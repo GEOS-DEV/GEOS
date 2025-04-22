@@ -730,8 +730,8 @@ real64 CompositionalMultiphaseHybridFVM::calculateResidualNorm( real64 const & G
 
   GEOS_LOG_LEVEL_RANK_0( logInfo::ResidualNorm, GEOS_FMT( "        ( R{} ) = ( {:4.2e} )", coupledSolverAttributePrefix(), residualNorm ));
 
-  m_solverStatistics.m_residualProppant = residualNorm;
-  m_solverStatistics.registerResidualNormToTable();
+  m_solverStatistics.m_convergenceStats.m_residualProppant = residualNorm;
+  m_solverStatistics.m_convergenceStats.registerResidualNormToTable();
 
   return residualNorm;
 }

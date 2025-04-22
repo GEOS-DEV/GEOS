@@ -367,8 +367,8 @@ real64 ReactiveCompositionalMultiphaseOBL::calculateResidualNorm( real64 const &
 
   GEOS_LOG_LEVEL_RANK_0_NLR( logInfo::ResidualNorm, GEOS_FMT( "        ( Rflow ) = ( {:4.2e} )", residual ) );
 
-  m_solverStatistics.m_residualFlow = residual;
-  m_solverStatistics.registerResidualNormToTable();
+  m_solverStatistics.m_convergenceStats.m_residualFlow = residual;
+  m_solverStatistics.m_convergenceStats.registerResidualNormToTable();
 
   return residual;
 }

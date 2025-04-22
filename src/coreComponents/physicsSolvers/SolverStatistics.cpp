@@ -30,66 +30,63 @@ using namespace dataRepository;
 
 SolverStatistics::SolverStatistics( string const & name, Group * const parent )
   : Group( name, parent ),
-  m_currentNumOuterLoopIterations( 0 ),
-  m_currentNumNonlinearIterations( 0 ),
-  m_currentNumLinearIterations( 0 ),
-  m_currentNewtonIter( 0 ),
+  m_iterationsStats( groupKeyStruct::IterationsStatisticsString(), this ),
+  m_convergenceStats(),
   m_outputDir( joinPath( OutputBase::getOutputDirectory(), "convergence" ))// TODO DANS LE HPP
 {
   makeDirsForPath( m_outputDir );
 
-  using TableLayoutArgs = std::initializer_list< std::variant< string_view, TableLayout::Column > >;
-
-  m_convergenceStats.m_nonLinearNormsLayout =  std::make_unique< TableLayout >(
-    TableLayoutArgs{
-      std::variant< string_view, TableLayout::Column >{"Time-steps"},
-      std::variant< string_view, TableLayout::Column >{"Newton Iter"}
-    } );
+  m_iterationsStats.setDirectoryPath( m_outputDir );
+  m_convergenceStats.setDirectoryPath( m_outputDir );
 }
 
-SolverStatistics::IterationsStatistics::IterationsStatistics()
+IterationsStatistics::IterationsStatistics( string const & name, Group * const parent )
+  : Group( name, parent ),
+  m_currentNumOuterLoopIterations( 0 ),
+  m_currentNumNonlinearIterations( 0 ),
+  m_currentNumLinearIterations( 0 )
 {
-  registerWrapper( viewKeyStruct::numTimeStepsString(), &m_iterationsStats.m_numTimeSteps ).
+  registerWrapper( viewKeyStruct::numTimeStepsString(), &m_numTimeSteps ).
     setApplyDefaultValue( 0 ).
     setDescription( "Number of time steps" );
 
-  registerWrapper( viewKeyStruct::numTimeStepCutsString(), &m_iterationsStats.m_numTimeStepCuts ).
+  registerWrapper( viewKeyStruct::numTimeStepCutsString(), &m_numTimeStepCuts ).
     setApplyDefaultValue( 0 ).
     setDescription( "Number of time step cuts" );
 
   registerWrapper( viewKeyStruct::numSuccessfulOuterLoopIterationsString(),
-                   &m_iterationsStats.m_numSuccessfulOuterLoopIterations ).
+                   &m_numSuccessfulOuterLoopIterations ).
     setApplyDefaultValue( 0 ).
     setDescription( "Cumulative number of successful outer loop iterations" );
 
   registerWrapper( viewKeyStruct::numSuccessfulNonlinearIterationsString(),
-                   &m_iterationsStats.m_numSuccessfulNonlinearIterations ).
+                   &m_numSuccessfulNonlinearIterations ).
     setApplyDefaultValue( 0 ).
     setDescription( "Cumulative number of successful nonlinear iterations" );
 
   registerWrapper( viewKeyStruct::numSuccessfulLinearIterationsString(),
-                   &m_iterationsStats.m_numSuccessfulLinearIterations ).
+                   &m_numSuccessfulLinearIterations ).
     setApplyDefaultValue( 0 ).
     setDescription( "Cumulative number of successful linear iterations" );
 
 
   registerWrapper( viewKeyStruct::numDiscardedOuterLoopIterationsString(),
-                   &m_iterationsStats.m_numDiscardedOuterLoopIterations ).
+                   &m_numDiscardedOuterLoopIterations ).
     setApplyDefaultValue( 0 ).
     setDescription( "Cumulative number of discarded outer loop iterations" );
 
   registerWrapper( viewKeyStruct::numDiscardedNonlinearIterationsString(),
-                   &m_iterationsStats.m_numDiscardedNonlinearIterations ).
+                   &m_numDiscardedNonlinearIterations ).
     setApplyDefaultValue( 0 ).
     setDescription( "Cumulative number of discarded nonlinear iterations" );
 
   registerWrapper( viewKeyStruct::numDiscardedLinearIterationsString(),
-                   &m_iterationsStats.m_numDiscardedLinearIterations ).
+                   &m_numDiscardedLinearIterations ).
     setApplyDefaultValue( 0 ).
     setDescription( "Cumulative number of discarded linear iterations" );
 }
 
-void SolverStatistics::IterationsStatistics::initializeTimeStepStatistics()
+void IterationsStatistics::initializeTimeStepStatistics()
 {
   // the time step begins, we reset the individual-timestep counters
   m_currentNumOuterLoopIterations = 0;
@@ -97,26 +94,26 @@ void SolverStatistics::IterationsStatistics::initializeTimeStepStatistics()
   m_currentNumLinearIterations = 0;
 }
 
-void SolverStatistics::IterationsStatistics::logNonlinearIteration( integer const numLinearIterations )
+void IterationsStatistics::logNonlinearIteration( integer const numLinearIterations )
 {
   // we have just performed a Newton iteration, so we increment the individual-timestep counters
   m_currentNumNonlinearIterations++;
   m_currentNumLinearIterations += numLinearIterations;
 }
 
-void SolverStatistics::IterationsStatistics::logNonlinearIteration()
+void IterationsStatistics::logNonlinearIteration()
 {
   // we have just performed an outer iteration, so we increment the individual-timestep counter (number of outer iteration)
   m_currentNumNonlinearIterations++;
 }
 
-void SolverStatistics::IterationsStatistics::logOuterLoopIteration()
+void IterationsStatistics::logOuterLoopIteration()
 {
   // we have just performed an outer loop iteration, so we increment the individual-timestep counter for outer loop iterations
   m_currentNumOuterLoopIterations++;
 }
 
-void SolverStatistics::IterationsStatistics::saveTimeStepStatistics()
+void IterationsStatistics::saveTimeStepStatistics()
 {
   // the timestep has converged, so we increment the cumulative counters for successful timesteps
   m_numSuccessfulOuterLoopIterations += m_currentNumOuterLoopIterations;
@@ -125,7 +122,7 @@ void SolverStatistics::IterationsStatistics::saveTimeStepStatistics()
   m_numTimeSteps++;
 }
 
-void SolverStatistics::IterationsStatistics::logTimeStepCut()
+void IterationsStatistics::logTimeStepCut()
 {
   // we have just cut the time step, so we increment the cumulative counters for discarded timesteps
   m_numDiscardedOuterLoopIterations += m_currentNumOuterLoopIterations;
@@ -137,7 +134,7 @@ void SolverStatistics::IterationsStatistics::logTimeStepCut()
   initializeTimeStepStatistics();
 }
 
-void SolverStatistics::IterationsStatistics::registerStatsToTable()
+void IterationsStatistics::registerStatsToTable()
 {
   m_nonLinearData.addRow( m_numTimeSteps,
                           m_numTimeStepCuts,
@@ -149,7 +146,7 @@ void SolverStatistics::IterationsStatistics::registerStatsToTable()
                           m_numDiscardedLinearIterations );
 }
 
-void SolverStatistics::IterationsStatistics::outputStatistics( bool writeCSV )
+void IterationsStatistics::outputStatistics( bool writeCSV )
 {
   { // output to log
     GEOS_LOG_RANK_0( GEOS_FMT( "{}, number of Time-steps: {}", getParent().getName(), m_numTimeSteps ) );
@@ -190,86 +187,31 @@ void SolverStatistics::IterationsStatistics::outputStatistics( bool writeCSV )
   }
 }
 
-SolverStatistics::ConvergenceStatistics::ConvergenceStatistics()
+ConvergenceStatistics::ConvergenceStatistics():
+  m_currentNewtonIter( 0 )
 {
-  registerWrapper( viewKeyStruct::numTimeStepsString(), &m_currentNewtonIter )
-    .setApplyDefaultValue( std::numeric_limits< real64 >::max())
-    .setDescription( "Maximum number of current Newton iterations" );
+  using TableLayoutArgs = std::initializer_list< std::variant< string_view, TableLayout::Column > >;
 
-  registerWrapper( viewKeyStruct::numTimeStepCutsString(), &m_residualMass )
-    .setApplyDefaultValue( std::numeric_limits< real64 >::max())
-    .setDescription( "Maximum value for residual mass" );
-
-  registerWrapper( viewKeyStruct::numSuccessfulOuterLoopIterationsString(), &m_residualVol )
-    .setApplyDefaultValue( std::numeric_limits< real64 >::max())
-    .setDescription( "Maximum value for residual volume" );
-
-  registerWrapper( viewKeyStruct::numSuccessfulNonlinearIterationsString(), &m_residualEnergy )
-    .setApplyDefaultValue( std::numeric_limits< real64 >::max())
-    .setDescription( "Maximum value for residual energy" );
-
-  registerWrapper( viewKeyStruct::numSuccessfulLinearIterationsString(), &m_residualFlow )
-    .setApplyDefaultValue( std::numeric_limits< real64 >::max())
-    .setDescription( "Maximum value for residual flow" );
-
-  registerWrapper( viewKeyStruct::numDiscardedOuterLoopIterationsString(), &m_residualBubbleDisp )
-    .setApplyDefaultValue( std::numeric_limits< real64 >::max())
-    .setDescription( "Maximum value for residual bubble displacement" );
-
-  registerWrapper( viewKeyStruct::numDiscardedNonlinearIterationsString(), &m_residualFracture )
-    .setApplyDefaultValue( std::numeric_limits< real64 >::max())
-    .setDescription( "Maximum value for residual fracture" );
-
-  registerWrapper( viewKeyStruct::numDiscardedLinearIterationsString(), &m_residualStick )
-    .setApplyDefaultValue( std::numeric_limits< real64 >::max())
-    .setDescription( "Maximum value for residual stick" );
-
-  registerWrapper( viewKeyStruct::numDiscardedLinearIterationsString(), &m_residualSlip )
-    .setApplyDefaultValue( std::numeric_limits< real64 >::max())
-    .setDescription( "Maximum value for residual slip" );
-
-  registerWrapper( viewKeyStruct::numDiscardedLinearIterationsString(), &m_residualOpen )
-    .setApplyDefaultValue( std::numeric_limits< real64 >::max())
-    .setDescription( "Maximum value for residual open" );
-
-  registerWrapper( viewKeyStruct::numDiscardedLinearIterationsString(), &m_residualSolid )
-    .setApplyDefaultValue( std::numeric_limits< real64 >::max())
-    .setDescription( "Maximum value for residual solid" );
-
-  registerWrapper( viewKeyStruct::numDiscardedLinearIterationsString(), &m_residualContact )
-    .setApplyDefaultValue( std::numeric_limits< real64 >::max())
-    .setDescription( "Maximum value for residual contact" );
-
-  registerWrapper( viewKeyStruct::numDiscardedLinearIterationsString(), &m_residualProppant )
-    .setApplyDefaultValue( std::numeric_limits< real64 >::max())
-    .setDescription( "Maximum value for residual proppant" );
-
-  registerWrapper( viewKeyStruct::numDiscardedLinearIterationsString(), &m_residualWell )
-    .setApplyDefaultValue( std::numeric_limits< real64 >::max())
-    .setDescription( "Maximum value for residual well" );
-
-  registerWrapper( viewKeyStruct::numDiscardedLinearIterationsString(), &m_residualDamage )
-    .setApplyDefaultValue( std::numeric_limits< real64 >::max())
-    .setDescription( "Maximum value for residual damage" );
-
-  registerWrapper( viewKeyStruct::numDiscardedLinearIterationsString(), &m_totalResidual )
-    .setApplyDefaultValue( std::numeric_limits< real64 >::max())
-    .setDescription( "Maximum total residual value" );
+  m_nonLinearNormsLayout = std::make_unique< TableLayout >(
+    TableLayoutArgs{
+      std::variant< string_view, TableLayout::Column >{"Time-steps"},
+      std::variant< string_view, TableLayout::Column >{"Newton Iter"}
+    } );
 }
 
 
-void SolverStatistics::ConvergenceStatistics::removeInvalidResidualNorms()
+void ConvergenceStatistics::removeInvalidResidualNorms()
 {
   for( int i = 0; i <= m_currentNewtonIter; i++ )
     m_nonLinearNormsData.getTableDataRows().pop_back();
 }
 
-void SolverStatistics::ConvergenceStatistics::logNewtonIter( integer currentNewtonIter )
+void ConvergenceStatistics::logNewtonIter( integer currentNewtonIter )
 { m_currentNewtonIter = currentNewtonIter; }
 
 
 
-void SolverStatistics::ConvergenceStatistics::registerResidualNormToTable()
+void ConvergenceStatistics::registerResidualNormToTable()
 {
   std::vector< TableData::CellData > residualsNormCells;
 
@@ -330,7 +272,7 @@ void SolverStatistics::ConvergenceStatistics::registerResidualNormToTable()
   m_nonLinearNormsData.addRow( residualsNormCells );
 }
 
-void SolverStatistics::ConvergenceStatistics::outputResidualNorm( bool writeCSV )
+void ConvergenceStatistics::outputResidualNorm( bool writeCSV )
 {
   std::ofstream logStream( m_residualNormsFileName );
 

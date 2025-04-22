@@ -119,7 +119,7 @@ real64 FlowProppantTransportSolver::sequentiallyCoupledSolverStep( real64 const 
     NonlinearSolverParameters const & fluidNonLinearParams = flowSolver()->getNonlinearSolverParameters();
     if( fluidNonLinearParams.m_numNewtonIterations <= this->m_nonlinearSolverParameters.m_minIterNewton && iter > 0 )
     {
-      m_solverStatistics.logNonlinearIteration();
+      m_solverStatistics.m_iterationsStats.logNonlinearIteration();
       GEOS_LOG_LEVEL_RANK_0( logInfo::Convergence,
                              GEOS_FMT( "***** The iterative coupling has converged in {} iterations *****", iter ) );
       break;

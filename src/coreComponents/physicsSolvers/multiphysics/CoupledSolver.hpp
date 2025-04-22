@@ -461,7 +461,7 @@ protected:
       forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
       {
         solver->resetStateToBeginningOfStep( domain );
-        solver->getSolverStatistics().initializeTimeStepStatistics();     // initialize counters for subsolvers
+        solver->getSolverStatistics().m_iterationsStats.initializeTimeStepStatistics(); // initialize counters for subsolvers
       } );
       resetStateToBeginningOfStep( domain );
 
@@ -472,7 +472,7 @@ protected:
       {
         // Increment the solver statistics for reporting purposes
         // Pass a "0" as argument (0 linear iteration) to skip the output of linear iteration stats at the end
-        m_solverStatistics.logNonlinearIteration( 0 );
+        m_solverStatistics.m_iterationsStats.logNonlinearIteration( 0 );
 
         startSequentialIteration( iter, domain );
 
@@ -526,7 +526,7 @@ protected:
         // Save time step statistics for the subsolvers
         forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
         {
-          solver->getSolverStatistics().saveTimeStepStatistics();
+          solver->getSolverStatistics().m_iterationsStats.saveTimeStepStatistics();
         } );
         // get out of the time loop
         break;
@@ -539,10 +539,10 @@ protected:
         GEOS_LOG_LEVEL_RANK_0( logInfo::TimeStep, GEOS_FMT( "New dt = {}", stepDt ) );
 
         // notify the solver statistics counter that this is a time step cut
-        m_solverStatistics.logTimeStepCut();
+        m_solverStatistics.m_iterationsStats.logTimeStepCut();
         forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
         {
-          solver->getSolverStatistics().logTimeStepCut();
+          solver->getSolverStatistics().m_iterationsStats.logTimeStepCut();
         } );
       }
     }

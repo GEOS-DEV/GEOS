@@ -874,12 +874,12 @@ real64 SolidMechanicsLagrangeContact::calculateContactResidualNorm( DomainPartit
 
   real64 totalResidualNorm = sqrt( stickResidual * stickResidual + slipResidual * slipResidual + openResidual * openResidual );
 
-  m_solverStatistics.m_residualStick = stickResidual;
-  m_solverStatistics.m_residualSlip = slipResidual;
-  m_solverStatistics.m_residualOpen = openResidual;
-  m_solverStatistics.m_totalResidual = totalResidualNorm;
+  m_solverStatistics.m_convergenceStats.m_residualStick = stickResidual;
+  m_solverStatistics.m_convergenceStats.m_residualSlip = slipResidual;
+  m_solverStatistics.m_convergenceStats.m_residualOpen = openResidual;
+  m_solverStatistics.m_convergenceStats.m_totalResidual = totalResidualNorm;
 
-  m_solverStatistics.registerResidualNormToTable();
+  m_solverStatistics.m_convergenceStats.registerResidualNormToTable();
 
 
   return totalResidualNorm;

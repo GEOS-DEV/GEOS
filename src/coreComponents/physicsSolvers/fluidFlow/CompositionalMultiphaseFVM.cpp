@@ -125,8 +125,8 @@ CompositionalMultiphaseFVM::CompositionalMultiphaseFVM( const string & name,
 
   if( m_writeSolvingCSV )
   {
-    m_solverStatistics.setResidualNormsFileName( GEOS_FMT( "{}/{}_solvings.csv",
-                                                           m_solverStatistics.getOutputDir(),
+    m_solverStatistics.m_convergenceStats.setResidualNormsFileName( GEOS_FMT( "{}/{}_solvings.csv",
+                                                           m_solverStatistics.m_convergenceStats.getOutputDir(),
                                                            getName() ));
   }
 
@@ -590,10 +590,10 @@ real64 CompositionalMultiphaseFVM::calculateResidualNorm( real64 const & GEOS_UN
                                GEOS_FMT( "        ( Rmass Rvol ) = ( {:4.2e} {:4.2e} )        ( Renergy ) = ( {:4.2e} )",
                                          globalResidualNorm[0], globalResidualNorm[1], globalResidualNorm[2] ));
 
-    m_solverStatistics.m_residualMass = globalResidualNorm[0];
-    m_solverStatistics.m_residualVol = globalResidualNorm[1];
-    m_solverStatistics.m_residualEnergy = globalResidualNorm[2];
-    m_solverStatistics.m_totalResidual = residualNorm;
+    m_solverStatistics.m_convergenceStats.m_residualMass = globalResidualNorm[0];
+    m_solverStatistics.m_convergenceStats.m_residualVol = globalResidualNorm[1];
+    m_solverStatistics.m_convergenceStats.m_residualEnergy = globalResidualNorm[2];
+    m_solverStatistics.m_convergenceStats.m_totalResidual = residualNorm;
   }
   else
   {
@@ -611,11 +611,11 @@ real64 CompositionalMultiphaseFVM::calculateResidualNorm( real64 const & GEOS_UN
 
     GEOS_LOG_LEVEL_RANK_0_NLR( logInfo::ResidualNorm, GEOS_FMT( "        ( Rmass Rvol ) = ( {:4.2e} {:4.2e} )",
                                                                 globalResidualNorm[0], globalResidualNorm[1] ) );
-    m_solverStatistics.m_residualMass = globalResidualNorm[0];
-    m_solverStatistics.m_residualVol = globalResidualNorm[1];
-    m_solverStatistics.m_totalResidual = residualNorm;
+    m_solverStatistics.m_convergenceStats.m_residualMass = globalResidualNorm[0];
+    m_solverStatistics.m_convergenceStats.m_residualVol = globalResidualNorm[1];
+    m_solverStatistics.m_convergenceStats.m_totalResidual = residualNorm;
   }
-  m_solverStatistics.registerResidualNormToTable();
+  m_solverStatistics.m_convergenceStats.registerResidualNormToTable();
 
   return residualNorm;
 }

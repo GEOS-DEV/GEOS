@@ -584,22 +584,22 @@ real64 SolidMechanicsEmbeddedFractures::calculateResidualNorm( real64 const & ti
 
   // Matrix residual
   real64 const solidResidualNorm = SolidMechanicsLagrangianFEM::calculateResidualNorm( time, dt, domain, dofManager, localRhs );
-  m_solverStatistics.m_residualSolid = solidResidualNorm;
+  m_solverStatistics.m_convergenceStats.m_residualSolid = solidResidualNorm;
 
   if( !m_useStaticCondensation )
   {
     real64 const fractureResidualNorm = calculateFractureResidualNorm( domain, dofManager, localRhs );
     real64 totalResidualNorm = sqrt( solidResidualNorm * solidResidualNorm + fractureResidualNorm * fractureResidualNorm );
 
-    m_solverStatistics.m_residualFracture = fractureResidualNorm;
-    m_solverStatistics.m_totalResidual = totalResidualNorm;
-    m_solverStatistics.registerResidualNormToTable();
+    m_solverStatistics.m_convergenceStats.m_residualFracture = fractureResidualNorm;
+    m_solverStatistics.m_convergenceStats.m_totalResidual = totalResidualNorm;
+    m_solverStatistics.m_convergenceStats.registerResidualNormToTable();
 
     return totalResidualNorm;
   }
   else
   {
-    m_solverStatistics.registerResidualNormToTable();
+    m_solverStatistics.m_convergenceStats.registerResidualNormToTable();
     return solidResidualNorm;
   }
 }

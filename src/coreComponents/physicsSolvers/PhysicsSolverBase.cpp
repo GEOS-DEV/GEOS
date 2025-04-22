@@ -275,7 +275,7 @@ bool PhysicsSolverBase::execute( real64 const time_n,
   for( integer subStep = 0; subStep < maxSubSteps && dtRemaining > 0.0; ++subStep )
   {
     // reset number of nonlinear and linear iterations
-    m_solverStatistics.initializeTimeStepStatistics();
+    m_solverStatistics.m_iterationsStats.initializeTimeStepStatistics();
 
     real64 const dtAccepted = solverStep( time_n + (dt - dtRemaining),
                                           nextDt,
@@ -285,7 +285,8 @@ bool PhysicsSolverBase::execute( real64 const time_n,
     getSubStepDts().push_back( dtAccepted );
 
     // increment the cumulative number of nonlinear and linear iterations
-    m_solverStatistics.saveTimeStepStatistics();
+    m_solverStatistics.m_iterationsStats.saveTimeStepStatistics();
+    m_solverStatistics.m_convergenceStats.m_numTimeSteps++;
 
     /*
      * Let us check convergence history of previous solve:
@@ -333,7 +334,7 @@ bool PhysicsSolverBase::execute( real64 const time_n,
 
 
   if( m_writeSolvingCSV )
-    getSolverStatistics().registerStatsToTable();
+    getSolverStatistics().m_iterationsStats.registerStatsToTable();
 
   return false;
 }
@@ -534,7 +535,7 @@ real64 PhysicsSolverBase::linearImplicitStep( real64 const & time_n,
   }
 
   // Increment the solver statistics for reporting purposes
-  m_solverStatistics.logNonlinearIteration( m_linearSolverResult.numIterations );
+  m_solverStatistics.m_iterationsStats.logNonlinearIteration( m_linearSolverResult.numIterations );
 
   // Output the linear system solution for debugging purposes
   debugOutputSolution( 0.0, 0, 0, m_solution );
@@ -823,8 +824,8 @@ real64 PhysicsSolverBase::nonlinearImplicitStep( real64 const & time_n,
         else
         {
           // increment the solver statistics for reporting purposes
-          m_solverStatistics.logOuterLoopIteration();
-          m_solverStatistics.removeInvalidResidualNorms();
+          m_solverStatistics.m_iterationsStats.logOuterLoopIteration();
+          m_solverStatistics.m_convergenceStats.removeInvalidResidualNorms();
           GEOS_LOG_LEVEL_RANK_0( logInfo::NonlinearSolver,
                                  "---------- Configuration did not converge. Testing new configuration. ----------" );
         }
@@ -859,7 +860,7 @@ real64 PhysicsSolverBase::nonlinearImplicitStep( real64 const & time_n,
       GEOS_LOG_LEVEL_RANK_0 ( logInfo::TimeStep, GEOS_FMT( "New dt = {}", stepDt ) );
 
       // notify the solver statistics counter that this is a time step cut
-      m_solverStatistics.logTimeStepCut();
+      m_solverStatistics.m_iterationsStats.logTimeStepCut();
     }
   } // end of outer loop (dt chopping strategy)
 
@@ -901,7 +902,7 @@ bool PhysicsSolverBase::solveNonlinearSystem( real64 const & time_n,
 
   for( newtonIter = 0; newtonIter < maxNewtonIter; ++newtonIter )
   {
-    getSolverStatistics().logNewtonIter( newtonIter );
+    m_solverStatistics.m_convergenceStats.logNewtonIter( newtonIter );
     GEOS_LOG_LEVEL_RANK_0( logInfo::NonlinearSolver,
                            GEOS_FMT( "    Attempt: {:2}, ConfigurationIter: {:2}, NewtonIter: {:2}", dtAttempt, configurationLoopIter, newtonIter ));
 
@@ -1060,7 +1061,7 @@ bool PhysicsSolverBase::solveNonlinearSystem( real64 const & time_n,
       solveLinearSystem( m_dofManager, m_matrix, m_rhs, m_solution );
 
       // Increment the solver statistics for reporting purposes
-      m_solverStatistics.logNonlinearIteration( m_linearSolverResult.numIterations );
+      m_solverStatistics.m_iterationsStats.logNonlinearIteration( m_linearSolverResult.numIterations );
 
       // Output the linear system solution for debugging purposes
       debugOutputSolution( time_n, cycleNumber, newtonIter, m_solution );
@@ -1393,8 +1394,8 @@ void PhysicsSolverBase::cleanup( real64 const GEOS_UNUSED_PARAM( time_n ),
                                  real64 const GEOS_UNUSED_PARAM( eventProgress ),
                                  DomainPartition & GEOS_UNUSED_PARAM( domain ) )
 {
-  m_solverStatistics.outputStatistics( m_writeSolvingCSV );
-  m_solverStatistics.outputResidualNorm( m_writeSolvingCSV );
+  m_solverStatistics.m_iterationsStats.outputStatistics( m_writeSolvingCSV );
+  m_solverStatistics.m_convergenceStats.outputResidualNorm( m_writeSolvingCSV );
 
   for( auto & timer : m_timers )
   {

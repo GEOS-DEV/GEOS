@@ -694,7 +694,7 @@ public:
 
     /// @return string for the writeLinearSystem wrapper
     static constexpr char const * writeLinearSystemString() { return "writeLinearSystem"; }
-    
+
     /// @return string for the writeLinearSystem wrapper
     static constexpr char const * writeSolvingCSVFlagString() { return "writeSolvingCSV"; }
   };

@@ -28,41 +28,19 @@
 namespace geos
 {
 
+class IterationsStatistics : public dataRepository::Group
+{
+public:
+
 /**
- * @class SolverStatistics
- * @brief This class is used to log the solver statistics
+ * @brief Constructor for SolverStatistics Objects.
+ * @param[in] name the name of this instantiation of SolverStatistics in the repository
+ * @param[in] parent the parent group of this instantiation of SolverStatistics
+ * @note For now, we register only the iteration statistics as the convergence value will be lost during the solving
  */
-class SolverStatistics : public dataRepository::Group
-{
-public:
-  /**
-   * @brief Constructor for SolverStatistics Objects.
-   * @param[in] name the name of this instantiation of SolverStatistics in the repository
-   * @param[in] parent the parent group of this instantiation of SolverStatistics
-   * @note For now, we register only the iteration statistics as the convergence value will be lost during the solving
-   */
-  SolverStatistics( string const & name,
-                    dataRepository::Group * const parent );
+  IterationsStatistics( string const & name,
+                        dataRepository::Group * const parent );
 
-  /**
-   * @return The output directory where all statistics related to the solver are atored
-   */
-  string getOutputDir()
-  { return m_outputDir; }
-
-  class IterationsStatistics {} m_iterationsStats;
-
-  class ConvergenceStatistics {} m_convergenceStats;
-
-private:
-  /// Output directory for solver statiscis csv
-  string m_outputDir;
-
-};
-
-class SolverStatistics::IterationsStatistics : public SolverStatistics
-{
-public:
   /// Number of time steps
   integer m_numTimeSteps;
 
@@ -169,102 +147,82 @@ public:
    */
   void outputStatistics( bool writeCSV );
 
+  /**
+   * @brief Set the Directory Path object
+   * @param path
+   */
+  void setDirectoryPath( string_view path )
+  { m_outputDir = path; }
+
+  /**
+   * @return The output directory where all statistics related to the solver are atored
+   */
+  string getOutputDir()
+  { return m_outputDir; }
+
 
 private:
   /// Table containing statistics relative to non linear parameter
   TableData m_nonLinearData;
+
+  string m_outputDir;
 };
 
-class SolverStatistics::ConvergenceStatistics : public SolverStatistics
+class ConvergenceStatistics
 {
 public:
+  ConvergenceStatistics();
+
+  /// Number of time steps
+  integer m_numTimeSteps;
+
   /// Maximum number of current Newton iterations.
   integer m_currentNewtonIter;
 
   /// Maximum value for residual mass.
-  real64 m_residualMass;
+  real64 m_residualMass = std::numeric_limits< real64 >::max();
 
   /// Maximum value for residual volume.
-  real64 m_residualVol;
+  real64 m_residualVol = std::numeric_limits< real64 >::max();
 
   /// Maximum value for residual energy.
-  real64 m_residualEnergy;
+  real64 m_residualEnergy = std::numeric_limits< real64 >::max();
 
   /// Maximum value for residual flow.
-  real64 m_residualFlow;
+  real64 m_residualFlow = std::numeric_limits< real64 >::max();
 
   /// Maximum value for residual bubble displacement.
-  real64 m_residualBubbleDisp;
+  real64 m_residualBubbleDisp = std::numeric_limits< real64 >::max();
 
   /// Maximum value for residual fracture.
-  real64 m_residualFracture;
+  real64 m_residualFracture = std::numeric_limits< real64 >::max();
 
   /// Maximum value for residual stick.
-  real64 m_residualStick;
+  real64 m_residualStick = std::numeric_limits< real64 >::max();
 
   /// Maximum value for residual slip.
-  real64 m_residualSlip;
+  real64 m_residualSlip = std::numeric_limits< real64 >::max();
 
   /// Maximum value for residual open.
-  real64 m_residualOpen;
+  real64 m_residualOpen = std::numeric_limits< real64 >::max();
 
   /// Maximum value for residual solid.
-  real64 m_residualSolid;
+  real64 m_residualSolid = std::numeric_limits< real64 >::max();
 
   /// Maximum value for residual contact.
-  real64 m_residualContact;
+  real64 m_residualContact = std::numeric_limits< real64 >::max();
 
   /// Maximum value for residual proppant.
-  real64 m_residualProppant;
+  real64 m_residualProppant = std::numeric_limits< real64 >::max();
 
   /// Maximum value for residual well.
-  real64 m_residualWell;
+  real64 m_residualWell = std::numeric_limits< real64 >::max();
 
   /// Maximum value for residual damage.
-  real64 m_residualDamage;
+  real64 m_residualDamage = std::numeric_limits< real64 >::max();
 
   /// Maximum total residual value.
-  real64 m_totalResidual;
-
-  /**
-   * @brief Struct to serve as a container for variable strings and keys.
-   * @struct viewKeyStruct
-   */
-  struct viewKeyStruct
-  {
-    /// String key for the current number of Newton iterations.
-    static constexpr char const * currentNewtonIterationsString() { return "currentNewtonIterations"; }
-    /// String key for the residual mass.
-    static constexpr char const * residualMassString() { return "residualMass"; }
-    /// String key for the residual volume.
-    static constexpr char const * residualVolumeString() { return "residualVolume"; }
-    /// String key for the residual energy.
-    static constexpr char const * residualEnergyString() { return "residualEnergy"; }
-    /// String key for the residual flow.
-    static constexpr char const * residualFlowString() { return "residualFlow"; }
-    /// String key for the residual bubble displacement.
-    static constexpr char const * residualBubbleDispString() { return "residualBubbleDisp"; }
-    /// String key for the residual fracture.
-    static constexpr char const * residualFractureString() { return "residualFracture"; }
-    /// String key for the residual stick.
-    static constexpr char const * residualStickString() { return "residualStick"; }
-    /// String key for the residual slip.
-    static constexpr char const * residualSlipString() { return "residualSlip"; }
-    /// String key for the residual open.
-    static constexpr char const * residualOpenString() { return "residualOpen"; }
-    /// String key for the residual solid.
-    static constexpr char const * residualSolidString() { return "residualSolid"; }
-    /// String key for the residual contact.
-    static constexpr char const * residualContactString() { return "residualContact"; }
-    /// String key for the residual proppant.
-    static constexpr char const * residualProppantString() { return "residualProppant"; }
-    /// String key for the residual well.
-    static constexpr char const * residualWellString() { return "residualWell"; }
-    /// String key for the residual damage.
-    static constexpr char const * residualDamageString() { return "residualDamage"; }
-    /// String key for the total residual value.
-    static constexpr char const * totalResidualString() { return "totalResidual"; }
-  };
+  real64 m_totalResidual = std::numeric_limits< real64 >::max();
 
   /**
    * @brief Output the cumulative statistics to the terminal
@@ -296,6 +254,19 @@ public:
    */
   void logNewtonIter( integer currentNewtonIter );
 
+  /**
+   * @brief Set the Directory Path object
+   * @param path
+   */
+  void setDirectoryPath( string_view path )
+  { m_outputDir = path; }
+
+  /**
+   * @return The output directory where all statistics related to the solver are atored
+   */
+  string getOutputDir()
+  { return m_outputDir; }
+
 private:
   /// Table containing statistics relative to non linear norms
   std::unique_ptr< TableLayout > m_nonLinearNormsLayout;
@@ -306,7 +277,47 @@ private:
   /// Residuals norms csv filename
   string m_residualNormsFileName;
 
+  string m_outputDir;
 };
+
+/**
+ * @class SolverStatistics
+ * @brief This class is used to log the solver statistics
+ */
+class SolverStatistics : public dataRepository::Group
+{
+public:
+  /**
+   * @brief Constructor for SolverStatistics Objects.
+   * @param[in] name the name of this instantiation of SolverStatistics in the repository
+   * @param[in] parent the parent group of this instantiation of SolverStatistics
+   * @note For now, we register only the iteration statistics as the convergence value will be lost during the solving
+   */
+  SolverStatistics( string const & name,
+                    dataRepository::Group * const parent );
+
+  struct groupKeyStruct
+  {
+    /// @return string for the IterationsStatistics wrapper
+    static constexpr char const * IterationsStatisticsString() { return "IterationsStatistics"; }
+  };
+
+  /**
+   * @return The output directory where all statistics related to the solver are atored
+   */
+  string getOutputDir()
+  { return m_outputDir; }
+
+  IterationsStatistics m_iterationsStats;
+
+  ConvergenceStatistics m_convergenceStats;
+
+private:
+  /// Output directory for solver statiscis csv à passer dans le cnstructeur
+  string m_outputDir;
+};
+
+
 
 } //namespace geos
 

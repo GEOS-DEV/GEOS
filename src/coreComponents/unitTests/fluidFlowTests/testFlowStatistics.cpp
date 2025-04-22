@@ -345,8 +345,8 @@ void checkWholeSimTimeStepStats( ProblemManager & problem,
 
   PhysicsSolverBase const & solver = problem.getGroupByPath< PhysicsSolverBase >( testSet.inputs.flowSolverPath );
   SolverStatistics const & solverStats = solver.getSolverStatistics();
-  EXPECT_GE( solverStats.m_numTimeStepCuts, testSet.inputs.requiredSubTimeStep ) << "The test did not encountered any timestep cut, but were expected to. "
-                                                                                       "Consider adapting the simulation so a timestep cut occurs to check they work as expected.";
+  EXPECT_GE( solverStats.m_iterationsStats.m_numTimeStepCuts, testSet.inputs.requiredSubTimeStep ) << "The test did not encountered any timestep cut, but were expected to. "
+                                                                                                      "Consider adapting the simulation so a timestep cut occurs to check they work as expected.";
 }
 
 
