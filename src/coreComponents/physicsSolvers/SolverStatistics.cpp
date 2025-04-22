@@ -36,48 +36,57 @@ SolverStatistics::SolverStatistics( string const & name, Group * const parent )
   m_currentNewtonIter( 0 ),
   m_outputDir( joinPath( OutputBase::getOutputDirectory(), "convergence" ))// TODO DANS LE HPP
 {
-  registerWrapper( viewKeyStruct::numTimeStepsString(), &m_numTimeSteps ).
-    setApplyDefaultValue( 0 ).
-    setDescription( "Number of time steps" );
-
-  registerWrapper( viewKeyStruct::numTimeStepCutsString(), &m_numTimeStepCuts ).
-    setApplyDefaultValue( 0 ).
-    setDescription( "Number of time step cuts" );
-
-  registerWrapper( viewKeyStruct::numSuccessfulOuterLoopIterationsString(), &m_numSuccessfulOuterLoopIterations ).
-    setApplyDefaultValue( 0 ).
-    setDescription( "Cumulative number of successful outer loop iterations" );
-
-  registerWrapper( viewKeyStruct::numSuccessfulNonlinearIterationsString(), &m_numSuccessfulNonlinearIterations ).
-    setApplyDefaultValue( 0 ).
-    setDescription( "Cumulative number of successful nonlinear iterations" );
-
-  registerWrapper( viewKeyStruct::numSuccessfulLinearIterationsString(), &m_numSuccessfulLinearIterations ).
-    setApplyDefaultValue( 0 ).
-    setDescription( "Cumulative number of successful linear iterations" );
-
-
-  registerWrapper( viewKeyStruct::numDiscardedOuterLoopIterationsString(), &m_numDiscardedOuterLoopIterations ).
-    setApplyDefaultValue( 0 ).
-    setDescription( "Cumulative number of discarded outer loop iterations" );
-
-  registerWrapper( viewKeyStruct::numDiscardedNonlinearIterationsString(), &m_numDiscardedNonlinearIterations ).
-    setApplyDefaultValue( 0 ).
-    setDescription( "Cumulative number of discarded nonlinear iterations" );
-
-  registerWrapper( viewKeyStruct::numDiscardedLinearIterationsString(), &m_numDiscardedLinearIterations ).
-    setApplyDefaultValue( 0 ).
-    setDescription( "Cumulative number of discarded linear iterations" );
-
   makeDirsForPath( m_outputDir );
 
   using TableLayoutArgs = std::initializer_list< std::variant< string_view, TableLayout::Column > >;
 
-  m_nonLinearNormsLayout =  std::make_unique< TableLayout >(
+  m_convergenceStats.m_nonLinearNormsLayout =  std::make_unique< TableLayout >(
     TableLayoutArgs{
       std::variant< string_view, TableLayout::Column >{"Time-steps"},
       std::variant< string_view, TableLayout::Column >{"Newton Iter"}
     } );
+}
+
+SolverStatistics::IterationsStatistics::IterationsStatistics()
+{
+  registerWrapper( viewKeyStruct::numTimeStepsString(), &m_iterationsStats.m_numTimeSteps ).
+    setApplyDefaultValue( 0 ).
+    setDescription( "Number of time steps" );
+
+  registerWrapper( viewKeyStruct::numTimeStepCutsString(), &m_iterationsStats.m_numTimeStepCuts ).
+    setApplyDefaultValue( 0 ).
+    setDescription( "Number of time step cuts" );
+
+  registerWrapper( viewKeyStruct::numSuccessfulOuterLoopIterationsString(),
+                   &m_iterationsStats.m_numSuccessfulOuterLoopIterations ).
+    setApplyDefaultValue( 0 ).
+    setDescription( "Cumulative number of successful outer loop iterations" );
+
+  registerWrapper( viewKeyStruct::numSuccessfulNonlinearIterationsString(),
+                   &m_iterationsStats.m_numSuccessfulNonlinearIterations ).
+    setApplyDefaultValue( 0 ).
+    setDescription( "Cumulative number of successful nonlinear iterations" );
+
+  registerWrapper( viewKeyStruct::numSuccessfulLinearIterationsString(),
+                   &m_iterationsStats.m_numSuccessfulLinearIterations ).
+    setApplyDefaultValue( 0 ).
+    setDescription( "Cumulative number of successful linear iterations" );
+
+
+  registerWrapper( viewKeyStruct::numDiscardedOuterLoopIterationsString(),
+                   &m_iterationsStats.m_numDiscardedOuterLoopIterations ).
+    setApplyDefaultValue( 0 ).
+    setDescription( "Cumulative number of discarded outer loop iterations" );
+
+  registerWrapper( viewKeyStruct::numDiscardedNonlinearIterationsString(),
+                   &m_iterationsStats.m_numDiscardedNonlinearIterations ).
+    setApplyDefaultValue( 0 ).
+    setDescription( "Cumulative number of discarded nonlinear iterations" );
+
+  registerWrapper( viewKeyStruct::numDiscardedLinearIterationsString(),
+                   &m_iterationsStats.m_numDiscardedLinearIterations ).
+    setApplyDefaultValue( 0 ).
+    setDescription( "Cumulative number of discarded linear iterations" );
 }
 
 void SolverStatistics::IterationsStatistics::initializeTimeStepStatistics()
@@ -179,6 +188,73 @@ void SolverStatistics::IterationsStatistics::outputStatistics( bool writeCSV )
     logStream.close();
     m_nonLinearData.clear();
   }
+}
+
+SolverStatistics::ConvergenceStatistics::ConvergenceStatistics()
+{
+  registerWrapper( viewKeyStruct::numTimeStepsString(), &m_currentNewtonIter )
+    .setApplyDefaultValue( std::numeric_limits< real64 >::max())
+    .setDescription( "Maximum number of current Newton iterations" );
+
+  registerWrapper( viewKeyStruct::numTimeStepCutsString(), &m_residualMass )
+    .setApplyDefaultValue( std::numeric_limits< real64 >::max())
+    .setDescription( "Maximum value for residual mass" );
+
+  registerWrapper( viewKeyStruct::numSuccessfulOuterLoopIterationsString(), &m_residualVol )
+    .setApplyDefaultValue( std::numeric_limits< real64 >::max())
+    .setDescription( "Maximum value for residual volume" );
+
+  registerWrapper( viewKeyStruct::numSuccessfulNonlinearIterationsString(), &m_residualEnergy )
+    .setApplyDefaultValue( std::numeric_limits< real64 >::max())
+    .setDescription( "Maximum value for residual energy" );
+
+  registerWrapper( viewKeyStruct::numSuccessfulLinearIterationsString(), &m_residualFlow )
+    .setApplyDefaultValue( std::numeric_limits< real64 >::max())
+    .setDescription( "Maximum value for residual flow" );
+
+  registerWrapper( viewKeyStruct::numDiscardedOuterLoopIterationsString(), &m_residualBubbleDisp )
+    .setApplyDefaultValue( std::numeric_limits< real64 >::max())
+    .setDescription( "Maximum value for residual bubble displacement" );
+
+  registerWrapper( viewKeyStruct::numDiscardedNonlinearIterationsString(), &m_residualFracture )
+    .setApplyDefaultValue( std::numeric_limits< real64 >::max())
+    .setDescription( "Maximum value for residual fracture" );
+
+  registerWrapper( viewKeyStruct::numDiscardedLinearIterationsString(), &m_residualStick )
+    .setApplyDefaultValue( std::numeric_limits< real64 >::max())
+    .setDescription( "Maximum value for residual stick" );
+
+  registerWrapper( viewKeyStruct::numDiscardedLinearIterationsString(), &m_residualSlip )
+    .setApplyDefaultValue( std::numeric_limits< real64 >::max())
+    .setDescription( "Maximum value for residual slip" );
+
+  registerWrapper( viewKeyStruct::numDiscardedLinearIterationsString(), &m_residualOpen )
+    .setApplyDefaultValue( std::numeric_limits< real64 >::max())
+    .setDescription( "Maximum value for residual open" );
+
+  registerWrapper( viewKeyStruct::numDiscardedLinearIterationsString(), &m_residualSolid )
+    .setApplyDefaultValue( std::numeric_limits< real64 >::max())
+    .setDescription( "Maximum value for residual solid" );
+
+  registerWrapper( viewKeyStruct::numDiscardedLinearIterationsString(), &m_residualContact )
+    .setApplyDefaultValue( std::numeric_limits< real64 >::max())
+    .setDescription( "Maximum value for residual contact" );
+
+  registerWrapper( viewKeyStruct::numDiscardedLinearIterationsString(), &m_residualProppant )
+    .setApplyDefaultValue( std::numeric_limits< real64 >::max())
+    .setDescription( "Maximum value for residual proppant" );
+
+  registerWrapper( viewKeyStruct::numDiscardedLinearIterationsString(), &m_residualWell )
+    .setApplyDefaultValue( std::numeric_limits< real64 >::max())
+    .setDescription( "Maximum value for residual well" );
+
+  registerWrapper( viewKeyStruct::numDiscardedLinearIterationsString(), &m_residualDamage )
+    .setApplyDefaultValue( std::numeric_limits< real64 >::max())
+    .setDescription( "Maximum value for residual damage" );
+
+  registerWrapper( viewKeyStruct::numDiscardedLinearIterationsString(), &m_totalResidual )
+    .setApplyDefaultValue( std::numeric_limits< real64 >::max())
+    .setDescription( "Maximum total residual value" );
 }
 
 
