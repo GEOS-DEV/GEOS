@@ -32,7 +32,7 @@ void TableLayout::addColumns( stdVector< string > const & columnNames )
   }
 }
 
-void TableLayout::addColumns( std::vector< TableLayout::Column > const & columns )
+void TableLayout::addColumns( stdVector< TableLayout::Column > const & columns )
 {
   for( auto const & column : columns )
   {
@@ -189,7 +189,7 @@ TableLayout::Column & TableLayout::Column::addSubColumns( std::initializer_list<
   return *this;
 }
 
-TableLayout::Column & TableLayout::Column::addSubColumns( std::vector< string > const & subColNames )
+TableLayout::Column & TableLayout::Column::addSubColumns( stdVector< string > const & subColNames )
 {
   m_subColumns.reserve( m_subColumns.size() + subColNames.size() );
   for( auto const & name : subColNames )
@@ -306,7 +306,7 @@ PreparedTableLayout::PreparedTableLayout( TableLayout const & other ):
   m_tableTitleLayout.prepareLayout( m_tableTitleStr, noColumnMaxWidth );
 }
 
-void PreparedTableLayout::prepareLayoutRecusive( std::vector< TableLayout::Column > & columns,
+void PreparedTableLayout::prepareLayoutRecusive( stdVector< TableLayout::Column > & columns,
                                                  size_t level )
 {
   for( size_t idxColumn = 0; idxColumn < columns.size(); ++idxColumn )

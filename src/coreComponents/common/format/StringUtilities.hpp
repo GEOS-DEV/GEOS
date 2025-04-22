@@ -252,7 +252,7 @@ string addCommaSeparators( T const & num );
  * @return A vector of STRING_T objects, each containing a single line from the input
  */
 template< typename STRING_T >
-std::vector< STRING_T > divideLines( size_t & linesWidth, string_view value );
+stdVector< STRING_T > divideLines( size_t & linesWidth, string_view value );
 
 /**
  * @brief Format all the lines by detecting spaces and by dividing each lines with maximum length specified.
@@ -264,7 +264,7 @@ std::vector< STRING_T > divideLines( size_t & linesWidth, string_view value );
  * @return A vector containing the lines wrapped.
  */
 template< typename STRING_T >
-std::vector< STRING_T > wrapTextToMaxLength( std::vector< STRING_T > const & lines,
+stdVector< STRING_T > wrapTextToMaxLength( stdVector< STRING_T > const & lines,
                                              size_t & maxLineLength );
 
 /**

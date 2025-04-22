@@ -383,7 +383,7 @@ void DomainPartition::outputPartitionInformation() const
 
   GEOS_LOG_RANK_0( "MPI Partitioning information:" );
 
-  std::vector< TableData > partitionsData;
+  stdVector< TableData > partitionsData;
   forMeshBodies( [&]( MeshBody const & meshBody )
   {
     meshBody.getMeshLevels().forSubGroupsIndex< MeshLevel >( [&]( int const level, MeshLevel const & meshLevel )

@@ -444,7 +444,7 @@ public:
    * @brief Perform a collective reduction on a container of pairs using MPI.
    * @tparam FIRST Pairs first element type. Typically a numerical quantity (e.g., real64, int).
    * @tparam SECOND Pairs second element type. Typically a numerical quantity (e.g., localIndex, globalIndex).
-   * @tparam CONTAINER Pairs container type (e.g., `std::vector<PairType<FIRST, SECOND>>`).
+   * @tparam CONTAINER Pairs container type (e.g., `stdVector<PairType<FIRST, SECOND>>`).
    * @tparam OP The reduction operation to apply (`PairReduction::Max` or `PairReduction::Min`).
    * @param pairs The local container of pairs to be reduced.
    * @param comm The MPI communicator to use.

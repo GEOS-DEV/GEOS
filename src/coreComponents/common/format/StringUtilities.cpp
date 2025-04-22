@@ -149,12 +149,12 @@ template string toMetricPrefixString( float const & );
 template string toMetricPrefixString( double const & );
 
 template< typename STRING_T >
-std::vector< STRING_T > divideLines( size_t & linesWidth, string_view value )
+stdVector< STRING_T > divideLines( size_t & linesWidth, string_view value )
 {
   size_t current = 0;
   size_t end = value.find( '\n' );
 
-  std::vector< STRING_T > lines;
+  stdVector< STRING_T > lines;
   linesWidth = 0;
 
   // Process each line until no more newlines are found
@@ -174,11 +174,11 @@ std::vector< STRING_T > divideLines( size_t & linesWidth, string_view value )
 
   return lines;
 }
-template std::vector< string > divideLines( size_t &, string_view );
-template std::vector< string_view > divideLines( size_t &, string_view );
+template stdVector< string > divideLines( size_t &, string_view );
+template stdVector< string_view > divideLines( size_t &, string_view );
 
 template< typename STRING_T >
-std::vector< STRING_T > wrapTextToMaxLength( std::vector< STRING_T > const & lines,
+stdVector< STRING_T > wrapTextToMaxLength( stdVector< STRING_T > const & lines,
                                              size_t & maxLineLength )
 {
   if( lines.empty())
@@ -186,7 +186,7 @@ std::vector< STRING_T > wrapTextToMaxLength( std::vector< STRING_T > const & lin
 
   size_t effectiveMaxLineLength = 0;
 
-  std::vector< STRING_T > formattedLines;
+  stdVector< STRING_T > formattedLines;
   formattedLines.reserve( lines.size() );
   for( const auto & line : lines )
   {
@@ -224,8 +224,8 @@ std::vector< STRING_T > wrapTextToMaxLength( std::vector< STRING_T > const & lin
   maxLineLength = effectiveMaxLineLength;
   return formattedLines;
 }
-template std::vector< string > wrapTextToMaxLength( std::vector< string > const &, size_t & );
-template std::vector< string_view > wrapTextToMaxLength( std::vector< string_view > const &, size_t & );
+template stdVector< string > wrapTextToMaxLength( stdVector< string > const &, size_t & );
+template stdVector< string_view > wrapTextToMaxLength( stdVector< string_view > const &, size_t & );
 
 }
 }

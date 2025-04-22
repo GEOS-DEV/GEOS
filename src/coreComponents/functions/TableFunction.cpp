@@ -312,8 +312,8 @@ void collectTableValues( TableData & table,
     div[d] = div[d-1] * coordinates[d-1].size();
   }
   // loop through all the values
-  std::vector< integer > coordsIdx( numDimensions );
-  std::vector< TableData::CellData > rowData( numDimensions + 1,
+  stdVector< integer > coordsIdx( numDimensions );
+  stdVector< TableData::CellData > rowData( numDimensions + 1,
                                               { CellType::Value, string() } );
   for( integer v = 0; v < values.size(); v++ )
   {

@@ -57,7 +57,7 @@ public:
   };
 
   /// Alias for table data rows with cells values
-  using DataRows = std::vector< std::vector< CellData > >;
+  using DataRows = stdVector< stdVector< CellData > >;
 
   /**
    * @brief Add a row to the table.
