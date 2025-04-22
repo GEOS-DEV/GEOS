@@ -1734,7 +1734,7 @@ stdVector< int > getVtkToGeosxNodeOrdering( VTKCellType const vtkType )
 }
 
 stdVector< int > getVtkToGeosxPolyhedronNodeOrdering( ElementType const elemType,
-                                                        vtkCell *cell )
+                                                      vtkCell *cell )
 {
   GEOS_ERROR_IF_NE_MSG( cell->GetCellType(), VTK_POLYHEDRON, "Input must be a VTK_POLYHEDRON." );
   switch( elemType )

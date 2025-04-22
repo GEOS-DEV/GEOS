@@ -84,9 +84,9 @@ void ParticleMeshGenerator::fillParticleBlockManager( ParticleBlockManager & par
   map< std::string, stdVector< stdVector< double > > > particleData;
   map< std::string, int > particleTypeMap;
   stdVector< std::string > particleTypes; // This is needed because the input file format is such that data associated with each particle
-                                            // type is in the same order as the preceding type listing.
-                                            // Looping over the particleTypeMap with an iterator does not respect this ordering since a map
-                                            // automatically sorts by its keys.
+                                          // type is in the same order as the preceding type listing.
+                                          // Looping over the particleTypeMap with an iterator does not respect this ordering since a map
+                                          // automatically sorts by its keys.
   map< std::string, int > materialMap;
 
   // Get and process header and particle files
@@ -134,7 +134,7 @@ void ParticleMeshGenerator::fillParticleBlockManager( ParticleBlockManager & par
     {
       std::getline( particleFile, line );
       stdVector< double > lineData; // TODO: Not great because we cast all input as doubles, but it all gets re-cast later so maybe it's
-                                      // fine.
+                                    // fine.
       std::istringstream lineStream( line );
 
       double value;
@@ -177,7 +177,7 @@ void ParticleMeshGenerator::fillParticleBlockManager( ParticleBlockManager & par
 
   // Distribute particle information to particle blocks
   map< std::string, stdVector< int > > indexMap; // This will keep track of the indices of particleData associated with each particle
-                                                   // block. It's populated in the loop that checks for which particles belong to a block.
+                                                 // block. It's populated in the loop that checks for which particles belong to a block.
   map< std::string, int > sizeMap;  // This keeps track of the size of each particle block so we can resize the ParticleRegions later
   for( auto & particleBlockName : m_blockNames )
   {

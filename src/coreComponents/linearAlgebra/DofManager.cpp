@@ -611,10 +611,10 @@ void DofManager::addCoupling( string const & rowFieldName,
 
   // Check if already defined
   stdVector< FieldSupport > processSupportList = processCouplingRegionList( supports,
-                                                                              m_fields[rowFieldIndex].support,
-                                                                              rowFieldName,
-                                                                              m_fields[colFieldIndex].support,
-                                                                              colFieldName );
+                                                                            m_fields[rowFieldIndex].support,
+                                                                            rowFieldName,
+                                                                            m_fields[colFieldIndex].support,
+                                                                            colFieldName );
 
   if( m_coupling.count( {rowFieldIndex, colFieldIndex} ) == 0 )
   {

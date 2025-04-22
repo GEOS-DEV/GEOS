@@ -265,7 +265,7 @@ stdVector< STRING_T > divideLines( size_t & linesWidth, string_view value );
  */
 template< typename STRING_T >
 stdVector< STRING_T > wrapTextToMaxLength( stdVector< STRING_T > const & lines,
-                                             size_t & maxLineLength );
+                                           size_t & maxLineLength );
 
 /**
  * @brief Take a string, and return a array1d with the cast values

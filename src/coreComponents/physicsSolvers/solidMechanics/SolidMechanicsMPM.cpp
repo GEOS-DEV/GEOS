@@ -1092,11 +1092,11 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
   solverProfiling( "Grid MPI operations" );
   //#######################################################################################
   stdVector< std::string > fieldNames1 = { viewKeyStruct::massString(),
-                                             viewKeyStruct::momentumString(),
-                                             viewKeyStruct::damageString(),
-                                             viewKeyStruct::materialPositionString(),
-                                             viewKeyStruct::forceInternalString(),
-                                             viewKeyStruct::forceExternalString() };
+                                           viewKeyStruct::momentumString(),
+                                           viewKeyStruct::damageString(),
+                                           viewKeyStruct::materialPositionString(),
+                                           viewKeyStruct::forceInternalString(),
+                                           viewKeyStruct::forceExternalString() };
   syncGridFields( fieldNames1, domain, nodeManager, mesh, MPI_SUM );
   stdVector< std::string > fieldNames2 = { viewKeyStruct::maxDamageString() };
   syncGridFields( fieldNames2, domain, nodeManager, mesh, MPI_MAX );
@@ -1891,8 +1891,8 @@ void SolidMechanicsMPM::setGridFieldLabels( NodeManager & nodeManager )
 
   // Apply labels to scalar multi-fields
   stdVector< std::string > keys2d = { viewKeyStruct::massString(),
-                                        viewKeyStruct::damageString(),
-                                        viewKeyStruct::maxDamageString()};
+                                      viewKeyStruct::damageString(),
+                                      viewKeyStruct::maxDamageString()};
   for( auto const & key: keys2d )
   {
     WrapperBase & wrapper = nodeManager.getWrapper< array2d< real64 > >( key );
@@ -1901,13 +1901,13 @@ void SolidMechanicsMPM::setGridFieldLabels( NodeManager & nodeManager )
 
   // Apply labels to vector multi-fields
   stdVector< std::string > keys3d = { viewKeyStruct::velocityString(),
-                                        viewKeyStruct::momentumString(),
-                                        viewKeyStruct::accelerationString(),
-                                        viewKeyStruct::forceInternalString(),
-                                        viewKeyStruct::forceExternalString(),
-                                        viewKeyStruct::forceContactString(),
-                                        viewKeyStruct::surfaceNormalString(),
-                                        viewKeyStruct::materialPositionString() };
+                                      viewKeyStruct::momentumString(),
+                                      viewKeyStruct::accelerationString(),
+                                      viewKeyStruct::forceInternalString(),
+                                      viewKeyStruct::forceExternalString(),
+                                      viewKeyStruct::forceContactString(),
+                                      viewKeyStruct::surfaceNormalString(),
+                                      viewKeyStruct::materialPositionString() };
   for( auto const & key: keys3d )
   {
     WrapperBase & wrapper = nodeManager.getWrapper< array3d< real64 > >( key );
@@ -2300,7 +2300,7 @@ void SolidMechanicsMPM::computeKernelFieldGradient( arraySlice1d< real64 const >
                                                     stdVector< stdVector< real64 > > & xp,  // List of neighbor particle locations.
                                                     stdVector< real64 > & Vp,                 // List of neighbor particle volumes.
                                                     stdVector< real64 > & fp,                 // scalar field values (e.g. damage) at
-                                                                                                // neighbor particles
+                                                                                              // neighbor particles
                                                     arraySlice1d< real64 > const result )
 {
   // Compute the kernel scalar field at a point, for a given list of neighbor particles.
@@ -2362,8 +2362,8 @@ void SolidMechanicsMPM::computeKernelVectorGradient( arraySlice1d< real64 const 
                                                      stdVector< stdVector< real64 > > & xp,  // List of neighbor particle locations.
                                                      stdVector< real64 > & Vp,                 // List of neighbor particle volumes.
                                                      stdVector< stdVector< real64 > > & fp,                 // vector field values (e.g.
-                                                                                                                // velocity) at neighbor
-                                                                                                                // particles
+                                                     // velocity) at neighbor
+                                                     // particles
                                                      arraySlice2d< real64 > const result )
 {
   // Compute the kernel scalar field at a point, for a given list of neighbor particles.

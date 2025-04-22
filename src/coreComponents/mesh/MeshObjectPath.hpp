@@ -156,7 +156,7 @@ public:
   }
 
   stdVector< string > testFillPathTokens( string const & path,
-                                            dataRepository::Group const & meshBodies )
+                                          dataRepository::Group const & meshBodies )
   {
     return fillPathTokens( path, meshBodies );
   }
@@ -209,7 +209,7 @@ private:
    * @return stdVector< string >  A tokenized representation of the path.
    */
   stdVector< string > fillPathTokens( string const & path,
-                                        dataRepository::Group const & meshBodies ) const;
+                                      dataRepository::Group const & meshBodies ) const;
 
   /**
    * @brief Convert the tokenized path into a collection of permutations and fill

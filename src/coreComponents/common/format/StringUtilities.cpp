@@ -179,7 +179,7 @@ template stdVector< string_view > divideLines( size_t &, string_view );
 
 template< typename STRING_T >
 stdVector< STRING_T > wrapTextToMaxLength( stdVector< STRING_T > const & lines,
-                                             size_t & maxLineLength )
+                                           size_t & maxLineLength )
 {
   if( lines.empty())
     return lines;

@@ -314,7 +314,7 @@ void collectTableValues( TableData & table,
   // loop through all the values
   stdVector< integer > coordsIdx( numDimensions );
   stdVector< TableData::CellData > rowData( numDimensions + 1,
-                                              { CellType::Value, string() } );
+                                            { CellType::Value, string() } );
   for( integer v = 0; v < values.size(); v++ )
   {
     // find coords indices

@@ -83,9 +83,9 @@ void ProjectionEDFMHelper::addNonNeighboringConnections() const
 }
 
 stdVector< localIndex > ProjectionEDFMHelper::selectFaces( FixedOneToManyRelation const & subRegionFaces,
-                                                             CellDescriptor const & hostCellID,
-                                                             localIndex const fracElement,
-                                                             EmbeddedSurfaceSubRegion const & fractureSubRegion ) const
+                                                           CellDescriptor const & hostCellID,
+                                                           localIndex const fracElement,
+                                                           EmbeddedSurfaceSubRegion const & fractureSubRegion ) const
 {
   arraySlice1d< real64 const > const n = fractureSubRegion.getNormalVector( fracElement );
   arrayView2d< real64 const > const & centers = fractureSubRegion.getElementCenter().toViewConst();

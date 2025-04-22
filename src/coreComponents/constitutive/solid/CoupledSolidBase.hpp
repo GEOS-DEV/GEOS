@@ -58,8 +58,8 @@ public:
   virtual stdVector< string > getSubRelationNames() const override final
   {
     stdVector< string > subRelationNames = { m_solidModelName,
-                                               m_porosityModelName,
-                                               m_permeabilityModelName };
+                                             m_porosityModelName,
+                                             m_permeabilityModelName };
 
     if( !m_solidInternalEnergyModelName.empty() )
     {

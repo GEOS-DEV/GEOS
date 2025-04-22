@@ -364,12 +364,12 @@ protected:
   virtual void postInputInitialization() override final;
 
   stdVector< array2d< localIndex > > m_mappedNodes; // mappedNodes[subregion index][particle index][node index]. dims = {# of subregions,
-                                                      // # of particles, # of nodes a particle on the subregion maps to}
+                                                    // # of particles, # of nodes a particle on the subregion maps to}
   stdVector< array2d< real64 > > m_shapeFunctionValues; // mappedNodes[subregion][particle][nodal shape function value]. dims = {# of
-                                                          // subregions, # of particles, # of nodes a particle on the subregion maps to}
+                                                        // subregions, # of particles, # of nodes a particle on the subregion maps to}
   stdVector< array3d< real64 > > m_shapeFunctionGradientValues; // mappedNodes[subregion][particle][nodal shape function gradient
-                                                                  // value][direction]. dims = {# of subregions, # of particles, # of nodes
-                                                                  // a particle on the subregion maps to, 3}
+                                                                // value][direction]. dims = {# of subregions, # of particles, # of nodes
+                                                                // a particle on the subregion maps to, 3}
 
   int m_solverProfiling;
   stdVector< real64 > m_profilingTimes;

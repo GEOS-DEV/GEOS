@@ -97,9 +97,9 @@ private:
    * @return a list of the faces that need to be disconnected.
    */
   stdVector< localIndex > selectFaces( FixedOneToManyRelation const & subRegionFaces,
-                                         CellDescriptor const & hostCellID,
-                                         localIndex const fracElement,
-                                         EmbeddedSurfaceSubRegion const & fractureSubRegion ) const;
+                                       CellDescriptor const & hostCellID,
+                                       localIndex const fracElement,
+                                       EmbeddedSurfaceSubRegion const & fractureSubRegion ) const;
 
   /**
    * @brief check the intersection a fracture element and an edge

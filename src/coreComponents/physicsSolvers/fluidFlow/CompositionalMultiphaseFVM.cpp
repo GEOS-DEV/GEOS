@@ -1045,8 +1045,8 @@ void CompositionalMultiphaseFVM::applySystemSolution( DofManager const & dofMana
                                                                string_array const & regionNames )
   {
     stdVector< string > fields{ fields::flow::pressure::key(),
-                                  m_formulationType == CompositionalMultiphaseFormulationType::OverallComposition ?
-                                  fields::flow::globalCompFraction::key() : fields::flow::globalCompDensity::key() };
+                                m_formulationType == CompositionalMultiphaseFormulationType::OverallComposition ?
+                                fields::flow::globalCompFraction::key() : fields::flow::globalCompDensity::key() };
     if( m_isThermal )
     {
       fields.emplace_back( fields::flow::temperature::key() );

@@ -101,7 +101,7 @@ using real64 = double;
 
 
 #if defined( GEOS_USE_BOUNDS_CHECK )
-  
+
 #else
 
 #endif

@@ -873,7 +873,7 @@ void SpatialPartition::sendListOfIndicesToNeighbors( stdVector< array1d< indexTy
 
   // Declare the receive buffers
   stdVector< unsigned int > sizeOfReceived( nn ); // TODO: decide if these number-of-neighbor-sized arrays should be array1d, stdVector
-                                                    // or std::array
+                                                  // or std::array
   stdVector< buffer_type > receiveBuffer( nn );
 
   // send the list of local indices to each neighbor using an asynchronous send
@@ -964,7 +964,7 @@ void SpatialPartition::sendParticlesToNeighbor( ParticleSubRegionBase & subRegio
 
   // Declare the receive buffers
   stdVector< unsigned int > sizeOfReceived( nn ); // TODO: decide if these number-of-neighbor-sized arrays should be array1d, stdVector
-                                                    // or std::array
+                                                  // or std::array
   stdVector< buffer_type > receiveBuffer( nn );
 
   // send/receive the size of the packed particle data to each neighbor using an asynchronous send
