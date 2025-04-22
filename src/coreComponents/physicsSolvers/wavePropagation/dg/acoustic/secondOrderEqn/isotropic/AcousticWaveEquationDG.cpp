@@ -523,10 +523,10 @@ void AcousticWaveEquationDG::prepareNextTimestep( MeshLevel & mesh )
              stiffnessVector[k][i] = 0.0;
 
           }
-          
-      
+        //  
+      //
         } );
-
+//
 
     } );
 
@@ -558,6 +558,8 @@ void AcousticWaveEquationDG::computeUnknowns( real64 const & time_n,
         arrayView2d< localIndex > const elemsToOpposite = elementSubRegion.getField< acousticfieldsdg::ElementToOpposite >();
         arrayView2d< integer > const elemsToOppositePermutation = elementSubRegion.getField< acousticfieldsdg::ElementToOppositePermutation >();
 
+        arrayView1d< real32 const > const velocity = elementSubRegion.getField< acousticfieldsdg::AcousticVelocity >();
+
         arrayView2d< real32 const > const p_nm1 = elementSubRegion.getField< acousticfieldsdg::Pressure_nm1 >();
         arrayView2d< real32  > const p_n = elementSubRegion.getField< acousticfieldsdg::Pressure_n >();
         arrayView2d< real32 > const p_np1 = elementSubRegion.getField< acousticfieldsdg::Pressure_np1 >();
@@ -577,6 +579,7 @@ void AcousticWaveEquationDG::computeUnknowns( real64 const & time_n,
           regionIndex,
           nodeCoords,
           elemsToNodes,
+          velocity,
           p_n,
           p_nm1,
           elemsToOpposite,

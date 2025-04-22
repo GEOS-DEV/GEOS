@@ -225,7 +225,7 @@ struct PrecomputeNeighborhoodKernel
           arrayView2d< integer > const & elemsToOppositePermutation )
   {
     forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const k1 )
-    {
+    {  
       localIndex vertices[ 4 ] = { elemsToNodes( k1, 0 ), elemsToNodes( k1, 1 ), elemsToNodes( k1, 2 ), elemsToNodes( k1, 3 ) };
       for( int i = 0; i < 4; i++ )
       {
@@ -281,7 +281,7 @@ struct PrecomputeNeighborhoodKernel
           int indexo2 = -1;
           count = 0;
           for ( localIndex k=0; k<4; ++k) {
-            vertex = vertices[k];
+            vertex = oppositeElemVertices[k];
             bool found = false;
             for ( int j = 0; j < 3; j++ )
             {
@@ -439,6 +439,7 @@ struct PressureComputationKernel
                       localIndex const regionIndex,
                       arrayView2d< WaveSolverBase::wsCoordType const, nodes::REFERENCE_POSITION_USD > const X,
                       arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes,
+                      arrayView1d< real32 const > const velocity,
                       arrayView2d< real32  > const p_n,
                       arrayView2d< real32 const > const p_nm1,
                       arrayView2d< localIndex > const & elemsToOpposite,
@@ -463,12 +464,18 @@ struct PressureComputationKernel
 
     real64 const rickerValue = useSourceWaveletTables ? 0 : WaveSolverUtils::evaluateRicker( time_n, timeSourceFrequency, timeSourceDelay, rickerOrder );
 
-    //For now lots of comments with ideas  + needed array to add to the method prototype
-    //forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const k )
-    for(localIndex k =0; k < 2 ; ++k)
+      //forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const k )
+      //{
+      //  for( localIndex i=0; i<4; ++i )
+      //  {
+      //     p_n[k][i] =  pow(X( elemsToNodes( k, i ), 0 ),2);
+      //     //printf("p_n[%d][%d]=%f\n",k,i,p_n[k][i]);
+      //  }
+      //} );
+
+    forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const k )
+    //for(localIndex k =0; k < 25007 ; ++k)
     {
-
-
       real64 const dt2 = pow(dt,2);
 
       constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
@@ -476,25 +483,28 @@ struct PressureComputationKernel
 
       real64 pTemp[numNodesPerElem] = {0.0};
       real64 flowx[numNodesPerElem] = {0.0};
+      real64 flowy[numNodesPerElem] = {0.0};
       
       real64 xLocal[4][3];
       for( localIndex a=0; a< 4; ++a )
       {
         for( localIndex i=0; i<3; ++i )
         {
-          xLocal[a][i] = X( elemsToNodes( k, a ), i );
-             
+          xLocal[a][i] = X( elemsToNodes( k, a ), i );             
         }
       }
+
+      real64 const C2 = pow(velocity[k],2);
  
+      real64 const invC2 = 1.0/C2;
   
       real64 const det = LvArray::math::abs(FE_TYPE::jacobianDeterminant(xLocal));
 
       //Multiply by p_{n } by 2*Mass
       FE_TYPE::computeMassTerm(xLocal, [&] (const int i, const int j, const real64 val)
       {
-         pTemp[i] += 2.0*val*p_n[k][j];
-         pTemp[i] -= val*p_nm1[k][j];
+         pTemp[i] += 2.0*invC2*val*p_n[k][j];
+         pTemp[i] -= val*invC2*p_nm1[k][j];
       } );
       
       //First stiffness part (volume)
@@ -502,42 +512,46 @@ struct PressureComputationKernel
       {
          stiffnessVector[k][i] -= val*p_n[k][j];
       } );
-
-      
-      
-
-      FE_TYPE::computeSurfaceTerms(xLocal, [&] (const int c1, const int c2, const int f1, const int , const int , const int ,const int i2, const int j2, const int k2, real64 val)
+  
+    
+      FE_TYPE::computeSurfaceTerms(xLocal, [&] (const int c1, const int c2, const int f1, const int i1, const int j1, const int k1,const int i2, const int j2, const int k2, real64 val)
       {
         const localIndex elemNeigh = elemsToOpposite(k,f1);
         
+        
         if(elemNeigh >= 0)
         {
+       
           // Now we seek the degree of freedom on the neighbour element to use for the computation of the flux (or the penalty)
           // First, we compute the four possible values of the permutation of the degrees of freedom depending on the the fixed
           // permutation value contained inside elemsToOppositePermutation permutation
 
           const int perm = elemsToOppositePermutation(k,f1);
   
+
           const int p1 = perm%4-1;
           const int p2 = (perm/4)%4-1;
           const int p3 = (perm/16)%4-1;
-  
+          const int p4 = (perm/64)%4-1;
           // Then we transform the 3 indices returned by the callback (i2,j2,k2) using the permutations. One of this permutation, will be 0 (depending on which
           // degree of freedom is the one at the opposite of the face shared with the neighbour element) and will correspond to the one where p* will be negati
-          const int Indices[3] = {i2,j2,k2};
-    
-          const int neighIndexBfPerm= FE_TYPE::dofIndex( i2, j2, k2 );
-       
-          const int ii2 = p1 < 0 ? 0 : Indices[p1];
-          const int jj2 = p2 < 0 ? 0 : Indices[p2];
-          const int kk2 = p3 < 0 ? 0 : Indices[p3];
-             
-          const int neighDof = FE_TYPE::dofIndex( ii2, jj2, kk2 );
-  
 
-           flowx[c1] -= (12.0/(dt*(LvArray::math::min(characteristicSize[k],characteristicSize[elemNeigh]))))*val*p_n[k][c2];
-           flowx[c1] += (12.0/(dt*(LvArray::math::min(characteristicSize[k],characteristicSize[elemNeigh]))))*val*p_n[elemNeigh][neighDof];
-        
+          
+          const int l2 = 1-i2-j2-k2;
+          const int Indices[3] = {i2,j2,k2};
+
+          const int ii2 = p1 < 0 ? l2 : Indices[p1];
+          const int jj2 = p2 < 0 ? l2 : Indices[p2];
+          const int kk2 = p3 < 0 ? l2 : Indices[p3];
+          const int ll2 = p4 < 0 ? l2 : Indices[p4];
+
+          const int neighDof = FE_TYPE::dofIndex( ii2, jj2, kk2 );
+                     
+          real64 const val1 = ((12.0)/((LvArray::math::min(characteristicSize[k],characteristicSize[elemNeigh]))))*val*p_n[k][c2];
+          real64 const val2 = ((12.0)/((LvArray::math::min(characteristicSize[k],characteristicSize[elemNeigh]))))*val*p_n[elemNeigh][neighDof];
+
+          stiffnessVector[k][c1] += -val1+val2;
+
         }
 
        },
@@ -547,69 +561,70 @@ struct PressureComputationKernel
          //We take the neighbour element
           const int elemNeigh = elemsToOpposite(k,f1);
 
-
          if (elemNeigh >= 0)
          {
+
        
-         const int perm = elemsToOppositePermutation(k,f1);
-
-         const int p1 = perm%4-1;
-         const int p2 = (perm/4)%4-1;
-         const int p3 = (perm/16)%4-1;
-
-         // Then we transform the 3 indices returned by the callback (i2,j2,k2) using the permutations. One of this permutation, will be 0 (depending on which
-         // degree of freedom is the one at the opposite of the face shared with the neighbour element) and will correspond to the one where p* will be negative
-
+           const int perm = elemsToOppositePermutation(k,f1);
+  
+           const int p1 = perm%4-1;
+           const int p2 = (perm/4)%4-1;
+           const int p3 = (perm/16)%4-1;
+           const int p4 = (perm/64)%4-1;
+  
+  
+           // Then we transform the 3 indices returned by the callback (i2,j2,k2) using the permutations. One of this permutation, will be 0 (depending on which
+           // degree of freedom is the one at the opposite of the face shared with the neighbour element) and will correspond to the one where p* will be negative
+  
+  
+           const int Indices[3] = {i2,j2,k2};
+  
+           const int l2 = 1-i2-j2-k2;
          
+           
+  
+           const int ii2 = p1 < 0 ? l2 : Indices[p1];
+           const int jj2 = p2 < 0 ? l2 : Indices[p2];
+           const int kk2 = p3 < 0 ? l2 : Indices[p3];
+           const int ll2 = p4 < 0 ? l2 : Indices[p4];
+  
+           const int neighDof = FE_TYPE::dofIndex( ii2, jj2, kk2 );
+  
+           const int IndicesTranspose[3] = {i1,j1,k1};
+  
+           const int l1 = 1-i1-j1-k1;
+  
+           const int ii1 = p1 < 0 ? l1 : IndicesTranspose[p1];
+           const int jj1 = p2 < 0 ? l1 : IndicesTranspose[p2];
+           const int kk1 = p3 < 0 ? l1 : IndicesTranspose[p3];
+           const int ll1 = p4 < 0 ? l1 : IndicesTranspose[p4];
+  
+           
+  
+           const int neighDof2 = FE_TYPE::dofIndex( ii1, jj1, kk1 );
+           
+            // Finally, using the dofIndex function, we compute the number of the global degree of freedom on the element
+   
+           real64 const val1 = 0.5*val*p_n[k][c2];
+           real64 const val2 = 0.5*val*p_n[elemNeigh][neighDof];
+           real64 const val3 = 0.5*val*p_n[k][c1];
+           real64 const val4 = 0.5*val*p_n[elemNeigh][neighDof2];
+           stiffnessVector[k][c1] += val1-val2;
+           stiffnessVector[k][c2] += val3-val4;
 
-         const int Indices[3] = {i2,j2,k2};
-
-         const int ii2 = p1 < 0 ? 0 : Indices[p1];
-         const int jj2 = p2 < 0 ? 0 : Indices[p2];
-         const int kk2 = p3 < 0 ? 0 : Indices[p3];
-
-         // Finally, using the dofIndex function, we compute the number of the global degree of freedom on the element
 
 
-        const int neighDof = FE_TYPE::dofIndex( ii2, jj2, kk2 );
-
-        stiffnessVector[k][c1] += 0.5*val*p_n[k][c2];
-        stiffnessVector[k][c1] -= 0.5*val*p_n[elemNeigh][neighDof];
-
-
-         const int IndicesTranspose[3] = {i1,j1,k1};
-         const int ii1 = p1 < 0 ? 0 : IndicesTranspose[p1];
-         const int jj1 = p2 < 0 ? 0 : IndicesTranspose[p2];
-         const int kk1 = p3 < 0 ? 0 : IndicesTranspose[p3];
-
-        const int neighDof2 = FE_TYPE::dofIndex( ii1, jj1, kk1 );
-         
-        stiffnessVector[k][c2] += 0.5*val*p_n[k][c1];
-        stiffnessVector[elemNeigh][neighDof] -= 0.5*val*p_n[k][c1];
-
+  
+  
          }
        } );
-
-
       //Add time and physic dependency
+      
       for (localIndex i = 0; i < numNodesPerElem; i++)
       {
-        pTemp[i] += 2250000*dt2*stiffnessVector[k][i] + dt2*flowx[i];
+        pTemp[i] += dt2*stiffnessVector[k][i] ;
       }
-      
-
-      for (localIndex i = 0; i < numNodesPerElem; ++i)
-      {
-        real64 fx=0.0;
-        for (localIndex j = 0; j < numNodesPerElem; ++j)
-        {
-          fx+= referenceInvMassMatrix[0][0](i,j)*pTemp[j]; 
-        }
-        p_np1[k][i]=fx/det;
-
-          
-      }
-
+  //
       real64 srcAmp[numNodesPerElem]={0.0}; 
       //Source Injection
       for( localIndex isrc = 0; isrc < sourceConstants.size( 0 ); ++isrc )
@@ -618,28 +633,30 @@ struct PressureComputationKernel
         {
           if( sourceElem[isrc]==k && sourceRegion[isrc] == regionIndex )
           {
-            printf("Hé la source est là ! : %d\n",k);
-            // Add inversemass matrix to sourceconstants
-            for (localIndex i = 0; i < numNodesPerElem; ++i)
-            {
-              real64 amp=0.0;
-              for (localIndex j = 0; j < numNodesPerElem; ++j)
-              {
-                amp+= referenceInvMassMatrix[0][0](i,j)*sourceConstants[isrc][j];
-              }
-              srcAmp[i] = amp/det;
-            }
             
             real64 const srcValue = useSourceWaveletTables ? sourceWaveletTableWrappers[ isrc ].compute( &time_n ) : rickerValue;
             for( localIndex i = 0; i < numNodesPerElem; ++i )
             {
-              p_np1[k][i]+= 2250000*dt2*(srcAmp[i]*srcValue);
+              pTemp[i]+= dt2*(sourceConstants[isrc][i]*srcValue);
             }
           }
         }
       }
-      
-    }// );
+//
+      for (localIndex i = 0; i < numNodesPerElem; ++i)
+      {
+        real64 fx=0.0;
+        for (localIndex j = 0; j < numNodesPerElem; ++j)
+        {
+          fx+= referenceInvMassMatrix[0][0](i,j)*pTemp[j]; 
+        }
+        p_np1[k][i]=(C2*fx)/det;
+        //p_np1[k][i]=pTemp[i];
+
+          
+      }
+
+    } );
 
  }
 

@@ -675,6 +675,8 @@ public:
            ( ORDER - i - j - k );
   }
 
+
+
   /**
    * @brief Computes the local degree of freedom index given the shape function indices for each vertex
    * @tparam C The dof index in the element
@@ -713,6 +715,51 @@ public:
       return k;
     }
     else if constexpr ( VTX == 3)
+    {
+      return ORDER - i - j - k;
+    }
+    return -1;
+  }
+
+
+  /**
+   * @brief Computes the local degree of freedom index given the shape function indices for each vertex
+   * @tparam C The dof index in the element
+   * @tparam VTX the vertex with respect to
+   * @return i, j, k, l if VTX= 0, 1, 2 or 3 resepctively (with i + j + k + l = order)
+   */
+  
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
+  static
+  constexpr
+  int
+  indexToIJKL(int C, int VTX)
+  {
+    //static_assert( VTX >= 0 && VTX < 4 );
+    // compute the indices of c in the current element using tetrahedral and triangular roots
+     int cc1 = C + 1;
+     real64 tetr = cbrt( 3.0 * cc1 + sqrt( 9.0 * cc1 * cc1 - 1.0 / 27.0 ) )
+                            + cbrt( 3.0 * cc1 - sqrt( 9.0 * cc1 * cc1 - 1.0 / 27.0 ) ) - 2;
+     int i = ORDER - round( tetr * 10.0 ) / 10;
+     int cc2 = C - ( ORDER - i ) * ( ORDER - i + 1 ) * ( ORDER - i + 2 ) / 6 + 1;
+     real64 trir = ( sqrt( 8.0 * cc2 + 1.0 ) - 1.0 ) / 2.0 - 1;
+     int j = ORDER - i - round( trir * 10.0 ) / 10;
+     int k = ORDER - i - j - ( C - (ORDER - i ) * ( ORDER - i + 1 ) * ( ORDER - i + 2 ) / 6
+                      - ( ORDER - i - j ) * ( ORDER - i - j + 1 ) / 2 );
+    if  ( VTX == 0 )
+    {
+      return i;
+    }
+    else if  ( VTX == 1)
+    {
+      return j;
+    }
+    else if  ( VTX == 2)
+    {
+      return k;
+    }
+    else if  ( VTX == 3)
     {
       return ORDER - i - j - k;
     }
@@ -819,17 +866,17 @@ public:
                       std::integral_constant<int, 1>{},
                       std::integral_constant<int, j1>{},
                       std::integral_constant<int, c1>{},
+                      std::integral_constant<int, i1>{},
                       std::integral_constant<int, k1>{},
-                      std::integral_constant<int, l1>{},
-                      std::integral_constant<int, i1>{} ) ), 1 ) ) || ... );
+                      std::integral_constant<int, l1>{} ) ), 1 ) ) || ... );
               ( ( (k1 == Is) &&
                ( void( func(
                       std::integral_constant<int, 2>{},
                       std::integral_constant<int, k1>{},
                       std::integral_constant<int, c1>{},
-                      std::integral_constant<int, l1>{},
                       std::integral_constant<int, i1>{},
-                      std::integral_constant<int, j1>{} ) ), 1 ) ) || ... );
+                      std::integral_constant<int, j1>{},
+                      std::integral_constant<int, l1>{} ) ), 1 ) ) || ... );
               ( ( (l1 == Is) &&
                ( void( func(
                       std::integral_constant<int, 3>{},
