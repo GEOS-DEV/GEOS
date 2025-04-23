@@ -57,7 +57,7 @@ TableData & TableData::operator=( TableData const & other )
   return *this;
 }
 
-bool TableData::operator<(TableData const & other) const
+bool TableData::operator<( TableData const & other ) const
 {
   return m_rows < other.m_rows;
 }
@@ -102,16 +102,16 @@ void TableData2D::collectTableValues( arraySlice1d< real64 const > dim0AxisCoord
   integer const nCol = columAxisCoordinates.size();
   integer const nRow = rowAxisCoordinates.size();
 
-  array1d< real64 > wellConstructValues( values.size() );
+  array1d< real64 > wellFormedValues( values.size() );
 
   if( nRow * nCol != values.size())
   {
-    wellConstructValues = values;
+    wellFormedValues = values;
     if( nRow * nCol > values.size())
     {
-      m_errors->addError( GEOS_FMT( "Warning : The number of values is insufficient for the number of columns * rows:\n"
+      m_errors->addError( GEOS_FMT( "Warning : Not enough data for the number of columns & rows:\n"
                                     "Expected {} values, Found {} values", nRow * nCol, values.size() ) );
-      wellConstructValues.resizeDefault( nRow * nCol, 0 );
+      wellFormedValues.resizeDefault( nRow * nCol, 0 );
     }
     else
     {
@@ -125,7 +125,7 @@ void TableData2D::collectTableValues( arraySlice1d< real64 const > dim0AxisCoord
   {
     for( integer x = 0; x < nCol; x++ )
     {
-      addCell( rowAxisCoordinates[y], columAxisCoordinates[x], wellConstructValues[ x + y*nCol ] );
+      addCell( rowAxisCoordinates[y], columAxisCoordinates[x], wellFormedValues[ x + y*nCol ] );
     }
   }
 }
@@ -156,9 +156,9 @@ TableData2D::TableDataHolder TableData2D::buildTableData( string_view targetUnit
     tableData1D.headerNames.push_back( GEOS_FMT( columnFmt, columnValue ) );
   }
 
-  for( auto const & error : m_errors->errorText )
+  for( auto errorIt = m_errors->begin(); errorIt != m_errors->end(); errorIt++ )
   {
-    tableData1D.tableData.getErrorsList().addError( error );
+    tableData1D.tableData.getErrorsList().addError( *errorIt );
   }
 
   // insert row value and row cell values

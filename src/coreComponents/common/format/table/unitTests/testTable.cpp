@@ -672,7 +672,7 @@ TEST( testTable, table2DMismatchingCoordValues )
 {
   TableData2D tableData2D;
 
-  // 1. Prepare values
+  // Prepare values
   real64 const numRow = 5;
   real64 const numCol = 5;
   array1d< real64 > values( 25 );
@@ -686,8 +686,8 @@ TEST( testTable, table2DMismatchingCoordValues )
   }
   arrayView1d< real64 const > const valuesConst = values;
 
-  auto const testCoordinates = [&tableData2D, &values]( std::array< real64, 6 > const & coordXValues,
-                                                        std::array< real64, 6 >  const & coordYValues,
+  auto const testCoordinates = [&tableData2D, &values]( std::vector< real64 > const & coordXValues,
+                                                        std::vector< real64 >  const & coordYValues,
                                                         std::size_t const expectedCoordSize )
   {
 
@@ -697,7 +697,7 @@ TEST( testTable, table2DMismatchingCoordValues )
       string csv;
     };
 
-    // 2. Prepare coordinates
+    // Prepare coordinates
     ArrayOfArrays< real64 > coordinates( 2, expectedCoordSize );
     coordinates.appendToArray( 0, coordXValues.begin(), coordXValues.begin() + coordXValues.size());
     coordinates.appendToArray( 1, coordYValues.begin(), coordYValues.begin() + coordYValues.size());
@@ -707,7 +707,7 @@ TEST( testTable, table2DMismatchingCoordValues )
     string const rowFmt = GEOS_FMT( "{}", "Temperature" );
     string const columnFmt = GEOS_FMT( "{}", "Pressure" );
 
-    // 3. Convert
+    // Convert
     TableData2D::TableDataHolder const tableConverted = tableData2D.convertTable2D( constCoordinates,
                                                                                     rowFmt,
                                                                                     columnFmt,
@@ -715,7 +715,7 @@ TEST( testTable, table2DMismatchingCoordValues )
                                                                                     true,
                                                                                     "T" );
 
-    // 4. Prepare table
+    // Prepare table
     TableLayout tableLayout;
     tableLayout.addColumns( tableConverted.headerNames );
 
@@ -727,36 +727,37 @@ TEST( testTable, table2DMismatchingCoordValues )
   };
 
   {  // Test with too many values
-    std::array< real64, 6 > const coordXValues = { 0, 1, 2, 3 };
-    std::array< real64, 6 > const coordYValues = { 0, 1, 2, 3 };
+    std::vector< real64 > const coordXValues = { 0, 1, 2, 3 };
+    std::vector< real64 > const coordYValues = { 0, 1, 2, 3 };
     auto const [textFormatted, csvFormatted] = testCoordinates( coordXValues, coordYValues, 4 );
     EXPECT_EQ( textFormatted,
                "\n"
                "-----------------------------------------------------------------------------------------\n"
                "|         T         |  Pressure = 0  |  Pressure = 1  |  Pressure = 2  |  Pressure = 3  |\n"
                "|-------------------|----------------|----------------|----------------|----------------|\n"
-               "|  Temperature = 0  |             0  |             0  |             0  |             0  |\n"
-               "|  Temperature = 1  |            11  |             7  |             8  |             9  |\n"
-               "|  Temperature = 2  |            17  |            13  |            14  |            15  |\n"
-               "|  Temperature = 3  |            23  |            19  |            20  |            21  |\n"
+               "|  Temperature = 0  |             0  |             1  |             2  |             3  |\n"
+               "|  Temperature = 1  |             4  |             5  |             6  |             7  |\n"
+               "|  Temperature = 2  |             8  |             9  |            10  |            11  |\n"
+               "|  Temperature = 3  |            12  |            13  |            14  |            15  |\n"
                "|---------------------------------------------------------------------------------------|\n"
-               "|  Warning : The number of values is insufficient for the number of columns * rows:     |\n"
-               "|  Expected 36 values, Found 25 values                                                  |\n"
+               "|  Warning : Too much data for the number of columns * rows:                            |\n"
+               "|  Expected 16 values, Found 25 values                                                  |\n"
+               "|  Data may be missaligned                                                              |\n"
                "-----------------------------------------------------------------------------------------\n" );
 
     EXPECT_EQ( csvFormatted,
                "T,Pressure = 0,Pressure = 1,Pressure = 2,Pressure = 3\n"
-               "Temperature = 0,0,0,0,0\n"
-               "Temperature = 1,11,7,8,9\n"
-               "Temperature = 2,17,13,14,15\n"
-               "Temperature = 3,23,19,20,21\n" );
+               "Temperature = 0,0,1,2,3\n"
+               "Temperature = 1,4,5,6,7\n"
+               "Temperature = 2,8,9,10,11\n"
+               "Temperature = 3,12,13,14,15\n" );
   }
 
 
   tableData2D.clear();
   {// Test with not enough values
-    std::array< real64, 6 > const coordXValues = { 0, 1, 2, 3, 4, 5 };
-    std::array< real64, 6 > const coordYValues = { 0, 1, 2, 3, 4, 5 };
+    std::vector< real64 > const coordXValues = { 0, 1, 2, 3, 4, 5 };
+    std::vector< real64 > const coordYValues = { 0, 1, 2, 3, 4, 5 };
     auto const [textFormatted, csvFormatted] = testCoordinates( coordXValues, coordYValues, 6 );
 
     EXPECT_EQ( textFormatted,
@@ -771,7 +772,7 @@ TEST( testTable, table2DMismatchingCoordValues )
                "|  Temperature = 4  |            24  |             0  |             0  |             0  |             0  |             0  |\n"
                "|  Temperature = 5  |             0  |             0  |             0  |             0  |             0  |             0  |\n"
                "|-------------------------------------------------------------------------------------------------------------------------|\n"
-               "|  Warning : The number of values is insufficient for the number of columns * rows:                                       |\n"
+               "|  Warning : Not enough data for the number of columns & rows:                                                            |\n"
                "|  Expected 36 values, Found 25 values                                                                                    |\n"
                "---------------------------------------------------------------------------------------------------------------------------\n" );
 
