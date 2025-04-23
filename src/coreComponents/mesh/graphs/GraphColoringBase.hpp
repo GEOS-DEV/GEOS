@@ -20,10 +20,9 @@
 #ifndef GEOS_GRAPH_GRAPHCOLORINGBASE_HPP_
 #define GEOS_GRAPH_GRAPHCOLORINGBASE_HPP_
 
-//#include "common/MpiWrapper.hpp"
+#include "common/MpiWrapper.hpp"
 #include "common/DataTypes.hpp"
 #include <vector>
-#include <mpi.h>
 
 
 namespace geos
@@ -34,7 +33,7 @@ namespace graph
 class GraphColoringBase
 {
 public:
-  GraphColoringBase( MPI_Comm comm = MPI_COMM_WORLD ): m_comm( comm ) {}
+  GraphColoringBase( MPI_Comm comm = MPI_COMM_GEOS ): m_comm( comm ) {}
 
   virtual std::vector< int > colorGraph( const std::vector< camp::idx_t > & xadj, const std::vector< camp::idx_t > & adjncy ) = 0;
   virtual int  colorGraph( const std::vector< camp::idx_t > & adjncy ) = 0;

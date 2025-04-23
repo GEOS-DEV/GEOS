@@ -47,6 +47,7 @@ bool GraphColoringBase::isColoringValid( const std::vector< camp::idx_t > & xadj
   return true;
 }
 
+
 size_t GraphColoringBase::getNumberOfColors( const std::vector< int > & colors )
 {
   std::unordered_set< int > uniqueColors;
@@ -61,28 +62,23 @@ size_t GraphColoringBase::getNumberOfColors( const std::vector< int > & colors )
 }
 
 
-
 // Assume only one node per rank.
 bool GraphColoringBase::isColoringValid( const std::vector< camp::idx_t > & adjncy,
                                          const int color,
                                          MPI_Comm comm )
 {
-
   // Gather neighbor colors asynchronously
   std::vector< int > neighborColors( adjncy.size());
-  std::vector< MPI_Request > requests( adjncy.size() * 2 ); // Two requests per neighbor (send and receive)
+  std::vector< MPI_Request > requests( adjncy.size() * 2, MPI_REQUEST_NULL ); // Two requests per neighbor (send and receive)
   for( size_t i = 0; i < adjncy.size(); ++i )
   {
     int const neighborRank = adjncy[i];
-    MPI_Isend( &color, 1, MPI_INT, neighborRank, 0, comm, &requests[i * 2] );
-    //MpiWrapper::iSend( &color, 1, neighborRank, 0, comm, &requests[i * 2] );
-    MPI_Irecv( &neighborColors[i], 1, MPI_INT, neighborRank, 0, comm, &requests[i * 2 + 1] );
-    //MpiWrapper::iRecv( &neighborColors[i], 1, neighborRank, 0, comm, &requests[i * 2 + 1] );
+    MpiWrapper::iSend( &color, 1, neighborRank, 0, comm, &requests[i * 2] );
+    MpiWrapper::iRecv( &neighborColors[i], 1, neighborRank, 0, comm, &requests[i * 2 + 1] );
   }
 
   // Wait for all asynchronous communications to complete
-  MPI_Waitall( requests.size(), requests.data(), MPI_STATUSES_IGNORE );
-  //MpiWrapper::waitAll( requests.size(), requests.data(), MPI_STATUSES_IGNORE );
+  MpiWrapper::waitAll( requests.size(), requests.data(), MPI_STATUSES_IGNORE );
 
 
   // Check for color conflicts
@@ -98,14 +94,11 @@ bool GraphColoringBase::isColoringValid( const std::vector< camp::idx_t > & adjn
 
   // Get a consolidated isColoringValid
   //bool isColoringValid = MpiWrapper::allReduce( &isLocalColoringValid,  MpiWrapper::Reduction::LogicalAnd, comm );
-
   bool isColoringValid;
   MPI_Allreduce( &isLocalColoringValid, &isColoringValid, 1, MPI_C_BOOL, MPI_LAND, comm );
 
-
   return isColoringValid;
 }
-
 
 
 size_t GraphColoringBase::getNumberOfColors( const int color, MPI_Comm comm )
@@ -117,11 +110,8 @@ size_t GraphColoringBase::getNumberOfColors( const int color, MPI_Comm comm )
 
 size_t GraphColoringBase::getNumberOfColors( const std::vector< int > & colors, MPI_Comm comm )
 {
-  //int const rank = MpiWrapper::commRank( comm );
-  //int const size = MpiWrapper::commSize( comm );
-  int rank, size;
-  MPI_Comm_rank( comm, &rank );
-  MPI_Comm_size( comm, &size );
+  int const rank = MpiWrapper::commRank( comm );
+  int const size = MpiWrapper::commSize( comm );
 
   std::set< int > localDistinctColors = std::set< int >( colors.begin(), colors.end());
   std::vector< int > localDistinctColorsVector( localDistinctColors.begin(), localDistinctColors.end());
@@ -129,9 +119,7 @@ size_t GraphColoringBase::getNumberOfColors( const std::vector< int > & colors, 
 
   // Gather the sizes of the local color vectors from all ranks
   std::vector< int > allSizes( size );
-  //MpiWrapper::gather( &localSize, 1, allSizes.data(), 1, 0, comm );
-  MPI_Gather( &localSize, 1, MPI_INT, allSizes.data(), 1, MPI_INT, 0, comm );
-
+  MpiWrapper::gather( &localSize, 1, allSizes.data(), 1, 0, comm );
 
   // Calculate the total number of colors and the displacements for gathering
   int totalSize = 0;
@@ -147,8 +135,9 @@ size_t GraphColoringBase::getNumberOfColors( const std::vector< int > & colors, 
 
   // Gather all colors from all ranks to rank 0
   std::vector< int > allColors( totalSize );
-  //MpiWrapper::gatherv( localDistinctColorsVector.data(), localSize, allColors.data(), allSizes.data(), displacements.data(), 0, comm );
-  MPI_Gatherv( localDistinctColorsVector.data(), localSize, MPI_INT, allColors.data(), allSizes.data(), displacements.data(), MPI_INT, 0, comm );
+  MpiWrapper::gatherv( localDistinctColorsVector.data(), localSize,
+                       allColors.data(), allSizes.data(), displacements.data(),
+                       0, comm );
 
   // Determine the number of distinct colors on rank 0
   int numDistinctColors = 0;
@@ -159,8 +148,7 @@ size_t GraphColoringBase::getNumberOfColors( const std::vector< int > & colors, 
   }
 
   // Broadcast the number of distinct colors to all ranks
-  //MpiWrapper::bcast( &numDistinctColors, 1, 0, comm );
-  MPI_Bcast( &numDistinctColors, 1, MPI_INT, 0, comm );
+  MpiWrapper::bcast( &numDistinctColors, 1, 0, comm );
 
   return numDistinctColors;
 }

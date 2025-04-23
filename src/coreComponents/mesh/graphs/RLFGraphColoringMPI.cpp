@@ -46,12 +46,8 @@ int RLFGraphColoringMPI::colorGraph( const std::vector< camp::idx_t > & localAdj
 std::vector< int > RLFGraphColoringMPI::colorGraph( const std::vector< camp::idx_t > & localXadj,
                                                     const std::vector< camp::idx_t > & localAdjncy )
 {
-  //int const rank = MpiWrapper::commRank( m_comm );
-  //int const size = MpiWrapper::commSize( m_comm );
-  int rank, size;
-  MPI_Comm_rank( m_comm, &rank );
-  MPI_Comm_size( m_comm, &size );
-
+  int const rank = MpiWrapper::commRank( m_comm );
+  int const size = MpiWrapper::commSize( m_comm );
 
   // Perform coloring on rank 0
   auto [xadj, adjncy] = gatherGraphData( localXadj, localAdjncy, m_comm );
@@ -62,8 +58,7 @@ std::vector< int > RLFGraphColoringMPI::colorGraph( const std::vector< camp::idx
     colors = graphColoring.colorGraph( xadj, adjncy );
   }
 
-
-  // Scatter colors back to original ranks.
+  // Scatter colors back to original ranks
   std::vector< int > sendCounts;
   std::vector< int > displacements;
 
@@ -72,7 +67,7 @@ std::vector< int > RLFGraphColoringMPI::colorGraph( const std::vector< camp::idx
     sendCounts.resize( size );
   }
   int localNodeCounts = static_cast< int >(localXadj.size()-1);
-  MPI_Gather( &localNodeCounts, 1, MPI_INT, sendCounts.data(), 1, MPI_INT, 0, m_comm );
+  MpiWrapper::gather( &localNodeCounts, 1, sendCounts.data(), 1, 0, m_comm );
 
   // Calculate displacements for the scattered data
   if( rank == 0 )

@@ -20,13 +20,13 @@
 #ifndef GEOS_GRAPH_ZOLTANGRAPHCOLORING_HPP_
 #define GEOS_GRAPH_ZOLTANGRAPHCOLORING_HPP_
 
-//#include "common/MpiWrapper.hpp"
+#include "common/MpiWrapper.hpp"
 #include "GraphColoringBase.hpp"
 #include <zoltan.h>
 #include <zoltan_cpp.h>
 #include <vector>
 #include <string>
-#include <mpi.h>
+
 namespace geos
 {
 namespace graph
@@ -35,7 +35,7 @@ namespace graph
 class ZoltanGraphColoring : public GraphColoringBase
 {
 public:
-  ZoltanGraphColoring( MPI_Comm comm = MPI_COMM_WORLD );
+  ZoltanGraphColoring( MPI_Comm comm = MPI_COMM_GEOS );
   ~ZoltanGraphColoring();
 
   size_t getNumberOfColors( const std::vector< int > & colors ) const;

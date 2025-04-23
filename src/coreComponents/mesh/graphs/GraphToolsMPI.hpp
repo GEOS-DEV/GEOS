@@ -20,7 +20,7 @@
 #ifndef GEOS_GRAPH_GRAPHTOOLSMPI_HPP_
 #define GEOS_GRAPH_GRAPHTOOLSMPI_HPP_
 
-//#include "common/MpiWrapper.hpp"
+#include "common/MpiWrapper.hpp"
 #include "common/DataTypes.hpp"
 #include <mpi.h> // For scatter !!??
 #include <vector>
@@ -48,13 +48,13 @@ using camp::idx_t;
 std::pair< std::vector< camp::idx_t >, std::vector< camp::idx_t > >
 scatterGraphData( const std::vector< camp::idx_t > & xadj,
                   const std::vector< camp::idx_t > & adjncy,
-                  MPI_Comm comm = MPI_COMM_WORLD );
+                  MPI_Comm comm = MPI_COMM_GEOS );
 
 
 std::pair< std::vector< camp::idx_t >, std::vector< camp::idx_t > >
 gatherGraphData( const std::vector< camp::idx_t > & localXadj,
                  const std::vector< camp::idx_t > & localAdjncy,
-                 MPI_Comm comm= MPI_COMM_WORLD );
+                 MPI_Comm comm= MPI_COMM_GEOS );
 
 
 

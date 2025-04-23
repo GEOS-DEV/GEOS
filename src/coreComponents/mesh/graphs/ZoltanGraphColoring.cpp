@@ -22,14 +22,11 @@
 #include <algorithm>
 
 
-#if 0
-
 #define GEOS_ZOLTAN_CHECK( call ) \
   do { \
     auto const ierr = call; \
     GEOS_ERROR_IF_NE_MSG( ierr, ZOLTAN_OK, "Error in call to:\n" << #call ); \
   } while( false )
-#endif
 
 namespace geos
 {
@@ -79,10 +76,7 @@ int ZoltanGraphColoring::colorGraph( const std::vector< camp::idx_t > & localAdj
 std::vector< int > ZoltanGraphColoring::colorGraph( const std::vector< camp::idx_t > & xadj,
                                                     const std::vector< camp::idx_t > & adjncy )
 {
-  //int const rank = MpiWrapper::commRank( m_comm );
-  int rank;
-  MPI_Comm_rank( m_comm, &rank );
-
+  int const rank = MpiWrapper::commRank( m_comm );
 
   ZoltanGraph graph;
   graph.m_xadj.assign( xadj.begin(), xadj.end());
@@ -115,8 +109,8 @@ std::vector< int > ZoltanGraphColoring::colorGraph( const std::vector< camp::idx
   int * color = new int[graph.m_numVertices];
   std::fill( color, color + graph.m_numVertices, -1 );
 
-  //GEOS_ZOLTAN_CHECK( m_zz->Color( numGidEntries, numReqObjs, reqObjs, color ));
-  m_zz->Color( numGidEntries, numReqObjs, reqObjs, color );
+  GEOS_ZOLTAN_CHECK( m_zz->Color( numGidEntries, numReqObjs, reqObjs, color ));
+  //m_zz->Color( numGidEntries, numReqObjs, reqObjs, color );
   std::vector< int > coloringVector;
   coloringVector.assign( color, color + graph.m_numVertices );
 

@@ -24,9 +24,12 @@
 #include "../graphs/ZoltanGraphColoring.hpp"
 #include "../graphs/RLFGraphColoringMPI.hpp"
 
+#include "common/MpiWrapper.hpp"
+
 #include <gtest/gtest.h>
 #include <iostream>
-#include <mpi.h>
+
+
 
 using namespace geos;
 using namespace graph;
@@ -36,11 +39,12 @@ class GraphColoringTest : public ::testing::Test
 protected:
   void SetUp() override
   {
-    MPI_Comm_rank( MPI_COMM_WORLD, &rank );
+    rank = MpiWrapper::commRank( MPI_COMM_WORLD );
   }
 
   int rank;
 };
+
 
 void runColoringTest( GraphColoringBase & graphColoring, const std::vector< camp::idx_t > & xadj, const std::vector< camp::idx_t > & adjncy, int expectedNumberOfColors )
 {
@@ -53,6 +57,7 @@ void runColoringTest( GraphColoringBase & graphColoring, const std::vector< camp
     EXPECT_EQ( graphColoring.getNumberOfColors( color, MPI_COMM_WORLD ), expectedNumberOfColors );
   }
 }
+
 
 TEST_F( GraphColoringTest, CartesianDecomposition3D6 )
 {
@@ -72,6 +77,7 @@ TEST_F( GraphColoringTest, CartesianDecomposition3D6 )
   runColoringTest( rlfColoringMPI, xadj, adjncy, 2 );
 }
 
+
 TEST_F( GraphColoringTest, CartesianDecomposition3D26 )
 {
   ZoltanGraphColoring zoltanColoring;
@@ -89,6 +95,7 @@ TEST_F( GraphColoringTest, CartesianDecomposition3D26 )
   runColoringTest( zoltanColoring, xadj, adjncy, 8 );
   runColoringTest( rlfColoringMPI, xadj, adjncy, 8 );
 }
+
 
 TEST_F( GraphColoringTest, RandomGraphs )
 {
@@ -113,23 +120,24 @@ TEST_F( GraphColoringTest, RandomGraphs )
   }
 }
 
+
 TEST_F( GraphColoringTest, CountPositiveDistinctColors )
 {
   std::vector< int > colors = {1, -1, 3, 2, 1, 4, 5, 3};
   EXPECT_EQ( GraphColoringBase::getNumberOfColors( colors, MPI_COMM_WORLD ), 6 );
 }
 
+
 int main( int argc, char * *argv )
 {
   // Initialize MPI
-  MPI_Init( &argc, &argv );
+  MpiWrapper::init( &argc, &argv );
+  MPI_COMM_GEOS = MpiWrapper::commDup( MPI_COMM_WORLD );
 
   // Initialize Google Test
   ::testing::InitGoogleTest( &argc, argv );
 
-  int rank;
-  MPI_Comm_rank( MPI_COMM_WORLD, &rank );
-
+  int const rank = MpiWrapper::commRank( MPI_COMM_GEOS );
   // Suppress output from non-root ranks
   if( rank != 0 )
   {
@@ -141,7 +149,8 @@ int main( int argc, char * *argv )
   int result = RUN_ALL_TESTS();
 
   // Finalize MPI
-  MPI_Finalize();
+  MpiWrapper::commFree( MPI_COMM_GEOS );
+  MpiWrapper::finalize();
 
   return result;
 }

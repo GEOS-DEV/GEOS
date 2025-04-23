@@ -36,7 +36,7 @@ namespace graph
 class RLFGraphColoringMPI : public GraphColoringBase
 {
 public:
-  RLFGraphColoringMPI( MPI_Comm comm = MPI_COMM_WORLD );
+  RLFGraphColoringMPI( MPI_Comm comm = MPI_COMM_GEOS );
   ~RLFGraphColoringMPI();
 
   size_t getNumberOfColors( const std::vector< int > & colors ) const;
