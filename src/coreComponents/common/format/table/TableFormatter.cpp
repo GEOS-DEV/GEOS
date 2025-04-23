@@ -119,8 +119,8 @@ TableCSVFormatter::~TableCSVFormatter()
   if( getErrorsList().hasErrors() )
   {
 
-    string const consoleWarning = std::accumulate( getErrorsList().errorText.begin(),
-                                                   getErrorsList().errorText.end(),
+    string const consoleWarning = std::accumulate( getErrorsList().begin(),
+                                                   getErrorsList().end(),
                                                    std::string( "" ));
     GEOS_WARNING( consoleWarning );
   }
@@ -204,7 +204,8 @@ string TableCSVFormatter::toString< TableData >( TableData const & tableData ) c
 {
   if( tableData.getErrorsList().hasErrors() )
   {
-    getErrorsList().errorText = tableData.getErrorsList().errorText;
+    std::vector< string > cpyErrors  = tableData.getErrorsList().getErrors();
+    getErrorsList().appendErrors( cpyErrors );
   }
 
   return headerToString() + dataToString( tableData );
@@ -292,7 +293,7 @@ void TableTextFormatter::initalizeTableGrids( PreparedTableLayout const & tableL
 
   if( getErrorsList().hasErrors() || tableInputData.getErrorsList().hasErrors())
   {
-    populateErrorCellsLayout( tableLayout, errorCellsLayout, tableInputData.getErrorsList().errorText );
+    populateErrorCellsLayout( tableLayout, errorCellsLayout, tableInputData );
     applyColumnsWidth( columnsWidth, errorCellsLayout, tableLayout );
   }
 }
@@ -498,14 +499,10 @@ void TableTextFormatter::populateDataCellsLayout( PreparedTableLayout const & ta
 
 void TableTextFormatter::populateErrorCellsLayout( PreparedTableLayout const & tableLayout,
                                                    CellLayoutRows & errorCellsLayout,
-                                                   std::vector< string > const & inputError ) const
+                                                   TableData const & tableInputData ) const
 {
 
-  for( auto const & dataError :  inputError )
-  {
-    getErrorsList().addError( dataError );
-  }
-
+  TableErrorListing const & errors = tableInputData.getErrorsList();
   size_t const nbCells = tableLayout.getVisibleLowermostColumnCount();
   errorCellsLayout.push_back(
     {
@@ -514,7 +511,7 @@ void TableTextFormatter::populateErrorCellsLayout( PreparedTableLayout const & t
       1
     } );
 
-  for( string_view error :  getErrorsList().errorText )
+  for( auto const & error : errors )
   {
     errorCellsLayout.push_back(
       {
@@ -522,10 +519,9 @@ void TableTextFormatter::populateErrorCellsLayout( PreparedTableLayout const & t
                                                 TableLayout::CellLayout( CellType::MergeNext ) ),
         1
       } );
-
-    errorCellsLayout[errorCellsLayout.size() - 1].cells[nbCells - 1].setWidth( 0 );
-    errorCellsLayout[errorCellsLayout.size() - 1].cells[nbCells - 1].m_cellType = CellType::Value;
-    errorCellsLayout[errorCellsLayout.size() - 1].cells[nbCells - 1].getLines().emplace_back( error );
+    errorCellsLayout.back().cells.back().m_cellType = CellType::Value;
+    errorCellsLayout.back().cells.back().prepareLayout( error, TableLayout::noColumnMaxWidth );
+    errorCellsLayout.back().sublinesCount =  errorCellsLayout.back().cells.back().getLines().size();
   }
 }
 
@@ -731,14 +727,10 @@ void TableTextFormatter::outputErrors( PreparedTableLayout const & tableLayout,
 {
   for( CellLayoutRow & errorLayout : errorCellsLayout )
   {
-    TableLayout::CellLayout & errorConfig = errorLayout.cells[errorLayout.cells.size() - 1];
+    TableLayout::CellLayout & errorConfig = errorLayout.cells.back();
     if( errorConfig.m_cellType == CellType::Value )
     {
-      size_t const tableWidth = errorConfig.getWidth();
-      errorConfig.prepareLayout( errorConfig.getLines().front(), errorConfig.getWidth() );
-      errorConfig.setWidth( tableWidth );
       errorConfig.m_alignment = TableLayout::Alignment::left;
-      errorLayout.sublinesCount = errorConfig.getHeight();
     }
   }
 
