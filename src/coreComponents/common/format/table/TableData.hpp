@@ -135,14 +135,14 @@ public:
 
   /**
    * @brief Get all error messages
-   * @return The vector of error messages
+   * @return The list of error messages
    */
   TableErrorListing const & getErrorsList() const
   { return *m_errors; }
 
   /**
    * @brief Get all error messages
-   * @return The vector of error messages
+   * @return The list of error messages
    */
   TableErrorListing & getErrorsList()
   { return *m_errors; }

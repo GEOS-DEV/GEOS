@@ -471,7 +471,7 @@ void TableTextFormatter::populateDataCellsLayout( PreparedTableLayout const & ta
     inputDataValues.size(),
     {
       std::vector< TableLayout::CellLayout >( nbColumns, TableLayout::CellLayout() ),   // cells
-      1   // sublinesCount
+      0 // sublinesCount
     }
   };
   TableLayout::ColumnAlignement const defaultAlignment;
@@ -508,7 +508,7 @@ void TableTextFormatter::populateErrorCellsLayout( PreparedTableLayout const & t
     {
       std::vector< TableLayout::CellLayout >( nbCells,
                                               TableLayout::CellLayout( CellType::Separator ) ),
-      1
+      1 // subLines count
     } );
 
   for( auto const & error : errors )
@@ -517,7 +517,7 @@ void TableTextFormatter::populateErrorCellsLayout( PreparedTableLayout const & t
       {
         std::vector< TableLayout::CellLayout >( nbCells,
                                                 TableLayout::CellLayout( CellType::MergeNext ) ),
-        1
+        1 // subLines count
       } );
     errorCellsLayout.back().cells.back().m_cellType = CellType::Value;
     errorCellsLayout.back().cells.back().prepareLayout( error, TableLayout::noColumnMaxWidth );
