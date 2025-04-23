@@ -453,7 +453,8 @@ void CompositionalMultiphaseWell::validateWellConstraints( real64 const & time_n
     else
     {
       ElementRegionBase const & region = elemManager.getRegion( wellControls.referenceReservoirRegion());
-      CompositionalMultiphaseStatistics::RegionStatistics const & stats = region.getReference< CompositionalMultiphaseStatistics::RegionStatistics >( "regionStatistics" );
+      CompositionalMultiphaseStatistics::RegionStatistics const & stats = region.getReference< CompositionalMultiphaseStatistics::RegionStatistics >(
+        CompositionalMultiphaseStatistics::regionStatisticsName() );
       wellControls.setRegionAveragePressure( stats.averagePressure );
       wellControls.setRegionAverageTemperature( stats.averageTemperature );
     }

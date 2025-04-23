@@ -47,6 +47,10 @@ public:
   /// Accessor for the catalog name
   static string catalogName() { return "CompositionalMultiphaseStatistics"; }
 
+  /// Accessor for the region statistics catalog name
+  static string regionStatisticsName() { return "regionStatistics"; }
+
+
   /**
    * @defgroup Tasks Interface Functions
    *

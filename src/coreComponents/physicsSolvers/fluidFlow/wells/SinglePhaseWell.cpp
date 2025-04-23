@@ -147,7 +147,7 @@ void SinglePhaseWell::validateWellConstraints( real64 const & time_n,
     else
     {
       ElementRegionBase const & region = elemManager.getRegion( wellControls.referenceReservoirRegion() );
-      SinglePhaseStatistics::RegionStatistics const & stats = region.getReference< SinglePhaseStatistics::RegionStatistics >( "regionStatistics" );
+      SinglePhaseStatistics::RegionStatistics const & stats = region.getReference< SinglePhaseStatistics::RegionStatistics >( SinglePhaseStatistics::regionStatisticsName() );
       wellControls.setRegionAveragePressure( stats.averagePressure );
       wellControls.setRegionAverageTemperature( stats.averageTemperature );
     }
