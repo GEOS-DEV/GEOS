@@ -148,8 +148,9 @@ TEST( testLogPart, valuesMultiLines )
   std::ostringstream oss;
   LogPart logPart( "TIMESTEP START" );
   logPart.addDescription( "dummy name\ndummy name long", "long dummy values, long dummy values1, long dummy values2, long dummy values3" );
-  logPart.addDescription( "dummy", "long dummy values", "long dummy values", "long dummy values", "long dummy values" );
+  logPart.addDescription( "dummy long very long for test crash", "long dummy values", "long dummy values", "long dummy values", "long dummy values" );
   logPart.addDescription( "long very long\nwith many \nlien return \nlong dummy name", "small dummy value" );
+  logPart.addDescription( "another test\nwith second part of name very long", "small dummy value" );
   logPart.addDescription( "dummy name, long dummy values, long dummy values, long dummy values, long dummy values" );
 
   logPart.addEndDescription( "dummy name", "long dummy end values, long dummy end values, long dummy end values, long dummy end values" );
@@ -160,22 +161,33 @@ TEST( testLogPart, valuesMultiLines )
   logPart.begin( oss );
   EXPECT_EQ( oss.str(),
              "\n"
-             "###########################################################\n"
-             "##                    TIMESTEP START                     ##\n"
-             "###########################################################\n"
-             "##  dummy name      : long dummy values, long dummy      ##\n"
-             "##  dummy name long : values1, long dummy values2, long  ##\n"
-             "##                    dummy values3                      ##\n"
-             "##  dummy           : long dummy values                  ##\n"
-             "##                    long dummy values                  ##\n"
-             "##                    long dummy values                  ##\n"
-             "##                    long dummy values                  ##\n"
-             "##  long very long  : small dummy value                  ##\n"
-             "##  with many                                            ##\n"
-             "##  lien return                                          ##\n"
-             "##  long dummy name                                      ##\n"
-             "##  dummy name, long dummy values, long dummy values,    ##\n"
-             "##  long dummy values, long dummy values                 ##\n\n" );
+             "############################################################\n"
+             "##                     TIMESTEP START                     ##\n"
+             "############################################################\n"
+             "##  dummy name                          : long dummy      ##\n"
+             "##  dummy name long                     : values, long    ##\n"
+             "##                                        dummy values1,  ##\n"
+             "##                                        long dummy      ##\n"
+             "##                                        values2, long   ##\n"
+             "##                                        dummy values3   ##\n"
+             "##  dummy long very long for test crash : long dummy      ##\n"
+             "##                                        values          ##\n"
+             "##                                        long dummy      ##\n"
+             "##                                        values          ##\n"
+             "##                                        long dummy      ##\n"
+             "##                                        values          ##\n"
+             "##                                        long dummy      ##\n"
+             "##                                        values          ##\n"
+             "##  long very long                      : small dummy     ##\n"
+             "##  with many                           : value           ##\n"
+             "##  lien return                                           ##\n"
+             "##  long dummy name                                       ##\n"
+             "##  another test                        : small dummy     ##\n"
+             "##  with second part of name very long  : value           ##\n"
+             "##  dummy name, long dummy values, long dummy values,     ##\n"
+             "##  long dummy values, long dummy values                  ##\n\n"
+             );
+
   oss.clear();
   oss.str( "" );
 
@@ -183,19 +195,19 @@ TEST( testLogPart, valuesMultiLines )
   std::cout <<oss.str() << std::endl;
   EXPECT_EQ( oss.str(),
              "\n"
-             "##  dummy name : long dummy end values, long dummy end   ##\n"
-             "##               values, long dummy end values, long     ##\n"
-             "##               dummy end values                        ##\n"
-             "##  dummy name : long dummy end values                   ##\n"
-             "##               long dummy end values                   ##\n"
-             "##               long dummy end values                   ##\n"
-             "##               long dummy end values                   ##\n"
-             "##  dummy name : small dummy end value                   ##\n"
-             "##  Ceci est un timestep extremement long 10h00h00545ms  ##\n"
-             "##  ( 1h 30 s en heure)                                  ##\n"
-             "###########################################################\n"
-             "##                 End of TIMESTEP START                 ##\n"
-             "###########################################################\n\n"
+             "##  dummy name : long dummy end values, long dummy end    ##\n"
+             "##               values, long dummy end values, long      ##\n"
+             "##               dummy end values                         ##\n"
+             "##  dummy name : long dummy end values                    ##\n"
+             "##               long dummy end values                    ##\n"
+             "##               long dummy end values                    ##\n"
+             "##               long dummy end values                    ##\n"
+             "##  dummy name : small dummy end value                    ##\n"
+             "##  Ceci est un timestep extremement long 10h00h00545ms   ##\n"
+             "##  ( 1h 30 s en heure)                                   ##\n"
+             "############################################################\n"
+             "##                 End of TIMESTEP START                  ##\n"
+             "############################################################\n\n"
              );
   oss.clear();
 }
@@ -212,13 +224,13 @@ TEST( testLogPart, multiLineWithExtraSpace )
 
   EXPECT_EQ( oss.str(),
              "\n"
-             "###########################################################\n"
-             "##                       TIMESTEP                        ##\n"
-             "###########################################################\n"
-             "##  - Time       : 00h00m00s out of 2y, 269d, 12h21m36s  ##\n"
-             "##                 (0% completed), 0 s / 86400000 s      ##\n"
-             "##  - Delta Time : 00h00m00s (0.001 s)                   ##\n"
-             "##  - Cycle      : 0                                     ##\n\n" );
+             "############################################################\n"
+             "##                        TIMESTEP                        ##\n"
+             "############################################################\n"
+             "##  - Time       : 00h00m00s out of 2y, 269d, 12h21m36s   ##\n"
+             "##                 (0% completed), 0 s / 86400000 s       ##\n"
+             "##  - Delta Time : 00h00m00s (0.001 s)                    ##\n"
+             "##  - Cycle      : 0                                      ##\n\n" );
   oss.clear();
   oss.str( "" );
 }
