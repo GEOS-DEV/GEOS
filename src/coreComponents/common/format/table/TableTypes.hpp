@@ -42,10 +42,6 @@ class TableErrorListing
 {
 
 public:
-  /// View on cell error grouping the cell information to display at the end of the table
-  /// Contain all the errors
-  std::vector< string > errorText;
-
   /**
    * @brief Add an error that will be display at the end of the table
    * @param text The string error to display.
@@ -63,6 +59,24 @@ public:
    * @brief Clear all error when calling toString()
    */
   void clear();
+
+  using Iterator = std::vector< string >::const_iterator;
+
+  Iterator begin() const
+  { return errorText.begin(); }
+
+  Iterator end() const
+  { return errorText.end(); }
+
+  void appendErrors( std::vector< string > & errors )
+  { errorText.insert( errorText.end(), errors.begin(), errors.end() );}
+
+  std::vector< string > const & getErrors() const
+  { return errorText; }
+
+private:
+  /// Contain all the errors  to display at the end of the table
+  std::vector< string > errorText;
 };
 
 
