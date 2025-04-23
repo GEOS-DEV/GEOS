@@ -190,6 +190,9 @@ public:
     real64 temperature{}; // for stress computation
     /// Delta temperature since last time step
     real64 deltaTemperatureFromLastStep{}; // for porosity update
+    /// Delta temperature from reference state
+    real64 deltaTemperature{}; // for stress computation
+    
 
     // Storage for residual and degrees of freedom
 
