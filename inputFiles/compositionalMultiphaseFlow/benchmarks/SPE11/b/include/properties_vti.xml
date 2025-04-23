@@ -233,6 +233,7 @@
       fieldName="rockPorosity_referencePorosity"
       scale=".05" />
 
+    <!-- SPHINX_THC_FIELD -->
     <FieldSpecification
       name="condx1"
       initialCondition="1"
@@ -249,6 +250,8 @@
       objectPath="ElementRegions/reservoir1"
       fieldName="thermalCond_rockThermalConductivity"
       scale="1.9" />
+   <!-- SPHINX_THC_FIELD_END -->
+
     <FieldSpecification
       name="condz1"
       initialCondition="1"

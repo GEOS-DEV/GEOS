@@ -47,8 +47,6 @@ convective mixing finger structures.
 Input base
 ------------------------------------------------------------------------
 
-Here we will discuss general decomposition of the deck files.
-
 This benchmark test is based on the XML file located below:
 
 .. code-block:: console
@@ -85,9 +83,74 @@ Constitutives and includes
 
 .. _KRPCSection:
 
-Here we will show a part of the _includes\/_. Discussion about NIST
+//Here we will show a part of the _include\/_. Discussion about NIST
+
+The capillary and residual trapping in such a multi-facies reservoir occurs due to the heterogeneous properties. For instance, jumping from
+anticline facies \#5 to the upper layers a large entry pressure has to be reached. The box A is the design such that it can monitor the
+expected trapped _CO2_ dissolving and making the surrounding brine heavier. This then will result in sinking brine and start convective
+mixing instabilites.
+
+// PLOT all capillary and kr
 
 
+
+Above are reported the sets of relative permeabilities (left) and capillary pressure (right) from their tabulated values. The facies \#5 is highlighted
+as playing an important role in the overall trapping. The import in the simulation deck is done through the _include\/_ folder
+
+.. literalinclude:: ../../../../../../../inputFiles/compositionalMultiphaseFlow/benchmarks/SPE11/b/include/kr.xml
+    :language: xml
+    :start-after: <!-- SPHINX_KR_TABLE -->
+    :end-before: <!-- SPHINX_KR_TABLE_END -->
+
+ and through the definition of relative permeabilities and capillary pressure under the _Constitutive_ tag. As an example, definition of
+ relperm for the facies \#1 is reported,
+
+
+.. literalinclude:: ../../../../../../../inputFiles/compositionalMultiphaseFlow/benchmarks/SPE11/b/spe11b_vti_source_base.xml
+    :language: xml
+    :start-after: <!-- SPHINX_KR_CONST -->
+    :end-before: <!-- SPHINX_KR_CONST_END -->
+
+There is also properties such as permeabilities, diffusivity and rock thermal conductivity that are modeled as constant per facies
+and then needs to be defined as such. They then will be defined as
+
+.. literalinclude:: ../../../../../../../inputFiles/compositionalMultiphaseFlow/benchmarks/SPE11/b/include/properties_vti.xml
+    :language: xml
+    :start-after: <!-- SPHINX_THC_FIELD -->
+    :end-before: <!-- SPHINX_THC_FIELD_END -->
+
+scaling their _Constitutive_ 's values that are defined,
+
+.. literalinclude:: ../../../../../../../inputFiles/compositionalMultiphaseFlow/benchmarks/SPE11/b/include/properties_vti.xml
+    :language: xml
+    :start-after: <!-- SPHINX_THC_CONST -->
+    :end-before: <!-- SPHINX_THC_CONST_END -->
+
+.. note::
+
+    Their _FieldSpecification_ scaling definintion is linked to their _Constitutive_ 's through the generated fieldname, for instance *thermalCond_rockThermalConductivity*.
+    The prefix being extracted from the _Constitutive_ 's `name` attributes.
+
+ .. note::
+
+     The permeabilities and porosities being also heterogeneous per facies, we let the reader inspect the files in _include\/_ and make themselves aware
+     of the places where fields are imported and defined similarly to the rock thermal conductivities.
+
+The diffusivity being non heterogeneous in the specifications of the case, it is solely defined in its _Constitutive_ model.
+
+Eventually, one has to pick a model for both brine and _CO2_ densities and viscosities with respect to varying pressure, temperature and
+composition.
+
+.. literalinclude:: ../../../../../../../inputFiles/compositionalMultiphaseFlow/benchmarks/SPE11/b/spe11b_vti_source_base.xml
+    :language: xml
+    :start-after: <!-- SPHINX_EOS_CONST -->
+    :end-before: <!-- SPHINX_EOS_CONST_END -->
+
+It is done using the _CO2BrinePhillipsThermalFluid_ tag. It lists files that includes table generator's paramters. For instance, _CO2_'s density
+is modeled through *Span Wagner* model, while the viscosities are obtained via Fenghour model. For more detail, read :ref:`CO2-EOS`.
+Their conformity to NIST values is assessed in the following plot,
+
+//ADD NIST COMPARISON
 
 ------------------------------------------------------------------------
 Flow solver

@@ -71,6 +71,7 @@
   </NumericalMethods>
 
   <Constitutive>
+    <!-- SPHINX_EOS_CONST -->
     <CO2BrinePhillipsThermalFluid
       name="fluid"
       phaseNames="{ gas, water }"
@@ -79,6 +80,7 @@
       componentMolarWeight="{ 44e-3, 18e-3 }"
       phasePVTParaFiles="{ tables/pvtgas_thermal.txt, tables/pvtliquid_thermal.txt }"
       flashModelParaFile="tables/co2flash_thermal.txt" />
+    <!-- SPHINX_EOS_CONST_END -->
     <SolidInternalEnergy
       name="rockInternalEnergy"
       referenceVolumetricHeatCapacity="2.125e6"
@@ -112,17 +114,21 @@
       defaultPhaseDiffusivityMultipliers="{ 0, 0 }"
       diffusivityComponents="{ 0, 0, 0 }" />
 
+   <!-- SPHINX_THC_CONST -->
     <MultiPhaseVolumeWeightedThermalConductivity
       name="thermalCond"
       phaseNames="{ gas, water }"
       phaseThermalConductivity="{ 0.09, 0.65 }"
       rockThermalConductivityComponents="{ 1.25, 1.25, 1.25 }" />
+   <!-- SPHINX_THC_CONST_END -->
 
     <!-- kr per facies -->
+    <!-- SPHINX_KR_CONST -->
     <TableRelativePermeability
       name="relperm1"
       phaseNames="{ gas, water }"
       wettingNonWettingRelPermTableNames="{ waterRelativePermeabilityTable1, gasRelativePermeabilityTable1 }" />
+    <!-- SPHINX_KR_CONST_END -->
     <TableRelativePermeability
       name="relperm2"
       phaseNames="{ gas, water }"

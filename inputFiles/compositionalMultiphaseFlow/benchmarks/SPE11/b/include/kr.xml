@@ -1,6 +1,7 @@
 <?xml version="1.0" ?>
 <Problem>
   <Functions>
+    <!-- SPHINX_KR_TABLE -->
     <TableFunction
       name="waterRelativePermeabilityTable1"
       coordinateFiles="{ ../tables/waterSaturation_spe11b_1.txt }"
@@ -86,6 +87,6 @@
       name="cappresTable7"
       coordinateFiles="{ ../tables/waterPCSaturation_spe11b_7.txt}"
       voxelFile="../tables/waterCapPres_spe11b_7.txt"/>    
-    
+   <!-- SPHINX_KR_TABLE_END -->
   </Functions>
 </Problem>
