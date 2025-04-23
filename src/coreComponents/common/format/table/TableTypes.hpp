@@ -48,8 +48,6 @@ public:
   /**
    * @brief Add an error that will be display at the end of the table
    * @param text The string error to display.
-   * @param nbCells The numbers cells that must be equal to the number of a CellLayoutRow
-   * present in headerCellsLayout or dataCellsLayout
    */
   void addError( string_view text );
 
@@ -110,7 +108,7 @@ inline bool TableErrorListing::hasErrors() const
 { return errorText.size() != 0; }
 
 /**
- * @return Clear the errors vector
+ * @brief Clear the errors vector
  */
 inline void TableErrorListing::clear()
 { errorText.clear(); }
