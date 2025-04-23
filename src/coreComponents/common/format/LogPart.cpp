@@ -66,7 +66,7 @@ void LogPart::formatDescriptions( LogPart::Description & description,
   size_t & maxNameSize = formattedDescription.m_maxNameWidth;
   size_t & maxValueSize = formattedDescription.m_maxValueWidth;
 
-  m_width = std::clamp(m_width, m_minWidth, m_maxWidth);
+  m_width = std::clamp( m_width, m_minWidth, m_maxWidth );
 
   for( size_t idxName = 0; idxName < description.m_names.size(); idxName++ )
   {
