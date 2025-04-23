@@ -59,45 +59,6 @@ DECLARE_FIELD( Pressure_np1,
                WRITE_AND_READ,
                "Scalar pressure at time n+1." );
 
-DECLARE_FIELD( StiffnessVector,
-                "stiffnessVector",
-                array2d< real32 >,
-                0,
-                LEVEL_0,
-                WRITE_AND_READ,
-                "2d array to store stiffness and flux information (useful for neighbour contribution)." );
-//DECLARE_FIELD( ForcingRHS,
-//               "rhs",
-//               array1d< real32 >,
-//               0,
-//               NOPLOT,
-//               WRITE_AND_READ,
-//               "RHS" );
-
-//DECLARE_FIELD( AcousticMassMatrix,
-//               "acousticMassVector",
-//               array2d< real32 >,
-//               0,
-//               NOPLOT,
-//               WRITE_AND_READ,
-//               "Diagonal of the Mass Matrix." );
-//
-//DECLARE_FIELD( StiffnessVector,
-//               "stiffnessVector",
-//               array2d< real32 >,
-//               0,
-//               NOPLOT,
-//               WRITE_AND_READ,
-//               "Stiffness vector contains R_h*Pressure_n." );
-
-//DECLARE_FIELD( DampingVector,
-//               "dampingVector",
-//               array1d< real32 >,
-//               0,
-//               NOPLOT,
-//               WRITE_AND_READ,
-//               "Diagonal of the Damping Matrix." );
-
 DECLARE_FIELD( AcousticVelocity,
                "acousticVelocity",
                array1d< real32 >,

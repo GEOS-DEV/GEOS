@@ -457,7 +457,6 @@ struct PressureComputationKernel
                       localIndex const rickerOrder,
                       bool const useSourceWaveletTables,
                       arrayView1d< TableFunction::KernelWrapper const > const sourceWaveletTableWrappers,
-                      arrayView2d< real32 > const stiffnessVector,
                       arrayView2d< real32 > const p_np1 )
 
  {
@@ -483,7 +482,6 @@ struct PressureComputationKernel
 
       real64 pTemp[numNodesPerElem] = {0.0};
       real64 flowx[numNodesPerElem] = {0.0};
-      real64 flowy[numNodesPerElem] = {0.0};
       
       real64 xLocal[4][3];
       for( localIndex a=0; a< 4; ++a )
@@ -494,13 +492,14 @@ struct PressureComputationKernel
         }
       }
 
+      //Compute 1/c2, take its inverse and compute the detemrinant of the jacobian  
       real64 const C2 = pow(velocity[k],2);
  
       real64 const invC2 = 1.0/C2;
   
       real64 const det = LvArray::math::abs(FE_TYPE::jacobianDeterminant(xLocal));
 
-      //Multiply by p_{n } by 2*Mass
+      //Multiply by p_{n } by 2*(1/c2)*Mass and p_{n-1} by -(1/c2)*Mass
       FE_TYPE::computeMassTerm(xLocal, [&] (const int i, const int j, const real64 val)
       {
          pTemp[i] += 2.0*invC2*val*p_n[k][j];
@@ -510,7 +509,7 @@ struct PressureComputationKernel
       //First stiffness part (volume)
       FE_TYPE::computeStiffnessTerm(xLocal, [&] (const int i, const int j, real64 val)
       {
-         stiffnessVector[k][i] -= val*p_n[k][j];
+         flowx[i] -= val*p_n[k][j];
       } );
   
     
@@ -550,7 +549,7 @@ struct PressureComputationKernel
           real64 const val1 = ((12.0)/((LvArray::math::min(characteristicSize[k],characteristicSize[elemNeigh]))))*val*p_n[k][c2];
           real64 const val2 = ((12.0)/((LvArray::math::min(characteristicSize[k],characteristicSize[elemNeigh]))))*val*p_n[elemNeigh][neighDof];
 
-          stiffnessVector[k][c1] += -val1+val2;
+          flowx[c1] += -val1+val2;
 
         }
 
@@ -609,8 +608,8 @@ struct PressureComputationKernel
            real64 const val2 = 0.5*val*p_n[elemNeigh][neighDof];
            real64 const val3 = 0.5*val*p_n[k][c1];
            real64 const val4 = 0.5*val*p_n[elemNeigh][neighDof2];
-           stiffnessVector[k][c1] += val1-val2;
-           stiffnessVector[k][c2] += val3-val4;
+           flowx[c1] += val1-val2;
+           flowx[c2] += val3-val4;
 
 
 
@@ -622,7 +621,7 @@ struct PressureComputationKernel
       
       for (localIndex i = 0; i < numNodesPerElem; i++)
       {
-        pTemp[i] += dt2*stiffnessVector[k][i] ;
+        pTemp[i] += dt2*flowx[i] ;
       }
   //
       real64 srcAmp[numNodesPerElem]={0.0}; 
