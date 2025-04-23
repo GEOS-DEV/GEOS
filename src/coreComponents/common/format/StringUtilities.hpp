@@ -213,7 +213,7 @@ string_view trim( string_view str,
 
 /**
  * @brief Trim the left string
- * @param[in] str the string to trim
+ * @param[in] s the string to trim
  * @return the trimmed string
  */
 string_view ltrimSpaces( string_view s );
@@ -243,11 +243,10 @@ string removeStringAndFollowingContent( string_view str,
 template< typename T >
 string addCommaSeparators( T const & num );
 
-
 /**
  * @brief Divides a string by newline characters and returns a vector of strings containing each line.
  * Also calculates the width of the widest line.
- * @param maxLength The max length a line can have.
+ * @param linesWidth [out] Reference to a size_t that will be set to the width of the widest line
  * @param value The input string to divide into lines
  * @tparam STRING_T The type of the string (string or string_view)
  * @return A vector of STRING_T objects, each containing a single line from the input
@@ -268,11 +267,14 @@ std::vector< STRING_T > divideLines( string_view value );
  * @brief Format all the lines by detecting spaces and by dividing each lines with maximum length specified.
  * If a word has a greater size than maxLength, it will be cut in one or many parts.
  * @param lines Vector containing all the lines to be formatted.
- * @param maxLength The max length a line can have.
+ * @param maxLineLength [inout] The max length a line can have.
+ *                      The value is then set to the effective maximum line length
+ * @tparam STRING_T The type of the string (string or string_view)
  * @return A vector containing the lines wrapped.
  */
 template< typename STRING_T >
-std::vector< STRING_T > wrapTextToMaxLength( std::vector< STRING_T > const & lines, size_t maxLength );
+std::vector< STRING_T > wrapTextToMaxLength( std::vector< STRING_T > const & lines,
+                                             size_t & maxLineLength );
 
 /**
  * @brief Take a string, and return a array1d with the cast values

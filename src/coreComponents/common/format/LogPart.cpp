@@ -68,7 +68,8 @@ void LogPart::formatDescriptions( LogPart::Description & description,
     // if no values process only the names
     if( values.empty())
     {
-      auto wrappedNames = wrapTextToMaxLength( names, description.m_maxWidth - borderSpaceWidth );
+      size_t spacesForName = description.m_maxWidth - borderSpaceWidth;
+      auto wrappedNames = wrapTextToMaxLength( names, spacesForName );
       formattedLines.insert( formattedLines.end(), wrappedNames.begin(), wrappedNames.end());
       continue;
     }
@@ -81,7 +82,7 @@ void LogPart::formatDescriptions( LogPart::Description & description,
     }
 
     //format values
-    size_t const valueSpaceAvailable = description.m_maxWidth - formattedDescription.m_maxNameWidth - borderSpaceWidth - m_delimiter.size();
+    size_t valueSpaceAvailable = description.m_maxWidth - formattedDescription.m_maxNameWidth - borderSpaceWidth - m_delimiter.size();
     auto wrappedValues = wrapTextToMaxLength( values, valueSpaceAvailable );
 
     size_t maxValueWidth = (*std::max_element( wrappedValues.begin(), wrappedValues.end(),
