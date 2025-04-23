@@ -50,7 +50,7 @@ public:
   /**
    * @brief Lexicographic sorting
    * @param other The table data to compate
-   * @return true 
+   * @return true
    */
   bool operator<( TableData const & other ) const;
 
@@ -229,6 +229,9 @@ public:
   TableDataHolder buildTableData( string_view dataDescription,
                                   string_view rowFmt = "{}", string_view columnFmt = "{}" ) const;
 
+  /**
+   * @brief Clear all data stored in TableData
+   */
   inline void clear()
   {
     m_data.clear();

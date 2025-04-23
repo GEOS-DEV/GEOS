@@ -62,7 +62,7 @@ protected:
 
   /// Layout for a table
   PreparedTableLayout const m_tableLayout;
-
+  /// Class used for listing all errors that may have occured during table generation
   std::unique_ptr< geos::TableErrorListing > m_errors = std::make_unique< geos::TableErrorListing >();
 
   /**
@@ -333,7 +333,7 @@ private:
    */
   void populateErrorCellsLayout( PreparedTableLayout const & tableLayout,
                                  CellLayoutRows & errorCellsLayout,
-                                 TableData const &  tableData ) const;
+                                 TableData const & tableData ) const;
 
   /**
    * @brief Populates the data cells layout based on input data values, taking into account the columns layout.
