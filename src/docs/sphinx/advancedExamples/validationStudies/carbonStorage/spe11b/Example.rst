@@ -91,8 +91,7 @@ expected trapped _CO2_ dissolving and making the surrounding brine heavier. This
 mixing instabilites.
 
 // PLOT all capillary and kr
-
-
+.. plot:: ../../../../../../../inputFiles/compositionalMultiphaseFlow/benchmarks/SPE11/b/include/plotAllKrPc.py
 
 Above are reported the sets of relative permeabilities (left) and capillary pressure (right) from their tabulated values. The facies \#5 is highlighted
 as playing an important role in the overall trapping. The import in the simulation deck is done through the _include\/_ folder
