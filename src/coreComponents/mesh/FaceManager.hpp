@@ -477,7 +477,7 @@ private:
   array3d< real64 > m_faceRotationMatrix;
 
   /// constant expression of the maximum number of nodes per faces
-  constexpr static int MAX_FACE_NODES = 9;
+  constexpr static int MAX_FACE_NODES = 16;
 
 };
 

@@ -765,7 +765,8 @@ void FaceManager::SortFaceNodes( arrayView2d< real64 const, nodes::REFERENCE_POS
       v -= fc;
       thetaOrder[n] = std::pair< realT, localIndex >( atan2( Dot( v, ey ), Dot( v, ex )), faceNodes[n] );
     }
-
+    
+    GEOSX_ASSERT( MAX_FACE_NODES >= numFaceNodes);
     std::sort( thetaOrder, thetaOrder + numFaceNodes );
 
     // Reorder nodes on face

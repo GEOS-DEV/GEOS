@@ -559,7 +559,7 @@ real64 LagrangianContactSolver::NonlinearImplicitStep( real64 const & time_n,
       {
         if( getLogLevel() >= 1 && logger::internal::rank==0 )
         {
-          char output[55] = {0};
+          char output[128] = {0};
           sprintf( output, "    Attempt: %2d, ActiveSetIter: %2d ; NewtonIter: %2d ; ",
                    dtAttempt, activeSetIter, newtonIter );
           std::cout<<output<<std::endl;

@@ -389,7 +389,7 @@ void ProblemManager::SetSchemaDeviations( xmlWrapper::xmlNode schemaRoot,
   Group * benchmarks = this->RegisterGroup< Group >( "Benchmarks" );
   benchmarks->setInputFlags( InputFlags::OPTIONAL );
 
-  for( std::string const & machineName : {"quartz", "lassen"} )
+  for( std::string const & machineName : std::initializer_list<std::string>{ "quartz", "lassen" } )
   {
     Group * machine = benchmarks->RegisterGroup< Group >( machineName );
     machine->setInputFlags( InputFlags::OPTIONAL );

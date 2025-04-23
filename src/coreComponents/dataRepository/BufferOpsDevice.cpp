@@ -170,6 +170,9 @@ PackByIndexDevice ( buffer_unit_type * & buffer,
   return packedSize;
 }
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wclass-memaccess"
+
 template< typename T, int NDIM, int USD, typename T_INDICES >
 typename std::enable_if< can_memcpy< T >, localIndex >::type
 UnpackDataByIndexDevice ( buffer_unit_type const * & buffer,
@@ -194,6 +197,8 @@ UnpackDataByIndexDevice ( buffer_unit_type const * & buffer,
   buffer += avSize;
   return sizeOfPackedChars;
 }
+
+#pragma GCC diagnostic pop
 
 template< typename T, int NDIM, int USD, typename T_INDICES >
 typename std::enable_if< can_memcpy< T >, localIndex >::type
