@@ -65,7 +65,7 @@ Group * FunctionManager::createChild( string const & functionCatalogKey,
   else
   {
     // Create FunctionBase-derived instance
-    std::unique_ptr< FunctionBase > function = FunctionBase::CatalogInterface::factory( functionCatalogKey, functionName, this );
+    std::unique_ptr< FunctionBase > function = FunctionBase::CatalogInterface::factory( functionCatalogKey, getDataContext(), functionName, this );
     return &this->registerGroup< FunctionBase >( functionName, std::move( function ));
   }
 }
