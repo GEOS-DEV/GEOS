@@ -930,11 +930,11 @@ void CompositionalMultiphaseWell::updateState( DomainPartition & domain )
                                                                                           WellElementSubRegion & subRegion )
     {
       WellControls & wellControls = getWellControls( subRegion );
-      if( wellControls.getWellStatus() == WellControls::Status::OPEN )
-      {
-        real64 const maxRegionPhaseVolFrac = updateSubRegionState( subRegion );
-        maxPhaseVolFrac = LvArray::math::max( maxRegionPhaseVolFrac, maxPhaseVolFrac );
-      }
+      //if( wellControls.getWellStatus() == WellControls::Status::OPEN )
+      //{
+      real64 const maxRegionPhaseVolFrac = updateSubRegionState( subRegion );
+      maxPhaseVolFrac = LvArray::math::max( maxRegionPhaseVolFrac, maxPhaseVolFrac );
+      //}
     } );
   } );
   maxPhaseVolFrac = MpiWrapper::max( maxPhaseVolFrac );
@@ -1215,7 +1215,6 @@ void CompositionalMultiphaseWell::assembleAccumulationTerms( real64 const & time
                                                        localMatrix,
                                                        localRhs );
         }
-        //wellControls.setWellOpen(false);
         // get the degrees of freedom and ghosting info
         arrayView1d< globalIndex const > const & wellElemDofNumber =
           subRegion.getReference< array1d< globalIndex > >( wellDofKey );
@@ -1250,7 +1249,6 @@ void CompositionalMultiphaseWell::assembleAccumulationTerms( real64 const & time
       }
       else
       {
-        //wellControls.setWellOpen(false);
         // get the degrees of freedom and ghosting info
         arrayView1d< globalIndex const > const & wellElemDofNumber =
           subRegion.getReference< array1d< globalIndex > >( wellDofKey );

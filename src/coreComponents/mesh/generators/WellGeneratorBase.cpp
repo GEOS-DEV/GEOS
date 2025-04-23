@@ -483,12 +483,6 @@ void WellGeneratorBase::checkPerforationLocationsValidity()
 
 void WellGeneratorBase::mergePerforations( array1d< array1d< localIndex > > const & elemToPerfMap )
 {
-
-
-  for( globalIndex iwelem = 0; iwelem < m_numElems; ++iwelem )
-  {
-    GEOS_LOG_RANK( "BEFMERGE :" <<getName()<< ": " << iwelem << ": " << elemToPerfMap[iwelem] );
-  }
   for( globalIndex iwelem = 0; iwelem < m_numElems; ++iwelem )
   {
     // collect the indices of the elems with more that one perforation
@@ -526,10 +520,6 @@ void WellGeneratorBase::mergePerforations( array1d< array1d< localIndex > > cons
         LvArray::tensorOps::copy< 3 >( m_perfCoords[elemToPerfMap[iwelem][ip]], m_perfCoords[iperfMaxTransmissibility] );
       }
     }
-  }
-  for( globalIndex iwelem = 0; iwelem < m_numElems; ++iwelem )
-  {
-    GEOS_LOG_RANK( "AFTMERGE :" <<getName()<< ": " << iwelem << ": " << elemToPerfMap[iwelem] );
   }
 }
 
