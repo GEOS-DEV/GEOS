@@ -138,7 +138,7 @@ void ImplicitQDRateAndState::updateSlip( ElementSubRegionBase & subRegion, real6
     deltaSlip[k][0] = slipVelocity[k][0] * dt;
     deltaSlip[k][1] = slipVelocity[k][1] * dt;
     totalSlip[k][0] = totalSlip_n[k][0] + deltaSlip[k][0];
-    totalSlip[k][1] = totalSlip_n[k][0] + deltaSlip[k][1];
+    totalSlip[k][1] = totalSlip_n[k][1] + deltaSlip[k][1];
   } );
 }
 

@@ -213,7 +213,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('-i', '--input-dir', type=str, help='input direrctory', default='.')
     parser.add_argument('-o', '--output-dir', type=str, help='output directory', default='.')
-    parser.add_argument('-nt', '--num-time-steps', type=int, help='num_timesteps', default=10)
+    parser.add_argument('-nt', '--num-time-steps', type=int, help='num_timesteps', default=100)
     args = parser.parse_args()
     output_dir = os.path.abspath( args.output_dir )
     for i in range(13):  # Loop over 13 fault stations

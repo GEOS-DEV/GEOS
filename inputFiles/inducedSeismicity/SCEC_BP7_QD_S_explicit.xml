@@ -12,7 +12,7 @@
       name="QDSolver"
       targetRegions="{ Domain, Fault }"
       shearImpedance="4.6247113164e6"
-      initialDt="1e-3"
+      initialDt="1e-1"
       logLevel="1"
       discretization="FE1"
       stressSolverName="stressSolver">
