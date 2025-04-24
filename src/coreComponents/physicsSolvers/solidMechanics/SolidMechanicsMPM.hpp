@@ -488,7 +488,7 @@ public:
 
   void solverProfiling( std::string label );
 
-  real64 computeNeighborList(  const int cycleNumber, ParticleManager & particleManager );
+  real64 computeNeighborList( ParticleManager & particleManager );
 
   void optimizeBinSort( ParticleManager & particleManager );
 
@@ -574,7 +574,7 @@ public:
                                           ParticleManager::ParticleView< arrayView2d< real64 const > > particleDisplacementView, 
                                           arraySlice2d< real64 > const result );
 
-  void computeDamageFieldGradient( const int cycleNumber, ParticleManager & particleManager );
+  void computeDamageFieldGradient( ParticleManager & particleManager );
 
   void updateSurfaceFlagOverload( ParticleManager & particleManager );
 
