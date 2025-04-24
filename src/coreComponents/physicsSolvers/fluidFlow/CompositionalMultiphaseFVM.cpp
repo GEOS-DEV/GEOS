@@ -123,13 +123,6 @@ CompositionalMultiphaseFVM::CompositionalMultiphaseFVM( const string & name,
     setDescription( "Target CFL condition `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_"
                     " when computing the next timestep." );
 
-  if( m_writeSolvingCSV )
-  {
-    m_solverStatistics.m_convergenceStats.setResidualNormsFileName( GEOS_FMT( "{}/{}_solvings.csv",
-                                                           m_solverStatistics.m_convergenceStats.getOutputDir(),
-                                                           getName() ));
-  }
-
   addLogLevel< logInfo::Convergence >();
   addLogLevel< logInfo::Solution >();
   addLogLevel< logInfo::TimeStep >();
@@ -206,6 +199,8 @@ void CompositionalMultiphaseFVM::registerDataForCFL( Group & meshBodies )
 void CompositionalMultiphaseFVM::initializePreSubGroups()
 {
   CompositionalMultiphaseBase::initializePreSubGroups();
+
+  m_solverStatistics.setOutputFilesName( getName() );
 
   m_linearSolverParameters.get().mgr.strategy = m_isThermal
                                                 ? LinearSolverParameters::MGR::StrategyType::thermalCompositionalMultiphaseFVM

@@ -116,6 +116,9 @@ void SolidMechanicsEmbeddedFractures::registerDataOnMesh( dataRepository::Group 
 void SolidMechanicsEmbeddedFractures::initializePostInitialConditionsPreSubGroups()
 {
   SolidMechanicsLagrangianFEM::initializePostInitialConditionsPreSubGroups();
+
+  m_solverStatistics.setOutputFilesName( getName() );
+
   updateState( this->getGroupByPath< DomainPartition >( "/Problem/domain" ) );
 }
 

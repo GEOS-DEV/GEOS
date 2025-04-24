@@ -151,24 +151,17 @@ public:
   void outputStatistics( bool writeCSV );
 
   /**
-   * @brief Set the Directory Path object
-   * @param path
+   * @brief  Set the filename output file.
+   * @param filename The filename as a string_view.
    */
-  void setDirectoryPath( string_view path )
-  { m_outputDir = path; }
-
-  /**
-   * @return The output directory for solver statistics (CSV).
-   */
-  string getOutputDir()
-  { return m_outputDir; }
-
+  void setFilename( string_view filename )
+  { m_IterationsFileName = filename; }
 
 private:
   /// Table containing statistics relative to non linear parameter
   TableData m_nonLinearData;
-  /// Output directory for the CSV solver iteration statistics
-  string m_outputDir;
+  /// Filename for the iterations CSV.
+  string m_IterationsFileName;
 };
 
 /**
@@ -240,13 +233,6 @@ public:
   void outputResidualNorm( bool writeCSV );
 
   /**
-   * @brief Set the Residual Norms filename
-   * @param filename The filename as a string_view.
-   */
-  void setResidualNormsFileName( string_view filename )
-  { m_residualNormsFileName = filename; }
-
-  /**
    * @brief Register the corresponding residuals norms to the TableData
    */
   void registerResidualNormToTable();
@@ -264,27 +250,19 @@ public:
   void logNewtonIter( integer currentNewtonIter );
 
   /**
-   * @brief  Set the directory path for output files.
-   * @param path The directory path as a string_view.
+   * @brief  Set the filename output file.
+   * @param filename The filename as a string_view.
    */
-  void setDirectoryPath( string_view path )
-  { m_outputDir = path; }
-
-  /**
-   * @return The output directory for solver statistics (CSV).
-   */
-  string getOutputDir()
-  { return m_outputDir; }
+  void setFilename( string_view filename )
+  { m_convergenceFilename = filename; }
 
 private:
   /// Table containing statistics related  to non linear norms
   std::unique_ptr< TableLayout > m_nonLinearNormsLayout;
   /// Table containing statistics data for nonlinear norms.
   TableData m_nonLinearNormsData;
-  /// Filename for the residual norms CSV.
-  string m_residualNormsFileName;
-  /// Output directory for the CSV solver convergence statistics
-  string m_outputDir;
+  /// Filename for the convergence CSV.
+  string m_convergenceFilename;
 };
 
 /**
@@ -317,6 +295,12 @@ public:
    */
   string getOutputDir()
   { return m_outputDir; }
+
+  /**
+   * @brief Set the Residual Norms filename
+   * @param solverName The solverName as a string_view.
+   */
+  void setOutputFilesName( string_view solverName );
 
   /// Contain iteration data given a time step
   IterationsStatistics m_iterationsStats;

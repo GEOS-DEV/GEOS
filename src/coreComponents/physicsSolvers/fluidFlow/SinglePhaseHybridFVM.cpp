@@ -99,6 +99,8 @@ void SinglePhaseHybridFVM::initializePreSubGroups()
 {
   SinglePhaseBase::initializePreSubGroups();
 
+  m_solverStatistics.setOutputFilesName( getName() );
+
   GEOS_THROW_IF( m_isThermal,
                  GEOS_FMT( "{} {}: The thermal option is not supported by SinglePhaseHybridFVM",
                            getCatalogName(), getDataContext().toString() ),
@@ -584,7 +586,7 @@ real64 SinglePhaseHybridFVM::calculateResidualNorm( real64 const & GEOS_UNUSED_P
   GEOS_LOG_LEVEL_RANK_0( logInfo::ResidualNorm, GEOS_FMT( "        ( R{} ) = ( {:4.2e} )", coupledSolverAttributePrefix(), residualNorm ));
   m_solverStatistics.m_convergenceStats.m_residualProppant = residualNorm;
   m_solverStatistics.m_convergenceStats.registerResidualNormToTable();
-  
+
   return residualNorm;
 }
 

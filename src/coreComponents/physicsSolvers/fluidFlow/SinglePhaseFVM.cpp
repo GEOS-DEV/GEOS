@@ -72,6 +72,8 @@ void SinglePhaseFVM< BASE >::initializePreSubGroups()
 {
   BASE::initializePreSubGroups();
 
+  BASE::m_solverStatistics.setOutputFilesName( BASE::getName() );
+
   this->checkDiscretizationName();
 
   if( m_isThermal )
@@ -234,7 +236,7 @@ real64 SinglePhaseFVM< BASE >::calculateResidualNorm( real64 const & GEOS_UNUSED
 
     GEOS_LOG_LEVEL_RANK_0_NLR( logInfo::ResidualNorm,
                                GEOS_FMT( "        ( R{} ) = ( {:4.2e} )", FlowSolverBase::coupledSolverAttributePrefix(), residualNorm ));
-   BASE:: m_solverStatistics.m_convergenceStats.m_residualFlow = residualNorm;
+    BASE:: m_solverStatistics.m_convergenceStats.m_residualFlow = residualNorm;
   }
   BASE::m_solverStatistics.m_convergenceStats.registerResidualNormToTable();
 

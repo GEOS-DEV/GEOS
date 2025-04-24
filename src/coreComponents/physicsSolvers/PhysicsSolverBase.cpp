@@ -98,11 +98,18 @@ PhysicsSolverBase::PhysicsSolverBase( string const & name,
     setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "Write matrix, rhs, solution to screen ( = 1) or file ( = 2)." );
 
-  registerWrapper( viewKeyStruct::writeSolvingCSVFlagString(), &m_writeSolvingCSV ).
-    setApplyDefaultValue( 1 ).
+  registerWrapper( viewKeyStruct::writeSolverIterationsCSVFlagString(), &m_writeSolverIterationsCSV ).
+    setApplyDefaultValue( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setRestartFlags( RestartFlags::NO_WRITE ).
-    setDescription( "When set to 1, output convergence information into a csv" );
+    setDescription( "When set to 1, output interations information to a csv" );
+
+  registerWrapper( viewKeyStruct::writeSolvingConvergenceCSVFlagString(), &m_writeSolvingConvergenceCSV ).
+    setApplyDefaultValue( 0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setDescription( "When set to 1, output convergence information to a csv" );
+
 
   addLogLevel< logInfo::Fields >();
   addLogLevel< logInfo::LinearSolver >();
@@ -333,7 +340,7 @@ bool PhysicsSolverBase::execute( real64 const time_n,
   m_nextDt = setNextDt( time_n + dt, nextDt, domain );
 
 
-  if( m_writeSolvingCSV )
+  if( m_writeSolverIterationsCSV )
     getSolverStatistics().m_iterationsStats.registerStatsToTable();
 
   return false;
@@ -1394,8 +1401,8 @@ void PhysicsSolverBase::cleanup( real64 const GEOS_UNUSED_PARAM( time_n ),
                                  real64 const GEOS_UNUSED_PARAM( eventProgress ),
                                  DomainPartition & GEOS_UNUSED_PARAM( domain ) )
 {
-  m_solverStatistics.m_iterationsStats.outputStatistics( m_writeSolvingCSV );
-  m_solverStatistics.m_convergenceStats.outputResidualNorm( m_writeSolvingCSV );
+  m_solverStatistics.m_iterationsStats.outputStatistics( m_writeSolverIterationsCSV );
+  m_solverStatistics.m_convergenceStats.outputResidualNorm( m_writeSolvingConvergenceCSV );
 
   for( auto & timer : m_timers )
   {

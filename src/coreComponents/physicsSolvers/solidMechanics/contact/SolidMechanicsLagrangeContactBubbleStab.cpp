@@ -51,6 +51,8 @@ SolidMechanicsLagrangeContactBubbleStab::SolidMechanicsLagrangeContactBubbleStab
   linSolParams.mgr.strategy = LinearSolverParameters::MGR::StrategyType::lagrangianContactMechanicsBubbleStab;
   linSolParams.mgr.separateComponents = true;
   linSolParams.dofsPerNode = 3;
+
+  addLogLevel< logInfo::ResidualNorm >();
 }
 
 SolidMechanicsLagrangeContactBubbleStab::~SolidMechanicsLagrangeContactBubbleStab()
@@ -100,6 +102,9 @@ real64 SolidMechanicsLagrangeContactBubbleStab::solverStep( real64 const & time_
 void SolidMechanicsLagrangeContactBubbleStab::registerDataOnMesh( Group & meshBodies )
 {
   ContactSolverBase::registerDataOnMesh( meshBodies );
+
+  m_solverStatistics.setOutputFilesName( getName() );
+
 
   forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
                                                     MeshLevel & meshLevel,
@@ -519,10 +524,8 @@ real64 SolidMechanicsLagrangeContactBubbleStab::calculateContactResidualNorm( Do
   stickResidual = MpiWrapper::sum( stickResidual );
   stickResidual = sqrt( stickResidual );
 
-  if( getLogLevel() >= 1 && logger::internal::rank==0 )
-  {
-    std::cout << GEOS_FMT( "        ( Rt  ) = ( {:15.6e}  )", stickResidual );
-  }
+  GEOS_LOG_LEVEL_RANK_0( logInfo::ResidualNorm,
+                         GEOS_FMT( "        ( Rt  ) = ( {:15.6e}  )", stickResidual ));
 
   return sqrt( stickResidual * stickResidual );
 }
