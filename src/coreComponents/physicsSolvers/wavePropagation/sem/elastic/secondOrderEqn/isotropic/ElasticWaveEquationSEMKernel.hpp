@@ -215,6 +215,16 @@ public:
       real32 const localIncrementy = (Ryx_ij * m_ux_n[m_elemsToNodes( k, j )] + Ryy_ij*m_uy_n[m_elemsToNodes( k, j )] + Ryz_ij*m_uz_n[m_elemsToNodes( k, j )]);
       real32 const localIncrementz = (Rzx_ij * m_ux_n[m_elemsToNodes( k, j )] + Rzy_ij*m_uy_n[m_elemsToNodes( k, j )] + Rzz_ij*m_uz_n[m_elemsToNodes( k, j )]);
 
+      printf("Rxxiso_ij: %f\n", Rxx_ij);
+      printf("Ryyiso_ij: %f\n", Ryy_ij);
+      printf("Rzziso_ij: %f\n", Rzz_ij);
+      printf("Rxyiso_ij: %f\n", Rxy_ij);
+      printf("Ryxiso_ij: %f\n", Ryx_ij);
+      printf("Rxziso_ij: %f\n", Rxz_ij);
+      printf("Rzxiso_ij: %f\n", Rzx_ij);
+      printf("Ryziso_ij: %f\n", Ryz_ij);
+      printf("Rzyiso_ij: %f\n", Rzy_ij);
+
       stack.stiffnessVectorxLocal[ i ] += localIncrementx;
       stack.stiffnessVectoryLocal[ i ] += localIncrementy;
       stack.stiffnessVectorzLocal[ i ] += localIncrementz;

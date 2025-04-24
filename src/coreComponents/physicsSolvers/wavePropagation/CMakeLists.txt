@@ -39,6 +39,8 @@ set( wavePropagationSolvers_headers
      sem/elastic/shared/ElasticMatricesSEMKernel.hpp
      sem/elastic/secondOrderEqn/anisotropic/ElasticVTIFields.hpp
      sem/elastic/secondOrderEqn/anisotropic/ElasticVTIWaveEquationSEMKernel.hpp
+     sem/elastic/secondOrderEqn/anisotropic/ElasticTTIFields.hpp
+     sem/elastic/secondOrderEqn/anisotropic/ElasticTTIWaveEquationSEMKernel.hpp
      sem/acoustic/secondOrderEqn/anisotropic/AcousticVTIFields.hpp
      sem/acoustic/secondOrderEqn/anisotropic/AcousticVTIWaveEquationSEM.hpp
      sem/acoustic/secondOrderEqn/anisotropic/AcousticVTIWaveEquationSEMKernel.hpp

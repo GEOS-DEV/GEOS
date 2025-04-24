@@ -21,7 +21,7 @@
 #include "ElasticWaveEquationSEM.hpp"
 #include "ElasticWaveEquationSEMKernel.hpp"
 #include "physicsSolvers/wavePropagation/sem/elastic/secondOrderEqn/anisotropic/ElasticVTIWaveEquationSEMKernel.hpp"
-
+#include "physicsSolvers/wavePropagation/sem/elastic/secondOrderEqn/anisotropic/ElasticTTIWaveEquationSEMKernel.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
 #include "finiteElement/FiniteElementDiscretization.hpp"
 #include "mainInterface/ProblemManager.hpp"
@@ -101,6 +101,13 @@ ElasticWaveEquationSEM::ElasticWaveEquationSEM( const std::string & name,
     setSizedFromParent( 0 ).
     setApplyDefaultValue( 0 ).
     setDescription( "Flag to apply VTI anisotropy. The default is to use isotropic physic." );
+
+  registerWrapper( viewKeyStruct::useTtiString(), &m_useTTI ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setSizedFromParent( 0 ).
+    setApplyDefaultValue( 0 ).
+    setDescription( "Flag to apply TTI anisotropy. The default is to use isotropic physic." );
+
 }
 
 ElasticWaveEquationSEM::~ElasticWaveEquationSEM()
@@ -188,11 +195,17 @@ void ElasticWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
         subRegion.registerField< elasticfields::ElasticQualityFactorS >( getName() );
       }
 
-      if( m_useVTI )
+      if( m_useVTI || m_useTTI )
       {
         subRegion.registerField< elasticvtifields::Gamma >( getName() );
         subRegion.registerField< elasticvtifields::Epsilon >( getName() );
         subRegion.registerField< elasticvtifields::Delta >( getName() );
+      }
+
+      if(m_useTTI)
+      {
+        subRegion.registerField< elasticttifields::Theta >( getName() );
+        subRegion.registerField< elasticttifields::Phi >( getName() );
       }
     } );
 
@@ -791,6 +804,18 @@ void ElasticWaveEquationSEM::computeUnknowns( real64 const & time_n,
   if( m_useVTI )
   {
     auto kernelFactory = elasticVTIWaveEquationSEMKernels::ExplicitElasticVTISEMFactory( dt );
+    finiteElement::
+      regionBasedKernelApplication< EXEC_POLICY,
+                                    constitutive::NullModel,
+                                    CellElementSubRegion >( mesh,
+                                                            regionNames,
+                                                            getDiscretizationName(),
+                                                            "",
+                                                            kernelFactory );
+  }
+  else if (m_useTTI)
+  {
+    auto kernelFactory = elasticTTIWaveEquationSEMKernels::ExplicitElasticTTISEMFactory( dt );
     finiteElement::
       regionBasedKernelApplication< EXEC_POLICY,
                                     constitutive::NullModel,
