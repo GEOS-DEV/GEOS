@@ -90,15 +90,15 @@ static PyObject * collect( PyHistoryCollection * self, PyObject * args )
 
   double time;
   double dt;
+  int cycleNumber;
 
-  if( !PyArg_ParseTuple( args, "dd", &time, &dt ) )
+  if( !PyArg_ParseTuple( args, "ddi", &time, &dt, &cycleNumber ) )
   {
     return nullptr;
   }
 
   geos::DomainPartition & domain = self->group->getGroupByPath< DomainPartition >( "/Problem/domain" );
 
-  int cycleNumber = int(round( time/dt ));
   try
   {
     self->group->execute( time, dt, cycleNumber, 0, 0, domain );

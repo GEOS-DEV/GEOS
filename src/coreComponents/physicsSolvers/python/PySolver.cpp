@@ -85,14 +85,14 @@ static PyObject * execute( PySolver * self, PyObject * args )
 
   double time;
   double dt;
-  if( !PyArg_ParseTuple( args, "dd", &time, &dt ) )
+  int cycleNumber;
+  
+  if( !PyArg_ParseTuple( args, "ddi", &time, &dt, &cycleNumber ) )
   {
     return nullptr;
   }
 
   geos::DomainPartition & domain = self->group->getGroupByPath< DomainPartition >( "/Problem/domain" );
-
-  int cycleNumber = int(round( time/dt ));
 
   self->group->execute( time, dt, cycleNumber, 0, 0, domain );
 
