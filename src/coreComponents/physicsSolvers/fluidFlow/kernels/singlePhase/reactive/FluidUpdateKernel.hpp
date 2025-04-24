@@ -44,8 +44,6 @@ struct FluidUpdateKernel
       for( localIndex q = 0; q < fluidWrapper.numGauss(); ++q )
       {
         fluidWrapper.update( k, q, pres[k], temp[k], logPrimaryConc[k] );
-
-        fluidWrapper.updateChemistryLogConc( k, q, pres[k], temp[k], logPrimaryConc[k] );
       }
     } );
   }

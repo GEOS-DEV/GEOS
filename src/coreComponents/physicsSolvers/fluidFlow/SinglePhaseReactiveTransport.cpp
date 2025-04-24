@@ -23,8 +23,9 @@
 #include "constitutive/ConstitutivePassThru.hpp"
 #include "constitutive/diffusion/DiffusionFields.hpp"
 #include "constitutive/diffusion/DiffusionSelector.hpp"
-#include "constitutive/fluid/singlefluid/reactive/ReactiveSingleFluid.hpp"
-#include "constitutive/fluid/multifluid/reactive/ReactiveFluidSelector.hpp"
+#include "constitutive/fluid/reactivefluid/ReactiveSinglePhaseFluid.hpp"
+#include "constitutive/fluid/reactivefluid/ReactiveSinglePhaseFluid.cpp"
+#include "constitutive/fluid/reactivefluid/ReactiveFluidSelector.hpp"
 #include "finiteVolume/FluxApproximationBase.hpp"
 #include "mesh/DomainPartition.hpp"
 #include "physicsSolvers/LogLevelsInfo.hpp"
@@ -70,7 +71,7 @@ void SinglePhaseReactiveTransport::registerDataOnMesh( Group & meshBodies )
     {
       if( m_reactiveFluidModelName.empty() )
       {
-        m_reactiveFluidModelName = getConstitutiveName< ReactiveSingleFluid >( subRegion );
+        m_reactiveFluidModelName = getConstitutiveName< reactivefluid::ReactiveCompressibleSinglePhaseFluid >( subRegion );
       }
 
       // If at least one region has a diffusion model, consider it enabled for all
@@ -86,7 +87,7 @@ void SinglePhaseReactiveTransport::registerDataOnMesh( Group & meshBodies )
   // Check needed to avoid errors when running in schema generation mode.
   if( !m_reactiveFluidModelName.empty() )
   {
-    ReactiveSingleFluid const & reactiveFluid = cm.getConstitutiveRelation< ReactiveSingleFluid >( m_reactiveFluidModelName );
+    reactivefluid::ReactiveCompressibleSinglePhaseFluid const & reactiveFluid = cm.getConstitutiveRelation< reactivefluid::ReactiveCompressibleSinglePhaseFluid >( m_reactiveFluidModelName );
     m_numPrimarySpecies = reactiveFluid.numPrimarySpecies();
     m_isThermal = reactiveFluid.isThermal();
   }
@@ -254,8 +255,8 @@ void SinglePhaseReactiveTransport::assembleAccumulationTermsInMassBalanceAndSpec
                                                 [&]( localIndex const,
                                                      ElementSubRegionBase const & subRegion )
     {
-      geos::constitutive::ReactiveSingleFluid const & fluid =
-        getConstitutiveModel< geos::constitutive::ReactiveSingleFluid >( subRegion, subRegion.template getReference< string >( viewKeyStruct::fluidNamesString() ) );
+      reactivefluid::ReactiveCompressibleSinglePhaseFluid const & fluid =
+        getConstitutiveModel< reactivefluid::ReactiveCompressibleSinglePhaseFluid >( subRegion, subRegion.template getReference< string >( viewKeyStruct::fluidNamesString() ) );
       geos::constitutive::CoupledSolidBase const & solid =
         getConstitutiveModel< geos::constitutive::CoupledSolidBase >( subRegion, subRegion.template getReference< string >( viewKeyStruct::solidNamesString() ) );
 
@@ -349,7 +350,7 @@ void SinglePhaseReactiveTransport::assembleFluxTerms( real64 const dt,
 
 SinglePhaseBase::FluidPropViews SinglePhaseReactiveTransport::getFluidProperties( constitutive::ConstitutiveBase const & fluid ) const
 {
-  ReactiveSingleFluid const & reactiveFluid = dynamicCast< ReactiveSingleFluid const & >( fluid );
+  reactivefluid::ReactiveCompressibleSinglePhaseFluid const & reactiveFluid = dynamicCast< reactivefluid::ReactiveCompressibleSinglePhaseFluid const & >( fluid );
   return { reactiveFluid.density(),
            reactiveFluid.dDensity(),
            reactiveFluid.viscosity(),
@@ -391,8 +392,8 @@ void SinglePhaseReactiveTransport::updateSpeciesAmount( ElementSubRegionBase & s
   arrayView1d< real64 const > const volume = subRegion.getElementVolume();
   arrayView1d< real64 > const deltaVolume = subRegion.getField< fields::flow::deltaVolume >();
 
-  ReactiveSingleFluid & fluid =
-    getConstitutiveModel< ReactiveSingleFluid >( subRegion, subRegion.getReference< string >( viewKeyStruct::fluidNamesString() ) );
+  reactivefluid::ReactiveCompressibleSinglePhaseFluid & fluid =
+    getConstitutiveModel< reactivefluid::ReactiveCompressibleSinglePhaseFluid >( subRegion, subRegion.getReference< string >( viewKeyStruct::fluidNamesString() ) );
   arrayView2d< real64 const, compflow::USD_COMP > const primarySpeciesAggregateConcentration = fluid.primarySpeciesAggregateConcentration();
   arrayView2d< real64 const, compflow::USD_COMP > const primarySpeciesAggregateConcentration_n = fluid.primarySpeciesAggregateConcentration_n();
 
@@ -416,8 +417,8 @@ void SinglePhaseReactiveTransport::updateFluidModel( ObjectManagerBase & dataGro
   arrayView1d< real64 const > const temp = dataGroup.getField< fields::flow::temperature >();
   arrayView2d< real64 const, compflow::USD_COMP > const logPrimaryConc = dataGroup.getField< fields::flow::logPrimarySpeciesConcentration >();
 
-  ReactiveSingleFluid & fluid =
-    getConstitutiveModel< ReactiveSingleFluid >( dataGroup, dataGroup.getReference< string >( viewKeyStruct::fluidNamesString() ) );
+  reactivefluid::ReactiveCompressibleSinglePhaseFluid & fluid =
+    getConstitutiveModel< reactivefluid::ReactiveCompressibleSinglePhaseFluid >( dataGroup, dataGroup.getReference< string >( viewKeyStruct::fluidNamesString() ) );
 
   constitutive::constitutiveUpdatePassThru( fluid, [&]( auto & castedFluid )
   {
@@ -431,12 +432,16 @@ void SinglePhaseReactiveTransport::initializeFluidState( MeshLevel & mesh, strin
   mesh.getElemManager().forElementSubRegions< CellElementSubRegion, SurfaceElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                                                  auto & subRegion )
   {
-    ReactiveSingleFluid const & fluid =
-      getConstitutiveModel< ReactiveSingleFluid >( subRegion, subRegion.template getReference< string >( viewKeyStruct::fluidNamesString()));
+    string const & fluidName = subRegion.template getReference< string >( viewKeyStruct::fluidNamesString() );
+    
+    reactivefluid::ReactiveCompressibleSinglePhaseFluid const & fluid =
+      getConstitutiveModel< reactivefluid::ReactiveCompressibleSinglePhaseFluid >( subRegion, fluidName);
     updateFluidState( subRegion );
 
     // 2. save the initial density (for use in the single-phase poromechanics solver to compute the deltaBodyForce)
     fluid.initializeState();
+
+    initializeEquilibriumReaction( subRegion );
 
     SinglePhaseBase::updateMass( subRegion );
     updateSpeciesAmount( subRegion );
@@ -449,6 +454,25 @@ void SinglePhaseReactiveTransport::initializeFluidState( MeshLevel & mesh, strin
       arrayView1d< real64 const > const temperature = subRegion.template getField< fields::flow::temperature >();
       diffusionMaterial.initializeTemperatureState( temperature );
     }
+  } );
+}
+
+void SinglePhaseReactiveTransport::initializeEquilibriumReaction( ElementSubRegionBase & subRegion ) const
+{
+  GEOS_MARK_FUNCTION;
+
+  arrayView1d< real64 const > const pres = subRegion.getField< fields::flow::pressure >();
+  arrayView1d< real64 const > const temp = subRegion.getField< fields::flow::temperature >();
+  arrayView2d< real64, compflow::USD_COMP > const logPrimaryConc = subRegion.getField< fields::flow::logPrimarySpeciesConcentration >();
+
+  reactivefluid::ReactiveCompressibleSinglePhaseFluid & fluid =
+    getConstitutiveModel< reactivefluid::ReactiveCompressibleSinglePhaseFluid >( subRegion, subRegion.getReference< string >( viewKeyStruct::fluidNamesString() ) );
+
+  constitutive::constitutiveUpdatePassThru( fluid, [&]( auto & castedFluid )
+  {
+    arrayView2d< real64 const, compflow::USD_COMP > const primaryAggregateConc = castedFluid.primarySpeciesAggregateConcentration();
+
+    singlePhaseReactiveBaseKernels::EquilibriumReactionUpdateKernel::launch( castedFluid, pres, temp, logPrimaryConc, primaryAggregateConc );
   } );
 }
 

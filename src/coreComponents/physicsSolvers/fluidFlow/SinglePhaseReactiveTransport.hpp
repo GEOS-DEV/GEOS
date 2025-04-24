@@ -28,9 +28,10 @@
 #include "physicsSolvers/fluidFlow/kernels/singlePhase/reactive/FluidUpdateKernel.hpp"
 #include "physicsSolvers/fluidFlow/kernels/singlePhase/reactive/FluxComputeKernel.hpp"
 #include "physicsSolvers/fluidFlow/kernels/singlePhase/reactive/ResidualNormKernel.hpp"
+#include "physicsSolvers/fluidFlow/kernels/singlePhase/reactive/ReactionUpdateKernel.hpp"
 #include "physicsSolvers/fluidFlow/kernels/singlePhase/reactive/ThermalAccumulationKernels.hpp"
 #include "physicsSolvers/fluidFlow/kernels/singlePhase/reactive/ThermalFluxComputeKernel.hpp"
-#include "constitutive/fluid/singlefluid/reactive/ReactiveSingleFluid.hpp"
+#include "constitutive/fluid/reactivefluid/ReactiveSinglePhaseFluid.hpp"
 
 
 namespace geos
@@ -143,6 +144,8 @@ public:
   virtual void initializePostInitialConditionsPreSubGroups() override;
 
   virtual void initializeFluidState( MeshLevel & mesh, string_array const & regionNames ) override;
+
+  void initializeEquilibriumReaction( ElementSubRegionBase & subRegion ) const;
 
   /**
    * @brief assembles the accumulation terms in total mass balance and primary species amount equation for all cells

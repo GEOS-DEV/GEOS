@@ -14,14 +14,13 @@
  */
 
 /**
- * @file singlePhaseSelector.hpp
+ * @file ReactiveFluidSelector.hpp
  */
-#ifndef GEOS_CONSTITUTIVE_FLUID_SINGLEFLUID_SINGLEPHASESELECTOR_HPP_
-#define GEOS_CONSTITUTIVE_FLUID_SINGLEFLUID_SINGLEPHASESELECTOR_HPP_
+#ifndef GEOS_CONSTITUTIVE_FLUID_REACTIVEFLUID_REACTIVEFLUIDSELECTOR_HPP_
+#define GEOS_CONSTITUTIVE_FLUID_REACTIVEFLUID_REACTIVEFLUIDSELECTOR_HPP_
 
 #include "constitutive/ConstitutivePassThruHandler.hpp"
-#include "constitutive/fluid/singlefluid/CompressibleSinglePhaseFluid.hpp"
-#include "constitutive/fluid/singlefluid/ThermalCompressibleSinglePhaseFluid.hpp"
+#include "constitutive/fluid/reactivefluid/ReactiveSinglePhaseFluid.hpp"
 
 namespace geos
 {
@@ -33,20 +32,20 @@ template< typename LAMBDA >
 void constitutiveUpdatePassThru( SingleFluidBase const & fluid,
                                  LAMBDA && lambda )
 {
-  ConstitutivePassThruHandler< ThermalCompressibleSinglePhaseFluid,
-                               CompressibleSinglePhaseFluid >::execute( fluid, std::forward< LAMBDA >( lambda ) );
+  ConstitutivePassThruHandler< reactivefluid::ReactiveCompressibleSinglePhaseFluid,
+                               reactivefluid::ReactiveThermalCompressibleSinglePhaseFluid >::execute( fluid, std::forward< LAMBDA >( lambda ) );
 }
 
 template< typename LAMBDA >
 void constitutiveUpdatePassThru( SingleFluidBase & fluid,
                                  LAMBDA && lambda )
 {
-  ConstitutivePassThruHandler< ThermalCompressibleSinglePhaseFluid,
-                               CompressibleSinglePhaseFluid >::execute( fluid, std::forward< LAMBDA >( lambda ) );
+  ConstitutivePassThruHandler< reactivefluid::ReactiveCompressibleSinglePhaseFluid,
+                               reactivefluid::ReactiveThermalCompressibleSinglePhaseFluid >::execute( fluid, std::forward< LAMBDA >( lambda ) );
 }
 
 } // namespace constitutive
 
 } // namespace geos
 
-#endif //GEOS_CONSTITUTIVE_FLUID_SINGLEFLUID_SINGLEPHASESELECTOR_HPP_
+#endif //GEOS_CONSTITUTIVE_FLUID_REACTIVEFLUID_REACTIVEFLUIDSELECTOR_HPP_

@@ -120,6 +120,7 @@ set( constitutive_headers
      fluid/reactivefluid/ReactiveSinglePhaseFluid.hpp
      fluid/reactivefluid/ReactiveFluidFields.hpp
      fluid/reactivefluid/ReactiveFluidLayouts.hpp
+     fluid/reactivefluid/ReactiveFluidSelector.hpp
      fluid/singlefluid/CompressibleSinglePhaseFluid.hpp
      fluid/singlefluid/ParticleFluid.hpp
      fluid/singlefluid/ParticleFluidBase.hpp
@@ -132,9 +133,6 @@ set( constitutive_headers
      fluid/singlefluid/SingleFluidSelector.hpp
      fluid/singlefluid/SlurryFluidSelector.hpp
      fluid/singlefluid/ThermalCompressibleSinglePhaseFluid.hpp
-     fluid/singlefluid/reactive/ReactiveCompressibleSinglePhaseFluid.hpp
-     fluid/singlefluid/reactive/ReactiveSingleFluid.hpp
-     fluid/singlefluid/reactive/ThermalReactiveCompressibleSinglePhaseFluid.hpp
      permeability/CarmanKozenyPermeability.hpp
      permeability/ConstantPermeability.hpp
      permeability/DamagePermeability.hpp
@@ -275,9 +273,6 @@ set( constitutive_sources
      fluid/singlefluid/SingleFluidBase.cpp
      fluid/singlefluid/SlurryFluidBase.cpp
      fluid/singlefluid/ThermalCompressibleSinglePhaseFluid.cpp
-     fluid/singlefluid/reactive/ReactiveCompressibleSinglePhaseFluid.cpp
-     fluid/singlefluid/reactive/ReactiveSingleFluid.cpp
-     fluid/singlefluid/reactive/ThermalReactiveCompressibleSinglePhaseFluid.cpp
      permeability/CarmanKozenyPermeability.cpp
      permeability/ConstantPermeability.cpp
      permeability/DamagePermeability.cpp

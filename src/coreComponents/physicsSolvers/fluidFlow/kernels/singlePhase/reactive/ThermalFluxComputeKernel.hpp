@@ -92,7 +92,7 @@ public:
     StencilAccessors< fields::flow::temperature >;
 
   using ThermalReactiveSinglePhaseFluidAccessors =
-    StencilMaterialAccessors< constitutive::ReactiveSingleFluid,
+    StencilMaterialAccessors< constitutive::reactivefluid::ReactiveSinglePhaseFluid< constitutive::CompressibleSinglePhaseFluid >,
                               fields::singlefluid::enthalpy,
                               fields::singlefluid::dEnthalpy >;
 

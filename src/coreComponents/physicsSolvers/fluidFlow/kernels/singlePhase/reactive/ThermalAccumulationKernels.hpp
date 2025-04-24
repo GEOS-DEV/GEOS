@@ -69,7 +69,7 @@ public:
   AccumulationKernel( globalIndex const rankOffset,
                       string const dofKey,
                       SUBREGION_TYPE const & subRegion,
-                      constitutive::ReactiveSingleFluid const & fluid,
+                      constitutive::reactivefluid::ReactiveSinglePhaseFluid< constitutive::CompressibleSinglePhaseFluid > const & fluid,
                       constitutive::CoupledSolidBase const & solid,
                       real64 const & dt,
                       CRSMatrixView< real64, globalIndex const > const & localMatrix,
@@ -236,7 +236,7 @@ public:
                    globalIndex const rankOffset,
                    string const dofKey,
                    SUBREGION_TYPE const & subRegion,
-                   constitutive::ReactiveSingleFluid const & fluid,
+                   constitutive::reactivefluid::ReactiveSinglePhaseFluid< constitutive::CompressibleSinglePhaseFluid > const & fluid,
                    constitutive::CoupledSolidBase const & solid,
                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
                    arrayView1d< real64 > const & localRhs )

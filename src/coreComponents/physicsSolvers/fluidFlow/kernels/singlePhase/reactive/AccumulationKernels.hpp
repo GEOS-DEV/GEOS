@@ -22,7 +22,7 @@
 
 #include "common/DataLayouts.hpp"
 #include "common/DataTypes.hpp"
-#include "constitutive/fluid/singlefluid/reactive/ReactiveSingleFluid.hpp"
+#include "constitutive/fluid/reactivefluid/ReactiveSinglePhaseFluid.hpp"
 #include "constitutive/solid/CoupledSolidBase.hpp"
 #include "physicsSolvers/fluidFlow/kernels/singlePhase/AccumulationKernels.hpp"
 #include "physicsSolvers/fluidFlow/kernels/singlePhase/reactive/KernelLaunchSelectors.hpp"
@@ -74,7 +74,7 @@ public:
   AccumulationKernel( globalIndex const rankOffset,
                       string const dofKey,
                       SUBREGION_TYPE const & subRegion,
-                      constitutive::ReactiveSingleFluid const & fluid,
+                      constitutive::reactivefluid::ReactiveSinglePhaseFluid< constitutive::CompressibleSinglePhaseFluid > const & fluid,
                       constitutive::CoupledSolidBase const & solid,
                       real64 const & dt,
                       CRSMatrixView< real64, globalIndex const > const & localMatrix,
@@ -90,7 +90,7 @@ public:
     m_primarySpeciesAggregateConcentration( fluid.primarySpeciesAggregateConcentration() ),
     // m_dPrimarySpeciesAggregateConcentration_dPres( fluid.dPrimarySpeciesAggregateConcentration_dPres() ),
     m_dPrimarySpeciesAggregateConcentration_dLogPrimaryConc( fluid.dPrimarySpeciesAggregateConcentration_dLogPrimaryConc() ),
-    m_primarySpeciesAggregateKineticRate( fluid.kineticReactionRates() ),
+    // m_primarySpeciesAggregateKineticRate( fluid.kineticReactionRates() ),
     // m_dPrimarySpeciesAggregateKineticRate_dPres( fluid.dPrimarySpeciesAggregateKineticRate_dPres() ),
     // m_dPrimarySpeciesAggregateKineticRate_dLogPrimaryConc( fluid.dPrimarySpeciesAggregateKineticRate_dLogPrimaryConc() ),
     m_primarySpeciesAggregateMole_n( subRegion.template getField< fields::flow::primarySpeciesAggregateMole_n >() )
@@ -269,8 +269,8 @@ protected:
   // View on the derivatives of total ion concentration for the primary species wrt log of primary species concentration
   arrayView3d< real64 const, compflow::USD_COMP_DC > m_dPrimarySpeciesAggregateConcentration_dLogPrimaryConc;
 
-  // View on the aggregate kinetic rate of primary species from all reactions
-  arrayView2d< real64 const, compflow::USD_COMP > m_primarySpeciesAggregateKineticRate;
+  // // View on the aggregate kinetic rate of primary species from all reactions
+  // arrayView2d< real64 const, compflow::USD_COMP > m_primarySpeciesAggregateKineticRate;
 
   // // View on the derivatives of aggregate kinetic rate of primary species wrt pressure
   // arrayView2d< real64 const, compflow::USD_COMP > m_dPrimarySpeciesAggregateKineticRate_dPres;
@@ -309,7 +309,7 @@ public:
                    globalIndex const rankOffset,
                    string const dofKey,
                    SUBREGION_TYPE const & subRegion,
-                   constitutive::ReactiveSingleFluid const & fluid,
+                   constitutive::reactivefluid::ReactiveSinglePhaseFluid< constitutive::CompressibleSinglePhaseFluid > const & fluid,
                    constitutive::CoupledSolidBase const & solid,
                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
                    arrayView1d< real64 > const & localRhs )

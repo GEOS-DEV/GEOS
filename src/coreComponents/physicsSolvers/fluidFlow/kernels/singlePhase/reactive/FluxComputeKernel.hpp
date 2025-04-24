@@ -24,8 +24,8 @@
 #include "constitutive/diffusion/DiffusionBase.hpp"
 #include "constitutive/solid/porosity/PorosityBase.hpp"
 #include "constitutive/solid/porosity/PorosityFields.hpp"
-#include "constitutive/fluid/singlefluid/reactive/ReactiveSingleFluid.hpp"
-#include "constitutive/fluid/multifluid/reactive/ReactiveMultiFluidFields.hpp"
+#include "constitutive/fluid/reactivefluid/ReactiveSinglePhaseFluid.hpp"
+#include "constitutive/fluid/reactivefluid/ReactiveFluidFields.hpp"
 #include "physicsSolvers/fluidFlow/kernels/singlePhase/FluxComputeKernel.hpp"
 #include "physicsSolvers/fluidFlow/kernels/singlePhase/reactive/KernelLaunchSelectors.hpp"
 
@@ -94,7 +94,7 @@ public:
                       fields::flow::dMobility_dLogPrimaryConc >;
 
   using ReactiveSinglePhaseFluidAccessors =
-    StencilMaterialAccessors< constitutive::ReactiveSingleFluid,
+    StencilMaterialAccessors< constitutive::reactivefluid::ReactiveSinglePhaseFluid< constitutive::CompressibleSinglePhaseFluid >,
                               fields::reactivefluid::primarySpeciesAggregateConcentration,
                               fields::reactivefluid::dPrimarySpeciesAggregateConcentration_dLogPrimaryConc >;
 

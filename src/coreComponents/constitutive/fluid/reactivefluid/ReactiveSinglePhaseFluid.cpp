@@ -30,76 +30,85 @@ namespace constitutive
 namespace reactivefluid
 {
 
-using namespace hpcReact::bulkGeneric;  
+using namespace hpcReact::bulkGeneric;
 
 template< typename BASE >
 ReactiveSinglePhaseFluid< BASE >::
-  ReactiveSinglePhaseFluid( string const & name, Group * const parent ) :
+ReactiveSinglePhaseFluid( string const & name, Group * const parent ):
   BASE( name, parent )
 {
 
-  registerWrapper( viewKeyStruct::chemicalSystemNameString(), &m_chemicalSystemType ).
-  setInputFlag( InputFlags::REQUIRED ).
-  setDescription( "Chemical System type. Available options are: "
-                  "``" + EnumStrings< ChemicalSystemType >::concat( "|" ) + "``" );
+  this->registerWrapper( viewKeyStruct::chemicalSystemNameString(), &m_chemicalSystemType ).
+    setInputFlag( InputFlags::REQUIRED ).
+    setDescription( "Chemical System type. Available options are: "
+                    "``" + EnumStrings< ChemicalSystemType >::concat( "|" ) + "``" );
   // For now this is being hardcoded. We will see where this should come from.
-  m_numPrimarySpecies = 7;
+  m_numPrimarySpecies = 5;
   m_numSecondarySpecies = 11;
 
-  registerField( fields::reactivefluid::primarySpeciesConcentration{}, &m_primarySpeciesConcentration );
-  registerField( fields::reactivefluid::secondarySpeciesConcentration{}, &m_secondarySpeciesConcentration );
-  registerField( fields::reactivefluid::primarySpeciesTotalConcentration{}, &m_primarySpeciesTotalConcentration );
+  this->registerField( fields::reactivefluid::primarySpeciesConcentration{}, &m_primarySpeciesConcentration );
+  this->registerField( fields::reactivefluid::secondarySpeciesConcentration{}, &m_secondarySpeciesConcentration );
+  this->registerField( fields::reactivefluid::primarySpeciesAggregateConcentration{}, &m_primarySpeciesAggregateConcentration );
+  this->registerField( fields::reactivefluid::primarySpeciesAggregateConcentration_n{}, &m_primarySpeciesAggregateConcentration_n );
+  this->registerField( fields::reactivefluid::dPrimarySpeciesAggregateConcentration_dLogPrimaryConc{}, &m_dPrimarySpeciesAggregateConcentration_dLogPrimaryConc );
 }
 
 template< typename BASE >
 std::unique_ptr< ConstitutiveBase > ReactiveSinglePhaseFluid< BASE >::
-  deliverClone( string const & name, Group * const parent ) const
+deliverClone( string const & name, Group * const parent ) const
 {
   std::unique_ptr< ConstitutiveBase > clone = BASE::deliverClone( name, parent );
 
   ReactiveSinglePhaseFluid & newConstitutiveRelation = dynamicCast< ReactiveSinglePhaseFluid & >( *clone );
+
+  GEOS_UNUSED_VAR( newConstitutiveRelation );
 
   return clone;
 }
 
 template< typename BASE >
 void ReactiveSinglePhaseFluid< BASE >::postInputInitialization()
-{}
+{
+  BASE::postInputInitialization();
+}
+
+template< typename BASE >
+void ReactiveSinglePhaseFluid< BASE >::saveConvergedState() const
+{
+  BASE::saveConvergedState();
+
+  m_primarySpeciesAggregateConcentration_n.setValues< parallelDevicePolicy<> >( m_primarySpeciesAggregateConcentration.toViewConst() );
+}
 
 template< typename BASE >
 void ReactiveSinglePhaseFluid< BASE >::resizeFields( localIndex const size, localIndex const numPts )
 {
-  BASE::resizeFields( size, numPts );
-
+  GEOS_UNUSED_VAR( numPts );
   integer const numPrimarySpecies = this->numPrimarySpecies();
   integer const numSecondarySpecies = this->numSecondarySpecies();
-  
+
   m_primarySpeciesConcentration.resize( size, numPrimarySpecies );
   m_secondarySpeciesConcentration.resize( size, numSecondarySpecies );
-  m_primarySpeciesTotalConcentration.resize( size, numPrimarySpecies );
+  m_primarySpeciesAggregateConcentration.resize( size, numPrimarySpecies );
+  m_primarySpeciesAggregateConcentration_n.resize( size, numPrimarySpecies );
+  m_dPrimarySpeciesAggregateConcentration_dLogPrimaryConc.resize( size, numPrimarySpecies, numPrimarySpecies );
 }
 
 template< typename BASE >
-std::variant< KernelWrapper< carbonateSystemType >,
-              KernelWrapper< simpleTestType > >
-ReactiveSinglePhaseFluid< BASE >createKernelWrapper() const
+void ReactiveSinglePhaseFluid< BASE >::allocateConstitutiveData( dataRepository::Group & parent,
+                                                                 localIndex const numConstitutivePointsPerParentIndex )
 {
-    switch ( m_chemicalSystemType )
-    {
-      case ChemicalSystemType::carbonates:
-        return KernelWrapper< hpcReact::bubulkGeneric::carbonateSystemType >( m_primarySpeciesConcentration,
-                                                       m_secondarySpeciesConcentration,
-                                                       m_primarySpeciesTotalConcentration,
-                                                       m_numSecondarySpecies,
-                                                       carbonateSystem );
-      default:
-        return KernelWrapper< hpcReact::bubulkGeneric::simpleTestType >( m_primarySpeciesConcentration,
-                                                                         m_secondarySpeciesConcentration,
-                                                                         m_primarySpeciesTotalConcentration,
-                                                                         m_numSecondarySpecies,
-                                                                         simpleTest );
-    }
+  BASE::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
+  resizeFields( parent.size(), numConstitutivePointsPerParentIndex );
 }
+
+template class ReactiveSinglePhaseFluid< CompressibleSinglePhaseFluid >;
+
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, ReactiveCompressibleSinglePhaseFluid, string const &, Group * const )
+
+template class ReactiveSinglePhaseFluid< ThermalCompressibleSinglePhaseFluid >;
+
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, ReactiveThermalCompressibleSinglePhaseFluid, string const &, Group * const )
 
 } // namespace reactivefluid
 
