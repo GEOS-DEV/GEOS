@@ -28,6 +28,9 @@
 namespace geos
 {
 
+/**
+ * @brief Class containing iteration data for a time-step
+ */
 class IterationsStatistics : public dataRepository::Group
 {
 public:
@@ -36,7 +39,7 @@ public:
  * @brief Constructor for SolverStatistics Objects.
  * @param[in] name the name of this instantiation of SolverStatistics in the repository
  * @param[in] parent the parent group of this instantiation of SolverStatistics
- * @note For now, we register only the iteration statistics as the convergence value will be lost during the solving
+ * @note Currently, we register only the iteration statistics as the convergence value will be lost during the solving
  */
   IterationsStatistics( string const & name,
                         dataRepository::Group * const parent );
@@ -106,7 +109,7 @@ public:
   /**
    * @brief Initialize the counters used for an individual time step
    */
-  void initializeTimeStepStatistics();
+  void resetCurrentTimeStepStatistics();
 
   /**
    * @brief Tell the solverStatistics that we are doing a nonlinear iteration
@@ -155,7 +158,7 @@ public:
   { m_outputDir = path; }
 
   /**
-   * @return The output directory where all statistics related to the solver are atored
+   * @return The output directory for solver statistics (CSV).
    */
   string getOutputDir()
   { return m_outputDir; }
@@ -164,13 +167,19 @@ public:
 private:
   /// Table containing statistics relative to non linear parameter
   TableData m_nonLinearData;
-
+  /// Output directory for the CSV solver iteration statistics
   string m_outputDir;
 };
 
+/**
+ * @brief Class containing convergence information given a time-step
+ */
 class ConvergenceStatistics
 {
 public:
+  /**
+   * @brief Construct a new Convergence Statistics object
+   */
   ConvergenceStatistics();
 
   /// Number of time steps
@@ -226,13 +235,13 @@ public:
 
   /**
    * @brief Output the cumulative statistics to the terminal
-   * @param Indicate if we output to CSV FILE
+   * @param writeCSV Indicates if the output should be written to a CSV file.
    */
   void outputResidualNorm( bool writeCSV );
 
   /**
    * @brief Set the Residual Norms filename
-   * @param filename The filename string
+   * @param filename The filename as a string_view.
    */
   void setResidualNormsFileName( string_view filename )
   { m_residualNormsFileName = filename; }
@@ -243,46 +252,44 @@ public:
   void registerResidualNormToTable();
 
   /**
-   * @brief When a configuration did not converge, removes the last residual norms by the number of
-   * the newton iterations
+   * @brief Remove the last residual norms when a configuration did not converge.
+   * @note This is done based on the number of Newton iterations.
    */
   void removeInvalidResidualNorms();
 
   /**
    * @brief Save the current newton iteration
-   * @param currentNewtonIter The current newton iteration done by the the linear solver
+   * @param currentNewtonIter The current newton iteration performed by the the linear solver
    */
   void logNewtonIter( integer currentNewtonIter );
 
   /**
-   * @brief Set the Directory Path object
-   * @param path
+   * @brief  Set the directory path for output files.
+   * @param path The directory path as a string_view.
    */
   void setDirectoryPath( string_view path )
   { m_outputDir = path; }
 
   /**
-   * @return The output directory where all statistics related to the solver are atored
+   * @return The output directory for solver statistics (CSV).
    */
   string getOutputDir()
   { return m_outputDir; }
 
 private:
-  /// Table containing statistics relative to non linear norms
+  /// Table containing statistics related  to non linear norms
   std::unique_ptr< TableLayout > m_nonLinearNormsLayout;
-
-  /// Table containing statistics relative to non linear norms
+  /// Table containing statistics data for nonlinear norms.
   TableData m_nonLinearNormsData;
-
-  /// Residuals norms csv filename
+  /// Filename for the residual norms CSV.
   string m_residualNormsFileName;
-
+  /// Output directory for the CSV solver convergence statistics
   string m_outputDir;
 };
 
 /**
  * @class SolverStatistics
- * @brief This class is used to log the solver statistics
+ * @brief This class records solver statistics for each time step.
  */
 class SolverStatistics : public dataRepository::Group
 {
@@ -291,11 +298,14 @@ public:
    * @brief Constructor for SolverStatistics Objects.
    * @param[in] name the name of this instantiation of SolverStatistics in the repository
    * @param[in] parent the parent group of this instantiation of SolverStatistics
-   * @note For now, we register only the iteration statistics as the convergence value will be lost during the solving
+   * @noteCurrently we register only the iteration statistics as the convergence value will be lost during the solving
    */
   SolverStatistics( string const & name,
                     dataRepository::Group * const parent );
 
+  /**
+   * @brief Group key associated with IterationsStatistics.
+   */
   struct groupKeyStruct
   {
     /// @return string for the IterationsStatistics wrapper
@@ -308,12 +318,13 @@ public:
   string getOutputDir()
   { return m_outputDir; }
 
+  /// Contain iteration data given a time step
   IterationsStatistics m_iterationsStats;
-
+  /// Contain convergence data given a time step
   ConvergenceStatistics m_convergenceStats;
 
 private:
-  /// Output directory for solver statiscis csv à passer dans le cnstructeur
+  /// Output directory for solver statistics (CSV), passed in the constructor.
   string m_outputDir;
 };
 

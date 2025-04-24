@@ -86,7 +86,7 @@ IterationsStatistics::IterationsStatistics( string const & name, Group * const p
     setDescription( "Cumulative number of discarded linear iterations" );
 }
 
-void IterationsStatistics::initializeTimeStepStatistics()
+void IterationsStatistics::resetCurrentTimeStepStatistics()
 {
   // the time step begins, we reset the individual-timestep counters
   m_currentNumOuterLoopIterations = 0;
@@ -131,7 +131,7 @@ void IterationsStatistics::logTimeStepCut()
   m_numTimeStepCuts++;
 
   // we are going to restart the timestep from the previous converged time step, so we have to re-initialize the statistics
-  initializeTimeStepStatistics();
+  resetCurrentTimeStepStatistics();
 }
 
 void IterationsStatistics::registerStatsToTable()
@@ -151,7 +151,7 @@ void IterationsStatistics::outputStatistics( bool writeCSV )
   { // output to log
     GEOS_LOG_RANK_0( GEOS_FMT( "{}, number of Time-steps: {}", getParent().getName(), m_numTimeSteps ) );
     GEOS_LOG_RANK_0( GEOS_FMT( "{}, number of Time steps cut: {}", getParent().getName(), m_numTimeStepCuts ) );
-    TableLayout statsLayout( GEOS_FMT( "{} statistics", getParent().getName()),
+    TableLayout const statsLayout( GEOS_FMT( "{} statistics", getParent().getName()),
                              { TableLayout::Column()
                                  .setName( "Components" )
                                  .setValuesAlignment( TableLayout::Alignment::left ),
@@ -166,20 +166,18 @@ void IterationsStatistics::outputStatistics( bool writeCSV )
     nonLinearDataLog.addRow( "Discarded nonlinear", m_numDiscardedNonlinearIterations );
     nonLinearDataLog.addRow( "Discarded linear", m_numDiscardedLinearIterations );
 
-    std::cout << statsFormatter.toString( nonLinearDataLog ) << std::endl;
+    GEOS_LOG_RANK_0( statsFormatter.toString( nonLinearDataLog ));
   }
 
   if( writeCSV )
   {
     string const fileName = GEOS_FMT( "{}/statistics_cycle_{}.csv", m_outputDir, m_numTimeSteps );
     std::ofstream logStream( fileName );
-    std::cout << "fileName : " << fileName <<  std::endl;
 
-    TableLayout statsLayout( {  "Time-steps", "Time steps cut",
+    TableLayout const statsLayout( {  "Time-steps", "Time steps cut",
                                 "Successful outer loop", "Successful nonlinear", "Successful linear",
                                 "Discarded outer loop", "Discarded nonlinear", "Discarded linear"} );
     TableCSVFormatter const csvOutput( statsLayout );
-    std::cout << csvOutput.toString( m_nonLinearData ) << std::endl;
 
     logStream << csvOutput.toString( m_nonLinearData );
     logStream.close();
@@ -279,7 +277,6 @@ void ConvergenceStatistics::outputResidualNorm( bool writeCSV )
   if( writeCSV )
   {
     TableCSVFormatter const csvOutput( *m_nonLinearNormsLayout );
-    std::cout << csvOutput.toString( m_nonLinearNormsData ) << std::endl;
     logStream << csvOutput.toString( m_nonLinearNormsData );
   }
   logStream.close();

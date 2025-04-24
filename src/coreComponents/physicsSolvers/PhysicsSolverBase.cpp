@@ -275,7 +275,7 @@ bool PhysicsSolverBase::execute( real64 const time_n,
   for( integer subStep = 0; subStep < maxSubSteps && dtRemaining > 0.0; ++subStep )
   {
     // reset number of nonlinear and linear iterations
-    m_solverStatistics.m_iterationsStats.initializeTimeStepStatistics();
+    m_solverStatistics.m_iterationsStats.resetCurrentTimeStepStatistics();
 
     real64 const dtAccepted = solverStep( time_n + (dt - dtRemaining),
                                           nextDt,

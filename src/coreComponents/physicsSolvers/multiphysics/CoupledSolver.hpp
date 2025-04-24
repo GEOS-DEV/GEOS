@@ -461,7 +461,7 @@ protected:
       forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
       {
         solver->resetStateToBeginningOfStep( domain );
-        solver->getSolverStatistics().m_iterationsStats.initializeTimeStepStatistics(); // initialize counters for subsolvers
+        solver->getSolverStatistics().m_iterationsStats.resetCurrentTimeStepStatistics(); // initialize counters for subsolvers
       } );
       resetStateToBeginningOfStep( domain );
 
