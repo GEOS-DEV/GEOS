@@ -198,8 +198,7 @@ std::vector< STRING_T > divideLines( string_view value )
 }
 template std::vector< string > divideLines( size_t &, string_view );
 template std::vector< string_view > divideLines( size_t &, string_view );
-template std::vector< string > divideLines( string_view );
-template std::vector< string_view > divideLines( string_view );
+
 
 template< typename STRING_T >
 std::vector< STRING_T > wrapTextToMaxLength( std::vector< STRING_T > const & lines,
