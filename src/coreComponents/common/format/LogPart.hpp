@@ -36,9 +36,10 @@ public:
 
   /**
    * @brief Initialize a LogPart given a title
-   * @param m_logPartTitle The title who will be used for top and bottom LogPart
+   * @param logPartTitle The title who will be used for top and bottom LogPart
+   * @param enableOutput Boolean to activate or not csv output
    */
-  LogPart( string_view m_logPartTitle, bool enableOutput );
+  LogPart( string_view logPartTitle, bool enableOutput );
 
   /**
    * @brief Add a description to the top LogPart
@@ -94,6 +95,10 @@ public:
    */
   void end( std::ostream & oss = std::cout );
 
+  /**
+   * @brief Toggles the CSV output feature.
+   * @param enabled Boolean to activate csv output 
+   */
   void enableOutput( bool enabled )
   { m_enableOutput = enabled; }
 
