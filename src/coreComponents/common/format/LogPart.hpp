@@ -97,7 +97,7 @@ public:
 
   /**
    * @brief Toggles the CSV output feature.
-   * @param enabled Boolean to activate csv output 
+   * @param enabled Boolean to activate csv output
    */
   void enableOutput( bool enabled )
   { m_enableOutput = enabled; }
