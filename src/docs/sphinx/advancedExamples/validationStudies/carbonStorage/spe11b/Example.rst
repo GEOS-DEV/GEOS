@@ -83,8 +83,6 @@ Constitutives and includes
 
 .. _KRPCSection:
 
-//Here we will show a part of the _include\/_. Discussion about NIST
-
 The capillary and residual trapping in such a multi-facies reservoir occurs due to the heterogeneous properties. For instance, jumping from
 anticline facies \#5 to the upper layers a large entry pressure has to be reached. The box A is the design such that it can monitor the
 expected trapped *CO2* dissolving and making the surrounding brine heavier. This then will result in sinking brine and start convective
@@ -100,7 +98,7 @@ as playing an important role in the overall trapping. The import in the simulati
     :start-after: <!-- SPHINX_KR_TABLE -->
     :end-before: <!-- SPHINX_KR_TABLE_END -->
 
-    and through the definition of relative permeabilities and capillary pressure under the `Constitutive` tag. As an example, definition of
+and through the definition of relative permeabilities and capillary pressure under the `Constitutive` tag. As an example, definition of
  relperm for the facies \#1 is reported,
 
 
@@ -119,7 +117,7 @@ and then needs to be defined as such. They then will be defined as
 
 scaling their `Constitutive` 's values that are defined,
 
-.. literalinclude:: ../../../../../../../inputFiles/compositionalMultiphaseFlow/benchmarks/SPE11/b/include/properties_vti.xml
+.. literalinclude:: ../../../../../../../inputFiles/compositionalMultiphaseFlow/benchmarks/SPE11/b/spe11b_vti_source_base.xml
     :language: xml
     :start-after: <!-- SPHINX_THC_CONST -->
     :end-before: <!-- SPHINX_THC_CONST_END -->
@@ -145,10 +143,12 @@ composition.
     :end-before: <!-- SPHINX_EOS_CONST_END -->
 
 It is done using the `CO2BrinePhillipsThermalFluid` tag. It lists files that includes table generator's parameters. For instance, *CO2*'s density
-is modeled through *Span Wagner* model, while the viscosities are obtained via Fenghour model. For more detail, read :ref:`CO2-EOS`.
+is modeled through *Span Wagner* model, while the viscosities are obtained via *Fenghour* model. For more detail, read :ref:`CO2-EOS`.
 Their conformity to NIST values is assessed in the following plot,
 
-//ADD NIST COMPARISON
+.. plot:: ../inputFiles/compositionalMultiphaseFlow/benchmarks/SPE11/b/tables/plotNIST.py
+
+ Above is the one to one comparison with respect to pressure range used for a variety of pressures.
 
 ------------------------------------------------------------------------
 Flow solver
