@@ -86,7 +86,7 @@ static PyObject * execute( PySolver * self, PyObject * args )
   double time;
   double dt;
   int cycleNumber;
-  
+
   if( !PyArg_ParseTuple( args, "ddi", &time, &dt, &cycleNumber ) )
   {
     return nullptr;
