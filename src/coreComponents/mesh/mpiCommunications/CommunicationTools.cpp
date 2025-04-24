@@ -23,6 +23,7 @@
 #include "common/GEOS_RAJA_Interface.hpp"
 
 #include <algorithm>
+#include <sys/resource.h>
 
 namespace geos
 {
@@ -936,23 +937,57 @@ void CommunicationTools::synchronizePackSendRecvSizes( FieldIdentifiers const & 
                                                        bool onDevice )
 {
   GEOS_MARK_FUNCTION;
+    struct rusage usage0;
+    struct rusage usage1;
+    struct rusage usage2;
+    struct rusage usage3;
+    struct rusage usage4;
+    struct rusage usage5;
+    struct rusage usage6;
+    struct rusage usage7;
+    getrusage(RUSAGE_SELF, &usage0);
   icomm.setFieldsToBeSync( fieldsToBeSync );
+    getrusage(RUSAGE_SELF, &usage1);
   icomm.resize( neighbors.size() );
+    getrusage(RUSAGE_SELF, &usage2);
 
   parallelDeviceEvents events;
   for( std::size_t neighborIndex = 0; neighborIndex < neighbors.size(); ++neighborIndex )
   {
     NeighborCommunicator & neighbor = neighbors[neighborIndex];
+    getrusage(RUSAGE_SELF, &usage3);
     int const bufferSize = neighbor.packCommSizeForSync( fieldsToBeSync, mesh, icomm.commID(), onDevice, events );
 
+    getrusage(RUSAGE_SELF, &usage4);
     neighbor.mpiISendReceiveBufferSizes( icomm.commID(),
                                          icomm.mpiSendBufferSizeRequest( neighborIndex ),
                                          icomm.mpiRecvBufferSizeRequest( neighborIndex ),
                                          MPI_COMM_GEOS );
+    getrusage(RUSAGE_SELF, &usage5);
 
     neighbor.resizeSendBuffer( icomm.commID(), bufferSize );
+    getrusage(RUSAGE_SELF, &usage6);
   }
   waitAllDeviceEvents( events );
+    getrusage(RUSAGE_SELF, &usage7);
+    if( usage0.ru_maxrss != usage1.ru_maxrss ||
+        usage1.ru_maxrss != usage2.ru_maxrss ||
+        usage2.ru_maxrss != usage3.ru_maxrss ||
+        usage3.ru_maxrss != usage4.ru_maxrss ||
+        usage4.ru_maxrss != usage5.ru_maxrss ||
+        usage5.ru_maxrss != usage6.ru_maxrss ||
+        usage6.ru_maxrss != usage7.ru_maxrss )
+    {
+      printf( "inside synchronizePackSendRecvSizes, Memory usage: %ld  %ld  %ld  %ld  %ld  %ld  %ld %ld \n", 
+              usage0.ru_maxrss,
+              usage1.ru_maxrss,
+              usage2.ru_maxrss,
+              usage3.ru_maxrss,
+              usage4.ru_maxrss,
+              usage5.ru_maxrss,
+              usage6.ru_maxrss,  
+              usage7.ru_maxrss );
+    }
 }
 
 
@@ -1098,11 +1133,28 @@ void CommunicationTools::synchronizeFields( FieldIdentifiers const & fieldsToBeS
                                             std::vector< NeighborCommunicator > & neighbors,
                                             bool onDevice )
 {
+    struct rusage usage0;
+    struct rusage usage1;
+    struct rusage usage2;
+    struct rusage usage3;
+    struct rusage usage4;
+    getrusage(RUSAGE_SELF, &usage0);
   MPI_iCommData icomm;
   icomm.resize( neighbors.size() );
+    getrusage(RUSAGE_SELF, &usage1);
   synchronizePackSendRecvSizes( fieldsToBeSync, mesh, neighbors, icomm, onDevice );
+    getrusage(RUSAGE_SELF, &usage2);
   synchronizePackSendRecv( fieldsToBeSync, mesh, neighbors, icomm, onDevice );
+    getrusage(RUSAGE_SELF, &usage3);
   synchronizeUnpack( mesh, neighbors, icomm, onDevice );
+    getrusage(RUSAGE_SELF, &usage4);
+    if( usage0.ru_maxrss != usage1.ru_maxrss )
+      printf( "SynchronizeFields usage: %ld  %ld  %ld  %ld  %ld  \n", 
+              usage0.ru_maxrss,
+              usage1.ru_maxrss,
+              usage2.ru_maxrss,
+              usage3.ru_maxrss,
+              usage4.ru_maxrss );
 }
 
 

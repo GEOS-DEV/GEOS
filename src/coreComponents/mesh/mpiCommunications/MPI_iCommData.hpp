@@ -111,6 +111,7 @@ private:
   std::vector< MPI_Request > m_mpiRecvBufferSizeRequest;
   std::vector< MPI_Status >  m_mpiSendBufferSizeStatus;
   std::vector< MPI_Status >  m_mpiRecvBufferSizeStatus;
+  
 };
 } /* namespace geos */
 

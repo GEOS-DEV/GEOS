@@ -54,9 +54,27 @@ public:
  */
   void addFields( FieldLocation const location, std::vector< string > const & fieldNames )
   {
+    // struct rusage usage0, usage1, usage2, usage3;
+  
+    // getrusage(RUSAGE_SELF, &usage0);
     string key;
+    // getrusage(RUSAGE_SELF, &usage1);
     generateKey( location, key );
+    // getrusage(RUSAGE_SELF, &usage2);
     addFields( fieldNames, key );
+    // getrusage(RUSAGE_SELF, &usage3);
+
+    // if( usage0.ru_maxrss != usage1.ru_maxrss ||
+    //   usage1.ru_maxrss != usage2.ru_maxrss ||
+    //   usage2.ru_maxrss != usage3.ru_maxrss )
+    // {
+    //   printf( "                    usage: %ld  %ld  %ld  %ld \n", 
+    //           usage0.ru_maxrss,
+    //           usage1.ru_maxrss,
+    //           usage2.ru_maxrss,
+    //           usage3.ru_maxrss );
+    // }
+
   }
 /**
  * @brief adds element-based fields to the fields map using the element region names to define keys.
@@ -78,9 +96,21 @@ public:
  *
  * @return std::map< string, string_array > const&
  */
+
   std::map< string, string_array > const & getFields() const
+
   {
-    return m_fields;
+//    return m_fields;
+    std::map< string, string_array > rval;
+    for( auto const & [key, fields] : m_fields )
+    {
+      for( auto const & field : fields )
+      {
+        rval[key].emplace_back( field );
+      }
+    }
+
+    return rval;
   }
 /**
  * @brief Get the Region Name object
@@ -128,6 +158,7 @@ public:
 
 private:
   ///
+
   std::map< string, string_array > m_fields;
 
   struct keysStruct
@@ -192,7 +223,7 @@ private:
  * @param fieldNames list of the names of the fields to sync
  * @param key key used to registered teh fields in the map.
  */
-  void addFields( std::vector< string > const fieldNames, string const key )
+  void addFields( std::vector< string > const & fieldNames, string const & key )
   {
     for( string const & field : fieldNames )
     {

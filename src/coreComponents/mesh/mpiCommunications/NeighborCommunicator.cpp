@@ -24,6 +24,7 @@
 #include "common/TimingMacros.hpp"
 #include "mesh/ObjectManagerBase.hpp"
 #include "mesh/MeshLevel.hpp"
+#include <sys/resource.h>
 
 namespace geos
 {
@@ -503,20 +504,34 @@ int NeighborCommunicator::packCommSizeForSync( FieldIdentifiers const & fieldsTo
   FaceManager const & faceManager = mesh.getFaceManager();
   ElementRegionManager const & elemManager = mesh.getElemManager();
 
+    struct rusage usage0;
+    struct rusage usage1;
+    struct rusage usage2;
+    struct rusage usage3;
+    struct rusage usage4;
+    struct rusage usage5;
+    struct rusage usage6;
+    struct rusage usage7;
+    getrusage(RUSAGE_SELF, &usage0);
   arrayView1d< localIndex const > const & nodeGhostsToSend = nodeManager.getNeighborData( m_neighborRank ).ghostsToSend();
+    getrusage(RUSAGE_SELF, &usage1);
   arrayView1d< localIndex const > const & edgeGhostsToSend = edgeManager.getNeighborData( m_neighborRank ).ghostsToSend();
+    getrusage(RUSAGE_SELF, &usage2);
   arrayView1d< localIndex const > const & faceGhostsToSend = faceManager.getNeighborData( m_neighborRank ).ghostsToSend();
+    getrusage(RUSAGE_SELF, &usage3);
 
   int bufferSize = 0;
 
   for( auto const & iter : fieldsToBeSync.getFields() )
   {
     FieldLocation const location = fieldsToBeSync.getLocation( iter.first );
+    getrusage(RUSAGE_SELF, &usage4);
     switch( location )
     {
       case FieldLocation::Node:
       {
         bufferSize += nodeManager.packSize( iter.second, nodeGhostsToSend, 0, onDevice, events );
+    getrusage(RUSAGE_SELF, &usage5);
         break;
       }
       case FieldLocation::Edge:
@@ -540,6 +555,26 @@ int NeighborCommunicator::packCommSizeForSync( FieldIdentifiers const & fieldsTo
     }
   }
   this->m_sendBufferSize[commID] = bufferSize;
+    getrusage(RUSAGE_SELF, &usage6);
+    getrusage(RUSAGE_SELF, &usage7);
+    if( usage0.ru_maxrss != usage1.ru_maxrss ||
+        usage1.ru_maxrss != usage2.ru_maxrss ||
+        usage2.ru_maxrss != usage3.ru_maxrss ||
+        usage3.ru_maxrss != usage4.ru_maxrss ||
+        usage4.ru_maxrss != usage5.ru_maxrss ||
+        usage5.ru_maxrss != usage6.ru_maxrss ||
+        usage6.ru_maxrss != usage7.ru_maxrss )
+    {
+      printf( "inside packCommSizesForSync, Memory usage: %ld  %ld  %ld  %ld  %ld  %ld  %ld %ld \n", 
+              usage0.ru_maxrss,
+              usage1.ru_maxrss,
+              usage2.ru_maxrss,
+              usage3.ru_maxrss,
+              usage4.ru_maxrss,
+              usage5.ru_maxrss,
+              usage6.ru_maxrss,  
+              usage7.ru_maxrss );
+    }
   return bufferSize;
 }
 
