@@ -22,7 +22,7 @@ using namespace geos;
 TEST( testLogPart, sectionWithTitle )
 {
   std::ostringstream oss;
-  LogPart logPart( "section name" );
+  LogPart logPart( "section name", true );
   logPart.begin( oss );
   EXPECT_EQ( oss.str(),
              "\n"
@@ -45,7 +45,7 @@ TEST( testLogPart, sectionWithTitle )
 TEST( testLogPart, sectionWithTitleAndOneDescription )
 {
   std::ostringstream oss;
-  LogPart logPart( "section name" );
+  LogPart logPart( "section name", true );
   logPart.addDescription( "description name" );
   logPart.begin( oss );
   EXPECT_EQ( oss.str(),
@@ -61,7 +61,7 @@ TEST( testLogPart, sectionWithTitleAndOneDescription )
 TEST( testLogPart, sectionWithSetWidth )
 {
   std::ostringstream oss;
-  LogPart logPart( "section name" );
+  LogPart logPart( "section name", true );
   logPart.addDescription( "description name 1" );
   logPart.addDescription( "description name 2" );
   logPart.setMinWidth( 100 );
@@ -90,7 +90,7 @@ TEST( testLogPart, sectionWithSetWidth )
 TEST( testLogPart, sectionMultipleDescriptions )
 {
   std::ostringstream oss;
-  LogPart logPart( "TIMESTEP START" );
+  LogPart logPart( "TIMESTEP START", true );
   logPart.addDescription( "- Time", "00h08m20s out of 2d, 21h26m40s (0% completed)", "500 s / 250000 s" );
   logPart.addDescription( "- Delta Time", "00h16m40s (1000 s)" );
   logPart.addDescription( "Description test" );
@@ -123,7 +123,7 @@ TEST( testLogPart, sectionMultipleDescriptions )
 TEST( testLogPart, sectionEndDescription )
 {
   std::ostringstream oss;
-  LogPart logPart( "TIMESTEP START" );
+  LogPart logPart( "TIMESTEP START", true );
   logPart.addEndDescription( "test end description" );
   logPart.setMinWidth( 70 );
   logPart.begin( oss );
@@ -146,7 +146,7 @@ TEST( testLogPart, valuesMultiLines )
 {
 
   std::ostringstream oss;
-  LogPart logPart( "TIMESTEP START" );
+  LogPart logPart( "TIMESTEP START", true );
   logPart.addDescription( "dummy name\ndummy name long", "long dummy values, long dummy values1, long dummy values2, long dummy values3" );
   logPart.addDescription( "dummy long very long for test crash", "long dummy values", "long dummy values", "long dummy values", "long dummy values" );
   logPart.addDescription( "long very long\nwith many \nlien return \nlong dummy name", "small dummy value" );
@@ -215,7 +215,7 @@ TEST( testLogPart, valuesMultiLines )
 TEST( testLogPart, multiLineWithExtraSpace )
 {
   std::ostringstream oss;
-  LogPart logPart( "TIMESTEP" );
+  LogPart logPart( "TIMESTEP", true );
   logPart.addDescription( "- Time", "00h00m00s out of 2y, 269d, 12h21m36s (0% completed), 0 s / 86400000 s" );
   logPart.addDescription( "- Delta Time", "00h00m00s (0.001 s)" );
   logPart.addDescription( "- Cycle", "0" );
@@ -239,11 +239,7 @@ int main( int argc, char * * argv )
 {
   testing::InitGoogleTest( &argc, argv );
 
-  geos::setupMPI( argc, argv );
-
   int const result = RUN_ALL_TESTS();
-
-  geos::finalizeMPI();
 
   return result;
 }

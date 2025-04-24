@@ -171,7 +171,8 @@ bool EventManager::run( DomainPartition & domain )
       m_dt = dt_global;
 #endif
     }
-    LogPart logPart( "TIMESTEP" );
+    LogPart logPart( "TIMESTEP", MpiWrapper::commRank() == 0 );
+
     outputTime( logPart );
     logPart.begin();
     std::vector< real64 > subStepDts;

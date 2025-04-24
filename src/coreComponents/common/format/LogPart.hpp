@@ -20,7 +20,6 @@
 #define GEOS_COMMON_FORMAT_LOGPART_HPP
 
 #include "common/DataTypes.hpp"
-#include "common/MpiWrapper.hpp"
 #include "common/format/Format.hpp"
 #include "common/format/StringUtilities.hpp"
 
@@ -39,7 +38,7 @@ public:
    * @brief Initialize a LogPart given a title
    * @param m_logPartTitle The title who will be used for top and bottom LogPart
    */
-  LogPart( string_view m_logPartTitle );
+  LogPart( string_view m_logPartTitle, bool enableOutput );
 
   /**
    * @brief Add a description to the top LogPart
@@ -95,6 +94,9 @@ public:
    */
   void end( std::ostream & oss = std::cout );
 
+  void enableOutput( bool enabled )
+  { m_enableOutput = enabled; }
+
 private:
 
   /**
@@ -147,6 +149,8 @@ private:
   static constexpr string_view m_prefixEndTitle = "End of ";
   /// string used to separate the name/description
   static constexpr string_view m_delimiter = " : ";
+  /// Active the LogPart output
+  bool m_enableOutput = true;
 
   /**
    * @brief Add a description to a specific section (top or bottom)
