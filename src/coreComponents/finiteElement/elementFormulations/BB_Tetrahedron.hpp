@@ -165,7 +165,7 @@ public:
     //printf("term1=%f,term2=%f,term3=%f\n",term1,term2,term3);
     //printf("sqrt=%f\n",LvArray::math::sqrt( ( term1 * term1 + term2 * term2 + term3 * term3 ) ));
     return LvArray::math::sqrt( ( term1 * term1 + term2 * term2 + term3 * term3 ) );
-    
+
   }
 
   /**
@@ -211,14 +211,14 @@ public:
    */
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
-  static void calcN( real64 const ( & lambda)[4],
+  static void calcN( real64 const ( &lambda)[4],
                      real64 (& N)[numNodes] )
   {
     N[ 0 ] = 6.0;
     int prev;
     int c;
     int limits[ 4 ] = { 1, 1, 1, 1 };
-    for( int np = 1; np <= ORDER; np++)
+    for( int np = 1; np <= ORDER; np++ )
     {
       prev = np * ( np + 1 ) * ( np + 2 ) / 6 - 1;
       c = ( np + 1 ) * ( np + 2 ) * ( np + 3 ) / 6 - 1;
@@ -229,7 +229,7 @@ public:
         int c1 = np - 1;
         int c2 = i + np - 2;
         int repetitionCount = i == 0 ? 1 : limits[ i - 1 ];
-        for( int j = 0; j < limits[ i ] ; j++ )
+        for( int j = 0; j < limits[ i ]; j++ )
         {
           if( j - offset >=  repetitionCount )
           {
@@ -250,7 +250,8 @@ public:
   }
 
   /**
-   * @brief Calculate shape functions values at a single point, given the coordinates of the tetrahedron vertices, using De Casteljau's algorithm.
+   * @brief Calculate shape functions values at a single point, given the coordinates of the tetrahedron vertices, using De Casteljau's
+   *algorithm.
    * @param[in] coords The parent coordinates at which to evaluate the shape function value, in the reference element
    * @param[out] ORDER The shape function values.
    */
@@ -287,15 +288,16 @@ public:
   }
 
   /**
-   * @brief Calculate the values and derivatives of shape functions with respect to barycentric coordinates at a single point using De Casteljau's algorithm.
+   * @brief Calculate the values and derivatives of shape functions with respect to barycentric coordinates at a single point using De
+   *Casteljau's algorithm.
    * @param[in] lambda barycentric coordinates of the point in thetetrahedron
    * @param[out] N The shape function values.
    * @param[out] gradN The derivatives of the shape functions with respect to the lambdas
    */
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
-  static void calcNandGradN( real64 const ( & lambda)[4],
-                             real64 const ( & N)[numNodes],
+  static void calcNandGradN( real64 const ( &lambda)[4],
+                             real64 const ( &N)[numNodes],
                              real64 (& gradN)[numNodes][ 4 ] )
   {
     gradN[ 0 ][ 0 ] = 0.0;
@@ -306,7 +308,7 @@ public:
     int prev;
     int c;
     int limits[ 4 ] = { 1, 1, 1, 1 };
-    for( int np = 1; np <= ORDER; np++)
+    for( int np = 1; np <= ORDER; np++ )
     {
       prev = np * ( np + 1 ) * ( np + 2 ) / 6 - 1;
       c = ( np + 1 ) * ( np + 2 ) * ( np + 3 ) / 6 - 1;
@@ -317,7 +319,7 @@ public:
         int c1 = np - 1;
         int c2 = i + np - 2;
         int repetitionCount = i == 0 ? 1 : limits[ i - 1 ];
-        for( int j = 0; j < limits[ i ] ; j++ )
+        for( int j = 0; j < limits[ i ]; j++ )
         {
           if( j - offset >=  repetitionCount )
           {
@@ -344,7 +346,8 @@ public:
 
 
   /**
-   * @brief Calculate the shape functions values and derivatives at a single point, given the coorginates of the tetrahedron vertices, using De Casteljau's algorithm.
+   * @brief Calculate the shape functions values and derivatives at a single point, given the coorginates of the tetrahedron vertices, using
+   *De Casteljau's algorithm.
    * @param[in] coords The parent coordinates at which to evaluate the shape function value, in the reference element
    * @param[out] ORDER The shape function values.
    */
@@ -385,9 +388,13 @@ public:
     {
       for( int j = 0; j < 3; j++ )
       {
-        gradN[ i ][ j ] = ( ( ( X[ 2 ][ (j+1)%3 ] - X[ 0 ][ (j+1)%3 ]) * ( X[ 3 ][ (j+2)%3 ] - X[ 0 ][ (j+2)%3 ] ) - ( X[ 3 ][ (j+1)%3 ] - X[ 0 ][ (j+1)%3 ]) * ( X[ 2 ][ (j+2)%3 ] - X[ 0 ][ (j+2)%3 ] ) )* ( dNdLambda[ i ][ 1 ] - dNdLambda[ i ][ 0 ] ) +
-                            ( ( X[ 3 ][ (j+1)%3 ] - X[ 0 ][ (j+1)%3 ]) * ( X[ 1 ][ (j+2)%3 ] - X[ 0 ][ (j+2)%3 ] ) - ( X[ 1 ][ (j+1)%3 ] - X[ 0 ][ (j+1)%3 ]) * ( X[ 3 ][ (j+2)%3 ] - X[ 0 ][ (j+2)%3 ] ) )* ( dNdLambda[ i ][ 2 ] - dNdLambda[ i ][ 0 ] ) +
-                            ( ( X[ 1 ][ (j+1)%3 ] - X[ 0 ][ (j+1)%3 ]) * ( X[ 2 ][ (j+2)%3 ] - X[ 0 ][ (j+2)%3 ] ) - ( X[ 2 ][ (j+1)%3 ] - X[ 0 ][ (j+1)%3 ]) * ( X[ 1 ][ (j+2)%3 ] - X[ 0 ][ (j+2)%3 ] ) )* ( dNdLambda[ i ][ 3 ] - dNdLambda[ i ][ 0 ] )) / den;
+        gradN[ i ][ j ] =
+          ( ( ( X[ 2 ][ (j+1)%3 ] - X[ 0 ][ (j+1)%3 ]) * ( X[ 3 ][ (j+2)%3 ] - X[ 0 ][ (j+2)%3 ] ) - ( X[ 3 ][ (j+1)%3 ] - X[ 0 ][ (j+1)%3 ]) * ( X[ 2 ][ (j+2)%3 ] - X[ 0 ][ (j+2)%3 ] ) )*
+            ( dNdLambda[ i ][ 1 ] - dNdLambda[ i ][ 0 ] ) +
+            ( ( X[ 3 ][ (j+1)%3 ] - X[ 0 ][ (j+1)%3 ]) * ( X[ 1 ][ (j+2)%3 ] - X[ 0 ][ (j+2)%3 ] ) - ( X[ 1 ][ (j+1)%3 ] - X[ 0 ][ (j+1)%3 ]) *
+              ( X[ 3 ][ (j+2)%3 ] - X[ 0 ][ (j+2)%3 ] ) )* ( dNdLambda[ i ][ 2 ] - dNdLambda[ i ][ 0 ] ) +
+            ( ( X[ 1 ][ (j+1)%3 ] - X[ 0 ][ (j+1)%3 ]) * ( X[ 2 ][ (j+2)%3 ] - X[ 0 ][ (j+2)%3 ] ) - ( X[ 2 ][ (j+1)%3 ] - X[ 0 ][ (j+1)%3 ]) *
+              ( X[ 1 ][ (j+2)%3 ] - X[ 0 ][ (j+2)%3 ] ) )* ( dNdLambda[ i ][ 3 ] - dNdLambda[ i ][ 0 ] )) / den;
       }
     }
   }
@@ -438,7 +445,8 @@ public:
 //  }
 //
 //  /**
-//   * @brief Calculate the derivatives of shape functions with respect to barycentric coordinates at a single point on a face using De Casteljau's algorithm.
+//   * @brief Calculate the derivatives of shape functions with respect to barycentric coordinates at a single point on a face using De
+// Casteljau's algorithm.
 //   * @param[in] lambda barycentric coordinates of the point in the triangle
 //   * @param[out] ORDER The shape function values.
 //   * @param[out] gradN The derivatives of the shape functions with respect to the lambdas
@@ -504,7 +512,7 @@ public:
   GEOS_FORCE_INLINE
   static real64 calcGradN( localIndex const q,
                            real64 const (&X)[numNodes][3],
-                           real64 ( &gradN )[numNodes][3] )
+                           real64 ( & gradN )[numNodes][3] )
   {
     GEOS_ERROR( "Bernstein-Bézier basis is modal, not nodal. No quadrature points are defined." );
     return 0;
@@ -524,7 +532,7 @@ public:
   static real64 calcGradN( localIndex const q,
                            real64 const (&X)[numNodes][3],
                            StackVariables const & GEOS_UNUSED_PARAM( stack ),
-                           real64 ( &gradN )[numNodes][3] )
+                           real64 ( & gradN )[numNodes][3] )
   {
     return calcGradN( q, X, gradN );
   }
@@ -538,24 +546,24 @@ public:
    */
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
-  constexpr static real64 integralTerm(const int a, const int b, const int c)
+  constexpr static real64 integralTerm( const int a, const int b, const int c )
   {
     real64 res = 1.0;
     int num = a;
     int den = c;
-    for( int i = b; i > 0; i--)
+    for( int i = b; i > 0; i-- )
     {
-        res *= ( (real64) num ) /  i;
-        num--;
+      res *= ( (real64) num ) /  i;
+      num--;
     }
-    for( int i = num; i > 0; i--)
+    for( int i = num; i > 0; i-- )
     {
-        res *= ( (real64) i ) /  den;
-        den--;
+      res *= ( (real64) i ) /  den;
+      den--;
     }
-    for( int i = den; i > 0; i--)
+    for( int i = den; i > 0; i-- )
     {
-        res /= i;
+      res /= i;
     }
 
     return res;
@@ -577,9 +585,9 @@ public:
    */
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
-  static constexpr real64 correctionFactorDerivative(int const i1, int const j1, int const k1, int const l1, int const i2, int const j2, int const k2, int const l2, int const dim)
+  static constexpr real64 correctionFactorDerivative( int const i1, int const j1, int const k1, int const l1, int const i2, int const j2, int const k2, int const l2, int const dim )
   {
-      return (i1+j1+k1+l1+dim)* (i2==0 ? 1 : i2) * (j2==0 ? 1 : j2)* (k2==0 ? 1 : k2)* (l2==0 ? 1 : l2);
+    return (i1+j1+k1+l1+dim)* (i2==0 ? 1 : i2) * (j2==0 ? 1 : j2)* (k2==0 ? 1 : k2)* (l2==0 ? 1 : l2);
   }
 
 
@@ -601,12 +609,12 @@ public:
   static constexpr real64 computeSuperpositionIntegral( const int i1, const int j1, const int k1, const int l1,
                                                         const int i2, const int j2, const int k2, const int l2 )
   {
-    return (integralTerm(i1+i2, i1, i2)*
-            integralTerm(j1+j2, j1, j2)*
-            integralTerm(k1+k2, k1, k2)*
-            integralTerm(l1+l2, l1, l2))/
-            integralTerm(i1+j1+k1+l1+i2+j2+k2+l2+3,
-                         i1+j1+k1+l1+3, i2+j2+k2+l2+3);
+    return (integralTerm( i1+i2, i1, i2 )*
+            integralTerm( j1+j2, j1, j2 )*
+            integralTerm( k1+k2, k1, k2 )*
+            integralTerm( l1+l2, l1, l2 ))/
+           integralTerm( i1+j1+k1+l1+i2+j2+k2+l2+3,
+                         i1+j1+k1+l1+3, i2+j2+k2+l2+3 );
   }
 
   /**
@@ -626,11 +634,11 @@ public:
                                                             const int i2, const int j2, const int k2 )
   {
     return ((i1+k1+j1+3)*(i2+j2+k2+3)*
-            integralTerm(i1+i2, i1, i2)*
-            integralTerm(j1+j2, j1, j2)*
-            integralTerm(k1+k2, k1, k2))/
-            integralTerm(i1+j1+k1+i2+j2+k2+2,
-                         i1+j1+k1+2, i2+j2+k2+2);
+            integralTerm( i1+i2, i1, i2 )*
+            integralTerm( j1+j2, j1, j2 )*
+            integralTerm( k1+k2, k1, k2 ))/
+           integralTerm( i1+j1+k1+i2+j2+k2+2,
+                         i1+j1+k1+2, i2+j2+k2+2 );
   }
 
   /**
@@ -668,7 +676,7 @@ public:
   static
   constexpr
   int
-  dofIndex(const int i, const int j, const int k)
+  dofIndex( const int i, const int j, const int k )
   {
     return ( ORDER - i ) * ( ORDER - i + 1 ) * ( ORDER - i + 2) / 6 +
            ( ORDER - i - j ) * ( ORDER - i - j + 1 ) / 2 +
@@ -683,7 +691,7 @@ public:
    * @tparam VTX the vertex with respect to
    * @return i, j, k, l if VTX= 0, 1, 2 or 3 resepctively (with i + j + k + l = order)
    */
-  template< int C, int VTX  >
+  template< int C, int VTX >
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
   static
@@ -701,7 +709,7 @@ public:
     constexpr real64 trir = ( sqrt( 8.0 * cc2 + 1.0 ) - 1.0 ) / 2.0 - 1;
     constexpr int j = ORDER - i - round( trir * 10.0 ) / 10;
     constexpr int k = ORDER - i - j - ( C - (ORDER - i ) * ( ORDER - i + 1 ) * ( ORDER - i + 2 ) / 6
-                      - ( ORDER - i - j ) * ( ORDER - i - j + 1 ) / 2 );
+                                        - ( ORDER - i - j ) * ( ORDER - i - j + 1 ) / 2 );
     if constexpr ( VTX == 0 )
     {
       return i;
@@ -728,38 +736,38 @@ public:
    * @tparam VTX the vertex with respect to
    * @return i, j, k, l if VTX= 0, 1, 2 or 3 resepctively (with i + j + k + l = order)
    */
-  
+
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
   static
   constexpr
   int
-  indexToIJKL(int C, int VTX)
+  indexToIJKL( int C, int VTX )
   {
     //static_assert( VTX >= 0 && VTX < 4 );
     // compute the indices of c in the current element using tetrahedral and triangular roots
-     int cc1 = C + 1;
-     real64 tetr = cbrt( 3.0 * cc1 + sqrt( 9.0 * cc1 * cc1 - 1.0 / 27.0 ) )
-                            + cbrt( 3.0 * cc1 - sqrt( 9.0 * cc1 * cc1 - 1.0 / 27.0 ) ) - 2;
-     int i = ORDER - round( tetr * 10.0 ) / 10;
-     int cc2 = C - ( ORDER - i ) * ( ORDER - i + 1 ) * ( ORDER - i + 2 ) / 6 + 1;
-     real64 trir = ( sqrt( 8.0 * cc2 + 1.0 ) - 1.0 ) / 2.0 - 1;
-     int j = ORDER - i - round( trir * 10.0 ) / 10;
-     int k = ORDER - i - j - ( C - (ORDER - i ) * ( ORDER - i + 1 ) * ( ORDER - i + 2 ) / 6
-                      - ( ORDER - i - j ) * ( ORDER - i - j + 1 ) / 2 );
-    if  ( VTX == 0 )
+    int cc1 = C + 1;
+    real64 tetr = cbrt( 3.0 * cc1 + sqrt( 9.0 * cc1 * cc1 - 1.0 / 27.0 ) )
+                  + cbrt( 3.0 * cc1 - sqrt( 9.0 * cc1 * cc1 - 1.0 / 27.0 ) ) - 2;
+    int i = ORDER - round( tetr * 10.0 ) / 10;
+    int cc2 = C - ( ORDER - i ) * ( ORDER - i + 1 ) * ( ORDER - i + 2 ) / 6 + 1;
+    real64 trir = ( sqrt( 8.0 * cc2 + 1.0 ) - 1.0 ) / 2.0 - 1;
+    int j = ORDER - i - round( trir * 10.0 ) / 10;
+    int k = ORDER - i - j - ( C - (ORDER - i ) * ( ORDER - i + 1 ) * ( ORDER - i + 2 ) / 6
+                              - ( ORDER - i - j ) * ( ORDER - i - j + 1 ) / 2 );
+    if( VTX == 0 )
     {
       return i;
     }
-    else if  ( VTX == 1)
+    else if( VTX == 1 )
     {
       return j;
     }
-    else if  ( VTX == 2)
+    else if( VTX == 2 )
     {
       return k;
     }
-    else if  ( VTX == 3)
+    else if( VTX == 3 )
     {
       return ORDER - i - j - k;
     }
@@ -772,35 +780,37 @@ public:
    * @tparam FUNC the callback function
    * @tparam ...Is integer indices of the loop
    */
-  template < typename FUNC, int... Is >
+  template< typename FUNC, int... Is >
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
   static constexpr void loop( FUNC && func, std::integer_sequence< int, Is... > )
   {
-      ( func( std::integral_constant< int, Is >{} ), ... );
+    ( func( std::integral_constant< int, Is >{} ), ... );
   }
 
   /**
    * @brief Helper function for loop over barycentric coordinates
    * @tparam FUNC the callback function
    */
-  template < typename FUNC >
+  template< typename FUNC >
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
-  static constexpr void barycentricCoordinateLoop(FUNC && func) {
-      loop( [&func] ( auto const i ) {
-        func( std::integral_constant< int, i >{} );
-      }, std::make_integer_sequence< int, 4 >{} );
+  static constexpr void barycentricCoordinateLoop( FUNC && func )
+  {
+    loop( [&func] ( auto const i ) {
+      func( std::integral_constant< int, i >{} );
+    }, std::make_integer_sequence< int, 4 >{} );
   }
 
   /**
    * @brief Helper function for loop over tet basis functions
    * @tparam FUNC the callback function
    */
-  template < typename FUNC >
+  template< typename FUNC >
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
-  static constexpr void basisLoop(FUNC && func) {
+  static constexpr void basisLoop( FUNC && func )
+  {
     loop( [&func] ( auto const i )
     {
       constexpr int i1 = ORDER - i;
@@ -834,10 +844,11 @@ public:
    * @tparam FUNC the callback function
    * @tparam Is the setindices
    */
-  template < int... Is, typename FUNC >
+  template< int... Is, typename FUNC >
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
-  static constexpr void conditionalBasisLoop( FUNC && func ) {
+  static constexpr void conditionalBasisLoop( FUNC && func )
+  {
     loop( [&func] ( auto const i )
     {
       constexpr int i1 = ORDER - i;
@@ -854,37 +865,37 @@ public:
               constexpr int l1 = ORDER - i1 - j1 - k1;
               constexpr int c1 = dofIndex< i1, j1, k1 >();
               ( ( (i1 == Is) &&
-               ( void( func(
-                       std::integral_constant<int, 0>{},
-                       std::integral_constant<int, i1>{},
-                       std::integral_constant<int, c1>{},
-                       std::integral_constant<int, j1>{},
-                       std::integral_constant<int, k1>{},
-                       std::integral_constant<int, l1>{} ) ), 1 ) ) || ... );
+                  ( void( func(
+                            std::integral_constant< int, 0 >{},
+                            std::integral_constant< int, i1 >{},
+                            std::integral_constant< int, c1 >{},
+                            std::integral_constant< int, j1 >{},
+                            std::integral_constant< int, k1 >{},
+                            std::integral_constant< int, l1 >{} ) ), 1 ) ) || ... );
               ( ( (j1 == Is) &&
-               ( void( func(
-                      std::integral_constant<int, 1>{},
-                      std::integral_constant<int, j1>{},
-                      std::integral_constant<int, c1>{},
-                      std::integral_constant<int, i1>{},
-                      std::integral_constant<int, k1>{},
-                      std::integral_constant<int, l1>{} ) ), 1 ) ) || ... );
+                  ( void( func(
+                            std::integral_constant< int, 1 >{},
+                            std::integral_constant< int, j1 >{},
+                            std::integral_constant< int, c1 >{},
+                            std::integral_constant< int, i1 >{},
+                            std::integral_constant< int, k1 >{},
+                            std::integral_constant< int, l1 >{} ) ), 1 ) ) || ... );
               ( ( (k1 == Is) &&
-               ( void( func(
-                      std::integral_constant<int, 2>{},
-                      std::integral_constant<int, k1>{},
-                      std::integral_constant<int, c1>{},
-                      std::integral_constant<int, i1>{},
-                      std::integral_constant<int, j1>{},
-                      std::integral_constant<int, l1>{} ) ), 1 ) ) || ... );
+                  ( void( func(
+                            std::integral_constant< int, 2 >{},
+                            std::integral_constant< int, k1 >{},
+                            std::integral_constant< int, c1 >{},
+                            std::integral_constant< int, i1 >{},
+                            std::integral_constant< int, j1 >{},
+                            std::integral_constant< int, l1 >{} ) ), 1 ) ) || ... );
               ( ( (l1 == Is) &&
-               ( void( func(
-                      std::integral_constant<int, 3>{},
-                      std::integral_constant<int, l1>{},
-                      std::integral_constant<int, c1>{},
-                      std::integral_constant<int, i1>{},
-                      std::integral_constant<int, j1>{},
-                      std::integral_constant<int, k1>{} ) ), 1 ) ) || ...);
+                  ( void( func(
+                            std::integral_constant< int, 3 >{},
+                            std::integral_constant< int, l1 >{},
+                            std::integral_constant< int, c1 >{},
+                            std::integral_constant< int, i1 >{},
+                            std::integral_constant< int, j1 >{},
+                            std::integral_constant< int, k1 >{} ) ), 1 ) ) || ...);
             }
           }, std::make_integer_sequence< int, ORDER + 1 > {} );
         }
@@ -892,13 +903,14 @@ public:
     }, std::make_integer_sequence< int, ORDER + 1 > {} );
   }
 
-  template < typename FUNC >
+  template< typename FUNC >
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
-  static constexpr void faceBarycentricCoordinateLoop(FUNC && func) {                                                                                                                                                                                            
-      loop( [&func] ( auto const i ) {
-        func( std::integral_constant< int, i >{} );
-      }, std::make_integer_sequence< int, 3 >{} );
+  static constexpr void faceBarycentricCoordinateLoop( FUNC && func )
+  {
+    loop( [&func] ( auto const i ) {
+      func( std::integral_constant< int, i >{} );
+    }, std::make_integer_sequence< int, 3 >{} );
   }
 
   /**
@@ -945,7 +957,7 @@ public:
   GEOS_FORCE_INLINE
   static
   void
-  computeReferenceDampingMatrix( real64 (& d)[numNodes][numNodes], bool const face1Damped, bool const face2Damped, bool const face3Damped, bool const face4Damped)
+  computeReferenceDampingMatrix( real64 (& d)[numNodes][numNodes], bool const face1Damped, bool const face2Damped, bool const face3Damped, bool const face4Damped )
   {
 
     for( int c1 = 0; c1 < numNodes; c1++ )
@@ -955,17 +967,17 @@ public:
         d[ c1 ][ c2 ] = 0;
       }
     }
-    conditionalBasisLoop< 0 >( [&] ( auto const f1, auto const, auto const c1, auto const i1, auto const j1, auto const k1)
+    conditionalBasisLoop< 0 >( [&] ( auto const f1, auto const, auto const c1, auto const i1, auto const j1, auto const k1 )
     {
-      conditionalBasisLoop< 0 >( [&] ( auto const f2, auto const, auto const c2, auto const i2, auto const j2, auto const k2)
+      conditionalBasisLoop< 0 >( [&] ( auto const f2, auto const, auto const c2, auto const i2, auto const j2, auto const k2 )
       {
-        if constexpr( f1 == f2 )
+        if constexpr ( f1 == f2 )
         {
           constexpr real64 val = computeFaceSuperpositionIntegral( i1, j1, k1, i2, j2, k2 );
-          if ( ( f1 == 0 && face1Damped ) ||
-               ( f1 == 1 && face2Damped ) ||
-               ( f1 == 2 && face3Damped ) ||
-               ( f1 == 3 && face4Damped ) )
+          if( ( f1 == 0 && face1Damped ) ||
+              ( f1 == 1 && face2Damped ) ||
+              ( f1 == 2 && face3Damped ) ||
+              ( f1 == 3 && face4Damped ) )
           {
             d[ c1 ][ c2 ] += val;
           }
@@ -989,7 +1001,7 @@ public:
   computeMassTerm( real64 const (&X)[4][3],
                    FUNC && func )
   {
-    real64 detJ = LvArray::math::abs(jacobianDeterminant( X ));
+    real64 detJ = LvArray::math::abs( jacobianDeterminant( X ));
     basisLoop( [&func, &detJ] ( auto const cc1, auto const ii1, auto const jj1, auto const kk1, auto const ll1 )
     {
       constexpr int c1 = cc1;
@@ -1020,33 +1032,36 @@ public:
   computeStiffnessTerm( real64 const (&X)[4][3],
                         FUNC && func )
   {
-    real64 detJ = LvArray::math::abs(jacobianDeterminant( X ));
+    real64 detJ = LvArray::math::abs( jacobianDeterminant( X ));
     real64 dLambdadX[4][3] = {};
-    for( int j = 0; j < 3; j ++ )
+    for( int j = 0; j < 3; j++ )
     {
-      dLambdadX[1][j] = ( ( X[ 2 ][ (j+1)%3 ] - X[ 0 ][ (j+1)%3 ]) * ( X[ 3 ][ (j+2)%3 ] - X[ 0 ][ (j+2)%3 ] ) - ( X[ 3 ][ (j+1)%3 ] - X[ 0 ][ (j+1)%3 ]) * ( X[ 2 ][ (j+2)%3 ] - X[ 0 ][ (j+2)%3 ] ) ) / detJ;
-      dLambdadX[2][j] = ( ( X[ 3 ][ (j+1)%3 ] - X[ 0 ][ (j+1)%3 ]) * ( X[ 1 ][ (j+2)%3 ] - X[ 0 ][ (j+2)%3 ] ) - ( X[ 1 ][ (j+1)%3 ] - X[ 0 ][ (j+1)%3 ]) * ( X[ 3 ][ (j+2)%3 ] - X[ 0 ][ (j+2)%3 ] ) ) / detJ;
-      dLambdadX[3][j] = ( ( X[ 1 ][ (j+1)%3 ] - X[ 0 ][ (j+1)%3 ]) * ( X[ 2 ][ (j+2)%3 ] - X[ 0 ][ (j+2)%3 ] ) - ( X[ 2 ][ (j+1)%3 ] - X[ 0 ][ (j+1)%3 ]) * ( X[ 1 ][ (j+2)%3 ] - X[ 0 ][ (j+2)%3 ] ) ) / detJ;
+      dLambdadX[1][j] =
+        ( ( X[ 2 ][ (j+1)%3 ] - X[ 0 ][ (j+1)%3 ]) * ( X[ 3 ][ (j+2)%3 ] - X[ 0 ][ (j+2)%3 ] ) - ( X[ 3 ][ (j+1)%3 ] - X[ 0 ][ (j+1)%3 ]) * ( X[ 2 ][ (j+2)%3 ] - X[ 0 ][ (j+2)%3 ] ) ) / detJ;
+      dLambdadX[2][j] =
+        ( ( X[ 3 ][ (j+1)%3 ] - X[ 0 ][ (j+1)%3 ]) * ( X[ 1 ][ (j+2)%3 ] - X[ 0 ][ (j+2)%3 ] ) - ( X[ 1 ][ (j+1)%3 ] - X[ 0 ][ (j+1)%3 ]) * ( X[ 3 ][ (j+2)%3 ] - X[ 0 ][ (j+2)%3 ] ) ) / detJ;
+      dLambdadX[3][j] =
+        ( ( X[ 1 ][ (j+1)%3 ] - X[ 0 ][ (j+1)%3 ]) * ( X[ 2 ][ (j+2)%3 ] - X[ 0 ][ (j+2)%3 ] ) - ( X[ 2 ][ (j+1)%3 ] - X[ 0 ][ (j+1)%3 ]) * ( X[ 1 ][ (j+2)%3 ] - X[ 0 ][ (j+2)%3 ] ) ) / detJ;
       dLambdadX[0][j] = -dLambdadX[1][j] - dLambdadX[2][j] - dLambdadX[3][j];
     }
-    basisLoop( [&func, &dLambdadX,&detJ] ( auto const cc1, auto const ci1, auto const cj1, auto const ck1, auto const cl1 )
+    basisLoop( [&func, &dLambdadX, &detJ] ( auto const cc1, auto const ci1, auto const cj1, auto const ck1, auto const cl1 )
     {
       constexpr int c1 = cc1;
       constexpr int i1 = ci1;
       constexpr int j1 = cj1;
       constexpr int k1 = ck1;
       constexpr int l1 = cl1;
-      basisLoop( [&func, &dLambdadX,&detJ] ( auto const cc2, auto const ci2, auto const cj2, auto const ck2, auto const cl2 )
+      basisLoop( [&func, &dLambdadX, &detJ] ( auto const cc2, auto const ci2, auto const cj2, auto const ck2, auto const cl2 )
       {
         constexpr int c2 = cc2;
         constexpr int i2 = ci2;
         constexpr int j2 = cj2;
         constexpr int k2 = ck2;
         constexpr int l2 = cl2;
-        barycentricCoordinateLoop( [&func, &dLambdadX,&detJ] ( auto const cd1 )
+        barycentricCoordinateLoop( [&func, &dLambdadX, &detJ] ( auto const cd1 )
         {
           constexpr int d1 = cd1;
-          barycentricCoordinateLoop( [&func, &dLambdadX,&detJ] ( auto const d2 )
+          barycentricCoordinateLoop( [&func, &dLambdadX, &detJ] ( auto const d2 )
           {
             constexpr int ii1 = i1 + ( d1 == 0 ) * ( -1 );
             constexpr int ij1 = j1 + ( d1 == 1 ) * ( -1 );
@@ -1073,13 +1088,13 @@ public:
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
   static real64 edgeLength2( localIndex i1,
-                             localIndex i2,                                                                                        
-                            real64 const (&X)[4][3] )
+                             localIndex i2,
+                             real64 const (&X)[4][3] )
   {
     real64 ab[3] = { X[ i2 ][ 0 ] - X[ i1 ][ 0 ],
                      X[ i2 ][ 1 ] - X[ i1 ][ 1 ],
                      X[ i2 ][ 2 ] - X[ i1 ][ 2 ] };
-    return  ab[0] * ab[0] + ab[1] * ab[1]+ ab[2]*ab[2];
+    return ab[0] * ab[0] + ab[1] * ab[1]+ ab[2]*ab[2];
   }
 
   /**
@@ -1110,9 +1125,9 @@ public:
                         faceJacobianDeterminant( 2, X ), faceJacobianDeterminant( 3, X ) };
     // squared length of edges, ordering follow voigt
     real64 el2[3][2] = { { edgeLength2( 0, 1, X ), edgeLength2( 2, 3, X ) },
-                         { edgeLength2( 0, 2, X ), edgeLength2( 1, 3, X ) },
-                         { edgeLength2( 0, 3, X ), edgeLength2( 1, 2, X ) } };
-    real64 detJ = abs(jacobianDeterminant( X ));      
+      { edgeLength2( 0, 2, X ), edgeLength2( 1, 3, X ) },
+      { edgeLength2( 0, 3, X ), edgeLength2( 1, 2, X ) } };
+    real64 detJ = abs( jacobianDeterminant( X ));
     conditionalBasisLoop< 0, 1 >( [&funcP, &funcF, &detJf, &detJ, &el2]  ( auto const cf1, auto const cd, auto const cc1, auto const ci1, auto const cj1, auto const ck1 )
     {
       constexpr int f1 = cf1;
@@ -1129,7 +1144,7 @@ public:
         constexpr int j2 = cj2;
         constexpr int k2 = ck2;
         // The second function is nonzero on the face indexed by f2, so we integrate on this face.
-        if constexpr( f1 == f2 )
+        if constexpr ( f1 == f2 )
         {
           // compute penalty term iff the other function is also nonzero on the same face (i.e., d1==0)
           if constexpr ( d1 == 0 )
@@ -1144,12 +1159,12 @@ public:
           {
             constexpr real64 derFactor = ( i1 + j1 + k1 + 4 );
             constexpr real64 val = computeFaceSuperpositionIntegral( i1, j1, k1, i2, j2, k2 ) * derFactor;
-            funcF( c1, c2, f2, i1, j1, k1, i2, j2, k2, val * detJf[ f2 ] * detJf[ f2 ]/detJ);  
+            funcF( c1, c2, f2, i1, j1, k1, i2, j2, k2, val * detJf[ f2 ] * detJf[ f2 ]/detJ );
           }
           // second case: function has exponent zero wrt f2.
-          // In this case, one can derive it wrt to any other face.  
+          // In this case, one can derive it wrt to any other face.
           else if constexpr ( d1 == 0 )
-          {            
+          {
             faceBarycentricCoordinateLoop( [ &funcF, &detJf, &detJ, &el2 ]( auto const cl )
             {
               constexpr int l = cl;
@@ -1168,7 +1183,7 @@ public:
                 h2 = (4.0 * el2[ic1][0]*el2[ic1][1] - h2 * h2)/16.0;
                 //real64 scal = -(detJf[ f ] * detJf[ f ] + detJf[ f2 ] * detJf[ f2 ] - 4.0*   h2) / (2.0);
                 real64 scal = -(detJf[ f ] * detJf[ f ] + detJf[ f2 ] * detJf[ f2 ] - 4.0*   h2) / (2.0);
-                funcF( c1, c2, f2, i1, j1, k1, i2, j2, k2, val * scal / detJ);
+                funcF( c1, c2, f2, i1, j1, k1, i2, j2, k2, val * scal / detJ );
               }
             } );
           }

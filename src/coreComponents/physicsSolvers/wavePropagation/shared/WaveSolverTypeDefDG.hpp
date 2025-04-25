@@ -34,9 +34,9 @@
   finiteElement::BB3_Tetrahedron, \
   finiteElement::BB4_Tetrahedron, \
   finiteElement::BB5_Tetrahedron
-#else                                                                           
-#define DG_FE_TYPES                                                            
-#endif                                                                          
+#else
+#define DG_FE_TYPES
+#endif
 
 
 #define SELECTED_FE_TYPES DG_FE_TYPES

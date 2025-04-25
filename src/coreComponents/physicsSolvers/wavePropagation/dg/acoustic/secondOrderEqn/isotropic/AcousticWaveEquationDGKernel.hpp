@@ -87,7 +87,7 @@ struct PrecomputeSourceAndReceiverKernel
           arrayView1d< localIndex > const receiverElem,
           arrayView2d< localIndex > const receiverNodeIds,
           arrayView2d< real64 > const receiverConstants,
-          arrayView1d< localIndex > const receiverRegion)
+          arrayView1d< localIndex > const receiverRegion )
   {
 
     forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const k )
@@ -116,7 +116,7 @@ struct PrecomputeSourceAndReceiverKernel
                                                                         elementLocalToGlobal,
                                                                         center,
                                                                         coords );
-          
+
           if( sourceFound )
           {
             sourceIsAccessible[isrc] = 1;
@@ -170,7 +170,7 @@ struct PrecomputeSourceAndReceiverKernel
           {
             receiverIsLocal[ircv] = 1;
             receiverElem[ircv] = k;
-            printf("receiverElem=%d\n",receiverElem[ircv]);
+            printf( "receiverElem=%d\n", receiverElem[ircv] );
             receiverRegion[ircv] = regionIndex;
 
 
@@ -225,11 +225,11 @@ struct PrecomputeNeighborhoodKernel
           arrayView2d< integer > const & elemsToOppositePermutation )
   {
     forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const k1 )
-    {  
+    {
       localIndex vertices[ 4 ] = { elemsToNodes( k1, 0 ), elemsToNodes( k1, 1 ), elemsToNodes( k1, 2 ), elemsToNodes( k1, 3 ) };
       for( int i = 0; i < 4; i++ )
       {
-        localIndex  k1OrderedVertices[ 3 ];
+        localIndex k1OrderedVertices[ 3 ];
         localIndex f = elemsToFaces( k1, i );
         localIndex faceVertices[ 3 ] = { facesToNodes( f, 0 ), facesToNodes( f, 1 ), facesToNodes( f, 2 ) };
         // find neighboring element, if any
@@ -243,12 +243,13 @@ struct PrecomputeNeighborhoodKernel
         int indexo1= -1;
         int vertex = -1;
         int count = 0;
-        for ( localIndex k=0; k< 4; ++k) {
+        for( localIndex k=0; k< 4; ++k )
+        {
           vertex = vertices[k];
           bool found = false;
-          for ( int j = 0; j < 3; j++ )
+          for( int j = 0; j < 3; j++ )
           {
-            if ( vertex == faceVertices[ j ] )
+            if( vertex == faceVertices[ j ] )
             {
               found = true;
               break;
@@ -265,7 +266,7 @@ struct PrecomputeNeighborhoodKernel
           }
         }
 
-        GEOS_ERROR_IF( o1 < 0, "Topological error in mesh: a face and its adjacent element share all vertices.");
+        GEOS_ERROR_IF( o1 < 0, "Topological error in mesh: a face and its adjacent element share all vertices." );
         if( k2 < 0 )
         {
           // boundary element, either free surface, or absorbing boundary
@@ -280,12 +281,13 @@ struct PrecomputeNeighborhoodKernel
           int o2 = -1;
           int indexo2 = -1;
           count = 0;
-          for ( localIndex k=0; k<4; ++k) {
+          for( localIndex k=0; k<4; ++k )
+          {
             vertex = oppositeElemVertices[k];
             bool found = false;
-            for ( int j = 0; j < 3; j++ )
+            for( int j = 0; j < 3; j++ )
             {
-              if ( vertex == faceVertices[ j ] )
+              if( vertex == faceVertices[ j ] )
               {
                 found = true;
                 break;
@@ -298,11 +300,11 @@ struct PrecomputeNeighborhoodKernel
             }
 
           }
-          GEOS_ERROR_IF( o2 < 0, "Topological error in mesh: a face and its adjacent element share all vertices.");
+          GEOS_ERROR_IF( o2 < 0, "Topological error in mesh: a face and its adjacent element share all vertices." );
           // compute permutation
           integer permutation = 0;
           int c = 1;
-          for (localIndex k2Vertex : oppositeElemVertices )
+          for( localIndex k2Vertex : oppositeElemVertices )
           {
             int position = -1;
             for( int j = 0; j < 3; j++ )
@@ -405,8 +407,7 @@ struct PrecomputeMassDampingKernel
 
     boundaryInvMassPlusDamping.resizeDimension< 0, 1, 2 >( nAbsBdryElems, FE_TYPE::numNodes, FE_TYPE::numNodes );
     forAll< EXEC_POLICY >( size, [&] ( localIndex const k )
-    {
-    } );
+    {} );
   }
 };
 
@@ -416,128 +417,130 @@ struct PressureComputationKernel
 {
   using EXEC_POLICY = parallelDevicePolicy< >;
 
- /**
-  * @brief Launches the computation of the pressure for one iteration
-  * @tparam EXEC_POLICY the execution policy
-  * @tparam ATOMIC_POLICY the atomic policy
-  * @param[in] size the number of cells in the subRegion
-  * @param[in] X coordinates of the nodes
-  * @param[in] p_nm1 pressure  array at time n-1 (only used here)
-  * @param[in] p_n pressure array at time n (only used here)
-  * @param[in] sourceConstants constant part of the source terms
-  * @param[in] sourceValue value of the temporal source (eg. Ricker)
-  * @param[in] sourceIsAccessible flag indicating whether the source is accessible or not
-  * @param[in] sourceElem element where a source is located
-  * @param[in] cycleNumber the number of cycle
-  * @param[in] dt time-step
-  * @param[out] p_np1 pressure array at time n+1 (updated here)
-  */
- //List is not complete, it will need several GEOS maps to add
- template< typename FE_TYPE, typename EXEC_POLICY, typename ATOMIC_POLICY >
- static void
- pressureComputation( localIndex const size,
-                      localIndex const regionIndex,
-                      arrayView2d< WaveSolverBase::wsCoordType const, nodes::REFERENCE_POSITION_USD > const X,
-                      arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes,
-                      arrayView1d< real32 const > const velocity,
-                      arrayView2d< real32  > const p_n,
-                      arrayView2d< real32 const > const p_nm1,
-                      arrayView2d< localIndex > const & elemsToOpposite,
-                      arrayView2d< integer > const & elemsToOppositePermutation,
-                      ArrayOfArrays< array2d< real64 > > referenceInvMassMatrix,
-                      arrayView1d< real32 const > const characteristicSize,
-                      arrayView2d< real64 const > const sourceConstants,
-                      arrayView1d< localIndex const > const sourceIsAccessible,
-                      arrayView1d< localIndex const > const sourceElem,
-                      arrayView1d< localIndex const > const sourceRegion,
-                      real64 const dt,
-                      real64 const time_n,
-                      real32 const timeSourceFrequency,
-                      real32 const timeSourceDelay,
-                      localIndex const rickerOrder,
-                      bool const useSourceWaveletTables,
-                      arrayView1d< TableFunction::KernelWrapper const > const sourceWaveletTableWrappers,
-                      arrayView2d< real32 > const p_np1 )
+  /**
+   * @brief Launches the computation of the pressure for one iteration
+   * @tparam EXEC_POLICY the execution policy
+   * @tparam ATOMIC_POLICY the atomic policy
+   * @param[in] size the number of cells in the subRegion
+   * @param[in] X coordinates of the nodes
+   * @param[in] p_nm1 pressure  array at time n-1 (only used here)
+   * @param[in] p_n pressure array at time n (only used here)
+   * @param[in] sourceConstants constant part of the source terms
+   * @param[in] sourceValue value of the temporal source (eg. Ricker)
+   * @param[in] sourceIsAccessible flag indicating whether the source is accessible or not
+   * @param[in] sourceElem element where a source is located
+   * @param[in] cycleNumber the number of cycle
+   * @param[in] dt time-step
+   * @param[out] p_np1 pressure array at time n+1 (updated here)
+   */
+  //List is not complete, it will need several GEOS maps to add
+  template< typename FE_TYPE, typename EXEC_POLICY, typename ATOMIC_POLICY >
+  static void
+  pressureComputation( localIndex const size,
+                       localIndex const regionIndex,
+                       arrayView2d< WaveSolverBase::wsCoordType const, nodes::REFERENCE_POSITION_USD > const X,
+                       arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes,
+                       arrayView1d< real32 const > const velocity,
+                       arrayView2d< real32 > const p_n,
+                       arrayView2d< real32 const > const p_nm1,
+                       arrayView2d< localIndex > const & elemsToOpposite,
+                       arrayView2d< integer > const & elemsToOppositePermutation,
+                       ArrayOfArrays< array2d< real64 > > referenceInvMassMatrix,
+                       arrayView1d< real32 const > const characteristicSize,
+                       arrayView2d< real64 const > const sourceConstants,
+                       arrayView1d< localIndex const > const sourceIsAccessible,
+                       arrayView1d< localIndex const > const sourceElem,
+                       arrayView1d< localIndex const > const sourceRegion,
+                       real64 const dt,
+                       real64 const time_n,
+                       real32 const timeSourceFrequency,
+                       real32 const timeSourceDelay,
+                       localIndex const rickerOrder,
+                       bool const useSourceWaveletTables,
+                       arrayView1d< TableFunction::KernelWrapper const > const sourceWaveletTableWrappers,
+                       arrayView2d< real32 > const p_np1 )
 
- {
+  {
 
     real64 const rickerValue = useSourceWaveletTables ? 0 : WaveSolverUtils::evaluateRicker( time_n, timeSourceFrequency, timeSourceDelay, rickerOrder );
 
-      //forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const k )
-      //{
-      //  for( localIndex i=0; i<4; ++i )
-      //  {
-      //     p_n[k][i] =  pow(X( elemsToNodes( k, i ), 0 ),2);
-      //     //printf("p_n[%d][%d]=%f\n",k,i,p_n[k][i]);
-      //  }
-      //} );
+    //forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const k )
+    //{
+    //  for( localIndex i=0; i<4; ++i )
+    //  {
+    //     p_n[k][i] =  pow(X( elemsToNodes( k, i ), 0 ),2);
+    //     //printf("p_n[%d][%d]=%f\n",k,i,p_n[k][i]);
+    //  }
+    //} );
 
     forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const k )
-    //for(localIndex k =0; k < 25007 ; ++k)
+                           //for(localIndex k =0; k < 25007 ; ++k)
     {
-      real64 const dt2 = pow(dt,2);
+      real64 const dt2 = pow( dt, 2 );
 
       constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
       constexpr localIndex numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
 
       real64 pTemp[numNodesPerElem] = {0.0};
       real64 flowx[numNodesPerElem] = {0.0};
-      
+
       real64 xLocal[4][3];
       for( localIndex a=0; a< 4; ++a )
       {
         for( localIndex i=0; i<3; ++i )
         {
-          xLocal[a][i] = X( elemsToNodes( k, a ), i );             
+          xLocal[a][i] = X( elemsToNodes( k, a ), i );
         }
       }
 
-      //Compute 1/c2, take its inverse and compute the detemrinant of the jacobian  
-      real64 const C2 = pow(velocity[k],2);
- 
+      //Compute 1/c2, take its inverse and compute the detemrinant of the jacobian
+      real64 const C2 = pow( velocity[k], 2 );
+
       real64 const invC2 = 1.0/C2;
-  
-      real64 const det = LvArray::math::abs(FE_TYPE::jacobianDeterminant(xLocal));
+
+      real64 const det = LvArray::math::abs( FE_TYPE::jacobianDeterminant( xLocal ));
 
       //Multiply by p_{n } by 2*(1/c2)*Mass and p_{n-1} by -(1/c2)*Mass
-      FE_TYPE::computeMassTerm(xLocal, [&] (const int i, const int j, const real64 val)
+      FE_TYPE::computeMassTerm( xLocal, [&] ( const int i, const int j, const real64 val )
       {
-         pTemp[i] += 2.0*invC2*val*p_n[k][j];
-         pTemp[i] -= val*invC2*p_nm1[k][j];
+        pTemp[i] += 2.0*invC2*val*p_n[k][j];
+        pTemp[i] -= val*invC2*p_nm1[k][j];
       } );
-      
+
       //First stiffness part (volume)
-      FE_TYPE::computeStiffnessTerm(xLocal, [&] (const int i, const int j, real64 val)
+      FE_TYPE::computeStiffnessTerm( xLocal, [&] ( const int i, const int j, real64 val )
       {
-         flowx[i] -= val*p_n[k][j];
+        flowx[i] -= val*p_n[k][j];
       } );
-  
-    
-      FE_TYPE::computeSurfaceTerms(xLocal, [&] (const int c1, const int c2, const int f1, const int i1, const int j1, const int k1,const int i2, const int j2, const int k2, real64 val)
+
+
+      FE_TYPE::computeSurfaceTerms( xLocal, [&] ( const int c1, const int c2, const int f1, const int i1, const int j1, const int k1, const int i2, const int j2, const int k2, real64 val )
       {
-        const localIndex elemNeigh = elemsToOpposite(k,f1);
-        
-        
-        if(elemNeigh >= 0)
+        const localIndex elemNeigh = elemsToOpposite( k, f1 );
+
+
+        if( elemNeigh >= 0 )
         {
-       
+
           // Now we seek the degree of freedom on the neighbour element to use for the computation of the flux (or the penalty)
           // First, we compute the four possible values of the permutation of the degrees of freedom depending on the the fixed
           // permutation value contained inside elemsToOppositePermutation permutation
 
-          const int perm = elemsToOppositePermutation(k,f1);
-  
+          const int perm = elemsToOppositePermutation( k, f1 );
+
 
           const int p1 = perm%4-1;
           const int p2 = (perm/4)%4-1;
           const int p3 = (perm/16)%4-1;
           const int p4 = (perm/64)%4-1;
-          // Then we transform the 3 indices returned by the callback (i2,j2,k2) using the permutations. One of this permutation, will be 0 (depending on which
-          // degree of freedom is the one at the opposite of the face shared with the neighbour element) and will correspond to the one where p* will be negati
+          // Then we transform the 3 indices returned by the callback (i2,j2,k2) using the permutations. One of this permutation, will be 0
+          // (depending on which
+          // degree of freedom is the one at the opposite of the face shared with the neighbour element) and will correspond to the one
+          // where p* will be negati
 
-          
+
           const int l2 = 1-i2-j2-k2;
-          const int Indices[3] = {i2,j2,k2};
+          const int Indices[3] = {i2, j2, k2};
 
           const int ii2 = p1 < 0 ? l2 : Indices[p1];
           const int jj2 = p2 < 0 ? l2 : Indices[p2];
@@ -545,86 +548,86 @@ struct PressureComputationKernel
           const int ll2 = p4 < 0 ? l2 : Indices[p4];
 
           const int neighDof = FE_TYPE::dofIndex( ii2, jj2, kk2 );
-                     
-          real64 const val1 = ((12.0)/((LvArray::math::min(characteristicSize[k],characteristicSize[elemNeigh]))))*val*p_n[k][c2];
-          real64 const val2 = ((12.0)/((LvArray::math::min(characteristicSize[k],characteristicSize[elemNeigh]))))*val*p_n[elemNeigh][neighDof];
+
+          real64 const val1 = ((12.0)/((LvArray::math::min( characteristicSize[k], characteristicSize[elemNeigh] ))))*val*p_n[k][c2];
+          real64 const val2 = ((12.0)/((LvArray::math::min( characteristicSize[k], characteristicSize[elemNeigh] ))))*val*p_n[elemNeigh][neighDof];
 
           flowx[c1] += -val1+val2;
 
         }
 
-       },
-       [&] (const int c1, const int c2, const int f1, const int i1, const int j1, const int k1, const int i2, const int j2, const int k2, real64 val)
-       {
-
-         //We take the neighbour element
-          const int elemNeigh = elemsToOpposite(k,f1);
-
-         if (elemNeigh >= 0)
-         {
-
-       
-           const int perm = elemsToOppositePermutation(k,f1);
-  
-           const int p1 = perm%4-1;
-           const int p2 = (perm/4)%4-1;
-           const int p3 = (perm/16)%4-1;
-           const int p4 = (perm/64)%4-1;
-  
-  
-           // Then we transform the 3 indices returned by the callback (i2,j2,k2) using the permutations. One of this permutation, will be 0 (depending on which
-           // degree of freedom is the one at the opposite of the face shared with the neighbour element) and will correspond to the one where p* will be negative
-  
-  
-           const int Indices[3] = {i2,j2,k2};
-  
-           const int l2 = 1-i2-j2-k2;
-         
-           
-  
-           const int ii2 = p1 < 0 ? l2 : Indices[p1];
-           const int jj2 = p2 < 0 ? l2 : Indices[p2];
-           const int kk2 = p3 < 0 ? l2 : Indices[p3];
-           const int ll2 = p4 < 0 ? l2 : Indices[p4];
-  
-           const int neighDof = FE_TYPE::dofIndex( ii2, jj2, kk2 );
-  
-           const int IndicesTranspose[3] = {i1,j1,k1};
-  
-           const int l1 = 1-i1-j1-k1;
-  
-           const int ii1 = p1 < 0 ? l1 : IndicesTranspose[p1];
-           const int jj1 = p2 < 0 ? l1 : IndicesTranspose[p2];
-           const int kk1 = p3 < 0 ? l1 : IndicesTranspose[p3];
-           const int ll1 = p4 < 0 ? l1 : IndicesTranspose[p4];
-  
-           
-  
-           const int neighDof2 = FE_TYPE::dofIndex( ii1, jj1, kk1 );
-           
-            // Finally, using the dofIndex function, we compute the number of the global degree of freedom on the element
-   
-           real64 const val1 = 0.5*val*p_n[k][c2];
-           real64 const val2 = 0.5*val*p_n[elemNeigh][neighDof];
-           real64 const val3 = 0.5*val*p_n[k][c1];
-           real64 const val4 = 0.5*val*p_n[elemNeigh][neighDof2];
-           flowx[c1] += val1-val2;
-           flowx[c2] += val3-val4;
-
-
-
-  
-  
-         }
-       } );
-      //Add time and physic dependency
-      
-      for (localIndex i = 0; i < numNodesPerElem; i++)
+      },
+                                    [&] ( const int c1, const int c2, const int f1, const int i1, const int j1, const int k1, const int i2, const int j2, const int k2, real64 val )
       {
-        pTemp[i] += dt2*flowx[i] ;
+
+        //We take the neighbour element
+        const int elemNeigh = elemsToOpposite( k, f1 );
+
+        if( elemNeigh >= 0 )
+        {
+
+
+          const int perm = elemsToOppositePermutation( k, f1 );
+
+          const int p1 = perm%4-1;
+          const int p2 = (perm/4)%4-1;
+          const int p3 = (perm/16)%4-1;
+          const int p4 = (perm/64)%4-1;
+
+
+          // Then we transform the 3 indices returned by the callback (i2,j2,k2) using the permutations. One of this permutation, will be 0
+          // (depending on which
+          // degree of freedom is the one at the opposite of the face shared with the neighbour element) and will correspond to the one
+          // where p* will be negative
+
+
+          const int Indices[3] = {i2, j2, k2};
+
+          const int l2 = 1-i2-j2-k2;
+
+
+
+          const int ii2 = p1 < 0 ? l2 : Indices[p1];
+          const int jj2 = p2 < 0 ? l2 : Indices[p2];
+          const int kk2 = p3 < 0 ? l2 : Indices[p3];
+          const int ll2 = p4 < 0 ? l2 : Indices[p4];
+
+          const int neighDof = FE_TYPE::dofIndex( ii2, jj2, kk2 );
+
+          const int IndicesTranspose[3] = {i1, j1, k1};
+
+          const int l1 = 1-i1-j1-k1;
+
+          const int ii1 = p1 < 0 ? l1 : IndicesTranspose[p1];
+          const int jj1 = p2 < 0 ? l1 : IndicesTranspose[p2];
+          const int kk1 = p3 < 0 ? l1 : IndicesTranspose[p3];
+          const int ll1 = p4 < 0 ? l1 : IndicesTranspose[p4];
+
+
+
+          const int neighDof2 = FE_TYPE::dofIndex( ii1, jj1, kk1 );
+
+          // Finally, using the dofIndex function, we compute the number of the global degree of freedom on the element
+
+          real64 const val1 = 0.5*val*p_n[k][c2];
+          real64 const val2 = 0.5*val*p_n[elemNeigh][neighDof];
+          real64 const val3 = 0.5*val*p_n[k][c1];
+          real64 const val4 = 0.5*val*p_n[elemNeigh][neighDof2];
+          flowx[c1] += val1-val2;
+          flowx[c2] += val3-val4;
+
+
+
+        }
+      } );
+      //Add time and physic dependency
+
+      for( localIndex i = 0; i < numNodesPerElem; i++ )
+      {
+        pTemp[i] += dt2*flowx[i];
       }
-  //
-      real64 srcAmp[numNodesPerElem]={0.0}; 
+      //
+      real64 srcAmp[numNodesPerElem]={0.0};
       //Source Injection
       for( localIndex isrc = 0; isrc < sourceConstants.size( 0 ); ++isrc )
       {
@@ -632,7 +635,7 @@ struct PressureComputationKernel
         {
           if( sourceElem[isrc]==k && sourceRegion[isrc] == regionIndex )
           {
-            
+
             real64 const srcValue = useSourceWaveletTables ? sourceWaveletTableWrappers[ isrc ].compute( &time_n ) : rickerValue;
             for( localIndex i = 0; i < numNodesPerElem; ++i )
             {
@@ -642,25 +645,25 @@ struct PressureComputationKernel
         }
       }
 //
-      for (localIndex i = 0; i < numNodesPerElem; ++i)
+      for( localIndex i = 0; i < numNodesPerElem; ++i )
       {
         real64 fx=0.0;
-        for (localIndex j = 0; j < numNodesPerElem; ++j)
+        for( localIndex j = 0; j < numNodesPerElem; ++j )
         {
-          fx+= referenceInvMassMatrix[0][0](i,j)*pTemp[j]; 
+          fx+= referenceInvMassMatrix[0][0]( i, j )*pTemp[j];
         }
         p_np1[k][i]=(C2*fx)/det;
         //p_np1[k][i]=pTemp[i];
 
-          
+
       }
 
     } );
 
- }
+  }
 
- /// The finite element space/discretization object for the element type in the subRegion
- // FE_TYPE const & m_finiteElement;
+  /// The finite element space/discretization object for the element type in the subRegion
+  // FE_TYPE const & m_finiteElement;
 
 
 };

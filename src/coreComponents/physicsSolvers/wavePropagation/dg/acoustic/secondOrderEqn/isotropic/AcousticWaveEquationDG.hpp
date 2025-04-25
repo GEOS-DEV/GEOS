@@ -41,12 +41,12 @@ public:
 
   virtual ~AcousticWaveEquationDG() override;
 
-  AcousticWaveEquationDG() = delete;                                           
-  AcousticWaveEquationDG( AcousticWaveEquationDG const & ) = delete;          
-  AcousticWaveEquationDG( AcousticWaveEquationDG && ) = default;              
-                                                                                  
+  AcousticWaveEquationDG() = delete;
+  AcousticWaveEquationDG( AcousticWaveEquationDG const & ) = delete;
+  AcousticWaveEquationDG( AcousticWaveEquationDG && ) = default;
+
   AcousticWaveEquationDG & operator=( AcousticWaveEquationDG const & ) = delete;
-  AcousticWaveEquationDG & operator=( AcousticWaveEquationDG && ) = delete;   
+  AcousticWaveEquationDG & operator=( AcousticWaveEquationDG && ) = delete;
 
 
   static string catalogName() { return "AcousticDG"; }
@@ -83,10 +83,10 @@ public:
    */
   virtual void initializePML() override;
 
- /**                                                                           
-  */                                                                           
-   virtual real64 computeTimeStep( real64 & dtOut ) override; 
-  
+  /**
+   */
+  virtual real64 computeTimeStep( real64 & dtOut ) override;
+
   /**
    * @brief Overridden from ExecutableGroup. Used to write last seismogram if needed.
    */
@@ -116,19 +116,19 @@ public:
                                integer const cycleNumber,
                                DomainPartition & domain );
 
-  void computeUnknowns( real64 const & time_n,                                  
-                         real64 const & dt,                                      
-                         DomainPartition & domain,                               
-                         MeshLevel & mesh,                                       
-                         string_array const & regionNames );      
-                                                                                 
-  void synchronizeUnknowns( real64 const & time_n,                              
-                             real64 const & dt,                                  
-                             DomainPartition & domain,                           
-                             MeshLevel & mesh,                                   
-                             string_array const & regionNames );  
-                                                                                 
-  void prepareNextTimestep( MeshLevel & mesh );  
+  void computeUnknowns( real64 const & time_n,
+                        real64 const & dt,
+                        DomainPartition & domain,
+                        MeshLevel & mesh,
+                        string_array const & regionNames );
+
+  void synchronizeUnknowns( real64 const & time_n,
+                            real64 const & dt,
+                            DomainPartition & domain,
+                            MeshLevel & mesh,
+                            string_array const & regionNames );
+
+  void prepareNextTimestep( MeshLevel & mesh );
 
 protected:
 
@@ -144,7 +144,7 @@ private:
    * corresponding elements nodes.
    * @param mesh mesh of the computational domain
    */
-  virtual void precomputeSourceAndReceiverTerm(  MeshLevel & baseMesh, MeshLevel & mesh, string_array const & regionNames) override;
+  virtual void precomputeSourceAndReceiverTerm( MeshLevel & baseMesh, MeshLevel & mesh, string_array const & regionNames ) override;
 
   /**
    * @brief Apply free surface condition to the face define in the geometry box from the xml
