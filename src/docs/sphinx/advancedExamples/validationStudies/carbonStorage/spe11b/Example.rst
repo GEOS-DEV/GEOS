@@ -148,14 +148,36 @@ Their conformity to NIST values is assessed in the following plot,
 
 .. plot:: ../inputFiles/compositionalMultiphaseFlow/benchmarks/SPE11/b/tables/plotNIST.py
 
- Above is the one to one comparison with respect to pressure range used for a variety of pressures.
+ Above is the one to one comparison with respect to pressure range used for a variety of pressures. The dotted lines represent *GEOS* values while
+ the solid-and-stars are the values from NIST database.
+
+ This shows the validity of the selected models with respect to the provided NIST tables over the range of pressures and temperatures.
+ The next step is to set-up the `Solvers` with some attributes foreseeing non-linear difficulties.
 
 ------------------------------------------------------------------------
 Flow solver
 ------------------------------------------------------------------------
 
-Now that the physics in our case is set, with its global and spatialized parameters defined, let's dive into `FlowSolver`
+Now that the physics in our case is set, with its global and spatialized parameters defined, let's dive into `Solvers`
 tunning. It is how we connect together these definition, up to a initial and boundary conditions (discussed in the next section).
+
+.. literalinclude:: ../../../../../../../inputFiles/compositionalMultiphaseFlow/benchmarks/SPE11/b/spe11b_vti_source_base.xml
+    :language: xml
+    :start-after: <!-- SPHINX_FLOW_SOL -->
+    :end-before: <!-- SPHINX_FLOW_SOL_END -->
+
+The `CompositionalMultiphaseFVM` will handle Finite Volume discretization of the `targetRegions`. The `discretization` will be TPFA and here is
+linked-by-name to a `TwoPointFluxApproximation` XML block lower. It is at this place that upwind interpolation will be selected, for instance. By default *Phase Potential Upwind (PPU)*
+is selected.
+
+Note the important `isThermal` and `useMass` that are triggered on. `targetPhaseVolFractionChangeInTimeStep` and `maxCompFractionChange` are usual bounds time-step wise that
+prevents from going non-convergent. The next Child XML tags `NonlinearSolverParameters` and `LinearSolverParameters` are of particular interest.
+
+The `NonlinearSolverParameters` states the nonlinear tolerance,
+the triggering of *line search* and the coefficient to the usual powerlaw of time step increase and decrease. It is brought to reader's attention that those parameters are usually
+heuristic.
+
+The `LinearSolverParameters` states the linear method use to solve the linearized Newton system. The standard pick here is *Flexible GMRES* with the *HYPRE*'s specific *Multi Grid Reduction*.
 
 ------------------------------------------------------------------------
 Initial and boundary conditions
@@ -175,7 +197,7 @@ The first point is defined in the discretization-specific file (also root file) 
     :end-before: <!-- SPHINX_GEOM_END -->
 
 .. note::
-    Note that the units here are in *mass* as the `useMass=1` attribute is set in `Solver` used.
+    Note that the units here are in *mass* as the `useMass=1` attribute is set in `Solvers` used.
     Default will be volumetric.
 
 

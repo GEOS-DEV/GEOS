@@ -90,7 +90,7 @@ def main():
     # File path
     base = args.outputDir
 
-    fsize = 30
+    fsize = 25
     msize = 12
     lw = 4
     fig, ax = plt.subplots(2, 2, figsize=(32, 18))
@@ -106,31 +106,41 @@ def main():
         geos_data[i] = np.loadtxt(f'{base}/geos_pvt_{ti}.txt', skiprows=7)
 
     for i in range(7):
-        ax[0, 0].plot(geos_data[i][:, 1], geos_data[i][:, 6], label=f'T={te[i]}', ls=':')
+        ax[0, 0].plot(geos_data[i][:, 1], geos_data[i][:, 6], label=f'T={te[i]}', ls=':', lw=lw)
     for i in range(7):
         nist_co2 = NISTData().getCO2Data(te[i])
-        ax[0, 0].plot(nist_co2[:, 0], nist_co2[:, 1], marker='*')
+        ax[0, 0].plot(nist_co2[:, 0], nist_co2[:, 1], marker='*',markersize=lw)
     ax[0, 0].legend()
-    ax[0, 0].set_xlabel('Pressure [Pa]')
-    ax[0, 0].set_ylabel('Gas densities [kg / m3]')
+    ax[0, 0].set_xlabel('Pressure [Pa]', size=fsize)
+    ax[0, 0].set_ylabel('Gas densities [kg / m3]', size=fsize)
 
     for i in range(7):
-        ax[0, 1].plot(geos_data[i][:, 1], geos_data[i][:, 7], label=f'T={te[i]}', ls=':')
+        ax[0, 1].plot(geos_data[i][:, 1], geos_data[i][:, 7], label=f'T={te[i]}', ls=':', lw=lw)
     for i in range(7):
         nist_h2o = NISTData().getH2OData(te[i])
-        ax[0, 1].plot(nist_h2o[:, 0], nist_h2o[:, 1], marker='*')
+        ax[0, 1].plot(nist_h2o[:, 0], nist_h2o[:, 1], marker='*', markersize=lw)
     ax[0, 1].legend()
-    ax[0, 1].set_xlabel('Pressure [Pa]')
-    ax[0, 1].set_ylabel('Water densities [kg / m3]')
+    ax[0, 1].set_xlabel('Pressure [Pa]', size=fsize)
+    ax[0, 1].set_ylabel('Water densities [kg / m3]', size=fsize)
 
     for i in range(7):
-        ax[1, 0].plot(geos_data[i][:, 1], geos_data[i][:, 8], label=f'T={te[i]}', ls=':')
+        ax[1, 0].plot(geos_data[i][:, 1], geos_data[i][:, 8], label=f'T={te[i]}', ls=':', lw=lw)
     for i in range(7):
         nist_co2 = NISTData().getCO2Data(te[i])
-        ax[1, 0].plot(nist_co2[:, 0], nist_co2[:, 2], marker='*')
+        ax[1, 0].plot(nist_co2[:, 0], nist_co2[:, 2], marker='*',markersize=lw)
     ax[1, 0].legend()
-    ax[1, 0].set_xlabel('Pressure [Pa]')
-    ax[1, 0].set_ylabel('Gas viscosity [Pa s]')
+    ax[1, 0].set_xlabel('Pressure [Pa]', size=fsize)
+    ax[1, 0].set_ylabel('Gas viscosity [Pa s]', size=fsize)
+
+    for i in range(7):
+        ax[1, 1].plot(geos_data[i][:, 1], geos_data[i][:, 9], label=f'T={te[i]}', ls=':', lw=lw)
+    for i in range(7):
+        nist_h2o = NISTData().getH2OData(te[i])
+        ax[1, 1].plot(nist_h2o[:, 0], nist_h2o[:, 2], marker='*',markersize=lw)
+    ax[1, 1].legend()
+    ax[1, 1].set_xlabel('Pressure [Pa]', size=fsize)
+    ax[1, 1].set_ylabel('Water viscosity [Pa s]', size=fsize)
+
     plt.show()
 
 

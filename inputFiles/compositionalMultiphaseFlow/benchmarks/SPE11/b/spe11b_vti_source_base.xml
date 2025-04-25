@@ -1,5 +1,6 @@
 <?xml version="1.0" ?>
 <Problem>
+  <!-- SPHINX_FLOW_SOL -->
   <Solvers>
     <CompositionalMultiphaseFVM
       name="compositionalMultiphaseFlow"
@@ -29,7 +30,7 @@
         logLevel="1" />        
     </CompositionalMultiphaseFVM>
   </Solvers>
-
+<!-- SPHINX_FLOW_SOL_END -->
 
 
   <ElementRegions>
