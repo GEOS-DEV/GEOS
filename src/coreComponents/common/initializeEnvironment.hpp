@@ -92,6 +92,9 @@ struct CommandLineOptions
 
   /// Path to output errors file 
   string errorsPath = "errors.yaml";
+
+  /// Path to output datahierarchy file
+  string hierarchyPath = "datahierarchy.yaml";
 };
 
 /**
