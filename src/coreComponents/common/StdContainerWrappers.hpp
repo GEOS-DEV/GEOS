@@ -12,6 +12,14 @@ namespace geos
 namespace internal
 {
 
+/**
+ * Wrapper for std::vector that allows toggling between bounds-checked access
+ * (using at()) and unchecked access (using operator[]).
+ * @tparam T Type of elements in the vector.
+ * @tparam Allocator Allocator type for the vector.
+ * @tparam USE_STD_CONTAINER_BOUNDS_CHECKING If true, uses at() for bounds-checked access.
+ * If false, uses operator[] for unchecked access.
+ */
 template< typename T,
           typename Allocator = std::allocator< T >,
           bool USE_STD_CONTAINER_BOUNDS_CHECKING = false
@@ -19,26 +27,27 @@ template< typename T,
 class StdVectorWrapper : public std::vector< T, Allocator >
 {
 public:
+  /// Type alias for the base class (i.e., std::vector)
   using Base = std::vector< T, Allocator >;
 
-  using Base::Base; // inherit constructors
+  /// inherit constructors from the base class
+  using Base::Base;
+
+  /// inherit std::vector::push_back()
   using Base::push_back;
+
+  /// inherit std::vector::size()
   using Base::size;
+
+  /// inherit std::vector::empty()
   using Base::empty;
 
-  // Override operator[] to toggle between at() and []
-  T & operator[]( size_t const index )
-  {
-    if constexpr (USE_STD_CONTAINER_BOUNDS_CHECKING)
-    {
-      return Base::at( index );  // Throws std::out_of_range if out of bounds
-    }
-    else
-    {
-      return Base::operator[]( index );  // No bounds checking
-    }
-  }
-
+  /**
+   * Access element at index with bounds checking if USE_STD_CONTAINER_BOUNDS_CHECKING is true.
+   * Otherwise, uses operator[] for unchecked access.
+   * @param index Index of the element to access.
+   * @return Const reference to the element at the specified index.
+   */
   T const & operator[]( size_t const index ) const
   {
     if constexpr (USE_STD_CONTAINER_BOUNDS_CHECKING)
@@ -50,13 +59,41 @@ public:
       return Base::operator[]( index );
     }
   }
+
+  /**
+   * Access element at index with bounds checking if USE_STD_CONTAINER_BOUNDS_CHECKING is true.
+   * Otherwise, uses operator[] for unchecked access.
+   * @param index Index of the element to access.
+   * @return Reference to the element at the specified index.
+   */
+  T & operator[]( size_t const index )
+  {
+    if constexpr (USE_STD_CONTAINER_BOUNDS_CHECKING)
+    {
+      return Base::at( index );  // Throws std::out_of_range if out of bounds
+    }
+    else
+    {
+      return Base::operator[]( index );  // No bounds checking
+    }
+  }
 };
 } // namespace internal
 
 #if defined( GEOS_USE_BOUNDS_CHECK )
+/**
+ * type alias for internal::StdVectorWrapper with bounds checking enabled.
+ * @tparam T Type of elements in the vector.
+ * @tparam Allocator Allocator type for the vector.
+ */
 template< typename T, typename Allocator = std::allocator< T > >
 using stdVector = internal::StdVectorWrapper< T, Allocator, true >;
 #else
+/**
+ * type alias for std::vector with no bounds checking.
+ * @tparam T Type of elements in the vector.
+ * @tparam Allocator Allocator type for the vector.
+ */
 template< typename T, typename Allocator = std::allocator< T > >
 using stdVector = std::vector< T, Allocator >;
 #endif
