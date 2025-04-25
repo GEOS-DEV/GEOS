@@ -89,6 +89,9 @@ struct CommandLineOptions
 
   /// Print memory usage in data repository
   real64 printMemoryUsage = -1.0;
+
+  /// Path to output errors file 
+  string errorsPath = "errors.yaml";
 };
 
 /**
