@@ -18,7 +18,7 @@
  */
 
 #include "ImmiscibleWaterViscosity.hpp"
-#include "ImmiscibleWaterParameters.hpp"
+#include "constitutive/fluid/multifluid/compositional/parameters/ImmiscibleWaterParameters.hpp"
 
 namespace geos
 {

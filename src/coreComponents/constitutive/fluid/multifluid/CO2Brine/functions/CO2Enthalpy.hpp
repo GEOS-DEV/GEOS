@@ -113,7 +113,7 @@ public:
 private:
 
   /// Table with CO2 enthalpy tabulated as a function of (P,T)
-  TableFunction const * m_CO2EnthalpyTable;
+  TableFunction const * m_CO2EnthalpyTable = nullptr;
 
   /// Index of the CO2 phase
   integer m_CO2Index;

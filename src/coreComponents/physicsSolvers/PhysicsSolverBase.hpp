@@ -30,7 +30,6 @@
 #include "physicsSolvers/NonlinearSolverParameters.hpp"
 #include "physicsSolvers/LinearSolverParameters.hpp"
 #include "physicsSolvers/SolverStatistics.hpp"
-#include "physicsSolvers/LogLevelsInfo.hpp"
 
 #include <limits>
 
@@ -894,6 +893,10 @@ public:
   virtual PyTypeObject * getPythonType() const override;
 #endif
 
+  /**
+   * @brief accessor for m_meshTargets
+   * @return reference to m_meshTargets
+   */
   map< std::pair< string, string >, string_array > const & getMeshTargets() const
   {
     return m_meshTargets;
