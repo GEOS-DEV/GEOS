@@ -86,10 +86,10 @@ bool HDFFile::hasDataset( const string & name ) const
   int exists = 0;
   H5E_BEGIN_TRY
   {
-    exists = H5Gget_objinfo( *this, name.c_str(), 0, NULL );
+    exists = H5Oexists_by_name( *this, name.c_str(), H5P_DEFAULT );
   }
   H5E_END_TRY
-  return ( exists == 0 );
+  return ( exists > 0 );
 }
 
 }
