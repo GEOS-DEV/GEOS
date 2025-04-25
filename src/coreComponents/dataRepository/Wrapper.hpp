@@ -411,7 +411,14 @@ public:
   virtual void resize( localIndex const newSize ) override
   {
     wrapperHelpers::move( *m_data, hostMemorySpace, true );
-    wrapperHelpers::resizeDefault( reference(), newSize, m_default, this->getName() );
+    if constexpr ( traits::HasMemberFunction_resizeDefault< T > && DefaultValue< T >::has_default_value )
+    {
+      wrapperHelpers::resizeDefault( reference(), newSize, m_default, this->getName() );
+    }
+    else
+    {
+      wrapperHelpers::resize( reference(), newSize );
+    }
   }
 
   /// @cond DO_NOT_DOCUMENT
