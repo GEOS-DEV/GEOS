@@ -62,7 +62,7 @@ protected:
 
   /// Layout for a table
   PreparedTableLayout const m_tableLayout;
-
+  /// Class used for listing all errors that may have occured during table generation
   std::unique_ptr< geos::TableErrorListing > m_errors = std::make_unique< geos::TableErrorListing >();
 
   /**
@@ -329,11 +329,11 @@ private:
    * @brief Populates the error cells layout based on input error values
    * @param tableLayout The layout of the table, containing information about columns, headers, and their layers.
    * @param errorCellsLayout A reference to the layout for the error cells that will be populated.
-   * @param inputError A vector containing all the error to display.
+   * @param tableData A constant reference to the `TableData` object, which contains the actual data for the table.
    */
   void populateErrorCellsLayout( PreparedTableLayout const & tableLayout,
                                  CellLayoutRows & errorCellsLayout,
-                                 std::vector< string > const & inputError ) const;
+                                 TableData const & tableData ) const;
 
   /**
    * @brief Populates the data cells layout based on input data values, taking into account the columns layout.

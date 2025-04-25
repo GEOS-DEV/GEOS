@@ -506,9 +506,7 @@ void DomainPartition::outputPartitionInformation() const
           partitionsData.insert( tableData );
           TableTextFormatter logPartition( layout );
           GEOS_LOG( logPartition.toString( *partitionsData.rbegin() ));
-
         }
-
       }
     } );
   } );

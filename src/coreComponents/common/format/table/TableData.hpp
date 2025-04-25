@@ -45,9 +45,14 @@ public:
   TableData & operator=( TableData const & other );
 
   TableData & operator=( TableData && other );
-
-  bool operator<( TableData const & other ) const;
   ///@endcond
+
+  /**
+   * @brief Lexicographic sorting
+   * @param other The table data to compate
+   * @return true
+   */
+  bool operator<( TableData const & other ) const;
 
   /**
    * @brief Representing a data in TableData
@@ -59,7 +64,7 @@ public:
     /// The cell value
     string value;
 
-    /// @cond DO_NOT_DOCUMENTreturn The comparison result
+    /// @cond DO_NOT_DOCUMENT
     bool operator==( CellData const & other ) const
     {
       return value == other.value;
@@ -130,14 +135,14 @@ public:
 
   /**
    * @brief Get all error messages
-   * @return The vector of error messages
+   * @return The list of error messages
    */
   TableErrorListing const & getErrorsList() const
   { return *m_errors; }
 
   /**
    * @brief Get all error messages
-   * @return The vector of error messages
+   * @return The list of error messages
    */
   TableErrorListing & getErrorsList()
   { return *m_errors; }
@@ -145,7 +150,7 @@ public:
 private:
   /// @brief vector containing all rows with cell values
   DataRows m_rows;
-  
+
   /// @brief Store all errors that can be found during the generation of the TableData
   std::unique_ptr< geos::TableErrorListing > m_errors;
 
@@ -224,6 +229,9 @@ public:
   TableDataHolder buildTableData( string_view dataDescription,
                                   string_view rowFmt = "{}", string_view columnFmt = "{}" ) const;
 
+  /**
+   * @brief Clear all data stored in TableData
+   */
   inline void clear()
   {
     m_data.clear();

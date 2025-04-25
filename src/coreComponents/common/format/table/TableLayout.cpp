@@ -310,30 +310,22 @@ PreparedTableLayout::PreparedTableLayout( TableLayout const & other ):
 void PreparedTableLayout::prepareLayoutRecusive( std::vector< TableLayout::Column > & columns,
                                                  size_t level )
 {
-  for( size_t idxColumn = 0; idxColumn < columns.size(); ++idxColumn )
+  for( auto & column : columns )
   {
 
-    if( columns[idxColumn].isVisible())
+    if( column.isVisible())
       m_columnLayersCount = std::max( m_columnLayersCount, level + 1 );
-
-    Column & column = columns[idxColumn];
-    CellType cellType = column.m_header.m_layout.m_cellType;
 
     if( !column.hasChild() )
     {
       ++m_totalLowermostColumnCount;
-      if( cellType!= CellType::Hidden )
+      if( column.isVisible() )
       {
         ++m_visibleLowermostColumnCount;
       }
     }
 
     column.m_header.prepareLayout( getMaxColumnWidth() );
-
-    if( idxColumn < columns.size() - 1 )
-    {
-      column.setNext( &columns[idxColumn + 1] );
-    }
 
     if( !column.m_subColumns.empty())
     {
@@ -347,6 +339,10 @@ void PreparedTableLayout::prepareLayoutRecusive( std::vector< TableLayout::Colum
 
     }
   }
+
+  // Link adjacent columns
+  for( size_t i = 0; i < columns.size() - 1; ++i )
+    columns[i].setNext( &columns[i + 1] );
 }
 
 void TableLayout::CellLayout::prepareLayout( string_view inputText, size_t maxLineWidth )
