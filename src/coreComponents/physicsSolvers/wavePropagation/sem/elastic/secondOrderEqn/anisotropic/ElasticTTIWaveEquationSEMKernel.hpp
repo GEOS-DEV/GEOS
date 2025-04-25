@@ -175,49 +175,49 @@ public:
     }
 
     //Initialize VTI elasticity tensor
-    for (localIndex i = 0; i < 6; i++)
+    for( localIndex i = 0; i < 6; i++ )
     {
-      for(localIndex j = 0; j < 6; j++)
+      for( localIndex j = 0; j < 6; j++ )
       {
         stack.CVTI[i][j] = 0.0;
-      } 
+      }
     }
-    
+
 
     stack.CVTI[0][0] = m_density[k] * pow( m_velocityVp[k], 2 ) * (1.0 + 2.0*m_epsilon[k]);
     stack.CVTI[1][1]= stack.CVTI[0][0];
 
-    
-    stack.CVTI[2][0] = m_density[k] *
-    sqrt( pow((pow( m_velocityVp[k],
-                    2 ) - pow( m_velocityVs[k], 2 )),
-              2 ) + 2.0 * pow( m_velocityVp[k], 2 ) * m_delta[k] * (pow( m_velocityVp[k], 2 ) - pow( m_velocityVs[k], 2 )) ) - m_density[k] * pow(
-m_velocityVs[k], 2 );
 
-    stack.CVTI[0][2] = stack.CVTI[2][0]; 
+    stack.CVTI[2][0] = m_density[k] *
+                       sqrt( pow((pow( m_velocityVp[k],
+                                       2 ) - pow( m_velocityVs[k], 2 )),
+                                 2 ) + 2.0 * pow( m_velocityVp[k], 2 ) * m_delta[k] * (pow( m_velocityVp[k], 2 ) - pow( m_velocityVs[k], 2 )) ) - m_density[k] * pow(
+      m_velocityVs[k], 2 );
+
+    stack.CVTI[0][2] = stack.CVTI[2][0];
 
     stack.CVTI[1][2] = stack.CVTI[0][2];
-    
+
     stack.CVTI[2][1] = stack.CVTI[1][2];
-    
+
     stack.CVTI[2][2] = m_density[k] * pow( m_velocityVp[k], 2 );
 
     stack.CVTI[3][3] = m_density[k] * pow( m_velocityVs[k], 2 );
 
     stack.CVTI[4][4] = stack.CVTI[3][3];
 
-    stack.CVTI[5][5] = m_density[k] * pow( m_velocityVs[k], 2 )*(1.0 + 2.0 * m_gamma[k]); 
+    stack.CVTI[5][5] = m_density[k] * pow( m_velocityVs[k], 2 )*(1.0 + 2.0 * m_gamma[k]);
 
     stack.CVTI[1][0] = stack.CVTI[0][0] - 2.0 * stack.CVTI[5][5];
-    stack.CVTI[0][1] = stack.CVTI[1][0];  
-     
+    stack.CVTI[0][1] = stack.CVTI[1][0];
+
     // Voigt array useful fot the CTTI tensor
     int Voigt[3][3];
 
     Voigt[0][0] = 0;
     Voigt[1][1] = 1;
     Voigt[2][2] = 2;
-    Voigt[2][1] = 3;  
+    Voigt[2][1] = 3;
     Voigt[1][2] = 3;
     Voigt[0][2] = 4;
     Voigt[2][0] = 4;
@@ -228,9 +228,9 @@ m_velocityVs[k], 2 );
     real64 rotationMatrix[3][3];
 
     rotationMatrix[0][0] = LvArray::math::cos( m_theta[k] ) * LvArray::math::cos( m_phi[k] );
-    rotationMatrix[0][1] = LvArray::math::cos( m_theta[k] )*LvArray::math::sin( m_phi[k] ) ;
+    rotationMatrix[0][1] = LvArray::math::cos( m_theta[k] )*LvArray::math::sin( m_phi[k] );
     rotationMatrix[0][2] = -LvArray::math::sin( m_theta[k] );
-    rotationMatrix[1][0] = - LvArray::math::sin( m_phi[k] );
+    rotationMatrix[1][0] = -LvArray::math::sin( m_phi[k] );
     rotationMatrix[1][1] = LvArray::math::cos( m_phi[k] );
     rotationMatrix[1][2] = 0.0;
     rotationMatrix[2][0] =  LvArray::math::sin( m_theta[k] ) * LvArray::math::cos( m_phi[k] );
@@ -240,33 +240,33 @@ m_velocityVs[k], 2 );
 
     // Build CTTI tensor
     real64 coeff;
-    for (localIndex  l = 0; l < 3; ++l)
+    for( localIndex l = 0; l < 3; ++l )
     {
-      for(localIndex  m = 0; m < 3; ++m)
+      for( localIndex m = 0; m < 3; ++m )
       {
-        for(localIndex  j = 0; j < 3; ++j)
+        for( localIndex j = 0; j < 3; ++j )
         {
-          for(localIndex  i = 0; i < 3; ++i)
+          for( localIndex i = 0; i < 3; ++i )
           {
-             coeff=0.0;
-             for(localIndex  a = 0; a < 3; ++a)
-             {
-               for(localIndex  b = 0; b < 3; ++b)
-               {
-                for(localIndex  c = 0; c < 3; ++c)
+            coeff=0.0;
+            for( localIndex a = 0; a < 3; ++a )
+            {
+              for( localIndex b = 0; b < 3; ++b )
+              {
+                for( localIndex c = 0; c < 3; ++c )
                 {
-                  for(localIndex  d = 0; d < 3; ++d)
+                  for( localIndex d = 0; d < 3; ++d )
                   {
                     coeff+= rotationMatrix[ d ][ i ] * rotationMatrix[ c ][ j ] * rotationMatrix[ b ][ m ] * rotationMatrix[ a ][ l ] * stack.CVTI[ Voigt[ d ][ c ] ][ Voigt[ b ][ a ] ];
                   }
                 }
-               }
-             }
-              stack.CTTI[ Voigt[ i ][ j ] ][ Voigt[ m ][ l ] ] = coeff; 
+              }
+            }
+            stack.CTTI[ Voigt[ i ][ j ] ][ Voigt[ m ][ l ] ] = coeff;
           }
         }
       }
-    }    
+    }
 
   }
 
@@ -304,42 +304,42 @@ m_velocityVs[k], 2 );
 
     m_finiteElementSpace.template computeFirstOrderStiffnessTerm<>( q, stack.xLocal, [&] ( int const i, int const j, real64 const val, real64 const (&J)[3][3], int const p, int const r )
     {
-      
+
       real32 const Rxx_ij = val*(stack.CTTI[0][0]*J[p][0]*J[r][0]+stack.CTTI[5][0]*J[p][0]*J[r][1]+stack.CTTI[4][0]*J[p][0]*J[r][2]+
-        stack.CTTI[0][5]*J[p][1]*J[r][0]+stack.CTTI[5][5]*J[p][1]*J[r][1]+stack.CTTI[4][5]*J[p][1]*J[r][2]+
-        stack.CTTI[0][4]*J[p][2]*J[r][0]+stack.CTTI[5][4]*J[p][2]*J[r][1]+stack.CTTI[4][4]*J[p][2]*J[r][2]);
+                                 stack.CTTI[0][5]*J[p][1]*J[r][0]+stack.CTTI[5][5]*J[p][1]*J[r][1]+stack.CTTI[4][5]*J[p][1]*J[r][2]+
+                                 stack.CTTI[0][4]*J[p][2]*J[r][0]+stack.CTTI[5][4]*J[p][2]*J[r][1]+stack.CTTI[4][4]*J[p][2]*J[r][2]);
 
       real32 const Ryy_ij = val*(stack.CTTI[5][5]*J[p][0]*J[r][0]+stack.CTTI[1][5]*J[p][0]*J[r][1]+stack.CTTI[3][5]*J[p][0]*J[r][2]+
-        stack.CTTI[5][2]*J[p][1]*J[r][0]+stack.CTTI[2][2]*J[p][1]*J[r][1]+stack.CTTI[3][2]*J[p][1]*J[r][2]+
-        stack.CTTI[5][3]*J[p][2]*J[r][0]+stack.CTTI[2][3]*J[p][2]*J[r][1]+stack.CTTI[3][3]*J[p][2]*J[r][2]);
+                                 stack.CTTI[5][2]*J[p][1]*J[r][0]+stack.CTTI[2][2]*J[p][1]*J[r][1]+stack.CTTI[3][2]*J[p][1]*J[r][2]+
+                                 stack.CTTI[5][3]*J[p][2]*J[r][0]+stack.CTTI[2][3]*J[p][2]*J[r][1]+stack.CTTI[3][3]*J[p][2]*J[r][2]);
 
       real32 const Rzz_ij = val*(stack.CTTI[4][4]*J[p][0]*J[r][0]+stack.CTTI[3][4]*J[p][0]*J[r][1]+stack.CTTI[2][4]*J[p][0]*J[r][2]+
-          stack.CTTI[4][3]*J[p][1]*J[r][0]+stack.CTTI[3][3]*J[p][1]*J[r][1]+stack.CTTI[2][3]*J[p][1]*J[r][2]+
-          stack.CTTI[4][2]*J[p][2]*J[r][0]+stack.CTTI[3][2]*J[p][2]*J[r][1]+stack.CTTI[2][2]*J[p][2]*J[r][2]);
+                                 stack.CTTI[4][3]*J[p][1]*J[r][0]+stack.CTTI[3][3]*J[p][1]*J[r][1]+stack.CTTI[2][3]*J[p][1]*J[r][2]+
+                                 stack.CTTI[4][2]*J[p][2]*J[r][0]+stack.CTTI[3][2]*J[p][2]*J[r][1]+stack.CTTI[2][2]*J[p][2]*J[r][2]);
 
       real32 const Ryx_ij = val*(stack.CTTI[0][5]*J[p][0]*J[r][0]+stack.CTTI[5][5]*J[p][0]*J[r][1]+stack.CTTI[4][5]*J[p][0]*J[r][2]+
-        stack.CTTI[0][1]*J[p][1]*J[r][0]+stack.CTTI[4][1]*J[p][1]*J[r][1]+stack.CTTI[4][1]*J[p][1]*J[r][2]+
-        stack.CTTI[0][3]*J[p][2]*J[r][0]+stack.CTTI[5][3]*J[p][2]*J[r][1]+stack.CTTI[4][3]*J[p][2]*J[r][2]);
+                                 stack.CTTI[0][1]*J[p][1]*J[r][0]+stack.CTTI[4][1]*J[p][1]*J[r][1]+stack.CTTI[4][1]*J[p][1]*J[r][2]+
+                                 stack.CTTI[0][3]*J[p][2]*J[r][0]+stack.CTTI[5][3]*J[p][2]*J[r][1]+stack.CTTI[4][3]*J[p][2]*J[r][2]);
 
       real32 const Rxy_ij = val*(stack.CTTI[5][0]*J[p][0]*J[r][0]+stack.CTTI[1][0]*J[p][0]*J[r][1]+stack.CTTI[3][0]*J[p][0]*J[r][2]+
-        stack.CTTI[5][5]*J[p][1]*J[r][0]+stack.CTTI[1][5]*J[p][1]*J[r][1]+stack.CTTI[3][5]*J[p][1]*J[r][2]+
-        stack.CTTI[5][4]*J[p][2]*J[r][0]+stack.CTTI[1][4]*J[p][2]*J[r][1]+stack.CTTI[3][4]*J[p][2]*J[r][2]);
+                                 stack.CTTI[5][5]*J[p][1]*J[r][0]+stack.CTTI[1][5]*J[p][1]*J[r][1]+stack.CTTI[3][5]*J[p][1]*J[r][2]+
+                                 stack.CTTI[5][4]*J[p][2]*J[r][0]+stack.CTTI[1][4]*J[p][2]*J[r][1]+stack.CTTI[3][4]*J[p][2]*J[r][2]);
 
       real32 const Rzx_ij = val*(stack.CTTI[0][4]*J[p][0]*J[r][0]+stack.CTTI[5][4]*J[p][0]*J[r][1]+stack.CTTI[4][4]*J[p][0]*J[r][2]+
-        stack.CTTI[0][3]*J[p][1]*J[r][0]+stack.CTTI[5][3]*J[p][1]*J[r][1]+stack.CTTI[4][3]*J[p][1]*J[r][2]+
-        stack.CTTI[0][2]*J[p][2]*J[r][0]+stack.CTTI[4][2]*J[p][2]*J[r][1]+stack.CTTI[4][2]*J[p][2]*J[r][2]);
+                                 stack.CTTI[0][3]*J[p][1]*J[r][0]+stack.CTTI[5][3]*J[p][1]*J[r][1]+stack.CTTI[4][3]*J[p][1]*J[r][2]+
+                                 stack.CTTI[0][2]*J[p][2]*J[r][0]+stack.CTTI[4][2]*J[p][2]*J[r][1]+stack.CTTI[4][2]*J[p][2]*J[r][2]);
 
       real32 const Rxz_ij = val*(stack.CTTI[4][0]*J[p][0]*J[r][0]+stack.CTTI[3][0]*J[p][0]*J[r][1]+stack.CTTI[2][0]*J[p][0]*J[r][2]+
-        stack.CTTI[4][5]*J[p][1]*J[r][0]+stack.CTTI[3][5]*J[p][1]*J[r][1]+stack.CTTI[2][5]*J[p][1]*J[r][2]+
-        stack.CTTI[4][4]*J[p][2]*J[r][0]+stack.CTTI[3][4]*J[p][2]*J[r][1]+stack.CTTI[2][4]*J[p][2]*J[r][2]);
+                                 stack.CTTI[4][5]*J[p][1]*J[r][0]+stack.CTTI[3][5]*J[p][1]*J[r][1]+stack.CTTI[2][5]*J[p][1]*J[r][2]+
+                                 stack.CTTI[4][4]*J[p][2]*J[r][0]+stack.CTTI[3][4]*J[p][2]*J[r][1]+stack.CTTI[2][4]*J[p][2]*J[r][2]);
 
       real32 const Rzy_ij = val*(stack.CTTI[5][4]*J[p][0]*J[r][0]+stack.CTTI[1][4]*J[p][0]*J[r][1]+stack.CTTI[3][4]*J[p][0]*J[r][2]+
-        stack.CTTI[5][3]*J[p][1]*J[r][0]+stack.CTTI[1][3]*J[p][1]*J[r][1]+stack.CTTI[3][3]*J[p][1]*J[r][2]+
-        stack.CTTI[5][2]*J[p][2]*J[r][0]+stack.CTTI[1][2]*J[p][2]*J[r][1]+stack.CTTI[3][2]*J[p][2]*J[r][2]);
+                                 stack.CTTI[5][3]*J[p][1]*J[r][0]+stack.CTTI[1][3]*J[p][1]*J[r][1]+stack.CTTI[3][3]*J[p][1]*J[r][2]+
+                                 stack.CTTI[5][2]*J[p][2]*J[r][0]+stack.CTTI[1][2]*J[p][2]*J[r][1]+stack.CTTI[3][2]*J[p][2]*J[r][2]);
 
       real32 const Ryz_ij = val*(stack.CTTI[4][5]*J[p][0]*J[r][0]+stack.CTTI[3][5]*J[p][0]*J[r][1]+stack.CTTI[2][5]*J[p][0]*J[r][2]+
-        stack.CTTI[4][1]*J[p][1]*J[r][0]+stack.CTTI[3][1]*J[p][1]*J[r][1]+stack.CTTI[2][1]*J[p][1]*J[r][2]+
-        stack.CTTI[5][3]*J[p][2]*J[r][0]+stack.CTTI[3][3]*J[p][2]*J[r][1]+stack.CTTI[2][3]*J[p][2]*J[r][2]);
+                                 stack.CTTI[4][1]*J[p][1]*J[r][0]+stack.CTTI[3][1]*J[p][1]*J[r][1]+stack.CTTI[2][1]*J[p][1]*J[r][2]+
+                                 stack.CTTI[5][3]*J[p][2]*J[r][0]+stack.CTTI[3][3]*J[p][2]*J[r][1]+stack.CTTI[2][3]*J[p][2]*J[r][2]);
 
       real32 const localIncrementx = (Rxx_ij * m_ux_n[m_elemsToNodes( k, j )] + Rxy_ij*m_uy_n[m_elemsToNodes( k, j )] + Rxz_ij*m_uz_n[m_elemsToNodes( k, j )]);
       real32 const localIncrementy = (Ryx_ij * m_ux_n[m_elemsToNodes( k, j )] + Ryy_ij*m_uy_n[m_elemsToNodes( k, j )] + Ryz_ij*m_uz_n[m_elemsToNodes( k, j )]);
@@ -392,7 +392,7 @@ protected:
   ///The array containing the Thomsen constant delta
   arrayView1d< real32 const > const m_delta;
 
-  ///The array containing tilt angle  
+  ///The array containing tilt angle
   arrayView1d< real32 const > const m_theta;
 
   ///The array containing the azimut angle

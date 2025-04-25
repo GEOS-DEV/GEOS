@@ -202,7 +202,7 @@ void ElasticWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
         subRegion.registerField< elasticvtifields::Delta >( getName() );
       }
 
-      if(m_useTTI)
+      if( m_useTTI )
       {
         subRegion.registerField< elasticttifields::Theta >( getName() );
         subRegion.registerField< elasticttifields::Phi >( getName() );
@@ -813,7 +813,7 @@ void ElasticWaveEquationSEM::computeUnknowns( real64 const & time_n,
                                                             "",
                                                             kernelFactory );
   }
-  else if (m_useTTI)
+  else if( m_useTTI )
   {
     auto kernelFactory = elasticTTIWaveEquationSEMKernels::ExplicitElasticTTISEMFactory( dt );
     finiteElement::

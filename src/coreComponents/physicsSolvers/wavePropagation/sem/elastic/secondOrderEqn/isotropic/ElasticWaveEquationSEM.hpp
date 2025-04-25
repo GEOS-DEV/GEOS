@@ -234,6 +234,8 @@ private:
   /// Flag to appliy TTI anisotropy
   integer m_useTTI;
 
+  real64 m_rotationMatrix[ 3 ][ 3 ]{};
+
 
 };
 
