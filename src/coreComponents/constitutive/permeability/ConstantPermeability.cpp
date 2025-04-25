@@ -34,7 +34,7 @@ ConstantPermeability::ConstantPermeability( string const & name, Group * const p
   registerWrapper( viewKeyStruct::permeabilityComponentsString(), &m_permeabilityComponents ).
     setInputFlag( InputFlags::REQUIRED ).
     setRestartFlags( RestartFlags::NO_WRITE ).
-    setDescription( "xx, yy and zz components of a diagonal permeability tensor." );
+    setDescription( "xx, yy and zz components of a diagonal permeability tensor [m²]." );
 }
 
 std::unique_ptr< ConstitutiveBase >

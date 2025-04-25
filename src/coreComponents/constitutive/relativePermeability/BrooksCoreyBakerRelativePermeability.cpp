@@ -34,7 +34,7 @@ BrooksCoreyBakerRelativePermeability::BrooksCoreyBakerRelativePermeability( stri
   registerWrapper( viewKeyStruct::phaseMinVolumeFractionString(), &m_phaseMinVolumeFraction ).
     setApplyDefaultValue( 0.0 ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Minimum volume fraction value for each phase" );
+    setDescription( "Minimum volume fraction value for each phase (expressed as a percentage) used to compute the relative permeability " );
 
   registerWrapper( viewKeyStruct::waterOilRelPermExponentString(), &m_waterOilRelPermExponent ).
     setApplyDefaultValue( 1.0 ).

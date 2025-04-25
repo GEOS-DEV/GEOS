@@ -50,7 +50,7 @@ CompositionalMultiphaseStatistics::CompositionalMultiphaseStatistics( const stri
   registerWrapper( viewKeyStruct::computeCFLNumbersString(), &m_computeCFLNumbers ).
     setApplyDefaultValue( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Flag to decide whether CFL numbers are computed or not" );
+    setDescription( "Flag to decide whether CFL numbers are computed or not, used to calculate a safe time-step for the simulation" );
 
   registerWrapper( viewKeyStruct::computeRegionStatisticsString(), &m_computeRegionStatistics ).
     setApplyDefaultValue( 1 ).

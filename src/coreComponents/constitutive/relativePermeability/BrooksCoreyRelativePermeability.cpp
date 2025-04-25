@@ -43,7 +43,7 @@ BrooksCoreyRelativePermeability::BrooksCoreyRelativePermeability( string const &
   registerWrapper( viewKeyStruct::phaseRelPermExponentString(), &m_phaseRelPermExponent ).
     setApplyDefaultValue( 1.0 ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Minimum relative permeability power law exponent for each phase" );
+    setDescription( "Ratio between a phase's permeability and the maximum permeability of the rock, for each phase." );
 
 
   registerWrapper( viewKeyStruct::phaseRelPermMaxValueString(), &m_phaseRelPermMaxValue ).

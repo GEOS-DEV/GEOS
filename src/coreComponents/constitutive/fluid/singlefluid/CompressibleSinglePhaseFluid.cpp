@@ -45,7 +45,7 @@ CompressibleSinglePhaseFluid::CompressibleSinglePhaseFluid( string const & name,
   registerWrapper( viewKeyStruct::compressibilityString(), &m_compressibility ).
     setApplyDefaultValue( 0.0 ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Fluid compressibility" );
+    setDescription( "Fluid compressibility [Pa-1]" );
 
   registerWrapper( viewKeyStruct::viscosibilityString(), &m_viscosibility ).
     setApplyDefaultValue( 0.0 ).
@@ -55,7 +55,7 @@ CompressibleSinglePhaseFluid::CompressibleSinglePhaseFluid( string const & name,
   registerWrapper( viewKeyStruct::referencePressureString(), &m_referencePressure ).
     setApplyDefaultValue( 0.0 ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Reference pressure" );
+    setDescription( "Reference pressure for solid compressibility [Pa]" );
 
   registerWrapper( viewKeyStruct::referenceDensityString(), &m_referenceDensity ).
     setApplyDefaultValue( 1000.0 ).

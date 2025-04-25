@@ -70,7 +70,7 @@ WellControls::WellControls( string const & name, Group * const parent )
     setDefaultValue( 0.0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setRestartFlags( RestartFlags::WRITE_AND_READ ).
-    setDescription( "Target bottom-hole pressure [Pa]" );
+    setDescription( "The Bottom Hole Pressure [Pa] being targeted during the injection." );
 
   registerWrapper( viewKeyStruct::targetTotalRateString(), &m_targetTotalRate ).
     setDefaultValue( 0.0 ).
@@ -106,7 +106,7 @@ WellControls::WellControls( string const & name, Group * const parent )
     setDefaultValue( -1 ).
     setSizedFromParent( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Global component densities of the injection stream [moles/m^3 or kg/m^3]" );
+    setDescription( "Defines the global component of the injected fluid in the reservoir as a fraction of its components [moles/m^3 or kg/m^3]" );
 
   registerWrapper( viewKeyStruct::injectionTemperatureString(), &m_injectionTemperature ).
     setDefaultValue( -1 ).

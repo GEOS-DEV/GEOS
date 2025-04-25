@@ -52,12 +52,12 @@ PoroElastic< BASE >::PoroElastic( string const & name, Group * const parent ):
   this->registerWrapper( viewKeyStruct::compressibilityString(), &m_compressibility ).
     setApplyDefaultValue( 0.0 ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Pore volume compressibilty" );
+    setDescription( "Pore volume compressibilty [Pa-1]" );
 
   this->registerWrapper( viewKeyStruct::referencePressureString(), &m_referencePressure ).
     setApplyDefaultValue( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "ReferencePressure" );
+    setDescription( "Reference pressure [Pa]" );
 
 
   this->registerWrapper( viewKeyStruct::poreVolumeMultiplierString(), &m_poreVolumeMultiplier ).

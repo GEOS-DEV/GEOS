@@ -47,7 +47,7 @@ FieldSpecificationBase::FieldSpecificationBase( string const & name, Group * par
   registerWrapper( viewKeyStruct::componentString(), &m_component ).
     setApplyDefaultValue( -1 ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Component of field (if tensor) to apply boundary condition to." );
+    setDescription( "Phase name of field (if tensor) to apply boundary condition to." );
 
   registerWrapper( viewKeyStruct::directionString(), &m_direction ).
     setApplyDefaultValue( {0, 0, 0} ).

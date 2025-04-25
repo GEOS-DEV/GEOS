@@ -95,7 +95,7 @@ CO2BrineFluid( string const & name, Group * const parent ):
   registerWrapper( viewKeyStruct::flashModelParaFileString(), &m_flashModelParaFile ).
     setInputFlag( InputFlags::OPTIONAL ).
     setRestartFlags( RestartFlags::NO_WRITE ).
-    setDescription( "Name of the file defining the parameters of the flash model" );
+    setDescription( "Name of the file defining the parameters of the flash model, which calculates how different components separate into gas and liquid phases under given pressure and temperature conditions." );
 
   registerWrapper( viewKeyStruct::solubilityTablesString(), &m_solubilityTables ).
     setInputFlag( InputFlags::OPTIONAL ).

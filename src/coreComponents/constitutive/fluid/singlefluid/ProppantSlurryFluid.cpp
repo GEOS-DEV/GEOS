@@ -33,7 +33,7 @@ ProppantSlurryFluid::ProppantSlurryFluid( string const & name, Group * const par
   registerWrapper( viewKeyStruct::compressibilityString(), &m_compressibility ).
     setApplyDefaultValue( 0.0 ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Fluid compressibility" );
+    setDescription( "Fluid compressibility [Pa-1]" );
 
   registerWrapper( viewKeyStruct::referenceProppantDensityString(), &m_referenceProppantDensity ).
     setApplyDefaultValue( 1400.0 ).
@@ -43,7 +43,7 @@ ProppantSlurryFluid::ProppantSlurryFluid( string const & name, Group * const par
   registerWrapper( viewKeyStruct::referencePressureString(), &m_referencePressure ).
     setApplyDefaultValue( 1e5 ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Reference pressure" );
+    setDescription( "Reference pressure [Pa]" );
 
   registerWrapper( viewKeyStruct::referenceDensityString(), &m_referenceDensity ).
     setApplyDefaultValue( 1000.0 ).

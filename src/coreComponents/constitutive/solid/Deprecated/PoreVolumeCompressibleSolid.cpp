@@ -33,11 +33,11 @@ PoreVolumeCompressibleSolid::PoreVolumeCompressibleSolid( string const & name, G
 {
   registerWrapper( viewKeyStruct::compressibilityString(), &m_compressibility ).
     setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "Solid compressibility" );
+    setDescription( "Solid compressibility [Pa-1]" );
 
   registerWrapper( viewKeyStruct::referencePressureString(), &m_referencePressure ).
     setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "Reference pressure for fluid compressibility" );
+    setDescription( "Reference pressure for fluid compressibility [Pa]" );
 
   registerWrapper( viewKeyStruct::poreVolumeMultiplierString(), &m_poreVolumeMultiplier ).
     setDefaultValue( 1.0 );
