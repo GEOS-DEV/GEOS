@@ -78,7 +78,7 @@ public:
   void setMinWidth( size_t const & minWidth );
 
   /**
-   * @briefSet the maximal width of the LogPart
+   * @brief Set the maximal width of the LogPart
    * @param maxWidth The maximal width to apply
    */
   void setMaxWidth( size_t const & maxWidth );

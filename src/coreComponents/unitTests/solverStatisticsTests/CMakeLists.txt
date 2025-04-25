@@ -2,7 +2,7 @@
 set( solverStatisticsTests_sources
       testSolverStats.cpp )
 
-set( dependencyList mainInterface  gtest common ${parallelDeps} )
+set( dependencyList mainInterface  gtest ${parallelDeps} )
 
 # Add gtest C++ based tests
 foreach(test ${solverStatisticsTests_sources})
