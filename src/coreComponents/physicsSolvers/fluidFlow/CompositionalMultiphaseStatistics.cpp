@@ -132,7 +132,7 @@ void CompositionalMultiphaseStatistics::registerDataOnMesh( Group & meshBodies )
               {
                 for( int ic = 0; ic < pnumComps; ++ic )
                 {
-                  pstatsLayout << description << " (component " << ic << ", phase " << ip << ") [" << punit << "]";
+                  pstatsLayout << description << " (component " << ic << " / phase " << ip << ") [" << punit << "]";
                   if( ic == 0 )
                   {
                     pstatsLayout << ",";
@@ -464,7 +464,7 @@ void CompositionalMultiphaseStatistics::computeRegionStatistics( real64 const ti
       compPhaseStatsData.addRow( "Temperature [K]", stats.minTemperature, stats.averageTemperature, stats.maxTemperature );
       compPhaseStatsData.addSeparator();
 
-      compPhaseStatsData.addRow( "Total dynamic pore volume [rm^3]", "-", CellType::MergeNext, stats.totalPoreVolume );
+      compPhaseStatsData.addRow( "Total dynamic pore volume [rm^3]", CellType::MergeNext, CellType::MergeNext, stats.totalPoreVolume );
       compPhaseStatsData.addSeparator();
       compPhaseStatsData.addRow( "Phase dynamic pore volume [rm^3]",
                                  stringutilities::joinLambda( phaseNames, "\n", []( auto data ) { return data[0]; } ),
