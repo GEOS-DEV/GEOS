@@ -32,7 +32,7 @@ SolverStatistics::SolverStatistics( string const & name, Group * const parent )
   : Group( name, parent ),
   m_iterationsStats( groupKeyStruct::IterationsStatisticsString(), this ),
   m_convergenceStats(),
-  m_outputDir( joinPath( OutputBase::getOutputDirectory(), "convergence" ))// TODO DANS LE HPP
+  m_outputDir( joinPath( OutputBase::getOutputDirectory(), m_directoryName ))
 {
   makeDirsForPath( m_outputDir );
 }

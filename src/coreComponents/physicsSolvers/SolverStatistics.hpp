@@ -308,6 +308,9 @@ public:
   ConvergenceStatistics m_convergenceStats;
 
 private:
+  /// Name of the directory containing solvers statistics csv
+  constexpr static string m_directoryName = "convergence";
+
   /// Output directory for solver statistics (CSV), passed in the constructor.
   string m_outputDir;
 };
