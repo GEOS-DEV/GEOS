@@ -30,18 +30,6 @@ public:
   /// Type alias for the base class (i.e., std::vector)
   using Base = std::vector< T, Allocator >;
 
-  /// inherit constructors from the base class
-  using Base::Base;
-
-  /// inherit std::vector::push_back()
-  using Base::push_back;
-
-  /// inherit std::vector::size()
-  using Base::size;
-
-  /// inherit std::vector::empty()
-  using Base::empty;
-
   /**
    * Access element at index with bounds checking if USE_STD_CONTAINER_BOUNDS_CHECKING is true.
    * Otherwise, uses operator[] for unchecked access.
