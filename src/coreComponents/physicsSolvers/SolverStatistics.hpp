@@ -293,7 +293,7 @@ public:
   /**
    * @return The output directory where all statistics related to the solver are atored
    */
-  string getOutputDir()
+  string_view getOutputDir() const
   { return m_outputDir; }
 
   /**
