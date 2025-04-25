@@ -92,21 +92,8 @@ void OBLFluid::postInputInitialization()
                  InputError );
   m_interpolatorMode = EnumStrings<OBLInterpolatorMode>::fromString( m_interpolatorModeString );
 
-  GEOS_WARNING_IF( m_interpolatorTypeString == "linear",
-                   GEOS_FMT( "{}: Linear interpolator type is not supported yet, using multilinear interpolator",
-                             getFullName()) );
-
-  if( !m_interpolatorTypeString.empty())
-  {
-    if( m_interpolatorTypeString == "multilinear" )
-      m_interpolatorType = OBLInterpolatorType::Multilinear;
-    else if( m_interpolatorTypeString == "linear" )
-      m_interpolatorType = OBLInterpolatorType::Multilinear;
-    else
-      m_interpolatorType = OBLInterpolatorType::Multilinear;
-  }
-  else
-    m_interpolatorType = OBLInterpolatorType::Multilinear;
+  // currently only multilinear interpolation is supported
+  m_interpolatorType = OBLInterpolatorType::Multilinear;
 
   // set table file
   GEOS_THROW_IF( m_OBLOperatorsTableFile.empty() &&
