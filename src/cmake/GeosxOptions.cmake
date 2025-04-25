@@ -113,6 +113,7 @@ option( GEOS_ENABLE_SIMPLEPDE "Enables simple PDE physics package" ON )
 option( GEOS_ENABLE_SOLIDMECHANICS "Enables solid mechanics physics package" ON )
 option( GEOS_ENABLE_SURFACEGENERATION "Enables surface generation physics package" ON )
 option( GEOS_ENABLE_WAVEPROPAGATION "Enables wave propagation physics package" ON )
+option( GEOS_ENABLE_ELECTROSTATICS "Enables Butler-Volmer electrostatics physics package" ON )
 
 #set(CMAKE_POSITION_INDEPENDENT_CODE ON  CACHE BOOL "" FORCE)
 #blt_append_custom_compiler_flag(FLAGS_VAR CMAKE_CXX_FLAGS DEFAULT -rdynamic)

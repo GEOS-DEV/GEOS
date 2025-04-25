@@ -117,6 +117,11 @@ if( GEOS_ENABLE_MULTIPHYSICS )
   list( APPEND dependencyList multiPhysicsSolvers )
 endif()
 
+if( GEOS_ENABLE_ELECTROSTATICS )
+  add_subdirectory( electrostatics )
+  list( APPEND dependencyList electrostaticsSolvers )
+endif()
+
 geos_decorate_link_dependencies( LIST decoratedDependencies
                                  DEPENDENCIES ${dependencyList} )
 
