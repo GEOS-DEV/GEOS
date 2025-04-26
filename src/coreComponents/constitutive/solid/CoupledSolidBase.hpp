@@ -55,11 +55,11 @@ public:
     static constexpr char const * solidInternalEnergyModelNameString() { return "solidInternalEnergyModelName"; }
   };
 
-  virtual std::vector< string > getSubRelationNames() const override final
+  virtual stdVector< string > getSubRelationNames() const override final
   {
-    std::vector< string > subRelationNames = { m_solidModelName,
-                                               m_porosityModelName,
-                                               m_permeabilityModelName };
+    stdVector< string > subRelationNames = { m_solidModelName,
+                                             m_porosityModelName,
+                                             m_permeabilityModelName };
 
     if( !m_solidInternalEnergyModelName.empty() )
     {
