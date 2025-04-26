@@ -747,6 +747,10 @@
 					<xsd:selector xpath="ElasticTransverseIsotropic" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
+				<xsd:unique name="domainConstitutiveElectroChemistryBaseUniqueName">
+					<xsd:selector xpath="ElectroChemistryBase" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
 				<xsd:unique name="domainConstitutiveExponentialDecayPermeabilityUniqueName">
 					<xsd:selector xpath="ExponentialDecayPermeability" />
 					<xsd:field xpath="@name" />
@@ -4777,6 +4781,7 @@ Information output from lower logLevels is added with the desired log level-->
 			<xsd:element name="ElasticIsotropicPressureDependent" type="ElasticIsotropicPressureDependentType" />
 			<xsd:element name="ElasticOrthotropic" type="ElasticOrthotropicType" />
 			<xsd:element name="ElasticTransverseIsotropic" type="ElasticTransverseIsotropicType" />
+			<xsd:element name="ElectroChemistryBase" type="ElectroChemistryBaseType" />
 			<xsd:element name="ExponentialDecayPermeability" type="ExponentialDecayPermeabilityType" />
 			<xsd:element name="ExtendedDruckerPrager" type="ExtendedDruckerPragerType" />
 			<xsd:element name="FrictionlessContact" type="FrictionlessContactType" />
@@ -5649,6 +5654,12 @@ For instance, if "oil" is before "gas" in "phaseNames", the table order should b
 		<xsd:attribute name="defaultYoungModulusAxial" type="real64" default="-1" />
 		<!--defaultYoungModulusTransverse => Default Transverse Young's Modulus-->
 		<xsd:attribute name="defaultYoungModulusTransverse" type="real64" default="-1" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="groupName" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="ElectroChemistryBaseType">
+		<!--defaultConductivity => Default Electro Conductivity-->
+		<xsd:attribute name="defaultConductivity" type="real64" default="1" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>

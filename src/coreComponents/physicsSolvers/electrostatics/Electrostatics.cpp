@@ -20,12 +20,15 @@
 #include "Electrostatics.hpp"
 #include "ElectrostaticsKernels.hpp"
 
+#include "constitutive/electroChemistry/ElectroChemistryBase.hpp"
+
 #include "fieldSpecification/FieldSpecificationManager.hpp"
 #include "fieldSpecification/TractionBoundaryCondition.hpp"
+
 #include "mesh/DomainPartition.hpp"
-// #include "mesh/FaceElementSubRegion.hpp"
-// #include "mesh/CellElementSubRegion.hpp"
-// #include "mesh/mpiCommunications/NeighborCommunicator.hpp"
+#include "mesh/FaceElementSubRegion.hpp"
+#include "mesh/CellElementSubRegion.hpp"
+#include "mesh/mpiCommunications/NeighborCommunicator.hpp"
 
 namespace geos
 {
@@ -67,14 +70,17 @@ void Electrostatics::registerDataOnMesh(Group& meshBodies)
 
       elemManager.forElementSubRegions< CellElementSubRegion >(regionNames,
         [&]( localIndex const, CellElementSubRegion& subRegion) {
-          subRegion.registerWrapper( viewKeyStruct::coeffNameString(), &m_conductivity).
-            setApplyDefaultValue( 1.0 ).
-            setPlotLevel( PlotLevel::LEVEL_0 ).
-            setDescription( "Field variable representing conductivity" );
-        }
-      );  
-    }
-  );
+          subRegion.registerWrapper<string>(viewKeyStruct::electroMaterialNamesString()).
+            setPlotLevel(PlotLevel::NOPLOT).
+            setRestartFlags(RestartFlags::NO_WRITE).
+            setSizedFromParent(0);
+
+          string& electroMaterialName = subRegion.getReference<string>(viewKeyStruct::electroMaterialNamesString());
+          electroMaterialName = PhysicsSolverBase::getConstitutiveName<ElectroChemistryBase>(subRegion);
+          GEOS_ERROR_IF( electroMaterialName.empty(), GEOS_FMT("{}: ElectroChemistryBase model not found on subregion {}",
+                                                               getDataContext(), subRegion.getName()));
+        });  
+    });
 }
 
 real64 Electrostatics::solverStep(real64 const& time_n, real64 const& dt,
@@ -155,9 +161,8 @@ void Electrostatics::assembleSystem(real64 const GEOS_UNUSED_PARAM(time_n), real
 
       ElectrostaticsKernelFactory kernelFactory(dofIndex, dofManager.rankOffset(), localMatrix, localRhs, dt, m_fieldName);
 
-      string const dummyString = "dummy";
-      finiteElement::regionBasedKernelApplication<parallelDevicePolicy<>, constitutive::NullModel, CellElementSubRegion>(
-        mesh, regionNames, this->getDiscretizationName(), dummyString, kernelFactory);
+      finiteElement::regionBasedKernelApplication<parallelDevicePolicy<>, constitutive::ElectroChemistryBase, CellElementSubRegion>(
+        mesh, regionNames, this->getDiscretizationName(), viewKeyStruct::electroMaterialNamesString(), kernelFactory);
     });
 }
 

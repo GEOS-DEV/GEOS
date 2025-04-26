@@ -205,6 +205,7 @@ set( constitutive_headers
      thermalConductivity/SinglePhaseThermalConductivityBase.hpp
      thermalConductivity/SinglePhaseThermalConductivitySelector.hpp
      thermalConductivity/ThermalConductivityFields.hpp
+     electroChemistry/ElectroChemistryBase.hpp
    )
 #
 # Specify all sources
@@ -328,6 +329,7 @@ set( constitutive_sources
      thermalConductivity/MultiPhaseVolumeWeightedThermalConductivity.cpp
      thermalConductivity/SinglePhaseThermalConductivity.cpp
      thermalConductivity/SinglePhaseThermalConductivityBase.cpp
+     electroChemistry/ElectroChemistryBase.cpp
    )
 
 set( dependencyList ${parallelDeps} functions denseLinearAlgebra )

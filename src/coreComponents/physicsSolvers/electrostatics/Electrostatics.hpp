@@ -116,13 +116,12 @@ public:
   {
     static constexpr char const* timeIntegrationOption() { return "timeIntegrationOption"; }
     static constexpr char const* fieldVarName() { return "fieldName"; }
-    static constexpr char const* coeffNameString() { return "coeffField"; }
+    static constexpr char const* electroMaterialNamesString() {return "electroMaterialNames";}
   };
 
 private:
   string m_fieldName;
   TimeIntegrationOption m_timeIntegrationOption;
-  array1d< real64 > m_conductivity;
 };
 
 ENUM_STRINGS(Electrostatics::TimeIntegrationOption,

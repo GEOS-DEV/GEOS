@@ -53,6 +53,7 @@
 #include "permeability/WillisRichardsPermeability.hpp"
 #include "contact/CoulombFriction.hpp"
 #include "contact/RateAndStateFriction.hpp"
+#include "electroChemistry/ElectroChemistryBase.hpp"
 
 
 namespace geos
@@ -466,6 +467,21 @@ struct ConstitutivePassThru< CoupledSolidBase >
                                  PorousDamageSolid< DamageVolDev< ElasticIsotropic > >,
                                  PorousDamageSolid< Damage< ElasticIsotropic > > >::execute( constitutiveRelation,
                                                                                              std::forward< LAMBDA >( lambda ) );
+  }
+};
+
+/**
+ * Base material model for electrochemistry.
+ */
+template<>
+struct ConstitutivePassThru<ElectroChemistryBase>
+{
+  template< typename LAMBDA >
+  static
+  void execute( ConstitutiveBase & constitutiveRelation, LAMBDA && lambda )
+  {
+    ConstitutivePassThruHandler<ElectroChemistryBase>::execute(constitutiveRelation,
+                                                               std::forward<LAMBDA>(lambda));
   }
 };
 
