@@ -64,6 +64,7 @@ public:
   using Base::m_matrix;
   using Base::m_rhs;
   using Base::m_elemsToNodes;
+  using Base::m_constitutiveUpdate;
   using Base::m_finiteElementSpace;
   using Base::m_meshData;
   using Base::m_dt;
@@ -147,6 +148,7 @@ public:
   GEOS_HOST_DEVICE
   inline void quadraturePointKernel(localIndex const k, localIndex const q, StackVariables& stack) const
   {
+    real64 const conductivity = m_constitutiveUpdate.getConductivity(k);
     real64 dNdX[maxNumTestSupportPointsPerElem][3];
     real64 const detJ = m_finiteElementSpace.template getGradN<FE_TYPE>(k, q, stack.xLocal, stack.feStack, dNdX);
 
@@ -154,7 +156,7 @@ public:
     {
       for (localIndex b = 0; b < stack.numCols; ++b)
       {
-        stack.localJacobian[a][b] += LvArray::tensorOps::AiBi<3>(dNdX[a], dNdX[b]) * detJ;
+        stack.localJacobian[a][b] += conductivity * LvArray::tensorOps::AiBi<3>(dNdX[a], dNdX[b]) * detJ;
       }
     }
   }

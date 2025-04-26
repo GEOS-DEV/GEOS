@@ -52,13 +52,13 @@
   </ElementRegions>
 
   <Constitutive>
-    <ElectroSolid
+    <ElectroChemistryBase
       name="electrodeMaterial"
-      conductivity="100.0"/>
+      defaultConductivity="100.0"/>
 
-    <ElectroSolid
+    <ElectroChemistryBase
       name="electrolyteMaterial"
-      conductivity="1.0"/>
+      defaultConductivity="10.0"/>
   </Constitutive>
 
   <NumericalMethods>
