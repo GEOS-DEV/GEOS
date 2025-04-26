@@ -95,7 +95,7 @@ string TableCSVFormatter::dataToString( TableData const & tableData ) const
 
   for( auto const & row : rowsValues )
   {
-    std::vector< string > rowConverted;
+    stdVector< string > rowConverted;
     for( auto const & item : row )
     {
       std::istringstream strStream( item.value );
@@ -164,7 +164,7 @@ void TableTextFormatter::initalizeTableGrids( PreparedTableLayout const & tableL
   RowsCellInput const & inputDataValues( tableInputData.getTableDataRows() );
   size_t const inputDataRowsCount = !inputDataValues.empty() ? inputDataValues.front().size() : 0;
   // this array will store the displayed width of all columns (it will be scaled by data & headers width)
-  std::vector< size_t > columnsWidth;
+  stdVector< size_t > columnsWidth;
 
   populateTitleCellsLayout( tableLayout, headerCellsLayout );
   if( hasColumnLayout )
@@ -172,12 +172,12 @@ void TableTextFormatter::initalizeTableGrids( PreparedTableLayout const & tableL
     populateHeaderCellsLayout( tableLayout, headerCellsLayout, inputDataRowsCount );
     size_t nbVisibleColumns = headerCellsLayout.back().cells.size();
     populateDataCellsLayout( tableLayout, dataCellsLayout, inputDataValues, nbVisibleColumns );
-    columnsWidth = std::vector< size_t >( nbVisibleColumns, 0 );
+    columnsWidth = stdVector< size_t >( nbVisibleColumns, 0 );
   }
   else
   {
     populateDataCellsLayout( tableLayout, dataCellsLayout, inputDataValues );
-    columnsWidth = std::vector< size_t >( inputDataRowsCount, 0 );
+    columnsWidth = stdVector< size_t >( inputDataRowsCount, 0 );
   }
 
   stretchColumnsByCellsWidth( columnsWidth, headerCellsLayout );
@@ -210,15 +210,15 @@ void TableTextFormatter::populateTitleCellsLayout( PreparedTableLayout const & t
 
     // the title row consists in a row of cells merging with the last cell containing the title text
     headerCellsLayout.emplace_back() = {
-      std::vector< TableLayout::CellLayout >( tableLayout.getLowermostColumnsCount(),
-                                              TableLayout::CellLayout( CellType::MergeNext ) ), // cells
+      stdVector< TableLayout::CellLayout >( tableLayout.getLowermostColumnsCount(),
+                                            TableLayout::CellLayout( CellType::MergeNext ) ),   // cells
       titleInput.getHeight(), // sublinesCount
     };
     headerCellsLayout.back().cells.back() = titleInput;
 
     headerCellsLayout.emplace_back() = {
-      std::vector< TableLayout::CellLayout >( tableLayout.getLowermostColumnsCount(),
-                                              TableLayout::CellLayout( CellType::Separator ) ), // cells
+      stdVector< TableLayout::CellLayout >( tableLayout.getLowermostColumnsCount(),
+                                            TableLayout::CellLayout( CellType::Separator ) ),   // cells
       1, // sublinesCount
     };
   }
@@ -252,7 +252,7 @@ void TableTextFormatter::populateHeaderCellsLayout( PreparedTableLayout const & 
     if( ( rowId % 2 ) == 1 )
     { // each even row is a separator
       headerCellsLayout[rowId] = {
-        std::vector< CellLayout >( lowermostColumnsCount, CellLayout( CellType::Separator ) ), // cells
+        stdVector< CellLayout >( lowermostColumnsCount, CellLayout( CellType::Separator ) ), // cells
         1 // sublinesCount
       };
     }
@@ -312,10 +312,10 @@ void TableTextFormatter::populateDataCellsLayout( PreparedTableLayout const & ta
                                                   RowsCellInput const & inputDataValues,
                                                   size_t const nbVisibleColumn ) const
 {
-  dataCellsLayout = std::vector< CellLayoutRow >{
+  dataCellsLayout = stdVector< CellLayoutRow >{
     inputDataValues.size(),
     {
-      std::vector< TableLayout::CellLayout >( nbVisibleColumn, TableLayout::CellLayout() ), // cells
+      stdVector< TableLayout::CellLayout >( nbVisibleColumn, TableLayout::CellLayout() ), // cells
       0 // sublinesCount
     }
   };
@@ -361,10 +361,10 @@ void TableTextFormatter::populateDataCellsLayout( PreparedTableLayout const & ta
                                                   RowsCellInput const & inputDataValues ) const
 {
   size_t const nbColumns = !inputDataValues.empty() ? inputDataValues[0].size() : 0;
-  dataCellsLayout = std::vector< CellLayoutRow >{
+  dataCellsLayout = stdVector< CellLayoutRow >{
     inputDataValues.size(),
     {
-      std::vector< TableLayout::CellLayout >( nbColumns, TableLayout::CellLayout() ), // cells
+      stdVector< TableLayout::CellLayout >( nbColumns, TableLayout::CellLayout() ), // cells
       0 // sublinesCount
     }
   };
@@ -390,7 +390,7 @@ void TableTextFormatter::populateDataCellsLayout( PreparedTableLayout const & ta
   }
 }
 
-void TableTextFormatter::stretchColumnsByCellsWidth( std::vector< size_t > & columnsWidth,
+void TableTextFormatter::stretchColumnsByCellsWidth( stdVector< size_t > & columnsWidth,
                                                      TableFormatter::CellLayoutRows const & tableGrid ) const
 {
   // first, we reduce by column all regular cells in the first row.
@@ -412,7 +412,7 @@ void TableTextFormatter::stretchColumnsByCellsWidth( std::vector< size_t > & col
   }
 }
 
-void TableTextFormatter::stretchColumnsByMergedCellsWidth( std::vector< size_t > & columnsWidth,
+void TableTextFormatter::stretchColumnsByMergedCellsWidth( stdVector< size_t > & columnsWidth,
                                                            TableFormatter::CellLayoutRows & tableGrid,
                                                            PreparedTableLayout const & tableLayout,
                                                            bool const compress ) const
@@ -421,7 +421,7 @@ void TableTextFormatter::stretchColumnsByMergedCellsWidth( std::vector< size_t >
   size_t const numRows = tableGrid.size();
   size_t const numColumns = tableGrid.empty() ? 0 : tableGrid[0].cells.size();
   size_t const spaceBetweenColumns = size_t( tableLayout.getColumnMargin() );
-  std::vector< size_t > flexSpaces = std::vector< size_t >( columnsWidth.size(), 0 );
+  stdVector< size_t > flexSpaces = stdVector< size_t >( columnsWidth.size(), 0 );
 
   for( size_t columnId = 0; columnId < numColumns; columnId++ )
   {
@@ -520,7 +520,7 @@ void TableTextFormatter::stretchColumnsByMergedCellsWidth( std::vector< size_t >
   }
 }
 
-void TableTextFormatter::applyColumnsWidth( std::vector< size_t > const & columnsWidth,
+void TableTextFormatter::applyColumnsWidth( stdVector< size_t > const & columnsWidth,
                                             TableFormatter::CellLayoutRows & tableGrid,
                                             PreparedTableLayout const & tableLayout ) const
 {
