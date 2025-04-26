@@ -394,7 +394,7 @@ public:
   /**
    * @return An array containing all sub groups keys
    */
-  std::vector< string > getSubGroupsNames() const;
+  stdVector< string > getSubGroupsNames() const;
 
   /**
    * @brief Check whether a sub-group exists.
@@ -1177,7 +1177,7 @@ public:
   /**
    * @return An array containing all wrappers keys
    */
-  std::vector< string > getWrappersNames() const;
+  stdVector< string > getWrappersNames() const;
 
   ///@}
 

@@ -164,9 +164,9 @@ public:
 private:
 
   // Futures associated to push to host in case we have no device buffers
-  std::vector< std::future< void > > m_pushToHostFutures;
+  stdVector< std::future< void > > m_pushToHostFutures;
   // Futures associated to pop from host in case we have no device buffers
-  std::vector< std::future< void > > m_popFromHostFutures;
+  stdVector< std::future< void > > m_popFromHostFutures;
 };
 }
 #endif // LIFOSTORAGEHOST_HPP
