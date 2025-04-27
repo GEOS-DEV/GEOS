@@ -172,44 +172,34 @@ def print_aggregated_table(aggregated_data, field_names_per_object, num_rows=Non
             print(" | ".join(row_items))
 
 
-def prepare_arrays_for_comparison(aggregated1, aggregated2, field_names_per_object, base_path):
-    """
-    Validates and prepares arrays and field names for comparison for a given object path.
-    """
-    array1 = aggregated1.get(base_path)
-    array2 = aggregated2.get(base_path)
 
-    if array1 is None or array2 is None:
-        return None, None, None, None, None  # Missing object in one dataset
-
-    field_names = field_names_per_object.get(base_path)
-    if field_names is None:
-        raise ValueError(f"No field names available for {base_path}.")
-
-    if array1.shape[1] != len(field_names) or array2.shape[1] != len(field_names):
-        raise ValueError(f"Mismatch between array shape and field names for {base_path}.")
-
-    map1 = {int(row[0]): row for row in array1}
-    map2 = {int(row[0]): row for row in array2}
-    all_indices = sorted(set(map1.keys()).union(map2.keys()))
-
-    return array1, array2, field_names, map1, map2
 
 
 def print_aggregated_diff_table(aggregated1, aggregated2, field_names_per_object, coord_tolerance=1e-8, num_rows=None):
     all_keys = sorted(set(aggregated1.keys()).union(aggregated2.keys()))
     for base_path in all_keys:
         print(f"\n[DIFF] Object: {base_path}")
+        array1 = aggregated1.get(base_path)
+        array2 = aggregated2.get(base_path)
+        field_names = field_names_per_object.get(base_path)
 
-        array1, array2, field_names, map1, map2 = prepare_arrays_for_comparison(
-            aggregated1, aggregated2, field_names_per_object, base_path
-        )
-
-        if array1 is None or array2 is None:
-            print("[WARN] Missing dataset.")
+        if array1 is None and array2 is None:
+            print("[WARN] Missing in BOTH datasets.")
+            continue
+        if array1 is None:
+            print("[WARN] Missing in dataset 1. No comparison possible.")
+            continue
+        if array2 is None:
+            print("[WARN] Missing in dataset 2. No comparison possible.")
             continue
 
-        rows_to_print = len(map1) if num_rows is None else min(len(map1), num_rows)
+        if array1.shape[1] != len(field_names) or array2.shape[1] != len(field_names):
+            raise ValueError(f"Mismatch between array shape and field names for {base_path}.")
+
+        map1 = {int(row[0]): row for row in array1}
+        map2 = {int(row[0]): row for row in array2}
+        all_indices = sorted(set(map1.keys()).union(map2.keys()))
+        rows_to_print = len(all_indices) if num_rows is None else min(len(all_indices), num_rows)
 
         header = f"{'globalIndex':>12} | {'x1':>12} | {'y1':>12} | {'z1':>12} | {'x2':>12} | {'y2':>12} | {'z2':>12} | {'coord_match':^12}"
         for field in field_names[4:]:
@@ -217,12 +207,12 @@ def print_aggregated_diff_table(aggregated1, aggregated2, field_names_per_object
         print(header)
         print("-" * len(header))
 
-        for idx in sorted(map1.keys())[:rows_to_print]:
+        for idx in all_indices[:rows_to_print]:
             row1 = map1.get(idx)
             row2 = map2.get(idx)
 
             if row1 is None or row2 is None:
-                print(f"{idx:12d} | {'MISSING'}")
+                print(f"{idx:12d} | {'MISSING':>12}")
                 continue
 
             coord_diff = np.linalg.norm(row1[1:4] - row2[1:4])
@@ -234,6 +224,7 @@ def print_aggregated_diff_table(aggregated1, aggregated2, field_names_per_object
             for i in range(1, 4):
                 line += f" {row2[i]:12.5e} |"
             line += f" {coord_match:^12}"
+
             for i in range(4, len(field_names)):
                 val1 = row1[i]
                 val2 = row2[i]
@@ -243,19 +234,49 @@ def print_aggregated_diff_table(aggregated1, aggregated2, field_names_per_object
 
 
 
+
 # ------------------------------
 # Summarizing and Pass/Fail
 # ------------------------------
 def summarize_aggregated_diff(aggregated1, aggregated2, field_names_per_object, coord_tolerance=1e-8, field_tolerance=1e-8):
     all_keys = sorted(set(aggregated1.keys()).union(aggregated2.keys()))
     overall_summary = {}
-    for base_path in all_keys:
-        array1, array2, field_names, map1, map2 = prepare_arrays_for_comparison(
-            aggregated1, aggregated2, field_names_per_object, base_path
-        )
 
-        if array1 is None or array2 is None:
+    for base_path in all_keys:
+        array1 = aggregated1.get(base_path)
+        array2 = aggregated2.get(base_path)
+        field_names = field_names_per_object.get(base_path)
+
+        if array1 is None:
+            overall_summary[base_path] = {
+                "total_indices": 0,
+                "missing_in_1": 1,
+                "missing_in_2": 0,
+                "coord_mismatches": 0,
+                "field_mismatches": 0,
+                "max_coord_norm": 0.0,
+                "field_max_abs": []
+            }
             continue
+
+        if array2 is None:
+            overall_summary[base_path] = {
+                "total_indices": 0,
+                "missing_in_1": 0,
+                "missing_in_2": 1,
+                "coord_mismatches": 0,
+                "field_mismatches": 0,
+                "max_coord_norm": 0.0,
+                "field_max_abs": []
+            }
+            continue
+
+        if array1.shape[1] != len(field_names) or array2.shape[1] != len(field_names):
+            raise ValueError(f"Mismatch between array shape and field names for {base_path}.")
+
+        map1 = {int(row[0]): row for row in array1}
+        map2 = {int(row[0]): row for row in array2}
+        all_indices = sorted(set(map1.keys()).union(map2.keys()))
 
         coords1 = array1[:, 1:4]
         coords2 = array2[:, 1:4]
@@ -271,7 +292,7 @@ def summarize_aggregated_diff(aggregated1, aggregated2, field_names_per_object, 
             field_max_abs.append(max(max1, max2) or 1.0)
 
         missing_in_1 = missing_in_2 = coord_mismatches = field_mismatches = 0
-        for idx in sorted(set(map1.keys()).union(map2.keys())):
+        for idx in all_indices:
             row1 = map1.get(idx)
             row2 = map2.get(idx)
             if row1 is None:
@@ -290,7 +311,7 @@ def summarize_aggregated_diff(aggregated1, aggregated2, field_names_per_object, 
                     field_mismatches += 1
 
         overall_summary[base_path] = {
-            "total_indices": len(map1),
+            "total_indices": len(all_indices),
             "missing_in_1": missing_in_1,
             "missing_in_2": missing_in_2,
             "coord_mismatches": coord_mismatches,
@@ -300,6 +321,7 @@ def summarize_aggregated_diff(aggregated1, aggregated2, field_names_per_object, 
         }
 
     return overall_summary
+
 
 
 
