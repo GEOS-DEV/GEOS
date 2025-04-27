@@ -5,6 +5,7 @@ import os
 import sys
 import itertools
 import re
+import argparse
 
 # ------------------------------
 # Utilities for wildcard expansion
@@ -352,16 +353,21 @@ def check_pass_fail(overall_summary):
 
 
 if __name__ == "__main__":
-    file_pattern1 = "~/Downloads/baseline_integratedTests-pr3624-11053-ae011c7/singlePhaseFlow/incompressible_pebi3d_02/0to1_restart_000000001/rank_000000*.hdf5"
-    file_pattern2 = "~/Downloads/baseline_integratedTests-pr3626-11174-d100cd2/singlePhaseFlow/incompressible_pebi3d_02/0to1_restart_000000001/rank_000000*.hdf5"
+    parser = argparse.ArgumentParser(description="Compare two sets of parallel HDF5 restart files.")
 
-    raw_patterns = [
-        "/Problem/domain/MeshBodies/mesh/meshLevels/Level0/ElementRegions/elementRegionsGroup/Domain/elementSubRegions/[hexahedra,hexagonalPrisms]/[pressure,temperature]"
-    ]
+    parser.add_argument("--baseline", required=True, help="path to baseline (e.g., '~/Downloads/old/rank_*.hdf5')")
+    parser.add_argument("--restart", required=True, help="path to restart (e.g., '~/Downloads/new/rank_*.hdf5')")
+    parser.add_argument("--fields", required=True, action="append", help="Field paths with optional wildcards (can specify multiple).")
 
-    one_example_file = glob.glob(os.path.expanduser(file_pattern1))[0]
+    args = parser.parse_args()
 
-    base_path_to_fields = expand_field_paths_per_object(one_example_file, raw_patterns)
+    baseline_file_pattern = args.baseline
+    restart_file_pattern = args.restart
+    raw_field_patterns = args.fields
+    
+    one_example_file = glob.glob(os.path.expanduser(baseline_file_pattern))[0]
+
+    base_path_to_fields = expand_field_paths_per_object(one_example_file, raw_field_patterns)
 
     print("\nExpanded base_path_to_fields:")
     for base_path, fields in base_path_to_fields.items():
@@ -369,8 +375,8 @@ if __name__ == "__main__":
 
     field_names_per_object = generate_field_names_per_object(one_example_file, base_path_to_fields)
 
-    aggregated1 = read_and_aggregate_hdf5_series(file_pattern1, base_path_to_fields)
-    aggregated2 = read_and_aggregate_hdf5_series(file_pattern2, base_path_to_fields)
+    aggregated1 = read_and_aggregate_hdf5_series(baseline_file_pattern, base_path_to_fields)
+    aggregated2 = read_and_aggregate_hdf5_series(restart_file_pattern, base_path_to_fields)
 
     print_aggregated_diff_table(aggregated1, aggregated2, field_names_per_object)
 
