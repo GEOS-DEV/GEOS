@@ -436,9 +436,9 @@ void CompositionalMultiphaseStatistics::computeRegionStatistics( real64 const ti
 
     string_view massUnit = units::getSymbol( m_solver->getMassUnit() );
 
-    std::vector< string > phaseCompName;
+    stdVector< string > phaseCompName;
     phaseCompName.reserve( numPhases*numComps );
-    std::vector< string > massValues;
+    stdVector< string > massValues;
     phaseCompName.reserve( numPhases*numComps );
 
     ConstitutiveManager const & constitutiveManager = this->getGroupByPath< ConstitutiveManager >( "/Problem/domain/Constitutive" );
