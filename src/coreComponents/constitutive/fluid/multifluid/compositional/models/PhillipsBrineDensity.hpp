@@ -199,11 +199,13 @@ void PhillipsBrineDensityUpdate::compute(
   // Convert to molar volume by scaling by (RT/P)
   // Scaling factor to convert compressibility factor (Z) to volume.
   real64 const idealGasVolume = constants::gasConstant * temperature  / pressure;
+  real64 const dIdealGasVolume_dP = -constants::gasConstant * temperature  / (pressure * pressure);
+  real64 const dIdealGasVolume_dT = constants::gasConstant / pressure;
 
   real64 molarVolume = idealGasVolume * compressibilityFactor;
   arraySlice1d< real64, USD2 > const & dMolarVolume = dMolarDensity;
-  dMolarVolume[Deriv::dP] = idealGasVolume * dCompressibilityFactor[Deriv::dP] - molarVolume / pressure;
-  dMolarVolume[Deriv::dT] = idealGasVolume * dCompressibilityFactor[Deriv::dT] + molarVolume / temperature;
+  dMolarVolume[Deriv::dP] = idealGasVolume * dCompressibilityFactor[Deriv::dP] + dIdealGasVolume_dP * compressibilityFactor;
+  dMolarVolume[Deriv::dT] = idealGasVolume * dCompressibilityFactor[Deriv::dT] + dIdealGasVolume_dT * compressibilityFactor;
   for( integer ic = 0; ic < numComps; ++ic )
   {
     dMolarVolume[Deriv::dC + ic] = idealGasVolume * dCompressibilityFactor[Deriv::dC + ic];

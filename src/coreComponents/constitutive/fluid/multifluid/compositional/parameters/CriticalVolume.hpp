@@ -42,15 +42,15 @@ public:
 
   array1d< real64 > m_componentCriticalVolume;
 
-protected:
-  void registerParametersImpl( MultiFluidBase * fluid ) override;
-
-  void postInputInitializationImpl( MultiFluidBase const * fluid, ComponentProperties const & componentProperties ) override;
-
   struct viewKeyStruct
   {
     static constexpr char const * componentCriticalVolumeString() { return "componentCriticalVolume"; }
   };
+
+protected:
+  void registerParametersImpl( MultiFluidBase * fluid ) override;
+
+  void postInputInitializationImpl( MultiFluidBase const * fluid, ComponentProperties const & componentProperties ) override;
 
   /**
    * @brief Estimate critical volumes using Ihmels' (2010) correlation

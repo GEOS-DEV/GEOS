@@ -313,8 +313,8 @@ bool NegativeTwoPhaseFlash::compute( integer const numComps,
     vapourPhaseMoleFraction = 0.0;
     for( integer ic = 0; ic < numComps; ++ic )
     {
-      liquidComposition[ic] = composition[ic];
-      vapourComposition[ic] = composition[ic];
+      //liquidComposition[ic] = composition[ic];
+      //vapourComposition[ic] = composition[ic];
     }
   }
   else if( 1.0 - vapourPhaseMoleFraction < MultiFluidConstants::epsilon )
@@ -322,8 +322,8 @@ bool NegativeTwoPhaseFlash::compute( integer const numComps,
     vapourPhaseMoleFraction = 1.0;
     for( integer ic = 0; ic < numComps; ++ic )
     {
-      liquidComposition[ic] = composition[ic];
-      vapourComposition[ic] = composition[ic];
+      //liquidComposition[ic] = composition[ic];
+      //vapourComposition[ic] = composition[ic];
     }
   }
 
