@@ -208,9 +208,9 @@ private:
   /// ueue of data stored on device
   FixedSizeDequeWithMutexes< T, INDEX_TYPE > m_deviceDeque;
   // Events associated to ith  copies to device buffer
-  std::vector< camp::resources::Event > m_pushToDeviceEvents;
+  stdVector< camp::resources::Event > m_pushToDeviceEvents;
   // Events associated to ith  copies from device buffer
-  std::vector< camp::resources::Event > m_popFromDeviceEvents;
+  stdVector< camp::resources::Event > m_popFromDeviceEvents;
 };
 }
 #endif // LIFOSTORAGE_HPP

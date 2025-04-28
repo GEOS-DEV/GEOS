@@ -127,7 +127,7 @@ void PhysicsSolverBase::generateMeshTargetsFromTargetRegions( Group const & mesh
   for( auto const & target : m_targetRegionNames )
   {
 
-    std::vector< string > targetTokens = stringutilities::tokenize( target, "/" );
+    stdVector< string > targetTokens = stringutilities::tokenize( target, "/" );
 
     if( targetTokens.size()==1 ) // no MeshBody or MeshLevel specified
     {

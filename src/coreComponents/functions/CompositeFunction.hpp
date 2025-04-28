@@ -85,7 +85,7 @@ private:
 
   localIndex m_numSubFunctions;
   static constexpr localIndex m_maxNumSubFunctions = 10;
-  std::vector< FunctionBase * > m_subFunctions;
+  stdVector< FunctionBase * > m_subFunctions;
 
 };
 
