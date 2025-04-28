@@ -13,25 +13,38 @@ import argparse
 def expand_field_paths_per_object(file_name, patterns):
     """
     Expand wildcard patterns and group by base path.
+    Raise an error if any specified pattern does not match anything.
     """
     expanded = {}
     with h5py.File(file_name, 'r') as f:
         for pattern in patterns:
             tokens = []
             pos = 0
+            has_wildcard = False
             for match in re.finditer(r'\[([^]]+)\]', pattern):
+                has_wildcard = True
                 tokens.append(pattern[pos:match.start()])
                 options = match.group(1).split(',')
                 tokens.append(options)
                 pos = match.end()
             tokens.append(pattern[pos:])
             option_lists = [t if isinstance(t, list) else [t] for t in tokens]
+
+            matched_any = False
             for combination in itertools.product(*option_lists):
                 full_path = ''.join(combination)
                 if full_path in f:
                     base_path = extract_base_path(full_path)
                     field_name = full_path.split('/')[-1]
                     expanded.setdefault(base_path, []).append(field_name)
+                    matched_any = True
+
+            if not matched_any:
+                if has_wildcard:
+                    raise ValueError(f"No fields matched pattern: {pattern}")
+                else:
+                    raise ValueError(f"Specified field path not found in HDF5: {pattern}")
+
     print(f"[INFO] Expanded {sum(len(v) for v in expanded.values())} fields over {len(expanded)} objects.")
     return expanded
 
@@ -42,26 +55,36 @@ def extract_base_path(field_path):
 # ------------------------------
 # Read and Aggregate
 # ------------------------------
+def infer_coord_dataset_name(base_path):
+    """
+    Infer the coordinate dataset name based on the container object name.
+    """
+    container = base_path.split('/')[-1]
+    if container.endswith('nodeManager'):
+        return 'ReferencePosition'
+    elif container.endswith('FaceManager'):
+        return 'faceCenter'
+    elif container.endswith('EdgeManager'):
+        return 'edgeCenter'
+    else:
+        return 'elementCenter'
+
+
 def read_and_aggregate_hdf5_series(file_pattern, paths_to_read):
     file_pattern = os.path.expanduser(file_pattern)
     file_list = sorted(glob.glob(file_pattern))
     if not file_list:
         raise RuntimeError(f"No files matched pattern: {file_pattern}")
 
-    print(f"[INFO] Found {len(file_list)} files matching {file_pattern}")
-
     aggregated_data = {}
 
     for base_path, field_list in paths_to_read.items():
-        print(f"[INFO] Processing base path: {base_path}")
-        print(f"[INFO] Fields: {field_list}")
         all_rows = []
         for file_name in file_list:
-            print(f"[INFO] Loading file: {file_name}")
             with h5py.File(file_name, 'r') as f:
                 global_index_path = f"{base_path}/localToGlobalMap"
-                print(f"[INFO] Global index path: {global_index_path}")
-                coord_path = f"{base_path}/elementCenter"
+                coord_dataset_name = infer_coord_dataset_name(base_path)
+                coord_path = f"{base_path}/{coord_dataset_name}"
 
                 # Global Indices
                 group = f[global_index_path]
@@ -92,11 +115,16 @@ def read_and_aggregate_hdf5_series(file_pattern, paths_to_read):
                     group = f[field_path]
                     dataset = group['__values__']
                     field_data = np.asarray(dataset)
-                    if '__dimensions__' in dataset.attrs:
-                        dims = dataset.attrs['__dimensions__']
+
+                    if '__dimensions__' in group:
+                        dims = np.asarray(group['__dimensions__'])
                         field_data = field_data.reshape(dims)
+                        print(f"[INFO] Reshaping field data {field_path} to {dims}")
                     elif field_data.ndim == 1:
                         field_data = field_data.reshape((-1,))
+                    else:
+                        raise ValueError(f"Unsupported data shape for {field_path}: {field_data.shape}")
+
                     field_datas.append(field_data)
 
                 # Assemble Rows
@@ -104,11 +132,14 @@ def read_and_aggregate_hdf5_series(file_pattern, paths_to_read):
                 for i in range(num_entries):
                     row = [global_indices[i]] + list(coords[i])
                     for field_data in field_datas:
-                        if field_data.ndim == 1:
+                        if field_data.ndim == 1 or (field_data.shape[1] == 1):
+                            # scalar field
                             row.append(field_data[i])
                         else:
+                            # vector/tensor field
                             row.extend(field_data[i])
                     all_rows.append(row)
+
 
         all_rows = np.array(all_rows)
         sort_order = np.argsort(all_rows[:, 0])
@@ -117,13 +148,11 @@ def read_and_aggregate_hdf5_series(file_pattern, paths_to_read):
     print(f"[INFO] Aggregated {len(aggregated_data)} object groups.")
     return aggregated_data
 
+
 # ------------------------------
 # Field Name Generation
 # ------------------------------
 def generate_field_names_per_object(file_name, base_path_to_fields):
-    """
-    Generate field names per object for the table headers.
-    """
     field_names_per_object = {}
     with h5py.File(file_name, 'r') as f:
         for base_path, fields in base_path_to_fields.items():
@@ -132,14 +161,20 @@ def generate_field_names_per_object(file_name, base_path_to_fields):
                 full_path = f"{base_path}/{field}"
                 group = f[full_path]
                 dataset = group['__values__']
-                if '__dimensions__' in dataset.attrs:
-                    dims = dataset.attrs['__dimensions__']
+
+                if '__dimensions__' in group:
+                    dims = np.asarray(group['__dimensions__'])
                 else:
                     dims = dataset.shape
-                if len(dims) == 1 or dims[1] == 1:
+
+                # Correct handling
+                if len(dims) == 1:
+                    field_names.append(field)
+                elif len(dims) == 2 and dims[1] == 1:
                     field_names.append(field)
                 else:
                     field_names.extend([f"{field}_{i}" for i in range(dims[1])])
+
             field_names_per_object[base_path] = field_names
     return field_names_per_object
 
@@ -183,6 +218,9 @@ def print_aggregated_diff_table(aggregated1, aggregated2, field_names_per_object
         array1 = aggregated1.get(base_path)
         array2 = aggregated2.get(base_path)
         field_names = field_names_per_object.get(base_path)
+
+        if field_names is None:
+            raise ValueError(f"No field names available for {base_path}.")
 
         if array1 is None and array2 is None:
             print("[WARN] Missing in BOTH datasets.")
@@ -236,6 +274,7 @@ def print_aggregated_diff_table(aggregated1, aggregated2, field_names_per_object
 
 
 
+
 # ------------------------------
 # Summarizing and Pass/Fail
 # ------------------------------
@@ -247,6 +286,9 @@ def summarize_aggregated_diff(aggregated1, aggregated2, field_names_per_object, 
         array1 = aggregated1.get(base_path)
         array2 = aggregated2.get(base_path)
         field_names = field_names_per_object.get(base_path)
+
+        if field_names is None:
+            raise ValueError(f"No field names available for {base_path}.")
 
         if array1 is None:
             overall_summary[base_path] = {
@@ -273,6 +315,10 @@ def summarize_aggregated_diff(aggregated1, aggregated2, field_names_per_object, 
             continue
 
         if array1.shape[1] != len(field_names) or array2.shape[1] != len(field_names):
+            print( f"[WARN] array1.shape[1] = {array1.shape[1]}.")
+            print( f"[WARN] array2.shape[1] = {array2.shape[1]}.")
+            print( f"[WARN] len(field_names) = {len(field_names)}.")
+            print( f"[WARN] field_names = {field_names}.")
             raise ValueError(f"Mismatch between array shape and field names for {base_path}.")
 
         map1 = {int(row[0]): row for row in array1}
@@ -322,7 +368,6 @@ def summarize_aggregated_diff(aggregated1, aggregated2, field_names_per_object, 
         }
 
     return overall_summary
-
 
 
 
@@ -378,7 +423,6 @@ if __name__ == "__main__":
     aggregated1 = read_and_aggregate_hdf5_series(baseline_file_pattern, base_path_to_fields)
     aggregated2 = read_and_aggregate_hdf5_series(restart_file_pattern, base_path_to_fields)
 
-    print_aggregated_diff_table(aggregated1, aggregated2, field_names_per_object)
 
     overall_summary = summarize_aggregated_diff(aggregated1, aggregated2, field_names_per_object)
 
@@ -394,5 +438,7 @@ if __name__ == "__main__":
 
     passed = check_pass_fail(overall_summary)
 
+
     if not passed:
+        print_aggregated_diff_table(aggregated1, aggregated2, field_names_per_object)
         sys.exit(1)
