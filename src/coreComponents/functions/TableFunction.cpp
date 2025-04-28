@@ -28,8 +28,85 @@
 
 #include <algorithm>
 
+#include <hdf5.h>
+
 namespace geos
 {
+
+namespace hdf5Utils
+{
+  hid_t openHDFFile( const string & filename )
+  {
+    hid_t file_id;
+    H5E_BEGIN_TRY
+    {
+      file_id = H5Fopen( filename.c_str(), H5F_ACC_RDONLY, H5P_DEFAULT );
+    }
+    H5E_END_TRY
+    GEOS_ERROR_IF( file_id < 0, GEOS_FMT( "{}: error opening file", filename ) );
+    return file_id;
+  }
+
+  void closeHDFFile( hid_t const file_id, const string & filename )
+  {
+    herr_t err;
+    H5E_BEGIN_TRY
+    {
+      err = H5Fclose( file_id);
+    }
+    H5E_END_TRY
+    GEOS_ERROR_IF( err < 0, GEOS_FMT( "{}: error closing file", filename ) );
+  }
+
+  bool datasetExists( hid_t const & file_id, string const & datasetName )
+  {
+    herr_t err;
+    H5E_BEGIN_TRY
+    {
+      err = H5Oexists_by_name( file_id, datasetName.c_str(), H5P_DEFAULT );
+    }
+    H5E_END_TRY
+    return err > 0 ? true : false;
+  }
+
+  array1d< real64 > readDataset( hid_t file_id, string const & filename, string const &datasetName, int const expectedNumDims )
+  {
+    // Check dataset existance
+    GEOS_ERROR_IF( !datasetExists( file_id, datasetName ), GEOS_FMT( "Dataset {} doesn't exist in {}", datasetName, filename ) );
+
+    // Open the dataset
+    hid_t dataset_id = H5Dopen( file_id, datasetName.c_str(), H5P_DEFAULT );
+    GEOS_ERROR_IF( dataset_id < 0, GEOS_FMT( "Error opening dataset {} in {}", datasetName, filename ) );
+
+    // Get the dataspace of the dataset
+    hid_t dataspace_id = H5Dget_space( dataset_id );
+    int ndims = H5Sget_simple_extent_ndims( dataspace_id );
+    if ( ndims != expectedNumDims )
+    {
+      H5Sclose( dataspace_id );
+      H5Dclose( dataset_id );
+      GEOS_ERROR( GEOS_FMT( "Dataset {} is not {}D", datasetName, std::to_string(expectedNumDims) ) );
+    }
+
+    array1d< hsize_t >  dims( ndims );
+    H5Sget_simple_extent_dims( dataspace_id, dims.data(), nullptr );
+
+    // Compute the total number of entries
+    hsize_t total_entries = 1;
+    for ( auto const &dim : dims)
+    {
+      total_entries *= dim;
+    }
+
+    // Read the dataset
+    array1d< real64 > datasetValues( total_entries );
+    H5Dread( dataset_id, H5T_NATIVE_DOUBLE, dataspace_id, dataspace_id, H5P_DEFAULT, datasetValues.data() );
+    //TODO: add error checking
+
+    return datasetValues;
+  }
+
+} // end of namespace hdf5Utils
 
 using namespace dataRepository;
 
@@ -148,6 +225,39 @@ void TableFunction::initializeFunction()
     // ND Table
     m_values.reserve( numValues );
     readFile( m_voxelFile, m_values );
+
+    //////////////////////////
+    /// WIP testing importing table from HDF5 file
+
+    string const filename = "array_3d.h5";
+    string_array const coordinateNames = {"x_coord", "y_coord", "z_coord"};
+    string const datasetName = "cell_ID";
+
+    ArrayOfArrays< real64 > m_coordinatesNew;
+
+    hid_t file_id = hdf5Utils::openHDFFile( filename );
+
+    // Read table coordinates
+    int tableDim = 0;
+    for ( auto const &coordName : coordinateNames)
+    {
+      array1d< real64 > tmpNew = hdf5Utils::readDataset( file_id, filename, coordName, 1 );
+      m_coordinatesNew.appendArray( tmpNew.begin(), tmpNew.end() );
+      tableDim += 1;
+    }
+
+    // Read valued
+    array1d< real64 > m_valuesNew = hdf5Utils::readDataset( file_id, filename, datasetName, tableDim );
+
+
+    GEOS_LOG_RANK_VAR( m_coordinatesNew );
+    GEOS_LOG_RANK_VAR( m_valuesNew );
+
+    
+
+    GEOS_ERROR("\n\n\n STOP HERE \n\n\n");
+
+    //////////////////////////
   }
 
   reInitializeFunction();
