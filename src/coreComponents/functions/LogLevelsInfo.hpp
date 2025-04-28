@@ -13,24 +13,38 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#include "codingUtilities/Utilities.hpp"
+/**
+ * @file LogLevelsInfo.hpp
+ * This file contains common log level informations for physics solvers
+ */
 
-#include <gtest/gtest.h>
+#ifndef GEOS_PHYSICSSOLVERS_LOGLEVELSINFO_HPP
+#define GEOS_PHYSICSSOLVERS_LOGLEVELSINFO_HPP
 
-#include <map>
+#include "common/DataTypes.hpp"
 
-using namespace geos;
-
-TEST( Utilities, MapExtraction )
+namespace geos
 {
-  std::map< string, int > const m{
-    { "k0", 0 },
-    { "k1", 1 },
-    { "k2", 2 }
-  };
 
-  EXPECT_EQ( mapKeys( m ), stdVector< string >( { "k0", "k1", "k2" } ) );
-  EXPECT_EQ( mapKeys< std::set >( m ), std::set< string >( { "k0", "k1", "k2" } ) );
-  EXPECT_EQ( mapValues( m ), stdVector< int >( { 0, 1, 2 } ) );
-  EXPECT_EQ( mapValues< std::set >( m ), std::set< int >( { 0, 1, 2 } ) );
+namespace logInfo
+{
+
+/// @cond DO_NOT_DOCUMENT
+
+struct TableDataOutput
+{
+  static constexpr int getMinLogLevel() { return 1; }
+  static constexpr std::string_view getDescription()
+  {
+    return "Output the loaded/computed table data in the log if succinct enough,"
+           " otherwise output it in a CSV file.";
+  }
+};
+
+/// @endcond
+
 }
+
+}
+
+#endif // GEOS_PHYSICSSOLVERS_LOGLEVELSINFO_HPP
