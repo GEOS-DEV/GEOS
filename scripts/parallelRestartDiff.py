@@ -100,8 +100,8 @@ def read_and_aggregate_hdf5_series(file_pattern, paths_to_read):
                 group = f[coord_path]
                 dataset = group['__values__']
                 coords = np.asarray(dataset)
-                if '__dimensions__' in dataset.attrs:
-                    dims = dataset.attrs['__dimensions__']
+                if '__dimensions__' in group:
+                    dims = np.asarray(group['__dimensions__'])
                     coords = coords.reshape(dims)
                 elif coords.ndim == 1:
                     coords = coords.reshape((-1, 3))
@@ -354,8 +354,16 @@ def summarize_aggregated_diff(aggregated1, aggregated2, field_names_per_object, 
             for i in range(4, len(field_names)):
                 val1, val2 = row1[i], row2[i]
                 delta = abs(val2 - val1)
-                if delta > field_tolerance * field_max_abs[i-4]:
+
+                field_name = field_names[i]
+                if 'displacement' in field_name.lower():  # special rule for displacement-like fields
+                    scale = max_coord_norm
+                else:
+                    scale = field_max_abs[i-4]
+
+                if delta > field_tolerance * scale:
                     field_mismatches += 1
+
 
         overall_summary[base_path] = {
             "total_indices": len(all_indices),
