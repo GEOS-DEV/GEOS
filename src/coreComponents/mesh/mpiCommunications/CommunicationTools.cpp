@@ -1030,7 +1030,7 @@ bool CommunicationTools::asyncUnpack( MeshLevel & mesh,
   MpiWrapper::testSome( icomm.size(),
                         icomm.mpiRecvBufferRequest(),
                         &recvCount,
-                        &*neighborIndices.begin(),
+                        neighborIndices.data(),
                         icomm.mpiRecvBufferStatus() );
 
   for( int recvIdx = 0; recvIdx < recvCount; ++recvIdx )
