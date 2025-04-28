@@ -90,11 +90,11 @@ void OBLFluid::postInputInitialization()
   ConstitutiveBase::postInputInitialization();
 
   // set interpolator mode
-  GEOS_THROW_IF( m_interpolatorModeString.empty(), 
-                 GEOS_FMT( "{}: Interpolator mode string is empty", 
-                            getFullName() ), 
+  GEOS_THROW_IF( m_interpolatorModeString.empty(),
+                 GEOS_FMT( "{}: Interpolator mode string is empty",
+                           getFullName() ),
                  InputError );
-  m_interpolatorMode = EnumStrings<OBLInterpolatorMode>::fromString( m_interpolatorModeString );
+  m_interpolatorMode = EnumStrings< OBLInterpolatorMode >::fromString( m_interpolatorModeString );
 
   // currently only multilinear interpolation is supported
   m_interpolatorType = OBLInterpolatorType::Multilinear;

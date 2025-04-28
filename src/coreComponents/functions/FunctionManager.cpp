@@ -81,7 +81,7 @@ void FunctionManager::expandObjectCatalogs()
   {
     createChild( catalogIter.first, catalogIter.first );
   }
-  
+
 #if defined(GEOS_USE_PYGEOSX)
   // Register an example of PythonFunction
   createChild( "PythonFunction", "PythonFunction" );

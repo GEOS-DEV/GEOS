@@ -59,7 +59,7 @@ ReactiveCompositionalMultiphaseOBL::ReactiveCompositionalMultiphaseOBL( const st
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Number of components" );
 
-    this->registerWrapper( viewKeyStruct::numSolidComponentsString(), &m_numSolidComponents ).
+  this->registerWrapper( viewKeyStruct::numSolidComponentsString(), &m_numSolidComponents ).
     setApplyDefaultValue( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Number of solid components" );
@@ -175,10 +175,10 @@ void ReactiveCompositionalMultiphaseOBL::postInputInitialization()
                                   getWrapperDataContext( viewKeyStruct::numSolidComponentsString() ), m_numSolidComponents, m_numComponents ),
                         InputError );
   GEOS_THROW_IF_LT_MSG( m_numSolidComponents, 0,
-                      GEOS_FMT( "{}: The number of solid component is set to {}, while it must non-negative",
-                                getWrapperDataContext( viewKeyStruct::numSolidComponentsString() ), m_numSolidComponents ),
-                      InputError );
-  
+                        GEOS_FMT( "{}: The number of solid component is set to {}, while it must non-negative",
+                                  getWrapperDataContext( viewKeyStruct::numSolidComponentsString() ), m_numSolidComponents ),
+                        InputError );
+
   GEOS_THROW_IF_GT_MSG( m_maxCompFracChange, 1.0,
                         GEOS_FMT( "{}: The maximum absolute change in component fraction is set to {}, while it must not be greater than 1.0",
                                   getWrapperDataContext( viewKeyStruct::maxCompFracChangeString() ), m_maxCompFracChange ),
