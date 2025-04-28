@@ -476,7 +476,7 @@ void TableTextFormatter::stretchColumnsByMergedCellsWidth( stdVector< size_t > &
         CellLayoutRow & row = tableGrid[rowId];
         TableLayout::CellLayout const & cell = row.cells[columnId];
         bool const isToMergeWithRight = cell.m_cellType == CellType::MergeNext;
-bool const isToMergeWithLeft = ( columnId > 0 ) ? ( row.cells[columnId - 1].m_cellType == CellType::MergeNext ) : false; 
+        bool const isToMergeWithLeft = ( columnId > 0 ) ? ( row.cells[columnId - 1].m_cellType == CellType::MergeNext ) : false; 
         bool const isFirstToMerge = isToMergeWithRight && !isToMergeWithLeft;
         if( isFirstToMerge )
         { // we detected a set of cells to merge, let's compute its total width
