@@ -25,7 +25,6 @@ set( functions_headers
      FunctionManager.hpp
      LogLevelsInfo.hpp
      TableFunction.hpp
-     PythonFunction.hpp
    )
 
 #
@@ -56,6 +55,7 @@ endif()
 
 if( ENABLE_PYGEOSX )
   list( APPEND functions_headers
+        python/PythonFunction.hpp
         python/PyPythonFunctionType.hpp )
   list( APPEND functions_sources
         python/PyPythonFunction.cpp )

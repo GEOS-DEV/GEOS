@@ -19,7 +19,7 @@
 
 // Source includes
 #include "LvArray/src/python/pythonHelpers.hpp"
-#include "functions/PythonFunction.hpp"
+#include "PythonFunction.hpp"
 #include "PyPythonFunctionType.hpp"
 #include "dataRepository/python/PyGroupType.hpp"
 

@@ -20,7 +20,7 @@
 #ifndef GEOS_FUNCTIONS_MULTILINEARINTERPOLATORADAPTIVEKERNELS_HPP_
 #define GEOS_FUNCTIONS_MULTILINEARINTERPOLATORADAPTIVEKERNELS_HPP_
 
-#include "MultilinearInterpolatorBaseKernels.hpp"
+#include "functions/MultilinearInterpolatorBaseKernels.hpp"
 
 namespace geos
 {

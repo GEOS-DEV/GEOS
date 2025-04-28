@@ -21,7 +21,9 @@
 
 #include "constitutive/ConstitutiveBase.hpp"
 #include "functions/MultivariableTableFunction.hpp"
-#include "functions/PythonFunction.hpp"
+#if defined(GEOS_USE_PYGEOSX)
+  #include "functions/python/PythonFunction.hpp"
+#endif
 
 namespace geos
 {
@@ -78,6 +80,7 @@ public:
     GEOS_ERROR_IF( m_OBLOperatorsTable == nullptr, "m_OBLOperatorsTable is not initialized" );
     return *m_OBLOperatorsTable;
   }
+#if defined(GEOS_USE_PYGEOSX)
   /**
    * @brief getter to the Python-based evaluator
    * @return pointer to the Python-based evaluator.
@@ -88,6 +91,7 @@ public:
     GEOS_ERROR_IF( m_pythonFunction == nullptr, "m_pythonFunction is not initialized" );
     return m_pythonFunction;
   }
+#endif
   /**
    * @brief initialize input
    */
@@ -127,8 +131,10 @@ private:
   /// OBL operators table function tabulated vs all primary variables
   MultivariableTableFunction const * m_OBLOperatorsTable;
 
+#if defined(GEOS_USE_PYGEOSX)
   /// OBL operators with access to Python-base exact evaluator
   PythonFunction< longIndex > * m_pythonFunction;
+#endif
 
   /// Flag to check if contitutive is initialized or not
   bool m_isInitialized = false;

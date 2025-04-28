@@ -47,6 +47,7 @@ makeOBLOperatorsTable( string const & OBLOperatorsTableFile,
   }
 }
 
+#if defined(GEOS_USE_PYGEOSX)
 template< typename INDEX_T = __uint128_t >
 PythonFunction< INDEX_T > *
 makePythonFunction( string const & OBLFluidName, FunctionManager & functionManager )
@@ -62,11 +63,14 @@ makePythonFunction( string const & OBLFluidName, FunctionManager & functionManag
     return function;
   }
 }
+#endif
 
 OBLFluid::OBLFluid( string const & name, Group * const parent )
   : ConstitutiveBase( name, parent ),
-  m_OBLOperatorsTable( nullptr ),
-  m_pythonFunction( nullptr )
+  m_OBLOperatorsTable( nullptr )
+#if defined(GEOS_USE_PYGEOSX)
+  , m_pythonFunction( nullptr )
+#endif
 {
   this->registerWrapper( viewKeyStruct::interpolatorModeString(), &m_interpolatorModeString ).
     setInputFlag( InputFlags::REQUIRED ).
@@ -104,9 +108,17 @@ void OBLFluid::postInputInitialization()
 
 
   if( m_interpolatorMode == OBLInterpolatorMode::Static )
+  {
     m_OBLOperatorsTable = makeOBLOperatorsTable( m_OBLOperatorsTableFile, getName(), FunctionManager::getInstance());
+  }
   else if( m_interpolatorMode == OBLInterpolatorMode::Adaptive )
+  {
+#if defined(GEOS_USE_PYGEOSX)
     m_pythonFunction = makePythonFunction< longIndex >( getName(), FunctionManager::getInstance());
+#else
+    GEOS_THROW( GEOS_FMT( "{}: adaptive interpolators require Python support, rebuild with ENABLE_PYGEOSX ON", getFullName() ), InputError );
+#endif
+  }
 
   // raise intialization flag
   m_isInitialized = true;

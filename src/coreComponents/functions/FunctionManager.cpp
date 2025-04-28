@@ -18,7 +18,9 @@
  */
 
 #include "FunctionManager.hpp"
-#include "PythonFunction.hpp"
+#if defined(GEOS_USE_PYGEOSX)
+  #include "python/PythonFunction.hpp"
+#endif
 
 namespace geos
 {
@@ -56,6 +58,7 @@ Group * FunctionManager::createChild( string const & functionCatalogKey,
 {
   GEOS_LOG_RANK_0( GEOS_FMT( "{}: adding {} {}", getName(), functionCatalogKey, functionName ) );
 
+#if defined(GEOS_USE_PYGEOSX)
   if( functionCatalogKey == PythonFunction< __uint128_t >::catalogName() )
   {
     // Create PythonFunction instance
@@ -63,13 +66,13 @@ Group * FunctionManager::createChild( string const & functionCatalogKey,
     return &this->registerGroup< PythonFunction< __uint128_t > >( functionName, std::move( function ));
   }
   else
+#endif
   {
     // Create FunctionBase-derived instance
     std::unique_ptr< FunctionBase > function = FunctionBase::CatalogInterface::factory( functionCatalogKey, getDataContext(), functionName, this );
     return &this->registerGroup< FunctionBase >( functionName, std::move( function ));
   }
 }
-
 
 void FunctionManager::expandObjectCatalogs()
 {
@@ -78,9 +81,11 @@ void FunctionManager::expandObjectCatalogs()
   {
     createChild( catalogIter.first, catalogIter.first );
   }
-
+  
+#if defined(GEOS_USE_PYGEOSX)
   // Register an example of PythonFunction
   createChild( "PythonFunction", "PythonFunction" );
+#endif
 }
 
 } // end of namespace geos

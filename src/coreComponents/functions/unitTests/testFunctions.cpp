@@ -13,19 +13,22 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#include <Python.h>
 #include "codingUtilities/UnitTestUtilities.hpp"
 #include "gtest/gtest.h"
 #include "mainInterface/initialization.hpp"
 #include "functions/FunctionManager.hpp"
 #include "functions/FunctionBase.hpp"
 #include "functions/TableFunction.hpp"
-#include "functions/PythonFunction.hpp"
 #include "functions/MultivariableTableFunction.hpp"
 #include "functions/MultilinearInterpolatorStaticKernels.hpp"
-#include "functions/MultilinearInterpolatorAdaptiveKernels.hpp"
 #include "common/logger/Logger.hpp"
 //#include "mainInterface/GeosxState.hpp"
+
+#if defined(GEOS_USE_PYGEOSX)
+  #include <Python.h>
+  #include "functions/python/PythonFunction.hpp"
+  #include "functions/python/MultilinearInterpolatorAdaptiveKernels.hpp"
+#endif
 
 #ifdef GEOS_USE_MATHPRESSO
   #include "functions/SymbolicFunction.hpp"

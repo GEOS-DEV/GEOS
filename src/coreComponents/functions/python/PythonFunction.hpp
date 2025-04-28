@@ -24,10 +24,7 @@
 #include "common/DataTypes.hpp"
 #include "dataRepository/Group.hpp"
 #include "LvArray/src/python/PyFunc.hpp"
-
-#if defined(GEOS_USE_PYGEOSX)
-  #include "python/PyPythonFunctionType.hpp"
-#endif
+#include "PyPythonFunctionType.hpp"
 
 namespace std
 {
@@ -282,8 +279,6 @@ public:
    * @return a reference to an array of table axes hypercube index multiplicators
    */
   arrayView1d< __uint128_t const > getAxisHypercubeMults() const { return m_axisHypercubeMults.toViewConst(); }
-
-#if defined(GEOS_USE_PYGEOSX)
   /**
    * @brief Return PySolver type.
    * @return Return PySolver type.
@@ -292,7 +287,6 @@ public:
   {
     return python::getPyPythonFunctionType();
   }
-#endif
 private:
   /// Array [numDims] of axis minimum values
   array1d< real64 > m_axisMinimums;

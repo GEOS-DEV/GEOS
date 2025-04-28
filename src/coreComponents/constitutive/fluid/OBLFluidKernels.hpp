@@ -20,7 +20,9 @@
 #define GEOS_CONSTITUTIVE_FLUID_OBLFLUIDKERNELS_HPP_
 
 #include "functions/MultilinearInterpolatorStaticKernels.hpp"
-#include "functions/MultilinearInterpolatorAdaptiveKernels.hpp"
+#if defined(GEOS_USE_PYGEOSX)
+  #include "functions/python/MultilinearInterpolatorAdaptiveKernels.hpp"
+#endif
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseBaseFields.hpp"
 #include "physicsSolvers/fluidFlow/ReactiveCompositionalMultiphaseOBLFields.hpp"
 
@@ -289,6 +291,7 @@ public:
         OBLOperatorsKernel< NUM_PHASES, NUM_COMPS, ENABLE_ENERGY > kernel( subRegion, &interpolationKernel );
         OBLOperatorsKernel< NUM_PHASES, NUM_COMPS, ENABLE_ENERGY >::template launch< POLICY >( subRegion.size(), kernel );
       }
+#if defined(GEOS_USE_PYGEOSX)
       else /* if ( oblFluid->getInterpolatorMode() == constitutive::OBLInterpolatorMode::Adaptive ) */
       {
         // Check if Python function was assigned to wrapper
@@ -303,6 +306,7 @@ public:
         OBLOperatorsKernel< NUM_PHASES, NUM_COMPS, ENABLE_ENERGY > kernel( subRegion, &interpolationKernel );
         OBLOperatorsKernel< NUM_PHASES, NUM_COMPS, ENABLE_ENERGY >::template launch< POLICY >( subRegion.size(), kernel );
       }
+#endif
     } );
   }
 
