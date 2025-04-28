@@ -52,7 +52,7 @@ public:
  * @param location location where the fields provided have been registered.
  * @param fieldNames vector of names of the  element-based fields to be added to the map.
  */
-  void addFields( FieldLocation const location, std::vector< string > const & fieldNames )
+  void addFields( FieldLocation const location, stdVector< string > const & fieldNames )
   {
     string key;
     generateKey( location, key );
@@ -64,8 +64,8 @@ public:
  * @param fieldNames vector of names of the  element-based fields to be added to the map.
  * @param regionNames vector of the regions on which these fields exist.
  */
-  template< typename T = std::vector< string > >
-  void addElementFields( std::vector< string > const & fieldNames, T const & regionNames )
+  template< typename T = stdVector< string > >
+  void addElementFields( stdVector< string > const & fieldNames, T const & regionNames )
   {
     for( auto const & regionName : regionNames )
     {
@@ -192,7 +192,7 @@ private:
  * @param fieldNames list of the names of the fields to sync
  * @param key key used to registered teh fields in the map.
  */
-  void addFields( std::vector< string > const fieldNames, string const key )
+  void addFields( stdVector< string > const fieldNames, string const key )
   {
     for( string const & field : fieldNames )
     {

@@ -115,7 +115,7 @@ public:
 private:
 
   /// Table with CO2 density tabulated as a function of (P,T)
-  TableFunction const * m_CO2DensityTable;
+  TableFunction const * m_CO2DensityTable = nullptr;
 
   /// Index of the CO2 component
   localIndex m_CO2Index;
