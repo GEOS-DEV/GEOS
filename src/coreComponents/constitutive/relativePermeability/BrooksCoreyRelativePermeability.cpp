@@ -49,7 +49,7 @@ BrooksCoreyRelativePermeability::BrooksCoreyRelativePermeability( string const &
   registerWrapper( viewKeyStruct::phaseRelPermMaxValueString(), &m_phaseRelPermMaxValue ).
     setApplyDefaultValue( 0.0 ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Maximum relative permeability value for each phase" );
+    setDescription( "Ratio between the maximum phase permeability and the rock permeability, for each phase" );
 
   registerWrapper( viewKeyStruct::volFracScaleString(), &m_volFracScale ).
     setApplyDefaultValue( 1.0 ).

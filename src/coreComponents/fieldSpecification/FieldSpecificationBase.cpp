@@ -32,7 +32,13 @@ FieldSpecificationBase::FieldSpecificationBase( string const & name, Group * par
     setRTTypeName( rtTypes::CustomTypes::groupNameRefArray ).
     setInputFlag( InputFlags::REQUIRED ).
     setSizedFromParent( 0 ).
-    setDescription( "Name of sets that boundary condition is applied to." );
+    setDescription(
+    "Name of sets  that boundary condition is applied to." \
+    "Sets name can be." \
+    "all, to select any mesh element," \
+    "xpos, ypos, zpos to select all elements facing the positive x, y or z axis" \
+    "xneg, yneg, zneg to select all elements facing the negative x, y or z axis" \
+    "can be the name of an geometrical object in <Geometry> to select the mesh elements that are strictly contained in it." );
 
   registerWrapper( viewKeyStruct::objectPathString(), &m_objectPath ).
     setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
@@ -47,7 +53,7 @@ FieldSpecificationBase::FieldSpecificationBase( string const & name, Group * par
   registerWrapper( viewKeyStruct::componentString(), &m_component ).
     setApplyDefaultValue( -1 ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Phase name of field (if tensor) to apply boundary condition to." );
+    setDescription( "Component name of field (if tensor) to apply boundary condition to. Component name must use the order in which the phaseNames" );
 
   registerWrapper( viewKeyStruct::directionString(), &m_direction ).
     setApplyDefaultValue( {0, 0, 0} ).
@@ -67,7 +73,7 @@ FieldSpecificationBase::FieldSpecificationBase( string const & name, Group * par
   registerWrapper( viewKeyStruct::scaleString(), &m_scale ).
     setApplyDefaultValue( 0.0 ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Scale factor for value of the boundary condition." );
+    setDescription( "Scale factor by which the value of the initial condition is multiplied" );
 
   registerWrapper( viewKeyStruct::initialConditionString(), &m_initialCondition ).
     setApplyDefaultValue( 0 ).
