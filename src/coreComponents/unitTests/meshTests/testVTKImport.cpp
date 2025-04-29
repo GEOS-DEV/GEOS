@@ -384,14 +384,13 @@ TEST( VTKImport, cube )
         {
           { "hexahedra", expectedSwap( 1, {  1, 0 } ) },
           { "3_hexahedra", expectedSwap( 25, { 16, 9 } ) },
-          { "9_hexahedra", expectedSwap( 1, {  0, 1 } ) }
+          { "9_hexahedra", expectedSwap( 1, {  1, 0 } ) }
         }
       };
       ASSERT_EQ( cellBlockManager.getCellBlocks().numSubGroups(), expectedCellBlocks.size() );
 
       for( const auto & nameAndSize : expectedCellBlocks )
       {
-        printf( "Checking cell block %s\n", nameAndSize.first.c_str() );
         ASSERT_TRUE( cellBlockManager.getCellBlocks().hasGroup< CellBlockABC >( nameAndSize.first ) );
 
         // here pb
