@@ -65,11 +65,14 @@ static constexpr char const * pvdoTableContent = "#P[Pa] Bo[m3/sm3] Visc(Pa.s)\n
 static constexpr char const * pvdwTableContent = "# Pref[Pa] Bw[m3/sm3] Cp[1/Pa]     Visc[Pa.s]\n"
                                                  " 30600000.1 1.03  0.00000000041 0.0003";
 
-template< bool FROM_TABLE >
+template< typename MODEL_TYPE >
 class MultiFluidDeadOilTestFixture : public FluidModelTest< DeadOilFluid, 3, 3 >
 {
 public:
   using Base = FluidModelTest< DeadOilFluid, 3, 3 >;
+
+  static constexpr bool FROM_TABLE = std::tuple_element_t< 0, MODEL_TYPE >::value;
+  static constexpr bool USE_MASS = std::tuple_element_t< 1, MODEL_TYPE >::value;
 
   static constexpr real64 relTol = 1.0e-4;
   static constexpr real64 absTol = 1.0e-4;
@@ -83,15 +86,11 @@ public:
       writeTableToFile( "pvdw.txt", pvdwTableContent );
     }
 
-    //m_parent.resize( 1 );
-
-    Base::createFluid( getFluidName(), []( DeadOilFluid & model ){
-      fillPhysicalProperties( model );
-      makeDeadOilFluid( model );
+    Base::createFluid( getFluidName(), []( DeadOilFluid & fluid ){
+      fillPhysicalProperties( fluid );
+      fillTables( fluid );
+      fluid.setMassFlag( USE_MASS );
     } );
-
-
-
   }
 
   ~MultiFluidDeadOilTestFixture() override
@@ -104,22 +103,21 @@ public:
     }
   }
 
-protected:
   static string getFluidName();
 
 private:
   static void fillPhysicalProperties( DeadOilFluid & fluid );
-  static void makeDeadOilFluid( DeadOilFluid & fluid );
+  static void fillTables( DeadOilFluid & fluid );
 };
 
-template< bool FROM_TABLE >
-string MultiFluidDeadOilTestFixture< FROM_TABLE >::getFluidName()
+template< typename MODEL_TYPE >
+string MultiFluidDeadOilTestFixture< MODEL_TYPE >::getFluidName()
 {
-  return GEOS_FMT( "fluid{}", (FROM_TABLE ? "Tables" : "Files"));
+  return GEOS_FMT( "fluid{}{}", (FROM_TABLE ? "Tables" : "Files"), (USE_MASS ? "Mass" : "Molar"));
 }
 
-template< bool FROM_TABLE >
-void MultiFluidDeadOilTestFixture< FROM_TABLE >::fillPhysicalProperties( DeadOilFluid & fluid )
+template< typename MODEL_TYPE >
+void MultiFluidDeadOilTestFixture< MODEL_TYPE >::fillPhysicalProperties( DeadOilFluid & fluid )
 {
   string_array & phaseNames = fluid.getReference< string_array >( MultiFluidBase::viewKeyStruct::phaseNamesString() );
   phaseNames = {"oil", "water", "gas"};
@@ -134,102 +132,105 @@ void MultiFluidDeadOilTestFixture< FROM_TABLE >::fillPhysicalProperties( DeadOil
   fill( surfaceDens, Feed< 3 >{800.0, 1022.0, 0.9907} );
 }
 
-template<>
-void MultiFluidDeadOilTestFixture< false >::makeDeadOilFluid( DeadOilFluid & fluid )
+template< typename MODEL_TYPE >
+void MultiFluidDeadOilTestFixture< MODEL_TYPE >::fillTables( DeadOilFluid & fluid )
 {
-  path_array & tableNames = fluid.getReference< path_array >( BlackOilFluidBase::viewKeyStruct::tableFilesString() );
-  tableNames.emplace_back( Path( "pvdo.txt" ));
-  tableNames.emplace_back( Path( "pvdw.txt" ));
-  tableNames.emplace_back( Path( "pvdg.txt" ));
-}
-
-template<>
-void MultiFluidDeadOilTestFixture< true >::makeDeadOilFluid( DeadOilFluid & fluid )
-{
-  // 1) First, define the tables (PVDO, PVDG)
-
-  // 1D table with linear interpolation
-  integer constexpr NaxisPVDO = 21;
-
-  real64_array coordinatesPVDO;
-  real64_array valuesPVDO_Bo;
-  real64_array valuesPVDO_visc;
-  fill( coordinatesPVDO, Feed< NaxisPVDO >{
-        1.000e+07, 1.250e+07, 1.500e+07, 2.000e+07, 2.500e+07, 3.000e+07, 3.320e+07, 3.500e+07,
-        4.000e+07, 5.000e+07, 6.000e+07, 7.000e+07, 8.000e+07, 9.000e+07, 9.500e+07, 1.000e+08,
-        1.100e+08, 1.125e+08, 1.150e+08, 1.175e+08, 1.200e+08 } );
-  fill( valuesPVDO_Bo, Feed< NaxisPVDO >{
-        1.23331, 1.21987, 1.20802, 1.18791, 1.17137, 1.15742, 1.14946, 1.14543,
-        1.13498, 1.11753, 1.10346, 1.09180, 1.08194, 1.07347, 1.06966, 1.06610,
-        1.05961, 1.05811, 1.05665, 1.05523, 1.05385 } );
-  fill( valuesPVDO_visc, Feed< NaxisPVDO >{
-        1.56740e-04, 1.65700e-04, 1.74450e-04, 1.91430e-04, 2.07790e-04, 2.23610e-04, 2.33590e-04, 2.38940e-04,
-        2.53830e-04, 2.82370e-04, 3.09410e-04, 3.35060e-04, 3.59450e-04, 3.82660e-04, 3.93840e-04, 4.04760e-04,
-        4.25840e-04, 4.30960e-04, 4.36020e-04, 4.41020e-04, 4.45960e-04 } );
-
-  integer constexpr NaxisPVDG = 13;
-
-  real64_array coordinatesPVDG;
-  real64_array valuesPVDG_Bg;
-  real64_array valuesPVDG_visc;
-  fill( coordinatesPVDG, Feed< NaxisPVDG >{
-        3.000e+06, 6.000e+06, 9.000e+06, 1.200e+07, 1.500e+07, 1.800e+07, 2.100e+07, 2.400e+07,
-        2.700e+07, 2.950e+07, 3.100e+07, 3.300e+07, 5.300e+07 } );
-  fill( valuesPVDG_Bg, Feed< NaxisPVDG >{
-        4.23400e-02, 2.04600e-02, 1.32800e-02, 9.77000e-03, 7.73000e-03, 6.42600e-03, 5.54100e-03, 4.91900e-03,
-        4.47100e-03, 4.19400e-03, 4.03100e-03, 3.91000e-03, 3.86800e-03 } );
-  fill( valuesPVDG_visc, Feed< NaxisPVDG >{
-        1.34400e-05, 1.42000e-05, 1.52600e-05, 1.66000e-05, 1.81800e-05, 1.99400e-05, 2.18100e-05, 2.37000e-05,
-        2.55900e-05, 2.71400e-05, 2.80600e-05, 2.83200e-05, 2.93500e-05 } );
-
-  createTable( "PVDO_Bo", coordinatesPVDO, valuesPVDO_Bo );
-  createTable( "PVDO_visc", coordinatesPVDO, valuesPVDO_visc );
-  createTable( "PVDG_Bg", coordinatesPVDG, valuesPVDG_Bg );
-  createTable( "PVDG_visc", coordinatesPVDG, valuesPVDG_visc );
-
-  // 2) Then, define the Dead-Oil constitutive model
-
-  string_array & fvfTableNames = fluid.getReference< string_array >( DeadOilFluid::viewKeyStruct::formationVolumeFactorTableNamesString() );
-  fvfTableNames = {"PVDG_Bg", "PVDO_Bo"};
-
-  string_array & viscosityTableNames = fluid.getReference< string_array >( DeadOilFluid::viewKeyStruct::viscosityTableNamesString() );
-  viscosityTableNames = {"PVDG_visc", "PVDO_visc"};
-
-  real64 & waterRefPressure = fluid.getReference< real64 >( DeadOilFluid::viewKeyStruct::waterRefPressureString() );
-  waterRefPressure = 30600000.1;
-  real64 & waterFormationVolumeFactor = fluid.getReference< real64 >( DeadOilFluid::viewKeyStruct::waterFormationVolumeFactorString() );
-  waterFormationVolumeFactor = 1.03;
-  real64 & waterCompressibility = fluid.getReference< real64 >( DeadOilFluid::viewKeyStruct::waterCompressibilityString() );
-  waterCompressibility = 0.00000000041;
-  real64 & waterViscosity = fluid.getReference< real64 >( DeadOilFluid::viewKeyStruct::waterViscosityString() );
-  waterViscosity = 0.0003;
-}
-
-using MultiFluidDeadOilTestFromFiles = MultiFluidDeadOilTestFixture< false >;
-using MultiFluidDeadOilTestFromTables = MultiFluidDeadOilTestFixture< true >;
-
-TEST_F( MultiFluidDeadOilTestFromFiles, numericalDerivativesMass )
-{
-  DeadOilFluid * fluid = getFluid( getFluidName() );
-  fluid->setMassFlag( true );
-
-  for( real64 const pressure : { 1.24e7, 3.21e7, 5.01e7 } )
+  if constexpr (FROM_TABLE)
   {
-    TestPoint const data ( pressure, 297.15, { 0.1, 0.3, 0.6 } );
-    Base::testNumericalDerivatives( fluid, data );
+    // 1) First, define the tables (PVDO, PVDG)
+
+    // 1D table with linear interpolation
+    integer constexpr NaxisPVDO = 21;
+
+    real64_array coordinatesPVDO;
+    real64_array valuesPVDO_Bo;
+    real64_array valuesPVDO_visc;
+    fill( coordinatesPVDO, Feed< NaxisPVDO >{
+          1.000e+07, 1.250e+07, 1.500e+07, 2.000e+07, 2.500e+07, 3.000e+07, 3.320e+07, 3.500e+07,
+          4.000e+07, 5.000e+07, 6.000e+07, 7.000e+07, 8.000e+07, 9.000e+07, 9.500e+07, 1.000e+08,
+          1.100e+08, 1.125e+08, 1.150e+08, 1.175e+08, 1.200e+08 } );
+    fill( valuesPVDO_Bo, Feed< NaxisPVDO >{
+          1.23331, 1.21987, 1.20802, 1.18791, 1.17137, 1.15742, 1.14946, 1.14543,
+          1.13498, 1.11753, 1.10346, 1.09180, 1.08194, 1.07347, 1.06966, 1.06610,
+          1.05961, 1.05811, 1.05665, 1.05523, 1.05385 } );
+    fill( valuesPVDO_visc, Feed< NaxisPVDO >{
+          1.56740e-04, 1.65700e-04, 1.74450e-04, 1.91430e-04, 2.07790e-04, 2.23610e-04, 2.33590e-04, 2.38940e-04,
+          2.53830e-04, 2.82370e-04, 3.09410e-04, 3.35060e-04, 3.59450e-04, 3.82660e-04, 3.93840e-04, 4.04760e-04,
+          4.25840e-04, 4.30960e-04, 4.36020e-04, 4.41020e-04, 4.45960e-04 } );
+
+    integer constexpr NaxisPVDG = 13;
+
+    real64_array coordinatesPVDG;
+    real64_array valuesPVDG_Bg;
+    real64_array valuesPVDG_visc;
+    fill( coordinatesPVDG, Feed< NaxisPVDG >{
+          3.000e+06, 6.000e+06, 9.000e+06, 1.200e+07, 1.500e+07, 1.800e+07, 2.100e+07, 2.400e+07,
+          2.700e+07, 2.950e+07, 3.100e+07, 3.300e+07, 5.300e+07 } );
+    fill( valuesPVDG_Bg, Feed< NaxisPVDG >{
+          4.23400e-02, 2.04600e-02, 1.32800e-02, 9.77000e-03, 7.73000e-03, 6.42600e-03, 5.54100e-03, 4.91900e-03,
+          4.47100e-03, 4.19400e-03, 4.03100e-03, 3.91000e-03, 3.86800e-03 } );
+    fill( valuesPVDG_visc, Feed< NaxisPVDG >{
+          1.34400e-05, 1.42000e-05, 1.52600e-05, 1.66000e-05, 1.81800e-05, 1.99400e-05, 2.18100e-05, 2.37000e-05,
+          2.55900e-05, 2.71400e-05, 2.80600e-05, 2.83200e-05, 2.93500e-05 } );
+
+    createTable( "PVDO_Bo", coordinatesPVDO, valuesPVDO_Bo );
+    createTable( "PVDO_visc", coordinatesPVDO, valuesPVDO_visc );
+    createTable( "PVDG_Bg", coordinatesPVDG, valuesPVDG_Bg );
+    createTable( "PVDG_visc", coordinatesPVDG, valuesPVDG_visc );
+
+    // 2) Then, define the Dead-Oil constitutive model
+
+    string_array & fvfTableNames = fluid.getReference< string_array >( DeadOilFluid::viewKeyStruct::formationVolumeFactorTableNamesString() );
+    fvfTableNames = {"PVDG_Bg", "PVDO_Bo"};
+
+    string_array & viscosityTableNames = fluid.getReference< string_array >( DeadOilFluid::viewKeyStruct::viscosityTableNamesString() );
+    viscosityTableNames = {"PVDG_visc", "PVDO_visc"};
+
+    real64 & waterRefPressure = fluid.getReference< real64 >( DeadOilFluid::viewKeyStruct::waterRefPressureString() );
+    waterRefPressure = 30600000.1;
+    real64 & waterFormationVolumeFactor = fluid.getReference< real64 >( DeadOilFluid::viewKeyStruct::waterFormationVolumeFactorString() );
+    waterFormationVolumeFactor = 1.03;
+    real64 & waterCompressibility = fluid.getReference< real64 >( DeadOilFluid::viewKeyStruct::waterCompressibilityString() );
+    waterCompressibility = 0.00000000041;
+    real64 & waterViscosity = fluid.getReference< real64 >( DeadOilFluid::viewKeyStruct::waterViscosityString() );
+    waterViscosity = 0.0003;
+  }
+  else
+  {
+    path_array & tableNames = fluid.getReference< path_array >( BlackOilFluidBase::viewKeyStruct::tableFilesString() );
+    tableNames.emplace_back( Path( "pvdo.txt" ));
+    tableNames.emplace_back( Path( "pvdw.txt" ));
+    tableNames.emplace_back( Path( "pvdg.txt" ));
   }
 }
 
+using TestTypes = ::testing::Types<
+  std::tuple< std::true_type, std::true_type >,
+  std::tuple< std::true_type, std::false_type >,
+  std::tuple< std::false_type, std::true_type >,
+  std::tuple< std::false_type, std::false_type >
+  >;
 
-TEST_F( MultiFluidDeadOilTestFromTables, numericalDerivativesMass )
+class NameGenerator
 {
-  DeadOilFluid * fluid = getFluid( getFluidName() );
-  fluid->setMassFlag( true );
+public:
+  template< typename T >
+  static std::string GetName( int index )
+  {
+    return GEOS_FMT( "DeadOil_{}_{}", MultiFluidDeadOilTestFixture< T >::getFluidName(), index );
+  }
+};
+
+TYPED_TEST_SUITE( MultiFluidDeadOilTestFixture, TestTypes, NameGenerator );
+
+TYPED_TEST( MultiFluidDeadOilTestFixture, numericalDerivatives )
+{
+  DeadOilFluid * fluid = this->getFluid( this->getFluidName() );
 
   for( real64 const pressure : { 1.24e7, 3.21e7, 5.01e7 } )
   {
-    TestPoint const data ( pressure, 297.15, { 0.1, 0.3, 0.6 } );
-    Base::testNumericalDerivatives( fluid, data );
+    typename TestFixture::Base::TestPoint const data ( pressure, 297.15, { 0.1, 0.3, 0.6 } );
+    TestFixture::Base::testNumericalDerivatives( fluid, data );
   }
 }
 

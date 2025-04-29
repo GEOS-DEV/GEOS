@@ -43,6 +43,8 @@ public:
   static constexpr integer numComp = NUM_COMP;
   static constexpr integer numDof = numComp + 2;
   static constexpr integer numPhase = NUM_PHASE;
+  static constexpr real64 relTolerance = 1.0e-5;
+  static constexpr real64 absTolerance = 1.0e-4;
 
 public:
   using TestPoint = std::tuple<
@@ -77,8 +79,20 @@ protected:
   static void populateLinearScale( array1d< real64 > & array, real64 const x0, real64 const x1, integer const n );
   static void populateLogScale( array1d< real64 > & array, real64 const x0, real64 const x1, integer const n );
 
+  template< integer NDIM, integer USD1, integer USD2, integer USD3 >
+  static void testDerivatives( string const propName,
+                               integer const phaseIndex,
+                               integer const componentIndex,
+                               ArrayView< real64 const, NDIM, USD1 > const & inputValueArray,
+                               ArrayView< real64 const, NDIM+1, USD2 > const & inputDerivArray,
+                               ArraySlice< real64 const, 1, USD3 > const & displacements,
+                               string_array const & dofNames,
+                               real64 const relTol = relTolerance,
+                               real64 const absTol = absTolerance );
+
 private:
   void createFunctionManager();
+
 protected:
   conduit::Node m_node;
   dataRepository::Group m_parent;
