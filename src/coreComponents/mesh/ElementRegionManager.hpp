@@ -1608,8 +1608,9 @@ ElementRegionManager::constructMaterialViewAccessor( string const & viewName ) c
       constitutiveGroup.forSubGroups< MATERIALTYPE >( [&]( MATERIALTYPE const & constitutiveRelation )
       {
         materialName = constitutiveRelation.getName();
-        if( constitutiveRelation.template hasWrapper( viewName ) )  //NOTE (matteo): I have added this check to allow for the view to be
-                                                                    // missing. I am not sure this is the default behaviour we want though.
+        if( constitutiveRelation.template hasWrapper<>( viewName ) )  //NOTE (matteo): I have added this check to allow for the view to be
+                                                                      // missing. I am not sure this is the default behaviour we want
+                                                                      // though.
         {
           accessor[er][esr] = constitutiveRelation.template getReference< VIEWTYPE >( viewName );
         }

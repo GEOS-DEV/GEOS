@@ -239,7 +239,7 @@ int MpiWrapper::checkAny( int count, MPI_Request array_of_requests[], int * idx,
   bool found = false;
   int flagCache = -1;
   int rval = MPI_SUCCESS;
-  std::vector< int > rvals( count );
+  stdVector< int > rvals( count );
   for( int jdx = 0; jdx < count; ++jdx )
   {
     *flag = 0;
@@ -271,7 +271,7 @@ int MpiWrapper::checkAll( int count, MPI_Request array_of_requests[], int * flag
   // assume all passing, any that don't pass set the flag to false
   *flag = 1;
   int rval = MPI_SUCCESS;
-  std::vector< int > rvals( count );
+  stdVector< int > rvals( count );
   int iFlag = 0;
   for( int idx = 0; idx < count; ++idx )
   {
@@ -366,7 +366,7 @@ int MpiWrapper::activeWaitSome( const int count,
   while( cmp < count )
   {
     int rcvd = 0;
-    std::vector< int > indices( count, -1 );
+    stdVector< int > indices( count, -1 );
     int err = waitSome( count, array_of_requests, &rcvd, &indices[0], array_of_statuses );
     if( err != MPI_SUCCESS )
       return err;
@@ -387,7 +387,7 @@ int MpiWrapper::activeWaitSome( const int count,
 
 
 int MpiWrapper::activeWaitSomeCompletePhase( const int participants,
-                                             std::vector< std::tuple< MPI_Request *, MPI_Status *, std::function< MPI_Request ( int ) > > > const & phases )
+                                             stdVector< std::tuple< MPI_Request *, MPI_Status *, std::function< MPI_Request ( int ) > > > const & phases )
 {
   const int num_phases = phases.size();
   int err = 0;
@@ -417,7 +417,7 @@ int MpiWrapper::activeWaitSomeCompletePhase( const int participants,
 }
 
 int MpiWrapper::activeWaitOrderedCompletePhase( const int participants,
-                                                std::vector< std::tuple< MPI_Request *, MPI_Status *, std::function< MPI_Request ( int ) > > > const & phases )
+                                                stdVector< std::tuple< MPI_Request *, MPI_Status *, std::function< MPI_Request ( int ) > > > const & phases )
 {
   const int num_phases = phases.size();
   for( int phase = 0; phase < num_phases; ++phase )
