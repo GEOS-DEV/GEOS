@@ -426,6 +426,7 @@ protected:
 private:
   virtual void setConstitutiveNames( ElementSubRegionBase & subRegion ) const override;
 
+  const double m_artificialCompr = 1e-6;
 };
 
 template< typename SUBREGION_TYPE >
@@ -462,6 +463,8 @@ void SinglePhaseBase::accumulationAssemblyLaunch( DofManager const & dofManager,
       createAndLaunch< parallelDevicePolicy<> >( dofManager.rankOffset(),
                                                  dofKey,
                                                  subRegion,
+                                                 m_artificialCompr,
+                                                 this->getNonlinearSolverParameters().m_numNewtonIterations,
                                                  fluid,
                                                  solid,
                                                  localMatrix,

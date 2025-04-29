@@ -30,6 +30,8 @@
 #include "physicsSolvers/PhysicsSolverBaseKernels.hpp"
 #include "codingUtilities/Utilities.hpp"
 
+#include <fstream>
+
 namespace geos
 {
 
@@ -147,7 +149,58 @@ public:
     m_mass_n( subRegion.template getField< fields::flow::mass_n >() ),
     m_localMatrix( localMatrix ),
     m_localRhs( localRhs )
-  {}
+  {
+    m_artificialCompr = 0;
+    m_curNewtonIter = 0;
+  }
+
+  /**
+   * @brief Constructor
+   * @param[in] rankOffset the offset of my MPI rank
+   * @param[in] dofKey the string key to retrieve the degress of freedom numbers
+   * @param[in] subRegion the element subregion
+   * @param[in] fluid the fluid model
+   * @param[in] solid the solid model
+   * @param[inout] localMatrix the local CRS matrix
+   * @param[inout] localRhs the local right-hand side vector
+   */
+  ElementBasedAssemblyKernel( globalIndex const rankOffset,
+                              string const dofKey,
+                              SUBREGION_TYPE const & subRegion,
+                              const real64 artificialCompr,
+                              const integer curNewtonIter,
+                              constitutive::SingleFluidBase const & fluid,
+                              constitutive::CoupledSolidBase const & solid,
+                              CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                              arrayView1d< real64 > const & localRhs )
+    :
+    m_rankOffset( rankOffset ),
+    m_dofNumber( subRegion.template getReference< array1d< globalIndex > >( dofKey ) ),
+    m_elemGhostRank( subRegion.ghostRank() ),
+    m_volume( subRegion.getElementVolume() ),
+    m_deltaVolume( subRegion.template getField< fields::flow::deltaVolume >() ),
+    m_porosity( solid.getPorosity() ),
+    m_dPoro_dPres( solid.getDporosity_dPressure() ),
+    m_density( fluid.density() ),
+    m_dDensity_dPres( fluid.dDensity_dPressure() ),
+    m_mass_n( subRegion.template getField< fields::flow::mass_n >() ),
+    m_pressure(subRegion.template getField< fields::flow::pressure>() ),
+    m_localMatrix( localMatrix ),
+    m_localRhs( localRhs ),
+    m_artificialCompr(artificialCompr),
+    m_curNewtonIter(curNewtonIter)
+  {
+    std::ifstream strm("artificial_factor.txt");
+    double decrease_factor = 0;
+    if(strm.good())
+      strm >> decrease_factor;
+    strm.close();
+      
+    double factor = 1.0;
+    for (auto i = 0; i < m_curNewtonIter; ++i)
+      factor *= decrease_factor;
+    m_artificialCompr *= factor;
+  }
 
   /**
    * @struct StackVariables
@@ -226,13 +279,21 @@ public:
                             FUNC && kernelOp = NoOpFunc{} ) const
   {
     // Residual contribution is mass conservation in the cell
-    stack.localResidual[0] = stack.poreVolume * m_density[ei][0] - m_mass_n[ei];
+    // this number has to be same as input
+    real64 defaultPressure = 0;
+    real64 deltaArtPV      = m_volume[ei] * m_artificialCompr * (m_pressure[ei] - defaultPressure);
+    real64 dDeltaArtPV_dP  = m_artificialCompr;
+    stack.localResidual[0] = (stack.poreVolume + deltaArtPV) * m_density[ei][0] - m_mass_n[ei];
 
     // Derivative of residual wrt to pressure in the cell
-    stack.localJacobian[0][0] = stack.dPoreVolume_dPres * m_density[ei][0] + m_dDensity_dPres[ei][0] * stack.poreVolume;
+    stack.localJacobian[0][0] = (stack.dPoreVolume_dPres + dDeltaArtPV_dP) * m_density[ei][0] + 
+                                m_dDensity_dPres[ei][0] * (stack.poreVolume + deltaArtPV);
 
     // Customize the kernel with this lambda
     kernelOp();
+    if (stack.poreVolume < 10)
+      std::cout << "poreVol " << ei << " " << stack.poreVolume <<" " << m_density[ei][0] << " " << m_mass_n[ei] << 
+      " pressure: " << m_pressure[ei] << " artificialcompr: " << m_artificialCompr << " cur newton: " << m_curNewtonIter << std::endl;
   }
 
   /**
@@ -308,11 +369,18 @@ protected:
   /// View on mass
   arrayView1d< real64 const > const m_mass_n;
 
+
+  /// Views on pressure
+  arrayView1d< real64 const> const m_pressure;
+
   /// View on the local CRS matrix
   CRSMatrixView< real64, globalIndex const > const m_localMatrix;
   /// View on the local RHS
   arrayView1d< real64 > const m_localRhs;
 
+  real64 m_artificialCompr = 0.0;
+
+  integer m_curNewtonIter = 0;
 };
 
 /**
@@ -339,11 +407,13 @@ public:
   SurfaceElementBasedAssemblyKernel( globalIndex const rankOffset,
                                      string const dofKey,
                                      SurfaceElementSubRegion const & subRegion,
+                                     const real64 artificialCompr,
+                                     const integer curNewtonIter,
                                      constitutive::SingleFluidBase const & fluid,
                                      constitutive::CoupledSolidBase const & solid,
                                      CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                      arrayView1d< real64 > const & localRhs )
-    : Base( rankOffset, dofKey, subRegion, fluid, solid, localMatrix, localRhs )
+    : Base( rankOffset, dofKey, subRegion, artificialCompr, curNewtonIter, fluid, solid, localMatrix, localRhs )
     , m_creationMass( subRegion.getField< fields::flow::massCreated >() )
   {}
 
@@ -395,11 +465,14 @@ public:
   createAndLaunch( globalIndex const rankOffset,
                    string const dofKey,
                    CellElementSubRegion const & subRegion,
+                   const real64 artificialCompr,
+                   const integer curNewtonIter,
                    constitutive::SingleFluidBase const & fluid,
                    constitutive::CoupledSolidBase const & solid,
                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
                    arrayView1d< real64 > const & localRhs )
   {
+    GEOS_UNUSED_VAR(artificialCompr, curNewtonIter);
     integer constexpr NUM_DOF = 1;
 
     ElementBasedAssemblyKernel< CellElementSubRegion, NUM_DOF >
@@ -423,13 +496,15 @@ public:
   createAndLaunch( globalIndex const rankOffset,
                    string const dofKey,
                    SurfaceElementSubRegion const & subRegion,
+                   const real64 artificialCompr,
+                   const integer curNewton,
                    constitutive::SingleFluidBase const & fluid,
                    constitutive::CoupledSolidBase const & solid,
                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
                    arrayView1d< real64 > const & localRhs )
   {
     SurfaceElementBasedAssemblyKernel
-      kernel( rankOffset, dofKey, subRegion, fluid, solid, localMatrix, localRhs );
+      kernel( rankOffset, dofKey, subRegion, artificialCompr, curNewton, fluid, solid, localMatrix, localRhs );
     SurfaceElementBasedAssemblyKernel::launch< POLICY >( subRegion.size(), kernel );
   }
 
