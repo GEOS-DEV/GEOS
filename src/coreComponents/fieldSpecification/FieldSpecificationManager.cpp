@@ -17,6 +17,7 @@
 
 #include "common/format/StringUtilities.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
+#include "mesh/MeshObjectPath.hpp"
 
 namespace geos
 {
@@ -96,7 +97,6 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
     }
 
     // Step 2: apply the boundary condition
-
     fs.apply< dataRepository::Group >( mesh,
                                        [&]( FieldSpecificationBase const &,
                                             string const & setName,
@@ -165,7 +165,6 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
     }
 
     // Step 4: issue an error or a warning if the field was not found
-
     // if all sets are missing, we stop the simulation.
     if( areAllSetsMissing )
     {
@@ -175,11 +174,56 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
       {
         missingSetNames.emplace_back( mapEntry.first );
       }
-      GEOS_THROW( GEOS_FMT( "\n{}: there is/are no set(s) named `{}` under the {} `{}`.\n",
-                            fs.getWrapperDataContext( FieldSpecificationBase::viewKeyStruct::objectPathString() ),
-                            fmt::join( missingSetNames, ", " ),
-                            FieldSpecificationBase::viewKeyStruct::objectPathString(), fs.getObjectPath() ),
-                  InputError );
+
+      string setNamesError = GEOS_FMT( "\n{}: there is/are no set(s) named `{}` under the {} `{}`.\nSet names available are : ",
+                                       fs.getWrapperDataContext( FieldSpecificationBase::viewKeyStruct::objectPathString() ),
+                                       fmt::join( missingSetNames, ", " ),
+                                       FieldSpecificationBase::viewKeyStruct::objectPathString(), fs.getObjectPath() );
+
+      string const & objPath = fs.getObjectPath();
+      if( objPath == "nodeManager" )
+      {
+        setNamesError.append( "xneg, yneg, zneg,xpos, ypos, rneg , rpos, tneg, tpos, all" );
+      }
+      else if( stringutilities::tokenize( fs.getObjectPath(), "/" ).at( 0 ) == "ElementRegions" )
+      {
+        string_array availableSet;
+        mesh.getElemManager().forElementRegions< CellElementRegion >( [&]( CellElementRegion const & sourceRegion )
+        {
+          for( auto const & cellblockName :  sourceRegion.getCellBlockNames())
+          {
+            availableSet.emplace_back( cellblockName );
+          }
+        } );
+        for( size_t i = 0; i < availableSet.size(); ++i )
+        {
+          setNamesError += availableSet[i];
+          if( i < availableSet.size() - 1 )
+            setNamesError += ", ";
+        }
+        setNamesError += "all";
+      }
+      else if( objPath == "faceManager" )
+      {
+        GeometricObjectManager & geoManager = GeometricObjectManager::getInstance();
+        string_array geometryName;
+        geoManager.forSubGroups< SimpleGeometricObjectBase >( [&]( SimpleGeometricObjectBase & meshGen )
+        {
+          geometryName.emplace_back( meshGen.getName() );
+        } );
+        for( size_t i = 0; i < geometryName.size(); ++i )
+        {
+          setNamesError += geometryName[i];
+          if( i < geometryName.size() - 1 )
+            setNamesError += ", ";
+        }
+      }
+      else
+      {
+        setNamesError.append( "Unkonwn object path" );
+      }
+
+      GEOS_THROW( setNamesError, InputError );
     }
 
     // if a target set is empty, we issue a warning
