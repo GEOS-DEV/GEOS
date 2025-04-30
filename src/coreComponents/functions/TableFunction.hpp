@@ -451,7 +451,7 @@ private:
   /// Table values (in fortran order)
   array1d< real64 > m_values;
 
-  /// 
+  ///
 
   /// The units of each table coordinate axes
   std::vector< units::Unit > m_dimUnits;

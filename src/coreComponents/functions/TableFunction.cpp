@@ -35,81 +35,88 @@ namespace geos
 
 namespace hdf5Utils
 {
-  hid_t openHDFFile( const string & filename )
+hid_t openHDFFile( const string & filename )
+{
+  hid_t file_id;
+
+  H5E_BEGIN_TRY
   {
-    hid_t file_id;
-    H5E_BEGIN_TRY
-    {
-      file_id = H5Fopen( filename.c_str(), H5F_ACC_RDONLY, H5P_DEFAULT );
-    }
-    H5E_END_TRY
-    GEOS_ERROR_IF( file_id < 0, GEOS_FMT( "{}: error opening file", filename ) );
-    return file_id;
+    file_id = H5Fopen( filename.c_str(), H5F_ACC_RDONLY, H5P_DEFAULT );
+  }
+  H5E_END_TRY
+
+  GEOS_ERROR_IF( file_id < 0, GEOS_FMT( "{}: error opening file", filename ) );
+  return file_id;
+}
+
+void closeHDFFile( hid_t const file_id, const string & filename )
+{
+  herr_t err;
+
+  H5E_BEGIN_TRY
+  {
+    err = H5Fclose( file_id );
+  }
+  H5E_END_TRY
+
+  GEOS_ERROR_IF( err < 0, GEOS_FMT( "{}: error closing file", filename ) );
+}
+
+bool datasetExists( hid_t const & file_id, string const & datasetName )
+{
+  herr_t err;
+
+  H5E_BEGIN_TRY
+  {
+    err = H5Oexists_by_name( file_id, datasetName.c_str(), H5P_DEFAULT );
+  }
+  H5E_END_TRY
+  return err > 0 ? true : false;
+}
+
+array1d< real64 > readDataset( hid_t file_id, string const & filename, string const & datasetName, int const expectedNumDims )
+{
+  // Check dataset existance
+  GEOS_ERROR_IF( !datasetExists( file_id, datasetName ), GEOS_FMT( "Dataset {} doesn't exist in {}", datasetName, filename ) );
+
+  // Open the dataset
+  hid_t dataset_id = H5Dopen( file_id, datasetName.c_str(), H5P_DEFAULT );
+  GEOS_ERROR_IF( dataset_id < 0, GEOS_FMT( "Error opening dataset {} in {}", datasetName, filename ) );
+
+  // Get the dataspace of the dataset
+  hid_t dataspace_id = H5Dget_space( dataset_id );
+  int ndims = H5Sget_simple_extent_ndims( dataspace_id );
+  if( ndims != expectedNumDims )
+  {
+    H5Sclose( dataspace_id );
+    H5Dclose( dataset_id );
+    GEOS_ERROR( GEOS_FMT( "Dataset {} is not {}D", datasetName, std::to_string( expectedNumDims ) ) );
   }
 
-  void closeHDFFile( hid_t const file_id, const string & filename )
+  array1d< hsize_t >  dims( ndims );
+  H5Sget_simple_extent_dims( dataspace_id, dims.data(), nullptr );
+
+  // Compute the total number of entries
+  hsize_t total_entries = 1;
+  for( auto const & dim : dims )
   {
-    herr_t err;
-    H5E_BEGIN_TRY
-    {
-      err = H5Fclose( file_id);
-    }
-    H5E_END_TRY
-    GEOS_ERROR_IF( err < 0, GEOS_FMT( "{}: error closing file", filename ) );
+    total_entries *= dim;
   }
 
-  bool datasetExists( hid_t const & file_id, string const & datasetName )
+  // Read the dataset
+  array1d< real64 > datasetValues( total_entries );
+  herr_t err;
+
+  H5E_BEGIN_TRY
   {
-    herr_t err;
-    H5E_BEGIN_TRY
-    {
-      err = H5Oexists_by_name( file_id, datasetName.c_str(), H5P_DEFAULT );
-    }
-    H5E_END_TRY
-    return err > 0 ? true : false;
+    err = H5Dread( dataset_id, H5T_NATIVE_DOUBLE, dataspace_id, H5S_ALL, H5P_DEFAULT, datasetValues.data() );
   }
+  H5E_END_TRY
 
-  array1d< real64 > readDataset( hid_t file_id, string const & filename, string const &datasetName, int const expectedNumDims )
-  {
-    // Check dataset existance
-    GEOS_ERROR_IF( !datasetExists( file_id, datasetName ), GEOS_FMT( "Dataset {} doesn't exist in {}", datasetName, filename ) );
+  GEOS_ERROR_IF( err < 0, GEOS_FMT( "{}: error reading dataset", datasetName ) );
 
-    // Open the dataset
-    hid_t dataset_id = H5Dopen( file_id, datasetName.c_str(), H5P_DEFAULT );
-    GEOS_ERROR_IF( dataset_id < 0, GEOS_FMT( "Error opening dataset {} in {}", datasetName, filename ) );
-
-    // Get the dataspace of the dataset
-    hid_t dataspace_id = H5Dget_space( dataset_id );
-    int ndims = H5Sget_simple_extent_ndims( dataspace_id );
-    if ( ndims != expectedNumDims )
-    {
-      H5Sclose( dataspace_id );
-      H5Dclose( dataset_id );
-      GEOS_ERROR( GEOS_FMT( "Dataset {} is not {}D", datasetName, std::to_string(expectedNumDims) ) );
-    }
-
-    array1d< hsize_t >  dims( ndims );
-    H5Sget_simple_extent_dims( dataspace_id, dims.data(), nullptr );
-
-    // Compute the total number of entries
-    hsize_t total_entries = 1;
-    for ( auto const &dim : dims)
-    {
-      total_entries *= dim;
-    }
-
-    // Read the dataset
-    array1d< real64 > datasetValues( total_entries );
-    herr_t err;
-    // H5E_BEGIN_TRY
-    {
-      err = H5Dread( dataset_id, H5T_NATIVE_DOUBLE, dataspace_id, H5S_ALL, H5P_DEFAULT, datasetValues.data() );
-    }
-    // H5E_END_TRY
-    GEOS_ERROR_IF( err < 0, GEOS_FMT( "{}: error reading dataset", datasetName ) );
-
-    return datasetValues;
-  }
+  return datasetValues;
+}
 
 } // end of namespace hdf5Utils
 
@@ -140,17 +147,17 @@ TableFunction::TableFunction( const string & name,
     setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "Voxel file name for ND Table" );
 
-  registerWrapper( viewKeyStruct::hdf5FileString(), &m_hdf5File).
+  registerWrapper( viewKeyStruct::hdf5FileString(), &m_hdf5File ).
     setInputFlag( InputFlags::OPTIONAL ).
     setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "HDF5 file name for ND Table" );
 
-  registerWrapper( viewKeyStruct::hdf5CoordinateDatasetNamesString(), &m_hdf5CoordinateDatasetNames).
+  registerWrapper( viewKeyStruct::hdf5CoordinateDatasetNamesString(), &m_hdf5CoordinateDatasetNames ).
     setInputFlag( InputFlags::OPTIONAL ).
     setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "List of coordinate dataset names in HDF5 file" );
 
-  registerWrapper( viewKeyStruct::hdf5TableDatasetNameString(), &m_hdf5TableDatasetName).
+  registerWrapper( viewKeyStruct::hdf5TableDatasetNameString(), &m_hdf5TableDatasetName ).
     setInputFlag( InputFlags::OPTIONAL ).
     setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "Table dataset name in HDF5 file" );
@@ -228,7 +235,7 @@ void TableFunction::initializeFunction()
 
     // Read table coordinates
     int tableDim = 0;
-    for ( auto const &coordName : m_hdf5CoordinateDatasetNames)
+    for( auto const & coordName : m_hdf5CoordinateDatasetNames )
     {
       array1d< real64 > tmpNew = hdf5Utils::readDataset( file_id, m_hdf5File, coordName, 1 );
       m_coordinates.appendArray( tmpNew.begin(), tmpNew.end() );
