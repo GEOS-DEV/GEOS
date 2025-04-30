@@ -225,13 +225,13 @@ testNumericalDerivatives( constitutive::MultiFluidBase & fluid,
     GET_FLUID_DATA( fluid, fields::multifluid::dTotalDensity )
   };
 
-  auto const & phaseFracCopy     = GET_FLUID_DATA( fluidCopy, fields::multifluid::phaseFraction );
-  auto const & phaseDensCopy     = GET_FLUID_DATA( fluidCopy, fields::multifluid::phaseDensity );
-  auto const & phaseViscCopy     = GET_FLUID_DATA( fluidCopy, fields::multifluid::phaseViscosity );
-  auto const & phaseEnthCopy     = GET_FLUID_DATA( fluidCopy, fields::multifluid::phaseEnthalpy );
-  auto const & phaseEnergyCopy   = GET_FLUID_DATA( fluidCopy, fields::multifluid::phaseInternalEnergy );
-  auto const & phaseCompFracCopy = GET_FLUID_DATA( fluidCopy, fields::multifluid::phaseCompFraction );
-  auto const & totalDensCopy     = GET_FLUID_DATA( fluidCopy, fields::multifluid::totalDensity );
+  auto const phaseFracCopy     = GET_FLUID_DATA( fluidCopy, fields::multifluid::phaseFraction );
+  auto const phaseDensCopy     = GET_FLUID_DATA( fluidCopy, fields::multifluid::phaseDensity );
+  auto const phaseViscCopy     = GET_FLUID_DATA( fluidCopy, fields::multifluid::phaseViscosity );
+  auto const phaseEnthCopy     = GET_FLUID_DATA( fluidCopy, fields::multifluid::phaseEnthalpy );
+  auto const phaseEnergyCopy   = GET_FLUID_DATA( fluidCopy, fields::multifluid::phaseInternalEnergy );
+  auto const phaseCompFracCopy = GET_FLUID_DATA( fluidCopy, fields::multifluid::phaseCompFraction );
+  auto const totalDensCopy     = GET_FLUID_DATA( fluidCopy, fields::multifluid::totalDensity );
 
 #undef GET_FLUID_DATA
 
