@@ -25,7 +25,7 @@
 #include "common/GeosxMacros.hpp"
 #include "common/format/Format.hpp"
 #include "LvArray/src/Macros.hpp"
-#include "../../common/logger/ErrorHandling.hpp"
+#include "common/logger/ErrorHandling.hpp"
 
 // System includes
 #include <stdexcept>

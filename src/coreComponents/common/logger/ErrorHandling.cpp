@@ -22,7 +22,7 @@
 
 // System includes
 #include <fstream>
-#include <filesystem>
+#include <iostream>
 
 namespace geos
 {
@@ -40,19 +40,24 @@ namespace geos
   void ErrorLogger::errorMsgWritter( ErrorLogger::ErrorMsg const & errorMsg )
   {
     ErrorLogger logger;
-    std::ofstream yamlFile( "errors.yaml", std::ios::app ); 
+
+    std::string filename = "errors.yaml";
+    std::ifstream checkYamlFile( filename );
+    bool isEmpty = checkYamlFile.peek() == std::ifstream::traits_type::eof();
+    checkYamlFile.close();
+
+    std::ofstream yamlFile( filename, std::ios::app ); 
     if( yamlFile.is_open() )
     {
-      std::ifstream yamlFileIn("errors.yaml");
-      if( yamlFileIn.tellg() == 0 ) 
+      if( isEmpty )
       {
         yamlFile << "errors: \n";
       }
-      yamlFile << "     - message: " << errorMsg.msg << "\n";
-      yamlFile << "       type: " << logger.toString( errorMsg.type ) << "\n";
-      yamlFile << "       location: " << "\n";
-      yamlFile << "             file: " << errorMsg.file << "\n";
-      yamlFile << "             line: " << errorMsg.line << "\n\n";
+      yamlFile << GEOS_FMT( "{:>2}- type: {}\n", " ", errorMsg.msg );
+      yamlFile << GEOS_FMT( "{:>4}message: {}\n", " ", logger.toString( errorMsg.type ) );
+      yamlFile << GEOS_FMT( "{:>4}location:\n", " " );
+      yamlFile << GEOS_FMT( "{:>6}- file: {}\n", " ", errorMsg.file );
+      yamlFile << GEOS_FMT( "{:>6}- line: {}\n\n", " ", errorMsg.line );
       yamlFile.close();
       std::cout << "YAML file created successfully.\n";
     } 

@@ -21,7 +21,8 @@
 #define INITIALIZATION_ERROR_LOGGER_HPP
 
 // Source includes 
-#include "../DataTypes.hpp"
+#include "common/DataTypes.hpp"
+#include "common/format/Format.hpp"
 
 using namespace std;
 
