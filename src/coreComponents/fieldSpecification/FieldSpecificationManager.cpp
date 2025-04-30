@@ -18,6 +18,9 @@
 #include "common/format/StringUtilities.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
 #include "mesh/MeshObjectPath.hpp"
+#include "mesh/MeshManager.hpp"
+#include "mesh/generators/InternalWellboreGenerator.hpp"
+#include "mainInterface/ProblemManager.hpp"
 
 namespace geos
 {
@@ -170,6 +173,7 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
     {
       // loop again over the map to collect the set names
       string_array missingSetNames;
+
       for( auto const & mapEntry : isTargetSetCreated )
       {
         missingSetNames.emplace_back( mapEntry.first );
@@ -179,31 +183,18 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
                                        fs.getWrapperDataContext( FieldSpecificationBase::viewKeyStruct::objectPathString() ),
                                        fmt::join( missingSetNames, ", " ),
                                        FieldSpecificationBase::viewKeyStruct::objectPathString(), fs.getObjectPath() );
-
+      Group const & problemManager = this->getGroupByPath( "/Problem" );
       string const & objPath = fs.getObjectPath();
       if( objPath == "nodeManager" )
       {
-        setNamesError.append( "xneg, yneg, zneg,xpos, ypos, rneg , rpos, tneg, tpos, all" );
-      }
-      else if( stringutilities::tokenize( fs.getObjectPath(), "/" ).at( 0 ) == "ElementRegions" )
-      {
-        string_array availableSet;
-        mesh.getElemManager().forElementRegions< CellElementRegion >( [&]( CellElementRegion const & sourceRegion )
+        setNamesError.append( "xneg ,yneg ,zneg ,xpos ,ypos" );
+        problemManager.getGroup( "Mesh" ).forSubGroups< InternalWellboreGenerator >( [&]( InternalWellboreGenerator const & ) // not a good way
         {
-          for( auto const & cellblockName :  sourceRegion.getCellBlockNames())
-          {
-            availableSet.emplace_back( cellblockName );
-          }
-        } );
-        for( size_t i = 0; i < availableSet.size(); ++i )
-        {
-          setNamesError += availableSet[i];
-          if( i < availableSet.size() - 1 )
-            setNamesError += ", ";
-        }
-        setNamesError += "all";
+          setNamesError.append( " ,rneg, rpos, tneg, tpos" );
+        });
       }
-      else if( objPath == "faceManager" )
+
+      if( problemManager.getSubGroups()["Geometry"] != nullptr )
       {
         GeometricObjectManager & geoManager = GeometricObjectManager::getInstance();
         string_array geometryName;
@@ -217,11 +208,13 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
           if( i < geometryName.size() - 1 )
             setNamesError += ", ";
         }
+        setNamesError += ", all";
       }
       else
       {
-        setNamesError.append( "Unkonwn object path" );
+        setNamesError.append( "Unkonwn objectPath or check your vtu" ); // check how we handle things in vtu
       }
+
 
       GEOS_THROW( setNamesError, InputError );
     }
