@@ -403,6 +403,12 @@ private:
     static constexpr char const * coordinateFilesString() { return "coordinateFiles"; }
     /// @return Key for name of file containing table values
     static constexpr char const * voxelFileString() { return "voxelFile"; }
+    /// @return Key for name of HDF5 file containing table values
+    static constexpr char const * hdf5FileString() { return "hdf5File"; }
+    /// @return Key for list of coordinate dataset names in HDF5 file
+    static constexpr char const * hdf5CoordinateDatasetNamesString() { return "hdf5CoordinateDatasetNames"; }
+    /// @return Key for name of dataset containing table values in HDF5 file
+    static constexpr char const * hdf5TableDatasetNameString() { return "hdf5TableDatasetName"; }
     /// @return Key for name of file containing table values
     static constexpr char const * writeCSVFlagString() { return "writeCSV"; }
   };
@@ -424,8 +430,17 @@ private:
   /// List of table coordinate file names
   path_array m_coordinateFiles;
 
-  /// Table voxel file names
+  /// Table voxel file name
   Path m_voxelFile;
+
+  /// Table voxel HDF5 file name
+  Path m_hdf5File;
+
+  /// List of table coordinate dataset names in HDF5 file
+  string_array m_hdf5CoordinateDatasetNames;
+
+  /// Table dataset name in HDF5 file
+  string m_hdf5TableDatasetName;
 
   /// Table interpolation method
   InterpolationType m_interpolationMethod;
@@ -435,6 +450,8 @@ private:
 
   /// Table values (in fortran order)
   array1d< real64 > m_values;
+
+  /// 
 
   /// The units of each table coordinate axes
   std::vector< units::Unit > m_dimUnits;

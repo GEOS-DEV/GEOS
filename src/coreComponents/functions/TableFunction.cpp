@@ -100,8 +100,13 @@ namespace hdf5Utils
 
     // Read the dataset
     array1d< real64 > datasetValues( total_entries );
-    H5Dread( dataset_id, H5T_NATIVE_DOUBLE, dataspace_id, dataspace_id, H5P_DEFAULT, datasetValues.data() );
-    //TODO: add error checking
+    herr_t err;
+    // H5E_BEGIN_TRY
+    {
+      err = H5Dread( dataset_id, H5T_NATIVE_DOUBLE, dataspace_id, H5S_ALL, H5P_DEFAULT, datasetValues.data() );
+    }
+    // H5E_END_TRY
+    GEOS_ERROR_IF( err < 0, GEOS_FMT( "{}: error reading dataset", datasetName ) );
 
     return datasetValues;
   }
@@ -134,6 +139,21 @@ TableFunction::TableFunction( const string & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "Voxel file name for ND Table" );
+
+  registerWrapper( viewKeyStruct::hdf5FileString(), &m_hdf5File).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setDescription( "HDF5 file name for ND Table" );
+
+  registerWrapper( viewKeyStruct::hdf5CoordinateDatasetNamesString(), &m_hdf5CoordinateDatasetNames).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setDescription( "List of coordinate dataset names in HDF5 file" );
+
+  registerWrapper( viewKeyStruct::hdf5TableDatasetNameString(), &m_hdf5TableDatasetName).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setDescription( "Table dataset name in HDF5 file" );
 
   registerWrapper( viewKeyStruct::interpolationString(), &m_interpolationMethod ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -202,6 +222,22 @@ void TableFunction::initializeFunction()
     // This function appears to be already initialized
     // Apparently, this can be called multiple times during unit tests?
   }
+  else if( !m_hdf5CoordinateDatasetNames.empty() )
+  {
+    hid_t file_id = hdf5Utils::openHDFFile( m_hdf5File );
+
+    // Read table coordinates
+    int tableDim = 0;
+    for ( auto const &coordName : m_hdf5CoordinateDatasetNames)
+    {
+      array1d< real64 > tmpNew = hdf5Utils::readDataset( file_id, m_hdf5File, coordName, 1 );
+      m_coordinates.appendArray( tmpNew.begin(), tmpNew.end() );
+      tableDim += 1;
+    }
+
+    // Read table dataset
+    m_values = hdf5Utils::readDataset( file_id, m_hdf5File, m_hdf5TableDatasetName, tableDim );
+  }
   else if( m_coordinateFiles.empty() )
   {
     // 1D Table
@@ -225,39 +261,6 @@ void TableFunction::initializeFunction()
     // ND Table
     m_values.reserve( numValues );
     readFile( m_voxelFile, m_values );
-
-    //////////////////////////
-    /// WIP testing importing table from HDF5 file
-
-    string const filename = "array_3d.h5";
-    string_array const coordinateNames = {"x_coord", "y_coord", "z_coord"};
-    string const datasetName = "cell_ID";
-
-    ArrayOfArrays< real64 > m_coordinatesNew;
-
-    hid_t file_id = hdf5Utils::openHDFFile( filename );
-
-    // Read table coordinates
-    int tableDim = 0;
-    for ( auto const &coordName : coordinateNames)
-    {
-      array1d< real64 > tmpNew = hdf5Utils::readDataset( file_id, filename, coordName, 1 );
-      m_coordinatesNew.appendArray( tmpNew.begin(), tmpNew.end() );
-      tableDim += 1;
-    }
-
-    // Read valued
-    array1d< real64 > m_valuesNew = hdf5Utils::readDataset( file_id, filename, datasetName, tableDim );
-
-
-    GEOS_LOG_RANK_VAR( m_coordinatesNew );
-    GEOS_LOG_RANK_VAR( m_valuesNew );
-
-    
-
-    GEOS_ERROR("\n\n\n STOP HERE \n\n\n");
-
-    //////////////////////////
   }
 
   reInitializeFunction();
