@@ -36,20 +36,20 @@ class TableFormatter
 public:
 
   /// Represent the TableData values
-  using RowsCellInput = std::vector< std::vector< TableData::CellData > >;
+  using RowsCellInput = stdVector< stdVector< TableData::CellData > >;
 
   /// Represent a row of the Table (header or values) when structured for formatting
   struct CellLayoutRow
   {
     /// The cell list of the row instance.
-    std::vector< TableLayout::CellLayout > cells;
+    stdVector< TableLayout::CellLayout > cells;
 
     /// The maximum number of lines in the `cells` texts (no text is considered as one line).
     size_t sublinesCount;
   };
 
   /// Represent a table section (title + header or values) layout: view on the data and its layout settings.
-  using CellLayoutRows = std::vector< CellLayoutRow >;
+  using CellLayoutRows = stdVector< CellLayoutRow >;
 
   /**
    * @return The Errors List object
@@ -352,7 +352,7 @@ private:
    * @param columnsWidth The array to store the resulting columns width in.
    * @param tableGrid The grid of cells containing content.
    */
-  void stretchColumnsByCellsWidth( std::vector< size_t > & columnsWidth,
+  void stretchColumnsByCellsWidth( stdVector< size_t > & columnsWidth,
                                    TableFormatter::CellLayoutRows const & tableGrid ) const;
 
   /**
@@ -364,7 +364,7 @@ private:
    * @param tableLayout Layout information, including column margins and other settings.
    * @param compress Enable a final compression pass instead of only expanding widths.
    */
-  void stretchColumnsByMergedCellsWidth( std::vector< size_t > & columnsWidth,
+  void stretchColumnsByMergedCellsWidth( stdVector< size_t > & columnsWidth,
                                          TableFormatter::CellLayoutRows & tableGrid,
                                          PreparedTableLayout const & tableLayout,
                                          bool const compress ) const;
@@ -375,7 +375,7 @@ private:
    * @param tableGrid The grid of cells that will have widths propagated to all rows.
    * @param tableLayout Layout information including spacing and other display settings.
    */
-  void applyColumnsWidth( std::vector< size_t > const & columnsWidth,
+  void applyColumnsWidth( stdVector< size_t > const & columnsWidth,
                           TableFormatter::CellLayoutRows & tableGrid,
                           PreparedTableLayout const & tableLayout ) const;
 

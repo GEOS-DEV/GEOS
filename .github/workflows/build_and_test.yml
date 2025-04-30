@@ -75,7 +75,7 @@ on:
         required: false
         type: string
         default: '--ninja'
-      ENABLE_LVARRAY_BOUNDS_CHECK:
+      GEOS_ENABLE_BOUNDS_CHECK:
         required: false
         type: string
     secrets:
@@ -199,8 +199,8 @@ jobs:
         docker_args+=(--volume=${GITHUB_WORKSPACE}:${GITHUB_WORKSPACE_MOUNT_POINT})
         script_args+=(--repository ${GITHUB_WORKSPACE_MOUNT_POINT})
 
-        if [ ! -z "${{ inputs.ENABLE_LVARRAY_BOUNDS_CHECK }}" ]; then
-          script_args+=(--enable-lvarray-bounds-check "${{ inputs.ENABLE_LVARRAY_BOUNDS_CHECK }}")
+        if [ ! -z "${{ inputs.GEOS_ENABLE_BOUNDS_CHECK }}" ]; then
+          script_args+=(--geos-enable-bounds-check "${{ inputs.GEOS_ENABLE_BOUNDS_CHECK }}")
         fi
         
         # The linear algebra environment variables (ENABLE_HYPRE, ENABLE_HYPRE_DEVICE & ENABLE_TRILINOS)
