@@ -1435,17 +1435,17 @@ stdVector< localIndex > getWedgeNodeOrderingFromPolyhedron( vtkCell * const cell
   {
     auto edgeNode0 = cell->GetEdge( iEdge )->GetPointId( 0 );
     auto edgeNode1 = cell->GetEdge( iEdge )->GetPointId( 1 );
-    auto it0 = std::find( &nodeTri0[0], &nodeTri0[3], edgeNode0 );
-    auto it1 = std::find( &nodeTri0[0], &nodeTri0[3], edgeNode1 );
+    auto it0 = std::find( nodeTri0.begin(), nodeTri0.end(), edgeNode0 );
+    auto it1 = std::find( nodeTri0.begin(), nodeTri0.end(), edgeNode1 );
 
-    if( it0 != &nodeTri0[3] && it1 == &nodeTri0[3] )
+    if( it0 != nodeTri0.end() && it1 == nodeTri0.end() )
     {
-      nodeTri1[std::distance( &nodeTri0[0], it0 )] = edgeNode1;
+      nodeTri1[std::distance( nodeTri0.begin(), it0 )] = edgeNode1;
     }
 
-    if( it0 == &nodeTri0[3] && it1 != &nodeTri0[3] )
+    if( it0 == nodeTri0.end() && it1 != nodeTri0.end() )
     {
-      nodeTri1[std::distance( &nodeTri0[0], it1 )] = edgeNode0;
+      nodeTri1[std::distance( nodeTri0.begin(), it1 )] = edgeNode0;
     }
   }
 
