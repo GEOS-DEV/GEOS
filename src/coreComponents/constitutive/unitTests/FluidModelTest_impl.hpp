@@ -193,7 +193,7 @@ void FluidModelTest< FLUID_TYPE, NUM_COMP, NUM_PHASE >::testNumericalDerivatives
 
   array1d< real64 > pressureArray( size );
   array1d< real64 > temperatureArray( size );
-  array2d< real64 > compositionArray( size, numComp );
+  array2d< real64, compflow::LAYOUT_PHASE > compositionArray( size, numComp );
   array1d< real64 > deltaArray( size );
 
   // Name the degrees of freedom
@@ -241,15 +241,19 @@ void FluidModelTest< FLUID_TYPE, NUM_COMP, NUM_PHASE >::testNumericalDerivatives
 
   FluidWrapper fluidWrapper = fluid->createKernelWrapper();
 
+  auto const pressureView = pressureArray.toViewConst();
+  auto const temperatureView = temperatureArray.toViewConst();
+  auto const compositionView = compositionArray.toViewConst();
+
   forAll< parallelDevicePolicy<> >( size, [fluidWrapper,
-                                           pres=pressureArray.toViewConst(),
-                                           temp=temperatureArray.toViewConst(),
-                                           comp=compositionArray.toViewConst()]
+                                           pressureView,
+                                           temperatureView,
+                                           compositionView]
                                     GEOS_HOST_DEVICE ( localIndex const k )
   {
     for( localIndex q = 0; q < fluidWrapper.numGauss(); ++q )
     {
-      fluidWrapper.update( k, q, pres[k], temp[k], comp[k] );
+      fluidWrapper.update( k, q, pressureView[k], temperatureView[k], compositionView[k] );
     }
   } );
 
