@@ -20,55 +20,71 @@
 #ifndef INITIALIZATION_ERROR_LOGGER_HPP
 #define INITIALIZATION_ERROR_LOGGER_HPP
 
+// Source includes 
 #include "../DataTypes.hpp"
-
-#include <yaml-cpp/yaml.h>
-#include <fstream>
 
 using namespace std;
 
+namespace geos
+{
+
+/**
+ * @class ErrorLogger
+ * @brief Class to format and write the error/warning message that occured during the initialization
+ */
 class ErrorLogger 
 {
+public:
+
+  /**
+   * @enum TypeMsg 
+   * Enum listing the different types of possible errors
+   */
   enum class TypeMsg 
   {
       ERROR,
       WARNING
   };
 
+  /**
+   * @brief Struct to define the error/warning message
+   * 
+   */
   struct ErrorMsg 
   {
-    string msg; 
     TypeMsg type; 
-    string file; 
+    std::string msg; 
+    std::string file; 
     integer line;
   };
 
-  // Fonction qui formatte 
-  ErrorMsg errorMsgformatter( const string & type, 
-                              const string & msg,
-                              const string & file, 
+  /**
+   * @brief Structured the message based on the provided parameters
+   * 
+   * @param type The type of the message (error or warning)
+   * @param msg The error/warning message content
+   * @param file The file name where the error occured
+   * @param line The line where the error occured 
+   * @return ErrorMsg 
+   */
+  ErrorMsg errorMsgformatter( TypeMsg const & type, 
+                              std::string const & msg,
+                              std::string const & file, 
                               integer line )
   {
     return { type, msg, file, line };
   };
 
+  std::string toString( TypeMsg type );
 
-  // Fonction qui écrit dans le yaml
-  void errorMsgWritter( const ErrorMsg & errorMsg, const string filename )
-  {
-    YAML::Node newMsg;
-    newMsg["message"] = errorMsg.msg;
-    newMsg["type"] = errorMsg.type;
-
-    YAML::Node location; 
-    location["file"] = errorMsg.file; 
-    location["line"] = errorMsg.line; 
-
-    newMsg["location"] = location; 
-
-    ofstream fout( filename, ios::app );
-    fout << newMsg << "\n";
-  };
+  /**
+   * @brief Add the error/warning message into the yaml file
+   * 
+   * @param errorMsg The error message informations formatted by the associated structure
+   */
+  void errorMsgWritter( ErrorMsg const & errorMsg );
 };
+
+} /* namespace geos */
 
 # endif 

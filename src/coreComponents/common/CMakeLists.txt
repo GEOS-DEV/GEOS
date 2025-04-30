@@ -19,7 +19,6 @@ Also provides commonly used components for such as logging, formatting, memory a
  dependencies.
 #]]
 
-
 #
 # Specify all headers
 #
@@ -40,6 +39,7 @@ set( common_headers
      GeosxMacros.hpp
      MemoryInfos.hpp
      logger/Logger.hpp
+     logger/ErrorHandling.hpp
      MpiWrapper.hpp
      Path.hpp
      Span.hpp
@@ -73,6 +73,7 @@ set( common_sources
      format/table/TableData.cpp
      format/StringUtilities.cpp
      logger/Logger.cpp
+     logger/ErrorHandling.cpp
      BufferAllocator.cpp
      MemoryInfos.cpp
      MpiWrapper.cpp

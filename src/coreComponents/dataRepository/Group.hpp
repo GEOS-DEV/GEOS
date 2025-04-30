@@ -309,7 +309,7 @@ public:
   /**
    * @brief Return a reference to a sub-group of the current Group.
    * @tparam T The type of subgroup.
-   * @tparam KEY The type of the lookup.
+   * @tparam KEY The type of the lookup. 
    * @param key The key used to perform the lookup.
    * @return A reference to @p T that refers to the sub-group.
    * @throw std::domain_error If the Group does not exist is thrown.
@@ -318,7 +318,7 @@ public:
   T & getGroup( KEY const & key )
   {
     Group * const child = m_subGroups[ key ];
-    GEOS_THROW_IF( child == nullptr,
+    GEOS_THROW_IF_TEST( child == nullptr,
                    "Group " << getDataContext() << " has no child named " << key << std::endl
                             << dumpSubGroupsNames(),
                    std::domain_error );
