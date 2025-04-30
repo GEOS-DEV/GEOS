@@ -225,13 +225,13 @@ testNumericalDerivatives( constitutive::MultiFluidBase & fluid,
     GET_FLUID_DATA( fluid, fields::multifluid::dTotalDensity )
   };
 
-  auto phaseFracCopy     = GET_FLUID_DATA( fluidCopy, fields::multifluid::phaseFraction );
-  auto phaseDensCopy     = GET_FLUID_DATA( fluidCopy, fields::multifluid::phaseDensity );
-  auto phaseViscCopy     = GET_FLUID_DATA( fluidCopy, fields::multifluid::phaseViscosity );
-  auto phaseEnthCopy     = GET_FLUID_DATA( fluidCopy, fields::multifluid::phaseEnthalpy );
-  auto phaseEnergyCopy   = GET_FLUID_DATA( fluidCopy, fields::multifluid::phaseInternalEnergy );
-  auto phaseCompFracCopy = GET_FLUID_DATA( fluidCopy, fields::multifluid::phaseCompFraction );
-  auto totalDensCopy     = GET_FLUID_DATA( fluidCopy, fields::multifluid::totalDensity );
+  auto const & phaseFracCopy     = GET_FLUID_DATA( fluidCopy, fields::multifluid::phaseFraction );
+  auto const & phaseDensCopy     = GET_FLUID_DATA( fluidCopy, fields::multifluid::phaseDensity );
+  auto const & phaseViscCopy     = GET_FLUID_DATA( fluidCopy, fields::multifluid::phaseViscosity );
+  auto const & phaseEnthCopy     = GET_FLUID_DATA( fluidCopy, fields::multifluid::phaseEnthalpy );
+  auto const & phaseEnergyCopy   = GET_FLUID_DATA( fluidCopy, fields::multifluid::phaseInternalEnergy );
+  auto const & phaseCompFracCopy = GET_FLUID_DATA( fluidCopy, fields::multifluid::phaseCompFraction );
+  real64 totalDensCopy = 0.0;
 
 #undef GET_FLUID_DATA
 
@@ -282,6 +282,8 @@ testNumericalDerivatives( constitutive::MultiFluidBase & fluid,
       resetFluid( fluidCopy );
       fluidWrapper.update( 0, 0, pressure + dP, temperature, composition );
 
+      totalDensCopy = fluidCopy.totalDensity()( 0, 0 );
+
       checkDerivative( phaseFracCopy.toSliceConst(), phaseFrac.value.toSliceConst(), dPhaseFrac[Deriv::dP].toSliceConst(),
                        dP, relTol, absTol, "phaseFrac", "Pres", phases );
       checkDerivative( phaseDensCopy.toSliceConst(), phaseDens.value.toSliceConst(), dPhaseDens[Deriv::dP].toSliceConst(),
@@ -308,6 +310,8 @@ testNumericalDerivatives( constitutive::MultiFluidBase & fluid,
       real64 const dT = perturbParameter * (temperature + perturbParameter);
       resetFluid( fluidCopy );
       fluidWrapper.update( 0, 0, pressure, temperature + dT, composition );
+
+      totalDensCopy = fluidCopy.totalDensity()( 0, 0 );
 
       checkDerivative( phaseFracCopy.toSliceConst(), phaseFrac.value.toSliceConst(), dPhaseFrac[Deriv::dT].toSliceConst(),
                        dT, relTol, absTol, "phaseFrac", "Temp", phases );
@@ -366,6 +370,8 @@ testNumericalDerivatives( constitutive::MultiFluidBase & fluid,
 
       resetFluid( fluidCopy );
       fluidWrapper.update( 0, 0, pressure, temperature, compNew[0] );
+
+      totalDensCopy = fluidCopy.totalDensity()( 0, 0 );
 
       string const var = "compFrac[" + components[jc] + "]";
       checkDerivative( phaseFracCopy.toSliceConst(), phaseFrac.value.toSliceConst(), dPhaseFrac[Deriv::dC+jc].toSliceConst(),
