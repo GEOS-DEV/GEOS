@@ -352,8 +352,8 @@ real64 SeismicityRate::updateStresses( real64 const & time_n,
 
       FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
 
-      std::vector< string > const keys = { inducedSeismicity::projectedNormalTraction::key(),
-                                           inducedSeismicity::projectedShearTraction::key() };
+      stdVector< string > const keys = { inducedSeismicity::projectedNormalTraction::key(),
+                                         inducedSeismicity::projectedShearTraction::key() };
 
       for( auto const & key : keys )
       {

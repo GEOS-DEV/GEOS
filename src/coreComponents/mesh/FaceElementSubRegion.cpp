@@ -149,7 +149,7 @@ void FaceElementSubRegion::copyFromCellBlock( FaceBlockABC const & faceBlock )
     m_2dElemToCollocatedNodesBuckets = faceBlock.get2dElemsToCollocatedNodesBuckets();
     // Checking if all the 2d elements are homogeneous.
     // We rely on the number of nodes for each element to find out.
-    std::vector< integer > numNodesPerElement( num2dElements );
+    stdVector< integer > numNodesPerElement( num2dElements );
     for( int i = 0; i < num2dElements; ++i )
     {
       numNodesPerElement[i] = m_2dElemToCollocatedNodesBuckets[i].size();
@@ -700,7 +700,7 @@ ArrayOfArrays< geos::localIndex > build2dFaceTo2dElems( ArrayOfArraysView< local
 
   // `tmp` contains the 2d face to 2d elements mappings as a `std` container.
   // Eventually, it's copied into an `LvArray` container.
-  std::vector< std::vector< localIndex > > tmp( num2dFaces );
+  stdVector< stdVector< localIndex > > tmp( num2dFaces );
   for( auto i = 0; i < num2dElems; ++i )
   {
     for( auto const & e: elem2dToEdges[i] )
@@ -712,9 +712,9 @@ ArrayOfArrays< geos::localIndex > build2dFaceTo2dElems( ArrayOfArraysView< local
       tmp[edgesTo2dFaces.at( referenceCollocatedEdges.at( e ) )].push_back( i );
     }
   }
-  std::vector< localIndex > sizes;
+  stdVector< localIndex > sizes;
   sizes.reserve( tmp.size() );
-  for( std::vector< localIndex > const & t: tmp )
+  for( stdVector< localIndex > const & t: tmp )
   {
     sizes.push_back( t.size() );
   }
@@ -811,7 +811,7 @@ void fillMissing2dElemToEdges( ArrayOfArraysView< localIndex const > const elem2
     // `nodesOfEdgesTouching2dElem` deals with the edges that have at least one point touching the 2d element.
     // While `nodesOfEdgesOf2dElem` deals with the edges for which all two nodes are on the 2d element.
     // For both mappings, the key is the edge index and the values are the local nodes indices of the concerned edges.
-    std::map< localIndex, std::vector< localIndex > > nodesOfEdgesTouching2dElem, nodesOfEdgesOf2dElem;
+    std::map< localIndex, stdVector< localIndex > > nodesOfEdgesTouching2dElem, nodesOfEdgesOf2dElem;
     for( localIndex const & n: elem2dToNodes[e2d] )
     {
       for( localIndex const & e: nodesToEdges[n] )
@@ -832,7 +832,7 @@ void fillMissing2dElemToEdges( ArrayOfArraysView< localIndex const > const elem2
     std::set< localIndex > allEdgesOf2dElem;
     for( auto const & ens: nodesOfEdgesOf2dElem )
     {
-      std::vector< localIndex > const & nodesOfEdge = ens.second;
+      stdVector< localIndex > const & nodesOfEdge = ens.second;
       globalIndex const & gn0 = referenceCollocatedNodes.at( nl2g[ nodesOfEdge[0] ] );
       globalIndex const & gn1 = referenceCollocatedNodes.at( nl2g[ nodesOfEdge[1] ] );
       std::set< localIndex > candidateEdges = collocatedEdgeBuckets.at( std::minmax( { gn0, gn1 } ) );
@@ -916,7 +916,7 @@ void fixNodesOrder( arrayView2d< localIndex const > const elem2dToFaces,
   localIndex const num2dElems = elem2dToNodes.size();
   for( localIndex e2d = 0; e2d < num2dElems; ++e2d )
   {
-    std::vector< localIndex > nodesOfFace;
+    stdVector< localIndex > nodesOfFace;
     for( localIndex fi: elem2dToFaces[e2d] )
     {
       if( fi != -1 )
@@ -969,7 +969,7 @@ void FaceElementSubRegion::fixSecondaryMappings( NodeManager const & nodeManager
     localIndex esr;
     localIndex ei;
     localIndex face;
-    std::vector< localIndex > nodes;
+    stdVector< localIndex > nodes;
 
     bool operator<( ElemPath const & other ) const
     {
@@ -1011,7 +1011,7 @@ void FaceElementSubRegion::fixSecondaryMappings( NodeManager const & nodeManager
         auto const & nodes = faceToNodes[face];
         if( nodesOfFace.size() == LvArray::integerConversion< std::size_t >( nodes.size() ) )
         {
-          std::vector< localIndex > const ns( nodes.begin(), nodes.end() );
+          stdVector< localIndex > const ns( nodes.begin(), nodes.end() );
           faceRefNodesToElems[nodesOfFace].insert( ElemPath{ er, esr, ei, face, ns } );
         }
       }
@@ -1079,7 +1079,7 @@ void FaceElementSubRegion::fixSecondaryMappings( NodeManager const & nodeManager
 
   // Checking that each face has two neighboring elements.
   // If not, we pop up an error.
-  std::vector< localIndex > isolatedFractureElements;
+  stdVector< localIndex > isolatedFractureElements;
   for( int e2d = 0; e2d < num2dElems; ++e2d )
   {
     if( m_2dElemToElems.m_toElementIndex.size( 1 )< 2 && m_ghostRank[e2d] < 0 )

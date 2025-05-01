@@ -33,7 +33,7 @@ namespace embeddedSurfacesParallelSynchronization
 {
 
 void sychronizeTopology( MeshLevel & mesh,
-                         std::vector< NeighborCommunicator > & neighbors,
+                         stdVector< NeighborCommunicator > & neighbors,
                          NewObjectLists & newObjects,
                          int const mpiCommOrder,
                          string const fractureRegionName );
