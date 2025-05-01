@@ -718,9 +718,9 @@ private:
 
   string m_baseFileName;
 
-  std::vector< string > m_emptyMeshes;
+  stdVector< string > m_emptyMeshes;
 //  string_array m_emptyMaterials;
-  std::vector< string > m_emptyVariables;
+  stdVector< string > m_emptyVariables;
 
   integer m_writeEdgeMesh;
   integer m_writeFaceMesh;

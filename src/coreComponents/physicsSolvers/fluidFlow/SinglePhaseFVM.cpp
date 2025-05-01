@@ -274,7 +274,7 @@ void SinglePhaseFVM< BASE >::applySystemSolution( DofManager const & dofManager,
                                                                       MeshLevel & mesh,
                                                                       string_array const & regionNames )
   {
-    std::vector< string > fields{ flow::pressure::key() };
+    stdVector< string > fields{ flow::pressure::key() };
 
     if( m_isThermal )
     {

@@ -138,7 +138,7 @@ public:
    * @brief Get a pointer to the extent of each dimension.
    * @return The head of the array containing the dimensional extent of each dimension of the array data being collected.
    */
-  std::vector< localIndex > const & getDims( ) const
+  stdVector< localIndex > const & getDims( ) const
   {
     return m_dims;
   }
@@ -154,7 +154,7 @@ public:
 private:
   string m_name;
   localIndex m_rank;
-  std::vector< localIndex > m_dims;
+  stdVector< localIndex > m_dims;
   std::type_index m_type;
 };
 

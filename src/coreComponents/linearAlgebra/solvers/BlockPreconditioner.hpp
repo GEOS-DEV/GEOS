@@ -138,7 +138,7 @@ public:
    *       DoF components in the monolithic system.
    */
   void setupBlock( localIndex const blockIndex,
-                   std::vector< DofManager::SubComponent > blockDofs,
+                   stdVector< DofManager::SubComponent > blockDofs,
                    std::unique_ptr< PreconditionerBase< LAI > > solver,
                    real64 const scaling = 1.0 );
 
@@ -197,7 +197,7 @@ private:
   BlockScalingOption m_scalingOption;
 
   /// Description of dof components making up each of the two main blocks
-  std::array< std::vector< DofManager::SubComponent >, 2 > m_blockDofs;
+  std::array< stdVector< DofManager::SubComponent >, 2 > m_blockDofs;
 
   /// Restriction operators for each sub-block
   std::array< Matrix, 2 > m_restrictors;
