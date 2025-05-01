@@ -44,7 +44,7 @@ public:
    * @param i the node in the face block (numbering is local to the face block).
    * @return The list of global node indices in the main 3d mesh.
    */
-  std::vector< vtkIdType > const & operator[]( std::size_t i ) const
+  stdVector< vtkIdType > const & operator[]( std::size_t i ) const
   {
     return m_collocatedNodes[i];
   }
@@ -69,7 +69,7 @@ private:
   void init( vtkIdTypeArray const * collocatedNodes );
 
   /// For each node of the face block, lists all the collocated nodes in the main 3d mesh.
-  std::vector< std::vector< vtkIdType > > m_collocatedNodes;
+  stdVector< stdVector< vtkIdType > > m_collocatedNodes;
 };
 
 } // geos::vtk

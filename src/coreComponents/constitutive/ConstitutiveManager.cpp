@@ -93,7 +93,7 @@ ConstitutiveManager::hangConstitutiveRelation( string const & constitutiveRelati
   materialGroup.resize( constitutiveGroup->size() );
 
   // 2. Allocate subrelations (for compound models)
-  std::vector< string > const subRelationNames = constitutiveRelation.getSubRelationNames();
+  stdVector< string > const subRelationNames = constitutiveRelation.getSubRelationNames();
   for( string const & subRelationName : subRelationNames )
   {
     // we only want to register the subRelation if it has not been registered yet.
