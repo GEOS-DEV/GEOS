@@ -41,7 +41,7 @@ template< typename FLUID_TYPE, integer NUM_COMP, integer NUM_PHASE >
 typename FluidModelTest< FLUID_TYPE, NUM_COMP, NUM_PHASE >::FluidModel *
 FluidModelTest< FLUID_TYPE, NUM_COMP, NUM_PHASE >::getFluid( string const & name )
 {
-  return m_parent.getGroupPointer< typename FluidModelTest< FLUID_TYPE, NUM_COMP, NUM_PHASE >::FluidModel >( name );
+  return m_parent.getGroupPointer< FLUID_TYPE >( name );
 }
 
 template< typename FLUID_TYPE, integer NUM_COMP, integer NUM_PHASE >
@@ -58,105 +58,31 @@ FluidModelTest< FLUID_TYPE, NUM_COMP, NUM_PHASE >::createFluid( string const & n
   return &fluid;
 }
 
-template< integer NDIM >
-struct ExtractValue {};
-
-template<>
-struct ExtractValue< 2 >
-{
-  template< integer USD >
-  GEOS_FORCE_INLINE
-  static real64 getValue( ArrayView< real64 const, 2, USD > const & array,
-                          integer const,
-                          integer const,
-                          integer const index )
-  {
-    return array( index, 0 );
-  }
-
-  template< integer USD >
-  GEOS_FORCE_INLINE
-  static real64 getDeriv( ArrayView< real64 const, 3, USD > const & array,
-                          integer const,
-                          integer const,
-                          integer const idof )
-  {
-    return array( 0, 0, idof );
-  }
-};
-
-template<>
-struct ExtractValue< 3 >
-{
-  template< integer USD >
-  GEOS_FORCE_INLINE
-  static real64 getValue( ArrayView< real64 const, 3, USD > const & array,
-                          integer const phaseIndex,
-                          integer const,
-                          integer const index )
-  {
-    return array( index, 0, phaseIndex );
-  }
-
-  template< integer USD >
-  GEOS_FORCE_INLINE
-  static real64 getDeriv( ArrayView< real64 const, 4, USD > const & array,
-                          integer const phaseIndex,
-                          integer const,
-                          integer const idof )
-  {
-    return array( 0, 0, phaseIndex, idof );
-  }
-};
-
-template<>
-struct ExtractValue< 4 >
-{
-  template< integer USD >
-  GEOS_FORCE_INLINE
-  static real64 getValue( ArrayView< real64 const, 4, USD > const & array,
-                          integer const phaseIndex,
-                          integer const componentIndex,
-                          integer const index )
-  {
-    return array( index, 0, phaseIndex, componentIndex );
-  }
-
-  template< integer USD >
-  GEOS_FORCE_INLINE
-  static real64 getDeriv( ArrayView< real64 const, 5, USD > const & array,
-                          integer const phaseIndex,
-                          integer const componentIndex,
-                          integer const idof )
-  {
-    return array( 0, 0, phaseIndex, componentIndex, idof );
-  }
-};
-
 template< typename FLUID_TYPE, integer NUM_COMP, integer NUM_PHASE >
-template< integer NDIM, integer USD1, integer USD2, integer USD3 >
+template< integer NDIM, typename ... INDICES, integer USD1, integer USD2, integer USD3, typename >
 void FluidModelTest< FLUID_TYPE, NUM_COMP, NUM_PHASE >::testDerivatives( string const propName,
-                                                                         integer const phaseIndex,
-                                                                         integer const componentIndex,
-                                                                         ArrayView< real64 const, NDIM, USD1 > const & inputValueArray,
-                                                                         ArrayView< real64 const, NDIM+1, USD2 > const & inputDerivArray,
+                                                                         ArrayView< real64 const, NDIM, USD1 > const & valueArray,
+                                                                         ArrayView< real64 const, NDIM+1, USD2 > const & derivArray,
                                                                          ArraySlice< real64 const, 1, USD3 > const & displacements,
                                                                          string_array const & dofNames,
                                                                          real64 const relTol,
-                                                                         real64 const absTol )
+                                                                         real64 const absTol,
+                                                                         INDICES const ... indices )
 {
-  real64 const centreValue = ExtractValue< NDIM >::getValue( inputValueArray, phaseIndex, componentIndex, 0 );
   for( integer idof = 0; idof < numDof; idof++ )
   {
-    real64 const analyticalDerivative = ExtractValue< NDIM >::getDeriv( inputDerivArray, phaseIndex, componentIndex, idof );
+    real64 const analyticalDerivative = derivArray( 0, 0, indices ..., idof );
     real64 numericalDerivative = 0.0;
 
-    real64 const rightValue = ExtractValue< NDIM >::getValue( inputValueArray, phaseIndex, componentIndex, 2*idof+1 );
-    real64 const leftValue = ExtractValue< NDIM >::getValue( inputValueArray, phaseIndex, componentIndex, 2*idof+2 );
+    real64 centreValue = valueArray( 0, 0, indices ... );
+    real64 rightValue = valueArray( 2*idof+1, 0, indices ... );
+    real64 leftValue = valueArray( 2*idof+2, 0, indices ... );
+
     real64 const dVr = displacements[2*idof+1];
     real64 const dVl = displacements[2*idof+2];
 
-    // Calculate the smallest difference
+    // Calculate the left, central and right derivative.
+    // The selected numerical derivative will be the one nearest the analytical derivative
     real64 minError = LvArray::NumericLimits< real64 >::max;
     for( real64 const derivative : { (rightValue - centreValue)/dVr,
                                      (rightValue - leftValue)/(dVr-dVl),
@@ -174,8 +100,14 @@ void FluidModelTest< FLUID_TYPE, NUM_COMP, NUM_PHASE >::testDerivatives( string 
                                  numericalDerivative,
                                  relTol,
                                  absTol,
-                                 GEOS_FMT( "\nd{}/d{} failed.\nValues: [{}, {}, {}].\nAnalytical derivative: {}.\nNumerical derivative: {}",
-                                           propName, dofNames[idof], leftValue, centreValue, rightValue, analyticalDerivative, numericalDerivative ));
+                                 GEOS_FMT(
+                                   "\nd{}/d{} failed.\n"
+                                   "Values: [{}, {}, {}].\n"
+                                   "Analytical derivative: {}.\n"
+                                   "Numerical derivative: {}",
+                                   propName, dofNames[idof],
+                                   leftValue, centreValue, rightValue,
+                                   analyticalDerivative, numericalDerivative ));
   }
 }
 
@@ -185,6 +117,7 @@ void FluidModelTest< FLUID_TYPE, NUM_COMP, NUM_PHASE >::testNumericalDerivatives
 {
   using Deriv = constitutive::multifluid::DerivativeOffset;
 
+  // Number of execution points actual value plus left and right pertubations for each variable
   integer constexpr size = 2*numDof + 1;
   m_parent.resize( size );
   fluid->allocateConstitutiveData( m_parent, 1 );
@@ -212,21 +145,22 @@ void FluidModelTest< FLUID_TYPE, NUM_COMP, NUM_PHASE >::testNumericalDerivatives
     }
   }
 
-  real64 constexpr dP = 1.0e2;
+  real64 constexpr dP = pressurePertubation;
+  real64 constexpr dT = temperaturePertubation;
+  real64 constexpr dz = compositionPertubation;
+
   deltaArray[2*Deriv::dP+1] = dP;
   deltaArray[2*Deriv::dP+2] = -dP;
   pressureArray[2*Deriv::dP+1] += deltaArray[2*Deriv::dP+1];
   pressureArray[2*Deriv::dP+2] += deltaArray[2*Deriv::dP+2];
   dofNames[Deriv::dP] = "pressure";
 
-  real64 constexpr dT = 1.0e-3;
   deltaArray[2*Deriv::dT+1] = dT;
   deltaArray[2*Deriv::dT+2] = -dT;
   temperatureArray[2*Deriv::dT+1] += deltaArray[2*Deriv::dT+1];
   temperatureArray[2*Deriv::dT+2] += deltaArray[2*Deriv::dT+2];
   dofNames[Deriv::dT] = "temperature";
 
-  real64 constexpr dz = 1.0e-7;
   for( integer ic = 0; ic < numComp; ++ic )
   {
     integer const idof = Deriv::dC+ic;
@@ -257,65 +191,79 @@ void FluidModelTest< FLUID_TYPE, NUM_COMP, NUM_PHASE >::testNumericalDerivatives
     }
   } );
 
-  testDerivatives( "Total density",
-                   0, 0,
-                   fluid->totalDensity().toViewConst(),
-                   fluid->dTotalDensity().toViewConst(),
-                   deltaArray.toSliceConst(),
-                   dofNames );
   for( integer phaseIndex = 0; phaseIndex < numPhase; phaseIndex++ )
   {
     testDerivatives( GEOS_FMT( "Phase fraction ({})", phaseNames[phaseIndex] ),
-                     phaseIndex, 0,
                      fluid->phaseFraction().toViewConst(),
                      fluid->dPhaseFraction().toViewConst(),
                      deltaArray.toSliceConst(),
-                     dofNames );
+                     dofNames,
+                     relTolerance,
+                     absTolerance,
+                     phaseIndex );
     testDerivatives( GEOS_FMT( "Phase density ({})", phaseNames[phaseIndex] ),
-                     phaseIndex, 0,
                      fluid->phaseDensity().toViewConst(),
                      fluid->dPhaseDensity().toViewConst(),
                      deltaArray.toSliceConst(),
-                     dofNames );
+                     dofNames,
+                     relTolerance,
+                     absTolerance,
+                     phaseIndex );
     testDerivatives( GEOS_FMT( "Phase mass density ({})", phaseNames[phaseIndex] ),
-                     phaseIndex, 0,
                      fluid->phaseMassDensity().toViewConst(),
                      fluid->dPhaseMassDensity().toViewConst(),
                      deltaArray.toSliceConst(),
-                     dofNames );
+                     dofNames,
+                     relTolerance,
+                     absTolerance,
+                     phaseIndex );
     testDerivatives( GEOS_FMT( "Phase viscosity ({})", phaseNames[phaseIndex] ),
-                     phaseIndex, 0,
                      fluid->phaseViscosity().toViewConst(),
                      fluid->dPhaseViscosity().toViewConst(),
                      deltaArray.toSliceConst(),
-                     dofNames );
-
+                     dofNames,
+                     relTolerance,
+                     absTolerance,
+                     phaseIndex );
     if( isThermal )
     {
       testDerivatives( GEOS_FMT( "Phase enthalpy ({})", phaseNames[phaseIndex] ),
-                       phaseIndex, 0,
                        fluid->phaseEnthalpy().toViewConst(),
                        fluid->dPhaseEnthalpy().toViewConst(),
                        deltaArray.toSliceConst(),
-                       dofNames );
+                       dofNames,
+                       relTolerance,
+                       absTolerance,
+                       phaseIndex );
       testDerivatives( GEOS_FMT( "Phase internal energy ({})", phaseNames[phaseIndex] ),
-                       phaseIndex, 0,
                        fluid->phaseInternalEnergy().toViewConst(),
                        fluid->dPhaseInternalEnergy().toViewConst(),
                        deltaArray.toSliceConst(),
-                       dofNames );
+                       dofNames,
+                       relTolerance,
+                       absTolerance,
+                       phaseIndex );
     }
-
     for( integer compIndex = 0; compIndex < numComp; compIndex++ )
     {
-      testDerivatives( GEOS_FMT( "Phase composition ({})", phaseNames[phaseIndex] ),
-                       phaseIndex, compIndex,
+      testDerivatives( GEOS_FMT( "Phase composition ({} {})", phaseNames[phaseIndex], componentNames[compIndex] ),
                        fluid->phaseCompFraction().toViewConst(),
                        fluid->dPhaseCompFraction().toViewConst(),
                        deltaArray.toSliceConst(),
-                       dofNames );
+                       dofNames,
+                       relTolerance,
+                       absTolerance,
+                       phaseIndex,
+                       compIndex );
     }
   }
+  testDerivatives( "Total density",
+                   fluid->totalDensity().toViewConst(),
+                   fluid->dTotalDensity().toViewConst(),
+                   deltaArray.toSliceConst(),
+                   dofNames,
+                   relTolerance,
+                   absTolerance );
 }
 
 template< typename FLUID_TYPE, integer NUM_COMP, integer NUM_PHASE >
@@ -411,6 +359,7 @@ void FluidModelTest< FLUID_TYPE, NUM_COMP, NUM_PHASE >::populateLogScale( array1
 template< typename FLUID_TYPE, integer NUM_COMP, integer NUM_PHASE >
 void FluidModelTest< FLUID_TYPE, NUM_COMP, NUM_PHASE >::createFunctionManager()
 {
+  // TODO: FunctionManager is a singleton
   string const name = FunctionManager::catalogName();
   auto functionManager = std::make_unique< FunctionManager >( name, &m_parent );
   m_parent.registerGroup( name, std::move( functionManager ) );
