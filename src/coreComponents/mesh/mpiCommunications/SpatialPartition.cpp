@@ -17,6 +17,11 @@
 #include "codingUtilities/Utilities.hpp"
 #include "LvArray/src/genericTensorOps.hpp"
 #include "mesh/mpiCommunications/MPI_iCommData.hpp"
+#ifdef GEOS_USE_TRILINOS
+#include "mesh/graphs/ZoltanGraphColoring.hpp"
+#else
+#include "mesh/graphs/RLFGraphColoringMPI.hpp"
+#endif
 
 #include <cmath>
 
@@ -86,26 +91,65 @@ void SpatialPartition::setPartitions( unsigned int xPartitions,
 
 int SpatialPartition::getColor()
 {
-  int color = 0;
-
-  if( isOdd( m_coords[0] ) )
+  if( m_metisNeighborList.empty() )
   {
-    color += 1;
-  }
+    int color=0;
+    if( isOdd( m_coords[0] ) )
+    {
+      color += 1;
+    }
 
-  if( isOdd( m_coords[1] ) )
+    if( isOdd( m_coords[1] ) )
+    {
+      color += 2;
+    }
+
+    if( isOdd( m_coords[2] ) )
+    {
+      color += 4;
+    }
+
+    std::vector< int > all_colors( m_size );
+    MpiWrapper::allgather( &color, 1, all_colors.data(), 1 );
+    std::set< int > unique_colors( all_colors.begin(), all_colors.end());
+    m_numColors = unique_colors.size();
+
+#if 1
+    std::cout<<"rank "<<MpiWrapper::commRank( MPI_COMM_GEOS )<<" color:"<<color<< " " << m_numColors << std::endl;
+#endif
+
+    m_numColors = MpiWrapper::max( color )+1;
+    return color;
+  }
+  else
   {
-    color += 2;
+    std::vector< camp::idx_t > adjncy;
+    adjncy.reserve( m_metisNeighborList.size());
+    std::copy( m_metisNeighborList.begin(), m_metisNeighborList.end(), std::back_inserter( adjncy ));
+#ifdef GEOS_USE_TRILINOS
+    geos::graph::ZoltanGraphColoring coloring;
+#else
+    geos::graph::RLFGraphColoringMPI coloring;
+#endif
+    int color = coloring.colorGraph( adjncy );
+
+    if( !coloring.isColoringValid( adjncy, color ))
+    {
+      GEOS_ERROR( "wrong coloring!" );
+    }
+    m_numColors = coloring.getNumberOfColors( color );
+
+#if 1
+    std::cout<<"rank "<<MpiWrapper::commRank( MPI_COMM_GEOS )<<" color:"<<color<< " " << m_numColors << "neighbors: ";
+    for( size_t i=0; i<adjncy.size(); i++ )
+    {
+      std::cout<<" "<<adjncy[i];
+    }
+    std::cout<<std::endl;
+#endif
+
+    return color;
   }
-
-  if( isOdd( m_coords[2] ) )
-  {
-    color += 4;
-  }
-
-  m_numColors = 8;
-
-  return color;
 }
 
 void SpatialPartition::addNeighbors( const unsigned int idim,
