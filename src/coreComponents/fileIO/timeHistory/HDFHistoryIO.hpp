@@ -48,7 +48,7 @@ public:
    */
   HDFHistoryIO( string const & filename,
                 localIndex rank,
-                std::vector< localIndex > const & dims,
+                stdVector< localIndex > const & dims,
                 string const & name,
                 std::type_index typeId,
                 localIndex writeHead = 0,
@@ -174,9 +174,9 @@ private:
   /// The rank of the data set
   hsize_t m_rank;
   /// The dimensions of the data set
-  std::vector< hsize_t > m_dims;
+  stdVector< hsize_t > m_dims;
   ///
-  std::vector< globalIndex > m_localIdxCounts_buffered;
+  stdVector< globalIndex > m_localIdxCounts_buffered;
   /// The name of the data set
   string m_name;
   /// The communicator across which the data set is distributed

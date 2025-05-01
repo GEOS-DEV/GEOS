@@ -126,7 +126,7 @@ void DomainPartition::setupBaseLevelMeshGlobalInfo()
   int neighborsTag = 54;
 
   // Send this list of neighbors to all neighbors.
-  std::vector< MPI_Request > requests( m_neighbors.size(), MPI_REQUEST_NULL );
+  stdVector< MPI_Request > requests( m_neighbors.size(), MPI_REQUEST_NULL );
 
   for( std::size_t i = 0; i < m_neighbors.size(); ++i )
   {
@@ -384,7 +384,7 @@ void DomainPartition::outputPartitionInformation() const
 
   GEOS_LOG_RANK_0( "MPI Partitioning information:" );
 
-  std::vector< TableData > partitionsData;
+  stdVector< TableData > partitionsData;
   forMeshBodies( [&]( MeshBody const & meshBody )
   {
     meshBody.getMeshLevels().forSubGroupsIndex< MeshLevel >( [&]( int const level, MeshLevel const & meshLevel )
@@ -392,7 +392,7 @@ void DomainPartition::outputPartitionInformation() const
       if( level!=0 )
       {
         // formatting is done on rank 0
-        std::vector< RankMeshStats > allRankStats;
+        stdVector< RankMeshStats > allRankStats;
         allRankStats.resize( MpiWrapper::commSize() );
 
         { // Compute stats of the current rank, then gather it on rank 0

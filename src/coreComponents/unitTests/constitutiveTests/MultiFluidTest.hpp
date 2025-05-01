@@ -231,7 +231,7 @@ testNumericalDerivatives( constitutive::MultiFluidBase & fluid,
   auto const & phaseEnthCopy     = GET_FLUID_DATA( fluidCopy, fields::multifluid::phaseEnthalpy );
   auto const & phaseEnergyCopy   = GET_FLUID_DATA( fluidCopy, fields::multifluid::phaseInternalEnergy );
   auto const & phaseCompFracCopy = GET_FLUID_DATA( fluidCopy, fields::multifluid::phaseCompFraction );
-  auto const & totalDensCopy     = GET_FLUID_DATA( fluidCopy, fields::multifluid::totalDensity );
+  real64 totalDensCopy = 0.0;
 
 #undef GET_FLUID_DATA
 
@@ -282,6 +282,8 @@ testNumericalDerivatives( constitutive::MultiFluidBase & fluid,
       resetFluid( fluidCopy );
       fluidWrapper.update( 0, 0, pressure + dP, temperature, composition );
 
+      totalDensCopy = fluidCopy.totalDensity()( 0, 0 );
+
       checkDerivative( phaseFracCopy.toSliceConst(), phaseFrac.value.toSliceConst(), dPhaseFrac[Deriv::dP].toSliceConst(),
                        dP, relTol, absTol, "phaseFrac", "Pres", phases );
       checkDerivative( phaseDensCopy.toSliceConst(), phaseDens.value.toSliceConst(), dPhaseDens[Deriv::dP].toSliceConst(),
@@ -308,6 +310,8 @@ testNumericalDerivatives( constitutive::MultiFluidBase & fluid,
       real64 const dT = perturbParameter * (temperature + perturbParameter);
       resetFluid( fluidCopy );
       fluidWrapper.update( 0, 0, pressure, temperature + dT, composition );
+
+      totalDensCopy = fluidCopy.totalDensity()( 0, 0 );
 
       checkDerivative( phaseFracCopy.toSliceConst(), phaseFrac.value.toSliceConst(), dPhaseFrac[Deriv::dT].toSliceConst(),
                        dT, relTol, absTol, "phaseFrac", "Temp", phases );
@@ -366,6 +370,8 @@ testNumericalDerivatives( constitutive::MultiFluidBase & fluid,
 
       resetFluid( fluidCopy );
       fluidWrapper.update( 0, 0, pressure, temperature, compNew[0] );
+
+      totalDensCopy = fluidCopy.totalDensity()( 0, 0 );
 
       string const var = "compFrac[" + components[jc] + "]";
       checkDerivative( phaseFracCopy.toSliceConst(), phaseFrac.value.toSliceConst(), dPhaseFrac[Deriv::dC+jc].toSliceConst(),

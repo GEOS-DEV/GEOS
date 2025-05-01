@@ -16,6 +16,8 @@
 #ifndef GEOS_COMMON_PATH_HPP
 #define GEOS_COMMON_PATH_HPP
 
+#include "common/StdContainerWrappers.hpp"
+
 // System includes
 #include <string>
 #include <sstream>
@@ -196,7 +198,7 @@ std::string joinPath( ARGS const & ... args )
  * @param[in] path path to the directory
  * @return vector containing all the file paths
  */
-std::vector< std::string > readDirectory( std::string const & path );
+stdVector< std::string > readDirectory( std::string const & path );
 
 /*!
  * @brief Create a directory @p path, where parent directories must already exist.
