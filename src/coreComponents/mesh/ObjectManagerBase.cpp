@@ -280,7 +280,7 @@ localIndex ObjectManagerBase::packImpl( buffer_unit_type * & buffer,
     // Now we build the final list.
     // No packing by index is allowed if the registered wrapper does not share the size of the owning group.
     // Hence, the sufficient (but not necessary...) condition on `wrapper.sizedFromParent()`.
-    std::vector< string > reqNotExclAndSized;
+    stdVector< string > reqNotExclAndSized;
     auto predicate = [this]( string const & wrapperName ) -> bool
     {
       return bool( this->getWrapperBase( wrapperName ).sizedFromParent() );
@@ -288,7 +288,7 @@ localIndex ObjectManagerBase::packImpl( buffer_unit_type * & buffer,
     std::copy_if( reqNotExcl.cbegin(), reqNotExcl.cend(), std::back_inserter( reqNotExclAndSized ), predicate );
 
     // Extracting the wrappers
-    std::vector< WrapperBase const * > wrappers;
+    stdVector< WrapperBase const * > wrappers;
     auto transformer = [this]( string const & wrapperName ) -> WrapperBase const *
     {
       return &this->getWrapperBase( wrapperName );
@@ -906,7 +906,7 @@ void ObjectManagerBase::cleanUpMap( std::set< localIndex > const & targetIndices
                                     ArrayOfSetsView< localIndex > const & upmap,
                                     arrayView2d< localIndex const > const & downmap )
 {
-  std::vector< localIndex > eraseList;
+  stdVector< localIndex > eraseList;
   for( localIndex const targetIndex : targetIndices )
   {
     eraseList.clear();
@@ -970,7 +970,7 @@ void ObjectManagerBase::cleanUpMap( std::set< localIndex > const & targetIndices
                                     ArrayOfSetsView< localIndex > const & upmap,
                                     arrayView1d< arrayView1d< localIndex const > const > const & downmap )
 {
-  std::vector< localIndex > eraseList;
+  stdVector< localIndex > eraseList;
   for( localIndex const targetIndex : targetIndices )
   {
     eraseList.clear();
@@ -1004,7 +1004,7 @@ void ObjectManagerBase::cleanUpMap( std::set< localIndex > const & targetIndices
                                     ArrayOfSetsView< localIndex > const & upmap,
                                     ArrayOfArraysView< localIndex const > const & downmap )
 {
-  std::vector< localIndex > eraseList;
+  stdVector< localIndex > eraseList;
   for( localIndex const targetIndex : targetIndices )
   {
     eraseList.clear();

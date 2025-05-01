@@ -29,8 +29,7 @@ set( physicsSolversBase_headers
      PhysicsSolverBase.hpp
      PhysicsSolverBaseKernels.hpp
      SolverStatistics.hpp
-     FieldStatisticsBase.hpp
-     LogLevelsInfo.hpp )
+     FieldStatisticsBase.hpp )
 #
 # Specify solver sources
 #

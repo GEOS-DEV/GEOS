@@ -26,6 +26,7 @@
 #include "physicsSolvers/multiphysics/poromechanicsKernels/SinglePhasePoromechanics.hpp"
 #include "physicsSolvers/multiphysics/poromechanicsKernels/ThermalSinglePhasePoromechanics.hpp"
 #include "physicsSolvers/multiphysics/poromechanicsKernels/ThermalSinglePhasePoromechanicsEFEM.hpp"
+#include "physicsSolvers/multiphysics/poromechanicsKernels/SinglePhasePoromechanicsFractures.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsFields.hpp"
 #include "finiteVolume/FluxApproximationBase.hpp"
@@ -41,7 +42,9 @@ using namespace fields;
 SinglePhasePoromechanicsEmbeddedFractures::SinglePhasePoromechanicsEmbeddedFractures( const std::string & name,
                                                                                       Group * const parent ):
   SinglePhasePoromechanics( name, parent )
-{}
+{
+  Base::template addLogLevel< logInfo::LinearSolverConfiguration >();
+}
 
 SinglePhasePoromechanicsEmbeddedFractures::~SinglePhasePoromechanicsEmbeddedFractures()
 {}
@@ -57,8 +60,9 @@ void SinglePhasePoromechanicsEmbeddedFractures::setMGRStrategy()
   linearSolverParameters.dofsPerNode = 3;
 
   linearSolverParameters.mgr.strategy = LinearSolverParameters::MGR::StrategyType::singlePhasePoromechanicsEmbeddedFractures;
-  GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "{}: MGR strategy set to {}", getName(),
-                                      EnumStrings< LinearSolverParameters::MGR::StrategyType >::toString( linearSolverParameters.mgr.strategy )));
+  GEOS_LOG_LEVEL_RANK_0( logInfo::LinearSolverConfiguration,
+                         GEOS_FMT( "{}: MGR strategy set to {}", getName(),
+                                   EnumStrings< LinearSolverParameters::MGR::StrategyType >::toString( linearSolverParameters.mgr.strategy )));
 }
 
 void SinglePhasePoromechanicsEmbeddedFractures::postInputInitialization()
@@ -522,10 +526,10 @@ void SinglePhasePoromechanicsEmbeddedFractures::updateState( DomainPartition & d
           using HydraulicApertureModelType = TYPEOFREF( castedHydraulicApertureModel );
           typename HydraulicApertureModelType::KernelWrapper hydraulicApertureModelWrapper = castedHydraulicApertureModel.createKernelWrapper();
 
-          poromechanicsEFEMKernels::StateUpdateKernel::
+          poromechanicsFracturesKernels::StateUpdateKernel::
             launch< parallelDevicePolicy<> >( subRegion.size(),
-                                              hydraulicApertureModelWrapper,
                                               porousMaterialWrapper,
+                                              hydraulicApertureModelWrapper,
                                               dispJump,
                                               pressure,
                                               area,

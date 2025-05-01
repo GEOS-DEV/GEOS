@@ -19,7 +19,6 @@ Contains:
 
 # Specify solver headers
 set( solidMechanicsSolvers_headers
-     LogLevelsInfo.hpp
      SolidMechanicsFields.hpp
      SolidMechanicsLagrangianFEM.hpp
      SolidMechanicsLagrangianFEM.hpp

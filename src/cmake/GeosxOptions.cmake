@@ -21,6 +21,19 @@ option( RAJA_ENABLE_CUDA "" OFF )
 option( RAJA_ENABLE_HIP "" OFF )
 option( RAJA_ENABLE_TESTS "" OFF )
 
+option( GEOS_ENABLE_BOUNDS_CHECK "Enables array bounds checking" OFF )
+if( NOT CMAKE_CONFIGURATION_TYPES )
+    ######################################################
+    # Add define we can use when debug builds are enabled
+    ######################################################
+    if ( CMAKE_BUILD_TYPE MATCHES "Debug" )
+        set( GEOS_ENABLE_BOUNDS_CHECK ON CACHE BOOL "" FORCE )
+    endif()
+endif()
+if( GEOS_ENABLE_BOUNDS_CHECK )
+  set( LVARRAY_BOUNDS_CHECK ON CACHE BOOL "" FORCE )
+endif()
+
 option( ENABLE_PVTPackage "" ON )
 
 option( ENABLE_UNCRUSTIFY "" ON )
@@ -128,12 +141,6 @@ if( NOT BLT_CXX_STD STREQUAL c++17 )
 endif( NOT BLT_CXX_STD STREQUAL c++17 )
 
 message( "CMAKE_CXX_COMPILER_ID = ${CMAKE_CXX_COMPILER_ID}" )
-
-option( GEOS_USE_LARGE_MEM_MODEL "Enables use of large mem model (linux only)" OFF )
-if(GEOS_USE_LARGE_MEM_MODEL)
-    message(STATUS "Large memory model enabled: Adding -mcmodel=large to CMAKE_CXX_FLAGS")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mcmodel=large")
-endif()
 
 blt_append_custom_compiler_flag( FLAGS_VAR CMAKE_CXX_FLAGS DEFAULT "${OpenMP_CXX_FLAGS}" )
 blt_append_custom_compiler_flag( FLAGS_VAR CMAKE_CXX_FLAGS
