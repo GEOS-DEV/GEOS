@@ -112,13 +112,13 @@ protected:
   TimeBufferProvider m_timeBufferProvider;
 
   /// Callbacks to get the current buffer head to write history data into
-  std::vector< BufferProvider > m_bufferProviders;
+  stdVector< BufferProvider > m_bufferProviders;
 
   /**
    * @brief The set of metadata collectors for this collector
    * @note Currently only used to collect coordinates of mesh objects when collecting field data.
    */
-  std::vector< std::unique_ptr< HistoryCollection > > m_metaDataCollectors;
+  stdVector< std::unique_ptr< HistoryCollection > > m_metaDataCollectors;
 };
 
 }

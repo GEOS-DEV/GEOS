@@ -165,9 +165,9 @@ void NodeManager::setGeometricalRelations( CellBlockManagerABC const & cellBlock
 
 #if !defined(GEOS_TEMP_MINIMUM_ALLOCATION_FLAG)
   m_toEdgesRelation.base().assimilate< parallelHostPolicy >( cellBlockManager.getNodeToEdges(),
-                                                             LvArray::sortedArrayManipulation::UNSORTED_NO_DUPLICATES );
+                                                             LvArray::sortedArrayManipulation::UNSORTED_WITH_DUPLICATES );
   m_toFacesRelation.base().assimilate< parallelHostPolicy >( cellBlockManager.getNodeToFaces(),
-                                                             LvArray::sortedArrayManipulation::UNSORTED_NO_DUPLICATES );
+                                                             LvArray::sortedArrayManipulation::UNSORTED_WITH_DUPLICATES );
 
   ToCellRelation< ArrayOfArrays< localIndex > > const toCellBlock = cellBlockManager.getNodeToElements();
   array2d< localIndex > const blockToSubRegion = elemRegionManager.getCellBlockToSubRegionMap( cellBlockManager );
