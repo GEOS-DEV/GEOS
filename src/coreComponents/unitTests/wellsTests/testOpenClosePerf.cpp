@@ -177,8 +177,6 @@ void testPlugTopDownPerfCheck( CompositionalMultiphaseReservoirAndWells<> & solv
 {
   CompositionalMultiphaseWell & wellSolver = *solver.wellSolver();
 
-  real64 relTol = 0.0;
-
   typedef std::map< real64, std::vector< int > > map_type;
   map_type refVal;
   refVal[29800.0] = { 1, 1, 1, 1, 1};
@@ -220,8 +218,6 @@ void testPlugBottomUpPerfCheck( CompositionalMultiphaseReservoirAndWells<> & sol
                                 LAMBDA && perfFunction )
 {
   CompositionalMultiphaseWell & wellSolver = *solver.wellSolver();
-
-  real64 relTol = 0.0;
 
   typedef std::map< real64, std::vector< int > > map_type;
   map_type refVal;
@@ -266,8 +262,6 @@ void testOpenTopDownPerfCheck( CompositionalMultiphaseReservoirAndWells<> & solv
 {
   CompositionalMultiphaseWell & wellSolver = *solver.wellSolver();
 
-  real64 relTol = 0.0;
-
   typedef std::map< real64, std::vector< int > > map_type;
   map_type refVal;
   refVal[4800.0] = { 0, 0, 0, 0, 0};
@@ -309,8 +303,6 @@ void testOpenBottomUpPerfCheck( CompositionalMultiphaseReservoirAndWells<> & sol
                                 LAMBDA && perfFunction )
 {
   CompositionalMultiphaseWell & wellSolver = *solver.wellSolver();
-
-  real64 relTol = 0.0;
 
   typedef std::map< real64, std::vector< int > > map_type;
   map_type refVal;
@@ -510,8 +502,6 @@ protected:
                          solver->getSystemSolution() );
 
   }
-  real64 time = 0.0;
-  real64 dt = 1e4;
 
   GeosxState state;
   CompositionalMultiphaseReservoirAndWells<> * solver;
