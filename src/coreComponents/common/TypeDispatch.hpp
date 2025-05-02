@@ -380,11 +380,10 @@ bool dispatch( LIST const combinations,
 
     GEOS_ERROR( "Types were not dispatched to the lambda of type\n"
                 << LvArray::system::demangleType< LAMBDA >() << "\n"
-                "The types of the input objects are:\n" <<
-                "( "<<(  ( "\n  " + LvArray::system::demangle( internal::typeIdWrapper( objects ).name() ) ) + ... )<<" \n)\n"
-                                                                                   <<
-                "and the dispatch options are:\n"<<
-                internal::listToString( combinations, "\n(", "\n)", typeListPrinter )
+                << "The types of the input objects are:\n"
+                << "( "<<(  ( "\n  " + LvArray::system::demangle( internal::typeIdWrapper( objects ).name() ) ) + ... )<<" \n)\n"
+                << "and the dispatch options are:\n"
+                << internal::listToString( combinations, "\n(", "\n)", typeListPrinter )
                 );
   }
   return success;
