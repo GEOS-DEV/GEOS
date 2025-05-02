@@ -15,6 +15,9 @@ set( SmallStrainResidualPolicy "geos::parallelDevicePolicy< ${GEOS_BLOCK_SIZE} >
 configure_file( ${CMAKE_SOURCE_DIR}/${kernelPath}/policies.hpp.in
                 ${CMAKE_BINARY_DIR}/generatedSrc/${kernelPath}/policies.hpp )
 
+configure_file( ${CMAKE_SOURCE_DIR}/${kernelPath}/policies.hpp.in
+                ${CMAKE_SOURCE_DIR}/${kernelPath}/policies.hpp )
+
 
 set( kernelNames SolidMechanicsKernels )
 set( subregionList CellElementSubRegion )
