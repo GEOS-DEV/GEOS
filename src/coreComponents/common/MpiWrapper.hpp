@@ -297,7 +297,7 @@ public:
    * @return MPI_SUCCESS or and MPI_ERROR from internal calls to MPI_WaitAny.
    */
   static int activeWaitSomeCompletePhase( const int participants,
-                                          std::vector< std::tuple< MPI_Request *, MPI_Status *, std::function< MPI_Request ( int ) > > > const & phases );
+                                          stdVector< std::tuple< MPI_Request *, MPI_Status *, std::function< MPI_Request ( int ) > > > const & phases );
 
   /**
    * Active blocking phased communication with multiple participants,
@@ -313,7 +313,7 @@ public:
    * @return MPI_SUCCESS or and MPI_ERROR from internal calls to MPI_WaitAny.
    */
   static int activeWaitOrderedCompletePhase( const int participants,
-                                             std::vector< std::tuple< MPI_Request *, MPI_Status *, std::function< MPI_Request ( int ) > > > const & phases );
+                                             stdVector< std::tuple< MPI_Request *, MPI_Status *, std::function< MPI_Request ( int ) > > > const & phases );
   ///@}
 
 #if !defined(GEOS_USE_MPI)
@@ -449,7 +449,7 @@ public:
    * @brief Perform a collective reduction on a container of pairs using MPI.
    * @tparam FIRST Pairs first element type. Typically a numerical quantity (e.g., real64, int).
    * @tparam SECOND Pairs second element type. Typically a numerical quantity (e.g., localIndex, globalIndex).
-   * @tparam CONTAINER Pairs container type (e.g., `std::vector<PairType<FIRST, SECOND>>`).
+   * @tparam CONTAINER Pairs container type (e.g., `stdVector<PairType<FIRST, SECOND>>`).
    * @tparam OP The reduction operation to apply (`PairReduction::Max` or `PairReduction::Min`).
    * @param pairs The local container of pairs to be reduced.
    * @param comm The MPI communicator to use.

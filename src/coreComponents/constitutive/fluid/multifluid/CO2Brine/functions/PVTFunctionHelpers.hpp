@@ -136,7 +136,7 @@ public:
 
   array1d< array1d< real64 > > const & getCoords() const { return coords; }
 
-  static const inline std::vector< units::Unit > coordsUnits =
+  static const inline stdVector< units::Unit > coordsUnits =
   { units::Pressure, units::TemperatureInC };
 
 private:

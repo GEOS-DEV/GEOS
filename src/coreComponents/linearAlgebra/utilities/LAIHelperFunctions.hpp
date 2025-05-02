@@ -213,11 +213,10 @@ MATRIX permuteMatrix( MATRIX const & matrix,
  * @return the output array of linear algebra vectors containing RBMs
  */
 template< typename VECTOR >
-array1d< VECTOR >
-computeRigidBodyModes( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition,
-                       arrayView1d< globalIndex const > const & dofIndex,
-                       globalIndex const dofOffset,
-                       localIndex const numLocalDof )
+void computeRigidBodyModes( MeshLevel const & mesh,
+                            DofManager const & dofManager,
+                            stdVector< string > const & selection,
+                            array1d< VECTOR > & rigidBodyModes )
 {
   GEOS_ASSERT_EQ( nodePosition.size( 0 ), dofIndex.size() );
   integer const numComponents = nodePosition.size( 1 );
@@ -322,8 +321,6 @@ computeRigidBodyModes( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD 
     }
     rigidBodyModes[k].scale( 1.0 / rigidBodyModes[k].norm2() );
   }
-
-  return rigidBodyModes;
 }
 
 } // LAIHelperFunctions namespace

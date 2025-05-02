@@ -115,7 +115,7 @@ HistoryMetadata PackCollection::getMetaData( DomainPartition const & domain, loc
  * @return The set names, guarantied to be unique.
  * @note This function simply discards requested sets which are not available. No warning or error is provided...
  */
-std::vector< string > getExistingWrapperNames( string_array const & setNames, ObjectManagerBase const * omb )
+stdVector< string > getExistingWrapperNames( string_array const & setNames, ObjectManagerBase const * omb )
 {
   // Extract available wrapper names from `omb`.
   std::set< string > available;
@@ -125,7 +125,7 @@ std::vector< string > getExistingWrapperNames( string_array const & setNames, Ob
   std::set< string > const requested( setNames.begin(), setNames.end() );
 
   // Compute the intersection of requested and available.
-  std::vector< string > intersection;
+  stdVector< string > intersection;
   std::set_intersection( requested.cbegin(), requested.cend(), available.cbegin(), available.cend(), std::back_inserter( intersection ) );
 
   return intersection;
@@ -165,12 +165,12 @@ void PackCollection::updateSetsIndices( DomainPartition const & domain )
   // This is questionable but lets me define `setNames` as `const` variable.
   // Note that the third operator will be evaluated iff `collectAll` is `false` (C++ paragraph 6.5.15).
   // So the `asOMB` function will not be called inappropriately and kill the simulation.
-  std::vector< string > const setNames = collectAll ? std::vector< string >{} : getExistingWrapperNames( m_setNames, asOMB( targetGrp ) );
+  stdVector< string > const setNames = collectAll ? stdVector< string >{} : getExistingWrapperNames( m_setNames, asOMB( targetGrp ) );
 
   std::size_t const numSets = collectAll ? 1 : setNames.size();
   m_setsIndices.resize( numSets );
   // `oldSetSizes` will help us check if the sets have changed.
-  std::vector< localIndex > oldSetSizes( numSets );
+  stdVector< localIndex > oldSetSizes( numSets );
   for( std::size_t setIdx = 0; setIdx < numSets; ++setIdx )
   {
     oldSetSizes[setIdx] = m_setsIndices[setIdx].size();
