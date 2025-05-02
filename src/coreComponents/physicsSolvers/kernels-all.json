@@ -249,7 +249,9 @@
       ],
       "CONSTITUTIVE_TYPE": [
         "PorousSolid<ElasticIsotropic>",
-        "PorousSolid<DruckerPrager>"
+        "PorousSolid<DruckerPrager>",
+        "PorousSolid<DruckerPragerExtended>",
+        "PorousSolid<ModifiedCamClay>"
       ],
       "FE_TYPE": [
         "H1_Hexahedron_Lagrange1_GaussLegendre2",
