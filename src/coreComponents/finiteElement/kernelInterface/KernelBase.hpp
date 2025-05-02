@@ -527,7 +527,7 @@ real64 regionBasedKernelApplication( MeshLevel & mesh,
     if( elementSubRegion.template hasWrapper< string >( constitutiveStringName ) )
     {
       string const & constitutiveName = elementSubRegion.template getReference< string >( constitutiveStringName );
-      constitutiveRelation = &elementSubRegion.template getConstitutiveModel( constitutiveName );
+      constitutiveRelation = &elementSubRegion.template getConstitutiveModel<>( constitutiveName );
     }
     else
     {
