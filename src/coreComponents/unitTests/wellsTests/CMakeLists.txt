@@ -9,6 +9,7 @@ set( dependencyList mainInterface )
 
 if( ENABLE_PVTPackage )
     list( APPEND gtest_geosx_tests
+          testOpenClosePerf.cpp
           testReservoirCompositionalMultiphaseMSWells.cpp
           testIsothermalReservoirCompositionalMultiphaseMSWells.cpp 
           testIsothermalReservoirCompositionalMultiphaseSSWells.cpp 

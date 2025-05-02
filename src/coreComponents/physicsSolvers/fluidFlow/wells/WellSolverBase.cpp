@@ -197,9 +197,7 @@ void WellSolverBase::setupDofs( DomainPartition const & domain,
                           DofManager::Connector::Node );
 }
 
-void WellSolverBase::implicitStepSetup( real64 const & time_n,
-                                        real64 const & GEOS_UNUSED_PARAM( dt ),
-                                        DomainPartition & domain )
+void WellSolverBase::setPerforationStatus( real64 const & time_n, DomainPartition & domain )
 {
   FunctionManager & functionManager = FunctionManager::getInstance();
 
@@ -277,6 +275,15 @@ void WellSolverBase::implicitStepSetup( real64 const & time_n,
     } );
 
   } );
+}
+void WellSolverBase::implicitStepSetup( real64 const & time_n,
+                                        real64 const & GEOS_UNUSED_PARAM( dt ),
+                                        DomainPartition & domain )
+{
+
+  // Open close perfs
+  setPerforationStatus( time_n, domain );
+
   // Initialize the primary and secondary variables for the first time step
 
   initializeWells( domain, time_n );

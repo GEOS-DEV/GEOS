@@ -7,7 +7,6 @@
       flowSolverName="compositionalMultiphaseFlow"
       wellSolverName="compositionalMultiphaseWell"
       logLevel="2"
-        writeLinearSystem="2"
       targetRegions="{ reservoir, wellRegion1 }">
       <NonlinearSolverParameters
         newtonTol="1.0e-8"

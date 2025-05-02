@@ -930,11 +930,11 @@ void CompositionalMultiphaseWell::updateState( DomainPartition & domain )
                                                                                           WellElementSubRegion & subRegion )
     {
       WellControls & wellControls = getWellControls( subRegion );
-      //if( wellControls.getWellStatus() == WellControls::Status::OPEN )
-      //{
-      real64 const maxRegionPhaseVolFrac = updateSubRegionState( subRegion );
-      maxPhaseVolFrac = LvArray::math::max( maxRegionPhaseVolFrac, maxPhaseVolFrac );
-      //}
+      if( wellControls.getWellStatus() == WellControls::Status::OPEN )
+      {
+        real64 const maxRegionPhaseVolFrac = updateSubRegionState( subRegion );
+        maxPhaseVolFrac = LvArray::math::max( maxRegionPhaseVolFrac, maxPhaseVolFrac );
+      }
     } );
   } );
   maxPhaseVolFrac = MpiWrapper::max( maxPhaseVolFrac );
