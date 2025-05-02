@@ -208,6 +208,29 @@ TableFunction::TableFunction( const string & name,
   addLogLevel< logInfo::TableDataOutput >();
 }
 
+void TableFunction::validateTableInput() const
+{
+  bool has1DTable = !m_tableCoordinates1D.empty() && !m_values.empty();
+  bool hasNDTable = !m_coordinateFiles.empty() && !m_voxelFile.empty();
+  bool hasHDF5Table = !m_hdf5File.empty() && !m_hdf5CoordinateDatasetNames.empty() && !m_hdf5TableDatasetName.empty();
+
+  GEOS_THROW_IF( (has1DTable + hasNDTable + hasHDF5Table) > 1,
+                 GEOS_FMT( "{} {}: Multiple table input types are provided. Only one of the following is allowed:\n"
+                           "1. 1D table inputs (coordinates and values)\n"
+                           "2. ND table inputs (coordinate files and voxel file)\n"
+                           "3. HDF5 table inputs (HDF5 file, coordinate dataset names, and table dataset name).",
+                           catalogName(), getDataContext() ),
+                 InputError );
+
+  GEOS_THROW_IF( !has1DTable && !hasNDTable && !hasHDF5Table,
+                 GEOS_FMT( "{} {}: No valid table input type is provided. One of the following must be specified:\n"
+                           "1. 1D table inputs (coordinates and values)\n"
+                           "2. ND table inputs (coordinate files and voxel file)\n"
+                           "3. HDF5 table inputs (HDF5 file, coordinate dataset names, and table dataset name).",
+                           catalogName(), getDataContext() ),
+                 InputError );
+}
+
 void TableFunction::readFile( string const & filename, array1d< real64 > & target )
 {
   auto const skipped = []( char const c ){ return std::isspace( c ) || c == ','; };
@@ -255,6 +278,9 @@ void TableFunction::setTableValues( real64_array values, units::Unit unit )
 
 void TableFunction::initializeFunction()
 {
+  // Validation logic to ensure mutual exclusivity of the three options
+  validateTableInput();
+  
   // Read in data
   if( m_coordinates.size() > 0 )
   {

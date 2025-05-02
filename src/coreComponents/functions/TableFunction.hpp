@@ -416,6 +416,11 @@ private:
 private:
 
   /**
+   * @brief Validates the input data for the table function.
+   */
+  void validateTableInput() const;
+
+  /**
    * @brief Parse a table file.
    * @param[in] target The place to store values.
    * @param[in] filename The name of the file to read.
