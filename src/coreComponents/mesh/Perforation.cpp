@@ -89,7 +89,7 @@ void Perforation::postInputInitialization()
     else
     {
       // If a name is explicitly given, then check that it exists
-      GEOS_THROW_IF( m_perfStatusTable.size( 0 ) != m_perfStatusTable.size( 1 ),
+      GEOS_THROW_IF( m_perfStatusTable[0].size() != m_perfStatusTable[1].size(),
                      GEOS_FMT( "Perforation status table missing time or status : {}", getName() ),
                      InputError );
       for( std::ptrdiff_t i=0; i<m_perfStatusTable[0].size(); i++ )
