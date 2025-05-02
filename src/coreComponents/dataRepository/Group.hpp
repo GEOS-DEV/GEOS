@@ -321,7 +321,7 @@ public:
     GEOS_THROW_IF_TEST( child == nullptr,
                    "Group " << getDataContext() << " has no child named " << key << std::endl
                             << dumpSubGroupsNames(),
-                   std::domain_error );
+                   std::domain_error, getDataContext().getTypeName(), getDataContext().getFilePath(), getDataContext().getLine(), getDataContext().getOffsetInLine(), getDataContext.getOffset() );
     T * const castedChild = dynamicCast< T * >( child );
     GEOS_THROW_IF( castedChild == nullptr,
                    GEOS_FMT( "{} was expected to be a '{}'.",

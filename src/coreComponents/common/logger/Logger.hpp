@@ -145,8 +145,13 @@
 #define GEOS_ERROR_IF( EXP, msg ) LVARRAY_ERROR_IF( EXP, "***** Rank " << ::geos::logger::internal::rankString << ": " << msg )
 #endif
 
-// Test copy 
-#define LVARRAY_THROW_IF_TEST( EXP, MSG, TYPE ) \
+/**
+ * @brief Conditionally throw an exception.
+ * @param EXP an expression that will be evaluated as a predicate
+ * @param MSG a message to log (any expression that can be stream inserted)
+ * @param TYPE the type of exception to throw
+ */
+#define LVARRAY_THROW_IF_TEST( EXP, MSG, TYPE, ... ) \
   do \
   { \
     if( EXP ) \
@@ -162,7 +167,8 @@
       __oss2 << MSG; \
       __oss3 << __FILE__; \
       integer line =  __LINE__; \
-      ErrorLogger::ErrorMsg structMsg = logger.errorMsgformatter( ErrorLogger::TypeMsg::ERROR, __oss2.str(), __oss3.str(), line ); \
+      ErrorLogger::ErrorMsg structMsg = logger.errorMsgFormatter( ErrorLogger::TypeMsg::ERROR, __oss2.str(), \
+                                                                  __oss3.str(), line, __VA_ARGS__ ); \
       logger.errorMsgWritter( structMsg ); \
       throw TYPE( __oss.str() ); \
     } \
@@ -176,8 +182,13 @@
  */
 #define GEOS_THROW_IF( EXP, msg, TYPE ) LVARRAY_THROW_IF( EXP, "***** Rank " << ::geos::logger::internal::rankString << ": " << msg, TYPE )
 
-// Test copy 
-#define GEOS_THROW_IF_TEST( EXP, msg, TYPE ) LVARRAY_THROW_IF_TEST( EXP, "***** Rank " << ::geos::logger::internal::rankString << ": " << msg, TYPE )
+/**
+ * @brief Conditionally throw an exception.
+ * @param EXP an expression that will be evaluated as a predicate
+ * @param msg a message to log (any expression that can be stream inserted)
+ * @param TYPE the type of exception to throw
+ */ 
+#define GEOS_THROW_IF_TEST( EXP, msg, TYPE, ... ) LVARRAY_THROW_IF_TEST( EXP, "***** Rank " << ::geos::logger::internal::rankString << ": " << msg, TYPE, __VA_ARGS__ )
 
 /**
  * @brief Raise a hard error and terminate the program.
