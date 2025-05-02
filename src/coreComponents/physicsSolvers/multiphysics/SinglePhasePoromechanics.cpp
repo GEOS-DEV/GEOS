@@ -38,6 +38,7 @@
 
 #include "physicsSolvers/multiphysics/poromechanicsKernels/PoromechanicsKernelsDispatchTypeList.hpp"
 #include "physicsSolvers/multiphysics/poromechanicsKernels/ThermoPoromechanicsKernelsDispatchTypeList.hpp"
+#include "physicsSolvers/multiphysics/poromechanicsKernels/PoromechanicsDamageKernelsDispatchTypeList.hpp"
 #include "physicsSolvers/solidMechanics/kernels/SolidMechanicsKernelsDispatchTypeList.hpp"
 
 namespace geos
@@ -296,7 +297,7 @@ void SinglePhasePoromechanics< FLOW_SOLVER, MECHANICS_SOLVER >::assembleElementB
     if( m_damageFlag )
     {
       poromechanicsMaxForce =
-        this->template assemblyLaunch< constitutive::PorousDamageSolidBase,
+        this->template assemblyLaunch< PoromechanicsDamageKernelsDispatchTypeList,
                                        poromechanicsDamageKernels::SinglePhasePoromechanicsDamageKernelFactory >( mesh,
                                                                                                                   dofManager,
                                                                                                                   regionNames,
@@ -312,16 +313,16 @@ void SinglePhasePoromechanics< FLOW_SOLVER, MECHANICS_SOLVER >::assembleElementB
     {
       poromechanicsMaxForce =
         this->template assemblyLaunch< ThermoPoromechanicsKernelsDispatchTypeList,
-                        thermalPoromechanicsKernels::ThermalSinglePhasePoromechanicsKernelFactory >( mesh,
-                                                                                                     dofManager,
-                                                                                                     regionNames,
-                                                                                                     viewKeyStruct::porousMaterialNamesString(),
-                                                                                                     localMatrix,
-                                                                                                     localRhs,
-                                                                                                     dt,
-                                                                                                     flowDofKey,
-                                                                                                     this->m_performStressInitialization,
-                                                                                                     FlowSolverBase::viewKeyStruct::fluidNamesString() );
+                                       thermalPoromechanicsKernels::ThermalSinglePhasePoromechanicsKernelFactory >( mesh,
+                                                                                                                    dofManager,
+                                                                                                                    regionNames,
+                                                                                                                    viewKeyStruct::porousMaterialNamesString(),
+                                                                                                                    localMatrix,
+                                                                                                                    localRhs,
+                                                                                                                    dt,
+                                                                                                                    flowDofKey,
+                                                                                                                    this->m_performStressInitialization,
+                                                                                                                    FlowSolverBase::viewKeyStruct::fluidNamesString() );
     }
     else
     {

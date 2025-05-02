@@ -125,6 +125,7 @@ set( kernelTemplateFileList
      multiphysics/poromechanicsKernels/PoromechanicsKernels.cpp.template
      multiphysics/poromechanicsKernels/PoromechanicsEFEMKernels.cpp.template
      multiphysics/poromechanicsKernels/ThermoPoromechanicsKernels.cpp.template
+     multiphysics/poromechanicsKernels/PoromechanicsDamageKernels.cpp.template
      fluidFlow/SinglePhaseHybridFVMKernels.cpp.template
      fluidFlow/CompositionalMultiphaseHybridFVMKernels_upwinding.cpp.template
      fluidFlow/CompositionalMultiphaseHybridFVMKernels_assembly.cpp.template

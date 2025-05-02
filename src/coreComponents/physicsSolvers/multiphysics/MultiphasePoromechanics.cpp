@@ -186,19 +186,19 @@ void MultiphasePoromechanics< FLOW_SOLVER, MECHANICS_SOLVER >::assembleElementBa
     {
       poromechanicsMaxForce =
         this->template assemblyLaunch< ThermoPoromechanicsKernelsDispatchTypeList,
-                        thermalPoromechanicsKernels::ThermalMultiphasePoromechanicsKernelFactory >( mesh,
-                                                                                                    dofManager,
-                                                                                                    regionNames,
-                                                                                                    Base::viewKeyStruct::porousMaterialNamesString(),
-                                                                                                    localMatrix,
-                                                                                                    localRhs,
-                                                                                                    dt,
-                                                                                                    flowDofKey,
-                                                                                                    this->flowSolver()->numFluidComponents(),
-                                                                                                    this->flowSolver()->numFluidPhases(),
-                                                                                                    this->flowSolver()->useTotalMassEquation(),
-                                                                                                    this->m_performStressInitialization,
-                                                                                                    FlowSolverBase::viewKeyStruct::fluidNamesString() );
+                                       thermalPoromechanicsKernels::ThermalMultiphasePoromechanicsKernelFactory >( mesh,
+                                                                                                                   dofManager,
+                                                                                                                   regionNames,
+                                                                                                                   Base::viewKeyStruct::porousMaterialNamesString(),
+                                                                                                                   localMatrix,
+                                                                                                                   localRhs,
+                                                                                                                   dt,
+                                                                                                                   flowDofKey,
+                                                                                                                   this->flowSolver()->numFluidComponents(),
+                                                                                                                   this->flowSolver()->numFluidPhases(),
+                                                                                                                   this->flowSolver()->useTotalMassEquation(),
+                                                                                                                   this->m_performStressInitialization,
+                                                                                                                   FlowSolverBase::viewKeyStruct::fluidNamesString() );
     }
     else
     {

@@ -436,10 +436,10 @@ protected:
     return finiteElement::
              regionBasedKernelApplication< parallelDevicePolicy< >,
                                            TYPE_LIST >( mesh,
-                                                                   regionNames,
-                                                                   this->solidMechanicsSolver()->getDiscretizationName(),
-                                                                   materialNamesString,
-                                                                   kernelWrapper );
+                                                        regionNames,
+                                                        this->solidMechanicsSolver()->getDiscretizationName(),
+                                                        materialNamesString,
+                                                        kernelWrapper );
   }
 
   /* Implementation of Nonlinear Acceleration (Aitken) of averageMeanTotalStressIncrement */

@@ -575,11 +575,11 @@ public:
   void forElementSubRegions( types::TypeList< SUBREGIONTYPES... >, LOOKUP_CONTAINER const & targetRegions, LAMBDA && lambda )
   {
     forElementSubRegionsComplete< SUBREGIONTYPES... >( targetRegions,
-                                                                      [lambda = std::forward< LAMBDA >( lambda )]( localIndex const targetIndex,
-                                                                                                                   localIndex const,
-                                                                                                                   localIndex const,
-                                                                                                                   ElementRegionBase &,
-                                                                                                                   auto & subRegion )
+                                                       [lambda = std::forward< LAMBDA >( lambda )]( localIndex const targetIndex,
+                                                                                                    localIndex const,
+                                                                                                    localIndex const,
+                                                                                                    ElementRegionBase &,
+                                                                                                    auto & subRegion )
     {
       lambda( targetIndex, subRegion );
     } );
