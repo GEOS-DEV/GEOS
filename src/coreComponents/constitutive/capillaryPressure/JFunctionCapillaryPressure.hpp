@@ -65,6 +65,7 @@ public:
 public:
 
     KernelWrapper( arrayView1d< TableFunction::KernelWrapper const > const & jFuncKernelWrappers,
+                   arrayView1d< TableFunction::KernelWrapper const > const & inverseJFuncKernelWrappers,
                    arrayView2d< real64 const > const & jFuncMultiplier,
                    arrayView1d< integer const > const & phaseTypes,
                    arrayView1d< integer const > const & phaseOrder,
@@ -78,6 +79,13 @@ public:
                   arraySlice2d< real64, cappres::USD_CAPPRES_DS - 2 > const & dPhaseCapPres_dPhaseVolFrac ) const;
 
     GEOS_HOST_DEVICE
+    void computeInv( arraySlice1d< real64, compflow::USD_PHASE - 1 > const & phaseVolFraction,
+                     arraySlice1d< real64 const > const & jFuncMultiplier,
+                     arraySlice1d< real64 const, cappres::USD_CAPPRES - 2 > const & phaseCapPres,
+                     arraySlice2d< real64, cappres::USD_CAPPRES_DS - 2 > const & dPhaseCapPres_dPhaseVolFrac ) const;             
+
+
+    GEOS_HOST_DEVICE
     virtual void update( localIndex const k,
                          localIndex const q,
                          arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseVolFraction ) const override;
@@ -87,6 +95,7 @@ private:
     /// Array of kernel wrappers for the J-function
     /// Is of size 1 for two-phase flow, and of size 2 for three-phase flow
     arrayView1d< TableFunction::KernelWrapper const > const m_jFuncKernelWrappers;
+    arrayView1d< TableFunction::KernelWrapper const > const m_inverseJFuncKernelWrappers;
 
     /// Array of cell-wise J-function multipliers
     /// The second dimension is of size 1 for two-phase flow, and of size 2 for three-phase flow
@@ -113,6 +122,7 @@ private:
     static constexpr char const * permeabilityExponentString() { return "permeabilityExponent"; }
     static constexpr char const * permeabilityDirectionString() { return "permeabilityDirection"; }
     static constexpr char const * jFunctionWrappersString() { return "jFunctionWrappers"; }
+    static constexpr char const * inverseJFunctionWrappersString() { return "inverseJFunctionWrappers"; }
   };
 
   /**
@@ -170,6 +180,9 @@ private:
 
   /// J-function kernel wrapper for the first pair (wetting-intermediate if NP=3, wetting-non-wetting otherwise)
   array1d< TableFunction::KernelWrapper > m_jFuncKernelWrappers;
+  array1d< TableFunction::KernelWrapper > m_inverseJFuncKernelWrappers;
+
+  std::vector< std::shared_ptr<TableFunction> > m_inverseTables;
 
 };
 
@@ -242,6 +255,41 @@ JFunctionCapillaryPressure::KernelWrapper::
     phaseCapPres[ipWater] *= jFuncMultiplier[0];
     dPhaseCapPres_dPhaseVolFrac[ipWater][ipWater] *= jFuncMultiplier[0];
   }
+}
+
+GEOS_HOST_DEVICE
+inline void
+JFunctionCapillaryPressure::KernelWrapper::
+  computeInv( arraySlice1d< real64, compflow::USD_PHASE - 1 > const & phaseVolFraction,
+           arraySlice1d< real64 const > const & jFuncMultiplier,
+           arraySlice1d< real64 const, cappres::USD_CAPPRES - 2 > const & phaseCapPres,
+           arraySlice2d< real64, cappres::USD_CAPPRES_DS - 2 > const & dPhaseCapPres_dPhaseVolFrac ) const
+{
+  LvArray::forValuesInSlice( dPhaseCapPres_dPhaseVolFrac, []( real64 & val ){ val = 0.0; } );
+
+  using PT = CapillaryPressureBase::PhaseType;
+  integer const ipWater = m_phaseOrder[PT::WATER];
+  integer const ipOil   = m_phaseOrder[PT::OIL];
+  integer const ipGas   = m_phaseOrder[PT::GAS];
+
+        // apply multiplier
+  real64 capPresWater_J = phaseCapPres[ipWater] / jFuncMultiplier[0];
+    // std::cout << GEOS_FMT( "        JM_2 = ( {:4.2e} )", jFuncMultiplier[0] );
+  array1d<real64> input(1);
+  input[0] = capPresWater_J;
+    // std::cout << GEOS_FMT( "        J_int2 = ( {:4.2e} )", input[0] );
+    // std::cout << GEOS_FMT( "        Pc_int2 = ( {:4.2e} )", phaseCapPres[ipWater] );
+  auto inputSlice = input.toSliceConst();
+
+
+
+    phaseVolFraction[ipWater] =
+          m_inverseJFuncKernelWrappers[0].compute( inputSlice,
+                                            &(dPhaseCapPres_dPhaseVolFrac)[ipWater][ipWater] );                                 
+     dPhaseCapPres_dPhaseVolFrac[ipWater][ipWater] /= jFuncMultiplier[0];
+    // std::cout << GEOS_FMT( "        S_int2 = ( {:4.2e} )", phaseVolFraction[ipWater] );
+    // std::cout << GEOS_FMT( "        dS/dP = ( {:4.2e} )", dPhaseCapPres_dPhaseVolFrac[ipWater][ipWater] );
+    phaseVolFraction[ipGas] = 1.0 - phaseVolFraction[ipWater];
 }
 
 GEOS_HOST_DEVICE

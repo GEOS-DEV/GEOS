@@ -24,6 +24,7 @@
 #include "physicsSolvers/PhysicsSolverBaseKernels.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseUtilities.hpp"
 #include "physicsSolvers/fluidFlow/kernels/immiscibleMultiphase/ImmiscibleMultiphaseKernels.hpp"
+#include "physicsSolvers/fluidFlow/kernels/immiscibleMultiphase/CapillaryPressureUpdateKernel.hpp"
 #include "physicsSolvers/fluidFlow/kernels/compositional/ThermalAccumulationKernel.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
 #include "constitutive/capillaryPressure/CapillaryPressureFields.hpp"
@@ -283,7 +284,8 @@ void ImmiscibleMultiphaseFlow::updateCapPressureModel( ObjectManagerBase & dataG
     {
       typename TYPEOFREF( castedCapPres ) ::KernelWrapper capPresWrapper = castedCapPres.createKernelWrapper();
 
-      isothermalCompositionalMultiphaseBaseKernels::
+      // isothermalCompositionalMultiphaseBaseKernels::
+        immiscibleMultiphaseKernels::
         CapillaryPressureUpdateKernel::
         launch< parallelDevicePolicy<> >( dataGroup.size(),
                                           capPresWrapper,
@@ -622,13 +624,17 @@ void ImmiscibleMultiphaseFlow::assembleFluxTerms( real64 const dt,
     {
       mesh.getElemManager().forElementSubRegions( regionNames,
                                                   [&]( localIndex const,
-                                                       ElementSubRegionBase & subRegion )
-      {
+                                                       ElementSubRegionBase & subRegion ) // Check if you need this.
+      {      
+        // Capillary pressure wrapper
         string const & cappresName = subRegion.getReference< string >( viewKeyStruct::capPressureNamesString() );
-        CapillaryPressureBase & capPressure = getConstitutiveModel< CapillaryPressureBase >( subRegion, cappresName );
-        constitutive::constitutiveUpdatePassThru( capPressure, [&] ( auto & castedCapPres )
-        {
-          typename TYPEOFREF( castedCapPres ) ::KernelWrapper capPresWrapper = castedCapPres.createKernelWrapper();
+        JFunctionCapillaryPressure & capPressure = getConstitutiveModel< JFunctionCapillaryPressure >( subRegion, cappresName );
+        JFunctionCapillaryPressure::KernelWrapper capPresWrapper = capPressure.createKernelWrapper(); 
+
+        // Relative permeability wrapper
+        string const & relPermName = subRegion.getReference< string >( viewKeyStruct::relPermNamesString() );
+        BrooksCoreyRelativePermeability & relPerm = getConstitutiveModel< BrooksCoreyRelativePermeability >( subRegion, relPermName );
+        BrooksCoreyRelativePermeability::KernelWrapper relPermWrapper = relPerm.createKernelWrapper();
 
           fluxApprox.forAllStencils( mesh, [&]( auto & stencil )
           {
@@ -644,12 +650,13 @@ void ImmiscibleMultiphaseFlow::assembleFluxTerms( real64 const dt,
                                                                                          mesh.getElemManager(),
                                                                                          stencilWrapper,
                                                                                          capPresWrapper,
+                                                                                         relPermWrapper,
+                                                                                         subRegion,
                                                                                          dt,
                                                                                          localMatrix.toViewConstSizes(),
                                                                                          localRhs.toView() );
           } );
         } );
-      } );
     }
     else
     {

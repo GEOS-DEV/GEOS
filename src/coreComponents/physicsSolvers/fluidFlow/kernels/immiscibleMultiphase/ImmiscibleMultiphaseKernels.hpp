@@ -32,12 +32,15 @@
 #include "constitutive/fluid/twophasefluid/TwoPhaseFluidFields.hpp"
 #include "constitutive/capillaryPressure/CapillaryPressureFields.hpp"
 #include "constitutive/capillaryPressure/CapillaryPressureBase.hpp"
+#include "constitutive/capillaryPressure/JFunctionCapillaryPressure.hpp"
+#include "constitutive/capillaryPressure/TableCapillaryPressure.hpp"
 #include "constitutive/permeability/PermeabilityBase.hpp"
 #include "constitutive/permeability/PermeabilityFields.hpp"
 #include "constitutive/relativePermeability/RelativePermeabilityBase.hpp"
 #include "constitutive/relativePermeability/RelativePermeabilityFields.hpp"
 #include "fieldSpecification/AquiferBoundaryCondition.hpp"
 #include "finiteVolume/BoundaryStencil.hpp"
+#include "finiteVolume/CellElementStencilTPFA.hpp"
 #include "finiteVolume/FluxApproximationBase.hpp"
 #include "linearAlgebra/interfaces/InterfaceTypes.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
@@ -103,12 +106,15 @@ public:
   using MultiphaseFluidAccessors =
     StencilMaterialAccessors< constitutive::TwoPhaseFluid,
                               fields::twophasefluid::phaseDensity,
-                              fields::twophasefluid::dPhaseDensity >;
+                              fields::twophasefluid::dPhaseDensity,
+                              fields::twophasefluid::phaseViscosity,
+                              fields::twophasefluid::dPhaseViscosity >;
 
   using CapPressureAccessors =
-    StencilMaterialAccessors< CapillaryPressureBase,
+    StencilMaterialAccessors< JFunctionCapillaryPressure,
                               fields::cappres::phaseCapPressure,
-                              fields::cappres::dPhaseCapPressure_dPhaseVolFraction >;
+                              fields::cappres::dPhaseCapPressure_dPhaseVolFraction,
+                              fields::cappres::jFuncMultiplier >;
 
   using PermeabilityAccessors =
     StencilMaterialAccessors< PermeabilityBase,
@@ -158,9 +164,12 @@ public:
     m_mob( multiPhaseFlowAccessors.get( fields::immiscibleMultiphaseFlow::phaseMobility {} ) ),
     m_dMob( multiPhaseFlowAccessors.get( fields::immiscibleMultiphaseFlow::dPhaseMobility {} ) ),
     m_dens( fluidAccessors.get( fields::twophasefluid::phaseDensity {} ) ),
+    m_visc( fluidAccessors.get( fields::twophasefluid::phaseViscosity {} ) ),
     m_dDens_dPres( fluidAccessors.get( fields::twophasefluid::dPhaseDensity {} ) ),
+    m_dVisc_dPres( fluidAccessors.get( fields::twophasefluid::dPhaseViscosity {} ) ),
     m_phaseCapPressure( capPressureAccessors.get( fields::cappres::phaseCapPressure {} ) ),
     m_dPhaseCapPressure_dPhaseVolFrac( capPressureAccessors.get( fields::cappres::dPhaseCapPressure_dPhaseVolFraction {} ) ),
+    m_jFuncMultiplier( capPressureAccessors.get( fields::cappres::jFuncMultiplier {} ) ),
     m_localMatrix( localMatrix ),
     m_localRhs( localRhs ),
     m_hasCapPressure ( hasCapPressure ),
@@ -199,15 +208,19 @@ protected:
   ElementViewConst< arrayView2d< real64 const, immiscibleFlow::USD_PHASE > > const m_mob;
   ElementViewConst< arrayView3d< real64 const, immiscibleFlow::USD_PHASE_DS > > const m_dMob;
 
-  /// Views on fluid density
+  /// Views on fluid density and viscosity
   ElementViewConst< arrayView3d< real64 const, constitutive::multifluid::USD_PHASE > > const m_dens;
+  ElementViewConst< arrayView3d< real64 const, constitutive::multifluid::USD_PHASE > > const m_visc;
   ElementViewConst< arrayView4d< real64 const, constitutive::multifluid::USD_PHASE_DC > > const m_dDens_dPres;
+  ElementViewConst< arrayView4d< real64 const, constitutive::multifluid::USD_PHASE_DC > > const m_dVisc_dPres;
 
   /// Views on capillary pressure
   ElementViewConst< arrayView3d< real64 const, cappres::USD_CAPPRES > > const m_phaseCapPressure;
   ElementViewConst< arrayView4d< real64 const, cappres::USD_CAPPRES_DS > > const m_dPhaseCapPressure_dPhaseVolFrac;
+  ElementViewConst< arrayView2d< real64 const > > const m_jFuncMultiplier;
 
   // Residual and jacobian
+
 
   /// View on the local CRS matrix
   CRSMatrixView< real64, globalIndex const > const m_localMatrix;
@@ -333,6 +346,11 @@ public:
     real64 transmissibility[maxNumConns][2]{};
     /// Derivatives of transmissibility with respect to pressure
     real64 dTrans_dPres[maxNumConns][2]{};
+
+    /// Transmissibility
+    real64 transmissibilityHat[maxNumConns][2]{};
+    /// Derivatives of transmissibility with respect to pressure
+    real64 dTransHat_dPres[maxNumConns][2]{};
 
     // Local degrees of freedom and local residual/jacobian
 
@@ -751,14 +769,16 @@ protected:
   typename STENCILWRAPPER::IndexContainerViewConstType const m_sei;
 };
 
+
 /**
  * @class FaceBasedAssemblyInterfaceConditionKernel
  * @tparam NUM_DOF number of degrees of freedom
  * @tparam STENCILWRAPPER the type of the stencil wrapper
  * @tparam CAPPRESWRAPPER the type of the capillary pressure wrapper
+ * @tparam RELPERMWRAPPER the type of the realtive permeability wrapper
  * @brief Define the interface for the assembly kernel in charge of flux terms
  */
-template< integer NUM_EQN, integer NUM_DOF, typename STENCILWRAPPER, typename CAPPRESWRAPPER >
+template< integer NUM_EQN, integer NUM_DOF, typename STENCILWRAPPER, typename CAPPRESWRAPPER, typename  RELPERMWRAPPER >
 class FaceBasedAssemblyInterfaceConditionKernel : public FaceBasedAssemblyKernel< NUM_EQN, NUM_DOF, STENCILWRAPPER >
 {
 public:
@@ -785,9 +805,12 @@ public:
   using Base::m_dPerm_dPres;
   using Base::m_phaseVolFrac;
   using Base::m_phaseCapPressure;
+  using Base::m_jFuncMultiplier;
   using Base::m_dPhaseCapPressure_dPhaseVolFrac;
   using Base::m_dens;
   using Base::m_dDens_dPres;
+  using Base::m_visc;
+  using Base::m_dVisc_dPres;
   using Base::m_dMob;
   using Base::m_mob;
   using Base::m_gravCoef;
@@ -822,6 +845,7 @@ public:
                                              globalIndex const rankOffset,
                                              STENCILWRAPPER const & stencilWrapper,
                                              CAPPRESWRAPPER const & capPressureWrapper,
+                                             RELPERMWRAPPER const & relPermWrapper,
                                              DofNumberAccessor const & dofNumberAccessor,
                                              ImmiscibleMultiphaseFlowAccessors const & multiPhaseFlowAccessors,
                                              MultiphaseFluidAccessors const & fluidAccessors,
@@ -832,7 +856,8 @@ public:
                                              arrayView1d< real64 > const & localRhs,
                                              integer const hasCapPressure,
                                              integer const useTotalMassEquation,
-                                             integer const checkPhasePresenceInGravity )
+                                             integer const checkPhasePresenceInGravity,
+                                             localIndex const GEOS_UNUSED_PARAM(domainSize) )
     : Base( numPhases,
             rankOffset,
             stencilWrapper,
@@ -847,7 +872,8 @@ public:
             hasCapPressure,
             useTotalMassEquation,
             checkPhasePresenceInGravity ),
-    m_capPressureWrapper( capPressureWrapper )
+    m_capPressureWrapper( capPressureWrapper ),
+    m_relPermWrapper( relPermWrapper )
   {}
 
   /**
@@ -857,6 +883,7 @@ public:
    * @param[inout] stack the stack variables
    * @param[in] NoOpFunc the function used to customize the computation of the flux
    */
+ 
   template< typename FUNC = NoOpFunc >   // should change to multiphase
   GEOS_HOST_DEVICE
   void computeFlux( localIndex const iconn,
@@ -874,6 +901,12 @@ public:
     localIndex k[2];
     localIndex connectionIndex = 0;
 
+    m_stencilWrapper.computeHalfWeights( iconn,
+      m_permeability,
+      m_dPerm_dPres,
+      stack.transmissibilityHat,
+      stack.dTransHat_dPres );
+
     for( k[0] = 0; k[0] < stack.numFluxElems; ++k[0] )
     {
       for( k[1] = k[0] + 1; k[1] < stack.numFluxElems; ++k[1] )
@@ -890,6 +923,7 @@ public:
 
         real64 capGrad[numEqn]{};
         real64 capPresIC[numEqn][2]{};
+        real64 jFMultiplier[numEqn][2]{};
         real64 dCapGrad_dP[numEqn][2]{};
         real64 dCapGrad_dS[numEqn][2]{};
 
@@ -903,13 +937,21 @@ public:
 
         real64 density2[numEqn]{};
         real64 dDens_dP2[numEqn][2]{};
+        real64 gravCoefHat[numEqn]{};
 
         real64 uT = 0;
+        real64 total_mobility = 0;
         real64 duT_dP[numEqn]{};
         real64 duT_dS[numEqn]{};
 
+        real64 potGrad_ip[numEqn]{};
+        real64 alpha_ip[numEqn]{};
+
         real64 const trans[2] = { stack.transmissibility[connectionIndex][0], stack.transmissibility[connectionIndex][1] };
         real64 const dTrans_dP[2] = { stack.dTrans_dPres[connectionIndex][0], stack.dTrans_dPres[connectionIndex][1] };
+
+        real64 const transHat[2] = { stack.transmissibilityHat[connectionIndex][0], stack.transmissibilityHat[connectionIndex][1] };
+        real64 const dTransHat_dP[2] = { stack.dTransHat_dPres[connectionIndex][0], stack.dTransHat_dPres[connectionIndex][1] };
 
         // cell indices
         localIndex const seri[2]  = {m_seri( iconn, k[0] ), m_seri( iconn, k[1] )};
@@ -956,6 +998,8 @@ public:
           real64 dPresGrad_dTrans = 0.0;
           real64 dGravHead_dTrans = 0.0;
           real64 dCapGrad_dTrans = 0.0;
+          gravCoefHat[0] = 0;
+          gravCoefHat[1] = 0;
           constexpr int signPotDiff[2] = {1, -1};
 
           for( integer ke = 0; ke < 2; ++ke )
@@ -971,6 +1015,8 @@ public:
 
             real64 const gravD = trans[ke] * m_gravCoef[er][esr][ei];       // D = T g z1 || -T g z2
             real64 pot = trans[ke] * pressure - densMean[ip] * gravD; // Phi = T P1 - rho T g z1 || -T P2 + rho T g z2
+            gravCoefHat[0] += m_gravCoef[er][esr][ei] * 0.5;
+            gravCoefHat[1] += m_gravCoef[er][esr][ei] * 0.5;
 
             gravHead[ip] += densMean[ip] * gravD;                                         // DPg = rho (T g z1 - T g z2) = T rho g (z1 - z2)
             dGravHead_dTrans += signPotDiff[ke] * densMean[ip] * m_gravCoef[er][esr][ei]; // dDPg/dT = rho g z1 - rho g z2 = rho g (z1 - z2)
@@ -983,6 +1029,8 @@ public:
             if( m_hasCapPressure )  // check sign convention
             {
               real64 const capPres = m_phaseCapPressure[er][esr][ei][0][ip];  // Pc = Pc1 || Pc2
+              jFMultiplier[ip][ke] = m_jFuncMultiplier[er][esr][ei][0]; 
+
               capPresIC[ip][ke] = capPres;
               dCapGrad_dTrans -= signPotDiff[ke] * capPres;                   // dDPc/dT = (-Pc1 + Pc2)
               pot -= trans[ke] * capPres;                                     // Phi = T P1 - rho T g z1 - T Pc1 || -T P2 + rho T g z2 + T
@@ -992,6 +1040,11 @@ public:
 
             potScale = fmax( potScale, fabs( pot ) ); // maxPhi = Phi1 > Phi2 ? Phi1 : Phi2
           }
+
+          // std::cout << GEOS_FMT( "        z1 = ( {:4.2e} )",  m_gravCoef[seri[0]][sesri[0]][sei[0]] );
+          // std::cout << GEOS_FMT( "        z2 = ( {:4.2e} )",  m_gravCoef[seri[1]][sesri[1]][sei[1]] );
+          // std::cout << GEOS_FMT( "        zhat1 = ( {:4.2e} )",  gravCoefHat[0] );
+          // std::cout << GEOS_FMT( "        zhat2 = ( {:4.2e} )",  gravCoefHat[1] );
 
           for( integer ke = 0; ke < 2; ++ke )
           {
@@ -1027,7 +1080,7 @@ public:
                                                                                                             // maxPhi * tol : eps
 
           // decide mobility coefficients - smooth variation in [-upwAbsTol; upwAbsTol]
-          real64 const alpha = ( potGrad + upwAbsTol ) / ( 2 * upwAbsTol );   // alpha = (DPhi + abstol) / abstol / 2
+          real64 alpha = ( potGrad + upwAbsTol ) / ( 2 * upwAbsTol );   // alpha = (DPhi + abstol) / abstol / 2
 
           // choose upstream cell
           if( alpha <= 0.0 || alpha >= 1.0 )  // no smoothing needed
@@ -1123,7 +1176,13 @@ public:
             duT_dS[ke] += dFlux_dS[ip][ke] / density2[ip];  // dF/dS = { M [T * -dPc/dS1] + dM/dS1 * DPhi , M [T * dPc/dS2] + dM/dS2 * DPhi
                                                             // }
           }
+          potGrad_ip[ip] = potGrad;
+          alpha_ip[ip] = alpha;
 
+        } // loop over phases
+
+         if (std::fabs(jFMultiplier[0][0] - jFMultiplier[0][1]) < 1e-8  && std::fabs(jFMultiplier[1][0] - jFMultiplier[1][1]) < 1e-8 ) {
+          for( integer ip = 0; ip < 2; ++ip ) {
           // populate local flux vector and derivatives
           stack.localFlux[k[0]*numEqn + ip] += m_dt * fluxVal[ip];
           stack.localFlux[k[1]*numEqn + ip] -= m_dt * fluxVal[ip];
@@ -1142,45 +1201,464 @@ public:
           }
 
           // Customize the kernel with this lambda
-          kernelOp( k, seri, sesri, sei, connectionIndex, alpha, mobility, potGrad, fluxVal, dFlux_dP, dFlux_dS );  // Not sure what this
+          kernelOp( k, seri, sesri, sei, connectionIndex, alpha_ip[ip], mobility, potGrad_ip[ip], fluxVal, dFlux_dP, dFlux_dS );  // Not sure what this
+          
+        }// does
+      } else {
 
-          // does
+        
 
-        } // loop over phases
-
-        if( m_hasCapPressure )
-        {
           // std::cout << GEOS_FMT( "        uT = ( {:4.2e} )", uT );
           // std::cout << GEOS_FMT( "        duTdP = ( {:4.2e} )", duT_dP[0] );
           // std::cout << GEOS_FMT( "        duTdS = ( {:4.2e} )", duT_dS[0] );
-          std::cout << GEOS_FMT( "        Pc1 = ( {:4.2e} )", capPresIC[0][0] );
-          std::cout << GEOS_FMT( "        Pc2 = ( {:4.2e} )", capPresIC[0][1] );
-
+          std::cout << GEOS_FMT( "        Pc1 = ( {:4.2e} )", capPresIC[1][0] );
+          std::cout << GEOS_FMT( "        Pc2 = ( {:4.2e} )", capPresIC[1][1] );
+          std::cout << GEOS_FMT( "        T1 = ( {:4.2e} )",  trans[0] );
+          std::cout << GEOS_FMT( "        T2 = ( {:4.2e} )",  trans[1] );
+          std::cout << GEOS_FMT( "        That1 = ( {:4.2e} )",  transHat[0] );
+          std::cout << GEOS_FMT( "        That2 = ( {:4.2e} )",  transHat[1] );
+         
 
 
           // --------------------  Here I implement the interface conditions local solver --------------------- //
+          // nonlinear solver's parameters
+          real64 tol = 1.0e-7;
+          int max_iter = 50;
+
           // initial guess:
           real64 S_int[numEqn]{};
-          real64 const Pc1 = capPresIC[0][0];
-          real64 const Pc2 = capPresIC[0][1];
+          real64 const Pc1 = capPresIC[1][0];
+          real64 const Pc2 = capPresIC[1][1];
 
-          real64 const Pc_int = ( Pc1 + Pc2 ) / 2;
+          real64 Pc_int = ( Pc1 + Pc2 ) / 2;
+          // std::cout << GEOS_FMT( "        Pc_int = ( {:4.2e} )", Pc_int );
+          // // Local newton loop:
 
-          // Local newton loop:
+          // Use of the capillary pressure kernel wrapper
 
-          // compute S_alpha and S_beta:
-          S_int[0] = computePCalphaInv< arrayView1d< real64 const > >( Pc_int );
-          S_int[1] = computePCalphaInv< arrayView1d< real64 const > >( Pc_int );
+            StackArray< real64, 2, 2, immiscibleFlow::LAYOUT_PHASE > facePhaseVolFrac1( 1, 2 );
+            StackArray< real64, 3, 2, constitutive::cappres::LAYOUT_CAPPRES > faceCapPres1( 1, 1, 2 );
+            StackArray< real64, 4, 4, constitutive::cappres::LAYOUT_CAPPRES_DS > dfacePhaseVolFrac_dCapPres1( 1, 1, 2, 2 );
+            StackArray< real64, 2, 2, immiscibleFlow::LAYOUT_PHASE > facePhaseVolFrac2( 1, 2 );
+            StackArray< real64, 3, 2, constitutive::cappres::LAYOUT_CAPPRES > faceCapPres2( 1, 1, 2 );
+            StackArray< real64, 4, 4, constitutive::cappres::LAYOUT_CAPPRES_DS > dfacePhaseVolFrac_dCapPres2( 1, 1, 2, 2 );
+            StackArray< real64, 1, 4> JFunc1( 2 );
+            StackArray< real64, 1, 4> JFunc2( 2 );
+            
 
-          real64 S_avg = S_int[0] + S_int[1];
+          // Use of the relative permeability kernel wrapper
+ 
+            StackArray< real64, 3, 2, constitutive::relperm::LAYOUT_RELPERM > faceTrappedVolFrac1( 1, 1, 2 );
+            StackArray< real64, 3, 2, constitutive::relperm::LAYOUT_RELPERM > faceRelPerm1( 1, 1, 2 );
+            StackArray< real64, 4, 4, constitutive::relperm::LAYOUT_RELPERM_DS > dfacePhaseRelPerm1_dPhaseVolFrac( 1, 1, 2, 2 );
+            StackArray< real64, 3, 2, constitutive::relperm::LAYOUT_RELPERM > faceTrappedVolFrac2( 1, 1, 2 );
+            StackArray< real64, 3, 2, constitutive::relperm::LAYOUT_RELPERM > faceRelPerm2( 1, 1, 2 );
+            StackArray< real64, 4, 4, constitutive::relperm::LAYOUT_RELPERM_DS > dfacePhaseRelPerm2_dPhaseVolFrac( 1, 1, 2, 2 );
+            
+            real64 halfFluxVal[numEqn][2]{};
+            real64 dhalfFlux_dP[numEqn][4]{};
+            real64 dhalfFlux_dS[numEqn][4]{};
+            real64 dhalfFlux_duT[numEqn][2]{};
 
-          // real64 PC_int1 = computePCalphaInv <arrayView1d< real64 const >> ( S_int[0] );
-          // real64 PC_int2 = computePCalphaInv <arrayView1d< real64 const >> ( S_int[1] );
-          GEOS_UNUSED_PARAM( S_avg );
+          // While loop
+              int iter = 0;
 
+
+   while (iter < max_iter) {
+       // clear working arrays
+      
+       //  densMean = {0 , 0};
+      //  dDensMean_dP[numEqn][0] = {0 , 0};
+      //  dDensMean_dP[numEqn][1] = {0 , 0};
+
+      //  presGrad[numEqn] = {0 , 0};
+      //  dPresGrad_dP[numEqn][0] = {0 , 0};
+      //  dPresGrad_dP[numEqn][1] = {0 , 0};
+
+      //  gravHead[numEqn] = {0 , 0};
+      //  dGravHead_dP[numEqn][0] = {0 , 0};
+      //  dGravHead_dP[numEqn][1] = {0 , 0};
+
+      //  capGrad[numEqn] = {0 , 0};
+      //  capPresIC[numEqn][0] = {0 , 0};
+      //  capPresIC[numEqn][1] = {0 , 0}; 
+      //  dCapGrad_dP[numEqn][0] = {0 , 0};
+      //  dCapGrad_dP[numEqn][1] = {0 , 0};
+      //  dCapGrad_dS[numEqn][0] = {0 , 0};
+      //  dCapGrad_dS[numEqn][1] = {0 , 0};
+      //  dCapPresIC_dS[numEqn][0] = {0 , 0};
+      //  dCapPresIC_dS[numEqn][1] = {0 , 0};
+
+      //  fluxVal[numEqn][0] = {0 , 0};
+      //  fluxVal[numEqn][1] = {0 , 0};
+      //  dFlux_dP[numEqn][0] = {0 , 0};
+      //  dFlux_dP[numEqn][1] = {0 , 0};
+      //  dFlux_dP[numEqn][2] = {0 , 0};
+      //  dFlux_dP[numEqn][3] = {0 , 0};
+      //  dFlux_dS[numEqn][0] = {0 , 0};
+      //  dFlux_dS[numEqn][1] = {0 , 0};
+      //  dFlux_dS[numEqn][2] = {0 , 0};
+      //  dFlux_dS[numEqn][3] = {0 , 0};
+
+
+
+       real64 density[numEqn]{};
+       real64 dDens_dP[numEqn][2]{};
+       real64 viscosity[numEqn]{};
+       real64 dVisc_dP[numEqn][2]{};
+
+      //  mobility[numEqn] = {0 , 0};
+      //  dMob_dP[numEqn][0] = {0 , 0};
+      //  dMob_dP[numEqn][1] = {0 , 0};
+      //  dMob_dS[numEqn][0] = {0 , 0};
+      //  dMob_dS[numEqn][1] = {0 , 0};
+
+       real64 local_residual = 0;
+       real64 local_jacobian = 0;
+
+       
+          // Compute the inverse:
+          faceCapPres1[0][0][1] = Pc_int;
+          faceCapPres2[0][0][1] = Pc_int;
+          JFunc1[0] = jFMultiplier[0][0];
+          JFunc2[0] = jFMultiplier[0][1];
+
+
+   m_capPressureWrapper.computeInv( facePhaseVolFrac1[0],
+           JFunc1.toSliceConst(), 
+           faceCapPres1[0][0],
+           dfacePhaseVolFrac_dCapPres1[0][0]);
+
+   m_capPressureWrapper.computeInv( facePhaseVolFrac2[0],
+           JFunc2.toSliceConst(),
+           faceCapPres2[0][0],
+           dfacePhaseVolFrac_dCapPres2[0][0]);
+
+    // compute relative permeability for both cells:
+    m_relPermWrapper.compute( facePhaseVolFrac1[0],
+           faceTrappedVolFrac1[0][0],
+           faceRelPerm1[0][0],
+           dfacePhaseRelPerm1_dPhaseVolFrac[0][0]);
+
+    m_relPermWrapper.compute( facePhaseVolFrac2[0],
+           faceTrappedVolFrac2[0][0],
+           faceRelPerm2[0][0],
+           dfacePhaseRelPerm2_dPhaseVolFrac[0][0]);
+           
+          
+    // real64 Sw_alpha = facePhaseVolFrac1[0][0];
+    // real64 Sw_beta = facePhaseVolFrac2[0][0];
+    // std::cout << GEOS_FMT( "        Sw_alpha = ( {:4.2e} )", Sw_alpha );
+    // std::cout << GEOS_FMT( "        Sw_beta = ( {:4.2e} )", Sw_beta );
+
+    // real64 Sn_alpha = facePhaseVolFrac1[0][1];
+    // real64 Sn_beta = facePhaseVolFrac2[0][1];
+    // std::cout << GEOS_FMT( "        Sn_alpha = ( {:4.2e} )", Sn_alpha );
+    // std::cout << GEOS_FMT( "        Sn_beta = ( {:4.2e} )", Sn_beta );
+
+    // std::cout << GEOS_FMT( "        Krw_alpha = ( {:4.2e} )", faceRelPerm1[0][0][0] );
+    // std::cout << GEOS_FMT( "        Krn_alpha = ( {:4.2e} )", faceRelPerm1[0][0][1] );
+
+
+
+  for( integer ix = 0; ix < 2; ++ix ) // for loop for each interface
+    {
+      // loop over phases
+      // clear arrays:
+      presGrad[0] = 0;
+      presGrad[1] = 0;
+      gravHead[0] = 0;
+      gravHead[1] = 0;
+      dGravHead_dP[0][0] = 0;
+      dGravHead_dP[0][1] = 0;
+      dGravHead_dP[1][0] = 0;
+      dGravHead_dP[1][1] = 0;
+      capGrad[0] = 0;
+      capGrad[1] = 0;
+      dCapGrad_dP[0][0] = 0;
+      dCapGrad_dP[1][0] = 0;
+      dCapGrad_dP[0][1] = 0;
+      dCapGrad_dP[1][1] = 0;
+
+      for( integer ip = 0; ip < m_numPhases; ++ip )
+      {
+        // calculate quantities on primary connected cells
+          // density
+          density[ip]  = m_dens[seri[ix]][sesri[ix]][sei[ix]][0][ip];                    // r = rho1 || rho2
+          dDens_dP[ip][ix] = m_dDens_dPres[seri[ix]][sesri[ix]][sei[ix]][0][ip][Deriv::dP];  // dr/dP = dr1/dP1 || dr2/dP
+
+          viscosity[ip]  = m_visc[seri[ix]][sesri[ix]][sei[ix]][0][ip];                    // r = rho1 || rho2
+          dVisc_dP[ip][ix] = m_dVisc_dPres[seri[ix]][sesri[ix]][sei[ix]][0][ip][Deriv::dP];  // dr/dP = dr1/dP1 || dr2/dP
+
+          densMean[ip] = density[ip];          // rho = (rho1 + rho2)
+          dDensMean_dP[ip][0] = dDens_dP[ip][ix];  // drho/dP = { (dr1/dP1) , (dr2/dP2) }
+          dDensMean_dP[ip][1] = dDens_dP[ip][ix];
+
+        //***** calculation of flux *****
+
+        // compute potential difference
+        real64 potScale = 0.0;
+        real64 dPresGrad_dTrans = 0.0;
+        real64 dGravHead_dTrans = 0.0;
+        real64 dCapGrad_dTrans = 0.0;
+        constexpr int signPotDiff[2] = {1, -1};
+
+        for( integer ke = 0; ke < 2; ++ke )
+        {
+          localIndex const er  = seri[ix];
+          localIndex const esr = sesri[ix];
+          localIndex const ei  = sei[ix];
+
+          real64 const pressure = m_pres[er][esr][ei];      // P = P1 || P2
+          presGrad[ip] += transHat[ix] * pressure;             // DPv = T (P1 - P2)
+          dPresGrad_dTrans += signPotDiff[ke] * pressure;   // dDPv/dT = (P1 - P2)
+          dPresGrad_dP[ip][ke] = transHat[ix];                 // dDPv/dP = { T , -T }
+
+          real64 const gravD = transHat[ix] * gravCoefHat[ix];       // D = T g z1 || -T g z2
+          real64 pot = transHat[ix] * pressure - densMean[ip] * gravD; // Phi = T P1 - rho T g z1 || -T P2 + rho T g z2
+
+          gravHead[ip] += densMean[ip] * gravD;                                         // DPg = rho (T g z1 - T g z2) = T rho g (z1 - z2)
+          dGravHead_dTrans += signPotDiff[ke] * densMean[ip] * gravCoefHat[ix]; // dDPg/dT = rho g z1 - rho g z2 = rho g (z1 - z2)
+
+          for( integer i = 0; i < 2; ++i )
+          {
+            dGravHead_dP[ip][i] += dDensMean_dP[ip][i] * gravD; // dDPg/dP = {drho/dP1 * T g (z1 - z2) , drho/dP2 * T g (z1 - z2)}
+          }
+
+          if( m_hasCapPressure )  // check sign convention
+          {
+            real64 capPres = m_phaseCapPressure[er][esr][ei][0][ip];  // Pc = Pc1 || Pc2
+            
+            if( ke == 1 && ix == 0 ) {
+              capPres = faceCapPres1[0][0][ip];
+            } else if ( ke == 1 && ix == 1 ) {
+              capPres = faceCapPres2[0][0][ip];
+            } 
+            
+            dCapGrad_dTrans -= signPotDiff[ke] * capPres;                   // dDPc/dT = (-Pc1 + Pc2)
+            pot -= transHat[ix] * capPres;                                     // Phi = T P1 - rho T g z1 - T Pc1 || -T P2 + rho T g z2 + T
+                                                                            // Pc2
+            capGrad[ip] -= transHat[ix] * capPres;                             // DPc = T (-Pc1 + Pc2)
+          }
+
+          potScale = fmax( potScale, fabs( pot ) ); // maxPhi = Phi1 > Phi2 ? Phi1 : Phi2
+        }
+
+        for( integer ke = 0; ke < 2; ++ke )
+        {
+          dPresGrad_dP[ip][ke] += dTransHat_dP[ix] * dPresGrad_dTrans;   // dDPv/dP = { T + dT/dP1 * (P1 - P2) , -T + dT/dP2 * (P1 - P2)}
+          dGravHead_dP[ip][ke] += dTransHat_dP[ix] * dGravHead_dTrans;   // dDPg/dP = { drho/dP1 * T g (z1 - z2) + dT/dP1 * rho g (z1 - z2) ,
+                                                                      //             drho/dP2 * T g (z1 - z2) + dT/dP2 * rho g (z1 - z2) }
+          if( m_hasCapPressure )
+          {
+            real64 constexpr eps = 1e-8;
+            real64 dCapPres_dS = m_dPhaseCapPressure_dPhaseVolFrac[seri[ix]][sesri[ix]][sei[ix]][0][ip][ip]; // dPc/dS = dPc1/dS1 ||
+            
+
+            if( ke == 1 && ix == 0 ) {
+              real64 dCapPresIC_dS = dfacePhaseVolFrac_dCapPres1[0][0][ip][ip];
+              dCapPres_dS = 1 / ( dCapPresIC_dS + eps);
+            } else if ( ke == 1 && ix == 1 ) {
+              real64 dCapPresIC_dS = dfacePhaseVolFrac_dCapPres2[0][0][ip][ip];
+              dCapPres_dS = 1 / ( dCapPresIC_dS + eps);
+            }  
+                                                                                                                // dPc2/dS2
+            dCapGrad_dP[ip][ke] += dTransHat_dP[ix] * dCapGrad_dTrans;                                                // dDPc/dP = { dT/dP1 *
+                                                                                                                   // (-Pc1 + Pc2) ,
+                                                                                                                   //             dT/dP2 *
+                                                                                                                   // (-Pc1 + Pc2) }
+            dCapGrad_dS[ip][ke] -= transHat[ix] * dCapPres_dS;                                                        // dDPc/dS = { -T *
+                                                                                                                   // dPc1/dS1 , T *
+                                                                                                                   // dPc2/dS2 }
+          }
+        }
+
+        // *** upwinding ***
+
+        // compute potential gradient
+        real64 potGrad = presGrad[ip] - gravHead[ip]; // DPhi = T (P1 - P2) - T rho g (z1 - z2)
+        if( m_hasCapPressure )
+        {
+          potGrad += capGrad[ip]; // DPhi = T (P1 - P2) - T rho g (z1 - z2) + T (-Pc1 + Pc2)
+        }
+
+        // compute upwinding tolerance
+        real64 constexpr upwRelTol = 1e-8;
+        real64 const upwAbsTol = fmax( potScale * upwRelTol, LvArray::NumericLimits< real64 >::epsilon ); // abstol = maxPhi * tol > eps ?
+                                                                                                          // maxPhi * tol : eps
+
+        // decide mobility coefficients - smooth variation in [-upwAbsTol; upwAbsTol]
+        real64 const alpha = ( potGrad + upwAbsTol ) / ( 2 * upwAbsTol );   // alpha = (DPhi + abstol) / abstol / 2
+
+        // choose upstream cell
+        // if( alpha <= 0.0 || alpha >= 1.0 )  // no smoothing needed
+        // {
+          constexpr int sign[2] = {1, -1};
+
+          localIndex const k_up = 1 - localIndex( fmax( fmin( alpha, 1.0 ), 0.0 ) ); // 1 upwind -> k_up = 0 || 2 upwind -> k_up = 1
+
+
+          if( k_up == 1 && ix == 0 ) {
+            
+            mobility[ip] = faceRelPerm1[0][ip][ip] * density[ip] / viscosity[ip];                     // M = Mupstream
+            dMob_dP[ip][k_up] = mobility[ip] * (dDens_dP[ip][ip] / density[ip] - dVisc_dP[ip][ip] / viscosity[ip]);   // dM/dP = {dM/dP1 , 0} OR {0 , dM/dP2}
+            dMob_dS[ip][k_up] = dfacePhaseRelPerm1_dPhaseVolFrac[0][0][ip][ip] * density[ip] / viscosity[ip];    // dM/dS = {dM/dS1 , 0} OR {0 , dM/dS2}
+          } else if ( k_up == 1 && ix == 1 ) {
+            mobility[ip] = faceRelPerm2[0][ip][ip] * density[ip] / viscosity[ip];                     // M = Mupstream
+            dMob_dP[ip][k_up] = mobility[ip] * (dDens_dP[ip][ip] / density[ip] - dVisc_dP[ip][ip] / viscosity[ip]);   // dM/dP = {dM/dP1 , 0} OR {0 , dM/dP2}
+            dMob_dS[ip][k_up] = dfacePhaseRelPerm2_dPhaseVolFrac[0][0][ip][ip] * density[ip] / viscosity[ip];    // dM/dS = {dM/dS1 , 0} OR {0 , dM/dS2}
+          } else {
+            mobility[ip] = m_mob[seri[k_up]][sesri[k_up]][sei[k_up]][ip];                     // M = Mupstream
+            dMob_dP[ip][k_up] = m_dMob[seri[k_up]][sesri[k_up]][sei[k_up]][ip][Deriv::dP];    // dM/dP = {dM/dP1 , 0} OR {0 , dM/dP2}
+            dMob_dS[ip][k_up] = m_dMob[seri[k_up]][sesri[k_up]][sei[k_up]][ip][Deriv::dS];    // dM/dS = {dM/dS1 , 0} OR {0 , dM/dS2}
+          } 
+
+
+        // }
+        // else  // perform smoothing
+        // {
+          // real64 const mobWeights[2] = { alpha, 1.0 - alpha };
+          // for( integer ke = 0; ke < 2; ++ke )
+          // {
+
+          //   mobility[ip] += mobWeights[ke] * m_mob[seri[ke]][sesri[ke]][sei[ke]][ip];               // M = alpha * M1 + (1 - alpha) * M2
+          //   density2[ip] += mobWeights[ke] * m_dens[seri[ke]][sesri[ke]][sei[ke]][0][ip];                    // r = rho1 || rho2
+          //   dDens_dP2[ip][ke] = mobWeights[ke] * m_dDens_dPres[seri[ke]][sesri[ke]][sei[ke]][0][ip][Deriv::dP];  // dr/dP = dr1/dP1 ||
+          //                                                                                                        // dr2/dP
+          //   dMob_dP[ip][ke] = mobWeights[ke] * m_dMob[seri[ke]][sesri[ke]][sei[ke]][ip][Deriv::dP]; // dM/dP = {alpha * dM1/dP1 , (1 -
+          //                                                                                           // alpha) * dM2/dP2}
+          //   dMob_dS[ip][ke] = mobWeights[ke] * m_dMob[seri[ke]][sesri[ke]][sei[ke]][ip][Deriv::dS]; // dM/dP = {alpha * dM1/dS1 , (1 -
+          //                                                                                           // alpha) * dM2/dS2}
+          // }
+        // }
+        real64 constexpr eps = 0.5e-8;
+        total_mobility += mobility[ip] + eps;
+        potGrad_ip[ip] = potGrad;
+        alpha_ip[ip] = alpha;
+
+        } // loop over phases
+
+        /// Three Forces Flux Contribution: 1- Viscous 2- Gravitational 3- Capillary
+              // loop over phases
+      for( integer ip = 0; ip < m_numPhases; ++ip )
+      {
+        // 1- Viscous: pressure gradient depends on all points in the stencil
+        for( integer ke = 0; ke < 2; ++ke )
+        {
+          halfFluxVal[ip][ix] = mobility[ip] / total_mobility * uT;
+          dhalfFlux_dP[ip][ix + ke] = dPresGrad_dP[ip][ke]; // dF/dP = { T + dT/dP1 * (P1 - P2) ,
+                                                    //          -T + dT/dP2 * (P1 - P2) }
+        }
+
+        // 2- Gravitational: gravitational head depends only on the two cells connected (same as mean density)
+        for( integer ke = 0; ke < 2; ++ke )
+        {
+          halfFluxVal[ip][ix] -= mobility[0] * mobility[1] / total_mobility * gravHead[ip];
+          dhalfFlux_dP[ip][ix + ke] -= dGravHead_dP[ip][ke]; // dF/dP = { T + dT/dP1 * (P1 - P2) - drho/dP1 * T g (z1 - z2) - dT/dP1 * rho g (z1 -
+                                                    // z2) ,
+                                                    //          -T + dT/dP2 * (P1 - P2) - drho/dP2 * T g (z1 - z2) - dT/dP2 * rho g (z1 -
+                                                    // z2) }
+        }
+
+        // 3- Capillary: capillary pressure contribution
+        if( m_hasCapPressure )
+        {
+          for( integer ke = 0; ke < 2; ++ke )
+          {
+            halfFluxVal[ip][ix] += mobility[0] * mobility[1] / total_mobility * capGrad[ip];
+            dhalfFlux_dP[ip][ix + ke] += dCapGrad_dP[ip][ke];  // dF/dP = { T + dT/dP1 * (P1 - P2) - drho/dP1 * T g (z1 - z2) - dT/dP1 * rho g (z1
+                                                      // - z2) + dT/dP1 * (-Pc1 + Pc2) ,
+                                                      //          -T + dT/dP2 * (P1 - P2) - drho/dP2 * T g (z1 - z2) - dT/dP2 * rho g (z1
+                                                      // - z2) + dT/dP2 * (-Pc1 + Pc2) }
+
+            dhalfFlux_dS[ip][ix + ke] = dCapGrad_dS[ip][ke];  // dF/dS = { T * -dPc/dS1 , T * dPc/dS2 }
+          }
         }
 
 
+        for( integer ke = 0; ke < 2; ++ke )
+        {
+          dhalfFlux_dP[ip][ix + ke] *= mobility[ip];   // dF/dP = { M [ T + dT/dP1 * (P1 - P2) - drho/dP1 * T g (z1 - z2) - dT/dP1 * rho g (z1 -
+                                              // z2) + dT/dP1 * (-Pc1 + Pc2)] ,
+                                              //           M [-T + dT/dP2 * (P1 - P2) - drho/dP2 * T g (z1 - z2) - dT/dP2 * rho g (z1 -
+                                              // z2) + dT/dP2 * (-Pc1 + Pc2)] }
+
+          dhalfFlux_dS[ip][ix + ke] *= mobility[ip];   // dF/dS = { M [T * -dPc/dS1] , M [T * dPc/dS2] }
+        }
+
+        // add contribution from upstream cell mobility derivatives
+        for( integer ke = 0; ke < 2; ++ke )
+        {
+          dhalfFlux_dP[ip][ix + ke] += dMob_dP[ip][ke] * potGrad_ip[ip];  // dF/dP = { M [ T + dT/dP1 * (P1 - P2) - drho1/dP * T g (z1 - z2) - dT/dP1 *
+                                                          // rho g (z1 - z2) + dT/dP1 * (-Pc1 + Pc2)] + dM/dP1 * DPhi ,
+                                                          //           M [-T + dT/dP2 * (P1 - P2) - drho2/dP * T g (z1 - z2) - dT/dP2 *
+                                                          // rho g (z1 - z2) + dT/dP2 * (-Pc1 + Pc2)] + dM/dP2 * DPhi }
+          dhalfFlux_dS[ip][ix + ke] += dMob_dS[ip][ke] * potGrad_ip[ip];  // dF/dS = { M [T * -dPc/dS1] + dM/dS1 * DPhi , M [T * dPc/dS2] + dM/dS2 * DPhi
+                                                          // }
+        }
+
+
+        // does
+        
+        } // loop over phases
+
+      } // loop over half fluxes
+
+      local_jacobian = dhalfFlux_dS[1][1]*dfacePhaseVolFrac_dCapPres1[0][0][1][1] - dhalfFlux_dS[1][3]*dfacePhaseVolFrac_dCapPres2[0][0][1][1];
+      local_residual = halfFluxVal[1][0] - halfFluxVal[1][1];
+
+      real64 deltaPc = local_residual/local_jacobian;
+      Pc_int -= deltaPc;
+
+      iter++;
+
+        // Check convergence
+        if (std::fabs(local_residual) < tol) {
+          break;  // Converged
+      }
+                
+
+    }   
+
+    for( integer ip = 0; ip < m_numPhases; ++ip )
+    {        
+        // populate local flux vector and derivatives
+        stack.localFlux[k[0]*numEqn + ip] += m_dt * (halfFluxVal[ip][0] + halfFluxVal[ip][1]);
+        stack.localFlux[k[1]*numEqn + ip] -= m_dt * (halfFluxVal[ip][0] + halfFluxVal[ip][1]);
+
+        for( integer ke = 0; ke < 2; ++ke )
+        {
+          // pressure
+          localIndex const localDofIndexPres = k[ke] * numDof;
+          stack.localFluxJacobian[k[0]*numEqn + ip][localDofIndexPres] += m_dt * dhalfFlux_dP[ip][ke];
+          stack.localFluxJacobian[k[1]*numEqn + ip][localDofIndexPres] -= m_dt * dhalfFlux_dP[ip][ke];
+
+          // saturation (hard-coded for 2-phase currently)
+          localIndex const localDofIndexSat = k[ke] * numDof + 1;
+          stack.localFluxJacobian[k[0]*numEqn + ip][localDofIndexSat] += m_dt * dhalfFlux_dS[ip][ke];
+          stack.localFluxJacobian[k[1]*numEqn + ip][localDofIndexSat] -= m_dt * dhalfFlux_dS[ip][ke];
+        }
+
+        // Customize the kernel with this lambda
+        kernelOp( k, seri, sesri, sei, connectionIndex, alpha_ip[ip], mobility, potGrad_ip[ip], fluxVal, dFlux_dP, dFlux_dS );  // Not sure what this
+
+
+              // }
+//           // // compute S_alpha and S_beta:
+          // S_int[0] = computePCalphaInv< arrayView1d< real64 const > >( Pc_int );
+          // S_int[1] = computePCalphaInv< arrayView1d< real64 const > >( Pc_int );
+
+          // real64 S_avg = S_int[0] + S_int[1];
+
+          // // real64 PC_int1 = computePCalphaInv <arrayView1d< real64 const >> ( S_int[0] );
+          // // real64 PC_int2 = computePCalphaInv <arrayView1d< real64 const >> ( S_int[1] );
+          
+          
+          
+          // GEOS_UNUSED_PARAM( Pc_int );
+
+      } // loop over phases
+      } // end of else for interface conditions
         connectionIndex++;
       }
     } // loop over connection elements
@@ -1189,6 +1667,7 @@ protected:
 
   /// Reference to the capillary pressure wrapper
   CAPPRESWRAPPER const m_capPressureWrapper;
+  RELPERMWRAPPER const m_relPermWrapper;
 };
 
 
@@ -1264,7 +1743,7 @@ public:
    * @param[inout] localMatrix the local CRS matrix
    * @param[inout] localRhs the local right-hand side vector
    */
-  template< typename POLICY, typename STENCILWRAPPER, typename CAPPRESWRAPPER >
+  template< typename POLICY, typename STENCILWRAPPER, typename CAPPRESWRAPPER, typename  RELPERMWRAPPER >
   static void
   createAndLaunch( integer const numPhases,
                    globalIndex const rankOffset,
@@ -1276,28 +1755,31 @@ public:
                    ElementRegionManager const & elemManager,
                    STENCILWRAPPER const & stencilWrapper,
                    CAPPRESWRAPPER const & capPresWrapper,
+                   RELPERMWRAPPER const & relPermWrapper,
+                   ElementSubRegionBase const & subRegion,
                    real64 const & dt,
                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
                    arrayView1d< real64 > const & localRhs )
   {
     integer constexpr NUM_EQN = 2;
     integer constexpr NUM_DOF = 2;
-
+    localIndex const domainSize = subRegion.size();
+  // GEOS_UNUSED_PARAM( domainSize );
     ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > dofNumberAccessor =
       elemManager.constructArrayViewAccessor< globalIndex, 1 >( dofKey );
     dofNumberAccessor.setName( solverName + "/accessors/" + dofKey );
 
-    using kernelType = FaceBasedAssemblyInterfaceConditionKernel< NUM_EQN, NUM_DOF, STENCILWRAPPER, CAPPRESWRAPPER >;
+    using kernelType = FaceBasedAssemblyInterfaceConditionKernel< NUM_EQN, NUM_DOF, STENCILWRAPPER, CAPPRESWRAPPER,  RELPERMWRAPPER >;
     typename kernelType::ImmiscibleMultiphaseFlowAccessors flowAccessors( elemManager, solverName );
     typename kernelType::MultiphaseFluidAccessors fluidAccessors( elemManager, solverName );
     typename kernelType::CapPressureAccessors capPressureAccessors( elemManager, solverName );
     typename kernelType::PermeabilityAccessors permAccessors( elemManager, solverName );
 
-    kernelType kernel( numPhases, rankOffset, stencilWrapper, capPresWrapper, dofNumberAccessor,
+    kernelType kernel( numPhases, rankOffset, stencilWrapper, capPresWrapper, relPermWrapper, dofNumberAccessor,
                        flowAccessors, fluidAccessors, capPressureAccessors, permAccessors,
                        dt, localMatrix, localRhs, hasCapPressure, useTotalMassEquation,
-                       checkPhasePresenceInGravity );
-    kernelType::template launch< POLICY >( stencilWrapper.size(), kernel );
+                       checkPhasePresenceInGravity, domainSize);
+    kernelType::template launch< POLICY >( stencilWrapper.size() , kernel );
   }
 };
 

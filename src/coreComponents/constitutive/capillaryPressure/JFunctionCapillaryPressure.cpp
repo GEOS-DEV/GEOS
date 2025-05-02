@@ -120,6 +120,11 @@ JFunctionCapillaryPressure::JFunctionCapillaryPressure( std::string const & name
   registerWrapper( viewKeyStruct::jFunctionWrappersString(), &m_jFuncKernelWrappers ).
     setSizedFromParent( 0 ).
     setRestartFlags( RestartFlags::NO_WRITE );
+  
+  registerWrapper( viewKeyStruct::inverseJFunctionWrappersString(), &m_inverseJFuncKernelWrappers ).
+    setSizedFromParent( 0 ).
+    setRestartFlags( RestartFlags::NO_WRITE );
+  
 }
 
 void JFunctionCapillaryPressure::postInputInitialization()
@@ -185,6 +190,7 @@ void JFunctionCapillaryPressure::initializePreSubGroups()
       ? true   // pc on the gas phase, function must be increasing
       : false; // pc on the water phase, function must be decreasing
     TableCapillaryPressureHelpers::validateCapillaryPressureTable( jFuncTable, getFullName(), jFuncMustBeIncreasing );
+
   }
   else if( numPhases == 3 )
   {
@@ -203,6 +209,7 @@ void JFunctionCapillaryPressure::initializePreSubGroups()
                    InputError );
     TableFunction const & jFuncTableNWI = functionManager.getGroup< TableFunction >( m_nonWettingIntermediateJFuncTableName );
     TableCapillaryPressureHelpers::validateCapillaryPressureTable( jFuncTableNWI, getFullName(), true );
+
   }
 }
 
@@ -298,23 +305,64 @@ void JFunctionCapillaryPressure::createAllTableKernelWrappers()
   // we want to make sure that the wrappers are always up-to-date, so we recreate them everytime
 
   m_jFuncKernelWrappers.clear();
+  m_inverseJFuncKernelWrappers.clear();
+
   if( numPhases == 2 )
   {
+
     TableFunction const & jFuncTable = functionManager.getGroup< TableFunction >( m_wettingNonWettingJFuncTableName );
     m_jFuncKernelWrappers.emplace_back( jFuncTable.createKernelWrapper() );
+
+    auto const & satArrayView = jFuncTable.getCoordinates()[0];
+    auto const & jArrayView   = jFuncTable.getValues();
+
+    std::vector<real64> satVec( satArrayView.size() );
+    std::vector<real64> jVec( jArrayView.size() );
+
+    std::copy( satArrayView.begin(), satArrayView.end(), satVec.begin() );
+    std::copy( jArrayView.begin(), jArrayView.end(), jVec.begin() );
+
+    // Reverse both arrays (if original J is decreasing in S)
+std::reverse( jVec.begin(), jVec.end() );
+std::reverse( satVec.begin(), satVec.end() );
+
+  
+auto inverseTable = std::make_shared<TableFunction>( "inverseJFunc", this );
+
+real64_array invJVec( jVec.size() );
+real64_array invSatVec( satVec.size() );
+std::copy( jVec.begin(), jVec.end(), invJVec.data() );
+std::copy( satVec.begin(), satVec.end(), invSatVec.data() );
+
+array1d< real64_array > coordinates;
+coordinates.emplace_back( std::move( invJVec ) );
+
+
+std::vector< units::Unit > dimUnits = { units::Unknown }; // or actual unit if available
+
+inverseTable->setTableCoordinates( coordinates, dimUnits );
+inverseTable->setTableValues( std::move( invSatVec ), units::Unknown );
+inverseTable->setInterpolationMethod( TableFunction::InterpolationType::Linear );
+
+m_inverseJFuncKernelWrappers.emplace_back( inverseTable->createKernelWrapper() );
+m_inverseTables.emplace_back( std::move( inverseTable ) );
+
   }
   else if( numPhases == 3 )
   {
     // the assumption used everywhere in this class is that the WI information comes before the NWI information
     TableFunction const & jFuncTableWI = functionManager.getGroup< TableFunction >( m_wettingIntermediateJFuncTableName );
     m_jFuncKernelWrappers.emplace_back( jFuncTableWI.createKernelWrapper() );
+    m_inverseJFuncKernelWrappers.emplace_back( jFuncTableWI.createKernelWrapper() );
     TableFunction const & jFuncTableNWI = functionManager.getGroup< TableFunction >( m_nonWettingIntermediateJFuncTableName );
     m_jFuncKernelWrappers.emplace_back( jFuncTableNWI.createKernelWrapper() );
+    m_inverseJFuncKernelWrappers.emplace_back( jFuncTableNWI.createKernelWrapper() );
   }
 }
 
 JFunctionCapillaryPressure::KernelWrapper::
   KernelWrapper( arrayView1d< TableFunction::KernelWrapper const > const & jFuncKernelWrappers,
+                 arrayView1d< TableFunction::KernelWrapper const > const & inverseJFuncKernelWrappers,
                  arrayView2d< real64 const > const & jFuncMultiplier,
                  arrayView1d< integer const > const & phaseTypes,
                  arrayView1d< integer const > const & phaseOrder,
@@ -325,6 +373,7 @@ JFunctionCapillaryPressure::KernelWrapper::
                                  phaseCapPres,
                                  dPhaseCapPres_dPhaseVolFrac ),
   m_jFuncKernelWrappers( jFuncKernelWrappers ),
+  m_inverseJFuncKernelWrappers( inverseJFuncKernelWrappers ),
   m_jFuncMultiplier( jFuncMultiplier )
 {}
 
@@ -333,6 +382,7 @@ JFunctionCapillaryPressure::createKernelWrapper()
 {
   createAllTableKernelWrappers();
   return KernelWrapper( m_jFuncKernelWrappers,
+                        m_inverseJFuncKernelWrappers,
                         m_jFuncMultiplier,
                         m_phaseTypes,
                         m_phaseOrder,
