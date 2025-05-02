@@ -85,11 +85,14 @@ array1d< real64 > readDataset( hid_t file_id, string const & filename, string co
 
   // Get the dataspace of the dataset
   hid_t dataspace_id = H5Dget_space( dataset_id );
+
+  // Get the dataset dimensions
   int ndims = H5Sget_simple_extent_ndims( dataspace_id );
   if( ndims != expectedNumDims )
   {
     H5Sclose( dataspace_id );
     H5Dclose( dataset_id );
+    H5Fclose( file_id );
     GEOS_ERROR( GEOS_FMT( "Dataset {} is not {}D", datasetName, std::to_string( expectedNumDims ) ) );
   }
 
@@ -103,17 +106,46 @@ array1d< real64 > readDataset( hid_t file_id, string const & filename, string co
     total_entries *= dim;
   }
 
+  // Get the dataset type
+  hid_t dataset_type = H5Dget_type(dataset_id);
+
   // Read the dataset
   array1d< real64 > datasetValues( total_entries );
-  herr_t err;
+  herr_t err{};
 
-  H5E_BEGIN_TRY
+  if ( (H5Tequal( dataset_type, H5T_NATIVE_FLOAT) ) )
   {
-    err = H5Dread( dataset_id, H5T_NATIVE_DOUBLE, dataspace_id, H5S_ALL, H5P_DEFAULT, datasetValues.data() );
+    array1d< real32 > tmp( total_entries );
+    H5E_BEGIN_TRY
+    {
+      err = H5Dread( dataset_id, H5T_NATIVE_FLOAT, dataspace_id, H5S_ALL, H5P_DEFAULT, tmp.data() );
+    }
+    H5E_END_TRY
+    GEOS_ERROR_IF( err < 0, GEOS_FMT( "{}: error reading single-precision dataset", datasetName ) );
+    for (int i = 0; i < tmp.size(); ++i)
+    {
+      datasetValues[i] = static_cast<double>( tmp[i] ) ;
+    }
   }
-  H5E_END_TRY
+  else if ( (H5Tequal( dataset_type, H5T_NATIVE_DOUBLE) ) )
+  {
+    H5E_BEGIN_TRY
+    {
+      err = H5Dread( dataset_id, H5T_NATIVE_DOUBLE, dataspace_id, H5S_ALL, H5P_DEFAULT, datasetValues.data() );
+    }
+    H5E_END_TRY
+    GEOS_ERROR_IF( err < 0, GEOS_FMT( "{}: error reading double-precision dataset", datasetName ) );
+  }
+  else
+  {
+    GEOS_ERROR( GEOS_FMT("Dataset {} is not of type float", datasetName) );
+  }
 
   GEOS_ERROR_IF( err < 0, GEOS_FMT( "{}: error reading dataset", datasetName ) );
+
+  H5Tclose( dataset_type );
+  H5Sclose( dataspace_id );
+  H5Dclose( dataset_id );
 
   return datasetValues;
 }
@@ -244,6 +276,8 @@ void TableFunction::initializeFunction()
 
     // Read table dataset
     m_values = hdf5Utils::readDataset( file_id, m_hdf5File, m_hdf5TableDatasetName, tableDim );
+
+    hdf5Utils::closeHDFFile( file_id, m_hdf5File );
   }
   else if( m_coordinateFiles.empty() )
   {
