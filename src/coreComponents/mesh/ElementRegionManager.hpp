@@ -571,6 +571,14 @@ public:
     } );
   }
 
+  /**
+   * @brief This function is used to launch kernel function over the specified target element subregions with the
+   * specified subregion types.
+   * @tparam LOOKUP_CONTAINER type of container of names or indices
+   * @tparam LAMBDA type of the user-provided function
+   * @param targetRegions target element region names or indices
+   * @param lambda kernel function
+   */
   template< typename ... SUBREGIONTYPES, typename LOOKUP_CONTAINER, typename LAMBDA >
   void forElementSubRegions( types::TypeList< SUBREGIONTYPES... >, LOOKUP_CONTAINER const & targetRegions, LAMBDA && lambda )
   {
