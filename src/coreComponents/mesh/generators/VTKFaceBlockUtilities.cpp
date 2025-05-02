@@ -124,7 +124,7 @@ ArrayOfArrays< globalIndex > buildCollocatedNodesMap( CollocatedNodes const & cn
 {
   ArrayOfArrays< globalIndex > result;
 
-  std::vector< int > sizes( cns.size() );
+  stdVector< int > sizes( cns.size() );
   for( std::size_t i = 0; i < cns.size(); ++i )
   {
     sizes[i] = cns[i].size();
@@ -152,7 +152,7 @@ ArrayOfArrays< localIndex > build2dElemTo2dNodes( vtkSmartPointer< vtkDataSet > 
 {
   // First allocate...
   vtkIdType const numCells = mesh->GetNumberOfCells();
-  std::vector< localIndex > sizes( numCells );
+  stdVector< localIndex > sizes( numCells );
   for( auto i = 0; i < numCells; ++i )
   {
     sizes[i] = mesh->GetCell( i )->GetNumberOfPoints();
@@ -280,10 +280,10 @@ array1d< localIndex > buildFace2dToEdge( vtkIdTypeArray const * globalPtIds,
                                          CollocatedNodes const & collocatedNodes,
                                          ArrayOfArraysView< localIndex const > nodeToEdges )
 {
-  std::map< globalIndex, std::vector< localIndex > > n2e;
+  std::map< globalIndex, stdVector< localIndex > > n2e;
   for( auto i = 0; i < nodeToEdges.size(); ++i )
   {
-    std::vector< localIndex > es;
+    stdVector< localIndex > es;
     for( auto j = 0; j < nodeToEdges[i].size(); ++j )
     {
       es.push_back( nodeToEdges[i][j] );
@@ -299,7 +299,7 @@ array1d< localIndex > buildFace2dToEdge( vtkIdTypeArray const * globalPtIds,
   // Eventually we select one of these edges.
   for( int i = 0; i < edges->GetNumberOfCells(); ++i )
   {
-    std::vector< vtkIdType > allDuplicatedNodesOfEdge;
+    stdVector< vtkIdType > allDuplicatedNodesOfEdge;
     vtkCell * edge = edges->GetCell( i );
     for( int j = 0; j < edge->GetNumberOfPoints(); ++j )
     {
@@ -451,7 +451,7 @@ Elem2dTo3dInfo buildElem2dTo3dElemAndFaces( vtkSmartPointer< vtkDataSet > faceMe
   // Let's build the elem2d to elem3d mapping.
   // We need to find the 3d elements (and only the 3d elements, so we can safely ignore the others).
   // First we compute the mapping from all the boundary nodes to the 3d elements that rely on those nodes.
-  std::map< vtkIdType, std::vector< vtkIdType > > nodesToCellsFull;
+  std::map< vtkIdType, stdVector< vtkIdType > > nodesToCellsFull;
   for( vtkIdType i = 0; i < boundary->GetNumberOfCells(); ++i )
   {
     vtkIdType const cellId = boundaryCells->GetValue( i );
@@ -473,7 +473,7 @@ Elem2dTo3dInfo buildElem2dTo3dElemAndFaces( vtkSmartPointer< vtkDataSet > faceMe
     std::set< vtkIdType > allDuplicatedNodes;
     for( std::size_t i = 0; i < collocatedNodes.size(); ++i )
     {
-      std::vector< vtkIdType > const & ns = collocatedNodes[ i ];
+      stdVector< vtkIdType > const & ns = collocatedNodes[ i ];
       allDuplicatedNodes.insert( ns.cbegin(), ns.cend() );
     }
 
@@ -482,7 +482,7 @@ Elem2dTo3dInfo buildElem2dTo3dElemAndFaces( vtkSmartPointer< vtkDataSet > faceMe
       auto const it = nodesToCellsFull.find( n );
       if( it != nodesToCellsFull.cend() )
       {
-        std::vector< vtkIdType > const & tmp = it->second;
+        stdVector< vtkIdType > const & tmp = it->second;
         std::set< vtkIdType > const cells{ tmp.cbegin(), tmp.cend() };
         nodesToCells[n] = cells;
       }
@@ -506,7 +506,7 @@ Elem2dTo3dInfo buildElem2dTo3dElemAndFaces( vtkSmartPointer< vtkDataSet > faceMe
     std::set< vtkIdType > duplicatedPointOfElem2d;
     for( vtkIdType j = 0; j < pointIds->GetNumberOfIds(); ++j )
     {
-      std::vector< vtkIdType > const & ns = collocatedNodes[ pointIds->GetId( j ) ];
+      stdVector< vtkIdType > const & ns = collocatedNodes[ pointIds->GetId( j ) ];
       duplicatedPointOfElem2d.insert( ns.cbegin(), ns.cend() );
     }
 

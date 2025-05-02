@@ -6,6 +6,18 @@ This file is designed to track changes to the integrated test baselines.
 Any developer who updates the baseline ID in the .integrated_tests.yaml file is expected to create an entry in this file with the pull request number, date, and their justification for rebaselining.
 These notes should be in reverse-chronological order, and use the following time format: (YYYY-MM-DD).
 
+PR #3626 (2025-04-28) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3626-11189-dfa74ce.tar.gz>
+=====================
+Update in VTK caused change in partitioning for reading vtk meshes. Verified baselines using new scripts/parallelRestartDiff.py
+
+PR #3624 (2025-04-15) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3624-11053-ae011c7.tar.gz>
+=====================
+Bugfix for time step cut in sequential, minor time step logic change when a cut occurs.
+
+PR #3537 (2025-04-02)
+=====================
+Added two attributes to TableFunction: writeCSV and logLevel.
+
 PR #3589 (2024-03-26)
 =====================
 Hypre update - make co2 cases use direct solver.
