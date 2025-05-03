@@ -94,6 +94,25 @@ if( GEOS_ENABLE_FLUIDFLOW )
         fluidFlow/CompositionalMultiphaseHybridFVMKernels_assembly.cpp.template
         fluidFlow/CompositionalMultiphaseHybridFVMKernels_flux.cpp.template
         fluidFlow/ReactiveCompositionalMultiphaseOBLKernels.cpp.template )
+
+  # TODO: The two kernels below have non-matching file names and JSON keys.
+  #       Either fix them to follow pattern, or come up with another mechanism.
+
+  generateKernels( TEMPLATE "fluidFlow/CompositionalMultiphaseFVMKernel_isothermal.cpp.template"
+                   JSON kernelSpecs
+                   KEY "IsothermalCompositionalMultiphaseFVM_DirichletFluxComputeKernels"
+                   HEADERS headerFiles
+                   SOURCES sourceFiles )
+  list(APPEND physicsSolvers_headers ${headerFiles})
+  list(APPEND physicsSolvers_sources ${sourceFiles})
+
+  generateKernels( TEMPLATE "fluidFlow/CompositionalMultiphaseFVMKernel_thermal.cpp.template"
+                   JSON kernelSpecs
+                   KEY "ThermalCompositionalMultiphaseFVM_DirichletFluxComputeKernels"
+                   HEADERS headerFiles
+                   SOURCES sourceFiles )
+  list(APPEND physicsSolvers_headers ${headerFiles})
+  list(APPEND physicsSolvers_sources ${sourceFiles})
 endif()
 
 if( GEOS_ENABLE_INDUCEDSEISMICITY )
@@ -154,24 +173,7 @@ foreach( kernelTemplateFile ${kernelTemplateFileList} )
   list(APPEND physicsSolvers_sources ${sourceFiles})
 endforeach()
  
-# TODO: The two kernels below have non-matching file names and JSON keys.
-#       Either fix them to follow pattern, or come up with another mechanism.
 
-generateKernels( TEMPLATE "fluidFlow/CompositionalMultiphaseFVMKernel_isothermal.cpp.template"
-                JSON kernelSpecs
-                KEY "IsothermalCompositionalMultiphaseFVM_DirichletFluxComputeKernels"
-                HEADERS headerFiles
-                SOURCES sourceFiles )
-list(APPEND physicsSolvers_headers ${headerFiles})
-list(APPEND physicsSolvers_sources ${sourceFiles})
-
-generateKernels( TEMPLATE "fluidFlow/CompositionalMultiphaseFVMKernel_thermal.cpp.template"
-                JSON kernelSpecs
-                KEY "ThermalCompositionalMultiphaseFVM_DirichletFluxComputeKernels"
-                HEADERS headerFiles
-                SOURCES sourceFiles )
-list(APPEND physicsSolvers_headers ${headerFiles})
-list(APPEND physicsSolvers_sources ${sourceFiles})
 
 
 geos_decorate_link_dependencies( LIST decoratedDependencies
