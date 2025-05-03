@@ -416,9 +416,21 @@ private:
 private:
 
   /**
+   * @enum TableInputType
+   * @brief Enumerator of available interpolation types
+   */
+  enum class TableInputType
+  {
+    None, //!< no input type is specified
+    OneD, //!< one-dimensional input type
+    ND,   //!< N-dimensional input type
+    HDF5  //!< input data in the HDF5 format
+  };
+
+  /**
    * @brief Validates the input data for the table function.
    */
-  void validateTableInput() const;
+  TableInputType determineTableInputType() const;
 
   /**
    * @brief Parse a table file.
@@ -439,7 +451,7 @@ private:
   Path m_voxelFile;
 
   /// Table voxel HDF5 file name
-  Path m_hdf5File;
+  Path m_hdf5FileName;
 
   /// List of table coordinate dataset names in HDF5 file
   string_array m_hdf5CoordinateDatasetNames;
