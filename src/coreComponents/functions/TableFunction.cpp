@@ -36,134 +36,134 @@ namespace geos
 namespace hdf5Utils
 {
 
-  struct serialHDF5File
+struct serialHDF5File
+{
+  hid_t m_fileId;
+  string m_filename;
+
+  serialHDF5File( string const & name ):
+    m_fileId( -1 ),
+    m_filename( name )
+  {}
+};
+
+void openHDF5File( serialHDF5File & hdfFile )
+{
+  H5E_BEGIN_TRY
   {
-    hid_t m_fileId;
-    string m_filename;
-
-    serialHDF5File(string const &name):
-      m_fileId(-1),
-      m_filename(name)
-      {}
-  };
-
-  void openHDF5File( serialHDF5File & hdfFile )
-  {
-    H5E_BEGIN_TRY
-    {
-      hdfFile.m_fileId = H5Fopen( hdfFile.m_filename.c_str(), H5F_ACC_RDONLY, H5P_DEFAULT );
-    }
-    H5E_END_TRY
-
-    GEOS_THROW_IF( hdfFile.m_fileId < 0,
-                   GEOS_FMT( "hdf5 file {} cannot be opened", hdfFile.m_filename ),
-                   InputError );
+    hdfFile.m_fileId = H5Fopen( hdfFile.m_filename.c_str(), H5F_ACC_RDONLY, H5P_DEFAULT );
   }
+  H5E_END_TRY
 
-  void closeHDF5File( hid_t const file_id, const string & filename )
+  GEOS_THROW_IF( hdfFile.m_fileId < 0,
+                 GEOS_FMT( "hdf5 file {} cannot be opened", hdfFile.m_filename ),
+                 InputError );
+}
+
+void closeHDF5File( serialHDF5File & hdfFile ) 
+{
+  herr_t err;
+
+  H5E_BEGIN_TRY
   {
-    herr_t err;
-
-    H5E_BEGIN_TRY
-    {
-      err = H5Fclose( file_id );
-    }
-    H5E_END_TRY
-
-    GEOS_THROW_IF( err < 0,
-                   GEOS_FMT( "hdf5 file {} cannot be closed", filename ),
-                   InputError );
+    err = H5Fclose( hdfFile.m_fileId );
   }
+  H5E_END_TRY
 
-  bool datasetExists( hid_t const & fileId, string const & datasetName )
+  GEOS_THROW_IF( err < 0,
+                 GEOS_FMT( "hdf5 file {} cannot be closed", hdfFile.m_filename ),
+                 InputError );
+}
+
+bool datasetExists( hid_t const & fileId, string const & datasetName )
+{
+  herr_t err;
+
+  H5E_BEGIN_TRY
   {
-    herr_t err;
-
-    H5E_BEGIN_TRY
-    {
-      err = H5Oexists_by_name( fileId, datasetName.c_str(), H5P_DEFAULT );
-    }
-    H5E_END_TRY
-    return err > 0 ? true : false;
+    err = H5Oexists_by_name( fileId, datasetName.c_str(), H5P_DEFAULT );
   }
+  H5E_END_TRY
+  return err > 0 ? true : false;
+}
 
-  array1d< real64 > readDataset( serialHDF5File & hdfFile, string const & datasetName, int const expectedNumDims )
+array1d< real64 > readDataset( serialHDF5File & hdfFile, string const & datasetName, int const expectedNumDims )
+{
+  // Check dataset existance
+  GEOS_THROW_IF( !datasetExists( hdfFile.m_fileId, datasetName ),
+                 GEOS_FMT( "Dataset {} doesn't exist in {}", datasetName, hdfFile.m_filename ),
+                 InputError );
+
+  // Open the dataset
+  hid_t dataset_id = H5Dopen( hdfFile.m_fileId, datasetName.c_str(), H5P_DEFAULT );
+  GEOS_ERROR_IF( dataset_id < 0, GEOS_FMT( "Error opening dataset {} in {}", datasetName, hdfFile.m_filename ) );
+
+  // Get the dataspace of the dataset
+  hid_t dataspace_id = H5Dget_space( dataset_id );
+
+  // Get the dataset dimensions
+  int ndims = H5Sget_simple_extent_ndims( dataspace_id );
+  if( ndims != expectedNumDims )
   {
-    // Check dataset existance
-    GEOS_THROW_IF( !datasetExists( hdfFile.m_fileId, datasetName ),
-                   GEOS_FMT( "Dataset {} doesn't exist in {}", datasetName, hdfFile.m_filename ),
-                   InputError );
-
-    // Open the dataset
-    hid_t dataset_id = H5Dopen( hdfFile.m_fileId, datasetName.c_str(), H5P_DEFAULT );
-    GEOS_ERROR_IF( dataset_id < 0, GEOS_FMT( "Error opening dataset {} in {}", datasetName, hdfFile.m_filename ) );
-
-    // Get the dataspace of the dataset
-    hid_t dataspace_id = H5Dget_space( dataset_id );
-
-    // Get the dataset dimensions
-    int ndims = H5Sget_simple_extent_ndims( dataspace_id );
-    if( ndims != expectedNumDims )
-    {
-      H5Sclose( dataspace_id );
-      H5Dclose( dataset_id );
-      H5Fclose( hdfFile.m_fileId );
-      GEOS_ERROR( GEOS_FMT( "Dataset {} is not {}D", datasetName, std::to_string( expectedNumDims ) ) );
-    }
-
-    array1d< hsize_t >  dims( ndims );
-    H5Sget_simple_extent_dims( dataspace_id, dims.data(), nullptr );
-
-    // Compute the total number of entries
-    hsize_t total_entries = 1;
-    for( auto const & dim : dims )
-    {
-      total_entries *= dim;
-    }
-
-    // Get the dataset type
-    hid_t dataset_type = H5Dget_type(dataset_id);
-
-    // Read the dataset
-    array1d< real64 > datasetValues( total_entries );
-    herr_t err{};
-
-    if ( (H5Tequal( dataset_type, H5T_NATIVE_FLOAT) ) )
-    {
-      array1d< real32 > tmp( total_entries );
-      H5E_BEGIN_TRY
-      {
-        err = H5Dread( dataset_id, H5T_NATIVE_FLOAT, dataspace_id, H5S_ALL, H5P_DEFAULT, tmp.data() );
-      }
-      H5E_END_TRY
-      GEOS_ERROR_IF( err < 0, GEOS_FMT( "{}: error reading single-precision dataset", datasetName ) );
-      for (int i = 0; i < tmp.size(); ++i)
-      {
-        datasetValues[i] = static_cast<double>( tmp[i] ) ;
-      }
-    }
-    else if ( (H5Tequal( dataset_type, H5T_NATIVE_DOUBLE) ) )
-    {
-      H5E_BEGIN_TRY
-      {
-        err = H5Dread( dataset_id, H5T_NATIVE_DOUBLE, dataspace_id, H5S_ALL, H5P_DEFAULT, datasetValues.data() );
-      }
-      H5E_END_TRY
-      GEOS_ERROR_IF( err < 0, GEOS_FMT( "{}: error reading double-precision dataset", datasetName ) );
-    }
-    else
-    {
-      GEOS_ERROR( GEOS_FMT("Dataset {} is not of type float", datasetName) );
-    }
-
-    GEOS_ERROR_IF( err < 0, GEOS_FMT( "{}: error reading dataset", datasetName ) );
-
-    H5Tclose( dataset_type );
     H5Sclose( dataspace_id );
     H5Dclose( dataset_id );
-
-    return datasetValues;
+    H5Fclose( hdfFile.m_fileId );
+    GEOS_ERROR( GEOS_FMT( "Dataset {} is not {}D", datasetName, std::to_string( expectedNumDims ) ) );
   }
+
+  array1d< hsize_t >  dims( ndims );
+  H5Sget_simple_extent_dims( dataspace_id, dims.data(), nullptr );
+
+  // Compute the total number of entries
+  hsize_t numDatasetEntries = 1;
+  for( auto const & dim : dims )
+  {
+    numDatasetEntries *= dim;
+  }
+
+  // Get the dataset type
+  hid_t dataset_type = H5Dget_type( dataset_id );
+
+  // Read the dataset
+  array1d< real64 > datasetValues( numDatasetEntries );
+  herr_t err{};
+
+  if( (H5Tequal( dataset_type, H5T_NATIVE_FLOAT ) ) )
+  {
+    array1d< real32 > tmp( numDatasetEntries );
+    H5E_BEGIN_TRY
+    {
+      err = H5Dread( dataset_id, H5T_NATIVE_FLOAT, dataspace_id, H5S_ALL, H5P_DEFAULT, tmp.data() );
+    }
+    H5E_END_TRY
+    GEOS_ERROR_IF( err < 0, GEOS_FMT( "{}: error reading single-precision dataset", datasetName ) );
+    for( int i = 0; i < tmp.size(); ++i )
+    {
+      datasetValues[i] = static_cast< double >( tmp[i] );
+    }
+  }
+  else if( (H5Tequal( dataset_type, H5T_NATIVE_DOUBLE ) ) )
+  {
+    H5E_BEGIN_TRY
+    {
+      err = H5Dread( dataset_id, H5T_NATIVE_DOUBLE, dataspace_id, H5S_ALL, H5P_DEFAULT, datasetValues.data() );
+    }
+    H5E_END_TRY
+    GEOS_ERROR_IF( err < 0, GEOS_FMT( "{}: error reading double-precision dataset", datasetName ) );
+  }
+  else
+  {
+    GEOS_ERROR( GEOS_FMT( "Dataset {} is not of type float", datasetName ) );
+  }
+
+  GEOS_ERROR_IF( err < 0, GEOS_FMT( "{}: error reading dataset", datasetName ) );
+
+  H5Tclose( dataset_type );
+  H5Sclose( dataspace_id );
+  H5Dclose( dataset_id );
+
+  return datasetValues;
+}
 
 } // end of namespace hdf5Utils
 
@@ -231,21 +231,30 @@ TableFunction::TableInputType TableFunction::determineTableInputType() const
   bool hasHDF5TableInputs = !m_hdf5FileName.empty() && !m_hdf5CoordinateDatasetNames.empty() && !m_hdf5TableDatasetName.empty();
 
   // Ensure mutual exclusivity of the three options
-  int const inputTypeCount = static_cast<int>(has1DTableInputs) + static_cast<int>(hasNDTableInputs) + static_cast<int>(hasHDF5TableInputs);
-  GEOS_THROW_IF(inputTypeCount > 1,
-                GEOS_FMT("{} {}: Multiple table input types are provided. Only one of the following is allowed:\n"
-                         "1. 1D table inputs (coordinates and values)\n"
-                         "2. ND table inputs (coordinate files and voxel file)\n"
-                         "3. HDF5 table inputs (HDF5 file, coordinate dataset names, and table dataset name).",
-                         catalogName(), getDataContext()),
-                InputError);
+  int const inputTypeCount = static_cast< int >(has1DTableInputs) + static_cast< int >(hasNDTableInputs) + static_cast< int >(hasHDF5TableInputs);
+  GEOS_THROW_IF( inputTypeCount > 1,
+                 GEOS_FMT( "{} {}: Multiple table input types are provided. Only one of the following is allowed:\n"
+                           "1. 1D table inputs (coordinates and values)\n"
+                           "2. ND table inputs (coordinate files and voxel file)\n"
+                           "3. HDF5 table inputs (HDF5 file, coordinate dataset names, and table dataset name).",
+                           catalogName(), getDataContext()),
+                 InputError );
 
   // Return the determined input type
-  if (has1DTableInputs) return TableInputType::OneD;
-  if (hasNDTableInputs) return TableInputType::ND;
-  if (hasHDF5TableInputs) return TableInputType::HDF5;
+  if( has1DTableInputs )
+  {
+    return TableInputType::OneD;
+  }
+  if( hasNDTableInputs )
+  {
+    return TableInputType::ND;
+  }
+  if( hasHDF5TableInputs )
+  {
+    return TableInputType::HDF5;
+  }
 
-  return TableInputType::None; // Default case if no input type is provided
+  return TableInputType::None;
 }
 
 void TableFunction::readFile( string const & filename, array1d< real64 > & target )
@@ -303,117 +312,67 @@ void TableFunction::initializeFunction()
   else
   {
     TableFunction::TableInputType inputType = determineTableInputType();
-    
+
     // Read in data
-    switch (inputType)
+    switch( inputType )
     {
       case TableInputType::OneD:
       {
-        // 1D Table
-        m_coordinates.appendArray(m_tableCoordinates1D.begin(), m_tableCoordinates1D.end());
-        GEOS_THROW_IF_NE_MSG(m_tableCoordinates1D.size(), m_values.size(),
-                            GEOS_FMT("{} {}: 1D table function coordinates and values must have the same length",
-                                      catalogName(), getDataContext()),
-                            InputError);
+        m_coordinates.appendArray( m_tableCoordinates1D.begin(), m_tableCoordinates1D.end());
+        GEOS_THROW_IF_NE_MSG( m_tableCoordinates1D.size(), m_values.size(),
+                              GEOS_FMT( "{} {}: 1D table function coordinates and values must have the same length",
+                                        catalogName(), getDataContext()),
+                              InputError );
         break;
       }
-                            
+
       case TableInputType::ND:
       {
-        // ND Table
-        array1d<real64> tmp;
+        array1d< real64 > tmp;
         localIndex numValues = 1;
-        for (localIndex ii = 0; ii < m_coordinateFiles.size(); ++ii)
+        for( localIndex ii = 0; ii < m_coordinateFiles.size(); ++ii )
         {
           tmp.clear();
-          readFile(m_coordinateFiles[ii], tmp);
-          m_coordinates.appendArray(tmp.begin(), tmp.end());
+          readFile( m_coordinateFiles[ii], tmp );
+          m_coordinates.appendArray( tmp.begin(), tmp.end());
           numValues *= tmp.size();
         }
-        m_values.reserve(numValues);
-        readFile(m_voxelFile, m_values);
+        m_values.reserve( numValues );
+        readFile( m_voxelFile, m_values );
         break;
       }
 
       case TableInputType::HDF5:
       {
-        hdf5Utils::serialHDF5File hdfFile(m_hdf5FileName);
-        hdf5Utils::openHDF5File(hdfFile);
+        hdf5Utils::serialHDF5File hdfFile( m_hdf5FileName );
+        hdf5Utils::openHDF5File( hdfFile );
 
         // Read table coordinates
         int tableDim = 0;
-        for (auto const &coordName : m_hdf5CoordinateDatasetNames)
+        for( auto const & coordName : m_hdf5CoordinateDatasetNames )
         {
-          array1d<real64> tmp = hdf5Utils::readDataset(hdfFile, coordName, 1);
-          m_coordinates.appendArray(tmp.begin(), tmp.end());
+          array1d< real64 > tmp = hdf5Utils::readDataset( hdfFile, coordName, 1 );
+          m_coordinates.appendArray( tmp.begin(), tmp.end());
           tableDim += 1;
         }
 
         // Read table dataset
-        m_values = hdf5Utils::readDataset(hdfFile, m_hdf5TableDatasetName, tableDim);
+        m_values = hdf5Utils::readDataset( hdfFile, m_hdf5TableDatasetName, tableDim );
 
-        hdf5Utils::closeHDF5File(hdfFile.m_fileId, m_hdf5FileName);
+        hdf5Utils::closeHDF5File( hdfFile );
         break;
       }
 
       case TableInputType::None:
       default:
       {
-        GEOS_THROW(GEOS_FMT("{} {}: No valid table input type is provided.",
-                            catalogName(), getDataContext()),
-                  InputError);
+        GEOS_THROW( GEOS_FMT( "{} {}: No valid table input type is provided.",
+                              catalogName(), getDataContext()),
+                    InputError );
         break;
       }
     }
   }
-  // if( m_coordinates.size() > 0 )
-  // {
-  //   // This function appears to be already initialized
-  //   // Apparently, this can be called multiple times during unit tests?
-  // }
-  // else if( !m_hdf5CoordinateDatasetNames.empty() )
-  // {
-  //   hdf5Utils::serialHDF5File hdfFile( m_hdf5FileName );
-  //   hdf5Utils::openHDF5File( hdfFile );
-
-  //   // Read table coordinates
-  //   int tableDim = 0;
-  //   for( auto const & coordName : m_hdf5CoordinateDatasetNames )
-  //   {
-  //     array1d< real64 > tmp = hdf5Utils::readDataset( hdfFile, coordName, 1 );
-  //     m_coordinates.appendArray( tmp.begin(), tmp.end() );
-  //     tableDim += 1;
-  //   }
-
-  //   // Read table dataset
-  //   m_values = hdf5Utils::readDataset( hdfFile, m_hdf5TableDatasetName, tableDim );
-
-  //   hdf5Utils::closeHDF5File( hdfFile.m_fileId, m_hdf5FileName );
-  // }
-  // else if( m_coordinateFiles.empty() )
-  // {
-  //   // 1D Table
-  //   m_coordinates.appendArray( m_tableCoordinates1D.begin(), m_tableCoordinates1D.end() );
-  //   GEOS_THROW_IF_NE_MSG( m_tableCoordinates1D.size(), m_values.size(),
-  //                         GEOS_FMT( "{} {}: 1D table function coordinates and values must have the same length",
-  //                                   catalogName(), getDataContext() ),
-  //                         InputError );
-  // }
-  // else
-  // {
-  //   array1d< real64 > tmp;
-  //   localIndex numValues = 1;
-  //   for( localIndex ii = 0; ii < m_coordinateFiles.size(); ++ii )
-  //   {
-  //     tmp.clear();
-  //     readFile( m_coordinateFiles[ii], tmp );
-  //     m_coordinates.appendArray( tmp.begin(), tmp.end() );
-  //     numValues *= tmp.size();
-  //   }
-  //   // ND Table
-  //   m_values.reserve( numValues );
-  //   readFile( m_voxelFile, m_values );
-  // }
 
   reInitializeFunction();
 }
