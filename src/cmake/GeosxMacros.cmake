@@ -307,7 +307,7 @@ function(generateKernels)
   set(generatedFileName "${CMAKE_BINARY_DIR}/include/${relativeSourceDir}/${localRelDir}/${KERNEL_GROUP_NAME}DispatchTypeList.hpp")
   string(REPLACE "coreComponents/" "" generatedFileName "${generatedFileName}")
   message(STATUS "Generating file: ${generatedFileName}")
-  configure_file(KernelDispatchTypeList.hpp.template "${generatedFileName}" @ONLY)
+  configure_file(../KernelDispatchTypeList.hpp.template "${generatedFileName}" @ONLY)
   list(APPEND generatedHeadersList ${generatedFileName})
 
   # The list of generated files is returned by setting the variable in the parent scope

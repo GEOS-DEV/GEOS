@@ -82,46 +82,10 @@ set( physicsSolvers_sources
      PhysicsSolverManager.cpp )
 
 
-
-if(NOT DEFINED GEOS_KERNEL_SPEC)
-  set(GEOS_KERNEL_SPEC "${CMAKE_CURRENT_LIST_DIR}/kernels-all.json" )
-endif()
-  
-file( READ ${GEOS_KERNEL_SPEC} kernelSpecs )
-
-
-set( kernelTemplateFileList )
-
-
 set( dependencyList ${parallelDeps})
 if( GEOS_ENABLE_FLUIDFLOW )
   add_subdirectory( fluidFlow )
   list( APPEND dependencyList fluidFlowSolvers )
-  list( APPEND kernelTemplateFileList
-        fluidFlow/SinglePhaseHybridFVMKernels.cpp.template
-        fluidFlow/CompositionalMultiphaseHybridFVMKernels_upwinding.cpp.template
-        fluidFlow/CompositionalMultiphaseHybridFVMKernels_assembly.cpp.template
-        fluidFlow/CompositionalMultiphaseHybridFVMKernels_flux.cpp.template
-        fluidFlow/ReactiveCompositionalMultiphaseOBLKernels.cpp.template )
-
-  # TODO: The two kernels below have non-matching file names and JSON keys.
-  #       Either fix them to follow pattern, or come up with another mechanism.
-
-  generateKernels( TEMPLATE "fluidFlow/CompositionalMultiphaseFVMKernel_isothermal.cpp.template"
-                   JSON kernelSpecs
-                   KEY "IsothermalCompositionalMultiphaseFVM_DirichletFluxComputeKernels"
-                   HEADERS headerFiles
-                   SOURCES sourceFiles )
-  list(APPEND physicsSolvers_headers ${headerFiles})
-  list(APPEND physicsSolvers_sources ${sourceFiles})
-
-  generateKernels( TEMPLATE "fluidFlow/CompositionalMultiphaseFVMKernel_thermal.cpp.template"
-                   JSON kernelSpecs
-                   KEY "ThermalCompositionalMultiphaseFVM_DirichletFluxComputeKernels"
-                   HEADERS headerFiles
-                   SOURCES sourceFiles )
-  list(APPEND physicsSolvers_headers ${headerFiles})
-  list(APPEND physicsSolvers_sources ${sourceFiles})
 endif()
 
 if( GEOS_ENABLE_INDUCEDSEISMICITY )
@@ -137,9 +101,6 @@ endif()
 if( GEOS_ENABLE_SOLIDMECHANICS )
   add_subdirectory( solidMechanics )
   list( APPEND dependencyList solidMechanicsSolvers )
-  list( APPEND kernelTemplateFileList 
-        solidMechanics/kernels/SolidMechanicsKernels.cpp.template
-        solidMechanics/kernels/SolidMechanicsFixedStressThermoPoromechanicsKernels.cpp.template )
 endif()
 
 if( GEOS_ENABLE_SURFACEGENERATION )
@@ -155,30 +116,7 @@ endif()
 if( GEOS_ENABLE_MULTIPHYSICS )
   add_subdirectory( multiphysics )
   list( APPEND dependencyList multiPhysicsSolvers )
-  list( APPEND kernelTemplateFileList 
-        multiphysics/poromechanicsKernels/PoromechanicsKernels.cpp.template
-        multiphysics/poromechanicsKernels/PoromechanicsEFEMKernels.cpp.template
-        multiphysics/poromechanicsKernels/ThermoPoromechanicsKernels.cpp.template
-        multiphysics/poromechanicsKernels/PoromechanicsDamageKernels.cpp.template )
-
 endif()
-
-
- 
-foreach( kernelTemplateFile ${kernelTemplateFileList} )
-  get_filename_component( jsonKey ${kernelTemplateFile} NAME_WE )
-  generateKernels( TEMPLATE ${kernelTemplateFile}
-                   JSON kernelSpecs
-                   KEY ${jsonKey}
-                   HEADERS headerFiles
-                   SOURCES sourceFiles )
-
-  list(APPEND physicsSolvers_headers ${headerFiles})
-  list(APPEND physicsSolvers_sources ${sourceFiles})
-endforeach()
- 
-
-
 
 geos_decorate_link_dependencies( LIST decoratedDependencies
                                  DEPENDENCIES ${dependencyList} )
