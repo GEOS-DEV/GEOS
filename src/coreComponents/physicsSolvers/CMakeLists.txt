@@ -81,6 +81,15 @@ set( physicsSolvers_headers
 set( physicsSolvers_sources
      PhysicsSolverManager.cpp )
 
+
+
+if(NOT DEFINED GEOS_KERNEL_SPEC)
+  set(GEOS_KERNEL_SPEC "${CMAKE_CURRENT_LIST_DIR}/kernels-all.json" )
+endif()
+  
+file( READ ${GEOS_KERNEL_SPEC} kernelSpecs )
+
+
 set( kernelTemplateFileList )
 
 
@@ -154,11 +163,6 @@ if( GEOS_ENABLE_MULTIPHYSICS )
 
 endif()
 
-if(NOT DEFINED GEOS_KERNEL_SPEC)
-  set(GEOS_KERNEL_SPEC "${CMAKE_CURRENT_LIST_DIR}/kernels-all.json" )
-endif()
-  
-file( READ ${GEOS_KERNEL_SPEC} kernelSpecs )
 
  
 foreach( kernelTemplateFile ${kernelTemplateFileList} )
