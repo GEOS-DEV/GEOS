@@ -158,6 +158,55 @@ set( dependencyList ${parallelDeps} physicsSolversBase )
 
 geos_decorate_link_dependencies( LIST decoratedDependencies DEPENDENCIES ${dependencyList} )
 
+
+
+
+file( READ "${CMAKE_CURRENT_LIST_DIR}/kernelSpecs.json" kernelSpecs )
+set( kernelTemplateFileList "" )
+
+list( APPEND kernelTemplateFileList
+      SinglePhaseHybridFVMKernels.cpp.template
+      CompositionalMultiphaseHybridFVMKernels_upwinding.cpp.template
+      CompositionalMultiphaseHybridFVMKernels_assembly.cpp.template
+      CompositionalMultiphaseHybridFVMKernels_flux.cpp.template
+      ReactiveCompositionalMultiphaseOBLKernels.cpp.template )
+
+
+foreach( kernelTemplateFile ${kernelTemplateFileList} )
+  get_filename_component( jsonKey ${kernelTemplateFile} NAME_WE )
+  generateKernels( TEMPLATE ${kernelTemplateFile}
+                   JSON kernelSpecs
+                   KEY ${jsonKey}
+                   HEADERS headerFiles
+                   SOURCES sourceFiles )
+
+list(APPEND fluidFlowSolvers_headers ${headerFiles})
+list(APPEND fluidFlowSolvers_sources ${sourceFiles})
+endforeach()
+
+# TODO: The two kernels below have non-matching file names and JSON keys.
+#       Either fix them to follow pattern, or come up with another mechanism.
+
+generateKernels( TEMPLATE "CompositionalMultiphaseFVMKernel_isothermal.cpp.template"
+                 JSON kernelSpecs
+                 KEY "IsothermalCompositionalMultiphaseFVM_DirichletFluxComputeKernels"
+                 HEADERS headerFiles
+                 SOURCES sourceFiles )
+list(APPEND fluidFlowSolvers_headers ${headerFiles})
+list(APPEND fluidFlowSolvers_sources ${sourceFiles})
+
+generateKernels( TEMPLATE "CompositionalMultiphaseFVMKernel_thermal.cpp.template"
+                 JSON kernelSpecs
+                 KEY "ThermalCompositionalMultiphaseFVM_DirichletFluxComputeKernels"
+                 HEADERS headerFiles
+                 SOURCES sourceFiles )
+list(APPEND fluidFlowSolvers_headers ${headerFiles})
+list(APPEND fluidFlowSolvers_sources ${sourceFiles})
+
+
+
+
+
 blt_add_library( NAME       fluidFlowSolvers
                  SOURCES    ${fluidFlowSolvers_sources}
                  HEADERS    ${fluidFlowSolvers_headers}
