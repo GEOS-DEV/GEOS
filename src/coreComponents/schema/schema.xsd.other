@@ -533,6 +533,7 @@
 			<xsd:element name="ExplicitSpringSlider" type="ExplicitSpringSliderType" />
 			<xsd:element name="FlowProppantTransport" type="FlowProppantTransportType" />
 			<xsd:element name="Hydrofracture" type="HydrofractureType" />
+			<xsd:element name="ImmiscibleMultiphaseFlow" type="ImmiscibleMultiphaseFlowType" />
 			<xsd:element name="ImplicitQuasiDynamicEQ" type="ImplicitQuasiDynamicEQType" />
 			<xsd:element name="ImplicitSpringSlider" type="ImplicitSpringSliderType" />
 			<xsd:element name="LaplaceFEM" type="LaplaceFEMType" />
@@ -782,8 +783,6 @@
 		<xsd:attribute name="maxStableDt" type="real64" />
 		<!--meshTargets => MeshBody/Region combinations that the solver will be applied to.-->
 		<xsd:attribute name="meshTargets" type="geos_mapBase_lt_std_pair_lt_string_cm_-string-_gt__cm_-std_vector_lt_string_cm_-std_allocator_lt_string-_gt_-_gt__cm_-std_integral_constant_lt_bool_cm_-true_gt_-_gt_" />
-		<!--performStressInitialization => Flag to indicate that the solver is going to perform stress initialization-->
-		<xsd:attribute name="performStressInitialization" type="integer" />
 	</xsd:complexType>
 	<xsd:complexType name="CompositionalMultiphaseWellType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -978,8 +977,17 @@
 		<xsd:attribute name="maxStableDt" type="real64" />
 		<!--meshTargets => MeshBody/Region combinations that the solver will be applied to.-->
 		<xsd:attribute name="meshTargets" type="geos_mapBase_lt_std_pair_lt_string_cm_-string-_gt__cm_-std_vector_lt_string_cm_-std_allocator_lt_string-_gt_-_gt__cm_-std_integral_constant_lt_bool_cm_-true_gt_-_gt_" />
-		<!--performStressInitialization => Flag to indicate that the solver is going to perform stress initialization-->
-		<xsd:attribute name="performStressInitialization" type="integer" />
+	</xsd:complexType>
+	<xsd:complexType name="ImmiscibleMultiphaseFlowType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
+			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
+			<xsd:element name="SolverStatistics" type="SolverStatisticsType" />
+		</xsd:choice>
+		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
+		<xsd:attribute name="maxStableDt" type="real64" />
+		<!--meshTargets => MeshBody/Region combinations that the solver will be applied to.-->
+		<xsd:attribute name="meshTargets" type="geos_mapBase_lt_std_pair_lt_string_cm_-string-_gt__cm_-std_vector_lt_string_cm_-std_allocator_lt_string-_gt_-_gt__cm_-std_integral_constant_lt_bool_cm_-true_gt_-_gt_" />
 	</xsd:complexType>
 	<xsd:complexType name="ImplicitQuasiDynamicEQType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -1026,8 +1034,6 @@
 		<xsd:attribute name="maxStableDt" type="real64" />
 		<!--meshTargets => MeshBody/Region combinations that the solver will be applied to.-->
 		<xsd:attribute name="meshTargets" type="geos_mapBase_lt_std_pair_lt_string_cm_-string-_gt__cm_-std_vector_lt_string_cm_-std_allocator_lt_string-_gt_-_gt__cm_-std_integral_constant_lt_bool_cm_-true_gt_-_gt_" />
-		<!--performStressInitialization => Flag to indicate that the solver is going to perform stress initialization-->
-		<xsd:attribute name="performStressInitialization" type="integer" />
 	</xsd:complexType>
 	<xsd:complexType name="MultiphasePoromechanicsConformingFracturesType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -1041,8 +1047,6 @@
 		<xsd:attribute name="maxStableDt" type="real64" />
 		<!--meshTargets => MeshBody/Region combinations that the solver will be applied to.-->
 		<xsd:attribute name="meshTargets" type="geos_mapBase_lt_std_pair_lt_string_cm_-string-_gt__cm_-std_vector_lt_string_cm_-std_allocator_lt_string-_gt_-_gt__cm_-std_integral_constant_lt_bool_cm_-true_gt_-_gt_" />
-		<!--performStressInitialization => Flag to indicate that the solver is going to perform stress initialization-->
-		<xsd:attribute name="performStressInitialization" type="integer" />
 	</xsd:complexType>
 	<xsd:complexType name="MultiphasePoromechanicsReservoirType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -1176,8 +1180,6 @@
 		<xsd:attribute name="maxStableDt" type="real64" />
 		<!--meshTargets => MeshBody/Region combinations that the solver will be applied to.-->
 		<xsd:attribute name="meshTargets" type="geos_mapBase_lt_std_pair_lt_string_cm_-string-_gt__cm_-std_vector_lt_string_cm_-std_allocator_lt_string-_gt_-_gt__cm_-std_integral_constant_lt_bool_cm_-true_gt_-_gt_" />
-		<!--performStressInitialization => Flag to indicate that the solver is going to perform stress initialization-->
-		<xsd:attribute name="performStressInitialization" type="integer" />
 	</xsd:complexType>
 	<xsd:complexType name="SinglePhasePoromechanicsConformingFracturesType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -1191,8 +1193,6 @@
 		<xsd:attribute name="maxStableDt" type="real64" />
 		<!--meshTargets => MeshBody/Region combinations that the solver will be applied to.-->
 		<xsd:attribute name="meshTargets" type="geos_mapBase_lt_std_pair_lt_string_cm_-string-_gt__cm_-std_vector_lt_string_cm_-std_allocator_lt_string-_gt_-_gt__cm_-std_integral_constant_lt_bool_cm_-true_gt_-_gt_" />
-		<!--performStressInitialization => Flag to indicate that the solver is going to perform stress initialization-->
-		<xsd:attribute name="performStressInitialization" type="integer" />
 	</xsd:complexType>
 	<xsd:complexType name="SinglePhasePoromechanicsConformingFracturesReservoirType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -1219,8 +1219,6 @@
 		<xsd:attribute name="maxStableDt" type="real64" />
 		<!--meshTargets => MeshBody/Region combinations that the solver will be applied to.-->
 		<xsd:attribute name="meshTargets" type="geos_mapBase_lt_std_pair_lt_string_cm_-string-_gt__cm_-std_vector_lt_string_cm_-std_allocator_lt_string-_gt_-_gt__cm_-std_integral_constant_lt_bool_cm_-true_gt_-_gt_" />
-		<!--performStressInitialization => Flag to indicate that the solver is going to perform stress initialization-->
-		<xsd:attribute name="performStressInitialization" type="integer" />
 	</xsd:complexType>
 	<xsd:complexType name="SinglePhasePoromechanicsReservoirType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -1271,8 +1269,6 @@
 		<xsd:attribute name="maxStableDt" type="real64" />
 		<!--meshTargets => MeshBody/Region combinations that the solver will be applied to.-->
 		<xsd:attribute name="meshTargets" type="geos_mapBase_lt_std_pair_lt_string_cm_-string-_gt__cm_-std_vector_lt_string_cm_-std_allocator_lt_string-_gt_-_gt__cm_-std_integral_constant_lt_bool_cm_-true_gt_-_gt_" />
-		<!--performStressInitialization => Flag to indicate that the solver is going to perform stress initialization-->
-		<xsd:attribute name="performStressInitialization" type="integer" />
 	</xsd:complexType>
 	<xsd:complexType name="SinglePhaseReservoirPoromechanicsConformingFracturesType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -1286,8 +1282,6 @@
 		<xsd:attribute name="maxStableDt" type="real64" />
 		<!--meshTargets => MeshBody/Region combinations that the solver will be applied to.-->
 		<xsd:attribute name="meshTargets" type="geos_mapBase_lt_std_pair_lt_string_cm_-string-_gt__cm_-std_vector_lt_string_cm_-std_allocator_lt_string-_gt_-_gt__cm_-std_integral_constant_lt_bool_cm_-true_gt_-_gt_" />
-		<!--performStressInitialization => Flag to indicate that the solver is going to perform stress initialization-->
-		<xsd:attribute name="performStressInitialization" type="integer" />
 	</xsd:complexType>
 	<xsd:complexType name="SinglePhaseWellType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -1632,6 +1626,7 @@
 			<xsd:element name="TableRelativePermeability" type="TableRelativePermeabilityType" />
 			<xsd:element name="TableRelativePermeabilityHysteresis" type="TableRelativePermeabilityHysteresisType" />
 			<xsd:element name="ThermalCompressibleSinglePhaseFluid" type="ThermalCompressibleSinglePhaseFluidType" />
+			<xsd:element name="TwoPhaseImmiscibleFluid" type="TwoPhaseImmiscibleFluidType" />
 			<xsd:element name="VanGenuchtenBakerRelativePermeability" type="VanGenuchtenBakerRelativePermeabilityType" />
 			<xsd:element name="VanGenuchtenCapillaryPressure" type="VanGenuchtenCapillaryPressureType" />
 			<xsd:element name="VanGenuchtenStone2RelativePermeability" type="VanGenuchtenStone2RelativePermeabilityType" />
@@ -3036,6 +3031,18 @@
 		<xsd:attribute name="internalEnergy_n" type="real64_array2d" />
 		<!--viscosity => Viscosity-->
 		<xsd:attribute name="viscosity" type="real64_array2d" />
+	</xsd:complexType>
+	<xsd:complexType name="TwoPhaseImmiscibleFluidType">
+		<!--dPhaseDensity => Derivative of phase density with respect to pressure-->
+		<xsd:attribute name="dPhaseDensity" type="real64_array4d" />
+		<!--dPhaseViscosity => Derivative of phase viscosity with respect to pressure-->
+		<xsd:attribute name="dPhaseViscosity" type="real64_array4d" />
+		<!--phaseDensity => Phase density-->
+		<xsd:attribute name="phaseDensity" type="real64_array3d" />
+		<!--phaseDensity_n => Phase density at the previous converged time step-->
+		<xsd:attribute name="phaseDensity_n" type="real64_array3d" />
+		<!--phaseViscosity => Phase viscosity-->
+		<xsd:attribute name="phaseViscosity" type="real64_array3d" />
 	</xsd:complexType>
 	<xsd:complexType name="VanGenuchtenBakerRelativePermeabilityType">
 		<!--dPhaseRelPerm_dPhaseVolFraction => Derivative of phase relative permeability with respect to phase volume fraction-->
