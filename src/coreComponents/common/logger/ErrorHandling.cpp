@@ -26,21 +26,20 @@
 
 namespace geos
 {
+  ErrorLogger errorLogger;
 
-  std::string ErrorLogger::toString( ErrorLogger::TypeMsg type )
+  std::string ErrorLogger::toString( ErrorLogger::MsgType type )
   {
     switch ( type )
     {
-      case ErrorLogger::TypeMsg::ERROR: return "Error";
-      case ErrorLogger::TypeMsg::WARNING: return "Warning";
+      case ErrorLogger::MsgType::Error: return "Error";
+      case ErrorLogger::MsgType::Warning: return "Warning";
       default: return "Unknown";
     }
   }
 
-  void ErrorLogger::errorMsgWritter( ErrorLogger::ErrorMsg const & errorMsg )
+  void ErrorLogger::write( ErrorLogger::ErrorMsg const & errorMsg )
   {
-    ErrorLogger logger;
-
     std::string filename = "errors.yaml";
     std::ifstream checkYamlFile( filename );
     bool isEmpty = checkYamlFile.peek() == std::ifstream::traits_type::eof();
@@ -54,10 +53,13 @@ namespace geos
         yamlFile << "errors: \n";
       }
       yamlFile << GEOS_FMT( "{:>2}- type: {}\n", " ", errorMsg.msg );
-      yamlFile << GEOS_FMT( "{:>4}message: {}\n", " ", logger.toString( errorMsg.type ) );
-      yamlFile << GEOS_FMT( "{:>4}location:\n", " " );
+      yamlFile << GEOS_FMT( "{:>4}message: {}\n", " ", errorLogger.toString( errorMsg.type ) );
+      yamlFile << GEOS_FMT( "{:>4}inputFileLocation:\n", " " );
       yamlFile << GEOS_FMT( "{:>6}- file: {}\n", " ", errorMsg.file );
-      yamlFile << GEOS_FMT( "{:>6}- line: {}\n\n", " ", errorMsg.line );
+      yamlFile << GEOS_FMT( "{:>8}line: {}\n\n", " ", errorMsg.line );
+      yamlFile << GEOS_FMT( "{:>4}sourceLocation:\n", " " );
+      yamlFile << GEOS_FMT( "{:>6}file: {}\n", " ", errorMsg.inputFileName );
+      yamlFile << GEOS_FMT( "{:>6}line: {}\n\n", " ", errorMsg.inputFileLine );
       yamlFile.close();
       std::cout << "YAML file created successfully.\n";
     } 

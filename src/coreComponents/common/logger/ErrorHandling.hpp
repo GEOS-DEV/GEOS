@@ -41,10 +41,10 @@ public:
    * @enum TypeMsg 
    * Enum listing the different types of possible errors
    */
-  enum class TypeMsg 
+  enum class MsgType 
   {
-      ERROR,
-      WARNING
+      Error,
+      Warning
   };
 
   /**
@@ -53,14 +53,19 @@ public:
    */
   struct ErrorMsg 
   {
-    TypeMsg type; 
+    MsgType type; 
     std::string msg; 
     std::string file; 
     integer line;
+    std::vector< std::map< std::string, std::string > > contextsInfo;
+    // std::vector< std::string > sourceCallStack;
+    // TODO: Ajouter une méthode addDataContext/addContext (0,1 ou *)
+    // Liste de contextes avec des fichiers et des lignes
+    void addContextInfo( std::map< std::string, std::string > && contextsInfo );
   };
 
   /**
-   * @brief Structured the message based on the provided parameters
+   * @brief Serialize the message based on the provided parameters
    * 
    * @param type The type of the message (error or warning)
    * @param msg The error/warning message content
@@ -68,23 +73,27 @@ public:
    * @param line The line where the error occured 
    * @return ErrorMsg 
    */
-  ErrorMsg errorMsgformatter( TypeMsg const & type, 
+  ErrorMsg serialize( MsgType const & type, 
                               std::string const & msg,
                               std::string const & file, 
-                              integer line )
+                              integer line,
+                              std::vector< std::map< std::string, std::string > > contextsInfo )
+                              // std::vector< std::string > sourceCallStack )
   {
-    return { type, msg, file, line };
+    return { type, msg, file, line, contextsInfo };
   };
 
-  std::string toString( TypeMsg type );
+  std::string toString( MsgType type );
 
   /**
    * @brief Add the error/warning message into the yaml file
    * 
    * @param errorMsg The error message informations formatted by the associated structure
    */
-  void errorMsgWritter( ErrorMsg const & errorMsg );
+  void write( ErrorMsg const & errorMsg );
 };
+
+extern ErrorLogger errorLogger;
 
 } /* namespace geos */
 

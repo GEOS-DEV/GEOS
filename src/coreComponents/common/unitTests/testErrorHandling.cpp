@@ -22,8 +22,8 @@ using namespace geos;
 TEST( ErrorHandling, testYaml )
 {
   ErrorLogger logger; 
-  ErrorLogger::ErrorMsg structMsg = logger.errorMsgformatter( ErrorLogger::TypeMsg::ERROR, "contenu du message", "nom du fichier dev", 24 );
-  logger.errorMsgWritter( structMsg );
+  ErrorLogger::ErrorMsg msgStruct = logger.errorMsgFormatter( ErrorLogger::MsgType::Error, "msg content", "dev file name", 24, "input file name", 42 );
+  logger.errorMsgWritter( msgStruct );
 }
 
 int main( int ac, char * av[] )
