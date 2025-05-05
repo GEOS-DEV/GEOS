@@ -2920,6 +2920,10 @@ Information output from lower logLevels is added with the desired log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--referenceElevation => Reference elevation where BHP control is enforced [m]-->
 		<xsd:attribute name="referenceElevation" type="real64" use="required" />
+		<!--referenceReservoirRegion => Name of reservoir region used for obtaining average region pressure used in volume rate constraint calculations.
+Frequency of pressure update is set in Single/CompositionalMultiPhaseStatistics definition.
+Setting cycleFrequency='1' will update the pressure every timestep, note that is a lagged property in constraint properties-->
+		<xsd:attribute name="referenceReservoirRegion" type="groupNameRef" default="" />
 		<!--statusTableName => Name of the well status table when the status of the well is a time dependent function. 
 If the status function evaluates to a positive value at the current time, the well will be open otherwise the well will be shut.-->
 		<xsd:attribute name="statusTableName" type="groupNameRef" default="" />
@@ -2950,7 +2954,8 @@ If the status function evaluates to a positive value at the current time, the we
 * injector-->
 		<xsd:attribute name="type" type="geos_WellControls_Type" use="required" />
 		<!--useSurfaceConditions => Flag to specify whether rates are checked at surface or reservoir conditions.
-Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
+Equal to 1 for surface conditions, and to 0 for reservoir conditions.
+See note on referenceReservoirRegion for reservoir condition options-->
 		<xsd:attribute name="useSurfaceConditions" type="integer" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
