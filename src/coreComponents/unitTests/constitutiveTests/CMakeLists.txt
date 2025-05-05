@@ -8,7 +8,8 @@ set( gtest_geosx_tests
      testMultiFluidCompositionalMultiphase.cpp
      testMultiFluidLiveOil.cpp
      testRelPerm.cpp
-     testRelPermHysteresis.cpp )
+     testRelPermHysteresis.cpp 
+     testTwoPhaseImmiscibleFluid.cpp )
 
 set( gtest_triaxial_xmls
      testTriaxial_druckerPragerExtended.xml
