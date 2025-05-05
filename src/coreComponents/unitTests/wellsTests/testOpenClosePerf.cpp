@@ -566,7 +566,7 @@ TEST_F( CompositionalMultiphaseReservoirSolverTest, openBottomUpPerfCheck )
 int main( int argc, char * * argv )
 {
   ::testing::InitGoogleTest( &argc, argv );
-  g_commandLineOptions = *geos::basicSetup( argc, argv );
+  geos::basicSetup( argc, argv );
   int const result = RUN_ALL_TESTS();
   geos::basicCleanup();
   return result;
