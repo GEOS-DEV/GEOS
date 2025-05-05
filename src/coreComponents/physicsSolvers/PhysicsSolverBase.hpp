@@ -803,6 +803,11 @@ public:
    */
   localIndex targetRegionIndex( string const & regionName ) const;
 
+  /**
+   * @brief return the list of target regions
+   * @return the array of region names
+   */
+  string_array const & getTargetRegionNames() const {return m_targetRegionNames;}
 
 
   /**
