@@ -54,6 +54,14 @@ string GroupContext::toString() const
   return path.str();
 }
 
+std::map< std::string, std::string > GroupContext::getContextInfo() const
+{
+  std::map<std::string, std::string> contextInfo;
+  contextInfo["dataPath"] = m_targetName;
+
+  return contextInfo;
+}
+
 DataContext::ToStringInfo GroupContext::getToStringInfo() const
 { return ToStringInfo( m_targetName ); }
 

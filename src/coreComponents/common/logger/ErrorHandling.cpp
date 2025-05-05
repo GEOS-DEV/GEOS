@@ -23,10 +23,16 @@
 // System includes
 #include <fstream>
 #include <iostream>
+#include<utility>
 
 namespace geos
 {
   ErrorLogger errorLogger;
+
+  void ErrorLogger::ErrorMsg::addContextInfo( std::map< std::string, std::string > && info )
+  {
+    ErrorLogger::ErrorMsg::contextsInfo.emplace_back( std::move( info ) );
+  }
 
   std::string ErrorLogger::toString( ErrorLogger::MsgType type )
   {
@@ -56,10 +62,8 @@ namespace geos
       yamlFile << GEOS_FMT( "{:>4}message: {}\n", " ", errorLogger.toString( errorMsg.type ) );
       yamlFile << GEOS_FMT( "{:>4}inputFileLocation:\n", " " );
       yamlFile << GEOS_FMT( "{:>6}- file: {}\n", " ", errorMsg.file );
-      yamlFile << GEOS_FMT( "{:>8}line: {}\n\n", " ", errorMsg.line );
+      yamlFile << GEOS_FMT( "{:>8}line: {}\n", " ", errorMsg.line );
       yamlFile << GEOS_FMT( "{:>4}sourceLocation:\n", " " );
-      yamlFile << GEOS_FMT( "{:>6}file: {}\n", " ", errorMsg.inputFileName );
-      yamlFile << GEOS_FMT( "{:>6}line: {}\n\n", " ", errorMsg.inputFileLine );
       yamlFile.close();
       std::cout << "YAML file created successfully.\n";
     } 

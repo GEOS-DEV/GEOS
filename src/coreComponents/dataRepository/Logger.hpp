@@ -151,11 +151,12 @@
  * @param MSG a message to log (any expression that can be stream inserted)
  * @param TYPE the type of exception to throw
  */
-#define LVARRAY_THROW_IF_TEST( EXP, MSG, TYPE ) \
+#define LVARRAY_THROW_IF_TEST( EXP, MSG, TYPE, ... ) \
   do \
   { \
     if( EXP ) \
     { \
+      ErrorLogger logger; \
       std::ostringstream __oss; \
       __oss << "\n"; \
       __oss << "***** LOCATION: " LOCATION "\n"; \
@@ -166,11 +167,9 @@
       __oss2 << MSG; \
       __oss3 << __FILE__; \
       integer line =  __LINE__; \
-      ErrorLogger::ErrorMsg msgStruct( ErrorLogger::MsgType::Error, \
-                                       __oss2.str(), \
-                                       __oss3.str(), \
-                                       line ); \
-      errorLogger.write( msgStruct ); \
+      ErrorLogger::ErrorMsg structMsg = logger.errorMsgformatter( ErrorLogger::TypeMsg::ERROR, __oss2.str(), \
+                                                                  __oss3.str(), line ); \
+      logger.errorMsgWritter( structMsg ); \
       throw TYPE( __oss.str() ); \
     } \
   } while( false )
@@ -189,7 +188,7 @@
  * @param msg a message to log (any expression that can be stream inserted)
  * @param TYPE the type of exception to throw
  */ 
-#define GEOS_THROW_IF_TEST( EXP, msg, TYPE ) LVARRAY_THROW_IF_TEST( EXP, "***** Rank " << ::geos::logger::internal::rankString << ": " << msg, TYPE )
+#define GEOS_THROW_IF_TEST( EXP, msg, TYPE, ... ) LVARRAY_THROW_IF_TEST( EXP, "***** Rank " << ::geos::logger::internal::rankString << ": " << msg, TYPE, __VA_ARGS__ )
 
 /**
  * @brief Raise a hard error and terminate the program.

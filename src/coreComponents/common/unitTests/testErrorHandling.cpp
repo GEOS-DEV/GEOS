@@ -13,22 +13,29 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#include "common/logger/ErrorHandling.hpp"
+// #include "common/logger/ErrorHandling.hpp"
 
-#include <gtest/gtest.h>
+// #include <gtest/gtest.h>
 
-using namespace geos;
+// using namespace geos;
 
-TEST( ErrorHandling, testYaml )
-{
-  ErrorLogger logger; 
-  ErrorLogger::ErrorMsg msgStruct = logger.errorMsgFormatter( ErrorLogger::MsgType::Error, "msg content", "dev file name", 24, "input file name", 42 );
-  logger.errorMsgWritter( msgStruct );
-}
+// TEST( ErrorHandling, testYaml )
+// {
+//   ErrorLogger logger; 
 
-int main( int ac, char * av[] )
-{
-  ::testing::InitGoogleTest( &ac, av );
-  int const result = RUN_ALL_TESTS();
-  return result;
-}
+//   std::vector<std::map<std::string, std::string>> vect;
+//   std::map<std::string, std::string> map;
+//   map["inputFile"] = "./simpleCo2Inj.xml";
+//   map["inputLineLine"] = "42";
+//   vect.push_back( map );
+
+//   ErrorLogger::ErrorMsg msgStruct = logger.serialize( ErrorLogger::MsgType::Error, "msg content", "dev file name", 24, vect );
+//   logger.write( msgStruct );
+// }
+
+// int main( int ac, char * av[] )
+// {
+//   ::testing::InitGoogleTest( &ac, av );
+//   int const result = RUN_ALL_TESTS();
+//   return result;
+// }

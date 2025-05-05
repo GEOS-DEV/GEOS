@@ -59,8 +59,11 @@ public:
    */
   virtual string toString() const = 0;
 
-  // TODO: Implémenter cette méthode pour chacune des classe qui en hérite
-  // Dans le cpp de chacune des classes car virtuelle pure 
+  /**
+   * @brief Returns contextual information, including the file name and the line number
+   * 
+   * @return std::map< std::string, std::string > 
+   */
   virtual std::map< std::string, std::string > getContextInfo() const = 0;
 
   /**
@@ -158,8 +161,10 @@ public:
    */
   string toString() const override;
 
-  // à compléter 
-  string getContextInfo() const override; // Puis implémenter dans le cpp
+  /**
+   * @return a map containing contextual information, including the file name and the line number
+   */
+  std::map< std::string, std::string > getContextInfo() const override; 
 
   /**
    * @return the type name in the source file (XML node tag name / attribute name).
@@ -216,9 +221,10 @@ private:
 // TODO: 
 // GEOS_THROW_IF_TEST manière de sortir une erreur sans contexte
 // addContext fais le lien entre GEOS_THROW_CTX_IF
-// Macro avec contextes ajoutés et macro quib n'en a pas 
 // Variation de GEOS_THROW_IF_TEST qui ajoute des données de contexte 
-// #define GEOS_THROW_CTX_IF( ctx ) ctx.getFilePath(), ctx.getLine() à remplacer 
+#define GEOS_THROW_CTX_IF( errorMsg, ctx ) \
+  std::map< std::string, std::string > contextInfo = ctx.getContextInfo(); \
+  errorMsg.addContext( contextInfo ); \
 
 } /* namespace dataRepository */
 } /* namespace geos */

@@ -68,6 +68,12 @@ private:
    * @return the group path with the file & line of the first parent for which this information exists.
    */
   string toString() const override;
+
+  /**
+   * @return a map containing contextual information, including the targetName of the DataContext
+   */
+  std::map< std::string, std::string > getContextInfo() const override; 
+
   /**
    * @copydoc DataContext::getToStringInfo()
    */

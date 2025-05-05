@@ -59,28 +59,23 @@ public:
     integer line;
     std::vector< std::map< std::string, std::string > > contextsInfo;
     // std::vector< std::string > sourceCallStack;
-    // TODO: Ajouter une méthode addDataContext/addContext (0,1 ou *)
-    // Liste de contextes avec des fichiers et des lignes
-    void addContextInfo( std::map< std::string, std::string > && contextsInfo );
-  };
 
-  /**
-   * @brief Serialize the message based on the provided parameters
-   * 
-   * @param type The type of the message (error or warning)
-   * @param msg The error/warning message content
-   * @param file The file name where the error occured
-   * @param line The line where the error occured 
-   * @return ErrorMsg 
-   */
-  ErrorMsg serialize( MsgType const & type, 
-                              std::string const & msg,
-                              std::string const & file, 
-                              integer line,
-                              std::vector< std::map< std::string, std::string > > contextsInfo )
-                              // std::vector< std::string > sourceCallStack )
-  {
-    return { type, msg, file, line, contextsInfo };
+    /**
+     * @brief Construct a new Error Msg object
+     * 
+     * @param t The type of the message (error or warning)
+     * @param m The error/warning message content
+     * @param f The file name where the error occured
+     * @param l The line where the error occured 
+     */
+    ErrorMsg( MsgType t, std::string m, std::string f, integer l ) : type( t ), msg( m ), file( f ), line( l ) {}
+    
+    /**
+     * @brief Add contextual information about the error/warning message to the ErrorMsg structure
+     * 
+     * @param info 
+     */
+    void addContextInfo( std::map< std::string, std::string > && info );
   };
 
   std::string toString( MsgType type );
