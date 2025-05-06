@@ -58,6 +58,13 @@ public:
                 arraySlice2d< real64, constitutive::relperm::USD_RELPERM_DS - 2 > const & dPhaseRelPerm_dPhaseVolFrac ) const;
 
   GEOS_HOST_DEVICE
+  void compute( real64 const phaseVolFraction,
+                integer const phase,
+                real64 & phaseRelPerm,
+                real64 & dPhaseRelPerm_dPhaseVolFrac,
+                real64 & d2PhaseRelPerm_d2PhaseVolFrac ) const;
+
+  GEOS_HOST_DEVICE
   virtual void update( localIndex const k,
                        localIndex const q,
                        arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseVolFraction ) const override
@@ -95,6 +102,8 @@ public:
    * @return the wrapper
    */
   KernelWrapper createKernelWrapper();
+
+  KernelWrapper createKernelWrapper() const;
 
 //START_SPHINX_INCLUDE_01
   struct viewKeyStruct : RelativePermeabilityBase::viewKeyStruct
@@ -155,6 +164,38 @@ BrooksCoreyRelativePermeabilityUpdate::
     phaseTrappedVolFrac[ip] = LvArray::math::min( phaseVolFraction[ip], m_phaseMinVolumeFraction[ip] );
 
   }
+}
+
+GEOS_HOST_DEVICE
+inline void
+BrooksCoreyRelativePermeabilityUpdate::
+  compute( real64 const phaseVolFraction,
+           integer const phase,
+           real64 & phaseRelPerm,
+           real64 & dPhaseRelPerm_dPhaseVolFrac,
+           real64 & d2PhaseRelPerm_d2PhaseVolFrac ) const
+{
+  real64 const satScaleInv = 1.0 / m_volFracScale;
+  
+  real64 const satScaled = (phaseVolFraction - m_phaseMinVolumeFraction[phase]) * satScaleInv;
+  real64 const exponent  = m_phaseRelPermExponent[phase];
+  real64 const scale     = m_phaseRelPermMaxValue[phase];
+
+  if( satScaled > 0.0 && satScaled < 1.0 )
+  {
+    // intermediate value
+    real64 const v = scale * pow( satScaled, exponent - 1.0 );
+
+    phaseRelPerm = v * satScaled;
+    dPhaseRelPerm_dPhaseVolFrac = v * exponent * satScaleInv;
+    d2PhaseRelPerm_d2PhaseVolFrac = dPhaseRelPerm_dPhaseVolFrac * satScaleInv / satScaled;
+  }
+  else
+  {
+    phaseRelPerm = (satScaled <= 0.0) ? 0.0 : scale;
+    dPhaseRelPerm_dPhaseVolFrac = 0.0;
+    d2PhaseRelPerm_d2PhaseVolFrac = 0.0;
+  }  
 }
 
 } // namespace constitutive

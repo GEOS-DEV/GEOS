@@ -117,6 +117,20 @@ BrooksCoreyRelativePermeability::createKernelWrapper()
                         m_phaseTrappedVolFrac );
 }
 
+BrooksCoreyRelativePermeability::KernelWrapper
+BrooksCoreyRelativePermeability::createKernelWrapper() const
+{
+  return KernelWrapper( m_phaseMinVolumeFraction,
+                        m_phaseRelPermExponent,
+                        m_phaseRelPermMaxValue,
+                        m_volFracScale,
+                        m_phaseTypes,
+                        m_phaseOrder,
+                        m_phaseRelPerm,
+                        m_dPhaseRelPerm_dPhaseVolFrac,
+                        m_phaseTrappedVolFrac );
+}
+
 //START_SPHINX_INCLUDE_01
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, BrooksCoreyRelativePermeability, string const &, Group * const )
 

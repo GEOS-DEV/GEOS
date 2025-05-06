@@ -250,6 +250,13 @@ TwoPhaseFluid::createKernelWrapper()
                         m_phaseViscosity.toView());
 }
 
+TwoPhaseFluid::KernelWrapper
+TwoPhaseFluid::createKernelWrapper() const
+{
+  return KernelWrapper( m_densityTableKernels,
+                        m_viscosityTableKernels );
+}
+
 
 TwoPhaseFluid::KernelWrapper::KernelWrapper(
   arrayView1d< TableFunction::KernelWrapper const > densityTables,
@@ -260,6 +267,12 @@ TwoPhaseFluid::KernelWrapper::KernelWrapper(
   m_viscosityTables( std::move( viscosityTables )),
   m_phaseDensity( std::move( phaseDensity )),
   m_phaseViscosity( std::move( phaseViscosity )) {}
+
+TwoPhaseFluid::KernelWrapper::KernelWrapper(
+  arrayView1d< TableFunction::KernelWrapper const > densityTables,
+  arrayView1d< TableFunction::KernelWrapper const > viscosityTables )
+  : m_densityTables( std::move( densityTables )),
+  m_viscosityTables( std::move( viscosityTables )) {}  
 
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, TwoPhaseFluid, string const &, Group * const )

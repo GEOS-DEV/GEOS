@@ -123,6 +123,20 @@ BrooksCoreyCapillaryPressure::createKernelWrapper()
                         m_dPhaseCapPressure_dPhaseVolFrac );
 }
 
+BrooksCoreyCapillaryPressure::KernelWrapper
+BrooksCoreyCapillaryPressure::createKernelWrapper() const
+{
+  return KernelWrapper( m_phaseMinVolumeFraction,
+                        m_phaseCapPressureExponentInv,
+                        m_phaseEntryPressure,
+                        m_capPressureEpsilon,
+                        m_volFracScale,
+                        m_phaseTypes,
+                        m_phaseOrder,
+                        m_phaseCapPressure,
+                        m_dPhaseCapPressure_dPhaseVolFrac );
+}
+
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, BrooksCoreyCapillaryPressure, string const &, Group * const )
 } // namespace constitutive
 

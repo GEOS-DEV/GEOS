@@ -137,6 +137,12 @@ public:
                   PhaseProp::SliceType const phaseViscosity ) const;
 
     GEOS_HOST_DEVICE
+    void compute( real64 const pressure,
+                  integer const phase,
+                  real64 & phaseDens,
+                  real64 & dPhaseDens_dPres ) const;        
+
+    GEOS_HOST_DEVICE
     void update( localIndex const k,
                  localIndex const q,
                  real64 const pressure ) const;
@@ -180,6 +186,19 @@ protected:
     GEOS_HOST_DEVICE
     void computeDensities( real64 const pressure,
                            PhaseProp::SliceType const & phaseDensity ) const;
+
+    /**
+     * @brief Overloaded utility function to compute density as a function of pressure (keeping derivatives)
+     * @param[in] pressure pressure in the cell
+     * @param[in] phase phase density being computed
+     * @param[out] phaseDens the phase density in the cell
+     * @param[out] dPhaseDens_dPres the phase density derivative in the cell
+     */
+    GEOS_HOST_DEVICE
+    void computeDensities( real64 const pressure,
+                           integer const phase,
+                           real64 & phaseDens,
+                           real64 & dPhaseDens_dPres ) const;                       
 
     /**
      * @brief Utility function to compute viscosities as a function of pressure (keeping derivatives)
@@ -233,6 +252,8 @@ protected:
 
   KernelWrapper createKernelWrapper();
 
+  KernelWrapper createKernelWrapper() const;
+
 
 private:
   void readInputDataFromTableFunctions();
@@ -273,6 +294,17 @@ void TwoPhaseFluid::KernelWrapper::
   }
 }
 
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
+void TwoPhaseFluid::KernelWrapper::
+  computeDensities( real64 const pressure,
+                    integer const phase,
+                    real64 & phaseDens,
+                    real64 & dPhaseDens_dPres ) const
+{
+  phaseDens = m_densityTables[phase].compute( &pressure, &dPhaseDens_dPres );
+}
+
 
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
@@ -306,6 +338,20 @@ void TwoPhaseFluid::KernelWrapper::
 
   computeViscosities( pressure,
                       phaseViscosity );
+}
+
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
+void TwoPhaseFluid::KernelWrapper::
+  compute( real64 const pressure,
+           integer const phase,
+           real64 & phaseDens,
+           real64 & dPhaseDens_dPres ) const
+{
+  computeDensities( pressure,
+                    phase,
+                    phaseDens,
+                    dPhaseDens_dPres );
 }
 
 

@@ -58,7 +58,9 @@ ImmiscibleMultiphaseFlow::ImmiscibleMultiphaseFlow( const string & name,
   FlowSolverBase( name, parent ),
   m_numPhases( 2 ),
   m_hasCapPressure( 0 ),
-  m_useTotalMassEquation ( 1 )
+  m_useTotalMassEquation ( 1 ),
+  m_trustRegion ( 0 ),
+  m_fluxInflection ( 1 )
 {
   this->registerWrapper( viewKeyStruct::inputTemperatureString(), &m_inputTemperature ).
     setInputFlag( InputFlags::REQUIRED ).
@@ -1147,6 +1149,161 @@ real64 ImmiscibleMultiphaseFlow::calculateResidualNorm( real64 const & GEOS_UNUS
   }
 
   return residualNorm;
+}
+
+real64
+ImmiscibleMultiphaseFlow::scalingForSystemSolution( DomainPartition & domain,
+                                                    DofManager const & dofManager,
+                                                    arrayView1d< real64 const > const & localSolution )
+{
+  GEOS_MARK_FUNCTION; // D2F with global damping
+  if ( m_trustRegion == 0 )
+  {
+    return 1.0;
+  }
+
+  // Compute kink scaling factor 
+  real64 localKinkFactor = 1.0;
+
+  NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
+  FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
+  FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( m_discretizationName );
+  
+  string const dofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
+
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                                               MeshLevel const & mesh,
+                                                               arrayView1d< string const > const & regionNames )
+  {
+    fluxApprox.forAllStencils( mesh, [&]( auto & stencil )
+    {
+      real64 stencilKinkFactor;            
+
+      // step 1.1: compute the kink damping factor in the stencil
+
+      typename TYPEOFREF( stencil ) ::KernelWrapper stencilWrapper = stencil.createKernelWrapper();
+      immiscibleMultiphaseKernels::
+        KinkFactorKernelFactory::createAndLaunch< parallelDevicePolicy<> >( m_numPhases,
+                                                                            dofManager.rankOffset(),                                                                            
+                                                                            dofKey,
+                                                                            localSolution,
+                                                                            getName(),
+                                                                            mesh.getElemManager(),
+                                                                            stencilWrapper,
+                                                                            m_hasCapPressure,
+                                                                            stencilKinkFactor );           
+
+      // step 1.2: local reduction across stencils
+
+      localKinkFactor = fmin( localKinkFactor, stencilKinkFactor );
+    } );
+  } );
+
+  // step 1.3: global reduction across mpi ranks
+
+  real64 globalKinkFactor = MpiWrapper::min( localKinkFactor );
+
+  // Compute inflection scaling factor
+  real64 localInflectionFactor = 1.0;  
+
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                                               MeshLevel const & mesh,
+                                                               arrayView1d< string const > const & regionNames )
+  {    
+    mesh.getElemManager().forElementSubRegions( regionNames,
+                                                [&]( localIndex const,
+                                                     ElementSubRegionBase const & subRegion )
+    {
+      // Build wrappers to the fluid, relative permeability and capillary pressure model objects
+      string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
+      TwoPhaseFluid const & fluid = getConstitutiveModel< TwoPhaseFluid >( subRegion, fluidName );
+      TwoPhaseFluid::KernelWrapper fluidWrapper = fluid.createKernelWrapper();
+
+      string const & relPermName = subRegion.getReference< string >( viewKeyStruct::relPermNamesString() );
+      BrooksCoreyRelativePermeability const & relPerm = getConstitutiveModel< BrooksCoreyRelativePermeability >( subRegion, relPermName );
+      BrooksCoreyRelativePermeability::KernelWrapper relPermWrapper = relPerm.createKernelWrapper();
+
+      BrooksCoreyCapillaryPressure::KernelWrapper* capPressureWrapper = nullptr;
+      if ( m_hasCapPressure )
+      {
+        string const & cappresName = subRegion.getReference< string >( viewKeyStruct::capPressureNamesString() );
+        BrooksCoreyCapillaryPressure const & capPressure = getConstitutiveModel< BrooksCoreyCapillaryPressure >( subRegion, cappresName );
+        BrooksCoreyCapillaryPressure::KernelWrapper wrapper = capPressure.createKernelWrapper();
+        capPressureWrapper = &wrapper;
+      }
+
+      if ( m_fluxInflection == 1 )
+      {
+        fluxApprox.forAllStencils( mesh, [&]( auto & stencil )
+        {
+          real64 stencilInflectionFactor;
+
+          // step 2.1a: compute the inflection damping factor in the subRegion
+
+          typename TYPEOFREF( stencil ) ::KernelWrapper stencilWrapper = stencil.createKernelWrapper();
+          immiscibleMultiphaseKernels::
+            InflectionFactorKernelFactory::createAndLaunch< parallelDevicePolicy<> >( m_numPhases,
+                                                                                      dofManager.rankOffset(),                                                                            
+                                                                                      dofKey,
+                                                                                      localSolution,
+                                                                                      globalKinkFactor,
+                                                                                      getName(),
+                                                                                      mesh.getElemManager(),
+                                                                                      stencilWrapper,
+                                                                                      fluidWrapper,
+                                                                                      relPermWrapper,
+                                                                                      capPressureWrapper,
+                                                                                      m_hasCapPressure,
+                                                                                      stencilInflectionFactor );           
+
+          // step 2.2a: local reduction across meshBodies/regions/subRegions
+
+          localInflectionFactor = fmin( localInflectionFactor, stencilInflectionFactor );
+        } );
+      }
+      else
+      {
+        fluxApprox.forAllStencils( mesh, [&]( auto & stencil )
+        {
+          real64 stencilInflectionFactor;
+
+          // step 2.1b: compute the inflection damping factor in the subRegion
+
+          typename TYPEOFREF( stencil ) ::KernelWrapper stencilWrapper = stencil.createKernelWrapper();
+          immiscibleMultiphaseKernels::
+            ResInflectionFactorKernelFactory::createAndLaunch< parallelDevicePolicy<> >( m_numPhases,
+                                                                                         dofManager.rankOffset(),                                                                            
+                                                                                         dofKey,
+                                                                                         localSolution,
+                                                                                         globalKinkFactor,
+                                                                                         getName(),
+                                                                                         mesh.getElemManager(),
+                                                                                         stencilWrapper,
+                                                                                         fluidWrapper,
+                                                                                         relPermWrapper,
+                                                                                         capPressureWrapper,
+                                                                                         m_hasCapPressure,
+                                                                                         stencilInflectionFactor );           
+
+          // step 2.2b: local reduction across meshBodies/regions/subRegions
+
+          localInflectionFactor = fmin( localInflectionFactor, stencilInflectionFactor );
+        } );
+      }
+    } );
+  } );
+
+  // step 2.3: global reduction across mpi ranks
+
+  real64 globalInflectionFactor = MpiWrapper::min( localInflectionFactor );
+
+  localInflectionFactor = fmax( localInflectionFactor, 0.1 ); // 0.8
+  globalInflectionFactor = fmax( globalInflectionFactor, 0.1 ); // 0.4
+
+  // step 2.4: global combined damping factor
+  real64 scalingFactor = fmax( globalKinkFactor * globalInflectionFactor, 0.01 ); /////// 0.1, 0.2, 0.4, 1.0
+
+  return scalingFactor;
 }
 
 void ImmiscibleMultiphaseFlow::applySystemSolution( DofManager const & dofManager,

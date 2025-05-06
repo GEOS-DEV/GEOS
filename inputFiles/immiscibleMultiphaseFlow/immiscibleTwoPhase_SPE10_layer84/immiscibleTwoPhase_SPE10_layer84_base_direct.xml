@@ -22,18 +22,21 @@
   </Solvers>
 
   <Events
-    maxTime="8e7">
+    maxTime="8e5">
+    <!-- maxTime="8e7" -->
 
    <PeriodicEvent
       name="outputs"
-      timeFrequency="4e7"
+      timeFrequency="4e5"
       targetExactTimestep="1"
       target="/Outputs/vtkOutput_direct"/>
+      <!-- timeFrequency="4e7" -->
     
     <PeriodicEvent
       name="solverApplications"
-      maxEventDt="1e6"  
+      maxEventDt="1e4"  
       target="/Solvers/FlowSolver"/>
+      <!-- maxEventDt="1e6" -->
   </Events>
 
   <NumericalMethods>
@@ -76,8 +79,9 @@
       name="relperm"
       phaseNames="{ oil, water }"
       phaseMinVolumeFraction="{ 0.0, 0.0 }"
-      phaseRelPermExponent="{ 2.0, 2.0 }"
+      phaseRelPermExponent="{ 3.5, 3.5 }"
       phaseRelPermMaxValue="{ 1.0, 1.0 }"/>
+      <!-- phaseRelPermExponent="{ 2.0, 2.0 } -->
 
     <ConstantPermeability
       name="rockPerm"
@@ -153,9 +157,10 @@
     <SourceFlux
       name="sourceTerm"
       objectPath="ElementRegions/reservoir/block"
-      scale="-0.07279"
+      scale="-0.2"
       component="1"
       setNames="{ source }"/>
+      <!-- scale="-0.07279" -->
 
     <FieldSpecification
       name="sinkPressure"
@@ -207,27 +212,33 @@
 
     <TableFunction
       name="densityTableOil"
-      coordinateFiles="{ pres_pvdo.txt }"
-      voxelFile="dens_pvdo.txt"
+      coordinateFiles="{ pres_pvdo2.txt }"
+      voxelFile="dens_pvdo2.txt"
       interpolation="linear"/>
+      <!-- file 1 -->
 
     <TableFunction
       name="viscosityTableOil"
-      coordinateFiles="{ pres_pvdo.txt }"
-      voxelFile="visc_pvdo.txt"
+      coordinateFiles="{ pres_pvdo2.txt }"
+      voxelFile="visc_pvdo2.txt"
       interpolation="linear"/>
+      <!-- file 1 -->
 
     <TableFunction
       name="densityTableWater"
-      coordinates="{2068000, 5516000, 30600000.1, 55160000}"
-      values="{980.683, 982.07, 992.23300970873786407766, 1002.265}"
+      coordinates="{2068000, 5516000, 28000000, 29000000, 30000000, 31000000, 32000000, 33000000, 34000000, 35000000, 36000000, 37000000, 38000000, 39000000, 55160000}"
+      values="{980.683,983.138,999.299,1000.024,1000.750,1001.475,1002.202,1002.929,1003.657,1004.385,1005.113,1005.842,1006.572,1007.302,1019.176}"
       interpolation="linear"/>
+      <!-- coordinates="{2068000, 5516000, 30600000.1, 55160000}"
+           values="{980.683, 982.07, 992.23300970873786407766, 1002.265}" -->
 
     <TableFunction
       name="viscosityTableWater"
-      coordinates="{0}"
-      values="{0.0003}"
+      coordinates="{2068000, 5516000, 28000000, 29000000, 30000000, 31000000, 32000000, 33000000, 34000000, 35000000, 36000000, 37000000, 38000000, 39000000, 55160000}"
+      values="{0.0003,0.000300751,0.000305695,0.000305917,0.000306139,0.000306361,0.000306583,0.000306805,0.000307028,0.000307251,0.000307473,0.000307696,0.00030792,0.000308143,0.000311775}"
       interpolation="linear"/>
+      <!-- coordinates="{0}"
+           values="{0.0003}" -->
   </Functions>
   
   <Outputs>
