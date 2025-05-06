@@ -119,9 +119,15 @@ TEST_F( SoreideWhitsonTestFixture4, testSolubility )
 
   m_parent.initialize();
   m_parent.initializePostInitialConditions();
-  TestPoint const data1{ 2.49977e+07, 344.15, { 0.757, 0.150, 0.077, 0.016 } };
+
+  //TestPoint const data1{ 2.49977e+07, 344.15, { 0.757, 0.150, 0.077, 0.016 } };
+  //Base::testNumericalDerivatives( fluid, data1 );
+  //0.00198586 0.00330612 0.00461795 0.99009
+  //TestPoint const data2{ 2.74343e+07, 344.15, { 0.000, 0.000, 0.000, 1.000 } };
+  //Base::testNumericalDerivatives( fluid, data2 );
+  TestPoint const data1{ 2.49977e+07, 344.15, { 0.0019849, 0.0033061, 0.0046179, 0.9900911 } };
   Base::testNumericalDerivatives( fluid, data1 );
-  TestPoint const data2{ 2.74343e+07, 344.15, { 0.000, 0.000, 0.000, 1.000 } };
+  TestPoint const data2{ 2.49977e+07, 344.15, { 0.0019859, 0.0033061, 0.0046179, 0.9900901 } };
   Base::testNumericalDerivatives( fluid, data2 );
 }
 

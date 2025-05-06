@@ -191,6 +191,65 @@ void FluidModelTest< FLUID_TYPE, NUM_COMP, NUM_PHASE >::testNumericalDerivatives
     }
   } );
 
+  auto printPhaseArrays = [&]( string const & name, const auto & values, const auto & derivs )
+  {
+    std::stringstream os;
+    for( int ip = 0; ip < numPhase; ip++ )
+    {
+      os << GEOS_FMT( "{}[{}]: value {}\n", name, ip, values( 0, 0, ip ));
+      os << GEOS_FMT( "{}[{}]: deriv {{", name, ip );
+      for( int ic = 0; ic < numDof; ic++ )
+      {
+        os << " " << derivs( 0, 0, ip, ic );
+      }
+      os << "}\n";
+    }
+    return os.str();
+  };
+
+  auto printPhaseCompositionArrays = [&]( string const & name, const auto & values, const auto & derivs )
+  {
+    std::stringstream os;
+    for( int ip = 0; ip < numPhase; ip++ )
+    {
+      os << GEOS_FMT( "{}[{}]: value {{", name, ip );
+      for( int ic = 0; ic < numComp; ic++ )
+      {
+        os << " " << std::fixed << std::setprecision( 7 ) << values( 0, 0, ip, ic );
+      }
+      os << "}\n";
+      os << GEOS_FMT( "{}[{}]: deriv {{", name, ip );
+      for( int ic = 0; ic < numComp; ic++ )
+      {
+        os << GEOS_FMT( "\n{:29s}", "" );
+        for( int id = 0; id < numDof; id++ )
+        {
+          os << " " << derivs( 0, 0, ip, ic, id );
+        }
+      }
+      os << "}\n";
+    }
+    return os.str();
+  };
+
+  /* UNCRUSTIFY-OFF */
+  std::cout << std::scientific << std::setprecision(6);
+  std::cout << "Pressure: " << pressure << "\n";
+  std::cout << "Temperature: " << std::fixed << temperature << "\n";
+  std::cout << "Composition: " << std::fixed << std::setprecision(6) << compositionArray[0].toSliceConst() << "\n";
+  std::cout << "--------------------------------------------\n";
+  std::cout << printPhaseArrays("Phase fraction", fluid->phaseFraction(), fluid->dPhaseFraction());
+  std::cout << "--------------------------------------------\n";
+  std::cout << printPhaseArrays("Phase density", fluid->phaseDensity(), fluid->dPhaseDensity());
+  std::cout << "--------------------------------------------\n";
+  std::cout << printPhaseArrays("Phase mass density", fluid->phaseMassDensity(), fluid->dPhaseMassDensity());
+  std::cout << "--------------------------------------------\n";
+  std::cout << printPhaseArrays("Phase viscosity", fluid->phaseViscosity(), fluid->dPhaseViscosity());
+  std::cout << "--------------------------------------------\n";
+  std::cout << printPhaseCompositionArrays("Phase composition", fluid->phaseCompFraction(), fluid->dPhaseCompFraction());
+  std::cout << "--------------------------------------------\n";
+  /* UNCRUSTIFY-ON */
+
   for( integer phaseIndex = 0; phaseIndex < numPhase; phaseIndex++ )
   {
     testDerivatives( GEOS_FMT( "Phase fraction ({})", phaseNames[phaseIndex] ),
