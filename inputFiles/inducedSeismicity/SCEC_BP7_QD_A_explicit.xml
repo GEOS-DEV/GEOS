@@ -21,7 +21,7 @@
       <NonlinearSolverParameters
         newtonTol="1.0e-6"
         logLevel="2"
-        newtonMaxIter="1000"
+        newtonMaxIter="40"
         maxNumConfigurationAttempts="1"
         lineSearchAction="None"
         lineSearchMaxCuts="2"
@@ -44,10 +44,10 @@
         lineSearchMaxCuts="2"
         maxTimeStepCuts="1"/>
       <LinearSolverParameters
-        solverType="direct"
+        solverType="gmres"
         preconditionerType="mgr"
         directParallel="1"
-        logLevel="0"/>
+        logLevel="1"/>
     </SolidMechanicsLagrangeContactBubbleStab>
     
     <SurfaceGenerator
@@ -59,7 +59,7 @@
   </Solvers>
 
   <Events
-    maxTime="1">
+    maxTime="2.0e7">
 
     <SoloEvent 
       name="generateFault"
@@ -88,32 +88,32 @@
      <!-- Time history collection -->
     <PeriodicEvent
       name="slipRateCollection"
-      cycleFrequency="1"
+      cycleFrequency="10"
       targetExactTimestep="0"
       target="/Tasks/slipVelocityCollection" />
 
     <PeriodicEvent
       name="slipCollection"
-      cycleFrequency="1"
+      cycleFrequency="10"
       targetExactTimestep="0"
       target="/Tasks/slipCollection"/>
 
     <PeriodicEvent
       name="shearTractionCollection"
-      cycleFrequency="1"
+      cycleFrequency="10"
       targetExactTimestep="0"
       target="/Tasks/shearTractionCollection"/>
 
     <PeriodicEvent
       name="stateCollection"
-      cycleFrequency="1"
+      cycleFrequency="10"
       targetExactTimestep="0"
       target="/Tasks/stateCollection"/>        
 
   <!-- Time history output -->
    <PeriodicEvent
       name="timeHistoryOutput"
-      cycleFrequency="1"
+      cycleFrequency="100"
       targetExactTimestep="0"
       target="/Outputs/timeHistoryOutput"/>
   </Events> 

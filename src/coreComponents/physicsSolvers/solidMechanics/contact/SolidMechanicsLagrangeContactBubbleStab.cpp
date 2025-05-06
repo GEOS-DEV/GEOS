@@ -49,7 +49,7 @@ SolidMechanicsLagrangeContactBubbleStab::SolidMechanicsLagrangeContactBubbleStab
 
   LinearSolverParameters & linSolParams = m_linearSolverParameters.get();
   linSolParams.mgr.strategy = LinearSolverParameters::MGR::StrategyType::lagrangianContactMechanicsBubbleStab;
-  linSolParams.mgr.separateComponents = false;
+  linSolParams.mgr.separateComponents = true;
   linSolParams.dofsPerNode = 3;
 }
 

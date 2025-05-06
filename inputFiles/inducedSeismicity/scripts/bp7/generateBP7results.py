@@ -100,6 +100,7 @@ class FaultStation:
         self.min_time_step = min_time_step
         self.max_time_step = max_time_step
         self.num_timesteps = num_timesteps 
+        self.number = station_number
 
         if input_data is not None and station_number is not None:
             # If input_data is provided, call process_input_data()
@@ -159,7 +160,7 @@ class FaultStation:
         """Return a FaultFile instance linked to this station."""
         return FaultStationFile(self)
     
-    def plot(self):
+    def plot(self, output_dir):
         time = self.data[:, 0]  # Extract time
         # Extract data columns
         slip_2 = self.data[:, 1]
@@ -201,8 +202,9 @@ class FaultStation:
         axs[3].grid()
 
         plt.suptitle(f"Fault Station at {self.location}")
-        plt.tight_layout()
-        plt.show()
+        # plt.tight_layout()
+        # plt.show()
+        fig.savefig( os.path.join(output_dir, f"FaultStation_{self.number}.png"), dpi=300, bbox_inches='tight')
 
 def getDataFromHDF5( hdf5FilePath ):
     # Read HDF5
@@ -229,4 +231,4 @@ if __name__ == "__main__":
         file = station.get_station_file()
         filename = output_dir + f"/fault_station_{i+1}.data"  
         file.write( filename )
-        station.plot()
+        station.plot(output_dir)
