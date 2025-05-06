@@ -24,9 +24,9 @@
 #include "common/DataLayouts.hpp"
 #include "common/DataTypes.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
-#include "constitutive/fluid/twophasefluid/TwoPhaseFluid.hpp"
+#include "constitutive/fluid/twophaseimmisciblefluid/TwoPhaseImmiscibleFluid.hpp"
 #include "constitutive/solid/CoupledSolidBase.hpp"
-#include "constitutive/fluid/twophasefluid/TwoPhaseFluidFields.hpp"
+#include "constitutive/fluid/twophaseimmisciblefluid/TwoPhaseImmiscibleFluidFields.hpp"
 #include "constitutive/capillaryPressure/CapillaryPressureFields.hpp"
 #include "constitutive/capillaryPressure/CapillaryPressureBase.hpp"
 #include "constitutive/permeability/PermeabilityBase.hpp"
@@ -37,6 +37,7 @@
 #include "finiteVolume/BoundaryStencil.hpp"
 #include "finiteVolume/FluxApproximationBase.hpp"
 #include "linearAlgebra/interfaces/InterfaceTypes.hpp"
+#include "physicsSolvers/PhysicsSolverBaseKernels.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
 #include "physicsSolvers/fluidFlow/ImmiscibleMultiphaseFlowFields.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseUtilities.hpp"
@@ -53,13 +54,13 @@ namespace immiscibleMultiphaseKernels
 using namespace constitutive;
 
 
-/******************************** FaceBasedAssemblyKernelBase ********************************/
+/******************************** FluxComputeKernelBase ********************************/
 
 /**
- * @brief Base class for FaceBasedAssemblyKernel that holds all data not dependent
+ * @brief Base class for FluxComputeKernel that holds all data not dependent
  *        on template parameters (like stencil type and number of dofs).
  */
-class FaceBasedAssemblyKernelBase
+class FluxComputeKernelBase
 {
 public:
 
@@ -83,9 +84,9 @@ public:
                       fields::immiscibleMultiphaseFlow::dPhaseMobility >;
 
   using MultiphaseFluidAccessors =
-    StencilMaterialAccessors< constitutive::TwoPhaseFluid,
-                              fields::twophasefluid::phaseDensity,
-                              fields::twophasefluid::dPhaseDensity >;
+    StencilMaterialAccessors< constitutive::TwoPhaseImmiscibleFluid,
+                              fields::twophaseimmisciblefluid::phaseDensity,
+                              fields::twophaseimmisciblefluid::dPhaseDensity >;
 
   using CapPressureAccessors =
     StencilMaterialAccessors< CapillaryPressureBase,
@@ -114,19 +115,19 @@ public:
    * @param[inout] hasCapPressure flag to indicate whether problem includes capillarity
    * @param[inout] useTotalMassEquation flag to indicate whether to use the total mass formulation
    */
-  FaceBasedAssemblyKernelBase( integer const numPhases,
-                               globalIndex const rankOffset,
-                               DofNumberAccessor const & dofNumberAccessor,
-                               ImmiscibleMultiphaseFlowAccessors const & multiPhaseFlowAccessors,
-                               MultiphaseFluidAccessors const & fluidAccessors,
-                               CapPressureAccessors const & capPressureAccessors,
-                               PermeabilityAccessors const & permeabilityAccessors,
-                               real64 const & dt,
-                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                               arrayView1d< real64 > const & localRhs,
-                               integer const hasCapPressure,
-                               integer const useTotalMassEquation,
-                               integer const checkPhasePresenceInGravity )
+  FluxComputeKernelBase( integer const numPhases,
+                         globalIndex const rankOffset,
+                         DofNumberAccessor const & dofNumberAccessor,
+                         ImmiscibleMultiphaseFlowAccessors const & multiPhaseFlowAccessors,
+                         MultiphaseFluidAccessors const & fluidAccessors,
+                         CapPressureAccessors const & capPressureAccessors,
+                         PermeabilityAccessors const & permeabilityAccessors,
+                         real64 const & dt,
+                         CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                         arrayView1d< real64 > const & localRhs,
+                         integer const hasCapPressure,
+                         integer const useTotalMassEquation,
+                         integer const checkPhasePresenceInGravity )
     : m_numPhases ( numPhases ),
     m_rankOffset( rankOffset ),
     m_dt( dt ),
@@ -139,8 +140,8 @@ public:
     m_phaseVolFrac( multiPhaseFlowAccessors.get( fields::immiscibleMultiphaseFlow::phaseVolumeFraction {} ) ),
     m_mob( multiPhaseFlowAccessors.get( fields::immiscibleMultiphaseFlow::phaseMobility {} ) ),
     m_dMob( multiPhaseFlowAccessors.get( fields::immiscibleMultiphaseFlow::dPhaseMobility {} ) ),
-    m_dens( fluidAccessors.get( fields::twophasefluid::phaseDensity {} ) ),
-    m_dDens_dPres( fluidAccessors.get( fields::twophasefluid::dPhaseDensity {} ) ),
+    m_dens( fluidAccessors.get( fields::twophaseimmisciblefluid::phaseDensity {} ) ),
+    m_dDens_dPres( fluidAccessors.get( fields::twophaseimmisciblefluid::dPhaseDensity {} ) ),
     m_phaseCapPressure( capPressureAccessors.get( fields::cappres::phaseCapPressure {} ) ),
     m_dPhaseCapPressure_dPhaseVolFrac( capPressureAccessors.get( fields::cappres::dPhaseCapPressure_dPhaseVolFraction {} ) ),
     m_localMatrix( localMatrix ),
@@ -205,13 +206,13 @@ protected:
 /***************************************** */
 
 /**
- * @class FaceBasedAssemblyKernel
+ * @class FluxComputeKernel
  * @tparam NUM_DOF number of degrees of freedom
  * @tparam STENCILWRAPPER the type of the stencil wrapper
  * @brief Define the interface for the assembly kernel in charge of flux terms
  */
 template< integer NUM_EQN, integer NUM_DOF, typename STENCILWRAPPER >
-class FaceBasedAssemblyKernel : public FaceBasedAssemblyKernelBase
+class FluxComputeKernel : public FluxComputeKernelBase
 {
 public:
 
@@ -246,33 +247,33 @@ public:
    * @param[in] hasCapPressure flags for capillary pressure
    * @param[in] useTotalMassEquation flags for using total velocity formulation
    */
-  FaceBasedAssemblyKernel( integer const numPhases,
-                           globalIndex const rankOffset,
-                           STENCILWRAPPER const & stencilWrapper,
-                           DofNumberAccessor const & dofNumberAccessor,
-                           ImmiscibleMultiphaseFlowAccessors const & multiPhaseFlowAccessors,
-                           MultiphaseFluidAccessors const & fluidAccessors,
-                           CapPressureAccessors const & capPressureAccessors,
-                           PermeabilityAccessors const & permeabilityAccessors,
-                           real64 const & dt,
-                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                           arrayView1d< real64 > const & localRhs,
-                           integer const hasCapPressure,
-                           integer const useTotalMassEquation,
-                           integer const checkPhasePresenceInGravity )
-    : FaceBasedAssemblyKernelBase( numPhases,
-                                   rankOffset,
-                                   dofNumberAccessor,
-                                   multiPhaseFlowAccessors,
-                                   fluidAccessors,
-                                   capPressureAccessors,
-                                   permeabilityAccessors,
-                                   dt,
-                                   localMatrix,
-                                   localRhs,
-                                   hasCapPressure,
-                                   useTotalMassEquation,
-                                   checkPhasePresenceInGravity ),
+  FluxComputeKernel( integer const numPhases,
+                     globalIndex const rankOffset,
+                     STENCILWRAPPER const & stencilWrapper,
+                     DofNumberAccessor const & dofNumberAccessor,
+                     ImmiscibleMultiphaseFlowAccessors const & multiPhaseFlowAccessors,
+                     MultiphaseFluidAccessors const & fluidAccessors,
+                     CapPressureAccessors const & capPressureAccessors,
+                     PermeabilityAccessors const & permeabilityAccessors,
+                     real64 const & dt,
+                     CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                     arrayView1d< real64 > const & localRhs,
+                     integer const hasCapPressure,
+                     integer const useTotalMassEquation,
+                     integer const checkPhasePresenceInGravity )
+    : FluxComputeKernelBase( numPhases,
+                             rankOffset,
+                             dofNumberAccessor,
+                             multiPhaseFlowAccessors,
+                             fluidAccessors,
+                             capPressureAccessors,
+                             permeabilityAccessors,
+                             dt,
+                             localMatrix,
+                             localRhs,
+                             hasCapPressure,
+                             useTotalMassEquation,
+                             checkPhasePresenceInGravity ),
     m_stencilWrapper( stencilWrapper ),
     m_seri( stencilWrapper.getElementRegionIndices() ),
     m_sesri( stencilWrapper.getElementSubRegionIndices() ),
@@ -732,13 +733,12 @@ protected:
   typename STENCILWRAPPER::IndexContainerViewConstType const m_sei;
 };
 
-
-/*******************************************/
+/****************************************** */
 
 /**
- * @class FaceBasedAssemblyKernelFactory
+ * @class FluxComputeKernelFactory
  */
-class FaceBasedAssemblyKernelFactory
+class FluxComputeKernelFactory
 {
 public:
 
@@ -777,7 +777,7 @@ public:
       elemManager.constructArrayViewAccessor< globalIndex, 1 >( dofKey );
     dofNumberAccessor.setName( solverName + "/accessors/" + dofKey );
 
-    using kernelType = FaceBasedAssemblyKernel< NUM_EQN, NUM_DOF, STENCILWRAPPER >;
+    using kernelType = FluxComputeKernel< NUM_EQN, NUM_DOF, STENCILWRAPPER >;
     typename kernelType::ImmiscibleMultiphaseFlowAccessors flowAccessors( elemManager, solverName );
     typename kernelType::MultiphaseFluidAccessors fluidAccessors( elemManager, solverName );
     typename kernelType::CapPressureAccessors capPressureAccessors( elemManager, solverName );
@@ -844,7 +844,7 @@ public:
                       globalIndex const rankOffset,
                       string const dofKey,
                       ElementSubRegionBase const & subRegion,
-                      constitutive::TwoPhaseFluid const & fluid,
+                      constitutive::TwoPhaseImmiscibleFluid const & fluid,
                       constitutive::CoupledSolidBase const & solid,
                       CRSMatrixView< real64, globalIndex const > const & localMatrix,
                       arrayView1d< real64 > const & localRhs,
@@ -1081,7 +1081,7 @@ public:
                    integer const useTotalMassEquation,
                    string const dofKey,
                    ElementSubRegionBase const & subRegion,
-                   constitutive::TwoPhaseFluid const & fluid,
+                   constitutive::TwoPhaseImmiscibleFluid const & fluid,
                    constitutive::CoupledSolidBase const & solid,
                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
                    arrayView1d< real64 > const & localRhs )
@@ -1130,7 +1130,7 @@ public:
    * @param[in] relperm the relperm model
    */
   PhaseMobilityKernel( ObjectManagerBase & subRegion,
-                       TwoPhaseFluid const & fluid,
+                       TwoPhaseImmiscibleFluid const & fluid,
                        RelativePermeabilityBase const & relperm )
     :
     m_phaseDens( fluid.phaseDensity() ),
@@ -1252,7 +1252,7 @@ public:
   static void
   createAndLaunch( integer const numPhase,
                    ObjectManagerBase & subRegion,
-                   TwoPhaseFluid const & fluid,
+                   TwoPhaseImmiscibleFluid const & fluid,
                    RelativePermeabilityBase const & relperm )
   {
     if( numPhase == 2 )

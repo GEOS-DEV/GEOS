@@ -25,10 +25,14 @@
 
 // Source includes
 #include "common/GeosxConfig.hpp"
-#include "GeosxMacros.hpp"
+
 #include "BufferAllocator.hpp"
 #include "DataLayouts.hpp"
+#include "GeosxMacros.hpp"
+#include "Path.hpp"
+#include "StdContainerWrappers.hpp"
 #include "Tensor.hpp"
+
 #include "LvArray/src/Macros.hpp"
 #include "LvArray/src/Array.hpp"
 #include "LvArray/src/ArrayOfArrays.hpp"
@@ -39,7 +43,6 @@
 #include "LvArray/src/StackBuffer.hpp"
 #include "LvArray/src/ChaiBuffer.hpp"
 
-#include "Path.hpp"
 
 // TPL includes
 #include <camp/camp.hpp>
@@ -53,16 +56,12 @@
 //#include <cmath>
 #include <cstdint>
 #include <iostream>
-#include <map>
-#include <memory>
 #include <optional>
 #include <set>
 #include <string>
 #include <string_view>
 #include <typeindex>
 #include <typeinfo>
-#include <unordered_map>
-#include <vector>
 
 /*
  * top level geos namespace contains all code that is specific to GEOSX
@@ -100,6 +99,15 @@ using real64 = double;
 
 ///@}
 
+
+#if defined( GEOS_USE_BOUNDS_CHECK )
+
+#else
+
+#endif
+
+
+
 /**
  * @name Binary buffer data types.
  */
@@ -110,10 +118,10 @@ using buffer_unit_type = signed char;
 
 #ifdef GEOS_USE_CHAI
 /// Type of storage for communication buffers.
-using buffer_type = std::vector< buffer_unit_type, BufferAllocator< buffer_unit_type > >;
+using buffer_type = stdVector< buffer_unit_type, BufferAllocator< buffer_unit_type > >;
 #else
 /// Type of storage for communication buffers.
-using buffer_type = std::vector< buffer_unit_type >;
+using buffer_type = stdVector< buffer_unit_type >;
 #endif
 
 ///@}
@@ -389,7 +397,8 @@ using real32_array = array1d< real32 >;
 using real64_array = array1d< real64 >;
 
 /// A 1-dimensional array of geos::string types.
-using string_array = array1d< string >;
+//using string_array = string_array;
+using string_array = stdVector< string >;
 
 /// A 1-dimensional array of geos::Path types
 using path_array = array1d< Path >;

@@ -71,13 +71,13 @@ public:
   using const_value_type       = typename std::pair< KEY_TYPE const, T const * >;
 
   /// the type of the vector container
-  using valueContainer         = std::vector< value_type >;
+  using valueContainer         = stdVector< value_type >;
 
   /// a const type of the vector container
-  using constKeyValueContainer = std::vector< const_key_value_type >;
+  using constKeyValueContainer = stdVector< const_key_value_type >;
 
   /// a const type of the vector container
-  using constValueContainer    = std::vector< const_value_type >;
+  using constValueContainer    = stdVector< const_value_type >;
 
   /// the pointer type of the value container
   using pointer                = typename valueContainer::pointer;
@@ -458,7 +458,7 @@ private:
   LookupMapType m_keyLookup;
 
   /// flag to indicate whether or not the values in m_values are owned by the container.
-  std::vector< int > m_ownsValues;
+  stdVector< int > m_ownsValues;
 };
 
 template< typename T, typename T_PTR, typename KEY_TYPE, typename INDEX_TYPE >

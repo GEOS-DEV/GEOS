@@ -11,7 +11,7 @@ single fluids and fluid mixtures.
 
    CompressibleSinglePhaseFluid
 
-   TwoPhaseFluid
+   TwoPhaseImmiscibleFluid
 
    BlackOilFluid
 

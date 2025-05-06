@@ -30,7 +30,6 @@
 #include "physicsSolvers/NonlinearSolverParameters.hpp"
 #include "physicsSolvers/LinearSolverParameters.hpp"
 #include "physicsSolvers/SolverStatistics.hpp"
-#include "physicsSolvers/LogLevelsInfo.hpp"
 
 #include <limits>
 
@@ -216,19 +215,21 @@ public:
 
   /**
    * @brief function to set the next time step size
+   * @param[in] currentTime the current time
    * @param[in] currentDt the current time step size
    * @param[in] domain the domain object
    * @return the prescribed time step size
    */
-  virtual real64 setNextDt( real64 const & currentDt,
+  virtual real64 setNextDt( real64 const & currentTime,
+                            real64 const & currentDt,
                             DomainPartition & domain );
 
   /**
-   * @brief function to set the next time step size based on Newton convergence
+   * @brief function to set the next time step size based on convergence
    * @param[in] currentDt the current time step size
    * @return the prescribed time step size
    */
-  virtual real64 setNextDtBasedOnNewtonIter( real64 const & currentDt );
+  virtual real64 setNextDtBasedOnIterNumber( real64 const & currentDt );
 
   /**
    * @brief function to set the next dt based on state change
@@ -818,7 +819,7 @@ public:
     {
       string const meshBodyName = target.first.first;
       string const meshLevelName = target.first.second;
-      arrayView1d< string const > const & regionNames = target.second.toViewConst();
+      string_array const & regionNames = target.second;
       MeshBody const & meshBody = meshBodies.getGroup< MeshBody >( meshBodyName );
 
       MeshLevel const * meshLevelPtr = meshBody.getMeshLevels().getGroupPointer< MeshLevel >( meshLevelName );
@@ -844,7 +845,7 @@ public:
     {
       string const meshBodyName = target.first.first;
       string const meshLevelName = target.first.second;
-      arrayView1d< string const > const & regionNames = target.second.toViewConst();
+      string_array const & regionNames = target.second;
       MeshBody & meshBody = meshBodies.getGroup< MeshBody >( meshBodyName );
 
       MeshLevel * meshLevelPtr = meshBody.getMeshLevels().getGroupPointer< MeshLevel >( meshLevelName );
@@ -896,7 +897,7 @@ public:
    * @brief accessor for m_meshTargets
    * @return reference to m_meshTargets
    */
-  map< std::pair< string, string >, array1d< string > > const & getMeshTargets() const
+  map< std::pair< string, string >, string_array > const & getMeshTargets() const
   {
     return m_meshTargets;
   }
@@ -1051,10 +1052,10 @@ protected:
 
 private:
   /// List of names of regions the solver will be applied to
-  array1d< string > m_targetRegionNames;
+  string_array m_targetRegionNames;
 
   /// Map containing the array of target regions (value) for each MeshBody (key).
-  map< std::pair< string, string >, array1d< string > > m_meshTargets;
+  map< std::pair< string, string >, string_array > m_meshTargets;
 
   /**
    * @brief This function sets constitutive name fields on an
@@ -1085,7 +1086,7 @@ private:
    */
   void logEndOfCycleInformation( integer const cycleNumber,
                                  integer const numOfSubSteps,
-                                 std::vector< real64 > const & subStepDt ) const;
+                                 stdVector< real64 > const & subStepDt ) const;
 
 };
 

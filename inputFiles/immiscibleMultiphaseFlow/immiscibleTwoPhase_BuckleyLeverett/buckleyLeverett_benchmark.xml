@@ -55,8 +55,7 @@
 
     <PeriodicEvent
       name="solverApplications"
-      forceDt="1.0" 
+      maxEventDt="0.01"
       target="/Solvers/FlowSolver"/>    
   </Events>
 </Problem>
-<!-- maxEventDt="0.01" -->

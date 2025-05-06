@@ -87,7 +87,7 @@
       phaseRelPermExponent="{ 3.5, 3.5 }"
       phaseRelPermMaxValue="{ 1.0, 1.0 }"/>
     
-      <TwoPhaseFluid
+    <TwoPhaseImmiscibleFluid
       name="fluid"
       phaseNames="{gas, water}"
       densityTableNames="{densityTablePhase1, densityTablePhase2}"    

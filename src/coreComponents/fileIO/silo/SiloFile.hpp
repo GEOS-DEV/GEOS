@@ -676,7 +676,7 @@ public:
    * @brief Set the names of the fields to output
    * @param[in] fieldNames the fields to output
    */
-  void setFieldNames( arrayView1d< string const > const & fieldNames )
+  void setFieldNames( string_array const & fieldNames )
   {
     m_fieldNames.insert( fieldNames.begin(), fieldNames.end() );
   }
@@ -718,9 +718,9 @@ private:
 
   string m_baseFileName;
 
-  std::vector< string > m_emptyMeshes;
+  stdVector< string > m_emptyMeshes;
 //  string_array m_emptyMaterials;
-  std::vector< string > m_emptyVariables;
+  stdVector< string > m_emptyVariables;
 
   integer m_writeEdgeMesh;
   integer m_writeFaceMesh;

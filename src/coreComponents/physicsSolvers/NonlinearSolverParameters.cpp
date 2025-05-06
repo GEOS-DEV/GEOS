@@ -16,6 +16,7 @@
 #include "NonlinearSolverParameters.hpp"
 #include "common/logger/Logger.hpp"
 #include "common/format/table/TableFormatter.hpp"
+#include "physicsSolvers/LogLevelsInfo.hpp"
 
 namespace geos
 {
@@ -27,9 +28,6 @@ NonlinearSolverParameters::NonlinearSolverParameters( string const & name,
   Group( name, parent )
 {
   setInputFlags( InputFlags::OPTIONAL );
-
-  // This enables logLevel filtering
-  enableLogLevelInput();
 
   registerWrapper( viewKeysStruct::lineSearchActionString(), &m_lineSearchAction ).
     setApplyDefaultValue( LineSearchAction::Attempt ).
@@ -132,7 +130,7 @@ NonlinearSolverParameters::NonlinearSolverParameters( string const & name,
   registerWrapper( viewKeysStruct::minTimeStepIncreaseIntervalString(), &m_minTimeStepIncreaseInterval ).
     setApplyDefaultValue( 10 ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Minimum number of cycles since the last time-step cut for increasing the time-step again." );
+    setDescription( "Minimum number of steps since the last time-step cut for increasing the time-step again." );
 
   registerWrapper( viewKeysStruct::timeStepCutFactorString(), &m_timeStepCutFactor ).
     setApplyDefaultValue( 0.5 ).
@@ -182,6 +180,10 @@ NonlinearSolverParameters::NonlinearSolverParameters( string const & name,
     setInputFlag( dataRepository::InputFlags::OPTIONAL ).
     setDescription( "Nonlinear acceleration type for sequential solver." );
 
+  addLogLevel< logInfo::Convergence >();
+  addLogLevel< logInfo::NonlinearSolver >();
+  addLogLevel< logInfo::LineSearch >();
+  addLogLevel< logInfo::TimeStep >();
 }
 
 void NonlinearSolverParameters::postInputInitialization()

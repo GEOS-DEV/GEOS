@@ -99,8 +99,7 @@ public:
   virtual real64
   scalingForSystemSolution( DomainPartition & domain,
                             DofManager const & dofManager,
-                            arrayView1d< real64 const > const & localSolution ) override;                       
-
+                            arrayView1d< real64 const > const & localSolution ) override;
   virtual void
   applySystemSolution( DofManager const & dofManager,
                        arrayView1d< real64 const > const & localSolution,
@@ -211,8 +210,7 @@ public:
 
   virtual void initializePostInitialConditionsPreSubGroups() override;
 
-  virtual void initializeFluidState( MeshLevel & mesh, arrayView1d< string const > const & regionNames ) override;
-
+  virtual void initializeFluidState( MeshLevel & mesh, string_array const & regionNames ) override;
 
   /**
    * @brief Function to update fluid mass

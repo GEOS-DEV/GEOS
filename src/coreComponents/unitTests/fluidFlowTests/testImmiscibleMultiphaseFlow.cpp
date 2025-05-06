@@ -15,7 +15,7 @@
 
 #include "mainInterface/initialization.hpp"
 #include "mainInterface/GeosxState.hpp"
-#include "constitutive/fluid/twophasefluid/TwoPhaseFluid.hpp"
+#include "constitutive/fluid/twophaseimmisciblefluid/TwoPhaseImmiscibleFluid.hpp"
 #include "physicsSolvers/PhysicsSolverManager.hpp"
 #include "physicsSolvers/fluidFlow/ImmiscibleMultiphaseFlow.hpp"
 #include "unitTests/fluidFlowTests/testCompFlowUtils.hpp"
@@ -113,7 +113,7 @@ char const *xmlInput =
 
 
   <Constitutive>
-    <TwoPhaseFluid
+    <TwoPhaseImmiscibleFluid
            name="fluid"
            phaseNames="{water22, gas22}"
            densityTableNames="{densityTablePhase1, densityTablePhase2}"    
@@ -256,7 +256,7 @@ void fillCellCenteredNumericalJacobian( ImmiscibleMultiphaseFlow & solver,
 
   solver.forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                       MeshLevel & mesh,
-                                                                      arrayView1d< string const > const & regionNames )
+                                                                      string_array const & regionNames )
   {
     mesh.getElemManager().forElementSubRegions( regionNames,
                                                 [&]( localIndex const,

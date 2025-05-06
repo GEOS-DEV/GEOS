@@ -80,7 +80,7 @@ public:
    * @brief Getter for the fluid component names
    * @return an array storing the component names
    */
-  arrayView1d< string const > componentNames() const { return m_componentNames; }
+  string_array const & componentNames() const { return m_componentNames; }
 
   /**
    * @brief Getter for the fluid component molar weights
@@ -97,7 +97,7 @@ public:
    * @brief Getter for the fluid phase names
    * @return an array storing the phase names
    */
-  arrayView1d< string const > phaseNames() const { return m_phaseNames; }
+  string_array const & phaseNames() const { return m_phaseNames; }
 
   /**
    * @brief Getter for the water phase index
@@ -370,7 +370,7 @@ protected:
      * @tparam OUT_ARRAY the type of array storing the component mole fractions
      * @param[in] composition the component mass fractions
      * @param[out] compMoleFrac the newly converted component mole fractions
-     * @detail The template is needed because PVTPackage expects a std::vector
+     * @detail The template is needed because PVTPackage expects a stdVector
      */
     template< integer maxNumComp, typename OUT_ARRAY >
     GEOS_HOST_DEVICE
@@ -385,7 +385,7 @@ protected:
      * @param[in] componentMolarWeight the component molar weight
      * @param[out] compMoleFrac the newly converted component mole fractions
      * @param[out] dCompMoleFrac_dCompMassFrac the derivatives of the newly converted component mole fractions
-     * @detail The template is needed because PVTPackage expects a std::vector
+     * @detail The template is needed because PVTPackage expects a stdVector
      */
     template< integer maxNumComp, typename OUT_ARRAY >
     GEOS_HOST_DEVICE
@@ -676,9 +676,9 @@ protected:
 
   // general fluid composition information
 
-  array1d< string > m_componentNames;
+  string_array m_componentNames;
   array1d< real64 > m_componentMolarWeight;
-  array1d< string > m_phaseNames;
+  string_array m_phaseNames;
 
   // constitutive data
 

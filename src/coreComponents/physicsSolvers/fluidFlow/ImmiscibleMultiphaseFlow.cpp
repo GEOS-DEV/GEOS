@@ -24,7 +24,8 @@
 #include "physicsSolvers/PhysicsSolverBaseKernels.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseUtilities.hpp"
 #include "physicsSolvers/fluidFlow/kernels/immiscibleMultiphase/ImmiscibleMultiphaseKernels.hpp"
-#include "physicsSolvers/fluidFlow/kernels/compositional/ThermalAccumulationKernel.hpp"
+#include "physicsSolvers/fluidFlow/kernels/compositional/RelativePermeabilityUpdateKernel.hpp"
+#include "physicsSolvers/fluidFlow/kernels/compositional/CapillaryPressureUpdateKernel.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
 #include "constitutive/capillaryPressure/CapillaryPressureFields.hpp"
 #include "constitutive/capillaryPressure/capillaryPressureSelector.hpp"
@@ -33,9 +34,10 @@
 #include "fieldSpecification/EquilibriumInitialCondition.hpp"
 #include "fieldSpecification/SourceFluxBoundaryCondition.hpp"
 #include "physicsSolvers/fluidFlow/SourceFluxStatistics.hpp"
+#include "physicsSolvers/LogLevelsInfo.hpp"
 
 #include "constitutive/ConstitutivePassThru.hpp"
-#include "constitutive/fluid/twophasefluid/TwoPhaseFluid.hpp"
+#include "constitutive/fluid/twophaseimmisciblefluid/TwoPhaseImmiscibleFluid.hpp"
 
 #include <cmath>
 
@@ -107,7 +109,7 @@ void ImmiscibleMultiphaseFlow::registerDataOnMesh( Group & meshBodies )
   // 0. Find a "reference" fluid model name (at this point, models are already attached to subregions)
   forDiscretizationOnMeshTargets( meshBodies, [&]( string const &,
                                                    MeshLevel & mesh,
-                                                   arrayView1d< string const > const & regionNames )
+                                                   string_array const & regionNames )
   {
     mesh.getElemManager().forElementSubRegions( regionNames,
                                                 [&]( localIndex const,
@@ -127,7 +129,7 @@ void ImmiscibleMultiphaseFlow::registerDataOnMesh( Group & meshBodies )
   // 2. Register and resize all fields as necessary
   forDiscretizationOnMeshTargets( meshBodies, [&]( string const &,
                                                    MeshLevel & mesh,
-                                                   arrayView1d< string const > const & regionNames )
+                                                   string_array const & regionNames )
   {
     mesh.getElemManager().forElementSubRegions( regionNames,
                                                 [&]( localIndex const,
@@ -182,7 +184,7 @@ void ImmiscibleMultiphaseFlow::setConstitutiveNames( ElementSubRegionBase & subR
 {
 
   string & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
-  fluidName = getConstitutiveName< TwoPhaseFluid >( subRegion );
+  fluidName = getConstitutiveName< TwoPhaseImmiscibleFluid >( subRegion );
   GEOS_ERROR_IF( fluidName.empty(), GEOS_FMT( "{}: Fluid model not found on subregion {}",
                                               getDataContext(), subRegion.getName() ) );
 
@@ -213,7 +215,7 @@ void ImmiscibleMultiphaseFlow::initializePreSubGroups()
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel & mesh,
-                                                               arrayView1d< string const > const & regionNames )
+                                                               string_array const & regionNames )
   {
     mesh.getElemManager().forElementSubRegions( regionNames,
                                                 [&]( localIndex const,
@@ -232,7 +234,7 @@ void ImmiscibleMultiphaseFlow::updateFluidModel( ObjectManagerBase & dataGroup )
 
   arrayView1d< real64 const > const pres = dataGroup.getField< fields::flow::pressure >();
 
-  TwoPhaseFluid & fluid = getConstitutiveModel< TwoPhaseFluid >( dataGroup, dataGroup.getReference< string >( viewKeyStruct::fluidNamesString() ) );
+  TwoPhaseImmiscibleFluid & fluid = getConstitutiveModel< TwoPhaseImmiscibleFluid >( dataGroup, dataGroup.getReference< string >( viewKeyStruct::fluidNamesString() ) );
 
   constitutiveUpdatePassThru( fluid, [&] ( auto & castedFluid )
   {
@@ -315,7 +317,8 @@ void ImmiscibleMultiphaseFlow::updatePhaseMass( ElementSubRegionBase & subRegion
   string const & solidName = subRegion.getReference< string >( viewKeyStruct::solidNamesString() );
   string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
 
-  TwoPhaseFluid const & fluid = getConstitutiveModel< TwoPhaseFluid >( subRegion, fluidName );
+  TwoPhaseImmiscibleFluid const & fluid = getConstitutiveModel< TwoPhaseImmiscibleFluid >( subRegion, fluidName );
+
   CoupledSolidBase const & solid = getConstitutiveModel< CoupledSolidBase >( subRegion, solidName );
 
   arrayView1d< real64 const > const volume = subRegion.getElementVolume();
@@ -345,7 +348,7 @@ void ImmiscibleMultiphaseFlow::updatePhaseMobility( ObjectManagerBase & dataGrou
 
   // note that the phase mobility computed here also includes phase density
   string const & fluidName = dataGroup.getReference< string >( viewKeyStruct::fluidNamesString() );
-  TwoPhaseFluid const & fluid = getConstitutiveModel< TwoPhaseFluid >( dataGroup, fluidName );
+  TwoPhaseImmiscibleFluid const & fluid = getConstitutiveModel< TwoPhaseImmiscibleFluid >( dataGroup, fluidName );
 
   string const & relpermName = dataGroup.getReference< string >( viewKeyStruct::relPermNamesString() );
   RelativePermeabilityBase const & relperm = getConstitutiveModel< RelativePermeabilityBase >( dataGroup, relpermName );
@@ -359,7 +362,7 @@ void ImmiscibleMultiphaseFlow::updatePhaseMobility( ObjectManagerBase & dataGrou
 }
 
 void ImmiscibleMultiphaseFlow::initializeFluidState( MeshLevel & mesh,
-                                                     arrayView1d< string const > const & regionNames )
+                                                     string_array const & regionNames )
 {
   GEOS_MARK_FUNCTION;
 
@@ -483,7 +486,7 @@ void ImmiscibleMultiphaseFlow::initializePostInitialConditionsPreSubGroups()
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel & mesh,
-                                                               arrayView1d< string const > const & regionNames )
+                                                               string_array const & regionNames )
   {
     FieldIdentifiers fieldsToBeSync;
     fieldsToBeSync.addElementFields( { fields::flow::pressure::key(),
@@ -504,7 +507,7 @@ ImmiscibleMultiphaseFlow::implicitStepSetup( real64 const & GEOS_UNUSED_PARAM( t
 {
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel & mesh,
-                                                               arrayView1d< string const > const & regionNames )
+                                                               string_array const & regionNames )
   {
     mesh.getElemManager().forElementSubRegions< CellElementSubRegion,
                                                 SurfaceElementSubRegion >( regionNames,
@@ -572,7 +575,7 @@ void ImmiscibleMultiphaseFlow::assembleAccumulationTerm( DomainPartition & domai
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel const & mesh,
-                                                               arrayView1d< string const > const & regionNames )
+                                                               string_array const & regionNames )
   {
     mesh.getElemManager().forElementSubRegions( regionNames,
                                                 [&]( localIndex const,
@@ -582,7 +585,8 @@ void ImmiscibleMultiphaseFlow::assembleAccumulationTerm( DomainPartition & domai
       string const & solidName = subRegion.getReference< string >( viewKeyStruct::solidNamesString() );
       string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
 
-      TwoPhaseFluid const & fluid = getConstitutiveModel< TwoPhaseFluid >( subRegion, fluidName );
+      TwoPhaseImmiscibleFluid const & fluid = getConstitutiveModel< TwoPhaseImmiscibleFluid >( subRegion, fluidName );
+        
       CoupledSolidBase const & solid = getConstitutiveModel< CoupledSolidBase >( subRegion, solidName );
 
       immiscibleMultiphaseKernels::
@@ -617,30 +621,28 @@ void ImmiscibleMultiphaseFlow::assembleFluxTerms( real64 const dt,
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel const & mesh,
-                                                                arrayView1d< string const > const & )
+                                                                string_array const & )
   {
     fluxApprox.forAllStencils( mesh, [&]( auto & stencil )
     {
       typename TYPEOFREF( stencil ) ::KernelWrapper stencilWrapper = stencil.createKernelWrapper();
       immiscibleMultiphaseKernels::
-        FaceBasedAssemblyKernelFactory::createAndLaunch< parallelDevicePolicy<> >( m_numPhases,
-                                                                                   dofManager.rankOffset(),
-                                                                                   dofKey,
-                                                                                   m_hasCapPressure,
-                                                                                   m_useTotalMassEquation,
-                                                                                   m_gravityDensityScheme == GravityDensityScheme::PhasePresence,
-                                                                                   getName(),
-                                                                                   mesh.getElemManager(),
-                                                                                   stencilWrapper,
-                                                                                   dt,
-                                                                                   localMatrix.toViewConstSizes(),
-                                                                                   localRhs.toView() );
+        FluxComputeKernelFactory::createAndLaunch< parallelDevicePolicy<> >( m_numPhases,
+                                                                             dofManager.rankOffset(),
+                                                                             dofKey,
+                                                                             m_hasCapPressure,
+                                                                             m_useTotalMassEquation,
+                                                                             m_gravityDensityScheme == GravityDensityScheme::PhasePresence,
+                                                                             getName(),
+                                                                             mesh.getElemManager(),
+                                                                             stencilWrapper,
+                                                                             dt,
+                                                                             localMatrix.toViewConstSizes(),
+                                                                             localRhs.toView() );
     } );
   } );
 }
 
-// Ryan: Looks like this will need to be overwritten as well...
-// I have left the CompositionalMultiphaseFVM implementation for reference
 void ImmiscibleMultiphaseFlow::setupDofs( DomainPartition const & domain,
                                           DofManager & dofManager ) const
 {
@@ -689,7 +691,7 @@ char const bcLogMessage[] =
 }
 
 bool ImmiscibleMultiphaseFlow::validateDirichletBC( DomainPartition & domain,
-                                                       real64 const time ) const
+                                                    real64 const time ) const
 {
   constexpr integer MAX_NP = 2;
   FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
@@ -698,7 +700,7 @@ bool ImmiscibleMultiphaseFlow::validateDirichletBC( DomainPartition & domain,
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel & mesh,
-                                                               arrayView1d< string const > const & )
+                                                               string_array const & )
   {
     // map: regionName -> subRegionName -> setName -> numPhases to check pressure/phase are present consistent
     map< string, map< string, map< string, ComponentMask< MAX_NP > > > > bcPresCompStatusMap;
@@ -725,9 +727,9 @@ bool ImmiscibleMultiphaseFlow::validateDirichletBC( DomainPartition & domain,
                                                    fields::flow::pressure::key() ) );
       }
       subRegionSetMap[setName].setNumComp( m_numPhases );
-     } );
+    } );
     // 2. Check saturation Dirichlet BCs
-       fsManager.apply< ElementSubRegionBase >( time,
+    fsManager.apply< ElementSubRegionBase >( time,
                                              mesh,
                                              fields::immiscibleMultiphaseFlow::phaseVolumeFraction::key(),
                                              [&] ( FieldSpecificationBase const & fs,
@@ -761,7 +763,7 @@ bool ImmiscibleMultiphaseFlow::validateDirichletBC( DomainPartition & domain,
         bcConsistent = false;
         fsManager.forSubGroups< EquilibriumInitialCondition >( [&] ( EquilibriumInitialCondition const & bc )
         {
-          arrayView1d< string const > componentNames = bc.getComponentNames();
+          string_array const & componentNames = bc.getComponentNames();
           GEOS_WARNING( BCMessage::conflictingComposition( comp, componentNames[comp],
                                                            regionName, subRegionName, setName,
                                                            fields::immiscibleMultiphaseFlow::phaseVolumeFraction::key() ) );
@@ -782,8 +784,8 @@ bool ImmiscibleMultiphaseFlow::validateDirichletBC( DomainPartition & domain,
 
           fsManager.forSubGroups< EquilibriumInitialCondition >( [&] ( EquilibriumInitialCondition const & fs )
           {
-            arrayView1d< string const > componentNames = fs.getComponentNames();
-            for( int ic = 0; ic < componentNames.size(); ic++ )
+            string_array const & componentNames = fs.getComponentNames();
+            for( size_t ic = 0; ic < componentNames.size(); ic++ )
             {
               if( !compMask[ic] )
               {
@@ -797,7 +799,7 @@ bool ImmiscibleMultiphaseFlow::validateDirichletBC( DomainPartition & domain,
         }
       }
     }
-  } ); 
+  } );
 
   return bcConsistent;
 }
@@ -822,7 +824,7 @@ void ImmiscibleMultiphaseFlow::applyDirichletBC( real64 const time_n,
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel & mesh,
-                                                               arrayView1d< string const > const & )
+                                                               string_array const & )
   {
 
     // 1. Apply pressure Dirichlet BCs, store in a separate field
@@ -947,7 +949,7 @@ void ImmiscibleMultiphaseFlow::applySourceFluxBC( real64 const time,
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel & mesh,
-                                                               arrayView1d< string const > const & )
+                                                               string_array const & )
   {
 
     fsManager.apply< ElementSubRegionBase,
@@ -1087,7 +1089,7 @@ real64 ImmiscibleMultiphaseFlow::calculateResidualNorm( real64 const & GEOS_UNUS
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel const & mesh,
-                                                               arrayView1d< string const > const & regionNames )
+                                                               string_array const & regionNames )
   {
     mesh.getElemManager().forElementSubRegions( regionNames,
                                                 [&]( localIndex const,
@@ -1333,7 +1335,7 @@ void ImmiscibleMultiphaseFlow::applySystemSolution( DofManager const & dofManage
   // 3. synchronize
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
-                                                                arrayView1d< string const > const & regionNames )
+                                                                string_array const & regionNames )
   {
     std::vector< string > fields{ fields::flow::pressure::key(), fields::immiscibleMultiphaseFlow::phaseVolumeFraction::key() };
 
@@ -1364,7 +1366,7 @@ void ImmiscibleMultiphaseFlow::resetStateToBeginningOfStep( DomainPartition & do
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel & mesh,
-                                                               arrayView1d< string const > const & regionNames )
+                                                               string_array const & regionNames )
   {
     mesh.getElemManager().forElementSubRegions< CellElementSubRegion,
                                                 SurfaceElementSubRegion >( regionNames,
@@ -1420,7 +1422,7 @@ void ImmiscibleMultiphaseFlow::implicitStepComplete( real64 const & time,
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel & mesh,
-                                                               arrayView1d< string const > const & regionNames )
+                                                               string_array const & regionNames )
   {
     mesh.getElemManager().forElementSubRegions( regionNames,
                                                 [&]( localIndex const,
@@ -1490,7 +1492,7 @@ void ImmiscibleMultiphaseFlow::updateState( DomainPartition & domain )
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel & mesh,
-                                                               arrayView1d< string const > const & regionNames )
+                                                               string_array const & regionNames )
   {
     mesh.getElemManager().forElementSubRegions< CellElementSubRegion,
                                                 SurfaceElementSubRegion >( regionNames, [&]( localIndex const,
@@ -1521,7 +1523,7 @@ real64 ImmiscibleMultiphaseFlow::setNextDtBasedOnStateChange( real64 const & cur
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel & mesh,
-                                                               arrayView1d< string const > const & regionNames )
+                                                               string_array const & regionNames )
   {
     mesh.getElemManager().forElementSubRegions( regionNames,
                                                 [&]( localIndex const,
@@ -1561,10 +1563,10 @@ real64 ImmiscibleMultiphaseFlow::setNextDtBasedOnStateChange( real64 const & cur
   maxRelativePresChange = MpiWrapper::max( maxRelativePresChange );
   maxAbsolutePhaseVolFracChange = MpiWrapper::max( maxAbsolutePhaseVolFracChange );
 
-  GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::TimeStep, GEOS_FMT( "{}: max relative pressure change during time step = {} %",
-                                                           getName(), GEOS_FMT( "{:.{}f}", 100*maxRelativePresChange, 3 ) ) );
-  GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::TimeStep, GEOS_FMT( "{}: max absolute phase volume fraction change during time step = {}",
-                                                           getName(), GEOS_FMT( "{:.{}f}", maxAbsolutePhaseVolFracChange, 3 ) ) );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::TimeStep, GEOS_FMT( "{}: max relative pressure change during time step = {} %",
+                                                      getName(), GEOS_FMT( "{:.{}f}", 100*maxRelativePresChange, 3 ) ) );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::TimeStep, GEOS_FMT( "{}: max absolute phase volume fraction change during time step = {}",
+                                                      getName(), GEOS_FMT( "{:.{}f}", maxAbsolutePhaseVolFracChange, 3 ) ) );
 
   real64 const eps = LvArray::NumericLimits< real64 >::epsilon;
 
