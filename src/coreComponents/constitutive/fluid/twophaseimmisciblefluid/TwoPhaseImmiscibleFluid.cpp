@@ -268,6 +268,13 @@ TwoPhaseImmiscibleFluid::KernelWrapper::KernelWrapper(
   m_phaseViscosity( std::move( phaseViscosity )) {}
 
 
+TwoPhaseImmiscibleFluid::KernelWrapper::KernelWrapper(
+  arrayView1d< TableFunction::KernelWrapper const > densityTables,
+  arrayView1d< TableFunction::KernelWrapper const > viscosityTables )
+  : m_densityTables( std::move( densityTables )),
+  m_viscosityTables( std::move( viscosityTables )) {}    
+
+
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, TwoPhaseImmiscibleFluid, string const &, Group * const )
 
 }  // namespace constitutive
