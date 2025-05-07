@@ -142,14 +142,9 @@ public:
   static real64 faceJacobianDeterminant( localIndex face,
                                          real64 const (&X)[4][3] )
   {
-    //printf("face=%d\n",face);
     int i1 = ( face + 1 ) % 4;
     int i2 = ( face + 2 ) % 4;
     int i3 = ( face + 3 ) % 4;
-    //printf("i1=%d,i2=%d,i3=%d\n",i1,i2,i3);
-    //printf("X[i1][0]=%f,X[i1][1]=%f,X[i1][2]=%f\n",X[i1][0],X[i1][1],X[i1][2]);
-    //printf("X[i2][0]=%f,X[i2][1]=%f,X[i2][2]=%f\n",X[i2][0],X[i2][1],X[i2][2]);
-    //printf("X[i3][0]=%f,X[i3][1]=%f,X[i3][2]=%f\n",X[i3][0],X[i3][1],X[i3][2]);
 
     real64 ab[3] = { X[ i2 ][ 0 ] - X[ i1 ][ 0 ],
                      X[ i2 ][ 1 ] - X[ i1 ][ 1 ],
@@ -157,13 +152,9 @@ public:
     real64 ac[3] = { X[ i3 ][ 0 ] - X[ i1 ][ 0 ],
                      X[ i3 ][ 1 ] - X[ i1 ][ 1 ],
                      X[ i3 ][ 2 ] - X[ i1 ][ 2 ] };
-    //printf("ab[0]=%f,ab[1]=%f,ab[2]=%f\n",ab[0],ab[1],ab[2]);
-    //printf("ac[0]=%f,ac[1]=%f,ac[2]=%f\n",ac[0],ac[1],ac[2]);
     real64 term1 = ab[1] * ac[2] - ab[2] * ac[1];
     real64 term2 = ab[2] * ac[0] - ab[0] * ac[2];
     real64 term3 = ab[0] * ac[1] - ab[1] * ac[0];
-    //printf("term1=%f,term2=%f,term3=%f\n",term1,term2,term3);
-    //printf("sqrt=%f\n",LvArray::math::sqrt( ( term1 * term1 + term2 * term2 + term3 * term3 ) ));
     return LvArray::math::sqrt( ( term1 * term1 + term2 * term2 + term3 * term3 ) );
 
   }
@@ -251,7 +242,7 @@ public:
 
   /**
    * @brief Calculate shape functions values at a single point, given the coordinates of the tetrahedron vertices, using De Casteljau's
-   *algorithm.
+   * algorithm.
    * @param[in] coords The parent coordinates at which to evaluate the shape function value, in the reference element
    * @param[out] ORDER The shape function values.
    */
@@ -289,7 +280,7 @@ public:
 
   /**
    * @brief Calculate the values and derivatives of shape functions with respect to barycentric coordinates at a single point using De
-   *Casteljau's algorithm.
+   * Casteljau's algorithm.
    * @param[in] lambda barycentric coordinates of the point in thetetrahedron
    * @param[out] N The shape function values.
    * @param[out] gradN The derivatives of the shape functions with respect to the lambdas
@@ -347,7 +338,7 @@ public:
 
   /**
    * @brief Calculate the shape functions values and derivatives at a single point, given the coorginates of the tetrahedron vertices, using
-   *De Casteljau's algorithm.
+   * De Casteljau's algorithm.
    * @param[in] coords The parent coordinates at which to evaluate the shape function value, in the reference element
    * @param[out] ORDER The shape function values.
    */
@@ -1017,6 +1008,54 @@ public:
     } );
   }
 
+
+  GEOS_HOST_DEVICE
+
+  GEOS_FORCE_INLINE
+
+  static
+
+  constexpr
+
+  real64
+
+  computeFluxDerivativeFactor( real64 const (&X)[4][3], int x1, int x2, int o1, int o2 )    // Order x1, x2, o1, o2
+
+  {
+
+    real64 detJ = abs( jacobianDeterminant( X ));
+
+    // height with respect to o2
+
+    real64 detJf1 = abs( faceJacobianDeterminant( o1, X ));
+
+    real64 scal = 1.0;
+
+    if( o1 != o2 )
+    {
+
+      // scalar product
+
+      real64 detJf2 = abs( faceJacobianDeterminant( o2, X ));
+
+      real64 el2[3][2] = { { edgeLength2( x1, x2, X ), edgeLength2( o1, o2, X ) },
+
+        { edgeLength2( x1, o1, X ), edgeLength2( x2, o2, X ) },
+
+        { edgeLength2( x1, o2, X ), edgeLength2( x2, o1, X ) } };
+
+      real64 h2 = (el2[1][0]+el2[1][1])-(el2[2][0]+el2[2][1]);
+
+      h2 = (4.0 * el2[0][0]*el2[0][1] - h2 * h2)/16.0;
+
+      scal = (4.0*h2-detJf1 * detJf1 - detJf2 * detJf2 ) / (2.0 * detJf1 * detJf2);
+
+    }
+
+    return scal * detJf1 / detJ;
+
+  }
+
   /**
    * @brief Computes the non-zero contributions inside the element of the
    *   stiffness matrix R, i.e., the superposition matrix of first derivatives of shape functions
@@ -1123,12 +1162,7 @@ public:
   {
     real64 detJf[4] = { faceJacobianDeterminant( 0, X ), faceJacobianDeterminant( 1, X ),
                         faceJacobianDeterminant( 2, X ), faceJacobianDeterminant( 3, X ) };
-    // squared length of edges, ordering follow voigt
-    real64 el2[3][2] = { { edgeLength2( 0, 1, X ), edgeLength2( 2, 3, X ) },
-      { edgeLength2( 0, 2, X ), edgeLength2( 1, 3, X ) },
-      { edgeLength2( 0, 3, X ), edgeLength2( 1, 2, X ) } };
-    real64 detJ = abs( jacobianDeterminant( X ));
-    conditionalBasisLoop< 0, 1 >( [&funcP, &funcF, &detJf, &detJ, &el2]  ( auto const cf1, auto const cd, auto const cc1, auto const ci1, auto const cj1, auto const ck1 )
+    conditionalBasisLoop< 0, 1 >( [&funcP, &funcF, &detJf]  ( auto const cf1, auto const cd, auto const cc1, auto const ci1, auto const cj1, auto const ck1 )
     {
       constexpr int f1 = cf1;
       constexpr int d1 = cd;
@@ -1136,7 +1170,7 @@ public:
       constexpr int i1 = ci1;
       constexpr int j1 = cj1;
       constexpr int k1 = ck1;
-      conditionalBasisLoop< 0 >( [&funcP, &funcF, &detJf, &detJ, &el2]  ( auto const cf2, auto const, auto const cc2, auto const ci2, auto const cj2, auto const ck2 )
+      conditionalBasisLoop< 0 >( [&funcP, &funcF, &detJf]  ( auto const cf2, auto const, auto const cc2, auto const ci2, auto const cj2, auto const ck2 )
       {
         constexpr int f2 = cf2;
         constexpr int c2 = cc2;
@@ -1150,7 +1184,7 @@ public:
           if constexpr ( d1 == 0 )
           {
             constexpr real64 val = computeFaceSuperpositionIntegral( i1, j1, k1, i2, j2, k2 );
-            funcP( c1, c2, f1, i1, j1, k1, i2, j2, k2, val * detJf[ f1 ] );
+            funcP( c1, c2, f2, i1, j1, k1, i2, j2, k2, val * detJf[ f2 ] );
           }
           // Compute flux term. This is nonzero in two cases.
           // first case: function has exponent 1 wrt to the same face. In this case, one can derive it once wrt to the
@@ -1159,13 +1193,13 @@ public:
           {
             constexpr real64 derFactor = ( i1 + j1 + k1 + 4 );
             constexpr real64 val = computeFaceSuperpositionIntegral( i1, j1, k1, i2, j2, k2 ) * derFactor;
-            funcF( c1, c2, f2, i1, j1, k1, i2, j2, k2, val * detJf[ f2 ] * detJf[ f2 ]/detJ );
+            funcF( c1, c2, f2, -1, i1, j1, k1, i2, j2, k2, val * detJf[ f2 ] );
           }
           // second case: function has exponent zero wrt f2.
           // In this case, one can derive it wrt to any other face.
           else if constexpr ( d1 == 0 )
           {
-            faceBarycentricCoordinateLoop( [ &funcF, &detJf, &detJ, &el2 ]( auto const cl )
+            faceBarycentricCoordinateLoop( [ &funcF, &detJf ]( auto const cl )
             {
               constexpr int l = cl;
               constexpr int ii1 = i1 + ( l == 0 ) * ( -1 );
@@ -1175,15 +1209,8 @@ public:
               {
                 constexpr real64 derFactor = ( ii1 + ij1 + ik1 + 4 );
                 constexpr real64 val = computeFaceSuperpositionIntegral( ii1, ij1, ik1, i2, j2, k2 ) * derFactor;
-                constexpr int f = (f1 + 1 + l) % 4;
-                constexpr int ic1 = (f==0||f2==0) ? (f + f2 -1)  : (5 - f - f2);
-                constexpr int ic2 = (ic1 + 1) % 3;
-                constexpr int ic3 = (ic2 + 1) % 3;
-                real64 h2 = (el2[ic2][0]+el2[ic2][1])-(el2[ic3][0]+el2[ic3][1]);
-                h2 = (4.0 * el2[ic1][0]*el2[ic1][1] - h2 * h2)/16.0;
-                //real64 scal = -(detJf[ f ] * detJf[ f ] + detJf[ f2 ] * detJf[ f2 ] - 4.0*   h2) / (2.0);
-                real64 scal = -(detJf[ f ] * detJf[ f ] + detJf[ f2 ] * detJf[ f2 ] - 4.0*   h2) / (2.0);
-                funcF( c1, c2, f2, i1, j1, k1, i2, j2, k2, val * scal / detJ );
+                constexpr int f = (f2 + 1 + l) % 4;
+                funcF( c1, c2, f2, f, i1, j1, k1, i2, j2, k2, val * detJf[f2] );
               }
             } );
           }
@@ -1191,7 +1218,6 @@ public:
       } );
     } );
   }
-
 //  /**
 //   * @brief Calculate the integration weights for a quadrature point.
 //   * @param q Index of the quadrature point.

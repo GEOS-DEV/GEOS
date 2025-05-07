@@ -123,6 +123,9 @@ struct PrecomputeSourceAndReceiverKernel
             sourceElem[isrc] = k;
             sourceRegion[isrc] = regionIndex;
             real64 Ntest[FE_TYPE::numNodes];
+
+
+
             constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
             real64 xLocal[4][3];
             for( localIndex a=0; a<4; ++a )
@@ -170,7 +173,6 @@ struct PrecomputeSourceAndReceiverKernel
           {
             receiverIsLocal[ircv] = 1;
             receiverElem[ircv] = k;
-            printf( "receiverElem=%d\n", receiverElem[ircv] );
             receiverRegion[ircv] = regionIndex;
 
 
@@ -433,7 +435,6 @@ struct PressureComputationKernel
    * @param[in] dt time-step
    * @param[out] p_np1 pressure array at time n+1 (updated here)
    */
-  //List is not complete, it will need several GEOS maps to add
   template< typename FE_TYPE, typename EXEC_POLICY, typename ATOMIC_POLICY >
   static void
   pressureComputation( localIndex const size,
@@ -464,18 +465,9 @@ struct PressureComputationKernel
 
     real64 const rickerValue = useSourceWaveletTables ? 0 : WaveSolverUtils::evaluateRicker( time_n, timeSourceFrequency, timeSourceDelay, rickerOrder );
 
-    //forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const k )
-    //{
-    //  for( localIndex i=0; i<4; ++i )
-    //  {
-    //     p_n[k][i] =  pow(X( elemsToNodes( k, i ), 0 ),2);
-    //     //printf("p_n[%d][%d]=%f\n",k,i,p_n[k][i]);
-    //  }
-    //} );
-
     forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const k )
-                           //for(localIndex k =0; k < 25007 ; ++k)
     {
+
       real64 const dt2 = pow( dt, 2 );
 
       constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
@@ -508,11 +500,11 @@ struct PressureComputationKernel
       } );
 
       //First stiffness part (volume)
+      int a;
       FE_TYPE::computeStiffnessTerm( xLocal, [&] ( const int i, const int j, real64 val )
       {
         flowx[i] -= val*p_n[k][j];
       } );
-
 
       FE_TYPE::computeSurfaceTerms( xLocal, [&] ( const int c1, const int c2, const int f1, const int i1, const int j1, const int k1, const int i2, const int j2, const int k2, real64 val )
       {
@@ -557,15 +549,13 @@ struct PressureComputationKernel
         }
 
       },
-                                    [&] ( const int c1, const int c2, const int f1, const int i1, const int j1, const int k1, const int i2, const int j2, const int k2, real64 val )
+                                    [&] ( const int c1, const int c2, const int f1, const int fNeigh, const int i1, const int j1, const int k1, const int i2, const int j2, const int k2, real64 val )
       {
 
         //We take the neighbour element
         const int elemNeigh = elemsToOpposite( k, f1 );
-
         if( elemNeigh >= 0 )
         {
-
 
           const int perm = elemsToOppositePermutation( k, f1 );
 
@@ -573,7 +563,6 @@ struct PressureComputationKernel
           const int p2 = (perm/4)%4-1;
           const int p3 = (perm/16)%4-1;
           const int p4 = (perm/64)%4-1;
-
 
           // Then we transform the 3 indices returned by the callback (i2,j2,k2) using the permutations. One of this permutation, will be 0
           // (depending on which
@@ -603,20 +592,69 @@ struct PressureComputationKernel
           const int kk1 = p3 < 0 ? l1 : IndicesTranspose[p3];
           const int ll1 = p4 < 0 ? l1 : IndicesTranspose[p4];
 
-
-
           const int neighDof2 = FE_TYPE::dofIndex( ii1, jj1, kk1 );
 
           // Finally, using the dofIndex function, we compute the number of the global degree of freedom on the element
+          real64 xLocalNeigh[4][3];
 
-          real64 const val1 = 0.5*val*p_n[k][c2];
-          real64 const val2 = 0.5*val*p_n[elemNeigh][neighDof];
-          real64 const val3 = 0.5*val*p_n[k][c1];
-          real64 const val4 = 0.5*val*p_n[elemNeigh][neighDof2];
+          int x1 = (f1+1)%4;
+          int x2 = (f1+2)%4;
+          int x3 = (f1+3)%4;
+
+          if( x2 == fNeigh )
+          {
+            int temp = x2;
+            x2 = x3;
+            x3 = temp;
+          }
+
+          if( x1 == fNeigh )
+          {
+            int temp = x1;
+            x1 = x3;
+            x3 = temp;
+          }
+
+          int o1 = fNeigh < 0 ? f1 : fNeigh;
+          int o2 = f1;
+
+          xLocalNeigh[x1][0] = xLocal[x1][0];
+          xLocalNeigh[x1][1] = xLocal[x1][1];
+          xLocalNeigh[x1][2] = xLocal[x1][2];
+          xLocalNeigh[x2][0] = xLocal[x2][0];
+          xLocalNeigh[x2][1] = xLocal[x2][1];
+          xLocalNeigh[x2][2] = xLocal[x2][2];
+          xLocalNeigh[x3][0] = xLocal[x3][0];
+          xLocalNeigh[x3][1] = xLocal[x3][1];
+          xLocalNeigh[x3][2] = xLocal[x3][2];
+
+          //Then we change the value fo DoF which is not common between xLocal and xLocalNeigh
+
+          localIndex IndexPerm[4] = {p1, p2, p3, p4};
+
+          for( localIndex i = 0; i <4; ++i )
+          {
+            if( IndexPerm[i] ==-1 )
+            {
+              xLocalNeigh[f1][0] = X[ elemsToNodes( elemNeigh, i )][0];
+              xLocalNeigh[f1][1] = X[ elemsToNodes( elemNeigh, i )][1];
+              xLocalNeigh[f1][2] = X[ elemsToNodes( elemNeigh, i )][2];
+            }
+
+          }
+
+          real64 corrLocal = FE_TYPE::computeFluxDerivativeFactor( xLocal, x1, x2, o1, o2 );
+          real64 corrNeigh = FE_TYPE::computeFluxDerivativeFactor( xLocalNeigh, x1, x2, o1, o2 );
+
+          real64 const val1 = 0.5*val*p_n[k][c2]*corrLocal;
+          real64 const val2 = 0.5*val*p_n[elemNeigh][neighDof]*corrLocal;
+//
+          real64 const val3 = 0.5*val*p_n[k][c1]*corrLocal;
+          real64 const val4 = 0.5*val*p_n[elemNeigh][neighDof2]*corrNeigh;
+
+
           flowx[c1] += val1-val2;
           flowx[c2] += val3-val4;
-
-
 
         }
       } );
@@ -626,8 +664,7 @@ struct PressureComputationKernel
       {
         pTemp[i] += dt2*flowx[i];
       }
-      //
-      real64 srcAmp[numNodesPerElem]={0.0};
+
       //Source Injection
       for( localIndex isrc = 0; isrc < sourceConstants.size( 0 ); ++isrc )
       {
@@ -644,7 +681,7 @@ struct PressureComputationKernel
           }
         }
       }
-//
+
       for( localIndex i = 0; i < numNodesPerElem; ++i )
       {
         real64 fx=0.0;
@@ -653,12 +690,12 @@ struct PressureComputationKernel
           fx+= referenceInvMassMatrix[0][0]( i, j )*pTemp[j];
         }
         p_np1[k][i]=(C2*fx)/det;
-        //p_np1[k][i]=pTemp[i];
-
-
       }
 
+
     } );
+
+
 
   }
 
