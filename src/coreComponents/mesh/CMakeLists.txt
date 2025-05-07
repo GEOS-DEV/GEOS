@@ -102,6 +102,9 @@ set( mesh_headers
      mpiCommunications/MPI_iCommData.hpp
      mpiCommunications/NeighborCommunicator.hpp
      mpiCommunications/NeighborData.hpp
+     mpiCommunications/PartitionerBase.hpp
+     mpiCommunications/CartesianPartitioner.hpp
+     mpiCommunications/ParMetisPartitioner.hpp
      mpiCommunications/PartitionBase.hpp
      mpiCommunications/SpatialPartition.hpp
      simpleGeometricObjects/Rectangle.hpp
@@ -183,6 +186,8 @@ set( mesh_sources
      mpiCommunications/CommunicationTools.cpp
      mpiCommunications/MPI_iCommData.cpp
      mpiCommunications/NeighborCommunicator.cpp
+     mpiCommunications/CartesianPartitioner.cpp
+     mpiCommunications/ParMetisPartitioner.cpp     
      mpiCommunications/PartitionBase.cpp
      mpiCommunications/SpatialPartition.cpp
      simpleGeometricObjects/Rectangle.cpp
