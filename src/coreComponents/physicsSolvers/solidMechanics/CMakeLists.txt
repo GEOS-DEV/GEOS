@@ -22,7 +22,6 @@ set( solidMechanicsSolvers_headers
      MatrixFreeSolidMechanicsFEM.hpp
      MatrixFreeSolidMechanicsFEMOperator.hpp
      SolidMechanicsFields.hpp
-     #[[
      SolidMechanicsLagrangianFEM.hpp
      kernels/SolidMechanicsLagrangianFEMKernels.hpp
      SolidMechanicsMPM.hpp
@@ -38,10 +37,8 @@ set( solidMechanicsSolvers_headers
      kernels/ImplicitSmallStrainNewmark_impl.hpp
      kernels/ImplicitSmallStrainQuasiStatic.hpp
      kernels/ImplicitSmallStrainQuasiStatic_impl.hpp
-     #]]
      kernels/SmallStrainResidual.hpp
      kernels/SmallStrainResidual_impl.hpp
-     #[[
      SolidMechanicsStateReset.hpp
      SolidMechanicsStatistics.hpp
      contact/ContactSolverBase.hpp
@@ -62,7 +59,6 @@ set( solidMechanicsSolvers_headers
      contact/kernels/SolidMechanicsConformingContactKernelsHelper.hpp
      contact/kernels/SolidMechanicsContactFaceBubbleKernels.hpp
      contact/kernels/SolidMechanicsLagrangeContactKernels.hpp 
-     #]]
      contact/LogLevelsInfo.hpp )
 
 # Specify solver sources
@@ -70,7 +66,6 @@ set( solidMechanicsSolvers_sources
      MatrixFreeSolidMechanicsFEM.cpp
      MatrixFreeSolidMechanicsFEMOperator.cpp
      kernels/SolidMechanicsSmallStrainResidualKernels.cpp
-     #[[
      SolidMechanicsLagrangianFEM.cpp
      SolidMechanicsMPM.cpp
      SolidMechanicsStateReset.cpp
@@ -80,7 +75,6 @@ set( solidMechanicsSolvers_sources
      contact/SolidMechanicsLagrangeContact.cpp
      contact/SolidMechanicsLagrangeContactBubbleStab.cpp
      contact/SolidMechanicsAugmentedLagrangianContact.cpp 
-     #]]
      )
 
 #include( kernels/SolidMechanicsKernels.cmake)
@@ -90,12 +84,12 @@ set( dependencyList ${parallelDeps} physicsSolversBase )
 geos_decorate_link_dependencies( LIST decoratedDependencies DEPENDENCIES ${dependencyList} )
 
 
-file( READ "${CMAKE_CURRENT_LIST_DIR}/kernelSpecs.json" kernelSpecs )
+file( READ "${CMAKE_CURRENT_LIST_DIR}/kernelSpecsMatrixFree.json" kernelSpecs )
 set( kernelTemplateFileList "" )
 
   list( APPEND kernelTemplateFileList 
-        kernels/SolidMechanicsKernels.cpp.template
-        kernels/SolidMechanicsFixedStressThermoPoromechanicsKernels.cpp.template )
+        kernels/SolidMechanicsKernels.cpp.template )
+#        kernels/SolidMechanicsFixedStressThermoPoromechanicsKernels.cpp.template )
 
 
 foreach( kernelTemplateFile ${kernelTemplateFileList} )
