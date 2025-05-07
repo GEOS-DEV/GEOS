@@ -51,9 +51,20 @@ m_timeIntegrationOption(TimeIntegrationOption::QuasiStatic)
     setRTTypeName(rtTypes::CustomTypes::groupNameRef).
     setInputFlag(InputFlags::REQUIRED).
     setDescription("Name of field variable");
+
+  registerWrapper(viewKeyStruct::surfaceGeneratorNameString(), &m_surfaceGeneratorName).
+    setInputFlag(InputFlags::OPTIONAL).
+    setDescription("Name of the surface generator to use");
 }
 
 Electrostatics::~Electrostatics() {}
+
+void Electrostatics::postInputInitialization()
+{
+  PhysicsSolverBase::postInputInitialization();
+
+  m_surfaceGenerator = this->getParent().getGroupPointer<PhysicsSolverBase>(m_surfaceGeneratorName);
+}
 
 void Electrostatics::registerDataOnMesh(Group& meshBodies)
 {
@@ -89,7 +100,13 @@ real64 Electrostatics::solverStep(real64 const& time_n, real64 const& dt,
   GEOS_MARK_FUNCTION;
   real64 dtReturn = dt;
 
-  setupSystem(domain, m_dofManager, m_localMatrix, m_rhs, m_solution, false);
+  // if (m_surfaceGenerator != nullptr && cycleNumber == 0)
+  // {
+  //   m_surfaceGenerator->solverStep(time_n, dt, cycleNumber, domain);
+  // }
+
+  // setupSystem(domain, m_dofManager, m_localMatrix, m_rhs, m_solution, false);
+  implicitStepSetup(time_n, dt, domain);
 
   dtReturn = linearImplicitStep(time_n, dt, cycleNumber, domain);
 
@@ -125,22 +142,7 @@ void Electrostatics::setupSystem(DomainPartition& domain, DofManager& dofManager
   GEOS_LOG("Electrostatics::setupSystem");
 
   GEOS_MARK_FUNCTION;
-  PhysicsSolverBase::setupSystem(domain, dofManager, localMatrix, rhs, solution, setSparsity);
-
-  SparsityPattern<globalIndex> sparsityPattern(dofManager.numLocalDofs(), dofManager.numGlobalDofs(), 8*8*1.2);
-
-  forDiscretizationOnMeshTargets(domain.getMeshBodies(),
-    [&](string const&, MeshLevel& mesh, string_array const& regionNames) {
-      NodeManager const& nodeManager = mesh.getNodeManager();
-      arrayView1d<globalIndex const> const dofNumber = nodeManager.getReference<globalIndex_array>(dofManager.getKey(m_fieldName));
-
-      finiteElement::fillSparsity<CellElementSubRegion, ElectrostaticsKernel>(mesh, regionNames, getDiscretizationName(),
-                                                                              dofNumber, dofManager.rankOffset(), sparsityPattern);
-    }
-  );
-
-  sparsityPattern.compress();
-  localMatrix.assimilate<parallelDevicePolicy<>>(std::move(sparsityPattern));
+  PhysicsSolverBase::setupSystem(domain, dofManager, localMatrix, rhs, solution, true);
 }
 
 void Electrostatics::assembleSystem(real64 const GEOS_UNUSED_PARAM(time_n), real64 const dt,
@@ -164,6 +166,8 @@ void Electrostatics::assembleSystem(real64 const GEOS_UNUSED_PARAM(time_n), real
       finiteElement::regionBasedKernelApplication<parallelDevicePolicy<>, constitutive::ElectroChemistryBase, CellElementSubRegion>(
         mesh, regionNames, this->getDiscretizationName(), viewKeyStruct::electroMaterialNamesString(), kernelFactory);
     });
+
+  applyButlerVolmerCurrent(dofManager, domain, localMatrix, localRhs);
 }
 
 void Electrostatics::applyBoundaryConditions(real64 const time_n, real64 const dt,
@@ -255,6 +259,89 @@ void Electrostatics::applyCurrentBC(real64 const time, DofManager const& dofMana
         {
           bc.launch(time, blockLocalDofNumber, dofRankOffset, faceManager, targetSet, localRhs);
         });
+    });
+}
+
+void Electrostatics::applyButlerVolmerCurrent(DofManager const& dofManager, DomainPartition& domain,
+                                              CRSMatrixView<real64, globalIndex const> const& localMatrix,
+                                              arrayView1d<real64> const& localRhs)
+{
+  GEOS_MARK_FUNCTION;
+
+  forDiscretizationOnMeshTargets(domain.getMeshBodies(),
+    [&](string const&, MeshLevel& mesh, string_array const&)
+    {
+      FaceManager const& faceManager = mesh.getFaceManager();
+      NodeManager& nodeManager = mesh.getNodeManager();
+      ElementRegionManager& elemManager = mesh.getElemManager();
+
+      arrayView1d<real64 const> const phi = nodeManager.getReference<array1d<real64>>(m_fieldName).toViewConst();
+
+      arrayView2d<real64 const> const faceNormal = faceManager.faceNormal();
+      ArrayOfArraysView<localIndex const> const facesToNodes = faceManager.nodeList().toViewConst();
+
+      string const dofKey = dofManager.getKey(m_fieldName);
+      arrayView1d<globalIndex> const nodeDofNumber = nodeManager.getReference<globalIndex_array>(dofKey);
+      globalIndex const rankOffset = dofManager.rankOffset();
+
+      constexpr localIndex maxNodesPerFace = 4;
+      constexpr localIndex maxDofPerElem = maxNodesPerFace * 2;
+
+      elemManager.forElementSubRegions<FaceElementSubRegion>([&](FaceElementSubRegion& subRegion) {
+        // Hard-coded for debugging
+        real64 const k_rxn = 1.0;
+
+        arrayView1d<real64> const area = subRegion.getElementArea();
+        arrayView2d<localIndex const> const elemsToFaces = subRegion.faceList().toViewConst();
+
+        forAll<parallelDevicePolicy<>>(subRegion.size(), [=](localIndex const kfe) {
+          localIndex const kf0 = elemsToFaces[kfe][0], kf1 = elemsToFaces[kfe][1];
+
+          localIndex const numNodesPerFace = facesToNodes.sizeOfArray(kf0);
+          real64 const Ja = area[kfe] / numNodesPerFace;
+
+          stackArray1d< globalIndex, maxDofPerElem > rowDof(numNodesPerFace*2);
+          stackArray1d< real64, maxDofPerElem > nodeRHS(numNodesPerFace*2);
+          stackArray2d< real64, maxDofPerElem *maxDofPerElem > dRdPhi(numNodesPerFace*2, numNodesPerFace*2);
+
+          for (localIndex a = 0; a < numNodesPerFace; ++a)
+          {
+            localIndex const node0 = facesToNodes[kf0][a];
+            localIndex const node1 = facesToNodes[kf1][a == 0 ? a : numNodesPerFace - a];
+
+            real64 phi_jump = phi[node0] - phi[node1];
+
+            rowDof[a] = nodeDofNumber[node0];
+            rowDof[numNodesPerFace + a] = nodeDofNumber[node1];
+
+            nodeRHS[a] += k_rxn * Ja * phi_jump;
+            nodeRHS[numNodesPerFace + a] -= k_rxn * Ja * phi_jump;
+
+            // initial implementation with mass lumping
+            dRdPhi(a, a) += k_rxn * Ja;
+            dRdPhi(a, numNodesPerFace + a) -= k_rxn * Ja;
+            dRdPhi(numNodesPerFace + a, numNodesPerFace + a) += k_rxn * Ja;
+            dRdPhi(numNodesPerFace + a, a) -= k_rxn * Ja;
+          }
+
+          // // debuggging with std::cout
+          // std::cout << "rowDofs are" << std::endl;
+          // for (auto i = 0; i < numNodesPerFace * 2; ++i)
+          //   std::cout << rowDof[i] << " ";
+          // std::cout << std::endl;
+          for (localIndex idof = 0; idof < numNodesPerFace * 2; ++idof)
+          {
+            localIndex const localRow = LvArray::integerConversion<localIndex>(rowDof[idof] - rankOffset);
+            if (localRow >= 0 && localRow < localMatrix.numRows())
+            {
+              std::cout << "For dof #" << rowDof[idof] - rankOffset << std::endl;
+              localMatrix.addToRowBinarySearchUnsorted<parallelDeviceAtomic>(
+                localRow, rowDof.data(), dRdPhi[idof].dataIfContiguous(), numNodesPerFace*2);
+              RAJA::atomicAdd<parallelDeviceAtomic>(&localRhs[localRow], nodeRHS[idof]);
+            }
+          }
+        });
+      });
     });
 }
 

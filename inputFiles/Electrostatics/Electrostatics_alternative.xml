@@ -8,7 +8,7 @@
       discretization="FE1"
       timeIntegrationOption="QuasiStatic"
       fieldName="potential"
-      targetRegions="{Region1, Region2, SEIRegion}">
+      targetRegions="{Domain, SEIRegion}">
       <LinearSolverParameters
         directParallel="0"/>
     </Electrostatics>
@@ -16,7 +16,7 @@
     <SurfaceGenerator
       name="SurfaceGen"
       fractureRegion="SEIRegion"
-      targetRegions="{ Region1, Region2 }"
+      targetRegions="{ Domain }"
       initialRockToughness="1.0e10"
       mpiCommOrder="1"/>
   </Solvers>
@@ -25,13 +25,13 @@
     <InternalMesh
       name="mesh1"
       elementTypes="{C3D8}"
-      xCoords="{0, 5, 10}"
+      xCoords="{0, 10}"
       yCoords="{0, 1}"
       zCoords="{0, 1}"
-      nx="{5, 5}"
+      nx="{2}"
       ny="{1}"
       nz="{1}"
-      cellBlockNames="{electrode, electrolyte}"/>
+      cellBlockNames="{halfcellblock}"/>
   </Mesh>
 
   <Geometry>
@@ -49,18 +49,18 @@
       name="SEI"
       xMin="{ 4.99, -0.01, -0.01 }"
       xMax="{ 5.01, 1.01, 1.01 }"/>
+
+    <Box
+      name="electrolyte"
+      xMin="{5.01, -0.01, -0.01}"
+      xMax="{10.01, 1.01, 1.01}"/>
   </Geometry>
 
   <ElementRegions>
     <CellElementRegion
-      name="Region1"
-      cellBlocks="{electrode}"
-      materialList="{electrodeMaterial}"/>
-
-    <CellElementRegion
-      name="Region2"
-      cellBlocks="{electrolyte}"
-      materialList="{electrolyteMaterial}"/>
+      name="Domain"
+      cellBlocks="{halfcellblock}"
+      materialList="{conductiveMaterial}"/>
 
     <SurfaceElementRegion
       name="SEIRegion"
@@ -70,12 +70,8 @@
 
   <Constitutive>
     <ElectroChemistryBase
-      name="electrodeMaterial"
+      name="conductiveMaterial"
       defaultConductivity="100.0"/>
-
-    <ElectroChemistryBase
-      name="electrolyteMaterial"
-      defaultConductivity="10.0"/>
 
     <NullModel
       name="nullModel"/>
@@ -113,6 +109,14 @@
   </Events>
 
   <FieldSpecifications>
+    <FieldSpecification
+      name="electrolyteConductivity"
+      initialCondition="1"
+      setNames="{electrolyte}"
+      objectPath="ElementRegions/Domain"
+      fieldName="conductiveMaterial_conductivity"
+      scale="10.0"/>
+
     <FieldSpecification
       name="groundPotential"
       fieldName="potential"
