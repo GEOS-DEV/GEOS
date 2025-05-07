@@ -148,7 +148,7 @@ std::tuple< std::vector< idx_t >, std::vector< idx_t > > generateGraphCartPartit
   std::vector< idx_t > xadj( num_nodes + 1, 0 );
   std::vector< idx_t > adjncy;
 
-  auto getNodeIndex = [nx, ny, nz] ( const idx_t x, const idx_t y, const idx_t z )
+  auto getNodeIndex = [nx, ny] ( const idx_t x, const idx_t y, const idx_t z )
   {
     return x + nx * (y + ny * z);
   };
