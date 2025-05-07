@@ -61,8 +61,8 @@ public:
 
   /**
    * @brief Returns contextual information, including the file name and the line number
-   * 
-   * @return std::map< std::string, std::string > 
+   *
+   * @return std::map< std::string, std::string >
    */
   virtual std::map< std::string, std::string > getContextInfo() const = 0;
 
@@ -164,7 +164,7 @@ public:
   /**
    * @return a map containing contextual information, including the file name and the line number
    */
-  std::map< std::string, std::string > getContextInfo() const override; 
+  std::map< std::string, std::string > getContextInfo() const override;
 
   /**
    * @return the type name in the source file (XML node tag name / attribute name).
@@ -218,18 +218,36 @@ private:
 
 };
 
-// TODO: 
+// TODO:
 // GEOS_THROW_IF_TEST manière de sortir une erreur sans contexte
 // addContext fais le lien entre GEOS_THROW_CTX_IF
-// Variation de GEOS_THROW_IF_TEST qui ajoute des données de contexte 
-#define GEOS_THROW_CTX_IF( errorMsg, ctx ) \
-  std::map< std::string, std::string > contextInfo = ctx.getContextInfo(); \
-  errorMsg.addContext( contextInfo ); \
+// Variation de GEOS_THROW_IF_TEST qui ajoute des données de contexte
+#define GEOS_THROW_CTX_IF( dataContext, EXP, MSG, EXCEPTIONTYPE ) \
+  do \
+  { \
+    if( EXP ) \
+    { \
+      std::ostringstream __oss; \
+      __oss << "\n"; \
+      __oss << "***** LOCATION: " LOCATION "\n"; \
+      __oss << "***** Controlling expression (should be false): " STRINGIZE( EXP ) "\n"; \
+      __oss << MSG << "\n"; \
+      __oss << LvArray::system::stackTrace( true ); \
+      std::ostringstream __msgoss; \
+      __msgoss << MSG; \
+      ErrorLogger::ErrorMsg msgStruct( ErrorLogger::MsgType::Error, \
+                                       __msgoss.str(), \
+                                       __FILE__, \
+                                       __LINE__ ); \
+      msgStruct.addContextInfo( dataContext.getContextInfo() ); \
+      errorLogger.write( msgStruct ); \
+      throw EXCEPTIONTYPE( __oss.str() ); \
+    } \
+  } while( false )
+
 
 } /* namespace dataRepository */
 } /* namespace geos */
-
-
 
 /**
  * @brief Formatter to be able to directly use a DataContext as a GEOS_FMT() argument.

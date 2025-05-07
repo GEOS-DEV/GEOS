@@ -318,10 +318,11 @@ public:
   T & getGroup( KEY const & key )
   {
     Group * const child = m_subGroups[ key ];
-    GEOS_THROW_IF_TEST( child == nullptr,
-                   "Group " << getDataContext() << " has no child named " << key << std::endl
-                            << dumpSubGroupsNames(),
-                   std::domain_error );
+    GEOS_THROW_CTX_IF( getDataContext(), 
+                       child == nullptr,
+                       "Group " << getDataContext() << " has no child named " << key << std::endl
+                                << dumpSubGroupsNames(),
+                       std::domain_error );
     T * const castedChild = dynamicCast< T * >( child );
     GEOS_THROW_IF( castedChild == nullptr,
                    GEOS_FMT( "{} was expected to be a '{}'.",

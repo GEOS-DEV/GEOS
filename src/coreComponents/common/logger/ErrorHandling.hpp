@@ -37,6 +37,8 @@ class ErrorLogger
 {
 public:
 
+  ErrorLogger();
+
   /**
    * @enum TypeMsg 
    * Enum listing the different types of possible errors

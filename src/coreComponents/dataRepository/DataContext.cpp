@@ -112,7 +112,7 @@ std::map< std::string, std::string > DataFileContext::getContextInfo() const
 {
   std::map<std::string, std::string> contextInfo;
   contextInfo["inputFile"] = m_filePath;
-  contextInfo["inputFileLine"] = m_line;
+  contextInfo["inputFileLine"] = to_string( m_line );
 
   return contextInfo;
 }

@@ -20,18 +20,14 @@
 
 using namespace geos;
 
-TEST( ErrorHandling, testYaml )
+TEST( DataContext, testCompleteYaml )
 {
-  std::map<std::string, std::string> map;
-  map["inputFile"] = "./simpleCo2Inj.xml";
-  map["inputLineLine"] = "42";
-
-  geos::ErrorLogger::ErrorMsg msgStruct( geos::ErrorLogger::MsgType::Error,
-                                         "msg content",
-                                         "dev file name",
-                                          24 );
-  msgStruct.addContextInfo( std::move( map ) );
-  errorLogger.write( msgStruct );
+  geos::ErrorLogger errorLogger; 
+  int x = 5;
+  geos::dataRepository::DataFileContext dataContext( "targetName",
+                                                     "test1_file.xml",
+                                                     42 );
+  GEOS_THROW_CTX_IF( dataContext, x==5, "Here is the error message", std::runtime_error );
 }
 
 int main( int ac, char * av[] )
