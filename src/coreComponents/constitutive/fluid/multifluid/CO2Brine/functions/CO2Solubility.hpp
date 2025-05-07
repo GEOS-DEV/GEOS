@@ -139,10 +139,10 @@ public:
 
 private:
   /// Table to compute solubility as a function of pressure and temperature
-  TableFunction const * m_CO2SolubilityTable;
+  TableFunction const * m_CO2SolubilityTable = nullptr;
 
   /// Table to compute  water vapourisation as a function of pressure and temperature
-  TableFunction const * m_WaterVapourisationTable;
+  TableFunction const * m_WaterVapourisationTable = nullptr;
 
   /// Index of the CO2 component
   integer m_CO2Index;

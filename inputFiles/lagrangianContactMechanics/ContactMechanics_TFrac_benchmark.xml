@@ -16,7 +16,7 @@
    discretization="FE1"
    targetRegions="{ Region, Fracture }">
    <NonlinearSolverParameters
-     newtonTol="1.0e-8"
+     newtonTol="1.0e-5"
      logLevel="2"
      maxNumConfigurationAttempts="10"
      newtonMaxIter="10"
@@ -24,8 +24,9 @@
      lineSearchMaxCuts="2"
      maxTimeStepCuts="2"/>
    <LinearSolverParameters
-     solverType="direct"
-     directParallel="0"
+     solverType="gmres"
+     preconditionerType="mgr"
+     krylovTol="1e-8"
      logLevel="0"/>
   </SolidMechanicsLagrangeContact>
   <!-- SPHINX_SOLVER_END -->
@@ -39,7 +40,7 @@
   </NumericalMethods>
 
   <Events
-    maxTime="0.2">
+    maxTime="1.0">
     <SoloEvent
       name="preFracture"
       target="/Solvers/SurfaceGen"/>
@@ -47,7 +48,7 @@
     <PeriodicEvent
       name="solverApplications"
       beginTime="0.0"
-      endTime="0.2"
+      endTime="1.0"
       forceDt="0.2"
       target="/Solvers/lagrangiancontact"/>  
 
@@ -77,12 +78,6 @@
       name="displacementHistoryOutput"
       timeFrequency="0.2"
       targetExactTimestep="0"
-      target="/Outputs/displacementOutput"/>
-      
-    <PeriodicEvent
-      name="restarts"
-      timeFrequency="0.2"
-      targetExactTimestep="0"
-      target="/Outputs/restartOutput"/>     
+      target="/Outputs/displacementOutput"/>    
   </Events>
 </Problem>

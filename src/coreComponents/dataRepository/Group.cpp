@@ -17,6 +17,9 @@
 #include "Group.hpp"
 #include "ConduitRestart.hpp"
 #include "common/format/StringUtilities.hpp"
+#include "common/format/table/TableData.hpp"
+#include "common/format/table/TableFormatter.hpp"
+#include "common/format/table/TableLayout.hpp"
 #include "codingUtilities/Utilities.hpp"
 #include "common/TimingMacros.hpp"
 #include "GroupContext.hpp"
@@ -135,17 +138,63 @@ string Group::getPath() const
   return noProblem.empty() ? "/" : noProblem;
 }
 
+string Group::processInputName( xmlWrapper::xmlNode const & targetNode,
+                                xmlWrapper::xmlNodePos const & targetNodePos,
+                                string_view parentNodeName,
+                                xmlWrapper::xmlNodePos const & parentNodePos,
+                                std::set< string > & siblingNames )
+{
+  GEOS_THROW_IF( targetNode.type() != xmlWrapper::xmlNodeType::node_element,
+                 GEOS_FMT( "Error in node named \"{}\" ({}): GEOS XML nodes cannot contain "
+                           "text data nor anything but XML nodes.\nErroneous content: \"{}\"\n",
+                           parentNodeName, parentNodePos.toString(),
+                           stringutilities::trimSpaces( targetNode.value() ) ),
+                 InputError );
+
+  string targetNodeName;
+  try
+  { // read & validate the name attribute
+    xmlWrapper::readAttributeAsType( targetNodeName, "name",
+                                     rtTypes::getTypeRegex< string >( rtTypes::CustomTypes::groupName ),
+                                     targetNode, string( "" ) );
+  } catch( std::exception const & ex )
+  {
+    xmlWrapper::processInputException( ex, "name", targetNode, targetNodePos );
+  }
+
+  if( targetNodeName.empty() )
+  { // if there is no name attribute, we use the node tag as a node name
+    targetNodeName = targetNode.name();
+  }
+  else
+  { // Make sure names are not duplicated by checking all previous siblings
+    GEOS_THROW_IF( siblingNames.count( targetNodeName ) != 0,
+                   GEOS_FMT( "Error at node named \"{}\" ({}): "
+                             "An XML block cannot contain children with duplicated names.\n",
+                             targetNodeName, targetNodePos.toString() ),
+                   InputError );
+    siblingNames.insert( targetNodeName );
+  }
+
+  return targetNodeName;
+}
+
 void Group::processInputFileRecursive( xmlWrapper::xmlDocument & xmlDocument,
                                        xmlWrapper::xmlNode & targetNode )
 {
-  xmlWrapper::xmlNodePos nodePos = xmlDocument.getNodePosition( targetNode );
-  processInputFileRecursive( xmlDocument, targetNode, nodePos );
+  xmlWrapper::xmlNodePos targetNodePos = xmlDocument.getNodePosition( targetNode );
+  processInputFileRecursive( xmlDocument, targetNode, targetNodePos );
 }
 void Group::processInputFileRecursive( xmlWrapper::xmlDocument & xmlDocument,
                                        xmlWrapper::xmlNode & targetNode,
-                                       xmlWrapper::xmlNodePos const & nodePos )
+                                       xmlWrapper::xmlNodePos const & targetNodePos )
 {
   xmlDocument.addIncludedXML( targetNode );
+
+  if( targetNodePos.isFound() )
+  {
+    m_dataContext = std::make_unique< DataFileContext >( targetNode, targetNodePos );
+  }
 
   // Handle the case where the node was imported from a different input file
   // Set the path prefix to make sure all relative Path variables are interpreted correctly
@@ -157,40 +206,12 @@ void Group::processInputFileRecursive( xmlWrapper::xmlDocument & xmlDocument,
   }
 
   // Loop over the child nodes of the targetNode
-  array1d< string > childNames;
+  std::set< string > childNames;
   for( xmlWrapper::xmlNode childNode : targetNode.children() )
   {
     xmlWrapper::xmlNodePos childNodePos = xmlDocument.getNodePosition( childNode );
-
-    // Get the child tag and name
-    string childName;
-
-    try
-    {
-      xmlWrapper::readAttributeAsType( childName, "name",
-                                       rtTypes::getTypeRegex< string >( rtTypes::CustomTypes::groupName ),
-                                       childNode, string( "" ) );
-    } catch( std::exception const & ex )
-    {
-      xmlWrapper::processInputException( ex, "name", childNode, childNodePos );
-    }
-
-    if( childName.empty() )
-    {
-      childName = childNode.name();
-    }
-    else
-    {
-      // Make sure child names are not duplicated
-      GEOS_ERROR_IF( std::find( childNames.begin(), childNames.end(), childName ) != childNames.end(),
-                     GEOS_FMT( "Error: An XML block cannot contain children with duplicated names.\n"
-                               "Error detected at node {} with name = {} ({}:l.{})",
-                               childNode.path(), childName, xmlDocument.getFilePath(),
-                               xmlDocument.getNodePosition( childNode ).line ) );
-
-      childNames.emplace_back( childName );
-    }
-
+    string const childName = processInputName( childNode, childNodePos,
+                                               getName(), targetNodePos, childNames );
     // Create children
     Group * newChild = createChild( childNode.name(), childName );
     if( newChild == nullptr )
@@ -203,7 +224,7 @@ void Group::processInputFileRecursive( xmlWrapper::xmlDocument & xmlDocument,
     }
   }
 
-  processInputFile( targetNode, nodePos );
+  processInputFile( targetNode, targetNodePos );
 
   // Restore original prefix once the node is processed
   Path::setPathPrefix( oldPrefix );
@@ -212,12 +233,6 @@ void Group::processInputFileRecursive( xmlWrapper::xmlDocument & xmlDocument,
 void Group::processInputFile( xmlWrapper::xmlNode const & targetNode,
                               xmlWrapper::xmlNodePos const & nodePos )
 {
-  if( nodePos.isFound() )
-  {
-    m_dataContext = std::make_unique< DataFileContext >( targetNode, nodePos );
-  }
-
-
   std::set< string > processedAttributes;
   for( std::pair< string const, WrapperBase * > & pair : m_wrappers )
   {
@@ -233,10 +248,10 @@ void Group::processInputFile( xmlWrapper::xmlNode const & targetNode,
     if( !xmlWrapper::isFileMetadataAttribute( attributeName ) )
     {
       GEOS_THROW_IF( processedAttributes.count( attributeName ) == 0,
-                     GEOS_FMT( "XML Node at '{}' with name={} contains unused attribute '{}'.\n"
+                     GEOS_FMT( "Error in {}: XML Node at '{}' contains unused attribute '{}'.\n"
                                "Valid attributes are:\n{}\nFor more details, please refer to documentation at:\n"
                                "http://geosx-geosx.readthedocs-hosted.com/en/latest/docs/sphinx/userGuide/Index.html",
-                               targetNode.path(), m_dataContext->toString(), attributeName,
+                               getDataContext(), targetNode.path(), attributeName,
                                dumpInputOptions() ),
                      InputError );
     }
@@ -264,11 +279,10 @@ void Group::registerDataOnMeshRecursive( Group & meshBodies )
 
 Group * Group::createChild( string const & childKey, string const & childName )
 {
-  GEOS_ERROR_IF( !(CatalogInterface::hasKeyName( childKey )),
-                 "KeyName ("<<childKey<<") not found in Group::Catalog" );
   GEOS_LOG_RANK_0( "Adding Object " << childKey<<" named "<< childName<<" from Group::Catalog." );
   return &registerGroup( childName,
-                         CatalogInterface::factory( childKey, childName, this ) );
+                         CatalogInterface::factory( childKey, getDataContext(),
+                                                    childName, this ) );
 }
 
 void Group::printDataHierarchy( integer const indent ) const
@@ -290,13 +304,30 @@ void Group::printDataHierarchy( integer const indent ) const
 string Group::dumpInputOptions() const
 {
   string rval;
-
-  bool writeHeader = true;
+  TableLayout const logLayout = TableLayout( "", {TableLayout::Column()
+                                                    .setName( "name" )
+                                                    .setValuesAlignment( TableLayout::Alignment::left ),
+                                                  TableLayout::Column()
+                                                    .setName( "Requirement" )
+                                                    .setValuesAlignment( TableLayout::Alignment::center ),
+                                                  TableLayout::Column()
+                                                    .setName( "Description" )
+                                                    .setValuesAlignment( TableLayout::Alignment::left ) } )
+                                  .setMaxColumnWidth( 80 );
+  TableData logData;
   for( auto const & wrapper : m_wrappers )
   {
-    rval.append( wrapper.second->dumpInputOptions( writeHeader ) );
-    writeHeader = false;
+    if( wrapper.second->getInputFlag() == InputFlags::OPTIONAL ||
+        wrapper.second->getInputFlag() == InputFlags::REQUIRED )
+    {
+      logData.addRow( wrapper.second->getName(),
+                      InputFlagToString( wrapper.second->getInputFlag() ),
+                      wrapper.second->getDescription() );
+    }
   }
+
+  TableTextFormatter logFormatter( logLayout );
+  rval.append( logFormatter.toString( logData ));
 
   return rval;
 }
@@ -344,7 +375,7 @@ void Group::initializationOrder( string_array & order )
 
 void Group::initialize_postMeshGeneration()
 {
-  array1d< string > initOrder;
+  string_array initOrder;
   initializationOrder( initOrder );
 
   for( auto const & groupName : initOrder )
@@ -358,7 +389,7 @@ void Group::initialize()
 {
   initializePreSubGroups();
 
-  array1d< string > initOrder;
+  string_array initOrder;
   initializationOrder( initOrder );
 
   for( auto const & groupName : initOrder )
@@ -374,7 +405,7 @@ void Group::initializePostInitialConditions()
 {
   initializePostInitialConditionsPreSubGroups();
 
-  array1d< string > initOrder;
+  string_array initOrder;
   initializationOrder( initOrder );
 
   for( auto const & groupName : initOrder )
@@ -387,7 +418,7 @@ void Group::initializePostInitialConditions()
 
 template< bool DO_PACKING >
 localIndex Group::packImpl( buffer_unit_type * & buffer,
-                            array1d< string > const & wrapperNames,
+                            string_array const & wrapperNames,
                             arrayView1d< localIndex const > const & packList,
                             integer const recursive,
                             bool onDevice,
@@ -400,7 +431,7 @@ localIndex Group::packImpl( buffer_unit_type * & buffer,
 
   // `wrappers` are considered for packing if they match the size of this Group instance.
   // A way to check this is to check the sufficient (but not necessary...) condition `wrapper.sizedFromParent()`.
-  std::vector< WrapperBase const * > wrappers;
+  stdVector< WrapperBase const * > wrappers;
   for( string const & wrapperName: wrapperNames )
   {
     if( hasWrapper( wrapperName ) )
@@ -447,7 +478,7 @@ localIndex Group::packImpl( buffer_unit_type * & buffer,
   return packedSize;
 }
 
-localIndex Group::packSize( array1d< string > const & wrapperNames,
+localIndex Group::packSize( string_array const & wrapperNames,
                             arrayView1d< localIndex const > const & packList,
                             integer const recursive,
                             bool onDevice,
@@ -463,14 +494,14 @@ localIndex Group::packSize( arrayView1d< localIndex const > const & packList,
                             bool onDevice,
                             parallelDeviceEvents & events ) const
 {
-  std::vector< string > const tmp = mapKeys( m_wrappers );
-  array1d< string > wrapperNames;
-  wrapperNames.insert( 0, tmp.begin(), tmp.end() );
+  stdVector< string > const tmp = mapKeys( m_wrappers );
+  string_array wrapperNames;
+  wrapperNames.insert( wrapperNames.begin(), tmp.begin(), tmp.end() );
   return this->packSize( wrapperNames, packList, recursive, onDevice, events );
 }
 
 
-localIndex Group::packSize( array1d< string > const & wrapperNames,
+localIndex Group::packSize( string_array const & wrapperNames,
                             integer const recursive,
                             bool onDevice,
                             parallelDeviceEvents & events ) const
@@ -481,7 +512,7 @@ localIndex Group::packSize( array1d< string > const & wrapperNames,
 
 
 localIndex Group::pack( buffer_unit_type * & buffer,
-                        array1d< string > const & wrapperNames,
+                        string_array const & wrapperNames,
                         arrayView1d< localIndex const > const & packList,
                         integer const recursive,
                         bool onDevice,
@@ -497,15 +528,15 @@ localIndex Group::pack( buffer_unit_type * & buffer,
                         bool onDevice,
                         parallelDeviceEvents & events ) const
 {
-  std::vector< string > const tmp = mapKeys( m_wrappers );
-  array1d< string > wrapperNames;
-  wrapperNames.insert( 0, tmp.begin(), tmp.end() );
+  stdVector< string > const tmp = mapKeys( m_wrappers );
+  string_array wrapperNames;
+  wrapperNames.insert( wrapperNames.begin(), tmp.begin(), tmp.end() );
   return this->pack( buffer, wrapperNames, packList, recursive, onDevice, events );
 }
 
 
 localIndex Group::pack( buffer_unit_type * & buffer,
-                        array1d< string > const & wrapperNames,
+                        string_array const & wrapperNames,
                         integer const recursive,
                         bool onDevice,
                         parallelDeviceEvents & events ) const
@@ -640,15 +671,6 @@ void Group::postRestartInitializationRecursive()
   postRestartInitialization();
 }
 
-void Group::enableLogLevelInput()
-{
-  // TODO : Improve the Log Level description to clearly assign a usecase per log level (incoming PR).
-  registerWrapper( viewKeyStruct::logLevelString(), &m_logLevel ).
-    setApplyDefaultValue( 0 ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Log level" );
-}
-
 Group const & Group::getBaseGroupByPath( string const & path ) const
 {
   Group const * currentGroup = this;
@@ -712,17 +734,17 @@ PyTypeObject * Group::getPythonType() const
 { return geos::python::getPyGroupType(); }
 #endif
 
-std::vector< string > Group::getSubGroupsNames() const
+stdVector< string > Group::getSubGroupsNames() const
 {
-  std::vector< string > childrenNames;
+  stdVector< string > childrenNames;
   childrenNames.reserve( numSubGroups() );
   forSubGroups( [&]( Group const & subGroup ){ childrenNames.push_back( subGroup.getName() ); } );
   return childrenNames;
 }
 
-std::vector< string > Group::getWrappersNames() const
+stdVector< string > Group::getWrappersNames() const
 {
-  std::vector< string > wrappersNames;
+  stdVector< string > wrappersNames;
   wrappersNames.reserve( numWrappers() );
   forWrappers( [&]( WrapperBase const & wrapper ){ wrappersNames.push_back( wrapper.getName() ); } );
   return wrappersNames;

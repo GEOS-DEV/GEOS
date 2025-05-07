@@ -67,10 +67,10 @@ private:
   static constexpr string_view cellBlockTypeSeparator = "_";
 
   /// @brief A map that link every cell-block name to the CellElementRegion(s) that references it.
-  std::map< string, std::vector< CellElementRegion const * > > m_cellBlocksOwners;
+  std::map< string, stdVector< CellElementRegion const * > > m_cellBlocksOwners;
 
   /// @brief A map that link every region attribute values to the CellElementRegion(s) that references it.
-  std::map< string, std::vector< CellElementRegion const * > > m_regionAttributesOwners;
+  std::map< string, stdVector< CellElementRegion const * > > m_regionAttributesOwners;
 
   /**
    * @brief A map of the cellblocks name lists for each region attributes value. Internal attribute type

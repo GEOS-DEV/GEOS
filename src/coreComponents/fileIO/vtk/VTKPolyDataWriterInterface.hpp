@@ -155,7 +155,7 @@ public:
    * @brief Set the names of the fields to output
    * @param[in] fieldNames the fields to output
    */
-  void setFieldNames( arrayView1d< string const > const & fieldNames )
+  void setFieldNames( string_array const & fieldNames )
   {
     m_fieldNames.insert( fieldNames.begin(), fieldNames.end() );
   }
@@ -164,7 +164,7 @@ public:
    * @brief Set the names of the mesh levels to output
    * @param[in] levelNames the mesh levels to output (an empty array means all levels are saved)
    */
-  void setLevelNames( arrayView1d< string const > const & levelNames )
+  void setLevelNames( string_array const & levelNames )
   {
     m_levelNames.insert( levelNames.begin(), levelNames.end() );
   }
@@ -377,7 +377,7 @@ protected:
   integer m_numberOfTargetProcesses;
 
   /// Map a region name to the array of ranks outputed for it
-  std::map< string, std::vector< integer > > m_targetProcessesId;
+  std::map< string, stdVector< integer > > m_targetProcessesId;
 };
 
 } // namespace vtk

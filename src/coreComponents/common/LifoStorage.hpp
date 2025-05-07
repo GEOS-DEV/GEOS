@@ -64,8 +64,7 @@ public:
     m_bufferCount( 0 )
   {
     LIFO_LOG_RANK( " LIFO : maximum size "<< m_maxNumberOfBuffers << " buffers " );
-    GEOS_MAYBE_UNUSED double bufferSize = ( ( double ) m_bufferSize ) / ( 1024.0 * 1024.0 );
-    LIFO_LOG_RANK( " LIFO : buffer size "<< bufferSize << "MB" );
+    LIFO_LOG_RANK( " LIFO : buffer size " << ( ( double ) m_bufferSize ) / ( 1024.0 * 1024.0 ) << "MB" );
     if( numberOfBuffersToStoreOnDevice < 0 )
     {
 #ifdef GEOS_USE_CUDA

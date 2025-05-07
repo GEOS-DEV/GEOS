@@ -44,7 +44,8 @@ ConstitutiveManager::~ConstitutiveManager()
 Group * ConstitutiveManager::createChild( string const & childKey, string const & childName )
 {
   GEOS_LOG_RANK_0( GEOS_FMT( "{}: adding {} {}", getName(), childKey, childName ) );
-  std::unique_ptr< ConstitutiveBase > material = ConstitutiveBase::CatalogInterface::factory( childKey, childName, this );
+  std::unique_ptr< ConstitutiveBase > material =
+    ConstitutiveBase::CatalogInterface::factory( childKey, getDataContext(), childName, this );
   return &registerGroup< ConstitutiveBase >( childName, std::move( material ) );
 }
 
@@ -92,7 +93,7 @@ ConstitutiveManager::hangConstitutiveRelation( string const & constitutiveRelati
   materialGroup.resize( constitutiveGroup->size() );
 
   // 2. Allocate subrelations (for compound models)
-  std::vector< string > const subRelationNames = constitutiveRelation.getSubRelationNames();
+  stdVector< string > const subRelationNames = constitutiveRelation.getSubRelationNames();
   for( string const & subRelationName : subRelationNames )
   {
     // we only want to register the subRelation if it has not been registered yet.

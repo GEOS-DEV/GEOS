@@ -118,8 +118,6 @@ private:
     array1d< real64 > immobilePhaseMass;
     /// region component mass
     array2d< real64 > componentMass;
-
-
   };
 
   /**
@@ -130,7 +128,7 @@ private:
    */
   void computeRegionStatistics( real64 const time,
                                 MeshLevel & mesh,
-                                arrayView1d< string const > const & regionNames ) const;
+                                string_array const & regionNames ) const;
 
   /**
    * @brief Compute CFL numbers

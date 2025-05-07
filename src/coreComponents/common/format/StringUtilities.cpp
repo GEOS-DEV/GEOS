@@ -57,6 +57,17 @@ string_view trimSpaces( string_view str )
 }
 
 
+std::string_view ltrimSpaces( std::string_view s )
+{
+  std::size_t const first = s.find_first_not_of( " \f\n\r\t\v" );
+  if( first != std::string::npos )
+  {
+    return s.substr( first, ( s.size() - first ) );
+  }
+  return {};
+}
+
+
 string removeStringAndFollowingContent( string_view const str,
                                         string_view const strToRemove )
 {
@@ -92,7 +103,6 @@ string addCommaSeparators( T const & num )
   }
   return result;
 }
-
 template string addCommaSeparators( int const & num );
 template string addCommaSeparators( long int const & num );
 template string addCommaSeparators( long long int const & num );
@@ -138,6 +148,84 @@ template string toMetricPrefixString( unsigned long long int const & );
 template string toMetricPrefixString( float const & );
 template string toMetricPrefixString( double const & );
 
+template< typename STRING_T >
+stdVector< STRING_T > divideLines( size_t & linesWidth, string_view value )
+{
+  size_t current = 0;
+  size_t end = value.find( '\n' );
+
+  stdVector< STRING_T > lines;
+  linesWidth = 0;
+
+  // Process each line until no more newlines are found
+  while( end != STRING_T::npos )
+  {
+    lines.push_back( STRING_T( value.substr( current, end - current ) ) );
+    current = end + 1;
+    end = value.find( '\n', current );
+    linesWidth = std::max( linesWidth, lines.back().size() );
+  }
+  // Add the last part
+  if( current <= value.size())
+  {
+    lines.push_back( STRING_T( value.substr( current )  ) );
+    linesWidth = std::max( linesWidth, lines.back().size() );
+  }
+
+  return lines;
+}
+template stdVector< string > divideLines( size_t &, string_view );
+template stdVector< string_view > divideLines( size_t &, string_view );
+
+template< typename STRING_T >
+stdVector< STRING_T > wrapTextToMaxLength( stdVector< STRING_T > const & lines,
+                                           size_t & maxLineLength )
+{
+  if( lines.empty())
+    return lines;
+
+  size_t effectiveMaxLineLength = 0;
+
+  stdVector< STRING_T > formattedLines;
+  formattedLines.reserve( lines.size() );
+  for( const auto & line : lines )
+  {
+    size_t startPos = 0;
+
+    while( startPos < line.size())
+    {
+      // if the remaining part is shorter than maxLineLength
+      if( startPos + maxLineLength >= line.size())
+      {
+        formattedLines.push_back( STRING_T( ltrimSpaces( line.substr( startPos ))));
+        effectiveMaxLineLength = std::max( effectiveMaxLineLength, formattedLines.back().size() );
+        break;
+      }
+
+      // find last space occurence before maxLineLength
+      size_t const endPos = startPos + maxLineLength;
+      size_t const spacePos = line.rfind( ' ', endPos );
+      if( spacePos != STRING_T::npos && spacePos > startPos )
+      {
+        // cut and push at the last space found
+        formattedLines.push_back( STRING_T( ltrimSpaces( line.substr( startPos, spacePos - startPos ))));
+        startPos = spacePos + 1;
+      }
+      else
+      {
+        // no space found, cut in the middle of the word with maxLineLength
+        formattedLines.push_back( STRING_T( ltrimSpaces( line.substr( startPos, maxLineLength ))));
+        startPos += maxLineLength;
+      }
+      effectiveMaxLineLength = std::max( effectiveMaxLineLength, formattedLines.back().size() );
+    }
+  }
+
+  maxLineLength = effectiveMaxLineLength;
+  return formattedLines;
+}
+template stdVector< string > wrapTextToMaxLength( stdVector< string > const &, size_t & );
+template stdVector< string_view > wrapTextToMaxLength( stdVector< string_view > const &, size_t & );
 
 }
 }

@@ -20,13 +20,16 @@
 #include "HypreMGR.hpp"
 
 
+#include "linearAlgebra/interfaces/hypre/mgrStrategies/AugmentedLagrangianContactMechanics.hpp"
 #include "linearAlgebra/interfaces/hypre/mgrStrategies/CompositionalMultiphaseFVM.hpp"
 #include "linearAlgebra/interfaces/hypre/mgrStrategies/CompositionalMultiphaseHybridFVM.hpp"
 #include "linearAlgebra/interfaces/hypre/mgrStrategies/CompositionalMultiphaseReservoirFVM.hpp"
 #include "linearAlgebra/interfaces/hypre/mgrStrategies/CompositionalMultiphaseReservoirHybridFVM.hpp"
 #include "linearAlgebra/interfaces/hypre/mgrStrategies/HybridSinglePhasePoromechanics.hpp"
 #include "linearAlgebra/interfaces/hypre/mgrStrategies/Hydrofracture.hpp"
+#include "linearAlgebra/interfaces/hypre/mgrStrategies/ImmiscibleMultiphaseFVM.hpp"
 #include "linearAlgebra/interfaces/hypre/mgrStrategies/LagrangianContactMechanics.hpp"
+#include "linearAlgebra/interfaces/hypre/mgrStrategies/LagrangianContactMechanicsBubbleStabilization.hpp"
 #include "linearAlgebra/interfaces/hypre/mgrStrategies/MultiphasePoromechanics.hpp"
 #include "linearAlgebra/interfaces/hypre/mgrStrategies/MultiphasePoromechanicsReservoirFVM.hpp"
 #include "linearAlgebra/interfaces/hypre/mgrStrategies/ReactiveCompositionalMultiphaseOBL.hpp"
@@ -133,9 +136,19 @@ void hypre::mgr::createMGR( LinearSolverParameters const & params,
       setStrategy< Hydrofracture >( params.mgr, numComponentsPerField, precond, mgrData );
       break;
     }
+    case LinearSolverParameters::MGR::StrategyType::augmentedLagrangianContactMechanics:
+    {
+      setStrategy< AugmentedLagrangianContactMechanics >( params.mgr, numComponentsPerField, precond, mgrData );
+      break;
+    }
     case LinearSolverParameters::MGR::StrategyType::lagrangianContactMechanics:
     {
       setStrategy< LagrangianContactMechanics >( params.mgr, numComponentsPerField, precond, mgrData );
+      break;
+    }
+    case LinearSolverParameters::MGR::StrategyType::lagrangianContactMechanicsBubbleStab:
+    {
+      setStrategy< LagrangianContactMechanicsBubbleStabilization >( params.mgr, numComponentsPerField, precond, mgrData );
       break;
     }
     case LinearSolverParameters::MGR::StrategyType::multiphasePoromechanics:
@@ -191,6 +204,11 @@ void hypre::mgr::createMGR( LinearSolverParameters const & params,
     case LinearSolverParameters::MGR::StrategyType::solidMechanicsEmbeddedFractures:
     {
       setStrategy< SolidMechanicsEmbeddedFractures >( params.mgr, numComponentsPerField, precond, mgrData );
+      break;
+    }
+    case LinearSolverParameters::MGR::StrategyType::immiscibleMultiphaseFVM:
+    {
+      setStrategy< ImmiscibleMultiphaseFVM >( params.mgr, numComponentsPerField, precond, mgrData );
       break;
     }
     default:

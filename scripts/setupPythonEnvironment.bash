@@ -14,6 +14,8 @@ PACKAGE_BRANCH=main
 declare -a TARGET_PACKAGES=("geos-mesh"
                             "geos-xml-tools"
                             "hdf5-wrapper"
+                            "geos-utils"
+                            "geos-mesh"
                             "pygeos-tools"
                             "geos-ats")
 declare -a LINK_SCRIPTS=("preprocess_xml"
@@ -24,6 +26,7 @@ declare -a LINK_SCRIPTS=("preprocess_xml"
                          "geos_ats_log_check"
                          "geos_ats_restart_check"
                          "geos_ats_curve_check"
+                         "geos_ats_process_tests_fails"
                          "mesh-doctor"
                          "activate"
                          "python")
