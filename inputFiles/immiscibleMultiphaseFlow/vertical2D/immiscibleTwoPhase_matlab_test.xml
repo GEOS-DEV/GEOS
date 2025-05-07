@@ -83,7 +83,7 @@
   </ElementRegions>
 
   <Constitutive>
-    <TwoPhaseFluid
+    <TwoPhaseImmiscibleFluid
       name="fluid"
       phaseNames="{ oil, water }"
       densityTableNames="{densityTableOil, densityTableWater}"    

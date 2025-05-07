@@ -108,7 +108,7 @@
 
 
   <Constitutive>
- <TwoPhaseFluid
+ <TwoPhaseImmiscibleFluid
            name="fluid"
            phaseNames="{water22, gas22}"
            densityTableNames="{densityTablePhase1, densityTablePhase2}"    
