@@ -41,6 +41,7 @@ set( fluidFlowSolvers_headers
      LogLevelsInfo.hpp
      kernels/MinPoreVolumeMaxPorosityKernel.hpp
      kernels/StencilWeightsUpdateKernel.hpp
+     kernels/SolutionCheckHelperKernels.hpp
      kernels/HybridFVMHelperKernels.hpp
      kernels/singlePhase/AccumulationKernels.hpp
      kernels/singlePhase/AquiferBCKernel.hpp

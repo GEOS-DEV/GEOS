@@ -21,6 +21,7 @@
 #define GEOS_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONAL_SOLUTIONCHECKKERNEL_HPP
 
 #include "physicsSolvers/fluidFlow/kernels/compositional/SolutionScalingAndCheckingKernelBase.hpp"
+#include "physicsSolvers/fluidFlow/kernels/SolutionCheckHelperKernels.hpp"
 
 namespace geos
 {
@@ -46,6 +47,8 @@ public:
   using Base::m_localSolution;
   using Base::m_pressure;
   using Base::m_compDens;
+
+  static constexpr int maxNegValueElementIds = 16;
 
   /**
    * @brief Create a new kernel instance
@@ -94,7 +97,9 @@ public:
   struct StackVariables : public Base::StackVariables
   {
     GEOS_HOST_DEVICE
-    StackVariables()
+    StackVariables():
+      localNegPresElementIds( maxNegValueElementIds ),
+      localNegDensElementIds( maxNegValueElementIds )
     { }
 
     StackVariables( real64 _localMinVal,
@@ -103,7 +108,9 @@ public:
                     real64 _localMinTotalDens,
                     integer _localNumNegPressures,
                     integer _localNumNegDens,
-                    integer _localNumNegTotalDens )
+                    integer _localNumNegTotalDens,
+                    stackArray1d< globalIndex, maxNegValueElementIds > _localNegPresElementIds,
+                    stackArray1d< globalIndex, maxNegValueElementIds > _localNegDensElementIds )
       :
       Base::StackVariables( _localMinVal ),
       localMinPres( _localMinPres ),
@@ -111,17 +118,24 @@ public:
       localMinTotalDens( _localMinTotalDens ),
       localNumNegPressures( _localNumNegPressures ),
       localNumNegDens( _localNumNegDens ),
-      localNumNegTotalDens( _localNumNegTotalDens )
+      localNumNegTotalDens( _localNumNegTotalDens ),
+      localNegPresElementIds( _localNegPresElementIds ),
+      localNegDensElementIds( _localNegDensElementIds )
     { }
 
     real64 localMinPres;
     real64 localMinDens;
     real64 localMinTotalDens;
 
-    integer localNumNegPressures;
-    integer localNumNegDens;
-    integer localNumNegTotalDens;
+    integer localNumNegPressures; // ne peuvent être que 0 ou 1 dans chaque kernel
+    integer localNumNegDens; // ne peuvent être que 0 ou 1 dans chaque kernel
+    integer localNumNegTotalDens; // ne peuvent être que 0 ou 1 dans chaque kernel
 
+    /// limited quantity of local ids of detected solved elements with negative pressures
+    stackArray1d< globalIndex, maxNegValueElementIds > localNegPresElementIds;
+
+    /// limited quantity of local ids of detected solved elements with negative density
+    stackArray1d< globalIndex, maxNegValueElementIds > localNegDensElementIds;
   };
 
   /**
@@ -146,6 +160,9 @@ public:
     RAJA::ReduceSum< ReducePolicy< POLICY >, integer > numNegDens( 0 );
     RAJA::ReduceSum< ReducePolicy< POLICY >, integer > numNegTotalDens( 0 );
 
+    stackArray1d< globalIndex, maxNegValueElementIds > localNegPresElementIds;
+    stackArray1d< globalIndex, maxNegValueElementIds > localNegDensElementIds;
+
     forAll< POLICY >( numElems, [=] GEOS_HOST_DEVICE ( localIndex const ei )
     {
       if( kernelComponent.ghostRank( ei ) >= 0 )
@@ -163,8 +180,21 @@ public:
       minDens.min( stack.localMinDens );
       minTotalDens.min( stack.localMinTotalDens );
 
-      numNegPressures += stack.localNumNegPressures;
-      numNegDens += stack.localNumNegDens;
+      if( stack.localNumNegPressures > 0 )
+      {
+        flowSolverBaseKernels::aggregateKernelsIds( localNegPresElementIds,
+                                                    numNegPressures,
+                                                    stack.localNegPresElementIds,
+                                                    integer( stack.localNumNegPressures ) );
+      }
+
+      if( stack.localNumNegDens > 0 )
+      {
+        flowSolverBaseKernels::aggregateKernelsIds( localNegDensElementIds,
+                                                    numNegDens,
+                                                    stack.localNegDensElementIds,
+                                                    stack.localNumNegDens );
+      }
       numNegTotalDens += stack.localNumNegTotalDens;
     } );
 
@@ -174,7 +204,9 @@ public:
                            minTotalDens.get(),
                            numNegPressures.get(),
                            numNegDens.get(),
-                           numNegTotalDens.get() );
+                           numNegTotalDens.get(),
+                           localNegPresElementIds,
+                           localNegDensElementIds );
   }
 
   GEOS_HOST_DEVICE
@@ -226,7 +258,11 @@ public:
       {
         stack.localMinVal = 0;
       }
-      stack.localNumNegPressures += 1;
+
+      flowSolverBaseKernels::collectKernelId( stack.localNegPresElementIds,
+                                              stack.localNumNegPressures,
+                                              globalIndex( ei ) );
+
       if( newPres < stack.localMinPres )
         stack.localMinPres = newPres;
     }
@@ -242,7 +278,11 @@ public:
         if( newDens < 0 )
         {
           stack.localMinVal = 0;
-          stack.localNumNegDens += 1;
+
+          flowSolverBaseKernels::collectKernelId( stack.localNegDensElementIds,
+                                                  stack.localNumNegDens,
+                                                  ei );
+
           if( newDens < stack.localMinDens )
             stack.localMinDens = newDens;
         }
