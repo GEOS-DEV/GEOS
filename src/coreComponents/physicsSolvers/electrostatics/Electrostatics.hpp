@@ -106,6 +106,10 @@ public:
   void applyCurrentBC(real64 const time, DofManager const& dofManager,
                       DomainPartition& domain, arrayView1d<real64> const& localRhs);
 
+  void applyButlerVolmerCurrent(DofManager const& dofManager, DomainPartition& domain,
+                                CRSMatrixView<real64, globalIndex const> const& localMatrix,
+                                arrayView1d<real64> const& localRhs);
+
   enum class TimeIntegrationOption : integer
   {
     QuasiStatic,
@@ -117,11 +121,18 @@ public:
     static constexpr char const* timeIntegrationOption() { return "timeIntegrationOption"; }
     static constexpr char const* fieldVarName() { return "fieldName"; }
     static constexpr char const* electroMaterialNamesString() {return "electroMaterialNames";}
+    static constexpr char const* surfaceGeneratorNameString() {return "surfaceGeneratorName";}
   };
 
-private:
+protected:
+  virtual void postInputInitialization() override;
+
   string m_fieldName;
   TimeIntegrationOption m_timeIntegrationOption;
+
+private:
+  PhysicsSolverBase *m_surfaceGenerator;
+  string m_surfaceGeneratorName;
 };
 
 ENUM_STRINGS(Electrostatics::TimeIntegrationOption,
