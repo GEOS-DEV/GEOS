@@ -1455,9 +1455,9 @@ public:
                       fields::flow::gravityCoefficient >;
 
   using MultiphaseFluidAccessors =
-    StencilMaterialAccessors< constitutive::TwoPhaseFluid,
-                              fields::twophasefluid::phaseDensity,
-                              fields::twophasefluid::dPhaseDensity >;
+    StencilMaterialAccessors< constitutive::TwoPhaseImmiscibleFluid,
+                              fields::twophaseimmisciblefluid::phaseDensity,
+                              fields::twophaseimmisciblefluid::dPhaseDensity >;
 
   using CapPressureAccessors =
     StencilMaterialAccessors< CapillaryPressureBase,
@@ -1500,8 +1500,8 @@ public:
       m_ghostRank( flowAccessors.get( fields::ghostRank {} ) ),
       m_gravCoef( flowAccessors.get( fields::flow::gravityCoefficient {} ) ),
       m_pres( flowAccessors.get( fields::flow::pressure {} ) ),
-      m_dens( fluidAccessors.get( fields::twophasefluid::phaseDensity {} ) ),
-      m_dDens_dPres( fluidAccessors.get( fields::twophasefluid::dPhaseDensity {} ) ),
+      m_dens( fluidAccessors.get( fields::twophaseimmisciblefluid::phaseDensity {} ) ),
+      m_dDens_dPres( fluidAccessors.get( fields::twophaseimmisciblefluid::dPhaseDensity {} ) ),
       m_phaseCapPressure( capPressureAccessors.get( fields::cappres::phaseCapPressure {} ) ),
       m_dPhaseCapPressure_dPhaseVolFrac( capPressureAccessors.get( fields::cappres::dPhaseCapPressure_dPhaseVolFraction {} ) ),
       m_localSolution ( localSolution ),
@@ -1835,11 +1835,11 @@ public:
                       fields::immiscibleMultiphaseFlow::phaseVolumeFraction >;
 
   using MultiphaseFluidAccessors =
-    StencilMaterialAccessors< constitutive::TwoPhaseFluid,
-                              fields::twophasefluid::phaseDensity,
-                              fields::twophasefluid::dPhaseDensity,
-                              fields::twophasefluid::phaseViscosity,
-                              fields::twophasefluid::dPhaseViscosity >;
+    StencilMaterialAccessors< constitutive::TwoPhaseImmiscibleFluid,
+                              fields::twophaseimmisciblefluid::phaseDensity,
+                              fields::twophaseimmisciblefluid::dPhaseDensity,
+                              fields::twophaseimmisciblefluid::phaseViscosity,
+                              fields::twophaseimmisciblefluid::dPhaseViscosity >;
 
   using RelPermAccessors =
     StencilMaterialAccessors< RelativePermeabilityBase,
@@ -1893,10 +1893,10 @@ public:
       m_gravCoef( flowAccessors.get( fields::flow::gravityCoefficient {} ) ),
       m_pres( flowAccessors.get( fields::flow::pressure {} ) ),
       m_phaseVolFrac( flowAccessors.get( fields::immiscibleMultiphaseFlow::phaseVolumeFraction {} ) ),
-      m_dens( fluidAccessors.get( fields::twophasefluid::phaseDensity {} ) ),
-      m_dDens_dPres( fluidAccessors.get( fields::twophasefluid::dPhaseDensity {} ) ),
-      m_phaseVisc( fluidAccessors.get( fields::twophasefluid::phaseViscosity {} ) ),
-      m_dPhaseVisc( fluidAccessors.get( fields::twophasefluid::dPhaseViscosity {} ) ),
+      m_dens( fluidAccessors.get( fields::twophaseimmisciblefluid::phaseDensity {} ) ),
+      m_dDens_dPres( fluidAccessors.get( fields::twophaseimmisciblefluid::dPhaseDensity {} ) ),
+      m_phaseVisc( fluidAccessors.get( fields::twophaseimmisciblefluid::phaseViscosity {} ) ),
+      m_dPhaseVisc( fluidAccessors.get( fields::twophaseimmisciblefluid::dPhaseViscosity {} ) ),
       m_phaseRelPerm( relPermAccessor.get( fields::relperm::phaseRelPerm {} ) ),
       m_dPhaseRelPerm_dPhaseVolFrac( relPermAccessor.get( fields::relperm::dPhaseRelPerm_dPhaseVolFraction {} ) ),
       m_phaseCapPressure( capPressureAccessors.get( fields::cappres::phaseCapPressure {} ) ),

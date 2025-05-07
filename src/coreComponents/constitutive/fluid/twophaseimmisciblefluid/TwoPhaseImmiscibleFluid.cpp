@@ -250,6 +250,12 @@ TwoPhaseImmiscibleFluid::createKernelWrapper()
                         m_phaseViscosity.toView());
 }
 
+TwoPhaseImmiscibleFluid::KernelWrapper
+TwoPhaseImmiscibleFluid::createKernelWrapper() const
+{
+  return KernelWrapper( m_densityTableKernels,
+                        m_viscosityTableKernels );
+}
 
 TwoPhaseImmiscibleFluid::KernelWrapper::KernelWrapper(
   arrayView1d< TableFunction::KernelWrapper const > densityTables,

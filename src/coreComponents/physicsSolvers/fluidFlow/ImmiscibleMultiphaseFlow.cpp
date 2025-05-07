@@ -1175,7 +1175,7 @@ ImmiscibleMultiphaseFlow::scalingForSystemSolution( DomainPartition & domain,
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel const & mesh,
-                                                               arrayView1d< string const > const & regionNames )
+                                                               string_array const & regionNames )
   {
     fluxApprox.forAllStencils( mesh, [&]( auto & stencil )
     {
@@ -1210,7 +1210,7 @@ ImmiscibleMultiphaseFlow::scalingForSystemSolution( DomainPartition & domain,
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel const & mesh,
-                                                               arrayView1d< string const > const & regionNames )
+                                                               string_array const & regionNames )
   {    
     mesh.getElemManager().forElementSubRegions( regionNames,
                                                 [&]( localIndex const,
@@ -1218,8 +1218,8 @@ ImmiscibleMultiphaseFlow::scalingForSystemSolution( DomainPartition & domain,
     {
       // Build wrappers to the fluid, relative permeability and capillary pressure model objects
       string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
-      TwoPhaseFluid const & fluid = getConstitutiveModel< TwoPhaseFluid >( subRegion, fluidName );
-      TwoPhaseFluid::KernelWrapper fluidWrapper = fluid.createKernelWrapper();
+      TwoPhaseImmiscibleFluid const & fluid = getConstitutiveModel< TwoPhaseImmiscibleFluid >( subRegion, fluidName );
+      TwoPhaseImmiscibleFluid::KernelWrapper fluidWrapper = fluid.createKernelWrapper();
 
       string const & relPermName = subRegion.getReference< string >( viewKeyStruct::relPermNamesString() );
       BrooksCoreyRelativePermeability const & relPerm = getConstitutiveModel< BrooksCoreyRelativePermeability >( subRegion, relPermName );
@@ -1273,7 +1273,7 @@ ImmiscibleMultiphaseFlow::scalingForSystemSolution( DomainPartition & domain,
 
           typename TYPEOFREF( stencil ) ::KernelWrapper stencilWrapper = stencil.createKernelWrapper();
           immiscibleMultiphaseKernels::
-            ResInflectionFactorKernelFactory::createAndLaunch< parallelDevicePolicy<> >( m_numPhases,
+            InflectionFactorKernelFactory::createAndLaunch< parallelDevicePolicy<> >( m_numPhases,
                                                                                          dofManager.rankOffset(),                                                                            
                                                                                          dofKey,
                                                                                          localSolution,
@@ -1583,10 +1583,6 @@ real64 ImmiscibleMultiphaseFlow::setNextDtBasedOnStateChange( real64 const & cur
 
 }
 
-real64 ImmiscibleMultiphaseFlow::setNextDt( const geos::real64 & currentDt, geos::DomainPartition & domain )
-{
-  return PhysicsSolverBase::setNextDt( currentDt, domain );
-}
 
 REGISTER_CATALOG_ENTRY( PhysicsSolverBase, ImmiscibleMultiphaseFlow, string const &, Group * const )
 
