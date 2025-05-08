@@ -580,6 +580,52 @@ public:
                       int root,
                       MPI_Comm comm = MPI_COMM_GEOS );
 
+
+/**
+ * @brief Strongly typed wrapper around MPI_Scatter.
+ * @tparam TS The pointer type for \p sendbuf
+ * @tparam TR The pointer type for \p recvbuf
+ * @param[in] sendbuf The pointer to the sending buffer.
+ * @param[in] sendcount The number of values to send.
+ * @param[out] recvbuf The pointer to the receive buffer.
+ * @param[in] recvcount The number of values to receive.
+ * @param[in] root The rank sending the data.
+ * @param[in] comm The MPI_Comm over which the scatter operates.
+ * @return The return value of the underlying call to MPI_Scatter().
+ */
+  template< typename TS, typename TR >
+  static int scatter( TS const * const sendbuf,
+                      int sendcount,
+                      TR * const recvbuf,
+                      int recvcount,
+                      int root,
+                      MPI_Comm comm = MPI_COMM_GEOS );
+
+/**
+ * @brief Strongly typed wrapper around MPI_Scatterv.
+ * @tparam TS The pointer type for \p sendbuf
+ * @tparam TR The pointer type for \p recvbuf
+ * @param[in] sendbuf The pointer to the sending buffer.
+ * @param[in] sendcounts The number of values to send.
+ * @param[in] displs integer array (of length group size). Entry i specifies the displacement relative to sendbuf at
+ *                   which to take the outgoing data from process i (significant only at root).
+ * @param[out] recvbuf The pointer to the receive buffer.
+ * @param[in] recvcount The number of values to receive.
+ * @param[in] root The rank sending the data.
+ * @param[in] comm The MPI_Comm over which the scatter operates.
+ * @return The return value of the underlying call to MPI_Scatterv().
+ */
+  template< typename TS, typename TR >
+  static int scatterv( TS const * const sendbuf,
+                       const int * sendcounts,
+                       const int * displs,
+                       TR * const recvbuf,
+                       int recvcount,
+                       int root,
+                       MPI_Comm comm = MPI_COMM_GEOS );
+
+
+
   /**
    * @brief Returns an MPI_Op associated with our strongly typed Reduction enum.
    * @param[in] op The value of the Reduction enum to get an MPI_Op for.
@@ -802,6 +848,17 @@ struct MpiTypeImpl< T, std::enable_if_t< std::is_enum< T >::value > >
 {
   static MPI_Datatype get() { return MpiTypeImpl< std::underlying_type_t< T > >::get(); }
 };
+
+template<>
+struct MpiTypeImpl< bool * >
+{
+  static MPI_Datatype get()
+  {
+    // Return the appropriate MPI_Datatype for bool*
+    return MPI_BYTE;
+  }
+};
+
 
 template< typename T >
 MPI_Datatype getMpiType()
@@ -1155,6 +1212,56 @@ int MpiWrapper::gatherv( TS const * const sendbuf,
   return 0;
 #endif
 }
+
+
+template< typename TS, typename TR >
+int MpiWrapper::scatter( TS const * const sendbuf,
+                         int sendcount,
+                         TR * const recvbuf,
+                         int recvcount,
+                         int MPI_PARAM( root ),
+                         MPI_Comm MPI_PARAM( comm ))
+{
+#ifdef GEOS_USE_MPI
+  return MPI_Scatter( sendbuf, sendcount, internal::getMpiType< TS >(),
+                      recvbuf, recvcount, internal::getMpiType< TR >(),
+                      root, comm );
+#else
+  static_assert( std::is_same< TS, TR >::value,
+                 "MpiWrapper::scatter() for serial run requires send and receive buffers are of the same type" );
+  std::size_t const sendBufferSize = sendcount * sizeof(TS);
+  std::size_t const recvBufferSize = recvcount * sizeof(TR);
+  GEOS_ERROR_IF_NE_MSG( sendBufferSize, recvBufferSize, "size of send buffer and receive buffer are not equal" );
+  memcpy( recvbuf, sendbuf, sendBufferSize );
+  return 0;
+#endif
+}
+
+template< typename TS, typename TR >
+int MpiWrapper::scatterv( TS const * const sendbuf,
+                          const int * sendcounts,
+                          const int * MPI_PARAM( displs ),
+                          TR * const recvbuf,
+                          int recvcount,
+                          int MPI_PARAM( root ),
+                          MPI_Comm MPI_PARAM( comm ))
+{
+#ifdef GEOS_USE_MPI
+  return MPI_Scatterv( sendbuf, sendcounts, displs, internal::getMpiType< TS >(),
+                       recvbuf, recvcount, internal::getMpiType< TR >(),
+                       root, comm );
+#else
+  static_assert( std::is_same< TS, TR >::value,
+                 "MpiWrapper::scatterv() for serial run requires send and receive buffers are of the same type" );
+  std::size_t const sendBufferSize = sendcounts * sizeof(TS);
+  std::size_t const recvBufferSize = recvcount * sizeof(TR);
+  GEOS_ERROR_IF_NE_MSG( sendBufferSize, recvBufferSize, "size of send buffer and receive buffer are not equal" );
+  memcpy( recvbuf, sendbuf, sendBufferSize );
+  return 0;
+#endif
+}
+
+
 
 template< typename T >
 int MpiWrapper::iRecv( T * const buf,

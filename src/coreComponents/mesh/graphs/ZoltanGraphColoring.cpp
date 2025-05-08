@@ -91,7 +91,7 @@ std::vector< int > ZoltanGraphColoring::colorGraph( const std::vector< camp::idx
     graph.m_vertexGID[i] = vertexGID[i];
   }
 
-  /* set call backs */
+  // Set call backs
   m_zz->Set_Num_Obj_Fn( getNumberOfVertices, &graph );
   m_zz->Set_Obj_List_Fn( getVertexList, &graph );
   m_zz->Set_Num_Edges_Multi_Fn( getNumEdgesList, &graph );

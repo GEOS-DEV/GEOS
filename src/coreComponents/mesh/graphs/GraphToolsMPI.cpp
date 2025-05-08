@@ -20,7 +20,6 @@
 
 #include "GraphToolsMPI.hpp"
 #include <numeric>
-#include <mpi.h> // For scatter !!
 
 namespace geos
 {
@@ -50,7 +49,7 @@ scatterGraphData( const std::vector< camp::idx_t > & xadj,
     sendCounts.resize( size );
     displacements.resize( size );
 
-    // Calculate send counts and displacements for MPI_Scatterv
+    // Calculate send counts and displacements for scatterv.
     for( int i = 0; i < size; ++i )
     {
       sendCounts[i] = static_cast< int >(xadj[i + 1] - xadj[i]);
@@ -66,14 +65,14 @@ scatterGraphData( const std::vector< camp::idx_t > & xadj,
   }
 
   std::vector< camp::idx_t > localXadj( 2 ); // Each rank will have two elements in localXadj: xadj[i] and xadj[i+1]
-  MPI_Scatter( xadjToScatter.data(), 2, MPI_LONG, localXadj.data(), 2, MPI_LONG, 0, comm );
+  MpiWrapper::scatter( xadjToScatter.data(), 2, localXadj.data(), 2, 0, comm );
 
   int localSize;
-  MPI_Scatter( sendCounts.data(), 1, MPI_INT, &localSize, 1, MPI_INT, 0, comm );
+  MpiWrapper::scatter( sendCounts.data(), 1, &localSize, 1, 0, comm );
 
   std::vector< camp::idx_t > localAdjncy( localSize );
-  MPI_Scatterv( adjncy.data(), sendCounts.data(), displacements.data(), MPI_LONG,
-                localAdjncy.data(), localSize, MPI_LONG, 0, comm );
+  MpiWrapper::scatterv( adjncy.data(), sendCounts.data(), displacements.data(),
+                        localAdjncy.data(), localSize, 0, comm );
 
   return {localXadj, localAdjncy};
 }
@@ -174,7 +173,8 @@ std::vector< camp::idx_t > createXadjFromAdjncy( const std::vector< camp::idx_t 
 
   // Scatter the xadj data
   std::vector< camp::idx_t > localXadj( 2 );
-  MPI_Scatter( xadjToScatter.data(), 2, MPI_LONG, localXadj.data(), 2, MPI_LONG, 0, comm );
+  MpiWrapper::scatter( xadjToScatter.data(), 2, localXadj.data(), 2, 0, comm );
+  //MPI_Scatter(  MPI_LONG, localXadj.data(), 2, MPI_LONG, 0, comm );
 
   return localXadj;
 }

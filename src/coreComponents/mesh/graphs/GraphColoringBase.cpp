@@ -93,9 +93,7 @@ bool GraphColoringBase::isColoringValid( const std::vector< camp::idx_t > & adjn
   }
 
   // Get a consolidated isColoringValid
-  //bool isColoringValid = MpiWrapper::allReduce( &isLocalColoringValid,  MpiWrapper::Reduction::LogicalAnd, comm );
-  bool isColoringValid;
-  MPI_Allreduce( &isLocalColoringValid, &isColoringValid, 1, MPI_C_BOOL, MPI_LAND, comm );
+  bool isColoringValid = MpiWrapper::allReduce( &isLocalColoringValid, MpiWrapper::Reduction::LogicalAnd, comm );
 
   return isColoringValid;
 }

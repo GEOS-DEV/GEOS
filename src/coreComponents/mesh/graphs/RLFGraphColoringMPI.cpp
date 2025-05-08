@@ -81,8 +81,8 @@ std::vector< int > RLFGraphColoringMPI::colorGraph( const std::vector< camp::idx
   }
 
   std::vector< int > localColors( localNodeCounts );
-  MPI_Scatterv( colors.data(), sendCounts.data(), displacements.data(), MPI_INT,
-                localColors.data(), localNodeCounts, MPI_INT, 0, m_comm );
+  MpiWrapper::scatterv( colors.data(), sendCounts.data(), displacements.data(),
+                        localColors.data(), localNodeCounts, 0, m_comm );
 
   return localColors;
 }
@@ -103,7 +103,6 @@ bool RLFGraphColoringMPI::isColoringValid( const std::vector< camp::idx_t > & ad
 {
   return GraphColoringBase::isColoringValid( adjncy, color, m_comm );
 }
-
 
 } // namespace graph
 } // namespace geos
