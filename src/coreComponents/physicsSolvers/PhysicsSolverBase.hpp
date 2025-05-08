@@ -1029,6 +1029,9 @@ protected:
   /// Local system matrix and rhs
   CRSMatrix< real64, globalIndex > m_localMatrix;
 
+  /// Custom linear solver for the "native" solver type
+  std::unique_ptr< LinearSolverBase< LAInterface > > m_linearSolver;
+
   /// Custom preconditioner for the "native" iterative solver
   std::unique_ptr< PreconditionerBase< LAInterface > > m_precond;
 

@@ -73,6 +73,7 @@ struct LinearSolverParameters
   integer dofsPerNode = 1;  ///< Dofs per node (or support location) for non-scalar problems
   bool isSymmetric = false; ///< Whether input matrix is symmetric (may affect choice of scheme)
   integer stopIfError = 1;  ///< Whether to stop the simulation if the linear solver reports an error
+  bool reuseFactorization = true; ///< Whether to reuse the LU factorization or not
 
   SolverType solverType = SolverType::direct;          ///< Solver type
   PreconditionerType preconditionerType = PreconditionerType::iluk;  ///< Preconditioner type
@@ -109,6 +110,7 @@ struct LinearSolverParameters
     integer replaceTinyPivot = 1;     ///< Whether to replace tiny pivots by sqrt(epsilon)*norm(A)
     integer iterativeRefine = 1;      ///< Whether to perform iterative refinement
     integer parallel = 1;             ///< Whether to use a parallel solver (instead of a serial one)
+    integer reuseFactorization = 1; ///< Whether to reuse the LU factorization or not
   }
   direct;                             ///< direct solver parameter struct
 

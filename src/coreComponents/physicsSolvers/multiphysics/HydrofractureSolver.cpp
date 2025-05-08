@@ -530,6 +530,8 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::setupSystem( DomainPartition &
   solution.create( numLocalRows, MPI_COMM_GEOS );
 
   setUpDflux_dApertureMatrix( domain, dofManager, localMatrix );
+
+  dofManager.printFieldInfo();
 }
 
 template< typename POROMECHANICS_SOLVER >
@@ -690,6 +692,7 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::assembleSystem( real64 const t
                                                                              [&]( localIndex const,
                                                                                   SurfaceElementSubRegion & subRegion )
       {
+        std::cout << "Num of frac elements: " << subRegion.size() << std::endl;
         flowSolver()->accumulationAssemblyLaunch( dofManager,
                                                   subRegion,
                                                   localMatrix,

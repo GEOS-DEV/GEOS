@@ -44,7 +44,7 @@
         lineSearchMaxCuts="2"
         maxTimeStepCuts="1"/>
       <LinearSolverParameters
-        solverType="gmres"
+        solverType="direct"
         preconditionerType="mgr"
         directParallel="1"
         logLevel="1"/>
