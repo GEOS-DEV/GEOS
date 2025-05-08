@@ -62,16 +62,7 @@
         "H1_Pyramid_Lagrange1_Gauss5"
       ]
     },
-    "explicit": [ "CellElementSubRegion#PorousSolid<ElasticIsotropic>#H1_Tetrahedron_VEM_Gauss1",
-                  "CellElementSubRegion#PorousSolid<ElasticIsotropic>#H1_Prism5_VEM_Gauss1",
-                  "CellElementSubRegion#PorousSolid<ElasticIsotropic>#H1_Prism6_VEM_Gauss1",
-                  "CellElementSubRegion#PorousSolid<ElasticIsotropic>#H1_Prism7_VEM_Gauss1",
-                  "CellElementSubRegion#PorousSolid<ElasticIsotropic>#H1_Prism8_VEM_Gauss1",
-                  "CellElementSubRegion#PorousSolid<ElasticIsotropic>#H1_Prism9_VEM_Gauss1",
-                  "CellElementSubRegion#PorousSolid<ElasticIsotropic>#H1_Prism10_VEM_Gauss1",
-                  "CellElementSubRegion#PorousSolid<ElasticIsotropic>#H1_Hexahedron_VEM_Gauss1",
-                  "CellElementSubRegion#PorousSolid<ElasticIsotropic>#H1_Wedge_VEM_Gauss1",
-                  "CellElementSubRegion#PorousSolid<ElasticIsotropic>#H1_Prism11_VEM_Gauss1" ]
+    "explicit": []
   },
 
   "PoromechanicsEFEMKernels": {
