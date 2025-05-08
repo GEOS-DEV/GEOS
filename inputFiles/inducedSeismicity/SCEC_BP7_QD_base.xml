@@ -15,10 +15,10 @@
       elementTypes="{ C3D8 }"
       xCoords="{ -505, 505 }"
       yCoords="{ -505, 505 }"
-      zCoords="{ -500, -100, 100, 500 }"
+      zCoords="{ -500, -300, -50, 50, 300, 500 }"
       nx="{ 101 }"
       ny="{ 101 }"
-      nz="{ 10, 20, 10 }"
+      nz="{ 2, 10, 10, 10, 2 }"
       cellBlockNames="{ cb1 }"/>
   </Mesh>
 
@@ -71,67 +71,67 @@
       
   <!-- Stations -->
     <Cylinder
-      name="faultStation_1"
+      name="01_faultStation"
       firstFaceCenter="{ 0.0, 0.0, -505.01 }"
       secondFaceCenter="{ 0.0, 0.0, 505.01 }"
       outerRadius="8"/> 
     <Cylinder
-      name="faultStation_2"
+      name="02_faultStation"
       firstFaceCenter="{ -100.0, 0.0, -505.01 }"
       secondFaceCenter="{ -100.0, 0.0, 505.01 }"
       outerRadius="8.0"/>
     <Cylinder
-      name="faultStation_3"
+      name="03_faultStation"
       firstFaceCenter="{ 0.0, 100.0, -505.01 }"
       secondFaceCenter="{ 0.0, 100.0, 505.01 }"
       outerRadius="8.0"/> 
     <Cylinder
-      name="faultStation_4"
-     firstFaceCenter="{ 100.0, 0.0, -505.01 }"
+      name="04_faultStation"
+      firstFaceCenter="{ 100.0, 0.0, -505.01 }"
       secondFaceCenter="{ 100.0, 0.0, 505.01 }"
       outerRadius="8.0"/>
     <Cylinder
-      name="faultStation_5"
+      name="05_faultStation"
       firstFaceCenter="{ 0.0, -100.0, -505.01 }"
       secondFaceCenter="{ 0.0, -100.0, 505.01 }"
       outerRadius="8.0"/> 
     <Cylinder
-      name="faultStation_6"
+      name="06_faultStation"
       firstFaceCenter="{ -100.0, -100.0, -505.01 }"
       secondFaceCenter="{ -100.0, -100.0, 505.01 }"
       outerRadius="8.0"/>
     <Cylinder
-      name="faultStation_7"
+      name="07_faultStation"
       firstFaceCenter="{ -100.0, 100.0, -505.01 }"
       secondFaceCenter="{ -100.0, 100.0, 505.01 }"
       outerRadius="8.0"/>
     <Cylinder
-      name="faultStation_8"
+      name="08_faultStation"
       firstFaceCenter="{ 100.0, -100.0, -505.01 }"
       secondFaceCenter="{ 100.0, -100.0, 505.01 }"
       outerRadius="8.0"/> 
     <Cylinder
-      name="faultStation_9"
+      name="09_faultStation"
       firstFaceCenter="{ 100.0, 100.0, -505.01 }"
       secondFaceCenter="{ 100.0, 100.0, 505.01 }"
       outerRadius="8.0"/>
     <Cylinder
-      name="faultStation_10"
+      name="10_faultStation"
       firstFaceCenter="{ -300.0, 0.0, -505.01 }"
       secondFaceCenter="{ -300.0, 0.0, 505.01 }"
       outerRadius="8.0"/>
     <Cylinder
-      name="faultStation_11"
+      name="11_faultStation"
       firstFaceCenter="{ 0.0, 300.0, -505.01 }"
       secondFaceCenter="{ 0.0, 300.0, 505.01 }"
       outerRadius="8.0"/>
     <Cylinder
-      name="faultStation_12"
+      name="12_faultStation"
       firstFaceCenter="{ 300.0, 0.0, -505.01 }"
       secondFaceCenter="{ 300.0, 0.0, 505.01 }"
       outerRadius="8.0"/>
     <Cylinder
-      name="faultStation_13"
+      name="13_faultStation"
       firstFaceCenter="{ 0.0, -300.0, -505.01 }"
       secondFaceCenter="{ 0.0, -300.0, 505.01 }"
       outerRadius="8.0"/>      
@@ -310,24 +310,24 @@
       name="slipVelocityCollection"
       objectPath="ElementRegions/Fault/FractureSubRegion"
       fieldName="slipVelocity"
-      setNames="{faultStation_1, faultStation_2, faultStation_3, faultStation_4, faultStation_5, faultStation_6, faultStation_7, faultStation_8, faultStation_9, faultStation_10, faultStation_11, faultStation_12, faultStation_13}"/>
+      setNames="{01_faultStation, 02_faultStation, 03_faultStation, 04_faultStation, 05_faultStation, 06_faultStation, 07_faultStation, 08_faultStation, 09_faultStation, 10_faultStation, 11_faultStation, 12_faultStation, 13_faultStation}"/>
 
     <PackCollection
       name="slipCollection"
       objectPath="ElementRegions/Fault/FractureSubRegion"
       fieldName="totalSlip"
-      setNames="{faultStation_1, faultStation_2, faultStation_3, faultStation_4, faultStation_5, faultStation_6, faultStation_7, faultStation_8, faultStation_9, faultStation_10, faultStation_11, faultStation_12, faultStation_13}"/>
+      setNames="{01_faultStation, 02_faultStation, 03_faultStation, 04_faultStation, 05_faultStation, 06_faultStation, 07_faultStation, 08_faultStation, 09_faultStation, 10_faultStation, 11_faultStation, 12_faultStation, 13_faultStation}"/>
 
     <PackCollection
       name="shearTractionCollection"
       objectPath="ElementRegions/Fault/FractureSubRegion"
       fieldName="shearTraction"
-      setNames="{faultStation_1, faultStation_2, faultStation_3, faultStation_4, faultStation_5, faultStation_6, faultStation_7, faultStation_8, faultStation_9, faultStation_10, faultStation_11, faultStation_12, faultStation_13}"/>
+      setNames="{01_faultStation, 02_faultStation, 03_faultStation, 04_faultStation, 05_faultStation, 06_faultStation, 07_faultStation, 08_faultStation, 09_faultStation, 10_faultStation, 11_faultStation, 12_faultStation, 13_faultStation}"/>
 
     <PackCollection
       name="stateCollection"
       objectPath="ElementRegions/Fault/FractureSubRegion"
       fieldName="stateVariable"
-      setNames="{faultStation_1, faultStation_2, faultStation_3, faultStation_4, faultStation_5, faultStation_6, faultStation_7, faultStation_8, faultStation_9, faultStation_10, faultStation_11, faultStation_12, faultStation_13}"/>
+      setNames="{01_faultStation, 02_faultStation, 03_faultStation, 04_faultStation, 05_faultStation, 06_faultStation, 07_faultStation, 08_faultStation, 09_faultStation, 10_faultStation, 11_faultStation, 12_faultStation, 13_faultStation}"/>
    </Tasks>
 </Problem>

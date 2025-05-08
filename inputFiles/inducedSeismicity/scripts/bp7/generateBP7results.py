@@ -121,13 +121,13 @@ class FaultStation:
         time = np.squeeze(input_data[f'stateVariable Time'])
 
         # Extract fault station variables
-        slip = np.squeeze(input_data[f'totalSlip faultStation_{station_number}'])
-        slip_velocity = np.squeeze(input_data[f'slipVelocity faultStation_{station_number}'])
-        shear_traction = np.squeeze(input_data[f'shearTraction faultStation_{station_number}'])
+        slip = np.squeeze(input_data[f'totalSlip {station_number:02d}_faultStation'])
+        slip_velocity = np.squeeze(input_data[f'slipVelocity {station_number:02d}_faultStation'])
+        shear_traction = np.squeeze(input_data[f'shearTraction {station_number:02d}_faultStation'])
         
         # Ensure data has the correct shape
         if slip_velocity.shape[1] != 2 or shear_traction.shape[1] != 2:
-            raise ValueError(f"Data for faultStation_{station_number} is not in expected shape (Nx2).")
+            raise ValueError(f"Data for {station_number:02d}_faultStation is not in expected shape (Nx2).")
 
         # Assign the components to separate variables
         slip_2 = slip[:, 0]
@@ -138,7 +138,7 @@ class FaultStation:
 
         # Extract state variable
         rsParams = RateAndStateParameters()
-        Psi = np.squeeze(input_data[f'stateVariable faultStation_{station_number}'])
+        Psi = np.squeeze(input_data[f'stateVariable {station_number:02d}_faultStation'])
         state = np.log10 ( (rsParams.Drs / rsParams.Vstar) * np.exp((Psi - rsParams.f) / rsParams.b) )
 
         self.data = np.column_stack((time, slip_2, slip_3, slip_rate_2, slip_rate_3, shear_stress_2, shear_stress_3, state))

@@ -1,0 +1,11 @@
+#!/bin/bash
+#SBATCH -J bp7
+#SBATCH -N 1
+#SBATCH -A vortex
+#SBATCH --mail-type=ALL
+#SBATCH -o /p/lustre1/cusini1/bp7/bp7_direct.out
+#SBATCH -p pbatch
+#SBATCH -t 10:00:00
+
+export OMP_NUM_THREADS=1
+srun -n 8 /usr/workspace/cusini1/geos/GEOS/build-dane-toss_4_x86_64_ib-gcc\@12.1.1-release/bin/geosx -i /usr/workspace/cusini1/geos/GEOS/inputFiles/inducedSeismicity/SCEC_BP7_QD_A_explicit.xml -o /p/lustre1/cusini1/bp7_direct/ -x 2 -y 2 -z 2 

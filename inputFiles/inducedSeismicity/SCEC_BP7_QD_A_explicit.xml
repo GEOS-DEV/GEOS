@@ -67,7 +67,7 @@
 
     <PeriodicEvent
       name="vtkOutput"
-      cycleFrequency="1"
+      cycleFrequency="10"
       targetExactTimestep="0"
       target="/Outputs/vtkOutput"/>
 
@@ -79,41 +79,47 @@
       target="/Solvers/QDSolver"/>    
       
     <PeriodicEvent
-      name="solverApplications"
+      name="solverApplications_1"
       maxEventDt="1.0"
       beginTime="1"
       endTime="10"
       target="/Solvers/QDSolver"/>
 
+    <PeriodicEvent
+      name="solverApplications_2"
+      maxEventDt="100.0"
+      beginTime="10"
+      target="/Solvers/QDSolver"/>  
+
      <!-- Time history collection -->
     <PeriodicEvent
       name="slipRateCollection"
-      cycleFrequency="10"
+      cycleFrequency="2"
       targetExactTimestep="0"
       target="/Tasks/slipVelocityCollection" />
 
     <PeriodicEvent
       name="slipCollection"
-      cycleFrequency="10"
+      cycleFrequency="2"
       targetExactTimestep="0"
       target="/Tasks/slipCollection"/>
 
     <PeriodicEvent
       name="shearTractionCollection"
-      cycleFrequency="10"
+      cycleFrequency="2"
       targetExactTimestep="0"
       target="/Tasks/shearTractionCollection"/>
 
     <PeriodicEvent
       name="stateCollection"
-      cycleFrequency="10"
+      cycleFrequency="2"
       targetExactTimestep="0"
       target="/Tasks/stateCollection"/>        
 
   <!-- Time history output -->
    <PeriodicEvent
       name="timeHistoryOutput"
-      cycleFrequency="100"
+      cycleFrequency="2"
       targetExactTimestep="0"
       target="/Outputs/timeHistoryOutput"/>
   </Events> 
