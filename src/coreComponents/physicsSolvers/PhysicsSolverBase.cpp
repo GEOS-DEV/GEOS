@@ -1307,16 +1307,21 @@ void PhysicsSolverBase::solveLinearSystem( DofManager const & dofManager,
 
   if( params.solverType == LinearSolverParameters::SolverType::direct || !m_precond )
   {
-    std::unique_ptr< LinearSolverBase< LAInterface > > solver = LAInterface::createSolver( params );
+    if (!m_linearSolver)
+    { 
+      m_linearSolver = LAInterface::createSolver( params );
+      m_linearSolver->setup( matrix );
+    }
+    if ( params.solverType != LinearSolverParameters::SolverType::direct || !params.direct.reuseFactorization )
     {
       Timer timer_setup( m_timers["linear solver setup"] );
-      solver->setup( matrix );
+      m_linearSolver->setup( matrix );
     }
     {
       Timer timer_setup( m_timers["linear solver solve"] );
-      solver->solve( rhs, solution );
+      m_linearSolver->solve( rhs, solution );
     }
-    m_linearSolverResult = solver->result();
+    m_linearSolverResult = m_linearSolver->result();
   }
   else
   {
