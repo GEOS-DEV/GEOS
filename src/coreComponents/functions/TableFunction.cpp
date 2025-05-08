@@ -243,7 +243,7 @@ namespace geos
 //             H5Tclose(typeId);
 //           }
 //           H5E_END_TRY
-//         }   
+//         }
 //         if (spaceId >= 0)
 //         {
 //           H5E_BEGIN_TRY
@@ -285,7 +285,7 @@ namespace geos
 //         }
 //         H5E_END_TRY
 //         return err > 0 ? true : false;
-//     }    
+//     }
 //   };
 
 
@@ -362,7 +362,7 @@ namespace geos
 //                  InputError );
 // }
 
-// void closeHDF5File( serialHDF5File & hdfFile ) 
+// void closeHDF5File( serialHDF5File & hdfFile )
 // {
 //   herr_t err;
 
@@ -652,39 +652,39 @@ void TableFunction::initializeFunction()
         int tableDim = 0;
         for( auto const & coordName : m_hdf5CoordinateDatasetNames )
         {
-          hdf5Utils::TypedArray1d tmp = reader.read1D( coordName, 1);
+          hdf5Utils::TypedArray1d tmp = reader.read1D( coordName, 1 );
 
-          if (std::holds_alternative< array1d<real64>>(tmp))
+          if( std::holds_alternative< array1d< real64 > >( tmp ))
           {
-            m_coordinates.appendArray(std::get<array1d<real64>>(tmp).begin(), std::get<array1d<real64>>(tmp).end());
+            m_coordinates.appendArray( std::get< array1d< real64 > >( tmp ).begin(), std::get< array1d< real64 > >( tmp ).end());
           }
-          else if (std::holds_alternative<array1d<float>>(tmp))
+          else if( std::holds_alternative< array1d< float > >( tmp ))
           {
-            const auto &floatArray = std::get<array1d<globalIndex>>(tmp);
-            m_coordinates.reserve( floatArray.size() );            
-            std::transform(floatArray.begin(),floatArray.end(), m_coordinates[tableDim].begin(), [](real32 val)
-                           { return static_cast<real64>(val); });
+            const auto & floatArray = std::get< array1d< globalIndex > >( tmp );
+            m_coordinates.reserve( floatArray.size() );
+            std::transform( floatArray.begin(), floatArray.end(), m_coordinates[tableDim].begin(), []( real32 val )
+            { return static_cast< real64 >(val); } );
           }
-          else if (std::holds_alternative<array1d<globalIndex>>(tmp))
+          else if( std::holds_alternative< array1d< globalIndex > >( tmp ))
           {
-            const auto &intArray = std::get<array1d<globalIndex>>(tmp);
-            m_coordinates.reserve(intArray.size());
-            std::transform(intArray.begin(),intArray.end(), m_coordinates[tableDim].begin(), [](globalIndex val)
-                           { return static_cast<real64>(val); });
+            const auto & intArray = std::get< array1d< globalIndex > >( tmp );
+            m_coordinates.reserve( intArray.size());
+            std::transform( intArray.begin(), intArray.end(), m_coordinates[tableDim].begin(), []( globalIndex val )
+            { return static_cast< real64 >(val); } );
           }
           else
           {
             // If tmp holds an unsupported type, throw an error
-            throw std::runtime_error("Unexpected data type for voxel dataset: " + coordName);
+            throw std::runtime_error( "Unexpected data type for voxel dataset: " + coordName );
           }
           tableDim += 1;
         }
 
         // Read table dataset
-        hdf5Utils::TypedArray1d tmp = reader.read1D(m_hdf5TableDatasetName, tableDim);
-        if (std::holds_alternative<array1d<real64>>(tmp))
+        hdf5Utils::TypedArray1d tmp = reader.read1D( m_hdf5TableDatasetName, tableDim );
+        if( std::holds_alternative< array1d< real64 > >( tmp ))
         {
-          m_values = std::move( std::get<array1d<real64>>(tmp) );
+          m_values = std::move( std::get< array1d< real64 > >( tmp ) );
         }
         // else if (std::holds_alternative<std::vector<float>>(tmp))
         // {
@@ -697,9 +697,9 @@ void TableFunction::initializeFunction()
         else
         {
           // If tmp holds an unsupported type, throw an error
-          throw std::runtime_error("Unexpected data type for voxel dataset: " + m_hdf5TableDatasetName);
+          throw std::runtime_error( "Unexpected data type for voxel dataset: " + m_hdf5TableDatasetName );
         }
-        
+
         break;
       }
 
@@ -708,7 +708,7 @@ void TableFunction::initializeFunction()
       {
         GEOS_THROW( GEOS_FMT( "{} {}: No valid table input type is provided.",
                               catalogName(), getDataContext()),
-                              InputError );
+                    InputError );
         break;
       }
     }
