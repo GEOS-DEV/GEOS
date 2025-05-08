@@ -26,6 +26,8 @@
 #include "common/DataTypes.hpp"
 #include "common/MpiWrapper.hpp"
 
+#include "HDF5Utilities.hpp"
+
 #include <algorithm>
 
 #include <hdf5.h>
@@ -33,308 +35,308 @@
 namespace geos
 {
 
-namespace hdf5Utils
-{
+// namespace hdf5Utils
+// {
 
-static_assert( sizeof( H5T_NATIVE_INT ) == sizeof( globalIndex ),
-             "H5T_NATIVE_INT and geos::integer must have the same size" );
-static_assert( sizeof( H5T_NATIVE_FLOAT ) == sizeof( real64 ),
-             "H5T_NATIVE_FLOAT and geos::real32 must have the same size" );
-static_assert( sizeof( H5T_NATIVE_DOUBLE ) == sizeof( real64 ),
-             "H5T_NATIVE_DOUBLE and geos::real64 must have the same size" );
+// static_assert( sizeof( H5T_NATIVE_INT ) == sizeof( globalIndex ),
+//              "H5T_NATIVE_INT and geos::integer must have the same size" );
+// static_assert( sizeof( H5T_NATIVE_FLOAT ) == sizeof( real64 ),
+//              "H5T_NATIVE_FLOAT and geos::real32 must have the same size" );
+// static_assert( sizeof( H5T_NATIVE_DOUBLE ) == sizeof( real64 ),
+//              "H5T_NATIVE_DOUBLE and geos::real64 must have the same size" );
 
-using TypedArray1d = std::variant<
-array1d< globalIndex >,
-array1d< float >,
-array1d< double > >;
-
-
-  class SerialHDF5File
-  {
-  public:
-    // Constructor: Open the HDF5 file
-    explicit SerialHDF5File(const string &filename) : m_filename(filename)
-    {
-      openFile();
-    }
-
-    // Destructor: Close the HDF5 file
-    ~SerialHDF5File()
-    {
-      closeFile();
-    }
-
-    // Disable copy constructor and assignment operator
-    SerialHDF5File(const SerialHDF5File &) = delete;
-    SerialHDF5File &operator=(const SerialHDF5File &) = delete;
-
-    // Allow move semantics
-    SerialHDF5File(SerialHDF5File &&other) noexcept : m_fileId(other.m_fileId), m_filename(std::move(other.m_filename))
-    {
-      other.m_fileId = -1;
-    }
-
-    SerialHDF5File &operator=(SerialHDF5File &&other) noexcept
-    {
-      if (this != &other)
-      {
-        closeFile();
-        m_fileId = other.m_fileId;
-        m_filename = std::move(other.m_filename);
-        other.m_fileId = -1;
-      }
-      return *this;
-    }
-
-    // Access the file ID
-    hid_t const &getFileId() const { return m_fileId; }
-
-    // Access the filename
-    string const &getFilename() const { return m_filename; }
-
-  private:
-    void openFile()
-    {
-      closeFile(); // Ensure any previously opened file is closed
-      H5E_BEGIN_TRY
-      {
-        m_fileId = H5Fopen(m_filename.c_str(), H5F_ACC_RDONLY, H5P_DEFAULT);
-      }
-      H5E_END_TRY
-      GEOS_THROW_IF( m_fileId < 0,
-                     GEOS_FMT( "Cannot open HDF5 file {}", getFilename() ),
-                     InputError );
-    }
-
-    void closeFile()
-    {
-      if (m_fileId >= 0)
-      {
-        herr_t status = -1;
-        H5E_BEGIN_TRY
-        {
-          status = H5Fclose(m_fileId);
-        }
-        H5E_END_TRY
-        GEOS_THROW_IF( status < 0,
-                       GEOS_FMT( "Cannot close HDF5 file {}", getFilename() ),
-                       InputError );
-        m_fileId = -1;
-      }
-    }
-
-    hid_t m_fileId{-1}; // HDF5 file handle
-    string m_filename;  // HDF5 file name
-  };
+// using TypedArray1d = std::variant<
+// array1d< globalIndex >,
+// array1d< float >,
+// array1d< double > >;
 
 
-  struct DatasetHandle
-  {
-    string m_datasetName;
-    hid_t datasetId = -1;
-    hid_t spaceId = -1;
-    hid_t typeId = -1;
-    array1d< hsize_t > dims; // Store dataset dimensions
+//   class SerialHDF5File
+//   {
+//   public:
+//     // Constructor: Open the HDF5 file
+//     explicit SerialHDF5File(const string &filename) : m_filename(filename)
+//     {
+//       openFile();
+//     }
 
-    // Constructor: Open dataset, dataspace, and datatype, and validate dimensions
-    DatasetHandle(SerialHDF5File const &hdf5File, string const &datasetName, int const expectedDims)
-    {
-      m_datasetName = datasetName;
+//     // Destructor: Close the HDF5 file
+//     ~SerialHDF5File()
+//     {
+//       closeFile();
+//     }
 
-      // Check dataset existance
-      GEOS_THROW_IF( !datasetExists( hdf5File.getFileId(), datasetName ),
-                     GEOS_FMT( "Dataset {} doesn't exist in {}", datasetName, hdf5File.getFilename() ),
-                     InputError );
+//     // Disable copy constructor and assignment operator
+//     SerialHDF5File(const SerialHDF5File &) = delete;
+//     SerialHDF5File &operator=(const SerialHDF5File &) = delete;
 
-      // Open the dataset
-      H5E_BEGIN_TRY
-      {
-        datasetId = H5Dopen2( hdf5File.getFileId(), datasetName.c_str(), H5P_DEFAULT);
-      }
-      H5E_END_TRY
-      GEOS_THROW_IF( datasetId < 0,
-                     GEOS_FMT( "Dataset {} cannot be opened in {}", datasetName, hdf5File.getFilename() ),
-                     InputError );
+//     // Allow move semantics
+//     SerialHDF5File(SerialHDF5File &&other) noexcept : m_fileId(other.m_fileId), m_filename(std::move(other.m_filename))
+//     {
+//       other.m_fileId = -1;
+//     }
 
-      // Get the dataspace
-      H5E_BEGIN_TRY
-      {
-        spaceId = H5Dget_space(datasetId);
-      }
-      H5E_END_TRY
-      GEOS_THROW_IF( spaceId < 0,
-                     GEOS_FMT( "Cannot get the dataspace for dataset {} in {}", datasetName, hdf5File.getFilename() ),
-                     InputError );
+//     SerialHDF5File &operator=(SerialHDF5File &&other) noexcept
+//     {
+//       if (this != &other)
+//       {
+//         closeFile();
+//         m_fileId = other.m_fileId;
+//         m_filename = std::move(other.m_filename);
+//         other.m_fileId = -1;
+//       }
+//       return *this;
+//     }
 
-      // Get the datatype
-      H5E_BEGIN_TRY
-      {
-        typeId = H5Dget_type(datasetId);
-      }
-      H5E_END_TRY
-      GEOS_THROW_IF( typeId < 0,
-                     GEOS_FMT( "Cannot get the datatype for dataset {} in {}", datasetName, hdf5File.getFilename() ),
-                     InputError );
+//     // Access the file ID
+//     hid_t const &getFileId() const { return m_fileId; }
 
-      // Get the number of dimensions
-      int ndims;
-      H5E_BEGIN_TRY
-      {
-        ndims = H5Sget_simple_extent_ndims(spaceId);
-      }
-      H5E_END_TRY
-      GEOS_THROW_IF( ndims < 0,
-                     GEOS_FMT( "Cannot get the number of dimensions for dataset {} in {}", datasetName, hdf5File.getFilename() ),
-                     InputError );
+//     // Access the filename
+//     string const &getFilename() const { return m_filename; }
 
-      // Validate dimensions if expectedDims is provided
-      GEOS_THROW_IF( ndims != expectedDims,
-                     GEOS_FMT( "Cannot get the number of dimensions for dataset {} in {}", datasetName, hdf5File.getFilename() ),
-                     InputError );
+//   private:
+//     void openFile()
+//     {
+//       closeFile(); // Ensure any previously opened file is closed
+//       H5E_BEGIN_TRY
+//       {
+//         m_fileId = H5Fopen(m_filename.c_str(), H5F_ACC_RDONLY, H5P_DEFAULT);
+//       }
+//       H5E_END_TRY
+//       GEOS_THROW_IF( m_fileId < 0,
+//                      GEOS_FMT( "Cannot open HDF5 file {}", getFilename() ),
+//                      InputError );
+//     }
 
-      // Get the dimensions
-      dims.resize(ndims);
-      herr_t status;
-      H5E_BEGIN_TRY
-      {
-        status = H5Sget_simple_extent_dims(spaceId, dims.data(), nullptr);
-      }
-      H5E_END_TRY
-      GEOS_THROW_IF( status < 0,
-                     GEOS_FMT( "Cannot get the dimensions for dataset {} in {}", datasetName, hdf5File.getFilename() ),
-                     InputError );
-    }
+//     void closeFile()
+//     {
+//       if (m_fileId >= 0)
+//       {
+//         herr_t status = -1;
+//         H5E_BEGIN_TRY
+//         {
+//           status = H5Fclose(m_fileId);
+//         }
+//         H5E_END_TRY
+//         GEOS_THROW_IF( status < 0,
+//                        GEOS_FMT( "Cannot close HDF5 file {}", getFilename() ),
+//                        InputError );
+//         m_fileId = -1;
+//       }
+//     }
 
-    // Destructor: Ensure all resources are closed
-    ~DatasetHandle()
-    {
-      if (typeId >= 0)
-        H5Tclose(typeId);
-      if (spaceId >= 0)
-        H5Sclose(spaceId);
-      if (datasetId >= 0)
-        H5Dclose(datasetId);
-    }
-
-    // Disable copy semantics
-    DatasetHandle(const DatasetHandle &) = delete;
-    DatasetHandle &operator=(const DatasetHandle &) = delete;
-
-    // Allow move semantics
-    DatasetHandle(DatasetHandle &&other) noexcept
-        : datasetId(other.datasetId), spaceId(other.spaceId), typeId(other.typeId), dims(std::move(other.dims))
-    {
-      other.datasetId = -1;
-      other.spaceId = -1;
-      other.typeId = -1;
-    }
-
-    DatasetHandle &operator=(DatasetHandle &&other) noexcept
-    {
-      if (this != &other)
-      {
-        // Close existing resources
-        if (typeId >= 0)
-        {
-          H5E_BEGIN_TRY
-          {
-            H5Tclose(typeId);
-          }
-          H5E_END_TRY
-        }   
-        if (spaceId >= 0)
-        {
-          H5E_BEGIN_TRY
-          {
-            H5Sclose(spaceId);
-          }
-          H5E_END_TRY
-        }
-        if (datasetId >= 0)
-        {
-          H5E_BEGIN_TRY
-          {
-            H5Dclose(datasetId);
-          }
-          H5E_END_TRY
-        }
-
-        // Transfer ownership
-        datasetId = other.datasetId;
-        spaceId = other.spaceId;
-        typeId = other.typeId;
-        dims = std::move(other.dims);
-
-        other.datasetId = -1;
-        other.spaceId = -1;
-        other.typeId = -1;
-      }
-      return *this;
-    }
-
-    // Check if a dataset exists
-    static bool datasetExists(hid_t const &fileId, string const &datasetName)
-    {
-        herr_t err;
-
-        H5E_BEGIN_TRY
-        {
-            err = H5Oexists_by_name(fileId, datasetName.c_str(), H5P_DEFAULT);
-        }
-        H5E_END_TRY
-        return err > 0 ? true : false;
-    }    
-  };
+//     hid_t m_fileId{-1}; // HDF5 file handle
+//     string m_filename;  // HDF5 file name
+//   };
 
 
+//   struct DatasetHandle
+//   {
+//     string m_datasetName;
+//     hid_t datasetId = -1;
+//     hid_t spaceId = -1;
+//     hid_t typeId = -1;
+//     array1d< hsize_t > dims; // Store dataset dimensions
 
-  class SerialHDF5Reader
-  {
-  public:
-    explicit SerialHDF5Reader(const std::string &filename)
-        : m_file(filename) {}
+//     // Constructor: Open dataset, dataspace, and datatype, and validate dimensions
+//     DatasetHandle(SerialHDF5File const &hdf5File, string const &datasetName, int const expectedDims)
+//     {
+//       m_datasetName = datasetName;
 
-    TypedArray1d read1D(const std::string &datasetName, const int expectedDims) const
-    {
-      // Create a DatasetHandle to manage resources
-      DatasetHandle handle(m_file, datasetName, expectedDims);
+//       // Check dataset existance
+//       GEOS_THROW_IF( !datasetExists( hdf5File.getFileId(), datasetName ),
+//                      GEOS_FMT( "Dataset {} doesn't exist in {}", datasetName, hdf5File.getFilename() ),
+//                      InputError );
 
-      // Compute the total number of elements
-      hsize_t total_elements = 1;
-      for (const auto &dim : handle.dims)
-        total_elements *= dim;
+//       // Open the dataset
+//       H5E_BEGIN_TRY
+//       {
+//         datasetId = H5Dopen2( hdf5File.getFileId(), datasetName.c_str(), H5P_DEFAULT);
+//       }
+//       H5E_END_TRY
+//       GEOS_THROW_IF( datasetId < 0,
+//                      GEOS_FMT( "Dataset {} cannot be opened in {}", datasetName, hdf5File.getFilename() ),
+//                      InputError );
 
-      // Determine the type and read the data
-      if (H5Tequal(handle.typeId, H5T_NATIVE_INT))
-      {
-        array1d<globalIndex> buffer(total_elements);
-        if (H5Dread(handle.datasetId, H5T_NATIVE_INT, H5S_ALL, H5S_ALL, H5P_DEFAULT, buffer.data()) < 0)
-          throw std::runtime_error("Failed to read dataset: " + datasetName);
-        return buffer;
-      }
-      else if (H5Tequal(handle.typeId, H5T_NATIVE_FLOAT))
-      {
-        array1d<real32> buffer(total_elements);
-        if (H5Dread(handle.datasetId, H5T_NATIVE_FLOAT, H5S_ALL, H5S_ALL, H5P_DEFAULT, buffer.data()) < 0)
-          throw std::runtime_error("Failed to read dataset: " + datasetName);
-        return buffer;
-      }
-      else if (H5Tequal(handle.typeId, H5T_NATIVE_DOUBLE))
-      {
-        array1d<real64> buffer(total_elements);
-        if (H5Dread(handle.datasetId, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, buffer.data()) < 0)
-          throw std::runtime_error("Failed to read dataset: " + datasetName);
-        return buffer;
-      }
-      else
-      {
-        throw std::runtime_error("Unsupported dataset type for dataset: " + datasetName);
-      }
-    }
+//       // Get the dataspace
+//       H5E_BEGIN_TRY
+//       {
+//         spaceId = H5Dget_space(datasetId);
+//       }
+//       H5E_END_TRY
+//       GEOS_THROW_IF( spaceId < 0,
+//                      GEOS_FMT( "Cannot get the dataspace for dataset {} in {}", datasetName, hdf5File.getFilename() ),
+//                      InputError );
 
-  private:
-    SerialHDF5File m_file;
-  };
+//       // Get the datatype
+//       H5E_BEGIN_TRY
+//       {
+//         typeId = H5Dget_type(datasetId);
+//       }
+//       H5E_END_TRY
+//       GEOS_THROW_IF( typeId < 0,
+//                      GEOS_FMT( "Cannot get the datatype for dataset {} in {}", datasetName, hdf5File.getFilename() ),
+//                      InputError );
+
+//       // Get the number of dimensions
+//       int ndims;
+//       H5E_BEGIN_TRY
+//       {
+//         ndims = H5Sget_simple_extent_ndims(spaceId);
+//       }
+//       H5E_END_TRY
+//       GEOS_THROW_IF( ndims < 0,
+//                      GEOS_FMT( "Cannot get the number of dimensions for dataset {} in {}", datasetName, hdf5File.getFilename() ),
+//                      InputError );
+
+//       // Validate dimensions if expectedDims is provided
+//       GEOS_THROW_IF( ndims != expectedDims,
+//                      GEOS_FMT( "Cannot get the number of dimensions for dataset {} in {}", datasetName, hdf5File.getFilename() ),
+//                      InputError );
+
+//       // Get the dimensions
+//       dims.resize(ndims);
+//       herr_t status;
+//       H5E_BEGIN_TRY
+//       {
+//         status = H5Sget_simple_extent_dims(spaceId, dims.data(), nullptr);
+//       }
+//       H5E_END_TRY
+//       GEOS_THROW_IF( status < 0,
+//                      GEOS_FMT( "Cannot get the dimensions for dataset {} in {}", datasetName, hdf5File.getFilename() ),
+//                      InputError );
+//     }
+
+//     // Destructor: Ensure all resources are closed
+//     ~DatasetHandle()
+//     {
+//       if (typeId >= 0)
+//         H5Tclose(typeId);
+//       if (spaceId >= 0)
+//         H5Sclose(spaceId);
+//       if (datasetId >= 0)
+//         H5Dclose(datasetId);
+//     }
+
+//     // Disable copy semantics
+//     DatasetHandle(const DatasetHandle &) = delete;
+//     DatasetHandle &operator=(const DatasetHandle &) = delete;
+
+//     // Allow move semantics
+//     DatasetHandle(DatasetHandle &&other) noexcept
+//         : datasetId(other.datasetId), spaceId(other.spaceId), typeId(other.typeId), dims(std::move(other.dims))
+//     {
+//       other.datasetId = -1;
+//       other.spaceId = -1;
+//       other.typeId = -1;
+//     }
+
+//     DatasetHandle &operator=(DatasetHandle &&other) noexcept
+//     {
+//       if (this != &other)
+//       {
+//         // Close existing resources
+//         if (typeId >= 0)
+//         {
+//           H5E_BEGIN_TRY
+//           {
+//             H5Tclose(typeId);
+//           }
+//           H5E_END_TRY
+//         }   
+//         if (spaceId >= 0)
+//         {
+//           H5E_BEGIN_TRY
+//           {
+//             H5Sclose(spaceId);
+//           }
+//           H5E_END_TRY
+//         }
+//         if (datasetId >= 0)
+//         {
+//           H5E_BEGIN_TRY
+//           {
+//             H5Dclose(datasetId);
+//           }
+//           H5E_END_TRY
+//         }
+
+//         // Transfer ownership
+//         datasetId = other.datasetId;
+//         spaceId = other.spaceId;
+//         typeId = other.typeId;
+//         dims = std::move(other.dims);
+
+//         other.datasetId = -1;
+//         other.spaceId = -1;
+//         other.typeId = -1;
+//       }
+//       return *this;
+//     }
+
+//     // Check if a dataset exists
+//     static bool datasetExists(hid_t const &fileId, string const &datasetName)
+//     {
+//         herr_t err;
+
+//         H5E_BEGIN_TRY
+//         {
+//             err = H5Oexists_by_name(fileId, datasetName.c_str(), H5P_DEFAULT);
+//         }
+//         H5E_END_TRY
+//         return err > 0 ? true : false;
+//     }    
+//   };
+
+
+
+//   class SerialHDF5Reader
+//   {
+//   public:
+//     explicit SerialHDF5Reader(const std::string &filename)
+//         : m_file(filename) {}
+
+//     TypedArray1d read1D(const std::string &datasetName, const int expectedDims) const
+//     {
+//       // Create a DatasetHandle to manage resources
+//       DatasetHandle handle(m_file, datasetName, expectedDims);
+
+//       // Compute the total number of elements
+//       hsize_t total_elements = 1;
+//       for (const auto &dim : handle.dims)
+//         total_elements *= dim;
+
+//       // Determine the type and read the data
+//       if (H5Tequal(handle.typeId, H5T_NATIVE_INT))
+//       {
+//         array1d<globalIndex> buffer(total_elements);
+//         if (H5Dread(handle.datasetId, H5T_NATIVE_INT, H5S_ALL, H5S_ALL, H5P_DEFAULT, buffer.data()) < 0)
+//           throw std::runtime_error("Failed to read dataset: " + datasetName);
+//         return buffer;
+//       }
+//       else if (H5Tequal(handle.typeId, H5T_NATIVE_FLOAT))
+//       {
+//         array1d<real32> buffer(total_elements);
+//         if (H5Dread(handle.datasetId, H5T_NATIVE_FLOAT, H5S_ALL, H5S_ALL, H5P_DEFAULT, buffer.data()) < 0)
+//           throw std::runtime_error("Failed to read dataset: " + datasetName);
+//         return buffer;
+//       }
+//       else if (H5Tequal(handle.typeId, H5T_NATIVE_DOUBLE))
+//       {
+//         array1d<real64> buffer(total_elements);
+//         if (H5Dread(handle.datasetId, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, buffer.data()) < 0)
+//           throw std::runtime_error("Failed to read dataset: " + datasetName);
+//         return buffer;
+//       }
+//       else
+//       {
+//         throw std::runtime_error("Unsupported dataset type for dataset: " + datasetName);
+//       }
+//     }
+
+//   private:
+//     SerialHDF5File m_file;
+//   };
 
 // struct serialHDF5File
 // {
@@ -465,7 +467,7 @@ array1d< double > >;
 //   return datasetValues;
 // }
 
-} // end of namespace hdf5Utils
+// } // end of namespace hdf5Utils
 
 using namespace dataRepository;
 
