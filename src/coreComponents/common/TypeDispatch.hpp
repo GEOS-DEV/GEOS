@@ -378,10 +378,13 @@ bool dispatch( LIST const combinations,
     auto typePrinter = []( auto t ){ return LvArray::system::demangle( typeid( typename decltype(t)::type ).name() ); };
     auto typeListPrinter = [typePrinter]( auto tlist ){ return internal::listToString( typename decltype( tlist )::type{}, "\n  ", "", typePrinter ); };
 
-    GEOS_ERROR( "Types were not dispatched. The types of the input objects are:\n" <<
-                "( "<<(  ( "\n  " + LvArray::system::demangle( internal::typeIdWrapper( objects ).name() ) ) + ... )<<" \n)\n"<<
-                "and the dispatch options are:\n"<<
-                internal::listToString( combinations, "\n(", "\n)", typeListPrinter ) );
+    GEOS_ERROR( "Types were not dispatched to the lambda of type\n"
+                << LvArray::system::demangleType< LAMBDA >() << "\n"
+                << "The types of the input objects are:\n"
+                << "( "<<(  ( "\n  " + LvArray::system::demangle( internal::typeIdWrapper( objects ).name() ) ) + ... )<<" \n)\n"
+                << "and the dispatch options are:\n"
+                << internal::listToString( combinations, "\n(", "\n)", typeListPrinter )
+                );
   }
   return success;
 }

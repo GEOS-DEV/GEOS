@@ -377,7 +377,7 @@ protected:
   integer m_numberOfTargetProcesses;
 
   /// Map a region name to the array of ranks outputed for it
-  std::map< string, std::vector< integer > > m_targetProcessesId;
+  std::map< string, stdVector< integer > > m_targetProcessesId;
 };
 
 } // namespace vtk

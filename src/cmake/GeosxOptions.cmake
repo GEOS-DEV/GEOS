@@ -21,6 +21,19 @@ option( RAJA_ENABLE_CUDA "" OFF )
 option( RAJA_ENABLE_HIP "" OFF )
 option( RAJA_ENABLE_TESTS "" OFF )
 
+option( GEOS_ENABLE_BOUNDS_CHECK "Enables array bounds checking" OFF )
+if( NOT CMAKE_CONFIGURATION_TYPES )
+    ######################################################
+    # Add define we can use when debug builds are enabled
+    ######################################################
+    if ( CMAKE_BUILD_TYPE MATCHES "Debug" )
+        set( GEOS_ENABLE_BOUNDS_CHECK ON CACHE BOOL "" FORCE )
+    endif()
+endif()
+if( GEOS_ENABLE_BOUNDS_CHECK )
+  set( LVARRAY_BOUNDS_CHECK ON CACHE BOOL "" FORCE )
+endif()
+
 option( ENABLE_PVTPackage "" ON )
 
 option( ENABLE_UNCRUSTIFY "" ON )
