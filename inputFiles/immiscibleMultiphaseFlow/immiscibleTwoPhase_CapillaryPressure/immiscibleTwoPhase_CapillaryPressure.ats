@@ -11,7 +11,7 @@ decks = [
         'Test 2 fluids can mix based on capillary pressure.',
         partitions=((1, 1, 1), ),
         restart_step=0,
-        check_step=68,
+        check_step=112,
         restartcheck_params=RestartcheckParameters(**restartcheck_params))
 ]
 

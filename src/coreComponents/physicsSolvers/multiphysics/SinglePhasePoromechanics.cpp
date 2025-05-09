@@ -22,9 +22,11 @@
 #include "SinglePhasePoromechanics.hpp"
 
 #include "constitutive/solid/PorousSolid.hpp"
+#include "constitutive/solid/PorousDamageSolid.hpp"
 #include "constitutive/fluid/singlefluid/SingleFluidBase.hpp"
 #include "linearAlgebra/solvers/BlockPreconditioner.hpp"
 #include "linearAlgebra/solvers/SeparateComponentPreconditioner.hpp"
+#include "physicsSolvers/multiphysics/poromechanicsKernels/SinglePhasePoromechanicsDamage.hpp"
 #include "physicsSolvers/multiphysics/poromechanicsKernels/SinglePhasePoromechanics.hpp"
 #include "physicsSolvers/multiphysics/poromechanicsKernels/ThermalSinglePhasePoromechanics.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsFields.hpp"
@@ -33,6 +35,11 @@
 #include "physicsSolvers/solidMechanics/contact/SolidMechanicsLagrangeContact.hpp"
 #include "physicsSolvers/solidMechanics/contact/SolidMechanicsEmbeddedFractures.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseHybridFVM.hpp"
+
+#include "physicsSolvers/multiphysics/poromechanicsKernels/PoromechanicsKernelsDispatchTypeList.hpp"
+#include "physicsSolvers/multiphysics/poromechanicsKernels/ThermoPoromechanicsKernelsDispatchTypeList.hpp"
+#include "physicsSolvers/multiphysics/poromechanicsKernels/PoromechanicsDamageKernelsDispatchTypeList.hpp"
+#include "physicsSolvers/solidMechanics/kernels/SolidMechanicsKernelsDispatchTypeList.hpp"
 
 namespace geos
 {
@@ -45,8 +52,16 @@ using namespace stabilization;
 template< typename FLOW_SOLVER, typename MECHANICS_SOLVER >
 SinglePhasePoromechanics< FLOW_SOLVER, MECHANICS_SOLVER >::SinglePhasePoromechanics( const string & name,
                                                                                      Group * const parent )
-  : Base( name, parent )
-{}
+  : Base( name, parent ),
+  m_damageFlag()
+{
+  Base::template addLogLevel< logInfo::LinearSolverConfiguration >();
+
+  this->registerWrapper( viewKeyStruct::damageFlagString(), &m_damageFlag ).
+    setApplyDefaultValue( 0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "The flag to indicate whether a damage solid model is used" );
+}
 
 template< typename FLOW_SOLVER, typename MECHANICS_SOLVER >
 void SinglePhasePoromechanics< FLOW_SOLVER, MECHANICS_SOLVER >::postInputInitialization()
@@ -142,8 +157,9 @@ void SinglePhasePoromechanics<>::setMGRStrategy()
       linearSolverParameters.mgr.strategy = LinearSolverParameters::MGR::StrategyType::singlePhasePoromechanics;
     }
   }
-  GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "{}: MGR strategy set to {}", getName(),
-                                      EnumStrings< LinearSolverParameters::MGR::StrategyType >::toString( linearSolverParameters.mgr.strategy )));
+  GEOS_LOG_LEVEL_RANK_0( logInfo::LinearSolverConfiguration,
+                         GEOS_FMT( "{}: MGR strategy set to {}", getName(),
+                                   EnumStrings< LinearSolverParameters::MGR::StrategyType >::toString( linearSolverParameters.mgr.strategy )));
 }
 
 template<>
@@ -168,8 +184,9 @@ void SinglePhasePoromechanics< SinglePhaseReservoirAndWells<>, SolidMechanicsLag
   {
     linearSolverParameters.mgr.strategy = LinearSolverParameters::MGR::StrategyType::singlePhasePoromechanicsReservoirFVM;
   }
-  GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "{}: MGR strategy set to {}", this->getName(),
-                                      EnumStrings< LinearSolverParameters::MGR::StrategyType >::toString( linearSolverParameters.mgr.strategy )));
+  GEOS_LOG_LEVEL_RANK_0( logInfo::LinearSolverConfiguration,
+                         GEOS_FMT( "{}: MGR strategy set to {}", this->getName(),
+                                   EnumStrings< LinearSolverParameters::MGR::StrategyType >::toString( linearSolverParameters.mgr.strategy )));
 }
 
 template< typename FLOW_SOLVER, typename MECHANICS_SOLVER >
@@ -269,18 +286,33 @@ void SinglePhasePoromechanics< FLOW_SOLVER, MECHANICS_SOLVER >::assembleElementB
 
   set< string > poromechanicsRegionNames;
 
-  this->template forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                                               MeshLevel & mesh,
-                                                                               string_array const & regionNames )
+  this->template forDiscretizationOnMeshTargets<>( domain.getMeshBodies(), [&] ( string const &,
+                                                                                 MeshLevel & mesh,
+                                                                                 string_array const & regionNames )
   {
     poromechanicsRegionNames.insert( regionNames.begin(), regionNames.end() );
 
     string const flowDofKey = dofManager.getKey( SinglePhaseBase::viewKeyStruct::elemDofFieldString() );
 
-    if( this->m_isThermal )
+    if( m_damageFlag )
     {
       poromechanicsMaxForce =
-        this->template assemblyLaunch< constitutive::PorousSolidBase,
+        this->template assemblyLaunch< PoromechanicsDamageKernelsDispatchTypeList,
+                                       poromechanicsDamageKernels::SinglePhasePoromechanicsDamageKernelFactory >( mesh,
+                                                                                                                  dofManager,
+                                                                                                                  regionNames,
+                                                                                                                  viewKeyStruct::porousMaterialNamesString(),
+                                                                                                                  localMatrix,
+                                                                                                                  localRhs,
+                                                                                                                  dt,
+                                                                                                                  flowDofKey,
+                                                                                                                  this->m_performStressInitialization,
+                                                                                                                  FlowSolverBase::viewKeyStruct::fluidNamesString() );
+    }
+    else if( this->m_isThermal )
+    {
+      poromechanicsMaxForce =
+        this->template assemblyLaunch< ThermoPoromechanicsKernelsDispatchTypeList,
                                        thermalPoromechanicsKernels::ThermalSinglePhasePoromechanicsKernelFactory >( mesh,
                                                                                                                     dofManager,
                                                                                                                     regionNames,
@@ -295,7 +327,7 @@ void SinglePhasePoromechanics< FLOW_SOLVER, MECHANICS_SOLVER >::assembleElementB
     else
     {
       poromechanicsMaxForce =
-        this->template assemblyLaunch< constitutive::PorousSolidBase,
+        this->template assemblyLaunch< PoromechanicsKernelsDispatchTypeList,
                                        poromechanicsKernels::SinglePhasePoromechanicsKernelFactory >( mesh,
                                                                                                       dofManager,
                                                                                                       regionNames,
@@ -334,7 +366,7 @@ void SinglePhasePoromechanics< FLOW_SOLVER, MECHANICS_SOLVER >::assembleElementB
     }
 
     mechanicsMaxForce =
-      this->template assemblyLaunch< constitutive::SolidBase,
+      this->template assemblyLaunch< SolidMechanicsKernelsDispatchTypeList,
                                      solidMechanicsLagrangianFEMKernels::QuasiStaticFactory >( mesh,
                                                                                                dofManager,
                                                                                                filteredRegionNames,

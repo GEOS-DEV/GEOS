@@ -6,12 +6,12 @@ restartcheck_params['rtol'] = 1.0E-8
 
 decks = [
     TestDeck(
-        name="immiscibleTwoPhase_SPE10_layer84_benchmark_iterative.xml",
+        name="immiscibleTwoPhase_SPE10_layer84_benchmark_iterative",
         description=
         'Two phase immiscible flow on SPE10 layer84 using iterative solver.',
         partitions=((1, 1, 1), ),
         restart_step=0,
-        check_step=89,
+        check_step=97,
         restartcheck_params=RestartcheckParameters(**restartcheck_params))
 ]
 

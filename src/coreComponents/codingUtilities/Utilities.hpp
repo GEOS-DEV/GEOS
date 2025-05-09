@@ -59,6 +59,20 @@ bool isZero( T const val, T const tol = LvArray::NumericLimits< T >::epsilon )
   return -tol <= val && val <= tol;
 }
 
+template< typename ARRAY_TYPE >
+GEOS_FORCE_INLINE GEOS_HOST_DEVICE
+bool hasNonZero( ARRAY_TYPE const & array )
+{
+  for( auto it = array.begin(); it != array.end(); ++it )
+  {
+    if( !isZero( *it ) )
+    {
+      return true;
+    }
+  }
+  return false;
+}
+
 template< typename T >
 GEOS_FORCE_INLINE GEOS_HOST_DEVICE constexpr
 bool isOdd( T x )
@@ -243,7 +257,7 @@ auto mapTransformer( MAP const & map,
  * @param[in] map The map from which keys will be extracted.
  * @return The container with the keys.
  */
-template< template< typename ... > class C = std::vector, typename MAP >
+template< template< typename ... > class C = stdVector, typename MAP >
 C< typename MAP::key_type > mapKeys( MAP const & map )
 {
   auto transformer = []( auto const & p ) -> typename MAP::key_type
@@ -258,7 +272,7 @@ C< typename MAP::key_type > mapKeys( MAP const & map )
  * @param[in] map The map from which values will be extracted.
  * @return The container with the values.
  */
-template< template< typename ... > class C = std::vector, typename MAP >
+template< template< typename ... > class C = stdVector, typename MAP >
 C< typename MAP::mapped_type > mapValues( MAP const & map )
 {
   auto transformer = []( typename MAP::const_reference p ) -> typename MAP::mapped_type

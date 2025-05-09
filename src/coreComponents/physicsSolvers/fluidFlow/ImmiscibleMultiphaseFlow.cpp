@@ -26,6 +26,7 @@
 #include "physicsSolvers/fluidFlow/kernels/immiscibleMultiphase/ImmiscibleMultiphaseKernels.hpp"
 #include "physicsSolvers/fluidFlow/kernels/immiscibleMultiphase/CapillaryPressureUpdateKernel.hpp"
 #include "physicsSolvers/fluidFlow/kernels/compositional/ThermalAccumulationKernel.hpp"
+#include "physicsSolvers/fluidFlow/kernels/compositional/RelativePermeabilityUpdateKernel.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
 #include "constitutive/capillaryPressure/CapillaryPressureFields.hpp"
 #include "constitutive/capillaryPressure/capillaryPressureSelector.hpp"
@@ -34,9 +35,10 @@
 #include "fieldSpecification/EquilibriumInitialCondition.hpp"
 #include "fieldSpecification/SourceFluxBoundaryCondition.hpp"
 #include "physicsSolvers/fluidFlow/SourceFluxStatistics.hpp"
+#include "physicsSolvers/LogLevelsInfo.hpp"
 
 #include "constitutive/ConstitutivePassThru.hpp"
-#include "constitutive/fluid/twophasefluid/TwoPhaseFluid.hpp"
+#include "constitutive/fluid/twophaseimmisciblefluid/TwoPhaseImmiscibleFluid.hpp"
 
 #include <cmath>
 
@@ -181,7 +183,7 @@ void ImmiscibleMultiphaseFlow::setConstitutiveNames( ElementSubRegionBase & subR
 {
 
   string & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
-  fluidName = getConstitutiveName< TwoPhaseFluid >( subRegion );
+  fluidName = getConstitutiveName< TwoPhaseImmiscibleFluid >( subRegion );
   GEOS_ERROR_IF( fluidName.empty(), GEOS_FMT( "{}: Fluid model not found on subregion {}",
                                               getDataContext(), subRegion.getName() ) );
 
@@ -231,7 +233,7 @@ void ImmiscibleMultiphaseFlow::updateFluidModel( ObjectManagerBase & dataGroup )
 
   arrayView1d< real64 const > const pres = dataGroup.getField< fields::flow::pressure >();
 
-  TwoPhaseFluid & fluid = getConstitutiveModel< TwoPhaseFluid >( dataGroup, dataGroup.getReference< string >( viewKeyStruct::fluidNamesString() ) );
+  TwoPhaseImmiscibleFluid & fluid = getConstitutiveModel< TwoPhaseImmiscibleFluid >( dataGroup, dataGroup.getReference< string >( viewKeyStruct::fluidNamesString() ) );
 
   constitutiveUpdatePassThru( fluid, [&] ( auto & castedFluid )
   {
@@ -315,7 +317,7 @@ void ImmiscibleMultiphaseFlow::updatePhaseMass( ElementSubRegionBase & subRegion
   string const & solidName = subRegion.getReference< string >( viewKeyStruct::solidNamesString() );
   string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
 
-  TwoPhaseFluid const & fluid = getConstitutiveModel< TwoPhaseFluid >( subRegion, fluidName );
+  TwoPhaseImmiscibleFluid const & fluid = getConstitutiveModel< TwoPhaseImmiscibleFluid >( subRegion, fluidName );
   CoupledSolidBase const & solid = getConstitutiveModel< CoupledSolidBase >( subRegion, solidName );
 
   arrayView1d< real64 const > const volume = subRegion.getElementVolume();
@@ -345,7 +347,7 @@ void ImmiscibleMultiphaseFlow::updatePhaseMobility( ObjectManagerBase & dataGrou
 
   // note that the phase mobility computed here also includes phase density
   string const & fluidName = dataGroup.getReference< string >( viewKeyStruct::fluidNamesString() );
-  TwoPhaseFluid const & fluid = getConstitutiveModel< TwoPhaseFluid >( dataGroup, fluidName );
+  TwoPhaseImmiscibleFluid const & fluid = getConstitutiveModel< TwoPhaseImmiscibleFluid >( dataGroup, fluidName );
 
   string const & relpermName = dataGroup.getReference< string >( viewKeyStruct::relPermNamesString() );
   RelativePermeabilityBase const & relperm = getConstitutiveModel< RelativePermeabilityBase >( dataGroup, relpermName );
@@ -582,7 +584,7 @@ void ImmiscibleMultiphaseFlow::assembleAccumulationTerm( DomainPartition & domai
       string const & solidName = subRegion.getReference< string >( viewKeyStruct::solidNamesString() );
       string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
 
-      TwoPhaseFluid const & fluid = getConstitutiveModel< TwoPhaseFluid >( subRegion, fluidName );
+      TwoPhaseImmiscibleFluid const & fluid = getConstitutiveModel< TwoPhaseImmiscibleFluid >( subRegion, fluidName );
       CoupledSolidBase const & solid = getConstitutiveModel< CoupledSolidBase >( subRegion, solidName );
 
       immiscibleMultiphaseKernels::
@@ -640,7 +642,7 @@ void ImmiscibleMultiphaseFlow::assembleFluxTerms( real64 const dt,
           {
             typename TYPEOFREF( stencil ) ::KernelWrapper stencilWrapper = stencil.createKernelWrapper();
             immiscibleMultiphaseKernels::
-              FaceBasedAssemblyKernelFactory::createAndLaunch< parallelDevicePolicy<> >( m_numPhases,
+            FluxComputeKernelFactory::createAndLaunch< parallelDevicePolicy<> >( m_numPhases,
                                                                                          dofManager.rankOffset(),
                                                                                          dofKey,
                                                                                          m_hasCapPressure,
@@ -664,7 +666,7 @@ void ImmiscibleMultiphaseFlow::assembleFluxTerms( real64 const dt,
       {
         typename TYPEOFREF( stencil ) ::KernelWrapper stencilWrapper = stencil.createKernelWrapper();
         immiscibleMultiphaseKernels::
-          FaceBasedAssemblyKernelFactory::createAndLaunch< parallelDevicePolicy<> >( m_numPhases,
+        FluxComputeKernelFactory::createAndLaunch< parallelDevicePolicy<> >( m_numPhases,
                                                                                      dofManager.rankOffset(),
                                                                                      dofKey,
                                                                                      m_hasCapPressure,
@@ -1449,10 +1451,10 @@ real64 ImmiscibleMultiphaseFlow::setNextDtBasedOnStateChange( real64 const & cur
   maxRelativePresChange = MpiWrapper::max( maxRelativePresChange );
   maxAbsolutePhaseVolFracChange = MpiWrapper::max( maxAbsolutePhaseVolFracChange );
 
-  GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::TimeStep, GEOS_FMT( "{}: max relative pressure change during time step = {} %",
-                                                           getName(), GEOS_FMT( "{:.{}f}", 100*maxRelativePresChange, 3 ) ) );
-  GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::TimeStep, GEOS_FMT( "{}: max absolute phase volume fraction change during time step = {}",
-                                                           getName(), GEOS_FMT( "{:.{}f}", maxAbsolutePhaseVolFracChange, 3 ) ) );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::TimeStep, GEOS_FMT( "{}: max relative pressure change during time step = {} %",
+                                                      getName(), GEOS_FMT( "{:.{}f}", 100*maxRelativePresChange, 3 ) ) );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::TimeStep, GEOS_FMT( "{}: max absolute phase volume fraction change during time step = {}",
+                                                      getName(), GEOS_FMT( "{:.{}f}", maxAbsolutePhaseVolFracChange, 3 ) ) );
 
   real64 const eps = LvArray::NumericLimits< real64 >::epsilon;
 
@@ -1467,11 +1469,6 @@ real64 ImmiscibleMultiphaseFlow::setNextDtBasedOnStateChange( real64 const & cur
 
   return std::min( nextDtPressure, nextDtPhaseVolFrac );
 
-}
-
-real64 ImmiscibleMultiphaseFlow::setNextDt( const geos::real64 & currentDt, geos::DomainPartition & domain )
-{
-  return PhysicsSolverBase::setNextDt( currentDt, domain );
 }
 
 REGISTER_CATALOG_ENTRY( PhysicsSolverBase, ImmiscibleMultiphaseFlow, string const &, Group * const )

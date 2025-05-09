@@ -16,7 +16,7 @@
 // Source includes
 #include "codingUtilities/UnitTestUtilities.hpp"
 #include "constitutive/fluid/multifluid/compositional/models/CompositionalDensity.hpp"
-#include "constitutive/fluid/multifluid/compositional/models/CriticalVolume.hpp"
+#include "constitutive/fluid/multifluid/compositional/parameters/CriticalVolume.hpp"
 #include "constitutive/fluid/multifluid/compositional/models/LohrenzBrayClarkViscosity.hpp"
 #include "TestFluid.hpp"
 #include "TestFluidUtilities.hpp"

@@ -23,6 +23,7 @@
 #include "mainInterface/GeosxState.hpp"
 #include "mesh/DomainPartition.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
+#include "fieldSpecification/LogLevelsInfo.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 #include "kernels/SeismicityRateKernels.hpp"
 #include "physicsSolvers/inducedSeismicity/inducedSeismicityFields.hpp"
@@ -351,8 +352,8 @@ real64 SeismicityRate::updateStresses( real64 const & time_n,
 
       FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
 
-      std::vector< string > const keys = { inducedSeismicity::projectedNormalTraction::key(),
-                                           inducedSeismicity::projectedShearTraction::key() };
+      stdVector< string > const keys = { inducedSeismicity::projectedNormalTraction::key(),
+                                         inducedSeismicity::projectedShearTraction::key() };
 
       for( auto const & key : keys )
       {
@@ -365,13 +366,12 @@ real64 SeismicityRate::updateStresses( real64 const & time_n,
                                                       ElementSubRegionBase & subRegion,
                                                       string const & )
         {
-          if( fs.getLogLevel() >= 1 )
-          {
-            globalIndex const numTargetElems = MpiWrapper::sum< globalIndex >( lset.size() );
-            GEOS_LOG_RANK_0( GEOS_FMT( bcLogMessage,
-                                       this->getName(), time_n+dt, FieldSpecificationBase::catalogName(),
-                                       fs.getName(), setName, subRegion.getName(), fs.getScale(), numTargetElems ) );
-          }
+          globalIndex const numTargetElems = MpiWrapper::sum< globalIndex >( lset.size() );
+          GEOS_LOG_LEVEL_RANK_0_ON_GROUP( logInfo::FaceBoundaryCondition,
+                                          GEOS_FMT( bcLogMessage,
+                                                    this->getName(), time_n+dt, FieldSpecificationBase::catalogName(),
+                                                    fs.getName(), setName, subRegion.getName(), fs.getScale(), numTargetElems ),
+                                          fs );
 
           // Specify the bc value of the field
           fs.applyFieldValue< FieldSpecificationEqual,

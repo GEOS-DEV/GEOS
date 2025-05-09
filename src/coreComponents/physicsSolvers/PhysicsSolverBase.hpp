@@ -30,7 +30,6 @@
 #include "physicsSolvers/NonlinearSolverParameters.hpp"
 #include "physicsSolvers/LinearSolverParameters.hpp"
 #include "physicsSolvers/SolverStatistics.hpp"
-#include "physicsSolvers/LogLevelsInfo.hpp"
 
 #include <limits>
 
@@ -216,19 +215,21 @@ public:
 
   /**
    * @brief function to set the next time step size
+   * @param[in] currentTime the current time
    * @param[in] currentDt the current time step size
    * @param[in] domain the domain object
    * @return the prescribed time step size
    */
-  virtual real64 setNextDt( real64 const & currentDt,
+  virtual real64 setNextDt( real64 const & currentTime,
+                            real64 const & currentDt,
                             DomainPartition & domain );
 
   /**
-   * @brief function to set the next time step size based on Newton convergence
+   * @brief function to set the next time step size based on convergence
    * @param[in] currentDt the current time step size
    * @return the prescribed time step size
    */
-  virtual real64 setNextDtBasedOnNewtonIter( real64 const & currentDt );
+  virtual real64 setNextDtBasedOnIterNumber( real64 const & currentDt );
 
   /**
    * @brief function to set the next dt based on state change
@@ -693,6 +694,9 @@ public:
 
     /// @return string for the writeLinearSystem wrapper
     static constexpr char const * writeLinearSystemString() { return "writeLinearSystem"; }
+
+    /// @return string for the allowNonConvergedLinearSolverSolution wrapper
+    static constexpr char const * allowNonConvergedLinearSolverSolutionString() { return "allowNonConvergedLinearSolverSolution"; }
   };
 
   /**
@@ -892,6 +896,10 @@ public:
   virtual PyTypeObject * getPythonType() const override;
 #endif
 
+  /**
+   * @brief accessor for m_meshTargets
+   * @return reference to m_meshTargets
+   */
   map< std::pair< string, string >, string_array > const & getMeshTargets() const
   {
     return m_meshTargets;
@@ -997,6 +1005,9 @@ protected:
   /// timestep of the next cycle
   real64 m_nextDt;
 
+  /// behavior in case of linear solver failure
+  integer m_allowNonConvergedLinearSolverSolution;
+
   /// Number of cycles since last timestep cut
   integer m_numTimestepsSinceLastDtCut;
 
@@ -1081,7 +1092,7 @@ private:
    */
   void logEndOfCycleInformation( integer const cycleNumber,
                                  integer const numOfSubSteps,
-                                 std::vector< real64 > const & subStepDt ) const;
+                                 stdVector< real64 > const & subStepDt ) const;
 
 };
 

@@ -411,7 +411,14 @@ public:
   virtual void resize( localIndex const newSize ) override
   {
     wrapperHelpers::move( *m_data, hostMemorySpace, true );
-    wrapperHelpers::resizeDefault( reference(), newSize, m_default, this->getName() );
+    if constexpr ( traits::HasMemberFunction_resizeDefault< T > && DefaultValue< T >::has_default_value )
+    {
+      wrapperHelpers::resizeDefault( reference(), newSize, m_default, this->getName() );
+    }
+    else
+    {
+      wrapperHelpers::resize( reference(), newSize );
+    }
   }
 
   /// @cond DO_NOT_DOCUMENT
@@ -727,11 +734,11 @@ public:
                                                                        targetNode,
                                                                        inputFlag == InputFlags::REQUIRED );
           GEOS_THROW_IF( !m_successfulReadFromInput,
-                         GEOS_FMT( "XML Node {} ({}) with name={} is missing required attribute '{}'."
-                                   "Available options are:\n {}\n For more details, please refer to documentation at:\n"
+                         GEOS_FMT( "XML Node {} ({}) with name={} is missing required attribute '{}'.\n"
+                                   "For more details, please refer to documentation at:\n"
                                    "http://geosx-geosx.readthedocs-hosted.com/en/latest/docs/sphinx/userGuide/Index.html",
                                    targetNode.name(), nodePos.toString(), targetNode.attribute( "name" ).value(),
-                                   getName(), dumpInputOptions( true ) ),
+                                   getName()),
                          InputError );
         }
         else
@@ -772,11 +779,11 @@ public:
   void addBlueprintField( conduit::Node & fields,
                           string const & name,
                           string const & topology,
-                          std::vector< string > const & componentNames = {} ) const override
+                          stdVector< string > const & componentNames = {} ) const override
   { wrapperHelpers::addBlueprintField( reference(), fields, name, topology, componentNames ); }
 
   ///////////////////////////////////////////////////////////////////////////////////////////////////
-  void populateMCArray( conduit::Node & node, std::vector< string > const & componentNames = {} ) const override
+  void populateMCArray( conduit::Node & node, stdVector< string > const & componentNames = {} ) const override
   { wrapperHelpers::populateMCArray( reference(), node, componentNames ); }
 
   ///////////////////////////////////////////////////////////////////////////////////////////////////

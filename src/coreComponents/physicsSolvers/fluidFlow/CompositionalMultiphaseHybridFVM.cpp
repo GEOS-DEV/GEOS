@@ -28,6 +28,7 @@
 #include "finiteVolume/HybridMimeticDiscretization.hpp"
 #include "finiteVolume/MimeticInnerProductDispatch.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
+#include "physicsSolvers/LogLevelsInfo.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseBaseFields.hpp"
 #include "physicsSolvers/fluidFlow/kernels/compositional/CompositionalMultiphaseHybridFVMKernels.hpp"
@@ -53,6 +54,8 @@ CompositionalMultiphaseHybridFVM::CompositionalMultiphaseHybridFVM( const std::s
   m_lengthTolerance( 0 )
 {
   m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::compositionalMultiphaseHybridFVM;
+
+  addLogLevel< logInfo::ResidualNorm >();
 }
 
 void CompositionalMultiphaseHybridFVM::registerDataOnMesh( Group & meshBodies )
@@ -378,7 +381,7 @@ void CompositionalMultiphaseHybridFVM::assembleFluxTerms( real64 const dt,
       mimeticInnerProductReducedDispatch( mimeticInnerProductBase,
                                           [&] ( auto const mimeticInnerProduct )
       {
-        using IP_TYPE = TYPEOFREF( mimeticInnerProduct );
+        using IP_TYPE = std::remove_const_t< TYPEOFREF( mimeticInnerProduct ) >;
         kernelLaunchSelector< FluxKernel,
                               IP_TYPE >( subRegion.numFacesPerElement(),
                                          m_numComponents, m_numPhases,
@@ -725,10 +728,7 @@ real64 CompositionalMultiphaseHybridFVM::calculateResidualNorm( real64 const & G
     physicsSolverBaseKernels::L2ResidualNormHelper::computeGlobalNorm( localResidualNorm, localResidualNormalizer, residualNorm );
   }
 
-  if( getLogLevel() >= 1 && logger::internal::rank == 0 )
-  {
-    std::cout << GEOS_FMT( "        ( R{} ) = ( {:4.2e} )", coupledSolverAttributePrefix(), residualNorm );
-  }
+  GEOS_LOG_LEVEL_RANK_0( logInfo::ResidualNorm, GEOS_FMT( "        ( R{} ) = ( {:4.2e} )", coupledSolverAttributePrefix(), residualNorm ));
 
   return residualNorm;
 }
