@@ -18,6 +18,7 @@
  */
 #include "ReactiveBrineFluid.hpp"
 
+#include "constitutive/fluid/multifluid/LogLevelsInfo.hpp"
 #include "constitutive/fluid/multifluid/MultiFluidFields.hpp"
 #include "constitutive/fluid/multifluid/CO2Brine/functions/PVTFunctionHelpers.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
@@ -74,7 +75,7 @@ ReactiveBrineFluid( string const & name, Group * const parent ):
     setApplyDefaultValue( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setRestartFlags( RestartFlags::NO_WRITE ).
-    setDescription( "Write PVT tables into a CSV file" );
+    setDescription( "When set to 1, write PVT tables into a CSV file" );
 
   // if this is a thermal model, we need to make sure that the arrays will be properly displayed and saved to restart
   if( isThermal() )
@@ -87,6 +88,8 @@ ReactiveBrineFluid( string const & name, Group * const parent ):
       setPlotLevel( PlotLevel::LEVEL_0 ).
       setRestartFlags( RestartFlags::WRITE_AND_READ );
   }
+
+  addLogLevel< logInfo::PVT >();
 }
 
 template< typename PHASE >
@@ -139,7 +142,7 @@ void ReactiveBrineFluid< PHASE > ::createPVTModels()
 {
   // TODO: get rid of these external files and move into XML, this is too error prone
   // For now, to support the legacy input, we read all the input parameters at once in the arrays below, and then we create the models
-  array1d< array1d< string > > phase1InputParams;
+  stdVector< string_array > phase1InputParams;
   phase1InputParams.resize( 3 );
 
   // 1) Create the viscosity, density, enthalpy models
@@ -149,7 +152,7 @@ void ReactiveBrineFluid< PHASE > ::createPVTModels()
     string str;
     while( std::getline( is, str ) )
     {
-      array1d< string > const strs = stringutilities::tokenizeBySpaces< array1d >( str );
+      string_array const strs = stringutilities::tokenizeBySpaces< stdVector >( str );
 
       if( !strs.empty() )
       {
@@ -203,7 +206,7 @@ void ReactiveBrineFluid< PHASE > ::createPVTModels()
   bool const isClone = this->isClone();
   TableFunction::OutputOptions const pvtOutputOpts = {
     !isClone && m_writeCSV,// writeCSV
-    !isClone && (getLogLevel() >= 0 && logger::internal::rank==0), // writeInLog
+    !isClone && isLogLevelActive< logInfo::PVT >( this->getLogLevel() ), // writeInLog
   };
 
   // then, we are ready to instantiate the phase models

@@ -41,7 +41,7 @@ struct surfaceWithGhostNodes
   /// local index of the surface element
   localIndex surfaceIndex;
   /// index of the parent edge of each node
-  std::vector< globalIndex > parentEdgeIndex;
+  stdVector< globalIndex > parentEdgeIndex;
   ///number of nodes of the element
   localIndex numOfNodes;
 
@@ -230,7 +230,7 @@ public:
    * @brief accessor to the m_surfaceWithGhostNodes list
    * @return the list of surfaces with at least one ghost node.
    */
-  std::vector< struct surfaceWithGhostNodes > surfaceWithGhostNodes() { return m_surfaceWithGhostNodes; }
+  stdVector< struct surfaceWithGhostNodes > surfaceWithGhostNodes() { return m_surfaceWithGhostNodes; }
 
   /**
    * @brief Get the surface element to cells map.
@@ -271,10 +271,10 @@ private:
   array1d< real64 > m_connectivityIndex;
 
   // Indices of geometric objects the element belongs to
-  array1d< string > m_parentPlaneName;
+  string_array m_parentPlaneName;
 
   /// Surfaces with ghost nodes
-  std::vector< struct surfaceWithGhostNodes > m_surfaceWithGhostNodes;
+  stdVector< struct surfaceWithGhostNodes > m_surfaceWithGhostNodes;
 
   /// Map between the surface elements and the cells
   OrderedVariableToManyElementRelation m_2dElemToElems;

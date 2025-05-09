@@ -131,9 +131,31 @@ int MpiWrapper::init( int * argc, char * * * argv )
 #endif
 }
 
+internal::ManagedResources & internal::getManagedResources()
+{
+  static ManagedResources instance;
+  return instance;
+}
+
+void internal::ManagedResources::finalize()
+{
+  for( MPI_Op resource : m_mpiOps )
+  {
+    MPI_CHECK_ERROR( MPI_Op_free( &resource ) );
+  }
+  m_mpiOps.clear();
+
+  for( MPI_Datatype resource : m_mpiTypes )
+  {
+    MPI_CHECK_ERROR( MPI_Type_free( &resource ) );
+  }
+  m_mpiTypes.clear();
+}
+
 void MpiWrapper::finalize()
 {
 #ifdef GEOS_USE_MPI
+  internal::getManagedResources().finalize();
   MPI_CHECK_ERROR( MPI_Finalize() );
 #endif
 }
@@ -217,7 +239,7 @@ int MpiWrapper::checkAny( int count, MPI_Request array_of_requests[], int * idx,
   bool found = false;
   int flagCache = -1;
   int rval = MPI_SUCCESS;
-  std::vector< int > rvals( count );
+  stdVector< int > rvals( count );
   for( int jdx = 0; jdx < count; ++jdx )
   {
     *flag = 0;
@@ -249,7 +271,7 @@ int MpiWrapper::checkAll( int count, MPI_Request array_of_requests[], int * flag
   // assume all passing, any that don't pass set the flag to false
   *flag = 1;
   int rval = MPI_SUCCESS;
-  std::vector< int > rvals( count );
+  stdVector< int > rvals( count );
   int iFlag = 0;
   for( int idx = 0; idx < count; ++idx )
   {
@@ -344,7 +366,7 @@ int MpiWrapper::activeWaitSome( const int count,
   while( cmp < count )
   {
     int rcvd = 0;
-    std::vector< int > indices( count, -1 );
+    stdVector< int > indices( count, -1 );
     int err = waitSome( count, array_of_requests, &rcvd, &indices[0], array_of_statuses );
     if( err != MPI_SUCCESS )
       return err;
@@ -365,7 +387,7 @@ int MpiWrapper::activeWaitSome( const int count,
 
 
 int MpiWrapper::activeWaitSomeCompletePhase( const int participants,
-                                             std::vector< std::tuple< MPI_Request *, MPI_Status *, std::function< MPI_Request ( int ) > > > const & phases )
+                                             stdVector< std::tuple< MPI_Request *, MPI_Status *, std::function< MPI_Request ( int ) > > > const & phases )
 {
   const int num_phases = phases.size();
   int err = 0;
@@ -395,7 +417,7 @@ int MpiWrapper::activeWaitSomeCompletePhase( const int participants,
 }
 
 int MpiWrapper::activeWaitOrderedCompletePhase( const int participants,
-                                                std::vector< std::tuple< MPI_Request *, MPI_Status *, std::function< MPI_Request ( int ) > > > const & phases )
+                                                stdVector< std::tuple< MPI_Request *, MPI_Status *, std::function< MPI_Request ( int ) > > > const & phases )
 {
   const int num_phases = phases.size();
   for( int phase = 0; phase < num_phases; ++phase )
@@ -439,6 +461,63 @@ int MpiWrapper::nodeCommSize()
   MPI_Comm_size( nodeComm, &nodeCommSize );
   return nodeCommSize;
 }
+
+namespace internal
+{
+
+template< typename FIRST, typename SECOND >
+MPI_Datatype getMpiCustomPairType()
+{
+  static auto const createTypeHolder = [] () {
+    using PAIR_T = MpiWrapper::PairType< FIRST, SECOND >;
+    static_assert( std::is_standard_layout_v< PAIR_T > );
+    static_assert( std::is_trivially_copyable_v< PAIR_T > );
+
+    MPI_Datatype types[2] = { getMpiType< FIRST >(), getMpiType< SECOND >() };
+    MPI_Aint offsets[2] = { offsetof( PAIR_T, first ), offsetof( PAIR_T, second ) };
+    int blocksCount[2] = { 1, 1 };
+
+    MPI_Datatype mpiType;
+    GEOS_ERROR_IF_NE( MPI_Type_create_struct( 2, blocksCount, offsets, types, &mpiType ), MPI_SUCCESS );
+    GEOS_ERROR_IF_NE( MPI_Type_commit( &mpiType ), MPI_SUCCESS );
+    // Resource registered to be destroyed at MpiWrapper::finalize().
+    internal::getManagedResources().m_mpiTypes.emplace( mpiType );
+    return mpiType;
+  };
+  // Static storage to ensure the MPI operation is created only once and reused for all calls to this function.
+  static MPI_Datatype mpiType{ createTypeHolder() };
+  return mpiType;
+}
+
+template<> MPI_Datatype getMpiPairType< int, int >()
+{ return MPI_2INT; }
+
+template<> MPI_Datatype getMpiPairType< long int, int >()
+{ return MPI_LONG_INT; }
+
+template<> MPI_Datatype getMpiPairType< long int, long int >()
+{ return getMpiCustomPairType< long int, long int >(); }
+
+template<> MPI_Datatype getMpiPairType< long long int, long long int >()
+{ return getMpiCustomPairType< long long int, long long int >(); }
+
+template<> MPI_Datatype getMpiPairType< float, int >()
+{ return MPI_FLOAT_INT; }
+
+template<> MPI_Datatype getMpiPairType< double, int >()
+{ return MPI_DOUBLE_INT; }
+
+template<> MPI_Datatype getMpiPairType< double, long int >()
+{ return getMpiCustomPairType< double, long int >(); }
+
+template<> MPI_Datatype getMpiPairType< double, long long int >()
+{ return getMpiCustomPairType< double, long long int >(); }
+
+template<> MPI_Datatype getMpiPairType< double, double >()
+{ return getMpiCustomPairType< double, double >(); }
+
+} /* namespace internal */
+
 } /* namespace geos */
 
 #if defined(__clang__)

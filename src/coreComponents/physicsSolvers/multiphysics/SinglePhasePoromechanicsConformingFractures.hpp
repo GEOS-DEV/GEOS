@@ -21,10 +21,7 @@
 #define GEOS_PHYSICSSOLVERS_MULTIPHYSICS_SINGLEPHASEPOROMECHANICSCONFORMINGFRACTURES_HPP_
 
 #include "physicsSolvers/multiphysics/SinglePhasePoromechanics.hpp"
-#include "physicsSolvers/multiphysics/CoupledSolver.hpp"
-#include "physicsSolvers/contact/SolidMechanicsLagrangeContact.hpp"
-#include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
-#include "dataRepository/Group.hpp"
+#include "physicsSolvers/solidMechanics/contact/SolidMechanicsLagrangeContact.hpp"
 
 namespace geos
 {
@@ -133,13 +130,13 @@ private:
                                       arrayView1d< real64 > const & localRhs ) override final;
 
   void assembleForceResidualDerivativeWrtPressure( MeshLevel const & mesh,
-                                                   arrayView1d< string const > const & regionNames,
+                                                   string_array const & regionNames,
                                                    DofManager const & dofManager,
                                                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                    arrayView1d< real64 > const & localRhs );
 
   void assembleFluidMassResidualDerivativeWrtDisplacement( MeshLevel const & mesh,
-                                                           arrayView1d< string const > const & regionNames,
+                                                           string_array const & regionNames,
                                                            DofManager const & dofManager,
                                                            CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                            arrayView1d< real64 > const & localRhs );

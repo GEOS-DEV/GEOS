@@ -298,8 +298,8 @@ private:
   int m_sendBufferSize[maxComm];
   int m_receiveBufferSize[maxComm];
 
-  std::vector< buffer_type > m_sendBuffer;
-  std::vector< buffer_type > m_receiveBuffer;
+  stdVector< buffer_type > m_sendBuffer;
+  stdVector< buffer_type > m_receiveBuffer;
 
   localIndex_array m_nodeUnpackList;
   localIndex_array m_edgeUnpackList;

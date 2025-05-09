@@ -214,7 +214,7 @@ MATRIX permuteMatrix( MATRIX const & matrix,
 template< typename VECTOR >
 void computeRigidBodyModes( MeshLevel const & mesh,
                             DofManager const & dofManager,
-                            std::vector< string > const & selection,
+                            stdVector< string > const & selection,
                             array1d< VECTOR > & rigidBodyModes )
 {
   NodeManager const & nodeManager = mesh.getNodeManager();

@@ -1,7 +1,11 @@
 # Specify list of tests
 set( gtest_geosx_tests
+     testBrineSalinity.cpp
      testCompositionalDensity.cpp
+     testCompositionalPhillipsBrineDensity.cpp
+     testCompositionalPhillipsBrineViscosity.cpp
      testCompositionalProperties.cpp
+     testCompositionalFluidComponentType.cpp
      testCubicEOS.cpp
      testDamageUtilities.cpp
      testDruckerPrager.cpp
@@ -11,11 +15,14 @@ set( gtest_geosx_tests
      testImmiscibleWaterProperties.cpp
      testLohrenzBrayClarkViscosity.cpp
      testModifiedCamClay.cpp
+     testMultiFluidDeadOil.cpp
      testMultiFluidSelector.cpp
      testNegativeTwoPhaseFlash.cpp
      testNegativeTwoPhaseFlash9Comp.cpp
      testParticleFluidEnums.cpp
+     testPressureTemperatureCoordinates.cpp
      testPropertyConversions.cpp
+     testSoreideWhitsonEOSPhaseModel.cpp
      testStabilityTest2Comp.cpp
      testStabilityTest9Comp.cpp
      testRachfordRice.cpp )

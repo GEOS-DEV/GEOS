@@ -1,0 +1,16 @@
+from geos.ats.test_builder import TestDeck, RestartcheckParameters, generate_geos_tests
+
+restartcheck_params = {}
+restartcheck_params["atol"] = 1.0E-6
+restartcheck_params["rtol"] = 1.0E-5
+
+decks = [
+    TestDeck(name="co2_2d_plume_Z",
+             description="2D co2 injection test for Overall Composition Formulation",
+             partitions=((1, 1, 1), (2, 1, 2)),
+             restart_step=77,
+             check_step=117,
+             restartcheck_params=RestartcheckParameters(atol=1e-4, rtol=1e-3)),
+]
+
+generate_geos_tests(decks)

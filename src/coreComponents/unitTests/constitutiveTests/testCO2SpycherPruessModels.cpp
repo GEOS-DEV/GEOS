@@ -81,7 +81,7 @@ CO2SolubilitySpycherPruessTestFixture::makeFlashModel( string const & fileConten
   componentMolarWeight[1] = 18.0e-3;
 
   // Read file parameters
-  array1d< string > const strs = stringutilities::tokenizeBySpaces< array1d >( fileContent );
+  string_array const strs = stringutilities::tokenizeBySpaces< stdVector >( fileContent );
 
   TableFunction::OutputOptions const flashOutputOpts = {
     false,  // writeCSV

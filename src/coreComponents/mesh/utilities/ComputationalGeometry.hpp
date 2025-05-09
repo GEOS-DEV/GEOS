@@ -24,7 +24,7 @@
 #include "common/DataLayouts.hpp"
 #include "finiteElement/elementFormulations/H1_Hexahedron_Lagrange1_GaussLegendre2.hpp"
 #include "finiteElement/elementFormulations/H1_Pyramid_Lagrange1_Gauss5.hpp"
-#include "finiteElement/elementFormulations/H1_Tetrahedron_Lagrange1_Gauss1.hpp"
+#include "finiteElement/elementFormulations/H1_Tetrahedron_Lagrange1_Gauss.hpp"
 #include "finiteElement/elementFormulations/H1_Wedge_Lagrange1_Gauss6.hpp"
 #include "LvArray/src/output.hpp"
 #include "LvArray/src/tensorOps.hpp"
@@ -81,7 +81,7 @@ void LinePlaneIntersection( LINEDIR_TYPE const & lineDir,
  * @tparam NORMAL_TYPE the type of @p normal
  * @param[in] points coordinates of the points
  * @param[in] normal vector normal to the plane
- * @return an std::vector containing the original indices of the reordered points.
+ * @return an stdVector containing the original indices of the reordered points.
  */
 template< typename NORMAL_TYPE >
 array1d< int >  orderPointsCCW( arrayView2d< real64 > const & points,

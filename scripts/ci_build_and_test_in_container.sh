@@ -38,6 +38,14 @@ Usage: $0
       run a code build and test.
   --data-basename output.tar.gz
       If some data needs to be extracted from the build, the argument will define the tarball. Has to be a `tar.gz`.
+  --geos-enable-bounds-check
+      Either ON or OFF (default is ON). Build geos with bounds check. 
+  --enable-hypre
+      One of ON or OFF (default is ON). Build geos with hypre.
+  --enable-hypre-device
+      One of CPU, CUDA, or HIP (default is CPU). Build geos with hypre GPU support.
+  --enable-trilinos
+      One of ON or OFF (default is OFF). Build geos with trilinos.
   --exchange-dir /path/to/exchange
       Folder to share data with outside of the container.
   --host-config host-config/my_config.cmake
@@ -71,21 +79,25 @@ exit 1
 # Then we'll move to the build dir.
 or_die cd $(dirname $0)/..
 
-# Parsing using getopt
-args=$(or_die getopt -a -o h --long build-exe-only,cmake-build-type:,code-coverage,data-basename:,exchange-dir:,host-config:,install-dir-basename:,makefile,ninja,no-install-schema,no-run-unit-tests,nproc:,repository:,run-integrated-tests,sccache-credentials:,test-code-style,test-documentation,help -- "$@")
+args=$(or_die getopt -a -o h --long build-exe-only,cmake-build-type:,code-coverage,data-basename:,geos-enable-bounds-check:,enable-hypre:,enable-hypre-device:,enable-trilinos:,exchange-dir:,host-config:,install-dir-basename:,makefile,ninja,no-install-schema,no-run-unit-tests,nproc:,repository:,run-integrated-tests,sccache-credentials:,test-code-style,test-documentation,help -- "$@")
 
 # Variables with default values
 BUILD_EXE_ONLY=false
 BUILD_GENERATOR=""
 GEOS_INSTALL_SCHEMA=true
 HOST_CONFIG="host-configs/environment.cmake"
+ENABLE_HYPRE=ON
+ENABLE_HYPRE_DEVICE=CPU
+GEOS_LA_INTERFACE=Hypre
 RUN_UNIT_TESTS=true
 RUN_INTEGRATED_TESTS=false
 UPLOAD_TEST_BASELINES=false
 TEST_CODE_STYLE=false
 TEST_DOCUMENTATION=false
+ENABLE_TRILINOS=OFF
 CODE_COVERAGE=false
 NPROC="$(nproc)"
+GEOS_ENABLE_BOUNDS_CHECK=ON
 
 eval set -- ${args}
 while :
@@ -109,6 +121,10 @@ do
       fi
       unset DATA_BASENAME DATA_BASENAME_EXT
       shift 2;;
+    --geos-enable-bounds-check) GEOS_ENABLE_BOUNDS_CHECK=$2; shift 2;;
+    --enable-hypre)          ENABLE_HYPRE=$2;            shift 2;;
+    --enable-hypre-device)   ENABLE_HYPRE_DEVICE=$2;     shift 2;;
+    --enable-trilinos)       ENABLE_TRILINOS=$2;         shift 2;;
     --exchange-dir)          DATA_EXCHANGE_DIR=$2;       shift 2;;
     --host-config)           HOST_CONFIG=$2;             shift 2;;
     --install-dir-basename)  GEOS_DIR=${GEOSX_TPL_DIR}/../$2; shift 2;;
@@ -139,6 +155,12 @@ fi
 if [[ -z "${GEOS_DIR}" ]]; then
   echo "Installation folder undefined. Set to default value '/dev/null'. You can define it using '--install-dir-basename'."
   GEOS_DIR=/dev/null
+fi
+
+if [[ "${ENABLE_HYPRE}" = ON ]]; then
+  GEOS_LA_INTERFACE=Hypre
+else
+  GEOS_LA_INTERFACE=Trilinos
 fi
 
 if [[ ! -z "${SCCACHE_CREDS}" ]]; then
@@ -200,7 +222,7 @@ if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
   ATS_WORKING_DIR=$tempdir/GEOS_integratedTests_working
 
   export ATS_FILTER="np<=32"
-  ATS_CMAKE_ARGS="-DATS_ARGUMENTS=\"--machine openmpi --ats openmpi_mpirun=/usr/bin/mpirun --ats openmpi_args=--allow-run-as-root --ats openmpi_procspernode=32 --ats openmpi_maxprocs=32\" -DPython3_ROOT_DIR=${ATS_PYTHON_HOME} -DATS_BASELINE_DIR=${ATS_BASELINE_DIR} -DATS_WORKING_DIR=${ATS_WORKING_DIR}"
+  ATS_CMAKE_ARGS="-DATS_ARGUMENTS=\"--machine openmpi --ats openmpi_mpirun=/usr/bin/mpirun --ats openmpi_args=--allow-run-as-root --ats openmpi_procspernode=32 --ats openmpi_maxprocs=32\" -DPython3_ROOT_DIR=${ATS_PYTHON_HOME} -DPython3_EXECUTABLE=${ATS_PYTHON_HOME}/bin/python3 -DATS_BASELINE_DIR=${ATS_BASELINE_DIR} -DATS_WORKING_DIR=${ATS_WORKING_DIR}"
 fi
 
 
@@ -208,8 +230,6 @@ if [[ "${CODE_COVERAGE}" = true ]]; then
   or_die apt-get update
   or_die apt-get install -y lcov
 fi
-
-
 
 # The -DBLT_MPI_COMMAND_APPEND="--allow-run-as-root;--oversubscribe" option is added for OpenMPI.
 #
@@ -233,7 +253,12 @@ or_die python3 scripts/config-build.py \
                ${BUILD_GENERATOR} \
                -DBLT_MPI_COMMAND_APPEND='"--allow-run-as-root;--oversubscribe"' \
                -DGEOS_INSTALL_SCHEMA=${GEOS_INSTALL_SCHEMA} \
+               -DENABLE_HYPRE=${ENABLE_HYPRE} \
+               -DENABLE_HYPRE_DEVICE=${ENABLE_HYPRE_DEVICE} \
+               -DENABLE_TRILINOS=${ENABLE_TRILINOS} \
+               -DGEOS_LA_INTERFACE:PATH=${GEOS_LA_INTERFACE} \
                -DENABLE_COVERAGE=$([[ "${CODE_COVERAGE}" = true ]] && echo 1 || echo 0) \
+               -DGEOS_ENABLE_BOUNDS_CHECK=${GEOS_ENABLE_BOUNDS_CHECK} \
                ${SCCACHE_CMAKE_ARGS} \
                ${ATS_CMAKE_ARGS}
 
@@ -337,11 +362,13 @@ fi
 # Cleaning the build directory.
 or_die cmake --build . --target clean
 
-
 # Clean the repository
 or_die cd ${GEOS_SRC_DIR}/inputFiles
 find . -name *.pyc | xargs rm -f
 
+# Clean the rst files
+echo "Cleaning the rst files..."
+or_die rm -rf ${GEOS_SRC_DIR}/src/docs/sphinx/datastructure
 
 # If we're here, either everything went OK or we have to deal with the integrated tests manually.
 if [[ ! -z "${INTEGRATED_TEST_EXIT_STATUS+x}" ]]; then
