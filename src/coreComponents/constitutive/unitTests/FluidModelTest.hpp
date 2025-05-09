@@ -52,10 +52,6 @@ public:
   static constexpr integer numPhase = NUM_PHASE;
   static constexpr real64 relTolerance = 1.0e-5;
   static constexpr real64 absTolerance = 1.0e-4;
-  // Perturbation values for numerical derivatives
-  static constexpr real64 pressurePertubation = 1.0e2;
-  static constexpr real64 temperaturePertubation = 1.0e-3;
-  static constexpr real64 compositionPertubation = 1.0e-7;
 
 public:
   /**
@@ -98,8 +94,15 @@ public:
    *          larger than the tolerance, the test will fail.
    * @param fluid - a pointer to the fluid model. Must be derived from @c MultiFluidBase
    * @param data - the test point input data (pressure, temperature and composition)
+   * @param perturbationLevel - fraction of parameter to use to perturb when calculating numerical derivatives
+   * @param relTol - the relative tolerance to use in the check
+   * @param absTol - the absolute tolerance to use in the check
    */
-  void testNumericalDerivatives( FluidModel * fluid, TestPoint const & data );
+  void testNumericalDerivatives( FluidModel * fluid,
+                                 TestPoint const & data,
+                                 real64 const perturbationLevel = 1.0e-4,
+                                 real64 const relTol = relTolerance,
+                                 real64 const absTol = absTolerance );
 
 protected:
   /**

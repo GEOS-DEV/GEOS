@@ -113,7 +113,10 @@ void FluidModelTest< FLUID_TYPE, NUM_COMP, NUM_PHASE >::testDerivatives( string 
 
 template< typename FLUID_TYPE, integer NUM_COMP, integer NUM_PHASE >
 void FluidModelTest< FLUID_TYPE, NUM_COMP, NUM_PHASE >::testNumericalDerivatives( FluidModel * fluid,
-                                                                                  TestPoint const & data )
+                                                                                  TestPoint const & data,
+                                                                                  real64 const perturbationLevel,
+                                                                                  real64 const relTol,
+                                                                                  real64 const absTol )
 {
   using Deriv = constitutive::multifluid::DerivativeOffset;
 
@@ -145,16 +148,14 @@ void FluidModelTest< FLUID_TYPE, NUM_COMP, NUM_PHASE >::testNumericalDerivatives
     }
   }
 
-  real64 constexpr dP = pressurePertubation;
-  real64 constexpr dT = temperaturePertubation;
-  real64 constexpr dz = compositionPertubation;
-
+  real64 const dP = perturbationLevel * (pressure + perturbationLevel);
   deltaArray[2*Deriv::dP+1] = dP;
   deltaArray[2*Deriv::dP+2] = -dP;
   pressureArray[2*Deriv::dP+1] += deltaArray[2*Deriv::dP+1];
   pressureArray[2*Deriv::dP+2] += deltaArray[2*Deriv::dP+2];
   dofNames[Deriv::dP] = "pressure";
 
+  real64 const dT = perturbationLevel * (temperature + perturbationLevel);
   deltaArray[2*Deriv::dT+1] = dT;
   deltaArray[2*Deriv::dT+2] = -dT;
   temperatureArray[2*Deriv::dT+1] += deltaArray[2*Deriv::dT+1];
@@ -164,6 +165,7 @@ void FluidModelTest< FLUID_TYPE, NUM_COMP, NUM_PHASE >::testNumericalDerivatives
   for( integer ic = 0; ic < numComp; ++ic )
   {
     integer const idof = Deriv::dC+ic;
+    real64 const dz = LvArray::math::max( 1.0e-7, perturbationLevel * ( composition[ic] + perturbationLevel ) );
     deltaArray[2*idof+1] = dz;
     deltaArray[2*idof+2] = -dz;
     compositionArray( 2*idof+1, ic ) += deltaArray[2*idof+1];
@@ -179,11 +181,11 @@ void FluidModelTest< FLUID_TYPE, NUM_COMP, NUM_PHASE >::testNumericalDerivatives
   auto const temperatureView = temperatureArray.toViewConst();
   auto const compositionView = compositionArray.toViewConst();
 
-  forAll< parallelDevicePolicy<> >( size, [fluidWrapper,
-                                           pressureView,
-                                           temperatureView,
-                                           compositionView]
-                                    GEOS_HOST_DEVICE ( localIndex const k )
+  forAll< serialPolicy >( size, [fluidWrapper,
+                                 pressureView,
+                                 temperatureView,
+                                 compositionView]
+                          GEOS_HOST_DEVICE ( localIndex const k )
   {
     for( localIndex q = 0; q < fluidWrapper.numGauss(); ++q )
     {
@@ -198,32 +200,32 @@ void FluidModelTest< FLUID_TYPE, NUM_COMP, NUM_PHASE >::testNumericalDerivatives
                      fluid->dPhaseFraction().toViewConst(),
                      deltaArray.toSliceConst(),
                      dofNames,
-                     relTolerance,
-                     absTolerance,
+                     relTol,
+                     absTol,
                      phaseIndex );
     testDerivatives( GEOS_FMT( "Phase density ({})", phaseNames[phaseIndex] ),
                      fluid->phaseDensity().toViewConst(),
                      fluid->dPhaseDensity().toViewConst(),
                      deltaArray.toSliceConst(),
                      dofNames,
-                     relTolerance,
-                     absTolerance,
+                     relTol,
+                     absTol,
                      phaseIndex );
     testDerivatives( GEOS_FMT( "Phase mass density ({})", phaseNames[phaseIndex] ),
                      fluid->phaseMassDensity().toViewConst(),
                      fluid->dPhaseMassDensity().toViewConst(),
                      deltaArray.toSliceConst(),
                      dofNames,
-                     relTolerance,
-                     absTolerance,
+                     relTol,
+                     absTol,
                      phaseIndex );
     testDerivatives( GEOS_FMT( "Phase viscosity ({})", phaseNames[phaseIndex] ),
                      fluid->phaseViscosity().toViewConst(),
                      fluid->dPhaseViscosity().toViewConst(),
                      deltaArray.toSliceConst(),
                      dofNames,
-                     relTolerance,
-                     absTolerance,
+                     relTol,
+                     absTol,
                      phaseIndex );
     if( isThermal )
     {
@@ -232,16 +234,16 @@ void FluidModelTest< FLUID_TYPE, NUM_COMP, NUM_PHASE >::testNumericalDerivatives
                        fluid->dPhaseEnthalpy().toViewConst(),
                        deltaArray.toSliceConst(),
                        dofNames,
-                       relTolerance,
-                       absTolerance,
+                       relTol,
+                       absTol,
                        phaseIndex );
       testDerivatives( GEOS_FMT( "Phase internal energy ({})", phaseNames[phaseIndex] ),
                        fluid->phaseInternalEnergy().toViewConst(),
                        fluid->dPhaseInternalEnergy().toViewConst(),
                        deltaArray.toSliceConst(),
                        dofNames,
-                       relTolerance,
-                       absTolerance,
+                       relTol,
+                       absTol,
                        phaseIndex );
     }
     for( integer compIndex = 0; compIndex < numComp; compIndex++ )
@@ -251,8 +253,8 @@ void FluidModelTest< FLUID_TYPE, NUM_COMP, NUM_PHASE >::testNumericalDerivatives
                        fluid->dPhaseCompFraction().toViewConst(),
                        deltaArray.toSliceConst(),
                        dofNames,
-                       relTolerance,
-                       absTolerance,
+                       relTol,
+                       absTol,
                        phaseIndex,
                        compIndex );
     }

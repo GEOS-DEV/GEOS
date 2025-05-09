@@ -33,6 +33,10 @@ namespace constitutive
 
 class BlackOilFluid : public BlackOilFluidBase
 {
+private:
+  /// Number of points to refine tables into
+  static constexpr integer numRefinedPoints = 100;
+
 public:
   /// Number of components supported by the model
   static constexpr integer NC_BO = 3;
@@ -391,10 +395,22 @@ BlackOilFluid::KernelWrapper::
                             dPhaseMolecularWeight,
                             phaseFraction,
                             phaseCompFraction,
-                            phaseDensity.derivs,
+                            phaseMassDensity.derivs,
                             phaseViscosity.derivs,
                             phaseEnthalpy.derivs,
                             phaseInternalEnergy.derivs );
+
+    // Molar density equals mass density
+    integer const numPhase = phaseMassDensity.value.size( 0 );
+    integer const numDof = phaseMassDensity.derivs.size( 1 );
+    for( integer ip = 0; ip < numPhase; ++ip )
+    {
+      phaseDensity.value[ip] = phaseMassDensity.value[ip];
+      for( integer idof = 0; idof < numDof; ++idof )
+      {
+        phaseDensity.derivs( ip, idof ) = phaseMassDensity.derivs( ip, idof );
+      }
+    }
   }
 
   // 5. Compute total fluid mass/molar density and derivatives
@@ -604,7 +620,7 @@ BlackOilFluid::KernelWrapper::
     real64 const fvfInv = 1.0 / fvf;
 
     phaseMassDens.value[ipGas] = m_surfacePhaseMassDensity[ipGas] * fvfInv;
-    real64 const mult = m_useMass ? 1.0 : 1.0 / m_componentMolarWeight[ipGas];
+    real64 const mult = 1.0 / m_componentMolarWeight[ipGas];
     phaseDens.value[ipGas] = phaseMassDens.value[ipGas] * mult;
     phaseMolecularWeight[ipGas] = m_componentMolarWeight[ipGas];
 
@@ -635,7 +651,7 @@ BlackOilFluid::KernelWrapper::
     real64 const dDenom_dPres = m_waterParams.formationVolFactor * dExpCompDeltaPres_dPres;
     real64 const denomInv = 1.0 / denom;
     phaseMassDens.value[ipWater] = m_surfacePhaseMassDensity[ipWater] * denomInv;
-    real64 const mult = m_useMass ? 1.0 : 1.0 / m_componentMolarWeight[ipWater];
+    real64 const mult = 1.0 / m_componentMolarWeight[ipWater];
     phaseDens.value[ipWater] = phaseMassDens.value[ipWater] * mult;
     phaseVisc.value[ipWater] = m_waterParams.viscosity;
     phaseMolecularWeight[ipWater] = m_componentMolarWeight[ipWater];
@@ -673,23 +689,20 @@ BlackOilFluid::KernelWrapper::
     // saturated conditions
     if( isGas )
     {
-
       // compute Rs as a function of pressure
       computeRs( pressure, Rs, dRs_dP );
-
       // compute saturated properties (Bo, viscosity) as a function of Rs
       computeSaturatedBoViscosity( Rs, dRs_dP, Bo, dBo_dP, visc, dVisc_dP );
-
     }
     // unsaturated conditions
     else
     {
-
       // compute Rs as a function of composition
       real64 const densRatio = m_PVTOView.m_surfaceMoleDensity[PT::OIL] / m_PVTOView.m_surfaceMoleDensity[PT::GAS];
-      Rs = densRatio * composition[icGas] / composition[icOil];
-      dRs_dC[PT::OIL] = -densRatio * composition[icGas] / (composition[icOil] * composition[icOil]);
-      dRs_dC[PT::GAS] =  densRatio  / composition[icOil];
+      real64 const oneOverZo = 1.0 / composition[icOil];
+      Rs = densRatio * composition[icGas] * oneOverZo;
+      dRs_dC[PT::OIL] = -densRatio * composition[icGas] * oneOverZo * oneOverZo;
+      dRs_dC[PT::GAS] =  densRatio * oneOverZo;
 
       // compute undersaturated properties (Bo, viscosity) by two-step interpolation in undersaturated tables
       // this part returns numerical derivatives
@@ -697,7 +710,6 @@ BlackOilFluid::KernelWrapper::
                                         visc, dVisc_dP, dVisc_dC );
 
     }
-
     // compute densities
     computeMassMoleDensity( needDerivs, true, Rs, dRs_dP, dRs_dC, Bo, dBo_dP, dBo_dC,
                             phaseMassDens.value[ipOil], phaseMassDens.derivs[ipOil] );
@@ -712,19 +724,6 @@ BlackOilFluid::KernelWrapper::
     {
       dPhaseMolecularWeight[ipOil][Deriv::dC+ic] =
         tmp * ( phaseMassDens.derivs[ipOil][Deriv::dC+ic] * phaseDens.value[ipOil] - phaseDens.derivs[ipOil][Deriv::dC+ic] * phaseMassDens.value[ipOil] );
-    }
-
-    if( m_useMass )
-    {
-      phaseDens.value[ipOil] = phaseMassDens.value[ipOil];
-      if( needDerivs )
-      {
-        phaseDens.derivs[ipOil][Deriv::dP] = phaseMassDens.derivs[ipOil][Deriv::dP];
-        for( integer ic = 0; ic < NC_BO; ++ic )
-        {
-          phaseDens.derivs[ipOil][Deriv::dC+ic] = phaseMassDens.derivs[ipOil][Deriv::dC+ic];
-        }
-      }
     }
 
     // copy viscosity into the final array

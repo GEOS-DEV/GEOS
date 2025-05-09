@@ -14,17 +14,19 @@
  */
 
 /**
- * @file testMultiFluidLiveOil.cpp
+ * @file testMultiFluidBlackOil.cpp
  */
 
-#include "MultiFluidTest.hpp"
-#include "mainInterface/GeosxState.hpp"
-#include "mainInterface/initialization.hpp"
+ #include "FluidModelTest.hpp"
+ #include "constitutive/fluid/multifluid/blackOil/BlackOilFluid.hpp"
+ #include "common/initializeEnvironment.hpp"
 
-using namespace geos;
-using namespace geos::testing;
-using namespace geos::dataRepository;
 using namespace geos::constitutive;
+
+namespace geos
+{
+namespace testing
+{
 
 static constexpr char const * pvdgTableContent = "# Pg(Pa) Bg(m3/sm3) Visc(Pa.s)\n"
                                                  "3000000  0.04234  0.00001344\n"
@@ -58,113 +60,117 @@ static const char * pvtoTableContent = "# Rs[sm3/sm3]\tPbub[Pa]\tBo[m3/sm3]\tVis
 static const char * pvtwTableContent = "#\tPref[Pa]\tBw[m3/sm3]\tCp[1/Pa]\t    Visc[Pa.s]\n"
                                        "\t30600000.1\t1.03\t\t0.00000000041\t0.0003";
 
-class MultiFluidLiveOilTest : public MultiFluidTest< BlackOilFluid, 3, 3 >
+template< typename USE_MASS_TYPE >
+class MultiFluidBlackOilTestFixture : public FluidModelTest< BlackOilFluid, 3, 3 >
 {
 public:
-  static constexpr real64 relTol = 1.0e-4;
-  static constexpr real64 absTol = 1.0e-4;
+  using Base = FluidModelTest< BlackOilFluid, 3, 3 >;
+
+  static constexpr bool USE_MASS = USE_MASS_TYPE::value;
 public:
-  MultiFluidLiveOilTest()
+  MultiFluidBlackOilTestFixture()
   {
     writeTableToFile( pvtoFileName, pvtoTableContent );
     writeTableToFile( pvdgFileName, pvdgTableContent );
     writeTableToFile( pvtwFileName, pvtwTableContent );
 
-    m_parent.resize( 1 );
-    m_model = makeLiveOilFluid( "fluid", &m_parent );
-
-    m_parent.initialize();
-    m_parent.initializePostInitialConditions();
+    Base::createFluid( getFluidName(), []( BlackOilFluid & fluid ){
+      fillPhysicalProperties( fluid );
+      fluid.setMassFlag( USE_MASS );
+    } );
   }
 
-  ~MultiFluidLiveOilTest() override
+  ~MultiFluidBlackOilTestFixture() override
   {
     removeFile( pvtoFileName );
     removeFile( pvdgFileName );
     removeFile( pvtwFileName );
   }
 
+  static string getFluidName();
+
 private:
-  static BlackOilFluid * makeLiveOilFluid( string const & name, Group * parent );
+  static void fillPhysicalProperties( BlackOilFluid & fluid );
   static constexpr const char * pvtoFileName = "pvto.txt";
   static constexpr const char * pvdgFileName = "pvdg.txt";
   static constexpr const char * pvtwFileName = "pvtw.txt";
 };
 
-BlackOilFluid * MultiFluidLiveOilTest::makeLiveOilFluid( string const & name, Group * parent )
+template< typename USE_MASS_TYPE >
+string MultiFluidBlackOilTestFixture< USE_MASS_TYPE >::getFluidName()
 {
-  BlackOilFluid & fluid = parent->registerGroup< BlackOilFluid >( name );
+  return GEOS_FMT( "fluid{}", (USE_MASS ? "Mass" : "Molar"));
+}
 
+template< typename USE_MASS_TYPE >
+void MultiFluidBlackOilTestFixture< USE_MASS_TYPE >::fillPhysicalProperties( BlackOilFluid & fluid )
+{
   string_array & phaseNames = fluid.getReference< string_array >( MultiFluidBase::viewKeyStruct::phaseNamesString() );
-  phaseNames = {"oil", "gas", "water"};
+  phaseNames = {"oil", "water", "gas"};
 
   string_array & compNames = fluid.getReference< string_array >( MultiFluidBase::viewKeyStruct::componentNamesString() );
-  compNames = {"oil", "gas", "water"};
+  compNames = {"oil", "water", "gas"};
 
   array1d< real64 > & molarWgt = fluid.getReference< array1d< real64 > >( MultiFluidBase::viewKeyStruct::componentMolarWeightString() );
-  fill< 3 >( molarWgt, {114e-3, 16e-3, 18e-3} );
+  fill( molarWgt, Feed< 3 >{114e-3, 18e-3, 16e-3} );
 
   array1d< real64 > & surfaceDens = fluid.getReference< array1d< real64 > >( BlackOilFluidBase::viewKeyStruct::surfacePhaseMassDensitiesString() );
-  fill< 3 >( surfaceDens, {800.0, 0.9907, 1022.0} );
+  fill( surfaceDens, Feed< 3 >{800.0, 1022.0, 0.9907} );
 
   path_array & tableNames = fluid.getReference< path_array >( BlackOilFluidBase::viewKeyStruct::tableFilesString() );
-  fill< 3 >( tableNames, {pvtoFileName, pvdgFileName, pvtwFileName} );
-
-  fluid.postInputInitializationRecursive();
-  return &fluid;
+  tableNames.emplace_back( Path( pvtoFileName ));
+  tableNames.emplace_back( Path( pvtwFileName ));
+  tableNames.emplace_back( Path( pvdgFileName ));
 }
 
-TEST_F( MultiFluidLiveOilTest, numericalDerivativesMolar )
+//using TestTypes = ::testing::Types< std::true_type, std::false_type >;
+using TestTypes = ::testing::Types< std::true_type, std::false_type >;
+class NameGenerator
 {
-  auto & fluid = getFluid();
-  fluid.setMassFlag( false );
+public:
+  template< typename T >
+  static std::string GetName( int index )
+  {
+    return GEOS_FMT( "BlackOil_{}_{}", MultiFluidBlackOilTestFixture< T >::getFluidName(), index );
+  }
+};
+
+TYPED_TEST_SUITE( MultiFluidBlackOilTestFixture, TestTypes, NameGenerator );
+
+TYPED_TEST( MultiFluidBlackOilTestFixture, numericalDerivatives )
+{
+  BlackOilFluid * fluid = this->getFluid( this->getFluidName() );
 
   real64 constexpr eps = 1.0e-6;
 
-  array2d< real64 > samples( 2, 3 );
-  fill< 3 >( samples[0], { 0.10000, 0.3, 0.60000 } );
-  fill< 3 >( samples[1], { 0.79999, 0.2, 0.00001 } );
+  auto const samples = {
+    Feed< 3 >{ 0.49500, 0.50000, 0.00500 },
+    Feed< 3 >{ 0.60000, 0.20000, 0.20000 }
+  };
+  auto const pressures = { 2.000e5, 312.000e5, 800.000e5  };
 
-  for( real64 const pressure : { 1.24e7, 3.21e7, 5.01e7 } )
+  for( real64 const pressure : pressures )
   {
-    for( integer sampleIndex = 0; sampleIndex < samples.size( 0 ); sampleIndex++ )
+    for( auto const & sample : samples )
     {
-      TestData data ( pressure, 297.15, samples[sampleIndex] );
-      testNumericalDerivatives( fluid, &getParent(), data, eps, relTol, absTol );
+      typename TestFixture::Base::TestPoint const data ( pressure, 297.15, sample );
+      TestFixture::Base::testNumericalDerivatives( fluid, data, eps );
     }
   }
 }
 
-TEST_F( MultiFluidLiveOilTest, numericalDerivativesMass )
-{
-  auto & fluid = getFluid();
-  fluid.setMassFlag( true );
-
-  real64 constexpr eps = 1.0e-6;
-
-  array2d< real64 > samples( 2, 3 );
-  fill< 3 >( samples[0], { 0.10000, 0.3, 0.60000 } );
-  fill< 3 >( samples[1], { 0.79999, 0.2, 0.00001 } );
-
-  for( real64 const pressure : { 1.24e7, 3.21e7, 5.01e7 } )
-  {
-    for( integer sampleIndex = 0; sampleIndex < samples.size( 0 ); sampleIndex++ )
-    {
-      TestData data ( pressure, 297.15, samples[sampleIndex] );
-      testNumericalDerivatives( fluid, &getParent(), data, eps, relTol, absTol );
-    }
-  }
-}
+} // testing
+} // geos
 
 int main( int argc, char * * argv )
 {
   ::testing::InitGoogleTest( &argc, argv );
 
-  geos::GeosxState state( geos::basicSetup( argc, argv ) );
+  geos::setupEnvironment( argc, argv );
 
   int const result = RUN_ALL_TESTS();
 
-  geos::basicCleanup();
+  geos::cleanupEnvironment();
 
   return result;
 }
