@@ -83,7 +83,7 @@ HDFFile::~HDFFile()
 
 bool HDFFile::hasDataset( const string & name ) const
 {
-  int exists = 0;
+  htri_t exists = -1;
   H5E_BEGIN_TRY
   {
     exists = H5Oexists_by_name( *this, name.c_str(), H5P_DEFAULT );

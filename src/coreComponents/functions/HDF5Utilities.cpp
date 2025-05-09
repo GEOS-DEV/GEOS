@@ -25,47 +25,47 @@
 
 #include <hdf5.h>
 
-#define GEOS_HDF5_CHECK_ERROR( call, context )                         \
-  do {                                                                            \
-    herr_t __geos_lai_internal_ierr__ = -1;                                       \
-    H5E_BEGIN_TRY {                                                               \
-      __geos_lai_internal_ierr__ = (call);                                        \
-    } H5E_END_TRY;                                                                \
-    if( __geos_lai_internal_ierr__ < 0 ) {                                        \
-      H5Eclear2( H5E_DEFAULT );                                                     \
-      throw std::runtime_error( std::string( "Error in call to " ) +                \
-                                #call + " (" + context + ")" );                    \
-    }                                                                             \
+#define GEOS_HDF5_CHECK_ERROR_WITH_THRESHOLD( call, context, type, threshold ) \
+  do {                                                                         \
+    type __geos_hdf_internal_result__ = -1;                                    \
+    H5E_BEGIN_TRY {                                                            \
+      __geos_hdf_internal_result__ = (call);                                   \
+    } H5E_END_TRY;                                                             \
+    if( __geos_hdf_internal_result__ < (threshold) ) {                         \
+      H5Eclear2( H5E_DEFAULT );                                                \
+      GEOS_THROW( GEOS_FMT( "Error in call to:\n"                             \
+                            "{}\n"                                            \
+                            "({})",                                           \
+                            #call, context ),                                 \
+                  InputError );                                              \
+    }                                                                          \
   } while (false)
 
-#define GEOS_HDF5_CHECK_AND_ASSIGN_ID( var, call, context )                       \
-  do {                                                                            \
-    hid_t __geos_lai_internal_result__ = H5I_INVALID_HID;                          \
-    H5E_BEGIN_TRY {                                                               \
-      __geos_lai_internal_result__ = (call);                                      \
-    } H5E_END_TRY;                                                                \
-    if( __geos_lai_internal_result__ < 0 ) {                                       \
-      H5Eclear2( H5E_DEFAULT );                                                     \
-      throw std::runtime_error( std::string( "Error in call to " ) +                \
-                                #call + " (" + context + ")" );                    \
-    }                                                                             \
-    var = __geos_lai_internal_result__;                                           \
+#define GEOS_HDF5_CHECK_WITH_THRESHOLD_AND_ASSIGN( var, call, context, type, threshold ) \
+  do {                                                                                   \
+    type __geos_hdf_internal_result__ = -1;                                              \
+    H5E_BEGIN_TRY {                                                                      \
+      __geos_hdf_internal_result__ = (call);                                             \
+    } H5E_END_TRY;                                                                       \
+    if( __geos_hdf_internal_result__ < (threshold) ) {                                   \
+      H5Eclear2( H5E_DEFAULT );                                                          \
+      GEOS_THROW( GEOS_FMT( "Error in call to:\n"                                       \
+                            "{}\n"                                                      \
+                            "({})",                                                     \
+                            #call, context ),                                           \
+                  InputError );                                                        \
+    }                                                                                    \
+    var = __geos_hdf_internal_result__;                                                  \
   } while (false)
 
-#define GEOS_HDF5_CHECK_AND_ASSIGN_INT( var, call, context )                       \
-  do {                                                                            \
-    int __geos_lai_internal_result__ = -1;                          \
-    H5E_BEGIN_TRY {                                                               \
-      __geos_lai_internal_result__ = (call);                                      \
-    } H5E_END_TRY;                                                                \
-    if( __geos_lai_internal_result__ < 0 ) {                                       \
-      H5Eclear2( H5E_DEFAULT );                                                     \
-      throw std::runtime_error( std::string( "Error in call to " ) +                \
-                                #call + " (" + context + ")" );                    \
-    }                                                                             \
-    var = __geos_lai_internal_result__;                                           \
-  } while (false)
+#define GEOS_HDF5_CHECK_ERROR( call, context ) \
+  GEOS_HDF5_CHECK_ERROR_WITH_THRESHOLD( call, context, herr_t, 0 )
 
+#define GEOS_HDF5_CHECK_AND_ASSIGN_HID( var, call, context ) \
+  GEOS_HDF5_CHECK_WITH_THRESHOLD_AND_ASSIGN( var, call, context, hid_t, 0 )
+
+#define GEOS_HDF5_CHECK_AND_ASSIGN_INT( var, call, context ) \
+  GEOS_HDF5_CHECK_WITH_THRESHOLD_AND_ASSIGN( var, call, context, int, 0 )
 
 namespace geos
 {
@@ -79,7 +79,6 @@ SerialHDF5File::SerialHDF5File( const string & filename ): m_filename( filename 
   openFile();
 }
 
-// Destructor: Close the HDF5 file
 SerialHDF5File::~SerialHDF5File()
 {
   closeFile();
@@ -102,46 +101,20 @@ SerialHDF5File & SerialHDF5File::operator=( SerialHDF5File && other ) noexcept
   return *this;
 }
 
-hid_t const & SerialHDF5File::getFileId() const
-{
-  return m_fileId;
-}
-
-// Access the filename
-string const & SerialHDF5File::getFilename() const
-{
-  return
-    m_filename;
-}
-
 void SerialHDF5File::openFile()
 {
-  closeFile();       // Ensure any previously opened file is closed
-  H5E_BEGIN_TRY
-  {
-    m_fileId = H5Fopen( m_filename.c_str(), H5F_ACC_RDONLY, H5P_DEFAULT );
-  }
-  H5E_END_TRY
-    GEOS_THROW_IF( m_fileId < 0,
-                   GEOS_FMT( "Cannot open HDF5 file {}", getFilename() ),
-                   InputError );
+  closeFile();
 
+  GEOS_HDF5_CHECK_AND_ASSIGN_HID( m_fileId,
+                                  H5Fopen( m_filename.c_str(), H5F_ACC_RDONLY, H5P_DEFAULT ),
+                                  GEOS_FMT( "Filename: {}", m_filename ) );
 }
 
 void SerialHDF5File::closeFile()
 {
   if( m_fileId >= 0 )
   {
-    herr_t status = -1;
-    H5E_BEGIN_TRY
-    {
-      status = H5Fclose( m_fileId );
-      // GEOS_HDF5_CHECK_ERROR( H5Fclose(m_fileId) ); //TODO add error checking as in linear algebra
-    }
-    H5E_END_TRY
-      GEOS_THROW_IF( status < 0,
-                     GEOS_FMT( "Cannot close HDF5 file {}", getFilename() ),
-                     InputError );
+    GEOS_HDF5_CHECK_ERROR( H5Fclose( m_fileId ), GEOS_FMT( "Filename: {}", m_filename ) );
     m_fileId = -1;
   }
 }
@@ -151,80 +124,71 @@ void SerialHDF5File::closeFile()
 DatasetHandle::DatasetHandle( SerialHDF5File const & hdf5File, string const & datasetName, int const expectedDims )
   : m_datasetName( datasetName )
 {
-  GEOS_THROW_IF( !datasetExists( hdf5File.getFileId(), datasetName ),
-                 GEOS_FMT( "Dataset {} doesn't exist in {}", datasetName, hdf5File.getFilename() ),
-                 InputError );
+  std::string contextCheckMessage{ GEOS_FMT( "Dataset {} in {}", datasetName, hdf5File.getFilename() ) };
 
-  H5E_BEGIN_TRY
+  if( datasetExists( hdf5File.getFileId(), datasetName )  )
   {
-    datasetId = H5Dopen2( hdf5File.getFileId(), datasetName.c_str(), H5P_DEFAULT );
-  }
-  H5E_END_TRY
-    GEOS_THROW_IF( datasetId < 0,
-                   GEOS_FMT( "Dataset {} cannot be opened in {}", datasetName, hdf5File.getFilename() ),
+    GEOS_HDF5_CHECK_AND_ASSIGN_HID( datasetId,
+                                    H5Dopen2( hdf5File.getFileId(), datasetName.c_str(), H5P_DEFAULT ),
+                                    contextCheckMessage );
+
+    GEOS_HDF5_CHECK_AND_ASSIGN_HID( spaceId,
+                                    H5Dget_space( datasetId ),
+                                    contextCheckMessage );
+
+    GEOS_HDF5_CHECK_AND_ASSIGN_HID( typeId,
+                                    H5Dget_type( datasetId ),
+                                    contextCheckMessage );
+
+    int ndims{};
+    GEOS_HDF5_CHECK_AND_ASSIGN_INT( ndims,
+                                    H5Sget_simple_extent_ndims( spaceId ),
+                                    contextCheckMessage );
+
+    // Validate dimensions
+    GEOS_THROW_IF( ndims != expectedDims,
+                   GEOS_FMT( "Incosistent number of dimensions for dataset {} in {}", datasetName, hdf5File.getFilename() ),
                    InputError );
 
-  // Get the dataspace
-  H5E_BEGIN_TRY
-  {
-    spaceId = H5Dget_space( datasetId );
+    dims.resize( ndims );
+    GEOS_HDF5_CHECK_ERROR( H5Sget_simple_extent_dims( spaceId, dims.data(), nullptr ),
+                           contextCheckMessage );
   }
-  H5E_END_TRY
-    GEOS_THROW_IF( spaceId < 0,
-                   GEOS_FMT( "Cannot get the dataspace for dataset {} in {}", datasetName, hdf5File.getFilename() ),
-                   InputError );
-
-  // Get the datatype
-  H5E_BEGIN_TRY
+  else
   {
-    typeId = H5Dget_type( datasetId );
+    GEOS_THROW( GEOS_FMT( "Dataset {} doesn't exist in {}", datasetName, hdf5File.getFilename() ),
+                InputError );
   }
-  H5E_END_TRY
-    GEOS_THROW_IF( typeId < 0,
-                   GEOS_FMT( "Cannot get the datatype for dataset {} in {}", datasetName, hdf5File.getFilename() ),
-                   InputError );
-
-  // Get the number of dimensions
-  int ndims;
-  H5E_BEGIN_TRY
-  {
-    ndims = H5Sget_simple_extent_ndims( spaceId );
-  }
-  H5E_END_TRY
-    GEOS_THROW_IF( ndims < 0,
-                   GEOS_FMT( "Cannot get the number of dimensions for dataset {} in {}", datasetName, hdf5File.getFilename() ),
-                   InputError );
-
-  // Validate dimensions if expectedDims is provided
-  GEOS_THROW_IF( ndims != expectedDims,
-                 GEOS_FMT( "Cannot get the number of dimensions for dataset {} in {}", datasetName, hdf5File.getFilename() ),
-                 InputError );
-
-  // Get the dimensions
-  dims.resize( ndims );
-  herr_t status;
-  H5E_BEGIN_TRY
-  {
-    status = H5Sget_simple_extent_dims( spaceId, dims.data(), nullptr );
-  }
-  H5E_END_TRY
-    GEOS_THROW_IF( status < 0,
-                   GEOS_FMT( "Cannot get the dimensions for dataset {} in {}", datasetName, hdf5File.getFilename() ),
-                   InputError );
 }
 
-// Destructor: Ensure all resources are closed
 DatasetHandle::~DatasetHandle()
 {
   if( typeId >= 0 )
-    H5Tclose( typeId );
+  {
+    H5E_BEGIN_TRY
+    {
+      H5Tclose( typeId );
+    }
+    H5E_END_TRY
+  }
   if( spaceId >= 0 )
-    H5Sclose( spaceId );
+  {
+    H5E_BEGIN_TRY
+    {
+      H5Sclose( spaceId );
+    }
+    H5E_END_TRY
+  }
   if( datasetId >= 0 )
-    H5Dclose( datasetId );
+  {
+    H5E_BEGIN_TRY
+    {
+      H5Dclose( datasetId );
+    }
+    H5E_END_TRY
+  }
 }
 
-// Allow move semantics
 DatasetHandle::DatasetHandle( DatasetHandle && other ) noexcept
   : datasetId( other.datasetId ), spaceId( other.spaceId ), typeId( other.typeId ), dims( std::move( other.dims ))
 {
@@ -279,17 +243,14 @@ DatasetHandle & DatasetHandle::operator=( DatasetHandle && other ) noexcept
 // Check if a dataset exists
 bool DatasetHandle::datasetExists( hid_t const & fileId, string const & datasetName )
 {
-  herr_t err;
-
+  htri_t status{-1};
   H5E_BEGIN_TRY
   {
-    err = H5Oexists_by_name( fileId, datasetName.c_str(), H5P_DEFAULT );
+    status = H5Oexists_by_name( fileId, datasetName.c_str(), H5P_DEFAULT );
   }
   H5E_END_TRY
-  return err > 0 ? true : false;
+  return status > 0 ? true : false;
 }
-
-
 
 // SerialHDF5Reader Implementation
 SerialHDF5Reader::SerialHDF5Reader( const std::string & filename )

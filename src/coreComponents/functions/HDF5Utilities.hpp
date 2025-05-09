@@ -57,8 +57,11 @@ public:
   SerialHDF5File( SerialHDF5File && other ) noexcept;
   SerialHDF5File & operator=( SerialHDF5File && other ) noexcept;
 
-  hid_t const & getFileId() const;
-  string const & getFilename() const;
+  hid_t const & getFileId() const
+  { return m_fileId; }
+
+  string const & getFilename() const
+  { return m_filename; }
 
 private:
   void openFile();
