@@ -330,12 +330,12 @@ void AcousticWaveEquationDG::initializePostInitialConditionsPreSubGroups()
           // Pre-compute inverse of mass + damping matrix for each boundary element
           // localIndex nAbsBdryElems = 0;
          
-          AcousticWaveEquationDGKernels::PrecomputePenaltyGeomKernel::
-            launch< EXEC_POLICY >
-            ( elementSubRegion.size(),
-            nodeCoords,
-            elemsToNodes,
-            characteristicSize );
+          //AcousticWaveEquationDGKernels::PrecomputePenaltyGeomKernel::
+          //  launch< EXEC_POLICY >
+          //  ( elementSubRegion.size(),
+          //  nodeCoords,
+          //  elemsToNodes,
+          //  characteristicSize );
 
 
 
