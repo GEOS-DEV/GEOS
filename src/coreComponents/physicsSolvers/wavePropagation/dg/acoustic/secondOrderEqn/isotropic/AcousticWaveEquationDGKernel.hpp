@@ -340,7 +340,7 @@ struct PrecomputePenaltyGeomKernel
    * @param[in] elemsToNodes map from element to nodes
    * @param[out] characteristicSize the field to contain the characteristic size used for penalty term calculation
    */
-  template< typename EXEC_POLICY, typename FE_TYPE >
+  template< typename EXEC_POLICY >
   static void
   launch( localIndex const size,
           arrayView2d< real32 const, nodes::REFERENCE_POSITION_USD > const nodeCoords,
@@ -447,7 +447,7 @@ struct PressureComputationKernel
                        arrayView2d< localIndex > const & elemsToOpposite,
                        arrayView2d< integer > const & elemsToOppositePermutation,
                        arrayView2d< real64 >referenceInvMassMatrix,
-                       arrayView1d< real32 const > const characteristicSize,
+                       arrayView1d< real32 > const characteristicSize,
                        arrayView2d< real64 const > const sourceConstants,
                        arrayView1d< localIndex const > const sourceIsAccessible,
                        arrayView1d< localIndex const > const sourceElem,
@@ -485,6 +485,8 @@ struct PressureComputationKernel
         }
       }
 
+      characteristicSize[k] = WaveSolverUtils::computeReferenceLengthForPenalty( elemsToNodes[ k ], X );
+
       //Compute 1/c2, take its inverse and compute the detemrinant of the jacobian
       real64 const C2 = pow( velocity[k], 2 );
 
@@ -514,6 +516,8 @@ struct PressureComputationKernel
         if( elemNeigh >= 0 )
         {
 
+          characteristicSize[elemNeigh] = WaveSolverUtils::computeReferenceLengthForPenalty( elemsToNodes[ elemNeigh ], X );
+          
           // Now we seek the degree of freedom on the neighbour element to use for the computation of the flux (or the penalty)
           // First, we compute the four possible values of the permutation of the degrees of freedom depending on the the fixed
           // permutation value contained inside elemsToOppositePermutation permutation

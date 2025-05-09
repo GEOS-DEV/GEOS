@@ -331,7 +331,7 @@ void AcousticWaveEquationDG::initializePostInitialConditionsPreSubGroups()
           // localIndex nAbsBdryElems = 0;
          
           AcousticWaveEquationDGKernels::PrecomputePenaltyGeomKernel::
-            launch< EXEC_POLICY, FE_TYPE >
+            launch< EXEC_POLICY >
             ( elementSubRegion.size(),
             nodeCoords,
             elemsToNodes,
@@ -530,7 +530,7 @@ void AcousticWaveEquationDG::computeUnknowns( real64 const & time_n,
     arrayView2d< real32 const > const p_nm1 = elementSubRegion.getField< acousticfieldsdg::Pressure_nm1 >();
     arrayView2d< real32 > const p_n = elementSubRegion.getField< acousticfieldsdg::Pressure_n >();
     arrayView2d< real32 > const p_np1 = elementSubRegion.getField< acousticfieldsdg::Pressure_np1 >();
-    arrayView1d< real32 const > const characteristicSize = elementSubRegion.getField< acousticfieldsdg::CharacteristicSize >();
+    arrayView1d< real32 > const characteristicSize = elementSubRegion.getField< acousticfieldsdg::CharacteristicSize >();
     
     arrayView2d< real64 >referenceInvMassMatrix = m_referenceInvMassMatrix[0][0].toView();
 
