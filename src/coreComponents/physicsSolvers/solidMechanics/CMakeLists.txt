@@ -74,8 +74,7 @@ set( solidMechanicsSolvers_sources
      contact/SolidMechanicsEmbeddedFractures.cpp
      contact/SolidMechanicsLagrangeContact.cpp
      contact/SolidMechanicsLagrangeContactBubbleStab.cpp
-     contact/SolidMechanicsAugmentedLagrangianContact.cpp 
-     )
+     contact/SolidMechanicsAugmentedLagrangianContact.cpp )
 
 #include( kernels/SolidMechanicsKernels.cmake)
 
@@ -88,8 +87,8 @@ file( READ "${CMAKE_CURRENT_LIST_DIR}/kernelSpecsMatrixFree.json" kernelSpecs )
 set( kernelTemplateFileList "" )
 
   list( APPEND kernelTemplateFileList 
-        kernels/SolidMechanicsKernels.cpp.template )
-#        kernels/SolidMechanicsFixedStressThermoPoromechanicsKernels.cpp.template )
+        kernels/SolidMechanicsKernels.cpp.template
+        kernels/SolidMechanicsFixedStressThermoPoromechanicsKernels.cpp.template )
 
 
 foreach( kernelTemplateFile ${kernelTemplateFileList} )

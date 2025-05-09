@@ -27,8 +27,12 @@
   "SolidMechanicsKernels": {
     "vars": [ "SUBREGION_TYPE", "CONSTITUTIVE_TYPE", "FE_TYPE" ],
     "constants": [
+      [ "ExplicitSmallStrainPolicy", "geos::parallelDevicePolicy< GEOS_BLOCK_SIZE >" ],
+      [ "ExplicitFiniteStrainPolicy", "geos::parallelDevicePolicy< GEOS_BLOCK_SIZE >" ],
+      [ "FixedStressThermoPoromechanicsPolicy", "geos::parallelDevicePolicy< GEOS_BLOCK_SIZE >" ],
+      [ "ImplicitSmallStrainNewmarkPolicy", "geos::parallelDevicePolicy< GEOS_BLOCK_SIZE >" ],
+      [ "ImplicitSmallStrainQuasiStaticPolicy", "geos::parallelDevicePolicy< GEOS_BLOCK_SIZE >" ],
       [ "SmallStrainResidualPolicy", "geos::parallelDevicePolicy< ${GEOS_BLOCK_SIZE} >" ]
-
     ],
     "combinations": {
       "SUBREGION_TYPE": [
@@ -36,6 +40,56 @@
       ],
       "CONSTITUTIVE_TYPE": [
         "ElasticIsotropic"
+      ],
+      "FE_TYPE": [
+        "H1_Hexahedron_Lagrange1_GaussLegendre2"
+      ]
+    },
+    "explicit": []
+  },
+
+  "SolidMechanicsFixedStressThermoPoromechanicsKernels": {
+    "vars": [
+      "SUBREGION_TYPE",
+      "CONSTITUTIVE_TYPE",
+      "FE_TYPE"
+    ],
+    "constants": [
+      [ "ExplicitSmallStrainPolicy", "geos::parallelDevicePolicy< GEOS_BLOCK_SIZE >" ],
+      [ "ExplicitFiniteStrainPolicy", "geos::parallelDevicePolicy< GEOS_BLOCK_SIZE >" ],
+      [ "FixedStressThermoPoromechanicsPolicy", "geos::parallelDevicePolicy< GEOS_BLOCK_SIZE >" ],
+      [ "ImplicitSmallStrainNewmarkPolicy", "geos::parallelDevicePolicy< GEOS_BLOCK_SIZE >" ],
+      [ "ImplicitSmallStrainQuasiStaticPolicy", "geos::parallelDevicePolicy< GEOS_BLOCK_SIZE >" ]
+    ],
+    "combinations": {
+      "SUBREGION_TYPE": [
+        "CellElementSubRegion"
+      ],
+      "CONSTITUTIVE_TYPE": [
+        "PorousSolid<ElasticIsotropic>"
+      ],
+      "FE_TYPE": [
+        "H1_Hexahedron_Lagrange1_GaussLegendre2"
+      ]
+    },
+    "explicit": []
+  },
+
+  "SolidMechanicsFixedStressThermoPoroElasticKernels": {
+    "vars": [
+      "SUBREGION_TYPE",
+      "CONSTITUTIVE_TYPE",
+      "FE_TYPE"
+    ],
+    "constants": [
+      [ "FixedStressThermoPoromechanicsPolicy", "geos::parallelDevicePolicy< GEOS_BLOCK_SIZE >" ]
+    ],
+    "combinations": {
+      "SUBREGION_TYPE": [
+        "CellElementSubRegion"
+      ],
+      "CONSTITUTIVE_TYPE": [
+        "PorousSolid<ElasticIsotropic>"
       ],
       "FE_TYPE": [
         "H1_Hexahedron_Lagrange1_GaussLegendre2"
