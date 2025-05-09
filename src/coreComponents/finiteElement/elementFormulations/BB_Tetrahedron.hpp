@@ -926,7 +926,7 @@ public:
       constexpr int l1 = ll1;
       basisLoop( [ &m ] ( auto const c2, auto const i2, auto const j2, auto const k2, auto const l2 )
       {
-        constexpr real64 val = BB_Tetrahedron< ORDER >::computeSuperpositionIntegral( i1, j1, k1, l1, i2, j2, k2, l2 );
+        constexpr real64 val = computeSuperpositionIntegral( i1, j1, k1, l1, i2, j2, k2, l2 );
         m[ c1 ][ c2 ] = val;
       } );
     } );
@@ -1429,10 +1429,10 @@ public:
  * Fixed-degree classes
  */
 using BB1_Tetrahedron = BB_Tetrahedron< 1 >;
-using BB2_Tetrahedron = BB_Tetrahedron< 2 >;
-using BB3_Tetrahedron = BB_Tetrahedron< 3 >;
-using BB4_Tetrahedron = BB_Tetrahedron< 4 >;
-using BB5_Tetrahedron = BB_Tetrahedron< 5 >;
+//using BB2_Tetrahedron = BB_Tetrahedron< 2 >;
+//using BB3_Tetrahedron = BB_Tetrahedron< 3 >;
+//using BB4_Tetrahedron = BB_Tetrahedron< 4 >;
+//using BB5_Tetrahedron = BB_Tetrahedron< 5 >;
 
 }
 }

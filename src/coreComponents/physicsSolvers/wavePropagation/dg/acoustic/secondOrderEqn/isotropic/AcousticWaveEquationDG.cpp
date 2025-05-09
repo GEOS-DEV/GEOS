@@ -329,20 +329,16 @@ void AcousticWaveEquationDG::initializePostInitialConditionsPreSubGroups()
 
           // Pre-compute inverse of mass + damping matrix for each boundary element
           // localIndex nAbsBdryElems = 0;
-          forAll< EXEC_POLICY >( elementSubRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const k )
-          {
-            characteristicSize[ k ] = WaveSolverUtils::computeReferenceLengthForPenalty( elemsToNodes[k], nodeCoords );
-            //   bool bdry = false;
-            //   for( int i = 0; i < 4; i++ )
-            //   {
-            //     if( elemsToOpposite( k, i ) == -1 )
-            //     {
-            //       bdry = true;
-            //       break;
-            //     }
-            //   }
-            //   RAJA::atomicInc< ATOMIC_POLICY >( &m_indexToBoundaryMatrix[ k ])
-          } );
+         
+          AcousticWaveEquationDGKernels::PrecomputePenaltyGeomKernel::
+            launch< EXEC_POLICY, FE_TYPE >
+            ( elementSubRegion.size(),
+            nodeCoords,
+            elemsToNodes,
+            characteristicSize );
+
+
+
           // m_boundaryInvMassPlusDamping[ regionIndex ][ subRegionIndex ].resizeDimension< 0, 1, 2 >( nAbsBdryElems, FE_TYPE::numNodes,
           // FE_TYPE::numNodes );
           // AcousticMatricesSEM::MassMatrix< FE_TYPE > kernelM( finiteElement );

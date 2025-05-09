@@ -49,11 +49,7 @@
   finiteElement::Q5_Hexahedron_Lagrange_GaussLobatto
 
 #define BB_FE_TYPES \
-  finiteElement::BB1_Tetrahedron, \
-  finiteElement::BB2_Tetrahedron, \
-  finiteElement::BB3_Tetrahedron, \
-  finiteElement::BB4_Tetrahedron, \
-  finiteElement::BB5_Tetrahedron
+  finiteElement::BB1_Tetrahedron
 
 #if defined( GEOS_DISPATCH_VEM )
 

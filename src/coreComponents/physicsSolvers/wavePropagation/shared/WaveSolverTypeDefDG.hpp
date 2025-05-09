@@ -29,11 +29,7 @@
 
 #if !defined( GEOS_USE_HIP )
 #define DG_FE_TYPES \
-  finiteElement::BB1_Tetrahedron, \
-  finiteElement::BB2_Tetrahedron, \
-  finiteElement::BB3_Tetrahedron, \
-  finiteElement::BB4_Tetrahedron, \
-  finiteElement::BB5_Tetrahedron
+  finiteElement::BB1_Tetrahedron
 #else
 #define DG_FE_TYPES
 #endif
