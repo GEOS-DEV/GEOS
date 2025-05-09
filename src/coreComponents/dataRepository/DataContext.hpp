@@ -218,10 +218,6 @@ private:
 
 };
 
-// TODO:
-// GEOS_THROW_IF_TEST manière de sortir une erreur sans contexte
-// addContext fais le lien entre GEOS_THROW_CTX_IF
-// Variation de GEOS_THROW_IF_TEST qui ajoute des données de contexte
 #define GEOS_THROW_CTX_IF( dataContext, EXP, MSG, EXCEPTIONTYPE ) \
   do \
   { \
@@ -240,11 +236,59 @@ private:
                                        __FILE__, \
                                        __LINE__ ); \
       msgStruct.addContextInfo( dataContext.getContextInfo() ); \
+      msgStruct.addCallStackInfo( LvArray::system::stackTrace( true ) ); \
       errorLogger.write( msgStruct ); \
       throw EXCEPTIONTYPE( __oss.str() ); \
     } \
   } while( false )
 
+#define GEOS_ERROR_CTX_IF( dataContext, EXP, MSG ) \
+  do \
+  { \
+    if( EXP ) \
+    { \
+      std::ostringstream __oss; \
+      __oss << "***** ERROR\n"; \
+      __oss << "***** LOCATION: " LOCATION "\n"; \
+      __oss << "***** Controlling expression (should be false): " STRINGIZE( EXP ) "\n"; \
+      __oss << MSG << "\n"; \
+      __oss << LvArray::system::stackTrace( true ); \
+      std::cout << __oss.str() << std::endl; \
+      std::ostringstream __msgoss; \
+      __msgoss << MSG; \
+      ErrorLogger::ErrorMsg msgStruct( ErrorLogger::MsgType::Error, \
+                                       __msgoss.str(), \
+                                       __FILE__, \
+                                       __LINE__ ); \
+      msgStruct.addContextInfo( dataContext.getContextInfo() ); \
+      msgStruct.addCallStackInfo( LvArray::system::stackTrace( true ) ); \
+      errorLogger.write( msgStruct ); \
+      LvArray::system::callErrorHandler(); \
+    } \
+  } while( false )
+
+#define GEOS_WARNING_CTX_IF( dataContext, EXP, MSG ) \
+  do \
+  { \
+    if( EXP ) \
+    { \
+      std::ostringstream __oss; \
+      __oss << "***** WARNING\n"; \
+      __oss << "***** LOCATION: " LOCATION "\n"; \
+      __oss << "***** Controlling expression (should be false): " STRINGIZE( EXP ) "\n"; \
+      __oss << MSG; \
+      std::cout << __oss.str() << std::endl; \
+      std::ostringstream __msgoss; \
+      __msgoss << MSG; \
+      ErrorLogger::ErrorMsg msgStruct( ErrorLogger::MsgType::Warning, \
+                                       __msgoss.str(), \
+                                       __FILE__, \
+                                       __LINE__ ); \
+      msgStruct.addContextInfo( dataContext.getContextInfo() ); \
+      msgStruct.addCallStackInfo( LvArray::system::stackTrace( true ) ); \
+      errorLogger.write( msgStruct ); \
+    } \
+  } while( false )
 
 } /* namespace dataRepository */
 } /* namespace geos */

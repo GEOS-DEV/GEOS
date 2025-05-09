@@ -134,6 +134,36 @@
  */
 #define GEOS_LOG_RANK_VAR( var ) GEOS_LOG_RANK( #var " = " << var )
 
+#define LVARRAY_ERROR_IF_TEST( EXP, MSG ) \
+  do \
+  { \
+    if( EXP ) \
+    { \
+      std::ostringstream __oss; \
+      __oss << "***** ERROR\n"; \
+      __oss << "***** LOCATION: " LOCATION "\n"; \
+      __oss << "***** Controlling expression (should be false): " STRINGIZE( EXP ) "\n"; \
+      __oss << MSG << "\n"; \
+      __oss << LvArray::system::stackTrace( true ); \
+      std::cout << __oss.str() << std::endl; \
+      std::ostringstream __msgoss; \
+      __msgoss << MSG; \
+      ErrorLogger::ErrorMsg msgStruct( ErrorLogger::MsgType::Error, \
+                                       __msgoss.str(), \
+                                       __FILE__, \
+                                       __LINE__ ); \
+      msgStruct.addCallStackInfo( LvArray::system::stackTrace( true ) ); \
+      errorLogger.write( msgStruct ); \
+      LvArray::system::callErrorHandler(); \
+    } \
+  } while( false )
+
+#if defined(GEOS_DEVICE_COMPILE)
+#define GEOS_ERROR_IF_TEST( EXP, msg ) LVARRAY_ERROR_IF_TEST( EXP, msg )
+#else
+#define GEOS_ERROR_IF_TEST( EXP, msg ) LVARRAY_ERROR_IF_TEST( EXP, "***** Rank " << ::geos::logger::internal::rankString << ": " << msg )
+#endif
+
 /**
  * @brief Conditionally raise a hard error and terminate the program.
  * @param EXP an expression that will be evaluated as a predicate
@@ -151,7 +181,7 @@
  * @param MSG a message to log (any expression that can be stream inserted)
  * @param TYPE the type of exception to throw
  */
-#define LVARRAY_THROW_IF_TEST( EXP, MSG, TYPE ) \
+#define LVARRAY_THROW_IF_TEST( EXP, MSG, EXCEPTIONTYPE ) \
   do \
   { \
     if( EXP ) \
@@ -162,19 +192,20 @@
       __oss << "***** Controlling expression (should be false): " STRINGIZE( EXP ) "\n"; \
       __oss << MSG << "\n"; \
       __oss << LvArray::system::stackTrace( true ); \
-      std::ostringstream __oss2, __oss3; \
-      __oss2 << MSG; \
-      __oss3 << __FILE__; \
-      integer line =  __LINE__; \
+      std::ostringstream __msgoss; \
+      __msgoss << MSG; \
       ErrorLogger::ErrorMsg msgStruct( ErrorLogger::MsgType::Error, \
-                                       __oss2.str(), \
-                                       __oss3.str(), \
-                                       line ); \
+                                       __msgoss.str(), \
+                                       __FILE__, \
+                                       __LINE__ ); \
+      msgStruct.addCallStackInfo( LvArray::system::stackTrace( true ) ); \
       errorLogger.write( msgStruct ); \
-      throw TYPE( __oss.str() ); \
+      throw EXCEPTIONTYPE( __oss.str() ); \
     } \
   } while( false )
   
+#define GEOS_THROW_IF_TEST( EXP, msg, EXCEPTIONTYPE ) LVARRAY_THROW_IF_TEST( EXP, "***** Rank " << ::geos::logger::internal::rankString << ": " << msg, EXCEPTIONTYPE )
+
 /**
  * @brief Conditionally throw an exception.
  * @param EXP an expression that will be evaluated as a predicate
@@ -182,14 +213,6 @@
  * @param TYPE the type of exception to throw
  */
 #define GEOS_THROW_IF( EXP, msg, TYPE ) LVARRAY_THROW_IF( EXP, "***** Rank " << ::geos::logger::internal::rankString << ": " << msg, TYPE )
-
-/**
- * @brief Conditionally throw an exception.
- * @param EXP an expression that will be evaluated as a predicate
- * @param msg a message to log (any expression that can be stream inserted)
- * @param TYPE the type of exception to throw
- */ 
-#define GEOS_THROW_IF_TEST( EXP, msg, TYPE ) LVARRAY_THROW_IF_TEST( EXP, "***** Rank " << ::geos::logger::internal::rankString << ": " << msg, TYPE )
 
 /**
  * @brief Raise a hard error and terminate the program.
@@ -216,6 +239,30 @@
  * @param EXP an expression that will be evaluated as a predicate
  */
 #define GEOS_ASSERT( EXP ) GEOS_ASSERT_MSG( EXP, "" )
+
+#define LVARRAY_WARNING_IF_TEST( EXP, MSG ) \
+  do \
+  { \
+    if( EXP ) \
+    { \
+      std::ostringstream __oss; \
+      __oss << "***** WARNING\n"; \
+      __oss << "***** LOCATION: " LOCATION "\n"; \
+      __oss << "***** Controlling expression (should be false): " STRINGIZE( EXP ) "\n"; \
+      __oss << MSG; \
+      std::cout << __oss.str() << std::endl; \
+      std::ostringstream __msgoss; \
+      __msgoss << MSG; \
+      ErrorLogger::ErrorMsg msgStruct( ErrorLogger::MsgType::Warning, \
+                                       __msgoss.str(), \
+                                       __FILE__, \
+                                       __LINE__ ); \
+      msgStruct.addCallStackInfo( LvArray::system::stackTrace( true ) ); \
+      errorLogger.write( msgStruct ); \
+    } \
+  } while( false )
+
+#define GEOS_WARNING_IF_TEST( EXP, msg ) LVARRAY_WARNING_IF_TEST( EXP, msg )
 
 /**
  * @brief Conditionally report a warning.

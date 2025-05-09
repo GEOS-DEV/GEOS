@@ -60,7 +60,7 @@ public:
     std::string file; 
     integer line;
     std::vector< std::map< std::string, std::string > > contextsInfo;
-    // std::vector< std::string > sourceCallStack;
+    std::vector< std::string > sourceCallStack;
 
     /**
      * @brief Construct a new Error Msg object
@@ -75,9 +75,16 @@ public:
     /**
      * @brief Add contextual information about the error/warning message to the ErrorMsg structure
      * 
-     * @param info 
+     * @param info DataContext information  stored into a map
      */
     void addContextInfo( std::map< std::string, std::string > && info );
+
+    /**
+     * @brief Add stack trace information about the error/warning message to the ErrorMsg structure
+     * 
+     * @param ossStackTrace stack trace information
+     */
+    void addCallStackInfo( std::string const & ossStackTrace );
   };
 
   std::string toString( MsgType type );

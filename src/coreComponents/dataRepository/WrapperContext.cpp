@@ -41,7 +41,7 @@ string WrapperContext::toString() const
 std::map< std::string, std::string > WrapperContext::getContextInfo() const
 {
   std::map<std::string, std::string> contextInfo;
-  contextInfo["dataPath"] = m_targetName;
+  contextInfo["dataPath"] = toString();
 
   return contextInfo;
 }

@@ -19,6 +19,7 @@
 
 // Source includes
 #include "ErrorHandling.hpp"
+#include "common/logger/Logger.hpp"
 
 // System includes
 #include <fstream>
@@ -41,16 +42,27 @@ ErrorLogger::ErrorLogger()
   }
   else
   {
-    // TODO => GEOS_ERROR
-    // Dire quel fichier bug = fichier d'erreur a échoué
-    std::cerr << "Unable to open file.\n";
+    GEOS_LOG( GEOS_FMT( "Unable to open error file for writing: {}", m_filename ) );
   }
 }
 
 
 void ErrorLogger::ErrorMsg::addContextInfo( std::map< std::string, std::string > && info )
 {
-  ErrorLogger::ErrorMsg::contextsInfo.emplace_back( std::move( info ) );
+  contextsInfo.emplace_back( std::move( info ) );
+}
+
+void ErrorLogger::ErrorMsg::addCallStackInfo( std::string const & ossStackTrace )
+{
+  std::istringstream iss( ossStackTrace );
+  std::string stackLine;
+  std::size_t index; 
+
+  while( std::getline( iss, stackLine) )
+  {
+    index = stackLine.find(':');
+    sourceCallStack.push_back( stackLine.substr( index + 1 ) );
+  }
 }
 
 std::string ErrorLogger::toString( ErrorLogger::MsgType type )
@@ -63,42 +75,51 @@ std::string ErrorLogger::toString( ErrorLogger::MsgType type )
   }
 }
 
-void ErrorLogger::write( ErrorLogger::ErrorMsg const & errorMsg )
+void ErrorLogger::write( ErrorLogger::ErrorMsg const & errorMsg ) //const
 {
   std::ofstream yamlFile( std::string( m_filename ), std::ios::app );
   if( yamlFile.is_open() )
   {
     yamlFile << GEOS_FMT( "{:>2}- type: {}\n", " ", errorLogger.toString( errorMsg.type ) );
-    yamlFile << GEOS_FMT( "{:>4}message: {}\n", " ", errorMsg.msg );
-    yamlFile << GEOS_FMT( "{:>4}contexts:\n", " " );
-  
-    for( size_t i = 0; i < errorMsg.contextsInfo.size(); i++ )
+    yamlFile << GEOS_FMT( "{:>4}message:\n {:>5}{}\n", " ", " ", errorMsg.msg );
+    if( errorMsg.contextsInfo.empty() )
     {
-      for( auto const & [key, value] : errorMsg.contextsInfo[i] )
+      yamlFile << GEOS_FMT( "{:>4}contexts:\n", " " );
+
+      for( size_t i = 0; i < errorMsg.contextsInfo.size(); i++ )
       {
-        if( key == "inputFileLine" )
+        for( auto const & [key, value] : errorMsg.contextsInfo[i] )
         {
-          yamlFile << GEOS_FMT( "{:>8}{}: {}\n", " ", key, value );
-        }
-        else
-        {
-          yamlFile << GEOS_FMT( "{:>6}- {}: {}\n", " ", key, value );
+          if( key == "inputFileLine" )
+          {
+            yamlFile << GEOS_FMT( "{:>8}{}: {}\n", " ", key, value );
+          }
+          else
+          {
+            yamlFile << GEOS_FMT( "{:>6}- {}: {}\n", " ", key, value );
+          }
         }
       }
     }
 
     yamlFile << GEOS_FMT( "{:>4}sourceLocation:\n", " " );
     yamlFile << GEOS_FMT( "{:>6}file: {}\n", " ", errorMsg.file );
-    yamlFile << GEOS_FMT( "{:>6}line: {}\n\n", " ", errorMsg.line );
-    yamlFile.close();
-    // TODO: change the message to be more explicit
-    std::cout << "YAML file created successfully.\n";
+    yamlFile << GEOS_FMT( "{:>6}line: {}\n", " ", errorMsg.line );
+    
+    yamlFile << GEOS_FMT( "{:>4}sourceCallStack:\n", " " );
+    
+    for( size_t i = 0; i < errorMsg.sourceCallStack.size(); i++ )
+    {
+      if( i < 2 || i == errorMsg.sourceCallStack.size() - 1 ) continue; 
+      yamlFile << GEOS_FMT( "{:>6}- {}: {}\n", " ", i-2, errorMsg.sourceCallStack[i] );
+    }
+
+    yamlFile.flush();
+    GEOS_LOG( GEOS_FMT( "The error file {} was created successfully.", m_filename ) );
   }
   else
   {
-    // TODO => GEOS_ERROR
-    // Dire quel fichier bug = fichier d'erreur a échoué
-    std::cerr << "Unable to open file.\n";
+    GEOS_LOG( GEOS_FMT( "Unable to open error file for writing: {}", m_filename ) );
   }
 }
 
