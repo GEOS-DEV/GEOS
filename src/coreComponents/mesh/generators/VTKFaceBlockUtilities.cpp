@@ -647,6 +647,14 @@ void importFractureNetwork( string const & faceBlockName,
   faceBlock.set2dElemToFaces( std::move( elem2dTo3d.elem2dToFaces ) );
   faceBlock.set2dElemToElems( std::move( elem2dTo3d.elem2dToElem3d ) );
 
+  if( num2dElements > 0 )
+  {
+    GEOS_ERROR_IF( !vtkIdTypeArray::FastDownCast( faceMesh->GetCellData()->GetGlobalIds() ),
+                   "Global IDs are required but not found for fracture mesh" );
+  }
+  GEOS_ERROR_IF( !vtkIdTypeArray::FastDownCast( mesh->GetCellData()->GetGlobalIds() ),
+                 "Global IDs are required but not found for main mesh" );
+
   faceBlock.setLocalToGlobalMap(
     buildLocalToGlobal( vtkIdTypeArray::FastDownCast( faceMesh->GetCellData()->GetGlobalIds() ),
                         vtkIdTypeArray::FastDownCast( mesh->GetCellData()->GetGlobalIds() ) )
