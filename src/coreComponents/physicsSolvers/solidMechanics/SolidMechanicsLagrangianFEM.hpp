@@ -170,7 +170,7 @@ public:
   /**@}*/
 
 
-  template< typename CONSTITUTIVE_BASE,
+  template< typename TYPE_LIST,
             typename KERNEL_WRAPPER,
             typename ... PARAMS >
   real64 assemblyLaunch( MeshLevel & mesh,
@@ -331,7 +331,7 @@ ENUM_STRINGS( SolidMechanicsLagrangianFEM::TimeIntegrationOption,
 //**********************************************************************************************************************
 
 
-template< typename CONSTITUTIVE_BASE,
+template< typename TYPE_LIST,
           typename KERNEL_WRAPPER,
           typename ... PARAMS >
 real64 SolidMechanicsLagrangianFEM::assemblyLaunch( MeshLevel & mesh,
@@ -362,12 +362,11 @@ real64 SolidMechanicsLagrangianFEM::assemblyLaunch( MeshLevel & mesh,
 
   return finiteElement::
            regionBasedKernelApplication< parallelDevicePolicy< >,
-                                         CONSTITUTIVE_BASE,
-                                         CellElementSubRegion >( mesh,
-                                                                 regionNames,
-                                                                 this->getDiscretizationName(),
-                                                                 materialNamesString,
-                                                                 kernelWrapper );
+                                         TYPE_LIST >( mesh,
+                                                      regionNames,
+                                                      this->getDiscretizationName(),
+                                                      materialNamesString,
+                                                      kernelWrapper );
 
 }
 
