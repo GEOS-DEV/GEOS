@@ -197,7 +197,7 @@ ControlEquationHelper::
       dControlEqn[COFFSET_WJ::dC+ic] = dCurrentPhaseVolRate[targetPhaseIndex][COFFSET_WJ::dC+ic];
     }
     if constexpr ( IS_THERMAL )
-      dControlEqn[COFFSET_WJ::dT] = dCurrentBHP[Deriv::dT];
+      dControlEqn[COFFSET_WJ::dT] = dCurrentPhaseVolRate[targetPhaseIndex][COFFSET_WJ::dT];
   }
   // Total volumetric rate control
   else if( currentControl == WellControls::Control::TOTALVOLRATE )
@@ -289,8 +289,8 @@ PressureRelationKernel::
   }
   if constexpr ( IS_THERMAL )
   {
-    localPresRelJacobian[TAG::NEXT *(NC+1+IS_THERMAL)+NC+1]    =  0.5 * dTotalMassDensNext[Deriv::dT];
-    localPresRelJacobian[TAG::CURRENT *(NC+1+IS_THERMAL)+NC+1] = 0.5 * dTotalMassDens[Deriv::dT];
+    localPresRelJacobian[TAG::NEXT *(NC+1+IS_THERMAL)+NC+1]    =  -0.5 * dTotalMassDensNext[Deriv::dT]* gravD;
+    localPresRelJacobian[TAG::CURRENT *(NC+1+IS_THERMAL)+NC+1] = -0.5 * dTotalMassDens[Deriv::dT]* gravD;
   }
 }
 
