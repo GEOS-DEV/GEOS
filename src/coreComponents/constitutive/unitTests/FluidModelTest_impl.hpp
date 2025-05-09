@@ -59,6 +59,97 @@ FluidModelTest< FLUID_TYPE, NUM_COMP, NUM_PHASE >::createFluid( string const & n
 }
 
 template< typename FLUID_TYPE, integer NUM_COMP, integer NUM_PHASE >
+void FluidModelTest< FLUID_TYPE, NUM_COMP, NUM_PHASE >::
+testValuesAgainstPreviousImplementation( FluidModel * fluid,
+                                         TestPoint const & testPoint,
+                                         TestResult const & expectedValues,
+                                         real64 const relTol,
+                                         real64 const absTol )
+{
+  integer constexpr size = 1;
+  m_parent.resize( size );
+  fluid->allocateConstitutiveData( m_parent, 1 );
+
+  string_array const & phaseNames = fluid->phaseNames();
+
+  auto const & [pressure, temperature, composition] = testPoint;
+  stackArray2d< real64, NUM_COMP > compositionArray( 1, NUM_COMP );
+  for( integer ic = 0; ic < NUM_COMP; ++ic )
+  {
+    compositionArray( 0, ic ) = composition[ic];
+  }
+
+  FluidWrapper fluidWrapper = fluid->createKernelWrapper();
+
+  auto const compositionView = compositionArray.toViewConst();
+
+  forAll< parallelDevicePolicy<> >( size, [fluidWrapper,
+                                           pressure,
+                                           temperature,
+                                           compositionView]
+                                    GEOS_HOST_DEVICE ( localIndex const k )
+  {
+    for( localIndex q = 0; q < fluidWrapper.numGauss(); ++q )
+    {
+      fluidWrapper.update( k, q, pressure, temperature, compositionView[k] );
+    }
+  } );
+
+  auto compareValues = [&]( string const & name, real64 const calculated, real64 const expected )
+  {
+    testing::checkRelativeError( calculated,
+                                 expected,
+                                 relTol,
+                                 absTol,
+                                 GEOS_FMT(
+                                   "\n{} failed.\n"
+                                   "Pressure: {}, Temperature: {} Composition: {}.\n"
+                                   "Calculated: {}.\n"
+                                   "Expacted: {}\n"
+                                   "Difference: {}",
+                                   name,
+                                   pressure, temperature, compositionView[0],
+                                   calculated, expected,
+                                   expected-calculated ));
+  };
+
+  bool const isThermal = fluid->isThermal();
+
+  for( integer phaseIndex = 0; phaseIndex < numPhase; phaseIndex++ )
+  {
+    real64 const phaseFraction = fluid->phaseFraction()( 0, 0, phaseIndex );
+    real64 const expectedPhaseFraction = std::get< 0 >( expectedValues )[phaseIndex];
+    compareValues( GEOS_FMT( "Phase fraction ({})", phaseNames[phaseIndex] ), phaseFraction, expectedPhaseFraction );
+
+    real64 const phaseDensity = fluid->phaseDensity()( 0, 0, phaseIndex );
+    real64 const expectedPhaseDensity = std::get< 1 >( expectedValues )[phaseIndex];
+    compareValues( GEOS_FMT( "Phase density ({})", phaseNames[phaseIndex] ), phaseDensity, expectedPhaseDensity );
+
+    real64 const phaseMassDensity = fluid->phaseMassDensity()( 0, 0, phaseIndex );
+    real64 const expectedPhaseMassDensity = std::get< 2 >( expectedValues )[phaseIndex];
+    compareValues( GEOS_FMT( "Phase mass density ({})", phaseNames[phaseIndex] ), phaseMassDensity, expectedPhaseMassDensity );
+
+    real64 const phaseViscosity = fluid->phaseViscosity()( 0, 0, phaseIndex );
+    real64 const expectedPhaseViscosity = std::get< 3 >( expectedValues )[phaseIndex];
+    compareValues( GEOS_FMT( "Phase viscosity ({})", phaseNames[phaseIndex] ), phaseViscosity, expectedPhaseViscosity );
+
+    if( isThermal )
+    {
+      real64 const phaseEnthalpy = fluid->phaseEnthalpy()( 0, 0, phaseIndex );
+      real64 const expectedPhaseEnthalpy = std::get< 4 >( expectedValues )[phaseIndex];
+      compareValues( GEOS_FMT( "Phase enthalpy ({})", phaseNames[phaseIndex] ), phaseEnthalpy, expectedPhaseEnthalpy );
+
+      real64 const phaseInternalEnergy = fluid->phaseInternalEnergy()( 0, 0, phaseIndex );
+      real64 const expectedPhaseInternalEnergy = std::get< 5 >( expectedValues )[phaseIndex];
+      compareValues( GEOS_FMT( "Phase internal energy ({})", phaseNames[phaseIndex] ), phaseInternalEnergy, expectedPhaseInternalEnergy );
+    }
+  }
+  real64 const totalDensity = fluid->totalDensity()( 0, 0 );
+  real64 const expectedTotalDensity = std::get< 6 >( expectedValues );
+  compareValues( "Total density", totalDensity, expectedTotalDensity );
+}
+
+template< typename FLUID_TYPE, integer NUM_COMP, integer NUM_PHASE >
 template< integer NDIM, typename ... INDICES, integer USD1, integer USD2, integer USD3, typename >
 void FluidModelTest< FLUID_TYPE, NUM_COMP, NUM_PHASE >::testDerivatives( string const propName,
                                                                          ArrayView< real64 const, NDIM, USD1 > const & valueArray,
@@ -181,11 +272,11 @@ void FluidModelTest< FLUID_TYPE, NUM_COMP, NUM_PHASE >::testNumericalDerivatives
   auto const temperatureView = temperatureArray.toViewConst();
   auto const compositionView = compositionArray.toViewConst();
 
-  forAll< serialPolicy >( size, [fluidWrapper,
-                                 pressureView,
-                                 temperatureView,
-                                 compositionView]
-                          GEOS_HOST_DEVICE ( localIndex const k )
+  forAll< parallelDevicePolicy<> >( size, [fluidWrapper,
+                                           pressureView,
+                                           temperatureView,
+                                           compositionView]
+                                    GEOS_HOST_DEVICE ( localIndex const k )
   {
     for( localIndex q = 0; q < fluidWrapper.numGauss(); ++q )
     {

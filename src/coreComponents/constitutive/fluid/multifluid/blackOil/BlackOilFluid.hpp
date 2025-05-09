@@ -495,9 +495,8 @@ BlackOilFluid::KernelWrapper::
   // 4. Update phase fraction and phase component fractions
 
   // 4.1 The gas phase is present
-  if( ( gasPhaseFraction > 0.0 ) && ( gasPhaseFraction < 1.0 ) )
+  if( gasPhaseFraction > 0.0 )
   {
-
     // phase fractions
     phaseFraction.value[ipOil] = 1.0 - gasPhaseFraction - zw;
     phaseFraction.value[ipGas] = gasPhaseFraction;

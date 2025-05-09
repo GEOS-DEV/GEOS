@@ -63,6 +63,19 @@ public:
     Feed< NUM_COMP > const  // composition
     >;
 
+  /**
+   * The result of a fluid calculation at a point
+   */
+  using TestResult = std::tuple<
+    Feed< NUM_PHASE > const,  // phase fraction
+    Feed< NUM_PHASE > const,  // phase density,
+    Feed< NUM_PHASE > const,  // phase mass density
+    Feed< NUM_PHASE > const,  // phase viscosity
+    Feed< NUM_PHASE > const,  // phase enthalpy
+    Feed< NUM_PHASE > const,  // phase internal energy
+    real64 const              // total density,
+    >;
+
 public:
   FluidModelTest();
   ~FluidModelTest() override = default;
@@ -84,6 +97,21 @@ public:
    */
   template< typename LAMBDA >
   FluidModel * createFluid( string const & name, LAMBDA && function );
+
+  /**
+   * @brief Test implementation against known (expected) valuse
+   * @details Will test the values returned by the fluid compute against values that are known or expected
+   * @param fluid - a pointer to the fluid model. Must be derived from @c MultiFluidBase
+   * @param testPoint - the test point input data (pressure, temperature and composition)
+   * @param expectedValues - the expected values
+   * @param relTol - the relative tolerance to use in the check
+   * @param absTol - the absolute tolerance to use in the check
+   */
+  void testValuesAgainstPreviousImplementation( FluidModel * fluid,
+                                                TestPoint const & testPoint,
+                                                TestResult const & expectedValues,
+                                                real64 const relTol = relTolerance,
+                                                real64 const absTol = absTolerance );
 
   /**
    * @brief Tests the derivatives of the fluid model
