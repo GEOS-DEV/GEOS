@@ -446,7 +446,7 @@ struct PressureComputationKernel
                        arrayView2d< real32 const > const p_nm1,
                        arrayView2d< localIndex > const & elemsToOpposite,
                        arrayView2d< integer > const & elemsToOppositePermutation,
-                       ArrayOfArrays< array2d< real64 > > referenceInvMassMatrix,
+                       arrayView2d< real64 >referenceInvMassMatrix,
                        arrayView1d< real32 const > const characteristicSize,
                        arrayView2d< real64 const > const sourceConstants,
                        arrayView1d< localIndex const > const sourceIsAccessible,
@@ -687,7 +687,7 @@ struct PressureComputationKernel
         real64 fx=0.0;
         for( localIndex j = 0; j < numNodesPerElem; ++j )
         {
-          fx+= referenceInvMassMatrix[0][0]( i, j )*pTemp[j];
+          fx+= referenceInvMassMatrix( i, j )*pTemp[j];
         }
         p_np1[k][i]=(C2*fx)/det;
       }

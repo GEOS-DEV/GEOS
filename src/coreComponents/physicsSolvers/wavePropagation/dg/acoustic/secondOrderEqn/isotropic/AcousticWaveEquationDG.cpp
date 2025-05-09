@@ -531,6 +531,9 @@ void AcousticWaveEquationDG::computeUnknowns( real64 const & time_n,
     arrayView2d< real32 > const p_n = elementSubRegion.getField< acousticfieldsdg::Pressure_n >();
     arrayView2d< real32 > const p_np1 = elementSubRegion.getField< acousticfieldsdg::Pressure_np1 >();
     arrayView1d< real32 const > const characteristicSize = elementSubRegion.getField< acousticfieldsdg::CharacteristicSize >();
+    
+    arrayView2d< real64 >referenceInvMassMatrix = m_referenceInvMassMatrix[0][0].toView();
+
 
     finiteElement::FiniteElementBase const &
     fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
@@ -550,7 +553,7 @@ void AcousticWaveEquationDG::computeUnknowns( real64 const & time_n,
         p_nm1,
         elemsToOpposite,
         elemsToOppositePermutation,
-        m_referenceInvMassMatrix,
+        referenceInvMassMatrix,
         characteristicSize,
         sourceConstants,
         sourceIsAccessible,
