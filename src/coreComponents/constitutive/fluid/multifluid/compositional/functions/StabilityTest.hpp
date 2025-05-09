@@ -66,7 +66,6 @@ public:
                        real64 & tangentPlaneDistance,
                        arraySlice1d< real64, USD2 > const & kValues )
   {
-    constexpr integer numTrials = 2;    // Trial compositions
     stackArray2d< real64, 4*maxNumComps > workSpace( 4, numComps );
     arraySlice1d< real64 > logFugacity = workSpace[0];
     arraySlice1d< real64 > normalizedComposition = workSpace[1];
@@ -114,17 +113,22 @@ public:
                                                           kValues );
     }
 
+    // The mimimum TPD over all trial compositions
     tangentPlaneDistance = LvArray::NumericLimits< real64 >::max;
-    for( integer trialIndex = 0; trialIndex < numTrials; ++trialIndex )
+
+    // Maximum error (convergence failure) over all trial compositions
+    real64 maxError = -LvArray::NumericLimits< real64 >::max;
+
+    for( real64 const & alpha : { 1.0, -1.0, 3.0, -3.0, 0.0 } )
     {
       // Initialise next sample
-      real64 const alpha = static_cast< real64 >(trialIndex)/(numTrials-1);
       for( integer const ic : presentComponents )
       {
-        normalizedComposition[ic] = composition[ic]*(alpha * kValues[ic] + (1.0 - alpha) / kValues[ic]);
-        logTrialComposition[ic] = LvArray::math::log( normalizedComposition[ic] );
+        logTrialComposition[ic] = LvArray::math::log( composition[ic] ) + alpha*LvArray::math::log( kValues[ic] );
+        normalizedComposition[ic] = LvArray::math::exp( logTrialComposition[ic] );
       }
 
+      real64 trialError = LvArray::NumericLimits< real64 >::max;
       for( localIndex iterationCount = 0; iterationCount < MultiFluidConstants::maxSSIIterations; ++iterationCount )
       {
         // Normalise the composition and calculate the fugacity
@@ -161,7 +165,8 @@ public:
           error += (dG*dG);
         }
         error = LvArray::math::sqrt( error );
-        if( error < MultiFluidConstants::fugacityTolerance )
+        trialError = LvArray::math::min( trialError, error );
+        if( trialError < MultiFluidConstants::fugacityTolerance )
         {
           break;
         }
@@ -173,12 +178,13 @@ public:
           normalizedComposition[ic] = LvArray::math::exp( logTrialComposition[ic] );
         }
       }
+      maxError = LvArray::math::max( maxError, trialError );
       if( tangentPlaneDistance < -MultiFluidConstants::fugacityTolerance )
       {
         break;
       }
     }
-    return true;
+    return ( tangentPlaneDistance < -MultiFluidConstants::fugacityTolerance ) || (maxError < MultiFluidConstants::fugacityTolerance);
   }
 
 private:
