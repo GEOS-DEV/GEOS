@@ -579,7 +579,7 @@ void TableFunction::setInterpolationMethod( InterpolationType const method )
 }
 
 void TableFunction::setTableCoordinates( array1d< real64_array > const & coordinates,
-                                         std::vector< units::Unit > const & dimUnits )
+                                         stdVector< units::Unit > const & dimUnits )
 {
   m_dimUnits = dimUnits;
   m_coordinates.resize( 0 );
@@ -869,16 +869,16 @@ void collectTableValues( TableData & table,
                          arrayView1d< real64 const > const values )
 {
   // prepare dividers
-  std::vector< integer > div( numDimensions );
+  stdVector< integer > div( numDimensions );
   div[0] = 1;
   for( integer d = 1; d < numDimensions; d++ )
   {
     div[d] = div[d-1] * coordinates[d-1].size();
   }
   // loop through all the values
-  std::vector< integer > coordsIdx( numDimensions );
-  std::vector< TableData::CellData > rowData( numDimensions + 1,
-                                              { CellType::Value, string() } );
+  stdVector< integer > coordsIdx( numDimensions );
+  stdVector< TableData::CellData > rowData( numDimensions + 1,
+                                            { CellType::Value, string() } );
   for( integer v = 0; v < values.size(); v++ )
   {
     // find coords indices

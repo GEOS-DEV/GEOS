@@ -82,7 +82,7 @@ protected:
 
   void setFractureRegions( dataRepository::Group const & domain );
 
-  std::vector< string > m_fractureRegionNames;
+  stdVector< string > m_fractureRegionNames;
 
   template< typename LAMBDA >
   void forFractureRegionOnMeshTargets( Group const & meshBodies, LAMBDA && lambda ) const

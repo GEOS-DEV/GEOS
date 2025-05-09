@@ -326,13 +326,13 @@ private:
    * @param dimUnits The units of each dimension of the coordinates, in the same order
    */
   void setTableCoordinates( array1d< real64_array > const & coordinates,
-                            std::vector< units::Unit > const & dimUnits = {} );
+                            stdVector< units::Unit > const & dimUnits = {} );
 
   /**
    * @brief Set the units of each dimension
    * @param dimUnits The units of each dimension
    */
-  void setDimUnits( std::vector< units::Unit > const & dimUnits )
+  void setDimUnits( stdVector< units::Unit > const & dimUnits )
   {
     m_dimUnits = dimUnits;
   }
@@ -471,7 +471,7 @@ private:
   ///
 
   /// The units of each table coordinate axes
-  std::vector< units::Unit > m_dimUnits;
+  stdVector< units::Unit > m_dimUnits;
 
   /// The unit of the table values
   units::Unit m_valueUnit;

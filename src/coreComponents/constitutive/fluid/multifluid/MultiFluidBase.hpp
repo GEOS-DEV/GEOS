@@ -370,7 +370,7 @@ protected:
      * @tparam OUT_ARRAY the type of array storing the component mole fractions
      * @param[in] composition the component mass fractions
      * @param[out] compMoleFrac the newly converted component mole fractions
-     * @detail The template is needed because PVTPackage expects a std::vector
+     * @detail The template is needed because PVTPackage expects a stdVector
      */
     template< integer maxNumComp, typename OUT_ARRAY >
     GEOS_HOST_DEVICE
@@ -385,7 +385,7 @@ protected:
      * @param[in] componentMolarWeight the component molar weight
      * @param[out] compMoleFrac the newly converted component mole fractions
      * @param[out] dCompMoleFrac_dCompMassFrac the derivatives of the newly converted component mole fractions
-     * @detail The template is needed because PVTPackage expects a std::vector
+     * @detail The template is needed because PVTPackage expects a stdVector
      */
     template< integer maxNumComp, typename OUT_ARRAY >
     GEOS_HOST_DEVICE
