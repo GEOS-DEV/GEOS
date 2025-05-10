@@ -27,6 +27,12 @@
 namespace geos
 {
 
+
+namespace constitutive
+{
+class ConstitutiveBase;
+} // namespace constitutive
+
 //START_SPHINX_INCLUDE_00
 /**
  * @class ImmiscibleMultiphaseFlow
@@ -217,6 +223,7 @@ public:
     static constexpr char const * capPressureNamesString() { return "capPressureNames"; }
     static constexpr char const * relPermNamesString() { return "relPermNames"; }
     static constexpr char const * elemDofFieldString() { return "elemDofField"; }
+    static constexpr char const * interfaceFaceSetNamesString() { return "interfaceFaceSetNames"; }
 
     // density averaging scheme
     static constexpr char const * gravityDensitySchemeString()    { return "gravityDensityScheme"; }
@@ -297,6 +304,12 @@ private:
 
   /// damping factor for solution change targets
   real64 m_solutionChangeScalingFactor;
+
+  string_array m_interfaceFaceSetNames;
+
+  stdVector< std::array< std::tuple< constitutive::ConstitutiveBase*, 
+                                     constitutive::ConstitutiveBase*, 
+                                     constitutive::ConstitutiveBase* >, 2 > >  m_constitutitveFluidModels;
 
 
 private:

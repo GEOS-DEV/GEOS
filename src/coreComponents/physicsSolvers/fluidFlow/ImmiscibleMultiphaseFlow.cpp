@@ -94,6 +94,11 @@ ImmiscibleMultiphaseFlow::ImmiscibleMultiphaseFlow( const string & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( 0.2 ).
     setDescription( "Target (absolute) change in phase volume fraction in a time step" );
+
+  this->registerWrapper( viewKeyStruct::interfaceFaceSetNamesString(), 
+                         &m_interfaceFaceSetNames ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Names of the interface face sets" );
 }
 
 void ImmiscibleMultiphaseFlow::postInputInitialization()
@@ -224,6 +229,50 @@ void ImmiscibleMultiphaseFlow::initializePreSubGroups()
       temp.setValues< parallelHostPolicy >( m_inputTemperature );
     } );
   } );
+
+
+
+
+  // ***** Create FaceElements *****
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                                   MeshLevel & meshLevel,
+                                                   string_array const & regionNames )
+  {
+
+    FaceManager const & faceManager = meshLevel.getFaceManager();
+    Group const & faceSetGroup = faceManager.sets();
+
+    ElementRegionManager & elemManager = meshLevel.getElemManager();
+    
+    m_constitutitveFluidModels.resize( m_interfaceFaceSetNames.size() );
+
+    // this is the FaceElement Level
+    for( size_t regionIndex=0; regionIndex < m_interfaceFaceSetNames.size(); ++regionIndex )
+    {
+      string const & faceSetName = m_interfaceFaceSetNames[regionIndex];
+      SortedArrayView< localIndex const > const & faceSet = faceSetGroup.getReference< SortedArray< localIndex > >( faceSetName );
+      SurfaceElementRegion & faceRegion = elemManager.getRegion<SurfaceElementRegion>( faceSetName );
+
+      for( localIndex const faceIndex : faceSet )
+      {
+        localIndex const faceIndices[2] = { faceIndex, faceIndex };
+        faceRegion.addToFractureMesh( 0.0,
+                                      &faceManager,
+                                      faceManager.edgeList().toViewConst(),
+                                      faceIndices );
+      } 
+
+      FaceElementSubRegion const & faceSubRegion = faceRegion.getUniqueSubRegion< FaceElementSubRegion >();
+      FixedToManyElementRelation const & faceElementsToCells = faceSubRegion.getToCellRelation();
+
+      for( localIndex side=0; side < 2; ++side )
+      {
+        // need to get the constitutive data from the cells.
+        m_constitutitveFluidModels[regionIndex][0] = std::make_tuple( nullptr, nullptr, nullptr ) ;
+      }
+    }
+  } );
+
 }
 
 
