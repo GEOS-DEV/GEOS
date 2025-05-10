@@ -148,7 +148,6 @@ std::vector< typename FIXTURE::Base::TestPoint > getTestData()
   return testData;
 }
 
-
 TEST_F( MultiFluidBlackOilTestMass, numericalDerivatives )
 {
   BlackOilFluid * fluid = this->getFluid( this->getFluidName() );

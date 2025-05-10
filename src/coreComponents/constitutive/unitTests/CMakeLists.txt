@@ -16,6 +16,7 @@ set( gtest_geosx_tests
      testLohrenzBrayClarkViscosity.cpp
      testModifiedCamClay.cpp
      testMultiFluidBlackOil.cpp
+     testMultiFluidCO2Brine.cpp
      testMultiFluidDeadOil.cpp
      testMultiFluidSelector.cpp
      testNegativeTwoPhaseFlash.cpp

@@ -152,22 +152,26 @@ testValuesAgainstPreviousImplementation( FluidModel * fluid,
 template< typename FLUID_TYPE, integer NUM_COMP, integer NUM_PHASE >
 template< integer NDIM, typename ... INDICES, integer USD1, integer USD2, integer USD3, typename >
 void FluidModelTest< FLUID_TYPE, NUM_COMP, NUM_PHASE >::testDerivatives( string const propName,
+                                                                         string const testPoint,
                                                                          ArrayView< real64 const, NDIM, USD1 > const & valueArray,
                                                                          ArrayView< real64 const, NDIM+1, USD2 > const & derivArray,
                                                                          ArraySlice< real64 const, 1, USD3 > const & displacements,
+                                                                         real64 const valueScale,
                                                                          string_array const & dofNames,
                                                                          real64 const relTol,
                                                                          real64 const absTol,
                                                                          INDICES const ... indices )
 {
+  real64 const invScale = 1.0 / valueScale;
+
   for( integer idof = 0; idof < numDof; idof++ )
   {
-    real64 const analyticalDerivative = derivArray( 0, 0, indices ..., idof );
+    real64 const analyticalDerivative = derivArray( 0, 0, indices ..., idof ) * invScale;
     real64 numericalDerivative = 0.0;
 
-    real64 centreValue = valueArray( 0, 0, indices ... );
-    real64 rightValue = valueArray( 2*idof+1, 0, indices ... );
-    real64 leftValue = valueArray( 2*idof+2, 0, indices ... );
+    real64 centreValue = valueArray( 0, 0, indices ... ) * invScale;
+    real64 rightValue = valueArray( 2*idof+1, 0, indices ... ) * invScale;
+    real64 leftValue = valueArray( 2*idof+2, 0, indices ... ) * invScale;
 
     real64 const dVr = displacements[2*idof+1];
     real64 const dVl = displacements[2*idof+2];
@@ -193,12 +197,14 @@ void FluidModelTest< FLUID_TYPE, NUM_COMP, NUM_PHASE >::testDerivatives( string 
                                  absTol,
                                  GEOS_FMT(
                                    "\nd{}/d{} failed.\n"
+                                   "Test Point: {}.\n"
                                    "Values: [{}, {}, {}].\n"
                                    "Analytical derivative: {}.\n"
                                    "Numerical derivative: {}",
                                    propName, dofNames[idof],
-                                   leftValue, centreValue, rightValue,
-                                   analyticalDerivative, numericalDerivative ));
+                                   testPoint,
+                                   valueScale*leftValue, valueScale*centreValue, valueScale*rightValue,
+                                   valueScale*analyticalDerivative, valueScale*numericalDerivative ));
   }
 }
 
@@ -238,6 +244,11 @@ void FluidModelTest< FLUID_TYPE, NUM_COMP, NUM_PHASE >::testNumericalDerivatives
       compositionArray( i, ic ) = composition[ic];
     }
   }
+
+  string const testValues = GEOS_FMT( "Pressure: {}, Temperature: {}, Composition: {}",
+                                      pressureArray[0],
+                                      temperatureArray[0],
+                                      compositionArray[0] );
 
   real64 const dP = perturbationLevel * (pressure + perturbationLevel);
   deltaArray[2*Deriv::dP+1] = dP;
@@ -284,36 +295,49 @@ void FluidModelTest< FLUID_TYPE, NUM_COMP, NUM_PHASE >::testNumericalDerivatives
     }
   } );
 
+  // Enthalpy and internal energy values can be quite large and prone to round-off errors when
+  // performing finite difference derivatives. We will therefore scale the values using this
+  // reference enthalpy value to bring them to a more manageable scale.
+  real64 constexpr referenceEnthalpy = 5.0584e5;
+
   for( integer phaseIndex = 0; phaseIndex < numPhase; phaseIndex++ )
   {
     testDerivatives( GEOS_FMT( "Phase fraction ({})", phaseNames[phaseIndex] ),
+                     testValues,
                      fluid->phaseFraction().toViewConst(),
                      fluid->dPhaseFraction().toViewConst(),
                      deltaArray.toSliceConst(),
+                     1.0,
                      dofNames,
                      relTol,
                      absTol,
                      phaseIndex );
     testDerivatives( GEOS_FMT( "Phase density ({})", phaseNames[phaseIndex] ),
+                     testValues,
                      fluid->phaseDensity().toViewConst(),
                      fluid->dPhaseDensity().toViewConst(),
                      deltaArray.toSliceConst(),
+                     1.0,
                      dofNames,
                      relTol,
                      absTol,
                      phaseIndex );
     testDerivatives( GEOS_FMT( "Phase mass density ({})", phaseNames[phaseIndex] ),
+                     testValues,
                      fluid->phaseMassDensity().toViewConst(),
                      fluid->dPhaseMassDensity().toViewConst(),
                      deltaArray.toSliceConst(),
+                     1.0,
                      dofNames,
                      relTol,
                      absTol,
                      phaseIndex );
     testDerivatives( GEOS_FMT( "Phase viscosity ({})", phaseNames[phaseIndex] ),
+                     testValues,
                      fluid->phaseViscosity().toViewConst(),
                      fluid->dPhaseViscosity().toViewConst(),
                      deltaArray.toSliceConst(),
+                     1.0,
                      dofNames,
                      relTol,
                      absTol,
@@ -321,17 +345,21 @@ void FluidModelTest< FLUID_TYPE, NUM_COMP, NUM_PHASE >::testNumericalDerivatives
     if( isThermal )
     {
       testDerivatives( GEOS_FMT( "Phase enthalpy ({})", phaseNames[phaseIndex] ),
+                       testValues,
                        fluid->phaseEnthalpy().toViewConst(),
                        fluid->dPhaseEnthalpy().toViewConst(),
                        deltaArray.toSliceConst(),
+                       referenceEnthalpy,
                        dofNames,
                        relTol,
                        absTol,
                        phaseIndex );
       testDerivatives( GEOS_FMT( "Phase internal energy ({})", phaseNames[phaseIndex] ),
+                       testValues,
                        fluid->phaseInternalEnergy().toViewConst(),
                        fluid->dPhaseInternalEnergy().toViewConst(),
                        deltaArray.toSliceConst(),
+                       referenceEnthalpy,
                        dofNames,
                        relTol,
                        absTol,
@@ -340,9 +368,11 @@ void FluidModelTest< FLUID_TYPE, NUM_COMP, NUM_PHASE >::testNumericalDerivatives
     for( integer compIndex = 0; compIndex < numComp; compIndex++ )
     {
       testDerivatives( GEOS_FMT( "Phase composition ({} {})", phaseNames[phaseIndex], componentNames[compIndex] ),
+                       testValues,
                        fluid->phaseCompFraction().toViewConst(),
                        fluid->dPhaseCompFraction().toViewConst(),
                        deltaArray.toSliceConst(),
+                       1.0,
                        dofNames,
                        relTol,
                        absTol,
@@ -351,9 +381,11 @@ void FluidModelTest< FLUID_TYPE, NUM_COMP, NUM_PHASE >::testNumericalDerivatives
     }
   }
   testDerivatives( "Total density",
+                   testValues,
                    fluid->totalDensity().toViewConst(),
                    fluid->dTotalDensity().toViewConst(),
                    deltaArray.toSliceConst(),
+                   1.0,
                    dofNames,
                    relTolerance,
                    absTolerance );

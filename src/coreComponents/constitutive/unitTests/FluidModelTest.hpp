@@ -217,9 +217,12 @@ protected:
    *          the input primary variables. The analytical derivatives are provided in the @c derivArray array.
    * @tparam NDIM - the dimension of the value array
    * @param propName - the name of the property whose derivatives are being tests
+   * @param testValues - a description of the test point (pressure, temperature and composition)
    * @param valueArray - array of calculated values including values at perturbed
    * @param derivArray - array of calculated analytical derivatives
    * @param displacements - values of displacements at each of the test points
+   * @param valueScale - a scale to use on the values before calculating the finite differences to reduce
+   *                     round off error.
    * @param dofNames - names for the degrees of freedom variables (for debug)
    * @param relTol - the relative tolerance to use in the check
    * @param absTol - the absolute tolerance to use in the check
@@ -229,9 +232,11 @@ protected:
   template< integer NDIM, typename ... INDICES, integer USD1, integer USD2, integer USD3,
             typename=std::enable_if_t< sizeof ... ( INDICES ) == NDIM-2 > >
   static void testDerivatives( string const propName,
+                               string const testValues,
                                ArrayView< real64 const, NDIM, USD1 > const & valueArray,
                                ArrayView< real64 const, NDIM+1, USD2 > const & derivArray,
                                ArraySlice< real64 const, 1, USD3 > const & displacements,
+                               real64 const valueScale,
                                string_array const & dofNames,
                                real64 const relTol,
                                real64 const absTol,
