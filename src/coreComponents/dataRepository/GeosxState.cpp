@@ -128,7 +128,14 @@ bool GeosxState::initializeDataRepository()
 
   GEOS_THROW_IF_NE( m_state, State::UNINITIALIZED, std::logic_error );
 
-  getProblemManager().parseCommandLineInput();
+  try
+  {
+    getProblemManager().parseCommandLineInput();
+  }
+  catch(const std::exception& e)
+  {
+    GEOS_LOG( e.what() );
+  }
 
   if( !getProblemManager().getSchemaFileName().empty() )
   {
@@ -137,8 +144,23 @@ bool GeosxState::initializeDataRepository()
     return false;
   }
 
-  getProblemManager().parseInputFile();
-  getProblemManager().problemSetup();
+  try
+  {
+    getProblemManager().parseInputFile();
+  }
+  catch(const std::exception& e)
+  {
+    GEOS_LOG( e.what() );
+  }
+  
+  try
+  {
+    getProblemManager().problemSetup();
+  }
+  catch(const std::exception& e)
+  {
+    GEOS_LOG( e.what() );
+  }
 
   m_state = State::INITIALIZED;
 
