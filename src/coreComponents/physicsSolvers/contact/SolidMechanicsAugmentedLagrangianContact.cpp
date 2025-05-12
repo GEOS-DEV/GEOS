@@ -386,6 +386,22 @@ void SolidMechanicsAugmentedLagrangianContact::assembleSystem( real64 const time
   //parallel_matrix.create( localMatrix.toViewConst(), dofManager.numLocalDofs(), MPI_COMM_GEOS );
   //parallel_matrix.write("mech.mtx");
 
+  assembleContact( time, dt, domain, dofManager, localMatrix, localRhs );
+
+}
+
+void SolidMechanicsAugmentedLagrangianContact::assembleContact( real64 const time,
+                                                                real64 const dt,
+                                                                DomainPartition & domain,
+                                                                DofManager const & dofManager,
+                                                                CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                                arrayView1d< real64 > const & localRhs )
+{
+
+  GEOS_MARK_FUNCTION;
+
+  GEOS_UNUSED_VAR( time );
+
   // Loop for assembling contributes from interface elements (Aut*eps^-1*Atu and Aub*eps^-1*Abu)
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const & meshName,
                                                                 MeshLevel & mesh,

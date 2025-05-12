@@ -113,6 +113,94 @@ private:
   struct viewKeyStruct : public Base::viewKeyStruct
   {};
 
+  static const localIndex m_maxFaceNodes=11; // Maximum number of nodes on a contact face
+
+  /**
+   * @Brief assemble the element-based contributions
+   * @param time_n the current time
+   * @param dt the time step
+   * @param domain the physical domain object
+   * @param dofManager degree-of-freedom manager associated with the linear system
+   * @param localMatrix the local system matrix
+   * @param localRhs the local system right-hand side vector
+   */
+  void assembleElementBasedContributions( real64 const time_n,
+                                          real64 const dt,
+                                          DomainPartition & domain,
+                                          DofManager const & dofManager,
+                                          CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                          arrayView1d< real64 > const & localRhs );
+
+  virtual void assembleCouplingTerms( real64 const time_n,
+                                      real64 const dt,
+                                      DomainPartition const & domain,
+                                      DofManager const & dofManager,
+                                      CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                      arrayView1d< real64 > const & localRhs ) override final;
+
+  void assembleForceResidualDerivativeWrtPressure( string const & meshName,
+                                                   MeshLevel const & mesh,
+                                                   arrayView1d< string const > const & regionNames,
+                                                   DofManager const & dofManager,
+                                                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                   arrayView1d< real64 > const & localRhs );
+
+  void assembleFluidMassResidualDerivativeWrtDisplacement( MeshLevel const & mesh,
+                                                           arrayView1d< string const > const & regionNames,
+                                                           DofManager const & dofManager,
+                                                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                           arrayView1d< real64 > const & localRhs );
+
+  /**
+   * @Brief add the nnz induced by the flux-aperture coupling
+   * @param domain the physical domain object
+   * @param dofManager degree-of-freedom manager associated with the linear system
+   * @param rowLenghts the nnz in each row
+   */
+  void addTransmissibilityCouplingNNZ( DomainPartition const & domain,
+                                       DofManager const & dofManager,
+                                       arrayView1d< localIndex > const & rowLengths ) const;
+
+  /**
+   * @Brief add the sparsity pattern induced by the flux-aperture coupling
+   * @param domain the physical domain object
+   * @param dofManager degree-of-freedom manager associated with the linear system
+   * @param pattern the sparsity pattern
+   */
+  void addTransmissibilityCouplingPattern( DomainPartition const & domain,
+                                           DofManager const & dofManager,
+                                           SparsityPatternView< globalIndex > const & pattern ) const;
+
+  /**
+   * @brief Set up the Dflux_dApertureMatrix object
+   *
+   * @param domain
+   * @param dofManager
+   * @param localMatrix
+   */
+  void setUpDflux_dApertureMatrix( DomainPartition & domain,
+                                   DofManager const & dofManager,
+                                   CRSMatrix< real64, globalIndex > & localMatrix );
+
+  std::unique_ptr< CRSMatrix< real64, localIndex > > & getRefDerivativeFluxResidual_dAperture()
+  {
+    return m_derivativeFluxResidual_dAperture;
+  }
+
+  CRSMatrixView< real64, localIndex const > getDerivativeFluxResidual_dNormalJump()
+  {
+    return m_derivativeFluxResidual_dAperture->toViewConstSizes();
+  }
+
+  CRSMatrixView< real64 const, localIndex const > getDerivativeFluxResidual_dNormalJump() const
+  {
+    return m_derivativeFluxResidual_dAperture->toViewConst();
+  }
+
+  std::unique_ptr< CRSMatrix< real64, localIndex > > m_derivativeFluxResidual_dAperture;
+
+  string const m_pressureKey = SinglePhaseBase::viewKeyStruct::elemDofFieldString();
+
 };
 
 } /* namespace geos */
