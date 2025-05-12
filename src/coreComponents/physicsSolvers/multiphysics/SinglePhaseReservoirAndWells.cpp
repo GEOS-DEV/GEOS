@@ -269,12 +269,12 @@ assembleCouplingTerms( real64 const time_n,
       elemManager.constructArrayViewAccessor< globalIndex, 1 >( resDofKey );
     ElementRegionManager::ElementViewConst< arrayView1d< globalIndex const > > const resDofNumber =
       resDofNumberAccessor.toNestedViewConst();
-  
-      // loop over the wells
+
+    // loop over the wells
     elemManager.forElementSubRegions< WellElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                 WellElementSubRegion const & subRegion )
     {
-    
+
       PerforationData const * const perforationData = subRegion.getPerforationData();
 
       WellControls const & wellControls = Base::wellSolver()->getWellControls( subRegion );

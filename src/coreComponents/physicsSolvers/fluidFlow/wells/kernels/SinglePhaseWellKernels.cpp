@@ -318,7 +318,7 @@ PressureRelationKernel::
     wellControls.getReference< real64 >( SinglePhaseWell::viewKeyStruct::currentVolRateString() );
   arrayView1d< real64 const > const & dCurrentVolRate =
     wellControls.getReference< array1d< real64 > >( SinglePhaseWell::viewKeyStruct::dCurrentVolRateString() );
-  
+
   RAJA::ReduceMax< parallelDeviceReduce, localIndex > switchControl( 0 );
 
   // loop over the well elements to compute the pressure relations between well elements

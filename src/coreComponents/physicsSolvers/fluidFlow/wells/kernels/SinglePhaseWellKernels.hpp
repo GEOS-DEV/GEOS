@@ -274,7 +274,7 @@ struct PerforationKernel
           arrayView1d< localIndex const > const & resElementSubRegion,
           arrayView1d< localIndex const > const & resElementIndex,
           arrayView1d< real64 > const & perfRate,
-          arrayView3d< real64 > const & dPerfRate);
+          arrayView3d< real64 > const & dPerfRate );
 
 };
 

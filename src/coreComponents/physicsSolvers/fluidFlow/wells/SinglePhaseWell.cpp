@@ -616,33 +616,33 @@ void SinglePhaseWell::assembleFluxTerms( real64 const & time_n,
       string const wellDofKey = dofManager.getKey( wellElementDofName() );
 
 
-        if( isThermal() )
-        {
-          string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
-          SingleFluidBase const & fluid = subRegion.getConstitutiveModel< SingleFluidBase >( fluidName );
-          thermalSinglePhaseWellKernels::
-            FaceBasedAssemblyKernelFactory::
-            createAndLaunch< parallelDevicePolicy<> >( dt,
-                                                       dofManager.rankOffset(),
-                                                       wellDofKey,
-                                                       wellControls,
-                                                       subRegion,
-                                                       fluid,
-                                                       localMatrix,
-                                                       localRhs );
-        }
-        else
-        {
-          singlePhaseWellKernels::
-            FaceBasedAssemblyKernelFactory::
-            createAndLaunch< parallelDevicePolicy<> >( dt,
-                                                       dofManager.rankOffset(),
-                                                       wellDofKey,
-                                                       wellControls,
-                                                       subRegion,
-                                                       localMatrix,
-                                                       localRhs );
-        }
+      if( isThermal() )
+      {
+        string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
+        SingleFluidBase const & fluid = subRegion.getConstitutiveModel< SingleFluidBase >( fluidName );
+        thermalSinglePhaseWellKernels::
+          FaceBasedAssemblyKernelFactory::
+          createAndLaunch< parallelDevicePolicy<> >( dt,
+                                                     dofManager.rankOffset(),
+                                                     wellDofKey,
+                                                     wellControls,
+                                                     subRegion,
+                                                     fluid,
+                                                     localMatrix,
+                                                     localRhs );
+      }
+      else
+      {
+        singlePhaseWellKernels::
+          FaceBasedAssemblyKernelFactory::
+          createAndLaunch< parallelDevicePolicy<> >( dt,
+                                                     dofManager.rankOffset(),
+                                                     wellDofKey,
+                                                     wellControls,
+                                                     subRegion,
+                                                     localMatrix,
+                                                     localRhs );
+      }
 
     } );
 
