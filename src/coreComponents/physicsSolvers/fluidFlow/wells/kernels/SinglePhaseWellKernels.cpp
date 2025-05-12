@@ -96,11 +96,8 @@ ControlEquationHelper::
            real64 const & targetRate,
            real64 const & currentBHP,
            arrayView1d< real64 const > const & dCurrentBHP,
-           real64 const & dCurrentBHP_dPres,
            real64 const & currentVolRate,
            arrayView1d< real64 const > const & dCurrentTotalVolRate,
-           real64 const & dCurrentVolRate_dPres,
-           real64 const & dCurrentVolRate_dRate,
            globalIndex const dofNumber,
            CRSMatrixView< real64, globalIndex const > const & localMatrix,
            arrayView1d< real64 > const & localRhs )
@@ -317,19 +314,11 @@ PressureRelationKernel::
   arrayView1d< real64 const > const & dCurrentBHP =
     wellControls.getReference< array1d< real64 > >( SinglePhaseWell::viewKeyStruct::dCurrentBHPString() );
 
-  real64 const & dCurrentBHP_dPres =
-    wellControls.getReference< real64 >( SinglePhaseWell::viewKeyStruct::dCurrentBHP_dPresString() );
-
   real64 const & currentVolRate =
     wellControls.getReference< real64 >( SinglePhaseWell::viewKeyStruct::currentVolRateString() );
   arrayView1d< real64 const > const & dCurrentVolRate =
     wellControls.getReference< array1d< real64 > >( SinglePhaseWell::viewKeyStruct::dCurrentVolRateString() );
-
-  real64 const & dCurrentVolRate_dPres =
-    wellControls.getReference< real64 >( SinglePhaseWell::viewKeyStruct::dCurrentVolRate_dPresString() );
-  real64 const & dCurrentVolRate_dRate =
-    wellControls.getReference< real64 >( SinglePhaseWell::viewKeyStruct::dCurrentVolRate_dRateString() );
-
+  
   RAJA::ReduceMax< parallelDeviceReduce, localIndex > switchControl( 0 );
 
   // loop over the well elements to compute the pressure relations between well elements
@@ -359,11 +348,8 @@ PressureRelationKernel::
                                                     targetRate,
                                                     currentBHP,
                                                     dCurrentBHP,
-                                                    dCurrentBHP_dPres,
                                                     currentVolRate,
                                                     dCurrentVolRate,
-                                                    dCurrentVolRate_dPres,
-                                                    dCurrentVolRate_dRate,
                                                     wellElemDofNumber[iwelemControl],
                                                     localMatrix,
                                                     localRhs );
@@ -422,266 +408,6 @@ PressureRelationKernel::
   } );
   return switchControl.get();
 }
-
-/******************************** PerforationKernel ********************************/
-
-template< integer IS_THERMAL >
-GEOS_HOST_DEVICE
-inline
-void
-PerforationKernel::
-  compute( real64 const & resPressure,
-           real64 const & resDensity,
-           arraySlice1d< real64 const > const & dResDensity,
-           real64 const & dResDensity_dPres,
-           real64 const & resViscosity,
-           arraySlice1d< real64 const > const & dResViscosity,
-           real64 const & dResViscosity_dPres,
-           real64 const & wellElemGravCoef,
-           real64 const & wellElemPressure,
-           real64 const & wellElemDensity,
-           arraySlice1d< real64 const > const & dWellElemDensity,
-           real64 const & dWellElemDensity_dPres,
-           real64 const & wellElemViscosity,
-           arraySlice1d< real64 const > const & dWellElemViscosity,
-           real64 const & dWellElemViscosity_dPres,
-           real64 const & perfGravCoef,
-           real64 const & trans,
-           real64 & perfRate,
-           arraySlice2d< real64 > const & dPerfRate,
-           arraySlice1d< real64 > const & dPerfRate_dPres )
-{
-
-  using DerivOffset = constitutive::singlefluid::DerivativeOffsetC< IS_THERMAL >;
-
-  // local working variables and arrays
-  real64 pressure[2]{};
-  real64 dPressure[2][DerivOffset::nDer]{};
-
-  real64 dPressure_dP[2]{};  // tjb delete
-  real64 multiplier[2]{};
-
-  perfRate = 0.0;
-  for( integer i = 0; i < 2; ++i )
-  {
-    for( integer j=0; j<DerivOffset::nDer; j++ )
-    {
-      dPerfRate[i][j] = 0.0;
-    }
-  }
-
-  dPerfRate_dPres[0] = 0.0;  // tjb delete
-  dPerfRate_dPres[1] = 0.0;  // tjb delete
-
-  // 1) Reservoir side
-  // get reservoir variables
-  pressure[TAG::RES] = resPressure;
-  dPressure_dP[TAG::RES] = 1;  // tjb delete
-  dPressure[TAG::RES][DerivOffset::dP] = 1.0;
-
-  // TODO: add a buoyancy term for the reservoir side here
-
-  // multiplier for reservoir side in the flux
-  multiplier[TAG::RES] = 1;
-
-  // 2) Well side
-
-
-  // get well variables
-  pressure[TAG::WELL] = wellElemPressure;
-  dPressure[TAG::WELL][DerivOffset::dP] = 1.0;
-  dPressure_dP[TAG::WELL] = 1.0; // tjb delete
-
-  real64 const gravD = ( perfGravCoef - wellElemGravCoef );
-  pressure[TAG::WELL]     += wellElemDensity * gravD;
-  dPressure[TAG::WELL][DerivOffset::dP] += dWellElemDensity[DerivOffset::dP] * gravD;
-  if constexpr (IS_THERMAL)
-  {
-    dPressure[TAG::WELL][DerivOffset::dT] = dWellElemDensity[DerivOffset::dT] * gravD;
-  }
-  dPressure_dP[TAG::WELL] += dWellElemDensity_dPres * gravD; // tjb remove
-
-  // multiplier for well side in the flux
-  multiplier[TAG::WELL] = -1;
-
-  // compute potential difference
-  real64 potDif = 0.0;
-  for( localIndex i = 0; i < 2; ++i )
-  {
-    potDif += multiplier[i] * trans * pressure[i];
-    dPerfRate_dPres[i] = multiplier[i] * trans * dPressure_dP[i];// tjb remove
-    for( integer j=0; j<DerivOffset::nDer; j++ )
-    {
-      dPerfRate[i][j] = multiplier[i] * trans * dPressure[i][j];
-    }
-  }
-
-
-  // choose upstream cell based on potential difference
-  localIndex const k_up = (potDif >= 0) ? TAG::RES : TAG::WELL;
-
-  // compute upstream density, viscosity, and mobility
-  real64 densityUp       = 0.0;
-  real64 viscosityUp     = 0.0;
-  real64 dDensityUp[DerivOffset::nDer]{};
-  real64 dViscosityUp[DerivOffset::nDer]{};
-  for( integer j=0; j<DerivOffset::nDer; j++ )
-  {
-    dDensityUp[j]=0.0;
-    dViscosityUp[j]=0.0;
-  }
-  real64 dDensityUp_dP   = 0.0;  // tjb remove
-  real64 dViscosityUp_dP = 0.0; // tjb remove
-
-  // upwinding the variables
-  if( k_up == TAG::RES ) // use reservoir vars
-  {
-    densityUp     = resDensity;
-    viscosityUp     = resViscosity;
-    for( integer j=0; j<DerivOffset::nDer; j++ )
-    {
-      dDensityUp[j] = dResDensity[j];
-      dViscosityUp[j] = dResViscosity[j];
-    }
-    dDensityUp_dP = dResDensity_dPres; // tjb remove
-    dViscosityUp_dP = dResViscosity_dPres; // tjb remove
-  }
-  else // use well vars
-  {
-    densityUp = wellElemDensity;
-    viscosityUp = wellElemViscosity;
-    for( integer j=0; j<DerivOffset::nDer; j++ )
-    {
-      dDensityUp[j] = dWellElemDensity[j];
-      dViscosityUp[j] = dWellElemViscosity[j];
-    }
-    dDensityUp_dP = dWellElemDensity_dPres;  // tjb remove
-    dViscosityUp_dP = dWellElemViscosity_dPres;  // tjb remove
-  }
-
-  // compute mobility
-  real64 const mobilityUp     = densityUp / viscosityUp;
-  real64 dMobilityUp[DerivOffset::nDer]{};
-  for( integer j=0; j<DerivOffset::nDer; j++ )
-  {
-    dMobilityUp[j] = dDensityUp[j] / viscosityUp
-                     - mobilityUp / viscosityUp * dViscosityUp[j];
-  }
-  real64 const dMobilityUp_dP = dDensityUp_dP / viscosityUp
-                                - mobilityUp / viscosityUp * dViscosityUp_dP;  // tjb remove
-
-  perfRate = mobilityUp * potDif;
-  for( localIndex ke = 0; ke < 2; ++ke )
-  {
-    for( integer j=0; j<DerivOffset::nDer; j++ )
-    {
-      dPerfRate[ke][j]  *= mobilityUp;
-    }
-    dPerfRate_dPres[ke] *= mobilityUp; // tjb remove
-  }
-  for( integer j=0; j<DerivOffset::nDer; j++ )
-  {
-    dPerfRate[k_up][j]  += dMobilityUp[j]* potDif;
-  }
-  dPerfRate_dPres[k_up] += dMobilityUp_dP * potDif; // tjb remove
-  assert( fabs( dPerfRate_dPres[k_up] -dPerfRate[k_up][DerivOffset::dP] ) < FLT_EPSILON );
-  for( localIndex ke = 0; ke < 2; ++ke )
-  {
-    assert( fabs( dPerfRate_dPres[ke] -dPerfRate[ke][DerivOffset::dP] ) < FLT_EPSILON );
-  }
-}
-#define INST_PerforationKernel( IS_THERMAL ) \
-  template  \
-  void \
-  PerforationKernel:: \
-    launch< IS_THERMAL >( localIndex const size, \
-                          ElementViewConst< arrayView1d< real64 const > > const & resPressure, \
-                          ElementViewConst< arrayView2d< real64 const, constitutive::singlefluid::USD_FLUID > > const & resDensity, \
-                          ElementViewConst< arrayView3d< real64 const, constitutive::singlefluid::USD_FLUID_DER > > const & dResDensity, \
-                          ElementViewConst< arrayView2d< real64 const, constitutive::singlefluid::USD_FLUID > > const & resViscosity, \
-                          ElementViewConst< arrayView3d< real64 const, constitutive::singlefluid::USD_FLUID_DER > > const & dResViscosity, \
-                          arrayView1d< real64 const > const & wellElemGravCoef, \
-                          arrayView1d< real64 const > const & wellElemPressure, \
-                          arrayView2d< real64 const, constitutive::singlefluid::USD_FLUID > const & wellElemDensity, \
-                          arrayView3d< real64 const, constitutive::singlefluid::USD_FLUID_DER > const & dWellElemDensity, \
-                          arrayView2d< real64 const, constitutive::singlefluid::USD_FLUID > const & wellElemViscosity, \
-                          arrayView3d< real64 const, constitutive::singlefluid::USD_FLUID_DER > const & dWellElemViscosity, \
-                          arrayView1d< real64 const > const & perfGravCoef, \
-                          arrayView1d< localIndex const > const & perfWellElemIndex, \
-                          arrayView1d< real64 const > const & perfTransmissibility, \
-                          arrayView1d< localIndex const > const & resElementRegion, \
-                          arrayView1d< localIndex const > const & resElementSubRegion, \
-                          arrayView1d< localIndex const > const & resElementIndex, \
-                          arrayView1d< real64 > const & perfRate, \
-                          arrayView3d< real64 > const & dPerfRate, \
-                          arrayView2d< real64 > const & dPerfRate_dPres )
-
-INST_PerforationKernel( 0 );
-INST_PerforationKernel( 1 );
-
-
-template< integer IS_THERMAL >
-void
-PerforationKernel::
-  launch( localIndex const size,
-          ElementViewConst< arrayView1d< real64 const > > const & resPressure,
-          ElementViewConst< arrayView2d< real64 const, constitutive::singlefluid::USD_FLUID > > const & resDensity,
-          ElementViewConst< arrayView3d< real64 const, constitutive::singlefluid::USD_FLUID_DER > > const & dResDensity,
-          ElementViewConst< arrayView2d< real64 const, constitutive::singlefluid::USD_FLUID > > const & resViscosity,
-          ElementViewConst< arrayView3d< real64 const, constitutive::singlefluid::USD_FLUID_DER > > const & dResViscosity,
-          arrayView1d< real64 const > const & wellElemGravCoef,
-          arrayView1d< real64 const > const & wellElemPressure,
-          arrayView2d< real64 const, constitutive::singlefluid::USD_FLUID > const & wellElemDensity,
-          arrayView3d< real64 const, constitutive::singlefluid::USD_FLUID_DER > const & dWellElemDensity,
-          arrayView2d< real64 const, constitutive::singlefluid::USD_FLUID > const & wellElemViscosity,
-          arrayView3d< real64 const, constitutive::singlefluid::USD_FLUID_DER > const & dWellElemViscosity,
-          arrayView1d< real64 const > const & perfGravCoef,
-          arrayView1d< localIndex const > const & perfWellElemIndex,
-          arrayView1d< real64 const > const & perfTransmissibility,
-          arrayView1d< localIndex const > const & resElementRegion,
-          arrayView1d< localIndex const > const & resElementSubRegion,
-          arrayView1d< localIndex const > const & resElementIndex,
-          arrayView1d< real64 > const & perfRate,
-          arrayView3d< real64 > const & dPerfRate,
-          arrayView2d< real64 > const & dPerfRate_dPres )
-{
-  using Deriv = constitutive::singlefluid::DerivativeOffset;
-  forAll< parallelDevicePolicy<> >( size, [=] GEOS_HOST_DEVICE ( localIndex const iperf )
-  {
-
-    // get the reservoir (sub)region and element indices
-    localIndex const er  = resElementRegion[iperf];
-    localIndex const esr = resElementSubRegion[iperf];
-    localIndex const ei  = resElementIndex[iperf];
-
-    // get the local index of the well element
-    localIndex const iwelem = perfWellElemIndex[iperf];
-
-    compute< IS_THERMAL >( resPressure[er][esr][ei],
-                           resDensity[er][esr][ei][0],
-                           dResDensity[er][esr][ei][0],
-                           dResDensity[er][esr][ei][0][Deriv::dP],
-                           resViscosity[er][esr][ei][0],
-                           dResViscosity[er][esr][ei][0],
-                           dResViscosity[er][esr][ei][0][Deriv::dP],
-                           wellElemGravCoef[iwelem],
-                           wellElemPressure[iwelem],
-                           wellElemDensity[iwelem][0],
-                           dWellElemDensity[iwelem][0],
-                           dWellElemDensity[iwelem][0][Deriv::dP],
-                           wellElemViscosity[iwelem][0],
-                           dWellElemViscosity[iwelem][0],
-                           dWellElemViscosity[iwelem][0][Deriv::dP],
-                           perfGravCoef[iperf],
-                           perfTransmissibility[iperf],
-                           perfRate[iperf],
-                           dPerfRate[iperf],
-                           dPerfRate_dPres[iperf] );
-
-
-  } );
-}
-
 
 /******************************** AccumulationKernel ********************************/
 

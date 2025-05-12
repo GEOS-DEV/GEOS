@@ -124,7 +124,6 @@ public:
       real64 localEnergyAccumDT;
       if( iwelem == m_iwelemControl && !m_isProducer )
       {
-        integer const numRows = 1+ IS_THERMAL;
         // For top segment energy balance eqn replaced with  T(n+1) - T = 0
         // No other energy balance derivatives
         // Assumption is global index == 0 is top segment with fixed temp BC
@@ -306,33 +305,32 @@ public:
   void computeFlux( localIndex const iwelem ) const
   {
     Base::computeFlux ( iwelem, [&] ( localIndex const & iwelemNext
-                                      , localIndex const & iwelemUp
                                       , real64 const & currentConnRate )
     {
-
+      std::cout << " connrate " << currentConnRate << " dt " << m_dt << std::endl;
       if( iwelemNext < 0 )
       {
-        globalIndex dofRowIndices  =  m_wellElemDofNumber[iwelemUp] + WJ_ROFFSET::ENERGYBAL - m_rankOffset;
+        globalIndex dofRowIndices  =  m_wellElemDofNumber[iwelem] + WJ_ROFFSET::ENERGYBAL - m_rankOffset;
 
         if( dofRowIndices  >= 0 && dofRowIndices < m_localMatrix.numRows() )
         {
-          globalIndex dofColIndices_dRate =   m_wellElemDofNumber[iwelemUp] + WJ_COFFSET::dQ;
+          globalIndex dofColIndices_dRate =   m_wellElemDofNumber[iwelem] + WJ_COFFSET::dQ;
           globalIndex dofColIndices[FLUID_PROP_COFFSET::nDer]{};
-          dofColIndices[0]= m_wellElemDofNumber[iwelemUp] + WJ_COFFSET::dP;
-          dofColIndices[1]= m_wellElemDofNumber[iwelemUp] + WJ_COFFSET::dT;
+          dofColIndices[0]= m_wellElemDofNumber[iwelem] + WJ_COFFSET::dP;
+          dofColIndices[1]= m_wellElemDofNumber[iwelem] + WJ_COFFSET::dT;
 
           real64 localEnergyFlux[1]{};
           real64 localEnergyFluxJacobian_dQ[1]{};
           real64 localEnergyFluxJacobian[numDof]{};
 
-          real64 eflux = -m_dt * m_enthalpy[iwelemUp][0];
+          real64 eflux = -m_dt * m_enthalpy[iwelem][0];
           localEnergyFlux[0]= eflux * currentConnRate;
-          localEnergyFluxJacobian_dQ[0] =   -m_dt *m_dEnthalpy[iwelemUp][0];
-          localEnergyFluxJacobian[FLUID_PROP_COFFSET::dP] =  eflux * currentConnRate * m_dEnthalpy[iwelemUp][0][FLUID_PROP_COFFSET::dP];
-          localEnergyFluxJacobian[FLUID_PROP_COFFSET::dT] =  eflux * currentConnRate * m_dEnthalpy[iwelemUp][0][FLUID_PROP_COFFSET::dT];
+          localEnergyFluxJacobian_dQ[0] =   -m_dt *m_enthalpy[iwelem][0];
+          localEnergyFluxJacobian[FLUID_PROP_COFFSET::dP] =  -m_dt  * currentConnRate * m_dEnthalpy[iwelem][0][FLUID_PROP_COFFSET::dP];
+          localEnergyFluxJacobian[FLUID_PROP_COFFSET::dT] =  -m_dt  * currentConnRate * m_dEnthalpy[iwelem][0][FLUID_PROP_COFFSET::dT];
           if( !m_isProducer && m_globalWellElementIndex[iwelem] == 0 )
           {
-            eflux= 0.0;
+            localEnergyFlux[0]= 0.0;
             localEnergyFluxJacobian_dQ[0]  = 0.0;
             localEnergyFluxJacobian[FLUID_PROP_COFFSET::dP] = 0.0;
             localEnergyFluxJacobian[FLUID_PROP_COFFSET::dT] = 0.0;
@@ -340,18 +338,18 @@ public:
 
           m_localMatrix.template addToRow< parallelDeviceAtomic >( dofRowIndices,
                                                                    &dofColIndices_dRate,
-                                                                   localEnergyFluxJacobian_dQ[0],
+                                                                   localEnergyFluxJacobian_dQ,
                                                                    1 );
           m_localMatrix.template addToRowBinarySearchUnsorted< parallelDeviceAtomic >( dofRowIndices,
                                                                                        dofColIndices,
-                                                                                       localEnergyFluxJacobian[0],
+                                                                                       localEnergyFluxJacobian,
                                                                                        FLUID_PROP_COFFSET::nDer );
           RAJA::atomicAdd( parallelDeviceAtomic{}, &m_localRhs[dofRowIndices], localEnergyFlux[0] );
         }
       }
       else
       {
-        globalIndex row_current = m_wellElemDofNumber[iwelemUp] + WJ_ROFFSET::ENERGYBAL   - m_rankOffset;
+        globalIndex row_current = m_wellElemDofNumber[iwelem] + WJ_ROFFSET::ENERGYBAL   - m_rankOffset;
         globalIndex row_next = m_wellElemDofNumber[iwelemNext] + WJ_ROFFSET::ENERGYBAL   - m_rankOffset;
 
         // Setup Jacobian global row indicies
@@ -362,29 +360,36 @@ public:
 
         // Setup Jacobian global col indicies  ( Mapping from local jac order to well jac order)
         globalIndex dofColIndices[FLUID_PROP_COFFSET::nDer]{};
-        dofColIndices[0]= m_wellElemDofNumber[iwelemUp] + WJ_COFFSET::dP;
-        dofColIndices[1]= m_wellElemDofNumber[iwelemUp] + WJ_COFFSET::dT;
+        dofColIndices[0]= m_wellElemDofNumber[iwelem] + WJ_COFFSET::dP;
+        dofColIndices[1]= m_wellElemDofNumber[iwelem] + WJ_COFFSET::dT;
 
-        globalIndex dofColIndices_dRate =  m_wellElemDofNumber[iwelemUp]   + WJ_COFFSET::dQ;
+        globalIndex dofColIndices_dRate =  m_wellElemDofNumber[iwelem]   + WJ_COFFSET::dQ;
 
         real64 localEnergyFlux[2]{};
-        real64 localEnergyFluxJacobian_dQ[2]{};
-        real64 localEnergyFluxJacobian[2*numDof]{};
+        real64 localEnergyFluxJacobian_dQ[2][1]{};
+        real64 localEnergyFluxJacobian[2][numDof]{};
 
-        real64 eflux    =  m_dt * m_enthalpy[iwelemUp][0];
-        real64 eflux_dq =  m_dt * m_dEnthalpy[iwelemUp][0];
-        real64 dprop_dp =  eflux * currentConnRate  *m_dEnthalpy[iwelemUp][0][FLUID_PROP_COFFSET::dP];
-        real64 dprop_dt =  eflux * currentConnRate * m_dEnthalpy[iwelemUp][0][FLUID_PROP_COFFSET::dT];
+        real64 eflux    =  m_dt * m_enthalpy[iwelem][0];
+        real64 eflux_dq =  m_dt * m_enthalpy[iwelem][0];
+        real64 dprop_dp =  m_dt * currentConnRate  *m_dEnthalpy[iwelem][0][FLUID_PROP_COFFSET::dP];
+        real64 dprop_dt =  m_dt * currentConnRate * m_dEnthalpy[iwelem][0][FLUID_PROP_COFFSET::dT];
 
-        localEnergyFlux[TAG::NEXT   ]   =   eflux * currentConnRate;
+        if( !m_isProducer  && m_globalWellElementIndex[iwelemNext] == 0 )
+        {
+          localEnergyFlux[TAG::NEXT   ]   =   0.0;
+          localEnergyFluxJacobian_dQ [TAG::NEXT   ][0]  =   0.0;
+          localEnergyFluxJacobian[TAG::NEXT ][FLUID_PROP_COFFSET::dP] = 0.0;
+          localEnergyFluxJacobian[TAG::NEXT][FLUID_PROP_COFFSET::dT]  = 0.0;
+        }
+        else
+        {
+          localEnergyFlux[TAG::NEXT   ]   =   eflux * currentConnRate;
+          localEnergyFluxJacobian_dQ [TAG::NEXT   ][0]  =   eflux_dq;
+          localEnergyFluxJacobian[TAG::NEXT ][FLUID_PROP_COFFSET::dP] = dprop_dp;
+          localEnergyFluxJacobian[TAG::NEXT][FLUID_PROP_COFFSET::dT]  = dprop_dt;
+        }
         localEnergyFlux[TAG::CURRENT  ] = -eflux * currentConnRate;
-
-        localEnergyFluxJacobian_dQ [TAG::NEXT   ]  =   eflux_dq;
-        localEnergyFluxJacobian_dQ [TAG::CURRENT]  =  -eflux_dq;
-
-        localEnergyFluxJacobian[TAG::NEXT ][FLUID_PROP_COFFSET::dP] = dprop_dp;
-        localEnergyFluxJacobian[TAG::NEXT][FLUID_PROP_COFFSET::dT]  = dprop_dt;
-
+        localEnergyFluxJacobian_dQ [TAG::CURRENT][0]  =  -eflux_dq;
         localEnergyFluxJacobian[TAG::CURRENT][FLUID_PROP_COFFSET::dP] = -dprop_dp;
         localEnergyFluxJacobian[TAG::CURRENT][FLUID_PROP_COFFSET::dT] = -dprop_dt;
 

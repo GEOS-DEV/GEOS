@@ -143,11 +143,8 @@ struct ControlEquationHelper
            real64 const & targetRate,
            real64 const & currentBHP,
            arrayView1d< real64 const > const & dCurrentBHP,
-           real64 const & dCurrentBHP_dPres,
            real64 const & currentVolRate,
            arrayView1d< real64 const > const & dCurrentVolRate,
-           real64 const & dCurrentVolRate_dPres,
-           real64 const & dCurrentVolRate_dRate,
            globalIndex const dofNumber,
            CRSMatrixView< real64, globalIndex const > const & localMatrix,
            arrayView1d< real64 > const & localRhs );
@@ -242,18 +239,14 @@ struct PerforationKernel
   compute( real64 const & resPressure,
            real64 const & resDensity,
            arraySlice1d< real64 const > const & dResDensity,
-           real64 const & dResDensity_dPres,
            real64 const & resViscosity,
            arraySlice1d< real64 const > const & dResViscosity,
-           real64 const & dResViscosity_dPres,
            real64 const & wellElemGravCoef,
            real64 const & wellElemPressure,
            real64 const & wellElemDensity,
            arraySlice1d< real64 const > const & dWellElemDensity,
-           real64 const & dWellElemDensity_dPres,
            real64 const & wellElemViscosity,
            arraySlice1d< real64 const > const & dWellElemViscosity,
-           real64 const & dWellElemViscosity_dPres,
            real64 const & perfGravCoef,
            real64 const & trans,
            real64 & perfRate,
@@ -281,8 +274,7 @@ struct PerforationKernel
           arrayView1d< localIndex const > const & resElementSubRegion,
           arrayView1d< localIndex const > const & resElementIndex,
           arrayView1d< real64 > const & perfRate,
-          arrayView3d< real64 > const & dPerfRate,
-          arrayView2d< real64 > const & dPerfRate_dPres );
+          arrayView3d< real64 > const & dPerfRate);
 
 };
 
@@ -393,6 +385,8 @@ public:
 
     // add contribution to global residual and jacobian (no need for atomics here)
     m_localMatrix.addToRow< serialAtomic >( eqnRowIndex, &presDofColIndex, &localAccumDP, 1 );
+    m_localRhs[eqnRowIndex] += localAccum;
+
     if constexpr ( IS_THERMAL )
     {
       real64 const localAccumDT = m_wellElemVolume[iwelem] * m_dWellElemDensity[iwelem][0][FLUID_PROP_COFFSET::dT];
@@ -400,10 +394,6 @@ public:
       m_localMatrix.addToRow< serialAtomic >( eqnRowIndex, &tempDofColIndex, &localAccumDT, 1 );
       kernelOp( presDofColIndex, tempDofColIndex );
     }
-    m_localRhs[eqnRowIndex] += localAccum;
-
-    // Energy Equation
-
 
   }
 
@@ -429,13 +419,7 @@ public:
       {
         return;
       }
-
-      //typename KERNEL_TYPE::StackVariables stack;
-
-      //kernelComponent.setup( ei, stack );
       kernelComponent.computeAccumulation( iwelem );
-      //kernelComponent.computeVolumeBalance( ei, stack );
-      //kernelComponent.complete( ei, stack );
     } );
   }
 
@@ -687,7 +671,7 @@ public:
         }
       }
     }
-    compFluxKernelOp( iwelem, iwelemNext, flux, currentConnRate );
+    compFluxKernelOp( iwelemNext, currentConnRate );
 
   }
 

@@ -153,6 +153,8 @@ addCouplingSparsityPattern( DomainPartition const & domain,
     string const resDofKey  = dofManager.getKey( Base::wellSolver()->resElementDofName() );
     string const wellDofKey = dofManager.getKey( Base::wellSolver()->wellElementDofName() );
     integer isThermal = Base::wellSolver()->isThermal();
+
+    integer const resNDOF = Base::wellSolver()->numDofPerResElement();
     integer const wellNDOF = Base::wellSolver()->numDofPerWellElement();
 
     ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > const & resDofNumber =
@@ -192,24 +194,31 @@ addCouplingSparsityPattern( DomainPartition const & domain,
           localIndex const ei = resElementIndex[iperf];
           localIndex const iwelem = perfWellElemIndex[iperf];
 
-          globalIndex const eqnRowIndexRes = resDofNumber[er][esr][ei] - rankOffset;
-          globalIndex const dofColIndexRes = resDofNumber[er][esr][ei];
-
           // working arrays
+          stackArray1d< globalIndex, 2+IS_THERMAL > eqnRowIndicesRes( resNDOF );
           stackArray1d< globalIndex, 2+IS_THERMAL > eqnRowIndicesWell( wellNDOF );
+          stackArray1d< globalIndex, 2+IS_THERMAL > dofColIndicesRes( resNDOF );
           stackArray1d< globalIndex, 2+IS_THERMAL > dofColIndicesWell( wellNDOF );
+
+          for( integer idof = 0; idof < resNDOF; ++idof )
+          {
+            eqnRowIndicesRes[idof] = resDofNumber[er][esr][ei] + idof - rankOffset;
+            dofColIndicesRes[idof] = resDofNumber[er][esr][ei] + idof;
+          }
 
           for( integer idof = 0; idof < wellNDOF; ++idof )
           {
             eqnRowIndicesWell[idof] = wellElemDofNumber[iwelem] + idof - rankOffset;
             dofColIndicesWell[idof] = wellElemDofNumber[iwelem] + idof;
           }
-
-          if( eqnRowIndexRes >= 0 && eqnRowIndexRes < pattern.numRows() )
+          for( localIndex i = 0; i < eqnRowIndicesRes.size(); ++i )
           {
-            for( localIndex j = 0; j < dofColIndicesWell.size(); ++j )
+            if( eqnRowIndicesRes[i] >= 0 && eqnRowIndicesRes[i] < pattern.numRows() )
             {
-              pattern.insertNonZero( eqnRowIndexRes, dofColIndicesWell[j] );
+              for( localIndex j = 0; j < dofColIndicesWell.size(); ++j )
+              {
+                pattern.insertNonZero( eqnRowIndicesRes[i], dofColIndicesWell[j] );
+              }
             }
           }
 
@@ -217,7 +226,10 @@ addCouplingSparsityPattern( DomainPartition const & domain,
           {
             if( eqnRowIndicesWell[i] >= 0 && eqnRowIndicesWell[i] < pattern.numRows() )
             {
-              pattern.insertNonZero( eqnRowIndicesWell[i], dofColIndexRes );
+              for( localIndex j = 0; j < dofColIndicesRes.size(); ++j )
+              {
+                pattern.insertNonZero( eqnRowIndicesWell[i], dofColIndicesRes[j] );
+              }
             }
           }
         } );
@@ -257,17 +269,12 @@ assembleCouplingTerms( real64 const time_n,
       elemManager.constructArrayViewAccessor< globalIndex, 1 >( resDofKey );
     ElementRegionManager::ElementViewConst< arrayView1d< globalIndex const > > const resDofNumber =
       resDofNumberAccessor.toNestedViewConst();
-    globalIndex const rankOffset = dofManager.rankOffset();
-
-
-
-    // loop over the wells
+  
+      // loop over the wells
     elemManager.forElementSubRegions< WellElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                 WellElementSubRegion const & subRegion )
     {
-      string const & fluidName = subRegion.getReference< string >( WellSolverBase::viewKeyStruct::fluidNamesString() );
-      SingleFluidBase const & fluid = subRegion.getConstitutiveModel< SingleFluidBase >( fluidName );
-
+    
       PerforationData const * const perforationData = subRegion.getPerforationData();
 
       WellControls const & wellControls = Base::wellSolver()->getWellControls( subRegion );
@@ -294,7 +301,6 @@ assembleCouplingTerms( real64 const time_n,
       }
       else
       {
-#if 1
         coupledReservoirAndSinglePhaseWellKernels::
           IsothermalSinglePhaseFluxKernelFactory::
           createAndLaunch< parallelDevicePolicy<> >( dt,
@@ -306,86 +312,6 @@ assembleCouplingTerms( real64 const time_n,
                                                      perforationData,
                                                      localMatrix,
                                                      localRhs );
-#else
-        using TAG = singlePhaseWellKernels::SubRegionTag;
-        using ROFFSET = singlePhaseWellKernels::RowOffset;
-        using COFFSET = singlePhaseWellKernels::ColOffset;
-        // get the degrees of freedom
-        string const wellDofKey = dofManager.getKey( Base::wellSolver()->wellElementDofName() );
-        arrayView1d< globalIndex const > const wellElemDofNumber =
-          subRegion.getReference< array1d< globalIndex > >( wellDofKey );
-
-        // get well variables on perforations
-        arrayView1d< real64 const > const perfRate =
-          perforationData->getField< fields::well::perforationRate >();
-        arrayView2d< real64 const > const dPerfRate_dPres =
-          perforationData->getField< fields::well::dPerforationRate_dPres >();
-
-        arrayView1d< localIndex const > const perfWellElemIndex =
-          perforationData->getField< fields::perforation::wellElementIndex >();
-
-        // get the element region, subregion, index
-        arrayView1d< localIndex const > const resElementRegion =
-          perforationData->getField< fields::perforation::reservoirElementRegion >();
-        arrayView1d< localIndex const > const resElementSubRegion =
-          perforationData->getField< fields::perforation::reservoirElementSubRegion >();
-        arrayView1d< localIndex const > const resElementIndex =
-          perforationData->getField< fields::perforation::reservoirElementIndex >();
-
-        // loop over the perforations and add the rates to the residual and jacobian
-        forAll< parallelDevicePolicy<> >( perforationData->size(), [=] GEOS_HOST_DEVICE ( localIndex const iperf )
-        {
-          // local working variables and arrays
-          localIndex eqnRowIndices[ 2 ] = { -1 };
-          globalIndex dofColIndices[ 2 ] = { -1 };
-
-
-          real64 localPerf[ 2 ]{};
-          real64 localPerfJacobian[ 2 ][ 2 ]{};
-
-          // get the reservoir (sub)region and element indices
-          localIndex const er = resElementRegion[iperf];
-          localIndex const esr = resElementSubRegion[iperf];
-          localIndex const ei = resElementIndex[iperf];
-
-          // get the well element index for this perforation
-          localIndex const iwelem = perfWellElemIndex[iperf];
-          globalIndex const elemOffset = wellElemDofNumber[iwelem];
-
-          // row index on reservoir side
-          eqnRowIndices[TAG::RES] = resDofNumber[er][esr][ei] - rankOffset;
-          // column index on reservoir side
-          dofColIndices[TAG::RES] = resDofNumber[er][esr][ei];
-
-          // row index on well side
-          eqnRowIndices[TAG::WELL] = LvArray::integerConversion< localIndex >( elemOffset - rankOffset ) + ROFFSET::MASSBAL;
-          // column index on well side
-          dofColIndices[TAG::WELL] = elemOffset + COFFSET::DPRES;
-
-          // populate local flux vector and derivatives
-          localPerf[TAG::RES] = dt * perfRate[iperf];
-          localPerf[TAG::WELL] = -localPerf[TAG::RES];
-
-          for( integer ke = 0; ke < 2; ++ke )
-          {
-            localPerfJacobian[TAG::RES][ke] = dt * dPerfRate_dPres[iperf][ke];
-            localPerfJacobian[TAG::WELL][ke] = -localPerfJacobian[TAG::RES][ke];
-          }
-
-          for( integer i = 0; i < 2; ++i )
-          {
-            if( eqnRowIndices[i] >= 0 && eqnRowIndices[i] < localMatrix.numRows() )
-            {
-              localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( eqnRowIndices[i],
-                                                                                &dofColIndices[0],
-                                                                                &localPerfJacobian[0][0] + 2 * i,
-                                                                                2 );
-              RAJA::atomicAdd( parallelDeviceAtomic{}, &localRhs[eqnRowIndices[i]], localPerf[i] );
-            }
-          }
-        } );
-
-#endif
       }
     } );
 

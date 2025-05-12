@@ -488,7 +488,7 @@ void testNumericalJacobian( SinglePhaseReservoirAndWells<> & solver,
   assembleFunction( jacobian.toViewConstSizes(), residual.toView() );
 
   compareLocalMatrices( jacobian.toViewConst(), jacobianFD.toViewConst(), relTol );
-  //printCompareLocalMatrices( jacobian.toViewConst(), jacobianFD.toViewConst(), testName );
+  printCompareLocalMatrices( jacobian.toViewConst(), jacobianFD.toViewConst(), testName );
 }
 
 

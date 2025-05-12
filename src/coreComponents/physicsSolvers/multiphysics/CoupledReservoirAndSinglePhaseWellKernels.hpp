@@ -56,8 +56,6 @@ public:
 
   using TAG = singlePhaseWellKernels::SubRegionTag;
 
-
-
   /// Compute time value for the number of degrees of freedom
   static constexpr integer numDof = WJ_COFFSET::nDer;
 
@@ -119,12 +117,13 @@ public:
   {
 
     // local working variables and arrays
-    localIndex eqnRowIndices[ 2 ] = { -1 };
-    globalIndex dofColIndices[ 2 ] = { -1 };
 
+    stackArray1d< localIndex, 2 > eqnRowIndices( 2 );
+    stackArray1d< globalIndex, 2*resNumDOF > dofColIndices( 2 * resNumDOF );
 
-    real64 localPerf[ 2 ]{};
-    real64 localPerfJacobian[ 2 ][ 2 ]{};
+    stackArray1d< real64, 2 > localPerf( 2 );
+    stackArray2d< real64, 2 * resNumDOF * 2 > localPerfJacobian( 2, 2 * resNumDOF );
+
 
     // get the reservoir (sub)region and element indices
     localIndex const er = m_resElementRegion[iperf];
@@ -133,40 +132,53 @@ public:
 
     // get the well element index for this perforation
     localIndex const iwelem = m_perfWellElemIndex[iperf];
-    globalIndex const elemOffset = m_wellElemDofNumber[iwelem];
+    globalIndex const wellElemOffset = m_wellElemDofNumber[iwelem];
+    globalIndex const resOffset = m_resElemDofNumber[er][esr][ei];
 
     // row index on reservoir side
     eqnRowIndices[TAG::RES] = m_resElemDofNumber[er][esr][ei] - m_rankOffset;
     // column index on reservoir side
-    dofColIndices[TAG::RES] = m_resElemDofNumber[er][esr][ei];
+    dofColIndices[TAG::RES] = resOffset;
 
     // row index on well side
-    eqnRowIndices[TAG::WELL] = LvArray::integerConversion< localIndex >( elemOffset - m_rankOffset ) + ROFFSET::MASSBAL;
+    eqnRowIndices[TAG::WELL] = LvArray::integerConversion< localIndex >( wellElemOffset - m_rankOffset ) + ROFFSET::MASSBAL;
     // column index on well side
-    dofColIndices[TAG::WELL] = elemOffset + COFFSET::DPRES;
+    dofColIndices[TAG::WELL * resNumDOF] = wellElemOffset + WJ_COFFSET::dP;
 
+    if constexpr ( IS_THERMAL )
+    {
+      dofColIndices[TAG::RES * resNumDOF + 1 ] = resOffset +  1;
+      dofColIndices[TAG::WELL * resNumDOF + 1 ] = wellElemOffset + WJ_COFFSET::dT;
+    }
     // populate local flux vector and derivatives
     localPerf[TAG::RES] = m_dt * m_perfRate[iperf];
     localPerf[TAG::WELL] = -localPerf[TAG::RES];
 
     for( integer ke = 0; ke < 2; ++ke )
     {
-      localPerfJacobian[TAG::RES][ke] = m_dt * m_dPerfRate[iperf][ke][0];     // tjb tag
-      localPerfJacobian[TAG::WELL][ke] = -localPerfJacobian[TAG::RES][ke];
+      localIndex localDofIndexPres = ke * resNumDOF;
+      localPerfJacobian[TAG::RES][localDofIndexPres] = m_dt * m_dPerfRate[iperf][ke][CP_Deriv::dP];
+      localPerfJacobian[TAG::WELL][localDofIndexPres] = -localPerfJacobian[TAG::RES][localDofIndexPres];
+      if constexpr ( IS_THERMAL )
+      {
+        localIndex localDofIndexTemp  = localDofIndexPres + 1;
+        localPerfJacobian[TAG::RES ][localDofIndexTemp] = m_dt *  m_dPerfRate[iperf][ke][CP_Deriv::dT];
+        localPerfJacobian[TAG::WELL ][localDofIndexTemp] = -m_dt *  m_dPerfRate[iperf][ke][CP_Deriv::dT];
+      }
     }
 
-    for( integer i = 0; i < 2; ++i )
+    for( integer i = 0; i < localPerf.size(); ++i )
     {
       if( eqnRowIndices[i] >= 0 && eqnRowIndices[i] < m_localMatrix.numRows() )
       {
         m_localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( eqnRowIndices[i],
-                                                                            &dofColIndices[0],
-                                                                            &localPerfJacobian[0][0] + 2 * i,
-                                                                            2 );
+                                                                            dofColIndices.data(),
+                                                                            localPerfJacobian[i].dataIfContiguous(),
+                                                                            2* resNumDOF );
         RAJA::atomicAdd( parallelDeviceAtomic{}, &m_localRhs[eqnRowIndices[i]], localPerf[i] );
       }
     }
-    //compFluxKernelOp( resOffset, wellElemOffset, dofColIndices, iwelem );
+    compFluxKernelOp( resOffset, wellElemOffset, dofColIndices, iwelem );
 
   }
 
@@ -361,7 +373,7 @@ public:
       stackArray1d< localIndex, 2 > eqnRowIndices( 2 );
 
       stackArray1d< real64, 2 > localPerf( 2 );
-      stackArray2d< real64, 2 * resNumDOF > localPerfJacobian( 2, 2 * resNumDOF );
+      stackArray2d< real64, 2*2 * resNumDOF > localPerfJacobian( 2, 2 * resNumDOF );
 
 
       // equantion offsets - note res and well have different equation lineups
