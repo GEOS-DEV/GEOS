@@ -9,8 +9,8 @@
       discretization="TPFA"
       temperature="300"
       initialDt="0.001"
-      targetRegions="{ region }"
-      interfaceFaceSetNames = "{ capillary_interface }">
+      targetRegions="{ region_left, region_right }">
+      <!-- interfaceFaceSetNames = "{ Interface }"> -->
       <NonlinearSolverParameters
         newtonTol="1.0e-6"
         newtonMaxIter="50"
@@ -20,6 +20,11 @@
         directParallel="0"  
         logLevel="0"/>
     </ImmiscibleMultiphaseFlow>
+<!--     <SurfaceGenerator
+      name="SurfaceGen"
+      targetRegions="{ Interface }"
+      initialRockToughness="1e6"
+      mpiCommOrder="1"/> -->    
   </Solvers>
   <!-- SPHINX_SOLVER_END -->
  
@@ -35,9 +40,20 @@
   <!-- SPHINX_ELEMENTREGIONS -->
   <ElementRegions>
     <CellElementRegion
-      name="region"
-      cellBlocks="{ cellBlock }"
-      materialList="{ fluid, rock, relperm }"/>
+      name="region_left"
+      cellBlocks="{ cb_left }"
+      materialList="{ fluid, rock, relperm_left }"/>
+
+    <CellElementRegion
+      name="region_right"
+      cellBlocks="{ cb_right }"
+      materialList="{ fluid, rock, relperm_right }"/>      
+
+<!--     <SurfaceElementRegion
+      name="Interface"
+      defaultAperture="1.0e-5"
+      materialList="{ relperm_left, relperm_right }"/> -->
+
   </ElementRegions>
   <!-- SPHINX_ELEMENTREGIONS_END -->
 
@@ -82,11 +98,18 @@
       permeabilityComponents="{ 9.0e-13, 9.0e-13, 9.0e-13}"/>   
 
     <BrooksCoreyRelativePermeability
-      name="relperm"
+      name="relperm_left"
       phaseNames="{ gas, water }"
       phaseMinVolumeFraction="{ 0.0, 0.0 }"
       phaseRelPermExponent="{ 3.5, 3.5 }"
       phaseRelPermMaxValue="{ 1.0, 1.0 }"/>
+
+    <BrooksCoreyRelativePermeability
+      name="relperm_right"
+      phaseNames="{ gas, water }"
+      phaseMinVolumeFraction="{ 0.0, 0.0 }"
+      phaseRelPermExponent="{ 3.5, 3.5 }"
+      phaseRelPermMaxValue="{ 1.0, 1.0 }"/>      
     
     <TwoPhaseImmiscibleFluid
       name="fluid"
@@ -175,7 +198,7 @@
   <Tasks>
     <PackCollection
       name="phaseVolumeFractionCollection"
-      objectPath="ElementRegions/region/cellBlock"
+      objectPath="ElementRegions/region_left/cb_left"
       fieldName="phaseVolumeFraction"/>
   </Tasks>
   <!-- SPHINX_TASKS_END -->   

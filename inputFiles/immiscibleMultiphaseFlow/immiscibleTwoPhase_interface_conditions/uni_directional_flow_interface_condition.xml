@@ -10,22 +10,15 @@
     <InternalMesh
       name="mesh"
       elementTypes="{ C3D8 }"
-      xCoords="{ 0, 1 }"
+      xCoords="{ 0, 0.5, 1 }"
       yCoords="{ 0, 1 }"
       zCoords="{ 0, 1 }"
-      nx="{ 100 }"
+      nx="{ 50, 50 }"
       ny="{ 1 }"
       nz="{ 1 }"
-      cellBlockNames="{ cellBlock }"/>
+      cellBlockNames="{ cb_left, cb_right }"/>
   </Mesh>
   <!-- SPHINX_MESH_END -->
-
-  <Geometry>
-    <Box
-      name="capillary_interface"
-      xMin="{ 0.499, -0.01, -0.01 }"
-      xMax="{ 0.501, 1.01, 1.01 }"/>
-  </Geometry>
 
   <Geometry>
     <Box
@@ -37,11 +30,19 @@
       name="sink"
       xMin="{ 0.99, -0.00001, -0.00001}"
       xMax="{ 1.0000, 1.00001, 1.00001}"/>
+
+    <Box
+      name="Interface"
+      xMin="{ 0.499, -0.01, -0.01 }"
+      xMax="{ 0.501, 1.01, 1.01 }"/>      
   </Geometry>
 
   <Events
     maxTime="200000.0">
-    
+<!--     <SoloEvent
+      name="preFracture"
+      target="/Solvers/SurfaceGen"/> -->
+      
     <PeriodicEvent
       name="outputs"
       timeFrequency="20000"
