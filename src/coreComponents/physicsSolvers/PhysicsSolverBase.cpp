@@ -271,7 +271,8 @@ bool PhysicsSolverBase::execute( real64 const time_n,
   real64 nextDt = dt;
 
   integer const maxSubSteps = m_nonlinearSolverParameters.m_maxSubSteps;
-  getSubStepDts().clear( );
+  getSubStepDts().clear();
+  getSubStepDts().resize( maxSubSteps, 0 );
   for( integer subStep = 0; subStep < maxSubSteps && dtRemaining > 0.0; ++subStep )
   {
     // reset number of nonlinear and linear iterations
