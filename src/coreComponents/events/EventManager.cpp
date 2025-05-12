@@ -330,7 +330,7 @@ void EventManager::logEndOfCycleInformation( LogPart & logpart,
   if( logMessage.rdbuf()->in_avail() == 0 )
     logMessage << "/";
 
-  logpart.addEndDescription( "- dt: ", logMessage.str() );
+  logpart.addEndDescription( "- substep dts: ", logMessage.str() );
   logpart.end();
 }
 
