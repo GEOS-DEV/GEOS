@@ -36,4 +36,7 @@ void ExecutableGroup::cleanup( real64 const GEOS_UNUSED_PARAM( time_n ),
                                DomainPartition & GEOS_UNUSED_PARAM( domain ) )
 {}
 
+ExecutableGroup::~ExecutableGroup()
+{}
+
 }

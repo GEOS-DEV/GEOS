@@ -43,6 +43,11 @@ public:
   using dataRepository::Group::Group;
 
   /**
+   * @brief Default destructor for the ExecutableGroup
+   */
+  virtual ~ExecutableGroup() override;
+
+  /**
    * @brief Main extension point of executable targets.
    * @param[in] time_n        current time level
    * @param[in] dt            time step to be taken
