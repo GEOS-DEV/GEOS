@@ -14,7 +14,7 @@
  */
 
 /**
- * @file testMultiFluidCompositionalMultiphase.cpp
+ * @file testMultiFluidTwoPhaseCompositionalMultiphase.cpp
  */
 
  #include "FluidModelTest.hpp"
