@@ -9,8 +9,8 @@
       discretization="TPFA"
       temperature="300"
       initialDt="0.001"
-      targetRegions="{ region_left, region_right }">
-      <!-- interfaceFaceSetNames = "{ Interface }"> -->
+      targetRegions="{ region_left, region_right }"
+      interfaceFaceSetNames = "{ Interface }">
       <NonlinearSolverParameters
         newtonTol="1.0e-6"
         newtonMaxIter="50"
@@ -20,11 +20,11 @@
         directParallel="0"  
         logLevel="0"/>
     </ImmiscibleMultiphaseFlow>
-<!--     <SurfaceGenerator
+    <SurfaceGenerator
       name="SurfaceGen"
       targetRegions="{ Interface }"
       initialRockToughness="1e6"
-      mpiCommOrder="1"/> -->    
+      mpiCommOrder="1"/>    
   </Solvers>
   <!-- SPHINX_SOLVER_END -->
  
@@ -49,10 +49,10 @@
       cellBlocks="{ cb_right }"
       materialList="{ fluid, rock, relperm_right }"/>      
 
-<!--     <SurfaceElementRegion
+    <SurfaceElementRegion
       name="Interface"
       defaultAperture="1.0e-5"
-      materialList="{ relperm_left, relperm_right }"/> -->
+      materialList="{ relperm_left, relperm_right }"/>
 
   </ElementRegions>
   <!-- SPHINX_ELEMENTREGIONS_END -->
