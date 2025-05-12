@@ -23,12 +23,13 @@
 #include "constitutive/fluid/multifluid/MultiFluidBase.hpp"
 #include "constitutive/relativePermeability/RelativePermeabilityBase.hpp"
 #include "constitutive/solid/CoupledSolidBase.hpp"
+#include "physicsSolvers/LogLevelsInfo.hpp"
+#include "physicsSolvers/fluidFlow/LogLevelsInfo.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseBase.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseBaseFields.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseHybridFVM.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
 #include "physicsSolvers/fluidFlow/kernels/compositional/StatisticsKernel.hpp"
-#include "physicsSolvers/fluidFlow/LogLevelsInfo.hpp"
 #include "common/format/table/TableData.hpp"
 #include "common/format/table/TableFormatter.hpp"
 #include "common/format/table/TableLayout.hpp"
@@ -90,7 +91,7 @@ void CompositionalMultiphaseStatistics::registerDataOnMesh( Group & meshBodies )
 
   m_solver->forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
                                                               MeshLevel & mesh,
-                                                              arrayView1d< string const > const & regionNames )
+                                                              string_array const & regionNames )
   {
     ElementRegionManager & elemManager = mesh.getElemManager();
 
@@ -100,7 +101,7 @@ void CompositionalMultiphaseStatistics::registerDataOnMesh( Group & meshBodies )
     // if we have to report region statistics, we have to register them first here
     if( m_computeRegionStatistics )
     {
-      for( integer i = 0; i < regionNames.size(); ++i )
+      for( size_t i = 0; i < regionNames.size(); ++i )
       {
         ElementRegionBase & region = elemManager.getRegion( regionNames[i] );
 
@@ -118,20 +119,20 @@ void CompositionalMultiphaseStatistics::registerDataOnMesh( Group & meshBodies )
         if( m_writeCSV > 0 && MpiWrapper::commRank() == 0 )
         {
           auto addStatsValue = []( std::ostringstream & pstatsLayout, TableLayout & ptableLayout,
-                                   string const & description, string_view pmassUnit,
+                                   string const & description, string_view punit,
                                    integer pnumPhases, integer pnumComps = 0 )
           {
             for( int ip = 0; ip < pnumPhases; ++ip )
             {
               if( pnumComps == 0 )
               {
-                pstatsLayout << description << " (phase " << ip << ") [" << pmassUnit << "]";
+                pstatsLayout << description << " (phase " << ip << ") [" << punit << "]";
               }
               else
               {
                 for( int ic = 0; ic < pnumComps; ++ic )
                 {
-                  pstatsLayout << "Component " << ic << " (phase " << ip << ") mass [" << pmassUnit << "]";
+                  pstatsLayout << description << " (component " << ic << " / phase " << ip << ") [" << punit << "]";
                   if( ic == 0 )
                   {
                     pstatsLayout << ",";
@@ -144,7 +145,7 @@ void CompositionalMultiphaseStatistics::registerDataOnMesh( Group & meshBodies )
               }
             }
 
-            ptableLayout.addToColumns( pstatsLayout.str());
+            ptableLayout.addColumn( pstatsLayout.str());
             pstatsLayout.str( "" );
           };
 
@@ -161,17 +162,16 @@ void CompositionalMultiphaseStatistics::registerDataOnMesh( Group & meshBodies )
               TableLayout::Column().setName( "Average temperature [Pa]" ),
               TableLayout::Column().setName( "Max temperature [Pa]" ),
               TableLayout::Column().setName( "Total dynamic pore volume [rm^3]" ),
-              TableLayout::Column().setName( GEOS_FMT( "Phase mass [{}] dynamic pore volume [rm^3]", massUnit ) ),
             } );
 
           std::ostringstream statsLayout;
-          addStatsValue( statsLayout, tableLayout, "Phase dynamic pore volume", massUnit, numPhases );
-          addStatsValue( statsLayout, tableLayout, "Phase", massUnit, numPhases );
+          addStatsValue( statsLayout, tableLayout, "Phase dynamic pore volume", "rm^3", numPhases );
+          addStatsValue( statsLayout, tableLayout, "Phase mass", massUnit, numPhases );
           addStatsValue( statsLayout, tableLayout, "Trapped phase mass (metric 1)", massUnit, numPhases );
           addStatsValue( statsLayout, tableLayout, "Non-trapped phase mass (metric 1)", massUnit, numPhases );
           addStatsValue( statsLayout, tableLayout, "Immobile phase mass (metric 2)", massUnit, numPhases );
           addStatsValue( statsLayout, tableLayout, "Mobile phase mass (metric 2)", massUnit, numPhases );
-          addStatsValue( statsLayout, tableLayout, "Component", massUnit, numPhases, numComps );
+          addStatsValue( statsLayout, tableLayout, "Component mass", massUnit, numPhases, numComps );
 
           std::ofstream outputFile( m_outputDir + "/" + regionNames[i] + ".csv" );
           TableCSVFormatter csvFormatter( tableLayout );
@@ -197,7 +197,7 @@ bool CompositionalMultiphaseStatistics::execute( real64 const time_n,
 {
   m_solver->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                           MeshLevel & mesh,
-                                                                          arrayView1d< string const > const & regionNames )
+                                                                          string_array const & regionNames )
   {
     if( m_computeRegionStatistics )
     {
@@ -217,7 +217,7 @@ bool CompositionalMultiphaseStatistics::execute( real64 const time_n,
 
 void CompositionalMultiphaseStatistics::computeRegionStatistics( real64 const time,
                                                                  MeshLevel & mesh,
-                                                                 arrayView1d< string const > const & regionNames ) const
+                                                                 string_array const & regionNames ) const
 {
   GEOS_MARK_FUNCTION;
 
@@ -226,7 +226,7 @@ void CompositionalMultiphaseStatistics::computeRegionStatistics( real64 const ti
 
   // Step 1: initialize the average/min/max quantities
   ElementRegionManager & elemManager = mesh.getElemManager();
-  for( integer i = 0; i < regionNames.size(); ++i )
+  for( size_t i = 0; i < regionNames.size(); ++i )
   {
     ElementRegionBase & region = elemManager.getRegion( regionNames[i] );
     RegionStatistics & stats = region.getReference< RegionStatistics >( viewKeyStruct::regionStatisticsString() );
@@ -382,7 +382,7 @@ void CompositionalMultiphaseStatistics::computeRegionStatistics( real64 const ti
   } );
 
   // Step 3: synchronize the results over the MPI ranks
-  for( integer i = 0; i < regionNames.size(); ++i )
+  for( size_t i = 0; i < regionNames.size(); ++i )
   {
     ElementRegionBase & region = elemManager.getRegion( regionNames[i] );
     RegionStatistics & stats = region.getReference< RegionStatistics >( viewKeyStruct::regionStatisticsString() );
@@ -419,8 +419,9 @@ void CompositionalMultiphaseStatistics::computeRegionStatistics( real64 const ti
     {
       stats.averagePressure = 0.0;
       stats.averageTemperature = 0.0;
-      GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::Statistics,
-                                  GEOS_FMT( "{}, {}: Cannot compute average pressure because region pore volume is zero.", getName(), regionNames[i] ) );
+      GEOS_LOG_LEVEL_RANK_0( logInfo::Statistics,
+                             GEOS_FMT( "{}, {}: Cannot compute average pressure because region pore volume is zero.",
+                                       getName(), regionNames[i] ) );
     }
 
 
@@ -435,9 +436,9 @@ void CompositionalMultiphaseStatistics::computeRegionStatistics( real64 const ti
 
     string_view massUnit = units::getSymbol( m_solver->getMassUnit() );
 
-    std::vector< string > phaseCompName;
+    stdVector< string > phaseCompName;
     phaseCompName.reserve( numPhases*numComps );
-    std::vector< string > massValues;
+    stdVector< string > massValues;
     phaseCompName.reserve( numPhases*numComps );
 
     ConstitutiveManager const & constitutiveManager = this->getGroupByPath< ConstitutiveManager >( "/Problem/domain/Constitutive" );
@@ -449,67 +450,66 @@ void CompositionalMultiphaseStatistics::computeRegionStatistics( real64 const ti
       for( integer ic = 0; ic < numComps; ++ic )
       {
         std::stringstream ss;
-        ss << phaseNames[ip]<< ", " <<componentNames[ic];
+        ss << phaseNames[ip] << "/" << componentNames[ic];
         phaseCompName.push_back( ss.str() );
         massValues.push_back( GEOS_FMT( "{}", stats.componentMass[ip][ic] ) );
       }
     }
 
-    TableData compPhaseStatsData;
-    compPhaseStatsData.addRow( "Pressure[Pa]", stats.minPressure, stats.averagePressure, stats.maxPressure );
-    compPhaseStatsData.addRow( "Delta pressure [Pa]", stats.minDeltaPressure, "/", stats.maxDeltaPressure );
-    compPhaseStatsData.addRow( "Temperature [K]", stats.minTemperature, stats.averageTemperature, stats.maxTemperature );
-    compPhaseStatsData.addSeparator();
+    if( isLogLevelActive< logInfo::Statistics >( this->getLogLevel() ) && MpiWrapper::commRank() == 0 )
+    {
+      TableData compPhaseStatsData;
+      compPhaseStatsData.addRow( "Pressure [Pa]", stats.minPressure, stats.averagePressure, stats.maxPressure );
+      compPhaseStatsData.addRow( "Delta pressure [Pa]", stats.minDeltaPressure, "/", stats.maxDeltaPressure );
+      compPhaseStatsData.addRow( "Temperature [K]", stats.minTemperature, stats.averageTemperature, stats.maxTemperature );
+      compPhaseStatsData.addSeparator();
 
-    compPhaseStatsData.addSeparator();
-    compPhaseStatsData.addRow( "statistics", "phase/component", CellType::MergeNext, "value" );
-    compPhaseStatsData.addSeparator();
+      compPhaseStatsData.addRow( "Total dynamic pore volume [rm^3]", CellType::MergeNext, CellType::MergeNext, stats.totalPoreVolume );
+      compPhaseStatsData.addSeparator();
+      compPhaseStatsData.addRow( "Phase dynamic pore volume [rm^3]",
+                                 stringutilities::joinLambda( phaseNames, "\n", []( auto data ) { return data[0]; } ),
+                                 CellType::MergeNext,
+                                 stringutilities::joinLambda( stats.phasePoreVolume, "\n", []( auto data ) { return data[0]; } ) );
+      compPhaseStatsData.addSeparator();
 
-    compPhaseStatsData.addRow( "Total dynamic pore volume [rm^3]", "all", CellType::MergeNext, stats.totalPoreVolume );
-    compPhaseStatsData.addSeparator();
-    compPhaseStatsData.addRow( "Phase dynamic pore volume: [rm^3]",
-                               stringutilities::joinLambda( phaseNames, "\n", []( auto data ) { return data[0]; } ),
-                               CellType::MergeNext,
-                               stringutilities::joinLambda( stats.phasePoreVolume, "\n", []( auto data ) { return data[0]; } ) );
-    compPhaseStatsData.addSeparator();
+      compPhaseStatsData.addRow( GEOS_FMT( "Phase mass [{}]", massUnit ),
+                                 stringutilities::joinLambda( phaseNames, "\n", []( auto data ) { return data[0]; } ),
+                                 CellType::MergeNext,
+                                 stringutilities::joinLambda( stats.phaseMass, "\n", []( auto data ) { return data[0]; } ) );
+      compPhaseStatsData.addSeparator();
 
-    compPhaseStatsData.addRow( GEOS_FMT( "Phase mass [{}]", massUnit ),
-                               stringutilities::joinLambda( phaseNames, "\n", []( auto data ) { return data[0]; } ),
-                               CellType::MergeNext,
-                               stringutilities::joinLambda( stats.phaseMass, "\n", []( auto data ) { return data[0]; } ) );
-    compPhaseStatsData.addSeparator();
+      compPhaseStatsData.addRow( GEOS_FMT( "Trapped phase mass (metric 1) [{}]", massUnit ),
+                                 stringutilities::joinLambda( phaseNames, "\n", []( auto value ) { return value[0]; } ),
+                                 CellType::MergeNext,
+                                 stringutilities::joinLambda( stats.trappedPhaseMass, "\n", []( auto value ) { return value[0]; } ) );
+      compPhaseStatsData.addSeparator();
+      compPhaseStatsData.addRow( GEOS_FMT( "Non-trapped phase mass (metric 1) [{}]", massUnit ),
+                                 stringutilities::joinLambda( phaseNames, "\n", []( auto value ) { return value[0]; } ),
+                                 CellType::MergeNext,
+                                 stringutilities::joinLambda( nonTrappedPhaseMass, "\n", []( auto value ) { return value[0]; } ) );
+      compPhaseStatsData.addSeparator();
 
-    compPhaseStatsData.addRow( GEOS_FMT( "Trapped phase mass (metric 1) [{}]", massUnit ),
-                               stringutilities::joinLambda( phaseNames, "\n", []( auto value ) { return value[0]; } ),
-                               CellType::MergeNext,
-                               stringutilities::joinLambda( stats.trappedPhaseMass, "\n", []( auto value ) { return value[0]; } ) );
-    compPhaseStatsData.addSeparator();
-    compPhaseStatsData.addRow( GEOS_FMT( "nonTrappedPhaseMass [{}]", massUnit ),
-                               stringutilities::joinLambda( phaseNames, "\n", []( auto value ) { return value[0]; } ),
-                               CellType::MergeNext,
-                               stringutilities::joinLambda( nonTrappedPhaseMass, "\n", []( auto value ) { return value[0]; } ) );
-    compPhaseStatsData.addSeparator();
+      compPhaseStatsData.addRow( GEOS_FMT( "Immobile phase mass (metric 2) [{}]", massUnit ),
+                                 stringutilities::joinLambda( phaseNames, "\n", []( auto value ) { return value[0]; } ),
+                                 CellType::MergeNext,
+                                 stringutilities::joinLambda( stats.immobilePhaseMass, "\n", []( auto value ) { return value[0]; } )  );
+      compPhaseStatsData.addSeparator();
+      compPhaseStatsData.addRow( GEOS_FMT( "Mobile phase mass (metric 2) [{}]", massUnit ),
+                                 stringutilities::joinLambda( phaseNames, "\n", []( auto value ) { return value[0]; } ),
+                                 CellType::MergeNext,
+                                 stringutilities::joinLambda( mobilePhaseMass, "\n", []( auto value ) { return value[0]; } ) );
+      compPhaseStatsData.addSeparator();
 
-    compPhaseStatsData.addRow( GEOS_FMT( "Immobile phase mass (metric 2) [{}]", massUnit ),
-                               stringutilities::joinLambda( phaseNames, "\n", []( auto value ) { return value[0]; } ),
-                               CellType::MergeNext,
-                               stringutilities::joinLambda( stats.immobilePhaseMass, "\n", []( auto value ) { return value[0]; } )  );
-    compPhaseStatsData.addSeparator();
-    compPhaseStatsData.addRow( GEOS_FMT( "Mobile phase mass (metric 2) [{}]", massUnit ),
-                               stringutilities::joinLambda( phaseNames, "\n", []( auto value ) { return value[0]; } ),
-                               CellType::MergeNext,
-                               stringutilities::joinLambda( mobilePhaseMass, "\n", []( auto value ) { return value[0]; } ) );
-    compPhaseStatsData.addSeparator();
+      compPhaseStatsData.addRow( GEOS_FMT( "Component mass [{}]", massUnit ),
+                                 stringutilities::join( phaseCompName, '\n' ),
+                                 CellType::MergeNext,
+                                 stringutilities::join( massValues, '\n' ) );
 
-    compPhaseStatsData.addRow( GEOS_FMT( "Component mass [{}]", massUnit ),
-                               stringutilities::join( phaseCompName, '\n' ),
-                               CellType::MergeNext,
-                               stringutilities::join( massValues, '\n' ) );
-
-    string const title = GEOS_FMT( "{}, {} (time {} s):", getName(), regionNames[i], time );
-    TableLayout const compPhaseStatsLayout( title, { "statistics", "min", "average", "max" } );
-    TableTextFormatter tableFormatter( compPhaseStatsLayout );
-    GEOS_LOG_RANK_0( tableFormatter.toString( compPhaseStatsData ) );
+      string const title = GEOS_FMT( "{}, {} (time {} s):", getName(), regionNames[i], time );
+      TableLayout const compPhaseStatsLayout( title, { "statistics", "min", "average", "max" } );
+      TableTextFormatter tableFormatter( compPhaseStatsLayout );
+      GEOS_LOG_RANK_0( tableFormatter.toString( compPhaseStatsData ) );
+    }
 
     if( m_writeCSV > 0 && MpiWrapper::commRank() == 0 )
     {
@@ -541,8 +541,10 @@ void CompositionalMultiphaseStatistics::computeCFLNumbers( real64 const time,
   real64 maxPhaseCFL, maxCompCFL;
   m_solver->computeCFLNumbers( domain, dt, maxPhaseCFL, maxCompCFL );
 
-  GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::CFL, GEOS_FMT( "{} (time {} s): Max phase CFL number: {}", getName(), time, maxPhaseCFL ) );
-  GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::CFL, GEOS_FMT( "{} (time {} s): Max component CFL number: {}", getName(), time, maxCompCFL ) );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::CFL,
+                         GEOS_FMT( "{} (time {} s): Max phase CFL number: {}", getName(), time, maxPhaseCFL ) );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::CFL,
+                         GEOS_FMT( "{} (time {} s): Max component CFL number: {}", getName(), time, maxCompCFL ) );
 }
 
 

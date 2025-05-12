@@ -25,7 +25,7 @@
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 #include "fileIO/Outputs/OutputBase.hpp"
 #include "mesh/DomainPartition.hpp"
-#include "physicsSolvers/solidMechanics/LogLevelsInfo.hpp"
+#include "physicsSolvers/LogLevelsInfo.hpp"
 #include "common/format/table/TableData.hpp"
 #include "common/format/table/TableFormatter.hpp"
 #include "common/format/table/TableLayout.hpp"
@@ -57,7 +57,7 @@ void SolidMechanicsStatistics::registerDataOnMesh( Group & meshBodies )
 
   m_solver->forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
                                                               MeshLevel & mesh,
-                                                              arrayView1d< string const > const & )
+                                                              string_array const & )
   {
     NodeManager & nodeManager = mesh.getNodeManager();
     nodeManager.registerWrapper< NodeStatistics >( viewKeyStruct::nodeStatisticsString() ).
@@ -88,7 +88,7 @@ bool SolidMechanicsStatistics::execute( real64 const time_n,
 {
   m_solver->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                           MeshLevel & mesh,
-                                                                          arrayView1d< string const > const & )
+                                                                          string_array const & )
   {
     // current time is time_n + dt
     computeNodeStatistics( mesh, time_n + dt );
@@ -146,29 +146,32 @@ void SolidMechanicsStatistics::computeNodeStatistics( MeshLevel & mesh, real64 c
   nodeStatistics.minDisplacement[1] = minDispY.get();
   nodeStatistics.minDisplacement[2] = minDispZ.get();
 
-  MpiWrapper::allReduce( nodeStatistics.maxDisplacement.data(),
-                         nodeStatistics.maxDisplacement.data(),
-                         3,
-                         MpiWrapper::getMpiOp( MpiWrapper::Reduction::Max ),
+  MpiWrapper::allReduce( nodeStatistics.maxDisplacement,
+                         nodeStatistics.maxDisplacement,
+                         MpiWrapper::Reduction::Max,
                          MPI_COMM_GEOS );
 
-  MpiWrapper::allReduce( nodeStatistics.minDisplacement.data(),
-                         nodeStatistics.minDisplacement.data(),
-                         3,
-                         MpiWrapper::getMpiOp( MpiWrapper::Reduction::Min ),
+  MpiWrapper::allReduce( nodeStatistics.minDisplacement,
+                         nodeStatistics.minDisplacement,
+                         MpiWrapper::Reduction::Min,
                          MPI_COMM_GEOS );
 
-  TableData mechanicsData;
-  mechanicsData.addRow( "min", GEOS_FMT( "[{},{},{}]", nodeStatistics.minDisplacement[0],
-                                         nodeStatistics.minDisplacement[1], nodeStatistics.minDisplacement[2] ));
-  mechanicsData.addRow( "max", GEOS_FMT( "[{},{},{}]", nodeStatistics.maxDisplacement[0],
-                                         nodeStatistics.maxDisplacement[1], nodeStatistics.maxDisplacement[2] ));
+  if( isLogLevelActive< logInfo::Statistics >( this->getLogLevel()) && MpiWrapper::commRank() == 0 )
+  {
+    TableData mechanicsData;
+    mechanicsData.addRow( "min", GEOS_FMT( "[{},{},{}]", nodeStatistics.minDisplacement[0],
+                                           nodeStatistics.minDisplacement[1], nodeStatistics.minDisplacement[2] ));
+    mechanicsData.addRow( "max", GEOS_FMT( "[{},{},{}]", nodeStatistics.maxDisplacement[0],
+                                           nodeStatistics.maxDisplacement[1], nodeStatistics.maxDisplacement[2] ));
 
-  string const title = GEOS_FMT( "{}, (time {} s):", getName(), time );
-  TableLayout mechanicsLayout( title, { " ", "Displacement (X, Y, Z)"} );
+    string const title = GEOS_FMT( "{}, (time {} s):", getName(), time );
+    TableLayout const mechanicsLayout( title, { " ", "Displacement (X, Y, Z)"} );
 
-  TableTextFormatter mechanicsFormatter( mechanicsLayout );
-  GEOS_LOG_RANK_0( mechanicsFormatter.toString( mechanicsData ));
+    TableTextFormatter mechanicsFormatter( mechanicsLayout );
+    mechanicsFormatter.toString( mechanicsData );
+  }
+
+
   if( m_writeCSV > 0 && MpiWrapper::commRank() == 0 )
   {
     std::ofstream outputFile( m_outputDir + "/" + mesh.getName() + "_node_statistics" + ".csv", std::ios_base::app );
