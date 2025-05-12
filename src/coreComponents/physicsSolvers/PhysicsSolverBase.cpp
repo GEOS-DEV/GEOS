@@ -332,10 +332,10 @@ bool PhysicsSolverBase::execute( real64 const time_n,
   m_nextDt = setNextDt( time_n + dt, nextDt, domain );
 
   // Increase counter to indicate how many cycles since the last timestep cut
-  if( m_numTimestepsSinceLastDtCut >= 0 )
-  {
-    m_numTimestepsSinceLastDtCut++;
-  }
+  // if( m_numTimestepsSinceLastDtCut >= 0 )
+  // {
+  //   m_numTimestepsSinceLastDtCut++;
+  // }
 
   return false;
 }
