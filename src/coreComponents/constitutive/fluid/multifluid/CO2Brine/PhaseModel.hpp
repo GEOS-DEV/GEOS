@@ -59,7 +59,7 @@ struct PhaseModel
    * @param[in] pvtOutputOpts A structure containing generated table output options
    */
   PhaseModel( string const & phaseModelName,
-              std::vector< string_array > const & inputParams,
+              stdVector< string_array > const & inputParams,
               string_array const & componentNames,
               array1d< real64 > const & componentMolarWeight,
               TableFunction::OutputOptions const pvtOutputOpts )
