@@ -307,7 +307,6 @@ public:
     Base::computeFlux ( iwelem, [&] ( localIndex const & iwelemNext
                                       , real64 const & currentConnRate )
     {
-      std::cout << " connrate " << currentConnRate << " dt " << m_dt << std::endl;
       if( iwelemNext < 0 )
       {
         globalIndex dofRowIndices  =  m_wellElemDofNumber[iwelem] + WJ_ROFFSET::ENERGYBAL - m_rankOffset;

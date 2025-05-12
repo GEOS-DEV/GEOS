@@ -11,6 +11,7 @@ if( ENABLE_PVTPackage )
     list( APPEND gtest_geosx_tests
           testReservoirCompositionalMultiphaseMSWells.cpp
           testReservoirThermalSinglePhaseMSWells.cpp
+          testReservoirThermalSinglePhaseMSWells_RateInj.cpp
           testIsothermalReservoirCompositionalMultiphaseMSWells.cpp 
           testIsothermalReservoirCompositionalMultiphaseSSWells.cpp 
           testThermalReservoirCompositionalMultiphaseSSWells.cpp 
