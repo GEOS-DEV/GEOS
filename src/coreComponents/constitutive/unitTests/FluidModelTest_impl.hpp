@@ -162,9 +162,10 @@ void FluidModelTest< FLUID_TYPE, NUM_COMP, NUM_PHASE >::testDerivatives( string 
                                                                          real64 const absTol,
                                                                          INDICES const ... indices )
 {
+  integer const numberOfDof = dofNames.size();
   real64 const invScale = 1.0 / valueScale;
 
-  for( integer idof = 0; idof < numDof; idof++ )
+  for( integer idof = 0; idof < numberOfDof; idof++ )
   {
     real64 const analyticalDerivative = derivArray( 0, 0, indices ..., idof ) * invScale;
     real64 numericalDerivative = 0.0;

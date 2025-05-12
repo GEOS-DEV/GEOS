@@ -17,9 +17,9 @@
  * @file testMultiFluidTwoPhaseCompositionalMultiphase.cpp
  */
 
- #include "FluidModelTest.hpp"
- #include "constitutive/fluid/multifluid/compositional/CompositionalMultiphaseFluid.hpp"
- #include "common/initializeEnvironment.hpp"
+#include "FluidModelTest.hpp"
+#include "constitutive/fluid/multifluid/compositional/CompositionalMultiphaseFluid.hpp"
+#include "common/initializeEnvironment.hpp"
 
 using namespace geos::constitutive;
 using namespace geos::constitutive::compositional;
