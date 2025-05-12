@@ -33,6 +33,7 @@
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseUtilities.hpp"
 #include "physicsSolvers/fluidFlow/StencilAccessors.hpp"
 
+#include "FluxComputeKernel.hpp"
 
 namespace geos
 {
