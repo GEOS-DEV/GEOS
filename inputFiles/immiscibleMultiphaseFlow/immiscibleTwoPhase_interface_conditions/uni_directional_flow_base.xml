@@ -9,7 +9,8 @@
       discretization="TPFA"
       temperature="300"
       initialDt="0.001"
-      targetRegions="{ region }">
+      targetRegions="{ region }"
+      interfaceFaceSetNames = "{ capillary_interface }">
       <NonlinearSolverParameters
         newtonTol="1.0e-6"
         newtonMaxIter="50"
