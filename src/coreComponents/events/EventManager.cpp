@@ -200,7 +200,7 @@ bool EventManager::run( DomainPartition & domain )
       {
         earlyReturn = subEvent->execute( m_time, m_dt, m_cycle, 0, 0, domain );
 
-        if( subEvent->getEventTarget()->getTimesteppingBehavior() == ExecutableGroup::TimesteppingBehavior::DeterminesTimeStepSize )
+        if( subEvent->getEventTarget() && subEvent->getEventTarget()->getTimesteppingBehavior() == ExecutableGroup::TimesteppingBehavior::DeterminesTimeStepSize )
         {
           subStepDts = subEvent->getSubStepDts();
           numTimeSteps = subEvent->getNumOfSubSteps();
