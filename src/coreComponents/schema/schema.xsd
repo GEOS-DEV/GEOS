@@ -3525,18 +3525,7 @@ Information output from lower logLevels is added with the desired log level-->
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
 		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
-Level 0 outputs no specific information for this solver. Higher levels require more outputs.
-1
- - Line search information
- - Solution information (scaling, maximum changes, quality check)
- - Convergence information
- - Time step information
- - Linear solver information
- - Nonlinear solver information
- - Solver timers information
- - Coupling information
-2
- - The summary of declared fields and coupling-->
+Information output from lower logLevels is added with the desired log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--poromechanicsSolverName => Name of the poromechanics solver used by the coupled solver-->
 		<xsd:attribute name="poromechanicsSolverName" type="groupNameRef" use="required" />

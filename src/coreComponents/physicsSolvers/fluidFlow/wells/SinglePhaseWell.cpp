@@ -692,7 +692,7 @@ void SinglePhaseWell::assemblePressureRelations( real64 const & time_n,
       arrayView2d< real64 const, constitutive::singlefluid::USD_FLUID > const & wellElemDensity = fluid.density();
       arrayView3d< real64 const, constitutive::singlefluid::USD_FLUID_DER > const & dWellElemDensity = fluid.dDensity();
 
-      localIndex controlHasSwitched;
+      localIndex controlHasSwitched=0;
       geos::internal::kernelLaunchSelectorThermalSwitch( isThermal(), [&] ( auto ISTHERMAL )
       {
         controlHasSwitched = PressureRelationKernel::launch< ISTHERMAL >( subRegion.size(),
