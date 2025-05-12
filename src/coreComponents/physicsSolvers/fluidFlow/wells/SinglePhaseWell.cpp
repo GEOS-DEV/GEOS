@@ -692,9 +692,9 @@ void SinglePhaseWell::assemblePressureRelations( real64 const & time_n,
       arrayView2d< real64 const, constitutive::singlefluid::USD_FLUID > const & wellElemDensity = fluid.density();
       arrayView3d< real64 const, constitutive::singlefluid::USD_FLUID_DER > const & dWellElemDensity = fluid.dDensity();
 
-      localIndex controlHasSwitched=0;
       geos::internal::kernelLaunchSelectorThermalSwitch( isThermal(), [&] ( auto ISTHERMAL )
       {
+        localIndex controlHasSwitched=0;
         controlHasSwitched = PressureRelationKernel::launch< ISTHERMAL >( subRegion.size(),
                                                                           dofManager.rankOffset(),
                                                                           subRegion.isLocallyOwned(),
@@ -709,26 +709,26 @@ void SinglePhaseWell::assemblePressureRelations( real64 const & time_n,
                                                                           dWellElemDensity,
                                                                           localMatrix,
                                                                           localRhs );
+
+        if( controlHasSwitched == 1 )
+        {
+          // Note: if BHP control is not viable, we switch to TOTALVOLRATE
+          //       if TOTALVOLRATE is not viable, we switch to BHP
+
+          if( wellControls.getControl() == WellControls::Control::BHP )
+          {
+            wellControls.switchToTotalRateControl( wellControls.getTargetTotalRate( time_n ) );
+            GEOS_LOG_LEVEL_RANK_0( logInfo::WellControl,
+                                   GEOS_FMT( "Control switch for well {} from BHP constraint to rate constraint", subRegion.getName()) );
+          }
+          else
+          {
+            wellControls.switchToBHPControl( wellControls.getTargetBHP( time_n ) );
+            GEOS_LOG_LEVEL_RANK_0( logInfo::WellControl,
+                                   GEOS_FMT( "Control switch for well {} from rate constraint to BHP constraint", subRegion.getName()) );
+          }
+        }
       } );
-
-      if( controlHasSwitched == 1 )
-      {
-        // Note: if BHP control is not viable, we switch to TOTALVOLRATE
-        //       if TOTALVOLRATE is not viable, we switch to BHP
-
-        if( wellControls.getControl() == WellControls::Control::BHP )
-        {
-          wellControls.switchToTotalRateControl( wellControls.getTargetTotalRate( time_n ) );
-          GEOS_LOG_LEVEL_RANK_0( logInfo::WellControl,
-                                 GEOS_FMT( "Control switch for well {} from BHP constraint to rate constraint", subRegion.getName()) );
-        }
-        else
-        {
-          wellControls.switchToBHPControl( wellControls.getTargetBHP( time_n ) );
-          GEOS_LOG_LEVEL_RANK_0( logInfo::WellControl,
-                                 GEOS_FMT( "Control switch for well {} from rate constraint to BHP constraint", subRegion.getName()) );
-        }
-      }
 
     } );
   } );
