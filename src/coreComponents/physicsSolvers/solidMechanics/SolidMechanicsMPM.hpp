@@ -24,7 +24,6 @@
 #include "common/TimingMacros.hpp"
 #include "kernels/SolidMechanicsLagrangianFEMKernels.hpp"
 #include "kernels/ExplicitMPM.hpp"
-#include "mesh/MeshForLoopInterface.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "mesh/mpiCommunications/MPI_iCommData.hpp"
 #include "physicsSolvers/PhysicsSolverBase.hpp"
@@ -151,7 +150,7 @@ public:
 
   template< typename ... PARAMS >
   real64 explicitKernelDispatch( MeshLevel & mesh,
-                                 arrayView1d< string const > const & targetRegions,
+                                 string_array const & targetRegions,
                                  string const & finiteElementName,
                                  real64 const dt,
                                  std::string const & elementListName );
@@ -198,7 +197,7 @@ public:
                    NodeManager & nodeManager,
                    real64 const dt );
 
-  void syncGridFields( std::vector< std::string > const & fieldNames,
+  void syncGridFields( stdVector< std::string > const & fieldNames,
                        DomainPartition & domain,
                        NodeManager & nodeManager,
                        MeshLevel & mesh,
@@ -265,7 +264,7 @@ public:
   real64 kernel( real64 const & r ); // distance from particle to query point
 
   void kernelGradient( arraySlice1d< real64 const > const x,  // query point
-                       std::vector< real64 > & xp,            // particle location
+                       stdVector< real64 > & xp,            // particle location
                        real64 const & r,                      // distance from particle to query point
                        real64 * result );
 
@@ -275,15 +274,15 @@ public:
                              arrayView1d< real64 const > const fp );  // scalar field values (e.g. damage) at neighbor particles
 
   void computeKernelFieldGradient( arraySlice1d< real64 const > const x,       // query point
-                                   std::vector< std::vector< real64 > > & xp,  // List of neighbor particle locations.
-                                   std::vector< real64 > & Vp,                 // List of neighbor particle volumes.
-                                   std::vector< real64 > & fp,                 // scalar field values (e.g. damage) at neighbor particles
+                                   stdVector< stdVector< real64 > > & xp,  // List of neighbor particle locations.
+                                   stdVector< real64 > & Vp,                 // List of neighbor particle volumes.
+                                   stdVector< real64 > & fp,                 // scalar field values (e.g. damage) at neighbor particles
                                    arraySlice1d< real64 > const result );
 
   void computeKernelVectorGradient( arraySlice1d< real64 const > const x,       // query point
-                                    std::vector< std::vector< real64 > > & xp,  // List of neighbor particle locations.
-                                    std::vector< real64 > & Vp,                 // List of neighbor particle volumes.
-                                    std::vector< std::vector< real64 > > & fp,  // vector field values (e.g. velocity) at neighbor particles
+                                    stdVector< stdVector< real64 > > & xp,  // List of neighbor particle locations.
+                                    stdVector< real64 > & Vp,                 // List of neighbor particle volumes.
+                                    stdVector< stdVector< real64 > > & fp,  // vector field values (e.g. velocity) at neighbor particles
                                     arraySlice2d< real64 > const result );
 
   void computeDamageFieldGradient( ParticleManager & particleManager );
@@ -364,17 +363,17 @@ public:
 protected:
   virtual void postInputInitialization() override final;
 
-  std::vector< array2d< localIndex > > m_mappedNodes; // mappedNodes[subregion index][particle index][node index]. dims = {# of subregions,
-                                                      // # of particles, # of nodes a particle on the subregion maps to}
-  std::vector< array2d< real64 > > m_shapeFunctionValues; // mappedNodes[subregion][particle][nodal shape function value]. dims = {# of
-                                                          // subregions, # of particles, # of nodes a particle on the subregion maps to}
-  std::vector< array3d< real64 > > m_shapeFunctionGradientValues; // mappedNodes[subregion][particle][nodal shape function gradient
-                                                                  // value][direction]. dims = {# of subregions, # of particles, # of nodes
-                                                                  // a particle on the subregion maps to, 3}
+  stdVector< array2d< localIndex > > m_mappedNodes; // mappedNodes[subregion index][particle index][node index]. dims = {# of subregions,
+                                                    // # of particles, # of nodes a particle on the subregion maps to}
+  stdVector< array2d< real64 > > m_shapeFunctionValues; // mappedNodes[subregion][particle][nodal shape function value]. dims = {# of
+                                                        // subregions, # of particles, # of nodes a particle on the subregion maps to}
+  stdVector< array3d< real64 > > m_shapeFunctionGradientValues; // mappedNodes[subregion][particle][nodal shape function gradient
+                                                                // value][direction]. dims = {# of subregions, # of particles, # of nodes
+                                                                // a particle on the subregion maps to, 3}
 
   int m_solverProfiling;
-  std::vector< real64 > m_profilingTimes;
-  std::vector< std::string > m_profilingLabels;
+  stdVector< real64 > m_profilingTimes;
+  stdVector< std::string > m_profilingLabels;
 
   TimeIntegrationOption m_timeIntegrationOption;
 

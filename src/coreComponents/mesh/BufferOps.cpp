@@ -94,7 +94,7 @@ localIndex Unpack( buffer_unit_type const * & buffer,
   valuesToReplace.reserve( numIndicesUnpacked );
   valuesToReplace.reserveValues( numIndicesUnpacked * 12 ); // guesstimate
 
-  std::vector< ElementID > values;
+  stdVector< ElementID > values;
   for( localIndex a=0; a<packList.size(); ++a )
   {
     values.clear();

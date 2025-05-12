@@ -18,7 +18,7 @@
  */
 
 #include "MultiFluidTest.hpp"
-#include "constitutive/fluid/multifluid/compositional/models/EquationOfState.hpp"
+#include "constitutive/fluid/multifluid/compositional/parameters/EquationOfState.hpp"
 #include "constitutive/fluid/multifluid/compositional/CompositionalMultiphaseFluid.hpp"
 #include "mainInterface/GeosxState.hpp"
 #include "mainInterface/initialization.hpp"
@@ -131,7 +131,7 @@ struct Fluid< FluidModel, 4 >
   static void fillProperties( Group & fluid )
   {
     string_array & componentNames = fluid.getReference< string_array >( MultiFluidBase::viewKeyStruct::componentNamesString() );
-    fill< 4 >( componentNames, {"N2", "C10", "C20", "H20"} );
+    componentNames = {"N2", "C10", "C20", "H20"};
 
     array1d< real64 > & molarWeight = fluid.getReference< array1d< real64 > >( MultiFluidBase::viewKeyStruct::componentMolarWeightString() );
     fill< 4 >( molarWeight, {28e-3, 134e-3, 275e-3, 18e-3} );
@@ -161,7 +161,7 @@ struct Fluid< FluidModel, 5 >
   static void fillProperties( Group & fluid )
   {
     string_array & componentNames = fluid.getReference< string_array >( MultiFluidBase::viewKeyStruct::componentNamesString() );
-    fill< 5 >( componentNames, {"CO2", "N2", "C1", "C2", "C4"} );
+    componentNames = {"CO2", "N2", "C1", "C2", "C4"};
 
     array1d< real64 > & molarWeight = fluid.getReference< array1d< real64 > >( MultiFluidBase::viewKeyStruct::componentMolarWeightString() );
     fill< 5 >( molarWeight, {44.0098e-3, 28.0135e-3, 16.0428e-3, 30.0700e-3, 82.4191e-3} );
@@ -192,11 +192,11 @@ makeFluid( string const & name, Group * parent )
   FluidModel & fluid = parent->registerGroup< FluidModel >( name );
 
   string_array & phaseNames = fluid.template getReference< string_array >( MultiFluidBase::viewKeyStruct::phaseNamesString() );
-  fill< 2 >( phaseNames, {"oil", "gas"} );
+  phaseNames = {"oil", "gas"};
 
   string const eosName = EnumStrings< EquationOfStateType >::toString( EOS );
   string_array & equationOfState = fluid.template getReference< string_array >( EquationOfState::viewKeyStruct::equationsOfStateString() );
-  fill< 2 >( equationOfState, {eosName, eosName} );
+  equationOfState = {eosName, eosName};
 
   Fluid< FluidModel, NUM_COMP >::fillProperties( fluid );
 

@@ -38,16 +38,6 @@ foreach( test ${gtest_geosx_tests} )
 
   geos_add_test( NAME ${test_name}
                  COMMAND ${test_name} ${CMAKE_CURRENT_LIST_DIR} )
-
-  # Older g++ version need a hint to use std::filesystem
-  if( CMAKE_CXX_COMPILER_ID STREQUAL "GNU" )
-      if( CMAKE_CXX_COMPILER_VERSION VERSION_LESS 9 )
-          target_link_libraries( ${test_name} PRIVATE "stdc++fs" )
-      endif ()
-  endif ()
-  if ( ENABLE_CUDA )
-    target_link_libraries( ${test_name} PRIVATE "stdc++fs" )
-  endif ()
 endforeach()
 
 if( ENABLE_MPI )
@@ -65,14 +55,5 @@ if( ENABLE_MPI )
     geos_add_test( NAME ${test_name}
                    COMMAND ${test_name} -x ${nranks}
                    NUM_MPI_TASKS ${nranks} )
-    # Older g++ version need a hint to use std::filesystem
-    if( CMAKE_CXX_COMPILER_ID STREQUAL "GNU" )
-        if( CMAKE_CXX_COMPILER_VERSION VERSION_LESS 9 )
-            target_link_libraries( ${test_name} PRIVATE "stdc++fs" )
-        endif ()
-    endif ()
-    if ( ENABLE_CUDA )
-      target_link_libraries( ${test_name} PRIVATE "stdc++fs" )
-    endif ()
   endforeach()
 endif()
