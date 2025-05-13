@@ -280,9 +280,10 @@ void ImmiscibleMultiphaseFlow::initializePreSubGroups()
       };
 
       auto [subRegionL, subRegionR] = getSubregions( regionIndex );
+        
+      // get constitutives by type and name
       auto & nameL = subRegionL->getReference< std::string >( viewKeyStruct::relPermNamesString());
       auto & nameR = subRegionR->getReference< std::string >( viewKeyStruct::relPermNamesString());
-
       auto * relPermL = &getConstitutiveModel< BrooksCoreyRelativePermeability >( *subRegionL, nameL );
       auto * relPermR = &getConstitutiveModel< BrooksCoreyRelativePermeability >( *subRegionR, nameR );
 
