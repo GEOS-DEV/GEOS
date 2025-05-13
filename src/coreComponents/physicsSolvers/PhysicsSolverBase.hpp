@@ -695,6 +695,9 @@ public:
 
     /// @return string for the writeLinearSystem wrapper
     static constexpr char const * writeLinearSystemString() { return "writeLinearSystem"; }
+
+    /// @return string for the allowNonConvergedLinearSolverSolution wrapper
+    static constexpr char const * allowNonConvergedLinearSolverSolutionString() { return "allowNonConvergedLinearSolverSolution"; }
   };
 
   /**
@@ -1035,6 +1038,9 @@ protected:
 
   /// timestep of the next cycle
   real64 m_nextDt;
+
+  /// behavior in case of linear solver failure
+  integer m_allowNonConvergedLinearSolverSolution;
 
   /// Number of cycles since last timestep cut
   integer m_numTimestepsSinceLastDtCut;

@@ -6,6 +6,14 @@ This file is designed to track changes to the integrated test baselines.
 Any developer who updates the baseline ID in the .integrated_tests.yaml file is expected to create an entry in this file with the pull request number, date, and their justification for rebaselining.
 These notes should be in reverse-chronological order, and use the following time format: (YYYY-MM-DD).
 
+PR #3274 (2025-05-08) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3274-11275-3cb35d1.tar.gz>
+=====================
+New flag `allowNonConvergedLinearSolverSolution` for solvers.
+
+PR #3524 (2025-05-02) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3524-11210-f1b043a.tar.gz>
+=====================
+Immiscible multiphase flow.
+
 PR #3626 (2025-04-28) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3626-11189-dfa74ce.tar.gz>
 =====================
 Update in VTK caused change in partitioning for reading vtk meshes. Verified baselines using new scripts/parallelRestartDiff.py
