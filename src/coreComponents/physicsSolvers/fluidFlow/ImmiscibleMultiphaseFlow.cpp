@@ -264,7 +264,7 @@ void ImmiscibleMultiphaseFlow::initializePreSubGroups()
       FaceElementSubRegion const & faceSubRegion = faceRegion.getUniqueSubRegion< FaceElementSubRegion >();
       FixedToManyElementRelation const & faceElementsToCells = faceSubRegion.getToCellRelation();
 
-      auto getRelPermWrappers = [&]( localIndex regionIndex ) {
+      auto getSubregions = [&]( localIndex regionIndex ) {
         auto regionIdxL = faceElementsToCells.m_toElementRegion[regionIndex][0];
         auto regionIdxR = faceElementsToCells.m_toElementRegion[regionIndex][1];
         auto subRegionIdxL = faceElementsToCells.m_toElementSubRegion[regionIndex][0];
@@ -273,27 +273,25 @@ void ImmiscibleMultiphaseFlow::initializePreSubGroups()
         auto & regionL = elemManager.getRegion< CellElementRegion >( regionIdxL );
         auto & regionR = elemManager.getRegion< CellElementRegion >( regionIdxR );
 
-        auto & subRegionL = regionL.getSubRegion< CellElementSubRegion >( subRegionIdxL );
-        auto & subRegionR = regionR.getSubRegion< CellElementSubRegion >( subRegionIdxR );
+        auto * subRegionL = &regionL.getSubRegion< CellElementSubRegion >( subRegionIdxL );
+        auto * subRegionR = &regionR.getSubRegion< CellElementSubRegion >( subRegionIdxR );
 
-        auto & nameL = subRegionL.getReference< std::string >( viewKeyStruct::relPermNamesString());
-        auto & nameR = subRegionR.getReference< std::string >( viewKeyStruct::relPermNamesString());
-
-        auto & relPermL = getConstitutiveModel< BrooksCoreyRelativePermeability >( subRegionL, nameL );
-        auto & relPermR = getConstitutiveModel< BrooksCoreyRelativePermeability >( subRegionR, nameR );
-
-        auto wrapperL = relPermL.createKernelWrapper();
-        auto wrapperR = relPermR.createKernelWrapper();
-
-        return std::make_pair( wrapperL, wrapperR );
+        return std::make_tuple( subRegionL, subRegionR );
       };
 
-      std::pair< BrooksCoreyRelativePermeability::KernelWrapper, BrooksCoreyRelativePermeability::KernelWrapper > relPerm_pair = getRelPermWrappers( regionIndex );
+      auto [subRegionL, subRegionR] = getSubregions( regionIndex );
+      auto & nameL = subRegionL->getReference< std::string >( viewKeyStruct::relPermNamesString());
+      auto & nameR = subRegionR->getReference< std::string >( viewKeyStruct::relPermNamesString());
+
+      auto * relPermL = &getConstitutiveModel< BrooksCoreyRelativePermeability >( *subRegionL, nameL );
+      auto * relPermR = &getConstitutiveModel< BrooksCoreyRelativePermeability >( *subRegionR, nameR );
+
 
       for( localIndex side=0; side < 2; ++side )
       {
         // need to get the constitutive data from the cells.
-        m_constitutitveFluidModels[regionIndex][0] = std::make_tuple( nullptr, nullptr, nullptr );
+        m_constitutitveFluidModels[regionIndex][0] = std::make_tuple( relPermL, nullptr, nullptr );
+        m_constitutitveFluidModels[regionIndex][1] = std::make_tuple( relPermL, nullptr, nullptr );
       }
     }
   } );
