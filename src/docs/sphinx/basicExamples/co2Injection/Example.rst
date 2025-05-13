@@ -169,9 +169,7 @@ The model definition requires three text files:
 
 In *co2flash.txt*, we define the CO :sub:`2` solubility model used to compute the amount of CO :sub:`2` dissolved in the brine phase as a function of pressure (in Pascal), temperature (in Kelvin), and salinity (in units of molality):
 
-.. code::
-
-   FlashModel CO2Solubility  1e6 1.5e7 5e4 367.15 369.15 1 0
+.. literalinclude:: ../../../../../inputFiles/compositionalMultiphaseWell/co2flash.txt
 
 The first keyword is an identifier for the model type (here, a flash model). It is followed by the model name. Then, the lower, upper, and step increment values for pressure and temperature ranges are specified.
 The trailing 0 defines a zero-salinity in the model. 
@@ -180,15 +178,9 @@ Note that the water component is not allowed to evaporate into the CO :sub:`2` -
 
 The *pvtgas.txt* and *pvtliquid.txt* files define the models used to compute the density and viscosity of the two phases, as follows:
 
-.. code:: 
+.. literalinclude:: ../../../../../inputFiles/compositionalMultiphaseWell/pvtgas.txt
 
-        DensityFun SpanWagnerCO2Density 1.0e5 7.5e7 1e5 285.15 395.15 5
-        ViscosityFun FenghourCO2Viscosity 1.0e5 7.5e7 1e5 285.15 395.15 5 
-
-.. code::
-  
-        DensityFun PhillipsBrineDensity 1.0e5 7.5e7 1e5 285.15 395.15 5 0
-        ViscosityFun PhillipsBrineViscosity 0
+.. literalinclude:: ../../../../../inputFiles/compositionalMultiphaseWell/pvtliquid.txt
 
 In these files, the first keyword of each line is an identifier for the model type (either a density or a viscosity model).
 It is followed by the model name.
