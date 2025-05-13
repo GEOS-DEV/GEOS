@@ -95,7 +95,7 @@ ImmiscibleMultiphaseFlow::ImmiscibleMultiphaseFlow( const string & name,
     setApplyDefaultValue( 0.2 ).
     setDescription( "Target (absolute) change in phase volume fraction in a time step" );
 
-  this->registerWrapper( viewKeyStruct::interfaceFaceSetNamesString(), 
+  this->registerWrapper( viewKeyStruct::interfaceFaceSetNamesString(),
                          &m_interfaceFaceSetNames ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Names of the interface face sets" );
@@ -232,18 +232,17 @@ void ImmiscibleMultiphaseFlow::initializePreSubGroups()
 
 
 
-
   // ***** Create FaceElements *****
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
-                                                   MeshLevel & meshLevel,
-                                                   string_array const & regionNames )
+                                                               MeshLevel & meshLevel,
+                                                               string_array const & regionNames )
   {
 
     FaceManager const & faceManager = meshLevel.getFaceManager();
     Group const & faceSetGroup = faceManager.sets();
 
     ElementRegionManager & elemManager = meshLevel.getElemManager();
-    
+
     m_constitutitveFluidModels.resize( m_interfaceFaceSetNames.size() );
 
     // this is the FaceElement Level
@@ -251,7 +250,7 @@ void ImmiscibleMultiphaseFlow::initializePreSubGroups()
     {
       string const & faceSetName = m_interfaceFaceSetNames[regionIndex];
       SortedArrayView< localIndex const > const & faceSet = faceSetGroup.getReference< SortedArray< localIndex > >( faceSetName );
-      SurfaceElementRegion & faceRegion = elemManager.getRegion<SurfaceElementRegion>( faceSetName );
+      SurfaceElementRegion & faceRegion = elemManager.getRegion< SurfaceElementRegion >( faceSetName );
 
       for( localIndex const faceIndex : faceSet )
       {
@@ -260,15 +259,41 @@ void ImmiscibleMultiphaseFlow::initializePreSubGroups()
                                       &faceManager,
                                       faceManager.edgeList().toViewConst(),
                                       faceIndices );
-      } 
+      }
 
       FaceElementSubRegion const & faceSubRegion = faceRegion.getUniqueSubRegion< FaceElementSubRegion >();
       FixedToManyElementRelation const & faceElementsToCells = faceSubRegion.getToCellRelation();
 
+      auto getRelPermWrappers = [&]( localIndex regionIndex ) {
+        auto regionIdxL = faceElementsToCells.m_toElementRegion[regionIndex][0];
+        auto regionIdxR = faceElementsToCells.m_toElementRegion[regionIndex][1];
+        auto subRegionIdxL = faceElementsToCells.m_toElementSubRegion[regionIndex][0];
+        auto subRegionIdxR = faceElementsToCells.m_toElementSubRegion[regionIndex][1];
+
+        auto & regionL = elemManager.getRegion< CellElementRegion >( regionIdxL );
+        auto & regionR = elemManager.getRegion< CellElementRegion >( regionIdxR );
+
+        auto & subRegionL = regionL.getSubRegion< CellElementSubRegion >( subRegionIdxL );
+        auto & subRegionR = regionR.getSubRegion< CellElementSubRegion >( subRegionIdxR );
+
+        auto & nameL = subRegionL.getReference< std::string >( viewKeyStruct::relPermNamesString());
+        auto & nameR = subRegionR.getReference< std::string >( viewKeyStruct::relPermNamesString());
+
+        auto & relPermL = getConstitutiveModel< BrooksCoreyRelativePermeability >( subRegionL, nameL );
+        auto & relPermR = getConstitutiveModel< BrooksCoreyRelativePermeability >( subRegionR, nameR );
+
+        auto wrapperL = relPermL.createKernelWrapper();
+        auto wrapperR = relPermR.createKernelWrapper();
+
+        return std::make_pair( wrapperL, wrapperR );
+      };
+
+      std::pair< BrooksCoreyRelativePermeability::KernelWrapper, BrooksCoreyRelativePermeability::KernelWrapper > relPerm_pair = getRelPermWrappers( regionIndex );
+
       for( localIndex side=0; side < 2; ++side )
       {
         // need to get the constitutive data from the cells.
-        m_constitutitveFluidModels[regionIndex][0] = std::make_tuple( nullptr, nullptr, nullptr ) ;
+        m_constitutitveFluidModels[regionIndex][0] = std::make_tuple( nullptr, nullptr, nullptr );
       }
     }
   } );
@@ -336,7 +361,7 @@ void ImmiscibleMultiphaseFlow::updateCapPressureModel( ObjectManagerBase & dataG
       typename TYPEOFREF( castedCapPres ) ::KernelWrapper capPresWrapper = castedCapPres.createKernelWrapper();
 
       // isothermalCompositionalMultiphaseBaseKernels::
-        immiscibleMultiphaseKernels::
+      immiscibleMultiphaseKernels::
         CapillaryPressureUpdateKernel::
         launch< parallelDevicePolicy<> >( dataGroup.size(),
                                           capPresWrapper,
@@ -676,38 +701,38 @@ void ImmiscibleMultiphaseFlow::assembleFluxTerms( real64 const dt,
       mesh.getElemManager().forElementSubRegions( regionNames,
                                                   [&]( localIndex const,
                                                        ElementSubRegionBase & subRegion ) // Check if you need this.
-      {      
+      {
         // Capillary pressure wrapper
         string const & cappresName = subRegion.getReference< string >( viewKeyStruct::capPressureNamesString() );
         JFunctionCapillaryPressure & capPressure = getConstitutiveModel< JFunctionCapillaryPressure >( subRegion, cappresName );
-        JFunctionCapillaryPressure::KernelWrapper capPresWrapper = capPressure.createKernelWrapper(); 
+        JFunctionCapillaryPressure::KernelWrapper capPresWrapper = capPressure.createKernelWrapper();
 
         // Relative permeability wrapper
         string const & relPermName = subRegion.getReference< string >( viewKeyStruct::relPermNamesString() );
         BrooksCoreyRelativePermeability & relPerm = getConstitutiveModel< BrooksCoreyRelativePermeability >( subRegion, relPermName );
         BrooksCoreyRelativePermeability::KernelWrapper relPermWrapper = relPerm.createKernelWrapper();
 
-          fluxApprox.forAllStencils( mesh, [&]( auto & stencil )
-          {
-            typename TYPEOFREF( stencil ) ::KernelWrapper stencilWrapper = stencil.createKernelWrapper();
-            immiscibleMultiphaseKernels::
+        fluxApprox.forAllStencils( mesh, [&]( auto & stencil )
+        {
+          typename TYPEOFREF( stencil ) ::KernelWrapper stencilWrapper = stencil.createKernelWrapper();
+          immiscibleMultiphaseKernels::
             FluxComputeKernelFactory::createAndLaunch< parallelDevicePolicy<> >( m_numPhases,
-                                                                                         dofManager.rankOffset(),
-                                                                                         dofKey,
-                                                                                         m_hasCapPressure,
-                                                                                         m_useTotalMassEquation,
-                                                                                         m_gravityDensityScheme == GravityDensityScheme::PhasePresence,
-                                                                                         getName(),
-                                                                                         mesh.getElemManager(),
-                                                                                         stencilWrapper,
-                                                                                         capPresWrapper,
-                                                                                         relPermWrapper,
-                                                                                         subRegion,
-                                                                                         dt,
-                                                                                         localMatrix.toViewConstSizes(),
-                                                                                         localRhs.toView() );
-          } );
+                                                                                 dofManager.rankOffset(),
+                                                                                 dofKey,
+                                                                                 m_hasCapPressure,
+                                                                                 m_useTotalMassEquation,
+                                                                                 m_gravityDensityScheme == GravityDensityScheme::PhasePresence,
+                                                                                 getName(),
+                                                                                 mesh.getElemManager(),
+                                                                                 stencilWrapper,
+                                                                                 capPresWrapper,
+                                                                                 relPermWrapper,
+                                                                                 subRegion,
+                                                                                 dt,
+                                                                                 localMatrix.toViewConstSizes(),
+                                                                                 localRhs.toView() );
         } );
+      } );
     }
     else
     {
@@ -715,18 +740,18 @@ void ImmiscibleMultiphaseFlow::assembleFluxTerms( real64 const dt,
       {
         typename TYPEOFREF( stencil ) ::KernelWrapper stencilWrapper = stencil.createKernelWrapper();
         immiscibleMultiphaseKernels::
-        FluxComputeKernelFactory::createAndLaunch< parallelDevicePolicy<> >( m_numPhases,
-                                                                                     dofManager.rankOffset(),
-                                                                                     dofKey,
-                                                                                     m_hasCapPressure,
-                                                                                     m_useTotalMassEquation,
-                                                                                     m_gravityDensityScheme == GravityDensityScheme::PhasePresence,
-                                                                                     getName(),
-                                                                                     mesh.getElemManager(),
-                                                                                     stencilWrapper,
-                                                                                     dt,
-                                                                                     localMatrix.toViewConstSizes(),
-                                                                                     localRhs.toView() );
+          FluxComputeKernelFactory::createAndLaunch< parallelDevicePolicy<> >( m_numPhases,
+                                                                               dofManager.rankOffset(),
+                                                                               dofKey,
+                                                                               m_hasCapPressure,
+                                                                               m_useTotalMassEquation,
+                                                                               m_gravityDensityScheme == GravityDensityScheme::PhasePresence,
+                                                                               getName(),
+                                                                               mesh.getElemManager(),
+                                                                               stencilWrapper,
+                                                                               dt,
+                                                                               localMatrix.toViewConstSizes(),
+                                                                               localRhs.toView() );
       } );
     }
 

@@ -307,9 +307,9 @@ private:
 
   string_array m_interfaceFaceSetNames;
 
-  stdVector< std::array< std::tuple< constitutive::ConstitutiveBase*, 
-                                     constitutive::ConstitutiveBase*, 
-                                     constitutive::ConstitutiveBase* >, 2 > >  m_constitutitveFluidModels;
+  stdVector< std::array< std::tuple< constitutive::ConstitutiveBase *,
+                                     constitutive::ConstitutiveBase *,
+                                     constitutive::ConstitutiveBase * >, 2 > >  m_constitutitveFluidModels;
 
 
 private:
