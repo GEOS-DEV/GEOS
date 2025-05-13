@@ -291,30 +291,28 @@ void FluidModelTest< FLUID_TYPE, NUM_COMP, NUM_PHASE >::testNumericalDerivatives
   auto fluidBase = fluid->deliverClone( fluid->getName()+"Copy", &fluid->getParent());
   FluidModel * fluidCopy = dynamicCast< FluidModel * >( fluidBase.get() );
 
-  constitutiveUpdatePassThru( *fluidCopy, [&] ( auto & castFluid ){
-    auto fluidWrapper = castFluid.createKernelWrapper();
+  auto fluidWrapper = fluidCopy->createKernelWrapper();
 
-    auto const pressureView = pressureArray.toViewConst();
-    auto const temperatureView = temperatureArray.toViewConst();
-    auto const compositionView = compositionArray.toViewConst();
+  auto const pressureView = pressureArray.toViewConst();
+  auto const temperatureView = temperatureArray.toViewConst();
+  auto const compositionView = compositionArray.toViewConst();
 
-    forAll< parallelHostPolicy >( size, [fluidWrapper,
-                                         pressureView,
-                                         temperatureView,
-                                         compositionView]
-                                  GEOS_HOST_DEVICE ( localIndex const k )
+  forAll< parallelHostPolicy >( size, [fluidWrapper,
+                                       pressureView,
+                                       temperatureView,
+                                       compositionView]
+                                GEOS_HOST_DEVICE ( localIndex const k )
+  {
+    for( localIndex q = 0; q < fluidWrapper.numGauss(); ++q )
     {
-      for( localIndex q = 0; q < fluidWrapper.numGauss(); ++q )
-      {
-        fluidWrapper.update( k, q, pressureView[k], temperatureView[k], compositionView[k] );
-      }
-    } );
+      fluidWrapper.update( k, q, pressureView[k], temperatureView[k], compositionView[k] );
+    }
+  } );
 
-    // Bring everything back to host
-    forAll< serialPolicy >( 1, [fluidWrapper] ( localIndex const )
-    {
-      /* Do nothing */
-    } );
+  // Bring everything back to host
+  forAll< serialPolicy >( 1, [fluidWrapper] ( localIndex const )
+  {
+    /* Do nothing */
   } );
 
   // Enthalpy and internal energy values can be quite large and prone to round-off errors when
