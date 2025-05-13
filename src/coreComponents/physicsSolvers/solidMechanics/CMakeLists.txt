@@ -65,7 +65,6 @@ set( solidMechanicsSolvers_headers
 set( solidMechanicsSolvers_sources
      MatrixFreeSolidMechanicsFEM.cpp
      MatrixFreeSolidMechanicsFEMOperator.cpp
-     kernels/SolidMechanicsSmallStrainResidualKernels.cpp
      SolidMechanicsLagrangianFEM.cpp
      SolidMechanicsMPM.cpp
      SolidMechanicsStateReset.cpp
