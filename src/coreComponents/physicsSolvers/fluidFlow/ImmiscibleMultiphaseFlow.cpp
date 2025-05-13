@@ -292,7 +292,7 @@ void ImmiscibleMultiphaseFlow::initializePreSubGroups()
       {
         // need to get the constitutive data from the cells.
         m_constitutitveFluidModels[regionIndex][0] = std::make_tuple( relPermL, nullptr, nullptr );
-        m_constitutitveFluidModels[regionIndex][1] = std::make_tuple( relPermL, nullptr, nullptr );
+        m_constitutitveFluidModels[regionIndex][1] = std::make_tuple( relPermR, nullptr, nullptr );
       }
     }
   } );
