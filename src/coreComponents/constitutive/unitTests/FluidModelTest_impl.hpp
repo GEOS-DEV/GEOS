@@ -20,6 +20,7 @@
 #ifndef GEOS_CORECOMPONENTS_CONSTITUTIVE_UNITTESTS_FLUIDMODELTEST_IMPL_HPP_
 #define GEOS_CORECOMPONENTS_CONSTITUTIVE_UNITTESTS_FLUIDMODELTEST_IMPL_HPP_
 
+#include "constitutive/fluid/multifluid/MultiFluidSelector.hpp"
 #include "functions/FunctionManager.hpp"
 #include "functions/TableFunction.hpp"
 
@@ -287,28 +288,33 @@ void FluidModelTest< FLUID_TYPE, NUM_COMP, NUM_PHASE >::testNumericalDerivatives
     dofNames[idof] = GEOS_FMT( "z({})", componentNames[ic] );
   }
 
-  FluidWrapper fluidWrapper = fluid->createKernelWrapper();
+  auto fluidBase = fluid->deliverClone( fluid->getName()+"Copy", &fluid->getParent());
+  FluidModel * fluidCopy = dynamicCast< FluidModel * >( fluidBase.get() );
 
-  auto const pressureView = pressureArray.toViewConst();
-  auto const temperatureView = temperatureArray.toViewConst();
-  auto const compositionView = compositionArray.toViewConst();
+  constitutiveUpdatePassThru( *fluidCopy, [&] ( auto & castFluid ){
+    auto fluidWrapper = castFluid.createKernelWrapper();
 
-  forAll< parallelHostPolicy >( size, [fluidWrapper,
-                                       pressureView,
-                                       temperatureView,
-                                       compositionView]
-                                GEOS_HOST_DEVICE ( localIndex const k )
-  {
-    for( localIndex q = 0; q < fluidWrapper.numGauss(); ++q )
+    auto const pressureView = pressureArray.toViewConst();
+    auto const temperatureView = temperatureArray.toViewConst();
+    auto const compositionView = compositionArray.toViewConst();
+
+    forAll< parallelHostPolicy >( size, [fluidWrapper,
+                                         pressureView,
+                                         temperatureView,
+                                         compositionView]
+                                  GEOS_HOST_DEVICE ( localIndex const k )
     {
-      fluidWrapper.update( k, q, pressureView[k], temperatureView[k], compositionView[k] );
-    }
-  } );
+      for( localIndex q = 0; q < fluidWrapper.numGauss(); ++q )
+      {
+        fluidWrapper.update( k, q, pressureView[k], temperatureView[k], compositionView[k] );
+      }
+    } );
 
-  // Bring everything back to host
-  forAll< serialPolicy >( 1, [fluidWrapper] ( localIndex const )
-  {
-    /* Do nothing */
+    // Bring everything back to host
+    forAll< serialPolicy >( 1, [fluidWrapper] ( localIndex const )
+    {
+      /* Do nothing */
+    } );
   } );
 
   // Enthalpy and internal energy values can be quite large and prone to round-off errors when
@@ -320,8 +326,8 @@ void FluidModelTest< FLUID_TYPE, NUM_COMP, NUM_PHASE >::testNumericalDerivatives
   {
     testDerivatives( GEOS_FMT( "Phase fraction ({})", phaseNames[phaseIndex] ),
                      testValues,
-                     fluid->phaseFraction().toViewConst(),
-                     fluid->dPhaseFraction().toViewConst(),
+                     fluidCopy->phaseFraction().toViewConst(),
+                     fluidCopy->dPhaseFraction().toViewConst(),
                      deltaArray.toSliceConst(),
                      1.0,
                      dofNames,
@@ -330,8 +336,8 @@ void FluidModelTest< FLUID_TYPE, NUM_COMP, NUM_PHASE >::testNumericalDerivatives
                      phaseIndex );
     testDerivatives( GEOS_FMT( "Phase density ({})", phaseNames[phaseIndex] ),
                      testValues,
-                     fluid->phaseDensity().toViewConst(),
-                     fluid->dPhaseDensity().toViewConst(),
+                     fluidCopy->phaseDensity().toViewConst(),
+                     fluidCopy->dPhaseDensity().toViewConst(),
                      deltaArray.toSliceConst(),
                      1.0,
                      dofNames,
@@ -340,8 +346,8 @@ void FluidModelTest< FLUID_TYPE, NUM_COMP, NUM_PHASE >::testNumericalDerivatives
                      phaseIndex );
     testDerivatives( GEOS_FMT( "Phase mass density ({})", phaseNames[phaseIndex] ),
                      testValues,
-                     fluid->phaseMassDensity().toViewConst(),
-                     fluid->dPhaseMassDensity().toViewConst(),
+                     fluidCopy->phaseMassDensity().toViewConst(),
+                     fluidCopy->dPhaseMassDensity().toViewConst(),
                      deltaArray.toSliceConst(),
                      1.0,
                      dofNames,
@@ -350,8 +356,8 @@ void FluidModelTest< FLUID_TYPE, NUM_COMP, NUM_PHASE >::testNumericalDerivatives
                      phaseIndex );
     testDerivatives( GEOS_FMT( "Phase viscosity ({})", phaseNames[phaseIndex] ),
                      testValues,
-                     fluid->phaseViscosity().toViewConst(),
-                     fluid->dPhaseViscosity().toViewConst(),
+                     fluidCopy->phaseViscosity().toViewConst(),
+                     fluidCopy->dPhaseViscosity().toViewConst(),
                      deltaArray.toSliceConst(),
                      1.0,
                      dofNames,
@@ -362,8 +368,8 @@ void FluidModelTest< FLUID_TYPE, NUM_COMP, NUM_PHASE >::testNumericalDerivatives
     {
       testDerivatives( GEOS_FMT( "Phase enthalpy ({})", phaseNames[phaseIndex] ),
                        testValues,
-                       fluid->phaseEnthalpy().toViewConst(),
-                       fluid->dPhaseEnthalpy().toViewConst(),
+                       fluidCopy->phaseEnthalpy().toViewConst(),
+                       fluidCopy->dPhaseEnthalpy().toViewConst(),
                        deltaArray.toSliceConst(),
                        referenceEnthalpy,
                        dofNames,
@@ -372,8 +378,8 @@ void FluidModelTest< FLUID_TYPE, NUM_COMP, NUM_PHASE >::testNumericalDerivatives
                        phaseIndex );
       testDerivatives( GEOS_FMT( "Phase internal energy ({})", phaseNames[phaseIndex] ),
                        testValues,
-                       fluid->phaseInternalEnergy().toViewConst(),
-                       fluid->dPhaseInternalEnergy().toViewConst(),
+                       fluidCopy->phaseInternalEnergy().toViewConst(),
+                       fluidCopy->dPhaseInternalEnergy().toViewConst(),
                        deltaArray.toSliceConst(),
                        referenceEnthalpy,
                        dofNames,
@@ -385,8 +391,8 @@ void FluidModelTest< FLUID_TYPE, NUM_COMP, NUM_PHASE >::testNumericalDerivatives
     {
       testDerivatives( GEOS_FMT( "Phase composition ({} {})", phaseNames[phaseIndex], componentNames[compIndex] ),
                        testValues,
-                       fluid->phaseCompFraction().toViewConst(),
-                       fluid->dPhaseCompFraction().toViewConst(),
+                       fluidCopy->phaseCompFraction().toViewConst(),
+                       fluidCopy->dPhaseCompFraction().toViewConst(),
                        deltaArray.toSliceConst(),
                        1.0,
                        dofNames,
@@ -398,8 +404,8 @@ void FluidModelTest< FLUID_TYPE, NUM_COMP, NUM_PHASE >::testNumericalDerivatives
   }
   testDerivatives( "Total density",
                    testValues,
-                   fluid->totalDensity().toViewConst(),
-                   fluid->dTotalDensity().toViewConst(),
+                   fluidCopy->totalDensity().toViewConst(),
+                   fluidCopy->dTotalDensity().toViewConst(),
                    deltaArray.toSliceConst(),
                    1.0,
                    dofNames,
