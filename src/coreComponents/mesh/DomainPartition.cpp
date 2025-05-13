@@ -374,7 +374,6 @@ void DomainPartition::outputPartitionInformation() const
 
   auto addSummaryRow = []( TableData & tableData, std::array< double, 4 > stats, string_view heading )
   {
-    std::cout << "addSummaryRow Elem "<< stats[3] << std::endl;
     tableData.addRow( heading,
                       CellType::MergeNext, CellType::MergeNext, stats[0],
                       CellType::MergeNext, CellType::MergeNext, stats[1],
