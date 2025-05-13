@@ -289,16 +289,20 @@ forming a gas cap at the top of the domain,
 
 .. |pic1| image:: fcCo2-sat-0.png
    :width: 32%
+   :alt: Gas saturation after 2e7 s
 .. |pic2| image:: fcCo2-sat-1.png
    :width: 32%
+   :alt: Gas saturation after 15e7 s
 .. |pic3| image:: fcCo2-sat-2.png
    :width: 32%
+   :alt: Gas saturation after 50e7 s
 
-The heterogeneous values of the log permeability field can also be visualized in Paraview as shown below:
+The heterogeneous values of the permeability field can also be visualized in Paraview as shown below:
 
-.. image:: fcCo2-logK.png
+.. image:: fcCo2-K.png
    :width: 400px
    :align: center
+   :alt: Vertical permeability
 
 ------------------------------------
 To go further
