@@ -120,10 +120,10 @@ public:
    */
   GEOS_HOST_DEVICE
   void computeHalfWeights( localIndex iconn,
-                       CoefficientAccessor< arrayView3d< real64 const > > const & coefficient,
-                       CoefficientAccessor< arrayView3d< real64 const > > const & dCoeff_dVar,
-                       real64 ( &weight )[maxNumConnections][2],
-                       real64 ( &dWeight_dVar )[maxNumConnections][2] ) const;
+                           CoefficientAccessor< arrayView3d< real64 const > > const & coefficient,
+                           CoefficientAccessor< arrayView3d< real64 const > > const & dCoeff_dVar,
+                           real64 ( &weight )[maxNumConnections][2],
+                           real64 ( &dWeight_dVar )[maxNumConnections][2] ) const;
 
   /**
    * @brief Compute weights and derivatives w.r.t to one variable without coefficient
@@ -383,10 +383,10 @@ GEOS_HOST_DEVICE
 inline void
 SurfaceElementStencilWrapper::
   computeHalfWeights( localIndex iconn,
-                  CoefficientAccessor< arrayView3d< real64 const > > const & coefficient,
-                  CoefficientAccessor< arrayView3d< real64 const > > const & dCoeff_dVar,
-                  real64 ( & weight )[maxNumConnections][2],
-                  real64 ( & dWeight_dVar )[maxNumConnections][2] ) const
+                      CoefficientAccessor< arrayView3d< real64 const > > const & coefficient,
+                      CoefficientAccessor< arrayView3d< real64 const > > const & dCoeff_dVar,
+                      real64 ( & weight )[maxNumConnections][2],
+                      real64 ( & dWeight_dVar )[maxNumConnections][2] ) const
 {
 
   real64 sumOfTrans = 0.0;

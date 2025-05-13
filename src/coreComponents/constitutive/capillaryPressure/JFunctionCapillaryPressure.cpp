@@ -120,11 +120,11 @@ JFunctionCapillaryPressure::JFunctionCapillaryPressure( std::string const & name
   registerWrapper( viewKeyStruct::jFunctionWrappersString(), &m_jFuncKernelWrappers ).
     setSizedFromParent( 0 ).
     setRestartFlags( RestartFlags::NO_WRITE );
-  
+
   registerWrapper( viewKeyStruct::inverseJFunctionWrappersString(), &m_inverseJFuncKernelWrappers ).
     setSizedFromParent( 0 ).
     setRestartFlags( RestartFlags::NO_WRITE );
-  
+
 }
 
 void JFunctionCapillaryPressure::postInputInitialization()
@@ -316,36 +316,36 @@ void JFunctionCapillaryPressure::createAllTableKernelWrappers()
     auto const & satArrayView = jFuncTable.getCoordinates()[0];
     auto const & jArrayView   = jFuncTable.getValues();
 
-    std::vector<real64> satVec( satArrayView.size() );
-    std::vector<real64> jVec( jArrayView.size() );
+    std::vector< real64 > satVec( satArrayView.size() );
+    std::vector< real64 > jVec( jArrayView.size() );
 
     std::copy( satArrayView.begin(), satArrayView.end(), satVec.begin() );
     std::copy( jArrayView.begin(), jArrayView.end(), jVec.begin() );
 
     // Reverse both arrays (if original J is decreasing in S)
-std::reverse( jVec.begin(), jVec.end() );
-std::reverse( satVec.begin(), satVec.end() );
-
-  
-auto inverseTable = std::make_shared<TableFunction>( "inverseJFunc", this );
-
-real64_array invJVec( jVec.size() );
-real64_array invSatVec( satVec.size() );
-std::copy( jVec.begin(), jVec.end(), invJVec.data() );
-std::copy( satVec.begin(), satVec.end(), invSatVec.data() );
-
-array1d< real64_array > coordinates;
-coordinates.emplace_back( std::move( invJVec ) );
+    std::reverse( jVec.begin(), jVec.end() );
+    std::reverse( satVec.begin(), satVec.end() );
 
 
-std::vector< units::Unit > dimUnits = { units::Unknown }; // or actual unit if available
+    auto inverseTable = std::make_shared< TableFunction >( "inverseJFunc", this );
 
-inverseTable->setTableCoordinates( coordinates, dimUnits );
-inverseTable->setTableValues( std::move( invSatVec ), units::Unknown );
-inverseTable->setInterpolationMethod( TableFunction::InterpolationType::Linear );
+    real64_array invJVec( jVec.size() );
+    real64_array invSatVec( satVec.size() );
+    std::copy( jVec.begin(), jVec.end(), invJVec.data() );
+    std::copy( satVec.begin(), satVec.end(), invSatVec.data() );
 
-m_inverseJFuncKernelWrappers.emplace_back( inverseTable->createKernelWrapper() );
-m_inverseTables.emplace_back( std::move( inverseTable ) );
+    array1d< real64_array > coordinates;
+    coordinates.emplace_back( std::move( invJVec ) );
+
+
+    std::vector< units::Unit > dimUnits = { units::Unknown }; // or actual unit if available
+
+    inverseTable->setTableCoordinates( coordinates, dimUnits );
+    inverseTable->setTableValues( std::move( invSatVec ), units::Unknown );
+    inverseTable->setInterpolationMethod( TableFunction::InterpolationType::Linear );
+
+    m_inverseJFuncKernelWrappers.emplace_back( inverseTable->createKernelWrapper() );
+    m_inverseTables.emplace_back( std::move( inverseTable ) );
 
   }
   else if( numPhases == 3 )

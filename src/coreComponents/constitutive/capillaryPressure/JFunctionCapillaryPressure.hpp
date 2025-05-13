@@ -82,7 +82,7 @@ public:
     void computeInv( arraySlice1d< real64, compflow::USD_PHASE - 1 > const & phaseVolFraction,
                      arraySlice1d< real64 const > const & jFuncMultiplier,
                      arraySlice1d< real64 const, cappres::USD_CAPPRES - 2 > const & phaseCapPres,
-                     arraySlice2d< real64, cappres::USD_CAPPRES_DS - 2 > const & dPhaseCapPres_dPhaseVolFrac ) const;             
+                     arraySlice2d< real64, cappres::USD_CAPPRES_DS - 2 > const & dPhaseCapPres_dPhaseVolFrac ) const;
 
 
     GEOS_HOST_DEVICE
@@ -182,7 +182,7 @@ private:
   array1d< TableFunction::KernelWrapper > m_jFuncKernelWrappers;
   array1d< TableFunction::KernelWrapper > m_inverseJFuncKernelWrappers;
 
-  std::vector< std::shared_ptr<TableFunction> > m_inverseTables;
+  std::vector< std::shared_ptr< TableFunction > > m_inverseTables;
 
 };
 
@@ -261,9 +261,9 @@ GEOS_HOST_DEVICE
 inline void
 JFunctionCapillaryPressure::KernelWrapper::
   computeInv( arraySlice1d< real64, compflow::USD_PHASE - 1 > const & phaseVolFraction,
-           arraySlice1d< real64 const > const & jFuncMultiplier,
-           arraySlice1d< real64 const, cappres::USD_CAPPRES - 2 > const & phaseCapPres,
-           arraySlice2d< real64, cappres::USD_CAPPRES_DS - 2 > const & dPhaseCapPres_dPhaseVolFrac ) const
+              arraySlice1d< real64 const > const & jFuncMultiplier,
+              arraySlice1d< real64 const, cappres::USD_CAPPRES - 2 > const & phaseCapPres,
+              arraySlice2d< real64, cappres::USD_CAPPRES_DS - 2 > const & dPhaseCapPres_dPhaseVolFrac ) const
 {
   LvArray::forValuesInSlice( dPhaseCapPres_dPhaseVolFrac, []( real64 & val ){ val = 0.0; } );
 
@@ -272,24 +272,24 @@ JFunctionCapillaryPressure::KernelWrapper::
   integer const ipOil   = m_phaseOrder[PT::OIL];
   integer const ipGas   = m_phaseOrder[PT::GAS];
 
-        // apply multiplier
+  // apply multiplier
   real64 capPresWater_J = phaseCapPres[ipWater] / jFuncMultiplier[0];
-    // std::cout << GEOS_FMT( "        JM_2 = ( {:4.2e} )", jFuncMultiplier[0] );
-  array1d<real64> input(1);
+  // std::cout << GEOS_FMT( "        JM_2 = ( {:4.2e} )", jFuncMultiplier[0] );
+  array1d< real64 > input( 1 );
   input[0] = capPresWater_J;
-    // std::cout << GEOS_FMT( "        J_int2 = ( {:4.2e} )", input[0] );
-    // std::cout << GEOS_FMT( "        Pc_int2 = ( {:4.2e} )", phaseCapPres[ipWater] );
+  // std::cout << GEOS_FMT( "        J_int2 = ( {:4.2e} )", input[0] );
+  // std::cout << GEOS_FMT( "        Pc_int2 = ( {:4.2e} )", phaseCapPres[ipWater] );
   auto inputSlice = input.toSliceConst();
 
 
 
-    phaseVolFraction[ipWater] =
-          m_inverseJFuncKernelWrappers[0].compute( inputSlice,
-                                            &(dPhaseCapPres_dPhaseVolFrac)[ipWater][ipWater] );                                 
-     dPhaseCapPres_dPhaseVolFrac[ipWater][ipWater] /= jFuncMultiplier[0];
-    // std::cout << GEOS_FMT( "        S_int2 = ( {:4.2e} )", phaseVolFraction[ipWater] );
-    // std::cout << GEOS_FMT( "        dS/dP = ( {:4.2e} )", dPhaseCapPres_dPhaseVolFrac[ipWater][ipWater] );
-    phaseVolFraction[ipGas] = 1.0 - phaseVolFraction[ipWater];
+  phaseVolFraction[ipWater] =
+    m_inverseJFuncKernelWrappers[0].compute( inputSlice,
+                                             &(dPhaseCapPres_dPhaseVolFrac)[ipWater][ipWater] );
+  dPhaseCapPres_dPhaseVolFrac[ipWater][ipWater] /= jFuncMultiplier[0];
+  // std::cout << GEOS_FMT( "        S_int2 = ( {:4.2e} )", phaseVolFraction[ipWater] );
+  // std::cout << GEOS_FMT( "        dS/dP = ( {:4.2e} )", dPhaseCapPres_dPhaseVolFrac[ipWater][ipWater] );
+  phaseVolFraction[ipGas] = 1.0 - phaseVolFraction[ipWater];
 }
 
 GEOS_HOST_DEVICE

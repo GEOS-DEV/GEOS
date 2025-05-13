@@ -67,8 +67,8 @@ public:
 
     GEOS_HOST_DEVICE
     void computeInv( arraySlice1d< real64, compflow::USD_PHASE - 1 > const & phaseVolFraction,
-                  arraySlice1d< real64 const, cappres::USD_CAPPRES - 2 > const & phaseCapPres,
-                  arraySlice2d< real64, cappres::USD_CAPPRES_DS - 2 > const & dPhaseCapPres_dPhaseVolFrac ) const;
+                     arraySlice1d< real64 const, cappres::USD_CAPPRES - 2 > const & phaseCapPres,
+                     arraySlice2d< real64, cappres::USD_CAPPRES_DS - 2 > const & dPhaseCapPres_dPhaseVolFrac ) const;
 
 
     GEOS_HOST_DEVICE
@@ -183,8 +183,8 @@ GEOS_HOST_DEVICE
 inline void
 TableCapillaryPressure::KernelWrapper::
   computeInv( arraySlice1d< real64, compflow::USD_PHASE - 1 > const & phaseVolFraction,
-           arraySlice1d< real64 const, cappres::USD_CAPPRES - 2 > const & phaseCapPres,
-           arraySlice2d< real64, cappres::USD_CAPPRES_DS - 2 > const & dPhaseCapPres_dPhaseVolFrac ) const
+              arraySlice1d< real64 const, cappres::USD_CAPPRES - 2 > const & phaseCapPres,
+              arraySlice2d< real64, cappres::USD_CAPPRES_DS - 2 > const & dPhaseCapPres_dPhaseVolFrac ) const
 {
   LvArray::forValuesInSlice( dPhaseCapPres_dPhaseVolFrac, []( real64 & val ){ val = 0.0; } );
 
@@ -193,11 +193,11 @@ TableCapillaryPressure::KernelWrapper::
   // integer const ipOil   = m_phaseOrder[PT::OIL];
   // integer const ipGas   = m_phaseOrder[PT::GAS];
 
-    // put capillary pressure on the wetting phase
+  // put capillary pressure on the wetting phase
 
-    phaseVolFraction[ipWater] =
-      m_capPresKernelWrappers[0].compute( &(phaseCapPres)[ipWater],
-                                          &(dPhaseCapPres_dPhaseVolFrac)[ipWater][ipWater] );
+  phaseVolFraction[ipWater] =
+    m_capPresKernelWrappers[0].compute( &(phaseCapPres)[ipWater],
+                                        &(dPhaseCapPres_dPhaseVolFrac)[ipWater][ipWater] );
 
 }
 

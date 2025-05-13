@@ -71,19 +71,19 @@ public:
                        real64 ( &weight )[1][2],
                        real64 ( &dWeight_dVar )[1][2] ) const;
 /**
-   * @brief Compute half weights and derivatives w.r.t to one variable.
-   * @param[in] iconn connection index
-   * @param[in] coefficient view accessor to the coefficient used to compute the weights
-   * @param[in] dCoeff_dVar view accessor to the derivative of the coefficient w.r.t to the variable
-   * @param[out] weight view weights
-   * @param[out] dWeight_dVar derivative of the weights w.r.t to the variable
-   */
+ * @brief Compute half weights and derivatives w.r.t to one variable.
+ * @param[in] iconn connection index
+ * @param[in] coefficient view accessor to the coefficient used to compute the weights
+ * @param[in] dCoeff_dVar view accessor to the derivative of the coefficient w.r.t to the variable
+ * @param[out] weight view weights
+ * @param[out] dWeight_dVar derivative of the weights w.r.t to the variable
+ */
   GEOS_HOST_DEVICE
   void computeHalfWeights( localIndex const iconn,
-                       CoefficientAccessor< arrayView3d< real64 const > > const & coefficient,
-                       CoefficientAccessor< arrayView3d< real64 const > > const & dCoeff_dVar,
-                       real64 ( &weight )[1][2],
-                       real64 ( &dWeight_dVar )[1][2] ) const;
+                           CoefficientAccessor< arrayView3d< real64 const > > const & coefficient,
+                           CoefficientAccessor< arrayView3d< real64 const > > const & dCoeff_dVar,
+                           real64 ( &weight )[1][2],
+                           real64 ( &dWeight_dVar )[1][2] ) const;
 
   /**
    * @brief Compute weights and derivatives w.r.t to one variable without coefficient
@@ -311,10 +311,10 @@ GEOS_HOST_DEVICE
 inline void
 CellElementStencilTPFAWrapper::
   computeHalfWeights( localIndex const iconn,
-                  CoefficientAccessor< arrayView3d< real64 const > > const & coefficient,
-                  CoefficientAccessor< arrayView3d< real64 const > > const & dCoeff_dVar,
-                  real64 (& weight)[1][2],
-                  real64 (& dWeight_dVar )[1][2] ) const
+                      CoefficientAccessor< arrayView3d< real64 const > > const & coefficient,
+                      CoefficientAccessor< arrayView3d< real64 const > > const & dCoeff_dVar,
+                      real64 (& weight)[1][2],
+                      real64 (& dWeight_dVar )[1][2] ) const
 {
   real64 halfWeight[2];
   real64 dHalfWeight_dVar[2];
@@ -371,8 +371,10 @@ CellElementStencilTPFAWrapper::
   // real64 dHarmonicWeight_dVar[2];
   // real64 dArithmeticWeight_dVar[2];
 
-  // dHarmonicWeight_dVar[0] = sum > 0 ? (dHalfWeight_dVar[0]*sum*halfWeight[1] - dHalfWeight_dVar[0]*halfWeight[0]*halfWeight[1]) / ( sum*sum ) : 0.0;
-  // dHarmonicWeight_dVar[1] = sum > 0 ? (dHalfWeight_dVar[1]*sum*halfWeight[0] - dHalfWeight_dVar[1]*halfWeight[1]*halfWeight[0]) / ( sum*sum ) : 0.0;
+  // dHarmonicWeight_dVar[0] = sum > 0 ? (dHalfWeight_dVar[0]*sum*halfWeight[1] - dHalfWeight_dVar[0]*halfWeight[0]*halfWeight[1]) / (
+  // sum*sum ) : 0.0;
+  // dHarmonicWeight_dVar[1] = sum > 0 ? (dHalfWeight_dVar[1]*sum*halfWeight[0] - dHalfWeight_dVar[1]*halfWeight[1]*halfWeight[0]) / (
+  // sum*sum ) : 0.0;
 
   // dArithmeticWeight_dVar[0] = dHalfWeight_dVar[0] / 2;
   // dArithmeticWeight_dVar[1] = dHalfWeight_dVar[1] / 2;

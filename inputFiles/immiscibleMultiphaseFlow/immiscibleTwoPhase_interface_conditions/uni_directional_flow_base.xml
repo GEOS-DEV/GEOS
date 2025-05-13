@@ -108,7 +108,7 @@
       name="relperm_right"
       phaseNames="{ gas, water }"
       phaseMinVolumeFraction="{ 0.0, 0.0 }"
-      phaseRelPermExponent="{ 3.5, 3.5 }"
+      phaseRelPermExponent="{ 3.141592, 3.141592 }"
       phaseRelPermMaxValue="{ 1.0, 1.0 }"/>      
     
     <TwoPhaseImmiscibleFluid
