@@ -107,7 +107,7 @@ TYPED_TEST_P( LAIHelperFunctionsTest, nodalVectorPermutation )
   DofManager dofManager( "test" );
   dofManager.setDomain( domain );
 
-  std::vector< DofManager::FieldSupport > regions;
+  stdVector< DofManager::FieldSupport > regions;
   DofManager::FieldSupport region = { "mesh1", "Level0", {"region1"} };
   regions.emplace_back( region );
 
@@ -158,7 +158,7 @@ TYPED_TEST_P( LAIHelperFunctionsTest, cellCenteredVectorPermutation )
   DofManager dofManager( "test" );
   dofManager.setDomain( domain );
 
-  std::vector< DofManager::FieldSupport > regions;
+  stdVector< DofManager::FieldSupport > regions;
   DofManager::FieldSupport region = { "mesh1", "Level0", {"region1"} };
   regions.emplace_back( region );
 

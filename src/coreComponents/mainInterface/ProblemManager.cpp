@@ -257,7 +257,7 @@ bool ProblemManager::parseRestart( string & restartFileName, CommandLineOptions 
     string dirname, basename;
     std::tie( dirname, basename ) = splitPath( restartFileName );
 
-    std::vector< string > dir_contents = readDirectory( dirname );
+    stdVector< string > dir_contents = readDirectory( dirname );
 
     GEOS_THROW_IF( dir_contents.empty(),
                    "Directory gotten from " << restartFileName << " " << dirname << " is empty.",

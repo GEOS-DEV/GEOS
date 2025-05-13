@@ -98,6 +98,12 @@ PhysicsSolverBase::PhysicsSolverBase( string const & name,
     setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "Write matrix, rhs, solution to screen ( = 1) or file ( = 2)." );
 
+  registerWrapper( viewKeyStruct::allowNonConvergedLinearSolverSolutionString(), &m_allowNonConvergedLinearSolverSolution ).
+    setApplyDefaultValue( 1 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
+    setDescription( "Cut time step if linear solution fail without going until max nonlinear iterations." );
+
   registerWrapper( viewKeyStruct::writeSolverIterationsCSVFlagString(), &m_writeSolverIterationsCSV ).
     setApplyDefaultValue( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -140,7 +146,7 @@ void PhysicsSolverBase::generateMeshTargetsFromTargetRegions( Group const & mesh
   for( auto const & target : m_targetRegionNames )
   {
 
-    std::vector< string > targetTokens = stringutilities::tokenize( target, "/" );
+    stdVector< string > targetTokens = stringutilities::tokenize( target, "/" );
 
     if( targetTokens.size()==1 ) // no MeshBody or MeshLevel specified
     {
@@ -1072,6 +1078,10 @@ bool PhysicsSolverBase::solveNonlinearSystem( real64 const & time_n,
 
       // Output the linear system solution for debugging purposes
       debugOutputSolution( time_n, cycleNumber, newtonIter, m_solution );
+
+      // Do not allow non converged linear solver - cut time step
+      if( !m_allowNonConvergedLinearSolverSolution && m_linearSolverResult.status == LinearSolverResult::Status::NotConverged )
+        return false;
     }
 
     {

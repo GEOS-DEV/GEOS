@@ -23,7 +23,7 @@
 namespace geos
 {
 
-void TableData::addRow( std::vector< TableData::CellData > const & row )
+void TableData::addRow( stdVector< TableData::CellData > const & row )
 {
   m_rows.push_back( row );
 }
@@ -36,13 +36,23 @@ void TableData::addSeparator()
   }
 
   integer rowSize = m_rows[0].size();
-  m_rows.emplace_back( std::vector< TableData::CellData >( rowSize, { CellType::Separator, "-" } ));
+  m_rows.emplace_back( stdVector< TableData::CellData >( rowSize, { CellType::Separator, "-" } ));
 
 }
 
 void TableData::clear()
 {
   m_rows.clear();
+}
+
+stdVector< stdVector< TableData::CellData > > const & TableData::getTableDataRows() const
+{
+  return m_rows;
+}
+
+stdVector< stdVector< TableData::CellData > > & TableData::getTableDataRows()
+{
+  return m_rows;
 }
 
 void TableData2D::collectTableValues( arraySlice1d< real64 const > dim0AxisCoordinates,
@@ -94,7 +104,7 @@ TableData2D::TableDataHolder TableData2D::buildTableData( string_view targetUnit
   // insert row value and row cell values
   for( auto const & [rowValue, rowMap] : m_data )
   {
-    std::vector< TableData::CellData > currentRowValues;
+    stdVector< TableData::CellData > currentRowValues;
     currentRowValues.reserve( rowMap.size() );
     currentRowValues.push_back( {CellType::Value, GEOS_FMT( rowFmt, rowValue )} );
 

@@ -631,9 +631,9 @@ real64 CompositionalMultiphaseFVM::scalingForSystemSolution( DomainPartition & d
     real64 scalingFactor = 1.0;
     real64 minPresScalingFactor = 1.0, minCompDensScalingFactor = 1.0, minTempScalingFactor = 1.0;
 
-    std::vector< MpiWrapper::PairType< real64, globalIndex > > regionDeltaPresMaxLoc;
-    std::vector< MpiWrapper::PairType< real64, globalIndex > > regionDeltaCompDensMaxLoc;
-    std::vector< MpiWrapper::PairType< real64, globalIndex > > regionDeltaTempMaxLoc;
+    stdVector< MpiWrapper::PairType< real64, globalIndex > > regionDeltaPresMaxLoc;
+    stdVector< MpiWrapper::PairType< real64, globalIndex > > regionDeltaCompDensMaxLoc;
+    stdVector< MpiWrapper::PairType< real64, globalIndex > > regionDeltaTempMaxLoc;
 
     forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                  MeshLevel & mesh,
@@ -1056,9 +1056,9 @@ void CompositionalMultiphaseFVM::applySystemSolution( DofManager const & dofMana
                                                                MeshLevel & mesh,
                                                                string_array const & regionNames )
   {
-    std::vector< string > fields{ fields::flow::pressure::key(),
-                                  m_formulationType == CompositionalMultiphaseFormulationType::OverallComposition ?
-                                  fields::flow::globalCompFraction::key() : fields::flow::globalCompDensity::key() };
+    stdVector< string > fields{ fields::flow::pressure::key(),
+                                m_formulationType == CompositionalMultiphaseFormulationType::OverallComposition ?
+                                fields::flow::globalCompFraction::key() : fields::flow::globalCompDensity::key() };
     if( m_isThermal )
     {
       fields.emplace_back( fields::flow::temperature::key() );
