@@ -112,9 +112,9 @@ public:
     auto const pressureView = pressureArray.toViewConst();
 
     auto fluidWrapper = fluid->createKernelWrapper();
-    forAll< parallelDevicePolicy<> >( size, [fluidWrapper,
-                                             pressureView]
-                                      GEOS_HOST_DEVICE ( localIndex const k )
+    forAll< parallelHostPolicy >( size, [fluidWrapper,
+                                         pressureView]
+                                  GEOS_HOST_DEVICE ( localIndex const k )
     {
       for( localIndex q = 0; q < fluidWrapper.numGauss(); ++q )
       {

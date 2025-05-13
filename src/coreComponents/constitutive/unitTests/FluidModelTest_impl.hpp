@@ -86,11 +86,11 @@ testValuesAgainstPreviousImplementation( FluidModel * fluid,
 
   auto const compositionView = compositionArray.toViewConst();
 
-  forAll< parallelDevicePolicy<> >( size, [fluidWrapper,
-                                           pressure,
-                                           temperature,
-                                           compositionView]
-                                    GEOS_HOST_DEVICE ( localIndex const k )
+  forAll< parallelHostPolicy >( size, [fluidWrapper,
+                                       pressure,
+                                       temperature,
+                                       compositionView]
+                                GEOS_HOST_DEVICE ( localIndex const k )
   {
     for( localIndex q = 0; q < fluidWrapper.numGauss(); ++q )
     {
@@ -293,11 +293,11 @@ void FluidModelTest< FLUID_TYPE, NUM_COMP, NUM_PHASE >::testNumericalDerivatives
   auto const temperatureView = temperatureArray.toViewConst();
   auto const compositionView = compositionArray.toViewConst();
 
-  forAll< parallelDevicePolicy<> >( size, [fluidWrapper,
-                                           pressureView,
-                                           temperatureView,
-                                           compositionView]
-                                    GEOS_HOST_DEVICE ( localIndex const k )
+  forAll< parallelHostPolicy >( size, [fluidWrapper,
+                                       pressureView,
+                                       temperatureView,
+                                       compositionView]
+                                GEOS_HOST_DEVICE ( localIndex const k )
   {
     for( localIndex q = 0; q < fluidWrapper.numGauss(); ++q )
     {
