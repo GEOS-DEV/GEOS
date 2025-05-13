@@ -7474,6 +7474,8 @@ void SolidMechanicsMPM::initializeCohesiveReferenceConfiguration( DomainPartitio
         }
       }
       referenceCohesiveGridNodeAreas[g][fieldIndex] *= dA * tempGridVolumeGlobal[g] / ( hEl[0] * hEl[1] * hEl[2] );
+      std::cout << "referenceCohesiveGridNodeAreas[g][fieldIndex]:  " << preferenceCohesiveGridNodeAreas[g][fieldIndex] << std::endl;
+
     }
   }
   // } );
@@ -7497,6 +7499,7 @@ void SolidMechanicsMPM::initializeCohesiveReferenceConfiguration( DomainPartitio
           {
             gridReferenceSurfacePosition[g][fieldIndex][i] = tempGridSurfacePositionGlobal[n][fieldIndex][i];
             gridReferenceAreaVector[g][fieldIndex][i] = referenceCohesiveGridNodeAreas[n][fieldIndex] * referenceCohesiveGridNodeSurfaceNormals[n][fieldIndex][i];
+            std::cout << "gridReferenceAreaVector[g][fieldIndex][i]:  " << gridReferenceAreaVector[g][fieldIndex][i] << std::endl;
           }
         }
         isCohesive = true;
@@ -7986,6 +7989,7 @@ void SolidMechanicsMPM::enforceCohesiveLaw( ParticleManager & particleManager,
           LvArray::tensorOps::copy< 3 >( initialAreaVectorA, m_referenceCohesiveGridNodeSurfaceNormals[gg][A] );
           
           real64 areaA = m_referenceCohesiveGridNodeAreas[gg][A];
+          std::cout << "m_referenceCohesiveGridNodeAreas[gg][A]:  " << m_referenceCohesiveGridNodeAreas[gg][A] << std::endl;////////////////////////////////////////////////////////////////////////////////////////////////////////
           LvArray::tensorOps::scale< 3 >( initialAreaVectorA, areaA );
 
           if(m_numDims < 3 )
@@ -8001,6 +8005,7 @@ void SolidMechanicsMPM::enforceCohesiveLaw( ParticleManager & particleManager,
           LvArray::tensorOps::copy< 3 >( initialAreaVectorB, m_referenceCohesiveGridNodeSurfaceNormals[gg][B] );
           
           real64 areaB = m_referenceCohesiveGridNodeAreas[gg][B];
+          std::cout << "m_referenceCohesiveGridNodeAreas[gg][B]:  " << m_referenceCohesiveGridNodeAreas[gg][B] << std::endl;////////////////////////////////////////////////////////////////////////////////////////////////////////
           LvArray::tensorOps::scale< 3 >( initialAreaVectorB, areaB );
 
           real64 areaVectorB[3] = { 0 };
@@ -8137,6 +8142,7 @@ void SolidMechanicsMPM::enforceCohesiveLaw( ParticleManager & particleManager,
                 for( int i=0; i < m_numDims; i++ )
                 {
                   particleCohesiveForce[p][i] += tempGridCohesiveTraction[nodeIndex][fieldIndex][i] * particleMass[p] * shapeFunctionValue / tempGridMassGlobal[nodeIndex][fieldIndex];
+                  std::cout << "particleCohesiveForce[p][i]:  " << particleCohesiveForce[p][i] << std::endl;
                 }
               }
               else
