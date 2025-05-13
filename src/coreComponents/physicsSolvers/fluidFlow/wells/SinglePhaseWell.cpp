@@ -105,9 +105,6 @@ void SinglePhaseWell::registerDataOnMesh( Group & meshBodies )
           reference().resizeDimension< 1, 2 >( 2, 2 );
       }
 
-      //tjb remove
-      perforationData.registerField< fields::well::dPerforationRate_dPres >( getName() ).
-        reference().resizeDimension< 1 >( 2 );
 
       WellControls & wellControls = getWellControls( subRegion );
       wellControls.registerWrapper< real64 >( viewKeyStruct::currentBHPString() );
@@ -116,15 +113,10 @@ void SinglePhaseWell::registerDataOnMesh( Group & meshBodies )
         setSizedFromParent( 0 ).
         reference().resizeDimension< 0 >( 2+ isThermal() );   // dP, dT , dQ
 
-      wellControls.registerWrapper< real64 >( viewKeyStruct::dCurrentBHP_dPresString() );
-
       wellControls.registerWrapper< real64 >( viewKeyStruct::currentVolRateString() );
       wellControls.registerWrapper< array1d< real64 > >( viewKeyStruct::dCurrentVolRateString() ).
         setSizedFromParent( 0 ).
         reference().resizeDimension< 0 >( 2+ isThermal() );   // dP, dT, dQ
-
-      wellControls.registerWrapper< real64 >( viewKeyStruct::dCurrentVolRate_dPresString() );
-      wellControls.registerWrapper< real64 >( viewKeyStruct::dCurrentVolRate_dRateString() );
 
       // write rates output header
       if( m_writeCSV > 0 && subRegion.isLocallyOwned())
