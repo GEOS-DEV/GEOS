@@ -21,28 +21,31 @@
 #define GEOS_FUNCTIONS_HDF5UTILITIES_HPP_
 
 #include "common/DataTypes.hpp"
-#include <algorithm>
-#include <hdf5.h>
+
 #include <variant>
+
+// Forward declarations for HDF5 types
+typedef int64_t hid_t;    // HDF5 identifier type
+typedef unsigned long long hsize_t; // HDF5 size type
 
 namespace geos
 {
 
 namespace hdf5Utils
 {
-
-static_assert( sizeof( H5T_NATIVE_INT ) == sizeof( globalIndex ),
-               "H5T_NATIVE_INT and geos::integer must have the same size" );
-static_assert( sizeof( H5T_NATIVE_FLOAT ) == sizeof( real64 ),
-               "H5T_NATIVE_FLOAT and geos::real32 must have the same size" );
-static_assert( sizeof( H5T_NATIVE_DOUBLE ) == sizeof( real64 ),
-               "H5T_NATIVE_DOUBLE and geos::real64 must have the same size" );
-
 using TypedArray1d = std::variant<
   array1d< globalIndex >,
   array1d< real32 >,
   array1d< real64 > >;
 
+template< typename SOURCE_T, typename TARGET_T >
+array1d< TARGET_T > staticCastArray( array1d< SOURCE_T > const & source )
+{
+  array1d< TARGET_T > casted( source.size() );
+  std::transform( source.begin(), source.end(), casted.begin(),
+                  []( auto value ) { return static_cast< TARGET_T >( value ); } );
+  return casted;
+}
 
 class SerialHDF5File
 {
@@ -97,10 +100,23 @@ public:
   explicit SerialHDF5Reader( const std::string & filename );
   TypedArray1d read1D( const std::string & datasetName, const int expectedDims ) const;
 
+  template< typename T >
+  array1d< T > read1DAs( const std::string & datasetName, const int expectedDims ) const;
+
 private:
   SerialHDF5File m_file;
 };
 
+
+// Specializations for supported types
+template<>
+array1d<globalIndex> SerialHDF5Reader::read1DAs< globalIndex >( const std::string & datasetName, const int expectedDims ) const;
+
+template<>
+array1d<real32> SerialHDF5Reader::read1DAs< real32 >( const std::string & datasetName, const int expectedDims ) const;
+
+template<>
+array1d<real64> SerialHDF5Reader::read1DAs< real64 >( const std::string & datasetName, const int expectedDims ) const;
 
 } // end of namespace hdf5Utils
 

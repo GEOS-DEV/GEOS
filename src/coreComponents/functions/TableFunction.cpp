@@ -218,54 +218,13 @@ void TableFunction::initializeFunction()
         int tableDim = 0;
         for( auto const & coordName : m_hdf5CoordinateDatasetNames )
         {
-          hdf5Utils::TypedArray1d tmp = reader.read1D( coordName, 1 );
-
-          if( std::holds_alternative< array1d< real64 > >( tmp ))
-          {
-            m_coordinates.appendArray( std::get< array1d< real64 > >( tmp ).begin(), std::get< array1d< real64 > >( tmp ).end());
-          }
-          else if( std::holds_alternative< array1d< float > >( tmp ))
-          {
-            const auto & floatArray = std::get< array1d< globalIndex > >( tmp );
-            m_coordinates.reserve( floatArray.size() );
-            std::transform( floatArray.begin(), floatArray.end(), m_coordinates[tableDim].begin(), []( real32 val )
-            { return static_cast< real64 >(val); } );
-          }
-          else if( std::holds_alternative< array1d< globalIndex > >( tmp ))
-          {
-            const auto & intArray = std::get< array1d< globalIndex > >( tmp );
-            m_coordinates.reserve( intArray.size());
-            std::transform( intArray.begin(), intArray.end(), m_coordinates[tableDim].begin(), []( globalIndex val )
-            { return static_cast< real64 >(val); } );
-          }
-          else
-          {
-            // If tmp holds an unsupported type, throw an error
-            throw std::runtime_error( "Unexpected data type for voxel dataset: " + coordName );
-          }
+          array1d< real64 > tmp = reader.read1DAs< real64 >( coordName, 1 );
+          m_coordinates.appendArray( tmp.begin(), tmp.end() );
           tableDim += 1;
         }
 
         // Read table dataset
-        hdf5Utils::TypedArray1d tmp = reader.read1D( m_hdf5TableDatasetName, tableDim );
-        if( std::holds_alternative< array1d< real64 > >( tmp ))
-        {
-          m_values = std::move( std::get< array1d< real64 > >( tmp ) );
-        }
-        // else if (std::holds_alternative<std::vector<float>>(tmp))
-        // {
-        //   // If tmp holds std::vector<real32>, cast to std::vector<double> and push
-        //   const auto &floatVec = std::get<array1d<real32>>(tmp);
-        //   m_values.resize(floatVec.size());
-        //   std::transform(floatVec.begin(), floatVec.end(), m_values.begin(), [](float val)
-        //                  { return static_cast<double>(val); });
-        // }
-        else
-        {
-          // If tmp holds an unsupported type, throw an error
-          throw std::runtime_error( "Unexpected data type for voxel dataset: " + m_hdf5TableDatasetName );
-        }
-
+        m_values = reader.read1DAs< real64 >( m_hdf5TableDatasetName, tableDim );
         break;
       }
 

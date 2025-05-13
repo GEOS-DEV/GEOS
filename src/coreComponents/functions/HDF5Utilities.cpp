@@ -73,6 +73,16 @@ namespace geos
 namespace hdf5Utils
 {
 
+static_assert( sizeof( H5T_NATIVE_INT ) == sizeof( globalIndex ),
+               "H4T_NATIVE_INT and geos::integer must have the same size" );
+static_assert( sizeof( H5T_NATIVE_FLOAT ) == sizeof( real64 ),
+               "H4T_NATIVE_FLOAT and geos::real32 must have the same size" );
+static_assert( sizeof( H5T_NATIVE_DOUBLE ) == sizeof( real64 ),
+               "H4T_NATIVE_DOUBLE and geos::real64 must have the same size" );
+
+typedef int64_t hid_t;    // HDF5 identifier type
+typedef unsigned long long hsize_t; // HDF5 size type
+
 //SerialHDF5File Implementation
 SerialHDF5File::SerialHDF5File( const string & filename ): m_filename( filename )
 {
@@ -294,7 +304,78 @@ TypedArray1d SerialHDF5Reader::read1D( const std::string & datasetName, const in
   }
 }
 
+// Templated function definition
+template< typename T >
+array1d< T > SerialHDF5Reader::read1DAs( const std::string & datasetName, const int expectedDims ) const
+{
+  throw std::runtime_error( "Unsupported type for read1DAs" );
+}
 
+// Specialization for array1d<globalIndex>
+template<>
+array1d<globalIndex> SerialHDF5Reader::read1DAs< globalIndex >( const std::string & datasetName, const int expectedDims ) const
+{
+  TypedArray1d result = read1D( datasetName, expectedDims );
+
+  if( std::holds_alternative<array1d<globalIndex>>( result ) )
+  {
+    return std::get<array1d<globalIndex>>( result );
+  }
+  else if( std::holds_alternative<array1d<real32>>( result ) )
+  {
+    return staticCastArray<real32, globalIndex>( std::get<array1d<real32>>( result ) );
+  }
+  else if( std::holds_alternative<array1d<real64>>( result ) )
+  {
+    return staticCastArray<real64, globalIndex>( std::get<array1d<real64>>( result ) );
+  }
+
+  throw std::runtime_error( "Dataset does not contain a compatible type for array1d<globalIndex>" );
+}
+
+// Specialization for array1d<real32>
+template<>
+array1d<real32> SerialHDF5Reader::read1DAs< real32 >( const std::string & datasetName, const int expectedDims ) const
+{
+  TypedArray1d result = read1D( datasetName, expectedDims );
+
+  if( std::holds_alternative<array1d<real32>>( result ) )
+  {
+    return std::get<array1d<real32>>( result );
+  }
+  else if( std::holds_alternative<array1d<globalIndex>>( result ) )
+  {
+    return staticCastArray<globalIndex, real32>( std::get<array1d<globalIndex>>( result ) );
+  }
+  else if( std::holds_alternative<array1d<real64>>( result ) )
+  {
+    return staticCastArray<real64, real32>( std::get<array1d<real64>>( result ) );
+  }
+
+  throw std::runtime_error( "Dataset does not contain a compatible type for array1d<real32>" );
+}
+
+// Specialization for array1d<real64>
+template<>
+array1d<real64> SerialHDF5Reader::read1DAs< real64 >( const std::string & datasetName, const int expectedDims ) const
+{
+  TypedArray1d result = read1D( datasetName, expectedDims );
+
+  if( std::holds_alternative<array1d<real64>>( result ) )
+  {
+    return std::get<array1d<real64>>( result );
+  }
+  else if( std::holds_alternative<array1d<globalIndex>>( result ) )
+  {
+    return staticCastArray<globalIndex, real64>( std::get<array1d<globalIndex>>( result ) );
+  }
+  else if( std::holds_alternative<array1d<real32>>( result ) )
+  {
+    return staticCastArray<real32, real64>( std::get<array1d<real32>>( result ) );
+  }
+
+  throw std::runtime_error( "Dataset does not contain a compatible type for array1d<real64>" );
+}
 
 } // end of namespace hdf5Utils
 
