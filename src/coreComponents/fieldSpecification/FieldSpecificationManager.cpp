@@ -20,6 +20,7 @@
 #include "mesh/MeshObjectPath.hpp"
 #include "mesh/MeshManager.hpp"
 #include "mesh/generators/InternalWellboreGenerator.hpp"
+#include "mesh/NodeManager.hpp"
 #include "mainInterface/ProblemManager.hpp"
 
 namespace geos
@@ -183,18 +184,22 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
                                        fs.getWrapperDataContext( FieldSpecificationBase::viewKeyStruct::objectPathString() ),
                                        fmt::join( missingSetNames, ", " ),
                                        FieldSpecificationBase::viewKeyStruct::objectPathString(), fs.getObjectPath() );
+
       Group const & problemManager = this->getGroupByPath( "/Problem" );
       string const & objPath = fs.getObjectPath();
+
       if( objPath == "nodeManager" )
       {
         setNamesError.append( "xneg ,yneg ,zneg ,xpos ,ypos" );
-        problemManager.getGroup( "Mesh" ).forSubGroups< InternalWellboreGenerator >( [&]( InternalWellboreGenerator const & ) // not a good way
+        stdVector< string > const ff =  problemManager.getGroup( "Mesh" ).getSubGroupsNames();
+
+        if( problemManager.getGroup( "Mesh" ).hasSubGroupOfType< InternalWellboreGenerator >() )
         {
-          setNamesError.append( " ,rneg, rpos, tneg, tpos" );
-        });
+          setNamesError.append( " ,rneg ,rpos ,tneg ,tpos" );
+        }
       }
 
-      if( problemManager.getSubGroups()["Geometry"] != nullptr )
+      if( GeometricObjectManager::getInstance().numSubGroups() > 0 )
       {
         GeometricObjectManager & geoManager = GeometricObjectManager::getInstance();
         string_array geometryName;
@@ -212,9 +217,12 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
       }
       else
       {
-        setNamesError.append( "Unkonwn objectPath or check your vtu" ); // check how we handle things in vtu
+        setNamesError.append( "Unknown objectPath or incorrect setnames" );
+        if( problemManager.getGroup( "Mesh" ).hasSubGroupOfType< VTKMeshGenerator >() )
+        {
+          setNamesError.append( "or check the setNames attribute tag in the input vtu mesh." );
+        }
       }
-
 
       GEOS_THROW( setNamesError, InputError );
     }
