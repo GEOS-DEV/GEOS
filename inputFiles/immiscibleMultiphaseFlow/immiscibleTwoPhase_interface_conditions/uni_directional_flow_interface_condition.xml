@@ -39,9 +39,6 @@
 
   <Events
     maxTime="200000.0">
-<!--     <SoloEvent
-      name="preFracture"
-      target="/Solvers/SurfaceGen"/> -->
       
     <PeriodicEvent
       name="outputs"
