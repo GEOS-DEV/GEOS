@@ -105,7 +105,7 @@ localIndex SurfaceElementRegion::addToFractureMesh( real64 const time_np1,
   rval = subRegion.size() - 1;
 
 
-  arrayView1d< real64 > const ruptureTime = subRegion.getField< fields::ruptureTime >();
+//  arrayView1d< real64 > const ruptureTime = subRegion.getField< fields::ruptureTime >();
 
   arrayView2d< real64 const > const faceCenter = faceManager->faceCenter();
   arrayView2d< real64 > const elemCenter = subRegion.getElementCenter();
@@ -121,7 +121,7 @@ localIndex SurfaceElementRegion::addToFractureMesh( real64 const time_np1,
   ArrayOfArraysView< localIndex const > const faceToNodeMap = faceManager->nodeList().toViewConst();
 
   localIndex const kfe = subRegion.size() - 1;
-  ruptureTime( kfe ) = time_np1;
+//  ruptureTime( kfe ) = time_np1;
 
   LvArray::tensorOps::copy< 3 >( elemCenter[ kfe ], faceCenter[ faceIndices[ 0 ] ] );
 
@@ -185,44 +185,44 @@ localIndex SurfaceElementRegion::addToFractureMesh( real64 const time_np1,
     }
   }
 
-  // Fill the connectivity between FaceElement entries. This is essentially a copy of the
-  // edgesToFaces map, but with differing offsets.
-  for( auto const & edge : connectedEdges )
-  {
-    // check to see if the edgesToFractureConnectors already have an entry
-    if( subRegion.m_edgesTo2dFaces.count( edge )==0 )
-    {
-      // if not, then fill increase the size of the fractureConnectors to face elements map and
-      // fill the fractureConnectorsToEdges map with the current edge....and the inverse map too.
-      subRegion.m_2dFaceTo2dElems.appendArray( 0 );
-      subRegion.m_2dFaceToEdge.emplace_back( edge );
-      subRegion.m_edgesTo2dFaces[edge] = subRegion.m_2dFaceToEdge.size()-1;
-    }
-    // now fill the fractureConnectorsToFaceElements map. This is analogous to the edge to face map
-    localIndex const connectorIndex = subRegion.m_edgesTo2dFaces[edge];
-    localIndex const numCells = subRegion.m_2dFaceTo2dElems.sizeOfArray( connectorIndex ) + 1;
-    subRegion.m_2dFaceTo2dElems.resizeArray( connectorIndex, numCells );
-    subRegion.m_2dFaceTo2dElems[connectorIndex][ numCells-1 ] = kfe;
-
-    // And fill the list of connectors that will need stencil modifications
-    subRegion.m_recalculateConnectionsFor2dFaces.insert( connectorIndex );
-  }
-
-  subRegion.calculateSingleElementGeometricQuantities( kfe, faceManager->faceArea() );
-
-  // update the sets
-  for( auto const & setIter : faceManager->sets().wrappers() )
-  {
-    SortedArrayView< localIndex const > const & faceSet = faceManager->sets().getReference< SortedArray< localIndex > >( setIter.first );
-    SortedArray< localIndex > & faceElementSet = subRegion.sets().registerWrapper< SortedArray< localIndex > >( setIter.first ).reference();
-    for( localIndex a = 0; a < faceMap.size( 0 ); ++a )
-    {
-      if( faceSet.count( faceMap[a][0] ) )
-      {
-        faceElementSet.insert( a );
-      }
-    }
-  }
+//  // Fill the connectivity between FaceElement entries. This is essentially a copy of the
+//  // edgesToFaces map, but with differing offsets.
+//  for( auto const & edge : connectedEdges )
+//  {
+//    // check to see if the edgesToFractureConnectors already have an entry
+//    if( subRegion.m_edgesTo2dFaces.count( edge )==0 )
+//    {
+//      // if not, then fill increase the size of the fractureConnectors to face elements map and
+//      // fill the fractureConnectorsToEdges map with the current edge....and the inverse map too.
+//      subRegion.m_2dFaceTo2dElems.appendArray( 0 );
+//      subRegion.m_2dFaceToEdge.emplace_back( edge );
+//      subRegion.m_edgesTo2dFaces[edge] = subRegion.m_2dFaceToEdge.size()-1;
+//    }
+//    // now fill the fractureConnectorsToFaceElements map. This is analogous to the edge to face map
+//    localIndex const connectorIndex = subRegion.m_edgesTo2dFaces[edge];
+//    localIndex const numCells = subRegion.m_2dFaceTo2dElems.sizeOfArray( connectorIndex ) + 1;
+//    subRegion.m_2dFaceTo2dElems.resizeArray( connectorIndex, numCells );
+//    subRegion.m_2dFaceTo2dElems[connectorIndex][ numCells-1 ] = kfe;
+//
+//    // And fill the list of connectors that will need stencil modifications
+//    subRegion.m_recalculateConnectionsFor2dFaces.insert( connectorIndex );
+//  }
+//
+//  subRegion.calculateSingleElementGeometricQuantities( kfe, faceManager->faceArea() );
+//
+//  // update the sets
+//  for( auto const & setIter : faceManager->sets().wrappers() )
+//  {
+//    SortedArrayView< localIndex const > const & faceSet = faceManager->sets().getReference< SortedArray< localIndex > >( setIter.first );
+//    SortedArray< localIndex > & faceElementSet = subRegion.sets().registerWrapper< SortedArray< localIndex > >( setIter.first ).reference();
+//    for( localIndex a = 0; a < faceMap.size( 0 ); ++a )
+//    {
+//      if( faceSet.count( faceMap[a][0] ) )
+//      {
+//        faceElementSet.insert( a );
+//      }
+//    }
+//  }
 
   return rval;
 }

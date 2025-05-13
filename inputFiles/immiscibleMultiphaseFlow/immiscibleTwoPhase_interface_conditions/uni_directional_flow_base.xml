@@ -19,12 +19,7 @@
         solverType="direct"
         directParallel="0"  
         logLevel="0"/>
-    </ImmiscibleMultiphaseFlow>
-    <SurfaceGenerator
-      name="SurfaceGen"
-      targetRegions="{ Interface }"
-      initialRockToughness="1e6"
-      mpiCommOrder="1"/>    
+    </ImmiscibleMultiphaseFlow>  
   </Solvers>
   <!-- SPHINX_SOLVER_END -->
  
@@ -42,17 +37,17 @@
     <CellElementRegion
       name="region_left"
       cellBlocks="{ cb_left }"
-      materialList="{ fluid, rock, relperm_left }"/>
+      materialList="{ fluid_left, rock, relperm_left }"/>
 
     <CellElementRegion
       name="region_right"
       cellBlocks="{ cb_right }"
-      materialList="{ fluid, rock, relperm_right }"/>      
+      materialList="{ fluid_right, rock, relperm_right }"/>      
 
     <SurfaceElementRegion
       name="Interface"
       defaultAperture="1.0e-5"
-      materialList="{ relperm_left, relperm_right }"/>
+      materialList="{ fluid_left, fluid_right }"/>
 
   </ElementRegions>
   <!-- SPHINX_ELEMENTREGIONS_END -->
@@ -112,10 +107,17 @@
       phaseRelPermMaxValue="{ 1.0, 1.0 }"/>      
     
     <TwoPhaseImmiscibleFluid
-      name="fluid"
+      name="fluid_left"
       phaseNames="{gas, water}"
       densityTableNames="{densityTablePhase1, densityTablePhase2}"    
       viscosityTableNames="{viscosityTablePhase1, viscosityTablePhase2}" />
+
+    <TwoPhaseImmiscibleFluid
+      name="fluid_right"
+      phaseNames="{gas, water}"
+      densityTableNames="{densityTablePhase1, densityTablePhase2}"    
+      viscosityTableNames="{viscosityTablePhase1, viscosityTablePhase2}" />
+
   </Constitutive>
   <!-- SPHINX_MATERIAL_END -->
 
@@ -125,7 +127,7 @@
       name="initialPressure"
       initialCondition="1"
       setNames="{ all }"
-      objectPath="ElementRegions"
+      objectPath="ElementRegions/region_*"
       fieldName="pressure"
       scale="1e7"/>
 
@@ -133,7 +135,7 @@
       name="initialSaturation_gas"
       initialCondition="1"
       setNames="{ all }"
-      objectPath="ElementRegions"
+      objectPath="ElementRegions/region_*"
       fieldName="phaseVolumeFraction"
       component="0"
       scale="0.0"/>
@@ -142,21 +144,21 @@
       name="initialSaturation_water"
       initialCondition="1"
       setNames="{ all }"
-      objectPath="ElementRegions"
+      objectPath="ElementRegions/region_*"
       fieldName="phaseVolumeFraction"
       component="1"
       scale="1.0"/>
 
     <SourceFlux
       name="sourceTerm"
-      objectPath="ElementRegions"
+      objectPath="ElementRegions/region_*"
       scale="-0.00007"
       component="0"
       setNames="{ source }"/>
 
     <FieldSpecification
       name="sinkTermPressure"
-      objectPath="ElementRegions"
+      objectPath="ElementRegions/region_*"
       fieldName="pressure"
       scale="1e7"
       setNames="{ sink }"/>
@@ -164,7 +166,7 @@
     <FieldSpecification
       name="sinkTermSaturation_gas"
       setNames="{ sink }"
-      objectPath="ElementRegions"
+      objectPath="ElementRegions/region_*"
       fieldName="phaseVolumeFraction"
       component="0"
       scale="0.0"/>
@@ -172,7 +174,7 @@
     <FieldSpecification
       name="sinkTermComposition_water"
       setNames="{ sink }"
-      objectPath="ElementRegions"
+      objectPath="ElementRegions/region_*"
       fieldName="phaseVolumeFraction"
       component="1"
       scale="1.0"/>    
@@ -199,7 +201,7 @@
     <PackCollection
       name="phaseVolumeFractionCollection"
       objectPath="ElementRegions/region_left/cb_left"
-      fieldName="phaseVolumeFraction"/>
+      fieldName="phaseVolumeFraction"/>      
   </Tasks>
   <!-- SPHINX_TASKS_END -->   
 </Problem>
