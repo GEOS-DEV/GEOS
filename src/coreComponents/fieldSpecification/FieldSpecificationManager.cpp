@@ -20,6 +20,7 @@
 #include "mesh/MeshObjectPath.hpp"
 #include "mesh/MeshManager.hpp"
 #include "mesh/generators/InternalWellboreGenerator.hpp"
+#include "mesh/generators/VTKMeshGenerator.hpp"
 #include "mesh/NodeManager.hpp"
 #include "mainInterface/ProblemManager.hpp"
 
@@ -180,7 +181,7 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
         missingSetNames.emplace_back( mapEntry.first );
       }
 
-      string setNamesError = GEOS_FMT( "\n{}: there is/are no set(s) named `{}` under the {} `{}`.\nSet names available are : ",
+      string setNamesError = GEOS_FMT( "\n{}: there is/are no set(s) named `{}` under the {} `{}`.\n",
                                        fs.getWrapperDataContext( FieldSpecificationBase::viewKeyStruct::objectPathString() ),
                                        fmt::join( missingSetNames, ", " ),
                                        FieldSpecificationBase::viewKeyStruct::objectPathString(), fs.getObjectPath() );
@@ -188,39 +189,49 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
       Group const & problemManager = this->getGroupByPath( "/Problem" );
       string const & objPath = fs.getObjectPath();
 
+      string setNamesAvailable;
+
       if( objPath == "nodeManager" )
       {
-        setNamesError.append( "xneg ,yneg ,zneg ,xpos ,ypos" );
+        setNamesAvailable.append( "Set names available are: xneg ,yneg ,zneg ,xpos ,ypos, " );
         stdVector< string > const ff =  problemManager.getGroup( "Mesh" ).getSubGroupsNames();
 
         if( problemManager.getGroup( "Mesh" ).hasSubGroupOfType< InternalWellboreGenerator >() )
         {
-          setNamesError.append( " ,rneg ,rpos ,tneg ,tpos" );
+          setNamesAvailable.append( ",rneg ,rpos ,tneg ,tpos" );
         }
       }
 
       if( GeometricObjectManager::getInstance().numSubGroups() > 0 )
       {
+        if( setNamesAvailable.empty())
+          setNamesAvailable.append( "Set names available are: " );
+
         GeometricObjectManager & geoManager = GeometricObjectManager::getInstance();
         string_array geometryName;
-        geoManager.forSubGroups< SimpleGeometricObjectBase >( [&]( SimpleGeometricObjectBase & meshGen )
+        geoManager.forSubGroups< SimpleGeometricObjectBase >( [&]( SimpleGeometricObjectBase const & meshGen )
         {
           geometryName.emplace_back( meshGen.getName() );
         } );
         for( size_t i = 0; i < geometryName.size(); ++i )
         {
-          setNamesError += geometryName[i];
+          setNamesAvailable += geometryName[i];
           if( i < geometryName.size() - 1 )
-            setNamesError += ", ";
+            setNamesAvailable += ", ";
         }
-        setNamesError += ", all";
+        setNamesAvailable += ", all";
+      }
+
+      if( !setNamesAvailable.empty())
+      {
+        setNamesError.append( setNamesAvailable );
       }
       else
       {
-        setNamesError.append( "Unknown objectPath or incorrect setnames" );
+        setNamesError.append( "Unknown objectPath" );
         if( problemManager.getGroup( "Mesh" ).hasSubGroupOfType< VTKMeshGenerator >() )
         {
-          setNamesError.append( "or check the setNames attribute tag in the input vtu mesh." );
+          setNamesError.append( " or check the setNames attribute tag in the input vtu mesh." );
         }
       }
 
