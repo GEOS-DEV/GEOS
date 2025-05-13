@@ -72,8 +72,11 @@ testValuesAgainstPreviousImplementation( FluidModel * fluid,
 
   string_array const & phaseNames = fluid->phaseNames();
 
-  auto const & [pressure, temperature, composition] = testPoint;
-  stackArray2d< real64, NUM_COMP > compositionArray( 1, NUM_COMP );
+  real64 const pressure = std::get< 0 >( testPoint );
+  real64 const temperature = std::get< 1 >( testPoint );
+  auto const composition = std::get< 2 >( testPoint );
+
+  array2d< real64, compflow::LAYOUT_PHASE > compositionArray( size, numComp );
   for( integer ic = 0; ic < NUM_COMP; ++ic )
   {
     compositionArray( 0, ic ) = composition[ic];
@@ -108,7 +111,7 @@ testValuesAgainstPreviousImplementation( FluidModel * fluid,
                                    "Expacted: {}\n"
                                    "Difference: {}",
                                    name,
-                                   pressure, temperature, compositionView[0],
+                                   pressure, temperature, toString( compositionView[0].toSliceConst() ),
                                    calculated, expected,
                                    expected-calculated ));
   };
@@ -249,7 +252,7 @@ void FluidModelTest< FLUID_TYPE, NUM_COMP, NUM_PHASE >::testNumericalDerivatives
   string const testValues = GEOS_FMT( "Pressure: {}, Temperature: {}, Composition: {}",
                                       pressureArray[0],
                                       temperatureArray[0],
-                                      compositionArray[0] );
+                                      toString( compositionArray[0].toSliceConst() ) );
 
   real64 const dP = perturbationLevel * (pressure + perturbationLevel);
   deltaArray[2*Deriv::dP+1] = dP;
@@ -457,6 +460,15 @@ void FluidModelTest< FLUID_TYPE, NUM_COMP, NUM_PHASE >::populate( ARRAY & array,
   {
     array[i] = *it;
   }
+}
+
+template< typename FLUID_TYPE, integer NUM_COMP, integer NUM_PHASE >
+template< integer USD >
+string FluidModelTest< FLUID_TYPE, NUM_COMP, NUM_PHASE >::toString( arraySlice1d< real64 const, USD > const & array )
+{
+  std::ostringstream os;
+  os << array;
+  return os.str();
 }
 
 template< typename FLUID_TYPE, integer NUM_COMP, integer NUM_PHASE >

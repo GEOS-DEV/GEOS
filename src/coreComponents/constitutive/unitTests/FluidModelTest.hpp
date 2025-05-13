@@ -189,6 +189,16 @@ protected:
   static void populate( ARRAY & array, LIST const & data );
 
   /**
+   * @brief Convert an array slice into a string
+   * @details Will print out an array slice into a string
+   * @tparam USD The leading dimension stride
+   * @param array - The array slice.
+   * @return A string printout of the array
+   */
+  template< integer USD >
+  static string toString( arraySlice1d< real64 const, USD > const & array );
+
+  /**
    * @brief Populate an array with linearly spaced data
    * @details Will allocated and populate the array with linearly spaced values in the interval [x0,x1] including the end
    *          points using @c n intervals. Note that @n is the number of intervals so the list will be of length @c n+1 on exit.

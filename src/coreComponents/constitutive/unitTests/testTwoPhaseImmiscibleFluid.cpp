@@ -111,18 +111,15 @@ public:
 
     auto const pressureView = pressureArray.toViewConst();
 
-    constitutive::constitutiveUpdatePassThru( *fluid, [&] ( auto & castFluid )
+    auto fluidWrapper = fluid->createKernelWrapper();
+    forAll< parallelDevicePolicy<> >( size, [fluidWrapper,
+                                             pressureView]
+                                      GEOS_HOST_DEVICE ( localIndex const k )
     {
-      typename TYPEOFREF( castFluid ) ::KernelWrapper fluidWrapper = castFluid.createKernelWrapper();
-      forAll< parallelDevicePolicy<> >( size, [fluidWrapper,
-                                               pressureView]
-                                        GEOS_HOST_DEVICE ( localIndex const k )
+      for( localIndex q = 0; q < fluidWrapper.numGauss(); ++q )
       {
-        for( localIndex q = 0; q < fluidWrapper.numGauss(); ++q )
-        {
-          fluidWrapper.update( k, q, pressureView[k] );
-        }
-      } );
+        fluidWrapper.update( k, q, pressureView[k] );
+      }
     } );
 
     for( integer phaseIndex = 0; phaseIndex < numPhase; phaseIndex++ )
