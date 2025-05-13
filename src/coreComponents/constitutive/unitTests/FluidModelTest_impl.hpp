@@ -98,6 +98,12 @@ testValuesAgainstPreviousImplementation( FluidModel * fluid,
     }
   } );
 
+  // Bring everything back to host
+  forAll< serialPolicy >( 1, [fluidWrapper] ( localIndex const )
+  {
+    /* Do nothing */
+  } );
+
   auto compareValues = [&]( string const & name, real64 const calculated, real64 const expected )
   {
     testing::checkRelativeError( calculated,
@@ -297,6 +303,12 @@ void FluidModelTest< FLUID_TYPE, NUM_COMP, NUM_PHASE >::testNumericalDerivatives
     {
       fluidWrapper.update( k, q, pressureView[k], temperatureView[k], compositionView[k] );
     }
+  } );
+
+  // Bring everything back to host
+  forAll< serialPolicy >( 1, [fluidWrapper] ( localIndex const )
+  {
+    /* Do nothing */
   } );
 
   // Enthalpy and internal energy values can be quite large and prone to round-off errors when

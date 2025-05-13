@@ -122,6 +122,12 @@ public:
       }
     } );
 
+    // Bring everything back to host
+    forAll< serialPolicy >( 1, [fluidWrapper] ( localIndex const )
+    {
+      /* Do nothing */
+    } );
+
     for( integer phaseIndex = 0; phaseIndex < numPhase; phaseIndex++ )
     {
       Base::testDerivatives( GEOS_FMT( "Phase density ({})", phaseNames[phaseIndex] ),
