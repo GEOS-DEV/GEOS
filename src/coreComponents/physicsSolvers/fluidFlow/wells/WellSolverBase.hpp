@@ -105,6 +105,11 @@ public:
   integer isThermal() const { return m_isThermal; }
 
   /**
+   * @brief getter for esitmator switch
+   * @return True if estimate well solution
+   */
+  integer estimateSolution() const { return m_estimateSolution; }
+  /**
    * @brief get the name of DOF defined on well elements
    * @return name of the DOF field used by derived solver type
    */
@@ -188,6 +193,14 @@ public:
                                CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                arrayView1d< real64 > const & localRhs ) override;
 
+  virtual void assembleWellFluxTerms( real64 const & time,
+                                      real64 const & dt,
+                                      WellElementSubRegion const & subRegion,
+                                      DofManager const & dofManager,
+                                      CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                      arrayView1d< real64 > const & localRhs ) {};
+
+
   /**
    * @brief assembles the flux terms for all connections between well elements
    * @param time_n previous time value
@@ -204,6 +217,15 @@ public:
                                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                   arrayView1d< real64 > const & localRhs ) = 0;
 
+
+
+  virtual void assembleWellAccumulationTerms( real64 const & time,
+                                              real64 const & dt,
+                                              WellElementSubRegion const & subRegion,
+                                              DofManager const & dofManager,
+                                              CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                              arrayView1d< real64 > const & localRhs ) {};
+
   /**
    * @brief assembles the accumulation term for all the well elements
    * @param domain the physical domain object
@@ -218,6 +240,13 @@ public:
                                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                           arrayView1d< real64 > const & localRhs ) = 0;
 
+
+  virtual void assembleWellPressureRelations( real64 const & time,
+                                              real64 const & dt,
+                                              WellElementSubRegion const & subRegion,
+                                              DofManager const & dofManager,
+                                              CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                              arrayView1d< real64 > const & localRhs ) {};
   /**
    * @brief assembles the pressure relations at all connections between well elements except at the well head
    * @param time_n time at the beginning of the time step
@@ -350,6 +379,17 @@ protected:
 
   /// name of the fluid constitutive model used as a reference for component/phase description
   string m_referenceFluidModelName;
+
+  /// flag to use the estimator
+  integer m_estimateSolution;
+
+  /// @brief  DofManagers for each wells estimator
+  /// @details This DofManager is used to store the DOF numbers for the estimator
+  /// @note This DofManager is used in the assembly of the estimators linear system
+  std::map< std::string, DofManager >   m_estimatorDoFManager;
+
+
+
 };
 
 }

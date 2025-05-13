@@ -195,6 +195,13 @@ public:
 
   integer useTotalMassEquation() const { return m_useTotalMassEquation; }
 
+  virtual void assembleWellFluxTerms( real64 const & time,
+                                      real64 const & dt,
+                                      WellElementSubRegion const & subRegion,
+                                      DofManager const & dofManager,
+                                      CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                      arrayView1d< real64 > const & localRhs ) override;
+
   /**
    * @brief assembles the flux terms for all connections between well elements
    * @param time_n previous time value
@@ -211,6 +218,13 @@ public:
                                   DofManager const & dofManager,
                                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                   arrayView1d< real64 > const & localRhs )override;
+
+  virtual void assembleWellAccumulationTerms( real64 const & time,
+                                              real64 const & dt,
+                                              WellElementSubRegion const & subRegion,
+                                              DofManager const & dofManager,
+                                              CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                              arrayView1d< real64 > const & localRhs ) override;
   /**
    * @brief assembles the accumulation term for all the well elements
    * @param domain the physical domain object
@@ -224,6 +238,13 @@ public:
                                           DofManager const & dofManager,
                                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                           arrayView1d< real64 > const & localRhs ) override;
+
+  virtual void assembleWellPressureRelations( real64 const & time_n,
+                                              real64 const & dt,
+                                              WellElementSubRegion const & subRegion,
+                                              DofManager const & dofManager,
+                                              CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                              arrayView1d< real64 > const & localRhs ) override;
 
   /**
    * @brief assembles the pressure relations at all connections between well elements except at the well head

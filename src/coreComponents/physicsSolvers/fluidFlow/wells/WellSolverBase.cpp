@@ -47,7 +47,8 @@ WellSolverBase::WellSolverBase( string const & name,
   m_numDofPerResElement( 0 ),
   m_isThermal( 0 ),
   m_ratesOutputDir( joinPath( OutputBase::getOutputDirectory(), name + "_rates" ) ),
-  m_keepVariablesConstantDuringInitStep( 0 )
+  m_keepVariablesConstantDuringInitStep( 0 ),
+  m_estimateSolution( 1 )
 {
   registerWrapper( viewKeyStruct::isThermalString(), &m_isThermal ).
     setApplyDefaultValue( 0 ).
@@ -195,15 +196,119 @@ void WellSolverBase::setupDofs( DomainPartition const & domain,
   dofManager.addCoupling( wellElementDofName(),
                           wellElementDofName(),
                           DofManager::Connector::Node );
+
+
 }
 
 void WellSolverBase::implicitStepSetup( real64 const & time_n,
-                                        real64 const & GEOS_UNUSED_PARAM( dt ),
+                                        real64 const & dt,
                                         DomainPartition & domain )
 {
   // Initialize the primary and secondary variables for the first time step
 
   initializeWells( domain, time_n );
+
+  // Setup dofManager for each well element region
+  if( estimateSolution() )
+  {
+    if( m_estimatorDoFManager.empty() )
+    {
+
+      map< std::pair< string, string >, string_array > meshTargets;
+      string_array regions;
+      forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const & meshBodyName,
+                                                                   MeshLevel const & meshLevel,
+                                                                   string_array const & regionNames )
+      {
+        ElementRegionManager const & elementRegionManager = meshLevel.getElemManager();
+        elementRegionManager.forElementRegions< WellElementRegion >( regionNames,
+                                                                     [&]( localIndex const,
+                                                                          WellElementRegion const & region )
+        {
+          meshTargets.clear();
+          regions.clear();
+          regions.emplace_back( region.getName() );
+          auto const key = std::make_pair( meshBodyName, meshLevel.getName());
+          meshTargets[key] = std::move( regions );
+
+          DofManager regionDoFManager( region.getName());
+          regionDoFManager.setDomain( domain );
+          regionDoFManager.addField( wellElementDofName(),
+                                     FieldLocation::Elem,
+                                     numDofPerWellElement(),
+                                     meshTargets );
+
+          regionDoFManager.addCoupling( wellElementDofName(),
+                                        wellElementDofName(),
+                                        DofManager::Connector::Node );
+
+          regionDoFManager.reorderByRank();
+          m_estimatorDoFManager.emplace( region.getName(), std::move( regionDoFManager ));
+        } );
+      } );
+    }
+#if 1
+    forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const & meshBodyName,
+                                                                 MeshLevel const & meshLevel,
+                                                                 string_array const & regionNames )
+    {
+      ElementRegionManager const & elementRegionManager = meshLevel.getElemManager();
+      elementRegionManager.forElementRegions< WellElementRegion >( regionNames,
+                                                                   [&]( localIndex const,
+                                                                        WellElementRegion const & region )
+      {
+        auto it = m_estimatorDoFManager.find( region.getName());
+        if( it == m_estimatorDoFManager.end())
+        {
+          throw std::runtime_error( "DofManager for region " + region.getName() + " not found." );
+        }
+        DofManager & dofManager = it->second;
+
+
+
+        ParallelMatrix pmatrix;
+        pmatrix.setDofManager( &dofManager );
+
+        CRSMatrix< real64, globalIndex >  localMatrix;
+        localMatrix.zero();
+
+        ParallelVector pRhs;
+        pRhs.setName( region.getName() + "/rhs" );
+        pRhs.create( dofManager.numLocalDofs(), MPI_COMM_GEOS );
+
+        arrayView1d< real64 > const localRhs =  pRhs.open();
+
+        ParallelVector localSoln;
+
+        SparsityPattern< globalIndex > pattern;
+        dofManager.setSparsityPattern( pattern );
+        localMatrix.assimilate< parallelDevicePolicy<> >( std::move( pattern ) );
+
+        localMatrix.setName( region.getName() + "/matrix" );
+
+
+
+        localSoln.setName( region.getName() + "/solution" );
+        localSoln.create( dofManager.numLocalDofs(), MPI_COMM_GEOS );
+
+
+        WellElementSubRegion const &
+        subRegion = region.getGroup( ElementRegionBase::viewKeyStruct::elementSubRegions() )
+                      .getGroup< WellElementSubRegion >( region.getSubRegionName() );
+
+        assembleWellAccumulationTerms( time_n, dt, subRegion, dofManager, localMatrix.toViewConstSizes(), localRhs );
+        assembleWellPressureRelations( time_n, dt, subRegion, dofManager, localMatrix.toViewConstSizes(), localRhs );
+        assembleWellFluxTerms( time_n, dt, subRegion, dofManager, localMatrix.toViewConstSizes(), localRhs );
+
+        pRhs.close();
+        pmatrix.create( localMatrix.toViewConst(), dofManager.numLocalDofs(), MPI_COMM_GEOS );
+
+        debugOutputSystem( time_n, 0, 0, pmatrix, pRhs );
+
+      } );
+    } );
+#endif
+  }
 }
 
 void WellSolverBase::updateState( DomainPartition & domain )

@@ -465,6 +465,7 @@ void DofManager::addField( string const & fieldName,
                            integer const components,
                            map< std::pair< string, string >, string_array > const & regions )
 {
+  GEOS_ASSERT_MSG( m_domain != nullptr, "Domain has not been set" );
   // Convert input into internal format
   stdVector< FieldSupport > support;
   for( auto const & p : regions )
