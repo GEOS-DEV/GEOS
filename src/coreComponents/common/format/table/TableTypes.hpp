@@ -94,22 +94,12 @@ private:
   std::vector< string > errorText;
 };
 
-/**
- * @brief Add an error to the error vector
- * @param text The string view of the error
- */
 inline void TableErrorListing::addError( string_view text )
 { errorText.emplace_back( text ); }
 
-/**
- * @return Return true if the vector contain any errors, false otherwise
- */
 inline bool TableErrorListing::hasErrors() const
 { return errorText.size() != 0; }
 
-/**
- * @brief Clear the errors vector
- */
 inline void TableErrorListing::clear()
 { errorText.clear(); }
 
