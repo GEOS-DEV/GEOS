@@ -5,9 +5,38 @@ Notes
 This file is designed to track changes to the integrated test baselines.
 Any developer who updates the baseline ID in the .integrated_tests.yaml file is expected to create an entry in this file with the pull request number, date, and their justification for rebaselining.
 These notes should be in reverse-chronological order, and use the following time format: (YYYY-MM-DD).
-PR #3555 (2024-03-11)
+
+PR #3274 (2025-05-08) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3274-11275-3cb35d1.tar.gz>
 =====================
-Add aging law.
+New flag `allowNonConvergedLinearSolverSolution` for solvers.
+
+PR #3524 (2025-05-02) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3524-11210-f1b043a.tar.gz>
+=====================
+Immiscible multiphase flow.
+
+PR #3626 (2025-04-28) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3626-11189-dfa74ce.tar.gz>
+=====================
+Update in VTK caused change in partitioning for reading vtk meshes. Verified baselines using new scripts/parallelRestartDiff.py
+
+PR #3624 (2025-04-15) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3624-11053-ae011c7.tar.gz>
+=====================
+Bugfix for time step cut in sequential, minor time step logic change when a cut occurs.
+
+PR #3537 (2025-04-02)
+=====================
+Added two attributes to TableFunction: writeCSV and logLevel.
+
+PR #3589 (2024-03-26)
+=====================
+Hypre update - make co2 cases use direct solver.
+
+PR #3396 (2024-03-21)
+=====================
+Use solid mechanics solver directly to perform poromechanics initialization.
+
+PR #2125 (2024-03-20)
+=====================
+Phase-field nucleation model.
 
 PR #3494 (2024-03-11)
 =====================

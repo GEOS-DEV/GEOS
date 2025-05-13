@@ -488,7 +488,10 @@ protected:
                                                            domain );
 
           // save fields (e.g. pressure and temperature) after inner solve
-          solver->saveSequentialIterationState( domain );
+          if( solver->getNonlinearSolverParameters().couplingType() == NonlinearSolverParameters::CouplingType::Sequential )
+          {
+            solver->saveSequentialIterationState( domain );
+          }
 
           mapSolutionBetweenSolvers( domain, idx() );
 
@@ -496,6 +499,7 @@ protected:
           {
             iter = 0; // restart outer loop
             stepDt = solverDt; // sync time step
+            m_numTimestepsSinceLastDtCut = 0;
           }
         } );
 
@@ -532,6 +536,7 @@ protected:
       {
         // cut timestep, go back to beginning of step and restart the Newton loop
         stepDt *= dtCutFactor;
+        m_numTimestepsSinceLastDtCut = 0;
         GEOS_LOG_LEVEL_RANK_0( logInfo::TimeStep, GEOS_FMT( "New dt = {}", stepDt ) );
 
         // notify the solver statistics counter that this is a time step cut
