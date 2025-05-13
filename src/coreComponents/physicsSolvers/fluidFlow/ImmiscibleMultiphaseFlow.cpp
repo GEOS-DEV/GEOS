@@ -246,9 +246,9 @@ void ImmiscibleMultiphaseFlow::initializePreSubGroups()
     m_constitutitveFluidModels.resize( m_interfaceFaceSetNames.size() );
 
     // this is the FaceElement Level
-    for( size_t regionIndex=0; regionIndex < m_interfaceFaceSetNames.size(); ++regionIndex )
+    for( size_t surfaceRegionIndex=0; surfaceRegionIndex < m_interfaceFaceSetNames.size(); ++surfaceRegionIndex )
     {
-      string const & faceSetName = m_interfaceFaceSetNames[regionIndex];
+      string const & faceSetName = m_interfaceFaceSetNames[surfaceRegionIndex];
       SortedArrayView< localIndex const > const & faceSet = faceSetGroup.getReference< SortedArray< localIndex > >( faceSetName );
       SurfaceElementRegion & faceRegion = elemManager.getRegion< SurfaceElementRegion >( faceSetName );
 
@@ -264,11 +264,11 @@ void ImmiscibleMultiphaseFlow::initializePreSubGroups()
       FaceElementSubRegion const & faceSubRegion = faceRegion.getUniqueSubRegion< FaceElementSubRegion >();
       FixedToManyElementRelation const & faceElementsToCells = faceSubRegion.getToCellRelation();
 
-      auto getSubregions = [&]( localIndex regionIndex ) {
-        auto regionIdxL = faceElementsToCells.m_toElementRegion[regionIndex][0];
-        auto regionIdxR = faceElementsToCells.m_toElementRegion[regionIndex][1];
-        auto subRegionIdxL = faceElementsToCells.m_toElementSubRegion[regionIndex][0];
-        auto subRegionIdxR = faceElementsToCells.m_toElementSubRegion[regionIndex][1];
+      auto getSubregions = [&]( localIndex surfaceRegionIndex ) {
+        auto regionIdxL = faceElementsToCells.m_toElementRegion[surfaceRegionIndex][0];
+        auto regionIdxR = faceElementsToCells.m_toElementRegion[surfaceRegionIndex][1];
+        auto subRegionIdxL = faceElementsToCells.m_toElementSubRegion[surfaceRegionIndex][0];
+        auto subRegionIdxR = faceElementsToCells.m_toElementSubRegion[surfaceRegionIndex][1];
 
         auto & regionL = elemManager.getRegion< CellElementRegion >( regionIdxL );
         auto & regionR = elemManager.getRegion< CellElementRegion >( regionIdxR );
@@ -279,21 +279,18 @@ void ImmiscibleMultiphaseFlow::initializePreSubGroups()
         return std::make_tuple( subRegionL, subRegionR );
       };
 
-      auto [subRegionL, subRegionR] = getSubregions( regionIndex );
+      auto [subRegionL, subRegionR] = getSubregions( surfaceRegionIndex );
         
-      // get constitutives by type and name
+      // get constitutives by type and name: relPerms, capPressures, Fluids (three pointers)
       auto & nameL = subRegionL->getReference< std::string >( viewKeyStruct::relPermNamesString());
       auto & nameR = subRegionR->getReference< std::string >( viewKeyStruct::relPermNamesString());
       auto * relPermL = &getConstitutiveModel< BrooksCoreyRelativePermeability >( *subRegionL, nameL );
       auto * relPermR = &getConstitutiveModel< BrooksCoreyRelativePermeability >( *subRegionR, nameR );
 
+      // need to get the constitutive data from the cells.
+      m_constitutitveFluidModels[surfaceRegionIndex][0] = std::make_tuple( relPermL, nullptr, nullptr );
+      m_constitutitveFluidModels[surfaceRegionIndex][1] = std::make_tuple( relPermR, nullptr, nullptr );
 
-      for( localIndex side=0; side < 2; ++side )
-      {
-        // need to get the constitutive data from the cells.
-        m_constitutitveFluidModels[regionIndex][0] = std::make_tuple( relPermL, nullptr, nullptr );
-        m_constitutitveFluidModels[regionIndex][1] = std::make_tuple( relPermR, nullptr, nullptr );
-      }
     }
   } );
 
