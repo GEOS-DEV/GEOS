@@ -597,7 +597,7 @@ public:
    * @brief Recompute all dependent quantities from primary variables (including constitutive models)
    * @param domain the domain containing the mesh and fields
    */
-  virtual void updateState( DomainPartition & domain );
+  virtual bool updateState( DomainPartition & domain );
 
   /**
    * @brief reset state of physics back to the beginning of the step.
@@ -1048,7 +1048,7 @@ protected:
   std::function< void( CRSMatrix< real64, globalIndex >, array1d< real64 > ) > m_assemblyCallback;
 
   /// Timers for the aggregate profiling of the solver
-  std::map< std::string, std::chrono::system_clock::duration > m_timers;
+  mutable std::map< std::string, std::chrono::system_clock::duration > m_timers;
 
 private:
   /// List of names of regions the solver will be applied to

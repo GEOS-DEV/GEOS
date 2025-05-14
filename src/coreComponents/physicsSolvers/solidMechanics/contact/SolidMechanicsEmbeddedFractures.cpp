@@ -759,7 +759,7 @@ void SolidMechanicsEmbeddedFractures::updateJump( DofManager const & dofManager,
   } );
 }
 
-void SolidMechanicsEmbeddedFractures::updateState( DomainPartition & domain )
+bool SolidMechanicsEmbeddedFractures::updateState( DomainPartition & domain )
 {
   GEOS_MARK_FUNCTION;
 
@@ -800,6 +800,7 @@ void SolidMechanicsEmbeddedFractures::updateState( DomainPartition & domain )
       } );
     } );
   } );
+  return true;
 }
 
 bool SolidMechanicsEmbeddedFractures::updateConfiguration( DomainPartition & domain )

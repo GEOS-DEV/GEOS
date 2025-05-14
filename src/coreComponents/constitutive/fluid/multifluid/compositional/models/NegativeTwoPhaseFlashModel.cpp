@@ -63,7 +63,8 @@ NegativeTwoPhaseFlashModel::createKernelWrapper() const
                         liquidEos,
                         vapourEos,
                         salinity,
-                        criticalVolume->m_componentCriticalVolume );
+                        criticalVolume->m_componentCriticalVolume,
+                        m_timers );
 }
 
 NegativeTwoPhaseFlashModelUpdate::NegativeTwoPhaseFlashModelUpdate(
@@ -73,11 +74,13 @@ NegativeTwoPhaseFlashModelUpdate::NegativeTwoPhaseFlashModelUpdate(
   EquationOfStateType const liquidEos,
   EquationOfStateType const vapourEos,
   real64 const salinity,
-  arrayView1d< real64 const > const componentCriticalVolume ):
+  arrayView1d< real64 const > const componentCriticalVolume,
+  std::map< std::string, std::chrono::system_clock::duration >& timers ):
   m_numComponents( numComponents ),
   m_liquidIndex( liquidIndex ),
   m_vapourIndex( vapourIndex ),
-  m_componentCriticalVolume( componentCriticalVolume )
+  m_componentCriticalVolume( componentCriticalVolume ),
+  m_timers( timers )
 {
   m_flashData.liquidEos = liquidEos;
   m_flashData.vapourEos = vapourEos;

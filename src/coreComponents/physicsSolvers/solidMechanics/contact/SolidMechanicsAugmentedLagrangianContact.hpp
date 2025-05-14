@@ -86,7 +86,7 @@ public:
                                     real64 const dt,
                                     DomainPartition & domain ) override;
 
-  void updateState( DomainPartition & domain ) override final;
+  bool updateState( DomainPartition & domain ) override final;
 
   virtual bool updateConfiguration( DomainPartition & domain ) override final;
 

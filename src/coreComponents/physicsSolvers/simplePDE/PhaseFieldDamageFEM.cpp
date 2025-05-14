@@ -462,9 +462,10 @@ void PhaseFieldDamageFEM::applySystemSolution( DofManager const & dofManager,
 
 }
 
-void PhaseFieldDamageFEM::updateState( DomainPartition & domain )
+bool PhaseFieldDamageFEM::updateState( DomainPartition & domain )
 {
   GEOS_UNUSED_VAR( domain );
+  return true;
 }
 
 void PhaseFieldDamageFEM::applyBoundaryConditions(

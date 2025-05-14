@@ -60,7 +60,7 @@ public:
                                        MultiFluidBase::PhaseComp::ViewValueType kValues );
 
   GEOS_HOST_DEVICE
-  virtual void compute( real64 const pressure,
+  virtual bool compute( real64 const pressure,
                         real64 const temperature,
                         arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & composition,
                         MultiFluidBase::PhaseProp::SliceType const phaseFrac,
@@ -73,7 +73,7 @@ public:
                         MultiFluidBase::FluidProp::SliceType const totalDensity ) const override;
 
   GEOS_HOST_DEVICE
-  virtual void update( localIndex const k,
+  virtual bool update( localIndex const k,
                        localIndex const q,
                        real64 const pressure,
                        real64 const temperature,
@@ -81,7 +81,7 @@ public:
 
 protected:
   GEOS_HOST_DEVICE
-  void compute( real64 const pressure,
+  bool compute( real64 const pressure,
                 real64 const temperature,
                 arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & composition,
                 MultiFluidBase::PhaseProp::SliceType const phaseFrac,
@@ -176,7 +176,7 @@ CompositionalMultiphaseFluidUpdates( compositional::ComponentProperties const & 
 template< typename FLASH, typename PHASE1, typename PHASE2, typename PHASE3 >
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
-void
+bool
 CompositionalMultiphaseFluidUpdates< FLASH, PHASE1, PHASE2, PHASE3 >::compute(
   real64 const pressure,
   real64 const temperature,
@@ -196,24 +196,24 @@ CompositionalMultiphaseFluidUpdates< FLASH, PHASE1, PHASE2, PHASE3 >::compute(
 
   LvArray::forValuesInSlice( kValues[0][0], setZero );   // Force initialisation of k-Values
 
-  compute( pressure,
-           temperature,
-           composition,
-           phaseFrac,
-           phaseDens,
-           phaseMassDensity,
-           phaseVisc,
-           phaseEnthalpy,
-           phaseInternalEnergy,
-           phaseCompFrac,
-           totalDensity,
-           kValues[0][0] );
+  return compute( pressure,
+                  temperature,
+                  composition,
+                  phaseFrac,
+                  phaseDens,
+                  phaseMassDensity,
+                  phaseVisc,
+                  phaseEnthalpy,
+                  phaseInternalEnergy,
+                  phaseCompFrac,
+                  totalDensity,
+                  kValues[0][0] );
 }
 
 template< typename FLASH, typename PHASE1, typename PHASE2, typename PHASE3 >
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
-void
+bool
 CompositionalMultiphaseFluidUpdates< FLASH, PHASE1, PHASE2, PHASE3 >::compute(
   real64 const pressure,
   real64 const temperature,
@@ -234,6 +234,8 @@ CompositionalMultiphaseFluidUpdates< FLASH, PHASE1, PHASE2, PHASE3 >::compute(
   integer const numComp = numComponents();
   integer const numPhase = numPhases();
   integer const numDof = numComp + 2;
+
+  bool status = true;
 
   // 1. Convert input mass fractions to mole fractions and keep derivatives
 
@@ -256,13 +258,13 @@ CompositionalMultiphaseFluidUpdates< FLASH, PHASE1, PHASE2, PHASE3 >::compute(
   }
 
   // 2. Compute phase fractions and phase component fractions
-  m_flash.compute( m_componentProperties,
-                   pressure,
-                   temperature,
-                   compMoleFrac.toSliceConst(),
-                   kValues,
-                   phaseFrac,
-                   phaseCompFrac );
+  status &= m_flash.compute( m_componentProperties,
+                             pressure,
+                             temperature,
+                             compMoleFrac.toSliceConst(),
+                             kValues,
+                             phaseFrac,
+                             phaseCompFrac );
 
   // 3. Calculate the phase densities
   m_phase1.density.compute( m_componentProperties,
@@ -390,12 +392,14 @@ CompositionalMultiphaseFluidUpdates< FLASH, PHASE1, PHASE2, PHASE3 >::compute(
   computeTotalDensity( phaseFrac,
                        phaseDens,
                        totalDensity );
+
+  return status;
 }
 
 template< typename FLASH, typename PHASE1, typename PHASE2, typename PHASE3 >
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
-void
+bool
 CompositionalMultiphaseFluidUpdates< FLASH, PHASE1, PHASE2, PHASE3 >::
 update( localIndex const k,
         localIndex const q,
@@ -403,18 +407,18 @@ update( localIndex const k,
         real64 const temperature,
         arraySlice1d< geos::real64 const, compflow::USD_COMP - 1 > const & composition ) const
 {
-  compute( pressure,
-           temperature,
-           composition,
-           m_phaseFraction( k, q ),
-           m_phaseDensity( k, q ),
-           m_phaseMassDensity( k, q ),
-           m_phaseViscosity( k, q ),
-           m_phaseEnthalpy( k, q ),
-           m_phaseInternalEnergy( k, q ),
-           m_phaseCompFraction( k, q ),
-           m_totalDensity( k, q ),
-           m_kValues[k][q] );
+  return compute( pressure,
+                  temperature,
+                  composition,
+                  m_phaseFraction( k, q ),
+                  m_phaseDensity( k, q ),
+                  m_phaseMassDensity( k, q ),
+                  m_phaseViscosity( k, q ),
+                  m_phaseEnthalpy( k, q ),
+                  m_phaseInternalEnergy( k, q ),
+                  m_phaseCompFraction( k, q ),
+                  m_totalDensity( k, q ),
+                  m_kValues[k][q] );
 }
 
 template< typename FLASH, typename PHASE1, typename PHASE2, typename PHASE3 >

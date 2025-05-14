@@ -1364,7 +1364,7 @@ void ReactiveCompositionalMultiphaseOBL::updateOBLOperators( ObjectManagerBase &
 }
 
 
-void ReactiveCompositionalMultiphaseOBL::updateState( DomainPartition & domain )
+bool ReactiveCompositionalMultiphaseOBL::updateState( DomainPartition & domain )
 {
   GEOS_MARK_FUNCTION;
 
@@ -1380,6 +1380,7 @@ void ReactiveCompositionalMultiphaseOBL::updateState( DomainPartition & domain )
       updateOBLOperators( subRegion );
     } );
   } );
+  return true;
 }
 
 

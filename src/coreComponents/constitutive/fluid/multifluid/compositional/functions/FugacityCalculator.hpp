@@ -37,6 +37,7 @@ namespace compositional
 
 struct FugacityCalculator
 {
+  static constexpr integer maxNumComps = MultiFluidConstants::MAX_NUM_COMPONENTS;
   /**
    * @brief Calculate the log fugacity for a phase
    * @param[in] numComps number of components
@@ -54,6 +55,17 @@ struct FugacityCalculator
                                   real64 const pressure,
                                   real64 const temperature,
                                   arraySlice1d< real64 const, USD > const & composition,
+                                  ComponentProperties::KernelWrapper const & componentProperties,
+                                  EquationOfStateType const equationOfState,
+                                  FlashData const & flashData,
+                                  arraySlice1d< real64 > const & logFugacity );
+  template< int USD >
+  GEOS_HOST_DEVICE
+  static void computeLogFugacity( integer const numComps,
+                                  real64 const pressure,
+                                  real64 const temperature,
+                                  arraySlice1d< real64 const, USD > const & composition,
+                                  arraySlice2d< real64 const > const & kij,
                                   ComponentProperties::KernelWrapper const & componentProperties,
                                   EquationOfStateType const equationOfState,
                                   FlashData const & flashData,
@@ -122,6 +134,52 @@ void FugacityCalculator::computeLogFugacity( integer const numComps,
                                     pressure,
                                     temperature,
                                     composition,
+                                    componentProperties,
+                                    flashData.salinity,
+                                    logFugacity );
+  }
+}
+
+template< int USD >
+GEOS_HOST_DEVICE
+void FugacityCalculator::computeLogFugacity( integer const numComps,
+                                             real64 const pressure,
+                                             real64 const temperature,
+                                             arraySlice1d< real64 const, USD > const & composition,
+                                             arraySlice2d< real64 const > const & kij,
+                                             ComponentProperties::KernelWrapper const & componentProperties,
+                                             EquationOfStateType const equationOfState,
+                                             FlashData const & flashData,
+                                             arraySlice1d< real64 > const & logFugacity )
+{
+  if( equationOfState == EquationOfStateType::PengRobinson )
+  {
+    CubicEOSPhaseModel< PengRobinsonEOS >::
+    computeLogFugacityCoefficients( numComps,
+                                    pressure,
+                                    temperature,
+                                    composition,
+                                    componentProperties,
+                                    logFugacity );
+  }
+  else if( equationOfState == EquationOfStateType::SoaveRedlichKwong )
+  {
+    CubicEOSPhaseModel< SoaveRedlichKwongEOS >::
+    computeLogFugacityCoefficients( numComps,
+                                    pressure,
+                                    temperature,
+                                    composition,
+                                    componentProperties,
+                                    logFugacity );
+  }
+  else if( equationOfState == EquationOfStateType::SoreideWhitson )
+  {
+    SoreideWhitsonEOSPhaseModel< PengRobinsonEOS >::
+    computeLogFugacityCoefficients( numComps,
+                                    pressure,
+                                    temperature,
+                                    composition,
+                                    kij,
                                     componentProperties,
                                     flashData.salinity,
                                     logFugacity );

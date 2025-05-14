@@ -467,7 +467,7 @@ void SinglePhasePoromechanicsEmbeddedFractures::assembleSystem( real64 const tim
 
 }
 
-void SinglePhasePoromechanicsEmbeddedFractures::updateState( DomainPartition & domain )
+bool SinglePhasePoromechanicsEmbeddedFractures::updateState( DomainPartition & domain )
 {
   GEOS_MARK_FUNCTION;
 
@@ -558,6 +558,8 @@ void SinglePhasePoromechanicsEmbeddedFractures::updateState( DomainPartition & d
       }
     } );
   } );
+
+  return true;
 }
 
 REGISTER_CATALOG_ENTRY( PhysicsSolverBase, SinglePhasePoromechanicsEmbeddedFractures, std::string const &, Group * const )

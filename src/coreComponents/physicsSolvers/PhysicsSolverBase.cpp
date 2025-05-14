@@ -240,13 +240,19 @@ real64 PhysicsSolverBase::solverStep( real64 const & time_n,
     GEOS_LOG_LEVEL( logInfo::Fields, oss.str())
   }
 
-  implicitStepSetup( time_n, dt, domain );
+  {
+    Timer timer( m_timers["step setup"] );
+    implicitStepSetup( time_n, dt, domain );
+  }
 
   // currently the only method is implicit time integration
   real64 const dt_return = nonlinearImplicitStep( time_n, dt, cycleNumber, domain );
 
   // final step for completion of timestep. typically secondary variable updates and cleanup.
-  implicitStepComplete( time_n, dt_return, domain );
+  {
+    Timer timer( m_timers["step complete"] );
+    implicitStepComplete( time_n, dt_return, domain );
+  }
 
   return dt_return;
 }
@@ -807,6 +813,8 @@ real64 PhysicsSolverBase::nonlinearImplicitStep( real64 const & time_n,
     // reset the solver state, since we are restarting the time step
     if( dtAttempt > 0 )
     {
+      Timer timer( m_timers["reset state"] );
+
       resetStateToBeginningOfStep( domain );
       resetConfigurationToBeginningOfStep( domain );
     }
@@ -1102,7 +1110,12 @@ bool PhysicsSolverBase::solveNonlinearSystem( real64 const & time_n,
       Timer timer( m_timers["update state"] );
 
       // update non-primary variables (constitutive models)
-      updateState( domain );
+      if( !updateState( domain ))
+      {
+        GEOS_LOG_RANK_0( GEOS_FMT( "    {}: Update state failed. Newton loop terminated.", getName()) );
+        isNewtonConverged = false;
+        break;
+      }
     }
 
     lastResidual = residualNorm;
@@ -1361,9 +1374,10 @@ void PhysicsSolverBase::applySystemSolution( DofManager const & GEOS_UNUSED_PARA
   GEOS_ERROR( "PhysicsSolverBase::applySystemSolution called!. Should be overridden." );
 }
 
-void PhysicsSolverBase::updateState( DomainPartition & GEOS_UNUSED_PARAM( domain ) )
+bool PhysicsSolverBase::updateState( DomainPartition & GEOS_UNUSED_PARAM( domain ) )
 {
   GEOS_ERROR( "PhysicsSolverBase::updateState called!. Should be overridden." );
+  return false;
 }
 
 bool PhysicsSolverBase::updateConfiguration( DomainPartition & GEOS_UNUSED_PARAM( domain ) )

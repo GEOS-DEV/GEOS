@@ -77,7 +77,7 @@ public:
   {
 public:
     GEOS_HOST_DEVICE
-    virtual void compute( real64 const pressure,
+    virtual bool compute( real64 const pressure,
                           real64 const temperature,
                           arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & composition,
                           PhaseProp::SliceType const phaseFraction,
@@ -90,7 +90,7 @@ public:
                           FluidProp::SliceType const totalDensity ) const override;
 
     GEOS_HOST_DEVICE
-    virtual void update( localIndex const k,
+    virtual bool update( localIndex const k,
                          localIndex const q,
                          real64 const pressure,
                          real64 const temperature,
@@ -159,7 +159,7 @@ private:
 
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
-void
+bool
 CompositionalMultiphaseFluidPVTPackage::KernelWrapper::
   compute( real64 const pressure,
            real64 const temperature,
@@ -307,11 +307,12 @@ CompositionalMultiphaseFluidPVTPackage::KernelWrapper::
                        totalDensity );
 
 #endif
+  return true;
 }
 
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
-void
+bool
 CompositionalMultiphaseFluidPVTPackage::KernelWrapper::
   update( localIndex const k,
           localIndex const q,
@@ -319,17 +320,17 @@ CompositionalMultiphaseFluidPVTPackage::KernelWrapper::
           real64 const temperature,
           arraySlice1d< geos::real64 const, compflow::USD_COMP - 1 > const & composition ) const
 {
-  compute( pressure,
-           temperature,
-           composition,
-           m_phaseFraction( k, q ),
-           m_phaseDensity( k, q ),
-           m_phaseMassDensity( k, q ),
-           m_phaseViscosity( k, q ),
-           m_phaseEnthalpy( k, q ),
-           m_phaseInternalEnergy( k, q ),
-           m_phaseCompFraction( k, q ),
-           m_totalDensity( k, q ) );
+  return compute( pressure,
+                  temperature,
+                  composition,
+                  m_phaseFraction( k, q ),
+                  m_phaseDensity( k, q ),
+                  m_phaseMassDensity( k, q ),
+                  m_phaseViscosity( k, q ),
+                  m_phaseEnthalpy( k, q ),
+                  m_phaseInternalEnergy( k, q ),
+                  m_phaseCompFraction( k, q ),
+                  m_totalDensity( k, q ) );
 }
 
 } /* namespace constitutive */

@@ -98,7 +98,7 @@ public:
                                CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                arrayView1d< real64 > const & localRhs ) override final;
 
-  virtual void updateState( DomainPartition & domain ) override final;
+  virtual bool updateState( DomainPartition & domain ) override final;
 
   virtual void setMGRStrategy() override
   {

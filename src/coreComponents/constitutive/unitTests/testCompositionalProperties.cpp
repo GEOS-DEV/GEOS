@@ -254,13 +254,13 @@ private:
     stackArray1d< real64, numDof > compressibilityFactorDerivs( numDof );
 
     CubicEOSPhaseModel< EOS_TYPE >::
-    computeCompressibilityFactor( numComps,
-                                  aMixtureCoefficient,
-                                  bMixtureCoefficient,
-                                  compressibilityFactor,
-                                  aMixtureCoefficientDerivs.toSliceConst(),
-                                  bMixtureCoefficientDerivs.toSliceConst(),
-                                  compressibilityFactorDerivs.toSlice() );
+    computeCompressibilityFactorDerivs( numComps,
+                                        aMixtureCoefficient,
+                                        bMixtureCoefficient,
+                                        compressibilityFactor,
+                                        aMixtureCoefficientDerivs.toSliceConst(),
+                                        bMixtureCoefficientDerivs.toSliceConst(),
+                                        compressibilityFactorDerivs.toSlice() );
 
     CompositionalProperties::
       computeMolarDensity( numComps,

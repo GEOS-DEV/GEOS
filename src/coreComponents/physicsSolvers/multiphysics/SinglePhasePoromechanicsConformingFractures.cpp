@@ -732,7 +732,7 @@ assembleFluidMassResidualDerivativeWrtDisplacement( MeshLevel const & mesh,
 }
 
 template< typename FLOW_SOLVER >
-void SinglePhasePoromechanicsConformingFractures< FLOW_SOLVER >::updateState( DomainPartition & domain )
+bool SinglePhasePoromechanicsConformingFractures< FLOW_SOLVER >::updateState( DomainPartition & domain )
 {
   GEOS_MARK_FUNCTION;
 
@@ -748,6 +748,8 @@ void SinglePhasePoromechanicsConformingFractures< FLOW_SOLVER >::updateState( Do
 
   // update the stencil weights using the updated hydraulic aperture
   this->flowSolver()->updateStencilWeights( domain );
+
+  return true;
 }
 
 template< typename FLOW_SOLVER >

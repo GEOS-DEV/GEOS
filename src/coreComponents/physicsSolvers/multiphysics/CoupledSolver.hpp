@@ -203,13 +203,16 @@ public:
     } );
   }
 
-  virtual void
+  virtual bool
   updateState( DomainPartition & domain ) override
   {
+    bool status = true;
     forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
     {
-      solver->updateState( domain );
+      status &= solver->updateState( domain );
     } );
+
+    return status;
   }
 
   virtual void

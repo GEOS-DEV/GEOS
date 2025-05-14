@@ -807,9 +807,10 @@ void SolidMechanicsAugmentedLagrangianContact::applySystemSolution( DofManager c
 
 }
 
-void SolidMechanicsAugmentedLagrangianContact::updateState( DomainPartition & domain )
+bool SolidMechanicsAugmentedLagrangianContact::updateState( DomainPartition & domain )
 {
   GEOS_UNUSED_VAR( domain );
+  return true;
 }
 
 bool SolidMechanicsAugmentedLagrangianContact::updateConfiguration( DomainPartition & domain )

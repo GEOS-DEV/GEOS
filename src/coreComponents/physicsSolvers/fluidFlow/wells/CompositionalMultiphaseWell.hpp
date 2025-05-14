@@ -181,7 +181,7 @@ public:
    * @brief Recompute all dependent quantities from primary variables (including constitutive models)
    * @param subRegion the well subregion containing all the primary and dependent fields
    */
-  virtual void updateState( DomainPartition & domain ) override;
+  virtual bool updateState( DomainPartition & domain ) override;
 
   virtual real64 updateSubRegionState( WellElementSubRegion & subRegion ) override;
 

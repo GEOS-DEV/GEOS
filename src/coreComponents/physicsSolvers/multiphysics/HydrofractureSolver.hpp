@@ -124,7 +124,7 @@ public:
                             real64 const & currentDt,
                             DomainPartition & domain ) override;
 
-  virtual void updateState( DomainPartition & domain ) override final;
+  virtual bool updateState( DomainPartition & domain ) override final;
 
   virtual void implicitStepComplete( real64 const & time_n,
                                      real64 const & dt,

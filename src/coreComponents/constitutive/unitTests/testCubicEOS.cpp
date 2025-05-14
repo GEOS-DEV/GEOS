@@ -600,7 +600,7 @@ public:
       bMixtureCoefficient,
       aMixtureCoefficientDerivs.toSlice(),
       bMixtureCoefficientDerivs.toSlice() );
-    CubicEOSPhaseModel< EOS >::computeCompressibilityFactor(
+    CubicEOSPhaseModel< EOS >::computeCompressibilityFactorDerivs(
       numComps,
       aMixtureCoefficient,
       bMixtureCoefficient,

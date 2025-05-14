@@ -34,38 +34,42 @@ namespace thermalCompositionalMultiphaseBaseKernels
 struct FluidUpdateKernel
 {
   template< typename POLICY, typename FLUID_WRAPPER >
-  static void
+  static bool
   launch( localIndex const size,
           FLUID_WRAPPER const & fluidWrapper,
           arrayView1d< real64 const > const & pres,
           arrayView1d< real64 const > const & temp,
           arrayView2d< real64 const, compflow::USD_COMP > const & compFrac )
   {
-    forAll< POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const k )
+    RAJA::ReduceBitAnd< ReducePolicy< POLICY >, bool > status = true;
+    forAll< POLICY >( size, [&] GEOS_HOST_DEVICE ( localIndex const k )
     {
       for( localIndex q = 0; q < fluidWrapper.numGauss(); ++q )
       {
-        fluidWrapper.update( k, q, pres[k], temp[k], compFrac[k] );
+        status &= fluidWrapper.update( k, q, pres[k], temp[k], compFrac[k] );
       }
     } );
+    return status.get();
   }
 
   template< typename POLICY, typename FLUID_WRAPPER >
-  static void
+  static bool
   launch( SortedArrayView< localIndex const > const & targetSet,
           FLUID_WRAPPER const & fluidWrapper,
           arrayView1d< real64 const > const & pres,
           arrayView1d< real64 const > const & temp,
           arrayView2d< real64 const, compflow::USD_COMP > const & compFrac )
   {
-    forAll< POLICY >( targetSet.size(), [=] GEOS_HOST_DEVICE ( localIndex const a )
+    bool status = true;
+    forAll< POLICY >( targetSet.size(), [&] GEOS_HOST_DEVICE ( localIndex const a )
     {
       localIndex const k = targetSet[a];
       for( localIndex q = 0; q < fluidWrapper.numGauss(); ++q )
       {
-        fluidWrapper.update( k, q, pres[k], temp[k], compFrac[k] );
+        status &= fluidWrapper.update( k, q, pres[k], temp[k], compFrac[k] );
       }
     } );
+    return status;
   }
 };
 

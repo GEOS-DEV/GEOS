@@ -264,7 +264,7 @@ public:
                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
                   arrayView1d< real64 > const & localRhs ) const = 0;
 
-  virtual void
+  virtual bool
   updateState ( DomainPartition & domain ) override final;
 
   /**

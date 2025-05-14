@@ -29,6 +29,9 @@
 #include "constitutive/fluid/multifluid/compositional/functions/StabilityTest.hpp"
 #include "constitutive/fluid/multifluid/compositional/functions/NegativeTwoPhaseFlash.hpp"
 
+#include "common/Timer.hpp"
+#include "common/MpiWrapper.hpp"
+
 namespace geos
 {
 
@@ -55,7 +58,8 @@ public:
                                     EquationOfStateType const liquidEos,
                                     EquationOfStateType const vapourEos,
                                     real64 const salinity,
-                                    arrayView1d< real64 const > const componentCriticalVolume );
+                                    arrayView1d< real64 const > const componentCriticalVolume,
+                                    std::map< std::string, std::chrono::system_clock::duration >& timers );
 
   // Mark as a 2-phase flash
   GEOS_HOST_DEVICE
@@ -63,7 +67,7 @@ public:
 
   template< int USD1, int USD2 >
   GEOS_HOST_DEVICE
-  void compute( ComponentProperties::KernelWrapper const & componentProperties,
+  bool compute( ComponentProperties::KernelWrapper const & componentProperties,
                 real64 const & pressure,
                 real64 const & temperature,
                 arraySlice1d< real64 const, USD1 > const & compFraction,
@@ -75,50 +79,79 @@ public:
 
     // Perform stability test to check that we have 2 phases
     real64 tangentPlaneDistance = 0.0;
-    bool const stabilityStatus = StabilityTest::compute( m_numComponents,
-                                                         pressure,
-                                                         temperature,
-                                                         compFraction,
-                                                         componentProperties,
-                                                         m_flashData.liquidEos,
-                                                         m_flashData,
-                                                         tangentPlaneDistance,
-                                                         kValues[0] );
-    GEOS_ERROR_IF( !stabilityStatus,
-                   GEOS_FMT( "Stability test failed at pressure {:.5e} and temperature {:.3f}", pressure, temperature ));
+    bool stabilityStatus = true;
+    {
+      Timer timer( m_timers["stability"] );
+      stabilityStatus = StabilityTest::compute( m_numComponents,
+                                                          pressure,
+                                                          temperature,
+                                                          compFraction,
+                                                          componentProperties,
+                                                          m_flashData.liquidEos,
+                                                          m_flashData,
+                                                          tangentPlaneDistance,
+                                                          kValues[0] );
+    }
+    if( !stabilityStatus )
+    {
+      GEOS_LOG( GEOS_FMT( "Stability test failed at pressure = {:.5e}, = temperature {:.3f}, composition =", pressure, temperature ));
+      for( integer ic = 0; ic < m_numComponents; ++ic )
+      {
+        GEOS_LOG( GEOS_FMT( "{:.5e}", compFraction[ic] ));
+      }
+    }
+
+    bool flashStatus = true;
 
     if( tangentPlaneDistance < -stabilityTolerance )
     {
+      Timer timer( m_timers["flash"] );
+
       // Unstable mixture
-      // Iterative solve to converge flash
-      bool const flashStatus = NegativeTwoPhaseFlash::compute( m_numComponents,
-                                                               pressure,
-                                                               temperature,
-                                                               compFraction,
-                                                               componentProperties,
-                                                               m_flashData,
-                                                               kValues,
-                                                               phaseFraction.value[m_vapourIndex],
-                                                               phaseCompFraction.value[m_liquidIndex],
-                                                               phaseCompFraction.value[m_vapourIndex] );
 
-      GEOS_ERROR_IF( !flashStatus,
-                     GEOS_FMT( "Negative two phase flash failed to converge at pressure {:.5e} and temperature {:.3f}",
-                               pressure, temperature ));
+      {
+        Timer timer1( m_timers["flash solve"] );
 
-      // Calculate derivatives
-      NegativeTwoPhaseFlash::computeDerivatives( m_numComponents,
-                                                 pressure,
-                                                 temperature,
-                                                 compFraction,
-                                                 componentProperties,
-                                                 m_flashData,
-                                                 phaseFraction.value[m_vapourIndex],
-                                                 phaseCompFraction.value[m_liquidIndex].toSliceConst(),
-                                                 phaseCompFraction.value[m_vapourIndex].toSliceConst(),
-                                                 phaseFraction.derivs[m_vapourIndex],
-                                                 phaseCompFraction.derivs[m_liquidIndex],
-                                                 phaseCompFraction.derivs[m_vapourIndex] );
+        // Iterative solve to converge flash
+        flashStatus = NegativeTwoPhaseFlash::compute( m_numComponents,
+                                                      pressure,
+                                                      temperature,
+                                                      compFraction,
+                                                      componentProperties,
+                                                      m_flashData,
+                                                      kValues,
+                                                      phaseFraction.value[m_vapourIndex],
+                                                      phaseCompFraction.value[m_liquidIndex],
+                                                      phaseCompFraction.value[m_vapourIndex] );
+
+        if( !flashStatus )
+        {
+          GEOS_LOG( GEOS_FMT( "Negative two phase flash failed to converge at pressure = {:.5e}, temperature = {:.3f}, composition =",
+                              pressure, temperature ));
+          for( integer ic = 0; ic < m_numComponents; ++ic )
+          {
+            GEOS_LOG( GEOS_FMT( "{:.5e}", compFraction[ic] ));
+          }
+        }
+      }
+
+      {
+        Timer timer2( m_timers["flash derivs"] );
+        // Calculate derivatives
+        NegativeTwoPhaseFlash::computeDerivatives( m_numComponents,
+                                                  pressure,
+                                                  temperature,
+                                                  compFraction,
+                                                  componentProperties,
+                                                  m_flashData,
+                                                  phaseFraction.value[m_vapourIndex],
+                                                  phaseCompFraction.value[m_liquidIndex].toSliceConst(),
+                                                  phaseCompFraction.value[m_vapourIndex].toSliceConst(),
+                                                  phaseFraction.derivs[m_vapourIndex],
+                                                  phaseCompFraction.derivs[m_liquidIndex],
+                                                  phaseCompFraction.derivs[m_vapourIndex],
+                                                m_timers );
+      }
     }
     else
     {
@@ -146,6 +179,8 @@ public:
     {
       phaseFraction.derivs[m_liquidIndex][ic] = -phaseFraction.derivs[m_vapourIndex][ic];
     }
+
+    return stabilityStatus && flashStatus;
   }
 
   template< int USD >
@@ -181,6 +216,7 @@ private:
   integer const m_vapourIndex;
   FlashData m_flashData;
   arrayView1d< real64 const > const m_componentCriticalVolume;
+  std::map< std::string, std::chrono::system_clock::duration >& m_timers;
 };
 
 class NegativeTwoPhaseFlashModel : public FunctionBase
@@ -189,6 +225,21 @@ public:
   NegativeTwoPhaseFlashModel( string const & name,
                               ComponentProperties const & componentProperties,
                               ModelParameters const & modelParameters );
+
+  ~NegativeTwoPhaseFlashModel() override
+  {
+    for( auto & timer : m_timers )
+    {
+      real64 const time = std::chrono::duration< double >( timer.second ).count();
+      real64 const minTime = MpiWrapper::min( time );
+      real64 const maxTime = MpiWrapper::max( time );
+      if( maxTime > 0 )
+      {
+        GEOS_LOG_RANK_0( GEOS_FMT( "{}: {} time = {} s (min), {} s (max)",
+          catalogName(), timer.first, minTime, maxTime ) );
+      }
+    }
+  }
 
   static string catalogName();
 
@@ -211,6 +262,7 @@ public:
 
 private:
   ModelParameters const & m_parameters;
+  mutable std::map< std::string, std::chrono::system_clock::duration > m_timers;
 };
 
 } // end namespace compositional

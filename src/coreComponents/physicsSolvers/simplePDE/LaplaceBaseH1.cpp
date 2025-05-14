@@ -168,9 +168,10 @@ void LaplaceBaseH1::applySystemSolution( DofManager const & dofManager,
   } );
 }
 
-void LaplaceBaseH1::updateState( DomainPartition & domain )
+bool LaplaceBaseH1::updateState( DomainPartition & domain )
 {
   GEOS_UNUSED_VAR( domain );
+  return true;
 }
 
 /*

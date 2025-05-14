@@ -81,7 +81,7 @@ public:
     // step 1: find solution window
     real64 xMin = 1.0 / ( 1 - maxK );
     real64 xMax = 1.0 / ( 1 - minK );
-    real64 const sqrtEpsilon = sqrt( epsilon );
+    real64 const sqrtEpsilon = LvArray::math::sqrt( epsilon );
     xMin += sqrtEpsilon * ( LvArray::math::abs( xMin ) + sqrtEpsilon );
     xMax -= sqrtEpsilon * ( LvArray::math::abs( xMax ) + sqrtEpsilon );
 
@@ -156,7 +156,127 @@ public:
 
       // TODO: add warning if max number of Newton iterations is reached
     }
-    return gasPhaseMoleFraction = newtonValue;
+    return newtonValue;
+  }
+
+  template< integer USD1, integer USD2 >
+  GEOS_HOST_DEVICE
+  bool
+  static
+  solve( arraySlice1d< real64 const, USD2 > const & kValues,
+         arraySlice1d< real64 const, USD1 > const & feed,
+         arraySlice1d< integer const > const & presentComponentIds,
+         real64 & gasPhaseMoleFraction)
+  {
+    gasPhaseMoleFraction = 0.0;
+
+    // min and max Kvalues for non-zero composition
+    real64 minK, maxK;
+    findKValueRange( kValues, presentComponentIds, minK, maxK );
+
+    // check for trivial solutions.
+    // this corresponds to bad Kvalues
+    if( maxK < 1.0 )
+    {
+      gasPhaseMoleFraction = 0.0;
+      return true;
+    }
+    if( minK > 1.0 )
+    {
+      gasPhaseMoleFraction = 1.0;
+      return true;
+    }
+
+    // start the solver loop
+
+    // step 1: find solution window
+    real64 xMin = 1.0 / ( 1 - maxK );
+    real64 xMax = 1.0 / ( 1 - minK );
+    real64 const sqrtEpsilon = LvArray::math::sqrt( epsilon );
+    xMin += sqrtEpsilon * ( LvArray::math::abs( xMin ) + sqrtEpsilon );
+    xMax -= sqrtEpsilon * ( LvArray::math::abs( xMax ) + sqrtEpsilon );
+
+    real64 currentError = 1 / epsilon;
+
+    // step 2: start the SSI loop
+    // Evaluate at the bounds
+    real64 funcXMin = evaluate( kValues, feed, presentComponentIds, xMin );
+    real64 funcXMax = evaluate( kValues, feed, presentComponentIds, xMax );
+    real64 funcXMid = 0.0;
+
+    // If the bound values are the same sign then we have a trivial solution
+    if( 0.0 < funcXMin * funcXMax )
+    {
+      gasPhaseMoleFraction = (0.0 < funcXMin) ? 1.0 : 0.0;
+      return true;
+    }
+
+    integer SSIIteration = 0;
+
+    while( ( currentError > SSITolerance ) && ( SSIIteration < maxSSIIterations ) )
+    {
+      real64 const xMid = 0.5 * ( xMin + xMax );
+      funcXMid = evaluate( kValues, feed, presentComponentIds, xMid );
+
+      if( 0.0 < funcXMax * funcXMid )
+      {
+        xMax = xMid;
+        funcXMax = funcXMid;
+      }
+      else if( 0.0 < funcXMin * funcXMid )
+      {
+        xMin = xMid;
+        funcXMin = funcXMid;
+      }
+
+      currentError = LvArray::math::min( LvArray::math::abs( funcXMid ),
+                                         LvArray::math::abs( xMax - xMin ) );
+      SSIIteration++;
+
+      // TODO: add warning if max number of SSI iterations is reached
+    }
+
+    gasPhaseMoleFraction = 0.5 * ( xMax + xMin );
+
+    // step 3: start the Newton loop
+    integer newtonIteration = 0;
+    real64 newtonValue = gasPhaseMoleFraction;
+    real64 funcNewton = evaluate( kValues, feed, presentComponentIds, newtonValue );
+
+    while( ( currentError > newtonTolerance ) && ( newtonIteration < maxNewtonIterations ) )
+    {
+      real64 deltaNewton = -funcNewton / evaluateDerivative( kValues, feed, presentComponentIds, newtonValue );
+
+      // test if we are stepping out of the [xMin;xMax] interval
+      if( newtonValue + deltaNewton < xMin )
+      {
+        deltaNewton = 0.5 * ( xMin - newtonValue );
+      }
+      else if( newtonValue + deltaNewton > xMax )
+      {
+        deltaNewton = 0.5 * ( xMax - newtonValue );
+      }
+
+      newtonValue = newtonValue + deltaNewton;
+
+      funcNewton = evaluate( kValues, feed, presentComponentIds, newtonValue );
+
+      currentError = LvArray::math::min( LvArray::math::abs( funcNewton ),
+                                         LvArray::math::abs( deltaNewton ) );
+      newtonIteration++;
+
+      // TODO: add warning if max number of Newton iterations is reached
+    }
+
+    gasPhaseMoleFraction = newtonValue;
+    
+    if( currentError > newtonTolerance )
+    {
+      GEOS_WARNING( "Rachford-Rice solver did not converge after " << SSIIteration << " SSI iterations and " << newtonIteration << " Newton iterations." );
+      return false;
+    }
+
+    return true;
   }
 
 private:

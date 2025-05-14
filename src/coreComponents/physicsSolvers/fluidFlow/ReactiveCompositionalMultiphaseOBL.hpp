@@ -169,7 +169,7 @@ public:
                        real64 const dt,
                        DomainPartition & domain ) override;
 
-  virtual void updateState( DomainPartition & domain ) override final;
+  virtual bool updateState( DomainPartition & domain ) override final;
 
 
   /**

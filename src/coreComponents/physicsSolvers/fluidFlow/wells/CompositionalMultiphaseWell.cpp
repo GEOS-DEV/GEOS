@@ -919,7 +919,7 @@ void CompositionalMultiphaseWell::updateTotalMassDensity( WellElementSubRegion &
 
 }
 
-void CompositionalMultiphaseWell::updateState( DomainPartition & domain )
+bool CompositionalMultiphaseWell::updateState( DomainPartition & domain )
 {
   GEOS_MARK_FUNCTION;
 
@@ -941,6 +941,7 @@ void CompositionalMultiphaseWell::updateState( DomainPartition & domain )
                          GEOS_FMT( "        {}: Max well phase volume fraction change = {}",
                                    getName(), fmt::format( "{:.{}f}", maxPhaseVolFrac, 4 ) ) );
 
+  return true;
 }
 
 real64 CompositionalMultiphaseWell::updateSubRegionState( WellElementSubRegion & subRegion )

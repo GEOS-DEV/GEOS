@@ -73,7 +73,7 @@ public:
   {
 public:
     GEOS_HOST_DEVICE
-    virtual void compute( real64 const pressure,
+    virtual bool compute( real64 const pressure,
                           real64 const temperature,
                           arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & composition,
                           PhaseProp::SliceType const phaseFraction,
@@ -86,7 +86,7 @@ public:
                           FluidProp::SliceType const totalDensity ) const override;
 
     GEOS_HOST_DEVICE
-    virtual void update( localIndex const k,
+    virtual bool update( localIndex const k,
                          localIndex const q,
                          real64 const pressure,
                          real64 const temperature,
@@ -185,7 +185,7 @@ using ReactiveBrineThermal =
 
 template< typename PHASE >
 GEOS_HOST_DEVICE
-inline void
+inline bool
 ReactiveBrineFluid< PHASE >::KernelWrapper::
   compute( real64 const pressure,
            real64 const temperature,
@@ -254,10 +254,12 @@ ReactiveBrineFluid< PHASE >::KernelWrapper::
   computeTotalDensity( phaseFraction,
                        phaseDensity,
                        totalDensity );
+
+  return true;
 }
 
 template< typename PHASE >
-GEOS_HOST_DEVICE inline void
+GEOS_HOST_DEVICE inline bool
 ReactiveBrineFluid< PHASE >::KernelWrapper::
   update( localIndex const k,
           localIndex const q,
@@ -265,17 +267,17 @@ ReactiveBrineFluid< PHASE >::KernelWrapper::
           real64 const temperature,
           arraySlice1d< geos::real64 const, compflow::USD_COMP - 1 > const & composition ) const
 {
-  compute( pressure,
-           temperature,
-           composition,
-           m_phaseFraction( k, q ),
-           m_phaseDensity( k, q ),
-           m_phaseMassDensity( k, q ),
-           m_phaseViscosity( k, q ),
-           m_phaseEnthalpy( k, q ),
-           m_phaseInternalEnergy( k, q ),
-           m_phaseCompFraction( k, q ),
-           m_totalDensity( k, q ) );
+  return compute( pressure,
+                  temperature,
+                  composition,
+                  m_phaseFraction( k, q ),
+                  m_phaseDensity( k, q ),
+                  m_phaseMassDensity( k, q ),
+                  m_phaseViscosity( k, q ),
+                  m_phaseEnthalpy( k, q ),
+                  m_phaseInternalEnergy( k, q ),
+                  m_phaseCompFraction( k, q ),
+                  m_totalDensity( k, q ) );
 }
 
 template< typename PHASE >

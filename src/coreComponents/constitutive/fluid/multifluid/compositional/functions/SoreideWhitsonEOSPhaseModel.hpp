@@ -59,7 +59,17 @@ struct SoreideWhitsonEOSPhaseModel
                                   ComponentProperties::KernelWrapper const & componentProperties,
                                   real64 const & salinity,
                                   arraySlice1d< real64 > const & logFugacityCoefficients );
-
+  template< integer USD >
+  GEOS_HOST_DEVICE
+  static void
+  computeLogFugacityCoefficients( integer const numComps,
+                                  real64 const & pressure,
+                                  real64 const & temperature,
+                                  arraySlice1d< real64 const, USD > const & composition,
+                                  arraySlice2d< real64 const > const & kij,
+                                  ComponentProperties::KernelWrapper const & componentProperties,
+                                  real64 const & salinity,
+                                  arraySlice1d< real64 > const & logFugacityCoefficients );
   /**
    * @brief Secondary entry point of the Soreide-Whitson EOS model
    * @details Computes the derivatives of the logarithm of the fugacity coefficients
@@ -159,7 +169,20 @@ struct SoreideWhitsonEOSPhaseModel
                               arraySlice1d< real64 > const & bPureCoefficient,
                               real64 & aMixtureCoefficient,
                               real64 & bMixtureCoefficient );
-
+  template< integer USD >
+  GEOS_HOST_DEVICE
+  static void
+  computeMixtureCoefficients( integer const numComps,
+                              real64 const & pressure,
+                              real64 const & temperature,
+                              arraySlice1d< real64 const, USD > const & composition,
+                              arraySlice2d< real64 const > const & kij,
+                              ComponentProperties::KernelWrapper const & componentProperties,
+                              real64 const & salinity,
+                              arraySlice1d< real64 > const & aPureCoefficient,
+                              arraySlice1d< real64 > const & bPureCoefficient,
+                              real64 & aMixtureCoefficient,
+                              real64 & bMixtureCoefficient );
   /**
    * @brief Compute the mixture coefficients derivatives
    * @param[in] numComps number of components
@@ -213,7 +236,17 @@ struct SoreideWhitsonEOSPhaseModel
                                 ComponentProperties::KernelWrapper const & componentProperties,
                                 real64 const & salinity,
                                 real64 & compressibilityFactor );
-
+  template< integer USD >
+  GEOS_HOST_DEVICE
+  static void
+  computeCompressibilityFactor( integer const numComps,
+                                real64 const & pressure,
+                                real64 const & temperature,
+                                arraySlice1d< real64 const, USD > const & composition,
+                                stackArray2d< real64, maxNumComps *maxNumComps >& kij,
+                                ComponentProperties::KernelWrapper const & componentProperties,
+                                real64 const & salinity,
+                                real64 & compressibilityFactor );
   /**
    * @brief Compute compressibility factor and derivatives
    * @details Computes the compressibility factor (z-factor) for the cubic EOS model including derivatives
@@ -228,14 +261,14 @@ struct SoreideWhitsonEOSPhaseModel
   template< integer USD >
   GEOS_HOST_DEVICE
   static void
-  computeCompressibilityFactor( integer const numComps,
-                                real64 const & pressure,
-                                real64 const & temperature,
-                                arraySlice1d< real64 const, USD > const & composition,
-                                ComponentProperties::KernelWrapper const & componentProperties,
-                                real64 const & salinity,
-                                real64 & compressibilityFactor,
-                                arraySlice1d< real64 > const & compressibilityFactorDerivs );
+  computeCompressibilityFactorAndDerivs( integer const numComps,
+                                         real64 const & pressure,
+                                         real64 const & temperature,
+                                         arraySlice1d< real64 const, USD > const & composition,
+                                         ComponentProperties::KernelWrapper const & componentProperties,
+                                         real64 const & salinity,
+                                         real64 & compressibilityFactor,
+                                         arraySlice1d< real64 > const & compressibilityFactorDerivs );
 
   /**
    * @brief Get the binary interaction coefficient between two components
@@ -250,7 +283,7 @@ struct SoreideWhitsonEOSPhaseModel
    */
   GEOS_HOST_DEVICE
   static void
-  getBinaryInteractionCiefficient( real64 const & pressure,
+  getBinaryInteractionCoefficient( real64 const & pressure,
                                    real64 const & temperature,
                                    ComponentProperties::KernelWrapper const & componentProperties,
                                    real64 const & salinity,

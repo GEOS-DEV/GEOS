@@ -119,10 +119,11 @@ public:
                        integer const cycleNumber,
                        DomainPartition & domain ) override;
 
-  virtual void updateState( DomainPartition & domain ) override final
+  virtual bool updateState( DomainPartition & domain ) override final
   {
     // There should be nothing to update
     GEOS_UNUSED_VAR( domain );
+    return true;
   };
 
   /**@}*/

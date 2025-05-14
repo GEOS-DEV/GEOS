@@ -270,15 +270,15 @@ void PhillipsBrineDensity::calculateEosWaterMolarVolume( arraySlice1d< real64 co
       {
         // Step 3: get the pure water density
         real64 compressibilityFactor = 0.0;
-        CompositionalDensityUpdate::computeCompressibilityFactor( numComps,
-                                                                  pressure,
-                                                                  temperature,
-                                                                  waterComposition.toSliceConst(),
-                                                                  componentPropertiesWrapper,
-                                                                  equationOfState,
-                                                                  salinity,
-                                                                  compressibilityFactor,
-                                                                  tempDerivs );
+        CompositionalDensityUpdate::computeCompressibilityFactorAndDerivs( numComps,
+                                                                           pressure,
+                                                                           temperature,
+                                                                           waterComposition.toSliceConst(),
+                                                                           componentPropertiesWrapper,
+                                                                           equationOfState,
+                                                                           salinity,
+                                                                           compressibilityFactor,
+                                                                           tempDerivs );
 
         molarVolume[j*nPressures+i] = constants::gasConstant * temperature * compressibilityFactor / pressure;
         minMolarVolume = LvArray::math::min( minMolarVolume, molarVolume[j*nPressures+i] );

@@ -141,10 +141,11 @@ public:
                        real64 const dt,
                        DomainPartition & domain ) override;
 
-  virtual void updateState( DomainPartition & domain ) override
+  virtual bool updateState( DomainPartition & domain ) override
   {
     // There should be nothing to update
     GEOS_UNUSED_VAR( domain );
+    return true;
   };
 
   virtual void applyBoundaryConditions( real64 const time,

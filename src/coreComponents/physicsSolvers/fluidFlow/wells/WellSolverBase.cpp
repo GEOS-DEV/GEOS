@@ -206,7 +206,7 @@ void WellSolverBase::implicitStepSetup( real64 const & time_n,
   initializeWells( domain, time_n );
 }
 
-void WellSolverBase::updateState( DomainPartition & domain )
+bool WellSolverBase::updateState( DomainPartition & domain )
 {
   GEOS_MARK_FUNCTION;
 
@@ -218,6 +218,7 @@ void WellSolverBase::updateState( DomainPartition & domain )
                                                                                           WellElementSubRegion & subRegion )
     { updateSubRegionState( subRegion ); } );
   } );
+  return true;
 }
 
 void WellSolverBase::assembleSystem( real64 const time,

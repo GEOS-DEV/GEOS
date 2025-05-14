@@ -198,7 +198,7 @@ SoreideWhitsonEOSPhaseModelTestFixture< NC, EOS_TYPE >::testBinaryInteractionCie
       real64 kij = 0.0;
       real64 kji = 0.0;
       real64 dk_dT = 0.0;
-      EOS::getBinaryInteractionCiefficient( pressure,
+      EOS::getBinaryInteractionCoefficient( pressure,
                                             temperature,
                                             componentProperties,
                                             salinity,
@@ -206,7 +206,7 @@ SoreideWhitsonEOSPhaseModelTestFixture< NC, EOS_TYPE >::testBinaryInteractionCie
                                             jc,
                                             kij,
                                             dk_dT );
-      EOS::getBinaryInteractionCiefficient( pressure,
+      EOS::getBinaryInteractionCoefficient( pressure,
                                             temperature,
                                             componentProperties,
                                             salinity,
@@ -229,7 +229,7 @@ SoreideWhitsonEOSPhaseModelTestFixture< NC, EOS_TYPE >::testBinaryInteractionCie
     {
       real64 kij = 0.0;
       real64 dkij_dT = 0.0;
-      EOS::getBinaryInteractionCiefficient( pressure,
+      EOS::getBinaryInteractionCoefficient( pressure,
                                             temperature,
                                             componentProperties,
                                             salinity,
@@ -242,7 +242,7 @@ SoreideWhitsonEOSPhaseModelTestFixture< NC, EOS_TYPE >::testBinaryInteractionCie
       internal::testNumericalDerivative( temperature, dT, dkij_dT,
                                          [&]( real64 t ) -> real64 {
         real64 l_kij, l_dkij_dT;
-        EOS::getBinaryInteractionCiefficient( pressure,
+        EOS::getBinaryInteractionCoefficient( pressure,
                                               t,
                                               componentProperties,
                                               salinity,
@@ -385,22 +385,22 @@ SoreideWhitsonEOSPhaseModelTestFixture< NC, EOS_TYPE >::testCompressibilityFacto
   real64 compressibilityFactor = 0.0;
   stackArray1d< real64, numDof > compressibilityFactorDerivs( numDof );
 
-  EOS::computeCompressibilityFactor( numComps,
-                                     pressure,
-                                     temperature,
-                                     composition.toSliceConst(),
-                                     componentProperties,
-                                     salinity,
-                                     compressibilityFactor );
+//  EOS::computeCompressibilityFactor( numComps,
+//                                     pressure,
+//                                     temperature,
+//                                     composition.toSliceConst(),
+//                                     componentProperties,
+//                                     salinity,
+//                                     compressibilityFactor );
 
-  EOS::computeCompressibilityFactor( numComps,
-                                     pressure,
-                                     temperature,
-                                     composition.toSliceConst(),
-                                     componentProperties,
-                                     salinity,
-                                     compressibilityFactor,
-                                     compressibilityFactorDerivs.toSlice() );
+  EOS::computeCompressibilityFactorAndDerivs( numComps,
+                                              pressure,
+                                              temperature,
+                                              composition.toSliceConst(),
+                                              componentProperties,
+                                              salinity,
+                                              compressibilityFactor,
+                                              compressibilityFactorDerivs.toSlice() );
 
   auto computeCompressibility = [&]( real64 p, real64 t, auto z ) -> real64 {
     real64 zfactor = 0.0;

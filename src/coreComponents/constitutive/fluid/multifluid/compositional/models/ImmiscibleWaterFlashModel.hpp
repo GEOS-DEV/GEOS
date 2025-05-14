@@ -56,7 +56,8 @@ public:
                                    EquationOfStateType const liquidEos,
                                    EquationOfStateType const vapourEos,
                                    real64 const salinity,
-                                   arrayView1d< real64 const > const componentCriticalVolume );
+                                   arrayView1d< real64 const > const componentCriticalVolume,
+                                  std::map< std::string, std::chrono::system_clock::duration >& timers );
 
   // Mark as a 3-phase flash
   GEOS_HOST_DEVICE
@@ -64,7 +65,7 @@ public:
 
   template< int USD1, int USD2 >
   GEOS_HOST_DEVICE
-  void compute( ComponentProperties::KernelWrapper const & componentProperties,
+  bool compute( ComponentProperties::KernelWrapper const & componentProperties,
                 real64 const & pressure,
                 real64 const & temperature,
                 arraySlice1d< real64 const, USD1 > const & compFraction,
@@ -130,11 +131,12 @@ public:
 private:
   ModelParameters const & m_parameters;
   integer m_waterComponentIndex{-1};
+  mutable std::map< std::string, std::chrono::system_clock::duration > m_timers;
 };
 
 template< int USD1, int USD2 >
 GEOS_HOST_DEVICE
-void ImmiscibleWaterFlashModelUpdate::compute( ComponentProperties::KernelWrapper const & componentProperties,
+bool ImmiscibleWaterFlashModelUpdate::compute( ComponentProperties::KernelWrapper const & componentProperties,
                                                real64 const & pressure,
                                                real64 const & temperature,
                                                arraySlice1d< real64 const, USD1 > const & compFraction,
@@ -202,6 +204,8 @@ void ImmiscibleWaterFlashModelUpdate::compute( ComponentProperties::KernelWrappe
       }
     }
   }
+
+  return true;
 }
 
 } // end namespace compositional

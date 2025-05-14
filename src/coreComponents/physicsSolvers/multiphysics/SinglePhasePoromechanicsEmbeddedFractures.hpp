@@ -90,7 +90,7 @@ public:
                                    SparsityPatternView< globalIndex > const & pattern ) const;
 
 
-  virtual void updateState( DomainPartition & domain ) override final;
+  virtual bool updateState( DomainPartition & domain ) override final;
 
 
   struct viewKeyStruct : SinglePhasePoromechanics::viewKeyStruct

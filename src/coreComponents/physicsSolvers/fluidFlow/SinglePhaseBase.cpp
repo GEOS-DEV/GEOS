@@ -1225,7 +1225,7 @@ void SinglePhaseBase::keepVariablesConstantDuringInitStep( real64 const time,
 }
 
 
-void SinglePhaseBase::updateState( DomainPartition & domain )
+bool SinglePhaseBase::updateState( DomainPartition & domain )
 {
   GEOS_MARK_FUNCTION;
 
@@ -1246,6 +1246,7 @@ void SinglePhaseBase::updateState( DomainPartition & domain )
       }
     } );
   } );
+  return true;
 }
 
 void SinglePhaseBase::resetStateToBeginningOfStep( DomainPartition & domain )

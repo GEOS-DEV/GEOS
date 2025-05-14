@@ -77,7 +77,7 @@ public:
                        real64 const dt,
                        DomainPartition & domain ) override;
 
-  virtual void updateState( DomainPartition & domain ) override final;
+  virtual bool updateState( DomainPartition & domain ) override final;
 
   virtual void
     resetStateToBeginningOfStep( DomainPartition & GEOS_UNUSED_PARAM( domain ) ) override;

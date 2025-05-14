@@ -620,7 +620,7 @@ private:
      * @param[out] totalDensity total mass/molar density in the cell (+ derivatives)
      */
     GEOS_HOST_DEVICE
-    virtual void compute( real64 const pressure,
+    virtual bool compute( real64 const pressure,
                           real64 const temperature,
                           arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & composition,
                           PhaseProp::SliceType const phaseFraction,
@@ -641,7 +641,7 @@ private:
      * @param[in] composition mass/molar component fractions in the cell
      */
     GEOS_HOST_DEVICE
-    virtual void update( localIndex const k,
+    virtual bool update( localIndex const k,
                          localIndex const q,
                          real64 const pressure,
                          real64 const temperature,

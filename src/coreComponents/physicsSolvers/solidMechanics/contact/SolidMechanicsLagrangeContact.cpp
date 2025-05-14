@@ -2183,10 +2183,11 @@ void SolidMechanicsLagrangeContact::applySystemSolution( DofManager const & dofM
   } );
 }
 
-void SolidMechanicsLagrangeContact::updateState( DomainPartition & domain )
+bool SolidMechanicsLagrangeContact::updateState( DomainPartition & domain )
 {
   GEOS_MARK_FUNCTION;
   computeFaceDisplacementJump( domain );
+  return true;
 }
 
 bool SolidMechanicsLagrangeContact::resetConfigurationToDefault( DomainPartition & domain ) const

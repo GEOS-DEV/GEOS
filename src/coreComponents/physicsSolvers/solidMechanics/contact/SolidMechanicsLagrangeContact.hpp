@@ -100,7 +100,7 @@ public:
   virtual void
   resetStateToBeginningOfStep( DomainPartition & domain ) override;
 
-  void updateState( DomainPartition & domain ) override final;
+  bool updateState( DomainPartition & domain ) override final;
 
   void assembleContact( DomainPartition & domain,
                         DofManager const & dofManager,

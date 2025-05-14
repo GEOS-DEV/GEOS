@@ -77,6 +77,7 @@ template< typename EOS_TYPE >
 struct CubicEOSPhaseModel
 {
   using Deriv = geos::constitutive::multifluid::DerivativeOffset;
+  static constexpr integer maxNumComps = MultiFluidConstants::MAX_NUM_COMPONENTS;
 public:
   /**
    * @brief Generate a catalog name
@@ -142,13 +143,13 @@ public:
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
   static void
-  computeCompressibilityFactor( integer const numComps,
-                                real64 const & pressure,
-                                real64 const & temperature,
-                                arraySlice1d< real64 const, USD > const & composition,
-                                ComponentProperties::KernelWrapper const & componentProperties,
-                                real64 & compressibilityFactor,
-                                arraySlice1d< real64 > const & compressibilityFactorDerivs );
+  computeCompressibilityFactorAndDerivs( integer const numComps,
+                                         real64 const & pressure,
+                                         real64 const & temperature,
+                                         arraySlice1d< real64 const, USD > const & composition,
+                                         ComponentProperties::KernelWrapper const & componentProperties,
+                                         real64 & compressibilityFactor,
+                                         arraySlice1d< real64 > const & compressibilityFactorDerivs );
 
   /**
    * @brief Calculate the dimensional volume shift
@@ -234,7 +235,20 @@ public:
                               arraySlice1d< real64 > const & bPureCoefficient,
                               real64 & aMixtureCoefficient,
                               real64 & bMixtureCoefficient );
-
+  template< integer USD >
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
+  static void
+  computeMixtureCoefficients( integer const numComps,
+                              real64 const & pressure,
+                              real64 const & temperature,
+                              arraySlice1d< real64 const, USD > const & composition,
+                              stackArray2d< real64, maxNumComps *maxNumComps >& kij,
+                              ComponentProperties::KernelWrapper const & componentProperties,
+                              arraySlice1d< real64 > const & aPureCoefficient,
+                              arraySlice1d< real64 > const & bPureCoefficient,
+                              real64 & aMixtureCoefficient,
+                              real64 & bMixtureCoefficient );
   /**
    * @brief Compute the mixture coefficients derivatives
    * @param[in] numComps number of components
@@ -304,13 +318,13 @@ public:
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
   static void
-  computeCompressibilityFactor( integer const numComps,
-                                real64 const & aMixtureCoefficient,
-                                real64 const & bMixtureCoefficient,
-                                real64 const & compressibilityFactor,
-                                arraySlice1d< real64 const > const & aMixtureCoefficientDerivs,
-                                arraySlice1d< real64 const > const & bMixtureCoefficientDerivs,
-                                arraySlice1d< real64 > const & compressibilityFactorDerivs );
+  computeCompressibilityFactorDerivs( integer const numComps,
+                                      real64 const & aMixtureCoefficient,
+                                      real64 const & bMixtureCoefficient,
+                                      real64 const & compressibilityFactor,
+                                      arraySlice1d< real64 const > const & aMixtureCoefficientDerivs,
+                                      arraySlice1d< real64 const > const & bMixtureCoefficientDerivs,
+                                      arraySlice1d< real64 > const & compressibilityFactorDerivs );
 
   /**
    * @brief Compute the log of the fugacity coefficients using compositions, BICs, compressibility factor and mixture coefficients
@@ -495,13 +509,13 @@ computeLogFugacityCoefficients( integer const numComps,
                                 bMixtureCoefficient,
                                 compressibilityFactor ); // output
   // 2.2: Update the compressibility factor derivatives
-  computeCompressibilityFactor( numComps,
-                                aMixtureCoefficient,
-                                bMixtureCoefficient,
-                                compressibilityFactor,
-                                aMixtureCoefficientDerivs,
-                                bMixtureCoefficientDerivs,
-                                compressibilityFactorDerivs );
+  computeCompressibilityFactorDerivs( numComps,
+                                      aMixtureCoefficient,
+                                      bMixtureCoefficient,
+                                      compressibilityFactor,
+                                      aMixtureCoefficientDerivs,
+                                      bMixtureCoefficientDerivs,
+                                      compressibilityFactorDerivs );
 
   // 3. Calculate derivatives of the logarithm of the fugacity coefficients
   stackArray1d< real64, numMaxComps > ki( numComps );
@@ -574,13 +588,13 @@ template< integer USD >
 GEOS_HOST_DEVICE
 void
 CubicEOSPhaseModel< EOS_TYPE >::
-computeCompressibilityFactor( integer const numComps,
-                              real64 const & pressure,
-                              real64 const & temperature,
-                              arraySlice1d< real64 const, USD > const & composition,
-                              ComponentProperties::KernelWrapper const & componentProperties,
-                              real64 & compressibilityFactor,
-                              arraySlice1d< real64 > const & compressibilityFactorDerivs )
+computeCompressibilityFactorAndDerivs( integer const numComps,
+                                       real64 const & pressure,
+                                       real64 const & temperature,
+                                       arraySlice1d< real64 const, USD > const & composition,
+                                       ComponentProperties::KernelWrapper const & componentProperties,
+                                       real64 & compressibilityFactor,
+                                       arraySlice1d< real64 > const & compressibilityFactorDerivs )
 {
   // step 0: allocate the stack memory needed for the update
   integer constexpr numMaxComps = MultiFluidConstants::MAX_NUM_COMPONENTS;
@@ -632,13 +646,13 @@ computeCompressibilityFactor( integer const numComps,
                                 compressibilityFactor ); // output
 
   // 2.2: Update the compressibility factor derivatives
-  computeCompressibilityFactor( numComps,
-                                aMixtureCoefficient,
-                                bMixtureCoefficient,
-                                compressibilityFactor,
-                                aMixtureCoefficientDerivs,
-                                bMixtureCoefficientDerivs,
-                                compressibilityFactorDerivs );
+  computeCompressibilityFactorDerivs( numComps,
+                                      aMixtureCoefficient,
+                                      bMixtureCoefficient,
+                                      compressibilityFactor,
+                                      aMixtureCoefficientDerivs,
+                                      bMixtureCoefficientDerivs,
+                                      compressibilityFactorDerivs );
 }
 
 template< typename EOS_TYPE >
@@ -894,13 +908,13 @@ template< typename EOS_TYPE >
 GEOS_HOST_DEVICE
 void
 CubicEOSPhaseModel< EOS_TYPE >::
-computeCompressibilityFactor( integer const numComps,
-                              real64 const & aMixtureCoefficient,
-                              real64 const & bMixtureCoefficient,
-                              real64 const & compressibilityFactor,
-                              arraySlice1d< real64 const > const & aMixtureCoefficientDerivs,
-                              arraySlice1d< real64 const > const & bMixtureCoefficientDerivs,
-                              arraySlice1d< real64 > const & compressibilityFactorDerivs )
+computeCompressibilityFactorDerivs( integer const numComps,
+                                    real64 const & aMixtureCoefficient,
+                                    real64 const & bMixtureCoefficient,
+                                    real64 const & compressibilityFactor,
+                                    arraySlice1d< real64 const > const & aMixtureCoefficientDerivs,
+                                    arraySlice1d< real64 const > const & bMixtureCoefficientDerivs,
+                                    arraySlice1d< real64 > const & compressibilityFactorDerivs )
 {
   real64 constexpr d1pd2 = EOS_TYPE::delta1 + EOS_TYPE::delta2;
   real64 constexpr d1xd2 = EOS_TYPE::delta1 * EOS_TYPE::delta2;
@@ -955,7 +969,7 @@ computeLogFugacityCoefficients( integer const numComps,
     ki[ic] = 0.0;
     for( integer jc = 0; jc < numComps; ++jc )
     {
-      ki[ic] += composition[jc] * ( 1.0 - binaryInteractionCoefficients( ic, jc ) ) * sqrt( aPureCoefficient[ic] * aPureCoefficient[jc] );
+      ki[ic] += composition[jc] * ( 1.0 - binaryInteractionCoefficients( ic, jc ) ) * LvArray::math::sqrt( aPureCoefficient[ic] * aPureCoefficient[jc] );
     }
   }
 
@@ -965,8 +979,8 @@ computeLogFugacityCoefficients( integer const numComps,
   real64 const expF = compressibilityFactor - bMixtureCoefficient;
   GEOS_ERROR_IF( expE < MultiFluidConstants::epsilon || expF < MultiFluidConstants::epsilon,
                  GEOS_FMT( "Cubic EOS failed with exp(E)={} and exp(F)={}", expE, expF ));
-  real64 const E = log( expE );
-  real64 const F = log( expF );
+  real64 const E = LvArray::math::log( expE );
+  real64 const F = LvArray::math::log( expF );
   real64 const G = 1.0 / ( ( EOS_TYPE::delta1 - EOS_TYPE::delta2 ) * bMixtureCoefficient );
   real64 const A = aMixtureCoefficient;
 

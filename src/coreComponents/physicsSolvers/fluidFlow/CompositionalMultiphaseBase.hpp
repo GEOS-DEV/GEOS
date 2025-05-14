@@ -157,7 +157,7 @@ public:
    * @brief Update all relevant fluid models using current values of pressure and composition
    * @param dataGroup the group storing the required fields
    */
-  void updateFluidModel( ObjectManagerBase & dataGroup ) const;
+  bool updateFluidModel( ObjectManagerBase & dataGroup ) const;
 
   /**
    * @brief Update all relevant relperm models using current values of phase volume fraction
@@ -195,13 +195,13 @@ public:
    */
   virtual void updatePhaseMobility( ObjectManagerBase & dataGroup ) const = 0;
 
-  real64 updateFluidState( ElementSubRegionBase & subRegion ) const;
+  std::pair< bool, real64 > updateFluidState( ElementSubRegionBase & subRegion ) const;
 
   virtual void saveConvergedState( ElementSubRegionBase & subRegion ) const override final;
 
   virtual void saveSequentialIterationState( DomainPartition & domain ) override final;
 
-  virtual void updateState( DomainPartition & domain ) override final;
+  virtual bool updateState( DomainPartition & domain ) override final;
 
   /**
    * @brief Getter for the number of fluid components (species)
@@ -309,6 +309,7 @@ public:
     static constexpr char const * allowLocalCompDensChoppingString() { return "allowLocalCompDensityChopping"; }
     static constexpr char const * useTotalMassEquationString() { return "useTotalMassEquation"; }
     static constexpr char const * useSimpleAccumulationString() { return "useSimpleAccumulation"; }
+    static constexpr char const * chopWhenUpdateStateFailedString() { return "chopWhenupdateStateFailed"; }
     static constexpr char const * minCompDensString() { return "minCompDens"; }
     static constexpr char const * minCompFracString() { return "minCompFrac"; }
     static constexpr char const * maxSequentialCompDensChangeString() { return "maxSequentialCompDensChange"; }
@@ -531,6 +532,9 @@ protected:
 
   /// flag indicating whether simple accumulation form is used
   integer m_useSimpleAccumulation;
+
+  /// flag indicating whether time step is chopped when update state failed
+  integer m_chopWhenUpdateStateFailed;
 
   /// minimum allowed global component density
   real64 m_minCompDens;
