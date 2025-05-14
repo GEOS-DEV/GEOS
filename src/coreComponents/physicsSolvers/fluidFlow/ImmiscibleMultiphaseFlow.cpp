@@ -255,16 +255,17 @@ void ImmiscibleMultiphaseFlow::initializePreSubGroups()
       for( localIndex const faceIndex : faceSet )
       {
         localIndex const faceIndices[2] = { faceIndex, faceIndex };
-        faceRegion.addToSurfaceMesh(  &faceManager,
-                                      faceManager.edgeList().toViewConst(),
-                                      faceIndices );
+        faceRegion.addToSurfaceMesh( &faceManager,
+                                     faceManager.edgeList().toViewConst(),
+                                     faceIndices );
       }
 
       FaceElementSubRegion const & faceSubRegion = faceRegion.getUniqueSubRegion< FaceElementSubRegion >();
       FixedToManyElementRelation const & faceElementsToCells = faceSubRegion.getToCellRelation();
 
-      std::function<std::tuple<CellElementSubRegion*, CellElementSubRegion*>(localIndex)> getSubregions = [&](localIndex surfaceRegionIndex ) -> std::tuple<CellElementSubRegion*, CellElementSubRegion*> {
-        
+      std::function< std::tuple< CellElementSubRegion *, CellElementSubRegion * >(localIndex) > getSubregions = [&]( localIndex surfaceRegionIndex ) -> std::tuple< CellElementSubRegion *,
+                                                                                                                                                                    CellElementSubRegion * > {
+
         int regionIdx0 = faceElementsToCells.m_toElementRegion[surfaceRegionIndex][0];
         int regionIdx1 = faceElementsToCells.m_toElementRegion[surfaceRegionIndex][1];
         int subRegionIdx0 = faceElementsToCells.m_toElementSubRegion[surfaceRegionIndex][0];
@@ -278,10 +279,10 @@ void ImmiscibleMultiphaseFlow::initializePreSubGroups()
         return std::make_tuple( subRegion0, subRegion1 );
       };
 
-      std::tuple<CellElementSubRegion *, CellElementSubRegion *> subRegionPair = getSubregions( surfaceRegionIndex );
-      CellElementSubRegion * subRegion0 = std::get<0>(subRegionPair);
-      CellElementSubRegion * subRegion1 = std::get<1>(subRegionPair);
-        
+      std::tuple< CellElementSubRegion *, CellElementSubRegion * > subRegionPair = getSubregions( surfaceRegionIndex );
+      CellElementSubRegion * subRegion0 = std::get< 0 >( subRegionPair );
+      CellElementSubRegion * subRegion1 = std::get< 1 >( subRegionPair );
+
       // get constitutives by type and name: relPerms, capPressures, Fluids (three pointers)
       std::string & relPermName0 = subRegion0->getReference< std::string >( viewKeyStruct::relPermNamesString());
       std::string & relPermName1 = subRegion1->getReference< std::string >( viewKeyStruct::relPermNamesString());
