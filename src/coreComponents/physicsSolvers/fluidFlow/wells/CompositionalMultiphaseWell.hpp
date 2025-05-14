@@ -91,6 +91,13 @@ public:
 
 
   virtual real64
+  calculateWellResidualNorm( real64 const & time_n,
+                             real64 const & dt,
+                             WellElementSubRegion const & subRegion,
+                             DofManager const & dofManager,
+                             arrayView1d< real64 const > const & localRhs ) override;
+
+  virtual real64
   calculateResidualNorm( real64 const & time_n,
                          real64 const & dt,
                          DomainPartition const & domain,
@@ -98,15 +105,33 @@ public:
                          arrayView1d< real64 const > const & localRhs ) override;
 
   virtual real64
+  scalingForWellSystemSolution( ElementSubRegionBase & subRegion,
+                                DofManager const & dofManager,
+                                arrayView1d< real64 const > const & localSolution ) override;
+
+  virtual real64
   scalingForSystemSolution( DomainPartition & domain,
                             DofManager const & dofManager,
                             arrayView1d< real64 const > const & localSolution ) override;
+
+  virtual bool
+  checkWellSystemSolution( ElementSubRegionBase & subRegion,
+                           DofManager const & dofManager,
+                           arrayView1d< real64 const > const & localSolution,
+                           real64 const scalingFactor ) override;
 
   virtual bool
   checkSystemSolution( DomainPartition & domain,
                        DofManager const & dofManager,
                        arrayView1d< real64 const > const & localSolution,
                        real64 const scalingFactor ) override;
+
+  virtual void
+  applyWellSystemSolution( DofManager const & dofManager,
+                           arrayView1d< real64 const > const & localSolution,
+                           real64 const scalingFactor,
+                           real64 const dt,
+                           DomainPartition & domain ) override;
 
   virtual void
   applySystemSolution( DofManager const & dofManager,
@@ -174,6 +199,16 @@ public:
    * @brief Recompute the perforation rates for all the wells
    * @param domain the domain containing the mesh and fields
    */
+  virtual void computeWellPerforationRates( real64 const & time_n,
+                                            real64 const & GEOS_UNUSED_PARAM( dt ),
+                                            ElementRegionManager const & elemManager,
+                                            WellElementSubRegion & subRegion )override;
+
+
+  /**
+   * @brief Recompute the perforation rates for all the wells
+   * @param domain the domain containing the mesh and fields
+   */
   virtual void computePerforationRates( real64 const & time_n,
                                         real64 const & dt, DomainPartition & domain ) override;
 
@@ -181,6 +216,7 @@ public:
    * @brief Recompute all dependent quantities from primary variables (including constitutive models)
    * @param subRegion the well subregion containing all the primary and dependent fields
    */
+  virtual real64 updateWellState( WellElementSubRegion & subRegion ) override;
   virtual void updateState( DomainPartition & domain ) override;
 
   virtual real64 updateSubRegionState( WellElementSubRegion & subRegion ) override;
@@ -262,6 +298,12 @@ public:
                                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                           arrayView1d< real64 > const & localRhs ) override;
 
+  virtual void applyBoundaryConditions( real64 const GEOS_UNUSED_PARAM( time_n ),
+                                        real64 const GEOS_UNUSED_PARAM( dt ),
+                                        DomainPartition & GEOS_UNUSED_PARAM( domain ),
+                                        DofManager const & GEOS_UNUSED_PARAM( dofManager ),
+                                        CRSMatrixView< real64, globalIndex const > const & GEOS_UNUSED_PARAM( localMatrix ),
+                                        arrayView1d< real64 > const & GEOS_UNUSED_PARAM( localRhs ) ) override;
   /**
    * @brief Sets all the negative component densities (if any) to zero.
    * @param domain the physical domain object

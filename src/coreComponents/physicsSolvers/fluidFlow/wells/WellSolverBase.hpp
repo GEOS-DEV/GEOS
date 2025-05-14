@@ -156,6 +156,22 @@ public:
 
   virtual void registerDataOnMesh( Group & meshBodies ) override;
 
+  void estimateWellSolution( real64 const & time_n,
+                             real64 const & dt,
+                             integer const cycleNumber,
+                             DomainPartition & domain );
+
+
+  void setupWellSystem ( DomainPartition & domain,
+                         DofManager & dofManager,
+                         CRSMatrix< real64, globalIndex > & localMatrix,
+                         ParallelVector & rhs,
+                         ParallelVector & solution,
+                         bool const setSparsity = true );
+
+
+  void setupWellDofs( DomainPartition & domain );
+
   virtual void setupDofs( DomainPartition const & domain,
                           DofManager & dofManager ) const override;
 
@@ -186,6 +202,15 @@ public:
    * @param matrix the system matrix
    * @param rhs the system right-hand side vector
    */
+
+  void assembleWellSystem( real64 const time,
+                           real64 const dt,
+                           ElementRegionManager const & elementRegionManager,
+                           WellElementSubRegion & subRegion,
+                           DofManager const & dofManager,
+                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                           arrayView1d< real64 > const & localRhs );
+
   virtual void assembleSystem( real64 const time,
                                real64 const dt,
                                DomainPartition & domain,
@@ -267,6 +292,7 @@ public:
    * @brief Recompute all dependent quantities from primary variables (including constitutive models)
    * @param domain the domain containing the mesh and fields
    */
+  virtual real64 updateWellState( WellElementSubRegion & subRegion ){return 0.0;};
   virtual void updateState( DomainPartition & domain ) override;
 
   /**
@@ -274,6 +300,12 @@ public:
    * @param subRegion the well subRegion containing the well elements and their associated fields
    */
   virtual real64 updateSubRegionState( WellElementSubRegion & subRegion ) = 0;
+
+
+  virtual void computeWellPerforationRates( real64 const & time_n,
+                                            real64 const & GEOS_UNUSED_PARAM( dt ),
+                                            ElementRegionManager const & elemManager,
+                                            WellElementSubRegion & subRegion ){}
 
   /**
    * @brief Recompute the perforation rates for all the wells
@@ -283,6 +315,36 @@ public:
                                         real64 const & dt,
                                         DomainPartition & domain ) = 0;
 
+  virtual real64
+  calculateWellResidualNorm( real64 const & time_n,
+                             real64 const & dt,
+                             WellElementSubRegion const & subRegion,
+                             DofManager const & dofManager,
+                             arrayView1d< real64 const > const & localRhs ) {return std::numeric_limits< real64 >::max();};
+  bool solveNonlinearSystem( real64 const & time_n,
+                             real64 const & stepDt,
+                             integer const cycleNumber,
+                             DomainPartition & domain,
+                             ElementRegionManager & elementRegionManager,
+                             WellElementSubRegion & subregion,
+                             DofManager const & dofManager );
+
+  virtual real64
+  scalingForWellSystemSolution( ElementSubRegionBase & subRegion,
+                                DofManager const & dofManager,
+                                arrayView1d< real64 const > const & localSolution ) {return std::numeric_limits< real64 >::max();};
+
+  virtual bool
+  checkWellSystemSolution( ElementSubRegionBase & subRegion,
+                           DofManager const & dofManager,
+                           arrayView1d< real64 const > const & localSolution,
+                           real64 const scalingFactor ) {return false;};
+  virtual void
+  applyWellSystemSolution( DofManager const & dofManager,
+                           arrayView1d< real64 const > const & localSolution,
+                           real64 const scalingFactor,
+                           real64 const dt,
+                           DomainPartition & domain ) {};
   /**
    * @brief function to set the next time step size
    * @param[in] currentTime the current time
@@ -382,6 +444,8 @@ protected:
 
   /// flag to use the estimator
   integer m_estimateSolution;
+
+
 
   /// @brief  DofManagers for each wells estimator
   /// @details This DofManager is used to store the DOF numbers for the estimator

@@ -550,7 +550,7 @@ public:
                    string const flowSolverName,
                    PerforationData * const perforationData,
                    ElementSubRegionBase const & subRegion,
-                   ElementRegionManager & elemManager,
+                   ElementRegionManager const & elemManager,
                    integer const disableReservoirToWellFlow )
   {
     geos::internal::kernelLaunchSelectorCompPhaseSwitch( numComp, numPhases, [&]( auto NC, auto NP )
@@ -832,7 +832,7 @@ public:
                    PerforationData * const perforationData,
                    ElementSubRegionBase const & subRegion,
                    MultiFluidBase const & fluid,
-                   ElementRegionManager & elemManager,
+                   ElementRegionManager const & elemManager,
                    integer const disableReservoirToWellFlow )
   {
     geos::internal::kernelLaunchSelectorCompPhaseSwitch( numComp, numPhases, [&]( auto NC, auto NP )
