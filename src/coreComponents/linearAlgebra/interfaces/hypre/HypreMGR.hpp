@@ -80,7 +80,7 @@ protected:
 
   HYPRE_Int m_numBlocks{ 0 };                                 ///< Number of different matrix blocks treated separately
 
-  std::vector< HYPRE_Int > m_labels[numLevels]{};             ///< Dof labels kept at each level
+  stdVector< HYPRE_Int > m_labels[numLevels]{};             ///< Dof labels kept at each level
   HYPRE_Int m_numLabels[numLevels]{ -1 };                     ///< Number of dof labels kept
   HYPRE_Int * m_ptrLabels[numLevels]{ nullptr };              ///< Pointers to each level's labels, as consumed by MGR
 

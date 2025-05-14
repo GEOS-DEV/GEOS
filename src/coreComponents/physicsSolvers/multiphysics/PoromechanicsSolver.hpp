@@ -145,9 +145,9 @@ public:
 
     DomainPartition & domain = this->template getGroupByPath< DomainPartition >( "/Problem/domain" );
 
-    this->template forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                                                 MeshLevel & mesh,
-                                                                                 string_array const & regionNames )
+    this->template forDiscretizationOnMeshTargets<>( domain.getMeshBodies(), [&] ( string const &,
+                                                                                   MeshLevel & mesh,
+                                                                                   string_array const & regionNames )
     {
       ElementRegionManager & elementRegionManager = mesh.getElemManager();
       elementRegionManager.forElementSubRegions< CellElementSubRegion >( regionNames,
@@ -333,9 +333,9 @@ public:
     }
 
     // Step 2: loop over target regions of solver, and tag the elements belonging to the stabilization regions
-    this->template forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                                                 MeshLevel & mesh,
-                                                                                 string_array const & targetRegionNames )
+    this->template forDiscretizationOnMeshTargets<>( domain.getMeshBodies(), [&] ( string const &,
+                                                                                   MeshLevel & mesh,
+                                                                                   string_array const & targetRegionNames )
     {
       //keep only target regions in filter
       string_array filteredTargetRegionNames;
@@ -387,9 +387,9 @@ public:
 
   void updateBulkDensity( DomainPartition & domain )
   {
-    this->template forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
-                                                                                MeshLevel & mesh,
-                                                                                string_array const & regionNames )
+    this->template forDiscretizationOnMeshTargets<>( domain.getMeshBodies(), [&]( string const &,
+                                                                                  MeshLevel & mesh,
+                                                                                  string_array const & regionNames )
     {
       mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                             auto & subRegion )
@@ -404,7 +404,7 @@ public:
 
 protected:
 
-  template< typename CONSTITUTIVE_BASE,
+  template< typename TYPE_LIST,
             typename KERNEL_WRAPPER,
             typename ... PARAMS >
   real64 assemblyLaunch( MeshLevel & mesh,
@@ -435,12 +435,11 @@ protected:
 
     return finiteElement::
              regionBasedKernelApplication< parallelDevicePolicy< >,
-                                           CONSTITUTIVE_BASE,
-                                           CellElementSubRegion >( mesh,
-                                                                   regionNames,
-                                                                   this->solidMechanicsSolver()->getDiscretizationName(),
-                                                                   materialNamesString,
-                                                                   kernelWrapper );
+                                           TYPE_LIST >( mesh,
+                                                        regionNames,
+                                                        this->solidMechanicsSolver()->getDiscretizationName(),
+                                                        materialNamesString,
+                                                        kernelWrapper );
   }
 
   /* Implementation of Nonlinear Acceleration (Aitken) of averageMeanTotalStressIncrement */
@@ -579,9 +578,9 @@ protected:
       // compute the average of the mean total stress increment over quadrature points
       averageMeanTotalStressIncrement( domain );
 
-      this->template forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
-                                                                                  MeshLevel & mesh,
-                                                                                  string_array const & regionNames )
+      this->template forDiscretizationOnMeshTargets<>( domain.getMeshBodies(), [&]( string const &,
+                                                                                    MeshLevel & mesh,
+                                                                                    string_array const & regionNames )
       {
 
         mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
@@ -610,9 +609,9 @@ protected:
    */
   void averageMeanTotalStressIncrement( DomainPartition & domain )
   {
-    this->template forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
-                                                                                MeshLevel & mesh,
-                                                                                string_array const & regionNames )
+    this->template forDiscretizationOnMeshTargets<>( domain.getMeshBodies(), [&]( string const &,
+                                                                                  MeshLevel & mesh,
+                                                                                  string_array const & regionNames )
     {
       mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                             auto & subRegion )

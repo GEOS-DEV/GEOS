@@ -34,7 +34,7 @@ namespace parallelTopologyChange
 {
 
 void synchronizeTopologyChange( MeshLevel * const mesh,
-                                std::vector< NeighborCommunicator > & neighbors,
+                                stdVector< NeighborCommunicator > & neighbors,
                                 ModifiedObjectLists & modifiedObjects,
                                 ModifiedObjectLists & receivedObjects,
                                 int mpiCommOrder );
