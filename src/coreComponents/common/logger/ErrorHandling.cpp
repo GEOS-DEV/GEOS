@@ -25,6 +25,7 @@
 #include <fstream>
 #include <iostream>
 #include <utility>
+#include <sstream>
 
 namespace geos
 {
@@ -34,6 +35,7 @@ ErrorLogger errorLogger{};
 
 ErrorLogger::ErrorLogger()
 {
+  m_currentErrorMsg.parent = this;
   std::ofstream yamlFile( std::string( m_filename ), std::ios::out );
   if( yamlFile.is_open() )
   {
@@ -45,7 +47,6 @@ ErrorLogger::ErrorLogger()
     GEOS_LOG( GEOS_FMT( "Unable to open error file for writing: {}", m_filename ) );
   }
 }
-
 
 void ErrorLogger::ErrorMsg::addContextInfo( std::map< std::string, std::string > && info )
 {
@@ -75,8 +76,28 @@ std::string ErrorLogger::toString( ErrorLogger::MsgType type )
   }
 }
 
+ErrorLogger::ErrorMsg & ErrorLogger::ErrorMsg::addToMsg( std::exception const & e )
+{
+  parent->m_currentErrorMsg.msg = e.what(); 
+  return parent->m_currentErrorMsg;
+}
+
+ErrorLogger::ErrorMsg & ErrorLogger::ErrorMsg::setCodeLocation( string msgFile, integer msgLine )
+{
+  parent->m_currentErrorMsg.file = msgFile;
+  parent->m_currentErrorMsg.line = msgLine;
+  return parent->m_currentErrorMsg;
+}
+
+ErrorLogger::ErrorMsg & ErrorLogger::ErrorMsg::setType( ErrorLogger::MsgType msgType )
+{
+  parent->m_currentErrorMsg.type = msgType;
+  return parent->m_currentErrorMsg;
+}
+
 void ErrorLogger::write( ErrorLogger::ErrorMsg const & errorMsg ) //const
 {
+  std::cout << "I'm in the write function" << std::endl;
   std::ofstream yamlFile( std::string( m_filename ), std::ios::app );
   if( yamlFile.is_open() )
   {

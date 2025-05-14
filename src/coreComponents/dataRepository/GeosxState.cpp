@@ -78,6 +78,7 @@ std::ostream & operator<<( std::ostream & os, State const state )
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 GeosxState::GeosxState( std::unique_ptr< CommandLineOptions > && commandLineOptions ):
   m_state( State::UNINITIALIZED ),
   m_commandLineOptions( std::move( commandLineOptions ) ),
@@ -96,17 +97,24 @@ GeosxState::GeosxState( std::unique_ptr< CommandLineOptions > && commandLineOpti
   setupCaliper( *m_caliperManager, getCommandLineOptions() );
 #endif
 
-  string restartFileName;
-  if( ProblemManager::parseRestart( restartFileName, getCommandLineOptions() ) )
+  try 
   {
-    GEOS_LOG_RANK_0( "Loading restart file " << restartFileName );
-    dataRepository::loadTree( restartFileName, getRootConduitNode() );
+    string restartFileName;
+    if( ProblemManager::parseRestart( restartFileName, getCommandLineOptions() ) )
+    {
+      GEOS_LOG_RANK_0( "Loading restart file " << restartFileName );
+      dataRepository::loadTree( restartFileName, getRootConduitNode() );
+    }
+
+    m_problemManager = std::make_unique< ProblemManager >( getRootConduitNode() );
+
+    GEOS_ERROR_IF( currentGlobalState != nullptr, "Only one state can exist at a time." );
+    currentGlobalState = this;
   }
-
-  m_problemManager = std::make_unique< ProblemManager >( getRootConduitNode() );
-
-  GEOS_ERROR_IF( currentGlobalState != nullptr, "Only one state can exist at a time." );
-  currentGlobalState = this;
+  catch(std::exception const & e)
+  {
+    throw;
+  }
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -123,85 +131,85 @@ GeosxState::~GeosxState()
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 bool GeosxState::initializeDataRepository()
 {
-  GEOS_MARK_FUNCTION;
-  Timer timer( m_initTime );
-
-  GEOS_THROW_IF_NE( m_state, State::UNINITIALIZED, std::logic_error );
-
   try
   {
+    GEOS_MARK_FUNCTION;
+    Timer timer( m_initTime );
+
+    GEOS_THROW_IF_NE( m_state, State::UNINITIALIZED, std::logic_error );
+
+    
     getProblemManager().parseCommandLineInput();
-  }
-  catch(const std::exception& e)
-  {
-    GEOS_LOG( e.what() );
-  }
 
-  if( !getProblemManager().getSchemaFileName().empty() )
-  {
-    getProblemManager().generateDocumentation();
-    m_state = State::INITIALIZED;
-    return false;
-  }
+    if( !getProblemManager().getSchemaFileName().empty() )
+    {
+      getProblemManager().generateDocumentation();
+      m_state = State::INITIALIZED;
+      return false;
+    }
 
-  try
-  {
     getProblemManager().parseInputFile();
-  }
-  catch(const std::exception& e)
-  {
-    GEOS_LOG( e.what() );
-  }
-  
-  try
-  {
     getProblemManager().problemSetup();
+
+    m_state = State::INITIALIZED;
+
+    if( m_commandLineOptions->printMemoryUsage >= 0.0 )
+    {
+      dataRepository::printMemoryAllocation( getProblemManager(), 0, m_commandLineOptions->printMemoryUsage );
+    }
+
+    return true;
   }
-  catch(const std::exception& e)
+  catch(std::exception const & e)
   {
-    GEOS_LOG( e.what() );
+    throw;
   }
-
-  m_state = State::INITIALIZED;
-
-  if( m_commandLineOptions->printMemoryUsage >= 0.0 )
-  {
-    dataRepository::printMemoryAllocation( getProblemManager(), 0, m_commandLineOptions->printMemoryUsage );
-  }
-
-  return true;
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void GeosxState::applyInitialConditions()
 {
-  GEOS_MARK_FUNCTION;
-  Timer timer( m_initTime );
-
-  GEOS_THROW_IF_NE( m_state, State::INITIALIZED, std::logic_error );
-
-  getProblemManager().applyInitialConditions();
-
-  if( getCommandLineOptions().beginFromRestart )
+  try
   {
-    getProblemManager().readRestartOverwrite();
-  }
+    GEOS_MARK_FUNCTION;
+    Timer timer( m_initTime );
 
-  m_state = State::READY_TO_RUN;
-  MpiWrapper::barrier( MPI_COMM_GEOS );
+    GEOS_THROW_IF_NE( m_state, State::INITIALIZED, std::logic_error );
+
+    getProblemManager().applyInitialConditions();
+
+    if( getCommandLineOptions().beginFromRestart )
+    {
+      getProblemManager().readRestartOverwrite();
+    }
+
+    m_state = State::READY_TO_RUN;
+    MpiWrapper::barrier( MPI_COMM_GEOS );
+  }
+  catch(std::exception const & e)
+  {
+    throw;
+  }
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void GeosxState::run()
 {
-  GEOS_MARK_FUNCTION;
-  Timer timer( m_runTime );
-
-  GEOS_THROW_IF_NE( m_state, State::READY_TO_RUN, std::logic_error );
-
-  if( !getProblemManager().runSimulation() )
+  try
   {
-    m_state = State::COMPLETED;
+    GEOS_MARK_FUNCTION;
+    Timer timer( m_runTime );
+
+    GEOS_THROW_IF_NE( m_state, State::READY_TO_RUN, std::logic_error );
+
+    if( !getProblemManager().runSimulation() )
+    {
+      m_state = State::COMPLETED;
+    }
+  }
+  catch(std::exception const & e)
+  {
+    throw;
   }
 }
 
