@@ -93,7 +93,7 @@ void BlackOilFluid::readInputDataFromPVTFiles()
   extendUndersaturatedProperties();
 
   // refine table branches
-  refineUndersaturatedTables( 100 );
+  refineUndersaturatedTables( numRefinedPoints );
 
   // check consistency
   checkTableConsistency();
