@@ -287,6 +287,13 @@ TEST( testTable, tableUniqueColumn )
              "---------------------------------------------------------------------------------------------------------------\n" );
 }
 
+TEST( testTable, emptyTable )
+{
+  string const title = "title";
+  TableLayout const tableLayout( title, {} );
+  EXPECT_EQ( tableLayout.getColumns().size(), 0 );
+}
+
 TEST( testTable, tableEmptyTitle )
 {
   TableLayout const tableLayout( {
