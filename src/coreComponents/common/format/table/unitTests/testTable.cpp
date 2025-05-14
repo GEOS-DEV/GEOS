@@ -691,7 +691,6 @@ TEST( testTable, table2DMismatchingCoordValues )
       values[t + p * numCol] = value;
     }
   }
-  arrayView1d< real64 const > const valuesConst = values;
 
   auto const testCoordinates = [&tableData2D, &values]( std::vector< real64 > const & coordXValues,
                                                         std::vector< real64 >  const & coordYValues,
