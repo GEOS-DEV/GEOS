@@ -639,7 +639,7 @@ real64 AcousticVTIWaveEquationSEM::explicitStepInternal( real64 const & time_n,
       arrayView1d< real32 > const referenceFrequencies = m_slsReferenceAngularFrequencies.toView();
       arrayView1d< real32 > const anelasticityCoefficients = m_slsAnelasticityCoefficients.toView();
       AcousticTimeSchemeSEM::AttenuationLeapFrogforVTI( nodeManager.size(), dt, p_np1, p_n, p_nm1, q_np1, q_n, q_nm1, divpsi_p, divpsi_q, mass, stiffnessVector_p,
-                                                        stiffnessVector_q, stiffnessVectorA_p, stiffnessVectorA_q, damping_p, damping_pq, damping_q, damping_qp, rhs, 
+                                                        stiffnessVector_q, stiffnessVectorA_p, stiffnessVectorA_q, damping_p, damping_pq, damping_q, damping_qp, rhs,
                                                         freeSurfaceNodeIndicator, lateralSurfaceNodeIndicator, bottomSurfaceNodeIndicator, referenceFrequencies,
                                                         anelasticityCoefficients );
     }
@@ -655,10 +655,10 @@ real64 AcousticVTIWaveEquationSEM::explicitStepInternal( real64 const & time_n,
     fieldsToBeSync.addFields( FieldLocation::Node, { acousticvtifields::Pressure_p_np1::key() } );
     fieldsToBeSync.addFields( FieldLocation::Node, { acousticvtifields::Pressure_q_np1::key() } );
 
-   if( m_slsReferenceAngularFrequencies.size( 0 ) > 0 )
-   {
-     fieldsToBeSync.addFields( FieldLocation::Node, { acousticvtifields::DivPsi_p::key(), acousticvtifields::DivPsi_q::key() } );
-   }
+    if( m_slsReferenceAngularFrequencies.size( 0 ) > 0 )
+    {
+      fieldsToBeSync.addFields( FieldLocation::Node, { acousticvtifields::DivPsi_p::key(), acousticvtifields::DivPsi_q::key() } );
+    }
 
     CommunicationTools & syncFields = CommunicationTools::getInstance();
     syncFields.synchronizeFields( fieldsToBeSync,
@@ -683,7 +683,7 @@ real64 AcousticVTIWaveEquationSEM::explicitStepInternal( real64 const & time_n,
     {
       arrayView1d< real32 > const stiffnessVectorA_p = nodeManager.getField< acousticvtifields::StiffnessVectorA_p >();
       arrayView1d< real32 > const stiffnessVectorA_q = nodeManager.getField< acousticvtifields::StiffnessVectorA_q >();
-      forAll< EXEC_POLICY >( nodeManager.size() , [=] GEOS_HOST_DEVICE ( localIndex const a )
+      forAll< EXEC_POLICY >( nodeManager.size(), [=] GEOS_HOST_DEVICE ( localIndex const a )
       {
         stiffnessVectorA_p[a] = stiffnessVectorA_q[a] = 0.0;
       } );

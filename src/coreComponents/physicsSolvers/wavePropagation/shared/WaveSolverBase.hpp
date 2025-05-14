@@ -145,18 +145,18 @@ public:
   void computeTargetNodeSet( arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes,
                              localIndex const subRegionSize,
                              localIndex const numQuadraturePointsPerElem );
- 
- /**
-  * @brief Computes the minimum value of the given element field over the whole mesh. 
-  * @param[in] F The type of the field whose minimum must be computed
-  * @param[in] T The data type of the field
-  * @eturn the minimum value
-  */ 
+
+  /**
+   * @brief Computes the minimum value of the given element field over the whole mesh.
+   * @param[in] F The type of the field whose minimum must be computed
+   * @param[in] T The data type of the field
+   * @eturn the minimum value
+   */
   template< typename F, typename T >
   T computeGlobalMinOfElemField( DomainPartition & domain )
   {
     RAJA::ReduceMin< ReducePolicy< EXEC_POLICY >, T > minF( LvArray::NumericLimits< T >::max );
-  
+
     forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                   MeshLevel & mesh,
                                                                   arrayView1d< string const > const & regionNames )
@@ -175,16 +175,16 @@ public:
   }
 
   /**
-  * @brief Initializes the anealsticity coefficients if needed, and checks that the anealsticity values 
-  * are within a valid range. Gives a warning if not. 
-  * @param[in] Qs the quality factor fields used to compute the anelasticity value if not given
-  */ 
-  template< typename... Qs >
+   * @brief Initializes the anealsticity coefficients if needed, and checks that the anealsticity values
+   * are within a valid range. Gives a warning if not.
+   * @param[in] Qs the quality factor fields used to compute the anelasticity value if not given
+   */
+  template< typename ... Qs >
   void initializeAnelasticityCoefficients( DomainPartition & domain )
   {
     // compute miniumum quality factor
-    real32 minQVal = LvArray::NumericLimits< real32>::max;
-    ( (minQVal = std::min( minQVal, computeGlobalMinOfElemField< Qs, real32 >( domain ) ) ), ... ); 
+    real32 minQVal = LvArray::NumericLimits< real32 >::max;
+    ( (minQVal = std::min( minQVal, computeGlobalMinOfElemField< Qs, real32 >( domain ) ) ), ... );
     if( m_slsAnelasticityCoefficients.size( 0 ) == 1 && m_slsAnelasticityCoefficients[ 0 ] < 0 )
     {
       m_slsAnelasticityCoefficients[ 0 ] = 2.0 * minQVal / ( minQVal - 1.0 );

@@ -1200,9 +1200,9 @@ void AcousticWaveEquationSEM::computeUnknowns( real64 const & time_n,
   real64 const dt2 = pow( dt, 2 );
 
   SortedArrayView< localIndex const > const solverTargetNodesSet = m_solverTargetNodesSet.toViewConst();
-  if( m_usePML && m_attenuationType != WaveSolverUtils::AttenuationType::none  )
+  if( m_usePML && m_attenuationType != WaveSolverUtils::AttenuationType::none )
   {
-      GEOS_ERROR( "Attenuation is not supported with PML boindary conditions.");
+    GEOS_ERROR( "Attenuation is not supported with PML boindary conditions." );
   }
   if( !m_usePML )
   {
@@ -1213,7 +1213,7 @@ void AcousticWaveEquationSEM::computeUnknowns( real64 const & time_n,
       arrayView2d< real32 > const divpsi = nodeManager.getField< acousticfields::DivPsi >();
       arrayView1d< real32 > const referenceFrequencies = m_slsReferenceAngularFrequencies.toView();
       arrayView1d< real32 > const anelasticityCoefficients = m_slsAnelasticityCoefficients.toView();
-      AcousticTimeSchemeSEM::AttenuationLeapFrogWithoutPML( dt, p_np1, p_n, p_nm1, divpsi, mass, stiffnessVector, stiffnessVectorA, 
+      AcousticTimeSchemeSEM::AttenuationLeapFrogWithoutPML( dt, p_np1, p_n, p_nm1, divpsi, mass, stiffnessVector, stiffnessVectorA,
                                                             damping, rhs, freeSurfaceNodeIndicator, solverTargetNodesSet, referenceFrequencies,
                                                             anelasticityCoefficients );
     }
