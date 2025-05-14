@@ -340,9 +340,12 @@ void PreparedTableLayout::prepareLayoutRecusive( stdVector< TableLayout::Column 
     }
   }
 
-  // Link adjacent columns
-  for( size_t i = 0; i < columns.size() - 1; ++i )
-    columns[i].setNext( &columns[i + 1] );
+  if( !columns.empty())
+  {
+    // Link adjacent columns
+    for( size_t i = 0; i < columns.size() - 1; ++i )
+      columns[i].setNext( &columns[i + 1] );
+  }
 }
 
 void TableLayout::CellLayout::prepareLayout( string_view inputText, size_t maxLineWidth )
