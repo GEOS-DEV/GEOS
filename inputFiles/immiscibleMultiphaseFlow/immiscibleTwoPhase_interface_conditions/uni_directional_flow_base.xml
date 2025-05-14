@@ -37,12 +37,12 @@
     <CellElementRegion
       name="region_left"
       cellBlocks="{ cb_left }"
-      materialList="{ fluid_left, rock, relperm_left }"/>
+      materialList="{ fluid_left, rock, relperm_left, capPressure_left }"/>
 
     <CellElementRegion
       name="region_right"
       cellBlocks="{ cb_right }"
-      materialList="{ fluid_right, rock, relperm_right }"/>      
+      materialList="{ fluid_right, rock, relperm_right, capPressure_right }"/>      
 
     <SurfaceElementRegion
       name="Interface"
@@ -70,6 +70,10 @@
       name="viscosityTablePhase2"
       coordinates="{ 0.0 }"
       values="{ 0.00055 }" />
+   <TableFunction
+      name="jFunctionTable"
+      coordinateFiles="{ tables/phaseVolumeFraction_water_linear.txt }"
+      voxelFile="tables/jFunction_linear.txt"/>      
  </Functions>
 
   <Constitutive>
@@ -104,7 +108,21 @@
       phaseNames="{ gas, water }"
       phaseMinVolumeFraction="{ 0.0, 0.0 }"
       phaseRelPermExponent="{ 3.141592, 3.141592 }"
-      phaseRelPermMaxValue="{ 1.0, 1.0 }"/>      
+      phaseRelPermMaxValue="{ 1.0, 1.0 }"/>
+
+    <JFunctionCapillaryPressure
+      name="capPressure_left"
+      phaseNames="{ gas, water }" 
+      wettingNonWettingJFunctionTableName="jFunctionTable"
+      wettingNonWettingSurfaceTension="23.86955676433857e-3"
+      permeabilityDirection="XY"/>
+
+    <JFunctionCapillaryPressure
+      name="capPressure_right"
+      phaseNames="{ gas, water }" 
+      wettingNonWettingJFunctionTableName="jFunctionTable"
+      wettingNonWettingSurfaceTension="23.86955676433857e-3"
+      permeabilityDirection="XY"/>    
     
     <TwoPhaseImmiscibleFluid
       name="fluid_left"
