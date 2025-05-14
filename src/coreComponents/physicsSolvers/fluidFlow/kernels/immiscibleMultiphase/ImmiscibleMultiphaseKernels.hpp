@@ -1192,7 +1192,7 @@ public:
         // 2) we need to identify if the facet is a member of the interface
         // 3) once we identify the surface element we infere surfaceSubRegionIndex
         
-        bool notOnInterface = std::fabs( jFMultiplier[0][0] - jFMultiplier[0][1] ) < 1e-8  && std::fabs( jFMultiplier[1][0] - jFMultiplier[1][1] ) < 1e-8
+        bool notOnInterface = std::fabs( jFMultiplier[0][0] - jFMultiplier[0][1] ) < 1e-8  && std::fabs( jFMultiplier[1][0] - jFMultiplier[1][1] ) < 1e-8;
         if( notOnInterface )
         {
           for( integer ip = 0; ip < 2; ++ip )
