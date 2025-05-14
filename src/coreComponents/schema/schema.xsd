@@ -7056,7 +7056,7 @@ To neglect hysteresis on this phase, just use the same table name for the draina
 The user must provide one TableFunction per phase, respecting the order provided in "phaseNames".-->
 		<xsd:attribute name="densityTableNames" type="groupNameRef_array" default="{}" />
 		<!--phaseNames => List of fluid phases-->
-		<xsd:attribute name="phaseNames" type="groupNameRef_array" default="{}" />
+		<xsd:attribute name="phaseNames" type="groupNameRef_array" use="required" />
 		<!--tableFiles => List of filenames with input PVT tables (one per phase)-->
 		<xsd:attribute name="tableFiles" type="path_array" default="{}" />
 		<!--viscosityTableNames => List of viscosity TableFuncion names from the Function block. 
