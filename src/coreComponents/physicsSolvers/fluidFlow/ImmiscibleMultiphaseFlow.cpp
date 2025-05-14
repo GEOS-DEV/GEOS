@@ -299,7 +299,6 @@ void ImmiscibleMultiphaseFlow::initializePreSubGroups()
       TwoPhaseImmiscibleFluid * fluid0 = &getConstitutiveModel< TwoPhaseImmiscibleFluid >( *subRegion0, fluidName0 );
       TwoPhaseImmiscibleFluid * fluid1 = &getConstitutiveModel< TwoPhaseImmiscibleFluid >( *subRegion1, fluidName1 );
       
-      // need to get the constitutive data from the cells.
       m_interfaceConstitutivePairs[surfaceRegionIndex][0] = std::make_tuple( relPerm0, capPressure0, fluid0 );
       m_interfaceConstitutivePairs[surfaceRegionIndex][1] = std::make_tuple( relPerm1, capPressure1, fluid1 );
 
