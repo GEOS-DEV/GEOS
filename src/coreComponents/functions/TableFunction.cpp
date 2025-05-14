@@ -28,10 +28,6 @@
 
 #include "HDF5Utilities.hpp"
 
-#include <algorithm>
-
-#include <hdf5.h>
-
 namespace geos
 {
 

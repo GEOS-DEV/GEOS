@@ -22,7 +22,6 @@
 
 #include "common/DataTypes.hpp"
 
-#include <variant>
 
 // Forward declarations for HDF5 types
 typedef int64_t hid_t;    // HDF5 identifier type
@@ -33,20 +32,6 @@ namespace geos
 
 namespace hdf5Utils
 {
-using TypedArray1d = std::variant<
-  array1d< globalIndex >,
-  array1d< real32 >,
-  array1d< real64 > >;
-
-template< typename SOURCE_T, typename TARGET_T >
-array1d< TARGET_T > staticCastArray( array1d< SOURCE_T > const & source )
-{
-  array1d< TARGET_T > casted( source.size() );
-  std::transform( source.begin(), source.end(), casted.begin(),
-                  []( auto value ) { return static_cast< TARGET_T >( value ); } );
-  return casted;
-}
-
 class SerialHDF5File
 {
 public:
@@ -97,11 +82,10 @@ struct DatasetHandle
 class SerialHDF5Reader
 {
 public:
-  explicit SerialHDF5Reader( const std::string & filename );
-  TypedArray1d read1D( const std::string & datasetName, const int expectedDims ) const;
+  explicit SerialHDF5Reader( string const & filename );
 
   template< typename T >
-  array1d< T > read1DAs( const std::string & datasetName, const int expectedDims ) const;
+  array1d< T > read1DAs( string const & datasetName, int const expectedDims ) const;
 
 private:
   SerialHDF5File m_file;
@@ -110,17 +94,16 @@ private:
 
 // Specializations for supported types
 template<>
-array1d<globalIndex> SerialHDF5Reader::read1DAs< globalIndex >( const std::string & datasetName, const int expectedDims ) const;
+array1d< globalIndex > SerialHDF5Reader::read1DAs< globalIndex >( const std::string & datasetName, const int expectedDims ) const;
 
 template<>
-array1d<real32> SerialHDF5Reader::read1DAs< real32 >( const std::string & datasetName, const int expectedDims ) const;
+array1d< real32 > SerialHDF5Reader::read1DAs< real32 >( const std::string & datasetName, const int expectedDims ) const;
 
 template<>
-array1d<real64> SerialHDF5Reader::read1DAs< real64 >( const std::string & datasetName, const int expectedDims ) const;
+array1d< real64 > SerialHDF5Reader::read1DAs< real64 >( const std::string & datasetName, const int expectedDims ) const;
 
 } // end of namespace hdf5Utils
 
-
 }  /* namespace geos */
 
- #endif /* GEOS_FUNCTIONS_HDF%UTILITIES_HPP_ */
+ #endif /* GEOS_FUNCTIONS_HDF5UTILITIES_HPP_ */

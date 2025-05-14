@@ -18,60 +18,86 @@
  */
 
 #include "HDF5Utilities.hpp"
+#include "HDF5Utilities_impl.hpp"
 #include "common/format/Format.hpp"
 #include "common/logger/Logger.hpp"
+
+#include <variant>
 
 #include <algorithm>
 
 #include <hdf5.h>
-
-#define GEOS_HDF5_CHECK_ERROR_WITH_THRESHOLD( call, context, type, threshold ) \
-  do {                                                                         \
-    type __geos_hdf_internal_result__ = -1;                                    \
-    H5E_BEGIN_TRY {                                                            \
-      __geos_hdf_internal_result__ = (call);                                   \
-    } H5E_END_TRY;                                                             \
-    if( __geos_hdf_internal_result__ < (threshold) ) {                         \
-      H5Eclear2( H5E_DEFAULT );                                                \
-      GEOS_THROW( GEOS_FMT( "Error in call to:\n"                             \
-                            "{}\n"                                            \
-                            "({})",                                           \
-                            #call, context ),                                 \
-                  InputError );                                              \
-    }                                                                          \
-  } while (false)
-
-#define GEOS_HDF5_CHECK_WITH_THRESHOLD_AND_ASSIGN( var, call, context, type, threshold ) \
-  do {                                                                                   \
-    type __geos_hdf_internal_result__ = -1;                                              \
-    H5E_BEGIN_TRY {                                                                      \
-      __geos_hdf_internal_result__ = (call);                                             \
-    } H5E_END_TRY;                                                                       \
-    if( __geos_hdf_internal_result__ < (threshold) ) {                                   \
-      H5Eclear2( H5E_DEFAULT );                                                          \
-      GEOS_THROW( GEOS_FMT( "Error in call to:\n"                                       \
-                            "{}\n"                                                      \
-                            "({})",                                                     \
-                            #call, context ),                                           \
-                  InputError );                                                        \
-    }                                                                                    \
-    var = __geos_hdf_internal_result__;                                                  \
-  } while (false)
-
-#define GEOS_HDF5_CHECK_ERROR( call, context ) \
-  GEOS_HDF5_CHECK_ERROR_WITH_THRESHOLD( call, context, herr_t, 0 )
-
-#define GEOS_HDF5_CHECK_AND_ASSIGN_HID( var, call, context ) \
-  GEOS_HDF5_CHECK_WITH_THRESHOLD_AND_ASSIGN( var, call, context, hid_t, 0 )
-
-#define GEOS_HDF5_CHECK_AND_ASSIGN_INT( var, call, context ) \
-  GEOS_HDF5_CHECK_WITH_THRESHOLD_AND_ASSIGN( var, call, context, int, 0 )
 
 namespace geos
 {
 
 namespace hdf5Utils
 {
+
+namespace
+{
+
+enum class HDF5NativeDataType
+{
+  Int,
+  Float,
+  Double,
+  Unknown
+};
+
+inline HDF5NativeDataType resolveDataType( hid_t typeId )
+{
+  if( H5Tequal( typeId, H5T_NATIVE_INT ))
+    return HDF5NativeDataType::Int;
+  if( H5Tequal( typeId, H5T_NATIVE_FLOAT ))
+    return HDF5NativeDataType::Float;
+  if( H5Tequal( typeId, H5T_NATIVE_DOUBLE ))
+    return HDF5NativeDataType::Double;
+  return HDF5NativeDataType::Unknown;
+}
+
+using TypedArray1d = std::variant<
+  array1d< globalIndex >,
+  array1d< real32 >,
+  array1d< real64 > >;
+
+static TypedArray1d read1D( SerialHDF5File const & file,
+                            string const & datasetName,
+                            int const expectedDims )
+{
+  // Create a DatasetHandle to manage resources
+  DatasetHandle handle( file, datasetName, expectedDims );
+
+  // Compute the total number of elements
+  hsize_t total_elements = 1;
+  for( const auto & dim : handle.dims )
+  {
+    total_elements *= dim;
+  }
+
+  // Determine the type and read the data
+  switch( resolveDataType( handle.typeId ) )
+  {
+    case HDF5NativeDataType::Int:
+    {
+      return readTypedData< globalIndex >( handle.datasetId, H5T_NATIVE_INT, total_elements, datasetName, file.getFilename() );
+    }
+    case HDF5NativeDataType::Float:
+    {
+      return readTypedData< real32 >( handle.datasetId, H5T_NATIVE_FLOAT, total_elements, datasetName, file.getFilename() );
+    }
+    case HDF5NativeDataType::Double:
+    {
+      return readTypedData< real64 >( handle.datasetId, H5T_NATIVE_DOUBLE, total_elements, datasetName, file.getFilename() );
+    }
+    default:
+    {
+      GEOS_THROW( GEOS_FMT( "Unsupported dataset type for dataset {} in {}", datasetName, file.getFilename()), InputError );
+    }
+  }
+}
+
+} // end anonymous namespace
 
 static_assert( sizeof( H5T_NATIVE_INT ) == sizeof( globalIndex ),
                "H4T_NATIVE_INT and geos::integer must have the same size" );
@@ -134,7 +160,7 @@ void SerialHDF5File::closeFile()
 DatasetHandle::DatasetHandle( SerialHDF5File const & hdf5File, string const & datasetName, int const expectedDims )
   : m_datasetName( datasetName )
 {
-  std::string contextCheckMessage{ GEOS_FMT( "Dataset {} in {}", datasetName, hdf5File.getFilename() ) };
+  string contextCheckMessage{ GEOS_FMT( "Dataset {} in {}", datasetName, hdf5File.getFilename() ) };
 
   if( datasetExists( hdf5File.getFileId(), datasetName )  )
   {
@@ -266,68 +292,32 @@ bool DatasetHandle::datasetExists( hid_t const & fileId, string const & datasetN
 SerialHDF5Reader::SerialHDF5Reader( const std::string & filename )
   : m_file( filename ) {}
 
-TypedArray1d SerialHDF5Reader::read1D( const std::string & datasetName, const int expectedDims ) const
-{
-  // Create a DatasetHandle to manage resources
-  DatasetHandle handle( m_file, datasetName, expectedDims );
 
-  // Compute the total number of elements
-  hsize_t total_elements = 1;
-  for( const auto & dim : handle.dims )
-    total_elements *= dim;
-
-  // Determine the type and read the data
-  if( H5Tequal( handle.typeId, H5T_NATIVE_INT ))
-  {
-    array1d< globalIndex > buffer( total_elements );
-    if( H5Dread( handle.datasetId, H5T_NATIVE_INT, H5S_ALL, H5S_ALL, H5P_DEFAULT, buffer.data()) < 0 )
-      throw std::runtime_error( "Failed to read dataset: " + datasetName );
-    return buffer;
-  }
-  else if( H5Tequal( handle.typeId, H5T_NATIVE_FLOAT ))
-  {
-    array1d< real32 > buffer( total_elements );
-    if( H5Dread( handle.datasetId, H5T_NATIVE_FLOAT, H5S_ALL, H5S_ALL, H5P_DEFAULT, buffer.data()) < 0 )
-      throw std::runtime_error( "Failed to read dataset: " + datasetName );
-    return buffer;
-  }
-  else if( H5Tequal( handle.typeId, H5T_NATIVE_DOUBLE ))
-  {
-    array1d< real64 > buffer( total_elements );
-    if( H5Dread( handle.datasetId, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, buffer.data()) < 0 )
-      throw std::runtime_error( "Failed to read dataset: " + datasetName );
-    return buffer;
-  }
-  else
-  {
-    throw std::runtime_error( "Unsupported dataset type for dataset: " + datasetName );
-  }
-}
 
 // Templated function definition
 template< typename T >
 array1d< T > SerialHDF5Reader::read1DAs( const std::string & datasetName, const int expectedDims ) const
 {
-  throw std::runtime_error( "Unsupported type for read1DAs" );
+  GEOS_THROW( GEOS_FMT( "Unsupported dataset type for dataset {} in {}", datasetName, m_file.getFilename()), InputError );
 }
 
 // Specialization for array1d<globalIndex>
 template<>
-array1d<globalIndex> SerialHDF5Reader::read1DAs< globalIndex >( const std::string & datasetName, const int expectedDims ) const
+array1d< globalIndex > SerialHDF5Reader::read1DAs< globalIndex >( const std::string & datasetName, const int expectedDims ) const
 {
-  TypedArray1d result = read1D( datasetName, expectedDims );
+  TypedArray1d result = read1D( m_file, datasetName, expectedDims );
 
-  if( std::holds_alternative<array1d<globalIndex>>( result ) )
+  if( std::holds_alternative< array1d< globalIndex > >( result ) )
   {
-    return std::get<array1d<globalIndex>>( result );
+    return std::get< array1d< globalIndex > >( result );
   }
-  else if( std::holds_alternative<array1d<real32>>( result ) )
+  else if( std::holds_alternative< array1d< real32 > >( result ) )
   {
-    return staticCastArray<real32, globalIndex>( std::get<array1d<real32>>( result ) );
+    return staticCastArray< real32, globalIndex >( std::get< array1d< real32 > >( result ) );
   }
-  else if( std::holds_alternative<array1d<real64>>( result ) )
+  else if( std::holds_alternative< array1d< real64 > >( result ) )
   {
-    return staticCastArray<real64, globalIndex>( std::get<array1d<real64>>( result ) );
+    return staticCastArray< real64, globalIndex >( std::get< array1d< real64 > >( result ) );
   }
 
   throw std::runtime_error( "Dataset does not contain a compatible type for array1d<globalIndex>" );
@@ -335,21 +325,21 @@ array1d<globalIndex> SerialHDF5Reader::read1DAs< globalIndex >( const std::strin
 
 // Specialization for array1d<real32>
 template<>
-array1d<real32> SerialHDF5Reader::read1DAs< real32 >( const std::string & datasetName, const int expectedDims ) const
+array1d< real32 > SerialHDF5Reader::read1DAs< real32 >( const std::string & datasetName, const int expectedDims ) const
 {
-  TypedArray1d result = read1D( datasetName, expectedDims );
+  TypedArray1d result = read1D( m_file, datasetName, expectedDims );
 
-  if( std::holds_alternative<array1d<real32>>( result ) )
+  if( std::holds_alternative< array1d< real32 > >( result ) )
   {
-    return std::get<array1d<real32>>( result );
+    return std::get< array1d< real32 > >( result );
   }
-  else if( std::holds_alternative<array1d<globalIndex>>( result ) )
+  else if( std::holds_alternative< array1d< globalIndex > >( result ) )
   {
-    return staticCastArray<globalIndex, real32>( std::get<array1d<globalIndex>>( result ) );
+    return staticCastArray< globalIndex, real32 >( std::get< array1d< globalIndex > >( result ) );
   }
-  else if( std::holds_alternative<array1d<real64>>( result ) )
+  else if( std::holds_alternative< array1d< real64 > >( result ) )
   {
-    return staticCastArray<real64, real32>( std::get<array1d<real64>>( result ) );
+    return staticCastArray< real64, real32 >( std::get< array1d< real64 > >( result ) );
   }
 
   throw std::runtime_error( "Dataset does not contain a compatible type for array1d<real32>" );
@@ -357,21 +347,21 @@ array1d<real32> SerialHDF5Reader::read1DAs< real32 >( const std::string & datase
 
 // Specialization for array1d<real64>
 template<>
-array1d<real64> SerialHDF5Reader::read1DAs< real64 >( const std::string & datasetName, const int expectedDims ) const
+array1d< real64 > SerialHDF5Reader::read1DAs< real64 >( const std::string & datasetName, const int expectedDims ) const
 {
-  TypedArray1d result = read1D( datasetName, expectedDims );
+  TypedArray1d result = read1D( m_file, datasetName, expectedDims );
 
-  if( std::holds_alternative<array1d<real64>>( result ) )
+  if( std::holds_alternative< array1d< real64 > >( result ) )
   {
-    return std::get<array1d<real64>>( result );
+    return std::get< array1d< real64 > >( result );
   }
-  else if( std::holds_alternative<array1d<globalIndex>>( result ) )
+  else if( std::holds_alternative< array1d< globalIndex > >( result ) )
   {
-    return staticCastArray<globalIndex, real64>( std::get<array1d<globalIndex>>( result ) );
+    return staticCastArray< globalIndex, real64 >( std::get< array1d< globalIndex > >( result ) );
   }
-  else if( std::holds_alternative<array1d<real32>>( result ) )
+  else if( std::holds_alternative< array1d< real32 > >( result ) )
   {
-    return staticCastArray<real32, real64>( std::get<array1d<real32>>( result ) );
+    return staticCastArray< real32, real64 >( std::get< array1d< real32 > >( result ) );
   }
 
   throw std::runtime_error( "Dataset does not contain a compatible type for array1d<real64>" );

@@ -28,6 +28,7 @@
 #endif
 
 #include <random>
+#include <hdf5.h>
 
 using namespace geos;
 
@@ -109,6 +110,54 @@ void checkDirectionalDerivative( real64 const (&input)[4],
   perturbedVal = kernelWrapper.compute( perturbedInput, perturbedDerivatives );
 
   geos::testing::checkRelativeError( derivatives[direction], (perturbedVal-val)/dInput, relTol, geos::testing::DEFAULT_ABS_TOL );
+}
+
+void createHDF5NDTableFile( Path const & filename,
+                            array1d< real64 > const & x1_coords,
+                            array1d< real64 > const & x2_coords,
+                            array1d< real64 > const & x3_coords,
+                            string_array const coordLabels,
+                            array1d< real64 > const & values,
+                            string const valueLabel )
+{
+  // Create an HDF5 file
+  hid_t file_id = H5Fcreate( filename.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT );
+  ASSERT_TRUE( file_id >= 0 );
+
+  hsize_t dimX1 = static_cast< hsize_t >( x1_coords.size() );
+  hid_t dataspace_id = H5Screate_simple( 1, &dimX1, nullptr );
+  hid_t dataset_id = H5Dcreate( file_id, coordLabels[0].data(), H5T_NATIVE_DOUBLE, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT );
+  H5Dwrite( dataset_id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, x1_coords.data());
+  H5Dclose( dataset_id );
+  H5Sclose( dataspace_id );
+
+  hsize_t dimX2 = static_cast< hsize_t >( x2_coords.size() );
+  dataspace_id = H5Screate_simple( 1, &dimX2, nullptr );
+  dataset_id = H5Dcreate( file_id, coordLabels[1].data(), H5T_NATIVE_DOUBLE, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT );
+  H5Dwrite( dataset_id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, x2_coords.data());
+  H5Dclose( dataset_id );
+  H5Sclose( dataspace_id );
+
+  hsize_t dimX3 = static_cast< hsize_t >( x3_coords.size() );
+  dataspace_id = H5Screate_simple( 1, &dimX3, nullptr );
+  dataset_id = H5Dcreate( file_id, coordLabels[2].data(), H5T_NATIVE_DOUBLE, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT );
+  H5Dwrite( dataset_id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, x3_coords.data());
+  H5Dclose( dataset_id );
+  H5Sclose( dataspace_id );
+
+  // Create table dataset
+  hsize_t dims[3] = {dimX1, dimX2, dimX3};
+  dataspace_id = H5Screate_simple( 3, dims, nullptr );
+  dataset_id = H5Dcreate( file_id, valueLabel.c_str(), H5T_NATIVE_DOUBLE, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT );
+
+  // Flattened table data in Fortran order (x varies fastest, z varies slowest)
+
+  H5Dwrite( dataset_id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, values.data());
+  H5Dclose( dataset_id );
+  H5Sclose( dataspace_id );
+
+  // Close the file
+  H5Fclose( file_id );
 }
 
 TEST( FunctionTests, 1DTable )
@@ -898,6 +947,71 @@ TEST( TableFunctionEnums, InterpolationType )
   ASSERT_EQ( "nearest", toString( EnumType::Nearest ) );
   ASSERT_EQ( "upper", toString( EnumType::Upper ) );
   ASSERT_EQ( "lower", toString( EnumType::Lower ) );
+}
+
+TEST( FunctionTests, NDTable_HDF5 )
+{
+  FunctionManager *functionManager = &FunctionManager::getInstance();
+
+  // Define ND table data
+  localIndex const nPointsX1 = 4;
+  localIndex const nPointsX2 = 2;
+  localIndex const nPointsX3 = 3;
+  array1d< real64 > x1_coords( nPointsX1 );
+  array1d< real64 > x2_coords( nPointsX2 );
+  array1d< real64 > x3_coords( nPointsX3 );
+  string_array const coordLabels{"x1", "x2", "x3"};
+  array1d< real64 > values( nPointsX1 * nPointsX2 * nPointsX3 );
+  string const valueLabel{"data"};
+
+  x1_coords[0] = 0.0;
+  x1_coords[1] = 1.0;
+  x1_coords[2] = 2.0;
+  x1_coords[3] = 3.0;
+
+  x2_coords[0] = 0.0;
+  x2_coords[1] = 1.0;
+
+  x3_coords[0] = 0.0;
+  x3_coords[1] = 1.0;
+  x3_coords[2] = 2.0;
+
+  for( auto i = 0; i < nPointsX1 * nPointsX2 * nPointsX3; i++ )
+  {
+    values[i] = static_cast< real64 >(i);
+  }
+
+  // Create an HDF5 file with ND table data
+  Path const hdf5File = "nd_table.h5";
+  createHDF5NDTableFile( hdf5File,
+                         x1_coords, x2_coords, x3_coords, coordLabels,
+                         values, valueLabel );
+
+  // Initialize the TableFunction
+  TableFunction & table_hdf5 = dynamicCast< TableFunction & >( *functionManager->createChild( "TableFunction", "table_hdf5" ));
+  Path & filename = table_hdf5.getReference< Path >( TableFunction::viewKeyStruct::hdf5FileString() );
+  string_array & coordNames = table_hdf5.getReference< string_array >( TableFunction::viewKeyStruct::hdf5CoordinateDatasetNamesString() );
+  string & tableName = table_hdf5.getReference< string >( TableFunction::viewKeyStruct::hdf5TableDatasetNameString() );
+
+  filename = hdf5File;
+  coordNames = coordLabels;
+  tableName = valueLabel;
+
+  table_hdf5.initializeFunction();
+
+  // Test interpolation
+  array1d< real64 > testCoordinates( 3 );
+  testCoordinates[0] = 1.5; // x
+  testCoordinates[1] = 1.0; // y
+  testCoordinates[2] = 0.5; // z
+
+  real64 expectedValue = 9.5; // Interpolated value
+  real64 computedValue = table_hdf5.evaluate( testCoordinates.data());
+
+  ASSERT_NEAR( computedValue, expectedValue, 1e-10 );
+
+  // Clean up
+  std::remove( filename.c_str());
 }
 
 
