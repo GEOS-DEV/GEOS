@@ -243,7 +243,7 @@ void ImmiscibleMultiphaseFlow::initializePreSubGroups()
 
     ElementRegionManager & elemManager = meshLevel.getElemManager();
 
-    m_constitutitveFluidModels.resize( m_interfaceFaceSetNames.size() );
+    m_interfaceConstitutivePairs.resize( m_interfaceFaceSetNames.size() );
 
     // this is the FaceElement Level
     for( size_t surfaceRegionIndex=0; surfaceRegionIndex < m_interfaceFaceSetNames.size(); ++surfaceRegionIndex )
@@ -301,8 +301,8 @@ void ImmiscibleMultiphaseFlow::initializePreSubGroups()
       TwoPhaseImmiscibleFluid * fluid1 = &getConstitutiveModel< TwoPhaseImmiscibleFluid >( *subRegion1, fluidName1 );
       
       // need to get the constitutive data from the cells.
-      m_constitutitveFluidModels[surfaceRegionIndex][0] = std::make_tuple( relPerm0, capPressure0, fluid0 );
-      m_constitutitveFluidModels[surfaceRegionIndex][1] = std::make_tuple( relPerm1, capPressure1, fluid1 );
+      m_interfaceConstitutivePairs[surfaceRegionIndex][0] = std::make_tuple( relPerm0, capPressure0, fluid0 );
+      m_interfaceConstitutivePairs[surfaceRegionIndex][1] = std::make_tuple( relPerm1, capPressure1, fluid1 );
 
     }
   } );
