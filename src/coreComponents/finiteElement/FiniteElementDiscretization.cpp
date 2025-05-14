@@ -215,7 +215,7 @@ FiniteElementDiscretization::factory( ElementType const parentElementShape ) con
         GEOS_ERROR_IF( m_formulation != Formulation::DG,
                        getDataContext() << ": Element type Tetrahedron with order 2 available" <<
                        " only when using the Discontinuous Galerkin Method" );
-        //return std::make_unique< BB2_Tetrahedron >();
+        return std::make_unique< BB2_Tetrahedron >();
       default:
       {
         GEOS_ERROR( getDataContext() << ": Element type " << parentElementShape << " does not" <<

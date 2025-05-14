@@ -1429,7 +1429,7 @@ public:
  * Fixed-degree classes
  */
 using BB1_Tetrahedron = BB_Tetrahedron< 1 >;
-//using BB2_Tetrahedron = BB_Tetrahedron< 2 >;
+using BB2_Tetrahedron = BB_Tetrahedron< 2 >;
 //using BB3_Tetrahedron = BB_Tetrahedron< 3 >;
 //using BB4_Tetrahedron = BB_Tetrahedron< 4 >;
 //using BB5_Tetrahedron = BB_Tetrahedron< 5 >;

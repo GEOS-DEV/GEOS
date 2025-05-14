@@ -121,6 +121,7 @@ struct PrecomputeSourceAndReceiverKernel
           {
             sourceIsAccessible[isrc] = 1;
             sourceElem[isrc] = k;
+            printf( "sourceElem[%d] = %d\n", isrc, k );
             sourceRegion[isrc] = regionIndex;
             real64 Ntest[FE_TYPE::numNodes];
 
@@ -463,7 +464,17 @@ struct PressureComputationKernel
 
   {
 
+
     real64 const rickerValue = useSourceWaveletTables ? 0 : WaveSolverUtils::evaluateRicker( time_n, timeSourceFrequency, timeSourceDelay, rickerOrder );
+
+    //for(localIndex k =0; k < size; ++k)
+    //{
+    //  for (localIndex i = 0; i < 4; ++i )
+    //  {
+    //      
+    //  p_n( k, i ) = X( elemsToNodes( k, i ), 0 );
+    //  }
+    //} 
 
     forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const k )
     {
@@ -500,13 +511,12 @@ struct PressureComputationKernel
       } );
 
       //First stiffness part (volume)
-      int a;
       FE_TYPE::computeStiffnessTerm( xLocal, [&] ( const int i, const int j, real64 val )
       {
         flowx[i] -= val*p_n[k][j];
       } );
 
-      FE_TYPE::computeSurfaceTerms( xLocal, [&] ( const int c1, const int c2, const int f1, const int i1, const int j1, const int k1, const int i2, const int j2, const int k2, real64 val )
+      FE_TYPE::computeSurfaceTerms( xLocal, [&] ( const int c1, const int c2, const int f1, const int i1, const int j1, const int k1, const int i2, const int j2, const int k2, real64 const val )
       {
         const localIndex elemNeigh = elemsToOpposite( k, f1 );
 
@@ -532,7 +542,7 @@ struct PressureComputationKernel
           // where p* will be negati
 
 
-          const int l2 = 1-i2-j2-k2;
+          const int l2 = 2-i2-j2-k2;
           const int Indices[3] = {i2, j2, k2};
 
           const int ii2 = p1 < 0 ? l2 : Indices[p1];
@@ -550,7 +560,7 @@ struct PressureComputationKernel
         }
 
       },
-                                    [&] ( const int c1, const int c2, const int f1, const int fNeigh, const int i1, const int j1, const int k1, const int i2, const int j2, const int k2, real64 val )
+      [&] ( const int c1, const int c2, const int f1, const int fNeigh, const int i1, const int j1, const int k1, const int i2, const int j2, const int k2, real64 const val )
       {
 
         //We take the neighbour element
@@ -573,7 +583,7 @@ struct PressureComputationKernel
 
           const int Indices[3] = {i2, j2, k2};
 
-          const int l2 = 1-i2-j2-k2;
+          const int l2 = 2-i2-j2-k2;
 
 
 
@@ -586,7 +596,7 @@ struct PressureComputationKernel
 
           const int IndicesTranspose[3] = {i1, j1, k1};
 
-          const int l1 = 1-i1-j1-k1;
+          const int l1 = 2-i1-j1-k1;
 
           const int ii1 = p1 < 0 ? l1 : IndicesTranspose[p1];
           const int jj1 = p2 < 0 ? l1 : IndicesTranspose[p2];
@@ -652,8 +662,7 @@ struct PressureComputationKernel
 //
           real64 const val3 = 0.5*val*p_n[k][c1]*corrLocal;
           real64 const val4 = 0.5*val*p_n[elemNeigh][neighDof2]*corrNeigh;
-
-
+ 
           flowx[c1] += val1-val2;
           flowx[c2] += val3-val4;
 
@@ -691,6 +700,7 @@ struct PressureComputationKernel
           fx+= referenceInvMassMatrix( i, j )*pTemp[j];
         }
         p_np1[k][i]=(C2*fx)/det;
+        //-p_np1[k][i] = pTemp[i];
       }
 
 

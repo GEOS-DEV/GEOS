@@ -482,19 +482,28 @@ void AcousticWaveEquationDG::prepareNextTimestep( MeshLevel & mesh )
     arrayView2d< real32 > const p_n = elementSubRegion.getField< acousticfieldsdg::Pressure_n >();
     arrayView2d< real32 >  p_np1 = elementSubRegion.getField< acousticfieldsdg::Pressure_np1 >();
 
-    forAll< EXEC_POLICY >( elementSubRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const k )
+    finiteElement::FiniteElementBase const &
+    fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
+    finiteElement::FiniteElementDispatchHandler< DG_FE_TYPES >::dispatch3D( fe, [&] ( auto const finiteElement )
     {
+      using FE_TYPE = TYPEOFREF( finiteElement );
 
-      for( localIndex i = 0; i < 4; i++ )
+      constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
+
+
+      forAll< EXEC_POLICY >( elementSubRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const k )
       {
-        p_nm1[k][i] = p_n[k][i];
-        p_n[k][i]   = p_np1[k][i];
-
-      }
+  
+        for( localIndex i = 0; i < numNodesPerElem; i++ )
+        {
+          p_nm1[k][i] = p_n[k][i];
+          p_n[k][i]   = p_np1[k][i];
+  
+        }
+  
+      } );
 
     } );
-
-
   } );
 
 
