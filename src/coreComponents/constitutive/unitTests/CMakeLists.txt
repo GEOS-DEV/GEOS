@@ -15,6 +15,9 @@ set( gtest_geosx_tests
      testImmiscibleWaterProperties.cpp
      testLohrenzBrayClarkViscosity.cpp
      testModifiedCamClay.cpp
+     testMultiFluidBlackOil.cpp
+     testMultiFluidCO2Brine.cpp
+     testMultiFluidTwoPhaseCompositionalMultiphase.cpp
      testMultiFluidDeadOil.cpp
      testMultiFluidSelector.cpp
      testNegativeTwoPhaseFlash.cpp
@@ -26,7 +29,7 @@ set( gtest_geosx_tests
      testStabilityTest2Comp.cpp
      testStabilityTest9Comp.cpp
      testRachfordRice.cpp
-     testTwoPhaseFluid.cpp )
+     testTwoPhaseImmiscibleFluid.cpp )
 
 set( dependencyList gtest blas lapack constitutive ${parallelDeps} )
 

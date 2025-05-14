@@ -38,7 +38,7 @@ TwoPhaseImmiscibleFluid::TwoPhaseImmiscibleFluid( string const & name, Group * c
 {
   registerWrapper( viewKeyStruct::phaseNamesString(), &m_phaseNames ).
     setRTTypeName( rtTypes::CustomTypes::groupNameRefArray ).
-    setInputFlag( InputFlags::OPTIONAL ).
+    setInputFlag( InputFlags::REQUIRED ).
     setDescription( "List of fluid phases" );
 
   // 1) First option: specify PVT tables from one file per phase, read the files line by line, and populate the internal TableFunctions
@@ -100,6 +100,12 @@ void TwoPhaseImmiscibleFluid::allocateConstitutiveData( dataRepository::Group & 
 void TwoPhaseImmiscibleFluid::postInputInitialization()
 {
   ConstitutiveBase::postInputInitialization();
+
+  // Ensure that we have two phases defined
+  GEOS_THROW_IF_NE_MSG( m_phaseNames.size(), 2,
+                        GEOS_FMT( "{}: invalid number of phases. There should be 2 phases defined by {}", getFullName(),
+                                  viewKeyStruct::phaseNamesString() ),
+                        InputError );
 
   // Input relationships can be provided either as text files or TableFunctions.
   m_tableFiles.empty() ? readInputDataFromTableFunctions() : readInputDataFromFileTableFunctions();
