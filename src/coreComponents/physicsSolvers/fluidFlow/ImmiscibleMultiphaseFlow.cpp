@@ -263,8 +263,7 @@ void ImmiscibleMultiphaseFlow::initializePreSubGroups()
       FaceElementSubRegion const & faceSubRegion = faceRegion.getUniqueSubRegion< FaceElementSubRegion >();
       FixedToManyElementRelation const & faceElementsToCells = faceSubRegion.getToCellRelation();
 
-      std::function< std::tuple< CellElementSubRegion *, CellElementSubRegion * >(localIndex) > getSubregions = [&]( localIndex surfaceSubRegionIndex ) -> std::tuple< CellElementSubRegion *,
-                                                                                                                                                                    CellElementSubRegion * > {
+      std::function< std::tuple< CellElementSubRegion *, CellElementSubRegion * >(localIndex) > getSubregions = [&]( localIndex surfaceSubRegionIndex ) -> std::tuple< CellElementSubRegion *, CellElementSubRegion * > {
 
         int regionIdx0 = faceElementsToCells.m_toElementRegion[surfaceSubRegionIndex][0];
         int regionIdx1 = faceElementsToCells.m_toElementRegion[surfaceSubRegionIndex][1];
