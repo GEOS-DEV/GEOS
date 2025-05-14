@@ -455,6 +455,10 @@ CO2BrineFluid< PHASE1, PHASE2, FLASH >::KernelWrapper::
                                phaseEnthalpy.value[ip2], phaseEnthalpy.derivs[ip2],
                                m_useMass );
 
+    // 5.1 Zero out internal energy before calculating
+    LvArray::forValuesInSlice( phaseInternalEnergy.value, setZero );
+    LvArray::forValuesInSlice( phaseInternalEnergy.derivs, setZero );
+
     computeInternalEnergy( pressure,
                            phaseFraction,
                            phaseMassDensity,
