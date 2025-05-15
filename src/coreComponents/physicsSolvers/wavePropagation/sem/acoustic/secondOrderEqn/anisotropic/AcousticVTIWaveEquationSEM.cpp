@@ -613,7 +613,7 @@ real64 AcousticVTIWaveEquationSEM::explicitStepInternal( real64 const & time_n,
 
     if( m_attenuationType == WaveSolverUtils::AttenuationType::sls )
     {
-      auto kernelFactory = acousticVTIWaveEquationSEMKernels::ExplicitAcousticVTIAttenuativeSEMFactory( dt );
+      auto kernelFactoryA = acousticVTIWaveEquationSEMKernels::ExplicitAcousticVTIAttenuativeSEMFactory( dt );
       finiteElement::
         regionBasedKernelApplication< EXEC_POLICY,
                                       constitutive::NullModel,
@@ -621,7 +621,7 @@ real64 AcousticVTIWaveEquationSEM::explicitStepInternal( real64 const & time_n,
                                                               regionNames,
                                                               getDiscretizationName(),
                                                               "",
-                                                              kernelFactory );
+                                                              kernelFactoryA );
     }
 
     addSourceToRightHandSide( time_n, rhs );
