@@ -216,7 +216,7 @@ TEST_F( AcousticWaveEquationSEMTest, SeismoTrace )
   for( int i=0; i<50; i++ )
   {
     rhsForward[i][0]=WaveSolverUtils::evaluateRicker( time_n, *ptrTimeSourceFrequency, *ptrTimeSourceDelay, *ptrRickerOrder );
-    propagator->explicitStepForward( time_n, dt, i, domain, false );
+    propagator->explicitStepForward( time_n, dt, i, domain, 0 );
     time_n += dt;
   }
   // cleanup (triggers calculation of the remaining seismograms data points)
@@ -315,7 +315,7 @@ TEST_F( AcousticWaveEquationSEMTest, SeismoTrace )
   for( int i = 50; i > 0; i-- )
   {
     rhsBackward[i][0]=WaveSolverUtils::evaluateRicker( time_n, *ptrTimeSourceFrequency, *ptrTimeSourceDelay, *ptrRickerOrder );
-    propagator->explicitStepBackward( time_n, dt, i, domain, false );
+    propagator->explicitStepBackward( time_n, dt, i, domain, 0 );
     time_n -= dt;
     //check source node in backward loop
     arrayView2d< localIndex > const sNodeIds_loop = propagator->getReference< array2d< localIndex > >( AcousticWaveEquationSEM::viewKeyStruct::sourceNodeIdsString() ).toView();
