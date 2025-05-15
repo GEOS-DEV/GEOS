@@ -35,7 +35,7 @@
 #include "finiteElement/Kinematics.h"
 #include "LvArray/src/output.hpp"
 #include "mesh/DomainPartition.hpp"
-#include "mesh/mpiCommunications/SpatialPartition.hpp"
+#include "mesh/mpiCommunications/ParticleCartesianPartitioner.hpp"
 #include "mainInterface/ProblemManager.hpp"
 #include "discretizationMethods/NumericalMethodsManager.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
@@ -550,7 +550,7 @@ real64 SolidMechanicsMPM::solverStep( real64 const & time_n,
 
 void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
                                     ParticleManager & particleManager,
-                                    SpatialPartition & partition )
+                                    ParticleCartesianPartitioner & partitioner )
 {
   // Initialize neighbor lists
   particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
@@ -655,8 +655,8 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
   }
   for( int i=0; i<3; i++ )
   {
-    m_xLocalMinNoGhost[i] = partition.getLocalMin()[i];
-    m_xLocalMaxNoGhost[i] = partition.getLocalMax()[i];
+    m_xLocalMinNoGhost[i] = partitioner.getLocalMin()[i];
+    m_xLocalMaxNoGhost[i] = partitioner.getLocalMax()[i];
     m_partitionExtent[i] = m_xLocalMax[i] - m_xLocalMin[i];
   }
 
@@ -696,8 +696,8 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
   m_domainExtent.resize( 3 );
   for( int i=0; i<3; i++ )
   {
-    m_xGlobalMin[i] = partition.getGlobalMin()[i] + m_hEl[i];
-    m_xGlobalMax[i] = partition.getGlobalMax()[i] - m_hEl[i];
+    m_xGlobalMin[i] = partitioner.getGlobalMin()[i] + m_hEl[i];
+    m_xGlobalMax[i] = partitioner.getGlobalMax()[i] - m_hEl[i];
     m_domainExtent[i] = m_xGlobalMax[i] - m_xGlobalMin[i];
   }
 
@@ -927,7 +927,7 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
   //#######################################################################################
   solverProfiling( "Get spatial partition, get node and particle managers. Resize m_iComm." );
   //#######################################################################################
-  SpatialPartition & partition = dynamic_cast< SpatialPartition & >(domain.getReference< PartitionBase >( keys::partitionManager ) );
+  ParticleCartesianPartitioner & partitioner = dynamic_cast< ParticleCartesianPartitioner & >(domain.getReference< PartitionerBase >( keys::partitionerManager ) );
 
   // ***** We assume that there are exactly two mesh bodies, and that one has particles and one does not. *****
   Group & meshBodies = domain.getMeshBodies();
@@ -950,7 +950,7 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
   //#######################################################################################
   if( cycleNumber == 0 )
   {
-    initialize( nodeManager, particleManager, partition );
+    initialize( nodeManager, particleManager, partitioner );
   }
 
 
@@ -989,7 +989,7 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
     } );
 
     // Perform ghosting
-    partition.getGhostParticlesFromNeighboringPartitions( domain, m_iComm, m_neighborRadius );
+    partitioner.getGhostParticlesFromNeighboringPartitions( domain, m_iComm, m_neighborRadius );
   }
 
 
@@ -1216,7 +1216,7 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
       {
         wrapper.move( LvArray::MemorySpace::host, true );
       } );
-      partition.repartitionMasterParticles( subRegion, m_iComm );
+      partitioner.repartitionMasterParticles( subRegion, m_iComm );
     } );
   }
 
@@ -1226,7 +1226,7 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
   //#######################################################################################
   if( m_prescribedBoundaryFTable == 1 )
   {
-    resizeGrid( partition, nodeManager, dt );
+    resizeGrid( partitioner, nodeManager, dt );
   }
 
 
@@ -1916,12 +1916,12 @@ void SolidMechanicsMPM::setGridFieldLabels( NodeManager & nodeManager )
   }
 }
 
-void SolidMechanicsMPM::resizeGrid( SpatialPartition & partition,
+void SolidMechanicsMPM::resizeGrid( ParticleCartesianPartitioner & partitioner,
                                     NodeManager & nodeManager,
                                     real64 const dt )
 {
   // Modify SpatialPartition class members
-  partition.updateSizes( m_domainL, dt );
+  partitioner.updateSizes( m_domainL, dt );
 
   // Modify SolidMechanicsMPM class members
   real64 ratio[3];

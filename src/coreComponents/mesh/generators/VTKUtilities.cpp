@@ -589,9 +589,9 @@ AllMeshes loadAllMeshes( Path const & filePath,
  * @return the vtk grid redistributed
  */
 AllMeshes redistributeByCellGraph( AllMeshes & input,
-                                   PartitionerBase &partitioner,
+                                   PartitionerBase & partitioner,
                                    MPI_Comm const comm,
-                                   int const numRefinements )                                   
+                                   int const numRefinements )
 {
   GEOS_MARK_FUNCTION;
 
@@ -878,7 +878,7 @@ redistributeMeshes( integer const logLevel,
                     vtkSmartPointer< vtkDataSet > loadedMesh,
                     std::map< string, vtkSmartPointer< vtkDataSet > > & namesToFractures,
                     MPI_Comm const comm,
-                    PartitionerBase& partitioner,
+                    PartitionerBase & partitioner,
                     int const partitionRefinement,
                     int const useGlobalIds )
 {

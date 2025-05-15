@@ -545,7 +545,7 @@ void InternalMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockMa
 {
   GEOS_MARK_FUNCTION;
 
-  CartesianPartitioner & partitioner = dynamic_cast< CartesianPartitioner & >(partitionerBase);  
+  CartesianPartitioner & partitioner = dynamic_cast< CartesianPartitioner & >(partitionerBase);
 
   // Partition based on even spacing to get load balance
   // Partition geometrical boundaries will be corrected in the end.

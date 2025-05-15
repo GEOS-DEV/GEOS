@@ -161,7 +161,7 @@ redistributeMeshes( integer const logLevel,
                     vtkSmartPointer< vtkDataSet > loadedMesh,
                     std::map< string, vtkSmartPointer< vtkDataSet > > & namesToFractures,
                     MPI_Comm const comm,
-                    PartitionerBase& partitioner,
+                    PartitionerBase & partitioner,
                     int const partitionRefinement,
                     int const useGlobalIds );
 

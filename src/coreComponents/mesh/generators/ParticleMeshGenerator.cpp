@@ -65,8 +65,8 @@ Group * ParticleMeshGenerator::createChild( string const & GEOS_UNUSED_PARAM( ch
 }
 
 
-void ParticleMeshGenerator::fillParticleBlockManager( ParticleBlockManager & particleBlockManager, 
-   ParticleManager & particleManager, PartitionerBase & partitionerBase )
+void ParticleMeshGenerator::fillParticleBlockManager( ParticleBlockManager & particleBlockManager,
+                                                      ParticleManager & particleManager, PartitionerBase & partitionerBase )
 {
   GEOS_MARK_FUNCTION;
 

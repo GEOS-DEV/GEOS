@@ -35,15 +35,15 @@ namespace dataRepository
 {
 namespace keys
 {
-/// @return PartitionManager string key
-string const partitionManager( "partitionManager" );
-string const partitioner( "partitioner" );
+/// @return PartitionerManager string key
+string const partitionerManager( "partitionerManager" );
 
 }
 }
 
 class ObjectManagerBase;
-class PartitionBase;
+//BDBD
+//class PartitionBase;
 
 /**
  * @brief Partition of the decomposed physical domain. It also manages the connexion information to its neighbors.

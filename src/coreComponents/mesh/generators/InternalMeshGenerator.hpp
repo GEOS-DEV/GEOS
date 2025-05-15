@@ -97,7 +97,7 @@ public:
    *   merging.
    */
   virtual void
-  setNodeGlobalIndicesOnPeriodicBoundary( CartesianPartitioner & partitioner,  
+  setNodeGlobalIndicesOnPeriodicBoundary( CartesianPartitioner & partitioner,
                                           int (& index)[3] )
   {
     GEOS_UNUSED_VAR( partitioner, index );

@@ -517,7 +517,7 @@ real64 SurfaceGenerator::solverStep( real64 const & time_n,
                                                                 MeshLevel & meshLevel,
                                                                 string_array const & )
   {
-    PartitionerBase & partitioner = domain.getReference< PartitionerBase >( dataRepository::keys::partitioner );
+    PartitionerBase & partitioner = domain.getReference< PartitionerBase >( dataRepository::keys::partitionerManager );
 
 //BDBD
     std::cout << "solverStep color " << partitioner.getColor() << " " << partitioner.getNumColors() << std::endl;

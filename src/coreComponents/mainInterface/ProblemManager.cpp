@@ -512,7 +512,7 @@ void ProblemManager::postInputInitialization()
   integer const & suppressPinned = commandLine.getReference< integer >( viewKeys.suppressPinned );
   setPreferPinned((suppressPinned == 0));
 
-  PartitionerBase & partitioner = domain.getReference< PartitionerBase >( keys::partitioner );
+  PartitionerBase & partitioner = domain.getReference< PartitionerBase >( keys::partitionerManager );
 
   bool repartition = false;
   integer xpar = 1;
@@ -535,12 +535,12 @@ void ProblemManager::postInputInitialization()
   }
   if( repartition )
   {
-    partitioner.setPartitionCounts(xpar, ypar, zpar );
+    partitioner.setPartitionCounts( xpar, ypar, zpar );
     int const mpiSize = MpiWrapper::commSize( MPI_COMM_GEOS );
     // Case : Using MPI domain decomposition and partition are not defined (mainly for external mesh readers)
     if( mpiSize > 1 && xpar == 1 && ypar == 1 && zpar == 1 )
     {
-      partitioner.setPartitionCounts(1, 1, mpiSize );      
+      partitioner.setPartitionCounts( 1, 1, mpiSize );
     }
   }
 }

@@ -33,7 +33,8 @@
 namespace geos
 {
 
-class SpatialPartition;
+//class SpatialPartition;
+class ParticleCartesianPartitioner;
 
 
 /**
@@ -191,9 +192,9 @@ public:
 
   void initialize( NodeManager & nodeManager,
                    ParticleManager & particleManager,
-                   SpatialPartition & partition );
+                   ParticleCartesianPartitioner & partitioner );
 
-  void resizeGrid( SpatialPartition & partition,
+  void resizeGrid( ParticleCartesianPartitioner & partitioner,
                    NodeManager & nodeManager,
                    real64 const dt );
 
@@ -423,7 +424,7 @@ protected:
   array1d< real64 > m_partitionExtent;    // Length of each edge of partition including buffer and ghost cells
   array1d< real64 > m_domainExtent;       // Length of each edge of global domain excluding buffer cells
   array1d< int > m_nEl;                   // Number of elements in each grid direction including buffer and ghost cells
-  array3d< int > m_ijkMap;        // Map from indices in each spatial dimension to local node ID
+  array3d< int > m_ijkMap;                // Map from indices in each spatial dimension to local node ID
 
 private:
   struct BinKey

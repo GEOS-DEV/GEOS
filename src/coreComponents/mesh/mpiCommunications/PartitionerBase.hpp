@@ -55,10 +55,10 @@ public:
                                            MPI_Comm comm,
                                            int const numRefinements ) = 0;
 
-
   virtual void setPartitionCounts( unsigned int xPartitions,
                                    unsigned int yPartitions,
                                    unsigned int zPartitions ) = 0;
+
 
   virtual void setNeighborsRank( const std::vector< int > & neighborsRank ) = 0;
 

@@ -104,8 +104,6 @@ set( mesh_headers
      mpiCommunications/CartesianPartitioner.hpp
      mpiCommunications/ParticleCartesianPartitioner.hpp
      mpiCommunications/ParMetisPartitioner.hpp
-     mpiCommunications/PartitionBase.hpp
-     mpiCommunications/SpatialPartition.hpp
      simpleGeometricObjects/Rectangle.hpp
      simpleGeometricObjects/Disc.hpp
      simpleGeometricObjects/CustomPolarObject.hpp
@@ -187,8 +185,6 @@ set( mesh_sources
      mpiCommunications/CartesianPartitioner.cpp
      mpiCommunications/ParticleCartesianPartitioner.cpp
      mpiCommunications/ParMetisPartitioner.cpp     
-     mpiCommunications/PartitionBase.cpp
-     mpiCommunications/SpatialPartition.cpp
      simpleGeometricObjects/Rectangle.cpp
      simpleGeometricObjects/Disc.cpp
      simpleGeometricObjects/CustomPolarObject.cpp

@@ -124,37 +124,37 @@ void VTKMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockManager
   // TODO refactor void MeshGeneratorBase::generateMesh( DomainPartition & domain )
   GEOS_MARK_FUNCTION;
 
-PartitionerBase * partitioner = nullptr; // Declare a pointer to the base class
+  PartitionerBase * partitioner = nullptr; // Declare a pointer to the base class
 
-switch( m_partitionMethod )
-{
-  case vtk::PartitionMethod::parmetis:
+  switch( m_partitionMethod )
   {
-    partitioner = dynamic_cast< ParMetisPartitioner * >( &partitionerBase );
-    if (partitioner == nullptr)
+    case vtk::PartitionMethod::parmetis:
     {
-      GEOS_THROW( "Failed to cast to ParMetisPartitioner", InputError );
+      partitioner = dynamic_cast< ParMetisPartitioner * >( &partitionerBase );
+      if( partitioner == nullptr )
+      {
+        GEOS_THROW( "Failed to cast to ParMetisPartitioner", InputError );
+      }
+      break;
     }
-    break;
-  }
-  case vtk::PartitionMethod::ptscotch:
-  {
+    case vtk::PartitionMethod::ptscotch:
+    {
 #ifdef GEOS_USE_SCOTCH
-    partitioner = dynamic_cast< PTScotchPartitioner * >(&partitionerBase);
-    if (partitioner == nullptr)
-    {
-      GEOS_THROW( "Failed to cast to PTScotchPartitioner", InputError );
-    }
+      partitioner = dynamic_cast< PTScotchPartitioner * >(&partitionerBase);
+      if( partitioner == nullptr )
+      {
+        GEOS_THROW( "Failed to cast to PTScotchPartitioner", InputError );
+      }
 #else
-    GEOS_THROW( "GEOSX must be built with Scotch support (ENABLE_SCOTCH=ON) to use 'ptscotch' partitioning method", InputError );
+      GEOS_THROW( "GEOSX must be built with Scotch support (ENABLE_SCOTCH=ON) to use 'ptscotch' partitioning method", InputError );
 #endif
-    break;
+      break;
+    }
+    default:
+    {
+      GEOS_THROW( "Unknown partition method", InputError );
+    }
   }
-  default:
-  {
-    GEOS_THROW( "Unknown partition method", InputError );
-  }
-}
 
   MPI_Comm const comm = MPI_COMM_GEOS;
   vtkSmartPointer< vtkMultiProcessController > controller = vtk::getController();
@@ -225,14 +225,14 @@ switch( m_partitionMethod )
     GEOS_LOG_LEVEL_RANK_0( logInfo::VTKSteps,
                            GEOS_FMT( "{} '{}': redistributing mesh...", catalogName(), getName() ) );
     vtk::AllMeshes redistributedMeshes =
-vtk::redistributeMeshes( getLogLevel(), allMeshes.getMainMesh(), allMeshes.getFaceBlocks(), comm, *partitioner, m_partitionRefinement, m_useGlobalIds );
+      vtk::redistributeMeshes( getLogLevel(), allMeshes.getMainMesh(), allMeshes.getFaceBlocks(), comm, *partitioner, m_partitionRefinement, m_useGlobalIds );
     m_vtkMesh = redistributedMeshes.getMainMesh();
     m_faceBlockMeshes = redistributedMeshes.getFaceBlocks();
     GEOS_LOG_LEVEL_RANK_0( logInfo::VTKSteps, GEOS_FMT( "{} '{}': finding neighbor ranks...", catalogName(), getName() ) );
     stdVector< vtkBoundingBox > boxes = vtk::exchangeBoundingBoxes( *m_vtkMesh, comm );
     stdVector< int > const neighbors = vtk::findNeighborRanks( std::move( boxes ) );
     partitioner->setNeighborsRank( std::move( neighbors ) );
-    
+
 
 
     GEOS_LOG_LEVEL_RANK_0( logInfo::VTKSteps, GEOS_FMT( "{} '{}': done!", catalogName(), getName() ) );

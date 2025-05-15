@@ -34,6 +34,9 @@ public:
   ParticleCartesianPartitioner();
   ~ParticleCartesianPartitioner();
 
+  void updateSizes( arrayView1d< real64 > const domainL,
+                    real64 const dt );
+
   bool isCoordInPartitionBoundingBox( const R1Tensor & elemCenter,
                                       const real64 & boundaryRadius ) const;
   void repartitionMasterParticles( ParticleSubRegion & subRegion,

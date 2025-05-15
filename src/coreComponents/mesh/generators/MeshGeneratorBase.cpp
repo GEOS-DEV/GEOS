@@ -60,7 +60,7 @@ void MeshGeneratorBase::generateMesh( Group & parent, PartitionerBase & partitio
 
     MeshLevel & meshLevel0 = meshBody.getBaseDiscretization();
     ParticleManager & particleManager = meshLevel0.getParticleManager();
-    GEOS_UNUSED_VAR(particleManager, particleBlockManager);
+    GEOS_UNUSED_VAR( particleManager, particleBlockManager );
 
     fillParticleBlockManager( particleBlockManager, particleManager, partitioner );
   }

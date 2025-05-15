@@ -20,7 +20,9 @@
 #ifndef GEOS_MESH_GENERATORS_MESHGENERATORBASE_HPP
 #define GEOS_MESH_GENERATORS_MESHGENERATORBASE_HPP
 
-#include "mesh/mpiCommunications/SpatialPartition.hpp"
+#include "mesh/generators/ParticleBlockManager.hpp"
+#include "mesh/ParticleManager.hpp"
+#include "mesh/MeshBody.hpp"
 #include "mesh/mpiCommunications/PartitionerBase.hpp"
 #include "dataRepository/Group.hpp"
 #include "dataRepository/WrapperBase.hpp"
@@ -138,13 +140,13 @@ private:
    * @param[inout] cellBlockManager the CellBlockManager that will receive the meshing information
    * @param[in] partitioner The reference to spatial partition
    */
-  
+
   virtual void fillCellBlockManager( CellBlockManager & cellBlockManager, PartitionerBase & partitioner )
   {
     GEOS_UNUSED_VAR( cellBlockManager );
     GEOS_UNUSED_VAR( partitioner );
     GEOS_ERROR( "Cell mesh generation not implemented for generator of this type" );
-  }  
+  }
 
   void attachWellInfo( CellBlockManager & cellBlockManager );
 
@@ -154,7 +156,7 @@ private:
    * @param[in] particleManager The reference to the particle manager
    * @param[in] partitioner The reference to spatial partition
    */
-  virtual void fillParticleBlockManager( ParticleBlockManager & particleBlockManager, 
+  virtual void fillParticleBlockManager( ParticleBlockManager & particleBlockManager,
                                          ParticleManager & particleManager, PartitionerBase & partitioner )
   {
     GEOS_UNUSED_VAR( particleBlockManager );

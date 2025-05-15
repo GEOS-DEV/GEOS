@@ -312,7 +312,7 @@ void InternalWellboreGenerator::reduceNumNodesForPeriodicBoundary( CartesianPart
     }
     else if( partitioner.getPartitionCounts()[1] > 1 )
     {
-      partitioner.setPeriodicity(1, 1);
+      partitioner.setPeriodicity( 1, 1 );
     }
   }
 }

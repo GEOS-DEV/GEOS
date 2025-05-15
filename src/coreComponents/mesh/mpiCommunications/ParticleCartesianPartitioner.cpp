@@ -28,8 +28,24 @@ ParticleCartesianPartitioner::~ParticleCartesianPartitioner()
 {}
 
 
+void ParticleCartesianPartitioner::updateSizes( arrayView1d< real64 > const domainL,
+                                                real64 const dt )
+{
+  for( int i=0; i<3; i++ )
+  {
+    real64 ratio = 1.0 + domainL[i] * dt;
+    m_localMin[i] *= ratio;
+    m_localMax[i] *= ratio;
+    m_localSize[i] *= ratio;
+    m_globalGridSize[i] *= ratio;
+    m_globalGridMin[i] *= ratio;
+    m_globalGridMax[i] *= ratio;
+  }
+}
+
+
 bool ParticleCartesianPartitioner::isCoordInPartitionBoundingBox( const R1Tensor & elemCenter,
-                                                      const real64 & boundaryRadius ) const
+                                                                  const real64 & boundaryRadius ) const
 // test a point relative to a boundary box. If non-zero buffer specified, expand the box.
 {
   for( int i = 0; i < m_ndim; i++ )
@@ -63,7 +79,7 @@ bool ParticleCartesianPartitioner::isCoordInPartitionBoundingBox( const R1Tensor
 
 
 void ParticleCartesianPartitioner::repartitionMasterParticles( ParticleSubRegion & subRegion,
-                                                   MPI_iCommData & commData )
+                                                               MPI_iCommData & commData )
 {
 
   /*
@@ -266,8 +282,8 @@ void ParticleCartesianPartitioner::repartitionMasterParticles( ParticleSubRegion
 
 
 void ParticleCartesianPartitioner::getGhostParticlesFromNeighboringPartitions( DomainPartition & domain,
-                                                                   MPI_iCommData & commData,
-                                                                   const real64 & boundaryRadius )
+                                                                               MPI_iCommData & commData,
+                                                                               const real64 & boundaryRadius )
 {
 
   /*
@@ -480,9 +496,9 @@ void ParticleCartesianPartitioner::getGhostParticlesFromNeighboringPartitions( D
  * @param[in] particleCoordinatesReceivedFromNeighbors List of lists of coordinates received from each neighbor
  */
 void ParticleCartesianPartitioner::sendCoordinateListToNeighbors( arrayView1d< R1Tensor > const & particleCoordinatesSendingToNeighbors,
-                                                      MPI_iCommData & commData,
-                                                      stdVector< array1d< R1Tensor > > & particleCoordinatesReceivedFromNeighbors
-                                                      )
+                                                                  MPI_iCommData & commData,
+                                                                  stdVector< array1d< R1Tensor > > & particleCoordinatesReceivedFromNeighbors
+                                                                  )
 {
   // Number of neighboring partitions
   unsigned int nn = m_neighbors.size();
@@ -575,8 +591,8 @@ void ParticleCartesianPartitioner::sendCoordinateListToNeighbors( arrayView1d< R
 
 template< typename indexType >
 void ParticleCartesianPartitioner::sendListOfIndicesToNeighbors( stdVector< array1d< indexType > > & listSendingToEachNeighbor,
-                                                     MPI_iCommData & commData,
-                                                     stdVector< array1d< indexType > > & listReceivedFromEachNeighbor )
+                                                                 MPI_iCommData & commData,
+                                                                 stdVector< array1d< indexType > > & listReceivedFromEachNeighbor )
 {
   // Number of neighboring partitions
   unsigned int nn = m_neighbors.size();
@@ -673,10 +689,10 @@ void ParticleCartesianPartitioner::sendListOfIndicesToNeighbors( stdVector< arra
 }
 
 void ParticleCartesianPartitioner::sendParticlesToNeighbor( ParticleSubRegionBase & subRegion,
-                                                stdVector< int > const & newParticleStartingIndices,
-                                                stdVector< int > const & numberOfIncomingParticles,
-                                                MPI_iCommData & commData,
-                                                stdVector< array1d< localIndex > > const & particleLocalIndicesToSendToEachNeighbor )
+                                                            stdVector< int > const & newParticleStartingIndices,
+                                                            stdVector< int > const & numberOfIncomingParticles,
+                                                            MPI_iCommData & commData,
+                                                            stdVector< array1d< localIndex > > const & particleLocalIndicesToSendToEachNeighbor )
 {
   unsigned int nn = m_neighbors.size();
 

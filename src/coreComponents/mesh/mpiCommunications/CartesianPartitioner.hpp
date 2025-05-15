@@ -80,6 +80,27 @@ public:
   }
 
 
+  real64 * getLocalMin()
+  {
+    return m_localMin;
+  }
+
+  real64 * getLocalMax()
+  {
+    return m_localMax;
+  }
+
+  real64 * getGlobalMin()
+  {
+    return m_globalGridMin;
+  }
+
+  real64 * getGlobalMax()
+  {
+    return m_globalGridMax;
+  }
+
+
 private:
   void color() override;
 

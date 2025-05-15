@@ -53,14 +53,14 @@ DomainPartition::DomainPartition( string const & name,
 
 
 #if 1
-  this->registerWrapper< CartesianPartitioner, PartitionerBase >( keys::partitioner ).
+  this->registerWrapper< CartesianPartitioner, PartitionerBase >( keys::partitionerManager ).
     setRestartFlags( RestartFlags::NO_WRITE ).
     setSizedFromParent( false );
 
 #else
-  this->registerWrapper< ParMetisPartitioner, PartitionerBase >( keys::partitioner ).
+  this->registerWrapper< ParMetisPartitioner, PartitionerBase >( keys::partitionerManager ).
     setRestartFlags( RestartFlags::NO_WRITE ).
-    setSizedFromParent( false );  
+    setSizedFromParent( false );
 #endif
 
 
@@ -101,11 +101,9 @@ void DomainPartition::setupBaseLevelMeshGlobalInfo()
 {
   GEOS_MARK_FUNCTION;
 
-
-std::cout << "INSIDE DomainPartition::setupBaseLevelMeshGlobalInfo"<<std::endl;
 #if defined(GEOS_USE_MPI)
 
-  PartitionerBase & partitioner = getReference< PartitionerBase >( keys::partitioner );
+  PartitionerBase & partitioner = getReference< PartitionerBase >( keys::partitionerManager );
   m_neighbors = partitioner.getNeighbors();
 
   // Create an array of the first neighbors.
