@@ -126,7 +126,6 @@ TableCSVFormatter::~TableCSVFormatter()
   }
 }
 
-static constexpr string_view csvSeparator = ",";
 string TableCSVFormatter::headerToString() const
 {
   string result;

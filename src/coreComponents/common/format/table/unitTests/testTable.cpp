@@ -287,6 +287,13 @@ TEST( testTable, tableUniqueColumn )
              "---------------------------------------------------------------------------------------------------------------\n" );
 }
 
+TEST( testTable, emptyTable )
+{
+  string const title = "title";
+  TableLayout const tableLayout( title, {} );
+  EXPECT_EQ( tableLayout.getColumns().size(), 0 );
+}
+
 TEST( testTable, tableEmptyTitle )
 {
   TableLayout const tableLayout( {
@@ -684,7 +691,6 @@ TEST( testTable, table2DMismatchingCoordValues )
       values[t + p * numCol] = value;
     }
   }
-  arrayView1d< real64 const > const valuesConst = values;
 
   auto const testCoordinates = [&tableData2D, &values]( arrayView1d< real64 const > coordXValues,
                                                         arrayView1d< real64 const > coordYValues )
