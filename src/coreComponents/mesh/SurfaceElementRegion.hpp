@@ -110,7 +110,8 @@ public:
    */
   localIndex addToSurfaceMesh( FaceManager const * const faceManager,
                                ArrayOfArraysView< localIndex const > const & originalFaceToEdges,
-                               localIndex const faceIndices[2] );
+                               localIndex const faceIndices[2],
+                               SortedArray< localIndex > & connectedEdges );
 
   /**
    * @brief This function generates and adds entries to the face/fracture mesh.

@@ -89,11 +89,10 @@ void SurfaceElementRegion::initializePreSubGroups()
 
 localIndex SurfaceElementRegion::addToSurfaceMesh( FaceManager const * const faceManager,
                                                    ArrayOfArraysView< localIndex const >  const & originalFaceToEdgeMap,
-                                                   localIndex const faceIndices[2] )
+                                                   localIndex const faceIndices[2],
+                                                   SortedArray< localIndex > & connectedEdges )
 {
   localIndex rval = -1;
-
-  SortedArray< localIndex > connectedEdges;
 
   arrayView2d< localIndex const > const faceToElementRegion = faceManager->elementRegionList();
   arrayView2d< localIndex const > const faceToElementSubRegion = faceManager->elementSubRegionList();
@@ -188,48 +187,44 @@ localIndex SurfaceElementRegion::addToFractureMesh( real64 const time_np1,
                                                     ArrayOfArraysView< localIndex const >  const & originalFaceToEdgeMap,
                                                     localIndex const faceIndices[2] )
 {
-
-  localIndex const kfe = this->addToSurfaceMesh( faceManager, originalFaceToEdgeMap, faceIndices );
+  SortedArray< localIndex > connectedEdges;
+  localIndex const kfe = this->addToSurfaceMesh( faceManager, originalFaceToEdgeMap, faceIndices, connectedEdges );
 
   FaceElementSubRegion & subRegion = this->getUniqueSubRegion< FaceElementSubRegion >();
   arrayView1d< real64 > const ruptureTime = subRegion.getField< fields::ruptureTime >();
   ruptureTime( kfe ) = time_np1;
 
-  SurfaceElementSubRegion::EdgeMapType & edgeMap = subRegion.edgeList();
-  SortedArray< localIndex > connectedEdges;
-  for( localIndex a = 0; a < edgeMap.sizeOfArray( kfe ); ++a )
-  {
-    connectedEdges.insert( edgeMap[kfe][a] );
-  }
-
+  // Fill the connectivity between FaceElement entries. This is essentially a copy of the
+  // edgesToFaces map, but with differing offsets.
   for( auto const & edge : connectedEdges )
   {
-    if( subRegion.m_edgesTo2dFaces.count( edge ) == 0 )
+    // check to see if the edgesToFractureConnectors already have an entry
+    if( subRegion.m_edgesTo2dFaces.count( edge )==0 )
     {
+      // if not, then fill increase the size of the fractureConnectors to face elements map and
+      // fill the fractureConnectorsToEdges map with the current edge....and the inverse map too.
       subRegion.m_2dFaceTo2dElems.appendArray( 0 );
       subRegion.m_2dFaceToEdge.emplace_back( edge );
-      subRegion.m_edgesTo2dFaces[edge] = subRegion.m_2dFaceToEdge.size() - 1;
+      subRegion.m_edgesTo2dFaces[edge] = subRegion.m_2dFaceToEdge.size()-1;
     }
-
+    // now fill the fractureConnectorsToFaceElements map. This is analogous to the edge to face map
     localIndex const connectorIndex = subRegion.m_edgesTo2dFaces[edge];
     localIndex const numCells = subRegion.m_2dFaceTo2dElems.sizeOfArray( connectorIndex ) + 1;
     subRegion.m_2dFaceTo2dElems.resizeArray( connectorIndex, numCells );
-    subRegion.m_2dFaceTo2dElems[connectorIndex][ numCells - 1 ] = kfe;
+    subRegion.m_2dFaceTo2dElems[connectorIndex][ numCells-1 ] = kfe;
 
+    // And fill the list of connectors that will need stencil modifications
     subRegion.m_recalculateConnectionsFor2dFaces.insert( connectorIndex );
   }
 
   subRegion.calculateSingleElementGeometricQuantities( kfe, faceManager->faceArea() );
 
-  FaceElementSubRegion::FaceMapType & faceMap = subRegion.faceList();
+  // update the sets
+  FaceElementSubRegion::FaceMapType const & faceMap = subRegion.faceList();
   for( auto const & setIter : faceManager->sets().wrappers() )
   {
-    SortedArrayView< localIndex const > const & faceSet =
-      faceManager->sets().getReference< SortedArray< localIndex > >( setIter.first );
-
-    SortedArray< localIndex > & faceElementSet =
-      subRegion.sets().registerWrapper< SortedArray< localIndex > >( setIter.first ).reference();
-
+    SortedArrayView< localIndex const > const & faceSet = faceManager->sets().getReference< SortedArray< localIndex > >( setIter.first );
+    SortedArray< localIndex > & faceElementSet = subRegion.sets().registerWrapper< SortedArray< localIndex > >( setIter.first ).reference();
     for( localIndex a = 0; a < faceMap.size( 0 ); ++a )
     {
       if( faceSet.count( faceMap[a][0] ) )
