@@ -2109,7 +2109,6 @@ void CompositionalMultiphaseWell::printRates( real64 const & time_n,
       integer const numPhase = m_numPhases;
       integer const numComp = m_numComponents;
       integer const numPerf = subRegion.getPerforationData()->size();
-      string const massUnit = m_useMass ? "kg" : "mol";
 
       // control data
       WellControls const & wellControls = getWellControls( subRegion );
@@ -2122,7 +2121,6 @@ void CompositionalMultiphaseWell::printRates( real64 const & time_n,
         // bring everything back to host, capture the scalars by reference
         forAll< serialPolicy >( 1, [&numComp,
                                     &numPerf,
-                                    &massUnit,
                                     compPerfRate,
                                     &compRate] ( localIndex const )
         {
@@ -2174,6 +2172,7 @@ void CompositionalMultiphaseWell::printRates( real64 const & time_n,
       }
 
       localIndex const iwelemRef = subRegion.getTopWellElementIndex();
+      string const massUnit = m_useMass ? "kg" : "mol";
 
       // subRegion data
 
