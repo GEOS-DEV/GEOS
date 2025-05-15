@@ -84,6 +84,7 @@
 /src/coreComponents/physicsSolvers/wavePropagation    @sframba @acitrain
 /src/coreComponents/schema
 /src/coreComponents/unitTests                         @rrsettgast @CusiniM @corbett5 @wrtobin @MelReyCG
+/src/docs                                             @rrsettgast @CusiniM @herve-gross @castelletto1 @jhuang2601 @dkachuma @paveltomin @OmarDuran
 
 # Here is a list of GEOS-DEV members as of 2024-07-02
 # username           name
