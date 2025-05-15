@@ -69,6 +69,9 @@
 #endif
 
 #include <numeric>
+#include "common/format/table/TableData.hpp"
+#include "common/format/table/TableFormatter.hpp"
+#include "common/format/table/TableLayout.hpp"
 
 namespace geos
 {
@@ -139,7 +142,7 @@ ENUM_STRINGS( VTKLegacyDatasetType,
  * @note This function makes MPI calls.
  */
 template< typename T >
-std::vector< T > collectUniqueValues( std::vector< T > const & data )
+stdVector< T > collectUniqueValues( stdVector< T > const & data )
 {
   // Exchange the sizes of the data across all ranks.
   array1d< int > dataSizes( MpiWrapper::commSize() );
@@ -150,9 +153,9 @@ std::vector< T > collectUniqueValues( std::vector< T > const & data )
   // Once the MPI exchange is done, `allData` will contain all the data of all the MPI ranks.
   // We want all ranks to get all the data. But each rank may have a different size of information.
   // Therefore, we use `allgatherv` that does not impose the same size across ranks like `allgather` does.
-  std::vector< T > allData( totalDataSize );
+  stdVector< T > allData( totalDataSize );
   // `displacements` is the offset (relative to the receive buffer) to store the data for each rank.
-  std::vector< int > displacements( MpiWrapper::commSize(), 0 );
+  stdVector< int > displacements( MpiWrapper::commSize(), 0 );
   std::partial_sum( dataSizes.begin(), dataSizes.end() - 1, displacements.begin() + 1 );
   MpiWrapper::allgatherv( data.data(), data.size(), allData.data(), dataSizes.data(), displacements.data(), MPI_COMM_GEOS );
 
@@ -263,7 +266,7 @@ buildElemToNodesImpl( AllMeshes & meshes,
   for( auto & [fractureName, fractureMesh]: meshes.getFaceBlocks() )
   {
     num2dCells += fractureMesh->GetNumberOfCells();
-    collocatedNodesMap.insert( { fractureName, CollocatedNodes( fractureName, fractureMesh, false ) } );
+    collocatedNodesMap.insert( { fractureName, CollocatedNodes( fractureName, fractureMesh ) } );
   }
   localIndex const numCells = num3dCells + num2dCells;
   array1d< INDEX_TYPE > nodeCounts( numCells );
@@ -710,8 +713,8 @@ redistributeByKdTree( vtkDataSet & mesh )
   return vtkDataSet::SafeDownCast( rdsf->GetOutputDataObject( 0 ) );
 }
 
-std::vector< int >
-findNeighborRanks( std::vector< vtkBoundingBox > boundingBoxes )
+stdVector< int >
+findNeighborRanks( stdVector< vtkBoundingBox > boundingBoxes )
 {
   int const numParts = LvArray::integerConversion< int >( boundingBoxes.size() );
   int const thisRank = MpiWrapper::commRank();
@@ -723,7 +726,7 @@ findNeighborRanks( std::vector< vtkBoundingBox > boundingBoxes )
     box.ScaleAboutCenter( inflateFactor );
   }
 
-  std::vector< int > neighbors;
+  stdVector< int > neighbors;
   for( int i = 0; i < numParts; ++i )
   {
     if( i != thisRank && boundingBoxes[thisRank].Intersects( boundingBoxes[i] ) )
@@ -906,7 +909,7 @@ redistributeMeshes( integer const logLevel,
 {
   GEOS_MARK_FUNCTION;
 
-  std::vector< vtkSmartPointer< vtkDataSet > > fractures;
+  stdVector< vtkSmartPointer< vtkDataSet > > fractures;
   for( auto & nameToFracture: namesToFractures )
   {
     fractures.push_back( nameToFracture.second );
@@ -955,7 +958,7 @@ redistributeMeshes( integer const logLevel,
   // Logging some information about the redistribution.
   {
     string const pattern = "{}: {}";
-    std::vector< string > messages;
+    stdVector< string > messages;
     messages.push_back( GEOS_FMT( pattern, "Local mesh size", result.getMainMesh()->GetNumberOfCells() ) );
     for( auto const & [faceName, faceMesh]: result.getFaceBlocks() )
     {
@@ -1107,10 +1110,10 @@ ElementType convertVtkToGeosxElementType( vtkCell *cell )
  * @param[in] mesh a vtk grid
  * @return a map of cells grouped by type
  */
-std::map< ElementType, std::vector< vtkIdType > >
+std::map< ElementType, stdVector< vtkIdType > >
 splitCellsByType( vtkDataSet & mesh )
 {
-  std::map< ElementType, std::vector< vtkIdType > > typeToCells;
+  std::map< ElementType, stdVector< vtkIdType > > typeToCells;
   vtkIdType const numCells = mesh.GetNumberOfCells();
 
   // Count the number of each cell type
@@ -1122,7 +1125,7 @@ splitCellsByType( vtkDataSet & mesh )
   }
 
   // Allocate space to hold cell id lists by type
-  std::array< std::vector< vtkIdType >, numElementTypes() > cellListsByType;
+  std::array< stdVector< vtkIdType >, numElementTypes() > cellListsByType;
   for( integer t = 0; t < numElementTypes(); ++t )
   {
     cellListsByType[t].reserve( cellTypeCounts[t] );
@@ -1156,7 +1159,7 @@ splitCellsByType( vtkDataSet & mesh )
       case 2:
       {
         // Merge all 2D elements together as polygons (we don't track their shapes).
-        std::vector< vtkIdType > & surfaceCells = typeToCells[ ElementType::Polygon ];
+        stdVector< vtkIdType > & surfaceCells = typeToCells[ ElementType::Polygon ];
         surfaceCells.insert( surfaceCells.end(), cellListsByType[t].begin(), cellListsByType[t].end() );
         break;
       }
@@ -1184,15 +1187,15 @@ splitCellsByType( vtkDataSet & mesh )
  * @return a map of cell lists grouped by type
  */
 CellMapType
-splitCellsByTypeAndAttribute( std::map< ElementType, std::vector< vtkIdType > > & typeToCells,
+splitCellsByTypeAndAttribute( std::map< ElementType, stdVector< vtkIdType > > & typeToCells,
                               vtkDataArray * const attributeDataArray )
 {
   CellMapType typeToAttributeToCells;
   for( auto & t2c : typeToCells )
   {
     ElementType const elemType = t2c.first;
-    std::vector< vtkIdType > & cells = t2c.second;
-    std::unordered_map< int, std::vector< vtkIdType > > & attributeToCells = typeToAttributeToCells[elemType];
+    stdVector< vtkIdType > & cells = t2c.second;
+    std::unordered_map< int, stdVector< vtkIdType > > & attributeToCells = typeToAttributeToCells[elemType];
 
     if( attributeDataArray == nullptr )
     {
@@ -1235,13 +1238,13 @@ splitCellsByTypeAndAttribute( std::map< ElementType, std::vector< vtkIdType > > 
 void extendCellMapWithRemoteKeys( CellMapType & cellMap )
 {
   // Gather all element types encountered on any rank and enrich the local collection
-  std::vector< ElementType > allElementTypes = collectUniqueValues( mapKeys( cellMap ) );
-  std::vector< int > allCellAttributes;
+  stdVector< ElementType > allElementTypes = collectUniqueValues( mapKeys( cellMap ) );
+  stdVector< int > allCellAttributes;
   for( auto const & typeRegions : cellMap )
   {
     if( getElementDim( typeRegions.first ) == 3 )
     {
-      std::vector< int > const attrs = mapKeys( typeRegions.second );
+      stdVector< int > const attrs = mapKeys( typeRegions.second );
       allCellAttributes.insert( allCellAttributes.end(), attrs.begin(), attrs.end() );
     }
   }
@@ -1260,10 +1263,10 @@ void extendCellMapWithRemoteKeys( CellMapType & cellMap )
   }
 
   // Treat surfaces separately - and avoid inadvertently creating a map entry for polygons
-  std::vector< int > const surfaceAttributes = cellMap.count( ElementType::Polygon ) > 0
+  stdVector< int > const surfaceAttributes = cellMap.count( ElementType::Polygon ) > 0
                                              ? mapKeys( cellMap.at( ElementType::Polygon ) )
-                                             : std::vector< int >();
-  std::vector< int > allSurfaceAttributes = collectUniqueValues( surfaceAttributes );
+                                             : stdVector< int >();
+  stdVector< int > allSurfaceAttributes = collectUniqueValues( surfaceAttributes );
   for( int attrValue: allSurfaceAttributes )
   {
     cellMap[ElementType::Polygon][attrValue];
@@ -1276,7 +1279,7 @@ void extendCellMapWithRemoteKeys( CellMapType & cellMap )
  * @param cell The vtk cell, type VTK_POLYHEDRON
  * @return The node ordering
  */
-std::vector< localIndex > getTetrahedronNodeOrderingFromPolyhedron( vtkCell * const cell )
+stdVector< localIndex > getTetrahedronNodeOrderingFromPolyhedron( vtkCell * const cell )
 {
   GEOS_ERROR_IF_NE_MSG( cell->GetCellType(), VTK_POLYHEDRON, "Input must be a VTK_POLYHEDRON." );
 
@@ -1318,12 +1321,12 @@ std::vector< localIndex > getTetrahedronNodeOrderingFromPolyhedron( vtkCell * co
  * permutations. But at this point computationalGeometry::prismVolume< NUM_SIDES >
  * is not ready.
  */
-std::vector< localIndex > getHexahedronNodeOrderingFromPolyhedron( vtkCell * const cell )
+stdVector< localIndex > getHexahedronNodeOrderingFromPolyhedron( vtkCell * const cell )
 {
   GEOS_ERROR_IF_NE_MSG( cell->GetCellType(), VTK_POLYHEDRON, "Input must be a VTK_POLYHEDRON." );
 
   localIndex iFace;
-  std::vector< localIndex > nodeOrder( 8 );
+  stdVector< localIndex > nodeOrder( 8 );
 
   // Generate global to local map
   std::unordered_map< localIndex, localIndex > G2L;
@@ -1393,14 +1396,14 @@ std::vector< localIndex > getHexahedronNodeOrderingFromPolyhedron( vtkCell * con
  * permutations. But at this point computationalGeometry::prismVolume< NUM_SIDES >
  * is not ready.
  */
-std::vector< localIndex > getWedgeNodeOrderingFromPolyhedron( vtkCell * const cell )
+stdVector< localIndex > getWedgeNodeOrderingFromPolyhedron( vtkCell * const cell )
 {
   GEOS_ERROR_IF_NE_MSG( cell->GetCellType(), VTK_POLYHEDRON, "Input must be a VTK_POLYHEDRON." );
 
   localIndex iFace;
-  std::vector< localIndex > nodeTri0( 3 );
-  std::vector< localIndex > nodeTri1( 3 );
-  std::vector< localIndex > nodeOrder( 6 );
+  stdVector< localIndex > nodeTri0( 3 );
+  stdVector< localIndex > nodeTri1( 3 );
+  stdVector< localIndex > nodeOrder( 6 );
 
   // Generate global to local map
   std::unordered_map< localIndex, localIndex > G2L;
@@ -1432,17 +1435,17 @@ std::vector< localIndex > getWedgeNodeOrderingFromPolyhedron( vtkCell * const ce
   {
     auto edgeNode0 = cell->GetEdge( iEdge )->GetPointId( 0 );
     auto edgeNode1 = cell->GetEdge( iEdge )->GetPointId( 1 );
-    auto it0 = std::find( &nodeTri0[0], &nodeTri0[3], edgeNode0 );
-    auto it1 = std::find( &nodeTri0[0], &nodeTri0[3], edgeNode1 );
+    auto it0 = std::find( nodeTri0.begin(), nodeTri0.end(), edgeNode0 );
+    auto it1 = std::find( nodeTri0.begin(), nodeTri0.end(), edgeNode1 );
 
-    if( it0 != &nodeTri0[3] && it1 == &nodeTri0[3] )
+    if( it0 != nodeTri0.end() && it1 == nodeTri0.end() )
     {
-      nodeTri1[std::distance( &nodeTri0[0], it0 )] = edgeNode1;
+      nodeTri1[std::distance( nodeTri0.begin(), it0 )] = edgeNode1;
     }
 
-    if( it0 == &nodeTri0[3] && it1 != &nodeTri0[3] )
+    if( it0 == nodeTri0.end() && it1 != nodeTri0.end() )
     {
-      nodeTri1[std::distance( &nodeTri0[0], it1 )] = edgeNode0;
+      nodeTri1[std::distance( nodeTri0.begin(), it1 )] = edgeNode0;
     }
   }
 
@@ -1489,13 +1492,13 @@ std::vector< localIndex > getWedgeNodeOrderingFromPolyhedron( vtkCell * const ce
  * @param cell The vtk cell, type VTK_POLYHEDRON
  * @return The node ordering
  */
-std::vector< localIndex > getPyramidNodeOrderingFromPolyhedron( vtkCell * const cell )
+stdVector< localIndex > getPyramidNodeOrderingFromPolyhedron( vtkCell * const cell )
 {
   GEOS_ERROR_IF_NE_MSG( cell->GetCellType(), VTK_POLYHEDRON, "Input must be a VTK_POLYHEDRON." );
 
   localIndex iPoint;
   localIndex iFace;
-  std::vector< localIndex > nodeOrder( 5 );
+  stdVector< localIndex > nodeOrder( 5 );
 
   // Generate global to local map
   std::unordered_map< localIndex, localIndex > G2L;
@@ -1564,12 +1567,12 @@ std::vector< localIndex > getPyramidNodeOrderingFromPolyhedron( vtkCell * const 
  * @return The node ordering
  */
 template< integer NUM_SIDES >
-std::vector< localIndex > getPrismNodeOrderingFromPolyhedron( vtkCell * const cell )
+stdVector< localIndex > getPrismNodeOrderingFromPolyhedron( vtkCell * const cell )
 {
   GEOS_ERROR_IF_NE_MSG( cell->GetCellType(), VTK_POLYHEDRON, "Input must be a VTK_POLYHEDRON." );
 
   localIndex iFace;
-  std::vector< localIndex > nodeOrder( 2*NUM_SIDES );
+  stdVector< localIndex > nodeOrder( 2*NUM_SIDES );
 
   // Generate global to local map
   std::unordered_map< localIndex, localIndex > G2L;
@@ -1644,7 +1647,7 @@ CellMapType buildCellMap( vtkDataSet & mesh, string const & attributeName )
 {
 
   // First, pass through all VTK cells and split them int sub-lists based on type.
-  std::map< ElementType, std::vector< vtkIdType > > typeToCells = splitCellsByType( mesh );
+  std::map< ElementType, stdVector< vtkIdType > > typeToCells = splitCellsByType( mesh );
 
   // Now, actually split into groups according to region attribute, if present
   vtkDataArray * const attributeDataArray =
@@ -1683,7 +1686,7 @@ bool vtkToGeosxNodeOrderingExists( ElementType const elemType )
   }
 }
 
-std::vector< int > getVtkToGeosxNodeOrdering( ElementType const elemType )
+stdVector< int > getVtkToGeosxNodeOrdering( ElementType const elemType )
 {
   switch( elemType )
   {
@@ -1706,7 +1709,7 @@ std::vector< int > getVtkToGeosxNodeOrdering( ElementType const elemType )
   return {};
 }
 
-std::vector< int > getVtkToGeosxNodeOrdering( VTKCellType const vtkType )
+stdVector< int > getVtkToGeosxNodeOrdering( VTKCellType const vtkType )
 {
   switch( vtkType )
   {
@@ -1730,8 +1733,8 @@ std::vector< int > getVtkToGeosxNodeOrdering( VTKCellType const vtkType )
   return {};
 }
 
-std::vector< int > getVtkToGeosxPolyhedronNodeOrdering( ElementType const elemType,
-                                                        vtkCell *cell )
+stdVector< int > getVtkToGeosxPolyhedronNodeOrdering( ElementType const elemType,
+                                                      vtkCell *cell )
 {
   GEOS_ERROR_IF_NE_MSG( cell->GetCellType(), VTK_POLYHEDRON, "Input must be a VTK_POLYHEDRON." );
   switch( elemType )
@@ -1763,7 +1766,7 @@ std::vector< int > getVtkToGeosxPolyhedronNodeOrdering( ElementType const elemTy
  * @param[in,out] cellBlock The cell block to be written
  */
 void fillCellBlock( vtkDataSet & mesh,
-                    std::vector< vtkIdType > const & cellIds,
+                    stdVector< vtkIdType > const & cellIds,
                     CellBlock & cellBlock )
 {
   localIndex const numNodesPerElement = cellBlock.numNodesPerElement();
@@ -1784,12 +1787,12 @@ void fillCellBlock( vtkDataSet & mesh,
 
   // Writing connectivity and Local to Global
   ElementType const elemType = cellBlock.getElementType();
-  std::vector< int > const nodeOrderFixed = vtkToGeosxNodeOrderingExists( elemType )
+  stdVector< int > const nodeOrderFixed = vtkToGeosxNodeOrderingExists( elemType )
                                           ? getVtkToGeosxNodeOrdering( elemType )
-                                          : std::vector< int >();
-  std::vector< int > const nodeOrderVoxel = ( elemType == ElementType::Hexahedron)
+                                          : stdVector< int >();
+  stdVector< int > const nodeOrderVoxel = ( elemType == ElementType::Hexahedron)
                                           ? getVtkToGeosxNodeOrdering( VTK_VOXEL )
-                                          : std::vector< int >();
+                                          : stdVector< int >();
 
   for( vtkIdType c: cellIds )
   {
@@ -1816,7 +1819,7 @@ void fillCellBlock( vtkDataSet & mesh,
   }
 }
 
-void importMaterialField( std::vector< vtkIdType > const & cellIds,
+void importMaterialField( stdVector< vtkIdType > const & cellIds,
                           vtkDataArray * vtkArray,
                           WrapperBase & wrapper )
 {
@@ -1853,7 +1856,7 @@ void importMaterialField( std::vector< vtkIdType > const & cellIds,
   }, wrapper );
 }
 
-void importRegularField( std::vector< vtkIdType > const & cellIds,
+void importRegularField( stdVector< vtkIdType > const & cellIds,
                          vtkDataArray * vtkArray,
                          WrapperBase & wrapper )
 {
@@ -1889,62 +1892,71 @@ void importRegularField( std::vector< vtkIdType > const & cellIds,
 void importRegularField( vtkDataArray * vtkArray,
                          WrapperBase & wrapper )
 {
-  std::vector< vtkIdType > cellIds( wrapper.size() );
+  stdVector< vtkIdType > cellIds( wrapper.size() );
   std::iota( cellIds.begin(), cellIds.end(), 0 );
   return importRegularField( cellIds, vtkArray, wrapper );
 }
 
 
-void printMeshStatistics( vtkDataSet & mesh,
+void printMeshStatistics( vtkDataSet &,
                           CellMapType const & cellMap,
                           MPI_Comm const comm )
 {
+  auto accumulateElemsCount = []( std::map< ElementType, globalIndex > & elemsTarget ) -> globalIndex
+  {
+    return std::accumulate(
+      std::begin( elemsTarget ), std::end( elemsTarget ), globalIndex{0},
+      []( std::size_t const previous, auto const & elems )
+    { return previous + elems.second; } );
+  };
+
   int const rank = MpiWrapper::commRank( comm );
   int const size = MpiWrapper::commSize( comm );
 
-  vtkIdTypeArray const & globalPointId = *vtkIdTypeArray::FastDownCast( mesh.GetPointData()->GetGlobalIds() );
-  RAJA::ReduceMax< parallelHostReduce, globalIndex > maxGlobalNode( -1 );
-  forAll< parallelHostPolicy >( mesh.GetNumberOfPoints(), [&globalPointId, maxGlobalNode]( vtkIdType const k )
-  {
-    maxGlobalNode.max( globalPointId.GetValue( k ) );
-  } );
-  globalIndex const numGlobalNodes = MpiWrapper::max( maxGlobalNode.get(), comm ) + 1;
-
-  localIndex numLocalElems = 0;
-  globalIndex numGlobalElems = 0;
-  std::map< ElementType, globalIndex > elemCounts;
+  std::map< ElementType, globalIndex > totalLocalElems;
+  std::map< ElementType, globalIndex > minLocalElemsCounts;
+  std::map< ElementType, globalIndex > avgLocalElemsCounts;
+  std::map< ElementType, globalIndex > maxLocalElemsCounts;
 
   for( auto const & typeToCells : cellMap )
   {
     localIndex const localElemsOfType =
       std::accumulate( typeToCells.second.begin(), typeToCells.second.end(), localIndex{},
                        []( auto const s, auto const & region ) { return s + region.second.size(); } );
-    numLocalElems += localElemsOfType;
 
-    globalIndex const globalElemsOfType = MpiWrapper::sum( globalIndex{ localElemsOfType }, comm );
-    numGlobalElems += globalElemsOfType;
-    elemCounts[typeToCells.first] = globalElemsOfType;
+    totalLocalElems[typeToCells.first] =  MpiWrapper::sum( globalIndex{ localElemsOfType }, comm );
+    minLocalElemsCounts[typeToCells.first] =  MpiWrapper::min( localElemsOfType );
+    avgLocalElemsCounts[typeToCells.first] =  LvArray::integerConversion< localIndex >( MpiWrapper::sum( localElemsOfType ) / size );
+    maxLocalElemsCounts[typeToCells.first] = MpiWrapper::max( localElemsOfType );
   }
-
-  localIndex const minLocalElems = MpiWrapper::min( numLocalElems );
-  localIndex const maxLocalElems = MpiWrapper::max( numLocalElems );
-  localIndex const avgLocalElems = LvArray::integerConversion< localIndex >( numGlobalElems / size );
 
   if( rank == 0 )
   {
-    int const widthGlobal = static_cast< int >( std::log10( std::max( numGlobalElems, numGlobalNodes ) ) + 1 );
-    GEOS_LOG( GEOS_FMT( "Number of nodes: {:>{}}", numGlobalNodes, widthGlobal ) );
-    GEOS_LOG( GEOS_FMT( "  Number of elems: {:>{}}", numGlobalElems, widthGlobal ) );
-    for( auto const & typeCount: elemCounts )
-    {
-      GEOS_LOG( GEOS_FMT( "{:>17}: {:>{}}", toString( typeCount.first ), typeCount.second, widthGlobal ) );
-    }
 
-    int const widthLocal = static_cast< int >( std::log10( maxLocalElems ) + 1 );
-    GEOS_LOG( GEOS_FMT( "Load balancing: {1:>{0}} {2:>{0}} {3:>{0}}\n"
-                        "(element/rank): {4:>{0}} {5:>{0}} {6:>{0}}",
-                        widthLocal, "min", "avg", "max",
-                        minLocalElems, avgLocalElems, maxLocalElems ) );
+    auto sumOfElemsType = accumulateElemsCount( totalLocalElems );
+    auto sumOfMinElemsType = accumulateElemsCount( minLocalElemsCounts );
+    auto sumOfAvgElemsType = accumulateElemsCount( avgLocalElemsCounts );
+    auto sumOfMaxElemsType = accumulateElemsCount( maxLocalElemsCounts );
+
+    TableLayout const elemsLayout( "Load balancing, element / rank",
+                                   { TableLayout::Column()
+                                       .setName( "Element type" )
+                                       .setValuesAlignment( TableLayout::Alignment::left ),
+                                     "Total over ranks",
+                                     "minimum",
+                                     "average",
+                                     "maximum" } );
+    TableData elemsData;
+    for( auto const & typeCount: totalLocalElems )
+    {
+      elemsData.addRow( typeCount.first, typeCount.second,
+                        minLocalElemsCounts[typeCount.first],
+                        avgLocalElemsCounts[typeCount.first],
+                        maxLocalElemsCounts[typeCount.first] );
+    }
+    elemsData.addRow( "total elements", sumOfElemsType, sumOfMinElemsType, sumOfAvgElemsType, sumOfMaxElemsType );
+    TableTextFormatter elemsText( elemsLayout );
+    GEOS_LOG_RANK_0( elemsText.toString( elemsData ));
   }
 }
 
@@ -2102,11 +2114,11 @@ void writeCells( integer const logLevel,
     {
       continue;
     }
-    std::unordered_map< int, std::vector< vtkIdType > > const & regionIdToCellIds = typeRegions.second;
+    std::unordered_map< int, stdVector< vtkIdType > > const & regionIdToCellIds = typeRegions.second;
     for( auto const & regionCells : regionIdToCellIds )
     {
       int const regionId = regionCells.first;
-      std::vector< vtkIdType > const & cellIds = regionCells.second;
+      stdVector< vtkIdType > const & cellIds = regionCells.second;
 
       string const cellBlockName = vtk::buildCellBlockName( elemType, regionId );
       GEOS_LOG_RANK_0_IF( logLevel >= 1, "Importing cell block " << cellBlockName );
@@ -2135,7 +2147,7 @@ void writeSurfaces( integer const logLevel,
   for( auto const & surfaceCells: cellMap.at( ElementType::Polygon ) )
   {
     int const surfaceId = surfaceCells.first;
-    std::vector< vtkIdType > const & cellIds = surfaceCells.second;
+    stdVector< vtkIdType > const & cellIds = surfaceCells.second;
     string const surfaceName = std::to_string( surfaceId );
     GEOS_LOG_RANK_0_IF( logLevel >= 1, "Importing surface " << surfaceName );
 

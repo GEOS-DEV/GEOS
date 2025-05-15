@@ -93,7 +93,7 @@ void BlackOilFluid::readInputDataFromPVTFiles()
   extendUndersaturatedProperties();
 
   // refine table branches
-  refineUndersaturatedTables( 100 );
+  refineUndersaturatedTables( numRefinedPoints );
 
   // check consistency
   checkTableConsistency();
@@ -279,7 +279,7 @@ void BlackOilFluid::createUndersaturatedProperties()
 
       // Step 1: collect all the pressure values in the undersaturated pressure tables on these branches
 
-      std::vector< real64 > allPressures( m_PVTO.undersaturatedPressure[iBranchUp].begin(), m_PVTO.undersaturatedPressure[iBranchUp].end() );
+      stdVector< real64 > allPressures( m_PVTO.undersaturatedPressure[iBranchUp].begin(), m_PVTO.undersaturatedPressure[iBranchUp].end() );
       allPressures.insert( allPressures.end(), m_PVTO.undersaturatedPressure[iBranchLow].begin(), m_PVTO.undersaturatedPressure[iBranchLow].end() );
       std::sort( allPressures.begin(), allPressures.end() );
       allPressures.erase( std::unique( allPressures.begin(), allPressures.end() ), allPressures.end() );

@@ -66,7 +66,7 @@ void BlockPreconditioner< LAI >::reinitialize( Matrix const & mat, DofManager co
 
 template< typename LAI >
 void BlockPreconditioner< LAI >::setupBlock( localIndex const blockIndex,
-                                             std::vector< DofManager::SubComponent > blockDofs,
+                                             stdVector< DofManager::SubComponent > blockDofs,
                                              std::unique_ptr< PreconditionerBase< LAI > > solver,
                                              real64 const scaling )
 {
