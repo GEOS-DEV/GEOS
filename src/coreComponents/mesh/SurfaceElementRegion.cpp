@@ -89,11 +89,10 @@ void SurfaceElementRegion::initializePreSubGroups()
 
 localIndex SurfaceElementRegion::addToSurfaceMesh( FaceManager const * const faceManager,
                                                    ArrayOfArraysView< localIndex const >  const & originalFaceToEdgeMap,
-                                                   localIndex const faceIndices[2],
-                                                   SortedArray< localIndex > & connectedEdges )
+                                                   localIndex const faceIndices[2])
 {
   localIndex rval = -1;
-
+  SortedArray< localIndex > connectedEdges;
   arrayView2d< localIndex const > const faceToElementRegion = faceManager->elementRegionList();
   arrayView2d< localIndex const > const faceToElementSubRegion = faceManager->elementSubRegionList();
   arrayView2d< localIndex const > const faceToElementIndex = faceManager->elementList();
@@ -187,17 +186,19 @@ localIndex SurfaceElementRegion::addToFractureMesh( real64 const time_np1,
                                                     ArrayOfArraysView< localIndex const >  const & originalFaceToEdgeMap,
                                                     localIndex const faceIndices[2] )
 {
-  SortedArray< localIndex > connectedEdges;
-  localIndex const kfe = this->addToSurfaceMesh( faceManager, originalFaceToEdgeMap, faceIndices, connectedEdges );
+  localIndex const kfe = this->addToSurfaceMesh( faceManager, originalFaceToEdgeMap, faceIndices);
 
   FaceElementSubRegion & subRegion = this->getUniqueSubRegion< FaceElementSubRegion >();
   arrayView1d< real64 > const ruptureTime = subRegion.getField< fields::ruptureTime >();
   ruptureTime( kfe ) = time_np1;
 
+  SurfaceElementSubRegion::EdgeMapType & edgeMap = subRegion.edgeList();
   // Fill the connectivity between FaceElement entries. This is essentially a copy of the
   // edgesToFaces map, but with differing offsets.
-  for( auto const & edge : connectedEdges )
+  for( localIndex a = 0; a < edgeMap.sizeOfArray(kfe); ++a )
   {
+    const localIndex edge = edgeMap[kfe][a];
+    
     // check to see if the edgesToFractureConnectors already have an entry
     if( subRegion.m_edgesTo2dFaces.count( edge )==0 )
     {
