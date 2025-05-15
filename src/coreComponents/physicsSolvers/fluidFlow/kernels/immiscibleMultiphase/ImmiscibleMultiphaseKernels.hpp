@@ -849,6 +849,10 @@ public:
                                        integer const hasCapPressure,
                                        integer const useTotalMassEquation,
                                        integer const checkPhasePresenceInGravity,
+                                       string_array const & interfaceFaceSetNames,
+                                       stdVector< std::array< std::tuple< constitutive::ConstitutiveBase *,
+                                                         constitutive::ConstitutiveBase *,
+                                                         constitutive::ConstitutiveBase * >, 2 > > const & interfaceConstitutivePairs,
                                        localIndex const GEOS_UNUSED_PARAM( domainSize ) )
     : Base( numPhases,
             rankOffset,
@@ -865,7 +869,9 @@ public:
             useTotalMassEquation,
             checkPhasePresenceInGravity ),
     m_capPressureWrapper( capPressureWrapper ),
-    m_relPermWrapper( relPermWrapper )
+    m_relPermWrapper( relPermWrapper ),
+    m_interfaceFaceSetNames( interfaceFaceSetNames ), 
+    m_interfaceConstitutivePairs( interfaceConstitutivePairs )
   {}
 
   /**
@@ -1748,6 +1754,13 @@ protected:
   /// Reference to the capillary pressure wrapper
   CAPPRESWRAPPER const m_capPressureWrapper;
   RELPERMWRAPPER const m_relPermWrapper;
+
+  string_array const m_interfaceFaceSetNames;
+
+  stdVector< std::array< std::tuple< constitutive::ConstitutiveBase *,
+                                     constitutive::ConstitutiveBase *,
+                                     constitutive::ConstitutiveBase * >, 2 > >  const m_interfaceConstitutivePairs;
+
 };
 
 
@@ -1836,6 +1849,10 @@ public:
                    STENCILWRAPPER const & stencilWrapper,
                    CAPPRESWRAPPER const & capPresWrapper,
                    RELPERMWRAPPER const & relPermWrapper,
+                   string_array const & m_interfaceFaceSetNames,
+                   stdVector< std::array< std::tuple< constitutive::ConstitutiveBase *,
+                                     constitutive::ConstitutiveBase *,
+                                     constitutive::ConstitutiveBase * >, 2 > > const & m_interfaceConstitutivePairs,
                    ElementSubRegionBase const & subRegion,
                    real64 const & dt,
                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
@@ -1858,7 +1875,7 @@ public:
     kernelType kernel( numPhases, rankOffset, stencilWrapper, capPresWrapper, relPermWrapper, dofNumberAccessor,
                        flowAccessors, fluidAccessors, capPressureAccessors, permAccessors,
                        dt, localMatrix, localRhs, hasCapPressure, useTotalMassEquation,
-                       checkPhasePresenceInGravity, domainSize );
+                       checkPhasePresenceInGravity, m_interfaceFaceSetNames, m_interfaceConstitutivePairs, domainSize );
     kernelType::template launch< POLICY >( stencilWrapper.size(), kernel );
   }
 };
