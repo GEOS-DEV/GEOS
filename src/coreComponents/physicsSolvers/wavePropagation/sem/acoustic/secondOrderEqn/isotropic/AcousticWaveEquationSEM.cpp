@@ -1177,7 +1177,7 @@ void AcousticWaveEquationSEM::computeUnknowns( real64 const & time_n,
 
   if( m_attenuationType == WaveSolverUtils::AttenuationType::sls )
   {
-    auto kernelFactory = acousticWaveEquationSEMKernels::ExplicitAcousticAttenuativeSEMFactory( dt );
+    auto kernelFactoryA = acousticWaveEquationSEMKernels::ExplicitAcousticAttenuativeSEMFactory( dt );
     finiteElement::
       regionBasedKernelApplication< EXEC_POLICY,
                                     constitutive::NullModel,
@@ -1185,7 +1185,7 @@ void AcousticWaveEquationSEM::computeUnknowns( real64 const & time_n,
                                                             regionNames,
                                                             getDiscretizationName(),
                                                             "",
-                                                            kernelFactory );
+                                                            kernelFactoryA );
   }
 
   //Modification of cycleNember useful when minTime < 0
