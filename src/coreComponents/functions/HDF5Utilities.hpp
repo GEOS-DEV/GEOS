@@ -17,7 +17,7 @@
  * @file HDF5Utilities.hpp
  */
 
- #ifndef GEOS_FUNCTIONS_HDF5UTILITIES_HPP_
+#ifndef GEOS_FUNCTIONS_HDF5UTILITIES_HPP_
 #define GEOS_FUNCTIONS_HDF5UTILITIES_HPP_
 
 #include "common/DataTypes.hpp"
@@ -25,7 +25,6 @@
 
 // Forward declarations for HDF5 types
 typedef int64_t hid_t;    // HDF5 identifier type
-typedef unsigned long long hsize_t; // HDF5 size type
 
 namespace geos
 {
@@ -59,33 +58,21 @@ private:
   string m_filename;
 };
 
-struct DatasetHandle
-{
-  DatasetHandle( SerialHDF5File const & hdf5File, string const & datasetName, int const expectedDims );
-  ~DatasetHandle();
-
-  DatasetHandle( const DatasetHandle & ) = delete;
-  DatasetHandle & operator=( const DatasetHandle & ) = delete;
-
-  DatasetHandle( DatasetHandle && other ) noexcept;
-  DatasetHandle & operator=( DatasetHandle && other ) noexcept;
-
-  bool datasetExists( hid_t const & fileId, string const & datasetName );
-
-  string m_datasetName;
-  hid_t datasetId = -1;
-  hid_t spaceId = -1;
-  hid_t typeId = -1;
-  array1d< hsize_t > dims;   // Store dataset dimensions
-};
-
 class SerialHDF5Reader
 {
 public:
   explicit SerialHDF5Reader( string const & filename );
 
   template< typename T >
-  array1d< T > read1DAs( string const & datasetName, int const expectedDims ) const;
+  array1d< T > read1DAs( string const & datasetName, int const expectedDims ) const
+  {
+    static_assert( std::is_same_v< T, uint8_t > || 
+                   std::is_same_v< T, localIndex > ||
+                   std::is_same_v< T, real32 > ||
+                   std::is_same_v< T, real64 > ,
+                   "Unsupported template type in read1DAs" );
+    return {};
+  }
 
 private:
   SerialHDF5File m_file;
@@ -94,7 +81,10 @@ private:
 
 // Specializations for supported types
 template<>
-array1d< globalIndex > SerialHDF5Reader::read1DAs< globalIndex >( const std::string & datasetName, const int expectedDims ) const;
+array1d< uint8_t > SerialHDF5Reader::read1DAs< uint8_t >( const std::string & datasetName, const int expectedDims ) const;
+
+template<>
+array1d< localIndex > SerialHDF5Reader::read1DAs< localIndex >( const std::string & datasetName, const int expectedDims ) const;
 
 template<>
 array1d< real32 > SerialHDF5Reader::read1DAs< real32 >( const std::string & datasetName, const int expectedDims ) const;
