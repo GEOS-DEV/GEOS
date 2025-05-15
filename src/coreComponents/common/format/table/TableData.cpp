@@ -94,13 +94,13 @@ stdVector< stdVector< TableData::CellData > > const & TableData::getTableDataRow
   return m_rows;
 }
 
-void TableData2D::collectTableValues( arraySlice1d< real64 const > dim0AxisCoordinates,
-                                      arraySlice1d< real64 const > dim1AxisCoordinates,
+void TableData2D::collectTableValues( arrayView1d< real64 const > dim0AxisCoordinates,
+                                      arrayView1d< real64 const > dim1AxisCoordinates,
                                       arrayView1d< real64 const > values,
                                       bool columnMajorInputValues )
 {
-  arraySlice1d< real64 const > rowAxisCoordinates = columnMajorInputValues ? dim1AxisCoordinates : dim0AxisCoordinates;
-  arraySlice1d< real64 const > columAxisCoordinates = columnMajorInputValues ? dim0AxisCoordinates : dim1AxisCoordinates;
+  arrayView1d< real64 const > rowAxisCoordinates = columnMajorInputValues ? dim1AxisCoordinates : dim0AxisCoordinates;
+  arrayView1d< real64 const > columAxisCoordinates = columnMajorInputValues ? dim0AxisCoordinates : dim1AxisCoordinates;
   integer const nCol = columAxisCoordinates.size();
   integer const nRow = rowAxisCoordinates.size();
 
@@ -132,7 +132,7 @@ void TableData2D::collectTableValues( arraySlice1d< real64 const > dim0AxisCoord
   }
 }
 
-TableData2D::TableDataHolder TableData2D::convertTable2D( ArrayOfArraysView< real64 const > const coordinates,
+TableData2D::TableDataHolder TableData2D::convertTable2D( arrayView1d< real64 const > coordX, arrayView1d< real64 const > coordY,
                                                           string_view rowAxisDescription,
                                                           string_view columnAxisDescription,
                                                           arrayView1d< real64 const > const values,
@@ -141,7 +141,7 @@ TableData2D::TableDataHolder TableData2D::convertTable2D( ArrayOfArraysView< rea
 {
   string const rowFmt = GEOS_FMT( "{} = {{}}", rowAxisDescription );
   string const columnFmt = GEOS_FMT( "{} = {{}}", columnAxisDescription );
-  collectTableValues( coordinates[0], coordinates[1], values, columnMajorValues );
+  collectTableValues( coordX, coordY, values, columnMajorValues );
   return buildTableData( valueDescription, rowFmt, columnFmt );
 }
 

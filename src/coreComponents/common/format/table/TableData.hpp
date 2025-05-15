@@ -196,21 +196,24 @@ public:
    * @param values Array containing all table values contiguously
    * @param columnMajorValues Set the row/column major convention
    */
-  void collectTableValues( arraySlice1d< real64 const > dim0AxisCoordinates,
-                           arraySlice1d< real64 const > dim1AxisCoordinates,
+  void collectTableValues( arrayView1d< real64 const > dim0AxisCoordinates,
+                           arrayView1d< real64 const > dim1AxisCoordinates,
                            arrayView1d< real64 const > values,
                            bool columnMajorValues );
 
   /**
-   * @param values Vector containing all table values
-   * @param valueDescription The description of the value (typically, the value unit description)
-   * @param columnMajorValues Set the row/column major convention
-   * @param coordinates Array containing row/column axis values
+   * @brief
+   *
+   * @param coordX Array containing row axis values
+   * @param coordX Array containing column axis values
    * @param rowAxisDescription The description for a row unit value
    * @param columnAxisDescription The description for a column unit value
+   * @param values Vector containing all table values
+   * @param columnMajorValues Set the row/column major convention
+   * @param valueDescription The description of the value (typically, the value unit description)
    * @return A struct containing the tableData converted and all header values ;
    */
-  TableData2D::TableDataHolder convertTable2D( ArrayOfArraysView< real64 const > const coordinates,
+  TableData2D::TableDataHolder convertTable2D( arrayView1d< real64 const > coordX, arrayView1d< real64 const > coordY,
                                                string_view rowAxisDescription,
                                                string_view columnAxisDescription,
                                                arrayView1d< real64 const > const values,

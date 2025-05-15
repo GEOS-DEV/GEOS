@@ -686,9 +686,8 @@ TEST( testTable, table2DMismatchingCoordValues )
   }
   arrayView1d< real64 const > const valuesConst = values;
 
-  auto const testCoordinates = [&tableData2D, &values]( std::vector< real64 > const & coordXValues,
-                                                        std::vector< real64 >  const & coordYValues,
-                                                        std::size_t const expectedCoordSize )
+  auto const testCoordinates = [&tableData2D, &values]( arrayView1d< real64 const > coordXValues,
+                                                        arrayView1d< real64 const > coordYValues )
   {
 
     struct Result
@@ -697,18 +696,11 @@ TEST( testTable, table2DMismatchingCoordValues )
       string csv;
     };
 
-    // Prepare coordinates
-    ArrayOfArrays< real64 > coordinates( 2, expectedCoordSize );
-    coordinates.appendToArray( 0, coordXValues.begin(), coordXValues.begin() + coordXValues.size());
-    coordinates.appendToArray( 1, coordYValues.begin(), coordYValues.begin() + coordYValues.size());
-
-    ArrayOfArraysView< real64 const > const constCoordinates = coordinates.toViewConst();
-
     string const rowFmt = GEOS_FMT( "{}", "Temperature" );
     string const columnFmt = GEOS_FMT( "{}", "Pressure" );
 
     // Convert
-    TableData2D::TableDataHolder const tableConverted = tableData2D.convertTable2D( constCoordinates,
+    TableData2D::TableDataHolder const tableConverted = tableData2D.convertTable2D( coordXValues, coordYValues,
                                                                                     rowFmt,
                                                                                     columnFmt,
                                                                                     values,
@@ -727,18 +719,26 @@ TEST( testTable, table2DMismatchingCoordValues )
   };
 
   {  // Test with too many values
-    std::vector< real64 > const coordXValues = { 0, 1, 2, 3 };
-    std::vector< real64 > const coordYValues = { 0, 1, 2, 3 };
-    auto const [textFormatted, csvFormatted] = testCoordinates( coordXValues, coordYValues, 4 );
+    array1d< real64 > coordXValues;
+    coordXValues.emplace_back( 0);
+    coordXValues.emplace_back( 1);
+    coordXValues.emplace_back( 2);
+    coordXValues.emplace_back( 3);
+    array1d< real64 > coordYValues;
+    coordYValues.emplace_back( 4);
+    coordYValues.emplace_back( 5);
+    coordYValues.emplace_back( 6);
+    coordYValues.emplace_back( 7);
+    auto const [textFormatted, csvFormatted] = testCoordinates( coordXValues.toViewConst(), coordYValues.toViewConst() );
     EXPECT_EQ( textFormatted,
                "\n"
                "-----------------------------------------------------------------------------------------\n"
                "|         T         |  Pressure = 0  |  Pressure = 1  |  Pressure = 2  |  Pressure = 3  |\n"
                "|-------------------|----------------|----------------|----------------|----------------|\n"
-               "|  Temperature = 0  |             0  |             1  |             2  |             3  |\n"
-               "|  Temperature = 1  |             4  |             5  |             6  |             7  |\n"
-               "|  Temperature = 2  |             8  |             9  |            10  |            11  |\n"
-               "|  Temperature = 3  |            12  |            13  |            14  |            15  |\n"
+               "|  Temperature = 4  |             0  |             1  |             2  |             3  |\n"
+               "|  Temperature = 5  |             4  |             5  |             6  |             7  |\n"
+               "|  Temperature = 6  |             8  |             9  |            10  |            11  |\n"
+               "|  Temperature = 7  |            12  |            13  |            14  |            15  |\n"
                "|---------------------------------------------------------------------------------------|\n"
                "|  Warning : Too much data for the number of columns * rows:                            |\n"
                "|  Expected 16 values, Found 25 values                                                  |\n"
@@ -747,43 +747,56 @@ TEST( testTable, table2DMismatchingCoordValues )
 
     EXPECT_EQ( csvFormatted,
                "T,Pressure = 0,Pressure = 1,Pressure = 2,Pressure = 3\n"
-               "Temperature = 0,0,1,2,3\n"
-               "Temperature = 1,4,5,6,7\n"
-               "Temperature = 2,8,9,10,11\n"
-               "Temperature = 3,12,13,14,15\n" );
+               "Temperature = 4,0,1,2,3\n"
+               "Temperature = 5,4,5,6,7\n"
+               "Temperature = 6,8,9,10,11\n"
+               "Temperature = 7,12,13,14,15\n" );
   }
 
 
   tableData2D.clear();
   {// Test with not enough values
-    std::vector< real64 > const coordXValues = { 0, 1, 2, 3, 4, 5 };
-    std::vector< real64 > const coordYValues = { 0, 1, 2, 3, 4, 5 };
-    auto const [textFormatted, csvFormatted] = testCoordinates( coordXValues, coordYValues, 6 );
+    array1d< real64 > coordXValues;
+    coordXValues.emplace_back( 0 );
+    coordXValues.emplace_back( 1 );
+    coordXValues.emplace_back( 2 );
+    coordXValues.emplace_back( 3 );
+    coordXValues.emplace_back( 4 );
+    coordXValues.emplace_back( 5 );
+    array1d< real64 > coordYValues;
+    coordYValues.emplace_back( 6 );
+    coordYValues.emplace_back( 7 );
+    coordYValues.emplace_back( 8 );
+    coordYValues.emplace_back( 9 );
+    coordYValues.emplace_back( 10 );
+    coordYValues.emplace_back( 11 );
+
+    auto const [textFormatted, csvFormatted] = testCoordinates( coordXValues, coordYValues );
 
     EXPECT_EQ( textFormatted,
                "\n"
-               "---------------------------------------------------------------------------------------------------------------------------\n"
-               "|         T         |  Pressure = 0  |  Pressure = 1  |  Pressure = 2  |  Pressure = 3  |  Pressure = 4  |  Pressure = 5  |\n"
-               "|-------------------|----------------|----------------|----------------|----------------|----------------|----------------|\n"
-               "|  Temperature = 0  |             0  |             1  |             2  |             3  |             4  |             5  |\n"
-               "|  Temperature = 1  |             6  |             7  |             8  |             9  |            10  |            11  |\n"
-               "|  Temperature = 2  |            12  |            13  |            14  |            15  |            16  |            17  |\n"
-               "|  Temperature = 3  |            18  |            19  |            20  |            21  |            22  |            23  |\n"
-               "|  Temperature = 4  |            24  |             0  |             0  |             0  |             0  |             0  |\n"
-               "|  Temperature = 5  |             0  |             0  |             0  |             0  |             0  |             0  |\n"
-               "|-------------------------------------------------------------------------------------------------------------------------|\n"
-               "|  Warning : Not enough data for the number of columns & rows:                                                            |\n"
-               "|  Expected 36 values, Found 25 values                                                                                    |\n"
-               "---------------------------------------------------------------------------------------------------------------------------\n" );
+               "----------------------------------------------------------------------------------------------------------------------------\n"
+               "|         T          |  Pressure = 0  |  Pressure = 1  |  Pressure = 2  |  Pressure = 3  |  Pressure = 4  |  Pressure = 5  |\n"
+               "|--------------------|----------------|----------------|----------------|----------------|----------------|----------------|\n"
+               "|   Temperature = 6  |             0  |             1  |             2  |             3  |             4  |             5  |\n"
+               "|   Temperature = 7  |             6  |             7  |             8  |             9  |            10  |            11  |\n"
+               "|   Temperature = 8  |            12  |            13  |            14  |            15  |            16  |            17  |\n"
+               "|   Temperature = 9  |            18  |            19  |            20  |            21  |            22  |            23  |\n"
+               "|  Temperature = 10  |            24  |             0  |             0  |             0  |             0  |             0  |\n"
+               "|  Temperature = 11  |             0  |             0  |             0  |             0  |             0  |             0  |\n"
+               "|--------------------------------------------------------------------------------------------------------------------------|\n"
+               "|  Warning : Not enough data for the number of columns & rows:                                                             |\n"
+               "|  Expected 36 values, Found 25 values                                                                                     |\n"
+               "----------------------------------------------------------------------------------------------------------------------------\n" );
 
     EXPECT_EQ( csvFormatted,
                "T,Pressure = 0,Pressure = 1,Pressure = 2,Pressure = 3,Pressure = 4,Pressure = 5\n"
-               "Temperature = 0,0,1,2,3,4,5\n"
-               "Temperature = 1,6,7,8,9,10,11\n"
-               "Temperature = 2,12,13,14,15,16,17\n"
-               "Temperature = 3,18,19,20,21,22,23\n"
-               "Temperature = 4,24,0,0,0,0,0\n"
-               "Temperature = 5,0,0,0,0,0,0\n" );
+               "Temperature = 6,0,1,2,3,4,5\n"
+               "Temperature = 7,6,7,8,9,10,11\n"
+               "Temperature = 8,12,13,14,15,16,17\n"
+               "Temperature = 9,18,19,20,21,22,23\n"
+               "Temperature = 10,24,0,0,0,0,0\n"
+               "Temperature = 11,0,0,0,0,0,0\n" );
   }
 }
 
