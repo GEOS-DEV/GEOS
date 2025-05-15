@@ -159,7 +159,7 @@ public:
 
     forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                   MeshLevel & mesh,
-                                                                  arrayView1d< string const > const & regionNames )
+                                                                  string_array const & regionNames )
     {
       mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                             CellElementSubRegion & elementSubRegion )
