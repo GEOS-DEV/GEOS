@@ -45,7 +45,7 @@
 #include "mesh/MeshManager.hpp"
 #include "mesh/simpleGeometricObjects/GeometricObjectManager.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
-#include "mesh/mpiCommunications/SpatialPartition.hpp"
+#include "mesh/mpiCommunications/PartitionerBase.hpp"
 #include "physicsSolvers/PhysicsSolverManager.hpp"
 #include "physicsSolvers/PhysicsSolverBase.hpp"
 #include "schema/schemaUtilities.hpp"
@@ -512,7 +512,8 @@ void ProblemManager::postInputInitialization()
   integer const & suppressPinned = commandLine.getReference< integer >( viewKeys.suppressPinned );
   setPreferPinned((suppressPinned == 0));
 
-  PartitionBase & partition = domain.getReference< PartitionBase >( keys::partitionManager );
+  PartitionerBase & partitioner = domain.getReference< PartitionerBase >( keys::partitioner );
+
   bool repartition = false;
   integer xpar = 1;
   integer ypar = 1;
@@ -534,13 +535,12 @@ void ProblemManager::postInputInitialization()
   }
   if( repartition )
   {
-    partition.setPartitions( xpar, ypar, zpar );
+    partitioner.setPartitionCounts(xpar, ypar, zpar );
     int const mpiSize = MpiWrapper::commSize( MPI_COMM_GEOS );
     // Case : Using MPI domain decomposition and partition are not defined (mainly for external mesh readers)
     if( mpiSize > 1 && xpar == 1 && ypar == 1 && zpar == 1 )
     {
-      //TODO  confirm creates no issues with MPI_Cart_Create
-      partition.setPartitions( 1, 1, mpiSize );
+      partitioner.setPartitionCounts(1, 1, mpiSize );      
     }
   }
 }

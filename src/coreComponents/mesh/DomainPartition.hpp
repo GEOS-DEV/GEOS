@@ -37,6 +37,8 @@ namespace keys
 {
 /// @return PartitionManager string key
 string const partitionManager( "partitionManager" );
+string const partitioner( "partitioner" );
+
 }
 }
 
@@ -98,24 +100,6 @@ public:
    * @brief Constructs the global information of this DomainPartition, needed to set up ghosting
    */
   void setupBaseLevelMeshGlobalInfo();
-
-  /**
-   * @brief Recursively builds neighbors if an MPI cartesian topology is used (i.e. not metis).
-   * @param idim Dimension index in the cartesian.
-   * @param cartcomm Communicator with cartesian structure.
-   * @param ncoords Cartesian coordinates of a process (assumed to be of length 3).
-   *
-   * This recursive function builds the neighbors recursively by increasing
-   * the dimension index of the current DomainPartition until all the dimensions (3) are done.
-   * The relevant values for initiating this functions are therefore @p ibim = 0
-   * and a non-initialized vector @p ncoords of length 3.
-   *
-   * This functions should have been implemented `private`
-   * and an additional functions to initiate the recursion could have been implemented.
-   */
-  void addNeighbors( const unsigned int idim,
-                     MPI_Comm & cartcomm,
-                     int * ncoords );
 
   /**
    * @brief Outputs information about the partitioning of the domain.

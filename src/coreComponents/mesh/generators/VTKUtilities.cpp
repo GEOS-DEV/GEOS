@@ -17,14 +17,10 @@
 #include "mesh/generators/CollocatedNodes.hpp"
 #include "mesh/generators/VTKMeshGeneratorTools.hpp"
 #include "mesh/generators/VTKUtilities.hpp"
-
-#include "mesh/generators/ParMETISInterface.hpp"
-#ifdef GEOS_USE_SCOTCH
-#include "mesh/generators/PTScotchInterface.hpp"
-#endif
-
+#include "mesh/mpiCommunications/ParMetisPartitioner.hpp"
 #include "common/TypeDispatch.hpp"
-
+#include "LvArray/src/genericTensorOps.hpp"
+#include "mesh/utilities/ComputationalGeometry.hpp"
 #include <vtkArrayDispatch.h>
 #include <vtkBoundingBox.h>
 #include <vtkCellData.h>
@@ -587,15 +583,15 @@ AllMeshes loadAllMeshes( Path const & filePath,
  * @brief Redistributes the mesh using cell graphds methods (ParMETIS or PTScotch)
  *
  * @param[in] mesh a vtk grid
- * @param[in] method the partitionning method
+ * @param[in] partitioner the partitionning method
  * @param[in] comm the MPI communicator
  * @param[in] numRefinements the number of refinements for PTScotch
  * @return the vtk grid redistributed
  */
 AllMeshes redistributeByCellGraph( AllMeshes & input,
-                                   PartitionMethod const method,
+                                   PartitionerBase &partitioner,
                                    MPI_Comm const comm,
-                                   int const numRefinements )
+                                   int const numRefinements )                                   
 {
   GEOS_MARK_FUNCTION;
 
@@ -633,32 +629,11 @@ AllMeshes redistributeByCellGraph( AllMeshes & input,
   // Use pmet_idx_t here to match ParMETIS' pmet_idx_t
   // The `elemToNodes` mapping binds element indices (local to the rank) to the global indices of their support nodes.
   ArrayOfArrays< pmet_idx_t, pmet_idx_t > const elemToNodes = buildElemToNodes< pmet_idx_t >( input );
-  ArrayOfArrays< pmet_idx_t, pmet_idx_t > const graph = parmetis::meshToDual( elemToNodes.toViewConst(), elemDist, comm, 3 );
+  ArrayOfArrays< pmet_idx_t, pmet_idx_t > const graph = ParMetisPartitioner::meshToDual( elemToNodes.toViewConst(), elemDist, comm, 3 );
+
 
   // `newParts` will contain the target rank (i.e. partition) for each of the elements of the current rank.
-  array1d< pmet_idx_t > newPartitions = [&]()
-  {
-    switch( method )
-    {
-      case PartitionMethod::parmetis:
-      {
-        return parmetis::partition( graph.toViewConst(), elemDist, numRanks, comm, numRefinements );
-      }
-      case PartitionMethod::ptscotch:
-      {
-#ifdef GEOS_USE_SCOTCH
-        GEOS_WARNING_IF( numRefinements > 0, "Partition refinement is not supported by 'ptscotch' partitioning method" );
-        return ptscotch::partition( graph.toViewConst(), numRanks, comm );
-#else
-        GEOS_THROW( "GEOSX must be built with Scotch support (ENABLE_SCOTCH=ON) to use 'ptscotch' partitioning method", InputError );
-#endif
-      }
-      default:
-      {
-        GEOS_THROW( "Unknown partition method", InputError );
-      }
-    }
-  }();
+  array1d< pmet_idx_t > newPartitions = partitioner.partition( graph.toViewConst(), elemDist, numRanks, comm, numRefinements );
 
   // Extract the partition information related to the fracture mesh.
   std::map< string, array1d< pmet_idx_t > > newFracturePartitions;
@@ -903,7 +878,7 @@ redistributeMeshes( integer const logLevel,
                     vtkSmartPointer< vtkDataSet > loadedMesh,
                     std::map< string, vtkSmartPointer< vtkDataSet > > & namesToFractures,
                     MPI_Comm const comm,
-                    PartitionMethod const method,
+                    PartitionerBase& partitioner,
                     int const partitionRefinement,
                     int const useGlobalIds )
 {
@@ -947,7 +922,7 @@ redistributeMeshes( integer const logLevel,
   if( partitionRefinement > 0 )
   {
     AllMeshes input( mesh, namesToFractures );
-    result = redistributeByCellGraph( input, method, comm, partitionRefinement - 1 );
+    result = redistributeByCellGraph( input, partitioner, comm, partitionRefinement - 1 );
   }
   else
   {

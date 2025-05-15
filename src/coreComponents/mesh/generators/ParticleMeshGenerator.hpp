@@ -28,8 +28,8 @@ namespace geos
 {
 
 class ParticleManager;
-class SpatialPartition;
-
+//class SpatialPartition;
+class PartitionerBase;
 /**
  * @class ParticleMeshGenerator
  * @brief The ParticleMeshGenerator class is a class handling import of particle data from an externel particle file.
@@ -61,7 +61,8 @@ public:
    */
   virtual Group * createChild( string const & childKey, string const & childName ) override;
 
-  virtual void fillParticleBlockManager( ParticleBlockManager & particleBlockManager, ParticleManager & particleManager, SpatialPartition const & partition ) override;
+  virtual void fillParticleBlockManager( ParticleBlockManager & particleBlockManager, 
+     ParticleManager & particleManager, PartitionerBase & partitioner ) override;
 
   void importFieldOnArray( Block block,
                            string const & blockName,

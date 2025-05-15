@@ -20,7 +20,7 @@
 #include "ParticleMeshGenerator.hpp"
 #include "ParticleBlockManager.hpp"
 
-#include "mesh/mpiCommunications/SpatialPartition.hpp"
+#include "mesh/mpiCommunications/ParticleCartesianPartitioner.hpp"
 
 #include "common/DataTypes.hpp"
 #include "common/TimingMacros.hpp"
@@ -65,9 +65,12 @@ Group * ParticleMeshGenerator::createChild( string const & GEOS_UNUSED_PARAM( ch
 }
 
 
-void ParticleMeshGenerator::fillParticleBlockManager( ParticleBlockManager & particleBlockManager, ParticleManager & particleManager, SpatialPartition const & partition )
+void ParticleMeshGenerator::fillParticleBlockManager( ParticleBlockManager & particleBlockManager, 
+   ParticleManager & particleManager, PartitionerBase & partitionerBase )
 {
   GEOS_MARK_FUNCTION;
+
+  ParticleCartesianPartitioner & partitioner = dynamic_cast< ParticleCartesianPartitioner & >(partitionerBase);
 
   // This should probably handled elsewhere:
   int aa = 0;
@@ -146,7 +149,7 @@ void ParticleMeshGenerator::fillParticleBlockManager( ParticleBlockManager & par
         if( 1<=column && column<4 ) // 0th column is global ID. Columns 1, 2 and 3 are the particle position components - check for
                                     // partition membership
         { // TODO: This is super obfuscated and hard to read, make it better
-          inPartition = inPartition && partition.isCoordInPartition( value, column-1 );
+          inPartition = inPartition && partitioner.isCoordInPartition( value, column-1 );
           if( !inPartition ) // if the current particle is outside this partition, we can ignore the rest of its data and go to the next
                              // line
           {

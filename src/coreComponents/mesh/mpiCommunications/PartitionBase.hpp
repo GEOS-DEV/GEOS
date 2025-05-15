@@ -103,6 +103,7 @@ protected:
    * @brief Number of colors
    */
   int m_numColors;
+
 };
 
 }

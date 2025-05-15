@@ -20,12 +20,12 @@
 #ifndef GEOS_GRAPH_RLFGRAPHCOLORINGMPI_HPP_
 #define GEOS_GRAPH_RLFGRAPHCOLORINGMPI_HPP_
 
+#include "GraphTools.hpp"
+#include "GraphColoringBase.hpp"
+#include "common/DataTypes.hpp"
 #include <vector>
 #include <unordered_set>
 #include <cstddef>
-#include "common/DataTypes.hpp"
-#include "GraphTools.hpp"
-#include "GraphColoringBase.hpp"
 
 namespace geos
 {

@@ -21,7 +21,7 @@
 #define GEOS_MESH_GENERATORS_MESHGENERATORBASE_HPP
 
 #include "mesh/mpiCommunications/SpatialPartition.hpp"
-
+#include "mesh/mpiCommunications/PartitionerBase.hpp"
 #include "dataRepository/Group.hpp"
 #include "dataRepository/WrapperBase.hpp"
 #include "codingUtilities/Utilities.hpp"
@@ -77,9 +77,9 @@ public:
   /**
    * @brief Generate the mesh object the input mesh object.
    * @param parent The parent group of the CellBlockManager.
-   * @param[in] partition The reference to spatial partition
+   * @param[in] partitioner The reference to partitioner
    */
-  void generateMesh( Group & parent, SpatialPartition & partition );
+  void generateMesh( Group & parent, PartitionerBase & partitioner );
 
   /**
    * @brief Describe which kind of block must be considered.
@@ -136,14 +136,15 @@ private:
   /**
    * @brief Fill the cellBlockManager object .
    * @param[inout] cellBlockManager the CellBlockManager that will receive the meshing information
-   * @param[in] partition The reference to spatial partition
+   * @param[in] partitioner The reference to spatial partition
    */
-  virtual void fillCellBlockManager( CellBlockManager & cellBlockManager, SpatialPartition & partition )
+  
+  virtual void fillCellBlockManager( CellBlockManager & cellBlockManager, PartitionerBase & partitioner )
   {
     GEOS_UNUSED_VAR( cellBlockManager );
-    GEOS_UNUSED_VAR( partition );
+    GEOS_UNUSED_VAR( partitioner );
     GEOS_ERROR( "Cell mesh generation not implemented for generator of this type" );
-  }
+  }  
 
   void attachWellInfo( CellBlockManager & cellBlockManager );
 
@@ -151,13 +152,14 @@ private:
    * @brief Fill the particleBlockManager object .
    * @param[inout] particleBlockManager the particleBlockManager that will receive the meshing information
    * @param[in] particleManager The reference to the particle manager
-   * @param[in] partition The reference to spatial partition
+   * @param[in] partitioner The reference to spatial partition
    */
-  virtual void fillParticleBlockManager( ParticleBlockManager & particleBlockManager, ParticleManager & particleManager, SpatialPartition const & partition )
+  virtual void fillParticleBlockManager( ParticleBlockManager & particleBlockManager, 
+                                         ParticleManager & particleManager, PartitionerBase & partitioner )
   {
     GEOS_UNUSED_VAR( particleBlockManager );
     GEOS_UNUSED_VAR( particleManager );
-    GEOS_UNUSED_VAR( partition );
+    GEOS_UNUSED_VAR( partitioner );
     GEOS_ERROR( "Particle mesh generation not implemented for generator of this type" );
   }
 

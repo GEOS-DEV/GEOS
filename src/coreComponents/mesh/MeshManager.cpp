@@ -19,7 +19,6 @@
 #include "MeshLevel.hpp"
 #include "mesh/LogLevelsInfo.hpp"
 
-#include "mesh/mpiCommunications/SpatialPartition.hpp"
 #include "generators/CellBlockManagerABC.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "common/TimingMacros.hpp"
@@ -66,9 +65,10 @@ void MeshManager::generateMeshes( DomainPartition & domain )
   {
     MeshBody & meshBody = domain.getMeshBodies().registerGroup< MeshBody >( meshGen.getName() );
     meshBody.createMeshLevel( 0 );
-    SpatialPartition & partition = dynamic_cast< SpatialPartition & >(domain.getReference< PartitionBase >( keys::partitionManager ) );
 
-    meshGen.generateMesh( meshBody, partition );
+    PartitionerBase & partitioner = domain.getReference< PartitionerBase >( keys::partitioner );
+
+    meshGen.generateMesh( meshBody, partitioner );
 
     if( !meshBody.hasParticles() )
     {

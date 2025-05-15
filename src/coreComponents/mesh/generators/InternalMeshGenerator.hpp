@@ -23,7 +23,10 @@
 #include "common/format/EnumStrings.hpp"
 #include "mesh/generators/MeshGeneratorBase.hpp"
 #include "mesh/generators/CellBlockManager.hpp"
-#include "mesh/mpiCommunications/SpatialPartition.hpp"
+
+#include "mesh/mpiCommunications/PartitionerBase.hpp"
+#include "mesh/mpiCommunications/CartesianPartitioner.hpp"
+
 
 namespace geos
 {
@@ -76,28 +79,28 @@ public:
 
   /**
    * @brief Reduce the number of nodes in a block coordinate direction for
-   * @param partition The partitioning object
+   * @param partitioner The partitioning object
    * @param numNodes The number of nodes in each coordinate direction.
    */
-  virtual void reduceNumNodesForPeriodicBoundary( SpatialPartition & partition,
+  virtual void reduceNumNodesForPeriodicBoundary( CartesianPartitioner & partitioner,
                                                   integer (& numNodes) [3] )
   {
-    GEOS_UNUSED_VAR( partition, numNodes );
+    GEOS_UNUSED_VAR( partitioner, numNodes );
   };
 
   /**
    * @brief Alter the directional indices for when the ending index should be
    *   set to the beginning of the index as is the case with periodic
    *   boundaries.
-   * @param partition The partitioning object
+   * @param partitioner The partitioning object
    * @param index The indices to be evaluated for periodic indexing.
    *   merging.
    */
   virtual void
-  setNodeGlobalIndicesOnPeriodicBoundary( SpatialPartition & partition,
+  setNodeGlobalIndicesOnPeriodicBoundary( CartesianPartitioner & partitioner,  
                                           int (& index)[3] )
   {
-    GEOS_UNUSED_VAR( partition, index );
+    GEOS_UNUSED_VAR( partitioner, index );
   }
 
   /**
@@ -264,7 +267,7 @@ private:
 
 
 
-  virtual void fillCellBlockManager( CellBlockManager & cellBlockManager, SpatialPartition & partition ) override;
+  virtual void fillCellBlockManager( CellBlockManager & cellBlockManager, PartitionerBase & partitioner ) override;
 
   /**
    * @brief Convert ndim node spatialized index to node global index.

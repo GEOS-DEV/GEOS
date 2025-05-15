@@ -14,17 +14,20 @@
  */
 
 /**
- * @file PTScotchInterface.cpp
+ * @file PTScotchPartitioner.cpp
  */
 
-#include "PTScotchInterface.hpp"
+#include "PTScotchPartitioner.hpp"
+
+#ifdef GEOS_USE_TRILINOS
+#include "mesh/graphs/ZoltanGraphColoring.hpp"
+#else
+#include "mesh/graphs/RLFGraphColoringMPI.hpp"
+#endif
 
 #include <ptscotch.h>
 
-#include <numeric>
 
-static_assert( std::is_same< int64_t, SCOTCH_Num >::value,
-               "Non-matching index types. Scotch must be configured with 64-bit indices." );
 
 #define GEOS_SCOTCH_CHECK( call ) \
   do { \
@@ -32,16 +35,50 @@ static_assert( std::is_same< int64_t, SCOTCH_Num >::value,
     GEOS_ERROR_IF_NE_MSG( ierr, 0, "Error in call to:\n" << #call ); \
   } while( false )
 
+
 namespace geos
 {
-namespace ptscotch
-{
 
-array1d< int64_t >
-partition( ArrayOfArraysView< int64_t const, int64_t > const & graph,
-           int64_t const numParts,
-           MPI_Comm comm )
+
+static_assert( std::is_same< int64_t, SCOTCH_Num >::value,
+               "Non-matching index types. Scotch must be configured with 64-bit indices." );
+
+
+
+PTScotchPartitioner::PTScotchPartitioner()
 {
+// Constructor implementation
+}
+
+PTScotchPartitioner::~PTScotchPartitioner()
+{
+// Destructor implementation
+}
+
+void PTScotchPartitioner::setPartitionCounts( unsigned int xPartitions, unsigned int yPartitions, unsigned int zPartitions )
+{
+  m_numPartitions = xPartitions * yPartitions * zPartitions;
+}
+
+
+
+void PTScotchPartitioner::setNeighborsRank( const std::vector< int > & neighborsRank )
+{
+  m_neighborsRank = neighborsRank;
+  buildNeighbors();
+  color();
+}
+
+
+array1d< pmet_idx_t > PTScotchPartitioner::partition( ArrayOfArraysView< pmet_idx_t const, pmet_idx_t > const & graph,
+                                                      arrayView1d< pmet_idx_t const > const & GEOS_UNUSED_PARAM( vertDist ),
+                                                      pmet_idx_t const numParts,
+                                                      MPI_Comm comm,
+                                                      int const numRefinements )
+
+{
+  GEOS_WARNING_IF( numRefinements > 0, "Partition refinement is not supported by 'ptscotch' partitioning method" );
+
   SCOTCH_Num const numVerts = graph.size();
 
   array1d< int64_t > part( numVerts ); // all 0 by default
@@ -59,7 +96,7 @@ partition( ArrayOfArraysView< int64_t const, int64_t > const & graph,
   SCOTCH_Num * const offsets = const_cast< SCOTCH_Num * >( graph.getOffsets() );
   SCOTCH_Num * const edges = const_cast< SCOTCH_Num * >( graph.getValues() );
 
-  GEOS_SCOTCH_CHECK( SCOTCH_dgraphBuild( gr,          // graphptr
+  GEOS_SCOTCH_CHECK( SCOTCH_dgraphBuild( gr,           // graphptr
                                          0,            // baseval
                                          numVerts,     // vertlocnbr
                                          numVerts,     // vertlocmax
@@ -74,7 +111,6 @@ partition( ArrayOfArraysView< int64_t const, int64_t > const & graph,
                                          nullptr       // edloloctab,
                                          ) );
 
-  // TODO: maybe remove?
   GEOS_SCOTCH_CHECK( SCOTCH_dgraphCheck( gr ) );
 
   SCOTCH_Strat * const strategy = SCOTCH_stratAlloc();
@@ -88,5 +124,35 @@ partition( ArrayOfArraysView< int64_t const, int64_t > const & graph,
   return part;
 }
 
-} // namespace ptscotch
-} // namespace geos
+
+
+void PTScotchPartitioner::color()
+{
+  std::vector< camp::idx_t > adjncy;
+  adjncy.reserve( m_neighborsRank.size());
+  std::copy( m_neighborsRank.begin(), m_neighborsRank.end(), std::back_inserter( adjncy ));
+
+#ifdef GEOS_USE_TRILINOS
+  geos::graph::ZoltanGraphColoring coloring;
+#else
+  geos::graph::RLFGraphColoringMPI coloring;
+#endif
+  m_color = coloring.colorGraph( adjncy );
+
+  if( !coloring.isColoringValid( adjncy, m_color ))
+  {
+    GEOS_ERROR( "wrong coloring!" );
+  }
+  m_numColors = coloring.getNumberOfColors( m_color );
+
+#if 1
+  std::cout<<"rank "<<MpiWrapper::commRank( MPI_COMM_GEOS )<<" color:"<<m_color<< ", numColors:" << m_numColors << " neighbors: ";
+  for( size_t i=0; i<adjncy.size(); i++ )
+  {
+    std::cout<<" "<<adjncy[i];
+  }
+  std::cout<<std::endl;
+#endif
+}
+
+}

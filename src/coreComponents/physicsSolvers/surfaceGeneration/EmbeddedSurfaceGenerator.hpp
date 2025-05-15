@@ -38,7 +38,8 @@ struct NewObjectLists
 };
 
 
-class SpatialPartition;
+//class SpatialPartition;
+class PartitionerBase;
 
 class NodeManager;
 class FaceManager;

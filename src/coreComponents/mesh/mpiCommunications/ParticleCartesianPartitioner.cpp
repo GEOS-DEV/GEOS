@@ -13,313 +13,40 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#include "SpatialPartition.hpp"
-#include "codingUtilities/Utilities.hpp"
-#include "LvArray/src/genericTensorOps.hpp"
-#include "mesh/mpiCommunications/MPI_iCommData.hpp"
-#ifdef GEOS_USE_TRILINOS
-#include "mesh/graphs/ZoltanGraphColoring.hpp"
-#else
-#include "mesh/graphs/RLFGraphColoringMPI.hpp"
-#endif
+/**
+ * @file ParticleCartesianPartitioner.cpp
+ */
 
-#include <cmath>
+#include "ParticleCartesianPartitioner.hpp"
 
 namespace geos
 {
-
-namespace
-{
-
-// Modulo
-// returns a positive value regardless of the sign of numerator
-real64 Mod( real64 num, real64 denom )
-{
-  if( fabs( denom )<fabs( num )*1.0e-14 )
-  {
-    return num;
-  }
-
-  return num - denom * std::floor( num/denom );
-}
-
-// MapValueToRange
-// returns a periodic value in the range [min, max)
-real64 MapValueToRange( real64 value, real64 min, real64 max )
-{
-  return Mod( value-min, max-min )+min;
-}
-
-}
-
-SpatialPartition::SpatialPartition():
-  PartitionBase(),
-  m_Periodic( m_nsdof ),
-  m_coords( m_nsdof ),
-  m_min{ 0.0 },
-  m_max{ 0.0 },
-  m_blockSize{ 1.0 },
-  m_gridSize{ 0.0 },
-  m_gridMin{ 0.0 },
-  m_gridMax{ 0.0 },
-  m_Partitions()
-{
-  m_size = 0;
-  m_rank = 0;
-  m_numColors = 8,
-  setPartitions( 1, 1, 1 );
-}
-
-SpatialPartition::~SpatialPartition()
+ParticleCartesianPartitioner::ParticleCartesianPartitioner()
 {}
 
-void SpatialPartition::setPartitions( unsigned int xPartitions,
-                                      unsigned int yPartitions,
-                                      unsigned int zPartitions )
-{
-  m_Partitions.resize( 3 );
-  m_Partitions( 0 ) = xPartitions;
-  m_Partitions( 1 ) = yPartitions;
-  m_Partitions( 2 ) = zPartitions;
-  m_size = 1;
-  for( int i = 0; i < m_nsdof; i++ )
-  {
-    m_size *= m_Partitions( i );
-  }
-  //setContactGhostRange( 0.0 );
-}
-
-int SpatialPartition::getColor()
-{
-  if( m_metisNeighborList.empty() )
-  {
-    int color=0;
-    if( isOdd( m_coords[0] ) )
-    {
-      color += 1;
-    }
-
-    if( isOdd( m_coords[1] ) )
-    {
-      color += 2;
-    }
-
-    if( isOdd( m_coords[2] ) )
-    {
-      color += 4;
-    }
-
-    std::vector< int > all_colors( m_size );
-    MpiWrapper::allgather( &color, 1, all_colors.data(), 1 );
-    std::set< int > unique_colors( all_colors.begin(), all_colors.end());
-    m_numColors = unique_colors.size();
-
-#if 1
-    std::cout<<"rank "<<MpiWrapper::commRank( MPI_COMM_GEOS )<<" color:"<<color<< " " << m_numColors << std::endl;
-#endif
-
-    m_numColors = MpiWrapper::max( color )+1;
-    return color;
-  }
-  else
-  {
-    std::vector< camp::idx_t > adjncy;
-    adjncy.reserve( m_metisNeighborList.size());
-    std::copy( m_metisNeighborList.begin(), m_metisNeighborList.end(), std::back_inserter( adjncy ));
-#ifdef GEOS_USE_TRILINOS
-    geos::graph::ZoltanGraphColoring coloring;
-#else
-    geos::graph::RLFGraphColoringMPI coloring;
-#endif
-    int color = coloring.colorGraph( adjncy );
-
-    if( !coloring.isColoringValid( adjncy, color ))
-    {
-      GEOS_ERROR( "wrong coloring!" );
-    }
-    m_numColors = coloring.getNumberOfColors( color );
-
-#if 1
-    std::cout<<"rank "<<MpiWrapper::commRank( MPI_COMM_GEOS )<<" color:"<<color<< " " << m_numColors << "neighbors: ";
-    for( size_t i=0; i<adjncy.size(); i++ )
-    {
-      std::cout<<" "<<adjncy[i];
-    }
-    std::cout<<std::endl;
-#endif
-
-    return color;
-  }
-}
+ParticleCartesianPartitioner::~ParticleCartesianPartitioner()
+{}
 
 
-void SpatialPartition::addNeighbors( const unsigned int idim,
-                                     MPI_Comm & cartcomm,
-                                     int * ncoords )
-{
-
-  if( idim == m_nsdof )
-  {
-    bool me = true;
-    for( int i = 0; i < m_nsdof; i++ )
-    {
-      if( ncoords[i] != this->m_coords( i ))
-      {
-        me = false;
-        break;
-      }
-    }
-    if( !me )
-    {
-      int const rank = MpiWrapper::cartRank( cartcomm, ncoords );
-      m_neighbors.push_back( NeighborCommunicator( rank ) );
-    }
-  }
-  else
-  {
-    const int dim = this->m_Partitions( LvArray::integerConversion< localIndex >( idim ) );
-    const bool periodic = this->m_Periodic( LvArray::integerConversion< localIndex >( idim ) );
-    for( int i = -1; i < 2; i++ )
-    {
-      ncoords[idim] = this->m_coords( LvArray::integerConversion< localIndex >( idim ) ) + i;
-      bool ok = true;
-      if( periodic )
-      {
-        if( ncoords[idim] < 0 )
-          ncoords[idim] = dim - 1;
-        else if( ncoords[idim] >= dim )
-          ncoords[idim] = 0;
-      }
-      else
-      {
-        ok = ncoords[idim] >= 0 && ncoords[idim] < dim;
-      }
-      if( ok )
-      {
-        addNeighbors( idim + 1, cartcomm, ncoords );
-      }
-    }
-  }
-}
-
-void SpatialPartition::updateSizes( arrayView1d< real64 > const domainL,
-                                    real64 const dt )
-{
-  for( int i=0; i<3; i++ )
-  {
-    real64 ratio = 1.0 + domainL[i] * dt;
-    m_min[i] *= ratio;
-    m_max[i] *= ratio;
-    m_blockSize[i] *= ratio;
-    m_gridSize[i] *= ratio;
-    m_gridMin[i] *= ratio;
-    m_gridMax[i] *= ratio;
-    //m_contactGhostMin[i] *= ratio;
-    //m_contactGhostMax[i] *= ratio;
-  }
-}
-
-void SpatialPartition::setSizes( real64 const ( &min )[ 3 ],
-                                 real64 const ( &max )[ 3 ] )
-{
-
-
-  {
-    //get size of problem and decomposition
-    m_size = MpiWrapper::commSize( MPI_COMM_GEOS );
-
-    //check to make sure our dimensions agree
-    {
-      string_view partitionsLogMessage =
-        "The total number of processes = {} does not correspond to the total number of partitions = {}.\n"
-        "The number of cells in an axis cannot be lower that the partition count of this axis\n";
-
-
-      int nPartitions = std::accumulate( m_Partitions.begin(), m_Partitions.end(), 1, std::multiplies< int >());
-
-      GEOS_ERROR_IF_NE_MSG( nPartitions, m_size, GEOS_FMT( partitionsLogMessage, m_size, nPartitions )  );
-    }
-
-    //get communicator, rank, and coordinates
-    MPI_Comm cartcomm;
-    {
-      int reorder = 0;
-      MpiWrapper::cartCreate( MPI_COMM_GEOS, m_nsdof, m_Partitions.data(), m_Periodic.data(), reorder, &cartcomm );
-    }
-    m_rank = MpiWrapper::commRank( cartcomm );
-    MpiWrapper::cartCoords( cartcomm, m_rank, m_nsdof, m_coords.data());
-
-    //add neighbors
-    {
-      int ncoords[m_nsdof];
-      m_neighbors.clear();
-      addNeighbors( 0, cartcomm, ncoords );
-    }
-
-    MpiWrapper::commFree( cartcomm );
-  }
-
-  // global values
-  LvArray::tensorOps::copy< 3 >( m_gridMin, min );
-  LvArray::tensorOps::copy< 3 >( m_gridMax, max );
-  LvArray::tensorOps::copy< 3 >( m_gridSize, max );
-  LvArray::tensorOps::subtract< 3 >( m_gridSize, min );
-
-  // block values
-  LvArray::tensorOps::copy< 3 >( m_blockSize, m_gridSize );
-
-  LvArray::tensorOps::copy< 3 >( m_min, min );
-  for( int i = 0; i < m_nsdof; ++i )
-  {
-
-    m_blockSize[ i ] /= m_Partitions( i );
-    m_min[ i ] += m_coords( i ) * m_blockSize[ i ];
-    m_max[ i ] = min[ i ] + (m_coords( i ) + 1) * m_blockSize[ i ];
-
-//      GEOS_ERROR( "SpatialPartition::setSizes(): number of partition locations does not equal number of partitions - 1\n" );
-  }
-}
-
-bool SpatialPartition::isCoordInPartition( const real64 & coord, const int dir ) const
-{
-  bool rval = true;
-  const int i = dir;
-  if( m_Periodic( i ))
-  {
-    if( m_Partitions( i ) != 1 )
-    {
-      real64 localCenter = MapValueToRange( coord, m_gridMin[ i ], m_gridMax[ i ] );
-      rval = rval && localCenter >= m_min[ i ] && localCenter < m_max[ i ];
-    }
-
-  }
-  else
-  {
-    rval = rval && (m_Partitions[ i ] == 1 || (coord >= m_min[ i ] && coord < m_max[ i ]));
-  }
-
-  return rval;
-}
-
-bool SpatialPartition::isCoordInPartitionBoundingBox( const R1Tensor & elemCenter,
+bool ParticleCartesianPartitioner::isCoordInPartitionBoundingBox( const R1Tensor & elemCenter,
                                                       const real64 & boundaryRadius ) const
 // test a point relative to a boundary box. If non-zero buffer specified, expand the box.
 {
-  for( int i = 0; i < m_nsdof; i++ )
+  for( int i = 0; i < m_ndim; i++ )
   {
     // Is particle already in bounds of partition?
-    if( !(m_Partitions( i )==1 || ( elemCenter[i] >= (m_min[i] - boundaryRadius) && elemCenter[i] <= (m_max[i] + boundaryRadius) ) ) )
+    if( !(m_partitionCounts( i )==1 || ( elemCenter[i] >= (m_localMin[i] - boundaryRadius) && elemCenter[i] <= (m_localMax[i] + boundaryRadius) ) ) )
     {
       // Particle not in bounds, check if direction has a periodic boundary
-      if( m_Periodic( i ) && (m_coords[i] == 0 || m_coords[i] == m_Partitions[i] - 1) )
+      if( m_periodic( i ) && (m_coords[i] == 0 || m_coords[i] == m_partitionCounts[i] - 1) )
       {
         // Partition minimum boundary is periodic
-        if( m_coords[i] == 0 && ( (elemCenter[i] - m_gridSize[i]) < (m_min[i] - boundaryRadius) ) )
+        if( m_coords[i] == 0 && ( (elemCenter[i] - m_globalGridSize[i]) < (m_localMin[i] - boundaryRadius) ) )
         {
           return false;
         }
         // Partition maximum boundary is periodic
-        if( m_coords[i] == m_Partitions[i] - 1 && ( (elemCenter[i] + m_gridSize[i]) > (m_max[i] + boundaryRadius) ) )
+        if( m_coords[i] == m_partitionCounts[i] - 1 && ( (elemCenter[i] + m_globalGridSize[i]) > (m_localMax[i] + boundaryRadius) ) )
         {
           return false;
         }
@@ -334,17 +61,8 @@ bool SpatialPartition::isCoordInPartitionBoundingBox( const R1Tensor & elemCente
   return true;
 }
 
-#if 0
-void SpatialPartition::setContactGhostRange( const real64 bufferSize )
-{
-  LvArray::tensorOps::copy< 3 >( m_contactGhostMin, m_min );
-  LvArray::tensorOps::addScalar< 3 >( m_contactGhostMin, -bufferSize );
 
-  LvArray::tensorOps::copy< 3 >( m_contactGhostMax, m_max );
-  LvArray::tensorOps::addScalar< 3 >( m_contactGhostMax, bufferSize );
-}
-#endif
-void SpatialPartition::repartitionMasterParticles( ParticleSubRegion & subRegion,
+void ParticleCartesianPartitioner::repartitionMasterParticles( ParticleSubRegion & subRegion,
                                                    MPI_iCommData & commData )
 {
 
@@ -389,7 +107,7 @@ void SpatialPartition::repartitionMasterParticles( ParticleSubRegion & subRegion
         p_x[i] = particleCenter[pp][i];
         inPartition = inPartition && isCoordInPartition( p_x[i], i );
       }
-      if( particleRank[pp]==this->m_rank && !inPartition )
+      if( particleRank[pp]==this->m_cartRank && !inPartition )
       {
         outOfDomainParticleCoordinates.emplace_back( p_x ); // Store the coordinate of the out-of-domain particle
         outOfDomainParticleLocalIndices.push_back( pp );   // Store the local index "pp" for the current coordinate.
@@ -476,13 +194,13 @@ void SpatialPartition::repartitionMasterParticles( ParticleSubRegion & subRegion
     // Check that there is exactly one processor requesting each out-of-domain particle.
     if( numberOfRequestedParticles != outOfDomainParticleLocalIndices.size())
     {
-      std::cout << "Rank " << m_rank << " has requests for " << numberOfRequestedParticles << " out of " << outOfDomainParticleLocalIndices.size() << " out-of-domain particles" << std::endl;
+      std::cout << "Rank " << m_cartRank << " has requests for " << numberOfRequestedParticles << " out of " << outOfDomainParticleLocalIndices.size() << " out-of-domain particles" << std::endl;
     }
     for( size_t i=0; i<outOfDomainParticleRequests.size(); i++ )
     {
       if( outOfDomainParticleRequests[i] != 1 )
       {
-        std::cout << "Rank " << m_rank << " particle as " << outOfDomainParticleRequests[i] << " != 1 requests!" << std::endl;
+        std::cout << "Rank " << m_cartRank << " particle as " << outOfDomainParticleRequests[i] << " != 1 requests!" << std::endl;
       }
     }
   }
@@ -533,7 +251,7 @@ void SpatialPartition::repartitionMasterParticles( ParticleSubRegion & subRegion
         GEOS_LOG_RANK( "Deleting orphan out-of-domain particle during repartition at p_x = " << particleCenterAfter[p] );
         indicesToErase.insert( p );
       }
-      else if( particleRankAfter[p] != m_rank )
+      else if( particleRankAfter[p] != m_cartRank )
       {
         indicesToErase.insert( p );
       }
@@ -547,7 +265,7 @@ void SpatialPartition::repartitionMasterParticles( ParticleSubRegion & subRegion
 }
 
 
-void SpatialPartition::getGhostParticlesFromNeighboringPartitions( DomainPartition & domain,
+void ParticleCartesianPartitioner::getGhostParticlesFromNeighboringPartitions( DomainPartition & domain,
                                                                    MPI_iCommData & commData,
                                                                    const real64 & boundaryRadius )
 {
@@ -597,7 +315,7 @@ void SpatialPartition::getGhostParticlesFromNeighboringPartitions( DomainPartiti
           p_x[i] = particleCenter[p][i];
           inPartition = inPartition && isCoordInPartition( p_x[i], i );
         }
-        if( particleRank[p]==this->m_rank && inPartition )
+        if( particleRank[p]==this->m_cartRank && inPartition )
         {
           inDomainMasterParticleCoordinates.emplace_back( p_x );  // Store the coordinate of the out-of-domain particle
           inDomainMasterParticleGlobalIndices.push_back( particleGlobalID[p] );     // Store the local index "pp" for the current
@@ -687,7 +405,7 @@ void SpatialPartition::getGhostParticlesFromNeighboringPartitions( DomainPartiti
     //     masters, the ghost rank will be overwritten.  At the end of this function, any ghosts that
     //     still have ghostRank=-1 are orphans and need to be deleted.
 
-    int partitionRank = this->m_rank;
+    int partitionRank = this->m_cartRank;
     forAll< parallelHostPolicy >( subRegion.size(), [=] GEOS_HOST ( localIndex const p )   // TODO: Worth moving to device?
       {
         if( particleRank[p] != partitionRank )
@@ -761,7 +479,7 @@ void SpatialPartition::getGhostParticlesFromNeighboringPartitions( DomainPartiti
  * @param[in] commData Solver's MPI communicator
  * @param[in] particleCoordinatesReceivedFromNeighbors List of lists of coordinates received from each neighbor
  */
-void SpatialPartition::sendCoordinateListToNeighbors( arrayView1d< R1Tensor > const & particleCoordinatesSendingToNeighbors,
+void ParticleCartesianPartitioner::sendCoordinateListToNeighbors( arrayView1d< R1Tensor > const & particleCoordinatesSendingToNeighbors,
                                                       MPI_iCommData & commData,
                                                       stdVector< array1d< R1Tensor > > & particleCoordinatesReceivedFromNeighbors
                                                       )
@@ -856,7 +574,7 @@ void SpatialPartition::sendCoordinateListToNeighbors( arrayView1d< R1Tensor > co
 }
 
 template< typename indexType >
-void SpatialPartition::sendListOfIndicesToNeighbors( stdVector< array1d< indexType > > & listSendingToEachNeighbor,
+void ParticleCartesianPartitioner::sendListOfIndicesToNeighbors( stdVector< array1d< indexType > > & listSendingToEachNeighbor,
                                                      MPI_iCommData & commData,
                                                      stdVector< array1d< indexType > > & listReceivedFromEachNeighbor )
 {
@@ -954,7 +672,7 @@ void SpatialPartition::sendListOfIndicesToNeighbors( stdVector< array1d< indexTy
   }
 }
 
-void SpatialPartition::sendParticlesToNeighbor( ParticleSubRegionBase & subRegion,
+void ParticleCartesianPartitioner::sendParticlesToNeighbor( ParticleSubRegionBase & subRegion,
                                                 stdVector< int > const & newParticleStartingIndices,
                                                 stdVector< int > const & numberOfIncomingParticles,
                                                 MPI_iCommData & commData,
@@ -1042,5 +760,6 @@ void SpatialPartition::sendParticlesToNeighbor( ParticleSubRegionBase & subRegio
   }
 
 }
+
 
 }

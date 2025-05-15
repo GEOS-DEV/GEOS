@@ -20,7 +20,6 @@
 #ifndef GEOS_GRAPH_GRAPHTOOLS_HPP_
 #define GEOS_GRAPH_GRAPHTOOLS_HPP_
 
-
 #include "common/DataTypes.hpp"
 #include <vector>
 #include <unordered_set>

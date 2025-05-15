@@ -20,9 +20,9 @@
 #ifndef GEOS_GRAPH_RLFGraphColoring_HPP_
 #define GEOS_GRAPH_RLFGraphColoring_HPP_
 
-#include <vector>
-#include "common/DataTypes.hpp"
 #include "GraphColoringBase.hpp"
+#include "common/DataTypes.hpp"
+#include <vector>
 
 namespace geos
 {

@@ -91,9 +91,7 @@ set( mesh_headers
      generators/InternalWellboreGenerator.hpp
      generators/MeshComponentBase.hpp
      generators/MeshGeneratorBase.hpp
-     generators/ParMETISInterface.hpp
      generators/ParticleMeshGenerator.hpp
-     generators/PartitionDescriptor.hpp
      generators/PrismUtilities.hpp
      generators/Region.hpp
      generators/WellGeneratorBase.hpp
@@ -104,6 +102,7 @@ set( mesh_headers
      mpiCommunications/NeighborData.hpp
      mpiCommunications/PartitionerBase.hpp
      mpiCommunications/CartesianPartitioner.hpp
+     mpiCommunications/ParticleCartesianPartitioner.hpp
      mpiCommunications/ParMetisPartitioner.hpp
      mpiCommunications/PartitionBase.hpp
      mpiCommunications/SpatialPartition.hpp
@@ -178,7 +177,6 @@ set( mesh_sources
      generators/InternalWellboreGenerator.cpp
      generators/MeshComponentBase.cpp
      generators/MeshGeneratorBase.cpp
-     generators/ParMETISInterface.cpp
      generators/ParticleMeshGenerator.cpp
      generators/Region.cpp
      generators/WellGeneratorBase.cpp
@@ -187,6 +185,7 @@ set( mesh_sources
      mpiCommunications/MPI_iCommData.cpp
      mpiCommunications/NeighborCommunicator.cpp
      mpiCommunications/CartesianPartitioner.cpp
+     mpiCommunications/ParticleCartesianPartitioner.cpp
      mpiCommunications/ParMetisPartitioner.cpp     
      mpiCommunications/PartitionBase.cpp
      mpiCommunications/SpatialPartition.cpp
@@ -239,8 +238,8 @@ if( ENABLE_VTK )
 endif()
 
 if( ENABLE_SCOTCH )
-    set( mesh_headers ${mesh_headers} generators/PTScotchInterface.hpp )
-    set( mesh_sources ${mesh_sources} generators/PTScotchInterface.cpp )
+    set( mesh_headers ${mesh_headers} mpiCommunications/PTScotchPartitioner.hpp )
+    set( mesh_sources ${mesh_sources} mpiCommunications/PTScotchPartitioner.cpp )
     list( APPEND dependencyList ptscotch )
 endif()
 

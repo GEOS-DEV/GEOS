@@ -23,7 +23,7 @@
 #include "mesh/generators/ExternalMeshGeneratorBase.hpp"
 #include "mesh/generators/VTKUtilities.hpp"
 #include "mesh/generators/VTKHierarchicalDataSource.hpp"
-#include "mesh/mpiCommunications/SpatialPartition.hpp"
+#include "mesh/mpiCommunications/PartitionerBase.hpp"
 #include <vtkDataSet.h>
 
 namespace geos
@@ -54,7 +54,7 @@ public:
   /**
    * @brief Generate the mesh using the VTK library.
    * @param[inout] cellBlockManager the CellBlockManager that will receive the meshing information
-   * @param[in] partition the number of domain in each direction (x,y,z) for InternalMesh only, not used here
+   * @param[in] partitioner the number of domain in each direction (x,y,z) for InternalMesh only, not used here
    * @details This method leverages the VTK library to load the meshes.
    * The supported formats are the official VTK ones dedicated to
    * unstructured grids (.vtu, .pvtu and .vtk) and structured grids (.vts, .vti and .pvts).
@@ -88,7 +88,7 @@ public:
    * surfaces of interest, with triangles and/or quads holding an attribute value
    * of 1, 2 or 3, three node sets named "1", "2" and "3" will be instantiated by this method
    */
-  void fillCellBlockManager( CellBlockManager & cellBlockManager, SpatialPartition & partition ) override;
+  void fillCellBlockManager( CellBlockManager & cellBlockManager, PartitionerBase & partitioner ) override;
 
   void importFieldOnArray( Block block,
                            string const & blockName,

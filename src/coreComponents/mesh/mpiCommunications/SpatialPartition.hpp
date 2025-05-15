@@ -143,7 +143,7 @@ public:
   static constexpr int m_nsdof = 3;
 
 private:
-
+#if 1
   /**
    * @brief Recursively builds neighbors if an MPI cartesian topology is used (i.e. not metis).
    * @param idim Dimension index in the cartesian.
@@ -155,7 +155,7 @@ private:
   void addNeighbors( const unsigned int idim,
                      MPI_Comm & cartcomm,
                      int * ncoords );
-
+#endif
   /**
    * @brief Defines a distance/buffer below which we are considered in the contact zone ghosts.
    * @param bufferSize The distance.
@@ -167,8 +167,7 @@ private:
   /// Maximum extent of partition dimensions (excluding ghost objects)
   real64 m_max[3];
 
-  /// Locations of partition boundaries
-  array1d< real64 > m_PartitionLocations[3];
+
 
   /// Length of partition dimensions (excluding ghost objects).
   real64 m_blockSize[3];
@@ -183,12 +182,12 @@ private:
   /**
    * @brief Ghost position (min).
    */
-  real64 m_contactGhostMin[3];
+  //real64 m_contactGhostMin[3];
 
   /**
    * @brief Ghost position (max).
    */
-  real64 m_contactGhostMax[3];
+  //real64 m_contactGhostMax[3];
 
   /// number of partitions
   array1d< int > m_Partitions;

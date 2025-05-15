@@ -19,7 +19,6 @@
 
 #include "InternalWellboreGenerator.hpp"
 
-#include "mesh/mpiCommunications/SpatialPartition.hpp"
 
 namespace geos
 {
@@ -302,29 +301,28 @@ void InternalWellboreGenerator::postInputInitialization()
   InternalMeshGenerator::postInputInitialization();
 }
 
-void InternalWellboreGenerator::reduceNumNodesForPeriodicBoundary( SpatialPartition & partition,
+void InternalWellboreGenerator::reduceNumNodesForPeriodicBoundary( CartesianPartitioner & partitioner,
                                                                    integer ( & numNodesInDir )[3] )
 {
   if( m_isFullAnnulus )
   {
-    if( partition.getPartitions()[1] == 1 )
+    if( partitioner.getPartitionCounts()[1] == 1 )
     {
       numNodesInDir[1] -= 1;
     }
-    else if( partition.getPartitions()[1] > 1 )
+    else if( partitioner.getPartitionCounts()[1] > 1 )
     {
-      partition.m_Periodic[1] = 1;
+      partitioner.setPeriodicity(1, 1);
     }
   }
-
 }
 
 void InternalWellboreGenerator::
-  setNodeGlobalIndicesOnPeriodicBoundary( SpatialPartition & partition,
+  setNodeGlobalIndicesOnPeriodicBoundary( CartesianPartitioner & partitioner,
                                           int ( & globalIJK )[3] )
 {
 
-  GEOS_UNUSED_VAR( partition );
+  GEOS_UNUSED_VAR( partitioner );
   if( m_isFullAnnulus )
   {
     if( globalIJK[1] == m_nElems[1].back() + 1 )

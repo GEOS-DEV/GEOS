@@ -43,7 +43,7 @@ struct ModifiedObjectLists
 };
 
 
-class SpatialPartition;
+//class SpatialPartition;
 
 class NodeManager;
 class EdgeManager;
