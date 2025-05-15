@@ -97,7 +97,7 @@ DECLARE_FIELD( PartialGradient,
                0,
                NOPLOT,
                WRITE_AND_READ,
-               "Partiel gradient computed during backward propagation" );
+               "Partial gradient or imaging condition computed during backward propagation" );
 
 DECLARE_FIELD( PartialGradient2,
                "partialGradient2",

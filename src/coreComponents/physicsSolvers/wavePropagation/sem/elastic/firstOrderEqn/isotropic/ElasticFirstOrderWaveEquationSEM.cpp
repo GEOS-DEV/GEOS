@@ -463,7 +463,7 @@ real64 ElasticFirstOrderWaveEquationSEM::explicitStepForward( real64 const & tim
                                                               real64 const & dt,
                                                               integer cycleNumber,
                                                               DomainPartition & domain,
-                                                              bool GEOS_UNUSED_PARAM( computeGradient ) )
+                                                              integer GEOS_UNUSED_PARAM( computeGradient ) )
 {
   real64 dtOut = explicitStepInternal( time_n, dt, cycleNumber, domain );
   return dtOut;
@@ -475,7 +475,7 @@ real64 ElasticFirstOrderWaveEquationSEM::explicitStepBackward( real64 const & ti
                                                                real64 const & dt,
                                                                integer cycleNumber,
                                                                DomainPartition & domain,
-                                                               bool GEOS_UNUSED_PARAM( computeGradient ) )
+                                                               integer GEOS_UNUSED_PARAM( computeGradient ) )
 {
   GEOS_ERROR( getDataContext() << ": Backward propagation for the first order elastic wave propagator not yet implemented" );
   real64 dtOut = explicitStepInternal( time_n, dt, cycleNumber, domain );

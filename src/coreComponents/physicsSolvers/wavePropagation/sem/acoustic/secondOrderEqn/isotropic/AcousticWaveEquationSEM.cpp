@@ -918,7 +918,7 @@ real64 AcousticWaveEquationSEM::explicitStepForward( real64 const & time_n,
                                                      real64 const & dt,
                                                      integer cycleNumber,
                                                      DomainPartition & domain,
-                                                     bool computeGradient )
+                                                     integer computeGradient )
 {
   real64 dtCompute = explicitStepInternal( time_n, dt, cycleNumber, domain );
 
@@ -989,7 +989,7 @@ real64 AcousticWaveEquationSEM::explicitStepBackward( real64 const & time_n,
                                                       real64 const & dt,
                                                       integer cycleNumber,
                                                       DomainPartition & domain,
-                                                      bool computeGradient )
+                                                      integer computeGradient )
 {
   real64 dtCompute = explicitStepInternal( time_n, dt, cycleNumber, domain );
   forDiscretizationOnMeshTargets( domain.getMeshBodies(),
@@ -1015,7 +1015,7 @@ real64 AcousticWaveEquationSEM::explicitStepBackward( real64 const & time_n,
     real64 const & maxTime = event.getReference< real64 >( EventManager::viewKeyStruct::maxTimeString() );
     int const maxCycle = int(round( maxTime / dt ));
 
-    if( computeGradient && cycleNumber < maxCycle )
+    if( computeGradient > 0 && cycleNumber < maxCycle )
     {
       ElementRegionManager & elemManager = mesh.getElemManager();
 
@@ -1053,7 +1053,7 @@ real64 AcousticWaveEquationSEM::explicitStepBackward( real64 const & time_n,
         arrayView1d< integer const > const elemGhostRank = elementSubRegion.ghostRank();
         GEOS_MARK_SCOPE ( updatePartialGradient );
 
-        //COMPUTE GRADIENTS with respect to K=1/rho*c2 (grad) and b=1/rho (grad2)
+        //COMPUTE GRADIENTS or imaging condition with respect to K=1/rho*c2 (grad) and b=1/rho (grad2)
         finiteElement::FiniteElementBase const &
         fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
 
@@ -1061,16 +1061,30 @@ real64 AcousticWaveEquationSEM::explicitStepBackward( real64 const & time_n,
         {
           using FE_TYPE = TYPEOFREF( finiteElement );
 
-          AcousticMatricesSEM::GradientKappaBuoyancy< FE_TYPE > kernelG( finiteElement );
-          kernelG.template computeGradient< EXEC_POLICY, ATOMIC_POLICY >( elementSubRegion.size(),
-                                                                          nodeCoords,
-                                                                          elemsToNodes,
-                                                                          elemGhostRank,
-                                                                          p_nm1,
-                                                                          p_n,
-                                                                          p_forward,
-                                                                          grad,
-                                                                          grad2 );
+          if( computeGradient == 1 )
+          {
+            AcousticMatricesSEM::GradientKappaBuoyancy< FE_TYPE > kernelG( finiteElement );
+            kernelG.template computeGradient< EXEC_POLICY, ATOMIC_POLICY >( elementSubRegion.size(),
+                                                                            nodeCoords,
+                                                                            elemsToNodes,
+                                                                            elemGhostRank,
+                                                                            p_nm1,
+                                                                            p_n,
+                                                                            p_forward,
+                                                                            grad,
+                                                                            grad2 );
+          }
+          else if( computeGradient == 2 )
+          {
+            AcousticMatricesSEM::ImagingCondition< FE_TYPE > kernelI( finiteElement );
+            kernelI.template computeImagingCondition< EXEC_POLICY, ATOMIC_POLICY >( elementSubRegion.size(),
+                                                                                    nodeCoords,
+                                                                                    elemsToNodes,
+                                                                                    elemGhostRank,
+                                                                                    p_n,
+                                                                                    p_forward,
+                                                                                    grad );
+          }
 
 
         } );

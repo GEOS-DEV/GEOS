@@ -217,6 +217,63 @@ struct AcousticMatricesSEM
     FE_TYPE const & m_finiteElement;
   };
 
+  template< typename FE_TYPE >
+  struct ImagingCondition
+  {
+
+    ImagingCondition( FE_TYPE const & finiteElement )
+      : m_finiteElement( finiteElement )
+    {}
+
+    /**
+     * @brief Launch the computation of the imaging condition for RTM
+     * @tparam EXEC_POLICY the execution policy
+     * @tparam ATOMIC_POLICY the atomic policy
+     * @param[in] size the number of cells in the subRegion
+     * @param[in] nodeCoords coordinates of the nodes
+     * @param[in] elemsToNodes map from element to nodes
+     * @param[in] q_n current time step of backward
+     * @param[in] p_n current time step of forward
+     * @param[out] imag will contain the imaging condition value
+     */
+    template< typename EXEC_POLICY, typename ATOMIC_POLICY >
+    void
+    computeImagingCondition( localIndex const size,
+                             arrayView2d< WaveSolverBase::wsCoordType const, nodes::REFERENCE_POSITION_USD > const nodeCoords,
+                             arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodes,
+                             arrayView1d< integer const > const elemGhostRank,
+                             arrayView1d< real32 const > const q_n,
+                             arrayView1d< real32 const > const p_n,
+                             arrayView1d< real32 > const imag )
+
+    {
+      forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const e )
+      {
+        if( elemGhostRank[e]<0 )
+        {
+          // only the eight corners of the mesh cell are needed to compute the Jacobian
+          real64 xLocal[ 8 ][ 3 ];
+          for( localIndex a = 0; a < 8; ++a )
+          {
+            localIndex const nodeIndex = elemsToNodes( e, FE_TYPE::meshIndexToLinearIndex3D( a ) );
+            for( localIndex i = 0; i < 3; ++i )
+            {
+              xLocal[a][i] = nodeCoords( nodeIndex, i );
+            }
+          }
+          constexpr localIndex numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
+          for( localIndex q = 0; q < numQuadraturePointsPerElem; ++q )
+          {
+            localIndex nodeIdx = elemsToNodes( e, q );
+            imag[e] += q_n[nodeIdx] * p_n[nodeIdx] * m_finiteElement.computeMassTerm( q, xLocal );
+          }
+        }
+      } ); // end loop over element
+    }
+    /// The finite element space/discretization object for the element type in the subRegion
+    FE_TYPE const & m_finiteElement;
+  };
+
 };
 
 } // namespace geos

@@ -482,7 +482,7 @@ real64 AcousticVTIWaveEquationSEM::explicitStepForward( real64 const & time_n,
                                                         real64 const & dt,
                                                         integer,
                                                         DomainPartition & domain,
-                                                        bool computeGradient )
+                                                        integer computeGradient )
 {
   real64 dtOut = explicitStepInternal( time_n, dt, domain );
 
@@ -501,7 +501,7 @@ real64 AcousticVTIWaveEquationSEM::explicitStepForward( real64 const & time_n,
     arrayView1d< real32 > const q_n = nodeManager.getField< acousticvtifields::Pressure_q_n >();
     arrayView1d< real32 > const q_np1 = nodeManager.getField< acousticvtifields::Pressure_q_np1 >();
 
-    if( computeGradient )
+    if( computeGradient  > 0 )
     {
       GEOS_ERROR( "This option is not supported yet" );
     }
@@ -537,7 +537,7 @@ real64 AcousticVTIWaveEquationSEM::explicitStepBackward( real64 const & GEOS_UNU
                                                          real64 const & GEOS_UNUSED_PARAM( dt ),
                                                          integer GEOS_UNUSED_PARAM( cycleNumber ),
                                                          DomainPartition & GEOS_UNUSED_PARAM( domain ),
-                                                         bool GEOS_UNUSED_PARAM( computeGradient ) )
+                                                         integer GEOS_UNUSED_PARAM( computeGradient ) )
 {
   GEOS_ERROR( "This option is not supported yet" );
   return -1;

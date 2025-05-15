@@ -227,28 +227,28 @@ protected:
    * @param dt the perscribed timestep
    * @param cycleNumber the current cycle number
    * @param domain the domain object
-   * @param computeGradient Indicates if we want to compute gradient at this step
+   * @param computeGradient Indicates if we want to compute gradient or the imaging condition at this step
    * @return return the timestep that was achieved during the step.
    */
   virtual real64 explicitStepForward( real64 const & time_n,
                                       real64 const & dt,
                                       integer const cycleNumber,
                                       DomainPartition & domain,
-                                      bool const computeGradient ) = 0;
+                                      integer const computeGradient ) = 0;
   /**
    * @brief Perform backward explicit step
    * @param time_n time at the beginning of the step
    * @param dt the perscribed timestep
    * @param cycleNumber the current cycle number
    * @param domain the domain object
-   * @param computeGradient Indicates if we want to compute gradient at this step
+   * @param computeGradient Indicates if we want to compute gradient or the imaging condition at this step
    * @return return the timestep that was achieved during the step.
    */
   virtual real64 explicitStepBackward( real64 const & time_n,
                                        real64 const & dt,
                                        integer const cycleNumber,
                                        DomainPartition & domain,
-                                       bool const computeGradient ) = 0;
+                                       integer const computeGradient ) = 0;
 
 
   virtual void registerDataOnMesh( Group & meshBodies ) override;
@@ -316,7 +316,7 @@ protected:
   localIndex m_forward;
 
   /// Indicate if we want to save fields to restore them during backward
-  localIndex m_saveFields;
+  integer m_saveFields;
 
   // Indicate the current shot computed for naming saved temporary data
   integer m_shotIndex;
