@@ -412,11 +412,6 @@ template<>
 string TableCSVFormatter::toString< TableFunction >( TableFunction const & tableFunction ) const
 {
   ArrayOfArraysView< real64 const > const coordinates = tableFunction.getCoordinates();
-  array1d< real64 > coordsX;
-  coordsX.insert( 0, coordinates[0].begin(), coordinates[0].end());
-  array1d< real64 > coordsY;
-  coordsY.insert( 0, coordinates[1].begin(), coordinates[1].end());
-
 
   arrayView1d< real64 const > const values = tableFunction.getValues();
   TableLayout tableLayout;
@@ -436,8 +431,13 @@ string TableCSVFormatter::toString< TableFunction >( TableFunction const & table
     TableCSVFormatter const csvFormat( tableLayout );
     return csvFormat.toString( tableData );
   }
-  else
+  else if( numDimensions == 2 )
   {
+    array1d< real64 > coordsX;
+    coordsX.insert( 0, coordinates[0].begin(), coordinates[0].end());
+    array1d< real64 > coordsY;
+    coordsY.insert( 0, coordinates[1].begin(), coordinates[1].end());
+
     TableData2D tableData2D;
     TableData2D::TableDataHolder const tableConverted =
       tableData2D.convertTable2D( coordsX, coordsY,
@@ -458,11 +458,6 @@ template<>
 string TableTextFormatter::toString< TableFunction >( TableFunction const & tableFunction ) const
 {
   ArrayOfArraysView< real64 const > coordinates = tableFunction.getCoordinates();
-  array1d< real64 > coordsX;
-  coordsX.insert( 0, coordinates[0].begin(), coordinates[0].end());
-  array1d< real64 > coordsY;
-  coordsY.insert( 0, coordinates[1].begin(), coordinates[1].end());
-
   arrayView1d< real64 const > const values = tableFunction.getValues();
   integer const numDimensions = LvArray::integerConversion< integer >( coordinates.size() );
 
@@ -497,6 +492,11 @@ string TableTextFormatter::toString< TableFunction >( TableFunction const & tabl
     }
     else if( numDimensions == 2 )
     {
+      array1d< real64 > coordsX;
+      coordsX.insert( 0, coordinates[0].begin(), coordinates[0].end());
+      array1d< real64 > coordsY;
+      coordsY.insert( 0, coordinates[1].begin(), coordinates[1].end());
+
       TableData2D tableData2D;
       TableData2D::TableDataHolder tableConverted;
       tableConverted = tableData2D.convertTable2D( coordsX, coordsY,
