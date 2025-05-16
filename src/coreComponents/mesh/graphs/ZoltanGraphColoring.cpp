@@ -51,13 +51,6 @@ ZoltanGraphColoring::ZoltanGraphColoring( MPI_Comm comm ): GraphColoringBase( co
   m_zz->Set_Param( "COLORING_PROBLEM", "distance-1" );
 }
 
-//Zoltan_Set_Param(zz, "OBJ_WEIGHT_DIM", "1"); /* weights are 1 float */
-/*		  { "SUPERSTEP_SIZE",     NULL, "INT", 0},
-      { "COMM_PATTERN",       NULL, "CHAR", 0 },
-      { "VERTEX_VISIT_ORDER", NULL, "CHAR", 0 },
-      { "COLORING_METHOD",    NULL, "CHAR", 0},
- */
-
 
 ZoltanGraphColoring::~ZoltanGraphColoring()
 {

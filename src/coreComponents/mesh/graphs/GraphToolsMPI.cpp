@@ -174,7 +174,6 @@ std::vector< camp::idx_t > createXadjFromAdjncy( const std::vector< camp::idx_t 
   // Scatter the xadj data
   std::vector< camp::idx_t > localXadj( 2 );
   MpiWrapper::scatter( xadjToScatter.data(), 2, localXadj.data(), 2, 0, comm );
-  //MPI_Scatter(  MPI_LONG, localXadj.data(), 2, MPI_LONG, 0, comm );
 
   return localXadj;
 }
