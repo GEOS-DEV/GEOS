@@ -66,6 +66,7 @@ public:
   template< typename T >
   array1d< T > read1DAs( string const & datasetName, int const expectedDims ) const
   {
+    GEOS_UNUSED_VAR( expectedDims );
     static_assert( std::is_same_v< T, uint8_t > ||
                    std::is_same_v< T, localIndex > ||
                    std::is_same_v< T, real32 > ||
