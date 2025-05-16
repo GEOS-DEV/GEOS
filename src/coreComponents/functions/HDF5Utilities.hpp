@@ -90,7 +90,7 @@ private:
   /// The HDF5 file identifier.
   hid_t m_fileId{-1};
   /// The filename.
-  string m_filename;    /// The filename.
+  string m_filename;
 };
 
 /**
@@ -122,7 +122,7 @@ public:
    * @return The contents of the dataset, flattened to a 1D array in Fortran order.
    */
   template< typename T >
-  array1d< T > readAsFortranFlatArray( std::string const & datasetName,
+  array1d< T > readAsFortranFlatArray( string const & datasetName,
                                        int const expectedDims ) const = delete;
 
 private:
@@ -132,29 +132,43 @@ private:
 
 //! @name Specializations for supported types
 ///@{
+
 /**
  * @brief Specialization for reading a dataset as array1d<uint8_t>.
+ * @param[in] datasetName The name of the dataset in the HDF5 file.
+ * @param[in] expectedDims The expected number of dimensions of the dataset.
+ * @return The contents of the dataset, flattened to a 1D array in Fortran order.
  */
 template<>
 array1d< uint8_t > SerialHDF5Reader::readAsFortranFlatArray< uint8_t >( const std::string & datasetName, const int expectedDims ) const;
 
 /**
  * @brief Specialization for reading a dataset as array1d<localIndex>.
+ * @param[in] datasetName The name of the dataset in the HDF5 file.
+ * @param[in] expectedDims The expected number of dimensions of the dataset.
+ * @return The contents of the dataset, flattened to a 1D array in Fortran order.
  */
 template<>
 array1d< localIndex > SerialHDF5Reader::readAsFortranFlatArray< localIndex >( const std::string & datasetName, const int expectedDims ) const;
 
 /**
  * @brief Specialization for reading a dataset as array1d<real32>.
+ * @param[in] datasetName The name of the dataset in the HDF5 file.
+ * @param[in] expectedDims The expected number of dimensions of the dataset.
+ * @return The contents of the dataset, flattened to a 1D array in Fortran order.
  */
 template<>
 array1d< real32 > SerialHDF5Reader::readAsFortranFlatArray< real32 >( const std::string & datasetName, const int expectedDims ) const;
 
 /**
  * @brief Specialization for reading a dataset as array1d<real64>.
+ * @param[in] datasetName The name of the dataset in the HDF5 file.
+ * @param[in] expectedDims The expected number of dimensions of the dataset.
+ * @return The contents of the dataset, flattened to a 1D array in Fortran order.
  */
 template<>
 array1d< real64 > SerialHDF5Reader::readAsFortranFlatArray< real64 >( const std::string & datasetName, const int expectedDims ) const;
+
 ///@}
 
 } // end of namespace hdf5Utils

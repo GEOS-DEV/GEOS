@@ -382,7 +382,7 @@ SerialHDF5Reader::SerialHDF5Reader( const string & filename )
 
 // Specialization for array1d<uint8_t>
 template<>
-array1d< uint8_t > SerialHDF5Reader::readAsFortranFlatArray< uint8_t >( const std::string & datasetName, const int expectedDims ) const
+array1d< uint8_t > SerialHDF5Reader::readAsFortranFlatArray< uint8_t >( string const & datasetName, const int expectedDims ) const
 {
   TypedArray1d result = readDatasetAsFortranFlatArray( m_file, datasetName, expectedDims );
 
@@ -397,7 +397,7 @@ array1d< uint8_t > SerialHDF5Reader::readAsFortranFlatArray< uint8_t >( const st
 
 // Specialization for array1d<localIndex>
 template<>
-array1d< localIndex > SerialHDF5Reader::readAsFortranFlatArray< localIndex >( const std::string & datasetName, const int expectedDims ) const
+array1d< localIndex > SerialHDF5Reader::readAsFortranFlatArray< localIndex >( string const & datasetName, const int expectedDims ) const
 {
   TypedArray1d result = readDatasetAsFortranFlatArray( m_file, datasetName, expectedDims );
 
@@ -416,7 +416,7 @@ array1d< localIndex > SerialHDF5Reader::readAsFortranFlatArray< localIndex >( co
 
 // Specialization for array1d<real32>
 template<>
-array1d< real32 > SerialHDF5Reader::readAsFortranFlatArray< real32 >( const std::string & datasetName, const int expectedDims ) const
+array1d< real32 > SerialHDF5Reader::readAsFortranFlatArray< real32 >( string const & datasetName, const int expectedDims ) const
 {
   TypedArray1d result = readDatasetAsFortranFlatArray( m_file, datasetName, expectedDims );
 
@@ -439,7 +439,7 @@ array1d< real32 > SerialHDF5Reader::readAsFortranFlatArray< real32 >( const std:
 
 // Specialization for array1d<real64>
 template<>
-array1d< real64 > SerialHDF5Reader::readAsFortranFlatArray< real64 >( const std::string & datasetName, const int expectedDims ) const
+array1d< real64 > SerialHDF5Reader::readAsFortranFlatArray< real64 >( string const & datasetName, const int expectedDims ) const
 {
   TypedArray1d result = readDatasetAsFortranFlatArray( m_file, datasetName, expectedDims );
 
