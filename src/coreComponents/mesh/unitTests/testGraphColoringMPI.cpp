@@ -21,7 +21,9 @@
 #include "../graphs/GraphToolsMPI.hpp"
 
 #include "../graphs/GraphColoringBase.hpp"
+#ifdef GEOS_USE_TRILINOS
 #include "../graphs/ZoltanGraphColoring.hpp"
+#endif
 #include "../graphs/RLFGraphColoringMPI.hpp"
 
 #include "common/MpiWrapper.hpp"
@@ -61,7 +63,9 @@ void runColoringTest( GraphColoringBase & graphColoring, const std::vector< camp
 
 TEST_F( GraphColoringTest, CartesianDecomposition3D6 )
 {
+#ifdef GEOS_USE_TRILINOS
   ZoltanGraphColoring zoltanColoring;
+#endif
   RLFGraphColoringMPI rlfColoringMPI;
 
   std::vector< camp::idx_t > xadj;
@@ -73,14 +77,18 @@ TEST_F( GraphColoringTest, CartesianDecomposition3D6 )
     std::tie( xadj, adjncy ) = generateGraphCartPartitionning3D6( nx, ny, nz );
   }
 
+#ifdef GEOS_USE_TRILINOS
   runColoringTest( zoltanColoring, xadj, adjncy, 2 );
+#endif
   runColoringTest( rlfColoringMPI, xadj, adjncy, 2 );
 }
 
 
 TEST_F( GraphColoringTest, CartesianDecomposition3D26 )
 {
+#ifdef GEOS_USE_TRILINOS
   ZoltanGraphColoring zoltanColoring;
+#endif
   RLFGraphColoringMPI rlfColoringMPI;
 
   std::vector< camp::idx_t > xadj;
@@ -92,14 +100,18 @@ TEST_F( GraphColoringTest, CartesianDecomposition3D26 )
     std::tie( xadj, adjncy ) = generateGraphCartPartitionning3D26( nx, ny, nz );
   }
 
+#ifdef GEOS_USE_TRILINOS
   runColoringTest( zoltanColoring, xadj, adjncy, 8 );
+#endif
   runColoringTest( rlfColoringMPI, xadj, adjncy, 8 );
 }
 
 
 TEST_F( GraphColoringTest, RandomGraphs )
 {
+#ifdef GEOS_USE_TRILINOS
   ZoltanGraphColoring zoltanColoring;
+#endif
   RLFGraphColoringMPI rlfColoringMPI;
 
   size_t const iterations = 10;
@@ -115,7 +127,9 @@ TEST_F( GraphColoringTest, RandomGraphs )
       std::tie( xadj, adjncy ) = generateGraphRandom( num_nodes, num_edges );
     }
 
+#ifdef GEOS_USE_TRILINOS
     runColoringTest( zoltanColoring, xadj, adjncy, 0 );
+#endif
     runColoringTest( rlfColoringMPI, xadj, adjncy, 0 );
   }
 }
