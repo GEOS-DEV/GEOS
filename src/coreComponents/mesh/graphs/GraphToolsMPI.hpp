@@ -41,7 +41,7 @@ using camp::idx_t;
  *
  * @param xadj The adjacency list offsets for each node.
  * @param adjncy The adjacency list containing the neighbors of each node.
- * @param comm The MPI communicator (default is MPI_COMM_WORLD).
+ * @param comm The MPI communicator (default is MPI_COMM_GEOS).
  * @return A pair of vectors containing the local adjacency list offsets and neighbors for each rank.
  */
 std::pair< std::vector< camp::idx_t >, std::vector< camp::idx_t > >

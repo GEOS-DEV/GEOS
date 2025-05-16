@@ -41,7 +41,7 @@ class GraphColoringTest : public ::testing::Test
 protected:
   void SetUp() override
   {
-    rank = MpiWrapper::commRank( MPI_COMM_WORLD );
+    rank = MpiWrapper::commRank( MPI_COMM_GEOS );
   }
 
   int rank;
@@ -50,13 +50,13 @@ protected:
 
 void runColoringTest( GraphColoringBase & graphColoring, const std::vector< camp::idx_t > & xadj, const std::vector< camp::idx_t > & adjncy, int expectedNumberOfColors )
 {
-  auto [localXadj, localAdjncy] = scatterGraphData( xadj, adjncy, MPI_COMM_WORLD );
+  auto [localXadj, localAdjncy] = scatterGraphData( xadj, adjncy, MPI_COMM_GEOS );
   int color = graphColoring.colorGraph( localAdjncy );
 
-  EXPECT_TRUE( graphColoring.isColoringValid( localAdjncy, color, MPI_COMM_WORLD ));
+  EXPECT_TRUE( graphColoring.isColoringValid( localAdjncy, color, MPI_COMM_GEOS ));
   if( expectedNumberOfColors>0 )
   {
-    EXPECT_EQ( graphColoring.getNumberOfColors( color, MPI_COMM_WORLD ), expectedNumberOfColors );
+    EXPECT_EQ( graphColoring.getNumberOfColors( color, MPI_COMM_GEOS ), expectedNumberOfColors );
   }
 }
 
@@ -138,7 +138,7 @@ TEST_F( GraphColoringTest, RandomGraphs )
 TEST_F( GraphColoringTest, CountPositiveDistinctColors )
 {
   std::vector< int > colors = {1, -1, 3, 2, 1, 4, 5, 3};
-  EXPECT_EQ( GraphColoringBase::getNumberOfColors( colors, MPI_COMM_WORLD ), 6 );
+  EXPECT_EQ( GraphColoringBase::getNumberOfColors( colors, MPI_COMM_GEOS ), 6 );
 }
 
 
@@ -146,7 +146,7 @@ int main( int argc, char * *argv )
 {
   // Initialize MPI
   MpiWrapper::init( &argc, &argv );
-  MPI_COMM_GEOS = MpiWrapper::commDup( MPI_COMM_WORLD );
+  MPI_COMM_GEOS = MpiWrapper::commDup( MPI_COMM_GEOS );
 
   // Initialize Google Test
   ::testing::InitGoogleTest( &argc, argv );
