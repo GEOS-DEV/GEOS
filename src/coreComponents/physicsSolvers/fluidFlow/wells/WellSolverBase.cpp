@@ -49,7 +49,7 @@ WellSolverBase::WellSolverBase( string const & name,
   m_isThermal( 0 ),
   m_ratesOutputDir( joinPath( OutputBase::getOutputDirectory(), name + "_rates" ) ),
   m_keepVariablesConstantDuringInitStep( 0 ),
-  m_estimateSolution( 1 )
+  m_estimateSolution( 0 )
 {
   registerWrapper( viewKeyStruct::isThermalString(), &m_isThermal ).
     setApplyDefaultValue( 0 ).
@@ -68,6 +68,12 @@ WellSolverBase::WellSolverBase( string const & name,
     setApplyDefaultValue( 0 ).
     setInputFlag( dataRepository::InputFlags::OPTIONAL ).
     setDescription( "Choose time step to honor rates/bhp tables time intervals" );
+
+  this->registerWrapper( viewKeyStruct::estimateWellSolutionString(), &m_estimateSolution ).
+    setApplyDefaultValue( 0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Flag to esitmate well solution prior to coupled reservoir and well solve." );
+
 }
 
 Group *WellSolverBase::createChild( string const & childKey, string const & childName )
@@ -209,111 +215,6 @@ void WellSolverBase::implicitStepSetup( real64 const & time_n,
 
   initializeWells( domain, time_n );
 
-  // Setup dofManager for each well element region
-  if( estimateSolution() )
-  {
-    setupWellDofs( domain );
-    estimateWellSolution( time_n, dt, 0, domain );
-#if 0
-    if( m_estimatorDoFManager.empty() )
-    {
-
-      map< std::pair< string, string >, string_array > meshTargets;
-      string_array regions;
-      forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const & meshBodyName,
-                                                                   MeshLevel & meshLevel,
-                                                                   string_array const & regionNames )
-      {
-        ElementRegionManager & elementRegionManager = meshLevel.getElemManager();
-        elementRegionManager.forElementRegions< WellElementRegion >( regionNames,
-                                                                     [&]( localIndex const,
-                                                                          WellElementRegion & region )
-        {
-          meshTargets.clear();
-          regions.clear();
-          regions.emplace_back( region.getName() );
-          auto const key = std::make_pair( meshBodyName, meshLevel.getName());
-          meshTargets[key] = std::move( regions );
-
-          DofManager regionDoFManager( region.getName());
-          regionDoFManager.setDomain( domain );
-          regionDoFManager.addField( wellElementDofName(),
-                                     FieldLocation::Elem,
-                                     numDofPerWellElement(),
-                                     meshTargets );
-
-          regionDoFManager.addCoupling( wellElementDofName(),
-                                        wellElementDofName(),
-                                        DofManager::Connector::Node );
-
-          regionDoFManager.reorderByRank();
-          m_estimatorDoFManager.emplace( region.getName(), std::move( regionDoFManager ));
-        } );
-      } );
-    }
-#if 1
-    forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const & meshBodyName,
-                                                                 MeshLevel & meshLevel,
-                                                                 string_array const & regionNames )
-    {
-      ElementRegionManager & elementRegionManager = meshLevel.getElemManager();
-      elementRegionManager.forElementRegions< WellElementRegion >( regionNames,
-                                                                   [&]( localIndex const,
-                                                                        WellElementRegion & region )
-      {
-        auto it = m_estimatorDoFManager.find( region.getName());
-        if( it == m_estimatorDoFManager.end())
-        {
-          throw std::runtime_error( "DofManager for region " + region.getName() + " not found." );
-        }
-        DofManager & dofManager = it->second;
-
-
-
-        ParallelMatrix pmatrix;
-        pmatrix.setDofManager( &dofManager );
-
-        CRSMatrix< real64, globalIndex >  localMatrix;
-        localMatrix.zero();
-
-        ParallelVector pRhs;
-        pRhs.setName( region.getName() + "/rhs" );
-        pRhs.create( dofManager.numLocalDofs(), MPI_COMM_GEOS );
-
-        arrayView1d< real64 > const localRhs =  pRhs.open();
-
-        ParallelVector localSoln;
-
-        SparsityPattern< globalIndex > pattern;
-        dofManager.setSparsityPattern( pattern );
-        localMatrix.assimilate< parallelDevicePolicy<> >( std::move( pattern ) );
-
-        localMatrix.setName( region.getName() + "/matrix" );
-
-
-
-        localSoln.setName( region.getName() + "/solution" );
-        localSoln.create( dofManager.numLocalDofs(), MPI_COMM_GEOS );
-
-
-        WellElementSubRegion & subRegion = region.getGroup( ElementRegionBase::viewKeyStruct::elementSubRegions() )
-                                             .getGroup< WellElementSubRegion >( region.getSubRegionName() );
-
-        assembleWellAccumulationTerms( time_n, dt, subRegion, dofManager, localMatrix.toViewConstSizes(), localRhs );
-        assembleWellPressureRelations( time_n, dt, subRegion, dofManager, localMatrix.toViewConstSizes(), localRhs );
-        computeWellPerforationRates( time_n, dt, elementRegionManager, subRegion );
-        assembleWellFluxTerms( time_n, dt, subRegion, dofManager, localMatrix.toViewConstSizes(), localRhs );
-        updateWellState( subRegion );
-        pRhs.close();
-        pmatrix.create( localMatrix.toViewConst(), dofManager.numLocalDofs(), MPI_COMM_GEOS );
-
-        debugOutputSystem( time_n, 0, 0, pmatrix, pRhs );
-
-      } );
-    } );
-#endif
-#endif
-  }
 }
 
 void WellSolverBase::setupWellDofs( DomainPartition & domain )
@@ -361,6 +262,10 @@ void WellSolverBase::estimateWellSolution( real64 const & time_n,
                                            DomainPartition & domain )
 {
   GEOS_MARK_FUNCTION;
+
+  if( !estimateSolution() )
+    return;
+  setupWellDofs( domain );
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const & meshBodyName,
                                                                MeshLevel & meshLevel,
@@ -633,12 +538,13 @@ bool WellSolverBase::solveNonlinearSystem( real64 const & time_n,
                           localRhs );
 
 // apply boundary conditions to system
-      applyBoundaryConditions( time_n,
-                               stepDt,
-                               domain,
-                               dofManager,
-                               m_localMatrix.toViewConstSizes(),
-                               localRhs );
+      applyWellBoundaryConditions( time_n,
+                                   stepDt,
+                                   elemManager,
+                                   subRegion,
+                                   dofManager,
+                                   localRhs,
+                                   m_localMatrix.toViewConstSizes() );
 
       m_rhs.close();
 

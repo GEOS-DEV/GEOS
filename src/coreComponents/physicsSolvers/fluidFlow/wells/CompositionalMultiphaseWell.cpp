@@ -50,6 +50,7 @@
 #include "physicsSolvers/fluidFlow/kernels/compositional/ThermalPhaseVolumeFractionKernel.hpp"
 #include "physicsSolvers/fluidFlow/kernels/compositional/FluidUpdateKernel.hpp"
 
+#include "physicsSolvers/multiphysics/CoupledReservoirAndWellKernels.hpp" // ouch
 #if defined( __INTEL_COMPILER )
 #pragma GCC optimize "O0"
 #endif
@@ -1413,6 +1414,89 @@ void CompositionalMultiphaseWell::assembleWellAccumulationTerms( real64 const & 
     } );
   }
 
+
+
+}
+
+void
+CompositionalMultiphaseWell::applyWellBoundaryConditions( real64 const time_n,
+                                                          real64 const dt,
+                                                          ElementRegionManager & elemManager,
+                                                          WellElementSubRegion & subRegion,
+                                                          DofManager const & dofManager,
+                                                          arrayView1d< real64 > const & localRhs,
+                                                          CRSMatrixView< real64, globalIndex const > const & localMatrix )
+{
+
+  using namespace compositionalMultiphaseUtilities;
+
+  BitFlags< isothermalCompositionalMultiphaseBaseKernels::KernelFlags > kernelFlags;
+  if( useTotalMassEquation() )
+    kernelFlags.set( isothermalCompositionalMultiphaseBaseKernels::KernelFlags::TotalMassEquation );
+
+  integer const numComps = numFluidComponents();
+
+  globalIndex const rankOffset = dofManager.rankOffset();
+
+
+  string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
+  MultiFluidBase const & fluid = subRegion.getConstitutiveModel< MultiFluidBase >( fluidName );
+
+  // if the well is shut, we neglect reservoir-well flow that may occur despite the zero rate
+  // therefore, we do not want to compute perforation rates and we simply assume they are zero
+  WellControls const & wellControls = getWellControls( subRegion );
+  bool const detectCrossflow =
+    ( wellControls.isInjector() ) && wellControls.isCrossflowEnabled() &&
+    getLogLevel() >= 1;     // since detect crossflow requires communication, we detect it only if the logLevel is sufficiently high
+
+  if( !wellControls.isWellOpen( time_n ) )
+  {
+    return;
+  }
+
+  PerforationData const * const perforationData = subRegion.getPerforationData();
+
+  // get the degrees of freedom
+  string const wellDofKey = dofManager.getKey( wellElementDofName() );
+
+
+  integer numCrossflowPerforations=0;
+  if( isThermal ( )  )
+  {
+#if 0
+    coupledReservoirAndWellKernels::
+      ThermalCompositionalMultiPhaseFluxKernelFactory::
+      createAndLaunch< parallelDevicePolicy<> >( numComps,
+                                                 wellControls.isProducer(),
+                                                 dt,
+                                                 rankOffset,
+                                                 wellDofKey,
+                                                 subRegion,
+                                                 resDofNumber,
+                                                 perforationData,
+                                                 fluid,
+                                                 kernelFlags,
+                                                 detectCrossflow,
+                                                 numCrossflowPerforations,
+                                                 localRhs,
+                                                 localMatrix );
+#endif
+  }
+  else
+  {
+    coupledReservoirAndWellKernels::
+      IsothermalCompositionalMultiPhaseWellFluxKernelFactory::
+      createAndLaunch< parallelDevicePolicy<> >( numComps,
+                                                 dt,
+                                                 rankOffset,
+                                                 wellDofKey,
+                                                 subRegion,
+                                                 perforationData,
+                                                 fluid,
+                                                 localRhs,
+                                                 localMatrix,
+                                                 kernelFlags );
+  }
 
 
 }
@@ -2842,6 +2926,8 @@ void CompositionalMultiphaseWell::implicitStepSetup( real64 const & time_n,
       updateSubRegionState( subRegion );
     } );
   } );
+  WellSolverBase::estimateWellSolution( time_n, dt, 0, domain );
+
 }
 
 void CompositionalMultiphaseWell::implicitStepComplete( real64 const & time_n,

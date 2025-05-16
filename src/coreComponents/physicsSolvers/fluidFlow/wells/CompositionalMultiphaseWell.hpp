@@ -298,6 +298,14 @@ public:
                                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                           arrayView1d< real64 > const & localRhs ) override;
 
+  virtual void applyWellBoundaryConditions( real64 const time_n,
+                                            real64 const dt,
+                                            ElementRegionManager & elemManager,
+                                            WellElementSubRegion & subRegion,
+                                            DofManager const & dofManager,
+                                            arrayView1d< real64 > const & localRhs,
+                                            CRSMatrixView< real64, globalIndex const > const & localMatrix ) override;
+
   virtual void applyBoundaryConditions( real64 const GEOS_UNUSED_PARAM( time_n ),
                                         real64 const GEOS_UNUSED_PARAM( dt ),
                                         DomainPartition & GEOS_UNUSED_PARAM( domain ),

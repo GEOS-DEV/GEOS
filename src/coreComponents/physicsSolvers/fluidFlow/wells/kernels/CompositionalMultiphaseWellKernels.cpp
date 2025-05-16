@@ -211,6 +211,7 @@ ControlEquationHelper::
     }
     if constexpr ( IS_THERMAL )
       dControlEqn[COFFSET_WJ::dT] = dCurrentTotalVolRate[COFFSET_WJ::dT];
+
   }
   // Total mass rate control
   else if( currentControl == WellControls::Control::MASSRATE )
