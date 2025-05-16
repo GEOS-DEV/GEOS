@@ -1,0 +1,248 @@
+{
+  "doc" :
+  {
+    "comment" : "All kernel template instantiation specs need all dict keys except 'comment' and 'explicit'",
+    "vars" :
+    [
+      "This is a list of the keys in the combinations dict (keys aren't queryable in cmake)",
+      "they are also the names of the CMAKE variables which will be set to one of the values specified",
+      "in the combinations dict just prior to cmake calling configure_file() on the template file"
+    ],
+    "constants" :
+    [
+      [ "key", "value" ],
+      [ "note", "All constants will be set for cmake to configure_file() for every instantiation." ]
+    ],
+    "combinations" :
+    {
+      "vars" : [ "each value in this list will be used to generate kernel template files",
+                 "combinatorally with all other value lists" ]
+    },
+    "explicit" : [ "specify a specific combination of the variables to generate",
+                   "specify by choosing one value from each variable you want generated",
+                   "and concating them with '#' (this can by modified internally at the",
+                   "generation call). Duplicate entries are unified internally" ]
+  },
+
+  "SinglePhaseHybridFVMKernels": {
+    "vars": [
+      "NAME",
+      "NFACES",
+      "IP"
+    ],
+    "constants": [
+      [ "ElementBasedAssemblyKernelPolicy", "geos::parallelDevicePolicy< GEOS_BLOCK_SIZE >" ]
+    ],
+    "combinations": {
+      "NAME": [
+        "ElementBasedAssemblyKernel"
+      ],
+      "NFACES": [
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13
+      ],
+      "IP": [
+        "mimeticInnerProduct::TPFAInnerProduct",
+        "mimeticInnerProduct::QuasiTPFAInnerProduct",
+        "mimeticInnerProduct::QuasiRTInnerProduct",
+        "mimeticInnerProduct::SimpleInnerProduct",
+        "mimeticInnerProduct::BdVLMInnerProduct"
+      ]
+    },
+    "explicit": []
+  },
+
+  "CompositionalMultiphaseHybridFVMKernels_upwinding": {
+    "vars": [
+      "NCOMPS",
+      "NPHASES"
+    ],
+    "constants": [],
+    "combinations": {
+      "NCOMPS": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "NPHASES": [
+        2,
+        3
+      ]
+    },
+    "explicit": []
+  },
+
+  "CompositionalMultiphaseHybridFVMKernels_assembly": {
+    "vars": [
+      "NFACES",
+      "NCOMPS",
+      "NPHASES"
+    ],
+    "constants": [],
+    "combinations": {
+      "NFACES": [
+        4,
+        5,
+        6
+      ],
+      "NCOMPS": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "NPHASES": [
+        2,
+        3
+      ]
+    },
+    "explicit": []
+  },
+
+  "CompositionalMultiphaseHybridFVMKernels_flux": {
+    "vars": [
+      "NFACES",
+      "NCOMPS",
+      "NPHASES",
+      "IP_TYPE"
+    ],
+    "constants": [],
+    "combinations": {
+      "NFACES": [
+        4,
+        5,
+        6
+      ],
+      "NCOMPS": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "NPHASES": [
+        2,
+        3
+      ],
+      "IP_TYPE": [
+        "mimeticInnerProduct::TPFAInnerProduct",
+        "mimeticInnerProduct::BdVLMInnerProduct"
+      ]
+    },
+    "explicit": []
+  },
+
+  "ReactiveCompositionalMultiphaseOBLKernels": {
+    "vars": [
+      "NAME",
+      "NDIM",
+      "NCOMP",
+      "ENABLE_ENERGY",
+      "STENCIL"
+    ],
+    "constants": [
+      [ "FluxComputeKernelPolicy", "geos::parallelDevicePolicy< GEOS_BLOCK_SIZE >" ]
+    ],
+    "combinations": {
+      "NAME": [
+        "FluxComputeKernel"
+      ],
+      "NDIM": [
+        1,
+        2,
+        3
+      ],
+      "NCOMP": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "ENABLE_ENERGY": [
+        "true",
+        "false"
+      ],
+      "STENCIL": [
+        "CellElementStencilTPFA",
+        "SurfaceElementStencil",
+        "EmbeddedSurfaceToCellStencil",
+        "FaceElementToCellStencil"
+      ]
+    },
+    "explicit": []
+  },
+
+  "IsothermalCompositionalMultiphaseFVM_DirichletFluxComputeKernels": {
+    "vars": [
+      "NAME",
+      "NCOMP_NDOF",
+      "KERNEL_TYPE"
+    ],
+    "constants": [
+      [ "DirichletFluxComputeKernelPolicy", "geos::parallelDevicePolicy< GEOS_BLOCK_SIZE >" ]
+    ],
+    "combinations": {
+      "NAME": [
+        "DirichletFluxComputeKernel"
+      ],
+      "NCOMP_NDOF": [
+        "1, 2",
+        "2, 3",
+        "3, 4",
+        "4, 5",
+        "5, 6"
+      ],
+      "KERNEL_TYPE": [
+        "constitutive::DeadOilFluid",
+        "constitutive::BlackOilFluid",
+        "constitutive::CO2BrinePhillipsFluid",
+        "constitutive::CO2BrineEzrokhiFluid",
+        "constitutive::CO2BrinePhillipsThermalFluid"
+      ]
+    },
+    "explicit": []
+  },
+
+  "ThermalCompositionalMultiphaseFVM_DirichletFluxComputeKernels": {
+    "vars": [
+      "NAME",
+      "NCOMP_NDOF",
+      "KERNEL_TYPE"
+    ],
+    "constants": [
+      [ "DirichletFluxComputeKernelPolicy", "geos::parallelDevicePolicy< GEOS_BLOCK_SIZE >" ]
+    ],
+    "combinations": {
+      "NAME": [
+        "DirichletFluxComputeKernel"
+      ],
+      "NCOMP_NDOF": [
+        "1, 2",
+        "2, 3",
+        "3, 4",
+        "4, 5",
+        "5, 6"
+      ],
+      "KERNEL_TYPE": [
+        "constitutive::DeadOilFluid",
+        "constitutive::BlackOilFluid",
+        "constitutive::CO2BrinePhillipsFluid",
+        "constitutive::CO2BrineEzrokhiFluid",
+        "constitutive::CO2BrinePhillipsThermalFluid"
+      ]
+    },
+    "explicit": []
+  }
+}

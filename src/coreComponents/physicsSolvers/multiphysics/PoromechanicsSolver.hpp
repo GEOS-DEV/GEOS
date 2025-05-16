@@ -404,7 +404,7 @@ public:
 
 protected:
 
-  template< typename CONSTITUTIVE_BASE,
+  template< typename TYPE_LIST,
             typename KERNEL_WRAPPER,
             typename ... PARAMS >
   real64 assemblyLaunch( MeshLevel & mesh,
@@ -435,12 +435,11 @@ protected:
 
     return finiteElement::
              regionBasedKernelApplication< parallelDevicePolicy< >,
-                                           CONSTITUTIVE_BASE,
-                                           CellElementSubRegion >( mesh,
-                                                                   regionNames,
-                                                                   this->solidMechanicsSolver()->getDiscretizationName(),
-                                                                   materialNamesString,
-                                                                   kernelWrapper );
+                                           TYPE_LIST >( mesh,
+                                                        regionNames,
+                                                        this->solidMechanicsSolver()->getDiscretizationName(),
+                                                        materialNamesString,
+                                                        kernelWrapper );
   }
 
   /* Implementation of Nonlinear Acceleration (Aitken) of averageMeanTotalStressIncrement */
