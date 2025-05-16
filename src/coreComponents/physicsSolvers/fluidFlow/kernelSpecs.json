@@ -175,7 +175,7 @@
   "IsothermalCompositionalMultiphaseFVM_DirichletFluxComputeKernels": {
     "vars": [
       "NAME",
-      "NCOMPS_FLUID"
+      "NCOMPS_THERMAL_FLUID"
     ],
     "constants": [
       [ "DirichletFluxComputeKernelPolicy", "geos::parallelDevicePolicy< GEOS_BLOCK_SIZE >" ]
@@ -184,14 +184,14 @@
       "NAME": [
         "DirichletFluxComputeKernel"
       ],
-      "NCOMPS_FLUID_THERMAL": [
-        "2, constitutive::DeadOilFluid",
-        "3, constitutive::DeadOilFluid",
-        "3, constitutive::BlackOilFluid",
-        "2, constitutive::CO2BrinePhillipsFluid",
-        "2, constitutive::CO2BrineEzrokhiFluid",
-        "2, constitutive::CO2BrinePhillipsThermalFluid",
-        "2, constitutive::CO2BrineEzrokhiThermalFluid"
+      "NCOMPS_THERMAL_FLUID": [
+        "2, false, constitutive::DeadOilFluid",
+        "3, false, constitutive::DeadOilFluid",
+        "3, false, constitutive::BlackOilFluid",
+        "2, false, constitutive::CO2BrinePhillipsFluid",
+        "2, false, constitutive::CO2BrineEzrokhiFluid",
+        "2, true, constitutive::CO2BrinePhillipsThermalFluid",
+        "2, true, constitutive::CO2BrineEzrokhiThermalFluid"
       ]
     },
     "explicit": []
@@ -200,7 +200,7 @@
   "ThermalCompositionalMultiphaseFVM_DirichletFluxComputeKernels": {
     "vars": [
       "NAME",
-      "NCOMPS_FLUID"
+      "NCOMPS_THERMAL_FLUID"
     ],
     "constants": [
       [ "DirichletFluxComputeKernelPolicy", "geos::parallelDevicePolicy< GEOS_BLOCK_SIZE >" ]
@@ -209,9 +209,9 @@
       "NAME": [
         "DirichletFluxComputeKernel"
       ],
-      "NCOMPS_FLUID": [
-        "2, constitutive::CO2BrinePhillipsThermalFluid",
-        "2, constitutive::CO2BrineEzrokhiThermalFluid"
+      "NCOMPS_THERMAL_FLUID": [
+        "2, true, constitutive::CO2BrinePhillipsThermalFluid",
+        "2, true, constitutive::CO2BrineEzrokhiThermalFluid"
       ]
     },
     "explicit": []

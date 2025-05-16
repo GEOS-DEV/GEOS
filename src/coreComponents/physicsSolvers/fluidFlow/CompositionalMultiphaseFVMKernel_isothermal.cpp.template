@@ -6,8 +6,8 @@ namespace geos
 {
 namespace isothermalCompositionalMultiphaseFVMKernels
 {
-  @EXTERN@ template class @NAME@ < @NCOMPS_FLUID@::KernelWrapper, @IS_THERMAL@ >;
-  // template void @NAME@ < @NCOMPS_FLUID@::KernelWrapper, @IS_THERMAL@ >::launch< @NAME@Policy >( localIndex const,
-                                                                                        // @NAME@ < @NCOMPS_FLUID@::KernelWrapper, @IS_THERMAL@ > const & );
+  @EXTERN@ template class @NAME@ < @NCOMPS_THERMAL_FLUID@::KernelWrapper >;
+  // template void @NAME@ < @NCOMPS_THERMAL_FLUID@::KernelWrapper >::launch< @NAME@Policy >( localIndex const,
+                                                                                        // @NAME@ < @NCOMPS_THERMAL_FLUID@::KernelWrapper > const & );
 }
 }

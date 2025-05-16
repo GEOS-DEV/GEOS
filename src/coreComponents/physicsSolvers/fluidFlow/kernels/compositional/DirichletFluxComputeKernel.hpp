@@ -50,7 +50,7 @@ namespace isothermalCompositionalMultiphaseFVMKernels
  * @tparam IS_THERMAL flag for thermal
  * @brief Define the interface for the assembly kernel in charge of Dirichlet face flux terms
  */
-template< integer NUM_COMP, typename FLUIDWRAPPER, bool IS_THERMAL >
+template< integer NUM_COMP, bool IS_THERMAL, typename FLUIDWRAPPER >
 class DirichletFluxComputeKernel : public FluxComputeKernel< NUM_COMP,
                                                              NUM_COMP + 1 + IS_THERMAL,
                                                              BoundaryStencilWrapper >
@@ -531,7 +531,7 @@ public:
         elemManager.constructArrayViewAccessor< globalIndex, 1 >( dofKey );
       dofNumberAccessor.setName( solverName + "/accessors/" + dofKey );
 
-      using kernelType = DirichletFluxComputeKernel< NUM_COMP, typename FluidType::KernelWrapper, false >; // false for isothermal
+      using kernelType = DirichletFluxComputeKernel< NUM_COMP, false, typename FluidType::KernelWrapper >; // false for isothermal
       typename kernelType::CompFlowAccessors compFlowAccessors( elemManager, solverName );
       typename kernelType::MultiFluidAccessors multiFluidAccessors( elemManager, solverName );
       typename kernelType::CapPressureAccessors capPressureAccessors( elemManager, solverName );

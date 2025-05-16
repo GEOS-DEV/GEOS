@@ -41,10 +41,10 @@ namespace thermalCompositionalMultiphaseFVMKernels
  * @tparam IS_THERMAL flag for thermal
  * @brief Define the interface for the assembly kernel in charge of Dirichlet face flux terms
  */
-template< integer NUM_COMP, typename FLUIDWRAPPER, bool IS_THERMAL >
+template< integer NUM_COMP, bool IS_THERMAL, typename FLUIDWRAPPER >
 class DirichletFluxComputeKernel : public isothermalCompositionalMultiphaseFVMKernels::DirichletFluxComputeKernel< NUM_COMP,
-                                                                                                                   FLUIDWRAPPER,
-                                                                                                                   IS_THERMAL >
+                                                                                                                   IS_THERMAL,
+                                                                                                                   FLUIDWRAPPER >
 {
 public:
 
@@ -73,7 +73,7 @@ public:
   using AbstractBase::m_dPhaseCompFrac;
   using AbstractBase::m_dCompFrac_dCompDens;
 
-  using Base = isothermalCompositionalMultiphaseFVMKernels::DirichletFluxComputeKernel< NUM_COMP, FLUIDWRAPPER, IS_THERMAL >;
+  using Base = isothermalCompositionalMultiphaseFVMKernels::DirichletFluxComputeKernel< NUM_COMP, IS_THERMAL, FLUIDWRAPPER >;
   using Base::numComp;
   using Base::numDof;
   using Base::numEqn;
@@ -452,7 +452,7 @@ public:
         elemManager.constructArrayViewAccessor< globalIndex, 1 >( dofKey );
       dofNumberAccessor.setName( solverName + "/accessors/" + dofKey );
 
-      using KernelType = DirichletFluxComputeKernel< NUM_COMP, typename FluidType::KernelWrapper, true >; // true for thermal
+      using KernelType = DirichletFluxComputeKernel< NUM_COMP, true, typename FluidType::KernelWrapper >; // true for thermal
       typename KernelType::CompFlowAccessors compFlowAccessors( elemManager, solverName );
       typename KernelType::ThermalCompFlowAccessors thermalCompFlowAccessors( elemManager, solverName );
       typename KernelType::MultiFluidAccessors multiFluidAccessors( elemManager, solverName );
