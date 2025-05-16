@@ -21,7 +21,7 @@
 #define GEOS_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONAL_SOLUTIONCHECKKERNEL_HPP
 
 #include "physicsSolvers/fluidFlow/kernels/compositional/SolutionScalingAndCheckingKernelBase.hpp"
-#include "physicsSolvers/fluidFlow/kernels/SolutionCheckHelperKernels.hpp"
+#include "physicsSolvers/fluidFlow/kernels/SolutionCheckKernelsHelper.hpp"
 
 namespace geos
 {
@@ -48,7 +48,7 @@ public:
   using Base::m_pressure;
   using Base::m_compDens;
 
-  static constexpr int maxNegValueElementIds = 16;
+  static constexpr int maxWrongValueIds = 16;
 
   /**
    * @brief Create a new kernel instance
@@ -74,7 +74,9 @@ public:
                        integer const numComp,
                        string const dofKey,
                        ElementSubRegionBase const & subRegion,
-                       arrayView1d< real64 const > const localSolution )
+                       arrayView1d< real64 const > const localSolution,
+                       IdReporterCollector<> const & negPressureIds,
+                       IdReporterCollector<> const & negDensityIds )
     : Base( rankOffset,
             numComp,
             dofKey,
@@ -87,55 +89,55 @@ public:
     m_allowCompDensChopping( allowCompDensChopping ),
     m_allowNegativePressure( allowNegativePressure ),
     m_scalingFactor( scalingFactor ),
-    m_scalingType( scalingType )
+    m_scalingType( scalingType ),
+    m_negPressureIds( negPressureIds ),
+    m_negDensityIds( negDensityIds )
   {}
 
   /**
-   * @struct StackVariables
+   * @struct KernelStats
    * @brief Kernel variables located on the stack
    */
-  struct StackVariables : public Base::StackVariables
+  struct KernelStats : public Base::StackVariables
   {
     GEOS_HOST_DEVICE
-    StackVariables():
-      localNegPresElementIds( maxNegValueElementIds ),
-      localNegDensElementIds( maxNegValueElementIds )
-    { }
+    KernelStats():
+      Base::StackVariables()
+    {}
 
-    StackVariables( real64 _localMinVal,
-                    real64 _localMinPres,
-                    real64 _localMinDens,
-                    real64 _localMinTotalDens,
-                    integer _localNumNegPressures,
-                    integer _localNumNegDens,
-                    integer _localNumNegTotalDens,
-                    stackArray1d< globalIndex, maxNegValueElementIds > _localNegPresElementIds,
-                    stackArray1d< globalIndex, maxNegValueElementIds > _localNegDensElementIds )
+    KernelStats( real64 _localMinVal,
+                 real64 _localMinPres,
+                 real64 _localMinDens,
+                 real64 _localMinTotalDens,
+                 integer _localNumNegTotalDens )
       :
       Base::StackVariables( _localMinVal ),
       localMinPres( _localMinPres ),
       localMinDens( _localMinDens ),
       localMinTotalDens( _localMinTotalDens ),
-      localNumNegPressures( _localNumNegPressures ),
-      localNumNegDens( _localNumNegDens ),
-      localNumNegTotalDens( _localNumNegTotalDens ),
-      localNegPresElementIds( _localNegPresElementIds ),
-      localNegDensElementIds( _localNegDensElementIds )
+      localNumNegTotalDens( _localNumNegTotalDens )
     { }
 
     real64 localMinPres;
     real64 localMinDens;
     real64 localMinTotalDens;
 
-    integer localNumNegPressures; // ne peuvent être que 0 ou 1 dans chaque kernel
-    integer localNumNegDens; // ne peuvent être que 0 ou 1 dans chaque kernel
-    integer localNumNegTotalDens; // ne peuvent être que 0 ou 1 dans chaque kernel
+    localIndex localNumNegTotalDens; // ne peuvent être que 0 ou 1 dans chaque kernel
+  };
 
-    /// limited quantity of local ids of detected solved elements with negative pressures
-    stackArray1d< globalIndex, maxNegValueElementIds > localNegPresElementIds;
+  /**
+   * @struct StackVariables
+   * @brief Kernel variables located on the stack
+   */
+  struct StackVariables : public KernelStats
+  {
+    GEOS_HOST_DEVICE
+    StackVariables():
+      KernelStats()
+    { }
 
-    /// limited quantity of local ids of detected solved elements with negative density
-    stackArray1d< globalIndex, maxNegValueElementIds > localNegDensElementIds;
+    localIndex localNumNegPres;
+    localIndex localNumNegDens;
   };
 
   /**
@@ -146,22 +148,20 @@ public:
    * @param[inout] kernelComponent the kernel component providing access to the compute function
    */
   template< typename POLICY, typename KERNEL_TYPE >
-  static StackVariables
+  static KernelStats
   launch( localIndex const numElems,
           KERNEL_TYPE const & kernelComponent )
   {
-    RAJA::ReduceMin< ReducePolicy< POLICY >, integer > globalMinVal( 1 );
+    using reducePolicy = ReducePolicy< POLICY >;
+    using atomicPolicy = AtomicPolicy< POLICY >;
 
-    RAJA::ReduceMin< ReducePolicy< POLICY >, real64 > minPres( 0.0 );
-    RAJA::ReduceMin< ReducePolicy< POLICY >, real64 > minDens( 0.0 );
-    RAJA::ReduceMin< ReducePolicy< POLICY >, real64 > minTotalDens( 0.0 );
+    RAJA::ReduceMin< reducePolicy, integer > globalMinVal( 1 );
 
-    RAJA::ReduceSum< ReducePolicy< POLICY >, integer > numNegPressures( 0 );
-    RAJA::ReduceSum< ReducePolicy< POLICY >, integer > numNegDens( 0 );
-    RAJA::ReduceSum< ReducePolicy< POLICY >, integer > numNegTotalDens( 0 );
+    RAJA::ReduceMin< reducePolicy, real64 > minPres( 0.0 );
+    RAJA::ReduceMin< reducePolicy, real64 > minDens( 0.0 );
+    RAJA::ReduceMin< reducePolicy, real64 > minTotalDens( 0.0 );
 
-    stackArray1d< globalIndex, maxNegValueElementIds > localNegPresElementIds;
-    stackArray1d< globalIndex, maxNegValueElementIds > localNegDensElementIds;
+    RAJA::ReduceSum< reducePolicy, localIndex > numNegTotalDens( 0 );
 
     forAll< POLICY >( numElems, [=] GEOS_HOST_DEVICE ( localIndex const ei )
     {
@@ -170,7 +170,7 @@ public:
         return;
       }
 
-      StackVariables stack;
+      StackVariables stack{};
       kernelComponent.setup( ei, stack );
       kernelComponent.compute( ei, stack );
 
@@ -180,33 +180,20 @@ public:
       minDens.min( stack.localMinDens );
       minTotalDens.min( stack.localMinTotalDens );
 
-      if( stack.localNumNegPressures > 0 )
-      {
-        flowSolverBaseKernels::aggregateKernelsIds( localNegPresElementIds,
-                                                    numNegPressures,
-                                                    stack.localNegPresElementIds,
-                                                    integer( stack.localNumNegPressures ) );
-      }
+      if( stack.localNumNegPres > 0 )
+        kernelComponent.m_negPressureIds.collectId( atomicPolicy{}, ei );
 
       if( stack.localNumNegDens > 0 )
-      {
-        flowSolverBaseKernels::aggregateKernelsIds( localNegDensElementIds,
-                                                    numNegDens,
-                                                    stack.localNegDensElementIds,
-                                                    stack.localNumNegDens );
-      }
+        kernelComponent.m_negDensityIds.collectId( atomicPolicy{}, ei );
+
       numNegTotalDens += stack.localNumNegTotalDens;
     } );
 
-    return StackVariables( globalMinVal.get(),
-                           minPres.get(),
-                           minDens.get(),
-                           minTotalDens.get(),
-                           numNegPressures.get(),
-                           numNegDens.get(),
-                           numNegTotalDens.get(),
-                           localNegPresElementIds,
-                           localNegDensElementIds );
+    return KernelStats( globalMinVal.get(),
+                        minPres.get(),
+                        minDens.get(),
+                        minTotalDens.get(),
+                        numNegTotalDens.get() );
   }
 
   GEOS_HOST_DEVICE
@@ -219,7 +206,7 @@ public:
     stack.localMinDens = 0.0;
     stack.localMinTotalDens = 0.0;
 
-    stack.localNumNegPressures = 0;
+    stack.localNumNegPres = 0;
     stack.localNumNegDens = 0;
     stack.localNumNegTotalDens = 0;
   }
@@ -254,14 +241,10 @@ public:
     real64 const newPres = m_pressure[ei] + (localScaling ? m_pressureScalingFactor[ei] : m_scalingFactor) * m_localSolution[stack.localRow];
     if( newPres < 0 )
     {
-      if( !m_allowNegativePressure )
-      {
-        stack.localMinVal = 0;
-      }
+      stack.localNumNegPres = 1;
 
-      flowSolverBaseKernels::collectKernelId( stack.localNegPresElementIds,
-                                              stack.localNumNegPressures,
-                                              globalIndex( ei ) );
+      if( !m_allowNegativePressure )
+        stack.localMinVal = 0;
 
       if( newPres < stack.localMinPres )
         stack.localMinPres = newPres;
@@ -277,11 +260,8 @@ public:
         real64 const newDens = m_compDens[ei][ic] + (localScaling ? m_compDensScalingFactor[ei] : m_scalingFactor) * m_localSolution[stack.localRow + ic + 1];
         if( newDens < 0 )
         {
+          stack.localNumNegDens = 1;
           stack.localMinVal = 0;
-
-          flowSolverBaseKernels::collectKernelId( stack.localNegDensElementIds,
-                                                  stack.localNumNegDens,
-                                                  ei );
 
           if( newDens < stack.localMinDens )
             stack.localMinDens = newDens;
@@ -298,8 +278,9 @@ public:
       }
       if( totalDens < 0 )
       {
+        stack.localNumNegTotalDens = 1;
         stack.localMinVal = 0;
-        stack.localNumNegTotalDens += 1;
+
         if( totalDens < stack.localMinTotalDens )
           stack.localMinTotalDens = totalDens;
       }
@@ -322,6 +303,10 @@ protected:
   /// scaling type (global or local)
   compositionalMultiphaseUtilities::ScalingType const m_scalingType;
 
+  IdReporterCollector<> m_negPressureIds;
+
+  IdReporterCollector<> m_negDensityIds;
+
 };
 
 /**
@@ -343,7 +328,7 @@ public:
    * @param[in] localSolution the Newton update
    */
   template< typename POLICY >
-  static SolutionCheckKernel::StackVariables
+  static SolutionCheckKernel::KernelStats
   createAndLaunch( integer const allowCompDensChopping,
                    integer const allowNegativePressure,
                    compositionalMultiphaseUtilities::ScalingType const scalingType,
@@ -356,11 +341,13 @@ public:
                    integer const numComp,
                    string const dofKey,
                    ElementSubRegionBase & subRegion,
-                   arrayView1d< real64 const > const localSolution )
+                   arrayView1d< real64 const > const localSolution,
+                   IdReporterCollector<> const & negPressureIds,
+                   IdReporterCollector<> const & negDensityIds ) // TODO : ajouter bool reportWrongValues
   {
     SolutionCheckKernel kernel( allowCompDensChopping, allowNegativePressure, scalingType, scalingFactor,
                                 pressure, compDens, pressureScalingFactor, compDensScalingFactor, rankOffset,
-                                numComp, dofKey, subRegion, localSolution );
+                                numComp, dofKey, subRegion, localSolution, negPressureIds, negDensityIds );
     return SolutionCheckKernel::launch< POLICY >( subRegion.size(), kernel );
   }
 

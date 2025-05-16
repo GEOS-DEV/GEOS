@@ -808,7 +808,7 @@ public:
    * @param[in] localSolution the Newton update
    */
   template< typename POLICY >
-  static isothermalCompositionalMultiphaseBaseKernels::SolutionCheckKernel::StackVariables
+  static isothermalCompositionalMultiphaseBaseKernels::SolutionCheckKernel::KernelStats
   createAndLaunch( integer const allowCompDensChopping,
                    compositionalMultiphaseUtilities::ScalingType const scalingType,
                    real64 const scalingFactor,
@@ -820,13 +820,15 @@ public:
                    integer const numComp,
                    string const dofKey,
                    ElementSubRegionBase & subRegion,
-                   arrayView1d< real64 const > const localSolution )
+                   arrayView1d< real64 const > const localSolution,
+                   IdReporterCollector<> const & negPressureIds,
+                   IdReporterCollector<> const & negDensityIds )
   {
 
     isothermalCompositionalMultiphaseBaseKernels::
       SolutionCheckKernel kernel( allowCompDensChopping, 0, scalingType, scalingFactor,
                                   pressure, compDens, pressureScalingFactor, compDensScalingFactor, rankOffset,
-                                  numComp, dofKey, subRegion, localSolution );
+                                  numComp, dofKey, subRegion, localSolution, negPressureIds, negDensityIds );
     return isothermalCompositionalMultiphaseBaseKernels::
              SolutionCheckKernel::
              launch< POLICY >( subRegion.size(), kernel );

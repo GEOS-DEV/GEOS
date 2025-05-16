@@ -73,6 +73,8 @@ public:
                        string const dofKey,
                        ElementSubRegionBase const & subRegion,
                        arrayView1d< real64 const > const localSolution,
+                       IdReporterCollector<> const & negPressureIds,
+                       IdReporterCollector<> const & negDensityIds,
                        integer const temperatureOffset )
     : Base( allowCompDensChopping,
             allowNegativePressure,
@@ -86,7 +88,9 @@ public:
             numComp,
             dofKey,
             subRegion,
-            localSolution ),
+            localSolution,
+            negPressureIds,
+            negDensityIds ),
     m_temperature( temperature ),
     m_temperatureScalingFactor( temperatureScalingFactor ),
     m_temperatureOffset( temperatureOffset )
@@ -146,7 +150,7 @@ public:
    * @param[in] localSolution the Newton update
    */
   template< typename POLICY >
-  static SolutionCheckKernel::StackVariables
+  static SolutionCheckKernel::KernelStats
   createAndLaunch( integer const allowCompDensChopping,
                    integer const allowNegativePressure,
                    compositionalMultiphaseUtilities::ScalingType const scalingType,
@@ -162,11 +166,13 @@ public:
                    string const dofKey,
                    ElementSubRegionBase & subRegion,
                    arrayView1d< real64 const > const localSolution,
+                   IdReporterCollector<> const & negPressureIds,
+                   IdReporterCollector<> const & negDensityIds,
                    integer temperatureOffset )
   {
     SolutionCheckKernel kernel( allowCompDensChopping, allowNegativePressure, scalingType, scalingFactor,
                                 pressure, temperature, compDens, pressureScalingFactor, compDensScalingFactor, temperatureScalingFactor,
-                                rankOffset, numComp, dofKey, subRegion, localSolution,
+                                rankOffset, numComp, dofKey, subRegion, localSolution, negPressureIds, negDensityIds,
                                 temperatureOffset );
     return SolutionCheckKernel::launch< POLICY >( subRegion.size(), kernel );
   }

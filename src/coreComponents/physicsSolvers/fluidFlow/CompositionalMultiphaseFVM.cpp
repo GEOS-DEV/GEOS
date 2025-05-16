@@ -845,9 +845,9 @@ bool CompositionalMultiphaseFVM::checkSystemSolution( DomainPartition & domain,
     string const dofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
     integer localCheck = 1;
     real64 minPres = 0.0, minDens = 0.0, minTotalDens = 0.0;
-    integer numNegPres = 0, numNegDens = 0, numNegTotalDens = 0;
-    std::vector< globalIndex > rankNegPressureElementIds;
-    std::vector< globalIndex > rankNegDensityElementIds;
+    integer numNegTotalDens = 0;
+    IdReporterBuffer< integer, globalIndex > rankNegPressureIds{ 16 }; // TODO disable if not enabled.
+    IdReporterBuffer< integer, globalIndex > rankNegDensityIds{ 16 }; // TODO disable if not enabled.
 
     forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                  MeshLevel & mesh,
@@ -866,6 +866,10 @@ bool CompositionalMultiphaseFVM::checkSystemSolution( DomainPartition & domain,
         arrayView1d< real64 > pressureScalingFactor = subRegion.getField< fields::flow::pressureScalingFactor >();
         arrayView1d< real64 > temperatureScalingFactor = subRegion.getField< fields::flow::temperatureScalingFactor >();
         arrayView1d< real64 > compDensScalingFactor = subRegion.getField< fields::flow::globalCompDensityScalingFactor >();
+        auto const & cellLocalToGlobalIds = subRegion.localToGlobalMap();
+        auto const presCollector = rankNegPressureIds.createCollector(cellLocalToGlobalIds);
+        auto const densCollector = rankNegDensityIds.createCollector(cellLocalToGlobalIds);
+
         // check that pressure and component densities are non-negative
         // for thermal, check that temperature is above 273.15 K
         const integer temperatureOffset = m_numComponents+1;
@@ -887,6 +891,8 @@ bool CompositionalMultiphaseFVM::checkSystemSolution( DomainPartition & domain,
                                                                                 dofKey,
                                                                                 subRegion,
                                                                                 localSolution,
+                                                                                presCollector,
+                                                                                densCollector,
                                                                                 temperatureOffset ) :
                                    isothermalCompositionalMultiphaseBaseKernels::
                                      SolutionCheckKernelFactory::
@@ -902,48 +908,24 @@ bool CompositionalMultiphaseFVM::checkSystemSolution( DomainPartition & domain,
                                                                                 m_numComponents,
                                                                                 dofKey,
                                                                                 subRegion,
-                                                                                localSolution );
+                                                                                localSolution,
+                                                                                presCollector,
+                                                                                densCollector );
 
         localCheck = std::min( localCheck, subRegionData.localMinVal );
 
         minPres  = std::min( minPres, subRegionData.localMinPres );
         minDens = std::min( minDens, subRegionData.localMinDens );
         minTotalDens = std::min( minTotalDens, subRegionData.localMinTotalDens );
-        // numNegPres += subRegionData.localNumNegPressures;
-        // numNegDens += subRegionData.localNumNegDens;
         numNegTotalDens += subRegionData.localNumNegTotalDens;
-
-        // integer const numIdsToAdd = std::min( subRegionData.localNumNegPressures,
-        //                                       integer( subRegionData.localNegPresElementIds.capacity() ) );
-        // for( int i = 0; i < numIdsToAdd; ++i )
-        // {
-        //   rankNegPressureElementIds.emplace_back( subRegionData.localNegPresElementIds[i] );   // todo local -> global
-        // }
-
-        flowSolverBaseKernels::aggregateKernelsIds( rankNegPressureElementIds,
-                                                    numNegPres,
-                                                    subRegionData.localNegPresElementIds,
-                                                    subRegionData.localNumNegPressures );
-
-        flowSolverBaseKernels::aggregateKernelsIds( rankNegDensityElementIds,
-                                                    numNegDens,
-                                                    subRegionData.localNegDensElementIds,
-                                                    subRegionData.localNumNegDens );
-
-        // integer const numIdsToAdd = std::min( subRegionData.localNumNegDens,
-        //                                       integer( subRegionData.localNegDensElementIds.capacity() ) );
-        // for( int i = 0; i < numIdsToAdd; ++i )
-        // {
-        //   rankNegDensityElementIds.emplace_back( subRegionData.localNegDensElementIds[i] );   // todo local -> global
-        // }
       } );
     } );
 
     minPres  = MpiWrapper::min( minPres );
     minDens = MpiWrapper::min( minDens );
     minTotalDens = MpiWrapper::min( minTotalDens );
-    numNegPres = MpiWrapper::sum( numNegPres );
-    numNegDens = MpiWrapper::sum( numNegDens );
+    integer numNegPres = MpiWrapper::sum( rankNegPressureIds.getSignaledIdsCount() );
+    integer numNegDens = MpiWrapper::sum( rankNegDensityIds.getSignaledIdsCount() );
     numNegTotalDens = MpiWrapper::sum( numNegTotalDens );
 
     if( numNegPres > 0 )
@@ -955,21 +937,20 @@ bool CompositionalMultiphaseFVM::checkSystemSolution( DomainPartition & domain,
                              GEOS_FMT( "        {}: negative pressure element ids (may not be complete):",
                                        getName() ) );
       MpiWrapper::barrier();
-      if( !rankNegPressureElementIds.empty() )
+      if( !rankNegPressureIds.empty() )
       {
         GEOS_LOG_LEVEL( logInfo::Solution,
                         GEOS_FMT( "          Rank {}: {}",
-                                  MpiWrapper::commRank(),
-                                  stringutilities::join( rankNegPressureElementIds, ", " ) ) );
+                                  MpiWrapper::commRank(), stringutilities::join( rankNegPressureIds, ", " ) ) );
       }
     }
 
     string const massUnit = m_useMass ? "kg/m3" : "mol/m3";
-    if( minTotalDens > 0 )
+    if( numNegTotalDens > 0 )
     {
       GEOS_LOG_LEVEL_RANK_0( logInfo::Solution,
                              GEOS_FMT( "        {}: Number of negative total density values: {}, minimum value: {} {}}",
-                                       getName(), minTotalDens, fmt::format( "{:.{}f}", minDens, 3 ), massUnit ) );
+                                       getName(), numNegTotalDens, fmt::format( "{:.{}f}", minTotalDens, 3 ), massUnit ) );
     }
 
     if( numNegDens > 0 )
@@ -981,12 +962,11 @@ bool CompositionalMultiphaseFVM::checkSystemSolution( DomainPartition & domain,
                              GEOS_FMT( "        {}: negative component density element ids (may not be complete):",
                                        getName() ) );
       MpiWrapper::barrier();
-      if( !rankNegDensityElementIds.empty() )
+      if( !rankNegDensityIds.empty() )
       {
         GEOS_LOG_LEVEL( logInfo::Solution,
                         GEOS_FMT( "          Rank {}: {}",
-                                  MpiWrapper::commRank(),
-                                  stringutilities::join( rankNegDensityElementIds, ", " ) ) );
+                                  MpiWrapper::commRank(), stringutilities::join( rankNegDensityIds, ", " ) ) );
       }
     }
 
