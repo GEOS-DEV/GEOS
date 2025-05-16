@@ -637,7 +637,7 @@ buildCollocatedEdgeBuckets( stdMap< globalIndex, globalIndex > const & reference
  * @return The computed mapping.
  */
 stdMap< localIndex, localIndex > buildReferenceCollocatedEdges( stdMap< std::pair< globalIndex, globalIndex >, std::set< localIndex > > const & collocatedEdgeBuckets,
-                                                                  arrayView1d< integer const > const edgeGhostRanks )
+                                                                arrayView1d< integer const > const edgeGhostRanks )
 {
   stdMap< localIndex, localIndex > referenceCollocatedEdges;
 

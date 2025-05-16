@@ -84,10 +84,10 @@ void CompositionalMultiphaseFluidPVTPackage::postInputInitialization()
   auto const getPVTPackagePhaseType = [&]( string const & phaseName )
   {
     static geos::map< string, pvt::PHASE_TYPE > const phaseTypes
-    {   
-        { "gas", pvt::PHASE_TYPE::GAS },
-        { "oil", pvt::PHASE_TYPE::OIL },
-        { "water", pvt::PHASE_TYPE::LIQUID_WATER_RICH }
+    {
+      { "gas", pvt::PHASE_TYPE::GAS },
+      { "oil", pvt::PHASE_TYPE::OIL },
+      { "water", pvt::PHASE_TYPE::LIQUID_WATER_RICH }
     };
     return findOption( phaseTypes, phaseName, viewKeyStruct::phaseNamesString(), getFullName() );
   };

@@ -345,9 +345,9 @@ public:
 };
 
 template< typename TKEY, typename TVAL >
-class mapBase< TKEY, TVAL, std::integral_constant< bool, false > > : public std::unordered_map< TKEY, TVAL >
+class mapBase< TKEY, TVAL, std::integral_constant< bool, false > > : public stdUnorderedMap< TKEY, TVAL >
 {
-  using std::unordered_map< TKEY, TVAL >::unordered_map; // enable list initialization
+  using stdUnorderedMap< TKEY, TVAL >::StdUnorderedMapWrapper; // enable list initialization
 };
 /// @endcond
 

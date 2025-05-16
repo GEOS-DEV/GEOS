@@ -135,14 +135,54 @@ template< typename Key,
 using stdMap = internal::StdMapWrapper< std::map< Key, T, Compare, Allocator >,
                                         false >;
 
+namespace internal
+{
+
+template< typename MapType,
+          bool USE_STD_CONTAINER_BOUNDS_CHECKING >
+class StdUnorderedMapWrapper : public MapType
+{
+public:
+  using Base = MapType;
+  using Base::Base;  // Inherit constructors
+  using KeyType = typename Base::key_type;
+  using MappedType = typename Base::mapped_type;
+  using ValueType = typename Base::value_type;
+
+  // Override operator[]
+  MappedType & operator[]( KeyType const & key )
+  {
+    if constexpr (USE_STD_CONTAINER_BOUNDS_CHECKING)
+    {
+      return this->at( key );  // Throws std::out_of_range if key is missing
+    }
+    else
+    {
+      return Base::operator[]( key );  // Inserts default-constructed value if missing
+    }
+  }
+
+  MappedType const & operator[]( KeyType const & key ) const
+  {
+    if constexpr (USE_STD_CONTAINER_BOUNDS_CHECKING)
+    {
+      return this->at( key );
+    }
+    else
+    {
+      return Base::operator[]( key );
+    }
+  }
+};
+} //namespace internal
 
 template< typename Key,
           typename T,
           typename Hash = std::hash< Key >,
           typename KeyEqual = std::equal_to< Key >,
           typename Allocator = std::allocator< std::pair< const Key, T > > >
-using stdUnorderedMap = internal::StdMapWrapper< std::unordered_map< Key, T, Hash, KeyEqual, Allocator >,
-                                                 false >;
+using stdUnorderedMap = internal::StdUnorderedMapWrapper< std::unordered_map< Key, T, Hash, KeyEqual, Allocator >,
+                                                          false >;
 
 
 } // namespace geos

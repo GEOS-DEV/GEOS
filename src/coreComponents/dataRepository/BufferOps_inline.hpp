@@ -1047,7 +1047,7 @@ inline
 localIndex
 UnpackSyncList( buffer_unit_type const * & buffer,
                 localIndex_array & var,
-                std::unordered_map< globalIndex, localIndex > const & globalToLocalMap )
+                stdUnorderedMap< globalIndex, localIndex > const & globalToLocalMap )
 {
   localIndex length;
   localIndex sizeOfUnpackedChars = Unpack( buffer, length );

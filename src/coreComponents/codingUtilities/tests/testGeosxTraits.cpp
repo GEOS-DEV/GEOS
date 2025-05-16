@@ -53,7 +53,7 @@ TEST( testGeosxTraits, HasMemberFunction_at )
   static_assert( HasMemberFunction_at< stdVector< int > >, "Should be true." );
   static_assert( HasMemberFunction_at< stdVector< double > >, "Should be true." );
   static_assert( HasMemberFunction_at< stdMap< int, string > >, "Should be true." );
-  static_assert( HasMemberFunction_at< std::unordered_map< int, string > >, "Should be true." );
+  static_assert( HasMemberFunction_at< stdUnorderedMap< int, string > >, "Should be true." );
 
   static_assert( !HasMemberFunction_at< int >, "Should be false." );
   static_assert( !HasMemberFunction_at< stdMap< string, string > >, "Should be false." );
