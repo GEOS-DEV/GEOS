@@ -42,7 +42,7 @@ using namespace dataRepository;
 using namespace fields;
 
 AcousticROMFrechet::AcousticROMFrechet( const std::string & name,
-                                                  Group * const parent ):
+					Group * const parent ):
   WaveSolverBase( name,
                   parent )
 {
@@ -118,9 +118,9 @@ void AcousticROMFrechet::registerDataOnMesh( Group & meshBodies )
   {
     NodeManager & nodeManager = mesh.getNodeManager();
 
-    nodeManager.registerField< acousticfields::Pressure_nm1,
-			       acousticfields::Pressure_n,
-			       acousticfields::Pressure_np1,
+    nodeManager.registerField< acousticfields::Pressure64_nm1,
+			       acousticfields::Pressure64_n,
+			       acousticfields::Pressure64_np1,
 			       acousticfields::PressureForward,
 			       acousticfields::PressureFrechet_nm1,
 			       acousticfields::PressureFrechet_n,
@@ -131,7 +131,7 @@ void AcousticROMFrechet::registerDataOnMesh( Group & meshBodies )
 			       acousticfields::AcousticMassPerturbationVector,
                                acousticfields::DampingVector,
 			       acousticfields::DampingPerturbationVector,
-                               acousticfields::StiffnessVector,
+                               acousticfields::StiffnessVector64,
                                acousticfields::AcousticFreeSurfaceNodeIndicator >( getName() );
 
 
@@ -720,9 +720,9 @@ void AcousticROMFrechet::applyFreeSurfaceBC( real64 time, DomainPartition & doma
   FaceManager & faceManager = domain.getMeshBody( 0 ).getMeshLevel( m_discretizationName ).getFaceManager();
   NodeManager & nodeManager = domain.getMeshBody( 0 ).getMeshLevel( m_discretizationName ).getNodeManager();
 
-  arrayView1d< real32 > const p_nm1 = nodeManager.getField< acousticfields::Pressure_nm1 >();
-  arrayView1d< real32 > const p_n = nodeManager.getField< acousticfields::Pressure_n >();
-  arrayView1d< real32 > const p_np1 = nodeManager.getField< acousticfields::Pressure_np1 >();
+  arrayView1d< pFieldType > const p_nm1 = nodeManager.getField< acousticfields::Pressure64_nm1 >();
+  arrayView1d< pFieldType > const p_n = nodeManager.getField< acousticfields::Pressure64_n >();
+  arrayView1d< pFieldType > const p_np1 = nodeManager.getField< acousticfields::Pressure64_np1 >();
 
   ArrayOfArraysView< localIndex const > const faceToNodeMap = faceManager.nodeList().toViewConst();
 
@@ -790,11 +790,11 @@ real64 AcousticROMFrechet::explicitStepForward( real64 const & time_n,
   {
     NodeManager & nodeManager = mesh.getNodeManager();
 
-    arrayView1d< real32 > const p_n = nodeManager.getField< acousticfields::Pressure_n >();
-
+    arrayView1d< pFieldType > const p_n = nodeManager.getField< acousticfields::Pressure64_n >();
+    
     if( computeGradient && cycleNumber >= 0 )
     {
-
+      /*
       if( m_enableLifo )
       {
         if( !m_lifo )
@@ -813,6 +813,7 @@ real64 AcousticROMFrechet::explicitStepForward( real64 const & time_n,
         p_n.move( LvArray::MemorySpace::cuda, false );
         m_lifo->pushAsync( p_n );
       }
+      
       else
       {
         GEOS_MARK_SCOPE ( DirectWrite );
@@ -836,7 +837,7 @@ real64 AcousticROMFrechet::explicitStepForward( real64 const & time_n,
                        getDataContext() << ": An error occured while writing "<< fileName,
                        InputError );
       }
-
+      */
     }
 
     prepareNextTimestep( mesh );
@@ -860,9 +861,9 @@ real64 AcousticROMFrechet::explicitStepBackward( real64 const & time_n,
   {
     NodeManager & nodeManager = mesh.getNodeManager();
 
-    arrayView1d< real32 > const p_nm1 = nodeManager.getField< acousticfields::Pressure_nm1 >();
-    arrayView1d< real32 > const p_n = nodeManager.getField< acousticfields::Pressure_n >();
-    arrayView1d< real32 > const p_np1 = nodeManager.getField< acousticfields::Pressure_np1 >();
+    arrayView1d< pFieldType > const p_nm1 = nodeManager.getField< acousticfields::Pressure64_nm1 >();
+    arrayView1d< pFieldType > const p_n = nodeManager.getField< acousticfields::Pressure64_n >();
+    arrayView1d< pFieldType > const p_np1 = nodeManager.getField< acousticfields::Pressure64_np1 >();
 
     //// Compute q_dt2 and store it in p_nm1
     SortedArrayView< localIndex const > const solverTargetNodesSet = m_solverTargetNodesSet.toViewConst();
@@ -875,7 +876,7 @@ real64 AcousticROMFrechet::explicitStepBackward( real64 const & time_n,
     EventManager const & event = getGroupByPath< EventManager >( "/Problem/Events" );
     real64 const & maxTime = event.getReference< real64 >( EventManager::viewKeyStruct::maxTimeString() );
     int const maxCycle = int(round( maxTime / dt ));
-
+    /*
     if( computeGradient && cycleNumber < maxCycle )
     {
       ElementRegionManager & elemManager = mesh.getElemManager();
@@ -949,7 +950,7 @@ real64 AcousticROMFrechet::explicitStepBackward( real64 const & time_n,
         // } );
       } );
     }
-
+    */
     prepareNextTimestep( mesh );
   } );
 
@@ -960,16 +961,16 @@ void AcousticROMFrechet::prepareNextTimestep( MeshLevel & mesh )
 {
   NodeManager & nodeManager = mesh.getNodeManager();
 
-  arrayView1d< real32 > const p_nm1 = nodeManager.getField< acousticfields::Pressure_nm1 >();
-  arrayView1d< real32 > const p_n   = nodeManager.getField< acousticfields::Pressure_n >();
-  arrayView1d< real32 > const p_np1 = nodeManager.getField< acousticfields::Pressure_np1 >();
+  arrayView1d< pFieldType > const p_nm1 = nodeManager.getField< acousticfields::Pressure64_nm1 >();
+  arrayView1d< pFieldType > const p_n   = nodeManager.getField< acousticfields::Pressure64_n >();
+  arrayView1d< pFieldType > const p_np1 = nodeManager.getField< acousticfields::Pressure64_np1 >();
 
-  arrayView2d< real32 > const pf_nm1 = nodeManager.getField< acousticfields::PressureFrechet_nm1 >();
-  arrayView2d< real32 > const pf_n = nodeManager.getField< acousticfields::PressureFrechet_n >();
-  arrayView2d< real32 > const pf_np1 = nodeManager.getField< acousticfields::PressureFrechet_np1 >();
+  arrayView2d< pFieldType > const pf_nm1 = nodeManager.getField< acousticfields::PressureFrechet_nm1 >();
+  arrayView2d< pFieldType > const pf_n = nodeManager.getField< acousticfields::PressureFrechet_n >();
+  arrayView2d< pFieldType > const pf_np1 = nodeManager.getField< acousticfields::PressureFrechet_np1 >();
   localIndex const ordF = m_orderFrechet;
 
-  arrayView1d< real32 > const stiffnessVector = nodeManager.getField< acousticfields::StiffnessVector >();
+  arrayView1d< pFieldType > const stiffnessVector = nodeManager.getField< acousticfields::StiffnessVector64 >();
   arrayView1d< real32 > const rhs = nodeManager.getField< acousticfields::ForcingRHS >();
   //arrayView1d< real32 > const rhs_fp1 = nodeManager.getField< acousticfields::ForcingRHS_fp1 >();
 
@@ -1073,12 +1074,12 @@ void AcousticROMFrechet::computeUnknowns( real64 const & time_n,
     arrayView1d< real32 const > const massPerturbation = nodeManager.getField< acousticfields::AcousticMassPerturbationVector >();
     arrayView1d< real32 const > const dampingPerturbation = nodeManager.getField< acousticfields::DampingPerturbationVector >();
 
-    arrayView1d< real32 > const p_nm1 = nodeManager.getField< acousticfields::Pressure_nm1 >();
-    arrayView1d< real32 > const p_n = nodeManager.getField< acousticfields::Pressure_n >();
-    arrayView1d< real32 > const p_np1 = nodeManager.getField< acousticfields::Pressure_np1 >();
+    arrayView1d< pFieldType > const p_nm1 = nodeManager.getField< acousticfields::Pressure64_nm1 >();
+    arrayView1d< pFieldType > const p_n = nodeManager.getField< acousticfields::Pressure64_n >();
+    arrayView1d< pFieldType > const p_np1 = nodeManager.getField< acousticfields::Pressure64_np1 >();
 
     arrayView1d< localIndex const > const freeSurfaceNodeIndicator = nodeManager.getField< acousticfields::AcousticFreeSurfaceNodeIndicator >();
-    arrayView1d< real32 > const stiffnessVector = nodeManager.getField< acousticfields::StiffnessVector >();
+    arrayView1d< pFieldType > const stiffnessVector = nodeManager.getField< acousticfields::StiffnessVector64 >();
     arrayView1d< real32 > const rhs = nodeManager.getField< acousticfields::ForcingRHS >();
     //arrayView1d< real32 > const rhs_fp1 = nodeManager.getField< acousticfields::ForcingRHS_fp1 >();
         
@@ -1110,11 +1111,11 @@ void AcousticROMFrechet::computeUnknowns( real64 const & time_n,
 													      perturbation,
 													      velocity);
 	*/
-	acousticROMFrechetKernels::computeStiffnessFrechet::launch< EXEC_POLICY, ATOMIC_POLICY, FE_TYPE >( elementSubRegion.size(),
-													   nodeCoords32,
-													   elemsToNodes,
-													   p_n,
-													   stiffnessVector);
+	acousticROMFrechetKernels::computeStiffnessFrechet64::launch< EXEC_POLICY, ATOMIC_POLICY, FE_TYPE >( elementSubRegion.size(),
+													     nodeCoords32,
+													     elemsToNodes,
+													     p_n,
+													     stiffnessVector);
 	
       } );
     } );
@@ -1201,17 +1202,17 @@ void AcousticROMFrechet::computeUnknowns( real64 const & time_n,
     }
     for( localIndex f=0; f<ordF; ++f )
     {
-      arrayView2d< real32 > const pf_nm1 = nodeManager.getField< acousticfields::PressureFrechet_nm1 >();
-      arrayView2d< real32 > const pf_n = nodeManager.getField< acousticfields::PressureFrechet_n >();
-      arrayView2d< real32 > const pf_np1 = nodeManager.getField< acousticfields::PressureFrechet_np1 >();
+      arrayView2d< pFieldType > const pf_nm1 = nodeManager.getField< acousticfields::PressureFrechet_nm1 >();
+      arrayView2d< pFieldType > const pf_n = nodeManager.getField< acousticfields::PressureFrechet_n >();
+      arrayView2d< pFieldType > const pf_np1 = nodeManager.getField< acousticfields::PressureFrechet_np1 >();
 
-      array1d< real32 > pf;
+      array1d< pFieldType > pf;
       pf.resizeWithoutInitializationOrDestruction(LvArray::MemorySpace::cuda, pf_n.size( 0 ));
-      arrayView1d< real32 > pfV = pf.toView();
+      arrayView1d< pFieldType > pfV = pf.toView();
       
-      array1d< real32 > p_dt2;
+      array1d< pFieldType > p_dt2;
       p_dt2.resizeWithoutInitializationOrDestruction(LvArray::MemorySpace::cuda, pf_n.size( 0 ));
-      arrayView1d< real32 > p_dt2V = p_dt2.toView();
+      arrayView1d< pFieldType > p_dt2V = p_dt2.toView();
       
       forAll< EXEC_POLICY >( solverTargetNodesSet.size(), [=] GEOS_HOST_DEVICE ( localIndex const n )
       {
@@ -1258,11 +1259,11 @@ void AcousticROMFrechet::computeUnknowns( real64 const & time_n,
 														perturbation,
 														velocity);
 	  */
-	  acousticROMFrechetKernels::computeStiffnessFrechet::launch< EXEC_POLICY, ATOMIC_POLICY, FE_TYPE >( elementSubRegion.size(),
-													     nodeCoords32,
-													     elemsToNodes,
-													     pfV,
-                                                                                                             stiffnessVector);
+	  acousticROMFrechetKernels::computeStiffnessFrechet64::launch< EXEC_POLICY, ATOMIC_POLICY, FE_TYPE >( elementSubRegion.size(),
+													       nodeCoords32,
+													       elemsToNodes,
+													       pfV,
+													       stiffnessVector);
 	  
 	} );
 
@@ -1556,8 +1557,8 @@ void AcousticROMFrechet::cleanup( real64 const time_n,
 }
 
 bool AcousticROMFrechet::gramSchmidtROMStiffness(finiteElement::FiniteElementBase const & fe,
-						 arrayView1d< real32 const > const Ku,
-						 arrayView1d< real32 const > const u,
+						 arrayView1d< pFieldType const > const Ku,
+						 arrayView1d< pFieldType const > const u,
 						 arrayView1d< integer const > const nodeghostrank,
 						 localIndex const elemRegionSize,
 						 arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodes,
@@ -1764,10 +1765,10 @@ void AcousticROMFrechet::gramSchmidtROMStiffnessFinal(finiteElement::FiniteEleme
     {
       using FE_TYPE = TYPEOFREF( finiteElement );
       acousticROMFrechetKernels::computeStiffnessFrechet::launch< EXEC_POLICY, ATOMIC_POLICY, FE_TYPE >( elemRegionSize,
-                                                                                                         X,
-                                                                                                         elemsToNodes,
-                                                                                                         q1V,
-                                                                                                         stiffnessVector_qV);
+													 X,
+													 elemsToNodes,
+													 q1V,
+													 stiffnessVector_qV);
     } );
     real64 val_all = 1.0;
 
