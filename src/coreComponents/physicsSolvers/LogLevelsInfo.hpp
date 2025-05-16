@@ -96,6 +96,12 @@ struct Solution
   static constexpr std::string_view getDescription() { return "Solution information (scaling, maximum changes, quality check)"; }
 };
 
+struct SolutionDetails
+{
+  static constexpr int getMinLogLevel() { return 2; }
+  static constexpr std::string_view getDescription() { return "Solution details (negative values ids)"; }
+};
+
 struct SolverInitialization
 {
   static constexpr int getMinLogLevel() { return 1; }

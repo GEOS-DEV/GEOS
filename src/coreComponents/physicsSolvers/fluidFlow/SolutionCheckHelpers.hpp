@@ -17,13 +17,31 @@
  * @file SolutionCheckHelpers.hpp
  */
 
-#ifndef GEOS_PHYSICSSOLVERS_FLUIDFLOW_SOLUTIONCHECKHELPER_HPP
-#define GEOS_PHYSICSSOLVERS_FLUIDFLOW_SOLUTIONCHECKHELPER_HPP
+#ifndef GEOS_PHYSICSSOLVERS_FLUIDFLOW_SOLUTIONCHECKHELPERS_HPP
+#define GEOS_PHYSICSSOLVERS_FLUIDFLOW_SOLUTIONCHECKHELPERS_HPP
 
 #include "physicsSolvers/fluidFlow/kernels/SolutionCheckKernelsHelpers.hpp"
+#include "common/Units.hpp"
 
 namespace geos
 {
+
+class IdReporterOutput
+{
+public:
+
+  IdReporterOutput( IdReporterBuffer const & buffer );
+
+  void outputWrongValues( string_view linesPrefix,
+                          string_view valueNaming,
+                          real64 minValue,
+                          units::Unit valueUnit ) const;
+
+private:
+
+  IdReporterBuffer const & m_buffer;
+
+};
 
 class IdReporterBuffer
 {
@@ -37,7 +55,7 @@ public:
    * @param maxCollectionSize Limit of the buffer.
    *                          If 0, the buffering functionnality is disabled and only the counting is enabled.
    */
-  IdReporterBuffer( IdCountType maxCollectionSize );
+  IdReporterBuffer( bool enabled, IdCountType maxCollectionSize );
 
   // TODO: Proper docs. can be moved without any issue.
   IdReporterBuffer( IdReporterBuffer && other ) = default;
@@ -48,10 +66,10 @@ public:
   IdReporterBuffer & operator=( IdReporterBuffer const & other ) = delete;
 
   IdCountType getSignaledIdsCount() const
-  { return m_idsCounter[0]; }
+  { return m_idsCounter.empty() ? 0 : m_idsCounter[0]; }
 
   IdCountType getCollectedIdsCount() const
-  { return LvArray::math::min( m_idsCounter[0], m_idsCounter.size() ); }
+  { return LvArray::math::min( getSignaledIdsCount(), m_idsBuffer.size() ); }
 
   auto begin() const
   { return m_idsBuffer.begin(); }
@@ -59,14 +77,21 @@ public:
   auto end() const
   { return m_idsBuffer.begin() + getCollectedIdsCount(); }
 
+  bool enabled() const
+  { return !m_idsCounter.empty(); }
+
   bool empty() const
   { return getCollectedIdsCount() == 0; }
+
+  bool isComplete() const
+  { return getCollectedIdsCount() < getSignaledIdsCount(); }
 
   /**
    * @return A view on the ids array owned by the instance. -> change comment to explain the interest for kernels
    */
-  IdReporterCollector createCollector( arrayView1d< globalIndex > const & localToGlobalId ) const // -> cpp
-  { return IdReporterCollector( m_idsCounter, m_idsBuffer, localToGlobalId ); }
+  IdReporterCollector createCollector( arrayView1d< globalIndex > const & localToGlobalId ) const;
+
+  IdReporterOutput createOutput() const;
 
 private:
 
@@ -77,7 +102,6 @@ private:
   array1d< IdType > m_idsBuffer;
 
 };
-
 
 } // namespace geos
 

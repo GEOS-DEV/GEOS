@@ -847,8 +847,10 @@ bool CompositionalMultiphaseFVM::checkSystemSolution( DomainPartition & domain,
     integer localCheck = 1;
     real64 minPres = 0.0, minDens = 0.0, minTotalDens = 0.0;
     integer numNegTotalDens = 0;
-    IdReporterBuffer rankNegPressureIds{ 16 }; // TODO disable if not enabled.
-    IdReporterBuffer rankNegDensityIds{ 16 }; // TODO disable if not enabled.
+    IdReporterBuffer rankNegPressureIds{ isLogLevelActive< logInfo::Solution >( getLogLevel() ),
+                                         isLogLevelActive< logInfo::SolutionDetails >( getLogLevel() ) ? 16 : 0 };
+    IdReporterBuffer rankNegDensityIds{ isLogLevelActive< logInfo::Solution >( getLogLevel() ),
+                                        isLogLevelActive< logInfo::SolutionDetails >( this->getLogLevel() ) ? 16 : 0 };
 
     forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                  MeshLevel & mesh,
@@ -868,8 +870,8 @@ bool CompositionalMultiphaseFVM::checkSystemSolution( DomainPartition & domain,
         arrayView1d< real64 > temperatureScalingFactor = subRegion.getField< fields::flow::temperatureScalingFactor >();
         arrayView1d< real64 > compDensScalingFactor = subRegion.getField< fields::flow::globalCompDensityScalingFactor >();
         auto const & cellLocalToGlobalIds = subRegion.localToGlobalMap();
-        auto const presCollector = rankNegPressureIds.createCollector(cellLocalToGlobalIds);
-        auto const densCollector = rankNegDensityIds.createCollector(cellLocalToGlobalIds);
+        auto const presCollector = rankNegPressureIds.createCollector( cellLocalToGlobalIds );
+        auto const densCollector = rankNegDensityIds.createCollector( cellLocalToGlobalIds );
 
         // check that pressure and component densities are non-negative
         // for thermal, check that temperature is above 273.15 K
@@ -925,50 +927,21 @@ bool CompositionalMultiphaseFVM::checkSystemSolution( DomainPartition & domain,
     minPres  = MpiWrapper::min( minPres );
     minDens = MpiWrapper::min( minDens );
     minTotalDens = MpiWrapper::min( minTotalDens );
-    integer numNegPres = MpiWrapper::sum( rankNegPressureIds.getSignaledIdsCount() );
-    integer numNegDens = MpiWrapper::sum( rankNegDensityIds.getSignaledIdsCount() );
     numNegTotalDens = MpiWrapper::sum( numNegTotalDens );
 
-    if( numNegPres > 0 )
-    {
-      GEOS_LOG_LEVEL_RANK_0( logInfo::Solution,
-                             GEOS_FMT( "        {}: Number of negative pressure values: {}, minimum value: {} Pa",
-                                       getName(), numNegPres, fmt::format( "{:.{}f}", minPres, 3 ) ) );
-      GEOS_LOG_LEVEL_RANK_0( logInfo::Solution,
-                             GEOS_FMT( "        {}: negative pressure element ids (may not be complete):",
-                                       getName() ) );
-      MpiWrapper::barrier();
-      if( !rankNegPressureIds.empty() )
-      {
-        GEOS_LOG_LEVEL( logInfo::Solution,
-                        GEOS_FMT( "          Rank {}: {}",
-                                  MpiWrapper::commRank(), stringutilities::join( rankNegPressureIds, ", " ) ) );
-      }
-    }
+    units::Unit const massUnit = m_useMass ? units::Unit::Density : units::Unit::MolarDensity;
 
-    string const massUnit = m_useMass ? "kg/m3" : "mol/m3";
+    rankNegPressureIds.createOutput().outputWrongValues( GEOS_FMT( "        {}: ", getName() ),
+                                                         "negative pressure", minPres, units::Unit::Pressure );
+
+    rankNegDensityIds.createOutput().outputWrongValues( GEOS_FMT( "        {}: ", getName() ),
+                                                        "negative component density", minDens, massUnit );
+
     if( numNegTotalDens > 0 )
     {
       GEOS_LOG_LEVEL_RANK_0( logInfo::Solution,
-                             GEOS_FMT( "        {}: Number of negative total density values: {}, minimum value: {} {}}",
-                                       getName(), numNegTotalDens, fmt::format( "{:.{}f}", minTotalDens, 3 ), massUnit ) );
-    }
-
-    if( numNegDens > 0 )
-    {
-      GEOS_LOG_LEVEL_RANK_0( logInfo::Solution,
-                             GEOS_FMT( "        {}: Number of negative component density values: {}, minimum value: {} {}}",
-                                       getName(), numNegDens, fmt::format( "{:.{}f}", minDens, 3 ), massUnit ) );
-      GEOS_LOG_LEVEL_RANK_0( logInfo::Solution,
-                             GEOS_FMT( "        {}: negative component density element ids (may not be complete):",
-                                       getName() ) );
-      MpiWrapper::barrier();
-      if( !rankNegDensityIds.empty() )
-      {
-        GEOS_LOG_LEVEL( logInfo::Solution,
-                        GEOS_FMT( "          Rank {}: {}",
-                                  MpiWrapper::commRank(), stringutilities::join( rankNegDensityIds, ", " ) ) );
-      }
+                             GEOS_FMT( "        {}: Number of negative total density values: {}, minimum value: {} {}",
+                                       getName(), numNegTotalDens, fmt::format( "{:.{}f}", minTotalDens, 3 ), units::getSymbol( massUnit ) ) );
     }
 
     return MpiWrapper::min( localCheck );
