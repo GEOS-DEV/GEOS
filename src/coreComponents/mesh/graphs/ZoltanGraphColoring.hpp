@@ -20,8 +20,8 @@
 #ifndef GEOS_GRAPH_ZOLTANGRAPHCOLORING_HPP_
 #define GEOS_GRAPH_ZOLTANGRAPHCOLORING_HPP_
 
-#include "common/MpiWrapper.hpp"
 #include "GraphColoringBase.hpp"
+#include "common/MpiWrapper.hpp"
 #include <zoltan.h>
 #include <zoltan_cpp.h>
 #include <vector>
