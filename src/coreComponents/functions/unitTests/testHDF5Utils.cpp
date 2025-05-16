@@ -269,7 +269,7 @@ using MyTestTypes = ::testing::Types<
   ReadTestConfig< real64, real64 >
   >;
 
-TYPED_TEST_SUITE( SerialHDF5ReaderTypedTest, MyTestTypes );
+TYPED_TEST_SUITE( SerialHDF5ReaderTypedTest, MyTestTypes, );
 
 TYPED_TEST( SerialHDF5ReaderTypedTest, CanRead1DTo4DFlattenedCorrectly )
 {
@@ -318,7 +318,7 @@ protected:
   }
 };
 
-TYPED_TEST_SUITE( SerialHDF5ReaderInvalidDimsTest, MyTestTypes );
+TYPED_TEST_SUITE( SerialHDF5ReaderInvalidDimsTest, MyTestTypes, );
 
 TYPED_TEST( SerialHDF5ReaderInvalidDimsTest, ThrowsOnWrongExpectedDims )
 {
@@ -378,7 +378,7 @@ protected:
   }
 };
 
-TYPED_TEST_SUITE( SerialHDF5ReaderUnsupportedConversionTest, InvalidConversionTypes );
+TYPED_TEST_SUITE( SerialHDF5ReaderUnsupportedConversionTest, InvalidConversionTypes, );
 
 TYPED_TEST( SerialHDF5ReaderUnsupportedConversionTest, ThrowsOnUnsupportedConversion )
 {
@@ -420,7 +420,7 @@ protected:
   }
 };
 
-TYPED_TEST_SUITE( SerialHDF5ReaderMissingDatasetTest, MyTestTypes );
+TYPED_TEST_SUITE( SerialHDF5ReaderMissingDatasetTest, MyTestTypes, );
 
 TYPED_TEST( SerialHDF5ReaderMissingDatasetTest, ThrowsOnMissingDataset )
 {

@@ -75,11 +75,16 @@ struct DatasetHandle
    */
   bool datasetExists( hid_t const & fileId, string const & datasetName );
 
-  string m_datasetName;     ///< The name of the dataset.
-  hid_t datasetId = -1;     ///< The HDF5 dataset identifier.
-  hid_t spaceId = -1;       ///< The HDF5 dataspace identifier.
-  hid_t typeId = -1;        ///< The HDF5 datatype identifier.
-  array1d< hsize_t > dims;  ///< The dimensions of the dataspace.
+  /// The name of the dataset.
+  string m_datasetName;
+  /// The HDF5 dataset identifier.
+  hid_t datasetId = -1;
+  /// The HDF5 dataspace identifier.
+  hid_t spaceId = -1;
+  /// The HDF5 datatype identifier.
+  hid_t typeId = -1;
+  /// The dimensions of the dataspace.
+  array1d< hsize_t > dims;
 };
 
 } // end of namespace hdf5Utils
