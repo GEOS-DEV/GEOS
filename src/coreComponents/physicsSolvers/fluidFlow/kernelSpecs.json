@@ -175,9 +175,8 @@
   "IsothermalCompositionalMultiphaseFVM_DirichletFluxComputeKernels": {
     "vars": [
       "NAME",
-      "NCOMP",
-      "IS_THERMAL",
-      "FLUID_TYPE"
+      "NCOMPS_FLUID",
+      "IS_THERMAL"
     ],
     "constants": [
       [ "DirichletFluxComputeKernelPolicy", "geos::parallelDevicePolicy< GEOS_BLOCK_SIZE >" ]
@@ -186,22 +185,16 @@
       "NAME": [
         "DirichletFluxComputeKernel"
       ],
-      "NCOMP": [
-        2,
-        3,
-        4,
-        5
+      "NCOMPS_FLUID": [
+        "2, constitutive::DeadOilFluid",
+        "3, constitutive::BlackOilFluid",
+        "2, constitutive::CO2BrinePhillipsFluid",
+        "2, constitutive::CO2BrineEzrokhiFluid",
+        "2, constitutive::CO2BrinePhillipsThermalFluid"
       ],
       "IS_THERMAL": [
         "true",
         "false"
-      ],
-      "FLUID_TYPE": [
-        "constitutive::DeadOilFluid",
-        "constitutive::BlackOilFluid",
-        "constitutive::CO2BrinePhillipsFluid",
-        "constitutive::CO2BrineEzrokhiFluid",
-        "constitutive::CO2BrinePhillipsThermalFluid"
       ]
     },
     "explicit": []
@@ -210,9 +203,7 @@
   "ThermalCompositionalMultiphaseFVM_DirichletFluxComputeKernels": {
     "vars": [
       "NAME",
-      "NCOMP",
-      "IS_THERMAL",
-      "FLUID_TYPE"
+      "NCOMPS_FLUID"
     ],
     "constants": [
       [ "DirichletFluxComputeKernelPolicy", "geos::parallelDevicePolicy< GEOS_BLOCK_SIZE >" ]
@@ -221,22 +212,12 @@
       "NAME": [
         "DirichletFluxComputeKernel"
       ],
-      "NCOMP": [
-        2,
-        3,
-        4,
-        5
-      ],
-      "IS_THERMAL": [
-        "true",
-        "false"
-      ],
-      "FLUID_TYPE": [
-        "constitutive::DeadOilFluid",
-        "constitutive::BlackOilFluid",
-        "constitutive::CO2BrinePhillipsFluid",
-        "constitutive::CO2BrineEzrokhiFluid",
-        "constitutive::CO2BrinePhillipsThermalFluid"
+      "NCOMPS_FLUID": [
+        "2, constitutive::DeadOilFluid",
+        "3, constitutive::BlackOilFluid",
+        "2, constitutive::CO2BrinePhillipsFluid",
+        "2, constitutive::CO2BrineEzrokhiFluid",
+        "2, constitutive::CO2BrinePhillipsThermalFluid"
       ]
     },
     "explicit": []
