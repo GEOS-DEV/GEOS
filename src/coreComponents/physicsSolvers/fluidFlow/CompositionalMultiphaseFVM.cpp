@@ -846,8 +846,8 @@ bool CompositionalMultiphaseFVM::checkSystemSolution( DomainPartition & domain,
     integer localCheck = 1;
     real64 minPres = 0.0, minDens = 0.0, minTotalDens = 0.0;
     integer numNegTotalDens = 0;
-    IdReporterBuffer< integer, globalIndex > rankNegPressureIds{ 16 }; // TODO disable if not enabled.
-    IdReporterBuffer< integer, globalIndex > rankNegDensityIds{ 16 }; // TODO disable if not enabled.
+    IdReporterBuffer rankNegPressureIds{ 16 }; // TODO disable if not enabled.
+    IdReporterBuffer rankNegDensityIds{ 16 }; // TODO disable if not enabled.
 
     forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                  MeshLevel & mesh,

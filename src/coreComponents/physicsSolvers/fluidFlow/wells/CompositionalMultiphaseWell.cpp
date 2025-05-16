@@ -1537,8 +1537,8 @@ CompositionalMultiphaseWell::checkSystemSolution( DomainPartition & domain,
                                                        wellDofKey,
                                                        subRegion,
                                                        localSolution,
-                                                       IdReporterCollector<>::disabled(),
-                                                       IdReporterCollector<>::disabled() );
+                                                       IdReporterCollector::disabled(),
+                                                       IdReporterCollector::disabled() );
 
         if( !subRegionData.localMinVal )
         {
@@ -1598,8 +1598,8 @@ CompositionalMultiphaseWell::checkSystemSolution( DomainPartition & domain,
                                                                                 wellDofKey,
                                                                                 subRegion,
                                                                                 localSolution,
-                                                                                IdReporterCollector<>::disabled(),
-                                                                                IdReporterCollector<>::disabled(),
+                                                                                IdReporterCollector::disabled(),
+                                                                                IdReporterCollector::disabled(),
                                                                                 temperatureOffset ) :
                                    isothermalCompositionalMultiphaseBaseKernels::
                                      SolutionCheckKernelFactory::
@@ -1616,8 +1616,8 @@ CompositionalMultiphaseWell::checkSystemSolution( DomainPartition & domain,
                                                                                 wellDofKey,
                                                                                 subRegion,
                                                                                 localSolution,
-                                                                                IdReporterCollector<>::disabled(),
-                                                                                IdReporterCollector<>::disabled() );
+                                                                                IdReporterCollector::disabled(),
+                                                                                IdReporterCollector::disabled() );
 
         localCheck = std::min( localCheck, subRegionData.localMinVal );
 

@@ -25,8 +25,6 @@
 namespace geos
 {
 
-template< typename IdCountType,
-          typename IdType >
 class IdReporterBuffer;
 
 /**
@@ -34,12 +32,13 @@ class IdReporterBuffer;
  * @tparam IdCountType TODO
  * @tparam IdType TODO
  */
-template< typename IdCountType = integer,
-          typename IdType = globalIndex >
 class IdReporterCollector
 {
-  friend class IdReporterBuffer< IdCountType, IdType >;
+  friend class IdReporterBuffer;
 public:
+
+  using IdCountType = int32_t;
+  using IdType = globalIndex;
 
   IdReporterCollector( IdReporterCollector const & other ) = default;
   IdReporterCollector( IdReporterCollector && other ) = default;
@@ -110,11 +109,12 @@ private:
 
 };
 
-template< typename IdCountType = integer,
-          typename IdType = globalIndex >
 class IdReporterBuffer
 {
 public:
+
+  using IdCountType = int32_t;
+  using IdType = globalIndex;
 
   /**
    * @brief Construct a preallocated buffer to collect a limited quantity of ids in kernels.
@@ -147,11 +147,10 @@ public:
   { return getCollectedIdsCount() == 0; }
 
   /**
-   * @return A view on the ids array owned by the instance.
+   * @return A view on the ids array owned by the instance. -> change comment to explain the interest for kernels
    */
-  IdReporterCollector< IdCountType, IdType >
-  createCollector( arrayView1d< globalIndex > const & localToGlobalId ) const // -> cpp
-  { return IdReporterCollector< IdCountType, IdType >( m_idsCounter, m_idsBuffer, localToGlobalId ); }
+  IdReporterCollector createCollector( arrayView1d< globalIndex > const & localToGlobalId ) const // -> cpp
+  { return IdReporterCollector( m_idsCounter, m_idsBuffer, localToGlobalId ); }
 
 private:
 

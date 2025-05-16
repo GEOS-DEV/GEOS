@@ -75,8 +75,8 @@ public:
                        string const dofKey,
                        ElementSubRegionBase const & subRegion,
                        arrayView1d< real64 const > const localSolution,
-                       IdReporterCollector<> const & negPressureIds,
-                       IdReporterCollector<> const & negDensityIds )
+                       IdReporterCollector const & negPressureIds,
+                       IdReporterCollector const & negDensityIds )
     : Base( rankOffset,
             numComp,
             dofKey,
@@ -303,9 +303,9 @@ protected:
   /// scaling type (global or local)
   compositionalMultiphaseUtilities::ScalingType const m_scalingType;
 
-  IdReporterCollector<> m_negPressureIds;
+  IdReporterCollector m_negPressureIds;
 
-  IdReporterCollector<> m_negDensityIds;
+  IdReporterCollector m_negDensityIds;
 
 };
 
@@ -342,8 +342,8 @@ public:
                    string const dofKey,
                    ElementSubRegionBase & subRegion,
                    arrayView1d< real64 const > const localSolution,
-                   IdReporterCollector<> const & negPressureIds,
-                   IdReporterCollector<> const & negDensityIds ) // TODO : ajouter bool reportWrongValues
+                   IdReporterCollector const & negPressureIds,
+                   IdReporterCollector const & negDensityIds ) // TODO : ajouter bool reportWrongValues
   {
     SolutionCheckKernel kernel( allowCompDensChopping, allowNegativePressure, scalingType, scalingFactor,
                                 pressure, compDens, pressureScalingFactor, compDensScalingFactor, rankOffset,

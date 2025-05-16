@@ -821,8 +821,8 @@ public:
                    string const dofKey,
                    ElementSubRegionBase & subRegion,
                    arrayView1d< real64 const > const localSolution,
-                   IdReporterCollector<> const & negPressureIds,
-                   IdReporterCollector<> const & negDensityIds )
+                   IdReporterCollector const & negPressureIds,
+                   IdReporterCollector const & negDensityIds )
   {
 
     isothermalCompositionalMultiphaseBaseKernels::

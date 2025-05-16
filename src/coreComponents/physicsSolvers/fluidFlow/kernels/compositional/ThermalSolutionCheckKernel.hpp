@@ -73,8 +73,8 @@ public:
                        string const dofKey,
                        ElementSubRegionBase const & subRegion,
                        arrayView1d< real64 const > const localSolution,
-                       IdReporterCollector<> const & negPressureIds,
-                       IdReporterCollector<> const & negDensityIds,
+                       IdReporterCollector const & negPressureIds,
+                       IdReporterCollector const & negDensityIds,
                        integer const temperatureOffset )
     : Base( allowCompDensChopping,
             allowNegativePressure,
@@ -166,8 +166,8 @@ public:
                    string const dofKey,
                    ElementSubRegionBase & subRegion,
                    arrayView1d< real64 const > const localSolution,
-                   IdReporterCollector<> const & negPressureIds,
-                   IdReporterCollector<> const & negDensityIds,
+                   IdReporterCollector const & negPressureIds,
+                   IdReporterCollector const & negDensityIds,
                    integer temperatureOffset )
   {
     SolutionCheckKernel kernel( allowCompDensChopping, allowNegativePressure, scalingType, scalingFactor,
