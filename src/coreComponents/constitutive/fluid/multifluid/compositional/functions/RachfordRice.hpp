@@ -166,7 +166,7 @@ public:
   solve( arraySlice1d< real64 const, USD2 > const & kValues,
          arraySlice1d< real64 const, USD1 > const & feed,
          arraySlice1d< integer const > const & presentComponentIds,
-         real64 & gasPhaseMoleFraction)
+         real64 & gasPhaseMoleFraction )
   {
     gasPhaseMoleFraction = 0.0;
 
@@ -269,7 +269,7 @@ public:
     }
 
     gasPhaseMoleFraction = newtonValue;
-    
+
     if( currentError > newtonTolerance )
     {
       GEOS_WARNING( "Rachford-Rice solver did not converge after " << SSIIteration << " SSI iterations and " << newtonIteration << " Newton iterations." );

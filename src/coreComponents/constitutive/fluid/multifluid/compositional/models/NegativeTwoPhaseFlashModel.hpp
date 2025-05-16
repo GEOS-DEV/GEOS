@@ -59,7 +59,7 @@ public:
                                     EquationOfStateType const vapourEos,
                                     real64 const salinity,
                                     arrayView1d< real64 const > const componentCriticalVolume,
-                                    std::map< std::string, std::chrono::system_clock::duration >& timers );
+                                    std::map< std::string, std::chrono::system_clock::duration > & timers );
 
   // Mark as a 2-phase flash
   GEOS_HOST_DEVICE
@@ -83,14 +83,14 @@ public:
     {
       Timer timer( m_timers["stability"] );
       stabilityStatus = StabilityTest::compute( m_numComponents,
-                                                          pressure,
-                                                          temperature,
-                                                          compFraction,
-                                                          componentProperties,
-                                                          m_flashData.liquidEos,
-                                                          m_flashData,
-                                                          tangentPlaneDistance,
-                                                          kValues[0] );
+                                                pressure,
+                                                temperature,
+                                                compFraction,
+                                                componentProperties,
+                                                m_flashData.liquidEos,
+                                                m_flashData,
+                                                tangentPlaneDistance,
+                                                kValues[0] );
     }
     if( !stabilityStatus )
     {
@@ -139,18 +139,18 @@ public:
         Timer timer2( m_timers["flash derivs"] );
         // Calculate derivatives
         NegativeTwoPhaseFlash::computeDerivatives( m_numComponents,
-                                                  pressure,
-                                                  temperature,
-                                                  compFraction,
-                                                  componentProperties,
-                                                  m_flashData,
-                                                  phaseFraction.value[m_vapourIndex],
-                                                  phaseCompFraction.value[m_liquidIndex].toSliceConst(),
-                                                  phaseCompFraction.value[m_vapourIndex].toSliceConst(),
-                                                  phaseFraction.derivs[m_vapourIndex],
-                                                  phaseCompFraction.derivs[m_liquidIndex],
-                                                  phaseCompFraction.derivs[m_vapourIndex],
-                                                m_timers );
+                                                   pressure,
+                                                   temperature,
+                                                   compFraction,
+                                                   componentProperties,
+                                                   m_flashData,
+                                                   phaseFraction.value[m_vapourIndex],
+                                                   phaseCompFraction.value[m_liquidIndex].toSliceConst(),
+                                                   phaseCompFraction.value[m_vapourIndex].toSliceConst(),
+                                                   phaseFraction.derivs[m_vapourIndex],
+                                                   phaseCompFraction.derivs[m_liquidIndex],
+                                                   phaseCompFraction.derivs[m_vapourIndex],
+                                                   m_timers );
       }
     }
     else
@@ -216,7 +216,7 @@ private:
   integer const m_vapourIndex;
   FlashData m_flashData;
   arrayView1d< real64 const > const m_componentCriticalVolume;
-  std::map< std::string, std::chrono::system_clock::duration >& m_timers;
+  std::map< std::string, std::chrono::system_clock::duration > & m_timers;
 };
 
 class NegativeTwoPhaseFlashModel : public FunctionBase
@@ -236,7 +236,7 @@ public:
       if( maxTime > 0 )
       {
         GEOS_LOG_RANK_0( GEOS_FMT( "{}: {} time = {} s (min), {} s (max)",
-          catalogName(), timer.first, minTime, maxTime ) );
+                                   catalogName(), timer.first, minTime, maxTime ) );
       }
     }
   }

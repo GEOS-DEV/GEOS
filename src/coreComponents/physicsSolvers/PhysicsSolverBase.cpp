@@ -878,6 +878,8 @@ real64 PhysicsSolverBase::nonlinearImplicitStep( real64 const & time_n,
       m_numTimestepsSinceLastDtCut = 0;
       GEOS_LOG_LEVEL_RANK_0 ( logInfo::TimeStep, GEOS_FMT( "New dt = {}", stepDt ) );
 
+      exit(-1);
+
       // notify the solver statistics counter that this is a time step cut
       m_solverStatistics.logTimeStepCut();
     }
@@ -1360,9 +1362,39 @@ bool PhysicsSolverBase::checkSystemSolution( DomainPartition & GEOS_UNUSED_PARAM
 
 real64 PhysicsSolverBase::scalingForSystemSolution( DomainPartition & GEOS_UNUSED_PARAM( domain ),
                                                     DofManager const & GEOS_UNUSED_PARAM( dofManager ),
-                                                    arrayView1d< real64 const > const & GEOS_UNUSED_PARAM( localSolution ) )
+                                                    arrayView1d< real64 const > const & localSolution )
 {
-  return 1.0;
+  localIndex const n = localSolution.size();
+
+  integer oscillation = true;
+
+  if( m_solution_old.size() != n )
+  {
+    m_solution_old.resize(n);
+    oscillation = false;
+  }
+  else
+  {
+    for ( localIndex i = 0; i < n; i++ )
+    {
+      if(LvArray::math::abs(localSolution[i]) > 1 &&
+       LvArray::math::abs(m_solution_old[i] + localSolution[i]) / LvArray::math::abs(localSolution[i]) > 0.25)
+      {
+        std::cout << "Oscillation not detected: " << i << " " << m_solution_old[i] << " " << localSolution[i] <<
+        " " << LvArray::math::abs(m_solution_old[i] + localSolution[i]) / LvArray::math::abs(localSolution[i]) << std::endl;
+        oscillation = false;
+        break;
+      }
+    }
+  }
+
+  // copy the solution to the old solution vector
+  for (localIndex i = 0; i < n; i++)
+  {
+    m_solution_old[i] = localSolution[i];
+  }
+
+  return oscillation ? 0.5 : 1.0;
 }
 
 void PhysicsSolverBase::applySystemSolution( DofManager const & GEOS_UNUSED_PARAM( dofManager ),

@@ -1019,6 +1019,7 @@ protected:
 
   /// System solution vector
   ParallelVector m_solution;
+  array1d< real64 > m_solution_old;
 
   /// Local system matrix and rhs
   CRSMatrix< real64, globalIndex > m_localMatrix;

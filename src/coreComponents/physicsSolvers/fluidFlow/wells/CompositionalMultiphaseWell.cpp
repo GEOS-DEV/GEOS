@@ -279,13 +279,16 @@ void CompositionalMultiphaseWell::registerDataOnMesh( Group & meshBodies )
         string const conditionKey = useSurfaceConditions ? "surface" : "reservoir";
         string const unitKey = useSurfaceConditions ? "s" : "r";
         integer const numPhase = m_numPhases;
+        integer const numComp = m_numComponents;
         // format: time,bhp,total_rate,total_vol_rate,phase0_vol_rate,phase1_vol_rate,...
         makeDirsForPath( m_ratesOutputDir );
         GEOS_LOG( GEOS_FMT( "{}: Rates CSV generated at {}", getName(), fileName ) );
         std::ofstream outputFile( fileName );
-        outputFile << "Time [s],BHP [Pa],Total rate [" << massUnit << "/s],Total " << conditionKey << " Volumetric rate [" << unitKey << "m3/s]";
+        outputFile << "Time [s],dt[s],BHP [Pa],Total rate [" << massUnit << "/s],Total " << conditionKey << " volumetric rate [" << unitKey << "m3/s]";
         for( integer ip = 0; ip < numPhase; ++ip )
           outputFile << ",Phase" << ip << " " << conditionKey << " volumetric rate [" << unitKey << "m3/s]";
+        for( integer ic = 0; ic < numComp; ++ic )
+          outputFile << ",Component" << ic << " rate [" << massUnit << "/s]";
         outputFile << std::endl;
         outputFile.close();
       }
@@ -2107,6 +2110,39 @@ void CompositionalMultiphaseWell::printRates( real64 const & time_n,
                                                               [&]( localIndex const,
                                                                    WellElementSubRegion & subRegion )
     {
+      integer const numPhase = m_numPhases;
+      integer const numComp = m_numComponents;
+      integer const numPerf = subRegion.getPerforationData()->size();
+      string const massUnit = m_useMass ? "kg" : "mol";
+
+      // control data
+      WellControls const & wellControls = getWellControls( subRegion );
+
+      std::vector< double > compRate( numComp, 0.0 );
+      if( m_writeCSV > 0 && wellControls.isWellOpen( time_n ) )
+      {
+        arrayView2d< real64 > const compPerfRate = subRegion.getPerforationData()->getField< fields::well::compPerforationRate >();
+
+        // bring everything back to host, capture the scalars by reference
+        forAll< serialPolicy >( 1, [&numComp,
+                                    &numPerf,
+                                    &massUnit,
+                                    compPerfRate,
+                                    &compRate] ( localIndex const )
+        {
+          for( integer ic = 0; ic < numComp; ++ic )
+          {
+            for( integer iperf = 0; iperf < numPerf; iperf++ )
+            {
+              compRate[ic] += compPerfRate[iperf][ic];
+            }
+          }
+        } );
+        for( integer ic = 0; ic < numComp; ++ic )
+        {
+          compRate[ic] = MpiWrapper::sum( compRate[ic] );
+        }
+      }
 
       // the rank that owns the reference well element is responsible for the calculations below.
       if( !subRegion.isLocallyOwned() )
@@ -2114,11 +2150,6 @@ void CompositionalMultiphaseWell::printRates( real64 const & time_n,
         return;
       }
 
-      integer const numPhase = m_numPhases;
-
-      // control data
-
-      WellControls const & wellControls = getWellControls( subRegion );
       string const wellControlsName = wellControls.getName();
 
       // format: time,total_rate,total_vol_rate,phase0_vol_rate,phase1_vol_rate,...
@@ -2138,6 +2169,8 @@ void CompositionalMultiphaseWell::printRates( real64 const & time_n,
           outputFile << ",0.0,0.0,0.0";
           for( integer ip = 0; ip < numPhase; ++ip )
             outputFile << ",0.0";
+          for( integer ic = 0; ic < numComp; ++ic )
+            outputFile << ",0.0";
           outputFile << std::endl;
           outputFile.close();
         }
@@ -2145,7 +2178,6 @@ void CompositionalMultiphaseWell::printRates( real64 const & time_n,
       }
 
       localIndex const iwelemRef = subRegion.getTopWellElementIndex();
-      string const massUnit = m_useMass ? "kg" : "mol";
 
       // subRegion data
 
@@ -2163,11 +2195,13 @@ void CompositionalMultiphaseWell::printRates( real64 const & time_n,
 
       // bring everything back to host, capture the scalars by reference
       forAll< serialPolicy >( 1, [&numPhase,
+                                  &numComp,
                                   &useSurfaceConditions,
                                   &currentBHP,
                                   connRate,
                                   &currentTotalVolRate,
                                   currentPhaseVolRate,
+                                  &compRate,
                                   &iwelemRef,
                                   &wellControlsName,
                                   &massUnit,
@@ -2190,6 +2224,8 @@ void CompositionalMultiphaseWell::printRates( real64 const & time_n,
           outputFile << "," << currentTotalRate << "," << currentTotalVolRate;
           for( integer ip = 0; ip < numPhase; ++ip )
             outputFile << "," << currentPhaseVolRate[ip];
+          for( integer ic = 0; ic < numComp; ++ic )
+            outputFile << "," << compRate[ic];
           outputFile << std::endl;
           outputFile.close();
         }

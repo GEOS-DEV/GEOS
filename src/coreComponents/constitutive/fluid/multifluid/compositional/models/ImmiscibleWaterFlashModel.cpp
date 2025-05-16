@@ -84,7 +84,7 @@ ImmiscibleWaterFlashModelUpdate::ImmiscibleWaterFlashModelUpdate(
   EquationOfStateType const vapourEos,
   real64 const salinity,
   arrayView1d< real64 const > const componentCriticalVolume,
-  std::map< std::string, std::chrono::system_clock::duration >& timers ):
+  std::map< std::string, std::chrono::system_clock::duration > & timers ):
   m_twoPhaseModel( numComponents,
                    liquidIndex,
                    vapourIndex,

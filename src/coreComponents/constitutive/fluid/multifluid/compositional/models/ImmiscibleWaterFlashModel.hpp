@@ -57,7 +57,7 @@ public:
                                    EquationOfStateType const vapourEos,
                                    real64 const salinity,
                                    arrayView1d< real64 const > const componentCriticalVolume,
-                                  std::map< std::string, std::chrono::system_clock::duration >& timers );
+                                   std::map< std::string, std::chrono::system_clock::duration > & timers );
 
   // Mark as a 3-phase flash
   GEOS_HOST_DEVICE

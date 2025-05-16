@@ -243,7 +243,7 @@ struct SoreideWhitsonEOSPhaseModel
                                 real64 const & pressure,
                                 real64 const & temperature,
                                 arraySlice1d< real64 const, USD > const & composition,
-                                stackArray2d< real64, maxNumComps *maxNumComps >& kij,
+                                stackArray2d< real64, maxNumComps *maxNumComps > & kij,
                                 ComponentProperties::KernelWrapper const & componentProperties,
                                 real64 const & salinity,
                                 real64 & compressibilityFactor );

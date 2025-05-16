@@ -327,7 +327,7 @@ computeMixtureCoefficients( integer const numComps,
   {
     for( integer ic = 0; ic < numComps; ++ic )
     {
-      aMixtureCoefficient += composition[ic] * composition[jc] * ( 1.0 - kij(ic,jc) ) * sqrt( aPureCoefficient[ic] * aPureCoefficient[jc] );
+      aMixtureCoefficient += composition[ic] * composition[jc] * ( 1.0 - kij( ic, jc ) ) * sqrt( aPureCoefficient[ic] * aPureCoefficient[jc] );
     }
   }
 

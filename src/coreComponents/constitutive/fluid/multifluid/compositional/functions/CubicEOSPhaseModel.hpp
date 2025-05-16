@@ -243,7 +243,7 @@ public:
                               real64 const & pressure,
                               real64 const & temperature,
                               arraySlice1d< real64 const, USD > const & composition,
-                              stackArray2d< real64, maxNumComps *maxNumComps >& kij,
+                              stackArray2d< real64, maxNumComps *maxNumComps > & kij,
                               ComponentProperties::KernelWrapper const & componentProperties,
                               arraySlice1d< real64 > const & aPureCoefficient,
                               arraySlice1d< real64 > const & bPureCoefficient,
