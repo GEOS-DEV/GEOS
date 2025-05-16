@@ -87,7 +87,9 @@ private:
    */
   void closeFile();
 
-  hid_t m_fileId{-1};   /// The HDF5 file identifier.
+  /// The HDF5 file identifier.
+  hid_t m_fileId{-1};
+  /// The filename.
   string m_filename;    /// The filename.
 };
 
@@ -124,7 +126,8 @@ public:
                                        int const expectedDims ) const = delete;
 
 private:
-  SerialHDF5File m_file;  /// The underlying HDF5 file.
+  /// The underlying HDF5 file.
+  SerialHDF5File m_file;
 };
 
 //! @name Specializations for supported types
