@@ -93,6 +93,7 @@ int SpatialPartition::getColor()
 {
   if( m_metisNeighborList.empty() )
   {
+    // Internal cartesian partitioner (for internal mesh)
     int color=0;
     if( isOdd( m_coords[0] ) )
     {
@@ -109,20 +110,14 @@ int SpatialPartition::getColor()
       color += 4;
     }
 
-    std::vector< int > all_colors( m_size );
-    MpiWrapper::allgather( &color, 1, all_colors.data(), 1 );
-    std::set< int > unique_colors( all_colors.begin(), all_colors.end());
-    m_numColors = unique_colors.size();
-
-#if 1
-    std::cout<<"rank "<<MpiWrapper::commRank( MPI_COMM_GEOS )<<" color:"<<color<< " " << m_numColors << std::endl;
-#endif
-
+    // With this algorithm, numbering may have gaps.
+    // In that case m_numColors is an upper bound, not the exact number of distinct colors used.
     m_numColors = MpiWrapper::max( color )+1;
     return color;
   }
   else
   {
+    // External partitioner such as ParMetis or PTScotch (for VTK external mesh)
     std::vector< camp::idx_t > adjncy;
     adjncy.reserve( m_metisNeighborList.size());
     std::copy( m_metisNeighborList.begin(), m_metisNeighborList.end(), std::back_inserter( adjncy ));
@@ -135,18 +130,9 @@ int SpatialPartition::getColor()
 
     if( !coloring.isColoringValid( adjncy, color ))
     {
-      GEOS_ERROR( "wrong coloring!" );
+      GEOS_ERROR( "Invalid partition coloring: two neighboring partitions share the same color" );
     }
     m_numColors = coloring.getNumberOfColors( color );
-
-#if 1
-    std::cout<<"rank "<<MpiWrapper::commRank( MPI_COMM_GEOS )<<" color:"<<color<< " " << m_numColors << "neighbors: ";
-    for( size_t i=0; i<adjncy.size(); i++ )
-    {
-      std::cout<<" "<<adjncy[i];
-    }
-    std::cout<<std::endl;
-#endif
 
     return color;
   }

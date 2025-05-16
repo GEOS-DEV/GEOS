@@ -962,7 +962,7 @@ void synchronizeTopologyChange( MeshLevel * const mesh,
    * At this point the OR has all the new objects that it owns...but not the maps.
    *
    * 2a) On the OR, pack the new objects that are owned by the rank and send them to the ranks
-   *     where they are ghosted (GR). DO NOT PACK THE MAPS as they are incomplete. 
+   *     where they are ghosted (GR). DO NOT PACK THE MAPS as they are incomplete.
    *     DOES NOT PACK FIELDS.
    * 2b) On the GR, unpack the new objects.
    *
