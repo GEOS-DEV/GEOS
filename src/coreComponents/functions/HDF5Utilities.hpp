@@ -66,12 +66,13 @@ public:
   template< typename T >
   array1d< T > read1DAs( string const & datasetName, int const expectedDims ) const
   {
-    GEOS_UNUSED_VAR( expectedDims );
     static_assert( std::is_same_v< T, uint8_t > ||
                    std::is_same_v< T, localIndex > ||
                    std::is_same_v< T, real32 > ||
                    std::is_same_v< T, real64 >,
                    "Unsupported template type in read1DAs" );
+    GEOS_UNUSED_VAR( datasetName );
+    GEOS_UNUSED_VAR( expectedDims );
     return {};
   }
 
