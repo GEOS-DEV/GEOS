@@ -31,7 +31,11 @@ endforeach()
 
 
 if( ENABLE_MPI )
-set( dependencyList blas lapack gtest mesh trilinos ${parallelDeps} )
+set( dependencyList blas lapack gtest mesh ${parallelDeps} )
+
+if (ENABLE_TRILINOS)
+   list( APPEND dependencyList trilinos )
+endif()
 
 set( nranks 8 )
 
