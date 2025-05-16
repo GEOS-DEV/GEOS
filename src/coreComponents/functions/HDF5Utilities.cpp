@@ -131,9 +131,9 @@ using TypedArray1d = std::variant<
   array1d< real32 >,
   array1d< real64 > >;
 
-static TypedArray1d read1D( SerialHDF5File const & file,
-                            string const & datasetName,
-                            int const expectedDims )
+static TypedArray1d readDatasetAsFortranFlatArray( SerialHDF5File const & file,
+                                                   string const & datasetName,
+                                                   int const expectedDims )
 {
   // Create a DatasetHandle to manage resources
   DatasetHandle handle( file, datasetName, expectedDims );
@@ -382,9 +382,9 @@ SerialHDF5Reader::SerialHDF5Reader( const string & filename )
 
 // Specialization for array1d<uint8_t>
 template<>
-array1d< uint8_t > SerialHDF5Reader::read1DAs< uint8_t >( const std::string & datasetName, const int expectedDims ) const
+array1d< uint8_t > SerialHDF5Reader::readAsFortranFlatArray< uint8_t >( const std::string & datasetName, const int expectedDims ) const
 {
-  TypedArray1d result = read1D( m_file, datasetName, expectedDims );
+  TypedArray1d result = readDatasetAsFortranFlatArray( m_file, datasetName, expectedDims );
 
   if( std::holds_alternative< array1d< uint8_t > >( result ) )
   {
@@ -397,9 +397,9 @@ array1d< uint8_t > SerialHDF5Reader::read1DAs< uint8_t >( const std::string & da
 
 // Specialization for array1d<localIndex>
 template<>
-array1d< localIndex > SerialHDF5Reader::read1DAs< localIndex >( const std::string & datasetName, const int expectedDims ) const
+array1d< localIndex > SerialHDF5Reader::readAsFortranFlatArray< localIndex >( const std::string & datasetName, const int expectedDims ) const
 {
-  TypedArray1d result = read1D( m_file, datasetName, expectedDims );
+  TypedArray1d result = readDatasetAsFortranFlatArray( m_file, datasetName, expectedDims );
 
   if( std::holds_alternative< array1d< localIndex > >( result ) )
   {
@@ -416,9 +416,9 @@ array1d< localIndex > SerialHDF5Reader::read1DAs< localIndex >( const std::strin
 
 // Specialization for array1d<real32>
 template<>
-array1d< real32 > SerialHDF5Reader::read1DAs< real32 >( const std::string & datasetName, const int expectedDims ) const
+array1d< real32 > SerialHDF5Reader::readAsFortranFlatArray< real32 >( const std::string & datasetName, const int expectedDims ) const
 {
-  TypedArray1d result = read1D( m_file, datasetName, expectedDims );
+  TypedArray1d result = readDatasetAsFortranFlatArray( m_file, datasetName, expectedDims );
 
   if( std::holds_alternative< array1d< real32 > >( result ) )
   {
@@ -439,9 +439,9 @@ array1d< real32 > SerialHDF5Reader::read1DAs< real32 >( const std::string & data
 
 // Specialization for array1d<real64>
 template<>
-array1d< real64 > SerialHDF5Reader::read1DAs< real64 >( const std::string & datasetName, const int expectedDims ) const
+array1d< real64 > SerialHDF5Reader::readAsFortranFlatArray< real64 >( const std::string & datasetName, const int expectedDims ) const
 {
-  TypedArray1d result = read1D( m_file, datasetName, expectedDims );
+  TypedArray1d result = readDatasetAsFortranFlatArray( m_file, datasetName, expectedDims );
 
   if( std::holds_alternative< array1d< real64 > >( result ) )
   {

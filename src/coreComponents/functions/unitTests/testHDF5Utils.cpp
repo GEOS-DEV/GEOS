@@ -156,7 +156,7 @@ TEST_F( SerialHDF5ReaderTest, ReadNonExistentDataset )
   SerialHDF5Reader reader( testFilename );
 
   // Attempt to read a non-existent dataset and expect an exception
-  EXPECT_THROW( reader.read1DAs< int >( "non_existent_dataset", 1 ), std::runtime_error );
+  EXPECT_THROW( reader.readAsFortranFlatArray< int >( "non_existent_dataset", 1 ), std::runtime_error );
 }
 
 
@@ -246,7 +246,7 @@ protected:
   void runReadTest( const std::string & datasetName, int expectedDims )
   {
     SerialHDF5Reader reader( filename );
-    array1d< T > result = reader.read1DAs< T >( datasetName, expectedDims );
+    array1d< T > result = reader.readAsFortranFlatArray< T >( datasetName, expectedDims );
     ASSERT_EQ( result.size(), 16 );
     for( int i = 0; i < result.size(); ++i )
     {
@@ -314,7 +314,7 @@ protected:
   void expectInvalidDims( const std::string & datasetName, int wrongDims )
   {
     SerialHDF5Reader reader( filename );
-    EXPECT_THROW( reader.read1DAs< ArrayType >( datasetName, wrongDims ), std::runtime_error );
+    EXPECT_THROW( reader.readAsFortranFlatArray< ArrayType >( datasetName, wrongDims ), std::runtime_error );
   }
 };
 
@@ -374,7 +374,7 @@ protected:
   void expectUnsupportedRead( const std::string & datasetName, int dims )
   {
     SerialHDF5Reader reader( filename );
-    EXPECT_THROW( reader.read1DAs< ArrayType >( datasetName, dims ), std::runtime_error );
+    EXPECT_THROW( reader.readAsFortranFlatArray< ArrayType >( datasetName, dims ), std::runtime_error );
   }
 };
 
@@ -416,7 +416,7 @@ protected:
   void expectMissingDatasetRead( const std::string & datasetName, int dims )
   {
     SerialHDF5Reader reader( filename );
-    EXPECT_THROW( reader.read1DAs< ArrayType >( datasetName, dims ), std::runtime_error );
+    EXPECT_THROW( reader.readAsFortranFlatArray< ArrayType >( datasetName, dims ), std::runtime_error );
   }
 };
 

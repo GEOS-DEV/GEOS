@@ -15,16 +15,15 @@
 
 /**
  * @file HDF5Utilities_impl.hpp
+ * @brief Implementation details and helper structures for HDF5 file utilities in GEOS.
  */
 
 #ifndef GEOS_FUNCTIONS_HDF5UTILITIES_IMPL_HPP_
 #define GEOS_FUNCTIONS_HDF5UTILITIES_IMPL_HPP_
 
 #include "common/DataTypes.hpp"
-
-// Forward declarations for HDF5 types
-typedef int64_t hid_t;    // HDF5 identifier type
-typedef unsigned long long hsize_t; // HDF5 size type
+#include <H5Ipublic.h>
+#include <H5public.h>
 
 namespace geos
 {
@@ -32,28 +31,59 @@ namespace geos
 namespace hdf5Utils
 {
 
+/**
+ * @struct DatasetHandle
+ * @brief Helper struct to manage the lifetime and metadata of an HDF5 dataset.
+ */
 struct DatasetHandle
 {
+  /**
+   * @brief Construct a handle for a dataset in the given file.
+   * @param[in] hdf5File The HDF5 file object.
+   * @param[in] datasetName The name of the dataset to open.
+   * @param[in] expectedDims The expected dimensionality of the dataspace for the dataset.
+   */
   DatasetHandle( SerialHDF5File const & hdf5File, string const & datasetName, int const expectedDims );
+
+  /**
+   * @brief Destructor. Closes all open HDF5 handles (datatype, dataspace, and dataset) if valid.
+   */
   ~DatasetHandle();
 
+  // Deleted copy constructor and assignment operator
   DatasetHandle( const DatasetHandle & ) = delete;
   DatasetHandle & operator=( const DatasetHandle & ) = delete;
 
+  /**
+   * @brief Move constructor.
+   * @param[in] other The handle to move from.
+   */
   DatasetHandle( DatasetHandle && other ) noexcept;
+
+  /**
+   * @brief Move assignment operator.
+   * @param[in] other The handle to move from.
+   * @return Reference to this object.
+   */
   DatasetHandle & operator=( DatasetHandle && other ) noexcept;
 
+  /**
+   * @brief Check if a dataset exists in the file.
+   * @param[in] fileId The HDF5 file identifier.
+   * @param[in] datasetName The name of the dataset.
+   * @return True if the dataset exists, false otherwise.
+   */
   bool datasetExists( hid_t const & fileId, string const & datasetName );
 
-  string m_datasetName;
-  hid_t datasetId = -1;
-  hid_t spaceId = -1;
-  hid_t typeId = -1;
-  array1d< hsize_t > dims;   // Store dataset dimensions
+  string m_datasetName;     ///< The name of the dataset.
+  hid_t datasetId = -1;     ///< The HDF5 dataset identifier.
+  hid_t spaceId = -1;       ///< The HDF5 dataspace identifier.
+  hid_t typeId = -1;        ///< The HDF5 datatype identifier.
+  array1d< hsize_t > dims;  ///< The dimensions of the dataspace.
 };
 
 } // end of namespace hdf5Utils
 
 }  /* namespace geos */
 
- #endif /* GEOS_FUNCTIONS_HDF5UTILITIES_IMPL_HPP_ */
+#endif /* GEOS_FUNCTIONS_HDF5UTILITIES_IMPL_HPP_ */

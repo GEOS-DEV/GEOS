@@ -214,13 +214,13 @@ void TableFunction::initializeFunction()
         int tableDim = 0;
         for( auto const & coordName : m_hdf5CoordinateDatasetNames )
         {
-          array1d< real64 > tmp = reader.read1DAs< real64 >( coordName, 1 );
+          array1d< real64 > tmp = reader.readAsFortranFlatArray< real64 >( coordName, 1 );
           m_coordinates.appendArray( tmp.begin(), tmp.end() );
           tableDim += 1;
         }
 
         // Read table dataset
-        m_values = reader.read1DAs< real64 >( m_hdf5TableDatasetName, tableDim );
+        m_values = reader.readAsFortranFlatArray< real64 >( m_hdf5TableDatasetName, tableDim );
         break;
       }
 
