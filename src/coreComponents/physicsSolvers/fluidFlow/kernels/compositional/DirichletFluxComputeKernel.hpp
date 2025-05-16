@@ -525,7 +525,7 @@ public:
       using FluidType = TYPEOFREF( fluid );
       typename FluidType::KernelWrapper const fluidWrapper = fluid.createKernelWrapper();
 
-      integer constexpr NUM_COMP = NC(); 
+      integer constexpr NUM_COMP = NC();
 
       ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > dofNumberAccessor =
         elemManager.constructArrayViewAccessor< globalIndex, 1 >( dofKey );
