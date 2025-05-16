@@ -139,9 +139,9 @@ private:
   FormattedDescription m_formattedEndDescription  = { "", {}, 0, 0 };
 
   /// logPart default length
-  size_t m_width = 50;
+  size_t m_width = 100;
   /// minimal length of a log part
-  size_t m_minWidth = 50;
+  size_t m_minWidth = 100;
   /// maximal length of a log part
   size_t m_maxWidth = SIZE_MAX;
   /// margin (left and right) between all descriptions and the log part borders
