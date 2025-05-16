@@ -431,12 +431,16 @@ string TableCSVFormatter::toString< TableFunction >( TableFunction const & table
     TableCSVFormatter const csvFormat( tableLayout );
     return csvFormat.toString( tableData );
   }
-  else if( numDimensions == 2 )
+  else
   {
     array1d< real64 > coordsX;
     coordsX.insert( 0, coordinates[0].begin(), coordinates[0].end());
+
     array1d< real64 > coordsY;
-    coordsY.insert( 0, coordinates[1].begin(), coordinates[1].end());
+    if( numDimensions == 2 )
+    {
+      coordsY.insert( 0, coordinates[1].begin(), coordinates[1].end());
+    }
 
     TableData2D tableData2D;
     TableData2D::TableDataHolder const tableConverted =
