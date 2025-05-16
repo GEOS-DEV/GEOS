@@ -21,7 +21,7 @@
 #define GEOS_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONAL_SOLUTIONCHECKKERNEL_HPP
 
 #include "physicsSolvers/fluidFlow/kernels/compositional/SolutionScalingAndCheckingKernelBase.hpp"
-#include "physicsSolvers/fluidFlow/kernels/SolutionCheckKernelsHelper.hpp"
+#include "physicsSolvers/fluidFlow/kernels/SolutionCheckKernelsHelpers.hpp"
 
 namespace geos
 {

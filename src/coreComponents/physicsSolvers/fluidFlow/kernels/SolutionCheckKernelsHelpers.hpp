@@ -14,7 +14,7 @@
  */
 
 /**
- * @file SolutionCheckKernel.hpp
+ * @file SolutionCheckKernelsHelpers.hpp
  */
 
 #ifndef GEOS_PHYSICSSOLVERS_FLUIDFLOW_SOLUTIONCHECKKERNELSHELPER_HPP
@@ -40,6 +40,7 @@ public:
   using IdCountType = int32_t;
   using IdType = globalIndex;
 
+  // TODO : proper docs. can be copied & moved as this class only has views to the internal chai memory buffers
   IdReporterCollector( IdReporterCollector const & other ) = default;
   IdReporterCollector( IdReporterCollector && other ) = default;
   IdReporterCollector & operator=( IdReporterCollector const & other ) = default;
@@ -101,64 +102,11 @@ private:
 
   IdReporterCollector( arrayView1d< IdCountType > const & idsCounter,
                        arrayView1d< IdType > const & idsArray,
-                       arrayView1d< globalIndex > const & localToGlobalId ): // -> cpp
+                       arrayView1d< globalIndex > const & localToGlobalId ):
     m_idsCounter( idsCounter ),
     m_idsBuffer( idsArray ),
     m_localToGlobalId( localToGlobalId )
   {}
-
-};
-
-class IdReporterBuffer
-{
-public:
-
-  using IdCountType = int32_t;
-  using IdType = globalIndex;
-
-  /**
-   * @brief Construct a preallocated buffer to collect a limited quantity of ids in kernels.
-   * @param maxCollectionSize Limit of the buffer.
-   *                          If 0, the buffering functionnality is disabled and only the counting is enabled.
-   */
-  IdReporterBuffer( IdCountType maxCollectionSize ):
-    m_idsCounter( 1 ),
-    m_idsBuffer( maxCollectionSize )
-  { m_idsCounter.zero(); }
-
-  IdReporterBuffer( IdReporterBuffer const & other ) = delete;
-  IdReporterBuffer( IdReporterBuffer && other ) = default;
-  IdReporterBuffer & operator=( IdReporterBuffer const & other ) = delete;
-  IdReporterBuffer & operator=( IdReporterBuffer && other ) = default;
-
-  IdCountType getSignaledIdsCount() const
-  { return m_idsCounter[0]; }
-
-  IdCountType getCollectedIdsCount() const
-  { return LvArray::math::min( m_idsCounter[0], m_idsCounter.size() ); }
-
-  auto begin() const
-  { return m_idsBuffer.begin(); }
-
-  auto end() const
-  { return m_idsBuffer.begin() + getCollectedIdsCount(); }
-
-  bool empty() const
-  { return getCollectedIdsCount() == 0; }
-
-  /**
-   * @return A view on the ids array owned by the instance. -> change comment to explain the interest for kernels
-   */
-  IdReporterCollector createCollector( arrayView1d< globalIndex > const & localToGlobalId ) const // -> cpp
-  { return IdReporterCollector( m_idsCounter, m_idsBuffer, localToGlobalId ); }
-
-private:
-
-  // array of one element to get benefit of managed host-device memory.
-  array1d< IdCountType > m_idsCounter;
-
-  // ids of detected elements
-  array1d< IdType > m_idsBuffer;
 
 };
 
