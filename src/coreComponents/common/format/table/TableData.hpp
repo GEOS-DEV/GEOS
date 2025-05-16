@@ -202,10 +202,9 @@ public:
                            bool columnMajorValues );
 
   /**
-   * @brief
-   *
+   * @brief Convert from 2D axis/values a structure the information needed to build a TableFormatter
    * @param coordX Array containing row axis values
-   * @param coordX Array containing column axis values
+   * @param coordY Array containing column axis values
    * @param rowAxisDescription The description for a row unit value
    * @param columnAxisDescription The description for a column unit value
    * @param values Vector containing all table values

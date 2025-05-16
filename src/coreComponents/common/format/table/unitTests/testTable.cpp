@@ -726,15 +726,15 @@ TEST( testTable, table2DMismatchingCoordValues )
 
   {  // Test with too many values
     array1d< real64 > coordXValues;
-    coordXValues.emplace_back( 0);
-    coordXValues.emplace_back( 1);
-    coordXValues.emplace_back( 2);
-    coordXValues.emplace_back( 3);
+    coordXValues.emplace_back( 0 );
+    coordXValues.emplace_back( 1 );
+    coordXValues.emplace_back( 2 );
+    coordXValues.emplace_back( 3 );
     array1d< real64 > coordYValues;
-    coordYValues.emplace_back( 4);
-    coordYValues.emplace_back( 5);
-    coordYValues.emplace_back( 6);
-    coordYValues.emplace_back( 7);
+    coordYValues.emplace_back( 4 );
+    coordYValues.emplace_back( 5 );
+    coordYValues.emplace_back( 6 );
+    coordYValues.emplace_back( 7 );
     auto const [textFormatted, csvFormatted] = testCoordinates( coordXValues.toViewConst(), coordYValues.toViewConst() );
     EXPECT_EQ( textFormatted,
                "\n"
