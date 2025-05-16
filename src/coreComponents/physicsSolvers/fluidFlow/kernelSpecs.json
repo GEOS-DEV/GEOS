@@ -40,14 +40,7 @@
       "NFACES": [
         4,
         5,
-        6,
-        7,
-        8,
-        9,
-        10,
-        11,
-        12,
-        13
+        6
       ],
       "IP": [
         "mimeticInnerProduct::TPFAInnerProduct",
@@ -68,7 +61,6 @@
     "constants": [],
     "combinations": {
       "NCOMPS": [
-        1,
         2,
         3,
         4,
@@ -96,7 +88,6 @@
         6
       ],
       "NCOMPS": [
-        1,
         2,
         3,
         4,
@@ -125,7 +116,6 @@
         6
       ],
       "NCOMPS": [
-        1,
         2,
         3,
         4,
@@ -146,8 +136,8 @@
   "ReactiveCompositionalMultiphaseOBLKernels": {
     "vars": [
       "NAME",
-      "NDIM",
-      "NCOMP",
+      "NPHASES",
+      "NCOMPS",
       "ENABLE_ENERGY",
       "STENCIL"
     ],
@@ -158,13 +148,11 @@
       "NAME": [
         "FluxComputeKernel"
       ],
-      "NDIM": [
-        1,
+      "NPHASES": [
         2,
         3
       ],
-      "NCOMP": [
-        1,
+      "NCOMPS": [
         2,
         3,
         4,
@@ -187,8 +175,9 @@
   "IsothermalCompositionalMultiphaseFVM_DirichletFluxComputeKernels": {
     "vars": [
       "NAME",
-      "NCOMP_NDOF",
-      "KERNEL_TYPE"
+      "NCOMP",
+      "IS_THERMAL",
+      "FLUID_TYPE"
     ],
     "constants": [
       [ "DirichletFluxComputeKernelPolicy", "geos::parallelDevicePolicy< GEOS_BLOCK_SIZE >" ]
@@ -197,14 +186,17 @@
       "NAME": [
         "DirichletFluxComputeKernel"
       ],
-      "NCOMP_NDOF": [
-        "1, 2",
-        "2, 3",
-        "3, 4",
-        "4, 5",
-        "5, 6"
+      "NCOMP": [
+        2,
+        3,
+        4,
+        5
       ],
-      "KERNEL_TYPE": [
+      "IS_THERMAL": [
+        "true",
+        "false"
+      ],
+      "FLUID_TYPE": [
         "constitutive::DeadOilFluid",
         "constitutive::BlackOilFluid",
         "constitutive::CO2BrinePhillipsFluid",
@@ -218,8 +210,9 @@
   "ThermalCompositionalMultiphaseFVM_DirichletFluxComputeKernels": {
     "vars": [
       "NAME",
-      "NCOMP_NDOF",
-      "KERNEL_TYPE"
+      "NCOMP",
+      "IS_THERMAL",
+      "FLUID_TYPE"
     ],
     "constants": [
       [ "DirichletFluxComputeKernelPolicy", "geos::parallelDevicePolicy< GEOS_BLOCK_SIZE >" ]
@@ -228,14 +221,17 @@
       "NAME": [
         "DirichletFluxComputeKernel"
       ],
-      "NCOMP_NDOF": [
-        "1, 2",
-        "2, 3",
-        "3, 4",
-        "4, 5",
-        "5, 6"
+      "NCOMP": [
+        2,
+        3,
+        4,
+        5
       ],
-      "KERNEL_TYPE": [
+      "IS_THERMAL": [
+        "true",
+        "false"
+      ],
+      "FLUID_TYPE": [
         "constitutive::DeadOilFluid",
         "constitutive::BlackOilFluid",
         "constitutive::CO2BrinePhillipsFluid",

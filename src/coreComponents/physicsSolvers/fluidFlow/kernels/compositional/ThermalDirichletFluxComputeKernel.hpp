@@ -37,13 +37,12 @@ namespace thermalCompositionalMultiphaseFVMKernels
 /**
  * @class DirichletFluxComputeKernel
  * @tparam NUM_COMP number of fluid components
- * @tparam NUM_DOF number of degrees of freedom
  * @tparam FLUIDWRAPPER the type of the fluid wrapper
  * @brief Define the interface for the assembly kernel in charge of Dirichlet face flux terms
  */
-template< integer NUM_COMP, integer NUM_DOF, typename FLUIDWRAPPER >
+template< integer NUM_COMP, bool IS_THERMAL, typename FLUIDWRAPPER >
 class DirichletFluxComputeKernel : public isothermalCompositionalMultiphaseFVMKernels::DirichletFluxComputeKernel< NUM_COMP,
-                                                                                                                   NUM_DOF,
+                                                                                                                   IS_THERMAL,
                                                                                                                    FLUIDWRAPPER >
 {
 public:
@@ -73,7 +72,7 @@ public:
   using AbstractBase::m_dPhaseCompFrac;
   using AbstractBase::m_dCompFrac_dCompDens;
 
-  using Base = isothermalCompositionalMultiphaseFVMKernels::DirichletFluxComputeKernel< NUM_COMP, NUM_DOF, FLUIDWRAPPER >;
+  using Base = isothermalCompositionalMultiphaseFVMKernels::DirichletFluxComputeKernel< NUM_COMP, IS_THERMAL, FLUIDWRAPPER >;
   using Base::numComp;
   using Base::numDof;
   using Base::numEqn;
@@ -447,13 +446,12 @@ public:
       typename FluidType::KernelWrapper const fluidWrapper = fluid.createKernelWrapper();
 
       integer constexpr NUM_COMP = NC();
-      integer constexpr NUM_DOF = NC() + 2;
 
       ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > dofNumberAccessor =
         elemManager.constructArrayViewAccessor< globalIndex, 1 >( dofKey );
       dofNumberAccessor.setName( solverName + "/accessors/" + dofKey );
 
-      using KernelType = DirichletFluxComputeKernel< NUM_COMP, NUM_DOF, typename FluidType::KernelWrapper >;
+      using KernelType = DirichletFluxComputeKernel< NUM_COMP, true, typename FluidType::KernelWrapper >;
       typename KernelType::CompFlowAccessors compFlowAccessors( elemManager, solverName );
       typename KernelType::ThermalCompFlowAccessors thermalCompFlowAccessors( elemManager, solverName );
       typename KernelType::MultiFluidAccessors multiFluidAccessors( elemManager, solverName );
