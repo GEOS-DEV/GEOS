@@ -154,30 +154,44 @@ public:
                                arrayView2d< WaveSolverBase::wsCoordType const, nodes::REFERENCE_POSITION_USD > const X,
                                localIndex const ordF);
 
+  void modifiedGramSchmidtROMStiffness(finiteElement::FiniteElementBase const & fe,
+				       arrayView1d< integer const > const nodeghostrank,
+				       localIndex const elemRegionSize,
+				       arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodes,
+				       arrayView2d< WaveSolverBase::wsCoordType const, nodes::REFERENCE_POSITION_USD > const X);
+  
   void gramSchmidtROMStiffnessFinal(finiteElement::FiniteElementBase const & fe,
 				    arrayView1d< integer const > const nodeghostrank,
 				    localIndex const elemRegionSize,
 				    arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodes,
 				    arrayView2d< WaveSolverBase::wsCoordType const, nodes::REFERENCE_POSITION_USD > const X);
 
-  void reorthogonalization(finiteElement::FiniteElementBase const & fe,
-			   arrayView1d< integer const > const nodeghostrank,
-			   localIndex const elemRegionSize,
-			   arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodes,
-			   arrayView2d< WaveSolverBase::wsCoordType const, nodes::REFERENCE_POSITION_USD > const X,
-			   localIndex const nq,
-			   std::string path);
+  int reorthogonalization(finiteElement::FiniteElementBase const & fe,
+			  arrayView1d< integer const > const nodeghostrank,
+			  localIndex const elemRegionSize,
+			  arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodes,
+			  arrayView2d< WaveSolverBase::wsCoordType const, nodes::REFERENCE_POSITION_USD > const X,
+			  localIndex const nq,
+			  std::string path);
 
 
   void computeReducedMatrices( arrayView2d< real32 > const massPOD,
 			       arrayView2d< real32 > const massPerturbationPOD,
 			       arrayView2d< real32 > const dampingPOD,
 			       arrayView2d< real32 > const dampingPerturbationPOD,
+			       arrayView2d< real64 > const sourceConstantsPOD,
+			       arrayView2d< real64 > const receiverConstantsPOD,
 			       arrayView1d< real32 const > const mass,
 			       arrayView1d< real32 const > const massPerturbation,
 			       arrayView1d< real32 const > const damping,
 			       arrayView1d< real32 const > const dampingPerturbation,
-			       arrayView1d< localIndex const > const nodesGhostRank );
+			       arrayView2d< real64 const > const sourceConstants,
+			       arrayView2d< localIndex const > const sourceNodeIds,
+			       arrayView1d< localIndex const > const sourceIsAccessible,
+			       arrayView2d< real64 const > const receiverConstants,
+			       arrayView2d< localIndex const > const receiverNodeIds,
+			       arrayView1d< localIndex const > const receiverIsLocal,
+			       arrayView1d< localIndex const > const nodesGhostRank);
 
 
   void computeSeismoTracePOD( real64 const time_n,

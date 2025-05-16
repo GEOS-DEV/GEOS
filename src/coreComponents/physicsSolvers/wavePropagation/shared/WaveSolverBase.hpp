@@ -258,7 +258,7 @@ protected:
   localIndex getNumNodesPerElem();
 
   /// Precomputed value of the source terms
-  array2d< real32 > m_sourceValue;
+  array2d< real64 > m_sourceValue;
 
   /// Coordinates of the sources in the mesh
   array2d< real64 > m_sourceCoordinates;

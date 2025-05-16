@@ -80,7 +80,7 @@ struct PrecomputeSourceAndReceiverPODKernel
 	  arrayView1d< localIndex > const receiverIsLocal,
 	  arrayView2d< localIndex > const receiverNodeIds,
 	  arrayView2d< real64 > const receiverConstants,
-	  arrayView2d< real32 > const sourceValue,
+	  arrayView2d< real64 > const sourceValue,
 	  int const countPhi,
 	  int const shotIndex,
           real64 const dt,
@@ -89,7 +89,7 @@ struct PrecomputeSourceAndReceiverPODKernel
           localIndex const rickerOrder )
   {
     constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
-
+    
     array1d< real32 > phim( size );
     arrayView1d< real32 > phimV = phim.toView();
 
@@ -132,7 +132,7 @@ struct PrecomputeSourceAndReceiverPODKernel
                                                                         elementLocalToGlobal,
                                                                         center,
                                                                         coords );
-	    if( sourceFound and elemGhostRank[k]<0)
+	    if( sourceFound )
 	    {
 	      real64 coordsOnRefElem[3]{};
 
@@ -220,6 +220,146 @@ struct PrecomputeSourceAndReceiverPODKernel
   }
 };
 
+
+
+struct PrecomputeSourceAndReceiverWithoutConstantsKernel
+{
+
+  using EXEC_POLICY = parallelDevicePolicy< >;
+
+  /**
+   * @brief Launches the precomputation of the source and receiver terms
+   * @tparam EXEC_POLICY execution policy
+   * @tparam FE_TYPE finite element type
+   * @param[in] size the number of cells in the subRegion
+   * @param[in] numNodesPerElem number of nodes per element
+   * @param[in] X coordinates of the nodes
+   * @param[in] elemsToNodes map from element to nodes
+   * @param[in] elemsToFaces map from element to faces
+   * @param[in] facesToNodes map from faces to nodes
+   * @param[in] elemCenter coordinates of the element centers
+   * @param[in] sourceCoordinates coordinates of the source terms
+   * @param[out] sourceIsAccessible flag indicating whether the source is accessible or not
+   * @param[out] sourceNodeIds indices of the nodes of the element where the source is located
+   * @param[out] sourceNodeConstants constant part of the source terms
+   * @param[in] receiverCoordinates coordinates of the receiver terms
+   * @param[out] receiverIsLocal flag indicating whether the receiver is local or not
+   * @param[out] receiverNodeIds indices of the nodes of the element where the receiver is located
+   * @param[out] receiverNodeConstants constant part of the receiver term
+   */
+  template< typename EXEC_POLICY, typename FE_TYPE >
+  static void
+  launch( localIndex const size,
+	  ArrayOfArraysView< localIndex const > const baseFacesToNodes,
+	  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const baseNodeCoords,
+	  arrayView1d< globalIndex const > const baseNodeLocalToGlobal,
+	  arrayView1d< globalIndex const > const elementLocalToGlobal,
+	  ArrayOfArraysView< localIndex const > const baseNodesToElements,
+	  arrayView2d< localIndex const, cells::NODE_MAP_USD > const & baseElemsToNodes,
+	  arrayView1d< integer const > const elemGhostRank,
+	  arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes,
+	  arrayView2d< localIndex const > const elemsToFaces,
+	  arrayView2d< real64 const > const & elemCenter,
+	  arrayView2d< real64 const > const sourceCoordinates,
+	  arrayView1d< localIndex > const sourceIsAccessible,
+	  arrayView2d< real64 const > const receiverCoordinates,
+	  arrayView1d< localIndex > const receiverIsLocal,
+	  arrayView2d< real64 > const sourceValue,
+          real64 const dt,
+	  real32 const timeSourceFrequency,
+          real32 const timeSourceDelay,
+          localIndex const rickerOrder )
+  {
+    forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const k )
+    {
+      real64 const center[3] = { elemCenter[k][0],
+				 elemCenter[k][1],
+				 elemCenter[k][2] };
+      
+      // Step 1: locate the sources, and precompute the source term
+      
+      /// loop over all the source that haven't been found yet
+      for( localIndex isrc = 0; isrc < sourceCoordinates.size( 0 ); ++isrc )
+      {
+	if( sourceIsAccessible[isrc] == 0 )
+	{
+	  real64 const coords[3] = { sourceCoordinates[isrc][0],
+				     sourceCoordinates[isrc][1],
+				     sourceCoordinates[isrc][2] };
+	  
+	  bool const sourceFound =
+          computationalGeometry::isPointInsideConvexPolyhedronRobust( k,
+								      baseNodeCoords,
+								      elemsToFaces,
+								      baseFacesToNodes,
+								      baseNodesToElements,
+								      baseNodeLocalToGlobal,
+								      elementLocalToGlobal,
+								      center,
+								      coords );
+	  if( sourceFound && elemGhostRank[k] < 0 )
+	  {
+	    real64 coordsOnRefElem[3]{};
+
+
+	    WaveSolverUtils::computeCoordinatesOnReferenceElement< FE_TYPE >( coords,
+									      baseElemsToNodes[k],
+									      baseNodeCoords,
+									      coordsOnRefElem );
+	    
+	    sourceIsAccessible[isrc] = 1;
+	    
+	    for( localIndex cycle = 0; cycle < sourceValue.size( 0 ); ++cycle )
+	    {
+	      sourceValue[cycle][isrc] = WaveSolverUtils::evaluateRicker( cycle * dt, timeSourceFrequency, timeSourceDelay, rickerOrder );
+	    }
+	  }
+	}
+      } // end loop over all sources
+    } );
+
+    forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const k )
+    {
+      real64 const center[3] = { elemCenter[k][0],
+				 elemCenter[k][1],
+				 elemCenter[k][2] };
+      // Step 2: locate the receivers, and precompute the receiver term
+      
+      /// loop over all the receivers that haven't been found yet
+      for( localIndex ircv = 0; ircv < receiverCoordinates.size( 0 ); ++ircv )
+      {
+	if( receiverIsLocal[ircv] == 0 )
+	{
+	  real64 const coords[3] = { receiverCoordinates[ircv][0],
+				     receiverCoordinates[ircv][1],
+				     receiverCoordinates[ircv][2] };
+	  
+	  real64 coordsOnRefElem[3]{};
+	  bool const receiverFound =
+            computationalGeometry::isPointInsideConvexPolyhedronRobust( k,
+                                                                        baseNodeCoords,
+                                                                        elemsToFaces,
+                                                                        baseFacesToNodes,
+                                                                        baseNodesToElements,
+                                                                        baseNodeLocalToGlobal,
+                                                                        elementLocalToGlobal,
+                                                                        center,
+                                                                        coords );
+
+	  if( receiverFound && elemGhostRank[k] < 0 )
+	  {
+	    WaveSolverUtils::computeCoordinatesOnReferenceElement< FE_TYPE >( coords,
+									      baseElemsToNodes[k],
+									      baseNodeCoords,
+									      coordsOnRefElem );
+	    receiverIsLocal[ircv] = 1;
+	  }
+	} // end loop over receivers
+      }
+    } );
+  }
+};
+  
 
 struct computeMassRhs
 {

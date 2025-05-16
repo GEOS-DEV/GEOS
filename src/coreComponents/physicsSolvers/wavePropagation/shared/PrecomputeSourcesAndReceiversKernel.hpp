@@ -73,7 +73,7 @@ struct PreComputeSourcesAndReceivers
                                        arrayView1d< localIndex > const receiverIsLocal,
                                        arrayView2d< localIndex > const receiverNodeIds,
                                        arrayView2d< real64 > const receiverConstants,
-                                       arrayView2d< real32 > const sourceValue,
+                                       arrayView2d< real64 > const sourceValue,
                                        real64 const dt,
                                        real32 const timeSourceFrequency,
                                        real32 const timeSourceDelay,
