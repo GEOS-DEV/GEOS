@@ -50,7 +50,12 @@ ErrorLogger::ErrorLogger()
 
 void ErrorLogger::ErrorMsg::addContextInfo( std::map< std::string, std::string > && info )
 {
-  contextsInfo.emplace_back( std::move( info ) );
+  m_contextsInfo.emplace_back( std::move( info ) );
+}
+
+void ErrorLogger::ErrorMsg::addRankInfo( int rank )
+{
+  m_ranksInfo.push_back( rank );
 }
 
 void ErrorLogger::ErrorMsg::addCallStackInfo( std::string const & ossStackTrace )
@@ -62,7 +67,7 @@ void ErrorLogger::ErrorMsg::addCallStackInfo( std::string const & ossStackTrace 
   while( std::getline( iss, stackLine) )
   {
     index = stackLine.find(':');
-    sourceCallStack.push_back( stackLine.substr( index + 1 ) );
+    m_sourceCallStack.push_back( stackLine.substr( index + 1 ) );
   }
 }
 
@@ -78,44 +83,55 @@ std::string ErrorLogger::toString( ErrorLogger::MsgType type )
 
 ErrorLogger::ErrorMsg & ErrorLogger::ErrorMsg::addToMsg( std::exception const & e )
 {
-  parent->m_currentErrorMsg.msg = e.what(); 
+  parent->m_currentErrorMsg.m_msg = e.what(); 
+  return parent->m_currentErrorMsg;
+}
+
+ErrorLogger::ErrorMsg & ErrorLogger::ErrorMsg::addToMsg( std::string const&  errorMsg )
+{
+  parent->m_currentErrorMsg.m_msg = GEOS_FMT( "{:>6}{}", " ", errorMsg ) + parent->m_currentErrorMsg.m_msg; // Inverser l'ordre FILO
   return parent->m_currentErrorMsg;
 }
 
 ErrorLogger::ErrorMsg & ErrorLogger::ErrorMsg::setCodeLocation( string msgFile, integer msgLine )
 {
-  parent->m_currentErrorMsg.file = msgFile;
-  parent->m_currentErrorMsg.line = msgLine;
+  parent->m_currentErrorMsg.m_file = msgFile;
+  parent->m_currentErrorMsg.m_line = msgLine;
   return parent->m_currentErrorMsg;
 }
 
 ErrorLogger::ErrorMsg & ErrorLogger::ErrorMsg::setType( ErrorLogger::MsgType msgType )
 {
-  parent->m_currentErrorMsg.type = msgType;
+  parent->m_currentErrorMsg.m_type = msgType;
   return parent->m_currentErrorMsg;
 }
-
+ 
 void ErrorLogger::write( ErrorLogger::ErrorMsg const & errorMsg ) //const
 {
-  std::cout << "I'm in the write function" << std::endl;
   std::ofstream yamlFile( std::string( m_filename ), std::ios::app );
   if( yamlFile.is_open() )
   {
-    yamlFile << GEOS_FMT( "{:>2}- type: {}\n", " ", errorLogger.toString( errorMsg.type ) );
-    yamlFile << GEOS_FMT( "{:>4}message:\n {:>5}{}\n", " ", " ", errorMsg.msg );
-    if( errorMsg.contextsInfo.empty() )
+    yamlFile << GEOS_FMT( "{:>2}- type: {}\n", " ", errorLogger.toString( errorMsg.m_type ) );
+    yamlFile << GEOS_FMT( "{:>4}rank: ", " " );
+    for( size_t i = 0; i < errorMsg.m_ranksInfo.size(); i++ )
+    {
+      yamlFile << errorMsg.m_ranksInfo[i];
+    }
+    yamlFile << "\n";
+    yamlFile << GEOS_FMT( "{:>4}message: >-\n{} \n", " ", errorMsg.m_msg );
+    if( !errorMsg.m_contextsInfo.empty() )
     {
       yamlFile << GEOS_FMT( "{:>4}contexts:\n", " " );
 
-      for( size_t i = 0; i < errorMsg.contextsInfo.size(); i++ )
+      for( size_t i = 0; i < errorMsg.m_contextsInfo.size(); i++ )
       {
-        for( auto const & [key, value] : errorMsg.contextsInfo[i] )
+        for( auto const & [key, value] : errorMsg.m_contextsInfo[i] )
         {
           if( key == "inputFileLine" )
           {
             yamlFile << GEOS_FMT( "{:>8}{}: {}\n", " ", key, value );
           }
-          else
+          else 
           {
             yamlFile << GEOS_FMT( "{:>6}- {}: {}\n", " ", key, value );
           }
@@ -124,15 +140,15 @@ void ErrorLogger::write( ErrorLogger::ErrorMsg const & errorMsg ) //const
     }
 
     yamlFile << GEOS_FMT( "{:>4}sourceLocation:\n", " " );
-    yamlFile << GEOS_FMT( "{:>6}file: {}\n", " ", errorMsg.file );
-    yamlFile << GEOS_FMT( "{:>6}line: {}\n", " ", errorMsg.line );
+    yamlFile << GEOS_FMT( "{:>6}file: {}\n", " ", errorMsg.m_file );
+    yamlFile << GEOS_FMT( "{:>6}line: {}\n", " ", errorMsg.m_line );
     
     yamlFile << GEOS_FMT( "{:>4}sourceCallStack:\n", " " );
     
-    for( size_t i = 0; i < errorMsg.sourceCallStack.size(); i++ )
+    for( size_t i = 0; i < errorMsg.m_sourceCallStack.size(); i++ )
     {
-      if( i < 2 || i == errorMsg.sourceCallStack.size() - 1 ) continue; 
-      yamlFile << GEOS_FMT( "{:>6}- {}: {}\n", " ", i-2, errorMsg.sourceCallStack[i] );
+      if( i < 2 || i == errorMsg.m_sourceCallStack.size() - 1 ) continue; 
+      yamlFile << GEOS_FMT( "{:>6}- {}: {}\n", " ", i-2, errorMsg.m_sourceCallStack[i] );
     }
 
     yamlFile.flush();

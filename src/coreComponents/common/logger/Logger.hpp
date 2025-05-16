@@ -194,12 +194,11 @@
       __oss << LvArray::system::stackTrace( true ); \
       std::ostringstream __msgoss; \
       __msgoss << MSG; \
-      ErrorLogger::ErrorMsg msgStruct( ErrorLogger::MsgType::Error, \
-                                       __msgoss.str(), \
-                                       __FILE__, \
-                                       __LINE__ ); \
-      msgStruct.addCallStackInfo( LvArray::system::stackTrace( true ) ); \
-      errorLogger.write( msgStruct ); \
+      errorLogger.currentErrorMsg().setType( ErrorLogger::MsgType::Error ); \
+      errorLogger.currentErrorMsg().setCodeLocation( __FILE__, __LINE__ ); \
+      errorLogger.currentErrorMsg().addToMsg( __msgoss.str() ); \
+      errorLogger.currentErrorMsg().addRankInfo( ::geos::logger::internal::rank ); \
+      errorLogger.currentErrorMsg().addCallStackInfo( LvArray::system::stackTrace( true ) ); \
       throw EXCEPTIONTYPE( __oss.str() ); \
     } \
   } while( false )

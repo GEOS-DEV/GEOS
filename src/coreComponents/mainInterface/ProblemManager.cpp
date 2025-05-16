@@ -194,7 +194,8 @@ void ProblemManager::problemSetup()
   }
   catch( std::exception const & e )
   {
-    throw;
+    errorLogger.write( errorLogger.currentErrorMsg() );
+    throw e;
   }
 }
 
@@ -471,18 +472,15 @@ void ProblemManager::parseInputFile()
     parseXMLDocument( xmlDocument );
   }
   catch( std::exception const & e )
-  {
-    std::cout << "Test retour exception" << e.what() << std::endl;
-    errorLogger.currentErrorMsg()
-      .addToMsg( e )
-      .setCodeLocation( __FILE__, __LINE__ )
-      .setType( ErrorLogger::MsgType::Error );
-
-    std::cout << "HELLOOOO" << std::endl;
-    std::cerr << "parseInputFile error:" << std::endl;
-    std::cerr << "Error type: " << errorLogger.toString( errorLogger.getCurrentErrorMsg().type ) << std::endl;
-    std::cerr << "Error msg: " << errorLogger.getCurrentErrorMsg().msg << std::endl;
-    std::cerr << "Error location: " << errorLogger.getCurrentErrorMsg().file << errorLogger.getCurrentErrorMsg().line << std::endl;
+  {   
+    // TODO: même code mais dans CO2BrineFluid
+    // errorLogger.currentErrorMsg()
+    //   .addToMsg( e )
+    //   .setCodeLocation( __FILE__, __LINE__ )
+    //   .setType( ErrorLogger::MsgType::Error );
+    // TODO: 
+    // write( errorLogger.currentErrorMsg )
+    // throw e; 
     throw;
   }
 }
@@ -1245,6 +1243,9 @@ bool ProblemManager::runSimulation()
   }
   catch( std::exception const & e )
   {
+    // TODO: implémenter cette méthoe pour éviter la redondance avec write()
+    // errorLogger.writeCurrentMsg();
+    errorLogger.write( errorLogger.currentErrorMsg() );
     throw;
   }
 }
@@ -1296,7 +1297,7 @@ void ProblemManager::applyInitialConditions()
     } );
     initializePostInitialConditions();
   }
-  catch( std::exception const & e ) // A bien réécrire
+  catch( std::exception const & e ) 
   {
     throw;
   }

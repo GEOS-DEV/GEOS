@@ -24,6 +24,7 @@
 #include "common/logger/Logger.hpp"
 #include "xmlWrapper.hpp"
 #include "common/format/Format.hpp"
+#include "common/logger/ErrorHandling.hpp"
 
 namespace geos
 {
@@ -218,7 +219,7 @@ private:
 
 };
 
-#define GEOS_THROW_CTX_IF( dataContext, EXP, MSG, EXCEPTIONTYPE ) \
+#define GEOS_THROW_CTX_IF( EXP, MSG, EXCEPTIONTYPE, dataContext ) \
   do \
   { \
     if( EXP ) \
@@ -229,20 +230,20 @@ private:
       __oss << "***** Controlling expression (should be false): " STRINGIZE( EXP ) "\n"; \
       __oss << MSG << "\n"; \
       __oss << LvArray::system::stackTrace( true ); \
+      std::cout << __oss.str() << std::endl; \
       std::ostringstream __msgoss; \
       __msgoss << MSG; \
-      ErrorLogger::ErrorMsg msgStruct( ErrorLogger::MsgType::Error, \
-                                       __msgoss.str(), \
-                                       __FILE__, \
-                                       __LINE__ ); \
-      msgStruct.addContextInfo( dataContext.getContextInfo() ); \
-      msgStruct.addCallStackInfo( LvArray::system::stackTrace( true ) ); \
-      errorLogger.write( msgStruct ); \
+      errorLogger.currentErrorMsg().setType( ErrorLogger::MsgType::Error ); \
+      errorLogger.currentErrorMsg().setCodeLocation( __FILE__, __LINE__ ); \
+      errorLogger.currentErrorMsg().addToMsg( __msgoss.str() ); \
+      errorLogger.currentErrorMsg().addRankInfo( ::geos::logger::internal::rank ); \
+      errorLogger.currentErrorMsg().addContextInfo( dataContext.getContextInfo() ); \
+      errorLogger.currentErrorMsg().addCallStackInfo( LvArray::system::stackTrace( true ) ); \
       throw EXCEPTIONTYPE( __oss.str() ); \
     } \
   } while( false )
 
-#define GEOS_ERROR_CTX_IF( dataContext, EXP, MSG ) \
+#define GEOS_ERROR_CTX_IF( EXP, MSG, dataContext ) \
   do \
   { \
     if( EXP ) \
@@ -267,7 +268,7 @@ private:
     } \
   } while( false )
 
-#define GEOS_WARNING_CTX_IF( dataContext, EXP, MSG ) \
+#define GEOS_WARNING_CTX_IF( EXP, MSG, dataContext ) \
   do \
   { \
     if( EXP ) \
