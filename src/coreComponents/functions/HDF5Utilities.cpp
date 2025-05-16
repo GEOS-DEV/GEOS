@@ -267,7 +267,11 @@ DatasetHandle::DatasetHandle( SerialHDF5File const & hdf5File, string const & da
 
     // Validate dimensions
     GEOS_THROW_IF( ndims != expectedDims,
-                   GEOS_FMT( "Incosistent number of dimensions for dataset {} in {}", datasetName, hdf5File.getFilename() ),
+                   GEOS_FMT( "Incosistent number of dimensions for dataset {} in {}, expcting {} found {}.",
+                             datasetName,
+                             hdf5File.getFilename(),
+                             expectedDims,
+                             ndims ),
                    InputError );
 
     dims.resize( ndims );
