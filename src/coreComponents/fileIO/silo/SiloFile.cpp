@@ -1226,7 +1226,7 @@ void SiloFile::writeElementRegionSilo( ElementRegionBase const & elemRegion,
   dataRepository::Group fakeGroup( elemRegion.getName(), conduitNode );
 
   localIndex numElems = 0;
-  stdVector< std::map< string, WrapperBase const * > > viewPointers;
+  stdVector< stdMap< string, WrapperBase const * > > viewPointers;
 
   viewPointers.resize( elemRegion.numSubRegions() );
   elemRegion.forElementSubRegionsIndex< ElementSubRegionBase >(

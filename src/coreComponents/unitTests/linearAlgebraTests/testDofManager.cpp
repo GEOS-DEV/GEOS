@@ -505,7 +505,7 @@ protected:
   };
 
   void addFields( std::vector< FieldDesc > fields,
-                  std::map< std::pair< string, string >, CouplingDesc > couplings = {} )
+                  stdMap< std::pair< string, string >, CouplingDesc > couplings = {} )
   {
     for( FieldDesc const & f : fields )
     {
@@ -539,14 +539,14 @@ protected:
   using Base::addFields;
 
   void test( std::vector< FieldDesc > fields,
-             std::map< std::pair< string, string >, CouplingDesc > couplings = {} );
+             stdMap< std::pair< string, string >, CouplingDesc > couplings = {} );
 };
 
 TYPED_TEST_SUITE_P( DofManagerSparsityTest );
 
 template< typename LAI >
 void DofManagerSparsityTest< LAI >::test( std::vector< FieldDesc > fields,
-                                          std::map< std::pair< string, string >, CouplingDesc > couplings )
+                                          stdMap< std::pair< string, string >, CouplingDesc > couplings )
 {
   addFields( fields, couplings );
 
@@ -856,13 +856,13 @@ protected:
 
   void test( std::vector< FieldDesc > fields,
              std::vector< DofManager::SubComponent > selection,
-             std::map< std::pair< string, string >, CouplingDesc > couplings = {} );
+             stdMap< std::pair< string, string >, CouplingDesc > couplings = {} );
 };
 
 template< typename LAI >
 void DofManagerRestrictorTest< LAI >::test( std::vector< FieldDesc > fields,
                                             std::vector< DofManager::SubComponent > selection,
-                                            std::map< std::pair< string, string >, CouplingDesc > couplings )
+                                            stdMap< std::pair< string, string >, CouplingDesc > couplings )
 {
   addFields( fields, couplings );
 
@@ -900,7 +900,7 @@ void DofManagerRestrictorTest< LAI >::test( std::vector< FieldDesc > fields,
   }
 
   // Filter the couplings of selected fields
-  std::map< std::pair< string, string >, CouplingDesc > couplingsSelected;
+  stdMap< std::pair< string, string >, CouplingDesc > couplingsSelected;
   for( auto it = couplings.begin(); it != couplings.end(); ++it )
   {
     std::pair< string, string > const & fieldNames = it->first;

@@ -73,7 +73,7 @@ public:
                                       std::set< localIndex > const & indexList );
 
   static void assignNewGlobalIndices( ElementRegionManager & elementManager,
-                                      std::map< std::pair< localIndex, localIndex >, std::set< localIndex > > const & newElems );
+                                      stdMap< std::pair< localIndex, localIndex >, std::set< localIndex > > const & newElems );
 
   void setupGhosts( MeshLevel & meshLevel,
                     stdVector< NeighborCommunicator > & neighbors,

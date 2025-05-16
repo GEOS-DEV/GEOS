@@ -27,7 +27,7 @@ using ViewKeys = CellElementRegion::viewKeyStruct;
 
 CellElementRegionSelector::CellElementRegionSelector(
   Group const & cellBlocks,
-  std::map< integer, std::set< string > > const & regionsCellBlocks )
+  stdMap< integer, std::set< string > > const & regionsCellBlocks )
 {
   // The owners lists need to be initialized so we will be able to verify later that it is not empty.
 

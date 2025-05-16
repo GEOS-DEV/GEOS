@@ -349,7 +349,7 @@ void InternalWellboreGenerator::setConnectivityForPeriodicBoundaries( int ( & gl
   }
 }
 
-void InternalWellboreGenerator::coordinateTransformation( arrayView2d< real64, nodes::REFERENCE_POSITION_USD > X, std::map< string, SortedArray< localIndex > > & nodeSets )
+void InternalWellboreGenerator::coordinateTransformation( arrayView2d< real64, nodes::REFERENCE_POSITION_USD > X, stdMap< string, SortedArray< localIndex > > & nodeSets )
 {
   localIndex const numNodes = X.size( 0 );
 

@@ -193,7 +193,7 @@ public:
 
 private:
   /// @brief all cell values by their [ row ][ column ]
-  std::map< RowType, std::map< ColumnType, string > > m_data;
+  stdMap< RowType, stdMap< ColumnType, string > > m_data;
 
   /// @brief Store all column values when adding cell
   std::set< real64 > m_columnValues;

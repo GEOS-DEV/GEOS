@@ -134,7 +134,7 @@ public:
    * @param[in,out] X The nodes coordinates.
    * @param[in,out] nodeSets The name to node sets mapping.
    */
-  virtual void coordinateTransformation( arrayView2d< real64, nodes::REFERENCE_POSITION_USD > X, std::map< string, SortedArray< localIndex > > & nodeSets )
+  virtual void coordinateTransformation( arrayView2d< real64, nodes::REFERENCE_POSITION_USD > X, stdMap< string, SortedArray< localIndex > > & nodeSets )
   {
     GEOS_UNUSED_VAR( X );
     GEOS_UNUSED_VAR( nodeSets );

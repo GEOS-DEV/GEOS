@@ -161,7 +161,7 @@ TEST( testMeshObjectPath, meshObjectPathConstuction )
   Group const & meshBodies = testMesh.meshBodies();
 
 
-  std::map< string, MeshObjectPath::permutationMapType > pathsAndResults =
+  stdMap< string, MeshObjectPath::permutationMapType > pathsAndResults =
   {
     { "ElementRegions",
       { { "body0",

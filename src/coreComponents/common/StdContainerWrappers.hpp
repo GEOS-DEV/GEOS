@@ -66,7 +66,7 @@ public:
     }
   }
 };
-} // namespace internal
+}
 
 #if defined( GEOS_USE_BOUNDS_CHECK )
 /**
@@ -86,62 +86,63 @@ template< typename T, typename Allocator = std::allocator< T > >
 using stdVector = std::vector< T, Allocator >;
 #endif
 
-// template< typename MapType,
-//           bool USE_STD_CONTAINER_BOUNDS_CHECKING >
-// class StdMapWrapper : public MapType
-// {
-// public:
-//   using Base = MapType;
-//   using Base::Base;  // Inherit constructors
-//   using KeyType = typename Base::key_type;
-//   using MappedType = typename Base::mapped_type;
-//   using ValueType = typename Base::value_type;
+namespace internal
+{
 
-//   // Override operator[]
-//   MappedType & operator[]( KeyType const & key)
-//   {
-//     if constexpr(USE_STD_CONTAINER_BOUNDS_CHECKING)
-//     {
-//       return this->at(key);  // Throws std::out_of_range if key is missing
-//     }
-//     else
-//     {
-//       return Base::operator[](key);  // Inserts default-constructed value if missing
-//     }
-//   }
+template< typename MapType,
+          bool USE_STD_CONTAINER_BOUNDS_CHECKING >
+class StdMapWrapper : public MapType
+{
+public:
+  using Base = MapType;
+  using Base::Base;  // Inherit constructors
+  using KeyType = typename Base::key_type;
+  using MappedType = typename Base::mapped_type;
+  using ValueType = typename Base::value_type;
 
-//   MappedType const & operator[]( KeyType const & key) const
-//   {
-//     if constexpr(USE_STD_CONTAINER_BOUNDS_CHECKING)
-//     {
-//       return this->at(key);
-//     }
-//     else
-//     {
-//       return Base::operator[](key);
-//     }
-//   }
-// };
+  // Override operator[]
+  MappedType & operator[]( KeyType const & key )
+  {
+    if constexpr (USE_STD_CONTAINER_BOUNDS_CHECKING)
+    {
+      return this->at( key );  // Throws std::out_of_range if key is missing
+    }
+    else
+    {
+      return Base::operator[]( key );  // Inserts default-constructed value if missing
+    }
+  }
 
-//} //namespace internal
+  MappedType const & operator[]( KeyType const & key ) const
+  {
+    if constexpr (USE_STD_CONTAINER_BOUNDS_CHECKING)
+    {
+      return this->at( key );
+    }
+    else
+    {
+      return Base::operator[]( key );
+    }
+  }
+};
 
-// template< typename Key,
-//           typename T,
-//           typename Compare = std::less<Key>,
-//           typename Allocator = std::allocator<std::pair<const Key, T>>,
-//           bool USE_STD_CONTAINER_BOUNDS_CHECKING = false>
-// using map = internal::StdMapWrapper< std::map< Key, T, Compare, Allocator> ,
-//                                      USE_STD_CONTAINER_BOUNDS_CHECKING >;
+} //namespace internal
+
+template< typename Key,
+          typename T,
+          typename Compare = std::less< Key >,
+          typename Allocator = std::allocator< std::pair< const Key, T > > >
+using stdMap = internal::StdMapWrapper< std::map< Key, T, Compare, Allocator >,
+                                        false >;
 
 
-// template< typename Key,
-//           typename T,
-//           typename Hash = std::hash<Key>,
-//           typename KeyEqual = std::equal_to<Key>,
-//           typename Allocator = std::allocator<std::pair<const Key, T>>,
-//           bool USE_STD_CONTAINER_BOUNDS_CHECKING = false>
-// using unordered_map = internal::StdMapWrapper< std::unordered_map< Key, T, Hash, KeyEqual, Allocator >,
-//                                                USE_STD_CONTAINER_BOUNDS_CHECKING >;
+template< typename Key,
+          typename T,
+          typename Hash = std::hash< Key >,
+          typename KeyEqual = std::equal_to< Key >,
+          typename Allocator = std::allocator< std::pair< const Key, T > > >
+using stdUnorderedMap = internal::StdMapWrapper< std::unordered_map< Key, T, Hash, KeyEqual, Allocator >,
+                                                 false >;
 
 
 } // namespace geos

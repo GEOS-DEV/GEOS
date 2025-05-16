@@ -22,6 +22,7 @@
 #include "xmlWrapper.hpp"
 
 #include "common/format/StringUtilities.hpp"
+#include "common/StdContainerWrappers.hpp"
 #include "common/MpiWrapper.hpp"
 #include "dataRepository/KeyNames.hpp"
 

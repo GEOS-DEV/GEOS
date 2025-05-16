@@ -44,7 +44,7 @@ public:
    * The third key is the name of an ElementRegion
    * The third value is a vector of subregion names
    */
-  using permutationMapType = std::map< string, std::map< string, std::map< string, stdVector< string > > > >;
+  using permutationMapType = stdMap< string, stdMap< string, stdMap< string, stdVector< string > > > >;
 
   /**
    * @brief Contains enums for the types of objects
@@ -177,13 +177,13 @@ private:
    */
   template< typename OBJECT_TYPE,
             typename FUNC >
-  void forObjectsInPath( std::pair< string const, std::map< string, stdVector< string > > > const & levelPair,
+  void forObjectsInPath( std::pair< string const, stdMap< string, stdVector< string > > > const & levelPair,
                          MeshLevel & meshLevel,
                          FUNC && func ) const;
 
   template< typename OBJECT_TYPE,
             typename FUNC >
-  void forObjectsInPath( std::pair< string const, std::map< string, stdVector< string > > > const & levelPair,
+  void forObjectsInPath( std::pair< string const, stdMap< string, stdVector< string > > > const & levelPair,
                          MeshLevel const & meshLevel,
                          FUNC && func ) const;
 
@@ -273,7 +273,7 @@ bool MeshObjectPath::checkObjectTypeConsistency() const
 
 template< typename OBJECT_TYPE,
           typename FUNC >
-void MeshObjectPath::forObjectsInPath( std::pair< string const, std::map< string, stdVector< string > > > const & levelPair,
+void MeshObjectPath::forObjectsInPath( std::pair< string const, stdMap< string, stdVector< string > > > const & levelPair,
                                        MeshLevel & meshLevel,
                                        FUNC && func ) const
 {
@@ -285,7 +285,7 @@ void MeshObjectPath::forObjectsInPath( std::pair< string const, std::map< string
 
 template< typename OBJECT_TYPE,
           typename FUNC >
-void MeshObjectPath::forObjectsInPath( std::pair< string const, std::map< string, stdVector< string > > > const & levelPair,
+void MeshObjectPath::forObjectsInPath( std::pair< string const, stdMap< string, stdVector< string > > > const & levelPair,
                                        MeshLevel const & meshLevel,
                                        FUNC && func ) const
 {

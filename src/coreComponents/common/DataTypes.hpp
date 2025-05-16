@@ -338,9 +338,10 @@ class mapBase
 
 /// @cond DO_NOT_DOCUMENT
 template< typename TKEY, typename TVAL >
-class mapBase< TKEY, TVAL, std::integral_constant< bool, true > > : public std::map< TKEY, TVAL >
+class mapBase< TKEY, TVAL, std::integral_constant< bool, true > > : public stdMap< TKEY, TVAL >
 {
-  using std::map< TKEY, TVAL >::map; // enable list initialization
+public:
+  using stdMap< TKEY, TVAL >::StdMapWrapper; // enable list initialization
 };
 
 template< typename TKEY, typename TVAL >

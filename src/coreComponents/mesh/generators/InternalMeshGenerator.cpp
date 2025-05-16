@@ -640,8 +640,8 @@ void InternalMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockMa
   // Calculate number of elements in this partition from each region, and the
   // total number of nodes
 
-  std::map< string, int > numElemsInRegions;
-  std::map< string, ElementType > elemTypeInRegions;
+  stdMap< string, int > numElemsInRegions;
+  stdMap< string, ElementType > elemTypeInRegions;
 
   array1d< integer > firstElemIndexForBlockInPartition[3];
   array1d< integer > lastElemIndexForBlockInPartition[3];
@@ -794,7 +794,7 @@ void InternalMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockMa
   {
     array1d< integer > numElements;
     string_array elementRegionNames;
-    std::map< string, localIndex > localElemIndexInRegion;
+    stdMap< string, localIndex > localElemIndexInRegion;
 
     for( auto const & numElemsInRegion : numElemsInRegions )
     {

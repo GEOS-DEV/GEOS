@@ -1569,7 +1569,7 @@ void DofManager::reorderByRank()
 {
   GEOS_LAI_ASSERT( !m_reordered );
 
-  std::map< string, array1d< localIndex > > permutations;
+  stdMap< string, array1d< localIndex > > permutations;
 
   // First loop: compute the local permutation
   for( FieldDescription & field : m_fields )
@@ -1599,7 +1599,7 @@ void DofManager::reorderByRank()
   // ( MeshBody name, MeshLevel name), and a value that is another map with a
   // key that indicates the name of the object that contains the field to be
   // synced, and a value that contans the name of the field to be synced.
-  std::map< std::pair< string, string >, FieldIdentifiers > fieldsToBeSync;
+  stdMap< std::pair< string, string >, FieldIdentifiers > fieldsToBeSync;
 
   // adjust index arrays for owned locations
   for( FieldDescription const & field : m_fields )

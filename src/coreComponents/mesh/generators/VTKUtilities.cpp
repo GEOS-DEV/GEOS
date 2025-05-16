@@ -262,7 +262,7 @@ buildElemToNodesImpl( AllMeshes & meshes,
   localIndex const num3dCells = LvArray::integerConversion< localIndex >( meshes.getMainMesh()->GetNumberOfCells() );
 
   localIndex num2dCells = 0;
-  std::map< string, CollocatedNodes > collocatedNodesMap;
+  stdMap< string, CollocatedNodes > collocatedNodesMap;
   for( auto & [fractureName, fractureMesh]: meshes.getFaceBlocks() )
   {
     num2dCells += fractureMesh->GetNumberOfCells();
@@ -572,7 +572,7 @@ AllMeshes loadAllMeshes( Path const & filePath,
 {
   int const lastRank = MpiWrapper::commSize() - 1;
   vtkSmartPointer< vtkDataSet > main = loadMesh( filePath, mainBlockName );
-  std::map< string, vtkSmartPointer< vtkDataSet > > faces;
+  stdMap< string, vtkSmartPointer< vtkDataSet > > faces;
 
   for( string const & faceBlockName: faceBlockNames )
   {
@@ -661,7 +661,7 @@ AllMeshes redistributeByCellGraph( AllMeshes & input,
   }();
 
   // Extract the partition information related to the fracture mesh.
-  std::map< string, array1d< pmet_idx_t > > newFracturePartitions;
+  stdMap< string, array1d< pmet_idx_t > > newFracturePartitions;
   vtkIdType fracOffset = input.getMainMesh()->GetNumberOfCells();
   for( auto const & nf: input.getFaceBlocks() )
   {
@@ -683,7 +683,7 @@ AllMeshes redistributeByCellGraph( AllMeshes & input,
   vtkSmartPointer< vtkPartitionedDataSet > const splitMesh = splitMeshByPartition( input.getMainMesh(), numRanks, newPartitions.toViewConst() );
   vtkSmartPointer< vtkUnstructuredGrid > finalMesh = vtk::redistribute( *splitMesh, MPI_COMM_GEOS );
   // ... and then for the fractures.
-  std::map< string, vtkSmartPointer< vtkDataSet > > finalFractures;
+  stdMap< string, vtkSmartPointer< vtkDataSet > > finalFractures;
   for( auto const & [fractureName, fracture]: input.getFaceBlocks() )
   {
     vtkSmartPointer< vtkPartitionedDataSet > const splitFracMesh = splitMeshByPartition( fracture, numRanks, newFracturePartitions[fractureName].toViewConst() );
@@ -901,7 +901,7 @@ ensureNoEmptyRank( vtkSmartPointer< vtkDataSet > mesh,
 AllMeshes
 redistributeMeshes( integer const logLevel,
                     vtkSmartPointer< vtkDataSet > loadedMesh,
-                    std::map< string, vtkSmartPointer< vtkDataSet > > & namesToFractures,
+                    stdMap< string, vtkSmartPointer< vtkDataSet > > & namesToFractures,
                     MPI_Comm const comm,
                     PartitionMethod const method,
                     int const partitionRefinement,
@@ -1110,10 +1110,10 @@ ElementType convertVtkToGeosxElementType( vtkCell *cell )
  * @param[in] mesh a vtk grid
  * @return a map of cells grouped by type
  */
-std::map< ElementType, stdVector< vtkIdType > >
+stdMap< ElementType, stdVector< vtkIdType > >
 splitCellsByType( vtkDataSet & mesh )
 {
-  std::map< ElementType, stdVector< vtkIdType > > typeToCells;
+  stdMap< ElementType, stdVector< vtkIdType > > typeToCells;
   vtkIdType const numCells = mesh.GetNumberOfCells();
 
   // Count the number of each cell type
@@ -1187,7 +1187,7 @@ splitCellsByType( vtkDataSet & mesh )
  * @return a map of cell lists grouped by type
  */
 CellMapType
-splitCellsByTypeAndAttribute( std::map< ElementType, stdVector< vtkIdType > > & typeToCells,
+splitCellsByTypeAndAttribute( stdMap< ElementType, stdVector< vtkIdType > > & typeToCells,
                               vtkDataArray * const attributeDataArray )
 {
   CellMapType typeToAttributeToCells;
@@ -1647,7 +1647,7 @@ CellMapType buildCellMap( vtkDataSet & mesh, string const & attributeName )
 {
 
   // First, pass through all VTK cells and split them int sub-lists based on type.
-  std::map< ElementType, stdVector< vtkIdType > > typeToCells = splitCellsByType( mesh );
+  stdMap< ElementType, stdVector< vtkIdType > > typeToCells = splitCellsByType( mesh );
 
   // Now, actually split into groups according to region attribute, if present
   vtkDataArray * const attributeDataArray =
@@ -1902,7 +1902,7 @@ void printMeshStatistics( vtkDataSet &,
                           CellMapType const & cellMap,
                           MPI_Comm const comm )
 {
-  auto accumulateElemsCount = []( std::map< ElementType, globalIndex > & elemsTarget ) -> globalIndex
+  auto accumulateElemsCount = []( stdMap< ElementType, globalIndex > & elemsTarget ) -> globalIndex
   {
     return std::accumulate(
       std::begin( elemsTarget ), std::end( elemsTarget ), globalIndex{0},
@@ -1913,10 +1913,10 @@ void printMeshStatistics( vtkDataSet &,
   int const rank = MpiWrapper::commRank( comm );
   int const size = MpiWrapper::commSize( comm );
 
-  std::map< ElementType, globalIndex > totalLocalElems;
-  std::map< ElementType, globalIndex > minLocalElemsCounts;
-  std::map< ElementType, globalIndex > avgLocalElemsCounts;
-  std::map< ElementType, globalIndex > maxLocalElemsCounts;
+  stdMap< ElementType, globalIndex > totalLocalElems;
+  stdMap< ElementType, globalIndex > minLocalElemsCounts;
+  stdMap< ElementType, globalIndex > avgLocalElemsCounts;
+  stdMap< ElementType, globalIndex > maxLocalElemsCounts;
 
   for( auto const & typeToCells : cellMap )
   {
@@ -2142,7 +2142,7 @@ void writeSurfaces( integer const logLevel,
   {
     return;
   }
-  std::map< string, SortedArray< localIndex > > & nodeSets = cellBlockManager.getNodeSets();
+  stdMap< string, SortedArray< localIndex > > & nodeSets = cellBlockManager.getNodeSets();
 
   for( auto const & surfaceCells: cellMap.at( ElementType::Polygon ) )
   {

@@ -263,7 +263,7 @@ void TableTextFormatter::populateHeaderCellsLayout( PreparedTableLayout const & 
   }
 
   // number of times we will divide the each headers in the headerCellsLayout (key is the Column ptr)
-  std::map< std::ptrdiff_t, size_t > subdivsCount;
+  stdMap< std::ptrdiff_t, size_t > subdivsCount;
 
   for( auto it = tableLayout.beginDeepFirst(); it != tableLayout.endDeepFirst(); ++it )
   {
