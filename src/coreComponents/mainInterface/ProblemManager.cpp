@@ -512,7 +512,7 @@ void ProblemManager::postInputInitialization()
   integer const & suppressPinned = commandLine.getReference< integer >( viewKeys.suppressPinned );
   setPreferPinned((suppressPinned == 0));
 
-  PartitionerBase & partitioner = domain.getReference< PartitionerBase >( keys::partitionerManager );
+  PartitionerBase & partitioner = domain.getPartitioner();
 
   bool repartition = false;
   integer xpar = 1;

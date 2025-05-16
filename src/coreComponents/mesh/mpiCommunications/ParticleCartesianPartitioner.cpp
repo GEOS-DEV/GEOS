@@ -112,7 +112,7 @@ void ParticleCartesianPartitioner::repartitionMasterParticles( ParticleSubRegion
   arrayView1d< localIndex > const particleRank = subRegion.getParticleRank();
   array1d< R1Tensor > outOfDomainParticleCoordinates;
   stdVector< localIndex > outOfDomainParticleLocalIndices;
-  unsigned int nn = m_neighbors.size();   // Number of partition neighbors.
+  unsigned int nn = getNumFirstOrderNeighbors();   // Number of partition neighbors.
 
   forAll< serialPolicy >( subRegion.size(), [&, particleCenter, particleRank] GEOS_HOST ( localIndex const pp )
     {
@@ -320,7 +320,7 @@ void ParticleCartesianPartitioner::getGhostParticlesFromNeighboringPartitions( D
     array1d< R1Tensor > inDomainMasterParticleCoordinates;   // Theoretically the same as particle position evaluated at
                                                              // subRegion.nonGhostIndices()?
     stdVector< globalIndex > inDomainMasterParticleGlobalIndices;
-    unsigned int nn = m_neighbors.size();   // Number of partition neighbors.
+    unsigned int nn = getNumFirstOrderNeighbors();   // Number of partition neighbors.
 
     forAll< serialPolicy >( subRegion.size(), [&, particleCenter, particleRank, particleGlobalID] GEOS_HOST ( localIndex const p )
       {
@@ -501,7 +501,7 @@ void ParticleCartesianPartitioner::sendCoordinateListToNeighbors( arrayView1d< R
                                                                   )
 {
   // Number of neighboring partitions
-  unsigned int nn = m_neighbors.size();
+  unsigned int nn = getNumFirstOrderNeighbors();
 
   // The send buffer is identical for each neighbor, and contains the packed coordinate list.
   unsigned int sizeToBePacked = 0;                                                        // size of the outgoing data with packing=false
@@ -595,7 +595,7 @@ void ParticleCartesianPartitioner::sendListOfIndicesToNeighbors( stdVector< arra
                                                                  stdVector< array1d< indexType > > & listReceivedFromEachNeighbor )
 {
   // Number of neighboring partitions
-  unsigned int nn = m_neighbors.size();
+  unsigned int nn = getNumFirstOrderNeighbors();
 
   // Pack the outgoing lists of local indices
   stdVector< unsigned int > sizeOfPacked( nn );
@@ -694,7 +694,7 @@ void ParticleCartesianPartitioner::sendParticlesToNeighbor( ParticleSubRegionBas
                                                             MPI_iCommData & commData,
                                                             stdVector< array1d< localIndex > > const & particleLocalIndicesToSendToEachNeighbor )
 {
-  unsigned int nn = m_neighbors.size();
+  unsigned int nn = getNumFirstOrderNeighbors();
 
   // Pack the send buffer for the particles being sent to each neighbor
   stdVector< buffer_type > sendBuffer( nn );

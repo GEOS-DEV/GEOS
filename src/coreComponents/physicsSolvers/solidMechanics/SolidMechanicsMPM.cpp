@@ -927,7 +927,7 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
   //#######################################################################################
   solverProfiling( "Get spatial partition, get node and particle managers. Resize m_iComm." );
   //#######################################################################################
-  ParticleCartesianPartitioner & partitioner = dynamic_cast< ParticleCartesianPartitioner & >(domain.getReference< PartitionerBase >( keys::partitionerManager ) );
+  ParticleCartesianPartitioner & partitioner = dynamic_cast< ParticleCartesianPartitioner & >(domain.getPartitioner() );
 
   // ***** We assume that there are exactly two mesh bodies, and that one has particles and one does not. *****
   Group & meshBodies = domain.getMeshBodies();

@@ -21,9 +21,7 @@
 #ifndef GEOS_PARTITIONER_PARTITIONERBASE_HPP_
 #define GEOS_PARTITIONER_PARTITIONERBASE_HPP_
 
-//#include "common/StdContainerWrappers.hpp"   // for stdVector
 #include "mesh/mpiCommunications/NeighborCommunicator.hpp"
-
 
 
 namespace geos
@@ -73,22 +71,57 @@ public:
   }
 
 
-  void buildNeighbors()
-  {
-    m_neighbors.clear();
-
-    for( int rank : m_neighborsRank )
-    {
-      m_neighbors.push_back( NeighborCommunicator( rank ));
-    }
-  }
+  void buildNeighbors();
 
 
   stdVector< NeighborCommunicator > & getNeighbors()
   { return m_neighbors; }
 
   stdVector< NeighborCommunicator > const & getNeighbors() const
-  { return m_neighbors; };
+  { return m_neighbors; }
+
+
+  int getNumNeighbors()
+  {
+    return static_cast< int >(m_neighbors.size());
+  }
+
+  int getNumNeighbors() const
+  {
+    return static_cast< int >(m_neighbors.size());
+  }
+
+
+  int getNumFirstOrderNeighbors()
+  {
+    return m_numFirstOrderNeighbors;
+  }
+
+  int getNumFirstOrderNeighbors() const
+  {
+    return m_numFirstOrderNeighbors;
+  }
+
+
+
+  stdVector< NeighborCommunicator > getFirstOrderNeighbors()
+  {
+    return stdVector< NeighborCommunicator >(
+      m_neighbors.begin(),
+      m_neighbors.begin() + std::min( m_numFirstOrderNeighbors, getNumNeighbors())
+      );
+  }
+
+  stdVector< NeighborCommunicator > getFirstOrderNeighbors() const
+  {
+    return stdVector< NeighborCommunicator >(
+      m_neighbors.begin(),
+      m_neighbors.begin() + std::min( m_numFirstOrderNeighbors, getNumNeighbors())
+      );
+  }
+
+
+  void appendNeighborsOfNeighbors();
 
 
   virtual void color() = 0;
@@ -125,7 +158,7 @@ public:
 
   virtual ~PartitionerBase() = default;
 
-  PartitionerBase(): m_numColors( 1 ), m_color( 0 ), m_numPartitions( 1 ) {}
+  PartitionerBase(): m_numColors( 1 ), m_color( 0 ), m_numPartitions( 1 ), m_numFirstOrderNeighbors( 0 ) {}
 
 
 
@@ -133,10 +166,14 @@ protected:
   stdVector< NeighborCommunicator > m_neighbors;
   std::vector< int > m_neighborsRank;
 
-
   int m_numColors;
   int m_color;
   int m_numPartitions;
+  int m_numFirstOrderNeighbors;
+
+
+private:
+  std::set< int > buildNeighborsOfNeighborsRank();
 };
 
 }

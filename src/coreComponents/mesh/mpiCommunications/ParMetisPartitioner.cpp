@@ -116,7 +116,6 @@ ParMetisPartitioner::partition( ArrayOfArraysView< idx_t const, idx_t > const & 
 }
 
 
-
 ArrayOfArrays< idx_t, idx_t >
 ParMetisPartitioner::meshToDual( ArrayOfArraysView< idx_t const, idx_t > const & elemToNodes,
                                  arrayView1d< idx_t const > const & elemDist,
@@ -159,11 +158,8 @@ ParMetisPartitioner::meshToDual( ArrayOfArraysView< idx_t const, idx_t > const &
 }
 
 
-
 void ParMetisPartitioner::color()
 {
-  std::cout << "ENTERING ParMetisPartitioner::color "<<std::endl;
-
   std::vector< camp::idx_t > adjncy;
   adjncy.reserve( m_neighborsRank.size());
   std::copy( m_neighborsRank.begin(), m_neighborsRank.end(), std::back_inserter( adjncy ));

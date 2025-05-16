@@ -41,10 +41,6 @@ DomainPartition::DomainPartition( string const & name,
                                   Group * const parent ):
   Group( name, parent )
 {
-  this->registerWrapper( "Neighbors", &m_neighbors ).
-    setRestartFlags( RestartFlags::NO_WRITE ).
-    setSizedFromParent( false );
-
 #if 0
   this->registerWrapper< SpatialPartition, PartitionBase >( keys::partitionManager ).
     setRestartFlags( RestartFlags::NO_WRITE ).
@@ -52,7 +48,7 @@ DomainPartition::DomainPartition( string const & name,
 #endif
 
 
-#if 1
+#if 0
   this->registerWrapper< CartesianPartitioner, PartitionerBase >( keys::partitionerManager ).
     setRestartFlags( RestartFlags::NO_WRITE ).
     setSizedFromParent( false );
@@ -63,6 +59,10 @@ DomainPartition::DomainPartition( string const & name,
     setSizedFromParent( false );
 #endif
 
+  std::vector< NeighborCommunicator > & neighbors = getNeighbors();
+  this->registerWrapper( "Neighbors", &neighbors ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setSizedFromParent( false );
 
   registerGroup( groupKeys.meshBodies );
   registerGroup< constitutive::ConstitutiveManager >( groupKeys.constitutiveManager );
@@ -73,6 +73,29 @@ DomainPartition::DomainPartition( string const & name,
 
 DomainPartition::~DomainPartition()
 {}
+
+
+PartitionerBase & DomainPartition::getPartitioner()
+{ return getReference< PartitionerBase >( dataRepository::keys::partitionerManager ); }
+
+PartitionerBase const & DomainPartition::getPartitioner() const
+{ return getReference< PartitionerBase >( dataRepository::keys::partitionerManager ); }
+
+
+/**
+ * @brief Get the neighbor communicators. @see DomainPartition#neighbors.
+ * @return Container of communicators.
+ */
+std::vector< NeighborCommunicator > & DomainPartition::getNeighbors()
+{ return getPartitioner().getNeighbors(); }
+
+/**
+ * @brief Get the neighbor communicators, const version. @see DomainPartition#neighbors.
+ * @return Container of communicators.
+ */
+std::vector< NeighborCommunicator > const & DomainPartition::getNeighbors() const
+{ return getPartitioner().getNeighbors(); }
+
 
 void DomainPartition::initializationOrder( string_array & order )
 {
@@ -100,56 +123,15 @@ void DomainPartition::initializationOrder( string_array & order )
 void DomainPartition::setupBaseLevelMeshGlobalInfo()
 {
   GEOS_MARK_FUNCTION;
+//BDBD
+//#if defined(GEOS_USE_MPI)
 
-#if defined(GEOS_USE_MPI)
+  PartitionerBase & partitioner = getPartitioner();
+  partitioner.appendNeighborsOfNeighbors();
 
-  PartitionerBase & partitioner = getReference< PartitionerBase >( keys::partitionerManager );
-  m_neighbors = partitioner.getNeighbors();
+  std::vector< NeighborCommunicator > & neighbors = getNeighbors();
 
-  // Create an array of the first neighbors.
-  array1d< int > firstNeighborRanks;
-  for( NeighborCommunicator const & neighbor : m_neighbors )
-  {
-    firstNeighborRanks.emplace_back( neighbor.neighborRank() );
-  }
-
-  int neighborsTag = 54;
-
-  // Send this list of neighbors to all neighbors.
-  stdVector< MPI_Request > requests( m_neighbors.size(), MPI_REQUEST_NULL );
-
-  for( std::size_t i = 0; i < m_neighbors.size(); ++i )
-  {
-    MpiWrapper::iSend( firstNeighborRanks.toView(), m_neighbors[ i ].neighborRank(), neighborsTag, MPI_COMM_GEOS, &requests[ i ] );
-  }
-
-  // This set will contain the second (neighbor of) neighbors ranks.
-  std::set< int > secondNeighborRanks;
-
-  array1d< int > neighborOfNeighborRanks;
-  for( std::size_t i = 0; i < m_neighbors.size(); ++i )
-  {
-    MpiWrapper::recv( neighborOfNeighborRanks, m_neighbors[ i ].neighborRank(), neighborsTag, MPI_COMM_GEOS, MPI_STATUS_IGNORE );
-
-    // Insert the neighbors of the current neighbor into the set of second neighbors.
-    secondNeighborRanks.insert( neighborOfNeighborRanks.begin(), neighborOfNeighborRanks.end() );
-  }
-
-  // Remove yourself and all the first neighbors from the second neighbors.
-  secondNeighborRanks.erase( MpiWrapper::commRank() );
-  for( NeighborCommunicator const & neighbor : m_neighbors )
-  {
-    secondNeighborRanks.erase( neighbor.neighborRank() );
-  }
-
-  for( integer const neighborRank : secondNeighborRanks )
-  {
-    m_neighbors.emplace_back( neighborRank );
-  }
-
-  MpiWrapper::waitAll( requests.size(), requests.data(), MPI_STATUSES_IGNORE );
-
-#endif
+//#endif
 
   forMeshBodies( [&]( MeshBody & meshBody )
   {
@@ -163,24 +145,24 @@ void DomainPartition::setupBaseLevelMeshGlobalInfo()
       EdgeManager & edgeManager = meshLevel.getEdgeManager();
 
       nodeManager.setMaxGlobalIndex();
-      for( NeighborCommunicator const & neighbor : m_neighbors )
+      for( NeighborCommunicator const & neighbor : neighbors )
       {
         neighbor.addNeighborGroupToMesh( meshLevel );
       }
 
       CommunicationTools::getInstance().assignGlobalIndices( faceManager,
                                                              nodeManager,
-                                                             m_neighbors );
+                                                             neighbors );
 
       CommunicationTools::getInstance().assignGlobalIndices( edgeManager,
                                                              nodeManager,
-                                                             m_neighbors );
+                                                             neighbors );
 
       CommunicationTools::getInstance().findMatchedPartitionBoundaryObjects( faceManager,
-                                                                             m_neighbors );
+                                                                             neighbors );
 
       CommunicationTools::getInstance().findMatchedPartitionBoundaryObjects( edgeManager,
-                                                                             m_neighbors );
+                                                                             neighbors );
 
       // w.r.t. edges and faces, finding the matching nodes between partitions is a bit trickier.
       // Because for contact mechanics and fractures, some nodes can be collocated.
@@ -216,7 +198,7 @@ void DomainPartition::setupBaseLevelMeshGlobalInfo()
       } );
 
       CommunicationTools::getInstance().findMatchedPartitionBoundaryNodes( nodeManager,
-                                                                           m_neighbors,
+                                                                           neighbors,
                                                                            collocatedNodesBuckets,
                                                                            requestedNodes );
     }
@@ -226,6 +208,7 @@ void DomainPartition::setupBaseLevelMeshGlobalInfo()
 
 void DomainPartition::setupCommunications( bool use_nonblocking )
 {
+  std::vector< NeighborCommunicator > & neighbors = getNeighbors();
   forMeshBodies( [&]( MeshBody & meshBody )
   {
     meshBody.forMeshLevels( [&]( MeshLevel & meshLevel )
@@ -238,22 +221,22 @@ void DomainPartition::setupCommunications( bool use_nonblocking )
           NodeManager & nodeManager = meshLevel.getNodeManager();
           FaceManager & faceManager = meshLevel.getFaceManager();
 
-          CommunicationTools::getInstance().setupGhosts( meshLevel, m_neighbors, use_nonblocking );
+          CommunicationTools::getInstance().setupGhosts( meshLevel, neighbors, use_nonblocking );
           faceManager.sortAllFaceNodes( nodeManager, meshLevel.getElemManager() );
           faceManager.computeGeometry( nodeManager );
         }
         else if( !meshLevel.isShallowCopyOf( meshBody.getMeshLevels().getGroup< MeshLevel >( 0 )) )
         {
-          for( NeighborCommunicator const & neighbor : m_neighbors )
+          for( NeighborCommunicator const & neighbor : neighbors )
           {
             neighbor.addNeighborGroupToMesh( meshLevel );
           }
           NodeManager & nodeManager = meshLevel.getNodeManager();
           FaceManager & faceManager = meshLevel.getFaceManager();
 
-          CommunicationTools::getInstance().findMatchedPartitionBoundaryObjects( faceManager, m_neighbors );
-          CommunicationTools::getInstance().findMatchedPartitionBoundaryObjects( nodeManager, m_neighbors );
-          CommunicationTools::getInstance().setupGhosts( meshLevel, m_neighbors, use_nonblocking );
+          CommunicationTools::getInstance().findMatchedPartitionBoundaryObjects( faceManager, neighbors );
+          CommunicationTools::getInstance().findMatchedPartitionBoundaryObjects( nodeManager, neighbors );
+          CommunicationTools::getInstance().setupGhosts( meshLevel, neighbors, use_nonblocking );
         }
         else
         {

@@ -66,7 +66,7 @@ void MeshManager::generateMeshes( DomainPartition & domain )
     MeshBody & meshBody = domain.getMeshBodies().registerGroup< MeshBody >( meshGen.getName() );
     meshBody.createMeshLevel( 0 );
 
-    PartitionerBase & partitioner = domain.getReference< PartitionerBase >( keys::partitionerManager );
+    PartitionerBase & partitioner = domain.getPartitioner();
 
     meshGen.generateMesh( meshBody, partitioner );
 

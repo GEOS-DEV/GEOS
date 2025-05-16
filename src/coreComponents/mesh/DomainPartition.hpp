@@ -26,6 +26,7 @@
 #include "discretizationMethods/NumericalMethodsManager.hpp"
 #include "mesh/MeshBody.hpp"
 #include "mesh/mpiCommunications/NeighborCommunicator.hpp"
+#include "mesh/mpiCommunications/PartitionerBase.hpp"
 
 namespace geos
 {
@@ -244,26 +245,22 @@ public:
     getMeshBodies().forSubGroupsIndex< MeshBody >( std::forward< FUNCTION >( function ) );
   }
 
+
+  PartitionerBase & getPartitioner();
+  PartitionerBase const & getPartitioner() const;
+
   /**
    * @brief Get the neighbor communicators. @see DomainPartition#m_neighbors.
    * @return Container of communicators.
    */
-  stdVector< NeighborCommunicator > & getNeighbors()
-  { return m_neighbors; }
+  stdVector< NeighborCommunicator > & getNeighbors();
 
   /**
    * @brief Get the neighbor communicators, const version. @see DomainPartition#m_neighbors.
    * @return Container of communicators.
    */
-  stdVector< NeighborCommunicator > const & getNeighbors() const
-  { return m_neighbors; };
+  stdVector< NeighborCommunicator > const & getNeighbors() const;
 
-private:
-
-  /**
-   * @brief Contains all the communicators from this DomainPartition to its neighbors.
-   */
-  stdVector< NeighborCommunicator > m_neighbors;
 };
 
 } /* namespace geos */

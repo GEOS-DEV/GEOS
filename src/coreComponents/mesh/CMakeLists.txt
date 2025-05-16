@@ -182,6 +182,7 @@ set( mesh_sources
      mpiCommunications/CommunicationTools.cpp
      mpiCommunications/MPI_iCommData.cpp
      mpiCommunications/NeighborCommunicator.cpp
+     mpiCommunications/PartitionerBase.cpp
      mpiCommunications/CartesianPartitioner.cpp
      mpiCommunications/ParticleCartesianPartitioner.cpp
      mpiCommunications/ParMetisPartitioner.cpp     
