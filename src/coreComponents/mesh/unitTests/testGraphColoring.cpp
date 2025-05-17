@@ -18,7 +18,6 @@
  */
 
 #include "../graphs/GraphTools.hpp"
-#include "../graphs/GraphColoringBase.hpp"
 #include "../graphs/RLFGraphColoring.hpp"
 
 #include <gtest/gtest.h>

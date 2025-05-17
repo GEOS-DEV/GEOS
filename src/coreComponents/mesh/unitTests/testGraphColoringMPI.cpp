@@ -20,7 +20,6 @@
 #include "../graphs/GraphTools.hpp"
 #include "../graphs/GraphToolsMPI.hpp"
 
-#include "../graphs/GraphColoringBase.hpp"
 #ifdef GEOS_USE_TRILINOS
 #include "../graphs/ZoltanGraphColoring.hpp"
 #endif

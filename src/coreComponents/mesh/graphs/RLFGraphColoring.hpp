@@ -17,8 +17,8 @@
  * @file RLFGraphColoring.hpp
  */
 
-#ifndef GEOS_GRAPH_RLFGraphColoring_HPP_
-#define GEOS_GRAPH_RLFGraphColoring_HPP_
+#ifndef GEOS_GRAPH_RLFGRAPHCOLORING_HPP_
+#define GEOS_GRAPH_RLFGRAPHCOLORING_HPP_
 
 #include "GraphColoringBase.hpp"
 #include "common/DataTypes.hpp"
@@ -66,4 +66,4 @@ private:
 } // namespace graph
 } // namespace geos
 
-#endif // GEOS_GRAPH_RLFGraphColoring_HPP_
+#endif // GEOS_GRAPH_RLFGRAPHCOLORING_HPP_
