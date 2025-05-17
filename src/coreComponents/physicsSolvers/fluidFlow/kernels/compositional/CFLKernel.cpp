@@ -159,19 +159,35 @@ void CFLFluxKernel::
           integer const checkPhasePresenceInGravity,
           real64 const dt,
           STENCILWRAPPER_TYPE const & stencilWrapper,
-          ElementViewConst< arrayView1d< real64 const > > const & pres,
-          ElementViewConst< arrayView1d< real64 const > > const & gravCoef,
-          ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & phaseVolFrac,
-          ElementViewConst< arrayView3d< real64 const > > const & permeability,
-          ElementViewConst< arrayView3d< real64 const > > const & dPerm_dPres,
-          ElementViewConst< arrayView3d< real64 const, relperm::USD_RELPERM > > const & phaseRelPerm,
-          ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & phaseVisc,
-          ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & phaseDens,
-          ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & phaseMassDens,
-          ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_COMP > > const & phaseCompFrac,
-          ElementView< arrayView2d< real64, compflow::USD_PHASE > > const & phaseOutflux,
-          ElementView< arrayView2d< real64, compflow::USD_COMP > > const & compOutflux )
+          MeshLevel & mesh)
 {
+  CompFlowAccessors compFlowAccessors( mesh.getElemManager(), "compFlowAccessors" );
+  MultiFluidAccessors multiFluidAccessors( mesh.getElemManager(), "multiFluidAccessors" );
+  PermeabilityAccessors permeabilityAccessors( mesh.getElemManager(), "permeabilityAccessors" );
+  RelPermAccessors relPermAccessors( mesh.getElemManager(), "relPermAccessors" );
+
+  // TODO: find a way to compile with this modifiable accessors in CompFlowAccessors, and remove them from here
+  ElementRegionManager::ElementViewAccessor< arrayView2d< real64, compflow::USD_PHASE > > const phaseOutfluxAccessor =
+    mesh.getElemManager().constructViewAccessor< array2d< real64, compflow::LAYOUT_PHASE >,
+                                                  arrayView2d< real64, compflow::USD_PHASE > >( fields::flow::phaseOutflux::key() );
+
+  ElementRegionManager::ElementViewAccessor< arrayView2d< real64, compflow::USD_COMP > > const compOutfluxAccessor =
+    mesh.getElemManager().constructViewAccessor< array2d< real64, compflow::LAYOUT_COMP >,
+                                                  arrayView2d< real64, compflow::USD_COMP > >( fields::flow::componentOutflux::key() );
+
+  ElementViewConst< arrayView1d< real64 const > > const & pres = compFlowAccessors.get( fields::flow::pressure{} );
+  ElementViewConst< arrayView1d< real64 const > > const & gravCoef = compFlowAccessors.get( fields::flow::gravityCoefficient{} );
+  ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & phaseVolFrac = compFlowAccessors.get( fields::flow::phaseVolumeFraction{} );
+  ElementViewConst< arrayView3d< real64 const > > const & permeability = permeabilityAccessors.get( fields::permeability::permeability{} );
+  ElementViewConst< arrayView3d< real64 const > > const & dPerm_dPres = permeabilityAccessors.get( fields::permeability::dPerm_dPressure{} );
+  ElementViewConst< arrayView3d< real64 const, relperm::USD_RELPERM > > const & phaseRelPerm = relPermAccessors.get( fields::relperm::phaseRelPerm{} );
+  ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & phaseVisc = multiFluidAccessors.get( fields::multifluid::phaseViscosity{} );
+  ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & phaseDens = multiFluidAccessors.get( fields::multifluid::phaseDensity{} );
+  ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & phaseMassDens = multiFluidAccessors.get( fields::multifluid::phaseMassDensity{} );
+  ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_COMP > > const & phaseCompFrac = multiFluidAccessors.get( fields::multifluid::phaseCompFraction{} );
+  ElementView< arrayView2d< real64, compflow::USD_PHASE > > const & phaseOutflux = phaseOutfluxAccessor.toNestedView();
+  ElementView< arrayView2d< real64, compflow::USD_COMP > > const & compOutflux = compOutfluxAccessor.toNestedView();
+  
   typename STENCILWRAPPER_TYPE::IndexContainerViewConstType const & seri = stencilWrapper.getElementRegionIndices();
   typename STENCILWRAPPER_TYPE::IndexContainerViewConstType const & sesri = stencilWrapper.getElementSubRegionIndices();
   typename STENCILWRAPPER_TYPE::IndexContainerViewConstType const & sei = stencilWrapper.getElementIndices();
@@ -216,38 +232,23 @@ void CFLFluxKernel::
                                        integer const checkPhasePresenceInGravity, \
                                        real64 const dt, \
                                        STENCILWRAPPER_TYPE const & stencil, \
-                                       ElementViewConst< arrayView1d< real64 const > > const & pres, \
-                                       ElementViewConst< arrayView1d< real64 const > > const & gravCoef, \
-                                       ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & phaseVolFrac, \
-                                       ElementViewConst< arrayView3d< real64 const > > const & permeability, \
-                                       ElementViewConst< arrayView3d< real64 const > > const & dPerm_dPres, \
-                                       ElementViewConst< arrayView3d< real64 const, relperm::USD_RELPERM > > const & phaseRelPerm, \
-                                       ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & phaseVisc, \
-                                       ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & phaseDens, \
-                                       ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & phaseMassDens, \
-                                       ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_COMP > > const & phaseCompFrac, \
-                                       ElementView< arrayView2d< real64, compflow::USD_PHASE > > const & phaseOutflux, \
-                                       ElementView< arrayView2d< real64, compflow::USD_COMP > > const & compOutflux )
+                                       MeshLevel & mesh )
 
-INST_CFLFluxKernel( 1, CellElementStencilTPFAWrapper );
 INST_CFLFluxKernel( 2, CellElementStencilTPFAWrapper );
 INST_CFLFluxKernel( 3, CellElementStencilTPFAWrapper );
 INST_CFLFluxKernel( 4, CellElementStencilTPFAWrapper );
 INST_CFLFluxKernel( 5, CellElementStencilTPFAWrapper );
 
-INST_CFLFluxKernel( 1, SurfaceElementStencilWrapper );
 INST_CFLFluxKernel( 2, SurfaceElementStencilWrapper );
 INST_CFLFluxKernel( 3, SurfaceElementStencilWrapper );
 INST_CFLFluxKernel( 4, SurfaceElementStencilWrapper );
 INST_CFLFluxKernel( 5, SurfaceElementStencilWrapper );
 
-INST_CFLFluxKernel( 1, EmbeddedSurfaceToCellStencilWrapper );
 INST_CFLFluxKernel( 2, EmbeddedSurfaceToCellStencilWrapper );
 INST_CFLFluxKernel( 3, EmbeddedSurfaceToCellStencilWrapper );
 INST_CFLFluxKernel( 4, EmbeddedSurfaceToCellStencilWrapper );
 INST_CFLFluxKernel( 5, EmbeddedSurfaceToCellStencilWrapper );
 
-INST_CFLFluxKernel( 1, FaceElementToCellStencilWrapper );
 INST_CFLFluxKernel( 2, FaceElementToCellStencilWrapper );
 INST_CFLFluxKernel( 3, FaceElementToCellStencilWrapper );
 INST_CFLFluxKernel( 4, FaceElementToCellStencilWrapper );
@@ -439,13 +440,11 @@ CFLKernel::
                       arrayView1d< real64 > const & compCFLNumber, \
                       real64 & maxPhaseCFLNumber, \
                       real64 & maxCompCFLNumber )
-INST_CFLKernel( 1, 2 );
 INST_CFLKernel( 2, 2 );
 INST_CFLKernel( 3, 2 );
 INST_CFLKernel( 4, 2 );
 INST_CFLKernel( 5, 2 );
 
-INST_CFLKernel( 1, 3 );
 INST_CFLKernel( 2, 3 );
 INST_CFLKernel( 3, 3 );
 INST_CFLKernel( 4, 3 );

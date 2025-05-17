@@ -1416,11 +1416,6 @@ void CompositionalMultiphaseFVM::applyAquiferBC( real64 const time,
       mesh.getElemManager().constructArrayViewAccessor< globalIndex, 1 >( elemDofKey );
     elemDofNumber.setName( getName() + "/accessors/" + elemDofKey );
 
-    isothermalCompositionalMultiphaseFVMKernels::
-      AquiferBCKernel::CompFlowAccessors compFlowAccessors( mesh.getElemManager(), getName() );
-    isothermalCompositionalMultiphaseFVMKernels::
-      AquiferBCKernel::MultiFluidAccessors multiFluidAccessors( mesh.getElemManager(), getName() );
-
     fsManager.apply< FaceManager,
                      AquiferBoundaryCondition >( time + dt,
                                                  mesh,
@@ -1466,17 +1461,7 @@ void CompositionalMultiphaseFVM::applyAquiferBC( real64 const time,
                                                                         aquiferBCWrapper,
                                                                         aquiferWaterPhaseDens,
                                                                         aquiferWaterPhaseCompFrac,
-                                                                        compFlowAccessors.get( fields::ghostRank{} ),
-                                                                        compFlowAccessors.get( fields::flow::pressure{} ),
-                                                                        compFlowAccessors.get( fields::flow::pressure_n{} ),
-                                                                        compFlowAccessors.get( fields::flow::gravityCoefficient{} ),
-                                                                        compFlowAccessors.get( fields::flow::phaseVolumeFraction{} ),
-                                                                        compFlowAccessors.get( fields::flow::dPhaseVolumeFraction{} ),
-                                                                        compFlowAccessors.get( fields::flow::dGlobalCompFraction_dGlobalCompDensity{} ),
-                                                                        multiFluidAccessors.get( fields::multifluid::phaseDensity{} ),
-                                                                        multiFluidAccessors.get( fields::multifluid::dPhaseDensity{} ),
-                                                                        multiFluidAccessors.get( fields::multifluid::phaseCompFraction{} ),
-                                                                        multiFluidAccessors.get( fields::multifluid::dPhaseCompFraction{} ),
+                                                                        mesh,
                                                                         time,
                                                                         dt,
                                                                         localMatrix.toViewConstSizes(),
@@ -1623,25 +1608,6 @@ void CompositionalMultiphaseFVM::computeCFLNumbers( geos::DomainPartition & doma
     FiniteVolumeManager & fvManager = numericalMethodManager.getFiniteVolumeManager();
     FluxApproximationBase & fluxApprox = fvManager.getFluxApproximation( getDiscretizationName() );
 
-    isothermalCompositionalMultiphaseFVMKernels::
-      CFLFluxKernel::CompFlowAccessors compFlowAccessors( mesh.getElemManager(), getName() );
-    isothermalCompositionalMultiphaseFVMKernels::
-      CFLFluxKernel::MultiFluidAccessors multiFluidAccessors( mesh.getElemManager(), getName() );
-    isothermalCompositionalMultiphaseFVMKernels::
-      CFLFluxKernel::PermeabilityAccessors permeabilityAccessors( mesh.getElemManager(), getName() );
-    isothermalCompositionalMultiphaseFVMKernels::
-      CFLFluxKernel::RelPermAccessors relPermAccessors( mesh.getElemManager(), getName() );
-
-    // TODO: find a way to compile with this modifiable accessors in CompFlowAccessors, and remove them from here
-    ElementRegionManager::ElementViewAccessor< arrayView2d< real64, compflow::USD_PHASE > > const phaseOutfluxAccessor =
-      mesh.getElemManager().constructViewAccessor< array2d< real64, compflow::LAYOUT_PHASE >,
-                                                   arrayView2d< real64, compflow::USD_PHASE > >( fields::flow::phaseOutflux::key() );
-
-    ElementRegionManager::ElementViewAccessor< arrayView2d< real64, compflow::USD_COMP > > const compOutfluxAccessor =
-      mesh.getElemManager().constructViewAccessor< array2d< real64, compflow::LAYOUT_COMP >,
-                                                   arrayView2d< real64, compflow::USD_COMP > >( fields::flow::componentOutflux::key() );
-
-
     fluxApprox.forAllStencils( mesh, [&] ( auto & stencil )
     {
       typename TYPEOFREF( stencil ) ::KernelWrapper stencilWrapper = stencil.createKernelWrapper();
@@ -1653,18 +1619,7 @@ void CompositionalMultiphaseFVM::computeCFLNumbers( geos::DomainPartition & doma
                                                                       m_gravityDensityScheme == GravityDensityScheme::PhasePresence,
                                                                       dt,
                                                                       stencilWrapper,
-                                                                      compFlowAccessors.get( fields::flow::pressure{} ),
-                                                                      compFlowAccessors.get( fields::flow::gravityCoefficient{} ),
-                                                                      compFlowAccessors.get( fields::flow::phaseVolumeFraction{} ),
-                                                                      permeabilityAccessors.get( fields::permeability::permeability{} ),
-                                                                      permeabilityAccessors.get( fields::permeability::dPerm_dPressure{} ),
-                                                                      relPermAccessors.get( fields::relperm::phaseRelPerm{} ),
-                                                                      multiFluidAccessors.get( fields::multifluid::phaseViscosity{} ),
-                                                                      multiFluidAccessors.get( fields::multifluid::phaseDensity{} ),
-                                                                      multiFluidAccessors.get( fields::multifluid::phaseMassDensity{} ),
-                                                                      multiFluidAccessors.get( fields::multifluid::phaseCompFraction{} ),
-                                                                      phaseOutfluxAccessor.toNestedView(),
-                                                                      compOutfluxAccessor.toNestedView() );
+                                                                      mesh );
     } );
   } );
 

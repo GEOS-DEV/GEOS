@@ -44,8 +44,6 @@ void kernelLaunchSelectorCompSwitch( T value, LAMBDA && lambda )
 
   switch( value )
   {
-    case 1:
-    { lambda( std::integral_constant< T, 1 >() ); return; }
     case 2:
     { lambda( std::integral_constant< T, 2 >() ); return; }
     case 3:

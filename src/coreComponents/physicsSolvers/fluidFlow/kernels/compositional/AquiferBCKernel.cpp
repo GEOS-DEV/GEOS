@@ -123,17 +123,7 @@ AquiferBCKernel::
           AquiferBoundaryCondition::KernelWrapper const & aquiferBCWrapper,
           real64 const aquiferWaterPhaseDens,
           arrayView1d< real64 const > const & aquiferWaterPhaseCompFrac,
-          ElementViewConst< arrayView1d< integer const > > const & ghostRank,
-          ElementViewConst< arrayView1d< real64 const > > const & pres,
-          ElementViewConst< arrayView1d< real64 const > > const & presOld,
-          ElementViewConst< arrayView1d< real64 const > > const & gravCoef,
-          ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & phaseVolFrac,
-          ElementViewConst< arrayView3d< real64 const, compflow::USD_PHASE_DC > > const & dPhaseVolFrac,
-          ElementViewConst< arrayView3d< real64 const, compflow::USD_COMP_DC > > const & dCompFrac_dCompDens,
-          ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & phaseDens,
-          ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_DC > > const & dPhaseDens,
-          ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_COMP > > const & phaseCompFrac,
-          ElementViewConst< arrayView5d< real64 const, multifluid::USD_PHASE_COMP_DC > > const & dPhaseCompFrac,
+          MeshLevel & mesh,
           real64 const timeAtBeginningOfStep,
           real64 const dt,
           CRSMatrixView< real64, globalIndex const > const & localMatrix,
@@ -142,6 +132,21 @@ AquiferBCKernel::
 
   using namespace compositionalMultiphaseUtilities;
   using Order = BoundaryStencil::Order;
+
+  CompFlowAccessors compFlowAccessors( mesh.getElemManager(), "compFlowAccessors" );
+  MultiFluidAccessors multiFluidAccessors( mesh.getElemManager(), "multiFluidAccessors" );
+
+  ElementViewConst< arrayView1d< integer const > > const & ghostRank = compFlowAccessors.get( fields::ghostRank{} );
+  ElementViewConst< arrayView1d< real64 const > > const & pres = compFlowAccessors.get( fields::flow::pressure{} );
+  ElementViewConst< arrayView1d< real64 const > > const & presOld = compFlowAccessors.get( fields::flow::pressure_n{} );
+  ElementViewConst< arrayView1d< real64 const > > const & gravCoef = compFlowAccessors.get( fields::flow::gravityCoefficient{} );
+  ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & phaseVolFrac = compFlowAccessors.get( fields::flow::phaseVolumeFraction{} );
+  ElementViewConst< arrayView3d< real64 const, compflow::USD_PHASE_DC > > const & dPhaseVolFrac = compFlowAccessors.get( fields::flow::dPhaseVolumeFraction{} );
+  ElementViewConst< arrayView3d< real64 const, compflow::USD_COMP_DC > > const & dCompFrac_dCompDens = compFlowAccessors.get( fields::flow::dGlobalCompFraction_dGlobalCompDensity{} );
+  ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & phaseDens = multiFluidAccessors.get( fields::multifluid::phaseDensity{} );
+  ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_DC > > const & dPhaseDens = multiFluidAccessors.get( fields::multifluid::dPhaseDensity{} );
+  ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_COMP > > const & phaseCompFrac = multiFluidAccessors.get( fields::multifluid::phaseCompFraction{} );
+  ElementViewConst< arrayView5d< real64 const, multifluid::USD_PHASE_COMP_DC > > const & dPhaseCompFrac = multiFluidAccessors.get( fields::multifluid::dPhaseCompFraction{} );
 
   BoundaryStencil::IndexContainerViewConstType const & seri = stencil.getElementRegionIndices();
   BoundaryStencil::IndexContainerViewConstType const & sesri = stencil.getElementSubRegionIndices();
@@ -239,23 +244,12 @@ AquiferBCKernel::
                   AquiferBoundaryCondition::KernelWrapper const & aquiferBCWrapper, \
                   real64 const aquiferWaterPhaseDens, \
                   arrayView1d< real64 const > const & aquiferWaterPhaseCompFrac, \
-                  ElementViewConst< arrayView1d< integer const > > const & ghostRank, \
-                  ElementViewConst< arrayView1d< real64 const > > const & pres, \
-                  ElementViewConst< arrayView1d< real64 const > > const & dPres, \
-                  ElementViewConst< arrayView1d< real64 const > > const & gravCoef, \
-                  ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & phaseVolFrac, \
-                  ElementViewConst< arrayView3d< real64 const, compflow::USD_PHASE_DC > > const & dPhaseVolFrac, \
-                  ElementViewConst< arrayView3d< real64 const, compflow::USD_COMP_DC > > const & dCompFrac_dCompDens, \
-                  ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & phaseDens, \
-                  ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_DC > > const & dPhaseDens, \
-                  ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_COMP > > const & phaseCompFrac, \
-                  ElementViewConst< arrayView5d< real64 const, multifluid::USD_PHASE_COMP_DC > > const & dPhaseCompFrac, \
+                  MeshLevel & mesh, \
                   real64 const timeAtBeginningOfStep, \
                   real64 const dt, \
                   CRSMatrixView< real64, globalIndex const > const & localMatrix, \
                   arrayView1d< real64 > const & localRhs )
 
-INST_AquiferBCKernel( 1 );
 INST_AquiferBCKernel( 2 );
 INST_AquiferBCKernel( 3 );
 INST_AquiferBCKernel( 4 );
