@@ -42,89 +42,6 @@ namespace geos
 namespace isothermalCompositionalMultiphaseFVMKernels
 {
 
-/******************************** CFLFluxKernel ********************************/
-
-/**
- * @brief Functions to compute the (outflux) total volumetric flux needed in the calculation of CFL numbers
- */
-struct CFLFluxKernel
-{
-
-  /**
-   * @brief The type for element-based data. Consists entirely of ArrayView's.
-   *
-   * Can be converted from ElementRegionManager::ElementViewConstAccessor
-   * by calling .toView() or .toViewConst() on an accessor instance
-   */
-  template< typename VIEWTYPE >
-  using ElementViewConst = ElementRegionManager::ElementViewConst< VIEWTYPE >;
-
-  template< typename VIEWTYPE >
-  using ElementView = ElementRegionManager::ElementView< VIEWTYPE >;
-
-  using CompFlowAccessors =
-    StencilAccessors< fields::flow::pressure,
-                      fields::flow::gravityCoefficient,
-                      fields::flow::phaseVolumeFraction,
-                      fields::flow::phaseOutflux,
-                      fields::flow::componentOutflux >;
-
-  using MultiFluidAccessors =
-    StencilMaterialAccessors< constitutive::MultiFluidBase,
-                              fields::multifluid::phaseViscosity,
-                              fields::multifluid::phaseDensity,
-                              fields::multifluid::phaseMassDensity,
-                              fields::multifluid::phaseCompFraction >;
-
-  using PermeabilityAccessors =
-    StencilMaterialAccessors< constitutive::PermeabilityBase,
-                              fields::permeability::permeability,
-                              fields::permeability::dPerm_dPressure >;
-
-
-  using RelPermAccessors =
-    StencilMaterialAccessors< constitutive::RelativePermeabilityBase, fields::relperm::phaseRelPerm >;
-
-  template< integer NC >
-  GEOS_HOST_DEVICE inline static void
-  compute( integer const numPhases,
-           integer const checkPhasePresenceInGravity,
-           localIndex const stencilSize,
-           real64 const dt,
-           arraySlice1d< localIndex const > const seri,
-           arraySlice1d< localIndex const > const sesri,
-           arraySlice1d< localIndex const > const sei,
-           real64 const (&transmissibility)[2],
-           ElementViewConst< arrayView1d< real64 const > > const & pres,
-           ElementViewConst< arrayView1d< real64 const > > const & gravCoef,
-           ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & phaseVolFrac,
-           ElementViewConst< arrayView3d< real64 const, constitutive::relperm::USD_RELPERM > > const & phaseRelPerm,
-           ElementViewConst< arrayView3d< real64 const, constitutive::multifluid::USD_PHASE > > const & phaseVisc,
-           ElementViewConst< arrayView3d< real64 const, constitutive::multifluid::USD_PHASE > > const & phaseDens,
-           ElementViewConst< arrayView3d< real64 const, constitutive::multifluid::USD_PHASE > > const & phaseMassDens,
-           ElementViewConst< arrayView4d< real64 const, constitutive::multifluid::USD_PHASE_COMP > > const & phaseCompFrac,
-           ElementView< arrayView2d< real64, compflow::USD_PHASE > > const & phaseOutflux,
-           ElementView< arrayView2d< real64, compflow::USD_COMP > > const & compOutflux );
-
-  GEOS_HOST_DEVICE inline static void
-  calculateMeanDensity( integer const checkPhasePresenceInGravity,
-                        integer const ip, localIndex const stencilSize,
-                        arraySlice1d< localIndex const > const seri,
-                        arraySlice1d< localIndex const > const sesri,
-                        arraySlice1d< localIndex const > const sei,
-                        ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & phaseVolFrac,
-                        ElementViewConst< arrayView3d< real64 const, constitutive::multifluid::USD_PHASE > > const & phaseMassDens,
-                        real64 & densMean );
-
-  template< integer NC, typename STENCILWRAPPER_TYPE >
-  static void
-  launch( integer const numPhases,
-          integer const checkPhasePresenceInGravity,
-          real64 const dt,
-          STENCILWRAPPER_TYPE const & stencil,
-          MeshLevel & mesh );
-};
-
 /******************************** CFLKernel ********************************/
 
 /**
@@ -177,6 +94,169 @@ struct CFLKernel
           real64 & maxCompCFLNumber );
 
 };
+
+/******************************** CFLKernel ********************************/
+
+template< integer NP >
+GEOS_HOST_DEVICE
+void
+CFLKernel::
+  computePhaseCFL( real64 const poreVol,
+                   arraySlice1d< real64 const, compflow::USD_PHASE - 1 > phaseVolFrac,
+                   arraySlice1d< real64 const, constitutive::relperm::USD_RELPERM - 2 > phaseRelPerm,
+                   arraySlice2d< real64 const, constitutive::relperm::USD_RELPERM_DS - 2 > dPhaseRelPerm_dPhaseVolFrac,
+                   arraySlice1d< real64 const, constitutive::multifluid::USD_PHASE - 2 > phaseVisc,
+                   arraySlice1d< real64 const, compflow::USD_PHASE - 1 > phaseOutflux,
+                   real64 & phaseCFLNumber )
+{
+  // first, check which phases are mobile in the cell
+  real64 mob[NP]{};
+  localIndex mobilePhases[NP]{};
+  localIndex numMobilePhases = 0;
+  for( localIndex ip = 0; ip < NP; ++ip )
+  {
+    if( phaseVolFrac[ip] > 0 )
+    {
+      mob[ip] = phaseRelPerm[ip] / phaseVisc[ip];
+      if( mob[ip] > minPhaseMobility )
+      {
+        mobilePhases[numMobilePhases] = ip;
+        numMobilePhases++;
+      }
+    }
+  }
+
+  // then, depending on the regime, apply the appropriate CFL formula
+  phaseCFLNumber = 0;
+
+  // single-phase flow regime
+  if( numMobilePhases == 1 )
+  {
+    phaseCFLNumber = phaseOutflux[mobilePhases[0]] / poreVol;
+  }
+  // two-phase flow regime
+  else if( numMobilePhases == 2 )
+  {
+    // from Hui Cao's PhD thesis
+    localIndex const ip0 = mobilePhases[0];
+    localIndex const ip1 = mobilePhases[1];
+    real64 const dMob_dVolFrac[2] = { dPhaseRelPerm_dPhaseVolFrac[ip0][ip0] / phaseVisc[ip0],
+                                      -dPhaseRelPerm_dPhaseVolFrac[ip1][ip1] / phaseVisc[ip1] }; // using S0 = 1 - S1
+    real64 const denom = 1. / ( poreVol * ( mob[ip0] + mob[ip1] ) );
+    real64 const coef0 = denom * mob[ip1] / mob[ip0] * dMob_dVolFrac[ip0];
+    real64 const coef1 = -denom * mob[ip0] / mob[ip1] * dMob_dVolFrac[ip1];
+
+    phaseCFLNumber = LvArray::math::abs( coef0*phaseOutflux[ip0] + coef1*phaseOutflux[ip1] );
+  }
+  // three-phase flow regime
+  else if( numMobilePhases == 3 )
+  {
+    // from Keith Coats, IMPES stability: Selection of stable timesteps (2003)
+    real64 totalMob = 0.0;
+    for( integer ip = 0; ip < numMobilePhases; ++ip )
+    {
+      totalMob += mob[ip];
+    }
+
+    real64 f[2][2]{};
+    for( integer i = 0; i < 2; ++i )
+    {
+      for( integer j = 0; j < 2; ++j )
+      {
+        f[i][j]  = ( i == j )*totalMob - mob[i];
+        f[i][j] /= (totalMob * mob[j]);
+        real64 sum = 0;
+        for( integer k = 0; k < 3; ++k )
+        {
+          sum += dPhaseRelPerm_dPhaseVolFrac[k][j] / phaseVisc[k]
+                 * phaseOutflux[j];
+        }
+        f[i][j] *= sum;
+      }
+    }
+    phaseCFLNumber = f[0][0] + f[1][1];
+    phaseCFLNumber += sqrt( phaseCFLNumber*phaseCFLNumber - 4 * ( f[0][0]*f[1][1] - f[1][0]*f[0][1] ) );
+    phaseCFLNumber = 0.5 * LvArray::math::abs( phaseCFLNumber ) / poreVol;
+  }
+}
+
+template< integer NC >
+GEOS_HOST_DEVICE
+void
+CFLKernel::
+  computeCompCFL( real64 const poreVol,
+                  arraySlice1d< real64 const, compflow::USD_COMP - 1 > compDens,
+                  arraySlice1d< real64 const, compflow::USD_COMP - 1 > compFrac,
+                  arraySlice1d< real64 const, compflow::USD_COMP - 1 > compOutflux,
+                  real64 & compCFLNumber )
+{
+  compCFLNumber = 0.0;
+  for( integer ic = 0; ic < NC; ++ic )
+  {
+    if( compFrac[ic] > minComponentFraction )
+    {
+      real64 const compMoles = compDens[ic] * poreVol;
+      real64 const CFL = compOutflux[ic] / compMoles;
+      if( CFL > compCFLNumber )
+      {
+        compCFLNumber = CFL;
+      }
+    }
+  }
+}
+
+template< integer NC, integer NP >
+void
+CFLKernel::
+  launch( localIndex const size,
+          arrayView1d< real64 const > const & volume,
+          arrayView2d< real64 const > const & porosity,
+          arrayView2d< real64 const, compflow::USD_COMP > const & compDens,
+          arrayView2d< real64 const, compflow::USD_COMP > const & compFrac,
+          arrayView2d< real64 const, compflow::USD_PHASE > const & phaseVolFrac,
+          arrayView3d< real64 const, constitutive::relperm::USD_RELPERM > const & phaseRelPerm,
+          arrayView4d< real64 const, constitutive::relperm::USD_RELPERM_DS > const & dPhaseRelPerm_dPhaseVolFrac,
+          arrayView3d< real64 const, constitutive::multifluid::USD_PHASE > const & phaseVisc,
+          arrayView2d< real64 const, compflow::USD_PHASE > const & phaseOutflux,
+          arrayView2d< real64 const, compflow::USD_COMP > const & compOutflux,
+          arrayView1d< real64 > const & phaseCFLNumber,
+          arrayView1d< real64 > const & compCFLNumber,
+          real64 & maxPhaseCFLNumber,
+          real64 & maxCompCFLNumber )
+{
+  RAJA::ReduceMax< parallelDeviceReduce, real64 > subRegionPhaseCFLNumber( 0.0 );
+  RAJA::ReduceMax< parallelDeviceReduce, real64 > subRegionCompCFLNumber( 0.0 );
+
+  forAll< parallelDevicePolicy<> >( size, [=] GEOS_HOST_DEVICE ( localIndex const ei )
+  {
+    real64 const poreVol = volume[ei] * porosity[ei][0];
+
+    // phase CFL number
+    real64 cellPhaseCFLNumber = 0.0;
+    computePhaseCFL< NP >( poreVol,
+                           phaseVolFrac[ei],
+                           phaseRelPerm[ei][0],
+                           dPhaseRelPerm_dPhaseVolFrac[ei][0],
+                           phaseVisc[ei][0],
+                           phaseOutflux[ei],
+                           cellPhaseCFLNumber );
+    subRegionPhaseCFLNumber.max( cellPhaseCFLNumber );
+    phaseCFLNumber[ei] = cellPhaseCFLNumber;
+
+    // component CFL number
+    real64 cellCompCFLNumber = 0.0;
+    computeCompCFL< NC >( poreVol,
+                          compDens[ei],
+                          compFrac[ei],
+                          compOutflux[ei],
+                          cellCompCFLNumber );
+    subRegionCompCFLNumber.max( cellCompCFLNumber );
+    compCFLNumber[ei] = cellCompCFLNumber;
+  } );
+
+  maxPhaseCFLNumber = subRegionPhaseCFLNumber.get();
+  maxCompCFLNumber = subRegionCompCFLNumber.get();
+}
 
 } // namespace isothermalCompositionalMultiphaseFVMKernels
 

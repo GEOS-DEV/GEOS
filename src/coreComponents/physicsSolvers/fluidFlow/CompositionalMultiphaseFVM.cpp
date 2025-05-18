@@ -56,6 +56,7 @@
 #include "physicsSolvers/fluidFlow/kernels/compositional/ThermalPhaseMobilityKernel.hpp"
 #include "physicsSolvers/fluidFlow/kernels/compositional/AquiferBCKernel.hpp"
 #include "physicsSolvers/fluidFlow/kernels/compositional/CFLKernel.hpp"
+#include "physicsSolvers/fluidFlow/kernels/compositional/CFLFluxKernel.hpp"
 #include "physicsSolvers/fluidFlow/kernels/compositional/zFormulation/FluxComputeZFormulationKernel.hpp"
 #include "physicsSolvers/fluidFlow/kernels/compositional/zFormulation/AccumulationZFormulationKernel.hpp"
 #include "physicsSolvers/fluidFlow/kernels/compositional/zFormulation/PhaseMobilityZFormulationKernel.hpp"
@@ -1449,7 +1450,7 @@ void CompositionalMultiphaseFVM::applyAquiferBC( real64 const time,
       arrayView1d< real64 const > const & aquiferWaterPhaseCompFrac = bc.getWaterPhaseComponentFraction();
 
       // While this kernel is waiting for a factory class, pass all the accessors here
-      isothermalCompositionalMultiphaseBaseKernels::KernelLaunchSelector1
+      isothermalCompositionalMultiphaseBaseKernels::KernelLaunchSelectorComp
       < isothermalCompositionalMultiphaseFVMKernels::AquiferBCKernel >( m_numComponents,
                                                                         m_numPhases,
                                                                         waterPhaseIndex,
@@ -1564,7 +1565,6 @@ real64 CompositionalMultiphaseFVM::setNextDt( real64 const & currentTime,
 
 real64 CompositionalMultiphaseFVM::setNextDtBasedOnCFL( const geos::real64 & currentDt, geos::DomainPartition & domain )
 {
-
   real64 maxPhaseCFL, maxCompCFL;
 
   computeCFLNumbers( domain, currentDt, maxPhaseCFL, maxCompCFL );
@@ -1613,7 +1613,7 @@ void CompositionalMultiphaseFVM::computeCFLNumbers( geos::DomainPartition & doma
       typename TYPEOFREF( stencil ) ::KernelWrapper stencilWrapper = stencil.createKernelWrapper();
 
       // While this kernel is waiting for a factory class, pass all the accessors here
-      isothermalCompositionalMultiphaseBaseKernels::KernelLaunchSelector1
+      isothermalCompositionalMultiphaseBaseKernels::KernelLaunchSelectorComp
       < isothermalCompositionalMultiphaseFVMKernels::CFLFluxKernel >( numComps,
                                                                       numPhases,
                                                                       m_gravityDensityScheme == GravityDensityScheme::PhasePresence,
@@ -1670,7 +1670,7 @@ void CompositionalMultiphaseFVM::computeCFLNumbers( geos::DomainPartition & doma
       real64 subRegionMaxPhaseCFLNumber = 0.0;
       real64 subRegionMaxCompCFLNumber = 0.0;
 
-      isothermalCompositionalMultiphaseBaseKernels::KernelLaunchSelector2
+      isothermalCompositionalMultiphaseBaseKernels::KernelLaunchSelectorCompPhase
       < isothermalCompositionalMultiphaseFVMKernels::CFLKernel >( numComps, numPhases,
                                                                   subRegion.size(),
                                                                   volume,

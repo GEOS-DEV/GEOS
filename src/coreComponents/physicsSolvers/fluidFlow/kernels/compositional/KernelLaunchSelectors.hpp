@@ -60,6 +60,15 @@ void kernelLaunchSelectorCompSwitch( T value, LAMBDA && lambda )
 } // namespace internal
 
 template< typename KERNELWRAPPER, typename ... ARGS >
+void KernelLaunchSelectorComp( integer const numComp, ARGS && ... args )
+{
+  internal::kernelLaunchSelectorCompSwitch( numComp, [&] ( auto NC )
+  {
+    KERNELWRAPPER::template launch< NC() >( std::forward< ARGS >( args )... );
+  } );
+}
+
+template< typename KERNELWRAPPER, typename ... ARGS >
 void KernelLaunchSelectorCompTherm( integer const numComp, bool const isThermal, ARGS && ... args )
 {
   geos::internal::kernelLaunchSelectorCompThermSwitch( numComp, isThermal, [&] ( auto NC, auto ISTHERMAL )
@@ -69,16 +78,7 @@ void KernelLaunchSelectorCompTherm( integer const numComp, bool const isThermal,
 }
 
 template< typename KERNELWRAPPER, typename ... ARGS >
-void KernelLaunchSelector1( integer const numComp, ARGS && ... args )
-{
-  internal::kernelLaunchSelectorCompSwitch( numComp, [&] ( auto NC )
-  {
-    KERNELWRAPPER::template launch< NC() >( std::forward< ARGS >( args )... );
-  } );
-}
-
-template< typename KERNELWRAPPER, typename ... ARGS >
-void KernelLaunchSelector2( integer const numComp, integer const numPhase, ARGS && ... args )
+void KernelLaunchSelectorCompPhase( integer const numComp, integer const numPhase, ARGS && ... args )
 {
   // Ideally this would be inside the dispatch, but it breaks on Summit with GCC 9.1.0 and CUDA 11.0.3.
   if( numPhase == 2 )
@@ -102,7 +102,7 @@ void KernelLaunchSelector2( integer const numComp, integer const numPhase, ARGS 
 }
 
 template< typename KERNELWRAPPER, typename ... ARGS >
-void KernelLaunchSelector_NC_NP_THERM( integer const numComp, integer const numPhase, integer const isThermal, ARGS && ... args )
+void KernelLaunchSelectorCompPhaseTherm( integer const numComp, integer const numPhase, integer const isThermal, ARGS && ... args )
 {
   // Ideally this would be inside the dispatch, but it breaks on Summit with GCC 9.1.0 and CUDA 11.0.3.
   if( isThermal )

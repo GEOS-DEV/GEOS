@@ -28,12 +28,7 @@ namespace internal
 template< typename S, typename T, typename LAMBDA >
 void invokePhaseDispatchLambda ( S val, T numPhases, LAMBDA && lambda )
 {
-  if( numPhases == 1 )
-  {
-    lambda( val, std::integral_constant< T, 1 >());
-    return;
-  }
-  else if( numPhases == 2 )
+  if( numPhases == 2 )
   {
     lambda( val, std::integral_constant< T, 2 >());
     return;
@@ -137,11 +132,6 @@ void kernelLaunchSelectorCompPhaseSwitch( T value, T n_phase, LAMBDA && lambda )
   static_assert( std::is_integral< T >::value, "kernelLaunchSelectorCompSwitch: value type should be integral" );
   switch( value )
   {
-    case 1:
-    {
-      invokePhaseDispatchLambda( std::integral_constant< T, 1 >(), n_phase, lambda );
-      return;
-    }
     case 2:
     {
       invokePhaseDispatchLambda( std::integral_constant< T, 2 >(), n_phase, lambda );
