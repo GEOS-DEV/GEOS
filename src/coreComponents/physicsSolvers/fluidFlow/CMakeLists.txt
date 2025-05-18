@@ -142,7 +142,6 @@ set( fluidFlowSolvers_sources
      SourceFluxStatistics.cpp
      StencilDataCollection.cpp
      kernels/singlePhase/proppant/ProppantFluxKernels.cpp
-     kernels/compositional/AquiferBCKernel.cpp
      kernels/compositional/FluxComputeKernelBase.cpp
      kernels/compositional/CompositionalMultiphaseHybridFVMKernels.cpp
      wells/CompositionalMultiphaseWell.cpp
