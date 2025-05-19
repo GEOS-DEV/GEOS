@@ -146,7 +146,8 @@ ProblemManager::ProblemManager( conduit::Node & root ):
   }
   catch( std::exception const & e )
   {
-    throw;
+    errorLogger.write( errorLogger.currentErrorMsg() );
+    throw e;
   }
 }
 
@@ -255,7 +256,8 @@ void ProblemManager::parseCommandLineInput()
   }
   catch( std::exception const & e )
   {
-    throw;
+    errorLogger.write( errorLogger.currentErrorMsg() );
+    throw e;
   }
 }
 
@@ -303,7 +305,8 @@ bool ProblemManager::parseRestart( string & restartFileName, CommandLineOptions 
   }
   catch( std::exception const & e )
   {
-    throw;
+    errorLogger.write( errorLogger.currentErrorMsg() );
+    throw e;
   }
 }
 
@@ -337,7 +340,8 @@ void ProblemManager::generateDocumentation()
   }
   catch( std::exception const & e )
   {
-    throw;
+    errorLogger.write( errorLogger.currentErrorMsg() );
+    throw e;
   }
 }
 
@@ -450,7 +454,8 @@ void ProblemManager::setSchemaDeviations( xmlWrapper::xmlNode schemaRoot,
   }
   catch( std::exception const & e )
   {
-    throw;
+    errorLogger.write( errorLogger.currentErrorMsg() );
+    throw e;
   }
 }
 
@@ -472,16 +477,8 @@ void ProblemManager::parseInputFile()
     parseXMLDocument( xmlDocument );
   }
   catch( std::exception const & e )
-  {   
-    // TODO: même code mais dans CO2BrineFluid
-    // errorLogger.currentErrorMsg()
-    //   .addToMsg( e )
-    //   .setCodeLocation( __FILE__, __LINE__ )
-    //   .setType( ErrorLogger::MsgType::Error );
-    // TODO: 
-    // write( errorLogger.currentErrorMsg )
-    // throw e; 
-    throw;
+  {
+    throw e;
   }
 }
 
@@ -501,74 +498,80 @@ void ProblemManager::parseInputString( string const & xmlString )
   }
   catch( std::exception const & e )
   {
-    throw;
+    errorLogger.write( errorLogger.currentErrorMsg() );
+    throw e;
   }
 }
-
 
 void ProblemManager::parseXMLDocument( xmlWrapper::xmlDocument & xmlDocument )
 {
   try
   {
-    // Extract the problem node and begin processing the user inputs
-    xmlWrapper::xmlNode xmlProblemNode = xmlDocument.getChild( this->getName().c_str() );
-    processInputFileRecursive( xmlDocument, xmlProblemNode );
-
-    // The objects in domain are handled separately for now
-    {
-      DomainPartition & domain = getDomainPartition();
-      ConstitutiveManager & constitutiveManager = domain.getGroup< ConstitutiveManager >( groupKeys.constitutiveManager );
-      xmlWrapper::xmlNode topLevelNode = xmlProblemNode.child( constitutiveManager.getName().c_str());
-      constitutiveManager.processInputFileRecursive( xmlDocument, topLevelNode );
-
-      // Open mesh levels
-      MeshManager & meshManager = this->getGroup< MeshManager >( groupKeys.meshManager );
-      meshManager.generateMeshLevels( domain );
-      Group & meshBodies = domain.getMeshBodies();
-
-      auto parseRegions = [&]( string_view regionManagerKey, bool const hasParticles )
-      {
-        xmlWrapper::xmlNode regionsNode = xmlProblemNode.child( regionManagerKey.data() );
-        xmlWrapper::xmlNodePos regionsNodePos = xmlDocument.getNodePosition( regionsNode );
-        std::set< string > regionNames;
-
-        for( xmlWrapper::xmlNode regionNode : regionsNode.children() )
-        {
-          auto const regionNodePos = xmlDocument.getNodePosition( regionNode );
-          string const regionName = Group::processInputName( regionNode, regionNodePos,
-                                                             regionsNode.name(), regionsNodePos, regionNames );
-          try
-          {
-            string const regionMeshBodyName =
-              ElementRegionBase::verifyMeshBodyName( meshBodies,
-                                                     regionNode.attribute( "meshBody" ).value() );
-
-            MeshBody & meshBody = domain.getMeshBody( regionMeshBodyName );
-            meshBody.setHasParticles( hasParticles );
-            meshBody.forMeshLevels( [&]( MeshLevel & meshLevel )
-            {
-              ObjectManagerBase & elementManager = hasParticles ?
-                                                   static_cast< ObjectManagerBase & >( meshLevel.getParticleManager() ):
-                                                   static_cast< ObjectManagerBase & >( meshLevel.getElemManager() );
-              Group * newRegion = elementManager.createChild( regionNode.name(), regionName );
-              newRegion->processInputFileRecursive( xmlDocument, regionNode );
-            } );
-          }
-          catch( InputError const & e )
-          {
-            throw InputError( e, GEOS_FMT( "Error while parsing region {} ({}):\n",
-                                           regionName, regionNodePos.toString() ) );
-          }
-        }
-      };
-
-      parseRegions( MeshLevel::groupStructKeys::elemManagerString(), false );
-      parseRegions( MeshLevel::groupStructKeys::particleManagerString(), true );
-    }
+    parseXMLDocumentImpl( xmlDocument );
   }
   catch( std::exception const & e )
   {
-    throw;
+    errorLogger.write( errorLogger.currentErrorMsg() );
+    throw e;
+  }
+}
+
+void ProblemManager::parseXMLDocumentImpl( xmlWrapper::xmlDocument & xmlDocument )
+{
+  // Extract the problem node and begin processing the user inputs
+  xmlWrapper::xmlNode xmlProblemNode = xmlDocument.getChild( this->getName().c_str() );
+  processInputFileRecursive( xmlDocument, xmlProblemNode );
+
+  // The objects in domain are handled separately for now
+  {
+    DomainPartition & domain = getDomainPartition();
+    ConstitutiveManager & constitutiveManager = domain.getGroup< ConstitutiveManager >( groupKeys.constitutiveManager );
+    xmlWrapper::xmlNode topLevelNode = xmlProblemNode.child( constitutiveManager.getName().c_str());
+    constitutiveManager.processInputFileRecursive( xmlDocument, topLevelNode );
+
+    // Open mesh levels
+    MeshManager & meshManager = this->getGroup< MeshManager >( groupKeys.meshManager );
+    meshManager.generateMeshLevels( domain );
+    Group & meshBodies = domain.getMeshBodies();
+
+    auto parseRegions = [&]( string_view regionManagerKey, bool const hasParticles )
+    {
+      xmlWrapper::xmlNode regionsNode = xmlProblemNode.child( regionManagerKey.data() );
+      xmlWrapper::xmlNodePos regionsNodePos = xmlDocument.getNodePosition( regionsNode );
+      std::set< string > regionNames;
+
+      for( xmlWrapper::xmlNode regionNode : regionsNode.children() )
+      {
+        auto const regionNodePos = xmlDocument.getNodePosition( regionNode );
+        string const regionName = Group::processInputName( regionNode, regionNodePos,
+                                                           regionsNode.name(), regionsNodePos, regionNames );
+        try
+        {
+          string const regionMeshBodyName =
+            ElementRegionBase::verifyMeshBodyName( meshBodies,
+                                                   regionNode.attribute( "meshBody" ).value() );
+
+          MeshBody & meshBody = domain.getMeshBody( regionMeshBodyName );
+          meshBody.setHasParticles( hasParticles );
+          meshBody.forMeshLevels( [&]( MeshLevel & meshLevel )
+          {
+            ObjectManagerBase & elementManager = hasParticles ?
+                                                 static_cast< ObjectManagerBase & >( meshLevel.getParticleManager() ):
+                                                 static_cast< ObjectManagerBase & >( meshLevel.getElemManager() );
+            Group * newRegion = elementManager.createChild( regionNode.name(), regionName );
+            newRegion->processInputFileRecursive( xmlDocument, regionNode );
+          } );
+        }
+        catch( InputError const & e )
+        {
+          throw InputError( e, GEOS_FMT( "Error while parsing region {} ({}):\n",
+                                         regionName, regionNodePos.toString() ) );
+        }
+      }
+    };
+
+    parseRegions( MeshLevel::groupStructKeys::elemManagerString(), false );
+    parseRegions( MeshLevel::groupStructKeys::particleManagerString(), true );
   }
 }
 
@@ -795,7 +798,8 @@ void ProblemManager::generateMesh()
   }
   catch( std::exception const & e )
   {
-    throw;
+    errorLogger.write( errorLogger.currentErrorMsg() );
+    throw e;
   }
 }
 
@@ -811,7 +815,8 @@ void ProblemManager::importFields()
   }
   catch( std::exception const & e )
   {
-    throw;
+    errorLogger.write( errorLogger.currentErrorMsg() );
+    throw e;
   }
 }
 
@@ -831,7 +836,8 @@ void ProblemManager::applyNumericalMethods()
   }
   catch( std::exception const & e )
   {
-    throw;
+    errorLogger.write( errorLogger.currentErrorMsg() );
+    throw e;
   }
 }
 
@@ -889,7 +895,8 @@ ProblemManager::getDiscretizations() const
   }
   catch( std::exception const & e )
   {
-    throw;
+    errorLogger.write( errorLogger.currentErrorMsg() );
+    throw e;
   }
 }
 
@@ -965,7 +972,8 @@ void ProblemManager::generateMeshLevel( MeshLevel & meshLevel,
   }
   catch( std::exception const & e )
   {
-    throw;
+    errorLogger.write( errorLogger.currentErrorMsg() );
+    throw e;
   }
 }
 
@@ -996,7 +1004,8 @@ void ProblemManager::generateMeshLevel( MeshLevel & meshLevel,
   }
   catch( std::exception const & e )
   {
-    throw;
+    errorLogger.write( errorLogger.currentErrorMsg() );
+    throw e;
   }
 }
 
@@ -1243,10 +1252,8 @@ bool ProblemManager::runSimulation()
   }
   catch( std::exception const & e )
   {
-    // TODO: implémenter cette méthoe pour éviter la redondance avec write()
-    // errorLogger.writeCurrentMsg();
     errorLogger.write( errorLogger.currentErrorMsg() );
-    throw;
+    throw e;
   }
 }
 
@@ -1258,7 +1265,8 @@ DomainPartition & ProblemManager::getDomainPartition()
   }
   catch( std::exception const & e )
   {
-    throw;
+    errorLogger.write( errorLogger.currentErrorMsg() );
+    throw e;
   }
 }
 
@@ -1270,7 +1278,8 @@ DomainPartition const & ProblemManager::getDomainPartition() const
   }
   catch( std::exception const & e )
   {
-    throw;
+    errorLogger.write( errorLogger.currentErrorMsg() );
+    throw e;
   }
 }
 
@@ -1297,9 +1306,10 @@ void ProblemManager::applyInitialConditions()
     } );
     initializePostInitialConditions();
   }
-  catch( std::exception const & e ) 
+  catch( std::exception const & e )
   {
-    throw;
+    errorLogger.write( errorLogger.currentErrorMsg() );
+    throw e;
   }
 }
 
