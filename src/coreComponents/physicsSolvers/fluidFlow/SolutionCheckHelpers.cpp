@@ -57,20 +57,20 @@ void IdReporterOutput::outputWrongValues( string_view linesPrefix,
 {
   if( m_buffer.enabled() )
   {
-    integer numNegativeValues = MpiWrapper::sum( m_buffer.getSignaledIdsCount() );
-    if( numNegativeValues > 0 )
+    integer numWrongValues = MpiWrapper::sum( m_buffer.getSignaledIdsCount() );
+    if( numWrongValues > 0 )
     {
       string const minValueStr = GEOS_FMT( "{:.{}f} [{}]", minValue, 3, units::getSymbol( unit ) );
       GEOS_LOG_RANK_0( GEOS_FMT( "{}{} {} values encountered. Minimum value: {}.",
-                                 linesPrefix, numNegativeValues, valueNaming, minValueStr ) );
+                                 linesPrefix, numWrongValues, valueNaming, minValueStr ) );
       GEOS_LOG_RANK_0( GEOS_FMT( "{}{} element ids:",
                                  linesPrefix, valueNaming ) );
 
       MpiWrapper::barrier();
       if( m_buffer.getCollectedIdsCount() > 0 )
       {
-        GEOS_LOG( GEOS_FMT( "{}- rank {} ({} values): {} {}",
-                            string( ' ', linesPrefix.size() ),
+        GEOS_LOG( GEOS_FMT( "{}- rank {}, {} values: {} {}",
+                            string( linesPrefix.size(), ' ' ),
                             MpiWrapper::commRank(),
                             m_buffer.getSignaledIdsCount(),
                             stringutilities::join( m_buffer, ", " ),
