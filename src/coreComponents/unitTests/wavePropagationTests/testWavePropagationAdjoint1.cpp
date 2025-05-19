@@ -170,7 +170,7 @@ char const * xmlInput =
   </Problem>
   )xml";
 
-class AcousticWaveEquationSEMTest : public ::testing::Test
+class AcousticWaveEquationSEMTest : public ::testing::TestWithParam< int >
 {
 public:
 
@@ -197,8 +197,10 @@ real64 constexpr AcousticWaveEquationSEMTest::time;
 real64 constexpr AcousticWaveEquationSEMTest::dt;
 real64 constexpr AcousticWaveEquationSEMTest::eps;
 
-TEST_F( AcousticWaveEquationSEMTest, SeismoTrace )
+TEST_P( AcousticWaveEquationSEMTest, SeismoTrace )
 {
+
+  int gradient = GetParam();
 
   DomainPartition & domain = state.getProblemManager().getDomainPartition();
   propagator = &state.getProblemManager().getPhysicsSolverManager().getGroup< AcousticWaveEquationSEM >( "acousticSolver" );
@@ -216,7 +218,7 @@ TEST_F( AcousticWaveEquationSEMTest, SeismoTrace )
   for( int i=0; i<50; i++ )
   {
     rhsForward[i][0]=WaveSolverUtils::evaluateRicker( time_n, *ptrTimeSourceFrequency, *ptrTimeSourceDelay, *ptrRickerOrder );
-    propagator->explicitStepForward( time_n, dt, i, domain, 0 );
+    propagator->explicitStepForward( time_n, dt, i, domain, gradient );
     time_n += dt;
   }
   // cleanup (triggers calculation of the remaining seismograms data points)
@@ -315,7 +317,7 @@ TEST_F( AcousticWaveEquationSEMTest, SeismoTrace )
   for( int i = 50; i > 0; i-- )
   {
     rhsBackward[i][0]=WaveSolverUtils::evaluateRicker( time_n, *ptrTimeSourceFrequency, *ptrTimeSourceDelay, *ptrRickerOrder );
-    propagator->explicitStepBackward( time_n, dt, i, domain, 0 );
+    propagator->explicitStepBackward( time_n, dt, i, domain, gradient );
     time_n -= dt;
     //check source node in backward loop
     arrayView2d< localIndex > const sNodeIds_loop = propagator->getReference< array2d< localIndex > >( AcousticWaveEquationSEM::viewKeyStruct::sourceNodeIdsString() ).toView();
@@ -393,6 +395,13 @@ TEST_F( AcousticWaveEquationSEMTest, SeismoTrace )
   std::cout << " Diff to compare with 9e-3: " << diffToCheck << std::endl;
   ASSERT_TRUE( diffToCheck < 9e-3 );
 }
+
+INSTANTIATE_TEST_CASE_P(
+        AcousticWaveEquationSEMTests,
+        AcousticWaveEquationSEMTest,
+        ::testing::Values(
+                0,1,2
+        ));
 
 int main( int argc, char * * argv )
 {
