@@ -157,17 +157,30 @@ ReactiveSinglePhaseFluid< BASE >::KernelWrapper::
 template< typename BASE >
 inline void
 ReactiveSinglePhaseFluid< BASE >::KernelWrapper::
-  computeReactionRates( real64 const pressure,
-                        real64 const temperature,
-                        arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & primarySpeciesAggregateConcentration,
-                        arraySlice1d< real64, compflow::USD_COMP - 1 > const & primarySpeciesConcentration,
-                        arraySlice1d< real64, compflow::USD_COMP - 1 > const & secondarySpeciesConcentration ) const
+  computeAggregateConcentractionsAndRates( real64 const pressure,
+                                           real64 const temperature,
+                                           arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & logPrimarySpeciesConcentration,
+                                           arraySlice1d< real64, compflow::USD_COMP - 1 > const & logSecondarySpeciesConcentration,
+                                           arraySlice1d< real64, compflow::USD_COMP - 1 > const & aggregatePrimarySpeciesConcentrations,
+                                           arraySlice2d< real64, compflow::USD_COMP - 1 > const & dAggregatePrimarySpeciesConcentrations_dLogPrimarySpeciesConcentrations,
+                                           arraySlice1d< real64, compflow::USD_COMP - 1 > const & reactionRates,
+                                           arraySlice2d< real64, compflow::USD_COMP - 1 > const & dReactionRates_dLogPrimarySpeciesConcentrations,
+                                           arraySlice1d< real64, compflow::USD_COMP - 1 > const & aggregateSpeciesRates,
+                                           arraySlice2d< real64, compflow::USD_COMP - 1 > const & dAggregateSpeciesRates_dLogPrimarySpeciesConcentrations ) const
 {
   GEOS_UNUSED_VAR( pressure );
-  // 1. We enforce equilibrium 
-  EquilibriumReactionsType::enforceEquilibrium_Extents( temperature, m_params, primarySpeciesAggregateConcentration, primarySpeciesConcentration );
-  // 2. We calculate the secondary species concentration 
-  speciesUtilities::calculateLogSecondarySpeciesConcentration( m_params, primarySpeciesConcentration, secondarySpeciesConcentration );
+
+  MixedEquilibriumKineticReactions::
+   updateMixedSystem( temperature,
+                      m_params,
+                      logPrimarySpeciesConcentrations,
+                      logSecondarySpeciesConcentrations,
+                      aggregatePrimarySpeciesConcentrations,
+                      dAggregatePrimarySpeciesConcentrations_dLogPrimarySpeciesConcentrations,
+                      reactionRates,
+                      dReactionRates_dLogPrimarySpeciesConcentrations,
+                      aggregateSpeciesRates,
+                      dAggregateSpeciesRates_dLogPrimarySpeciesConcentrations )
 }
 
 ENUM_STRINGS( ChemicalSystemType,
