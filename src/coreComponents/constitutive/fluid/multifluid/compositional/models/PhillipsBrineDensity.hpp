@@ -187,15 +187,15 @@ void PhillipsBrineDensityUpdate::compute(
   // Use molar density space for temporary derivatives
   real64 compressibilityFactor = 0.0;
   arraySlice1d< real64, USD2 > const & dCompressibilityFactor = dMolarDensity;
-  CompositionalDensityUpdate::computeCompressibilityFactorAndDerivs( numComps,
-                                                                     pressure,
-                                                                     temperature,
-                                                                     phaseComposition,
-                                                                     componentProperties,
-                                                                     m_equationOfState,
-                                                                     m_salinity,
-                                                                     compressibilityFactor,
-                                                                     dCompressibilityFactor );
+  CompositionalDensityUpdate::computeCompressibilityFactor( numComps,
+                                                            pressure,
+                                                            temperature,
+                                                            phaseComposition,
+                                                            componentProperties,
+                                                            m_equationOfState,
+                                                            m_salinity,
+                                                            compressibilityFactor,
+                                                            dCompressibilityFactor );
 
   // Convert to molar volume by scaling by (RT/P)
   // Scaling factor to convert compressibility factor (Z) to volume.

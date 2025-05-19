@@ -884,8 +884,6 @@ real64 PhysicsSolverBase::nonlinearImplicitStep( real64 const & time_n,
       m_numTimestepsSinceLastDtCut = 0;
       GEOS_LOG_LEVEL_RANK_0 ( logInfo::TimeStep, GEOS_FMT( "New dt = {}", stepDt ) );
 
-      exit(-1);
-
       // notify the solver statistics counter that this is a time step cut
       m_solverStatistics.logTimeStepCut();
     }
@@ -1378,17 +1376,17 @@ real64 PhysicsSolverBase::scalingForSystemSolution( DomainPartition & GEOS_UNUSE
 
   real64 maxDx = 0.0;
 
-  for ( localIndex i = 0; i < n; i++ )
+  for( localIndex i = 0; i < n; i++ )
   {
-    if ( LvArray::math::abs(localSolution[i]) > LvArray::math::abs(maxDx) )
+    if( LvArray::math::abs( localSolution[i] ) > LvArray::math::abs( maxDx ) )
     {
       maxDx = localSolution[i];
     }
   }
 
   bool oscillation = true;
-  if(LvArray::math::abs(maxDx) + LvArray::math::abs(m_maxDx_old) > 1e-3 &&
-    LvArray::math::abs(maxDx + m_maxDx_old) / (LvArray::math::abs(maxDx) + LvArray::math::abs(m_maxDx_old)) > 1e-2)
+  if( LvArray::math::abs( maxDx ) + LvArray::math::abs( m_maxDx_old ) > 1e-3 &&
+      LvArray::math::abs( maxDx + m_maxDx_old ) / (LvArray::math::abs( maxDx ) + LvArray::math::abs( m_maxDx_old )) > 1e-2 )
   {
     std::cout << "Oscillation not detected: " << maxDx << " " << m_maxDx_old << std::endl;
     oscillation = false;

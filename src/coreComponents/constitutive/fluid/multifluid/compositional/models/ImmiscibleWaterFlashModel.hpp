@@ -56,8 +56,7 @@ public:
                                    EquationOfStateType const liquidEos,
                                    EquationOfStateType const vapourEos,
                                    real64 const salinity,
-                                   arrayView1d< real64 const > const componentCriticalVolume,
-                                   std::map< std::string, std::chrono::system_clock::duration > & timers );
+                                   arrayView1d< real64 const > const componentCriticalVolume );
 
   // Mark as a 3-phase flash
   GEOS_HOST_DEVICE
@@ -131,7 +130,6 @@ public:
 private:
   ModelParameters const & m_parameters;
   integer m_waterComponentIndex{-1};
-  mutable std::map< std::string, std::chrono::system_clock::duration > m_timers;
 };
 
 template< int USD1, int USD2 >
