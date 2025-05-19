@@ -151,6 +151,13 @@ public:
   std::string toString( MsgType type );
 
   /**
+   * @brief Write the error message in the yaml file regarding indentation and line break
+   * 
+   * @param msg 
+   */
+  void streamMultilineYamlAttribute( std::string_view msg, std::ofstream& yamlFile );
+
+  /**
    * @brief Add the error/warning message into the yaml file
    *
    * @param errorMsg The error message informations formatted by the associated structure
