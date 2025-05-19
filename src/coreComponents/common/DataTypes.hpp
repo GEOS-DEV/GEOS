@@ -99,15 +99,6 @@ using real64 = double;
 
 ///@}
 
-
-#if defined( GEOS_USE_BOUNDS_CHECK )
-
-#else
-
-#endif
-
-
-
 /**
  * @name Binary buffer data types.
  */
@@ -320,36 +311,6 @@ using CRSMatrixView = LvArray::CRSMatrixView< T, COL_INDEX, localIndex const, Lv
 ///@}
 
 //END_SPHINX_INCLUDE_00
-
-/**
- * @name Ordered and unordered map types.
- */
-///@{
-
-/**
- * @brief Base template for ordered and unordered maps.
- * @tparam TKEY key type
- * @tparam TVAL value type
- * @tparam SORTED a @p std::integral_constant<bool> indicating whether map is ordered
- */
-template< typename TKEY, typename TVAL, typename SORTED >
-class mapBase
-{};
-
-/// @cond DO_NOT_DOCUMENT
-template< typename TKEY, typename TVAL >
-class mapBase< TKEY, TVAL, std::integral_constant< bool, true > > : public stdMap< TKEY, TVAL >
-{
-public:
-  using stdMap< TKEY, TVAL >::StdMapWrapper; // enable list initialization
-};
-
-template< typename TKEY, typename TVAL >
-class mapBase< TKEY, TVAL, std::integral_constant< bool, false > > : public stdUnorderedMap< TKEY, TVAL >
-{
-  using stdUnorderedMap< TKEY, TVAL >::StdUnorderedMapWrapper; // enable list initialization
-};
-/// @endcond
 
 /**
  * @brief Stream output operator for map types.
