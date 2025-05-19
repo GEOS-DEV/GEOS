@@ -171,9 +171,9 @@ TEST( testStringUtilities, tokenize )
     for( TokenizeTest test : tokenizeTests )
     {
       stdVector< string > const r = stringutilities::tokenize( test.strToTest,
-                                                                 test.delims,
-                                                                 test.treatConsecutiveDelimAsOne,
-                                                                 test.preTrimStr );
+                                                               test.delims,
+                                                               test.treatConsecutiveDelimAsOne,
+                                                               test.preTrimStr );
 
       if( r != test.expected )
       {

@@ -3216,7 +3216,7 @@
 		<!--ghostRank => (no description available)-->
 		<xsd:attribute name="ghostRank" type="integer_array" />
 		<!--globalToLocalMap => (no description available)-->
-		<xsd:attribute name="globalToLocalMap" type="geos_mapBase_lt_long-long_cm_-int_cm_-std___1_integral_constant_lt_bool_cm_-false_gt__gt_" />
+		<xsd:attribute name="globalToLocalMap" type="geos_mapBase_lt_long-long_cm_-int_cm_-std_integral_constant_lt_bool_cm_-false_gt_-_gt_" />
 		<!--isExternal => (no description available)-->
 		<xsd:attribute name="isExternal" type="integer_array" />
 		<!--localMaxGlobalIndex => (no description available)-->
@@ -3244,7 +3244,7 @@
 		<!--ghostRank => (no description available)-->
 		<xsd:attribute name="ghostRank" type="integer_array" />
 		<!--globalToLocalMap => (no description available)-->
-		<xsd:attribute name="globalToLocalMap" type="geos_mapBase_lt_long-long_cm_-int_cm_-std___1_integral_constant_lt_bool_cm_-false_gt__gt_" />
+		<xsd:attribute name="globalToLocalMap" type="geos_mapBase_lt_long-long_cm_-int_cm_-std_integral_constant_lt_bool_cm_-false_gt_-_gt_" />
 		<!--isExternal => (no description available)-->
 		<xsd:attribute name="isExternal" type="integer_array" />
 		<!--localMaxGlobalIndex => (no description available)-->
@@ -3263,11 +3263,11 @@
 		<!--domainBoundaryIndicator => (no description available)-->
 		<xsd:attribute name="domainBoundaryIndicator" type="integer_array" />
 		<!--faceList => (no description available)-->
-		<xsd:attribute name="faceList" type="geos_InterObjectRelation_lt_LvArray_ArrayOfSets_lt_int_cm_-int_cm_-LvArray_ChaiBuffer_gt__gt_" />
+		<xsd:attribute name="faceList" type="geos_InterObjectRelation_lt_LvArray_ArrayOfSets_lt_int_cm_-int_cm_-LvArray_ChaiBuffer_gt_-_gt_" />
 		<!--ghostRank => (no description available)-->
 		<xsd:attribute name="ghostRank" type="integer_array" />
 		<!--globalToLocalMap => (no description available)-->
-		<xsd:attribute name="globalToLocalMap" type="geos_mapBase_lt_long-long_cm_-int_cm_-std___1_integral_constant_lt_bool_cm_-false_gt__gt_" />
+		<xsd:attribute name="globalToLocalMap" type="geos_mapBase_lt_long-long_cm_-int_cm_-std_integral_constant_lt_bool_cm_-false_gt_-_gt_" />
 		<!--isExternal => (no description available)-->
 		<xsd:attribute name="isExternal" type="integer_array" />
 		<!--localMaxGlobalIndex => (no description available)-->
@@ -3277,7 +3277,7 @@
 		<!--maxGlobalIndex => (no description available)-->
 		<xsd:attribute name="maxGlobalIndex" type="globalIndex" />
 		<!--nodeList => (no description available)-->
-		<xsd:attribute name="nodeList" type="geos_InterObjectRelation_lt_LvArray_Array_lt_int_cm_-2_cm_-camp_int_seq_lt_long_cm_-0l_cm_-1l_gt__cm_-int_cm_-LvArray_ChaiBuffer_gt__gt_" />
+		<xsd:attribute name="nodeList" type="geos_InterObjectRelation_lt_LvArray_Array_lt_int_cm_-2_cm_-camp_int_seq_lt_long_cm_-0l_cm_-1l_gt__cm_-int_cm_-LvArray_ChaiBuffer_gt_-_gt_" />
 	</xsd:complexType>
 	<xsd:complexType name="embeddedSurfacesEdgeManagerType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -3287,11 +3287,11 @@
 		<!--domainBoundaryIndicator => (no description available)-->
 		<xsd:attribute name="domainBoundaryIndicator" type="integer_array" />
 		<!--faceList => (no description available)-->
-		<xsd:attribute name="faceList" type="geos_InterObjectRelation_lt_LvArray_ArrayOfSets_lt_int_cm_-int_cm_-LvArray_ChaiBuffer_gt__gt_" />
+		<xsd:attribute name="faceList" type="geos_InterObjectRelation_lt_LvArray_ArrayOfSets_lt_int_cm_-int_cm_-LvArray_ChaiBuffer_gt_-_gt_" />
 		<!--ghostRank => (no description available)-->
 		<xsd:attribute name="ghostRank" type="integer_array" />
 		<!--globalToLocalMap => (no description available)-->
-		<xsd:attribute name="globalToLocalMap" type="geos_mapBase_lt_long-long_cm_-int_cm_-std___1_integral_constant_lt_bool_cm_-false_gt__gt_" />
+		<xsd:attribute name="globalToLocalMap" type="geos_mapBase_lt_long-long_cm_-int_cm_-std_integral_constant_lt_bool_cm_-false_gt_-_gt_" />
 		<!--isExternal => (no description available)-->
 		<xsd:attribute name="isExternal" type="integer_array" />
 		<!--localMaxGlobalIndex => (no description available)-->
@@ -3301,7 +3301,7 @@
 		<!--maxGlobalIndex => (no description available)-->
 		<xsd:attribute name="maxGlobalIndex" type="globalIndex" />
 		<!--nodeList => (no description available)-->
-		<xsd:attribute name="nodeList" type="geos_InterObjectRelation_lt_LvArray_Array_lt_int_cm_-2_cm_-camp_int_seq_lt_long_cm_-0l_cm_-1l_gt__cm_-int_cm_-LvArray_ChaiBuffer_gt__gt_" />
+		<xsd:attribute name="nodeList" type="geos_InterObjectRelation_lt_LvArray_Array_lt_int_cm_-2_cm_-camp_int_seq_lt_long_cm_-0l_cm_-1l_gt__cm_-int_cm_-LvArray_ChaiBuffer_gt_-_gt_" />
 	</xsd:complexType>
 	<xsd:complexType name="embeddedSurfacesNodeManagerType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -3311,7 +3311,7 @@
 		<!--domainBoundaryIndicator => (no description available)-->
 		<xsd:attribute name="domainBoundaryIndicator" type="integer_array" />
 		<!--edgeList => (no description available)-->
-		<xsd:attribute name="edgeList" type="geos_InterObjectRelation_lt_LvArray_ArrayOfSets_lt_int_cm_-int_cm_-LvArray_ChaiBuffer_gt__gt_" />
+		<xsd:attribute name="edgeList" type="geos_InterObjectRelation_lt_LvArray_ArrayOfSets_lt_int_cm_-int_cm_-LvArray_ChaiBuffer_gt_-_gt_" />
 		<!--elemList => (no description available)-->
 		<xsd:attribute name="elemList" type="LvArray_ArrayOfArrays_lt_int_cm_-int_cm_-LvArray_ChaiBuffer_gt_" />
 		<!--elemRegionList => (no description available)-->
@@ -3321,7 +3321,7 @@
 		<!--ghostRank => (no description available)-->
 		<xsd:attribute name="ghostRank" type="integer_array" />
 		<!--globalToLocalMap => (no description available)-->
-		<xsd:attribute name="globalToLocalMap" type="geos_mapBase_lt_long-long_cm_-int_cm_-std___1_integral_constant_lt_bool_cm_-false_gt__gt_" />
+		<xsd:attribute name="globalToLocalMap" type="geos_mapBase_lt_long-long_cm_-int_cm_-std_integral_constant_lt_bool_cm_-false_gt_-_gt_" />
 		<!--isExternal => (no description available)-->
 		<xsd:attribute name="isExternal" type="integer_array" />
 		<!--localMaxGlobalIndex => (no description available)-->
@@ -3345,7 +3345,7 @@
 		<!--domainBoundaryIndicator => (no description available)-->
 		<xsd:attribute name="domainBoundaryIndicator" type="integer_array" />
 		<!--edgeList => (no description available)-->
-		<xsd:attribute name="edgeList" type="geos_InterObjectRelation_lt_LvArray_ArrayOfArrays_lt_int_cm_-int_cm_-LvArray_ChaiBuffer_gt__gt_" />
+		<xsd:attribute name="edgeList" type="geos_InterObjectRelation_lt_LvArray_ArrayOfArrays_lt_int_cm_-int_cm_-LvArray_ChaiBuffer_gt_-_gt_" />
 		<!--elemList => (no description available)-->
 		<xsd:attribute name="elemList" type="integer_array2d" />
 		<!--elemRegionList => (no description available)-->
@@ -3363,7 +3363,7 @@
 		<!--ghostRank => (no description available)-->
 		<xsd:attribute name="ghostRank" type="integer_array" />
 		<!--globalToLocalMap => (no description available)-->
-		<xsd:attribute name="globalToLocalMap" type="geos_mapBase_lt_long-long_cm_-int_cm_-std___1_integral_constant_lt_bool_cm_-false_gt__gt_" />
+		<xsd:attribute name="globalToLocalMap" type="geos_mapBase_lt_long-long_cm_-int_cm_-std_integral_constant_lt_bool_cm_-false_gt_-_gt_" />
 		<!--isExternal => (no description available)-->
 		<xsd:attribute name="isExternal" type="integer_array" />
 		<!--localMaxGlobalIndex => (no description available)-->
@@ -3375,7 +3375,7 @@
 		<!--mimGravityCoefficient => Mimetic gravity coefficient => CompositionalMultiphaseHybridFVM-->
 		<xsd:attribute name="mimGravityCoefficient" type="real64_array" />
 		<!--nodeList => (no description available)-->
-		<xsd:attribute name="nodeList" type="geos_InterObjectRelation_lt_LvArray_ArrayOfArrays_lt_int_cm_-int_cm_-LvArray_ChaiBuffer_gt__gt_" />
+		<xsd:attribute name="nodeList" type="geos_InterObjectRelation_lt_LvArray_ArrayOfArrays_lt_int_cm_-int_cm_-LvArray_ChaiBuffer_gt_-_gt_" />
 	</xsd:complexType>
 	<xsd:complexType name="nodeManagerType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -3387,7 +3387,7 @@
 		<!--domainBoundaryIndicator => (no description available)-->
 		<xsd:attribute name="domainBoundaryIndicator" type="integer_array" />
 		<!--edgeList => (no description available)-->
-		<xsd:attribute name="edgeList" type="geos_InterObjectRelation_lt_LvArray_ArrayOfSets_lt_int_cm_-int_cm_-LvArray_ChaiBuffer_gt__gt_" />
+		<xsd:attribute name="edgeList" type="geos_InterObjectRelation_lt_LvArray_ArrayOfSets_lt_int_cm_-int_cm_-LvArray_ChaiBuffer_gt_-_gt_" />
 		<!--elemList => (no description available)-->
 		<xsd:attribute name="elemList" type="LvArray_ArrayOfArrays_lt_int_cm_-int_cm_-LvArray_ChaiBuffer_gt_" />
 		<!--elemRegionList => (no description available)-->
@@ -3395,11 +3395,11 @@
 		<!--elemSubRegionList => (no description available)-->
 		<xsd:attribute name="elemSubRegionList" type="LvArray_ArrayOfArrays_lt_int_cm_-int_cm_-LvArray_ChaiBuffer_gt_" />
 		<!--faceList => (no description available)-->
-		<xsd:attribute name="faceList" type="geos_InterObjectRelation_lt_LvArray_ArrayOfSets_lt_int_cm_-int_cm_-LvArray_ChaiBuffer_gt__gt_" />
+		<xsd:attribute name="faceList" type="geos_InterObjectRelation_lt_LvArray_ArrayOfSets_lt_int_cm_-int_cm_-LvArray_ChaiBuffer_gt_-_gt_" />
 		<!--ghostRank => (no description available)-->
 		<xsd:attribute name="ghostRank" type="integer_array" />
 		<!--globalToLocalMap => (no description available)-->
-		<xsd:attribute name="globalToLocalMap" type="geos_mapBase_lt_long-long_cm_-int_cm_-std___1_integral_constant_lt_bool_cm_-false_gt__gt_" />
+		<xsd:attribute name="globalToLocalMap" type="geos_mapBase_lt_long-long_cm_-int_cm_-std_integral_constant_lt_bool_cm_-false_gt_-_gt_" />
 		<!--isExternal => (no description available)-->
 		<xsd:attribute name="isExternal" type="integer_array" />
 		<!--localMaxGlobalIndex => (no description available)-->
@@ -3422,7 +3422,7 @@
 		<!--ghostRank => (no description available)-->
 		<xsd:attribute name="ghostRank" type="integer_array" />
 		<!--globalToLocalMap => (no description available)-->
-		<xsd:attribute name="globalToLocalMap" type="geos_mapBase_lt_long-long_cm_-int_cm_-std___1_integral_constant_lt_bool_cm_-false_gt__gt_" />
+		<xsd:attribute name="globalToLocalMap" type="geos_mapBase_lt_long-long_cm_-int_cm_-std_integral_constant_lt_bool_cm_-false_gt_-_gt_" />
 		<!--isExternal => (no description available)-->
 		<xsd:attribute name="isExternal" type="integer_array" />
 		<!--localMaxGlobalIndex => (no description available)-->
@@ -3448,7 +3448,7 @@
 		<!--ghostRank => (no description available)-->
 		<xsd:attribute name="ghostRank" type="integer_array" />
 		<!--globalToLocalMap => (no description available)-->
-		<xsd:attribute name="globalToLocalMap" type="geos_mapBase_lt_long-long_cm_-int_cm_-std___1_integral_constant_lt_bool_cm_-false_gt__gt_" />
+		<xsd:attribute name="globalToLocalMap" type="geos_mapBase_lt_long-long_cm_-int_cm_-std_integral_constant_lt_bool_cm_-false_gt_-_gt_" />
 		<!--isExternal => (no description available)-->
 		<xsd:attribute name="isExternal" type="integer_array" />
 		<!--localMaxGlobalIndex => (no description available)-->
@@ -3469,7 +3469,7 @@
 		<!--ghostRank => (no description available)-->
 		<xsd:attribute name="ghostRank" type="integer_array" />
 		<!--globalToLocalMap => (no description available)-->
-		<xsd:attribute name="globalToLocalMap" type="geos_mapBase_lt_long-long_cm_-int_cm_-std___1_integral_constant_lt_bool_cm_-false_gt__gt_" />
+		<xsd:attribute name="globalToLocalMap" type="geos_mapBase_lt_long-long_cm_-int_cm_-std_integral_constant_lt_bool_cm_-false_gt_-_gt_" />
 		<!--isExternal => (no description available)-->
 		<xsd:attribute name="isExternal" type="integer_array" />
 		<!--localMaxGlobalIndex => (no description available)-->
@@ -3499,7 +3499,7 @@
 		<!--ghostRank => (no description available)-->
 		<xsd:attribute name="ghostRank" type="integer_array" />
 		<!--globalToLocalMap => (no description available)-->
-		<xsd:attribute name="globalToLocalMap" type="geos_mapBase_lt_long-long_cm_-int_cm_-std___1_integral_constant_lt_bool_cm_-false_gt__gt_" />
+		<xsd:attribute name="globalToLocalMap" type="geos_mapBase_lt_long-long_cm_-int_cm_-std_integral_constant_lt_bool_cm_-false_gt_-_gt_" />
 		<!--isExternal => (no description available)-->
 		<xsd:attribute name="isExternal" type="integer_array" />
 		<!--localMaxGlobalIndex => (no description available)-->
@@ -3513,7 +3513,7 @@
 		<!--nextWellElementIndexGlobal => (no description available)-->
 		<xsd:attribute name="nextWellElementIndexGlobal" type="integer_array" />
 		<!--nodeList => (no description available)-->
-		<xsd:attribute name="nodeList" type="geos_InterObjectRelation_lt_LvArray_Array_lt_int_cm_-2_cm_-camp_int_seq_lt_long_cm_-0l_cm_-1l_gt__cm_-int_cm_-LvArray_ChaiBuffer_gt__gt_" />
+		<xsd:attribute name="nodeList" type="geos_InterObjectRelation_lt_LvArray_Array_lt_int_cm_-2_cm_-camp_int_seq_lt_long_cm_-0l_cm_-1l_gt__cm_-int_cm_-LvArray_ChaiBuffer_gt_-_gt_" />
 		<!--numEdgesPerElement => (no description available)-->
 		<xsd:attribute name="numEdgesPerElement" type="integer" />
 		<!--numFacesPerElement => (no description available)-->
@@ -3540,7 +3540,7 @@
 		<!--ghostRank => (no description available)-->
 		<xsd:attribute name="ghostRank" type="integer_array" />
 		<!--globalToLocalMap => (no description available)-->
-		<xsd:attribute name="globalToLocalMap" type="geos_mapBase_lt_long-long_cm_-int_cm_-std___1_integral_constant_lt_bool_cm_-false_gt__gt_" />
+		<xsd:attribute name="globalToLocalMap" type="geos_mapBase_lt_long-long_cm_-int_cm_-std_integral_constant_lt_bool_cm_-false_gt_-_gt_" />
 		<!--isExternal => (no description available)-->
 		<xsd:attribute name="isExternal" type="integer_array" />
 		<!--localMaxGlobalIndex => (no description available)-->
@@ -3579,7 +3579,7 @@
 		<!--ghostRank => (no description available)-->
 		<xsd:attribute name="ghostRank" type="integer_array" />
 		<!--globalToLocalMap => (no description available)-->
-		<xsd:attribute name="globalToLocalMap" type="geos_mapBase_lt_long-long_cm_-int_cm_-std___1_integral_constant_lt_bool_cm_-false_gt__gt_" />
+		<xsd:attribute name="globalToLocalMap" type="geos_mapBase_lt_long-long_cm_-int_cm_-std_integral_constant_lt_bool_cm_-false_gt_-_gt_" />
 		<!--isExternal => (no description available)-->
 		<xsd:attribute name="isExternal" type="integer_array" />
 		<!--localMaxGlobalIndex => (no description available)-->

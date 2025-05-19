@@ -105,7 +105,7 @@ using TestTypes = ::testing::Types< int,
                                                                  // pointer but currently we're packing it.
                                     std::pair< string, double >,
                                     string,
-                                     stdVector< int >,
+                                    stdVector< int >,
                                     // stdVector< string > bufferOps currently can't pack this
                                     array1d< double >,
                                     string_array,
