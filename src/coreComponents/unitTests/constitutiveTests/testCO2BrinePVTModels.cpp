@@ -405,7 +405,7 @@ std::unique_ptr< MODEL > makeFlashModel( string const & filename,
   string str;
   while( std::getline( is, str ) )
   {
-    string_array const strs = stringutilities::tokenizeBySpaces< std::vector >( str );
+    string_array const strs = stringutilities::tokenizeBySpaces< stdVector >( str );
     TableFunction::OutputOptions const flashOutputOpts = {
       true, // writeCSV
       true, // writeInLog

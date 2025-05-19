@@ -173,7 +173,7 @@ public:
   }
 
 private:
-  std::vector< string > m_tableFileNames;
+  stdVector< string > m_tableFileNames;
 };
 
 
