@@ -266,7 +266,7 @@ buildElemToNodesImpl( AllMeshes & meshes,
   for( auto & [fractureName, fractureMesh]: meshes.getFaceBlocks() )
   {
     num2dCells += fractureMesh->GetNumberOfCells();
-    collocatedNodesMap.insert( { fractureName, CollocatedNodes( fractureName, fractureMesh, false ) } );
+    collocatedNodesMap.insert( { fractureName, CollocatedNodes( fractureName, fractureMesh ) } );
   }
   localIndex const numCells = num3dCells + num2dCells;
   array1d< INDEX_TYPE > nodeCounts( numCells );

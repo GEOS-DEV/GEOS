@@ -232,6 +232,24 @@ private:
         fracture->InsertNextCell( VTK_QUAD, numPoints, q );
       }
 
+      vtkNew< vtkIdTypeArray > cellGlobalIds;
+      cellGlobalIds->SetNumberOfComponents( 1 );
+      cellGlobalIds->SetNumberOfTuples( numQuads );
+      for( auto i = 0; i < numQuads; ++i )
+      {
+        cellGlobalIds->SetValue( i, i );
+      }
+      fracture->GetCellData()->SetGlobalIds( cellGlobalIds );
+
+      vtkNew< vtkIdTypeArray > pointGlobalIds;
+      pointGlobalIds->SetNumberOfComponents( 1 );
+      pointGlobalIds->SetNumberOfTuples( numPoints );
+      for( auto i = 0; i < numPoints; ++i )
+      {
+        pointGlobalIds->SetValue( i, i );
+      }
+      fracture->GetPointData()->SetGlobalIds( pointGlobalIds );
+
       // Do not forget the collocated_nodes fields
       vtkNew< vtkIdTypeArray > collocatedNodes;
       collocatedNodes->SetName( "collocated_nodes" );
