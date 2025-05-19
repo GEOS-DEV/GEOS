@@ -280,12 +280,15 @@ computeMixtureCoefficients( integer const numComps,
   aMixtureCoefficient = 0.0;
   for( integer jc = 0; jc < numComps; ++jc )
   {
-    for( integer ic = 0; ic < numComps; ++ic )
+    real64 const aj = sqrt( aPureCoefficient[jc] );
+    aMixtureCoefficient += composition[jc] * composition[jc] * aj * aj;
+    for( integer ic = jc+1; ic < numComps; ++ic )
     {
+      real64 const ai = sqrt( aPureCoefficient[ic] );
       real64 kij = 0.0;
       real64 dkij_dT = 0.0;
       getBinaryInteractionCiefficient( pressure, temperature, componentProperties, salinity, ic, jc, kij, dkij_dT );
-      aMixtureCoefficient += composition[ic] * composition[jc] * ( 1.0 - kij ) * sqrt( aPureCoefficient[ic] * aPureCoefficient[jc] );
+      aMixtureCoefficient += 2.0 * composition[ic] * composition[jc] * ( 1.0 - kij ) * ai * aj;
     }
   }
 
@@ -510,9 +513,11 @@ computeLogFugacityCoefficients( integer const numComps,
   real64 dkij_dT = 0.0;
   for( integer ic = 0; ic < numComps; ++ic )
   {
-    for( integer jc = 0; jc < numComps; ++jc )
+    kij( ic, ic ) = 0.0;
+    for( integer jc = ic+1; jc < numComps; ++jc )
     {
       getBinaryInteractionCiefficient( pressure, temperature, componentProperties, salinity, ic, jc, kij( ic, jc ), dkij_dT );
+      kij( jc, ic ) = kij( ic, jc );
     }
   }
 
@@ -666,11 +671,22 @@ computeLogFugacityCoefficients( integer const numComps,
     ki[ic] = 0.0;
     dki( ic, Deriv::dP ) = 0.0;
     dki( ic, Deriv::dT ) = 0.0;
+  }
 
-    real64 const ai = sqrt( aPureCoefficient[ic] );
+  for( integer ic = 0; ic < numComps; ++ic )
+  {
+    real64 const Ai = aPureCoefficient[ic];
+    real64 const ai = sqrt( Ai );
     real64 const dai_dP = aPureCoefficientDerivs( Deriv::dP, ic );
     real64 const dai_dT = aPureCoefficientDerivs( Deriv::dT, ic );
-    for( integer jc = 0; jc < numComps; ++jc )
+
+    ki[ic] += composition[ic] * Ai;
+    dki( ic, Deriv::dC + ic ) = Ai;
+
+    dki( ic, Deriv::dP ) += composition[ic] * dai_dP;
+    dki( ic, Deriv::dT ) += composition[ic] * dai_dT;
+
+    for( integer jc = ic+1; jc < numComps; ++jc )
     {
       real64 const aj = sqrt( aPureCoefficient[jc] );
       real64 const daj_dP = aPureCoefficientDerivs( Deriv::dP, jc );
@@ -682,10 +698,18 @@ computeLogFugacityCoefficients( integer const numComps,
       real64 const bicValue = ( 1.0 - kij ) * ai * aj;
 
       ki[ic] += composition[jc] * bicValue;
+      ki[jc] += composition[ic] * bicValue;
+
       dki( ic, Deriv::dC + jc ) = bicValue;
+      dki( jc, Deriv::dC + ic ) = bicValue;
+
       dki( ic, Deriv::dP ) += 0.5 * composition[jc] * bicValue * (dai_dP/aPureCoefficient[ic] + daj_dP/aPureCoefficient[jc]);
+      dki( jc, Deriv::dP ) += 0.5 * composition[ic] * bicValue * (dai_dP/aPureCoefficient[ic] + daj_dP/aPureCoefficient[jc]);
+
       dki( ic, Deriv::dT ) += 0.5 * composition[jc] * bicValue * (dai_dT/aPureCoefficient[ic] + daj_dT/aPureCoefficient[jc])
                               - composition[jc] * dkij_dT * ai * aj;
+      dki( jc, Deriv::dT ) += 0.5 * composition[ic] * bicValue * (dai_dT/aPureCoefficient[ic] + daj_dT/aPureCoefficient[jc])
+                              - composition[ic] * dkij_dT * ai * aj;
     }
   }
 
