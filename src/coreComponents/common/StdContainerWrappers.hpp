@@ -9,6 +9,13 @@
 namespace geos
 {
 
+#ifdef GEOS_USE_BOUNDS_CHECK
+#define USE_STD_CONTAINER_BOUNDS_CHECKING true
+#else
+#define USE_STD_CONTAINER_BOUNDS_CHECKING false
+#endif
+
+
 namespace internal
 {
 
@@ -22,13 +29,24 @@ namespace internal
  */
 template< typename T,
           typename Allocator = std::allocator< T >,
-          bool USE_STD_CONTAINER_BOUNDS_CHECKING = false
+          bool USE_BOUNDS_CHECKING = false
           >
 class StdVectorWrapper : public std::vector< T, Allocator >
 {
 public:
   /// Type alias for the base class (i.e., std::vector)
   using Base = std::vector< T, Allocator >;
+  using Base::Base;
+
+  /**
+   * @brief Conversion constructor for StdVectorWrapper.
+   * @tparam T Type of elements in the vector.
+   * @tparam Allocator Allocator type for the vector.
+   * @param vector std::vector of elements to copy into the StdVectorWrapper.
+   */
+  StdVectorWrapper( std::vector< T, Allocator > vec ):
+    Base( vec )
+  {}
 
   /**
    * Access element at index with bounds checking if USE_STD_CONTAINER_BOUNDS_CHECKING is true.
@@ -38,7 +56,7 @@ public:
    */
   T const & operator[]( size_t const index ) const
   {
-    if constexpr (USE_STD_CONTAINER_BOUNDS_CHECKING)
+    if constexpr (USE_BOUNDS_CHECKING)
     {
       return Base::at( index );
     }
@@ -56,7 +74,7 @@ public:
    */
   T & operator[]( size_t const index )
   {
-    if constexpr (USE_STD_CONTAINER_BOUNDS_CHECKING)
+    if constexpr (USE_BOUNDS_CHECKING)
     {
       return Base::at( index );  // Throws std::out_of_range if out of bounds
     }
@@ -68,29 +86,20 @@ public:
 };
 }
 
-#if defined( GEOS_USE_BOUNDS_CHECK )
-/**
- * type alias for internal::StdVectorWrapper with bounds checking enabled.
- * @tparam T Type of elements in the vector.
- * @tparam Allocator Allocator type for the vector.
- */
-template< typename T, typename Allocator = std::allocator< T > >
-using stdVector = internal::StdVectorWrapper< T, Allocator, true >;
-#else
 /**
  * type alias for std::vector with no bounds checking.
  * @tparam T Type of elements in the vector.
  * @tparam Allocator Allocator type for the vector.
  */
 template< typename T, typename Allocator = std::allocator< T > >
-using stdVector = std::vector< T, Allocator >;
-#endif
+using stdVector = internal::StdVectorWrapper< T, Allocator, USE_STD_CONTAINER_BOUNDS_CHECKING >;
 
 namespace internal
 {
 
 template< typename MapType,
-          bool USE_STD_CONTAINER_BOUNDS_CHECKING >
+          bool USE_BOUNDS_CHECKING = false
+          >
 class StdMapWrapper : public MapType
 {
 public:
@@ -103,7 +112,7 @@ public:
   // Override operator[]
   MappedType & operator[]( KeyType const & key )
   {
-    if constexpr (USE_STD_CONTAINER_BOUNDS_CHECKING)
+    if constexpr (USE_BOUNDS_CHECKING)
     {
       return this->at( key );  // Throws std::out_of_range if key is missing
     }
@@ -115,7 +124,7 @@ public:
 
   MappedType const & operator[]( KeyType const & key ) const
   {
-    if constexpr (USE_STD_CONTAINER_BOUNDS_CHECKING)
+    if constexpr (USE_BOUNDS_CHECKING)
     {
       return this->at( key );
     }
@@ -133,13 +142,13 @@ template< typename Key,
           typename Compare = std::less< Key >,
           typename Allocator = std::allocator< std::pair< const Key, T > > >
 using stdMap = internal::StdMapWrapper< std::map< Key, T, Compare, Allocator >,
-                                        false >;
+                                        USE_STD_CONTAINER_BOUNDS_CHECKING >;
 
 namespace internal
 {
 
 template< typename MapType,
-          bool USE_STD_CONTAINER_BOUNDS_CHECKING >
+          bool USE_BOUNDS_CHECKING = false >
 class StdUnorderedMapWrapper : public MapType
 {
 public:
@@ -152,7 +161,7 @@ public:
   // Override operator[]
   MappedType & operator[]( KeyType const & key )
   {
-    if constexpr (USE_STD_CONTAINER_BOUNDS_CHECKING)
+    if constexpr (USE_BOUNDS_CHECKING)
     {
       return this->at( key );  // Throws std::out_of_range if key is missing
     }
@@ -164,7 +173,7 @@ public:
 
   MappedType const & operator[]( KeyType const & key ) const
   {
-    if constexpr (USE_STD_CONTAINER_BOUNDS_CHECKING)
+    if constexpr (USE_BOUNDS_CHECKING)
     {
       return this->at( key );
     }
@@ -184,6 +193,35 @@ template< typename Key,
 using stdUnorderedMap = internal::StdUnorderedMapWrapper< std::unordered_map< Key, T, Hash, KeyEqual, Allocator >,
                                                           false >;
 
+/**
+ * @name Ordered and unordered map types.
+ */
+///@{
+
+/**
+ * @brief Base template for ordered and unordered maps.
+ * @tparam TKEY key type
+ * @tparam TVAL value type
+ * @tparam SORTED a bool indicating whether map is ordered
+ */
+template< typename TKEY, typename TVAL, typename SORTED >
+class mapBase
+{};
+
+/// @cond DO_NOT_DOCUMENT
+template< typename TKEY, typename TVAL >
+class mapBase< TKEY, TVAL, std::integral_constant< bool, true > > : public stdMap< TKEY, TVAL >
+{
+public:
+  using stdMap< TKEY, TVAL >::StdMapWrapper; // enable list initialization
+};
+
+template< typename TKEY, typename TVAL >
+class mapBase< TKEY, TVAL, std::integral_constant< bool, false > > : public stdUnorderedMap< TKEY, TVAL >
+{
+  using stdUnorderedMap< TKEY, TVAL >::StdUnorderedMapWrapper; // enable list initialization
+};
+/// @endcond
 
 } // namespace geos
 
