@@ -36,6 +36,7 @@ class StdVectorWrapper : public std::vector< T, Allocator >
 public:
   /// Type alias for the base class (i.e., std::vector)
   using Base = std::vector< T, Allocator >;
+  // Inherit constructors
   using Base::Base;
 
   /**
@@ -87,24 +88,35 @@ public:
 }
 
 /**
- * type alias for std::vector with no bounds checking.
+ * type alias for std::vector
  * @tparam T Type of elements in the vector.
  * @tparam Allocator Allocator type for the vector.
  */
 template< typename T, typename Allocator = std::allocator< T > >
 using stdVector = internal::StdVectorWrapper< T, Allocator, USE_STD_CONTAINER_BOUNDS_CHECKING >;
 
+
+
 namespace internal
 {
 
+/**
+ * Wrapper for the underlying map that allows toggling between bounds-checked access
+ * (using at()) and unchecked access (using operator[]).
+ * @tparam MapType The type of the underlying map (e.g., std::map).
+ * @tparam Allocator Allocator type for the vector.
+ * @tparam USE_STD_CONTAINER_BOUNDS_CHECKING A boolean flag to enable or disable bounds checking.
+ */
 template< typename MapType,
           bool USE_BOUNDS_CHECKING = false
           >
 class StdMapWrapper : public MapType
 {
 public:
+  /// Type alias for the base class (i.e., std::map)
   using Base = MapType;
-  using Base::Base;  // Inherit constructors
+  /// Inherit constructors
+  using Base::Base;
   using KeyType = typename Base::key_type;
   using MappedType = typename Base::mapped_type;
   using ValueType = typename Base::value_type;
@@ -137,6 +149,13 @@ public:
 
 } //namespace internal
 
+/**
+ * type alias for std::map
+ * @tparam Key The unique std::map key.
+ * @tparam T Type of elements in the std::map.
+ * @tparam Compare The comparison function used to order the keys. Defaults to std::less<Key>.
+ * @tparam Allocator Allocator type for the map. Defaults to std::allocator<std::pair<const Key, T>>
+ */
 template< typename Key,
           typename T,
           typename Compare = std::less< Key >,
@@ -144,54 +163,21 @@ template< typename Key,
 using stdMap = internal::StdMapWrapper< std::map< Key, T, Compare, Allocator >,
                                         USE_STD_CONTAINER_BOUNDS_CHECKING >;
 
-namespace internal
-{
-
-template< typename MapType,
-          bool USE_BOUNDS_CHECKING = false >
-class StdUnorderedMapWrapper : public MapType
-{
-public:
-  using Base = MapType;
-  using Base::Base;  // Inherit constructors
-  using KeyType = typename Base::key_type;
-  using MappedType = typename Base::mapped_type;
-  using ValueType = typename Base::value_type;
-
-  // Override operator[]
-  MappedType & operator[]( KeyType const & key )
-  {
-    if constexpr (USE_BOUNDS_CHECKING)
-    {
-      return this->at( key );  // Throws std::out_of_range if key is missing
-    }
-    else
-    {
-      return Base::operator[]( key );  // Inserts default-constructed value if missing
-    }
-  }
-
-  MappedType const & operator[]( KeyType const & key ) const
-  {
-    if constexpr (USE_BOUNDS_CHECKING)
-    {
-      return this->at( key );
-    }
-    else
-    {
-      return Base::operator[]( key );
-    }
-  }
-};
-} //namespace internal
-
+/**
+ * type alias for std::unordered_map
+ * @tparam Key The unique std::unordered_map key.
+ * @tparam T Type of elements in the std::unordered_map.
+ * @tparam Hash The hash function to be used for the keys. Defaults to std::hash<Key>
+ * @tparam KeyEqual The function used to compare keys for equality. Defaults to std::equal_to<Key>.
+ * @tparam Allocator Allocator type for the map.  Defaults to std::allocator<std::pair<const Key, T>>
+ */
 template< typename Key,
           typename T,
           typename Hash = std::hash< Key >,
           typename KeyEqual = std::equal_to< Key >,
           typename Allocator = std::allocator< std::pair< const Key, T > > >
-using stdUnorderedMap = internal::StdUnorderedMapWrapper< std::unordered_map< Key, T, Hash, KeyEqual, Allocator >,
-                                                          false >;
+using stdUnorderedMap = internal::StdMapWrapper< std::unordered_map< Key, T, Hash, KeyEqual, Allocator >,
+                                                 USE_STD_CONTAINER_BOUNDS_CHECKING >;
 
 /**
  * @name Ordered and unordered map types.
@@ -219,7 +205,7 @@ public:
 template< typename TKEY, typename TVAL >
 class mapBase< TKEY, TVAL, std::integral_constant< bool, false > > : public stdUnorderedMap< TKEY, TVAL >
 {
-  using stdUnorderedMap< TKEY, TVAL >::StdUnorderedMapWrapper; // enable list initialization
+  using stdUnorderedMap< TKEY, TVAL >::StdMapWrapper; // enable list initialization
 };
 /// @endcond
 
