@@ -759,19 +759,20 @@ void CompositionalMultiphaseBase::updateFluidModel( ObjectManagerBase & dataGrou
   string const & fluidName = dataGroup.getReference< string >( viewKeyStruct::fluidNamesString() );
   MultiFluidBase & fluid = getConstitutiveModel< MultiFluidBase >( dataGroup, fluidName );
 
-  constitutiveUpdatePassThru( fluid, [&] ( auto & castedFluid )
+  constitutiveUpdatePassThru( fluid, [&] ( auto & castFluid )
   {
-    using FluidType = TYPEOFREF( castedFluid );
-    using ExecPolicy = typename FluidType::exec_policy;
-    typename FluidType::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
+    using FluidType = TYPEOFREF( castFluid );
+    using FluidUpdateType = typename FluidType::KernelWrapper;
+    using FluidUpdateKernel = thermalCompositionalMultiphaseBaseKernels::
+                                FluidUpdateKernel< typename FluidType::exec_policy,
+                                                   FluidUpdateType >;
 
-    thermalCompositionalMultiphaseBaseKernels::
-      FluidUpdateKernel::
-      launch< ExecPolicy >( dataGroup.size(),
-                            fluidWrapper,
-                            pres,
-                            temp,
-                            compFrac );
+    FluidUpdateType fluidWrapper = castFluid.createKernelWrapper();
+    FluidUpdateKernel::launch( dataGroup.size(),
+                               fluidWrapper,
+                               pres,
+                               temp,
+                               compFrac );
   } );
 }
 
@@ -1254,10 +1255,10 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium( DomainPartition
 
       // Step 3.4: compute the hydrostatic pressure values
 
-      constitutiveUpdatePassThru( fluid, [&] ( auto & castedFluid )
+      constitutiveUpdatePassThru( fluid, [&] ( auto & castFluid )
       {
-        using FluidType = TYPEOFREF( castedFluid );
-        typename FluidType::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
+        using FluidType = TYPEOFREF( castFluid );
+        typename FluidType::KernelWrapper fluidWrapper = castFluid.createKernelWrapper();
 
         // note: inside this kernel, serialPolicy is used, and elevation/pressure values don't go to the GPU
         isothermalCompositionalMultiphaseBaseKernels::
@@ -1962,19 +1963,20 @@ void CompositionalMultiphaseBase::applyDirichletBC( real64 const time_n,
       arrayView2d< real64 const, compflow::USD_COMP > const compFrac =
         subRegion.getReference< array2d< real64, compflow::LAYOUT_COMP > >( fields::flow::globalCompFraction::key() );
 
-      constitutiveUpdatePassThru( fluid, [&] ( auto & castedFluid )
+      constitutiveUpdatePassThru( fluid, [&] ( auto & castFluid )
       {
-        using FluidType = TYPEOFREF( castedFluid );
-        using ExecPolicy = typename FluidType::exec_policy;
-        typename FluidType::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
+        using FluidType = TYPEOFREF( castFluid );
+        using FluidUpdateType = typename FluidType::KernelWrapper;
+        using FluidUpdateKernel = thermalCompositionalMultiphaseBaseKernels::
+                                    FluidUpdateKernel< typename FluidType::exec_policy,
+                                                       FluidUpdateType >;
 
-        thermalCompositionalMultiphaseBaseKernels::
-          FluidUpdateKernel::
-          launch< ExecPolicy >( targetSet,
-                                fluidWrapper,
-                                bcPres,
-                                bcTemp,
-                                compFrac );
+        FluidUpdateType fluidWrapper = castFluid.createKernelWrapper();
+        FluidUpdateKernel::launch( targetSet,
+                                   fluidWrapper,
+                                   bcPres,
+                                   bcTemp,
+                                   compFrac );
       } );
 
       arrayView1d< integer const > const ghostRank =

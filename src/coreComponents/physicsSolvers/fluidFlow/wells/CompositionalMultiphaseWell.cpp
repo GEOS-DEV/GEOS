@@ -691,9 +691,9 @@ void CompositionalMultiphaseWell::updateVolRatesForConstraint( WellElementSubReg
 
   real64 & massDensity =
     wellControls.getReference< real64 >( CompositionalMultiphaseWell::viewKeyStruct::massDensityString() );
-  constitutive::constitutiveUpdatePassThru( fluid, [&] ( auto & castedFluid )
+  constitutive::constitutiveUpdatePassThru( fluid, [&] ( auto & castFluid )
   {
-    typename TYPEOFREF( castedFluid ) ::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
+    typename TYPEOFREF( castFluid ) ::KernelWrapper fluidWrapper = castFluid.createKernelWrapper();
     geos::internal::kernelLaunchSelectorCompThermSwitch( numComp, isThermal, [&] ( auto NC, auto ISTHERMAL )
     {
       integer constexpr NUM_COMP = NC();
@@ -855,18 +855,20 @@ void CompositionalMultiphaseWell::updateFluidModel( WellElementSubRegion & subRe
   string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
   MultiFluidBase & fluid = subRegion.getConstitutiveModel< MultiFluidBase >( fluidName );
 
-  constitutive::constitutiveUpdatePassThru( fluid, [&] ( auto & castedFluid )
+  constitutive::constitutiveUpdatePassThru( fluid, [&] ( auto & castFluid )
   {
-    using FluidType = TYPEOFREF( castedFluid );
-    using ExecPolicy = typename FluidType::exec_policy;
-    typename FluidType::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
-    thermalCompositionalMultiphaseBaseKernels::
-      FluidUpdateKernel::
-      launch< ExecPolicy >( subRegion.size(),
-                            fluidWrapper,
-                            pres,
-                            temp,
-                            compFrac );
+    using FluidType = TYPEOFREF( castFluid );
+    using FluidUpdateType = typename FluidType::KernelWrapper;
+    using FluidUpdateKernel = thermalCompositionalMultiphaseBaseKernels::
+                                FluidUpdateKernel< typename FluidType::exec_policy,
+                                                   FluidUpdateType >;
+
+    FluidUpdateType fluidWrapper = castFluid.createKernelWrapper();
+    FluidUpdateKernel::launch( subRegion.size(),
+                               fluidWrapper,
+                               pres,
+                               temp,
+                               compFrac );
   } );
 
 }
@@ -1046,17 +1048,20 @@ void CompositionalMultiphaseWell::initializeWells( DomainPartition & domain, rea
         arrayView2d< real64 const, multifluid::USD_FLUID > const & wellElemTotalDens = fluid.totalDensity();
 
         // 4) Back calculate component densities
-        constitutive::constitutiveUpdatePassThru( fluid, [&] ( auto & castedFluid )
+        constitutive::constitutiveUpdatePassThru( fluid, [&] ( auto & castFluid )
         {
-          typename TYPEOFREF( castedFluid ) ::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
+          using FluidType = TYPEOFREF( castFluid );
+          using FluidUpdateType = typename FluidType::KernelWrapper;
+          using FluidUpdateKernel = thermalCompositionalMultiphaseBaseKernels::
+                                      FluidUpdateKernel< serialPolicy,
+                                                         FluidUpdateType >;
 
-          thermalCompositionalMultiphaseBaseKernels::
-            FluidUpdateKernel::
-            launch< serialPolicy >( subRegion.size(),
-                                    fluidWrapper,
-                                    wellElemPressure,
-                                    wellElemTemp,
-                                    wellElemCompFrac );
+          FluidUpdateType fluidWrapper = castFluid.createKernelWrapper();
+          FluidUpdateKernel::launch( subRegion.size(),
+                                     fluidWrapper,
+                                     wellElemPressure,
+                                     wellElemTemp,
+                                     wellElemCompFrac );
         } );
 
         compositionalMultiphaseWellKernels::

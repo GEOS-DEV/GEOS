@@ -1,0 +1,16 @@
+
+#include "physicsSolvers/fluidFlow/kernels/compositional/FluidUpdateKernel.hpp"
+#include "physicsSolvers/fluidFlow/kernels/compositional/FluidUpdateKernel_impl.hpp"
+#include "constitutive/fluid/multifluid/MultiFluidSelector.hpp"
+
+namespace geos
+{
+using FluidUpdateKernelPolicy = @POLICY@;
+using FluidModelWrapper = @FLUID@::KernelWrapper;
+namespace thermalCompositionalMultiphaseBaseKernels
+{
+
+template struct FluidUpdateKernel<FluidUpdateKernelPolicy, FluidModelWrapper>;
+
+} // namespace thermalCompositionalMultiphaseBaseKernels
+} // namespace geos

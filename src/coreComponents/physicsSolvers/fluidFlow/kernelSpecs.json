@@ -215,5 +215,36 @@
       ]
     },
     "explicit": []
+  },
+
+  "CompositionalMultiphaseBase_FluidUpdateKernel": {
+    "vars": [
+      "NAME",
+      "POLICY",
+      "FLUID"
+    ],
+    "constants": [
+    ],
+    "combinations": {
+      "NAME": [
+        "FluidUpdateKernel"
+      ],
+      "POLICY": [
+        "serialPolicy",
+        "parallelDevicePolicy<>"
+      ],
+      "FLUID": [
+        "constitutive::DeadOilFluid",
+        "constitutive::BlackOilFluid",
+        "constitutive::CO2BrinePhillipsFluid",
+        "constitutive::CO2BrineEzrokhiFluid",
+        "constitutive::CO2BrinePhillipsThermalFluid",
+        "constitutive::CO2BrineEzrokhiThermalFluid",
+        "constitutive::CompositionalTwoPhaseLohrenzBrayClarkViscosity",
+        "constitutive::CompositionalThreePhaseLohrenzBrayClarkViscosity",
+        "constitutive::CompositionalTwoPhaseConstantViscosity"
+      ]
+    },
+    "explicit": ["FluidUpdateKernel#serialPolicy#constitutive::CompositionalMultiphaseFluidPVTPackage"]
   }
 }
