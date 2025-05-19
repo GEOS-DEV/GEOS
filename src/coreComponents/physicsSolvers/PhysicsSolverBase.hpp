@@ -449,13 +449,15 @@ public:
    * @param nonlinearIteration current nonlinear iteration number
    * @param matrix system matrix
    * @param rhs system right-hand side vector
+   * @param tag option to tag the output
    */
   void
   debugOutputSystem( real64 const & time,
                      integer const cycleNumber,
                      integer const nonlinearIteration,
                      ParallelMatrix const & matrix,
-                     ParallelVector const & rhs ) const;
+                     ParallelVector const & rhs,
+                     string const & tag="" ) const;
 
   /**
    * @brief Output the linear system solution for debug purposes.
@@ -463,12 +465,14 @@ public:
    * @param cycleNumber event cycle number
    * @param nonlinearIteration current nonlinear iteration number
    * @param solution system solution vector
+   *
    */
   void
   debugOutputSolution( real64 const & time,
                        integer const cycleNumber,
                        integer const nonlinearIteration,
-                       ParallelVector const & solution ) const;
+                       ParallelVector const & solution,
+                       string const & tag ="" ) const;
 
   /**
    * @brief calculate the norm of the global system residual

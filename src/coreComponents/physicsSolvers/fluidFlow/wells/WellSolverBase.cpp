@@ -49,7 +49,11 @@ WellSolverBase::WellSolverBase( string const & name,
   m_isThermal( 0 ),
   m_ratesOutputDir( joinPath( OutputBase::getOutputDirectory(), name + "_rates" ) ),
   m_keepVariablesConstantDuringInitStep( 0 ),
-  m_estimateSolution( 0 )
+  m_writeSegDebug( 0 ),
+  m_globalNumTimeSteps( -1 ),
+  m_currentDt( -1.0 ),
+  m_estimateSolution( 0 ),
+  my_ctime( 0 )
 {
   registerWrapper( viewKeyStruct::isThermalString(), &m_isThermal ).
     setApplyDefaultValue( 0 ).
@@ -74,15 +78,25 @@ WellSolverBase::WellSolverBase( string const & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Flag to esitmate well solution prior to coupled reservoir and well solve." );
 
+  this->registerWrapper( viewKeyStruct::writeSegDebugFlagString(), &m_writeSegDebug ).
+    setApplyDefaultValue( 0 ).
+    setInputFlag( dataRepository::InputFlags::OPTIONAL ).
+    setDescription( "Write well seg/perf debug into CSV files" );
 }
 
 Group *WellSolverBase::createChild( string const & childKey, string const & childName )
 {
+  // Unused as all children are created within the constructor
   const auto childTypes = { keys::wellControls };
-  GEOS_ERROR_IF( childKey != keys::wellControls,
-                 PhysicsSolverBase::CatalogInterface::unknownTypeError( childKey, getDataContext(), childTypes ) );
-  return &registerGroup< WellControls >( childName );
+  if( childKey == keys::wellControls )
+    return &registerGroup< WellControls >( childName );
+  return nullptr;
 }
+//const auto childTypes = { keys::wellControls };
+//GEOS_ERROR_IF( childKey != keys::wellControls,
+//               PhysicsSolverBase::CatalogInterface::unknownTypeError( childKey, getDataContext(), childTypes ) );
+//return &registerGroup< WellControls >( childName );
+//}
 
 void WellSolverBase::expandObjectCatalogs()
 {
@@ -100,6 +114,13 @@ void WellSolverBase::postInputInitialization()
   m_numDofPerResElement = m_isThermal ? m_numComponents  + 1: m_numComponents;   // 1 pressure   + temp if thermal
 
 
+  if( m_writeSegDebug > 0 )
+  {
+    if( m_writeCSV == 0 )
+    {
+      m_writeCSV=1;
+    }
+  }
   // create dir for rates output
   if( m_writeCSV > 0 )
   {
@@ -309,6 +330,7 @@ void WellSolverBase::estimateWellSolution( real64 const & time_n,
                             dt,
                             cycleNumber,
                             domain,
+                            meshLevel,
                             elementRegionManager,
                             subRegion,
                             dofManager );
@@ -368,6 +390,10 @@ void WellSolverBase::assembleWellSystem( real64 const time_n,
   assembleWellPressureRelations( time_n, dt, subRegion, dofManager, localMatrix.toViewConstSizes(), localRhs );
   computeWellPerforationRates( time_n, dt, elementRegionManager, subRegion );
   assembleWellFluxTerms( time_n, dt, subRegion, dofManager, localMatrix.toViewConstSizes(), localRhs );
+
+  //auto iterInfo = currentIter( time_n, dt );
+  //outputWellDebug( time_n, dt, std::get< 0 >( iterInfo ), std::get< 1 >( iterInfo ), std::get< 2 >( iterInfo ),
+  //                 domain, dofManager, localMatrix, localRhs );
 }
 
 void WellSolverBase::assembleSystem( real64 const time,
@@ -377,6 +403,8 @@ void WellSolverBase::assembleSystem( real64 const time,
                                      CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                      arrayView1d< real64 > const & localRhs )
 {
+
+  estimateWellSolution( time, dt, 0, domain );
   string const wellDofKey = dofManager.getKey( wellElementDofName());
 
 
@@ -392,8 +420,73 @@ void WellSolverBase::assembleSystem( real64 const time,
   // get a reference to the degree-of-freedom numbers
   // then assemble the flux terms in the mass balance equations
   assembleFluxTerms( time, dt, domain, dofManager, localMatrix, localRhs );
+  my_ctime=my_ctime+1;
+
 }
 
+std::tuple< integer, integer, integer >
+WellSolverBase::currentIter( real64 const time, real64 const dt )
+{
+  if( isEqual( m_currentDt, -1.0 ) )
+  {
+    m_globalNumTimeSteps=0;
+    m_currentTime=time;
+    m_prevTime=time;
+    m_currentDt=dt;
+    m_prevDt=dt;
+    m_numTimeStepCuts=0;
+    m_currentNewtonIteration=0;
+  }
+  else
+  {
+    if( !isEqual( time, m_currentTime ) )
+    {
+      m_globalNumTimeSteps++;
+      m_prevTime=m_currentTime;
+      m_prevDt=m_currentDt;
+      m_currentTime=time;
+      m_currentDt=dt;
+      m_currentNewtonIteration=0;
+      m_numTimeStepCuts=0;
+    }
+    else
+    {
+      if( dt < m_currentDt )
+      {
+        // timestep cut
+        m_globalNumTimeSteps++;
+        m_prevTime=m_currentTime;
+        m_prevDt=m_currentDt;
+        m_currentTime=time;
+        m_currentDt=dt;
+        m_currentNewtonIteration=0;
+        m_numTimeStepCuts++;
+        m_currentNewtonIteration=0;
+      }
+      /*
+         else if ( isEqual(dt,m_currentDt ) )
+         {
+         // next timestep
+         m_globalNumTimeSteps++;
+         m_prevTime=m_currentTime;
+         m_prevDt=m_currentDt;
+         m_currentTime=time;
+         m_currentDt=dt;
+         m_currentNewtonIteration=0;
+         m_numTimeStepCuts=0;
+         m_currentNewtonIteration=0;
+         }*/
+      else
+      {
+        // continuation of current timestep
+        m_currentNewtonIteration++;
+      }
+    }
+  }
+
+  return std::tuple< integer, integer, integer >( m_globalNumTimeSteps, m_numTimeStepCuts, m_currentNewtonIteration );
+
+}
 void WellSolverBase::initializePostInitialConditionsPreSubGroups()
 {
   PhysicsSolverBase::initializePostInitialConditionsPreSubGroups();
@@ -491,6 +584,7 @@ bool WellSolverBase::solveNonlinearSystem( real64 const & time_n,
                                            real64 const & stepDt,
                                            integer const cycleNumber,
                                            DomainPartition & domain,
+                                           MeshLevel & mesh,
                                            ElementRegionManager & elemManager,
                                            WellElementSubRegion & subRegion,
                                            DofManager const & dofManager )
@@ -566,7 +660,9 @@ bool WellSolverBase::solveNonlinearSystem( real64 const & time_n,
       GEOS_LOG_LEVEL_RANK_0( logInfo::Convergence,
                              GEOS_FMT( "        ( R ) = ( {:4.2e} )", residualNorm ) );
     }
-
+    //auto iterInfo = currentIter( time_n, dt );
+    outputSingleWellDebug( time_n, stepDt, 0, newtonIter, 0,
+                           mesh, subRegion, dofManager, m_localMatrix.toViewConstSizes(), m_rhs.values()  );
 // if the residual norm is less than the Newton tolerance we denote that we have
 // converged and break from the Newton loop immediately.
     if( residualNorm < newtonTol && newtonIter >= minNewtonIter )
@@ -665,7 +761,8 @@ bool WellSolverBase::solveNonlinearSystem( real64 const & time_n,
       }
 
 // Output the linear system matrix/rhs for debugging purposes
-      debugOutputSystem( time_n, cycleNumber, newtonIter, m_matrix, m_rhs );
+      string tag = "_"+std::to_string( my_ctime );
+      debugOutputSystem( time_n, cycleNumber, newtonIter, m_matrix, m_rhs, tag );
 
 // Solve the linear system
       solveLinearSystem( dofManager, m_matrix, m_rhs, m_solution );
@@ -674,7 +771,7 @@ bool WellSolverBase::solveNonlinearSystem( real64 const & time_n,
       m_solverStatistics.logNonlinearIteration( m_linearSolverResult.numIterations );
 
 // Output the linear system solution for debugging purposes
-      debugOutputSolution( time_n, cycleNumber, newtonIter, m_solution );
+      debugOutputSolution( time_n, cycleNumber, newtonIter, m_solution, tag );
     }
 
     {

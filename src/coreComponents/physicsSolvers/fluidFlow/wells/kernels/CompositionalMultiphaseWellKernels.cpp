@@ -125,6 +125,7 @@ ControlEquationHelper::
       }
     }
   }
+  std::cout << "tjb control switch " << isProducer << " " << currentControl << " " << newControl << std::endl;
 }
 
 template< integer NC, integer IS_THERMAL >

@@ -21,6 +21,7 @@
 #define GEOS_PHYSICSSOLVERS_FLUIDFLOW_WELLS_WELLSOLVERBASE_HPP_
 
 #include "physicsSolvers/PhysicsSolverBase.hpp"
+#include "physicsSolvers/fluidFlow/wells/WellPropWriter.hpp"
 
 namespace geos
 {
@@ -295,6 +296,26 @@ public:
                                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                           arrayView1d< real64 > const & localRhs ) = 0;
 
+  virtual void outputSingleWellDebug( real64 const time,
+                                      real64 const dt,
+                                      integer num_timesteps,
+                                      integer current_newton_iteration,
+                                      integer num_timestep_cuts,
+                                      MeshLevel & mesh,
+                                      WellElementSubRegion & subRegion,
+                                      DofManager const & dofManager,
+                                      CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                      arrayView1d< const real64 > const & localRhs ) {};
+
+  virtual void outputWellDebug( real64 const time,
+                                real64 const dt,
+                                integer num_timesteps,
+                                integer current_newton_iteration,
+                                integer num_timestep_cuts,
+                                DomainPartition & domain,
+                                DofManager const & dofManager,
+                                CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                arrayView1d< real64 > const & localRhs ) = 0;
   /**
    * @brief Recompute all dependent quantities from primary variables (including constitutive models)
    * @param domain the domain containing the mesh and fields
@@ -332,6 +353,7 @@ public:
                              real64 const & stepDt,
                              integer const cycleNumber,
                              DomainPartition & domain,
+                             MeshLevel & mesh,
                              ElementRegionManager & elementRegionManager,
                              WellElementSubRegion & subregion,
                              DofManager const & dofManager );
@@ -378,8 +400,11 @@ public:
     static constexpr char const * writeCSVFlagString() { return "writeCSV"; }
     static constexpr char const * timeStepFromTablesFlagString() { return "timeStepFromTables"; }
     static constexpr char const * estimateWellSolutionString() { return "estimateWellSolution"; }
+    static constexpr char const * writeSegDebugFlagString() { return "writeSegDebug"; }
   };
 
+
+  std::tuple< integer, integer, integer > currentIter( real64 const time, real64 const dt );
 private:
 
   /**
@@ -446,6 +471,21 @@ protected:
 
   /// flag to freeze the initial state during initialization in coupled problems
   integer m_keepVariablesConstantDuringInitStep;
+  /// flag to write detailed segment properties
+  integer m_writeSegDebug;
+
+  integer m_globalNumTimeSteps;
+  real64 m_currentTime;
+  real64 m_currentDt;
+  real64 m_prevTime;
+  real64 m_prevDt;
+  integer m_numTimeStepCuts;
+  integer m_currentNewtonIteration;
+
+  std::map< std::string, WellPropWriter > m_wellPropWriter;
+  std::map< std::string, WellPropWriter > m_wellPropWriter_eot;
+
+
 
   /// name of the fluid constitutive model used as a reference for component/phase description
   string m_referenceFluidModelName;
@@ -460,7 +500,7 @@ protected:
   /// @note This DofManager is used in the assembly of the estimators linear system
   std::map< std::string, DofManager >   m_estimatorDoFManager;
 
-
+  integer my_ctime;
 
 };
 

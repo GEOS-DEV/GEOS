@@ -170,6 +170,7 @@ public:
     for( integer ic = 0; ic < numComp; ++ic )
     {
       localPerf[TAG::RES * numComp + ic] = m_dt * m_compPerfRate[iperf][ic];
+      std::cout << " tjb coupled compperf " << ic << " " << iperf << " " << -m_dt * m_compPerfRate[iperf][ic] << std::endl;
       localPerf[TAG::WELL * numComp + ic] = -m_dt * m_compPerfRate[iperf][ic];
 
       if( m_detectCrossflow )
@@ -208,7 +209,7 @@ public:
       shiftBlockRowsAheadByOneAndReplaceFirstRowWithColumnSum( numComp, numComp, resNumDOF * 2, 2, localPerfJacobian, work );
       shiftBlockElementsAheadByOneAndReplaceFirstElementWithSum( numComp, numComp, 2, localPerf );
     }
-
+    std::cout << localPerf.size() << std::endl;
     for( localIndex i = 0; i < localPerf.size(); ++i )
     {
       if( eqnRowIndices[i] >= 0 && eqnRowIndices[i] < m_localMatrix.numRows() )
@@ -431,7 +432,7 @@ public:
 
     for( integer ic = 0; ic < numComp; ++ic )
     {
-      // eqnRowIndices[TAG::RES * numComp + ic] = LvArray::integerConversion< localIndex >( resOffset - m_rankOffset ) + ic;
+      eqnRowIndices[TAG::RES * numComp + ic] = -1;
       eqnRowIndices[TAG::WELL * numComp + ic] = LvArray::integerConversion< localIndex >( wellElemOffset - m_rankOffset ) + WJ_ROFFSET::MASSBAL + ic;
     }
     // Note res and well have same col lineup for P and compdens
@@ -447,10 +448,10 @@ public:
       dofColIndices[TAG::WELL * resNumDOF + NC+1 ] = wellElemOffset + WJ_COFFSET::dT;
     }
     // populate local flux vector and derivatives
+
     for( integer ic = 0; ic < numComp; ++ic )
     {
       localPerf[TAG::WELL * numComp + ic] = -m_dt * m_compPerfRate[iperf][ic];
-      std::cout << " tjb compperf " << ic << " " << iperf << " " << -m_dt * m_compPerfRate[iperf][ic] << std::endl;
     }
 
     if( m_useTotalMassEquation )
@@ -459,10 +460,12 @@ public:
       shiftBlockElementsAheadByOneAndReplaceFirstElementWithSum( numComp, numComp, 2, localPerf );
     }
 
-    integer i = TAG::WELL;
-    if( eqnRowIndices[i] >= 0 && eqnRowIndices[i] < m_localMatrix.numRows() )
+    for( localIndex i = 0; i < localPerf.size(); ++i )
     {
-      RAJA::atomicAdd( parallelDeviceAtomic{}, &m_localRhs[eqnRowIndices[i]], localPerf[i] );
+      if( eqnRowIndices[i] >= 0 && eqnRowIndices[i] < m_localMatrix.numRows() )
+      {
+        RAJA::atomicAdd( parallelDeviceAtomic{}, &m_localRhs[eqnRowIndices[i]], localPerf[i] );
+      }
     }
 
     //compFluxKernelOp( resOffset, wellElemOffset, dofColIndices, iwelem );

@@ -1568,7 +1568,6 @@ public:
         dofColIndices_dPresCompUp[ioff++] = stack.offsetUp + WJ_COFFSET::dC+ jdof;
       }
 
-
       if( m_useTotalMassEquation > 0 )
       {
         // Apply equation/variable change transformation(s)
@@ -1768,7 +1767,6 @@ public:
     stack.offsetCurrent = m_wellElemDofNumber[iwelem];
     stack.iwelemCurrent= iwelem;
 
-
     if( iwelemNext < 0 )  // exit connection
     {
       // for this case, we only need NC mass conservation equations
@@ -1804,6 +1802,7 @@ public:
   launch( localIndex const numElements,
           KERNEL_TYPE const & kernelComponent )
   {
+
     GEOS_MARK_FUNCTION;
     forAll< POLICY >( numElements, [=] GEOS_HOST_DEVICE ( localIndex const ie )
     {
