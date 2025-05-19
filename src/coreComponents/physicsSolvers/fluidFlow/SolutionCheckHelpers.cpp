@@ -69,7 +69,7 @@ void IdReporterOutput::outputWrongValues( string_view linesPrefix,
       MpiWrapper::barrier();
       if( m_buffer.getCollectedIdsCount() > 0 )
       {
-        GEOS_LOG( GEOS_FMT( "{}- rank {}, {} values: {} {}",
+        GEOS_LOG( GEOS_FMT( "{}- rank {}, {} values: {}{}",
                             string( linesPrefix.size(), ' ' ),
                             MpiWrapper::commRank(),
                             m_buffer.getSignaledIdsCount(),
