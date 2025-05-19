@@ -855,22 +855,12 @@ void CompositionalMultiphaseWell::updateFluidModel( WellElementSubRegion & subRe
   string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
   MultiFluidBase & fluid = subRegion.getConstitutiveModel< MultiFluidBase >( fluidName );
 
-  constitutive::constitutiveUpdatePassThru( fluid, [&] ( auto & castFluid )
-  {
-    using FluidType = TYPEOFREF( castFluid );
-    using FluidUpdateType = typename FluidType::KernelWrapper;
-    using FluidUpdateKernel = thermalCompositionalMultiphaseBaseKernels::
-                                FluidUpdateKernel< typename FluidType::exec_policy,
-                                                   FluidUpdateType >;
-
-    FluidUpdateType fluidWrapper = castFluid.createKernelWrapper();
-    FluidUpdateKernel::launch( subRegion.size(),
-                               fluidWrapper,
-                               pres,
-                               temp,
-                               compFrac );
-  } );
-
+  thermalCompositionalMultiphaseBaseKernels::
+    FluidUpdate::update( subRegion.size(),
+                         fluid,
+                         pres,
+                         temp,
+                         compFrac );
 }
 
 real64 CompositionalMultiphaseWell::updatePhaseVolumeFraction( WellElementSubRegion & subRegion ) const

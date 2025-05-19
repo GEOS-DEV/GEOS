@@ -758,22 +758,12 @@ void CompositionalMultiphaseBase::updateFluidModel( ObjectManagerBase & dataGrou
 
   string const & fluidName = dataGroup.getReference< string >( viewKeyStruct::fluidNamesString() );
   MultiFluidBase & fluid = getConstitutiveModel< MultiFluidBase >( dataGroup, fluidName );
-
-  constitutiveUpdatePassThru( fluid, [&] ( auto & castFluid )
-  {
-    using FluidType = TYPEOFREF( castFluid );
-    using FluidUpdateType = typename FluidType::KernelWrapper;
-    using FluidUpdateKernel = thermalCompositionalMultiphaseBaseKernels::
-                                FluidUpdateKernel< typename FluidType::exec_policy,
-                                                   FluidUpdateType >;
-
-    FluidUpdateType fluidWrapper = castFluid.createKernelWrapper();
-    FluidUpdateKernel::launch( dataGroup.size(),
-                               fluidWrapper,
-                               pres,
-                               temp,
-                               compFrac );
-  } );
+  thermalCompositionalMultiphaseBaseKernels::
+    FluidUpdate::update( dataGroup.size(),
+                         fluid,
+                         pres,
+                         temp,
+                         compFrac );
 }
 
 void CompositionalMultiphaseBase::updateRelPermModel( ObjectManagerBase & dataGroup ) const
@@ -1963,21 +1953,12 @@ void CompositionalMultiphaseBase::applyDirichletBC( real64 const time_n,
       arrayView2d< real64 const, compflow::USD_COMP > const compFrac =
         subRegion.getReference< array2d< real64, compflow::LAYOUT_COMP > >( fields::flow::globalCompFraction::key() );
 
-      constitutiveUpdatePassThru( fluid, [&] ( auto & castFluid )
-      {
-        using FluidType = TYPEOFREF( castFluid );
-        using FluidUpdateType = typename FluidType::KernelWrapper;
-        using FluidUpdateKernel = thermalCompositionalMultiphaseBaseKernels::
-                                    FluidUpdateKernel< typename FluidType::exec_policy,
-                                                       FluidUpdateType >;
-
-        FluidUpdateType fluidWrapper = castFluid.createKernelWrapper();
-        FluidUpdateKernel::launch( targetSet,
-                                   fluidWrapper,
-                                   bcPres,
-                                   bcTemp,
-                                   compFrac );
-      } );
+      thermalCompositionalMultiphaseBaseKernels::
+        FluidUpdate::update( targetSet,
+                             fluid,
+                             bcPres,
+                             bcTemp,
+                             compFrac );
 
       arrayView1d< integer const > const ghostRank =
         subRegion.getReference< array1d< integer > >( ObjectManagerBase::viewKeyStruct::ghostRankString() );

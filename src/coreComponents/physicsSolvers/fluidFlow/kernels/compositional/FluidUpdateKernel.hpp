@@ -24,31 +24,34 @@
 
 namespace geos
 {
-//namespace constitutive
-//{
-//class MultiFluidBase;
-//}
+namespace constitutive
+{
+class MultiFluidBase;
+}
 namespace thermalCompositionalMultiphaseBaseKernels
 {
 
 /******************************** FluidUpdateKernel ********************************/
 
+struct FluidUpdate
+{
+  static void update( localIndex const size,
+                      constitutive::MultiFluidBase & fluid,
+                      arrayView1d< real64 const > const & pres,
+                      arrayView1d< real64 const > const & temp,
+                      arrayView2d< real64 const, compflow::USD_COMP > const & compFrac );
+
+  static void update( SortedArrayView< localIndex const > const & targetSet,
+                      constitutive::MultiFluidBase & fluid,
+                      arrayView1d< real64 const > const & pres,
+                      arrayView1d< real64 const > const & temp,
+                      arrayView2d< real64 const, compflow::USD_COMP > const & compFrac );
+
+};
+
 template< typename POLICY, typename FLUID_WRAPPER >
 struct FluidUpdateKernel
 {
-  //static void update( localIndex const size,
-  //                    constitutive::MultiFluidBase & fluid,
-  //                    arrayView1d< real64 const > const & pres,
-  //                    arrayView1d< real64 const > const & temp,
-  //                    arrayView2d< real64 const, compflow::USD_COMP > const & compFrac );
-//
-//static void update( SortedArrayView< localIndex const > const & targetSet,
-//                    constitutive::MultiFluidBase & fluid,
-//                    arrayView1d< real64 const > const & pres,
-//                    arrayView1d< real64 const > const & temp,
-//                    arrayView2d< real64 const, compflow::USD_COMP > const & compFrac );
-//
-
   static void
   launch( localIndex const size,
           FLUID_WRAPPER const & fluidWrapper,

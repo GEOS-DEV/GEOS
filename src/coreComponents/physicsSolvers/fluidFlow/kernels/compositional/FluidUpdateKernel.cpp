@@ -18,9 +18,52 @@
  */
 
 #include "FluidUpdateKernel.hpp"
+#include "constitutive/fluid/multifluid/MultiFluidSelector.hpp"
 
 namespace geos
 {
 namespace thermalCompositionalMultiphaseBaseKernels
-{} // namespace thermalCompositionalMultiphaseBaseKernels
+{
+
+void FluidUpdate::update( localIndex const size,
+                          constitutive::MultiFluidBase & fluid,
+                          arrayView1d< real64 const > const & pres,
+                          arrayView1d< real64 const > const & temp,
+                          arrayView2d< real64 const, compflow::USD_COMP > const & compFrac )
+{
+  constitutive::constitutiveUpdatePassThru( fluid, [&] ( auto & castFluid )
+  {
+    using FluidType = TYPEOFREF( castFluid );
+    using FluidUpdateType = typename FluidType::KernelWrapper;
+    FluidUpdateType fluidWrapper = castFluid.createKernelWrapper();
+    FluidUpdateKernel< typename FluidType::exec_policy, FluidUpdateType >::launch( size,
+                                                                                   fluidWrapper,
+                                                                                   pres,
+                                                                                   temp,
+                                                                                   compFrac );
+
+  } );
+}
+
+void FluidUpdate::update( SortedArrayView< localIndex const > const & targetSet,
+                          constitutive::MultiFluidBase & fluid,
+                          arrayView1d< real64 const > const & pres,
+                          arrayView1d< real64 const > const & temp,
+                          arrayView2d< real64 const, compflow::USD_COMP > const & compFrac )
+{
+  constitutive::constitutiveUpdatePassThru( fluid, [&] ( auto & castFluid )
+  {
+    using FluidType = TYPEOFREF( castFluid );
+    using FluidUpdateType = typename FluidType::KernelWrapper;
+    FluidUpdateType fluidWrapper = castFluid.createKernelWrapper();
+
+    FluidUpdateKernel< typename FluidType::exec_policy, FluidUpdateType >::launch( targetSet,
+                                                                                   fluidWrapper,
+                                                                                   pres,
+                                                                                   temp,
+                                                                                   compFrac );
+  } );
+}
+
+} // namespace thermalCompositionalMultiphaseBaseKernels
 } // namespace geos
