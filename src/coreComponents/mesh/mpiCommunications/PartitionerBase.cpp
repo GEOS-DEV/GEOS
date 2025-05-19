@@ -26,6 +26,17 @@
 namespace geos
 {
 
+PartitionerBase::PartitionerBase( string const & name,
+                               Group * const parent ):
+  Group( name, parent )
+{}
+
+
+PartitionerBase::CatalogInterface::CatalogType & PartitionerBase::getCatalog()
+{
+  static PartitionerBase::CatalogInterface::CatalogType catalog;
+  return catalog;
+}
 
 void PartitionerBase::buildNeighbors()
 {

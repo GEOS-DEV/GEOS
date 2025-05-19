@@ -28,6 +28,26 @@
 namespace geos
 {
 
+  CartesianPartitioner::CartesianPartitioner( string const & name,
+                                              Group * const parent ):
+    PartitionerBase( name, parent ),
+    m_cartComm( MPI_COMM_NULL ),
+    m_periodic( m_ndim ),
+    m_coords( m_ndim ),
+    m_partitionCounts(),
+    m_localMin{ 0.0, 0.0, 0.0 },
+    m_localMax{ 0.0, 0.0, 0.0 },
+    m_localSize{ 0.0, 0.0, 0.0 },
+    m_globalGridMin{ 0.0, 0.0, 0.0 },
+    m_globalGridMax{ 0.0, 0.0, 0.0 },
+    m_globalGridSize{ 0.0, 0.0, 0.0 },
+    m_cartRank( 0 )
+  {
+    registerWrapper( viewKeyStruct::paritionCountsString(), &m_partitionCounts ).
+      setInputFlag( InputFlags::OPTIONAL ).
+      setDescription( "Method (library) used to partition the mesh" );
+  }
+
 // Modulo
 // returns a positive value regardless of the sign of numerator
 real64 Mod( real64 num, real64 denom )
@@ -255,6 +275,8 @@ bool CartesianPartitioner::isCoordInPartition( const real64 & coord, const int d
 
   return rval;
 }
+
+REGISTER_CATALOG_ENTRY( PartitionerBase, CartesianPartitioner, string const &, Group * const )
 
 
 } // namespace geos

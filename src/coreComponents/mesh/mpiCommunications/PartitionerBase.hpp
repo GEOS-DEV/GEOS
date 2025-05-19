@@ -38,6 +38,19 @@ using pmet_idx_t = int64_t;
 class PartitionerBase
 {
 public:
+
+  explicit PartitionerBase( string const & name,
+                              Group * const parent );
+
+  /// using alias for templated Catalog meshGenerator type
+  using CatalogInterface = dataRepository::CatalogInterface< PartitionerBase, string const &, Group * const >;
+
+  /**
+   * @brief Accessor for the singleton Catalog object
+   * @return a static reference to the Catalog object
+   */
+  static CatalogInterface::CatalogType & getCatalog();
+
   /**
    * @brief Partition a mesh according to its dual graph.
    * @param graph the input graph (edges of locally owned nodes)

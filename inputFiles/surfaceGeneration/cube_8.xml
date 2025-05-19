@@ -29,7 +29,7 @@
     <VTKMesh
       name="cube8"
       file="cube_8.vtu"
-      partitionRefinement="0"/>
+      paritionerName="cartesian"/>
 
     <!-- <InternalMesh
       name="mesh1"
@@ -42,6 +42,14 @@
       nz="{ 2 }"
       cellBlockNames="{ 3_hexahedra }"/> -->
   </Mesh>
+
+  <Partitions>
+    <Cartesian
+      name="partition1"
+      meshName="cube8"
+      partitionerName="cartesian"
+      numPartitions="{ 1 }"/>
+  </Partitions>
 
   <Geometry>
     <Box

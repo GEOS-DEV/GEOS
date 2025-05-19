@@ -31,11 +31,23 @@ namespace geos
 class CartesianPartitioner : public PartitionerBase
 {
 public:
+  static constexpr int m_ndim = 3;
 
-  CartesianPartitioner();
+  CartesianPartitioner( string const & name,
+                        Group * const parent );
+
   ~CartesianPartitioner();
 
-  static constexpr int m_ndim = 3;
+  struct viewKeyStruct
+  {
+    constexpr static char const * partitionCountsString() { return "partitionCounts"; }
+  }
+
+ /**
+   * @brief Return the name of the VTKMeshGenerator in object Catalog.
+   * @return string that contains the key name to VTKMeshGenerator in the Catalog
+   */
+  static string catalogName() { return "Cartesian"; }
 
   void partition( const real64 (& globalGridMin)[m_ndim], const real64 (& globalGridMax)[m_ndim] );
 
@@ -111,6 +123,7 @@ private:
   void setLocalPartitionValues( const real64 (& globalGridMin)[m_ndim] );
 
   void addNeighbors( const unsigned int idim, int * ncoords );
+
 
 
 protected:
