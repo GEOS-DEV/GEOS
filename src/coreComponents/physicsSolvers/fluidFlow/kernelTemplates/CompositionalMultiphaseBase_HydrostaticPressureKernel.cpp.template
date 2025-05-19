@@ -1,0 +1,15 @@
+
+#include "physicsSolvers/fluidFlow/kernels/compositional/HydrostaticPressureKernel.hpp"
+#include "physicsSolvers/fluidFlow/kernels/compositional/HydrostaticPressureKernel_impl.hpp"
+#include "constitutive/fluid/multifluid/MultiFluidSelector.hpp"
+
+namespace geos
+{
+using FluidModelWrapper = @FLUID@::KernelWrapper;
+namespace isothermalCompositionalMultiphaseBaseKernels
+{
+
+template struct HydrostaticPressureFluidUpdate<FluidModelWrapper>;
+
+} // namespace isothermalCompositionalMultiphaseBaseKernels
+} // namespace geos

@@ -1245,47 +1245,40 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium( DomainPartition
 
       // Step 3.4: compute the hydrostatic pressure values
 
-      constitutiveUpdatePassThru( fluid, [&] ( auto & castFluid )
-      {
-        using FluidType = TYPEOFREF( castFluid );
-        typename FluidType::KernelWrapper fluidWrapper = castFluid.createKernelWrapper();
-
-        // note: inside this kernel, serialPolicy is used, and elevation/pressure values don't go to the GPU
+      // NOTE: This kernel is serial only. Elevation/pressure values don't go to the GPU
+      isothermalCompositionalMultiphaseBaseKernels::
+        HydrostaticPressureKernel::ReturnType const returnValue =
         isothermalCompositionalMultiphaseBaseKernels::
-          HydrostaticPressureKernel::ReturnType const returnValue =
-          isothermalCompositionalMultiphaseBaseKernels::
-            HydrostaticPressureKernel::launch( numPointsInTable,
-                                               numComps,
-                                               numPhases,
-                                               ipInit,
-                                               maxNumEquilIterations,
-                                               equilTolerance,
-                                               gravVector,
-                                               minElevation,
-                                               elevationIncrement,
-                                               datumElevation,
-                                               datumPressure,
-                                               fluidWrapper,
-                                               compFracTableWrappers.toViewConst(),
-                                               tempTableWrapper,
-                                               elevationValues.toNestedView(),
-                                               pressureValues.toView() );
+          HydrostaticPressureKernel::launch( numPointsInTable,
+                                             numComps,
+                                             numPhases,
+                                             ipInit,
+                                             maxNumEquilIterations,
+                                             equilTolerance,
+                                             gravVector,
+                                             minElevation,
+                                             elevationIncrement,
+                                             datumElevation,
+                                             datumPressure,
+                                             fluid,
+                                             compFracTableWrappers.toViewConst(),
+                                             tempTableWrapper,
+                                             elevationValues.toNestedView(),
+                                             pressureValues.toView() );
 
-        GEOS_THROW_IF( returnValue ==  isothermalCompositionalMultiphaseBaseKernels::HydrostaticPressureKernel::ReturnType::FAILED_TO_CONVERGE,
-                       getCatalogName() << " " << getDataContext() <<
-                       ": hydrostatic pressure initialization failed to converge in region " << region.getName() << "! \n" <<
-                       "Try to loosen the equilibration tolerance, or increase the number of equilibration iterations. \n" <<
-                       "If nothing works, something may be wrong in the fluid model, see <Constitutive> ",
-                       std::runtime_error );
+      GEOS_THROW_IF( returnValue ==  isothermalCompositionalMultiphaseBaseKernels::HydrostaticPressureKernel::ReturnType::FAILED_TO_CONVERGE,
+                     getCatalogName() << " " << getDataContext() <<
+                     ": hydrostatic pressure initialization failed to converge in region " << region.getName() << "! \n" <<
+                     "Try to loosen the equilibration tolerance, or increase the number of equilibration iterations. \n" <<
+                     "If nothing works, something may be wrong in the fluid model, see <Constitutive> ",
+                     std::runtime_error );
 
-        GEOS_LOG_RANK_0_IF( returnValue == isothermalCompositionalMultiphaseBaseKernels::HydrostaticPressureKernel::ReturnType::DETECTED_MULTIPHASE_FLOW,
-                            getCatalogName() << " " << getDataContext() <<
-                            ": currently, GEOS assumes that there is only one mobile phase when computing the hydrostatic pressure. \n" <<
-                            "We detected multiple phases using the provided datum pressure, temperature, and component fractions. \n" <<
-                            "Please make sure that only one phase is mobile at the beginning of the simulation. \n" <<
-                            "If this is not the case, the problem will not be at equilibrium when the simulation starts" );
-
-      } );
+      GEOS_LOG_RANK_0_IF( returnValue == isothermalCompositionalMultiphaseBaseKernels::HydrostaticPressureKernel::ReturnType::DETECTED_MULTIPHASE_FLOW,
+                          getCatalogName() << " " << getDataContext() <<
+                          ": currently, GEOS assumes that there is only one mobile phase when computing the hydrostatic pressure. \n" <<
+                          "We detected multiple phases using the provided datum pressure, temperature, and component fractions. \n" <<
+                          "Please make sure that only one phase is mobile at the beginning of the simulation. \n" <<
+                          "If this is not the case, the problem will not be at equilibrium when the simulation starts" );
 
       // Step 3.5: create hydrostatic pressure table
 

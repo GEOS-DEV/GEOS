@@ -82,6 +82,7 @@ set( fluidFlowSolvers_headers
      kernels/compositional/FluxComputeKernelBase.hpp
      kernels/compositional/GlobalComponentFractionKernel.hpp
      kernels/compositional/HydrostaticPressureKernel.hpp
+     kernels/compositional/HydrostaticPressureKernel_impl.hpp
      kernels/compositional/IHUPhaseFlux.hpp
      kernels/compositional/HU2PhaseFlux.hpp
      kernels/compositional/KernelLaunchSelectors.hpp
@@ -143,8 +144,9 @@ set( fluidFlowSolvers_sources
      StencilDataCollection.cpp
      kernels/singlePhase/proppant/ProppantFluxKernels.cpp
      kernels/compositional/CompositionalMultiphaseHybridFVMKernels.cpp
-     kernels/compositional/FluxComputeKernelBase.cpp
      kernels/compositional/FluidUpdateKernel.cpp
+     kernels/compositional/FluxComputeKernelBase.cpp
+     kernels/compositional/HydrostaticPressureKernel.cpp
      wells/CompositionalMultiphaseWell.cpp
      wells/kernels/CompositionalMultiphaseWellKernels.cpp
      wells/SinglePhaseWell.cpp
@@ -172,7 +174,8 @@ list( APPEND kernelTemplateFileList
       kernelTemplates/ReactiveCompositionalMultiphaseOBLKernels.cpp.template
       kernelTemplates/IsothermalCompositionalMultiphaseFVM_DirichletFluxComputeKernels.cpp.template
       kernelTemplates/ThermalCompositionalMultiphaseFVM_DirichletFluxComputeKernels.cpp.template
-      kernelTemplates/CompositionalMultiphaseBase_FluidUpdateKernel.cpp.template )
+      kernelTemplates/CompositionalMultiphaseBase_FluidUpdateKernel.cpp.template
+      kernelTemplates/CompositionalMultiphaseBase_HydrostaticPressureKernel.cpp.template )
 
 foreach( kernelTemplateFile ${kernelTemplateFileList} )
   get_filename_component( jsonKey ${kernelTemplateFile} NAME_WE )

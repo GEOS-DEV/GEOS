@@ -223,8 +223,7 @@
       "POLICY",
       "FLUID"
     ],
-    "constants": [
-    ],
+    "constants": [],
     "combinations": {
       "NAME": [
         "FluidUpdateKernel"
@@ -246,5 +245,31 @@
       ]
     },
     "explicit": ["FluidUpdateKernel#serialPolicy#constitutive::CompositionalMultiphaseFluidPVTPackage"]
+  },
+
+  "CompositionalMultiphaseBase_HydrostaticPressureKernel": {
+    "vars": [
+      "NAME",
+      "FLUID"
+    ],
+    "constants": [],
+    "combinations": {
+      "NAME": [
+        "HydrostaticPressureKernel"
+      ],
+      "FLUID": [
+        "constitutive::DeadOilFluid",
+        "constitutive::BlackOilFluid",
+        "constitutive::CO2BrinePhillipsFluid",
+        "constitutive::CO2BrineEzrokhiFluid",
+        "constitutive::CO2BrinePhillipsThermalFluid",
+        "constitutive::CO2BrineEzrokhiThermalFluid",
+        "constitutive::CompositionalTwoPhaseLohrenzBrayClarkViscosity",
+        "constitutive::CompositionalThreePhaseLohrenzBrayClarkViscosity",
+        "constitutive::CompositionalTwoPhaseConstantViscosity",
+        "constitutive::CompositionalMultiphaseFluidPVTPackage"
+      ]
+    },
+    "explicit": []
   }
 }
