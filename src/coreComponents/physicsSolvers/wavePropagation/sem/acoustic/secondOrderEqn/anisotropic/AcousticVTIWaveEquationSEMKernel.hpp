@@ -489,6 +489,7 @@ public:
         stack.xLocal[ a ][ i ] = m_nodeCoords[ nodeIndex ][ i ];
       }
     }
+    // The following factor is modified by the derived class to include the attenuationc quality factor 
     stack.factor = 1.0;
   }
 
