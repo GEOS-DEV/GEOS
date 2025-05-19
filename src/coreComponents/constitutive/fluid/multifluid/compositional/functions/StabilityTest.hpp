@@ -119,7 +119,7 @@ public:
     // Maximum error (convergence failure) over all trial compositions
     real64 maxError = -LvArray::NumericLimits< real64 >::max;
 
-    for( real64 const & alpha : { 1.0, -1.0, 3.0, -3.0, 0.0 } )
+    for( real64 const & alpha : { 1.0, -1.0, 3.0, -3.0 } )
     {
       // Initialise next sample
       for( integer const ic : presentComponents )

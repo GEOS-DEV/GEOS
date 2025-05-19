@@ -165,7 +165,7 @@ public:
       stackArray1d< real64, numComps > displacedLiquidComposition( numComps );
       stackArray1d< real64, numComps > displacedVapourComposition( numComps );
       kValues( 0, 0 ) = 0.0;
-      
+
       NegativeTwoPhaseFlash::compute(
         numComps,
         p,
