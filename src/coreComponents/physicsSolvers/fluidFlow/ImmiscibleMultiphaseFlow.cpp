@@ -1327,7 +1327,7 @@ void ImmiscibleMultiphaseFlow::saveConvergedState( ElementSubRegionBase & subReg
 
 }
 
-void ImmiscibleMultiphaseFlow::updateState( DomainPartition & domain )
+bool ImmiscibleMultiphaseFlow::updateState( DomainPartition & domain )
 {
   GEOS_MARK_FUNCTION;
 
@@ -1346,6 +1346,8 @@ void ImmiscibleMultiphaseFlow::updateState( DomainPartition & domain )
       updateFluidState( subRegion );
     } );
   } );
+
+  return true;
 }
 
 real64 ImmiscibleMultiphaseFlow::setNextDtBasedOnStateChange( real64 const & currentDt,

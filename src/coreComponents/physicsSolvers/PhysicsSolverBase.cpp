@@ -1376,33 +1376,25 @@ real64 PhysicsSolverBase::scalingForSystemSolution( DomainPartition & GEOS_UNUSE
 {
   localIndex const n = localSolution.size();
 
-  integer oscillation = true;
+  real64 maxDx = 0.0;
 
-  if( m_solution_old.size() != n )
+  for ( localIndex i = 0; i < n; i++ )
   {
-    m_solution_old.resize(n);
-    oscillation = false;
-  }
-  else
-  {
-    for ( localIndex i = 0; i < n; i++ )
+    if ( LvArray::math::abs(localSolution[i]) > LvArray::math::abs(maxDx) )
     {
-      if(LvArray::math::abs(localSolution[i]) > 1 &&
-       LvArray::math::abs(m_solution_old[i] + localSolution[i]) / LvArray::math::abs(localSolution[i]) > 0.25)
-      {
-        std::cout << "Oscillation not detected: " << i << " " << m_solution_old[i] << " " << localSolution[i] <<
-        " " << LvArray::math::abs(m_solution_old[i] + localSolution[i]) / LvArray::math::abs(localSolution[i]) << std::endl;
-        oscillation = false;
-        break;
-      }
+      maxDx = localSolution[i];
     }
   }
 
-  // copy the solution to the old solution vector
-  for (localIndex i = 0; i < n; i++)
+  bool oscillation = true;
+  if(LvArray::math::abs(maxDx) + LvArray::math::abs(m_maxDx_old) > 1e-3 &&
+    LvArray::math::abs(maxDx + m_maxDx_old) / (LvArray::math::abs(maxDx) + LvArray::math::abs(m_maxDx_old)) > 1e-2)
   {
-    m_solution_old[i] = localSolution[i];
+    std::cout << "Oscillation not detected: " << maxDx << " " << m_maxDx_old << std::endl;
+    oscillation = false;
   }
+
+  m_maxDx_old = maxDx;
 
   return oscillation ? 0.5 : 1.0;
 }
