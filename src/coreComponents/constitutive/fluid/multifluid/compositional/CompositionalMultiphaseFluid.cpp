@@ -26,7 +26,6 @@
 
 namespace geos
 {
-
 namespace fields
 {
 namespace multifluid

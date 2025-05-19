@@ -50,14 +50,19 @@ void CompositionalProperties::computeMolarDensity( integer const numComps,
                                                    real64 & molarDensity,
                                                    arraySlice1d< real64, USD2 > const & molarDensityDerivs )
 {
-  real64 vCorrected = constants::gasConstant * temperature * compressibilityFactor / pressure;
+  real64 vEos = constants::gasConstant * temperature * compressibilityFactor / pressure;
+  real64 vCorrected = vEos;
 
   for( integer ic = 0; ic < numComps; ++ic )
   {
     vCorrected -= composition[ic] * volumeShift[ic];
   }
 
-  if( vCorrected < MultiFluidConstants::epsilon )
+  if( MultiFluidConstants::epsilon < vCorrected )
+  {
+    molarDensity = 1.0 / vCorrected;
+  }
+  else
   {
     molarDensity = 0.0;
     auto const setZero = []( real64 & val ){ val = 0.0; };
@@ -65,22 +70,22 @@ void CompositionalProperties::computeMolarDensity( integer const numComps,
     return;
   }
 
-  molarDensity = 1.0 / vCorrected;
+  real64 dvCorrected_dx = 0.0;
 
   // Pressure derivative
-  real64 const dvCorrected_dP = constants::gasConstant * temperature * (compressibilityFactorDerivs[Deriv::dP] - compressibilityFactor / pressure) / pressure;
-  molarDensityDerivs[Deriv::dP] = -dvCorrected_dP / (vCorrected * vCorrected);
+  dvCorrected_dx = constants::gasConstant * temperature * (compressibilityFactorDerivs[Deriv::dP] - compressibilityFactor / pressure) / pressure;
+  molarDensityDerivs[Deriv::dP] = -molarDensity * molarDensity * dvCorrected_dx;
 
   // Temperature derivative
-  real64 const dvCorrected_dT = constants::gasConstant * (compressibilityFactor + temperature * compressibilityFactorDerivs[Deriv::dT]) / pressure;
-  molarDensityDerivs[Deriv::dT] = -dvCorrected_dT / (vCorrected * vCorrected);
+  dvCorrected_dx = constants::gasConstant * (temperature * compressibilityFactorDerivs[Deriv::dT] + compressibilityFactor) / pressure;
+  molarDensityDerivs[Deriv::dT] = -molarDensity * molarDensity * dvCorrected_dx;
 
   // Composition derivative
   for( integer ic = 0; ic < numComps; ++ic )
   {
     integer const kc = Deriv::dC + ic;
-    real64 const dvCorrected_dC = constants::gasConstant * temperature * compressibilityFactorDerivs[kc] / pressure - volumeShift[ic];
-    molarDensityDerivs[kc] = -dvCorrected_dC / (vCorrected * vCorrected);
+    dvCorrected_dx = constants::gasConstant * temperature * compressibilityFactorDerivs[kc] / pressure - volumeShift[ic];
+    molarDensityDerivs[kc] = -molarDensity * molarDensity * dvCorrected_dx;
   }
 }
 

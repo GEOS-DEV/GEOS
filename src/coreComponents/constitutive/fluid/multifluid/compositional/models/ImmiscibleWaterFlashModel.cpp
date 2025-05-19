@@ -70,8 +70,7 @@ ImmiscibleWaterFlashModel::createKernelWrapper() const
                         liquidEos,
                         vapourEos,
                         salinity,
-                        criticalVolume->m_componentCriticalVolume,
-                        m_timers );
+                        criticalVolume->m_componentCriticalVolume );
 }
 
 ImmiscibleWaterFlashModelUpdate::ImmiscibleWaterFlashModelUpdate(
@@ -83,16 +82,14 @@ ImmiscibleWaterFlashModelUpdate::ImmiscibleWaterFlashModelUpdate(
   EquationOfStateType const liquidEos,
   EquationOfStateType const vapourEos,
   real64 const salinity,
-  arrayView1d< real64 const > const componentCriticalVolume,
-  std::map< std::string, std::chrono::system_clock::duration > & timers ):
+  arrayView1d< real64 const > const componentCriticalVolume ):
   m_twoPhaseModel( numComponents,
                    liquidIndex,
                    vapourIndex,
                    liquidEos,
                    vapourEos,
                    salinity,
-                   componentCriticalVolume,
-                   timers ),
+                   componentCriticalVolume ),
   m_numComponents( numComponents ),
   m_liquidIndex( liquidIndex ),
   m_vapourIndex( vapourIndex ),
