@@ -396,7 +396,7 @@ TEST_P( AcousticWaveEquationSEMTest, SeismoTrace )
   ASSERT_TRUE( diffToCheck < 9e-3 );
 }
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
   AcousticWaveEquationSEMTests,
   AcousticWaveEquationSEMTest,
   ::testing::Values(
