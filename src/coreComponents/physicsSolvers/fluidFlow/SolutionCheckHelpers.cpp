@@ -57,24 +57,28 @@ void IdReporterOutput::outputWrongValues( string_view linesPrefix,
 {
   if( m_buffer.enabled() )
   {
-    integer numWrongValues = MpiWrapper::sum( m_buffer.getSignaledIdsCount() );
-    if( numWrongValues > 0 )
+    integer numSignaledWrongValues = MpiWrapper::sum( m_buffer.getSignaledIdsCount() );
+    if( numSignaledWrongValues > 0 )
     {
       string const minValueStr = GEOS_FMT( "{:.{}f} [{}]", minValue, 3, units::getSymbol( unit ) );
       GEOS_LOG_RANK_0( GEOS_FMT( "{}{} {} values encountered. Minimum value: {}.",
-                                 linesPrefix, numWrongValues, valueNaming, minValueStr ) );
-      GEOS_LOG_RANK_0( GEOS_FMT( "{}{} element ids:",
-                                 linesPrefix, valueNaming ) );
+                                 linesPrefix, numSignaledWrongValues, valueNaming, minValueStr ) );
 
-      MpiWrapper::barrier();
-      if( m_buffer.getCollectedIdsCount() > 0 )
+      if( MpiWrapper::sum( m_buffer.getCollectedIdsCount() ) > 0 )
       {
+        GEOS_LOG_RANK_0( GEOS_FMT( "{}{} element ids:",
+                                   linesPrefix, valueNaming ) );
+        MpiWrapper::barrier();
         GEOS_LOG( GEOS_FMT( "{}- rank {}, {} values: {}{}",
                             string( linesPrefix.size(), ' ' ),
                             MpiWrapper::commRank(),
                             m_buffer.getSignaledIdsCount(),
                             stringutilities::join( m_buffer, ", " ),
                             ( m_buffer.isComplete() ? "..." : "." ) ) );
+      }
+      else {
+        GEOS_LOG_RANK_0( GEOS_FMT( "{}Id listing of {} elements not shown, increase the log-level if needed.",
+                                   linesPrefix, valueNaming ) );
       }
     }
   }
