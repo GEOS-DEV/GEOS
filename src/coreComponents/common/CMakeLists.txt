@@ -43,6 +43,7 @@ set( common_headers
      MpiWrapper.hpp
      Path.hpp
      Span.hpp
+     StdContainerWrappers.hpp
      Stopwatch.hpp
      Timer.hpp
      Tensor.hpp
@@ -137,6 +138,16 @@ blt_add_library( NAME       common
 
 target_include_directories( common PUBLIC ${CMAKE_BINARY_DIR}/include )
 target_include_directories( common PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )
+
+# Older g++ version need a hint to use std::filesystem
+if( CMAKE_CXX_COMPILER_ID STREQUAL "GNU" )
+    if( CMAKE_CXX_COMPILER_VERSION VERSION_LESS 9 )
+        target_link_libraries( common PRIVATE "stdc++fs" )
+    endif ()
+endif ()
+if ( ENABLE_CUDA )
+  target_link_libraries( common PRIVATE "stdc++fs" )
+endif ()
 
 install( TARGETS common LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib )
 

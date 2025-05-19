@@ -48,7 +48,7 @@ public:
    * @param[in] dataSetName name of the dataset (leaf level in the multi-block tree)
    * @param[in] filePath path to the dataset file
    */
-  void addDataSet( std::vector< string > const & blockPath,
+  void addDataSet( stdVector< string > const & blockPath,
                    string const & dataSetName,
                    string const & filePath ) const;
 

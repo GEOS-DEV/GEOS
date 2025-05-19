@@ -14,9 +14,8 @@
         newtonMaxIter="20"
         lineSearchAction="None"/>
       <LinearSolverParameters
-        solverType="fgmres"
-        preconditionerType="mgr"
-        krylovTol="1.0e-5"/>
+        solverType="direct"
+        directParallel="0"/>
     </CompositionalMultiphaseFVM>
   </Solvers>
 

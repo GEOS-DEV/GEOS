@@ -42,6 +42,9 @@
 #include "mesh/mpiCommunications/NeighborCommunicator.hpp"
 #include "fileIO/Outputs/ChomboIO.hpp"
 
+#include "physicsSolvers/solidMechanics/kernels/SolidMechanicsKernelsDispatchTypeList.hpp"
+#include "physicsSolvers/solidMechanics/kernels/SolidMechanicsFixedStressThermoPoromechanicsKernelsDispatchTypeList.hpp"
+
 namespace geos
 {
 
@@ -60,7 +63,8 @@ SolidMechanicsLagrangianFEM::SolidMechanicsLagrangianFEM( const string & name,
   m_maxForce( 0.0 ),
   m_maxNumResolves( 10 ),
   m_strainTheory( 0 ),
-  m_isFixedStressPoromechanicsUpdate( false )
+  m_isFixedStressPoromechanicsUpdate( false ),
+  m_performStressInitialization( false )
 {
 
   registerWrapper( viewKeyStruct::newmarkGammaString(), &m_newmarkGamma ).
@@ -294,24 +298,22 @@ real64 SolidMechanicsLagrangianFEM::explicitKernelDispatch( MeshLevel & mesh,
     auto kernelFactory = solidMechanicsLagrangianFEMKernels::ExplicitSmallStrainFactory( dt, elementListName );
     rval = finiteElement::
              regionBasedKernelApplication< parallelDevicePolicy<   >,
-                                           constitutive::SolidBase,
-                                           CellElementSubRegion >( mesh,
-                                                                   targetRegions,
-                                                                   finiteElementName,
-                                                                   viewKeyStruct::solidMaterialNamesString(),
-                                                                   kernelFactory );
+                                           SolidMechanicsKernelsDispatchTypeList >( mesh,
+                                                                                    targetRegions,
+                                                                                    finiteElementName,
+                                                                                    viewKeyStruct::solidMaterialNamesString(),
+                                                                                    kernelFactory );
   }
   else if( m_strainTheory==1 )
   {
     auto kernelFactory = solidMechanicsLagrangianFEMKernels::ExplicitFiniteStrainFactory( dt, elementListName );
     rval = finiteElement::
              regionBasedKernelApplication< parallelDevicePolicy<   >,
-                                           constitutive::SolidBase,
-                                           CellElementSubRegion >( mesh,
-                                                                   targetRegions,
-                                                                   finiteElementName,
-                                                                   viewKeyStruct::solidMaterialNamesString(),
-                                                                   kernelFactory );
+                                           SolidMechanicsKernelsDispatchTypeList >( mesh,
+                                                                                    targetRegions,
+                                                                                    finiteElementName,
+                                                                                    viewKeyStruct::solidMaterialNamesString(),
+                                                                                    kernelFactory );
   }
   else
   {
@@ -1021,25 +1023,6 @@ void SolidMechanicsLagrangianFEM::setupSystem( DomainPartition & domain,
     arrayView1d< globalIndex const > const
     dofNumber = nodeManager.getReference< globalIndex_array >( dofManager.getKey( solidMechanics::totalDisplacement::key() ) );
 
-    if( m_contactRelationName != viewKeyStruct::noContactRelationNameString() )
-    {
-      ElementRegionManager const & elemManager = mesh.getElemManager();
-      string_array allFaceElementRegions;
-      elemManager.forElementRegions< SurfaceElementRegion >( [&]( SurfaceElementRegion const & elemRegion )
-      {
-        allFaceElementRegions.emplace_back( elemRegion.getName() );
-      } );
-
-      finiteElement::
-        fillSparsity< FaceElementSubRegion,
-                      solidMechanicsLagrangianFEMKernels::ImplicitSmallStrainQuasiStatic >( mesh,
-                                                                                            allFaceElementRegions,
-                                                                                            this->getDiscretizationName(),
-                                                                                            dofNumber,
-                                                                                            dofManager.rankOffset(),
-                                                                                            sparsityPattern );
-
-    }
     finiteElement::
       fillSparsity< CellElementSubRegion,
                     solidMechanicsLagrangianFEMKernels::ImplicitSmallStrainQuasiStatic >( mesh,
@@ -1072,7 +1055,7 @@ void SolidMechanicsLagrangianFEM::assembleSystem( real64 const GEOS_UNUSED_PARAM
                                                                 MeshLevel & mesh,
                                                                 string_array const & regionNames )
   {
-    if( m_isFixedStressPoromechanicsUpdate )
+    if( m_isFixedStressPoromechanicsUpdate || m_performStressInitialization )
     {
       set< string > poromechanicsRegions;
       set< string > mechanicsRegions;
@@ -1105,8 +1088,7 @@ void SolidMechanicsLagrangianFEM::assembleSystem( real64 const GEOS_UNUSED_PARAM
       }
 
       // first pass for coupled poromechanics regions
-      real64 const poromechanicsMaxForce= assemblyLaunch< constitutive::PorousSolid< ElasticIsotropic >, // TODO: change once there is a
-                                                                                                         // cmake solution
+      real64 const poromechanicsMaxForce= assemblyLaunch< SolidMechanicsFixedStressThermoPoromechanicsKernelsDispatchTypeList,
                                                           solidMechanicsLagrangianFEMKernels::FixedStressThermoPoromechanicsFactory >( mesh,
                                                                                                                                        dofManager,
                                                                                                                                        poromechanicsRegionNames,
@@ -1115,7 +1097,7 @@ void SolidMechanicsLagrangianFEM::assembleSystem( real64 const GEOS_UNUSED_PARAM
                                                                                                                                        localRhs,
                                                                                                                                        dt );
       // second pass for pure mechanics regions
-      real64 const mechanicsMaxForce = assemblyLaunch< constitutive::SolidBase,
+      real64 const mechanicsMaxForce = assemblyLaunch< SolidMechanicsKernelsDispatchTypeList,
                                                        solidMechanicsLagrangianFEMKernels::QuasiStaticFactory >( mesh,
                                                                                                                  dofManager,
                                                                                                                  mechanicsRegionNames,
@@ -1130,7 +1112,7 @@ void SolidMechanicsLagrangianFEM::assembleSystem( real64 const GEOS_UNUSED_PARAM
     {
       if( m_timeIntegrationOption == TimeIntegrationOption::QuasiStatic )
       {
-        m_maxForce = assemblyLaunch< constitutive::SolidBase,
+        m_maxForce = assemblyLaunch< SolidMechanicsKernelsDispatchTypeList,
                                      solidMechanicsLagrangianFEMKernels::QuasiStaticFactory >( mesh,
                                                                                                dofManager,
                                                                                                regionNames,
@@ -1141,7 +1123,7 @@ void SolidMechanicsLagrangianFEM::assembleSystem( real64 const GEOS_UNUSED_PARAM
       }
       else if( m_timeIntegrationOption == TimeIntegrationOption::ImplicitDynamic )
       {
-        m_maxForce = assemblyLaunch< constitutive::SolidBase,
+        m_maxForce = assemblyLaunch< SolidMechanicsKernelsDispatchTypeList,
                                      solidMechanicsLagrangianFEMKernels::ImplicitNewmarkFactory >( mesh,
                                                                                                    dofManager,
                                                                                                    regionNames,

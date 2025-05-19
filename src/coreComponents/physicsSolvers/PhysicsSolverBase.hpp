@@ -694,6 +694,9 @@ public:
 
     /// @return string for the writeLinearSystem wrapper
     static constexpr char const * writeLinearSystemString() { return "writeLinearSystem"; }
+
+    /// @return string for the allowNonConvergedLinearSolverSolution wrapper
+    static constexpr char const * allowNonConvergedLinearSolverSolutionString() { return "allowNonConvergedLinearSolverSolution"; }
   };
 
   /**
@@ -893,6 +896,10 @@ public:
   virtual PyTypeObject * getPythonType() const override;
 #endif
 
+  /**
+   * @brief accessor for m_meshTargets
+   * @return reference to m_meshTargets
+   */
   map< std::pair< string, string >, string_array > const & getMeshTargets() const
   {
     return m_meshTargets;
@@ -998,6 +1005,9 @@ protected:
   /// timestep of the next cycle
   real64 m_nextDt;
 
+  /// behavior in case of linear solver failure
+  integer m_allowNonConvergedLinearSolverSolution;
+
   /// Number of cycles since last timestep cut
   integer m_numTimestepsSinceLastDtCut;
 
@@ -1082,7 +1092,7 @@ private:
    */
   void logEndOfCycleInformation( integer const cycleNumber,
                                  integer const numOfSubSteps,
-                                 std::vector< real64 > const & subStepDt ) const;
+                                 stdVector< real64 > const & subStepDt ) const;
 
 };
 

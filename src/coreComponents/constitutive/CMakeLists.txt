@@ -84,13 +84,15 @@ set( constitutive_headers
      fluid/multifluid/CO2Brine/functions/PVTFunctionHelpers.hpp
      fluid/multifluid/CO2Brine/functions/SpanWagnerCO2Density.hpp
      fluid/multifluid/CO2Brine/functions/WaterDensity.hpp
+     fluid/multifluid/compositional/functions/CompositionalProperties_impl.hpp
      fluid/multifluid/compositional/functions/CompositionalProperties.hpp
-     fluid/multifluid/compositional/functions/CompositionalPropertiesImpl.hpp
      fluid/multifluid/compositional/functions/CubicEOSPhaseModel.hpp
      fluid/multifluid/compositional/functions/FugacityCalculator.hpp
      fluid/multifluid/compositional/functions/KValueInitialization.hpp
      fluid/multifluid/compositional/functions/NegativeTwoPhaseFlash.hpp
      fluid/multifluid/compositional/functions/RachfordRice.hpp
+     fluid/multifluid/compositional/functions/SoreideWhitsonEOSPhaseModel_impl.hpp
+     fluid/multifluid/compositional/functions/SoreideWhitsonEOSPhaseModel.hpp
      fluid/multifluid/compositional/functions/StabilityTest.hpp
      fluid/multifluid/compositional/models/CompositionalDensity.hpp
      fluid/multifluid/compositional/models/ConstantViscosity.hpp
@@ -103,11 +105,16 @@ set( constitutive_headers
      fluid/multifluid/compositional/models/NegativeTwoPhaseFlashModel.hpp
      fluid/multifluid/compositional/models/NullModel.hpp
      fluid/multifluid/compositional/models/PhaseModel.hpp
+     fluid/multifluid/compositional/models/PhillipsBrineDensity.hpp
+     fluid/multifluid/compositional/models/PhillipsBrineViscosity.hpp
+     fluid/multifluid/compositional/parameters/BrineSalinity.hpp
      fluid/multifluid/compositional/parameters/ComponentProperties.hpp
+     fluid/multifluid/compositional/parameters/ComponentType.hpp
      fluid/multifluid/compositional/parameters/CriticalVolume.hpp
      fluid/multifluid/compositional/parameters/EquationOfState.hpp
      fluid/multifluid/compositional/parameters/ImmiscibleWaterParameters.hpp
      fluid/multifluid/compositional/parameters/ModelParameters.hpp
+     fluid/multifluid/compositional/parameters/PressureTemperatureCoordinates.hpp
      fluid/multifluid/compositional/CompositionalMultiphaseFluid.hpp
      fluid/multifluid/compositional/CompositionalMultiphaseFluidUpdates.hpp
      fluid/reactivefluid/ReactiveSinglePhaseFluid.hpp
@@ -125,8 +132,11 @@ set( constitutive_headers
      fluid/singlefluid/SingleFluidSelector.hpp
      fluid/singlefluid/SlurryFluidSelector.hpp
      fluid/singlefluid/ThermalCompressibleSinglePhaseFluid.hpp
+     fluid/twophaseimmisciblefluid/TwoPhaseImmiscibleFluid.hpp
+     fluid/twophaseimmisciblefluid/TwoPhaseImmiscibleFluidFields.hpp
      permeability/CarmanKozenyPermeability.hpp
      permeability/ConstantPermeability.hpp
+     permeability/DamagePermeability.hpp
      permeability/ExponentialDecayPermeability.hpp
      permeability/ParallelPlatesPermeability.hpp
      permeability/PermeabilityBase.hpp
@@ -166,7 +176,8 @@ set( constitutive_headers
      solid/ElasticTransverseIsotropic.hpp
      solid/ElasticOrthotropic.hpp
      solid/InvariantDecompositions.hpp
-     solid/PerfectlyPlastic.hpp
+     solid/PorousDamageSolid.hpp
+     solid/PerfectlyPlastic.hpp     
      solid/PorousSolid.hpp
      solid/PropertyConversions.hpp
      solid/SolidBase.hpp
@@ -246,8 +257,13 @@ set( constitutive_sources
      fluid/multifluid/compositional/models/ImmiscibleWaterViscosity.cpp
      fluid/multifluid/compositional/models/LohrenzBrayClarkViscosity.cpp
      fluid/multifluid/compositional/models/NegativeTwoPhaseFlashModel.cpp
+     fluid/multifluid/compositional/models/PhillipsBrineDensity.cpp
+     fluid/multifluid/compositional/models/PhillipsBrineViscosity.cpp
+     fluid/multifluid/compositional/parameters/BrineSalinity.cpp
+     fluid/multifluid/compositional/parameters/ComponentProperties.cpp
      fluid/multifluid/compositional/parameters/CriticalVolume.cpp
      fluid/multifluid/compositional/parameters/ImmiscibleWaterParameters.cpp
+     fluid/multifluid/compositional/parameters/PressureTemperatureCoordinates.cpp
      fluid/multifluid/compositional/CompositionalMultiphaseFluid.cpp
      fluid/multifluid/compositional/CompositionalMultiphaseFluidUpdates.cpp
      fluid/reactivefluid/ReactiveSinglePhaseFluid.cpp
@@ -258,8 +274,10 @@ set( constitutive_sources
      fluid/singlefluid/SingleFluidBase.cpp
      fluid/singlefluid/SlurryFluidBase.cpp
      fluid/singlefluid/ThermalCompressibleSinglePhaseFluid.cpp
+     fluid/twophaseimmisciblefluid/TwoPhaseImmiscibleFluid.cpp
      permeability/CarmanKozenyPermeability.cpp
      permeability/ConstantPermeability.cpp
+     permeability/DamagePermeability.cpp
      permeability/ExponentialDecayPermeability.cpp
      permeability/ParallelPlatesPermeability.cpp
      permeability/PermeabilityBase.cpp
@@ -291,6 +309,7 @@ set( constitutive_sources
      solid/ElasticIsotropicPressureDependent.cpp
      solid/ElasticTransverseIsotropic.cpp
      solid/ElasticOrthotropic.cpp
+     solid/PorousDamageSolid.cpp
      solid/PerfectlyPlastic.cpp
      solid/PorousSolid.cpp
      solid/SolidBase.cpp

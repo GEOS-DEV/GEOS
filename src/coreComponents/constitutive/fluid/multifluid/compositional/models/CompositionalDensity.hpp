@@ -58,17 +58,17 @@ public:
                 arraySlice1d< real64, USD2 > const & dMassDensity,
                 bool useMass ) const;
 
-private:
   template< integer USD >
   GEOS_HOST_DEVICE
-  void computeCompressibilityFactor( integer const numComps,
-                                     real64 const & pressure,
-                                     real64 const & temperature,
-                                     arraySlice1d< real64 const, USD > const & composition,
-                                     ComponentProperties::KernelWrapper const & componentProperties,
-                                     EquationOfStateType const equationOfState,
-                                     real64 & compressibilityFactor,
-                                     arraySlice1d< real64 > const & compressibilityFactorDerivs ) const;
+  static void
+  computeCompressibilityFactor( integer const numComps,
+                                real64 const & pressure,
+                                real64 const & temperature,
+                                arraySlice1d< real64 const, USD > const & composition,
+                                ComponentProperties::KernelWrapper const & componentProperties,
+                                EquationOfStateType const equationOfState,
+                                real64 & compressibilityFactor,
+                                arraySlice1d< real64 > const & compressibilityFactorDerivs );
 
 private:
   arrayView1d< real64 const > m_componentDimensionalVolumeShift;
@@ -170,7 +170,7 @@ void CompositionalDensityUpdate::computeCompressibilityFactor( integer const num
                                                                ComponentProperties::KernelWrapper const & componentProperties,
                                                                EquationOfStateType const equationOfState,
                                                                real64 & compressibilityFactor,
-                                                               arraySlice1d< real64 > const & compressibilityFactorDerivs ) const
+                                                               arraySlice1d< real64 > const & compressibilityFactorDerivs )
 {
   if( equationOfState == EquationOfStateType::PengRobinson )
   {
