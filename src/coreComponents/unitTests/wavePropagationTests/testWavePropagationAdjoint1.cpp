@@ -397,11 +397,11 @@ TEST_P( AcousticWaveEquationSEMTest, SeismoTrace )
 }
 
 INSTANTIATE_TEST_CASE_P(
-        AcousticWaveEquationSEMTests,
-        AcousticWaveEquationSEMTest,
-        ::testing::Values(
-                0,1,2
-        ));
+  AcousticWaveEquationSEMTests,
+  AcousticWaveEquationSEMTest,
+  ::testing::Values(
+    0, 1, 2
+    ));
 
 int main( int argc, char * * argv )
 {
