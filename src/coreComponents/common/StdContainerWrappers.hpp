@@ -45,7 +45,7 @@ public:
    * @tparam Allocator Allocator type for the vector.
    * @param vector std::vector of elements to copy into the StdVectorWrapper.
    */
-  StdVectorWrapper( std::vector< T, Allocator > const & vec ): Base( vec ){}
+  StdVectorWrapper( std::vector< T, Allocator > const & vec ): Base( std::move(vec) ){}
 
   /**
    * @brief Conversion constructor for StdVectorWrapper.
