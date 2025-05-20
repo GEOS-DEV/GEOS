@@ -66,6 +66,12 @@ struct WellValidity
   static constexpr std::string_view getDescription() { return "Well validity information"; }
 };
 
+struct WellValidityDetails
+{
+  static constexpr int getMinLogLevel() { return 2; }
+  static constexpr std::string_view getDescription() { return "Well validity details (negative pressure element ids)"; }
+};
+
 
 /// @endcond
 ///@}

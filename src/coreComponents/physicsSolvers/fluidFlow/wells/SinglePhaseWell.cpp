@@ -33,6 +33,7 @@
 #include "physicsSolvers/LogLevelsInfo.hpp"
 #include "physicsSolvers/fluidFlow/wells/LogLevelsInfo.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
+#include "physicsSolvers/fluidFlow/SolutionCheckHelpers.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellSolverBaseFields.hpp"
 #include "physicsSolvers/fluidFlow/wells/SinglePhaseWellFields.hpp"
@@ -883,8 +884,9 @@ bool SinglePhaseWell::checkSystemSolution( DomainPartition & domain,
   GEOS_MARK_FUNCTION;
 
   string const wellDofKey = dofManager.getKey( wellElementDofName() );
-  integer numNegativePressures = 0;
-  real64 minPressure = 0.0;
+  IdReporterBuffer rankNegPressureIds{ isLogLevelActive< logInfo::WellValidity >( getLogLevel() ),
+                                       isLogLevelActive< logInfo::WellValidityDetails >( getLogLevel() ) ? 16 : 0 };
+  real64 minNegPres = 0.0;
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel const & mesh,
@@ -908,25 +910,26 @@ bool SinglePhaseWell::checkSystemSolution( DomainPartition & domain,
       arrayView1d< real64 const > const & pres =
         subRegion.getField< fields::well::pressure >();
 
-      auto const statistics =
-        singlePhaseBaseKernels::SolutionCheckKernel::
-          launch< parallelDevicePolicy<> >( localSolution, rankOffset, dofNumber, ghostRank, pres, scalingFactor );
+      auto const negPresCollector = rankNegPressureIds.createCollector( subRegion.localToGlobalMap().toViewConst() );
 
-      numNegativePressures += statistics.first;
-      minPressure = std::min( minPressure, statistics.second );
+      auto const results = singlePhaseBaseKernels::SolutionCheckKernel::
+                             launch< parallelDevicePolicy<> >( localSolution,
+                                                               rankOffset,
+                                                               dofNumber,
+                                                               ghostRank,
+                                                               pres,
+                                                               scalingFactor,
+                                                               negPresCollector );
+
+      minNegPres = std::min( minNegPres, results.minNegPres );
     } );
   } );
 
-  numNegativePressures = MpiWrapper::sum( numNegativePressures );
+  IdReporterOutput const rankNegPressureIdsOutput = rankNegPressureIds.createOutput();
+  rankNegPressureIdsOutput.outputWrongValues( GEOS_FMT( "        {}: ", getName() ),
+                                              "negative pressure", minNegPres, units::Unit::Pressure );
 
-  if( numNegativePressures > 0 )
-  {
-    GEOS_LOG_LEVEL_RANK_0( logInfo::SystemSolution,
-                           GEOS_FMT( "        {}: Number of negative pressure values: {}, minimum value: {} Pa",
-                                     getName(), numNegativePressures, fmt::format( "{:.{}f}", minPressure, 3 ) ) );
-  }
-
-  return (m_allowNegativePressure || numNegativePressures == 0) ?  1 : 0;
+  return (m_allowNegativePressure || rankNegPressureIdsOutput.getRanksSignaledIdsCount() == 0) ? 1 : 0;
 }
 
 void
