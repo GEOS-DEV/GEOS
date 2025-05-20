@@ -199,13 +199,13 @@ template< typename TKEY, typename TVAL >
 class mapBase< TKEY, TVAL, std::integral_constant< bool, true > > : public stdMap< TKEY, TVAL >
 {
 public:
-  using stdMap = typename stdMap< TKEY, TVAL >::StdMapWrapper; 
+  using stdMap< TKEY, TVAL >::StdMapWrapper; 
 };
 
 template< typename TKEY, typename TVAL >
 class mapBase< TKEY, TVAL, std::integral_constant< bool, false > > : public stdUnorderedMap< TKEY, TVAL >
 {
-  using stdUnorderedMap = typename stdUnorderedMap< TKEY, TVAL >::StdMapWrapper; 
+  using stdUnorderedMap< TKEY, TVAL >::StdMapWrapper; 
 };
 /// @endcond
 
