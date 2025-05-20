@@ -46,6 +46,9 @@ class BB_Tetrahedron final : public FiniteElementBase
 {
 public:
 
+  /// The order of the finite element.
+  static constexpr int order = ORDER;
+
   /// The number of shape functions per element.
   constexpr static localIndex numNodes = ( ORDER + 1 ) * ( ORDER + 2 ) * ( ORDER + 3 ) / 6;
 
@@ -1209,7 +1212,7 @@ public:
               {
                 constexpr real64 derFactor = ( ii1 + ij1 + ik1 + 4 );
                 constexpr real64 val = computeFaceSuperpositionIntegral( ii1, ij1, ik1, i2, j2, k2 ) * derFactor;
-                constexpr int f = (f2 + 1 + l) % 4;
+                constexpr int f = l >= f2 ? l + 1 : l;
                 funcF( c1, c2, f2, f, i1, j1, k1, i2, j2, k2, val * detJf[f2] );
               }
             } );

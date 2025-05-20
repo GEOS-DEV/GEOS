@@ -490,20 +490,22 @@ void AcousticWaveEquationDG::prepareNextTimestep( MeshLevel & mesh )
 
       constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
 
-
-      forAll< EXEC_POLICY >( elementSubRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const k )
-      {
-  
-        for( localIndex i = 0; i < numNodesPerElem; i++ )
-        {
-          p_nm1[k][i] = p_n[k][i];
-          p_n[k][i]   = p_np1[k][i];
-  
-        }
-  
-      } );
+      updatePressure( elementSubRegion.size(), numNodesPerElem, p_nm1, p_n, p_np1 );
 
     } );
+  } );
+
+}
+
+void AcousticWaveEquationDG::updatePressure( localIndex const size, localIndex const numNodesPerElem, arrayView2d< real32 > const p_nm1,arrayView2d< real32 > const p_n, arrayView2d< real32 >  p_np1 )
+{
+  forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const k )
+  {
+    for( localIndex i = 0; i < numNodesPerElem; i++ )
+    {
+      p_nm1[k][i] = p_n[k][i];
+      p_n[k][i]   = p_np1[k][i];
+    }
   } );
 
 
