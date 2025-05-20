@@ -2220,9 +2220,13 @@ void CompositionalMultiphaseWell::printRates( real64 const & time_n,
           outputFile << "," << currentBHP;
           outputFile << "," << currentTotalRate << "," << currentTotalVolRate;
           for( integer ip = 0; ip < numPhase; ++ip )
+          {
             outputFile << "," << currentPhaseVolRate[ip];
+          }
           for( integer ic = 0; ic < numComp; ++ic )
+          {
             outputFile << "," << compRate[ic];
+          }
           outputFile << std::endl;
           outputFile.close();
         }
