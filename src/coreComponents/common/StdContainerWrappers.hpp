@@ -45,9 +45,13 @@ public:
    * @tparam Allocator Allocator type for the vector.
    * @param vector std::vector of elements to copy into the StdVectorWrapper.
    */
-  StdVectorWrapper( std::vector< T, Allocator > vec ):
-    Base( vec )
-  {}
+  StdVectorWrapper( std::vector< T, Allocator > vec ): Base( vec ){}
+
+  /**
+   * @brief Add copie constructor
+   * @param other
+   */
+  StdVectorWrapper( StdVectorWrapper const & other ): Base( other ) {}
 
   /**
    * Access element at index with bounds checking if USE_STD_CONTAINER_BOUNDS_CHECKING is true.
@@ -199,13 +203,13 @@ template< typename TKEY, typename TVAL >
 class mapBase< TKEY, TVAL, std::integral_constant< bool, true > > : public stdMap< TKEY, TVAL >
 {
 public:
-  using stdMap< TKEY, TVAL >::stdMap; 
+  using stdMap< TKEY, TVAL >::stdMap;
 };
 
 template< typename TKEY, typename TVAL >
 class mapBase< TKEY, TVAL, std::integral_constant< bool, false > > : public stdUnorderedMap< TKEY, TVAL >
 {
-  using stdUnorderedMap< TKEY, TVAL >::stdUnorderedMap; 
+  using stdUnorderedMap< TKEY, TVAL >::stdUnorderedMap;
 };
 /// @endcond
 
