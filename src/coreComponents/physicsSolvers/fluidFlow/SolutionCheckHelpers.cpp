@@ -65,22 +65,19 @@ void IdReporterOutput::outputWrongValues( string_view linesPrefix,
       GEOS_LOG_RANK_0( GEOS_FMT( "{}{} {} values encountered. Minimum value: {}.",
                                  linesPrefix, m_ranksSignaledIdsCount, valueNaming, minValueStr ) );
 
+      string const indentation = string( linesPrefix.size(), ' ' );
       if( m_ranksCollectedIdsCount > 0 )
       {
-        GEOS_LOG_RANK_0( GEOS_FMT( "{}{} element ids:",
-                                   linesPrefix, valueNaming ) );
+        GEOS_LOG_RANK_0( GEOS_FMT( "{}Summary of {} element:",
+                                   indentation, valueNaming ) );
         MpiWrapper::barrier();
-        GEOS_LOG( GEOS_FMT( "{}- rank {}, {} values: {}{}",
-                            string( linesPrefix.size(), ' ' ),
-                            MpiWrapper::commRank(),
-                            m_buffer.getSignaledIdsCount(),
-                            stringutilities::join( m_buffer, ", " ),
-                            ( m_buffer.isComplete() ? "..." : "." ) ) );
-      }
-      else
-      {
-        GEOS_LOG_RANK_0( GEOS_FMT( "{}Id listing of {} elements not shown, increase the log-level if needed.",
-                                   linesPrefix, valueNaming ) );
+        if( m_buffer.getSignaledIdsCount() > 0 )
+          GEOS_LOG( GEOS_FMT( "{}- rank {}, {} values: {}{}",
+                              indentation,
+                              MpiWrapper::commRank(),
+                              m_buffer.getSignaledIdsCount(),
+                              stringutilities::join( m_buffer, ", " ),
+                              ( m_buffer.isComplete() ? "..." : "." ) ) );
       }
     }
   }
