@@ -255,10 +255,6 @@ void AcousticWaveEquationDG::initializePostInitialConditionsPreSubGroups()
     arrayView2d< localIndex const > const & facesToElems = faceManager.elementList();
     arrayView2d< wsCoordType const, nodes::REFERENCE_POSITION_USD > const nodeCoords = nodeManager.getField< fields::referencePosition32 >().toViewConst();
 
-    // mass matrix to be computed in this function
-
-    /// damping matrix to be computed for each dof in the boundary of the mesh
-
     /// get array of indicators: 1 if face is on the free surface; 0 otherwise
     arrayView1d< localIndex const > const freeSurfaceFaceIndicator = faceManager.getField< acousticfieldsdg::AcousticFreeSurfaceFaceIndicator >();
 
@@ -537,6 +533,7 @@ void AcousticWaveEquationDG::computeUnknowns( real64 const & time_n,
     arrayView2d< integer > const elemsToOppositePermutation = elementSubRegion.getField< acousticfieldsdg::ElementToOppositePermutation >();
 
     arrayView1d< real32 const > const velocity = elementSubRegion.getField< acousticfieldsdg::AcousticVelocity >();
+    arrayView1d< real32 const > const density = elementSubRegion.getField< acousticfieldsdg::AcousticDensity >();
 
     arrayView2d< real32 const > const p_nm1 = elementSubRegion.getField< acousticfieldsdg::Pressure_nm1 >();
     arrayView2d< real32 > const p_n = elementSubRegion.getField< acousticfieldsdg::Pressure_n >();
@@ -560,6 +557,7 @@ void AcousticWaveEquationDG::computeUnknowns( real64 const & time_n,
         nodeCoords,
         elemsToNodes,
         velocity,
+        density,
         p_n,
         p_nm1,
         elemsToOpposite,

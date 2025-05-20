@@ -117,11 +117,10 @@ struct PrecomputeSourceAndReceiverKernel
                                                                         center,
                                                                         coords );
 
-          if( sourceFound && elemGhostRank[k] < 0)
+          if( sourceFound )
           {
             sourceIsAccessible[isrc] = 1;
             sourceElem[isrc] = k;
-            printf( "sourceElem[%d] = %d\n", isrc, k );
             sourceRegion[isrc] = regionIndex;
             real64 Ntest[FE_TYPE::numNodes];
 
@@ -443,6 +442,7 @@ struct PressureComputationKernel
                        arrayView2d< WaveSolverBase::wsCoordType const, nodes::REFERENCE_POSITION_USD > const X,
                        arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes,
                        arrayView1d< real32 const > const velocity,
+                       arrayView1d< real32 const > const density,
                        arrayView2d< real32 > const p_n,
                        arrayView2d< real32 const > const p_nm1,
                        arrayView2d< localIndex > const & elemsToOpposite,
@@ -469,12 +469,14 @@ struct PressureComputationKernel
     forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const k )
     {
 
-      int order = FE_TYPE::order;
+      int const order = FE_TYPE::order;
+
+      // Coefficient for penalisation
+      int const alpha = 12.0*((order*(order+1)*(order+2))/6);
 
       real64 const dt2 = pow( dt, 2 );
 
       constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
-      constexpr localIndex numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
 
       real64 pTemp[numNodesPerElem] = {0.0};
       real64 flowx[numNodesPerElem] = {0.0};
@@ -488,14 +490,14 @@ struct PressureComputationKernel
         }
       }
 
-      //Compute 1/c2, take its inverse and compute the detemrinant of the jacobian
+      //Compute 1/(c2*density) term and compute the determinant of the jacobian
       real64 const C2 = pow( velocity[k], 2 );
 
-      real64 const invC2 = 1.0/C2;
+      real64 const invC2 = 1.0/(C2*density[k]);
 
       real64 const det = LvArray::math::abs( FE_TYPE::jacobianDeterminant( xLocal ));
 
-      //Multiply by p_{n } by 2*(1/c2)*Mass and p_{n-1} by -(1/c2)*Mass
+      //Multiply p_{n } by 2*invC2*Mass and p_{n-1} by -invC2*Mass
       FE_TYPE::computeMassTerm( xLocal, [&] ( const int i, const int j, const real64 val )
       {
         pTemp[i] += 2.0*invC2*val*p_n[k][j];
@@ -508,8 +510,12 @@ struct PressureComputationKernel
         flowx[i] -= val*p_n[k][j];
       } );
 
+
+      //Second stiffness part (surface)
       FE_TYPE::computeSurfaceTerms( xLocal, [&] ( const int c1, const int c2, const int f1, const int i1, const int j1, const int k1, const int i2, const int j2, const int k2, real64 const val )
       {
+
+        // We take the neighbour element
         const localIndex elemNeigh = elemsToOpposite( k, f1 );
       
 
@@ -517,10 +523,7 @@ struct PressureComputationKernel
         {
 
           
-          // Now we seek the degree of freedom on the neighbour element to use for the computation of the flux (or the penalty)
-          // First, we compute the four possible values of the permutation of the degrees of freedom depending on the the fixed
-          // permutation value contained inside elemsToOppositePermutation permutation
-
+          // We compute the permutation of the opposite element, used to find the equivalent of c2 on the neighbour element
           const int perm = elemsToOppositePermutation( k, f1 );
 
 
@@ -528,11 +531,7 @@ struct PressureComputationKernel
           const int p2 = (perm/4)%4-1;
           const int p3 = (perm/16)%4-1;
           const int p4 = (perm/64)%4-1;
-          // Then we transform the 3 indices returned by the callback (i2,j2,k2) using the permutations. One of this permutation, will be 0
-          // (depending on which
-          // degree of freedom is the one at the opposite of the face shared with the neighbour element) and will correspond to the one
-          // where p* will be negati
-
+      
 
           const int l2 = order-i2-j2-k2;
           const int Indices[3] = {i2, j2, k2};
@@ -542,10 +541,14 @@ struct PressureComputationKernel
           const int kk2 = p3 < 0 ? l2 : Indices[p3];
           const int ll2 = p4 < 0 ? l2 : Indices[p4];
 
-          const int neighDof = FE_TYPE::dofIndex( ii2, jj2, kk2 );
+          const int neighDof2 = FE_TYPE::dofIndex( ii2, jj2, kk2 );
 
-          real64 const val1 = ((12.0)/((LvArray::math::min( characteristicSize[k], characteristicSize[elemNeigh] ))))*val*p_n[k][c2];
-          real64 const val2 = ((12.0)/((LvArray::math::min( characteristicSize[k], characteristicSize[elemNeigh] ))))*val*p_n[elemNeigh][neighDof];
+          //Now that we have the neighbor dof, we compute the penalisation term. The extra tyerm 12 is used as a safety for the value 
+          // of coefficient alpha= 1/hmin 
+
+
+          real64 const val1 = (alpha/((LvArray::math::min( characteristicSize[k], characteristicSize[elemNeigh] ))))*val*p_n[k][c2];
+          real64 const val2 = (alpha/((LvArray::math::min( characteristicSize[k], characteristicSize[elemNeigh] ))))*val*p_n[elemNeigh][neighDof2];
 
           flowx[c1] += -val1+val2;
 
@@ -556,7 +559,7 @@ struct PressureComputationKernel
       {
 
         
-
+        // This part is for the flux term
         //We take the neighbour element
         const int elemNeigh = elemsToOpposite( k, f1 );
         
@@ -570,11 +573,7 @@ struct PressureComputationKernel
           const int p3 = (perm/16)%4-1;
           const int p4 = (perm/64)%4-1;
 
-          // Then we transform the 3 indices returned by the callback (i2,j2,k2) using the permutations. One of this permutation, will be 0
-          // (depending on which
-          // degree of freedom is the one at the opposite of the face shared with the neighbour element) and will correspond to the one
-          // where p* will be negative
-
+          // Again we take the permutation of the opposite element, used to find the equivalent of c2 on the neighbour element and c1 this time
 
           const int Indices[3] = {i2, j2, k2};
 
@@ -585,7 +584,7 @@ struct PressureComputationKernel
           const int kk2 = p3 < 0 ? l2 : Indices[p3];
           const int ll2 = p4 < 0 ? l2 : Indices[p4];
 
-          const int neighDof = FE_TYPE::dofIndex( ii2, jj2, kk2 );
+          const int neighDof2 = FE_TYPE::dofIndex( ii2, jj2, kk2 );
 
           const int IndicesTranspose[3] = {i1, j1, k1};
 
@@ -596,9 +595,12 @@ struct PressureComputationKernel
           const int kk1 = p3 < 0 ? l1 : IndicesTranspose[p3];
           const int ll1 = p4 < 0 ? l1 : IndicesTranspose[p4];
 
-          const int neighDof2 = FE_TYPE::dofIndex( ii1, jj1, kk1 );
+          const int neighDof = FE_TYPE::dofIndex( ii1, jj1, kk1 );
 
-          // Finally, using the dofIndex function, we compute the number of the global degree of freedom on the element
+          // Here the goal is to compute the factor of correction for the flux term
+          // We need to get the local coordinates of the element and the neighbour element on a specific order
+
+          //We first assign to elemneigh the three value from xLocal which are common to the two elements
           real64 xLocalNeigh[4][3];
 
           int x1 = (f1+1)%4;
@@ -632,7 +634,7 @@ struct PressureComputationKernel
           xLocalNeigh[x3][1] = xLocal[x3][1];
           xLocalNeigh[x3][2] = xLocal[x3][2];
 
-          //Then we change the value fo DoF which is not common between xLocal and xLocalNeigh
+          // Using the permutation we can find the last point of the neighbour element
 
           localIndex IndexPerm[4] = {p1, p2, p3, p4};
 
@@ -647,22 +649,23 @@ struct PressureComputationKernel
 
           }
 
+          //We compute the correction factor and the value of the flux term
           real64 corrLocal = FE_TYPE::computeFluxDerivativeFactor( xLocal, x1, x2, o1, o2 );
           real64 corrNeigh = FE_TYPE::computeFluxDerivativeFactor( xLocalNeigh, x1, x2, o1, o2 );
 
           real64 const val1 = 0.5*val*p_n[k][c2]*corrLocal;
-          real64 const val2 = 0.5*val*p_n[elemNeigh][neighDof]*corrLocal;
+          real64 const val2 = 0.5*val*p_n[elemNeigh][neighDof2]*corrLocal;
 //
           real64 const val3 = 0.5*val*p_n[k][c1]*corrLocal;
-          real64 const val4 = 0.5*val*p_n[elemNeigh][neighDof2]*corrNeigh;
+          real64 const val4 = 0.5*val*p_n[elemNeigh][neighDof]*corrNeigh;
         
           flowx[c1] += val1-val2;
           flowx[c2] += val3-val4;
 
         }
       } );
-      //Add time and physic dependency
 
+      //Add time dependency  
       for( localIndex i = 0; i < numNodesPerElem; i++ )
       {
         pTemp[i] += dt2*flowx[i];
@@ -685,6 +688,7 @@ struct PressureComputationKernel
         }
       }
 
+      //Multiplication by the inverse mass matrix
       for( localIndex i = 0; i < numNodesPerElem; ++i )
       {
         real64 fx=0.0;
@@ -692,7 +696,7 @@ struct PressureComputationKernel
         {
           fx+= referenceInvMassMatrix( i, j )*pTemp[j];
         }
-        p_np1[k][i]=(C2*fx)/det;
+        p_np1[k][i]=(C2*density[k]*fx)/det;
       }
 
     } );
