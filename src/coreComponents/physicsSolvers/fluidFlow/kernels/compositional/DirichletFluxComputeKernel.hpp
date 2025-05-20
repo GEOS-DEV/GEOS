@@ -32,19 +32,6 @@ namespace isothermalCompositionalMultiphaseFVMKernels
 
 /******************************** DirichletFluxComputeKernel ********************************/
 
-template< integer NUM_COMP, bool IS_THERMAL >
-static constexpr integer getNumDof()
-{
-  if constexpr (IS_THERMAL)
-  {
-    return NUM_COMP + 2;
-  }
-  else
-  {
-    return NUM_COMP + 1;
-  }
-}
-
 /**
  * @class DirichletFluxComputeKernel
  * @tparam NUM_COMP number of fluid components
@@ -54,7 +41,7 @@ static constexpr integer getNumDof()
  */
 template< integer NUM_COMP, bool IS_THERMAL, typename FLUID >
 class DirichletFluxComputeKernel : public FluxComputeKernel< NUM_COMP,
-                                                             getNumDof< NUM_COMP, IS_THERMAL >(),
+                                                             NUM_COMP + 1 + IS_THERMAL,
                                                              BoundaryStencilWrapper >
 {
 public:
@@ -91,7 +78,7 @@ public:
   using AbstractBase::m_localRhs;
   using AbstractBase::m_kernelFlags;
 
-  using Base = isothermalCompositionalMultiphaseFVMKernels::FluxComputeKernel< NUM_COMP, getNumDof< NUM_COMP, IS_THERMAL >(), BoundaryStencilWrapper >;
+  using Base = isothermalCompositionalMultiphaseFVMKernels::FluxComputeKernel< NUM_COMP, NUM_COMP + 1 + IS_THERMAL, BoundaryStencilWrapper >;
   using Base::numComp;
   using Base::numDof;
   using Base::numEqn;

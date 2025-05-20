@@ -182,6 +182,7 @@
     ],
     "combinations": {
       "NAME": [
+        "DirichletFluxComputeZFormulationKernel",
         "DirichletFluxComputeKernel"
       ],
       "NCOMPS": [

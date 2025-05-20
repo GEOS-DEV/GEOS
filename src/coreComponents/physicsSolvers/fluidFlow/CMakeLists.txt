@@ -75,6 +75,7 @@ set( fluidFlowSolvers_headers
      kernels/compositional/CompositionalMultiphaseHybridFVMKernels.hpp
      kernels/compositional/DiffusionDispersionFluxComputeKernel.hpp
      kernels/compositional/DirichletFluxComputeKernel.hpp
+     kernels/compositional/DirichletFluxComputeKernel_impl.hpp
      kernels/compositional/DissipationFluxComputeKernel.hpp
      kernels/compositional/FluidUpdateKernel.hpp
      kernels/compositional/FluidUpdateKernel.hpp
@@ -103,12 +104,24 @@ set( fluidFlowSolvers_headers
      kernels/compositional/ThermalAccumulationKernel.hpp
      kernels/compositional/ThermalDiffusionDispersionFluxComputeKernel.hpp
      kernels/compositional/ThermalDirichletFluxComputeKernel.hpp
+     kernels/compositional/ThermalDirichletFluxComputeKernel_impl.hpp
      kernels/compositional/ThermalFluxComputeKernel.hpp
      kernels/compositional/ThermalPhaseMobilityKernel.hpp
      kernels/compositional/ThermalPhaseVolumeFractionKernel.hpp
      kernels/compositional/ThermalResidualNormKernel.hpp
      kernels/compositional/ThermalSolutionCheckKernel.hpp
      kernels/compositional/ThermalSolutionScalingKernel.hpp
+     kernels/compositional/zFormulation/AccumulationZFormulationKernel.hpp
+     kernels/compositional/zFormulation/DirichletFluxComputeZFormulationKernel.hpp
+     kernels/compositional/zFormulation/DirichletFluxComputeZFormulationKernel_impl.hpp
+     kernels/compositional/zFormulation/FluxComputeZFormulationKernel.hpp
+     kernels/compositional/zFormulation/PhaseComponentFluxZFormulation.hpp
+     kernels/compositional/zFormulation/PhaseMobilityZFormulationKernel.hpp
+     kernels/compositional/zFormulation/PhaseVolumeFractionZFormulationKernel.hpp
+     kernels/compositional/zFormulation/PotGradZFormulation.hpp
+     kernels/compositional/zFormulation/PPUPhaseFluxZFormulation.hpp
+     kernels/compositional/zFormulation/SolutionScalingAndCheckingZFormulationKernelBase.hpp
+     kernels/compositional/zFormulation/SolutionScalingZFormulationKernel.hpp
      kernels/immiscibleMultiphase/ImmiscibleMultiphaseKernels.hpp
      wells/CompositionalMultiphaseWell.hpp
      wells/CompositionalMultiphaseWellFields.hpp
