@@ -202,8 +202,6 @@ void SinglePhaseWell::updateBHPForConstraint( WellElementSubRegion & subRegion )
     wellControls.getReference< real64 >( SinglePhaseWell::viewKeyStruct::currentBHPString() );
   arrayView1d< real64 > const & dCurrentBHP =
     wellControls.getReference< array1d< real64 > >( SinglePhaseWell::viewKeyStruct::dCurrentBHPString() );
-  real64 & dCurrentBHP_dPres =
-    wellControls.getReference< real64 >( SinglePhaseWell::viewKeyStruct::dCurrentBHP_dPresString() );
 
   geos::internal::kernelLaunchSelectorThermalSwitch( isThermal(), [&] ( auto ISTHERMAL )
   {
@@ -215,13 +213,11 @@ void SinglePhaseWell::updateBHPForConstraint( WellElementSubRegion & subRegion )
                                 wellElemGravCoef,
                                 &currentBHP,
                                 &dCurrentBHP,
-                                &dCurrentBHP_dPres,
                                 &iwelemRef,
                                 &refGravCoef] ( localIndex const )
     {
       real64 const diffGravCoef = refGravCoef - wellElemGravCoef[iwelemRef];
       currentBHP = pres[iwelemRef] + dens[iwelemRef][0] * diffGravCoef;
-      dCurrentBHP_dPres = 1.0 + dDens[iwelemRef][0][DerivOffset::dP] * diffGravCoef;
       dCurrentBHP[DerivOffset::dP] = 1.0 + dDens[iwelemRef][0][DerivOffset::dP] *diffGravCoef;
       if constexpr ( IS_THERMAL )
       {
@@ -277,11 +273,6 @@ void SinglePhaseWell::updateVolRateForConstraint( WellElementSubRegion & subRegi
   arrayView1d< real64 > const & dCurrentVolRate =
     wellControls.getReference< array1d< real64 > >( SinglePhaseWell::viewKeyStruct::dCurrentVolRateString() );
 
-  real64 & dCurrentVolRate_dPres =
-    wellControls.getReference< real64 >( SinglePhaseWell::viewKeyStruct::dCurrentVolRate_dPresString() );
-  real64 & dCurrentVolRate_dRate =
-    wellControls.getReference< real64 >( SinglePhaseWell::viewKeyStruct::dCurrentVolRate_dRateString() );
-
   constitutiveUpdatePassThru( fluid, [&]( auto & castedFluid )
   {
     typename TYPEOFREF( castedFluid ) ::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
@@ -300,8 +291,6 @@ void SinglePhaseWell::updateVolRateForConstraint( WellElementSubRegion & subRegi
                                   &surfacePres,
                                   &currentVolRate,
                                   dCurrentVolRate,
-                                  &dCurrentVolRate_dPres,
-                                  &dCurrentVolRate_dRate,
                                   &iwelemRef,
                                   &wellControlsName] ( localIndex const )
       {
@@ -334,10 +323,6 @@ void SinglePhaseWell::updateVolRateForConstraint( WellElementSubRegion & subRegi
 
         real64 const densInv = 1.0 / dens[iwelemRef][0];
         currentVolRate = connRate[iwelemRef] * densInv;
-
-        // tjb remove
-        dCurrentVolRate_dPres = -( useSurfaceConditions ==  0 ) * dDens[iwelemRef][0][DerivOffset::dP] * currentVolRate * densInv;
-        dCurrentVolRate_dRate = densInv;
 
         dCurrentVolRate[COFFSET_WJ::dP] = -( useSurfaceConditions ==  0 ) * dDens[iwelemRef][0][DerivOffset::dP] * currentVolRate * densInv;
         dCurrentVolRate[COFFSET_WJ::dQ] = densInv;
