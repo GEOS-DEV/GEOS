@@ -822,7 +822,7 @@ void SinglePhaseWell::computePerforationRates( real64 const & time_n,
         string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
         SingleFluidBase const & fluid = getConstitutiveModel< SingleFluidBase >( subRegion, fluidName );
 
-        if( isThermal() )  // fluid.isThermal();
+        if( isThermal() )
         {
           thermalSinglePhasePerforationFluxKernels::
             PerforationFluxKernelFactory::
@@ -954,7 +954,7 @@ SinglePhaseWell::calculateResidualNorm( real64 const & time_n,
     real64 globalResidualNorm[2]{};
     globalResidualNorm[0] = MpiWrapper::max( localResidualNorm[0] );
     globalResidualNorm[1] = MpiWrapper::max( localResidualNorm[1] );
-    resNorm=sqrt( globalResidualNorm[0] * globalResidualNorm[0] + globalResidualNorm[1] * globalResidualNorm[1] );
+    resNorm= std::sqrt( globalResidualNorm[0] * globalResidualNorm[0] + globalResidualNorm[1] * globalResidualNorm[1] );
 
     GEOS_LOG_LEVEL_RANK_0( logInfo::ResidualNorm, GEOS_FMT( "        ( R{} ) = ( {:4.2e} )        ( Renergy ) = ( {:4.2e} )",
                                                             coupledSolverAttributePrefix(), globalResidualNorm[0], globalResidualNorm[1] ));
