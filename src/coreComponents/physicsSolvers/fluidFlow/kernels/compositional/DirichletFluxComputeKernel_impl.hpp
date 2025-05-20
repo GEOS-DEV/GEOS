@@ -14,116 +14,37 @@
  */
 
 /**
- * @file DirichletFluxComputeKernel.hpp
+ * @file DirichletFluxComputeKernel_impl.hpp
  */
 
-#ifndef GEOS_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONAL_DIRICHLETFLUXCOMPUTEKERNEL_HPP
-#define GEOS_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONAL_DIRICHLETFLUXCOMPUTEKERNEL_HPP
+#ifndef GEOS_PHYSICSSOLVERS_FLUIDFLOW_KERNELS_COMPOSITIONAL_DIRICHLETFLUXCOMPUTEKERNEL_IMPL_HPP
+#define GEOS_PHYSICSSOLVERS_FLUIDFLOW_KERNELS_COMPOSITIONAL_DIRICHLETFLUXCOMPUTEKERNEL_IMPL_HPP
 
-#include "codingUtilities/Utilities.hpp"
-#include "common/DataLayouts.hpp"
-#include "common/DataTypes.hpp"
-#include "common/GEOS_RAJA_Interface.hpp"
-#include "constitutive/fluid/multifluid/MultiFluidBase.hpp"
-#include "constitutive/fluid/multifluid/MultiFluidSelector.hpp"
-#include "finiteVolume/BoundaryStencil.hpp"
-#include "mesh/ElementRegionManager.hpp"
-#include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
-#include "physicsSolvers/fluidFlow/CompositionalMultiphaseBaseFields.hpp"
-#include "physicsSolvers/fluidFlow/CompositionalMultiphaseUtilities.hpp"
-#include "physicsSolvers/fluidFlow/StencilAccessors.hpp"
-
-#include "FluxComputeKernel.hpp"
+//#include "codingUtilities/Utilities.hpp"
+//#include "common/DataLayouts.hpp"
+//#include "common/DataTypes.hpp"
+//#include "common/GEOS_RAJA_Interface.hpp"
+//#include "constitutive/fluid/multifluid/MultiFluidBase.hpp"
+//#include "constitutive/fluid/multifluid/MultiFluidSelector.hpp"
+//#include "finiteVolume/BoundaryStencil.hpp"
+//#include "mesh/ElementRegionManager.hpp"
+//#include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
+//#include "physicsSolvers/fluidFlow/CompositionalMultiphaseBaseFields.hpp"
+//#include "physicsSolvers/fluidFlow/CompositionalMultiphaseUtilities.hpp"
+//#include "physicsSolvers/fluidFlow/StencilAccessors.hpp"
+//
+#include "DirichletFluxComputeKernel.hpp"
 
 namespace geos
 {
-
 namespace isothermalCompositionalMultiphaseFVMKernels
 {
-
-/******************************** DirichletFluxComputeKernel ********************************/
-
-/**
- * @class DirichletFluxComputeKernel
- * @tparam NUM_COMP number of fluid components
- * @tparam FLUIDWRAPPER the type of the fluid wrapper
- * @tparam IS_THERMAL flag for thermal
- * @brief Define the interface for the assembly kernel in charge of Dirichlet face flux terms
- */
-template< integer NUM_COMP, bool IS_THERMAL, typename FLUIDWRAPPER >
-class DirichletFluxComputeKernel : public FluxComputeKernel< NUM_COMP,
-                                                             NUM_COMP + 1 + IS_THERMAL,
-                                                             BoundaryStencilWrapper >
-{
-public:
-
-  /**
-   * @brief The type for element-based data. Consists entirely of ArrayView's.
-   *
-   * Can be converted from ElementRegionManager::ElementViewConstAccessor
-   * by calling .toView() or .toViewConst() on an accessor instance
-   */
-  template< typename VIEWTYPE >
-  using ElementViewConst = ElementRegionManager::ElementViewConst< VIEWTYPE >;
-
-  using AbstractBase = isothermalCompositionalMultiphaseFVMKernels::FluxComputeKernelBase;
-  using DofNumberAccessor = AbstractBase::DofNumberAccessor;
-  using CompFlowAccessors = AbstractBase::CompFlowAccessors;
-  using MultiFluidAccessors = AbstractBase::MultiFluidAccessors;
-  using CapPressureAccessors = AbstractBase::CapPressureAccessors;
-  using PermeabilityAccessors = AbstractBase::PermeabilityAccessors;
-
-  using AbstractBase::m_dt;
-  using AbstractBase::m_numPhases;
-  using AbstractBase::m_rankOffset;
-  using AbstractBase::m_dofNumber;
-  using AbstractBase::m_ghostRank;
-  using AbstractBase::m_gravCoef;
-  using AbstractBase::m_pres;
-  using AbstractBase::m_phaseCompFrac;
-  using AbstractBase::m_dPhaseCompFrac;
-  using AbstractBase::m_dCompFrac_dCompDens;
-  using AbstractBase::m_localMatrix;
-  using AbstractBase::m_localRhs;
-  using AbstractBase::m_kernelFlags;
-
-  using Base = isothermalCompositionalMultiphaseFVMKernels::FluxComputeKernel< NUM_COMP, NUM_COMP + 1 + IS_THERMAL, BoundaryStencilWrapper >;
-  using Base::numComp;
-  using Base::numDof;
-  using Base::numEqn;
-  using Base::m_stencilWrapper;
-  using Base::m_phaseMob;
-  using Base::m_dPhaseMob;
-  using Base::m_phaseMassDens;
-  using Base::m_dPhaseMassDens;
-  using Base::m_permeability;
-  using Base::m_dPerm_dPres;
-  using Base::m_seri;
-  using Base::m_sesri;
-  using Base::m_sei;
-
-  /**
-   * @brief Constructor for the kernel interface
-   * @param[in] numPhases the number of fluid phases
-   * @param[in] rankOffset the offset of my MPI rank
-   * @param[in] faceManager the face manager
-   * @param[in] stencilWrapper reference to the stencil wrapper
-   * @param[in] fluidWrapper reference to the fluid wrapper
-   * @param[in] dofNumberAccessor
-   * @param[in] compFlowAccessors
-   * @param[in] multiFluidAccessors
-   * @param[in] capPressureAccessors
-   * @param[in] permeabilityAccessors
-   * @param[in] dt time step size
-   * @param[inout] localMatrix the local CRS matrix
-   * @param[inout] localRhs the local right-hand side vector
-   * @param[in] kernelFlags flags packed together
-   */
-  DirichletFluxComputeKernel( integer const numPhases,
+template< integer NUM_COMP, typename FLUID >
+  DirichletFluxComputeKernel<NUM_COMP,FLUID>::DirichletFluxComputeKernel( integer const numPhases,
                               globalIndex const rankOffset,
                               FaceManager const & faceManager,
                               BoundaryStencilWrapper const & stencilWrapper,
-                              FLUIDWRAPPER const & fluidWrapper,
+                              typename FLUID::KernelWrapper const & fluidWrapper,
                               DofNumberAccessor const & dofNumberAccessor,
                               CompFlowAccessors const & compFlowAccessors,
                               MultiFluidAccessors const & multiFluidAccessors,
@@ -152,55 +73,9 @@ public:
     m_fluidWrapper( fluidWrapper )
   {}
 
-  /**
-   * @struct StackVariables
-   * @brief Kernel variables (dof numbers, jacobian and residual) located on the stack
-   */
-  struct StackVariables
-  {
-public:
-
-    /**
-     * @brief Constructor for the stack variables
-     * @param[in] size size of the stencil for this connection
-     * @param[in] numElems number of elements for this connection
-     */
-    GEOS_HOST_DEVICE
-    StackVariables( localIndex const GEOS_UNUSED_PARAM( size ),
-                    localIndex GEOS_UNUSED_PARAM( numElems )) {}
-
-    // Transmissibility
-    real64 transmissibility = 0.0;
-
-    // Component fluxes and derivatives
-
-    /// Component fluxes
-    real64 compFlux[numComp]{};
-    /// Derivatives of component fluxes wrt pressure
-    real64 dCompFlux_dP[numComp]{};
-    /// Derivatives of component fluxes wrt component densities
-    real64 dCompFlux_dC[numComp][numComp]{};
-
-    // Local degrees of freedom and local residual/jacobian
-
-    /// Indices of the matrix rows/columns corresponding to the dofs in this face
-    globalIndex dofColIndices[numDof]{};
-
-    /// Storage for the face local residual vector
-    real64 localFlux[numEqn]{};
-    /// Storage for the face local Jacobian matrix
-    real64 localFluxJacobian[numEqn][numDof]{};
-
-  };
-
-
-  /**
-   * @brief Performs the setup phase for the kernel.
-   * @param[in] iconn the connection index
-   * @param[in] stack the stack variables
-   */
+template< integer NUM_COMP, typename FLUID >
   GEOS_HOST_DEVICE
-  void setup( localIndex const iconn,
+  void DirichletFluxComputeKernel<NUM_COMP,FLUID>::setup( localIndex const iconn,
               StackVariables & stack ) const
   {
     globalIndex const offset =
@@ -212,19 +87,12 @@ public:
     }
   }
 
-
-  /**
-   * @brief Compute the local Dirichlet face flux contributions to the residual and Jacobian
-   * @tparam FUNC the type of the function that can be used to customize the computation of the phase fluxes
-   * @param[in] iconn the connection index
-   * @param[inout] stack the stack variables
-   * @param[in] compFluxKernelOp the function used to customize the computation of the component fluxes
-   */
-  template< typename FUNC = NoOpFunc >
+  template< integer NUM_COMP, typename FLUID >
+  template< typename FUNC >
   GEOS_HOST_DEVICE
-  void computeFlux( localIndex const iconn,
+  void DirichletFluxComputeKernel<NUM_COMP,FLUID>::computeFlux( localIndex const iconn,
                     StackVariables & stack,
-                    FUNC && compFluxKernelOp = NoOpFunc{} ) const
+                    FUNC && compFluxKernelOp) const
   {
     using Deriv = constitutive::multifluid::DerivativeOffset;
     using Order = BoundaryStencil::Order;
@@ -418,16 +286,12 @@ public:
     }
   }
 
-  /**
-   * @brief Performs the complete phase for the kernel.
-   * @param[in] iconn the connection index
-   * @param[inout] stack the stack variables
-   */
-  template< typename FUNC = NoOpFunc >
+  template< integer NUM_COMP, typename FLUID >
+  template< typename FUNC >
   GEOS_HOST_DEVICE
-  void complete( localIndex const iconn,
+  void DirichletFluxComputeKernel<NUM_COMP,FLUID>::complete( localIndex const iconn,
                  StackVariables & stack,
-                 FUNC && assemblyKernelOp = NoOpFunc{} ) const
+                 FUNC && assemblyKernelOp ) const
   {
     using namespace compositionalMultiphaseUtilities;
     using Order = BoundaryStencil::Order;
@@ -465,89 +329,7 @@ public:
     }
   }
 
-protected:
-
-  /// Views on face pressure, temperature, and composition
-  arrayView1d< real64 const > const m_facePres;
-  arrayView1d< real64 const > const m_faceTemp;
-  arrayView2d< real64 const, compflow::USD_COMP > const m_faceCompFrac;
-
-  /// View on the face gravity coefficient
-  arrayView1d< real64 const > const m_faceGravCoef;
-
-  /// Reference to the fluid wrapper
-  FLUIDWRAPPER const m_fluidWrapper;
-
-};
-
-
-/**
- * @class DirichletFluxComputeKernelFactory
- */
-class DirichletFluxComputeKernelFactory
-{
-public:
-
-  /**
-   * @brief Create a new kernel and launch
-   * @tparam POLICY the policy used in the RAJA kernel
-   * @param[in] numComps the number of fluid components
-   * @param[in] numPhases the number of fluid phases
-   * @param[in] rankOffset the offset of my MPI rank
-   * @param[in] dofKey string to get the element degrees of freedom numbers
-   * @param[in] solverName name of the solver (to name accessors)
-   * @param[in] faceManager reference to the face manager
-   * @param[in] elemManager reference to the element region manager
-   * @param[in] stencilWrapper reference to the boundary stencil wrapper
-   * @param[in] fluidBase the multifluid constitutive model
-   * @param[in] dt time step size
-   * @param[inout] localMatrix the local CRS matrix
-   * @param[inout] localRhs the local right-hand side vector
-   */
-  template< typename POLICY >
-  static void
-  createAndLaunch( integer const numComps,
-                   integer const numPhases,
-                   globalIndex const rankOffset,
-                   BitFlags< KernelFlags > kernelFlags,
-                   string const & dofKey,
-                   string const & solverName,
-                   FaceManager const & faceManager,
-                   ElementRegionManager const & elemManager,
-                   BoundaryStencilWrapper const & stencilWrapper,
-                   constitutive::MultiFluidBase & fluidBase,
-                   real64 const dt,
-                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                   arrayView1d< real64 > const & localRhs )
-  {
-    constitutive::constitutiveComponentUpdatePassThru( fluidBase, numComps, [&]( auto & fluid, auto NC )
-    {
-      using FluidType = TYPEOFREF( fluid );
-      typename FluidType::KernelWrapper const fluidWrapper = fluid.createKernelWrapper();
-
-      integer constexpr NUM_COMP = NC();
-
-      ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > dofNumberAccessor =
-        elemManager.constructArrayViewAccessor< globalIndex, 1 >( dofKey );
-      dofNumberAccessor.setName( solverName + "/accessors/" + dofKey );
-
-      using kernelType = DirichletFluxComputeKernel< NUM_COMP, false, typename FluidType::KernelWrapper >; // false for isothermal
-      typename kernelType::CompFlowAccessors compFlowAccessors( elemManager, solverName );
-      typename kernelType::MultiFluidAccessors multiFluidAccessors( elemManager, solverName );
-      typename kernelType::CapPressureAccessors capPressureAccessors( elemManager, solverName );
-      typename kernelType::PermeabilityAccessors permeabilityAccessors( elemManager, solverName );
-
-      kernelType kernel( numPhases, rankOffset, faceManager, stencilWrapper, fluidWrapper,
-                         dofNumberAccessor, compFlowAccessors, multiFluidAccessors, capPressureAccessors, permeabilityAccessors,
-                         dt, localMatrix, localRhs, kernelFlags );
-      kernelType::template launch< POLICY >( stencilWrapper.size(), kernel );
-    } );
-  }
-};
-
 } // namespace isothermalCompositionalMultiphaseFVMKernels
-
 } // namespace geos
 
-
-#endif //GEOS_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONAL_DIRICHLETFLUXCOMPUTEKERNEL_HPP
+#endif //GEOS_PHYSICSSOLVERS_FLUIDFLOW_KERNELS_COMPOSITIONAL_DIRICHLETFLUXCOMPUTEKERNEL_IMPL_HPP
