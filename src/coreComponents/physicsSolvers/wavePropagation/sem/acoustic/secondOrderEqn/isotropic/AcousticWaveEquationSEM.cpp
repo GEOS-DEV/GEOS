@@ -64,7 +64,9 @@ AcousticWaveEquationSEM::~AcousticWaveEquationSEM()
 
 void AcousticWaveEquationSEM::initializePreSubGroups()
 {
+
   WaveSolverBase::initializePreSubGroups();
+  printf("initpresubgroups\n");
 }
 
 

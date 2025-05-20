@@ -174,7 +174,9 @@ protected:
 
   void SetUp() override
   {
+    printf("setup1\n");
     setupProblemFromXML( state.getProblemManager(), xmlInput );
+    printf("setup2\n");
   }
 
   static real64 constexpr time = 0.0;
