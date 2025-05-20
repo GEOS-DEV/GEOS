@@ -20,20 +20,19 @@
 #ifndef GEOS_PHYSICSSOLVERS_FLUIDFLOW_KERNELS_COMPOSITIONAL_DIRICHLETFLUXCOMPUTEKERNEL_HPP
 #define GEOS_PHYSICSSOLVERS_FLUIDFLOW_KERNELS_COMPOSITIONAL_DIRICHLETFLUXCOMPUTEKERNEL_HPP
 
+#include "FluxComputeKernel.hpp"
 //#include "codingUtilities/Utilities.hpp"
 //#include "common/DataLayouts.hpp"
 //#include "common/DataTypes.hpp"
 //#include "common/GEOS_RAJA_Interface.hpp"
 //#include "constitutive/fluid/multifluid/MultiFluidBase.hpp"
 #include "constitutive/fluid/multifluid/MultiFluidSelector.hpp"
-//#include "finiteVolume/BoundaryStencil.hpp"
+#include "finiteVolume/BoundaryStencil.hpp"
 //#include "mesh/ElementRegionManager.hpp"
 //#include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
 //#include "physicsSolvers/fluidFlow/CompositionalMultiphaseBaseFields.hpp"
 //#include "physicsSolvers/fluidFlow/CompositionalMultiphaseUtilities.hpp"
 //#include "physicsSolvers/fluidFlow/StencilAccessors.hpp"
-
-#include "FluxComputeKernel.hpp"
 
 namespace geos
 {
@@ -43,31 +42,29 @@ namespace isothermalCompositionalMultiphaseFVMKernels
 
 /******************************** DirichletFluxComputeKernel ********************************/
 
-template <integer NUM_COMP, typename FLUID>
-struct FluidDof
+template< integer NUM_COMP, bool IS_THERMAL >
+static constexpr integer getNumDof()
 {
-  static constexpr integer getNumDof()
+  if constexpr (IS_THERMAL)
   {
-    if constexpr (FLUID::isThermalType())
-    {
-      return NUM_COMP + 2;
-    }
-    else
-    {
-      return NUM_COMP + 1;
-    }
+    return NUM_COMP + 2;
   }
-};
+  else
+  {
+    return NUM_COMP + 1;
+  }
+}
 
 /**
  * @class DirichletFluxComputeKernel
  * @tparam NUM_COMP number of fluid components
  * @tparam FLUID the type of the fluid
+ * @tparam IS_THERMAL flag for thermal
  * @brief Define the interface for the assembly kernel in charge of Dirichlet face flux terms
  */
-template< integer NUM_COMP, typename FLUID >
+template< integer NUM_COMP, bool IS_THERMAL, typename FLUID >
 class DirichletFluxComputeKernel : public FluxComputeKernel< NUM_COMP,
-                                                             FluidDof<NUM_COMP, FLUID>::getNumDof(),
+                                                             getNumDof< NUM_COMP, IS_THERMAL >(),
                                                              BoundaryStencilWrapper >
 {
 public:
@@ -104,7 +101,7 @@ public:
   using AbstractBase::m_localRhs;
   using AbstractBase::m_kernelFlags;
 
-  using Base = isothermalCompositionalMultiphaseFVMKernels::FluxComputeKernel< NUM_COMP, FluidDof<NUM_COMP, FLUID>::getNumDof(), BoundaryStencilWrapper >;
+  using Base = isothermalCompositionalMultiphaseFVMKernels::FluxComputeKernel< NUM_COMP, getNumDof< NUM_COMP, IS_THERMAL >(), BoundaryStencilWrapper >;
   using Base::numComp;
   using Base::numDof;
   using Base::numEqn;
@@ -289,7 +286,7 @@ public:
         elemManager.constructArrayViewAccessor< globalIndex, 1 >( dofKey );
       dofNumberAccessor.setName( solverName + "/accessors/" + dofKey );
 
-      using kernelType = DirichletFluxComputeKernel< NUM_COMP, FluidType >;
+      using kernelType = DirichletFluxComputeKernel< NUM_COMP, false, FluidType >;
       typename kernelType::CompFlowAccessors compFlowAccessors( elemManager, solverName );
       typename kernelType::MultiFluidAccessors multiFluidAccessors( elemManager, solverName );
       typename kernelType::CapPressureAccessors capPressureAccessors( elemManager, solverName );
