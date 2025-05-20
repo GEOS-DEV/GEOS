@@ -20,19 +20,7 @@
 #ifndef GEOS_PHYSICSSOLVERS_FLUIDFLOW_KERNELS_COMPOSITIONAL_ZFORMULATION_DIRICHLETFLUXCOMPUTEZFORMULATIONKERNEL_IMPL_HPP
 #define GEOS_PHYSICSSOLVERS_FLUIDFLOW_KERNELS_COMPOSITIONAL_ZFORMULATION_DIRICHLETFLUXCOMPUTEZFORMULATIONKERNEL_IMPL_HPP
 
-//#include "codingUtilities/Utilities.hpp"
-//#include "common/DataLayouts.hpp"
-//#include "common/DataTypes.hpp"
-//#include "common/GEOS_RAJA_Interface.hpp"
-//#include "constitutive/fluid/multifluid/MultiFluidBase.hpp"
-//#include "constitutive/fluid/multifluid/MultiFluidSelector.hpp"
-//#include "finiteVolume/BoundaryStencil.hpp"
-//#include "mesh/ElementRegionManager.hpp"
-//#include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
-//#include "physicsSolvers/fluidFlow/CompositionalMultiphaseBaseFields.hpp"
-//#include "physicsSolvers/fluidFlow/CompositionalMultiphaseUtilities.hpp"
-//#include "physicsSolvers/fluidFlow/StencilAccessors.hpp"
-
+#include "DirichletFluxComputeZFormulationKernel.hpp"
 
 namespace geos
 {
