@@ -2164,7 +2164,9 @@ void CompositionalMultiphaseWell::printRates( real64 const & time_n,
           for( integer ip = 0; ip < numPhase; ++ip )
             outputFile << ",0.0";
           for( integer ic = 0; ic < numComp; ++ic )
+          {
             outputFile << ",0.0";
+          }
           outputFile << std::endl;
           outputFile.close();
         }
