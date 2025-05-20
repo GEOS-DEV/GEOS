@@ -111,12 +111,12 @@ void SinglePhaseWell::registerDataOnMesh( Group & meshBodies )
 
       wellControls.registerWrapper< array1d< real64 > >( viewKeyStruct::dCurrentBHPString() ).
         setSizedFromParent( 0 ).
-        reference().resizeDimension< 0 >( 2+ isThermal() );   // dP, dT , dQ
+        reference().resizeDimension< 0 >( 2 + isThermal() );   // dP, dT , dQ
 
       wellControls.registerWrapper< real64 >( viewKeyStruct::currentVolRateString() );
       wellControls.registerWrapper< array1d< real64 > >( viewKeyStruct::dCurrentVolRateString() ).
         setSizedFromParent( 0 ).
-        reference().resizeDimension< 0 >( 2+ isThermal() );   // dP, dT, dQ
+        reference().resizeDimension< 0 >( 2 + isThermal() );   // dP, dT, dQ
 
       // write rates output header
       if( m_writeCSV > 0 && subRegion.isLocallyOwned())
