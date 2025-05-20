@@ -4,10 +4,6 @@ set( gtest_geosx_tests
      testCO2BrinePVTModels.cpp
      testCO2SpycherPruessModels.cpp
      testDamage.cpp
-     testMultiFluidCO2Brine.cpp
-     testMultiFluidCompositionalMultiphase.cpp
-     testMultiFluidDeadOil.cpp
-     testMultiFluidLiveOil.cpp
      testRelPerm.cpp
      testRelPermHysteresis.cpp )
 
@@ -34,11 +30,6 @@ set( gtest_pvt_xmls
 set( tplDependencyList ${parallelDeps} gtest )
 
 set( dependencyList mainInterface  )
-
-if( ENABLE_PVTPackage )
-    list( APPEND gtest_geosx_tests
-          testMultiFluidCompositionalMultiphasePVTPackage.cpp )
-endif()
 
 geos_decorate_link_dependencies( LIST decoratedDependencies
                                  DEPENDENCIES ${dependencyList} )
@@ -77,4 +68,17 @@ foreach(test ${gtest_pvt_xmls})
     get_filename_component( test_name ${test} NAME_WE )
     geos_add_test( NAME ${test_name}
                    COMMAND testPVT -i ${CMAKE_CURRENT_LIST_DIR}/${test} )
+endforeach()
+
+
+# Add reactivefluiddriver xml based tests
+blt_add_executable( NAME testReactiveFluid
+                    SOURCES testReactiveFluid.cpp
+                    OUTPUT_DIR ${TEST_OUTPUT_DIRECTORY}
+                    DEPENDS_ON ${dependencyList} "-lz" ${tplDependencyList} )
+
+foreach(test ${gtest_reactivefluid_xmls})
+    get_filename_component( test_name ${test} NAME_WE )
+    geos_add_test( NAME ${test_name}
+                   COMMAND testReactiveFluid -i ${CMAKE_CURRENT_LIST_DIR}/${test} )
 endforeach()

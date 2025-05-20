@@ -431,7 +431,7 @@ localIndex Group::packImpl( buffer_unit_type * & buffer,
 
   // `wrappers` are considered for packing if they match the size of this Group instance.
   // A way to check this is to check the sufficient (but not necessary...) condition `wrapper.sizedFromParent()`.
-  std::vector< WrapperBase const * > wrappers;
+  stdVector< WrapperBase const * > wrappers;
   for( string const & wrapperName: wrapperNames )
   {
     if( hasWrapper( wrapperName ) )
@@ -494,7 +494,7 @@ localIndex Group::packSize( arrayView1d< localIndex const > const & packList,
                             bool onDevice,
                             parallelDeviceEvents & events ) const
 {
-  std::vector< string > const tmp = mapKeys( m_wrappers );
+  stdVector< string > const tmp = mapKeys( m_wrappers );
   string_array wrapperNames;
   wrapperNames.insert( wrapperNames.begin(), tmp.begin(), tmp.end() );
   return this->packSize( wrapperNames, packList, recursive, onDevice, events );
@@ -528,7 +528,7 @@ localIndex Group::pack( buffer_unit_type * & buffer,
                         bool onDevice,
                         parallelDeviceEvents & events ) const
 {
-  std::vector< string > const tmp = mapKeys( m_wrappers );
+  stdVector< string > const tmp = mapKeys( m_wrappers );
   string_array wrapperNames;
   wrapperNames.insert( wrapperNames.begin(), tmp.begin(), tmp.end() );
   return this->pack( buffer, wrapperNames, packList, recursive, onDevice, events );
@@ -734,17 +734,17 @@ PyTypeObject * Group::getPythonType() const
 { return geos::python::getPyGroupType(); }
 #endif
 
-std::vector< string > Group::getSubGroupsNames() const
+stdVector< string > Group::getSubGroupsNames() const
 {
-  std::vector< string > childrenNames;
+  stdVector< string > childrenNames;
   childrenNames.reserve( numSubGroups() );
   forSubGroups( [&]( Group const & subGroup ){ childrenNames.push_back( subGroup.getName() ); } );
   return childrenNames;
 }
 
-std::vector< string > Group::getWrappersNames() const
+stdVector< string > Group::getWrappersNames() const
 {
-  std::vector< string > wrappersNames;
+  stdVector< string > wrappersNames;
   wrappersNames.reserve( numWrappers() );
   forWrappers( [&]( WrapperBase const & wrapper ){ wrappersNames.push_back( wrapper.getName() ); } );
   return wrappersNames;
