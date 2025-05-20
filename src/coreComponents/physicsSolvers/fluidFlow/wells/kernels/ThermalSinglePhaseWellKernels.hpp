@@ -179,9 +179,9 @@ protected:
   /// Index of the element where the control is enforced
   localIndex const m_iwelemControl;
   /// Views on fluid internal energy
-  arrayView2d< real64 const > const m_internalEnergy;
-  arrayView2d< real64 const > const m_internalEnergy_n;
-  arrayView3d< real64 const > const m_dInternalEnergy;
+  arrayView2d< real64 const, constitutive::singlefluid::USD_FLUID >  const m_internalEnergy;
+  arrayView2d< real64 const, constitutive::singlefluid::USD_FLUID > const m_internalEnergy_n;
+  arrayView3d< real64 const, constitutive::singlefluid::USD_FLUID_DER > const m_dInternalEnergy;
 
 };
 
