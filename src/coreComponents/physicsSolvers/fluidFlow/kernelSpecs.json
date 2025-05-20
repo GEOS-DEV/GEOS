@@ -206,5 +206,22 @@
       ]
     },
     "explicit": []
+  },
+  
+  "CompositionalMultiphaseFVM_ThermalDirichletFluxComputeKernels": {
+    "vars": [
+      "FLUID"
+    ],
+    "constants": [
+      [ "NAME", "DirichletFluxComputeKernel" ],
+      [ "NCOMPS", 2 ]
+    ],
+    "combinations": {
+      "FLUID": [
+        "constitutive::CO2BrinePhillipsThermalFluid",
+        "constitutive::CO2BrineEzrokhiThermalFluid"
+      ]
+    },
+    "explicit": []
   }
 }

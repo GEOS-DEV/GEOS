@@ -1,0 +1,11 @@
+#include "physicsSolvers/fluidFlow/kernels/compositional/ThermalDirichletFluxComputeKernel.hpp"
+#include "physicsSolvers/fluidFlow/kernels/compositional/DirichletFluxComputeKernel_impl.hpp"
+#include "physicsSolvers/fluidFlow/kernels/compositional/ThermalDirichletFluxComputeKernel_impl.hpp"
+
+namespace geos
+{
+namespace thermalCompositionalMultiphaseFVMKernels
+{
+template class @NAME@< @NCOMPS@, @FLUID@ >;
+}
+}
