@@ -5844,9 +5844,9 @@ Information output from lower logLevels is added with the desired log level
 		<!--componentVolumeShift => Component volume shifts-->
 		<xsd:attribute name="componentVolumeShift" type="real64_array" default="{0}" />
 		<!--equationsOfState => List of equation of state types for each phase. Valid options:
-* pr
-* srk
-* sw-->
+* PengRobinson
+* SoaveRedlichKwong
+* SoreideWhitson-->
 		<xsd:attribute name="equationsOfState" type="string_array" use="required" />
 		<!--phaseNames => List of fluid phases-->
 		<xsd:attribute name="phaseNames" type="groupNameRef_array" use="required" />
@@ -5896,9 +5896,9 @@ Information output from lower logLevels is added with the desired log level
 		<!--constantPhaseViscosity => Constant phase viscosity-->
 		<xsd:attribute name="constantPhaseViscosity" type="real64_array" default="{0}" />
 		<!--equationsOfState => List of equation of state types for each phase. Valid options:
-* pr
-* srk
-* sw-->
+* PengRobinson
+* SoaveRedlichKwong
+* SoreideWhitson-->
 		<xsd:attribute name="equationsOfState" type="string_array" use="required" />
 		<!--phaseNames => List of fluid phases-->
 		<xsd:attribute name="phaseNames" type="groupNameRef_array" use="required" />
@@ -5925,9 +5925,9 @@ Information output from lower logLevels is added with the desired log level
 		<!--componentVolumeShift => Component volume shifts-->
 		<xsd:attribute name="componentVolumeShift" type="real64_array" default="{0}" />
 		<!--equationsOfState => List of equation of state types for each phase. Valid options:
-* pr
-* srk
-* sw-->
+* PengRobinson
+* SoaveRedlichKwong
+* SoreideWhitson-->
 		<xsd:attribute name="equationsOfState" type="string_array" use="required" />
 		<!--phaseNames => List of fluid phases-->
 		<xsd:attribute name="phaseNames" type="groupNameRef_array" use="required" />
@@ -5959,9 +5959,9 @@ Information output from lower logLevels is added with the desired log level
 		<!--componentVolumeShift => Component volume shifts-->
 		<xsd:attribute name="componentVolumeShift" type="real64_array" default="{0}" />
 		<!--equationsOfState => List of equation of state types for each phase. Valid options:
-* pr
-* srk
-* sw-->
+* PengRobinson
+* SoaveRedlichKwong
+* SoreideWhitson-->
 		<xsd:attribute name="equationsOfState" type="string_array" use="required" />
 		<!--phaseNames => List of fluid phases-->
 		<xsd:attribute name="phaseNames" type="groupNameRef_array" use="required" />

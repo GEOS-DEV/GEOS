@@ -201,14 +201,14 @@ void CompositionalDensityUpdate::computeCompressibilityFactor( integer const num
   else if( equationOfState == EquationOfStateType::SoreideWhitson )
   {
     SoreideWhitsonEOSPhaseModel< PengRobinsonEOS >::
-    computeCompressibilityFactor( numComps,
-                                  pressure,
-                                  temperature,
-                                  composition,
-                                  componentProperties,
-                                  salinity,
-                                  compressibilityFactor,
-                                  compressibilityFactorDerivs );
+    computeCompressibilityFactorAndDerivs( numComps,
+                                           pressure,
+                                           temperature,
+                                           composition,
+                                           componentProperties,
+                                           salinity,
+                                           compressibilityFactor,
+                                           compressibilityFactorDerivs );
   }
 }
 
