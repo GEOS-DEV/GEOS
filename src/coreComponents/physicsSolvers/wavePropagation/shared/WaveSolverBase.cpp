@@ -294,6 +294,7 @@ void WaveSolverBase::registerDataOnMesh( Group & meshBodies )
 
     printf("avantregister\n");
     nodeManager.registerField< fields::taperCoeff >( this->getName());
+    printf("apresregister\n");
 
   } );
 }
