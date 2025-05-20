@@ -2162,7 +2162,9 @@ void CompositionalMultiphaseWell::printRates( real64 const & time_n,
           // print all zeros in the rates file
           outputFile << ",0.0,0.0,0.0";
           for( integer ip = 0; ip < numPhase; ++ip )
+          {
             outputFile << ",0.0";
+          }
           for( integer ic = 0; ic < numComp; ++ic )
           {
             outputFile << ",0.0";
