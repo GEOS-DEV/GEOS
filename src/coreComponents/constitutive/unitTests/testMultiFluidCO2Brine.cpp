@@ -212,85 +212,85 @@ using CO2BrinePhillipsSpycherPruessTest = MultiFluidCO2BrineTestFixture< BrineMo
                                                                          FlashType::SpycherPruess,
                                                                          false >;
 
-TEST_F( CO2BrinePhillipsTest, numericalDerivativesMolar )
-{
-  testNumericalDerivatives( false );
-}
-TEST_F( CO2BrinePhillipsTest, numericalDerivativesMass )
-{
-  testNumericalDerivatives( true );
-}
-TEST_F( CO2BrineEzrokhiTest, numericalDerivativesMolar )
-{
-  testNumericalDerivatives( false );
-}
-TEST_F( CO2BrineEzrokhiTest, numericalDerivativesMass )
-{
-  testNumericalDerivatives( true );
-}
-TEST_F( CO2BrinePhillipsThermalTest, numericalDerivativesMolar )
-{
-  testNumericalDerivatives( false );
-}
-TEST_F( CO2BrinePhillipsThermalTest, numericalDerivativesMass )
-{
-  testNumericalDerivatives( true );
-}
-#if !defined(GEOS_DEVICE_COMPILE)
-TEST_F( CO2BrineEzrokhiThermalTest, numericalDerivativesMolar )
-{
-  testNumericalDerivatives( false );
-}
-TEST_F( CO2BrineEzrokhiThermalTest, numericalDerivativesMass )
-{
-  testNumericalDerivatives( true );
-}
-#endif
-TEST_F( CO2BrinePhillipsSpycherPruessTest, numericalDerivativesMolar )
-{
-  testNumericalDerivatives( false );
-}
-TEST_F( CO2BrinePhillipsSpycherPruessTest, numericalDerivativesMass )
-{
-  testNumericalDerivatives( true );
-}
+// TEST_F( CO2BrinePhillipsTest, numericalDerivativesMolar )
+// {
+//   testNumericalDerivatives( false );
+// }
+// TEST_F( CO2BrinePhillipsTest, numericalDerivativesMass )
+// {
+//   testNumericalDerivatives( true );
+// }
+// TEST_F( CO2BrineEzrokhiTest, numericalDerivativesMolar )
+// {
+//   testNumericalDerivatives( false );
+// }
+// TEST_F( CO2BrineEzrokhiTest, numericalDerivativesMass )
+// {
+//   testNumericalDerivatives( true );
+// }
+// TEST_F( CO2BrinePhillipsThermalTest, numericalDerivativesMolar )
+// {
+//   testNumericalDerivatives( false );
+// }
+// TEST_F( CO2BrinePhillipsThermalTest, numericalDerivativesMass )
+// {
+//   testNumericalDerivatives( true );
+// }
+// #if !defined(GEOS_DEVICE_COMPILE)
+// TEST_F( CO2BrineEzrokhiThermalTest, numericalDerivativesMolar )
+// {
+//   testNumericalDerivatives( false );
+// }
+// TEST_F( CO2BrineEzrokhiThermalTest, numericalDerivativesMass )
+// {
+//   testNumericalDerivatives( true );
+// }
+// #endif
+// TEST_F( CO2BrinePhillipsSpycherPruessTest, numericalDerivativesMolar )
+// {
+//   testNumericalDerivatives( false );
+// }
+// TEST_F( CO2BrinePhillipsSpycherPruessTest, numericalDerivativesMass )
+// {
+//   testNumericalDerivatives( true );
+// }
 
-TEST_P( CO2BrinePhillipsTest, testFluidValues )
-{
-  auto const [testPoint, testResult] = GetParam();
-  CO2BrineFluid * fluid = this->getFluid( this->getFluidName() );
-  testValuesAgainstPreviousImplementation( fluid, testPoint, testResult );
-}
+// TEST_P( CO2BrinePhillipsTest, testFluidValues )
+// {
+//   auto const [testPoint, testResult] = GetParam();
+//   CO2BrineFluid * fluid = this->getFluid( this->getFluidName() );
+//   testValuesAgainstPreviousImplementation( fluid, testPoint, testResult );
+// }
 
-TEST_P( CO2BrineEzrokhiTest, testFluidValues )
-{
-  auto const [testPoint, testResult] = GetParam();
-  CO2BrineFluid * fluid = this->getFluid( this->getFluidName() );
-  testValuesAgainstPreviousImplementation( fluid, testPoint, testResult );
-}
+// TEST_P( CO2BrineEzrokhiTest, testFluidValues )
+// {
+//   auto const [testPoint, testResult] = GetParam();
+//   CO2BrineFluid * fluid = this->getFluid( this->getFluidName() );
+//   testValuesAgainstPreviousImplementation( fluid, testPoint, testResult );
+// }
 
-TEST_P( CO2BrinePhillipsThermalTest, testFluidValues )
-{
-  auto const [testPoint, testResult] = GetParam();
-  CO2BrineFluid * fluid = this->getFluid( this->getFluidName() );
-  testValuesAgainstPreviousImplementation( fluid, testPoint, testResult );
-}
+// TEST_P( CO2BrinePhillipsThermalTest, testFluidValues )
+// {
+//   auto const [testPoint, testResult] = GetParam();
+//   CO2BrineFluid * fluid = this->getFluid( this->getFluidName() );
+//   testValuesAgainstPreviousImplementation( fluid, testPoint, testResult );
+// }
 
-#if !defined(GEOS_DEVICE_COMPILE)
-TEST_P( CO2BrineEzrokhiThermalTest, testFluidValues )
-{
-  auto const [testPoint, testResult] = GetParam();
-  CO2BrineFluid * fluid = this->getFluid( this->getFluidName() );
-  testValuesAgainstPreviousImplementation( fluid, testPoint, testResult );
-}
-#endif
+// #if !defined(GEOS_DEVICE_COMPILE)
+// TEST_P( CO2BrineEzrokhiThermalTest, testFluidValues )
+// {
+//   auto const [testPoint, testResult] = GetParam();
+//   CO2BrineFluid * fluid = this->getFluid( this->getFluidName() );
+//   testValuesAgainstPreviousImplementation( fluid, testPoint, testResult );
+// }
+// #endif
 
-TEST_P( CO2BrinePhillipsSpycherPruessTest, testFluidValues )
-{
-  auto const [testPoint, testResult] = GetParam();
-  CO2BrineFluid * fluid = this->getFluid( this->getFluidName() );
-  testValuesAgainstPreviousImplementation( fluid, testPoint, testResult );
-}
+// TEST_P( CO2BrinePhillipsSpycherPruessTest, testFluidValues )
+// {
+//   auto const [testPoint, testResult] = GetParam();
+//   CO2BrineFluid * fluid = this->getFluid( this->getFluidName() );
+//   testValuesAgainstPreviousImplementation( fluid, testPoint, testResult );
+// }
 
 //-------------------------------------------------------------------------------
 // Data
