@@ -78,6 +78,7 @@ void IdReporterOutput::outputWrongValues( string_view linesPrefix,
                               m_buffer.getSignaledIdsCount(),
                               stringutilities::join( m_buffer, ", " ),
                               ( m_buffer.isComplete() ? "..." : "." ) ) );
+        MpiWrapper::barrier();
       }
     }
   }
