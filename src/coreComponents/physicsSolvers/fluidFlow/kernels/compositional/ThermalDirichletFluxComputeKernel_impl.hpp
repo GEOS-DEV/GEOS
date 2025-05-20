@@ -20,11 +20,7 @@
 #ifndef GEOS_PHYSICSSOLVERS_FLUIDFLOW_KERNELS_COMPOSITIONAL_THERMALDIRICHLETFLUXCOMPUTEKERNEL_IMPL_HPP
 #define GEOS_PHYSICSSOLVERS_FLUIDFLOW_KERNELS_COMPOSITIONAL_THERMALDIRICHLETFLUXCOMPUTEKERNEL_IMPL_HPP
 
-#include "physicsSolvers/fluidFlow/kernels/compositional/DirichletFluxComputeKernel.hpp"
-#include "constitutive/fluid/multifluid/MultiFluidBase.hpp"
-#include "constitutive/fluid/multifluid/MultiFluidFields.hpp"
-#include "constitutive/thermalConductivity/MultiPhaseThermalConductivityBase.hpp"
-#include "constitutive/thermalConductivity/ThermalConductivityFields.hpp"
+#include "ThermalDirichletFluxComputeKernel.hpp"
 
 namespace geos
 {
@@ -39,7 +35,7 @@ DirichletFluxComputeKernel< NUM_COMP, FLUID >::DirichletFluxComputeKernel( integ
                                                                            globalIndex const rankOffset,
                                                                            FaceManager const & faceManager,
                                                                            BoundaryStencilWrapper const & stencilWrapper,
-                                                                           FLUIDWRAPPER const & fluidWrapper,
+                                                                           FluidWrapper const & fluidWrapper,
                                                                            DofNumberAccessor const & dofNumberAccessor,
                                                                            CompFlowAccessors const & compFlowAccessors,
                                                                            ThermalCompFlowAccessors const & thermalCompFlowAccessors,

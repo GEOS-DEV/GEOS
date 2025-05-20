@@ -169,8 +169,7 @@ list( APPEND kernelTemplateFileList
       kernelTemplates/CompositionalMultiphaseHybridFVMKernels_assembly.cpp.template
       kernelTemplates/CompositionalMultiphaseHybridFVMKernels_flux.cpp.template
       kernelTemplates/ReactiveCompositionalMultiphaseOBLKernels.cpp.template
-      kernelTemplates/IsothermalCompositionalMultiphaseFVM_DirichletFluxComputeKernels.cpp.template
-      kernelTemplates/ThermalCompositionalMultiphaseFVM_DirichletFluxComputeKernels.cpp.template )
+      kernelTemplates/CompositionalMultiphaseFVM_DirichletFluxComputeKernels.cpp.template )
 
 foreach( kernelTemplateFile ${kernelTemplateFileList} )
   get_filename_component( jsonKey ${kernelTemplateFile} NAME_WE )

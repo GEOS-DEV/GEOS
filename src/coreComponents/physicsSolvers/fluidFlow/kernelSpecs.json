@@ -172,46 +172,37 @@
     "explicit": []
   },
 
-  "IsothermalCompositionalMultiphaseFVM_DirichletFluxComputeKernels": {
+  "CompositionalMultiphaseFVM_DirichletFluxComputeKernels": {
     "vars": [
       "NAME",
-      "NCOMPS_THERMAL_FLUID"
+      "NCOMPS",
+      "FLUID"
     ],
     "constants": [
-      [ "DirichletFluxComputeKernelPolicy", "geos::parallelDevicePolicy< GEOS_BLOCK_SIZE >" ]
+      [ "DirichletFluxComputeKernelPolicy", "geos::parallelDevicePolicy<>" ]
     ],
     "combinations": {
       "NAME": [
         "DirichletFluxComputeKernel"
       ],
-      "NCOMPS_THERMAL_FLUID": [
-        "2, false, constitutive::DeadOilFluid",
-        "3, false, constitutive::DeadOilFluid",
-        "3, false, constitutive::BlackOilFluid",
-        "2, false, constitutive::CO2BrinePhillipsFluid",
-        "2, false, constitutive::CO2BrineEzrokhiFluid",
-        "2, true, constitutive::CO2BrinePhillipsThermalFluid",
-        "2, true, constitutive::CO2BrineEzrokhiThermalFluid"
-      ]
-    },
-    "explicit": []
-  },
-
-  "ThermalCompositionalMultiphaseFVM_DirichletFluxComputeKernels": {
-    "vars": [
-      "NAME",
-      "NCOMPS_THERMAL_FLUID"
-    ],
-    "constants": [
-      [ "DirichletFluxComputeKernelPolicy", "geos::parallelDevicePolicy< GEOS_BLOCK_SIZE >" ]
-    ],
-    "combinations": {
-      "NAME": [
-        "DirichletFluxComputeKernel"
+      "NCOMPS": [
+        2,
+        3,
+        4,
+        5
       ],
-      "NCOMPS_THERMAL_FLUID": [
-        "2, true, constitutive::CO2BrinePhillipsThermalFluid",
-        "2, true, constitutive::CO2BrineEzrokhiThermalFluid"
+      "FLUID": [
+        "constitutive::DeadOilFluid",
+        "constitutive::DeadOilFluid",
+        "constitutive::BlackOilFluid",
+        "constitutive::CO2BrinePhillipsFluid",
+        "constitutive::CO2BrineEzrokhiFluid",
+        "constitutive::CO2BrinePhillipsThermalFluid",
+        "constitutive::CO2BrineEzrokhiThermalFluid",
+        "constitutive::CompositionalTwoPhaseLohrenzBrayClarkViscosity",
+        "constitutive::CompositionalThreePhaseLohrenzBrayClarkViscosity",
+        "constitutive::CompositionalTwoPhaseConstantViscosity",
+        "constitutive::CompositionalMultiphaseFluidPVTPackage"
       ]
     },
     "explicit": []

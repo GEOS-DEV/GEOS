@@ -21,8 +21,6 @@
 #define GEOS_PHYSICSSOLVERS_FLUIDFLOW_KERNELS_COMPOSITIONAL_THERMALDIRICHLETFLUXCOMPUTEKERNEL_HPP
 
 #include "DirichletFluxComputeKernel.hpp"
-//#include "constitutive/fluid/multifluid/MultiFluidBase.hpp"
-//#include "constitutive/fluid/multifluid/MultiFluidFields.hpp"
 #include "constitutive/thermalConductivity/MultiPhaseThermalConductivityBase.hpp"
 #include "constitutive/thermalConductivity/ThermalConductivityFields.hpp"
 
