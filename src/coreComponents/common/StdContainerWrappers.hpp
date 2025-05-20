@@ -47,11 +47,6 @@ public:
    */
   StdVectorWrapper( std::vector< T, Allocator > vec ): Base( vec ){}
 
-  /**
-   * @brief Add copie constructor
-   * @param other
-   */
-  StdVectorWrapper( StdVectorWrapper const & other ): Base( other ) {}
 
   /**
    * Access element at index with bounds checking if USE_STD_CONTAINER_BOUNDS_CHECKING is true.
