@@ -135,6 +135,8 @@ set( constitutive_headers
      fluid/singlefluid/SingleFluidSelector.hpp
      fluid/singlefluid/SlurryFluidSelector.hpp
      fluid/singlefluid/ThermalCompressibleSinglePhaseFluid.hpp
+     fluid/twophaseimmisciblefluid/TwoPhaseImmiscibleFluid.hpp
+     fluid/twophaseimmisciblefluid/TwoPhaseImmiscibleFluidFields.hpp
      permeability/CarmanKozenyPermeability.hpp
      permeability/ConstantPermeability.hpp
      permeability/DamagePermeability.hpp
@@ -279,6 +281,7 @@ set( constitutive_sources
      fluid/singlefluid/SingleFluidBase.cpp
      fluid/singlefluid/SlurryFluidBase.cpp
      fluid/singlefluid/ThermalCompressibleSinglePhaseFluid.cpp
+     fluid/twophaseimmisciblefluid/TwoPhaseImmiscibleFluid.cpp
      permeability/CarmanKozenyPermeability.cpp
      permeability/ConstantPermeability.cpp
      permeability/DamagePermeability.cpp

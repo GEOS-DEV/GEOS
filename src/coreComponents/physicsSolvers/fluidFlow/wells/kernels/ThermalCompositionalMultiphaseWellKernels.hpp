@@ -80,7 +80,7 @@ public:
     arraySlice2d< real64 const, multifluid::USD_PHASE_DC - 2 > dPhaseMassDens = m_dPhaseMassDens[ei][0];
 
     real64 & dTotalMassDens_dT = m_dTotalMassDens[ei][Deriv::dT];
-
+    dTotalMassDens_dT=0.0;
     // Call the base compute the compute the total mass density and derivatives
     return Base::compute( ei, [&]( localIndex const ip )
     {

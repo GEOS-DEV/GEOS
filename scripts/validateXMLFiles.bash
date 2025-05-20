@@ -7,7 +7,7 @@ if [ -z "$1" ]; then
 fi
 
 SCHEMA=$1; shift
-LOGFILE=xml_validation_results.log
+LOGFILE=$(pwd)/xml_validation_results.log
 
 # "-r" in GNU xargs omits the call if input is empty
 # OS X xargs does not support it, but does the same by default

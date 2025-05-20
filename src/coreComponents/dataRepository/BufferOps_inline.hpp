@@ -133,7 +133,7 @@ template< bool DO_PACKING, typename T >
 inline
 localIndex
 Pack( buffer_unit_type * & buffer,
-      std::vector< T > const & var )
+      stdVector< T > const & var )
 {
   size_t const length = var.size();
   localIndex sizeOfPackedChars = Pack< DO_PACKING >( buffer, length );
@@ -276,7 +276,7 @@ PackArray( buffer_unit_type * & buffer,
 template< bool DO_PACKING, typename T, typename T_indices >
 typename std::enable_if< is_packable< T >, localIndex >::type
 PackByIndex( buffer_unit_type * & buffer,
-             std::vector< T > const & var,
+             stdVector< T > const & var,
              const T_indices & indices )
 {
   localIndex sizeOfPackedChars = Pack< DO_PACKING >( buffer, indices.size() );
@@ -419,7 +419,7 @@ Unpack( buffer_unit_type const * & buffer,
 template< typename T >
 typename std::enable_if< is_packable< T >, localIndex >::type
 Unpack( buffer_unit_type const * & buffer,
-        std::vector< T > & var )
+        stdVector< T > & var )
 {
   size_t length;
   localIndex sizeOfUnpackedChars = Unpack( buffer, length );
@@ -602,7 +602,7 @@ UnpackArray( buffer_unit_type const * & buffer,
 template< typename T, typename T_indices >
 localIndex
 UnpackByIndex( buffer_unit_type const * & buffer,
-               std::vector< T > & var,
+               stdVector< T > & var,
                T_indices const & indices )
 {
   localIndex sizeOfUnpackedChars = 0;
@@ -1626,13 +1626,13 @@ Unpack( buffer_unit_type const * & buffer,
 
   // for objects related to the above local index li (e.g. up/down mappings)
   // global indices not yet known on the local rank
-  std::vector< globalIndex > unmapped;
+  stdVector< globalIndex > unmapped;
 
   // local indices of known global indices
-  std::vector< localIndex > mapped;
+  stdVector< localIndex > mapped;
 
   // local indices of known objects not yet present in the map
-  std::vector< localIndex > mappedNew;
+  stdVector< localIndex > mappedNew;
 
   // storage for new values that don't fit into existing capacity
   array1d< localIndex > indiciesToInsert;

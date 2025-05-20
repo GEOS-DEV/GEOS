@@ -118,7 +118,7 @@ public:
    */
   bool isClone()  const { return m_isClone; }
 
-  virtual std::vector< string > getSubRelationNames() const { return {}; }
+  virtual stdVector< string > getSubRelationNames() const { return {}; }
 
   /**
    * @brief Helper function to register field on a constitutive model

@@ -332,7 +332,7 @@ private:
   Path m_OBLOperatorsTableFile;
 
   /// OBL operators table function tabulated vs all primary variables
-  MultivariableTableFunction const * m_OBLOperatorsTable;
+  MultivariableTableFunction const * m_OBLOperatorsTable = nullptr;
 
   /// flag indicating whether energy balance will be enabled or not
   integer m_enableEnergyBalance;
