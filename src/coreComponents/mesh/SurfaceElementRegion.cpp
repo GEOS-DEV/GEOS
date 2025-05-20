@@ -195,9 +195,11 @@ localIndex SurfaceElementRegion::addToFractureMesh( real64 const time_np1,
   SurfaceElementSubRegion::EdgeMapType & edgeMap = subRegion.edgeList();
   // Fill the connectivity between FaceElement entries. This is essentially a copy of the
   // edgesToFaces map, but with differing offsets.
-  for( localIndex a = 0; a < edgeMap.sizeOfArray( kfe ); ++a )
+  localIndex const faceIndex = faceIndices[0];
+  localIndex const numEdges = originalFaceToEdgeMap.sizeOfArray( faceIndex );
+  for( localIndex a = 0; a < numEdges; ++a )
   {
-    const localIndex edge = edgeMap[kfe][a];
+    const localIndex edge = originalFaceToEdgeMap( faceIndex, a );
 
     // check to see if the edgesToFractureConnectors already have an entry
     if( subRegion.m_edgesTo2dFaces.count( edge )==0 )
