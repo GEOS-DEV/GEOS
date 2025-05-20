@@ -30,7 +30,16 @@ class IdReporterOutput
 {
 public:
 
+  using IdCountType = IdReporterCollector::IdCountType;
+  using IdType = IdReporterCollector::IdType;
+
   IdReporterOutput( IdReporterBuffer const & buffer );
+
+  IdCountType getRanksSignaledIdsCount() const
+  { return m_ranksSignaledIdsCount; }
+
+  IdCountType getRanksCollectedIdsCount() const
+  { return m_ranksCollectedIdsCount; }
 
   void outputWrongValues( string_view linesPrefix,
                           string_view valueNaming,
@@ -41,14 +50,18 @@ private:
 
   IdReporterBuffer const & m_buffer;
 
+  IdCountType m_ranksSignaledIdsCount;
+
+  IdCountType m_ranksCollectedIdsCount;
+
 };
 
 class IdReporterBuffer
 {
 public:
 
-  using IdCountType = int32_t;
-  using IdType = globalIndex;
+  using IdCountType = IdReporterCollector::IdCountType;
+  using IdType = IdReporterCollector::IdType;
 
   /**
    * @brief Construct a preallocated buffer to collect a limited quantity of ids in kernels.
@@ -89,7 +102,7 @@ public:
   /**
    * @return A view on the ids array owned by the instance. -> change comment to explain the interest for kernels
    */
-  IdReporterCollector createCollector( arrayView1d< globalIndex > const & localToGlobalId ) const;
+  IdReporterCollector createCollector( arrayView1d< globalIndex const > const & localToGlobalId ) const;
 
   IdReporterOutput createOutput() const;
 

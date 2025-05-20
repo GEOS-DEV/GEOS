@@ -46,11 +46,11 @@ public:
   IdReporterCollector & operator=( IdReporterCollector const & other ) = default;
   IdReporterCollector & operator=( IdReporterCollector && other ) = default;
 
-  static IdReporterCollector disabled() // -> cpp
+  static IdReporterCollector disabled()
   {
     return IdReporterCollector( arrayView1d< IdCountType >(),
                                 arrayView1d< IdType >(),
-                                arrayView1d< globalIndex >() );
+                                arrayView1d< globalIndex const >() );
   }
 
   /**
@@ -98,11 +98,11 @@ private:
   // ids of detected elements, quantity limited to 'maxIdsCount'
   arrayView1d< IdType > m_idsBuffer;
 
-  arrayView1d< globalIndex > m_localToGlobalId;
+  arrayView1d< globalIndex const > m_localToGlobalId;
 
   IdReporterCollector( arrayView1d< IdCountType > const & idsCounter,
                        arrayView1d< IdType > const & idsArray,
-                       arrayView1d< globalIndex > const & localToGlobalId ):
+                       arrayView1d< globalIndex const > const & localToGlobalId ):
     m_idsCounter( idsCounter ),
     m_idsBuffer( idsArray ),
     m_localToGlobalId( localToGlobalId )

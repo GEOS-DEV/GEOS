@@ -870,8 +870,8 @@ bool CompositionalMultiphaseFVM::checkSystemSolution( DomainPartition & domain,
         arrayView1d< real64 > temperatureScalingFactor = subRegion.getField< fields::flow::temperatureScalingFactor >();
         arrayView1d< real64 > compDensScalingFactor = subRegion.getField< fields::flow::globalCompDensityScalingFactor >();
         auto const & cellLocalToGlobalIds = subRegion.localToGlobalMap();
-        auto const presCollector = rankNegPressureIds.createCollector( cellLocalToGlobalIds );
-        auto const densCollector = rankNegDensityIds.createCollector( cellLocalToGlobalIds );
+        auto const negPresCollector = rankNegPressureIds.createCollector( cellLocalToGlobalIds );
+        auto const negDensCollector = rankNegDensityIds.createCollector( cellLocalToGlobalIds );
 
         // check that pressure and component densities are non-negative
         // for thermal, check that temperature is above 273.15 K
@@ -894,8 +894,8 @@ bool CompositionalMultiphaseFVM::checkSystemSolution( DomainPartition & domain,
                                                                                 dofKey,
                                                                                 subRegion,
                                                                                 localSolution,
-                                                                                presCollector,
-                                                                                densCollector,
+                                                                                negPresCollector,
+                                                                                negDensCollector,
                                                                                 temperatureOffset ) :
                                    isothermalCompositionalMultiphaseBaseKernels::
                                      SolutionCheckKernelFactory::
@@ -912,14 +912,14 @@ bool CompositionalMultiphaseFVM::checkSystemSolution( DomainPartition & domain,
                                                                                 dofKey,
                                                                                 subRegion,
                                                                                 localSolution,
-                                                                                presCollector,
-                                                                                densCollector );
+                                                                                negPresCollector,
+                                                                                negDensCollector );
 
         localCheck = std::min( localCheck, subRegionData.localMinVal );
 
-        minPres  = std::min( minPres, subRegionData.localMinPres );
-        minDens = std::min( minDens, subRegionData.localMinDens );
-        minTotalDens = std::min( minTotalDens, subRegionData.localMinTotalDens );
+        minPres  = std::min( minPres, subRegionData.localMinNegPres );
+        minDens = std::min( minDens, subRegionData.localMinNegDens );
+        minTotalDens = std::min( minTotalDens, subRegionData.localMinNegTotalDens );
         numNegTotalDens += subRegionData.localNumNegTotalDens;
       } );
     } );
@@ -929,14 +929,12 @@ bool CompositionalMultiphaseFVM::checkSystemSolution( DomainPartition & domain,
     minTotalDens = MpiWrapper::min( minTotalDens );
     numNegTotalDens = MpiWrapper::sum( numNegTotalDens );
 
-    units::Unit const massUnit = m_useMass ? units::Unit::Density : units::Unit::MolarDensity;
-
     rankNegPressureIds.createOutput().outputWrongValues( GEOS_FMT( "        {}: ", getName() ),
                                                          "negative pressure", minPres, units::Unit::Pressure );
 
+    units::Unit const massUnit = m_useMass ? units::Unit::Density : units::Unit::MolarDensity;
     rankNegDensityIds.createOutput().outputWrongValues( GEOS_FMT( "        {}: ", getName() ),
                                                         "negative component density", minDens, massUnit );
-
     if( numNegTotalDens > 0 )
     {
       GEOS_LOG_LEVEL_RANK_0( logInfo::Solution,

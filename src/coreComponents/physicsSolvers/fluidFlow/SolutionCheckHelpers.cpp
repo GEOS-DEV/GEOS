@@ -35,7 +35,7 @@ IdReporterBuffer::IdReporterBuffer( bool enabled, IdCountType maxCollectionSize 
   }
 }
 
-IdReporterCollector IdReporterBuffer::createCollector( arrayView1d< globalIndex > const & localToGlobalId ) const
+IdReporterCollector IdReporterBuffer::createCollector( arrayView1d< globalIndex const > const & localToGlobalId ) const
 {
   return IdReporterCollector( m_idsCounter, m_idsBuffer, localToGlobalId );
 }
@@ -47,7 +47,9 @@ IdReporterOutput IdReporterBuffer::createOutput() const
 
 
 IdReporterOutput::IdReporterOutput( IdReporterBuffer const & buffer ):
-  m_buffer( buffer )
+  m_buffer( buffer ),
+  m_ranksSignaledIdsCount( MpiWrapper::sum( buffer.getSignaledIdsCount() ) ),
+  m_ranksCollectedIdsCount( MpiWrapper::sum( buffer.getCollectedIdsCount() ) )
 {}
 
 void IdReporterOutput::outputWrongValues( string_view linesPrefix,
@@ -57,14 +59,13 @@ void IdReporterOutput::outputWrongValues( string_view linesPrefix,
 {
   if( m_buffer.enabled() )
   {
-    integer numSignaledWrongValues = MpiWrapper::sum( m_buffer.getSignaledIdsCount() );
-    if( numSignaledWrongValues > 0 )
+    if( m_ranksSignaledIdsCount > 0 )
     {
       string const minValueStr = GEOS_FMT( "{:.{}f} [{}]", minValue, 3, units::getSymbol( unit ) );
       GEOS_LOG_RANK_0( GEOS_FMT( "{}{} {} values encountered. Minimum value: {}.",
-                                 linesPrefix, numSignaledWrongValues, valueNaming, minValueStr ) );
+                                 linesPrefix, m_ranksSignaledIdsCount, valueNaming, minValueStr ) );
 
-      if( MpiWrapper::sum( m_buffer.getCollectedIdsCount() ) > 0 )
+      if( m_ranksCollectedIdsCount > 0 )
       {
         GEOS_LOG_RANK_0( GEOS_FMT( "{}{} element ids:",
                                    linesPrefix, valueNaming ) );
@@ -76,7 +77,8 @@ void IdReporterOutput::outputWrongValues( string_view linesPrefix,
                             stringutilities::join( m_buffer, ", " ),
                             ( m_buffer.isComplete() ? "..." : "." ) ) );
       }
-      else {
+      else
+      {
         GEOS_LOG_RANK_0( GEOS_FMT( "{}Id listing of {} elements not shown, increase the log-level if needed.",
                                    linesPrefix, valueNaming ) );
       }

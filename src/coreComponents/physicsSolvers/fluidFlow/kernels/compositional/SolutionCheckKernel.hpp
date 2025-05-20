@@ -106,21 +106,21 @@ public:
     {}
 
     KernelStats( real64 _localMinVal,
-                 real64 _localMinPres,
-                 real64 _localMinDens,
-                 real64 _localMinTotalDens,
+                 real64 _localNegMinPres,
+                 real64 _localMinNegDens,
+                 real64 _localMinNegTotalDens,
                  integer _localNumNegTotalDens )
       :
       Base::StackVariables( _localMinVal ),
-      localMinPres( _localMinPres ),
-      localMinDens( _localMinDens ),
-      localMinTotalDens( _localMinTotalDens ),
+      localMinNegPres( _localNegMinPres ),
+      localMinNegDens( _localMinNegDens ),
+      localMinNegTotalDens( _localMinNegTotalDens ),
       localNumNegTotalDens( _localNumNegTotalDens )
     { }
 
-    real64 localMinPres;
-    real64 localMinDens;
-    real64 localMinTotalDens;
+    real64 localMinNegPres;
+    real64 localMinNegDens;
+    real64 localMinNegTotalDens;
 
     localIndex localNumNegTotalDens; // ne peuvent être que 0 ou 1 dans chaque kernel
   };
@@ -176,9 +176,9 @@ public:
 
       globalMinVal.min( stack.localMinVal );
 
-      minPres.min( stack.localMinPres );
-      minDens.min( stack.localMinDens );
-      minTotalDens.min( stack.localMinTotalDens );
+      minPres.min( stack.localMinNegPres );
+      minDens.min( stack.localMinNegDens );
+      minTotalDens.min( stack.localMinNegTotalDens );
 
       if( stack.localNumNegPres > 0 )
         kernelComponent.m_negPressureIds.collectId( atomicPolicy{}, ei );
@@ -202,9 +202,9 @@ public:
   {
     Base::setup( ei, stack );
 
-    stack.localMinPres = 0.0;
-    stack.localMinDens = 0.0;
-    stack.localMinTotalDens = 0.0;
+    stack.localMinNegPres = 0.0;
+    stack.localMinNegDens = 0.0;
+    stack.localMinNegTotalDens = 0.0;
 
     stack.localNumNegPres = 0;
     stack.localNumNegDens = 0;
@@ -246,8 +246,8 @@ public:
       if( !m_allowNegativePressure )
         stack.localMinVal = 0;
 
-      if( newPres < stack.localMinPres )
-        stack.localMinPres = newPres;
+      if( newPres < stack.localMinNegPres )
+        stack.localMinNegPres = newPres;
     }
 
     // if component density chopping is not allowed, the time step fails if a component density is negative
@@ -263,8 +263,8 @@ public:
           stack.localNumNegDens = 1;
           stack.localMinVal = 0;
 
-          if( newDens < stack.localMinDens )
-            stack.localMinDens = newDens;
+          if( newDens < stack.localMinNegDens )
+            stack.localMinNegDens = newDens;
         }
       }
     }
@@ -281,8 +281,8 @@ public:
         stack.localNumNegTotalDens = 1;
         stack.localMinVal = 0;
 
-        if( totalDens < stack.localMinTotalDens )
-          stack.localMinTotalDens = totalDens;
+        if( totalDens < stack.localMinNegTotalDens )
+          stack.localMinNegTotalDens = totalDens;
       }
     }
 
@@ -303,9 +303,9 @@ protected:
   /// scaling type (global or local)
   compositionalMultiphaseUtilities::ScalingType const m_scalingType;
 
-  IdReporterCollector m_negPressureIds;
+  IdReporterCollector const & m_negPressureIds;
 
-  IdReporterCollector m_negDensityIds;
+  IdReporterCollector const & m_negDensityIds;
 
 };
 
