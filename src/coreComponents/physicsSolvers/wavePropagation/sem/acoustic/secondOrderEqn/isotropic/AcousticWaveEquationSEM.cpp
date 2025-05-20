@@ -417,10 +417,13 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
       m_timeStep=dtOut*m_cflFactor;
     }
 
+    printf("beforeuse\n");
     if( m_useTaper==1 )
     {
       real32 vMin;
+      printf("getforegetmin\n");
       vMin = getGlobalMinWavespeed( mesh, regionNames );
+      printf("aftergetmin\n");
 
       arrayView1d< real32 > const taperCoeff = nodeManager.getField< fields::taperCoeff >();
       TaperKernel::computeTaperCoeff< EXEC_POLICY >( nodeManager.size(), nodeCoords, m_thicknessTaper, m_timeStep, vMin, m_reflectivityCoeff,

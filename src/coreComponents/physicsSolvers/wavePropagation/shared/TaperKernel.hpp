@@ -55,6 +55,7 @@ struct TaperKernel
   {
 
     ///Seek the global maximum and minimum of the domain
+    printf("beforereduce\n");
     RAJA::ReduceMin< parallelDeviceReduce, real32 > xMinGlobal( LvArray::NumericLimits< real32 >::max );
     RAJA::ReduceMin< parallelDeviceReduce, real32 > yMinGlobal( LvArray::NumericLimits< real32 >::max );
     RAJA::ReduceMin< parallelDeviceReduce, real32 > zMinGlobal( LvArray::NumericLimits< real32 >::max );
@@ -67,6 +68,7 @@ struct TaperKernel
     RAJA::ReduceMax< parallelDeviceReduce, real32 > xMaxInterior( -LvArray::NumericLimits< real32 >::max );
     RAJA::ReduceMax< parallelDeviceReduce, real32 > yMaxInterior( -LvArray::NumericLimits< real32 >::max );
     RAJA::ReduceMax< parallelDeviceReduce, real32 > zMaxInterior( -LvArray::NumericLimits< real32 >::max );
+    printf("afterreduce\n");
 
     real32 xGlobalMin[3]{};
     real32 xGlobalMax[3]{};
