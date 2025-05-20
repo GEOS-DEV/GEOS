@@ -179,7 +179,6 @@
       "FLUID"
     ],
     "constants": [
-      [ "DirichletFluxComputeKernelPolicy", "geos::parallelDevicePolicy<>" ]
     ],
     "combinations": {
       "NAME": [

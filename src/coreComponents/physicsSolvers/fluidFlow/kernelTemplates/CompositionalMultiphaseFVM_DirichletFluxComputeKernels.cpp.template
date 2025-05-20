@@ -2,17 +2,25 @@
 #include "physicsSolvers/fluidFlow/kernels/compositional/DirichletFluxComputeKernel_impl.hpp"
 #include "physicsSolvers/fluidFlow/kernels/compositional/ThermalDirichletFluxComputeKernel_impl.hpp"
 
-using DirichletFluxComputeKernelPolicy = @DirichletFluxComputeKernelPolicy@;
-
 namespace geos
 {
 namespace isothermalCompositionalMultiphaseFVMKernels
 {
-  template class @NAME@ < @NCOMPS@, false, @FLUID@ >;
-  template class @NAME@ < @NCOMPS@, true, @FLUID@ >;
+template class @NAME@< @NCOMPS@, false, @FLUID@ >;
+template class @NAME@< @NCOMPS@, true, @FLUID@ >;
+
+template
+void @NAME@< @NCOMPS@, false, @FLUID@ >::computeFlux( localIndex const,
+                                                      @NAME@< @NCOMPS@, false, @FLUID@ >::StackVariables &,
+                                                      NoOpFunc && ) const;
+
+template
+void @NAME@< @NCOMPS@, false, @FLUID@ >::complete( localIndex const,
+                                                    @NAME@< @NCOMPS@, false, @FLUID@ >::StackVariables &,
+                                                    NoOpFunc && ) const;
 }
 namespace thermalCompositionalMultiphaseFVMKernels
 {
-  template class @NAME@ < @NCOMPS@, @FLUID@ >;
+template class @NAME@ < @NCOMPS@, @FLUID@ >;
 }
 }
