@@ -69,7 +69,7 @@ struct SolutionCheckKernel
 
     } );
 
-    return { minNegPres.get() };
+    return KernelStats{ minNegPres.get() };
   }
 
 };
