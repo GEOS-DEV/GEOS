@@ -278,7 +278,7 @@ void PhillipsBrineDensity::calculateEosWaterMolarVolume( arraySlice1d< real64 co
                                                                   equationOfState,
                                                                   salinity,
                                                                   compressibilityFactor,
-                                                                  tempDerivs );
+                                                                  tempDerivs.toSlice() );
 
         molarVolume[j*nPressures+i] = constants::gasConstant * temperature * compressibilityFactor / pressure;
         minMolarVolume = LvArray::math::min( minMolarVolume, molarVolume[j*nPressures+i] );

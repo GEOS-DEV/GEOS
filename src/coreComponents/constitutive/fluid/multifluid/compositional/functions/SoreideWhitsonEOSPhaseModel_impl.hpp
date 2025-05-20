@@ -418,18 +418,18 @@ computeCompressibilityFactor( integer const numComps,
 }
 
 template< typename EOS_TYPE >
-template< integer USD >
+template< integer USD1, integer USD2 >
 GEOS_HOST_DEVICE
 void
 SoreideWhitsonEOSPhaseModel< EOS_TYPE >::
 computeCompressibilityFactor( integer const numComps,
                               real64 const & pressure,
                               real64 const & temperature,
-                              arraySlice1d< real64 const, USD > const & composition,
+                              arraySlice1d< real64 const, USD1 > const & composition,
                               ComponentProperties::KernelWrapper const & componentProperties,
                               real64 const & salinity,
                               real64 & compressibilityFactor,
-                              arraySlice1d< real64 > const & compressibilityFactorDerivs )
+                              arraySlice1d< real64, USD2 > const & compressibilityFactorDerivs )
 {
   integer constexpr numMaxDofs = maxNumComps + 2;
 

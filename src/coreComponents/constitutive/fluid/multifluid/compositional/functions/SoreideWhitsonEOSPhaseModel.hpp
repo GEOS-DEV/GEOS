@@ -225,17 +225,17 @@ struct SoreideWhitsonEOSPhaseModel
    * @param[out] compressibilityFactor the current compressibility factor
    * @param[out] compressibilityFactorDerivs derivatives of the compressibility factor
    */
-  template< integer USD >
+  template< integer USD1, integer USD2 >
   GEOS_HOST_DEVICE
   static void
   computeCompressibilityFactor( integer const numComps,
                                 real64 const & pressure,
                                 real64 const & temperature,
-                                arraySlice1d< real64 const, USD > const & composition,
+                                arraySlice1d< real64 const, USD1 > const & composition,
                                 ComponentProperties::KernelWrapper const & componentProperties,
                                 real64 const & salinity,
                                 real64 & compressibilityFactor,
-                                arraySlice1d< real64 > const & compressibilityFactorDerivs );
+                                arraySlice1d< real64, USD2 > const & compressibilityFactorDerivs );
 
   /**
    * @brief Get the binary interaction coefficient between two components
