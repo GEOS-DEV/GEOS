@@ -103,14 +103,14 @@ private:
 
   FieldIdentifiers m_fieldsToBeSync;
 
-  std::vector< MPI_Request > m_mpiSendBufferRequest;
-  std::vector< MPI_Request > m_mpiRecvBufferRequest;
-  std::vector< MPI_Status >  m_mpiSendBufferStatus;
-  std::vector< MPI_Status >  m_mpiRecvBufferStatus;
-  std::vector< MPI_Request > m_mpiSendBufferSizeRequest;
-  std::vector< MPI_Request > m_mpiRecvBufferSizeRequest;
-  std::vector< MPI_Status >  m_mpiSendBufferSizeStatus;
-  std::vector< MPI_Status >  m_mpiRecvBufferSizeStatus;
+  stdVector< MPI_Request > m_mpiSendBufferRequest;
+  stdVector< MPI_Request > m_mpiRecvBufferRequest;
+  stdVector< MPI_Status >  m_mpiSendBufferStatus;
+  stdVector< MPI_Status >  m_mpiRecvBufferStatus;
+  stdVector< MPI_Request > m_mpiSendBufferSizeRequest;
+  stdVector< MPI_Request > m_mpiRecvBufferSizeRequest;
+  stdVector< MPI_Status >  m_mpiSendBufferSizeStatus;
+  stdVector< MPI_Status >  m_mpiRecvBufferSizeStatus;
 };
 } /* namespace geos */
 

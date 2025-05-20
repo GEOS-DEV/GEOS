@@ -221,7 +221,7 @@ protected:
  * @param numDofIndicesExpected expected global number of dof indices
  * @param regions list of support regions (empty = whole domain)
  */
-void DofManagerIndicesTest::test( std::vector< FieldDesc > const & fields )
+void DofManagerIndicesTest::test( stdVector< FieldDesc > const & fields )
 {
   for( FieldDesc const & f : fields )
   {

@@ -196,7 +196,7 @@ private:
   template< typename SUBREGION_TYPE >
   string getUniqueSubRegionName() const
   {
-    std::vector< string > subRegionNames;
+    stdVector< string > subRegionNames;
     forElementSubRegions< SUBREGION_TYPE >( [&]( SUBREGION_TYPE const & sr )
     {
       subRegionNames.push_back( sr.getName() );
