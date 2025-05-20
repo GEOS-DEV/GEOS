@@ -205,7 +205,7 @@ public:
 template< typename TKEY, typename TVAL >
 class mapBase< TKEY, TVAL, std::integral_constant< bool, false > > : public stdUnorderedMap< TKEY, TVAL >
 {
-  using stdUnorderedMap< TKEY, TVAL >::stdMap; 
+  using stdUnorderedMap< TKEY, TVAL >::stdUnorderedMap; 
 };
 /// @endcond
 
