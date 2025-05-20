@@ -227,7 +227,7 @@ INSTANTIATE_TEST_SUITE_P(
   )
 );
 
-/* U//NCRUSTIFY-ON */
+/* UNCRUSTIFY-ON */
 
 } // testing
 
