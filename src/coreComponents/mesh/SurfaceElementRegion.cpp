@@ -192,7 +192,6 @@ localIndex SurfaceElementRegion::addToFractureMesh( real64 const time_np1,
   arrayView1d< real64 > const ruptureTime = subRegion.getField< fields::ruptureTime >();
   ruptureTime( kfe ) = time_np1;
 
-  SurfaceElementSubRegion::EdgeMapType & edgeMap = subRegion.edgeList();
   // Fill the connectivity between FaceElement entries. This is essentially a copy of the
   // edgesToFaces map, but with differing offsets.
   localIndex const faceIndex = faceIndices[0];
