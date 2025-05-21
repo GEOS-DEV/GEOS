@@ -314,6 +314,7 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
   applyFreeSurfaceBC( 0.0, domain );
 
 
+  printf("beforeloopinsideinitializePostInitialConditionsPreSubGroups\n");
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
@@ -363,6 +364,7 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
       arrayView1d< real32 > grad2 = elementSubRegion.getField< acousticfields::PartialGradient2 >();
       grad2.zero();
 
+  printf("beforeloopinsideinitializePostInitialConditionsPreSubGroupsdispatch\n");
       finiteElement::FiniteElementDispatchHandler< SEM_FE_TYPES >::dispatch3D( fe, [&] ( auto const finiteElement )
       {
         using FE_TYPE = TYPEOFREF( finiteElement );
@@ -390,6 +392,7 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
       } );
     } );
     // Here we compute the timeStep only one time (beginning of the simulation).
+  printf("beforeloopinsideinitializePostInitialConditionsPreSubtimestep\n");
     if( m_timestepStabilityLimit==1 )
     {
       real64 dtOut = 0.0;
