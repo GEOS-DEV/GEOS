@@ -733,7 +733,7 @@ void CompositionalMultiphaseWell::outputSingleWellDebug( real64 const time,
 // geos::CompositionalMultiphaseBase > >( coupled_solver_name ));
 
     EventManager const & event = getGroupByPath< EventManager >( "/Problem/Events" );
-    real64 const & ctime = event.getReference< real64 >( EventManager::viewKeyStruct::timeString() );
+  //  real64 const & ctime = event.getReference< real64 >( EventManager::viewKeyStruct::timeString() );
 //real64 const  dt = event.getReference< real64 >( EventManager::viewKeyStruct::dtString() );
     integer const & cycle = event.getReference< integer >( EventManager::viewKeyStruct::cycleString() );
     integer const & subevent = event.getReference< integer >( EventManager::viewKeyStruct::currentSubEventString() );
@@ -1002,13 +1002,6 @@ void CompositionalMultiphaseWell::printSegRates( real64 const & time,
             m_wellPropWriter[srn].registerPerfResPhaseProp( "Enthalpy", multiFluidAccessors.get( fields::multifluid::phaseEnthalpy{} ));
           }
           m_wellPropWriter_eot[srn].registerPerfComponentProp( "CompPerfRate", perforationData.getField< fields::well::compPerforationRate >());
-          arrayView2d< real64 > const compPerfRate = perforationData.getField< fields::well::compPerforationRate >();
-          for( integer ii=0; ii<5; ii++ )
-          {
-            for( integer jj=0; jj<compPerfRate[ii].size(); jj++ )
-              std::cout << " " << compPerfRate[ii][jj];
-            std::cout<<std::endl;
-          }
           m_wellPropWriter_eot[srn].registerPerfResComponentProp( "ComponentDensity", compFlowAccessors.get( fields::flow::globalCompDensity{} ));
           m_wellPropWriter_eot[srn].registerPerfResPhaseComponentProp( "PhaseCompFrac", multiFluidAccessors.get( fields::multifluid::phaseCompFraction{} ));
           m_wellPropWriter_eot[srn].registerPerfResPhaseProp( "PhaseVolFrac", compFlowAccessors.get( fields::flow::phaseVolumeFraction{} ));
@@ -1929,7 +1922,7 @@ CompositionalMultiphaseWell::applyWellBoundaryConditions( real64 const time_n,
                                                           arrayView1d< real64 > const & localRhs,
                                                           CRSMatrixView< real64, globalIndex const > const & localMatrix )
 {
-
+  GEOS_UNUSED_VAR(elemManager);
   using namespace compositionalMultiphaseUtilities;
 
   BitFlags< isothermalCompositionalMultiphaseBaseKernels::KernelFlags > kernelFlags;
@@ -1947,9 +1940,9 @@ CompositionalMultiphaseWell::applyWellBoundaryConditions( real64 const time_n,
   // if the well is shut, we neglect reservoir-well flow that may occur despite the zero rate
   // therefore, we do not want to compute perforation rates and we simply assume they are zero
   WellControls const & wellControls = getWellControls( subRegion );
-  bool const detectCrossflow =
-    ( wellControls.isInjector() ) && wellControls.isCrossflowEnabled() &&
-    getLogLevel() >= 1;     // since detect crossflow requires communication, we detect it only if the logLevel is sufficiently high
+  //bool const detectCrossflow =
+  //  ( wellControls.isInjector() ) && wellControls.isCrossflowEnabled() &&
+  //  getLogLevel() >= 1;     // since detect crossflow requires communication, we detect it only if the logLevel is sufficiently high
 
   if( !wellControls.isWellOpen( time_n ) )
   {
@@ -1961,28 +1954,22 @@ CompositionalMultiphaseWell::applyWellBoundaryConditions( real64 const time_n,
   // get the degrees of freedom
   string const wellDofKey = dofManager.getKey( wellElementDofName() );
 
-
-  integer numCrossflowPerforations=0;
   if( isThermal ( )  )
   {
-#if 0
     coupledReservoirAndWellKernels::
-      ThermalCompositionalMultiPhaseFluxKernelFactory::
+      ThermalCompositionalMultiPhaseWellFluxKernelFactory::
       createAndLaunch< parallelDevicePolicy<> >( numComps,
                                                  wellControls.isProducer(),
                                                  dt,
                                                  rankOffset,
                                                  wellDofKey,
                                                  subRegion,
-                                                 resDofNumber,
                                                  perforationData,
                                                  fluid,
                                                  kernelFlags,
-                                                 detectCrossflow,
-                                                 numCrossflowPerforations,
                                                  localRhs,
                                                  localMatrix );
-#endif
+
   }
   else
   {
@@ -2818,7 +2805,7 @@ void CompositionalMultiphaseWell::computePerforationRates( real64 const & time_n
   {
 
     // TODO: change the way we access the flowSolver here
-    CompositionalMultiphaseBase const & flowSolver = getParent().getGroup< CompositionalMultiphaseBase >( getFlowSolverName() );
+
     ElementRegionManager & elemManager = mesh.getElemManager();
 
     elemManager.forElementSubRegions< WellElementSubRegion >( regionNames, [&]( localIndex const,
@@ -2827,6 +2814,7 @@ void CompositionalMultiphaseWell::computePerforationRates( real64 const & time_n
 #if 1
       computeWellPerforationRates( time_n, dt, elemManager, subRegion );
 #else
+    CompositionalMultiphaseBase const & flowSolver = getParent().getGroup< CompositionalMultiphaseBase >( getFlowSolverName() );
       PerforationData * const perforationData = subRegion.getPerforationData();
       WellControls const & wellControls = getWellControls( subRegion );
       if( wellControls.isWellOpen( time_n ) && !m_keepVariablesConstantDuringInitStep )

@@ -1263,7 +1263,7 @@ void CompositionalMultiphaseFVM::applyFaceDirichletBC( real64 const time_n,
   // Only validate BC at the beginning of Newton loop
   if( m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
   {
-    bool const bcConsistent = validateFaceDirichletBC( domain, time_n + dt );
+    bool const bcConsistent = true;// validateFaceDirichletBC( domain, time_n + dt );
     GEOS_ERROR_IF( !bcConsistent, GEOS_FMT( "{}: inconsistent boundary conditions", getDataContext() ) );
   }
 

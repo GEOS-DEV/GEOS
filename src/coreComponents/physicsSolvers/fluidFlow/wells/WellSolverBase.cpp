@@ -87,7 +87,6 @@ WellSolverBase::WellSolverBase( string const & name,
 Group *WellSolverBase::createChild( string const & childKey, string const & childName )
 {
   // Unused as all children are created within the constructor
-  const auto childTypes = { keys::wellControls };
   if( childKey == keys::wellControls )
     return &registerGroup< WellControls >( childName );
   return nullptr;
@@ -232,6 +231,7 @@ void WellSolverBase::implicitStepSetup( real64 const & time_n,
                                         real64 const & dt,
                                         DomainPartition & domain )
 {
+  GEOS_UNUSED_VAR(dt);
   // Initialize the primary and secondary variables for the first time step
 
   initializeWells( domain, time_n );
@@ -292,6 +292,7 @@ void WellSolverBase::estimateWellSolution( real64 const & time_n,
                                                                MeshLevel & meshLevel,
                                                                string_array const & regionNames )
   {
+    GEOS_UNUSED_VAR(meshBodyName);
     ElementRegionManager & elementRegionManager = meshLevel.getElemManager();
     elementRegionManager.forElementRegions< WellElementRegion >( regionNames,
                                                                  [&]( localIndex const,
