@@ -71,8 +71,9 @@ WellSolverBase::WellSolverBase( string const & name,
 Group *WellSolverBase::createChild( string const & childKey, string const & childName )
 {
   const auto childTypes = { keys::wellControls };
-  GEOS_ERROR_IF( childKey != keys::wellControls,
-                 PhysicsSolverBase::CatalogInterface::unknownTypeError( childKey, getDataContext(), childTypes ) );
+  GEOS_ERROR_CTX_IF( childKey != keys::wellControls,
+                     PhysicsSolverBase::CatalogInterface::unknownTypeError( childKey, getDataContext(), childTypes ),
+                     getDataContext() );
   return &registerGroup< WellControls >( childName );
 }
 

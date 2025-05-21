@@ -390,8 +390,9 @@ addTransmissibilityCouplingPattern( DomainPartition const & domain,
     FaceElementSubRegion const & fractureSubRegion =
       fractureRegion.getUniqueSubRegion< FaceElementSubRegion >();
 
-    GEOS_ERROR_IF( !fractureSubRegion.hasWrapper( flow::pressure::key() ),
-                   this->getDataContext() << ": The fracture subregion must contain pressure field." );
+    GEOS_ERROR_CTX_IF( !fractureSubRegion.hasWrapper( flow::pressure::key() ),
+                   this->getDataContext() << ": The fracture subregion must contain pressure field.",
+                   this->getDataContext() );
 
     arrayView2d< localIndex const > const elem2dToFaces = fractureSubRegion.faceList().toViewConst();
 

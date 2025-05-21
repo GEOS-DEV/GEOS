@@ -323,8 +323,10 @@ void FlowSolverBase::setConstitutiveNamesCallSuper( ElementSubRegionBase & subRe
 
   string & solidName = subRegion.getReference< string >( viewKeyStruct::solidNamesString() );
   solidName = getConstitutiveName< CoupledSolidBase >( subRegion );
-  GEOS_ERROR_IF( solidName.empty(), GEOS_FMT( "{}: Solid model not found on subregion {}",
-                                              getDataContext(), subRegion.getName() ) );
+  GEOS_ERROR_CTX_IF( solidName.empty(),
+                     GEOS_FMT( "{}: Solid model not found on subregion {}",
+                               getDataContext(), subRegion.getName() ),
+                     getDataContext() );
 
   subRegion.registerWrapper< string >( viewKeyStruct::permeabilityNamesString() ).
     setPlotLevel( PlotLevel::NOPLOT ).
@@ -333,8 +335,10 @@ void FlowSolverBase::setConstitutiveNamesCallSuper( ElementSubRegionBase & subRe
 
   string & permName = subRegion.getReference< string >( viewKeyStruct::permeabilityNamesString() );
   permName = getConstitutiveName< PermeabilityBase >( subRegion );
-  GEOS_ERROR_IF( permName.empty(), GEOS_FMT( "{}: Permeability model not found on subregion {}",
-                                             getDataContext(), subRegion.getName() ) );
+  GEOS_ERROR_CTX_IF( permName.empty(),
+                     GEOS_FMT( "{}: Permeability model not found on subregion {}",
+                               getDataContext(), subRegion.getName() ),
+                     getDataContext() );
 
   if( m_isThermal )
   {
@@ -346,10 +350,10 @@ void FlowSolverBase::setConstitutiveNamesCallSuper( ElementSubRegionBase & subRe
                                          reference();
 
     solidInternalEnergyName = getConstitutiveName< SolidInternalEnergy >( subRegion );
-    GEOS_THROW_IF( solidInternalEnergyName.empty(),
-                   GEOS_FMT( "{}: Solid internal energy model not found on subregion {}",
-                             getDataContext(), subRegion.getName() ),
-                   InputError );
+    GEOS_THROW_CTX_IF( solidInternalEnergyName.empty(),
+                       GEOS_FMT( "{}: Solid internal energy model not found on subregion {}",
+                                 getDataContext(), subRegion.getName() ),
+                       InputError, getDataContext() );
   }
 }
 

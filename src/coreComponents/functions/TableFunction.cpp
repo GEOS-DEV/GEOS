@@ -100,10 +100,10 @@ void TableFunction::setTableCoordinates( array1d< real64_array > const & coordin
   {
     for( localIndex j = 1; j < coordinates[i].size(); ++j )
     {
-      GEOS_THROW_IF( coordinates[i][j] - coordinates[i][j-1] <= 0,
-                     GEOS_FMT( "{} {}: coordinates must be strictly increasing, but axis {} is not",
-                               catalogName(), getDataContext(), i ),
-                     InputError );
+      GEOS_THROW_CTX_IF( coordinates[i][j] - coordinates[i][j-1] <= 0,
+                         GEOS_FMT( "{} {}: coordinates must be strictly increasing, but axis {} is not",
+                                   catalogName(), getDataContext(), i ),
+                         InputError, getDataContext() );
     }
     m_coordinates.appendArray( coordinates[i].begin(), coordinates[i].end() );
   }
@@ -162,10 +162,10 @@ void TableFunction::reInitializeFunction()
     increment *= m_coordinates.sizeOfArray( ii );
     for( localIndex j = 1; j < m_coordinates[ii].size(); ++j )
     {
-      GEOS_THROW_IF( m_coordinates[ii][j] - m_coordinates[ii][j-1] <= 0,
-                     GEOS_FMT( "{} {}: coordinates must be strictly increasing, but axis {} is not",
-                               catalogName(), getDataContext(), ii ),
-                     InputError );
+      GEOS_THROW_CTX_IF( m_coordinates[ii][j] - m_coordinates[ii][j-1] <= 0,
+                         GEOS_FMT( "{} {}: coordinates must be strictly increasing, but axis {} is not",
+                                   catalogName(), getDataContext(), ii ),
+                         InputError, getDataContext() );
     }
   }
   if( m_coordinates.size() > 0 && !m_values.empty() ) // coordinates and values have been set
@@ -185,8 +185,7 @@ void TableFunction::checkCoord( real64 const coord, localIndex const dim ) const
   GEOS_THROW_CTX_IF( dim >= m_coordinates.size() || dim < 0,
                      GEOS_FMT( "{}: The {} dimension ( no. {} ) doesn't exist in the table.",
                                getDataContext(), units::getDescription( getDimUnit( dim ) ), dim ),
-                     SimulationError,
-                     getDataContext() );
+                     SimulationError, getDataContext() );
   real64 const lowerBound = m_coordinates[dim][0];
   real64 const upperBound = m_coordinates[dim][m_coordinates.sizeOfArray( dim ) - 1];
   GEOS_THROW_CTX_IF( coord > upperBound || coord < lowerBound,
@@ -195,8 +194,7 @@ void TableFunction::checkCoord( real64 const coord, localIndex const dim ) const
                                units::formatValue( coord, getDimUnit( dim ) ),
                                units::formatValue( lowerBound, getDimUnit( dim ) ),
                                units::formatValue( upperBound, getDimUnit( dim ) ) ),
-                     SimulationError,
-                     getDataContext() );
+                     SimulationError, getDataContext() );
 }
 
 TableFunction::KernelWrapper TableFunction::createKernelWrapper() const

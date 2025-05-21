@@ -86,8 +86,10 @@ void SinglePhaseWell::registerDataOnMesh( Group & meshBodies )
     {
       string & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
       fluidName = getConstitutiveName< SingleFluidBase >( subRegion );
-      GEOS_ERROR_IF( fluidName.empty(), GEOS_FMT( "{}: Fluid model not found on subregion {}",
-                                                  getDataContext(), subRegion.getName() ) );
+      GEOS_ERROR_CTX_IF( fluidName.empty(),
+                         GEOS_FMT( "{}: Fluid model not found on subregion {}",
+                                   getDataContext(), subRegion.getName() ),
+                         getDataContext() );
 
       subRegion.registerField< fields::well::connectionRate_n >( getName() );
       subRegion.registerField< fields::well::connectionRate >( getName() );
@@ -136,20 +138,20 @@ void SinglePhaseWell::validateWellConstraints( real64 const & time_n,
   WellControls::Control const currentControl = wellControls.getControl();
   real64 const targetTotalRate = wellControls.getTargetTotalRate( time_n );
   real64 const targetPhaseRate = wellControls.getTargetPhaseRate( time_n );
-  GEOS_THROW_IF( currentControl == WellControls::Control::PHASEVOLRATE,
+  GEOS_THROW_CTX_IF( currentControl == WellControls::Control::PHASEVOLRATE,
                  "WellControls " << wellControls.getDataContext() <<
                  ": Phase rate control is not available for SinglePhaseWell",
-                 InputError );
+                 InputError, wellControls.getDataContext() );
   // The user always provides positive rates, but these rates are later multiplied by -1 internally for producers
-  GEOS_THROW_IF( ( ( wellControls.isInjector() && targetTotalRate < 0.0 ) ||
+  GEOS_THROW_CTX_IF( ( ( wellControls.isInjector() && targetTotalRate < 0.0 ) ||
                    ( wellControls.isProducer() && targetTotalRate > 0.0) ),
                  "WellControls " << wellControls.getDataContext() <<
                  ": Target total rate cannot be negative",
-                 InputError );
-  GEOS_THROW_IF( !isZero( targetPhaseRate ),
+                 InputError, wellControls.getDataContext() );
+  GEOS_THROW_CTX_IF( !isZero( targetPhaseRate ),
                  "WellControls " << wellControls.getDataContext() <<
                  ": Target phase rate cannot be used for SinglePhaseWell",
-                 InputError );
+                 InputError, wellControls.getDataContext() );
 }
 
 void SinglePhaseWell::updateBHPForConstraint( WellElementSubRegion & subRegion )

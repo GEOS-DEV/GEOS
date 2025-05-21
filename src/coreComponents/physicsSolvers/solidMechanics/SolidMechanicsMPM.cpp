@@ -306,8 +306,8 @@ void SolidMechanicsMPM::postInputInitialization()
 
   // Throw error if boundary conditions are incorrectly specified
   GEOS_ERROR_IF( m_boundaryConditionTypes.size() != 6 && m_boundaryConditionTypes.size() > 0,
-                 "boundaryConditionTypes must be of length 6. "
-                 "The 6 entries correspond to BCs on the x-, x+, y-, y+, z- and z+ faces." );
+                      "boundaryConditionTypes must be of length 6. "
+                      "The 6 entries correspond to BCs on the x-, x+, y-, y+, z- and z+ faces." );
 
   // Initialize boundary condition types if they're not specified by the user
   if( m_boundaryConditionTypes.size() == 0 )
@@ -1980,7 +1980,8 @@ void SolidMechanicsMPM::setParticlesConstitutiveNames( ParticleSubRegionBase & s
 
   string & solidMaterialName = subRegion.getReference< string >( viewKeyStruct::solidMaterialNamesString() );
   solidMaterialName = PhysicsSolverBase::getConstitutiveName< SolidBase >( subRegion );
-  GEOS_ERROR_IF( solidMaterialName.empty(), GEOS_FMT( "SolidBase model not found on subregion {}", subRegion.getName() ) );
+  GEOS_ERROR_IF( solidMaterialName.empty(),
+                      GEOS_FMT( "SolidBase model not found on subregion {}", subRegion.getName() ) );
 }
 
 real64 SolidMechanicsMPM::computeNeighborList( ParticleManager & particleManager )

@@ -478,6 +478,7 @@ void ProblemManager::parseInputFile()
   }
   catch( std::exception const & e )
   {
+    errorLogger.write( errorLogger.currentErrorMsg() );
     throw e;
   }
 }
@@ -564,8 +565,10 @@ void ProblemManager::parseXMLDocumentImpl( xmlWrapper::xmlDocument & xmlDocument
         }
         catch( InputError const & e )
         {
-          throw InputError( e, GEOS_FMT( "Error while parsing region {} ({}):\n",
-                                         regionName, regionNodePos.toString() ) );
+          string const errorMsg = GEOS_FMT( "Error while parsing region {} ({}):\n",
+                                         regionName, regionNodePos.toString() );
+          errorLogger.currentErrorMsg().addToMsg( errorMsg );
+          throw InputError( e, errorMsg );
         }
       }
     };

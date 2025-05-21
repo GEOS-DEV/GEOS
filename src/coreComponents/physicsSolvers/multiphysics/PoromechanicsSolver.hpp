@@ -128,8 +128,10 @@ public:
 
       string & hydraulicApertureModelName = subRegion.getReference< string >( viewKeyStruct::hydraulicApertureRelationNameString() );
       hydraulicApertureModelName = PhysicsSolverBase::getConstitutiveName< constitutive::HydraulicApertureBase >( subRegion );
-      GEOS_ERROR_IF( hydraulicApertureModelName.empty(), GEOS_FMT( "{}: HydraulicApertureBase model not found on subregion {}",
-                                                                   this->getDataContext(), subRegion.getDataContext() ) );
+      GEOS_ERROR_CTX_IF( hydraulicApertureModelName.empty(),
+                         GEOS_FMT( "{}: HydraulicApertureBase model not found on subregion {}",
+                                   this->getDataContext(), subRegion.getDataContext() ),
+                         this->getDataContext() );
     }
 
   }
@@ -138,10 +140,10 @@ public:
   {
     Base::initializePreSubGroups();
 
-    GEOS_THROW_IF( m_stabilizationType == stabilization::StabilizationType::Local,
-                   this->getWrapperDataContext( viewKeyStruct::stabilizationTypeString() ) <<
-                   ": Local stabilization has been temporarily disabled",
-                   InputError );
+    GEOS_THROW_CTX_IF( m_stabilizationType == stabilization::StabilizationType::Local,
+                       this->getWrapperDataContext( viewKeyStruct::stabilizationTypeString() ) <<
+                       ": Local stabilization has been temporarily disabled",
+                       InputError, this->getWrapperDataContext( viewKeyStruct::stabilizationTypeString() ) );
 
     DomainPartition & domain = this->template getGroupByPath< DomainPartition >( "/Problem/domain" );
 
@@ -156,17 +158,17 @@ public:
       {
         string & porousName = subRegion.getReference< string >( viewKeyStruct::porousMaterialNamesString() );
         porousName = this->template getConstitutiveName< constitutive::CoupledSolidBase >( subRegion );
-        GEOS_THROW_IF( porousName.empty(),
-                       GEOS_FMT( "{} {} : Solid model not found on subregion {}",
-                                 this->getCatalogName(), this->getDataContext().toString(), subRegion.getName() ),
-                       InputError );
+        GEOS_THROW_CTX_IF( porousName.empty(),
+                           GEOS_FMT( "{} {} : Solid model not found on subregion {}",
+                                     this->getCatalogName(), this->getDataContext().toString(), subRegion.getName() ),
+                           InputError, this->getDataContext() );
 
         string & porosityModelName = subRegion.getReference< string >( constitutive::CoupledSolidBase::viewKeyStruct::porosityModelNameString() );
         porosityModelName = this->template getConstitutiveName< constitutive::PorosityBase >( subRegion );
-        GEOS_THROW_IF( porosityModelName.empty(),
-                       GEOS_FMT( "{} {} : Porosity model not found on subregion {}",
-                                 this->getCatalogName(), this->getDataContext().toString(), subRegion.getName() ),
-                       InputError );
+        GEOS_THROW_CTX_IF( porosityModelName.empty(),
+                           GEOS_FMT( "{} {} : Porosity model not found on subregion {}",
+                                     this->getCatalogName(), this->getDataContext().toString(), subRegion.getName() ),
+                           InputError, this->getDataContext() );
 
         if( subRegion.hasField< fields::poromechanics::bulkDensity >() )
         {

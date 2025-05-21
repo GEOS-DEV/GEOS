@@ -78,8 +78,9 @@ WrapperBase & Group::registerWrapper( std::unique_ptr< WrapperBase > wrapper )
 
 void Group::deregisterWrapper( string const & name )
 {
-  GEOS_ERROR_IF( !hasWrapper( name ),
-                 "Wrapper " << name << " doesn't exist in Group" << getDataContext() << '.' );
+  GEOS_ERROR_CTX_IF( !hasWrapper( name ),
+                     "Wrapper " << name << " doesn't exist in Group" << getDataContext() << '.',
+                     getDataContext() );
   m_wrappers.erase( name );
   m_conduitNode.remove( name );
 }
@@ -239,7 +240,7 @@ void Group::processInputFile( xmlWrapper::xmlNode const & targetNode,
     if( pair.second->processInputFile( targetNode, nodePos ) )
     {
       processedAttributes.insert( pair.first );
-    }
+    }     
   }
 
   for( xmlWrapper::xmlAttribute attribute : targetNode.attributes() )
@@ -247,13 +248,13 @@ void Group::processInputFile( xmlWrapper::xmlNode const & targetNode,
     string const attributeName = attribute.name();
     if( !xmlWrapper::isFileMetadataAttribute( attributeName ) )
     {
-      GEOS_THROW_IF( processedAttributes.count( attributeName ) == 0,
-                     GEOS_FMT( "Error in {}: XML Node at '{}' contains unused attribute '{}'.\n"
-                               "Valid attributes are:\n{}\nFor more details, please refer to documentation at:\n"
-                               "http://geosx-geosx.readthedocs-hosted.com/en/latest/docs/sphinx/userGuide/Index.html",
-                               getDataContext(), targetNode.path(), attributeName,
-                               dumpInputOptions() ),
-                     InputError );
+      GEOS_THROW_CTX_IF( processedAttributes.count( attributeName ) == 0,
+                         GEOS_FMT( "Error in {}: XML Node at '{}' contains unused attribute '{}'.\n"
+                                   "Valid attributes are:\n{}\nFor more details, please refer to documentation at:\n"
+                                   "http://geosx-geosx.readthedocs-hosted.com/en/latest/docs/sphinx/userGuide/Index.html",
+                                   getDataContext(), targetNode.path(), attributeName,
+                                   dumpInputOptions() ),
+                         InputError, getDataContext() );
     }
   }
 }

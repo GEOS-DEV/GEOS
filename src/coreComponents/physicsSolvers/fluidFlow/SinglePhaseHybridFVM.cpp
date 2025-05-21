@@ -99,19 +99,19 @@ void SinglePhaseHybridFVM::initializePreSubGroups()
 {
   SinglePhaseBase::initializePreSubGroups();
 
-  GEOS_THROW_IF( m_isThermal,
-                 GEOS_FMT( "{} {}: The thermal option is not supported by SinglePhaseHybridFVM",
-                           getCatalogName(), getDataContext().toString() ),
-                 InputError );
+  GEOS_THROW_CTX_IF( m_isThermal,
+                     GEOS_FMT( "{} {}: The thermal option is not supported by SinglePhaseHybridFVM",
+                               getCatalogName(), getDataContext().toString() ),
+                     InputError, getDataContext() );
 
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
   FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
 
-  GEOS_THROW_IF( !fvManager.hasGroup< HybridMimeticDiscretization >( m_discretizationName ),
-                 getCatalogName() << " " << getDataContext() <<
-                 ": the HybridMimeticDiscretization must be selected with SinglePhaseHybridFVM",
-                 InputError );
+  GEOS_THROW_CTX_IF( !fvManager.hasGroup< HybridMimeticDiscretization >( m_discretizationName ),
+                     getCatalogName() << " " << getDataContext() <<
+                     ": the HybridMimeticDiscretization must be selected with SinglePhaseHybridFVM",
+                     InputError, getDataContext() );
 }
 
 void SinglePhaseHybridFVM::initializePostInitialConditionsPreSubGroups()

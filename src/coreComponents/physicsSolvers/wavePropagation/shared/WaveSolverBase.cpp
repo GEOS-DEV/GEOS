@@ -318,9 +318,9 @@ void WaveSolverBase::postInputInitialization()
   {
     counter++;
   } );
-  GEOS_THROW_IF( counter > 1,
+  GEOS_THROW_CTX_IF( counter > 1,
                  getDataContext() << ": One single PML field specification is allowed",
-                 InputError );
+                 InputError, getDataContext() );
 
   m_usePML = counter;
 
@@ -342,10 +342,10 @@ void WaveSolverBase::postInputInitialization()
                                                        m_useDAS == WaveSolverUtils::DASType::strainIntegration ? "strain integration" : "displacement difference" ) );
 
     GEOS_ERROR_IF( m_linearDASGeometry.size( 1 ) != 3,
-                   "Invalid number of geometry parameters for the linear DAS fiber. Three parameters are required: dip, azimuth, gauge length" );
+                        "Invalid number of geometry parameters for the linear DAS fiber. Three parameters are required: dip, azimuth, gauge length" );
 
     GEOS_ERROR_IF( m_linearDASGeometry.size( 0 ) != m_receiverCoordinates.size( 0 ),
-                   "Invalid number of geometry parameters instances for the linear DAS fiber. It should match the number of receivers." );
+                        "Invalid number of geometry parameters instances for the linear DAS fiber. It should match the number of receivers." );
 
     m_linearDASVectorX.resize( m_linearDASGeometry.size( 0 ) );
     m_linearDASVectorY.resize( m_linearDASGeometry.size( 0 ) );
@@ -442,9 +442,9 @@ localIndex WaveSolverBase::getNumNodesPerElem()
 
   FiniteElementDiscretization const * const
   feDiscretization = feDiscretizationManager.getGroupPointer< FiniteElementDiscretization >( m_discretizationName );
-  GEOS_THROW_IF( feDiscretization == nullptr,
+  GEOS_THROW_CTX_IF( feDiscretization == nullptr,
                  getDataContext() << ": FE discretization not found: " << m_discretizationName,
-                 InputError );
+                 InputError, getDataContext() );
 
   localIndex numNodesPerElem = 0;
   forDiscretizationOnMeshTargets( domain.getMeshBodies(),

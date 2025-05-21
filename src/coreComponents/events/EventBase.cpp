@@ -153,8 +153,12 @@ void EventBase::getTargetReferences()
     }
     catch( std::exception const & e )
     {
-      throw InputError( e, GEOS_FMT( "Error while reading {}:\n",
-                                     getWrapperDataContext( viewKeyStruct::eventTargetString() ) ) );
+      string const errorMsg = GEOS_FMT( "Error while reading {}:\n",
+                                     getWrapperDataContext( viewKeyStruct::eventTargetString() ) );
+      errorLogger.currentErrorMsg()
+        .addToMsg( errorMsg )
+        .addContextInfo( getWrapperDataContext( viewKeyStruct::eventTargetString() ).getContextInfo() );
+      throw InputError( e, errorMsg );
     }
   }
 

@@ -140,8 +140,10 @@ void SinglePhaseBase::setConstitutiveNames( ElementSubRegionBase & subRegion ) c
 {
   string & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
   fluidName = getConstitutiveName< SingleFluidBase >( subRegion );
-  GEOS_ERROR_IF( fluidName.empty(), GEOS_FMT( "{}: Fluid model not found on subregion {}",
-                                              getDataContext(), subRegion.getName() ) );
+  GEOS_ERROR_CTX_IF( fluidName.empty(),
+                     GEOS_FMT( "{}: Fluid model not found on subregion {}",
+                               getDataContext(), subRegion.getName() ),
+                     getDataContext() );
 
   if( m_isThermal )
   {
@@ -153,10 +155,10 @@ void SinglePhaseBase::setConstitutiveNames( ElementSubRegionBase & subRegion ) c
                                          reference();
 
     thermalConductivityName = getConstitutiveName< SinglePhaseThermalConductivityBase >( subRegion );
-    GEOS_THROW_IF( thermalConductivityName.empty(),
-                   GEOS_FMT( "{}: Thermal conductivity model not found on subregion {}",
-                             getDataContext(), subRegion.getName() ),
-                   InputError );
+    GEOS_THROW_CTX_IF( thermalConductivityName.empty(),
+                       GEOS_FMT( "{}: Thermal conductivity model not found on subregion {}",
+                                 getDataContext(), subRegion.getName() ),
+                       InputError, getDataContext() );
   }
 }
 
@@ -185,24 +187,24 @@ void SinglePhaseBase::validateConstitutiveModels( DomainPartition & domain ) con
     {
       string & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
       fluidName = getConstitutiveName< SingleFluidBase >( subRegion );
-      GEOS_THROW_IF( fluidName.empty(),
-                     GEOS_FMT( "SingleFluidBase {}: Fluid model not found on subregion {}",
-                               getDataContext(), subRegion.getName() ),
-                     InputError );
+      GEOS_THROW_CTX_IF( fluidName.empty(),
+                         GEOS_FMT( "SingleFluidBase {}: Fluid model not found on subregion {}",
+                                   getDataContext(), subRegion.getName() ),
+                         InputError, getDataContext() );
 
       SingleFluidBase const & fluid = getConstitutiveModel< SingleFluidBase >( subRegion, fluidName );
 
       constitutiveUpdatePassThru( fluid, [&] ( auto & castedFluid )
       {
         string const fluidModelName = castedFluid.getCatalogName();
-        GEOS_THROW_IF( m_isThermal && (fluidModelName != "ThermalCompressibleSinglePhaseFluid"),
-                       GEOS_FMT( "SingleFluidBase {}: the thermal option is enabled in the solver, but the fluid model {} is not for thermal fluid",
-                                 getDataContext(), fluid.getDataContext() ),
-                       InputError );
-        GEOS_THROW_IF( !m_isThermal && (fluidModelName == "ThermalCompressibleSinglePhaseFluid"),
-                       GEOS_FMT( "SingleFluidBase {}: the fluid model is for thermal fluid {}, but the solver option is incompatible with the fluid model",
-                                 getDataContext(), fluid.getDataContext() ),
-                       InputError );
+        GEOS_THROW_CTX_IF( m_isThermal && (fluidModelName != "ThermalCompressibleSinglePhaseFluid"),
+                           GEOS_FMT( "SingleFluidBase {}: the thermal option is enabled in the solver, but the fluid model {} is not for thermal fluid",
+                                     getDataContext(), fluid.getDataContext() ),
+                           InputError, getDataContext(), fluid.getDataContext() );
+        GEOS_THROW_CTX_IF( !m_isThermal && (fluidModelName == "ThermalCompressibleSinglePhaseFluid"),
+                           GEOS_FMT( "SingleFluidBase {}: the fluid model is for thermal fluid {}, but the solver option is incompatible with the fluid model",
+                                     getDataContext(), fluid.getDataContext() ),
+                           InputError, getDataContext(), fluid.getDataContext() );
       } );
     } );
   } );
@@ -457,15 +459,15 @@ void SinglePhaseBase::computeHydrostaticEquilibrium( DomainPartition & domain )
     equilCounter++;
 
     // check that the gravity vector is aligned with the z-axis
-    GEOS_THROW_IF( !isZero( gravVector[0] ) || !isZero( gravVector[1] ),
-                   getCatalogName() << " " << getDataContext() <<
-                   ": the gravity vector specified in this simulation (" << gravVector[0] << " " << gravVector[1] << " " << gravVector[2] <<
-                   ") is not aligned with the z-axis. \n"
-                   "This is incompatible with the " << bc.getCatalogName() << " " << bc.getDataContext() <<
-                   "used in this simulation. To proceed, you can either: \n" <<
-                   "   - Use a gravityVector aligned with the z-axis, such as (0.0,0.0,-9.81)\n" <<
-                   "   - Remove the hydrostatic equilibrium initial condition from the XML file",
-                   InputError );
+    GEOS_THROW_CTX_IF( !isZero( gravVector[0] ) || !isZero( gravVector[1] ),
+                       getCatalogName() << " " << getDataContext() <<
+                       ": the gravity vector specified in this simulation (" << gravVector[0] << " " << gravVector[1] << " " << gravVector[2] <<
+                       ") is not aligned with the z-axis. \n"
+                       "This is incompatible with the " << bc.getCatalogName() << " " << bc.getDataContext() <<
+                       "used in this simulation. To proceed, you can either: \n" <<
+                       "   - Use a gravityVector aligned with the z-axis, such as (0.0,0.0,-9.81)\n" <<
+                       "   - Remove the hydrostatic equilibrium initial condition from the XML file",
+                       InputError, getDataContext(), bc.getDataContext() );
   } );
 
   if( equilCounter == 0 )
@@ -576,10 +578,10 @@ void SinglePhaseBase::computeHydrostaticEquilibrium( DomainPartition & domain )
                                            elevationValues.toNestedView(),
                                            pressureValues.toView() );
 
-      GEOS_THROW_IF( !equilHasConverged,
-                     getCatalogName() << " " << getDataContext() <<
-                     ": hydrostatic pressure initialization failed to converge in region " << region.getName() << "!",
-                     std::runtime_error );
+      GEOS_THROW_CTX_IF( !equilHasConverged,
+                         getCatalogName() << " " << getDataContext() <<
+                         ": hydrostatic pressure initialization failed to converge in region " << region.getName() << "!",
+                         std::runtime_error, getDataContext() );
     } );
 
     // Step 3.4: create hydrostatic pressure table

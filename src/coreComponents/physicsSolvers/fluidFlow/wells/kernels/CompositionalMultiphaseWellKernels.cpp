@@ -661,15 +661,15 @@ PresTempCompFracInitializationKernel::
   } );
 
 
-  GEOS_THROW_IF( foundNegativePres.get() == 1,
+  GEOS_THROW_CTX_IF( foundNegativePres.get() == 1,
                  wellControls.getDataContext() << "Invalid well initialization, negative pressure was found.",
-                 InputError );
-  GEOS_THROW_IF( foundNegativeTemp.get() == 1,
+                 InputError, wellControls.getDataContext() );
+  GEOS_THROW_CTX_IF( foundNegativeTemp.get() == 1,
                  wellControls.getDataContext() << "Invalid well initialization, negative temperature was found.",
-                 InputError );
-  GEOS_THROW_IF( foundInconsistentCompFrac.get() == 1,
+                 InputError, wellControls.getDataContext() );
+  GEOS_THROW_CTX_IF( foundInconsistentCompFrac.get() == 1,
                  wellControls.getDataContext() << "Invalid well initialization, inconsistent component fractions were found.",
-                 InputError );
+                 InputError, wellControls.getDataContext() );
 
 
 }

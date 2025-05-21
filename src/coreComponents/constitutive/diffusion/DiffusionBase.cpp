@@ -57,10 +57,10 @@ void DiffusionBase::postInputInitialization()
                         GEOS_FMT( "{}: invalid number of phases", getFullName() ),
                         InputError );
 
-  GEOS_THROW_IF( numPhases != m_defaultPhaseDiffusivityMultiplier.size(),
-                 GEOS_FMT( "{}: the arrays in `{}` and `{}` must have the same size",
-                           getFullName(), viewKeyStruct::phaseNamesString(), viewKeyStruct::defaultPhaseDiffusivityMultiplierString() ),
-                 InputError );
+  GEOS_THROW_CTX_IF( numPhases != m_defaultPhaseDiffusivityMultiplier.size(),
+                     GEOS_FMT( "{}: the arrays in `{}` and `{}` must have the same size",
+                               getFullName(), viewKeyStruct::phaseNamesString(), viewKeyStruct::defaultPhaseDiffusivityMultiplierString() ),
+                     InputError, getDataContext() );
 
   m_diffusivity.resize( 0, 0, 3 );
   m_dDiffusivity_dTemperature.resize( 0, 0, 3 );

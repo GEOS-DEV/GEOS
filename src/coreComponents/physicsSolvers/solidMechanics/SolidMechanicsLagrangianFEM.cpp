@@ -243,8 +243,10 @@ void SolidMechanicsLagrangianFEM::setConstitutiveNamesCallSuper( ElementSubRegio
 
   string & solidMaterialName = subRegion.getReference< string >( viewKeyStruct::solidMaterialNamesString() );
   solidMaterialName = PhysicsSolverBase::getConstitutiveName< SolidBase >( subRegion );
-  GEOS_ERROR_IF( solidMaterialName.empty(), GEOS_FMT( "{}: SolidBase model not found on subregion {}",
-                                                      getDataContext(), subRegion.getDataContext() ) );
+  GEOS_ERROR_CTX_IF( solidMaterialName.empty(),
+                     GEOS_FMT( "{}: SolidBase model not found on subregion {}",
+                               getDataContext(), subRegion.getDataContext() ),
+                     getDataContext() );
 
 }
 
@@ -737,15 +739,18 @@ void SolidMechanicsLagrangianFEM::applyDisplacementBCImplicit( real64 const time
         "\nWarning!"
         "\n{} {}: There is no displacement boundary condition applied to this problem in the {} direction. \n"
         "The problem may be ill-posed.\n";
-      GEOS_WARNING_IF( isDisplacementBCAppliedGlobal[0] == 0, // target set is empty
-                       GEOS_FMT( bcLogMessage,
-                                 getCatalogName(), getDataContext(), 'x' ) );
-      GEOS_WARNING_IF( isDisplacementBCAppliedGlobal[1] == 0, // target set is empty
-                       GEOS_FMT( bcLogMessage,
-                                 getCatalogName(), getDataContext(), 'y' ) );
-      GEOS_WARNING_IF( isDisplacementBCAppliedGlobal[2] == 0, // target set is empty
-                       GEOS_FMT( bcLogMessage,
-                                 getCatalogName(), getDataContext(), 'z' ) );
+      GEOS_WARNING_CTX_IF( isDisplacementBCAppliedGlobal[0] == 0, // target set is empty
+                           GEOS_FMT( bcLogMessage,
+                                     getCatalogName(), getDataContext(), 'x' ),
+                           getDataContext() );
+      GEOS_WARNING_CTX_IF( isDisplacementBCAppliedGlobal[1] == 0, // target set is empty
+                           GEOS_FMT( bcLogMessage,
+                                     getCatalogName(), getDataContext(), 'y' ),
+                           getDataContext() );
+      GEOS_WARNING_CTX_IF( isDisplacementBCAppliedGlobal[2] == 0, // target set is empty
+                           GEOS_FMT( bcLogMessage,
+                                     getCatalogName(), getDataContext(), 'z' ),
+                           getDataContext() );
     }
   }
 

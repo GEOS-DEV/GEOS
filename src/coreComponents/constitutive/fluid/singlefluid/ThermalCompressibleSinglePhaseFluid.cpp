@@ -90,9 +90,9 @@ void ThermalCompressibleSinglePhaseFluid::postInputInitialization()
   // Due to the way update wrapper is currently implemented, we can only support one model type
   auto const checkModelType = [&]( ExponentApproximationType const value, auto const & attribute )
   {
-    GEOS_THROW_IF( value != ExponentApproximationType::Linear && value != ExponentApproximationType::Full,
-                   GEOS_FMT( "{}: invalid model type in attribute '{}' (only linear or fully exponential currently supported)", getFullName(), attribute ),
-                   InputError );
+    GEOS_THROW_CTX_IF( value != ExponentApproximationType::Linear && value != ExponentApproximationType::Full,
+                       GEOS_FMT( "{}: invalid model type in attribute '{}' (only linear or fully exponential currently supported)", getFullName(), attribute ),
+                       InputError, getDataContext() );
   };
   checkModelType( m_internalEnergyModelType, viewKeyStruct::internalEnergyModelTypeString() );
 }

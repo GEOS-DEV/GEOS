@@ -82,8 +82,9 @@ auto const & getUserAvailableKeys()
 Group * ElementRegionManager::createChild( string const & childKey, string const & childName )
 {
   GEOS_LOG_RANK_0( GEOS_FMT( "{}: adding {} {}", getName(), childKey, childName ) );
-  GEOS_ERROR_IF( getUserAvailableKeys().count( childKey ) == 0,
-                 CatalogInterface::unknownTypeError( childKey, getDataContext(), getUserAvailableKeys() ) );
+  GEOS_ERROR_CTX_IF( getUserAvailableKeys().count( childKey ) == 0,
+                     CatalogInterface::unknownTypeError( childKey, getDataContext(), getUserAvailableKeys() ),
+                     getDataContext() );
   Group & elementRegions = this->getGroup( ElementRegionManager::groupKeyStruct::elementRegionsGroup() );
   return &elementRegions.registerGroup( childName,
                                         CatalogInterface::factory( childKey, getDataContext(),
@@ -218,9 +219,10 @@ void ElementRegionManager::generateWells( CellBlockManagerABC const & cellBlockM
 
     globalIndex const numWellElemsGlobal = MpiWrapper::sum( subRegion.size() );
 
-    GEOS_ERROR_IF( numWellElemsGlobal != lineBlock.numElements(),
-                   "Invalid partitioning in well " << lineBlock.getDataContext() <<
-                   ", subregion " << subRegion.getDataContext() );
+    GEOS_ERROR_CTX_IF( numWellElemsGlobal != lineBlock.numElements(),
+                       "Invalid partitioning in well " << lineBlock.getDataContext() <<
+                       ", subregion " << subRegion.getDataContext(),
+                       getDataContext() );
 
   } );
 
@@ -653,7 +655,7 @@ ElementRegionManager::unpackFaceElementToFace( buffer_unit_type const * & buffer
       string subRegionName;
       unpackedSize += bufferOps::Unpack( buffer, subRegionName );
       GEOS_ERROR_IF( subRegionName != subRegion.getName(),
-                     "Unpacked subregion name (" << subRegionName << ") does not equal object name (" << subRegion.getName() << ")" );
+                          "Unpacked subregion name (" << subRegionName << ") does not equal object name (" << subRegion.getName() << ")" );
 
       localIndex_array & elemList = packList[kReg][kSubReg];
       unpackedSize += subRegion.unpackToFaceRelation( buffer, elemList, false, overwriteMap );
@@ -779,12 +781,14 @@ ElementRegionManager::getCellBlockToSubRegionMap( CellBlockManagerABC const & ce
   {
     GEOS_UNUSED_VAR( region ); // unused if geos_error_if is nulld
     localIndex const blockIndex = cellBlocks.getIndex( subRegion.getName() );
-    GEOS_ERROR_IF( blockIndex == Group::subGroupMap::KeyIndex::invalid_index,
-                   GEOS_FMT( "{}, subregion {}: Cell block not found at index {}.",
-                             region.getDataContext().toString(), subRegion.getName(), blockIndex ) );
-    GEOS_ERROR_IF( blockMap( blockIndex, 1 ) != -1,
-                   GEOS_FMT( "{}, subregion {}: Cell block at index {} is mapped to more than one subregion.",
-                             region.getDataContext().toString(), subRegion.getName(), blockIndex ) );
+    GEOS_ERROR_CTX_IF( blockIndex == Group::subGroupMap::KeyIndex::invalid_index,
+                        GEOS_FMT( "{}, subregion {}: Cell block not found at index {}.",
+                                  region.getDataContext().toString(), subRegion.getName(), blockIndex ),
+                        region.getDataContext() );
+    GEOS_ERROR_CTX_IF( blockMap( blockIndex, 1 ) != -1,
+                        GEOS_FMT( "{}, subregion {}: Cell block at index {} is mapped to more than one subregion.",
+                                  region.getDataContext().toString(), subRegion.getName(), blockIndex ),
+                        region.getDataContext() );
 
     blockMap( blockIndex, 0 ) = er;
     blockMap( blockIndex, 1 ) = esr;

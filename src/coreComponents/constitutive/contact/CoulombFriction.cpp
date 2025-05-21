@@ -57,9 +57,9 @@ CoulombFriction::~CoulombFriction()
 
 void CoulombFriction::postInputInitialization()
 {
-  GEOS_THROW_IF( m_frictionCoefficient < 0.0,
-                 getFullName() << ": The provided friction coefficient is less than zero. Value: " << m_frictionCoefficient,
-                 InputError );
+  GEOS_THROW_CTX_IF( m_frictionCoefficient < 0.0,
+                     getFullName() << ": The provided friction coefficient is less than zero. Value: " << m_frictionCoefficient,
+                     InputError, getDataContext() );
 
 }
 

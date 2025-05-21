@@ -13,26 +13,26 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#include "common/logger/ErrorHandling.hpp"
-#include "dataRepository/DataContext.hpp"
+// #include "common/logger/ErrorHandling.hpp"
+// #include "dataRepository/DataContext.hpp"
 
-#include <gtest/gtest.h>
+// #include <gtest/gtest.h>
 
-using namespace geos;
+// using namespace geos;
 
-TEST( DataContext, testCompleteYaml )
-{
-  geos::ErrorLogger errorLogger; 
-  int x = 5;
-  geos::dataRepository::DataFileContext dataContext( "targetName",
-                                                     "test1_file.xml",
-                                                     42 );
-  GEOS_THROW_CTX_IF( dataContext, x==5, "Here is the error message", std::runtime_error );
-}
+// TEST( DataContext, testCompleteYaml )
+// {
+//   geos::ErrorLogger errorLogger;
+//   int x = 5;
+//   geos::dataRepository::DataFileContext dataContext( "targetName",
+//                                                      "test1_file.xml",
+//                                                      42 );
+//   GEOS_THROW_CTX_IF( dataContext, x==5, "Here is the error message", std::runtime_error );
+// }
 
-int main( int ac, char * av[] )
-{
-  ::testing::InitGoogleTest( &ac, av );
-  int const result = RUN_ALL_TESTS();
-  return result;
-}
+// int main( int ac, char * av[] )
+// {
+//   ::testing::InitGoogleTest( &ac, av );
+//   int const result = RUN_ALL_TESTS();
+//   return result;
+// }

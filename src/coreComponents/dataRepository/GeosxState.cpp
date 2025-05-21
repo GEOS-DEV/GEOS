@@ -113,6 +113,7 @@ GeosxState::GeosxState( std::unique_ptr< CommandLineOptions > && commandLineOpti
   }
   catch(std::exception const & e)
   {
+    errorLogger.write( errorLogger.currentErrorMsg() );
     throw;
   }
 }
@@ -162,6 +163,7 @@ bool GeosxState::initializeDataRepository()
   }
   catch(std::exception const & e)
   {
+    errorLogger.write( errorLogger.currentErrorMsg() );
     throw;
   }
 }
@@ -188,6 +190,7 @@ void GeosxState::applyInitialConditions()
   }
   catch(std::exception const & e)
   {
+    errorLogger.write( errorLogger.currentErrorMsg() );
     throw;
   }
 }
@@ -209,6 +212,7 @@ void GeosxState::run()
   }
   catch(std::exception const & e)
   {
+    errorLogger.write( errorLogger.currentErrorMsg() );
     throw;
   }
 }

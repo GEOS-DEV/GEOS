@@ -298,6 +298,9 @@ void FaceManager::sortAllFaceNodes( NodeManager const & nodeManager,
       sortFaceNodes( X, elemCenter[er][esr][ei], facesToNodes[faceIndex] );
     } catch( std::runtime_error const & e )
     {
+      errorLogger.currentErrorMsg()
+        .addToMsg( getDataContext().toString() + ": " + e.what() )
+        .addContextInfo( getDataContext().getContextInfo() );
       throw std::runtime_error( getDataContext().toString() + ": " + e.what() );
     }
   } );

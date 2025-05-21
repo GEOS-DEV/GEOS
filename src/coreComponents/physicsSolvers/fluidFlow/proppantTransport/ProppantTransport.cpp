@@ -146,18 +146,18 @@ void ProppantTransport::setConstitutiveNames( ElementSubRegionBase & subRegion )
 {
   string & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
   fluidName = getConstitutiveName< SlurryFluidBase >( subRegion );
-  GEOS_THROW_IF( fluidName.empty(),
+  GEOS_THROW_CTX_IF( fluidName.empty(),
                  GEOS_FMT( "{}: Fluid model not found on subregion {}",
                            getDataContext(), subRegion.getName() ),
-                 InputError );
+                 InputError, getDataContext() );
 
   subRegion.registerWrapper< string >( viewKeyStruct::proppantNamesString() );
   string & proppantName = subRegion.getReference< string >( viewKeyStruct::proppantNamesString() );
   proppantName = getConstitutiveName< ParticleFluidBase >( subRegion );
-  GEOS_THROW_IF( proppantName.empty(),
+  GEOS_THROW_CTX_IF( proppantName.empty(),
                  GEOS_FMT( "{}: Proppant model not found on subregion {}",
                            getDataContext(), subRegion.getName() ),
-                 InputError );
+                 InputError, getDataContext() );
 
 }
 
@@ -730,8 +730,9 @@ void ProppantTransport::applyBoundaryConditions( real64 const time_n,
       {
 
         string const & subRegionName = subRegion.getName();
-        GEOS_ERROR_IF( bcStatusMap[subRegionName].count( setName ) > 0,
-                       getDataContext() << ": Conflicting proppant boundary conditions on set " << setName );
+        GEOS_ERROR_CTX_IF( bcStatusMap[subRegionName].count( setName ) > 0,
+                           getDataContext() << ": Conflicting proppant boundary conditions on set " << setName,
+                           getDataContext() );
         bcStatusMap[subRegionName][setName].resize( m_numComponents );
         bcStatusMap[subRegionName][setName].setValues< serialPolicy >( false );
 
@@ -750,10 +751,12 @@ void ProppantTransport::applyBoundaryConditions( real64 const time_n,
         string const & subRegionName = subRegion.getName();
         localIndex const comp = fs.getComponent();
 
-        GEOS_ERROR_IF( bcStatusMap[subRegionName].count( setName ) == 0,
-                       getDataContext() << ": Proppant boundary condition not prescribed on set '" << setName << "'" );
-        GEOS_ERROR_IF( bcStatusMap[subRegionName][setName][comp],
-                       getDataContext() << ": Conflicting composition[" << comp << "] boundary conditions on set '" << setName << "'" );
+        GEOS_ERROR_CTX_IF( bcStatusMap[subRegionName].count( setName ) == 0,
+                           getDataContext() << ": Proppant boundary condition not prescribed on set '" << setName << "'",
+                           getDataContext() );
+        GEOS_ERROR_CTX_IF( bcStatusMap[subRegionName][setName][comp],
+                           getDataContext() << ": Conflicting composition[" << comp << "] boundary conditions on set '" << setName << "'",
+                           getDataContext() );
         bcStatusMap[subRegionName][setName][comp] = true;
 
         fs.applyFieldValue< FieldSpecificationEqual >( targetSet,
@@ -771,10 +774,11 @@ void ProppantTransport::applyBoundaryConditions( real64 const time_n,
           for( localIndex ic = 0; ic < m_numComponents; ++ic )
           {
             bcConsistent &= bcStatusEntryInner.second[ic];
-            GEOS_WARNING_IF( !bcConsistent,
-                             getDataContext() << ": Composition boundary condition not applied to component " <<
-                             ic << " on region '" << bcStatusEntryOuter.first << "'," <<
-                             " set '" << bcStatusEntryInner.first << "'" );
+            GEOS_WARNING_CTX_IF( !bcConsistent,
+                                 getDataContext() << ": Composition boundary condition not applied to component " <<
+                                 ic << " on region '" << bcStatusEntryOuter.first << "'," <<
+                                 " set '" << bcStatusEntryInner.first << "'",
+                                 getDataContext() );
           }
         }
       }

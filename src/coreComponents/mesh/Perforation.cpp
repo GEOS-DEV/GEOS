@@ -56,9 +56,10 @@ Perforation::Perforation( string const & name, Group * const parent )
 
 void Perforation::postInputInitialization()
 {
-  GEOS_ERROR_IF( m_distanceFromHead <= 0,
-                 getWrapperDataContext( viewKeyStruct::distanceFromHeadString() ) <<
-                 ": distance from well head to perforation cannot be negative." );
+  GEOS_ERROR_CTX_IF( m_distanceFromHead <= 0,
+                     getWrapperDataContext( viewKeyStruct::distanceFromHeadString() ) <<
+                     ": distance from well head to perforation cannot be negative.",
+                     getWrapperDataContext( viewKeyStruct::distanceFromHeadString() ) );
 }
 
 

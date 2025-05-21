@@ -62,17 +62,17 @@ void ConstantDiffusion::allocateConstitutiveData( dataRepository::Group & parent
 
 void ConstantDiffusion::postInputInitialization()
 {
-  GEOS_THROW_IF( m_diffusivityComponents.size() != 3,
-                 GEOS_FMT( "{}: the size of the diffusivity must be equal to 3",
-                           getFullName() ),
-                 InputError );
+  GEOS_THROW_CTX_IF( m_diffusivityComponents.size() != 3,
+                     GEOS_FMT( "{}: the size of the diffusivity must be equal to 3",
+                               getFullName() ),
+                     InputError, getDataContext() );
 
-  GEOS_THROW_IF( m_diffusivityComponents[0] < 0 ||
-                 m_diffusivityComponents[1] < 0 ||
-                 m_diffusivityComponents[2] < 0,
-                 GEOS_FMT( "{}: the components of the diffusivity tensor must be non-negative",
-                           getFullName() ),
-                 InputError );
+  GEOS_THROW_CTX_IF( m_diffusivityComponents[0] < 0 ||
+                     m_diffusivityComponents[1] < 0 ||
+                     m_diffusivityComponents[2] < 0,
+                     GEOS_FMT( "{}: the components of the diffusivity tensor must be non-negative",
+                               getFullName() ),
+                     InputError, getDataContext() );
 }
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, ConstantDiffusion, string const &, Group * const )

@@ -660,9 +660,9 @@ PresInitializationKernel::
   } );
 
 
-  GEOS_THROW_IF( foundNegativePressure.get() == 1,
+  GEOS_THROW_CTX_IF( foundNegativePressure.get() == 1,
                  wellControls.getDataContext() << ": Invalid well initialization, negative pressure was found.",
-                 InputError );
+                 InputError, wellControls.getDataContext() );
 }
 
 /******************************** RateInitializationKernel ********************************/

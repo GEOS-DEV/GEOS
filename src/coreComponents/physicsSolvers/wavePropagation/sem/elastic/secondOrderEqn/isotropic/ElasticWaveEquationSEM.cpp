@@ -261,9 +261,9 @@ void ElasticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & baseMe
                                                                                                 CellElementSubRegion & elementSubRegion )
   {
 
-    GEOS_THROW_IF( elementSubRegion.getElementType() != ElementType::Hexahedron,
+    GEOS_THROW_CTX_IF( elementSubRegion.getElementType() != ElementType::Hexahedron,
                    getDataContext() << ": Invalid type of element, the elastic solver is designed for hexahedral meshes only (C3D8) ",
-                   InputError );
+                   InputError, getDataContext() );
 
     arrayView2d< localIndex const > const elemsToFaces = elementSubRegion.faceList();
     arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes = elementSubRegion.nodeList();

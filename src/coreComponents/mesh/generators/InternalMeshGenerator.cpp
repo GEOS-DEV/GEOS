@@ -182,6 +182,10 @@ void InternalMeshGenerator::postInputInitialization()
     } catch( InputError const & e )
     {
       WrapperBase const & wrapper = getWrapperBase( viewKeyStruct::elementTypesString() );
+      errorLogger.currentErrorMsg()
+        .addToMsg( "InternalMesh " + wrapper.getDataContext().toString() +
+                        ", element index = " + std::to_string( i ) + ": " )
+        .addContextInfo( wrapper.getDataContext().getContextInfo() );
       throw InputError( e, "InternalMesh " + wrapper.getDataContext().toString() +
                         ", element index = " + std::to_string( i ) + ": " );
     }
