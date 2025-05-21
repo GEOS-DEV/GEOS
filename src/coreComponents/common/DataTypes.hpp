@@ -107,13 +107,13 @@ using real64 = double;
 /// Type stored in communication buffers.
 using buffer_unit_type = signed char;
 
-// #ifdef GEOS_USE_CHAI
-// /// Type of storage for communication buffers.
-// using buffer_type = stdVector< buffer_unit_type, BufferAllocator< buffer_unit_type > >;
-// #else
+#ifdef GEOS_USE_CHAI
 /// Type of storage for communication buffers.
-using buffer_type = stdVector< buffer_unit_type >;
-// #endif
+using buffer_type = internal::StdVectorWrapper< buffer_unit_type, BufferAllocator< buffer_unit_type > >;
+#else
+/// Type of storage for communication buffers.
+using buffer_type = internal::StdVectorWrapper< buffer_unit_type, std::allocator< buffer_unit_type > >;
+#endif
 
 ///@}
 

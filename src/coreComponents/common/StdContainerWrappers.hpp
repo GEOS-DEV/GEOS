@@ -23,33 +23,37 @@ namespace internal
  * Wrapper for std::vector that allows toggling between bounds-checked access
  * (using at()) and unchecked access (using operator[]).
  * @tparam T Type of elements in the vector.
+ * @tparam Allocator Allocator type for the vector.
  * @tparam USE_STD_CONTAINER_BOUNDS_CHECKING If true, uses at() for bounds-checked access.
  * If false, uses operator[] for unchecked access.
  */
 template< typename T,
+          typename Allocator,
           bool USE_BOUNDS_CHECKING = false
           >
-class StdVectorWrapper : public std::vector< T >
+class StdVectorWrapper : public std::vector< T, Allocator >
 {
 public:
   /// Type alias for the base class (i.e., std::vector)
-  using Base = std::vector< T >;
+  using Base = std::vector< T, Allocator >;
   // Inherit constructors
   using Base::Base;
 
   /**
    * @brief Conversion constructor for StdVectorWrapper.
    * @tparam T Type of elements in the vector.
+   * @tparam Allocator Allocator type for the vector.
    * @param vector std::vector of elements to copy into the StdVectorWrapper.
    */
-  StdVectorWrapper( std::vector< T > const & vec ): Base( std::move(vec) ){}
+  StdVectorWrapper( std::vector< T, Allocator > const & vec ): Base( std::move( vec ) ){}
 
   /**
    * @brief Conversion constructor for StdVectorWrapper.
    * @tparam T Type of elements in the vector.
+   * @tparam Allocator Allocator type for the vector.
    * @param vector std::vector of elements to copy into the StdVectorWrapper.
    */
-  StdVectorWrapper( std::vector< T > && vec ): Base( vec ){}
+  StdVectorWrapper( std::vector< T, Allocator > && vec ): Base( vec ){}
 
 
   /**
@@ -93,9 +97,10 @@ public:
 /**
  * type alias for std::vector
  * @tparam T Type of elements in the vector.
+ * @tparam Allocator Allocator type for the vector.
  */
-template< typename T>
-using stdVector = internal::StdVectorWrapper< T, USE_STD_CONTAINER_BOUNDS_CHECKING >;
+template< typename T >
+using stdVector = internal::StdVectorWrapper< T, std::allocator< T >, USE_STD_CONTAINER_BOUNDS_CHECKING >;
 
 
 
