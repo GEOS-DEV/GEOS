@@ -24,6 +24,7 @@
 #include "physicsSolvers/PhysicsSolverBaseKernels.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseUtilities.hpp"
 #include "physicsSolvers/fluidFlow/kernels/immiscibleMultiphase/ImmiscibleMultiphaseKernels.hpp"
+#include "physicsSolvers/fluidFlow/kernels/immiscibleMultiphase/ImmiscibleTrustRegionKernels.hpp"
 #include "physicsSolvers/fluidFlow/kernels/compositional/RelativePermeabilityUpdateKernel.hpp"
 #include "physicsSolvers/fluidFlow/kernels/compositional/CapillaryPressureUpdateKernel.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
@@ -61,7 +62,7 @@ ImmiscibleMultiphaseFlow::ImmiscibleMultiphaseFlow( const string & name,
   m_numPhases( 2 ),
   m_hasCapPressure( 0 ),
   m_useTotalMassEquation ( 1 ),
-  m_trustRegion ( 0 ),
+  m_trustRegion ( 1 ),
   m_fluxInflection ( 1 )
 {
   this->registerWrapper( viewKeyStruct::inputTemperatureString(), &m_inputTemperature ).
@@ -1258,7 +1259,7 @@ ImmiscibleMultiphaseFlow::scalingForSystemSolution( DomainPartition & domain,
                                                                                       m_hasCapPressure,
                                                                                       stencilInflectionFactor );           
 
-          // step 2.2a: local reduction across meshBodies/regions/subRegions
+          // step 2.2a: local reduction across meshBodies/regions/subRegions/stencils
 
           localInflectionFactor = fmin( localInflectionFactor, stencilInflectionFactor );
         } );
@@ -1273,21 +1274,22 @@ ImmiscibleMultiphaseFlow::scalingForSystemSolution( DomainPartition & domain,
 
           typename TYPEOFREF( stencil ) ::KernelWrapper stencilWrapper = stencil.createKernelWrapper();
           immiscibleMultiphaseKernels::
-            InflectionFactorKernelFactory::createAndLaunch< parallelDevicePolicy<> >( m_numPhases,
-                                                                                         dofManager.rankOffset(),                                                                            
-                                                                                         dofKey,
-                                                                                         localSolution,
-                                                                                         globalKinkFactor,
-                                                                                         getName(),
-                                                                                         mesh.getElemManager(),
-                                                                                         stencilWrapper,
-                                                                                         fluidWrapper,
-                                                                                         relPermWrapper,
-                                                                                         capPressureWrapper,
-                                                                                         m_hasCapPressure,
-                                                                                         stencilInflectionFactor );           
+            ResidualInflectionFactorKernelFactory::createAndLaunch< parallelDevicePolicy<> >( m_numPhases,
+                                                                                              dofManager.rankOffset(),                                                                            
+                                                                                              dofKey,
+                                                                                              localSolution,
+                                                                                              globalKinkFactor,
+                                                                                              getName(),                                                                                              
+                                                                                              mesh.getElemManager(),
+                                                                                              subRegion,
+                                                                                              stencilWrapper,
+                                                                                              fluidWrapper,
+                                                                                              relPermWrapper,
+                                                                                              capPressureWrapper,
+                                                                                              m_hasCapPressure,
+                                                                                              stencilInflectionFactor );           
 
-          // step 2.2b: local reduction across meshBodies/regions/subRegions
+          // step 2.2b: local reduction across meshBodies/regions/subRegions/stencils
 
           localInflectionFactor = fmin( localInflectionFactor, stencilInflectionFactor );
         } );

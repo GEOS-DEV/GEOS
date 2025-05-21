@@ -3,14 +3,14 @@
 <Problem>
 
   <Solvers
-    gravityVector="{ 0.0, 0.0, -10 }">
+    gravityVector="{ 0.0, 0.0, -9.81 }">
     <ImmiscibleMultiphaseFlow
       name="FlowSolver"
       logLevel="1"
       discretization="TPFA"
       targetRegions="{ reservoir }"      
       temperature="300"
-      initialDt="1.728e8">
+      initialDt="1.728e7">
       <NonlinearSolverParameters
         newtonTol="1.0e-3"
         newtonMaxIter="2000"
@@ -51,7 +51,7 @@
   </Geometry>
 
   <Events
-    maxTime="1.728e8">
+    maxTime="1.728e7">
 
    <PeriodicEvent
       name="outputs"
@@ -62,7 +62,7 @@
     
     <PeriodicEvent
       name="solverApplications"
-      forceDt="1.728e8"  
+      forceDt="1.728e7"  
       target="/Solvers/FlowSolver"/>
   </Events>
   <!-- maxEventDt="2e6" -->
@@ -239,23 +239,23 @@
 
     <TableFunction
       name="densityTableOil"
-      coordinateFiles="{ pres_pvdo.txt }"
-      voxelFile="dens_pvdo_hi.txt"
+      coordinateFiles="{ pres.txt }"
+      voxelFile="denso.txt"
       interpolation="linear"/>
     <TableFunction
       name="viscosityTableOil"
-      coordinateFiles="{ pres_pvdo.txt }"
-      voxelFile="visc_pvdo_hi.txt"
+      coordinateFiles="{ pres.txt }"
+      voxelFile="visco.txt"
       interpolation="linear"/>
     <TableFunction
       name="densityTableWater"
-      coordinateFiles="{ pres_pvdo.txt }"
-      voxelFile="dens_pvdw_hi.txt"
+      coordinateFiles="{ pres.txt }"
+      voxelFile="densw.txt"
       interpolation="linear"/>
     <TableFunction
       name="viscosityTableWater"
-      coordinateFiles="{ pres_pvdo.txt }"
-      voxelFile="visc_pvdw_hi.txt"
+      coordinateFiles="{ pres.txt }"
+      voxelFile="viscw.txt"
       interpolation="linear"/>
   </Functions>
   
