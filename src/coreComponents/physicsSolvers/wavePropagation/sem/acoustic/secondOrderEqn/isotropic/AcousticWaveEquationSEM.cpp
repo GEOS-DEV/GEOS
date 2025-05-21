@@ -302,6 +302,7 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
   GEOS_MARK_FUNCTION;
   {
     GEOS_MARK_SCOPE( WaveSolverBase::initializePostInitialConditionsPreSubGroups );
+  printf("beforewavesolverbaseinsideinitializePostInitialConditionsPreSubGroups\n");
     WaveSolverBase::initializePostInitialConditionsPreSubGroups();
   }
   if( m_usePML )
@@ -309,8 +310,10 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
     AcousticWaveEquationSEM::initializePML();
   }
 
+  printf("initinsideinitializePostInitialConditionsPreSubGroups\n");
   DomainPartition & domain = getGroupByPath< DomainPartition >( "/Problem/domain" );
 
+  printf("beforefreesurfaceinsideinitializePostInitialConditionsPreSubGroups\n");
   applyFreeSurfaceBC( 0.0, domain );
 
 
