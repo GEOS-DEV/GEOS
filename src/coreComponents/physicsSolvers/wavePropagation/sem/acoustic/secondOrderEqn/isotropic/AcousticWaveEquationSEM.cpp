@@ -120,7 +120,9 @@ void AcousticWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
 
 void AcousticWaveEquationSEM::postInputInitialization()
 {
+  printf("postinitbefore\n");
   WaveSolverBase::postInputInitialization();
+  printf("postinitafter\n");
 
   m_pressureNp1AtReceivers.resize( m_nsamplesSeismoTrace, m_receiverCoordinates.size( 0 ) + 1 );
 }
