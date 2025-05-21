@@ -41,7 +41,7 @@ char const * xmlInput =
       <AcousticSEM
         name="acousticSolver"
         cflFactor="0.25"
-        discretization="Level0"
+        discretization="FE1"
         targetRegions="{ Region }"
         sourceCoordinates="{ { 50, 50, 50 } }"
         timeSourceFrequency="2"
@@ -94,7 +94,7 @@ char const * xmlInput =
     <NumericalMethods>
       <FiniteElements>
         <FiniteElementSpace
-          name="Level0"
+          name="FE1"
           order="1"
           formulation="SEM"/>
       </FiniteElements>
