@@ -134,7 +134,7 @@
  */
 #define GEOS_LOG_RANK_VAR( var ) GEOS_LOG_RANK( #var " = " << var )
 
-#define LVARRAY_ERROR_IF_TEST( EXP, MSG ) \
+#define GEOS_ERROR_OUTPUT_IF( EXP, MSG ) \
   do \
   { \
     if( EXP ) \
@@ -158,22 +158,22 @@
     } \
   } while( false )
 
-#if defined(GEOS_DEVICE_COMPILE)
-#define GEOS_ERROR_IF_TEST( EXP, msg ) LVARRAY_ERROR_IF_TEST( EXP, msg )
-#else
-#define GEOS_ERROR_IF_TEST( EXP, msg ) LVARRAY_ERROR_IF_TEST( EXP, "***** Rank " << ::geos::logger::internal::rankString << ": " << msg )
-#endif
-
 /**
  * @brief Conditionally raise a hard error and terminate the program.
  * @param EXP an expression that will be evaluated as a predicate
  * @param msg a message to log (any expression that can be stream inserted)
  */
 #if defined(GEOS_DEVICE_COMPILE)
-#define GEOS_ERROR_IF( EXP, msg ) LVARRAY_ERROR_IF( EXP, msg )
+#define GEOS_ERROR_IF( EXP, msg ) GEOS_ERROR_OUTPUT_IF( EXP, msg )
 #else
-#define GEOS_ERROR_IF( EXP, msg ) LVARRAY_ERROR_IF( EXP, "***** Rank " << ::geos::logger::internal::rankString << ": " << msg )
+#define GEOS_ERROR_IF( EXP, msg ) GEOS_ERROR_OUTPUT_IF( EXP, "***** Rank " << ::geos::logger::internal::rankString << ": " << msg )
 #endif
+
+/**
+ * @brief Raise a hard error and terminate the program.
+ * @param msg a message to log (any expression that can be stream inserted)
+ */
+#define GEOS_ERROR( msg ) GEOS_ERROR_IF( true, msg )
 
 /**
  * @brief Conditionally throw an exception.
@@ -181,7 +181,7 @@
  * @param MSG a message to log (any expression that can be stream inserted)
  * @param TYPE the type of exception to throw
  */
-#define LVARRAY_THROW_IF_TEST( EXP, MSG, EXCEPTIONTYPE ) \
+#define GEOS_THROW_OUTPUT_IF( EXP, MSG, EXCEPTIONTYPE ) \
   do \
   { \
     if( EXP ) \
@@ -192,6 +192,7 @@
       __oss << "***** Controlling expression (should be false): " STRINGIZE( EXP ) "\n"; \
       __oss << MSG << "\n"; \
       __oss << LvArray::system::stackTrace( true ); \
+      std::cout << __oss.str() << std::endl; \
       std::ostringstream __msgoss; \
       __msgoss << MSG; \
       errorLogger.currentErrorMsg().setType( ErrorLogger::MsgType::Error ); \
@@ -202,8 +203,6 @@
       throw EXCEPTIONTYPE( __oss.str() ); \
     } \
   } while( false )
-  
-#define GEOS_THROW_IF_TEST( EXP, msg, EXCEPTIONTYPE ) LVARRAY_THROW_IF_TEST( EXP, "***** Rank " << ::geos::logger::internal::rankString << ": " << msg, EXCEPTIONTYPE )
 
 /**
  * @brief Conditionally throw an exception.
@@ -211,13 +210,7 @@
  * @param msg a message to log (any expression that can be stream inserted)
  * @param TYPE the type of exception to throw
  */
-#define GEOS_THROW_IF( EXP, msg, TYPE ) LVARRAY_THROW_IF( EXP, "***** Rank " << ::geos::logger::internal::rankString << ": " << msg, TYPE )
-
-/**
- * @brief Raise a hard error and terminate the program.
- * @param msg a message to log (any expression that can be stream inserted)
- */
-#define GEOS_ERROR( msg ) GEOS_ERROR_IF( true, msg )
+#define GEOS_THROW_IF( EXP, msg, TYPE ) GEOS_THROW_OUTPUT_IF( EXP, "***** Rank " << ::geos::logger::internal::rankString << ": " << msg, TYPE )
 
 /**
  * @brief Throw an exception.
@@ -239,7 +232,7 @@
  */
 #define GEOS_ASSERT( EXP ) GEOS_ASSERT_MSG( EXP, "" )
 
-#define LVARRAY_WARNING_IF_TEST( EXP, MSG ) \
+#define GEOS_WARNING_OUTPUT_IF( EXP, MSG ) \
   do \
   { \
     if( EXP ) \
@@ -261,20 +254,18 @@
     } \
   } while( false )
 
-#define GEOS_WARNING_IF_TEST( EXP, msg ) LVARRAY_WARNING_IF_TEST( EXP, msg )
-
 /**
  * @brief Conditionally report a warning.
  * @param EXP an expression that will be evaluated as a predicate
  * @param msg a message to log (any expression that can be stream inserted)
  */
-#define GEOS_WARNING_IF( EXP, msg ) LVARRAY_WARNING_IF( EXP, msg )
+#define GEOS_WARNING_IF( EXP, msg ) GEOS_WARNING_OUTPUT_IF( EXP, msg )
 
 /**
  * @brief Report a warning.
  * @param msg a message to log (any expression that can be stream inserted)
  */
-#define GEOS_WARNING( msg ) LVARRAY_WARNING( msg )
+#define GEOS_WARNING( msg ) GEOS_WARNING_IF( true, msg )
 
 /**
  * @brief Conditionally log an info message.
