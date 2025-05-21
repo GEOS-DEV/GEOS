@@ -119,10 +119,10 @@ string MultiFluidDeadOilTestFixture< MODEL_TYPE >::getFluidName()
 template< typename MODEL_TYPE >
 void MultiFluidDeadOilTestFixture< MODEL_TYPE >::fillPhysicalProperties( DeadOilFluid & fluid )
 {
-  string_array & phaseNames = fluid.getReference< string_array >( MultiFluidBase::viewKeyStruct::phaseNamesString() );
+  std::vector<string> & phaseNames = fluid.getReference< std::vector<string> >( MultiFluidBase::viewKeyStruct::phaseNamesString() );
   phaseNames = {"oil", "water", "gas"};
 
-  string_array & compNames = fluid.getReference< string_array >( MultiFluidBase::viewKeyStruct::componentNamesString() );
+  std::vector<string> & compNames = fluid.getReference< std::vector<string> >( MultiFluidBase::viewKeyStruct::componentNamesString() );
   compNames = {"oil", "water", "gas"};
 
   array1d< real64 > & molarWgt = fluid.getReference< array1d< real64 > >( MultiFluidBase::viewKeyStruct::componentMolarWeightString() );
