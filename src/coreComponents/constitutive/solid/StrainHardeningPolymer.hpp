@@ -393,8 +393,8 @@ void StrainHardeningPolymerUpdates::smallStrainUpdateHelper( localIndex const k,
     real64 U[6] = { 0.0 };
     LvArray::tensorOps::denseToSymmetric< 3 >( U, unrotatedDeformationGradient );
 
-    real64 stretch[3] = { 0 };
-    real64 eigenVectors[3][3] = { { 0 } };
+    real64 stretch[3] = { 0.0 };
+    real64 eigenVectors[3][3] = { { 0.0 } };
     LvArray::tensorOps::symEigenvectors< 3 >( stretch, eigenVectors, U );
 
     // Find the largest eigenvalues

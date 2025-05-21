@@ -298,6 +298,7 @@ public:
     static constexpr char const * gridSurfaceNormalWeightNormalizationString() { return "gridSurfaceNormalWeightNormalization"; }
     static constexpr char const * gridSurfaceNormalString() { return "gridSurfaceNormal"; }
     static constexpr char const * gridSurfacePositionString() { return "gridSurfacePosition"; }
+    static constexpr char const * gridSurfaceAreaString() { return "gridSurfaceArea"; }
 
     static constexpr char const * gridCenterOfMassString() { return "gridCenterOfMass"; }
     static constexpr char const * gridNormalStressString() { return "gridNormalStress"; }
@@ -426,9 +427,11 @@ public:
   void computeGridSurfacePositions( ParticleManager & particleManager,
                                     NodeManager & nodeManager );
 
-  void normalizeGridSurfaceNormals( NodeManager & nodeManager );
+  void computeNodalAreas( NodeManager & nodeManager );
 
-  void normalizeGridSurfacePositions( NodeManager & nodeManager );
+  void normalizeGridSurfaceNormalsAndPositions( NodeManager & nodeManager );
+
+  // void normalizeGridSurfacePositions( NodeManager & nodeManager );
 
   void computeGridSurfaceNormalWeights( ParticleManager & particleManager,
                                         NodeManager & nodeManager );
@@ -709,10 +712,11 @@ public:
                         NodeManager & nodeManager );
 
   void enforceContact( real64 dt,
-                       DomainPartition & domain,
-                       ParticleManager & particleManager,
-                       NodeManager & nodeManager,
-                       MeshLevel & mesh );
+                      //  DomainPartition & domain,
+                      //  ParticleManager & particleManager,
+                       NodeManager & nodeManager
+                      //  MeshLevel & mesh
+                      );
 
 void interpolateTable( real64 x, 
                        real64 dx,
@@ -1041,7 +1045,11 @@ protected:
 
   real64 m_smallMass;
 
-  int m_numContactGroups, m_numContactFlags, m_numVelocityFields;
+  int m_numContactGroups;
+  int m_numContactFlags;
+  int m_numVelocityFields;
+  int m_hasContact;
+  int m_computeNodalArea;
   real64 m_separabilityMinDamage;
   int m_treatFullyDamagedAsSingleField;
   int m_surfaceDetection;
@@ -1075,6 +1083,7 @@ protected:
   array1d< real64 > m_domainExtent;       // Length of each edge of global domain excluding buffer cells
   array1d< int > m_nEl;                   // Number of elements in each grid direction including buffer and ghost cells
   array3d< localIndex > m_ijkMap;        // Map from indices in each spatial dimension to local node ID
+  localIndex m_numberOfSubRegions;
 
   int m_useEvents;                   // Events flag
   MPMEventManager* m_mpmEventManager;
