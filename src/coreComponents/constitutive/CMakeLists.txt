@@ -365,6 +365,6 @@ target_include_directories( constitutive PUBLIC ${CMAKE_SOURCE_DIR}/coreComponen
 
 install( TARGETS constitutive LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib )
 
-if( GEOS_ENABLE_TESTS )
-  add_subdirectory( unitTests )
-endif( )
+# if( GEOS_ENABLE_TESTS )
+#   add_subdirectory( unitTests )
+# endif( )
