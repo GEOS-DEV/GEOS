@@ -212,10 +212,10 @@ using CO2BrinePhillipsSpycherPruessTest = MultiFluidCO2BrineTestFixture< BrineMo
                                                                          FlashType::SpycherPruess,
                                                                          false >;
 
-// TEST_F( CO2BrinePhillipsTest, numericalDerivativesMolar )
-// {
-//   testNumericalDerivatives( false );
-// }
+TEST_F( CO2BrinePhillipsTest, numericalDerivativesMolar )
+{
+  testNumericalDerivatives( false );
+}
 // TEST_F( CO2BrinePhillipsTest, numericalDerivativesMass )
 // {
 //   testNumericalDerivatives( true );
