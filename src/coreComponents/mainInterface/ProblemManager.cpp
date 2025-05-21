@@ -641,11 +641,12 @@ void ProblemManager::generateMesh()
       {
         int const order = feDiscretization->getOrder();
         string const & discretizationName = feDiscretization->getName();
+        FiniteElementDiscretization::Formulation const & formulationName = feDiscretization->getFormulation();
         string_array const & regionNames = discretizationPair.second;
         CellBlockManagerABC const & cellBlockManager = meshBody.getCellBlockManager();
 
         // create a high order MeshLevel
-        if( order > 1 && discretizationName == "SEM")
+        if( order > 1 && formulationName == FiniteElementDiscretization::Formulation::SEM)
         {
           MeshLevel & mesh = meshBody.createMeshLevel( MeshBody::groupStructKeys::baseDiscretizationString(),
                                                        discretizationName, order );
@@ -656,7 +657,7 @@ void ProblemManager::generateMesh()
                                    regionNames );
         }
         // Just create a shallow copy of the base discretization.
-        else if( order==1  || discretizationName == "DG" )
+        else if( order==1  ||  formulationName == FiniteElementDiscretization::Formulation::DG)
         {
           // create a shallow copy of the base discretization
           meshBody.createShallowMeshLevel( MeshBody::groupStructKeys::baseDiscretizationString(),
