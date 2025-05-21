@@ -282,7 +282,7 @@ private:
   integer m_numPhases;
 
   /// flag to determine whether or not to apply capillary pressure
-  integer m_hasCapPressure;
+  bool m_hasCapPressure;
 
   /// flag to determine whether or not to use total velocity formulation
   integer m_useTotalMassEquation;

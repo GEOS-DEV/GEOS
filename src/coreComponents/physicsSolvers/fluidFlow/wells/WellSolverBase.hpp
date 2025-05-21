@@ -346,7 +346,7 @@ protected:
   integer m_timeStepFromTables;
 
   /// flag to freeze the initial state during initialization in coupled problems
-  integer m_keepVariablesConstantDuringInitStep;
+  bool m_keepVariablesConstantDuringInitStep;
 
   /// name of the fluid constitutive model used as a reference for component/phase description
   string m_referenceFluidModelName;

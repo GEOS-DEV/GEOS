@@ -59,7 +59,7 @@ ImmiscibleMultiphaseFlow::ImmiscibleMultiphaseFlow( const string & name,
   :
   FlowSolverBase( name, parent ),
   m_numPhases( 2 ),
-  m_hasCapPressure( 0 ),
+  m_hasCapPressure( false ),
   m_useTotalMassEquation ( 1 )
 {
   this->registerWrapper( viewKeyStruct::inputTemperatureString(), &m_inputTemperature ).

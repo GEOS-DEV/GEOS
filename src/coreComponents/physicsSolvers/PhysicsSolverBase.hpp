@@ -23,6 +23,7 @@
 #include "codingUtilities/traits.hpp"
 #include "common/DataTypes.hpp"
 #include "dataRepository/ExecutableGroup.hpp"
+#include "dataRepository/RestartFlags.hpp"
 #include "linearAlgebra/interfaces/InterfaceTypes.hpp"
 #include "linearAlgebra/utilities/LinearSolverResult.hpp"
 #include "linearAlgebra/DofManager.hpp"
@@ -680,17 +681,11 @@ public:
     /// @return string for the minDtIncreaseInterval wrapper
     static constexpr char const * minDtIncreaseIntervalString() { return "minDtIncreaseInterval"; }
 
-    /// @return string for the maxStableDt wrapper
-    static constexpr char const * maxStableDtString() { return "maxStableDt"; }
-
     /// @return string for the discretization wrapper
     static constexpr char const * discretizationString() { return "discretization"; }
 
     /// @return string for the nextDt targetRegions wrapper
     static constexpr char const * targetRegionsString() { return "targetRegions"; }
-
-    /// @return string for the meshTargets wrapper
-    static constexpr char const * meshTargetsString() { return "meshTargets"; }
 
     /// @return string for the writeLinearSystem wrapper
     static constexpr char const * writeLinearSystemString() { return "writeLinearSystem"; }
@@ -793,7 +788,7 @@ public:
   }
 
   /**
-   * @brief syncronize the nonlinear solver parameters.
+   * @brief synchronize the nonlinear solver parameters.
    */
   virtual void
   synchronizeNonlinearSolverParameters()
@@ -994,13 +989,17 @@ protected:
     return constitutiveModels.getGroup< BASETYPE >( key );
   }
 
-
+  /**
+   * @brief Set the Constitutive Name object
+   * @tparam CONSTITUTIVE_TYPE the type of the constitutive model.
+   * @param subRegion the element subregion on which the constitutive model is registered
+   * @param wrapperName the name of the wrapper to set
+   */
+  template< typename CONSTITUTIVE_TYPE >
+  void setConstitutiveName( ElementSubRegionBase & subRegion, string const & wrapperName ) const;
 
   /// Courant–Friedrichs–Lewy factor for the timestep
   real64 m_cflFactor;
-
-  /// maximum stable time step
-  real64 m_maxStableDt;
 
   /// timestep of the next cycle
   real64 m_nextDt;
@@ -1124,6 +1123,19 @@ string PhysicsSolverBase::getConstitutiveName( ParticleSubRegionBase const & sub
   return validName;
 }
 
+template< typename CONSTITUTIVE_TYPE >
+void PhysicsSolverBase::setConstitutiveName( ElementSubRegionBase & subRegion, string const & wrapperName ) const
+{
+  subRegion.registerWrapper< string >( wrapperName ).
+    setPlotLevel( dataRepository::PlotLevel::NOPLOT ).
+    setRestartFlags( dataRepository::RestartFlags::NO_WRITE ).
+    setSizedFromParent( 0 );
+
+  string & constitutiveName = subRegion.getReference< string >( wrapperName );
+  constitutiveName = getConstitutiveName< CONSTITUTIVE_TYPE >( subRegion );
+  GEOS_ERROR_IF( constitutiveName.empty(), GEOS_FMT( "{}: constitutive model not found on subregion {}",
+                                                     getDataContext(), subRegion.getName() ) );
+}
 
 } // namespace geos
 

@@ -39,7 +39,6 @@ PhysicsSolverBase::PhysicsSolverBase( string const & name,
   :
   ExecutableGroup( name, parent ),
   m_cflFactor(),
-  m_maxStableDt{ 1e99 },
   m_nextDt( 1e99 ),
   m_numTimestepsSinceLastDtCut( -1 ),
   m_dofManager( name ),
@@ -59,11 +58,6 @@ PhysicsSolverBase::PhysicsSolverBase( string const & name,
     setDescription( "Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_"
                     " when calculating the maximum allowable time step. Values should be in the interval (0,1] " );
 
-  registerWrapper( viewKeyStruct::maxStableDtString(), &m_maxStableDt ).
-    setApplyDefaultValue( 0.5 ).
-    setInputFlag( InputFlags::FALSE ).
-    setDescription( "Value of the Maximum Stable Timestep for this solver." );
-
   this->registerWrapper( viewKeyStruct::discretizationString(), &m_discretizationName ).
     setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
     setInputFlag( InputFlags::REQUIRED ).
@@ -79,11 +73,6 @@ PhysicsSolverBase::PhysicsSolverBase( string const & name,
                     "the solver will be applied to these regions, only that allocation will occur such that the "
                     "solver may be applied to these regions. The decision about what regions this solver will be"
                     "applied to rests in the EventManager." );
-
-  registerWrapper( viewKeyStruct::meshTargetsString(), &m_meshTargets ).
-    setInputFlag( InputFlags::FALSE ).
-    setRestartFlags( RestartFlags::NO_WRITE ).
-    setDescription( "MeshBody/Region combinations that the solver will be applied to." );
 
   registerWrapper( viewKeyStruct::initialDtString(), &m_nextDt ).
     setApplyDefaultValue( 1e99 ).
@@ -246,13 +235,19 @@ real64 PhysicsSolverBase::solverStep( real64 const & time_n,
     GEOS_LOG_LEVEL( logInfo::Fields, oss.str())
   }
 
-  implicitStepSetup( time_n, dt, domain );
+  {
+    Timer timer( m_timers["step setup"] );
+    implicitStepSetup( time_n, dt, domain );
+  }
 
   // currently the only method is implicit time integration
   real64 const dt_return = nonlinearImplicitStep( time_n, dt, cycleNumber, domain );
 
   // final step for completion of timestep. typically secondary variable updates and cleanup.
-  implicitStepComplete( time_n, dt_return, domain );
+  {
+    Timer timer( m_timers["step complete"] );
+    implicitStepComplete( time_n, dt_return, domain );
+  }
 
   return dt_return;
 }
@@ -813,6 +808,8 @@ real64 PhysicsSolverBase::nonlinearImplicitStep( real64 const & time_n,
     // reset the solver state, since we are restarting the time step
     if( dtAttempt > 0 )
     {
+      Timer timer( m_timers["reset state"] );
+
       resetStateToBeginningOfStep( domain );
       resetConfigurationToBeginningOfStep( domain );
     }

@@ -73,11 +73,11 @@ public:
   struct viewKeyStruct : PhysicsSolverBase::viewKeyStruct
   {
     // misc inputs
+    static constexpr char const * isThermalString() { return "isThermal"; }
+    static constexpr char const * inputTemperatureString() { return "temperature"; }
     static constexpr char const * fluidNamesString() { return "fluidNames"; }
     static constexpr char const * solidNamesString() { return "solidNames"; }
     static constexpr char const * permeabilityNamesString() { return "permeabilityNames"; }
-    static constexpr char const * isThermalString() { return "isThermal"; }
-    static constexpr char const * inputTemperatureString() { return "temperature"; }
     static constexpr char const * solidInternalEnergyNamesString() { return "solidInternalEnergyNames"; }
     static constexpr char const * thermalConductivityNamesString() { return "thermalConductivityNames"; }
     static constexpr char const * allowNegativePressureString() { return "allowNegativePressure"; }
@@ -137,14 +137,6 @@ public:
   virtual bool checkSequentialSolutionIncrements( DomainPartition & domain ) const override;
 
   void enableLaggingFractureStencilWeightsUpdate(){ m_isLaggingFractureStencilWeightsUpdate = 1; };
-
-  real64 sumAquiferFluxes( BoundaryStencil const & stencil,
-                           AquiferBoundaryCondition::KernelWrapper const & aquiferBCWrapper,
-                           ElementViewConst< arrayView1d< real64 const > > const & pres,
-                           ElementViewConst< arrayView1d< real64 const > > const & presOld,
-                           ElementViewConst< arrayView1d< real64 const > > const & gravCoef,
-                           real64 const & timeAtBeginningOfStep,
-                           real64 const & dt );
 
   /**
    * @brief assembles the flux terms for all cells for the hydrofracture case
@@ -258,7 +250,7 @@ protected:
   real64 m_inputTemperature;
 
   /// flag to freeze the initial state during initialization in coupled problems
-  integer m_keepVariablesConstantDuringInitStep;
+  bool m_keepVariablesConstantDuringInitStep;
 
   /// enable the fixed stress poromechanics update of porosity
   bool m_isFixedStressPoromechanicsUpdate;
@@ -311,12 +303,18 @@ public:
 private:
     static string generateMessage( string_view baseMessage,
                                    string_view fieldName, string_view setName );
-
-    BCMessage();
   };
 
 private:
   virtual void setConstitutiveNames( ElementSubRegionBase & subRegion ) const override;
+
+  real64 sumAquiferFluxes( BoundaryStencil const & stencil,
+                           AquiferBoundaryCondition::KernelWrapper const & aquiferBCWrapper,
+                           ElementViewConst< arrayView1d< real64 const > > const & pres,
+                           ElementViewConst< arrayView1d< real64 const > > const & presOld,
+                           ElementViewConst< arrayView1d< real64 const > > const & gravCoef,
+                           real64 const & timeAtBeginningOfStep,
+                           real64 const & dt );
 
   // flag to determine whether or not to apply lagging update for the fracture stencil weights
   integer m_isLaggingFractureStencilWeightsUpdate;
