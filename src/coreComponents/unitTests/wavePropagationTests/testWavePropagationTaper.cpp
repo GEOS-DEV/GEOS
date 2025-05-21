@@ -41,7 +41,7 @@ char const * xmlInput =
       <AcousticSEM
         name="acousticSolver"
         cflFactor="0.25"
-        discretization="FE1"
+        discretization="Level0"
         targetRegions="{ Region }"
         sourceCoordinates="{ { 50, 50, 50 } }"
         timeSourceFrequency="2"
@@ -94,7 +94,7 @@ char const * xmlInput =
     <NumericalMethods>
       <FiniteElements>
         <FiniteElementSpace
-          name="FE1"
+          name="Level0"
           order="1"
           formulation="SEM"/>
       </FiniteElements>
@@ -111,39 +111,19 @@ char const * xmlInput =
     </Constitutive>
     <FieldSpecifications>
       <FieldSpecification
-        name="initialPressureN"
-        initialCondition="1"
-        setNames="{ all }"
-        objectPath="nodeManager"
-        fieldName="pressure_n"
-        scale="0.0"/>
-      <FieldSpecification
-        name="initialPressureNm1"
-        initialCondition="1"
-        setNames="{ all }"
-        objectPath="nodeManager"
-        fieldName="pressure_nm1"
-        scale="0.0"/>
-      <FieldSpecification
         name="cellVelocity"
         initialCondition="1"
-        objectPath="ElementRegions/Region/cb"
+        objectPath="mesh/Level0/ElementRegions/Region/cb"
         fieldName="acousticVelocity"
         scale="1500"
         setNames="{ all }"/>
       <FieldSpecification
         name="cellDensity"
         initialCondition="1"
-        objectPath="ElementRegions/Region/cb"
+        objectPath="mesh/Level0/ElementRegions/Region/cb"
         fieldName="acousticDensity"
         scale="1"
         setNames="{ all }"/>
-      <FieldSpecification
-        name="zposFreeSurface"
-        objectPath="faceManager"
-        fieldName="FreeSurface"
-        scale="0.0"
-        setNames="{ zpos }"/>
     </FieldSpecifications>
     <Tasks>
       <PackCollection
