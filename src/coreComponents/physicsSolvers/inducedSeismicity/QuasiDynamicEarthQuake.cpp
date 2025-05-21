@@ -70,10 +70,14 @@ real64 QuasiDynamicEarthQuake< RSSOLVER_TYPE >::updateStresses( real64 const & t
                                                                 const int cycleNumber,
                                                                 DomainPartition & domain ) const
 {
+
+  GEOS_UNUSED_VAR( cycleNumber );
+
   // 1. Setup variables for stress solver
-  setTargetDispJump( domain, dt );
+  setTargetDispJump( domain, dt, time_n );
 
   // 2. Solve the momentum balance
+  // real64 const dtAccepted = dt;
   real64 const dtAccepted = m_stressSolver->solverStep( time_n, dt, cycleNumber, domain );
 
   // 3. Apply background stress value (if any was prescribed)
@@ -146,12 +150,14 @@ void QuasiDynamicEarthQuake< RSSOLVER_TYPE >::applyBackGroundStress( real64 cons
 template< typename RSSOLVER_TYPE >
 void QuasiDynamicEarthQuake< RSSOLVER_TYPE >::resetStressState( DomainPartition & domain )
 {
-  m_stressSolver->resetStateToBeginningOfStep( domain );
+  // m_stressSolver->resetStateToBeginningOfStep( domain );
+  m_stressSolver->setAllVariablesToZero( domain );
 }
 
 template< typename RSSOLVER_TYPE >
 void QuasiDynamicEarthQuake< RSSOLVER_TYPE >::setTargetDispJump( DomainPartition & domain,
-                                                                 real64 const dt ) const
+                                                                 real64 const dt,
+                                                                 real64 const time_n ) const
 {
   this->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                      MeshLevel & mesh,
@@ -161,15 +167,15 @@ void QuasiDynamicEarthQuake< RSSOLVER_TYPE >::setTargetDispJump( DomainPartition
                                                                            [&]( localIndex const,
                                                                                 SurfaceElementSubRegion & subRegion )
     {
-      arrayView2d< real64 const > const deltaSlip     = subRegion.getField< contact::deltaSlip >();
+      arrayView2d< real64 const > const totalSlip     = subRegion.getField< rateAndState::totalSlip >();
       arrayView2d< real64 const > const backSlipRate  = subRegion.getField< rateAndState::backSlipRate >();
       arrayView2d< real64 > const targetDispJump      = subRegion.getField< contact::targetIncrementalJump >();
 
       forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const k )
       {
         targetDispJump( k, 0 ) = 0.0;
-        targetDispJump( k, 1 ) = deltaSlip( k, 0 ) - backSlipRate( k, 0 ) * dt;
-        targetDispJump( k, 2 ) = deltaSlip( k, 1 ) - backSlipRate( k, 1 ) * dt;
+        targetDispJump( k, 1 ) = totalSlip( k, 0 ) - backSlipRate( k, 0 ) * ( time_n + dt );
+        targetDispJump( k, 2 ) = totalSlip( k, 1 ) - backSlipRate( k, 1 ) * ( time_n + dt );
       } );
     } );
   } );

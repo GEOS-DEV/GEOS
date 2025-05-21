@@ -1212,6 +1212,43 @@ void SolidMechanicsLagrangeContactBubbleStab::resetStateToBeginningOfStep( Domai
   } );
 }
 
+void SolidMechanicsLagrangeContactBubbleStab::setAllVariablesToZero( DomainPartition & domain  ) const
+{
+
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                MeshLevel & mesh,
+                                                                string_array const & regionNames )
+  {
+    NodeManager & nodeManager = mesh.getNodeManager();
+  
+    nodeManager.getField< solidMechanics::totalDisplacement >().zero();
+    nodeManager.getField< solidMechanics::incrementalDisplacement >().zero();
+    ElementRegionManager & elemManager = mesh.getElemManager();
+
+    elemManager.forElementSubRegions< CellElementSubRegion >( regionNames,
+                                                                [&]( localIndex const,
+                                                                     ElementSubRegionBase & subRegion )
+    {
+      subRegion.getField< solidMechanics::strain >().zero();
+      subRegion.getField< solidMechanics::plasticStrain >().zero();
+      string const & solidName = subRegion.template getReference< string >( viewKeyStruct::solidMaterialNamesString() );
+      SolidBase & solidModel = subRegion.getConstitutiveModel< constitutive::SolidBase >( solidName );
+      solidModel.getStress().zero();
+      solidModel.getOldStress().zero();
+    } );
+
+    elemManager.forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
+    {
+      subRegion.getField< contact::traction >().zero();
+      subRegion.getField< contact::traction_n >().zero();
+      subRegion.getField< contact::deltaTraction >().zero();
+      subRegion.getField< contact::dispJump >().zero();
+      subRegion.getField< contact::dispJump_n >().zero();
+      subRegion.getField< contact::oldDispJump >().zero();
+    } );
+  } );
+}
+
 REGISTER_CATALOG_ENTRY( PhysicsSolverBase, SolidMechanicsLagrangeContactBubbleStab, string const &, Group * const )
 
 } /* namespace geos */

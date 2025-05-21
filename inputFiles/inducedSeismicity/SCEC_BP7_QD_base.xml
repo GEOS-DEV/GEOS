@@ -33,23 +33,6 @@
       materialList="{frictionLaw}"
       defaultAperture="1e-3"/>  
     </ElementRegions>
-  
-  <Constitutive>
-
-    <ElasticIsotropic
-     name="rock"
-     defaultDensity="2670"
-     defaultBulkModulus="50.0e9"
-     defaultShearModulus="32.04e9"/>
-
-    <RateAndStateFrictionSlipLaw
-      name="frictionLaw"
-      defaultA="0.007"
-      defaultB="0.005"
-      defaultDc="4.0e-3"  
-      defaultReferenceVelocity="1.0e-6"
-      defaultReferenceFrictionCoefficient="0.6"/>  
-  </Constitutive>
 
   <Geometry>    
     <Box

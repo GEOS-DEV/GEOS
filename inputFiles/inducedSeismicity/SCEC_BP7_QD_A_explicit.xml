@@ -13,19 +13,20 @@
       targetRegions="{ Domain, Fault }"
       shearImpedance="4.6247113164e6"
       initialDt="1.0e-1"
-      relTimeStepTol="1e-6"
-      absTimeStepTol="1e-6"
+      relTimeStepTol="1e-8"
+      absTimeStepTol="1e-8"
       logLevel="1"
       discretization="FE1"
       stressSolverName="stressSolver">
       <NonlinearSolverParameters
         newtonTol="1.0e-6"
         logLevel="2"
-        newtonMaxIter="40"
+        newtonMaxIter="100"
         maxNumConfigurationAttempts="1"
         lineSearchAction="None"
         lineSearchMaxCuts="2"
-        maxTimeStepCuts="1"/>
+        maxTimeStepCuts="1"
+        maxSubSteps="100"/>
      </ExplicitQuasiDynamicEQ>
 
     <SolidMechanicsLagrangeContactBubbleStab
@@ -59,7 +60,7 @@
   </Solvers>
 
   <Events
-    maxTime="2.0e7">
+    maxTime="1.5">
 
     <SoloEvent 
       name="generateFault"
@@ -67,7 +68,7 @@
 
     <PeriodicEvent
       name="vtkOutput"
-      cycleFrequency="10"
+      cycleFrequency="1"
       targetExactTimestep="0"
       target="/Outputs/vtkOutput"/>
 

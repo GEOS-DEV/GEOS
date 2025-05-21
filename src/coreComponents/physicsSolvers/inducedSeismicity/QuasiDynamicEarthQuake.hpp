@@ -53,7 +53,8 @@ public:
   void postInputInitialization() override final;
 
   void setTargetDispJump( DomainPartition & domain,
-                          real64 const dt ) const;
+                          real64 const dt,
+                          real64 const time_n ) const;
 
   virtual real64 updateStresses( real64 const & time_n,
                                  real64 const & dt,

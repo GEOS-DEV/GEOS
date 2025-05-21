@@ -73,7 +73,6 @@ struct LinearSolverParameters
   integer dofsPerNode = 1;  ///< Dofs per node (or support location) for non-scalar problems
   bool isSymmetric = false; ///< Whether input matrix is symmetric (may affect choice of scheme)
   integer stopIfError = 1;  ///< Whether to stop the simulation if the linear solver reports an error
-  bool reuseFactorization = true; ///< Whether to reuse the LU factorization or not
 
   SolverType solverType = SolverType::direct;          ///< Solver type
   PreconditionerType preconditionerType = PreconditionerType::iluk;  ///< Preconditioner type

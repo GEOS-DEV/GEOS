@@ -58,6 +58,8 @@ def save_to_file(filename, data):
 def writeBP7Tables( data_to_save, dir ):    
     # Loop through the dictionary and save each file
     for filename, data in data_to_save.items():
+        if ( not os.path.isdir(dir) ):
+            os.mkdir(dir)
         save_to_file(f'{dir}/{filename}.geos', data)
 
 def calcualteBP7Parameters( dir, printTables ):

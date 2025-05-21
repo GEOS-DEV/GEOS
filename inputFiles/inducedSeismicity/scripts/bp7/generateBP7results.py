@@ -5,6 +5,7 @@ import argparse
 from rs_parameters import RateAndStateParameters   
 from geos.hdf5_wrapper import hdf5_wrapper
 import matplotlib.pyplot as plt
+import math
 
 MODELER = "Matteo Cusini, Lawrence Livermore National Laboratory"
 CODE  = "GEOS"
@@ -171,7 +172,7 @@ class FaultStation:
         shear_stress_3 = self.data[:, 6]
         state = self.data[:, 7]
 
-        fig, axs = plt.subplots(4, 1, figsize=(10, 12), sharex=True)
+        fig, axs = plt.subplots(5, 1, figsize=(10, 12), sharex=True)
 
         # Lambda function for dual-axis plotting
         plot_dual = lambda ax, y1, y2, label1, label2, color1="b", color2="r": (
@@ -201,6 +202,28 @@ class FaultStation:
         axs[3].legend()
         axs[3].grid()
 
+        # Plot State Variable
+        # Save position of axs[4]
+        pos = axs[4].get_position()
+
+        # Remove axs[4] from the figure
+        axs[4].remove()
+
+        # Add new axes at the same position without shared x
+        axs[4] = fig.add_axes(pos)
+
+        axs[4].plot(slip_rate_2[0:self.num_timesteps-1], shear_stress_2[0:self.num_timesteps-1], label='Slip Rate 2 vs shear stress 2', color='g')
+        axs[4].set_xlabel("slip rate 2 [m]")
+        axs[4].set_ylabel("shear stress 2 [MPa]")
+        axs[4].legend()
+        axs[4].grid()
+
+        #  m = a * sigma
+
+        slope = (shear_stress_2[3] - shear_stress_2[2]) / ( slip_rate_2[3]* math.log(10) - slip_rate_2[2]* math.log(10) )
+        print(f'slope is {slope}')
+
+
         plt.suptitle(f"Fault Station at {self.location}")
         # plt.tight_layout()
         # plt.show()
@@ -218,6 +241,8 @@ if __name__ == "__main__":
     parser.add_argument('-nt', '--num-time-steps', type=int, help='num_timesteps', default=100)
     args = parser.parse_args()
     output_dir = os.path.abspath( args.output_dir )
+    if (not os.path.isdir(output_dir)):
+        os.mkdir(output_dir)
     for i in range(13):  # Loop over 13 fault stations
         location_str = f"x2 = {fault_stations_locations[i][0]}, x3 = {fault_stations_locations[i][1]}"
         station = FaultStation(

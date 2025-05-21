@@ -46,7 +46,8 @@
         solverType="direct"
         preconditionerType="mgr"
         directParallel="1"
-        logLevel="0"/>
+        logLevel="0"
+        reuseFactorization="1"/>
     </SolidMechanicsLagrangeContactBubbleStab>
     
     <SurfaceGenerator
@@ -58,7 +59,7 @@
   </Solvers>
 
   <Events
-    maxTime="1">
+    maxTime="1.5">
     <SoloEvent 
       name="generateFault"
       target="/Solvers/SurfaceGen"/>
@@ -110,7 +111,7 @@
   <!-- Time history output -->
    <PeriodicEvent
       name="timeHistoryOutput"
-      cycleFrequency="10"
+      cycleFrequency="2"
       targetExactTimestep="0"
       target="/Outputs/timeHistoryOutput"/>
   </Events> 
