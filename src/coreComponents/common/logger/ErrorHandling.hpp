@@ -40,7 +40,7 @@ public:
 
   /**
    * @brief Construct a new Error Logger object
-   * 
+   *
    */
   ErrorLogger();
 
@@ -56,7 +56,7 @@ public:
 
   /**
    * @brief Struct to define the error/warning message
-   * 
+   *
    */
   struct ErrorMsg
   {
@@ -64,13 +64,13 @@ public:
     std::string m_msg;
     std::string m_file;
     integer m_line;
-    std::vector< int > m_ranksInfo; 
+    std::vector< int > m_ranksInfo;
     std::vector< std::map< std::string, std::string > > m_contextsInfo;
     std::vector< std::string > m_sourceCallStack;
 
     /**
      * @brief Construct a new Error Msg object
-     * 
+     *
      */
     ErrorMsg() {};
 
@@ -90,31 +90,31 @@ public:
 
     /**
      * @brief Fill the msg field of the structure with the error message
-     * 
-     * @param e is the exception 
-     * @return ErrorMsg& 
+     *
+     * @param e is the exception
+     * @return ErrorMsg&
      */
     ErrorMsg & addToMsg( std::exception const & e );
     /**
-     * @brief 
-     * 
+     * @brief
+     *
      * @param msg Add information about the error that occured to the msg field of the structure
-     * @return ErrorMsg& 
+     * @return ErrorMsg&
      */
     ErrorMsg & addToMsg( std::string const & msg );
     /**
      * @brief Set the Code Location object
-     * 
-     * @param msgFile 
-     * @param msgLine 
-     * @return ErrorMsg& 
+     *
+     * @param msgFile
+     * @param msgLine
+     * @return ErrorMsg&
      */
     ErrorMsg & setCodeLocation( string msgFile, integer msgLine );
     /**
      * @brief Set the Type object
-     * 
-     * @param msgType 
-     * @return ErrorMsg& 
+     *
+     * @param msgType
+     * @return ErrorMsg&
      */
     ErrorMsg & setType( MsgType msgType );
 
@@ -125,8 +125,11 @@ public:
      */
     void addContextInfo( std::map< std::string, std::string > && info );
 
+    template< typename ... Args >
+    void addContextInfo( Args && ... args );
+
     void addRankInfo( int rank );
-    
+
     /**
      * @brief Add stack trace information about the error/warning message to the ErrorMsg structure
      *
@@ -143,19 +146,19 @@ public:
   { return m_currentErrorMsg; }
 
   /**
-   * @brief Convert a MsgType into a string 
-   * 
-   * @param type 
-   * @return std::string 
+   * @brief Convert a MsgType into a string
+   *
+   * @param type
+   * @return std::string
    */
   std::string toString( MsgType type );
 
   /**
    * @brief Write the error message in the yaml file regarding indentation and line break
-   * 
-   * @param msg 
+   *
+   * @param msg
    */
-  void streamMultilineYamlAttribute( std::string_view msg, std::ofstream& yamlFile );
+  void streamMultilineYamlAttribute( std::string_view msg, std::ofstream & yamlFile );
 
   /**
    * @brief Add the error/warning message into the yaml file
@@ -166,10 +169,16 @@ public:
 
 private:
   // The error constructed via exceptions
-  ErrorMsg m_currentErrorMsg; 
+  ErrorMsg m_currentErrorMsg;
 };
 
 extern ErrorLogger errorLogger;
+
+template< typename ... Args >
+void ErrorLogger::ErrorMsg::addContextInfo( Args && ... args )
+{
+  ( addContextInfo( args.getContextInfo() ), ... );
+}
 
 } /* namespace geos */
 

@@ -219,7 +219,7 @@ private:
 
 };
 
-#define GEOS_THROW_CTX_IF( EXP, MSG, EXCEPTIONTYPE, dataContext ) \
+#define GEOS_THROW_CTX_IF( EXP, MSG, EXCEPTIONTYPE, ... ) \
   do \
   { \
     if( EXP ) \
@@ -237,7 +237,7 @@ private:
       errorLogger.currentErrorMsg().setCodeLocation( __FILE__, __LINE__ ); \
       errorLogger.currentErrorMsg().addToMsg( __msgoss.str() ); \
       errorLogger.currentErrorMsg().addRankInfo( ::geos::logger::internal::rank ); \
-      errorLogger.currentErrorMsg().addContextInfo( dataContext.getContextInfo() ); \
+      errorLogger.currentErrorMsg().addContextInfo( __VA_ARGS__ ); \
       errorLogger.currentErrorMsg().addCallStackInfo( LvArray::system::stackTrace( true ) ); \
       throw EXCEPTIONTYPE( __oss.str() ); \
     } \
