@@ -303,9 +303,9 @@ protected:
   /// scaling type (global or local)
   compositionalMultiphaseUtilities::ScalingType const m_scalingType;
 
-  IdReporterCollector const & m_negPressureIds;
+  IdReporterCollector const m_negPressureIds;
 
-  IdReporterCollector const & m_negDensityIds;
+  IdReporterCollector const m_negDensityIds;
 
 };
 

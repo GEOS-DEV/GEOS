@@ -42,6 +42,8 @@ IdReporterCollector IdReporterBuffer::createCollector( arrayView1d< globalIndex 
 
 IdReporterOutput IdReporterBuffer::createOutput() const
 {
+  m_idsCounter.move( LvArray::MemorySpace::host, false );
+  m_idsBuffer.move( LvArray::MemorySpace::host, false );
   return IdReporterOutput( *this );
 }
 
