@@ -799,6 +799,7 @@ bool SolidMechanicsEmbeddedFractures::updateState( DomainPartition & domain )
       } );
     } );
   } );
+  
   return true;
 }
 

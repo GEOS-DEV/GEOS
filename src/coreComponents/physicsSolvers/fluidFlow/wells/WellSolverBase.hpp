@@ -235,18 +235,6 @@ public:
                                           arrayView1d< real64 > const & localRhs ) = 0;
 
   /**
-   * @brief Recompute all dependent quantities from primary variables (including constitutive models)
-   * @param domain the domain containing the mesh and fields
-   */
-  virtual bool updateState( DomainPartition & domain ) override;
-
-  /**
-   * @brief Recompute all dependent quantities from primary variables (including constitutive models)
-   * @param subRegion the well subRegion containing the well elements and their associated fields
-   */
-  virtual real64 updateSubRegionState( WellElementSubRegion & subRegion ) = 0;
-
-  /**
    * @brief Recompute the perforation rates for all the wells
    * @param domain the domain containing the mesh and fields
    */

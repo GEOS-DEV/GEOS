@@ -329,7 +329,27 @@ void SinglePhaseWell::updateFluidModel( WellElementSubRegion & subRegion ) const
   } );
 }
 
-real64 SinglePhaseWell::updateSubRegionState( WellElementSubRegion & subRegion )
+bool SinglePhaseWell::updateState( DomainPartition & domain )
+{
+  GEOS_MARK_FUNCTION;
+
+  bool status = true;
+
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                                               MeshLevel & mesh,
+                                                               string_array const & regionNames )
+  {
+    mesh.getElemManager().forElementSubRegions< WellElementSubRegion >( regionNames, [&]( localIndex const,
+                                                                                          WellElementSubRegion & subRegion )
+    {
+      status &= updateSubRegionState( subRegion ); 
+    } );
+  } );
+
+  return status;
+}
+
+bool SinglePhaseWell::updateSubRegionState( WellElementSubRegion & subRegion )
 {
   // update volumetric rates for the well constraints
   // Warning! This must be called before updating the fluid model
@@ -342,7 +362,8 @@ real64 SinglePhaseWell::updateSubRegionState( WellElementSubRegion & subRegion )
   updateBHPForConstraint( subRegion );
 
   // note: the perforation rates are updated separately
-  return 0.0;  // change in phasevolume fraction doesnt apply
+
+  return true;
 }
 
 void SinglePhaseWell::initializeWells( DomainPartition & domain, real64 const & time_n )

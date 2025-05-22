@@ -60,7 +60,7 @@ struct FluidUpdateKernel
           arrayView1d< real64 const > const & temp,
           arrayView2d< real64 const, compflow::USD_COMP > const & compFrac )
   {
-    bool status = true;
+    RAJA::ReduceBitAnd< ReducePolicy< POLICY >, bool > status = true;
     forAll< POLICY >( targetSet.size(), [&] GEOS_HOST_DEVICE ( localIndex const a )
     {
       localIndex const k = targetSet[a];
@@ -69,7 +69,7 @@ struct FluidUpdateKernel
         status &= fluidWrapper.update( k, q, pres[k], temp[k], compFrac[k] );
       }
     } );
-    return status;
+    return status.get();
   }
 };
 

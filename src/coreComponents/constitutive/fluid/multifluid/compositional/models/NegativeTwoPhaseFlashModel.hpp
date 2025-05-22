@@ -29,9 +29,6 @@
 #include "constitutive/fluid/multifluid/compositional/functions/StabilityTest.hpp"
 #include "constitutive/fluid/multifluid/compositional/functions/NegativeTwoPhaseFlash.hpp"
 
-#include "common/Timer.hpp"
-#include "common/MpiWrapper.hpp"
-
 namespace geos
 {
 
@@ -96,16 +93,16 @@ public:
       // Unstable mixture
 
       // Iterative solve to converge flash
-      bool const flashStatus = NegativeTwoPhaseFlash::compute( m_numComponents,
-                                                               pressure,
-                                                               temperature,
-                                                               compFraction,
-                                                               componentProperties,
-                                                               m_flashData,
-                                                               kValues,
-                                                               phaseFraction.value[m_vapourIndex],
-                                                               phaseCompFraction.value[m_liquidIndex],
-                                                               phaseCompFraction.value[m_vapourIndex] );
+      flashStatus = NegativeTwoPhaseFlash::compute( m_numComponents,
+                                                    pressure,
+                                                    temperature,
+                                                    compFraction,
+                                                    componentProperties,
+                                                    m_flashData,
+                                                    kValues,
+                                                    phaseFraction.value[m_vapourIndex],
+                                                    phaseCompFraction.value[m_liquidIndex],
+                                                    phaseCompFraction.value[m_vapourIndex] );
 
 #if !defined(GEOS_DEVICE_COMPILE)
       GEOS_WARNING_IF( !flashStatus,

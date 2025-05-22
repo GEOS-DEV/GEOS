@@ -516,15 +516,11 @@ real64 NegativeTwoPhaseFlash::computeFugacityRatio(
   // Solve Rachford-Rice Equation
   bool const rrStatus = RachfordRice::solve( kValues, composition, presentComponents, vapourPhaseMoleFraction );
 
-  if( !rrStatus )
-  {
-    GEOS_LOG( GEOS_FMT( "Rachford-Rice failed to converge at pressure = {:.5e}, temperature = {:.3f}, composition =",
-                        pressure, temperature ));
-    for( integer ic = 0; ic < numComps; ++ic )
-    {
-      GEOS_LOG( GEOS_FMT( "{:.5e}", composition[ic] ));
-    }
-  }
+#if !defined(GEOS_DEVICE_COMPILE)
+  GEOS_WARNING_IF( !rrStatus,
+                   GEOS_FMT( "Rachford-Rice solver failed to converge at pressure {:.5e}, temperature {:.3f} and composition ",
+                             pressure, temperature ) << composition );
+#endif
 
   // Assign phase compositions
   for( integer ic = 0; ic < numComps; ++ic )

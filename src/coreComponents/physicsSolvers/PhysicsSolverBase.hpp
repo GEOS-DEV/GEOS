@@ -697,6 +697,9 @@ public:
 
     /// @return string for the allowNonConvergedLinearSolverSolution wrapper
     static constexpr char const * allowNonConvergedLinearSolverSolutionString() { return "allowNonConvergedLinearSolverSolution"; }
+
+    /// @return string for the chopWhenUpdateStateFailed wrapper
+    static constexpr char const * chopWhenUpdateStateFailedString() { return "chopWhenUpdateStateFailed"; }
   };
 
   /**
@@ -1008,6 +1011,9 @@ protected:
   /// behavior in case of linear solver failure
   integer m_allowNonConvergedLinearSolverSolution;
 
+  /// flag indicating whether time step is chopped when update state failed
+  integer m_chopWhenUpdateStateFailed;
+
   /// Number of cycles since last timestep cut
   integer m_numTimestepsSinceLastDtCut;
 
@@ -1025,7 +1031,6 @@ protected:
 
   /// System solution vector
   ParallelVector m_solution;
-  real64 m_maxDx_old = 0.0;
 
   /// Local system matrix and rhs
   CRSMatrix< real64, globalIndex > m_localMatrix;
@@ -1055,7 +1060,7 @@ protected:
   std::function< void( CRSMatrix< real64, globalIndex >, array1d< real64 > ) > m_assemblyCallback;
 
   /// Timers for the aggregate profiling of the solver
-  mutable std::map< std::string, std::chrono::system_clock::duration > m_timers;
+  std::map< std::string, std::chrono::system_clock::duration > m_timers;
 
 private:
   /// List of names of regions the solver will be applied to

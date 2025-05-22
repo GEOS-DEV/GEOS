@@ -103,6 +103,12 @@ PhysicsSolverBase::PhysicsSolverBase( string const & name,
     setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "Cut time step if linear solution fail without going until max nonlinear iterations." );
 
+  this->registerWrapper( viewKeyStruct::chopWhenUpdateStateFailedString(), &m_chopWhenUpdateStateFailed ).
+    setSizedFromParent( 0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( 0 ).
+    setDescription( "Flag indicating whether time step is chopped when update status failed" );
+
   addLogLevel< logInfo::Fields >();
   addLogLevel< logInfo::LinearSolver >();
   addLogLevel< logInfo::Solution >();
@@ -246,19 +252,13 @@ real64 PhysicsSolverBase::solverStep( real64 const & time_n,
     GEOS_LOG_LEVEL( logInfo::Fields, oss.str())
   }
 
-  {
-    Timer timer( m_timers["step setup"] );
-    implicitStepSetup( time_n, dt, domain );
-  }
+  implicitStepSetup( time_n, dt, domain );
 
   // currently the only method is implicit time integration
   real64 const dt_return = nonlinearImplicitStep( time_n, dt, cycleNumber, domain );
 
   // final step for completion of timestep. typically secondary variable updates and cleanup.
-  {
-    Timer timer( m_timers["step complete"] );
-    implicitStepComplete( time_n, dt_return, domain );
-  }
+  implicitStepComplete( time_n, dt_return, domain );
 
   return dt_return;
 }
@@ -819,8 +819,6 @@ real64 PhysicsSolverBase::nonlinearImplicitStep( real64 const & time_n,
     // reset the solver state, since we are restarting the time step
     if( dtAttempt > 0 )
     {
-      Timer timer( m_timers["reset state"] );
-
       resetStateToBeginningOfStep( domain );
       resetConfigurationToBeginningOfStep( domain );
     }
@@ -1120,7 +1118,7 @@ bool PhysicsSolverBase::solveNonlinearSystem( real64 const & time_n,
       Timer timer( m_timers["update state"] );
 
       // update non-primary variables (constitutive models)
-      if( !updateState( domain ))
+      if( !updateState( domain ) && m_chopWhenUpdateStateFailed )
       {
         GEOS_LOG_RANK_0( GEOS_FMT( "    {}: Update state failed. Newton loop terminated.", getName()) );
         isNewtonConverged = false;
@@ -1370,31 +1368,9 @@ bool PhysicsSolverBase::checkSystemSolution( DomainPartition & GEOS_UNUSED_PARAM
 
 real64 PhysicsSolverBase::scalingForSystemSolution( DomainPartition & GEOS_UNUSED_PARAM( domain ),
                                                     DofManager const & GEOS_UNUSED_PARAM( dofManager ),
-                                                    arrayView1d< real64 const > const & localSolution )
+                                                    arrayView1d< real64 const > const & GEOS_UNUSED_PARAM( localSolution ) )
 {
-  localIndex const n = localSolution.size();
-
-  real64 maxDx = 0.0;
-
-  for( localIndex i = 0; i < n; i++ )
-  {
-    if( LvArray::math::abs( localSolution[i] ) > LvArray::math::abs( maxDx ) )
-    {
-      maxDx = localSolution[i];
-    }
-  }
-
-  bool oscillation = true;
-  if( LvArray::math::abs( maxDx ) + LvArray::math::abs( m_maxDx_old ) > 1e-3 &&
-      LvArray::math::abs( maxDx + m_maxDx_old ) / (LvArray::math::abs( maxDx ) + LvArray::math::abs( m_maxDx_old )) > 1e-2 )
-  {
-    std::cout << "Oscillation not detected: " << maxDx << " " << m_maxDx_old << std::endl;
-    oscillation = false;
-  }
-
-  m_maxDx_old = maxDx;
-
-  return oscillation ? 0.5 : 1.0;
+  return 1.0;
 }
 
 void PhysicsSolverBase::applySystemSolution( DofManager const & GEOS_UNUSED_PARAM( dofManager ),

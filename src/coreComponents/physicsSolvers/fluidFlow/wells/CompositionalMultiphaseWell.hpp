@@ -155,7 +155,7 @@ public:
    * @param subRegion the well subregion containing all the primary and dependent fields
    * @param targetIndex the targetIndex of the subRegion
    */
-  void updateFluidModel( WellElementSubRegion & subRegion );
+  bool updateFluidModel( WellElementSubRegion & subRegion );
 
   /**
    * @brief Recompute phase volume fractions (saturations) from constitutive and primary variables
@@ -183,7 +183,7 @@ public:
    */
   virtual bool updateState( DomainPartition & domain ) override;
 
-  virtual real64 updateSubRegionState( WellElementSubRegion & subRegion ) override;
+  std::pair< bool, real64 > updateSubRegionState( WellElementSubRegion & subRegion );
 
   virtual string wellElementDofName() const override { return viewKeyStruct::dofFieldString(); }
 

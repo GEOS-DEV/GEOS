@@ -1246,6 +1246,7 @@ bool SinglePhaseBase::updateState( DomainPartition & domain )
       }
     } );
   } );
+  
   return true;
 }
 

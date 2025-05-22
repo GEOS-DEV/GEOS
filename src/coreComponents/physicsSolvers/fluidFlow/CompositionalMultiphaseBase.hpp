@@ -309,7 +309,6 @@ public:
     static constexpr char const * allowLocalCompDensChoppingString() { return "allowLocalCompDensityChopping"; }
     static constexpr char const * useTotalMassEquationString() { return "useTotalMassEquation"; }
     static constexpr char const * useSimpleAccumulationString() { return "useSimpleAccumulation"; }
-    static constexpr char const * chopWhenUpdateStateFailedString() { return "chopWhenupdateStateFailed"; }
     static constexpr char const * minCompDensString() { return "minCompDens"; }
     static constexpr char const * minCompFracString() { return "minCompFrac"; }
     static constexpr char const * maxSequentialCompDensChangeString() { return "maxSequentialCompDensChange"; }
@@ -532,9 +531,6 @@ protected:
 
   /// flag indicating whether simple accumulation form is used
   integer m_useSimpleAccumulation;
-
-  /// flag indicating whether time step is chopped when update state failed
-  integer m_chopWhenUpdateStateFailed;
 
   /// minimum allowed global component density
   real64 m_minCompDens;

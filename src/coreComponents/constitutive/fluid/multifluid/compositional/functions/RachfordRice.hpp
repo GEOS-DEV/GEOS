@@ -136,7 +136,7 @@ public:
     real64 newtonValue = gasPhaseMoleFraction;
     real64 funcNewton = evaluate( kValues, feed, presentComponentIds, newtonValue );
 
-    while( ( currentError > newtonTolerance ) && ( newtonIteration < maxNewtonIterations ) )
+    while( ( currentError >= newtonTolerance ) && ( newtonIteration < maxNewtonIterations ) )
     {
       real64 deltaNewton = -funcNewton / evaluateDerivative( kValues, feed, presentComponentIds, newtonValue );
 
@@ -158,18 +158,16 @@ public:
                                          LvArray::math::abs( deltaNewton ) );
       newtonIteration++;
 
-      // TODO: add warning if max number of Newton iterations is reached
+#if !defined(GEOS_DEVICE_COMPILE)
+      GEOS_WARNING_IF( newtonIteration >= maxNewtonIterations,
+                       GEOS_FMT( "Rachford-Rice solver did not converge after {} SSI iterations and {} Newton iterations",
+                                 SSIIteration, newtonIteration ) );
+#endif
     }
 
     gasPhaseMoleFraction = newtonValue;
 
-    if( currentError > newtonTolerance )
-    {
-      GEOS_WARNING( "Rachford-Rice solver did not converge after " << SSIIteration << " SSI iterations and " << newtonIteration << " Newton iterations." );
-      return false;
-    }
-
-    return true;
+    return currentError < newtonTolerance;
   }
 
 private:

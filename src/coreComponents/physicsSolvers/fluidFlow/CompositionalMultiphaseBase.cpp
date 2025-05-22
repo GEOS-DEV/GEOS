@@ -194,12 +194,6 @@ CompositionalMultiphaseBase::CompositionalMultiphaseBase( const string & name,
     setApplyDefaultValue( 0.01 ).
     setDescription( "Minimum value for solution scaling factor" );
 
-  this->registerWrapper( viewKeyStruct::chopWhenUpdateStateFailedString(), &m_chopWhenUpdateStateFailed ).
-    setSizedFromParent( 0 ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setApplyDefaultValue( 0 ).
-    setDescription( "Flag indicating whether time step is chopped when update status failed" );
-
   addLogLevel< logInfo::Convergence >();
   addLogLevel< logInfo::Solution >();
   addLogLevel< logInfo::SourceFluxFailure >();
@@ -757,8 +751,6 @@ bool CompositionalMultiphaseBase::updateFluidModel( ObjectManagerBase & dataGrou
 {
   GEOS_MARK_FUNCTION;
 
-  Timer timer( m_timers["update fluid model"] );
-
   arrayView1d< real64 const > const pres = dataGroup.getField< fields::flow::pressure >();
   arrayView1d< real64 const > const temp = dataGroup.getField< fields::flow::temperature >();
   arrayView2d< real64 const, compflow::USD_COMP > const compFrac =
@@ -928,8 +920,6 @@ std::pair< bool, real64 > CompositionalMultiphaseBase::updateFluidState( Element
 {
   GEOS_MARK_FUNCTION;
 
-  Timer timer( m_timers["update fluid state"] );
-
   if( m_formulationType == CompositionalMultiphaseFormulationType::ComponentDensities )
   {
     // For p, rho_c as the primary unknowns
@@ -944,7 +934,7 @@ std::pair< bool, real64 > CompositionalMultiphaseBase::updateFluidState( Element
   // note1: for now, thermal conductivity is treated explicitly, so no update here
   // note2: for now, diffusion and dispersion are also treated explicitly
 
-  return {status, maxDeltaPhaseVolFrac};
+  return { status, maxDeltaPhaseVolFrac };
 }
 
 void CompositionalMultiphaseBase::initializeFluidState( MeshLevel & mesh,
@@ -2793,6 +2783,7 @@ bool CompositionalMultiphaseBase::updateState( DomainPartition & domain )
 
   bool status = true;
   real64 maxDeltaPhaseVolFrac = 0.0;
+
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel & mesh,
                                                                string_array const & regionNames )
@@ -2816,12 +2807,13 @@ bool CompositionalMultiphaseBase::updateState( DomainPartition & domain )
     } );
   } );
 
+  status = MpiWrapper::allReduce( int(status), MpiWrapper::Reduction::LogicalAnd );
   maxDeltaPhaseVolFrac = MpiWrapper::max( maxDeltaPhaseVolFrac );
 
   GEOS_LOG_LEVEL_RANK_0( logInfo::Solution,
                          GEOS_FMT( "        {}: Max phase volume fraction change = {}", getName(), fmt::format( "{:.{}f}", maxDeltaPhaseVolFrac, 4 ) ) );
 
-  return m_chopWhenUpdateStateFailed ? status : true;
+  return status;
 }
 
 bool CompositionalMultiphaseBase::checkSequentialSolutionIncrements( DomainPartition & domain ) const

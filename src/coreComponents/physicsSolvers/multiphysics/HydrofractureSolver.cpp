@@ -984,7 +984,7 @@ bool HydrofractureSolver< POROMECHANICS_SOLVER >::updateState( DomainPartition &
 {
   GEOS_MARK_FUNCTION;
 
-  Base::updateState( domain );
+  bool const status = Base::updateState( domain );
 
   if( !m_isLaggingFractureStencilWeightsUpdate )
   {
@@ -1015,7 +1015,7 @@ bool HydrofractureSolver< POROMECHANICS_SOLVER >::updateState( DomainPartition &
     } );
   } );
 
-  return true;
+  return status;
 }
 
 template< typename POROMECHANICS_SOLVER >

@@ -1380,6 +1380,7 @@ bool ReactiveCompositionalMultiphaseOBL::updateState( DomainPartition & domain )
       updateOBLOperators( subRegion );
     } );
   } );
+  
   return true;
 }
 

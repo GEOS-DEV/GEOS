@@ -741,9 +741,9 @@ bool SinglePhasePoromechanicsConformingFractures< FLOW_SOLVER >::updateState( Do
   GEOS_MARK_FUNCTION;
 
   // call base poromechanics update
-  Base::updateState( domain );
+  bool status = Base::updateState( domain );
   // need to call solid mechanics update separately to compute face displacement jump
-  this->solidMechanicsSolver()->updateState( domain );
+  status &= this->solidMechanicsSolver()->updateState( domain );
 
   // remove the contribution of the hydraulic aperture from the stencil weights
   this->flowSolver()->prepareStencilWeights( domain );
@@ -753,7 +753,7 @@ bool SinglePhasePoromechanicsConformingFractures< FLOW_SOLVER >::updateState( Do
   // update the stencil weights using the updated hydraulic aperture
   this->flowSolver()->updateStencilWeights( domain );
 
-  return true;
+  return status;
 }
 
 template< typename FLOW_SOLVER >

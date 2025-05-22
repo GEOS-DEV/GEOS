@@ -235,8 +235,6 @@ CompositionalMultiphaseFluidUpdates< FLASH, PHASE1, PHASE2, PHASE3 >::compute(
   integer const numPhase = numPhases();
   integer const numDof = numComp + 2;
 
-  bool status = true;
-
   // 1. Convert input mass fractions to mole fractions and keep derivatives
 
   stackArray1d< real64, maxNumComp > compMoleFrac( numComp );
@@ -258,13 +256,13 @@ CompositionalMultiphaseFluidUpdates< FLASH, PHASE1, PHASE2, PHASE3 >::compute(
   }
 
   // 2. Compute phase fractions and phase component fractions
-  status &= m_flash.compute( m_componentProperties,
-                             pressure,
-                             temperature,
-                             compMoleFrac.toSliceConst(),
-                             kValues,
-                             phaseFrac,
-                             phaseCompFrac );
+  bool const status = m_flash.compute( m_componentProperties,
+                                       pressure,
+                                       temperature,
+                                       compMoleFrac.toSliceConst(),
+                                       kValues,
+                                       phaseFrac,
+                                       phaseCompFrac );
 
   // 3. Calculate the phase densities
   m_phase1.density.compute( m_componentProperties,

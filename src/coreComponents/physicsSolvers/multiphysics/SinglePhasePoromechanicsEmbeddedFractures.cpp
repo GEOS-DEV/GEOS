@@ -470,13 +470,13 @@ bool SinglePhasePoromechanicsEmbeddedFractures::updateState( DomainPartition & d
   GEOS_MARK_FUNCTION;
 
   /// 1. update the reservoir
-  Base::updateState( domain );
+  bool status = Base::updateState( domain );
 
   // remove the contribution of the hydraulic aperture from the stencil weights
   flowSolver()->prepareStencilWeights( domain );
 
   /// 2. update the fractures
-  solidMechanicsSolver()->updateState( domain );
+  status &= solidMechanicsSolver()->updateState( domain );
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
@@ -557,7 +557,7 @@ bool SinglePhasePoromechanicsEmbeddedFractures::updateState( DomainPartition & d
     } );
   } );
 
-  return true;
+  return status;
 }
 
 REGISTER_CATALOG_ENTRY( PhysicsSolverBase, SinglePhasePoromechanicsEmbeddedFractures, std::string const &, Group * const )

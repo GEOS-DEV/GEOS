@@ -206,21 +206,6 @@ void WellSolverBase::implicitStepSetup( real64 const & time_n,
   initializeWells( domain, time_n );
 }
 
-bool WellSolverBase::updateState( DomainPartition & domain )
-{
-  GEOS_MARK_FUNCTION;
-
-  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
-                                                               MeshLevel & mesh,
-                                                               string_array const & regionNames )
-  {
-    mesh.getElemManager().forElementSubRegions< WellElementSubRegion >( regionNames, [&]( localIndex const,
-                                                                                          WellElementSubRegion & subRegion )
-    { updateSubRegionState( subRegion ); } );
-  } );
-  return true;
-}
-
 void WellSolverBase::assembleSystem( real64 const time,
                                      real64 const dt,
                                      DomainPartition & domain,
