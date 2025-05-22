@@ -255,9 +255,7 @@ void ImmiscibleMultiphaseFlow::initializePreSubGroups()
       for( localIndex const faceIndex : faceSet )
       {
         localIndex const faceIndices[2] = { faceIndex, faceIndex };
-        faceRegion.addToSurfaceMesh( &faceManager,
-                                     faceManager.edgeList().toViewConst(),
-                                     faceIndices );
+        faceRegion.addToSurfaceMesh( &faceManager, faceIndices );
       }
 
       FaceElementSubRegion const & faceSubRegion = faceRegion.getUniqueSubRegion< FaceElementSubRegion >();
