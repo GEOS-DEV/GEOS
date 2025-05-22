@@ -55,9 +55,9 @@ void kernelLaunchSelectorCompSwitch( T value, LAMBDA && lambda )
     case 5:
     { lambda( std::integral_constant< T, 5 >() ); return; }
     case 6:
-    { lambda( std::integral_constant< T, 5 >() ); return; }
+    { lambda( std::integral_constant< T, 6 >() ); return; }
     case 7:
-    { lambda( std::integral_constant< T, 5 >() ); return; }
+    { lambda( std::integral_constant< T, 7 >() ); return; }
     default:
     { GEOS_ERROR( "Unsupported number of primary species: " << value ); }
   }

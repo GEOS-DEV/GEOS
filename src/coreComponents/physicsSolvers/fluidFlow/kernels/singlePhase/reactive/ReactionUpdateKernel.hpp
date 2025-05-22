@@ -39,14 +39,13 @@ struct EquilibriumReactionUpdateKernel
   static void launch( REACTIVE_FLUID const & fluid,
                       arrayView1d< real64 const > const & pres,
                       arrayView1d< real64 const > const & temp,
-                      arrayView2d< real64, constitutive::reactivefluid::USD_COMP > const logPrimaryConc,
-                      arrayView2d< real64 const, constitutive::reactivefluid::USD_COMP > const primaryAggregateConc )
+                      arrayView2d< real64, compflow::USD_COMP > const logPrimaryConc )
   {
     std::visit( [&]( auto const reactionWrapper )
     {
       forAll< parallelDevicePolicy<> >( reactionWrapper.numElems(), [=] GEOS_HOST_DEVICE ( localIndex const k )
       {
-        reactionWrapper.updateEquilibriumReaction( k, pres[k], temp[k], primaryAggregateConc[k], logPrimaryConc[k] );
+        reactionWrapper.updateEquilibriumReaction( k, pres[k], temp[k], logPrimaryConc[k] );
       } );
     }, fluid.createReactionKernelWrapper());
   }
@@ -54,23 +53,23 @@ struct EquilibriumReactionUpdateKernel
 
 /******************************** MixedSystemReactionUpdateKernel ********************************/
 
-// struct MixedSystemReactionUpdateKernel
-// {
-//   template< typename REACTION_WRAPPER >
-//   static void launch( REACTION_WRAPPER const & reactionWrapper,
-//                       arrayView1d< real64 const > const & pres,
-//                       arrayView1d< real64 const > const & temp,
-//                       arrayView2d< real64 const, compflow::USD_COMP > const logPrimaryConc )
-//   {
-//     forAll< parallelDevicePolicy<> >( reactionWrapper.numElems(), [=] GEOS_HOST_DEVICE ( localIndex const k )
-//     {
-//       for( localIndex q = 0; q < reactionWrapper.numGauss(); ++q )
-//       {
-//         reactionWrapper.computeReactionRates( k, q, pres[k], temp[k], logPrimaryConc[k] );
-//       }
-//     } );
-//   }
-// };
+struct MixedSystemReactionUpdateKernel
+{
+  template< typename REACTIVE_FLUID >
+  static void launch( REACTIVE_FLUID const & fluid,
+                      arrayView1d< real64 const > const & pres,
+                      arrayView1d< real64 const > const & temp,
+                      arrayView2d< real64 const, compflow::USD_COMP > const logPrimaryConc )
+  {
+    std::visit( [&]( auto const reactionWrapper )
+    {
+      forAll< parallelDevicePolicy<> >( reactionWrapper.numElems(), [=] GEOS_HOST_DEVICE ( localIndex const k )
+      {
+        reactionWrapper.updateMixedReactionSystem( k, pres[k], temp[k], logPrimaryConc[k] );
+      } );
+    }, fluid.createReactionKernelWrapper());
+  }
+};
 
 } // namespace singlePhaseReactiveBaseKernels
 
