@@ -92,7 +92,6 @@ localIndex SurfaceElementRegion::addToSurfaceMesh( FaceManager const * const fac
                                                    localIndex const faceIndices[2] )
 {
   localIndex rval = -1;
-  SortedArray< localIndex > connectedEdges;
   arrayView2d< localIndex const > const faceToElementRegion = faceManager->elementRegionList();
   arrayView2d< localIndex const > const faceToElementSubRegion = faceManager->elementSubRegionList();
   arrayView2d< localIndex const > const faceToElementIndex = faceManager->elementList();
@@ -109,7 +108,6 @@ localIndex SurfaceElementRegion::addToSurfaceMesh( FaceManager const * const fac
   arrayView1d< integer const > const faceGhostRank = faceManager->ghostRank();
 
   SurfaceElementSubRegion::NodeMapType & nodeMap = subRegion.nodeList();
-  SurfaceElementSubRegion::EdgeMapType & edgeMap = subRegion.edgeList();
   FaceElementSubRegion::FaceMapType & faceMap = subRegion.faceList();
 
   ArrayOfArraysView< localIndex const > const faceToNodeMap = faceManager->nodeList().toViewConst();
@@ -149,17 +147,6 @@ localIndex SurfaceElementRegion::addToSurfaceMesh( FaceManager const * const fac
     nodeMap[ kfe ][ 7 ] = faceToNodeMap( faceIndices[ 1 ], 2 );
   }
 
-  // Add the edges that compose the faceElement to the edge map. This is essentially a copy of
-  // the facesToEdges entry.
-  localIndex const faceIndex = faceIndices[0];
-  localIndex const numEdges = originalFaceToEdgeMap.sizeOfArray( faceIndex );
-  edgeMap.resizeArray( kfe, numEdges );
-  for( localIndex a=0; a<numEdges; ++a )
-  {
-    edgeMap[kfe][a] = originalFaceToEdgeMap( faceIndex, a );
-    connectedEdges.insert( originalFaceToEdgeMap( faceIndex, a ) );
-  }
-
   // Add the cell region/subregion/index to the faceElementToCells map
   FixedToManyElementRelation & faceElementsToCells = subRegion.getToCellRelation();
 
@@ -192,14 +179,23 @@ localIndex SurfaceElementRegion::addToFractureMesh( real64 const time_np1,
   arrayView1d< real64 > const ruptureTime = subRegion.getField< fields::ruptureTime >();
   ruptureTime( kfe ) = time_np1;
 
-  // Fill the connectivity between FaceElement entries. This is essentially a copy of the
-  // edgesToFaces map, but with differing offsets.
+  // Add the edges that compose the faceElement to the edge map. This is essentially a copy of
+  // the facesToEdges entry.
+  SurfaceElementSubRegion::EdgeMapType & edgeMap = subRegion.edgeList();
+  SortedArray< localIndex > connectedEdges;
   localIndex const faceIndex = faceIndices[0];
   localIndex const numEdges = originalFaceToEdgeMap.sizeOfArray( faceIndex );
-  for( localIndex a = 0; a < numEdges; ++a )
+  edgeMap.resizeArray( kfe, numEdges );
+  for( localIndex a=0; a<numEdges; ++a )
   {
-    const localIndex edge = originalFaceToEdgeMap( faceIndex, a );
+    edgeMap[kfe][a] = originalFaceToEdgeMap( faceIndex, a );
+    connectedEdges.insert( originalFaceToEdgeMap( faceIndex, a ) );
+  }
 
+  // Fill the connectivity between FaceElement entries. This is essentially a copy of the
+  // edgesToFaces map, but with differing offsets.
+  for( auto const & edge : connectedEdges )
+  {
     // check to see if the edgesToFractureConnectors already have an entry
     if( subRegion.m_edgesTo2dFaces.count( edge )==0 )
     {
