@@ -141,6 +141,17 @@ public:
                                arraySlice1d< real64, reactivefluid::USD_COMP - 1 > const & primarySpeciesConcentration,
                                arraySlice1d< real64, reactivefluid::USD_COMP - 1 > const & secondarySpeciesConcentration ) const;
 
+    void computeAggregateConcentrationsAndRates( real64 const pressure,
+                                                 real64 const temperature,
+                                                 arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & logPrimarySpeciesConcentration,
+                                                 arraySlice1d< real64, compflow::USD_COMP - 1 > const & logSecondarySpeciesConcentration,
+                                                 arraySlice1d< real64, compflow::USD_COMP - 1 > const & aggregatePrimarySpeciesConcentrations,
+                                                 arraySlice2d< real64, compflow::USD_COMP - 1 > const & dAggregatePrimarySpeciesConcentrations_dLogPrimarySpeciesConcentrations,
+                                                 arraySlice1d< real64, compflow::USD_COMP - 1 > const & reactionRates,
+                                                 arraySlice2d< real64, compflow::USD_COMP - 1 > const & dReactionRates_dLogPrimarySpeciesConcentrations,
+                                                 arraySlice1d< real64, compflow::USD_COMP - 1 > const & aggregateSpeciesRates,
+                                                 arraySlice2d< real64, compflow::USD_COMP - 1 > const & dAggregateSpeciesRates_dLogPrimarySpeciesConcentrations ) const; 
+
 protected:
 
     integer m_numPrimarySpecies;
@@ -229,14 +240,7 @@ updateEquilibriumReaction( localIndex const k,
                            arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & primarySpeciesAggregateConcentration,
                            arraySlice1d< real64, compflow::USD_COMP - 1 > const & logPrimarySpeciesConcentration ) const
 {
-  enforceEquilibrium( pressure, temperature, primarySpeciesAggregateConcentration, m_primarySpeciesConcentration[k], m_secondarySpeciesConcentration[k] );
-
-  for( int i=0; i < m_numPrimarySpecies; i++ )
-  {
-    real64 const primarySpeciesConc_i = m_primarySpeciesConcentration[k][i];
-
-    logPrimarySpeciesConcentration[i] = LvArray::math::log( primarySpeciesConc_i );
-  }
+  enforceEquilibrium( pressure, temperature, primarySpeciesAggregateConcentration, logPrimarySpeciesConcentration, m_secondarySpeciesConcentration[k] );
 }
 
 template< typename BASE >
@@ -245,34 +249,47 @@ inline void
 ReactiveSinglePhaseFluid< BASE >::ReactionKernelWrapper< REACTION_PARAMS_TYPE >::
 enforceEquilibrium( real64 const pressure,
                     real64 const temperature,
-                    arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & primarySpeciesAggregateConcentration,
-                    arraySlice1d< real64, compflow::USD_COMP - 1 > const & primarySpeciesConcentration,
-                    arraySlice1d< real64, compflow::USD_COMP - 1 > const & secondarySpeciesConcentration ) const
+                    arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & logPrimarySpeciesAggregateConcentration,
+                    arraySlice1d< real64, compflow::USD_COMP - 1 > const & logPrimarySpeciesConcentration,
+                    arraySlice1d< real64, compflow::USD_COMP - 1 > const & logSecondarySpeciesConcentrations ) const
 {
-  GEOS_UNUSED_VAR( pressure, temperature, secondarySpeciesConcentration );
+  GEOS_UNUSED_VAR( pressure );
   // 1. We enforce equilibrium
-  EquilibriumReactionsType::enforceEquilibrium_Extents( 298.15, m_params, primarySpeciesAggregateConcentration, primarySpeciesConcentration );
-  // // 2. We calculate the secondary species concentration
-  // hpcReact::bulkGeneric::calculateLogSecondarySpeciesConcentration< real64,
-  //                                                                   localIndex,
-  //                                                                   localIndex >( m_params, primarySpeciesConcentration, secondarySpeciesConcentration );
+  EquilibriumReactionsType::enforceEquilibrium_Aggregate( temperature, m_params, logPrimarySpeciesAggregateConcentration, logPrimarySpeciesConcentration );
+  // 2. We calculate the secondary species concentration
+  hpcReact::bulkGeneric::calculateLogSecondarySpeciesConcentration< real64,
+                                                                    localIndex,
+                                                                    localIndex >( m_params, logPrimarySpeciesConcentration, logSecondarySpeciesConcentrations );
 }
 
 template< typename BASE >
 template< typename REACTION_PARAMS_TYPE >
 inline void
 ReactiveSinglePhaseFluid< BASE >::ReactionKernelWrapper< REACTION_PARAMS_TYPE >::
-computeReactionRates( real64 const pressure,
-                      real64 const temperature,
-                      arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & primarySpeciesAggregateConcentration,
-                      arraySlice1d< real64, compflow::USD_COMP - 1 > const & primarySpeciesConcentration,
-                      arraySlice1d< real64, compflow::USD_COMP - 1 > const & secondarySpeciesConcentration ) const
+  computeAggregateConcentrationsAndRates( real64 const pressure,
+                                          real64 const temperature,
+                                          arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & logPrimarySpeciesConcentration,
+                                          arraySlice1d< real64, compflow::USD_COMP - 1 > const & logSecondarySpeciesConcentration,
+                                          arraySlice1d< real64, compflow::USD_COMP - 1 > const & aggregatePrimarySpeciesConcentrations,
+                                          arraySlice2d< real64, compflow::USD_COMP - 1 > const & dAggregatePrimarySpeciesConcentrations_dLogPrimarySpeciesConcentrations,
+                                          arraySlice1d< real64, compflow::USD_COMP - 1 > const & reactionRates,
+                                          arraySlice2d< real64, compflow::USD_COMP - 1 > const & dReactionRates_dLogPrimarySpeciesConcentrations,
+                                          arraySlice1d< real64, compflow::USD_COMP - 1 > const & aggregateSpeciesRates,
+                                          arraySlice2d< real64, compflow::USD_COMP - 1 > const & dAggregateSpeciesRates_dLogPrimarySpeciesConcentrations ) const
 {
   GEOS_UNUSED_VAR( pressure );
-  // 1. We enforce equilibrium
-  EquilibriumReactionsType::enforceEquilibrium_Extents( temperature, m_params, primarySpeciesAggregateConcentration, primarySpeciesConcentration );
-  // 2. We calculate the secondary species concentration
-  hpcReact::bulkGeneric::utilities_impl::calculateLogSecondarySpeciesConcentration( m_params, primarySpeciesConcentration, secondarySpeciesConcentration );
+
+  MixedEquilibriumKineticReactions::
+   updateMixedSystem( temperature,
+                      m_params,
+                      logPrimarySpeciesConcentrations,
+                      logSecondarySpeciesConcentrations,
+                      aggregatePrimarySpeciesConcentrations,
+                      dAggregatePrimarySpeciesConcentrations_dLogPrimarySpeciesConcentrations,
+                      reactionRates,
+                      dReactionRates_dLogPrimarySpeciesConcentrations,
+                      aggregateSpeciesRates,
+                      dAggregateSpeciesRates_dLogPrimarySpeciesConcentrations )
 }
 
 ENUM_STRINGS( ChemicalSystemType,
