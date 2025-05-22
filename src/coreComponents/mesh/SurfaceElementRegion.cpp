@@ -172,7 +172,7 @@ localIndex SurfaceElementRegion::addToFractureMesh( real64 const time_np1,
                                                     ArrayOfArraysView< localIndex const >  const & originalFaceToEdgeMap,
                                                     localIndex const faceIndices[2] )
 {
-  localIndex const kfe = this->addToSurfaceMesh( faceManager, originalFaceToEdgeMap, faceIndices );
+  localIndex const kfe = this->addToSurfaceMesh( faceManager, faceIndices );
 
   FaceElementSubRegion & subRegion = this->getUniqueSubRegion< FaceElementSubRegion >();
   arrayView1d< real64 > const ruptureTime = subRegion.getField< fields::ruptureTime >();
