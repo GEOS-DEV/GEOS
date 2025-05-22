@@ -102,6 +102,15 @@ public:
   virtual void generateMesh( Group const & faceBlocks ) override;
 
   /**
+   * @brief This function generates and adds entries to the face/surface mesh.
+   * @param faceManager pointer to the FaceManager object.
+   * @param faceIndices the local indices of the new faces that define the face element.
+   * @return the local index of the new FaceElement entry.
+   */
+  localIndex addToSurfaceMesh( FaceManager const * const faceManager,
+                               localIndex const faceIndices[2] );
+
+  /**
    * @brief This function generates and adds entries to the face/fracture mesh.
    * @param faceManager pointer to the FaceManager object.
    * @param originalFaceToEdges face-to-edge map before the rupture.
