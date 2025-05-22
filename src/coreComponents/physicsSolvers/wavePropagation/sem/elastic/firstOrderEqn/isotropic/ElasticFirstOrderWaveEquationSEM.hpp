@@ -62,13 +62,13 @@ public:
                                       real64 const & dt,
                                       integer const cycleNumber,
                                       DomainPartition & domain,
-                                      bool const computeGradient ) override;
+                                      integer const computeGradient ) override;
 
   virtual real64 explicitStepBackward( real64 const & time_n,
                                        real64 const & dt,
                                        integer const cycleNumber,
                                        DomainPartition & domain,
-                                       bool const computeGradient ) override;
+                                       integer const computeGradient ) override;
 
 
   /**
