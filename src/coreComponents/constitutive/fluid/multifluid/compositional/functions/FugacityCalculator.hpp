@@ -165,14 +165,14 @@ void FugacityCalculator::computeLogFugacityDerivatives( integer const numComps,
   else if( equationOfState == EquationOfStateType::SoreideWhitson )
   {
     SoreideWhitsonEOSPhaseModel< PengRobinsonEOS >::
-    computeLogFugacityCoefficients( numComps,
-                                    pressure,
-                                    temperature,
-                                    composition,
-                                    componentProperties,
-                                    flashData.salinity,
-                                    logFugacity,
-                                    logFugacityDerivs );
+    computeLogFugacityCoefficientDerivs( numComps,
+                                         pressure,
+                                         temperature,
+                                         composition,
+                                         componentProperties,
+                                         flashData.salinity,
+                                         logFugacity,
+                                         logFugacityDerivs );
   }
 }
 

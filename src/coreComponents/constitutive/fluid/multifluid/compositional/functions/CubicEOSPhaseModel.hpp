@@ -138,17 +138,17 @@ public:
    * @param[out] compressibilityFactor the current compressibility factor
    * @param[out] compressibilityFactorDerivs derivatives of the compressibility factor
    */
-  template< integer USD >
+  template< integer USD1, integer USD2 >
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
   static void
   computeCompressibilityFactor( integer const numComps,
                                 real64 const & pressure,
                                 real64 const & temperature,
-                                arraySlice1d< real64 const, USD > const & composition,
+                                arraySlice1d< real64 const, USD1 > const & composition,
                                 ComponentProperties::KernelWrapper const & componentProperties,
                                 real64 & compressibilityFactor,
-                                arraySlice1d< real64 > const & compressibilityFactorDerivs );
+                                arraySlice1d< real64, USD2 > const & compressibilityFactorDerivs );
 
   /**
    * @brief Calculate the dimensional volume shift
@@ -301,6 +301,7 @@ public:
    * @param[out] compressibilityFactorDerivs derivatives of the compressibility factor
    * @note Assumes that pressure and temperature are strictly positive
    */
+  template< integer USD >
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
   static void
@@ -310,7 +311,7 @@ public:
                                 real64 const & compressibilityFactor,
                                 arraySlice1d< real64 const > const & aMixtureCoefficientDerivs,
                                 arraySlice1d< real64 const > const & bMixtureCoefficientDerivs,
-                                arraySlice1d< real64 > const & compressibilityFactorDerivs );
+                                arraySlice1d< real64, USD > const & compressibilityFactorDerivs );
 
   /**
    * @brief Compute the log of the fugacity coefficients using compositions, BICs, compressibility factor and mixture coefficients
@@ -440,9 +441,10 @@ computeLogFugacityCoefficients( integer const numComps,
   real64 aMixtureCoefficient = 0.0;
   real64 bMixtureCoefficient = 0.0;
   real64 compressibilityFactor = 0.0;
-  stackArray1d< real64, numMaxDofs > aMixtureCoefficientDerivs( numDofs );
-  stackArray1d< real64, numMaxDofs > bMixtureCoefficientDerivs( numDofs );
-  stackArray1d< real64, numMaxDofs > compressibilityFactorDerivs( numDofs );
+  stackArray2d< real64, 3*numMaxDofs > derivatives( 3, numDofs );
+  arraySlice1d< real64 > aMixtureCoefficientDerivs = derivatives[0];
+  arraySlice1d< real64 > bMixtureCoefficientDerivs = derivatives[1];
+  arraySlice1d< real64 > compressibilityFactorDerivs = derivatives[2];
 
   arraySlice2d< real64 const > const & binaryInteractionCoefficients = componentProperties.m_componentBinaryCoeff;
 
@@ -570,17 +572,17 @@ computeLogFugacityCoefficients( integer const numComps,
 }
 
 template< typename EOS_TYPE >
-template< integer USD >
+template< integer USD1, integer USD2 >
 GEOS_HOST_DEVICE
 void
 CubicEOSPhaseModel< EOS_TYPE >::
 computeCompressibilityFactor( integer const numComps,
                               real64 const & pressure,
                               real64 const & temperature,
-                              arraySlice1d< real64 const, USD > const & composition,
+                              arraySlice1d< real64 const, USD1 > const & composition,
                               ComponentProperties::KernelWrapper const & componentProperties,
                               real64 & compressibilityFactor,
-                              arraySlice1d< real64 > const & compressibilityFactorDerivs )
+                              arraySlice1d< real64, USD2 > const & compressibilityFactorDerivs )
 {
   // step 0: allocate the stack memory needed for the update
   integer constexpr numMaxComps = MultiFluidConstants::MAX_NUM_COMPONENTS;
@@ -891,6 +893,7 @@ computeCompressibilityFactor( integer const numComps,
 }
 
 template< typename EOS_TYPE >
+template< integer USD >
 GEOS_HOST_DEVICE
 void
 CubicEOSPhaseModel< EOS_TYPE >::
@@ -900,7 +903,7 @@ computeCompressibilityFactor( integer const numComps,
                               real64 const & compressibilityFactor,
                               arraySlice1d< real64 const > const & aMixtureCoefficientDerivs,
                               arraySlice1d< real64 const > const & bMixtureCoefficientDerivs,
-                              arraySlice1d< real64 > const & compressibilityFactorDerivs )
+                              arraySlice1d< real64, USD > const & compressibilityFactorDerivs )
 {
   real64 constexpr d1pd2 = EOS_TYPE::delta1 + EOS_TYPE::delta2;
   real64 constexpr d1xd2 = EOS_TYPE::delta1 * EOS_TYPE::delta2;

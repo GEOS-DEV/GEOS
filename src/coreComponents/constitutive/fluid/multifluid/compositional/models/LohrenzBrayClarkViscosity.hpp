@@ -21,7 +21,7 @@
 #define GEOS_CONSTITUTIVE_FLUID_MULTIFLUID_COMPOSITIONAL_MODELS_LOHRENZBRAYCLARKVISCOSITY_HPP_
 
 #include "FunctionBase.hpp"
-
+#include "constitutive/fluid/multifluid/MultiFluidConstants.hpp"
 #include "common/format/EnumStrings.hpp"
 
 namespace geos
@@ -37,6 +37,8 @@ class ModelParameters;
 
 class LohrenzBrayClarkViscosityUpdate final : public FunctionBaseUpdate
 {
+private:
+  static integer constexpr maxNumComps = MultiFluidConstants::MAX_NUM_COMPONENTS;
 public:
 /**
  * @brief Mixing types for phase viscosity

@@ -42,9 +42,9 @@ enum class EquationOfStateType : integer
 };
 
 ENUM_STRINGS( EquationOfStateType,
-              "pr",
-              "srk",
-              "sw" );
+              "PengRobinson",
+              "SoaveRedlichKwong",
+              "SoreideWhitson" );
 
 class EquationOfState : public ModelParameters
 {

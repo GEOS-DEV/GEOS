@@ -27,7 +27,7 @@
     <CompositionalTwoPhaseFluidPhillipsBrine
       name="brine"
       phaseNames="{ liquid, gas }"
-      equationsOfState="{ sw, pr }"
+      equationsOfState="{ SoreideWhitson, PengRobinson }"
       componentNames="{ CH4, CO2, H2O }"
       componentCriticalPressure="{ 4.59920e+06, 7.37730e+06, 2.20640e+07 }"
       componentCriticalTemperature="{ 1.90564e+02, 3.04128e+02, 6.47096e+02 }"

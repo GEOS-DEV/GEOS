@@ -87,42 +87,31 @@ public:
                                                          m_flashData,
                                                          tangentPlaneDistance,
                                                          kValues[0] );
-    if( !stabilityStatus )
-    {
-      GEOS_LOG( GEOS_FMT( "Stability test failed at pressure = {:.5e}, = temperature {:.3f}, composition =", pressure, temperature ));
-      for( integer ic = 0; ic < m_numComponents; ++ic )
-      {
-        GEOS_LOG( GEOS_FMT( "{:.5e}", compFraction[ic] ));
-      }
-    }
 
     bool flashStatus = true;
 
-    if( tangentPlaneDistance < -stabilityTolerance )
+    // If the stability test failed to converge to a stationary point then we will assume the mixture is unstable
+    if( tangentPlaneDistance < -stabilityTolerance || !stabilityStatus )
     {
       // Unstable mixture
 
       // Iterative solve to converge flash
-      flashStatus = NegativeTwoPhaseFlash::compute( m_numComponents,
-                                                    pressure,
-                                                    temperature,
-                                                    compFraction,
-                                                    componentProperties,
-                                                    m_flashData,
-                                                    kValues,
-                                                    phaseFraction.value[m_vapourIndex],
-                                                    phaseCompFraction.value[m_liquidIndex],
-                                                    phaseCompFraction.value[m_vapourIndex] );
+      bool const flashStatus = NegativeTwoPhaseFlash::compute( m_numComponents,
+                                                               pressure,
+                                                               temperature,
+                                                               compFraction,
+                                                               componentProperties,
+                                                               m_flashData,
+                                                               kValues,
+                                                               phaseFraction.value[m_vapourIndex],
+                                                               phaseCompFraction.value[m_liquidIndex],
+                                                               phaseCompFraction.value[m_vapourIndex] );
 
-      if( !flashStatus )
-      {
-        GEOS_LOG( GEOS_FMT( "Negative two phase flash failed to converge at pressure = {:.5e}, temperature = {:.3f}, composition =",
-                            pressure, temperature ));
-        for( integer ic = 0; ic < m_numComponents; ++ic )
-        {
-          GEOS_LOG( GEOS_FMT( "{:.5e}", compFraction[ic] ));
-        }
-      }
+#if !defined(GEOS_DEVICE_COMPILE)
+      GEOS_WARNING_IF( !flashStatus,
+                       GEOS_FMT( "Negative two phase flash failed to converge at pressure {:.5e}, temperature {:.3f} and composition ",
+                                 pressure, temperature ) << compFraction );
+#endif
 
       // Calculate derivatives
       NegativeTwoPhaseFlash::computeDerivatives( m_numComponents,
