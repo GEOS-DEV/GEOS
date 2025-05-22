@@ -361,6 +361,8 @@ public:
                                             CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                             arrayView1d< real64 > const & localRhs ) const;
 
+  void applyDeltaVolume( ElementSubRegionBase & subRegion ) const;
+
 protected:
 
   /**

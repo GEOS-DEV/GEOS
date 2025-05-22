@@ -21,6 +21,9 @@
 
 #include "common/FieldSpecificationOps.hpp"
 #include "common/TypeDispatch.hpp"
+#include "common/format/table/TableData.hpp"
+#include "common/format/table/TableFormatter.hpp"
+#include "common/format/table/TableLayout.hpp"
 #include "finiteVolume/FluxApproximationBase.hpp"
 #include "linearAlgebra/interfaces/InterfaceTypes.hpp"
 #include "linearAlgebra/utilities/ReverseCutHillMcKeeOrdering.hpp"
@@ -150,7 +153,7 @@ namespace
 {
 
 template< typename FUNC >
-void forMeshSupport( std::vector< DofManager::FieldSupport > const & support,
+void forMeshSupport( stdVector< DofManager::FieldSupport > const & support,
                      DomainPartition & domain,
                      FUNC && func )
 {
@@ -163,7 +166,7 @@ void forMeshSupport( std::vector< DofManager::FieldSupport > const & support,
 }
 
 template< typename FUNC >
-void forMeshSupport( std::vector< DofManager::FieldSupport > const & support,
+void forMeshSupport( stdVector< DofManager::FieldSupport > const & support,
                      DomainPartition const & domain,
                      FUNC && func )
 {
@@ -386,11 +389,11 @@ processFieldRegionList( MeshLevel const & mesh,
   return regions;
 }
 
-std::vector< DofManager::FieldSupport >
+stdVector< DofManager::FieldSupport >
 processFieldSupportList( DomainPartition const & domain,
-                         std::vector< DofManager::FieldSupport > const & inputList )
+                         stdVector< DofManager::FieldSupport > const & inputList )
 {
-  std::vector< DofManager::FieldSupport > result;
+  stdVector< DofManager::FieldSupport > result;
   std::set< std::pair< string, string > > processedMeshLevels;
   for( DofManager::FieldSupport const & r : inputList )
   {
@@ -405,8 +408,8 @@ processFieldSupportList( DomainPartition const & domain,
   return result;
 }
 
-void addNewSupports( std::vector< DofManager::FieldSupport > const & inputSupport,
-                     std::vector< DofManager::FieldSupport > & fieldSupport )
+void addNewSupports( stdVector< DofManager::FieldSupport > const & inputSupport,
+                     stdVector< DofManager::FieldSupport > & fieldSupport )
 {
   for( auto const & newRegion : inputSupport )
   {
@@ -429,13 +432,13 @@ void addNewSupports( std::vector< DofManager::FieldSupport > const & inputSuppor
 void DofManager::addField( string const & fieldName,
                            FieldLocation const location,
                            integer const components,
-                           std::vector< FieldSupport > const & regions )
+                           stdVector< FieldSupport > const & regions )
 {
   GEOS_ASSERT_MSG( m_domain != nullptr, "Domain has not been set" );
   GEOS_ERROR_IF( m_reordered, "Cannot add fields after reorderByRank() has been called." );
   GEOS_ERROR_IF_GT_MSG( components, MAX_COMP, "Number of components limit exceeded" );
 
-  std::vector< FieldSupport > processedSupports = processFieldSupportList( *m_domain, regions );
+  stdVector< FieldSupport > processedSupports = processFieldSupportList( *m_domain, regions );
 
   if( !fieldExists( fieldName ))
   {
@@ -463,7 +466,7 @@ void DofManager::addField( string const & fieldName,
                            map< std::pair< string, string >, string_array > const & regions )
 {
   // Convert input into internal format
-  std::vector< FieldSupport > support;
+  stdVector< FieldSupport > support;
   for( auto const & p : regions )
   {
     MeshBody const & meshBody = m_domain->getMeshBody( p.first.first );
@@ -544,14 +547,14 @@ struct RegionComp
   }
 };
 
-std::vector< DofManager::FieldSupport >
-processCouplingRegionList( std::vector< DofManager::FieldSupport > inputList,
-                           std::vector< DofManager::FieldSupport > const & rowFieldRegions,
+stdVector< DofManager::FieldSupport >
+processCouplingRegionList( stdVector< DofManager::FieldSupport > inputList,
+                           stdVector< DofManager::FieldSupport > const & rowFieldRegions,
                            string const & rowFieldName,
-                           std::vector< DofManager::FieldSupport > const & colFieldRegions,
+                           stdVector< DofManager::FieldSupport > const & colFieldRegions,
                            string const & colFieldName )
 {
-  std::vector< DofManager::FieldSupport > regions( std::move( inputList ) );
+  stdVector< DofManager::FieldSupport > regions( std::move( inputList ) );
 
   if( regions.empty() )
   {
@@ -572,7 +575,7 @@ processCouplingRegionList( std::vector< DofManager::FieldSupport > inputList,
   else
   {
     // Check that each input entry is included in both row and col field supports
-    auto const checkSupport = [&regions]( std::vector< DofManager::FieldSupport > const & fieldRegions, string const & fieldName )
+    auto const checkSupport = [&regions]( stdVector< DofManager::FieldSupport > const & fieldRegions, string const & fieldName )
     {
       GEOS_UNUSED_VAR( fieldName ); // unused if geos_error_if is nulled
       for( DofManager::FieldSupport const & r : regions )
@@ -599,7 +602,7 @@ processCouplingRegionList( std::vector< DofManager::FieldSupport > inputList,
 void DofManager::addCoupling( string const & rowFieldName,
                               string const & colFieldName,
                               Connector const connectivity,
-                              std::vector< FieldSupport > const & supports,
+                              stdVector< FieldSupport > const & supports,
                               bool const symmetric )
 {
   GEOS_ASSERT_MSG( m_domain != nullptr, "Domain has not been set" );
@@ -607,11 +610,11 @@ void DofManager::addCoupling( string const & rowFieldName,
   localIndex const colFieldIndex = getFieldIndex( colFieldName );
 
   // Check if already defined
-  std::vector< FieldSupport > processSupportList = processCouplingRegionList( supports,
-                                                                              m_fields[rowFieldIndex].support,
-                                                                              rowFieldName,
-                                                                              m_fields[colFieldIndex].support,
-                                                                              colFieldName );
+  stdVector< FieldSupport > processSupportList = processCouplingRegionList( supports,
+                                                                            m_fields[rowFieldIndex].support,
+                                                                            rowFieldName,
+                                                                            m_fields[colFieldIndex].support,
+                                                                            colFieldName );
 
   if( m_coupling.count( {rowFieldIndex, colFieldIndex} ) == 0 )
   {
@@ -665,7 +668,7 @@ void DofManager::addCoupling( string const & rowFieldName,
                               bool symmetric )
 {
   // Convert input into internal format
-  std::vector< FieldSupport > support;
+  stdVector< FieldSupport > support;
   for( auto const & p : supports )
   {
     MeshBody const & meshBody = m_domain->getMeshBody( p.first.first );
@@ -1288,10 +1291,10 @@ void vectorToFieldKernel( ObjectManagerBase & GEOS_UNUSED_PARAM( manager ),
       integer fieldComp = 0;
       for( integer const vecComp : mask )
       {
-        FIELD_OP::template SpecifyFieldValue( field,
-                                              i,
-                                              fieldComp++,
-                                              scalingFactor * localVector[lid + vecComp] );
+        FIELD_OP::template SpecifyFieldValue<>( field,
+                                                i,
+                                                fieldComp++,
+                                                scalingFactor * localVector[lid + vecComp] );
       }
     }
   } );
@@ -1319,10 +1322,10 @@ void vectorToFieldKernel( ObjectManagerBase & manager,
       integer fieldComp = 0;
       for( integer const vecComp : mask )
       {
-        FIELD_OP::template SpecifyFieldValue( field,
-                                              i,
-                                              fieldComp++,
-                                              scalingFactor[i] * localVector[lid + vecComp] );
+        FIELD_OP::template SpecifyFieldValue<>( field,
+                                                i,
+                                                fieldComp++,
+                                                scalingFactor[i] * localVector[lid + vecComp] );
       }
     }
   } );
@@ -1379,10 +1382,10 @@ void fieldToVectorKernel( arrayView1d< real64 > const & localVector,
       integer fieldComp = 0;
       for( integer const vecComp : mask )
       {
-        FIELD_OP::template readFieldValue( field,
-                                           i,
-                                           fieldComp++,
-                                           localVector[lid + vecComp] );
+        FIELD_OP::template readFieldValue<>( field,
+                                             i,
+                                             fieldComp++,
+                                             localVector[lid + vecComp] );
       }
     }
   } );
@@ -1640,10 +1643,10 @@ void DofManager::reorderByRank()
   m_reordered = true;
 }
 
-std::vector< DofManager::SubComponent >
-DofManager::filterDofs( std::vector< SubComponent > const & excluded ) const
+stdVector< DofManager::SubComponent >
+DofManager::filterDofs( stdVector< SubComponent > const & excluded ) const
 {
-  std::vector< DofManager::SubComponent > result;
+  stdVector< DofManager::SubComponent > result;
   for( const auto & field : m_fields )
   {
     auto const it = std::find_if( excluded.begin(), excluded.end(),
@@ -1659,7 +1662,7 @@ DofManager::filterDofs( std::vector< SubComponent > const & excluded ) const
 }
 
 void DofManager::setupFrom( DofManager const & source,
-                            std::vector< SubComponent > const & selection )
+                            stdVector< SubComponent > const & selection )
 {
   clear();
   for( FieldDescription const & field : source.m_fields )
@@ -1688,7 +1691,7 @@ void DofManager::setupFrom( DofManager const & source,
 }
 
 template< typename MATRIX >
-void DofManager::makeRestrictor( std::vector< SubComponent > const & selection,
+void DofManager::makeRestrictor( stdVector< SubComponent > const & selection,
                                  MPI_Comm const & comm,
                                  bool const transpose,
                                  MATRIX & restrictor ) const
@@ -1697,7 +1700,7 @@ void DofManager::makeRestrictor( std::vector< SubComponent > const & selection,
 
   // 1. Populate selected fields and compute some basic dimensions
   // array1d< FieldDescription > fieldsSelected( selection.size() );
-  std::vector< FieldDescription > fieldsSelected( selection.size() );
+  stdVector< FieldDescription > fieldsSelected( selection.size() );
 
   for( std::size_t k = 0; k < fieldsSelected.size(); ++k )
   {
@@ -1794,18 +1797,16 @@ void DofManager::printFieldInfo( std::ostream & os ) const
   {
     localIndex const numFields = LvArray::integerConversion< localIndex >( m_fields.size() );
 
-    os << "Fields:" << std::endl;
-    os << " # | " << std::setw( 20 ) << "name" << " | " << "comp" << " | " << "N global DOF" << std::endl;
-    os << "---+----------------------+------+-------------" << std::endl;
+    TableLayout const fieldLayout( "The summary of declared fields and coupling",
+                                   {" ", "name", "comp", "N global DOF"} );
+    TableData fieldData;
     for( localIndex i = 0; i < numFields; ++i )
     {
       FieldDescription const & f = m_fields[i];
-      os << ' ' << i << " | "
-         << std::setw( 20 ) << f.name << " | "
-         << std::setw( 4 ) << f.numComponents << " | "
-         << std::setw( 12 ) << f.numGlobalDof << std::endl;
+      fieldData.addRow( i, f.name, f.numComponents, f.numGlobalDof );
     }
-    os << "---+----------------------+------+-------------" << std::endl;
+    TableTextFormatter const logFormatter( fieldLayout );
+    GEOS_LOG_RANK_0( logFormatter.toString( fieldData ) );
 
     os << std::endl << "Connectivity:" << std::endl;
     for( localIndex i = 0; i < numFields; ++i )
@@ -1873,7 +1874,7 @@ void DofManager::printFieldInfo( std::ostream & os ) const
 }
 
 #define MAKE_DOFMANAGER_METHOD_INST( LAI ) \
-  template void DofManager::makeRestrictor( std::vector< SubComponent > const & selection, \
+  template void DofManager::makeRestrictor( stdVector< SubComponent > const & selection, \
                                             MPI_Comm const & comm, \
                                             bool const transpose, \
                                             LAI::ParallelMatrix & restrictor ) const;
