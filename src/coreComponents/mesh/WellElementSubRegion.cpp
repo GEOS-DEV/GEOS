@@ -537,7 +537,7 @@ void WellElementSubRegion::assignUnownedElementsInReservoir( MeshLevel & mesh,
       {
         // the well element is in the reservoir element (erMatched,esrMatched,eiMatched), so tag it as local
         localElems.insert( currGlobal );
-        elemStatusGlobal[currGlobal] = WellElemStatus::LOCAL;
+        elemStatusGlobal[currGlobal] = WellElemParallelStatus::LOCAL;
       }
 
       // if one rank has found the element, all ranks exit the search
