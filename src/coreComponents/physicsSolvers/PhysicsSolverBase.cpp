@@ -271,7 +271,11 @@ bool PhysicsSolverBase::execute( real64 const time_n,
   real64 nextDt = dt;
 
   integer const maxSubSteps = m_nonlinearSolverParameters.m_maxSubSteps;
-  getSubStepDts().clear();
+
+  // Keep track of substeps. It is useful to output these.
+  stdVector< real64 > subStepDts( maxSubSteps, 0.0 );
+  integer numOfSubSteps = 0;
+
   for( integer subStep = 0; subStep < maxSubSteps && dtRemaining > 0.0; ++subStep )
   {
     // reset number of nonlinear and linear iterations
@@ -282,7 +286,8 @@ bool PhysicsSolverBase::execute( real64 const time_n,
                                           cycleNumber,
                                           domain );
 
-    getSubStepDts().push_back( dtAccepted );
+    numOfSubSteps++;
+    subStepDts[subStep] = dtAccepted;
 
     // increment the cumulative number of nonlinear and linear iterations
     m_solverStatistics.saveTimeStepStatistics();
@@ -331,13 +336,34 @@ bool PhysicsSolverBase::execute( real64 const time_n,
   // Decide what to do with the next Dt for the event running the solver.
   m_nextDt = setNextDt( time_n + dt, nextDt, domain );
 
-  // Increase counter to indicate how many cycles since the last timestep cut
-  // if( m_numTimestepsSinceLastDtCut >= 0 )
-  // {
-  //   m_numTimestepsSinceLastDtCut++;
-  // }
+  logEndOfCycleInformation( cycleNumber, numOfSubSteps, subStepDts );
 
   return false;
+}
+
+void PhysicsSolverBase::logEndOfCycleInformation( integer const cycleNumber,
+                                                  integer const numOfSubSteps,
+                                                  std::vector< real64 > const & subStepDts ) const
+{
+  LogPart logpart( "TIMESTEP", MpiWrapper::commRank() == 0 );
+  logpart.addEndDescription( "- Cycle ", cycleNumber );
+  logpart.addEndDescription( "- N substeps ", numOfSubSteps );
+
+  std::stringstream logMessage;
+  for( integer i = 0; i < numOfSubSteps; ++i )
+  {
+    if( i > 0 )
+    {
+      logMessage << ", ";
+    }
+    logMessage << subStepDts[i] << " " << units::getSymbol( units::Unit::Time );
+  }
+
+  if( logMessage.rdbuf()->in_avail() == 0 )
+    logMessage << "/";
+
+  logpart.addEndDescription( "- substep dts ", logMessage.str() );
+  logpart.end();
 }
 
 real64 PhysicsSolverBase::setNextDt( real64 const & GEOS_UNUSED_PARAM( currentTime ),

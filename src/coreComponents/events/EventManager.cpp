@@ -175,8 +175,6 @@ bool EventManager::run( DomainPartition & domain )
 
     outputTime( logPart );
     logPart.begin();
-    std::vector< real64 > subStepDts;
-    integer numTimeSteps = 0;
     // Execute
     for(; m_currentSubEvent<this->numSubGroups(); ++m_currentSubEvent )
     {
@@ -199,13 +197,6 @@ bool EventManager::run( DomainPartition & domain )
       else if( subEvent->isReadyForExec() )
       {
         earlyReturn = subEvent->execute( m_time, m_dt, m_cycle, 0, 0, domain );
-
-        if( subEvent->getEventTarget() && subEvent->getEventTarget()->getTimesteppingBehavior() == ExecutableGroup::TimesteppingBehavior::DeterminesTimeStepSize )
-        {
-          subStepDts = subEvent->getSubStepDts();
-          numTimeSteps = subEvent->getNumOfSubSteps();
-        }
-
       }
 
       // Check the exit flag
@@ -219,8 +210,6 @@ bool EventManager::run( DomainPartition & domain )
         return true;
       }
     }
-
-    logEndOfCycleInformation( logPart, m_cycle, numTimeSteps, subStepDts );
 
     // Increment time/cycle, reset the subevent counter
     m_time += m_dt;
@@ -304,31 +293,6 @@ void EventManager::outputTime( LogPart & logPart ) const
   {
     GEOS_ERROR( "Unknown time output format requested." );
   }
-}
-
-void EventManager::logEndOfCycleInformation( LogPart & logpart,
-                                             integer const cycleNumber,
-                                             integer const numOfSubSteps,
-                                             std::vector< real64 > const & subStepDts ) const
-{
-  logpart.addEndDescription( "- Cycle: ", cycleNumber );
-  logpart.addEndDescription( "- N substeps: ", numOfSubSteps );
-  
-  std::stringstream logMessage;
-  for( integer i = 0; i < numOfSubSteps; ++i )
-  {
-    if( i > 0 )
-    {
-      logMessage << ", ";
-    }
-    logMessage << subStepDts[i] << " " << units::getSymbol( units::Unit::Time );
-  }
-
-  if( logMessage.rdbuf()->in_avail() == 0 )
-    logMessage << "/";
-
-  logpart.addEndDescription( "- substep dts: ", logMessage.str() );
-  logpart.end();
 }
 
 } /* namespace geos */
