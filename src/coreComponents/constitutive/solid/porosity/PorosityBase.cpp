@@ -52,7 +52,7 @@ PorosityBase::PorosityBase( string const & name, Group * const parent ):
   registerField( fields::porosity::dPorosity_dTemperature{}, &m_dPorosity_dTemperature );
 
   registerField( fields::porosity::initialPorosity{}, &m_initialPorosity );
-
+//
   registerField( fields::porosity::referencePorosity{}, &m_referencePorosity );
 }
 

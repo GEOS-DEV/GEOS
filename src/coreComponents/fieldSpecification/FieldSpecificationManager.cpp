@@ -194,7 +194,6 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
       if( objPath == "nodeManager" )
       {
         setNamesAvailable.append( "Set names available are: xneg ,yneg ,zneg ,xpos ,ypos, " );
-        stdVector< string > const ff =  problemManager.getGroup( "Mesh" ).getSubGroupsNames();
 
         if( problemManager.getGroup( "Mesh" ).hasSubGroupOfType< InternalWellboreGenerator >() )
         {
