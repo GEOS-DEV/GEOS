@@ -88,7 +88,6 @@ void SurfaceElementRegion::initializePreSubGroups()
 }
 
 localIndex SurfaceElementRegion::addToSurfaceMesh( FaceManager const * const faceManager,
-                                                   ArrayOfArraysView< localIndex const >  const & originalFaceToEdgeMap,
                                                    localIndex const faceIndices[2] )
 {
   localIndex rval = -1;
