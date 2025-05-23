@@ -153,15 +153,15 @@ void CompositionalMultiphaseFluidPVTPackage::createFluid()
     return findOption( eosTypes, name, viewKeyStruct::equationsOfStateString(), getFullName() );
   };
 
-  std::vector< pvt::EOS_TYPE > eos( numFluidPhases() );
+  stdVector< pvt::EOS_TYPE > eos( numFluidPhases() );
   std::transform( m_equationsOfState.begin(), m_equationsOfState.end(), eos.begin(), getCompositionalEosType );
 
-  std::vector< pvt::PHASE_TYPE > phases( m_phaseTypes.begin(), m_phaseTypes.end() );
-  std::vector< string > const components( m_componentNames.begin(), m_componentNames.end() );
-  std::vector< double > const Mw( m_componentMolarWeight.begin(), m_componentMolarWeight.end() );
-  std::vector< double > const Tc( m_componentCriticalTemperature.begin(), m_componentCriticalTemperature.end() );
-  std::vector< double > const Pc( m_componentCriticalPressure.begin(), m_componentCriticalPressure.end() );
-  std::vector< double > const Omega( m_componentAcentricFactor.begin(), m_componentAcentricFactor.end() );
+  stdVector< pvt::PHASE_TYPE > phases( m_phaseTypes.begin(), m_phaseTypes.end() );
+  stdVector< string > const components( m_componentNames.begin(), m_componentNames.end() );
+  stdVector< double > const Mw( m_componentMolarWeight.begin(), m_componentMolarWeight.end() );
+  stdVector< double > const Tc( m_componentCriticalTemperature.begin(), m_componentCriticalTemperature.end() );
+  stdVector< double > const Pc( m_componentCriticalPressure.begin(), m_componentCriticalPressure.end() );
+  stdVector< double > const Omega( m_componentAcentricFactor.begin(), m_componentAcentricFactor.end() );
 
   m_fluid = pvt::MultiphaseSystemBuilder::buildCompositional( pvt::COMPOSITIONAL_FLASH_TYPE::NEGATIVE_OIL_GAS, phases, eos,
                                                               components, Mw, Tc, Pc, Omega );

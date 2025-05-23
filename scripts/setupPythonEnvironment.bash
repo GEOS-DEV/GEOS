@@ -14,6 +14,8 @@ PACKAGE_BRANCH=main
 declare -a TARGET_PACKAGES=("geos-mesh"
                             "geos-xml-tools"
                             "hdf5-wrapper"
+                            "geos-utils"
+                            "geos-mesh"
                             "pygeos-tools"
                             "geos-ats")
 declare -a LINK_SCRIPTS=("preprocess_xml"

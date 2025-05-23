@@ -77,11 +77,34 @@ set( multiPhysicsSolvers_sources
     SinglePhasePoromechanicsConformingFractures.cpp
     SinglePhaseReservoirAndWells.cpp )
 
-include(poromechanicsKernels/PoromechanicsKernels.cmake)
+#include(poromechanicsKernels/PoromechanicsKernels.cmake)
 
 set( dependencyList ${parallelDeps} fluidFlowSolvers simplePDESolvers solidMechanicsSolvers )
 
 geos_decorate_link_dependencies( LIST decoratedDependencies DEPENDENCIES ${dependencyList} )
+
+
+file( READ "${CMAKE_CURRENT_LIST_DIR}/kernelSpecs.json" kernelSpecs )
+set( kernelTemplateFileList "" )
+
+  list( APPEND kernelTemplateFileList 
+        poromechanicsKernels/PoromechanicsKernels.cpp.template
+        poromechanicsKernels/PoromechanicsEFEMKernels.cpp.template
+        poromechanicsKernels/ThermoPoromechanicsKernels.cpp.template
+        poromechanicsKernels/PoromechanicsDamageKernels.cpp.template )
+
+
+foreach( kernelTemplateFile ${kernelTemplateFileList} )
+  get_filename_component( jsonKey ${kernelTemplateFile} NAME_WE )
+  generateKernels( TEMPLATE ${kernelTemplateFile}
+                   JSON kernelSpecs
+                   KEY ${jsonKey}
+                   HEADERS headerFiles
+                   SOURCES sourceFiles )
+
+list(APPEND multiPhysicsSolvers_headers ${headerFiles})
+list(APPEND multiPhysicsSolvers_sources ${sourceFiles})
+endforeach()
 
 blt_add_library( NAME       multiPhysicsSolvers
                  SOURCES    ${multiPhysicsSolvers_sources}
