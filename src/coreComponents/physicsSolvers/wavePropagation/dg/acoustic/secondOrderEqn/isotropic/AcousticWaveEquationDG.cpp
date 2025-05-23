@@ -151,23 +151,19 @@ void AcousticWaveEquationDG::precomputeSourceAndReceiverTerm( MeshLevel & baseMe
 
 
   arrayView2d< real64 const > const sourceCoordinates = m_sourceCoordinates.toViewConst();
-  arrayView2d< localIndex > const sourceNodeIds = m_sourceNodeIds.toView();
   arrayView2d< real64 > const sourceConstants = m_sourceConstants.toView();
   arrayView1d< localIndex > const sourceIsAccessible = m_sourceIsAccessible.toView();
   arrayView1d< localIndex > const sourceElem = m_sourceElem.toView();
   arrayView1d< localIndex > const sourceRegion = m_sourceRegion.toView();
 
-  sourceNodeIds.setValues< EXEC_POLICY >( -1 );
   sourceConstants.setValues< EXEC_POLICY >( -1 );
   sourceIsAccessible.zero();
 
   arrayView2d< real64 const > const receiverCoordinates = m_receiverCoordinates.toViewConst();
-  arrayView2d< localIndex > const receiverNodeIds = m_receiverNodeIds.toView();
   arrayView2d< real64 > const receiverConstants = m_receiverConstants.toView();
   arrayView1d< localIndex > const receiverIsLocal = m_receiverIsLocal.toView();
   arrayView1d< localIndex > const receiverElem = m_receiverElem.toView();
   arrayView1d< localIndex > const receiverRegion = m_receiverRegion.toView();
-  receiverNodeIds.setValues< EXEC_POLICY >( -1 );
   receiverConstants.setValues< EXEC_POLICY >( -1 );
   receiverIsLocal.zero();
 
@@ -214,13 +210,11 @@ void AcousticWaveEquationDG::precomputeSourceAndReceiverTerm( MeshLevel & baseMe
         sourceCoordinates,
         sourceIsAccessible,
         sourceElem,
-        sourceNodeIds,
         sourceConstants,
         sourceRegion,
         receiverCoordinates,
         receiverIsLocal,
         receiverElem,
-        receiverNodeIds,
         receiverConstants,
         receiverRegion );
     } );
@@ -438,7 +432,7 @@ real64 AcousticWaveEquationDG::explicitStepForward( real64 const & time_n,
                                                     real64 const & dt,
                                                     integer cycleNumber,
                                                     DomainPartition & domain,
-                                                    bool GEOS_UNUSED_PARAM( computeGradient ) )
+                                                    integer GEOS_UNUSED_PARAM( computeGradient ) )
 {
   real64 dtOut = explicitStepInternal( time_n, dt, cycleNumber, domain );
   forDiscretizationOnMeshTargets( domain.getMeshBodies(),
@@ -457,7 +451,7 @@ real64 AcousticWaveEquationDG::explicitStepBackward( real64 const & time_n,
                                                      real64 const & dt,
                                                      integer cycleNumber,
                                                      DomainPartition & domain,
-                                                     bool GEOS_UNUSED_PARAM( computeGradient ) )
+                                                     integer GEOS_UNUSED_PARAM( computeGradient ) )
 {
   GEOS_ERROR( "Backward propagation for the first-order wave propagator not yet implemented" );
   real64 dtOut = explicitStepInternal( time_n, dt, cycleNumber, domain );

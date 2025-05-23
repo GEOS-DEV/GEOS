@@ -395,6 +395,51 @@ struct WaveSolverUtils
     }
   }
 
+   /**
+   * @brief Convert a mesh element point coordinate into a coordinate on the reference element
+   * @tparam FE_TYPE finite element type
+   * @param[in] coords coordinate of the point
+   * @param[in] elemsToNodes element to node map for the base mesh
+   * @param[in] nodeCoords array of base mesh nodes coordinates
+   * @param[out] coordsOnRefElem to contain the coordinate computed in the reference element
+   */
+  template< typename FE_TYPE >
+  GEOS_HOST_DEVICE static void
+  computeCoordinatesOnReferenceElementTet( real64 const (&coords)[3],
+                                           arraySlice1d< localIndex const, cells::NODE_MAP_USD - 1 > const elemsToNodes,
+                                           arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const nodeCoords,
+                                           real64 (& coordsOnRefElem)[3] )
+  {
+    // only the eight corners of the mesh cell are needed to compute the Jacobian
+    real64 xLocal[4][3]{};
+    for( localIndex a = 0; a < 4; ++a )
+    {
+      LvArray::tensorOps::copy< 3 >( xLocal[a], nodeCoords[elemsToNodes[a]] );
+    }
+    // coordsOnRefElem = invJ*(coords-coordsNode_0)
+    real64 invJ[3][3]{};
+    
+    for( int i = 0; i < 3; i++ )
+    {
+      for( int j = 0; j < 3; j++ )
+      {
+        invJ[ i ][ j ] = xLocal[ i + 1 ][ j ] - xLocal[ 0 ][ j ];
+      }
+    }
+
+    real64 const detJ = LvArray::tensorOps::invert< 3 >( invJ );
+
+    for( localIndex i = 0; i < 3; ++i )
+    {
+      // init at (-1,-1,-1) as the origin of the referential elem
+      coordsOnRefElem[i] = 0.0;
+      for( localIndex j = 0; j < 3; ++j )
+      {
+        coordsOnRefElem[i] += invJ[i][j] * (coords[j] - xLocal[0][j]);
+      }
+    }
+  }
+
   /**
    * @brief Compute dotProduct between two vectors
    * @param numFacesPerElem number of face on an element

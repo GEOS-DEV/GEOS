@@ -50,12 +50,10 @@ struct PrecomputeSourceAndReceiverKernel
    * @param[in] sourceCoordinates coordinates of the source terms
    * @param[out] sourceIsAccessible flag indicating whether the source is accessible or not
    * @param[out] sourceElem element where a source is located
-   * @param[out] sourceNodeIds indices of the nodes of the element where the source is located
    * @param[out] sourceConstants constant part of the source terms
    * @param[in] receiverCoordinates coordinates of the receiver terms
    * @param[out] receiverIsLocal flag indicating whether the receiver is local or not
    * @param[out] receiverElem element where a receiver is located
-   * @param[out] receiverNodeIds indices of the nodes of the element where the receiver is located
    * @param[out] receiverConstants constant part of the receiver term
    * @param[out] sourceValue value of the temporal source (eg. Ricker)
    * @param[in] dt time-step
@@ -79,13 +77,11 @@ struct PrecomputeSourceAndReceiverKernel
           arrayView2d< real64 const > const sourceCoordinates,
           arrayView1d< localIndex > const sourceIsAccessible,
           arrayView1d< localIndex > const sourceElem,
-          arrayView2d< localIndex > const sourceNodeIds,
           arrayView2d< real64 > const sourceConstants,
           arrayView1d< localIndex > const sourceRegion,
           arrayView2d< real64 const > const receiverCoordinates,
           arrayView1d< localIndex > const receiverIsLocal,
           arrayView1d< localIndex > const receiverElem,
-          arrayView2d< localIndex > const receiverNodeIds,
           arrayView2d< real64 > const receiverConstants,
           arrayView1d< localIndex > const receiverRegion )
   {
@@ -140,7 +136,6 @@ struct PrecomputeSourceAndReceiverKernel
 
             for( localIndex a = 0; a < numNodesPerElem; ++a )
             {
-              sourceNodeIds[isrc][a] = elemsToNodes[k][a];
               sourceConstants[isrc][a] = Ntest[a];
             }
           }
@@ -191,7 +186,6 @@ struct PrecomputeSourceAndReceiverKernel
 
             for( localIndex a = 0; a < numNodesPerElem; ++a )
             {
-              receiverNodeIds[ircv][a] = elemsToNodes[k][a];
               receiverConstants[ircv][a] = Ntest[a];
             }
           }
