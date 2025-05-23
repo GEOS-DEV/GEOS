@@ -22,6 +22,7 @@
 
 #include "codingUtilities/traits.hpp"
 #include "common/DataTypes.hpp"
+#include "common/format/LogPart.hpp"
 #include "dataRepository/ExecutableGroup.hpp"
 #include "linearAlgebra/interfaces/InterfaceTypes.hpp"
 #include "linearAlgebra/utilities/LinearSolverResult.hpp"
@@ -1088,13 +1089,13 @@ private:
    * @brief output information about the cycle to the log
    * @param cycleNumber the current cycle number
    * @param numOfSubSteps the number of substeps taken
-   * @param subStepDt the time step size for each substep
+   * @param subStepDts the time step size for each substep
    */
   void logEndOfCycleInformation( integer const cycleNumber,
                                  integer const numOfSubSteps,
-                                 stdVector< real64 > const & subStepDt ) const;
-
+                                 std::vector< real64 > const & subStepDts ) const;
 };
+
 
 template< typename CONSTITUTIVE_BASE_TYPE >
 string PhysicsSolverBase::getConstitutiveName( ElementSubRegionBase const & subRegion )
