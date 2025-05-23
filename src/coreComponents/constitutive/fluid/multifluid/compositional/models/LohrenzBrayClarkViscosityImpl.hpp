@@ -22,7 +22,6 @@
 
 #include "LohrenzBrayClarkViscosity.hpp"
 #include "constitutive/fluid/multifluid/Layouts.hpp"
-#include "common/DataTypes.hpp"
 
 namespace geos
 {
@@ -175,12 +174,11 @@ void LohrenzBrayClarkViscosityUpdate::computePhaseDiluteViscosity_Wilke( integer
                                                                          arraySlice1d< real64, USD2 > const & dPhaseViscosity ) const
 {
   using Deriv = constitutive::multifluid::DerivativeOffset;
-  integer constexpr maxNumComps = MultiFluidConstants::MAX_NUM_COMPONENTS;
   GEOS_UNUSED_VAR( temperature );
 
   // compute the "phi" interaction matrix (and its temperature derivatives)
-  stackArray2d< real64, maxNumComps *maxNumComps > phi( numComponents, numComponents );
-  stackArray2d< real64, maxNumComps *maxNumComps > dPhi_dT( numComponents, numComponents );
+  stackArray2d< real64, maxNumComps2 > phi( numComponents, numComponents );
+  stackArray2d< real64, maxNumComps2 > dPhi_dT( numComponents, numComponents );
 
   LvArray::forValuesInSlice( phi.toSlice(), setZero );
   LvArray::forValuesInSlice( dPhi_dT.toSlice(), setZero );
@@ -259,7 +257,7 @@ void LohrenzBrayClarkViscosityUpdate::computePhaseDiluteViscosity_Brokaw( intege
   GEOS_UNUSED_VAR( temperature );
 
   // Compute the "phi" interaction matrix (constant, as only function of molecular weights)
-  stackArray2d< real64, maxNumComps *maxNumComps > phi( numComponents, numComponents );
+  stackArray2d< real64, maxNumComps2 > phi( numComponents, numComponents );
 
   for( integer ic = 0; ic < numComponents; ++ic )
   {
