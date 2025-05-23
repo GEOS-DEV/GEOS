@@ -71,9 +71,10 @@ void IdReporterOutput::outputWrongValues( string_view linesPrefix,
       string const indentation = string( linesPrefix.size(), ' ' );
       if( m_ranksCollectedIdsCount > 0 )
       {
-        TableLayout const layout = TableLayout( GEOS_FMT( "Summary of {} element:", valueNaming ),
-                                                { "Rank", "Global id", "Value" } )/*.
-                                     setIndentation( linesPrefix.size() )*/;
+        TableLayout const layout = TableLayout( GEOS_FMT( "Summary of {} element", valueNaming ),
+                                                { "Rank", "Global id", "Value" } ).
+                                     enableLineBreak( false ).
+                                     setIndentation( linesPrefix.size() );
         TableData data;
         if( m_buffer.getSignaledIdsCount() > 0 )
         {

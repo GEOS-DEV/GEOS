@@ -78,6 +78,12 @@ TableLayout & TableLayout::setMaxColumnWidth( size_t width )
   return *this;
 }
 
+TableLayout & TableLayout::setIndentation( size_t spacesCount )
+{
+  m_indentation = spacesCount;
+  return *this;
+}
+
 bool TableLayout::isLineBreakEnabled() const
 { return m_lineBreakAtBegin; }
 
@@ -293,13 +299,15 @@ TableLayout::DeepFirstIterator TableLayout::beginDeepFirst() const
 PreparedTableLayout::PreparedTableLayout(  ):
   TableLayout(),
   m_columnLayersCount( 0 ),
-  m_lowermostColumnCount( 0 )
+  m_lowermostColumnCount( 0 ),
+  m_indentationStr( m_indentation, ' ' )
 {}
 
 PreparedTableLayout::PreparedTableLayout( TableLayout const & other ):
   TableLayout( other ),
   m_columnLayersCount( 0 ),
-  m_lowermostColumnCount( 0 )
+  m_lowermostColumnCount( 0 ),
+  m_indentationStr( m_indentation, ' ' )
 {
   prepareLayoutRecusive( m_tableColumns, 0 );
 

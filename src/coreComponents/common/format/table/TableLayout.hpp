@@ -635,6 +635,12 @@ private:
   TableLayout & setMaxColumnWidth( size_t width );
 
   /**
+   * @brief Set the indentation of the whole table.
+   * @param spacesCount The number of indentation spaces.
+   */
+  TableLayout & setIndentation( size_t spacesCount );
+
+  /**
    * @brief check if a column max width has been set
    * @return Truef a column max width has been set, otherwise false
    */
@@ -669,6 +675,12 @@ private:
    */
   size_t const & getMaxColumnWidth() const
   { return m_maxColumnWidth; }
+
+  /**
+   * @return The number of spaces at the left of the table. 
+   */
+  size_t const & getIndentation() const
+  { return m_indentation; }
 
   /**
    * @brief Create and add columns to the columns vector given a string vector
@@ -744,6 +756,9 @@ protected:
 
   /// The number of margin spaces around contents.
   integer m_marginValue;
+  
+  /// The number of spaces at the left of the table.
+  size_t m_indentation = 0;
 
 };
 
@@ -796,10 +811,18 @@ public:
   size_t getLowermostColumnsCount() const
   { return m_lowermostColumnCount; }
 
+  /**
+   * @return A string with the correct indentation space count to precede each lines of the formatted table.
+   */
+  string_view getIndentationStr() const
+  { return m_indentationStr; }
+
 private:
 
   size_t m_columnLayersCount;
   size_t m_lowermostColumnCount;
+
+  string m_indentationStr;
 
   /**
    * @brief Recursive part of column layout preparation, see constructor documentation.

@@ -70,7 +70,7 @@ protected:
 };
 
 /**
- * @brief class for CSV formatting
+ * @brief Class to format data in a formatted CSV format
  */
 class TableCSVFormatter : public TableFormatter
 {
@@ -123,7 +123,8 @@ string TableCSVFormatter::toString< TableData >( TableData const & tableData ) c
 
 
 /**
- * @brief class for log formatting
+ * @brief Class to format data in a formatted text format
+ * (for log output typically, expecting fixed character size).
  */
 class TableTextFormatter : public TableFormatter
 {

@@ -564,12 +564,12 @@ void TableTextFormatter::outputTable( PreparedTableLayout const & tableLayout,
   {
     tableOutput << '\n';
   }
-  tableOutput << sepLine << '\n';
+  tableOutput << tableLayout.getIndentationStr() << sepLine << '\n';
   outputLines( tableLayout, headerCellsLayout, tableOutput );
   if( !dataCellsLayout.empty())
   {
     outputLines( tableLayout, dataCellsLayout, tableOutput );
-    tableOutput << sepLine;
+    tableOutput << tableLayout.getIndentationStr() << sepLine;
   }
   if( tableLayout.isLineBreakEnabled())
   {
@@ -640,6 +640,7 @@ void TableTextFormatter::outputLines( PreparedTableLayout const & tableLayout,
           if( isLeftBorderCell )
           { // left table border
             isLeftBorderCell=false;
+            tableOutput << tableLayout.getIndentationStr();
             tableOutput << m_verticalLine << string( nbBorderSpaces, cellSpaceChar );
           }
           else
