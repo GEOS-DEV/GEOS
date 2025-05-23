@@ -843,8 +843,6 @@ void CompositionalMultiphaseWell::updateVolRatesForConstraint( WellElementSubReg
   } );
 }
 
-
-
 void CompositionalMultiphaseWell::updateFluidModel( WellElementSubRegion & subRegion )
 {
   GEOS_MARK_FUNCTION;
@@ -856,11 +854,11 @@ void CompositionalMultiphaseWell::updateFluidModel( WellElementSubRegion & subRe
   MultiFluidBase & fluid = subRegion.getConstitutiveModel< MultiFluidBase >( fluidName );
 
   thermalCompositionalMultiphaseBaseKernels::
-    FluidUpdate::update( subRegion.size(),
-                         fluid,
-                         pres,
-                         temp,
-                         compFrac );
+    FluidUpdate::localUpdate< serialPolicy >( subRegion.size(),
+                                              fluid,
+                                              pres,
+                                              temp,
+                                              compFrac );
 }
 
 real64 CompositionalMultiphaseWell::updatePhaseVolumeFraction( WellElementSubRegion & subRegion ) const
@@ -1038,21 +1036,12 @@ void CompositionalMultiphaseWell::initializeWells( DomainPartition & domain, rea
         arrayView2d< real64 const, multifluid::USD_FLUID > const & wellElemTotalDens = fluid.totalDensity();
 
         // 4) Back calculate component densities
-        constitutive::constitutiveUpdatePassThru( fluid, [&] ( auto & castFluid )
-        {
-          using FluidType = TYPEOFREF( castFluid );
-          using FluidUpdateType = typename FluidType::KernelWrapper;
-          using FluidUpdateKernel = thermalCompositionalMultiphaseBaseKernels::
-                                      FluidUpdateKernel< serialPolicy,
-                                                         FluidUpdateType >;
-
-          FluidUpdateType fluidWrapper = castFluid.createKernelWrapper();
-          FluidUpdateKernel::launch( subRegion.size(),
-                                     fluidWrapper,
-                                     wellElemPressure,
-                                     wellElemTemp,
-                                     wellElemCompFrac );
-        } );
+        thermalCompositionalMultiphaseBaseKernels::FluidUpdate::
+          localUpdate< serialPolicy >( subRegion.size(),
+                                       fluid,
+                                       wellElemPressure,
+                                       wellElemTemp,
+                                       wellElemCompFrac );
 
         compositionalMultiphaseWellKernels::
           CompDensInitializationKernel::launch( subRegion.size(),

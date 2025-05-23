@@ -45,6 +45,27 @@ void FluidUpdate::update( localIndex const size,
   } );
 }
 
+template< typename POLICY >
+void FluidUpdate::localUpdate( localIndex const size,
+                               constitutive::MultiFluidBase & fluid,
+                               arrayView1d< real64 const > const & pres,
+                               arrayView1d< real64 const > const & temp,
+                               arrayView2d< real64 const, compflow::USD_COMP > const & compFrac )
+{
+  constitutive::constitutiveUpdatePassThru( fluid, [&] ( auto & castFluid )
+  {
+    using FluidType = TYPEOFREF( castFluid );
+    using FluidUpdateType = typename FluidType::KernelWrapper;
+    FluidUpdateType fluidWrapper = castFluid.createKernelWrapper();
+    FluidUpdateKernel< POLICY, FluidUpdateType >::launch( size,
+                                                          fluidWrapper,
+                                                          pres,
+                                                          temp,
+                                                          compFrac );
+
+  } );
+}
+
 void FluidUpdate::update( SortedArrayView< localIndex const > const & targetSet,
                           constitutive::MultiFluidBase & fluid,
                           arrayView1d< real64 const > const & pres,
@@ -64,6 +85,13 @@ void FluidUpdate::update( SortedArrayView< localIndex const > const & targetSet,
                                                                                    compFrac );
   } );
 }
+
+template
+void FluidUpdate::localUpdate< serialPolicy >( localIndex const,
+                                               constitutive::MultiFluidBase &,
+                                               arrayView1d< real64 const > const &,
+                                               arrayView1d< real64 const > const &,
+                                               arrayView2d< real64 const, compflow::USD_COMP > const & );
 
 } // namespace thermalCompositionalMultiphaseBaseKernels
 } // namespace geos
