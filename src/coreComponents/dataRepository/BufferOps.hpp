@@ -67,7 +67,7 @@ template< typename >
 constexpr bool is_packable_vector = false;
 
 template< typename T >
-constexpr bool is_packable_vector< std::vector< T > > = is_packable_helper< T >::value;
+constexpr bool is_packable_vector< stdVector< T > > = is_packable_helper< T >::value;
 
 
 template< typename >
@@ -168,7 +168,7 @@ Pack( buffer_unit_type * & buffer,
 template< bool DO_PACKING, typename T >
 localIndex
 Pack( buffer_unit_type * & buffer,
-      std::vector< T > const & var );
+      stdVector< T > const & var );
 
 //------------------------------------------------------------------------------
 template< bool DO_PACKING, typename T >
@@ -247,7 +247,7 @@ PackArray( buffer_unit_type * & buffer,
 template< bool DO_PACKING, typename T, typename T_indices >
 typename std::enable_if< is_packable< T >, localIndex >::type
 PackByIndex( buffer_unit_type * & buffer,
-             std::vector< T > const & var,
+             stdVector< T > const & var,
              const T_indices & indices );
 
 //------------------------------------------------------------------------------
@@ -329,7 +329,7 @@ Unpack( buffer_unit_type const * & buffer,
 template< typename T >
 typename std::enable_if< is_packable< T >, localIndex >::type
 Unpack( buffer_unit_type const * & buffer,
-        std::vector< T > & var );
+        stdVector< T > & var );
 
 
 //------------------------------------------------------------------------------
@@ -413,7 +413,7 @@ UnpackArray( buffer_unit_type const * & buffer,
 template< typename T, typename T_indices >
 localIndex
 UnpackByIndex( buffer_unit_type const * & buffer,
-               std::vector< T > & var,
+               stdVector< T > & var,
                T_indices const & indices );
 
 //------------------------------------------------------------------------------

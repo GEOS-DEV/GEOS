@@ -98,8 +98,7 @@ BlackOilTables::buildAllTables( localIndex const ipOil,
 {
 
   // check if both oil and gas are defined
-  auto lower = LvArray::sortedArrayManipulation::find( phaseTypes.begin(), phaseTypes.size(), int(ipOil) );
-  bool const containsOil = lower != phaseTypes.size();
+  bool const containsOil = std::find( phaseTypes.begin(), phaseTypes.end(), static_cast< integer >(ipOil) ) != phaseTypes.end();
   GEOS_ERROR_IF( !containsOil, "The oil phase must be defined for all PVT models" );
 
   // reading data from files

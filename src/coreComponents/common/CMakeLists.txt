@@ -43,6 +43,7 @@ set( common_headers
      MpiWrapper.hpp
      Path.hpp
      Span.hpp
+     StdContainerWrappers.hpp
      Stopwatch.hpp
      Timer.hpp
      Tensor.hpp
