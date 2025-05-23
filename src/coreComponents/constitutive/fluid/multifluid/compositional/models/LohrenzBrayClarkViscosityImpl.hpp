@@ -175,6 +175,7 @@ void LohrenzBrayClarkViscosityUpdate::computePhaseDiluteViscosity_Wilke( integer
                                                                          arraySlice1d< real64, USD2 > const & dPhaseViscosity ) const
 {
   using Deriv = constitutive::multifluid::DerivativeOffset;
+  integer constexpr maxNumComps = MultiFluidConstants::MAX_NUM_COMPONENTS;
   GEOS_UNUSED_VAR( temperature );
 
   // compute the "phi" interaction matrix (and its temperature derivatives)
