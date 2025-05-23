@@ -376,7 +376,7 @@ void unpackFracturedToGhosts( NeighborCommunicator * const neighbor,
 }
 
 void synchronizeNewNodes( MeshLevel & mesh,
-                          std::vector< NeighborCommunicator > & neighbors,
+                          stdVector< NeighborCommunicator > & neighbors,
                           NewObjectLists & newObjects,
                           int const mpiCommOrder )
 {
@@ -451,7 +451,7 @@ void synchronizeNewNodes( MeshLevel & mesh,
 }
 
 void synchronizeNewSurfaces( MeshLevel & mesh,
-                             std::vector< NeighborCommunicator > & neighbors,
+                             stdVector< NeighborCommunicator > & neighbors,
                              NewObjectLists & newObjects,
                              int const mpiCommOrder )
 {
@@ -525,7 +525,7 @@ void synchronizeNewSurfaces( MeshLevel & mesh,
 }
 
 void synchronizeFracturedElements( MeshLevel & mesh,
-                                   std::vector< NeighborCommunicator > & neighbors,
+                                   stdVector< NeighborCommunicator > & neighbors,
                                    string const fractureRegionName )
 {
   MPI_iCommData commData;
@@ -594,7 +594,7 @@ void synchronizeFracturedElements( MeshLevel & mesh,
 using namespace parallelSynchronizationHelpers;
 
 void sychronizeTopology( MeshLevel & mesh,
-                         std::vector< NeighborCommunicator > & neighbors,
+                         stdVector< NeighborCommunicator > & neighbors,
                          NewObjectLists & newObjects,
                          int const mpiCommOrder,
                          string const fractureRegionName )

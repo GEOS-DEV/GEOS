@@ -232,6 +232,24 @@ private:
         fracture->InsertNextCell( VTK_QUAD, numPoints, q );
       }
 
+      vtkNew< vtkIdTypeArray > cellGlobalIds;
+      cellGlobalIds->SetNumberOfComponents( 1 );
+      cellGlobalIds->SetNumberOfTuples( numQuads );
+      for( auto i = 0; i < numQuads; ++i )
+      {
+        cellGlobalIds->SetValue( i, i );
+      }
+      fracture->GetCellData()->SetGlobalIds( cellGlobalIds );
+
+      vtkNew< vtkIdTypeArray > pointGlobalIds;
+      pointGlobalIds->SetNumberOfComponents( 1 );
+      pointGlobalIds->SetNumberOfTuples( numPoints );
+      for( auto i = 0; i < numPoints; ++i )
+      {
+        pointGlobalIds->SetValue( i, i );
+      }
+      fracture->GetPointData()->SetGlobalIds( pointGlobalIds );
+
       // Do not forget the collocated_nodes fields
       vtkNew< vtkIdTypeArray > collocatedNodes;
       collocatedNodes->SetName( "collocated_nodes" );
@@ -370,12 +388,12 @@ TEST( VTKImport, cube )
       // The "2" set are all the boundary nodes (64 - 8 inside nodes = 56),
       // minus an extra node that belongs to regions -1 and 9 only.
       SortedArray< localIndex > const & nodesRegion2 = cellBlockManager.getNodeSets().at( "2" );
-      ASSERT_EQ( nodesRegion2.size(), expectedSwap( 55, { 39, 27 } ) );
+      ASSERT_EQ( nodesRegion2.size(), expectedSwap( 55, { 38, 28 } ) );
 
       // Region "9" has only one quad, on the greater `x` direction.
       // This hex will belong to MPI rank 1.
       SortedArray< localIndex > const & nodesRegion9 = cellBlockManager.getNodeSets().at( "9" );
-      ASSERT_EQ( nodesRegion9.size(), expectedSwap( 4, { 0, 4 } ) );
+      ASSERT_EQ( nodesRegion9.size(), expectedSwap( 4, { 4, 0 } ) );
 
       // FIXME How to get the CellBlock as a function of the region, without knowing the naming pattern.
       // 1 elements type on 3 regions ("-1", "3", "9") = 3 sub-groups
@@ -383,8 +401,8 @@ TEST( VTKImport, cube )
       {
         {
           { "hexahedra", expectedSwap( 1, {  1, 0 } ) },
-          { "3_hexahedra", expectedSwap( 25, { 17, 8 } ) },
-          { "9_hexahedra", expectedSwap( 1, {  0, 1 } ) }
+          { "3_hexahedra", expectedSwap( 25, { 16, 9 } ) },
+          { "9_hexahedra", expectedSwap( 1, {  1, 0 } ) }
         }
       };
       ASSERT_EQ( cellBlockManager.getCellBlocks().numSubGroups(), expectedCellBlocks.size() );

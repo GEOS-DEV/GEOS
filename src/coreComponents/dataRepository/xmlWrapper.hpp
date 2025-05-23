@@ -399,7 +399,7 @@ stringToInputVariable( Array< T, NDIM, PERMUTATION > & array, string const & val
  * @param[in]  value the string that contains the data to be parsed into target
  * @param[in]  regex the regular expression used for validating the string value.
  */
-void stringToInputVariable( std::vector< std::string > & array, string const & value, Regex const & regex );
+void stringToInputVariable( stdVector< std::string > & array, string const & value, Regex const & regex );
 
 ///@}
 
@@ -433,7 +433,7 @@ static void equate( Array< T, NDIM, PERM > const & lhs, T const & rhs )
 { lhs.template setValues< serialPolicy >( rhs ); }
 
 template< typename T >
-static void equate( std::vector< T > & lhs, T const & rhs )
+static void equate( stdVector< T > & lhs, T const & rhs )
 {
   for( auto & val : lhs )
   {
