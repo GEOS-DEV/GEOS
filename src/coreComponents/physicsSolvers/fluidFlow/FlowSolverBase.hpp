@@ -139,6 +139,14 @@ public:
 
   void enableLaggingFractureStencilWeightsUpdate(){ m_isLaggingFractureStencilWeightsUpdate = 1; };
 
+  real64 sumAquiferFluxes( BoundaryStencil const & stencil,
+                           AquiferBoundaryCondition::KernelWrapper const & aquiferBCWrapper,
+                           ElementViewConst< arrayView1d< real64 const > > const & pres,
+                           ElementViewConst< arrayView1d< real64 const > > const & presOld,
+                           ElementViewConst< arrayView1d< real64 const > > const & gravCoef,
+                           real64 const & timeAtBeginningOfStep,
+                           real64 const & dt );
+
   /**
    * @brief assembles the flux terms for all cells for the hydrofracture case
    * @param time_n previous time value
@@ -308,14 +316,6 @@ private:
 
 private:
   virtual void setConstitutiveNames( ElementSubRegionBase & subRegion ) const override;
-
-  real64 sumAquiferFluxes( BoundaryStencil const & stencil,
-                           AquiferBoundaryCondition::KernelWrapper const & aquiferBCWrapper,
-                           ElementViewConst< arrayView1d< real64 const > > const & pres,
-                           ElementViewConst< arrayView1d< real64 const > > const & presOld,
-                           ElementViewConst< arrayView1d< real64 const > > const & gravCoef,
-                           real64 const & timeAtBeginningOfStep,
-                           real64 const & dt );
 
   // flag to determine whether or not to apply lagging update for the fracture stencil weights
   integer m_isLaggingFractureStencilWeightsUpdate;
