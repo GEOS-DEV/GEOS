@@ -37,9 +37,9 @@ class ModelParameters;
 
 class LohrenzBrayClarkViscosityUpdate final : public FunctionBaseUpdate
 {
-private:
   static integer constexpr maxNumComps = MultiFluidConstants::MAX_NUM_COMPONENTS;
   static integer constexpr maxNumComps2 = MultiFluidConstants::MAX_NUM_COMPONENTS * MultiFluidConstants::MAX_NUM_COMPONENTS;
+
 public:
 /**
  * @brief Mixing types for phase viscosity
