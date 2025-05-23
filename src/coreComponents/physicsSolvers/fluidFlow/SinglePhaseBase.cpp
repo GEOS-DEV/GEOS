@@ -392,12 +392,11 @@ void SinglePhaseBase::updateThermalConductivity( ElementSubRegionBase & subRegio
   conductivityMaterial.updateFromTemperature( temperature );
 }
 
-real64 SinglePhaseBase::updateFluidState( ElementSubRegionBase & subRegion ) const
+void SinglePhaseBase::updateFluidState( ElementSubRegionBase & subRegion ) const
 {
   updateFluidModel( subRegion );
   updateMass( subRegion );
   updateMobility( subRegion );
-  return 0.0;
 }
 
 void SinglePhaseBase::updateMobility( ObjectManagerBase & dataGroup ) const
