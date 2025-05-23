@@ -22,6 +22,7 @@
 
 #include "LohrenzBrayClarkViscosity.hpp"
 #include "constitutive/fluid/multifluid/Layouts.hpp"
+#include "common/DataTypes.hpp"
 
 namespace geos
 {
