@@ -180,27 +180,9 @@ void ImmiscibleMultiphaseFlow::registerDataOnMesh( Group & meshBodies )
 
 void ImmiscibleMultiphaseFlow::setConstitutiveNames( ElementSubRegionBase & subRegion ) const
 {
+  setConstitutiveName< TwoPhaseImmiscibleFluid >( subRegion, viewKeyStruct::fluidNamesString() );
 
-  string & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
-  fluidName = getConstitutiveName< TwoPhaseImmiscibleFluid >( subRegion );
-  GEOS_ERROR_IF( fluidName.empty(), GEOS_FMT( "{}: Fluid model not found on subregion {}",
-                                              getDataContext(), subRegion.getName() ) );
-
-
-
-  string & relPermName = subRegion.registerWrapper< string >( viewKeyStruct::relPermNamesString() ).
-                           setPlotLevel( PlotLevel::NOPLOT ).
-                           setRestartFlags( RestartFlags::NO_WRITE ).
-                           setSizedFromParent( 0 ).
-                           setDescription( "Name of the relative permeability constitutive model to use" ).
-                           reference();
-
-  relPermName = getConstitutiveName< RelativePermeabilityBase >( subRegion );
-
-  GEOS_THROW_IF( relPermName.empty(),
-                 GEOS_FMT( "{}: Relative permeability model not found on subregion {}",
-                           getDataContext(), subRegion.getDataContext() ),
-                 InputError );
+  setConstitutiveName< RelativePermeabilityBase >( subRegion, viewKeyStruct::relPermNamesString() );
 }
 
 void ImmiscibleMultiphaseFlow::initializePreSubGroups()
