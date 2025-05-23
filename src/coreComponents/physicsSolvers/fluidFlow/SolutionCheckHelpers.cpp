@@ -20,6 +20,7 @@
 #include "physicsSolvers/fluidFlow/SolutionCheckHelpers.hpp"
 #include "common/MpiWrapper.hpp"
 #include "common/format/StringUtilities.hpp"
+#include "common/format/table/TableFormatter.hpp"
 
 namespace geos
 {
@@ -70,20 +71,29 @@ void IdReporterOutput::outputWrongValues( string_view linesPrefix,
       string const indentation = string( linesPrefix.size(), ' ' );
       if( m_ranksCollectedIdsCount > 0 )
       {
-        GEOS_LOG_RANK_0( GEOS_FMT( "{}Summary of {} element:",
-                                   indentation, valueNaming ) );
-        MpiWrapper::barrier();
+        TableLayout const layout = TableLayout( GEOS_FMT( "Summary of {} element:", valueNaming ),
+                                                { "Rank", "Global id", "Value" } )/*.
+                                     setIndentation( linesPrefix.size() )*/;
+        TableData data;
         if( m_buffer.getSignaledIdsCount() > 0 )
-          GEOS_LOG( GEOS_FMT( "{}- rank {}, {} values: {}{}",
-                              indentation,
-                              MpiWrapper::commRank(),
-                              m_buffer.getSignaledIdsCount(),
-                              stringutilities::join( m_buffer, ", " ),
-                              ( m_buffer.isComplete() ? "..." : "." ) ) );
-        MpiWrapper::barrier();
+        {
+          integer rank = MpiWrapper::commRank();
+          integer omitted = m_buffer.getSignaledIdsCount() - m_buffer.getCollectedIdsCount();
+
+          for( auto const & wrongOccurence : m_buffer )
+          {
+            data.addRow( rank, m_buffer.getSignaledIdsCount(), wrongOccurence );
+          }
+
+          if( omitted > 0 )
+            data.addRow( rank, CellType::MergeNext, GEOS_FMT( "Omitted {} values ...", omitted ) );
+        }
+
+        TableTextFormatter const formatter( layout );
+        GEOS_LOG( formatter.toString( data ) );
       }
     }
   }
 }
 
-} // namespace geos
+}   // namespace geos
