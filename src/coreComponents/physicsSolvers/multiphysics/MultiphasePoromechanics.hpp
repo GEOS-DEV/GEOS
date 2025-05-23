@@ -41,7 +41,7 @@ public:
   using Base::m_stabilizationType;
   using Base::m_stabilizationRegionNames;
   using Base::m_stabilizationMultiplier;
-  using Base::getLogLevel;
+  using Base::updateBulkDensity;
 
   /**
    * @brief main constructor for MultiphasePoromechanics Objects
@@ -106,6 +106,12 @@ public:
 protected:
 
   virtual void initializePostInitialConditionsPreSubGroups() override;
+
+  virtual void setMGRStrategy()
+  {
+    if( this->m_linearSolverParameters.get().preconditionerType == LinearSolverParameters::PreconditionerType::mgr )
+      GEOS_ERROR( GEOS_FMT( "{}: MGR strategy is not implemented for {}", this->getName(), this->getCatalogName()));
+  }
 
   /**
    * @brief Helper function to recompute the bulk density

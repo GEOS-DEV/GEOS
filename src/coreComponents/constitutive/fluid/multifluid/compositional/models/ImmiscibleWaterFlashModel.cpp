@@ -18,8 +18,9 @@
  */
 
 #include "ImmiscibleWaterFlashModel.hpp"
-#include "ImmiscibleWaterParameters.hpp"
-#include "EquationOfState.hpp"
+#include "constitutive/fluid/multifluid/compositional/parameters/ImmiscibleWaterParameters.hpp"
+#include "constitutive/fluid/multifluid/compositional/parameters/EquationOfState.hpp"
+#include "constitutive/fluid/multifluid/compositional/parameters/CriticalVolume.hpp"
 
 namespace geos
 {
@@ -55,7 +56,7 @@ ImmiscibleWaterFlashModel::createKernelWrapper() const
   EquationOfStateType const liquidEos =  EnumStrings< EquationOfStateType >::fromString( equationOfState->m_equationsOfStateNames[liquidIndex] );
   EquationOfStateType const vapourEos =  EnumStrings< EquationOfStateType >::fromString( equationOfState->m_equationsOfStateNames[vapourIndex] );
 
-  array1d< real64 > componentCriticalVolume( m_componentProperties.getNumberOfComponents());
+  CriticalVolume const * criticalVolume = m_parameters.get< CriticalVolume >();
 
   return KernelWrapper( m_componentProperties.getNumberOfComponents(),
                         liquidIndex,
@@ -64,7 +65,7 @@ ImmiscibleWaterFlashModel::createKernelWrapper() const
                         m_waterComponentIndex,
                         liquidEos,
                         vapourEos,
-                        componentCriticalVolume );
+                        criticalVolume->m_componentCriticalVolume );
 }
 
 ImmiscibleWaterFlashModelUpdate::ImmiscibleWaterFlashModelUpdate(

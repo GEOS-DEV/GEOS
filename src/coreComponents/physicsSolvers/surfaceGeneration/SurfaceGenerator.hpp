@@ -111,7 +111,7 @@ private:
 
   int separationDriver( DomainPartition & domain,
                         MeshLevel & mesh,
-                        std::vector< NeighborCommunicator > & neighbors,
+                        stdVector< NeighborCommunicator > & neighbors,
                         int const tileColor,
                         int const numTileColors,
                         const bool prefrac,
@@ -267,8 +267,8 @@ private:
                                 EdgeManager const & edgeManager,
                                 FaceManager const & faceManager,
                                 ElementRegionManager const & elementManager,
-                                std::vector< std::set< localIndex > > & nodesToRupturedFaces,
-                                std::vector< std::set< localIndex > > & edgesToRupturedFaces );
+                                stdVector< std::set< localIndex > > & nodesToRupturedFaces,
+                                stdVector< std::set< localIndex > > & edgesToRupturedFaces );
 
   /**
    *
@@ -318,8 +318,8 @@ private:
                     EdgeManager & edgeManager,
                     FaceManager & faceManager,
                     ElementRegionManager & elemManager,
-                    std::vector< std::set< localIndex > > & nodesToRupturedFaces,
-                    std::vector< std::set< localIndex > > & edgesToRupturedFaces,
+                    stdVector< std::set< localIndex > > & nodesToRupturedFaces,
+                    stdVector< std::set< localIndex > > & edgesToRupturedFaces,
                     ElementRegionManager & elementManager,
                     ModifiedObjectLists & modifiedObjects,
                     const bool prefrac );
@@ -344,8 +344,8 @@ private:
                            EdgeManager const & edgeManager,
                            FaceManager const & faceManager,
                            ElementRegionManager const & elemManager,
-                           std::vector< std::set< localIndex > > const & nodesToRupturedFaces,
-                           std::vector< std::set< localIndex > > const & edgesToRupturedFaces,
+                           stdVector< std::set< localIndex > > const & nodesToRupturedFaces,
+                           stdVector< std::set< localIndex > > const & edgesToRupturedFaces,
                            std::set< localIndex > & separationPathFaces,
                            map< localIndex, int > & edgeLocations,
                            map< localIndex, int > & faceLocations,
@@ -374,8 +374,8 @@ private:
                         FaceManager & faceManager,
                         ElementRegionManager & elementManager,
                         ModifiedObjectLists & modifiedObjects,
-                        std::vector< std::set< localIndex > > & nodesToRupturedFaces,
-                        std::vector< std::set< localIndex > > & edgesToRupturedFaces,
+                        stdVector< std::set< localIndex > > & nodesToRupturedFaces,
+                        stdVector< std::set< localIndex > > & edgesToRupturedFaces,
                         std::set< localIndex > const & separationPathFaces,
                         map< localIndex, int > const & edgeLocations,
                         map< localIndex, int > const & faceLocations,
@@ -403,7 +403,7 @@ private:
   bool setLocations( std::set< localIndex > const & separationPathFaces,
                      ElementRegionManager const & elemManager,
                      FaceManager const & faceManager,
-                     std::vector< std::pair< CellElementSubRegion const *, localIndex > > const & nodeToElementMaps,
+                     stdVector< std::pair< CellElementSubRegion const *, localIndex > > const & nodeToElementMaps,
                      map< localIndex, std::pair< localIndex, localIndex > > const & localFacesToEdges,
                      map< localIndex, int > & edgeLocations,
                      map< localIndex, int > & faceLocations,
@@ -428,7 +428,7 @@ private:
                          std::set< localIndex > const & separationPathFaces,
                          ElementRegionManager const & elemManager,
                          FaceManager const & faceManager,
-                         std::vector< std::pair< CellElementSubRegion const *, localIndex > > const & nodesToElements,
+                         stdVector< std::pair< CellElementSubRegion const *, localIndex > > const & nodesToElements,
                          map< localIndex, std::pair< localIndex, localIndex > > const & localFacesToEdges,
                          map< localIndex, int > & edgeLocations,
                          map< localIndex, int > & faceLocations,
@@ -503,6 +503,11 @@ private:
 
   real64 calculateRuptureRate( SurfaceElementRegion & faceElementRegion );
 
+  real64 scalingToughness( R1Tensor const fractureOrigin,
+                           real64 const (&faceCenter)[3],
+                           real64 const initialRockToughness,
+                           real64 const toughnessScalingFactor );
+
   /**
    * @struct viewKeyStruct holds char strings and viewKeys for fast lookup
    */
@@ -521,7 +526,10 @@ private:
 
     //TODO: rock toughness should be a material parameter, and we need to make rock toughness to KIC a constitutive
     // relation.
-    constexpr static char const * rockToughnessString() { return "rockToughness"; }
+    constexpr static char const * initialRockToughnessString() { return "initialRockToughness"; }
+    constexpr static char const * toughnessScalingFactorString() { return "toughnessScalingFactor"; }
+    //TODO: fracture origin can be obtained from the initial fracture geometry
+    constexpr static char const * fractureOriginString() { return "fractureOrigin"; }
 
 //    //TODO: Once the node-based SIF criterion becomes mature and robust, remove the edge-based criterion.
     constexpr static char const * nodeBasedSIFString() { return "nodeBasedSIF"; }
@@ -541,7 +549,11 @@ private:
 
   int m_isPoroelastic;
 
-  real64 m_rockToughness;
+  real64 m_initialRockToughness;
+
+  real64 m_toughnessScalingFactor;
+
+  R1Tensor m_fractureOrigin;
 
   // Flag for consistent communication ordering
   int m_mpiCommOrder;

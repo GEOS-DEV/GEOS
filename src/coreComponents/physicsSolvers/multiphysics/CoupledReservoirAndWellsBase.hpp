@@ -201,8 +201,16 @@ public:
     // Validate well perforations: Ensure that each perforation is in a region targeted by the solver
     if( !validateWellPerforations( domain ))
     {
-      return;
+      GEOS_ERROR( GEOS_FMT( "{}: well perforations validation failed, bad perforations found", this->getName()));
     }
+  }
+
+  virtual void
+  postInputInitialization() override
+  {
+    Base::postInputInitialization();
+
+    setMGRStrategy();
   }
 
   virtual void
@@ -222,6 +230,8 @@ public:
       m_isWellTransmissibilityComputed = true;
     }
   }
+
+  void initializeState( DomainPartition & domain ) const { return reservoirSolver()->initializeState( domain ); }
 
   void
   assembleFluxTerms( real64 const dt,
@@ -298,6 +308,12 @@ protected:
                               DofManager const & dofManager,
                               SparsityPatternView< globalIndex > const & pattern ) const = 0;
 
+  virtual void setMGRStrategy()
+  {
+    if( this->m_linearSolverParameters.get().preconditionerType == LinearSolverParameters::PreconditionerType::mgr )
+      GEOS_ERROR( GEOS_FMT( "{}: MGR strategy is not implemented for {}", this->getName(), this->getCatalogName()));
+  }
+
   /// Flag to determine whether the well transmissibility needs to be computed
   bool m_isWellTransmissibilityComputed;
 
@@ -319,9 +335,9 @@ private:
    */
   void computeWellTransmissibility( DomainPartition & domain ) const
   {
-    this->template forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                                                 MeshLevel & meshLevel,
-                                                                                 arrayView1d< string const > const & regionNames )
+    this->template forDiscretizationOnMeshTargets<>( domain.getMeshBodies(), [&] ( string const &,
+                                                                                   MeshLevel & meshLevel,
+                                                                                   string_array const & regionNames )
     {
       ElementRegionManager & elemManager = meshLevel.getElemManager();
 

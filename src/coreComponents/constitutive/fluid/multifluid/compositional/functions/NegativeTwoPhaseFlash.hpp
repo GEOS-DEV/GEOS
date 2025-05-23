@@ -24,7 +24,7 @@
 #include "KValueInitialization.hpp"
 #include "FugacityCalculator.hpp"
 #include "constitutive/fluid/multifluid/MultiFluidConstants.hpp"
-#include "constitutive/fluid/multifluid/compositional/models/ComponentProperties.hpp"
+#include "constitutive/fluid/multifluid/compositional/parameters/ComponentProperties.hpp"
 #include "denseLinearAlgebra/interfaces/blaslapack/BlasLapackLA.hpp"
 
 namespace geos

@@ -199,7 +199,7 @@ real64 getTotalFluidMass( ProblemManager & problem, string_view flowSolverPath )
   solver.forDiscretizationOnMeshTargets( problem.getDomainPartition().getMeshBodies(),
                                          [&] ( string const &,
                                                MeshLevel & mesh,
-                                               arrayView1d< string const > const & )
+                                               string_array const & )
   {
     mesh.getElemManager().forElementRegions( [&]( ElementRegionBase & region )
     {
@@ -365,6 +365,8 @@ TestSet getTestSet()
 
   <Solvers>
     <SinglePhaseFVM name="testSolver"
+                    logLevel="1"
+                    allowNegativePressure="1"
                     discretization="singlePhaseTPFA"
                     targetRegions="{ reservoir }" >
 
@@ -481,10 +483,12 @@ TestSet getTestSet()
   <Tasks>
     <SourceFluxStatistics name="timeStepFluxStats"
                           flowSolverName="testSolver"
-                          logLevel="0" />
+                          fluxNames="{*}"
+                          logLevel="3" />
     <SourceFluxStatistics name="wholeSimFluxStats"
+                          fluxNames="{*}"
                           flowSolverName="testSolver"
-                          logLevel="0" />
+                          logLevel="3" />
 
     <SinglePhaseStatistics name="timeStepReservoirStats"
                            flowSolverName="testSolver"
@@ -726,9 +730,11 @@ TestSet getTestSet()
   <Tasks>
     <SourceFluxStatistics name="timeStepFluxStats"
                           flowSolverName="testSolver"
+                          fluxNames="{*}"
                           logLevel="2" />
     <SourceFluxStatistics name="wholeSimFluxStats"
                           flowSolverName="testSolver"
+                          fluxNames="{*}"
                           logLevel="2" />
 
     <CompositionalMultiphaseStatistics name="timeStepReservoirStats"
@@ -998,10 +1004,12 @@ TestSet getTestSet()
   <Tasks>
     <SourceFluxStatistics name="timeStepFluxStats"
                           flowSolverName="testSolver"
-                          logLevel="2" />
+                          fluxNames="{*}"
+                          logLevel="1" />
     <SourceFluxStatistics name="wholeSimFluxStats"
                           flowSolverName="testSolver"
-                          logLevel="2" />
+                          fluxNames="{*}"
+                          logLevel="1" />
 
     <CompositionalMultiphaseStatistics name="timeStepReservoirStats"
                                        flowSolverName="testSolver"

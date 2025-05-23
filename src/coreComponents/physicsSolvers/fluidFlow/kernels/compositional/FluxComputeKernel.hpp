@@ -35,6 +35,8 @@
 #include "physicsSolvers/fluidFlow/kernels/compositional/PPUPhaseFlux.hpp"
 #include "physicsSolvers/fluidFlow/kernels/compositional/C1PPUPhaseFlux.hpp"
 #include "physicsSolvers/fluidFlow/kernels/compositional/IHUPhaseFlux.hpp"
+#include "physicsSolvers/fluidFlow/kernels/compositional/HU2PhaseFlux.hpp"
+#include "physicsSolvers/fluidFlow/kernels/compositional/PhaseComponentFlux.hpp"
 
 namespace geos
 {
@@ -228,6 +230,7 @@ public:
                     StackVariables & stack,
                     FUNC && compFluxKernelOp = NoOpFunc{} ) const
   {
+    using namespace isothermalCompositionalMultiphaseFVMKernelUtilities;
 
     // first, compute the transmissibilities at this face
     m_stencilWrapper.computeWeights( iconn,
@@ -252,6 +255,7 @@ public:
         real64 compFlux[numComp]{};
         real64 dCompFlux_dP[numFluxSupportPoints][numComp]{};
         real64 dCompFlux_dC[numFluxSupportPoints][numComp][numComp]{};
+        real64 dCompFlux_dTrans[numComp]{};
 
         real64 const trans[numFluxSupportPoints] = { stack.transmissibility[connectionIndex][0],
                                                      stack.transmissibility[connectionIndex][1] };
@@ -268,16 +272,15 @@ public:
           real64 phaseFlux = 0.0;
           real64 dPhaseFlux_dP[numFluxSupportPoints]{};
           real64 dPhaseFlux_dC[numFluxSupportPoints][numComp]{};
-
-          localIndex k_up = -1;
+          real64 dPhaseFlux_dTrans = 0.0; // not really used
 
           if( m_kernelFlags.isSet( KernelFlags::C1PPU ) )
           {
-            isothermalCompositionalMultiphaseFVMKernelUtilities::C1PPUPhaseFlux::compute< numComp, numFluxSupportPoints >
+            C1PPUPhaseFlux::compute< numComp, numFluxSupportPoints >
               ( m_numPhases,
               ip,
               m_kernelFlags.isSet( KernelFlags::CapPressure ),
-              m_kernelFlags.isSet( KernelFlags::NewGravity ),
+              m_kernelFlags.isSet( KernelFlags::CheckPhasePresenceInGravity ),
               seri, sesri, sei,
               trans,
               dTrans_dPres,
@@ -285,26 +288,21 @@ public:
               m_gravCoef,
               m_phaseMob, m_dPhaseMob,
               m_phaseVolFrac, m_dPhaseVolFrac,
-              m_phaseCompFrac, m_dPhaseCompFrac,
               m_dCompFrac_dCompDens,
               m_phaseMassDens, m_dPhaseMassDens,
               m_phaseCapPressure, m_dPhaseCapPressure_dPhaseVolFrac,
-              k_up,
               potGrad,
               phaseFlux,
               dPhaseFlux_dP,
-              dPhaseFlux_dC,
-              compFlux,
-              dCompFlux_dP,
-              dCompFlux_dC );
+              dPhaseFlux_dC );
           }
           else if( m_kernelFlags.isSet( KernelFlags::IHU ) )
           {
-            isothermalCompositionalMultiphaseFVMKernelUtilities::IHUPhaseFlux::compute< numComp, numFluxSupportPoints >
+            IHUPhaseFlux::compute< numComp, numFluxSupportPoints >
               ( m_numPhases,
               ip,
               m_kernelFlags.isSet( KernelFlags::CapPressure ),
-              m_kernelFlags.isSet( KernelFlags::NewGravity ),
+              m_kernelFlags.isSet( KernelFlags::CheckPhasePresenceInGravity ),
               seri, sesri, sei,
               trans,
               dTrans_dPres,
@@ -312,26 +310,43 @@ public:
               m_gravCoef,
               m_phaseMob, m_dPhaseMob,
               m_phaseVolFrac, m_dPhaseVolFrac,
-              m_phaseCompFrac, m_dPhaseCompFrac,
               m_dCompFrac_dCompDens,
               m_phaseMassDens, m_dPhaseMassDens,
               m_phaseCapPressure, m_dPhaseCapPressure_dPhaseVolFrac,
-              k_up,
               potGrad,
               phaseFlux,
               dPhaseFlux_dP,
-              dPhaseFlux_dC,
-              compFlux,
-              dCompFlux_dP,
-              dCompFlux_dC );
+              dPhaseFlux_dC );
+          }
+          else if( m_kernelFlags.isSet( KernelFlags::HU2PH ) )
+          {
+            HU2PhaseFlux::compute< numComp, numFluxSupportPoints >
+              ( m_numPhases,
+              ip,
+              m_kernelFlags.isSet( KernelFlags::CapPressure ),
+              m_kernelFlags.isSet( KernelFlags::CheckPhasePresenceInGravity ),
+              seri, sesri, sei,
+              trans,
+              dTrans_dPres,
+              m_pres,
+              m_gravCoef,
+              m_phaseMob, m_dPhaseMob,
+              m_phaseVolFrac, m_dPhaseVolFrac,
+              m_dCompFrac_dCompDens,
+              m_phaseMassDens, m_dPhaseMassDens,
+              m_phaseCapPressure, m_dPhaseCapPressure_dPhaseVolFrac,
+              potGrad,
+              phaseFlux,
+              dPhaseFlux_dP,
+              dPhaseFlux_dC );
           }
           else
           {
-            isothermalCompositionalMultiphaseFVMKernelUtilities::PPUPhaseFlux::compute< numComp, numFluxSupportPoints >
+            PPUPhaseFlux::compute< numComp, numFluxSupportPoints >
               ( m_numPhases,
               ip,
               m_kernelFlags.isSet( KernelFlags::CapPressure ),
-              m_kernelFlags.isSet( KernelFlags::NewGravity ),
+              m_kernelFlags.isSet( KernelFlags::CheckPhasePresenceInGravity ),
               seri, sesri, sei,
               trans,
               dTrans_dPres,
@@ -339,28 +354,33 @@ public:
               m_gravCoef,
               m_phaseMob, m_dPhaseMob,
               m_phaseVolFrac, m_dPhaseVolFrac,
-              m_phaseCompFrac, m_dPhaseCompFrac,
               m_dCompFrac_dCompDens,
               m_phaseMassDens, m_dPhaseMassDens,
               m_phaseCapPressure, m_dPhaseCapPressure_dPhaseVolFrac,
-              k_up,
               potGrad,
               phaseFlux,
               dPhaseFlux_dP,
               dPhaseFlux_dC,
-              compFlux,
-              dCompFlux_dP,
-              dCompFlux_dC );
+              dPhaseFlux_dTrans );
           }
+
+          // choose upstream cell for composition upwinding
+          localIndex const k_up = (phaseFlux >= 0) ? 0 : 1;
+
+          // distribute on phaseComponentFlux here
+          PhaseComponentFlux::compute( ip, k_up, seri, sesri, sei,
+                                       m_phaseCompFrac, m_dPhaseCompFrac, m_dCompFrac_dCompDens,
+                                       phaseFlux, dPhaseFlux_dP, dPhaseFlux_dC, dPhaseFlux_dTrans,
+                                       compFlux, dCompFlux_dP, dCompFlux_dC, dCompFlux_dTrans );
 
           // call the lambda in the phase loop to allow the reuse of the phase fluxes and their derivatives
           // possible use: assemble the derivatives wrt temperature, and the flux term of the energy equation for this phase
-          compFluxKernelOp( ip, m_kernelFlags.isSet( KernelFlags::NewGravity ),
+          compFluxKernelOp( ip, m_kernelFlags.isSet( KernelFlags::CheckPhasePresenceInGravity ),
                             k, seri, sesri, sei, connectionIndex,
                             k_up, seri[k_up], sesri[k_up], sei[k_up], potGrad,
                             phaseFlux, dPhaseFlux_dP, dPhaseFlux_dC );
 
-        }                                 // loop over phases
+        }   // loop over phases
 
         /// populate local flux vector and derivatives
         for( integer ic = 0; ic < numComp; ++ic )
@@ -527,10 +547,7 @@ public:
                    integer const numPhases,
                    globalIndex const rankOffset,
                    string const & dofKey,
-                   integer const hasCapPressure,
-                   integer const useTotalMassEquation,
-                   integer const useNewGravity,
-                   UpwindingParameters upwindingParams,
+                   BitFlags< KernelFlags > kernelFlags,
                    string const & solverName,
                    ElementRegionManager const & elemManager,
                    STENCILWRAPPER const & stencilWrapper,
@@ -546,20 +563,6 @@ public:
       ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > dofNumberAccessor =
         elemManager.constructArrayViewAccessor< globalIndex, 1 >( dofKey );
       dofNumberAccessor.setName( solverName + "/accessors/" + dofKey );
-
-      BitFlags< KernelFlags > kernelFlags;
-      if( hasCapPressure )
-        kernelFlags.set( KernelFlags::CapPressure );
-      if( useTotalMassEquation )
-        kernelFlags.set( KernelFlags::TotalMassEquation );
-      if( useNewGravity )
-        kernelFlags.set( KernelFlags::NewGravity );
-      if( upwindingParams.upwindingScheme == UpwindingScheme::C1PPU &&
-          isothermalCompositionalMultiphaseFVMKernelUtilities::epsC1PPU > 0 )
-        kernelFlags.set( KernelFlags::C1PPU );
-      else if( upwindingParams.upwindingScheme == UpwindingScheme::IHU )
-        kernelFlags.set( KernelFlags::IHU );
-
 
       using kernelType = FluxComputeKernel< NUM_COMP, NUM_DOF, STENCILWRAPPER >;
       typename kernelType::CompFlowAccessors compFlowAccessors( elemManager, solverName );

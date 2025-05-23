@@ -16,7 +16,7 @@
         lineSearchMaxCuts="10"/>
     </Hydrofracture>
 
-    <SolidMechanicsLagrangianSSLE
+    <SolidMechanicsLagrangianFEM
       name="lagsolve"
       logLevel="1"
       timeIntegrationOption="QuasiStatic"
@@ -34,7 +34,7 @@
     <SurfaceGenerator
       name="SurfaceGen"
       targetRegions="{ Domain }"
-      rockToughness="1.0e6"/>
+      initialRockToughness="1.0e6"/>
   </Solvers>
 
   <Mesh>

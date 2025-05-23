@@ -34,6 +34,7 @@
 #include "events/EventManager.hpp"
 #include "AcousticPMLSEMKernel.hpp"
 #include "physicsSolvers/wavePropagation/shared/PrecomputeSourcesAndReceiversKernel.hpp"
+#include "physicsSolvers/wavePropagation/LogLevelsInfo.hpp"
 
 namespace geos
 {
@@ -52,6 +53,7 @@ AcousticWaveEquationSEM::AcousticWaveEquationSEM( const std::string & name,
     setSizedFromParent( 0 ).
     setDescription( "Pressure value at each receiver for each timestep" );
 
+  addLogLevel< logInfo::PMLParameters >();
 }
 
 AcousticWaveEquationSEM::~AcousticWaveEquationSEM()
@@ -70,7 +72,7 @@ void AcousticWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
   WaveSolverBase::registerDataOnMesh( meshBodies );
   forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
                                                     MeshLevel & mesh,
-                                                    arrayView1d< string const > const & )
+                                                    string_array const & )
   {
     NodeManager & nodeManager = mesh.getNodeManager();
 
@@ -133,7 +135,7 @@ void AcousticWaveEquationSEM::postInputInitialization()
 }
 
 void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & baseMesh, MeshLevel & mesh,
-                                                               arrayView1d< string const > const & regionNames )
+                                                               string_array const & regionNames )
 {
   GEOS_MARK_FUNCTION;
 
@@ -157,6 +159,35 @@ void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & baseM
   receiverNodeIds.setValues< EXEC_POLICY >( -1 );
   receiverConstants.setValues< EXEC_POLICY >( -1 );
   receiverIsLocal.zero();
+
+  arrayView1d< TableFunction::KernelWrapper const > const sourceWaveletTableWrappers = m_sourceWaveletTableWrappers.toViewConst();
+  bool useSourceWaveletTables = m_useSourceWaveletTables;
+
+  //Correct size for sourceValue
+  EventManager const & event = getGroupByPath< EventManager >( "/Problem/Events" );
+  real64 const & maxTime = event.getReference< real64 >( EventManager::viewKeyStruct::maxTimeString() );
+  real64 const & minTime = event.getReference< real64 >( EventManager::viewKeyStruct::minTimeString() );
+  real64 dt = 0;
+  for( localIndex numSubEvent = 0; numSubEvent < event.numSubGroups(); ++numSubEvent )
+  {
+    EventBase const * subEvent = static_cast< EventBase const * >( event.getSubGroups()[numSubEvent] );
+    if( subEvent->getEventName() == "/Solvers/" + this->getName() )
+    {
+      dt = subEvent->getReference< real64 >( EventBase::viewKeyStruct::forceDtString() );
+    }
+  }
+
+  real64 dtCompute;
+
+  localIndex nSubSteps = (int) ceil( dt/m_timeStep );
+  dtCompute = dt/nSubSteps;
+
+  localIndex const nsamples = int( (maxTime - minTime) / dtCompute) + 1;
+
+  localIndex const numSourcesGlobal = m_sourceCoordinates.size( 0 );
+  m_sourceValue.resize( nsamples, numSourcesGlobal );
+
+  arrayView2d< real32 > const sourceValue = m_sourceValue.toView();
 
   mesh.getElemManager().forElementSubRegionsComplete< CellElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                                 localIndex const er,
@@ -204,7 +235,14 @@ void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & baseM
           receiverCoordinates,
           receiverIsLocal,
           receiverNodeIds,
-          receiverConstants );
+          receiverConstants,
+          sourceValue,
+          dtCompute,
+          m_timeSourceFrequency,
+          m_timeSourceDelay,
+          m_rickerOrder,
+          sourceWaveletTableWrappers,
+          useSourceWaveletTables );
       }
     } );
     elementSubRegion.faceList().freeOnDevice();
@@ -221,25 +259,24 @@ void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & baseM
   nodesToElements.freeOnDevice();
 }
 
-void AcousticWaveEquationSEM::addSourceToRightHandSide( real64 const & time_n, arrayView1d< real32 > const rhs )
+void AcousticWaveEquationSEM::addSourceToRightHandSide( integer const & cycleNumber, arrayView1d< real32 > const rhs )
 {
   arrayView2d< localIndex const > const sourceNodeIds = m_sourceNodeIds.toViewConst();
   arrayView2d< real64 const > const sourceConstants   = m_sourceConstants.toViewConst();
   arrayView1d< localIndex const > const sourceIsAccessible = m_sourceIsAccessible.toViewConst();
-  real32 const timeSourceFrequency = m_timeSourceFrequency;
-  real32 const timeSourceDelay = m_timeSourceDelay;
-  localIndex const rickerOrder = m_rickerOrder;
-  bool useSourceWaveletTables = m_useSourceWaveletTables;
-  arrayView1d< TableFunction::KernelWrapper const > const sourceWaveletTableWrappers = m_sourceWaveletTableWrappers.toViewConst();
+  arrayView2d< real32 const > const sourceValue   = m_sourceValue.toViewConst();
+
+  GEOS_THROW_IF( cycleNumber > sourceValue.size( 0 ),
+                 getDataContext() << ": Too many steps compared to array size",
+                 std::runtime_error );
   forAll< EXEC_POLICY >( sourceConstants.size( 0 ), [=] GEOS_HOST_DEVICE ( localIndex const isrc )
   {
     if( sourceIsAccessible[isrc] == 1 )
     {
-      real64 const srcValue =
-        useSourceWaveletTables ? sourceWaveletTableWrappers[ isrc ].compute( &time_n ) : WaveSolverUtils::evaluateRicker( time_n, timeSourceFrequency, timeSourceDelay, rickerOrder );
+
       for( localIndex inode = 0; inode < sourceConstants.size( 1 ); ++inode )
       {
-        real32 const localIncrement = sourceConstants[isrc][inode] * srcValue;
+        real32 const localIncrement = sourceConstants[isrc][inode] * sourceValue[cycleNumber][isrc];
         RAJA::atomicAdd< ATOMIC_POLICY >( &rhs[sourceNodeIds[isrc][inode]], localIncrement );
       }
     }
@@ -264,12 +301,10 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
 
 
 
-  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const & meshBodyName,
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
-                                                                arrayView1d< string const > const & regionNames )
+                                                                string_array const & regionNames )
   {
-    MeshLevel & baseMesh = domain.getMeshBodies().getGroup< MeshBody >( meshBodyName ).getBaseDiscretization();
-    precomputeSourceAndReceiverTerm( baseMesh, mesh, regionNames );
 
     NodeManager & nodeManager = mesh.getNodeManager();
     FaceManager & faceManager = mesh.getFaceManager();
@@ -365,6 +400,16 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
     m_timeStep=dtOut;
   }
 
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const & meshBodyName,
+                                                                MeshLevel & mesh,
+                                                                string_array const & regionNames )
+  {
+    GEOS_UNUSED_VAR( meshBodyName );
+    MeshLevel & baseMesh = domain.getMeshBodies().getGroup< MeshBody >( meshBodyName ).getBaseDiscretization();
+    precomputeSourceAndReceiverTerm( baseMesh, mesh, regionNames );
+
+  } );
+
 
   WaveSolverUtils::initTrace( "seismoTraceReceiver", getName(), m_outputSeismoTrace, m_receiverConstants.size( 0 ), m_receiverIsLocal );
 }
@@ -379,7 +424,7 @@ real64 AcousticWaveEquationSEM::computeTimeStep( real64 & dtOut )
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
-                                                                arrayView1d< string const > const & regionNames )
+                                                                string_array const & regionNames )
   {
 
     NodeManager & nodeManager = mesh.getNodeManager();
@@ -578,7 +623,7 @@ void AcousticWaveEquationSEM::initializePML()
   DomainPartition & domain = getGroupByPath< DomainPartition >( "/Problem/domain" );
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
-                                                                arrayView1d< string const > const & )
+                                                                string_array const & )
   {
 
     NodeManager & nodeManager = mesh.getNodeManager();
@@ -781,7 +826,7 @@ void AcousticWaveEquationSEM::initializePML()
     /// so it can be used by the PML application
     indicatorPML.zero();
 
-    GEOS_LOG_LEVEL_RANK_0( 1,
+    GEOS_LOG_LEVEL_RANK_0( logInfo::PMLParameters,
                            "PML parameters are: \n"
                            << "\t inner boundaries xMin = "<<param.xMinPML<<"\n"
                            << "\t inner boundaries xMax = "<<param.xMaxPML<<"\n"
@@ -807,7 +852,7 @@ void AcousticWaveEquationSEM::applyPML( real64 const time, DomainPartition & dom
   /// which is the whole mesh
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
-                                                                arrayView1d< string const > const & )
+                                                                string_array const & )
   {
 
     NodeManager & nodeManager = mesh.getNodeManager();
@@ -900,14 +945,14 @@ real64 AcousticWaveEquationSEM::explicitStepForward( real64 const & time_n,
                                                      real64 const & dt,
                                                      integer cycleNumber,
                                                      DomainPartition & domain,
-                                                     bool computeGradient )
+                                                     integer computeGradient )
 {
-  real64 dtCompute = explicitStepInternal( time_n, dt, domain );
+  real64 dtCompute = explicitStepInternal( time_n, dt, cycleNumber, domain );
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(),
                                   [&] ( string const &,
                                         MeshLevel & mesh,
-                                        arrayView1d< string const > const & GEOS_UNUSED_PARAM ( regionNames ) )
+                                        string_array const & GEOS_UNUSED_PARAM ( regionNames ) )
   {
     NodeManager & nodeManager = mesh.getNodeManager();
 
@@ -971,13 +1016,13 @@ real64 AcousticWaveEquationSEM::explicitStepBackward( real64 const & time_n,
                                                       real64 const & dt,
                                                       integer cycleNumber,
                                                       DomainPartition & domain,
-                                                      bool computeGradient )
+                                                      integer computeGradient )
 {
-  real64 dtCompute = explicitStepInternal( time_n, dt, domain );
+  real64 dtCompute = explicitStepInternal( time_n, dt, cycleNumber, domain );
   forDiscretizationOnMeshTargets( domain.getMeshBodies(),
                                   [&] ( string const &,
                                         MeshLevel & mesh,
-                                        arrayView1d< string const > const & regionNames )
+                                        string_array const & regionNames )
   {
     NodeManager & nodeManager = mesh.getNodeManager();
 
@@ -997,7 +1042,7 @@ real64 AcousticWaveEquationSEM::explicitStepBackward( real64 const & time_n,
     real64 const & maxTime = event.getReference< real64 >( EventManager::viewKeyStruct::maxTimeString() );
     int const maxCycle = int(round( maxTime / dt ));
 
-    if( computeGradient && cycleNumber < maxCycle )
+    if( computeGradient > 0 && cycleNumber < maxCycle )
     {
       ElementRegionManager & elemManager = mesh.getElemManager();
 
@@ -1035,7 +1080,7 @@ real64 AcousticWaveEquationSEM::explicitStepBackward( real64 const & time_n,
         arrayView1d< integer const > const elemGhostRank = elementSubRegion.ghostRank();
         GEOS_MARK_SCOPE ( updatePartialGradient );
 
-        //COMPUTE GRADIENTS with respect to K=1/rho*c2 (grad) and b=1/rho (grad2)
+        //COMPUTE GRADIENTS or imaging condition with respect to K=1/rho*c2 (grad) and b=1/rho (grad2)
         finiteElement::FiniteElementBase const &
         fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
 
@@ -1043,16 +1088,30 @@ real64 AcousticWaveEquationSEM::explicitStepBackward( real64 const & time_n,
         {
           using FE_TYPE = TYPEOFREF( finiteElement );
 
-          AcousticMatricesSEM::GradientKappaBuoyancy< FE_TYPE > kernelG( finiteElement );
-          kernelG.template computeGradient< EXEC_POLICY, ATOMIC_POLICY >( elementSubRegion.size(),
-                                                                          nodeCoords,
-                                                                          elemsToNodes,
-                                                                          elemGhostRank,
-                                                                          p_nm1,
-                                                                          p_n,
-                                                                          p_forward,
-                                                                          grad,
-                                                                          grad2 );
+          if( computeGradient == 1 )
+          {
+            AcousticMatricesSEM::GradientKappaBuoyancy< FE_TYPE > kernelG( finiteElement );
+            kernelG.template computeGradient< EXEC_POLICY, ATOMIC_POLICY >( elementSubRegion.size(),
+                                                                            nodeCoords,
+                                                                            elemsToNodes,
+                                                                            elemGhostRank,
+                                                                            p_nm1,
+                                                                            p_n,
+                                                                            p_forward,
+                                                                            grad,
+                                                                            grad2 );
+          }
+          else if( computeGradient == 2 )
+          {
+            AcousticMatricesSEM::ImagingCondition< FE_TYPE > kernelI( finiteElement );
+            kernelI.template computeImagingCondition< EXEC_POLICY, ATOMIC_POLICY >( elementSubRegion.size(),
+                                                                                    nodeCoords,
+                                                                                    elemsToNodes,
+                                                                                    elemGhostRank,
+                                                                                    p_n,
+                                                                                    p_forward,
+                                                                                    grad );
+          }
 
 
         } );
@@ -1112,9 +1171,10 @@ void AcousticWaveEquationSEM::prepareNextTimestep( MeshLevel & mesh )
 
 void AcousticWaveEquationSEM::computeUnknowns( real64 const & time_n,
                                                real64 const & dt,
+                                               integer const & cycleNumber,
                                                DomainPartition & domain,
                                                MeshLevel & mesh,
-                                               arrayView1d< string const > const & regionNames )
+                                               string_array const & regionNames )
 {
   NodeManager & nodeManager = mesh.getNodeManager();
 
@@ -1139,8 +1199,14 @@ void AcousticWaveEquationSEM::computeUnknowns( real64 const & time_n,
                                                           getDiscretizationName(),
                                                           "",
                                                           kernelFactory );
+
   //Modification of cycleNember useful when minTime < 0
-  addSourceToRightHandSide( time_n, rhs );
+  EventManager const & event = getGroupByPath< EventManager >( "/Problem/Events" );
+  real64 const & minTime = event.getReference< real64 >( EventManager::viewKeyStruct::minTimeString() );
+  //localIndex const cycleNumber = time_n/dt;
+  integer const cycleForSource = int(round( -minTime / dt + cycleNumber ));
+
+  addSourceToRightHandSide( cycleForSource, rhs );
 
   /// calculate your time integrators
   real64 const dt2 = pow( dt, 2 );
@@ -1236,7 +1302,7 @@ void AcousticWaveEquationSEM::synchronizeUnknowns( real64 const & time_n,
                                                    real64 const & dt,
                                                    DomainPartition & domain,
                                                    MeshLevel & mesh,
-                                                   arrayView1d< string const > const & )
+                                                   string_array const & )
 {
   NodeManager & nodeManager = mesh.getNodeManager();
 
@@ -1280,20 +1346,21 @@ void AcousticWaveEquationSEM::synchronizeUnknowns( real64 const & time_n,
 
 real64 AcousticWaveEquationSEM::explicitStepInternal( real64 const & time_n,
                                                       real64 const & dt,
+                                                      integer const & cycleNumber,
                                                       DomainPartition & domain )
 {
   GEOS_MARK_FUNCTION;
 
   GEOS_LOG_RANK_0_IF( dt < epsilonLoc, "Warning! Value for dt: " << dt << "s is smaller than local threshold: " << epsilonLoc );
 
-  real64 dtCompute;
+  real64 dtCompute = 0.0;
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
-                                                                arrayView1d< string const > const & regionNames )
+                                                                string_array const & regionNames )
   {
     localIndex nSubSteps = (int) ceil( dt/m_timeStep );
     dtCompute = dt/nSubSteps;
-    computeUnknowns( time_n, dtCompute, domain, mesh, regionNames );
+    computeUnknowns( time_n, dtCompute, cycleNumber, domain, mesh, regionNames );
     synchronizeUnknowns( time_n, dtCompute, domain, mesh, regionNames );
   } );
 
@@ -1312,7 +1379,7 @@ void AcousticWaveEquationSEM::cleanup( real64 const time_n,
   // compute the remaining seismic traces, if needed
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
-                                                                arrayView1d< string const > const & )
+                                                                string_array const & )
   {
     NodeManager & nodeManager = mesh.getNodeManager();
     arrayView1d< real32 const > const p_n = nodeManager.getField< acousticfields::Pressure_n >();

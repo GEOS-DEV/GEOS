@@ -146,9 +146,33 @@ public:
                            real64 const & timeAtBeginningOfStep,
                            real64 const & dt );
 
-  virtual void initializeFluidState( MeshLevel & mesh, const arrayView1d< const string > & regionNames ) { GEOS_UNUSED_VAR( mesh, regionNames ); }
+  /**
+   * @brief assembles the flux terms for all cells for the hydrofracture case
+   * @param time_n previous time value
+   * @param dt time step
+   * @param domain the physical domain object
+   * @param dofManager degree-of-freedom manager associated with the linear system
+   * @param localMatrix the system matrix
+   * @param localRhs the system right-hand side vector
+   * @param dR_dAper
+   */
+  virtual void assembleHydrofracFluxTerms( real64 const time_n,
+                                           real64 const dt,
+                                           DomainPartition const & domain,
+                                           DofManager const & dofManager,
+                                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                           arrayView1d< real64 > const & localRhs,
+                                           CRSMatrixView< real64, localIndex const > const & dR_dAper )
+  {
+    GEOS_UNUSED_VAR ( time_n, dt, domain, dofManager, localMatrix, localRhs, dR_dAper );
+    GEOS_ERROR( "Poroelastic fluxes with conforming fractures not yet implemented." );
+  }
 
-  virtual void initializeThermalState( MeshLevel & mesh, const arrayView1d< const string > & regionNames ) { GEOS_UNUSED_VAR( mesh, regionNames ); }
+  void initializeState( DomainPartition & domain );
+
+  virtual void initializeFluidState( MeshLevel & mesh, string_array const & regionNames ) { GEOS_UNUSED_VAR( mesh, regionNames ); }
+
+  virtual void initializeThermalState( MeshLevel & mesh, string_array const & regionNames ) { GEOS_UNUSED_VAR( mesh, regionNames ); }
 
   /**
    * @brief For each equilibrium initial condition, loop over all the target cells and compute the min/max elevation
@@ -175,6 +199,8 @@ public:
                                            DomainPartition & domain, // cannot be const...
                                            std::map< string, localIndex > const & bcNameToBcId,
                                            arrayView1d< globalIndex > const & bcAllSetsSize ) const;
+
+  integer numberOfDofsPerCell() const { return m_numDofPerCell; }
 
 protected:
 
@@ -204,21 +230,21 @@ protected:
   virtual void validatePoreVolumes( DomainPartition const & domain ) const;
 
   virtual void precomputeData( MeshLevel & mesh,
-                               arrayView1d< string const > const & regionNames );
+                               string_array const & regionNames );
 
   virtual void initializePreSubGroups() override;
 
-  virtual void initializePostInitialConditionsPreSubGroups() override;
+  void checkDiscretizationName() const;
 
-  void initializeState( DomainPartition & domain );
+  virtual void initializePostInitialConditionsPreSubGroups() override;
 
   virtual void computeHydrostaticEquilibrium( DomainPartition & domain ) { GEOS_UNUSED_VAR( domain ); }
 
-  void initializePorosityAndPermeability( MeshLevel & mesh, arrayView1d< string const > const & regionNames );
+  void initializePorosityAndPermeability( MeshLevel & mesh, string_array const & regionNames );
 
-  void initializeHydraulicAperture( MeshLevel & mesh, const arrayView1d< const string > & regionNames );
+  void initializeHydraulicAperture( MeshLevel & mesh, string_array const & regionNames );
 
-  void saveInitialPressureAndTemperature( MeshLevel & mesh, const arrayView1d< const string > & regionNames );
+  void saveInitialPressureAndTemperature( MeshLevel & mesh, string_array const & regionNames );
 
   virtual void setConstitutiveNamesCallSuper( ElementSubRegionBase & subRegion ) const override;
 

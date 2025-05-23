@@ -18,8 +18,7 @@
  */
 
 #include "NegativeTwoPhaseFlashModel.hpp"
-#include "EquationOfState.hpp"
-#include "CriticalVolume.hpp"
+#include "constitutive/fluid/multifluid/compositional/parameters/CriticalVolume.hpp"
 
 namespace geos
 {

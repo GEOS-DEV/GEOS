@@ -77,7 +77,7 @@ void SinglePhaseProppantBase::validateConstitutiveModels( DomainPartition & doma
   // Validate fluid models in regions
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel & mesh,
-                                                               arrayView1d< string const > const & regionNames )
+                                                               string_array const & regionNames )
   {
     mesh.getElemManager().forElementSubRegions( regionNames, [&]( localIndex const,
                                                                   ElementSubRegionBase & subRegion )
@@ -96,9 +96,9 @@ SinglePhaseBase::FluidPropViews SinglePhaseProppantBase::getFluidProperties( con
 {
   SlurryFluidBase const & slurryFluid = dynamicCast< SlurryFluidBase const & >( fluid );
   return { slurryFluid.density(),
-           slurryFluid.dDensity_dPressure(),
+           slurryFluid.dDensity(),
            slurryFluid.viscosity(),
-           slurryFluid.dViscosity_dPressure(),
+           slurryFluid.dViscosity(),
            slurryFluid.getField< fields::singlefluid::density >().getDefaultValue(),
            slurryFluid.getField< fields::singlefluid::viscosity >().getDefaultValue() };
 }

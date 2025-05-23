@@ -83,6 +83,7 @@ public:
   struct viewKeyStruct : PhysicsSolverBase::viewKeyStruct
   {
     static constexpr char const * sourceCoordinatesString() { return "sourceCoordinates"; }
+    static constexpr char const * sourceValueString() { return "sourceValue"; }
 
     static constexpr char const * timeSourceFrequencyString() { return "timeSourceFrequency"; }
     static constexpr char const * timeSourceDelayString() { return "timeSourceDelay"; }
@@ -218,7 +219,7 @@ protected:
    * @param baseMesh the level-0 mesh
    * @param mesh mesh of the computational domain
    */
-  virtual void precomputeSourceAndReceiverTerm( MeshLevel & baseMesh, MeshLevel & mesh, arrayView1d< string const > const & regionNames ) = 0;
+  virtual void precomputeSourceAndReceiverTerm( MeshLevel & baseMesh, MeshLevel & mesh, string_array const & regionNames ) = 0;
 
   /**
    * @brief Perform forward explicit step
@@ -226,33 +227,36 @@ protected:
    * @param dt the perscribed timestep
    * @param cycleNumber the current cycle number
    * @param domain the domain object
-   * @param computeGradient Indicates if we want to compute gradient at this step
+   * @param computeGradient Indicates if we want to compute gradient or the imaging condition at this step
    * @return return the timestep that was achieved during the step.
    */
   virtual real64 explicitStepForward( real64 const & time_n,
                                       real64 const & dt,
                                       integer const cycleNumber,
                                       DomainPartition & domain,
-                                      bool const computeGradient ) = 0;
+                                      integer const computeGradient ) = 0;
   /**
    * @brief Perform backward explicit step
    * @param time_n time at the beginning of the step
    * @param dt the perscribed timestep
    * @param cycleNumber the current cycle number
    * @param domain the domain object
-   * @param computeGradient Indicates if we want to compute gradient at this step
+   * @param computeGradient Indicates if we want to compute gradient or the imaging condition at this step
    * @return return the timestep that was achieved during the step.
    */
   virtual real64 explicitStepBackward( real64 const & time_n,
                                        real64 const & dt,
                                        integer const cycleNumber,
                                        DomainPartition & domain,
-                                       bool const computeGradient ) = 0;
+                                       integer const computeGradient ) = 0;
 
 
   virtual void registerDataOnMesh( Group & meshBodies ) override;
 
   localIndex getNumNodesPerElem();
+
+  /// Precomputed value of the source terms
+  array2d< real32 > m_sourceValue;
 
   /// Coordinates of the sources in the mesh
   array2d< real64 > m_sourceCoordinates;
@@ -312,7 +316,7 @@ protected:
   localIndex m_forward;
 
   /// Indicate if we want to save fields to restore them during backward
-  localIndex m_saveFields;
+  integer m_saveFields;
 
   // Indicate the current shot computed for naming saved temporary data
   integer m_shotIndex;
@@ -371,7 +375,7 @@ protected:
   SortedArray< localIndex > m_solverTargetNodesSet;
 
   /// Names of table functions for source wavelet (time dependency)
-  array1d< string > m_sourceWaveletTableNames;
+  string_array m_sourceWaveletTableNames;
 
   /// Flag to indicate if source wavelet table functions are used
   bool m_useSourceWaveletTables;
