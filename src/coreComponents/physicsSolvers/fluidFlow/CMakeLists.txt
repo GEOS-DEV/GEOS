@@ -77,7 +77,7 @@ set( fluidFlowSolvers_headers
      kernels/compositional/DirichletFluxComputeKernel.hpp
      kernels/compositional/DissipationFluxComputeKernel.hpp
      kernels/compositional/FluidUpdateKernel.hpp
-     kernels/compositional/FluidUpdateKernel.hpp
+     kernels/compositional/FluidUpdateKernel_impl.hpp
      kernels/compositional/FluxComputeKernel.hpp
      kernels/compositional/FluxComputeKernelBase.hpp
      kernels/compositional/GlobalComponentFractionKernel.hpp
@@ -142,8 +142,9 @@ set( fluidFlowSolvers_sources
      SourceFluxStatistics.cpp
      StencilDataCollection.cpp
      kernels/singlePhase/proppant/ProppantFluxKernels.cpp
-     kernels/compositional/FluxComputeKernelBase.cpp
      kernels/compositional/CompositionalMultiphaseHybridFVMKernels.cpp
+     kernels/compositional/FluxComputeKernelBase.cpp
+     kernels/compositional/FluidUpdateKernel.cpp
      wells/CompositionalMultiphaseWell.cpp
      wells/kernels/CompositionalMultiphaseWellKernels.cpp
      wells/SinglePhaseWell.cpp
@@ -170,7 +171,8 @@ list( APPEND kernelTemplateFileList
       kernelTemplates/CompositionalMultiphaseHybridFVMKernels_flux.cpp.template
       kernelTemplates/ReactiveCompositionalMultiphaseOBLKernels.cpp.template
       kernelTemplates/IsothermalCompositionalMultiphaseFVM_DirichletFluxComputeKernels.cpp.template
-      kernelTemplates/ThermalCompositionalMultiphaseFVM_DirichletFluxComputeKernels.cpp.template )
+      kernelTemplates/ThermalCompositionalMultiphaseFVM_DirichletFluxComputeKernels.cpp.template
+      kernelTemplates/CompositionalMultiphaseBase_FluidUpdateKernel.cpp.template )
 
 foreach( kernelTemplateFile ${kernelTemplateFileList} )
   get_filename_component( jsonKey ${kernelTemplateFile} NAME_WE )

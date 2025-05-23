@@ -691,9 +691,9 @@ void CompositionalMultiphaseWell::updateVolRatesForConstraint( WellElementSubReg
 
   real64 & massDensity =
     wellControls.getReference< real64 >( CompositionalMultiphaseWell::viewKeyStruct::massDensityString() );
-  constitutive::constitutiveUpdatePassThru( fluid, [&] ( auto & castedFluid )
+  constitutive::constitutiveUpdatePassThru( fluid, [&] ( auto & castFluid )
   {
-    typename TYPEOFREF( castedFluid ) ::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
+    typename TYPEOFREF( castFluid ) ::KernelWrapper fluidWrapper = castFluid.createKernelWrapper();
     geos::internal::kernelLaunchSelectorCompThermSwitch( numComp, isThermal, [&] ( auto NC, auto ISTHERMAL )
     {
       integer constexpr NUM_COMP = NC();
@@ -843,8 +843,6 @@ void CompositionalMultiphaseWell::updateVolRatesForConstraint( WellElementSubReg
   } );
 }
 
-
-
 void CompositionalMultiphaseWell::updateFluidModel( WellElementSubRegion & subRegion )
 {
   GEOS_MARK_FUNCTION;
@@ -855,20 +853,12 @@ void CompositionalMultiphaseWell::updateFluidModel( WellElementSubRegion & subRe
   string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
   MultiFluidBase & fluid = subRegion.getConstitutiveModel< MultiFluidBase >( fluidName );
 
-  constitutive::constitutiveUpdatePassThru( fluid, [&] ( auto & castedFluid )
-  {
-    using FluidType = TYPEOFREF( castedFluid );
-    using ExecPolicy = typename FluidType::exec_policy;
-    typename FluidType::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
-    thermalCompositionalMultiphaseBaseKernels::
-      FluidUpdateKernel::
-      launch< ExecPolicy >( subRegion.size(),
-                            fluidWrapper,
-                            pres,
-                            temp,
-                            compFrac );
-  } );
-
+  thermalCompositionalMultiphaseBaseKernels::FluidUpdate::
+    localUpdate< serialPolicy >( subRegion.size(),
+                                 fluid,
+                                 pres,
+                                 temp,
+                                 compFrac );
 }
 
 real64 CompositionalMultiphaseWell::updatePhaseVolumeFraction( WellElementSubRegion & subRegion ) const
@@ -1046,18 +1036,12 @@ void CompositionalMultiphaseWell::initializeWells( DomainPartition & domain, rea
         arrayView2d< real64 const, multifluid::USD_FLUID > const & wellElemTotalDens = fluid.totalDensity();
 
         // 4) Back calculate component densities
-        constitutive::constitutiveUpdatePassThru( fluid, [&] ( auto & castedFluid )
-        {
-          typename TYPEOFREF( castedFluid ) ::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
-
-          thermalCompositionalMultiphaseBaseKernels::
-            FluidUpdateKernel::
-            launch< serialPolicy >( subRegion.size(),
-                                    fluidWrapper,
-                                    wellElemPressure,
-                                    wellElemTemp,
-                                    wellElemCompFrac );
-        } );
+        thermalCompositionalMultiphaseBaseKernels::FluidUpdate::
+          localUpdate< serialPolicy >( subRegion.size(),
+                                       fluid,
+                                       wellElemPressure,
+                                       wellElemTemp,
+                                       wellElemCompFrac );
 
         compositionalMultiphaseWellKernels::
           CompDensInitializationKernel::launch( subRegion.size(),
