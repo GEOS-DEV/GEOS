@@ -166,7 +166,7 @@ void TableTextFormatter::initalizeTableGrids( PreparedTableLayout const & tableL
   // this array will store the displayed width of all columns (it will be scaled by data & headers width)
   stdVector< size_t > columnsWidth;
 
-  populateTitleCellsLayout( tableLayout, headerCellsLayout );
+  populateTitleCellsLayout( tableLayout, headerCellsLayout, inputDataRowsCount );
   if( hasColumnLayout )
   {
     populateHeaderCellsLayout( tableLayout, headerCellsLayout, inputDataRowsCount );
@@ -201,23 +201,29 @@ void TableTextFormatter::initalizeTableGrids( PreparedTableLayout const & tableL
 }
 
 void TableTextFormatter::populateTitleCellsLayout( PreparedTableLayout const & tableLayout,
-                                                   CellLayoutRows & headerCellsLayout ) const
+                                                   CellLayoutRows & headerCellsLayout,
+                                                   size_t const inputDataColumnsCount ) const
 {
   TableLayout::CellLayout const & titleInput = tableLayout.getTitleLayout();
   if( !titleInput.isEmpty() )
   { // if it exists, we add the title, as a first row with all cells merged in one containing the title text
-    headerCellsLayout.reserve( headerCellsLayout.size() + 2 );
+    // (we fit the number of data columns if no column layout has been specified)
+    size_t const lowermostColumnsCount = tableLayout.getColumnLayersCount() > 0 ?
+                                         tableLayout.getLowermostColumnsCount() :
+                                         inputDataColumnsCount;
+
+    headerCellsLayout.reserve( 2 );
 
     // the title row consists in a row of cells merging with the last cell containing the title text
     headerCellsLayout.emplace_back() = {
-      stdVector< TableLayout::CellLayout >( tableLayout.getLowermostColumnsCount(),
+      stdVector< TableLayout::CellLayout >( lowermostColumnsCount,
                                             TableLayout::CellLayout( CellType::MergeNext ) ),   // cells
       titleInput.getHeight(), // sublinesCount
     };
     headerCellsLayout.back().cells.back() = titleInput;
 
     headerCellsLayout.emplace_back() = {
-      stdVector< TableLayout::CellLayout >( tableLayout.getLowermostColumnsCount(),
+      stdVector< TableLayout::CellLayout >( lowermostColumnsCount,
                                             TableLayout::CellLayout( CellType::Separator ) ),   // cells
       1, // sublinesCount
     };

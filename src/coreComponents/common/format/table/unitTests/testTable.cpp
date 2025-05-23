@@ -88,19 +88,18 @@ TEST( testTable, tableEmptyRow )
 
 TEST( testTable, tableOneTrickyLine )
 {
-  TableLayout const tableLayout = TableLayout( "", { "Well", "CordX", "CoordZ", "Prev", "Next" } ).
-    setIndentation( 4 );
+  TableLayout const tableLayout( "", { "Well", "CordX", "CoordZ", "Prev", "Next" } );
   TableData tableData;
   tableData.addRow( "value1", CellType::MergeNext, CellType::MergeNext, CellType::MergeNext, CellType::MergeNext );
 
   TableTextFormatter const tableText( tableLayout );
   EXPECT_EQ( tableText.toString( tableData ),
              "\n"
-             "    ---------------------------------------------------\n"
-             "    |   Well   |  CordX  |  CoordZ  |  Prev  |  Next  |\n"
-             "    |----------|---------|----------|--------|--------|\n"
-             "    |  value1  |                                      |\n"
-             "    ---------------------------------------------------\n" );
+             "---------------------------------------------------\n"
+             "|   Well   |  CordX  |  CoordZ  |  Prev  |  Next  |\n"
+             "|----------|---------|----------|--------|--------|\n"
+             "|  value1  |                                      |\n"
+             "---------------------------------------------------\n" );
 }
 
 TEST( testTable, tableClassic )
@@ -668,6 +667,29 @@ TEST( testTable, testFreeLayout )
              "|--------------------------------------------------------------|\n"
              "|                     121212465465465666656461245452145454545  |\n"
              "----------------------------------------------------------------\n"
+             );
+}
+
+TEST( testTable, testTitleWithNoColumnIndented )
+{
+  TableLayout const tableLayout = TableLayout().
+                                    setTitle( "Title" ).
+                                    setIndentation( 4 ).
+                                    setMargin( TableLayout::MarginValue::small );
+
+  TableData tableData;
+  tableData.addRow( "Global Id", 1234, 40, 5678, 60 );
+  tableData.addRow( "pressure", 0.1234, 0.40, 0.5678, 0.60 );
+
+  TableTextFormatter const tableText( tableLayout );
+  EXPECT_EQ( tableText.toString( tableData ),
+             "\n"
+             "    -------------------------------------------\n"
+             "    |                  Title                  |\n"
+             "    |-----------------------------------------|\n"
+             "    | Global Id |   1234 |  40 |   5678 |  60 |\n"
+             "    |  pressure | 0.1234 | 0.4 | 0.5678 | 0.6 |\n"
+             "    -------------------------------------------\n"
              );
 }
 
