@@ -1134,7 +1134,7 @@ void PhysicsSolverBase::setConstitutiveName( ElementSubRegionBase & subRegion, s
   string & constitutiveName = subRegion.getReference< string >( wrapperName );
   constitutiveName = getConstitutiveName< CONSTITUTIVE_TYPE >( subRegion );
   GEOS_ERROR_IF( constitutiveName.empty(), GEOS_FMT( "{}: {} constitutive model not found on subregion {}",
-                                                     getDataContext(), typeid(CONSTITUTIVE_TYPE).name(), subRegion.getName() ) );
+                                                     getDataContext(), wrapperName, subRegion.getName() ) );
 }
 
 } // namespace geos

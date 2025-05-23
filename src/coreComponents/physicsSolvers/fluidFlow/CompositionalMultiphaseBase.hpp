@@ -309,10 +309,10 @@ public:
     static constexpr char const * maxSequentialCompDensChangeString() { return "maxSequentialCompDensChange"; }
     static constexpr char const * minScalingFactorString() { return "minScalingFactor"; }
 
-    static constexpr char const * relPermNamesString() { return "relPermNames"; }
-    static constexpr char const * capPressureNamesString() { return "capPressureNames"; }
-    static constexpr char const * diffusionNamesString() { return "diffusionNames"; }
-    static constexpr char const * dispersionNamesString() { return "dispersionNames"; }
+    static constexpr char const * relPermNamesString() { return "relative permeability"; }
+    static constexpr char const * capPressureNamesString() { return "capillary pressure"; }
+    static constexpr char const * diffusionNamesString() { return "diffusion"; }
+    static constexpr char const * dispersionNamesString() { return "dispersion"; }
   };
 
   /**

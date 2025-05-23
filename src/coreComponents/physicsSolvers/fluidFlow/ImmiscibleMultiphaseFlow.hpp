@@ -215,9 +215,6 @@ public:
   struct viewKeyStruct : public FlowSolverBase::viewKeyStruct
   {
     // inputs
-    static constexpr char const * capPressureNamesString() { return "capPressureNames"; }
-    static constexpr char const * relPermNamesString() { return "relPermNames"; }
-    static constexpr char const * elemDofFieldString() { return "elemDofField"; }
 
     // density averaging scheme
     static constexpr char const * gravityDensitySchemeString()    { return "gravityDensityScheme"; }
@@ -230,6 +227,10 @@ public:
     // nonlinear solver parameters
     static constexpr char const * maxRelativePresChangeString() { return "maxRelativePressureChange"; }
     static constexpr char const * useTotalMassEquationString() { return "useTotalMassEquation"; }
+
+    static constexpr char const * capPressureNamesString() { return "capillary pressure"; }
+    static constexpr char const * relPermNamesString() { return "relative permeability"; }
+    static constexpr char const * elemDofFieldString() { return "elemDofField"; }
   };
 
 
