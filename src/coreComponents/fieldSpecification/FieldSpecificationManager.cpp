@@ -189,48 +189,39 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
       Group const & problemManager = this->getGroupByPath( "/Problem" );
       string const & objPath = fs.getObjectPath();
 
-      string setNamesAvailable;
+      problemManager.printDataHierarchy( 1 );
 
+      std::vector< string > availableSetNames;
       if( objPath == "nodeManager" )
       {
-        setNamesAvailable.append( "Set names available are: xneg ,yneg ,zneg ,xpos ,ypos, " );
+        setNamesError.append( "Available set names are: " );
 
-        if( problemManager.getGroup( "Mesh" ).hasSubGroupOfType< InternalWellboreGenerator >() )
+        mesh.getGroup( "nodeManager" ).getGroup( ObjectManagerBase::groupKeyStruct::setsString() ).forWrappers(
+          [&] ( dataRepository::WrapperBase const & wrapper )
         {
-          setNamesAvailable.append( ",rneg ,rpos ,tneg ,tpos" );
-        }
+          availableSetNames.push_back( wrapper.getName() );
+        } );
+        setNamesError.append( stringutilities::join( availableSetNames, ", " ));
       }
-
-      if( GeometricObjectManager::getInstance().numSubGroups() > 0 )
+      else if( GeometricObjectManager::getInstance().numSubGroups() > 0 )
       {
-        if( setNamesAvailable.empty())
-          setNamesAvailable.append( "Set names available are: " );
+        setNamesError.append( "Available set names are: " );
 
         GeometricObjectManager & geoManager = GeometricObjectManager::getInstance();
-        string_array geometryName;
         geoManager.forSubGroups< SimpleGeometricObjectBase >( [&]( SimpleGeometricObjectBase const & meshGen )
         {
-          geometryName.emplace_back( meshGen.getName() );
+          availableSetNames.push_back( meshGen.getName() );
         } );
-        for( size_t i = 0; i < geometryName.size(); ++i )
-        {
-          setNamesAvailable += geometryName[i];
-          if( i < geometryName.size() - 1 )
-            setNamesAvailable += ", ";
-        }
-        setNamesAvailable += ", all";
+        availableSetNames.push_back( "all" );
+        setNamesError.append( stringutilities::join( availableSetNames, ", " ));
       }
 
-      if( !setNamesAvailable.empty())
+      if( availableSetNames.empty())
       {
-        setNamesError.append( setNamesAvailable );
-      }
-      else
-      {
-        setNamesError.append( "Unknown objectPath" );
+        setNamesError.append( "No objectPath recognized." );
         if( problemManager.getGroup( "Mesh" ).hasSubGroupOfType< VTKMeshGenerator >() )
         {
-          setNamesError.append( " or check the setNames attribute tag in the input vtu mesh." );
+          setNamesError.append( "Also check the setNames attribute in the mesh vtu file." );
         }
       }
 
