@@ -111,10 +111,10 @@ private:
   struct Description
   {
     /// Name of the description (first part of a description), it can be splited by \\n
-    std::vector< std::vector< string > > m_names;
+    stdVector< stdVector< string > > m_names;
     /// Values in the description (remaining part of a description),
     /// each vector of values is associated with one name
-    std::vector< std::vector< string > > m_values;
+    stdVector< stdVector< string > > m_values;
   };
 
   /**
@@ -125,7 +125,7 @@ private:
     /// Log part title
     string m_title;
     /// Vector containing the descriptions formatted by formatDescriptions()
-    std::vector< string > m_lines;
+    stdVector< string > m_lines;
     /// max length name (first part of a description) of a logPart
     size_t m_maxNameWidth;
     /// max length name (remaining part of a description) of a logPart
@@ -193,7 +193,7 @@ template< typename ... Args >
 void LogPart::addDescriptionBySection( Description & description, FormattedDescription & formattedDescription,
                                        string_view name, Args const &... args )
 {
-  std::vector< string > values;
+  stdVector< string > values;
   size_t & maxValueSize = formattedDescription.m_maxValueWidth;
   size_t & maxNameSize = formattedDescription.m_maxNameWidth;
   ( [&] {
@@ -201,14 +201,14 @@ void LogPart::addDescriptionBySection( Description & description, FormattedDescr
                    "Argument passed cannot be converted to string" );
     string const value = GEOS_FMT( "{}", args );
 
-    std::vector< string_view > splitValues =  divideLines< string_view >( maxValueSize, value );
+    stdVector< string_view > splitValues =  divideLines< string_view >( maxValueSize, value );
     values.insert( values.end(), splitValues.begin(), splitValues.end() );
   } (), ...);
 
   description.m_values.push_back( values );
 
   size_t lineWidth = 0;
-  std::vector< string > nameDivided = divideLines< string >( lineWidth, name );
+  stdVector< string > nameDivided = divideLines< string >( lineWidth, name );
   if( lineWidth == 0 )
     lineWidth = name.size();
   maxNameSize = std::max( maxNameSize, lineWidth );
