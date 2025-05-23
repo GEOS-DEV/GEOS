@@ -180,7 +180,7 @@ void ImmiscibleMultiphaseFlow::registerDataOnMesh( Group & meshBodies )
 
 void ImmiscibleMultiphaseFlow::setConstitutiveNames( ElementSubRegionBase & subRegion ) const
 {
-  setConstitutiveName< MultiFluidBase >( subRegion, viewKeyStruct::fluidNamesString() );
+  setConstitutiveName< TwoPhaseImmiscibleFluid >( subRegion, viewKeyStruct::fluidNamesString() );
 
   setConstitutiveName< RelativePermeabilityBase >( subRegion, viewKeyStruct::relPermNamesString() );
 }
