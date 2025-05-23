@@ -17,6 +17,7 @@
 #include "PhysicsSolverManager.hpp"
 
 #include "physicsSolvers/LogLevelsInfo.hpp"
+#include "common/format/LogPart.hpp"
 #include "common/TimingMacros.hpp"
 #include "linearAlgebra/solvers/KrylovSolver.hpp"
 #include "mesh/DomainPartition.hpp"
@@ -267,7 +268,7 @@ bool PhysicsSolverBase::execute( real64 const time_n,
   integer const maxSubSteps = m_nonlinearSolverParameters.m_maxSubSteps;
 
   // Keep track of substeps. It is useful to output these.
-  stdVector< real64 > subStepDt( maxSubSteps, 0.0 );
+  stdVector< real64 > subStepDts( maxSubSteps, 0.0 );
   integer numOfSubSteps = 0;
 
   for( integer subStep = 0; subStep < maxSubSteps && dtRemaining > 0.0; ++subStep )
@@ -279,8 +280,9 @@ bool PhysicsSolverBase::execute( real64 const time_n,
                                           nextDt,
                                           cycleNumber,
                                           domain );
+
     numOfSubSteps++;
-    subStepDt[subStep] = dtAccepted;
+    subStepDts[subStep] = dtAccepted;
 
     // increment the cumulative number of nonlinear and linear iterations
     m_solverStatistics.saveTimeStepStatistics();
@@ -323,34 +325,40 @@ bool PhysicsSolverBase::execute( real64 const time_n,
                                        getName(), subStep, dtAccepted, nextDt, dtRemaining ) );
     }
   }
-
   GEOS_ERROR_IF( dtRemaining > 0.0, getDataContext() << ": Maximum allowed number of sub-steps"
                                                         " reached. Consider increasing maxSubSteps." );
 
   // Decide what to do with the next Dt for the event running the solver.
   m_nextDt = setNextDt( time_n + dt, nextDt, domain );
 
-  logEndOfCycleInformation( cycleNumber, numOfSubSteps, subStepDt );
+  logEndOfCycleInformation( cycleNumber, numOfSubSteps, subStepDts );
 
   return false;
 }
 
 void PhysicsSolverBase::logEndOfCycleInformation( integer const cycleNumber,
                                                   integer const numOfSubSteps,
-                                                  stdVector< real64 > const & subStepDt ) const
+                                                  std::vector< real64 > const & subStepDts ) const
 {
-  // The formating here is a work in progress.
-  GEOS_LOG_LEVEL_RANK_0( logInfo::TimeStep, "\n------------------------- TIMESTEP END -------------------------" );
-  GEOS_LOG_LEVEL_RANK_0( logInfo::TimeStep, GEOS_FMT( "    - Cycle:      {}", cycleNumber ) );
-  GEOS_LOG_LEVEL_RANK_0( logInfo::TimeStep, GEOS_FMT( "    - N substeps: {}", numOfSubSteps ) );
-  std::string logMessage = "    - dt:";
+  LogPart logpart( "TIMESTEP", MpiWrapper::commRank() == 0 );
+  logpart.addEndDescription( "- Cycle ", cycleNumber );
+  logpart.addEndDescription( "- N substeps ", numOfSubSteps );
+
+  std::stringstream logMessage;
   for( integer i = 0; i < numOfSubSteps; ++i )
   {
-    logMessage += "  " + units::TimeFormatInfo::fromSeconds( subStepDt[i] ).toString();
+    if( i > 0 )
+    {
+      logMessage << ", ";
+    }
+    logMessage << subStepDts[i] << " " << units::getSymbol( units::Unit::Time );
   }
-  // Log the complete message once
-  GEOS_LOG_LEVEL_RANK_0( logInfo::TimeStep, logMessage );
-  GEOS_LOG_LEVEL_RANK_0( logInfo::TimeStep, "------------------------------------------------------------------\n" );
+
+  if( logMessage.rdbuf()->in_avail() == 0 )
+    logMessage << "/";
+
+  logpart.addEndDescription( "- substep dts ", logMessage.str() );
+  logpart.end();
 }
 
 real64 PhysicsSolverBase::setNextDt( real64 const & GEOS_UNUSED_PARAM( currentTime ),
