@@ -2160,7 +2160,7 @@ void CompositionalMultiphaseWell::printRates( real64 const & time_n,
       WellControls const & wellControls = getWellControls( subRegion );
 
       std::vector< double > compRate( numComp, 0.0 );
-      if( m_writeCSV > 0 && wellControls.isWellOpen( time_n ) )
+      if( m_writeCSV > 0 && wellControls.isWellOpen( ) )
       {
         arrayView2d< real64 > const compPerfRate = subRegion.getPerforationData()->getField< fields::well::compPerforationRate >();
 
