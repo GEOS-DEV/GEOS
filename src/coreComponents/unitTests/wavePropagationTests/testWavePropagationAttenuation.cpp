@@ -196,7 +196,7 @@ TEST_F( ElasticWaveEquationSEMTest, SeismoTrace )
   // run for 1s (10 steps)
   for( int i=0; i<10; i++ )
   {
-    propagator->explicitStepForward( time_n, dt, i, domain, false );
+    propagator->explicitStepForward( time_n, dt, i, domain, 0 );
     time_n += dt;
   }
   // cleanup (triggers calculation of the remaining seismograms data points)
