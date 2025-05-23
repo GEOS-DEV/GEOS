@@ -100,7 +100,7 @@ WaveSolverBase::WaveSolverBase( const std::string & name,
   registerWrapper( viewKeyStruct::saveFieldsString(), &m_saveFields ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( 0 ).
-    setDescription( "Set to 1 to save fields during forward and restore them during backward" );
+    setDescription( "Set to 1 to save fields during forward and restore them during backward. If set to 1, the gradient is computed, and if set to 2, the imaging condition is computed." );
 
   registerWrapper( viewKeyStruct::shotIndexString(), &m_shotIndex ).
     setInputFlag( InputFlags::OPTIONAL ).

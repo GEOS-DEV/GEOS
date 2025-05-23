@@ -81,12 +81,12 @@ void ParticleMeshGenerator::fillParticleBlockManager( ParticleBlockManager & par
   //GEOS_LOG_RANK_0( "MPM header file path: " << m_headerFilePath );
 
   int numMaterials, numParticleTypes;
-  map< std::string, std::vector< std::vector< double > > > particleData;
+  map< std::string, stdVector< stdVector< double > > > particleData;
   map< std::string, int > particleTypeMap;
-  std::vector< std::string > particleTypes; // This is needed because the input file format is such that data associated with each particle
-                                            // type is in the same order as the preceding type listing.
-                                            // Looping over the particleTypeMap with an iterator does not respect this ordering since a map
-                                            // automatically sorts by its keys.
+  stdVector< std::string > particleTypes; // This is needed because the input file format is such that data associated with each particle
+                                          // type is in the same order as the preceding type listing.
+                                          // Looping over the particleTypeMap with an iterator does not respect this ordering since a map
+                                          // automatically sorts by its keys.
   map< std::string, int > materialMap;
 
   // Get and process header and particle files
@@ -133,8 +133,8 @@ void ParticleMeshGenerator::fillParticleBlockManager( ParticleBlockManager & par
     for( int j=0; j<particleTypeMap[particleTypes[i]]; j++ )
     {
       std::getline( particleFile, line );
-      std::vector< double > lineData; // TODO: Not great because we cast all input as doubles, but it all gets re-cast later so maybe it's
-                                      // fine.
+      stdVector< double > lineData; // TODO: Not great because we cast all input as doubles, but it all gets re-cast later so maybe it's
+                                    // fine.
       std::istringstream lineStream( line );
 
       double value;
@@ -176,8 +176,8 @@ void ParticleMeshGenerator::fillParticleBlockManager( ParticleBlockManager & par
   } );
 
   // Distribute particle information to particle blocks
-  map< std::string, std::vector< int > > indexMap; // This will keep track of the indices of particleData associated with each particle
-                                                   // block. It's populated in the loop that checks for which particles belong to a block.
+  map< std::string, stdVector< int > > indexMap; // This will keep track of the indices of particleData associated with each particle
+                                                 // block. It's populated in the loop that checks for which particles belong to a block.
   map< std::string, int > sizeMap;  // This keeps track of the size of each particle block so we can resize the ParticleRegions later
   for( auto & particleBlockName : m_blockNames )
   {
@@ -211,7 +211,7 @@ void ParticleMeshGenerator::fillParticleBlockManager( ParticleBlockManager & par
     array3d< real64 > particleRVectors( npInBlock, 3, 3 ); // TODO: Flatten the r-vector array into a 1x9 for each particle
 
     // Assign particle data to the appropriate block.
-    std::vector< int > & indices = indexMap[particleBlockName];
+    stdVector< int > & indices = indexMap[particleBlockName];
     int index = 0;
     for( int i : indices )
     {
