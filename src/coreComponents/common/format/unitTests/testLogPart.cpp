@@ -192,7 +192,6 @@ TEST( testLogPart, valuesMultiLines )
   oss.str( "" );
 
   logPart.end( oss );
-  std::cout <<oss.str() << std::endl;
   EXPECT_EQ( oss.str(),
              "\n"
              "##  dummy name : long dummy end values, long dummy end    ##\n"
