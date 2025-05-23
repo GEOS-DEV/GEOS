@@ -733,7 +733,7 @@ void CompositionalMultiphaseWell::outputSingleWellDebug( real64 const time,
 // geos::CompositionalMultiphaseBase > >( coupled_solver_name ));
 
     EventManager const & event = getGroupByPath< EventManager >( "/Problem/Events" );
-  //  real64 const & ctime = event.getReference< real64 >( EventManager::viewKeyStruct::timeString() );
+    //  real64 const & ctime = event.getReference< real64 >( EventManager::viewKeyStruct::timeString() );
 //real64 const  dt = event.getReference< real64 >( EventManager::viewKeyStruct::dtString() );
     integer const & cycle = event.getReference< integer >( EventManager::viewKeyStruct::cycleString() );
     integer const & subevent = event.getReference< integer >( EventManager::viewKeyStruct::currentSubEventString() );
@@ -1922,7 +1922,7 @@ CompositionalMultiphaseWell::applyWellBoundaryConditions( real64 const time_n,
                                                           arrayView1d< real64 > const & localRhs,
                                                           CRSMatrixView< real64, globalIndex const > const & localMatrix )
 {
-  GEOS_UNUSED_VAR(elemManager);
+  GEOS_UNUSED_VAR( elemManager );
   using namespace compositionalMultiphaseUtilities;
 
   BitFlags< isothermalCompositionalMultiphaseBaseKernels::KernelFlags > kernelFlags;
@@ -2814,7 +2814,7 @@ void CompositionalMultiphaseWell::computePerforationRates( real64 const & time_n
 #if 1
       computeWellPerforationRates( time_n, dt, elemManager, subRegion );
 #else
-    CompositionalMultiphaseBase const & flowSolver = getParent().getGroup< CompositionalMultiphaseBase >( getFlowSolverName() );
+      CompositionalMultiphaseBase const & flowSolver = getParent().getGroup< CompositionalMultiphaseBase >( getFlowSolverName() );
       PerforationData * const perforationData = subRegion.getPerforationData();
       WellControls const & wellControls = getWellControls( subRegion );
       if( wellControls.isWellOpen( time_n ) && !m_keepVariablesConstantDuringInitStep )

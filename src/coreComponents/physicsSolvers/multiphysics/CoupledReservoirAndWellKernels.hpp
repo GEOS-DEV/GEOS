@@ -412,11 +412,11 @@ public:
 
     using namespace compositionalMultiphaseUtilities;
     // local working variables and arrays
-    stackArray1d< localIndex, 2* numComp > eqnRowIndices( 2 * numComp );
-    stackArray1d< globalIndex, 2*resNumDOF > dofColIndices( 2 * resNumDOF );
+    stackArray1d< localIndex, numComp > eqnRowIndices( numComp );
+    stackArray1d< globalIndex, resNumDOF > dofColIndices( resNumDOF );
 
-    stackArray1d< real64, 2 * numComp > localPerf( 2 * numComp );
-    stackArray2d< real64, 2 * resNumDOF * 2 * numComp > localPerfJacobian( 2 * numComp, 2 * resNumDOF );
+    stackArray1d< real64, numComp > localPerf( numComp );
+    stackArray2d< real64, resNumDOF *   numComp > localPerfJacobian( numComp, resNumDOF );
 
     // get the reservoir (sub)region and element indices
     //localIndex const er  = m_resElementRegion[iperf];
@@ -430,79 +430,110 @@ public:
 
     for( integer ic = 0; ic < numComp; ++ic )
     {
-      eqnRowIndices[TAG::RES * numComp + ic] = -1;
-      eqnRowIndices[TAG::WELL * numComp + ic] = LvArray::integerConversion< localIndex >( wellElemOffset - m_rankOffset ) + WJ_ROFFSET::MASSBAL + ic;
+      eqnRowIndices[ ic] = LvArray::integerConversion< localIndex >( wellElemOffset - m_rankOffset ) + WJ_ROFFSET::MASSBAL + ic;
     }
-
+    for( integer jdof = 0; jdof < NC+1; ++jdof )
+    {
+      dofColIndices[ jdof] = wellElemOffset + WJ_COFFSET::dP + jdof;
+    }
+        // For temp its different
+    if constexpr ( IS_THERMAL )
+    {
+      dofColIndices[ NC+1 ] = wellElemOffset + WJ_COFFSET::dT;
+    }
     // populate local flux vector and derivatives
 
     for( integer ic = 0; ic < numComp; ++ic )
     {
-      localPerf[TAG::WELL * numComp + ic] = -m_dt * m_compPerfRate[iperf][ic];
+      localPerf[ic] = -m_dt * m_compPerfRate[iperf][ic];
     }
-
-    if( m_useTotalMassEquation )
+    for( integer ic = 0; ic < numComp; ++ic )
     {
-      // Apply equation/variable change transformation(s)
-      shiftBlockElementsAheadByOneAndReplaceFirstElementWithSum( numComp, numComp, 2, localPerf );
-    }
+      localIndex localDofIndexPres = 0;
 
-    for( localIndex i = 0; i < localPerf.size(); ++i )
-    {
-      if( eqnRowIndices[i] >= 0 && eqnRowIndices[i] < m_localMatrix.numRows() )
+      localPerfJacobian[ic][localDofIndexPres] = -m_dt *  m_dCompPerfRate[iperf][TAG::WELL ][ic][CP_Deriv::dP];
+      for( integer jc = 0; jc < numComp; ++jc )
       {
-        RAJA::atomicAdd( parallelDeviceAtomic{}, &m_localRhs[eqnRowIndices[i]], localPerf[i] );
+        localIndex const localDofIndexComp = localDofIndexPres + jc + 1;
+
+        localPerfJacobian[ic][localDofIndexComp] = -m_dt * m_dCompPerfRate[iperf][TAG::WELL ][ic][CP_Deriv::dC+jc];
+      }
+      if constexpr ( IS_THERMAL )
+      {
+        localIndex localDofIndexTemp  = localDofIndexPres + NC + 1;
+        localPerfJacobian[ic][localDofIndexTemp] = -m_dt *  m_dCompPerfRate[iperf][TAG::WELL ][ic][CP_Deriv::dT];
       }
     }
-  
-    compFluxKernelOp( wellElemOffset, iwelem );
-
-  }
-
-
-  /**
-   * @brief Performs the kernel launch
-   * @tparam POLICY the policy used in the RAJA kernels
-   * @tparam KERNEL_TYPE the kernel type
-   * @param[in] numElements the number of elements
-   * @param[inout] kernelComponent the kernel component providing access to setup/compute/complete functions and stack
-   * variables
-   */
-  template< typename POLICY, typename KERNEL_TYPE >
-  static void
-  launch( localIndex const numElements,
-          KERNEL_TYPE const & kernelComponent )
+ 
+  if( m_useTotalMassEquation )
   {
-    GEOS_MARK_FUNCTION;
-    forAll< POLICY >( numElements, [=] GEOS_HOST_DEVICE ( localIndex const ie )
-    {
-      kernelComponent.computeFlux( ie );
+    stackArray1d< real64, resNumDOF > work( resNumDOF );
+    shiftBlockRowsAheadByOneAndReplaceFirstRowWithColumnSum( numComp, numComp, resNumDOF, 1, localPerfJacobian, work );
 
-    } );
+    // Apply equation/variable change transformation(s)
+    shiftBlockElementsAheadByOneAndReplaceFirstElementWithSum( numComp, numComp, 1, localPerf );
   }
+ 
+  for( localIndex i = 0; i < localPerf.size(); ++i )
+  {
+    if( eqnRowIndices[i] >= 0 && eqnRowIndices[i] < m_localMatrix.numRows() )
+    {
+      m_localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( eqnRowIndices[i],
+                                                                          dofColIndices.data(),
+                                                                          localPerfJacobian[i].dataIfContiguous(),
+                                                                          resNumDOF );
+      RAJA::atomicAdd( parallelDeviceAtomic{}, &m_localRhs[eqnRowIndices[i]], localPerf[i] );
+    }
+  }
+ 
+  compFluxKernelOp( wellElemOffset, iwelem );
+
+}
+
+
+/**
+ * @brief Performs the kernel launch
+ * @tparam POLICY the policy used in the RAJA kernels
+ * @tparam KERNEL_TYPE the kernel type
+ * @param[in] numElements the number of elements
+ * @param[inout] kernelComponent the kernel component providing access to setup/compute/complete functions and stack
+ * variables
+ */
+template< typename POLICY, typename KERNEL_TYPE >
+static void
+launch( localIndex const numElements,
+        KERNEL_TYPE const & kernelComponent )
+{
+  GEOS_MARK_FUNCTION;
+  forAll< POLICY >( numElements, [=] GEOS_HOST_DEVICE ( localIndex const ie )
+  {
+    kernelComponent.computeFlux( ie );
+
+  } );
+}
 
 protected:
 
-  /// Time step size
-  real64 const m_dt;
+/// Time step size
+real64 const m_dt;
 
-  /// Number of phases
-  integer const m_numPhases;
+/// Number of phases
+integer const m_numPhases;
 
-  globalIndex const m_rankOffset;
-  // Perfoation variables
-  arrayView2d< real64 const > const m_compPerfRate;
-  arrayView4d< real64 const > const m_dCompPerfRate;
-  arrayView1d< localIndex const > const m_perfWellElemIndex;
+globalIndex const m_rankOffset;
+// Perfoation variables
+arrayView2d< real64 const > const m_compPerfRate;
+arrayView4d< real64 const > const m_dCompPerfRate;
+arrayView1d< localIndex const > const m_perfWellElemIndex;
 
-  // Element region, subregion, index
-  arrayView1d< globalIndex const > const m_wellElemDofNumber;
+// Element region, subregion, index
+arrayView1d< globalIndex const > const m_wellElemDofNumber;
 
-  // RHS and Jacobian
-  arrayView1d< real64 > const m_localRhs;
-  CRSMatrixView< real64, globalIndex const >  m_localMatrix;
+// RHS and Jacobian
+arrayView1d< real64 > const m_localRhs;
+CRSMatrixView< real64, globalIndex const >  m_localMatrix;
 
-  integer const m_useTotalMassEquation;
+integer const m_useTotalMassEquation;
 };
 
 /**
@@ -850,15 +881,15 @@ public:
    * @param[in] kernelFlags flags packed together
    */
   ThermalCompositionalMultiPhaseWellFluxKernel( real64 const dt,
-                                            integer const isProducer,
-                                            globalIndex const rankOffset,
-                                            string const wellDofKey,
-                                            WellElementSubRegion const & subRegion,
-                                            PerforationData const * const perforationData,
-                                            MultiFluidBase const & fluid,
-                                            arrayView1d< real64 > const & localRhs,
-                                            CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                            BitFlags< isothermalCompositionalMultiphaseBaseKernels::KernelFlags > kernelFlags )
+                                                integer const isProducer,
+                                                globalIndex const rankOffset,
+                                                string const wellDofKey,
+                                                WellElementSubRegion const & subRegion,
+                                                PerforationData const * const perforationData,
+                                                MultiFluidBase const & fluid,
+                                                arrayView1d< real64 > const & localRhs,
+                                                CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                BitFlags< isothermalCompositionalMultiphaseBaseKernels::KernelFlags > kernelFlags )
     : Base( dt,
             rankOffset,
             wellDofKey,

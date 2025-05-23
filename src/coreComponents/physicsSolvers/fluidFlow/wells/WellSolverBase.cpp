@@ -231,7 +231,7 @@ void WellSolverBase::implicitStepSetup( real64 const & time_n,
                                         real64 const & dt,
                                         DomainPartition & domain )
 {
-  GEOS_UNUSED_VAR(dt);
+  GEOS_UNUSED_VAR( dt );
   // Initialize the primary and secondary variables for the first time step
 
   initializeWells( domain, time_n );
@@ -292,7 +292,7 @@ void WellSolverBase::estimateWellSolution( real64 const & time_n,
                                                                MeshLevel & meshLevel,
                                                                string_array const & regionNames )
   {
-    GEOS_UNUSED_VAR(meshBodyName);
+    GEOS_UNUSED_VAR( meshBodyName );
     ElementRegionManager & elementRegionManager = meshLevel.getElemManager();
     elementRegionManager.forElementRegions< WellElementRegion >( regionNames,
                                                                  [&]( localIndex const,
@@ -391,7 +391,8 @@ void WellSolverBase::assembleWellSystem( real64 const time_n,
   assembleWellPressureRelations( time_n, dt, subRegion, dofManager, localMatrix.toViewConstSizes(), localRhs );
   computeWellPerforationRates( time_n, dt, elementRegionManager, subRegion );
   assembleWellFluxTerms( time_n, dt, subRegion, dofManager, localMatrix.toViewConstSizes(), localRhs );
-
+  my_ctime=my_ctime+1;
+  
   //auto iterInfo = currentIter( time_n, dt );
   //outputWellDebug( time_n, dt, std::get< 0 >( iterInfo ), std::get< 1 >( iterInfo ), std::get< 2 >( iterInfo ),
   //                 domain, dofManager, localMatrix, localRhs );
