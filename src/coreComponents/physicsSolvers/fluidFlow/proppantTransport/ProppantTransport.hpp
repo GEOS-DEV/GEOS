@@ -185,7 +185,7 @@ public:
 
   struct viewKeyStruct : FlowSolverBase::viewKeyStruct
   {
-    static constexpr char const * proppantNamesString() { return "proppantNames"; }
+    static constexpr char const * proppantNamesString() { return "proppant"; }
 
     // these are used to store last converged time step values
 
