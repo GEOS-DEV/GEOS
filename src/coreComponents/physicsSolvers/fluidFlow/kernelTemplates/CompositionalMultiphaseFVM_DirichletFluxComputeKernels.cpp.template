@@ -5,19 +5,9 @@
 
 namespace geos
 {
-namespace isothermalCompositionalMultiphaseFVMKernels
-{
-template class @NAME@< @NCOMPS@, false, @FLUID@ >;
-template class @NAME@< @NCOMPS@, true, @FLUID@ >;
-
-template
-void @NAME@< @NCOMPS@, false, @FLUID@ >::computeFlux( localIndex const,
-                                                      @NAME@< @NCOMPS@, false, @FLUID@ >::StackVariables &,
-                                                      NoOpFunc && ) const;
-
-template
-void @NAME@< @NCOMPS@, false, @FLUID@ >::complete( localIndex const,
-                                                    @NAME@< @NCOMPS@, false, @FLUID@ >::StackVariables &,
-                                                    NoOpFunc && ) const;
-}
+  namespace isothermalCompositionalMultiphaseFVMKernels
+  {
+    template class @NAME@< @NCOMPS@, false, @FLUID@ >;
+    template class @NAME@< @NCOMPS@, true, @FLUID@ >;
+  }
 }

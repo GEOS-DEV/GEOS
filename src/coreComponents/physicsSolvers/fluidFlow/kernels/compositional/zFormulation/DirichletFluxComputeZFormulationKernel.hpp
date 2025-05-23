@@ -90,6 +90,24 @@ public:
   using Base::m_sesri;
   using Base::m_sei;
 
+  using PhaseProp = arraySlice1d< const real64, constitutive::multifluid::USD_PHASE - 2 >;
+  using PhaseComp =  arraySlice2d< const real64, constitutive::multifluid::USD_PHASE_COMP-2 >;
+  using ComponentFluxKernelOperator = std::function< void (
+                                                       integer const,             // phase index
+                                                       localIndex const,          // element region index
+                                                       localIndex const,          // element sub-region index
+                                                       localIndex const,          // element index
+                                                       localIndex const,          // kf?
+                                                       real64 const,              // potential gradient times transmissibility
+                                                       real64 const,              // face phase mobility
+                                                       PhaseProp const &,         // face phase enthalpy
+                                                       PhaseComp const &,         // face phase component fractions
+                                                       real64 const,              // phase flux
+                                                       real64 const,              // phase pressure derivative
+                                                       real64 const (&)[numComp]  // phase flux composition derivative
+                                                       ) >;
+  using AssemblyKernelOperator = std::function< void (localIndex const) >;
+
   /**
    * @brief Constructor for the kernel interface
    * @param[in] numPhases the number of fluid phases
@@ -175,27 +193,24 @@ public:
 
   /**
    * @brief Compute the local Dirichlet face flux contributions to the residual and Jacobian
-   * @tparam FUNC the type of the function that can be used to customize the computation of the phase fluxes
    * @param[in] iconn the connection index
    * @param[inout] stack the stack variables
    * @param[in] compFluxKernelOp the function used to customize the computation of the component fluxes
    */
-  template< typename FUNC = NoOpFunc >
   GEOS_HOST_DEVICE
   void computeFlux( localIndex const iconn,
                     StackVariables & stack,
-                    FUNC && compFluxKernelOp = NoOpFunc{} ) const;
+                    ComponentFluxKernelOperator && compFluxKernelOp = ComponentFluxKernelOperator() ) const;
 
   /**
    * @brief Performs the complete phase for the kernel.
    * @param[in] iconn the connection index
    * @param[inout] stack the stack variables
    */
-  template< typename FUNC = NoOpFunc >
   GEOS_HOST_DEVICE
   void complete( localIndex const iconn,
                  StackVariables & stack,
-                 FUNC && assemblyKernelOp = NoOpFunc{} ) const;
+                 AssemblyKernelOperator && assemblyKernelOp = AssemblyKernelOperator() ) const;
 
 protected:
 

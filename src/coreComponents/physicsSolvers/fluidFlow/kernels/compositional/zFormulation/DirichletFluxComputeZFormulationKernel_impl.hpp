@@ -77,11 +77,10 @@ void DirichletFluxComputeZFormulationKernel< NUM_COMP, IS_THERMAL, FLUID >::setu
 }
 
 template< integer NUM_COMP, bool IS_THERMAL, typename FLUID >
-template< typename FUNC >
 GEOS_HOST_DEVICE
 void DirichletFluxComputeZFormulationKernel< NUM_COMP, IS_THERMAL, FLUID >::computeFlux( localIndex const iconn,
                                                                                          StackVariables & stack,
-                                                                                         FUNC && compFluxKernelOp ) const
+                                                                                         ComponentFluxKernelOperator && compFluxKernelOp ) const
 {
   using Deriv = constitutive::multifluid::DerivativeOffset;
   using Order = BoundaryStencil::Order;
@@ -263,11 +262,10 @@ void DirichletFluxComputeZFormulationKernel< NUM_COMP, IS_THERMAL, FLUID >::comp
 }
 
 template< integer NUM_COMP, bool IS_THERMAL, typename FLUID >
-template< typename FUNC >
 GEOS_HOST_DEVICE
 void DirichletFluxComputeZFormulationKernel< NUM_COMP, IS_THERMAL, FLUID >::complete( localIndex const iconn,
                                                                                       StackVariables & stack,
-                                                                                      FUNC && assemblyKernelOp ) const
+                                                                                      AssemblyKernelOperator && assemblyKernelOp ) const
 {
   using namespace compositionalMultiphaseUtilities;
   using Order = BoundaryStencil::Order;
