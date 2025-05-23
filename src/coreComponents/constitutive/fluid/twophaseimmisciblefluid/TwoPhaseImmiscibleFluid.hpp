@@ -140,7 +140,15 @@ public:
     void compute( real64 const pressure,
                   integer const phase,
                   real64 & phaseDens,
-                  real64 & dPhaseDens_dPres ) const;    
+                  real64 & dPhaseDens_dPres ) const; 
+                  
+    GEOS_HOST_DEVICE
+    void compute( real64 const pressure,
+                  integer const phase,
+                  real64 & phaseDens,
+                  real64 & dPhaseDens_dPres,
+                  real64 & phaseVisc,
+                  real64 & dPhaseVisc_dPres ) const; 
 
     GEOS_HOST_DEVICE
     void update( localIndex const k,
@@ -208,6 +216,19 @@ protected:
     GEOS_HOST_DEVICE
     void computeViscosities( real64 const pressure,
                              PhaseProp::SliceType const & phaseViscosity ) const;
+
+    /**
+     * @brief Overloaded utility function to compute density as a function of pressure (keeping derivatives)
+     * @param[in] pressure pressure in the cell
+     * @param[in] phase phase density being computed
+     * @param[out] phaseVisc the phase viscosity in the cell
+     * @param[out] dPhaseVisc_dPres the phase viscosity derivative in the cell
+     */
+    GEOS_HOST_DEVICE
+    void computeViscosities( real64 const pressure,
+                             integer const phase,
+                             real64 & phaseVisc,
+                             real64 & dPhaseVisc_dPres ) const;                          
 
     /// Views on the phase properties
     PhaseProp::ViewType m_phaseDensity;
@@ -325,6 +346,17 @@ void TwoPhaseImmiscibleFluid::KernelWrapper::
   }
 }
 
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
+void TwoPhaseImmiscibleFluid::KernelWrapper::
+  computeViscosities( real64 const pressure,
+                      integer const phase,
+                      real64 & phaseVisc,
+                      real64 & dPhaseVisc_dPres ) const
+{
+  phaseVisc = m_viscosityTables[phase].compute( &pressure, &dPhaseVisc_dPres );
+}
+
 
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
@@ -353,6 +385,27 @@ void TwoPhaseImmiscibleFluid::KernelWrapper::
                     phase,
                     phaseDens,
                     dPhaseDens_dPres );
+}
+
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
+void TwoPhaseImmiscibleFluid::KernelWrapper::
+  compute( real64 const pressure,
+           integer const phase,
+           real64 & phaseDens,
+           real64 & dPhaseDens_dPres,
+           real64 & phaseVisc,
+           real64 & dPhaseVisc_dPres) const
+{
+  computeDensities( pressure,
+                    phase,
+                    phaseDens,
+                    dPhaseDens_dPres );
+
+  computeViscosities( pressure,
+                      phase,
+                      phaseVisc,
+                      dPhaseVisc_dPres );
 }
 
 

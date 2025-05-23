@@ -1088,7 +1088,7 @@ public:
   static constexpr integer m_maxIter = 5;
 
   /// Minimum potential difference to apply a damping factor
-  static constexpr real64 m_d2FMin = 1.0; // 7000
+  static constexpr real64 m_d2RMin = 1.0; // 7000
 
   /// Minimum dampining factor
    static constexpr real64 m_minFactor = 0.1;
@@ -1190,93 +1190,130 @@ public:
   void computeInflection( localIndex const ei,
                           StackVariables & stack ) const
   {
-    // grab list of the # of the connections containing the current cell
-    array1d connNumber;
-    
-    for( integer ip = 0; ip < m_numPhases; ++ip )
+    // get list of with the connection number associated to the faces of the current cell
+    arraySlice1d< localIndex > connList = m_connMap[ei];
+    integer numConns = m_connMap.sizeOfArray( ei );
+
+    localIndex const seri[numConns][2];
+    localIndex const sesri[numConns][2];
+    localIndex const sei[numConns][2];
+
+    real64 transmissibility[numConns][2];    
+
+    // build cell maps (assuming only 2 cells per connection) and get geometric transmissibilities
+    for ( integer conn = 0; conn < numConns; ++conn )
     {
+      localIndex const iconn = connList[conn];
+
+      // cell indices
+      seri[conn][2]  = {m_seri( iconn, 0 ), m_seri( iconn, 1 )};
+      sesri[conn][2] = {m_sesri( iconn, 0 ), m_sesri( iconn, 1 )};
+      sei[conn][2]   = {m_sei( iconn, 0 ), m_sei( iconn, 1 )};
+
+      // transmissibilities
+      real64 trans[1][2];
+      real64 dTrans_dPres[1][2];
+
+      m_stencilWrapper.computeWeights( iconn,                                     
+                                       trans,
+                                       dTrans_dPres );
+      transmissibility[conn] = trans[0];
+    }
+    
+    constexpr int signPotDiff[2] = {1, -1};
+    real64 eps[2]{1.0};
+    
+    // analyze residual inflections for each phase
+    for( integer ip = 0; ip < m_numPhases; ++ip )
+    {        
+      real64 dPhi[numConns]{};      
+      real64 compressibility[numConns][2]{};
+      real64 viscosibility[numConns][2]{};              
 
       real64 phaseEps[2]{0.0, 1.0}; 
-      real64 d2R[2]{};
-      real64 newD2R{}; 
-      real64 eps[2]{1.0};
-
-      real64 dPhi[numConns]{};
       real64 d2F[numConns][2]{};
-      
+      real64 d2R[2]{};      
+      real64 newD2F[numConns]{};
+      real64 newD2R{};      
 
       // loop through connections to compute directional derivative at eps = 0 and eps = 1
       for ( integer conn = 0; conn < numConns; ++conn )
-      {
-        
-        // Assuming here only 2 elements per connection
-        localIndex const iconn = connNumber[conn];
-
-        // cell indices
-        localIndex const seri[2]  = {m_seri( iconn, 0 ), m_seri( iconn, 1 )};
-        localIndex const sesri[2] = {m_sesri( iconn, 0 ), m_sesri( iconn, 1 )};
-        localIndex const sei[2]   = {m_sei( iconn, 0 ), m_sei( iconn, 1 )};
-
-        constexpr int signPotDiff[2] = {1, -1};  
+      {           
+        localIndex const iconn = connList[conn];   
 
         // compute average density, compressibility and viscosibility
+        real64 densMean{};
+
         for( integer ke = 0; ke < 2; ++ke )
         {
-          real64 const density  = m_dens[seri[ke]][sesri[ke]][sei[ke]][0][ip];                     // r = rho1 || rho2
-          real64 const dDens_dP = m_dDens_dPres[seri[ke]][sesri[ke]][sei[ke]][0][ip][Deriv::dP];   // dr/dP = dr1/dP1 || dr2/dP
+          real64 const density  = m_dens[seri[conn][ke]][sesri[conn][ke]][sei[conn][ke]][0][ip];                              // r = rho1 || rho2
+          real64 const dDens_dP = m_dDens_dPres[seri[conn][ke]][sesri[conn][ke]][sei[conn][ke]][0][ip][Deriv::dP];   // dr/dP = dr1/dP1 || dr2/dP
 
-          real64 const viscosity = m_phaseVisc[seri[ke]][sesri[ke]][sei[ke]][0][ip];               // mu = mu1 || mu2
-          real64 const dVisc_dP  = m_dPhaseVisc[seri[ke]][sesri[ke]][sei[ke]][0][ip][Deriv::dP];   // dmu/dP = dmu1/dP1 || dmu2/dP
+          real64 const viscosity = m_phaseVisc[seri[conn][ke]][sesri[conn][ke]][sei[conn][ke]][0][ip];                        // mu = mu1 || mu2
+          real64 const dVisc_dP  = m_dPhaseVisc[seri[conn][ke]][sesri[conn][ke]][sei[conn][ke]][0][ip][Deriv::dP];   // dmu/dP = dmu1/dP1 || dmu2/dP
 
-          densMean[ip] += 0.5 * density;                                                           // rho = (rho1 + rho2) / 2  
-          compressibility[ip][ke] = dDens_dP / density;                                            // cf = drho1 / rho1 || drho2 / rho2     
-          viscosibility[ip][ke] = -viscosity * dVisc_dP;                                           // cmu = -mu1 * dmu1 || -mu2 * dmu2
+          densMean += 0.5 * density;                                                                 // rho = (rho1 + rho2) / 2  
+          compressibility[conn][ke] = dDens_dP / density;                                            // cf = drho1 / rho1 || drho2 / rho2     
+          viscosibility[conn][ke] = -viscosity * dVisc_dP;                                           // cmu = -mu1 * dmu1 || -mu2 * dmu2
         }          
 
         // compute potential difference before update  
         for( integer ke = 0; ke < 2; ++ke )
         {
-          real64 const pressure = m_pres[seri[ke]][sesri[ke]][sei[ke]];       // P = P1 || P2
-          real64 const gravD = m_gravCoef[seri[ke]][sesri[ke]][sei[ke]];      // D = g z1 || g z2 
+          real64 const pressure = m_pres[seri[conn][ke]][sesri[conn][ke]][sei[conn][ke]];       // P = P1 || P2
+          real64 const gravD = m_gravCoef[seri[conn][ke]][sesri[conn][ke]][sei[conn][ke]];      // D = g z1 || g z2 
 
-          real64 pot = pressure - densMean[ip] * gravD;      // Phi = P1 - rho g z1 || P2 - rho g z2
+          real64 pot = pressure - densMean * gravD;      // Phi = P1 - rho g z1 || P2 - rho g z2
 
           if( m_hasCapPressure )
           {              
-            pot -= m_phaseCapPressure[seri[ke]][sesri[ke]][sei[ke]][0][ip];   // Phi = P1 - rho g z1 - Pc1 || P2 - rho g z2 - Pc2
+            pot -= m_phaseCapPressure[seri[conn][ke]][sesri[conn][ke]][sei[conn][ke]][0][ip];   // Phi = P1 - rho g z1 - Pc1 || P2 - rho g z2 - Pc2
           }
 
-          dPhi[conn] += signPotDiff[ke] * pot;                 // dPhi = P1 - P2 - rho g (z1 - z2) - Pc1 + Pc2
+          dPhi[conn] += signPotDiff[ke] * pot;           // dPhi = P1 - P2 - rho g (z1 - z2) - Pc1 + Pc2          
         }
 
         // compute directional derivatives before and after update
-        computeDirectionalDerivative(iconn, k, ip, compressibility[ip], viscosibility[ip], dPhi[conn], phaseEps[0], d2R[conn][0]);
-        computeDirectionalDerivative(iconn, k, ip, compressibility[ip], viscosibility[ip], dPhi[conn], phaseEps[1], d2R[conn][1]);
+        computeDirectionalDerivative(iconn, ip, transmissibility[conn], compressibility[conn], viscosibility[conn], dPhi[conn], phaseEps[0], d2F[conn][0]);
+        computeDirectionalDerivative(iconn, ip, transmissibility[conn], compressibility[conn], viscosibility[conn], dPhi[conn], phaseEps[1], d2F[conn][1]);
 
+        d2R[0] += d2F[conn][0];
+        d2R[1] += d2F[conn][1];
 
-
-      } // connection loop
+      } // connection loop for initial derivative computations
 
       // check for presence of inflection
-      for ( integer iter = 0; iter < m_maxIter; ++iter )
+      for ( integer iter = 0; iter < m_maxIter &&
+                              signbit( d2R[0] ) != signbit( d2R[1] ) &&
+                              fabs( d2R[0] ) > m_d2RMin &&
+                              fabs( d2R[1] ) > m_d2RMin; ++iter )
       {
+        real64 slope = (d2R[1] - d2R[0]) / (phaseEps[1] - phaseEps[0]);
+        eps[ip] = phaseEps[1] - d2R[1] / slope;
 
         // loop through connections to compute directional derivative at potential root
         for ( integer conn = 0; conn < numConns; ++conn )
-        {
-          
-          // Assuming here only 2 elements per connection
+        {        
           localIndex const iconn = connNumber[conn];
+          computeDirectionalDerivative(iconn, ip, transmissibility[conn], compressibility[conn], viscosibility[conn], dPhi[conn], eps[ip], newD2F[conn]);
 
-          // cell indices
-          localIndex const seri[2]  = {m_seri( iconn, 0 ), m_seri( iconn, 1 )};
-          localIndex const sesri[2] = {m_sesri( iconn, 0 ), m_sesri( iconn, 1 )};
-          localIndex const sei[2]   = {m_sei( iconn, 0 ), m_sei( iconn, 1 )};
-
+          newD2R += newD2F[conn];
         } // connection loop
+
+        if ( signbit( d2R[0] ) == signbit( newD2R ) )
+        {
+          d2R[0] = newD2R;
+          phaseEps[0] = eps[ip];
+        } 
+        else
+        {
+          d2R[1] = newD2R;
+          phaseEps[1] = eps[ip];
+        }
 
       } // iterative root search
 
+      stack.localEps[ip] = eps[ip];
       
     } // loop through phases
     
@@ -1288,16 +1325,20 @@ public:
    *        at a specific location in the solution space, given by the location 
    *        at the previous iteration plus a restricted update
    * @param[in] iconn the connection index
+   * @param[in] k the cell index in the connection
    * @param[in] ip the phase index
-   * @param[in] dPhi phase potential difference before update   * 
+   * @param[in] trans the connection transmissibility
+   * @param[in] comp cell compressibilities
+   * @param[in] visc cell viscosibility
+   * @param[in] dPhiv phase potential difference before update  
    * @param[in] eps restriction factor that determines where in the update direction to evaluate
    *                the directional second derivative 
    * @param[out] d2F directional second derivative at given location in the solution space
    */                                 
   GEOS_HOST_DEVICE
   void computeDirectionalDerivative( localIndex const iconn,
-                                     localIndex const * k,
                                      localIndex const ip,
+                                     real64 const trans,
                                      real64 const * comp,
                                      real64 const * visc,
                                      real64 const dPhiv,                                     
@@ -1308,7 +1349,8 @@ public:
     localIndex down = 1 - up;
     
     // clear working variables
-    real64 dens[2]{};   
+    real64 dens[2]{};
+    real64 viscosity[2]{};   
     real64 gravD[2]{};  
     real64 capPres[2]{};  
     real64 dcapPres[2]{};
@@ -1327,9 +1369,9 @@ public:
     real64 dS[2]{};    
 
     // cell indices
-    localIndex const seri[2]  = {m_seri( iconn, k[0] ), m_seri( iconn, k[1] )};
-    localIndex const sesri[2] = {m_sesri( iconn, k[0] ), m_sesri( iconn, k[1] )};
-    localIndex const sei[2]   = {m_sei( iconn, k[0] ), m_sei( iconn, k[1] )};
+    localIndex const seri[2]  = {m_seri( iconn, 0 ), m_seri( iconn, 1 )};
+    localIndex const sesri[2] = {m_sesri( iconn, 0 ), m_sesri( iconn, 1 )};
+    localIndex const sei[2]   = {m_sei( iconn, 0 ), m_sei( iconn, 1 )};
 
     // get pressure and saturation updates for connection elements
     for ( integer ke = 0; ke < 2; ++ke )
@@ -1363,14 +1405,14 @@ public:
     m_relPermWrapper.compute(phaseVolFrac[up], ip, perm, dperm, d2perm);
     D = gravD[up] - gravD[down];   // D = g (zup - zdown)
 
-
-    // get density and potential difference
+    // get density, viscosity and potential difference
     if ( eps < 0.001 )
     {
-      // get density     
+      // get density and viscosity   
       for ( integer ke = 0; ke < 2; ++ke )
       {
-        dens[ke] = m_dens[seri[ke]][sesri[ke]][sei[ke]][0][ip];       // r = { r1 , r2 }            
+        dens[ke] = m_dens[seri[ke]][sesri[ke]][sei[ke]][0][ip];          // r = { r1 , r2 }
+        mu[ke] = m_phaseVisc[seri[ke]][sesri[ke]][sei[ke]][0][ip];       // r = { mu1 , mu2 }            
       }
 
       // get potential differece
@@ -1383,8 +1425,9 @@ public:
       {
         pressure[ke] = m_pres[seri[ke]][sesri[ke]][sei[ke]] + eps * dP[ke];  // P = P1 || P2
 
-        real64 dDens;       
-        m_fluidWrapper.compute(pressure[ke], ip, dens[ke], dDens);  // r = { r1 , r2 } , dr = { dr1 , dr2 }             
+        real64 dDens;   
+        real64 dVisc;    
+        m_fluidWrapper.compute(pressure[ke], ip, dens[ke], dDens, viscosity[ke], dVisc);  // r = { r1 , r2 } , dr = { dr1 , dr2 }             
       }    
 
       // compute potential difference
@@ -1429,7 +1472,9 @@ public:
 
     // compute directional second derivative
     d2F = d2Pi2 * pow( dP[up], 2.0 ) + d2Pj2 * pow( dP[down], 2.0 ) + d2Si2 * pow( dS[up], 2.0 ) + d2Sj2 * pow( dS[down], 2.0 )
-        + d2PiPj * 2 * dP[up] * dP[down] + d2PiSi * 2  * dP[up] * dS[up] + d2PiSj * 2  * dP[up] * dS[down] + d2PjSi * 2  * dP[down] * dS[up] + d2SiSj * 2  * dS[up] * dS[down];
+        + d2PiPj * 2 * dP[up] * dP[down] + d2PiSi * 2  * dP[up] * dS[up] + d2PiSj * 2  * dP[up] * dS[down]
+        + d2PjSi * 2  * dP[down] * dS[up] + d2SiSj * 2  * dS[up] * dS[down];
+    d2F *= trans * dens[up] / viscosity[up];
   }
 
   /**
@@ -1505,7 +1550,7 @@ protected:
   /// Offset for my MPI rank
   globalIndex const m_rankOffset;
 
-  arrayView2d< const localIndex > m_cellFaceMap;
+  ArrayOfArrays< const localIndex > m_connMap;
 
   /// Views on dof numbers
   ElementViewConst< arrayView1d< globalIndex const > > const m_dofNumber;
