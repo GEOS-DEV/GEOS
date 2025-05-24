@@ -14,15 +14,14 @@
  */
 
 /**
- * @file LohrenzBrayClarkViscosityImpl.hpp
+ * @file LohrenzBrayClarkViscosity_Impl.hpp
  */
 
-#ifndef GEOS_CONSTITUTIVE_FLUID_MULTIFLUID_COMPOSITIONAL_MODELS_LOHRENZBRAYCLARKVISCOSITYIMPL_HPP_
-#define GEOS_CONSTITUTIVE_FLUID_MULTIFLUID_COMPOSITIONAL_MODELS_LOHRENZBRAYCLARKVISCOSITYIMPL_HPP_
+#ifndef GEOS_CONSTITUTIVE_FLUID_MULTIFLUID_COMPOSITIONAL_MODELS_LOHRENZBRAYCLARKVISCOSITY_IMPL_HPP_
+#define GEOS_CONSTITUTIVE_FLUID_MULTIFLUID_COMPOSITIONAL_MODELS_LOHRENZBRAYCLARKVISCOSITY_IMPL_HPP_
 
 #include "LohrenzBrayClarkViscosity.hpp"
 #include "constitutive/fluid/multifluid/Layouts.hpp"
-#include "common/DataTypes.hpp"
 
 namespace geos
 {
@@ -178,8 +177,8 @@ void LohrenzBrayClarkViscosityUpdate::computePhaseDiluteViscosity_Wilke( integer
   GEOS_UNUSED_VAR( temperature );
 
   // compute the "phi" interaction matrix (and its temperature derivatives)
-  stackArray2d< real64, maxNumComps *maxNumComps > phi( numComponents, numComponents );
-  stackArray2d< real64, maxNumComps *maxNumComps > dPhi_dT( numComponents, numComponents );
+  StackArray< real64, 2, maxNumComps * maxNumComps > phi( numComponents, numComponents );
+  StackArray< real64, 2, maxNumComps * maxNumComps > dPhi_dT( numComponents, numComponents );
 
   LvArray::forValuesInSlice( phi.toSlice(), setZero );
   LvArray::forValuesInSlice( dPhi_dT.toSlice(), setZero );
@@ -258,7 +257,7 @@ void LohrenzBrayClarkViscosityUpdate::computePhaseDiluteViscosity_Brokaw( intege
   GEOS_UNUSED_VAR( temperature );
 
   // Compute the "phi" interaction matrix (constant, as only function of molecular weights)
-  stackArray2d< real64, maxNumComps *maxNumComps > phi( numComponents, numComponents );
+  StackArray< real64, 2, maxNumComps * maxNumComps > phi( numComponents, numComponents );
 
   for( integer ic = 0; ic < numComponents; ++ic )
   {
@@ -401,4 +400,4 @@ void LohrenzBrayClarkViscosityUpdate::computePhaseViscosity_LohrenzBrayClark( in
 
 } // end namespace geos
 
-#endif //GEOS_CONSTITUTIVE_FLUID_MULTIFLUID_COMPOSITIONAL_MODELS_LOHRENZBRAYCLARKVISCOSITYIMPL_HPP_
+#endif //GEOS_CONSTITUTIVE_FLUID_MULTIFLUID_COMPOSITIONAL_MODELS_LOHRENZBRAYCLARKVISCOSITY_IMPL_HPP_
