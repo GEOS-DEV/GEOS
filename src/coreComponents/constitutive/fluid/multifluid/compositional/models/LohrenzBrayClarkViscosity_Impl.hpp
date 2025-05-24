@@ -47,7 +47,7 @@ void LohrenzBrayClarkViscosityUpdate::compute( ComponentProperties::KernelWrappe
   GEOS_UNUSED_VAR( pressure );   // No-direct pressure dependence (instead through density)
   GEOS_UNUSED_VAR( useMass );
 
-  integer constexpr maxNumDofs = maxNumComp + 2;
+  integer constexpr maxNumDofs = maxNumComps + 2;
   integer const numComponents = componentProperties.m_componentMolarWeight.size();
   integer const numDofs = numComponents + 2;
 
@@ -59,7 +59,7 @@ void LohrenzBrayClarkViscosityUpdate::compute( ComponentProperties::KernelWrappe
   // Dilute viscosity is solely temperature dependent
   // Units are converted so componentViscosity is in centipoise to match original reference
 
-  stackArray1d< real64, maxNumComp > componentDiluteViscosity( numComponents );
+  stackArray1d< real64, maxNumComps > componentDiluteViscosity( numComponents );
 
   computeComponentDiluteViscosity_StielThodos( numComponents,
                                                componentProperties,
@@ -177,8 +177,8 @@ void LohrenzBrayClarkViscosityUpdate::computePhaseDiluteViscosity_Wilke( integer
   GEOS_UNUSED_VAR( temperature );
 
   // compute the "phi" interaction matrix (and its temperature derivatives)
-  StackArray< real64, 2, maxNumComp2 > phi( numComponents, numComponents );
-  StackArray< real64, 2, maxNumComp2 > dPhi_dT( numComponents, numComponents );
+  StackArray< real64, 2, maxNumComps * maxNumComps > phi( numComponents, numComponents );
+  StackArray< real64, 2, maxNumComps * maxNumComps > dPhi_dT( numComponents, numComponents );
 
   LvArray::forValuesInSlice( phi.toSlice(), setZero );
   LvArray::forValuesInSlice( dPhi_dT.toSlice(), setZero );
@@ -257,7 +257,7 @@ void LohrenzBrayClarkViscosityUpdate::computePhaseDiluteViscosity_Brokaw( intege
   GEOS_UNUSED_VAR( temperature );
 
   // Compute the "phi" interaction matrix (constant, as only function of molecular weights)
-  StackArray< real64, 2, maxNumComp2 > phi( numComponents, numComponents );
+  StackArray< real64, 2, maxNumComps * maxNumComps > phi( numComponents, numComponents );
 
   for( integer ic = 0; ic < numComponents; ++ic )
   {
