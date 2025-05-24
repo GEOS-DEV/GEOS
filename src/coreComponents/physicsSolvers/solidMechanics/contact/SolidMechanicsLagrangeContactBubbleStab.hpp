@@ -195,12 +195,12 @@ public:
    * @param domain The domain partition object
    */
   void computeRotationMatrices( DomainPartition & domain ) const;
-  
+
   /**
    * @brief set all variables to zero (needed for earthquake models)
    * @param domain The domain partition object
    */
-  void setAllVariablesToZero( DomainPartition & domain ) const; 
+  void setAllVariablesToZero( DomainPartition & domain ) override;
 
 private:
   /**

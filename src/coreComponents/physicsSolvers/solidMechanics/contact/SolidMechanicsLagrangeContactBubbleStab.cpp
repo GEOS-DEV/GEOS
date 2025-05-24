@@ -1212,7 +1212,7 @@ void SolidMechanicsLagrangeContactBubbleStab::resetStateToBeginningOfStep( Domai
   } );
 }
 
-void SolidMechanicsLagrangeContactBubbleStab::setAllVariablesToZero( DomainPartition & domain  ) const
+void SolidMechanicsLagrangeContactBubbleStab::setAllVariablesToZero( DomainPartition & domain  )
 {
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
@@ -1220,7 +1220,7 @@ void SolidMechanicsLagrangeContactBubbleStab::setAllVariablesToZero( DomainParti
                                                                 string_array const & regionNames )
   {
     NodeManager & nodeManager = mesh.getNodeManager();
-  
+
     nodeManager.getField< solidMechanics::totalDisplacement >().zero();
     nodeManager.getField< solidMechanics::incrementalDisplacement >().zero();
     ElementRegionManager & elemManager = mesh.getElemManager();
