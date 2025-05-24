@@ -342,7 +342,7 @@ bool SinglePhaseWell::updateState( DomainPartition & domain )
     mesh.getElemManager().forElementSubRegions< WellElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                           WellElementSubRegion & subRegion )
     {
-      status &= updateSubRegionState( subRegion ); 
+      status &= updateSubRegionState( subRegion );
     } );
   } );
 

@@ -861,12 +861,12 @@ bool CompositionalMultiphaseWell::updateFluidModel( WellElementSubRegion & subRe
     using ExecPolicy = typename FluidType::exec_policy;
     typename FluidType::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
     status &= thermalCompositionalMultiphaseBaseKernels::
-      FluidUpdateKernel::
-      launch< ExecPolicy >( subRegion.size(),
-                            fluidWrapper,
-                            pres,
-                            temp,
-                            compFrac );
+                FluidUpdateKernel::
+                launch< ExecPolicy >( subRegion.size(),
+                                      fluidWrapper,
+                                      pres,
+                                      temp,
+                                      compFrac );
   } );
 
   return status;
