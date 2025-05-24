@@ -22,6 +22,6 @@
 
 namespace geos
 {
-stemplate void PVTDriver::runTest< constitutive::CompositionalThreePhaseLohrenzBrayClarkViscosity >(
+template void PVTDriver::runTest< constitutive::CompositionalThreePhaseLohrenzBrayClarkViscosity >(
   constitutive::CompositionalThreePhaseLohrenzBrayClarkViscosity &, arrayView2d< real64 > const & );
 }

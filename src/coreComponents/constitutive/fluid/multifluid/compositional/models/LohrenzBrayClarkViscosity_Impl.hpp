@@ -257,7 +257,7 @@ void LohrenzBrayClarkViscosityUpdate::computePhaseDiluteViscosity_Brokaw( intege
   GEOS_UNUSED_VAR( temperature );
 
   // Compute the "phi" interaction matrix (constant, as only function of molecular weights)
-  stackArray2d< real64, maxNumComp2 > phi( numComponents, numComponents );
+  StackArray< real64, 2, maxNumComp2 > phi( numComponents, numComponents );
 
   for( integer ic = 0; ic < numComponents; ++ic )
   {
