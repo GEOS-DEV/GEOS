@@ -332,6 +332,6 @@ ENUM_STRINGS( LohrenzBrayClarkViscosityUpdate::MixingType,
 } // end namespace geos
 
 // Implementation
-#include "LohrenzBrayClarkViscosityImpl.hpp"
+#include "LohrenzBrayClarkViscosity_Impl.hpp"
 
 #endif //GEOS_CONSTITUTIVE_FLUID_MULTIFLUID_COMPOSITIONAL_MODELS_LOHRENZBRAYCLARKVISCOSITY_HPP_
