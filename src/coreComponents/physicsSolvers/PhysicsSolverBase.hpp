@@ -597,6 +597,7 @@ public:
   /**
    * @brief Recompute all dependent quantities from primary variables (including constitutive models)
    * @param domain the domain containing the mesh and fields
+   * @return a bool that states whether the update was successful or not
    */
   virtual bool updateState( DomainPartition & domain );
 
