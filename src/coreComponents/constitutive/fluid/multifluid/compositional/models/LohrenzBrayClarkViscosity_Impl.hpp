@@ -177,8 +177,8 @@ void LohrenzBrayClarkViscosityUpdate::computePhaseDiluteViscosity_Wilke( integer
   GEOS_UNUSED_VAR( temperature );
 
   // compute the "phi" interaction matrix (and its temperature derivatives)
-  stackArray2d< real64, maxNumComp2 > phi( numComponents, numComponents );
-  stackArray2d< real64, maxNumComp2 > dPhi_dT( numComponents, numComponents );
+  StackArray< real64, 2, maxNumComp2 > phi( numComponents, numComponents );
+  StackArray< real64, 2, maxNumComp2 > dPhi_dT( numComponents, numComponents );
 
   LvArray::forValuesInSlice( phi.toSlice(), setZero );
   LvArray::forValuesInSlice( dPhi_dT.toSlice(), setZero );
