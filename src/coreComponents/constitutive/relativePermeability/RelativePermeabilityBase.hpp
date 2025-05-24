@@ -23,6 +23,7 @@
 #include "common/DataLayouts.hpp"
 #include "constitutive/ConstitutiveBase.hpp"
 #include "constitutive/relativePermeability/layouts.hpp"
+#include "constitutive/fluid/multifluid/MultiFluidConstants.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
 #include "common/format/EnumStrings.hpp"
 
@@ -114,9 +115,11 @@ private:
 
 class RelativePermeabilityBase : public ConstitutiveBase
 {
-public:
+protected:
 
-  static constexpr integer MAX_NUM_PHASES = 3;
+  static constexpr integer MAX_NUM_PHASES = MultiFluidConstants::MAX_NUM_PHASES;
+
+public:
 
   struct PhaseType
   {

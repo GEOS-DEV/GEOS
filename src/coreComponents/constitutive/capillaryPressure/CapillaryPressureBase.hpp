@@ -23,6 +23,7 @@
 #include "common/DataLayouts.hpp"
 #include "constitutive/ConstitutiveBase.hpp"
 #include "constitutive/capillaryPressure/layouts.hpp"
+#include "constitutive/fluid/multifluid/MultiFluidConstants.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
 
 namespace geos
@@ -84,9 +85,9 @@ private:
 
 class CapillaryPressureBase : public ConstitutiveBase
 {
-public:
+  static auto constexpr MAX_NUM_PHASES = MultiFluidConstants::MAX_NUM_PHASES;
 
-  static constexpr integer MAX_NUM_PHASES = 3;
+public:
 
   struct PhaseType
   {

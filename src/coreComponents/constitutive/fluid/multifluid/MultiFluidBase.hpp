@@ -48,28 +48,28 @@ public:
    *
    * @note This puts an upper bound on memory use, allowing to optimize code better
    */
-  static constexpr integer MAX_NUM_COMPONENTS = MultiFluidConstants::MAX_NUM_COMPONENTS;
+  //static constexpr auto MAX_NUM_COMPONENTS = MultiFluidConstants::MAX_NUM_COMPONENTS;
 
   /**
    * @brief Maximum supported number of fluid phases
    *
    * @note This puts an upper bound on memory use, allowing to optimize code better
    */
-  static constexpr integer MAX_NUM_PHASES = MultiFluidConstants::MAX_NUM_PHASES;
+  static constexpr auto MAX_NUM_PHASES = MultiFluidConstants::MAX_NUM_PHASES;
 
   /**
    * @brief Minimum supported number of fluid components (species) for dispatch
-   * @note This is the mininum number of components that can be used for dispatch in a kernel launch specific for
+   * @note This is the minimum number of components that can be used for dispatch in a kernel launch specific for
    *       this fluid type.
    */
   static constexpr integer min_n_components = 2;
 
   /**
    * @brief Maximum supported number of fluid components (species) for dispatch
-   * @note This is the maxinum number of components that can be used for dispatch in a kernel launch specific for
+   * @note This is the maximum number of components that can be used for dispatch in a kernel launch specific for
    *       this fluid type.
    */
-  static constexpr integer max_n_components = 5;
+  static constexpr integer max_n_components = MultiFluidConstants::MAX_NUM_COMPONENTS;
 
   /**
    * @return number of fluid components (species) in the model
@@ -193,7 +193,6 @@ public:
 
   /**
    * @brief Initialize the model
-   * @param[in] phaseVolFraction an array containing the initial phase volume fractions
    */
   virtual void initializeState() const;
 
@@ -648,10 +647,6 @@ private:
                          arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & composition ) const = 0;
   };
 
-private:
-
-
-
   /**
    * @brief Called internally to set array dim labels.
    */
@@ -718,8 +713,8 @@ MultiFluidBase::KernelWrapper::computeValues( FLUIDWRAPPER const fluidWrapper,
                                               real64 & totalDensity )
 {
   integer constexpr maxNumPhase = MAX_NUM_PHASES;
-  integer constexpr maxNumComp = MAX_NUM_COMPONENTS;
-  integer constexpr maxNumDof = MAX_NUM_COMPONENTS + 2;
+  integer constexpr maxNumComp = max_n_components;
+  integer constexpr maxNumDof = maxNumComp + 2;
   integer const numPhase = fluidWrapper.numPhases();
   integer const numComp = fluidWrapper.numComponents();
 

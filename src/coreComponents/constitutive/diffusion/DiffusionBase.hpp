@@ -23,6 +23,7 @@
 #include "common/DataLayouts.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
 #include "constitutive/ConstitutiveBase.hpp"
+#include "constitutive/fluid/multifluid/MultiFluidConstants.hpp"
 
 namespace geos
 {
@@ -89,10 +90,10 @@ private:
  */
 class DiffusionBase : public ConstitutiveBase
 {
-public:
-
   /// Max number of phases allowed in the class
-  static constexpr integer MAX_NUM_PHASES = 3;
+  static constexpr auto MAX_NUM_PHASES = MultiFluidConstants::MAX_NUM_PHASES;
+
+public:
 
   /**
    * @brief Constructor for the abstract base class

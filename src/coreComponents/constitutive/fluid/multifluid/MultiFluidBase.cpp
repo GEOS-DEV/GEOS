@@ -165,13 +165,13 @@ void MultiFluidBase::postInputInitialization()
   integer const numComp = numFluidComponents();
   integer const numPhase = numFluidPhases();
 
-  GEOS_THROW_IF_LT_MSG( numComp, 1,
+  GEOS_THROW_IF_LT_MSG( numComp, min_n_components,
                         GEOS_FMT( "{}: invalid number of components", getFullName() ),
                         InputError );
-  GEOS_THROW_IF_GT_MSG( numComp, MAX_NUM_COMPONENTS,
+  GEOS_THROW_IF_GT_MSG( numComp, max_n_components,
                         GEOS_FMT( "{}: invalid number of components", getFullName() ),
                         InputError );
-  GEOS_THROW_IF_LT_MSG( numPhase, 1,
+  GEOS_THROW_IF_LT_MSG( numPhase, 2,
                         GEOS_FMT( "{}: invalid number of phases", getFullName() ),
                         InputError );
   GEOS_THROW_IF_GT_MSG( numPhase, MAX_NUM_PHASES,

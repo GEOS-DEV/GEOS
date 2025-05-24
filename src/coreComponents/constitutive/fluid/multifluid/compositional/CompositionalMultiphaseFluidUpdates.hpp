@@ -190,9 +190,9 @@ CompositionalMultiphaseFluidUpdates< FLASH, PHASE1, PHASE2, PHASE3 >::compute(
   MultiFluidBase::PhaseComp::SliceType const phaseCompFrac,
   MultiFluidBase::FluidProp::SliceType const totalDensity ) const
 {
-  integer constexpr maxNumComp = MultiFluidBase::MAX_NUM_COMPONENTS;
+  integer constexpr maxNumComp = MultiFluidBase::max_n_components;
   integer constexpr maxNumPhase = MultiFluidBase::MAX_NUM_PHASES - 1;
-  MultiFluidBase::PhaseComp::StackValueType< maxNumPhase *maxNumComp > kValues( 1, 1, numPhases() - 1, numComponents() );
+  MultiFluidBase::PhaseComp::StackValueType< maxNumPhase * maxNumComp > kValues( 1, 1, numPhases() - 1, numComponents() );
 
   LvArray::forValuesInSlice( kValues[0][0], setZero );   // Force initialisation of k-Values
 
@@ -228,8 +228,8 @@ CompositionalMultiphaseFluidUpdates< FLASH, PHASE1, PHASE2, PHASE3 >::compute(
   MultiFluidBase::FluidProp::SliceType const totalDensity,
   MultiFluidBase::PhaseComp::SliceType::ValueType const & kValues ) const
 {
-  integer constexpr maxNumComp = MultiFluidBase::MAX_NUM_COMPONENTS;
-  integer constexpr maxNumDof = MultiFluidBase::MAX_NUM_COMPONENTS + 2;
+  integer constexpr maxNumComp = MultiFluidBase::max_n_components;
+  integer constexpr maxNumDof = maxNumComp + 2;
   integer constexpr maxNumPhase = MultiFluidBase::MAX_NUM_PHASES;
   integer const numComp = numComponents();
   integer const numPhase = numPhases();

@@ -30,17 +30,19 @@ namespace constitutive
 
 struct MultiFluidConstants
 {
+  static constexpr integer MIN_NUM_COMPONENTS = 2;
+
   /**
    * @brief Maximum supported number of fluid components (species)
    * @note This puts an upper bound on memory use, allowing to optimize code better
    */
-  static constexpr integer MAX_NUM_COMPONENTS = 9;
+  static constexpr integer MAX_NUM_COMPONENTS = 5;
 
   /**
    * @brief Maximum supported number of fluid phases
    * @note This puts an upper bound on memory use, allowing to optimize code better
    */
-  static constexpr integer MAX_NUM_PHASES = 4;
+  static constexpr integer MAX_NUM_PHASES = 3;
 
   /**
    * @brief Epsilon used in the calculations to check against zero

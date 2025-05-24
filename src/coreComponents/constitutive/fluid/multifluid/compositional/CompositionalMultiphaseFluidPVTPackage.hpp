@@ -190,7 +190,7 @@ CompositionalMultiphaseFluidPVTPackage::KernelWrapper::
 
   using Deriv = constitutive::multifluid::DerivativeOffset;
 
-  integer constexpr maxNumComp = MultiFluidBase::MAX_NUM_COMPONENTS;
+  integer constexpr maxNumComp = MultiFluidBase::max_n_components;
   integer constexpr maxNumPhase = MultiFluidBase::MAX_NUM_PHASES;
   integer const numComp = numComponents();
   integer const numPhase = numPhases();
