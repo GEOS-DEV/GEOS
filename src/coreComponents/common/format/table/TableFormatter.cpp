@@ -79,7 +79,7 @@ string TableCSVFormatter::headerToString() const
 string TableCSVFormatter::dataToString( TableData const & tableData ) const
 {
 
-  RowsCellInput const rowsValues( tableData.getTableDataRows() );
+  RowsCellInput const rowsValues( tableData.getCellsData() );
   string result;
   size_t total_size = 0;
   for( auto const & row : rowsValues )
@@ -160,8 +160,8 @@ void TableTextFormatter::initalizeTableGrids( PreparedTableLayout const & tableL
                                               CellLayoutRows & dataCellsLayout,
                                               size_t & tableTotalWidth ) const
 {
+  RowsCellInput const & inputDataValues( tableInputData.getCellsData() );
   bool const hasColumnLayout = tableLayout.getColumnLayersCount() > 0;
-  RowsCellInput const & inputDataValues( tableInputData.getTableDataRows() );
   size_t const inputDataRowsCount = !inputDataValues.empty() ? inputDataValues.front().size() : 0;
   // this array will store the displayed width of all columns (it will be scaled by data & headers width)
   stdVector< size_t > columnsWidth;
