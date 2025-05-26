@@ -50,7 +50,7 @@ char const * xmlInput =
                                 { 50, 50, 50 } }"
         outputSeismoTrace="0"
         dtSeismoTrace="0.1"
-        useTaper="0"
+        useTaper="1"
         reflectivityCoeff="0.000001"
         thicknessTaper="50.0"
         />
