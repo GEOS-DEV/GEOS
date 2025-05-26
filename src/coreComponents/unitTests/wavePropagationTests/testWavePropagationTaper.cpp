@@ -53,7 +53,7 @@ char const * xmlInput =
         outputSeismoTrace="0"
         timestepStabilityLimit="1"
         cflFactor="0.95"
-        useTaper="1"
+        useTaper="0"
         reflectivityCoeff="0.000001"
         thicknessTaper="50"
         dtSeismoTrace="0.1"/>
@@ -130,14 +130,14 @@ char const * xmlInput =
       <FieldSpecification
         name="cellVelocity"
         initialCondition="1"
-        objectPath="ElementRegions/Region/cb"
+        objectPath="mesh/FE1/ElementRegions/Region/cb"
         fieldName="acousticVelocity"
         scale="1500"
         setNames="{ all }"/>
       <FieldSpecification
         name="cellDensity"
         initialCondition="1"
-        objectPath="ElementRegions/Region/cb"
+        objectPath="mesh/FE1/ElementRegions/Region/cb"
         fieldName="acousticDensity"
         scale="1"
         setNames="{ all }"/>
