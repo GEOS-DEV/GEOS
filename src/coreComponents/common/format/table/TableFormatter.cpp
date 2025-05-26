@@ -148,9 +148,12 @@ string TableTextFormatter::toString< TableData >( TableData const & tableData ) 
   initalizeTableGrids( m_tableLayout, tableData,
                        headerCellsLayout, dataCellsLayout,
                        tableTotalWidth );
-  outputTable( m_tableLayout, tableOutput,
-               headerCellsLayout, dataCellsLayout,
-               tableTotalWidth );
+
+  string const sepLine = string( tableTotalWidth, m_horizontalLine );
+  outputTableHeader( tableOutput, m_tableLayout, headerCellsLayout, sepLine );
+  outputTableData( tableOutput, m_tableLayout, dataCellsLayout, false );
+  outputTableBottom( tableOutput, m_tableLayout, sepLine, !dataCellsLayout.empty() );
+
   return tableOutput.str();
 }
 
@@ -559,24 +562,40 @@ void TableTextFormatter::applyColumnsWidth( stdVector< size_t > const & columnsW
   }
 }
 
-void TableTextFormatter::outputTable( PreparedTableLayout const & tableLayout,
-                                      std::ostringstream & tableOutput,
-                                      CellLayoutRows const & headerCellsLayout,
-                                      CellLayoutRows const & dataCellsLayout,
-                                      size_t const tableTotalWidth ) const
+void TableTextFormatter::outputTableHeader( std::ostream & tableOutput,
+                                            PreparedTableLayout const & tableLayout,
+                                            CellLayoutRows const & headerCellsLayout,
+                                            string_view sepLine ) const
 {
-  string const sepLine = string( tableTotalWidth, m_horizontalLine );
   if( tableLayout.isLineBreakEnabled())
   {
     tableOutput << '\n';
   }
   tableOutput << tableLayout.getIndentationStr() << sepLine << '\n';
-  outputLines( tableLayout, headerCellsLayout, tableOutput );
-  if( !dataCellsLayout.empty())
+  outputLines( tableLayout, headerCellsLayout, tableOutput, false );
+}
+
+void TableTextFormatter::outputTableData( std::ostream & tableOutput,
+                                          PreparedTableLayout const & tableLayout,
+                                          CellLayoutRows const & dataCellsLayout,
+                                          bool flushAfterEachLines ) const
+{
+  if( !dataCellsLayout.empty() )
   {
-    outputLines( tableLayout, dataCellsLayout, tableOutput );
+    outputLines( tableLayout, dataCellsLayout, tableOutput, flushAfterEachLines );
+  }
+}
+
+void TableTextFormatter::outputTableBottom( std::ostream & tableOutput,
+                                            PreparedTableLayout const & tableLayout,
+                                            string_view sepLine,
+                                            bool hasData ) const
+{
+  if( hasData )
+  {
     tableOutput << tableLayout.getIndentationStr() << sepLine;
   }
+
   if( tableLayout.isLineBreakEnabled())
   {
     tableOutput << '\n';
@@ -601,7 +620,7 @@ string buildCell( TableLayout::Alignment const m_alignment, string_view value, s
   }
 }
 
-void TableTextFormatter::formatCell( std::ostringstream & tableOutput,
+void TableTextFormatter::formatCell( std::ostream & tableOutput,
                                      TableLayout::CellLayout const & cell,
                                      size_t const idxLine ) const
 {
@@ -620,7 +639,8 @@ void TableTextFormatter::formatCell( std::ostringstream & tableOutput,
 
 void TableTextFormatter::outputLines( PreparedTableLayout const & tableLayout,
                                       CellLayoutRows const & rows,
-                                      std::ostringstream & tableOutput ) const
+                                      std::ostream & tableOutput,
+                                      bool flushOnEachLines ) const
 {
   size_t const nbRows = rows.size();
   size_t const nbColumns = !rows.empty() ? rows[0].cells.size() : 0;
@@ -669,6 +689,8 @@ void TableTextFormatter::outputLines( PreparedTableLayout const & tableLayout,
           else
           { // right table border
             tableOutput << string( nbBorderSpaces, cellSpaceChar ) << m_verticalLine << "\n";
+            if( flushOnEachLines )
+              tableOutput << std::flush;
           }
         }
       }

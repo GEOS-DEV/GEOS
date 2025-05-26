@@ -158,13 +158,12 @@ public:
   template< typename DATASOURCE >
   string toString( DATASOURCE const & tableData ) const;
 
-private:
+protected:
 
   /// symbol for separator construction
   static constexpr char m_verticalLine = '|';
   /// for the extremity of a row
   static constexpr char m_horizontalLine = '-';
-
 
   /**
    * @brief Initializes the table layout with the given table data and prepares necessary layouts for headers and data cells.
@@ -172,7 +171,7 @@ private:
    * @param tableData A constant reference to the `TableData` object, which contains the actual data for the table.
    * @param headerCellsLayout A reference to a `CellLayoutRows` where the header cells will be populated.
    * @param dataCellsLayout A reference to a `CellLayoutRows` where the data cells will be populated.
-   * @param separatorLine A string that will be used as the table separator line
+   * @param tableTotalWidth A string that will be used as the table separator line
    */
   void initalizeTableGrids( PreparedTableLayout const & tableLayout,
                             TableData const & tableData,
@@ -183,16 +182,43 @@ private:
   /**
    * @brief Outputs the formatted table to the provided output stream.
    * @param tableLayout The layout of the table
-   * @param tableOutput A reference to an `std::ostringstream` where the formatted table will be written.
+   * @param tableOutput A reference to an `std::ostream` where the formatted table will be written.
    * @param headerCellsLayout The layout of the header rows
    * @param dataCellsLayout The layout of the data rows
-   * @param separatorLine The string to be used as the table separator line
+   * @param separatorLine A string that will be used as the table separator line
    */
-  void outputTable( PreparedTableLayout const & tableLayout,
-                    std::ostringstream & tableOutput,
-                    CellLayoutRows const & headerCellsLayout,
-                    CellLayoutRows const & dataCellsLayout,
-                    size_t tableTotalWidth ) const;
+  void outputTableHeader( std::ostream & tableOutput,
+                          PreparedTableLayout const & tableLayout,
+                          CellLayoutRows const & headerCellsLayout,
+                          string_view separatorLine ) const;
+
+  /**
+   * @brief Outputs the formatted table to the provided output stream.
+   * @param tableLayout The layout of the table
+   * @param tableOutput A reference to an `std::ostream` where the formatted table will be written.
+   * @param headerCellsLayout The layout of the header rows
+   * @param dataCellsLayout The layout of the data rows
+   * @param separatorLine A string that will be used as the table separator line
+   */
+  void outputTableData( std::ostream & tableOutput,
+                        PreparedTableLayout const & tableLayout,
+                        CellLayoutRows const & dataCellsLayout,
+                        bool flushAfterEachLines ) const;
+
+  /**
+   * @brief Outputs the formatted table to the provided output stream.
+   * @param tableLayout The layout of the table
+   * @param tableOutput A reference to an `std::ostream` where the formatted table will be written.
+   * @param headerCellsLayout The layout of the header rows
+   * @param dataCellsLayout The layout of the data rows
+   * @param separatorLine A string that will be used as the table separator line
+   */
+  void outputTableBottom( std::ostream & tableOutput,
+                          PreparedTableLayout const & tableLayout,
+                          string_view separatorLine,
+                          bool hasData ) const;
+
+private:
 
   /**
    * @brief Populate a grid of CellLayout with the title rows.
@@ -290,13 +316,12 @@ private:
    * @param tableLayout The layout of the table
    * @param cellsLayout A collection of rows, each containing a layout of cells to be processed and formatted.
    * @param tableOutput The output stream
-   * @param nbLinesRow A vector containing the number of sub-lines for each row.
-   * @param sectionType The type of the section being processed (Header, Value, etc.).
-   * @param separatorLine The table separator line string
+   * @param flushOnEachLines flush the output stream each time a line is finished
    */
   void outputLines( PreparedTableLayout const & tableLayout,
                     CellLayoutRows const & cellsLayout,
-                    std::ostringstream & tableOutput ) const;
+                    std::ostream & tableOutput,
+                    bool flushOnEachLines ) const;
 };
 
 /**
