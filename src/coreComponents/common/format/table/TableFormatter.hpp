@@ -307,7 +307,7 @@ private:
    * @param cell The cell to format
    * @param idxLine The current line index used to access the specific content for the cell.
    */
-  void formatCell( std::ostringstream & tableOutput,
+  void formatCell( std::ostream & tableOutput,
                    TableLayout::CellLayout const & cell,
                    size_t idxLine ) const;
 
