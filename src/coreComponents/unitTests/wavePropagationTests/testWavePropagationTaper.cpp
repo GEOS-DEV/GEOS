@@ -62,12 +62,12 @@ char const * xmlInput =
       <InternalMesh
         name="mesh"
         elementTypes="{ C3D8 }"
-        xCoords="{ 0, 100 }"
-        yCoords="{ 0, 100 }"
-        zCoords="{ 0, 100 }"
-        nx="{ 1 }"
-        ny="{ 1 }"
-        nz="{ 1 }"
+        xCoords="{ 0, 400 }"
+        yCoords="{ 0, 400 }"
+        zCoords="{ 0, 400 }"
+        nx="{ 4 }"
+        ny="{ 4 }"
+        nz="{ 4 }"
         cellBlockNames="{ cb }"/>
     </Mesh>
     <Events
