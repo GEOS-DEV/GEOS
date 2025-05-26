@@ -43,12 +43,6 @@ public:
   /// Type of aligment for a column
   enum Alignment { right, left, center };
 
-  /// default value for columns header cells alignement
-  static constexpr Alignment defaultHeaderAlignment = Alignment::center;
-
-  /// default value for data cells alignement
-  static constexpr Alignment defaultValueAlignment = Alignment::right;
-
   /// Space to apply between all data and border
   enum MarginValue : integer
   {
@@ -69,9 +63,9 @@ public:
   struct ColumnAlignement
   {
     /// Alignment for column name. By default aligned to center
-    Alignment headerAlignment = defaultHeaderAlignment;
+    Alignment headerAlignment = Alignment::center;
     /// Alignment for column values. By default aligned to right side
-    Alignment valueAlignment = defaultValueAlignment;
+    Alignment valueAlignment = Alignment::right;
   };
 
   /**
@@ -608,6 +602,18 @@ private:
   { return m_tableTitleStr; }
 
   /**
+   * @return the default value for columns header cells alignement. Used with column-free layout.
+   */
+  Alignment getDefaultHeaderAlignment() const
+  { return m_defaultHeaderAlignment; }
+
+  /**
+   * @return the default value for data cells alignement. Used with column-free layout.
+   */
+  Alignment getDefaultValueAlignment() const
+  { return m_defaultValueAlignment; }
+
+  /**
    * @param title The table title
    * @return The tableLayout reference
    */
@@ -639,6 +645,16 @@ private:
    * @param spacesCount The number of indentation spaces.
    */
   TableLayout & setIndentation( size_t spacesCount );
+
+  /**
+   * @brief Sets the default value for columns header cells alignement. Used with column-free layout.
+   */
+  TableLayout & setDefaultHeaderAlignment( Alignment alignment );
+
+  /**
+   * @brief Sets the default value for data cells alignement. Used with column-free layout.
+   */
+  TableLayout & setDefaultValueAlignment( Alignment alignment );
 
   /**
    * @brief check if a column max width has been set
@@ -677,7 +693,7 @@ private:
   { return m_maxColumnWidth; }
 
   /**
-   * @return The number of spaces at the left of the table. 
+   * @return The number of spaces at the left of the table.
    */
   size_t const & getIndentation() const
   { return m_indentation; }
@@ -756,9 +772,15 @@ protected:
 
   /// The number of margin spaces around contents.
   integer m_marginValue;
-  
+
   /// The number of spaces at the left of the table.
   size_t m_indentation = 0;
+
+  /// default value for columns header cells alignement.
+  Alignment m_defaultHeaderAlignment = Alignment::center;
+
+  /// default value for data cells alignement.
+  Alignment m_defaultValueAlignment = Alignment::right;
 
 };
 

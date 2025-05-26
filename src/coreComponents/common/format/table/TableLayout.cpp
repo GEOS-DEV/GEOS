@@ -84,6 +84,17 @@ TableLayout & TableLayout::setIndentation( size_t spacesCount )
   return *this;
 }
 
+TableLayout & TableLayout::setDefaultHeaderAlignment( TableLayout::Alignment alignment )
+{
+  m_defaultHeaderAlignment = alignment;
+  return *this;
+}
+TableLayout & TableLayout::setDefaultValueAlignment( TableLayout::Alignment alignment )
+{
+  m_defaultValueAlignment = alignment;
+  return *this;
+}
+
 bool TableLayout::isLineBreakEnabled() const
 { return m_lineBreakAtBegin; }
 
@@ -165,7 +176,7 @@ void TableLayout::Cell::setText( string_view text )
 }
 
 TableLayout::Column::Column():
-  m_header( CellType::Header, defaultHeaderAlignment )
+  m_header( CellType::Header, Alignment::center )
 {}
 
 TableLayout::Column::Column( string_view name, TableLayout::ColumnAlignement alignment ):

@@ -383,9 +383,12 @@ void TableTextFormatter::populateDataCellsLayout( PreparedTableLayout const & ta
       string_view value = inputCell.type == CellType::Separator ?
                           string_view( &m_horizontalLine, 1 ) :
                           string_view( inputCell.value );
+      TableLayout::Alignment const alignment = inputCell.type == CellType::Header ?
+                                  tableLayout.getDefaultHeaderAlignment() :
+                                  tableLayout.getDefaultValueAlignment();
 
       TableLayout::CellLayout & outputCell = outputRow.cells[idxColumn];
-      outputCell = TableLayout::CellLayout( inputCell.type, TableLayout::defaultValueAlignment );
+      outputCell = TableLayout::CellLayout( inputCell.type, alignment );
       outputCell.prepareLayout( value, tableLayout.getMaxColumnWidth() );
 
       maxLinesInRow  = std::max( maxLinesInRow, outputCell.getHeight() );
