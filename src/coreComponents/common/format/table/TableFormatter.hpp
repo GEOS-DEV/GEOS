@@ -225,11 +225,11 @@ private:
    * @param tableLayout The layout of the table, containing information about columns, headers, and their layers.
    * @param headerCellsLayout A reference to the collection of header cells that will be updated with the
    *                          gridified layout.
-   * @param inputDataColumnsCount The number of input data columns count, helps verifying the number of column.
+   * @param nbVisibleColumn The number of columns that are not hidden
    */
   void populateTitleCellsLayout( PreparedTableLayout const & tableLayout,
                                  CellLayoutRows & headerCellsLayout,
-                                 size_t inputDataColumnsCount ) const;
+                                 size_t nbVisibleColumn ) const;
 
   /**
    * @brief Populate a grid of CellLayout with all visible columns of the given table layout.
@@ -240,11 +240,11 @@ private:
    * @param tableLayout The layout of the table, containing information about columns, headers, and their layers.
    * @param headerCellsLayout A reference to the collection of header cells that will be updated with the
    *                          gridified layout.
-   * @param inputDataColumnsCount The number of input data columns count, helps verifying the number of column.
+   * @param nbVisibleColumn The number of columns that are not hidden
    */
   void populateHeaderCellsLayout( PreparedTableLayout const & tableLayout,
                                   CellLayoutRows & headerCellsLayout,
-                                  size_t inputDataColumnsCount ) const;
+                                  size_t nbVisibleColumn ) const;
   /**
    * @brief Populates the data cells layout based on input data values, as a free layout (no columns layout).
    * @param tableLayout The layout of the table,

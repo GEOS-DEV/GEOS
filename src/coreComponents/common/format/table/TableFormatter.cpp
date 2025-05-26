@@ -166,21 +166,21 @@ void TableTextFormatter::initalizeTableGrids( PreparedTableLayout const & tableL
   RowsCellInput const & inputDataValues( tableInputData.getCellsData() );
   bool const hasColumnLayout = tableLayout.getColumnLayersCount() > 0;
   size_t const inputDataRowsCount = !inputDataValues.empty() ? inputDataValues.front().size() : 0;
+  size_t nbVisibleColumns = std::max( size_t( 1 ), ( hasColumnLayout ?
+                                                     tableLayout.getLowermostColumnsCount() :
+                                                     inputDataRowsCount ) );
   // this array will store the displayed width of all columns (it will be scaled by data & headers width)
-  stdVector< size_t > columnsWidth;
+  stdVector< size_t > columnsWidth = stdVector< size_t >( nbVisibleColumns, 0 );
 
-  populateTitleCellsLayout( tableLayout, headerCellsLayout, inputDataRowsCount );
+  populateTitleCellsLayout( tableLayout, headerCellsLayout, nbVisibleColumns );
   if( hasColumnLayout )
   {
-    populateHeaderCellsLayout( tableLayout, headerCellsLayout, inputDataRowsCount );
-    size_t nbVisibleColumns = headerCellsLayout.back().cells.size();
+    populateHeaderCellsLayout( tableLayout, headerCellsLayout, nbVisibleColumns );
     populateDataCellsLayout( tableLayout, dataCellsLayout, inputDataValues, nbVisibleColumns );
-    columnsWidth = stdVector< size_t >( nbVisibleColumns, 0 );
   }
   else
   {
     populateDataCellsLayout( tableLayout, dataCellsLayout, inputDataValues );
-    columnsWidth = stdVector< size_t >( inputDataRowsCount, 0 );
   }
 
   stretchColumnsByCellsWidth( columnsWidth, headerCellsLayout );
@@ -205,28 +205,23 @@ void TableTextFormatter::initalizeTableGrids( PreparedTableLayout const & tableL
 
 void TableTextFormatter::populateTitleCellsLayout( PreparedTableLayout const & tableLayout,
                                                    CellLayoutRows & headerCellsLayout,
-                                                   size_t const inputDataColumnsCount ) const
+                                                   size_t const nbVisibleColumns ) const
 {
   TableLayout::CellLayout const & titleInput = tableLayout.getTitleLayout();
   if( !titleInput.isEmpty() )
   { // if it exists, we add the title, as a first row with all cells merged in one containing the title text
-    // (we fit the number of data columns if no column layout has been specified)
-    size_t const lowermostColumnsCount = tableLayout.getColumnLayersCount() > 0 ?
-                                         tableLayout.getLowermostColumnsCount() :
-                                         inputDataColumnsCount;
-
     headerCellsLayout.reserve( 2 );
 
     // the title row consists in a row of cells merging with the last cell containing the title text
     headerCellsLayout.emplace_back() = {
-      stdVector< TableLayout::CellLayout >( lowermostColumnsCount,
+      stdVector< TableLayout::CellLayout >( nbVisibleColumns,
                                             TableLayout::CellLayout( CellType::MergeNext ) ),   // cells
       titleInput.getHeight(), // sublinesCount
     };
     headerCellsLayout.back().cells.back() = titleInput;
 
     headerCellsLayout.emplace_back() = {
-      stdVector< TableLayout::CellLayout >( lowermostColumnsCount,
+      stdVector< TableLayout::CellLayout >( nbVisibleColumns,
                                             TableLayout::CellLayout( CellType::Separator ) ),   // cells
       1, // sublinesCount
     };
@@ -235,7 +230,7 @@ void TableTextFormatter::populateTitleCellsLayout( PreparedTableLayout const & t
 
 void TableTextFormatter::populateHeaderCellsLayout( PreparedTableLayout const & tableLayout,
                                                     CellLayoutRows & headerCellsLayout,
-                                                    size_t const inputDataColumnsCount ) const
+                                                    size_t const nbVisibleColumns ) const
 {
   using CellLayout = TableLayout::CellLayout;
 
@@ -252,8 +247,8 @@ void TableTextFormatter::populateHeaderCellsLayout( PreparedTableLayout const & 
 
   // TODO: integrate this error in the table, and use an equality with the visible+non-visible lowermost column count
   // (PreparedTableLayout should have a visible & nonvisible getLowermostColumnsCount() verion)
-  if( inputDataColumnsCount > 0 )
-    GEOS_ERROR_IF_GT( lowermostColumnsCount, inputDataColumnsCount );
+  if( nbVisibleColumns > 0 )
+    GEOS_ERROR_IF_GT( lowermostColumnsCount, nbVisibleColumns );
 
   headerCellsLayout.resize( previousRowsCount + headerRowsCount );
   for( size_t rowId = previousRowsCount; rowId < headerCellsLayout.size(); rowId++ )
