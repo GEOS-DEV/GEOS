@@ -140,6 +140,7 @@ void MeshManager::importFields( DomainPartition & domain )
       {
         GEOS_LOG_RANK_0( GEOS_FMT( "  volumic fields on {}/{}", region.getName(), subRegion.getName() ) );
         importFields( generator, region.getName(), subRegion, MeshGeneratorBase::Block::VOLUMIC, generator.getVolumicFieldsMapping(), fieldsToBeSync );
+        printf("afterimportfield\n");
       } );
       meshLevel.getElemManager().forElementSubRegionsComplete< FaceElementSubRegion >(
         [&]( localIndex,
