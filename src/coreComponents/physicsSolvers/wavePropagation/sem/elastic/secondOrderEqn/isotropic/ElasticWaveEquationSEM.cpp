@@ -462,23 +462,6 @@ void ElasticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
       } );
     } );
 
-    // check anelasticity coefficient and/or compute it if needed
-    if( m_attenuationType == WaveSolverUtils::AttenuationType::sls )
-    {
-      real32 minQVal = computeGlobalMinQFactor();
-      if( m_slsAnelasticityCoefficients.size( 0 ) == 1 && m_slsAnelasticityCoefficients[ 0 ] < 0 )
-      {
-        m_slsAnelasticityCoefficients[ 0 ] = 2.0 * minQVal / ( minQVal - 1.0 );
-      }
-      // test if anelasticity is too high and artifacts could appear
-      real32 ySum = 0.0;
-      for( integer l = 0; l < m_slsAnelasticityCoefficients.size( 0 ); l++ )
-      {
-        ySum += m_slsAnelasticityCoefficients[ l ];
-      }
-      GEOS_WARNING_IF( ySum > minQVal, "The anelasticity parameters are too high for the given quality factor. This could lead to solution artifacts such as zero-velocity waves." );
-    }
-
     // Here we compute the timeStep only one time (beginning of the simulation).
     if( m_timestepStabilityLimit==1 )
     {
@@ -523,6 +506,12 @@ void ElasticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
   } );
 
 
+
+  // check anelasticity coefficient and/or compute it if needed
+  if( m_attenuationType == WaveSolverUtils::AttenuationType::sls )
+  {
+    initializeAnelasticityCoefficients< elasticfields::ElasticQualityFactorP, elasticfields::ElasticQualityFactorS >( domain );
+  }
 
   if( m_useDAS == WaveSolverUtils::DASType::none )
   {
@@ -697,30 +686,6 @@ real64 ElasticWaveEquationSEM::computeTimeStep( real64 & dtOut )
   return 0;
 }
 
-real32 ElasticWaveEquationSEM::computeGlobalMinQFactor()
-{
-  RAJA::ReduceMin< ReducePolicy< EXEC_POLICY >, real32 > minQ( LvArray::NumericLimits< real32 >::max );
-  DomainPartition & domain = getGroupByPath< DomainPartition >( "/Problem/domain" );
-
-  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                                MeshLevel & mesh,
-                                                                string_array const & regionNames )
-  {
-    mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
-                                                                                          CellElementSubRegion & elementSubRegion )
-    {
-      arrayView1d< real32 const > const qp = elementSubRegion.getField< elasticfields::ElasticQualityFactorP >();
-      arrayView1d< real32 const > const qs = elementSubRegion.getField< elasticfields::ElasticQualityFactorS >();
-      forAll< EXEC_POLICY >( elementSubRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const e ) {
-        minQ.min( qp[e] );
-        minQ.min( qs[e] );
-      } );
-    } );
-  } );
-  real32 minQVal = minQ.get();
-  return MpiWrapper::min< real32 >( minQVal );
-}
-
 void ElasticWaveEquationSEM::applyFreeSurfaceBC( real64 const time, DomainPartition & domain )
 {
   FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
@@ -799,7 +764,7 @@ real64 ElasticWaveEquationSEM::explicitStepForward( real64 const & time_n,
                                                     real64 const & dt,
                                                     integer,
                                                     DomainPartition & domain,
-                                                    bool GEOS_UNUSED_PARAM( computeGradient ) )
+                                                    integer GEOS_UNUSED_PARAM( computeGradient ) )
 {
   real64 dtCompute = explicitStepInternal( time_n, dt, domain );
   return dtCompute;
@@ -811,7 +776,7 @@ real64 ElasticWaveEquationSEM::explicitStepBackward( real64 const & time_n,
                                                      real64 const & dt,
                                                      integer,
                                                      DomainPartition & domain,
-                                                     bool GEOS_UNUSED_PARAM( computeGradient ) )
+                                                     integer GEOS_UNUSED_PARAM( computeGradient ) )
 {
   GEOS_ERROR( getDataContext() << ": Backward propagation for the elastic wave propagator not yet implemented" );
   real64 dtOut = explicitStepInternal( time_n, dt, domain );

@@ -75,7 +75,8 @@ public:
   /**
    * @brief default destructor
    */
-  virtual ~SinglePhaseBase() override = default;
+  virtual ~SinglePhaseBase() override
+  {}
 
   virtual void registerDataOnMesh( Group & meshBodies ) override;
 
