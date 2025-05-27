@@ -177,8 +177,6 @@ protected:
     setupProblemFromXML( state.getProblemManager(), xmlInput );
   }
 
-  printf("aftersetup");
-
   static real64 constexpr time = 0.0;
   static real64 constexpr dt = 1e-1;
   static real64 constexpr eps = std::numeric_limits< real64 >::epsilon();
@@ -213,7 +211,6 @@ TEST_F( AcousticWaveEquationSEMTest, SeismoTrace )
     propagator->explicitStepForward( time_n, dt, i, domain, 0 );
     time_n += dt;
   }
-  printf("afterstepforward");
   // cleanup (triggers calculation of the remaining seismograms data points)
   propagator->cleanup( 1.0, 10, 0, 0, domain );
 
