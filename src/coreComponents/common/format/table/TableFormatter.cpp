@@ -254,7 +254,7 @@ void TableTextFormatter::initalizeTableGrids( PreparedTableLayout const & tableL
   bool const hasColumnLayout = tableLayout.getColumnLayersCount() > 0;
   RowsCellInput const & inputDataValues( tableInputData.getTableDataRows() );
   size_t const inputDataRowsCount = !inputDataValues.empty() ? inputDataValues.front().size() : 0;
-  size_t nbVisibleColumns = std::max( size_t( 1 ), ( hasColumnLayout ?
+  size_t const nbVisibleColumns = std::max( size_t( 1 ), ( hasColumnLayout ?
                                                      tableLayout.getLowermostColumnsCount() :
                                                      inputDataRowsCount ) );
   // this array will store the displayed width of all columns (it will be scaled by data & headers width)
