@@ -53,13 +53,6 @@ public:
     Error,
     Warning
   };
-
-  // TODO: changer le nom
-  // Solution possible:
-  //  - Ne plus communiquer des contexts info avec des maps mais avec la struct ContextInfo
-  //  - Ajouter une méthode avec le design pattern builder qui reglerait la priorité
-  // Il faudrait un couple de méthodes addContextInfo():
-  //   un qui prendrait DataCOntext et l'autre ContextInfo prélablement buildé
   struct ContextInfo
   {
     std::map< std::string, std::string > m_ctxInfo;
@@ -140,14 +133,14 @@ public:
     template< typename ... Args >
     void addContextInfo( Args && ... args );
 
-    void addRankInfo( int rank );
+    ErrorMsg & setRank( int rank );
 
     /**
      * @brief Add stack trace information about the error/warning message to the ErrorMsg structure
      *
      * @param ossStackTrace stack trace information
      */
-    void addCallStackInfo( std::string const & ossStackTrace );
+    ErrorLogger::ErrorMsg & addCallStackInfo( std::string const & ossStackTrace );
 
 private:
     /**
@@ -194,8 +187,6 @@ private:
 
 extern ErrorLogger errorLogger;
 
-// >TODO : Priorité normale 0 puis décroître mais possibilité d'aller à 1, 2, ...
-// exemple getGroup() à 0 et tout ce qui throw à cause de getGroup() > 0
 template< typename ... Args >
 void ErrorLogger::ErrorMsg::addContextInfo( Args && ... args )
 {

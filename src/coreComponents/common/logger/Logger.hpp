@@ -159,7 +159,6 @@
     } \
   } while( false )
 
-// - utiliser le builder d'ErrorMsg
 #define GEOS_ERROR_CTX_IF( EXP, MSG, ... ) \
   do \
   { \
@@ -179,7 +178,7 @@
                                        __msgoss.str(), \
                                        __FILE__, \
                                        __LINE__ ); \
-      msgStruct.addRankInfo( ::geos::logger::internal::rank ); \
+      msgStruct.setRank( ::geos::logger::internal::rank ); \
       msgStruct.addContextInfo( __VA_ARGS__ ); \
       msgStruct.addCallStackInfo( stackHistory ); \
       errorLogger.write( msgStruct ); \
@@ -225,11 +224,12 @@
       std::cout << __oss.str() << std::endl; \
       std::ostringstream __msgoss; \
       __msgoss << MSG; \
-      errorLogger.currentErrorMsg().setType( ErrorLogger::MsgType::Error ); \
-      errorLogger.currentErrorMsg().setCodeLocation( __FILE__, __LINE__ ); \
-      errorLogger.currentErrorMsg().addToMsg( __msgoss.str() ); \
-      errorLogger.currentErrorMsg().addRankInfo( ::geos::logger::internal::rank ); \
-      errorLogger.currentErrorMsg().addCallStackInfo( stackHistory ); \
+      errorLogger.currentErrorMsg() \
+        .setType( ErrorLogger::MsgType::Error ) \
+        .setCodeLocation( __FILE__, __LINE__ ) \
+        .addToMsg( __msgoss.str() ) \
+        .setRank( ::geos::logger::internal::rank ) \
+        .addCallStackInfo( stackHistory ); \
       throw EXCEPTIONTYPE( __oss.str() ); \
     } \
   } while( false )
@@ -249,12 +249,13 @@
       std::cout << __oss.str() << std::endl; \
       std::ostringstream __msgoss; \
       __msgoss << MSG; \
-      errorLogger.currentErrorMsg().setType( ErrorLogger::MsgType::Error ); \
-      errorLogger.currentErrorMsg().setCodeLocation( __FILE__, __LINE__ ); \
-      errorLogger.currentErrorMsg().addToMsg( __msgoss.str() ); \
-      errorLogger.currentErrorMsg().addRankInfo( ::geos::logger::internal::rank ); \
-      errorLogger.currentErrorMsg().addContextInfo( __VA_ARGS__ ); \
-      errorLogger.currentErrorMsg().addCallStackInfo( stackHistory ); \
+      errorLogger.currentErrorMsg() \
+        .setType( ErrorLogger::MsgType::Error ) \
+        .setCodeLocation( __FILE__, __LINE__ ) \
+        .addToMsg( __msgoss.str() ) \
+        .setRank( ::geos::logger::internal::rank ) \
+        .addCallStackInfo( stackHistory ) \
+        .addContextInfo( __VA_ARGS__ ); \
       throw EXCEPTIONTYPE( __oss.str() ); \
     } \
   } while( false )
@@ -326,7 +327,7 @@
                                        __msgoss.str(), \
                                        __FILE__, \
                                        __LINE__ ); \
-      msgStruct.addRankInfo( ::geos::logger::internal::rank ); \
+      msgStruct.setRank( ::geos::logger::internal::rank ); \
       msgStruct.addContextInfo( __VA_ARGS__ ); \
       msgStruct.addCallStackInfo( LvArray::system::stackTrace( true ) ); \
       errorLogger.write( msgStruct ); \

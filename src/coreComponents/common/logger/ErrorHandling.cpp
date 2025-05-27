@@ -61,12 +61,13 @@ void ErrorLogger::ErrorMsg::addContextInfoImpl( ErrorLogger::ContextInfo && ctxI
   m_contextsInfo.emplace_back( std::move( ctxInfo ) );
 }
 
-void ErrorLogger::ErrorMsg::addRankInfo( int rank )
+ErrorLogger::ErrorMsg & ErrorLogger::ErrorMsg::setRank( int rank )
 {
   m_ranksInfo.push_back( rank );
+  return *this;
 }
 
-void ErrorLogger::ErrorMsg::addCallStackInfo( std::string const & ossStackTrace )
+ErrorLogger::ErrorMsg & ErrorLogger::ErrorMsg::addCallStackInfo( std::string const & ossStackTrace )
 {
   std::istringstream iss( ossStackTrace );
   std::string stackLine;
@@ -77,6 +78,8 @@ void ErrorLogger::ErrorMsg::addCallStackInfo( std::string const & ossStackTrace 
     index = stackLine.find( ':' );
     m_sourceCallStack.push_back( stackLine.substr( index + 1 ) );
   }
+
+  return *this;
 }
 
 std::string ErrorLogger::toString( ErrorLogger::MsgType type )
