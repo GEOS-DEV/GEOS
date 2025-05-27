@@ -416,7 +416,7 @@ public:
     stackArray1d< globalIndex, resNumDOF > dofColIndices( resNumDOF );
 
     stackArray1d< real64, numComp > localPerf( numComp );
-    stackArray2d< real64, resNumDOF *   numComp > localPerfJacobian( numComp, resNumDOF );
+    stackArray2d< real64, numComp*resNumDOF > localPerfJacobian( numComp, resNumDOF );
 
     // get the reservoir (sub)region and element indices
     //localIndex const er  = m_resElementRegion[iperf];
@@ -436,7 +436,7 @@ public:
     {
       dofColIndices[ jdof] = wellElemOffset + WJ_COFFSET::dP + jdof;
     }
-        // For temp its different
+    // For temp its different
     if constexpr ( IS_THERMAL )
     {
       dofColIndices[ NC+1 ] = wellElemOffset + WJ_COFFSET::dT;
@@ -464,31 +464,31 @@ public:
         localPerfJacobian[ic][localDofIndexTemp] = -m_dt *  m_dCompPerfRate[iperf][TAG::WELL ][ic][CP_Deriv::dT];
       }
     }
- 
-  if( m_useTotalMassEquation )
-  {
-    stackArray1d< real64, resNumDOF > work( resNumDOF );
-    shiftBlockRowsAheadByOneAndReplaceFirstRowWithColumnSum( numComp, numComp, resNumDOF, 1, localPerfJacobian, work );
 
-    // Apply equation/variable change transformation(s)
-    shiftBlockElementsAheadByOneAndReplaceFirstElementWithSum( numComp, numComp, 1, localPerf );
-  }
- 
-  for( localIndex i = 0; i < localPerf.size(); ++i )
-  {
-    if( eqnRowIndices[i] >= 0 && eqnRowIndices[i] < m_localMatrix.numRows() )
+    if( m_useTotalMassEquation )
     {
-      m_localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( eqnRowIndices[i],
-                                                                          dofColIndices.data(),
-                                                                          localPerfJacobian[i].dataIfContiguous(),
-                                                                          resNumDOF );
-      RAJA::atomicAdd( parallelDeviceAtomic{}, &m_localRhs[eqnRowIndices[i]], localPerf[i] );
-    }
-  }
- 
-  compFluxKernelOp( wellElemOffset, iwelem );
+      stackArray1d< real64, resNumDOF > work( resNumDOF );
+      shiftBlockRowsAheadByOneAndReplaceFirstRowWithColumnSum( numComp, numComp, resNumDOF, 1, localPerfJacobian, work );
 
-}
+      // Apply equation/variable change transformation(s)
+      shiftBlockElementsAheadByOneAndReplaceFirstElementWithSum( numComp, numComp, 1, localPerf );
+    }
+
+    for( localIndex i = 0; i < localPerf.size(); ++i )
+    {
+      if( eqnRowIndices[i] >= 0 && eqnRowIndices[i] < m_localMatrix.numRows() )
+      {
+        m_localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( eqnRowIndices[i],
+                                                                            dofColIndices.data(),
+                                                                            localPerfJacobian[i].dataIfContiguous(),
+                                                                            resNumDOF );
+        RAJA::atomicAdd( parallelDeviceAtomic{}, &m_localRhs[eqnRowIndices[i]], localPerf[i] );
+      }
+    }
+
+    compFluxKernelOp( wellElemOffset, iwelem, dofColIndices );
+
+  }
 
 
 /**
@@ -499,41 +499,41 @@ public:
  * @param[inout] kernelComponent the kernel component providing access to setup/compute/complete functions and stack
  * variables
  */
-template< typename POLICY, typename KERNEL_TYPE >
-static void
-launch( localIndex const numElements,
-        KERNEL_TYPE const & kernelComponent )
-{
-  GEOS_MARK_FUNCTION;
-  forAll< POLICY >( numElements, [=] GEOS_HOST_DEVICE ( localIndex const ie )
+  template< typename POLICY, typename KERNEL_TYPE >
+  static void
+  launch( localIndex const numElements,
+          KERNEL_TYPE const & kernelComponent )
   {
-    kernelComponent.computeFlux( ie );
+    GEOS_MARK_FUNCTION;
+    forAll< POLICY >( numElements, [=] GEOS_HOST_DEVICE ( localIndex const ie )
+    {
+      kernelComponent.computeFlux( ie );
 
-  } );
-}
+    } );
+  }
 
 protected:
 
 /// Time step size
-real64 const m_dt;
+  real64 const m_dt;
 
 /// Number of phases
-integer const m_numPhases;
+  integer const m_numPhases;
 
-globalIndex const m_rankOffset;
+  globalIndex const m_rankOffset;
 // Perfoation variables
-arrayView2d< real64 const > const m_compPerfRate;
-arrayView4d< real64 const > const m_dCompPerfRate;
-arrayView1d< localIndex const > const m_perfWellElemIndex;
+  arrayView2d< real64 const > const m_compPerfRate;
+  arrayView4d< real64 const > const m_dCompPerfRate;
+  arrayView1d< localIndex const > const m_perfWellElemIndex;
 
 // Element region, subregion, index
-arrayView1d< globalIndex const > const m_wellElemDofNumber;
+  arrayView1d< globalIndex const > const m_wellElemDofNumber;
 
 // RHS and Jacobian
-arrayView1d< real64 > const m_localRhs;
-CRSMatrixView< real64, globalIndex const >  m_localMatrix;
+  arrayView1d< real64 > const m_localRhs;
+  CRSMatrixView< real64, globalIndex const >  m_localMatrix;
 
-integer const m_useTotalMassEquation;
+  integer const m_useTotalMassEquation;
 };
 
 /**
@@ -693,7 +693,7 @@ public:
           return;
       }
       // local working variables and arrays
-      stackArray1d< localIndex, 2* numComp > eqnRowIndices( 2 );
+      stackArray1d< localIndex, 2* numComp > eqnRowIndices( 2* numComp );
 
       stackArray1d< real64, 2 * numComp > localPerf( 2 );
       stackArray2d< real64, 2 * resNumDOF * 2 * numComp > localPerfJacobian( 2, 2 * resNumDOF );
@@ -901,7 +901,8 @@ public:
             kernelFlags ),
     m_isProducer( isProducer ),
     m_globalWellElementIndex( subRegion.getGlobalWellElementIndex() ),
-    m_energyPerfFlux( perforationData->getField< fields::well::energyPerforationFlux >())
+    m_energyPerfFlux( perforationData->getField< fields::well::energyPerforationFlux >()),
+    m_dEnergyPerfFlux( perforationData->getField< fields::well::dEnergyPerforationFlux >())
 
   { }
 
@@ -919,7 +920,8 @@ public:
   void computeFlux( localIndex const iperf ) const
   {
     Base::computeFlux( iperf, [&] ( globalIndex const & wellElemOffset,
-                                    localIndex const iwelem )
+                                    localIndex const iwelem,
+                                    stackArray1d< globalIndex,  resNumDOF > & dofColIndices )
     {
       // No energy equation if top element and Injector
       // Top element defined by global index == 0
@@ -930,24 +932,31 @@ public:
           return;
       }
       // local working variables and arrays
-      stackArray1d< localIndex, 2* numComp > eqnRowIndices( 2 );
+      localIndex eqnRowIndices = LvArray::integerConversion< localIndex >( wellElemOffset - m_rankOffset ) + WJ_ROFFSET::ENERGYBAL;
 
-      stackArray1d< real64, 2 * numComp > localPerf( 2 );
-
-      // equantion offsets - note res and well have different equation lineups
-      eqnRowIndices[TAG::RES  ] =-1;
-      eqnRowIndices[TAG::WELL ] = LvArray::integerConversion< localIndex >( wellElemOffset - m_rankOffset ) + WJ_ROFFSET::ENERGYBAL;
-
+      stackArray2d< real64, resNumDOF > localPerfJacobian( 1,resNumDOF );
       // populate local flux vector and derivatives
 
-      localPerf[TAG::WELL ]   = -m_dt * m_energyPerfFlux[iperf];
+      real64 localPerf  = -m_dt * m_energyPerfFlux[iperf];
 
-      for( localIndex i = 0; i < localPerf.size(); ++i )
+      localIndex localDofIndexPres = 0;
+      localPerfJacobian [0][localDofIndexPres] = -m_dt *  m_dEnergyPerfFlux[iperf][TAG::WELL][CP_Deriv::dP];
+
+      // populate local flux vector and derivatives
+      for( integer ic = 0; ic < numComp; ++ic )
       {
-        if( eqnRowIndices[i] >= 0 && eqnRowIndices[i] < m_localMatrix.numRows() )
-        {
-          RAJA::atomicAdd( parallelDeviceAtomic{}, &m_localRhs[eqnRowIndices[i]], localPerf[i] );
-        }
+        localIndex const localDofIndexComp = localDofIndexPres + ic + 1;
+        localPerfJacobian [0][localDofIndexComp] = -m_dt * m_dEnergyPerfFlux[iperf][TAG::WELL ][CP_Deriv::dC+ic];
+      }
+      localPerfJacobian [0][localDofIndexPres+NC+1] = -m_dt * m_dEnergyPerfFlux[iperf][TAG::WELL ][CP_Deriv::dT];
+
+      if( eqnRowIndices >= 0 && eqnRowIndices < m_localMatrix.numRows() )
+      {
+        m_localMatrix.template addToRowBinarySearchUnsorted< parallelDeviceAtomic >( eqnRowIndices,
+                                                                            dofColIndices.data(),
+                                                                            localPerfJacobian[0].dataIfContiguous(),
+                                                                            resNumDOF );
+        RAJA::atomicAdd( parallelDeviceAtomic{}, &m_localRhs[eqnRowIndices], localPerf );
       }
     } );
 
@@ -986,6 +995,7 @@ protected:
 
   /// Views on energy flux
   arrayView1d< real64 const > const m_energyPerfFlux;
+  arrayView3d< real64 const > const m_dEnergyPerfFlux;
 };
 
 /**
