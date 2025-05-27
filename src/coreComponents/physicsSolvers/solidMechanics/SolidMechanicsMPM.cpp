@@ -203,6 +203,7 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
   m_subdivideParticles( 0 ),
   m_disableSurfaceNormalsAndPositionsOnCPDIScaling( 0 ),
   m_disableSurfaceNormalsAndPositionsOnDamage( 0 ),
+  m_generalizedVortexMMS( 0 ),
   m_smallMass( DBL_MAX ),
   m_numContactGroups( 0 ),
   m_numContactFlags(),
@@ -11111,6 +11112,7 @@ void SolidMechanicsMPM::computeCPDIShapeFunctions( arrayView2d< real64 const > c
   // TODO: try storing the relative corner position, then when doing the p2g momentum map, we can have
   // q_ia += 0.25*p_m*( S_ia *v_p + L_p*(x_alpha-x_p) 
   //  This might be better for grid cells with one particle in them.  
+  // (MH: This is just APIC, and it works sometimes)
 
   // get IJK associated with each corner
   int cornerIJK[8][3]; // CPDI can map to up to 8 cells

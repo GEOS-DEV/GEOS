@@ -908,6 +908,8 @@ protected:
   int m_disableSurfaceNormalsAndPositionsOnCPDIScaling; // Turns off surface normals and positions for highly deformed particles
   int m_disableSurfaceNormalsAndPositionsOnDamage; // Turns off surface normals and positions for highly damaged particles
 
+  int m_generalizedVortexMMS;
+  
   real64 m_smallMass;
 
   int m_numContactGroups, m_numContactFlags, m_numVelocityFields;
@@ -933,7 +935,7 @@ protected:
   int m_planeStrain;
   int m_numDims;
 
-  int m_generalizedVortexMMS;
+
 
   array1d< real64 > m_hEl;                // Grid spacing in x-y-z
   array1d< real64 > m_xLocalMin;          // Minimum local grid coordinate including ghost nodes
