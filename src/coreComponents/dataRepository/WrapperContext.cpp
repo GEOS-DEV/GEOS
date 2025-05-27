@@ -38,12 +38,13 @@ string WrapperContext::toString() const
          GEOS_FMT( "{}/{}", m_group.getDataContext().toString(), m_typeName );
 }
 
-std::map< std::string, std::string > WrapperContext::getContextInfo() const
+ErrorLogger::ContextInfo WrapperContext::getContextInfo() const
 {
   std::map<std::string, std::string> contextInfo;
   contextInfo["dataPath"] = toString();
+  ErrorLogger::ContextInfo ctxInfo{ contextInfo };
 
-  return contextInfo;
+  return ctxInfo;
 }
 
 } /* namespace dataRepository */

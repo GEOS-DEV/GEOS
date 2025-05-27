@@ -54,6 +54,21 @@ public:
     Warning
   };
 
+  // TODO: changer le nom
+  // Solution possible:
+  //  - Ne plus communiquer des contexts info avec des maps mais avec la struct ContextInfo
+  //  - Ajouter une méthode avec le design pattern builder qui reglerait la priorité
+  // Il faudrait un couple de méthodes addContextInfo():
+  //   un qui prendrait DataCOntext et l'autre ContextInfo prélablement buildé
+  struct ContextInfo
+  {
+    std::map< std::string, std::string > m_ctxInfo;
+    integer m_priority = 0;
+
+    ContextInfo & setPriority( integer priority )
+    { m_priority = priority; return *this; }
+  };
+
   /**
    * @brief Struct to define the error/warning message
    *
@@ -65,8 +80,10 @@ public:
     std::string m_file;
     integer m_line;
     std::vector< int > m_ranksInfo;
-    std::vector< std::map< std::string, std::string > > m_contextsInfo;
+    std::vector< ContextInfo > m_contextsInfo;
     std::vector< std::string > m_sourceCallStack;
+
+    int n = 0;
 
     /**
      * @brief Construct a new Error Msg object
@@ -79,7 +96,7 @@ public:
      *
      * @param msgType The type of the message (error or warning)
      * @param msgContent The error/warning message content
-     * @param msgFile The file name where the error occured
+     * @param msgFile The file name where the error occcured
      * @param msgLine The line where the error occured
      */
     ErrorMsg( MsgType msgType, std::string msgContent, std::string msgFile, integer msgLine )
@@ -118,12 +135,7 @@ public:
      */
     ErrorMsg & setType( MsgType msgType );
 
-    /**
-     * @brief Add contextual information about the error/warning message to the ErrorMsg structure
-     *
-     * @param info DataContext information  stored into a map
-     */
-    void addContextInfo( std::map< std::string, std::string > && info );
+    // void addContextInfo( std::map< std::string, std::string > && info );
 
     template< typename ... Args >
     void addContextInfo( Args && ... args );
@@ -136,6 +148,14 @@ public:
      * @param ossStackTrace stack trace information
      */
     void addCallStackInfo( std::string const & ossStackTrace );
+
+private:
+    /**
+     * @brief Add contextual information about the error/warning message to the ErrorMsg structure
+     *
+     * @param info DataContext information  stored into a map
+     */
+    void addContextInfoImpl( ContextInfo && ctxInfo );
   };
 
   /**
@@ -174,10 +194,12 @@ private:
 
 extern ErrorLogger errorLogger;
 
+// >TODO : Priorité normale 0 puis décroître mais possibilité d'aller à 1, 2, ...
+// exemple getGroup() à 0 et tout ce qui throw à cause de getGroup() > 0
 template< typename ... Args >
 void ErrorLogger::ErrorMsg::addContextInfo( Args && ... args )
 {
-  ( addContextInfo( args.getContextInfo() ), ... );
+  ( this->addContextInfoImpl( ContextInfo( args ) ), ... );
 }
 
 } /* namespace geos */

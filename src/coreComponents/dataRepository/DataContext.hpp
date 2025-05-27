@@ -65,7 +65,18 @@ public:
    *
    * @return std::map< std::string, std::string >
    */
-  virtual std::map< std::string, std::string > getContextInfo() const = 0;
+  // virtual std::map< std::string, std::string > getContextInfo() const = 0;
+  
+  virtual ErrorLogger::ContextInfo getContextInfo() const = 0;
+
+  /**
+   * @brief Conversion operator to ErrorLogger::ContextInfo 
+   * 
+   * @return ErrorLogger::ContextInfo 
+   */
+  explicit operator ErrorLogger::ContextInfo() const {
+    return getContextInfo();
+  }
 
   /**
    * @return Get the target object name
@@ -165,7 +176,7 @@ public:
   /**
    * @return a map containing contextual information, including the file name and the line number
    */
-  std::map< std::string, std::string > getContextInfo() const override;
+  ErrorLogger::ContextInfo getContextInfo() const override;
 
   /**
    * @return the type name in the source file (XML node tag name / attribute name).
@@ -261,7 +272,7 @@ private:
                                        __msgoss.str(), \
                                        __FILE__, \
                                        __LINE__ ); \
-      msgStruct.addContextInfo( dataContext.getContextInfo() ); \
+      msgStruct.addContextInfo( dataContext ); \
       msgStruct.addCallStackInfo( LvArray::system::stackTrace( true ) ); \
       errorLogger.write( msgStruct ); \
       LvArray::system::callErrorHandler(); \
@@ -285,7 +296,7 @@ private:
                                        __msgoss.str(), \
                                        __FILE__, \
                                        __LINE__ ); \
-      msgStruct.addContextInfo( dataContext.getContextInfo() ); \
+      msgStruct.addContextInfo( dataContext ); \
       msgStruct.addCallStackInfo( LvArray::system::stackTrace( true ) ); \
       errorLogger.write( msgStruct ); \
     } \

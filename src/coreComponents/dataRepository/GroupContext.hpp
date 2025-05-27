@@ -72,7 +72,7 @@ private:
   /**
    * @return a map containing contextual information, including the targetName of the DataContext
    */
-  std::map< std::string, std::string > getContextInfo() const override; 
+  ErrorLogger::ContextInfo getContextInfo() const override; 
 
   /**
    * @copydoc DataContext::getToStringInfo()

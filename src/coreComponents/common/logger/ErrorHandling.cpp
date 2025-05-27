@@ -56,9 +56,9 @@ ErrorLogger::ErrorLogger()
   }
 }
 
-void ErrorLogger::ErrorMsg::addContextInfo( std::map< std::string, std::string > && info )
+void ErrorLogger::ErrorMsg::addContextInfoImpl( ErrorLogger::ContextInfo && ctxInfo )
 {
-  m_contextsInfo.emplace_back( std::move( info ) );
+  m_contextsInfo.emplace_back( std::move( ctxInfo ) );
 }
 
 void ErrorLogger::ErrorMsg::addRankInfo( int rank )
@@ -133,7 +133,7 @@ void ErrorLogger::write( ErrorLogger::ErrorMsg const & errorMsg ) //const
   std::ofstream yamlFile( std::string( m_filename ), std::ios::app );
   if( yamlFile.is_open() )
   {
-    yamlFile << g_level1Start << "type: " << errorLogger.toString( errorMsg.m_type ) << "\n";
+    yamlFile << "\n" << g_level1Start << "type: " << errorLogger.toString( errorMsg.m_type ) << "\n";
     yamlFile << g_level1Next << "rank: ";
     for( size_t i = 0; i < errorMsg.m_ranksInfo.size(); i++ )
     {
@@ -148,17 +148,25 @@ void ErrorLogger::write( ErrorLogger::ErrorMsg const & errorMsg ) //const
       for( size_t i = 0; i < errorMsg.m_contextsInfo.size(); i++ )
       {
         bool isFirst = true;
-        for( auto const & [key, value] : errorMsg.m_contextsInfo[i] )
+        for( auto const & [key, value] : errorMsg.m_contextsInfo[i].m_ctxInfo )
         {
           if( isFirst )
           {
-            yamlFile << g_level3Start << key << ": " << value << "\n";
-            isFirst = false;
+              yamlFile << g_level3Start << key << ": " << value << "\n";
+              isFirst = false;
           }
           else
           {
-            yamlFile << g_level3Next << key << ": " << value << "\n";
+              yamlFile << g_level3Next << key << ": " << value << "\n";
           }
+        }
+        if( isFirst )
+        {
+          yamlFile << g_level3Start << "priority: " << errorMsg.m_contextsInfo[i].m_priority << "\n";
+        }
+        else 
+        {
+          yamlFile << g_level3Next << "priority: " << errorMsg.m_contextsInfo[i].m_priority << "\n";
         }
       }
     }
@@ -177,7 +185,7 @@ void ErrorLogger::write( ErrorLogger::ErrorMsg const & errorMsg ) //const
     }
 
     yamlFile.flush();
-    GEOS_LOG( GEOS_FMT( "The error file {} was created successfully.", m_filename ) );
+    GEOS_LOG( GEOS_FMT( "The error file {} was appended.", m_filename ) );
   }
   else
   {

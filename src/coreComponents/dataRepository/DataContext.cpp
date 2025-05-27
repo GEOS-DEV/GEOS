@@ -108,13 +108,14 @@ string DataFileContext::toString() const
   }
 }
 
-std::map< std::string, std::string > DataFileContext::getContextInfo() const
+ErrorLogger::ContextInfo DataFileContext::getContextInfo() const
 {
   std::map<std::string, std::string> contextInfo;
   contextInfo["inputFile"] = m_filePath;
   contextInfo["inputFileLine"] = to_string( m_line );
+  ErrorLogger::ContextInfo ctxInfo{ contextInfo };
 
-  return contextInfo;
+  return ctxInfo;
 }
 
 DataContext::ToStringInfo DataFileContext::getToStringInfo() const

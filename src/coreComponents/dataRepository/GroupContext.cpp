@@ -54,12 +54,13 @@ string GroupContext::toString() const
   return path.str();
 }
 
-std::map< std::string, std::string > GroupContext::getContextInfo() const
+ErrorLogger::ContextInfo GroupContext::getContextInfo() const
 {
   std::map<std::string, std::string> contextInfo;
   contextInfo["dataPath"] = toString();
+  ErrorLogger::ContextInfo ctxInfo{ contextInfo };
 
-  return contextInfo;
+  return ctxInfo;
 }
 
 DataContext::ToStringInfo GroupContext::getToStringInfo() const
