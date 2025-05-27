@@ -144,7 +144,8 @@
       __oss << "***** LOCATION: " LOCATION "\n"; \
       __oss << "***** Controlling expression (should be false): " STRINGIZE( EXP ) "\n"; \
       __oss << MSG << "\n"; \
-      __oss << LvArray::system::stackTrace( true ); \
+      std::string stackHistory = LvArray::system::stackTrace( true ); \
+      __oss << stackHistory; \
       std::cout << __oss.str() << std::endl; \
       std::ostringstream __msgoss; \
       __msgoss << MSG; \
@@ -152,7 +153,35 @@
                                        __msgoss.str(), \
                                        __FILE__, \
                                        __LINE__ ); \
-      msgStruct.addCallStackInfo( LvArray::system::stackTrace( true ) ); \
+      msgStruct.addCallStackInfo( stackHistory ); \
+      errorLogger.write( msgStruct ); \
+      LvArray::system::callErrorHandler(); \
+    } \
+  } while( false )
+
+// - utiliser le builder d'ErrorMsg
+#define GEOS_ERROR_CTX_IF( EXP, MSG, ... ) \
+  do \
+  { \
+    if( EXP ) \
+    { \
+      std::ostringstream __oss; \
+      __oss << "***** ERROR\n"; \
+      __oss << "***** LOCATION: " LOCATION "\n"; \
+      __oss << "***** Controlling expression (should be false): " STRINGIZE( EXP ) "\n"; \
+      __oss << MSG << "\n"; \
+      std::string stackHistory = LvArray::system::stackTrace( true ); \
+      __oss << stackHistory; \
+      std::cout << __oss.str() << std::endl; \
+      std::ostringstream __msgoss; \
+      __msgoss << MSG; \
+      ErrorLogger::ErrorMsg msgStruct( ErrorLogger::MsgType::Error, \
+                                       __msgoss.str(), \
+                                       __FILE__, \
+                                       __LINE__ ); \
+      msgStruct.addRankInfo( ::geos::logger::internal::rank ); \
+      msgStruct.addContextInfo( __VA_ARGS__ ); \
+      msgStruct.addCallStackInfo( stackHistory ); \
       errorLogger.write( msgStruct ); \
       LvArray::system::callErrorHandler(); \
     } \
@@ -191,7 +220,8 @@
       __oss << "***** LOCATION: " LOCATION "\n"; \
       __oss << "***** Controlling expression (should be false): " STRINGIZE( EXP ) "\n"; \
       __oss << MSG << "\n"; \
-      __oss << LvArray::system::stackTrace( true ); \
+      std::string stackHistory = LvArray::system::stackTrace( true ); \
+      __oss << stackHistory; \
       std::cout << __oss.str() << std::endl; \
       std::ostringstream __msgoss; \
       __msgoss << MSG; \
@@ -199,7 +229,32 @@
       errorLogger.currentErrorMsg().setCodeLocation( __FILE__, __LINE__ ); \
       errorLogger.currentErrorMsg().addToMsg( __msgoss.str() ); \
       errorLogger.currentErrorMsg().addRankInfo( ::geos::logger::internal::rank ); \
-      errorLogger.currentErrorMsg().addCallStackInfo( LvArray::system::stackTrace( true ) ); \
+      errorLogger.currentErrorMsg().addCallStackInfo( stackHistory ); \
+      throw EXCEPTIONTYPE( __oss.str() ); \
+    } \
+  } while( false )
+
+#define GEOS_THROW_CTX_IF( EXP, MSG, EXCEPTIONTYPE, ... ) \
+  do \
+  { \
+    if( EXP ) \
+    { \
+      std::ostringstream __oss; \
+      __oss << "\n"; \
+      __oss << "***** LOCATION: " LOCATION "\n"; \
+      __oss << "***** Controlling expression (should be false): " STRINGIZE( EXP ) "\n"; \
+      __oss << MSG << "\n"; \
+      std::string stackHistory = LvArray::system::stackTrace( true ); \
+      __oss << stackHistory; \
+      std::cout << __oss.str() << std::endl; \
+      std::ostringstream __msgoss; \
+      __msgoss << MSG; \
+      errorLogger.currentErrorMsg().setType( ErrorLogger::MsgType::Error ); \
+      errorLogger.currentErrorMsg().setCodeLocation( __FILE__, __LINE__ ); \
+      errorLogger.currentErrorMsg().addToMsg( __msgoss.str() ); \
+      errorLogger.currentErrorMsg().addRankInfo( ::geos::logger::internal::rank ); \
+      errorLogger.currentErrorMsg().addContextInfo( __VA_ARGS__ ); \
+      errorLogger.currentErrorMsg().addCallStackInfo( stackHistory ); \
       throw EXCEPTIONTYPE( __oss.str() ); \
     } \
   } while( false )
@@ -249,6 +304,30 @@
                                        __msgoss.str(), \
                                        __FILE__, \
                                        __LINE__ ); \
+      msgStruct.addCallStackInfo( LvArray::system::stackTrace( true ) ); \
+      errorLogger.write( msgStruct ); \
+    } \
+  } while( false )
+
+#define GEOS_WARNING_CTX_IF( EXP, MSG, ... ) \
+  do \
+  { \
+    if( EXP ) \
+    { \
+      std::ostringstream __oss; \
+      __oss << "***** WARNING\n"; \
+      __oss << "***** LOCATION: " LOCATION "\n"; \
+      __oss << "***** Controlling expression (should be false): " STRINGIZE( EXP ) "\n"; \
+      __oss << MSG; \
+      std::cout << __oss.str() << std::endl; \
+      std::ostringstream __msgoss; \
+      __msgoss << MSG; \
+      ErrorLogger::ErrorMsg msgStruct( ErrorLogger::MsgType::Warning, \
+                                       __msgoss.str(), \
+                                       __FILE__, \
+                                       __LINE__ ); \
+      msgStruct.addRankInfo( ::geos::logger::internal::rank ); \
+      msgStruct.addContextInfo( __VA_ARGS__ ); \
       msgStruct.addCallStackInfo( LvArray::system::stackTrace( true ) ); \
       errorLogger.write( msgStruct ); \
     } \
