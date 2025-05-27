@@ -75,7 +75,8 @@ public:
    * @param[in] t2RateDependence The value for the rate dependence parameter 2
    * @param[in] fractureEnergyReleaseRate The value for the fracture energy release rate
    * @param[in] fractureSofteningExponent controls shape of softening with damage
-   * @param[in] fractureStress The root J2 value for the fracture stress 
+   * @param[in] fractureStress The root J2 value for the fracture stress
+   * @param[in] initialTemperature starting the temp table very simply with an initial temperature
    * @param[in] brittleDuctileTransition The root J2 value for the fracture stress 
    * @param[in] damageEvolutionCriterion this is to trigger the damage for TXCo tests 0 or 1 for dilation vs pressure
    * @param[in] cr The value for the cap shape paramter
@@ -125,6 +126,7 @@ public:
                        real64 const & fractureEnergyReleaseRate,
                        real64 const & fractureSofteningExponent,
                        real64 const & fractureStress,
+                       real64 const & initialTemperature,
                        real64 const & brittleDuctileTransition,
                        int const & damageEvolutionCriterion,
                        real64 const & cr,
@@ -197,6 +199,7 @@ public:
     m_fractureEnergyReleaseRate( fractureEnergyReleaseRate ),
     m_fractureSofteningExponent( fractureSofteningExponent ),
     m_fractureStress( fractureStress ),
+    m_initialTemperature( initialTemperature ),
     m_brittleDuctileTransition( brittleDuctileTransition ),
     m_damageEvolutionCriterion ( damageEvolutionCriterion ),
     m_cr( cr ),
@@ -543,6 +546,7 @@ private:
   real64 const & m_fractureEnergyReleaseRate;
   real64 const & m_fractureSofteningExponent;
   real64 const & m_fractureStress;
+  real64 const & m_initialTemperature;
   real64 const & m_brittleDuctileTransition;
   int const & m_damageEvolutionCriterion;
   real64 const & m_cr;
@@ -1003,7 +1007,7 @@ int GeomechanicsUpdates::computeStep( real64 const ( & D )[6],               // 
     real64 equilibriumPorosityPressureExponent = m_creepD;  // volumetric creep rate parameter
     real64 equilibriumPorosityOffset = m_creepE;  // volumetric creep rate parameter
     real64 compactionRatePressureExponent = m_creepF;  // volumetric creep rate parameter
-
+    real64 Temp_0 = m_initialTemperature;
 
     real64 rootTwoThirds = 0.81649658092772603273242802490196; 
 
@@ -1097,7 +1101,7 @@ int GeomechanicsUpdates::computeStep( real64 const ( & D )[6],               // 
     // unloaded porosity at the start of the step.
     real64 phi_p = std::max( 1.e-10 , 1.0 + exp(-evp)*( phi_i - 1 ) ); 
     // equilibrium porosity at the start of the step.
-		real64 phi_e = std::max(1.e-10 , A * exp( -std::pow(p,equilibriumPorosityPressureExponent) / B ) + equilibriumPorosityOffset );    
+		real64 phi_e = std::max(1.e-10 , A * exp( -std::pow(p,equilibriumPorosityPressureExponent) / B ) + equilibriumPorosityOffset ) + (0. * Temp_0);    
 
     // uncomment for debugging:
     //std::cout<<"pn = "<<p<<", evp_n = "<<evp<<", phi_p_n = "<<phi_p<<", phi_e_n = "<<phi_e<<", X_n = "<<X_old<<std::endl;
@@ -3019,10 +3023,12 @@ public:
 
     /// string/key for fracture softening shape parameter
     static constexpr char const * fractureSofteningExponentString() { return "fractureSofteningExponent"; }
-   
 
     /// string/key for fracture stress
     static constexpr char const * fractureStressString() { return "fractureStress"; }
+
+    /// string/key for initialTemperature
+    static constexpr char const * initialTemperatureString() { return "initialTemperature"; }
 
     /// string/keay for brittleDuctileTransition
     static constexpr char const * brittleDuctileTransitionString() { return "brittleDuctileTransition"; }
@@ -3158,6 +3164,7 @@ public:
                                 m_fractureEnergyReleaseRate,
                                 m_fractureSofteningExponent,
                                 m_fractureStress,
+                                m_initialTemperature,
                                 m_brittleDuctileTransition,
                                 m_damageEvolutionCriterion,
                                 m_cr,
@@ -3237,6 +3244,7 @@ public:
                           m_fractureEnergyReleaseRate,
                           m_fractureSofteningExponent,
                           m_fractureStress,
+                          m_initialTemperature,
                           m_brittleDuctileTransition,
                           m_damageEvolutionCriterion,
                           m_cr,
@@ -3393,7 +3401,11 @@ protected:
   real64 m_fractureEnergyReleaseRate;
   real64 m_fractureSofteningExponent;  // shape parameter that controls softening with damage
   real64 m_fractureStress;
+  // not in the fractuer/damage, but MM was using the Fracture stress as template for initalTemperature
+  real64 m_initialTemperature;
+
   real64 m_brittleDuctileTransition;
+
   int m_damageEvolutionCriterion;
 
   // Cap shape parameter

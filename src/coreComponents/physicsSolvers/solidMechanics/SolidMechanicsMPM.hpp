@@ -596,6 +596,12 @@ void interpolateTable( real64 x,
                        arrayView1d< real64 > outputRate,
                        SolidMechanicsMPM::InterpolationOption interpolationType );
 
+void interpolateTempTable( real64 x, 
+                       real64 dx,
+                       arrayView2d< real64 const > const table,
+                       arrayView1d< real64 > const output,
+                       SolidMechanicsMPM::InterpolationOption interpolationType );
+
 void interpolateValueInRange( real64 const & x, 
                               real64 const & xmin,
                               real64 const & xmax,
@@ -669,6 +675,9 @@ void interpolateValueInRange( real64 const & x,
   void computeRVectors( ParticleManager & particleManager );
 
   void cpdiDomainScaling( ParticleManager & particleManager );
+
+  void applyThermalDeformations( real64 const dt,
+                                 ParticleManager & particleManager );
 
   void subdivideParticles( ParticleManager & particleManager );
 
@@ -891,6 +900,8 @@ protected:
   real64 m_overlapThreshold2;
   int m_computeSPHJacobian;
 
+
+
   // parameters for crack-tip detection used for stress concentration factor
   int m_useCrackTipDetection;
   real64 m_crackTipDetectionThreshold;
@@ -961,6 +972,7 @@ protected:
   real64 m_xProfileVx0;
 
   real64 m_implicitContinuumFluidPressure; // Borehole collapse
+  real64 m_initialTemperature;
 
 private:
   struct BinKey

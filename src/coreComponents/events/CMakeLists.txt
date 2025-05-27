@@ -24,6 +24,7 @@ set( events_headers
      mpmEvents/BoreholePressureMPMEvent.hpp
      mpmEvents/ConfiningPressureMPMEvent.hpp
      mpmEvents/CohesiveZoneReferenceMPMEvent.hpp
+     mpmEvents/TemperatureProfileMPMEvent.hpp
    )
 
 #
@@ -52,6 +53,7 @@ set( events_sources
      mpmEvents/BoreholePressureMPMEvent.cpp
      mpmEvents/ConfiningPressureMPMEvent.cpp
      mpmEvents/CohesiveZoneReferenceMPMEvent.cpp
+     mpmEvents/TemperatureProfileMPMEvent.cpp
    )
 
 set( dependencyList ${parallelDeps} common fileIO dataRepository )
