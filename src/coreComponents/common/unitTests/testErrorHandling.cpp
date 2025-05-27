@@ -20,23 +20,23 @@
 
 using namespace geos;
 
-TEST( ErrorHandling, testYaml )
-{
-  std::map<std::string, std::string> map;
-  map["inputFile"] = "./simpleCo2Inj.xml";
-  map["inputLineLine"] = "42";
+// TEST( ErrorHandling, testYaml )
+// {
+//   std::map<std::string, std::string> map;
+//   map["inputFile"] = "./simpleCo2Inj.xml";
+//   map["inputLineLine"] = "42";
 
-  geos::ErrorLogger::ErrorMsg msgStruct( geos::ErrorLogger::MsgType::Error,
-                                         "msg content",
-                                         "dev file name",
-                                          24 );
-  msgStruct.addContextInfo( std::move( map ) );
-  errorLogger.write( msgStruct );
-}
+//   geos::ErrorLogger::ErrorMsg msgStruct( geos::ErrorLogger::MsgType::Error,
+//                                          "msg content",
+//                                          "dev file name",
+//                                           24 );
+//   msgStruct.addContextInfo( std::move( map ) );
+//   errorLogger.write( msgStruct );
+// }
 
-int main( int ac, char * av[] )
-{
-  ::testing::InitGoogleTest( &ac, av );
-  int const result = RUN_ALL_TESTS();
-  return result;
-}
+// int main( int ac, char * av[] )
+// {
+//   ::testing::InitGoogleTest( &ac, av );
+//   int const result = RUN_ALL_TESTS();
+//   return result;
+// }

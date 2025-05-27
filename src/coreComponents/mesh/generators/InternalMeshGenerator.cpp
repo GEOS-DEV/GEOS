@@ -185,7 +185,7 @@ void InternalMeshGenerator::postInputInitialization()
       errorLogger.currentErrorMsg()
         .addToMsg( "InternalMesh " + wrapper.getDataContext().toString() +
                         ", element index = " + std::to_string( i ) + ": " )
-        .addContextInfo( wrapper.getDataContext().getContextInfo() );
+        .addContextInfo( wrapper.getDataContext().getContextInfo().setPriority( 2 ) );
       throw InputError( e, "InternalMesh " + wrapper.getDataContext().toString() +
                         ", element index = " + std::to_string( i ) + ": " );
     }

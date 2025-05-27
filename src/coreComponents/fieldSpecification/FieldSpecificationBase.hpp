@@ -626,7 +626,7 @@ void FieldSpecificationBase::applyFieldValueKernel( ArrayView< T, N, USD > const
                                        getWrapperDataContext( viewKeyStruct::functionNameString() ) );
         errorLogger.currentErrorMsg()
           .addToMsg( errorMsg )
-          .addContextInfo( getWrapperDataContext( viewKeyStruct::functionNameString() ).getContextInfo() );
+          .addContextInfo( getWrapperDataContext( viewKeyStruct::functionNameString() ).getContextInfo().setPriority( 1 ) );
         throw InputError( e, errorMsg );
       }
     }();

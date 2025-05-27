@@ -157,7 +157,7 @@ void EventBase::getTargetReferences()
                                      getWrapperDataContext( viewKeyStruct::eventTargetString() ) );
       errorLogger.currentErrorMsg()
         .addToMsg( errorMsg )
-        .addContextInfo( getWrapperDataContext( viewKeyStruct::eventTargetString() ).getContextInfo() );
+        .addContextInfo( getWrapperDataContext( viewKeyStruct::eventTargetString() ).getContextInfo().setPriority( 1 ) );
       throw InputError( e, errorMsg );
     }
   }

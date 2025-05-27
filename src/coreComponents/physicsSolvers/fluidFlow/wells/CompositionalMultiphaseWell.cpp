@@ -339,7 +339,7 @@ void compareMulticomponentModels( MODEL1_TYPE const & lhs, MODEL2_TYPE const & r
   {
     GEOS_THROW_IF_NE_MSG( lhs.componentNames()[ic], rhs.componentNames()[ic],
                           GEOS_FMT( "Mismatch in component names between constitutive models {} and {}",
-                                    lhs.getDataContext(), rhs.getDataContext() ),
+                                    lhs.getDataContext (), rhs.getDataContext() ),
                           InputError );
   }
 }
@@ -365,7 +365,7 @@ void CompositionalMultiphaseWell::validateWellControlsForFluid( WellControls con
       string const errorMsg = GEOS_FMT( "{}: wrong surface pressure / temperature.\n", getDataContext() );
       errorLogger.currentErrorMsg()
         .addToMsg( errorMsg )
-        .addContextInfo( getDataContext().getContextInfo() );
+        .addContextInfo( getDataContext().getContextInfo().setPriority( 1 ) );
       throw SimulationError( ex, errorMsg );
     }
   }

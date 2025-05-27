@@ -300,7 +300,7 @@ void FaceManager::sortAllFaceNodes( NodeManager const & nodeManager,
     {
       errorLogger.currentErrorMsg()
         .addToMsg( getDataContext().toString() + ": " + e.what() )
-        .addContextInfo( getDataContext().getContextInfo() );
+        .addContextInfo( getDataContext().getContextInfo().setPriority( 1 ) );
       throw std::runtime_error( getDataContext().toString() + ": " + e.what() );
     }
   } );
