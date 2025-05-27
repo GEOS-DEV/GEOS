@@ -84,6 +84,9 @@ public:
   IdCountType getCollectedIdsCount() const
   { return LvArray::math::min( getSignaledIdsCount(), m_idsBuffer.size() ); }
 
+  IdType operator[]( IdCountType id ) const
+  { return m_idsBuffer[id]; }
+
   auto begin() const
   { return m_idsBuffer.begin(); }
 

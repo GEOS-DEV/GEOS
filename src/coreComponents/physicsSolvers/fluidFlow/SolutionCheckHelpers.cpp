@@ -68,26 +68,48 @@ void IdReporterOutput::outputWrongValues( string_view linesPrefix,
       GEOS_LOG_RANK_0( GEOS_FMT( "{}{} {} values encountered. Minimum value: {}.",
                                  linesPrefix, m_ranksSignaledIdsCount, valueNaming, minValueStr ) );
 
-      string const indentation = string( linesPrefix.size(), ' ' );
       if( m_ranksCollectedIdsCount > 0 )
       {
-        TableLayout const layout = TableLayout( GEOS_FMT( "Summary of {} element", valueNaming ),
-                                                { "Rank", "Global id", "Value" } ).
+        TableLayout const layout = TableLayout().
+                                     setTitle( GEOS_FMT( "Summary of {} elements", valueNaming ) ).
                                      enableLineBreak( false ).
-                                     setIndentation( linesPrefix.size() );
+                                     setIndentation( linesPrefix.size() ).
+                                     setMargin( TableLayout::MarginValue::small ).
+                                     setDefaultHeaderAlignment( TableLayout::Alignment::left );
         TableData data;
-        if( m_buffer.getSignaledIdsCount() > 0 )
+        integer const signaledCount = m_buffer.getSignaledIdsCount();
+        integer const collectedCount = m_buffer.getCollectedIdsCount();
+
+        if( signaledCount > 0 )
         {
-          integer rank = MpiWrapper::commRank();
-          integer omitted = m_buffer.getSignaledIdsCount() - m_buffer.getCollectedIdsCount();
+          integer const omittedCount = signaledCount - collectedCount;
+          // adding a columns for row name, each collected value, and one last if a "..." have to be added
+          integer const columnsCount = MpiWrapper::max( 1 + collectedCount + integer( omittedCount > 0 ) );
+          enum class Lines : integer { Title, Separator, GlobalId, Value };
+          auto & cells = data.getCellsData();
+          string const title = GEOS_FMT( "Rank {}, {} / {} {} values:",
+                                         MpiWrapper::commRank(), collectedCount, signaledCount, valueNaming );
 
-          for( auto const & wrongOccurence : m_buffer )
+          data.addRow( stdVector< TableData::CellData >( columnsCount, { CellType::MergeNext, "" } ) );
+          cells[integer( Lines::Title )].back() = { CellType::Header, title };
+
+          data.addRow( stdVector< TableData::CellData >( columnsCount, { CellType::MergeNext, "" } ) );
+
+          data.addRow( stdVector< TableData::CellData >( columnsCount, { CellType::MergeNext, "" } ) );
+          cells[integer( Lines::GlobalId )].front() = { CellType::Value, "Global Id" };
+          for( int i = 0; i < collectedCount; ++i )
+            cells[integer( Lines::GlobalId )][i+1] = { CellType::Value, std::to_string( m_buffer[i] ) };
+
+          data.addRow( stdVector< TableData::CellData >( columnsCount, { CellType::MergeNext, "" } ) );
+          cells[integer( Lines::Value )].front() = { CellType::Value, string( units::getDescription( unit ) ) };
+          for( int i = 0; i < collectedCount; ++i )
+            cells[integer( Lines::Value )][i+1] = { CellType::Value, std::to_string( 0.0 ) };
+
+          if( omittedCount > 0 )
           {
-            data.addRow( rank, m_buffer.getSignaledIdsCount(), wrongOccurence );
+            cells[integer( Lines::GlobalId )].back() = { CellType::Value, "..." };
+            cells[integer( Lines::Value )].back() = { CellType::Value, "..." };
           }
-
-          if( omitted > 0 )
-            data.addRow( rank, CellType::MergeNext, GEOS_FMT( "Omitted {} values ...", omitted ) );
         }
 
         TableTextFormatter const formatter( layout );
