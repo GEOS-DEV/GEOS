@@ -302,7 +302,7 @@ private:
    */
   void populateTitleCellsLayout( PreparedTableLayout const & tableLayout,
                                  CellLayoutRows & headerCellsLayout,
-                                 size_t nbVisibleColumn ) const;
+                                 size_t const nbVisibleColumn ) const;
 
   /**
    * @brief Populate a grid of CellLayout with all visible columns of the given table layout.
@@ -326,7 +326,8 @@ private:
    */
   void populateDataCellsLayout( PreparedTableLayout const & tableLayout,
                                 CellLayoutRows & dataCellsLayout,
-                                RowsCellInput const & inputDataValues ) const;
+                                RowsCellInput const & inputDataValues,
+                                size_t const nbVisibleColumn ) const;
 
   /**
    * @brief Populates the error cells layout based on input error values
@@ -343,12 +344,10 @@ private:
    * @param tableLayout The layout of the table, containing information about columns, headers, and their layers.
    * @param dataCellsLayout A reference to the layout for the data cells that will be populated.
    * @param inputDataValues A 2D vector containing the actual input data values.
-   * @param nbVisibleColumn The number of columns that are not hidden
    */
   void populateDataCellsLayout( PreparedTableLayout const & tableLayout,
                                 CellLayoutRows & dataCellsLayout,
-                                RowsCellInput const & inputDataValues,
-                                size_t nbVisibleColumn ) const;
+                                RowsCellInput const & inputDataValues ) const;
 
   /**
    * @brief Expend the columns width to accomodate with the content of all cells that are not merged.

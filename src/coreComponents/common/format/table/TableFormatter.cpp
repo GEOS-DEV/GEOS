@@ -255,8 +255,8 @@ void TableTextFormatter::initalizeTableGrids( PreparedTableLayout const & tableL
   RowsCellInput const & inputDataValues( tableInputData.getTableDataRows() );
   size_t const inputDataRowsCount = !inputDataValues.empty() ? inputDataValues.front().size() : 0;
   size_t const nbVisibleColumns = std::max( size_t( 1 ), ( hasColumnLayout ?
-                                                     tableLayout.getLowermostColumnsCount() :
-                                                     inputDataRowsCount ) );
+                                                           tableLayout.getVisibleLowermostColumnCount() :
+                                                           inputDataRowsCount ) );
   // this array will store the displayed width of all columns (it will be scaled by data & headers width)
   stdVector< size_t > columnsWidth = stdVector< size_t >( nbVisibleColumns, 0 );
 
@@ -338,6 +338,9 @@ void TableTextFormatter::populateHeaderCellsLayout( PreparedTableLayout const & 
   // n-1 -> separator
   size_t const previousRowsCount = headerCellsLayout.size();
   auto const getColumnRowId = [=] ( size_t columnLayer ) { return previousRowsCount + columnLayer * 2; };
+
+  if( nbVisibleColumns > 0 )
+    GEOS_ERROR_IF_GT( lowermostColumnsCount, nbVisibleColumns );
 
   headerCellsLayout.resize( previousRowsCount + headerRowsCount );
   for( size_t rowId = previousRowsCount; rowId < headerCellsLayout.size(); rowId++ )
@@ -421,8 +424,11 @@ void TableTextFormatter::populateDataCellsLayout( PreparedTableLayout const & ta
     size_t idxInputColumn = 0;
     size_t idxOutputColumn = 0;
 
+    size_t nbLinesToEvaluate = tableLayout.getVisibleLowermostColumnCount() != tableLayout.getTotalLowermostColumnCount() ?
+                               tableLayout.getTotalLowermostColumnCount():
+                               tableLayout.getVisibleLowermostColumnCount();
     // data input malformed
-    if( !errorInData && tableLayout.getTotalLowermostColumnCount() != inputDataValues[idxRow].size())
+    if( !errorInData && nbLinesToEvaluate != inputDataValues[idxRow].size())
     {
       getErrorsList().addError( "Error : One or more data lines are not equal to the number of headers\nData can be missing/misaligned" );
       errorInData = true;
@@ -475,7 +481,6 @@ void TableTextFormatter::populateDataCellsLayout( PreparedTableLayout const & ta
       0 // sublinesCount
     }
   };
-  TableLayout::ColumnAlignement const defaultAlignment;
 
   for( size_t idxRow = 0; idxRow < inputDataValues.size(); ++idxRow )
   {
@@ -487,9 +492,12 @@ void TableTextFormatter::populateDataCellsLayout( PreparedTableLayout const & ta
       string_view value = inputCell.type == CellType::Separator ?
                           string_view( &m_horizontalLine, 1 ) :
                           string_view( inputCell.value );
+      TableLayout::Alignment const alignment = inputCell.type == CellType::Header ?
+                                               tableLayout.defaultHeaderAlignment :
+                                               tableLayout.defaultValueAlignment;
 
       TableLayout::CellLayout & outputCell = outputRow.cells[idxColumn];
-      outputCell = TableLayout::CellLayout( inputCell.type, defaultAlignment.valueAlignment );
+      outputCell = TableLayout::CellLayout( inputCell.type, alignment );
       outputCell.prepareLayout( value, tableLayout.getMaxColumnWidth() );
 
       maxLinesInRow  = std::max( maxLinesInRow, outputCell.getHeight()  );

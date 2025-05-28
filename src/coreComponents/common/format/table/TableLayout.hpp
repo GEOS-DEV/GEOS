@@ -815,7 +815,7 @@ private:
   size_t m_columnLayersCount;
   // Numbers of lower most column
   size_t m_totalLowermostColumnCount;
-  // Numbers of lower most column that are visible
+// Numbers of lower most column that are visible
   size_t m_visibleLowermostColumnCount;
 
   /**

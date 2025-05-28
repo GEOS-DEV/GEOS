@@ -312,7 +312,6 @@ void PreparedTableLayout::prepareLayoutRecusive( stdVector< TableLayout::Column 
 {
   for( auto & column : columns )
   {
-
     if( column.isVisible())
       m_columnLayersCount = std::max( m_columnLayersCount, level + 1 );
 
@@ -336,7 +335,6 @@ void PreparedTableLayout::prepareLayoutRecusive( stdVector< TableLayout::Column 
       }
 
       prepareLayoutRecusive( column.m_subColumns, level + 1 );
-
     }
   }
 
