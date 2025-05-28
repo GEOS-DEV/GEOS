@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 TotalEnergies
+ * Copyright (c) 2018-2024 Total, S.A
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
  * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
@@ -23,7 +23,7 @@
 #include "mainInterface/GeosxState.hpp"
 #include "physicsSolvers/PhysicsSolverManager.hpp"
 #include "physicsSolvers/wavePropagation/shared/WaveSolverBase.hpp"
-#include "physicsSolvers/wavePropagation/sem/elastic/secondOrderEqn/isotropic/ElasticWaveEquationSEM.hpp"
+#include "physicsSolvers/wavePropagation/sem/acoustic/secondOrderEqn/anisotropic/AcousticVTIWaveEquationSEM.hpp"
 
 #include <gtest/gtest.h>
 
@@ -39,21 +39,16 @@ char const * xmlInput =
   R"xml(
   <Problem>
     <Solvers>
-      <ElasticSEM
-        name="elasticSolver"
+      <AcousticVTISEM
+        name="acousticVTISolver"
         cflFactor="0.25"
         discretization="FE1"
         targetRegions="{ Region }"
         sourceCoordinates="{ { 50, 50, 50 } }"
         timeSourceFrequency="2"
-        useDAS="strainIntegration"
         attenuationType="sls"
         slsReferenceAngularFrequencies="{ 69.6283, 592.177 }" 
         slsAnelasticityCoefficients="{ 1.63675, 1.75153 }" 
-        linearDASSamples="5"
-        linearDASGeometry="{ { 0, 0, 10 }, { 0, 0, 10 }, { 0, 0, 10 }, { 0, 0, 10 },
-                                { 0, 0, 10 }, { 0, 0, 10 }, { 0, 0, 10 }, { 0, 0, 10 },
-                                { 0, 0, 10 } }"
         receiverCoordinates="{ { 0.1, 0.1, 0.1 }, { 0.1, 0.1, 99.9 }, { 0.1, 99.9, 0.1 }, { 0.1, 99.9, 99.9 },
                                 { 99.9, 0.1, 0.1 }, { 99.9, 0.1, 99.9 }, { 99.9, 99.9, 0.1 }, { 99.9, 99.9, 99.9 },
                                 { 50, 50, 50 } }"
@@ -79,7 +74,7 @@ char const * xmlInput =
         forceDt="0.1"
         targetExactStartStop="0"
         targetExactTimestep="0"
-        target="/Solvers/elasticSolver"/>
+        target="/Solvers/acousticVTISolver"/>
       <PeriodicEvent
         name="waveFieldNp1Collection"
         timeFrequency="0.1"
@@ -116,38 +111,38 @@ char const * xmlInput =
     </Constitutive>
     <FieldSpecifications>
       <FieldSpecification
-        name="cellVelocityVp"
+        name="cellVelocity"
         initialCondition="1"
         objectPath="ElementRegions/Region/cb"
-        fieldName="elasticVelocityVp"
+        fieldName="acousticVelocity"
         scale="1500"
         setNames="{ all }"/>
       <FieldSpecification
-        name="cellVelocityVs"
+        name="Epsilon"
         initialCondition="1"
         objectPath="ElementRegions/Region/cb"
-        fieldName="elasticVelocityVs"
-        scale="700"
+        fieldName="epsilon"
+        scale="0.24"
         setNames="{ all }"/>
       <FieldSpecification
-        name="cellDensity"
+        name="Delta"
         initialCondition="1"
         objectPath="ElementRegions/Region/cb"
-        fieldName="elasticDensity"
-        scale="1"
+        fieldName="delta"
+        scale="0.1"
         setNames="{ all }"/>
       <FieldSpecification
-        name="cellQp"
+        name="f"
         initialCondition="1"
         objectPath="ElementRegions/Region/cb"
-        fieldName="elasticQualityFactorP"
-        scale="30"
+        fieldName="f"
+        scale="1.0"
         setNames="{ all }"/>
       <FieldSpecification
-        name="cellQs"
+        name="cellQ"
         initialCondition="1"
         objectPath="ElementRegions/Region/cb"
-        fieldName="elasticQualityFactorS"
+        fieldName="acousticQualityFactor"
         scale="30"
         setNames="{ all }"/>
       <FieldSpecification
@@ -160,11 +155,11 @@ char const * xmlInput =
   </Problem>
   )xml";
 
-class ElasticWaveEquationSEMTest : public ::testing::Test
+class AcousticVTIWaveEquationSEMTest : public ::testing::Test
 {
 public:
 
-  ElasticWaveEquationSEMTest():
+  AcousticVTIWaveEquationSEMTest():
     state( std::make_unique< CommandLineOptions >( g_commandLineOptions ) )
   {}
 
@@ -180,18 +175,18 @@ protected:
   static real64 constexpr eps = std::numeric_limits< real64 >::epsilon();
 
   GeosxState state;
-  ElasticWaveEquationSEM * propagator;
+  AcousticVTIWaveEquationSEM * propagator;
 };
 
-real64 constexpr ElasticWaveEquationSEMTest::time;
-real64 constexpr ElasticWaveEquationSEMTest::dt;
-real64 constexpr ElasticWaveEquationSEMTest::eps;
+real64 constexpr AcousticVTIWaveEquationSEMTest::time;
+real64 constexpr AcousticVTIWaveEquationSEMTest::dt;
+real64 constexpr AcousticVTIWaveEquationSEMTest::eps;
 
-TEST_F( ElasticWaveEquationSEMTest, SeismoTrace )
+TEST_F( AcousticVTIWaveEquationSEMTest, SeismoTrace )
 {
 
   DomainPartition & domain = state.getProblemManager().getDomainPartition();
-  propagator = &state.getProblemManager().getPhysicsSolverManager().getGroup< ElasticWaveEquationSEM >( "elasticSolver" );
+  propagator = &state.getProblemManager().getPhysicsSolverManager().getGroup< AcousticVTIWaveEquationSEM >( "acousticVTISolver" );
   real64 time_n = time;
   // run for 1s (10 steps)
   for( int i=0; i<10; i++ )
@@ -203,31 +198,31 @@ TEST_F( ElasticWaveEquationSEMTest, SeismoTrace )
   propagator->cleanup( 1.0, 10, 0, 0, domain );
 
   // retrieve seismo
-  arrayView2d< real32 > const dasReceivers = propagator->getReference< array2d< real32 > >( ElasticWaveEquationSEM::viewKeyStruct::dasSignalNp1AtReceiversString() ).toView();
+  arrayView2d< real32 > const pressureReceivers = propagator->getReference< array2d< real32 > >( AcousticVTIWaveEquationSEM::viewKeyStruct::pressureNp1AtReceiversString() ).toView();
 
   // move it to CPU, if needed
-  dasReceivers.move( hostMemorySpace, false );
+  pressureReceivers.move( hostMemorySpace, false );
 
   // check number of seismos and trace length
-  ASSERT_EQ( dasReceivers.size( 1 ), 10 );
-  ASSERT_EQ( dasReceivers.size( 0 ), 11 );
+  ASSERT_EQ( pressureReceivers.size( 1 ), 10 );
+  ASSERT_EQ( pressureReceivers.size( 0 ), 11 );
 
-  // check das content. The signal values cannot be directly checked as the problem is too small.
+  // check pressure content. The signal values cannot be directly checked as the problem is too small.
   // Since the basis is linear, check that the seismograms are nonzero (for t>0) and the seismogram at the center is equal
   // to the average of the others.
   for( int i = 0; i < 11; i++ )
   {
     if( i > 0 )
     {
-      ASSERT_TRUE( std::abs( dasReceivers[i][8] ) > 0 );
+      ASSERT_TRUE( std::abs( pressureReceivers[i][8] ) > 0 );
     }
     double avg = 0;
     for( int r=0; r<8; r++ )
     {
-      avg += dasReceivers[i][r];
+      avg += pressureReceivers[i][r];
     }
     avg /= 8.0;
-    ASSERT_TRUE( std::abs( dasReceivers[i][8] - avg ) < 0.00001 );
+    ASSERT_TRUE( std::abs( pressureReceivers[i][8] - avg ) < 0.00001 );
   }
 }
 
