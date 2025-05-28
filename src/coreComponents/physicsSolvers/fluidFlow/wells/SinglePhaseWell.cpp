@@ -884,7 +884,7 @@ bool SinglePhaseWell::checkSystemSolution( DomainPartition & domain,
   GEOS_MARK_FUNCTION;
 
   string const wellDofKey = dofManager.getKey( wellElementDofName() );
-  IdReporterBuffer rankNegPressureIds{ isLogLevelActive< logInfo::WellValidity >( getLogLevel() ),
+  ElementsReporterBuffer rankNegPressureIds{ isLogLevelActive< logInfo::WellValidity >( getLogLevel() ),
                                        isLogLevelActive< logInfo::WellValidityDetails >( getLogLevel() ) ? 16 : 0 };
   real64 minNegPres = 0.0;
 
@@ -925,8 +925,8 @@ bool SinglePhaseWell::checkSystemSolution( DomainPartition & domain,
     } );
   } );
 
-  IdReporterOutput const rankNegPressureIdsOutput = rankNegPressureIds.createOutput();
-  rankNegPressureIdsOutput.outputWrongValues( GEOS_FMT( "        {}: ", getName() ),
+  ElementsReporterOutput const rankNegPressureIdsOutput = rankNegPressureIds.createOutput();
+  rankNegPressureIdsOutput.outputTooLowValues( GEOS_FMT( "        {}: ", getName() ),
                                               "negative pressure", minNegPres, units::Unit::Pressure );
 
   return (m_allowNegativePressure || rankNegPressureIdsOutput.getRanksSignaledIdsCount() == 0) ? 1 : 0;

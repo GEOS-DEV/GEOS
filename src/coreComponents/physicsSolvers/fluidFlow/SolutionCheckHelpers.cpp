@@ -25,50 +25,51 @@
 namespace geos
 {
 
-IdReporterBuffer::IdReporterBuffer( bool enabled, IdCountType maxCollectionSize ):
-  m_idsCounter( enabled ? 1 : 0 ),
-  m_idsBuffer( enabled ? maxCollectionSize : 0 )
+ElementsReporterBuffer::ElementsReporterBuffer( bool enabled, ElementCount maxCollectionSize ):
+  m_elementsCounter( enabled ? 1 : 0 ),
+  m_elementsBuffer( enabled ? maxCollectionSize : 0 )
 {
   if( enabled )
   {
-    m_idsCounter.zero();
-    m_idsBuffer.zero();
+    m_elementsCounter.zero();
+    m_elementsBuffer.zero();
   }
 }
 
-IdReporterCollector IdReporterBuffer::createCollector( arrayView1d< globalIndex const > const & localToGlobalId ) const
+ElementsReporterCollector
+ElementsReporterBuffer::createCollector( arrayView1d< globalIndex const > const & localToGlobalId ) const
 {
-  return IdReporterCollector( m_idsCounter, m_idsBuffer, localToGlobalId );
+  return ElementsReporterCollector( m_elementsCounter, m_elementsBuffer, localToGlobalId );
 }
 
-IdReporterOutput IdReporterBuffer::createOutput() const
+ElementsReporterOutput ElementsReporterBuffer::createOutput() const
 {
-  m_idsCounter.move( LvArray::MemorySpace::host, false );
-  m_idsBuffer.move( LvArray::MemorySpace::host, false );
-  return IdReporterOutput( *this );
+  m_elementsCounter.move( LvArray::MemorySpace::host, false );
+  m_elementsBuffer.move( LvArray::MemorySpace::host, false );
+  return ElementsReporterOutput( *this );
 }
 
 
-IdReporterOutput::IdReporterOutput( IdReporterBuffer const & buffer ):
+ElementsReporterOutput::ElementsReporterOutput( ElementsReporterBuffer const & buffer ):
   m_buffer( buffer ),
-  m_ranksSignaledIdsCount( MpiWrapper::sum( buffer.getSignaledIdsCount() ) ),
-  m_ranksCollectedIdsCount( MpiWrapper::sum( buffer.getCollectedIdsCount() ) )
+  m_ranksSignaledElementsCount( MpiWrapper::sum( buffer.getSignaledElementsCount() ) ),
+  m_ranksCollectedElementsCount( MpiWrapper::sum( buffer.getCollectedElementsCount() ) )
 {}
 
-void IdReporterOutput::outputWrongValues( string_view linesPrefix,
-                                          string_view valueNaming,
-                                          real64 minValue,
-                                          units::Unit unit ) const
+void ElementsReporterOutput::outputTooLowValues( string_view linesPrefix,
+                                                string_view valueNaming,
+                                                real64 minValue,
+                                                units::Unit unit ) const
 {
   if( m_buffer.enabled() )
   {
-    if( m_ranksSignaledIdsCount > 0 )
+    if( m_ranksSignaledElementsCount > 0 )
     {
       string const minValueStr = GEOS_FMT( "{:.{}f} [{}]", minValue, 3, units::getSymbol( unit ) );
       GEOS_LOG_RANK_0( GEOS_FMT( "{}{} {} values encountered. Minimum value: {}.",
-                                 linesPrefix, m_ranksSignaledIdsCount, valueNaming, minValueStr ) );
+                                 linesPrefix, m_ranksSignaledElementsCount, valueNaming, minValueStr ) );
 
-      if( m_ranksCollectedIdsCount > 0 )
+      if( m_ranksCollectedElementsCount > 0 )
       {
         TableLayout const layout = TableLayout().
                                      setTitle( GEOS_FMT( "Summary of {} elements", valueNaming ) ).
@@ -77,38 +78,43 @@ void IdReporterOutput::outputWrongValues( string_view linesPrefix,
                                      setMargin( TableLayout::MarginValue::small ).
                                      setDefaultHeaderAlignment( TableLayout::Alignment::left );
         TableData data;
-        integer const signaledCount = m_buffer.getSignaledIdsCount();
-        integer const collectedCount = m_buffer.getCollectedIdsCount();
+        integer const signaledCount = m_buffer.getSignaledElementsCount();
+        integer const collectedCount = m_buffer.getCollectedElementsCount();
 
         if( signaledCount > 0 )
         {
           integer const omittedCount = signaledCount - collectedCount;
           // adding a columns for row name, each collected value, and one last if a "..." have to be added
           integer const columnsCount = MpiWrapper::max( 1 + collectedCount + integer( omittedCount > 0 ) );
-          enum class Lines : integer { Title, Separator, GlobalId, Value };
           auto & cells = data.getCellsData();
           string const title = GEOS_FMT( "Rank {}, {} / {} {} values:",
-                                         MpiWrapper::commRank(), collectedCount, signaledCount, valueNaming );
+                                         MpiWrapper::commRank(),
+                                         collectedCount,
+                                         signaledCount,
+                                         valueNaming );
+          static constexpr integer titleLine = 0;
+          static constexpr integer globalIdLine = 2;
+          static constexpr integer valueLine = 3;
 
           data.addRow( stdVector< TableData::CellData >( columnsCount, { CellType::MergeNext, "" } ) );
-          cells[integer( Lines::Title )].back() = { CellType::Header, title };
+          cells[titleLine].back() = { CellType::Header, title };
 
           data.addRow( stdVector< TableData::CellData >( columnsCount, { CellType::MergeNext, "" } ) );
 
           data.addRow( stdVector< TableData::CellData >( columnsCount, { CellType::MergeNext, "" } ) );
-          cells[integer( Lines::GlobalId )].front() = { CellType::Value, "Global Id" };
+          cells[globalIdLine].front() = { CellType::Value, "Global Id" };
           for( int i = 0; i < collectedCount; ++i )
-            cells[integer( Lines::GlobalId )][i+1] = { CellType::Value, std::to_string( m_buffer[i] ) };
+            cells[globalIdLine][i+1] = { CellType::Value, std::to_string( m_buffer[i].m_id ) };
 
           data.addRow( stdVector< TableData::CellData >( columnsCount, { CellType::MergeNext, "" } ) );
-          cells[integer( Lines::Value )].front() = { CellType::Value, string( units::getDescription( unit ) ) };
+          cells[valueLine].front() = { CellType::Value, string( units::getDescription( unit ) ) };
           for( int i = 0; i < collectedCount; ++i )
-            cells[integer( Lines::Value )][i+1] = { CellType::Value, std::to_string( 0.0 ) };
+            cells[valueLine][i+1] = { CellType::Value, std::to_string( m_buffer[i].m_value ) };
 
           if( omittedCount > 0 )
           {
-            cells[integer( Lines::GlobalId )].back() = { CellType::Value, "..." };
-            cells[integer( Lines::Value )].back() = { CellType::Value, "..." };
+            cells[globalIdLine].back() = { CellType::Value, "..." };
+            cells[valueLine].back() = { CellType::Value, "..." };
           }
         }
 

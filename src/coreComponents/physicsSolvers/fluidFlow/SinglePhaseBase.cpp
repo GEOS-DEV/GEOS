@@ -1329,7 +1329,7 @@ bool SinglePhaseBase::checkSystemSolution( DomainPartition & domain,
   GEOS_MARK_FUNCTION;
 
   string const dofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
-  IdReporterBuffer rankNegPressureIds{ isLogLevelActive< logInfo::Solution >( getLogLevel() ),
+  ElementsReporterBuffer rankNegPressureIds{ isLogLevelActive< logInfo::Solution >( getLogLevel() ),
                                        isLogLevelActive< logInfo::SolutionDetails >( getLogLevel() ) ? 16 : 0 };
   real64 minPressure = 0.0;
 
@@ -1360,10 +1360,10 @@ bool SinglePhaseBase::checkSystemSolution( DomainPartition & domain,
     } );
   } );
 
-  rankNegPressureIds.createOutput().outputWrongValues( GEOS_FMT( "        {}: ", getName() ),
+  rankNegPressureIds.createOutput().outputTooLowValues( GEOS_FMT( "        {}: ", getName() ),
                                                        "negative pressure", minPressure, units::Unit::Pressure );
 
-  return (m_allowNegativePressure || rankNegPressureIds.getSignaledIdsCount() == 0) ?  1 : 0;
+  return (m_allowNegativePressure || rankNegPressureIds.getSignaledElementsCount() == 0) ?  1 : 0;
 }
 
 void SinglePhaseBase::saveConvergedState( ElementSubRegionBase & subRegion ) const

@@ -75,8 +75,8 @@ public:
                        string const dofKey,
                        ElementSubRegionBase const & subRegion,
                        arrayView1d< real64 const > const localSolution,
-                       IdReporterCollector const & negPressureIds,
-                       IdReporterCollector const & negDensityIds )
+                       ElementsReporterCollector const & negPressureIds,
+                       ElementsReporterCollector const & negDensityIds )
     : Base( rankOffset,
             numComp,
             dofKey,
@@ -181,10 +181,10 @@ public:
       minTotalDens.min( stack.localMinNegTotalDens );
 
       if( stack.localNumNegPres > 0 )
-        kernelComponent.m_negPressureIds.collectId( atomicPolicy{}, ei );
+        kernelComponent.m_negPressureIds.collectElement( atomicPolicy{}, { ei, stack.localMinNegPres } );
 
       if( stack.localNumNegDens > 0 )
-        kernelComponent.m_negDensityIds.collectId( atomicPolicy{}, ei );
+        kernelComponent.m_negDensityIds.collectElement( atomicPolicy{}, { ei, stack.localMinNegDens } );
 
       numNegTotalDens += stack.localNumNegTotalDens;
     } );
@@ -303,9 +303,9 @@ protected:
   /// scaling type (global or local)
   compositionalMultiphaseUtilities::ScalingType const m_scalingType;
 
-  IdReporterCollector const m_negPressureIds;
+  ElementsReporterCollector const m_negPressureIds;
 
-  IdReporterCollector const m_negDensityIds;
+  ElementsReporterCollector const m_negDensityIds;
 
 };
 
@@ -342,8 +342,8 @@ public:
                    string const dofKey,
                    ElementSubRegionBase & subRegion,
                    arrayView1d< real64 const > const localSolution,
-                   IdReporterCollector const & negPressureIds,
-                   IdReporterCollector const & negDensityIds ) // TODO : ajouter bool reportWrongValues
+                   ElementsReporterCollector const & negPressureIds,
+                   ElementsReporterCollector const & negDensityIds ) // TODO : ajouter bool reportWrongValues
   {
     SolutionCheckKernel kernel( allowCompDensChopping, allowNegativePressure, scalingType, scalingFactor,
                                 pressure, compDens, pressureScalingFactor, compDensScalingFactor, rankOffset,

@@ -25,86 +25,94 @@
 namespace geos
 {
 
-class IdReporterBuffer;
+class ElementsReporterBuffer;
+
+struct ElementReport
+{
+  /// the global id of the reported element
+  globalIndex m_id;
+  /// a single value to report for the given element (i.e. a negative pressure, a density...)
+  real64 m_value;
+};
 
 /**
  * @brief TODO
- * @tparam IdCountType TODO
+ * @tparam ElementCount TODO
  * @tparam IdType TODO
  */
-class IdReporterCollector
+class ElementsReporterCollector
 {
-  friend class IdReporterBuffer;
+  friend class ElementsReporterBuffer;
 public:
 
-  using IdCountType = int32_t;
-  using IdType = globalIndex;
+  using ElementCount = int32_t;
 
   // TODO : proper docs. can be copied & moved as this class only has views to the internal chai memory buffers
-  IdReporterCollector( IdReporterCollector const & other ) = default;
-  IdReporterCollector( IdReporterCollector && other ) = default;
-  IdReporterCollector & operator=( IdReporterCollector const & other ) = default;
-  IdReporterCollector & operator=( IdReporterCollector && other ) = default;
+  ElementsReporterCollector( ElementsReporterCollector const & other ) = default;
+  ElementsReporterCollector( ElementsReporterCollector && other ) = default;
+  ElementsReporterCollector & operator=( ElementsReporterCollector const & other ) = default;
+  ElementsReporterCollector & operator=( ElementsReporterCollector && other ) = default;
 
-  static IdReporterCollector disabled()
+  static ElementsReporterCollector disabled()
   {
-    return IdReporterCollector( arrayView1d< IdCountType >(),
-                                arrayView1d< IdType >(),
-                                arrayView1d< globalIndex const >() );
+    return ElementsReporterCollector( arrayView1d< ElementCount >(),
+                                      arrayView1d< ElementReport >(),
+                                      arrayView1d< globalIndex const >() );
   }
 
   /**
    * @brief TODO
    * @tparam CollectorAtomicPolicy The policy of the atomic increment on the ids counter.
-   * @param m_idsCounter The ids counter to increment with an atomic operation.
-   * @param m_idsBuffer The output id buffer, in the same memory space as m_idsCounter.
+   * @param m_elementsCounter The ids counter to increment with an atomic operation.
+   * @param m_elementsBuffer The output id buffer, in the same memory space as m_elementsCounter.
    *                  If its size is 0 (= disabled output) or not not large enought, the buffer is not filled.
    * @param id The Id to add to the buffer.
    */
   template< typename CollectorAtomicPolicy >
   GEOS_HOST_DEVICE
-  void collectId( CollectorAtomicPolicy, IdType id ) const
+  void collectElement( CollectorAtomicPolicy, ElementReport const & report ) const
   {
-    if( !m_idsCounter.empty() )
+    if( !m_elementsCounter.empty() )
     {
-      IdCountType const outputStart = RAJA::atomicInc< CollectorAtomicPolicy >( &m_idsCounter[0] );
+      ElementCount const outputStart = RAJA::atomicInc< CollectorAtomicPolicy >( &m_elementsCounter[0] );
 
-      if( outputStart < m_idsBuffer.size() )
+      if( outputStart < m_elementsBuffer.size() )
       {
-        m_idsBuffer[outputStart] = m_localToGlobalId[id];
+        m_elementsBuffer[outputStart].m_id = m_localToGlobalId[report.m_id];
+        m_elementsBuffer[outputStart].m_value = report.m_value;
       }
     }
   }
 
   // // currently unused version for adding multiple ids from a given kernel
-  // template< typename AddedArray, typename IdCountType >
+  // template< typename AddedArray, typename ElementCount >
   // GEOS_HOST_DEVICE
-  // void collectIds( AddedArray const & newIds, IdCountType newIdsCount )
+  // void collectIds( AddedArray const & newIds, ElementCount newIdsCount )
   // {
-  //   IdCountType const outputStart = RAJA::atomicAdd< CollectorAtomicPolicy >( &m_idsCounter[0], newIdsCount );
-  //   IdCountType const maxNbIdToAdd = IdCountType( m_idsBuffer.size() - outputStart );
+  //   ElementCount const outputStart = RAJA::atomicAdd< CollectorAtomicPolicy >( &m_elementsCounter[0], newIdsCount );
+  //   ElementCount const maxNbIdToAdd = ElementCount( m_elementsBuffer.size() - outputStart );
   //   newIdsCount = LvArray::math::min( newIdsCount, maxNbIdToAdd );
-  //   for( IdCountType i = 0; i < newIdsCount; ++i )
+  //   for( ElementCount i = 0; i < newIdsCount; ++i )
   //   {
-  //     m_idsBuffer[outputStart + i] = newIds[i];
+  //     m_elementsBuffer[outputStart + i] = newIds[i];
   //   }
   // }
 
 private:
 
   // array of one element to get benefit of chai managed memory.
-  arrayView1d< IdCountType > m_idsCounter;
+  arrayView1d< ElementCount > m_elementsCounter;
 
   // ids of detected elements, quantity limited to 'maxIdsCount'
-  arrayView1d< IdType > m_idsBuffer;
+  arrayView1d< ElementReport > m_elementsBuffer;
 
   arrayView1d< globalIndex const > m_localToGlobalId;
 
-  IdReporterCollector( arrayView1d< IdCountType > const & idsCounter,
-                       arrayView1d< IdType > const & idsArray,
-                       arrayView1d< globalIndex const > const & localToGlobalId ):
-    m_idsCounter( idsCounter ),
-    m_idsBuffer( idsArray ),
+  ElementsReporterCollector( arrayView1d< ElementCount > const & elementsCounter,
+                             arrayView1d< ElementReport > const & elementsBuffer,
+                             arrayView1d< globalIndex const > const & localToGlobalId ):
+    m_elementsCounter( elementsCounter ),
+    m_elementsBuffer( elementsBuffer ),
     m_localToGlobalId( localToGlobalId )
   {}
 

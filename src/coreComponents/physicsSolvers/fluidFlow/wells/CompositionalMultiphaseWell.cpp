@@ -1538,8 +1538,8 @@ CompositionalMultiphaseWell::checkSystemSolution( DomainPartition & domain,
                                                        wellDofKey,
                                                        subRegion,
                                                        localSolution,
-                                                       IdReporterCollector::disabled(),
-                                                       IdReporterCollector::disabled() );
+                                                       ElementsReporterCollector::disabled(),
+                                                       ElementsReporterCollector::disabled() );
 
         if( !subRegionData.localMinVal )
         {
@@ -1556,9 +1556,9 @@ CompositionalMultiphaseWell::checkSystemSolution( DomainPartition & domain,
 
     real64 minPres = 0.0, minDens = 0.0, minTotalDens = 0.0;
     integer numNegTotalDens = 0;
-    IdReporterBuffer rankNegPressureIds{ isLogLevelActive< logInfo::WellValidity >( getLogLevel() ),
+    ElementsReporterBuffer rankNegPressureIds{ isLogLevelActive< logInfo::WellValidity >( getLogLevel() ),
                                          isLogLevelActive< logInfo::WellValidityDetails >( getLogLevel() ) ? 16 : 0 };
-    IdReporterBuffer rankNegDensityIds{ isLogLevelActive< logInfo::WellValidity >( getLogLevel() ),
+    ElementsReporterBuffer rankNegDensityIds{ isLogLevelActive< logInfo::WellValidity >( getLogLevel() ),
                                         isLogLevelActive< logInfo::WellValidityDetails >( this->getLogLevel() ) ? 16 : 0 };
 
     forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
@@ -1641,11 +1641,11 @@ CompositionalMultiphaseWell::checkSystemSolution( DomainPartition & domain,
     minTotalDens = MpiWrapper::min( minTotalDens );
     numNegTotalDens = MpiWrapper::sum( numNegTotalDens );
 
-    rankNegPressureIds.createOutput().outputWrongValues( GEOS_FMT( "        {}: ", getName() ),
+    rankNegPressureIds.createOutput().outputTooLowValues( GEOS_FMT( "        {}: ", getName() ),
                                                          "negative pressure", minPres, units::Unit::Pressure );
 
     units::Unit const massUnit = m_useMass ? units::Unit::Density : units::Unit::MolarDensity;
-    rankNegDensityIds.createOutput().outputWrongValues( GEOS_FMT( "        {}: ", getName() ),
+    rankNegDensityIds.createOutput().outputTooLowValues( GEOS_FMT( "        {}: ", getName() ),
                                                         "negative component density", minDens, massUnit );
     if( numNegTotalDens > 0 )
     {

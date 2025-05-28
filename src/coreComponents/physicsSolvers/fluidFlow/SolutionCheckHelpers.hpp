@@ -26,96 +26,94 @@
 namespace geos
 {
 
-class IdReporterOutput
+class ElementsReporterOutput
 {
 public:
 
-  using IdCountType = IdReporterCollector::IdCountType;
-  using IdType = IdReporterCollector::IdType;
+  using ElementCount = ElementsReporterCollector::ElementCount;
 
-  IdReporterOutput( IdReporterBuffer const & buffer );
+  ElementsReporterOutput( ElementsReporterBuffer const & buffer );
 
-  IdCountType getRanksSignaledIdsCount() const
-  { return m_ranksSignaledIdsCount; }
+  ElementCount getRanksSignaledIdsCount() const
+  { return m_ranksSignaledElementsCount; }
 
-  IdCountType getRanksCollectedIdsCount() const
-  { return m_ranksCollectedIdsCount; }
+  ElementCount getRanksCollectedIdsCount() const
+  { return m_ranksCollectedElementsCount; }
 
-  void outputWrongValues( string_view linesPrefix,
-                          string_view valueNaming,
-                          real64 minValue,
-                          units::Unit valueUnit ) const;
+  void outputTooLowValues( string_view linesPrefix,
+                           string_view valueNaming,
+                           real64 minValue,
+                           units::Unit valueUnit ) const;
 
 private:
 
-  IdReporterBuffer const & m_buffer;
+  ElementsReporterBuffer const & m_buffer;
 
-  IdCountType m_ranksSignaledIdsCount;
+  ElementCount m_ranksSignaledElementsCount;
 
-  IdCountType m_ranksCollectedIdsCount;
+  ElementCount m_ranksCollectedElementsCount;
 
 };
 
-class IdReporterBuffer
+class ElementsReporterBuffer
 {
 public:
 
-  using IdCountType = IdReporterCollector::IdCountType;
-  using IdType = IdReporterCollector::IdType;
+  using ElementCount = ElementsReporterCollector::ElementCount;
 
   /**
    * @brief Construct a preallocated buffer to collect a limited quantity of ids in kernels.
    * @param maxCollectionSize Limit of the buffer.
    *                          If 0, the buffering functionnality is disabled and only the counting is enabled.
    */
-  IdReporterBuffer( bool enabled, IdCountType maxCollectionSize );
+  ElementsReporterBuffer( bool enabled, ElementCount maxCollectionSize );
 
   // TODO: Proper docs. can be moved without any issue.
-  IdReporterBuffer( IdReporterBuffer && other ) = default;
-  IdReporterBuffer & operator=( IdReporterBuffer && other ) = default;
+  ElementsReporterBuffer( ElementsReporterBuffer && other ) = default;
+  ElementsReporterBuffer & operator=( ElementsReporterBuffer && other ) = default;
 
   // TODO: Proper docs. copying prevented has it doesn't seem useful / relevant.
-  IdReporterBuffer( IdReporterBuffer const & other ) = delete;
-  IdReporterBuffer & operator=( IdReporterBuffer const & other ) = delete;
+  ElementsReporterBuffer( ElementsReporterBuffer const & other ) = delete;
+  ElementsReporterBuffer & operator=( ElementsReporterBuffer const & other ) = delete;
 
-  IdCountType getSignaledIdsCount() const
-  { return m_idsCounter.empty() ? 0 : m_idsCounter[0]; }
+  ElementCount getSignaledElementsCount() const
+  { return m_elementsCounter.empty() ? 0 : m_elementsCounter[0]; }
 
-  IdCountType getCollectedIdsCount() const
-  { return LvArray::math::min( getSignaledIdsCount(), m_idsBuffer.size() ); }
+  ElementCount getCollectedElementsCount() const
+  { return LvArray::math::min( getSignaledElementsCount(), m_elementsBuffer.size() ); }
 
-  IdType operator[]( IdCountType id ) const
-  { return m_idsBuffer[id]; }
+  ElementReport operator[]( ElementCount id ) const
+  { return m_elementsBuffer[id]; }
 
   auto begin() const
-  { return m_idsBuffer.begin(); }
+  { return m_elementsBuffer.begin(); }
 
   auto end() const
-  { return m_idsBuffer.begin() + getCollectedIdsCount(); }
+  { return m_elementsBuffer.begin() + getCollectedElementsCount(); }
 
   bool enabled() const
-  { return !m_idsCounter.empty(); }
+  { return !m_elementsCounter.empty(); }
 
   bool empty() const
-  { return getCollectedIdsCount() == 0; }
+  { return getCollectedElementsCount() == 0; }
 
   bool isComplete() const
-  { return getCollectedIdsCount() < getSignaledIdsCount(); }
+  { return getCollectedElementsCount() < getSignaledElementsCount(); }
 
   /**
    * @return A view on the ids array owned by the instance. -> change comment to explain the interest for kernels
    */
-  IdReporterCollector createCollector( arrayView1d< globalIndex const > const & localToGlobalId ) const;
+  ElementsReporterCollector createCollector( arrayView1d< globalIndex const > const & localToGlobalId ) const;
 
-  IdReporterOutput createOutput() const;
+  ElementsReporterOutput createOutput() const;
 
 private:
 
   // array of one element to get benefit of managed host-device memory.
-  array1d< IdCountType > m_idsCounter;
+  array1d< ElementCount > m_elementsCounter;
 
   // ids of detected elements
-  array1d< IdType > m_idsBuffer;
+  array1d< ElementReport > m_elementsBuffer;
 
 };
 

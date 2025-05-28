@@ -47,7 +47,7 @@ struct SolutionCheckKernel
                              arrayView1d< integer const > const & ghostRank,
                              arrayView1d< real64 const > const & pres,
                              real64 const scalingFactor,
-                             IdReporterCollector const & negPressureIds )
+                             ElementsReporterCollector const & negPressureIds )
   {
     using reducePolicy = ReducePolicy< POLICY >;
     using atomicPolicy = AtomicPolicy< POLICY >;
@@ -63,7 +63,7 @@ struct SolutionCheckKernel
         if( newPres < 0.0 )
         {
           minNegPres.min( newPres );
-          negPressureIds.collectId( atomicPolicy{}, ei );
+          negPressureIds.collectElement( atomicPolicy{}, { ei, newPres } );
         }
       }
 
