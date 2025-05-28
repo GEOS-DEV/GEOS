@@ -57,9 +57,9 @@ ElementsReporterOutput::ElementsReporterOutput( ElementsReporterBuffer const & b
 {}
 
 void ElementsReporterOutput::outputTooLowValues( string_view linesPrefix,
-                                                string_view valueNaming,
-                                                real64 minValue,
-                                                units::Unit unit ) const
+                                                 string_view valueNaming,
+                                                 real64 minValue,
+                                                 units::Unit unit ) const
 {
   if( m_buffer.enabled() )
   {
@@ -120,6 +120,11 @@ void ElementsReporterOutput::outputTooLowValues( string_view linesPrefix,
 
         TableTextFormatter const formatter( layout );
         GEOS_LOG( formatter.toString( data ) );
+      }
+      else
+      {
+        GEOS_LOG( GEOS_FMT( "{}Increase the log level to enable a reporting of the {} values.",
+                            string( linesPrefix.size(), ' ' ), valueNaming ) );
       }
     }
   }
