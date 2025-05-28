@@ -19,6 +19,7 @@
 
 #include "dataRepository/Group.hpp"
 #include "EventBase.hpp"
+#include "common/format/LogPart.hpp"
 
 namespace geos
 {
@@ -134,7 +135,19 @@ private:
    * @brief ouput time information to the log
    *
    */
-  void outputTime() const;
+  void outputTime( LogPart & section ) const;
+
+  /**
+   * @brief output information about the cycle to the log
+   * @param logpart the end of section to be displayed
+   * @param cycleNumber the current cycle number
+   * @param numOfSubSteps the number of substeps taken
+   * @param subStepDts the time step size for each substep
+   */
+  void logEndOfCycleInformation( LogPart & logpart,
+                                 integer const cycleNumber,
+                                 integer const numOfSubSteps,
+                                 std::vector< real64 > const & subStepDts ) const;
 
   /// Min time for a simulation
   real64 m_minTime;
