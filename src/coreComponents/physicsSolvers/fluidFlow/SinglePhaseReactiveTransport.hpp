@@ -95,6 +95,11 @@ public:
              DofManager & dofManager ) const override;
 
   virtual void
+  implicitStepSetup( real64 const & time_n,
+                     real64 const & dt,
+                     DomainPartition & domain ) override final;
+
+  virtual void
   assembleSystem( real64 const time_n,
                   real64 const dt,
                   DomainPartition & domain,
@@ -137,6 +142,8 @@ public:
   virtual void
   updateState ( DomainPartition & domain ) override final;
 
+  void updateMixedReactionSystem( ElementSubRegionBase & subRegion ) const;
+
   void updateSpeciesAmount( ElementSubRegionBase & subRegion ) const;
 
   virtual void updateFluidModel( ObjectManagerBase & dataGroup ) const override;
@@ -146,6 +153,12 @@ public:
   virtual void initializeFluidState( MeshLevel & mesh, string_array const & regionNames ) override;
 
   void initializeEquilibriumReaction( ElementSubRegionBase & subRegion ) const;
+
+  /**
+   * @brief Getter for the number of fluid components (species)
+   * @return the number of components
+   */
+  integer numPrimarySpecies() const { return m_numPrimarySpecies; }
 
   /**
    * @brief assembles the accumulation terms in total mass balance and primary species amount equation for all cells

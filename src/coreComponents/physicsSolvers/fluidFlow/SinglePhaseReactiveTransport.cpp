@@ -188,6 +188,30 @@ void SinglePhaseReactiveTransport::resetStateToBeginningOfStep( DomainPartition 
         updateSolidInternalEnergyModel( subRegion );
         updateEnergy( subRegion );
       }
+
+      updateMixedReactionSystem( subRegion );
+      updateSpeciesAmount( subRegion );
+    } );
+  } );
+}
+
+void SinglePhaseReactiveTransport::implicitStepSetup( real64 const & time_n,
+                                                      real64 const & dt,
+                                                      DomainPartition & domain )
+{
+  GEOS_MARK_FUNCTION;
+
+  SinglePhaseBase::implicitStepSetup( time_n, dt, domain );
+  
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                                               MeshLevel & mesh,
+                                                               string_array const & regionNames )
+  {
+    mesh.getElemManager().forElementSubRegions< CellElementSubRegion, SurfaceElementSubRegion >( regionNames, [&]( localIndex const,
+                                                                                                                   auto & subRegion )
+    {
+      updateMixedReactionSystem( subRegion );
+      updateSpeciesAmount( subRegion );
     } );
   } );
 }
@@ -373,6 +397,8 @@ void SinglePhaseReactiveTransport::updateState( DomainPartition & domain )
     mesh.getElemManager().forElementSubRegions< CellElementSubRegion, SurfaceElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                                                    auto & subRegion )
     {
+      updateMixedReactionSystem( subRegion );
+      
       updateSpeciesAmount( subRegion );
     } );
   } );
@@ -428,15 +454,32 @@ void SinglePhaseReactiveTransport::updateFluidModel( ObjectManagerBase & dataGro
   } );
 }
 
+void SinglePhaseReactiveTransport::updateMixedReactionSystem( ElementSubRegionBase & subRegion ) const
+{
+  GEOS_MARK_FUNCTION;
+
+  arrayView1d< real64 const > const pres = subRegion.getField< fields::flow::pressure >();
+  arrayView1d< real64 const > const temp = subRegion.getField< fields::flow::temperature >();
+  arrayView2d< real64 const, compflow::USD_COMP > const logPrimaryConc = subRegion.getField< fields::flow::logPrimarySpeciesConcentration >();
+
+  reactivefluid::ReactiveCompressibleSinglePhaseFluid & fluid =
+    getConstitutiveModel< reactivefluid::ReactiveCompressibleSinglePhaseFluid >( subRegion, subRegion.getReference< string >( viewKeyStruct::fluidNamesString() ) );
+
+  constitutive::constitutiveUpdatePassThru( fluid, [&]( auto & castedFluid )
+  {
+    singlePhaseReactiveBaseKernels::MixedSystemReactionUpdateKernel::launch( castedFluid, pres, temp, logPrimaryConc );
+  } );
+}
+
 void SinglePhaseReactiveTransport::initializeFluidState( MeshLevel & mesh, string_array const & regionNames )
 {
   mesh.getElemManager().forElementSubRegions< CellElementSubRegion, SurfaceElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                                                  auto & subRegion )
   {
     string const & fluidName = subRegion.template getReference< string >( viewKeyStruct::fluidNamesString() );
-    
+
     reactivefluid::ReactiveCompressibleSinglePhaseFluid const & fluid =
-      getConstitutiveModel< reactivefluid::ReactiveCompressibleSinglePhaseFluid >( subRegion, fluidName);
+      getConstitutiveModel< reactivefluid::ReactiveCompressibleSinglePhaseFluid >( subRegion, fluidName );
     updateFluidState( subRegion );
 
     // 2. save the initial density (for use in the single-phase poromechanics solver to compute the deltaBodyForce)
@@ -444,8 +487,12 @@ void SinglePhaseReactiveTransport::initializeFluidState( MeshLevel & mesh, strin
 
     initializeEquilibriumReaction( subRegion );
 
+    updateMixedReactionSystem( subRegion );
+
     SinglePhaseBase::updateMass( subRegion );
     updateSpeciesAmount( subRegion );
+
+    saveConvergedState( subRegion );
 
     // If the diffusion is supported, initialize the model
     if( m_hasDiffusion )
@@ -471,10 +518,10 @@ void SinglePhaseReactiveTransport::initializeEquilibriumReaction( ElementSubRegi
 
   constitutive::constitutiveUpdatePassThru( fluid, [&]( auto & castedFluid )
   {
-    arrayView2d< real64 const, compflow::USD_COMP > const primaryAggregateConc = castedFluid.primarySpeciesAggregateConcentration();
-
-    singlePhaseReactiveBaseKernels::EquilibriumReactionUpdateKernel::launch( castedFluid, pres, temp, logPrimaryConc, primaryAggregateConc );
+    singlePhaseReactiveBaseKernels::EquilibriumReactionUpdateKernel::launch( castedFluid, pres, temp, logPrimaryConc );
   } );
+
+  fluid.saveConvergedState();
 }
 
 void SinglePhaseReactiveTransport::initializePostInitialConditionsPreSubGroups()
@@ -1020,6 +1067,10 @@ void SinglePhaseReactiveTransport::applySystemSolution( DofManager const & dofMa
 void SinglePhaseReactiveTransport::saveConvergedState( ElementSubRegionBase & subRegion ) const
 {
   SinglePhaseBase::saveConvergedState( subRegion );
+
+  arrayView2d< real64 const, compflow::USD_COMP > const logPrimaryConc = subRegion.template getField< fields::flow::logPrimarySpeciesConcentration >();
+  arrayView2d< real64, compflow::USD_COMP > const logPrimarySpeciesConc_n = subRegion.template getField< fields::flow::logPrimarySpeciesConcentration_n >();
+  logPrimarySpeciesConc_n.setValues< parallelDevicePolicy<> >( logPrimaryConc );
 
   arrayView2d< real64 const, compflow::USD_COMP > const primarySpeciesAggregateMole = subRegion.template getField< fields::flow::primarySpeciesAggregateMole >();
   arrayView2d< real64, compflow::USD_COMP > const primarySpeciesAggregateMole_n = subRegion.template getField< fields::flow::primarySpeciesAggregateMole_n >();
