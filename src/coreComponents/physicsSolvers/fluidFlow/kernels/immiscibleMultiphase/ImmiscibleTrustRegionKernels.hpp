@@ -638,7 +638,7 @@ public:
 
             densMean[ip] += 0.5 * density;                                                           // rho = (rho1 + rho2) / 2  
             compressibility[ip][ke] = dDens_dP / density;                                            // cf = drho1 / rho1 || drho2 / rho2     
-            viscosibility[ip][ke] = -viscosity * dVisc_dP;                                           // cmu = -mu1 * dmu1 || -mu2 * dmu2
+            viscosibility[ip][ke] = dVisc_dP / viscosity;                                            // cmu = dmu1 / mu1  || dmu2 / mu2
           }          
 
           // compute potential difference before update  
@@ -976,6 +976,7 @@ public:
    * @param[in] rankOffset the offset of my MPI rank
    * @param[in] dofKey the string key to retrieve the degress of freedom numbers
    * @param[in] localSolution the residual vector on my MPI rank
+   * @param[in] globalKinkFactor kink restriction factor already computed
    * @param[in] solverName name of the solver (to name accessors)
    * @param[in] elemManager reference to the element region manager
    * @param[in] stencilWrapper reference to the stencil wrapper
@@ -1081,7 +1082,7 @@ public:
   /// Compute time value for the number of equations
   static constexpr integer numEqn = NUM_EQN;
 
-  /// Maximum number of elements at the face (equivalent to a connection with 4 elements)
+  /// Maximum number of elements at the face
   static constexpr localIndex maxNumConn = 6;
 
   /// Maximum number of nonlinear iterations
@@ -1114,7 +1115,7 @@ public:
       m_rankOffset( rankOffset ),
       m_dofNumber( dofNumberAccessor.toNestedViewConst() ),
       m_ghostRank( flowAccessors.get( fields::ghostRank {} ) ),
-      m_cellFaceMap (subregion.faceList().base().toView()),
+      m_connMap (subregion.faceList().base().toView()),
       m_gravCoef( flowAccessors.get( fields::flow::gravityCoefficient {} ) ),
       m_pres( flowAccessors.get( fields::flow::pressure {} ) ),
       m_phaseVolFrac( flowAccessors.get( fields::immiscibleMultiphaseFlow::phaseVolumeFraction {} ) ),
@@ -1143,47 +1144,21 @@ public:
 
   struct StackVariables
   {
-    /**
-     * @brief Constructor for the stack variables
-     * @param[in] numElems number of elements in this connection
-     */
-    GEOS_HOST_DEVICE
-    StackVariables( localIndex numElems )
-      : numFluxElems( numElems ),
-        nConn ( numElems * (numElems - 1) / 2 ),
-        localEps( numElems * (numElems - 1) / 2 * numEqn ),
-        connFactor( 1.0 ),
-        dPhi( numElems * (numElems - 1) / 2 * numEqn )
-    {}   
+  public:
+  
+    /// Storage for the phase local damping factors    
+    real64 localEps[numEqn]{};
 
-    /// Number of elements for a given connection
-    localIndex const numFluxElems;    
-
-    /// Number of pairwise connections
-    localIndex const nConn; 
-
-    /// Storage for the face local damping factors
-    stackArray1d< real64, maxNumConn * numEqn > localEps;
-
-    /// Storage for the minimum face local damping factor
-    real64 elemFactor;
+    /// Storage for the minimum cell local damping factor
+    real64 elemFactor = 1.0;
 
     /// Storage for the face potential differences
-    stackArray1d< real64, maxNumConn * numEqn > dPhi;
-  };
-
-  /**
-   * @brief Getter for the number of elements at this connection
-   * @param[in] iconn the connection index
-   * @return the number of elements at this connection
-   */
-  GEOS_HOST_DEVICE
-  localIndex numPointsInFlux( localIndex const iconn ) const
-  { return m_stencilWrapper.numPointsInFlux( iconn ); }
+    real64 dPhi[maxNumConn][numEqn]{};
+  };  
 
   /**
    * @brief Compute the local inflection damping factors for the connection
-   * @param[in] iconn the connection index
+   * @param[in] ei the cell index
    * @param[inout] stack the stack variables
    */  
   GEOS_HOST_DEVICE
@@ -1198,7 +1173,7 @@ public:
     localIndex const sesri[numConns][2];
     localIndex const sei[numConns][2];
 
-    real64 transmissibility[numConns][2];    
+    real64 transmissibility[numConns];    
 
     // build cell maps (assuming only 2 cells per connection) and get geometric transmissibilities
     for ( integer conn = 0; conn < numConns; ++conn )
@@ -1206,9 +1181,9 @@ public:
       localIndex const iconn = connList[conn];
 
       // cell indices
-      seri[conn][2]  = {m_seri( iconn, 0 ), m_seri( iconn, 1 )};
-      sesri[conn][2] = {m_sesri( iconn, 0 ), m_sesri( iconn, 1 )};
-      sei[conn][2]   = {m_sei( iconn, 0 ), m_sei( iconn, 1 )};
+      seri[conn][0] = m_seri( iconn, 0 );   seri[conn][1] = m_seri( iconn, 1 );
+      sesri[conn][0] = m_sesri( iconn, 0 ); sesri[conn][1] = m_sesri( iconn, 1 );
+      sei[conn][0] = m_sei( iconn, 0 );     sei[conn][1] = m_sei( iconn, 1 );      
 
       // transmissibilities
       real64 trans[1][2];
@@ -1233,8 +1208,7 @@ public:
       real64 phaseEps[2]{0.0, 1.0}; 
       real64 d2F[numConns][2]{};
       real64 d2R[2]{};      
-      real64 newD2F[numConns]{};
-      real64 newD2R{};      
+      real64 newD2F[numConns]{};            
 
       // loop through connections to compute directional derivative at eps = 0 and eps = 1
       for ( integer conn = 0; conn < numConns; ++conn )
@@ -1247,14 +1221,14 @@ public:
         for( integer ke = 0; ke < 2; ++ke )
         {
           real64 const density  = m_dens[seri[conn][ke]][sesri[conn][ke]][sei[conn][ke]][0][ip];                              // r = rho1 || rho2
-          real64 const dDens_dP = m_dDens_dPres[seri[conn][ke]][sesri[conn][ke]][sei[conn][ke]][0][ip][Deriv::dP];   // dr/dP = dr1/dP1 || dr2/dP
+          real64 const dDens_dP = m_dDens_dPres[seri[conn][ke]][sesri[conn][ke]][sei[conn][ke]][0][ip][Deriv::dP];     // dr/dP = dr1/dP1 || dr2/dP
 
           real64 const viscosity = m_phaseVisc[seri[conn][ke]][sesri[conn][ke]][sei[conn][ke]][0][ip];                        // mu = mu1 || mu2
           real64 const dVisc_dP  = m_dPhaseVisc[seri[conn][ke]][sesri[conn][ke]][sei[conn][ke]][0][ip][Deriv::dP];   // dmu/dP = dmu1/dP1 || dmu2/dP
 
           densMean += 0.5 * density;                                                                 // rho = (rho1 + rho2) / 2  
           compressibility[conn][ke] = dDens_dP / density;                                            // cf = drho1 / rho1 || drho2 / rho2     
-          viscosibility[conn][ke] = -viscosity * dVisc_dP;                                           // cmu = -mu1 * dmu1 || -mu2 * dmu2
+          viscosibility[conn][ke] = dVisc_dP / viscosity;                                            // cmu = dmu1 / mu1  || dmu2 / mu2
         }          
 
         // compute potential difference before update  
@@ -1288,8 +1262,9 @@ public:
                               fabs( d2R[0] ) > m_d2RMin &&
                               fabs( d2R[1] ) > m_d2RMin; ++iter )
       {
+        real64 newD2R{};
         real64 slope = (d2R[1] - d2R[0]) / (phaseEps[1] - phaseEps[0]);
-        eps[ip] = phaseEps[1] - d2R[1] / slope;
+        eps[ip] = phaseEps[1] - d2R[1] / slope;        
 
         // loop through connections to compute directional derivative at potential root
         for ( integer conn = 0; conn < numConns; ++conn )
@@ -1318,7 +1293,6 @@ public:
     } // loop through phases
     
   }
-
 
   /**
    * @brief Compute the directional second derivative of the phase flux function
@@ -1349,9 +1323,9 @@ public:
     localIndex down = 1 - up;
     
     // clear working variables
+    real64 gravD[2]{};
     real64 dens[2]{};
-    real64 viscosity[2]{};   
-    real64 gravD[2]{};  
+    real64 viscosity[2]{};     
     real64 capPres[2]{};  
     real64 dcapPres[2]{};
     real64 d2capPres[2]{};  
@@ -1381,13 +1355,13 @@ public:
       GEOS_ASSERT_GE( localRow, 0 );      
 
       dP[ke] = m_localSolution[localRow] * m_globalKinkFactor;     // dP = { dP1 , dP2 }
-      dS[ke] = m_localSolution[localRow + 1] * m_globalKinkFactor; // dS = { dS1 , dS2 }    // saturation change for nonspecified phase should be negative of dS
+      dS[ke] = m_localSolution[localRow + 1] * m_globalKinkFactor; // dS = { dS1 , dS2 }
     }
 
     // compute saturation of updated state
     for ( integer ke = 0; ke < 2; ++ke )
     {  
-      phaseVolFrac[ke] = ip == 0 ? m_phaseVolFrac[seri[ke]][sesri[ke]][sei[ke]][ip] + eps * dS[ke] :  // S = S + e.dS
+      phaseVolFrac[ke] = ip == 0 ? m_phaseVolFrac[seri[ke]][sesri[ke]][sei[ke]][ip] + eps * dS[ke] :  // S = S +- e.dS
                                    m_phaseVolFrac[seri[ke]][sesri[ke]][sei[ke]][ip] - eps * dS[ke] ;
              
     }
@@ -1395,15 +1369,19 @@ public:
     // get grav coef, rel perm and capillary pressure + derivatives      
     for ( integer ke = 0; ke < 2; ++ke )
     {      
-      gravD[ke] = m_gravCoef[seri[ke]][sesri[ke]][sei[ke]];  // D = { g z1 , g z2 }      
+      gravD[ke] = m_gravCoef[seri[ke]][sesri[ke]][sei[ke]];              // D = { g z1 , g z2 }      
 
       if ( m_hasCapPressure )
       {
-        (*m_capPressureWrapper).compute(phaseVolFrac[ke], ip, capPres[ke], dcapPres[ke], d2capPres[ke]);
+        (*m_capPressureWrapper).compute(phaseVolFrac[ke], ip, capPres[ke], dcapPres[ke], d2capPres[ke]);    // Pc   = { Pc1   || Pc2   }
+                                                                                                            // Pc'  = { Pc1'  || Pc2'  }
+                                                                                                            // Pc'' = { Pc1'' || Pc2'' }
       }      
     }
-    m_relPermWrapper.compute(phaseVolFrac[up], ip, perm, dperm, d2perm);
-    D = gravD[up] - gravD[down];   // D = g (zup - zdown)
+    m_relPermWrapper.compute(phaseVolFrac[up], ip, perm, dperm, d2perm);                                    // kr   = { krup   }
+                                                                                                            // kr'  = { krup'  }
+                                                                                                            // kr'' = { krup'' }
+    D = gravD[up] - gravD[down];                                         // D = g (zup - zdown)
 
     // get density, viscosity and potential difference
     if ( eps < 0.001 )
@@ -1411,8 +1389,8 @@ public:
       // get density and viscosity   
       for ( integer ke = 0; ke < 2; ++ke )
       {
-        dens[ke] = m_dens[seri[ke]][sesri[ke]][sei[ke]][0][ip];          // r = { r1 , r2 }
-        mu[ke] = m_phaseVisc[seri[ke]][sesri[ke]][sei[ke]][0][ip];       // r = { mu1 , mu2 }            
+        dens[ke] = m_dens[seri[ke]][sesri[ke]][sei[ke]][0][ip];                 // r  = { r1  , r2  }
+        viscosity[ke] = m_phaseVisc[seri[ke]][sesri[ke]][sei[ke]][0][ip];       // mu = { mu1 , mu2 }            
       }
 
       // get potential differece
@@ -1427,7 +1405,8 @@ public:
 
         real64 dDens;   
         real64 dVisc;    
-        m_fluidWrapper.compute(pressure[ke], ip, dens[ke], dDens, viscosity[ke], dVisc);  // r = { r1 , r2 } , dr = { dr1 , dr2 }             
+        m_fluidWrapper.compute(pressure[ke], ip, dens[ke], dDens, viscosity[ke], dVisc);  // r  = { r1  , r2  }
+                                                                                          // mu = { mu1 , mu2 }             
       }    
 
       // compute potential difference
@@ -1448,7 +1427,6 @@ public:
       }
       dPhi = fabs( dPhi );    
     }
-
 
     // compute partial second derivatives
     real64 d2Pi2 = perm * pow( comp[up] - visc[up], 2.0) * dPhi + 2 * perm * (comp[up] - visc[up]) + perm * comp[up] * (visc[up] - 1.5 * comp[up]) * dens[up] * D;
@@ -1472,8 +1450,8 @@ public:
 
     // compute directional second derivative
     d2F = d2Pi2 * pow( dP[up], 2.0 ) + d2Pj2 * pow( dP[down], 2.0 ) + d2Si2 * pow( dS[up], 2.0 ) + d2Sj2 * pow( dS[down], 2.0 )
-        + d2PiPj * 2 * dP[up] * dP[down] + d2PiSi * 2  * dP[up] * dS[up] + d2PiSj * 2  * dP[up] * dS[down]
-        + d2PjSi * 2  * dP[down] * dS[up] + d2SiSj * 2  * dS[up] * dS[down];
+        + d2PiPj * 2 * dP[up] * dP[down] + d2PiSi * 2 * dP[up] * dS[up] + d2PiSj * 2 * dP[up] * dS[down]
+        + d2PjSi * 2 * dP[down] * dS[up] + d2SiSj * 2 * dS[up] * dS[down];
     d2F *= trans * dens[up] / viscosity[up];
   }
 
@@ -1489,29 +1467,27 @@ public:
 
   /**
    * @brief Performs the complete phase for the kernel.
-   * @param[in] iconn the connection index
+   * @param[in] ei the cell index
    * @param[inout] stack the stack variables
    */                                 
   GEOS_HOST_DEVICE
   void complete( localIndex const ei,
                  StackVariables & stack ) const
   {
-    for( integer ic = 0; ic < stack.nConn; ++ic )
+    for ( integer ip = 0; ip < m_numPhases; ++ip )
     {
-      for (integer ip = 0; ip < m_numPhases; ++ip )
-      {
-        stack.connFactor = LvArray::math::min( stack.connFactor, stack.localEps[ic * numEqn + ip] );
-      }  
+      stack.elemFactor = LvArray::math::min( stack.elemFactor, stack.localEps[ip] );
     }   
+    stack.elemFactor = LvArray::math::min( stack.elemFactor, m_minFactor );
   }  
 
   /**
    * @brief Performs the kernel launch
    * @tparam POLICY the policy used in the RAJA kernels
    * @tparam KERNEL_TYPE the kernel type
-   * @param[in] numConnections the number of connections
-   * @param[inout] kernelComponent the kernel component providing access to the compute function and stack variables
-   * @param[in] inflectionFactor the minimum inflection damping factor for the current stencil
+   * @param[in] numElems the number of elements
+   * @param[in] kernelComponent the kernel component providing access to the compute function and stack variables
+   * @param[inout] inflectionFactor the minimum inflection damping factor for the current stencil
    */
   template< typename POLICY, typename KERNEL_TYPE >
   static void 
@@ -1530,12 +1506,12 @@ public:
         return;
       }
       
-      typename KERNEL_TYPE::StackVariables stack( kernelComponent.numPointsInFlux( iconn ) ); // TODO
+      typename KERNEL_TYPE::StackVariables stack;
       
       kernelComponent.computeInflection( ei, stack );
       kernelComponent.complete( ei, stack );
 
-      minInflectionFactor.min( stack.connFactor );
+      minInflectionFactor.min( stack.elemFactor );
     } );
 
     inflectionFactor = minInflectionFactor.get();
@@ -1623,6 +1599,7 @@ public:
    * @param[in] rankOffset the offset of my MPI rank
    * @param[in] dofKey the string key to retrieve the degress of freedom numbers
    * @param[in] localSolution the residual vector on my MPI rank
+   * @param[in] globalKinkFactor kink restriction factor already computed
    * @param[in] solverName name of the solver (to name accessors)
    * @param[in] elemManager reference to the element region manager
    * @param[in] subRegion reference to the subregion

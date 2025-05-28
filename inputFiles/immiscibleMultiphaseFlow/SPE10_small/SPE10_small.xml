@@ -1,0 +1,52 @@
+<?xml version="1.0" ?>
+
+<Problem>
+
+  <Included>
+    <File name="./SPE10_base.xml"/>
+  </Included>
+
+  <Events
+    maxTime="8.64e5">
+
+    <PeriodicEvent
+      name="solverApplications"
+      forceDt="8.64e5"
+      target="/Solvers/FlowSolver"/>
+
+    <PeriodicEvent
+      name="outputs"
+      timeFrequency="50e7" 
+      targetExactTimestep="1"
+      target="/Outputs/SPE10_small"/>
+      <!-- timeFrequency="50e6
+           maxTime="500e7" -->
+  </Events>
+  
+  <Mesh>
+    <InternalMesh
+      name="mesh"
+      elementTypes="{ C3D8 }"
+      xCoords="{ 0, 182.871 }"
+      yCoords="{ 0, 91.436 }"
+      zCoords="{ 0, 21.335 }"
+      nx="{ 30 }"
+      ny="{ 30 }"
+      nz="{ 35 }"
+      cellBlockNames="{ block }"/>
+  </Mesh>
+
+  <Geometry>
+
+    <Box
+      name="source"
+      xMin="{ 146.2, 73.1, 14.0 }"
+      xMax="{ 152.4, 76.2, 14.7 }"/>
+    <Box
+      name="sink"
+      xMin="{ 30.4, 15.2, 3.6 }"
+      xMax="{ 36.6, 18.3, 4.3 }"/>    
+    
+  </Geometry>
+  
+</Problem>

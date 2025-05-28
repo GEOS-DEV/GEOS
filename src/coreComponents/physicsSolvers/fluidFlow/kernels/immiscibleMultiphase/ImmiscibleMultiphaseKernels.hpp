@@ -1813,7 +1813,7 @@ public:
 
 
 template< integer NUM_EQN, integer NUM_DOF, typename STENCILWRAPPER, typename FLUIDWRAPPER, typename RELPERMWRAPPER, typename CAPPRESWRAPPER >
-class InflectionFactorKernel
+class FluxInflectionFactorKernel
 {
 public:
 
@@ -1872,20 +1872,20 @@ public:
    static constexpr real64 m_minFactor = 0.1;
 
 
-  InflectionFactorKernel( integer const numPhases,
-                          globalIndex const rankOffset,
-                          arrayView1d< real64 const > const & localSolution,
-                          real64 const globalKinkFactor,
-                          STENCILWRAPPER const & stencilWrapper,
-                          FLUIDWRAPPER const & fluidWrapper,
-                          RELPERMWRAPPER const & relPermWrapper,
-                          CAPPRESWRAPPER const * capPressureWrapper,
-                          DofNumberAccessor const & dofNumberAccessor,
-                          ImmiscibleMultiphaseFlowAccessors const & flowAccessors,
-                          MultiphaseFluidAccessors const & fluidAccessors,
-                          RelPermAccessors const & relPermAccessor,
-                          CapPressureAccessors const & capPressureAccessors,                    
-                          integer const hasCapPressure )
+  FluxInflectionFactorKernel( integer const numPhases,
+                              globalIndex const rankOffset,
+                              arrayView1d< real64 const > const & localSolution,
+                              real64 const globalKinkFactor,
+                              STENCILWRAPPER const & stencilWrapper,
+                              FLUIDWRAPPER const & fluidWrapper,
+                              RELPERMWRAPPER const & relPermWrapper,
+                              CAPPRESWRAPPER const * capPressureWrapper,
+                              DofNumberAccessor const & dofNumberAccessor,
+                              ImmiscibleMultiphaseFlowAccessors const & flowAccessors,
+                              MultiphaseFluidAccessors const & fluidAccessors,
+                              RelPermAccessors const & relPermAccessor,
+                              CapPressureAccessors const & capPressureAccessors,                    
+                              integer const hasCapPressure )
     : m_numPhases( numPhases ),
       m_rankOffset( rankOffset ),
       m_dofNumber( dofNumberAccessor.toNestedViewConst() ),
@@ -2003,7 +2003,7 @@ public:
 
             densMean[ip] += 0.5 * density;                                                           // rho = (rho1 + rho2) / 2  
             compressibility[ip][ke] = dDens_dP / density;                                            // cf = drho1 / rho1 || drho2 / rho2     
-            viscosibility[ip][ke] = -viscosity * dVisc_dP;                                           // cmu = -mu1 * dmu1 || -mu2 * dmu2
+            viscosibility[ip][ke] = dVisc_dP / viscosity;                                            // cmu = dmu1 / mu1  || dmu2 / mu2
           }          
 
           // compute potential difference before update  
@@ -2328,9 +2328,9 @@ protected:
 };
 
 /**
- * @class InflectionFactorKernelFactory
+ * @class FluxInflectionFactorKernelFactory
  */
-class InflectionFactorKernelFactory
+class FluxInflectionFactorKernelFactory
 {
 public:
 
@@ -2373,7 +2373,7 @@ public:
       elemManager.constructArrayViewAccessor< globalIndex, 1 >( dofKey );
     dofNumberAccessor.setName( solverName + "/accessors/" + dofKey );
 
-    using kernelType = InflectionFactorKernel< NUM_EQN, NUM_DOF, STENCILWRAPPER, FLUIDWRAPPER, RELPERMWRAPPER, CAPPRESWRAPPER >;
+    using kernelType = FluxInflectionFactorKernel< NUM_EQN, NUM_DOF, STENCILWRAPPER, FLUIDWRAPPER, RELPERMWRAPPER, CAPPRESWRAPPER >;
     typename kernelType::ImmiscibleMultiphaseFlowAccessors flowAccessors( elemManager, solverName );
     typename kernelType::MultiphaseFluidAccessors fluidAccessors( elemManager, solverName );
     typename kernelType::RelPermAccessors relPermAccessor( elemManager, solverName );
@@ -2384,6 +2384,31 @@ public:
                        dofNumberAccessor, flowAccessors, fluidAccessors, relPermAccessor,
                        capPressureAccessors, hasCapPressure );
     kernelType::template launch< POLICY >( stencilWrapper.size(), kernel, inflectionFactor );    
+  }
+};
+
+class ResidualInflectionFactorKernelFactory
+{
+public:  
+  template< typename POLICY, typename STENCILWRAPPER, typename FLUIDWRAPPER, typename RELPERMWRAPPER, typename CAPPRESWRAPPER >
+  static void
+  createAndLaunch( integer const numPhases,
+                   globalIndex const rankOffset,
+                   string const dofKey,
+                   arrayView1d< real64 const > const & localSolution,
+                   real64 const globalKinkFactor,
+                   string const & solverName,
+                   ElementRegionManager const & elemManager,
+                   ElementSubRegionBase const & subRegion,
+                   STENCILWRAPPER const & stencilWrapper,
+                   FLUIDWRAPPER const & fluidWrapper,
+                   RELPERMWRAPPER const & relPermWrapper,
+                   CAPPRESWRAPPER const * capPressureWrapper,
+                   integer const hasCapPressure,                  
+                   real64 & inflectionFactor )
+  {
+    GEOS_UNUSED_VAR(numPhases, rankOffset, dofKey, localSolution, globalKinkFactor, solverName, elemManager, subRegion,
+                    stencilWrapper, fluidWrapper, relPermWrapper, capPressureWrapper, hasCapPressure, inflectionFactor);
   }
 };
 
