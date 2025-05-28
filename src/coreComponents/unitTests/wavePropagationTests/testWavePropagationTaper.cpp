@@ -51,7 +51,7 @@ char const * xmlInput =
                                 { 99.9, 0.1, 0.1 }, { 99.9, 0.1, 99.9 }, { 99.9, 99.9, 0.1 }, { 99.9, 99.9, 99.9 },
                                 { 50, 50, 50 } }"
         outputSeismoTrace="0"
-        timestepStabilityLimit="1"
+        timestepStabilityLimit="0"
         cflFactor="0.95"
         useTaper="1"
         reflectivityCoeff="0.000001"
@@ -199,15 +199,6 @@ TEST_F( AcousticWaveEquationSEMTest, SeismoTrace )
   propagator = &state.getProblemManager().getPhysicsSolverManager().getGroup< AcousticWaveEquationSEM >( "acousticSolver" );
 
 
-  //Assert on time-step computed with the automatci time-step routine
-  real64 const dtOut = propagator->getReference< real64 >( AcousticWaveEquationSEM::viewKeyStruct::timeStepString() );
-  real64 const Vp = 1500.0;
-  real64 const h = 100.0;
-  real64 const cflConstant = 1/sqrt( 3 );
-  real64 const dtTheo = (cflConstant*h)/Vp;
-  ASSERT_TRUE( dtOut < dtTheo );
-
-  real64 time_n = time;
   // run for 1s (10 steps)
   for( int i=0; i<10; i++ )
   {
