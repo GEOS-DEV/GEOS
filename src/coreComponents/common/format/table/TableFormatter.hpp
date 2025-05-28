@@ -260,14 +260,14 @@ private:
   /**
    * @brief Outputs the formatted table to the provided output stream.
    * @param tableLayout The layout of the table
-   * @param tableOutput A reference to an `std::ostringstream` where the formatted table will be written.
+   * @param tableOutput A reference to an `std::ostream` where the formatted table will be written.
    * @param headerCellsLayout The layout of the header rows
    * @param dataCellsLayout The layout of the data rows
    * @param errorCellsLayout The layout of the error rows
    * @param separatorLine The string to be used as the table separator line
    */
   void outputTable( PreparedTableLayout const & tableLayout,
-                    std::ostringstream & tableOutput,
+                    std::ostream & tableOutput,
                     CellLayoutRows const & headerCellsLayout,
                     CellLayoutRows const & dataCellsLayout,
                     CellLayoutRows & errorCellsLayout,
@@ -277,21 +277,21 @@ private:
    * @brief Outputs the formatted table lines to the output stream.
    * @param tableLayout The layout of the table
    * @param cellsLayout A collection of rows, each containing a layout of cells to be processed and formatted.
-   * @param tableOutput A reference to an `std::ostringstream` where the formatted table will be written.
+   * @param tableOutput A reference to an `std::ostream` where the formatted table will be written.
    */
   void outputLines( PreparedTableLayout const & tableLayout,
                     CellLayoutRows const & cellsLayout,
-                    std::ostringstream & tableOutput ) const;
+                    std::ostream & tableOutput ) const;
 
   /**
    * @brief Outputs the formatted table lines to the output stream.
    * @param tableLayout The layout of the table
    * @param errorCellsLayout The layout of the error rows
-   * @param tableOutput A reference to an `std::ostringstream` where the formatted table will be written.
+   * @param tableOutput A reference to an `std::ostream` where the formatted table will be written.
    */
   void outputErrors( PreparedTableLayout const & tableLayout,
                      CellLayoutRows & errorCellsLayout,
-                     std::ostringstream & tableOutput ) const;
+                     std::ostream & tableOutput ) const;
 
   /**
    * @brief Populate a grid of CellLayout with the title rows.
@@ -389,7 +389,7 @@ private:
    * @param cell The cell to format
    * @param idxLine The current line index used to access the specific content for the cell.
    */
-  void formatCell( std::ostringstream & tableOutput,
+  void formatCell( std::ostream & tableOutput,
                    TableLayout::CellLayout const & cell,
                    size_t idxLine ) const;
 };

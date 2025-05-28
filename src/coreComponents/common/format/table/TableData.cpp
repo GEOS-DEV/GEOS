@@ -158,9 +158,9 @@ TableData2D::TableDataHolder TableData2D::buildTableData( string_view targetUnit
     tableData1D.headerNames.push_back( GEOS_FMT( columnFmt, columnValue ) );
   }
 
-  for( auto errorIt = m_errors->begin(); errorIt != m_errors->end(); errorIt++ )
+    for( auto const & error : *m_errors )
   {
-    tableData1D.tableData.getErrorsList().addError( *errorIt );
+    tableData1D.tableData.getErrorsList().addError( error );
   }
 
   // insert row value and row cell values

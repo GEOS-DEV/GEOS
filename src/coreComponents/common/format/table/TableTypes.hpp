@@ -68,40 +68,40 @@ public:
    * @return An Iterator pointing to the first element of the errors vector
    */
   Iterator begin() const
-  { return errorText.begin(); }
+  { return m_errorList.begin(); }
 
   /**
    * @return An Iterator pointing to the last element of the errors vector
    */
   Iterator end() const
-  { return errorText.end(); }
+  { return m_errorList.end(); }
 
   /**
    * @brief Append a vector of string to the errors vector.
    * @param errors A vector of string to append
    */
   void appendErrors( std::vector< string > & errors )
-  { errorText.insert( errorText.end(), errors.begin(), errors.end() );}
+  { m_errorList.insert( m_errorList.end(), errors.begin(), errors.end() );}
 
   /**
    * @return A const reference to the errors vector.
    */
   std::vector< string > const & getErrors() const
-  { return errorText; }
+  { return m_errorList; }
 
 private:
   /// Contain all the errors  to display at the end of the table
-  std::vector< string > errorText;
+  std::vector< string > m_errorList;
 };
 
 inline void TableErrorListing::addError( string_view text )
-{ errorText.emplace_back( text ); }
+{ m_errorList.emplace_back( text ); }
 
 inline bool TableErrorListing::hasErrors() const
-{ return errorText.size() != 0; }
+{ return m_errorList.size() != 0; }
 
 inline void TableErrorListing::clear()
-{ errorText.clear(); }
+{ m_errorList.clear(); }
 
 }
 
