@@ -323,7 +323,7 @@ public:
         // Step 2.2: compute speciesFlux derivative wrt temperature
         for( integer is = 0; is < numSpecies; ++is )
         {
-          real64 const aggregateConc_i = m_primarySpeciesAggregateConc[er_up][esr_up][ei_up][is];
+          real64 const aggregateConc_i = m_primarySpeciesAggregateConc[er_up][esr_up][ei_up][0][is];
 
           // real64 const dAggregateConc_i_dTemp = m_dPrimarySpeciesAggregateConcentration_dTemp[er_up][esr_up][ei_up][is];
           // dSpeciesFlux_dT[k_up][is] += dAggregateConc_i_dTemp * fluxVal / fluidDens_up;
@@ -484,7 +484,7 @@ public:
         // dSpeciesGrad_dT[ke] += stack.diffusionTransmissibility[connectionIndex][ke]
         //                        * m_dPrimarySpeciesAggregateConcentration_dTemp[er][esr][ei][is];
 
-        dSpeciesGrad_dT[ke] += stack.dDiffusionTrans_dT[connectionIndex][ke] * m_primarySpeciesAggregateConc[er][esr][ei][is];
+        dSpeciesGrad_dT[ke] += stack.dDiffusionTrans_dT[connectionIndex][ke] * m_primarySpeciesAggregateConc[er][esr][ei][0][is];
       }
 
       for( integer ke = 0; ke < numFluxSupportPoints; ke++ )

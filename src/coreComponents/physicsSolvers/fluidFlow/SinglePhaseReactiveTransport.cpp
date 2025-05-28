@@ -23,6 +23,7 @@
 #include "constitutive/ConstitutivePassThru.hpp"
 #include "constitutive/diffusion/DiffusionFields.hpp"
 #include "constitutive/diffusion/DiffusionSelector.hpp"
+#include "constitutive/fluid/reactivefluid/ReactiveFluidLayouts.hpp"
 #include "constitutive/fluid/reactivefluid/ReactiveSinglePhaseFluid.hpp"
 #include "constitutive/fluid/reactivefluid/ReactiveSinglePhaseFluid.cpp"
 #include "constitutive/fluid/reactivefluid/ReactiveFluidSelector.hpp"
@@ -394,17 +395,17 @@ void SinglePhaseReactiveTransport::updateSpeciesAmount( ElementSubRegionBase & s
 
   reactivefluid::ReactiveCompressibleSinglePhaseFluid & fluid =
     getConstitutiveModel< reactivefluid::ReactiveCompressibleSinglePhaseFluid >( subRegion, subRegion.getReference< string >( viewKeyStruct::fluidNamesString() ) );
-  arrayView2d< real64 const, compflow::USD_COMP > const primarySpeciesAggregateConcentration = fluid.primarySpeciesAggregateConcentration();
-  arrayView2d< real64 const, compflow::USD_COMP > const primarySpeciesAggregateConcentration_n = fluid.primarySpeciesAggregateConcentration_n();
+  arrayView3d< real64 const, reactivefluid::USD_SPECIES > const primarySpeciesAggregateConcentration = fluid.primarySpeciesAggregateConcentration();
+  arrayView3d< real64 const, reactivefluid::USD_SPECIES > const primarySpeciesAggregateConcentration_n = fluid.primarySpeciesAggregateConcentration_n();
 
   forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const ei )
   {
     for( integer is = 0; is < m_numPrimarySpecies; ++is )
     {
-      primarySpeciesAggregateMole[ei][is] = porosity[ei][0] * ( volume[ei] + deltaVolume[ei] ) * primarySpeciesAggregateConcentration[ei][is];
+      primarySpeciesAggregateMole[ei][is] = porosity[ei][0] * ( volume[ei] + deltaVolume[ei] ) * primarySpeciesAggregateConcentration[ei][0][is];
 
       if( isZero( primarySpeciesAggregateMole_n[ei][is] ) )
-        primarySpeciesAggregateMole_n[ei][is] = porosity_n[ei][0] * volume[ei] * primarySpeciesAggregateConcentration_n[ei][is];
+        primarySpeciesAggregateMole_n[ei][is] = porosity_n[ei][0] * volume[ei] * primarySpeciesAggregateConcentration_n[ei][0][is];
     }
   } );
 }

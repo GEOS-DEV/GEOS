@@ -33,84 +33,84 @@ namespace constitutive
 
 namespace reactivefluid
 {
-  struct DerivativeOffset
-  {
-    /// index of derivative wrt pressure
-    static integer constexpr dP = 0;
-    /// index of derivative wrt temperature
-    static integer constexpr dT = 1;
-    /// index of first derivative wrt compositions
-    static integer constexpr dC = 2;
-  };
-  
-  /// indices of pressure, temperature, and composition derivatives
-  template< integer NC, integer IS_THERMAL >
-  struct DerivativeOffsetC {};
-  
-  template< integer NC >
-  struct DerivativeOffsetC< NC, 1 >
-  {
-    /// index of derivative wrt pressure
-    static integer constexpr dP = 0;
-    /// index of derivative wrt temperature
-    static integer constexpr dT = dP + 1;
-    /// index of first derivative wrt compositions
-    static integer constexpr dC = dP+2;
-    /// number of derivatives
-    static integer constexpr nDer =  NC + 2;
-  };
-  template< integer NC >
-  struct DerivativeOffsetC< NC, 0 >
-  {
-    /// index of derivative wrt pressure
-    static integer constexpr dP = 0;
-    /// index of first derivative wrt compositions
-    static integer constexpr dC = dP+1;
-    /// number of derivatives
-    static integer constexpr nDer =  NC + 1;
-  };
-  
+struct DerivativeOffset
+{
+  /// index of derivative wrt pressure
+  static integer constexpr dP = 0;
+  /// index of derivative wrt temperature
+  static integer constexpr dT = 1;
+  /// index of first derivative wrt compositions
+  static integer constexpr dC = 2;
+};
+
+/// indices of pressure, temperature, and composition derivatives
+template< integer NC, integer IS_THERMAL >
+struct DerivativeOffsetC {};
+
+template< integer NC >
+struct DerivativeOffsetC< NC, 1 >
+{
+  /// index of derivative wrt pressure
+  static integer constexpr dP = 0;
+  /// index of derivative wrt temperature
+  static integer constexpr dT = dP + 1;
+  /// index of first derivative wrt compositions
+  static integer constexpr dC = dP+2;
+  /// number of derivatives
+  static integer constexpr nDer =  NC + 2;
+};
+template< integer NC >
+struct DerivativeOffsetC< NC, 0 >
+{
+  /// index of derivative wrt pressure
+  static integer constexpr dP = 0;
+  /// index of first derivative wrt compositions
+  static integer constexpr dC = dP+1;
+  /// number of derivatives
+  static integer constexpr nDer =  NC + 1;
+};
+
   #if defined( GEOS_USE_DEVICE )
-  
-  /// Constitutive model phase property array layout
-  using LAYOUT_PHASE = RAJA::PERM_JKI;
-  /// Constitutive model phase property compositional derivative array layout
-  using LAYOUT_PHASE_DC = RAJA::PERM_JKLI;
-  
-  /// Constitutive model phase composition array layout
-  using LAYOUT_PHASE_COMP = RAJA::PERM_JKLI;
-  /// Constitutive model phase composition compositional derivative array layout
-  using LAYOUT_PHASE_COMP_DC = RAJA::PERM_JKLMI;
-  
-  /// Constitutive model fluid property array layout
-  using LAYOUT_FLUID = RAJA::PERM_JI;
-  /// Constitutive model fluid property compositional derivative array layout
-  using LAYOUT_FLUID_DC = RAJA::PERM_JKI;
-  
+
+/// Constitutive model phase property array layout
+using LAYOUT_PHASE = RAJA::PERM_JKI;
+/// Constitutive model phase property compositional derivative array layout
+using LAYOUT_PHASE_DC = RAJA::PERM_JKLI;
+
+/// Constitutive model phase composition array layout
+using LAYOUT_PHASE_COMP = RAJA::PERM_JKLI;
+/// Constitutive model phase composition compositional derivative array layout
+using LAYOUT_PHASE_COMP_DC = RAJA::PERM_JKLMI;
+
+/// Constitutive model fluid property array layout
+using LAYOUT_FLUID = RAJA::PERM_JI;
+/// Constitutive model fluid property compositional derivative array layout
+using LAYOUT_FLUID_DC = RAJA::PERM_JKI;
+
   #else
 
-  /// Constitutive model phase composition array layout
-  using LAYOUT_COMP = RAJA::PERM_IJ;
-  /// Constitutive model phase composition compositional derivative array layout
-  using LAYOUT_COMP_DC = RAJA::PERM_IJK;
-  
-  /// Constitutive model fluid property array layout
-  using LAYOUT_FLUID = RAJA::PERM_IJ;
-  /// Constitutive model fluid property compositional derivative array layout
-  using LAYOUT_FLUID_DC = RAJA::PERM_IJK;
-  
+/// Constitutive model species variable array array layout
+using LAYOUT_SPECIES = RAJA::PERM_IJK;
+/// Constitutive model species derivative of species variable array layout
+using LAYOUT_SPECIES_DC = RAJA::PERM_IJKL;
+
+/// Constitutive model fluid property array layout
+using LAYOUT_FLUID = RAJA::PERM_IJ;
+/// Constitutive model fluid property species derivative array layout
+using LAYOUT_FLUID_DC = RAJA::PERM_IJK;
+
   #endif
 
-  
-  /// Constitutive model phase composition unit stride dimension
-  static constexpr int USD_COMP = LvArray::typeManipulation::getStrideOneDimension( LAYOUT_COMP{} );
-  /// Constitutive model phase composition compositional derivative unit stride dimension
-  static constexpr int USD_COMP_DC = LvArray::typeManipulation::getStrideOneDimension( LAYOUT_COMP_DC{} );
-  
-  /// Constitutive model fluid property unit stride dimension
-  static constexpr int USD_FLUID = LvArray::typeManipulation::getStrideOneDimension( LAYOUT_FLUID{} );
-  /// Constitutive model fluid property compositional derivative unit stride dimension
-  static constexpr int USD_FLUID_DC = LvArray::typeManipulation::getStrideOneDimension( LAYOUT_FLUID_DC{} );
+
+/// Constitutive model phase composition unit stride dimension
+static constexpr int USD_SPECIES = LvArray::typeManipulation::getStrideOneDimension( LAYOUT_SPECIES{} );
+/// Constitutive model phase composition compositional derivative unit stride dimension
+static constexpr int USD_SPECIES_DC = LvArray::typeManipulation::getStrideOneDimension( LAYOUT_SPECIES_DC{} );
+
+/// Constitutive model fluid property unit stride dimension
+static constexpr int USD_FLUID = LvArray::typeManipulation::getStrideOneDimension( LAYOUT_FLUID{} );
+/// Constitutive model fluid property compositional derivative unit stride dimension
+static constexpr int USD_FLUID_DC = LvArray::typeManipulation::getStrideOneDimension( LAYOUT_FLUID_DC{} );
 
 } // namespace reactivefluid
 } // namespace constitutive

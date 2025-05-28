@@ -32,36 +32,36 @@ namespace fields
 namespace reactivefluid
 {
 
-using array2dLayoutComp = array2d< real64, constitutive::reactivefluid::LAYOUT_COMP >;
-using array3dLayoutComp_dC = array3d< real64, constitutive::reactivefluid::LAYOUT_COMP_DC >;
+using array3dLayoutSpecies = array3d< real64, constitutive::reactivefluid::LAYOUT_SPECIES >;
+using array4dLayoutSpecies_dC = array4d< real64, constitutive::reactivefluid::LAYOUT_SPECIES_DC >;
 
 DECLARE_FIELD( primarySpeciesConcentration,
                "primarySpeciesConcentration",
-               array2dLayoutComp,
-               0,
+               array3dLayoutSpecies,
+               1e-16,
                LEVEL_0,
                WRITE_AND_READ,
                "primarySpeciesConcentration" );
 
 DECLARE_FIELD( primarySpeciesAggregateConcentration,
                "primarySpeciesAggregateConcentration",
-               array2dLayoutComp,
-               0,
+               array3dLayoutSpecies,
+               1e-16,
                LEVEL_0,
                WRITE_AND_READ,
                "primarySpeciesAggregateConcentration" );
 
 DECLARE_FIELD( primarySpeciesAggregateConcentration_n,
                "primarySpeciesAggregateConcentration_n",
-               array2dLayoutComp,
-               0,
+               array3dLayoutSpecies,
+               1e-16,
                LEVEL_0,
                WRITE_AND_READ,
                "primarySpeciesAggregateConcentration at the previous timestep" );
 
-DECLARE_FIELD( dPrimarySpeciesAggregateConcentration_dLogPrimaryConc,
-               "dPrimarySpeciesAggregateConcentration_dLogPrimaryConc",
-               array3dLayoutComp_dC,
+DECLARE_FIELD( dPrimarySpeciesAggregateConcentration_dLogPrimarySpeciesConcentrations,
+               "dPrimarySpeciesAggregateConcentration_dLogPrimarySpeciesConcentrations",
+               array4dLayoutSpecies_dC,
                0,
                LEVEL_0,
                WRITE_AND_READ,
@@ -69,19 +69,35 @@ DECLARE_FIELD( dPrimarySpeciesAggregateConcentration_dLogPrimaryConc,
 
 DECLARE_FIELD( secondarySpeciesConcentration,
                "secondarySpeciesConcentration",
-               array2dLayoutComp,
-               0,
+               array3dLayoutSpecies,
+               1e-16,
                LEVEL_0,
                WRITE_AND_READ,
                "secondarySpeciesConcentration" );
 
 DECLARE_FIELD( kineticReactionRates,
                "kineticReactionRates",
-               array2dLayoutComp,
+               array3dLayoutSpecies,
                0,
                LEVEL_0,
                WRITE_AND_READ,
                "kineticReactionRates" );
+
+DECLARE_FIELD( aggregateSpeciesRates,
+               "aggregateSpeciesRates",
+               array3dLayoutSpecies,
+               0,
+               LEVEL_0,
+               WRITE_AND_READ,
+               "aggregateSpeciesRates" );
+
+DECLARE_FIELD( dAggregateSpeciesRates_dLogPrimarySpeciesConcentrations,
+               "dAggregateSpeciesRates_dLogPrimarySpeciesConcentrations",
+               array4dLayoutSpecies_dC,
+               0,
+               LEVEL_0,
+               WRITE_AND_READ,
+               "Deivatives of aggregate concentration rates w.r.t log primary species concentration" );
 }
 
 }

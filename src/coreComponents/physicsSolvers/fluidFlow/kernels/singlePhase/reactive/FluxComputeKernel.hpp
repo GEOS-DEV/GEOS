@@ -96,7 +96,7 @@ public:
   using ReactiveSinglePhaseFluidAccessors =
     StencilMaterialAccessors< constitutive::reactivefluid::ReactiveSinglePhaseFluid< constitutive::CompressibleSinglePhaseFluid >,
                               fields::reactivefluid::primarySpeciesAggregateConcentration,
-                              fields::reactivefluid::dPrimarySpeciesAggregateConcentration_dLogPrimaryConc >;
+                              fields::reactivefluid::dPrimarySpeciesAggregateConcentration_dLogPrimarySpeciesConcentrations >;
 
   using DiffusionAccessors =
     StencilMaterialAccessors< constitutive::DiffusionBase,
@@ -150,7 +150,7 @@ public:
     m_logPrimarySpeciesConc( reactiveSinglePhaseFlowAccessors.get( fields::flow::logPrimarySpeciesConcentration {} ) ),
     m_dMob_dLogPrimaryConc( reactiveSinglePhaseFlowAccessors.get( fields::flow::dMobility_dLogPrimaryConc {} ) ),
     m_primarySpeciesAggregateConc( reactiveSinglePhaseFluidAccessors.get( fields::reactivefluid::primarySpeciesAggregateConcentration {} ) ),
-    m_dPrimarySpeciesAggregateConc_dLogPrimaryConc( reactiveSinglePhaseFluidAccessors.get( fields::reactivefluid::dPrimarySpeciesAggregateConcentration_dLogPrimaryConc {} ) ),
+    m_dPrimarySpeciesAggregateConc_dLogPrimaryConc( reactiveSinglePhaseFluidAccessors.get( fields::reactivefluid::dPrimarySpeciesAggregateConcentration_dLogPrimarySpeciesConcentrations {} ) ),
     m_diffusivity( diffusionAccessors.get( fields::diffusion::diffusivity {} ) ),
     m_dDiffusivity_dTemp( diffusionAccessors.get( fields::diffusion::dDiffusivity_dTemperature {} ) ),
     m_referencePorosity( porosityAccessors.get( fields::porosity::referencePorosity {} ) ),
@@ -244,7 +244,7 @@ public:
       // compute species fluxes and derivatives using upstream cell concentration
       for( integer is = 0; is < numSpecies; ++is )
       {
-        real64 const aggregateConc_i = m_primarySpeciesAggregateConc[er_up][esr_up][ei_up][is];
+        real64 const aggregateConc_i = m_primarySpeciesAggregateConc[er_up][esr_up][ei_up][0][is];
         speciesFlux[is] = aggregateConc_i / fluidDens_up * fluxVal;
 
         for( integer ke = 0; ke < numFluxSupportPoints; ++ke )
@@ -256,7 +256,7 @@ public:
 
         for( integer js = 0; js < numSpecies; ++js )
         {
-          real64 const dAggregateConc_i_dLogConc_j = m_dPrimarySpeciesAggregateConc_dLogPrimaryConc[er_up][esr_up][ei_up][is][js];
+          real64 const dAggregateConc_i_dLogConc_j = m_dPrimarySpeciesAggregateConc_dLogPrimaryConc[er_up][esr_up][ei_up][0][is][js];
           dSpeciesFlux_dLogConc[k_up][is][js] += dAggregateConc_i_dLogConc_j / fluidDens_up * fluxVal;
         }
       }
@@ -349,13 +349,13 @@ public:
               localIndex const esr = sesri[ke];
               localIndex const ei  = sei[ke];
 
-              real64 const aggregateConc_i = m_primarySpeciesAggregateConc[er][esr][ei][is];
+              real64 const aggregateConc_i = m_primarySpeciesAggregateConc[er][esr][ei][0][is];
 
               speciesGrad[is] += diffusionTrans[ke] * aggregateConc_i;
 
               for( integer js = 0; js < numSpecies; ++js )
               {
-                real64 const dAggregateConc_i_dLogConc_j = m_dPrimarySpeciesAggregateConc_dLogPrimaryConc[er][esr][ei][is][js];
+                real64 const dAggregateConc_i_dLogConc_j = m_dPrimarySpeciesAggregateConc_dLogPrimaryConc[er][esr][ei][0][is][js];
 
                 dSpeciesGrad_i_dLogConc[ke][js] += diffusionTrans[ke] * dAggregateConc_i_dLogConc_j;
               }
@@ -478,10 +478,10 @@ protected:
   ElementViewConst< arrayView2d< real64 const, compflow::USD_FLUID_DC > > const m_dMob_dLogPrimaryConc;
 
   /// Views on primary species aggregate concentration
-  ElementViewConst< arrayView2d< real64 const, compflow::USD_COMP > > const m_primarySpeciesAggregateConc;
+  ElementViewConst< arrayView3d< real64 const, constitutive::reactivefluid::USD_SPECIES > > const m_primarySpeciesAggregateConc;
 
   /// Views on the derivative of primary species aggregate concentration wrt log of primary concentration
-  ElementViewConst< arrayView3d< real64 const, compflow::USD_COMP_DC > > const m_dPrimarySpeciesAggregateConc_dLogPrimaryConc;
+  ElementViewConst< arrayView4d< real64 const, constitutive::reactivefluid::USD_SPECIES_DC > > const m_dPrimarySpeciesAggregateConc_dLogPrimaryConc;
 
   /// Views on diffusivity
   ElementViewConst< arrayView3d< real64 const > > const m_diffusivity;

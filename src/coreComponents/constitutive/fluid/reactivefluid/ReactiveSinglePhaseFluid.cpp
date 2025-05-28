@@ -43,14 +43,17 @@ ReactiveSinglePhaseFluid( string const & name, Group * const parent ):
     setDescription( "Chemical System type. Available options are: "
                     "``" + EnumStrings< ChemicalSystemType >::concat( "|" ) + "``" );
   // For now this is being hardcoded. We will see where this should come from.
-  m_numPrimarySpecies = 5;
-  m_numSecondarySpecies = 11;
+  m_numPrimarySpecies = 8; // 3 for simple; 7 for carbonateSystemAllEquilibrium; 8 for carbonate
+  m_numSecondarySpecies = 10; // 2 for simple; 11 for carbonateSystemAllEquilibrium; 10 for carbonate
+  m_numKineticReactions = 1;
 
-  this->registerField( fields::reactivefluid::primarySpeciesConcentration{}, &m_primarySpeciesConcentration );
   this->registerField( fields::reactivefluid::secondarySpeciesConcentration{}, &m_secondarySpeciesConcentration );
   this->registerField( fields::reactivefluid::primarySpeciesAggregateConcentration{}, &m_primarySpeciesAggregateConcentration );
   this->registerField( fields::reactivefluid::primarySpeciesAggregateConcentration_n{}, &m_primarySpeciesAggregateConcentration_n );
-  this->registerField( fields::reactivefluid::dPrimarySpeciesAggregateConcentration_dLogPrimaryConc{}, &m_dPrimarySpeciesAggregateConcentration_dLogPrimaryConc );
+  this->registerField( fields::reactivefluid::dPrimarySpeciesAggregateConcentration_dLogPrimarySpeciesConcentrations{}, &m_dPrimarySpeciesAggregateConcentration_dLogPrimarySpeciesConcentrations );
+  this->registerField( fields::reactivefluid::kineticReactionRates{}, &m_kineticReactionRates );
+  this->registerField( fields::reactivefluid::aggregateSpeciesRates{}, &m_aggregateSpeciesRates );
+  this->registerField( fields::reactivefluid::dAggregateSpeciesRates_dLogPrimarySpeciesConcentrations{}, &m_dAggregateSpeciesRates_dLogPrimarySpeciesConcentrations );
 }
 
 template< typename BASE >
@@ -86,12 +89,15 @@ void ReactiveSinglePhaseFluid< BASE >::resizeFields( localIndex const size, loca
   GEOS_UNUSED_VAR( numPts );
   integer const numPrimarySpecies = this->numPrimarySpecies();
   integer const numSecondarySpecies = this->numSecondarySpecies();
+  integer const numKineticReactions = this->numKineticReactions();
 
-  m_primarySpeciesConcentration.resize( size, numPrimarySpecies );
-  m_secondarySpeciesConcentration.resize( size, numSecondarySpecies );
-  m_primarySpeciesAggregateConcentration.resize( size, numPrimarySpecies );
-  m_primarySpeciesAggregateConcentration_n.resize( size, numPrimarySpecies );
-  m_dPrimarySpeciesAggregateConcentration_dLogPrimaryConc.resize( size, numPrimarySpecies, numPrimarySpecies );
+  m_secondarySpeciesConcentration.resize( size, numPts, numSecondarySpecies );
+  m_primarySpeciesAggregateConcentration.resize( size, numPts, numPrimarySpecies );
+  m_primarySpeciesAggregateConcentration_n.resize( size, numPts, numPrimarySpecies );
+  m_dPrimarySpeciesAggregateConcentration_dLogPrimarySpeciesConcentrations.resize( size, numPts, numPrimarySpecies, numPrimarySpecies );
+  m_kineticReactionRates.resize( size, numPts, numKineticReactions );
+  m_aggregateSpeciesRates.resize( size, numPts, numPrimarySpecies );
+  m_dAggregateSpeciesRates_dLogPrimarySpeciesConcentrations.resize( size, numPts, numPrimarySpecies, numPrimarySpecies );
 }
 
 template< typename BASE >
