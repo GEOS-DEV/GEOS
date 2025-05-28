@@ -18,7 +18,6 @@
  * @file TableFormatter.cpp
  */
 
-#include "TableFormatter.hpp"
 #include <numeric>
 #include "common/format/StringUtilities.hpp"
 #include "common/logger/Logger.hpp"
@@ -696,4 +695,5 @@ void TableTextFormatter::outputLines( PreparedTableLayout const & tableLayout,
     idxRow++;
   }
 }
-}
+
+} /* namespace geos */
