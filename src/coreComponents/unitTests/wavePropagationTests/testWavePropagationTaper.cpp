@@ -51,11 +51,11 @@ char const * xmlInput =
                                 { 99.9, 0.1, 0.1 }, { 99.9, 0.1, 99.9 }, { 99.9, 99.9, 0.1 }, { 99.9, 99.9, 99.9 },
                                 { 50, 50, 50 } }"
         outputSeismoTrace="0"
-        timestepStabilityLimit="0"
-        cflFactor="0.95"
+        timestepStabilityLimit="1"
         useTaper="1"
-        reflectivityCoeff="0.000001"
-        thicknessTaper="50"
+        thicknessTaper="50.0"
+        reflectivityCoeff="0.00001"
+        cflFactor="0.95"
         dtSeismoTrace="0.1"/>
     </Solvers>
     <Mesh>
@@ -130,14 +130,14 @@ char const * xmlInput =
       <FieldSpecification
         name="cellVelocity"
         initialCondition="1"
-        objectPath="mesh/FE1/ElementRegions/Region/cb"
+        objectPath="ElementRegions/Region/cb"
         fieldName="acousticVelocity"
         scale="1500"
         setNames="{ all }"/>
       <FieldSpecification
         name="cellDensity"
         initialCondition="1"
-        objectPath="mesh/FE1/ElementRegions/Region/cb"
+        objectPath="ElementRegions/Region/cb"
         fieldName="acousticDensity"
         scale="1"
         setNames="{ all }"/>
@@ -197,6 +197,15 @@ TEST_F( AcousticWaveEquationSEMTest, SeismoTrace )
 
   DomainPartition & domain = state.getProblemManager().getDomainPartition();
   propagator = &state.getProblemManager().getPhysicsSolverManager().getGroup< AcousticWaveEquationSEM >( "acousticSolver" );
+
+
+  //Assert on time-step computed with the automatci time-step routine
+  real64 const dtOut = propagator->getReference< real64 >( AcousticWaveEquationSEM::viewKeyStruct::timeStepString() );
+  real64 const Vp = 1500.0;
+  real64 const h = 100.0;
+  real64 const cflConstant = 1/sqrt( 3 );
+  real64 const dtTheo = (cflConstant*h)/Vp;
+  ASSERT_TRUE( dtOut < dtTheo );
 
   real64 time_n = time;
   // run for 1s (10 steps)
