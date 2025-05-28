@@ -358,6 +358,11 @@ public:
   void calculateElementGeometricQuantities( NodeManager const & nodeManager,
                                             FaceManager const & faceManager ) override;
 
+
+  void addToConnectorList( localIndex const elemIndex, 
+                           localIndex const connectorIndex ) 
+  { m_toConnectors.emplaceBack( elemIndex, connectorIndex ); }
+
 private:
 
   /// Map used for constitutive grouping
@@ -417,6 +422,9 @@ private:
   /// A 2D array is needed to store both the face ID in the physical space
   /// and the corresponding face ID in the parent element space.
   array2d< localIndex > m_toFaceElements;
+
+  /// list of the indices of all stencil connections for a give cell   
+  ArrayOfArrays< localIndex > m_toConnectors;
 
   /**
    * @brief Pack element-to-node and element-to-face maps
