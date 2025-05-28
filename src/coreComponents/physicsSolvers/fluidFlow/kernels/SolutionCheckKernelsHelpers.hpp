@@ -110,61 +110,6 @@ private:
 
 };
 
-// /**
-//  * @brief TODO
-//  * @tparam AtomicPolicy The policy of the atomic increment on idsCounter.
-//  * @tparam KernelStackArray TODO
-//  * @tparam IdType TODO
-//  * @tparam IdCountType TODO
-//  * @param idsCounter The ids counter to increment with an atomic operation.
-//  * @param idsBuffer The output id buffer, in the same memory space as idsCounter.
-//  *                  If its size is 0 (= disabled output) or not not large enought, the buffer is not filled.
-//  * @param id The Id to add to the buffer.
-//  * @return TODO
-//  */
-// template< typename AtomicPolicy, typename OutputStackArray, typename IdType, typename IdCountType >
-// GEOS_HOST_DEVICE
-// void collectKernelId( IdCountType & idsCounter, OutputStackArray & idsBuffer, IdType id )
-// {
-//   static constexpr IdCountType addingRequest = 1;
-//   IdCountType const idsBufferStart = RAJA::atomicAdd< AtomicPolicy >( &idsCounter, addingRequest );
-//   if( idsBufferStart < idsBuffer.size() )
-//   {
-//     idsBuffer[idsBufferStart] = kernelIds[i];
-//   }
-// }
-
-// // // currently unused version for adding multiple ids from a given kernel
-// // template< typename ReducePolicy, typename OutputStackArray, typename KernelStackArray, typename IdCountType >
-// // GEOS_HOST_DEVICE
-// // void collectKernelIds( OutputStackArray & outputBuffer,
-// //                        IdCountType & outputIdsCounter,
-// //                        KernelStackArray const & kernelIds,
-// //                        IdCountType const kernelIdsCount )
-// // {
-// //   IdCountType const outputBufferStart = RAJA::atomicAdd< ReducePolicy >( &outputIdsCounter, kernelIdsCount );
-// //   IdCountType const maxNbIdToAdd = IdCountType( outputBuffer.capacity() - outputBufferStart );
-// //   IdCountType const nbIdToAdd = LvArray::math::min( kernelIdsCount, maxNbIdToAdd );
-// //   for( IdCountType i = 0; i < nbIdToAdd; ++i )
-// //   {
-// //     outputBuffer[outputBufferStart + i] = kernelIds[i];
-// //   }
-// // }
-
-// template< typename OutputDynamicArray, typename InputArray, typename IdCountType >
-// void aggregateIdsBuffers( OutputDynamicArray & outputBuffer,
-//                           IdCountType & outputIdsCounter,
-//                           InputArray const & ids,
-//                           IdCountType const idsCount )
-// {
-//   outputIdsCounter += idsCount;
-//   IdCountType const numIdsToAdd = std::min( idsCount, IdCountType( ids.capacity() ) );
-//   for( int i = 0; i < numIdsToAdd; ++i )
-//   {
-//     outputBuffer.emplace_back( ids[i] );   // todo local -> global
-//   }
-// }
-
 } // namespace geos
 
 
