@@ -296,7 +296,7 @@ void CompositionalMultiphaseWell::registerDataOnMesh( Group & meshBodies )
 
 void CompositionalMultiphaseWell::setConstitutiveNames( ElementSubRegionBase & subRegion ) const
 {
-  setConstitutiveName< MultiFluidBase >( subRegion, viewKeyStruct::fluidNamesString() );
+  setConstitutiveName< MultiFluidBase >( subRegion, viewKeyStruct::fluidNamesString(), "multiphase fluid" );
 }
 
 namespace

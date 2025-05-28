@@ -228,8 +228,8 @@ public:
     static constexpr char const * maxRelativePresChangeString() { return "maxRelativePressureChange"; }
     static constexpr char const * useTotalMassEquationString() { return "useTotalMassEquation"; }
 
-    static constexpr char const * capPressureNamesString() { return "capillary pressure"; }
-    static constexpr char const * relPermNamesString() { return "relative permeability"; }
+    static constexpr char const * capPressureNamesString() { return "capillary_pressure"; }
+    static constexpr char const * relPermNamesString() { return "relative_permeability"; }
     static constexpr char const * elemDofFieldString() { return "elemDofField"; }
   };
 

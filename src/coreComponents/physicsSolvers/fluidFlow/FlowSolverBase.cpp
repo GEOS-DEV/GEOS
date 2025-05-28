@@ -311,13 +311,13 @@ void FlowSolverBase::setConstitutiveNamesCallSuper( ElementSubRegionBase & subRe
 {
   PhysicsSolverBase::setConstitutiveNamesCallSuper( subRegion );
 
-  setConstitutiveName< CoupledSolidBase >( subRegion, viewKeyStruct::solidNamesString());
+  setConstitutiveName< CoupledSolidBase >( subRegion, viewKeyStruct::solidNamesString(), "coupled solid" );
 
-  setConstitutiveName< PermeabilityBase >( subRegion, viewKeyStruct::permeabilityNamesString());
+  setConstitutiveName< PermeabilityBase >( subRegion, viewKeyStruct::permeabilityNamesString(), "permeability" );
 
   if( m_isThermal )
   {
-    setConstitutiveName< SolidInternalEnergy >( subRegion, viewKeyStruct::solidInternalEnergyNamesString());
+    setConstitutiveName< SolidInternalEnergy >( subRegion, viewKeyStruct::solidInternalEnergyNamesString(), "solid internal energy" );
   }
 }
 

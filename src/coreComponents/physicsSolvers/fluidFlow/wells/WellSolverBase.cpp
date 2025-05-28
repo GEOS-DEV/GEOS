@@ -158,15 +158,6 @@ void WellSolverBase::initializePostSubGroups()
   } );
 }
 
-void WellSolverBase::setConstitutiveNamesCallSuper( ElementSubRegionBase & subRegion ) const
-{
-  PhysicsSolverBase::setConstitutiveNamesCallSuper( subRegion );
-  subRegion.registerWrapper< string >( viewKeyStruct::fluidNamesString() ).
-    setPlotLevel( PlotLevel::NOPLOT ).
-    setRestartFlags( RestartFlags::NO_WRITE ).
-    setSizedFromParent( 0 );
-}
-
 void WellSolverBase::setupDofs( DomainPartition const & domain,
                                 DofManager & dofManager ) const
 {

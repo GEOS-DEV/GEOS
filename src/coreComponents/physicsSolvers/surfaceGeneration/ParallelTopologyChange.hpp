@@ -20,7 +20,6 @@
 #ifndef GEOS_PHYSICSSOLVERS_SURFACEGENERATION_PARALLELTOPOLOGYCHANGE_HPP_
 #define GEOS_PHYSICSSOLVERS_SURFACEGENERATION_PARALLELTOPOLOGYCHANGE_HPP_
 
-//#include "physicsSolvers/surfaceGeneration/SurfaceGenerator.hpp"
 #include "common/DataTypes.hpp"
 #include "mesh/ElementRegionManager.hpp"
 

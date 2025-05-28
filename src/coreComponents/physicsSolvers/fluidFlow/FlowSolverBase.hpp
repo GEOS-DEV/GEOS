@@ -80,11 +80,11 @@ public:
     static constexpr char const * maxSequentialPresChangeString() { return "maxSequentialPressureChange"; }
     static constexpr char const * maxSequentialTempChangeString() { return "maxSequentialTemperatureChange"; }
 
-    static constexpr char const * fluidNamesString() { return "fluid"; }
-    static constexpr char const * solidNamesString() { return "solid"; }
-    static constexpr char const * permeabilityNamesString() { return "permeability"; }
-    static constexpr char const * solidInternalEnergyNamesString() { return "solid internal energy"; }
-    static constexpr char const * thermalConductivityNamesString() { return "thermal conductivity"; }
+    static constexpr char const * fluidNamesString() { return "fluidNames"; }
+    static constexpr char const * solidNamesString() { return "solidNames"; }
+    static constexpr char const * permeabilityNamesString() { return "permeabilityNames"; }
+    static constexpr char const * solidInternalEnergyNamesString() { return "solidInternalEnergyNames"; }
+    static constexpr char const * thermalConductivityNamesString() { return "thermalConductivityNames"; }
   };
 
   /**

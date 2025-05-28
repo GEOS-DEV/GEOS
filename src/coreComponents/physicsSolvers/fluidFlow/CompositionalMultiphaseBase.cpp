@@ -365,17 +365,17 @@ void CompositionalMultiphaseBase::registerDataOnMesh( Group & meshBodies )
     {
       if( m_hasCapPressure )
       {
-        setConstitutiveName< CapillaryPressureBase >( subRegion, viewKeyStruct::capPressureNamesString() );
+        setConstitutiveName< CapillaryPressureBase >( subRegion, viewKeyStruct::capPressureNamesString(), "capillary pressure" );
       }
 
       if( m_hasDiffusion )
       {
-        setConstitutiveName< DiffusionBase >( subRegion, viewKeyStruct::diffusionNamesString() );
+        setConstitutiveName< DiffusionBase >( subRegion, viewKeyStruct::diffusionNamesString(), "diffusion" );
       }
 
       if( m_hasDispersion )
       {
-        setConstitutiveName< DispersionBase >( subRegion, viewKeyStruct::dispersionNamesString() );
+        setConstitutiveName< DispersionBase >( subRegion, viewKeyStruct::dispersionNamesString(), "dispersion" );
       }
 
       string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
@@ -463,13 +463,13 @@ void CompositionalMultiphaseBase::registerDataOnMesh( Group & meshBodies )
 
 void CompositionalMultiphaseBase::setConstitutiveNames( ElementSubRegionBase & subRegion ) const
 {
-  setConstitutiveName< MultiFluidBase >( subRegion, viewKeyStruct::fluidNamesString() );
+  setConstitutiveName< MultiFluidBase >( subRegion, viewKeyStruct::fluidNamesString(), "multiphase fluid" );
 
-  setConstitutiveName< RelativePermeabilityBase >( subRegion, viewKeyStruct::relPermNamesString() );
+  setConstitutiveName< RelativePermeabilityBase >( subRegion, viewKeyStruct::relPermNamesString(), "relative permeability" );
 
   if( m_isThermal )
   {
-    setConstitutiveName< MultiPhaseThermalConductivityBase >( subRegion, viewKeyStruct::thermalConductivityNamesString() );
+    setConstitutiveName< MultiPhaseThermalConductivityBase >( subRegion, viewKeyStruct::thermalConductivityNamesString(), "multiphase thermal conductivity" );
   }
 }
 

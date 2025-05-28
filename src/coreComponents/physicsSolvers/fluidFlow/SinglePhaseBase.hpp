@@ -377,8 +377,6 @@ protected:
    */
   void initializeAquiferBC() const;
 
-  virtual void setConstitutiveNamesCallSuper( ElementSubRegionBase & subRegion ) const override;
-
   /**
    * @brief Utility function to save the converged state
    * @param[in] subRegion the element subRegion

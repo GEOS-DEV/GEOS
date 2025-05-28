@@ -995,9 +995,10 @@ protected:
    * @tparam CONSTITUTIVE_TYPE the type of the constitutive model.
    * @param subRegion the element subregion on which the constitutive model is registered
    * @param wrapperName the name of the wrapper to set
+   * @param constitutiveType the constitutive model name for error message output
    */
-  template< typename CONSTITUTIVE_TYPE >
-  void setConstitutiveName( ElementSubRegionBase & subRegion, string const & wrapperName ) const;
+  template< typename CONSTITUTIVE >
+  void setConstitutiveName( ElementSubRegionBase & subRegion, string const & wrapperName, string const & constitutiveType ) const;
 
   /// Courant–Friedrichs–Lewy factor for the timestep
   real64 m_cflFactor;
@@ -1124,8 +1125,8 @@ string PhysicsSolverBase::getConstitutiveName( ParticleSubRegionBase const & sub
   return validName;
 }
 
-template< typename CONSTITUTIVE_TYPE >
-void PhysicsSolverBase::setConstitutiveName( ElementSubRegionBase & subRegion, string const & wrapperName ) const
+template< typename CONSTITUTIVE >
+void PhysicsSolverBase::setConstitutiveName( ElementSubRegionBase & subRegion, string const & wrapperName, string const & constitutiveType ) const
 {
   subRegion.registerWrapper< string >( wrapperName ).
     setPlotLevel( dataRepository::PlotLevel::NOPLOT ).
@@ -1133,9 +1134,9 @@ void PhysicsSolverBase::setConstitutiveName( ElementSubRegionBase & subRegion, s
     setSizedFromParent( 0 );
 
   string & constitutiveName = subRegion.getReference< string >( wrapperName );
-  constitutiveName = getConstitutiveName< CONSTITUTIVE_TYPE >( subRegion );
+  constitutiveName = getConstitutiveName< CONSTITUTIVE >( subRegion );
   GEOS_ERROR_IF( constitutiveName.empty(), GEOS_FMT( "{}: {} constitutive model not found on subregion {}",
-                                                     getDataContext(), wrapperName, subRegion.getName() ) );
+                                                     getDataContext(), constitutiveType, subRegion.getName() ) );
 }
 
 } // namespace geos

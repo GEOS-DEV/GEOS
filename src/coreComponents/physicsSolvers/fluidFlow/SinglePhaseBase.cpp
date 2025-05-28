@@ -131,18 +131,13 @@ void SinglePhaseBase::registerDataOnMesh( Group & meshBodies )
   } );
 }
 
-void SinglePhaseBase::setConstitutiveNamesCallSuper( ElementSubRegionBase & subRegion ) const
-{
-  FlowSolverBase::setConstitutiveNamesCallSuper( subRegion );
-}
-
 void SinglePhaseBase::setConstitutiveNames( ElementSubRegionBase & subRegion ) const
 {
-  setConstitutiveName< SingleFluidBase >( subRegion, viewKeyStruct::fluidNamesString() );
+  setConstitutiveName< SingleFluidBase >( subRegion, viewKeyStruct::fluidNamesString(), "singlephase fluid" );
 
   if( m_isThermal )
   {
-    setConstitutiveName< SinglePhaseThermalConductivityBase >( subRegion, viewKeyStruct::thermalConductivityNamesString() );
+    setConstitutiveName< SinglePhaseThermalConductivityBase >( subRegion, viewKeyStruct::thermalConductivityNamesString(), "singlephase thermal conductivity" );
   }
 }
 

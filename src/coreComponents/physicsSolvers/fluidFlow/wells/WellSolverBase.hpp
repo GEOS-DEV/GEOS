@@ -279,7 +279,7 @@ public:
     static constexpr char const * writeCSVFlagString() { return "writeCSV"; }
     static constexpr char const * timeStepFromTablesFlagString() { return "timeStepFromTables"; }
 
-    static constexpr char const * fluidNamesString() { return "fluid"; }
+    static constexpr char const * fluidNamesString() { return "fluidNames"; }
   };
 
 private:
@@ -289,9 +289,6 @@ private:
    * @param domain the domain parition
    */
   void precomputeData( DomainPartition & domain );
-
-  virtual void setConstitutiveNamesCallSuper( ElementSubRegionBase & subRegion ) const override;
-
 
 protected:
 
