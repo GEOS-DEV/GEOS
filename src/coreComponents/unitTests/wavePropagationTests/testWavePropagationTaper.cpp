@@ -198,7 +198,7 @@ TEST_F( AcousticWaveEquationSEMTest, SeismoTrace )
   DomainPartition & domain = state.getProblemManager().getDomainPartition();
   propagator = &state.getProblemManager().getPhysicsSolverManager().getGroup< AcousticWaveEquationSEM >( "acousticSolver" );
 
-
+  real64 time_n = time;
   // run for 1s (10 steps)
   for( int i=0; i<10; i++ )
   {
