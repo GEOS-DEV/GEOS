@@ -21,6 +21,7 @@
 #include "constitutive/fluid/multifluid/compositional/parameters/ImmiscibleWaterParameters.hpp"
 #include "constitutive/fluid/multifluid/compositional/parameters/EquationOfState.hpp"
 #include "constitutive/fluid/multifluid/compositional/parameters/CriticalVolume.hpp"
+#include "constitutive/fluid/multifluid/compositional/parameters/BrineSalinity.hpp"
 
 namespace geos
 {
@@ -56,6 +57,9 @@ ImmiscibleWaterFlashModel::createKernelWrapper() const
   EquationOfStateType const liquidEos =  EnumStrings< EquationOfStateType >::fromString( equationOfState->m_equationsOfStateNames[liquidIndex] );
   EquationOfStateType const vapourEos =  EnumStrings< EquationOfStateType >::fromString( equationOfState->m_equationsOfStateNames[vapourIndex] );
 
+  BrineSalinity const * brineSalinity = m_parameters.get< BrineSalinity >();
+  real64 const salinity = (brineSalinity == nullptr) ? 0.0 : brineSalinity->m_salinity;
+
   CriticalVolume const * criticalVolume = m_parameters.get< CriticalVolume >();
 
   return KernelWrapper( m_componentProperties.getNumberOfComponents(),
@@ -65,6 +69,7 @@ ImmiscibleWaterFlashModel::createKernelWrapper() const
                         m_waterComponentIndex,
                         liquidEos,
                         vapourEos,
+                        salinity,
                         criticalVolume->m_componentCriticalVolume );
 }
 
@@ -76,12 +81,14 @@ ImmiscibleWaterFlashModelUpdate::ImmiscibleWaterFlashModelUpdate(
   integer const waterComponentIndex,
   EquationOfStateType const liquidEos,
   EquationOfStateType const vapourEos,
+  real64 const salinity,
   arrayView1d< real64 const > const componentCriticalVolume ):
   m_twoPhaseModel( numComponents,
                    liquidIndex,
                    vapourIndex,
                    liquidEos,
                    vapourEos,
+                   salinity,
                    componentCriticalVolume ),
   m_numComponents( numComponents ),
   m_liquidIndex( liquidIndex ),
