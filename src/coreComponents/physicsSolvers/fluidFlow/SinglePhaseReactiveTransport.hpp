@@ -254,8 +254,6 @@ public:
 
 protected:
 
-  virtual FluidPropViews getFluidProperties( constitutive::ConstitutiveBase const & fluid ) const override;
-
   /// the number of primary species in the fluid
   integer m_numPrimarySpecies;
 

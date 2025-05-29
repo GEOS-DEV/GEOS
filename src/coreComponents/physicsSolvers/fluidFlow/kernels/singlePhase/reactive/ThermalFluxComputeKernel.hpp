@@ -40,8 +40,8 @@ namespace thermalSinglePhaseReactiveFVMKernels
  * @tparam STENCILWRAPPER the type of the stencil wrapper
  * @brief Define the interface for the assembly kernel in charge of flux terms
  */
-template< integer NUM_SPECIES, integer NUM_EQN, integer NUM_DOF, typename STENCILWRAPPER >
-class FluxComputeKernel : public singlePhaseReactiveFVMKernels::FluxComputeKernel< NUM_SPECIES, NUM_EQN, NUM_DOF, STENCILWRAPPER >
+template< integer NUM_SPECIES, integer NUM_EQN, integer NUM_DOF, typename STENCILWRAPPER, typename BASE_FLUID_TYPE >
+class FluxComputeKernel : public singlePhaseReactiveFVMKernels::FluxComputeKernel< NUM_SPECIES, NUM_EQN, NUM_DOF, STENCILWRAPPER, BASE_FLUID_TYPE >
 {
 public:
 
@@ -69,7 +69,7 @@ public:
   using AbstractBase::m_dens;
   using AbstractBase::m_dDens;
 
-  using Base = singlePhaseReactiveFVMKernels::FluxComputeKernel< NUM_SPECIES, NUM_EQN, NUM_DOF, STENCILWRAPPER >;
+  using Base = singlePhaseReactiveFVMKernels::FluxComputeKernel< NUM_SPECIES, NUM_EQN, NUM_DOF, STENCILWRAPPER, BASE_FLUID_TYPE >;
   using ReactiveSinglePhaseFlowAccessors = typename Base::ReactiveSinglePhaseFlowAccessors;
   using ReactiveSinglePhaseFluidAccessors = typename Base::ReactiveSinglePhaseFluidAccessors;
   using DiffusionAccessors = typename Base::DiffusionAccessors;
@@ -92,7 +92,7 @@ public:
     StencilAccessors< fields::flow::temperature >;
 
   using ThermalReactiveSinglePhaseFluidAccessors =
-    StencilMaterialAccessors< constitutive::reactivefluid::ReactiveSinglePhaseFluid< constitutive::CompressibleSinglePhaseFluid >,
+    StencilMaterialAccessors< constitutive::reactivefluid::ReactiveSinglePhaseFluid< BASE_FLUID_TYPE >,
                               fields::singlefluid::enthalpy,
                               fields::singlefluid::dEnthalpy >;
 
@@ -600,7 +600,7 @@ public:
         elemManager.constructArrayViewAccessor< globalIndex, 1 >( dofKey );
       dofNumberAccessor.setName( solverName + "/accessors/" + dofKey );
 
-      using KernelType = FluxComputeKernel< NUM_SPECIES, NUM_EQN, NUM_DOF, STENCILWRAPPER >;
+      using KernelType = FluxComputeKernel< NUM_SPECIES, NUM_EQN, NUM_DOF, STENCILWRAPPER, constitutive::ThermalCompressibleSinglePhaseFluid >;
       typename KernelType::SinglePhaseFlowAccessors flowAccessors( elemManager, solverName );
       typename KernelType::ReactiveSinglePhaseFlowAccessors reactiveFlowAccessors( elemManager, solverName );
       typename KernelType::ThermalSinglePhaseFlowAccessors thermalFlowAccessors( elemManager, solverName );

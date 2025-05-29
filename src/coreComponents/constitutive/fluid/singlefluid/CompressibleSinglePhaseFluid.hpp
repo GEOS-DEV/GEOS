@@ -136,7 +136,7 @@ public:
                        localIndex const q,
                        real64 const pressure,
                        real64 const GEOS_UNUSED_PARAM( temperature ),
-                       arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & GEOS_UNUSED_PARAM( composition ) ) const override
+                       arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & GEOS_UNUSED_PARAM( logPrimaryConcentration ) ) const override
   {
     compute( pressure,
              m_density[k][q],

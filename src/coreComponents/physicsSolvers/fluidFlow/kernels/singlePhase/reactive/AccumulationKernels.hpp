@@ -40,7 +40,7 @@ namespace singlePhaseReactiveBaseKernels
  * @class AccumulationKernel
  * @brief Define the interface for the assembly kernel in charge of accumulation
  */
-template< typename SUBREGION_TYPE, integer NUM_DOF, integer NUM_SPECIES >
+template< typename SUBREGION_TYPE, integer NUM_DOF, integer NUM_SPECIES, typename BASE_FLUID_TYPE >
 class AccumulationKernel : public singlePhaseBaseKernels::AccumulationKernel< SUBREGION_TYPE, NUM_DOF >
 {
 
@@ -75,7 +75,7 @@ public:
   AccumulationKernel( globalIndex const rankOffset,
                       string const dofKey,
                       SUBREGION_TYPE const & subRegion,
-                      constitutive::reactivefluid::ReactiveSinglePhaseFluid< constitutive::CompressibleSinglePhaseFluid > const & fluid,
+                      constitutive::reactivefluid::ReactiveSinglePhaseFluid< BASE_FLUID_TYPE > const & fluid,
                       constitutive::CoupledSolidBase const & solid,
                       real64 const & dt,
                       CRSMatrixView< real64, globalIndex const > const & localMatrix,
@@ -299,14 +299,14 @@ public:
    * @param[inout] localMatrix the local CRS matrix
    * @param[inout] localRhs the local right-hand side vector
    */
-  template< typename POLICY, typename SUBREGION_TYPE >
+  template< typename POLICY, typename SUBREGION_TYPE, typename BASE_FLUID_TYPE >
   static void
   createAndLaunch( integer const numSpecies,
                    real64 const dt,
                    globalIndex const rankOffset,
                    string const dofKey,
                    SUBREGION_TYPE const & subRegion,
-                   constitutive::reactivefluid::ReactiveSinglePhaseFluid< constitutive::CompressibleSinglePhaseFluid > const & fluid,
+                   constitutive::reactivefluid::ReactiveSinglePhaseFluid< BASE_FLUID_TYPE > const & fluid,
                    constitutive::CoupledSolidBase const & solid,
                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
                    arrayView1d< real64 > const & localRhs )
@@ -315,8 +315,8 @@ public:
     {
       integer constexpr NUM_SPECIES = NS();
       integer constexpr NUM_DOF = 1+NS();
-      AccumulationKernel< SUBREGION_TYPE, NUM_DOF, NUM_SPECIES > kernel( rankOffset, dofKey, subRegion, fluid, solid, dt, localMatrix, localRhs );
-      AccumulationKernel< SUBREGION_TYPE, NUM_DOF, NUM_SPECIES >::template launch< POLICY >( subRegion.size(), kernel );
+      AccumulationKernel< SUBREGION_TYPE, NUM_DOF, NUM_SPECIES, BASE_FLUID_TYPE > kernel( rankOffset, dofKey, subRegion, fluid, solid, dt, localMatrix, localRhs );
+      AccumulationKernel< SUBREGION_TYPE, NUM_DOF, NUM_SPECIES, BASE_FLUID_TYPE >::template launch< POLICY >( subRegion.size(), kernel );
     } );
   }
 };

@@ -72,8 +72,6 @@ public:
   virtual void allocateConstitutiveData( dataRepository::Group & parent,
                                          localIndex const numConstitutivePointsPerParentIndex ) override;
 
-  // virtual bool isThermal() const override;
-
   static constexpr integer MAX_NUM_SPECIES = 20;
   static constexpr integer MAX_NUM_KINETIC_REACTIONS = 10;
 

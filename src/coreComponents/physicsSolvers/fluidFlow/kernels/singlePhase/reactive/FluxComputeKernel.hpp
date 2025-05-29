@@ -42,9 +42,10 @@ namespace singlePhaseReactiveFVMKernels
  * @tparam NUM_EQN number of equations
  * @tparam NUM_DOF number of degrees of freedom
  * @tparam STENCILWRAPPER the type of the stencil wrapper
+ * @tparam BASE_FLUID_TYPE the type of the base model for the reactive fluid model
  * @brief Define the interface for the assembly kernel in charge of flux terms
  */
-template< integer NUM_SPECIES, integer NUM_EQN, integer NUM_DOF, typename STENCILWRAPPER >
+template< integer NUM_SPECIES, integer NUM_EQN, integer NUM_DOF, typename STENCILWRAPPER, typename BASE_FLUID_TYPE >
 class FluxComputeKernel : public singlePhaseFVMKernels::FluxComputeKernel< NUM_EQN, NUM_DOF, STENCILWRAPPER >
 {
 public:
@@ -94,7 +95,7 @@ public:
                       fields::flow::dMobility_dLogPrimaryConc >;
 
   using ReactiveSinglePhaseFluidAccessors =
-    StencilMaterialAccessors< constitutive::reactivefluid::ReactiveSinglePhaseFluid< constitutive::CompressibleSinglePhaseFluid >,
+    StencilMaterialAccessors< constitutive::reactivefluid::ReactiveSinglePhaseFluid< BASE_FLUID_TYPE >,
                               fields::reactivefluid::primarySpeciesAggregateConcentration,
                               fields::reactivefluid::dPrimarySpeciesAggregateConcentration_dLogPrimarySpeciesConcentrations >;
 
@@ -539,7 +540,7 @@ public:
         elemManager.constructArrayViewAccessor< globalIndex, 1 >( dofKey );
       dofNumberAccessor.setName( solverName + "/accessors/" + dofKey );
 
-      using KernelType = FluxComputeKernel< NUM_SPECIES, NUM_EQN, NUM_DOF, STENCILWRAPPER >;
+      using KernelType = FluxComputeKernel< NUM_SPECIES, NUM_EQN, NUM_DOF, STENCILWRAPPER, constitutive::CompressibleSinglePhaseFluid >;
       typename KernelType::SinglePhaseFlowAccessors flowAccessors( elemManager, solverName );
       typename KernelType::ReactiveSinglePhaseFlowAccessors reactiveFlowAccessors( elemManager, solverName );
       typename KernelType::SinglePhaseFluidAccessors fluidAccessors( elemManager, solverName );
