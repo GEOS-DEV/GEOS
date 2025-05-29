@@ -911,6 +911,7 @@ protected:
   int m_shockHeating;
   int m_computeInternalEnergyAndTemperature;
   int m_useArtificialViscosity;
+  int m_useThermalDeformations;
   real64 m_artificialViscosityQ0;
   real64 m_artificialViscosityQ1;
 
@@ -972,7 +973,7 @@ protected:
   real64 m_xProfileVx0;
 
   real64 m_implicitContinuumFluidPressure; // Borehole collapse
-  real64 m_initialTemperature;
+  real64 m_initialDomainTemperature;
 
 private:
   struct BinKey

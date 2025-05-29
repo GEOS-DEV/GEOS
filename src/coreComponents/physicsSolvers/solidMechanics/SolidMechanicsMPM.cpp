@@ -197,6 +197,7 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
   m_shockHeating( 0 ),
   m_computeInternalEnergyAndTemperature( 0 ),
   m_useArtificialViscosity( 0 ),
+  m_useThermalDeformations( 0 ),
   m_artificialViscosityQ0( 0.0 ),
   m_artificialViscosityQ1( 0.0 ),
   m_cpdiDomainScaling( 0 ),
@@ -232,7 +233,7 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
   m_xProfileWriteInterval( 0.0 ),
   m_nextXProfileWriteTime( 0.0 ),
   m_xProfileVx0( 0.0 ),
-  m_initialTemperature( 25.0 )
+  m_initialDomainTemperature( 25.0 )
 {
   // setInputFlags( InputFlags::OPTIONAL );
 
@@ -640,12 +641,6 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
     setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "Neighbor radius for SPH-type calculations" );
 
-  registerWrapper( "initialTemperature", &m_initialTemperature ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setDefaultValue( m_initialTemperature ).
-    setRestartFlags( RestartFlags::NO_WRITE ).
-    setDescription( "Initial particle temperature" );
-
   registerWrapper( "binSizeMultiplier", &m_binSizeMultiplier ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( 1 ).
@@ -776,6 +771,12 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
     setDefaultValue( m_useArtificialViscosity ).
     setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "Flag to enable artificial viscosity" );
+
+  registerWrapper( "useThermalDeformations", &m_useThermalDeformations ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDefaultValue( m_useThermalDeformations ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setDescription( "Flag to enable thermal deformations" );
 
   registerWrapper( "artificialViscosityQ0", &m_artificialViscosityQ0 ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -1036,9 +1037,9 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
     setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "Pressure of implicit continuum fluid" );
 
-  registerWrapper( "initialTemperature", &m_initialTemperature ).
+  registerWrapper( "initialDomainTemperature", &m_initialDomainTemperature ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDefaultValue( m_initialTemperature ).
+    setDefaultValue( m_initialDomainTemperature ).
     setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "Initial particle temperature" );
 
@@ -1372,9 +1373,8 @@ void SolidMechanicsMPM::registerDataOnMesh( Group & meshBodies )
         subRegion.registerField< particleWavespeed >( getName() );
         subRegion.registerField< particleHeatCapacity >( getName() );
         subRegion.registerField< particleTemperature >( getName() );
-        subRegion.registerField< particleReferencePorosity >( getName() );
         subRegion.registerField< particleInitialTemperature >( getName() );
-        subRegion.registerField< particleTemperature >( getName() );
+        subRegion.registerField< particleReferencePorosity >( getName() );
         subRegion.registerField< particleReferenceTemperature >( getName() );
         subRegion.registerField< particleInternalEnergy >( getName() );
         subRegion.registerField< particleKineticEnergy >( getName() );
@@ -1984,8 +1984,8 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
 
     for( int p=0; p<subRegion.size(); p++ )
     {     
-      particleInitialTemperature[p] = m_initialTemperature;
-      particleTemperature[p] = m_initialTemperature;
+      particleInitialTemperature[p] = m_initialDomainTemperature;
+      particleTemperature[p] = m_initialDomainTemperature;
 
       for( int i=0; i<3; i++ )
       {
@@ -2780,11 +2780,14 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
   }
 
   //#######################################################################################
-  GEOS_LOG_RANK_IF( m_debugFlag == 1, "Update particle reference volume according to temperature" );
-  solverProfiling( "Update particle reference volume according to temperature");
+  GEOS_LOG_RANK_IF( m_debugFlag == 1 && m_useThermalDeformations, "Update particle reference volume according to temperature" );
+  solverProfilingIf( "Update particle reference volume according to temperature", m_useThermalDeformations);
   //#######################################################################################
-  applyThermalDeformations( dt, 
-                            particleManager );
+  if( m_useThermalDeformations )
+  {
+    applyThermalDeformations( dt,
+                              particleManager );
+  }
 
   //#######################################################################################
   GEOS_LOG_RANK_IF( m_debugFlag == 1, "Update particle geometry (e.g. volume, r-vectors) and density" );
@@ -2809,15 +2812,15 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
     computeArtificialViscosity( particleManager );
   }
 
-  ////#######################################################################################
-  //GEOS_LOG_RANK_IF( m_debugFlag == 1 && m_computeInternalEnergyAndTemperature == 1, "Increment internalEnergy with old stress and Fdot" );
-  //solverProfilingIf( "Increment internalEnergy with old stress and Fdot", m_computeInternalEnergyAndTemperature == 1 );
-  ////#######################################################################################
-  //if( m_computeInternalEnergyAndTemperature == 1 )
-  //{
-  //  computeInternalEnergyAndTemperature( dt,
-  //                                      particleManager );
-  //}
+  //#######################################################################################
+  GEOS_LOG_RANK_IF( m_debugFlag == 1 && m_computeInternalEnergyAndTemperature == 1, "Increment internalEnergy with old stress and Fdot" );
+  solverProfilingIf( "Increment internalEnergy with old stress and Fdot", m_computeInternalEnergyAndTemperature == 1 );
+  //#######################################################################################
+  if( m_computeInternalEnergyAndTemperature == 1 )
+  {
+    computeInternalEnergyAndTemperature( dt,
+                                        particleManager );
+  }
 
   //#######################################################################################
   GEOS_LOG_RANK_IF( m_debugFlag == 1, "Update constitutive model dependencies" );
@@ -6084,7 +6087,7 @@ void SolidMechanicsMPM::updateConstitutiveModelDependencies( ParticleManager & p
       } );
     }
 
-    if(  solidModel.hasWrapper( "temperature" ) ) //not sure if this should be the solid model or the constitutive, model, since we put it into Geomechanics
+    if(  constitutiveModel.hasWrapper( "temperature" ) ) //not sure if this should be the solid model or the constitutive, model, since we put it into Geomechanics
     {
       arrayView1d< real64 const > const particleTemperature = subRegion.getParticleTemperature();
       arrayView1d< real64 > const constitutiveTemperature = constitutiveModel.getReference< array1d< real64 > >( "temperature" );
@@ -6138,16 +6141,7 @@ void SolidMechanicsMPM::updateConstitutiveModelDependencies( ParticleManager & p
       } );
     }
 
-    if(  solidModel.hasWrapper( "temperature" ) )
-    {
-      arrayView1d< real64 > const particleTemperature = subRegion.getField< fields::mpm::particleTemperature >();
-      arrayView1d< real64 > const constitutiveTemperature = solidModel.getReference< array1d< real64 > >( "temperature" );
-      forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST_DEVICE ( localIndex const pp )
-      {
-        localIndex const p = activeParticleIndices[pp];
-        constitutiveTemperature[p] = particleTemperature[p]; 
-      } );
-    }
+    
   } );
 }
 
@@ -9766,17 +9760,6 @@ void SolidMechanicsMPM::updateSolverDependencies( ParticleManager & particleMana
       {
         localIndex const p = activeParticleIndices[pp];
         LvArray::tensorOps::copy< 6 >( particlePlasticStrain[p], constitutivePlasticStrain[p][0] );
-      } );
-    }
-
-    if(  constitutiveModel.hasWrapper( "temperature" ) )
-    {
-      arrayView1d< real64 > const particleTemperature = subRegion.getParticleTemperature();
-      arrayView1d< real64 const > const constitutiveTemperature = constitutiveModel.getReference< array1d< real64 > >( "temperature" );
-      forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST_DEVICE ( localIndex const pp )
-      {
-        localIndex const p = activeParticleIndices[pp];
-        particleTemperature[p] = constitutiveTemperature[p]; 
       } );
     }
     

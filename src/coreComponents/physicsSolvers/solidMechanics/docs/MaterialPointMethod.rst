@@ -543,6 +543,10 @@ This solver has many solver specific variables. The following list describes eac
      - useArtificialViscosity
      - 0
      - Enables use of artificial viscosity
+   * - bool
+     - useThermalDeformations
+     - 0
+     - Enables use of artificial viscosity
    * - real
      - artificialViscosityQ0
      - 0.0
