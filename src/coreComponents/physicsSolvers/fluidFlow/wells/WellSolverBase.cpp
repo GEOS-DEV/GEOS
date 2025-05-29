@@ -47,7 +47,7 @@ WellSolverBase::WellSolverBase( string const & name,
   m_numDofPerResElement( 0 ),
   m_isThermal( 0 ),
   m_ratesOutputDir( joinPath( OutputBase::getOutputDirectory(), name + "_rates" ) ),
-  m_keepVariablesConstantDuringInitStep( 0 )
+  m_keepVariablesConstantDuringInitStep( false )
 {
   registerWrapper( viewKeyStruct::isThermalString(), &m_isThermal ).
     setApplyDefaultValue( 0 ).
@@ -156,15 +156,6 @@ void WellSolverBase::initializePostSubGroups()
       validateWellConstraints( 0, 0, subRegion );
     } );
   } );
-}
-
-void WellSolverBase::setConstitutiveNamesCallSuper( ElementSubRegionBase & subRegion ) const
-{
-  PhysicsSolverBase::setConstitutiveNamesCallSuper( subRegion );
-  subRegion.registerWrapper< string >( viewKeyStruct::fluidNamesString() ).
-    setPlotLevel( PlotLevel::NOPLOT ).
-    setRestartFlags( RestartFlags::NO_WRITE ).
-    setSizedFromParent( 0 );
 }
 
 void WellSolverBase::setupDofs( DomainPartition const & domain,
