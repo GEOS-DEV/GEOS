@@ -45,7 +45,7 @@ WellSolverBase::WellSolverBase( string const & name,
   m_numDofPerResElement( 0 ),
   m_isThermal( 0 ),
   m_ratesOutputDir( joinPath( OutputBase::getOutputDirectory(), name + "_rates" ) ),
-  m_keepVariablesConstantDuringInitStep( 0 )
+  m_keepVariablesConstantDuringInitStep( false )
 {
   registerWrapper( viewKeyStruct::isThermalString(), &m_isThermal ).
     setApplyDefaultValue( 0 ).

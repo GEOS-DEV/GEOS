@@ -129,9 +129,9 @@ void ProppantTransport::registerDataOnMesh( Group & meshBodies )
 
 void ProppantTransport::setConstitutiveNames( ElementSubRegionBase & subRegion ) const
 {
-  setConstitutiveName< SlurryFluidBase >( subRegion, viewKeyStruct::fluidNamesString());
+  setConstitutiveName< SlurryFluidBase >( subRegion, viewKeyStruct::fluidNamesString(), "slurry fluid" );
 
-  setConstitutiveName< ParticleFluidBase >( subRegion, viewKeyStruct::proppantNamesString());
+  setConstitutiveName< ParticleFluidBase >( subRegion, viewKeyStruct::proppantNamesString(), "proppant" );
 }
 
 

@@ -682,17 +682,11 @@ public:
     /// @return string for the minDtIncreaseInterval wrapper
     static constexpr char const * minDtIncreaseIntervalString() { return "minDtIncreaseInterval"; }
 
-    /// @return string for the maxStableDt wrapper
-    static constexpr char const * maxStableDtString() { return "maxStableDt"; }
-
     /// @return string for the discretization wrapper
     static constexpr char const * discretizationString() { return "discretization"; }
 
     /// @return string for the nextDt targetRegions wrapper
     static constexpr char const * targetRegionsString() { return "targetRegions"; }
-
-    /// @return string for the meshTargets wrapper
-    static constexpr char const * meshTargetsString() { return "meshTargets"; }
 
     /// @return string for the writeLinearSystem wrapper
     static constexpr char const * writeLinearSystemString() { return "writeLinearSystem"; }
@@ -795,7 +789,7 @@ public:
   }
 
   /**
-   * @brief syncronize the nonlinear solver parameters.
+   * @brief synchronize the nonlinear solver parameters.
    */
   virtual void
   synchronizeNonlinearSolverParameters()
@@ -960,12 +954,13 @@ protected:
   /**
    * @brief Register wrapper with given name and store constitutive model name on the subregion
    *
-   * @tparam CONSTITUTIVE_BASE_TYPE the base type of the constitutive model.
-   * @param subRegion the subregion on which the constitutive model is registered
-   * @param name the name of the constitutive model of type CONSTITUTIVE_BASE_TYPE registered on the subregion.
+   * @tparam CONSTITUTIVE the base type of the constitutive model.
+   * @param subRegion the subregion on which the constitutive model is registered.
+   * @param wrapperName the wrapper name to register.
+   * @param constitutiveType the type description of the constitutive model.
    */
-  template< typename CONSTITUTIVE_BASE_TYPE >
-  void setConstitutiveName( ElementSubRegionBase & subRegion, string const & name ) const;
+  template< typename CONSTITUTIVE >
+  void setConstitutiveName( ElementSubRegionBase & subRegion, string const & wrapperName, string const & constitutiveType ) const;
 
   /**
    * @brief This function sets constitutive name fields on an
@@ -1008,18 +1003,6 @@ protected:
 
   /**
    * @brief Get the Constitutive Model object
-   * @tparam BASETYPE the base type of the constitutive model.
-   * @param subRegion the element subregion on which the constitutive model is registered.
-   * @return the constitutive model of type @p CONSTITUTIVE_TYPE registered on the @p subRegion.
-   */
-  template< typename CONSTITUTIVE_TYPE >
-  static CONSTITUTIVE_TYPE const & getConstitutiveModel( ElementSubRegionBase const & subRegion )
-  {
-    return getConstitutiveModel< CONSTITUTIVE_TYPE >( subRegion, getConstitutiveName< CONSTITUTIVE_TYPE >( subRegion ) );
-  }
-
-  /**
-   * @brief Get the Constitutive Model object
    * @tparam CONSTITUTIVE_TYPE the base type of the constitutive model.
    * @param subRegion the element subregion on which the constitutive model is registered.
    * @return the constitutive model of type @p CONSTITUTIVE_TYPE registered on the @p subRegion.
@@ -1030,12 +1013,8 @@ protected:
     return getConstitutiveModel< CONSTITUTIVE_TYPE >( subRegion, getConstitutiveName< CONSTITUTIVE_TYPE >( subRegion ) );
   }
 
-
   /// Courant–Friedrichs–Lewy factor for the timestep
   real64 m_cflFactor;
-
-  /// maximum stable time step
-  real64 m_maxStableDt;
 
   /// timestep of the next cycle
   real64 m_nextDt;
@@ -1160,17 +1139,18 @@ string PhysicsSolverBase::getConstitutiveName( ParticleSubRegionBase const & sub
   return validName;
 }
 
-template< typename CONSTITUTIVE_BASE_TYPE >
-void PhysicsSolverBase::setConstitutiveName( ElementSubRegionBase & subRegion, string const & name ) const
+template< typename CONSTITUTIVE >
+void PhysicsSolverBase::setConstitutiveName( ElementSubRegionBase & subRegion, string const & wrapperName, string const & constitutiveType ) const
 {
-  string & constitutiveName = subRegion.registerWrapper< string >( name ).
-                                setPlotLevel( dataRepository::PlotLevel::NOPLOT ).
-                                setRestartFlags( dataRepository::RestartFlags::NO_WRITE ).
-                                setSizedFromParent( 0 ).
-                                reference();
-  constitutiveName = getConstitutiveName< CONSTITUTIVE_BASE_TYPE >( subRegion );
-  GEOS_ERROR_IF( constitutiveName.empty(), GEOS_FMT( "{}: {} not found on subregion {}",
-                                                     getDataContext(), typeid(CONSTITUTIVE_BASE_TYPE).name(), subRegion.getDataContext() ) );
+  subRegion.registerWrapper< string >( wrapperName ).
+    setPlotLevel( dataRepository::PlotLevel::NOPLOT ).
+    setRestartFlags( dataRepository::RestartFlags::NO_WRITE ).
+    setSizedFromParent( 0 );
+
+  string & constitutiveName = subRegion.getReference< string >( wrapperName );
+  constitutiveName = getConstitutiveName< CONSTITUTIVE >( subRegion );
+  GEOS_ERROR_IF( constitutiveName.empty(), GEOS_FMT( "{}: {} constitutive model not found on subregion {}",
+                                                     getDataContext(), constitutiveType, subRegion.getName() ) );
 }
 
 } // namespace geos

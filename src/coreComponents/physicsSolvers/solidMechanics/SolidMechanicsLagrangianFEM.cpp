@@ -240,7 +240,7 @@ void SolidMechanicsLagrangianFEM::setConstitutiveNamesCallSuper( ElementSubRegio
 
   if( dynamic_cast< CellElementSubRegion * >( &subRegion ) )
   {
-    setConstitutiveName< SolidBase >( subRegion, viewKeyStruct::solidMaterialNamesString() );
+    setConstitutiveName< SolidBase >( subRegion, viewKeyStruct::solidMaterialNamesString(), "solid" );
   }
 }
 

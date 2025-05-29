@@ -121,7 +121,7 @@ void SinglePhaseWell::registerDataOnMesh( Group & meshBodies )
 
 void SinglePhaseWell::setConstitutiveNames( ElementSubRegionBase & subRegion ) const
 {
-  setConstitutiveName< SingleFluidBase >( subRegion, viewKeyStruct::fluidNamesString() );
+  setConstitutiveName< SingleFluidBase >( subRegion, viewKeyStruct::fluidNamesString(), "singlephase fluid" );
 }
 
 string SinglePhaseWell::resElementDofName() const

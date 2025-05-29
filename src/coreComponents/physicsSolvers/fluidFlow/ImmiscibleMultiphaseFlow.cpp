@@ -59,7 +59,7 @@ ImmiscibleMultiphaseFlow::ImmiscibleMultiphaseFlow( const string & name,
   :
   FlowSolverBase( name, parent ),
   m_numPhases( 2 ),
-  m_hasCapPressure( 0 ),
+  m_hasCapPressure( false ),
   m_useTotalMassEquation ( 1 )
 {
   this->registerWrapper( viewKeyStruct::inputTemperatureString(), &m_inputTemperature ).
@@ -180,9 +180,9 @@ void ImmiscibleMultiphaseFlow::registerDataOnMesh( Group & meshBodies )
 
 void ImmiscibleMultiphaseFlow::setConstitutiveNames( ElementSubRegionBase & subRegion ) const
 {
-  setConstitutiveName< TwoPhaseImmiscibleFluid >( subRegion, viewKeyStruct::fluidNamesString() );
+  setConstitutiveName< TwoPhaseImmiscibleFluid >( subRegion, viewKeyStruct::fluidNamesString(), "two phase immiscible fluid" );
 
-  setConstitutiveName< RelativePermeabilityBase >( subRegion, viewKeyStruct::relPermNamesString() );
+  setConstitutiveName< RelativePermeabilityBase >( subRegion, viewKeyStruct::relPermNamesString(), "relative permeability" );
 }
 
 void ImmiscibleMultiphaseFlow::initializePreSubGroups()

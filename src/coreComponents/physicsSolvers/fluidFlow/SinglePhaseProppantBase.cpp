@@ -65,18 +65,7 @@ SinglePhaseProppantBase::~SinglePhaseProppantBase()
 
 void SinglePhaseProppantBase::setConstitutiveNames( ElementSubRegionBase & subRegion ) const
 {
-  setConstitutiveName< SlurryFluidBase >( subRegion, viewKeyStruct::fluidNamesString() );
-}
-
-SinglePhaseBase::FluidPropViews SinglePhaseProppantBase::getFluidProperties( constitutive::ConstitutiveBase const & fluid ) const
-{
-  SlurryFluidBase const & slurryFluid = dynamicCast< SlurryFluidBase const & >( fluid );
-  return { slurryFluid.density(),
-           slurryFluid.dDensity(),
-           slurryFluid.viscosity(),
-           slurryFluid.dViscosity(),
-           slurryFluid.getField< fields::singlefluid::density >().getDefaultValue(),
-           slurryFluid.getField< fields::singlefluid::viscosity >().getDefaultValue() };
+  setConstitutiveName< SlurryFluidBase >( subRegion, viewKeyStruct::fluidNamesString(), "slurry fluid" );
 }
 
 void SinglePhaseProppantBase::updateFluidModel( ObjectManagerBase & dataGroup ) const

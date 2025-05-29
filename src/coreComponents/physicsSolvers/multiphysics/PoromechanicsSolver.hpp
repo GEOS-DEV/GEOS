@@ -122,16 +122,16 @@ public:
     Base::setConstitutiveNamesCallSuper( subRegion );
 
     this->template setConstitutiveName< constitutive::CoupledSolidBase >( subRegion,
-                                                                          viewKeyStruct::porousMaterialNamesString() );
+                                                                          viewKeyStruct::porousMaterialNamesString(), "coupled solid" );
 
     // This is needed by the way the surface generator currently does things.
     this->template setConstitutiveName< constitutive::PorosityBase >( subRegion,
-                                                                      constitutive::CoupledSolidBase::viewKeyStruct::porosityModelNameString() );
+                                                                      constitutive::CoupledSolidBase::viewKeyStruct::porosityModelNameString(), "porosity" );
 
     if( dynamic_cast< SurfaceElementSubRegion * >( &subRegion ) )
     {
       this->template setConstitutiveName< constitutive::HydraulicApertureBase >( subRegion,
-                                                                                 viewKeyStruct::hydraulicApertureRelationNameString() );
+                                                                                 viewKeyStruct::hydraulicApertureRelationNameString(), "hydraulic aperture" );
     }
   }
 

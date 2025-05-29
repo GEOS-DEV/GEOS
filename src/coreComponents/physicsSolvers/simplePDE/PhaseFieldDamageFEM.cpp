@@ -117,9 +117,8 @@ void PhaseFieldDamageFEM::registerDataOnMesh( Group & meshBodies )
         setPlotLevel( PlotLevel::LEVEL_0 ).
         setDescription( "field variable representing the diffusion coefficient" );
 
-
       // TODO this should be in setConstitutiveNames
-      setConstitutiveName< SolidBase >( subRegion, viewKeyStruct::solidModelNamesString() );
+      setConstitutiveName< SolidBase >( subRegion, viewKeyStruct::solidModelNamesString(), "solid" );
     } );
   } );
 }

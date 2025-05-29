@@ -73,9 +73,9 @@ CompositionalMultiphaseBase::CompositionalMultiphaseBase( const string & name,
   FlowSolverBase( name, parent ),
   m_numPhases( 0 ),
   m_numComponents( 0 ),
-  m_hasCapPressure( 0 ),
-  m_hasDiffusion( 0 ),
-  m_hasDispersion( 0 ),
+  m_hasCapPressure( false ),
+  m_hasDiffusion( false ),
+  m_hasDispersion( false ),
   m_minScalingFactor( 0.01 ),
   m_allowCompDensChopping( 1 ),
   m_useTotalMassEquation( 1 ),
@@ -469,28 +469,28 @@ void CompositionalMultiphaseBase::registerDataOnMesh( Group & meshBodies )
 
 void CompositionalMultiphaseBase::setConstitutiveNames( ElementSubRegionBase & subRegion ) const
 {
-  setConstitutiveName< MultiFluidBase >( subRegion, viewKeyStruct::fluidNamesString() );
+  setConstitutiveName< MultiFluidBase >( subRegion, viewKeyStruct::fluidNamesString(), "multiphase fluid" );
 
-  setConstitutiveName< RelativePermeabilityBase >( subRegion, viewKeyStruct::relPermNamesString() );
+  setConstitutiveName< RelativePermeabilityBase >( subRegion, viewKeyStruct::relPermNamesString(), "relative permeability" );
 
   if( !getConstitutiveName< CapillaryPressureBase >( subRegion ).empty() )
   {
-    setConstitutiveName< CapillaryPressureBase >( subRegion, viewKeyStruct::capPressureNamesString() );
+    setConstitutiveName< CapillaryPressureBase >( subRegion, viewKeyStruct::capPressureNamesString(), "capillary pressure" );
   }
 
   if( !getConstitutiveName< DiffusionBase >( subRegion ).empty() )
   {
-    setConstitutiveName< DiffusionBase >( subRegion, viewKeyStruct::diffusionNamesString() );
+    setConstitutiveName< DiffusionBase >( subRegion, viewKeyStruct::diffusionNamesString(), "diffusion" );
   }
 
   if( !getConstitutiveName< DispersionBase >( subRegion ).empty() )
   {
-    setConstitutiveName< DispersionBase >( subRegion, viewKeyStruct::dispersionNamesString() );
+    setConstitutiveName< DispersionBase >( subRegion, viewKeyStruct::dispersionNamesString(), "dispersion" );
   }
 
   if( m_isThermal )
   {
-    setConstitutiveName< MultiPhaseThermalConductivityBase >( subRegion, viewKeyStruct::thermalConductivityNamesString() );
+    setConstitutiveName< MultiPhaseThermalConductivityBase >( subRegion, viewKeyStruct::thermalConductivityNamesString(), "multiphase thermal conductivity" );
   }
 }
 

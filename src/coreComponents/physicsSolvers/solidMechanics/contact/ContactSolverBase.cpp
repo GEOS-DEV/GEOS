@@ -252,9 +252,7 @@ void ContactSolverBase::setConstitutiveNamesCallSuper( ElementSubRegionBase & su
   }
   else if( dynamic_cast< SurfaceElementSubRegion * >( &subRegion ) )
   {
-    PhysicsSolverBase::setConstitutiveNamesCallSuper( subRegion );
-
-    setConstitutiveName< FrictionBase >( subRegion, viewKeyStruct::frictionLawNameString());
+    setConstitutiveName< FrictionBase >( subRegion, viewKeyStruct::frictionLawNameString(), "friction" );
   }
 }
 

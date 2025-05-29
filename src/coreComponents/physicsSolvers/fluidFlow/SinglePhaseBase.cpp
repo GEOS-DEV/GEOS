@@ -128,21 +128,15 @@ void SinglePhaseBase::registerDataOnMesh( Group & meshBodies )
   } );
 }
 
-void SinglePhaseBase::setConstitutiveNamesCallSuper( ElementSubRegionBase & subRegion ) const
-{
-  FlowSolverBase::setConstitutiveNamesCallSuper( subRegion );
-}
-
 void SinglePhaseBase::setConstitutiveNames( ElementSubRegionBase & subRegion ) const
 {
-  setConstitutiveName< SingleFluidBase >( subRegion, viewKeyStruct::fluidNamesString());
+  setConstitutiveName< SingleFluidBase >( subRegion, viewKeyStruct::fluidNamesString(), "singlephase fluid" );
 
   if( m_isThermal )
   {
-    setConstitutiveName< SinglePhaseThermalConductivityBase >( subRegion, viewKeyStruct::thermalConductivityNamesString());
+    setConstitutiveName< SinglePhaseThermalConductivityBase >( subRegion, viewKeyStruct::thermalConductivityNamesString(), "singlephase thermal conductivity" );
   }
 }
-
 
 void SinglePhaseBase::initializeAquiferBC() const
 {
@@ -183,17 +177,6 @@ void SinglePhaseBase::validateConstitutiveModels( DomainPartition & domain ) con
       } );
     } );
   } );
-}
-
-SinglePhaseBase::FluidPropViews SinglePhaseBase::getFluidProperties( ConstitutiveBase const & fluid ) const
-{
-  SingleFluidBase const & singleFluid = dynamicCast< SingleFluidBase const & >( fluid );
-  return { singleFluid.density(),
-           singleFluid.dDensity(),
-           singleFluid.viscosity(),
-           singleFluid.dViscosity(),
-           singleFluid.defaultDensity(),
-           singleFluid.defaultViscosity() };
 }
 
 void SinglePhaseBase::initializePreSubGroups()
@@ -388,16 +371,15 @@ void SinglePhaseBase::updateMobility( ObjectManagerBase & dataGroup ) const
   // input
   SingleFluidBase & fluid =
     getConstitutiveModel< SingleFluidBase >( dataGroup, dataGroup.getReference< string >( viewKeyStruct::fluidNamesString() ) );
-  FluidPropViews fluidProps = getFluidProperties( fluid );
 
   geos::internal::kernelLaunchSelectorThermalSwitch( m_isThermal, [&] ( auto ISTHERMAL )
   {
     integer constexpr NUMDOF = ISTHERMAL() + 1;
     singlePhaseBaseKernels::MobilityKernel::compute_value_and_derivatives< parallelDevicePolicy<>, NUMDOF >( dataGroup.size(),
-                                                                                                             fluidProps.dens,
-                                                                                                             fluidProps.dDens,
-                                                                                                             fluidProps.visc,
-                                                                                                             fluidProps.dVisc,
+                                                                                                             fluid.density(),
+                                                                                                             fluid.dDensity(),
+                                                                                                             fluid.viscosity(),
+                                                                                                             fluid.dViscosity(),
                                                                                                              mob,
                                                                                                              dMobility );
   } );
