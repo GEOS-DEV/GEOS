@@ -167,6 +167,7 @@ jobs:
             BUILD_SHARED_LIBS: ON
             ENABLE_HYPRE: OFF
             ENABLE_TRILINOS: ON
+            GEOS_ENABLE_BOUNDS_CHECK: ON
             HOST_CONFIG: /spack-generated.cmake
 
           - name: Ubuntu debug (20.04, gcc 10.5.0, open-mpi 4.0.3) - github codespaces
@@ -175,6 +176,7 @@ jobs:
             BUILD_SHARED_LIBS: ON
             ENABLE_HYPRE: OFF
             ENABLE_TRILINOS: ON
+            GEOS_ENABLE_BOUNDS_CHECK: ON
             HOST_CONFIG: /spack-generated.cmake
 
           - name: Ubuntu (20.04, gcc 10.5.0, open-mpi 4.0.3) - github codespaces
@@ -183,6 +185,7 @@ jobs:
             BUILD_SHARED_LIBS: ON
             ENABLE_HYPRE: OFF
             ENABLE_TRILINOS: ON
+            GEOS_ENABLE_BOUNDS_CHECK: ON
             HOST_CONFIG: /spack-generated.cmake
 
           - name: Ubuntu (22.04, gcc 11.4.0, open-mpi 4.1.2)
@@ -191,7 +194,7 @@ jobs:
             ENABLE_HYPRE: ON
             ENABLE_TRILINOS: OFF
             BUILD_SHARED_LIBS: ON
-            ENABLE_LVARRAY_BOUNDS_CHECK: OFF
+            GEOS_ENABLE_BOUNDS_CHECK: OFF
             GCP_BUCKET: geosx/ubuntu22.04-gcc11
             HOST_CONFIG: /spack-generated.cmake
 
@@ -202,6 +205,17 @@ jobs:
             ENABLE_HYPRE: ON
             ENABLE_TRILINOS: OFF
             BUILD_SHARED_LIBS: ON
+            GEOS_ENABLE_BOUNDS_CHECK: ON
+            HOST_CONFIG: /spack-generated.cmake
+
+          - name: Ubuntu (22.04, gcc 12.3.0, open-mpi 4.1.2) - NO BOUNDS CHECK
+            CMAKE_BUILD_TYPE: Release
+            DOCKER_REPOSITORY: geosx/ubuntu22.04-gcc12
+            GCP_BUCKET: geosx/ubuntu22.04-gcc12
+            ENABLE_HYPRE: ON
+            ENABLE_TRILINOS: OFF
+            BUILD_SHARED_LIBS: ON
+            GEOS_ENABLE_BOUNDS_CHECK: OFF
             HOST_CONFIG: /spack-generated.cmake
 
           - name: Ubuntu (22.04, clang 15.0.7, open-mpi 4.1.2)
@@ -209,6 +223,7 @@ jobs:
             DOCKER_REPOSITORY: geosx/ubuntu22.04-clang15
             ENABLE_HYPRE: ON
             ENABLE_TRILINOS: OFF
+            GEOS_ENABLE_BOUNDS_CHECK: ON
             BUILD_SHARED_LIBS: ON
             HOST_CONFIG: /spack-generated.cmake
 
@@ -217,6 +232,7 @@ jobs:
             DOCKER_REPOSITORY: geosx/sherlock-gcc10.1.0-openmpi4.1.2-openblas0.3.10-zlib1.2.11
             ENABLE_HYPRE: ON
             ENABLE_TRILINOS: OFF
+            GEOS_ENABLE_BOUNDS_CHECK: OFF
             GCP_BUCKET: geosx/Sherlock-CPU
             HOST_CONFIG: /spack-generated.cmake
 #            HOST_CONFIG: host-configs/Stanford/sherlock-gcc10.cmake
@@ -230,7 +246,7 @@ jobs:
       DOCKER_REPOSITORY: ${{ matrix.DOCKER_REPOSITORY }}
       ENABLE_HYPRE: ${{ matrix.ENABLE_HYPRE }}
       ENABLE_TRILINOS: ${{ matrix.ENABLE_TRILINOS }}
-      ENABLE_LVARRAY_BOUNDS_CHECK: ${{ matrix.ENABLE_LVARRAY_BOUNDS_CHECK }}
+      GEOS_ENABLE_BOUNDS_CHECK: ${{ matrix.GEOS_ENABLE_BOUNDS_CHECK }}
       GCP_BUCKET: ${{ matrix.GCP_BUCKET }}
       HOST_CONFIG: ${{ matrix.HOST_CONFIG }}
       RUNS_ON: ubuntu-22.04
@@ -252,6 +268,7 @@ jobs:
       DOCKER_REPOSITORY: geosx/ubuntu22.04-gcc12
       ENABLE_HYPRE: ON
       ENABLE_TRILINOS: OFF
+      GEOS_ENABLE_BOUNDS_CHECK: ON
       GCP_BUCKET: geosx/integratedTests
       RUNS_ON: streak2-32core
       NPROC: 32
@@ -324,7 +341,7 @@ jobs:
             ENABLE_HYPRE_DEVICE: CUDA
             ENABLE_HYPRE: ON
             ENABLE_TRILINOS: OFF
-            ENABLE_LVARRAY_BOUNDS_CHECK: OFF
+            GEOS_ENABLE_BOUNDS_CHECK: OFF
             RUNS_ON: streak2
             NPROC: 8
             DOCKER_RUN_ARGS: "--cpus=8 --memory=128g --runtime=nvidia -v /etc/pki/ca-trust/source/anchors/:/usr/local/share/ca-certificates/llnl:ro"
@@ -340,7 +357,7 @@ jobs:
             ENABLE_HYPRE_DEVICE: CUDA
             ENABLE_HYPRE: ON
             ENABLE_TRILINOS: OFF
-            ENABLE_LVARRAY_BOUNDS_CHECK: OFF
+            GEOS_ENABLE_BOUNDS_CHECK: OFF
             RUNS_ON: streak2
             NPROC: 8
             DOCKER_RUN_ARGS: "--cpus=8 --memory=256g --runtime=nvidia -v /etc/pki/ca-trust/source/anchors/:/usr/local/share/ca-certificates/llnl:ro"
@@ -355,7 +372,7 @@ jobs:
             ENABLE_HYPRE_DEVICE: CUDA
             ENABLE_HYPRE: ON
             ENABLE_TRILINOS: OFF
-            ENABLE_LVARRAY_BOUNDS_CHECK: OFF
+            GEOS_ENABLE_BOUNDS_CHECK: OFF
             DOCKER_REPOSITORY: geosx/rockylinux8-clang17-cuda12.5
             RUNS_ON: streak
             NPROC: 8
@@ -371,7 +388,7 @@ jobs:
             ENABLE_HYPRE_DEVICE: CUDA
             ENABLE_HYPRE: ON
             ENABLE_TRILINOS: OFF
-            ENABLE_LVARRAY_BOUNDS_CHECK: OFF
+            GEOS_ENABLE_BOUNDS_CHECK: OFF
             DOCKER_REPOSITORY: geosx/rockylinux8-gcc8-cuda12.5
             RUNS_ON: streak2
             NPROC: 8
@@ -388,7 +405,7 @@ jobs:
             ENABLE_HYPRE_DEVICE: CUDA
             ENABLE_HYPRE: ON
             ENABLE_TRILINOS: OFF
-            ENABLE_LVARRAY_BOUNDS_CHECK: OFF
+            GEOS_ENABLE_BOUNDS_CHECK: OFF
             HOST_ARCH: ppc64le
             RUNS_ON: streak2
             NPROC: 8
@@ -405,7 +422,7 @@ jobs:
             ENABLE_HYPRE_DEVICE: CUDA
             ENABLE_HYPRE: ON
             ENABLE_TRILINOS: OFF
-            ENABLE_LVARRAY_BOUNDS_CHECK: OFF
+            GEOS_ENABLE_BOUNDS_CHECK: OFF
             GCP_BUCKET: geosx/Sherlock-GPU
             RUNS_ON: streak2
             NPROC: 8
@@ -429,7 +446,7 @@ jobs:
       ENABLE_HYPRE_DEVICE: ${{ matrix.ENABLE_HYPRE_DEVICE }}
       ENABLE_HYPRE: ${{ matrix.ENABLE_HYPRE }}
       ENABLE_TRILINOS: ${{ matrix.ENABLE_TRILINOS }}
-      ENABLE_LVARRAY_BOUNDS_CHECK: ${{ matrix.ENABLE_LVARRAY_BOUNDS_CHECK }}
+      GEOS_ENABLE_BOUNDS_CHECK: ${{ matrix.GEOS_ENABLE_BOUNDS_CHECK }}
       GCP_BUCKET: ${{ matrix.GCP_BUCKET }}
       HOST_ARCH: ${{ matrix.HOST_ARCH }}
       HOST_CONFIG: ${{ matrix.HOST_CONFIG }}

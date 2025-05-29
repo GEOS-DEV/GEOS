@@ -1,10 +1,10 @@
-set( PREPROCESSOR_DEFINES ARRAY_BOUNDS_CHECK
+set( PREPROCESSOR_DEFINES BOUNDS_CHECK
                           CALIPER
                           CHAI
                           CUDA
                           CUDA_NVTOOLSEXT
                           HIP
-			  FMT_CONST_FORMATTER_WORKAROUND
+                          FMT_CONST_FORMATTER_WORKAROUND
                           FORTRAN_MANGLE_NO_UNDERSCORE
                           FPE
                           HYPRE
@@ -30,7 +30,6 @@ set( PREPROCESSOR_DEFINES ARRAY_BOUNDS_CHECK
 foreach( DEP in ${PREPROCESSOR_DEFINES} )
     if( ${DEP}_FOUND OR ENABLE_${DEP} OR GEOS_ENABLE_${DEP} )
         set( USE_${DEP} TRUE )
-        set( GEOS_USE_${DEP} TRUE )
         set( GEOS_USE_${DEP} TRUE )
 	message(STATUS "GEOS_USE_${DEP} = ${GEOS_USE_${DEP}}")
     endif()

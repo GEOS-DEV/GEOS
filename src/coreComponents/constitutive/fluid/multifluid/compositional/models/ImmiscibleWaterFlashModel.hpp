@@ -55,6 +55,7 @@ public:
                                    integer const waterComponentIndex,
                                    EquationOfStateType const liquidEos,
                                    EquationOfStateType const vapourEos,
+                                   real64 const salinity,
                                    arrayView1d< real64 const > const componentCriticalVolume );
 
   // Mark as a 3-phase flash
