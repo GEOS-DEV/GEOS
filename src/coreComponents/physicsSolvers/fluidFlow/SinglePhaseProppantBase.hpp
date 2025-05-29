@@ -63,11 +63,9 @@ protected:
 
   virtual void validateConstitutiveModels( DomainPartition & domain ) const override;
 
-  virtual FluidPropViews getFluidProperties( constitutive::ConstitutiveBase const & fluid ) const override;
-
 private:
-  virtual void setConstitutiveNames( ElementSubRegionBase & subRegion ) const override;
 
+  virtual void setConstitutiveNames( ElementSubRegionBase & subRegion ) const override;
 
 };
 }

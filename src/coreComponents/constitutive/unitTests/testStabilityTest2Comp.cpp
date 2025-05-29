@@ -61,6 +61,10 @@ public:
     real64 const zCH4 = std::get< 2 >( data );
     real64 const expectedTangentPlaneDistance = std::get< 3 >( data );
 
+    constitutive::compositional::FlashData flashData;
+    flashData.liquidEos = EOS_TYPE;
+    flashData.vapourEos = EOS_TYPE;
+
     stackArray1d< real64, numComps > composition( numComps );
     composition[0] = zCH4;
     composition[1] = 1.0 - zCH4;
@@ -74,6 +78,7 @@ public:
                                                          composition.toSliceConst(),
                                                          componentProperties,
                                                          EOS_TYPE,
+                                                         flashData,
                                                          tangentPlaneDistance,
                                                          kValues.toSlice() );
 

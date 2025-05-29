@@ -22,29 +22,12 @@
 #include "mesh/mpiCommunications/NeighborCommunicator.hpp"
 #include "physicsSolvers/PhysicsSolverBase.hpp"
 #include "mesh/DomainPartition.hpp"
+#include "ParallelTopologyChange.hpp"
 
 namespace geos
 {
 
-struct ModifiedObjectLists
-{
-  std::set< localIndex > newNodes;
-  std::set< localIndex > newEdges;
-  std::set< localIndex > newFaces;
-  std::set< localIndex > modifiedNodes;
-  std::set< localIndex > modifiedEdges;
-  std::set< localIndex > modifiedFaces;
-  map< std::pair< localIndex, localIndex >, std::set< localIndex > > newElements;
-  map< std::pair< localIndex, localIndex >, std::set< localIndex > > modifiedElements;
-
-  void clearNewFromModified();
-
-  void insert( ModifiedObjectLists const & lists );
-};
-
-
 class SpatialPartition;
-
 class NodeManager;
 class EdgeManager;
 class FaceManager;
