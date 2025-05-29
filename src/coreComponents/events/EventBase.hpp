@@ -270,6 +270,13 @@ public:
     return m_eventTarget;
   }
 
+  /**
+   * @brief Get the target of this event.
+   * @return The target of this event.
+   */
+  ExecutableGroup * getEventTarget() const
+  { return m_target; }
+
 protected:
 
   /**
@@ -300,13 +307,6 @@ protected:
    */
   void setForecast( integer forecast )
   { m_eventForecast = forecast; }
-
-  /**
-   * @brief Get the target of this event.
-   * @return The target of this event.
-   */
-  ExecutableGroup * getEventTarget() const
-  { return m_target; }
 
   /**
    * @brief Is the event active?
