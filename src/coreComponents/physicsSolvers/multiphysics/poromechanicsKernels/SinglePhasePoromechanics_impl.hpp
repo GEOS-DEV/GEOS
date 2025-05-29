@@ -23,8 +23,6 @@
 #include "constitutive/fluid/singlefluid/SingleFluidBase.hpp"
 #include "finiteElement/BilinearFormUtilities.hpp"
 #include "finiteElement/LinearFormUtilities.hpp"
-#include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
-#include "physicsSolvers/fluidFlow/SinglePhaseBaseFields.hpp"
 #include "physicsSolvers/multiphysics/poromechanicsKernels/SinglePhasePoromechanics.hpp"
 
 namespace geos
