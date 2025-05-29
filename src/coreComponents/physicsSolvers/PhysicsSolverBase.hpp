@@ -37,7 +37,7 @@ namespace geos
 {
 
 class DomainPartition;
-
+extern integer currentCoupledNewton;
 /**
  * @class PhysicsSolverBase
  * @brief Base class for all physics solvers

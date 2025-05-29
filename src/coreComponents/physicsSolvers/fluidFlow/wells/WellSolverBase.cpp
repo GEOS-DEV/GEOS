@@ -284,8 +284,8 @@ void WellSolverBase::estimateWellSolution( real64 const & time_n,
 {
   GEOS_MARK_FUNCTION;
 
-  if( !estimateSolution() )
-    return;
+
+  GEOS_LOG_RANK("**** Estimate Well Solution - Start ****");
   setupWellDofs( domain );
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const & meshBodyName,
@@ -338,6 +338,7 @@ void WellSolverBase::estimateWellSolution( real64 const & time_n,
 
     } );
   } );
+  GEOS_LOG_RANK("**** Estimate Well Solution End ****");
 }
 
 void WellSolverBase::setupWellSystem( DomainPartition & domain,
@@ -405,7 +406,7 @@ void WellSolverBase::assembleSystem( real64 const time,
                                      CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                      arrayView1d< real64 > const & localRhs )
 {
-
+  if ( geos::currentCoupledNewton < m_estimateSolution)
   estimateWellSolution( time, dt, 0, domain );
   string const wellDofKey = dofManager.getKey( wellElementDofName());
 

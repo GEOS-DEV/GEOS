@@ -31,7 +31,7 @@
 
 namespace geos
 {
-
+int currentCoupledNewton=0;
 using namespace dataRepository;
 
 PhysicsSolverBase::PhysicsSolverBase( string const & name,
@@ -913,7 +913,7 @@ bool PhysicsSolverBase::solveNonlinearSystem( real64 const & time_n,
 
   for( newtonIter = 0; newtonIter < maxNewtonIter; ++newtonIter )
   {
-
+    currentCoupledNewton = newtonIter;
     GEOS_LOG_LEVEL_RANK_0( logInfo::NonlinearSolver,
                            GEOS_FMT( "    Attempt: {:2}, ConfigurationIter: {:2}, NewtonIter: {:2}", dtAttempt, configurationLoopIter, newtonIter ));
 

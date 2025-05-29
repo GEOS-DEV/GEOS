@@ -125,7 +125,6 @@ ControlEquationHelper::
       }
     }
   }
-  std::cout << "tjb control switch " << isProducer << " " << currentControl << " " << newControl << std::endl;
 }
 
 template< integer NC, integer IS_THERMAL >
@@ -216,7 +215,7 @@ ControlEquationHelper::
   }
   // Total mass rate control
   else if( currentControl == WellControls::Control::MASSRATE )
-  {
+  { 
     controlEqn = massDensity*currentTotalVolRate - targetMassRate;
     dControlEqn[COFFSET_WJ::dP] = massDensity*dCurrentTotalVolRate[COFFSET_WJ::dP];
     dControlEqn[COFFSET_WJ::dQ] = massDensity*dCurrentTotalVolRate[COFFSET_WJ::dQ];
@@ -325,7 +324,6 @@ PressureRelationKernel::
   real64 const targetTotalRate = wellControls.getTargetTotalRate( time );
   real64 const targetPhaseRate = wellControls.getTargetPhaseRate( time );
   real64 const targetMassRate = wellControls.getTargetMassRate( time );
-
   // dynamic well control data
   real64 const & currentBHP =
     wellControls.getReference< real64 >( CompositionalMultiphaseWell::viewKeyStruct::currentBHPString() );
