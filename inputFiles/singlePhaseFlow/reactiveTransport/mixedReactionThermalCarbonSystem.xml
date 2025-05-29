@@ -8,12 +8,12 @@
       discretization="singlePhaseTPFA"
       targetRegions="{ Region1 }"
       writeLinearSystem="0"
+      isThermal="1"
       logLevel="1">
       <NonlinearSolverParameters
-        newtonTol="1.0e-6"
-        lineSearchAction="None"
+        newtonTol="1.0e-8"
         maxTimeStepCuts="1"
-        newtonMaxIter="8"
+        newtonMaxIter="20"
         maxAllowedResidualNorm="1e40"/>
       <LinearSolverParameters
         directParallel="0"/>
@@ -24,10 +24,10 @@
     <InternalMesh
       name="mesh1"
       elementTypes="{ C3D8 }"
-      xCoords="{ 0, 10 }"
+      xCoords="{ 0, 3 }"
       yCoords="{ 0, 1 }"
       zCoords="{ 0, 1 }"
-      nx="{ 10 }"
+      nx="{ 3 }"
       ny="{ 1 }"
       nz="{ 1 }"
       cellBlockNames="{ block1 }"/>
@@ -41,20 +41,20 @@
 
     <Box
       name="sink"
-      xMin="{ 8.99, -0.01, -0.01 }"
-      xMax="{ 10.01, 1.01, 1.01 }"/>
+      xMin="{ 1.99, -0.01, -0.01 }"
+      xMax="{ 3.01, 1.01, 1.01 }"/>
   </Geometry>
 
   <Events
-    maxTime="500">
+    maxTime="1">
     <PeriodicEvent
       name="outputs"
       cycleFrequency="1"
-      target="/Outputs/vtkOutput"/>
+      target="/Outputs/vtkOutput_mixed_thermal"/>
 
     <PeriodicEvent
       name="solverApplications"
-      forceDt="5"
+      forceDt="0.2"
       target="/Solvers/SinglePhaseReactiveFlow"/>
   </Events>
 
@@ -69,36 +69,52 @@
     <CellElementRegion
       name="Region1"
       cellBlocks="{ * }"
-      materialList="{ water, rock }"/>
+      materialList="{ water, rock, thermalCond }"/>
   </ElementRegions>
 
   <Constitutive>
-    <ReactiveCompressibleSinglePhase
+    <ReactiveThermalCompressibleSinglePhaseFluid
       name="water"
       defaultDensity="1000"
       defaultViscosity="0.001"
       referencePressure="0.0"
+      referenceTemperature="0.0"
       compressibility="5e-10"
-      viscosibility="0.0"/>
+      thermalExpansionCoeff="0.0"
+      viscosibility="0.0"
+      specificHeatCapacity="4.0e3"
+      referenceInternalEnergy="1e-3"
+      chemicalSystemType="carbonate"/>
 
     <CompressibleSolidConstantPermeability
       name="rock"
       solidModelName="nullSolid"
       porosityModelName="rockPorosity"
-      permeabilityModelName="rockPerm"/>
+      permeabilityModelName="rockPerm"
+      solidInternalEnergyModelName="rockInternalEnergy"/>
 
     <NullModel
       name="nullSolid"/>
 
     <PressurePorosity
       name="rockPorosity"
-      defaultReferencePorosity="0.05"
+      defaultReferencePorosity="0.1"
       referencePressure="0.0"
-      compressibility="1.0e-9"/>
+      compressibility="1e-10"/>
+
+    <SolidInternalEnergy
+      name="rockInternalEnergy"
+      referenceVolumetricHeatCapacity="1.95e6"
+      referenceTemperature="0.0"
+      referenceInternalEnergy="0.0"/>
 
     <ConstantPermeability
       name="rockPerm"
-      permeabilityComponents="{ 2.0e-14, 2.0e-14, 2.0e-14 }"/>
+      permeabilityComponents="{ 2.0e-10, 2.0e-10, 2.0e-10 }"/>
+
+    <SinglePhaseThermalConductivity
+      name="thermalCond"
+      defaultThermalConductivityComponents="{ 200, 200, 200 }"/>
   </Constitutive>
 
   <FieldSpecifications>
@@ -108,7 +124,7 @@
       setNames="{ all }"
       objectPath="ElementRegions/Region1/block1"
       fieldName="rockPorosity_referencePorosity"
-      scale="0.05"/>
+      scale="0.1"/>
 
     <FieldSpecification
       name="initialPressure"
@@ -119,165 +135,244 @@
       scale="1e6"/>
 
     <FieldSpecification
-      name="initialLogSpecies0"
+      name="sourcePressure"
+      setNames="{ source }"
+      objectPath="ElementRegions/Region1/block1"
+      fieldName="pressure"
+      scale="1.2e6"/>
+
+    <FieldSpecification
+      name="sinkPressure"
+      setNames="{ sink }"
+      objectPath="ElementRegions/Region1/block1"
+      fieldName="pressure"
+      scale="1.0e6"/>
+
+    <FieldSpecification
+      name="initialTemperature"
       initialCondition="1"
       setNames="{ all }"
+      objectPath="ElementRegions/Region1/block1"
+      fieldName="temperature"
+      scale="353.0"/>
+
+    <FieldSpecification
+      name="sourceTemperature"
+      setNames="{ source }"     
+      objectPath="ElementRegions/Region1/block1"
+      fieldName="temperature"
+      scale="403.0"/>
+
+    <FieldSpecification
+      name="sinkTemperature"
+      setNames="{ sink }"       
+      objectPath="ElementRegions/Region1/block1"
+      fieldName="temperature"
+      scale="353.0"/>
+
+    <FieldSpecification
+      name="initialAggregate_CaCO3"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Region1/block1"
+      fieldName="water_primarySpeciesAggregateConcentration"
+      component="0"
+      scale="3.76e-3"/>
+
+    <FieldSpecification
+      name="initialAggregate_H"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Region1/block1"
+      fieldName="water_primarySpeciesAggregateConcentration"
+      component="1"
+      scale="3.76e-1"/>
+
+    <FieldSpecification
+      name="initialAggregate_HCO3"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Region1/block1"
+      fieldName="water_primarySpeciesAggregateConcentration"
+      component="2"
+      scale="3.76e-1"/>
+
+    <FieldSpecification
+      name="initialAggregate_Ca"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Region1/block1"
+      fieldName="water_primarySpeciesAggregateConcentration"
+      component="3"
+      scale="3.87e-2"/>
+
+    <FieldSpecification
+      name="initialAggregate_SO4"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Region1/block1"
+      fieldName="water_primarySpeciesAggregateConcentration"
+      component="4"
+      scale="3.21e-2"/>
+
+    <FieldSpecification
+      name="initialAggregate_Cl"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Region1/block1"
+      fieldName="water_primarySpeciesAggregateConcentration"
+      component="5"
+      scale="1.89"/>
+
+    <FieldSpecification
+      name="initialAggregate_Mg"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Region1/block1"
+      fieldName="water_primarySpeciesAggregateConcentration"
+      component="6"
+      scale="1.65e-2"/>
+    
+    <FieldSpecification
+      name="initialAggregate_Na"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Region1/block1"
+      fieldName="water_primarySpeciesAggregateConcentration"
+      component="7"
+      scale="1.09"/>
+
+    <FieldSpecification
+      name="sourceLog_CaCO3"
+      setNames="{ source }"
       objectPath="ElementRegions/Region1/block1"
       fieldName="logPrimarySpeciesConcentration"
       component="0"
-      scale="-8"/>
+      scale="-5.5833363216"/>
 
     <FieldSpecification
-      name="initialLogSpecies1"
-      initialCondition="1"
-      setNames="{ all }"
+      name="sourceLog_H"
+      setNames="{ source }"
       objectPath="ElementRegions/Region1/block1"
       fieldName="logPrimarySpeciesConcentration"
       component="1"
-      scale="-10"/>
+      scale="-7.7294305998"/>
 
     <FieldSpecification
-      name="initialLogSpecies2"
-      initialCondition="1"
-      setNames="{ all }"
+      name="sourceLog_HCO3"
+      setNames="{ source }"
       objectPath="ElementRegions/Region1/block1"
       fieldName="logPrimarySpeciesConcentration"
       component="2"
-      scale="-9"/>
-<!-- 
+      scale="-7.8958055517"/>
+    
     <FieldSpecification
-      name="initialLogSpecies3"
-      initialCondition="1"
-      setNames="{ all }"
+      name="sourceLog_Ca"
+      setNames="{ source }"
       objectPath="ElementRegions/Region1/block1"
       fieldName="logPrimarySpeciesConcentration"
       component="3"
-      scale="-10"/>
+      scale="-4.2187815037"/>
 
     <FieldSpecification
-      name="initialLogSpecies4"
-      initialCondition="1"
-      setNames="{ all }"
+      name="sourceLog_SO4"
+      setNames="{ source }"
       objectPath="ElementRegions/Region1/block1"
       fieldName="logPrimarySpeciesConcentration"
       component="4"
-      scale="-10"/>
+      scale="-5.9949216104"/>
 
     <FieldSpecification
-      name="initialLogSpecies5"
-      initialCondition="1"
-      setNames="{ all }"
+      name="sourceLog_Cl"
+      setNames="{ source }"
       objectPath="ElementRegions/Region1/block1"
       fieldName="logPrimarySpeciesConcentration"
       component="5"
-      scale="-10"/>
+      scale="0.61982840898"/>
 
     <FieldSpecification
-      name="initialLogSpecies6"
-      initialCondition="1"
-      setNames="{ all }"
+      name="sourceLog_Mg"
+      setNames="{ source }"
       objectPath="ElementRegions/Region1/block1"
       fieldName="logPrimarySpeciesConcentration"
       component="6"
-      scale="-10"/> -->
+      scale="-4.6170530778"/>
 
     <FieldSpecification
-      name="sourceLogSpecies0"
+      name="sourceLog_Na"
       setNames="{ source }"
+      objectPath="ElementRegions/Region1/block1"
+      fieldName="logPrimarySpeciesConcentration"
+      component="7"
+      scale="0.069813174359"/>
+
+    <FieldSpecification
+      name="sinkLog_CaCO3"
+      setNames="{ sink }"
       objectPath="ElementRegions/Region1/block1"
       fieldName="logPrimarySpeciesConcentration"
       component="0"
-      scale="-6"/>
+      scale="-5.5833363216"/>
 
     <FieldSpecification
-      name="sourceLogSpecies1"
-      setNames="{ source }"
+      name="sinkLog_H"
+      setNames="{ sink }"
       objectPath="ElementRegions/Region1/block1"
       fieldName="logPrimarySpeciesConcentration"
       component="1"
-      scale="-8"/>
+      scale="-7.7294305998"/>
 
     <FieldSpecification
-      name="sourceLogSpecies2"
-      setNames="{ source }"
+      name="sinkLog_HCO3"
+      setNames="{ sink }"
       objectPath="ElementRegions/Region1/block1"
       fieldName="logPrimarySpeciesConcentration"
       component="2"
-      scale="-7.2"/>
-
-    <!-- <FieldSpecification
-      name="sourceLogSpecies3"
-      setNames="{ source }"
+      scale="-7.8958055517"/>
+    
+    <FieldSpecification
+      name="sinkLog_Ca"
+      setNames="{ sink }"
       objectPath="ElementRegions/Region1/block1"
       fieldName="logPrimarySpeciesConcentration"
       component="3"
-      scale="-10"/>
+      scale="-4.2187815037"/>
 
     <FieldSpecification
-      name="sourceLogSpecies4"
-      setNames="{ source }"
+      name="sinkLog_SO4"
+      setNames="{ sink }"
       objectPath="ElementRegions/Region1/block1"
       fieldName="logPrimarySpeciesConcentration"
       component="4"
-      scale="-10"/>
+      scale="-5.9949216104"/>
 
     <FieldSpecification
-      name="sourceLogSpecies5"
-      setNames="{ source }"
+      name="sinkLog_Cl"
+      setNames="{ sink }"
       objectPath="ElementRegions/Region1/block1"
       fieldName="logPrimarySpeciesConcentration"
       component="5"
-      scale="-10"/>
+      scale="0.61982840898"/>
 
     <FieldSpecification
-      name="sourceLogSpecies6"
-      setNames="{ source }"
+      name="sinkLog_Mg"
+      setNames="{ sink }"
       objectPath="ElementRegions/Region1/block1"
       fieldName="logPrimarySpeciesConcentration"
       component="6"
-      scale="-10"/>  -->
+      scale="-4.6170530778"/>
 
     <FieldSpecification
-      name="sinkLogSpecies0"
+      name="sinkLog_Na"
       setNames="{ sink }"
       objectPath="ElementRegions/Region1/block1"
       fieldName="logPrimarySpeciesConcentration"
-      component="0"
-      scale="-8"/>
-
-    <FieldSpecification
-      name="sinkLogSpecies1"
-      setNames="{ sink }"
-      objectPath="ElementRegions/Region1/block1"
-      fieldName="logPrimarySpeciesConcentration"
-      component="1"
-      scale="-10"/>
-
-    <FieldSpecification
-      name="sinkLogSpecies2"
-      setNames="{ sink }"
-      objectPath="ElementRegions/Region1/block1"
-      fieldName="logPrimarySpeciesConcentration"
-      component="2"
-      scale="-9"/>
-
-    <FieldSpecification
-      name="sourceTerm"
-      objectPath="ElementRegions/Region1/block1"
-      fieldName="pressure"
-      scale="5e6"
-      setNames="{ source }"/>
-
-    <FieldSpecification
-      name="sinkTerm"
-      objectPath="ElementRegions/Region1/block1"
-      fieldName="pressure"
-      scale="1e6"
-      setNames="{ sink }"/>
+      component="7"
+      scale="0.069813174359"/>
   </FieldSpecifications>
 
   <Outputs>
     <VTK
-      name="vtkOutput"/>
+      name="vtkOutput_mixed_thermal"/>
   </Outputs>
 </Problem>
