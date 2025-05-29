@@ -22,6 +22,7 @@
 
 #include "common/DataTypes.hpp"
 #include "constitutive/fluid/multifluid/compositional/parameters/ComponentProperties.hpp"
+#include "constitutive/fluid/multifluid/compositional/parameters/ComponentType.hpp"
 
 namespace geos
 {
@@ -64,12 +65,61 @@ public:
     }
   }
 
-/**
- * @brief Calculate water-gas k-value
- * @param[in] pressure pressure
- * @param[in] temperature temperature
- * @return The water component k-value
- **/
+  /**
+   * @brief Initialise k-values for the Soreide-Whitson equation of state
+   * @param[in] numComps number of components
+   * @param[in] pressure pressure
+   * @param[in] temperature temperature
+   * @param[in] componentProperties The compositional component properties
+   * @param[in] presentComponents The list of present components (with non-zero mole fraction)
+   * @param[out] kValues the calculated k-values
+   **/
+  template< integer USD >
+  GEOS_HOST_DEVICE
+  static void
+  computeSoreideWhitsonKvalue( integer const numComps,
+                               real64 const pressure,
+                               real64 const temperature,
+                               ComponentProperties::KernelWrapper const & componentProperties,
+                               arraySlice1d< integer const > const & presentComponents,
+                               arraySlice1d< real64, USD > const & kValues )
+  {
+    integer waterIndex = -1;
+    auto const & componentType = componentProperties.m_componentType;
+    for( integer const ic : presentComponents )
+    {
+      if( isComponentType( componentType[ic], ComponentType::Water ))
+      {
+        waterIndex = ic;
+        break;
+      }
+    }
+    // If water is not present default to Wilson k-values
+    if( waterIndex < 0 )
+    {
+      computeWilsonGasLiquidKvalue( numComps,
+                                    pressure,
+                                    temperature,
+                                    componentProperties,
+                                    kValues );
+    }
+    else
+    {
+      real64 const waterKValue = computeWaterGasKvalue( pressure, temperature );
+      for( integer ic = 0; ic < numComps; ++ic )
+      {
+        kValues[ic] = 1.0 / waterKValue;
+      }
+      kValues[waterIndex] = waterKValue;
+    }
+  }
+
+  /**
+   * @brief Calculate water-gas k-value
+   * @param[in] pressure pressure
+   * @param[in] temperature temperature
+   * @return The water component k-value
+   **/
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
   static double
