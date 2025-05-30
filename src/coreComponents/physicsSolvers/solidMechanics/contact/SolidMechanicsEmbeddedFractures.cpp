@@ -21,9 +21,7 @@
 
 #include "common/TimingMacros.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
-#include "constitutive/ConstitutiveManager.hpp"
 #include "constitutive/contact/FrictionSelector.hpp"
-#include "constitutive/solid/ElasticIsotropic.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
 #include "finiteElement/elementFormulations/FiniteElementBase.hpp"
 #include "linearAlgebra/utilities/LAIHelperFunctions.hpp"

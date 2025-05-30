@@ -22,7 +22,6 @@
 #include "dataRepository/InputFlags.hpp"
 #include "mainInterface/GeosxState.hpp"
 #include "mesh/DomainPartition.hpp"
-#include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "fieldSpecification/LogLevelsInfo.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 #include "kernels/SeismicityRateKernels.hpp"

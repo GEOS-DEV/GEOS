@@ -19,13 +19,11 @@
 
 #include "ExplicitQDRateAndState.hpp"
 
-#include "dataRepository/InputFlags.hpp"
 #include "mesh/DomainPartition.hpp"
 #include "kernels/ExplicitRateAndStateKernels.hpp"
 #include "kernels/EmbeddedRungeKuttaKernels.hpp"
 #include "rateAndStateFields.hpp"
 #include "physicsSolvers/LogLevelsInfo.hpp"
-#include "physicsSolvers/solidMechanics/contact/ContactFields.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
 
 namespace geos

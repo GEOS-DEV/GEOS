@@ -181,8 +181,6 @@ public:
                          real64 const dt,
                          PARAMS && ... params );
 
-
-  template< typename ... PARAMS >
   real64 explicitKernelDispatch( MeshLevel & mesh,
                                  string_array const & targetRegions,
                                  string const & finiteElementName,

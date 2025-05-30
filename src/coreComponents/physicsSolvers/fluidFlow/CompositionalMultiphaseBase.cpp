@@ -20,16 +20,12 @@
 #include "CompositionalMultiphaseBase.hpp"
 
 #include "constitutive/ConstitutiveManager.hpp"
-#include "constitutive/capillaryPressure/CapillaryPressureFields.hpp"
 #include "constitutive/capillaryPressure/capillaryPressureSelector.hpp"
 #include "constitutive/ConstitutivePassThru.hpp"
-#include "constitutive/diffusion/DiffusionFields.hpp"
 #include "constitutive/diffusion/DiffusionSelector.hpp"
-#include "constitutive/dispersion/DispersionFields.hpp"
 #include "constitutive/dispersion/DispersionSelector.hpp"
 #include "constitutive/fluid/multifluid/MultiFluidFields.hpp"
 #include "constitutive/fluid/multifluid/MultiFluidSelector.hpp"
-#include "constitutive/relativePermeability/RelativePermeabilityFields.hpp"
 #include "constitutive/relativePermeability/RelativePermeabilitySelector.hpp"
 #include "constitutive/solid/SolidInternalEnergy.hpp"
 #include "constitutive/thermalConductivity/MultiPhaseThermalConductivitySelector.hpp"
@@ -856,8 +852,6 @@ real64 CompositionalMultiphaseBase::updateFluidState( ElementSubRegionBase & sub
 {
   GEOS_MARK_FUNCTION;
 
-  real64 maxDeltaPhaseVolFrac;
-
   if( m_formulationType == CompositionalMultiphaseFormulationType::ComponentDensities )
   {
     // For p, rho_c as the primary unknowns
@@ -865,7 +859,7 @@ real64 CompositionalMultiphaseBase::updateFluidState( ElementSubRegionBase & sub
   }
   updateFluidModel( subRegion );
   updateCompAmount( subRegion );
-  maxDeltaPhaseVolFrac = updatePhaseVolumeFraction( subRegion );
+  real64 const maxDeltaPhaseVolFrac = updatePhaseVolumeFraction( subRegion );
   updateRelPermModel( subRegion );
   updatePhaseMobility( subRegion );
   updateCapPressureModel( subRegion );

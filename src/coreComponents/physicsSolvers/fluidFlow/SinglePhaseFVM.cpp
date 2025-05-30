@@ -20,11 +20,9 @@
 #include "SinglePhaseFVM.hpp"
 
 #include "common/TimingMacros.hpp"
-#include "constitutive/fluid/singlefluid/SingleFluidSelector.hpp"
 #include "constitutive/permeability/PermeabilityFields.hpp"
 #include "constitutive/ConstitutivePassThru.hpp"
 #include "discretizationMethods/NumericalMethodsManager.hpp"
-#include "mainInterface/ProblemManager.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "finiteVolume/BoundaryStencil.hpp"
 #include "finiteVolume/FiniteVolumeManager.hpp"

@@ -28,17 +28,12 @@
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "mesh/mpiCommunications/NeighborCommunicator.hpp"
 
-#include "codingUtilities/Utilities.hpp"
 #include "common/DataTypes.hpp"
-#include "constitutive/ConstitutiveBase.hpp"
-#include "constitutive/ConstitutiveManager.hpp"
 #include "constitutive/ConstitutivePassThru.hpp"
 #include "constitutive/solid/Damage.hpp"
 #include "constitutive/solid/SolidBase.hpp"
 #include "finiteElement/FiniteElementDiscretization.hpp"
-#include "finiteElement/FiniteElementDiscretizationManager.hpp"
 #include "finiteElement/Kinematics.h"
-#include "discretizationMethods/NumericalMethodsManager.hpp"
 
 #include "mesh/DomainPartition.hpp"
 

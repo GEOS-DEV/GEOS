@@ -13,7 +13,6 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#include "physicsSolvers/multiphysics/poromechanicsKernels/SinglePhasePoromechanics_impl.hpp"
 #include "physicsSolvers/multiphysics/poromechanicsKernels/SinglePhasePoromechanicsDamage_impl.hpp"
 
 using SinglePhasePoromechanicsDamagePolicy = @SinglePhasePoromechanicsDamagePolicy@;

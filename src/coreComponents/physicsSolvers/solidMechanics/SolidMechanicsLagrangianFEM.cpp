@@ -26,7 +26,6 @@
 #include "kernels/ExplicitFiniteStrain.hpp"
 #include "kernels/FixedStressThermoPoromechanics.hpp"
 
-#include "codingUtilities/Utilities.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
 #include "discretizationMethods/NumericalMethodsManager.hpp"
@@ -274,9 +273,6 @@ void SolidMechanicsLagrangianFEM::initializePreSubGroups()
   GEOS_UNUSED_VAR( feDiscretization );
 }
 
-
-
-template< typename ... PARAMS >
 real64 SolidMechanicsLagrangianFEM::explicitKernelDispatch( MeshLevel & mesh,
                                                             string_array const & targetRegions,
                                                             string const & finiteElementName,

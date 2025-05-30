@@ -19,8 +19,6 @@
 
 #include "CompositionalMultiphaseHybridFVMKernels.hpp"
 
-#include "finiteVolume/mimeticInnerProducts/MimeticInnerProductBase.hpp"
-#include "finiteVolume/mimeticInnerProducts/BdVLMInnerProduct.hpp"
 #include "finiteVolume/mimeticInnerProducts/TPFAInnerProduct.hpp"
 
 #include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
@@ -949,7 +947,7 @@ AssemblerKernelHelper::
   }
 }
 
-template< integer NF, integer NC, integer NP >
+template< integer NF, integer NC >
 GEOS_HOST_DEVICE
 inline
 void
