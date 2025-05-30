@@ -34,7 +34,7 @@ SourceFluxBoundaryCondition::SourceFluxBoundaryCondition( string const & name, G
   getWrapper< string >( FieldSpecificationBase::viewKeyStruct::functionNameString() ).
     setDescription( GEOS_FMT( "Name of a function that specifies the variation of the production rate variations of this {}."
                               "Multiplied by {}. If no function is provided, a constant value of 1 is used."
-                              "The producted fluid rate unit is in kg by default, or in mole if the flow solver uses moles.",
+                              "The produced fluid rate unit is in kg by default, or in mole if the flow solver uses moles.",
                               catalogName(),
                               FieldSpecificationBase::viewKeyStruct::scaleString() ) );
 
