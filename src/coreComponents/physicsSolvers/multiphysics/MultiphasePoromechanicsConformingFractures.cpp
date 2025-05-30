@@ -20,7 +20,6 @@
 #include "MultiphasePoromechanicsConformingFractures.hpp"
 
 #include "constitutive/contact/HydraulicApertureRelationSelector.hpp"
-//#include "physicsSolvers/multiphysics/poromechanicsKernels/SinglePhasePoromechanics.hpp"
 #include "physicsSolvers/multiphysics/poromechanicsKernels/SinglePhasePoromechanicsFractures.hpp"
 #include "finiteVolume/FluxApproximationBase.hpp"
 #include "constitutive/fluid/multifluid/MultiFluidBase.hpp"
