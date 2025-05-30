@@ -221,6 +221,32 @@ void TwoPointFluxApproximation::computeCellStencil( MeshLevel & mesh ) const
   } );
 }
 
+void TwoPointFluxApproximation::fillConnectionMap( MeshLevel & mesh ) const
+{
+
+  string_array const & targetRegions = m_targetRegions.at( mesh.getParent().getParent().getName() );
+
+  CellElementStencilTPFA & stencil = getStencil< CellElementStencilTPFA >( mesh, viewKeyStruct::cellStencilString() );
+
+  unordered_map< localIndex, localIndex > const & connectorIndices = stencil.getConnectorIndices();
+
+  mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( targetRegions, [&]( localIndex const, 
+                                                                                          CellElementSubRegion & subRegion )
+  {
+    forAll< serialPolicy >( subRegion.size(), [&]( localIndex const ke )
+    {
+      for ( auto kf : subRegion.faceList() )
+      {
+        if ( connectorIndices.find( kf ) != connectorIndices.end() ) // with c++20 this can be connectorIndices.contains( kf )
+        { 
+          localIndex const connector = connectorIndices.at( kf );
+          subRegion.addToConnectorList( ke, connector );
+        } 
+      }
+    } ); 
+  } );
+}
+
 void TwoPointFluxApproximation::registerFractureStencil( Group & stencilGroup ) const
 {
   stencilGroup.registerWrapper< SurfaceElementStencil >( viewKeyStruct::fractureStencilString() ).

@@ -145,6 +145,13 @@ private:
    */
   void initNewFractureFieldsDFM( MeshLevel & mesh,
                                  string const & faceElementRegionName ) const;
+  
+  /**
+   * @brief Fill the connection map for all cellElements
+   * 
+   * @param mesh The mesh object.
+   */
+  void fillConnectionMap( MeshLevel & mesh ) const;                             
 
   /// mean permeability coefficient
   real64 m_meanPermCoefficient;
