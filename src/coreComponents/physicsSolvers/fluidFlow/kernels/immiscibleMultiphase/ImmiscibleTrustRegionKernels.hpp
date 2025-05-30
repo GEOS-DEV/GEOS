@@ -1115,7 +1115,7 @@ public:
       m_rankOffset( rankOffset ),
       m_dofNumber( dofNumberAccessor.toNestedViewConst() ),
       m_ghostRank( flowAccessors.get( fields::ghostRank {} ) ),
-      m_connMap (subregion.faceList().base().toView()),
+      m_connMap (subregion.getConnectorIndices().base().toView()),
       m_gravCoef( flowAccessors.get( fields::flow::gravityCoefficient {} ) ),
       m_pres( flowAccessors.get( fields::flow::pressure {} ) ),
       m_phaseVolFrac( flowAccessors.get( fields::immiscibleMultiphaseFlow::phaseVolumeFraction {} ) ),
