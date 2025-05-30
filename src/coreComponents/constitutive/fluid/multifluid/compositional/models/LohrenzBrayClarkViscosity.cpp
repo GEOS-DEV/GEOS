@@ -18,7 +18,7 @@
  */
 
 #include "LohrenzBrayClarkViscosity.hpp"
-#include "CriticalVolume.hpp"
+#include "constitutive/fluid/multifluid/compositional/parameters/CriticalVolume.hpp"
 #include "constitutive/fluid/multifluid/Layouts.hpp"
 #include "constitutive/fluid/multifluid/MultiFluidConstants.hpp"
 #include "constitutive/fluid/multifluid/MultiFluidBase.hpp"

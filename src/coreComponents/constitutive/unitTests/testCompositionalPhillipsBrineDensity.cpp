@@ -16,8 +16,8 @@
 // Source includes
 #include "codingUtilities/UnitTestUtilities.hpp"
 #include "constitutive/fluid/multifluid/compositional/models/PhillipsBrineDensity.hpp"
-#include "constitutive/fluid/multifluid/compositional/models/BrineSalinity.hpp"
-#include "constitutive/fluid/multifluid/compositional/models/PressureTemperatureCoordinates.hpp"
+#include "constitutive/fluid/multifluid/compositional/parameters/BrineSalinity.hpp"
+#include "constitutive/fluid/multifluid/compositional/parameters/PressureTemperatureCoordinates.hpp"
 
 #include "TestFluid.hpp"
 #include "TestFluidUtilities.hpp"
@@ -99,7 +99,7 @@ public:
     real64 const expectedMassDensity = std::get< 4 >( data );
 
     auto componentProperties = m_fluid->createKernelWrapper();
-    auto kernelWrapper = this->m_density->createKernelWrapper();
+    auto kernelWrapper = m_density->createKernelWrapper();
 
     real64 molarDensity = 0.0;
     real64 massDensity = 0.0;
@@ -131,92 +131,84 @@ public:
 
     real64 molarDensity = 0.0;
     real64 massDensity = 0.0;
-    stackArray1d< real64, numDofs > molarDensityDerivs( numDofs );
-    stackArray1d< real64, numDofs > massDensityDerivs( numDofs );
+    stackArray2d< real64, 3*numDofs > derivSpace( 3, numDofs );
+    arraySlice1d< real64 > molarDensityDerivs = derivSpace[0];
+    arraySlice1d< real64 > massDensityDerivs = derivSpace[1];
+    arraySlice1d< real64 > tempDerivs = derivSpace[2];
+
+    integer constexpr numValues = 2;
+    stackArray1d< real64, numValues > derivatives( numValues );
 
     kernelWrapper.compute( componentProperties,
                            pressure,
                            temperature,
                            phaseComposition.toSliceConst(),
                            molarDensity,
-                           molarDensityDerivs.toSlice(),
+                           molarDensityDerivs,
                            massDensity,
-                           massDensityDerivs.toSlice(),
+                           massDensityDerivs,
                            false );
 
-    real64 constexpr scale = 1.0;
-
-    molarDensity *= scale;
-    massDensity *= scale;
-    LvArray::forValuesInSlice( molarDensityDerivs.toSlice(), []( real64 & a ){ a *= scale; } );
-    LvArray::forValuesInSlice( massDensityDerivs.toSlice(), []( real64 & a ){ a *= scale; } );
-
-    auto calculateDensity = [&]( real64 const p, real64 const t, auto const & zmf ) -> std::pair< real64, real64 > {
-      real64 densityMolar = 0.0;
-      real64 densityMass = 0.0;
-      stackArray1d< real64, numDofs > tempDerivs( numDofs );
-      kernelWrapper.compute( componentProperties, p, t,
-                             zmf.toSliceConst(),
-                             densityMolar,
-                             tempDerivs.toSlice(),
-                             densityMass,
-                             tempDerivs.toSlice(),
-                             false );
-      return {scale * densityMolar, scale * densityMass};
+    auto const concactDerivatives = [&]( integer const idof ){
+      derivatives[0] = molarDensityDerivs[idof];
+      derivatives[1] = massDensityDerivs[idof];
     };
 
     // Compare against numerical derivatives
     // -- Pressure derivative
+    concactDerivatives( Deriv::dP );
     real64 const dp = 1.0e-4 * pressure;
-    internal::testNumericalDerivative(
-      pressure, dp, molarDensityDerivs[Deriv::dP],
-      [&]( real64 const p ) -> real64 {
-      return calculateDensity( p, temperature, phaseComposition ).first;
-    } );
-    internal::testNumericalDerivative(
-      pressure, dp, massDensityDerivs[Deriv::dP],
-      [&]( real64 const p ) -> real64 {
-      return calculateDensity( p, temperature, phaseComposition ).second;
+    internal::testNumericalDerivative< numValues >(
+      pressure, dp, derivatives.toSliceConst(),
+      [&]( real64 const p, auto & values ){
+      kernelWrapper.compute( componentProperties,
+                             p,
+                             temperature,
+                             phaseComposition.toSliceConst(),
+                             values[0],
+                             tempDerivs,
+                             values[1],
+                             tempDerivs,
+                             false );
     } );
 
     // -- Temperature derivative
+    concactDerivatives( Deriv::dT );
     real64 const dT = 1.0e-6 * temperature;
-    internal::testNumericalDerivative(
-      temperature, dT, molarDensityDerivs[Deriv::dT],
-      [&]( real64 const t ) -> real64 {
-      return calculateDensity( pressure, t, phaseComposition ).first;
-    } );
-    internal::testNumericalDerivative(
-      temperature, dT, massDensityDerivs[Deriv::dT],
-      [&]( real64 const t ) -> real64 {
-      return calculateDensity( pressure, t, phaseComposition ).second;
+    internal::testNumericalDerivative< numValues >(
+      temperature, dT, derivatives.toSliceConst(),
+      [&]( real64 const t, auto & values ){
+      kernelWrapper.compute( componentProperties,
+                             pressure,
+                             t,
+                             phaseComposition.toSliceConst(),
+                             values[0],
+                             tempDerivs,
+                             values[1],
+                             tempDerivs,
+                             false );
     } );
 
-    // -- Composition derivatives derivative
-    real64 const dz = 1.0e-6;
+    // -- Composition derivatives
+    real64 constexpr dz = 1.0e-6;
     for( integer ic = 0; ic < numComps; ++ic )
     {
-      internal::testNumericalDerivative(
-        0.0, dz, molarDensityDerivs[Deriv::dC + ic],
-        [&]( real64 const z ) -> real64 {
-        stackArray1d< real64, numComps > zmf( numComps );
-        for( integer jc = 0; jc < numComps; ++jc )
-        {
-          zmf[jc] = phaseComposition[jc];
-        }
-        zmf[ic] += z;
-        return calculateDensity( pressure, temperature, zmf ).first;
-      } );
-      internal::testNumericalDerivative(
-        0.0, dz, massDensityDerivs[Deriv::dC + ic],
-        [&]( real64 const z ) -> real64 {
-        stackArray1d< real64, numComps > zmf( numComps );
-        for( integer jc = 0; jc < numComps; ++jc )
-        {
-          zmf[jc] = phaseComposition[jc];
-        }
-        zmf[ic] += z;
-        return calculateDensity( pressure, temperature, zmf ).second;
+      concactDerivatives( Deriv::dC + ic );
+      internal::testNumericalDerivative< numValues >(
+        0.0, dz, derivatives.toSliceConst(),
+        [&]( real64 const z, auto & values ){
+        real64 const z_old = phaseComposition[ic];
+        phaseComposition[ic] += z;
+        kernelWrapper.compute( componentProperties,
+                               pressure,
+                               temperature,
+                               phaseComposition.toSliceConst(),
+                               values[0],
+                               tempDerivs,
+                               values[1],
+                               tempDerivs,
+                               false );
+        phaseComposition[ic] = z_old;
       } );
     }
   }
@@ -227,7 +219,7 @@ private:
     int constexpr n = 20;
     real64 constexpr minPressure = 0.995e5;
     real64 constexpr maxPressure = 1000.005e5;
-    real64 constexpr r = pow( maxPressure/minPressure, 1.0 / n );
+    real64 const r = pow( maxPressure/minPressure, 1.0 / n );
     pressureCoordinates.resize( n+1 );
     pressureCoordinates[0] = minPressure;
     for( integer i = 1; i <= n; i++ )
@@ -283,53 +275,77 @@ TEST_P( PengRobinson100K, testDensityDerivatives )
 
 /* UNCRUSTIFY-OFF */
 
+// Test data
+
 INSTANTIATE_TEST_SUITE_P(
   CompositionalPhillipsBrineDensityTest, PengRobinson,
   ::testing::ValuesIn( {
-    DensityData<4>{1.0e+05, 288.15, {0.003, 0.995, 0.005, 0.002}, 5.5944615e+04, 1.0178113e+03},
-    DensityData<4>{1.0e+06, 288.15, {0.003, 0.995, 0.005, 0.002}, 5.5973705e+04, 1.0183406e+03},
-    DensityData<4>{5.0e+06, 288.15, {0.003, 0.995, 0.005, 0.002}, 5.6102402e+04, 1.0206820e+03},
-    DensityData<4>{5.0e+07, 288.15, {0.003, 0.995, 0.005, 0.002}, 5.7501010e+04, 1.0461271e+03},
-    DensityData<4>{1.0e+08, 288.15, {0.003, 0.995, 0.005, 0.002}, 5.9016111e+04, 1.0736917e+03},
-    DensityData<4>{1.0e+05, 293.15, {0.003, 0.995, 0.005, 0.002}, 5.5752244e+04, 1.0143115e+03},
-    DensityData<4>{1.0e+06, 293.15, {0.003, 0.995, 0.005, 0.002}, 5.5781710e+04, 1.0148476e+03},
-    DensityData<4>{5.0e+06, 293.15, {0.003, 0.995, 0.005, 0.002}, 5.5912023e+04, 1.0172184e+03},
-    DensityData<4>{5.0e+07, 293.15, {0.003, 0.995, 0.005, 0.002}, 5.7323318e+04, 1.0428944e+03},
-    DensityData<4>{1.0e+08, 293.15, {0.003, 0.995, 0.005, 0.002}, 5.8840359e+04, 1.0704942e+03},
-    DensityData<4>{1.0e+05, 353.15, {0.003, 0.995, 0.005, 0.002}, 5.3210272e+04, 9.6806491e+02},
-    DensityData<4>{1.0e+06, 353.15, {0.003, 0.995, 0.005, 0.002}, 5.3246283e+04, 9.6872005e+02},
-    DensityData<4>{5.0e+06, 353.15, {0.003, 0.995, 0.005, 0.002}, 5.3405091e+04, 9.7160928e+02},
-    DensityData<4>{5.0e+07, 353.15, {0.003, 0.995, 0.005, 0.002}, 5.5071382e+04, 1.0019244e+03},
-    DensityData<4>{1.0e+08, 353.15, {0.003, 0.995, 0.005, 0.002}, 5.6727179e+04, 1.0320487e+03},
-    DensityData<4>{1.0e+06, 373.15, {0.003, 0.995, 0.005, 0.002}, 5.2276940e+04, 9.5108462e+02},
-    DensityData<4>{5.0e+06, 373.15, {0.003, 0.995, 0.005, 0.002}, 5.2448976e+04, 9.5421451e+02},
-    DensityData<4>{5.0e+07, 373.15, {0.003, 0.995, 0.005, 0.002}, 5.4242231e+04, 9.8683954e+02},
-    DensityData<4>{1.0e+08, 373.15, {0.003, 0.995, 0.005, 0.002}, 5.5991229e+04, 1.0186594e+03}
+    // Pure water: Mass density compared against CO2-Brine implementation
+    DensityData<4>{1.0e+05, 288.15, {0.000, 1.000, 0.000, 0.000}, 5.54544e+04, 9.99012e+02},
+    DensityData<4>{1.0e+06, 288.15, {0.000, 1.000, 0.000, 0.000}, 5.54769e+04, 9.99416e+02},
+    DensityData<4>{5.0e+07, 288.15, {0.000, 1.000, 0.000, 0.000}, 5.67137e+04, 1.02170e+03},
+    DensityData<4>{1.0e+05, 293.15, {0.000, 1.000, 0.000, 0.000}, 5.54069e+04, 9.98155e+02},
+    DensityData<4>{1.0e+06, 293.15, {0.000, 1.000, 0.000, 0.000}, 5.54293e+04, 9.98559e+02},
+    DensityData<4>{5.0e+07, 293.15, {0.000, 1.000, 0.000, 0.000}, 5.66650e+04, 1.02082e+03},
+    DensityData<4>{1.0e+05, 373.15, {0.000, 1.000, 0.000, 0.000}, 5.27943e+04, 9.51089e+02}, // Undersaturated value
+    DensityData<4>{1.0e+06, 373.15, {0.000, 1.000, 0.000, 0.000}, 5.32169e+04, 9.58703e+02},
+    DensityData<4>{5.0e+07, 373.15, {0.000, 1.000, 0.000, 0.000}, 5.44032e+04, 9.80073e+02},
+    // Mixtures
+    DensityData<4>{1.0e+05, 288.15, {0.003, 0.995, 0.005, 0.002}, 5.49382e+04, 9.99502e+02},
+    DensityData<4>{1.0e+06, 288.15, {0.003, 0.995, 0.005, 0.002}, 5.49604e+04, 9.99906e+02},
+    DensityData<4>{5.0e+06, 288.15, {0.003, 0.995, 0.005, 0.002}, 5.50593e+04, 1.00170e+03},
+    DensityData<4>{5.0e+07, 288.15, {0.003, 0.995, 0.005, 0.002}, 5.61822e+04, 1.02213e+03},
+    DensityData<4>{1.0e+08, 288.15, {0.003, 0.995, 0.005, 0.002}, 5.74545e+04, 1.04528e+03},
+    DensityData<4>{1.0e+05, 293.15, {0.003, 0.995, 0.005, 0.002}, 5.48866e+04, 9.98562e+02},
+    DensityData<4>{1.0e+06, 293.15, {0.003, 0.995, 0.005, 0.002}, 5.49088e+04, 9.98966e+02},
+    DensityData<4>{5.0e+06, 293.15, {0.003, 0.995, 0.005, 0.002}, 5.50076e+04, 1.00076e+03},
+    DensityData<4>{5.0e+07, 293.15, {0.003, 0.995, 0.005, 0.002}, 5.61300e+04, 1.02118e+03},
+    DensityData<4>{1.0e+08, 293.15, {0.003, 0.995, 0.005, 0.002}, 5.74018e+04, 1.04432e+03},
+    DensityData<4>{1.0e+05, 353.15, {0.003, 0.995, 0.005, 0.002}, 5.33815e+04, 9.71180e+02},
+    DensityData<4>{1.0e+06, 353.15, {0.003, 0.995, 0.005, 0.002}, 5.34034e+04, 9.71578e+02},
+    DensityData<4>{5.0e+06, 353.15, {0.003, 0.995, 0.005, 0.002}, 5.35006e+04, 9.73346e+02},
+    DensityData<4>{5.0e+07, 353.15, {0.003, 0.995, 0.005, 0.002}, 5.46032e+04, 9.93407e+02},
+    DensityData<4>{1.0e+08, 353.15, {0.003, 0.995, 0.005, 0.002}, 5.58496e+04, 1.01608e+03},
+    DensityData<4>{1.0e+06, 373.15, {0.003, 0.995, 0.005, 0.002}, 5.26439e+04, 9.57762e+02},
+    DensityData<4>{5.0e+06, 373.15, {0.003, 0.995, 0.005, 0.002}, 5.27404e+04, 9.59516e+02},
+    DensityData<4>{5.0e+07, 373.15, {0.003, 0.995, 0.005, 0.002}, 5.38331e+04, 9.79396e+02},
+    DensityData<4>{1.0e+08, 373.15, {0.003, 0.995, 0.005, 0.002}, 5.50664e+04, 1.00183e+03},
   } )
 );
 
 INSTANTIATE_TEST_SUITE_P(
   CompositionalPhillipsBrineDensityTest, PengRobinson100K,
   ::testing::ValuesIn( {
-    DensityData<4>{1.0e+05, 288.15, {0.003, 0.995, 0.005, 0.002}, 5.4308247e+04, 1.0603832e+03},
-    DensityData<4>{1.0e+06, 288.15, {0.003, 0.995, 0.005, 0.002}, 5.4333160e+04, 1.0608696e+03},
-    DensityData<4>{5.0e+06, 288.15, {0.003, 0.995, 0.005, 0.002}, 5.4443949e+04, 1.0630328e+03},
-    DensityData<4>{5.0e+07, 288.15, {0.003, 0.995, 0.005, 0.002}, 5.5712671e+04, 1.0878050e+03},
-    DensityData<4>{1.0e+08, 288.15, {0.003, 0.995, 0.005, 0.002}, 5.7237189e+04, 1.1175716e+03},
-    DensityData<4>{1.0e+05, 293.15, {0.003, 0.995, 0.005, 0.002}, 5.4144306e+04, 1.0571822e+03},
-    DensityData<4>{1.0e+06, 293.15, {0.003, 0.995, 0.005, 0.002}, 5.4169246e+04, 1.0576692e+03},
-    DensityData<4>{5.0e+06, 293.15, {0.003, 0.995, 0.005, 0.002}, 5.4280108e+04, 1.0598338e+03},
-    DensityData<4>{5.0e+07, 293.15, {0.003, 0.995, 0.005, 0.002}, 5.5544412e+04, 1.0845197e+03},
-    DensityData<4>{1.0e+08, 293.15, {0.003, 0.995, 0.005, 0.002}, 5.7052472e+04, 1.1139649e+03},
-    DensityData<4>{1.0e+05, 353.15, {0.003, 0.995, 0.005, 0.002}, 5.2118214e+04, 1.0176222e+03},
-    DensityData<4>{1.0e+06, 353.15, {0.003, 0.995, 0.005, 0.002}, 5.2145414e+04, 1.0181533e+03},
-    DensityData<4>{5.0e+06, 353.15, {0.003, 0.995, 0.005, 0.002}, 5.2265760e+04, 1.0205031e+03},
-    DensityData<4>{5.0e+07, 353.15, {0.003, 0.995, 0.005, 0.002}, 5.3574220e+04, 1.0460511e+03},
-    DensityData<4>{1.0e+08, 353.15, {0.003, 0.995, 0.005, 0.002}, 5.4993761e+04, 1.0737680e+03},
-    DensityData<4>{1.0e+06, 373.15, {0.003, 0.995, 0.005, 0.002}, 5.1419016e+04, 1.0039702e+03},
-    DensityData<4>{5.0e+06, 373.15, {0.003, 0.995, 0.005, 0.002}, 5.1546068e+04, 1.0064509e+03},
-    DensityData<4>{5.0e+07, 373.15, {0.003, 0.995, 0.005, 0.002}, 5.2909038e+04, 1.0330633e+03},
-    DensityData<4>{1.0e+08, 373.15, {0.003, 0.995, 0.005, 0.002}, 5.4343460e+04, 1.0610708e+03}
+    // Pure water: Mass density compared against CO2-Brine implementation
+    DensityData<4>{1.0e+05, 288.15, {0.000, 1.000, 0.000, 0.000}, 5.48094e+04, 1.06077e+03},
+    DensityData<4>{1.0e+06, 288.15, {0.000, 1.000, 0.000, 0.000}, 5.48347e+04, 1.06126e+03},
+    DensityData<4>{5.0e+07, 288.15, {0.000, 1.000, 0.000, 0.000}, 5.62329e+04, 1.08832e+03},
+    DensityData<4>{1.0e+05, 293.15, {0.000, 1.000, 0.000, 0.000}, 5.46468e+04, 1.05762e+03},
+    DensityData<4>{1.0e+06, 293.15, {0.000, 1.000, 0.000, 0.000}, 5.46721e+04, 1.05811e+03},
+    DensityData<4>{5.0e+07, 293.15, {0.000, 1.000, 0.000, 0.000}, 5.60653e+04, 1.08507e+03},
+    DensityData<4>{1.0e+05, 373.15, {0.000, 1.000, 0.000, 0.000}, 5.15482e+04, 9.97652e+02}, // Undersaturated value
+    DensityData<4>{1.0e+06, 373.15, {0.000, 1.000, 0.000, 0.000}, 5.19594e+04, 1.00561e+03},
+    DensityData<4>{5.0e+07, 373.15, {0.000, 1.000, 0.000, 0.000}, 5.34550e+04, 1.03456e+03},
+    // Mixtures
+    DensityData<4>{1.0e+05, 288.15, {0.003, 0.995, 0.005, 0.002}, 5.43082e+04, 1.06038e+03},
+    DensityData<4>{1.0e+06, 288.15, {0.003, 0.995, 0.005, 0.002}, 5.43332e+04, 1.06087e+03},
+    DensityData<4>{5.0e+06, 288.15, {0.003, 0.995, 0.005, 0.002}, 5.44439e+04, 1.06303e+03},
+    DensityData<4>{5.0e+07, 288.15, {0.003, 0.995, 0.005, 0.002}, 5.57127e+04, 1.08780e+03},
+    DensityData<4>{1.0e+08, 288.15, {0.003, 0.995, 0.005, 0.002}, 5.72372e+04, 1.11757e+03},
+    DensityData<4>{1.0e+05, 293.15, {0.003, 0.995, 0.005, 0.002}, 5.41443e+04, 1.05718e+03},
+    DensityData<4>{1.0e+06, 293.15, {0.003, 0.995, 0.005, 0.002}, 5.41692e+04, 1.05767e+03},
+    DensityData<4>{5.0e+06, 293.15, {0.003, 0.995, 0.005, 0.002}, 5.42801e+04, 1.05983e+03},
+    DensityData<4>{5.0e+07, 293.15, {0.003, 0.995, 0.005, 0.002}, 5.55444e+04, 1.08452e+03},
+    DensityData<4>{1.0e+08, 293.15, {0.003, 0.995, 0.005, 0.002}, 5.70525e+04, 1.11396e+03},
+    DensityData<4>{1.0e+05, 353.15, {0.003, 0.995, 0.005, 0.002}, 5.21182e+04, 1.01762e+03},
+    DensityData<4>{1.0e+06, 353.15, {0.003, 0.995, 0.005, 0.002}, 5.21454e+04, 1.01815e+03},
+    DensityData<4>{5.0e+06, 353.15, {0.003, 0.995, 0.005, 0.002}, 5.22658e+04, 1.02050e+03},
+    DensityData<4>{5.0e+07, 353.15, {0.003, 0.995, 0.005, 0.002}, 5.35742e+04, 1.04605e+03},
+    DensityData<4>{1.0e+08, 353.15, {0.003, 0.995, 0.005, 0.002}, 5.49938e+04, 1.07377e+03},
+    DensityData<4>{1.0e+06, 373.15, {0.003, 0.995, 0.005, 0.002}, 5.14190e+04, 1.00397e+03},
+    DensityData<4>{5.0e+06, 373.15, {0.003, 0.995, 0.005, 0.002}, 5.15461e+04, 1.00645e+03},
+    DensityData<4>{5.0e+07, 373.15, {0.003, 0.995, 0.005, 0.002}, 5.29090e+04, 1.03306e+03},
+    DensityData<4>{1.0e+08, 373.15, {0.003, 0.995, 0.005, 0.002}, 5.43435e+04, 1.06107e+03},
   } )
 );
 

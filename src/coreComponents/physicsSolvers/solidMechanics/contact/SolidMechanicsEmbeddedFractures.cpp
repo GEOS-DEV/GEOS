@@ -30,12 +30,15 @@
 #include "mesh/DomainPartition.hpp"
 #include "mesh/NodeManager.hpp"
 #include "mesh/SurfaceElementRegion.hpp"
+#include "physicsSolvers/LogLevelsInfo.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsFields.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 #include "physicsSolvers/solidMechanics/contact/kernels/SolidMechanicsEFEMKernels.hpp"
 #include "physicsSolvers/solidMechanics/contact/kernels/SolidMechanicsEFEMStaticCondensationKernels.hpp"
 #include "physicsSolvers/solidMechanics/contact/kernels/SolidMechanicsEFEMJumpUpdateKernels.hpp"
 #include "physicsSolvers/solidMechanics/contact/ContactFields.hpp"
+
+#include "physicsSolvers/solidMechanics/kernels/SolidMechanicsKernelsDispatchTypeList.hpp"
 
 namespace geos
 {
@@ -56,6 +59,8 @@ SolidMechanicsEmbeddedFractures::SolidMechanicsEmbeddedFractures( const string &
   getWrapperBase( viewKeyStruct::contactPenaltyStiffnessString() ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Value of the penetration penalty stiffness. Units of Pressure/length" );
+
+  addLogLevel< logInfo::LinearSolverConfiguration >();
 }
 
 SolidMechanicsEmbeddedFractures::~SolidMechanicsEmbeddedFractures()
@@ -92,8 +97,8 @@ void SolidMechanicsEmbeddedFractures::setMGRStrategy()
   linearSolverParameters.dofsPerNode = 3;
 
   linearSolverParameters.mgr.strategy = LinearSolverParameters::MGR::StrategyType::solidMechanicsEmbeddedFractures;
-  GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "{}: MGR strategy set to {}", getName(),
-                                      EnumStrings< LinearSolverParameters::MGR::StrategyType >::toString( linearSolverParameters.mgr.strategy )));
+  GEOS_LOG_LEVEL_RANK_0( logInfo::LinearSolverConfiguration, GEOS_FMT( "{}: MGR strategy set to {}", getName(),
+                                                                       EnumStrings< LinearSolverParameters::MGR::StrategyType >::toString( linearSolverParameters.mgr.strategy )));
 }
 
 void SolidMechanicsEmbeddedFractures::registerDataOnMesh( dataRepository::Group & meshBodies )
@@ -345,12 +350,11 @@ void SolidMechanicsEmbeddedFractures::assembleSystem( real64 const time,
       real64 maxTraction = finiteElement::
                              regionBasedKernelApplication
                            < parallelDevicePolicy< >,
-                             constitutive::ElasticIsotropic,
-                             CellElementSubRegion >( mesh,
-                                                     regionNames,
-                                                     getDiscretizationName(),
-                                                     SolidMechanicsLagrangianFEM::viewKeyStruct::solidMaterialNamesString(),
-                                                     kernelFactory );
+                             SolidMechanicsKernelsDispatchTypeList >( mesh,
+                                                                      regionNames,
+                                                                      getDiscretizationName(),
+                                                                      SolidMechanicsLagrangianFEM::viewKeyStruct::solidMaterialNamesString(),
+                                                                      kernelFactory );
 
       GEOS_UNUSED_VAR( maxTraction );
 
@@ -367,12 +371,11 @@ void SolidMechanicsEmbeddedFractures::assembleSystem( real64 const time,
       real64 maxTraction = finiteElement::
                              regionBasedKernelApplication
                            < parallelDevicePolicy< >,
-                             constitutive::SolidBase,
-                             CellElementSubRegion >( mesh,
-                                                     regionNames,
-                                                     getDiscretizationName(),
-                                                     SolidMechanicsLagrangianFEM::viewKeyStruct::solidMaterialNamesString(),
-                                                     kernelFactory );
+                             SolidMechanicsKernelsDispatchTypeList >( mesh,
+                                                                      regionNames,
+                                                                      getDiscretizationName(),
+                                                                      SolidMechanicsLagrangianFEM::viewKeyStruct::solidMaterialNamesString(),
+                                                                      kernelFactory );
 
       GEOS_UNUSED_VAR( maxTraction );
 
@@ -745,12 +748,11 @@ void SolidMechanicsEmbeddedFractures::updateJump( DofManager const & dofManager,
     real64 maxTraction = finiteElement::
                            regionBasedKernelApplication
                          < parallelDevicePolicy< >,
-                           constitutive::SolidBase,
-                           CellElementSubRegion >( mesh,
-                                                   regionNames,
-                                                   getDiscretizationName(),
-                                                   SolidMechanicsLagrangianFEM::viewKeyStruct::solidMaterialNamesString(),
-                                                   kernelFactory );
+                           SolidMechanicsKernelsDispatchTypeList >( mesh,
+                                                                    regionNames,
+                                                                    getDiscretizationName(),
+                                                                    SolidMechanicsLagrangianFEM::viewKeyStruct::solidMaterialNamesString(),
+                                                                    kernelFactory );
 
     GEOS_UNUSED_VAR( maxTraction );
   } );

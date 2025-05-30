@@ -73,17 +73,18 @@ public:
   struct viewKeyStruct : PhysicsSolverBase::viewKeyStruct
   {
     // misc inputs
-    static constexpr char const * fluidNamesString() { return "fluidNames"; }
-    static constexpr char const * solidNamesString() { return "solidNames"; }
-    static constexpr char const * permeabilityNamesString() { return "permeabilityNames"; }
     static constexpr char const * isThermalString() { return "isThermal"; }
     static constexpr char const * inputTemperatureString() { return "temperature"; }
-    static constexpr char const * solidInternalEnergyNamesString() { return "solidInternalEnergyNames"; }
-    static constexpr char const * thermalConductivityNamesString() { return "thermalConductivityNames"; }
     static constexpr char const * allowNegativePressureString() { return "allowNegativePressure"; }
     static constexpr char const * maxAbsolutePresChangeString() { return "maxAbsolutePressureChange"; }
     static constexpr char const * maxSequentialPresChangeString() { return "maxSequentialPressureChange"; }
     static constexpr char const * maxSequentialTempChangeString() { return "maxSequentialTemperatureChange"; }
+
+    static constexpr char const * fluidNamesString() { return "fluidNames"; }
+    static constexpr char const * solidNamesString() { return "solidNames"; }
+    static constexpr char const * permeabilityNamesString() { return "permeabilityNames"; }
+    static constexpr char const * solidInternalEnergyNamesString() { return "solidInternalEnergyNames"; }
+    static constexpr char const * thermalConductivityNamesString() { return "thermalConductivityNames"; }
   };
 
   /**
@@ -168,6 +169,8 @@ public:
     GEOS_ERROR( "Poroelastic fluxes with conforming fractures not yet implemented." );
   }
 
+  void initializeState( DomainPartition & domain );
+
   virtual void initializeFluidState( MeshLevel & mesh, string_array const & regionNames ) { GEOS_UNUSED_VAR( mesh, regionNames ); }
 
   virtual void initializeThermalState( MeshLevel & mesh, string_array const & regionNames ) { GEOS_UNUSED_VAR( mesh, regionNames ); }
@@ -236,8 +239,6 @@ protected:
 
   virtual void initializePostInitialConditionsPreSubGroups() override;
 
-  void initializeState( DomainPartition & domain );
-
   virtual void computeHydrostaticEquilibrium( DomainPartition & domain ) { GEOS_UNUSED_VAR( domain ); }
 
   void initializePorosityAndPermeability( MeshLevel & mesh, string_array const & regionNames );
@@ -258,7 +259,7 @@ protected:
   real64 m_inputTemperature;
 
   /// flag to freeze the initial state during initialization in coupled problems
-  integer m_keepVariablesConstantDuringInitStep;
+  bool m_keepVariablesConstantDuringInitStep;
 
   /// enable the fixed stress poromechanics update of porosity
   bool m_isFixedStressPoromechanicsUpdate;
@@ -311,8 +312,6 @@ public:
 private:
     static string generateMessage( string_view baseMessage,
                                    string_view fieldName, string_view setName );
-
-    BCMessage();
   };
 
 private:

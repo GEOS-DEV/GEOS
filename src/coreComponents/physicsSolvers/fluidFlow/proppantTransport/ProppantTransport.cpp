@@ -33,6 +33,7 @@
 #include "fieldSpecification/FieldSpecificationManager.hpp"
 #include "mesh/DomainPartition.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
+#include "physicsSolvers/LogLevelsInfo.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
 #include "physicsSolvers/fluidFlow/proppantTransport/ProppantTransportFields.hpp"
 #include "physicsSolvers/fluidFlow/proppantTransport/ProppantTransportKernels.hpp"
@@ -81,6 +82,7 @@ ProppantTransport::ProppantTransport( const string & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Flag that enables/disables proppant-packing update" );
 
+  addLogLevel< logInfo::ResidualNorm >();
 }
 
 void ProppantTransport::postInputInitialization()
@@ -142,21 +144,9 @@ void ProppantTransport::registerDataOnMesh( Group & meshBodies )
 
 void ProppantTransport::setConstitutiveNames( ElementSubRegionBase & subRegion ) const
 {
-  string & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
-  fluidName = getConstitutiveName< SlurryFluidBase >( subRegion );
-  GEOS_THROW_IF( fluidName.empty(),
-                 GEOS_FMT( "{}: Fluid model not found on subregion {}",
-                           getDataContext(), subRegion.getName() ),
-                 InputError );
+  setConstitutiveName< SlurryFluidBase >( subRegion, viewKeyStruct::fluidNamesString(), "slurry fluid" );
 
-  subRegion.registerWrapper< string >( viewKeyStruct::proppantNamesString() );
-  string & proppantName = subRegion.getReference< string >( viewKeyStruct::proppantNamesString() );
-  proppantName = getConstitutiveName< ParticleFluidBase >( subRegion );
-  GEOS_THROW_IF( proppantName.empty(),
-                 GEOS_FMT( "{}: Proppant model not found on subregion {}",
-                           getDataContext(), subRegion.getName() ),
-                 InputError );
-
+  setConstitutiveName< ParticleFluidBase >( subRegion, viewKeyStruct::proppantNamesString(), "proppant" );
 }
 
 
@@ -894,10 +884,8 @@ ProppantTransport::calculateResidualNorm( real64 const & GEOS_UNUSED_PARAM( time
     physicsSolverBaseKernels::L2ResidualNormHelper::computeGlobalNorm( localResidualNorm, localResidualNormalizer, residualNorm );
   }
 
-  if( getLogLevel() >= 1 && logger::internal::rank == 0 )
-  {
-    std::cout << GEOS_FMT( "        ( R{} ) = ( {:4.2e} )", ProppantTransport::coupledSolverAttributePrefix(), residualNorm );
-  }
+  GEOS_LOG_LEVEL_RANK_0( logInfo::ResidualNorm,
+                         GEOS_FMT( "        ( R{} ) = ( {:4.2e} )", coupledSolverAttributePrefix(), residualNorm ));
 
   return residualNorm;
 }

@@ -16,8 +16,8 @@
 // Source includes
 #include "codingUtilities/UnitTestUtilities.hpp"
 #include "constitutive/fluid/multifluid/compositional/models/PhillipsBrineViscosity.hpp"
-#include "constitutive/fluid/multifluid/compositional/models/BrineSalinity.hpp"
-#include "constitutive/fluid/multifluid/compositional/models/PressureTemperatureCoordinates.hpp"
+#include "constitutive/fluid/multifluid/compositional/parameters/BrineSalinity.hpp"
+#include "constitutive/fluid/multifluid/compositional/parameters/PressureTemperatureCoordinates.hpp"
 #include "TestFluid.hpp"
 #include "TestFluidUtilities.hpp"
 #include "functions/FunctionManager.hpp"

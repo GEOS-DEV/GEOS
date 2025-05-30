@@ -21,12 +21,12 @@
 
 #include "mesh/DomainPartition.hpp"
 #include "mainInterface/ProblemManager.hpp"
+#include "physicsSolvers/LogLevelsInfo.hpp"
 #include "physicsSolvers/PhysicsSolverManager.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBaseFields.hpp"
 #include "physicsSolvers/fluidFlow/kernels/singlePhase/StatisticsKernel.hpp"
-#include "physicsSolvers/fluidFlow/LogLevelsInfo.hpp"
 #include "common/format/table/TableData.hpp"
 #include "common/format/table/TableFormatter.hpp"
 #include "common/format/table/TableLayout.hpp"
@@ -255,32 +255,32 @@ void SinglePhaseStatistics::computeRegionStatistics( real64 const time,
 
     string_view massUnit = units::getSymbol( m_solver->getMassUnit() );
 
-    TableData singPhaseStatsData;
-    singPhaseStatsData.addRow( "Pressure[Pa]", stats.minPressure, stats.averagePressure, stats.maxPressure );
-    singPhaseStatsData.addRow( "Delta pressure [Pa]", stats.minDeltaPressure, "/", stats.maxDeltaPressure );
-    singPhaseStatsData.addRow( "Temperature [K]", stats.minTemperature, stats.averageTemperature, stats.maxTemperature );
-    singPhaseStatsData.addSeparator();
-    singPhaseStatsData.addSeparator();
-    singPhaseStatsData.addRow( "statistics", CellType::MergeNext, CellType::MergeNext, "value" );
-    singPhaseStatsData.addSeparator();
-
-    singPhaseStatsData.addRow( "Total dynamic pore volume [rm^3]", CellType::MergeNext, CellType::MergeNext, stats.totalPoreVolume );
-    singPhaseStatsData.addSeparator();
-    singPhaseStatsData.addRow( GEOS_FMT( "Total fluid mass [{}]", massUnit ), CellType::MergeNext, CellType::MergeNext, stats.totalMass );
-
-    string const title = GEOS_FMT( "{}, {} (time {} s):", getName(), regionNames[i], time );
-    TableLayout const singPhaseStatsLayout( title, { "statistics", "min", "average", "max" } );
-    TableTextFormatter tableFormatter( singPhaseStatsLayout );
-    GEOS_LOG_RANK_0( tableFormatter.toString( singPhaseStatsData ) );
-
-    if( m_writeCSV > 0 && MpiWrapper::commRank() == 0 )
+    if( isLogLevelActive< logInfo::Statistics >( this->getLogLevel())&& MpiWrapper::commRank() == 0 )
     {
-      std::ofstream outputFile( m_outputDir + "/" + regionNames[i] + ".csv", std::ios_base::app );
-      outputFile << time << "," << stats.minPressure << "," << stats.averagePressure << "," << stats.maxPressure << "," <<
-        stats.minDeltaPressure << "," << stats.maxDeltaPressure << "," <<
-        stats.minTemperature << "," << stats.averageTemperature << "," << stats.maxTemperature << "," <<
-        stats.totalPoreVolume << "," << stats.totalMass << std::endl;
-      outputFile.close();
+      TableData singPhaseStatsData;
+      singPhaseStatsData.addRow( "Pressure[Pa]", stats.minPressure, stats.averagePressure, stats.maxPressure );
+      singPhaseStatsData.addRow( "Delta pressure [Pa]", stats.minDeltaPressure, "/", stats.maxDeltaPressure );
+      singPhaseStatsData.addRow( "Temperature [K]", stats.minTemperature, stats.averageTemperature, stats.maxTemperature );
+      singPhaseStatsData.addSeparator();
+
+      singPhaseStatsData.addRow( "Total dynamic pore volume [rm^3]", CellType::MergeNext, CellType::MergeNext, stats.totalPoreVolume );
+      singPhaseStatsData.addSeparator();
+      singPhaseStatsData.addRow( GEOS_FMT( "Total fluid mass [{}]", massUnit ), CellType::MergeNext, CellType::MergeNext, stats.totalMass );
+
+      string const title = GEOS_FMT( "{}, {} (time {} s):", getName(), regionNames[i], time );
+      TableLayout const singPhaseStatsLayout( title, { "statistics", "min", "average", "max" } );
+      TableTextFormatter tableFormatter( singPhaseStatsLayout );
+      GEOS_LOG_RANK_0( tableFormatter.toString( singPhaseStatsData ) );
+
+      if( m_writeCSV > 0 && MpiWrapper::commRank() == 0 )
+      {
+        std::ofstream outputFile( m_outputDir + "/" + regionNames[i] + ".csv", std::ios_base::app );
+        outputFile << time << "," << stats.minPressure << "," << stats.averagePressure << "," << stats.maxPressure << "," <<
+          stats.minDeltaPressure << "," << stats.maxDeltaPressure << "," <<
+          stats.minTemperature << "," << stats.averageTemperature << "," << stats.maxTemperature << "," <<
+          stats.totalPoreVolume << "," << stats.totalMass << std::endl;
+        outputFile.close();
+      }
     }
   }
 }

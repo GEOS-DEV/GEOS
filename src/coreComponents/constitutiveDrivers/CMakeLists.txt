@@ -22,6 +22,7 @@ Contains fluid and rock constitutive model tests to calibrate constitutive model
 # Specify all headers
 #
 set( constitutiveDrivers_headers
+     fluid/multiFluid/LogLevelsInfo.hpp
      fluid/multiFluid/PVTDriver.hpp
      fluid/multiFluid/PVTDriverRunTest.hpp
      fluid/multiFluid/reactive/ReactiveFluidDriver.hpp
@@ -43,6 +44,7 @@ set( constitutiveDrivers_sources
      fluid/multiFluid/compositional/PVTDriverRunTestCompositionalKValuePhillipsBrine.cpp
      fluid/multiFluid/compositional/PVTDriverRunTestCompositionalThreePhaseLohrenzBrayClarkViscosity.cpp
      fluid/multiFluid/compositional/PVTDriverRunTestCompositionalTwoPhaseConstantViscosity.cpp
+     fluid/multiFluid/compositional/PVTDriverRunTestCompositionalTwoPhasePhillipsBrine.cpp
      fluid/multiFluid/compositional/PVTDriverRunTestCompositionalTwoPhaseLohrenzBrayClarkViscosity.cpp
      fluid/multiFluid/reactive/ReactiveFluidDriver.cpp
      relativePermeability/RelpermDriver.cpp

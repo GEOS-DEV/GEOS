@@ -23,6 +23,7 @@
       outputCompressibility="1"
       outputPhaseComposition="1"
       baseline="testPVT_CO2BrineTables_testCo2BrinePhillipsMixtureB.txt"
+      precision="6"
       logLevel="1" />
   </Tasks>
 

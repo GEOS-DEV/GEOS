@@ -23,11 +23,12 @@
 #include "mesh/PerforationFields.hpp"
 #include "mesh/WellElementRegion.hpp"
 #include "mesh/WellElementSubRegion.hpp"
+#include "physicsSolvers/fluidFlow/wells/LogLevelsInfo.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBase.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
+
 #include "physicsSolvers/fluidFlow/wells/WellControls.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellSolverBaseFields.hpp"
-#include "physicsSolvers/fluidFlow/wells/LogLevelsInfo.hpp"
 #include "physicsSolvers/fluidFlow/wells/kernels/ThermalCompositionalMultiphaseWellKernels.hpp"
 #include "fileIO/Outputs/OutputBase.hpp"
 
@@ -46,7 +47,7 @@ WellSolverBase::WellSolverBase( string const & name,
   m_numDofPerResElement( 0 ),
   m_isThermal( 0 ),
   m_ratesOutputDir( joinPath( OutputBase::getOutputDirectory(), name + "_rates" ) ),
-  m_keepVariablesConstantDuringInitStep( 0 )
+  m_keepVariablesConstantDuringInitStep( false )
 {
   registerWrapper( viewKeyStruct::isThermalString(), &m_isThermal ).
     setApplyDefaultValue( 0 ).
@@ -59,15 +60,12 @@ WellSolverBase::WellSolverBase( string const & name,
   this->registerWrapper( viewKeyStruct::writeCSVFlagString(), &m_writeCSV ).
     setApplyDefaultValue( 0 ).
     setInputFlag( dataRepository::InputFlags::OPTIONAL ).
-    setDescription( "Write rates into a CSV file" );
+    setDescription( "When set to 1, write the rates into a CSV file" );
 
   this->registerWrapper( viewKeyStruct::timeStepFromTablesFlagString(), &m_timeStepFromTables ).
     setApplyDefaultValue( 0 ).
     setInputFlag( dataRepository::InputFlags::OPTIONAL ).
     setDescription( "Choose time step to honor rates/bhp tables time intervals" );
-
-  addLogLevel< logInfo::WellControl >();
-  addLogLevel< logInfo::Crossflow >();
 }
 
 Group *WellSolverBase::createChild( string const & childKey, string const & childName )
@@ -158,15 +156,6 @@ void WellSolverBase::initializePostSubGroups()
       validateWellConstraints( 0, 0, subRegion );
     } );
   } );
-}
-
-void WellSolverBase::setConstitutiveNamesCallSuper( ElementSubRegionBase & subRegion ) const
-{
-  PhysicsSolverBase::setConstitutiveNamesCallSuper( subRegion );
-  subRegion.registerWrapper< string >( viewKeyStruct::fluidNamesString() ).
-    setPlotLevel( PlotLevel::NOPLOT ).
-    setRestartFlags( RestartFlags::NO_WRITE ).
-    setSizedFromParent( 0 );
 }
 
 void WellSolverBase::setupDofs( DomainPartition const & domain,

@@ -70,7 +70,7 @@ protected:
     return std::find( separators.begin(), separators.end(), c ) != separators.end();
   };
 
-  std::vector< T > reference;
+  geos::stdVector< T > reference;
   std::string input;
 
   void SetUp() override
@@ -103,7 +103,7 @@ protected:
 
   void testParseBuffer() const
   {
-    std::vector< T > vec;
+    geos::stdVector< T > vec;
     char const * ptr = geos::parseBuffer( input.data(), input.data() + input.size(), vec, issep );
     EXPECT_EQ( ptr, input.data() + input.size() );
     compareToReference( vec );
@@ -111,7 +111,7 @@ protected:
 
   void testParseBufferInvalid() const
   {
-    std::vector< T > vec;
+    geos::stdVector< T > vec;
     auto const issep_invalid = []( char const c ){ return c == '|'; };
     char const * ptr = geos::parseBuffer( input.data(), input.data() + input.size(), vec, issep_invalid );
     EXPECT_NE( ptr, input.data() + input.size() );
@@ -124,7 +124,7 @@ protected:
     os << input;
     os.close();
 
-    std::vector< T > vec;
+    geos::stdVector< T > vec;
     geos::parseFile( fname, vec, issep );
     compareToReference( vec );
 
@@ -138,7 +138,7 @@ protected:
     os << input;
     os.close();
 
-    std::vector< T > vec;
+    geos::stdVector< T > vec;
     auto const issep_invalid = []( char const c ){ return c == '|'; };
     EXPECT_THROW( geos::parseFile( fname, vec, issep_invalid ), std::runtime_error );
 

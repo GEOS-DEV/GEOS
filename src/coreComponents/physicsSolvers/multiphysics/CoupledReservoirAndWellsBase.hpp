@@ -231,6 +231,8 @@ public:
     }
   }
 
+  void initializeState( DomainPartition & domain ) const { return reservoirSolver()->initializeState( domain ); }
+
   void
   assembleFluxTerms( real64 const dt,
                      DomainPartition const & domain,
@@ -333,9 +335,9 @@ private:
    */
   void computeWellTransmissibility( DomainPartition & domain ) const
   {
-    this->template forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                                                 MeshLevel & meshLevel,
-                                                                                 string_array const & regionNames )
+    this->template forDiscretizationOnMeshTargets<>( domain.getMeshBodies(), [&] ( string const &,
+                                                                                   MeshLevel & meshLevel,
+                                                                                   string_array const & regionNames )
     {
       ElementRegionManager & elemManager = meshLevel.getElemManager();
 

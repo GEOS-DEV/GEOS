@@ -21,7 +21,7 @@
 #define GEOS_CONSTITUTIVE_FLUID_MULTIFLUID_COMPOSITIONAL_MODELS_IMMISCIBLEWATERFLASHMODEL_HPP_
 
 #include "FunctionBase.hpp"
-#include "EquationOfState.hpp"
+#include "constitutive/fluid/multifluid/compositional/parameters/EquationOfState.hpp"
 
 #include "constitutive/fluid/multifluid/Layouts.hpp"
 #include "constitutive/fluid/multifluid/MultiFluidUtils.hpp"
@@ -55,6 +55,7 @@ public:
                                    integer const waterComponentIndex,
                                    EquationOfStateType const liquidEos,
                                    EquationOfStateType const vapourEos,
+                                   real64 const salinity,
                                    arrayView1d< real64 const > const componentCriticalVolume );
 
   // Mark as a 3-phase flash
