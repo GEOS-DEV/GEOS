@@ -18,7 +18,7 @@
  */
 
 #include "KValueFlashModel.hpp"
-#include "constitutive/fluid/multifluid/compositional/models/KValueFlashParameters.hpp"
+#include "constitutive/fluid/multifluid/compositional/parameters/KValueFlashParameters.hpp"
 
 #include "functions/FunctionManager.hpp"
 

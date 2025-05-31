@@ -14,8 +14,8 @@
  */
 
 #include "constitutive/fluid/multifluid/compositional/models/KValueFlashModel.hpp"
-#include "constitutive/fluid/multifluid/compositional/models/KValueFlashParameters.hpp"
-#include "constitutive/fluid/multifluid/compositional/models/EquationOfState.hpp"
+#include "constitutive/fluid/multifluid/compositional/parameters/KValueFlashParameters.hpp"
+#include "constitutive/fluid/multifluid/compositional/parameters/EquationOfState.hpp"
 #include "constitutive/fluid/multifluid/compositional/CompositionalMultiphaseFluid.hpp"
 #include "constitutive/unitTests/TestFluid.hpp"
 #include "constitutive/unitTests/TestFluidUtilities.hpp"

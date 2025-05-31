@@ -55,6 +55,8 @@ void constitutiveUpdatePassThru( constitutive::MultiFluidBase const & fluid,
                                CompositionalTwoPhaseLohrenzBrayClarkViscosity,
                                CompositionalThreePhaseLohrenzBrayClarkViscosity,
                                CompositionalTwoPhasePhillipsBrine,
+                               CompositionalKValuePhillipsBrine,
+                               CompositionalKValueLohrenzBrayClarkViscosity,
 #endif
                                CompositionalTwoPhaseConstantViscosity
                                >::execute( fluid, std::forward< LAMBDA >( lambda ) );
@@ -79,6 +81,8 @@ void constitutiveUpdatePassThru( constitutive::MultiFluidBase & fluid,
                                CompositionalTwoPhaseLohrenzBrayClarkViscosity,
                                CompositionalThreePhaseLohrenzBrayClarkViscosity,
                                CompositionalTwoPhasePhillipsBrine,
+                               CompositionalKValuePhillipsBrine,
+                               CompositionalKValueLohrenzBrayClarkViscosity,
 #endif
                                CompositionalTwoPhaseConstantViscosity
                                >::execute( fluid, std::forward< LAMBDA >( lambda ) );
