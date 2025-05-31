@@ -101,6 +101,7 @@ set( constitutive_headers
      fluid/multifluid/compositional/models/ImmiscibleWaterDensity.hpp
      fluid/multifluid/compositional/models/ImmiscibleWaterFlashModel.hpp
      fluid/multifluid/compositional/models/ImmiscibleWaterViscosity.hpp
+     fluid/multifluid/compositional/models/KValueFlashModel.hpp
      fluid/multifluid/compositional/models/LohrenzBrayClarkViscosity.hpp
      fluid/multifluid/compositional/models/LohrenzBrayClarkViscosity_Impl.hpp
      fluid/multifluid/compositional/models/NegativeTwoPhaseFlashModel.hpp
