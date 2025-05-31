@@ -19,8 +19,12 @@
 
 #include "TrilinosInterface.hpp"
 
+#if defined(GEOS_USE_SUITESPARSE)
 #include "linearAlgebra/interfaces/direct/SuiteSparse.hpp"
+#endif
+#if defined(GEOS_USE_SUPERLU_DIST)
 #include "linearAlgebra/interfaces/direct/SuperLUDist.hpp"
+#endif
 #include "linearAlgebra/interfaces/trilinos/TrilinosPreconditioner.hpp"
 #include "linearAlgebra/interfaces/trilinos/TrilinosSolver.hpp"
 
@@ -46,7 +50,12 @@ TrilinosInterface::createSolver( LinearSolverParameters params )
     else
 #endif
     {
+#if defined(GEOS_USE_SUITESPARSE)
       return std::make_unique< SuiteSparse< TrilinosInterface > >( std::move( params ) );
+#else
+      GEOS_ERROR( "GEOS is configured without support for SuiteSparse." );
+      return std::unique_ptr< LinearSolverBase< TrilinosInterface > >( nullptr );
+#endif
     }
   }
   else

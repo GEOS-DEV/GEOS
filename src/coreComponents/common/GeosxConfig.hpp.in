@@ -5,7 +5,7 @@
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2023-2024 Chevron 
+ * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
@@ -94,6 +94,9 @@
 
 /// Enables use of SuperLU_dist library through HYPRE (CMake option ENABLE_SUPERLU_DIST)
 #cmakedefine GEOS_USE_SUPERLU_DIST
+
+/// Enables use of SuiteSparse library (CMake option ENABLE_SUITESPARSE)
+#cmakedefine GEOS_USE_SUITESPARSE
 
 /// Enables use of PETSc library (CMake option ENABLE_PETSC)
 #cmakedefine GEOS_USE_PETSC
@@ -200,4 +203,3 @@
 #endif
 
 #endif  /* GEOS_CONFIG_HPP */
-

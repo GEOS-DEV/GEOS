@@ -19,15 +19,16 @@
 
 #include "HypreInterface.hpp"
 
+#if defined(GEOS_USE_SUITESPARSE)
 #include "linearAlgebra/interfaces/direct/SuiteSparse.hpp"
+#endif
+#if defined(GEOS_USE_SUPERLU_DIST)
+#include "linearAlgebra/interfaces/direct/SuperLUDist.hpp"
+#endif
 #include "linearAlgebra/interfaces/hypre/HypreMatrix.hpp"
 #include "linearAlgebra/interfaces/hypre/HyprePreconditioner.hpp"
 #include "linearAlgebra/interfaces/hypre/HypreSolver.hpp"
 #include "linearAlgebra/interfaces/hypre/HypreUtils.hpp"
-
-#if defined(GEOS_USE_SUPERLU_DIST)
-#include "linearAlgebra/interfaces/direct/SuperLUDist.hpp"
-#endif
 
 #include "HYPRE_utilities.h"
 #if GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_CUDA || GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_HIP
@@ -98,8 +99,7 @@ HypreInterface::createSolver( LinearSolverParameters params )
     }
     else
     {
-      /* TODO: add GEOS_USE_SUITESPARSE and use it below */
-#if defined(suitesparse_VERSION)
+#if defined(GEOS_USE_SUITESPARSE)
       return std::make_unique< SuiteSparse< HypreInterface > >( std::move( params ) );
 #else
       GEOS_ERROR( "GEOS is configured without support for SuiteSparse." );

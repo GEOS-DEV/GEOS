@@ -19,8 +19,12 @@
 
 #include "PetscInterface.hpp"
 
+#if defined(GEOS_USE_SUITESPARSE)
 #include "linearAlgebra/interfaces/direct/SuiteSparse.hpp"
+#endif
+#if defined(GEOS_USE_SUPERLU_DIST)
 #include "linearAlgebra/interfaces/direct/SuperLUDist.hpp"
+#endif
 #include "linearAlgebra/interfaces/petsc/PetscPreconditioner.hpp"
 #include "linearAlgebra/interfaces/petsc/PetscSolver.hpp"
 
@@ -47,13 +51,20 @@ PetscInterface::createSolver( LinearSolverParameters params )
 {
   if( params.solverType == LinearSolverParameters::SolverType::direct )
   {
+#if defined(GEOS_USE_SUPERLU_DIST)
     if( params.direct.parallel )
     {
       return std::make_unique< SuperLUDist< PetscInterface > >( std::move( params ) );
     }
     else
+#endif
     {
+#if defined(GEOS_USE_SUITESPARSE)
       return std::make_unique< SuiteSparse< PetscInterface > >( std::move( params ) );
+#else
+      GEOS_ERROR( "GEOS is configured without support for SuiteSparse." );
+      return std::unique_ptr< LinearSolverBase< TrilinosInterface > >( nullptr );
+#endif
     }
   }
   else

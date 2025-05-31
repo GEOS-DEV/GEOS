@@ -106,55 +106,55 @@ void outputVersionInfo()
   GEOS_LOG_RANK_0( "  - VTK version: " << STRINGIZE( VTK_VERSION ) );
 #endif
 
-#if defined(RAJA_VERSION)
+#if defined(GEOS_USE_RAJA) && defined(RAJA_VERSION)
   GEOS_LOG_RANK_0( "  - RAJA version: " << STRINGIZE( RAJA_VERSION ) );
 #endif
 
-#if defined(umpire_VERSION)
+#if defined(GEOS_USE_UMPIRE) && defined(umpire_VERSION)
   GEOS_LOG_RANK_0( "  - Umpire version: " << STRINGIZE( umpire_VERSION ) );
 #endif
 
-#if defined(chai_VERSION)
+#if defined(GEOS_USE_CHAI) && defined(chai_VERSION)
   GEOS_LOG_RANK_0( "  - CHAI version: " << STRINGIZE( chai_VERSION ) );
 #endif
 
-#if defined(adiak_VERSION)
+#if defined(GEOS_USE_ADIAK) && defined(adiak_VERSION)
   GEOS_LOG_RANK_0( "  - adiak version: " << STRINGIZE( adiak_VERSION ) );
 #endif
 
-#if defined(caliper_VERSION)
+#if defined(GEOS_USE_CALIPER) && defined(caliper_VERSION)
   GEOS_LOG_RANK_0( "  - Caliper version: " << STRINGIZE( caliper_VERSION ) );
 #endif
 
-#if defined(metis_VERSION)
+#if defined(GEOS_USE_METIS) && defined(metis_VERSION)
   GEOS_LOG_RANK_0( "  - METIS version: " << STRINGIZE( metis_VERSION ) );
 #endif
 
-#if defined(parmetis_VERSION)
+#if defined(GEOS_USE_PARMETIS) && defined(parmetis_VERSION)
   GEOS_LOG_RANK_0( "  - PARMETIS version: " << STRINGIZE( parmetis_VERSION ) );
 #endif
 
-#if defined(scotch_VERSION)
+#if defined(GEOS_USE_SCOTCH) && defined(scotch_VERSION)
   GEOS_LOG_RANK_0( "  - Scotch version: " << STRINGIZE( scotch_VERSION ) );
 #endif
 
-#if defined(superlu_dist_VERSION)
+#if defined(GEOS_USE_SUPERLU_DIST) && defined(superlu_dist_VERSION)
   GEOS_LOG_RANK_0( "  - SuperLU_Dist version: " << STRINGIZE( superlu_dist_VERSION ) );
 #endif
 
-#if defined(suitesparse_VERSION)
+#if defined(GEOS_USE_SUITESPARSE) && defined(suitesparse_VERSION)
   GEOS_LOG_RANK_0( "  - SuiteSparse version: " << STRINGIZE( suitesparse_VERSION ) );
 #endif
 
-#if defined(hypre_VERSION)
+#if defined(GEOS_USE_HYPRE) && defined(hypre_VERSION)
   GEOS_LOG_RANK_0( "  - HYPRE version: " << STRINGIZE( hypre_VERSION ) );
 #endif
 
-#if defined(trilinos_VERSION)
+#if defined(GEOS_USE_TRILINOS) && defined(trilinos_VERSION)
   GEOS_LOG_RANK_0( "  - trilinos version: " << STRINGIZE( trilinos_VERSION ) );
 #endif
 
-#if defined(petsc_VERSION)
+#if defined(GEOS_USE_PETSC) && defined(petsc_VERSION)
   GEOS_LOG_RANK_0( "  - PETSc version: " << STRINGIZE( petsc_VERSION ) );
 #endif
 
@@ -172,7 +172,7 @@ void outputVersionInfo()
   ( GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_CPU )
   GEOS_LOG_RANK_0( "" );
   GEOS_LOG_RANK_0( "*******************************************************" );
-  GEOS_LOG_RANK_0( "*                   WARNING!!!                        *" );
+  GEOS_LOG_RANK_0( "*            WARNING!! WARNING!! WARNING!!            *" );
   GEOS_LOG_RANK_0( "*                                                     *" );
   GEOS_LOG_RANK_0( "*  GEOS has GPU support enabled, but HYPRE does not!  *" );
   GEOS_LOG_RANK_0( "*******************************************************" );

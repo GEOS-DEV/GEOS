@@ -79,7 +79,7 @@ set( linearAlgebra_sources
 
 # Workaround for link issue with cce-18
 if( NOT ${ENABLE_HIP} )
-    list( APPEND linearAlgebra_sources solvers/GmresSolver.hpp )
+    list( APPEND linearAlgebra_sources solvers/GmresSolver.cpp )
 endif()
 
 set( dependencyList ${parallelDeps} mesh denseLinearAlgebra finiteVolume )
