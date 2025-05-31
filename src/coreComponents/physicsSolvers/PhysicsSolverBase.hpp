@@ -691,6 +691,9 @@ public:
     /// @return string for the writeLinearSystem wrapper
     static constexpr char const * writeLinearSystemString() { return "writeLinearSystem"; }
 
+    /// @return string for the usePhysicsScaling wrapper
+    static constexpr char const * usePhysicsScalingString() { return "usePhysicsScaling"; }
+
     /// @return string for the allowNonConvergedLinearSolverSolution wrapper
     static constexpr char const * allowNonConvergedLinearSolverSolutionString() { return "allowNonConvergedLinearSolverSolution"; }
   };
@@ -1026,6 +1029,12 @@ protected:
 
   /// System solution vector
   ParallelVector m_solution;
+
+  /// Scaling vector (A^\tilde = D * A * D, b^\tilde = D * b, x = D * x^\tilde)
+  ParallelVector m_scaling;
+
+  /// Flag to decide whether to apply physics-based scaling to the linear system
+  integer m_usePhysicsScaling;
 
   /// Local system matrix and rhs
   CRSMatrix< real64, globalIndex > m_localMatrix;
