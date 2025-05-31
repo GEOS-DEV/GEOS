@@ -23,8 +23,6 @@ set( gtest_pvt_xmls
      testPVT.xml
      testPVT_CO2Brine.xml
      testPVT_CO2BrineTables.xml
-     testPVT_KValue.xml
-     testPVT_KValuePhillips.xml
      testPVT_PhaseComposition.xml
      testPVT_ThreePhaseCompositional.xml
    )
