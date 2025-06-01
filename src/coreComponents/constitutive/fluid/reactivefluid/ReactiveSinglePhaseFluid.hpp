@@ -190,6 +190,7 @@ protected:
   };
 
   std::variant<
+    typename ReactiveSinglePhaseFluid< BASE >::template ReactionKernelWrapper< hpcReact::bulkGeneric::ultramaficSystemType >,
     typename ReactiveSinglePhaseFluid< BASE >::template ReactionKernelWrapper< hpcReact::bulkGeneric::carbonateSystemType >,
     typename ReactiveSinglePhaseFluid< BASE >::template ReactionKernelWrapper< hpcReact::bulkGeneric::carbonateSystemAllEquilibriumType >,
     typename ReactiveSinglePhaseFluid< BASE >::template ReactionKernelWrapper< hpcReact::bulkGeneric::simpleTestType > >
@@ -197,6 +198,18 @@ protected:
   {
     switch( m_chemicalSystemType )
     {
+      case ChemicalSystemType::ultramafic:
+        return ReactionKernelWrapper< hpcReact::bulkGeneric::ultramaficSystemType >( m_primarySpeciesAggregateConcentration,
+                                                                                    m_dPrimarySpeciesAggregateConcentration_dLogPrimarySpeciesConcentrations,
+                                                                                    m_secondarySpeciesConcentration,
+                                                                                    m_kineticReactionRates,
+                                                                                    m_aggregateSpeciesRates,
+                                                                                    m_dAggregateSpeciesRates_dLogPrimarySpeciesConcentrations,
+                                                                                    m_numPrimarySpecies,
+                                                                                    m_numSecondarySpecies,
+                                                                                    m_numKineticReactions,
+                                                                                    ultramaficSystem );
+      
       case ChemicalSystemType::carbonate:
         return ReactionKernelWrapper< hpcReact::bulkGeneric::carbonateSystemType >( m_primarySpeciesAggregateConcentration,
                                                                                     m_dPrimarySpeciesAggregateConcentration_dLogPrimarySpeciesConcentrations,

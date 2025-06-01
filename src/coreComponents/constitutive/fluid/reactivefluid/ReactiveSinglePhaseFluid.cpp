@@ -42,10 +42,6 @@ ReactiveSinglePhaseFluid( string const & name, Group * const parent ):
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Chemical System type. Available options are: "
                     "``" + EnumStrings< ChemicalSystemType >::concat( "|" ) + "``" );
-  // For now this is being hardcoded. We will see where this should come from.
-  m_numPrimarySpecies = 8; // 3 for simple; 7 for carbonateSystemAllEquilibrium; 8 for carbonate
-  m_numSecondarySpecies = 10; // 2 for simple; 11 for carbonateSystemAllEquilibrium; 10 for carbonate
-  m_numKineticReactions = 1;
 
   this->registerField( fields::reactivefluid::secondarySpeciesConcentration{}, &m_secondarySpeciesConcentration );
   this->registerField( fields::reactivefluid::primarySpeciesAggregateConcentration{}, &m_primarySpeciesAggregateConcentration );
@@ -64,7 +60,10 @@ deliverClone( string const & name, Group * const parent ) const
 
   ReactiveSinglePhaseFluid & newConstitutiveRelation = dynamicCast< ReactiveSinglePhaseFluid & >( *clone );
 
-  GEOS_UNUSED_VAR( newConstitutiveRelation );
+  newConstitutiveRelation.m_chemicalSystemType = m_chemicalSystemType; 
+  newConstitutiveRelation.m_numPrimarySpecies = m_numPrimarySpecies; 
+  newConstitutiveRelation.m_numSecondarySpecies = m_numSecondarySpecies; 
+  newConstitutiveRelation.m_numKineticReactions = m_numKineticReactions; 
 
   return clone;
 }
@@ -73,6 +72,33 @@ template< typename BASE >
 void ReactiveSinglePhaseFluid< BASE >::postInputInitialization()
 {
   BASE::postInputInitialization();
+
+  switch( m_chemicalSystemType )
+  {
+    case ChemicalSystemType::ultramafic:
+      m_numPrimarySpecies = 9; 
+      m_numSecondarySpecies = 16; 
+      m_numKineticReactions = 5;
+      break;
+
+    case ChemicalSystemType::carbonate:
+      m_numPrimarySpecies = 8; 
+      m_numSecondarySpecies = 10; 
+      m_numKineticReactions = 1;
+      break;
+
+    case ChemicalSystemType::carbonateAllEquilibrium:
+      m_numPrimarySpecies = 7; 
+      m_numSecondarySpecies = 11; 
+      m_numKineticReactions = 0;
+      break;
+
+    default:
+      m_numPrimarySpecies = 3; 
+      m_numSecondarySpecies = 2; 
+      m_numKineticReactions = 0;
+      break;
+  }
 }
 
 template< typename BASE >
