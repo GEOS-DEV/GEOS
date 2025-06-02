@@ -43,7 +43,7 @@ PhysicsSolverBase::PhysicsSolverBase( string const & name,
   m_nextDt( 1e99 ),
   m_numTimestepsSinceLastDtCut( -1 ),
   m_dofManager( name ),
-  m_usePhysicsScaling( 1 ),
+  m_usePhysicsScaling( 0 ),
   m_linearSolverParameters( groupKeyStruct::linearSolverParametersString(), this ),
   m_nonlinearSolverParameters( groupKeyStruct::nonlinearSolverParametersString(), this ),
   m_solverStatistics( groupKeyStruct::solverStatisticsString(), this ),
@@ -95,7 +95,7 @@ PhysicsSolverBase::PhysicsSolverBase( string const & name,
     setDescription( "Cut time step if linear solution fail without going until max nonlinear iterations." );
 
   registerWrapper( viewKeyStruct::usePhysicsScalingString(), &m_usePhysicsScaling )
-    .setApplyDefaultValue( 1 )
+    .setApplyDefaultValue( 0 )
     .setInputFlag( InputFlags::OPTIONAL )
     .setDescription( "Enable physics-based scaling of the linear system. Default: true." );
 
