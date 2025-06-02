@@ -158,7 +158,7 @@ TableData2D::TableDataHolder TableData2D::buildTableData( string_view targetUnit
     tableData1D.headerNames.push_back( GEOS_FMT( columnFmt, columnValue ) );
   }
 
-    for( auto const & error : *m_errors )
+  for( auto const & error : *m_errors )
   {
     tableData1D.tableData.getErrorsList().addError( error );
   }

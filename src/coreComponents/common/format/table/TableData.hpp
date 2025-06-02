@@ -105,6 +105,9 @@ public:
    */
   void clear();
 
+  void clearErrors()
+  { m_errors->clear(); }
+
   /**
    * @return The rows of the table
    */

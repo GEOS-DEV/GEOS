@@ -98,7 +98,7 @@ inline void TableErrorListing::addError( string_view text )
 { m_errorList.emplace_back( text ); }
 
 inline bool TableErrorListing::hasErrors() const
-{ return m_errorList.size() != 0; }
+{ return !m_errorList.empty(); }
 
 inline void TableErrorListing::clear()
 { m_errorList.clear(); }

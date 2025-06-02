@@ -116,9 +116,8 @@ TableCSVFormatter::TableCSVFormatter( TableLayout const & tableLayout ):
 
 TableCSVFormatter::~TableCSVFormatter()
 {
-  if( getErrorsList().hasErrors() )
+  if( m_showErrors && getErrorsList().hasErrors() )
   {
-
     string const consoleWarning = std::accumulate( getErrorsList().begin(),
                                                    getErrorsList().end(),
                                                    std::string( "" ));
@@ -270,12 +269,19 @@ void TableTextFormatter::initalizeTableGrids( PreparedTableLayout const & tableL
     populateDataCellsLayout( tableLayout, dataCellsLayout, inputDataValues );
   }
 
+  if( getErrorsList().hasErrors() || tableInputData.getErrorsList().hasErrors())
+  {
+    populateErrorCellsLayout( tableLayout, errorCellsLayout, tableInputData.getErrorsList() );
+  }
+
   stretchColumnsByCellsWidth( columnsWidth, headerCellsLayout );
   stretchColumnsByCellsWidth( columnsWidth, dataCellsLayout );
+  stretchColumnsByCellsWidth( columnsWidth, errorCellsLayout );
 
   // only after all cells that are not merge, we can process the merged cells.
   stretchColumnsByMergedCellsWidth( columnsWidth, headerCellsLayout, tableLayout, false );
   stretchColumnsByMergedCellsWidth( columnsWidth, dataCellsLayout, tableLayout, true );
+  stretchColumnsByMergedCellsWidth( columnsWidth, errorCellsLayout, tableLayout, true );
 
   // the columns width array is now sized after all the table, we can compute the total table width
   tableTotalWidth = tableLayout.getBorderMargin() * 2 + 2;
@@ -288,12 +294,7 @@ void TableTextFormatter::initalizeTableGrids( PreparedTableLayout const & tableL
   // we can now propagate the columns width width to all cells
   applyColumnsWidth( columnsWidth, headerCellsLayout, tableLayout );
   applyColumnsWidth( columnsWidth, dataCellsLayout, tableLayout );
-
-  if( getErrorsList().hasErrors() || tableInputData.getErrorsList().hasErrors())
-  {
-    populateErrorCellsLayout( tableLayout, errorCellsLayout, tableInputData );
-    applyColumnsWidth( columnsWidth, errorCellsLayout, tableLayout );
-  }
+  applyColumnsWidth( columnsWidth, errorCellsLayout, tableLayout );
 }
 
 void TableTextFormatter::populateTitleCellsLayout( PreparedTableLayout const & tableLayout,
@@ -414,6 +415,9 @@ void TableTextFormatter::populateDataCellsLayout( PreparedTableLayout const & ta
       1 // sublinesCount
     }
   };
+  size_t const nbColumnsToEvaluate = tableLayout.getVisibleLowermostColumnCount() != tableLayout.getTotalLowermostColumnCount() ?
+                               tableLayout.getTotalLowermostColumnCount():
+                               tableLayout.getVisibleLowermostColumnCount();
 
   bool errorInData = false;
   for( size_t idxRow = 0; idxRow < inputDataValues.size(); ++idxRow )
@@ -423,11 +427,8 @@ void TableTextFormatter::populateDataCellsLayout( PreparedTableLayout const & ta
     size_t idxInputColumn = 0;
     size_t idxOutputColumn = 0;
 
-    size_t nbLinesToEvaluate = tableLayout.getVisibleLowermostColumnCount() != tableLayout.getTotalLowermostColumnCount() ?
-                               tableLayout.getTotalLowermostColumnCount():
-                               tableLayout.getVisibleLowermostColumnCount();
     // data input malformed
-    if( !errorInData && nbLinesToEvaluate != inputDataValues[idxRow].size())
+    if( !errorInData && nbColumnsToEvaluate != inputDataValues[idxRow].size())
     {
       getErrorsList().addError( "Error : One or more data lines are not equal to the number of headers\nData can be missing/misaligned" );
       errorInData = true;
@@ -507,11 +508,26 @@ void TableTextFormatter::populateDataCellsLayout( PreparedTableLayout const & ta
 
 void TableTextFormatter::populateErrorCellsLayout( PreparedTableLayout const & tableLayout,
                                                    CellLayoutRows & errorCellsLayout,
-                                                   TableData const & tableInputData ) const
+                                                   TableErrorListing const & dataErrors ) const
 {
-
-  TableErrorListing const & errors = tableInputData.getErrorsList();
   size_t const nbCells = tableLayout.getVisibleLowermostColumnCount();
+  auto addCellRows = [&]( TableErrorListing const & errors )
+  {
+    for( auto const & error : errors )
+    {
+      errorCellsLayout.push_back(
+        {
+          std::vector< TableLayout::CellLayout >( nbCells,
+                                                  TableLayout::CellLayout( CellType::MergeNext ) ),
+          1 // subLines count
+        } );
+      errorCellsLayout.back().cells.back().m_cellType = CellType::Value;
+      errorCellsLayout.back().cells.back().prepareLayout( error, TableLayout::noColumnMaxWidth );
+      errorCellsLayout.back().sublinesCount =  errorCellsLayout.back().cells.back().getLines().size();
+    }
+
+  };
+
   errorCellsLayout.push_back(
     {
       std::vector< TableLayout::CellLayout >( nbCells,
@@ -519,18 +535,8 @@ void TableTextFormatter::populateErrorCellsLayout( PreparedTableLayout const & t
       1 // subLines count
     } );
 
-  for( auto const & error : errors )
-  {
-    errorCellsLayout.push_back(
-      {
-        std::vector< TableLayout::CellLayout >( nbCells,
-                                                TableLayout::CellLayout( CellType::MergeNext ) ),
-        1 // subLines count
-      } );
-    errorCellsLayout.back().cells.back().m_cellType = CellType::Value;
-    errorCellsLayout.back().cells.back().prepareLayout( error, TableLayout::noColumnMaxWidth );
-    errorCellsLayout.back().sublinesCount =  errorCellsLayout.back().cells.back().getLines().size();
-  }
+  addCellRows( dataErrors );
+  addCellRows( getErrorsList() );
 }
 
 void TableTextFormatter::stretchColumnsByCellsWidth( stdVector< size_t > & columnsWidth,

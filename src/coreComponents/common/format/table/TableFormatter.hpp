@@ -167,6 +167,17 @@ public:
   void toStream( std::ostream & outputStream, DATASOURCE const & tableData ) const
   { toStreamImpl( outputStream, toString( tableData ) ); }
 
+  /**
+   * @brief Indicate if we print a warning if the table contains any errors By default, show any erros
+   * @param cond The boolean to turn on/off log errors
+   */
+  void showErrors( bool cond )
+  { m_showErrors = cond; }
+
+private:
+  /// Boolean indicating if we show any erros
+  bool m_showErrors = true;
+
 };
 
 /**
@@ -337,7 +348,7 @@ private:
    */
   void populateErrorCellsLayout( PreparedTableLayout const & tableLayout,
                                  CellLayoutRows & errorCellsLayout,
-                                 TableData const & tableData ) const;
+                                 TableErrorListing const & dataErrors ) const;
 
   /**
    * @brief Populates the data cells layout based on input data values, taking into account the columns layout.
