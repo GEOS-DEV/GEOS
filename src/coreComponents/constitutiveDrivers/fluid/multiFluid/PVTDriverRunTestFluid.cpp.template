@@ -14,7 +14,7 @@
  */
 
 /*
- * PVTDriverRunTest@FLUID@.cpp
+ * PVTDriverRunTestFluid_@FLUID@.cpp
  */
 
 #include "constitutiveDrivers/fluid/multiFluid/PVTDriverRunTest.hpp"

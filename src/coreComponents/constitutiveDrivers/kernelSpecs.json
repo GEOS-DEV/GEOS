@@ -46,23 +46,20 @@
     "explicit": []
   },
 
-  "RelpermDriverRunTest": {
+  "RelpermDriverRunTestRelPerm": {
     "vars": [
       "RELPERM"
     ],
     "constants": [],
     "combinations": {
       "RELPERM": [
-        "DeadOilFluid",
-        "BlackOilFluid",
-        "CO2BrineEzrokhiFluid",
-        "CO2BrineEzrokhiThermalFluid",
-        "CO2BrinePhillipsFluid",
-        "CO2BrinePhillipsThermalFluid",
-        "CompositionalThreePhaseLohrenzBrayClarkViscosity",
-        "CompositionalTwoPhaseConstantViscosity",
-        "CompositionalTwoPhaseLohrenzBrayClarkViscosity",
-        "CompositionalTwoPhasePhillipsBrine"
+        "BrooksCoreyBakerRelativePermeability",
+        "BrooksCoreyRelativePermeability",
+        "BrooksCoreyStone2RelativePermeability",
+        "TableRelativePermeabilityHysteresis",
+        "TableRelativePermeability",
+        "VanGenuchtenBakerRelativePermeability",
+        "VanGenuchtenStone2RelativePermeability"
       ]
     },
     "explicit": []

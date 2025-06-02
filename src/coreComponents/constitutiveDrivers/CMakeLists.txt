@@ -37,13 +37,6 @@ set( constitutiveDrivers_sources
      fluid/multiFluid/PVTDriver.cpp
      fluid/multiFluid/reactive/ReactiveFluidDriver.cpp
      relativePermeability/RelpermDriver.cpp
-     relativePermeability/RelpermDriverBrooksCoreyBakerRunTest.cpp
-     relativePermeability/RelpermDriverBrooksCoreyStone2RunTest.cpp
-     relativePermeability/RelpermDriverBrooksCoreyRunTest.cpp
-     relativePermeability/RelpermDriverVanGenuchtenBakerRunTest.cpp
-     relativePermeability/RelpermDriverVanGenuchtenStone2RunTest.cpp
-     relativePermeability/RelpermDriverTableRelativeRunTest.cpp
-     relativePermeability/RelpermDriverTableRelativeHysteresisRunTest.cpp
      solid/TriaxialDriver.cpp
    )
 
@@ -61,7 +54,8 @@ geos_decorate_link_dependencies( LIST decoratedDependencies
 
 file( READ "${CMAKE_CURRENT_LIST_DIR}/kernelSpecs.json" kernelSpecs )
 set( kernelTemplateFileList
-     fluid/multiFluid/PVTDriverRunTestFluid.cpp.template)
+     fluid/multiFluid/PVTDriverRunTestFluid.cpp.template
+     relativePermeability/RelpermDriverRunTestRelPerm.cpp.template)
 
 foreach( kernelTemplateFile ${kernelTemplateFileList} )
   get_filename_component( jsonKey ${kernelTemplateFile} NAME_WE )
@@ -71,7 +65,7 @@ foreach( kernelTemplateFile ${kernelTemplateFileList} )
                    HEADERS headerFiles
                    SOURCES sourceFiles
                    LIST_TEMPLATE ${CMAKE_CURRENT_LIST_DIR}/DriverDispatchTypeList.hpp.template )
-
+                   
   list(APPEND constitutiveDrivers_headers ${headerFiles})
   list(APPEND constitutiveDrivers_sources ${sourceFiles})
 endforeach()
