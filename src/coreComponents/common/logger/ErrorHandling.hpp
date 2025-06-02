@@ -45,6 +45,12 @@ public:
   ErrorLogger();
 
   /**
+   * @brief Create the yaml file if the option is specified in the command line options
+   * 
+   */
+  void createFile();
+
+  /**
    * @enum MsgType
    * Enum listing the different types of possible errors
    */
@@ -53,11 +59,22 @@ public:
     Error,
     Warning
   };
+
+  /**
+   * @brief Stores contextual information about the error that occurred and assigns it a priority (default is 0)
+   * 
+   */
   struct ContextInfo
   {
     std::map< std::string, std::string > m_ctxInfo;
     integer m_priority = 0;
 
+    /**
+     * @brief Set the priority of the current error context information
+     * 
+     * @param priority 
+     * @return ContextInfo& 
+     */
     ContextInfo & setPriority( integer priority )
     { m_priority = priority; return *this; }
   };
@@ -105,6 +122,7 @@ public:
      * @return ErrorMsg&
      */
     ErrorMsg & addToMsg( std::exception const & e );
+
     /**
      * @brief
      *
@@ -112,6 +130,7 @@ public:
      * @return ErrorMsg&
      */
     ErrorMsg & addToMsg( std::string const & msg );
+
     /**
      * @brief Set the Code Location object
      *
@@ -120,6 +139,7 @@ public:
      * @return ErrorMsg&
      */
     ErrorMsg & setCodeLocation( string msgFile, integer msgLine );
+
     /**
      * @brief Set the Type object
      *
@@ -128,11 +148,21 @@ public:
      */
     ErrorMsg & setType( MsgType msgType );
 
-    // void addContextInfo( std::map< std::string, std::string > && info );
-
+    /**
+     * @brief Adds one or more context elements to the error
+     * 
+     * @tparam Args 
+     * @param args 
+     */
     template< typename ... Args >
     void addContextInfo( Args && ... args );
 
+    /**
+     * @brief Set the rank on which the error is raised
+     * 
+     * @param rank 
+     * @return ErrorMsg& 
+     */
     ErrorMsg & setRank( int rank );
 
     /**
@@ -142,13 +172,13 @@ public:
      */
     ErrorLogger::ErrorMsg & addCallStackInfo( std::string const & ossStackTrace );
 
-private:
-    /**
-     * @brief Add contextual information about the error/warning message to the ErrorMsg structure
-     *
-     * @param info DataContext information  stored into a map
-     */
-    void addContextInfoImpl( ContextInfo && ctxInfo );
+    private:
+      /**
+       * @brief Add contextual information about the error/warning message to the ErrorMsg structure
+       *
+       * @param info DataContext information  stored into a map
+       */
+      void addContextInfoImpl( ContextInfo && ctxInfo );
   };
 
   /**
@@ -180,9 +210,38 @@ private:
    */
   void write( ErrorMsg const & errorMsg );
 
+  /**
+   * @brief Returns true whether the yaml file writing option is enabled by the user otherwise false 
+   * 
+   * @return true 
+   * @return false 
+   */
+  bool writeFile() const 
+  { return m_writeYaml; }
+
+  /**
+   * @brief Set the Write Value object
+   * True whether the yaml file writing option is enabled by the user otherwise false
+   * @param value 
+   */
+  void setWriteValue( bool value )
+  { m_writeYaml = value; }
+
+  /**
+   * @brief Set the name of the yaml file if specified by user (default is "errors.yaml")
+   * 
+   * @param filename 
+   */
+  void setFilename( std::string filename )
+  { m_filename = filename; }
+
 private:
   // The error constructed via exceptions
   ErrorMsg m_currentErrorMsg;
+  // Write in the yaml file
+  bool m_writeYaml = false;
+  // Yaml file name 
+  std::string m_filename = "errors.yaml";
 };
 
 extern ErrorLogger errorLogger;

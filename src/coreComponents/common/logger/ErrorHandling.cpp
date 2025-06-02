@@ -30,7 +30,6 @@
 
 namespace geos
 {
-static constexpr std::string_view m_filename = "errors.yaml";
 static constexpr std::string_view g_level1Start = "  - ";
 static constexpr std::string_view g_level1Next =  "    ";
 static constexpr std::string_view g_level2Start = "    - ";
@@ -38,12 +37,15 @@ static constexpr std::string_view g_level2Next =  "      ";
 static constexpr std::string_view g_level3Start = "      - ";
 static constexpr std::string_view g_level3Next =  "        ";
 
-
 ErrorLogger errorLogger{};
 
 ErrorLogger::ErrorLogger()
 {
   m_currentErrorMsg.parent = this;
+}
+
+void ErrorLogger::createFile()
+{
   std::ofstream yamlFile( std::string( m_filename ), std::ios::out );
   if( yamlFile.is_open() )
   {

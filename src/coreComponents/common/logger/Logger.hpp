@@ -149,12 +149,15 @@
       std::cout << __oss.str() << std::endl; \
       std::ostringstream __msgoss; \
       __msgoss << MSG; \
-      ErrorLogger::ErrorMsg msgStruct( ErrorLogger::MsgType::Error, \
-                                       __msgoss.str(), \
-                                       __FILE__, \
-                                       __LINE__ ); \
-      msgStruct.addCallStackInfo( stackHistory ); \
-      errorLogger.write( msgStruct ); \
+      if( errorLogger.writeFile() ) \
+      { \
+        ErrorLogger::ErrorMsg msgStruct( ErrorLogger::MsgType::Error, \
+                                        __msgoss.str(), \
+                                        __FILE__, \
+                                        __LINE__ ); \
+        msgStruct.addCallStackInfo( stackHistory ); \
+        errorLogger.write( msgStruct ); \
+      } \
       LvArray::system::callErrorHandler(); \
     } \
   } while( false )
@@ -174,14 +177,17 @@
       std::cout << __oss.str() << std::endl; \
       std::ostringstream __msgoss; \
       __msgoss << MSG; \
-      ErrorLogger::ErrorMsg msgStruct( ErrorLogger::MsgType::Error, \
-                                       __msgoss.str(), \
-                                       __FILE__, \
-                                       __LINE__ ); \
-      msgStruct.setRank( ::geos::logger::internal::rank ); \
-      msgStruct.addContextInfo( __VA_ARGS__ ); \
-      msgStruct.addCallStackInfo( stackHistory ); \
-      errorLogger.write( msgStruct ); \
+      if( errorLogger.writeFile() ) \
+      { \
+        ErrorLogger::ErrorMsg msgStruct( ErrorLogger::MsgType::Error, \
+                                        __msgoss.str(), \
+                                        __FILE__, \
+                                        __LINE__ ); \
+        msgStruct.setRank( ::geos::logger::internal::rank ); \
+        msgStruct.addContextInfo( __VA_ARGS__ ); \
+        msgStruct.addCallStackInfo( stackHistory ); \
+        errorLogger.write( msgStruct ); \
+      } \
       LvArray::system::callErrorHandler(); \
     } \
   } while( false )
@@ -224,12 +230,15 @@
       std::cout << __oss.str() << std::endl; \
       std::ostringstream __msgoss; \
       __msgoss << MSG; \
-      errorLogger.currentErrorMsg() \
-        .setType( ErrorLogger::MsgType::Error ) \
-        .setCodeLocation( __FILE__, __LINE__ ) \
-        .addToMsg( __msgoss.str() ) \
-        .setRank( ::geos::logger::internal::rank ) \
-        .addCallStackInfo( stackHistory ); \
+      if( errorLogger.writeFile() ) \
+      { \
+        errorLogger.currentErrorMsg() \
+          .setType( ErrorLogger::MsgType::Error ) \
+          .setCodeLocation( __FILE__, __LINE__ ) \
+          .addToMsg( __msgoss.str() ) \
+          .setRank( ::geos::logger::internal::rank ) \
+          .addCallStackInfo( stackHistory ); \
+      } \
       throw EXCEPTIONTYPE( __oss.str() ); \
     } \
   } while( false )
@@ -249,13 +258,16 @@
       std::cout << __oss.str() << std::endl; \
       std::ostringstream __msgoss; \
       __msgoss << MSG; \
-      errorLogger.currentErrorMsg() \
-        .setType( ErrorLogger::MsgType::Error ) \
-        .setCodeLocation( __FILE__, __LINE__ ) \
-        .addToMsg( __msgoss.str() ) \
-        .setRank( ::geos::logger::internal::rank ) \
-        .addCallStackInfo( stackHistory ) \
-        .addContextInfo( __VA_ARGS__ ); \
+      if( errorLogger.writeFile() ) \
+      { \
+        errorLogger.currentErrorMsg() \
+          .setType( ErrorLogger::MsgType::Error ) \
+          .setCodeLocation( __FILE__, __LINE__ ) \
+          .addToMsg( __msgoss.str() ) \
+          .setRank( ::geos::logger::internal::rank ) \
+          .addCallStackInfo( stackHistory ) \
+          .addContextInfo( __VA_ARGS__ ); \
+      } \
       throw EXCEPTIONTYPE( __oss.str() ); \
     } \
   } while( false )
@@ -301,12 +313,15 @@
       std::cout << __oss.str() << std::endl; \
       std::ostringstream __msgoss; \
       __msgoss << MSG; \
-      ErrorLogger::ErrorMsg msgStruct( ErrorLogger::MsgType::Warning, \
-                                       __msgoss.str(), \
-                                       __FILE__, \
-                                       __LINE__ ); \
-      msgStruct.addCallStackInfo( LvArray::system::stackTrace( true ) ); \
-      errorLogger.write( msgStruct ); \
+      if( errorLogger.writeFile() ) \
+      { \
+        ErrorLogger::ErrorMsg msgStruct( ErrorLogger::MsgType::Warning, \
+                                        __msgoss.str(), \
+                                        __FILE__, \
+                                        __LINE__ ); \
+        msgStruct.addCallStackInfo( LvArray::system::stackTrace( true ) ); \
+        errorLogger.write( msgStruct ); \
+      } \
     } \
   } while( false )
 
@@ -323,14 +338,17 @@
       std::cout << __oss.str() << std::endl; \
       std::ostringstream __msgoss; \
       __msgoss << MSG; \
-      ErrorLogger::ErrorMsg msgStruct( ErrorLogger::MsgType::Warning, \
-                                       __msgoss.str(), \
-                                       __FILE__, \
-                                       __LINE__ ); \
-      msgStruct.setRank( ::geos::logger::internal::rank ); \
-      msgStruct.addContextInfo( __VA_ARGS__ ); \
-      msgStruct.addCallStackInfo( LvArray::system::stackTrace( true ) ); \
-      errorLogger.write( msgStruct ); \
+      if( errorLogger.writeFile() ) \
+      { \
+        ErrorLogger::ErrorMsg msgStruct( ErrorLogger::MsgType::Warning, \
+                                        __msgoss.str(), \
+                                        __FILE__, \
+                                        __LINE__ ); \
+        msgStruct.setRank( ::geos::logger::internal::rank ); \
+        msgStruct.addContextInfo( __VA_ARGS__ ); \
+        msgStruct.addCallStackInfo( LvArray::system::stackTrace( true ) ); \
+        errorLogger.write( msgStruct ); \
+      } \
     } \
   } while( false )
 
