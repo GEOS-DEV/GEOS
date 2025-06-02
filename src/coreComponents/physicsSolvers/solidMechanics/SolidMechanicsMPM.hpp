@@ -279,6 +279,7 @@ public:
 
     static constexpr char const * gridExternalForceString() { return "gridExternalForce"; }
     static constexpr char const * gridInternalForceString() { return "gridInternalForce"; }
+    static constexpr char const * gridSurfaceTensionForceString() { return "gridSurfaceForceTension"; }
     static constexpr char const * gridDisplacementString() { return "gridDisplacement"; }
     static constexpr char const * gridCenterOfVolumeString() { return "gridCenterOfVolume"; }
     static constexpr char const * gridParticleMappedSurfaceNormalString() { return "gridParticleMappedSurfaceNormal"; }
@@ -707,6 +708,8 @@ public:
                               integer const cycleNumber,
                               ParticleManager & particleManager,
                               NodeManager & nodeManager );
+
+  void computeSurfaceTension( NodeManager & nodeManager );
 
   void gridTrialUpdate( real64 dt,
                         NodeManager & nodeManager );
