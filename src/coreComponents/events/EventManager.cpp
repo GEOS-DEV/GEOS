@@ -171,11 +171,10 @@ bool EventManager::run( DomainPartition & domain )
       m_dt = dt_global;
 #endif
     }
-    LogPart logPart( "TIMESTEP" );
+    LogPart logPart( "TIMESTEP", MpiWrapper::commRank() == 0 );
+
     outputTime( logPart );
     logPart.begin();
-    std::vector< real64 > subStepDts;
-    integer numTimeSteps = 0;
     // Execute
     for(; m_currentSubEvent<this->numSubGroups(); ++m_currentSubEvent )
     {
@@ -198,13 +197,6 @@ bool EventManager::run( DomainPartition & domain )
       else if( subEvent->isReadyForExec() )
       {
         earlyReturn = subEvent->execute( m_time, m_dt, m_cycle, 0, 0, domain );
-
-        if( subEvent->getEventTarget()->getTimesteppingBehavior() == ExecutableGroup::TimesteppingBehavior::DeterminesTimeStepSize )
-        {
-          subStepDts = subEvent->getSubStepDts();
-          numTimeSteps = subEvent->getNumOfSubSteps();
-        }
-
       }
 
       // Check the exit flag
@@ -219,7 +211,6 @@ bool EventManager::run( DomainPartition & domain )
       }
     }
 
-    logEndOfCycleInformation( logPart, m_cycle, numTimeSteps, subStepDts );
 
     // Increment time/cycle, reset the subevent counter
     m_time += m_dt;
@@ -268,8 +259,6 @@ void EventManager::outputTime( LogPart & logPart ) const
   logPart.addDescription( "- Time ", timeInfosUnfolded, timeCompletionSeconds );
   logPart.addDescription( "- Delta Time ", units::TimeFormatInfo::fromSeconds( m_dt ).toString() );
   logPart.addDescription( "- Cycle ", m_cycle, cycleLimited );
-  logPart.setMinWidth( 80 );
-  logPart.setMaxWidth( 80 );
 
   // We are keeping the old outputs to keep compatibility with current log reading scripts.
   if( m_timeOutputFormat==TimeOutputFormat::full )

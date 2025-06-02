@@ -20,7 +20,6 @@
 #define GEOS_COMMON_FORMAT_LOGPART_HPP
 
 #include "common/DataTypes.hpp"
-#include "common/MpiWrapper.hpp"
 #include "common/format/Format.hpp"
 #include "common/format/StringUtilities.hpp"
 
@@ -37,9 +36,10 @@ public:
 
   /**
    * @brief Initialize a LogPart given a title
-   * @param m_logPartTitle The title who will be used for top and bottom LogPart
+   * @param logPartTitle The title who will be used for top and bottom LogPart
+   * @param enableOutput Boolean to activate or not csv output
    */
-  LogPart( string_view m_logPartTitle );
+  LogPart( string_view logPartTitle, bool enableOutput );
 
   /**
    * @brief Add a description to the top LogPart
@@ -95,6 +95,13 @@ public:
    */
   void end( std::ostream & oss = std::cout );
 
+  /**
+   * @brief Toggles the CSV output feature.
+   * @param enabled Boolean to activate csv output
+   */
+  void enableOutput( bool enabled )
+  { m_enableOutput = enabled; }
+
 private:
 
   /**
@@ -105,7 +112,8 @@ private:
   {
     /// Name of the description (first part of a description), it can be splited by \\n
     std::vector< std::vector< string > > m_names;
-    /// Values in the description, each value is associated with one name
+    /// Values in the description (remaining part of a description),
+    /// each vector of values is associated with one name
     std::vector< std::vector< string > > m_values;
   };
 
@@ -120,35 +128,34 @@ private:
     std::vector< string > m_lines;
     /// max length name (first part of a description) of a logPart
     size_t m_maxNameWidth;
-    /// max length name (first part of a description) of a logPart
+    /// max length name (remaining part of a description) of a logPart
     size_t m_maxValueWidth;
   };
 
-  Description m_startDescription = { {}, {}};
-  Description m_endDescription  = { {}, {}};
+  Description m_startDescription = { {}, {} };
+  Description m_endDescription  = { {}, {} };
 
   FormattedDescription m_formattedStartDescription = {  "", {}, 0, 0 };
   FormattedDescription m_formattedEndDescription  = { "", {}, 0, 0 };
 
-  /// logPart length
-  size_t m_width = 50;
-  /// logPart length
-  size_t m_minWidth = 50;
-  /// logPart length
+  /// logPart default length
+  size_t m_width = 100;
+  /// minimal length of a log part
+  size_t m_minWidth = 100;
+  /// maximal length of a log part
   size_t m_maxWidth = SIZE_MAX;
-  /// description border margin
+  /// margin (left and right) between all descriptions and the log part borders
   static constexpr size_t m_borderMargin = 2;
-  /// numbers of character used as border
+  /// numbers of character used for the border
   static constexpr size_t m_nbBorderChar = 2;
-  /// character used for logPart construction
+  /// character used for border
   char const m_borderCharacter = '#';
   /// prefix to append to the title of bottom section
   static constexpr string_view m_prefixEndTitle = "End of ";
   /// string used to separate the name/description
   static constexpr string_view m_delimiter = " : ";
-
-  /// String containing horizontal border
-  string m_horizontalBorder;
+  /// Active the LogPart output
+  bool m_enableOutput = true;
 
   /**
    * @brief Add a description to a specific section (top or bottom)

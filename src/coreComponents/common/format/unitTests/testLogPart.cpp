@@ -22,13 +22,13 @@ using namespace geos;
 TEST( testLogPart, sectionWithTitle )
 {
   std::ostringstream oss;
-  LogPart logPart( "section name" );
+  LogPart logPart( "section name", true );
   logPart.begin( oss );
   EXPECT_EQ( oss.str(),
              "\n"
-             "##################################################\n"
-             "##                 section name                 ##\n"
-             "##################################################\n\n"
+             "####################################################################################################\n"
+             "##                                          section name                                          ##\n"
+             "####################################################################################################\n\n"
              );
   oss.clear();
   oss.str( "" );
@@ -36,8 +36,8 @@ TEST( testLogPart, sectionWithTitle )
   logPart.end( oss );
   EXPECT_EQ( oss.str(),
              "\n"
-             "##             End of section name              ##\n"
-             "##################################################\n\n"
+             "##                                      End of section name                                       ##\n"
+             "####################################################################################################\n\n"
              );
   oss.clear();
 }
@@ -45,15 +45,15 @@ TEST( testLogPart, sectionWithTitle )
 TEST( testLogPart, sectionWithTitleAndOneDescription )
 {
   std::ostringstream oss;
-  LogPart logPart( "section name" );
+  LogPart logPart( "section name", true );
   logPart.addDescription( "description name" );
   logPart.begin( oss );
   EXPECT_EQ( oss.str(),
              "\n"
-             "##################################################\n"
-             "##                 section name                 ##\n"
-             "##################################################\n"
-             "##  description name                            ##\n\n"
+             "####################################################################################################\n"
+             "##                                          section name                                          ##\n"
+             "####################################################################################################\n"
+             "##  description name                                                                              ##\n\n"
              );
   oss.clear();
 }
@@ -61,7 +61,7 @@ TEST( testLogPart, sectionWithTitleAndOneDescription )
 TEST( testLogPart, sectionWithSetWidth )
 {
   std::ostringstream oss;
-  LogPart logPart( "section name" );
+  LogPart logPart( "section name", true );
   logPart.addDescription( "description name 1" );
   logPart.addDescription( "description name 2" );
   logPart.setMinWidth( 100 );
@@ -90,7 +90,7 @@ TEST( testLogPart, sectionWithSetWidth )
 TEST( testLogPart, sectionMultipleDescriptions )
 {
   std::ostringstream oss;
-  LogPart logPart( "TIMESTEP START" );
+  LogPart logPart( "TIMESTEP START", true );
   logPart.addDescription( "- Time", "00h08m20s out of 2d, 21h26m40s (0% completed)", "500 s / 250000 s" );
   logPart.addDescription( "- Delta Time", "00h16m40s (1000 s)" );
   logPart.addDescription( "Description test" );
@@ -98,13 +98,13 @@ TEST( testLogPart, sectionMultipleDescriptions )
   logPart.begin( oss );
   EXPECT_EQ ( oss.str(),
               "\n"
-              "######################################################################\n"
-              "##                          TIMESTEP START                          ##\n"
-              "######################################################################\n"
-              "##  - Time       : 00h08m20s out of 2d, 21h26m40s (0% completed)    ##\n"
-              "##                 500 s / 250000 s                                 ##\n"
-              "##  - Delta Time : 00h16m40s (1000 s)                               ##\n"
-              "##  Description test                                                ##\n\n"
+              "####################################################################################################\n"
+              "##                                         TIMESTEP START                                         ##\n"
+              "####################################################################################################\n"
+              "##  - Time       : 00h08m20s out of 2d, 21h26m40s (0% completed)                                  ##\n"
+              "##                 500 s / 250000 s                                                               ##\n"
+              "##  - Delta Time : 00h16m40s (1000 s)                                                             ##\n"
+              "##  Description test                                                                              ##\n\n"
               );
   oss.clear();
   oss.str( "" );
@@ -114,8 +114,8 @@ TEST( testLogPart, sectionMultipleDescriptions )
 
   EXPECT_EQ( oss.str(),
              "\n"
-             "##                      End of TIMESTEP START                       ##\n"
-             "######################################################################\n\n"
+             "##                                     End of TIMESTEP START                                      ##\n"
+             "####################################################################################################\n\n"
              );
   oss.clear();
 }
@@ -123,7 +123,7 @@ TEST( testLogPart, sectionMultipleDescriptions )
 TEST( testLogPart, sectionEndDescription )
 {
   std::ostringstream oss;
-  LogPart logPart( "TIMESTEP START" );
+  LogPart logPart( "TIMESTEP START", true );
   logPart.addEndDescription( "test end description" );
   logPart.setMinWidth( 70 );
   logPart.begin( oss );
@@ -134,10 +134,10 @@ TEST( testLogPart, sectionEndDescription )
 
   EXPECT_EQ( oss.str(),
              "\n"
-             "##  test end description                                            ##\n"
-             "######################################################################\n"
-             "##                      End of TIMESTEP START                       ##\n"
-             "######################################################################\n\n"
+             "##  test end description                                                                          ##\n"
+             "####################################################################################################\n"
+             "##                                     End of TIMESTEP START                                      ##\n"
+             "####################################################################################################\n\n"
              );
   oss.clear();
 }
@@ -146,7 +146,7 @@ TEST( testLogPart, valuesMultiLines )
 {
 
   std::ostringstream oss;
-  LogPart logPart( "TIMESTEP START" );
+  LogPart logPart( "TIMESTEP START", true );
   logPart.addDescription( "dummy name\ndummy name long", "long dummy values, long dummy values1, long dummy values2, long dummy values3" );
   logPart.addDescription( "dummy long very long for test crash", "long dummy values", "long dummy values", "long dummy values", "long dummy values" );
   logPart.addDescription( "long very long\nwith many \nlien return \nlong dummy name", "small dummy value" );
@@ -192,7 +192,6 @@ TEST( testLogPart, valuesMultiLines )
   oss.str( "" );
 
   logPart.end( oss );
-  std::cout <<oss.str() << std::endl;
   EXPECT_EQ( oss.str(),
              "\n"
              "##  dummy name : long dummy end values, long dummy end    ##\n"
@@ -215,7 +214,7 @@ TEST( testLogPart, valuesMultiLines )
 TEST( testLogPart, multiLineWithExtraSpace )
 {
   std::ostringstream oss;
-  LogPart logPart( "TIMESTEP" );
+  LogPart logPart( "TIMESTEP", true );
   logPart.addDescription( "- Time", "00h00m00s out of 2y, 269d, 12h21m36s (0% completed), 0 s / 86400000 s" );
   logPart.addDescription( "- Delta Time", "00h00m00s (0.001 s)" );
   logPart.addDescription( "- Cycle", "0" );
@@ -239,11 +238,7 @@ int main( int argc, char * * argv )
 {
   testing::InitGoogleTest( &argc, argv );
 
-  geos::setupMPI( argc, argv );
-
   int const result = RUN_ALL_TESTS();
-
-  geos::finalizeMPI();
 
   return result;
 }

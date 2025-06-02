@@ -20,6 +20,7 @@
 #ifndef GEOS_CORECOMPONENTS_CONSTITUTIVE_UNITTESTS_FLUIDMODELTEST_IMPL_HPP_
 #define GEOS_CORECOMPONENTS_CONSTITUTIVE_UNITTESTS_FLUIDMODELTEST_IMPL_HPP_
 
+#include "constitutive/fluid/multifluid/MultiFluidSelector.hpp"
 #include "functions/FunctionManager.hpp"
 #include "functions/TableFunction.hpp"
 
@@ -59,24 +60,129 @@ FluidModelTest< FLUID_TYPE, NUM_COMP, NUM_PHASE >::createFluid( string const & n
 }
 
 template< typename FLUID_TYPE, integer NUM_COMP, integer NUM_PHASE >
+void FluidModelTest< FLUID_TYPE, NUM_COMP, NUM_PHASE >::
+testValuesAgainstPreviousImplementation( FluidModel * fluid,
+                                         TestPoint const & testPoint,
+                                         TestResult const & expectedValues,
+                                         real64 const relTol,
+                                         real64 const absTol )
+{
+  integer constexpr size = 1;
+  m_parent.resize( size );
+  fluid->allocateConstitutiveData( m_parent, 1 );
+
+  string_array const & phaseNames = fluid->phaseNames();
+
+  real64 const pressure = std::get< 0 >( testPoint );
+  real64 const temperature = std::get< 1 >( testPoint );
+  auto const composition = std::get< 2 >( testPoint );
+
+  array2d< real64, compflow::LAYOUT_PHASE > compositionArray( size, numComp );
+  for( integer ic = 0; ic < NUM_COMP; ++ic )
+  {
+    compositionArray( 0, ic ) = composition[ic];
+  }
+
+  FluidWrapper fluidWrapper = fluid->createKernelWrapper();
+
+  auto const compositionView = compositionArray.toViewConst();
+
+  forAll< parallelHostPolicy >( size, [fluidWrapper,
+                                       pressure,
+                                       temperature,
+                                       compositionView]
+                                GEOS_HOST_DEVICE ( localIndex const k )
+  {
+    for( localIndex q = 0; q < fluidWrapper.numGauss(); ++q )
+    {
+      fluidWrapper.update( k, q, pressure, temperature, compositionView[k] );
+    }
+  } );
+
+  // Bring everything back to host
+  forAll< serialPolicy >( 1, [fluidWrapper] ( localIndex const )
+  {
+    /* Do nothing */
+  } );
+
+  auto compareValues = [&]( string const & name, real64 const calculated, real64 const expected )
+  {
+    testing::checkRelativeError( calculated,
+                                 expected,
+                                 relTol,
+                                 absTol,
+                                 GEOS_FMT(
+                                   "\n{} failed.\n"
+                                   "Pressure: {}, Temperature: {} Composition: {}.\n"
+                                   "Calculated: {}.\n"
+                                   "Expacted: {}\n"
+                                   "Difference: {}",
+                                   name,
+                                   pressure, temperature, toString( compositionView[0].toSliceConst() ),
+                                   calculated, expected,
+                                   expected-calculated ));
+  };
+
+  bool const isThermal = fluid->isThermal();
+
+  for( integer phaseIndex = 0; phaseIndex < numPhase; phaseIndex++ )
+  {
+    real64 const phaseFraction = fluid->phaseFraction()( 0, 0, phaseIndex );
+    real64 const expectedPhaseFraction = std::get< 0 >( expectedValues )[phaseIndex];
+    compareValues( GEOS_FMT( "Phase fraction ({})", phaseNames[phaseIndex] ), phaseFraction, expectedPhaseFraction );
+
+    real64 const phaseDensity = fluid->phaseDensity()( 0, 0, phaseIndex );
+    real64 const expectedPhaseDensity = std::get< 1 >( expectedValues )[phaseIndex];
+    compareValues( GEOS_FMT( "Phase density ({})", phaseNames[phaseIndex] ), phaseDensity, expectedPhaseDensity );
+
+    real64 const phaseMassDensity = fluid->phaseMassDensity()( 0, 0, phaseIndex );
+    real64 const expectedPhaseMassDensity = std::get< 2 >( expectedValues )[phaseIndex];
+    compareValues( GEOS_FMT( "Phase mass density ({})", phaseNames[phaseIndex] ), phaseMassDensity, expectedPhaseMassDensity );
+
+    real64 const phaseViscosity = fluid->phaseViscosity()( 0, 0, phaseIndex );
+    real64 const expectedPhaseViscosity = std::get< 3 >( expectedValues )[phaseIndex];
+    compareValues( GEOS_FMT( "Phase viscosity ({})", phaseNames[phaseIndex] ), phaseViscosity, expectedPhaseViscosity );
+
+    if( isThermal )
+    {
+      real64 const phaseEnthalpy = fluid->phaseEnthalpy()( 0, 0, phaseIndex );
+      real64 const expectedPhaseEnthalpy = std::get< 4 >( expectedValues )[phaseIndex];
+      compareValues( GEOS_FMT( "Phase enthalpy ({})", phaseNames[phaseIndex] ), phaseEnthalpy, expectedPhaseEnthalpy );
+
+      real64 const phaseInternalEnergy = fluid->phaseInternalEnergy()( 0, 0, phaseIndex );
+      real64 const expectedPhaseInternalEnergy = std::get< 5 >( expectedValues )[phaseIndex];
+      compareValues( GEOS_FMT( "Phase internal energy ({})", phaseNames[phaseIndex] ), phaseInternalEnergy, expectedPhaseInternalEnergy );
+    }
+  }
+  real64 const totalDensity = fluid->totalDensity()( 0, 0 );
+  real64 const expectedTotalDensity = std::get< 6 >( expectedValues );
+  compareValues( "Total density", totalDensity, expectedTotalDensity );
+}
+
+template< typename FLUID_TYPE, integer NUM_COMP, integer NUM_PHASE >
 template< integer NDIM, typename ... INDICES, integer USD1, integer USD2, integer USD3, typename >
 void FluidModelTest< FLUID_TYPE, NUM_COMP, NUM_PHASE >::testDerivatives( string const propName,
+                                                                         string const testPoint,
                                                                          ArrayView< real64 const, NDIM, USD1 > const & valueArray,
                                                                          ArrayView< real64 const, NDIM+1, USD2 > const & derivArray,
                                                                          ArraySlice< real64 const, 1, USD3 > const & displacements,
+                                                                         real64 const valueScale,
                                                                          string_array const & dofNames,
                                                                          real64 const relTol,
                                                                          real64 const absTol,
                                                                          INDICES const ... indices )
 {
-  for( integer idof = 0; idof < numDof; idof++ )
+  integer const numberOfDof = dofNames.size();
+  real64 const invScale = 1.0 / valueScale;
+
+  for( integer idof = 0; idof < numberOfDof; idof++ )
   {
-    real64 const analyticalDerivative = derivArray( 0, 0, indices ..., idof );
+    real64 const analyticalDerivative = derivArray( 0, 0, indices ..., idof ) * invScale;
     real64 numericalDerivative = 0.0;
 
-    real64 centreValue = valueArray( 0, 0, indices ... );
-    real64 rightValue = valueArray( 2*idof+1, 0, indices ... );
-    real64 leftValue = valueArray( 2*idof+2, 0, indices ... );
+    real64 centreValue = valueArray( 0, 0, indices ... ) * invScale;
+    real64 rightValue = valueArray( 2*idof+1, 0, indices ... ) * invScale;
+    real64 leftValue = valueArray( 2*idof+2, 0, indices ... ) * invScale;
 
     real64 const dVr = displacements[2*idof+1];
     real64 const dVl = displacements[2*idof+2];
@@ -102,18 +208,23 @@ void FluidModelTest< FLUID_TYPE, NUM_COMP, NUM_PHASE >::testDerivatives( string 
                                  absTol,
                                  GEOS_FMT(
                                    "\nd{}/d{} failed.\n"
+                                   "Test Point: {}.\n"
                                    "Values: [{}, {}, {}].\n"
                                    "Analytical derivative: {}.\n"
                                    "Numerical derivative: {}",
                                    propName, dofNames[idof],
-                                   leftValue, centreValue, rightValue,
-                                   analyticalDerivative, numericalDerivative ));
+                                   testPoint,
+                                   valueScale*leftValue, valueScale*centreValue, valueScale*rightValue,
+                                   valueScale*analyticalDerivative, valueScale*numericalDerivative ));
   }
 }
 
 template< typename FLUID_TYPE, integer NUM_COMP, integer NUM_PHASE >
 void FluidModelTest< FLUID_TYPE, NUM_COMP, NUM_PHASE >::testNumericalDerivatives( FluidModel * fluid,
-                                                                                  TestPoint const & data )
+                                                                                  TestPoint const & data,
+                                                                                  real64 const perturbationLevel,
+                                                                                  real64 const relTol,
+                                                                                  real64 const absTol )
 {
   using Deriv = constitutive::multifluid::DerivativeOffset;
 
@@ -145,16 +256,19 @@ void FluidModelTest< FLUID_TYPE, NUM_COMP, NUM_PHASE >::testNumericalDerivatives
     }
   }
 
-  real64 constexpr dP = pressurePertubation;
-  real64 constexpr dT = temperaturePertubation;
-  real64 constexpr dz = compositionPertubation;
+  string const testValues = GEOS_FMT( "Pressure: {}, Temperature: {}, Composition: {}",
+                                      pressureArray[0],
+                                      temperatureArray[0],
+                                      toString( compositionArray[0].toSliceConst() ) );
 
+  real64 const dP = perturbationLevel * (pressure + perturbationLevel);
   deltaArray[2*Deriv::dP+1] = dP;
   deltaArray[2*Deriv::dP+2] = -dP;
   pressureArray[2*Deriv::dP+1] += deltaArray[2*Deriv::dP+1];
   pressureArray[2*Deriv::dP+2] += deltaArray[2*Deriv::dP+2];
   dofNames[Deriv::dP] = "pressure";
 
+  real64 const dT = perturbationLevel * (temperature + perturbationLevel);
   deltaArray[2*Deriv::dT+1] = dT;
   deltaArray[2*Deriv::dT+2] = -dT;
   temperatureArray[2*Deriv::dT+1] += deltaArray[2*Deriv::dT+1];
@@ -164,6 +278,7 @@ void FluidModelTest< FLUID_TYPE, NUM_COMP, NUM_PHASE >::testNumericalDerivatives
   for( integer ic = 0; ic < numComp; ++ic )
   {
     integer const idof = Deriv::dC+ic;
+    real64 const dz = LvArray::math::max( 1.0e-7, perturbationLevel * ( composition[ic] + perturbationLevel ) );
     deltaArray[2*idof+1] = dz;
     deltaArray[2*idof+2] = -dz;
     compositionArray( 2*idof+1, ic ) += deltaArray[2*idof+1];
@@ -173,17 +288,20 @@ void FluidModelTest< FLUID_TYPE, NUM_COMP, NUM_PHASE >::testNumericalDerivatives
     dofNames[idof] = GEOS_FMT( "z({})", componentNames[ic] );
   }
 
-  FluidWrapper fluidWrapper = fluid->createKernelWrapper();
+  auto fluidBase = fluid->deliverClone( fluid->getName()+"Copy", &fluid->getParent());
+  FluidModel * fluidCopy = dynamicCast< FluidModel * >( fluidBase.get() );
+
+  auto fluidWrapper = fluidCopy->createKernelWrapper();
 
   auto const pressureView = pressureArray.toViewConst();
   auto const temperatureView = temperatureArray.toViewConst();
   auto const compositionView = compositionArray.toViewConst();
 
-  forAll< parallelDevicePolicy<> >( size, [fluidWrapper,
-                                           pressureView,
-                                           temperatureView,
-                                           compositionView]
-                                    GEOS_HOST_DEVICE ( localIndex const k )
+  forAll< parallelHostPolicy >( size, [fluidWrapper,
+                                       pressureView,
+                                       temperatureView,
+                                       compositionView]
+                                GEOS_HOST_DEVICE ( localIndex const k )
   {
     for( localIndex q = 0; q < fluidWrapper.numGauss(); ++q )
     {
@@ -191,76 +309,103 @@ void FluidModelTest< FLUID_TYPE, NUM_COMP, NUM_PHASE >::testNumericalDerivatives
     }
   } );
 
+  // Bring everything back to host
+  forAll< serialPolicy >( 1, [fluidWrapper] ( localIndex const )
+  {
+    /* Do nothing */
+  } );
+
+  // Enthalpy and internal energy values can be quite large and prone to round-off errors when
+  // performing finite difference derivatives. We will therefore scale the values using this
+  // reference enthalpy value to bring them to a more manageable scale.
+  real64 constexpr referenceEnthalpy = 5.0584e5;
+
   for( integer phaseIndex = 0; phaseIndex < numPhase; phaseIndex++ )
   {
     testDerivatives( GEOS_FMT( "Phase fraction ({})", phaseNames[phaseIndex] ),
-                     fluid->phaseFraction().toViewConst(),
-                     fluid->dPhaseFraction().toViewConst(),
+                     testValues,
+                     fluidCopy->phaseFraction().toViewConst(),
+                     fluidCopy->dPhaseFraction().toViewConst(),
                      deltaArray.toSliceConst(),
+                     1.0,
                      dofNames,
-                     relTolerance,
-                     absTolerance,
+                     relTol,
+                     absTol,
                      phaseIndex );
     testDerivatives( GEOS_FMT( "Phase density ({})", phaseNames[phaseIndex] ),
-                     fluid->phaseDensity().toViewConst(),
-                     fluid->dPhaseDensity().toViewConst(),
+                     testValues,
+                     fluidCopy->phaseDensity().toViewConst(),
+                     fluidCopy->dPhaseDensity().toViewConst(),
                      deltaArray.toSliceConst(),
+                     1.0,
                      dofNames,
-                     relTolerance,
-                     absTolerance,
+                     relTol,
+                     absTol,
                      phaseIndex );
     testDerivatives( GEOS_FMT( "Phase mass density ({})", phaseNames[phaseIndex] ),
-                     fluid->phaseMassDensity().toViewConst(),
-                     fluid->dPhaseMassDensity().toViewConst(),
+                     testValues,
+                     fluidCopy->phaseMassDensity().toViewConst(),
+                     fluidCopy->dPhaseMassDensity().toViewConst(),
                      deltaArray.toSliceConst(),
+                     1.0,
                      dofNames,
-                     relTolerance,
-                     absTolerance,
+                     relTol,
+                     absTol,
                      phaseIndex );
     testDerivatives( GEOS_FMT( "Phase viscosity ({})", phaseNames[phaseIndex] ),
-                     fluid->phaseViscosity().toViewConst(),
-                     fluid->dPhaseViscosity().toViewConst(),
+                     testValues,
+                     fluidCopy->phaseViscosity().toViewConst(),
+                     fluidCopy->dPhaseViscosity().toViewConst(),
                      deltaArray.toSliceConst(),
+                     1.0,
                      dofNames,
-                     relTolerance,
-                     absTolerance,
+                     relTol,
+                     absTol,
                      phaseIndex );
     if( isThermal )
     {
       testDerivatives( GEOS_FMT( "Phase enthalpy ({})", phaseNames[phaseIndex] ),
-                       fluid->phaseEnthalpy().toViewConst(),
-                       fluid->dPhaseEnthalpy().toViewConst(),
+                       testValues,
+                       fluidCopy->phaseEnthalpy().toViewConst(),
+                       fluidCopy->dPhaseEnthalpy().toViewConst(),
                        deltaArray.toSliceConst(),
+                       referenceEnthalpy,
                        dofNames,
-                       relTolerance,
-                       absTolerance,
+                       relTol,
+                       absTol,
                        phaseIndex );
       testDerivatives( GEOS_FMT( "Phase internal energy ({})", phaseNames[phaseIndex] ),
-                       fluid->phaseInternalEnergy().toViewConst(),
-                       fluid->dPhaseInternalEnergy().toViewConst(),
+                       testValues,
+                       fluidCopy->phaseInternalEnergy().toViewConst(),
+                       fluidCopy->dPhaseInternalEnergy().toViewConst(),
                        deltaArray.toSliceConst(),
+                       referenceEnthalpy,
                        dofNames,
-                       relTolerance,
-                       absTolerance,
+                       relTol,
+                       absTol,
                        phaseIndex );
     }
     for( integer compIndex = 0; compIndex < numComp; compIndex++ )
     {
       testDerivatives( GEOS_FMT( "Phase composition ({} {})", phaseNames[phaseIndex], componentNames[compIndex] ),
-                       fluid->phaseCompFraction().toViewConst(),
-                       fluid->dPhaseCompFraction().toViewConst(),
+                       testValues,
+                       fluidCopy->phaseCompFraction().toViewConst(),
+                       fluidCopy->dPhaseCompFraction().toViewConst(),
                        deltaArray.toSliceConst(),
+                       1.0,
                        dofNames,
-                       relTolerance,
-                       absTolerance,
+                       relTol,
+                       absTol,
                        phaseIndex,
                        compIndex );
     }
   }
   testDerivatives( "Total density",
-                   fluid->totalDensity().toViewConst(),
-                   fluid->dTotalDensity().toViewConst(),
+                   testValues,
+                   fluidCopy->totalDensity().toViewConst(),
+                   fluidCopy->dTotalDensity().toViewConst(),
                    deltaArray.toSliceConst(),
+                   1.0,
                    dofNames,
                    relTolerance,
                    absTolerance );
@@ -331,6 +476,15 @@ void FluidModelTest< FLUID_TYPE, NUM_COMP, NUM_PHASE >::populate( ARRAY & array,
   {
     array[i] = *it;
   }
+}
+
+template< typename FLUID_TYPE, integer NUM_COMP, integer NUM_PHASE >
+template< integer USD >
+string FluidModelTest< FLUID_TYPE, NUM_COMP, NUM_PHASE >::toString( arraySlice1d< real64 const, USD > const & array )
+{
+  std::ostringstream os;
+  os << array;
+  return os.str();
 }
 
 template< typename FLUID_TYPE, integer NUM_COMP, integer NUM_PHASE >

@@ -24,10 +24,12 @@ using namespace geos::stringutilities;
 namespace geos
 {
 
-LogPart::LogPart( string_view logPartTitle )
+LogPart::LogPart( string_view logPartTitle, bool enableOutput )
 {
   m_formattedStartDescription.m_title = logPartTitle;
   m_formattedEndDescription.m_title = GEOS_FMT( "{}{}", m_prefixEndTitle, logPartTitle );
+
+  m_enableOutput = enableOutput;
 }
 
 void LogPart::addDescription( string_view description )
@@ -56,6 +58,12 @@ void LogPart::setMaxWidth( size_t const & maxWidth )
   m_maxWidth = maxWidth;
 }
 
+
+double clamp( double v, double min, double max )
+{
+  return std::min( max, std::max( min, v ));
+}
+
 void LogPart::formatDescriptions( LogPart::Description & description,
                                   FormattedDescription & formattedDescription )
 {
@@ -66,15 +74,17 @@ void LogPart::formatDescriptions( LogPart::Description & description,
   size_t & maxNameSize = formattedDescription.m_maxNameWidth;
   size_t & maxValueSize = formattedDescription.m_maxValueWidth;
 
-  m_width = std::max( m_minWidth, m_width );
-  m_width = std::min( m_maxWidth, m_width );
+  formattedLines.reserve( description.m_names.size() * 2 );
+
+  /// clamp
+  m_width = std::min( m_maxWidth, std::max( m_minWidth, m_width ));
 
   for( size_t idxName = 0; idxName < description.m_names.size(); idxName++ )
   {
-    std::vector< string > const & nonFormattedNames =  description.m_names[idxName];
-    std::vector< string > const & nonFormattedValues =  description.m_values[idxName];
+    auto const & nonFormattedNames =  description.m_names[idxName];
+    auto const & nonFormattedValues =  description.m_values[idxName];
 
-    // first format name with no values associated
+    // Format name with no values associated
     if( nonFormattedValues.empty())
     {
       size_t maxLineLength = m_width - borderSpaceWidth;
@@ -82,10 +92,11 @@ void LogPart::formatDescriptions( LogPart::Description & description,
 
       for( auto & name : wrappedNames )
       {
-        auto currMaxNameSize = std::max( name.size(), maxNameSize );
+        auto const currMaxNameSize = std::max( name.size(), maxNameSize );
         if( currMaxNameSize + formattingCharSize < m_width )
         {
           // append space at the end of name if needed
+          name.reserve( m_width - borderSpaceWidth );
           name.append( std::string( m_width - currMaxNameSize - formattingCharSize, ' ' ));
         }
         formattedLines.push_back( name );
@@ -93,6 +104,7 @@ void LogPart::formatDescriptions( LogPart::Description & description,
       continue;
     }
 
+    // Format name with values assiociated
     size_t maxLineLength = m_width - maxNameSize - formattingCharSize - m_delimiter.size();
     auto wrappedValues = stringutilities::wrapTextToMaxLength( nonFormattedValues, maxLineLength );
 
@@ -100,26 +112,33 @@ void LogPart::formatDescriptions( LogPart::Description & description,
     std::vector< string > formatNames {nonFormattedNames};
     for( size_t idxSubName = 0; idxSubName < formatNames.size(); idxSubName++ )
     {
-      size_t spaces = idxSubName < wrappedValues.size() ?
-                      maxNameSize  - formatNames[idxSubName].size() :
-                      m_width - formatNames[idxSubName].size() - formattingCharSize;
+      size_t const spaces = idxSubName < wrappedValues.size() ?
+                            maxNameSize  - formatNames[idxSubName].size() :
+                            m_width - formatNames[idxSubName].size() - formattingCharSize;
       // append space at the end of name if needed
+      formatNames[idxSubName].reserve( formatNames[idxSubName].size() + spaces );
       formatNames[idxSubName].append( spaces, ' ' );
     }
 
     size_t const lineCount = std::max( formatNames.size(), wrappedValues.size());
 
     // format values
+    size_t const minValueSizeRequired = m_width - maxNameSize - formattingCharSize - m_delimiter.size();
     for( auto & wrappedValue : wrappedValues )
     {
-      size_t minValueSizeRequired = m_width - maxNameSize - formattingCharSize - m_delimiter.size();
+      wrappedValue.reserve( minValueSizeRequired );
       wrappedValue.append( minValueSizeRequired - wrappedValue.size(), ' ' );
     }
     maxValueSize = std::max( maxValueSize,
                              (std::max_element( wrappedValues.begin(), wrappedValues.end() ))->size() );
 
-    formattedLines.push_back( GEOS_FMT( "{}{}{}", formatNames.front(), m_delimiter, wrappedValues.front() ));
+    // add the first line
+    string firstLine;
+    firstLine.reserve( formatNames.front().size() + m_delimiter.size() + wrappedValues.front().size());
+    firstLine.append( formatNames.front()).append( m_delimiter ).append( wrappedValues.front());
+    formattedLines.push_back( firstLine );
 
+    // combination name + value
     for( size_t idxLine = 1; idxLine < lineCount; ++idxLine )
     {
       if( idxLine < formatNames.size() && idxLine < wrappedValues.size())
@@ -127,11 +146,11 @@ void LogPart::formatDescriptions( LogPart::Description & description,
         formattedLines.push_back( GEOS_FMT( "{}{}{}", formatNames[idxLine], m_delimiter, wrappedValues[idxLine] ));
       }
       else if( idxLine < formatNames.size())
-      { // subnames
+      { // subnames remaining
         formattedLines.push_back( formatNames[idxLine] );
       }
       else if( idxLine < wrappedValues.size())
-      { // subvalues
+      { // subvalues remaining
         size_t const spaceAvailable = maxNameSize + wrappedValues[idxLine].size() + m_delimiter.size();
         formattedLines.push_back( GEOS_FMT( "{:>{}}", wrappedValues[idxLine], spaceAvailable ));
       }
@@ -168,7 +187,7 @@ string LogPart::outputTitle( LogPart::FormattedDescription & formattedDescriptio
 
 void LogPart::begin( std::ostream & os )
 {
-  if( MpiWrapper::commRank() != 0 )
+  if( !m_enableOutput )
     return;
 
 
@@ -186,7 +205,7 @@ void LogPart::begin( std::ostream & os )
 
 void LogPart::end( std::ostream & os )
 {
-  if( MpiWrapper::commRank() != 0 )
+  if( !m_enableOutput )
     return;
 
   formatDescriptions( m_endDescription, m_formattedEndDescription );
