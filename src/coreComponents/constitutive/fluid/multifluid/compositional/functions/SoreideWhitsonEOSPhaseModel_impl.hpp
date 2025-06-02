@@ -48,35 +48,50 @@ computePureCoefficients( integer const ic,
   real64 dbCoefficient_dp = 0.0;
   real64 daCoefficient_dt = 0.0;
   real64 dbCoefficient_dt = 0.0;
-  computePureCoefficients( ic,
-                           pressure,
-                           temperature,
-                           componentProperties,
-                           salinity,
-                           aCoefficient,
-                           bCoefficient,
-                           daCoefficient_dp,
-                           dbCoefficient_dp,
-                           daCoefficient_dt,
-                           dbCoefficient_dt );
+  computePureCoefficientsAndDerivs( ic,
+                                    pressure,
+                                    temperature,
+                                    componentProperties,
+                                    salinity,
+                                    aCoefficient,
+                                    bCoefficient,
+                                    daCoefficient_dp,
+                                    dbCoefficient_dp,
+                                    daCoefficient_dt,
+                                    dbCoefficient_dt );
 }
 
 template< typename EOS_TYPE >
 GEOS_HOST_DEVICE
 void
 SoreideWhitsonEOSPhaseModel< EOS_TYPE >::
-computePureCoefficients( integer const ic,
-                         real64 const & pressure,
-                         real64 const & temperature,
-                         ComponentProperties::KernelWrapper const & componentProperties,
-                         real64 const & salinity,
-                         real64 & aCoefficient,
-                         real64 & bCoefficient,
-                         real64 & daCoefficient_dp,
-                         real64 & dbCoefficient_dp,
-                         real64 & daCoefficient_dt,
-                         real64 & dbCoefficient_dt )
+computePureCoefficientsAndDerivs( integer const ic,
+                                  real64 const & pressure,
+                                  real64 const & temperature,
+                                  ComponentProperties::KernelWrapper const & componentProperties,
+                                  real64 const & salinity,
+                                  real64 & aCoefficient,
+                                  real64 & bCoefficient,
+                                  real64 & daCoefficient_dp,
+                                  real64 & dbCoefficient_dp,
+                                  real64 & daCoefficient_dt,
+                                  real64 & dbCoefficient_dt )
 {
+  arraySlice1d< integer const > const & componentType = componentProperties.m_componentType;
+  if( !isComponentType( componentType[ic], ComponentType::Water ))
+  {
+    CubicModel::computePureCoefficients( ic,
+                                         pressure,
+                                         temperature,
+                                         componentProperties,
+                                         aCoefficient,
+                                         bCoefficient,
+                                         daCoefficient_dp,
+                                         dbCoefficient_dp,
+                                         daCoefficient_dt,
+                                         dbCoefficient_dt );
+    return;
+  }
   arraySlice1d< real64 const > const & criticalPressure = componentProperties.m_componentCriticalPressure;
   arraySlice1d< real64 const > const & criticalTemperature = componentProperties.m_componentCriticalTemperature;
 
@@ -88,8 +103,8 @@ computePureCoefficients( integer const ic,
 
   real64 const csw = power( salinity, 1.1 );
 
-  real64 const sqrtAlpha = 1.0 - 0.4530*(1.0 - tr*(1.0 - 0.0103*csw)) + 0.0034*(trToMinus3 - 1.0);
-  real64 const dSqrtAlpha_dtr = 0.4530*(1.0 - 0.0103*csw) - 0.0102*trToMinus3/tr;
+  real64 const sqrtAlpha = 1.0 + 0.4530*(1.0 - tr*(1.0 - 0.0103*csw)) + 0.0034*(trToMinus3 - 1.0);
+  real64 const dSqrtAlpha_dtr = -0.4530*(1.0 - 0.0103*csw) - 0.0102*trToMinus3/tr;
   real64 const alpha = sqrtAlpha * sqrtAlpha;
   real64 const dAlpha_dt = 2.0 * sqrtAlpha * dSqrtAlpha_dtr / criticalTemperature[ic];
 
@@ -107,7 +122,7 @@ template< typename EOS_TYPE >
 GEOS_HOST_DEVICE
 void
 SoreideWhitsonEOSPhaseModel< EOS_TYPE >::
-getBinaryInteractionCiefficient( real64 const & pressure,
+getBinaryInteractionCoefficient( real64 const & pressure,
                                  real64 const & temperature,
                                  ComponentProperties::KernelWrapper const & componentProperties,
                                  real64 const & salinity,
@@ -163,9 +178,10 @@ getBinaryInteractionCiefficient( real64 const & pressure,
     real64 constexpr A2 = -21.2566;
     real64 const a0 = 1.0 + 0.15587 * power( salinity, 0.7505 );
     real64 const a1 = 1.0 + 0.17837 * power( salinity, 0.979 );
-    real64 const a2 = LvArray::math::exp( -6.7222*Tr - salinity );
-    kij = A0*a0 + A1*a1 + A2*a2;
-    dkij_dT = -6.7222*A2*a2 * dTr_dT;
+    real64 constexpr e2 = -6.7222;
+    real64 const a2 = LvArray::math::exp( e2*Tr - salinity );
+    kij = A0*a0 + A1*a1*Tr + A2*a2;
+    dkij_dT = (A1*a1 + e2*A2*a2) * dTr_dT;
   }
   else if( isComponentType( type_i, ComponentType::HydrogenSulphide ))
   {
@@ -181,7 +197,7 @@ getBinaryInteractionCiefficient( real64 const & pressure,
     real64 constexpr A0 = -1.70235;
     real64 constexpr A1 = 0.44338;
     real64 const csw = power( salinity, 0.75 );
-    real64 const a0 = 1.0 + 0.25587*csw;
+    real64 const a0 = 1.0 + 0.025587*csw;
     real64 const a1 = 1.0 + 0.08126*csw;
     kij = A0*a0 + A1*a1*Tr;
     dkij_dT = A1*a1*dTr_dT;
@@ -205,15 +221,36 @@ getBinaryInteractionCiefficient( real64 const & pressure,
 
     // Table 2 from Soreide & Whitson (1992)
     // See also equations (11) and (12)
-    real64 const A0 = 1.1120 - 1.7369 * power( omega, -0.1 );
-    real64 const A1 = 1.1001 + 0.8360 * omega;
-    real64 const A2 = -0.15742 - 1.0988 * omega;
-    real64 const a0 = 1.0 + 0.017407*salinity;
-    real64 const a1 = 1.0 + 0.033516*salinity;
-    real64 const a2 = 1.0 + 0.011478*salinity;
-    kij = A0*a0 + A1*a1*Tr + A2*a2*Tr*Tr;
-    real64 const dkij_dTr = A1*a1 + 2.0*A2*a2*Tr;
-    dkij_dT = dkij_dTr * dTr_dT;
+    // For methane we will use the tuned parameters
+    if( 0.02 < omega )
+    {
+      // Original parameters from Soreide & Whitson (1992)
+      real64 const A0 = 1.1120 - 1.7369 * power( omega, -0.1 );
+      real64 const A1 = 1.1001 + 0.8360 * omega;
+      real64 const A2 = -0.15742 - 1.0988 * omega;
+
+      real64 const a0 = 1.0 + 0.017407*salinity;
+      real64 const a1 = 1.0 + 0.033516*salinity;
+      real64 const a2 = 1.0 + 0.011478*salinity;
+      kij = A0*a0 + A1*a1*Tr + A2*a2*Tr*Tr;
+      real64 const dkij_dTr = A1*a1 + 2.0*A2*a2*Tr;
+      dkij_dT = dkij_dTr * dTr_dT;
+    }
+    else
+    {
+      // Tuned parameters
+      real64 const A0 = 1.616705 - 1.884534 * power( omega, -0.1 );
+      real64 const A1 = 0.8157014 + 0.8723632 * omega;
+      real64 const A2 = -0.0887821 - 0.8767864 * omega;
+
+      real64 const a0 = 1.0 + 0.09988448*salinity;
+      real64 const a1 = 1.0 + 0.1485516*salinity;
+      real64 const a2 = 1.0 + 0.2111324*salinity;
+
+      kij = A0*a0 + A1*a1*Tr + A2*a2*Tr*Tr;
+      real64 const dkij_dTr = A1*a1 + 2.0*A2*a2*Tr;
+      dkij_dT = dkij_dTr * dTr_dT;
+    }
   }
 }
 
@@ -243,12 +280,15 @@ computeMixtureCoefficients( integer const numComps,
   aMixtureCoefficient = 0.0;
   for( integer jc = 0; jc < numComps; ++jc )
   {
-    for( integer ic = 0; ic < numComps; ++ic )
+    real64 const aj = sqrt( aPureCoefficient[jc] );
+    aMixtureCoefficient += composition[jc] * composition[jc] * aj * aj;
+    for( integer ic = jc+1; ic < numComps; ++ic )
     {
+      real64 const ai = sqrt( aPureCoefficient[ic] );
       real64 kij = 0.0;
       real64 dkij_dT = 0.0;
-      getBinaryInteractionCiefficient( pressure, temperature, componentProperties, salinity, ic, jc, kij, dkij_dT );
-      aMixtureCoefficient += composition[ic] * composition[jc] * ( 1.0 - kij ) * sqrt( aPureCoefficient[ic] * aPureCoefficient[jc] );
+      getBinaryInteractionCoefficient( pressure, temperature, componentProperties, salinity, ic, jc, kij, dkij_dT );
+      aMixtureCoefficient += 2.0 * composition[ic] * composition[jc] * ( 1.0 - kij ) * ai * aj;
     }
   }
 
@@ -264,18 +304,18 @@ template< integer USD >
 GEOS_HOST_DEVICE
 void
 SoreideWhitsonEOSPhaseModel< EOS_TYPE >::
-computeMixtureCoefficients( integer const numComps,
-                            real64 const & pressure,
-                            real64 const & temperature,
-                            arraySlice1d< real64 const, USD > const & composition,
-                            ComponentProperties::KernelWrapper const & componentProperties,
-                            real64 const & salinity,
-                            arraySlice1d< real64 const > const & aPureCoefficient,
-                            arraySlice1d< real64 const > const & bPureCoefficient,
-                            real64 const aMixtureCoefficient,
-                            real64 const bMixtureCoefficient,
-                            arraySlice1d< real64 > const & aMixtureCoefficientDerivs,
-                            arraySlice1d< real64 > const & bMixtureCoefficientDerivs )
+computeMixtureCoefficientDerivs( integer const numComps,
+                                 real64 const & pressure,
+                                 real64 const & temperature,
+                                 arraySlice1d< real64 const, USD > const & composition,
+                                 ComponentProperties::KernelWrapper const & componentProperties,
+                                 real64 const & salinity,
+                                 arraySlice1d< real64 const > const & aPureCoefficient,
+                                 arraySlice1d< real64 const > const & bPureCoefficient,
+                                 real64 const aMixtureCoefficient,
+                                 real64 const bMixtureCoefficient,
+                                 arraySlice1d< real64 > const & aMixtureCoefficientDerivs,
+                                 arraySlice1d< real64 > const & bMixtureCoefficientDerivs )
 {
   // a parameter derivatives
   aMixtureCoefficientDerivs[Deriv::dP] = aMixtureCoefficient / pressure;
@@ -286,8 +326,8 @@ computeMixtureCoefficients( integer const numComps,
   stackArray1d< real64, maxNumComps > daPureCoefficient_dt( numComps );
   for( integer ic = 0; ic < numComps; ++ic )
   {
-    computePureCoefficients( ic, pressure, temperature, componentProperties, salinity,
-                             aCoefficient, bCoefficient, dummy, dummy, daPureCoefficient_dt[ic], dummy );
+    computePureCoefficientsAndDerivs( ic, pressure, temperature, componentProperties, salinity,
+                                      aCoefficient, bCoefficient, dummy, dummy, daPureCoefficient_dt[ic], dummy );
   }
 
   aMixtureCoefficientDerivs[Deriv::dT] = 0.0;
@@ -301,7 +341,7 @@ computeMixtureCoefficients( integer const numComps,
     {
       real64 kij = 0.0;
       real64 dkij_dT = 0.0;
-      getBinaryInteractionCiefficient( pressure, temperature, componentProperties, salinity, ic, jc, kij, dkij_dT );
+      getBinaryInteractionCoefficient( pressure, temperature, componentProperties, salinity, ic, jc, kij, dkij_dT );
 
       real64 const aij = sqrt( aPureCoefficient[ic] * aPureCoefficient[jc] );
       real64 const coeff = composition[ic] * composition[jc] * ( 1.0 - kij ) / aij;
@@ -361,7 +401,7 @@ computeCompressibilityFactor( integer const numComps,
     kij( ic, ic ) = 0.0;
     for( integer jc = ic+1; jc < numComps; ++jc )
     {
-      getBinaryInteractionCiefficient( pressure, temperature, componentProperties, salinity, ic, jc, kij( ic, jc ), dkij_dT );
+      getBinaryInteractionCoefficient( pressure, temperature, componentProperties, salinity, ic, jc, kij( ic, jc ), dkij_dT );
       kij( jc, ic ) = kij( ic, jc );
     }
   }
@@ -378,18 +418,18 @@ computeCompressibilityFactor( integer const numComps,
 }
 
 template< typename EOS_TYPE >
-template< integer USD >
+template< integer USD1, integer USD2 >
 GEOS_HOST_DEVICE
 void
 SoreideWhitsonEOSPhaseModel< EOS_TYPE >::
-computeCompressibilityFactor( integer const numComps,
-                              real64 const & pressure,
-                              real64 const & temperature,
-                              arraySlice1d< real64 const, USD > const & composition,
-                              ComponentProperties::KernelWrapper const & componentProperties,
-                              real64 const & salinity,
-                              real64 const & compressibilityFactor,
-                              arraySlice1d< real64 > const & compressibilityFactorDerivs )
+computeCompressibilityFactorAndDerivs( integer const numComps,
+                                       real64 const & pressure,
+                                       real64 const & temperature,
+                                       arraySlice1d< real64 const, USD1 > const & composition,
+                                       ComponentProperties::KernelWrapper const & componentProperties,
+                                       real64 const & salinity,
+                                       real64 & compressibilityFactor,
+                                       arraySlice1d< real64, USD2 > const & compressibilityFactorDerivs )
 {
   integer constexpr numMaxDofs = maxNumComps + 2;
 
@@ -415,20 +455,29 @@ computeCompressibilityFactor( integer const numComps,
                               bMixtureCoefficient );
 
   // 1.2: Compute the pure and mixture coefficient derivatives
-  computeMixtureCoefficients( numComps,
-                              pressure,
-                              temperature,
-                              composition,
-                              componentProperties,
-                              salinity,
-                              aPureCoefficient.toSliceConst(),
-                              bPureCoefficient.toSliceConst(),
-                              aMixtureCoefficient,
-                              bMixtureCoefficient,
-                              aMixtureCoefficientDerivs,    // output
-                              bMixtureCoefficientDerivs );
+  computeMixtureCoefficientDerivs( numComps,
+                                   pressure,
+                                   temperature,
+                                   composition,
+                                   componentProperties,
+                                   salinity,
+                                   aPureCoefficient.toSliceConst(),
+                                   bPureCoefficient.toSliceConst(),
+                                   aMixtureCoefficient,
+                                   bMixtureCoefficient,
+                                   aMixtureCoefficientDerivs, // output
+                                   bMixtureCoefficientDerivs );
 
-  // 2. Calculate derivatives
+  // 2.1: Update the compressibility factor
+  computeCompressibilityFactor( numComps,
+                                pressure,
+                                temperature,
+                                composition,
+                                componentProperties,
+                                salinity,
+                                compressibilityFactor );
+
+  // 2.2: Calculate derivatives
   CubicModel::computeCompressibilityFactor( numComps,
                                             aMixtureCoefficient,
                                             bMixtureCoefficient,
@@ -464,9 +513,11 @@ computeLogFugacityCoefficients( integer const numComps,
   real64 dkij_dT = 0.0;
   for( integer ic = 0; ic < numComps; ++ic )
   {
-    for( integer jc = 0; jc < numComps; ++jc )
+    kij( ic, ic ) = 0.0;
+    for( integer jc = ic+1; jc < numComps; ++jc )
     {
-      getBinaryInteractionCiefficient( pressure, temperature, componentProperties, salinity, ic, jc, kij( ic, jc ), dkij_dT );
+      getBinaryInteractionCoefficient( pressure, temperature, componentProperties, salinity, ic, jc, kij( ic, jc ), dkij_dT );
+      kij( jc, ic ) = kij( ic, jc );
     }
   }
 
@@ -509,14 +560,14 @@ template< integer USD >
 GEOS_HOST_DEVICE
 void
 SoreideWhitsonEOSPhaseModel< EOS_TYPE >::
-computeLogFugacityCoefficients( integer const numComps,
-                                real64 const & pressure,
-                                real64 const & temperature,
-                                arraySlice1d< real64 const, USD > const & composition,
-                                ComponentProperties::KernelWrapper const & componentProperties,
-                                real64 const & salinity,
-                                arraySlice1d< real64 const > const & logFugacityCoefficients,
-                                arraySlice2d< real64 > const & logFugacityCoefficientDerivs )
+computeLogFugacityCoefficientDerivs( integer const numComps,
+                                     real64 const & pressure,
+                                     real64 const & temperature,
+                                     arraySlice1d< real64 const, USD > const & composition,
+                                     ComponentProperties::KernelWrapper const & componentProperties,
+                                     real64 const & salinity,
+                                     arraySlice1d< real64 const > const & logFugacityCoefficients,
+                                     arraySlice2d< real64 > const & logFugacityCoefficientDerivs )
 {
   integer constexpr numMaxComps = MultiFluidConstants::MAX_NUM_COMPONENTS;
   integer constexpr numMaxDofs = MultiFluidConstants::MAX_NUM_COMPONENTS + 2;
@@ -540,17 +591,17 @@ computeLogFugacityCoefficients( integer const numComps,
   // 1: Compute pure coefficients and derivatives
   for( integer ic = 0; ic < numComps; ++ic )
   {
-    computePureCoefficients( ic,
-                             pressure,
-                             temperature,
-                             componentProperties,
-                             salinity,
-                             aPureCoefficient[ic],
-                             bPureCoefficient[ic],
-                             aPureCoefficientDerivs( Deriv::dP, ic ),
-                             bPureCoefficientDerivs( Deriv::dP, ic ),
-                             aPureCoefficientDerivs( Deriv::dT, ic ),
-                             bPureCoefficientDerivs( Deriv::dT, ic ));
+    computePureCoefficientsAndDerivs( ic,
+                                      pressure,
+                                      temperature,
+                                      componentProperties,
+                                      salinity,
+                                      aPureCoefficient[ic],
+                                      bPureCoefficient[ic],
+                                      aPureCoefficientDerivs( Deriv::dP, ic ),
+                                      bPureCoefficientDerivs( Deriv::dP, ic ),
+                                      aPureCoefficientDerivs( Deriv::dT, ic ),
+                                      bPureCoefficientDerivs( Deriv::dT, ic ));
   }
 
   // 2.1: Compute mixture coefficients
@@ -566,18 +617,18 @@ computeLogFugacityCoefficients( integer const numComps,
                               bMixtureCoefficient );
 
   // 2.2: Compute mixture coefficient derivatives
-  computeMixtureCoefficients( numComps,
-                              pressure,
-                              temperature,
-                              composition,
-                              componentProperties,
-                              salinity,
-                              aPureCoefficient,
-                              bPureCoefficient,
-                              aMixtureCoefficient,
-                              bMixtureCoefficient,
-                              aMixtureCoefficientDerivs,
-                              bMixtureCoefficientDerivs );
+  computeMixtureCoefficientDerivs( numComps,
+                                   pressure,
+                                   temperature,
+                                   composition,
+                                   componentProperties,
+                                   salinity,
+                                   aPureCoefficient,
+                                   bPureCoefficient,
+                                   aMixtureCoefficient,
+                                   bMixtureCoefficient,
+                                   aMixtureCoefficientDerivs,
+                                   bMixtureCoefficientDerivs );
 
   // 3: Extract binary interaction coefficients
   stackArray1d< real64, maxNumComps > ki( numComps );
@@ -588,7 +639,7 @@ computeLogFugacityCoefficients( integer const numComps,
     dki( ic, ic ) = 0.0;
     for( integer jc = ic+1; jc < numComps; ++jc )
     {
-      getBinaryInteractionCiefficient( pressure, temperature, componentProperties, salinity, ic, jc, dki( ic, jc ), dkij_dT );
+      getBinaryInteractionCoefficient( pressure, temperature, componentProperties, salinity, ic, jc, dki( ic, jc ), dkij_dT );
       dki( jc, ic ) = dki( ic, jc );
     }
   }
@@ -620,26 +671,45 @@ computeLogFugacityCoefficients( integer const numComps,
     ki[ic] = 0.0;
     dki( ic, Deriv::dP ) = 0.0;
     dki( ic, Deriv::dT ) = 0.0;
+  }
 
-    real64 const ai = sqrt( aPureCoefficient[ic] );
+  for( integer ic = 0; ic < numComps; ++ic )
+  {
+    real64 const Ai = aPureCoefficient[ic];
+    real64 const ai = sqrt( Ai );
     real64 const dai_dP = aPureCoefficientDerivs( Deriv::dP, ic );
     real64 const dai_dT = aPureCoefficientDerivs( Deriv::dT, ic );
-    for( integer jc = 0; jc < numComps; ++jc )
+
+    ki[ic] += composition[ic] * Ai;
+    dki( ic, Deriv::dC + ic ) = Ai;
+
+    dki( ic, Deriv::dP ) += composition[ic] * dai_dP;
+    dki( ic, Deriv::dT ) += composition[ic] * dai_dT;
+
+    for( integer jc = ic+1; jc < numComps; ++jc )
     {
       real64 const aj = sqrt( aPureCoefficient[jc] );
       real64 const daj_dP = aPureCoefficientDerivs( Deriv::dP, jc );
       real64 const daj_dT = aPureCoefficientDerivs( Deriv::dT, jc );
 
       real64 kij = 0.0;
-      getBinaryInteractionCiefficient( pressure, temperature, componentProperties, salinity, ic, jc, kij, dkij_dT );
+      getBinaryInteractionCoefficient( pressure, temperature, componentProperties, salinity, ic, jc, kij, dkij_dT );
 
       real64 const bicValue = ( 1.0 - kij ) * ai * aj;
 
       ki[ic] += composition[jc] * bicValue;
+      ki[jc] += composition[ic] * bicValue;
+
       dki( ic, Deriv::dC + jc ) = bicValue;
+      dki( jc, Deriv::dC + ic ) = bicValue;
+
       dki( ic, Deriv::dP ) += 0.5 * composition[jc] * bicValue * (dai_dP/aPureCoefficient[ic] + daj_dP/aPureCoefficient[jc]);
+      dki( jc, Deriv::dP ) += 0.5 * composition[ic] * bicValue * (dai_dP/aPureCoefficient[ic] + daj_dP/aPureCoefficient[jc]);
+
       dki( ic, Deriv::dT ) += 0.5 * composition[jc] * bicValue * (dai_dT/aPureCoefficient[ic] + daj_dT/aPureCoefficient[jc])
                               - composition[jc] * dkij_dT * ai * aj;
+      dki( jc, Deriv::dT ) += 0.5 * composition[ic] * bicValue * (dai_dT/aPureCoefficient[ic] + daj_dT/aPureCoefficient[jc])
+                              - composition[ic] * dkij_dT * ai * aj;
     }
   }
 
