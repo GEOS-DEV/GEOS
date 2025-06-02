@@ -146,7 +146,7 @@ string TableTextFormatter::toString< TableData >( TableData const & tableData ) 
 
   initalizeTableGrids( m_tableLayout, tableData,
                        headerCellsLayout, dataCellsLayout,
-                       tableTotalWidth );
+                       tableTotalWidth, nullptr );
 
   string const sepLine = string( tableTotalWidth, m_horizontalLine );
   outputTableHeader( tableOutput, m_tableLayout, headerCellsLayout, sepLine );
@@ -160,7 +160,8 @@ void TableTextFormatter::initalizeTableGrids( PreparedTableLayout const & tableL
                                               TableData const & tableInputData,
                                               CellLayoutRows & headerCellsLayout,
                                               CellLayoutRows & dataCellsLayout,
-                                              size_t & tableTotalWidth ) const
+                                              size_t & tableTotalWidth,
+                                              ColumnWidthModifier columnWidthModifier ) const
 {
   RowsCellInput const & inputDataValues( tableInputData.getCellsData() );
   bool const hasColumnLayout = tableLayout.getColumnLayersCount() > 0;
@@ -188,6 +189,9 @@ void TableTextFormatter::initalizeTableGrids( PreparedTableLayout const & tableL
   // only after all cells that are not merge, we can process the merged cells.
   stretchColumnsByMergedCellsWidth( columnsWidth, headerCellsLayout, tableLayout, false );
   stretchColumnsByMergedCellsWidth( columnsWidth, dataCellsLayout, tableLayout, true );
+
+  if( columnWidthModifier )
+    columnWidthModifier( columnsWidth );
 
   // the columns width array is now sized after all the table, we can compute the total table width
   tableTotalWidth = tableLayout.getBorderMargin() * 2 + 2;
@@ -383,8 +387,8 @@ void TableTextFormatter::populateDataCellsLayout( PreparedTableLayout const & ta
                           string_view( &m_horizontalLine, 1 ) :
                           string_view( inputCell.value );
       TableLayout::Alignment const alignment = inputCell.type == CellType::Header ?
-                                  tableLayout.getDefaultHeaderAlignment() :
-                                  tableLayout.getDefaultValueAlignment();
+                                               tableLayout.getDefaultHeaderAlignment() :
+                                               tableLayout.getDefaultValueAlignment();
 
       TableLayout::CellLayout & outputCell = outputRow.cells[idxColumn];
       outputCell = TableLayout::CellLayout( inputCell.type, alignment );

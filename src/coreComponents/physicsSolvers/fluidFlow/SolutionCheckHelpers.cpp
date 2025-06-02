@@ -20,7 +20,7 @@
 #include "physicsSolvers/fluidFlow/SolutionCheckHelpers.hpp"
 #include "common/MpiWrapper.hpp"
 #include "common/format/StringUtilities.hpp"
-#include "common/format/table/TableFormatter.hpp"
+#include "common/format/table/TableMpiComponents.hpp"
 
 namespace geos
 {
@@ -118,8 +118,9 @@ void ElementsReporterOutput::outputTooLowValues( string_view linesPrefix,
           }
         }
 
-        TableTextFormatter const formatter( layout );
-        GEOS_LOG( formatter.toString( data ) );
+        auto const outputStrat = TableTextMpiOutput::ParallelOutputMode::InsecableRanks;
+        TableTextMpiOutput const formatter = TableTextMpiOutput( layout, outputStrat );
+        formatter.toStream( std::cout, data );
       }
       else
       {

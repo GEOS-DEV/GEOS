@@ -165,6 +165,9 @@ protected:
   /// for the extremity of a row
   static constexpr char m_horizontalLine = '-';
 
+  /// A functor which allow to customize the columns width after their computation.
+  using ColumnWidthModifier = std::function< void( stdVector< size_t > & ) >;
+
   /**
    * @brief Initializes the table layout with the given table data and prepares necessary layouts for headers and data cells.
    * @param tableLayout A reference to the `TableLayout` object.
@@ -172,12 +175,14 @@ protected:
    * @param headerCellsLayout A reference to a `CellLayoutRows` where the header cells will be populated.
    * @param dataCellsLayout A reference to a `CellLayoutRows` where the data cells will be populated.
    * @param tableTotalWidth A string that will be used as the table separator line
+   * @param columnWidthModifier A functor which allow to customize the columns width after their computation.
    */
   void initalizeTableGrids( PreparedTableLayout const & tableLayout,
                             TableData const & tableData,
                             CellLayoutRows & dataCellsLayout,
                             CellLayoutRows & headerCellsLayout,
-                            size_t & tableTotalWidth ) const;
+                            size_t & tableTotalWidth,
+                            ColumnWidthModifier columnWidthModifier ) const;
 
   /**
    * @brief Outputs the formatted table to the provided output stream.
