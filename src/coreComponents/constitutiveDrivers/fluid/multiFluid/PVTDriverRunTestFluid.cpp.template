@@ -13,10 +13,15 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
+/*
+ * PVTDriverRunTest@FLUID@.cpp
+ */
+
 #include "constitutiveDrivers/fluid/multiFluid/PVTDriverRunTest.hpp"
-#include "constitutive/fluid/multifluid/CO2Brine/CO2BrineFluid.hpp"
+#include "constitutive/fluid/multifluid/MultiFluidSelector.hpp"
 
 namespace geos
 {
-template void PVTDriver::runTest< constitutive::CO2BrinePhillipsThermalFluid >( constitutive::CO2BrinePhillipsThermalFluid &, arrayView2d< real64 > const & );
+template void PVTDriver::runTest< constitutive::@FLUID@ >(
+  constitutive::@FLUID@ &, arrayView2d< real64 > const & );
 }

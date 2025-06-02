@@ -35,15 +35,6 @@ set( constitutiveDrivers_headers
 #
 set( constitutiveDrivers_sources
      fluid/multiFluid/PVTDriver.cpp
-     fluid/multiFluid/blackOil/PVTDriverRunTestDeadOilFluid.cpp
-     fluid/multiFluid/CO2Brine/PVTDriverRunTestCO2BrinePhillipsFluid.cpp
-     fluid/multiFluid/CO2Brine/PVTDriverRunTestCO2BrinePhillipsThermalFluid.cpp
-     fluid/multiFluid/CO2Brine/PVTDriverRunTestCO2BrineEzrokhiFluid.cpp
-     fluid/multiFluid/CO2Brine/PVTDriverRunTestCO2BrineEzrokhiThermalFluid.cpp
-     fluid/multiFluid/compositional/PVTDriverRunTestCompositionalThreePhaseLohrenzBrayClarkViscosity.cpp
-     fluid/multiFluid/compositional/PVTDriverRunTestCompositionalTwoPhaseConstantViscosity.cpp
-     fluid/multiFluid/compositional/PVTDriverRunTestCompositionalTwoPhasePhillipsBrine.cpp
-     fluid/multiFluid/compositional/PVTDriverRunTestCompositionalTwoPhaseLohrenzBrayClarkViscosity.cpp
      fluid/multiFluid/reactive/ReactiveFluidDriver.cpp
      relativePermeability/RelpermDriver.cpp
      relativePermeability/RelpermDriverBrooksCoreyBakerRunTest.cpp
@@ -67,6 +58,23 @@ endif()
 
 geos_decorate_link_dependencies( LIST decoratedDependencies
                                  DEPENDENCIES ${dependencyList} )
+
+file( READ "${CMAKE_CURRENT_LIST_DIR}/kernelSpecs.json" kernelSpecs )
+set( kernelTemplateFileList
+     fluid/multiFluid/PVTDriverRunTestFluid.cpp.template)
+
+foreach( kernelTemplateFile ${kernelTemplateFileList} )
+  get_filename_component( jsonKey ${kernelTemplateFile} NAME_WE )
+  generateKernels( TEMPLATE ${kernelTemplateFile}
+                   JSON kernelSpecs
+                   KEY ${jsonKey}
+                   HEADERS headerFiles
+                   SOURCES sourceFiles
+                   LIST_TEMPLATE ${CMAKE_CURRENT_LIST_DIR}/DriverDispatchTypeList.hpp.template )
+
+  list(APPEND constitutiveDrivers_headers ${headerFiles})
+  list(APPEND constitutiveDrivers_sources ${sourceFiles})
+endforeach()
 
 blt_add_library( NAME       constitutiveDrivers
                  SOURCES    ${constitutiveDrivers_sources}
