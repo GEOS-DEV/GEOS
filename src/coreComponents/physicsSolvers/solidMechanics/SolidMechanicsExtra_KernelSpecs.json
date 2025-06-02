@@ -47,11 +47,7 @@
         "DruckerPragerExtended",
         "ModifiedCamClay",
         "DelftEgg",
-        "DruckerPrager",
-        "ElasticIsotropic",
-        "ElasticTransverseIsotropic",
-        "ElasticIsotropicPressureDependent",
-        "ElasticOrthotropic"
+        "DruckerPrager"
       ],
       "FE_TYPE": [
         "H1_Hexahedron_Lagrange1_GaussLegendre2",
@@ -59,62 +55,6 @@
         "H1_Tetrahedron_Lagrange1_Gauss1",
         "H1_Tetrahedron_Lagrange1_Gauss5",
         "H1_Tetrahedron_Lagrange1_Gauss14",
-        "H1_Pyramid_Lagrange1_Gauss5"
-      ]
-    },
-    "explicit": []
-  },
-
-  "SolidMechanicsFixedStressThermoPoromechanicsKernels": {
-    "vars": [
-      "SUBREGION_TYPE",
-      "CONSTITUTIVE_TYPE",
-      "FE_TYPE"
-    ],
-    "constants": [
-      [ "ExplicitSmallStrainPolicy", "geos::parallelDevicePolicy< GEOS_BLOCK_SIZE >" ],
-      [ "ExplicitFiniteStrainPolicy", "geos::parallelDevicePolicy< GEOS_BLOCK_SIZE >" ],
-      [ "FixedStressThermoPoromechanicsPolicy", "geos::parallelDevicePolicy< GEOS_BLOCK_SIZE >" ],
-      [ "ImplicitSmallStrainNewmarkPolicy", "geos::parallelDevicePolicy< GEOS_BLOCK_SIZE >" ],
-      [ "ImplicitSmallStrainQuasiStaticPolicy", "geos::parallelDevicePolicy< GEOS_BLOCK_SIZE >" ]
-    ],
-    "combinations": {
-      "SUBREGION_TYPE": [
-        "CellElementSubRegion"
-      ],
-      "CONSTITUTIVE_TYPE": [
-        "PorousSolid<ElasticIsotropic>"
-      ],
-      "FE_TYPE": [
-        "H1_Hexahedron_Lagrange1_GaussLegendre2",
-        "H1_Wedge_Lagrange1_Gauss6",
-        "H1_Tetrahedron_Lagrange1_Gauss1",
-        "H1_Pyramid_Lagrange1_Gauss5"
-      ]
-    },
-    "explicit": []
-  },
-
-  "SolidMechanicsFixedStressThermoPoroElasticKernels": {
-    "vars": [
-      "SUBREGION_TYPE",
-      "CONSTITUTIVE_TYPE",
-      "FE_TYPE"
-    ],
-    "constants": [
-      [ "FixedStressThermoPoromechanicsPolicy", "geos::parallelDevicePolicy< GEOS_BLOCK_SIZE >" ]
-    ],
-    "combinations": {
-      "SUBREGION_TYPE": [
-        "CellElementSubRegion"
-      ],
-      "CONSTITUTIVE_TYPE": [
-        "PorousSolid<ElasticIsotropic>"
-      ],
-      "FE_TYPE": [
-        "H1_Hexahedron_Lagrange1_GaussLegendre2",
-        "H1_Wedge_Lagrange1_Gauss6",
-        "H1_Tetrahedron_Lagrange1_Gauss1",
         "H1_Pyramid_Lagrange1_Gauss5"
       ]
     },

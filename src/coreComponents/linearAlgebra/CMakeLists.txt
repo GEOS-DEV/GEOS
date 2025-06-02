@@ -60,7 +60,11 @@ set( linearAlgebra_headers
      utilities/ReverseCutHillMcKeeOrdering.hpp
      utilities/TransposeOperator.hpp )
 
-# Workaround for link issue with cce-18
+# TODO: workaround for issue with undefined hidden symbols
+#   LvArray::internal::toChaiExecutionSpace(camp::resources::v1::Platform)
+#   LvArray::internal::getArrayManager()
+#   chai::ArrayManager::move(void*, chai::PointerRecord*, chai::ExecutionSpace)
+#   geos::HypreVector::~HypreVector()
 if( NOT ${ENABLE_HIP} )
     list( APPEND linearAlgebra_headers solvers/GmresSolver.hpp )
 endif()
@@ -77,7 +81,11 @@ set( linearAlgebra_sources
      solvers/SeparateComponentPreconditioner.cpp
      utilities/ReverseCutHillMcKeeOrdering.cpp )
 
-# Workaround for link issue with cce-18
+# TODO: workaround for issue with undefined hidden symbols
+#   LvArray::internal::toChaiExecutionSpace(camp::resources::v1::Platform)
+#   LvArray::internal::getArrayManager()
+#   chai::ArrayManager::move(void*, chai::PointerRecord*, chai::ExecutionSpace)
+#   geos::HypreVector::~HypreVector()
 if( NOT ${ENABLE_HIP} )
     list( APPEND linearAlgebra_sources solvers/GmresSolver.cpp )
 endif()
