@@ -20,6 +20,7 @@ Contains:
 set( fluidFlowSolvers_headers
      FlowSolverBase.hpp
      FlowSolverBaseFields.hpp
+     SinglePhaseHybridFVM.hpp
      CompositionalMultiphaseBase.hpp
      CompositionalMultiphaseBaseFields.hpp
      CompositionalMultiphaseStatistics.hpp
@@ -36,14 +37,12 @@ set( fluidFlowSolvers_headers
      SinglePhaseBaseFields.hpp
      SinglePhaseStatistics.hpp
      SinglePhaseFVM.hpp
-     SinglePhaseHybridFVM.hpp
      SinglePhaseProppantBase.hpp
      StencilAccessors.hpp
      StencilDataCollection.hpp
      LogLevelsInfo.hpp
      kernels/MinPoreVolumeMaxPorosityKernel.hpp
      kernels/StencilWeightsUpdateKernel.hpp
-     kernels/HybridFVMHelperKernels.hpp
      kernels/singlePhase/AccumulationKernels.hpp
      kernels/singlePhase/AquiferBCKernel.hpp
      kernels/singlePhase/DirichletFluxComputeKernel.hpp
@@ -54,7 +53,6 @@ set( fluidFlowSolvers_headers
      kernels/singlePhase/HydrostaticPressureKernel.hpp
      kernels/singlePhase/MobilityKernel.hpp
      kernels/singlePhase/ResidualNormKernel.hpp
-     kernels/singlePhase/SinglePhaseHybridFVMKernels.hpp
      kernels/singlePhase/SolidInternalEnergyUpdateKernel.hpp
      kernels/singlePhase/SolutionCheckKernel.hpp
      kernels/singlePhase/SolutionScalingKernel.hpp
@@ -71,7 +69,6 @@ set( fluidFlowSolvers_headers
      kernels/compositional/C1PPUPhaseFlux.hpp
      kernels/compositional/CapillaryPressureUpdateKernel.hpp
      kernels/compositional/CFLKernel.hpp
-     kernels/compositional/CompositionalMultiphaseHybridFVMKernels.hpp
      kernels/compositional/DiffusionDispersionFluxComputeKernel.hpp
      kernels/compositional/DirichletFluxComputeKernel.hpp
      kernels/compositional/DissipationFluxComputeKernel.hpp
@@ -126,31 +123,30 @@ set( fluidFlowSolvers_headers
 
 # Specify solver sources
 set( fluidFlowSolvers_sources
-     CompositionalMultiphaseBase.cpp
-     CompositionalMultiphaseFVM.cpp
-     CompositionalMultiphaseStatistics.cpp
-     CompositionalMultiphaseHybridFVM.cpp
-     ImmiscibleMultiphaseFlow.cpp
-     ReactiveCompositionalMultiphaseOBL.cpp
      FlowSolverBase.cpp
      SinglePhaseBase.cpp
      SinglePhaseStatistics.cpp
      SinglePhaseFVM.cpp
      SinglePhaseHybridFVM.cpp
      SinglePhaseProppantBase.cpp
+     CompositionalMultiphaseBase.cpp
+     CompositionalMultiphaseFVM.cpp
+     CompositionalMultiphaseHybridFVM.cpp
+     CompositionalMultiphaseStatistics.cpp
+     ImmiscibleMultiphaseFlow.cpp
+     ReactiveCompositionalMultiphaseOBL.cpp
      SourceFluxStatistics.cpp
      StencilDataCollection.cpp
      kernels/singlePhase/proppant/ProppantFluxKernels.cpp
      kernels/compositional/AquiferBCKernel.cpp
      kernels/compositional/CFLKernel.cpp
      kernels/compositional/FluxComputeKernelBase.cpp
-     kernels/compositional/CompositionalMultiphaseHybridFVMKernels.cpp
      wells/CompositionalMultiphaseWell.cpp
      wells/kernels/CompositionalMultiphaseWellKernels.cpp
      wells/SinglePhaseWell.cpp
      wells/kernels/SinglePhaseWellKernels.cpp
      wells/WellControls.cpp
-     wells/WellSolverBase.cpp 
+     wells/WellSolverBase.cpp
      proppantTransport/ProppantTransport.cpp
      proppantTransport/ProppantTransportKernels.cpp )
 
@@ -158,54 +154,100 @@ set( dependencyList ${parallelDeps} physicsSolversBase )
 
 geos_decorate_link_dependencies( LIST decoratedDependencies DEPENDENCIES ${dependencyList} )
 
+# Add isothermal FVM fluid flow kernels
+if( GEOS_ENABLE_FLUIDFLOW_ISOTHERMAL_FVM )
+  file( READ "${CMAKE_CURRENT_LIST_DIR}/IsothermalFVM_KernelSpecs.json" kernelSpecs )
 
+  # TODO: The kernel below has non-matching file names and JSON keys.
+  #       Either fix them to follow pattern, or come up with another mechanism.
+  generateKernels( TEMPLATE "CompositionalMultiphaseFVMKernel_isothermal.cpp.template"
+                   JSON kernelSpecs
+                   KEY "IsothermalCompositionalMultiphaseFVM_DirichletFluxComputeKernels"
+                   HEADERS headerFiles
+                   SOURCES sourceFiles )
+  list(APPEND fluidFlowSolvers_headers ${headerFiles})
+  list(APPEND fluidFlowSolvers_sources ${sourceFiles})
 
+  list(LENGTH sourceFiles NUM_KERNELS)
+  math(EXPR TOTAL_GENERATED_KERNELS "${TOTAL_GENERATED_KERNELS} + ${NUM_KERNELS}")
+endif()
 
-file( READ "${CMAKE_CURRENT_LIST_DIR}/kernelSpecs.json" kernelSpecs )
-set( kernelTemplateFileList "" )
+# Add thermal FVM fluid flow kernels
+if( GEOS_ENABLE_FLUIDFLOW_THERMAL_FVM )
+  file( READ "${CMAKE_CURRENT_LIST_DIR}/ThermalFVM_KernelSpecs.json" kernelSpecs )
 
-list( APPEND kernelTemplateFileList
+  # TODO: The kernel below has non-matching file names and JSON keys.
+  #       Either fix them to follow pattern, or come up with another mechanism.
+  generateKernels( TEMPLATE "CompositionalMultiphaseFVMKernel_thermal.cpp.template"
+                   JSON kernelSpecs
+                   KEY "ThermalCompositionalMultiphaseFVM_DirichletFluxComputeKernels"
+                   HEADERS headerFiles
+                   SOURCES sourceFiles )
+  list(APPEND fluidFlowSolvers_headers ${headerFiles})
+  list(APPEND fluidFlowSolvers_sources ${sourceFiles})
+
+  list(LENGTH sourceFiles NUM_KERNELS)
+  math(EXPR TOTAL_GENERATED_KERNELS "${TOTAL_GENERATED_KERNELS} + ${NUM_KERNELS}")
+endif()
+
+# Add reactive fluid flow kernels
+if( GEOS_ENABLE_FLUIDFLOW_REACTIVE )
+  file( READ "${CMAKE_CURRENT_LIST_DIR}/Reactive_KernelSpecs.json" kernelSpecs )
+  set( kernelTemplateFileList
+       ReactiveCompositionalMultiphaseOBLKernels.cpp.template )
+
+  foreach( kernelTemplateFile ${kernelTemplateFileList} )
+    get_filename_component( jsonKey ${kernelTemplateFile} NAME_WE )
+    generateKernels( TEMPLATE ${kernelTemplateFile}
+                     JSON kernelSpecs
+                     KEY ${jsonKey}
+                     HEADERS headerFiles
+                     SOURCES sourceFiles )
+
+    list(APPEND fluidFlowSolvers_headers ${headerFiles})
+    list(APPEND fluidFlowSolvers_sources ${sourceFiles})
+
+    list(LENGTH sourceFiles NUM_KERNELS)
+    math(EXPR TOTAL_GENERATED_KERNELS "${TOTAL_GENERATED_KERNELS} + ${NUM_KERNELS}")
+  endforeach()
+endif()
+
+# Add Hybrid FVM fluid flow code
+if( GEOS_ENABLE_FLUIDFLOW_HYBRIDFVM )
+  list( APPEND fluidFlowSolvers_headers
+        CompositionalMultiphaseHybridFVM.hpp
+        kernels/HybridFVMHelperKernels.hpp
+        kernels/singlePhase/SinglePhaseHybridFVMKernels.hpp
+        kernels/compositional/CompositionalMultiphaseHybridFVMKernels.hpp )
+  list( APPEND fluidFlowSolvers_sources
+        SinglePhaseHybridFVM.cpp
+        CompositionalMultiphaseHybridFVM.cpp
+        kernels/compositional/CompositionalMultiphaseHybridFVMKernels.cpp )
+
+  file( READ "${CMAKE_CURRENT_LIST_DIR}/HybridFVM_KernelSpecs.json" kernelSpecs )
+  set( kernelTemplateFileList
       SinglePhaseHybridFVMKernels.cpp.template
       CompositionalMultiphaseHybridFVMKernels_upwinding.cpp.template
       CompositionalMultiphaseHybridFVMKernels_assembly.cpp.template
-      CompositionalMultiphaseHybridFVMKernels_flux.cpp.template
-      ReactiveCompositionalMultiphaseOBLKernels.cpp.template )
+      CompositionalMultiphaseHybridFVMKernels_flux.cpp.template )
 
+  foreach( kernelTemplateFile ${kernelTemplateFileList} )
+    get_filename_component( jsonKey ${kernelTemplateFile} NAME_WE )
+    generateKernels( TEMPLATE ${kernelTemplateFile}
+                     JSON kernelSpecs
+                     KEY ${jsonKey}
+                     HEADERS headerFiles
+                     SOURCES sourceFiles )
 
-foreach( kernelTemplateFile ${kernelTemplateFileList} )
-  get_filename_component( jsonKey ${kernelTemplateFile} NAME_WE )
-  generateKernels( TEMPLATE ${kernelTemplateFile}
-                   JSON kernelSpecs
-                   KEY ${jsonKey}
-                   HEADERS headerFiles
-                   SOURCES sourceFiles )
+    list(APPEND fluidFlowSolvers_headers ${headerFiles})
+    list(APPEND fluidFlowSolvers_sources ${sourceFiles})
 
-list(APPEND fluidFlowSolvers_headers ${headerFiles})
-list(APPEND fluidFlowSolvers_sources ${sourceFiles})
-endforeach()
+    list(LENGTH sourceFiles NUM_KERNELS)
+    math(EXPR TOTAL_GENERATED_KERNELS "${TOTAL_GENERATED_KERNELS} + ${NUM_KERNELS}")
+  endforeach()
+endif()
 
-# TODO: The two kernels below have non-matching file names and JSON keys.
-#       Either fix them to follow pattern, or come up with another mechanism.
-
-generateKernels( TEMPLATE "CompositionalMultiphaseFVMKernel_isothermal.cpp.template"
-                 JSON kernelSpecs
-                 KEY "IsothermalCompositionalMultiphaseFVM_DirichletFluxComputeKernels"
-                 HEADERS headerFiles
-                 SOURCES sourceFiles )
-list(APPEND fluidFlowSolvers_headers ${headerFiles})
-list(APPEND fluidFlowSolvers_sources ${sourceFiles})
-
-generateKernels( TEMPLATE "CompositionalMultiphaseFVMKernel_thermal.cpp.template"
-                 JSON kernelSpecs
-                 KEY "ThermalCompositionalMultiphaseFVM_DirichletFluxComputeKernels"
-                 HEADERS headerFiles
-                 SOURCES sourceFiles )
-list(APPEND fluidFlowSolvers_headers ${headerFiles})
-list(APPEND fluidFlowSolvers_sources ${sourceFiles})
-
-
-
-
+set(TOTAL_GENERATED_KERNELS ${TOTAL_GENERATED_KERNELS} CACHE INTERNAL "Total number of generated kernels")
 
 blt_add_library( NAME       fluidFlowSolvers
                  SOURCES    ${fluidFlowSolvers_sources}

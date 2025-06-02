@@ -83,28 +83,87 @@ set( dependencyList ${parallelDeps} fluidFlowSolvers simplePDESolvers solidMecha
 
 geos_decorate_link_dependencies( LIST decoratedDependencies DEPENDENCIES ${dependencyList} )
 
+if (GEOS_ENABLE_MULTIPHYSICS_POROMECHANICS)
+  file( READ "${CMAKE_CURRENT_LIST_DIR}/Poromechanics_KernelSpecs.json" kernelSpecs )
+  set( kernelTemplateFileList poromechanicsKernels/PoromechanicsKernels.cpp.template )
 
-file( READ "${CMAKE_CURRENT_LIST_DIR}/kernelSpecs.json" kernelSpecs )
-set( kernelTemplateFileList "" )
+  foreach( kernelTemplateFile ${kernelTemplateFileList} )
+    get_filename_component( jsonKey ${kernelTemplateFile} NAME_WE )
+    generateKernels( TEMPLATE ${kernelTemplateFile}
+                     JSON kernelSpecs
+                     KEY ${jsonKey}
+                     HEADERS headerFiles
+                     SOURCES sourceFiles )
 
-  list( APPEND kernelTemplateFileList 
-        poromechanicsKernels/PoromechanicsKernels.cpp.template
-        poromechanicsKernels/PoromechanicsEFEMKernels.cpp.template
-        poromechanicsKernels/ThermoPoromechanicsKernels.cpp.template
-        poromechanicsKernels/PoromechanicsDamageKernels.cpp.template )
+    list(APPEND multiPhysicsSolvers_headers ${headerFiles})
+    list(APPEND multiPhysicsSolvers_sources ${sourceFiles})
 
+    list(LENGTH sourceFiles NUM_KERNELS)
+    math(EXPR TOTAL_GENERATED_KERNELS "${TOTAL_GENERATED_KERNELS} + ${NUM_KERNELS}")
+  endforeach()
+endif()
 
-foreach( kernelTemplateFile ${kernelTemplateFileList} )
-  get_filename_component( jsonKey ${kernelTemplateFile} NAME_WE )
-  generateKernels( TEMPLATE ${kernelTemplateFile}
-                   JSON kernelSpecs
-                   KEY ${jsonKey}
-                   HEADERS headerFiles
-                   SOURCES sourceFiles )
+if (GEOS_ENABLE_MULTIPHYSICS_POROMECHANICS_EFEM)
+  file( READ "${CMAKE_CURRENT_LIST_DIR}/PoromechanicsEFEM_KernelSpecs.json" kernelSpecs )
+  set( kernelTemplateFileList poromechanicsKernels/PoromechanicsEFEMKernels.cpp.template )
 
-list(APPEND multiPhysicsSolvers_headers ${headerFiles})
-list(APPEND multiPhysicsSolvers_sources ${sourceFiles})
-endforeach()
+  foreach( kernelTemplateFile ${kernelTemplateFileList} )
+    get_filename_component( jsonKey ${kernelTemplateFile} NAME_WE )
+    generateKernels( TEMPLATE ${kernelTemplateFile}
+                     JSON kernelSpecs
+                     KEY ${jsonKey}
+                     HEADERS headerFiles
+                     SOURCES sourceFiles )
+
+    list(APPEND multiPhysicsSolvers_headers ${headerFiles})
+    list(APPEND multiPhysicsSolvers_sources ${sourceFiles})
+
+    list(LENGTH sourceFiles NUM_KERNELS)
+    math(EXPR TOTAL_GENERATED_KERNELS "${TOTAL_GENERATED_KERNELS} + ${NUM_KERNELS}")
+  endforeach()
+endif()
+
+if (GEOS_ENABLE_MULTIPHYSICS_POROMECHANICS_DAMAGE)
+  file( READ "${CMAKE_CURRENT_LIST_DIR}/PoromechanicsDamage_KernelSpecs.json" kernelSpecs )
+  set( kernelTemplateFileList poromechanicsKernels/PoromechanicsDamageKernels.cpp.template )
+
+  foreach( kernelTemplateFile ${kernelTemplateFileList} )
+    get_filename_component( jsonKey ${kernelTemplateFile} NAME_WE )
+    generateKernels( TEMPLATE ${kernelTemplateFile}
+                     JSON kernelSpecs
+                     KEY ${jsonKey}
+                     HEADERS headerFiles
+                     SOURCES sourceFiles )
+
+    list(APPEND multiPhysicsSolvers_headers ${headerFiles})
+    list(APPEND multiPhysicsSolvers_sources ${sourceFiles})
+
+    list(LENGTH sourceFiles NUM_KERNELS)
+    math(EXPR TOTAL_GENERATED_KERNELS "${TOTAL_GENERATED_KERNELS} + ${NUM_KERNELS}")
+  endforeach()
+endif()
+
+if (GEOS_ENABLE_MULTIPHYSICS_THERMOPOROMECHANICS)
+  file( READ "${CMAKE_CURRENT_LIST_DIR}/ThermoPoromechanics_KernelSpecs.json" kernelSpecs )
+  set( kernelTemplateFileList poromechanicsKernels/ThermoPoromechanicsKernels.cpp.template )
+
+  foreach( kernelTemplateFile ${kernelTemplateFileList} )
+    get_filename_component( jsonKey ${kernelTemplateFile} NAME_WE )
+    generateKernels( TEMPLATE ${kernelTemplateFile}
+                     JSON kernelSpecs
+                     KEY ${jsonKey}
+                     HEADERS headerFiles
+                     SOURCES sourceFiles )
+
+    list(APPEND multiPhysicsSolvers_headers ${headerFiles})
+    list(APPEND multiPhysicsSolvers_sources ${sourceFiles})
+
+    list(LENGTH sourceFiles NUM_KERNELS)
+    math(EXPR TOTAL_GENERATED_KERNELS "${TOTAL_GENERATED_KERNELS} + ${NUM_KERNELS}")
+  endforeach()
+endif()
+
+set(TOTAL_GENERATED_KERNELS ${TOTAL_GENERATED_KERNELS} CACHE INTERNAL "Total number of generated kernels")
 
 blt_add_library( NAME       multiPhysicsSolvers
                  SOURCES    ${multiPhysicsSolvers_sources}
