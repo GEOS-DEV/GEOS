@@ -24,16 +24,9 @@ set( multiPhysicsSolvers_headers
     CoupledSolver.hpp
     PoromechanicsSolver.hpp
     FlowProppantTransportSolver.hpp
-    HydrofractureSolver.hpp
-    HydrofractureSolverKernels.hpp
-    MultiphasePoromechanics.hpp
     OneWayCoupledFractureFlowContactMechanics.hpp
-    MultiphasePoromechanicsConformingFractures.hpp
     PhaseFieldFractureSolver.hpp
-    PhaseFieldPoromechanicsSolver.hpp
-    PoromechanicsInitialization.hpp
     PoromechanicsFields.hpp
-    PoromechanicsInitialization.hpp
     poromechanicsKernels/MultiphasePoromechanics.hpp
     poromechanicsKernels/MultiphasePoromechanics_impl.hpp
     poromechanicsKernels/MultiphasePoromechanicsConformingFractures.hpp
@@ -55,9 +48,6 @@ set( multiPhysicsSolvers_headers
     poromechanicsKernels/ThermalSinglePhasePoromechanicsEFEM_impl.hpp
     poromechanicsKernels/ThermalSinglePhasePoromechanicsConformingFractures.hpp
     poromechanicsKernels/ThermalSinglePhasePoromechanicsEmbeddedFractures.hpp
-    SinglePhasePoromechanics.hpp
-    SinglePhasePoromechanicsEmbeddedFractures.hpp
-    SinglePhasePoromechanicsConformingFractures.hpp
     SinglePhaseReservoirAndWells.hpp )
 
 # Specify solver sources
@@ -65,16 +55,8 @@ set( multiPhysicsSolvers_sources
     CompositionalMultiphaseReservoirAndWells.cpp
     CoupledReservoirAndWellsBase.cpp
     FlowProppantTransportSolver.cpp
-    HydrofractureSolver.cpp
-    MultiphasePoromechanics.cpp
     OneWayCoupledFractureFlowContactMechanics.cpp
-    MultiphasePoromechanicsConformingFractures.cpp
     PhaseFieldFractureSolver.cpp
-    PhaseFieldPoromechanicsSolver.cpp
-    PoromechanicsInitialization.cpp
-    SinglePhasePoromechanics.cpp
-    SinglePhasePoromechanicsEmbeddedFractures.cpp
-    SinglePhasePoromechanicsConformingFractures.cpp
     SinglePhaseReservoirAndWells.cpp )
 
 #include(poromechanicsKernels/PoromechanicsKernels.cmake)
@@ -84,6 +66,24 @@ set( dependencyList ${parallelDeps} fluidFlowSolvers simplePDESolvers solidMecha
 geos_decorate_link_dependencies( LIST decoratedDependencies DEPENDENCIES ${dependencyList} )
 
 if (GEOS_ENABLE_MULTIPHYSICS_POROMECHANICS)
+  list( APPEND multiPhysicsSolvers_headers
+        PoromechanicsInitialization.hpp
+        SinglePhasePoromechanics.hpp
+        SinglePhasePoromechanicsConformingFractures.hpp
+        MultiphasePoromechanics.hpp
+        MultiphasePoromechanicsConformingFractures.hpp
+        PhaseFieldPoromechanicsSolver.hpp
+        HydrofractureSolver.hpp
+        HydrofractureSolverKernels.hpp )
+  list( APPEND multiPhysicsSolvers_sources
+        PoromechanicsInitialization.cpp
+        SinglePhasePoromechanics.cpp
+        SinglePhasePoromechanicsConformingFractures.cpp
+        MultiphasePoromechanics.cpp
+        MultiphasePoromechanicsConformingFractures.cpp
+        PhaseFieldPoromechanicsSolver.cpp
+        HydrofractureSolver.cpp )
+
   file( READ "${CMAKE_CURRENT_LIST_DIR}/Poromechanics_KernelSpecs.json" kernelSpecs )
   set( kernelTemplateFileList poromechanicsKernels/PoromechanicsKernels.cpp.template )
 
@@ -104,6 +104,11 @@ if (GEOS_ENABLE_MULTIPHYSICS_POROMECHANICS)
 endif()
 
 if (GEOS_ENABLE_MULTIPHYSICS_POROMECHANICS_EFEM)
+  list( APPEND multiPhysicsSolvers_headers
+        SinglePhasePoromechanicsEmbeddedFractures.hpp )
+  list( APPEND multiPhysicsSolvers_sources
+        SinglePhasePoromechanicsEmbeddedFractures.cpp )
+
   file( READ "${CMAKE_CURRENT_LIST_DIR}/PoromechanicsEFEM_KernelSpecs.json" kernelSpecs )
   set( kernelTemplateFileList poromechanicsKernels/PoromechanicsEFEMKernels.cpp.template )
 
