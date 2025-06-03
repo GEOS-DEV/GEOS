@@ -890,6 +890,21 @@ public:
                     StackVariables & stack,
                     FUNC && kernelOp = NoOpFunc{} ) const
   {
+    
+    bool hasConnectorInterfaceConditionQ = false;
+    bool anyInterfaceConditionsQ = not m_interfaceConstitutivePairs.empty();
+    if (anyInterfaceConditionsQ) {
+        hasConnectorInterfaceConditionQ =
+            m_interfaceRegionByConnector.find(iconn) != m_interfaceRegionByConnector.end();
+    }
+
+    
+    if (hasConnectorInterfaceConditionQ){
+      // Improved transmission conditions
+    }else{
+      // Regular contribution
+    }
+    
     // first, compute the transmissibilities at this face                                             // get k and dk/dP from global arrays
     // and place in stack
     m_stencilWrapper.computeWeights( iconn,
