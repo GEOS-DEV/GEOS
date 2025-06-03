@@ -65,6 +65,7 @@ void ElementsReporterOutput::outputTooLowValues( string_view linesPrefix,
   {
     if( m_ranksSignaledElementsCount > 0 )
     {
+
       string const minValueStr = GEOS_FMT( "{:.{}f} [{}]", minValue, 3, units::getSymbol( unit ) );
       GEOS_LOG_RANK_0( GEOS_FMT( "{}{} {} values encountered. Minimum value: {}.",
                                  linesPrefix, m_ranksSignaledElementsCount, valueNaming, minValueStr ) );
@@ -80,12 +81,12 @@ void ElementsReporterOutput::outputTooLowValues( string_view linesPrefix,
         TableData data;
         integer const signaledCount = m_buffer.getSignaledElementsCount();
         integer const collectedCount = m_buffer.getCollectedElementsCount();
+        integer const omittedCount = signaledCount - collectedCount;
+        integer const tableColumnsCount = MpiWrapper::max( 1 + collectedCount + integer( omittedCount > 0 ) );
 
         if( signaledCount > 0 )
         {
-          integer const omittedCount = signaledCount - collectedCount;
           // adding a columns for row name, each collected value, and one last if a "..." have to be added
-          integer const columnsCount = MpiWrapper::max( 1 + collectedCount + integer( omittedCount > 0 ) );
           auto & cells = data.getCellsData();
           string const title = GEOS_FMT( "Rank {}, {} / {} {} values:",
                                          MpiWrapper::commRank(),
@@ -96,17 +97,17 @@ void ElementsReporterOutput::outputTooLowValues( string_view linesPrefix,
           static constexpr integer globalIdLine = 2;
           static constexpr integer valueLine = 3;
 
-          data.addRow( stdVector< TableData::CellData >( columnsCount, { CellType::MergeNext, "" } ) );
+          data.addRow( stdVector< TableData::CellData >( tableColumnsCount, { CellType::MergeNext, "" } ) );
           cells[titleLine].back() = { CellType::Header, title };
 
-          data.addRow( stdVector< TableData::CellData >( columnsCount, { CellType::MergeNext, "" } ) );
+          data.addRow( stdVector< TableData::CellData >( tableColumnsCount, { CellType::MergeNext, "" } ) );
 
-          data.addRow( stdVector< TableData::CellData >( columnsCount, { CellType::MergeNext, "" } ) );
+          data.addRow( stdVector< TableData::CellData >( tableColumnsCount, { CellType::MergeNext, "" } ) );
           cells[globalIdLine].front() = { CellType::Value, "Global Id" };
           for( int i = 0; i < collectedCount; ++i )
             cells[globalIdLine][i+1] = { CellType::Value, std::to_string( m_buffer[i].m_id ) };
 
-          data.addRow( stdVector< TableData::CellData >( columnsCount, { CellType::MergeNext, "" } ) );
+          data.addRow( stdVector< TableData::CellData >( tableColumnsCount, { CellType::MergeNext, "" } ) );
           cells[valueLine].front() = { CellType::Value, string( units::getDescription( unit ) ) };
           for( int i = 0; i < collectedCount; ++i )
             cells[valueLine][i+1] = { CellType::Value, std::to_string( m_buffer[i].m_value ) };
@@ -118,9 +119,9 @@ void ElementsReporterOutput::outputTooLowValues( string_view linesPrefix,
           }
         }
 
-        auto const outputStrat = TableTextMpiOutput::ParallelOutputMode::InsecableRanks;
-        TableTextMpiOutput const formatter = TableTextMpiOutput( layout, outputStrat );
+        TableTextMpiOutput const formatter = TableTextMpiOutput( layout, TableMpiLayout{ true } );
         formatter.toStream( std::cout, data );
+        GEOS_LOG_RANK_0( '\n' );
       }
       else
       {

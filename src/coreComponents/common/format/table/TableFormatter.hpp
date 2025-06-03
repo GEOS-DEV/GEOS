@@ -199,16 +199,13 @@ protected:
 
   /**
    * @brief Outputs the formatted table to the provided output stream.
-   * @param tableLayout The layout of the table
    * @param tableOutput A reference to an `std::ostream` where the formatted table will be written.
-   * @param headerCellsLayout The layout of the header rows
+   * @param tableLayout The layout of the table
    * @param dataCellsLayout The layout of the data rows
-   * @param separatorLine A string that will be used as the table separator line
    */
   void outputTableData( std::ostream & tableOutput,
                         PreparedTableLayout const & tableLayout,
-                        CellLayoutRows const & dataCellsLayout,
-                        bool flushAfterEachLines ) const;
+                        CellLayoutRows const & dataCellsLayout ) const;
 
   /**
    * @brief Outputs the formatted table to the provided output stream.
@@ -321,12 +318,10 @@ private:
    * @param tableLayout The layout of the table
    * @param cellsLayout A collection of rows, each containing a layout of cells to be processed and formatted.
    * @param tableOutput The output stream
-   * @param flushOnEachLines flush the output stream each time a line is finished
    */
   void outputLines( PreparedTableLayout const & tableLayout,
                     CellLayoutRows const & cellsLayout,
-                    std::ostream & tableOutput,
-                    bool flushOnEachLines ) const;
+                    std::ostream & tableOutput ) const;
 };
 
 /**
