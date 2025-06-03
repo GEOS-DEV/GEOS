@@ -43,26 +43,93 @@ template< typename T,
 class StdVectorWrapper : public std::vector< T, Allocator >
 {
 public:
+  typedef typename std::_Vector_base< T, Allocator >::_Tp_alloc_type _Tp_alloc_type;
+  typedef __gnu_cxx::__alloc_traits< _Tp_alloc_type > _Alloc_traits;
   /// Type alias for the base class (i.e., std::vector)
   using Base = std::vector< T, Allocator >;
   // Inherit constructors
-  using Base::Base;
+  StdVectorWrapper(): std::vector< T, Allocator >()
+  {}
 
-  /**
-   * @brief Conversion constructor for StdVectorWrapper.
-   * @tparam T Type of elements in the vector.
-   * @tparam Allocator Allocator type for the vector.
-   * @param vector std::vector of elements to copy into the StdVectorWrapper.
-   */
-  StdVectorWrapper( std::vector< T, Allocator > const & vec ): Base( std::move( vec ) ){}
+  StdVectorWrapper( const Allocator & __a ): std::vector< T, Allocator >( __a )
+  {}
 
-  /**
-   * @brief Conversion constructor for StdVectorWrapper.
-   * @tparam T Type of elements in the vector.
-   * @tparam Allocator Allocator type for the vector.
-   * @param vector std::vector of elements to copy into the StdVectorWrapper.
-   */
-  StdVectorWrapper( std::vector< T, Allocator > && vec ): Base( vec ){}
+  StdVectorWrapper( size_t __n, const Allocator & __a = Allocator()): std::vector< T, Allocator >( __n, __a )
+  {}
+
+  StdVectorWrapper( size_t __n, const T & __value,
+                    const Allocator & __a = Allocator())
+    : std::vector< T, Allocator >( __n, __a )
+  {}
+
+  // StdVectorWrapper
+  StdVectorWrapper( const StdVectorWrapper & __x )
+    : std::vector< T, Allocator >( __x.size(),
+                                   _Alloc_traits::_S_select_on_copy( __x._M_get_Tp_allocator()))
+  {}
+
+  StdVectorWrapper( const StdVectorWrapper & __x, const Allocator & __a )
+    : std::vector< T, Allocator >( __x.size(), __a )
+  {}
+
+  // INITALIZER
+  StdVectorWrapper( std::initializer_list< T > __l, const Allocator & __a =  Allocator())
+    : std::vector< T, Allocator >( __a )
+  {}
+
+  // MOVE
+  StdVectorWrapper( StdVectorWrapper && __x )
+    : std::vector< T, Allocator >( std::move( __x ))
+  {}
+
+  StdVectorWrapper( const StdVectorWrapper && __rv, const Allocator & __m )
+    : std::vector< T, Allocator >( std::move( __rv ), __m )
+  {}
+
+  //Iterator
+  template< typename _InputIterator >
+  StdVectorWrapper( _InputIterator __first, _InputIterator __last,
+                    const Allocator & __a = Allocator())
+    : std::vector< T, Allocator >( __a )
+  {}
+
+  // operator
+  StdVectorWrapper & operator=( const StdVectorWrapper & __x )
+  {
+    if( this != &__x )
+    {
+       std::vector< T, Allocator >::operator=( __x ); // Use base class assignment
+    }
+    return *this;
+  }
+
+  StdVectorWrapper & operator=( StdVectorWrapper && __x ) noexcept
+  {
+    if( this != &__x )
+    {
+       std::vector< T, Allocator >::operator=( std::move(__x));  // Move assignment
+    }
+    return *this;
+  }
+
+  StdVectorWrapper & operator=( std::initializer_list< T > __l )
+  {
+     std::vector< T, Allocator >::operator=( __l ); // Use base class assignment
+    return *this;
+  }
+
+  // Copy constructor
+  StdVectorWrapper( const std::vector< T, Allocator > & vec )
+    : std::vector< T, Allocator >( vec ) {}
+
+  // Move constructor
+  StdVectorWrapper( std::vector< T, Allocator > && vec )
+    : std::vector< T, Allocator >( std::move( vec )) {}
+
+  // Conversion constructor
+  template< typename U, typename A >
+  StdVectorWrapper( std::vector< U, Allocator > & vec )
+    : std::vector< T, Allocator >( vec.begin(), vec.end()) {}
 
 
   /**
