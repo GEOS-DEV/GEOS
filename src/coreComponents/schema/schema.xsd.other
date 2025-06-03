@@ -2016,6 +2016,12 @@
 		<xsd:attribute name="dPhaseViscosity" type="real64_array4d" />
 		<!--dTotalDensity => Derivative of total density with respect to pressure, temperature, and global component fractions-->
 		<xsd:attribute name="dTotalDensity" type="real64_array3d" />
+		<!--kValueHyperCube => (no description available)-->
+		<xsd:attribute name="kValueHyperCube" type="real64_array4d" />
+		<!--kValuePressureCoordinates => (no description available)-->
+		<xsd:attribute name="kValuePressureCoordinates" type="LvArray_Array_lt_LvArray_Array_lt_double_cm_-1_cm_-camp_int_seq_lt_long_cm_-0l_gt__cm_-int_cm_-LvArray_ChaiBuffer_gt__cm_-1_cm_-camp_int_seq_lt_long_cm_-0l_gt__cm_-int_cm_-LvArray_ChaiBuffer_gt_" />
+		<!--kValueTemperatureCoordinates => (no description available)-->
+		<xsd:attribute name="kValueTemperatureCoordinates" type="LvArray_Array_lt_LvArray_Array_lt_double_cm_-1_cm_-camp_int_seq_lt_long_cm_-0l_gt__cm_-int_cm_-LvArray_ChaiBuffer_gt__cm_-1_cm_-camp_int_seq_lt_long_cm_-0l_gt__cm_-int_cm_-LvArray_ChaiBuffer_gt_" />
 		<!--kValues => Phase equilibrium ratios-->
 		<xsd:attribute name="kValues" type="real64_array4d" />
 		<!--phaseCompFraction => Phase component fraction-->
@@ -2068,6 +2074,12 @@
 		<xsd:attribute name="dPhaseViscosity" type="real64_array4d" />
 		<!--dTotalDensity => Derivative of total density with respect to pressure, temperature, and global component fractions-->
 		<xsd:attribute name="dTotalDensity" type="real64_array3d" />
+		<!--kValueHyperCube => (no description available)-->
+		<xsd:attribute name="kValueHyperCube" type="real64_array4d" />
+		<!--kValuePressureCoordinates => (no description available)-->
+		<xsd:attribute name="kValuePressureCoordinates" type="LvArray_Array_lt_LvArray_Array_lt_double_cm_-1_cm_-camp_int_seq_lt_long_cm_-0l_gt__cm_-int_cm_-LvArray_ChaiBuffer_gt__cm_-1_cm_-camp_int_seq_lt_long_cm_-0l_gt__cm_-int_cm_-LvArray_ChaiBuffer_gt_" />
+		<!--kValueTemperatureCoordinates => (no description available)-->
+		<xsd:attribute name="kValueTemperatureCoordinates" type="LvArray_Array_lt_LvArray_Array_lt_double_cm_-1_cm_-camp_int_seq_lt_long_cm_-0l_gt__cm_-int_cm_-LvArray_ChaiBuffer_gt__cm_-1_cm_-camp_int_seq_lt_long_cm_-0l_gt__cm_-int_cm_-LvArray_ChaiBuffer_gt_" />
 		<!--kValues => Phase equilibrium ratios-->
 		<xsd:attribute name="kValues" type="real64_array4d" />
 		<!--phaseCompFraction => Phase component fraction-->

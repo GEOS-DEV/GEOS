@@ -106,9 +106,10 @@ public:
     else
     {
       real64 const waterKValue = computeWaterGasKvalue( pressure, temperature );
+      real64 const otherKValue = LvArray::math::max( 1.0 / waterKValue, 100.0 );
       for( integer ic = 0; ic < numComps; ++ic )
       {
-        kValues[ic] = 1.0 / waterKValue;
+        kValues[ic] = otherKValue;
       }
       kValues[waterIndex] = waterKValue;
     }

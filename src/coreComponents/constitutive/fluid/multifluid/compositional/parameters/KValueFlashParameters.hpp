@@ -56,6 +56,9 @@ public:
   struct viewKeyStruct : public PressureTemperatureCoordinates::viewKeyStruct
   {
     static constexpr char const * kValueTablesString() { return "kValueTables"; }
+    static constexpr char const * kValuePressureCoordinatesString() { return "kValuePressureCoordinates"; }
+    static constexpr char const * kValueTemperatureCoordinatesString() { return "kValueTemperatureCoordinates"; }
+    static constexpr char const * kValueHyperCubeString() { return "kValueHyperCube"; }
   };
 
 protected:

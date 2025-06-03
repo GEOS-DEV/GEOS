@@ -62,6 +62,17 @@ void KValueFlashParameters< NUM_PHASE >::registerParametersImpl( MultiFluidBase 
   fluid->registerWrapper( viewKeyStruct::kValueTablesString(), &m_kValueTables ).
     setInputFlag( dataRepository::InputFlags::REQUIRED ).
     setDescription( "List of k-value tables for each phase." );
+
+  // Register extra wrappers to enable auto-cloning
+  fluid->registerWrapper( viewKeyStruct::kValuePressureCoordinatesString(), &m_pressureValues )
+    .setSizedFromParent( 0 )
+    .setRestartFlags( dataRepository::RestartFlags::NO_WRITE );
+  fluid->registerWrapper( viewKeyStruct::kValueTemperatureCoordinatesString(), &m_temperatureValues )
+    .setSizedFromParent( 0 )
+    .setRestartFlags( dataRepository::RestartFlags::NO_WRITE );
+  fluid->registerWrapper( viewKeyStruct::kValueHyperCubeString(), &m_kValueHyperCube )
+    .setSizedFromParent( 0 )
+    .setRestartFlags( dataRepository::RestartFlags::NO_WRITE );
 }
 
 template< integer NUM_PHASE >
@@ -220,7 +231,7 @@ void KValueFlashParameters< NUM_PHASE >::generateHyperCube( integer const numCom
     if( numTemperaturePoints == 1 )
     {
       numTemperaturePoints = 2;
-      pressurePoints.insert( *temperaturePoints.begin() + 1.0 );
+      temperaturePoints.insert( *temperaturePoints.begin() + 1.0 );
     }
   }
 

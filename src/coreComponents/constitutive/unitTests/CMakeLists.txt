@@ -28,6 +28,7 @@ set( gtest_geosx_tests
      testPropertyConversions.cpp
      testSoreideWhitsonEOSPhaseModel.cpp
      testSoreideWhitsonFlash.cpp
+     testSoreideWhitsonFlashMultiComponent.cpp
      testStabilityTest2Comp.cpp
      testStabilityTest9Comp.cpp
      testRachfordRice.cpp
