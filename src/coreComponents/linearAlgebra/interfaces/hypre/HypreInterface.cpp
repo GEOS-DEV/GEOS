@@ -76,6 +76,7 @@ void HypreInterface::initialize()
 #endif
 
   HYPRE_SetLogLevel( getenv( "HYPRE_LOG_LEVEL" ) ? atoi( getenv( "HYPRE_LOG_LEVEL" ) ) : 0 );
+  HYPRE_SetGpuAwareMPI( getenv( "MPICH_GPU_SUPPORT_ENABLED" ) ? atoi( getenv( "MPICH_GPU_SUPPORT_ENABLED" ) ) : 0 );
 }
 
 void HypreInterface::finalize()
