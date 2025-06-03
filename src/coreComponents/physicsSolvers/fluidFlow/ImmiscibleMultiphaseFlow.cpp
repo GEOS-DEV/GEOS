@@ -553,10 +553,12 @@ void ImmiscibleMultiphaseFlow::initializePostInitialConditionsPreSubGroups()
   } );
   
   
+
+  
   // Retrieve the numerical methods and finite volume manager
-  NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
-  // Get the name of the flux approximation method used for the current discretization
-  const geos::string flux_approximation_name = fvManager.getFluxApproximation(m_discretizationName).getName();
+  FiniteVolumeManager const & fvManager = domain.getNumericalMethodManager().getFiniteVolumeManager();
+  FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( m_discretizationName );
+  const geos::string flux_approximation_name = fluxApprox.getName();
 
   // Clear the existing mapping between connector indices and interface region indices
   m_interfaceRegionByConnector.clear();
