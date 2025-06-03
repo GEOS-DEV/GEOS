@@ -891,18 +891,20 @@ public:
                     FUNC && kernelOp = NoOpFunc{} ) const
   {
     
-    bool hasConnectorInterfaceConditionQ = false;
+    bool connectorHasInterfaceConditionQ = false;
     bool anyInterfaceConditionsQ = not m_interfaceConstitutivePairs.empty();
     if (anyInterfaceConditionsQ) {
-        hasConnectorInterfaceConditionQ =
+        connectorHasInterfaceConditionQ =
             m_interfaceRegionByConnector.find(iconn) != m_interfaceRegionByConnector.end();
     }
 
     
-    if (hasConnectorInterfaceConditionQ){
+    if (connectorHasInterfaceConditionQ){
       // Improved transmission conditions
+      int ammar_code = 0;
     }else{
       // Regular contribution
+      int standard_code = 0;
     }
     
     // first, compute the transmissibilities at this face                                             // get k and dk/dP from global arrays
