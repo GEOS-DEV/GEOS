@@ -347,6 +347,9 @@ bool PhysicsSolverBase::execute( real64 const time_n,
 
   logEndOfCycleInformation( cycleNumber, numOfSubSteps, subStepDts );
 
+  if( m_writeSolverIterationsCSV )
+    getSolverStatistics().m_iterationsStats.registerStatsToTable();
+
   return false;
 }
 

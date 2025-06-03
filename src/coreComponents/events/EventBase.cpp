@@ -361,6 +361,7 @@ void EventBase::getExecutionOrder( array1d< integer > & eventCounters )
   } );
 }
 
+
 void EventBase::setProgressIndicator( array1d< integer > & eventCounters )
 {
   // Calculate the event progress indicator

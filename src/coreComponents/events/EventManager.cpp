@@ -211,7 +211,6 @@ bool EventManager::run( DomainPartition & domain )
       }
     }
 
-
     // Increment time/cycle, reset the subevent counter
     m_time += m_dt;
     ++m_cycle;
@@ -294,32 +293,6 @@ void EventManager::outputTime( LogPart & logPart ) const
   {
     GEOS_ERROR( "Unknown time output format requested." );
   }
-}
-
-void EventManager::logEndOfCycleInformation( LogPart & logpart,
-                                             integer const cycleNumber,
-                                             integer const numOfSubSteps,
-                                             std::vector< real64 > const & subStepDts ) const
-{
-  logpart.addEndDescription( "- Cycle: ", cycleNumber );
-  logpart.addEndDescription( "- N substeps: ", numOfSubSteps );
-  logpart.setMinWidth( 80 );
-  logpart.setMaxWidth( 80 );
-  std::stringstream logMessage;
-  for( integer i = 0; i < numOfSubSteps; ++i )
-  {
-    if( i > 0 )
-    {
-      logMessage << ", ";
-    }
-    logMessage << subStepDts[i] << " " << units::getSymbol( units::Unit::Time );
-  }
-
-  if( logMessage.rdbuf()->in_avail() == 0 )
-    logMessage << "/";
-
-  logpart.addEndDescription( "- dt: ", logMessage.str() );
-  logpart.end();
 }
 
 } /* namespace geos */

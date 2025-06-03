@@ -170,6 +170,7 @@ private:
 class ConvergenceStatistics
 {
 public:
+
   /**
    * @brief Construct a new Convergence Statistics object
    */
