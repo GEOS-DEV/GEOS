@@ -59,7 +59,7 @@ public:
 
   StdVectorWrapper( size_t __n, const T & __value,
                     const Allocator & __a = Allocator())
-    : std::vector< T, Allocator >( __n, __a )
+    : std::vector< T, Allocator >( __n, __value, __a )
   {}
 
   // StdVectorWrapper
@@ -74,7 +74,7 @@ public:
 
   // INITALIZER
   StdVectorWrapper( std::initializer_list< T > __l, const Allocator & __a =  Allocator())
-    : std::vector< T, Allocator >( __a )
+    : std::vector< T, Allocator >( __l, __a )
   {}
 
   // MOVE
@@ -90,7 +90,7 @@ public:
   template< typename _InputIterator >
   StdVectorWrapper( _InputIterator __first, _InputIterator __last,
                     const Allocator & __a = Allocator())
-    : std::vector< T, Allocator >( __a )
+    : std::vector< T, Allocator >( __first, __last, __a )
   {}
 
   // operator
@@ -98,7 +98,7 @@ public:
   {
     if( this != &__x )
     {
-       std::vector< T, Allocator >::operator=( __x ); // Use base class assignment
+      std::vector< T, Allocator >::operator=( __x );  // Use base class assignment
     }
     return *this;
   }
@@ -107,14 +107,14 @@ public:
   {
     if( this != &__x )
     {
-       std::vector< T, Allocator >::operator=( std::move(__x));  // Move assignment
+      std::vector< T, Allocator >::operator=( std::move(__x));   // Move assignment
     }
     return *this;
   }
 
   StdVectorWrapper & operator=( std::initializer_list< T > __l )
   {
-     std::vector< T, Allocator >::operator=( __l ); // Use base class assignment
+    std::vector< T, Allocator >::operator=( __l );  // Use base class assignment
     return *this;
   }
 
