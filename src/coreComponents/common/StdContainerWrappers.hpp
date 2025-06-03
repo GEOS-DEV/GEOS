@@ -128,8 +128,8 @@ public:
 
   // Conversion constructor
   template< typename U, typename A >
-  StdVectorWrapper( std::vector< U, Allocator > & vec )
-    : std::vector< T, Allocator >( vec.begin(), vec.end()) {}
+  StdVectorWrapper( std::vector< U, A > & vec )
+    : std::vector< T, A >( vec.begin(), vec.end()) {}
 
 
   /**
