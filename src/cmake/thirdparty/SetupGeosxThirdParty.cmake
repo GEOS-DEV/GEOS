@@ -211,7 +211,7 @@ else()
 endif()
 
 ################################
-# ZLIB 
+# ZLIB
 ################################
 if(DEFINED ZLIB_DIR)
   list(PREPEND CMAKE_PREFIX_PATH "${ZLIB_DIR}")
@@ -718,6 +718,14 @@ if(DEFINED HYPRE_DIR AND ENABLE_HYPRE)
         set( hypre_VERSION "${hypre_dev_string} (${hypre_dev_branch})" CACHE STRING "" FORCE )
         message( " ----> hypre_VERSION = ${hypre_VERSION}" )
     endif()
+
+    if( ENABLE_HYPRE_GPU_AWARE_MPI )
+      if( "${header_file}" MATCHES "HYPRE_USING_GPU_AWARE_MPI 1" )
+        message( " ----> GPU-aware MPI support activated" )
+      else ()
+        message(FATAL_ERROR "GEOS configured with ENABLE_HYPRE_GPU_AWARE_MPI=ON, however hypre was not built with GPU-aware MPI support")
+      endif ()
+    endif ()
 
     # Prepend Hypre to link flags, fix for Umpire appearing before Hypre on the link line
     # if (NOT CMAKE_HOST_APPLE)
