@@ -1730,6 +1730,11 @@ void SolidMechanicsMPM::registerDataOnMesh( Group & meshBodies )
         setDescription( "An array that holds the external forces on the nodes. This includes any boundary"
                         " conditions as well as coupling forces such as hydraulic forces." );
 
+      nodeManager.registerWrapper< array3d< real64 > >( viewKeyStruct::gridSurfaceTensionForceString() ).
+        setPlotLevel( PlotLevel::LEVEL_1 ).
+        setRegisteringObjects( this->getName() ).
+        setDescription( "An array that holds the forces due to surface tension on the nodes." );
+
       nodeManager.registerWrapper< array3d< real64 > >( viewKeyStruct::gridInternalForceString() ).
         setPlotLevel( PlotLevel::LEVEL_1 ).
         setRegisteringObjects( this->getName() ).
@@ -2360,6 +2365,7 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
   nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridAccelerationString() ).resize( numNodes, m_numVelocityFields, 3 );
   nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridInternalForceString() ).resize( numNodes, m_numVelocityFields, 3 );
   nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridExternalForceString() ).resize( numNodes, m_numVelocityFields, 3 );
+  nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridSurfaceTensionForceString() ).resize( numNodes, m_numVelocityFields, 3 );
   nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridContactForceString() ).resize( numNodes, m_numVelocityFields, 3 );
   nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridSurfaceNormalWeightsString() ).resize( numNodes, m_numVelocityFields );
   nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridSurfaceNormalWeightNormalizationString() ).resize( numNodes, m_numVelocityFields );
@@ -2837,6 +2843,17 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
                              particleManager,
                              nodeManager );
       break;
+  }
+
+  //#######################################################################################
+
+
+  //#######################################################################################
+  if( m_enableSurfaceTension )
+  {
+    GEOS_LOG_LEVEL_BY_RANK( 1, "Compute surface tension on grid" );
+    solverProfiling( "Compute surface tension on grid" );
+    computeSurfaceTension( nodeManager );
   }
 
   //#######################################################################################
@@ -4426,7 +4443,7 @@ void SolidMechanicsMPM::computeNodalAreas( NodeManager & nodeManager )
   real64 const L = LvArray::tensorOps::l2Norm< 3 >( hEl );
   real64 const dA = pow( 2 * L / numSurfaceIntegrationPoints, 2 );
 
- for( localIndex g = 0; g < nodeManager.size(); ++g)
+ for( localIndex g = 0; g < nodeManager.size(); ++g )
   {
     for( localIndex fieldIndex = 0; fieldIndex < numVelocityFields; ++fieldIndex )
     {
@@ -7346,6 +7363,7 @@ void SolidMechanicsMPM::initializeGridFields( NodeManager & nodeManager )
   arrayView2d< real64 > const gridDamageGradient = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridDamageGradientString() );
   arrayView3d< real64 > const gridInternalForce = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridInternalForceString() );
   arrayView3d< real64 > const gridExternalForce = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridExternalForceString() );
+  arrayView3d< real64 > const gridSurfaceTensionForce = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridSurfaceTensionForceString() );
   arrayView3d< real64 > const gridContactForce = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridContactForceString() );
 
   arrayView3d< real64 > const gridSurfaceNormal = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridSurfaceNormalString() );
@@ -7416,6 +7434,7 @@ void SolidMechanicsMPM::initializeGridFields( NodeManager & nodeManager )
         gridAcceleration[g][fieldIndex][i] = 0.0;
         gridInternalForce[g][fieldIndex][i] = 0.0;
         gridExternalForce[g][fieldIndex][i] = 0.0;
+        gridSurfaceTensionForce[g][fieldIndex][i] = 0.0;
         gridContactForce[g][fieldIndex][i] = 0.0;
         gridNormalStress[g][fieldIndex][i] = 0.0;
         gridCohesiveArea[g][fieldIndex][i] = 0.0;
@@ -10297,13 +10316,41 @@ void SolidMechanicsMPM::particleToGrid_colors( real64 const time_n,
   } ); // subregion loop
 }
 
+void SolidMechanicsMPM::computeSurfaceTension( NodeManager & nodeManager )
+{
+  GEOS_MARK_FUNCTION;
+  int const numDims = m_numDims;
+  real64 const smallMass = m_smallMass;
+  localIndex numVelocityFields = m_numVelocityFields;
+
+  real64 const cellVolume = m_hEl[0] * m_hE[1] * m_hE[2];
+
+  arrayView3d< real64 const > const & gridSurfaceNormal = nodeManger.getReference< array3d< real64 > >( viewKeyStruct::gridSurfaceNormalString() );
+  arrayView3d< real64 > const & gridSurfaceTensionForce = nodeManger.getReference< array3d< real64 > >( viewKeyStruct::gridSurfaceTensionForceString() );
+
+  localIndex const numNodes = nodeManager.size();
+  // forAll< parallelDevicePolicy<> >( numNodes, [=] GEOS_HOST_DEVICE ( localIndex const g )
+  forAll< serialPolicy >( numNodes, [=] GEOS_HOST_DEVICE ( localIndex const g )
+  {
+    for( localIndex fieldIndex=0; fieldIndex< numVelocityFields; ++fieldIndex )
+    {
+      if( gridMass[g][fieldIndex] > smallMass ) // small mass threshold
+      {
+        
+      }
+    }
+  } );
+}
+
 void SolidMechanicsMPM::gridTrialUpdate( real64 dt,
                                          NodeManager & nodeManager )
 {
   GEOS_MARK_FUNCTION;
+  int const numDims = m_numDims;
+  real64 const smallMass = m_smallMass;
+  localIndex numVelocityFields = m_numVelocityFields;
 
   // Grid fields
-  // arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const gridPosition = nodeManager.referencePosition();
   arrayView2d< real64 const > const & gridMass = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridMassString() );
   arrayView3d< real64 > const & gridVelocity = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridVelocityString() );
   arrayView3d< real64 > const & gridDVelocity = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridDVelocityString() );
@@ -10317,18 +10364,14 @@ void SolidMechanicsMPM::gridTrialUpdate( real64 dt,
   arrayView2d< real64 const > const gridMaterialVolume = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridMaterialVolumeString() );
   arrayView3d< real64 > const & gridCenterOfVolume = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridCenterOfVolumeString() );
 
-  // In certain situations it seems that using a parallelDeviecPolicy causes erroneous grid updates
-  // Cause...unknown
-
-  // Loop over velocity fields
   localIndex const numNodes = nodeManager.size();
-  real64 const smallMass = m_smallMass;
-  int const numDims = m_numDims;
-  for( localIndex fieldIndex=0; fieldIndex<m_numVelocityFields; ++fieldIndex )
+  
+  // RAJA::MultiReduceSum< RAJA::seq_multi_reduce, real64 > internalForce(3, 0.0);
+  // forAll< parallelDevicePolicy<> >( numNodes, [=] GEOS_HOST_DEVICE ( localIndex const g )
+  forAll< serialPolicy >( numNodes, [=] GEOS_HOST_DEVICE ( localIndex const g )
   {
-    // RAJA::MultiReduceSum< RAJA::seq_multi_reduce, real64 > internalForce(3, 0.0);
-    // forAll< parallelDevicePolicy<> >( numNodes, [=] GEOS_HOST_DEVICE ( localIndex const g )
-    forAll< serialPolicy >( numNodes, [=] GEOS_HOST_DEVICE ( localIndex const g )
+    // Loop over velocity fields
+    for( localIndex fieldIndex=0; fieldIndex< numVelocityFields; ++fieldIndex )
     {
       if( gridMass[g][fieldIndex] > smallMass ) // small mass threshold
       {
@@ -10354,16 +10397,16 @@ void SolidMechanicsMPM::gridTrialUpdate( real64 dt,
           gridVelocity[g][fieldIndex][i] = 0.0;
           gridMomentum[g][fieldIndex][i] = 0.0;
           gridCenterOfVolume[g][fieldIndex][i] = 0.0;
-          gridCenterOfMass[g][fieldIndex][i] = 0.0; // * gridPosition[g][i]; // TODO: zero? since it's supposed to be relative position?
+          gridCenterOfMass[g][fieldIndex][i] = 0.0;
         }
       }
       // for(int i =0; i < numDims; ++i)
       // {
       //   internalForce[i] += gridInternalForce[g][fieldIndex][i];
       // }
-    } );
-    // GEOS_LOG_RANK_0("Field: " << fieldIndex << ", force: {"<< internalForce[0].get() << ", " << internalForce[1].get() << ", " << internalForce[2].get() << "}");
-  }
+    }
+  } );
+  // GEOS_LOG_RANK_0("Field: " << fieldIndex << ", force: {"<< internalForce[0].get() << ", " << internalForce[1].get() << ", " << internalForce[2].get() << "}");
 }
 
 void SolidMechanicsMPM::enforceContact( real64 dt,

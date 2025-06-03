@@ -287,6 +287,7 @@ xmlResult xmlDocument::loadString( string_view content, bool loadNodeFileInfo )
 
   return result;
 }
+
 xmlResult xmlDocument::loadFile( string const & path, bool loadNodeFileInfo )
 {
   xmlResult result = pugiDocument.load_file( path.c_str(), pugi::parse_default, pugi::encoding_auto );
@@ -307,6 +308,9 @@ xmlResult xmlDocument::loadFile( string const & path, bool loadNodeFileInfo )
 
   return result;
 }
+
+void xmlDocument::reset()
+{ return pugiDocument.reset() ; }
 
 xmlNode xmlDocument::appendChild( string const & name )
 { return pugiDocument.append_child( name.c_str() ); }

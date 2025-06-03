@@ -219,11 +219,17 @@ public:
   xmlResult loadFile( string const & path, bool loadNodeFileInfo = false );
 
   /**
+   * @brief Reset document
+   */
+  void reset( );
+
+  /**
    * @brief Add a root element to the document
    * @param name the tag name of the node to add
    * @return the added node
    */
   xmlNode appendChild( string const & name );
+
   /**
    * @brief Add a root element to the document
    * @param type the type of the node to add to the root of the document.
