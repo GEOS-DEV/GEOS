@@ -212,8 +212,6 @@ void ImmiscibleMultiphaseFlow::initializePreSubGroups()
     } );
   } );
 
-
-
   // ***** Create FaceElements *****
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel & meshLevel,
@@ -222,11 +220,9 @@ void ImmiscibleMultiphaseFlow::initializePreSubGroups()
 
     FaceManager const & faceManager = meshLevel.getFaceManager();
     Group const & faceSetGroup = faceManager.sets();
-
     ElementRegionManager & elemManager = meshLevel.getElemManager();
-
     m_interfaceConstitutivePairs.resize( m_interfaceFaceSetNames.size() );
-
+    
     // this is the FaceElement Level
     for( size_t surfaceRegionIndex=0; surfaceRegionIndex < m_interfaceFaceSetNames.size(); ++surfaceRegionIndex )
     {
@@ -257,11 +253,11 @@ void ImmiscibleMultiphaseFlow::initializePreSubGroups()
         CellElementSubRegion * subRegion1 = &region1.getSubRegion< CellElementSubRegion >( subRegionIdx1 );
         return std::make_tuple( subRegion0, subRegion1 );
       };
-
+      
       std::tuple< CellElementSubRegion *, CellElementSubRegion * > subRegionPair = getSubregions( surfaceRegionIndex );
       CellElementSubRegion * subRegion0 = std::get< 0 >( subRegionPair );
       CellElementSubRegion * subRegion1 = std::get< 1 >( subRegionPair );
-
+      
       // get constitutives by type and name: relPerms, capPressures, Fluids (three pointers)
       std::string & relPermName0 = subRegion0->getReference< std::string >( viewKeyStruct::relPermNamesString());
       std::string & relPermName1 = subRegion1->getReference< std::string >( viewKeyStruct::relPermNamesString());
@@ -281,7 +277,7 @@ void ImmiscibleMultiphaseFlow::initializePreSubGroups()
       
       m_interfaceConstitutivePairs[surfaceRegionIndex][0] = std::make_tuple( relPerm0, capPressure0, fluid0 );
       m_interfaceConstitutivePairs[surfaceRegionIndex][1] = std::make_tuple( relPerm1, capPressure1, fluid1 );
-
+      
     }
   } );
 
@@ -555,6 +551,55 @@ void ImmiscibleMultiphaseFlow::initializePostInitialConditionsPreSubGroups()
 
     CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync, mesh, domain.getNeighbors(), false );
   } );
+  
+  
+    NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
+    // Helper Function
+    auto findByKey =
+              [](const unordered_map<localIndex, localIndex>& map, localIndex key) -> std::optional<localIndex> {
+              auto it = map.find(key);
+                  if (it != map.end()) {
+                      return it->second;
+                  }
+                  return std::nullopt; // Value not found
+          };
+  
+    m_interfaceRegionByConnector.clear();
+    // Associated interface Region indices to Connector indices
+    forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                                                 MeshLevel & meshLevel,
+                                                                 string_array const & regionNames )
+    {
+
+      FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
+      FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( m_discretizationName );
+      const geos::string flux_approximation_name = fluxApprox.getName();
+      
+      FaceManager const & faceManager = meshLevel.getFaceManager();
+      Group const & faceSetGroup = faceManager.sets();
+      ElementRegionManager & elemManager = meshLevel.getElemManager();
+     
+      // this is the FaceElement Level
+      for( size_t surfaceRegionIndex=0; surfaceRegionIndex < m_interfaceFaceSetNames.size(); ++surfaceRegionIndex )
+      {
+        string const & faceSetName = m_interfaceFaceSetNames[surfaceRegionIndex];
+        SortedArrayView< localIndex const > const & faceSet = faceSetGroup.getReference< SortedArray< localIndex > >( faceSetName );
+        Group & stencilGroup = meshLevel.getGroup( FluxApproximationBase::groupKeyStruct::stencilMeshGroupString() ).getGroup( flux_approximation_name );
+        CellElementStencilTPFA & stencil = stencilGroup.getReference< CellElementStencilTPFA >( FluxApproximationBase::viewKeyStruct::cellStencilString() );
+        unordered_map< localIndex, localIndex > const & connectorIndices = stencil.getConnectorIndices();
+        
+        for( localIndex const kf : faceSet )
+        {
+          // Check if face lies on an interface (different region or subregion)
+          std::optional<localIndex> connectorIdx = findByKey(connectorIndices, kf);
+          bool isMemberQ = connectorIdx.has_value();
+          if (isMemberQ){
+            m_interfaceRegionByConnector[connectorIdx.value()] = surfaceRegionIndex;
+          }
+        }
+        
+      }
+    } );
 
   initializeState( domain );
 }
@@ -716,6 +761,7 @@ void ImmiscibleMultiphaseFlow::assembleFluxTerms( real64 const dt,
                                                                                  relPermWrapper,
                                                                                  m_interfaceFaceSetNames,
                                                                                  m_interfaceConstitutivePairs,
+                                                                                 m_interfaceRegionByConnector,
                                                                                  subRegion,
                                                                                  dt,
                                                                                  localMatrix.toViewConstSizes(),

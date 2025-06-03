@@ -853,6 +853,7 @@ public:
                                        stdVector< std::array< std::tuple< constitutive::ConstitutiveBase *,
                                                          constitutive::ConstitutiveBase *,
                                                          constitutive::ConstitutiveBase * >, 2 > > const & interfaceConstitutivePairs,
+                                       unordered_map< localIndex, localIndex > const & interfaceRegionByConnector,
                                        localIndex const GEOS_UNUSED_PARAM( domainSize ) )
     : Base( numPhases,
             rankOffset,
@@ -871,7 +872,8 @@ public:
     m_capPressureWrapper( capPressureWrapper ),
     m_relPermWrapper( relPermWrapper ),
     m_interfaceFaceSetNames( interfaceFaceSetNames ), 
-    m_interfaceConstitutivePairs( interfaceConstitutivePairs )
+    m_interfaceConstitutivePairs( interfaceConstitutivePairs ),
+    m_interfaceRegionByConnector( interfaceRegionByConnector )
   {}
 
   /**
@@ -896,6 +898,7 @@ public:
                                      stack.transmissibility,
                                      stack.dTrans_dPres );
 
+    std::cout << "computeFlux:: iconn" << iconn << std::endl;
     localIndex k[2];
     localIndex connectionIndex = 0;
 
@@ -1760,6 +1763,8 @@ protected:
   stdVector< std::array< std::tuple< constitutive::ConstitutiveBase *,
                                      constitutive::ConstitutiveBase *,
                                      constitutive::ConstitutiveBase * >, 2 > >  const m_interfaceConstitutivePairs;
+  
+  unordered_map< localIndex, localIndex > const m_interfaceRegionByConnector;
 
 };
 
@@ -1849,10 +1854,11 @@ public:
                    STENCILWRAPPER const & stencilWrapper,
                    CAPPRESWRAPPER const & capPresWrapper,
                    RELPERMWRAPPER const & relPermWrapper,
-                   string_array const & m_interfaceFaceSetNames,
+                   string_array const & interfaceFaceSetNames,
                    stdVector< std::array< std::tuple< constitutive::ConstitutiveBase *,
                                      constitutive::ConstitutiveBase *,
-                                     constitutive::ConstitutiveBase * >, 2 > > const & m_interfaceConstitutivePairs,
+                                     constitutive::ConstitutiveBase * >, 2 > > const & interfaceConstitutivePairs,
+                   unordered_map< localIndex, localIndex > const & interfaceRegionByConnector,
                    ElementSubRegionBase const & subRegion,
                    real64 const & dt,
                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
@@ -1875,7 +1881,7 @@ public:
     kernelType kernel( numPhases, rankOffset, stencilWrapper, capPresWrapper, relPermWrapper, dofNumberAccessor,
                        flowAccessors, fluidAccessors, capPressureAccessors, permAccessors,
                        dt, localMatrix, localRhs, hasCapPressure, useTotalMassEquation,
-                       checkPhasePresenceInGravity, m_interfaceFaceSetNames, m_interfaceConstitutivePairs, domainSize );
+                       checkPhasePresenceInGravity, interfaceFaceSetNames, interfaceConstitutivePairs, interfaceRegionByConnector, domainSize );
     kernelType::template launch< POLICY >( stencilWrapper.size(), kernel );
   }
 };

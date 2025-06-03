@@ -237,9 +237,9 @@ public:
     static constexpr char const * maxRelativePresChangeString() { return "maxRelativePressureChange"; }
     static constexpr char const * useTotalMassEquationString() { return "useTotalMassEquation"; }
 
-    static constexpr char const * capPressureNamesString() { return "capillary_pressure"; }
-    static constexpr char const * relPermNamesString() { return "relative_permeability"; }
-    static constexpr char const * elemDofFieldString() { return "elemDofField"; }
+//    static constexpr char const * capPressureNamesString() { return "capillary_pressure"; }
+//    static constexpr char const * relPermNamesString() { return "relative_permeability"; }
+//    static constexpr char const * elemDofFieldString() { return "elemDofField"; }
   };
 
 
@@ -314,6 +314,8 @@ private:
   stdVector< std::array< std::tuple< constitutive::ConstitutiveBase *,
                                      constitutive::ConstitutiveBase *,
                                      constitutive::ConstitutiveBase * >, 2 > >  m_interfaceConstitutivePairs;
+  
+  unordered_map< localIndex, localIndex >  m_interfaceRegionByConnector;
 
 
 private:
