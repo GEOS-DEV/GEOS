@@ -621,7 +621,7 @@ public:
    * @note This is needed solely for the Earthquake simulations in which we want to compute changes w.r.t. to a zero configuration
    */
   virtual void
-  setAllVariablesToZero( DomainPartition & domain ) { GEOS_UNUSED_VAR( domain );}
+  setAllVariablesToZero( DomainPartition & domain ) const { GEOS_UNUSED_VAR( domain );}
 
   /**
    * @brief perform cleanup for implicit timestep

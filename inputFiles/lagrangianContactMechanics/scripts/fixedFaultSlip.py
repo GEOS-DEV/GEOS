@@ -338,8 +338,8 @@ def generate_tables_1d(inputFileDirectory):
     ax.yaxis.set_tick_params(labelsize=fsize)
     plt.savefig("gaussianSlip.png")
 
-    output_tables(x, singularCrackSlip, "singularCrackSlip")
-    output_tables(x, gaussianSlip, "gaussianSlip")
+    output_tables_1d(x, singularCrackSlip, "singularCrackSlip")
+    output_tables_1d(x, gaussianSlip, "gaussianSlip")
 
 def generate_tables_2d(inputFileDirectory):
     #-------- Extract info from XML
@@ -450,7 +450,7 @@ if __name__ == "__main__":
     elif args.action == 'plotTractions':
         print("Plotting tractions...")
         if args.dimension == '1d':
-            plot_traction_solution(os.path.normpath(args.input_files_path), os.path.normpath(args.output_dir))
+            plot_traction_solution_1d(os.path.normpath(args.input_files_path), os.path.normpath(args.output_dir))
         elif args.dimension == '2d':
             plot_traction_solution_2d( os.path.normpath(args.input_files_path), os.path.normpath(args.output_dir) )
         else:
