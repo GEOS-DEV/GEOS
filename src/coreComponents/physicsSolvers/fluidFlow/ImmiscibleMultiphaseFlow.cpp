@@ -553,53 +553,45 @@ void ImmiscibleMultiphaseFlow::initializePostInitialConditionsPreSubGroups()
   } );
   
   
-    NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
-    // Helper Function
-    auto findByKey =
-              [](const unordered_map<localIndex, localIndex>& map, localIndex key) -> std::optional<localIndex> {
-              auto it = map.find(key);
-                  if (it != map.end()) {
-                      return it->second;
-                  }
-                  return std::nullopt; // Value not found
-          };
-  
-    m_interfaceRegionByConnector.clear();
-    // Associated interface Region indices to Connector indices
-    forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
-                                                                 MeshLevel & meshLevel,
-                                                                 string_array const & regionNames )
-    {
+  // Retrieve the numerical methods and finite volume manager
+  NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
+  // Get the name of the flux approximation method used for the current discretization
+  const geos::string flux_approximation_name = fvManager.getFluxApproximation(m_discretizationName).getName();
 
-      FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
-      FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( m_discretizationName );
-      const geos::string flux_approximation_name = fluxApprox.getName();
-      
+  // Clear the existing mapping between connector indices and interface region indices
+  m_interfaceRegionByConnector.clear();
+  forDiscretizationOnMeshTargets(domain.getMeshBodies(), [&](std::string const &,
+                                                              MeshLevel & meshLevel,
+                                                              string_array const & regionNames)
+  {
+      // Access the face manager and retrieve the face set group for the current mesh level
       FaceManager const & faceManager = meshLevel.getFaceManager();
       Group const & faceSetGroup = faceManager.sets();
-      ElementRegionManager & elemManager = meshLevel.getElemManager();
-     
-      // this is the FaceElement Level
-      for( size_t surfaceRegionIndex=0; surfaceRegionIndex < m_interfaceFaceSetNames.size(); ++surfaceRegionIndex )
+
+      // Access the connector indices map (face index → connector index)
+      Group & stencilGroup =
+          meshLevel.getGroup(FluxApproximationBase::groupKeyStruct::stencilMeshGroupString())
+                   .getGroup(flux_approximation_name);
+      CellElementStencilTPFA & stencil =
+          stencilGroup.getReference<CellElementStencilTPFA>(
+              FluxApproximationBase::viewKeyStruct::cellStencilString());
+      std::unordered_map<localIndex, localIndex> const & connectorIndices = stencil.getConnectorIndices();
+
+      // for all interface face sets to map connector indices to their corresponding interface region indices
+      for (size_t surfaceRegionIndex = 0; surfaceRegionIndex < m_interfaceFaceSetNames.size(); ++surfaceRegionIndex)
       {
-        string const & faceSetName = m_interfaceFaceSetNames[surfaceRegionIndex];
-        SortedArrayView< localIndex const > const & faceSet = faceSetGroup.getReference< SortedArray< localIndex > >( faceSetName );
-        Group & stencilGroup = meshLevel.getGroup( FluxApproximationBase::groupKeyStruct::stencilMeshGroupString() ).getGroup( flux_approximation_name );
-        CellElementStencilTPFA & stencil = stencilGroup.getReference< CellElementStencilTPFA >( FluxApproximationBase::viewKeyStruct::cellStencilString() );
-        unordered_map< localIndex, localIndex > const & connectorIndices = stencil.getConnectorIndices();
-        
-        for( localIndex const kf : faceSet )
-        {
-          // Check if face lies on an interface (different region or subregion)
-          std::optional<localIndex> connectorIdx = findByKey(connectorIndices, kf);
-          bool isMemberQ = connectorIdx.has_value();
-          if (isMemberQ){
-            m_interfaceRegionByConnector[connectorIdx.value()] = surfaceRegionIndex;
+          // Iterate over each face and associate its connector index
+          std::string const & faceSetName = m_interfaceFaceSetNames[surfaceRegionIndex];
+          for (localIndex kf : faceSetGroup.getReference<SortedArray<localIndex>>(faceSetName)) {
+              auto it = connectorIndices.find(kf);
+              if (it != connectorIndices.end()) {
+                  // Map the connector index to the corresponding surface region index
+                  m_interfaceRegionByConnector[it->second] = surfaceRegionIndex;
+              }
           }
-        }
-        
       }
-    } );
+  });
+
 
   initializeState( domain );
 }
