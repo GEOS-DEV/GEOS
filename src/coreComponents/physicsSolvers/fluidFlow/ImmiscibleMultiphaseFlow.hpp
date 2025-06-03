@@ -314,7 +314,7 @@ private:
   stdVector< std::array< std::tuple< constitutive::ConstitutiveBase *,
                                      constitutive::ConstitutiveBase *,
                                      constitutive::ConstitutiveBase * >, 2 > >  m_interfaceConstitutivePairs;
-  
+
   unordered_map< localIndex, localIndex >  m_interfaceRegionByConnector;
 
 

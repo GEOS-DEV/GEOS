@@ -222,7 +222,7 @@ void ImmiscibleMultiphaseFlow::initializePreSubGroups()
     Group const & faceSetGroup = faceManager.sets();
     ElementRegionManager & elemManager = meshLevel.getElemManager();
     m_interfaceConstitutivePairs.resize( m_interfaceFaceSetNames.size() );
-    
+
     // this is the FaceElement Level
     for( size_t surfaceRegionIndex=0; surfaceRegionIndex < m_interfaceFaceSetNames.size(); ++surfaceRegionIndex )
     {
@@ -239,7 +239,9 @@ void ImmiscibleMultiphaseFlow::initializePreSubGroups()
       FaceElementSubRegion const & faceSubRegion = faceRegion.getUniqueSubRegion< FaceElementSubRegion >();
       FixedToManyElementRelation const & faceElementsToCells = faceSubRegion.getToCellRelation();
 
-      std::function< std::tuple< CellElementSubRegion *, CellElementSubRegion * >(localIndex) > getSubregions = [&]( localIndex surfaceSubRegionIndex ) -> std::tuple< CellElementSubRegion *, CellElementSubRegion * > {
+      std::function< std::tuple< CellElementSubRegion *, CellElementSubRegion * >(localIndex) > getSubregions = [&]( localIndex surfaceSubRegionIndex ) -> std::tuple< CellElementSubRegion *,
+                                                                                                                                                                       CellElementSubRegion * >
+      {
 
         int regionIdx0 = faceElementsToCells.m_toElementRegion[surfaceSubRegionIndex][0];
         int regionIdx1 = faceElementsToCells.m_toElementRegion[surfaceSubRegionIndex][1];
@@ -253,31 +255,31 @@ void ImmiscibleMultiphaseFlow::initializePreSubGroups()
         CellElementSubRegion * subRegion1 = &region1.getSubRegion< CellElementSubRegion >( subRegionIdx1 );
         return std::make_tuple( subRegion0, subRegion1 );
       };
-      
+
       std::tuple< CellElementSubRegion *, CellElementSubRegion * > subRegionPair = getSubregions( surfaceRegionIndex );
       CellElementSubRegion * subRegion0 = std::get< 0 >( subRegionPair );
       CellElementSubRegion * subRegion1 = std::get< 1 >( subRegionPair );
-      
+
       // get constitutives by type and name: relPerms, capPressures, Fluids (three pointers)
       std::string & relPermName0 = subRegion0->getReference< std::string >( viewKeyStruct::relPermNamesString());
       std::string & relPermName1 = subRegion1->getReference< std::string >( viewKeyStruct::relPermNamesString());
       RelativePermeabilityBase * relPerm0 = &getConstitutiveModel< RelativePermeabilityBase >( *subRegion0, relPermName0 );
       RelativePermeabilityBase * relPerm1 = &getConstitutiveModel< RelativePermeabilityBase >( *subRegion1, relPermName1 );
 
-      std::string & cappresName0 = subRegion0->getReference< std::string >(  viewKeyStruct::capPressureNamesString());
-      std::string & cappresName1 = subRegion1->getReference< std::string >(  viewKeyStruct::capPressureNamesString());
+      std::string & cappresName0 = subRegion0->getReference< std::string >( viewKeyStruct::capPressureNamesString());
+      std::string & cappresName1 = subRegion1->getReference< std::string >( viewKeyStruct::capPressureNamesString());
       CapillaryPressureBase * capPressure0 = &getConstitutiveModel< CapillaryPressureBase >( *subRegion0, cappresName0 );
       CapillaryPressureBase * capPressure1 = &getConstitutiveModel< CapillaryPressureBase >( *subRegion1, cappresName1 );
 
-      std::string & fluidName0 = subRegion0->getReference< std::string >(  viewKeyStruct::fluidNamesString() );
-      std::string & fluidName1 = subRegion1->getReference< std::string >(  viewKeyStruct::fluidNamesString() );
+      std::string & fluidName0 = subRegion0->getReference< std::string >( viewKeyStruct::fluidNamesString() );
+      std::string & fluidName1 = subRegion1->getReference< std::string >( viewKeyStruct::fluidNamesString() );
 
       TwoPhaseImmiscibleFluid * fluid0 = &getConstitutiveModel< TwoPhaseImmiscibleFluid >( *subRegion0, fluidName0 );
       TwoPhaseImmiscibleFluid * fluid1 = &getConstitutiveModel< TwoPhaseImmiscibleFluid >( *subRegion1, fluidName1 );
-      
+
       m_interfaceConstitutivePairs[surfaceRegionIndex][0] = std::make_tuple( relPerm0, capPressure0, fluid0 );
       m_interfaceConstitutivePairs[surfaceRegionIndex][1] = std::make_tuple( relPerm1, capPressure1, fluid1 );
-      
+
     }
   } );
 
@@ -551,10 +553,7 @@ void ImmiscibleMultiphaseFlow::initializePostInitialConditionsPreSubGroups()
 
     CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync, mesh, domain.getNeighbors(), false );
   } );
-  
-  
 
-  
   // Retrieve the numerical methods and finite volume manager
   FiniteVolumeManager const & fvManager = domain.getNumericalMethodManager().getFiniteVolumeManager();
   FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( m_discretizationName );
@@ -562,37 +561,39 @@ void ImmiscibleMultiphaseFlow::initializePostInitialConditionsPreSubGroups()
 
   // Clear the existing mapping between connector indices and interface region indices
   m_interfaceRegionByConnector.clear();
-  forDiscretizationOnMeshTargets(domain.getMeshBodies(), [&](std::string const &,
-                                                              MeshLevel & meshLevel,
-                                                              string_array const & regionNames)
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( std::string const &,
+                                                               MeshLevel & meshLevel,
+                                                               string_array const & regionNames )
   {
-      // Access the face manager and retrieve the face set group for the current mesh level
-      FaceManager const & faceManager = meshLevel.getFaceManager();
-      Group const & faceSetGroup = faceManager.sets();
+    // Access the face manager and retrieve the face set group for the current mesh level
+    FaceManager const & faceManager = meshLevel.getFaceManager();
+    Group const & faceSetGroup = faceManager.sets();
 
-      // Access the connector indices map (face index → connector index)
-      Group & stencilGroup =
-          meshLevel.getGroup(FluxApproximationBase::groupKeyStruct::stencilMeshGroupString())
-                   .getGroup(flux_approximation_name);
-      CellElementStencilTPFA & stencil =
-          stencilGroup.getReference<CellElementStencilTPFA>(
-              FluxApproximationBase::viewKeyStruct::cellStencilString());
-      std::unordered_map<localIndex, localIndex> const & connectorIndices = stencil.getConnectorIndices();
+    // Access the connector indices map (face index → connector index)
+    Group & stencilGroup =
+      meshLevel.getGroup( FluxApproximationBase::groupKeyStruct::stencilMeshGroupString())
+        .getGroup( flux_approximation_name );
+    CellElementStencilTPFA & stencil =
+      stencilGroup.getReference< CellElementStencilTPFA >(
+        FluxApproximationBase::viewKeyStruct::cellStencilString());
+    std::unordered_map< localIndex, localIndex > const & connectorIndices = stencil.getConnectorIndices();
 
-      // for all interface face sets to map connector indices to their corresponding interface region indices
-      for (size_t surfaceRegionIndex = 0; surfaceRegionIndex < m_interfaceFaceSetNames.size(); ++surfaceRegionIndex)
+    // for all interface face sets to map connector indices to their corresponding interface region indices
+    for( size_t surfaceRegionIndex = 0; surfaceRegionIndex < m_interfaceFaceSetNames.size(); ++surfaceRegionIndex )
+    {
+      // Iterate over each face and associate its connector index
+      std::string const & faceSetName = m_interfaceFaceSetNames[surfaceRegionIndex];
+      for( localIndex kf : faceSetGroup.getReference< SortedArray< localIndex > >( faceSetName ))
       {
-          // Iterate over each face and associate its connector index
-          std::string const & faceSetName = m_interfaceFaceSetNames[surfaceRegionIndex];
-          for (localIndex kf : faceSetGroup.getReference<SortedArray<localIndex>>(faceSetName)) {
-              auto it = connectorIndices.find(kf);
-              if (it != connectorIndices.end()) {
-                  // Map the connector index to the corresponding surface region index
-                  m_interfaceRegionByConnector[it->second] = surfaceRegionIndex;
-              }
-          }
+        auto it = connectorIndices.find( kf );
+        if( it != connectorIndices.end())
+        {
+          // Map the connector index to the corresponding surface region index
+          m_interfaceRegionByConnector[it->second] = surfaceRegionIndex;
+        }
       }
-  });
+    }
+  } );
 
 
   initializeState( domain );

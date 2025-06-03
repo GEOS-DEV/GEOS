@@ -851,8 +851,8 @@ public:
                                        integer const checkPhasePresenceInGravity,
                                        string_array const & interfaceFaceSetNames,
                                        stdVector< std::array< std::tuple< constitutive::ConstitutiveBase *,
-                                                         constitutive::ConstitutiveBase *,
-                                                         constitutive::ConstitutiveBase * >, 2 > > const & interfaceConstitutivePairs,
+                                                                          constitutive::ConstitutiveBase *,
+                                                                          constitutive::ConstitutiveBase * >, 2 > > const & interfaceConstitutivePairs,
                                        unordered_map< localIndex, localIndex > const & interfaceRegionByConnector,
                                        localIndex const GEOS_UNUSED_PARAM( domainSize ) )
     : Base( numPhases,
@@ -871,7 +871,7 @@ public:
             checkPhasePresenceInGravity ),
     m_capPressureWrapper( capPressureWrapper ),
     m_relPermWrapper( relPermWrapper ),
-    m_interfaceFaceSetNames( interfaceFaceSetNames ), 
+    m_interfaceFaceSetNames( interfaceFaceSetNames ),
     m_interfaceConstitutivePairs( interfaceConstitutivePairs ),
     m_interfaceRegionByConnector( interfaceRegionByConnector )
   {}
@@ -1200,7 +1200,7 @@ public:
         // 1) we expect m_interfaceFaceSetNames, m_interfaceConstitutivePairs
         // 2) we need to identify if the facet is a member of the interface
         // 3) once we identify the surface element we infere surfaceSubRegionIndex
-        
+
         bool notOnInterface = std::fabs( jFMultiplier[0][0] - jFMultiplier[0][1] ) < 1e-8  && std::fabs( jFMultiplier[1][0] - jFMultiplier[1][1] ) < 1e-8;
         if( notOnInterface )
         {
@@ -1763,7 +1763,7 @@ protected:
   stdVector< std::array< std::tuple< constitutive::ConstitutiveBase *,
                                      constitutive::ConstitutiveBase *,
                                      constitutive::ConstitutiveBase * >, 2 > >  const m_interfaceConstitutivePairs;
-  
+
   unordered_map< localIndex, localIndex > const m_interfaceRegionByConnector;
 
 };
@@ -1856,8 +1856,8 @@ public:
                    RELPERMWRAPPER const & relPermWrapper,
                    string_array const & interfaceFaceSetNames,
                    stdVector< std::array< std::tuple< constitutive::ConstitutiveBase *,
-                                     constitutive::ConstitutiveBase *,
-                                     constitutive::ConstitutiveBase * >, 2 > > const & interfaceConstitutivePairs,
+                                                      constitutive::ConstitutiveBase *,
+                                                      constitutive::ConstitutiveBase * >, 2 > > const & interfaceConstitutivePairs,
                    unordered_map< localIndex, localIndex > const & interfaceRegionByConnector,
                    ElementSubRegionBase const & subRegion,
                    real64 const & dt,
