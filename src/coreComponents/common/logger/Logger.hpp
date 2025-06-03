@@ -155,6 +155,7 @@
                                         __msgoss.str(), \
                                         __FILE__, \
                                         __LINE__ ); \
+        msgStruct.setRank( ::geos::logger::internal::rank ); \
         msgStruct.addCallStackInfo( stackHistory ); \
         errorLogger.write( msgStruct ); \
       } \
@@ -319,6 +320,7 @@
                                         __msgoss.str(), \
                                         __FILE__, \
                                         __LINE__ ); \
+        msgStruct.setRank( ::geos::logger::internal::rank ); \
         msgStruct.addCallStackInfo( LvArray::system::stackTrace( true ) ); \
         errorLogger.write( msgStruct ); \
       } \
