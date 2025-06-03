@@ -237,6 +237,13 @@ public:
    */
   typename TRAITS::WeightContainerViewConstType
   getWeights() const { return m_weights.toViewConst(); }
+  
+  /**
+   * @brief  Const access to stencil connector indices.
+   * @return A geos::unordered_map of stencil connector indices
+   */
+  geos::unordered_map< localIndex, localIndex > const &
+  getConnectorIndices() const { return m_connectorIndices; }
 
 protected:
 
