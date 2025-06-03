@@ -23,7 +23,7 @@
         lineSearchMaxCuts="2"
         maxTimeStepCuts="1"/>
       <LinearSolverParameters
-        solverType="gmres"
+        solverType="direct"
         directParallel="1"
         preconditionerType="mgr"
         reuseFactorization="1"
@@ -35,7 +35,8 @@
       targetRegions="{ Domain }"
       initialRockToughness="1.0"
       mpiCommOrder="1"
-      fractureRegion="Fault"/>  
+      fractureRegion="Fault"
+      logLevel="0"/>  
   </Solvers>
 
   <Mesh>
@@ -58,8 +59,8 @@
       xCoords="{ -400, 400 }"
       yCoords="{ -400, 400 }"
       zCoords="{-10, 10 }"
-      nx="{ 415 }"
-      ny="{ 415 }"
+      nx="{ 115 }"
+      ny="{ 115 }"
       nz="{ 2 }"
       cellBlockNames="{ cb1 }"/>
   </Mesh>
