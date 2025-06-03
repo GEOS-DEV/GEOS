@@ -5,8 +5,7 @@ set( gtest_geosx_tests
      testMpiWrapper.cpp
      testTypeDispatch.cpp
      testLifoStorage.cpp
-     testUnits.cpp
-     testErrorHandling.cpp )
+     testUnits.cpp )
 
 set( gtest_geosx_mpi_tests
      testMpiWrapper.cpp )
