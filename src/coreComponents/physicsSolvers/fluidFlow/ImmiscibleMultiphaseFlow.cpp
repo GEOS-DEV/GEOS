@@ -576,7 +576,7 @@ void ImmiscibleMultiphaseFlow::initializePostInitialConditionsPreSubGroups()
     CellElementStencilTPFA & stencil =
       stencilGroup.getReference< CellElementStencilTPFA >(
         FluxApproximationBase::viewKeyStruct::cellStencilString());
-    std::unordered_map< localIndex, localIndex > const & connectorIndices = stencil.getConnectorIndices();
+    unordered_map< localIndex, localIndex > const & connectorIndices = stencil.getConnectorIndices();
 
     // for all interface face sets to map connector indices to their corresponding interface region indices
     for( size_t surfaceRegionIndex = 0; surfaceRegionIndex < m_interfaceFaceSetNames.size(); ++surfaceRegionIndex )
