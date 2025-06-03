@@ -23,7 +23,7 @@
         lineSearchMaxCuts="2"
         maxTimeStepCuts="1"/>
       <LinearSolverParameters
-        solverType="gmres"
+        solverType="direct"
         directParallel="1"
         preconditionerType="mgr"
         reuseFactorization="1"
