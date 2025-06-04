@@ -112,7 +112,6 @@ void ReactiveSinglePhaseFluid< BASE >::saveConvergedState() const
 template< typename BASE >
 void ReactiveSinglePhaseFluid< BASE >::resizeFields( localIndex const size, localIndex const numPts )
 {
-  GEOS_UNUSED_VAR( numPts );
   integer const numPrimarySpecies = this->numPrimarySpecies();
   integer const numSecondarySpecies = this->numSecondarySpecies();
   integer const numKineticReactions = this->numKineticReactions();

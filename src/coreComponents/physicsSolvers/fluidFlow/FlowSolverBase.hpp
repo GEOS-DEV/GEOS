@@ -105,7 +105,7 @@ public:
 
   void enableJumpStabilization() { m_isJumpStabilized = true; }
 
-  void updatePorosityAndPermeability( CellElementSubRegion & subRegion ) const;
+  virtual void updatePorosityAndPermeability( CellElementSubRegion & subRegion ) const;
 
   virtual void updatePorosityAndPermeability( SurfaceElementSubRegion & subRegion ) const;
 

@@ -146,7 +146,12 @@ public:
 
   void updateSpeciesAmount( ElementSubRegionBase & subRegion ) const;
 
+  void updateKineticReactionMolarIncrements( real64 const dt,
+                                             ElementSubRegionBase & subRegion ) const;
+
   virtual void updateFluidModel( ObjectManagerBase & dataGroup ) const override;
+
+  virtual void updatePorosityAndPermeability( CellElementSubRegion & subRegion ) const override;
 
   virtual void initializePostInitialConditionsPreSubGroups() override;
 
@@ -250,6 +255,7 @@ public:
   struct viewKeyStruct : SinglePhaseBase::viewKeyStruct
   {
     static constexpr char const * diffusionNamesString() { return "diffusionNames"; }
+    static constexpr char const * isUpdateReactivePorosityString() { return "isUpdateReactivePorosity"; }
   };
 
 protected:
@@ -257,11 +263,17 @@ protected:
   /// the number of primary species in the fluid
   integer m_numPrimarySpecies;
 
+  /// the number of kinetic reactions 
+  integer m_numKineticReactions;
+
   /// name of the reactive fluid constitutive model
   string m_reactiveFluidModelName;
 
   /// flag to determine whether or not to apply diffusion
   integer m_hasDiffusion;
+
+  /// flag to determine whether or not to use the reactive porosity
+  integer m_isUpdateReactivePorosity;
 };
 
 template< typename OBJECT_TYPE >

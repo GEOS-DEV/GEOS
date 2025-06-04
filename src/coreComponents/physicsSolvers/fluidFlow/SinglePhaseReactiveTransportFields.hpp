@@ -75,6 +75,14 @@ DECLARE_FIELD( primarySpeciesAggregateMole_n,
                WRITE_AND_READ,
                "Aggregate amount of primary species in mole at the previous converged time step" );
 
+DECLARE_FIELD( kineticReactionMolarIncrements,
+               "kineticReactionMolarIncrements",
+               array2dLayoutComp,
+               0,
+               LEVEL_0,
+               WRITE_AND_READ,
+               "Molar increment in the current timestep for kinetic reactions" );
+
 DECLARE_FIELD( dMobility_dLogPrimaryConc,
                "dMobility_dLogPrimaryConc",
                array2dLayoutFluid_dC,

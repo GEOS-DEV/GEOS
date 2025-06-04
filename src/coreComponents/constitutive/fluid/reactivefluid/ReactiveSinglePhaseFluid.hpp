@@ -90,6 +90,9 @@ public:
   arrayView3d< real64 const, reactivefluid::USD_SPECIES > aggregateSpeciesRates() const
   { return m_aggregateSpeciesRates; }
 
+  arrayView3d< real64 const, reactivefluid::USD_SPECIES > kineticReactionRates() const
+  { return m_kineticReactionRates; }
+
   arrayView4d< real64 const, reactivefluid::USD_SPECIES_DC > dAggregateSpeciesRates_dLogPrimarySpeciesConcentrations() const
   { return m_dAggregateSpeciesRates_dLogPrimarySpeciesConcentrations; }
 

@@ -182,6 +182,7 @@ set( constitutive_headers
      solid/PerfectlyPlastic.hpp     
      solid/PorousSolid.hpp
      solid/PropertyConversions.hpp
+     solid/ReactiveSolid.hpp
      solid/SolidBase.hpp
      solid/SolidUtilities.hpp
      solid/SolidInternalEnergy.hpp
@@ -197,6 +198,7 @@ set( constitutive_headers
      solid/porosity/PorosityFields.hpp
      solid/porosity/PressurePorosity.hpp
      solid/porosity/ProppantPorosity.hpp
+     solid/porosity/ReactivePorosity.hpp
      thermalConductivity/MultiPhaseConstantThermalConductivity.hpp
      thermalConductivity/MultiPhaseThermalConductivityBase.hpp
      thermalConductivity/MultiPhaseThermalConductivityFields.hpp
@@ -314,6 +316,7 @@ set( constitutive_sources
      solid/PorousDamageSolid.cpp
      solid/PerfectlyPlastic.cpp
      solid/PorousSolid.cpp
+     solid/ReactiveSolid.cpp
      solid/SolidBase.cpp
      solid/SolidInternalEnergy.cpp
      solid/CeramicDamage.cpp
@@ -321,6 +324,7 @@ set( constitutive_sources
      solid/porosity/PorosityBase.cpp
      solid/porosity/PressurePorosity.cpp
      solid/porosity/ProppantPorosity.cpp
+     solid/porosity/ReactivePorosity.cpp
      thermalConductivity/MultiPhaseConstantThermalConductivity.cpp
      thermalConductivity/MultiPhaseThermalConductivityBase.cpp
      thermalConductivity/MultiPhaseVolumeWeightedThermalConductivity.cpp
