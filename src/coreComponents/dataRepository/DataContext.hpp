@@ -31,6 +31,7 @@ namespace geos
 namespace dataRepository
 {
 
+
 /**
  * @class DataContext
  *
@@ -230,8 +231,11 @@ private:
 
 };
 
+
 } /* namespace dataRepository */
 } /* namespace geos */
+
+
 
 /**
  * @brief Formatter to be able to directly use a DataContext as a GEOS_FMT() argument.
