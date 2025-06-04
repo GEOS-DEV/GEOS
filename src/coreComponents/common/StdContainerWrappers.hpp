@@ -46,6 +46,11 @@ public:
   /// Type alias for the base class (i.e., std::vector)
   using Base = std::vector< T, Allocator >;
 
+  /*
+   * We cannot automatically import the constructors aka `Base::vector`
+   * due to a compiler bug on testMultiFluidDeadOil.cpp that causes a recursive evaluation of default argument.
+   * The constructors are therefore imported manually.
+   */
   /// @cond DO_NOT_DOCUMENT
   StdVectorWrapper(): std::vector< T, Allocator >()
   {}
