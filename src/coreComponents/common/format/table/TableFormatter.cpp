@@ -597,7 +597,7 @@ void TableTextFormatter::stretchColumnsByMergedCellsWidth( stdVector< size_t > &
 
         integer const overflowingWidth = mergedCellsWidth - mergedColumnsWidth;
         if( overflowingWidth > 0 )
-        {  // if the merged content width exceeds the available columns width, we balance the resizing over all cells.
+        { // if the merged content width exceeds the available columns width, we balance the resizing over all cells.
           auto [stretchPerColumn, remainingStretch] = std::div( overflowingWidth, mergedCellsCount );
           for( size_t mergedId = size_t( columnId - mergedCellsCount + 1 ); mergedId <= columnId; ++mergedId )
           {
@@ -612,6 +612,7 @@ void TableTextFormatter::stretchColumnsByMergedCellsWidth( stdVector< size_t > &
       }
     }
   }
+
   // compression of flexible space, mandatory for when we merge cells in intersecting column sets.
   if( compress && numRows > 0 )
   {
@@ -659,6 +660,7 @@ void TableTextFormatter::stretchColumnsByMergedCellsWidth( stdVector< size_t > &
         flexSpaces[columnId] = size_t( std::max( 0, integer( flexSpaces[columnId] ) - oversize ) );
     }
   }
+
   for( size_t columnId = 0; columnId < numColumns; columnId++ )
   {
     columnsWidth[columnId] += size_t( flexSpaces[columnId] );
