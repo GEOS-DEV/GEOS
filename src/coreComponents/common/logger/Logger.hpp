@@ -234,7 +234,7 @@
       if( errorLogger.writeFile() ) \
       { \
         errorLogger.currentErrorMsg() \
-          .setType( ErrorLogger::MsgType::Error ) \
+          .setType( ErrorLogger::MsgType::Exception ) \
           .setCodeLocation( __FILE__, __LINE__ ) \
           .addToMsg( __msgoss.str() ) \
           .setRank( ::geos::logger::internal::rank ) \
@@ -262,7 +262,7 @@
       if( errorLogger.writeFile() ) \
       { \
         errorLogger.currentErrorMsg() \
-          .setType( ErrorLogger::MsgType::Error ) \
+          .setType( ErrorLogger::MsgType::Exception ) \
           .setCodeLocation( __FILE__, __LINE__ ) \
           .addToMsg( __msgoss.str() ) \
           .setRank( ::geos::logger::internal::rank ) \
