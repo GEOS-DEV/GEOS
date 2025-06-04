@@ -355,8 +355,6 @@ void TableFunction::outputTableData( OutputOptions const outputOpts ) const
   if( MpiWrapper::commRank() != 0 )
     return;
 
-
-
   bool const logOutputFailed = isTableTooLargeForLog( *this );
 
   TableLayout tableLayout( { TableLayout::Column().
