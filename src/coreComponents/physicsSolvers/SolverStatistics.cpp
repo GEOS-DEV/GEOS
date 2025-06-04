@@ -242,7 +242,7 @@ void ConvergenceStatistics::registerResidualNormToTable()
     { m_totalResidual, "RTotal" }
   };
 
-
+  std::cout << "m_numTimeSteps " << m_numTimeSteps << " m_currentNewtonIter "<< m_currentNewtonIter <<< std::endl;
   if( m_numTimeSteps == 0 && m_currentNewtonIter == 0 )
   {
     for( auto const & residual : residuals )
