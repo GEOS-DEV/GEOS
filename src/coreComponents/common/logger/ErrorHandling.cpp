@@ -90,6 +90,7 @@ std::string ErrorLogger::toString( ErrorLogger::MsgType type )
   {
     case ErrorLogger::MsgType::Error: return "Error";
     case ErrorLogger::MsgType::Warning: return "Warning";
+    case ErrorLogger::MsgType::Exception: return "Exception";
     default: return "Unknown";
   }
 }

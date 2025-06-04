@@ -57,7 +57,8 @@ public:
   enum class MsgType
   {
     Error,
-    Warning
+    Warning,
+    Exception
   };
 
   /**
