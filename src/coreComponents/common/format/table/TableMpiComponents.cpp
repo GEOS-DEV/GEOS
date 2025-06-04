@@ -60,11 +60,11 @@ void TableTextMpiOutput::toStream< TableData >( std::ostream & tableOutput,
     initalizeTableGrids( m_tableLayout, tableData,
                          headerCellsLayout, dataCellsLayout,
                          tableTotalWidth, columnWidthModifier );
+    status.m_sepLine = string( tableTotalWidth, m_horizontalLine );
   }
 
   if( status.m_isMasterRank )
   {
-    status.m_sepLine = string( tableTotalWidth, m_horizontalLine );
     outputTableHeader( tableOutput, m_tableLayout, headerCellsLayout, status.m_sepLine );
     tableOutput.flush();
   }
@@ -81,14 +81,22 @@ void TableTextMpiOutput::toStream< TableData >( std::ostream & tableOutput,
 void TableTextMpiOutput::stretchColumnsByRanks( stdVector< size_t > & columnsWidth,
                                                 TableTextMpiOutputStatus const status ) const
 {
-  size_t const rankColumnsCount = columnsWidth.size();
-  size_t const maxRanksColumnsCount = MpiWrapper::max( rankColumnsCount );
+  { // we ensure we have the correct amount of columns on all ranks (for correct MPI reduction operation)
+    size_t const rankColumnsCount = columnsWidth.size();
+    size_t const maxRanksColumnsCount = MpiWrapper::max( rankColumnsCount );
 
-  if( status.m_isContributing )
-    GEOS_ASSERT_EQ( rankColumnsCount, maxRanksColumnsCount ); // TODO: contribute to the new table error system with this one
+    // TODO: contribute to the new table error system with this one
+    if( status.m_isContributing )
+      GEOS_ASSERT_EQ( rankColumnsCount, maxRanksColumnsCount );
 
-  columnsWidth.resize( maxRanksColumnsCount, 0 );
+    columnsWidth.resize( maxRanksColumnsCount, 0 );
+  }
 
+  // the ranks that does not contribute must not interfere in the column width computing
+  if( !status.m_isContributing )
+    std::fill( columnsWidth.begin(), columnsWidth.end(), 0 );
+
+  // we keep the largest column widths so we have the same layout on all ranks
   MpiWrapper::allReduce( columnsWidth, columnsWidth, MpiWrapper::Reduction::Max );
 }
 
@@ -105,6 +113,11 @@ void TableTextMpiOutput::outputTableDataToRank0( std::ostream & tableOutput,
 
   if( status.m_isContributing )
   {
+    if( m_mpiLayout.m_separatorBetweenRanks )
+    {
+      string const rankSepLine = GEOS_FMT( "{:-^{}}", m_mpiLayout.m_rankTitle, status.m_sepLine.size() - 2 );
+      rankOutput << tableLayout.getIndentationStr() << m_verticalLine << rankSepLine << m_verticalLine << '\n';
+    }
     outputTableData( rankOutput, tableLayout, dataCellsLayout );
   }
 
@@ -134,11 +147,6 @@ void TableTextMpiOutput::outputTableDataToRank0( std::ostream & tableOutput,
   {
     for( integer rankId = 1; rankId < ranksCount; ++rankId )
     {
-      if( m_mpiLayout.m_separatorBetweenRanks )
-        tableOutput << tableLayout.getIndentationStr() << m_verticalLine
-                    << string( status.m_sepLine.size() - 2, m_horizontalLine )
-                    << m_verticalLine << '\n';
-
       if( ranksStrsSizes[rankId] > 0 )
       {
         tableOutput << string_view( &ranksStrs[ranksStrsDisps[rankId]], ranksStrsSizes[rankId] );

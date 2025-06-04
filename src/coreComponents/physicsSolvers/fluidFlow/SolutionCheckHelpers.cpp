@@ -84,23 +84,18 @@ void ElementsReporterOutput::outputTooLowValues( string_view linesPrefix,
         integer const omittedCount = signaledCount - collectedCount;
         integer const tableColumnsCount = MpiWrapper::max( 1 + collectedCount + integer( omittedCount > 0 ) );
 
+        TableMpiLayout mpiLayout;
+        mpiLayout.m_separatorBetweenRanks = true;
+
         if( signaledCount > 0 )
         {
           // adding a columns for row name, each collected value, and one last if a "..." have to be added
           auto & cells = data.getCellsData();
-          string const title = GEOS_FMT( "Rank {}, {} / {} {} values:",
-                                         MpiWrapper::commRank(),
-                                         collectedCount,
-                                         signaledCount,
-                                         valueNaming );
-          static constexpr integer titleLine = 0;
-          static constexpr integer globalIdLine = 2;
-          static constexpr integer valueLine = 3;
+          static constexpr integer globalIdLine = 0;
+          static constexpr integer valuesLine = 1;
 
-          data.addRow( stdVector< TableData::CellData >( tableColumnsCount, { CellType::MergeNext, "" } ) );
-          cells[titleLine].back() = { CellType::Header, title };
-
-          data.addRow( stdVector< TableData::CellData >( tableColumnsCount, { CellType::MergeNext, "" } ) );
+          mpiLayout.m_rankTitle = GEOS_FMT( "Rank {}, {} / {} values",
+                                            MpiWrapper::commRank(), collectedCount, signaledCount );
 
           data.addRow( stdVector< TableData::CellData >( tableColumnsCount, { CellType::MergeNext, "" } ) );
           cells[globalIdLine].front() = { CellType::Value, "Global Id" };
@@ -108,18 +103,21 @@ void ElementsReporterOutput::outputTooLowValues( string_view linesPrefix,
             cells[globalIdLine][i+1] = { CellType::Value, std::to_string( m_buffer[i].m_id ) };
 
           data.addRow( stdVector< TableData::CellData >( tableColumnsCount, { CellType::MergeNext, "" } ) );
-          cells[valueLine].front() = { CellType::Value, string( units::getDescription( unit ) ) };
+          cells[valuesLine].front() = { CellType::Value, string( units::getDescription( unit ) ) };
           for( int i = 0; i < collectedCount; ++i )
-            cells[valueLine][i+1] = { CellType::Value, std::to_string( m_buffer[i].m_value ) };
+            cells[valuesLine][i+1] = { CellType::Value, std::to_string( m_buffer[i].m_value ) };
 
           if( omittedCount > 0 )
           {
             cells[globalIdLine].back() = { CellType::Value, "..." };
-            cells[valueLine].back() = { CellType::Value, "..." };
+            cells[valuesLine].back() = { CellType::Value, "..." };
           }
+
+          // ending blank cells
+          data.addRow( stdVector< TableData::CellData >( tableColumnsCount, { CellType::Value, "" } ) );
         }
 
-        TableTextMpiOutput const formatter = TableTextMpiOutput( layout, TableMpiLayout{ true } );
+        TableTextMpiOutput const formatter = TableTextMpiOutput( layout, mpiLayout );
         formatter.toStream( std::cout, data );
         GEOS_LOG_RANK_0( '\n' );
       }

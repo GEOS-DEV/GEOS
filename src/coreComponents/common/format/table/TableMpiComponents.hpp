@@ -29,6 +29,7 @@ namespace geos
 struct TableMpiLayout
 {
   bool m_separatorBetweenRanks = false;
+  string m_rankTitle;
 };
 
 /**
