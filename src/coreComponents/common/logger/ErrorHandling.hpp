@@ -20,9 +20,7 @@
 #ifndef INITIALIZATION_ERROR_LOGGER_HPP
 #define INITIALIZATION_ERROR_LOGGER_HPP
 
-// Source includes
 #include "common/DataTypes.hpp"
-#include "common/format/Format.hpp"
 
 using namespace std;
 

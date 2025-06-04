@@ -50,6 +50,6 @@ TEST( testGeosxTraits, test_is_array_packable )
 TEST( testGeosxTraits, test_is_packable_map )
 {
   static_assert( is_packable_map< map< string, int > >, "Should be true." );
-  static_assert( is_packable_map< map< string, array1d< int > > >, "Should be true." );
+  static_assert( is_packable_map<map< string, array1d< int > > >, "Should be true." );
   static_assert( !is_packable_map< map< string, std::pair< int, int > > >, "Should be false" );
 }

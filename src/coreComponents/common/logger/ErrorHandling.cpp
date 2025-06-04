@@ -17,15 +17,11 @@
  * @file ErrorHandling.cpp
  */
 
-// Source includes
 #include "ErrorHandling.hpp"
 #include "common/logger/Logger.hpp"
 
-// System includes
 #include <fstream>
-#include <iostream>
 #include <utility>
-#include <sstream>
 #include <string_view>
 
 namespace geos
