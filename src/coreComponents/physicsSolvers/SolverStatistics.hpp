@@ -148,7 +148,7 @@ public:
    * @brief Output the statistics to the console and csv file if needed
    * @param writeCSV Indicate if we output to CSV FILE
    */
-  void outputStatistics( bool writeCSV );
+  void outputStatistics( bool writeCSV ) const;
 
   /**
    * @brief  Set the filename output file.
@@ -231,7 +231,7 @@ public:
    * @brief Output the cumulative statistics to the terminal
    * @param writeCSV Indicates if the output should be written to a CSV file.
    */
-  void outputResidualNorm( bool writeCSV );
+  void outputResidualNorm( bool writeCSV ) const;
 
   /**
    * @brief Prepare the layout and register the corresponding residuals norms to the TableData

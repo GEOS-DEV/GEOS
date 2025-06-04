@@ -149,7 +149,7 @@ void IterationsStatistics::registerStatsToTable()
                           m_numDiscardedLinearIterations );
 }
 
-void IterationsStatistics::outputStatistics( bool writeCSV )
+void IterationsStatistics::outputStatistics( bool writeCSV ) const
 {
   { // output to log
     GEOS_LOG_RANK_0( GEOS_FMT( "{}, number of Time-steps: {}", getParent().getName(), m_numTimeSteps ) );
@@ -183,7 +183,6 @@ void IterationsStatistics::outputStatistics( bool writeCSV )
 
     logStream << csvOutput.toString( m_nonLinearData );
     logStream.close();
-    m_nonLinearData.clear();
   }
 }
 
@@ -250,6 +249,7 @@ void ConvergenceStatistics::registerResidualNormToTable()
     {
       if( hasValue( residual.value ) )
       {
+        std::cout << " residual.columnName "<< residual.columnName << std::endl;
         m_nonLinearNormsLayout->addColumn( residual.columnName );
       }
     }
@@ -272,7 +272,7 @@ void ConvergenceStatistics::registerResidualNormToTable()
   m_nonLinearNormsData.addRow( residualsNormCells );
 }
 
-void ConvergenceStatistics::outputResidualNorm( bool writeCSV )
+void ConvergenceStatistics::outputResidualNorm( bool writeCSV ) const
 {
   std::ofstream logStream( m_convergenceFilename );
   if( writeCSV )
@@ -281,7 +281,6 @@ void ConvergenceStatistics::outputResidualNorm( bool writeCSV )
     logStream << csvOutput.toString( m_nonLinearNormsData );
   }
   logStream.close();
-  m_nonLinearNormsData.clear();
 
 }
 

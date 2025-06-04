@@ -146,9 +146,9 @@ TEST( testSolverStats, testOutputFiles )
   problem.applyInitialConditions();
   problem.runSimulation();
 
-  PhysicsSolverBase & solver = problem.getGroupByPath< PhysicsSolverBase >( string( "/Solvers/SinglePhaseFlow" ) );
+  PhysicsSolverBase const & solver = problem.getGroupByPath< PhysicsSolverBase >( string( "/Solvers/SinglePhaseFlow" ) );
 
-  SolverStatistics & solverStat = solver.getSolverStatistics();
+  SolverStatistics const & solverStat = solver.getSolverStatistics();
 
   EXPECT_EQ( solverStat.m_iterationsStats.m_numTimeSteps, 20 );
   EXPECT_EQ( solverStat.m_iterationsStats.m_numTimeStepCuts, 0 );
