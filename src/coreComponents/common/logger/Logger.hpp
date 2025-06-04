@@ -152,9 +152,9 @@
       if( errorLogger.writeFile() ) \
       { \
         ErrorLogger::ErrorMsg msgStruct( ErrorLogger::MsgType::Error, \
-                                        __msgoss.str(), \
-                                        __FILE__, \
-                                        __LINE__ ); \
+                                         __msgoss.str(), \
+                                         __FILE__, \
+                                         __LINE__ ); \
         msgStruct.setRank( ::geos::logger::internal::rank ); \
         msgStruct.addCallStackInfo( stackHistory ); \
         errorLogger.write( msgStruct ); \
@@ -181,9 +181,9 @@
       if( errorLogger.writeFile() ) \
       { \
         ErrorLogger::ErrorMsg msgStruct( ErrorLogger::MsgType::Error, \
-                                        __msgoss.str(), \
-                                        __FILE__, \
-                                        __LINE__ ); \
+                                         __msgoss.str(), \
+                                         __FILE__, \
+                                         __LINE__ ); \
         msgStruct.setRank( ::geos::logger::internal::rank ); \
         msgStruct.addContextInfo( __VA_ARGS__ ); \
         msgStruct.addCallStackInfo( stackHistory ); \
@@ -288,19 +288,6 @@
  */
 #define GEOS_THROW( msg, TYPE ) GEOS_THROW_IF( true, msg, TYPE )
 
-/**
- * @brief Assert a condition in debug builds.
- * @param EXP an expression that will be evaluated as a predicate
- * @param msg a message to log (any expression that can be stream inserted)
- */
-#define GEOS_ASSERT_MSG( EXP, msg ) LVARRAY_ASSERT_MSG( EXP, "***** Rank " << ::geos::logger::internal::rankString << ": " << msg )
-
-/**
- * @brief Assert a condition in debug builds.
- * @param EXP an expression that will be evaluated as a predicate
- */
-#define GEOS_ASSERT( EXP ) GEOS_ASSERT_MSG( EXP, "" )
-
 #define GEOS_WARNING_OUTPUT_IF( EXP, MSG ) \
   do \
   { \
@@ -317,9 +304,9 @@
       if( errorLogger.writeFile() ) \
       { \
         ErrorLogger::ErrorMsg msgStruct( ErrorLogger::MsgType::Warning, \
-                                        __msgoss.str(), \
-                                        __FILE__, \
-                                        __LINE__ ); \
+                                         __msgoss.str(), \
+                                         __FILE__, \
+                                         __LINE__ ); \
         msgStruct.setRank( ::geos::logger::internal::rank ); \
         msgStruct.addCallStackInfo( LvArray::system::stackTrace( true ) ); \
         errorLogger.write( msgStruct ); \
@@ -343,9 +330,9 @@
       if( errorLogger.writeFile() ) \
       { \
         ErrorLogger::ErrorMsg msgStruct( ErrorLogger::MsgType::Warning, \
-                                        __msgoss.str(), \
-                                        __FILE__, \
-                                        __LINE__ ); \
+                                         __msgoss.str(), \
+                                         __FILE__, \
+                                         __LINE__ ); \
         msgStruct.setRank( ::geos::logger::internal::rank ); \
         msgStruct.addContextInfo( __VA_ARGS__ ); \
         msgStruct.addCallStackInfo( LvArray::system::stackTrace( true ) ); \
@@ -573,12 +560,63 @@
 #define GEOS_THROW_IF_LE( lhs, rhs, TYPE ) GEOS_ERROR_IF_LE_MSG( lhs, rhs, "", TYPE )
 
 /**
+ * @brief Abort execution if @p EXP is false but only when
+ *        NDEBUG is not defined..
+ * @param EXP The expression to check.
+ * @param MSG The message to associate with the error, can be anything streamable to a std::ostream.
+ * @note This macro can be used in both host and device code.
+ * @note Tries to provide as much information about the location of the error
+ *       as possible. On host this should result in the file and line of the error
+ *       and a stack trace along with the provided message. On device none of this is
+ *       guaranteed. In fact it is only guaranteed to abort the current kernel.
+ */
+#if !defined(NDEBUG)
+#define GEOS_ASSERT_MSG_IF( EXP, MSG ) GEOS_ERROR_OUTPUT_IF( !(EXP), MSG )
+#else
+#define GEOS_ASSERT_MSG_IF( EXP, MSG ) ((void) 0)
+#endif
+
+/**
+ * @brief Assert a condition in debug builds.
+ * @param EXP an expression that will be evaluated as a predicate
+ * @param msg a message to log (any expression that can be stream inserted)
+ */
+#define GEOS_ASSERT_MSG( EXP, msg ) GEOS_ASSERT_MSG_IF( EXP, "***** Rank " << ::geos::logger::internal::rankString << ": " << msg )
+
+/**
+ * @brief Assert a condition in debug builds.
+ * @param EXP an expression that will be evaluated as a predicate
+ */
+#define GEOS_ASSERT( EXP ) GEOS_ASSERT_MSG( EXP, "" )
+
+/**
+ * @brief Abort execution if @p lhs @p OP @p rhs is false.
+ * @param lhs The left side of the operation.
+ * @param OP The operation to apply.
+ * @param rhs The right side of the operation.
+ * @param msg The message to diplay.
+ */
+#define GEOS_ASSERT_OP_MSG( lhs, OP, rhs, msg ) \
+  GEOS_ASSERT_MSG_IF( lhs OP rhs, \
+                      msg << "\n" << \
+                      "  " << #lhs << " = " << lhs << "\n" << \
+                      "  " << #rhs << " = " << rhs << "\n" )
+
+/**
  * @brief Assert that two values compare equal in debug builds.
  * @param lhs expression to be evaluated and used as left-hand side in comparison
  * @param rhs expression to be evaluated and used as right-hand side in comparison
  * @param msg a message to log (any expression that can be stream inserted)
  */
-#define GEOS_ASSERT_EQ_MSG( lhs, rhs, msg ) LVARRAY_ASSERT_EQ_MSG( lhs, rhs, "***** Rank " << ::geos::logger::internal::rankString << ": " << msg )
+#define GEOS_ASSERT_EQ_MSG_IF( lhs, rhs, msg ) GEOS_ASSERT_OP_MSG( lhs, ==, rhs, msg )
+
+/**
+ * @brief Assert that two values compare equal in debug builds.
+ * @param lhs expression to be evaluated and used as left-hand side in comparison
+ * @param rhs expression to be evaluated and used as right-hand side in comparison
+ * @param msg a message to log (any expression that can be stream inserted)
+ */
+#define GEOS_ASSERT_EQ_MSG( lhs, rhs, msg ) GEOS_ASSERT_EQ_MSG_IF( lhs, rhs, "***** Rank " << ::geos::logger::internal::rankString << ": " << msg )
 
 /**
  * @brief Assert that two values compare equal in debug builds.
@@ -593,14 +631,29 @@
  * @param rhs expression to be evaluated and used as right-hand side in comparison
  * @param msg a message to log (any expression that can be stream inserted)
  */
-#define GEOS_ASSERT_NE_MSG( lhs, rhs, msg ) LVARRAY_ASSERT_NE_MSG( lhs, rhs, msg )
+#define GEOS_ASSERT_NE_MSG_IF( lhs, rhs, msg ) GEOS_ASSERT_OP_MSG( lhs, !=, rhs, msg )
+
+/**
+ * @brief Assert that two values compare not equal in debug builds.
+ * @param lhs expression to be evaluated and used as left-hand side in comparison
+ * @param rhs expression to be evaluated and used as right-hand side in comparison
+ * @param msg a message to log (any expression that can be stream inserted)
+ */
+#define GEOS_ASSERT_NE_MSG( lhs, rhs, msg ) GEOS_ASSERT_NE_MSG_IF( lhs, rhs, msg )
 
 /**
  * @brief Assert that two values compare not equal in debug builds.
  * @param lhs expression to be evaluated and used as left-hand side in comparison
  * @param rhs expression to be evaluated and used as right-hand side in comparison
  */
-#define GEOS_ASSERT_NE( lhs, rhs ) LVARRAY_ASSERT_NE( lhs, rhs )
+#define GEOS_ASSERT_NE_IF( lhs, rhs ) GEOS_ASSERT_NE_MSG( lhs, rhs, "" )
+
+/**
+ * @brief Assert that two values compare not equal in debug builds.
+ * @param lhs expression to be evaluated and used as left-hand side in comparison
+ * @param rhs expression to be evaluated and used as right-hand side in comparison
+ */
+#define GEOS_ASSERT_NE( lhs, rhs ) GEOS_ASSERT_NE_IF( lhs, rhs )
 
 /**
  * @brief Assert that one value compares greater than the other in debug builds.
@@ -608,7 +661,15 @@
  * @param rhs expression to be evaluated and used as right-hand side in comparison
  * @param msg a message to log (any expression that can be stream inserted)
  */
-#define GEOS_ASSERT_GT_MSG( lhs, rhs, msg ) LVARRAY_ASSERT_GT_MSG( lhs, rhs, "***** Rank " << ::geos::logger::internal::rankString << ": " << msg )
+#define GEOS_ASSERT_GT_MSG_IF( lhs, rhs, msg ) GEOS_ASSERT_OP_MSG( lhs, >, rhs, msg )
+
+/**
+ * @brief Assert that one value compares greater than the other in debug builds.
+ * @param lhs expression to be evaluated and used as left-hand side in comparison
+ * @param rhs expression to be evaluated and used as right-hand side in comparison
+ * @param msg a message to log (any expression that can be stream inserted)
+ */
+#define GEOS_ASSERT_GT_MSG( lhs, rhs, msg ) GEOS_ASSERT_GT_MSG_IF( lhs, rhs, "***** Rank " << ::geos::logger::internal::rankString << ": " << msg )
 
 /**
  * @brief Assert that one value compares greater than the other in debug builds.
@@ -623,7 +684,15 @@
  * @param rhs expression to be evaluated and used as right-hand side in comparison
  * @param msg a message to log (any expression that can be stream inserted)
  */
-#define GEOS_ASSERT_GE_MSG( lhs, rhs, msg ) LVARRAY_ASSERT_GE_MSG( lhs, rhs, "***** Rank " << ::geos::logger::internal::rankString << ": " << msg )
+#define GEOS_ASSERT_GE_MSG_IF( lhs, rhs, msg ) GEOS_ASSERT_OP_MSG( lhs, >=, rhs, msg )
+
+/**
+ * @brief Assert that one value compares greater than or equal to the other in debug builds.
+ * @param lhs expression to be evaluated and used as left-hand side in comparison
+ * @param rhs expression to be evaluated and used as right-hand side in comparison
+ * @param msg a message to log (any expression that can be stream inserted)
+ */
+#define GEOS_ASSERT_GE_MSG( lhs, rhs, msg ) GEOS_ASSERT_GE_MSG_IF( lhs, rhs, "***** Rank " << ::geos::logger::internal::rankString << ": " << msg )
 
 /**
  * @brief Assert that one value compares greater than or equal to the other in debug builds.
