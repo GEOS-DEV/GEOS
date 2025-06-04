@@ -126,7 +126,7 @@ real64 SinglePhaseFVM< BASE >::calculateResidualNorm( real64 const & GEOS_UNUSED
                                                       arrayView1d< real64 const > const & localRhs )
 {
   GEOS_MARK_FUNCTION;
-
+  std::cout <<" calculateResidualNorm "<< std::endl;
   integer constexpr numNorm = 2; // mass balance and energy balance
   array1d< real64 > localResidualNorm;
   array1d< real64 > localResidualNormalizer;
@@ -237,9 +237,10 @@ real64 SinglePhaseFVM< BASE >::calculateResidualNorm( real64 const & GEOS_UNUSED
     GEOS_LOG_LEVEL_RANK_0_NLR( logInfo::ResidualNorm,
                                GEOS_FMT( "        ( R{} ) = ( {:4.2e} )", FlowSolverBase::coupledSolverAttributePrefix(), residualNorm ));
     BASE:: m_solverStatistics.m_convergenceStats.m_residualFlow = residualNorm;
+    std::cout <<" not thermal "<< std::endl;
   }
   BASE::m_solverStatistics.m_convergenceStats.registerResidualNormToTable();
-
+  std::cout <<" registered in SingleFVM "<< std::endl;
   return residualNorm;
 }
 

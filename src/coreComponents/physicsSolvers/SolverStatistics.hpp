@@ -234,7 +234,7 @@ public:
   void outputResidualNorm( bool writeCSV );
 
   /**
-   * @brief Register the corresponding residuals norms to the TableData
+   * @brief Prepare the layout and register the corresponding residuals norms to the TableData
    */
   void registerResidualNormToTable();
 

@@ -627,7 +627,7 @@ bool PhysicsSolverBase::lineSearch( real64 const & time_n,
   // subtract a portion of the previous solution.
   real64 localScaleFactor = -scaleFactor;
   real64 cumulativeScale = scaleFactor;
-
+  std::cout << "line search "<< maxNumberLineSearchCuts << std::endl;
   // main loop for the line search.
   for( integer lineSearchIteration = 0; lineSearchIteration < maxNumberLineSearchCuts; ++lineSearchIteration )
   {
