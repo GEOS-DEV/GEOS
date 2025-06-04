@@ -43,7 +43,7 @@ void VTKVTMWriter::write() const
   m_document.saveFile( m_filePath );
 }
 
-void VTKVTMWriter::addDataSet( std::vector< string > const & blockPath,
+void VTKVTMWriter::addDataSet( stdVector< string > const & blockPath,
                                string const & dataSetName,
                                string const & filePath ) const
 {

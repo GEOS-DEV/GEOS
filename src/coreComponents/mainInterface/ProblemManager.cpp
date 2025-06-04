@@ -32,6 +32,7 @@
 #include "events/tasks/TasksManager.hpp"
 #include "events/EventManager.hpp"
 #include "finiteElement/FiniteElementDiscretization.hpp"
+#include "common/format/LogPart.hpp"
 #include "finiteElement/FiniteElementDiscretizationManager.hpp"
 #include "finiteVolume/FluxApproximationBase.hpp"
 #include "finiteVolume/HybridMimeticDiscretization.hpp"
@@ -168,19 +169,28 @@ Group * ProblemManager::createChild( string const & GEOS_UNUSED_PARAM( childKey 
 void ProblemManager::problemSetup()
 {
   GEOS_MARK_FUNCTION;
+
   postInputInitializationRecursive();
 
+  LogPart meshGenerationLog( "Mesh generation", MpiWrapper::commRank() == 0 );
+  meshGenerationLog.begin();
   generateMesh();
+  meshGenerationLog.end();
 
 //  initialize_postMeshGeneration();
-
+  LogPart numericalMethodLog( "Numerical Methods", MpiWrapper::commRank() == 0 );
+  numericalMethodLog.begin();
   applyNumericalMethods();
+  numericalMethodLog.end();
 
   registerDataOnMeshRecursive( getDomainPartition().getMeshBodies() );
 
   initialize();
 
+  LogPart importFieldsLog( "Import fields", MpiWrapper::commRank() == 0 );
+  importFieldsLog.begin();
   importFields();
+  importFieldsLog.end();
 }
 
 
@@ -247,7 +257,7 @@ bool ProblemManager::parseRestart( string & restartFileName, CommandLineOptions 
     string dirname, basename;
     std::tie( dirname, basename ) = splitPath( restartFileName );
 
-    std::vector< string > dir_contents = readDirectory( dirname );
+    stdVector< string > dir_contents = readDirectory( dirname );
 
     GEOS_THROW_IF( dir_contents.empty(),
                    "Directory gotten from " << restartFileName << " " << dirname << " is empty.",

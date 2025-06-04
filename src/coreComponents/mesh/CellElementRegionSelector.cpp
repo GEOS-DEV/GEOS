@@ -34,14 +34,14 @@ CellElementRegionSelector::CellElementRegionSelector(
   cellBlocks.forSubGroups< CellBlockABC >( [&] ( CellBlockABC const & cellBlock )
   {
     string const name = cellBlock.getName();
-    m_cellBlocksOwners.emplace( name, std::vector< CellElementRegion const * >() );
+    m_cellBlocksOwners.emplace( name, stdVector< CellElementRegion const * >() );
   } );
 
   for( auto const & regionCellBlocks : regionsCellBlocks )
   {
     string const regionAttributeStr = std::to_string( regionCellBlocks.first );
     m_regionAttributesCellBlocks.emplace( regionAttributeStr, regionCellBlocks.second );
-    m_regionAttributesOwners.emplace( regionAttributeStr, std::vector< CellElementRegion const * >() );
+    m_regionAttributesOwners.emplace( regionAttributeStr, stdVector< CellElementRegion const * >() );
   }
 }
 
@@ -150,7 +150,7 @@ void CellElementRegionSelector::checkSelectionConsistency() const
                                     auto const & qualifiersOwners,
                                     auto & orphanList ) {
     // Search of never or multiple selected attribute values
-    std::vector< string > multipleRefsErrors;
+    stdVector< string > multipleRefsErrors;
     for( auto const & [qualifier, owningRegions] : qualifiersOwners )
     {
       if( owningRegions.size() == 0 )

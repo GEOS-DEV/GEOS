@@ -38,8 +38,8 @@ Usage: $0
       run a code build and test.
   --data-basename output.tar.gz
       If some data needs to be extracted from the build, the argument will define the tarball. Has to be a `tar.gz`.
-  --enable-lvarray-bounds-check
-      Either ON or OFF (default is ON). Build geos with LVArray bounds check. 
+  --geos-enable-bounds-check
+      Either ON or OFF (default is ON). Build geos with bounds check. 
   --enable-hypre
       One of ON or OFF (default is ON). Build geos with hypre.
   --enable-hypre-device
@@ -79,7 +79,7 @@ exit 1
 # Then we'll move to the build dir.
 or_die cd $(dirname $0)/..
 
-args=$(or_die getopt -a -o h --long build-exe-only,cmake-build-type:,code-coverage,data-basename:,enable-lvarray-bounds-check:,enable-hypre:,enable-hypre-device:,enable-trilinos:,exchange-dir:,host-config:,install-dir-basename:,makefile,ninja,no-install-schema,no-run-unit-tests,nproc:,repository:,run-integrated-tests,sccache-credentials:,test-code-style,test-documentation,help -- "$@")
+args=$(or_die getopt -a -o h --long build-exe-only,cmake-build-type:,code-coverage,data-basename:,geos-enable-bounds-check:,enable-hypre:,enable-hypre-device:,enable-trilinos:,exchange-dir:,host-config:,install-dir-basename:,makefile,ninja,no-install-schema,no-run-unit-tests,nproc:,repository:,run-integrated-tests,sccache-credentials:,test-code-style,test-documentation,help -- "$@")
 
 # Variables with default values
 BUILD_EXE_ONLY=false
@@ -97,7 +97,7 @@ TEST_DOCUMENTATION=false
 ENABLE_TRILINOS=OFF
 CODE_COVERAGE=false
 NPROC="$(nproc)"
-ENABLE_LVARRAY_BOUNDS_CHECK=ON
+GEOS_ENABLE_BOUNDS_CHECK=ON
 
 eval set -- ${args}
 while :
@@ -121,7 +121,7 @@ do
       fi
       unset DATA_BASENAME DATA_BASENAME_EXT
       shift 2;;
-    --enable-lvarray-bounds-check) ENABLE_LVARRAY_BOUNDS_CHECK=$2; shift 2;;
+    --geos-enable-bounds-check) GEOS_ENABLE_BOUNDS_CHECK=$2; shift 2;;
     --enable-hypre)          ENABLE_HYPRE=$2;            shift 2;;
     --enable-hypre-device)   ENABLE_HYPRE_DEVICE=$2;     shift 2;;
     --enable-trilinos)       ENABLE_TRILINOS=$2;         shift 2;;
@@ -258,7 +258,7 @@ or_die python3 scripts/config-build.py \
                -DENABLE_TRILINOS=${ENABLE_TRILINOS} \
                -DGEOS_LA_INTERFACE:PATH=${GEOS_LA_INTERFACE} \
                -DENABLE_COVERAGE=$([[ "${CODE_COVERAGE}" = true ]] && echo 1 || echo 0) \
-               -DLVARRAY_BOUNDS_CHECK=${ENABLE_LVARRAY_BOUNDS_CHECK} \
+               -DGEOS_ENABLE_BOUNDS_CHECK=${GEOS_ENABLE_BOUNDS_CHECK} \
                ${SCCACHE_CMAKE_ARGS} \
                ${ATS_CMAKE_ARGS}
 

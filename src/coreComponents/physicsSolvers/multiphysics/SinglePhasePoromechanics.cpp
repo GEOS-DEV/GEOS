@@ -36,6 +36,11 @@
 #include "physicsSolvers/solidMechanics/contact/SolidMechanicsEmbeddedFractures.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseHybridFVM.hpp"
 
+#include "physicsSolvers/multiphysics/poromechanicsKernels/PoromechanicsKernelsDispatchTypeList.hpp"
+#include "physicsSolvers/multiphysics/poromechanicsKernels/ThermoPoromechanicsKernelsDispatchTypeList.hpp"
+#include "physicsSolvers/multiphysics/poromechanicsKernels/PoromechanicsDamageKernelsDispatchTypeList.hpp"
+#include "physicsSolvers/solidMechanics/kernels/SolidMechanicsKernelsDispatchTypeList.hpp"
+
 namespace geos
 {
 
@@ -292,7 +297,7 @@ void SinglePhasePoromechanics< FLOW_SOLVER, MECHANICS_SOLVER >::assembleElementB
     if( m_damageFlag )
     {
       poromechanicsMaxForce =
-        this->template assemblyLaunch< constitutive::PorousDamageSolidBase,
+        this->template assemblyLaunch< PoromechanicsDamageKernelsDispatchTypeList,
                                        poromechanicsDamageKernels::SinglePhasePoromechanicsDamageKernelFactory >( mesh,
                                                                                                                   dofManager,
                                                                                                                   regionNames,
@@ -307,7 +312,7 @@ void SinglePhasePoromechanics< FLOW_SOLVER, MECHANICS_SOLVER >::assembleElementB
     else if( this->m_isThermal )
     {
       poromechanicsMaxForce =
-        this->template assemblyLaunch< constitutive::PorousSolidBase,
+        this->template assemblyLaunch< ThermoPoromechanicsKernelsDispatchTypeList,
                                        thermalPoromechanicsKernels::ThermalSinglePhasePoromechanicsKernelFactory >( mesh,
                                                                                                                     dofManager,
                                                                                                                     regionNames,
@@ -322,7 +327,7 @@ void SinglePhasePoromechanics< FLOW_SOLVER, MECHANICS_SOLVER >::assembleElementB
     else
     {
       poromechanicsMaxForce =
-        this->template assemblyLaunch< constitutive::PorousSolidBase,
+        this->template assemblyLaunch< PoromechanicsKernelsDispatchTypeList,
                                        poromechanicsKernels::SinglePhasePoromechanicsKernelFactory >( mesh,
                                                                                                       dofManager,
                                                                                                       regionNames,
@@ -361,7 +366,7 @@ void SinglePhasePoromechanics< FLOW_SOLVER, MECHANICS_SOLVER >::assembleElementB
     }
 
     mechanicsMaxForce =
-      this->template assemblyLaunch< constitutive::SolidBase,
+      this->template assemblyLaunch< SolidMechanicsKernelsDispatchTypeList,
                                      solidMechanicsLagrangianFEMKernels::QuasiStaticFactory >( mesh,
                                                                                                dofManager,
                                                                                                filteredRegionNames,

@@ -84,11 +84,7 @@ void SinglePhaseWell::registerDataOnMesh( Group & meshBodies )
                                                               [&]( localIndex const,
                                                                    WellElementSubRegion & subRegion )
     {
-      string & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
-      fluidName = getConstitutiveName< SingleFluidBase >( subRegion );
-      GEOS_ERROR_CTX_IF( fluidName.empty(),
-                         GEOS_FMT( "{}: Fluid model not found on subregion {}",
-                                   getDataContext(), subRegion.getName() ), getDataContext() );
+      setConstitutiveName< SingleFluidBase >( subRegion, viewKeyStruct::fluidNamesString(), "singlephase fluid" );
 
       subRegion.registerField< fields::well::connectionRate_n >( getName() );
       subRegion.registerField< fields::well::connectionRate >( getName() );

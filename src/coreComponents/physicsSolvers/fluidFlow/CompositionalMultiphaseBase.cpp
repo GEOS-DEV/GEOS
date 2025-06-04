@@ -72,9 +72,9 @@ CompositionalMultiphaseBase::CompositionalMultiphaseBase( const string & name,
   FlowSolverBase( name, parent ),
   m_numPhases( 0 ),
   m_numComponents( 0 ),
-  m_hasCapPressure( 0 ),
-  m_hasDiffusion( 0 ),
-  m_hasDispersion( 0 ),
+  m_hasCapPressure( false ),
+  m_hasDiffusion( false ),
+  m_hasDispersion( false ),
   m_minScalingFactor( 0.01 ),
   m_allowCompDensChopping( 1 ),
   m_useTotalMassEquation( 1 ),
@@ -365,49 +365,17 @@ void CompositionalMultiphaseBase::registerDataOnMesh( Group & meshBodies )
     {
       if( m_hasCapPressure )
       {
-        subRegion.registerWrapper< string >( viewKeyStruct::capPressureNamesString() ).
-          setPlotLevel( PlotLevel::NOPLOT ).
-          setRestartFlags( RestartFlags::NO_WRITE ).
-          setSizedFromParent( 0 ).
-          setDescription( "Name of the capillary pressure constitutive model to use" ).
-          reference();
-
-        string & capPresName = subRegion.getReference< string >( viewKeyStruct::capPressureNamesString() );
-        capPresName = getConstitutiveName< CapillaryPressureBase >( subRegion );
-        GEOS_THROW_CTX_IF( capPresName.empty(),
-                           GEOS_FMT( "{}: Capillary pressure model not found on subregion {}",
-                                     getDataContext(), subRegion.getDataContext() ),
-                           InputError, getDataContext(), subRegion.getDataContext() );
+        setConstitutiveName< CapillaryPressureBase >( subRegion, viewKeyStruct::capPressureNamesString(), "capillary pressure" );
       }
 
       if( m_hasDiffusion )
       {
-        subRegion.registerWrapper< string >( viewKeyStruct::diffusionNamesString() ).
-          setPlotLevel( PlotLevel::NOPLOT ).
-          setRestartFlags( RestartFlags::NO_WRITE ).
-          setSizedFromParent( 0 ).
-          setDescription( "Name of the diffusion constitutive model to use" );
-
-        string & diffusionName = subRegion.getReference< string >( viewKeyStruct::diffusionNamesString() );
-        diffusionName = getConstitutiveName< DiffusionBase >( subRegion );
-        GEOS_THROW_IF( diffusionName.empty(),
-                       GEOS_FMT( "Diffusion model not found on subregion {}", subRegion.getName() ),
-                       InputError );
+        setConstitutiveName< DiffusionBase >( subRegion, viewKeyStruct::diffusionNamesString(), "diffusion" );
       }
 
       if( m_hasDispersion )
       {
-        subRegion.registerWrapper< string >( viewKeyStruct::dispersionNamesString() ).
-          setPlotLevel( PlotLevel::NOPLOT ).
-          setRestartFlags( RestartFlags::NO_WRITE ).
-          setSizedFromParent( 0 ).
-          setDescription( "Name of the dispersion constitutive model to use" );
-
-        string & dispersionName = subRegion.getReference< string >( viewKeyStruct::dispersionNamesString() );
-        dispersionName = getConstitutiveName< DispersionBase >( subRegion );
-        GEOS_THROW_IF( dispersionName.empty(),
-                       GEOS_FMT( "Dispersion model not found on subregion {}", subRegion.getName() ),
-                       InputError );
+        setConstitutiveName< DispersionBase >( subRegion, viewKeyStruct::dispersionNamesString(), "dispersion" );
       }
 
       string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
@@ -495,41 +463,13 @@ void CompositionalMultiphaseBase::registerDataOnMesh( Group & meshBodies )
 
 void CompositionalMultiphaseBase::setConstitutiveNames( ElementSubRegionBase & subRegion ) const
 {
-  string & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
-  fluidName = getConstitutiveName< MultiFluidBase >( subRegion );
-  GEOS_THROW_CTX_IF( fluidName.empty(),
-                     GEOS_FMT( "{}: multiphase fluid model not found on subregion {}",
-                               getDataContext(), subRegion.getDataContext() ),
-                     InputError, getDataContext(), subRegion.getDataContext() );
+  setConstitutiveName< MultiFluidBase >( subRegion, viewKeyStruct::fluidNamesString(), "multiphase fluid" );
 
-  string & relPermName = subRegion.registerWrapper< string >( viewKeyStruct::relPermNamesString() ).
-                           setPlotLevel( PlotLevel::NOPLOT ).
-                           setRestartFlags( RestartFlags::NO_WRITE ).
-                           setSizedFromParent( 0 ).
-                           setDescription( "Name of the relative permeability constitutive model to use" ).
-                           reference();
-
-  relPermName = getConstitutiveName< RelativePermeabilityBase >( subRegion );
-
-  GEOS_THROW_CTX_IF( relPermName.empty(),
-                     GEOS_FMT( "{}: Relative permeability model not found on subregion {}",
-                               getDataContext(), subRegion.getDataContext() ),
-                     InputError, getDataContext(), subRegion.getDataContext() );
+  setConstitutiveName< RelativePermeabilityBase >( subRegion, viewKeyStruct::relPermNamesString(), "relative permeability" );
 
   if( m_isThermal )
   {
-    string & thermalConductivityName = subRegion.registerWrapper< string >( viewKeyStruct::thermalConductivityNamesString() ).
-                                         setPlotLevel( PlotLevel::NOPLOT ).
-                                         setRestartFlags( RestartFlags::NO_WRITE ).
-                                         setSizedFromParent( 0 ).
-                                         setDescription( "Name of the thermal conductivity constitutive model to use" ).
-                                         reference();
-
-    thermalConductivityName = getConstitutiveName< MultiPhaseThermalConductivityBase >( subRegion );
-    GEOS_THROW_CTX_IF( thermalConductivityName.empty(),
-                       GEOS_FMT( "{}: Thermal conductivity model not found on subregion {}",
-                                 getDataContext(), subRegion.getDataContext() ),
-                       InputError, getDataContext(), subRegion.getDataContext() );
+    setConstitutiveName< MultiPhaseThermalConductivityBase >( subRegion, viewKeyStruct::thermalConductivityNamesString(), "multiphase thermal conductivity" );
   }
 }
 

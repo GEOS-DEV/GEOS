@@ -28,6 +28,7 @@ set( common_headers
      format/table/TableFormatter.hpp
      format/table/TableData.hpp
      format/EnumStrings.hpp
+     format/LogPart.hpp
      format/Format.hpp
      format/StringUtilities.hpp
      logger/Logger.hpp
@@ -43,6 +44,7 @@ set( common_headers
      MpiWrapper.hpp
      Path.hpp
      Span.hpp
+     StdContainerWrappers.hpp
      Stopwatch.hpp
      Timer.hpp
      Tensor.hpp
@@ -71,6 +73,7 @@ set( common_sources
      format/table/TableLayout.cpp
      format/table/TableFormatter.cpp
      format/table/TableData.cpp
+     format/LogPart.cpp
      format/StringUtilities.cpp
      logger/Logger.cpp
      logger/ErrorHandling.cpp
@@ -153,6 +156,6 @@ install( TARGETS common LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib )
 
 if( GEOS_ENABLE_TESTS )
   add_subdirectory( unitTests )
-  add_subdirectory( format/table/unitTests )
   add_subdirectory( format/unitTests )
+  add_subdirectory( format/table/unitTests )
 endif()
