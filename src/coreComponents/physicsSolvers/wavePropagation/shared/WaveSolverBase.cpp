@@ -342,10 +342,10 @@ void WaveSolverBase::postInputInitialization()
                                                        m_useDAS == WaveSolverUtils::DASType::strainIntegration ? "strain integration" : "displacement difference" ) );
 
     GEOS_ERROR_IF( m_linearDASGeometry.size( 1 ) != 3,
-                        "Invalid number of geometry parameters for the linear DAS fiber. Three parameters are required: dip, azimuth, gauge length" );
+                   "Invalid number of geometry parameters for the linear DAS fiber. Three parameters are required: dip, azimuth, gauge length" );
 
     GEOS_ERROR_IF( m_linearDASGeometry.size( 0 ) != m_receiverCoordinates.size( 0 ),
-                        "Invalid number of geometry parameters instances for the linear DAS fiber. It should match the number of receivers." );
+                   "Invalid number of geometry parameters instances for the linear DAS fiber. It should match the number of receivers." );
 
     m_linearDASVectorX.resize( m_linearDASGeometry.size( 0 ) );
     m_linearDASVectorY.resize( m_linearDASGeometry.size( 0 ) );

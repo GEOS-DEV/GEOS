@@ -207,8 +207,7 @@ localIndex PhysicsSolverBase::targetRegionIndex( string const & regionName ) con
   auto const pos = std::find( m_targetRegionNames.begin(), m_targetRegionNames.end(), regionName );
   GEOS_ERROR_CTX_IF( pos == m_targetRegionNames.end(),
                      GEOS_FMT( "{}: Region {} is not a target of the solver.",
-                               getDataContext(), regionName ),
-                     getDataContext() );
+                               getDataContext(), regionName ), getDataContext() );
   return std::distance( m_targetRegionNames.begin(), pos );
 }
 

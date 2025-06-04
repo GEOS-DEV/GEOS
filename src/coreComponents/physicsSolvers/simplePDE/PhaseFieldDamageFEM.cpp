@@ -127,8 +127,7 @@ void PhaseFieldDamageFEM::registerDataOnMesh( Group & meshBodies )
       solidMaterialName = PhysicsSolverBase::getConstitutiveName< SolidBase >( subRegion );
       GEOS_ERROR_CTX_IF( solidMaterialName.empty(),
                          GEOS_FMT( "{}: SolidBase model not found on subregion {}",
-                                   getDataContext(), subRegion.getName() ),
-                         getDataContext() );
+                                   getDataContext(), subRegion.getName() ), getDataContext() );
 
     } );
   } );

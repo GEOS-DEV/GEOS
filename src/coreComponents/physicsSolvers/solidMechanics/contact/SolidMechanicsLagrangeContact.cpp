@@ -1732,8 +1732,7 @@ void SolidMechanicsLagrangeContact::assembleStabilization( MeshLevel const & mes
   SurfaceElementRegion const & fractureRegion = elemManager.getRegion< SurfaceElementRegion >( getUniqueFractureRegionName() );
   FaceElementSubRegion const & fractureSubRegion = fractureRegion.getUniqueSubRegion< FaceElementSubRegion >();
 
-  GEOS_ERROR_IF( !fractureSubRegion.hasField< contact::traction >(),
-                      "The fracture subregion must contain traction field." );
+  GEOS_ERROR_IF( !fractureSubRegion.hasField< contact::traction >(), "The fracture subregion must contain traction field." );
   arrayView2d< localIndex const > const elem2dToFaces = fractureSubRegion.faceList().toViewConst();
 
   // Get the state of fracture elements

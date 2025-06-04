@@ -193,8 +193,7 @@ void CompositionalMultiphaseWell::registerDataOnMesh( Group & meshBodies )
       string const & fluidName = getConstitutiveName< MultiFluidBase >( subRegion );
       GEOS_ERROR_CTX_IF( fluidName.empty(),
                          GEOS_FMT( "{}: Fluid model not found on subregion {}",
-                                   getDataContext(), subRegion.getName() ),
-                         getDataContext() );
+                                   getDataContext(), subRegion.getName() ), getDataContext() );
 
       MultiFluidBase const & fluid = subRegion.getConstitutiveModel< MultiFluidBase >( fluidName );
 
@@ -339,7 +338,7 @@ void compareMulticomponentModels( MODEL1_TYPE const & lhs, MODEL2_TYPE const & r
   {
     GEOS_THROW_IF_NE_MSG( lhs.componentNames()[ic], rhs.componentNames()[ic],
                           GEOS_FMT( "Mismatch in component names between constitutive models {} and {}",
-                                    lhs.getDataContext (), rhs.getDataContext() ),
+                                    lhs.getDataContext(), rhs.getDataContext() ),
                           InputError );
   }
 }

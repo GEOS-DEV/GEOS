@@ -113,8 +113,7 @@ struct WaveSolverUtils
     } );
 
     localIndex const total = MpiWrapper::sum( count.get() );
-    GEOS_ERROR_IF( nReceivers != total,
-                        GEOS_FMT( ": Invalid distribution of receivers: nReceivers={} != MPI::sum={}.", nReceivers, total ) );
+    GEOS_ERROR_IF( nReceivers != total, GEOS_FMT( ": Invalid distribution of receivers: nReceivers={} != MPI::sum={}.", nReceivers, total ) );
   }
 
   /**

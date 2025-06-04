@@ -1489,8 +1489,7 @@ ElementRegionManager::constructMaterialViewAccessor( string const & viewName,
           GEOS_ERROR_CTX_IF( !allowMissingViews,
                              subRegion.getDataContext() <<
                              ": Material " << constitutiveRelation.getDataContext() <<
-                             " does not contain " << viewName,
-                             subRegion.getDataContext() );
+                             " does not contain " << viewName, subRegion.getDataContext() );
         }
       } );
     }

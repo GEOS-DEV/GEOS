@@ -325,8 +325,7 @@ void FlowSolverBase::setConstitutiveNamesCallSuper( ElementSubRegionBase & subRe
   solidName = getConstitutiveName< CoupledSolidBase >( subRegion );
   GEOS_ERROR_CTX_IF( solidName.empty(),
                      GEOS_FMT( "{}: Solid model not found on subregion {}",
-                               getDataContext(), subRegion.getName() ),
-                     getDataContext() );
+                               getDataContext(), subRegion.getName() ), getDataContext() );
 
   subRegion.registerWrapper< string >( viewKeyStruct::permeabilityNamesString() ).
     setPlotLevel( PlotLevel::NOPLOT ).
@@ -337,8 +336,7 @@ void FlowSolverBase::setConstitutiveNamesCallSuper( ElementSubRegionBase & subRe
   permName = getConstitutiveName< PermeabilityBase >( subRegion );
   GEOS_ERROR_CTX_IF( permName.empty(),
                      GEOS_FMT( "{}: Permeability model not found on subregion {}",
-                               getDataContext(), subRegion.getName() ),
-                     getDataContext() );
+                               getDataContext(), subRegion.getName() ), getDataContext() );
 
   if( m_isThermal )
   {

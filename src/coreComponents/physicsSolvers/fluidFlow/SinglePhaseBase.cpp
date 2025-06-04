@@ -142,8 +142,7 @@ void SinglePhaseBase::setConstitutiveNames( ElementSubRegionBase & subRegion ) c
   fluidName = getConstitutiveName< SingleFluidBase >( subRegion );
   GEOS_ERROR_CTX_IF( fluidName.empty(),
                      GEOS_FMT( "{}: Fluid model not found on subregion {}",
-                               getDataContext(), subRegion.getName() ),
-                     getDataContext() );
+                               getDataContext(), subRegion.getName() ), getDataContext() );
 
   if( m_isThermal )
   {

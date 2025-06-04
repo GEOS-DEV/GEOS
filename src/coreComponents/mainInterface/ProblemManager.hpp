@@ -350,11 +350,6 @@ private:
   map< std::pair< string, Group const * const >, string_array const & >
   getDiscretizations() const;
 
-  /**
-   * @copydoc parseXMLDocument( xmlWrapper::xmlDocument & xmlDocument )
-   */
-  void parseXMLDocumentImpl( xmlWrapper::xmlDocument & xmlDocument );
-
   void generateMeshLevel( MeshLevel & meshLevel,
                           CellBlockManagerABC const & cellBlockManager,
                           Group const * const discretization,

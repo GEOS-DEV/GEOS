@@ -263,8 +263,7 @@ void ContactSolverBase::setConstitutiveNamesCallSuper( ElementSubRegionBase & su
     frictionLawName = PhysicsSolverBase::getConstitutiveName< FrictionBase >( subRegion );
     GEOS_ERROR_CTX_IF( frictionLawName.empty(),
                        GEOS_FMT( "{}: FrictionBase model not found on subregion {}",
-                                 getDataContext(), subRegion.getDataContext() ),
-                       getDataContext() );
+                                 getDataContext(), subRegion.getDataContext() ), getDataContext() );
   }
 }
 

@@ -655,7 +655,7 @@ ElementRegionManager::unpackFaceElementToFace( buffer_unit_type const * & buffer
       string subRegionName;
       unpackedSize += bufferOps::Unpack( buffer, subRegionName );
       GEOS_ERROR_IF( subRegionName != subRegion.getName(),
-                          "Unpacked subregion name (" << subRegionName << ") does not equal object name (" << subRegion.getName() << ")" );
+                     "Unpacked subregion name (" << subRegionName << ") does not equal object name (" << subRegion.getName() << ")" );
 
       localIndex_array & elemList = packList[kReg][kSubReg];
       unpackedSize += subRegion.unpackToFaceRelation( buffer, elemList, false, overwriteMap );

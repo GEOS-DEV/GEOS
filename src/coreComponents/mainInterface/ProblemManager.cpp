@@ -168,12 +168,11 @@ Group * ProblemManager::createChild( string const & GEOS_UNUSED_PARAM( childKey 
 void ProblemManager::problemSetup()
 {
   GEOS_MARK_FUNCTION;
-
   postInputInitializationRecursive();
 
   generateMesh();
 
-  // initialize_postMeshGeneration();
+//  initialize_postMeshGeneration();
 
   applyNumericalMethods();
 
@@ -440,6 +439,7 @@ void ProblemManager::parseInputString( string const & xmlString )
   parseXMLDocument( xmlDocument );
 }
 
+
 void ProblemManager::parseXMLDocument( xmlWrapper::xmlDocument & xmlDocument )
 {
   // Extract the problem node and begin processing the user inputs
@@ -490,7 +490,8 @@ void ProblemManager::parseXMLDocument( xmlWrapper::xmlDocument & xmlDocument )
         {
           string const errorMsg = GEOS_FMT( "Error while parsing region {} ({}):\n",
                                             regionName, regionNodePos.toString() );
-          errorLogger.currentErrorMsg().addToMsg( errorMsg )
+          errorLogger.currentErrorMsg()
+            .addToMsg( errorMsg )
             .addContextInfo( getDataContext().getContextInfo().setPriority( 1 ) );
           throw InputError( e, errorMsg );
         }
@@ -720,6 +721,7 @@ void ProblemManager::generateMesh()
       edgeManager.setIsExternal( faceManager );
     } );
   } );
+
 }
 
 
@@ -733,6 +735,7 @@ void ProblemManager::importFields()
 
 void ProblemManager::applyNumericalMethods()
 {
+
   DomainPartition & domain  = getDomainPartition();
   ConstitutiveManager & constitutiveManager = domain.getGroup< ConstitutiveManager >( groupKeys.constitutiveManager );
   Group & meshBodies = domain.getMeshBodies();
@@ -749,6 +752,7 @@ void ProblemManager::applyNumericalMethods()
 map< std::pair< string, Group const * const >, string_array const & >
 ProblemManager::getDiscretizations() const
 {
+
   map< std::pair< string, Group const * const >, string_array const & > meshDiscretizations;
 
   NumericalMethodsManager const &
@@ -1140,6 +1144,7 @@ DomainPartition const & ProblemManager::getDomainPartition() const
 
 void ProblemManager::applyInitialConditions()
 {
+
   m_fieldSpecificationManager->forSubGroups< FieldSpecificationBase >( [&]( FieldSpecificationBase & fs )
   {
     fs.setMeshObjectPath( getDomainPartition().getMeshBodies() );

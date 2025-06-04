@@ -777,8 +777,7 @@ void ProppantTransport::applyBoundaryConditions( real64 const time_n,
             GEOS_WARNING_CTX_IF( !bcConsistent,
                                  getDataContext() << ": Composition boundary condition not applied to component " <<
                                  ic << " on region '" << bcStatusEntryOuter.first << "'," <<
-                                 " set '" << bcStatusEntryInner.first << "'",
-                                 getDataContext() );
+                                 " set '" << bcStatusEntryInner.first << "'", getDataContext() );
           }
         }
       }
