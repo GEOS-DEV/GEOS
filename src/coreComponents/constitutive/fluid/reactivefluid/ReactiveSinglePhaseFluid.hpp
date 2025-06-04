@@ -348,45 +348,23 @@ updateMixedReactionSystem( localIndex const k,
   integer const numSecondarySpecies = m_numSecondarySpecies;
   integer const numKineticReactions = m_numKineticReactions;
   
-  stackArray1d< real64, MAX_NUM_SPECIES > primarySpeciesAggregateConcentration( numPrimarySpecies );
   stackArray1d< real64, MAX_NUM_SPECIES > logSecondarySpeciesConcentration( numSecondarySpecies );
-  stackArray1d< real64, MAX_NUM_KINETIC_REACTIONS > kineticReactionRates( m_numKineticReactions );
-  stackArray1d< real64, MAX_NUM_SPECIES > aggregateSpeciesRates( m_numPrimarySpecies );
   stackArray2d< real64, MAX_NUM_KINETIC_REACTIONS * MAX_NUM_SPECIES > dReactionRates_dLogPrimarySpeciesConcentrations( numKineticReactions, numPrimarySpecies );
-  stackArray2d< real64, MAX_NUM_SPECIES * MAX_NUM_SPECIES > dAggregatePrimarySpeciesConcentrations_dLogPrimarySpeciesConcentrations( numPrimarySpecies, numPrimarySpecies );
-  stackArray2d< real64, MAX_NUM_SPECIES * MAX_NUM_SPECIES > dAggregateSpeciesRates_dLogPrimarySpeciesConcentrations( numPrimarySpecies, numPrimarySpecies );
   
   computeAggregateConcentrationsAndRates( pressure, 
                                           temperature,
                                           logPrimarySpeciesConcentration,
                                           logSecondarySpeciesConcentration.toSlice(),
-                                          primarySpeciesAggregateConcentration.toSlice(),
-                                          dAggregatePrimarySpeciesConcentrations_dLogPrimarySpeciesConcentrations.toSlice(),
-                                          kineticReactionRates.toSlice(),
+                                          m_primarySpeciesAggregateConcentration[k][0],
+                                          m_dPrimarySpeciesAggregateConcentration_dLogPrimarySpeciesConcentrations[k][0],
+                                          m_kineticReactionRates[k][0],
                                           dReactionRates_dLogPrimarySpeciesConcentrations.toSlice(),
-                                          aggregateSpeciesRates.toSlice(),
-                                          dAggregateSpeciesRates_dLogPrimarySpeciesConcentrations.toSlice() );
-
-  for( int i = 0; i < numPrimarySpecies; ++i )
-  {
-    m_primarySpeciesAggregateConcentration[k][0][i] = primarySpeciesAggregateConcentration[i];
-    m_aggregateSpeciesRates[k][0][i] = aggregateSpeciesRates[i];
-    
-    for( int j = 0; j < numPrimarySpecies; ++j )
-    {
-      m_dPrimarySpeciesAggregateConcentration_dLogPrimarySpeciesConcentrations[k][0][i][j] = dAggregatePrimarySpeciesConcentrations_dLogPrimarySpeciesConcentrations[i][j];
-      m_dAggregateSpeciesRates_dLogPrimarySpeciesConcentrations[k][0][i][j] = dAggregateSpeciesRates_dLogPrimarySpeciesConcentrations[i][j];
-    }
-  }
+                                          m_aggregateSpeciesRates[k][0],
+                                          m_dAggregateSpeciesRates_dLogPrimarySpeciesConcentrations[k][0] );
 
   for( integer i=0; i < numSecondarySpecies; ++i )
   {
     m_secondarySpeciesConcentration[k][0][i] =  LvArray::math::exp( logSecondarySpeciesConcentration[i] );
-  }
-
-  for( integer r=0; r < numKineticReactions; ++r )
-  {
-    m_kineticReactionRates[k][0][r] =  kineticReactionRates[r];
   }
 }
 
