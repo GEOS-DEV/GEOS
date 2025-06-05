@@ -41,11 +41,18 @@ CeramicDamage::CeramicDamage( string const & name, Group * const parent ):
   m_thirdInvariantDependence(),
   m_velocityGradient(),
   m_plasticStrain(),
+<<<<<<< HEAD
   m_refStrainRate(), //added by SG
   m_strainRate(), //added by SG
   m_instTensileStrength(), //added by SG
   m_instCompressiveStrength(), //added by SG
   m_rateSensitivity() //added by SG
+=======
+  m_accumulatedModeIWork(),
+  m_accumulatedModeIIWork(),
+  m_distanceToCrackTip(),
+  m_surfaceFlag()
+>>>>>>> origin/feature/sohanjit/msee
 {
   // register default values
   registerWrapper( viewKeyStruct::tensileStrengthString(), &m_tensileStrength ).
@@ -117,6 +124,7 @@ CeramicDamage::CeramicDamage( string const & name, Group * const parent ):
     setPlotLevel( PlotLevel::NOPLOT ).
     setDescription( "Plastic strain" );
 
+<<<<<<< HEAD
   registerWrapper( viewKeyStruct::refStrainRateString(), &m_refStrainRate ). //added by SG
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( 1.0e-3 ). // you can adjust default as needed
@@ -143,6 +151,53 @@ CeramicDamage::CeramicDamage( string const & name, Group * const parent ):
     setApplyDefaultValue( 2.0 ).
     setDescription( "Rate sensitivity exponent for strength scaling" );
 
+=======
+  registerWrapper( viewKeyStruct::enableCrackTipStressConcentrationString(), &m_enableCrackTipStressConcentration).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( 0 ).
+    setPlotLevel( PlotLevel::NOPLOT ).
+    setDescription( "Use crack-tip stress concentration" );
+
+  registerWrapper( viewKeyStruct::fractureToughnessString(), &m_fractureToughness).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( 0 ).
+    setPlotLevel( PlotLevel::NOPLOT ).
+    setDescription( "Fracture toughness to compute fracture radius from crack-tip stress concentration" );
+
+  registerWrapper( viewKeyStruct::enableEnergyFailureCriterionString(), &m_enableEnergyFailureCriterion).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( 0 ).
+    setPlotLevel( PlotLevel::NOPLOT ).
+    setDescription( "Enable energy failure criterion" );
+
+  registerWrapper( viewKeyStruct::fractureEnergyReleaseRateString(), &m_fractureEnergyReleaseRate).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( DBL_MAX ).
+    setPlotLevel( PlotLevel::NOPLOT ).
+    setDescription( "Fracture energy release rate" );
+
+  registerWrapper( viewKeyStruct::accumulatedModeIWorkString(), &m_accumulatedModeIWork).
+    setInputFlag( InputFlags::FALSE ).
+    setApplyDefaultValue( 0.0 ).
+    setDescription( "Accumulated mode I work" );
+  
+  registerWrapper( viewKeyStruct::accumulatedModeIIWorkString(), &m_accumulatedModeIIWork).
+    setInputFlag( InputFlags::FALSE ).
+    setApplyDefaultValue( 0.0 ).
+    setDescription( "Accumulated mode II work" );
+  
+  registerWrapper( viewKeyStruct::distanceToCrackTipString(), &m_distanceToCrackTip ).
+    setInputFlag( InputFlags::FALSE ).
+    setApplyDefaultValue( 0.0 ).
+    setPlotLevel( PlotLevel::LEVEL_0).
+    setDescription( "Distance to crack tip" );
+
+  registerWrapper( viewKeyStruct::surfaceFlagString(), &m_surfaceFlag).
+    setInputFlag( InputFlags::FALSE ).
+    setApplyDefaultValue( 0 ).
+    setPlotLevel( PlotLevel::NOPLOT ).
+    setDescription( "Particle surface flag" );
+>>>>>>> origin/feature/sohanjit/msee
 }
 
 
@@ -162,6 +217,7 @@ void CeramicDamage::allocateConstitutiveData( dataRepository::Group & parent,
   m_jacobian.resize( 0, numConstitutivePointsPerParentIndex );
   m_velocityGradient.resize( 0, 3, 3 );
   m_plasticStrain.resize( 0, numConstitutivePointsPerParentIndex, 6 );
+<<<<<<< HEAD
   m_strainRate.resize( 0, numConstitutivePointsPerParentIndex ); //added by SG
   m_instTensileStrength.resize( 0, numConstitutivePointsPerParentIndex ); //added by SG
   m_instCompressiveStrength.resize( 0, numConstitutivePointsPerParentIndex ); //added by SG
@@ -169,6 +225,11 @@ void CeramicDamage::allocateConstitutiveData( dataRepository::Group & parent,
   //m_refStrainRate.resize( 0 ); //added by SG
   //m_rateSensitivity.resize( 0 ); //added by SG
 
+=======
+  m_accumulatedModeIWork.resize( 0 );
+  m_accumulatedModeIIWork.resize( 0 );
+  m_distanceToCrackTip.resize( 0 );
+>>>>>>> origin/feature/sohanjit/msee
 }
 
 
@@ -181,6 +242,8 @@ void CeramicDamage::postInputInitialization()
   GEOS_THROW_IF( m_compressiveStrength < m_tensileStrength, "Compressive strength must be greater than tensile strength.", InputError );
   GEOS_THROW_IF( m_maximumStrength < m_compressiveStrength, "Maximum theoretical strength must be greater than compressive strength.", InputError );
   GEOS_THROW_IF( m_crackSpeed < 0.0, "Crack speed must be a positive number.", InputError );
+  GEOS_THROW_IF( m_fractureEnergyReleaseRate < 0.0, "Fracture energy release rate must be positive.", InputError );
+  
 }
 
 

@@ -41,23 +41,32 @@ Geomechanics::Geomechanics( string const & name, Group * const parent ):
   m_p2( 0.0 ),
   m_p3( 0.0 ),
   m_p4( 0.0 ),
-  m_peakT1( 0.0 ),
+  m_peakI1( 0.0 ),
   m_fSlope( 0.0 ),
+  m_fSlopeFailed( 0.0 ),
   m_stren( 0.0 ),
   m_ySlope( 0.0 ),
   m_beta( 1.0 ),
   m_t1RateDependence( 0.0 ),
   m_t2RateDependence( 0.0 ),
   m_fractureEnergyReleaseRate( 0.0 ),
+  m_fractureSofteningExponent( 1.0 ),
+  m_fractureStress( 0.0 ),
+  m_brittleDuctileTransition( 0.0 ),
+  m_damageEvolutionCriterion( 0 ),
   m_cr( 0.0 ),
   m_fluidBulkModulus(0.0 ),
   m_fluidInitialPressure( 0.0 ),
   m_enableCreep( 0 ),
   m_creepC0( 0.0),
   m_creepC1( 0.0 ),
+  m_creepC2( 0.0 ),
   m_creepA( 0.0 ),
   m_creepB( 0.0 ),
   m_creepC( 0.0 ),
+  m_creepD( 1.0 ),
+  m_creepE( 0.0 ),
+  m_creepF( 1.0 ),
   m_strainHardeningN( 0.0 ),
   m_strainHardeningK( 0.0 ),
   m_plasticStrainTolerance( 1.0e-10 ),
@@ -69,7 +78,8 @@ Geomechanics::Geomechanics( string const & name, Group * const parent ):
   m_velocityGradient(),
   m_plasticStrain(),
   m_damage(),
-  m_lengthScale()
+  m_lengthScale(),
+  m_strengthScale()
 {
   // register default values
   registerWrapper( viewKeyStruct::b0String(), &m_b0 ).
@@ -152,13 +162,37 @@ Geomechanics::Geomechanics( string const & name, Group * const parent ):
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Rate dependence parameter 2" );
 
-  registerWrapper( viewKeyStruct::peakT1String(), &m_peakT1 ).
+  registerWrapper( viewKeyStruct::fractureEnergyReleaseRateString(), &m_fractureEnergyReleaseRate ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Fracture energy release rate parameter" );
+
+  registerWrapper( viewKeyStruct::brittleDuctileTransitionString(), &m_brittleDuctileTransition ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "brittleDuctileTransition parameter" );
+
+  registerWrapper( viewKeyStruct::fractureSofteningExponentString(), &m_fractureSofteningExponent ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Fracture softening exponent parameter" );
+
+  registerWrapper( viewKeyStruct::fractureStressString(), &m_fractureStress ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Fracture stress" );
+
+  registerWrapper( viewKeyStruct::damageEvolutionCriterionString(), &m_damageEvolutionCriterion ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "damageEvolutionCriterion" );
+
+  registerWrapper( viewKeyStruct::peakI1String(), &m_peakI1 ).
     setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "Peak T1 shear limit parameter" );
+    setDescription( "Peak I1 shear limit parameter" );
 
   registerWrapper( viewKeyStruct::fSlopeString(), &m_fSlope ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "F slope shear limit parameter" );
+
+  registerWrapper( viewKeyStruct::fSlopeFailedString(), &m_fSlopeFailed ).
+    setInputFlag( InputFlags::REQUIRED ).
+    setDescription( "F slope shear limit parameter after damage" );
 
   registerWrapper( viewKeyStruct::strenString(), &m_stren ).
     setInputFlag( InputFlags::REQUIRED ).
@@ -184,6 +218,10 @@ Geomechanics::Geomechanics( string const & name, Group * const parent ):
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Creep C1 parameter" );
 
+  registerWrapper( viewKeyStruct::creepC2String(), &m_creepC2 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Creep C2 parameter" );
+
   registerWrapper( viewKeyStruct::creepAString(), &m_creepA ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Creep A parameter" );
@@ -195,6 +233,18 @@ Geomechanics::Geomechanics( string const & name, Group * const parent ):
   registerWrapper( viewKeyStruct::creepCString(), &m_creepC ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Creep C parameter" );
+  
+  registerWrapper( viewKeyStruct::creepDString(), &m_creepD ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Creep D parameter" );
+
+  registerWrapper( viewKeyStruct::creepEString(), &m_creepE ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Creep E parameter" );
+
+  registerWrapper( viewKeyStruct::creepFString(), &m_creepF ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Creep F parameter" );
 
   registerWrapper( viewKeyStruct::strainHardeningNString(), &m_strainHardeningN ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -253,6 +303,12 @@ Geomechanics::Geomechanics( string const & name, Group * const parent ):
     setApplyDefaultValue( DBL_MIN ).
     setPlotLevel( PlotLevel::NOPLOT ).
     setDescription( "Array of quadrature point length scale values" );
+
+  registerWrapper( viewKeyStruct::strengthScaleString(), &m_strengthScale ).
+    setApplyDefaultValue( DBL_MIN ).
+    setPlotLevel( PlotLevel::NOPLOT ).
+    setDescription( "Array of quadrature point strength scale values" );
+
 }
 
 
@@ -283,7 +339,12 @@ void Geomechanics::postInputInitialization()
     // GEOS_THROW_IF( m_b3 <= 0.0, "b3 must be greater than 0", InputError );
     // GEOS_THROW_IF( m_b4 <= 0.0, "b4 must be greater than 0", InputError );
 
-    GEOS_THROW_IF( m_g0 < 0.0, "g0 must be greater than or equalt to 0", InputError );
+    //GEOS_THROW_IF( m_damageEvolutionCriterionPressure == 0. && m_damageEvolutionCriterionDilation == 0., "choose pressure or dilation", InputError );
+
+    //GEOS_THROW_IF( m_damageEvolutionCriterionPressure > 0. && m_damageEvolutionCriterionDilation > 0., "choose pressure or dilation", InputError );
+
+
+    GEOS_THROW_IF( m_g0 < 0.0, "g0 must be greater than or equal to 0", InputError );
     // GEOS_THROW_IF( m_g1 <= 0.0, "g1 must be greater than 0", InputError );
     // GEOS_THROW_IF( m_g2 <= 0.0, "g2 must be greater than 0", InputError );
     // GEOS_THROW_IF( m_g3 <= 0.0, "g3 must be greater than 0", InputError );
@@ -295,17 +356,20 @@ void Geomechanics::postInputInitialization()
     GEOS_THROW_IF( m_p3 <= 0.0, "p3 must be greater than 0", InputError );
     // GEOS_THROW_IF( m_p4 <= 0.0, "p4 must be greater than 0", InputError );
 
-    // GEOS_THROW_IF( m_peakT1 <= 0.0, "peakT1 must be greater than 0", InputError );
+    // GEOS_THROW_IF( m_peakI1 <= 0.0, "peakI1 must be greater than 0", InputError );
     GEOS_THROW_IF( m_fSlope < 0.0, "fSlope must be greater than 0", InputError );
+    GEOS_THROW_IF( m_fSlopeFailed > m_fSlope, "fSlopeFailed must be less than fSlope", InputError );
     // GEOS_THROW_IF( m_ySlope <= 0.0, "ySlope must be greater than 0", InputError );
     // GEOS_THROW_IF( m_stren <= 0.0, "stren must be greater than 0", InputError );
     GEOS_THROW_IF( m_beta <= 0.0, "beta must be greater than 0", InputError );
     // GEOS_THROW_IF( m_t1RateDependence <= 0.0, "t1RateDependence must be greater than 0", InputError );
     // GEOS_THROW_IF( m_t2RateDependence <= 0.0, "t2RateDependence must be greater than 0", InputError );
     // GEOS_THROW_IF( m_fractureEnergyReleaseRate <= 0.0, "fractureEnergyReleaseRate must be greater than 0", InputError );
+    GEOS_THROW_IF( m_fractureSofteningExponent <= 0.0, "fracture softening exponent must be greater than 0", InputError);
     GEOS_THROW_IF( m_cr <= 0.0, "cr must be 0 < CR < 1", InputError );
     // GEOS_THROW_IF( m_fluidBulkModulus <= 0.0, "fluidBulkModulus must be greater than 0", InputError );
     // GEOS_THROW_IF( m_initialFluidPressure <= 0.0, "initialFluidPressure must be greater than 0", InputError );
+
 }
 
 
