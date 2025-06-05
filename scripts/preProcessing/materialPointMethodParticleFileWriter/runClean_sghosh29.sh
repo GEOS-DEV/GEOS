@@ -10,19 +10,20 @@ fileNames=(
 	#elasticBlockUni
 	#ceramicDamage
 	#brazilianDisk
-	#planestrain
+	#planestrainfinecase4
 	#fullthreeD
 	#fullthreeDm2
 	#2Dboundary
-	blockthreeD_small
+	#jc
+	3DRBC
 )
 # ==========================================================================================================================================
 # This should be the location of the input file and anything else you need to copy over:
 #fileLocation='/data1/sghosh29/Working_MPM_LLNL/GEOS/scripts/preProcessing/materialPointMethodParticleFileWriter/verification/Ftable/'
 #fileLocation='/data1/sghosh29/Working_MPM_LLNL/GEOS/scripts/preProcessing/materialPointMethodParticleFileWriter/ceramicDamage/'
 #fileLocation='/data1/sghosh29/Working_MPM_LLNL/GEOS/scripts/preProcessing/materialPointMethodParticleFileWriter/examples/brazilianDisk/'
-#fileLocation='/data1/sghosh29/Working_MPM_LLNL/GEOS/scripts/preProcessing/materialPointMethodParticleFileWriter/planestrain/'
-fileLocation='/data1/sghosh29/Working_MPM_LLNL/GEOS/scripts/preProcessing/materialPointMethodParticleFileWriter/blockthreeD_small/'
+fileLocation='/data1/sghosh29/Working_MPM_LLNL/GEOS/scripts/preProcessing/materialPointMethodParticleFileWriter/3DRBC/'
+#fileLocation='/data1/sghosh29/Working_MPM_LLNL/GEOS/scripts/preProcessing/materialPointMethodParticleFileWriter/johnsoncook/'
 #fileLocation='/data1/sghosh29/Working_MPM_LLNL/GEOS/scripts/preProcessing/materialPointMethodParticleFileWriter/full_threeD_double/'
 #fileLocation='/data1/sghosh29/Working_MPM_LLNL/GEOS/scripts/preProcessing/materialPointMethodParticleFileWriter/2Dboundary/'
 

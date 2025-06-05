@@ -9,17 +9,17 @@ pfw["runDebug"] = True
 
 # Unit system :  mg, microsecond, mm,  stress-> GPA, velocity mm/us=km/s
 
-impacterDiameter = 3 # aluminum sphere, mm
-sampleDiameter = 76.2 # target diameter
-sampleLength = 76.2 # target length (cylinder) , mm
-impactVelocity = 1.5 # mm/us
+impacterDiameter = 3 # SS sphere, mm
+sampleDiameter = 152.4 # target diameter
+sampleLength = 152.4 # target length (cylinder) , mm
+impactVelocity = 1.515 # mm/us
 
 stopTime = sampleLength/impactVelocity 
 
-aluminumDensity = 2.7
-aluminumYield = .030
-aluminumYoungsModulus = 70.
-aluminumPoissonsRatio = 0.3
+steelDensity = 7.85
+steelYield = .25*1.2 #20 percent increased for strain rate hardening
+steelYoungsModulus = 210.
+steelPoissonsRatio = 0.3
 
 density = 2.75
 bulk = 275./( 3.*( 1. - 2.*0.3) )
@@ -35,11 +35,11 @@ weibullModulus = 6.
 # Domain ---------------------------------------------------------------------------------
 
 domainX = sampleLength+impacterDiameter
-domainY = 1.1*sampleDiameter
-domainZ = 1.1*sampleDiameter
+domainY = 1*sampleDiameter #changed
+domainZ = 1*sampleDiameter #changed
 
-cppx=240   # cells per partition in each direction
-cppy=240
+cppx=120   # cells per partition in each direction
+cppy=120
 cppz=12
 
 refine=1
@@ -74,8 +74,8 @@ pfw["autoRestart"]=False
 
 # END BATCH PARAMETERS ---------------------------------------------------------------
 
-pfw["endTime"] = stopTime
-pfw["plotInterval"] = stopTime / 100
+pfw["endTime"] = stopTime*4.0
+pfw["plotInterval"] = stopTime / 20
 pfw["restartInterval"] = stopTime*5.0
 
 # GEOSX MPM SOLVER PARAMETERS -------------------------------------------------------------------
@@ -158,16 +158,16 @@ def make_objects():
 
 # MATERIAL PROPERTIES --------------------------------------------------------------------
 
-pfw["materials"] = ["aluminum","target"]
+pfw["materials"] = ["steel","target"]
 pfw["materialPropertyString"]="""
 <VonMisesJ
 
-    name="aluminum"
+    name="steel"
 
-    defaultDensity=""" + '"' + str(aluminumDensity) + '"' + """
-    defaultYoungModulus=""" + '"' + str(aluminumYoungsModulus) + '"' + """
-    defaultPoissonRatio=""" + '"' + str(aluminumPoissonsRatio) + '"' + """
-    defaultYieldStrength=""" + '"' + str(aluminumYield) + '"' + """/>
+    defaultDensity=""" + '"' + str(steelDensity) + '"' + """
+    defaultYoungModulus=""" + '"' + str(steelYoungsModulus) + '"' + """
+    defaultPoissonRatio=""" + '"' + str(steelPoissonsRatio) + '"' + """
+    defaultYieldStrength=""" + '"' + str(steelYield) + '"' + """/>
 
  <CeramicDamage
 
@@ -186,3 +186,4 @@ pfw["materialPropertyString"]="""
 # DEFORMATION ---------------------------------------------------------------------------------
 
 pfw["boundaryConditionTypes"]=[0, 0, 0, 0, 0, 0]  
+pfw["plottableFields"]=["particleStrengthScale","target_damage", "gridVelocity","particleVelocity","particleWavespeed", "particleVolume"]

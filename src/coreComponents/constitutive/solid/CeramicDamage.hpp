@@ -69,7 +69,12 @@ public:
    * @param[in] shearModulus The ArrayView holding the shear modulus data for each element.
    * @param[in] thermalExpansionCoefficient The ArrayView holding the thermal expansion coefficient data for each element.
    * @param[in] newStress The ArrayView holding the new stress data for each quadrature point.
-   * @param[in] oldStress The ArrayView holding the old stress data for each quadrature point.
+   * @param[in] oldStress The ArrayView holding the old stress data for each quadrature point. 
+   * @param[in] refStrainRate The reference strain rate for rate-dependent strength scaling.
+   * @param[in] strainRate The ArrayView holding the strain rate data for each quadrature point (for rate-dependent scaling). //added here by SG
+   * @param[in] instTensileStrength Instantaneous Tensile Strength values.
+   * @param[in] instCompressiveStrength Instantaneous Compressive Strength values.
+   * @param[in] rateSensitivity The rate sensitivity for rate-dependent strength scaling.
    */
   CeramicDamageUpdates( arrayView2d< real64 > const & damage,
                         arrayView2d< real64 > const & jacobian,
@@ -91,7 +96,12 @@ public:
                         arrayView3d< real64, solid::STRESS_USD > const & newStress,
                         arrayView3d< real64, solid::STRESS_USD > const & oldStress,
                         arrayView2d< real64 > const & density,
-                        arrayView2d< real64 > const & wavespeed,
+                        arrayView2d< real64 > const & wavespeed,                       
+                        real64  const & refStrainRate,
+                        arrayView2d< real64 > const & strainRate, //added by SG
+                        arrayView2d< real64 > const & instTensileStrength, //added by SG
+                        arrayView2d< real64 > const & instCompressiveStrength, //added by SG
+                        real64  const & rateSensitivity,
                         bool const & disableInelasticity ):
     ElasticIsotropicUpdates( bulkModulus,
                              shearModulus,
@@ -114,7 +124,13 @@ public:
     m_damagedMaterialFrictionSlope( damagedMaterialFrictionSlope ),
     m_thirdInvariantDependence( thirdInvariantDependence ),
     m_velocityGradient( velocityGradient ),
-    m_plasticStrain( plasticStrain )
+    m_plasticStrain( plasticStrain ),
+    m_refStrainRate( refStrainRate ),
+    m_strainRate( strainRate ), // <-- Added by SG
+    m_instTensileStrength( instTensileStrength ), // <-- Added by SG
+    m_instCompressiveStrength( instCompressiveStrength ), // <-- Added by SG
+    m_rateSensitivity( rateSensitivity )
+
   {}
 
   /// Default copy constructor
@@ -176,7 +192,8 @@ public:
                                 real64 const timeIncrement,
                                 real64 const ( & beginningRotation )[3][3],
                                 real64 const ( & endRotation )[3][3],
-                                real64 ( &stress )[6] ) const;
+                                real64 const ( &strainIncrement )[6], //added by SG
+                                real64 ( &stress )[6] ) const; 
 
   GEOS_HOST_DEVICE
   real64 getStrength( const real64 damage,      // damage
@@ -219,6 +236,7 @@ real64 thirdInvariantStrengthScaling( const real64 J2,
                                       const real64 J3,
                                       const real64 dfdp ) const;
 
+                                
 
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
@@ -270,6 +288,19 @@ private:
 
   /// State variable: The plastic strain values for each quadrature point
   arrayView3d< real64 > const m_plasticStrain;
+
+  real64 m_refStrainRate;       // <-- ADD THIS
+
+  arrayView2d< real64 > const m_strainRate; //Added by SG
+
+  arrayView2d< real64 > const m_instTensileStrength; //Added by SG
+
+  arrayView2d< real64 > const m_instCompressiveStrength; //Added by SG
+
+  real64 m_rateSensitivity;     // <-- AND THIS
+
+  
+
 };
 
 
@@ -311,7 +342,8 @@ void CeramicDamageUpdates::smallStrainUpdate( localIndex const k,
                                                  timeIncrement, 
                                                  beginningRotation, 
                                                  endRotation, 
-                                                 stress );
+                                                 strainIncrement, //added by SG
+                                                 stress ); 
 
   // It doesn't make sense to modify stiffness with this model
 
@@ -386,6 +418,7 @@ void CeramicDamageUpdates::smallStrainUpdate_StressOnly( localIndex const k,
                                                  timeIncrement,
                                                  beginningRotation, 
                                                  endRotation, 
+                                                 strainIncrement,
                                                  stress );
 
   // Save new stress and return
@@ -400,10 +433,14 @@ void CeramicDamageUpdates::smallStrainUpdateHelper( localIndex const k,
                                                     real64 const timeIncrement,
                                                     real64 const ( & beginningRotation )[3][3],
                                                     real64 const ( & endRotation )[3][3],
-                                                    real64 ( & stress )[6] ) const
+                                                    real64 const ( &strainIncrement )[6], //added by SG
+                                                    real64 ( & stress )[6] ) const 
 {
   GEOS_UNUSED_VAR( beginningRotation );
   GEOS_UNUSED_VAR( endRotation );
+
+
+  //static real64 maxStrainRate = 0.0;
 
   // cohesion slope
   real64 mu = m_damagedMaterialFrictionSlope;
@@ -417,11 +454,54 @@ void CeramicDamageUpdates::smallStrainUpdateHelper( localIndex const k,
   real64 Ycmax = m_maximumStrength;
   real64 Ytmax = Ycmax / gamma;
 
-  Yt = std::min(Yt, 0.999*Ytmax);
-  Yc = std::min(Yc, 0.999*Ycmax);
+  (void) Ycmax;
+  (void) Ytmax;
 
+  //strain rate
+
+  real64 Yt_baseline=Yt;
+  real64 Yc_baseline=Yc;
+  
+  // real64 dEdt = 0.0;
+  // for( int i = 0; i < 3; ++i )
+  // {
+  //   for( int j = 0; j < 3; ++j )
+  //   {
+  //     real64 symPart = 0.5 * ( m_velocityGradient[k][i][j] + m_velocityGradient[k][j][i]  );
+  //     dEdt += symPart * symPart;
+  //   }
+  // }
+
+  // real64 SR = std::sqrt( 2.0 * dEdt );
+
+  real64 SR =
+  sqrt( (strainIncrement[0]*strainIncrement[0] +
+  strainIncrement[1]*strainIncrement[1] +
+  strainIncrement[2]*strainIncrement[2] +
+  2*strainIncrement[3]*strainIncrement[3] +
+  2*strainIncrement[4]*strainIncrement[4] +
+  2*strainIncrement[5]*strainIncrement[5] ) / timeIncrement );
+
+  //  //added by SG
+  m_strainRate[k][q] = SR;
+
+  real64 rateScaling_T=std::pow( (SR / (m_refStrainRate)), m_rateSensitivity );
+  real64 rateScaling_C=std::pow( (SR / (m_refStrainRate)), m_rateSensitivity );
+
+  Yt *= (rateScaling_T);
+  Yc *= (rateScaling_C);
+
+  Yt = std::max(Yt_baseline,Yt); //added for cutoff strength cannot go below initial
+  Yc = std::max(Yc_baseline,Yc); //added for cutoff strength cannot go below initial
+
+  //added by SG
+
+  m_instTensileStrength[k][q]=Yt;
+  m_instCompressiveStrength[k][q]=Yc;
+  
   // get failure time
   real64 tFail = m_lengthScale[k] / m_crackSpeed;
+  //tFail /= rateFactor;  //Faster degradation 
 
   // get trial pressure
   real64 pressure = -m_bulkModulus[k] * log( m_jacobian[k][q] );
@@ -743,6 +823,20 @@ public:
 
     /// string/key for quadrature point plasticStrain value 
     static constexpr char const * plasticStrainString() { return "plasticStrain"; }
+
+    static constexpr char const * refStrainRateString() { return "refStrainRate"; } //added by SG
+
+    static constexpr char const * strainRateString() { return "strainRate"; } // added by SG
+
+    static constexpr char const * instTensileStrengthString() { return "instTensileStrength"; } // added by SG
+
+    static constexpr char const * instCompressiveStrengthString() { return "instCompressiveStrength"; } // added by SG
+
+    static constexpr char const * rateSensitivityString() { return "rateSensitivity"; } //added by SG
+
+    
+
+
   };
 
   /**
@@ -772,6 +866,11 @@ public:
                                  m_oldStress,
                                  m_density,
                                  m_wavespeed,
+                                 m_refStrainRate,
+                                 m_strainRate,  // <-- Added this
+                                 m_instTensileStrength,  // <-- Added this
+                                 m_instCompressiveStrength,  // <-- Added this
+                                 m_rateSensitivity,
                                  m_disableInelasticity );
   }
 
@@ -799,14 +898,19 @@ public:
                           m_damagedMaterialFrictionSlope,
                           m_thirdInvariantDependence,
                           m_velocityGradient,
-                          m_plasticStrain,
+                          m_plasticStrain,                         
                           m_bulkModulus,
                           m_shearModulus,
                           m_thermalExpansionCoefficient,
                           m_newStress,
                           m_oldStress,
                           m_density,
-                          m_wavespeed,
+                          m_wavespeed,           
+                          m_refStrainRate,
+                          m_strainRate,  // <-- Added this
+                          m_instTensileStrength,  // <-- Added this
+                          m_instCompressiveStrength,  // <-- Added this
+                          m_rateSensitivity,
                           m_disableInelasticity );
   }
 
@@ -855,6 +959,23 @@ protected:
 
   ///State variable: The plastic strain values for each quadrature point
   array3d< real64 > m_plasticStrain;
+  
+  /// Material parameter: The reference strain rate (scalar)
+  real64 m_refStrainRate;
+
+   /// Material parameter: The reference strain rate (scalar)
+  array2d< real64 > m_strainRate; //added by SG
+
+   /// Material parameter: The reference strain rate (scalar)
+  array2d< real64 > m_instTensileStrength; //added by SG
+
+   /// Material parameter: The reference strain rate (scalar)
+  array2d< real64 > m_instCompressiveStrength; //added by SG
+
+/// Material parameter: The rate sensitivity (scalar)
+  real64 m_rateSensitivity;
+
+
 };
 
 } /* namespace constitutive */

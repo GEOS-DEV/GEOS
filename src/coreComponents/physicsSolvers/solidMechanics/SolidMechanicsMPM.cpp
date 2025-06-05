@@ -1339,6 +1339,10 @@ void SolidMechanicsMPM::registerDataOnMesh( Group & meshBodies )
         subRegion.registerField< particleMaterialType >( getName() );
         subRegion.registerField< particleMass >( getName() );
         subRegion.registerField< particleReferenceVolume >( getName() );
+        subRegion.registerField< particleStrainRate >( getName() ); // <-- Added this line
+        subRegion.registerField< particleinstTensileStrength >( getName() ); // <-- Added this line
+        subRegion.registerField< particleinstCompressiveStrength >( getName() ); // <-- Added this line
+
         subRegion.registerField< particleWavespeed >( getName() );
         subRegion.registerField< particleHeatCapacity >( getName() );
         subRegion.registerField< particleReferencePorosity >( getName() );
@@ -1910,6 +1914,14 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
     arrayView1d< real64 > const particleReferencePorosity = subRegion.getField< fields::mpm::particleReferencePorosity >();
     arrayView1d< real64 > const particleReferenceTemperature = subRegion.getField< fields::mpm::particleReferenceTemperature >();
 
+    //Added by SG
+
+    arrayView1d< real64 > const particleStrainRate = subRegion.getField< fields::mpm::particleStrainRate >();
+    arrayView1d< real64 > const particleinstTensileStrength = subRegion.getField< fields::mpm::particleinstTensileStrength >();
+    arrayView1d< real64 > const particleinstCompressiveStrength = subRegion.getField< fields::mpm::particleinstCompressiveStrength >();
+
+
+
     // Are these fields automatically set on initiailization?
     arrayView1d< int > const particleDomainScaledFlag = subRegion.getField< fields::mpm::particleDomainScaledFlag >();
     arrayView1d< int > const particleCopyFlag = subRegion.getField< fields::mpm::particleCopyFlag >();
@@ -1964,6 +1976,8 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
       particleSubdivideFlag[p] = 0;
       particleCopyFlag[p] = -1;
       particleDomainScaledFlag[p] = 0;
+      //particleStrainRate[p] = 0.0; // <-- Add this line by SG
+      
       
       // Initialize field from constitutive model
       particleHeatCapacity[p] = DBL_MAX; // CC: TODO Need to get this from constitutive model
@@ -3871,13 +3885,13 @@ void SolidMechanicsMPM::applyEssentialBCs( const real64 dt,
                 SortedArrayView< localIndex const > const boundaryNodes = m_boundaryNodes[face].toView();
                 int const numBoundaryNodes = boundaryNodes.size();
 
-                std::ofstream file;
+                // std::ofstream file;
 
-                file.open( "grid_coordinates.txt", std::ios::out | std::ios::app );
-                if( file.fail() )
-                {
-                  throw std::ios_base::failure( std::strerror( errno ) );
-                }
+                // file.open( "grid_coordinates.txt", std::ios::out | std::ios::app );
+                // if( file.fail() )
+                // {
+                //   throw std::ios_base::failure( std::strerror( errno ) );
+                // }
               
                 forAll< serialPolicy >( numBoundaryNodes, [&, gridPosition, gridVelocity, gridDVelocity, gridMass] GEOS_HOST ( localIndex const gg ) 
                 {
@@ -3895,18 +3909,18 @@ void SolidMechanicsMPM::applyEssentialBCs( const real64 dt,
 
                    // std::cout<<"Grid spacing dir0 "<<m_hEl[dir0]<<"Grid spacing dir1 "<<m_hEl[dir1]<<"Grid spacing dir2 "<<m_hEl[dir2]<<"Face "<<face<<std::endl;
   
-                    file <<"Time "<<time_n<<" "<< "Face "<<face<<" "<<"Node "<<g<<" "<<gridPosition[g][0]<<" "<<gridPosition[g][1]<<" "<<gridPosition[g][2]<<std::endl;
+                    //file <<"Time "<<time_n<<" "<< "Face "<<face<<" "<<"Node "<<g<<" "<<gridPosition[g][0]<<" "<<gridPosition[g][1]<<" "<<gridPosition[g][2]<<std::endl;
                       
-                   real64 velocityMagnitude = sqrt(gridVelocity[g][fieldIndex][dir0] * gridVelocity[g][fieldIndex][dir0] +
-                                gridVelocity[g][fieldIndex][dir1] * gridVelocity[g][fieldIndex][dir1] 
-                                +gridVelocity[g][fieldIndex][dir2] * gridVelocity[g][fieldIndex][dir2] );
+                   //real64 velocityMagnitude = sqrt(gridVelocity[g][fieldIndex][dir0] * gridVelocity[g][fieldIndex][dir0] +
+                    //            gridVelocity[g][fieldIndex][dir1] * gridVelocity[g][fieldIndex][dir1] 
+                          //      +gridVelocity[g][fieldIndex][dir2] * gridVelocity[g][fieldIndex][dir2] );
 
                                //if(face==0 || face==2)
                                 //{std::cout<<"Alpha "<<alpha<<"Face "<<face<<std::endl;}
 
-                    dampingCoefficient_dir0 = alpha * (velocityMagnitude / m_hEl[dir0]); // mus to s conversion
-                    dampingCoefficient_dir1 = alpha * (velocityMagnitude / m_hEl[dir1]);
-                    dampingCoefficient_dir2 = alpha * (velocityMagnitude / m_hEl[dir2]);
+                    dampingCoefficient_dir0 = alpha * (fabs(gridVelocity[g][fieldIndex][dir0]) / m_hEl[dir0]); // mus to s conversion
+                    dampingCoefficient_dir1 = alpha * (fabs(gridVelocity[g][fieldIndex][dir1]) / m_hEl[dir1]);
+                    dampingCoefficient_dir2 = alpha * (fabs(gridVelocity[g][fieldIndex][dir2]) / m_hEl[dir2]);
 
                     //dampingCoefficient_dir0=alpha;
                     //dampingCoefficient_dir1=alpha;
@@ -3958,7 +3972,9 @@ void SolidMechanicsMPM::applyEssentialBCs( const real64 dt,
                           {
                             localFaceReactions[face] += accelerationForAbsorption * gridMass[g][fieldIndex];
                           }
-                    } );  file.close();
+                    } );  
+                    
+                    //file.close();
 
                       // --- Buffer node update ---
                       // These nodes provide a smooth transition between interior and boundary.
@@ -9475,6 +9491,49 @@ void SolidMechanicsMPM::updateSolverDependencies( ParticleManager & particleMana
         particleWavespeed[p] = constitutiveWavespeed[p][0]; 
       } );
     }
+
+    //Added by SG
+    if( constitutiveModel.hasWrapper( "strainRate" ) )
+    {
+      arrayView1d< real64 > const particleStrainRate = subRegion.getField< fields::mpm::particleStrainRate >();
+      arrayView2d< real64 const > const constitutiveStrainRate = constitutiveModel.getReference< array2d< real64 > >( "strainRate" );
+
+      forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST_DEVICE ( localIndex const pp )
+      {
+        localIndex const p = activeParticleIndices[pp];
+        particleStrainRate[p] = constitutiveStrainRate[p][0]; // assuming [0] is the scalar strain rate
+      } );
+    }
+
+      //Added by SG
+    if( constitutiveModel.hasWrapper( "instTensileStrength" ) )
+    {
+      arrayView1d< real64 > const particleinstTensileStrength = subRegion.getField< fields::mpm::particleinstTensileStrength >();
+      arrayView2d< real64 const > const constitutiveinstTensileStrength = constitutiveModel.getReference< array2d< real64 > >( "instTensileStrength" );
+
+      forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST_DEVICE ( localIndex const pp )
+      {
+        localIndex const p = activeParticleIndices[pp];
+        particleinstTensileStrength[p] = constitutiveinstTensileStrength[p][0]; // assuming [0] is the scalar strain rate
+      } );
+    }
+
+      //Added by SG
+    if( constitutiveModel.hasWrapper( "instCompressiveStrength" ) )
+    {
+      arrayView1d< real64 > const particleinstCompressiveStrength = subRegion.getField< fields::mpm::particleinstCompressiveStrength >();
+      arrayView2d< real64 const > const constitutiveinstCompressiveStrength = constitutiveModel.getReference< array2d< real64 > >( "instCompressiveStrength" );
+
+      forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST_DEVICE ( localIndex const pp )
+      {
+        localIndex const p = activeParticleIndices[pp];
+        particleinstCompressiveStrength[p] = constitutiveinstCompressiveStrength[p][0]; // assuming [0] is the scalar strain rate
+      } );
+    }
+
+
+
+
   } );
 }
 

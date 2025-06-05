@@ -356,6 +356,7 @@ if wallTimeMinutes > 60 and runDebug:
   mWallTime="01:00:00"
 
 maxRestartTime = wallTimeMinutes*60 - min(wallTimeMinutes,lastRestartBufferInSeconds)
+maxRestartTime = maxRestartTime*1000 ##added this line
 mWallTimeMinutes=str(wallTimeMinutes)
 
 coreHours = float(int(mCores))*(float(int(wH))+float(int(wM))/60.+float(int(wS))/3600.)
