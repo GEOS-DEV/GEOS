@@ -45,40 +45,40 @@ public:
                         dataRepository::Group * const parent );
 
   /// Number of time steps
-  integer m_numTimeSteps;
+  integer m_numTimeSteps = 0;
 
   /// Number of time step cuts
-  integer m_numTimeStepCuts;
+  integer m_numTimeStepCuts = 0;
 
 
   /// Number of outer loop iterations in the current time step (utility variable constantly overwritten)
-  integer m_currentNumOuterLoopIterations;
+  integer m_currentNumOuterLoopIterations = 0;
 
   /// Number of nonlinear iterations in the current time step (utility variable constantly overwritten)
-  integer m_currentNumNonlinearIterations;
+  integer m_currentNumNonlinearIterations = 0;
 
   /// Number of linear iterations in the current time step (utility variable constantly overwritten)
-  integer m_currentNumLinearIterations;
+  integer m_currentNumLinearIterations = 0;
 
 
   /// Cumulative number of successful outer loop iterations
-  integer m_numSuccessfulOuterLoopIterations;
+  integer m_numSuccessfulOuterLoopIterations = 0;
 
   /// Cumulative number of successful nonlinear iterations
-  integer m_numSuccessfulNonlinearIterations;
+  integer m_numSuccessfulNonlinearIterations = 0;
 
   /// Cumulative number of successful linear iterations
-  integer m_numSuccessfulLinearIterations;
+  integer m_numSuccessfulLinearIterations = 0;
 
 
   /// Cumulative number of discarded outer loop iterations
-  integer m_numDiscardedOuterLoopIterations;
+  integer m_numDiscardedOuterLoopIterations = 0;
 
   /// Cumulative number of discarded nonlinear iterations
-  integer m_numDiscardedNonlinearIterations;
+  integer m_numDiscardedNonlinearIterations = 0;
 
   /// Cumulative number of discarded linear iterations
-  integer m_numDiscardedLinearIterations;
+  integer m_numDiscardedLinearIterations = 0;
 
   /**
    * @brief Struct to serve as a container for variable strings and keys.
