@@ -240,9 +240,9 @@ public:
 
   /**
    * @brief  Const access to stencil connector indices.
-   * @return A geos::unordered_map of stencil connector indices
+   * @return An unordered_map of stencil connector indices
    */
-  geos::unordered_map< localIndex, localIndex > const &
+  unordered_map< localIndex, localIndex > const &
   getConnectorIndices() const { return m_connectorIndices; }
 
 protected:
