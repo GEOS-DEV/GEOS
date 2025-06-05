@@ -58,6 +58,7 @@ set( multiPhysicsSolvers_headers
     SinglePhasePoromechanics.hpp
     SinglePhasePoromechanicsEmbeddedFractures.hpp
     SinglePhasePoromechanicsConformingFractures.hpp
+    SinglePhasePoromechanicsConformingFracturesALM.hpp
     SinglePhaseReservoirAndWells.hpp )
 
 # Specify solver sources
@@ -75,6 +76,7 @@ set( multiPhysicsSolvers_sources
     SinglePhasePoromechanics.cpp
     SinglePhasePoromechanicsEmbeddedFractures.cpp
     SinglePhasePoromechanicsConformingFractures.cpp
+    SinglePhasePoromechanicsConformingFracturesALM.cpp
     SinglePhaseReservoirAndWells.cpp )
 
 #include(poromechanicsKernels/PoromechanicsKernels.cmake)

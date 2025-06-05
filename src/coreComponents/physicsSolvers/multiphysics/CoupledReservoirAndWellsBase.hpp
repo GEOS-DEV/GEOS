@@ -253,6 +253,8 @@ public:
   { return reservoirSolver()->updateFluidState( subRegion ); }
   void updatePorosityAndPermeability( CellElementSubRegion & subRegion ) const
   { reservoirSolver()->updatePorosityAndPermeability( subRegion ); }
+  void updatePorosityAndPermeability( SurfaceElementSubRegion & subRegion ) const
+  { reservoirSolver()->updatePorosityAndPermeability( subRegion ); }
   void updateSolidInternalEnergyModel( ObjectManagerBase & dataGroup ) const
   { reservoirSolver()->updateSolidInternalEnergyModel( dataGroup ); }
 

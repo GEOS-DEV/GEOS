@@ -21,7 +21,7 @@
 #define GEOS_PHYSICSSOLVERS_MULTIPHYSICS_SINGLEPHASEPOROMECHANICSCONFORMINGFRACTURESALM_HPP_
 
 #include "physicsSolvers/multiphysics/SinglePhasePoromechanics.hpp"
-#include "physicsSolvers/contact/SolidMechanicsAugmentedLagrangianContact.hpp"
+#include "physicsSolvers/solidMechanics/contact/SolidMechanicsAugmentedLagrangianContact.hpp"
 
 namespace geos
 {
@@ -47,7 +47,7 @@ public:
    * @param parent the parent group of this instantiation of SinglePhasePoromechanicsConformingFracturesALM
    */
   SinglePhasePoromechanicsConformingFracturesALM( const string & name,
-                                               dataRepository::Group * const parent );
+                                                  dataRepository::Group * const parent );
 
   /// Destructor for the class
   ~SinglePhasePoromechanicsConformingFracturesALM() override {}
