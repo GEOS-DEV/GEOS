@@ -240,7 +240,7 @@ public:
 
   /**
    * @brief  Const access to stencil connector indices.
-   * @return A unordered_map of stencil connector indices
+   * @return An unordered_map of stencil connector indices
    */
   unordered_map< localIndex, localIndex > const &
   getConnectorIndices() const { return m_connectorIndices; }
