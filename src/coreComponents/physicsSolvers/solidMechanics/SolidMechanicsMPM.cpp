@@ -2007,11 +2007,7 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
       particleSubdivideFlag[p] = 0;
       particleCopyFlag[p] = -1;
       particleDomainScaledFlag[p] = 0;
-<<<<<<< HEAD
       //particleStrainRate[p] = 0.0; // <-- Add this line by SG
-=======
-
->>>>>>> origin/feature/sohanjit/msee
       
       
       // Initialize field from constitutive model
@@ -7968,68 +7964,32 @@ void SolidMechanicsMPM::computeDistanceToParticleSurface( real64 (& normal)[3],
   real64 tolerance = 1e-16;
 
   distanceToSurface = DBL_MAX;
-<<<<<<< HEAD
   if( std::abs( dN1 ) > tolerance && dS1 / dN1 > 0 )
-=======
-
-  if( std::abs( dN1 ) > tolerance && dS1 / dN1 > 0 )
-
->>>>>>> origin/feature/sohanjit/msee
   {
     distanceToSurface = fmin( distanceToSurface, dS1 / dN1 );
   }
 
-<<<<<<< HEAD
   if( std::abs( dN2 ) > tolerance && dS2 / dN2 > 0 )
-=======
-
-  if( std::abs( dN2 ) > tolerance && dS2 / dN2 > 0 )
-
->>>>>>> origin/feature/sohanjit/msee
   {
     distanceToSurface = fmin( distanceToSurface, dS2 / dN2 );
   }
 
-<<<<<<< HEAD
   if( std::abs( dN3 ) > tolerance && dS3 / dN3 > 0 )
-=======
-
-  if( std::abs( dN3 ) > tolerance && dS3 / dN3 > 0 )
-
->>>>>>> origin/feature/sohanjit/msee
   {
     distanceToSurface = fmin( distanceToSurface, dS3 / dN3 );
   }
 
-<<<<<<< HEAD
   if( std::abs( dN4 ) > tolerance && dS4 / dN4 > 0 )
-=======
-
-  if( std::abs( dN4 ) > tolerance && dS4 / dN4 > 0 )
-
->>>>>>> origin/feature/sohanjit/msee
   {
     distanceToSurface = fmin( distanceToSurface, dS4 / dN4 );
   }
 
-<<<<<<< HEAD
   if( std::abs( dN5 ) > tolerance && dS5 / dN5 > 0 )
-=======
-
-  if( std::abs( dN5 ) > tolerance && dS5 / dN5 > 0 )
-
->>>>>>> origin/feature/sohanjit/msee
   {
     distanceToSurface = fmin( distanceToSurface, dS5 / dN5 );
   }
 
-<<<<<<< HEAD
   if( std::abs( dN6 ) > tolerance && dS6 / dN6 > 0 )
-=======
-
-  if( std::abs( dN6 ) > tolerance && dS6 / dN6 > 0 )
-
->>>>>>> origin/feature/sohanjit/msee
   {
     distanceToSurface = fmin( distanceToSurface, dS6 / dN6 );
   }
