@@ -22,8 +22,6 @@
 
 #include "common/DataTypes.hpp"
 
-using namespace std;
-
 namespace geos
 {
 
@@ -65,7 +63,7 @@ public:
    */
   struct ContextInfo
   {
-    std::map< std::string, std::string > m_ctxInfo;
+    map< std::string, std::string > m_ctxInfo;
     integer m_priority = 0;
 
     /**

@@ -70,7 +70,9 @@ private:
   string toString() const override;
 
   /**
-   * @return a map containing contextual information, including the targetName of the DataContext
+   * @brief Returns contextual information, including the file name and the line number
+   * 
+   * @return ErrorLogger::ContextInfo 
    */
   ErrorLogger::ContextInfo getContextInfo() const override; 
 

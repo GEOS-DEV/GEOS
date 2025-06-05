@@ -21,7 +21,6 @@
 #include "common/logger/Logger.hpp"
 
 #include <fstream>
-#include <utility>
 #include <string_view>
 
 namespace geos

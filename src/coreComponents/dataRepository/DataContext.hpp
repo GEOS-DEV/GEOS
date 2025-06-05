@@ -60,14 +60,12 @@ public:
    * object comes from.
    */
   virtual string toString() const = 0;
-
+  
   /**
    * @brief Returns contextual information, including the file name and the line number
-   *
-   * @return std::map< std::string, std::string >
+   * 
+   * @return ErrorLogger::ContextInfo 
    */
-  // virtual std::map< std::string, std::string > getContextInfo() const = 0;
-  
   virtual ErrorLogger::ContextInfo getContextInfo() const = 0;
 
   /**
@@ -175,7 +173,9 @@ public:
   string toString() const override;
 
   /**
-   * @return a map containing contextual information, including the file name and the line number
+   * @brief Returns contextual information, including the file name and the line number
+   * 
+   * @return ErrorLogger::ContextInfo 
    */
   ErrorLogger::ContextInfo getContextInfo() const override;
 

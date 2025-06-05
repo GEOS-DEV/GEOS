@@ -29,8 +29,6 @@
 
 // System includes
 #include <stdexcept>
-#include <sstream>
-#include <iostream>
 
 #if defined(GEOS_USE_MPI)
   #include <mpi.h>
