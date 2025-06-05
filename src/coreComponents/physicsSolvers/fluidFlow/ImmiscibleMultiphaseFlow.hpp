@@ -316,6 +316,7 @@ private:
                                      constitutive::ConstitutiveBase * >, 2 > >  m_interfaceConstitutivePairs;
 
   unordered_map< localIndex, localIndex >  m_interfaceRegionByConnector;
+  unordered_map< localIndex, localIndex >  m_connectorIndicesByInterfaceRegion;
 
 
 private:
