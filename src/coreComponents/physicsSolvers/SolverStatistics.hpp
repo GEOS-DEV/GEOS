@@ -177,10 +177,10 @@ public:
   ConvergenceStatistics();
 
   /// Number of time steps
-  integer m_numTimeSteps;
+  integer m_numTimeSteps = 0;
 
   /// Maximum number of current Newton iterations.
-  integer m_currentNewtonIter;
+  integer m_currentNewtonIter = 0;
 
   /// Maximum value for residual mass.
   real64 m_residualMass = std::numeric_limits< real64 >::max();
