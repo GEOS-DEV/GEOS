@@ -285,7 +285,7 @@ void WellSolverBase::estimateWellSolution( real64 const & time_n,
   GEOS_MARK_FUNCTION;
 
 
-  GEOS_LOG_RANK("**** Estimate Well Solution - Start ****");
+  GEOS_LOG_RANK("**** Estimate Well Solution - Start **** " << getName() );
   setupWellDofs( domain );
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const & meshBodyName,
@@ -338,7 +338,7 @@ void WellSolverBase::estimateWellSolution( real64 const & time_n,
 
     } );
   } );
-  GEOS_LOG_RANK("**** Estimate Well Solution End ****");
+  GEOS_LOG_RANK("**** Estimate Well Solution End **** " << getName());
 }
 
 void WellSolverBase::setupWellSystem( DomainPartition & domain,

@@ -82,16 +82,16 @@ addCouplingNumNonzeros( PhysicsSolverBase const * const solver,
         localIndex const esr = resElementSubRegion[iperf];
         localIndex const ei = resElementIndex[iperf];
         localIndex const iwelem = perfWellElemIndex[iperf];
-
         if( resElemGhostRank[er][esr][ei] < 0 )
         {
           localIndex const localRow = LvArray::integerConversion< localIndex >( resElemDofNumber[er][esr][ei] - rankOffset );
           GEOS_ASSERT_GE( localRow, 0 );
           GEOS_ASSERT_GE( rowLengths.size(), localRow + resNumDof );
-
+          
           for( integer idof = 0; idof < resNumDof; ++idof )
           {
-            rowLengths[localRow + idof] += wellNumDof;
+              rowLengths[localRow + idof] += wellNumDof;
+            
           }
         }
 
@@ -103,7 +103,9 @@ addCouplingNumNonzeros( PhysicsSolverBase const * const solver,
 
           for( integer idof = 0; idof < wellNumDof; ++idof )
           {
+            
             rowLengths[localRow + idof] += resNumDof;
+                     
           }
         }
       } );

@@ -798,7 +798,7 @@ void CompositionalMultiphaseWell::outputSingleWellDebug( real64 const time,
       {
         cp_der.push_back( "dRho"+std::to_string( i+1 ));
       }
-      if( !m_wellDebugInit )
+      if( !m_wellPropWriter[srn].initialized() )
       {
         integer my_rank = MpiWrapper::commRank( MPI_COMM_GEOS );
         m_wellPropWriter[srn].initialize_perf( my_rank, m_ratesOutputDir, wellControls.getName(), perforationData );

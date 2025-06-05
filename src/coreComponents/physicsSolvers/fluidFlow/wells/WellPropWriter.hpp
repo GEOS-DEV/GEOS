@@ -309,6 +309,10 @@ public:
     m_globalWellElementIndex = subRegion.getGlobalWellElementIndex();
   }
 
+  bool initialized() 
+  {
+    return m_initialized == 1;
+  }
   template< typename T >
   void registerSegProp( std::string const & name, const T & prop )
   {
@@ -539,9 +543,11 @@ public:
       if( m_elemGhostRank[j] < 0 )
       {
         m_outputFile <<   time << "," <<  dt << "," <<  cycle << "," <<  subevent << "," << timeStep << "," << newtonIter << "," << numTimeStepCuts<<","<<m_globalWellElementIndex[j];
+        int cntr=0;
         for( auto i : m_propWriterVec )
         {
           i->write_prop( j, m_outputFile );
+          cntr=cntr+1;
         }
         m_outputFile << std::endl;
       }
@@ -555,7 +561,6 @@ public:
         localIndex const er  = m_resElementRegion[j];
         localIndex const esr = m_resElementSubRegion[j];
         localIndex const ei  = m_resElementIndex[j];
-
         m_perfOutputFile << time << "," <<  dt << "," <<  cycle << "," <<  subevent << "," << timeStep << "," << newtonIter << "," << numTimeStepCuts<<","<<m_perfResElemGlobalIndex[j] << "," <<
           m_globalWellElementIndex[iwelem];
         for( auto i : m_perfPropWriterVec )
