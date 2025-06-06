@@ -795,8 +795,8 @@ real64 PhysicsSolverBase::eisenstatWalker( real64 const newNewtonNorm,
 
 void MemoryUsageOutput( std::string const & message )
 {
-#if 0
   GEOS_UNUSED_VAR(message);
+#if 0
 #if defined( GEOS_USE_HIP )
   size_t free, total;
 
