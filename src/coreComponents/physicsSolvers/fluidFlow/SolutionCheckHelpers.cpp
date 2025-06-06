@@ -65,7 +65,6 @@ void ElementsReporterOutput::outputTooLowValues( string_view linesPrefix,
   {
     if( m_ranksSignaledElementsCount > 0 )
     {
-
       string const minValueStr = GEOS_FMT( "{:.{}f} [{}]", minValue, 3, units::getSymbol( unit ) );
       GEOS_LOG_RANK_0( GEOS_FMT( "{}{} {} values encountered. Minimum value: {}.",
                                  linesPrefix, m_ranksSignaledElementsCount, valueNaming, minValueStr ) );
@@ -74,9 +73,9 @@ void ElementsReporterOutput::outputTooLowValues( string_view linesPrefix,
       {
         TableLayout const layout = TableLayout().
                                      setTitle( GEOS_FMT( "Summary of {} elements", valueNaming ) ).
+                                     addColumns( { "Global Id", units::getDescription( unit ) } ).
                                      enableLineBreak( false ).
                                      setIndentation( linesPrefix.size() ).
-                                     setMargin( TableLayout::MarginValue::small ).
                                      setDefaultHeaderAlignment( TableLayout::Alignment::left );
         TableData data;
         integer const signaledCount = m_buffer.getSignaledElementsCount();
@@ -97,24 +96,19 @@ void ElementsReporterOutput::outputTooLowValues( string_view linesPrefix,
           mpiLayout.m_rankTitle = GEOS_FMT( "Rank {}, {} / {} values",
                                             MpiWrapper::commRank(), collectedCount, signaledCount );
 
-          data.addRow( stdVector< TableData::CellData >( tableColumnsCount, { CellType::MergeNext, "" } ) );
-          cells[globalIdLine].front() = { CellType::Value, "Global Id" };
-          for( int i = 0; i < collectedCount; ++i )
-            cells[globalIdLine][i+1] = { CellType::Value, std::to_string( m_buffer[i].m_id ) };
-
-          data.addRow( stdVector< TableData::CellData >( tableColumnsCount, { CellType::MergeNext, "" } ) );
-          cells[valuesLine].front() = { CellType::Value, string( units::getDescription( unit ) ) };
-          for( int i = 0; i < collectedCount; ++i )
-            cells[valuesLine][i+1] = { CellType::Value, std::to_string( m_buffer[i].m_value ) };
+          for( ElementReport const & report : m_buffer )
+          {
+            data.addRow( report.m_id, report.m_value );
+          }
 
           if( omittedCount > 0 )
           {
-            cells[globalIdLine].back() = { CellType::Value, "..." };
-            cells[valuesLine].back() = { CellType::Value, "..." };
+            data.addRow( "...", "..." );
           }
-
-          // ending blank cells
-          data.addRow( stdVector< TableData::CellData >( tableColumnsCount, { CellType::Value, "" } ) );
+          else
+          {
+            data.addRow( "", "" );
+          }
         }
 
         TableTextMpiOutput const formatter = TableTextMpiOutput( layout, mpiLayout );

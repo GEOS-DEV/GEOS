@@ -82,7 +82,7 @@ public:
   ElementCount getCollectedElementsCount() const
   { return LvArray::math::min( getSignaledElementsCount(), m_elementsBuffer.size() ); }
 
-  ElementReport operator[]( ElementCount id ) const
+  ElementReport const & operator[]( ElementCount id ) const
   { return m_elementsBuffer[id]; }
 
   auto begin() const
