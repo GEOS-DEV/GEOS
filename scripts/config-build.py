@@ -214,6 +214,12 @@ def main(calling_script, args, unknown_args):
     # Append cache file at the end of the command line to make previous argument visible to the cache.
     cmake_line.append("-C%s" % cache_file)
 
+    # Add them back
+    for unknown_arg in unknown_args:
+        if not unknown_arg.startswith('-D'):
+            logging.warning("Additional argument '%s' does not start with '-D'. Keeping it nevertheless." % unknown_arg)
+        cmake_line.append(unknown_arg)
+
     cmake_line.append(os.path.normpath(os.path.join(scripts_dir, "..", "src")))
 
     # Dump the cmake command to file for convenience
