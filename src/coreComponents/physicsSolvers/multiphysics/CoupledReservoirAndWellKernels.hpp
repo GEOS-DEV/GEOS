@@ -144,7 +144,7 @@ public:
     localIndex const esr = m_resElementSubRegion[iperf];
     localIndex const ei  = m_resElementIndex[iperf];
 
-    // get the well element index for this perforation
+    // get the well element index for this perforati
     localIndex const iwelem = m_perfWellElemIndex[iperf];
     globalIndex const resOffset = m_resElemDofNumber[er][esr][ei];
     globalIndex const wellElemOffset = m_wellElemDofNumber[iwelem];
@@ -416,7 +416,7 @@ public:
     stackArray1d< globalIndex, resNumDOF > dofColIndices( resNumDOF );
 
     stackArray1d< real64, numComp > localPerf( numComp );
-    stackArray2d< real64, numComp*resNumDOF > localPerfJacobian( numComp, resNumDOF );
+    stackArray2d< real64, numComp *resNumDOF > localPerfJacobian( numComp, resNumDOF );
 
     // get the reservoir (sub)region and element indices
     //localIndex const er  = m_resElementRegion[iperf];
@@ -921,7 +921,7 @@ public:
   {
     Base::computeFlux( iperf, [&] ( globalIndex const & wellElemOffset,
                                     localIndex const iwelem,
-                                    stackArray1d< globalIndex,  resNumDOF > & dofColIndices )
+                                    stackArray1d< globalIndex, resNumDOF > & dofColIndices )
     {
       // No energy equation if top element and Injector
       // Top element defined by global index == 0
@@ -934,7 +934,7 @@ public:
       // local working variables and arrays
       localIndex eqnRowIndices = LvArray::integerConversion< localIndex >( wellElemOffset - m_rankOffset ) + WJ_ROFFSET::ENERGYBAL;
 
-      stackArray2d< real64, resNumDOF > localPerfJacobian( 1,resNumDOF );
+      stackArray2d< real64, resNumDOF > localPerfJacobian( 1, resNumDOF );
       // populate local flux vector and derivatives
 
       real64 localPerf  = -m_dt * m_energyPerfFlux[iperf];
@@ -953,9 +953,9 @@ public:
       if( eqnRowIndices >= 0 && eqnRowIndices < m_localMatrix.numRows() )
       {
         m_localMatrix.template addToRowBinarySearchUnsorted< parallelDeviceAtomic >( eqnRowIndices,
-                                                                            dofColIndices.data(),
-                                                                            localPerfJacobian[0].dataIfContiguous(),
-                                                                            resNumDOF );
+                                                                                     dofColIndices.data(),
+                                                                                     localPerfJacobian[0].dataIfContiguous(),
+                                                                                     resNumDOF );
         RAJA::atomicAdd( parallelDeviceAtomic{}, &m_localRhs[eqnRowIndices], localPerf );
       }
     } );

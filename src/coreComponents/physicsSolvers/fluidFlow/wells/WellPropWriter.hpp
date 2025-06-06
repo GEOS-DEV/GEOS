@@ -309,7 +309,7 @@ public:
     m_globalWellElementIndex = subRegion.getGlobalWellElementIndex();
   }
 
-  bool initialized() 
+  bool initialized()
   {
     return m_initialized == 1;
   }

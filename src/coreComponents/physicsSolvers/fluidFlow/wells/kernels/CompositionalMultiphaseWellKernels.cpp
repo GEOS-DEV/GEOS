@@ -215,7 +215,7 @@ ControlEquationHelper::
   }
   // Total mass rate control
   else if( currentControl == WellControls::Control::MASSRATE )
-  { 
+  {
     controlEqn = massDensity*currentTotalVolRate - targetMassRate;
     dControlEqn[COFFSET_WJ::dP] = massDensity*dCurrentTotalVolRate[COFFSET_WJ::dP];
     dControlEqn[COFFSET_WJ::dQ] = massDensity*dCurrentTotalVolRate[COFFSET_WJ::dQ];

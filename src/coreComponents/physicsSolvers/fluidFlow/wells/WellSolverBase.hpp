@@ -373,7 +373,8 @@ public:
                            arrayView1d< real64 const > const & GEOS_UNUSED_PARAM( localSolution ),
                            real64 const GEOS_UNUSED_PARAM( scalingFactor ),
                            real64 const GEOS_UNUSED_PARAM( dt ),
-                           DomainPartition & GEOS_UNUSED_PARAM( domain ) ) {};
+                           DomainPartition & GEOS_UNUSED_PARAM( domain ),
+                           MeshLevel & GEOS_UNUSED_PARAM(mesh) ) {};
   /**
    * @brief function to set the next time step size
    * @param[in] currentTime the current time

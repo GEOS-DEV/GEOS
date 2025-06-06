@@ -1054,9 +1054,10 @@ protected:
   /// Timers for the aggregate profiling of the solver
   std::map< std::string, std::chrono::system_clock::duration > m_timers;
 
-private:
   /// List of names of regions the solver will be applied to
   string_array m_targetRegionNames;
+private:
+
 
   /// Map containing the array of target regions (value) for each MeshBody (key).
   map< std::pair< string, string >, string_array > m_meshTargets;

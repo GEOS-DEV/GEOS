@@ -285,7 +285,7 @@ void WellSolverBase::estimateWellSolution( real64 const & time_n,
   GEOS_MARK_FUNCTION;
 
 
-  GEOS_LOG_RANK("**** Estimate Well Solution - Start **** " << getName() );
+  GEOS_LOG_RANK( "**** Estimate Well Solution - Start **** " << getName() );
   setupWellDofs( domain );
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const & meshBodyName,
@@ -338,7 +338,7 @@ void WellSolverBase::estimateWellSolution( real64 const & time_n,
 
     } );
   } );
-  GEOS_LOG_RANK("**** Estimate Well Solution End **** " << getName());
+  GEOS_LOG_RANK( "**** Estimate Well Solution End **** " << getName());
 }
 
 void WellSolverBase::setupWellSystem( DomainPartition & domain,
@@ -393,7 +393,7 @@ void WellSolverBase::assembleWellSystem( real64 const time_n,
   computeWellPerforationRates( time_n, dt, elementRegionManager, subRegion );
   assembleWellFluxTerms( time_n, dt, subRegion, dofManager, localMatrix.toViewConstSizes(), localRhs );
   my_ctime=my_ctime+1;
-  
+
   //auto iterInfo = currentIter( time_n, dt );
   //outputWellDebug( time_n, dt, std::get< 0 >( iterInfo ), std::get< 1 >( iterInfo ), std::get< 2 >( iterInfo ),
   //                 domain, dofManager, localMatrix, localRhs );
@@ -406,8 +406,24 @@ void WellSolverBase::assembleSystem( real64 const time,
                                      CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                      arrayView1d< real64 > const & localRhs )
 {
-  if ( geos::currentCoupledNewton < m_estimateSolution)
-  estimateWellSolution( time, dt, 0, domain );
+  if( m_estimateSolution == 1000 )
+  {
+    if( geos::currentCoupledNewton%2 == 0 )
+    {
+      estimateWellSolution( time, dt, 0, domain );
+    }
+  }
+  else if( m_estimateSolution == 1001 )
+  {
+    if( geos::currentCoupledNewton%2 != 0 )
+    {
+      estimateWellSolution( time, dt, 0, domain );
+    }
+  }
+  else if( geos::currentCoupledNewton < m_estimateSolution )
+  {
+    estimateWellSolution( time, dt, 0, domain );
+  }
   string const wellDofKey = dofManager.getKey( wellElementDofName());
 
 
@@ -794,7 +810,7 @@ bool WellSolverBase::solveNonlinearSystem( real64 const & time_n,
       }
 
 // apply the system solution to the fields/variables
-      applyWellSystemSolution( dofManager, m_solution.values(), scaleFactor, stepDt, domain );
+      applyWellSystemSolution( dofManager, m_solution.values(), scaleFactor, stepDt, domain, mesh );
     }
 
     {

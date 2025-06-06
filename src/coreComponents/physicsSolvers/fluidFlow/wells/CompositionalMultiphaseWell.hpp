@@ -131,7 +131,8 @@ public:
                            arrayView1d< real64 const > const & localSolution,
                            real64 const scalingFactor,
                            real64 const dt,
-                           DomainPartition & domain ) override;
+                           DomainPartition & domain,
+                           MeshLevel & mesh ) override;
 
   virtual void
   applySystemSolution( DofManager const & dofManager,
@@ -349,6 +350,7 @@ public:
  */
   void chopNegativeDensities( DomainPartition & domain );
 
+  void chopNegativeDensities( WellElementSubRegion & subRegion );
   struct viewKeyStruct : WellSolverBase::viewKeyStruct
   {
     static constexpr char const * dofFieldString() { return "compositionalWellVars"; }

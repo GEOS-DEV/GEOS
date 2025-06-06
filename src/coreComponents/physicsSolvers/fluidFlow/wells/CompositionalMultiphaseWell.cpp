@@ -2876,7 +2876,8 @@ CompositionalMultiphaseWell::applyWellSystemSolution( DofManager const & dofMana
                                                       arrayView1d< real64 const > const & localSolution,
                                                       real64 const scalingFactor,
                                                       real64 const dt,
-                                                      DomainPartition & domain )
+                                                      DomainPartition & domain,
+                                                      MeshLevel & mesh )
 {
 
   GEOS_UNUSED_VAR( domain );
@@ -2914,6 +2915,7 @@ CompositionalMultiphaseWell::applyWellSystemSolution( DofManager const & dofMana
                                  temperatureMask );
 
   }
+
 #if 0
   // if component density chopping is allowed, some component densities may be negative after the update
   // these negative component densities are set to zero in this function
@@ -2921,34 +2923,31 @@ CompositionalMultiphaseWell::applyWellSystemSolution( DofManager const & dofMana
   {
     chopNegativeDensities( domain );
   }
-
-  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
-                                                               MeshLevel & mesh,
-                                                               string_array const & regionNames )
-  {
-    // synchronize
-    FieldIdentifiers fieldsToBeSync;
-    if( isThermal() )
-    {
-      fieldsToBeSync.addElementFields( { fields::well::pressure::key(),
-                                         fields::well::globalCompDensity::key(),
-                                         fields::well::mixtureConnectionRate::key(),
-                                         fields::well::temperature::key() },
-                                       regionNames );
-    }
-    else
-    {
-      fieldsToBeSync.addElementFields( { fields::well::pressure::key(),
-                                         fields::well::globalCompDensity::key(),
-                                         fields::well::mixtureConnectionRate::key() },
-                                       regionNames );
-    }
-    CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync,
-                                                         mesh,
-                                                         domain.getNeighbors(),
-                                                         true );
-  } );
 #endif
+ 
+  // synchronize
+  FieldIdentifiers fieldsToBeSync;
+  if( isThermal() )
+  {
+    fieldsToBeSync.addElementFields( { fields::well::pressure::key(),
+                                       fields::well::globalCompDensity::key(),
+                                       fields::well::mixtureConnectionRate::key(),
+                                       fields::well::temperature::key() },
+                                     m_targetRegionNames );
+  }
+  else
+  {
+    fieldsToBeSync.addElementFields( { fields::well::pressure::key(),
+                                       fields::well::globalCompDensity::key(),
+                                       fields::well::mixtureConnectionRate::key() },
+                                     m_targetRegionNames );
+  }
+  CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync,
+                                                       mesh,
+                                                       domain.getNeighbors(),
+                                                       true );
+
+
 
 }
 
@@ -3029,6 +3028,34 @@ CompositionalMultiphaseWell::applySystemSolution( DofManager const & dofManager,
                                                          true );
   } );
 
+
+}
+
+void CompositionalMultiphaseWell::chopNegativeDensities( WellElementSubRegion & subRegion )
+{
+  integer const numComp = m_numComponents;
+
+
+  arrayView1d< integer const > const & wellElemGhostRank = subRegion.ghostRank();
+
+  arrayView2d< real64, compflow::USD_COMP > const & wellElemCompDens =
+    subRegion.getField< fields::well::globalCompDensity >();
+
+  forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const iwelem )
+  {
+    if( wellElemGhostRank[iwelem] < 0 )
+    {
+      for( integer ic = 0; ic < numComp; ++ic )
+      {
+        // we allowed for some densities to be slightly negative in CheckSystemSolution
+        // if the new density is negative, chop back to zero
+        if( wellElemCompDens[iwelem][ic] < 0 )
+        {
+          wellElemCompDens[iwelem][ic] = 0;
+        }
+      }
+    }
+  } );
 
 }
 
