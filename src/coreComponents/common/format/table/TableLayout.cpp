@@ -24,31 +24,41 @@
 namespace geos
 {
 
-void TableLayout::addColumns( stdVector< string > const & columnNames )
+TableLayout & TableLayout::addColumns( stdVector< string > const & columnNames )
 {
   for( auto const & columnName : columnNames )
   {
     addColumn( columnName );
   }
+  return *this;
 }
 
-void TableLayout::addColumns( stdVector< TableLayout::Column > const & columns )
+TableLayout & TableLayout::addColumns( stdVector< TableLayout::Column > const & columns )
 {
   for( auto const & column : columns )
   {
     addColumn( column );
   }
+  return *this;
 }
 
-void TableLayout::addColumn( string_view columnName )
+TableLayout & TableLayout::addColumns( TableLayoutArgs columns )
+{
+  processArguments( columns );
+  return *this;
+}
+
+TableLayout & TableLayout::addColumn( string_view columnName )
 {
   TableLayout::Column column = TableLayout::Column().setName( columnName );
   m_tableColumns.emplace_back( column );
+  return *this;
 }
 
-void TableLayout::addColumn( TableLayout::Column const & column )
+TableLayout & TableLayout::addColumn( TableLayout::Column const & column )
 {
   m_tableColumns.emplace_back( column );
+  return *this;
 }
 
 TableLayout & TableLayout::setTitle( string_view title )

@@ -702,25 +702,31 @@ private:
    * @brief Create and add columns to the columns vector given a string vector
    * @param columnNames The columns name
    */
-  void addColumns( stdVector< TableLayout::Column > const & columnNames );
+  TableLayout & addColumns( stdVector< Column > const & columnNames );
 
   /**
    * @brief Create and add columns to the columns vector given a string vector
    * @param columns The columns list
    */
-  void addColumns( stdVector< string > const & columns );
+  TableLayout & addColumns( stdVector< string > const & columns );
+
+  /**
+   * @brief Create and add columns to the columns vector given a string and/or columns
+   * @param columns brace enclosed parameters, consisting of column names or Column instances
+   */
+  TableLayout & addColumns( TableLayoutArgs columns );
 
   /**
    * @brief Create and add a column to the columns vector given a string
    * @param columnName The column name
    */
-  void addColumn( string_view columnName );
+  TableLayout & addColumn( string_view columnName );
 
   /**
    * @brief Create and add a column to the columns vector given a Column
    * @param column Vector containing addition information on the column
    */
-  void addColumn( TableLayout::Column const & column );
+  TableLayout & addColumn( Column const & column );
 
 protected:
 
