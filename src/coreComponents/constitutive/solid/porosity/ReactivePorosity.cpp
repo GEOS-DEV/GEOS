@@ -51,9 +51,34 @@ ReactivePorosity::ReactivePorosity( string const & name, Group * const parent ):
   registerWrapper( viewKeyStruct::mineralDensitiesString(), &m_mineralDensities ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Mineral densities" );
+}
 
-  // Hard code for now 
-  m_numKineticReactions = 1; 
+std::unique_ptr< ConstitutiveBase > ReactivePorosity::deliverClone( string const & name, Group * const parent ) const
+{
+  std::unique_ptr< ConstitutiveBase > clone = ConstitutiveBase::deliverClone( name, parent );
+
+  ReactivePorosity & newConstitutiveRelation = dynamicCast< ReactivePorosity & >( *clone );
+
+  newConstitutiveRelation.m_numKineticReactions = m_numKineticReactions;
+
+  return clone;
+}
+
+void ReactivePorosity::postInputInitialization()
+{
+  PorosityBase::postInputInitialization();
+
+  GEOS_THROW_IF_NE_MSG( m_molarWeights.size(), m_initialVolumeFractions.size(),
+                        GEOS_FMT( "{}: mismatch in number of components in porosity model attribute '{}' and '{}", 
+                        getFullName(), viewKeyStruct::molarWeightsString(), viewKeyStruct::initialVolumeFractionsString() ),
+                        InputError );
+
+  GEOS_THROW_IF_NE_MSG( m_mineralDensities.size(), m_initialVolumeFractions.size(),
+                        GEOS_FMT( "{}: mismatch in number of components in porosity model attribute '{}' and '{}", 
+                        getFullName(), viewKeyStruct::mineralDensitiesString(), viewKeyStruct::initialVolumeFractionsString() ),
+                        InputError );
+
+  m_numKineticReactions = m_initialVolumeFractions.size();
 }
 
 void ReactivePorosity::allocateConstitutiveData( dataRepository::Group & parent,
@@ -71,25 +96,6 @@ void ReactivePorosity::resizeFields( localIndex const size, localIndex const num
 
   m_volumeFractions.resize( size, numPts, numKineticReactions );
   m_volumeFractions_n.resize( size, numPts, numKineticReactions );
-}
-
-void ReactivePorosity::postInputInitialization()
-{
-  PorosityBase::postInputInitialization();
-  
-  integer const numKineticReactions = this->numKineticReactions();
-
-  GEOS_THROW_IF_NE_MSG( m_initialVolumeFractions.size(), numKineticReactions,
-                        GEOS_FMT( "{}: invalid number of values in attribute '{}'", getFullName(), viewKeyStruct::initialVolumeFractionsString() ),
-                        InputError );
-
-  GEOS_THROW_IF_NE_MSG( m_molarWeights.size(), numKineticReactions,
-                        GEOS_FMT( "{}: invalid number of values in attribute '{}'", getFullName(), viewKeyStruct::molarWeightsString() ),
-                        InputError );
-
-  GEOS_THROW_IF_NE_MSG( m_mineralDensities.size(), numKineticReactions,
-                        GEOS_FMT( "{}: invalid number of values in attribute '{}'", getFullName(), viewKeyStruct::mineralDensitiesString() ),
-                        InputError );
 }
 
 void ReactivePorosity::saveConvergedState() const

@@ -121,6 +121,10 @@ class ReactivePorosity : public PorosityBase
 public:
   ReactivePorosity( string const & name, Group * const parent );
 
+  virtual std::unique_ptr< ConstitutiveBase >
+  deliverClone( string const & name,
+                dataRepository::Group * const parent ) const override;
+
   virtual void allocateConstitutiveData( dataRepository::Group & parent,
                                          localIndex const numConstitutivePointsPerParentIndex ) override;
 

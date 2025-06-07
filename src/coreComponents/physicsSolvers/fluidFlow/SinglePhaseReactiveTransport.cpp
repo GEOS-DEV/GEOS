@@ -27,6 +27,7 @@
 #include "constitutive/fluid/reactivefluid/ReactiveSinglePhaseFluid.hpp"
 #include "constitutive/fluid/reactivefluid/ReactiveSinglePhaseFluid.cpp"
 #include "constitutive/fluid/reactivefluid/ReactiveFluidSelector.hpp"
+#include "constitutive/solid/CoupledSolidBase.hpp"
 #include "finiteVolume/FluxApproximationBase.hpp"
 #include "mesh/DomainPartition.hpp"
 #include "physicsSolvers/LogLevelsInfo.hpp"
@@ -154,6 +155,41 @@ void SinglePhaseReactiveTransport::registerDataOnMesh( Group & meshBodies )
       
       subRegion.registerField< kineticReactionMolarIncrements >( getName() ).
         reference().resizeDimension< 1 >( m_numKineticReactions );
+    } );
+  } );
+}
+
+void SinglePhaseReactiveTransport::validateConstitutiveModels( DomainPartition & domain ) const
+{
+  GEOS_MARK_FUNCTION;
+
+  SinglePhaseBase::validateConstitutiveModels( domain );
+
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                                               MeshLevel & mesh,
+                                                               string_array const & regionNames )
+  {
+    mesh.getElemManager().forElementSubRegions( regionNames, [&]( localIndex const,
+                                                                  ElementSubRegionBase & subRegion )
+    {
+      string const & porosityModelName = getConstitutiveName< PorosityBase >( subRegion );
+
+      PorosityBase const & porosity = getConstitutiveModel< PorosityBase >( subRegion, porosityModelName );
+
+      GEOS_THROW_IF( m_isUpdateReactivePorosity && (porosity.getCatalogName() != "ReactivePorosity"),
+                     GEOS_FMT( "SinglePhaseReactiveTransport {}: the reaction porosity update option is enabled in the solver, but the porosity model {} is not for reactive porosity",
+                               getDataContext(), porosity.getDataContext() ),
+                     InputError );
+
+      if( m_isUpdateReactivePorosity )
+      {
+        ReactivePorosity const & reactivePorosity = getConstitutiveModel< ReactivePorosity >( subRegion, porosityModelName );
+
+        GEOS_THROW_IF_NE_MSG( reactivePorosity.numKineticReactions(), m_numKineticReactions,
+                              GEOS_FMT( "Mismatch in number of kinetic reactions, check the number of components input in porosity model {}",
+                                        reactivePorosity.getDataContext() ),
+                              InputError );
+      }
     } );
   } );
 }

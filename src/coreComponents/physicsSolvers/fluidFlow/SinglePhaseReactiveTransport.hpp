@@ -160,6 +160,12 @@ public:
   void initializeEquilibriumReaction( ElementSubRegionBase & subRegion ) const;
 
   /**
+   * @brief Checks constitutive models for consistency
+   * @param[in] domain the domain partition
+   */
+  virtual void validateConstitutiveModels( DomainPartition & domain ) const override final;
+
+  /**
    * @brief Getter for the number of fluid components (species)
    * @return the number of components
    */
