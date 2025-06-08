@@ -125,10 +125,16 @@ endif()
 
 if( ENABLE_CUDA )
   list( APPEND extraComponentsLinkList cuda )
-endif()
 
-if( ENABLE_CUDA AND ENABLE_CUDA_NVTOOLSEXT )
-  list( APPEND extraComponentsLinkList CUDA::nvToolsExt )
+  if (ENABLE_CUDA_NVTOOLSEXT)
+    list( APPEND extraComponentsLinkList CUDA::nvToolsExt )
+    message( STATUS "Enabling CUDA::nvToolsExt" )
+  endif()
+
+  if (ENABLE_CUDA_NVML)
+    list( APPEND extraComponentsLinkList CUDA::nvml )
+    message( STATUS "Enabling CUDA::nvml" )
+  endif()
 endif()
 
 if( ENABLE_HIP )
