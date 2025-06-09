@@ -49,7 +49,8 @@ WellControls::WellControls( string const & name, Group * const parent )
   m_targetTotalRateTable( nullptr ),
   m_targetPhaseRateTable( nullptr ),
   m_targetBHPTable( nullptr ),
-  m_statusTable( nullptr )
+  m_statusTable( nullptr ),
+  m_wellOpen( false )
 {
   setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
 
@@ -483,6 +484,15 @@ bool WellControls::isWellOpen( real64 const & currentTime ) const
   return isOpen;
 }
 
+void WellControls::setWellState( bool open )
+{
+  m_wellOpen = open;
+}
+
+bool WellControls::getWellState()
+{
+  return m_wellOpen;
+}
 void WellControls::setNextDtFromTables( real64 const currentTime, real64 & nextDt )
 {
   setNextDtFromTable( m_targetBHPTable, currentTime, nextDt );

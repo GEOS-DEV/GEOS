@@ -270,6 +270,9 @@ public:
    */
   bool isWellOpen( real64 const & currentTime ) const;
 
+  void setWellState( bool open );
+  bool getWellState();
+
   /**
    * @brief Getter for the flag to enable crossflow
    * @return the flag deciding whether crossflow is allowed or not
@@ -435,6 +438,8 @@ private:
 
   /// Status table
   TableFunction const * m_statusTable;
+
+  bool m_wellOpen;
 };
 
 ENUM_STRINGS( WellControls::Type,

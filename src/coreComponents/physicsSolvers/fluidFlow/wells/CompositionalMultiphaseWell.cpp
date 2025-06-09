@@ -1041,7 +1041,7 @@ void CompositionalMultiphaseWell::initializePostInitialConditionsPreSubGroups()
 void CompositionalMultiphaseWell::updateGlobalComponentFraction( WellElementSubRegion & subRegion ) const
 {
   GEOS_MARK_FUNCTION;
-
+  GEOS_LOG_RANK( "tjb " << subRegion.getName());
   isothermalCompositionalMultiphaseBaseKernels::
     GlobalComponentFractionKernelFactory::
     createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
@@ -1437,13 +1437,17 @@ void CompositionalMultiphaseWell::updateState( DomainPartition & domain )
     mesh.getElemManager().forElementSubRegions< WellElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                           WellElementSubRegion & subRegion )
     {
+      WellControls & wellControls = getWellControls( subRegion );
+      if( wellControls.getWellState())
+      {
 #if 1
-      real64 const maxRegionPhaseVolFrac = updateWellState( subRegion );
+        real64 const maxRegionPhaseVolFrac = updateWellState( subRegion );
 #else
-      real64 const maxRegionPhaseVolFrac = updateSubRegionState( subRegion );
+        real64 const maxRegionPhaseVolFrac = updateSubRegionState( subRegion );
 
 #endif
-      maxPhaseVolFrac = LvArray::math::max( maxRegionPhaseVolFrac, maxPhaseVolFrac );
+        maxPhaseVolFrac = LvArray::math::max( maxRegionPhaseVolFrac, maxPhaseVolFrac );
+      }
     } );
   } );
   maxPhaseVolFrac = MpiWrapper::max( maxPhaseVolFrac );
@@ -1456,20 +1460,25 @@ void CompositionalMultiphaseWell::updateState( DomainPartition & domain )
 
 real64 CompositionalMultiphaseWell::updateSubRegionState( WellElementSubRegion & subRegion )
 {
-  // update properties
-  updateGlobalComponentFraction( subRegion );
+  real64 maxPhaseVolChange=0.0;
+  WellControls & wellControls = getWellControls( subRegion );
+  if( wellControls.getWellState())
+  {
+    // update properties
+    updateGlobalComponentFraction( subRegion );
 
-  // update volumetric rates for the well constraints
-  // note: this must be called before updateFluidModel
-  updateVolRatesForConstraint( subRegion );
+    // update volumetric rates for the well constraints
+    // note: this must be called before updateFluidModel
+    updateVolRatesForConstraint( subRegion );
 
-  // update densities, phase fractions, phase volume fractions
+    // update densities, phase fractions, phase volume fractions
 
-  updateFluidModel( subRegion );   //  Calculate fluid properties;
-  real64 maxPhaseVolChange = updatePhaseVolumeFraction( subRegion );
-  updateTotalMassDensity( subRegion );
-  // update the current BHP pressure
-  updateBHPForConstraint( subRegion );
+    updateFluidModel( subRegion ); //  Calculate fluid properties;
+    maxPhaseVolChange = updatePhaseVolumeFraction( subRegion );
+    updateTotalMassDensity( subRegion );
+    // update the current BHP pressure
+    updateBHPForConstraint( subRegion );
+  }
   return maxPhaseVolChange;
 }
 
@@ -1499,7 +1508,7 @@ void CompositionalMultiphaseWell::initializeWells( DomainPartition & domain, rea
                                                               [&]( localIndex const,
                                                                    WellElementSubRegion & subRegion )
     {
-      WellControls const & wellControls = getWellControls( subRegion );
+      WellControls & wellControls = getWellControls( subRegion );
       PerforationData const & perforationData = *subRegion.getPerforationData();
       arrayView2d< real64 const > const compPerfRate = perforationData.getField< fields::well::compPerforationRate >();
 
@@ -1507,6 +1516,7 @@ void CompositionalMultiphaseWell::initializeWells( DomainPartition & domain, rea
 
       if( time_n <= 0.0  || ( wellControls.isWellOpen( time_n ) && !hasNonZeroRate ) )
       {
+        wellControls.setWellState( true );
         // get well primary variables on well elements
         arrayView1d< real64 > const & wellElemPressure = subRegion.getField< fields::well::pressure >();
         arrayView1d< real64 > const & wellElemTemp = subRegion.getField< fields::well::temperature >();
@@ -1591,6 +1601,10 @@ void CompositionalMultiphaseWell::initializeWells( DomainPartition & domain, rea
                   wellElemPhaseDens,
                   wellElemTotalDens,
                   connRate );
+      }
+      else
+      {
+        wellControls.setWellState( false );
       }
     } );
 
@@ -2007,7 +2021,6 @@ CompositionalMultiphaseWell::calculateWellResidualNorm( real64 const & time_n,
                                                         arrayView1d< real64 const > const & localRhs )
 {
   GEOS_MARK_FUNCTION;
-
   integer numNorm = 1; // mass balance
   array1d< real64 > localResidualNorm;
   array1d< real64 > localResidualNormalizer;
@@ -2030,65 +2043,73 @@ CompositionalMultiphaseWell::calculateWellResidualNorm( real64 const & time_n,
 
   WellControls const & wellControls = getWellControls( subRegion );
 
-  // step 1: compute the norm in the subRegion
-
-  if( isThermal() )
+  if( wellControls.isWellOpen( time_n ) )
   {
-    real64 subRegionResidualNorm[2]{};
-
-    thermalCompositionalMultiphaseWellKernels::ResidualNormKernelFactory::
-      createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
-                                                 m_targetPhaseIndex,
-                                                 rankOffset,
-                                                 wellDofKey,
-                                                 localRhs,
-                                                 subRegion,
-                                                 fluid,
-                                                 wellControls,
-                                                 time_n,
-                                                 dt,
-                                                 m_nonlinearSolverParameters.m_minNormalizer,
-                                                 subRegionResidualNorm );
-    // step 2: reduction across meshBodies/regions/subRegions
-
-    for( integer i=0; i<numNorm; i++ )
+    // step 1: compute the norm in the subRegion
+    if( isThermal() )
     {
-      if( subRegionResidualNorm[i] > localResidualNorm[i] )
+      real64 subRegionResidualNorm[2]{};
+
+      thermalCompositionalMultiphaseWellKernels::ResidualNormKernelFactory::
+        createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
+                                                   m_targetPhaseIndex,
+                                                   rankOffset,
+                                                   wellDofKey,
+                                                   localRhs,
+                                                   subRegion,
+                                                   fluid,
+                                                   wellControls,
+                                                   time_n,
+                                                   dt,
+                                                   m_nonlinearSolverParameters.m_minNormalizer,
+                                                   subRegionResidualNorm );
+      // step 2: reduction across meshBodies/regions/subRegions
+
+      for( integer i=0; i<numNorm; i++ )
       {
-        localResidualNorm[i] = subRegionResidualNorm[i];
+        if( subRegionResidualNorm[i] > localResidualNorm[i] )
+        {
+          localResidualNorm[i] = subRegionResidualNorm[i];
+        }
+      }
+
+    }
+    else
+    {
+      real64 subRegionResidualNorm[1]{};
+      compositionalMultiphaseWellKernels::ResidualNormKernelFactory::
+        createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
+                                                   numDofPerWellElement(),
+                                                   m_targetPhaseIndex,
+                                                   rankOffset,
+                                                   wellDofKey,
+                                                   localRhs,
+                                                   subRegion,
+                                                   fluid,
+                                                   wellControls,
+                                                   time_n,
+                                                   dt,
+                                                   m_nonlinearSolverParameters.m_minNormalizer,
+                                                   subRegionResidualNorm );
+
+
+
+      // step 2: reduction across meshBodies/regions/subRegions
+
+      if( subRegionResidualNorm[0] > localResidualNorm[0] )
+      {
+        localResidualNorm[0] = subRegionResidualNorm[0];
       }
     }
-
   }
   else
   {
-    real64 subRegionResidualNorm[1]{};
-    compositionalMultiphaseWellKernels::ResidualNormKernelFactory::
-      createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
-                                                 numDofPerWellElement(),
-                                                 m_targetPhaseIndex,
-                                                 rankOffset,
-                                                 wellDofKey,
-                                                 localRhs,
-                                                 subRegion,
-                                                 fluid,
-                                                 wellControls,
-                                                 time_n,
-                                                 dt,
-                                                 m_nonlinearSolverParameters.m_minNormalizer,
-                                                 subRegionResidualNorm );
-
-
-
-    // step 2: reduction across meshBodies/regions/subRegions
-
-    if( subRegionResidualNorm[0] > localResidualNorm[0] )
+    for( integer i=0; i<numNorm; i++ )
     {
-      localResidualNorm[0] = subRegionResidualNorm[0];
+      localResidualNorm[i] = 0.0;
     }
+
   }
-
-
   // step 3: second reduction across MPI ranks
   real64 resNorm=localResidualNorm[0];
   if( isThermal() )
@@ -2122,13 +2143,13 @@ CompositionalMultiphaseWell::calculateResidualNorm( real64 const & time_n,
 {
   GEOS_MARK_FUNCTION;
 
-  integer numNorm = 1; // mass balance
+  integer numNorm = 1;   // mass balance
   array1d< real64 > localResidualNorm;
   array1d< real64 > localResidualNormalizer;
 
   if( isThermal() )
   {
-    numNorm = 2;  // mass balance and energy balance
+    numNorm = 2;   // mass balance and energy balance
   }
   localResidualNorm.resize( numNorm );
   localResidualNormalizer.resize( numNorm );
@@ -2149,69 +2170,77 @@ CompositionalMultiphaseWell::calculateResidualNorm( real64 const & time_n,
                                                               [&]( localIndex const,
                                                                    WellElementSubRegion const & subRegion )
     {
-
-
       string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
       MultiFluidBase const & fluid = subRegion.getConstitutiveModel< MultiFluidBase >( fluidName );
 
       WellControls const & wellControls = getWellControls( subRegion );
 
       // step 1: compute the norm in the subRegion
-
-      if( isThermal() )
+      if( wellControls.isWellOpen( time_n ) )
       {
-        real64 subRegionResidualNorm[2]{};
-
-        thermalCompositionalMultiphaseWellKernels::ResidualNormKernelFactory::
-          createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
-                                                     m_targetPhaseIndex,
-                                                     rankOffset,
-                                                     wellDofKey,
-                                                     localRhs,
-                                                     subRegion,
-                                                     fluid,
-                                                     wellControls,
-                                                     time_n,
-                                                     dt,
-                                                     m_nonlinearSolverParameters.m_minNormalizer,
-                                                     subRegionResidualNorm );
-        // step 2: reduction across meshBodies/regions/subRegions
-
-        for( integer i=0; i<numNorm; i++ )
+        if( isThermal() )
         {
-          if( subRegionResidualNorm[i] > localResidualNorm[i] )
+          real64 subRegionResidualNorm[2]{};
+
+          thermalCompositionalMultiphaseWellKernels::ResidualNormKernelFactory::
+            createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
+                                                       m_targetPhaseIndex,
+                                                       rankOffset,
+                                                       wellDofKey,
+                                                       localRhs,
+                                                       subRegion,
+                                                       fluid,
+                                                       wellControls,
+                                                       time_n,
+                                                       dt,
+                                                       m_nonlinearSolverParameters.m_minNormalizer,
+                                                       subRegionResidualNorm );
+          // step 2: reduction across meshBodies/regions/subRegions
+
+          for( integer i=0; i<numNorm; i++ )
           {
-            localResidualNorm[i] = subRegionResidualNorm[i];
+            if( subRegionResidualNorm[i] > localResidualNorm[i] )
+            {
+              localResidualNorm[i] = subRegionResidualNorm[i];
+            }
+          }
+
+        }
+        else
+        {
+          real64 subRegionResidualNorm[1]{};
+          compositionalMultiphaseWellKernels::ResidualNormKernelFactory::
+            createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
+                                                       numDofPerWellElement(),
+                                                       m_targetPhaseIndex,
+                                                       rankOffset,
+                                                       wellDofKey,
+                                                       localRhs,
+                                                       subRegion,
+                                                       fluid,
+                                                       wellControls,
+                                                       time_n,
+                                                       dt,
+                                                       m_nonlinearSolverParameters.m_minNormalizer,
+                                                       subRegionResidualNorm );
+
+
+
+          // step 2: reduction across meshBodies/regions/subRegions
+
+          if( subRegionResidualNorm[0] > localResidualNorm[0] )
+          {
+            localResidualNorm[0] = subRegionResidualNorm[0];
           }
         }
-
       }
       else
       {
-        real64 subRegionResidualNorm[1]{};
-        compositionalMultiphaseWellKernels::ResidualNormKernelFactory::
-          createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
-                                                     numDofPerWellElement(),
-                                                     m_targetPhaseIndex,
-                                                     rankOffset,
-                                                     wellDofKey,
-                                                     localRhs,
-                                                     subRegion,
-                                                     fluid,
-                                                     wellControls,
-                                                     time_n,
-                                                     dt,
-                                                     m_nonlinearSolverParameters.m_minNormalizer,
-                                                     subRegionResidualNorm );
-
-
-
-        // step 2: reduction across meshBodies/regions/subRegions
-
-        if( subRegionResidualNorm[0] > localResidualNorm[0] )
+        for( integer i=0; i<numNorm; i++ )
         {
-          localResidualNorm[0] = subRegionResidualNorm[0];
+          localResidualNorm[i] = 0.0;
         }
+
       }
     } );
   } );
@@ -2236,6 +2265,7 @@ CompositionalMultiphaseWell::calculateResidualNorm( real64 const & time_n,
     GEOS_LOG_LEVEL_RANK_0( logInfo::ResidualNorm, GEOS_FMT( "        ( R{} ) = ( {:4.2e} )",
                                                             coupledSolverAttributePrefix(), resNorm ));
   }
+
   return resNorm;
 }
 
@@ -2924,7 +2954,7 @@ CompositionalMultiphaseWell::applyWellSystemSolution( DofManager const & dofMana
     chopNegativeDensities( domain );
   }
 #endif
- 
+
   // synchronize
   FieldIdentifiers fieldsToBeSync;
   if( isThermal() )
@@ -3193,7 +3223,7 @@ void CompositionalMultiphaseWell::assembleWellPressureRelations( real64 const & 
       subRegion.getTopWellElementIndex(),
       m_targetPhaseIndex,
       wellControls,
-      time_n, // controls evaluated with BHP/rate of the beginning of step
+      time_n,   // controls evaluated with BHP/rate of the beginning of step
       wellElemDofNumber,
       wellElemGravCoef,
       nextWellElemIndex,
@@ -3315,7 +3345,7 @@ void CompositionalMultiphaseWell::assemblePressureRelations( real64 const & time
           subRegion.getTopWellElementIndex(),
           m_targetPhaseIndex,
           wellControls,
-          time_n, // controls evaluated with BHP/rate of the beginning of step
+          time_n,   // controls evaluated with BHP/rate of the beginning of step
           wellElemDofNumber,
           wellElemGravCoef,
           nextWellElemIndex,

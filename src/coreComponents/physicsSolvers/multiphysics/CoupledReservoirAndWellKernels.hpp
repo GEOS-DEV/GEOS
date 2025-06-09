@@ -144,7 +144,7 @@ public:
     localIndex const esr = m_resElementSubRegion[iperf];
     localIndex const ei  = m_resElementIndex[iperf];
 
-    // get the well element index for this perforati
+    // get the well element index for this perforation
     localIndex const iwelem = m_perfWellElemIndex[iperf];
     globalIndex const resOffset = m_resElemDofNumber[er][esr][ei];
     globalIndex const wellElemOffset = m_wellElemDofNumber[iwelem];
