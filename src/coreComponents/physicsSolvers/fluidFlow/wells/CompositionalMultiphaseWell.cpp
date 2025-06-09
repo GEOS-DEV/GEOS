@@ -973,9 +973,6 @@ void CompositionalMultiphaseWell::printSegRates( real64 const & time,
           m_wellPropWriter_eot[srn].registerSegComponentProp( "ComponentDensity", subRegion.getField< fields::well::globalCompDensity >());
 
           m_wellPropWriter_eot[srn].registerSegProp( "TotalRate", subRegion.getField< fields::well::mixtureConnectionRate >());
-          arrayView1d< real64 >   mcr = subRegion.getField< fields::well::mixtureConnectionRate >();
-          for( integer ii=0; ii<mcr.size(); ii++ )
-            GEOS_LOG_RANK( "tjb report pmcrs "<< ii << " " << mcr[ii] );
 
           m_wellPropWriter_eot[srn].registerSegProp( "MassDensity", subRegion.getField< fields::well::totalMassDensity >());
 
@@ -1041,7 +1038,6 @@ void CompositionalMultiphaseWell::initializePostInitialConditionsPreSubGroups()
 void CompositionalMultiphaseWell::updateGlobalComponentFraction( WellElementSubRegion & subRegion ) const
 {
   GEOS_MARK_FUNCTION;
-  GEOS_LOG_RANK( "tjb " << subRegion.getName());
   isothermalCompositionalMultiphaseBaseKernels::
     GlobalComponentFractionKernelFactory::
     createAndLaunch< parallelDevicePolicy<> >( m_numComponents,

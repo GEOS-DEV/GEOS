@@ -594,7 +594,24 @@ real64 WellSolverBase::setNextDt( real64 const & currentTime, const real64 & cur
           GEOS_LOG_RANK_0( GEOS_FMT( "{}: next time step based on tables coordinates = {}", getName(), nextDt ));
       } );
     } );
+    forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                                                 MeshLevel & mesh,
+                                                                 string_array const & regionNames )
+    {
+      mesh.getElemManager().forElementSubRegions< WellElementSubRegion >( regionNames, [&]( localIndex const,
+                                                                                            WellElementSubRegion & subRegion )
+      {
+        WellControls & wellControls = getWellControls( subRegion );
+        real64 const nextDt_orig = nextDt;
+        if( m_nonlinearSolverParameters.getLogLevel() > 0 && nextDt < nextDt_orig )
+          GEOS_LOG_RANK_0( GEOS_FMT( "{}: next time step to 0.5 days = {}", getName(), nextDt ));
+
+        if( wellControls.isWellOpen( currentTime+nextDt ) && !wellControls.getWellState() && isThermal())
+          nextDt= 43200;
+      } );
+    } );
   }
+
 
   return nextDt;
 }
@@ -609,14 +626,14 @@ bool WellSolverBase::solveNonlinearSystem( real64 const & time_n,
                                            DofManager const & dofManager )
 {
   integer const maxNewtonIter = m_nonlinearSolverParameters.m_maxIterNewton;
-  integer & dtAttempt = m_nonlinearSolverParameters.m_numTimeStepAttempts;
-  integer & configurationLoopIter = m_nonlinearSolverParameters.m_numConfigurationAttempts;
+  integer dtAttempt = m_nonlinearSolverParameters.m_numTimeStepAttempts;
+  integer configurationLoopIter = m_nonlinearSolverParameters.m_numConfigurationAttempts;
   integer const minNewtonIter = m_nonlinearSolverParameters.m_minIterNewton;
   real64 const newtonTol = m_nonlinearSolverParameters.m_newtonTol;
 
 // keep residual from previous iteration in case we need to do a line search
   real64 lastResidual = 1e99;
-  integer & newtonIter = m_nonlinearSolverParameters.m_numNewtonIterations;
+  integer newtonIter = 0;
   real64 scaleFactor = 1.0;
 
   bool isNewtonConverged = false;
@@ -625,7 +642,7 @@ bool WellSolverBase::solveNonlinearSystem( real64 const & time_n,
   {
 
     GEOS_LOG_LEVEL_RANK_0( logInfo::NonlinearSolver,
-                           GEOS_FMT( "    Attempt: {:2}, ConfigurationIter: {:2}, NewtonIter: {:2}", dtAttempt, configurationLoopIter, newtonIter ));
+                           GEOS_FMT( "    Est Attempt: {:2}, ConfigurationIter: {:2}, NewtonIter: {:2}", dtAttempt, configurationLoopIter, newtonIter ));
 
     {
       Timer timer( m_timers["assemble"] );
@@ -703,7 +720,9 @@ bool WellSolverBase::solveNonlinearSystem( real64 const & time_n,
       break;
     }
 
-// do line search in case residual has increased
+
+    // do line search in case residual has increased
+
     if( m_nonlinearSolverParameters.m_lineSearchAction != NonlinearSolverParameters::LineSearchAction::None
         && residualNorm > lastResidual * m_nonlinearSolverParameters.m_lineSearchResidualFactor
         && newtonIter >= m_nonlinearSolverParameters.m_lineSearchStartingIteration )
@@ -716,6 +735,9 @@ bool WellSolverBase::solveNonlinearSystem( real64 const & time_n,
                                         stepDt,
                                         cycleNumber,
                                         domain,
+                                        elemManager,
+                                        subRegion,
+                                        mesh,
                                         dofManager,
                                         m_localMatrix.toViewConstSizes(),
                                         m_rhs,
@@ -826,5 +848,101 @@ bool WellSolverBase::solveNonlinearSystem( real64 const & time_n,
   return isNewtonConverged;
 }
 
+bool WellSolverBase::lineSearch( real64 const & time_n,
+                                 real64 const & dt,
+                                 integer const GEOS_UNUSED_PARAM( cycleNumber ),
+                                 DomainPartition & domain,
+                                 ElementRegionManager & elemManager,
+                                 WellElementSubRegion & subRegion,
+                                 MeshLevel & mesh,
+                                 DofManager const & dofManager,
+                                 CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                 ParallelVector & rhs,
+                                 ParallelVector & solution,
+                                 real64 const scaleFactor,
+                                 real64 & lastResidual )
+{
+  Timer timer( m_timers["line search"] );
+
+  integer const maxNumberLineSearchCuts = m_nonlinearSolverParameters.m_lineSearchMaxCuts;
+  real64 const lineSearchCutFactor = m_nonlinearSolverParameters.m_lineSearchCutFactor;
+
+  // flag to determine if we should solve the system and apply the solution. If the line
+  // search fails we just bail.
+  bool lineSearchSuccess = false;
+
+  real64 residualNorm = lastResidual;
+
+  // scale factor is value applied to the previous solution. In this case we want to
+  // subtract a portion of the previous solution.
+  real64 localScaleFactor = -scaleFactor;
+  real64 cumulativeScale = scaleFactor;
+
+  // main loop for the line search.
+  for( integer lineSearchIteration = 0; lineSearchIteration < maxNumberLineSearchCuts; ++lineSearchIteration )
+  {
+    // cut the scale factor by half. This means that the scale factors will
+    // have values of -0.5, -0.25, -0.125, ...
+    localScaleFactor *= lineSearchCutFactor;
+    cumulativeScale += localScaleFactor;
+
+    if( !checkWellSystemSolution( subRegion, dofManager, m_solution.values(), localScaleFactor ) )
+    {
+      GEOS_LOG_LEVEL_RANK_0( logInfo::LineSearch,
+                             GEOS_FMT( "        Line search {}, solution check failed", lineSearchIteration ) );
+      continue;
+    }
+
+
+    applyWellSystemSolution( dofManager, solution.values(), localScaleFactor, dt, domain, mesh );
+    // update non-primary variables (constitutive models)
+
+    updateWellState( subRegion );
+    // re-assemble system
+    localMatrix.zero();
+    rhs.zero();
+
+    arrayView1d< real64 > const localRhs = rhs.open();
+
+    // call assemble to fill the matrix and the rhs
+    assembleWellSystem( time_n,
+                        dt,
+                        elemManager,
+                        subRegion,
+                        dofManager,
+                        localMatrix,
+                        localRhs );
+
+// apply boundary conditions to system
+    applyWellBoundaryConditions( time_n,
+                                 dt,
+                                 elemManager,
+                                 subRegion,
+                                 dofManager,
+                                 localRhs,
+                                 localMatrix );
+
+    rhs.close();
+
+    GEOS_LOG_LEVEL_RANK_0( logInfo::LineSearch,
+                           GEOS_FMT( "        Line search @ {:0.3f}:      ", cumulativeScale ));
+
+    // get residual norm
+    residualNorm = calculateWellResidualNorm( time_n, dt, subRegion, dofManager, rhs.values() );
+    GEOS_LOG_LEVEL_RANK_0( logInfo::LineSearch,
+                           GEOS_FMT( "        ( R ) = ( {:4.2e} )", residualNorm ) );
+
+    // if the residual norm is less than the last residual, we can proceed to the
+    // solution step
+    if( residualNorm < lastResidual )
+    {
+      lineSearchSuccess = true;
+      break;
+    }
+  }
+
+  lastResidual = residualNorm;
+  return lineSearchSuccess;
+}
 
 } // namespace geos

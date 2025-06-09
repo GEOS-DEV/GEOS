@@ -375,6 +375,40 @@ public:
                            real64 const GEOS_UNUSED_PARAM( dt ),
                            DomainPartition & GEOS_UNUSED_PARAM( domain ),
                            MeshLevel & GEOS_UNUSED_PARAM( mesh ) ) {};
+
+  /**
+   * @brief Function to perform line search
+   * @param time_n time at the beginning of the step
+   * @param dt the perscribed timestep
+   * @param cycleNumber the current cycle number
+   * @param domain the domain object
+   * @param dofManager degree-of-freedom manager associated with the linear system
+   * @param localMatrix the system matrix
+   * @param rhs the system right-hand side vector
+   * @param solution the solution vector
+   * @param scaleFactor the scaling factor to apply to the solution
+   * @param lastResidual (in) target value below which to reduce residual norm, (out) achieved residual norm
+   * @return return true if line search succeeded, false otherwise
+   *
+   * This function implements a nonlinear newton method for implicit problems. It requires that the
+   * other functions in the solver interface are implemented in the derived physics solver. The
+   * nonlinear loop includes a simple line search algorithm, and will cut the timestep if
+   * convergence is not achieved according to the parameters in linearSolverParameters member.
+   */
+  bool
+  lineSearch( real64 const & time_n,
+              real64 const & dt,
+              integer const cycleNumber,
+              DomainPartition & domain,
+              ElementRegionManager & elemManager,
+              WellElementSubRegion & subRegion,
+              MeshLevel & mesh,
+              DofManager const & dofManager,
+              CRSMatrixView< real64, globalIndex const > const & localMatrix,
+              ParallelVector & rhs,
+              ParallelVector & solution,
+              real64 const scaleFactor,
+              real64 & lastResidual );
   /**
    * @brief function to set the next time step size
    * @param[in] currentTime the current time
