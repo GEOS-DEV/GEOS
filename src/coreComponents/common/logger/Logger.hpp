@@ -132,6 +132,11 @@
  */
 #define GEOS_LOG_RANK_VAR( var ) GEOS_LOG_RANK( #var " = " << var )
 
+/**
+ * @brief Conditionally raise a hard error and terminate the program.
+ * @param EXP an expression that will be evaluated as a predicate
+ * @param MSG a message to log (any expression that can be stream inserted)
+ */
 #define GEOS_ERROR_IF_IMPL( EXP, MSG ) \
   do \
   { \
@@ -161,6 +166,12 @@
     } \
   } while( false )
 
+/**
+ * @brief Conditionally raise a hard error and terminate the program.
+ * @param EXP an expression that will be evaluated as a predicate
+ * @param MSG a message to log (any expression that can be stream inserted)
+ * @param ... One or more DataContext (current error context information) 
+ */
 #define GEOS_ERROR_CTX_IF( EXP, MSG, ... ) \
   do \
   { \
@@ -242,6 +253,13 @@
     } \
   } while( false )
 
+/**
+ * @brief Conditionally throw an exception.
+ * @param EXP an expression that will be evaluated as a predicate
+ * @param MSG a message to log (any expression that can be stream inserted)
+ * @param TYPE the type of exception to throw
+ * @param ... One or more DataContext (current error context information) 
+ */
 #define GEOS_THROW_CTX_IF( EXP, MSG, EXCEPTIONTYPE, ... ) \
   do \
   { \
@@ -286,6 +304,11 @@
  */
 #define GEOS_THROW( msg, TYPE ) GEOS_THROW_IF( true, msg, TYPE )
 
+/**
+ * @brief Conditionally report a warning
+ * @param EXP an expression that will be evaluated as a predicate
+ * @param MSG a message to log (any expression that can be stream inserted)
+ */
 #define GEOS_WARNING_IF_IMPL( EXP, MSG ) \
   do \
   { \
@@ -312,6 +335,12 @@
     } \
   } while( false )
 
+/**
+ * @brief Conditionally report a warning
+ * @param EXP an expression that will be evaluated as a predicate
+ * @param MSG a message to log (any expression that can be stream inserted)
+ * @param ... One or more DataContext (current error context information) 
+ */
 #define GEOS_WARNING_CTX_IF( EXP, MSG, ... ) \
   do \
   { \
