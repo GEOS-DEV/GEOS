@@ -903,18 +903,7 @@ struct Arg
     return ARG_NONE;
   }
 
-  //! @brief Returns ARG_OK if the argument is attached and ARG_IGNORE otherwise.
-  // static ArgStatus Optional(const Option& option, bool)
-  // {
-  //   std::cout << "Name: " << option.name <<std::endl;
-  //   std::cout << "Len: " << option.namelen <<std::endl;
-  //   std::cout << "Name[Len]: " << option.name[option.namelen] <<std::endl;
-  //   if (option.arg && option.name[option.namelen] != 0)
-  //     return ARG_OK;
-  //   else
-  //     return ARG_IGNORE;
-  // }
-
+  //! @brief Returns ARG_OK if there is an argument and ARG_IGNORE otherwise.
   static ArgStatus Optional(const Option& option, bool)
   {
     if ( option.arg != nullptr )

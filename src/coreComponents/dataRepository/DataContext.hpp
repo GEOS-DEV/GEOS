@@ -63,14 +63,12 @@ public:
   
   /**
    * @brief Returns contextual information, including the file name and the line number
-   * 
    * @return ErrorLogger::ContextInfo 
    */
   virtual ErrorLogger::ContextInfo getContextInfo() const = 0;
 
   /**
    * @brief Conversion operator to ErrorLogger::ContextInfo 
-   * 
    * @return ErrorLogger::ContextInfo 
    */
   explicit operator ErrorLogger::ContextInfo() const {
@@ -174,7 +172,6 @@ public:
 
   /**
    * @brief Returns contextual information, including the file name and the line number
-   * 
    * @return ErrorLogger::ContextInfo 
    */
   ErrorLogger::ContextInfo getContextInfo() const override;

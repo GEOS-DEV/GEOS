@@ -71,7 +71,6 @@ private:
 
   /**
    * @brief Returns contextual information, including the file name and the line number
-   * 
    * @return ErrorLogger::ContextInfo 
    */
   ErrorLogger::ContextInfo getContextInfo() const override; 

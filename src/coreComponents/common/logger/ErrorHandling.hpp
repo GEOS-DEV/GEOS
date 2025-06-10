@@ -36,13 +36,11 @@ public:
 
   /**
    * @brief Construct a new Error Logger object
-   *
    */
   ErrorLogger();
 
   /**
    * @brief Create the yaml file if the option is specified in the command line options
-   * 
    */
   void createFile();
 
@@ -59,7 +57,6 @@ public:
 
   /**
    * @brief Stores contextual information about the error that occurred and assigns it a priority (default is 0)
-   * 
    */
   struct ContextInfo
   {
@@ -68,7 +65,6 @@ public:
 
     /**
      * @brief Set the priority of the current error context information
-     * 
      * @param priority 
      * @return ContextInfo& 
      */
@@ -78,7 +74,6 @@ public:
 
   /**
    * @brief Struct to define the error/warning message
-   *
    */
   struct ErrorMsg
   {
@@ -94,13 +89,11 @@ public:
 
     /**
      * @brief Construct a new Error Msg object
-     *
      */
     ErrorMsg() {};
 
     /**
      * @brief Construct a new Error Msg object
-     *
      * @param msgType The type of the message (error or warning)
      * @param msgContent The error/warning message content
      * @param msgFile The file name where the error occcured
@@ -114,7 +107,6 @@ public:
 
     /**
      * @brief Fill the msg field of the structure with the error message
-     *
      * @param e is the exception
      * @return ErrorMsg&
      */
@@ -122,7 +114,6 @@ public:
 
     /**
      * @brief
-     *
      * @param msg Add information about the error that occured to the msg field of the structure
      * @return ErrorMsg&
      */
@@ -130,7 +121,6 @@ public:
 
     /**
      * @brief Set the Code Location object
-     *
      * @param msgFile
      * @param msgLine
      * @return ErrorMsg&
@@ -139,7 +129,6 @@ public:
 
     /**
      * @brief Set the Type object
-     *
      * @param msgType
      * @return ErrorMsg&
      */
@@ -147,7 +136,6 @@ public:
 
     /**
      * @brief Adds one or more context elements to the error
-     * 
      * @tparam Args 
      * @param args 
      */
@@ -156,7 +144,6 @@ public:
 
     /**
      * @brief Set the rank on which the error is raised
-     * 
      * @param rank 
      * @return ErrorMsg& 
      */
@@ -164,7 +151,6 @@ public:
 
     /**
      * @brief Add stack trace information about the error/warning message to the ErrorMsg structure
-     *
      * @param ossStackTrace stack trace information
      */
     ErrorLogger::ErrorMsg & addCallStackInfo( std::string const & ossStackTrace );
@@ -172,7 +158,6 @@ public:
     private:
       /**
        * @brief Add contextual information about the error/warning message to the ErrorMsg structure
-       *
        * @param info DataContext information  stored into a map
        */
       void addContextInfoImpl( ContextInfo && ctxInfo );
@@ -187,7 +172,6 @@ public:
 
   /**
    * @brief Convert a MsgType into a string
-   *
    * @param type
    * @return std::string
    */
@@ -195,21 +179,18 @@ public:
 
   /**
    * @brief Write the error message in the yaml file regarding indentation and line break
-   *
    * @param msg
    */
   void streamMultilineYamlAttribute( std::string_view msg, std::ofstream & yamlFile );
 
   /**
    * @brief Add the error/warning message into the yaml file
-   *
    * @param errorMsg The error message informations formatted by the associated structure
    */
   void write( ErrorMsg const & errorMsg );
 
   /**
    * @brief Returns true whether the yaml file writing option is enabled by the user otherwise false 
-   * 
    * @return true 
    * @return false 
    */
@@ -226,7 +207,6 @@ public:
 
   /**
    * @brief Set the name of the yaml file if specified by user (default is "errors.yaml")
-   * 
    * @param filename 
    */
   void setFilename( std::string filename )
