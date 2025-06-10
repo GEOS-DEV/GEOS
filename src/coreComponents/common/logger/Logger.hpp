@@ -132,7 +132,7 @@
  */
 #define GEOS_LOG_RANK_VAR( var ) GEOS_LOG_RANK( #var " = " << var )
 
-#define GEOS_ERROR_OUTPUT_IF( EXP, MSG ) \
+#define GEOS_ERROR_IF_IMPL( EXP, MSG ) \
   do \
   { \
     if( EXP ) \
@@ -197,9 +197,9 @@
  * @param msg a message to log (any expression that can be stream inserted)
  */
 #if defined(GEOS_DEVICE_COMPILE)
-#define GEOS_ERROR_IF( EXP, msg ) GEOS_ERROR_OUTPUT_IF( EXP, msg )
+#define GEOS_ERROR_IF( EXP, msg ) GEOS_ERROR_IF_IMPL( EXP, msg )
 #else
-#define GEOS_ERROR_IF( EXP, msg ) GEOS_ERROR_OUTPUT_IF( EXP, "***** Rank " << ::geos::logger::internal::rankString << ": " << msg )
+#define GEOS_ERROR_IF( EXP, msg ) GEOS_ERROR_IF_IMPL( EXP, "***** Rank " << ::geos::logger::internal::rankString << ": " << msg )
 #endif
 
 /**
@@ -214,7 +214,7 @@
  * @param MSG a message to log (any expression that can be stream inserted)
  * @param TYPE the type of exception to throw
  */
-#define GEOS_THROW_OUTPUT_IF( EXP, MSG, EXCEPTIONTYPE ) \
+#define GEOS_THROW_IF_IMPL( EXP, MSG, EXCEPTIONTYPE ) \
   do \
   { \
     if( EXP ) \
@@ -277,7 +277,7 @@
  * @param msg a message to log (any expression that can be stream inserted)
  * @param TYPE the type of exception to throw
  */
-#define GEOS_THROW_IF( EXP, msg, TYPE ) GEOS_THROW_OUTPUT_IF( EXP, "***** Rank " << ::geos::logger::internal::rankString << ": " << msg, TYPE )
+#define GEOS_THROW_IF( EXP, msg, TYPE ) GEOS_THROW_IF_IMPL( EXP, "***** Rank " << ::geos::logger::internal::rankString << ": " << msg, TYPE )
 
 /**
  * @brief Throw an exception.
@@ -286,7 +286,7 @@
  */
 #define GEOS_THROW( msg, TYPE ) GEOS_THROW_IF( true, msg, TYPE )
 
-#define GEOS_WARNING_OUTPUT_IF( EXP, MSG ) \
+#define GEOS_WARNING_IF_IMPL( EXP, MSG ) \
   do \
   { \
     if( EXP ) \
@@ -344,7 +344,7 @@
  * @param EXP an expression that will be evaluated as a predicate
  * @param msg a message to log (any expression that can be stream inserted)
  */
-#define GEOS_WARNING_IF( EXP, msg ) GEOS_WARNING_OUTPUT_IF( EXP, msg )
+#define GEOS_WARNING_IF( EXP, msg ) GEOS_WARNING_IF_IMPL( EXP, msg )
 
 /**
  * @brief Report a warning.
@@ -374,7 +374,7 @@
  * @param msg The message to diplay.
  */
 #define GEOS_ERROR_IF_OP_MSG( lhs, OP, NOP, rhs, msg ) \
-  GEOS_ERROR_OUTPUT_IF( lhs OP rhs, \
+  GEOS_ERROR_IF_IMPL( lhs OP rhs, \
                     msg << "\n" << \
                     "Expected " << #lhs << " " << #NOP << " " << #rhs << "\n" << \
                     "  " << #lhs << " = " << lhs << "\n" << \
@@ -406,7 +406,7 @@
  * @param TYPE the type of exception to throw.
  */
 #define GEOS_THROW_IF_OP_MSG( lhs, OP, NOP, rhs, msg, TYPE ) \
-  GEOS_THROW_OUTPUT_IF( lhs OP rhs, \
+  GEOS_THROW_IF_IMPL( lhs OP rhs, \
                     msg << "\n" << \
                     "Expected " << #lhs << " " << #NOP << " " << #rhs << "\n" << \
                     "  " << #lhs << " = " << lhs << "\n" << \
@@ -703,7 +703,7 @@
  *       guaranteed. In fact it is only guaranteed to abort the current kernel.
  */
 #if !defined(NDEBUG)
-#define GEOS_ASSERT_MSG_IF( EXP, MSG ) GEOS_ERROR_OUTPUT_IF( !(EXP), MSG )
+#define GEOS_ASSERT_MSG_IF( EXP, MSG ) GEOS_ERROR_IF_IMPL( !(EXP), MSG )
 #else
 #define GEOS_ASSERT_MSG_IF( EXP, MSG ) ((void) 0)
 #endif
