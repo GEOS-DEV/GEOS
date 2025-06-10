@@ -238,7 +238,6 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
       Group const & problemManager = this->getGroupByPath( "/Problem" );
       string const & objPath = fs.getObjectPath();
 
-      problemManager.printDataHierarchy( 1 );
       setNamesError.append( stringutilities::join( setsInSubRegion, ", " ));
 
       GEOS_THROW( setNamesError, InputError );
