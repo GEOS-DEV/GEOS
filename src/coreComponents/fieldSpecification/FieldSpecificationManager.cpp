@@ -75,6 +75,43 @@ void FieldSpecificationManager::expandObjectCatalogs()
 
 void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) const
 {
+  std::map< std::string, localIndex > validRegions;
+  std::map< std::string, std::vector< string > > fieldsInSubRegions;
+
+  mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion const & subRegion )
+  {
+    std::vector< string > subRegionFields;
+    ObjectManagerBase const * targetOMB = dynamic_cast< ObjectManagerBase const * >( &subRegion );
+    if( targetOMB )
+    {   // filter anything that is not an ObjectManagerBase type
+        // show to the user all fields which are registered under the field-specification object path
+      subRegionFields.insert( subRegionFields.end(),
+                              targetOMB->getRegisteredFields().begin(),
+                              targetOMB->getRegisteredFields().end() );
+    }
+    subRegion.forSubGroups< Group >( [&]( Group const & constitutiveModel )
+    {
+      if( constitutiveModel.getName() == ConstitutiveManager::groupKeyStruct::constitutiveModelsString())
+      {
+        constitutiveModel.forSubGroups< Group >( [&]( Group const & constitutive )
+        {
+          ConstitutiveBase const * constitutiveBase = dynamic_cast< ConstitutiveBase const * >(&constitutive);
+          auto const consititutiveFields = constitutiveBase->getFields();
+          constitutive.forWrappers(
+            [&] ( dataRepository::WrapperBase const & wrapper )
+          {
+            if( std::find( consititutiveFields.begin(), consititutiveFields.end(),
+                           wrapper.getName()) != consititutiveFields.end())
+              subRegionFields.insert( subRegionFields.end(),
+                                      GEOS_FMT( "{}_{}", constitutive.getName(), wrapper.getName()));
+          } );
+        } );
+      }
+    } );
+    validRegions[subRegion.getName()] = 1;
+    fieldsInSubRegions[subRegion.getName()] = subRegionFields;
+  } );
+
   // loop over all the FieldSpecification of the XML file
   this->forSubGroups< FieldSpecificationBase >( [&] ( FieldSpecificationBase const & fs )
   {
@@ -122,12 +159,16 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
       //       - Face boundary conditions that target cell-based quantities, like the face BC of the flow solvers
       if( targetGroup.hasWrapper( fieldName ) ||
           flag == InputFlags::FALSE || // no need to check input if the input flag is false (Aquifer, Traction, Equilibrium do not target a
-                                       // field)
+          // field)
           targetGroup.getName() == MeshLevel::groupStructKeys::faceManagerString() ) // the field names of the face BCs are not always
-                                                                                     // registered on
-                                                                                     // the faceManager...
+      // registered on
+      // the faceManager...
       {
         isFieldNameFound = 1;
+      }
+      else // !targetGroup.hasWrapper( fieldName ) // check 140
+      {
+        validRegions[targetGroup.getName()] = 0;
       }
 
       // 2.c) If the target set is not empty, we record it
@@ -139,7 +180,6 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
     } );
 
     // Step 3: MPI synchronization
-
     isFieldNameFound = MpiWrapper::max( isFieldNameFound );
 
     for( std::pair< string const, localIndex > & mapEntry : isTargetSetEmpty )
@@ -192,7 +232,7 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
       problemManager.printDataHierarchy( 1 );
 
       std::vector< string > availableSetNames;
-      if( objPath == "nodeManager" )
+      if( objPath == "nodeManager" )// duplication ?
       {
         setNamesError.append( "Available set names are: " );
 
@@ -238,14 +278,22 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
                                     fs.getDataContext(), mapEntry.first, fs.getObjectPath() ) );
     }
 
-    if( isFieldNameFound == 0 )
+    std::vector< string > invalidRegions;
+    for( const auto & [key, value] : validRegions )
+    {
+      if( !value )
+        invalidRegions.push_back( key );
+    }
+
+    if( !invalidRegions.empty() )
     {
       std::ostringstream fieldNameNotFoundMessage;
+
       std::string fieldNamePath =
-        GEOS_FMT( "\n{}: there is no {} named `{}` under the {} `{}`.\n",
+        GEOS_FMT( "\n{}: there is no {} named `{}` under the region `{}`.\n",
                   fs.getWrapperDataContext( FieldSpecificationBase::viewKeyStruct::fieldNameString() ),
                   FieldSpecificationBase::viewKeyStruct::fieldNameString(),
-                  fs.getFieldName(), FieldSpecificationBase::viewKeyStruct::objectPathString(), fs.getObjectPath());
+                  fs.getFieldName(), stringutilities::join( invalidRegions, " & " ) /*fs.getObjectPath()*/ );
 
       fieldNameNotFoundMessage << fieldNamePath;
       if( areAllSetsEmpty )
@@ -254,28 +302,29 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
       }
       else
       {
-        fieldNameNotFoundMessage << GEOS_FMT( "Available fields in {} are:\n", fs.getObjectPath());
-        std::set< string > fieldNameAvailable;
-        fs.apply< dataRepository::Group >( mesh,
-                                           [&]( FieldSpecificationBase const &,
-                                                string const &,
-                                                SortedArrayView< localIndex const > const &,
-                                                Group & targetObject,
-                                                string const )
+        std::vector< string > commonFieldsInRegions;
+        commonFieldsInRegions = fieldsInSubRegions[invalidRegions[0]];
+        if( invalidRegions.size() > 1 )
         {
-          ObjectManagerBase const * targetOMB = dynamic_cast< ObjectManagerBase const * >( &targetObject );
-          if( targetOMB )
-          { // filter anything that is not an ObjectManagerBase type
-            // show to the user all fields which are registered under the field-specification object path
-            fieldNameAvailable.insert( targetOMB->getRegisteredFields().begin(), targetOMB->getRegisteredFields().end() );
+          std::vector< string > common = fieldsInSubRegions[invalidRegions[0]];
+
+          for( size_t i = 1; i < invalidRegions.size(); ++i )
+          {
+            std::vector< string > temp;
+            std::set_intersection( commonFieldsInRegions.begin(), commonFieldsInRegions.end(),
+                                   fieldsInSubRegions[invalidRegions[i]].begin(),
+                                   fieldsInSubRegions[invalidRegions[i]].end(),
+                                   std::back_inserter( temp ));
+            commonFieldsInRegions = std::move( temp );
           }
+        }
 
-        } );
+        fieldNameNotFoundMessage << GEOS_FMT( "Available fields in {} are:\n", fs.getObjectPath() );
 
-        for( auto it=fieldNameAvailable.begin(); it!=fieldNameAvailable.end(); ++it )
+        for( auto it=commonFieldsInRegions.begin(); it!=commonFieldsInRegions.end(); ++it )
         {
           fieldNameNotFoundMessage << *it;
-          if( it != std::prev( fieldNameAvailable.end()))
+          if( it != std::prev( commonFieldsInRegions.end()))
           {
             fieldNameNotFoundMessage << ", ";
           }
