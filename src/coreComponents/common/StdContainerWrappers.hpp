@@ -38,8 +38,7 @@ using DefaultAllocator = std::allocator< T >;
  */
 template< typename T,
           typename Allocator  = DefaultAllocator< T >,
-          bool USE_BOUNDS_CHECKING = false
-          >
+          bool USE_BOUNDS_CHECKING = false >
 class StdVectorWrapper : public std::vector< T, Allocator >
 {
 public:
@@ -48,7 +47,7 @@ public:
 
   /*
    * We cannot automatically import the constructors aka `Base::vector`
-   * due to a compiler bug on testMultiFluidDeadOil.cpp that causes a recursive evaluation of default argument.
+   * due to a compiler bug on `testMultiFluidDeadOil.cpp` that causes a recursive evaluation of default argument.
    * The constructors are therefore imported manually.
    */
   /// @cond DO_NOT_DOCUMENT
@@ -133,6 +132,7 @@ public:
    * Otherwise, uses operator[] for unchecked access.
    * @param index Index of the element to access.
    * @return Const reference to the element at the specified index.
+   * @throws std::out_of_range if index is out of bounds.
    */
   T const & operator[]( size_t const index ) const
   {
@@ -187,8 +187,7 @@ namespace internal
  * @tparam USE_STD_CONTAINER_BOUNDS_CHECKING A boolean flag to enable or disable bounds checking.
  */
 template< typename MapType,
-          bool USE_BOUNDS_CHECKING = false
-          >
+          bool USE_BOUNDS_CHECKING = false >
 class StdMapWrapper : public MapType
 {
 public:
@@ -200,7 +199,13 @@ public:
   using MappedType = typename Base::mapped_type;
   using ValueType = typename Base::value_type;
 
-  // Override operator[]
+  /**
+   * Access element at index with bounds checking if USE_STD_CONTAINER_BOUNDS_CHECKING is true.
+   * Otherwise, uses operator[] for unchecked access.
+   * @param index Index of the element to access.
+   * @return Const reference to the element at the specified index.
+   * @throws std::out_of_range if index is out of bounds.
+   */
   MappedType & operator[]( KeyType const & key )
   {
     if constexpr (USE_BOUNDS_CHECKING)
@@ -213,6 +218,13 @@ public:
     }
   }
 
+  /**
+   * Access element at index with bounds checking if USE_STD_CONTAINER_BOUNDS_CHECKING is true.
+   * Otherwise, uses operator[] for unchecked access.
+   * @param index Index of the element to access.
+   * @return Const reference to the element at the specified index.
+   * @throws std::out_of_range if index is out of bounds.
+   */
   MappedType const & operator[]( KeyType const & key ) const
   {
     if constexpr (USE_BOUNDS_CHECKING)

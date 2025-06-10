@@ -174,10 +174,10 @@ void MultiFluidCO2BrineTestFixture< BRINE, FLASH, THERMAL >::fillPhysicalPropert
 {
   dataRepository::Group & group = fluid;
 
-  string_array & phaseNames = group.getReference< string_array >( MultiFluidBase::viewKeyStruct::phaseNamesString() );
+  auto & phaseNames = group.getReference< string_array >( MultiFluidBase::viewKeyStruct::phaseNamesString() );
   phaseNames = {"gas", "liquid"};
 
-  string_array & compNames = group.getReference< string_array >( MultiFluidBase::viewKeyStruct::componentNamesString() );
+  auto & compNames = group.getReference< string_array >( MultiFluidBase::viewKeyStruct::componentNamesString() );
   compNames = {"co2", "water"};
 
   auto & logLevel = group.getReference< integer >( dataRepository::Group::viewKeyStruct::logLevelString() );
