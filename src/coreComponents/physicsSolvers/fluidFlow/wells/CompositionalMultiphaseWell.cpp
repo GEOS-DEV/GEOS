@@ -1598,7 +1598,7 @@ void CompositionalMultiphaseWell::initializeWells( DomainPartition & domain, rea
                   wellElemTotalDens,
                   connRate );
       }
-      else
+      else if( !hasNonZeroRate )
       {
         wellControls.setWellState( false );
       }
@@ -3469,7 +3469,6 @@ void CompositionalMultiphaseWell::implicitStepSetup( real64 const & time_n,
       updateSubRegionState( subRegion );
     } );
   } );
-  //WellSolverBase::estimateWellSolution( time_n, dt, 0, domain );
 
 }
 

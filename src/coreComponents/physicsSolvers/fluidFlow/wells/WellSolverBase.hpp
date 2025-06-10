@@ -396,19 +396,19 @@ public:
    * convergence is not achieved according to the parameters in linearSolverParameters member.
    */
   bool
-  lineSearch( real64 const & time_n,
-              real64 const & dt,
-              integer const cycleNumber,
-              DomainPartition & domain,
-              ElementRegionManager & elemManager,
-              WellElementSubRegion & subRegion,
-              MeshLevel & mesh,
-              DofManager const & dofManager,
-              CRSMatrixView< real64, globalIndex const > const & localMatrix,
-              ParallelVector & rhs,
-              ParallelVector & solution,
-              real64 const scaleFactor,
-              real64 & lastResidual );
+  lineSearch1( real64 const & time_n,
+               real64 const & dt,
+               integer const cycleNumber,
+               DomainPartition & domain,
+               ElementRegionManager & elemManager,
+               WellElementSubRegion & subRegion,
+               MeshLevel & mesh,
+               DofManager const & dofManager,
+               CRSMatrixView< real64, globalIndex const > const & localMatrix,
+               ParallelVector & rhs,
+               ParallelVector & solution,
+               real64 const scaleFactor,
+               real64 & lastResidual );
   /**
    * @brief function to set the next time step size
    * @param[in] currentTime the current time

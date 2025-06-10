@@ -298,43 +298,49 @@ void WellSolverBase::estimateWellSolution( real64 const & time_n,
                                                                  [&]( localIndex const,
                                                                       WellElementRegion & region )
     {
-      auto it = m_estimatorDoFManager.find( region.getName());
-      if( it == m_estimatorDoFManager.end())
-      {
-        throw std::runtime_error( "DofManager for region " + region.getName() + " not found." );
-      }
-      DofManager & dofManager = it->second;
       WellElementSubRegion & subRegion = region.getGroup( ElementRegionBase::viewKeyStruct::elementSubRegions() )
                                            .getGroup< WellElementSubRegion >( region.getSubRegionName() );
-// Only build the sparsity pattern if the mesh has changed
-      Timestamp const meshModificationTimestamp = getMeshModificationTimestamp( domain );
-
-      if( meshModificationTimestamp > getSystemSetupTimestamp() )
+      WellControls & wellControls = getWellControls( subRegion );
+      if( wellControls.getWellState())
       {
-        setupWellSystem( domain, dofManager, m_localMatrix, m_rhs, m_solution );
-        //setSystemSetupTimestamp( meshModificationTimestamp );
 
-        //std::ostringstream oss;
-        //m_dofManager.printFieldInfo( oss );
-        //GEOS_LOG_LEVEL( logInfo::Fields, oss.str())
-      }
+        auto it = m_estimatorDoFManager.find( region.getName());
+        if( it == m_estimatorDoFManager.end())
+        {
+          throw std::runtime_error( "DofManager for region " + region.getName() + " not found." );
+        }
+        DofManager & dofManager = it->second;
 
-      //implicitStepSetup( time_n, dt, domain );
+// Only build the sparsity pattern if the mesh has changed
+        Timestamp const meshModificationTimestamp = getMeshModificationTimestamp( domain );
+
+        if( meshModificationTimestamp > getSystemSetupTimestamp() )
+        {
+          setupWellSystem( domain, dofManager, m_localMatrix, m_rhs, m_solution );
+          //setSystemSetupTimestamp( meshModificationTimestamp );
+
+          //std::ostringstream oss;
+          //m_dofManager.printFieldInfo( oss );
+          //GEOS_LOG_LEVEL( logInfo::Fields, oss.str())
+        }
+
+        //implicitStepSetup( time_n, dt, domain );
 
 // currently the only method is implicit time integration
-      //real64 const dt_return = nonlinearImplicitStep( time_n, dt, cycleNumber, domain );
+        //real64 const dt_return = nonlinearImplicitStep( time_n, dt, cycleNumber, domain );
 
 // final step for completion of timestep. typically secondary variable updates and cleanup.
-      //implicitStepComplete( time_n, dt_return, domain );
+        //implicitStepComplete( time_n, dt_return, domain );
 
-      solveNonlinearSystem( time_n,
-                            dt,
-                            cycleNumber,
-                            domain,
-                            meshLevel,
-                            elementRegionManager,
-                            subRegion,
-                            dofManager );
+        solveNonlinearSystem( time_n,
+                              dt,
+                              cycleNumber,
+                              domain,
+                              meshLevel,
+                              elementRegionManager,
+                              subRegion,
+                              dofManager );
+      }
 
     } );
   } );
@@ -642,7 +648,7 @@ bool WellSolverBase::solveNonlinearSystem( real64 const & time_n,
   {
 
     GEOS_LOG_LEVEL_RANK_0( logInfo::NonlinearSolver,
-                           GEOS_FMT( "    Est Attempt: {:2}, ConfigurationIter: {:2}, NewtonIter: {:2}", dtAttempt, configurationLoopIter, newtonIter ));
+                           GEOS_FMT( " Well: {}   Est Attempt: {:2}, ConfigurationIter: {:2}, NewtonIter: {:2}", subRegion.getName(), dtAttempt, configurationLoopIter, newtonIter ));
 
     {
       Timer timer( m_timers["assemble"] );
@@ -731,19 +737,19 @@ bool WellSolverBase::solveNonlinearSystem( real64 const & time_n,
       if( m_nonlinearSolverParameters.m_lineSearchInterpType == NonlinearSolverParameters::LineSearchInterpolationType::Linear )
       {
         residualNorm = lastResidual;
-        lineSearchSuccess = lineSearch( time_n,
-                                        stepDt,
-                                        cycleNumber,
-                                        domain,
-                                        elemManager,
-                                        subRegion,
-                                        mesh,
-                                        dofManager,
-                                        m_localMatrix.toViewConstSizes(),
-                                        m_rhs,
-                                        m_solution,
-                                        scaleFactor,
-                                        residualNorm );
+        lineSearchSuccess = lineSearch1( time_n,
+                                         stepDt,
+                                         cycleNumber,
+                                         domain,
+                                         elemManager,
+                                         subRegion,
+                                         mesh,
+                                         dofManager,
+                                         m_localMatrix.toViewConstSizes(),
+                                         m_rhs,
+                                         m_solution,
+                                         scaleFactor,
+                                         residualNorm );
       }
       else
       {
@@ -848,19 +854,19 @@ bool WellSolverBase::solveNonlinearSystem( real64 const & time_n,
   return isNewtonConverged;
 }
 
-bool WellSolverBase::lineSearch( real64 const & time_n,
-                                 real64 const & dt,
-                                 integer const GEOS_UNUSED_PARAM( cycleNumber ),
-                                 DomainPartition & domain,
-                                 ElementRegionManager & elemManager,
-                                 WellElementSubRegion & subRegion,
-                                 MeshLevel & mesh,
-                                 DofManager const & dofManager,
-                                 CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                 ParallelVector & rhs,
-                                 ParallelVector & solution,
-                                 real64 const scaleFactor,
-                                 real64 & lastResidual )
+bool WellSolverBase::lineSearch1( real64 const & time_n,
+                                  real64 const & dt,
+                                  integer const GEOS_UNUSED_PARAM( cycleNumber ),
+                                  DomainPartition & domain,
+                                  ElementRegionManager & elemManager,
+                                  WellElementSubRegion & subRegion,
+                                  MeshLevel & mesh,
+                                  DofManager const & dofManager,
+                                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                  ParallelVector & rhs,
+                                  ParallelVector & solution,
+                                  real64 const scaleFactor,
+                                  real64 & lastResidual )
 {
   Timer timer( m_timers["line search"] );
 
