@@ -281,23 +281,26 @@ using stdUnorderedMap = internal::StdMapWrapper< std::unordered_map< Key, T, Has
  * @tparam TVAL value type
  * @tparam SORTED a bool indicating whether map is ordered
  */
-template< typename TKEY, typename TVAL, typename SORTED >
-class mapBase
+template< typename TKEY, typename TVAL, bool SORTED >
+struct stdMapTypeDefinition
 {};
-
 /// @cond DO_NOT_DOCUMENT
 template< typename TKEY, typename TVAL >
-class mapBase< TKEY, TVAL, std::integral_constant< bool, true > > : public stdMap< TKEY, TVAL >
-{
-public:
-  using stdMap< TKEY, TVAL >::stdMap;
-};
+struct stdMapTypeDefinition< TKEY, TVAL, true >
+{ using Type = stdMap< TKEY, TVAL >; };
 
 template< typename TKEY, typename TVAL >
-class mapBase< TKEY, TVAL, std::integral_constant< bool, false > > : public stdUnorderedMap< TKEY, TVAL >
-{
-  using stdUnorderedMap< TKEY, TVAL >::stdUnorderedMap;
-};
+struct stdMapTypeDefinition< TKEY, TVAL, false >
+{ using Type = stdUnorderedMap< TKEY, TVAL >; };
+
+/**
+ * @brief templated type for ordered and unordered maps.
+ * @tparam TKEY key type
+ * @tparam TVAL value type
+ * @tparam SORTED a bool indicating whether map is ordered
+ */
+template< typename TKEY, typename TVAL, bool SORTED >
+using stdMapType = typename stdMapTypeDefinition<TKEY,TVAL,SORTED>::Type;
 /// @endcond
 
 } // namespace geos

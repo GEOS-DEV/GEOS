@@ -321,9 +321,9 @@ using CRSMatrixView = LvArray::CRSMatrixView< T, COL_INDEX, localIndex const, Lv
  * @param map the map to print
  * @return reference to output stream
  */
-template< typename K, typename V, typename SORTED >
+template< typename K, typename V, bool SORTED >
 inline
-std::ostream & operator<< ( std::ostream & stream, mapBase< K, V, SORTED > const & map )
+std::ostream & operator<< ( std::ostream & stream, stdMapType< K, V, SORTED > const & map )
 {
   stream << "{\n";
   for( auto const & pair : map )
@@ -336,11 +336,12 @@ std::ostream & operator<< ( std::ostream & stream, mapBase< K, V, SORTED > const
 
 /// Ordered map type.
 template< typename TKEY, typename TVAL >
-using map = mapBase< TKEY, TVAL, std::integral_constant< bool, true > >;
+using map = stdMapType< TKEY, TVAL, true >;
 
 /// Unordered map type.
 template< typename TKEY, typename TVAL >
-using unordered_map = mapBase< TKEY, TVAL, std::integral_constant< bool, false > >;
+using unordered_map = stdMapType< TKEY, TVAL, false >;
+
 
 /**
  * @name Aliases for commonly used array types.

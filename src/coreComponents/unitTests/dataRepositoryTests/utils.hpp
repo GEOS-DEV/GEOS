@@ -103,8 +103,8 @@ void fill( SortedArray< T > & val, localIndex const maxSize )
   }
 }
 
-template< typename K, typename V, typename SORTED >
-void fill( mapBase< K, V, SORTED > & val, localIndex const maxSize )
+template< typename K, typename V, bool SORTED >
+void fill( stdMapType< K, V, SORTED > & val, localIndex const maxSize )
 {
   int const nVals = rand( 0, maxSize );
   for( int i = 0; i < nVals; ++i )
