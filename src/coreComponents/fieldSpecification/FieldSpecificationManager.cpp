@@ -77,6 +77,7 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
 {
   std::map< std::string, localIndex > validRegions;
   std::map< std::string, std::vector< string > > fieldsInSubRegions;
+  std::set< string > setsInSubRegion;
 
   mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion const & subRegion )
   {
@@ -89,6 +90,7 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
                               targetOMB->getRegisteredFields().begin(),
                               targetOMB->getRegisteredFields().end() );
     }
+    // fieldsNames
     subRegion.forSubGroups< Group >( [&]( Group const & constitutiveModel )
     {
       if( constitutiveModel.getName() == ConstitutiveManager::groupKeyStruct::constitutiveModelsString())
@@ -108,6 +110,13 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
         } );
       }
     } );
+
+    // sets
+    subRegion.sets().forWrappers( [&] ( dataRepository::WrapperBase const & wrapper )
+    {
+      setsInSubRegion.insert( wrapper.getName());
+    } );
+
     validRegions[subRegion.getName()] = 1;
     fieldsInSubRegions[subRegion.getName()] = subRegionFields;
   } );
@@ -230,40 +239,7 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
       string const & objPath = fs.getObjectPath();
 
       problemManager.printDataHierarchy( 1 );
-
-      std::vector< string > availableSetNames;
-      if( objPath == "nodeManager" )// duplication ?
-      {
-        setNamesError.append( "Available set names are: " );
-
-        mesh.getGroup( "nodeManager" ).getGroup( ObjectManagerBase::groupKeyStruct::setsString() ).forWrappers(
-          [&] ( dataRepository::WrapperBase const & wrapper )
-        {
-          availableSetNames.push_back( wrapper.getName() );
-        } );
-        setNamesError.append( stringutilities::join( availableSetNames, ", " ));
-      }
-      else if( GeometricObjectManager::getInstance().numSubGroups() > 0 )
-      {
-        setNamesError.append( "Available set names are: " );
-
-        GeometricObjectManager & geoManager = GeometricObjectManager::getInstance();
-        geoManager.forSubGroups< SimpleGeometricObjectBase >( [&]( SimpleGeometricObjectBase const & meshGen )
-        {
-          availableSetNames.push_back( meshGen.getName() );
-        } );
-        availableSetNames.push_back( "all" );
-        setNamesError.append( stringutilities::join( availableSetNames, ", " ));
-      }
-
-      if( availableSetNames.empty())
-      {
-        setNamesError.append( "No objectPath recognized." );
-        if( problemManager.getGroup( "Mesh" ).hasSubGroupOfType< VTKMeshGenerator >() )
-        {
-          setNamesError.append( "Also check the setNames attribute in the mesh vtu file." );
-        }
-      }
+      setNamesError.append( stringutilities::join( setsInSubRegion, ", " ));
 
       GEOS_THROW( setNamesError, InputError );
     }
@@ -308,12 +284,12 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
         {
           std::vector< string > common = fieldsInSubRegions[invalidRegions[0]];
 
-          for( size_t i = 1; i < invalidRegions.size(); ++i )
+          for( size_t idxRegion = 1; idxRegion < invalidRegions.size(); ++idxRegion )
           {
             std::vector< string > temp;
             std::set_intersection( commonFieldsInRegions.begin(), commonFieldsInRegions.end(),
-                                   fieldsInSubRegions[invalidRegions[i]].begin(),
-                                   fieldsInSubRegions[invalidRegions[i]].end(),
+                                   fieldsInSubRegions[invalidRegions[idxRegion]].begin(),
+                                   fieldsInSubRegions[invalidRegions[idxRegion]].end(),
                                    std::back_inserter( temp ));
             commonFieldsInRegions = std::move( temp );
           }
