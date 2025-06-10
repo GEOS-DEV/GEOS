@@ -91,19 +91,19 @@ public:
     ErrorMsg( MsgType msgType, std::string msgContent, std::string msgFile, integer msgLine )
       : m_type( msgType ), m_msg( msgContent ), m_file( msgFile ), m_line( msgLine ) {}
 
-    /**
-     * @brief Fill the msg field of the structure with the error message
-     * @param e is the exception
-     * @return ErrorMsg&
-     */
+    /**  
+     * @brief Add text to the error msg that occured to the msg field of the structure  
+     * @param e The exception to add.  
+     * @return The instance, for builder pattern.  
+     */  
     ErrorMsg & addToMsg( std::exception const & e );
 
-    /**
-     * @brief
-     * @param msg Add information about the error that occured to the msg field of the structure
-     * @return ErrorMsg&
-     */
-    ErrorMsg & addToMsg( std::string const & msg );
+    /**  
+     * @brief Add text to the error msg that occured to the msg field of the structure  
+     * @param msg The text to add.  
+     * @return The instance, for builder pattern.  
+     */  
+    ErrorMsg & addToMsg( std::string msg );
 
     /**
      * @brief Set the Code Location object
@@ -111,7 +111,7 @@ public:
      * @param msgLine
      * @return ErrorMsg&
      */
-    ErrorMsg & setCodeLocation( string msgFile, integer msgLine );
+    ErrorMsg & setCodeLocation( std::string_view msgFile, integer msgLine );
 
     /**
      * @brief Set the Type object
@@ -131,7 +131,7 @@ public:
      * @brief Add stack trace information about the error/warning message to the ErrorMsg structure
      * @param ossStackTrace stack trace information
      */
-    ErrorLogger::ErrorMsg & addCallStackInfo( std::string const & ossStackTrace );
+    ErrorLogger::ErrorMsg & addCallStackInfo( std::string ossStackTrace );
 
     private:
       /**
@@ -199,7 +199,7 @@ public:
    * @brief Set the name of the yaml file if specified by user (default is "errors.yaml")
    * @param filename
    */
-  void setFilename( std::string filename )
+  void setFilename( std::string_view filename )
   { m_filename = filename; }
 
   /**
@@ -215,7 +215,7 @@ public:
     // Write in the yaml file
     bool m_writeYaml = false;
     // Yaml file name
-    std::string m_filename = "errors.yaml";
+    std::string_view m_filename = "errors.yaml";
 };
 
 extern ErrorLogger g_errorLogger;

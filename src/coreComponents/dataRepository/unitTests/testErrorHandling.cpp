@@ -23,17 +23,17 @@ using namespace dataRepository;
 
 TEST( ErrorHandling, testYaml )
 {
-  errorLogger.setFilename( "errorsOutput.yaml" );
-  errorLogger.setWriteValue( true );
+  g_errorLogger.setFilename( "errorsOutput.yaml" );
+  g_errorLogger.setWriteValue( true );
   double minPrecision = 1e-6;
   double maxPrecision = 1e-3;
   int x = 5;
 
   DataFileContext const context = DataFileContext( "Base Test Class", __FILE__, __LINE__ );
 
-  if( errorLogger.writeFile() )
+  if( g_errorLogger.writeFile() )
   {
-    errorLogger.createFile();
+    g_errorLogger.createFile();
   }
 
   GEOS_WARNING( "Conflicting pressure boundary conditions" );
@@ -52,13 +52,13 @@ TEST( ErrorHandling, testYaml )
   catch( std::domain_error const & ex )
   {
     string const errorMsg = "Table input error.\n";
-    errorLogger.currentErrorMsg().addToMsg( errorMsg )
+    g_errorLogger.currentErrorMsg().addToMsg( errorMsg )
       .addContextInfo( context.getContextInfo().setPriority( 2 ) );
   }
 
-  if( errorLogger.writeFile() )
+  if( g_errorLogger.writeFile() )
   {
-    errorLogger.write( errorLogger.currentErrorMsg() );
+    g_errorLogger.write( g_errorLogger.currentErrorMsg() );
   }
 }
 

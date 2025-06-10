@@ -152,7 +152,7 @@
       std::cout << __oss.str() << std::endl; \
       std::ostringstream __msgoss; \
       __msgoss << MSG; \
-      if( errorLogger.writeFile() ) \
+      if( g_errorLogger.writeFile() ) \
       { \
         ErrorLogger::ErrorMsg msgStruct( ErrorLogger::MsgType::Error, \
                                          __msgoss.str(), \
@@ -160,7 +160,7 @@
                                          __LINE__ ); \
         msgStruct.setRank( ::geos::logger::internal::rank ); \
         msgStruct.addCallStackInfo( stackHistory ); \
-        errorLogger.write( msgStruct ); \
+        g_errorLogger.write( msgStruct ); \
       } \
       LvArray::system::callErrorHandler(); \
     } \
@@ -187,7 +187,7 @@
       std::cout << __oss.str() << std::endl; \
       std::ostringstream __msgoss; \
       __msgoss << MSG; \
-      if( errorLogger.writeFile() ) \
+      if( g_errorLogger.writeFile() ) \
       { \
         ErrorLogger::ErrorMsg msgStruct( ErrorLogger::MsgType::Error, \
                                          __msgoss.str(), \
@@ -196,7 +196,7 @@
         msgStruct.setRank( ::geos::logger::internal::rank ); \
         msgStruct.addContextInfo( __VA_ARGS__ ); \
         msgStruct.addCallStackInfo( stackHistory ); \
-        errorLogger.write( msgStruct ); \
+        g_errorLogger.write( msgStruct ); \
       } \
       LvArray::system::callErrorHandler(); \
     } \
@@ -240,9 +240,9 @@
       std::cout << __oss.str() << std::endl; \
       std::ostringstream __msgoss; \
       __msgoss << MSG; \
-      if( errorLogger.writeFile() ) \
+      if( g_errorLogger.writeFile() ) \
       { \
-        errorLogger.currentErrorMsg() \
+        g_errorLogger.currentErrorMsg() \
           .setType( ErrorLogger::MsgType::Exception ) \
           .setCodeLocation( __FILE__, __LINE__ ) \
           .addToMsg( __msgoss.str() ) \
@@ -275,9 +275,9 @@
       std::cout << __oss.str() << std::endl; \
       std::ostringstream __msgoss; \
       __msgoss << MSG; \
-      if( errorLogger.writeFile() ) \
+      if( g_errorLogger.writeFile() ) \
       { \
-        errorLogger.currentErrorMsg() \
+        g_errorLogger.currentErrorMsg() \
           .setType( ErrorLogger::MsgType::Exception ) \
           .setCodeLocation( __FILE__, __LINE__ ) \
           .addToMsg( __msgoss.str() ) \
@@ -322,7 +322,7 @@
       std::cout << __oss.str() << std::endl; \
       std::ostringstream __msgoss; \
       __msgoss << MSG; \
-      if( errorLogger.writeFile() ) \
+      if( g_errorLogger.writeFile() ) \
       { \
         ErrorLogger::ErrorMsg msgStruct( ErrorLogger::MsgType::Warning, \
                                          __msgoss.str(), \
@@ -330,7 +330,7 @@
                                          __LINE__ ); \
         msgStruct.setRank( ::geos::logger::internal::rank ); \
         msgStruct.addCallStackInfo( LvArray::system::stackTrace( true ) ); \
-        errorLogger.write( msgStruct ); \
+        g_errorLogger.write( msgStruct ); \
       } \
     } \
   } while( false )
@@ -354,7 +354,7 @@
       std::cout << __oss.str() << std::endl; \
       std::ostringstream __msgoss; \
       __msgoss << MSG; \
-      if( errorLogger.writeFile() ) \
+      if( g_errorLogger.writeFile() ) \
       { \
         ErrorLogger::ErrorMsg msgStruct( ErrorLogger::MsgType::Warning, \
                                          __msgoss.str(), \
@@ -363,7 +363,7 @@
         msgStruct.setRank( ::geos::logger::internal::rank ); \
         msgStruct.addContextInfo( __VA_ARGS__ ); \
         msgStruct.addCallStackInfo( LvArray::system::stackTrace( true ) ); \
-        errorLogger.write( msgStruct ); \
+        g_errorLogger.write( msgStruct ); \
       } \
     } \
   } while( false )

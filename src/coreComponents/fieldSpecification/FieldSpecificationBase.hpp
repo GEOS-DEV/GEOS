@@ -624,7 +624,7 @@ void FieldSpecificationBase::applyFieldValueKernel( ArrayView< T, N, USD > const
       {
         string const errorMsg = GEOS_FMT( "Error while reading {}:\n",
                                        getWrapperDataContext( viewKeyStruct::functionNameString() ) );
-        errorLogger.currentErrorMsg()
+        g_errorLogger.currentErrorMsg()
           .addToMsg( errorMsg )
           .addContextInfo( getWrapperDataContext( viewKeyStruct::functionNameString() ).getContextInfo().setPriority( 1 ) );
         throw InputError( e, errorMsg );

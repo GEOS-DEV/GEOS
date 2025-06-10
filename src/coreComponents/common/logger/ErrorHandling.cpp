@@ -32,7 +32,7 @@ static constexpr std::string_view g_level2Next =  "      ";
 static constexpr std::string_view g_level3Start = "      - ";
 static constexpr std::string_view g_level3Next =  "        ";
 
-ErrorLogger errorLogger{};
+ErrorLogger g_errorLogger{};
 
 ErrorLogger::ErrorLogger()
 {
@@ -59,13 +59,13 @@ ErrorLogger::ErrorMsg & ErrorLogger::ErrorMsg::addToMsg( std::exception const & 
   return parent->m_currentErrorMsg;
 }
 
-ErrorLogger::ErrorMsg & ErrorLogger::ErrorMsg::addToMsg( std::string const & errorMsg )
+ErrorLogger::ErrorMsg & ErrorLogger::ErrorMsg::addToMsg( std::string errorMsg )
 {
   parent->m_currentErrorMsg.m_msg = errorMsg + parent->m_currentErrorMsg.m_msg; 
   return parent->m_currentErrorMsg;
 }
 
-ErrorLogger::ErrorMsg & ErrorLogger::ErrorMsg::setCodeLocation( string msgFile, integer msgLine )
+ErrorLogger::ErrorMsg & ErrorLogger::ErrorMsg::setCodeLocation( std::string_view msgFile, integer msgLine )
 {
   parent->m_currentErrorMsg.m_file = msgFile;
   parent->m_currentErrorMsg.m_line = msgLine;
@@ -89,7 +89,7 @@ ErrorLogger::ErrorMsg & ErrorLogger::ErrorMsg::setRank( int rank )
   return *this;
 }
 
-ErrorLogger::ErrorMsg & ErrorLogger::ErrorMsg::addCallStackInfo( std::string const & ossStackTrace )
+ErrorLogger::ErrorMsg & ErrorLogger::ErrorMsg::addCallStackInfo( std::string ossStackTrace )
 {
   std::istringstream iss( ossStackTrace );
   std::string stackLine;
@@ -134,7 +134,7 @@ void ErrorLogger::write( ErrorLogger::ErrorMsg const & errorMsg ) //const
   std::ofstream yamlFile( std::string( m_filename ), std::ios::app );
   if( yamlFile.is_open() )
   {
-    yamlFile << "\n" << g_level1Start << "type: " << errorLogger.toString( errorMsg.m_type ) << "\n";
+    yamlFile << "\n" << g_level1Start << "type: " << g_errorLogger.toString( errorMsg.m_type ) << "\n";
     yamlFile << g_level1Next << "rank: ";
     for( size_t i = 0; i < errorMsg.m_ranksInfo.size(); i++ )
     {
