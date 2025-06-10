@@ -146,10 +146,10 @@ void ErrorLogger::write( ErrorLogger::ErrorMsg const & errorMsg ) //const
     if( !errorMsg.m_contextsInfo.empty() )
     {
       yamlFile << g_level1Next << "contexts:\n";
-      for( size_t i = 0; i < errorMsg.m_contextsInfo.size(); i++ )
+      for( ContextInfo const & ctxInfo : errorMsg.m_contextsInfo )  
       {
         bool isFirst = true;
-        for( auto const & [key, value] : errorMsg.m_contextsInfo[i].m_ctxInfo )
+        for( auto const & [key, value] : ctxInfo.m_ctxInfo )
         {
           if( isFirst )
           {
@@ -163,11 +163,11 @@ void ErrorLogger::write( ErrorLogger::ErrorMsg const & errorMsg ) //const
         }
         if( isFirst )
         {
-          yamlFile << g_level3Start << "priority: " << errorMsg.m_contextsInfo[i].m_priority << "\n";
+          yamlFile << g_level3Start << "priority: " << ctxInfo.m_priority << "\n";
         }
         else 
         {
-          yamlFile << g_level3Next << "priority: " << errorMsg.m_contextsInfo[i].m_priority << "\n";
+          yamlFile << g_level3Next << "priority: " <<ctxInfo.m_priority << "\n";
         }
       }
     }

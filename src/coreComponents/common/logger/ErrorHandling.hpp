@@ -56,7 +56,8 @@ public:
   };
 
   /**
-   * @brief Stores contextual information about the error that occurred and assigns it a priority (default is 0)
+   * @brief Stores contextual information about the error that occurred and assigns it a priority 
+   * default is 0
    */
   struct ContextInfo
   {
@@ -65,8 +66,8 @@ public:
 
     /**
      * @brief Set the priority of the current error context information
-     * @param priority 
-     * @return ContextInfo& 
+     * @param priority
+     * @return ContextInfo&
      */
     ContextInfo & setPriority( integer priority )
     { m_priority = priority; return *this; }
@@ -136,16 +137,16 @@ public:
 
     /**
      * @brief Adds one or more context elements to the error
-     * @tparam Args 
-     * @param args 
+     * @tparam Args
+     * @param args
      */
     template< typename ... Args >
     void addContextInfo( Args && ... args );
 
     /**
      * @brief Set the rank on which the error is raised
-     * @param rank 
-     * @return ErrorMsg& 
+     * @param rank
+     * @return ErrorMsg&
      */
     ErrorMsg & setRank( int rank );
 
@@ -155,12 +156,12 @@ public:
      */
     ErrorLogger::ErrorMsg & addCallStackInfo( std::string const & ossStackTrace );
 
-    private:
-      /**
-       * @brief Add contextual information about the error/warning message to the ErrorMsg structure
-       * @param info DataContext information  stored into a map
-       */
-      void addContextInfoImpl( ContextInfo && ctxInfo );
+private:
+    /**
+     * @brief Add contextual information about the error/warning message to the ErrorMsg structure
+     * @param info DataContext information  stored into a map
+     */
+    void addContextInfoImpl( ContextInfo && ctxInfo );
   };
 
   /**
@@ -190,24 +191,24 @@ public:
   void write( ErrorMsg const & errorMsg );
 
   /**
-   * @brief Returns true whether the yaml file writing option is enabled by the user otherwise false 
-   * @return true 
-   * @return false 
+   * @brief Returns true whether the yaml file writing option is enabled by the user otherwise false
+   * @return true
+   * @return false
    */
-  bool writeFile() const 
+  bool writeFile() const
   { return m_writeYaml; }
 
   /**
    * @brief Set the Write Value object
    * True whether the yaml file writing option is enabled by the user otherwise false
-   * @param value 
+   * @param value
    */
   void setWriteValue( bool value )
   { m_writeYaml = value; }
 
   /**
    * @brief Set the name of the yaml file if specified by user (default is "errors.yaml")
-   * @param filename 
+   * @param filename
    */
   void setFilename( std::string filename )
   { m_filename = filename; }
@@ -217,7 +218,7 @@ private:
   ErrorMsg m_currentErrorMsg;
   // Write in the yaml file
   bool m_writeYaml = false;
-  // Yaml file name 
+  // Yaml file name
   std::string m_filename = "errors.yaml";
 };
 
