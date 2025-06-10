@@ -33,17 +33,6 @@ class ErrorLogger
 {
 
 public:
-
-  /**
-   * @brief Construct a new Error Logger object
-   */
-  ErrorLogger();
-
-  /**
-   * @brief Create the yaml file if the option is specified in the command line options
-   */
-  void createFile();
-
   /**
    * @enum MsgType
    * Enum listing the different types of possible errors
@@ -85,8 +74,7 @@ public:
     std::vector< int > m_ranksInfo;
     std::vector< ContextInfo > m_contextsInfo;
     std::vector< std::string > m_sourceCallStack;
-
-    int n = 0;
+    ErrorLogger * parent = nullptr;
 
     /**
      * @brief Construct a new Error Msg object
@@ -102,9 +90,6 @@ public:
      */
     ErrorMsg( MsgType msgType, std::string msgContent, std::string msgFile, integer msgLine )
       : m_type( msgType ), m_msg( msgContent ), m_file( msgFile ), m_line( msgLine ) {}
-
-
-    ErrorLogger * parent = nullptr;
 
     /**
      * @brief Fill the msg field of the structure with the error message
@@ -136,14 +121,6 @@ public:
     ErrorMsg & setType( MsgType msgType );
 
     /**
-     * @brief Adds one or more context elements to the error
-     * @tparam Args
-     * @param args
-     */
-    template< typename ... Args >
-    void addContextInfo( Args && ... args );
-
-    /**
      * @brief Set the rank on which the error is raised
      * @param rank
      * @return ErrorMsg&
@@ -156,20 +133,32 @@ public:
      */
     ErrorLogger::ErrorMsg & addCallStackInfo( std::string const & ossStackTrace );
 
-private:
-    /**
-     * @brief Add contextual information about the error/warning message to the ErrorMsg structure
-     * @param info DataContext information  stored into a map
-     */
-    void addContextInfoImpl( ContextInfo && ctxInfo );
+    private:
+      /**
+       * @brief Add contextual information about the error/warning message to the ErrorMsg structure
+       * @param info DataContext information  stored into a map
+       */
+      void addContextInfoImpl( ContextInfo && ctxInfo );
+
+    public: 
+      /**
+       * @brief Adds one or more context elements to the error
+       * @tparam Args
+       * @param args
+       */
+      template< typename ... Args >
+      void addContextInfo( Args && ... args );
   };
 
   /**
-   * @brief Return the error message information at the step where this getter is called
-   * @return The current error msg
+   * @brief Construct a new Error Logger object
    */
-  ErrorMsg & currentErrorMsg()
-  { return m_currentErrorMsg; }
+  ErrorLogger();
+
+  /**
+   * @brief Create the yaml file if the option is specified in the command line options
+   */
+  void createFile();
 
   /**
    * @brief Convert a MsgType into a string
@@ -213,16 +202,23 @@ private:
   void setFilename( std::string filename )
   { m_filename = filename; }
 
-private:
-  // The error constructed via exceptions
-  ErrorMsg m_currentErrorMsg;
-  // Write in the yaml file
-  bool m_writeYaml = false;
-  // Yaml file name
-  std::string m_filename = "errors.yaml";
+  /**
+   * @brief Return the error message information at the step where this getter is called
+   * @return The current error msg
+   */
+  ErrorMsg & currentErrorMsg()
+  { return m_currentErrorMsg; }
+
+  private:
+    // The error constructed via exceptions
+    ErrorMsg m_currentErrorMsg;
+    // Write in the yaml file
+    bool m_writeYaml = false;
+    // Yaml file name
+    std::string m_filename = "errors.yaml";
 };
 
-extern ErrorLogger errorLogger;
+extern ErrorLogger g_errorLogger;
 
 template< typename ... Args >
 void ErrorLogger::ErrorMsg::addContextInfo( Args && ... args )

@@ -53,6 +53,31 @@ void ErrorLogger::createFile()
   }
 }
 
+ErrorLogger::ErrorMsg & ErrorLogger::ErrorMsg::addToMsg( std::exception const & e )
+{
+  parent->m_currentErrorMsg.m_msg = e.what();
+  return parent->m_currentErrorMsg;
+}
+
+ErrorLogger::ErrorMsg & ErrorLogger::ErrorMsg::addToMsg( std::string const & errorMsg )
+{
+  parent->m_currentErrorMsg.m_msg = errorMsg + parent->m_currentErrorMsg.m_msg; 
+  return parent->m_currentErrorMsg;
+}
+
+ErrorLogger::ErrorMsg & ErrorLogger::ErrorMsg::setCodeLocation( string msgFile, integer msgLine )
+{
+  parent->m_currentErrorMsg.m_file = msgFile;
+  parent->m_currentErrorMsg.m_line = msgLine;
+  return parent->m_currentErrorMsg;
+}
+
+ErrorLogger::ErrorMsg & ErrorLogger::ErrorMsg::setType( ErrorLogger::MsgType msgType )
+{
+  parent->m_currentErrorMsg.m_type = msgType;
+  return parent->m_currentErrorMsg;
+}
+
 void ErrorLogger::ErrorMsg::addContextInfoImpl( ErrorLogger::ContextInfo && ctxInfo )
 {
   m_contextsInfo.emplace_back( std::move( ctxInfo ) );
@@ -88,31 +113,6 @@ std::string ErrorLogger::toString( ErrorLogger::MsgType type )
     case ErrorLogger::MsgType::Exception: return "Exception";
     default: return "Unknown";
   }
-}
-
-ErrorLogger::ErrorMsg & ErrorLogger::ErrorMsg::addToMsg( std::exception const & e )
-{
-  parent->m_currentErrorMsg.m_msg = e.what();
-  return parent->m_currentErrorMsg;
-}
-
-ErrorLogger::ErrorMsg & ErrorLogger::ErrorMsg::addToMsg( std::string const & errorMsg )
-{
-  parent->m_currentErrorMsg.m_msg = errorMsg + parent->m_currentErrorMsg.m_msg; 
-  return parent->m_currentErrorMsg;
-}
-
-ErrorLogger::ErrorMsg & ErrorLogger::ErrorMsg::setCodeLocation( string msgFile, integer msgLine )
-{
-  parent->m_currentErrorMsg.m_file = msgFile;
-  parent->m_currentErrorMsg.m_line = msgLine;
-  return parent->m_currentErrorMsg;
-}
-
-ErrorLogger::ErrorMsg & ErrorLogger::ErrorMsg::setType( ErrorLogger::MsgType msgType )
-{
-  parent->m_currentErrorMsg.m_type = msgType;
-  return parent->m_currentErrorMsg;
 }
 
 void ErrorLogger::streamMultilineYamlAttribute( std::string_view msg, std::ofstream& yamlFile )
