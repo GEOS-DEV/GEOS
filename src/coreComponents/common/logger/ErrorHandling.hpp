@@ -50,6 +50,12 @@ public:
    */
   struct ContextInfo
   {
+    // The map contains contextual information about the error
+    // It could be something like 
+    // "file" = "/path/to/file.xml"
+    // "line" = "24"
+    // or something like 
+    // "dataPath" = "/Functions/co2brine_philipsDensityTable"
     map< std::string, std::string > m_ctxInfo;
     integer m_priority = 0;
 
