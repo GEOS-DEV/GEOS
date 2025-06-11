@@ -159,6 +159,7 @@ void ErrorLogger::write( ErrorLogger::ErrorMsg const & errorMsg )
   std::ofstream yamlFile( std::string( m_filename ), std::ios::app );
   if( yamlFile.is_open() )
   {
+    // General errors info (type, rank on which the error occured)
     yamlFile << "\n" << g_level1Start << "type: " << g_errorLogger.toString( errorMsg.m_type ) << "\n";
     yamlFile << g_level1Next << "rank: ";
     for( size_t i = 0; i < errorMsg.m_ranksInfo.size(); i++ )
@@ -166,10 +167,12 @@ void ErrorLogger::write( ErrorLogger::ErrorMsg const & errorMsg )
       yamlFile << errorMsg.m_ranksInfo[i];
     }
     yamlFile << "\n";
+    // Error message 
     yamlFile << g_level1Next << "message: >-\n";
     streamMultilineYamlAttribute( errorMsg.m_msg, yamlFile );
     if( !errorMsg.m_contextsInfo.empty() )
     {
+      // Additional informations about the context of the error and priority information of each context
       yamlFile << g_level1Next << "contexts:\n";
       for( ContextInfo const & ctxInfo : errorMsg.m_contextsInfo )
       {
@@ -196,9 +199,11 @@ void ErrorLogger::write( ErrorLogger::ErrorMsg const & errorMsg )
         }
       }
     }
+    // Location of the error in the code 
     yamlFile << g_level1Next << "sourceLocation:\n";
     yamlFile << g_level2Next << "file: " << errorMsg.m_file << "\n";
     yamlFile << g_level2Next << "line: " << errorMsg.m_line << "\n";
+    // Information about the stack trace 
     yamlFile << g_level1Next << "sourceCallStack:\n";
     if( isValidStackTrace( errorMsg ) )
     {
