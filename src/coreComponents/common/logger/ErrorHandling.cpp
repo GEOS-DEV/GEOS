@@ -57,27 +57,27 @@ void ErrorLogger::createFile()
 
 ErrorLogger::ErrorMsg & ErrorLogger::ErrorMsg::addToMsg( std::exception const & e )
 {
-  parent->m_currentErrorMsg.m_msg = e.what();
-  return parent->m_currentErrorMsg;
+  m_msg = e.what();
+  return *this;
 }
 
 ErrorLogger::ErrorMsg & ErrorLogger::ErrorMsg::addToMsg( std::string errorMsg )
 {
-  parent->m_currentErrorMsg.m_msg = errorMsg + parent->m_currentErrorMsg.m_msg;
-  return parent->m_currentErrorMsg;
+  m_msg = errorMsg + m_msg;
+  return *this;
 }
 
 ErrorLogger::ErrorMsg & ErrorLogger::ErrorMsg::setCodeLocation( std::string_view msgFile, integer msgLine )
 {
-  parent->m_currentErrorMsg.m_file = msgFile;
-  parent->m_currentErrorMsg.m_line = msgLine;
-  return parent->m_currentErrorMsg;
+  m_file = msgFile;
+  m_line = msgLine;
+  return *this;
 }
 
 ErrorLogger::ErrorMsg & ErrorLogger::ErrorMsg::setType( ErrorLogger::MsgType msgType )
 {
-  parent->m_currentErrorMsg.m_type = msgType;
-  return parent->m_currentErrorMsg;
+  m_type = msgType;
+  return *this;
 }
 
 void ErrorLogger::ErrorMsg::addContextInfoImpl( ErrorLogger::ContextInfo && ctxInfo )
