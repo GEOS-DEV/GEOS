@@ -1295,7 +1295,8 @@ void synchronizeTopologyChange( MeshLevel * const mesh,
   edgeManager.enforceStateFieldConsistencyPostTopologyChange( modifiedObjects.modifiedEdges );
   faceManager.enforceStateFieldConsistencyPostTopologyChange( modifiedObjects.modifiedFaces );
 
-
+  // Enforce face-element mapping convention: the first connected element should be in column 0.
+  faceManager.enforceConnectivityConvention();
 }
 
 }

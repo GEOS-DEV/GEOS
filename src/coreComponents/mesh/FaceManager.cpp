@@ -519,11 +519,31 @@ localIndex FaceManager::unpackUpDownMaps( buffer_unit_type const * & buffer,
                                      m_toElements.getElementRegionManager(),
                                      overwriteUpMaps );
 
+
   GEOS_ERROR_IF_NE( m_unmappedGlobalIndicesInToNodes.size(), 0 );
   GEOS_ERROR_IF_NE( m_unmappedGlobalIndicesInToEdges.size(), 0 );
 
   return unPackedSize;
 }
+
+
+void FaceManager::enforceConnectivityConvention()
+{
+  arrayView2d< localIndex > & region = m_toElements.m_toElementRegion;
+  arrayView2d< localIndex > & subregion = m_toElements.m_toElementSubRegion;
+  arrayView2d< localIndex > & index = m_toElements.m_toElementIndex;
+
+  for( localIndex f = 0; f < this->size(); ++f )
+  {
+    if( index[f][0] == -1 && index[f][1] != -1 )
+    {
+      std::swap( region[f][0], region[f][1] );
+      std::swap( subregion[f][0], subregion[f][1] );
+      std::swap( index[f][0], index[f][1] );
+    }
+  }
+}
+
 
 void FaceManager::fixUpDownMaps( bool const clearIfUnmapped )
 {
