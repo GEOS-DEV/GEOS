@@ -31,6 +31,8 @@ static constexpr std::string_view g_level2Start = "    - ";
 static constexpr std::string_view g_level2Next =  "      ";
 static constexpr std::string_view g_level3Start = "      - ";
 static constexpr std::string_view g_level3Next =  "        ";
+static constexpr const char* g_callStackMessage =
+  "Callstack could not be retrieved. The format does not match the expected one.";
 
 ErrorLogger g_errorLogger{};
 
@@ -61,7 +63,7 @@ ErrorLogger::ErrorMsg & ErrorLogger::ErrorMsg::addToMsg( std::exception const & 
 
 ErrorLogger::ErrorMsg & ErrorLogger::ErrorMsg::addToMsg( std::string errorMsg )
 {
-  parent->m_currentErrorMsg.m_msg = errorMsg + parent->m_currentErrorMsg.m_msg; 
+  parent->m_currentErrorMsg.m_msg = errorMsg + parent->m_currentErrorMsg.m_msg;
   return parent->m_currentErrorMsg;
 }
 
@@ -96,12 +98,12 @@ ErrorLogger::ErrorMsg & ErrorLogger::ErrorMsg::addCallStackInfo( std::string oss
   std::size_t index;
   bool isWellFormatted = false;
 
-  std::regex pattern(R"(Frame \d+: \S+)");
+  std::regex pattern( R"(Frame \d+: \S+)" );
 
   while( std::getline( iss, stackLine ) )
   {
-    stackLine = "this is a test";
-    if (std::regex_search(stackLine, pattern)) {
+    if( std::regex_search( stackLine, pattern ))
+    {
       isWellFormatted = true;
       index = stackLine.find( ':' );
       m_sourceCallStack.push_back( stackLine.substr( index + 1 ) );
@@ -110,7 +112,7 @@ ErrorLogger::ErrorMsg & ErrorLogger::ErrorMsg::addCallStackInfo( std::string oss
 
   if( !isWellFormatted )
   {
-    m_sourceCallStack.push_back( "Callstack could not be retrieved. The format does not match the expected one." );
+    m_sourceCallStack.push_back( g_callStackMessage );
   }
 
   return *this;
@@ -127,7 +129,7 @@ std::string ErrorLogger::toString( ErrorLogger::MsgType type )
   }
 }
 
-void ErrorLogger::streamMultilineYamlAttribute( std::string_view msg, std::ofstream& yamlFile )
+void ErrorLogger::streamMultilineYamlAttribute( std::string_view msg, std::ofstream & yamlFile )
 {
   while( !msg.empty() )
   {
@@ -135,13 +137,24 @@ void ErrorLogger::streamMultilineYamlAttribute( std::string_view msg, std::ofstr
     std::string_view line = msg.substr( 0, index );
     yamlFile << g_level2Next << line << "\n";
 
-    if( index == msg.npos )
-      break;
-    msg.remove_prefix( index + 1 );
+    if( index != msg.npos )
+    {
+      msg.remove_prefix( index + 1 );
+    }
+    else
+    {
+      msg = {};
+    }
   }
 }
 
-void ErrorLogger::write( ErrorLogger::ErrorMsg const & errorMsg ) //const
+bool ErrorLogger::isValidStackTrace( ErrorLogger::ErrorMsg const & errorMsg ) const
+{
+  return( errorMsg.m_sourceCallStack.size() == 1 &&
+          errorMsg.m_sourceCallStack[0] == g_callStackMessage );
+}
+
+void ErrorLogger::write( ErrorLogger::ErrorMsg const & errorMsg )
 {
   std::ofstream yamlFile( std::string( m_filename ), std::ios::app );
   if( yamlFile.is_open() )
@@ -158,43 +171,46 @@ void ErrorLogger::write( ErrorLogger::ErrorMsg const & errorMsg ) //const
     if( !errorMsg.m_contextsInfo.empty() )
     {
       yamlFile << g_level1Next << "contexts:\n";
-      for( ContextInfo const & ctxInfo : errorMsg.m_contextsInfo )  
+      for( ContextInfo const & ctxInfo : errorMsg.m_contextsInfo )
       {
         bool isFirst = true;
         for( auto const & [key, value] : ctxInfo.m_ctxInfo )
         {
           if( isFirst )
           {
-              yamlFile << g_level3Start << key << ": " << value << "\n";
-              isFirst = false;
+            yamlFile << g_level3Start << key << ": " << value << "\n";
+            isFirst = false;
           }
           else
           {
-              yamlFile << g_level3Next << key << ": " << value << "\n";
+            yamlFile << g_level3Next << key << ": " << value << "\n";
           }
         }
         if( isFirst )
         {
           yamlFile << g_level3Start << "priority: " << ctxInfo.m_priority << "\n";
         }
-        else 
+        else
         {
           yamlFile << g_level3Next << "priority: " <<ctxInfo.m_priority << "\n";
         }
       }
     }
-
     yamlFile << g_level1Next << "sourceLocation:\n";
     yamlFile << g_level2Next << "file: " << errorMsg.m_file << "\n";
     yamlFile << g_level2Next << "line: " << errorMsg.m_line << "\n";
-
     yamlFile << g_level1Next << "sourceCallStack:\n";
-
-    for( size_t i = 0; i < errorMsg.m_sourceCallStack.size(); i++ )
+    if( isValidStackTrace( errorMsg ) )
     {
-      yamlFile << g_level3Start << "frame" << i << ": " << errorMsg.m_sourceCallStack[i] << "\n"; 
+      yamlFile << g_level3Start << "callStackMessage: " << errorMsg.m_sourceCallStack[0] << "\n";
     }
-
+    else
+    {
+      for( size_t i = 0; i < errorMsg.m_sourceCallStack.size(); i++ )
+      {
+        yamlFile << g_level3Start << "frame" << i << ": " << errorMsg.m_sourceCallStack[i] << "\n";
+      }
+    }
     yamlFile.flush();
     GEOS_LOG( GEOS_FMT( "The error file {} was appended.", m_filename ) );
   }

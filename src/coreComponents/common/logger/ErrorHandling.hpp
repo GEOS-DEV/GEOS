@@ -174,6 +174,13 @@ public:
   void streamMultilineYamlAttribute( std::string_view msg, std::ofstream & yamlFile );
 
   /**
+   * @brief Checks if the vector contains a valid stack or just the error message
+   * @return true 
+   * @return false 
+   */
+  bool isValidStackTrace( ErrorMsg const & errorMsg ) const;
+
+  /**
    * @brief Add the error/warning message into the yaml file
    * @param errorMsg The error message informations formatted by the associated structure
    */
