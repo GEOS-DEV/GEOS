@@ -94,11 +94,23 @@ ErrorLogger::ErrorMsg & ErrorLogger::ErrorMsg::addCallStackInfo( std::string oss
   std::istringstream iss( ossStackTrace );
   std::string stackLine;
   std::size_t index;
+  bool isWellFormatted = false;
+
+  std::regex pattern(R"(Frame \d+: \S+)");
 
   while( std::getline( iss, stackLine ) )
   {
-    index = stackLine.find( ':' );
-    m_sourceCallStack.push_back( stackLine.substr( index + 1 ) );
+    stackLine = "this is a test";
+    if (std::regex_search(stackLine, pattern)) {
+      isWellFormatted = true;
+      index = stackLine.find( ':' );
+      m_sourceCallStack.push_back( stackLine.substr( index + 1 ) );
+    }
+  }
+
+  if( !isWellFormatted )
+  {
+    m_sourceCallStack.push_back( "Callstack could not be retrieved. The format does not match the expected one." );
   }
 
   return *this;
@@ -180,9 +192,7 @@ void ErrorLogger::write( ErrorLogger::ErrorMsg const & errorMsg ) //const
 
     for( size_t i = 0; i < errorMsg.m_sourceCallStack.size(); i++ )
     {
-      if( i < 2 || i == errorMsg.m_sourceCallStack.size() - 1 )
-        continue;
-      yamlFile << g_level3Start << i-2 << errorMsg.m_sourceCallStack[i] << "\n"; 
+      yamlFile << g_level3Start << "frame" << i << ": " << errorMsg.m_sourceCallStack[i] << "\n"; 
     }
 
     yamlFile.flush();
