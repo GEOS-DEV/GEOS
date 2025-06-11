@@ -226,6 +226,12 @@ public:
   ///@}
 
   /**
+   * @brief Ensure first connected element is stored in column 0.
+   * @details Swaps entries if column 0 is empty and column 1 is valid.
+   */
+  void enforceConnectivityConvention();
+
+  /**
    * @brief Compress FaceManager face-to-node and face-to-edge containers so that the values of
    * each array are contiguous with no extra capacity in between.
    * @note The method used here on each arrays (compress) does not free any memory.

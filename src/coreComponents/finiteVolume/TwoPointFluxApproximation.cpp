@@ -488,6 +488,11 @@ void TwoPointFluxApproximation::addFractureMatrixConnectionsDFM( MeshLevel & mes
           continue;
         }
 
+        if( ei < 0 )
+        {
+          continue;
+        }
+
         // Filter out entries where both fracture and cell element are ghosted
         if( elemGhostRank[fractureRegionIndex][0][kfe] >= 0 && elemGhostRank[er][esr][ei] >= 0 )
         {
