@@ -71,10 +71,6 @@ int main( int argc, char *argv[] )
   // A NotAnError is thrown if "-h" or "--help" option is used.
   catch( NotAnError const & )
   {
-    if( g_errorLogger.writeFile() )
-    {
-      g_errorLogger.write( g_errorLogger.currentErrorMsg() );
-    }
     basicCleanup();
     return 0;
   }
