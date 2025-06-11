@@ -45,7 +45,7 @@ public:
   };
 
   /**
-   * @brief Stores contextual information about the error that occurred and assigns it a priority 
+   * @brief Stores contextual information about the error that occurred and assigns it a priority
    * default is 0
    */
   struct ContextInfo
@@ -91,18 +91,18 @@ public:
     ErrorMsg( MsgType msgType, std::string msgContent, std::string msgFile, integer msgLine )
       : m_type( msgType ), m_msg( msgContent ), m_file( msgFile ), m_line( msgLine ) {}
 
-    /**  
-     * @brief Add text to the error msg that occured to the msg field of the structure  
-     * @param e The exception to add.  
-     * @return The instance, for builder pattern.  
-     */  
+    /**
+     * @brief Add text to the error msg that occured to the msg field of the structure
+     * @param e The exception to add.
+     * @return The instance, for builder pattern.
+     */
     ErrorMsg & addToMsg( std::exception const & e );
 
-    /**  
-     * @brief Add text to the error msg that occured to the msg field of the structure  
-     * @param msg The text to add.  
-     * @return The instance, for builder pattern.  
-     */  
+    /**
+     * @brief Add text to the error msg that occured to the msg field of the structure
+     * @param msg The text to add.
+     * @return The instance, for builder pattern.
+     */
     ErrorMsg & addToMsg( std::string msg );
 
     /**
@@ -133,21 +133,21 @@ public:
      */
     ErrorLogger::ErrorMsg & addCallStackInfo( std::string ossStackTrace );
 
-    private:
-      /**
-       * @brief Add contextual information about the error/warning message to the ErrorMsg structure
-       * @param info DataContext information  stored into a map
-       */
-      void addContextInfoImpl( ContextInfo && ctxInfo );
+private:
+    /**
+     * @brief Add contextual information about the error/warning message to the ErrorMsg structure
+     * @param info DataContext information  stored into a map
+     */
+    void addContextInfoImpl( ContextInfo && ctxInfo );
 
-    public: 
-      /**
-       * @brief Adds one or more context elements to the error
-       * @tparam Args
-       * @param args
-       */
-      template< typename ... Args >
-      void addContextInfo( Args && ... args );
+public:
+    /**
+     * @brief Adds one or more context elements to the error
+     * @tparam Args
+     * @param args
+     */
+    template< typename ... Args >
+    void addContextInfo( Args && ... args );
   };
 
   /**
@@ -171,12 +171,13 @@ public:
    * @brief Write the error message in the yaml file regarding indentation and line break
    * @param msg
    */
-  void streamMultilineYamlAttribute( std::string_view msg, std::ofstream & yamlFile );
+  void streamMultilineYamlAttribute( std::string_view msg, std::ofstream & yamlFile,
+                                     std::string_view indent );
 
   /**
    * @brief Checks if the vector contains a valid stack or just the error message
-   * @return true 
-   * @return false 
+   * @return true
+   * @return false
    */
   bool isValidStackTrace( ErrorMsg const & errorMsg ) const;
 
@@ -216,13 +217,13 @@ public:
   ErrorMsg & currentErrorMsg()
   { return m_currentErrorMsg; }
 
-  private:
-    // The error constructed via exceptions
-    ErrorMsg m_currentErrorMsg;
-    // Write in the yaml file
-    bool m_writeYaml = false;
-    // Yaml file name
-    std::string_view m_filename = "errors.yaml";
+private:
+  // The error constructed via exceptions
+  ErrorMsg m_currentErrorMsg;
+  // Write in the yaml file
+  bool m_writeYaml = false;
+  // Yaml file name
+  std::string_view m_filename = "errors.yaml";
 };
 
 extern ErrorLogger g_errorLogger;

@@ -31,7 +31,7 @@ static constexpr std::string_view g_level2Start = "    - ";
 static constexpr std::string_view g_level2Next =  "      ";
 static constexpr std::string_view g_level3Start = "      - ";
 static constexpr std::string_view g_level3Next =  "        ";
-static constexpr const char* g_callStackMessage =
+static constexpr const char * g_callStackMessage =
   "Callstack could not be retrieved. The format does not match the expected one.";
 
 ErrorLogger g_errorLogger{};
@@ -129,7 +129,8 @@ std::string ErrorLogger::toString( ErrorLogger::MsgType type )
   }
 }
 
-void ErrorLogger::streamMultilineYamlAttribute( std::string_view msg, std::ofstream & yamlFile )
+void ErrorLogger::streamMultilineYamlAttribute( std::string_view msg, std::ofstream & yamlFile,
+                                                std::string_view indent )
 {
   std::size_t i = 0;
   // Loop that runs through the string_view named msg
@@ -144,7 +145,7 @@ void ErrorLogger::streamMultilineYamlAttribute( std::string_view msg, std::ofstr
     }
     // Writes the current line to the YAML file with the desired indentation
     std::string_view msgLine = msg.substr( i, index - i );
-    yamlFile << g_level2Next << msgLine << "\n";
+    yamlFile << indent << msgLine << "\n";
     // Move to the next line
     i = index + 1;
   }
@@ -169,9 +170,9 @@ void ErrorLogger::write( ErrorLogger::ErrorMsg const & errorMsg )
       yamlFile << errorMsg.m_ranksInfo[i];
     }
     yamlFile << "\n";
-    // Error message 
+    // Error message
     yamlFile << g_level1Next << "message: >-\n";
-    streamMultilineYamlAttribute( errorMsg.m_msg, yamlFile );
+    streamMultilineYamlAttribute( errorMsg.m_msg, yamlFile, g_level2Next );
     if( !errorMsg.m_contextsInfo.empty() )
     {
       // Additional informations about the context of the error and priority information of each context
@@ -201,11 +202,11 @@ void ErrorLogger::write( ErrorLogger::ErrorMsg const & errorMsg )
         }
       }
     }
-    // Location of the error in the code 
+    // Location of the error in the code
     yamlFile << g_level1Next << "sourceLocation:\n";
     yamlFile << g_level2Next << "file: " << errorMsg.m_file << "\n";
     yamlFile << g_level2Next << "line: " << errorMsg.m_line << "\n";
-    // Information about the stack trace 
+    // Information about the stack trace
     yamlFile << g_level1Next << "sourceCallStack:\n";
     if( isValidStackTrace( errorMsg ) )
     {
