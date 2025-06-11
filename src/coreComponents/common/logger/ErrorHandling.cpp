@@ -131,20 +131,22 @@ std::string ErrorLogger::toString( ErrorLogger::MsgType type )
 
 void ErrorLogger::streamMultilineYamlAttribute( std::string_view msg, std::ofstream & yamlFile )
 {
-  while( !msg.empty() )
+  std::size_t i = 0;
+  // Loop that runs through the string_view named msg
+  while( i < msg.size() )
   {
-    const size_t index = msg.find( "\n" );
-    std::string_view line = msg.substr( 0, index );
-    yamlFile << g_level2Next << line << "\n";
-
-    if( index != msg.npos )
+    // Index of the next line break
+    std::size_t index = msg.find( "\n", i );
+    // If there is no line break, the entire string is taken
+    if( index == std::string_view::npos )
     {
-      msg.remove_prefix( index + 1 );
+      index = msg.size();
     }
-    else
-    {
-      msg = {};
-    }
+    // Writes the current line to the YAML file with the desired indentation
+    std::string_view msgLine = msg.substr( i, index - i );
+    yamlFile << g_level2Next << msgLine << "\n";
+    // Move to the next line
+    i = index + 1;
   }
 }
 
