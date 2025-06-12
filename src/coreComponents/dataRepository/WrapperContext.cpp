@@ -38,11 +38,11 @@ string WrapperContext::toString() const
          GEOS_FMT( "{}/{}", m_group.getDataContext().toString(), m_typeName );
 }
 
-ErrorLogger::ContextInfo WrapperContext::getContextInfo() const
+ErrorLogger::ErrorContext WrapperContext::getContextInfo() const
 {
   map< std::string, std::string > contextInfo;
   contextInfo["dataPath"] = toString();
-  ErrorLogger::ContextInfo ctxInfo{ contextInfo };
+  ErrorLogger::ErrorContext ctxInfo{ contextInfo };
 
   return ctxInfo;
 }

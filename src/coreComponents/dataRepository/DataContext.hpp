@@ -63,15 +63,15 @@ public:
   
   /**
    * @brief Returns contextual information, including the file name and the line number
-   * @return ErrorLogger::ContextInfo 
+   * @return ErrorLogger::ErrorContext 
    */
-  virtual ErrorLogger::ContextInfo getContextInfo() const = 0;
+  virtual ErrorLogger::ErrorContext getContextInfo() const = 0;
 
   /**
-   * @brief Conversion operator to ErrorLogger::ContextInfo 
-   * @return ErrorLogger::ContextInfo 
+   * @brief Conversion operator to ErrorLogger::ErrorContext 
+   * @return ErrorLogger::ErrorContext 
    */
-  explicit operator ErrorLogger::ContextInfo() const {
+  explicit operator ErrorLogger::ErrorContext() const {
     return getContextInfo();
   }
 
@@ -172,9 +172,9 @@ public:
 
   /**
    * @brief Returns contextual information, including the file name and the line number
-   * @return ErrorLogger::ContextInfo 
+   * @return ErrorLogger::ErrorContext 
    */
-  ErrorLogger::ContextInfo getContextInfo() const override;
+  ErrorLogger::ErrorContext getContextInfo() const override;
 
   /**
    * @return the type name in the source file (XML node tag name / attribute name).

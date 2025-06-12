@@ -61,12 +61,6 @@ void ErrorLogger::createFile()
   }
 }
 
-ErrorLogger::ErrorMsg & ErrorLogger::ErrorMsg::addToMsg( std::exception const & e )
-{
-  m_msg = e.what();
-  return *this;
-}
-
 ErrorLogger::ErrorMsg & ErrorLogger::ErrorMsg::addToMsg( std::string errorMsg )
 {
   m_msg = errorMsg + m_msg;
@@ -86,7 +80,7 @@ ErrorLogger::ErrorMsg & ErrorLogger::ErrorMsg::setType( ErrorLogger::MsgType msg
   return *this;
 }
 
-void ErrorLogger::ErrorMsg::addContextInfoImpl( ErrorLogger::ContextInfo && ctxInfo )
+void ErrorLogger::ErrorMsg::addContextInfoImpl( ErrorLogger::ErrorContext && ctxInfo )
 {
   m_contextsInfo.emplace_back( std::move( ctxInfo ) );
 }
@@ -185,10 +179,10 @@ void ErrorLogger::write( ErrorLogger::ErrorMsg const & errorMsg )
       {
         // Additional informations about the context of the error and priority information of each context
         yamlFile << g_level1Next << "contexts:\n";
-        for( ContextInfo const & ctxInfo : errorMsg.m_contextsInfo )
+        for( ErrorContext const & ctxInfo : errorMsg.m_contextsInfo )
         {
           bool isFirst = true;
-          for( auto const & [key, value] : ctxInfo.m_ctxInfo )
+          for( auto const & [key, value] : ctxInfo.m_attributes )
           {
             if( isFirst )
             {
@@ -203,6 +197,7 @@ void ErrorLogger::write( ErrorLogger::ErrorMsg const & errorMsg )
           if( isFirst )
           {
             yamlFile << g_level3Start << "priority: " << ctxInfo.m_priority << "\n";
+            isFirst = false;
           }
           else
           {

@@ -48,7 +48,7 @@ public:
    * @brief Stores contextual information about the error that occurred and assigns it a priority
    * default is 0
    */
-  struct ContextInfo
+  struct ErrorContext
   {
     // The map contains contextual information about the error
     // It could be something like 
@@ -56,15 +56,15 @@ public:
     // "line" = "24"
     // or something like 
     // "dataPath" = "/Functions/co2brine_philipsDensityTable"
-    map< std::string, std::string > m_ctxInfo;
+    map< std::string, std::string > m_attributes;
     integer m_priority = 0;
 
     /**
      * @brief Set the priority of the current error context information
      * @param priority
-     * @return ContextInfo&
+     * @return ErrorContext&
      */
-    ContextInfo & setPriority( integer priority )
+    ErrorContext & setPriority( integer priority )
     { m_priority = priority; return *this; }
   };
 
@@ -78,7 +78,7 @@ public:
     std::string m_file;
     integer m_line;
     std::vector< int > m_ranksInfo;
-    std::vector< ContextInfo > m_contextsInfo;
+    std::vector< ErrorContext > m_contextsInfo;
     std::vector< std::string > m_sourceCallStack;
 
     /**
@@ -95,13 +95,6 @@ public:
      */
     ErrorMsg( MsgType msgType, std::string msgContent, std::string msgFile, integer msgLine )
       : m_type( msgType ), m_msg( msgContent ), m_file( msgFile ), m_line( msgLine ) {}
-
-    /**
-     * @brief Add text to the error msg that occured to the msg field of the structure
-     * @param e The exception to add.
-     * @return The instance, for builder pattern.
-     */
-    ErrorMsg & addToMsg( std::exception const & e );
 
     /**
      * @brief Add text to the error msg that occured to the msg field of the structure
@@ -151,7 +144,7 @@ private:
      * @brief Add contextual information about the error/warning message to the ErrorMsg structure
      * @param info DataContext information  stored into a map
      */
-    void addContextInfoImpl( ContextInfo && ctxInfo );
+    void addContextInfoImpl( ErrorContext && ctxInfo );
   };
 
   /**
@@ -230,7 +223,7 @@ extern ErrorLogger g_errorLogger;
 template< typename ... Args >
 void ErrorLogger::ErrorMsg::addContextInfo( Args && ... args )
 {
-  ( this->addContextInfoImpl( ContextInfo( args ) ), ... );
+  ( this->addContextInfoImpl( ErrorContext( args ) ), ... );
 }
 
 } /* namespace geos */
