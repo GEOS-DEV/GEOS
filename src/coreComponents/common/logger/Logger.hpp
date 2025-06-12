@@ -152,7 +152,7 @@
       std::cout << __oss.str() << std::endl; \
       std::ostringstream __msgoss; \
       __msgoss << MSG; \
-      if( g_errorLogger.writeFile() ) \
+      if( g_errorLogger.isOutputFileEnabled() ) \
       { \
         ErrorLogger::ErrorMsg msgStruct( ErrorLogger::MsgType::Error, \
                                          __msgoss.str(), \
@@ -187,7 +187,7 @@
       std::cout << __oss.str() << std::endl; \
       std::ostringstream __msgoss; \
       __msgoss << MSG; \
-      if( g_errorLogger.writeFile() ) \
+      if( g_errorLogger.isOutputFileEnabled() ) \
       { \
         ErrorLogger::ErrorMsg msgStruct( ErrorLogger::MsgType::Error, \
                                          __msgoss.str(), \
@@ -240,7 +240,7 @@
       std::cout << __oss.str() << std::endl; \
       std::ostringstream __msgoss; \
       __msgoss << MSG; \
-      if( g_errorLogger.writeFile() ) \
+      if( g_errorLogger.isOutputFileEnabled() ) \
       { \
         g_errorLogger.currentErrorMsg() \
           .setType( ErrorLogger::MsgType::Exception ) \
@@ -275,7 +275,7 @@
       std::cout << __oss.str() << std::endl; \
       std::ostringstream __msgoss; \
       __msgoss << MSG; \
-      if( g_errorLogger.writeFile() ) \
+      if( g_errorLogger.isOutputFileEnabled() ) \
       { \
         g_errorLogger.currentErrorMsg() \
           .setType( ErrorLogger::MsgType::Exception ) \
@@ -322,7 +322,7 @@
       std::cout << __oss.str() << std::endl; \
       std::ostringstream __msgoss; \
       __msgoss << MSG; \
-      if( g_errorLogger.writeFile() ) \
+      if( g_errorLogger.isOutputFileEnabled() ) \
       { \
         ErrorLogger::ErrorMsg msgStruct( ErrorLogger::MsgType::Warning, \
                                          __msgoss.str(), \
@@ -354,7 +354,7 @@
       std::cout << __oss.str() << std::endl; \
       std::ostringstream __msgoss; \
       __msgoss << MSG; \
-      if( g_errorLogger.writeFile() ) \
+      if( g_errorLogger.isOutputFileEnabled() ) \
       { \
         ErrorLogger::ErrorMsg msgStruct( ErrorLogger::MsgType::Warning, \
                                          __msgoss.str(), \

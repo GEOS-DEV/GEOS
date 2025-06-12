@@ -61,6 +61,17 @@ void ErrorLogger::createFile()
   }
 }
 
+std::string ErrorLogger::ErrorContext::attributeToString(  ErrorLogger::ErrorContext::Attribute attribute )
+{
+  switch( attribute )
+  {
+    case ErrorLogger::ErrorContext::Attribute::InputFile: return "inputFile";
+    case ErrorLogger::ErrorContext::Attribute::InputLine: return "inputLine";
+    case ErrorLogger::ErrorContext::Attribute::DataPath: return "dataPath";
+    default: return "Unknown";
+  }
+}
+
 ErrorLogger::ErrorMsg & ErrorLogger::ErrorMsg::addToMsg( std::string errorMsg )
 {
   m_msg = errorMsg + m_msg;
@@ -186,12 +197,12 @@ void ErrorLogger::write( ErrorLogger::ErrorMsg const & errorMsg )
           {
             if( isFirst )
             {
-              yamlFile << g_level3Start << key << ": " << value << "\n";
+              yamlFile << g_level3Start << ErrorContext::attributeToString( key ) << ": " << value << "\n";
               isFirst = false;
             }
             else
             {
-              yamlFile << g_level3Next << key << ": " << value << "\n";
+              yamlFile << g_level3Next << ErrorContext::attributeToString( key ) << ": " << value << "\n";
             }
           }
           if( isFirst )

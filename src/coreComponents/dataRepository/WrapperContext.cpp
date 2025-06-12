@@ -40,10 +40,9 @@ string WrapperContext::toString() const
 
 ErrorLogger::ErrorContext WrapperContext::getContextInfo() const
 {
-  map< std::string, std::string > contextInfo;
-  contextInfo["dataPath"] = toString();
-  ErrorLogger::ErrorContext ctxInfo{ contextInfo };
-
+  ErrorLogger::ErrorContext ctxInfo{ 
+    { { ErrorLogger::ErrorContext::Attribute::DataPath, toString() } } // m_attributes
+  };
   return ctxInfo;
 }
 

@@ -56,10 +56,9 @@ string GroupContext::toString() const
 
 ErrorLogger::ErrorContext GroupContext::getContextInfo() const
 {
-  map< std::string, std::string > contextInfo;
-  contextInfo["dataPath"] = toString();
-  ErrorLogger::ErrorContext ctxInfo{ contextInfo };
-
+  ErrorLogger::ErrorContext ctxInfo{ 
+    { { ErrorLogger::ErrorContext::Attribute::DataPath, toString() } } // m_attributes
+  };
   return ctxInfo;
 }
 

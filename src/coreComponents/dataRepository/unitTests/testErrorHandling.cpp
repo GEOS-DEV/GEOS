@@ -23,15 +23,15 @@ using namespace dataRepository;
 
 TEST( ErrorHandling, testYaml )
 {
-  g_errorLogger.setFilename( "errorsOutput.yaml" );
-  g_errorLogger.setWriteValue( true );
+  g_errorLogger.setOutputFilename( "errorsOutput.yaml" );
+  g_errorLogger.enableFileOutput( true );
   double minPrecision = 1e-6;
   double maxPrecision = 1e-3;
   int x = 5;
 
   DataFileContext const context = DataFileContext( "Base Test Class", __FILE__, __LINE__ );
 
-  if( g_errorLogger.writeFile() )
+  if( g_errorLogger.isOutputFileEnabled() )
   {
     g_errorLogger.createFile();
   }
@@ -57,7 +57,7 @@ TEST( ErrorHandling, testYaml )
       .addContextInfo( context.getContextInfo().setPriority( 2 ) );
   }
 
-  if( g_errorLogger.writeFile() )
+  if( g_errorLogger.isOutputFileEnabled() )
   {
     g_errorLogger.write( g_errorLogger.currentErrorMsg() );
   }

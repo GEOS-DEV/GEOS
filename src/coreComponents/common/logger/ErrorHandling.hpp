@@ -50,13 +50,20 @@ public:
    */
   struct ErrorContext
   {
+    enum class Attribute
+    {
+      InputFile,
+      InputLine,
+      DataPath
+    };
+
     // The map contains contextual information about the error
     // It could be something like 
     // "file" = "/path/to/file.xml"
     // "line" = "24"
     // or something like 
     // "dataPath" = "/Functions/co2brine_philipsDensityTable"
-    map< std::string, std::string > m_attributes;
+    map< Attribute, std::string > m_attributes;
     integer m_priority = 0;
 
     /**
@@ -66,6 +73,8 @@ public:
      */
     ErrorContext & setPriority( integer priority )
     { m_priority = priority; return *this; }
+
+    static std::string attributeToString( Attribute attribute );
   };
 
   /**
@@ -139,67 +148,34 @@ public:
     template< typename ... Args >
     void addContextInfo( Args && ... args );
 
-private:
-    /**
-     * @brief Add contextual information about the error/warning message to the ErrorMsg structure
-     * @param info DataContext information  stored into a map
-     */
-    void addContextInfoImpl( ErrorContext && ctxInfo );
+    private:
+      /**
+       * @brief Add contextual information about the error/warning message to the ErrorMsg structure
+       * @param info DataContext information  stored into a map
+       */
+      void addContextInfoImpl( ErrorContext && ctxInfo );
   };
 
   /**
-   * @brief Create the yaml file if the option is specified in the command line options
-   */
-  void createFile();
-
-  /**
-   * @brief Convert a MsgType into a string
-   * @param type
-   * @return std::string
-   */
-  std::string toString( MsgType type );
-
-  /**
-   * @brief Write the error message in the yaml file regarding indentation and line break
-   * @param msg
-   */
-  void streamMultilineYamlAttribute( std::string_view msg, std::ofstream & yamlFile,
-                                     std::string_view indent );
-
-  /**
-   * @brief Checks if the vector contains a valid stack or just the error message
+   * @brief Returns true whether the YAML file writing option is enabled by the user otherwise false
    * @return true
    * @return false
    */
-  bool isValidStackTrace( ErrorMsg const & errorMsg ) const;
-
-  /**
-   * @brief Add the error/warning message into the yaml file
-   * @param errorMsg The error message informations formatted by the associated structure
-   */
-  void write( ErrorMsg const & errorMsg );
-
-  /**
-   * @brief Returns true whether the yaml file writing option is enabled by the user otherwise false
-   * @return true
-   * @return false
-   */
-  bool writeFile() const
+  bool isOutputFileEnabled() const
   { return m_writeYaml; }
 
   /**
-   * @brief Set the Write Value object
-   * True whether the yaml file writing option is enabled by the user otherwise false
-   * @param value
+   * @brief Enable the YAML file output, which is false by default  
+   * @param value A value of true enable the file writing
    */
-  void setWriteValue( bool value )
+  void enableFileOutput( bool value )
   { m_writeYaml = value; }
 
   /**
-   * @brief Set the name of the yaml file if specified by user (default is "errors.yaml")
+   * @brief Set the name of the YAML file if specified by user (default is "errors.yaml")
    * @param filename
    */
-  void setFilename( std::string_view filename )
+  void setOutputFilename( std::string_view filename )
   { m_filename = filename; }
 
   /**
@@ -209,13 +185,45 @@ private:
   ErrorMsg & currentErrorMsg()
   { return m_currentErrorMsg; }
 
+  /**
+   * @brief Create the YAML file if the option is specified in the command line options
+   */
+  void createFile();
+
+  /**
+   * @brief Convert a MsgType into a string
+   * @param type the message type label 
+   * @return the string representation of the message type 
+   */
+  static std::string toString( MsgType type );
+
+  /**
+   * @brief Checks 
+   * @return trueif the vector contains a valid stack or just the error message
+   * @return false
+   */
+  bool isValidStackTrace( ErrorMsg const & errorMsg ) const;
+
+  /**
+   * @brief Add the error/warning message into the YAML file
+   * @param errorMsg The error message informations formatted by the associated structure
+   */
+  void write( ErrorMsg const & errorMsg );
+
 private:
   // The error constructed via exceptions
   ErrorMsg m_currentErrorMsg;
-  // Write in the yaml file
+  // Write in the YAML file
   bool m_writeYaml = false;
-  // Yaml file name
+  // YAML file name
   std::string_view m_filename = "errors.yaml";
+
+  /**
+   * @brief Write the error message in the YAML file regarding indentation and line break
+   * @param msg
+   */
+  void streamMultilineYamlAttribute( std::string_view msg, std::ofstream & yamlFile,
+                                     std::string_view indent );
 };
 
 extern ErrorLogger g_errorLogger;
