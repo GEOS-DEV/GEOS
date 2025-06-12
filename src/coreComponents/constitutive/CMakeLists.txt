@@ -84,6 +84,7 @@ set( constitutive_headers
      fluid/multifluid/CO2Brine/functions/PVTFunctionHelpers.hpp
      fluid/multifluid/CO2Brine/functions/SpanWagnerCO2Density.hpp
      fluid/multifluid/CO2Brine/functions/WaterDensity.hpp
+     fluid/multifluid/compositional/functions/CompositionalMultiphaseFluidUtilities.hpp
      fluid/multifluid/compositional/functions/CompositionalProperties_impl.hpp
      fluid/multifluid/compositional/functions/CompositionalProperties.hpp
      fluid/multifluid/compositional/functions/CubicEOSPhaseModel.hpp
@@ -96,6 +97,7 @@ set( constitutive_headers
      fluid/multifluid/compositional/functions/SoreideWhitsonEOSPhaseModel.hpp
      fluid/multifluid/compositional/functions/StabilityTest.hpp
      fluid/multifluid/compositional/models/CompositionalDensity.hpp
+     fluid/multifluid/compositional/models/CompositionalEnthalpy.hpp
      fluid/multifluid/compositional/models/ConstantViscosity.hpp
      fluid/multifluid/compositional/models/FunctionBase.hpp
      fluid/multifluid/compositional/models/ImmiscibleWaterDensity.hpp
@@ -255,6 +257,7 @@ set( constitutive_sources
      fluid/multifluid/CO2Brine/functions/PureWaterProperties.cpp
      fluid/multifluid/CO2Brine/functions/WaterDensity.cpp
      fluid/multifluid/compositional/models/CompositionalDensity.cpp
+     fluid/multifluid/compositional/models/CompositionalEnthalpy.cpp
      fluid/multifluid/compositional/models/ConstantViscosity.cpp
      fluid/multifluid/compositional/models/ImmiscibleWaterDensity.cpp
      fluid/multifluid/compositional/models/ImmiscibleWaterFlashModel.cpp

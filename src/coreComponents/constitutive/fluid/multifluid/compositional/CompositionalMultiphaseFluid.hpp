@@ -28,7 +28,6 @@
 #include "constitutive/fluid/multifluid/compositional/models/ImmiscibleWaterViscosity.hpp"
 #include "constitutive/fluid/multifluid/compositional/models/LohrenzBrayClarkViscosity.hpp"
 #include "constitutive/fluid/multifluid/compositional/models/NegativeTwoPhaseFlashModel.hpp"
-#include "constitutive/fluid/multifluid/compositional/models/NullModel.hpp"
 #include "constitutive/fluid/multifluid/compositional/models/PhaseModel.hpp"
 #include "constitutive/fluid/multifluid/compositional/models/PhillipsBrineDensity.hpp"
 #include "constitutive/fluid/multifluid/compositional/models/PhillipsBrineViscosity.hpp"
@@ -49,6 +48,7 @@ namespace constitutive
 template< typename FLASH, typename PHASE1, typename PHASE2, typename PHASE3 = compositional::NullPhaseModel >
 class CompositionalMultiphaseFluid : public MultiFluidBase
 {
+  using Traits = compositional::CompositionalMultiphaseFluidTraits< FLASH, PHASE1, PHASE2, PHASE3 >;
 public:
   using FlashModel = FLASH;
   using Phase1Model = PHASE1;
@@ -56,7 +56,7 @@ public:
   using Phase3Model = PHASE3;
 
   // Get the number of phases
-  static constexpr integer NUM_PHASES = FlashModel::KernelWrapper::getNumberOfPhases();
+  static constexpr integer NUM_PHASES = Traits::getNumberOfPhases();
   // Currently restrict to 2 or 3 phases
   static_assert( NUM_PHASES == 2 || NUM_PHASES == 3 );
 
@@ -73,7 +73,10 @@ public:
 
   virtual string getCatalogName() const override { return catalogName(); }
 
-  static constexpr bool isThermalType(){ return false; }
+  static constexpr bool isThermalType()
+  {
+    return Traits::isThermalType();
+  }
 
   // TODO: This method should be implemented if an incorrect extrapolation of the pressure and temperature is encountered in the kernel
   /**
