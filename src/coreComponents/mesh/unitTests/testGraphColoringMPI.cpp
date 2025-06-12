@@ -145,7 +145,7 @@ int main( int argc, char * *argv )
 {
   // Initialize MPI
   MpiWrapper::init( &argc, &argv );
-  MPI_COMM_GEOS = MpiWrapper::commDup( MPI_COMM_GEOS );
+  MPI_COMM_GEOS = MpiWrapper::commDup( MPI_COMM_WORLD );
 
   // Initialize Google Test
   ::testing::InitGoogleTest( &argc, argv );
