@@ -18,6 +18,7 @@
  */
 
 #include "CompositionalEnthalpy.hpp"
+#include "constitutive/fluid/multifluid/compositional/parameters/HeatCapacityCoefficients.hpp"
 
 namespace geos
 {
@@ -50,7 +51,9 @@ CompositionalEnthalpy::createKernelWrapper() const
 std::unique_ptr< ModelParameters >
 CompositionalEnthalpy::createParameters( std::unique_ptr< ModelParameters > parameters )
 {
-  return EquationOfState::create( std::move( parameters ) );
+  auto params = EquationOfState::create( std::move( parameters ) );
+  params = HeatCapacityCoefficients::create( std::move( params ) );
+  return params;
 }
 
 } // namespace compositional
