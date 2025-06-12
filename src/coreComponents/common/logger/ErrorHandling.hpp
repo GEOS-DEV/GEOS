@@ -80,7 +80,6 @@ public:
     std::vector< int > m_ranksInfo;
     std::vector< ContextInfo > m_contextsInfo;
     std::vector< std::string > m_sourceCallStack;
-    ErrorLogger * parent = nullptr;
 
     /**
      * @brief Construct a new Error Msg object
@@ -139,14 +138,6 @@ public:
      */
     ErrorLogger::ErrorMsg & addCallStackInfo( std::string ossStackTrace );
 
-private:
-    /**
-     * @brief Add contextual information about the error/warning message to the ErrorMsg structure
-     * @param info DataContext information  stored into a map
-     */
-    void addContextInfoImpl( ContextInfo && ctxInfo );
-
-public:
     /**
      * @brief Adds one or more context elements to the error
      * @tparam Args
@@ -154,12 +145,14 @@ public:
      */
     template< typename ... Args >
     void addContextInfo( Args && ... args );
-  };
 
-  /**
-   * @brief Construct a new Error Logger object
-   */
-  ErrorLogger();
+private:
+    /**
+     * @brief Add contextual information about the error/warning message to the ErrorMsg structure
+     * @param info DataContext information  stored into a map
+     */
+    void addContextInfoImpl( ContextInfo && ctxInfo );
+  };
 
   /**
    * @brief Create the yaml file if the option is specified in the command line options
