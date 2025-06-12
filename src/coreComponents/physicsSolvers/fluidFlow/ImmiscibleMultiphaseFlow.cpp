@@ -24,7 +24,7 @@
 #include "physicsSolvers/PhysicsSolverBaseKernels.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseUtilities.hpp"
 #include "physicsSolvers/fluidFlow/kernels/immiscibleMultiphase/ImmiscibleMultiphaseKernels.hpp"
-//#include "physicsSolvers/fluidFlow/kernels/immiscibleMultiphase/ImmiscibleTrustRegionKernels.hpp"
+#include "physicsSolvers/fluidFlow/kernels/immiscibleMultiphase/ImmiscibleTrustRegionKernels.hpp"
 #include "physicsSolvers/fluidFlow/kernels/compositional/RelativePermeabilityUpdateKernel.hpp"
 #include "physicsSolvers/fluidFlow/kernels/compositional/CapillaryPressureUpdateKernel.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
@@ -63,7 +63,7 @@ ImmiscibleMultiphaseFlow::ImmiscibleMultiphaseFlow( const string & name,
   m_hasCapPressure( 0 ),
   m_useTotalMassEquation ( 1 ),
   m_trustRegion ( 1 ),
-  m_fluxInflection ( 1 )
+  m_fluxInflection ( 0 )
 {
   this->registerWrapper( viewKeyStruct::inputTemperatureString(), &m_inputTemperature ).
     setInputFlag( InputFlags::REQUIRED ).
@@ -834,7 +834,7 @@ void ImmiscibleMultiphaseFlow::applyDirichletBC( real64 const time_n,
     // 2. Apply saturation BC (phase volume fraction) and store in a separate field
     applyFieldValue< ElementSubRegionBase >( time_n, dt, mesh, bcLogMessage,
                                              fields::immiscibleMultiphaseFlow::phaseVolumeFraction::key(),
-                                             fields::immiscibleMultiphaseFlow::bcPhaseVolumeFraction::key() );
+                                             fields::immiscibleMultiphaseFlow::phaseVolumeFraction::key() ); // fields::immiscibleMultiphaseFlow::bcPhaseVolumeFraction::key()
 
     globalIndex const rankOffset = dofManager.rankOffset();
     string const dofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
@@ -852,9 +852,9 @@ void ImmiscibleMultiphaseFlow::applyDirichletBC( real64 const time_n,
 
       arrayView1d< real64 const > const bcPres =
         subRegion.getReference< array1d< real64 > >( fields::flow::bcPressure::key() );
-      arrayView2d< real64 const, immiscibleFlow::USD_PHASE > const bcPhaseVolFraction =
-        subRegion.getReference< array2d< real64, immiscibleFlow::LAYOUT_PHASE > >(
-          fields::immiscibleMultiphaseFlow::bcPhaseVolumeFraction::key() );
+      // arrayView2d< real64 const, immiscibleFlow::USD_PHASE > const bcPhaseVolFraction =
+      //   subRegion.getReference< array2d< real64, immiscibleFlow::LAYOUT_PHASE > >(
+      //     fields::immiscibleMultiphaseFlow::phaseVolumeFraction::key() ); // fields::immiscibleMultiphaseFlow::bcPhaseVolumeFraction::key()
 
       arrayView1d< integer const > const ghostRank =
         subRegion.getReference< array1d< integer > >( ObjectManagerBase::viewKeyStruct::ghostRankString() );
@@ -897,7 +897,7 @@ void ImmiscibleMultiphaseFlow::applyDirichletBC( real64 const time_n,
                                                       rankOffset,
                                                       localMatrix,
                                                       rhsValue,
-                                                      bcPhaseVolFraction[ei][ip],
+                                                      phaseVolFraction[ei][ip],   // bcPhaseVolFraction[ei][ip]
                                                       phaseVolFraction[ei][ip] );
           localRhs[localRow + ip + 1] = rhsValue;
         }
@@ -1213,9 +1213,8 @@ ImmiscibleMultiphaseFlow::scalingForSystemSolution( DomainPartition & domain,
                                                                MeshLevel const & mesh,
                                                                string_array const & regionNames )
   {    
-    mesh.getElemManager().forElementSubRegions( regionNames,
-                                                [&]( localIndex const,
-                                                     ElementSubRegionBase const & subRegion )
+    mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
+                                                                                          CellElementSubRegion const & subRegion )
     {
       // Build wrappers to the fluid, relative permeability and capillary pressure model objects
       string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
@@ -1225,6 +1224,9 @@ ImmiscibleMultiphaseFlow::scalingForSystemSolution( DomainPartition & domain,
       string const & relPermName = subRegion.getReference< string >( viewKeyStruct::relPermNamesString() );
       BrooksCoreyRelativePermeability const & relPerm = getConstitutiveModel< BrooksCoreyRelativePermeability >( subRegion, relPermName );
       BrooksCoreyRelativePermeability::KernelWrapper relPermWrapper = relPerm.createKernelWrapper();
+
+      string const & solidName = subRegion.getReference< string >( viewKeyStruct::solidNamesString() );
+      CoupledSolidBase const & solid = getConstitutiveModel< CoupledSolidBase >( subRegion, solidName );
 
       BrooksCoreyCapillaryPressure::KernelWrapper* capPressureWrapper = nullptr;
       if ( m_hasCapPressure )
@@ -1282,6 +1284,7 @@ ImmiscibleMultiphaseFlow::scalingForSystemSolution( DomainPartition & domain,
                                                                                               getName(),                                                                                              
                                                                                               mesh.getElemManager(),
                                                                                               subRegion,
+                                                                                              solid,
                                                                                               stencilWrapper,
                                                                                               fluidWrapper,
                                                                                               relPermWrapper,

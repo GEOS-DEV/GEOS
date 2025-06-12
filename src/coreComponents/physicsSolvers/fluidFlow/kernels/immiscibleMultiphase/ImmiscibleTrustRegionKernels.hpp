@@ -37,6 +37,9 @@
 #include "constitutive/solid/porosity/PorosityFields.hpp"
 #include "fieldSpecification/AquiferBoundaryCondition.hpp"
 #include "finiteVolume/BoundaryStencil.hpp"
+#include "finiteVolume/StencilBase.hpp"
+#include "finiteVolume/TwoPointFluxApproximation.hpp"
+#include "mesh/CellElementSubRegion.hpp"
 #include "finiteVolume/FluxApproximationBase.hpp"
 #include "linearAlgebra/interfaces/InterfaceTypes.hpp"
 #include "physicsSolvers/PhysicsSolverBaseKernels.hpp"
@@ -46,7 +49,6 @@
 #include "physicsSolvers/fluidFlow/StencilAccessors.hpp"
 #include "physicsSolvers/fluidFlow/kernels/compositional/RelativePermeabilityUpdateKernel.hpp"
 #include "physicsSolvers/fluidFlow/kernels/compositional/CapillaryPressureUpdateKernel.hpp"
-#include "physicsSolvers/PhysicsSolverBaseKernels.hpp"
 #include "physicsSolvers/fluidFlow/kernels/immiscibleMultiphase/KernelLaunchSelectors.hpp"
 
 namespace geos
@@ -151,7 +153,7 @@ public:
     GEOS_HOST_DEVICE
     StackVariables( localIndex numElems )
       : numFluxElems( numElems ),
-        nConn ( numElems * (numElems - 1) / 2 ),
+        nConn( numElems * (numElems - 1) / 2 ),
         localEps( numElems * (numElems - 1) / 2 * numEqn ),
         connFactor( 1.0 )
     {}
@@ -1052,6 +1054,11 @@ public:
                       fields::flow::gravityCoefficient,
                       fields::immiscibleMultiphaseFlow::phaseVolumeFraction >;
 
+  using PermeabilityAccessors =
+    StencilMaterialAccessors< PermeabilityBase,
+                              fields::permeability::permeability,
+                              fields::permeability::dPerm_dPressure >;
+
   using MultiphaseFluidAccessors =
     StencilMaterialAccessors< TwoPhaseImmiscibleFluid,
                               fields::twophaseimmisciblefluid::phaseDensity,
@@ -1099,37 +1106,41 @@ public:
                                    globalIndex const rankOffset,
                                    arrayView1d< real64 const > const & localSolution,
                                    real64 const globalKinkFactor,
-                                   ElementSubRegionBase const & subRegion,
+                                   CellElementSubRegion const & subRegion,
+                                   constitutive::CoupledSolidBase const & solid,
                                    STENCILWRAPPER const & stencilWrapper,
                                    FLUIDWRAPPER const & fluidWrapper,
                                    RELPERMWRAPPER const & relPermWrapper,
                                    CAPPRESWRAPPER const * capPressureWrapper,
                                    DofNumberAccessor const & dofNumberAccessor,
+                                   PermeabilityAccessors const & permeabilityAccessors,
                                    ImmiscibleMultiphaseFlowAccessors const & flowAccessors,
                                    MultiphaseFluidAccessors const & fluidAccessors,
-                                   RelPermAccessors const & relPermAccessor,
-                                   PorosityAccessors const & poroAccessor,
+                                   RelPermAccessors const & relPermAccessors,
+                                   PorosityAccessors const & poroAccessors,
                                    CapPressureAccessors const & capPressureAccessors,                    
                                    integer const hasCapPressure )
     : m_numPhases( numPhases ),
       m_rankOffset( rankOffset ),
       m_dofNumber( dofNumberAccessor.toNestedViewConst() ),
-      m_ghostRank( flowAccessors.get( fields::ghostRank {} ) ),
-      m_connMap (subregion.getConnectorIndices().base().toView()),
+      m_ghostRank( subRegion.ghostRank() ), //  flowAccessors.get( fields::ghostRank {} )
+      m_connMap( subRegion.getConnectionMap() ),
       m_gravCoef( flowAccessors.get( fields::flow::gravityCoefficient {} ) ),
       m_pres( flowAccessors.get( fields::flow::pressure {} ) ),
       m_phaseVolFrac( flowAccessors.get( fields::immiscibleMultiphaseFlow::phaseVolumeFraction {} ) ),
+      m_permeability( permeabilityAccessors.get( fields::permeability::permeability {} ) ),
+      m_dPerm_dPres( permeabilityAccessors.get( fields::permeability::dPerm_dPressure {} ) ),
       m_dens( fluidAccessors.get( fields::twophaseimmisciblefluid::phaseDensity {} ) ),
       m_dDens_dPres( fluidAccessors.get( fields::twophaseimmisciblefluid::dPhaseDensity {} ) ),
       m_phaseVisc( fluidAccessors.get( fields::twophaseimmisciblefluid::phaseViscosity {} ) ),
       m_dPhaseVisc( fluidAccessors.get( fields::twophaseimmisciblefluid::dPhaseViscosity {} ) ),
-      m_phaseRelPerm( relPermAccessor.get( fields::relperm::phaseRelPerm {} ) ),
-      m_dPhaseRelPerm_dPhaseVolFrac( relPermAccessor.get( fields::relperm::dPhaseRelPerm_dPhaseVolFraction {} ) ),      
-      m_porosity( poroAccessor.get( fields::porosity::porosity {} ) ),
-      m_dPoro_dPres( poroAccessor.get( fields::porosity::dPorosity_dPressure {} ) ),
+      m_phaseRelPerm( relPermAccessors.get( fields::relperm::phaseRelPerm {} ) ),
+      m_dPhaseRelPerm_dPhaseVolFrac( relPermAccessors.get( fields::relperm::dPhaseRelPerm_dPhaseVolFraction {} ) ),     
       m_phaseCapPressure( capPressureAccessors.get( fields::cappres::phaseCapPressure {} ) ),
       m_dPhaseCapPressure_dPhaseVolFrac( capPressureAccessors.get( fields::cappres::dPhaseCapPressure_dPhaseVolFraction {} ) ),
       m_volume( subRegion.getElementVolume() ),
+      m_porosity( solid.getPorosity() ), // poroAccessors.get( fields::porosity::porosity {} )
+      m_dPoro_dPres( solid.getDporosity_dPressure() ), // poroAccessors.get( fields::porosity::dPorosity_dPressure {} )
       m_localSolution( localSolution ),
       m_globalKinkFactor( globalKinkFactor ),  
       m_hasCapPressure( hasCapPressure ),
@@ -1147,7 +1158,7 @@ public:
   public:
   
     /// Storage for the phase local damping factors    
-    real64 localEps[numEqn]{};
+    real64 localEps[numEqn]{ 1.0 };
 
     /// Storage for the minimum cell local damping factor
     real64 elemFactor = 1.0;
@@ -1165,15 +1176,19 @@ public:
   void computeInflection( localIndex const ei,
                           StackVariables & stack ) const
   {
+    if ( m_connMap.size() == 0 )
+    {
+      return; // no connections for this subregion
+    }
     // get list of with the connection number associated to the faces of the current cell
-    arraySlice1d< localIndex > connList = m_connMap[ei];
+    arraySlice1d< localIndex const > const connList = m_connMap[ei];
     integer numConns = m_connMap.sizeOfArray( ei );
 
-    localIndex const seri[numConns][2];
-    localIndex const sesri[numConns][2];
-    localIndex const sei[numConns][2];
+    localIndex seri[maxNumConn][2]{};
+    localIndex sesri[maxNumConn][2]{};
+    localIndex sei[maxNumConn][2]{};
 
-    real64 transmissibility[numConns];    
+    real64 transmissibility[maxNumConn]{};    
 
     // build cell maps (assuming only 2 cells per connection) and get geometric transmissibilities
     for ( integer conn = 0; conn < numConns; ++conn )
@@ -1185,14 +1200,16 @@ public:
       sesri[conn][0] = m_sesri( iconn, 0 ); sesri[conn][1] = m_sesri( iconn, 1 );
       sei[conn][0] = m_sei( iconn, 0 );     sei[conn][1] = m_sei( iconn, 1 );      
 
-      // transmissibilities
-      real64 trans[1][2];
-      real64 dTrans_dPres[1][2];
+      // transmissibilities      
+      real64 trans[STENCILWRAPPER::maxNumConnections][2]{};
+      real64 dTrans_dPres[STENCILWRAPPER::maxNumConnections][2]{};
 
-      m_stencilWrapper.computeWeights( iconn,                                     
+      m_stencilWrapper.computeWeights( iconn,
+                                       m_permeability,
+                                       m_dPerm_dPres,                                    
                                        trans,
                                        dTrans_dPres );
-      transmissibility[conn] = trans[0];
+      transmissibility[conn] = trans[0][0];
     }
     
     constexpr int signPotDiff[2] = {1, -1};
@@ -1201,14 +1218,14 @@ public:
     // analyze residual inflections for each phase
     for( integer ip = 0; ip < m_numPhases; ++ip )
     {        
-      real64 dPhi[numConns]{};      
-      real64 compressibility[numConns][2]{};
-      real64 viscosibility[numConns][2]{};              
+      real64 dPhi[maxNumConn]{};      
+      real64 compressibility[maxNumConn][2]{};
+      real64 viscosibility[maxNumConn][2]{};              
 
       real64 phaseEps[2]{0.0, 1.0}; 
-      real64 d2F[numConns][2]{};
+      real64 d2F[maxNumConn][2]{};
       real64 d2R[2]{};      
-      real64 newD2F[numConns]{};            
+      real64 newD2F[maxNumConn]{};            
 
       // loop through connections to compute directional derivative at eps = 0 and eps = 1
       for ( integer conn = 0; conn < numConns; ++conn )
@@ -1269,7 +1286,7 @@ public:
         // loop through connections to compute directional derivative at potential root
         for ( integer conn = 0; conn < numConns; ++conn )
         {        
-          localIndex const iconn = connNumber[conn];
+          localIndex const iconn = connList[conn];
           computeDirectionalDerivative(iconn, ip, transmissibility[conn], compressibility[conn], viscosibility[conn], dPhi[conn], eps[ip], newD2F[conn]);
 
           newD2R += newD2F[conn];
@@ -1466,6 +1483,15 @@ public:
   }
 
   /**
+   * @brief Getter for the ghost rank of an element
+   * @param[in] ei the element index
+   * @return the ghost rank of the element
+   */
+  GEOS_HOST_DEVICE
+  integer elemGhostRank( localIndex const ei ) const
+  { return m_ghostRank( ei ); } //return m_ghostRank( ei ); }
+
+  /**
    * @brief Performs the complete phase for the kernel.
    * @param[in] ei the cell index
    * @param[inout] stack the stack variables
@@ -1524,27 +1550,27 @@ protected:
   integer const m_numPhases;
 
   /// Offset for my MPI rank
-  globalIndex const m_rankOffset;
-
-  ArrayOfArrays< const localIndex > m_connMap;
+  globalIndex const m_rankOffset;  
 
   /// Views on dof numbers
   ElementViewConst< arrayView1d< globalIndex const > > const m_dofNumber;
 
   /// Views on ghost rank numbers and gravity coefficients
-  ElementViewConst< arrayView1d< integer const > > const m_ghostRank;
+  arrayView1d< integer const > const m_ghostRank;
+
+  /// Views on the connection map
+  ArrayOfArraysView< localIndex const > const m_connMap;
+
+  /// ElementViewConst< arrayView1d< integer const > > const m_ghostRank;
   ElementViewConst< arrayView1d< real64 const > > const m_gravCoef;
   
   /// View on pressure and phase volume fraction
   ElementViewConst< arrayView1d< real64 const > > const m_pres;
-  ElementViewConst< arrayView2d< real64 const, immiscibleFlow::USD_PHASE > > const m_phaseVolFrac;
+  ElementViewConst< arrayView2d< real64 const, immiscibleFlow::USD_PHASE > > const m_phaseVolFrac;  
 
-  /// View on the element volumes
-  arrayView1d< real64 const > const m_volume;
-
-  /// Views on the porosity
-  arrayView2d< real64 const > const m_porosity;
-  arrayView2d< real64 const > const m_dPoro_dPres;
+  /// Views on permeability
+  ElementViewConst< arrayView3d< real64 const > > m_permeability;
+  ElementViewConst< arrayView3d< real64 const > > m_dPerm_dPres;
 
   /// Views on fluid density
   ElementViewConst< arrayView3d< real64 const, constitutive::multifluid::USD_PHASE > > const m_dens;
@@ -1557,12 +1583,19 @@ protected:
   /// Views on the phase relative permeabilities
   ElementViewConst< arrayView3d< real64 const, relperm::USD_RELPERM > > const m_phaseRelPerm;
   ElementViewConst< arrayView4d< real64 const, relperm::USD_RELPERM_DS > > const m_dPhaseRelPerm_dPhaseVolFrac;
-  ElementViewConst< arrayView4d< real64 const, relperm::USD_RELPERM_DS > > const m_d2PhaseRelPerm_d2PhaseVolFrac;
+  ElementViewConst< arrayView4d< real64 const, relperm::USD_RELPERM_DS > > const m_d2PhaseRelPerm_d2PhaseVolFrac;  
 
   /// Views on capillary pressure
   ElementViewConst< arrayView3d< real64 const, cappres::USD_CAPPRES > > const m_phaseCapPressure;
   ElementViewConst< arrayView4d< real64 const, cappres::USD_CAPPRES_DS > > const m_dPhaseCapPressure_dPhaseVolFrac;
-  ElementViewConst< arrayView4d< real64 const, cappres::USD_CAPPRES_DS > > const m_d2PhaseCapPressure_d2PhaseVolFrac;  
+  ElementViewConst< arrayView4d< real64 const, cappres::USD_CAPPRES_DS > > const m_d2PhaseCapPressure_d2PhaseVolFrac;
+
+  /// View on the element volumes
+  arrayView1d< real64 const > const m_volume;
+
+  /// Views on the porosity
+  arrayView2d< real64 const > const m_porosity;
+  arrayView2d< real64 const > const m_dPoro_dPres;
 
   /// View on the local solution
   arrayView1d< real64 const > const m_localSolution;
@@ -1603,6 +1636,7 @@ public:
    * @param[in] solverName name of the solver (to name accessors)
    * @param[in] elemManager reference to the element region manager
    * @param[in] subRegion reference to the subregion
+   * @param[in] solid the solid model
    * @param[in] stencilWrapper reference to the stencil wrapper
    * @param[in] fluidWrapper reference to the fluid wrapper
    * @param[in] relPermWrapper reference to the relative permeability wrapper
@@ -1619,7 +1653,8 @@ public:
                    real64 const globalKinkFactor,
                    string const & solverName,
                    ElementRegionManager const & elemManager,
-                   ElementSubRegionBase const & subRegion,
+                   CellElementSubRegion const & subRegion,
+                   constitutive::CoupledSolidBase const & solid,
                    STENCILWRAPPER const & stencilWrapper,
                    FLUIDWRAPPER const & fluidWrapper,
                    RELPERMWRAPPER const & relPermWrapper,
@@ -1635,16 +1670,17 @@ public:
     dofNumberAccessor.setName( solverName + "/accessors/" + dofKey );
 
     using kernelType = ResidualInflectionFactorKernel< NUM_EQN, NUM_DOF, STENCILWRAPPER, FLUIDWRAPPER, RELPERMWRAPPER, CAPPRESWRAPPER >;
+    typename kernelType::PermeabilityAccessors permeabilityAccessors( elemManager, solverName );
     typename kernelType::ImmiscibleMultiphaseFlowAccessors flowAccessors( elemManager, solverName );
     typename kernelType::MultiphaseFluidAccessors fluidAccessors( elemManager, solverName );
-    typename kernelType::RelPermAccessors relPermAccessor( elemManager, solverName );
-    typename kernelType::PorosityAccessors poroAccessor( elemManager, solverName );
+    typename kernelType::RelPermAccessors relPermAccessors( elemManager, solverName );
+    typename kernelType::PorosityAccessors poroAccessors( elemManager, solverName );
     typename kernelType::CapPressureAccessors capPressureAccessors( elemManager, solverName );
 
     kernelType kernel( numPhases, rankOffset, localSolution, globalKinkFactor, subRegion,
-                       stencilWrapper, fluidWrapper, relPermWrapper, capPressureWrapper,
-                       dofNumberAccessor, flowAccessors, fluidAccessors, relPermAccessor,
-                       poroAccessor, capPressureAccessors, hasCapPressure );
+                       solid, stencilWrapper, fluidWrapper, relPermWrapper, capPressureWrapper,
+                       dofNumberAccessor, permeabilityAccessors, flowAccessors, fluidAccessors, 
+                       relPermAccessors, poroAccessors, capPressureAccessors, hasCapPressure );
     kernelType::template launch< POLICY >( subRegion.size(), kernel, inflectionFactor );    
   }
 };

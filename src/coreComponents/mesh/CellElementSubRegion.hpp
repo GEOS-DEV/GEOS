@@ -363,6 +363,9 @@ public:
                            localIndex const connectorIndex ) 
   { m_toConnectors.emplaceBack( elemIndex, connectorIndex ); }
 
+  ArrayOfArraysView< localIndex const > const getConnectionMap() const
+  { return m_toConnectors.toViewConst(); }
+
 private:
 
   /// Map used for constitutive grouping

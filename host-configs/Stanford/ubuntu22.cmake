@@ -39,6 +39,7 @@ set(ENABLE_GTEST_DEATH_TESTS ON CACHE BOOL "" FORCE )
 # define the path to your compiled installation directory
 # set(GEOSX_TPL_DIR "/home/rpiazza/codes/thirdPartyLibs/install-ubuntu22-debug" CACHE PATH "")
 set(GEOS_TPL_DIR "/home/rpiazza/two-phase/thirdPartyLibs/install-ubuntu22-debug" CACHE PATH "")
+set(CONDUIT_DIR "/home/rpiazza/two-phase/thirdPartyLibs/install-ubuntu22-debug" CACHE PATH "")
 #set(GEOSX_TPL_DIR "${GEOSX_TPL_DIR}" CACHE PATH "" FORCE)
 # let GEOS define some third party libraries information for you
 #include(${CMAKE_CURRENT_LIST_DIR}/tpls.cmake)
