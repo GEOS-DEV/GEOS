@@ -2,6 +2,7 @@
 set( gtest_geosx_tests
      testBrineSalinity.cpp
      testCompositionalDensity.cpp
+     testCompositionalEnthalpy.cpp
      testCompositionalPhillipsBrineDensity.cpp
      testCompositionalPhillipsBrineViscosity.cpp
      testCompositionalProperties.cpp
