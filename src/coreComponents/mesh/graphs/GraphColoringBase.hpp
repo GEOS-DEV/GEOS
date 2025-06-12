@@ -115,7 +115,7 @@ public:
 
   /**
    * @brief Counts the number of distinct colors assuming one node per rank (parallel version).
-   * @param colors Vector of color values.
+   * @param color Color of the node.
    * @param comm MPI communicator.
    * @return Number of distinct colors.
    */
