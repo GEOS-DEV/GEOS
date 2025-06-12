@@ -50,11 +50,22 @@ scatterGraphData( const std::vector< camp::idx_t > & xadj,
                   MPI_Comm comm = MPI_COMM_GEOS );
 
 
+/**
+ * @brief Gathers distributed graph data from MPI ranks.
+ *
+ * This function collects local adjacency lists from all ranks and reconstructs
+ * the global xadj and adjncy arrays.
+ *
+ * @param localXadj Local adjacency list offsets.
+ * @param localAdjncy Local adjacency list.
+ * @param comm MPI communicator (default: MPI_COMM_GEOS).
+ * @return A pair of vectors: global xadj and adjncy.
+ */
+
 std::pair< std::vector< camp::idx_t >, std::vector< camp::idx_t > >
 gatherGraphData( const std::vector< camp::idx_t > & localXadj,
                  const std::vector< camp::idx_t > & localAdjncy,
                  MPI_Comm comm= MPI_COMM_GEOS );
-
 
 
 /**
@@ -70,8 +81,16 @@ gatherGraphData( const std::vector< camp::idx_t > & localXadj,
 std::vector< camp::idx_t > createXadjFromAdjncy( const std::vector< camp::idx_t > & localAdjncy, MPI_Comm comm );
 
 
+/**
+ * @brief Generates global vertex IDs for distributed graph nodes.
+ *
+ * This function assigns a unique global ID to each vertex in the distributed graph.
+ *
+ * @param localXadj Local adjacency list offsets.
+ * @param comm MPI communicator.
+ * @return A vector of global vertex IDs.
+ */
 std::vector< int > createVertexGlobalID( const std::vector< camp::idx_t > & localXadj, MPI_Comm comm );
-
 
 } // namespace geos
 } // namespace graph

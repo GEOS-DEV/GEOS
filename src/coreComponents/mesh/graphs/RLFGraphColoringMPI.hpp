@@ -33,20 +33,63 @@ namespace graph
 {
 
 
+/**
+ * @class RLFGraphColoringMPI
+ * @brief Distributed graph coloring using the Recursive Largest First (RLF) algorithm.
+ *
+ * This class implements a parallel version of the RLF algorithm for graph coloring
+ * using MPI.
+ */
 class RLFGraphColoringMPI : public GraphColoringBase
 {
 public:
+
+  /**
+   * @brief Constructor.
+   * @param comm MPI communicator (default: MPI_COMM_GEOS).
+   */
   RLFGraphColoringMPI( MPI_Comm comm = MPI_COMM_GEOS );
+
+  /**
+   * @brief Destructor.
+   */
   ~RLFGraphColoringMPI();
 
+  /**
+   * @brief Returns the number of distinct colors used.
+   * @param colors Vector of color assignments.
+   * @return Number of unique colors.
+   */
   size_t getNumberOfColors( const std::vector< int > & colors ) const;
+
+  /**
+   * @brief Returns the number of distinct colors used, assuming one node per rank.
+   * @param color Color value.
+   * @return Number of unique colors.
+   */
   size_t getNumberOfColors( const int color ) const;
+
+  /**
+   * @brief Validates the coloring of a graph partition.
+   * @param localAdjncy adjacency list.
+   * @param localColor Color assigned to the local node.
+   * @return True if the coloring is valid, false otherwise.
+   */
   bool isColoringValid( const std::vector< camp::idx_t > & localAdjncy, const int localColor ) const;
 
-
+  /**
+   * @brief Colors a distributed graph.
+   * @param localXadj Local adjacency list offsets.
+   * @param localAdjncy Local adjacency list.
+   * @return A vector of assigned colors.
+   */
   std::vector< int > colorGraph( const std::vector< camp::idx_t > & localXadj, const std::vector< camp::idx_t > & localAdjncy ) override;
 
-  // Simplified version assuming one node per rank
+  /**
+   * @brief Simplified coloring assuming one node per rank.
+   * @param localAdjncy Local adjacency list.
+   * @return Color of the node.
+   */
   int colorGraph( const std::vector< camp::idx_t > & localAdjncy ) override;
 };
 

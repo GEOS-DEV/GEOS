@@ -30,15 +30,44 @@ namespace geos
 namespace graph
 {
 
+/**
+ * @class GraphColoringBase
+ * @brief Abstract base class for graph coloring strategies.
+ *
+ * Provides a common interface for graph coloring algorithms used in GEOS.
+ * Derived classes must implement the coloring logic for adjacency graphs.
+ */
 class GraphColoringBase
 {
 public:
+
+  /**
+   * @brief Constructor.
+   * @param comm MPI communicator (default: MPI_COMM_GEOS).
+   */
   GraphColoringBase( MPI_Comm comm = MPI_COMM_GEOS ): m_comm( comm ) {}
 
+
+  /**
+   * @brief Pure virtual method to color a graph.
+   * @param xadj Adjacency list offsets for each node.
+   * @param adjncy Adjacency list containing neighbors of each node.
+   * @return A vector of colors assigned to each node.
+   */
   virtual std::vector< int > colorGraph( const std::vector< camp::idx_t > & xadj, const std::vector< camp::idx_t > & adjncy ) = 0;
+
+  /**
+   * @brief Pure virtual method to color a graph assuming one node per rank.
+   * @param adjncy Adjacency list containing neighbors of each node.
+   * @return Color of the node.
+   */
   virtual int  colorGraph( const std::vector< camp::idx_t > & adjncy ) = 0;
 
-  virtual ~GraphColoringBase() {}   // Virtual destructor
+
+  /**
+   * @brief Virtual destructor.
+   */
+  virtual ~GraphColoringBase() {}
 
 
 
@@ -54,8 +83,19 @@ public:
  */
   static bool isColoringValid( const std::vector< camp::idx_t > & xadj, const std::vector< camp::idx_t > & adjncy, const std::vector< int > & coloring );
 
+  /**
+   * @brief Checks the validity of the graph coloring assuming one node per rank.
+   *
+   * @param adjncy The adjacency list containing the neighbors of each node.
+   * @param color Color assigned to the local node.
+   * @param comm MPI communicator.
+   *
+   * @return True if the coloring is valid, false otherwise.
+   */
+  static bool isColoringValid( const std::vector< camp::idx_t > & adjncy, const int color, MPI_Comm comm );
+
 /**
- * @brief Counts the number of distinct colors in a vector.
+ * @brief Counts the number of distinct colors.
  *
  * This function takes a vector of integers representing colors
  * and returns the number of distinct (positive) colors present in the vector.
@@ -65,15 +105,25 @@ public:
  */
   static size_t getNumberOfColors( const std::vector< int > & colors );
 
-
-
-  static bool isColoringValid( const std::vector< camp::idx_t > & adjncy, const int color, MPI_Comm comm );
+  /**
+   * @brief Counts the number of distinct colors  (parallel version).
+   * @param colors Vector of color values.
+   * @param comm MPI communicator.
+   * @return Number of distinct colors.
+   */
   static size_t getNumberOfColors( const std::vector< int > & colors, MPI_Comm comm );
+
+  /**
+   * @brief Counts the number of distinct colors assuming one node per rank (parallel version).
+   * @param colors Vector of color values.
+   * @param comm MPI communicator.
+   * @return Number of distinct colors.
+   */
   static size_t getNumberOfColors( const int color, MPI_Comm comm );
 
 
 protected:
-  MPI_Comm m_comm;   // MPI communicator
+  MPI_Comm m_comm;  /**< MPI communicator used for parallel operations. */
 
 };
 
