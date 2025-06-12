@@ -45,14 +45,15 @@ TEST( ErrorHandling, testYaml )
   try
   {
     GEOS_THROW_CTX_IF( x == 5,
-                      "Group " << context.toString() << " has no wrapper named" << std::endl,
-                      std::domain_error,
-                      context );
+                       "Group " << context.toString() << " has no wrapper named" << std::endl,
+                       std::domain_error,
+                       context );
   }
   catch( std::domain_error const & ex )
   {
     string const errorMsg = "Table input error.\n";
-    g_errorLogger.currentErrorMsg().addToMsg( errorMsg )
+    g_errorLogger.currentErrorMsg()
+      .addToMsg( errorMsg )
       .addContextInfo( context.getContextInfo().setPriority( 2 ) );
   }
 
