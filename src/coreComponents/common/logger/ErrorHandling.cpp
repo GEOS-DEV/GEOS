@@ -48,7 +48,7 @@ void ErrorLogger::createFile()
     }
     else
     {
-      GEOS_LOG( GEOS_FMT( "Unable to open error file for writing: {}", m_filename ) );
+      GEOS_LOG_RANK( GEOS_FMT( "Unable to open error file for writing: {}", m_filename ) );
     }
   }
   catch(const std::exception& e)
@@ -223,11 +223,11 @@ void ErrorLogger::write( ErrorLogger::ErrorMsg const & errorMsg )
         }
       }
       yamlFile.flush();
-      GEOS_LOG( GEOS_FMT( "The error file {} was appended.", m_filename ) );
+      GEOS_LOG_RANK( GEOS_FMT( "The error file {} was appended.", m_filename ) );
     }
     else
     {
-      GEOS_LOG( GEOS_FMT( "Unable to open error file for writing: {}", m_filename ) );
+      GEOS_LOG_RANK( GEOS_FMT( "Unable to open error file for writing: {}", m_filename ) );
     }
   }
   catch( const std::exception & e )
