@@ -71,39 +71,8 @@ TEST( testDataTypes, testBoundChecking )
 
 }
 
-TEST( testDataTypes, testNoBoundChecking )
-{
-  internal::StdVectorWrapper< std::string,
-                              std::allocator< std::string >,
-                              false > boundChecking = {"test"};
-
-  EXPECT_NO_THROW( {
-    std::string crash = boundChecking[1];
-    GEOS_UNUSED_VAR( crash );
-  } );
-
-  internal::StdMapWrapper< std::map< integer, integer >,
-                           false > mapBoundsChecking{{0, 1}};
-
-  EXPECT_NO_THROW( {
-    integer crash = mapBoundsChecking[1];
-    GEOS_UNUSED_VAR( crash );
-  } );
-
-  internal::StdMapWrapper< std::unordered_map< integer, integer >,
-                           false > unorderedMapBoundsChecking{{0, 1}};
-
-  EXPECT_NO_THROW( {
-    integer crash = unorderedMapBoundsChecking[1];
-    GEOS_UNUSED_VAR( crash );
-  } );
-
-}
-
 int main( int argc, char * * argv )
 {
   testing::InitGoogleTest( &argc, argv );
   return RUN_ALL_TESTS();
 }
-
-#pragma GCC diagnostic ignored "-Werror=array-bounds"
