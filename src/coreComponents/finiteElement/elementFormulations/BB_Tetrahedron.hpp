@@ -849,12 +849,14 @@ public:
       loop( [&func, i1] ( auto const j )
       {
         constexpr int j1 = ORDER - j;
-        if constexpr ( j1 <= ORDER - i1 )
+        constexpr int ii1 = ORDER -i1;
+        if constexpr ( j1 <= ii1 )
         {
           loop( [&func, i1, j1] ( auto const k )
           {
             constexpr int k1 = ORDER - k;
-            if constexpr ( k1 <= ORDER - i1 - j1 )
+            constexpr int ji1 = ORDER - i1 - j1;
+            if constexpr ( k1 <= ji1 )
             {
               constexpr int l1 = ORDER - i1 - j1 - k1;
               constexpr int c1 = dofIndex< i1, j1, k1 >();
