@@ -46,7 +46,8 @@ PhysicsSolverBase::PhysicsSolverBase( string const & name,
   m_linearSolverParameters( groupKeyStruct::linearSolverParametersString(), this ),
   m_nonlinearSolverParameters( groupKeyStruct::nonlinearSolverParametersString(), this ),
   m_solverStatistics( groupKeyStruct::solverStatisticsString(), this ),
-  m_systemSetupTimestamp( 0 )
+  m_systemSetupTimestamp( 0 ),
+  m_trustRegion ( 1 )
 {
   setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
 
@@ -1092,7 +1093,14 @@ bool PhysicsSolverBase::solveNonlinearSystem( real64 const & time_n,
       Timer timer( m_timers["apply solution"] );
 
       // Compute the scaling factor for the Newton update
-      scaleFactor = scalingForSystemSolution( domain, m_dofManager, m_solution.values() );
+      if ( m_trustRegion )
+      {
+        scaleFactor = scalingForSystemSolution( domain, m_dofManager, m_solution.values(), m_rhs.values() );
+      }
+      else
+      {
+        scaleFactor = scalingForSystemSolution( domain, m_dofManager, m_solution.values() );
+      }      
 
       GEOS_LOG_LEVEL_RANK_0( logInfo::Solution,
                              GEOS_FMT( "        {}: Global solution scaling factor = {}", getName(), scaleFactor ) );
@@ -1358,6 +1366,14 @@ bool PhysicsSolverBase::checkSystemSolution( DomainPartition & GEOS_UNUSED_PARAM
 real64 PhysicsSolverBase::scalingForSystemSolution( DomainPartition & GEOS_UNUSED_PARAM( domain ),
                                                     DofManager const & GEOS_UNUSED_PARAM( dofManager ),
                                                     arrayView1d< real64 const > const & GEOS_UNUSED_PARAM( localSolution ) )
+{
+  return 1.0;
+}
+
+real64 PhysicsSolverBase::scalingForSystemSolution( DomainPartition & GEOS_UNUSED_PARAM( domain ),
+                                                    DofManager const & GEOS_UNUSED_PARAM( dofManager ),
+                                                    arrayView1d< real64 const > const & GEOS_UNUSED_PARAM( localSolution ),
+                                                    arrayView1d< real64 const > const & GEOS_UNUSED_PARAM( localResidual ) )
 {
   return 1.0;
 }
