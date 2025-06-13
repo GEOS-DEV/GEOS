@@ -47,7 +47,7 @@ HeatCapacityCoefficients::create( std::unique_ptr< ModelParameters > parameters 
 
 void HeatCapacityCoefficients::registerParametersImpl( MultiFluidBase * fluid )
 {
-  fluid->registerWrapper( viewKeyStruct::referenceTemperatureString(), &m_referenceTemperature ).
+  fluid->registerWrapper( viewKeyStruct::enthalpyReferenceTemperatureString(), &m_referenceTemperature ).
     setInputFlag( dataRepository::InputFlags::OPTIONAL ).
     setDescription( "The reference temperature for enthalpy calculation" );
 
@@ -79,7 +79,7 @@ void HeatCapacityCoefficients::postInputInitializationImpl( MultiFluidBase const
     GEOS_THROW_IF_NE_MSG( m_referenceTemperature.size(), numComps,
                           GEOS_FMT( "{}: '{}' there must be as many reference temperatures provided as there are components",
                                     fluid->getFullName(),
-                                    viewKeyStruct::referenceTemperatureString() ),
+                                    viewKeyStruct::enthalpyReferenceTemperatureString() ),
                           InputError );
   }
 

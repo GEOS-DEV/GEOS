@@ -42,7 +42,7 @@ public:
 
   struct viewKeyStruct
   {
-    static constexpr char const * referenceTemperatureString() { return "referenceTemperature"; }
+    static constexpr char const * enthalpyReferenceTemperatureString() { return "enthalpyReferenceTemperature"; }
     static constexpr char const * referenceEnthalpyString() { return "referenceEnthalpy"; }
     static constexpr char const * componentHeatCapacityCoefficientsString() { return "componentHeatCapacityCoefficients"; }
   };

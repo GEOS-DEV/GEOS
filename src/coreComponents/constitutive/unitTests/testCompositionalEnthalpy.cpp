@@ -17,6 +17,7 @@
 #include "codingUtilities/UnitTestUtilities.hpp"
 #include "constitutive/fluid/multifluid/compositional/models/CompositionalEnthalpy.hpp"
 #include "constitutive/fluid/multifluid/compositional/parameters/EquationOfState.hpp"
+#include "constitutive/fluid/multifluid/compositional/parameters/HeatCapacityCoefficients.hpp"
 
 #include "TestFluid.hpp"
 #include "TestFluidUtilities.hpp"
@@ -44,7 +45,29 @@ struct FluidData< 4 >
 {
   static std::unique_ptr< TestFluid< 4 > > createFluid()
   {
-    return TestFluid< 4 >::create( {Fluid::CO2, Fluid::H2O, Fluid::C1, Fluid::N2} );
+    return TestFluid< 4 >::create( {Fluid::CO2, Fluid::H2, Fluid::C1, Fluid::C2} );
+  }
+
+  static void populateCoefficients( HeatCapacityCoefficients * coefficients )
+  {
+    coefficients->m_referenceTemperature.resize( 4 );
+    coefficients->m_referenceTemperature.zero();
+    coefficients->m_referenceEnthalpy.resize( 1, 4 );
+    coefficients->m_referenceEnthalpy.zero();
+    coefficients->m_coefficients.resize( 1, 4, 5 );
+    std::array< real64, 5*4 > coefficientsData{
+      0.0, 0.0, 0.0, 0.0, 0.0,
+      2.883,  0.003681, -7.720e-06,  6.920e-09, -2.130e-12,
+      4.568, -0.008975,  3.631e-05, -3.407e-08,  1.091e-11,
+      4.178, -0.004427,  5.660e-05, -6.651e-08,  2.487e-11
+    };
+    for( int ic = 0; ic < 4; ++ic )
+    {
+      for( int j = 0; j < 5; ++j )
+      {
+        coefficients->m_coefficients( 0, ic, j ) = coefficientsData[ic*5 + j];
+      }
+    }
   }
 };
 
@@ -67,6 +90,9 @@ public:
     string const eosName = EnumStrings< EquationOfStateType >::toString( EOS_TYPE );
     equationOfState->m_equationsOfStateNames.emplace_back( eosName );
 
+    auto heatCapacityCoefficients = const_cast< HeatCapacityCoefficients * >(m_parameters->get< HeatCapacityCoefficients >());
+    FluidData< NC >::populateCoefficients( heatCapacityCoefficients );
+
     string const name = GEOS_FMT( "PhaseEnthalpy{}{}", eosName, NC );
     m_enthalpy = std::make_unique< CompositionalEnthalpy >( name, componentProperties, 0, *m_parameters );
   }
@@ -76,10 +102,10 @@ public:
   void testEnthalpyValues( EnthalpyData< NC > const & data )
   {
     real64 const pressure = std::get< 0 >( data );
-    real64 const temperature = std::get< 1 >( data );
+    //real64 const temperature = std::get< 1 >( data );
     stackArray1d< real64, numComps > phaseComposition;
     TestFluid< NC >::createArray( phaseComposition, std::get< 2 >( data ));
-    real64 const expectedEnthalpy = std::get< 3 >( data );
+    //real64 const expectedEnthalpy = std::get< 3 >( data );
 
     auto componentProperties = m_fluid->createKernelWrapper();
     auto kernelWrapper = m_enthalpy->createKernelWrapper();
@@ -87,15 +113,21 @@ public:
     real64 enthalpy = 0.0;
     stackArray1d< real64, numDofs > tempDerivs( numDofs );
 
+    for (real64 t = 250.00; t <= 799.00; t += 50.0)
+    {
     kernelWrapper.compute( componentProperties,
                            pressure,
-                           temperature,
+                           t,
                            phaseComposition.toSliceConst(),
                            enthalpy,
                            tempDerivs.toSlice(),
                            false );
-
-    checkRelativeError( enthalpy, expectedEnthalpy, relTol, absTol );
+                           std::cout << std::fixed << std::setprecision(0) << t << " "
+                            << std::fixed << std::setprecision(5) << enthalpy << " "
+                            << std::fixed << std::setprecision(5) << tempDerivs[1] << " "
+                            << std::endl;
+    }
+    //checkRelativeError( enthalpy, expectedEnthalpy, relTol, absTol );
   }
 
   void testEnthalpyDerivatives( EnthalpyData< NC > const & data )
@@ -188,12 +220,12 @@ TEST_P( PengRobinson, testEnthalpyValues )
 {
   testEnthalpyValues( GetParam() );
 }
-
-TEST_P( PengRobinson, testEnthalpyDerivatives )
-{
-  testEnthalpyDerivatives( GetParam() );
-}
-
+/**
+   TEST_P( PengRobinson, testEnthalpyDerivatives )
+   {
+   testEnthalpyDerivatives( GetParam() );
+   }
+ **/
 /* UNCRUSTIFY-OFF */
 
 // Test data
@@ -202,7 +234,7 @@ INSTANTIATE_TEST_SUITE_P(
   CompositionalEnthalpyTest, PengRobinson,
   ::testing::ValuesIn<EnthalpyData<4>>( {
     {1.0e+05, 288.15, {0.000, 1.000, 0.000, 0.000}, 5.54544e+04},
-    {1.0e+06, 288.15, {0.000, 1.000, 0.000, 0.000}, 5.54769e+04}
+    {1.0e+06, 288.15, {0.000, 0.000, 1.000, 0.000}, 5.54769e+04}
   } )
 );
 

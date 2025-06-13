@@ -38,10 +38,15 @@ namespace constitutive
 namespace compositional
 {
 
+class HeatCapacityCoefficients;
+
 class CompositionalEnthalpyUpdate final : public FunctionBaseUpdate
 {
+  using Deriv = multifluid::DerivativeOffset;
 public:
-  explicit CompositionalEnthalpyUpdate( EquationOfStateType const equationOfState );
+  CompositionalEnthalpyUpdate( EquationOfStateType const equationOfState,
+                               arrayView1d< real64 const > const & referenceEnthalpy,
+                               arrayView2d< real64 const > const & coefficients );
 
   template< integer USD1, integer USD2 >
   GEOS_HOST_DEVICE
@@ -53,8 +58,32 @@ public:
                 arraySlice1d< real64, USD2 > const & dEnthalpy,
                 bool useMass ) const;
 
+  /**
+   * @brief Evaluates the Poling polynomial at a given temeperature given a list of coefficients
+   * @param[in] T - the temperature
+   * @param[in] a - the coefficients
+   * @param[out] enthalpy - the enthalpy
+   * @param[out] heatCapacity - the enthalpy derivative wrt temperature
+   */
+  GEOS_FORCE_INLINE
+  GEOS_HOST_DEVICE
+  static void evaluatePolynomial( real64 const & T,
+                                  arraySlice1d< const real64 > const & a,
+                                  real64 & enthalpy,
+                                  real64 & heatCapacity )
+  {
+    real64 constexpr r1 = 1.0/2.0;
+    real64 constexpr r2 = 1.0/3.0;
+    real64 constexpr r3 = 1.0/4.0;
+    real64 constexpr r4 = 1.0/5.0;
+    enthalpy = ((((r4*a[4]*T + r3*a[3])*T + r2*a[2])*T + r1*a[1])*T + a[0])*T;
+    heatCapacity = (((a[4]*T + a[3])*T + a[2])*T + a[1])*T + a[0];
+  }
+
 private:
   EquationOfStateType const m_equationOfState;
+  arrayView1d< real64 const > const m_referenceEnthalpy;
+  arrayView2d< real64 const > const m_coefficients;
 };
 
 class CompositionalEnthalpy : public FunctionBase
@@ -86,6 +115,9 @@ public:
 
 private:
   EquationOfStateType m_equationOfState;
+  array1d< real64 > m_referenceEnthalpy;
+  array2d< real64 > m_coefficients;
+  HeatCapacityCoefficients const * const m_heatCapacityCoefficients{nullptr};
 };
 
 template< integer USD1, integer USD2 >
@@ -101,12 +133,26 @@ void CompositionalEnthalpyUpdate::compute(
 {
   GEOS_UNUSED_VAR( useMass );
   GEOS_UNUSED_VAR( pressure );
-  GEOS_UNUSED_VAR( componentProperties );
-  GEOS_UNUSED_VAR( temperature );
-  GEOS_UNUSED_VAR( phaseComposition );
   GEOS_UNUSED_VAR( enthalpy );
-  GEOS_UNUSED_VAR( dEnthalpy );
-  GEOS_UNUSED_VAR( pressure );
+
+  integer const numComps = componentProperties.m_componentMolarWeight.size();
+
+  // 1. Calculate the ideal gas
+  real64 hIdealGas = 0.0;
+  auto const & dhIdealGas = dEnthalpy;
+  dhIdealGas[Deriv::dT] = 0.0;
+  dhIdealGas[Deriv::dP] = 0.0;
+  for( integer ic = 0; ic < numComps; ++ic )
+  {
+    real64 enthalpyI = 0.0;
+    real64 heatCapacityI = 0.0;
+    evaluatePolynomial( temperature, m_coefficients[ic], enthalpyI, heatCapacityI );
+    enthalpyI += m_referenceEnthalpy[ic];
+    hIdealGas += phaseComposition[ic] * enthalpyI;
+    dhIdealGas[Deriv::dT] += phaseComposition[ic] * heatCapacityI;
+    dhIdealGas[Deriv::dC+ic] = enthalpyI;
+  }
+
 }
 
 } // end namespace compositional
