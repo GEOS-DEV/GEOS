@@ -361,7 +361,9 @@ public:
 
   void addToConnectorList( localIndex const elemIndex, 
                            localIndex const connectorIndex ) 
-  { m_toConnectors.emplaceBack( elemIndex, connectorIndex ); }
+  { 
+    m_toConnectors.emplaceBack( elemIndex, connectorIndex ); 
+  }
 
   ArrayOfArraysView< localIndex const > const getConnectionMap() const
   { return m_toConnectors.toViewConst(); }

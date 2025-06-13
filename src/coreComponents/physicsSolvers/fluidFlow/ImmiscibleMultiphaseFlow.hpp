@@ -99,7 +99,8 @@ public:
   virtual real64
   scalingForSystemSolution( DomainPartition & domain,
                             DofManager const & dofManager,
-                            arrayView1d< real64 const > const & localSolution ) override;
+                            arrayView1d< real64 const > const & localSolution,
+                            arrayView1d< real64 const > const & localResidual ) override;
   virtual void
   applySystemSolution( DofManager const & dofManager,
                        arrayView1d< real64 const > const & localSolution,
@@ -291,10 +292,10 @@ private:
   /// flag to determine whether or not to use total velocity formulation
   integer m_useTotalMassEquation;
 
-  /// flag to determine whether or not to use trust region solver;
+  /// flag to determine whether or not to use trust region solver
   integer m_trustRegion;
 
-  /// flag to determine whether to use the flux or the residual inflection algorithm;
+  /// flag to determine whether to use the flux or the residual inflection algorithm
   integer m_fluxInflection;
 
   /// scheme for density treatment in gravity
