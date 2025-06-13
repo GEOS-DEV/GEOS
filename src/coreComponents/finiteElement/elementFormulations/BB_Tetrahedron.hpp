@@ -355,7 +355,6 @@ public:
     real64 lambda[4] = {};
     real64 m[3][3] = {};
     real64 dNdLambda[numNodes][4];
-    real64 dLambdadX[4][4];
     for( int i = 0; i < 3; i++ )
     {
       for( int j = 0; j < 3; j++ )
@@ -508,6 +507,7 @@ public:
                            real64 const (&X)[numNodes][3],
                            real64 ( & gradN )[numNodes][3] )
   {
+    GEOS_UNUSED_VAR(q, X, gradN);
     GEOS_ERROR( "Bernstein-Bézier basis is modal, not nodal. No quadrature points are defined." );
     return 0;
   }
