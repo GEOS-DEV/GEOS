@@ -444,8 +444,8 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::setupCoupling( DomainPartition
     string const flowDiscretizationName = flowSolver()->getDiscretizationName();
 
     // restrict coupling to fracture regions only (as done originally in setupSystem)
-    map< std::pair< string, string >, string_array > dispMeshTargets;
-    map< std::pair< string, string >, string_array > presMeshTargets;
+    stdMap< std::pair< string, string >, string_array > dispMeshTargets;
+    stdMap< std::pair< string, string >, string_array > presMeshTargets;
 
     forDiscretizationOnMeshTargets( domain.getMeshBodies(),
                                     [&] ( string const & meshBodyName,
@@ -1153,7 +1153,7 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::initializeNewFractureFields( r
       {
         ArrayOfArraysView< localIndex const > const facesToEdges = subRegion.edgeList().toViewConst();
         ArrayOfArraysView< localIndex const > const & fractureConnectorsToFaceElements = subRegion.m_2dFaceTo2dElems.toViewConst();
-        map< localIndex, localIndex > const & edgesToConnectorEdges = subRegion.m_edgesTo2dFaces;
+        stdMap< localIndex, localIndex > const & edgesToConnectorEdges = subRegion.m_edgesTo2dFaces;
 
         arrayView2d< localIndex const > const faceMap = subRegion.faceList().toViewConst();
 

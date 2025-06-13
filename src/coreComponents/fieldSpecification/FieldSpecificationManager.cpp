@@ -73,12 +73,12 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
   this->forSubGroups< FieldSpecificationBase >( [&] ( FieldSpecificationBase const & fs )
   {
     localIndex isFieldNameFound = 0;
-    // map from set name to a flag (1 if targetSet empty, 0 otherwise)
-    map< string, localIndex > isTargetSetEmpty;
-    // map from set name to a flag (1 if targetSet has been created, 0 otherwise)
-    map< string, localIndex > isTargetSetCreated;
+    // stdMap from set name to a flag (1 if targetSet empty, 0 otherwise)
+    stdMap< string, localIndex > isTargetSetEmpty;
+    // stdMap from set name to a flag (1 if targetSet has been created, 0 otherwise)
+    stdMap< string, localIndex > isTargetSetCreated;
 
-    // Step 1: collect all the set names in a map (this is made necessary by the "apply" loop pattern
+    // Step 1: collect all the set names in a stdMap (this is made necessary by the "apply" loop pattern
 
     string_array const & setNames = fs.getSetNames();
     for( size_t i = 0; i < setNames.size(); ++i )
@@ -137,28 +137,28 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
 
     isFieldNameFound = MpiWrapper::max( isFieldNameFound );
 
-    for( std::pair< string const, localIndex > & mapEntry : isTargetSetEmpty )
+    for( std::pair< string const, localIndex > & stdMapEntry : isTargetSetEmpty )
     {
-      mapEntry.second = MpiWrapper::min( mapEntry.second );
+      stdMapEntry.second = MpiWrapper::min( stdMapEntry.second );
     }
     bool areAllSetsEmpty = true;
-    for( std::pair< string const, localIndex > & mapEntry : isTargetSetEmpty )
+    for( std::pair< string const, localIndex > & stdMapEntry : isTargetSetEmpty )
     {
-      if( mapEntry.second == 0 ) // target set is not empty
+      if( stdMapEntry.second == 0 ) // target set is not empty
       {
         areAllSetsEmpty = false;
         break;
       }
     }
 
-    for( std::pair< string const, localIndex > & mapEntry : isTargetSetCreated )
+    for( std::pair< string const, localIndex > & stdMapEntry : isTargetSetCreated )
     {
-      mapEntry.second = MpiWrapper::max( mapEntry.second );
+      stdMapEntry.second = MpiWrapper::max( stdMapEntry.second );
     }
     bool areAllSetsMissing = true;
-    for( std::pair< string const, localIndex > & mapEntry : isTargetSetCreated )
+    for( std::pair< string const, localIndex > & stdMapEntry : isTargetSetCreated )
     {
-      if( mapEntry.second == 1 ) // target set has been created
+      if( stdMapEntry.second == 1 ) // target set has been created
       {
         areAllSetsMissing = false;
       }
@@ -169,11 +169,11 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
     // if all sets are missing, we stop the simulation.
     if( areAllSetsMissing )
     {
-      // loop again over the map to collect the set names
+      // loop again over the stdMap to collect the set names
       string_array missingSetNames;
-      for( auto const & mapEntry : isTargetSetCreated )
+      for( auto const & stdMapEntry : isTargetSetCreated )
       {
-        missingSetNames.emplace_back( mapEntry.first );
+        missingSetNames.emplace_back( stdMapEntry.first );
       }
       GEOS_THROW( GEOS_FMT( "\n{}: there is/are no set(s) named `{}` under the {} `{}`.\n",
                             fs.getWrapperDataContext( FieldSpecificationBase::viewKeyStruct::objectPathString() ),
@@ -184,12 +184,12 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
 
     // if a target set is empty, we issue a warning
     // ideally we would just stop the simulation, but the SurfaceGenerator relies on this behavior
-    for( auto const & mapEntry : isTargetSetEmpty )
+    for( auto const & stdMapEntry : isTargetSetEmpty )
     {
-      GEOS_LOG_RANK_0_IF( ( mapEntry.second == 1 ), // target set is empty
+      GEOS_LOG_RANK_0_IF( ( stdMapEntry.second == 1 ), // target set is empty
                           GEOS_FMT( "\nWarning!\n{}: this FieldSpecification targets (an) empty set(s)"
                                     "\nIf the simulation does not involve the SurfaceGenerator, check the content of the set `{}` in `{}`. \n",
-                                    fs.getDataContext(), mapEntry.first, fs.getObjectPath() ) );
+                                    fs.getDataContext(), stdMapEntry.first, fs.getObjectPath() ) );
     }
 
     if( isFieldNameFound == 0 )

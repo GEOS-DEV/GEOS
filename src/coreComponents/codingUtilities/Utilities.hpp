@@ -88,26 +88,26 @@ bool isEven( T x )
   return !isOdd( x );
 }
 
-template< typename T1, typename T2, bool SORTED >
-T2 & stlMapLookup( stdMapType< T1, T2, SORTED > & Map, const T1 & key )
+template< typename T1, typename T2, typename SORTED >
+T2 & stlMapLookup( mapType< T1, T2, SORTED > & Map, const T1 & key )
 {
-  typename stdMapType< T1, T2, SORTED >::iterator MapIter = Map.find( key );
+  typename mapType< T1, T2, SORTED >::iterator MapIter = Map.find( key );
   GEOS_ERROR_IF( MapIter==Map.end(), "Key not found: " << key );
   return MapIter->second;
 }
 
 
-template< typename T1, typename T2, bool SORTED >
-const T2 & stlMapLookup( const stdMapType< T1, T2, SORTED > & Map, const T1 & key )
+template< typename T1, typename T2, typename SORTED >
+const T2 & stlMapLookup( const mapType< T1, T2, SORTED > & Map, const T1 & key )
 {
-  return (stlMapLookup( const_cast< stdMapType< T1, T2, SORTED > & >(Map), key ));
+  return (stlMapLookup( const_cast< mapType< T1, T2, SORTED > & >(Map), key ));
 }
 
-template< typename T1, typename T2, bool SORTED, typename LAMBDA >
-bool executeOnMapValue( stdMapType< T1, T2, SORTED > const & Map, const T1 & key, LAMBDA && lambda )
+template< typename T1, typename T2, typename SORTED, typename LAMBDA >
+bool executeOnMapValue( mapType< T1, T2, SORTED > const & Map, const T1 & key, LAMBDA && lambda )
 {
   bool rval = false;
-  typename stdMapType< T1, T2, SORTED >::const_iterator MapIter = Map.find( key );
+  typename mapType< T1, T2, SORTED >::const_iterator MapIter = Map.find( key );
   if( MapIter!=Map.end() )
   {
     rval = true;
@@ -117,13 +117,13 @@ bool executeOnMapValue( stdMapType< T1, T2, SORTED > const & Map, const T1 & key
   return rval;
 }
 
-template< typename T_KEY, typename T_VALUE, bool SORTED >
-T_VALUE softMapLookup( stdMapType< T_KEY, T_VALUE, SORTED > const & theMap,
+template< typename T_KEY, typename T_VALUE, typename SORTED >
+T_VALUE softMapLookup( mapType< T_KEY, T_VALUE, SORTED > const & theMap,
                        T_KEY const & key,
                        T_VALUE const failValue )
 {
   T_VALUE rvalue;
-  typename stdMapType< T_KEY, T_VALUE, SORTED >::const_iterator iter = theMap.find( key );
+  typename mapType< T_KEY, T_VALUE, SORTED >::const_iterator iter = theMap.find( key );
   if( iter==theMap.end() )
   {
     rvalue = failValue;
@@ -208,8 +208,8 @@ void forUniqueValues( ITER first, ITER const last, FUNC && func, COMP && comp = 
  * @param optionName name of the option to use in exception error message
  * @param contextName name of the lookup context (e.g. the data repository group)
  */
-template< typename KEY, typename VAL, bool SORTED >
-VAL findOption( stdMapType< KEY, VAL, SORTED > const & map,
+template< typename KEY, typename VAL, typename SORTED >
+VAL findOption( mapType< KEY, VAL, SORTED > const & map,
                 KEY const & option,
                 string const & optionName,
                 string const & contextName )

@@ -313,6 +313,35 @@ using CRSMatrixView = LvArray::CRSMatrixView< T, COL_INDEX, localIndex const, Lv
 //END_SPHINX_INCLUDE_00
 
 /**
+ * @name Ordered and unordered map types.
+ */
+///@{
+
+/**
+ * @brief Base template for ordered and unordered maps.
+ * @tparam TKEY key type
+ * @tparam TVAL value type
+ * @tparam SORTED a @p std::integral_constant<bool> indicating whether map is ordered
+ */
+template< typename TKEY, typename TVAL, typename SORTED >
+class mapType
+{};
+
+/// @cond DO_NOT_DOCUMENT
+template< typename TKEY, typename TVAL >
+class mapType< TKEY, TVAL, std::integral_constant< bool, true > > : public stdMap< TKEY, TVAL >
+{
+  using stdMap< TKEY, TVAL >::stdMap; // enable list initialization
+};
+
+template< typename TKEY, typename TVAL >
+class mapType< TKEY, TVAL, std::integral_constant< bool, false > > : public stdUnorderedMap< TKEY, TVAL >
+{
+  using stdUnorderedMap< TKEY, TVAL >::stdUnorderedMap; // enable list initialization
+};
+/// @endcond
+
+/**
  * @brief Stream output operator for map types.
  * @tparam K key type
  * @tparam V value type
@@ -321,9 +350,9 @@ using CRSMatrixView = LvArray::CRSMatrixView< T, COL_INDEX, localIndex const, Lv
  * @param map the map to print
  * @return reference to output stream
  */
-template< typename K, typename V, bool SORTED >
+template< typename K, typename V, typename SORTED >
 inline
-std::ostream & operator<< ( std::ostream & stream, stdMapType< K, V, SORTED > const & map )
+std::ostream & operator<< ( std::ostream & stream, mapType< K, V, SORTED > const & map )
 {
   stream << "{\n";
   for( auto const & pair : map )
@@ -336,12 +365,13 @@ std::ostream & operator<< ( std::ostream & stream, stdMapType< K, V, SORTED > co
 
 /// Ordered map type.
 template< typename TKEY, typename TVAL >
-using map = stdMapType< TKEY, TVAL, true >;
+using map = mapType< TKEY, TVAL, std::integral_constant< bool, true > >;
 
 /// Unordered map type.
 template< typename TKEY, typename TVAL >
-using unordered_map = stdMapType< TKEY, TVAL, false >;
+using unordered_map = mapType< TKEY, TVAL, std::integral_constant< bool, false > >;
 
+///@}
 
 /**
  * @name Aliases for commonly used array types.

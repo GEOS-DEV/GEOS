@@ -463,7 +463,7 @@ void DofManager::addField( string const & fieldName,
 void DofManager::addField( string const & fieldName,
                            FieldLocation const location,
                            integer const components,
-                           map< std::pair< string, string >, string_array > const & regions )
+                           stdMap< std::pair< string, string >, string_array > const & regions )
 {
   // Convert input into internal format
   stdVector< FieldSupport > support;
@@ -664,7 +664,7 @@ void DofManager::addCoupling( string const & fieldName,
 void DofManager::addCoupling( string const & rowFieldName,
                               string const & colFieldName,
                               DofManager::Connector connectivity,
-                              map< std::pair< string, string >, string_array > const & supports,
+                              stdMap< std::pair< string, string >, string_array > const & supports,
                               bool symmetric )
 {
   // Convert input into internal format
@@ -688,7 +688,7 @@ namespace
  * @tparam CONN type of mesh connector
  * @tparam SUBREGIONTYPES types of subregions to loop over
  *
- * The algorithm used requires that a connector-to-location map is present and populated in
+ * The algorithm used requires that a connector-to-location stdMap is present and populated in
  * the mesh data structure. We loop over connectors first, then visit adjacent locations from
  * each connector and thus populate sparsity pattern row-by-row. The numbering of connectors
  * is implicit, i.e. implied by the looping order, thus we don't have to compute/store it.
@@ -740,7 +740,7 @@ struct ConnLocPatternBuilder
  * @brief A specialization of ConnLocPatternBuilder for elements connected through edges.
  * @tparam SUBREGIONTYPES types of subregions to loop over
  *
- * This is required because edge-to-element map does not exist in the mesh. Therefore, we have
+ * This is required because edge-to-element stdMap does not exist in the mesh. Therefore, we have
  * to invert the loop order and go through elements first. This requires us to create a unique
  * connector numbering for edges in the regions of interest first - which comes with a memory
  * and runtime overhead, so we only use this method when absolutely have to, i.e. in this case.
@@ -1595,8 +1595,8 @@ void DofManager::reorderByRank()
     dofOffset += field.numLocalDof;
   }
 
-  // This is a map with a key that is the pair of strings specifying the
-  // ( MeshBody name, MeshLevel name), and a value that is another map with a
+  // This is a stdMap with a key that is the pair of strings specifying the
+  // ( MeshBody name, MeshLevel name), and a value that is another stdMap with a
   // key that indicates the name of the object that contains the field to be
   // synced, and a value that contans the name of the field to be synced.
   stdMap< std::pair< string, string >, FieldIdentifiers > fieldsToBeSync;

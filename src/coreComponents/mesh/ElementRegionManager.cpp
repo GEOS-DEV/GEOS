@@ -234,7 +234,7 @@ void ElementRegionManager::buildSets( NodeManager const & nodeManager )
 
   dataRepository::Group const & nodeSets = nodeManager.sets();
 
-  map< string, array1d< bool > > nodeInSet; // map to contain indicator of whether a node is in a set.
+  stdMap< string, array1d< bool > > nodeInSet; // map to contain indicator of whether a node is in a set.
   string_array setNames; // just a holder for the names of the sets
 
   // loop over all wrappers and fill the nodeIndSet arrays for each set
@@ -834,8 +834,8 @@ void ElementRegionManager::outputObjectConnectivity() const
           }
 
           printf( "\n  ElementToNodes map ( global nodes sorted by global elems):\n" );
-          map< globalIndex, localIndex > const sortedGlobalToLocalMap( elemGlobalToLocal.begin(),
-                                                                       elemGlobalToLocal.end());
+          stdMap< globalIndex, localIndex > const sortedGlobalToLocalMap( elemGlobalToLocal.begin(),
+                                                                          elemGlobalToLocal.end());
           for( auto indexPair : sortedGlobalToLocalMap )
           {
             globalIndex const gk = indexPair.first;

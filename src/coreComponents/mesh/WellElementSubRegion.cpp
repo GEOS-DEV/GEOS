@@ -406,7 +406,7 @@ void WellElementSubRegion::generate( MeshLevel & mesh,
                                      globalIndex elemOffsetGlobal )
 {
 
-  map< integer, SortedArray< globalIndex > > elemSetsByStatus;
+  stdMap< integer, SortedArray< globalIndex > > elemSetsByStatus;
 
   // convert elemStatus list into sets of indices
   for( localIndex iwelemGlobal = 0; iwelemGlobal < elemStatusGlobal.size(); ++iwelemGlobal )
@@ -558,7 +558,7 @@ void WellElementSubRegion::checkPartitioningValidity( LineBlockABC const & lineB
     MpiWrapper::allGather( elemStatusGlobal[iwelemGlobal],
                            thisElemStatusGlobal );
     // group the ranks by well element status
-    map< integer, SortedArray< globalIndex > > rankSetsByStatus;
+    stdMap< integer, SortedArray< globalIndex > > rankSetsByStatus;
     for( globalIndex irank = 0; irank < thisElemStatusGlobal.size(); ++irank )
     {
       rankSetsByStatus[thisElemStatusGlobal[irank]].insert( irank );

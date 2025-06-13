@@ -193,11 +193,12 @@ class StdMapWrapper : public MapType
 public:
   /// Type alias for the base class (i.e., std::map)
   using Base = MapType;
-  /// Inherit constructors
-  using Base::Base;
   using KeyType = typename Base::key_type;
   using MappedType = typename Base::mapped_type;
   using ValueType = typename Base::value_type;
+
+  /// Inherit constructors
+  using Base::Base;
 
   /**
    * Access element at index with bounds checking if USE_STD_CONTAINER_BOUNDS_CHECKING is true.
@@ -275,32 +276,6 @@ using stdUnorderedMap = internal::StdMapWrapper< std::unordered_map< Key, T, Has
  */
 ///@{
 
-/**
- * @brief Base template for ordered and unordered maps.
- * @tparam TKEY key type
- * @tparam TVAL value type
- * @tparam SORTED a bool indicating whether map is ordered
- */
-template< typename TKEY, typename TVAL, bool SORTED >
-struct stdMapTypeDefinition
-{};
-/// @cond DO_NOT_DOCUMENT
-template< typename TKEY, typename TVAL >
-struct stdMapTypeDefinition< TKEY, TVAL, true >
-{ using Type = stdMap< TKEY, TVAL >; };
-
-template< typename TKEY, typename TVAL >
-struct stdMapTypeDefinition< TKEY, TVAL, false >
-{ using Type = stdUnorderedMap< TKEY, TVAL >; };
-
-/**
- * @brief templated type for ordered and unordered maps.
- * @tparam TKEY key type
- * @tparam TVAL value type
- * @tparam SORTED a bool indicating whether map is ordered
- */
-template< typename TKEY, typename TVAL, bool SORTED >
-using stdMapType = typename stdMapTypeDefinition<TKEY,TVAL,SORTED>::Type;
 /// @endcond
 
 } // namespace geos

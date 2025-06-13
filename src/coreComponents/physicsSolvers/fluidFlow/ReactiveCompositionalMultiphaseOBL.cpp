@@ -936,7 +936,7 @@ bool ReactiveCompositionalMultiphaseOBL::validateDirichletBC( DomainPartition & 
   {
     // map to check consistent application of BC
     // this is used as bcStatusMap[regionName][subRegionName][setName] which returns the corresponding ComponentMask (if is has been set)
-    map< string, map< string, map< string, ComponentMask< MAX_NC > > > > bcStatusMap;
+    stdMap< string, stdMap< string, stdMap< string, ComponentMask< MAX_NC > > > > bcStatusMap;
     integer const numCompWithEnergy = numComp + enableEnergyBalance;
 
     // 1. Check pressure Dirichlet BCs
