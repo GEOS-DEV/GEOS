@@ -171,8 +171,8 @@ public:
   string toString() const override;
 
   /**
-   * @brief Returns contextual information, including the file name and the line number
-   * @return ErrorLogger::ErrorContext 
+   * @brief Return contextual information (file and line of the input file where the error occured)
+   * @return ErrorLogger::ErrorContext ErrorLogger instance updated with context information
    */
   ErrorLogger::ErrorContext getContextInfo() const override;
 

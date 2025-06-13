@@ -70,8 +70,8 @@ private:
   string toString() const override;
 
   /**
-   * @brief Returns contextual information, including the file name and the line number
-   * @return ErrorLogger::ErrorContext 
+   * @brief Return contextual information here it is a data path 
+   * @return ErrorLogger::ErrorContext ErrorLogger instance updated with context information
    */
   ErrorLogger::ErrorContext getContextInfo() const override; 
 

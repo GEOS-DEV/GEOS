@@ -164,9 +164,15 @@ void ErrorLogger::streamMultilineYamlAttribute( std::string_view msg, std::ofstr
 
 bool ErrorLogger::isValidStackTrace( ErrorLogger::ErrorMsg const & errorMsg ) const
 {
-  return( errorMsg.m_sourceCallStack.size() == 1 &&
-          errorMsg.m_sourceCallStack[0] == g_callStackMessage );
+  return( errorMsg.m_sourceCallStack.size() != 1 ||
+          errorMsg.m_sourceCallStack[0] != g_callStackMessage );
 }
+
+// void ErrorLogger::writeCurrentMsg()
+// {
+//   write( m_currentErrorMsg );
+//   m_currentErrorMsg = ErrorMsg{};
+// }
 
 void ErrorLogger::write( ErrorLogger::ErrorMsg const & errorMsg )
 {
@@ -222,7 +228,7 @@ void ErrorLogger::write( ErrorLogger::ErrorMsg const & errorMsg )
       yamlFile << g_level2Next << "line: " << errorMsg.m_line << "\n";
       // Information about the stack trace
       yamlFile << g_level1Next << "sourceCallStack:\n";
-      if( isValidStackTrace( errorMsg ) )
+      if( !isValidStackTrace( errorMsg ) )
       {
         yamlFile << g_level3Start << "callStackMessage: " << errorMsg.m_sourceCallStack[0] << "\n";
       }
