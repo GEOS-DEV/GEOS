@@ -1088,11 +1088,14 @@ public:
     }
     basisLoop( [&func, &dLambdadX, &detJ] ( auto const cc1, auto const ci1, auto const cj1, auto const ck1, auto const cl1 )
     {
+      
       constexpr int c1 = cc1;
       constexpr int i1 = ci1;
       constexpr int j1 = cj1;
       constexpr int k1 = ck1;
       constexpr int l1 = cl1;
+      //Not used in some combinations, but needed for constexpr
+      GEOS_UNUSED_VAR(c1,i1,j1,k1,l1);
       basisLoop( [&func, &dLambdadX, &detJ] ( auto const cc2, auto const ci2, auto const cj2, auto const ck2, auto const cl2 )
       {
         constexpr int c2 = cc2;
@@ -1100,6 +1103,8 @@ public:
         constexpr int j2 = cj2;
         constexpr int k2 = ck2;
         constexpr int l2 = cl2;
+        //Not used in some combinations, but needed for constexpr
+        GEOS_UNUSED_VAR(c2,i2,j2,k2,l2);
         barycentricCoordinateLoop( [&func, &dLambdadX, &detJ] ( auto const cd1 )
         {
           constexpr int d1 = cd1;
@@ -1173,6 +1178,8 @@ public:
       constexpr int i1 = ci1;
       constexpr int j1 = cj1;
       constexpr int k1 = ck1;
+      // Not used in some combinations, but needed for constexpr
+      GEOS_UNUSED_VAR( c1, i1, j1, k1 );
       conditionalBasisLoop< 0 >( [&funcP, &funcF, &detJf]  ( auto const cf2, auto const, auto const cc2, auto const ci2, auto const cj2, auto const ck2 )
       {
         constexpr int f2 = cf2;
@@ -1180,6 +1187,9 @@ public:
         constexpr int i2 = ci2;
         constexpr int j2 = cj2;
         constexpr int k2 = ck2;
+        // Not used in some combinations, but needed for constexpr
+        GEOS_UNUSED_VAR( c2, i2, j2, k2 );
+
         // The second function is nonzero on the face indexed by f2, so we integrate on this face.
         if constexpr ( f1 == f2 )
         {
