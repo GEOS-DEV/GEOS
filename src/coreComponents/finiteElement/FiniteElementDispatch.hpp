@@ -50,7 +50,8 @@
 
 #define BB_FE_TYPES \
   finiteElement::BB1_Tetrahedron, \
-  finiteElement::BB2_Tetrahedron
+  finiteElement::BB2_Tetrahedron, \
+  finiteElement::BB3_Tetrahedron
 
 #if defined( GEOS_DISPATCH_VEM )
 
