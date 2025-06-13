@@ -52,10 +52,6 @@ public:
   static constexpr integer numPhase = NUM_PHASE;
   static constexpr real64 relTolerance = 1.0e-5;
   static constexpr real64 absTolerance = 1.0e-4;
-  // Perturbation values for numerical derivatives
-  static constexpr real64 pressurePertubation = 1.0e2;
-  static constexpr real64 temperaturePertubation = 1.0e-3;
-  static constexpr real64 compositionPertubation = 1.0e-7;
 
 public:
   /**
@@ -65,6 +61,19 @@ public:
     real64 const,           // pressure
     real64 const,           // temperature
     Feed< NUM_COMP > const  // composition
+    >;
+
+  /**
+   * The result of a fluid calculation at a point
+   */
+  using TestResult = std::tuple<
+    Feed< NUM_PHASE > const,  // phase fraction
+    Feed< NUM_PHASE > const,  // phase density,
+    Feed< NUM_PHASE > const,  // phase mass density
+    Feed< NUM_PHASE > const,  // phase viscosity
+    Feed< NUM_PHASE > const,  // phase enthalpy
+    Feed< NUM_PHASE > const,  // phase internal energy
+    real64 const              // total density,
     >;
 
 public:
@@ -90,6 +99,21 @@ public:
   FluidModel * createFluid( string const & name, LAMBDA && function );
 
   /**
+   * @brief Test implementation against known (expected) valuse
+   * @details Will test the values returned by the fluid compute against values that are known or expected
+   * @param fluid - a pointer to the fluid model. Must be derived from @c MultiFluidBase
+   * @param testPoint - the test point input data (pressure, temperature and composition)
+   * @param expectedValues - the expected values
+   * @param relTol - the relative tolerance to use in the check
+   * @param absTol - the absolute tolerance to use in the check
+   */
+  void testValuesAgainstPreviousImplementation( FluidModel * fluid,
+                                                TestPoint const & testPoint,
+                                                TestResult const & expectedValues,
+                                                real64 const relTol = relTolerance,
+                                                real64 const absTol = absTolerance );
+
+  /**
    * @brief Tests the derivatives of the fluid model
    * @details Will test the derivatives returned by the fluid model at the test point specified. The input
    *          values will be perturbed to calculate left, central and right numerical derivatives at the
@@ -98,8 +122,15 @@ public:
    *          larger than the tolerance, the test will fail.
    * @param fluid - a pointer to the fluid model. Must be derived from @c MultiFluidBase
    * @param data - the test point input data (pressure, temperature and composition)
+   * @param perturbationLevel - fraction of parameter to use to perturb when calculating numerical derivatives
+   * @param relTol - the relative tolerance to use in the check
+   * @param absTol - the absolute tolerance to use in the check
    */
-  void testNumericalDerivatives( FluidModel * fluid, TestPoint const & data );
+  void testNumericalDerivatives( FluidModel * fluid,
+                                 TestPoint const & data,
+                                 real64 const perturbationLevel = 1.0e-4,
+                                 real64 const relTol = relTolerance,
+                                 real64 const absTol = absTolerance );
 
 protected:
   /**
@@ -158,6 +189,16 @@ protected:
   static void populate( ARRAY & array, LIST const & data );
 
   /**
+   * @brief Convert an array slice into a string
+   * @details Will print out an array slice into a string
+   * @tparam USD The leading dimension stride
+   * @param array - The array slice.
+   * @return A string printout of the array
+   */
+  template< integer USD >
+  static string toString( arraySlice1d< real64 const, USD > const & array );
+
+  /**
    * @brief Populate an array with linearly spaced data
    * @details Will allocated and populate the array with linearly spaced values in the interval [x0,x1] including the end
    *          points using @c n intervals. Note that @n is the number of intervals so the list will be of length @c n+1 on exit.
@@ -186,9 +227,12 @@ protected:
    *          the input primary variables. The analytical derivatives are provided in the @c derivArray array.
    * @tparam NDIM - the dimension of the value array
    * @param propName - the name of the property whose derivatives are being tests
+   * @param testValues - a description of the test point (pressure, temperature and composition)
    * @param valueArray - array of calculated values including values at perturbed
    * @param derivArray - array of calculated analytical derivatives
    * @param displacements - values of displacements at each of the test points
+   * @param valueScale - a scale to use on the values before calculating the finite differences to reduce
+   *                     round off error.
    * @param dofNames - names for the degrees of freedom variables (for debug)
    * @param relTol - the relative tolerance to use in the check
    * @param absTol - the absolute tolerance to use in the check
@@ -198,9 +242,11 @@ protected:
   template< integer NDIM, typename ... INDICES, integer USD1, integer USD2, integer USD3,
             typename=std::enable_if_t< sizeof ... ( INDICES ) == NDIM-2 > >
   static void testDerivatives( string const propName,
+                               string const testValues,
                                ArrayView< real64 const, NDIM, USD1 > const & valueArray,
                                ArrayView< real64 const, NDIM+1, USD2 > const & derivArray,
                                ArraySlice< real64 const, 1, USD3 > const & displacements,
+                               real64 const valueScale,
                                string_array const & dofNames,
                                real64 const relTol,
                                real64 const absTol,
