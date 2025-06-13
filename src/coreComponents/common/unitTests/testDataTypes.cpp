@@ -33,6 +33,7 @@ TEST( testDataTypes, testBoundChecking )
     try
     {
       std::string crash = vectorBoundsChecking[1];
+      GEOS_UNUSED_VAR( crash );
     }
     catch( const std::out_of_range & e )
     {
@@ -46,6 +47,7 @@ TEST( testDataTypes, testBoundChecking )
     try
     {
       integer crash = mapBoundsChecking[1];
+      GEOS_UNUSED_VAR( crash );
     }
     catch( const std::out_of_range & e )
     {
@@ -59,6 +61,7 @@ TEST( testDataTypes, testBoundChecking )
     try
     {
       integer crash = unorderedMapBoundsChecking[1];
+      GEOS_UNUSED_VAR( crash );
     }
     catch( const std::out_of_range & e )
     {
@@ -76,6 +79,7 @@ TEST( testDataTypes, testNoBoundChecking )
 
   EXPECT_NO_THROW( {
     std::string crash = boundChecking[1];
+    GEOS_UNUSED_VAR( crash );
   } );
 
   internal::StdMapWrapper< std::map< integer, integer >,
@@ -83,6 +87,7 @@ TEST( testDataTypes, testNoBoundChecking )
 
   EXPECT_NO_THROW( {
     integer crash = mapBoundsChecking[1];
+    GEOS_UNUSED_VAR( crash );
   } );
 
   internal::StdMapWrapper< std::unordered_map< integer, integer >,
@@ -90,6 +95,7 @@ TEST( testDataTypes, testNoBoundChecking )
 
   EXPECT_NO_THROW( {
     integer crash = unorderedMapBoundsChecking[1];
+    GEOS_UNUSED_VAR( crash );
   } );
 
 }
