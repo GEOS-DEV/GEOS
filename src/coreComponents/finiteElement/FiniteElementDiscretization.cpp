@@ -265,11 +265,11 @@ FiniteElementDiscretization::factory( ElementType const parentElementShape ) con
 #else
       GEOS_ERROR( "Cannot compile this with HIP active." );
 #endif
-      case ElementType::Tetrahedron:
-        GEOS_ERROR_IF( m_formulation != Formulation::DG,
-                       getDataContext() << ": Element type Tetrahedron with order 4 available" <<
-                       " only when using the Discontinuous Galerkin Method" );
-        //return std::make_unique< BB4_Tetrahedron >();
+      //case ElementType::Tetrahedron:
+      //  GEOS_ERROR_IF( m_formulation != Formulation::DG,
+      //                 getDataContext() << ": Element type Tetrahedron with order 4 available" <<
+      //                 " only when using the Discontinuous Galerkin Method" );
+      //  //return std::make_unique< BB4_Tetrahedron >();
       default:
       {
         GEOS_ERROR( getDataContext() << ": Element type " << parentElementShape << " does not have" <<
@@ -292,11 +292,11 @@ FiniteElementDiscretization::factory( ElementType const parentElementShape ) con
 #else
       GEOS_ERROR( "Cannot compile this with HIP active." );
 #endif
-      case ElementType::Tetrahedron:
-        GEOS_ERROR_IF( m_formulation != Formulation::DG,
-                       getDataContext() << ": Element type Tetrahedron with order 5 available" <<
-                       " only when using the Discontinuous Galerkin Method" );
-        //return std::make_unique< BB5_Tetrahedron >();
+      //case ElementType::Tetrahedron:
+      //  GEOS_ERROR_IF( m_formulation != Formulation::DG,
+      //                 getDataContext() << ": Element type Tetrahedron with order 5 available" <<
+      //                 " only when using the Discontinuous Galerkin Method" );
+      //  //return std::make_unique< BB5_Tetrahedron >();
       default:
       {
         GEOS_ERROR( getDataContext() << ": Element type " << parentElementShape << " does not have" <<
