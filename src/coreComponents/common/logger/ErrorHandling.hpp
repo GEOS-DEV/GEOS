@@ -28,7 +28,6 @@ namespace geos
 /**
  * @class ErrorLogger
  * @brief Class to format and write different error/warning information that occured during the initialization
- *
  */
 class ErrorLogger
 {
@@ -78,7 +77,7 @@ public:
     /**
      * @brief Set the priority value of the current error context information
      * @param priority the new value to asign
-     * @return ErrorContext& the reference to the corresponding error
+     * @return the reference to the corresponding error
      */
     ErrorContext & setPriority( integer priority )
     { m_priority = priority; return *this; }
@@ -86,7 +85,7 @@ public:
     /**
      * @brief Convert a value from the Attribute enumeration to a string
      * @param attribute the value of the enumeration to be converted
-     * @return std::string a string representation of the enumeration value
+     * @return a string representation of the enumeration value
      */
     static std::string attributeToString( Attribute attribute );
   };
@@ -116,7 +115,7 @@ public:
     ErrorMsg() {};
 
     /**
-     * @brief Construct a new Error Message from attributes
+     * @brief Construct a new Error Message from parameters
      * @param msgType the type of the message (error or warning)
      * @param msgContent the error/warning message content
      * @param msgFile the source file name where the error occcured
@@ -128,7 +127,7 @@ public:
     /**
      * @brief Add text to the current error msg
      * @param msg the text to add
-     * @return reference to the current instance
+     * @return the reference to the current instance
      */
     ErrorMsg & addToMsg( std::string msg );
 
@@ -136,30 +135,36 @@ public:
      * @brief Set the source code location values (file and line where the error is detected)
      * @param msgFile name of the source file location to add
      * @param msgLine line of the source file location to add
-     * @return ErrorMsg& reference to the current instance
+     * @return the reference to the current instance
      */
     ErrorMsg & setCodeLocation( std::string_view msgFile, integer msgLine );
 
     /**
      * @brief Set the type of the error
      * @param msgType the type can be error, warning or exception
-     * @return ErrorMsg& reference to the current instance
+     * @return the reference to the current instance
      */
     ErrorMsg & setType( MsgType msgType );
 
     /**
      * @brief Set the rank on which the error is raised
      * @param rank the value to asign
-     * @return ErrorMsg& reference to the current instance
+     * @return the reference to the current instance
      */
     ErrorMsg & setRank( int rank );
 
     /**
      * @brief Add stack trace information about the error
      * @param ossStackTrace stack trace information to add
-     * @return ErrorMsg& reference to the current instance
+     * @return the reference to the current instance
      */
     ErrorMsg & addCallStackInfo( std::string ossStackTrace );
+
+      /**
+       * @return true if the YAML file output is enabled
+       */
+      bool isValidStackTrace() const
+      { return m_isValidStackTrace; }
 
     /**
      * @brief Adds one or more context elements to the error
@@ -175,6 +180,8 @@ private:
      * @param ctxInfo rvalue of the ErrorContext class
      */
     void addContextInfoImpl( ErrorContext && ctxInfo );
+
+    bool m_isValidStackTrace = false;
   };
 
   /**
@@ -200,7 +207,7 @@ private:
 
   /**
    * @brief Return the error message information at this point
-   * @return reference to the current instance
+   * @return the reference to the current instance
    */
   ErrorMsg & currentErrorMsg()
   { return m_currentErrorMsg; }
@@ -217,12 +224,6 @@ private:
    * @return the string representation of the message type
    */
   static std::string toString( MsgType type );
-
-  /**
-   * @return true if the vector contains a valid stack
-   */
-  bool isValidStackTrace( ErrorMsg const & errorMsg ) const;
-
   /**
    * @brief Write all the information retrieved about the error/warning message into the YAML file
    * @param errorMsg a constant reference to the error

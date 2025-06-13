@@ -107,7 +107,6 @@ ErrorLogger::ErrorMsg & ErrorLogger::ErrorMsg::addCallStackInfo( std::string oss
   std::istringstream iss( ossStackTrace );
   std::string stackLine;
   std::size_t index;
-  bool isWellFormatted = false;
 
   std::regex pattern( R"(Frame \d+: \S+)" );
 
@@ -115,13 +114,13 @@ ErrorLogger::ErrorMsg & ErrorLogger::ErrorMsg::addCallStackInfo( std::string oss
   {
     if( std::regex_search( stackLine, pattern ))
     {
-      isWellFormatted = true;
+      m_isValidStackTrace = true;
       index = stackLine.find( ':' );
       m_sourceCallStack.push_back( stackLine.substr( index + 1 ) );
     }
   }
 
-  if( !isWellFormatted )
+  if( !m_isValidStackTrace )
   {
     m_sourceCallStack.push_back( g_callStackMessage );
   }
@@ -162,12 +161,6 @@ void ErrorLogger::streamMultilineYamlAttribute( std::string_view msg, std::ofstr
   }
 }
 
-bool ErrorLogger::isValidStackTrace( ErrorLogger::ErrorMsg const & errorMsg ) const
-{
-  return( errorMsg.m_sourceCallStack.size() != 1 ||
-          errorMsg.m_sourceCallStack[0] != g_callStackMessage );
-}
-
 void ErrorLogger::flushCurrentErrorMsg( ErrorLogger::ErrorMsg & errorMsg )
 {
   try
@@ -178,9 +171,9 @@ void ErrorLogger::flushCurrentErrorMsg( ErrorLogger::ErrorMsg & errorMsg )
       // General errors info (type, rank on which the error occured)
       yamlFile << "\n" << g_level1Start << "type: " << g_errorLogger.toString( errorMsg.m_type ) << "\n";
       yamlFile << g_level1Next << "rank: ";
-      for( size_t i = 0; i < errorMsg.m_ranksInfo.size(); i++ )
+      for( auto const & info: errorMsg.m_ranksInfo )
       {
-        yamlFile << errorMsg.m_ranksInfo[i];
+        yamlFile << info;
       }
       yamlFile << "\n";
       // Error message
@@ -222,7 +215,7 @@ void ErrorLogger::flushCurrentErrorMsg( ErrorLogger::ErrorMsg & errorMsg )
       yamlFile << g_level2Next << "line: " << errorMsg.m_line << "\n";
       // Information about the stack trace
       yamlFile << g_level1Next << "sourceCallStack:\n";
-      if( !isValidStackTrace( errorMsg ) )
+      if( !errorMsg.isValidStackTrace() )
       {
         yamlFile << g_level3Start << "callStackMessage: " << errorMsg.m_sourceCallStack[0] << "\n";
       }
@@ -240,6 +233,7 @@ void ErrorLogger::flushCurrentErrorMsg( ErrorLogger::ErrorMsg & errorMsg )
     else
     {
       GEOS_LOG( GEOS_FMT( "Unable to open error file for writing: {}", m_filename ) );
+
     }
   }
   catch( const std::exception & e )
