@@ -42,7 +42,8 @@ public:
   {
     Error,
     Warning,
-    Exception
+    Exception, 
+    Undefined
   };
 
   /**
@@ -96,7 +97,7 @@ public:
   struct ErrorMsg
   {
     // the error type (Warning, Error or Exception)
-    MsgType m_type;
+    MsgType m_type = ErrorLogger::MsgType::Undefined;
     // the erreur message that can be completed
     std::string m_msg;
     // the source location (file and line corresponding to the error in the code)
@@ -222,13 +223,11 @@ private:
    */
   bool isValidStackTrace( ErrorMsg const & errorMsg ) const;
 
-  // void writeCurrentMsg();
-
   /**
    * @brief Write all the information retrieved about the error/warning message into the YAML file
    * @param errorMsg a constant reference to the error
    */
-  void write( ErrorMsg const & errorMsg );
+  void flushCurrentErrorMsg( ErrorMsg & errorMsg );
 
 private:
   // The error constructed via exceptions

@@ -160,7 +160,7 @@
                                          __LINE__ ); \
         msgStruct.setRank( ::geos::logger::internal::rank ); \
         msgStruct.addCallStackInfo( stackHistory ); \
-        g_errorLogger.write( msgStruct ); \
+        g_errorLogger.flushCurrentErrorMsg( msgStruct ); \
       } \
       LvArray::system::callErrorHandler(); \
     } \
@@ -196,7 +196,7 @@
         msgStruct.setRank( ::geos::logger::internal::rank ); \
         msgStruct.addContextInfo( __VA_ARGS__ ); \
         msgStruct.addCallStackInfo( stackHistory ); \
-        g_errorLogger.write( msgStruct ); \
+        g_errorLogger.flushCurrentErrorMsg( msgStruct ); \
       } \
       LvArray::system::callErrorHandler(); \
     } \
@@ -330,7 +330,7 @@
                                          __LINE__ ); \
         msgStruct.setRank( ::geos::logger::internal::rank ); \
         msgStruct.addCallStackInfo( LvArray::system::stackTrace( true ) ); \
-        g_errorLogger.write( msgStruct ); \
+        g_errorLogger.flushCurrentErrorMsg( msgStruct ); \
       } \
     } \
   } while( false )
@@ -363,7 +363,7 @@
         msgStruct.setRank( ::geos::logger::internal::rank ); \
         msgStruct.addContextInfo( __VA_ARGS__ ); \
         msgStruct.addCallStackInfo( LvArray::system::stackTrace( true ) ); \
-        g_errorLogger.write( msgStruct ); \
+        g_errorLogger.flushCurrentErrorMsg( msgStruct ); \
       } \
     } \
   } while( false )
