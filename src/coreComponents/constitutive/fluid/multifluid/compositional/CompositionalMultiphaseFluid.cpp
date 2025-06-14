@@ -26,6 +26,7 @@
 
 namespace geos
 {
+
 namespace fields
 {
 namespace multifluid
@@ -86,9 +87,6 @@ CompositionalMultiphaseFluid( string const & name, Group * const parent )
   registerWrapper( "phaseOrder", &m_phaseOrder )
     .setSizedFromParent( 0 )
     .setRestartFlags( RestartFlags::NO_WRITE );
-  registerWrapper( "componentType", &m_componentProperties->m_componentType )
-    .setSizedFromParent( 0 )
-    .setRestartFlags( RestartFlags::NO_WRITE );
 }
 
 template< typename FLASH, typename PHASE1, typename PHASE2, typename PHASE3 >
@@ -139,8 +137,6 @@ void CompositionalMultiphaseFluid< FLASH, PHASE1, PHASE2, PHASE3 >::postInputIni
   checkInputSize( m_componentProperties->m_componentCriticalPressure, NC, viewKeyStruct::componentCriticalPressureString() );
   checkInputSize( m_componentProperties->m_componentCriticalTemperature, NC, viewKeyStruct::componentCriticalTemperatureString() );
   checkInputSize( m_componentProperties->m_componentAcentricFactor, NC, viewKeyStruct::componentAcentricFactorString() );
-
-  m_componentProperties->classifyComponents();
 
   if( m_componentProperties->m_componentVolumeShift.empty() )
   {
@@ -304,10 +300,6 @@ template class CompositionalMultiphaseFluid<
     compositional::PhaseModel< compositional::CompositionalDensity, compositional::LohrenzBrayClarkViscosity, compositional::NullModel >,
     compositional::PhaseModel< compositional::CompositionalDensity, compositional::LohrenzBrayClarkViscosity, compositional::NullModel > >;
 template class CompositionalMultiphaseFluid<
-    compositional::NegativeTwoPhaseFlashModel,
-    compositional::PhaseModel< compositional::PhillipsBrineDensity, compositional::PhillipsBrineViscosity, compositional::NullModel >,
-    compositional::PhaseModel< compositional::CompositionalDensity, compositional::LohrenzBrayClarkViscosity, compositional::NullModel > >;
-template class CompositionalMultiphaseFluid<
     compositional::ImmiscibleWaterFlashModel,
     compositional::PhaseModel< compositional::CompositionalDensity, compositional::LohrenzBrayClarkViscosity, compositional::NullModel >,
     compositional::PhaseModel< compositional::CompositionalDensity, compositional::LohrenzBrayClarkViscosity, compositional::NullModel >,
@@ -320,11 +312,6 @@ REGISTER_CATALOG_ENTRY( ConstitutiveBase,
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase,
                         CompositionalTwoPhaseLohrenzBrayClarkViscosity,
-                        string const &,
-                        dataRepository::Group * const )
-
-REGISTER_CATALOG_ENTRY( ConstitutiveBase,
-                        CompositionalTwoPhasePhillipsBrine,
                         string const &,
                         dataRepository::Group * const )
 

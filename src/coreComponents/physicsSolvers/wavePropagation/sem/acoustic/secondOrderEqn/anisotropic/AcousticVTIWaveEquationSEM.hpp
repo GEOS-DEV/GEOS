@@ -60,14 +60,14 @@ public:
                                       real64 const & dt,
                                       integer const cycleNumber,
                                       DomainPartition & domain,
-                                      integer const computeGradient ) override;
+                                      bool const computeGradient ) override;
 
 
   virtual real64 explicitStepBackward( real64 const & GEOS_UNUSED_PARAM( time_n ),
                                        real64 const & GEOS_UNUSED_PARAM( dt ),
                                        integer const GEOS_UNUSED_PARAM( cycleNumber ),
                                        DomainPartition & GEOS_UNUSED_PARAM( domain ),
-                                       integer const GEOS_UNUSED_PARAM( computeGradient ) ) override;
+                                       bool const GEOS_UNUSED_PARAM( computeGradient ) ) override;
 
   /**@}*/
 

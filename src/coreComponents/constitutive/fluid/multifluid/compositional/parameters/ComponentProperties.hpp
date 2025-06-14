@@ -50,14 +50,6 @@ public:
   integer getNumberOfComponents() const { return m_componentNames.size(); }
 
   /**
-   * @brief Assign component types to the components
-   */
-  void classifyComponents()
-  {
-    classifyComponents( m_componentNames, m_componentType );
-  }
-
-  /**
    * Data accessors
    */
   string_array const & getComponentName() const { return m_componentNames; }

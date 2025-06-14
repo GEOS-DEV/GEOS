@@ -144,9 +144,21 @@ void ProppantTransport::registerDataOnMesh( Group & meshBodies )
 
 void ProppantTransport::setConstitutiveNames( ElementSubRegionBase & subRegion ) const
 {
-  setConstitutiveName< SlurryFluidBase >( subRegion, viewKeyStruct::fluidNamesString(), "slurry fluid" );
+  string & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
+  fluidName = getConstitutiveName< SlurryFluidBase >( subRegion );
+  GEOS_THROW_IF( fluidName.empty(),
+                 GEOS_FMT( "{}: Fluid model not found on subregion {}",
+                           getDataContext(), subRegion.getName() ),
+                 InputError );
 
-  setConstitutiveName< ParticleFluidBase >( subRegion, viewKeyStruct::proppantNamesString(), "proppant" );
+  subRegion.registerWrapper< string >( viewKeyStruct::proppantNamesString() );
+  string & proppantName = subRegion.getReference< string >( viewKeyStruct::proppantNamesString() );
+  proppantName = getConstitutiveName< ParticleFluidBase >( subRegion );
+  GEOS_THROW_IF( proppantName.empty(),
+                 GEOS_FMT( "{}: Proppant model not found on subregion {}",
+                           getDataContext(), subRegion.getName() ),
+                 InputError );
+
 }
 
 

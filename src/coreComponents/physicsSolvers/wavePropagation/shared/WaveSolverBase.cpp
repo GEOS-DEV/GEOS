@@ -28,6 +28,8 @@
 #include "fieldSpecification/PerfectlyMatchedLayer.hpp"
 #include "mainInterface/ProblemManager.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
+#include "mesh/DomainPartition.hpp"
+#include "WaveSolverUtils.hpp"
 #include "events/EventManager.hpp"
 
 #include <limits>
@@ -98,7 +100,7 @@ WaveSolverBase::WaveSolverBase( const std::string & name,
   registerWrapper( viewKeyStruct::saveFieldsString(), &m_saveFields ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( 0 ).
-    setDescription( "Set to 1 to save fields during forward and restore them during backward. If set to 1, the gradient is computed, and if set to 2, the imaging condition is computed." );
+    setDescription( "Set to 1 to save fields during forward and restore them during backward" );
 
   registerWrapper( viewKeyStruct::shotIndexString(), &m_shotIndex ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -572,5 +574,6 @@ bool WaveSolverBase::directoryExists( std::string const & directoryName )
   struct stat buffer;
   return stat( directoryName.c_str(), &buffer ) == 0;
 }
+
 
 } /* namespace geos */

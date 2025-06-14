@@ -109,7 +109,7 @@ FlowSolverBase::FlowSolverBase( string const & name,
   PhysicsSolverBase( name, parent ),
   m_numDofPerCell( 0 ),
   m_isThermal( 0 ),
-  m_keepVariablesConstantDuringInitStep( false ),
+  m_keepVariablesConstantDuringInitStep( 0 ),
   m_isFixedStressPoromechanicsUpdate( false ),
   m_isJumpStabilized( false ),
   m_isLaggingFractureStencilWeightsUpdate( 0 )
@@ -311,13 +311,45 @@ void FlowSolverBase::setConstitutiveNamesCallSuper( ElementSubRegionBase & subRe
 {
   PhysicsSolverBase::setConstitutiveNamesCallSuper( subRegion );
 
-  setConstitutiveName< CoupledSolidBase >( subRegion, viewKeyStruct::solidNamesString(), "coupled solid" );
+  subRegion.registerWrapper< string >( viewKeyStruct::fluidNamesString() ).
+    setPlotLevel( PlotLevel::NOPLOT ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setSizedFromParent( 0 );
 
-  setConstitutiveName< PermeabilityBase >( subRegion, viewKeyStruct::permeabilityNamesString(), "permeability" );
+  subRegion.registerWrapper< string >( viewKeyStruct::solidNamesString() ).
+    setPlotLevel( PlotLevel::NOPLOT ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setSizedFromParent( 0 );
+
+  string & solidName = subRegion.getReference< string >( viewKeyStruct::solidNamesString() );
+  solidName = getConstitutiveName< CoupledSolidBase >( subRegion );
+  GEOS_ERROR_IF( solidName.empty(), GEOS_FMT( "{}: Solid model not found on subregion {}",
+                                              getDataContext(), subRegion.getName() ) );
+
+  subRegion.registerWrapper< string >( viewKeyStruct::permeabilityNamesString() ).
+    setPlotLevel( PlotLevel::NOPLOT ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setSizedFromParent( 0 );
+
+  string & permName = subRegion.getReference< string >( viewKeyStruct::permeabilityNamesString() );
+  permName = getConstitutiveName< PermeabilityBase >( subRegion );
+  GEOS_ERROR_IF( permName.empty(), GEOS_FMT( "{}: Permeability model not found on subregion {}",
+                                             getDataContext(), subRegion.getName() ) );
 
   if( m_isThermal )
   {
-    setConstitutiveName< SolidInternalEnergy >( subRegion, viewKeyStruct::solidInternalEnergyNamesString(), "solid internal energy" );
+    string & solidInternalEnergyName = subRegion.registerWrapper< string >( viewKeyStruct::solidInternalEnergyNamesString() ).
+                                         setPlotLevel( PlotLevel::NOPLOT ).
+                                         setRestartFlags( RestartFlags::NO_WRITE ).
+                                         setSizedFromParent( 0 ).
+                                         setDescription( "Name of the solid internal energy constitutive model to use" ).
+                                         reference();
+
+    solidInternalEnergyName = getConstitutiveName< SolidInternalEnergy >( subRegion );
+    GEOS_THROW_IF( solidInternalEnergyName.empty(),
+                   GEOS_FMT( "{}: Solid internal energy model not found on subregion {}",
+                             getDataContext(), subRegion.getName() ),
+                   InputError );
   }
 }
 

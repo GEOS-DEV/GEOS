@@ -87,7 +87,6 @@ set( constitutive_headers
      fluid/multifluid/compositional/functions/CompositionalProperties_impl.hpp
      fluid/multifluid/compositional/functions/CompositionalProperties.hpp
      fluid/multifluid/compositional/functions/CubicEOSPhaseModel.hpp
-     fluid/multifluid/compositional/functions/FlashData.hpp
      fluid/multifluid/compositional/functions/FugacityCalculator.hpp
      fluid/multifluid/compositional/functions/KValueInitialization.hpp
      fluid/multifluid/compositional/functions/NegativeTwoPhaseFlash.hpp
@@ -102,7 +101,7 @@ set( constitutive_headers
      fluid/multifluid/compositional/models/ImmiscibleWaterFlashModel.hpp
      fluid/multifluid/compositional/models/ImmiscibleWaterViscosity.hpp
      fluid/multifluid/compositional/models/LohrenzBrayClarkViscosity.hpp
-     fluid/multifluid/compositional/models/LohrenzBrayClarkViscosity_Impl.hpp
+     fluid/multifluid/compositional/models/LohrenzBrayClarkViscosityImpl.hpp
      fluid/multifluid/compositional/models/NegativeTwoPhaseFlashModel.hpp
      fluid/multifluid/compositional/models/NullModel.hpp
      fluid/multifluid/compositional/models/PhaseModel.hpp

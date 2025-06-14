@@ -34,12 +34,9 @@ namespace compositional
 template< typename EOS_TYPE >
 struct SoreideWhitsonEOSPhaseModel
 {
-private:
-  static constexpr integer maxNumComps = MultiFluidConstants::MAX_NUM_COMPONENTS;
-
-public:
   using CubicModel = CubicEOSPhaseModel< EOS_TYPE >;
   using Deriv = typename CubicModel::Deriv;
+  static constexpr integer maxNumComps = MultiFluidConstants::MAX_NUM_COMPONENTS;
 
   /**
    * @brief Main entry point of the Soreide-Whitson EOS model
@@ -77,14 +74,14 @@ public:
   template< integer USD >
   GEOS_HOST_DEVICE
   static void
-  computeLogFugacityCoefficientDerivs( integer const numComps,
-                                       real64 const & pressure,
-                                       real64 const & temperature,
-                                       arraySlice1d< real64 const, USD > const & composition,
-                                       ComponentProperties::KernelWrapper const & componentProperties,
-                                       real64 const & salinity,
-                                       arraySlice1d< real64 const > const & logFugacityCoefficients,
-                                       arraySlice2d< real64 > const & logFugacityCoefficientDerivs );
+  computeLogFugacityCoefficients( integer const numComps,
+                                  real64 const & pressure,
+                                  real64 const & temperature,
+                                  arraySlice1d< real64 const, USD > const & composition,
+                                  ComponentProperties::KernelWrapper const & componentProperties,
+                                  real64 const & salinity,
+                                  arraySlice1d< real64 const > const & logFugacityCoefficients,
+                                  arraySlice2d< real64 > const & logFugacityCoefficientDerivs );
 
   /**
    * @brief Calculate the pure coefficients
@@ -124,17 +121,17 @@ public:
    */
   GEOS_HOST_DEVICE
   static void
-  computePureCoefficientsAndDerivs( integer const ic,
-                                    real64 const & pressure,
-                                    real64 const & temperature,
-                                    ComponentProperties::KernelWrapper const & componentProperties,
-                                    real64 const & salinity,
-                                    real64 & aCoefficient,
-                                    real64 & bCoefficient,
-                                    real64 & daCoefficient_dp,
-                                    real64 & dbCoefficient_dp,
-                                    real64 & daCoefficient_dt,
-                                    real64 & dbCoefficient_dt );
+  computePureCoefficients( integer const ic,
+                           real64 const & pressure,
+                           real64 const & temperature,
+                           ComponentProperties::KernelWrapper const & componentProperties,
+                           real64 const & salinity,
+                           real64 & aCoefficient,
+                           real64 & bCoefficient,
+                           real64 & daCoefficient_dp,
+                           real64 & dbCoefficient_dp,
+                           real64 & daCoefficient_dt,
+                           real64 & dbCoefficient_dt );
 
   /**
    * @brief Compute the mixture coefficients using pressure, temperature, composition and input
@@ -182,18 +179,18 @@ public:
   template< integer USD >
   GEOS_HOST_DEVICE
   static void
-  computeMixtureCoefficientDerivs( integer const numComps,
-                                   real64 const & pressure,
-                                   real64 const & temperature,
-                                   arraySlice1d< real64 const, USD > const & composition,
-                                   ComponentProperties::KernelWrapper const & componentProperties,
-                                   real64 const & salinity,
-                                   arraySlice1d< real64 const > const & aPureCoefficient,
-                                   arraySlice1d< real64 const > const & bPureCoefficient,
-                                   real64 const aMixtureCoefficient,
-                                   real64 const bMixtureCoefficient,
-                                   arraySlice1d< real64 > const & aMixtureCoefficientDerivs,
-                                   arraySlice1d< real64 > const & bMixtureCoefficientDerivs );
+  computeMixtureCoefficients( integer const numComps,
+                              real64 const & pressure,
+                              real64 const & temperature,
+                              arraySlice1d< real64 const, USD > const & composition,
+                              ComponentProperties::KernelWrapper const & componentProperties,
+                              real64 const & salinity,
+                              arraySlice1d< real64 const > const & aPureCoefficient,
+                              arraySlice1d< real64 const > const & bPureCoefficient,
+                              real64 const aMixtureCoefficient,
+                              real64 const bMixtureCoefficient,
+                              arraySlice1d< real64 > const & aMixtureCoefficientDerivs,
+                              arraySlice1d< real64 > const & bMixtureCoefficientDerivs );
 
   /**
    * @brief Compute compressibility factor
@@ -218,27 +215,27 @@ public:
                                 real64 & compressibilityFactor );
 
   /**
-   * @brief Compute compressibility factor and derivatives
+   * @brief Compute compressibility factor derivatives
    * @details Computes the compressibility factor (z-factor) for the cubic EOS model including derivatives
    * @param[in] numComps number of components
    * @param[in] pressure pressure
    * @param[in] temperature temperature
    * @param[in] composition composition of the phase
    * @param[in] componentProperties The compositional component properties
-   * @param[out] compressibilityFactor the current compressibility factor
+   * @param[in] compressibilityFactor the current compressibility factor
    * @param[out] compressibilityFactorDerivs derivatives of the compressibility factor
    */
-  template< integer USD1, integer USD2 >
+  template< integer USD >
   GEOS_HOST_DEVICE
   static void
-  computeCompressibilityFactorAndDerivs( integer const numComps,
-                                         real64 const & pressure,
-                                         real64 const & temperature,
-                                         arraySlice1d< real64 const, USD1 > const & composition,
-                                         ComponentProperties::KernelWrapper const & componentProperties,
-                                         real64 const & salinity,
-                                         real64 & compressibilityFactor,
-                                         arraySlice1d< real64, USD2 > const & compressibilityFactorDerivs );
+  computeCompressibilityFactor( integer const numComps,
+                                real64 const & pressure,
+                                real64 const & temperature,
+                                arraySlice1d< real64 const, USD > const & composition,
+                                ComponentProperties::KernelWrapper const & componentProperties,
+                                real64 const & salinity,
+                                real64 const & compressibilityFactor,
+                                arraySlice1d< real64 > const & compressibilityFactorDerivs );
 
   /**
    * @brief Get the binary interaction coefficient between two components
@@ -253,7 +250,7 @@ public:
    */
   GEOS_HOST_DEVICE
   static void
-  getBinaryInteractionCoefficient( real64 const & pressure,
+  getBinaryInteractionCiefficient( real64 const & pressure,
                                    real64 const & temperature,
                                    ComponentProperties::KernelWrapper const & componentProperties,
                                    real64 const & salinity,

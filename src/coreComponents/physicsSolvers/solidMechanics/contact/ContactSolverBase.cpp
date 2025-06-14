@@ -254,7 +254,15 @@ void ContactSolverBase::setConstitutiveNamesCallSuper( ElementSubRegionBase & su
   }
   else if( dynamic_cast< SurfaceElementSubRegion * >( &subRegion ) )
   {
-    setConstitutiveName< FrictionBase >( subRegion, viewKeyStruct::frictionLawNameString(), "friction" );
+    subRegion.registerWrapper< string >( viewKeyStruct::frictionLawNameString() ).
+      setPlotLevel( PlotLevel::NOPLOT ).
+      setRestartFlags( RestartFlags::NO_WRITE ).
+      setSizedFromParent( 0 );
+
+    string & frictionLawName = subRegion.getReference< string >( viewKeyStruct::frictionLawNameString() );
+    frictionLawName = PhysicsSolverBase::getConstitutiveName< FrictionBase >( subRegion );
+    GEOS_ERROR_IF( frictionLawName.empty(), GEOS_FMT( "{}: FrictionBase model not found on subregion {}",
+                                                      getDataContext(), subRegion.getDataContext() ) );
   }
 }
 

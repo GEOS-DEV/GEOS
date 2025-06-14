@@ -25,7 +25,6 @@
 #include "constitutive/fluid/multifluid/Layouts.hpp"
 #include "constitutive/fluid/multifluid/MultiFluidConstants.hpp"
 #include "constitutive/fluid/multifluid/compositional/parameters/ComponentProperties.hpp"
-#include "constitutive/fluid/multifluid/compositional/functions/FlashData.hpp"
 
 namespace geos
 {
@@ -49,7 +48,6 @@ public:
    * @param[in] composition composition of the mixture
    * @param[in] componentProperties The compositional component properties
    * @param[in] equationOfState The equation of state
-   * @param[in] flashData The parameters required for the flash
    * @param[out] tangentPlaneDistance the minimum tangent plane distance (TPD)
    * @param[out] kValues the k-values estimated from the stationary points
    * @return a flag indicating that 2 stationary points have been found
@@ -62,10 +60,10 @@ public:
                        arraySlice1d< real64 const, USD1 > const & composition,
                        ComponentProperties::KernelWrapper const & componentProperties,
                        EquationOfStateType const & equationOfState,
-                       FlashData const & flashData,
                        real64 & tangentPlaneDistance,
                        arraySlice1d< real64, USD2 > const & kValues )
   {
+    constexpr integer numTrials = 2;    // Trial compositions
     stackArray2d< real64, 4*maxNumComps > workSpace( 4, numComps );
     arraySlice1d< real64 > logFugacity = workSpace[0];
     arraySlice1d< real64 > normalizedComposition = workSpace[1];
@@ -86,49 +84,30 @@ public:
                                             composition,
                                             componentProperties,
                                             equationOfState,
-                                            flashData,
                                             logFugacity );
     for( integer const ic : presentComponents )
     {
       hyperplane[ic] = LvArray::math::log( composition[ic] ) + logFugacity[ic];
     }
 
-    if( equationOfState == EquationOfStateType::SoreideWhitson )
-    {
-      // Initialise the trial compositions using SW uniform values
-      KValueInitialization::computeSoreideWhitsonKvalue( numComps,
-                                                         pressure,
-                                                         temperature,
-                                                         componentProperties,
-                                                         presentComponents,
-                                                         kValues );
-    }
-    else
-    {
-      // Initialise the trial compositions using Wilson k-Values
-      KValueInitialization::computeWilsonGasLiquidKvalue( numComps,
-                                                          pressure,
-                                                          temperature,
-                                                          componentProperties,
-                                                          kValues );
-    }
+    // Initialise the trial compositions using Wilson k-Values
+    KValueInitialization::computeWilsonGasLiquidKvalue( numComps,
+                                                        pressure,
+                                                        temperature,
+                                                        componentProperties,
+                                                        kValues );
 
-    // The mimimum TPD over all trial compositions
     tangentPlaneDistance = LvArray::NumericLimits< real64 >::max;
-
-    // Maximum error (convergence failure) over all trial compositions
-    real64 maxError = -LvArray::NumericLimits< real64 >::max;
-
-    for( real64 const & alpha : { 1.0, -1.0, 3.0, -3.0 } )
+    for( integer trialIndex = 0; trialIndex < numTrials; ++trialIndex )
     {
       // Initialise next sample
+      real64 const alpha = static_cast< real64 >(trialIndex)/(numTrials-1);
       for( integer const ic : presentComponents )
       {
-        logTrialComposition[ic] = LvArray::math::log( composition[ic] ) + alpha*LvArray::math::log( kValues[ic] );
-        normalizedComposition[ic] = LvArray::math::exp( logTrialComposition[ic] );
+        normalizedComposition[ic] = composition[ic]*(alpha * kValues[ic] + (1.0 - alpha) / kValues[ic]);
+        logTrialComposition[ic] = LvArray::math::log( normalizedComposition[ic] );
       }
 
-      real64 trialError = LvArray::NumericLimits< real64 >::max;
       for( localIndex iterationCount = 0; iterationCount < MultiFluidConstants::maxSSIIterations; ++iterationCount )
       {
         // Normalise the composition and calculate the fugacity
@@ -139,7 +118,6 @@ public:
                                                 normalizedComposition.toSliceConst(),
                                                 componentProperties,
                                                 equationOfState,
-                                                flashData,
                                                 logFugacity );
 
         // Calculate the TPD
@@ -165,8 +143,7 @@ public:
           error += (dG*dG);
         }
         error = LvArray::math::sqrt( error );
-        trialError = LvArray::math::min( trialError, error );
-        if( trialError < MultiFluidConstants::fugacityTolerance )
+        if( error < MultiFluidConstants::fugacityTolerance )
         {
           break;
         }
@@ -178,13 +155,12 @@ public:
           normalizedComposition[ic] = LvArray::math::exp( logTrialComposition[ic] );
         }
       }
-      maxError = LvArray::math::max( maxError, trialError );
       if( tangentPlaneDistance < -MultiFluidConstants::fugacityTolerance )
       {
         break;
       }
     }
-    return ( tangentPlaneDistance < -MultiFluidConstants::fugacityTolerance ) || (maxError < MultiFluidConstants::fugacityTolerance);
+    return true;
   }
 
 private:

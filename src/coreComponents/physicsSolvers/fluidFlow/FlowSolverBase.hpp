@@ -73,18 +73,17 @@ public:
   struct viewKeyStruct : PhysicsSolverBase::viewKeyStruct
   {
     // misc inputs
+    static constexpr char const * fluidNamesString() { return "fluidNames"; }
+    static constexpr char const * solidNamesString() { return "solidNames"; }
+    static constexpr char const * permeabilityNamesString() { return "permeabilityNames"; }
     static constexpr char const * isThermalString() { return "isThermal"; }
     static constexpr char const * inputTemperatureString() { return "temperature"; }
+    static constexpr char const * solidInternalEnergyNamesString() { return "solidInternalEnergyNames"; }
+    static constexpr char const * thermalConductivityNamesString() { return "thermalConductivityNames"; }
     static constexpr char const * allowNegativePressureString() { return "allowNegativePressure"; }
     static constexpr char const * maxAbsolutePresChangeString() { return "maxAbsolutePressureChange"; }
     static constexpr char const * maxSequentialPresChangeString() { return "maxSequentialPressureChange"; }
     static constexpr char const * maxSequentialTempChangeString() { return "maxSequentialTemperatureChange"; }
-
-    static constexpr char const * fluidNamesString() { return "fluidNames"; }
-    static constexpr char const * solidNamesString() { return "solidNames"; }
-    static constexpr char const * permeabilityNamesString() { return "permeabilityNames"; }
-    static constexpr char const * solidInternalEnergyNamesString() { return "solidInternalEnergyNames"; }
-    static constexpr char const * thermalConductivityNamesString() { return "thermalConductivityNames"; }
   };
 
   /**
@@ -259,7 +258,7 @@ protected:
   real64 m_inputTemperature;
 
   /// flag to freeze the initial state during initialization in coupled problems
-  bool m_keepVariablesConstantDuringInitStep;
+  integer m_keepVariablesConstantDuringInitStep;
 
   /// enable the fixed stress poromechanics update of porosity
   bool m_isFixedStressPoromechanicsUpdate;
@@ -312,6 +311,8 @@ public:
 private:
     static string generateMessage( string_view baseMessage,
                                    string_view fieldName, string_view setName );
+
+    BCMessage();
   };
 
 private:

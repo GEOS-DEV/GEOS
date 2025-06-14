@@ -92,6 +92,17 @@ void SinglePhaseProppantBase::validateConstitutiveModels( DomainPartition & doma
   } );
 }
 
+SinglePhaseBase::FluidPropViews SinglePhaseProppantBase::getFluidProperties( constitutive::ConstitutiveBase const & fluid ) const
+{
+  SlurryFluidBase const & slurryFluid = dynamicCast< SlurryFluidBase const & >( fluid );
+  return { slurryFluid.density(),
+           slurryFluid.dDensity(),
+           slurryFluid.viscosity(),
+           slurryFluid.dViscosity(),
+           slurryFluid.getField< fields::singlefluid::density >().getDefaultValue(),
+           slurryFluid.getField< fields::singlefluid::viscosity >().getDefaultValue() };
+}
+
 void SinglePhaseProppantBase::updateFluidModel( ObjectManagerBase & dataGroup ) const
 {
   GEOS_MARK_FUNCTION;

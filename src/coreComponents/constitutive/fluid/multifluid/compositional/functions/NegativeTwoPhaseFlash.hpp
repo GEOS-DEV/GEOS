@@ -23,7 +23,6 @@
 #include "RachfordRice.hpp"
 #include "KValueInitialization.hpp"
 #include "FugacityCalculator.hpp"
-#include "FlashData.hpp"
 #include "constitutive/fluid/multifluid/MultiFluidConstants.hpp"
 #include "constitutive/fluid/multifluid/compositional/parameters/ComponentProperties.hpp"
 #include "denseLinearAlgebra/interfaces/blaslapack/BlasLapackLA.hpp"
@@ -48,7 +47,8 @@ public:
    * @param[in] temperature temperature
    * @param[in] composition composition of the mixture
    * @param[in] componentProperties The compositional component properties
-   * @param[in] flashData The parameters required for the flash
+   * @param[in] liquidEos The equation of state for the liquid phase
+   * @param[in] vapourEos The equation of state for the vapour phase
    * @param[in/out] kValues The phase equilibrium ratios
    * @param[out] vapourPhaseMoleFraction the calculated vapour (gas) mole fraction
    * @param[out] liquidComposition the calculated liquid phase composition
@@ -62,7 +62,8 @@ public:
                        real64 const temperature,
                        arraySlice1d< real64 const > const & composition,
                        ComponentProperties::KernelWrapper const & componentProperties,
-                       FlashData const & flashData,
+                       EquationOfStateType const liquidEos,
+                       EquationOfStateType const vapourEos,
                        arraySlice2d< real64, USD1 > const & kValues,
                        real64 & vapourPhaseMoleFraction,
                        arraySlice1d< real64, USD2 > const & liquidComposition,
@@ -75,7 +76,8 @@ public:
    * @param[in] temperature temperature
    * @param[in] composition composition of the mixture
    * @param[in] componentProperties The compositional component properties
-   * @param[in] flashData The parameters required for the flash
+   * @param[in] liquidEos The equation of state for the liquid phase
+   * @param[in] vapourEos The equation of state for the vapour phase
    * @param[in] vapourFraction the calculated vapour (gas) mole fraction
    * @param[in] liquidComposition the calculated liquid phase composition
    * @param[in] vapourComposition the calculated vapour phase composition
@@ -90,7 +92,8 @@ public:
                                   real64 const temperature,
                                   arraySlice1d< real64 const > const & composition,
                                   ComponentProperties::KernelWrapper const & componentProperties,
-                                  FlashData const & flashData,
+                                  EquationOfStateType const liquidEos,
+                                  EquationOfStateType const vapourEos,
                                   real64 const & vapourFraction,
                                   arraySlice1d< real64 const, USD1 > const & liquidComposition,
                                   arraySlice1d< real64 const, USD1 > const & vapourComposition,
@@ -159,7 +162,8 @@ private:
    * @param[in] temperature temperature
    * @param[in] composition composition of the mixture
    * @param[in] componentProperties The compositional component properties
-   * @param[in] flashData The parameters required for the flash
+   * @param[in] liquidEos The equation of state for the liquid phase
+   * @param[in] vapourEos The equation of state for the vapour phase
    * @param[in] kValues The k-values
    * @param[in] presentComponents The indices of the present components
    * @param[out] vapourPhaseMoleFraction the calculated vapour (gas) mole fraction
@@ -178,7 +182,8 @@ private:
     real64 const temperature,
     arraySlice1d< real64 const > const & composition,
     ComponentProperties::KernelWrapper const & componentProperties,
-    FlashData const & flashData,
+    EquationOfStateType const liquidEos,
+    EquationOfStateType const vapourEos,
     arraySlice1d< real64 const, USD1 > const & kValues,
     arraySlice1d< integer const > const & presentComponents,
     real64 & vapourPhaseMoleFraction,
@@ -218,7 +223,8 @@ bool NegativeTwoPhaseFlash::compute( integer const numComps,
                                      real64 const temperature,
                                      arraySlice1d< real64 const > const & composition,
                                      ComponentProperties::KernelWrapper const & componentProperties,
-                                     FlashData const & flashData,
+                                     EquationOfStateType const liquidEos,
+                                     EquationOfStateType const vapourEos,
                                      arraySlice2d< real64, USD1 > const & kValues,
                                      real64 & vapourPhaseMoleFraction,
                                      arraySlice1d< real64, USD2 > const & liquidComposition,
@@ -233,8 +239,6 @@ bool NegativeTwoPhaseFlash::compute( integer const numComps,
 
   calculatePresentComponents( numComps, composition, componentIndices );
 
-  auto const presentComponents = componentIndices.toSliceConst();
-
   // Initialise compositions to feed composition
   for( integer ic = 0; ic < numComps; ++ic )
   {
@@ -243,7 +247,7 @@ bool NegativeTwoPhaseFlash::compute( integer const numComps,
   }
 
   // Check if k-Values need to be initialised
-  bool needInitialisation = false;
+  bool needInitialisation = true;
   for( integer ic = 0; ic < numComps; ++ic )
   {
     if( kVapourLiquid[ic] < MultiFluidConstants::epsilon )
@@ -255,24 +259,14 @@ bool NegativeTwoPhaseFlash::compute( integer const numComps,
 
   if( needInitialisation )
   {
-    if( flashData.liquidEos == EquationOfStateType::SoreideWhitson )
-    {
-      KValueInitialization::computeSoreideWhitsonKvalue( numComps,
-                                                         pressure,
-                                                         temperature,
-                                                         componentProperties,
-                                                         presentComponents,
-                                                         kVapourLiquid );
-    }
-    else
-    {
-      KValueInitialization::computeWilsonGasLiquidKvalue( numComps,
-                                                          pressure,
-                                                          temperature,
-                                                          componentProperties,
-                                                          kVapourLiquid );
-    }
+    KValueInitialization::computeWilsonGasLiquidKvalue( numComps,
+                                                        pressure,
+                                                        temperature,
+                                                        componentProperties,
+                                                        kVapourLiquid );
   }
+
+  auto const presentComponents = componentIndices.toSliceConst();
 
   bool converged = false;
   for( localIndex iterationCount = 0; iterationCount < MultiFluidConstants::maxSSIIterations; ++iterationCount )
@@ -282,7 +276,8 @@ bool NegativeTwoPhaseFlash::compute( integer const numComps,
                                                temperature,
                                                composition,
                                                componentProperties,
-                                               flashData,
+                                               liquidEos,
+                                               vapourEos,
                                                kVapourLiquid.toSliceConst(),
                                                presentComponents,
                                                vapourPhaseMoleFraction,
@@ -338,7 +333,8 @@ void NegativeTwoPhaseFlash::computeDerivatives(
   real64 const temperature,
   arraySlice1d< real64 const > const & composition,
   ComponentProperties::KernelWrapper const & componentProperties,
-  FlashData const & flashData,
+  EquationOfStateType const liquidEos,
+  EquationOfStateType const vapourEos,
   real64 const & vapourFraction,
   arraySlice1d< real64 const, USD1 > const & liquidComposition,
   arraySlice1d< real64 const, USD1 > const & vapourComposition,
@@ -386,16 +382,14 @@ void NegativeTwoPhaseFlash::computeDerivatives(
                                             temperature,
                                             liquidComposition,
                                             componentProperties,
-                                            flashData.liquidEos,
-                                            flashData,
+                                            liquidEos,
                                             logLiquidFugacity );
     FugacityCalculator::computeLogFugacity( numComps,
                                             pressure,
                                             temperature,
                                             vapourComposition,
                                             componentProperties,
-                                            flashData.vapourEos,
-                                            flashData,
+                                            vapourEos,
                                             logVapourFugacity );
 
     FugacityCalculator::computeLogFugacityDerivatives( numComps,
@@ -403,8 +397,7 @@ void NegativeTwoPhaseFlash::computeDerivatives(
                                                        temperature,
                                                        liquidComposition,
                                                        componentProperties,
-                                                       flashData.liquidEos,
-                                                       flashData,
+                                                       liquidEos,
                                                        logLiquidFugacity.toSliceConst(),
                                                        logLiquidFugacityDerivs.toSlice() );
     FugacityCalculator::computeLogFugacityDerivatives( numComps,
@@ -412,8 +405,7 @@ void NegativeTwoPhaseFlash::computeDerivatives(
                                                        temperature,
                                                        vapourComposition,
                                                        componentProperties,
-                                                       flashData.vapourEos,
-                                                       flashData,
+                                                       vapourEos,
                                                        logVapourFugacity.toSliceConst(),
                                                        logVapourFugacityDerivs.toSlice() );
 
@@ -503,7 +495,8 @@ real64 NegativeTwoPhaseFlash::computeFugacityRatio(
   real64 const temperature,
   arraySlice1d< real64 const > const & composition,
   ComponentProperties::KernelWrapper const & componentProperties,
-  FlashData const & flashData,
+  EquationOfStateType const liquidEos,
+  EquationOfStateType const vapourEos,
   arraySlice1d< real64 const, USD1 > const & kValues,
   arraySlice1d< integer const > const & presentComponents,
   real64 & vapourPhaseMoleFraction,
@@ -531,16 +524,14 @@ real64 NegativeTwoPhaseFlash::computeFugacityRatio(
                                           temperature,
                                           liquidComposition.toSliceConst(),
                                           componentProperties,
-                                          flashData.liquidEos,
-                                          flashData,
+                                          liquidEos,
                                           logLiquidFugacity );
   FugacityCalculator::computeLogFugacity( numComps,
                                           pressure,
                                           temperature,
                                           vapourComposition.toSliceConst(),
                                           componentProperties,
-                                          flashData.vapourEos,
-                                          flashData,
+                                          vapourEos,
                                           logVapourFugacity );
 
   // Compute fugacity ratios and calculate the error

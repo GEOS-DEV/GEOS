@@ -4,8 +4,12 @@ set( gtest_geosx_tests
      testCO2BrinePVTModels.cpp
      testCO2SpycherPruessModels.cpp
      testDamage.cpp
+     testMultiFluidCO2Brine.cpp
+     testMultiFluidCompositionalMultiphase.cpp
+     testMultiFluidLiveOil.cpp
      testRelPerm.cpp
-     testRelPermHysteresis.cpp )
+     testRelPermHysteresis.cpp 
+     testTwoPhaseImmiscibleFluid.cpp )
 
 set( gtest_triaxial_xmls
      testTriaxial_druckerPragerExtended.xml
@@ -33,6 +37,11 @@ set( gtest_reactivefluid_xmls
 set( tplDependencyList ${parallelDeps} gtest )
 
 set( dependencyList mainInterface  )
+
+if( ENABLE_PVTPackage )
+    list( APPEND gtest_geosx_tests
+          testMultiFluidCompositionalMultiphasePVTPackage.cpp )
+endif()
 
 geos_decorate_link_dependencies( LIST decoratedDependencies
                                  DEPENDENCIES ${dependencyList} )

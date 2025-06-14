@@ -21,7 +21,7 @@
 #define GEOS_CONSTITUTIVE_FLUID_MULTIFLUID_PVTDRIVERRUNTEST_HPP_
 
 #include "PVTDriver.hpp"
-#include "constitutive/fluid/multifluid/MultiFluidConstants.hpp"
+#include "constitutive/fluid/multifluid/MultiFluidBase.hpp"
 
 namespace geos
 {
@@ -83,7 +83,7 @@ void PVTDriver::runTest( FLUID_TYPE & fluid, arrayView2d< real64 > const & table
     integer const PHASE_COMP = PHASE_VISCOSITY + numPhases;
 
     // Temporary space for phase mole fractions
-    stackArray1d< real64, constitutive::MultiFluidConstants::MAX_NUM_COMPONENTS > phaseComposition( numComponents );
+    stackArray1d< real64, constitutive::MultiFluidBase::MAX_NUM_COMPONENTS > phaseComposition( numComponents );
 
     for( integer n = 0; n <= numSteps; ++n )
     {

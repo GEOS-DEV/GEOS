@@ -239,8 +239,8 @@ public:
   getWeights() const { return m_weights.toViewConst(); }
 
   /**
-   * @brief  Const access to stencil connector indices.
-   * @return An unordered_map of stencil connector indices
+   * @brief  access to the stencil connector indices.
+   * @return an unordered_map of the connector indices
    */
   unordered_map< localIndex, localIndex > const &
   getConnectorIndices() const { return m_connectorIndices; }

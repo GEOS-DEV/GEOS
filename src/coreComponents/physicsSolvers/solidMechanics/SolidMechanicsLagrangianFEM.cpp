@@ -239,7 +239,16 @@ void SolidMechanicsLagrangianFEM::setConstitutiveNamesCallSuper( ElementSubRegio
 {
   PhysicsSolverBase::setConstitutiveNamesCallSuper( subRegion );
 
-  setConstitutiveName< SolidBase >( subRegion, viewKeyStruct::solidMaterialNamesString(), "solid" );
+  subRegion.registerWrapper< string >( viewKeyStruct::solidMaterialNamesString() ).
+    setPlotLevel( PlotLevel::NOPLOT ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setSizedFromParent( 0 );
+
+  string & solidMaterialName = subRegion.getReference< string >( viewKeyStruct::solidMaterialNamesString() );
+  solidMaterialName = PhysicsSolverBase::getConstitutiveName< SolidBase >( subRegion );
+  GEOS_ERROR_IF( solidMaterialName.empty(), GEOS_FMT( "{}: SolidBase model not found on subregion {}",
+                                                      getDataContext(), subRegion.getDataContext() ) );
+
 }
 
 void SolidMechanicsLagrangianFEM::initializePreSubGroups()

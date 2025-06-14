@@ -60,10 +60,6 @@ public:
   {
     auto componentProperties = this->m_fluid->createKernelWrapper();
 
-    constitutive::compositional::FlashData flashData;
-    flashData.liquidEos = EOS_TYPE;
-    flashData.vapourEos = EOS_TYPE;
-
     real64 const pressure = std::get< 0 >( data );
     real64 const temperature = std::get< 1 >( data );
     stackArray1d< real64, numComps > composition;
@@ -89,7 +85,8 @@ public:
       temperature,
       composition.toSliceConst(),
       componentProperties,
-      flashData,
+      EOS_TYPE,
+      EOS_TYPE,
       kValues.toSlice(),
       vapourFraction,
       liquidComposition.toSlice(),
@@ -128,10 +125,6 @@ public:
 
     auto componentProperties = this->m_fluid->createKernelWrapper();
 
-    constitutive::compositional::FlashData flashData;
-    flashData.liquidEos = EOS_TYPE;
-    flashData.vapourEos = EOS_TYPE;
-
     bool const expectedStatus = std::get< 3 >( data );
     if( !expectedStatus ) return;
 
@@ -164,7 +157,6 @@ public:
     auto const evaluateFlash = [&]( real64 const p, real64 const t, auto const & zmf, auto & values ){
       stackArray1d< real64, numComps > displacedLiquidComposition( numComps );
       stackArray1d< real64, numComps > displacedVapourComposition( numComps );
-      kValues( 0, 0 ) = 0.0;
 
       NegativeTwoPhaseFlash::compute(
         numComps,
@@ -172,7 +164,8 @@ public:
         t,
         zmf.toSliceConst(),
         componentProperties,
-        flashData,
+        EOS_TYPE,
+        EOS_TYPE,
         kValues.toSlice(),
         values[0],
         displacedLiquidComposition.toSlice(),
@@ -190,7 +183,8 @@ public:
       temperature,
       composition.toSliceConst(),
       componentProperties,
-      flashData,
+      EOS_TYPE,
+      EOS_TYPE,
       kValues.toSlice(),
       vapourFraction,
       liquidComposition.toSlice(),
@@ -202,7 +196,8 @@ public:
       temperature,
       composition.toSliceConst(),
       componentProperties,
-      flashData,
+      EOS_TYPE,
+      EOS_TYPE,
       vapourFraction,
       liquidComposition.toSliceConst(),
       vapourComposition.toSliceConst(),

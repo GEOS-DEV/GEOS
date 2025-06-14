@@ -28,7 +28,18 @@
 namespace geos
 {
 
+struct NewObjectLists
+{
+  std::set< localIndex > newNodes;
+  std::set< localIndex > newEdges;
+  map< std::pair< localIndex, localIndex >, std::set< localIndex > > newElements;
+
+  void insert( NewObjectLists const & lists );
+};
+
+
 class SpatialPartition;
+
 class NodeManager;
 class FaceManager;
 class ElementRegionManager;

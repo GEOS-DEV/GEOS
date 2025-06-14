@@ -174,31 +174,8 @@ stdVector< STRING_T > divideLines( size_t & linesWidth, string_view value )
 
   return lines;
 }
-
-template< typename STRING_T >
-std::vector< STRING_T > divideLines( string_view value )
-{
-  size_t current = 0;
-  size_t end = value.find( '\n' );
-
-  std::vector< STRING_T > lines;
-
-  // Process each line until no more newlines are found
-  while( end != STRING_T::npos )
-  {
-    lines.push_back( STRING_T( value.substr( current, end - current ) ) );
-    current = end + 1;
-    end = value.find( '\n', current );
-  }
-  // Add the last part
-  if( current <= value.size())
-    lines.push_back( STRING_T( value.substr( current )  ) );
-
-  return lines;
-}
-template std::vector< string > divideLines( size_t &, string_view );
-template std::vector< string_view > divideLines( size_t &, string_view );
-
+template stdVector< string > divideLines( size_t &, string_view );
+template stdVector< string_view > divideLines( size_t &, string_view );
 
 template< typename STRING_T >
 stdVector< STRING_T > wrapTextToMaxLength( stdVector< STRING_T > const & lines,

@@ -21,13 +21,10 @@
 #define SRC_CORECOMPONENTS_PHYSICSSOLVERS_FLUIDFLOW_CELLTOCELLDATACOLLECTOR_HPP_
 
 #include "events/tasks/TaskBase.hpp"
-#include "mesh/ElementRegionManager.hpp"
+#include "physicsSolvers/fluidFlow/FlowSolverBase.hpp"
+
 namespace geos
 {
-
-class FlowSolverBase;
-class MeshLevel;
-class FluxApproximationBase;
 
 /**
  * @class StencilDataCollection

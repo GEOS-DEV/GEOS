@@ -283,6 +283,11 @@ public:
 
     static constexpr char const * useMassFlagString() { return "useMass"; }
     static constexpr char const * formulationTypeString() { return "formulationType"; }
+    static constexpr char const * relPermNamesString() { return "relPermNames"; }
+    static constexpr char const * capPressureNamesString() { return "capPressureNames"; }
+    static constexpr char const * diffusionNamesString() { return "diffusionNames"; }
+    static constexpr char const * dispersionNamesString() { return "dispersionNames"; }
+
 
     // time stepping controls
 
@@ -309,10 +314,6 @@ public:
     static constexpr char const * maxSequentialCompDensChangeString() { return "maxSequentialCompDensChange"; }
     static constexpr char const * minScalingFactorString() { return "minScalingFactor"; }
 
-    static constexpr char const * relPermNamesString() { return "relPermNames"; }
-    static constexpr char const * capPressureNamesString() { return "capPressureNames"; }
-    static constexpr char const * diffusionNamesString() { return "diffusionNames"; }
-    static constexpr char const * dispersionNamesString() { return "dispersionNames"; }
   };
 
   /**
@@ -481,13 +482,13 @@ protected:
   CompositionalMultiphaseFormulationType m_formulationType;
 
   /// flag to determine whether or not to apply capillary pressure
-  bool m_hasCapPressure;
+  integer m_hasCapPressure;
 
   /// flag to determine whether or not to apply diffusion
-  bool m_hasDiffusion;
+  integer m_hasDiffusion;
 
   /// flag to determine whether or not to apply dispersion
-  bool m_hasDispersion;
+  integer m_hasDispersion;
 
   /// maximum (absolute) change in a component fraction in a Newton iteration
   real64 m_maxCompFracChange;

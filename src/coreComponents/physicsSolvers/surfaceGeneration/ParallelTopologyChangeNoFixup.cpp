@@ -21,11 +21,10 @@
 
 #include "common/GeosxMacros.hpp"
 #include "common/TimingMacros.hpp"
+#include "mesh/ElementRegionManager.hpp"
 #include "mesh/MeshFields.hpp"
-#include "mesh/MeshLevel.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "mesh/mpiCommunications/MPI_iCommData.hpp"
-#include "mesh/mpiCommunications/NeighborCommunicator.hpp"
 
 #if PARALLEL_TOPOLOGY_CHANGE_METHOD==1
 namespace geos

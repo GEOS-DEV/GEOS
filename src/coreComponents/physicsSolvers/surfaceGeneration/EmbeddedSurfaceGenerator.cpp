@@ -44,6 +44,24 @@ namespace geos
 using namespace dataRepository;
 using namespace constitutive;
 
+void NewObjectLists::insert( NewObjectLists const & newObjects )
+{
+  newNodes.insert( newObjects.newNodes.begin(),
+                   newObjects.newNodes.end() );
+
+  newEdges.insert( newObjects.newEdges.begin(),
+                   newObjects.newEdges.end() );
+
+  for( auto & iter : newObjects.newElements )
+  {
+    std::pair< localIndex, localIndex > const & key = iter.first;
+    std::set< localIndex > const & values = iter.second;
+    newElements[key].insert( values.begin(), values.end() );
+  }
+
+}
+
+
 EmbeddedSurfaceGenerator::EmbeddedSurfaceGenerator( const string & name,
                                                     Group * const parent ):
   PhysicsSolverBase( name, parent ),
@@ -223,11 +241,11 @@ void EmbeddedSurfaceGenerator::initializePostSubGroups()
 
   setGlobalIndices( elemManager, embSurfNodeManager, embeddedSurfaceSubRegion );
 
-  embeddedSurfacesParallelSynchronization::synchronizeTopology( meshLevel,
-                                                                domain.getNeighbors(),
-                                                                newObjects,
-                                                                m_mpiCommOrder,
-                                                                this->m_fractureRegionName );
+  embeddedSurfacesParallelSynchronization::sychronizeTopology( meshLevel,
+                                                               domain.getNeighbors(),
+                                                               newObjects,
+                                                               m_mpiCommOrder,
+                                                               this->m_fractureRegionName );
 
   addEmbeddedElementsToSets( elemManager, embeddedSurfaceSubRegion );
 

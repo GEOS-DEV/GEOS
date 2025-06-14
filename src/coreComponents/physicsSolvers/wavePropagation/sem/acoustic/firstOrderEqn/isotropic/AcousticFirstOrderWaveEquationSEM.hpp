@@ -61,13 +61,13 @@ public:
                                       real64 const & dt,
                                       integer const cycleNumber,
                                       DomainPartition & domain,
-                                      integer const computeGradient ) override;
+                                      bool const computeGradient ) override;
 
   virtual real64 explicitStepBackward( real64 const & time_n,
                                        real64 const & dt,
                                        integer const cycleNumber,
                                        DomainPartition & domain,
-                                       integer const computeGradient ) override;
+                                       bool const computeGradient ) override;
 
   /**
    * @brief Initialize Perfectly Matched Layer (PML) information

@@ -84,7 +84,7 @@ public:
   ~SoreideWhitsonEOSPhaseModelTestFixture() = default;
 
   void testPureCoefficients( ParamType const & testData );
-  void testBinaryInteractionCoefficients( ParamType const & testData );
+  void testBinaryInteractionCiefficients( ParamType const & testData );
   void testMixtureCoefficients( ParamType const & testData );
   void testCompressibilityFactor( ParamType const & testData );
   void testLogFugacityCoefficients( ParamType const & testData );
@@ -139,17 +139,17 @@ SoreideWhitsonEOSPhaseModelTestFixture< NC, EOS_TYPE >::testPureCoefficients( Pa
 
   for( integer ic = 0; ic < numComps; ++ic )
   {
-    EOS::computePureCoefficientsAndDerivs( ic,
-                                           pressure,
-                                           temperature,
-                                           componentProperties,
-                                           salinity,
-                                           aCoefficient,
-                                           bCoefficient,
-                                           daCoefficient_dp,
-                                           dbCoefficient_dp,
-                                           daCoefficient_dt,
-                                           dbCoefficient_dt );
+    EOS::computePureCoefficients( ic,
+                                  pressure,
+                                  temperature,
+                                  componentProperties,
+                                  salinity,
+                                  aCoefficient,
+                                  bCoefficient,
+                                  daCoefficient_dp,
+                                  dbCoefficient_dp,
+                                  daCoefficient_dt,
+                                  dbCoefficient_dt );
 
     real64 const dp = 1.0e-4 * pressure;
     internal::testNumericalDerivative( pressure, dp, daCoefficient_dp,
@@ -183,7 +183,7 @@ SoreideWhitsonEOSPhaseModelTestFixture< NC, EOS_TYPE >::testPureCoefficients( Pa
 
 template< integer NC, typename EOS_TYPE >
 void
-SoreideWhitsonEOSPhaseModelTestFixture< NC, EOS_TYPE >::testBinaryInteractionCoefficients( ParamType const & testData )
+SoreideWhitsonEOSPhaseModelTestFixture< NC, EOS_TYPE >::testBinaryInteractionCiefficients( ParamType const & testData )
 {
   auto componentProperties = this->m_fluid->createKernelWrapper();
   real64 const pressure = std::get< 0 >( testData );
@@ -198,7 +198,7 @@ SoreideWhitsonEOSPhaseModelTestFixture< NC, EOS_TYPE >::testBinaryInteractionCoe
       real64 kij = 0.0;
       real64 kji = 0.0;
       real64 dk_dT = 0.0;
-      EOS::getBinaryInteractionCoefficient( pressure,
+      EOS::getBinaryInteractionCiefficient( pressure,
                                             temperature,
                                             componentProperties,
                                             salinity,
@@ -206,7 +206,7 @@ SoreideWhitsonEOSPhaseModelTestFixture< NC, EOS_TYPE >::testBinaryInteractionCoe
                                             jc,
                                             kij,
                                             dk_dT );
-      EOS::getBinaryInteractionCoefficient( pressure,
+      EOS::getBinaryInteractionCiefficient( pressure,
                                             temperature,
                                             componentProperties,
                                             salinity,
@@ -229,7 +229,7 @@ SoreideWhitsonEOSPhaseModelTestFixture< NC, EOS_TYPE >::testBinaryInteractionCoe
     {
       real64 kij = 0.0;
       real64 dkij_dT = 0.0;
-      EOS::getBinaryInteractionCoefficient( pressure,
+      EOS::getBinaryInteractionCiefficient( pressure,
                                             temperature,
                                             componentProperties,
                                             salinity,
@@ -242,7 +242,7 @@ SoreideWhitsonEOSPhaseModelTestFixture< NC, EOS_TYPE >::testBinaryInteractionCoe
       internal::testNumericalDerivative( temperature, dT, dkij_dT,
                                          [&]( real64 t ) -> real64 {
         real64 l_kij, l_dkij_dT;
-        EOS::getBinaryInteractionCoefficient( pressure,
+        EOS::getBinaryInteractionCiefficient( pressure,
                                               t,
                                               componentProperties,
                                               salinity,
@@ -289,18 +289,18 @@ SoreideWhitsonEOSPhaseModelTestFixture< NC, EOS_TYPE >::testMixtureCoefficients(
                                    mixtureCoefficient[0],
                                    mixtureCoefficient[1] );
 
-  EOS::computeMixtureCoefficientDerivs( numComps,
-                                        pressure,
-                                        temperature,
-                                        composition.toSliceConst(),
-                                        componentProperties,
-                                        salinity,
-                                        aCoefficients.toSliceConst(),
-                                        bCoefficients.toSliceConst(),
-                                        mixtureCoefficient[0],
-                                        mixtureCoefficient[1],
-                                        aCoefficientDerivs,
-                                        bCoefficientDerivs );
+  EOS::computeMixtureCoefficients( numComps,
+                                   pressure,
+                                   temperature,
+                                   composition.toSliceConst(),
+                                   componentProperties,
+                                   salinity,
+                                   aCoefficients.toSliceConst(),
+                                   bCoefficients.toSliceConst(),
+                                   mixtureCoefficient[0],
+                                   mixtureCoefficient[1],
+                                   aCoefficientDerivs,
+                                   bCoefficientDerivs );
 
   stackArray1d< real64, numValues > derivatives( numValues );
 
@@ -385,14 +385,22 @@ SoreideWhitsonEOSPhaseModelTestFixture< NC, EOS_TYPE >::testCompressibilityFacto
   real64 compressibilityFactor = 0.0;
   stackArray1d< real64, numDof > compressibilityFactorDerivs( numDof );
 
-  EOS::computeCompressibilityFactorAndDerivs( numComps,
-                                              pressure,
-                                              temperature,
-                                              composition.toSliceConst(),
-                                              componentProperties,
-                                              salinity,
-                                              compressibilityFactor,
-                                              compressibilityFactorDerivs.toSlice() );
+  EOS::computeCompressibilityFactor( numComps,
+                                     pressure,
+                                     temperature,
+                                     composition.toSliceConst(),
+                                     componentProperties,
+                                     salinity,
+                                     compressibilityFactor );
+
+  EOS::computeCompressibilityFactor( numComps,
+                                     pressure,
+                                     temperature,
+                                     composition.toSliceConst(),
+                                     componentProperties,
+                                     salinity,
+                                     compressibilityFactor,
+                                     compressibilityFactorDerivs.toSlice() );
 
   auto computeCompressibility = [&]( real64 p, real64 t, auto z ) -> real64 {
     real64 zfactor = 0.0;
@@ -455,14 +463,14 @@ SoreideWhitsonEOSPhaseModelTestFixture< NC, EOS_TYPE >::testLogFugacityCoefficie
                                        salinity,
                                        logFugacityCoefficients.toSlice() );
 
-  EOS::computeLogFugacityCoefficientDerivs( numComps,
-                                            pressure,
-                                            temperature,
-                                            composition.toSliceConst(),
-                                            componentProperties,
-                                            salinity,
-                                            logFugacityCoefficients.toSliceConst(),
-                                            logFugacityCoefficientDerivs.toSlice() );
+  EOS::computeLogFugacityCoefficients( numComps,
+                                       pressure,
+                                       temperature,
+                                       composition.toSliceConst(),
+                                       componentProperties,
+                                       salinity,
+                                       logFugacityCoefficients.toSliceConst(),
+                                       logFugacityCoefficientDerivs.toSlice() );
 
   stackArray1d< real64, numComps > derivatives( numComps );
 
@@ -536,7 +544,7 @@ TEST_P( PengRobinson4, testSWModel )
 {
   auto const testParam = GetParam();
   testPureCoefficients( testParam );
-  testBinaryInteractionCoefficients( testParam );
+  testBinaryInteractionCiefficients( testParam );
   testMixtureCoefficients( testParam );
   testCompressibilityFactor( testParam );
   testLogFugacityCoefficients( testParam );
@@ -546,7 +554,7 @@ TEST_P( SoaveRedlichKwong3, testSWModel )
 {
   auto const testParam = GetParam();
   testPureCoefficients( testParam );
-  testBinaryInteractionCoefficients( testParam );
+  testBinaryInteractionCiefficients( testParam );
   testMixtureCoefficients( testParam );
   testCompressibilityFactor( testParam );
   testLogFugacityCoefficients( testParam );
