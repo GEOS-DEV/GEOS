@@ -624,6 +624,52 @@ int SurfaceGenerator::separationDriver( DomainPartition & domain,
 
   array1d< integer > const & isNodeGhost = nodeManager.ghostRank();
 
+
+  {
+  auto const & faceToElementMap = faceManager.elementList().toViewConst();
+  auto const & faceToRegionMap = faceManager.elementRegionList().toViewConst();
+  auto const & faceToSubRegionMap = faceManager.elementSubRegionList().toViewConst();
+  auto const & faceLocalToGlobalMap = faceManager.localToGlobalMap().toViewConst();
+  auto const & elementLocalToGlobalMap = elementManager.getRegion(0).getSubRegion(0).localToGlobalMap().toViewConst();
+  
+  if( MpiWrapper::commRank() == 0 )
+  {
+    std::cout<< "***** before split *****"<<std::endl;
+  }
+
+  for( int rank=0; rank<MpiWrapper::commSize(); ++rank )
+  {
+    if( rank==MpiWrapper::commRank() )
+    {
+      std::cout<< "***** rank "<<rank<<std::endl;
+      for( localIndex k=0; k<faceManager.size(); ++k )
+      {
+//        if( faceToRegionMap[k][0] == -1 )
+        {
+
+          globalIndex const gElem[2] = { faceToElementMap[k][0] >=0 ? elementLocalToGlobalMap[faceToElementMap[k][0]] : -1,
+                               faceToElementMap[k][1] >=0 ? elementLocalToGlobalMap[faceToElementMap[k][1]] : -1 };
+
+          printf( " rank %d, face %d/%lld: ( %d, %d, %d/%lld ) ( %d, %d, %d/%lld )\n",
+                  rank,
+                  k,
+                  faceLocalToGlobalMap[k],
+                  faceToRegionMap[k][0],
+                  faceToSubRegionMap[k][0],
+                  faceToElementMap[k][0],
+                  gElem[0],
+                  faceToRegionMap[k][1],
+                  faceToSubRegionMap[k][1],
+                  faceToElementMap[k][1],
+                  gElem[1]
+                  );
+        }
+      }
+    }
+    MpiWrapper::barrier();
+  }
+  }
+
   for( int color=0; color<numTileColors; ++color )
   {
     ModifiedObjectLists modifiedObjects;
@@ -666,6 +712,56 @@ int SurfaceGenerator::separationDriver( DomainPartition & domain,
 
     ModifiedObjectLists receivedObjects;
 
+
+  {
+    auto const & faceToElementMap = faceManager.elementList().toViewConst();
+    auto const & faceToRegionMap = faceManager.elementRegionList().toViewConst();
+    auto const & faceToSubRegionMap = faceManager.elementSubRegionList().toViewConst();
+    auto const & faceLocalToGlobalMap = faceManager.localToGlobalMap().toViewConst();
+    auto const & elementLocalToGlobalMap = elementManager.getRegion(0).getSubRegion(0).localToGlobalMap().toViewConst();
+
+  if( MpiWrapper::commRank() == 0 )
+  {
+    std::cout<< "***** before sync *****"<<std::endl;
+  }
+  for( int rank=0; rank<MpiWrapper::commSize(); ++rank )
+  {
+    if( rank==MpiWrapper::commRank() )
+    {
+      std::cout<< "***** rank "<<rank<<std::endl;
+      for( localIndex k=0; k<faceManager.size(); ++k )
+      {
+//        if( faceToRegionMap[k][0] == -1 )
+        if( faceLocalToGlobalMap[k] == 253 )
+        {
+          globalIndex const gElem[2] = { faceToElementMap[k][0] >=0 ? elementLocalToGlobalMap[faceToElementMap[k][0]] : -1,
+                                         faceToElementMap[k][1] >=0 ? elementLocalToGlobalMap[faceToElementMap[k][1]] : -1 };
+
+          printf( " color %d, rank %d, face %d/%lld: ( %d, %d, %d/%lld ) ( %d, %d, %d/%lld )\n",
+                  color,
+                  rank,
+                  k,
+                  faceLocalToGlobalMap[k],
+                  faceToRegionMap[k][0],
+                  faceToSubRegionMap[k][0],
+                  faceToElementMap[k][0],
+                  gElem[0],
+                  faceToRegionMap[k][1],
+                  faceToSubRegionMap[k][1],
+                  faceToElementMap[k][1],
+                  gElem[1]
+                  );
+        }
+      }
+    }
+    MpiWrapper::barrier();
+  }
+  std::cout<<" rank "<<MpiWrapper::commRank()<<" done printing faces"<<std::endl;
+  }
+
+
+
+
     /// Nodes to edges in process node is not being set on rank 2. need to check that the new node->edge map is properly
     /// communicated
     parallelTopologyChange::synchronizeTopologyChange( &mesh,
@@ -679,6 +775,51 @@ int SurfaceGenerator::separationDriver( DomainPartition & domain,
                         nodeManager,
                         receivedObjects );
 
+
+  {
+    auto const & faceToElementMap = faceManager.elementList().toViewConst();
+    auto const & faceToRegionMap = faceManager.elementRegionList().toViewConst();
+    auto const & faceToSubRegionMap = faceManager.elementSubRegionList().toViewConst();
+    auto const & faceLocalToGlobalMap = faceManager.localToGlobalMap().toViewConst();
+    auto const & elementLocalToGlobalMap = elementManager.getRegion(0).getSubRegion(0).localToGlobalMap().toViewConst();
+
+  if( MpiWrapper::commRank() == 0 )
+  {
+    std::cout<< "***** after sync *****"<<std::endl;
+  }
+
+  for( int rank=0; rank<MpiWrapper::commSize(); ++rank )
+  {
+    if( rank==MpiWrapper::commRank() )
+    {
+      for( localIndex k=0; k<faceManager.size(); ++k )
+      {
+//        if( faceToRegionMap[k][0] == -1 )
+        if( faceLocalToGlobalMap[k] == 253 )
+        {
+          globalIndex const gElem[2] = { faceToElementMap[k][0] >=0 ? elementLocalToGlobalMap[faceToElementMap[k][0]] : -1,
+                                         faceToElementMap[k][1] >=0 ? elementLocalToGlobalMap[faceToElementMap[k][1]] : -1 };
+
+          printf( " color %d, rank %d, face %d/%lld: ( %d, %d, %d/%lld ) ( %d, %d, %d/%lld )\n",
+                  color,
+                  rank,
+                  k,
+                  faceLocalToGlobalMap[k],
+                  faceToRegionMap[k][0],
+                  faceToSubRegionMap[k][0],
+                  faceToElementMap[k][0],
+                  gElem[0],
+                  faceToRegionMap[k][1],
+                  faceToSubRegionMap[k][1],
+                  faceToElementMap[k][1],
+                  gElem[1]
+                  );
+        }
+      }
+    }
+    MpiWrapper::barrier();
+  }
+  }
 
 #else
 
@@ -2061,6 +2202,7 @@ void SurfaceGenerator::performFracture( const localIndex nodeID,
         bool const isNewFace = (splitFaces.count( faceIndex )>0) ? true : false;
         localIndex const newFaceIndex = isNewFace ? childFaceIndex[faceIndex] : faceIndex;
 
+//        printf( "  Processing  %d %d %d %d\n", faceIndex, parentFaceIndex[faceIndex], childFaceIndex[faceIndex], isNewFace );
 
         // 3a) check to see if the face was split. If so, then we will need
         // to alter the face relation with the elements in both directions.
