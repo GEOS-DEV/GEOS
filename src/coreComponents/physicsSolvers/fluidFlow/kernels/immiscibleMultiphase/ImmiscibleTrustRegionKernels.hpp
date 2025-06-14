@@ -871,7 +871,8 @@ public:
       {
         stack.connFactor = LvArray::math::min( stack.connFactor, stack.localEps[ic * numEqn + ip] );
       }  
-    }   
+    }
+    stack.connFactor = LvArray::math::max( stack.connFactor, m_minFactor ); 
   }  
 
   /**
@@ -1099,30 +1100,37 @@ public:
   static constexpr real64 m_d2RMin = 1.0; // 7000
 
   /// Minimum dampining factor
-   static constexpr real64 m_minFactor = 0.1;
+  static constexpr real64 m_minFactor = 0.1; 
+  
+  /// Minimum dampining factor
+  static constexpr real64 m_resThres = 0.2;
 
 
-   ResidualInflectionFactorKernel( integer const numPhases,
-                                   globalIndex const rankOffset,
-                                   arrayView1d< real64 const > const & localSolution,
-                                   real64 const globalKinkFactor,
-                                   CellElementSubRegion const & subRegion,
-                                   constitutive::CoupledSolidBase const & solid,
-                                   STENCILWRAPPER const & stencilWrapper,
-                                   FLUIDWRAPPER const & fluidWrapper,
-                                   RELPERMWRAPPER const & relPermWrapper,
-                                   CAPPRESWRAPPER const * capPressureWrapper,
-                                   DofNumberAccessor const & dofNumberAccessor,
-                                   PermeabilityAccessors const & permeabilityAccessors,
-                                   ImmiscibleMultiphaseFlowAccessors const & flowAccessors,
-                                   MultiphaseFluidAccessors const & fluidAccessors,
-                                   RelPermAccessors const & relPermAccessors,
-                                   PorosityAccessors const & poroAccessors,
-                                   CapPressureAccessors const & capPressureAccessors,                    
-                                   integer const hasCapPressure )
+  ResidualInflectionFactorKernel( integer const numPhases,
+                                  globalIndex const rankOffset,
+                                  string const dofKey,
+                                  arrayView1d< real64 const > const & localSolution,
+                                  arrayView1d< real64 const > const & localResidual,
+                                  real64 const resNorm,
+                                  real64 const globalKinkFactor,
+                                  CellElementSubRegion const & subRegion,
+                                  constitutive::CoupledSolidBase const & solid,
+                                  STENCILWRAPPER const & stencilWrapper,
+                                  FLUIDWRAPPER const & fluidWrapper,
+                                  RELPERMWRAPPER const & relPermWrapper,
+                                  CAPPRESWRAPPER const * capPressureWrapper,
+                                  DofNumberAccessor const & dofNumberAccessor,
+                                  PermeabilityAccessors const & permeabilityAccessors,
+                                  ImmiscibleMultiphaseFlowAccessors const & flowAccessors,
+                                  MultiphaseFluidAccessors const & fluidAccessors,
+                                  RelPermAccessors const & relPermAccessors,
+                                  PorosityAccessors const & poroAccessors,
+                                  CapPressureAccessors const & capPressureAccessors,                    
+                                  integer const hasCapPressure )
     : m_numPhases( numPhases ),
       m_rankOffset( rankOffset ),
       m_dofNumber( dofNumberAccessor.toNestedViewConst() ),
+      m_dofNumberElem( subRegion.getReference< array1d< globalIndex > >( dofKey ) ),
       m_ghostRank( subRegion.ghostRank() ), //  flowAccessors.get( fields::ghostRank {} )
       m_connMap( subRegion.getConnectionMap() ),
       m_gravCoef( flowAccessors.get( fields::flow::gravityCoefficient {} ) ),
@@ -1142,6 +1150,8 @@ public:
       m_porosity( solid.getPorosity() ), // poroAccessors.get( fields::porosity::porosity {} )
       m_dPoro_dPres( solid.getDporosity_dPressure() ), // poroAccessors.get( fields::porosity::dPorosity_dPressure {} )
       m_localSolution( localSolution ),
+      m_localResidual( localResidual ),
+      m_resNorm( resNorm ),
       m_globalKinkFactor( globalKinkFactor ),  
       m_hasCapPressure( hasCapPressure ),
       m_stencilWrapper( stencilWrapper ),
@@ -1158,7 +1168,7 @@ public:
   public:
   
     /// Storage for the phase local damping factors    
-    real64 localEps[numEqn]{ 1.0 };
+    real64 localEps[numEqn]{ 1.0, 1.0 };
 
     /// Storage for the minimum cell local damping factor
     real64 elemFactor = 1.0;
@@ -1218,6 +1228,17 @@ public:
     // analyze residual inflections for each phase
     for( integer ip = 0; ip < m_numPhases; ++ip )
     {        
+      { // Adaptive residual analysis
+        globalIndex const globalRow = m_dofNumberElem[ei];
+        localIndex const localRow = LvArray::integerConversion< localIndex >( globalRow - m_rankOffset );
+        GEOS_ASSERT_GE( localRow, 0 );      
+
+        if( m_localResidual[localRow + ip] < m_resThres * m_resNorm )
+        {           
+          continue; // skip analysis if phase residual is below minimum threshold
+        }
+      }
+      
       real64 dPhi[maxNumConn]{};      
       real64 compressibility[maxNumConn][2]{};
       real64 viscosibility[maxNumConn][2]{};              
@@ -1489,7 +1510,9 @@ public:
    */
   GEOS_HOST_DEVICE
   integer elemGhostRank( localIndex const ei ) const
-  { return m_ghostRank( ei ); } //return m_ghostRank( ei ); }
+  { 
+    return m_ghostRank( ei );
+  }
 
   /**
    * @brief Performs the complete phase for the kernel.
@@ -1504,7 +1527,7 @@ public:
     {
       stack.elemFactor = LvArray::math::min( stack.elemFactor, stack.localEps[ip] );
     }   
-    stack.elemFactor = LvArray::math::min( stack.elemFactor, m_minFactor );
+    stack.elemFactor = LvArray::math::max( stack.elemFactor, m_minFactor );
   }  
 
   /**
@@ -1554,6 +1577,7 @@ protected:
 
   /// Views on dof numbers
   ElementViewConst< arrayView1d< globalIndex const > > const m_dofNumber;
+  arrayView1d< globalIndex const > const m_dofNumberElem;
 
   /// Views on ghost rank numbers and gravity coefficients
   arrayView1d< integer const > const m_ghostRank;
@@ -1597,8 +1621,12 @@ protected:
   arrayView2d< real64 const > const m_porosity;
   arrayView2d< real64 const > const m_dPoro_dPres;
 
-  /// View on the local solution
-  arrayView1d< real64 const > const m_localSolution;
+  /// View on the local solution and residual
+  arrayView1d< real64 const > const m_localSolution; 
+  arrayView1d< real64 const > const m_localResidual;
+
+  /// Residual norm for adaptive residual analysis
+  real64 const m_resNorm;
 
   /// Kink factor computed previously
   real64 const m_globalKinkFactor;
@@ -1650,6 +1678,7 @@ public:
                    globalIndex const rankOffset,
                    string const dofKey,
                    arrayView1d< real64 const > const & localSolution,
+                   arrayView1d< real64 const > const & localResidual,
                    real64 const globalKinkFactor,
                    string const & solverName,
                    ElementRegionManager const & elemManager,
@@ -1659,9 +1688,16 @@ public:
                    FLUIDWRAPPER const & fluidWrapper,
                    RELPERMWRAPPER const & relPermWrapper,
                    CAPPRESWRAPPER const * capPressureWrapper,
-                   integer const hasCapPressure,                  
+                   integer const hasCapPressure,
+                   real64 const resNorm,                
                    real64 & inflectionFactor )
   {
+    if ( subRegion.getConnectionMap().size() == 0 )
+    {
+      inflectionFactor = 1.0; // no connections, no inflection damping
+      return;
+    }    
+    
     integer constexpr NUM_EQN = 2;
     integer constexpr NUM_DOF = 2;
 
@@ -1677,7 +1713,7 @@ public:
     typename kernelType::PorosityAccessors poroAccessors( elemManager, solverName );
     typename kernelType::CapPressureAccessors capPressureAccessors( elemManager, solverName );
 
-    kernelType kernel( numPhases, rankOffset, localSolution, globalKinkFactor, subRegion,
+    kernelType kernel( numPhases, rankOffset, dofKey, localSolution, localResidual, resNorm, globalKinkFactor, subRegion,
                        solid, stencilWrapper, fluidWrapper, relPermWrapper, capPressureWrapper,
                        dofNumberAccessor, permeabilityAccessors, flowAccessors, fluidAccessors, 
                        relPermAccessors, poroAccessors, capPressureAccessors, hasCapPressure );
