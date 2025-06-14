@@ -541,20 +541,6 @@ public:
                             arrayView1d< real64 const > const & localSolution );
 
   /**
-   * @brief Function to determine if the solution vector should be scaled back in order to maintain a known constraint.
-   * @param[in] domain The domain partition.
-   * @param[in] dofManager degree-of-freedom manager associated with the linear system
-   * @param[in] localSolution the solution vector
-   * @param[in] localResidual the residual vector
-   * @return The factor that should be used to scale the solution vector values when they are being applied.
-   */
-  virtual real64
-  scalingForSystemSolution( DomainPartition & domain,
-                            DofManager const & dofManager,
-                            arrayView1d< real64 const > const & localSolution,
-                            arrayView1d< real64 const > const & localResidual );
-
-  /**
    * @brief Function to apply the solution vector to the state
    * @param dofManager degree-of-freedom manager associated with the linear system
    * @param localSolution the solution vector
@@ -1070,9 +1056,6 @@ protected:
 
   /// Timers for the aggregate profiling of the solver
   std::map< std::string, std::chrono::system_clock::duration > m_timers;
-
-  /// Flag for trust region solver
-  integer m_trustRegion;
 
 private:
   /// List of names of regions the solver will be applied to
