@@ -381,23 +381,6 @@ void NegativeTwoPhaseFlash::computeDerivatives(
     stackArray2d< real64, maxNumComps * maxNumDofs > logLiquidFugacityDerivs( numComps, numDofs );
     stackArray2d< real64, maxNumComps * maxNumDofs > logVapourFugacityDerivs( numComps, numDofs );
 
-    FugacityCalculator::computeLogFugacity( numComps,
-                                            pressure,
-                                            temperature,
-                                            liquidComposition,
-                                            componentProperties,
-                                            flashData.liquidEos,
-                                            flashData,
-                                            logLiquidFugacity );
-    FugacityCalculator::computeLogFugacity( numComps,
-                                            pressure,
-                                            temperature,
-                                            vapourComposition,
-                                            componentProperties,
-                                            flashData.vapourEos,
-                                            flashData,
-                                            logVapourFugacity );
-
     FugacityCalculator::computeLogFugacityDerivatives( numComps,
                                                        pressure,
                                                        temperature,
@@ -405,7 +388,7 @@ void NegativeTwoPhaseFlash::computeDerivatives(
                                                        componentProperties,
                                                        flashData.liquidEos,
                                                        flashData,
-                                                       logLiquidFugacity.toSliceConst(),
+                                                       logLiquidFugacity.toSlice(),
                                                        logLiquidFugacityDerivs.toSlice() );
     FugacityCalculator::computeLogFugacityDerivatives( numComps,
                                                        pressure,
@@ -414,7 +397,7 @@ void NegativeTwoPhaseFlash::computeDerivatives(
                                                        componentProperties,
                                                        flashData.vapourEos,
                                                        flashData,
-                                                       logVapourFugacity.toSliceConst(),
+                                                       logVapourFugacity.toSlice(),
                                                        logVapourFugacityDerivs.toSlice() );
 
     constexpr integer maxNumVals = 2*MultiFluidConstants::MAX_NUM_COMPONENTS+1;
