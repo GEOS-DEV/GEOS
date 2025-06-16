@@ -507,6 +507,9 @@ public:
                            real64 const (&X)[numNodes][3],
                            real64 ( & gradN )[numNodes][3] )
   {
+    gradN[ q ][ 0 ] = 0.0;
+    gradN[ q ][ 1 ] = 0.0;
+    gradN[ q ][ 2 ] = 0.0;
     GEOS_UNUSED_VAR(q, X, gradN);
     GEOS_ERROR( "Bernstein-Bézier basis is modal, not nodal. No quadrature points are defined." );
     return 0;
@@ -845,7 +848,7 @@ public:
   {
     loop( [&func] ( auto const i )
     {
-      constexpr int i1 = ORDER - i;
+      constexpr int i1 = ORDER -  i;
       loop( [&func, i1] ( auto const j )
       {
         constexpr int j1 = ORDER - j;

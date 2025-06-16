@@ -71,7 +71,6 @@ struct PrecomputeSourceAndReceiverKernel
           ArrayOfArraysView< localIndex const > const baseNodesToElements,
           arrayView2d< localIndex const, cells::NODE_MAP_USD > const & baseElemsToNodes,
           arrayView1d< integer const > const elemGhostRank,
-          arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes,
           arrayView2d< localIndex const > const elemsToFaces,
           arrayView2d< real64 const > const & elemCenter,
           arrayView2d< real64 const > const sourceCoordinates,
@@ -482,7 +481,7 @@ struct PressureComputationKernel
 
 
       //Second stiffness part (surface)
-      FE_TYPE::computeSurfaceTerms( xLocal, [&] ( const int c1, const int c2, const int f1, const int i1, const int j1, const int k1, const int i2, const int j2, const int k2, real64 const val )
+      FE_TYPE::computeSurfaceTerms( xLocal, [&] ( const int c1, const int c2, const int f1, const int , const int , const int , const int i2, const int j2, const int k2, real64 const val )
       {
 
         // We take the neighbour element
@@ -509,7 +508,6 @@ struct PressureComputationKernel
           const int ii2 = p1 < 0 ? l2 : Indices[p1];
           const int jj2 = p2 < 0 ? l2 : Indices[p2];
           const int kk2 = p3 < 0 ? l2 : Indices[p3];
-          const int ll2 = p4 < 0 ? l2 : Indices[p4];
 
           const int neighDof2 = FE_TYPE::dofIndex( ii2, jj2, kk2 );
 
@@ -552,7 +550,6 @@ struct PressureComputationKernel
           const int ii2 = p1 < 0 ? l2 : Indices[p1];
           const int jj2 = p2 < 0 ? l2 : Indices[p2];
           const int kk2 = p3 < 0 ? l2 : Indices[p3];
-          const int ll2 = p4 < 0 ? l2 : Indices[p4];
 
           const int neighDof2 = FE_TYPE::dofIndex( ii2, jj2, kk2 );
 
@@ -563,7 +560,6 @@ struct PressureComputationKernel
           const int ii1 = p1 < 0 ? l1 : IndicesTranspose[p1];
           const int jj1 = p2 < 0 ? l1 : IndicesTranspose[p2];
           const int kk1 = p3 < 0 ? l1 : IndicesTranspose[p3];
-          const int ll1 = p4 < 0 ? l1 : IndicesTranspose[p4];
 
           const int neighDof = FE_TYPE::dofIndex( ii1, jj1, kk1 );
 

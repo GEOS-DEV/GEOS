@@ -80,8 +80,6 @@ void AcousticWaveEquationDG::registerDataOnMesh( Group & meshBodies )
                                                     MeshLevel & mesh,
                                                     string_array const & )
   {
-    NodeManager & nodeManager = mesh.getNodeManager();
-
 
     FaceManager & faceManager = mesh.getFaceManager();
     faceManager.registerField< acousticfieldsdg::AcousticFreeSurfaceFaceIndicator >( this->getName() );
@@ -178,7 +176,6 @@ void AcousticWaveEquationDG::precomputeSourceAndReceiverTerm( MeshLevel & baseMe
                    InputError );
 
     arrayView2d< localIndex const > const elemsToFaces = elementSubRegion.faceList();
-    arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes = elementSubRegion.nodeList();
     arrayView2d< localIndex const, cells::NODE_MAP_USD > const & baseElemsToNodes = baseMesh.getElemManager().getRegion( er ).getSubRegion< CellElementSubRegion >( esr ).nodeList();
     arrayView2d< real64 const > const elemCenter = elementSubRegion.getElementCenter();
     arrayView1d< integer const > const elemGhostRank = elementSubRegion.ghostRank();
@@ -189,8 +186,6 @@ void AcousticWaveEquationDG::precomputeSourceAndReceiverTerm( MeshLevel & baseMe
     finiteElement::FiniteElementDispatchHandler< DG_FE_TYPES >::dispatch3D( fe, [&] ( auto const finiteElement )
     {
       using FE_TYPE = TYPEOFREF( finiteElement );
-
-      localIndex const numFacesPerElem = elementSubRegion.numFacesPerElement();
 
       AcousticWaveEquationDGKernels::
         PrecomputeSourceAndReceiverKernel::
@@ -204,7 +199,6 @@ void AcousticWaveEquationDG::precomputeSourceAndReceiverTerm( MeshLevel & baseMe
         nodesToElements,
         baseElemsToNodes,
         elemGhostRank,
-        elemsToNodes,
         elemsToFaces,
         elemCenter,
         sourceCoordinates,
@@ -244,7 +238,6 @@ void AcousticWaveEquationDG::initializePostInitialConditionsPreSubGroups()
     ElementRegionManager & elemManager = mesh.getElemManager();
 
     /// get the array of indicators: 1 if the face is on the boundary; 0 otherwise
-    arrayView1d< integer const > const & facesDomainBoundaryIndicator = faceManager.getDomainBoundaryIndicator();
     ArrayOfArraysView< localIndex const > const facesToNodes = faceManager.nodeList().toViewConst();
     arrayView2d< localIndex const > const & facesToElems = faceManager.elementList();
     arrayView2d< wsCoordType const, nodes::REFERENCE_POSITION_USD > const nodeCoords = nodeManager.getField< fields::referencePosition32 >().toViewConst();
@@ -376,55 +369,55 @@ real64 AcousticWaveEquationDG::computeTimeStep( real64 & dtOut )
 //TODO: Modify to use on discontinuous variable
 void AcousticWaveEquationDG::applyFreeSurfaceBC( real64 const time, DomainPartition & domain )
 {
-  FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
-  FunctionManager const & functionManager = FunctionManager::getInstance();
-
-  FaceManager & faceManager = domain.getMeshBody( 0 ).getMeshLevel( m_discretizationName ).getFaceManager();
-  NodeManager & nodeManager = domain.getMeshBody( 0 ).getMeshLevel( m_discretizationName ).getNodeManager();
-
-  ArrayOfArraysView< localIndex const > const faceToNodeMap = faceManager.nodeList().toViewConst();
-
-  /// array of indicators: 1 if a face is on on free surface; 0 otherwise
-  arrayView1d< localIndex > const freeSurfaceFaceIndicator = faceManager.getField< acousticfieldsdg::AcousticFreeSurfaceFaceIndicator >();
-
-
-  freeSurfaceFaceIndicator.zero();
-
-  fsManager.apply< FaceManager >( time,
-                                  domain.getMeshBody( 0 ).getMeshLevel( m_discretizationName ),
-                                  string( "FreeSurface" ),
-                                  [&]( FieldSpecificationBase const & bc,
-                                       string const &,
-                                       SortedArrayView< localIndex const > const & targetSet,
-                                       FaceManager &,
-                                       string const & )
-  {
-    // string const & functionName = bc.getFunctionName();
-
-    // if( functionName.empty() || functionManager.getGroup< FunctionBase >( functionName ).isFunctionOfTime() == 2 )
-    // {
-    //   real64 const value = bc.getScale();
-
-    //   for( localIndex i = 0; i < targetSet.size(); ++i )
-    //   {
-    //     localIndex const kf = targetSet[ i ];
-    //     freeSurfaceFaceIndicator[kf] = 1;
-
-    //     localIndex const numNodes = faceToNodeMap.sizeOfArray( kf );
-    //     for( localIndex a=0; a < numNodes; ++a )
-    //     {
-    //       localIndex const dof = faceToNodeMap( kf, a );
-    //       freeSurfaceNodeIndicator[dof] = 1;
-
-    //       p_np1[dof] = value;
-    //     }
-    //   }
-    // }
-    // else
-    // {
-    //   GEOS_ERROR( "This option is not supported yet" );
-    // }
-  } );
+//  FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
+//  FunctionManager const & functionManager = FunctionManager::getInstance();
+//
+//  FaceManager & faceManager = domain.getMeshBody( 0 ).getMeshLevel( m_discretizationName ).getFaceManager();
+//  NodeManager & nodeManager = domain.getMeshBody( 0 ).getMeshLevel( m_discretizationName ).getNodeManager();
+//
+//  ArrayOfArraysView< localIndex const > const faceToNodeMap = faceManager.nodeList().toViewConst();
+//
+//  /// array of indicators: 1 if a face is on on free surface; 0 otherwise
+//  arrayView1d< localIndex > const freeSurfaceFaceIndicator = faceManager.getField< acousticfieldsdg::AcousticFreeSurfaceFaceIndicator >();
+//
+//
+//  freeSurfaceFaceIndicator.zero();
+//
+//  fsManager.apply< FaceManager >( time,
+//                                  domain.getMeshBody( 0 ).getMeshLevel( m_discretizationName ),
+//                                  string( "FreeSurface" ),
+//                                  [&]( FieldSpecificationBase const & bc,
+//                                       string const &,
+//                                       SortedArrayView< localIndex const > const & targetSet,
+//                                       FaceManager &,
+//                                       string const & )
+//  {
+//    // string const & functionName = bc.getFunctionName();
+//
+//    // if( functionName.empty() || functionManager.getGroup< FunctionBase >( functionName ).isFunctionOfTime() == 2 )
+//    // {
+//    //   real64 const value = bc.getScale();
+//
+//    //   for( localIndex i = 0; i < targetSet.size(); ++i )
+//    //   {
+//    //     localIndex const kf = targetSet[ i ];
+//    //     freeSurfaceFaceIndicator[kf] = 1;
+//
+//    //     localIndex const numNodes = faceToNodeMap.sizeOfArray( kf );
+//    //     for( localIndex a=0; a < numNodes; ++a )
+//    //     {
+//    //       localIndex const dof = faceToNodeMap( kf, a );
+//    //       freeSurfaceNodeIndicator[dof] = 1;
+//
+//    //       p_np1[dof] = value;
+//    //     }
+//    //   }
+//    // }
+//    // else
+//    // {
+//    //   GEOS_ERROR( "This option is not supported yet" );
+//    // }
+//  } );
 }
 
 // Here for retrocompatibily
@@ -461,9 +454,6 @@ real64 AcousticWaveEquationDG::explicitStepBackward( real64 const & time_n,
 
 void AcousticWaveEquationDG::prepareNextTimestep( MeshLevel & mesh )
 {
-  NodeManager & nodeManager = mesh.getNodeManager();
-
-  localIndex regionNames;
 
   mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion & elementSubRegion )
   {
@@ -503,7 +493,7 @@ void AcousticWaveEquationDG::updatePressure( localIndex const size, localIndex c
 
 void AcousticWaveEquationDG::computeUnknowns( real64 const & time_n,
                                               real64 const & dt,
-                                              DomainPartition & domain,
+                                              DomainPartition &,
                                               MeshLevel & mesh,
                                               string_array const & regionNames )
 {
@@ -587,9 +577,8 @@ void AcousticWaveEquationDG::synchronizeUnknowns( real64 const & time_n,
                                                   MeshLevel & mesh,
                                                   string_array const & regionNames )
 {
-  NodeManager & nodeManager = mesh.getNodeManager();
 
-  mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const regionIndex,
+  mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                         CellElementSubRegion & elementSubRegion )
   {
 

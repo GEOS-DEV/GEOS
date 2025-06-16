@@ -454,7 +454,6 @@ struct WaveSolverUtils
     REAL v1[3]{};
     REAL v2[3]{};
     REAL spx[3][3]{};
-    REAL m[6]{};
     for( int i = 0; i < 4; i++ )
     {
       REAL cross[3]{};
@@ -479,7 +478,7 @@ struct WaveSolverUtils
       v2[1] = spxf[1][1];
       v2[2] = spxf[2][1];
       LvArray::tensorOps::crossProduct( cross, v1, v2 );
-      hs = hs + LvArray::math::sqrt( LvArray::tensorOps::AiBi< 3 >( cross, cross ));
+      hs = hs + LvArray::math::sqrt( LvArray::tensorOps::l2NormSquared<3>( cross ));
     }
 
     for( int i = 0; i < 3; i++ )
