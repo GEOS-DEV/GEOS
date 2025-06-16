@@ -5,6 +5,64 @@ Log and CSV outputs
 This section details the log files and CSV outputs that can be generated from the various GEOS components.
 These outputs provide useful information for execution monitoring and simulation performance analysis.
 
+How to generate these outputs
+-----------------------------
+
+In order to generate these outputs, you must specify it in the input files.
+
+CSV outputs 
+~~~~~~~~~~~
+To generate a CSV output, you must specify ``writeCSV="1"`` as follows: 
+
+.. literalinclude:: ../../../../inputFiles/compositionalMultiphaseFlow/co2_flux_dirichlet.xml
+  :language: xml
+  :start-after: <!-- SPHINX_FIELD_CASE_CSV_OUTPUT -->
+  :end-before: <!-- SPHINX_FIELD_CASE_CSV_OUTPUT_END -->
+
+If you do not want CSV output, do not add this line.
+
+Log outputs 
+~~~~~~~~~~~
+
+To generate a log output, you must specify ``logLevel="x"``, where ``x`` can be 0, 1, 2 or 3, as follows: 
+
+.. literalinclude:: ../../../../inputFiles/compositionalMultiphaseFlow/deadoil_2ph_staircase_gravity_segregation_3d.xml
+  :language: xml
+  :start-after: <!-- SPHINX_FIELD_CASE_LOG_OUTPUT -->
+  :end-before: <!-- SPHINX_FIELD_CASE_LOG_OUTPUT_END -->
+
+If you do not want log output, do not add this line.
+
+Depending on the value of the logLevel parameter, different levels of detail are available in the
+statistics displayed.
+Higher values lead to more console output or intermediate results saved to files. 
+When debugging, higher logLevel values is often convenient.
+
+- **logLevel = 0:**
+
+  This is the level of information with the least precision.
+  It is a silent mode, only critical errors are displayed.
+  
+- **logLevel = 1:**
+
+  Only errors are displayed, warnings and informational messages are suppressed.
+
+- **logLevel = 2:**
+
+  Warnings and errors are displayed.
+
+- **logLevel = 3:**
+
+  With this level of information we have general information, warnings and errors.
+
+- **logLevel = 4:**
+  
+  Lightweight debug messages are added. These allow you to track the simulation progress in more detail. 
+  
+- **logLevel = 5 or more :**
+
+  It is the full debug mode. It gives really detailed logs. This mode is really usefull for developers.
+
 Memory usage statistics at the end of execution in a parallel environment
 -------------------------------------------------------------------------
 
@@ -66,7 +124,7 @@ The table contains one line for each element making up the well, with the follow
 
 - **Element no.:**
 
-  The index of the element in the well, ranging from 0 à n_numElems − 1.
+  The index of the element in the well, starting from 0.
 
 - **CoordX:**
 
@@ -99,7 +157,7 @@ Single-phase simulation statistics
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This component manages and computes statistics for single-phase fluid simulations.
-The output generated gives the following information for a given wrapper, a given region at a
+The output generated gives the following information for a given wrapper\ [*]_, a given region at a
 given time:
 
 - **Pressure [Pa]:**
@@ -125,6 +183,11 @@ given time:
 
 The output can be saved in the log file if this option is specified when the program is run.
 
+
+.. [*] A wrapper is a tool that makes a software component (such as a material model or a solver) accessible and configurable from input files.
+  It is used to connect the inside of the GEOS code with what you can see, modify and use. 
+  For example, CompositionalMultiphaseFVM is a solver and its associated wrapper allow us to configure it via input files. 
+  You can find more information in the following page `Wrapper <https://geosx-geosx.readthedocs-hosted.com/en/latest/coreComponents/dataRepository/docs/Wrapper.html?_sm_au_=iVVFWf2SqSTnZPfQQ0WpHK6H8sjL6>`_.
 
 SolidMechanicsStatistics
 ------------------------
@@ -165,11 +228,11 @@ At each simulation timestep, the following quantities are reported:
 
 - **Delta pressure [Pa]:**
 
-  This gives us the variation in minimum and maximum pressure for this region.
+  This gives us the pressure loss or gain in the reservoir since the start of the simulation.
 
 - **Temperature [K]:**
 
-  This gives us the minimum, average and maximum temperature for this region.
+  This gives us the pressure loss or gain in the reservoir since the start of the simulation.
 
 - **Total dynamic pore volume [rm^3]:**
 
@@ -243,27 +306,10 @@ informations:
 
   Total number of elements (meshes) contained in the region or sub-region.
 
-Depending on the value of the logLevel parameter, different levels of detail are available in the
-statistics displayed:
-
-- **logLevel = 1:**
-
-  It gives aggregated global statistics for all source streams in the mesh;
-
-- **logLevel = 2:**
-
-  It gives individual statistics for each source stream in the mesh;
-
-- **logLevel = 3:**
-
-  It gives detailed statistics for each source stream, broken down by region or sub-region.
-
-
-The output can be saved in the log file and/or a CSV file if these options are specified when the
+The output can be saved in the log file and/or a CSV file if the associated options are specified when the
 program is run.
 If the CSV option is enabled, the start of the statistical measurement period is added to the
 table.
-
 
 TableFunction
 -------------
@@ -334,7 +380,7 @@ PVT Tables are used to define fluid properties as a function of pressure and tem
 They are integrated into fluid and relative permeability models enabling accurate simulations of multiphase flows in reservoirs.
 You can find an application example `here <https://geosx-geosx.readthedocs-hosted.com/en/latest/docs/sphinx/basicExamples/co2Injection/Example.html#constitutive-laws>`_.
 
-- CO2BrineFluid
+- CO2BrinePhillipsFluid
 
   This component models the properties of fluids made up of CO2 and brine. This model takes into account the solubility of CO2 in brine as a function of pressure and temperature.
 
