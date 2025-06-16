@@ -37,27 +37,16 @@ static constexpr std::string_view g_callStackMessage =
 ErrorLogger g_errorLogger{};
 
 void ErrorLogger::createFile()
-{
-  try
-  {  
-    std::ofstream yamlFile( std::string( m_filename ), std::ios::out );
-    if( yamlFile.is_open() )
-    {
-      yamlFile << "errors: \n";
-      yamlFile.close();
-    }
-    else
-    {
-      GEOS_LOG( GEOS_FMT( "Unable to open error file for writing: {}", m_filename ) );
-    }
-  }
-  catch(const std::exception& e)
+{ 
+  std::ofstream yamlFile( std::string( m_filename ), std::ios::out );
+  if( yamlFile.is_open() )
   {
-    std::cerr << e.what() << '\n';
+    yamlFile << "errors: \n";
+    yamlFile.close();
   }
-  catch ( ... )
+  else
   {
-    std::cerr << "Unexpected exception." << '\n';
+    GEOS_LOG( GEOS_FMT( "Unable to open error file for writing: {}", m_filename ) );
   }
 }
 
@@ -184,86 +173,75 @@ void ErrorLogger::streamMultilineYamlAttribute( std::string_view msg, std::ofstr
 
 void ErrorLogger::flushCurrentErrorMsg( ErrorLogger::ErrorMsg & errorMsg )
 {
-  try
+  std::ofstream yamlFile( std::string( m_filename ), std::ios::app );
+  if( yamlFile.is_open() )
   {
-    std::ofstream yamlFile( std::string( m_filename ), std::ios::app );
-    if( yamlFile.is_open() )
+    // General errors info (type, rank on which the error occured)
+    yamlFile << "\n" << g_level1Start << "type: " << g_errorLogger.toString( errorMsg.m_type ) << "\n";
+    yamlFile << g_level1Next << "rank: ";
+    for( auto const & info: errorMsg.m_ranksInfo )
     {
-      // General errors info (type, rank on which the error occured)
-      yamlFile << "\n" << g_level1Start << "type: " << g_errorLogger.toString( errorMsg.m_type ) << "\n";
-      yamlFile << g_level1Next << "rank: ";
-      for( auto const & info: errorMsg.m_ranksInfo )
+      yamlFile << info;
+    }
+    yamlFile << "\n";
+    // Error message
+    yamlFile << g_level1Next << "message: >-\n";
+    streamMultilineYamlAttribute( errorMsg.m_msg, yamlFile, g_level2Next );
+    if( !errorMsg.m_contextsInfo.empty() )
+    {
+      // Additional informations about the context of the error and priority information of each context
+      yamlFile << g_level1Next << "contexts:\n";
+      for( ErrorContext const & ctxInfo : errorMsg.m_contextsInfo )
       {
-        yamlFile << info;
-      }
-      yamlFile << "\n";
-      // Error message
-      yamlFile << g_level1Next << "message: >-\n";
-      streamMultilineYamlAttribute( errorMsg.m_msg, yamlFile, g_level2Next );
-      if( !errorMsg.m_contextsInfo.empty() )
-      {
-        // Additional informations about the context of the error and priority information of each context
-        yamlFile << g_level1Next << "contexts:\n";
-        for( ErrorContext const & ctxInfo : errorMsg.m_contextsInfo )
+        bool isFirst = true;
+        for( auto const & [key, value] : ctxInfo.m_attributes )
         {
-          bool isFirst = true;
-          for( auto const & [key, value] : ctxInfo.m_attributes )
-          {
-            if( isFirst )
-            {
-              yamlFile << g_level3Start << ErrorContext::attributeToString( key ) << ": " << value << "\n";
-              isFirst = false;
-            }
-            else
-            {
-              yamlFile << g_level3Next << ErrorContext::attributeToString( key ) << ": " << value << "\n";
-            }
-          }
           if( isFirst )
           {
-            yamlFile << g_level3Start << "priority: " << ctxInfo.m_priority << "\n";
+            yamlFile << g_level3Start << ErrorContext::attributeToString( key ) << ": " << value << "\n";
             isFirst = false;
           }
           else
           {
-            yamlFile << g_level3Next << "priority: " <<ctxInfo.m_priority << "\n";
+            yamlFile << g_level3Next << ErrorContext::attributeToString( key ) << ": " << value << "\n";
           }
         }
-      }
-      // Location of the error in the code
-      yamlFile << g_level1Next << "sourceLocation:\n";
-      yamlFile << g_level2Next << "file: " << errorMsg.m_file << "\n";
-      yamlFile << g_level2Next << "line: " << errorMsg.m_line << "\n";
-      // Information about the stack trace
-      yamlFile << g_level1Next << "sourceCallStack:\n";
-      if( !errorMsg.isValidStackTrace() )
-      {
-        yamlFile << g_level3Start << "callStackMessage: " << errorMsg.m_sourceCallStack[0] << "\n";
-      }
-      else
-      {
-        for( size_t i = 0; i < errorMsg.m_sourceCallStack.size(); i++ )
+        if( isFirst )
         {
-          yamlFile << g_level3Start << "frame" << i << ": " << errorMsg.m_sourceCallStack[i] << "\n";
+          yamlFile << g_level3Start << "priority: " << ctxInfo.m_priority << "\n";
+          isFirst = false;
+        }
+        else
+        {
+          yamlFile << g_level3Next << "priority: " <<ctxInfo.m_priority << "\n";
         }
       }
-      yamlFile.flush();
-      errorMsg = ErrorMsg();
-      GEOS_LOG( GEOS_FMT( "The error file {} was appended.", m_filename ) );
+    }
+    // Location of the error in the code
+    yamlFile << g_level1Next << "sourceLocation:\n";
+    yamlFile << g_level2Next << "file: " << errorMsg.m_file << "\n";
+    yamlFile << g_level2Next << "line: " << errorMsg.m_line << "\n";
+    // Information about the stack trace
+    yamlFile << g_level1Next << "sourceCallStack:\n";
+    if( !errorMsg.isValidStackTrace() )
+    {
+      yamlFile << g_level3Start << "callStackMessage: " << errorMsg.m_sourceCallStack[0] << "\n";
     }
     else
     {
-      GEOS_LOG( GEOS_FMT( "Unable to open error file for writing: {}", m_filename ) );
-
+      for( size_t i = 0; i < errorMsg.m_sourceCallStack.size(); i++ )
+      {
+        yamlFile << g_level3Start << "frame" << i << ": " << errorMsg.m_sourceCallStack[i] << "\n";
+      }
     }
+    yamlFile.flush();
+    errorMsg = ErrorMsg();
+    GEOS_LOG( GEOS_FMT( "The error file {} was appended.", m_filename ) );
   }
-  catch( const std::exception & e )
+  else
   {
-    std::cerr << e.what() << '\n';
-  }
-  catch ( ... )
-  {
-    std::cerr << "Unexpected exception." << '\n';
+    GEOS_LOG( GEOS_FMT( "Unable to open error file for writing: {}", m_filename ) );
+
   }
 }
 
