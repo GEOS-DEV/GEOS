@@ -59,7 +59,7 @@ TEST( ErrorHandling, testYaml )
 
   if( g_errorLogger.isOutputFileEnabled() )
   {
-    g_errorLogger.flushCurrentErrorMsg( g_errorLogger.currentErrorMsg() );
+    g_errorLogger.flushErrorMsg( g_errorLogger.currentErrorMsg() );
   }
 }
 

@@ -171,7 +171,7 @@ void ErrorLogger::streamMultilineYamlAttribute( std::string_view msg, std::ofstr
   }
 }
 
-void ErrorLogger::flushCurrentErrorMsg( ErrorLogger::ErrorMsg & errorMsg )
+void ErrorLogger::flushErrorMsg( ErrorLogger::ErrorMsg & errorMsg )
 {
   std::ofstream yamlFile( std::string( m_filename ), std::ios::app );
   if( yamlFile.is_open() )

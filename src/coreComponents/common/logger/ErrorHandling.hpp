@@ -235,7 +235,7 @@ private:
    * @brief Write all the information retrieved about the error/warning message into the YAML file
    * @param errorMsg a constant reference to the error
    */
-  void flushCurrentErrorMsg( ErrorMsg & errorMsg );
+  void flushErrorMsg( ErrorMsg & errorMsg );
 
 private:
   // The error constructed via exceptions

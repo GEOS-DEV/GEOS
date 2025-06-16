@@ -79,7 +79,7 @@ int main( int argc, char *argv[] )
     GEOS_LOG( e.what() );
     if( g_errorLogger.isOutputFileEnabled() )
     {
-      g_errorLogger.flushCurrentErrorMsg( g_errorLogger.currentErrorMsg() );
+      g_errorLogger.flushErrorMsg( g_errorLogger.currentErrorMsg() );
     }
     LvArray::system::callErrorHandler();
     basicCleanup();
