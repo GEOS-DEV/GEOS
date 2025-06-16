@@ -121,15 +121,22 @@ public:
      * @param msgFile the source file name where the error occcured
      * @param msgLine the line where the error occured
      */
-    ErrorMsg( MsgType msgType, std::string msgContent, std::string msgFile, integer msgLine )
+    ErrorMsg( MsgType msgType, std::string_view msgContent, std::string_view msgFile, integer msgLine )
       : m_type( msgType ), m_msg( msgContent ), m_file( msgFile ), m_line( msgLine ) {}
+    
+    /**
+     * @brief Add text to the current error msg
+     * @param e the exception containing text to add
+     * @return the reference to the current instance
+     */
+    ErrorMsg & addToMsg( std::exception const & e, bool toEnd = false );
 
     /**
      * @brief Add text to the current error msg
      * @param msg the text to add
      * @return the reference to the current instance
      */
-    ErrorMsg & addToMsg( std::string msg );
+    ErrorMsg & addToMsg( std::string_view msg, bool toEnd = false );
 
     /**
      * @brief Set the source code location values (file and line where the error is detected)
@@ -158,7 +165,7 @@ public:
      * @param ossStackTrace stack trace information to add
      * @return the reference to the current instance
      */
-    ErrorMsg & addCallStackInfo( std::string ossStackTrace );
+    ErrorMsg & addCallStackInfo( std::string_view ossStackTrace );
 
       /**
        * @return true if the YAML file output is enabled

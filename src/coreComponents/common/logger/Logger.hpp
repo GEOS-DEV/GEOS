@@ -240,12 +240,13 @@
       std::cout << __oss.str() << std::endl; \
       std::ostringstream __msgoss; \
       __msgoss << MSG; \
+      std::string msg =  __msgoss.str(); \
       if( g_errorLogger.isOutputFileEnabled() ) \
       { \
         g_errorLogger.currentErrorMsg() \
           .setType( ErrorLogger::MsgType::Exception ) \
           .setCodeLocation( __FILE__, __LINE__ ) \
-          .addToMsg( __msgoss.str() ) \
+          .addToMsg( msg ) \
           .setRank( ::geos::logger::internal::rank ) \
           .addCallStackInfo( stackHistory ); \
       } \
@@ -275,12 +276,13 @@
       std::cout << __oss.str() << std::endl; \
       std::ostringstream __msgoss; \
       __msgoss << MSG; \
+      std::string msg =  __msgoss.str(); \
       if( g_errorLogger.isOutputFileEnabled() ) \
       { \
         g_errorLogger.currentErrorMsg() \
           .setType( ErrorLogger::MsgType::Exception ) \
           .setCodeLocation( __FILE__, __LINE__ ) \
-          .addToMsg( __msgoss.str() ) \
+          .addToMsg( msg ) \
           .setRank( ::geos::logger::internal::rank ) \
           .addCallStackInfo( stackHistory ) \
           .addContextInfo( __VA_ARGS__ ); \

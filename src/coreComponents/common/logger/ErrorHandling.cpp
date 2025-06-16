@@ -31,7 +31,7 @@ static constexpr std::string_view g_level2Start = "    - ";
 static constexpr std::string_view g_level2Next =  "      ";
 static constexpr std::string_view g_level3Start = "      - ";
 static constexpr std::string_view g_level3Next =  "        ";
-static constexpr const char * g_callStackMessage =
+static constexpr std::string_view g_callStackMessage =
   "Callstack could not be retrieved. The format does not match the expected one.";
 
 ErrorLogger g_errorLogger{};
@@ -72,9 +72,29 @@ std::string ErrorLogger::ErrorContext::attributeToString(  ErrorLogger::ErrorCon
   }
 }
 
-ErrorLogger::ErrorMsg & ErrorLogger::ErrorMsg::addToMsg( std::string errorMsg )
+ErrorLogger::ErrorMsg & ErrorLogger::ErrorMsg::addToMsg( std::exception const & e, bool toEnd )
 {
-  m_msg = errorMsg + m_msg;
+  if( toEnd )
+  {
+    m_msg = m_msg + e.what();
+  }
+  else
+  {
+    m_msg = e.what() + m_msg;
+  }
+  return *this; 
+}
+
+ErrorLogger::ErrorMsg & ErrorLogger::ErrorMsg::addToMsg( std::string_view errorMsg, bool toEnd )
+{
+  if( toEnd )
+  {
+    m_msg = m_msg + std::string( errorMsg );
+  }
+  else
+  {
+    m_msg = std::string( errorMsg ) + m_msg;
+  }
   return *this;
 }
 
@@ -102,9 +122,10 @@ ErrorLogger::ErrorMsg & ErrorLogger::ErrorMsg::setRank( int rank )
   return *this;
 }
 
-ErrorLogger::ErrorMsg & ErrorLogger::ErrorMsg::addCallStackInfo( std::string ossStackTrace )
+ErrorLogger::ErrorMsg & ErrorLogger::ErrorMsg::addCallStackInfo( std::string_view ossStackTrace )
 {
-  std::istringstream iss( ossStackTrace );
+  std::string str = std::string( ossStackTrace );
+  std::istringstream iss( str );
   std::string stackLine;
   std::size_t index;
 
@@ -122,7 +143,7 @@ ErrorLogger::ErrorMsg & ErrorLogger::ErrorMsg::addCallStackInfo( std::string oss
 
   if( !m_isValidStackTrace )
   {
-    m_sourceCallStack.push_back( g_callStackMessage );
+    m_sourceCallStack.push_back( std::string( g_callStackMessage ) );
   }
 
   return *this;
