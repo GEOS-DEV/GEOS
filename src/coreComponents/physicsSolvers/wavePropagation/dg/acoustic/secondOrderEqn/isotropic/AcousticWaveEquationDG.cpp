@@ -574,12 +574,11 @@ void AcousticWaveEquationDG::computeUnknowns( real64 const & time_n,
 }
 
 void AcousticWaveEquationDG::synchronizeUnknowns( real64 const & time_n,
-                                                  real64 const & dt,
+                                                  real64 const & ,
                                                   DomainPartition & domain,
                                                   MeshLevel & mesh,
                                                   string_array const & regionNames )
 {
-  GEOS_UNUSED_PARAM( dt );
 
   mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                         CellElementSubRegion & elementSubRegion )
@@ -609,10 +608,9 @@ void AcousticWaveEquationDG::synchronizeUnknowns( real64 const & time_n,
 
 real64 AcousticWaveEquationDG::explicitStepInternal( real64 const & time_n,
                                                      real64 const & dt,
-                                                     integer const cycleNumber,
+                                                     integer const ,
                                                      DomainPartition & domain )
 {
-  GEOS_UNUSED_PARAM( cycleNumber );
   GEOS_MARK_FUNCTION;
 
   GEOS_LOG_RANK_0_IF( dt < epsilonLoc, "Warning! Value for dt: " << dt << "s is smaller than local threshold: " << epsilonLoc );
