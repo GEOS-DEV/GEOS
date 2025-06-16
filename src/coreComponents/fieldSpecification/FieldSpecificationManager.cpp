@@ -75,7 +75,7 @@ void FieldSpecificationManager::expandObjectCatalogs()
 
 void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) const
 {
-  std::map< std::string, localIndex > validRegions;
+  std::map< std::string, std::vector< localIndex > > validRegions;
   std::map< std::string, std::vector< string > > fieldsInSubRegions;
   std::set< string > setsInSubRegion;
 
@@ -117,8 +117,10 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
       setsInSubRegion.insert( wrapper.getName());
     } );
 
-    validRegions[subRegion.getName()] = 1;
-    fieldsInSubRegions[subRegion.getName()] = subRegionFields;
+    if( !subRegionFields.empty())
+    {
+      fieldsInSubRegions[subRegion.getName()] = subRegionFields;
+    }
   } );
 
   // loop over all the FieldSpecification of the XML file
@@ -173,11 +175,11 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
       // registered on
       // the faceManager...
       {
-        isFieldNameFound = 1;
+        validRegions[targetGroup.getName()].push_back( 1 );
       }
-      else // !targetGroup.hasWrapper( fieldName ) // check 140
+      else
       {
-        validRegions[targetGroup.getName()] = 0;
+        validRegions[targetGroup.getName()].push_back( 0 );
       }
 
       // 2.c) If the target set is not empty, we record it
@@ -189,7 +191,13 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
     } );
 
     // Step 3: MPI synchronization
-    isFieldNameFound = MpiWrapper::max( isFieldNameFound );
+    for( auto const & [key, validFieldsName] : validRegions )
+    {
+      for( auto const fieldName : validFieldsName )
+      {
+        validRegions[key][fieldName] = MpiWrapper::max( validRegions[key][fieldName] );
+      }
+    }
 
     for( std::pair< string const, localIndex > & mapEntry : isTargetSetEmpty )
     {
@@ -237,7 +245,6 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
 
       Group const & problemManager = this->getGroupByPath( "/Problem" );
       string const & objPath = fs.getObjectPath();
-
       setNamesError.append( stringutilities::join( setsInSubRegion, ", " ));
 
       GEOS_THROW( setNamesError, InputError );
@@ -254,9 +261,9 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
     }
 
     std::vector< string > invalidRegions;
-    for( const auto & [key, value] : validRegions )
+    for( const auto & [key, validFieldsName] : validRegions )
     {
-      if( !value )
+      if( std::find( validFieldsName.begin(), validFieldsName.end(), 0 ) != validFieldsName.end() )
         invalidRegions.push_back( key );
     }
 
