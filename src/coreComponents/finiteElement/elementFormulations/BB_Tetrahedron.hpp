@@ -929,6 +929,8 @@ public:
       constexpr int j1 = jj1;
       constexpr int k1 = kk1;
       constexpr int l1 = ll1;
+      // Needed for compilers that do not support constexpr lambdas
+      GEOS_UNUSED_VAR( c1, i1, j1, k1, l1 );
       basisLoop( [ &m ] ( auto const c2, auto const i2, auto const j2, auto const k2, auto const l2 )
       {
         constexpr real64 val = computeSuperpositionIntegral( i1, j1, k1, l1, i2, j2, k2, l2 );
@@ -1005,6 +1007,8 @@ public:
       constexpr int j1 = jj1;
       constexpr int k1 = kk1;
       constexpr int l1 = ll1;
+      //Needed for compilors that do not support constexpr lambdas
+      GEOS_UNUSED_VAR( c1, i1, j1, k1, l1 );
       basisLoop( [&func, &detJ] ( auto const c2, auto const i2, auto const j2, auto const k2, auto const l2 )
       {
         constexpr real64 val = computeSuperpositionIntegral( i1, j1, k1, l1, i2, j2, k2, l2 );
