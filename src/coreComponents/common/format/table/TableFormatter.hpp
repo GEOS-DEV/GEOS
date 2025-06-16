@@ -168,14 +168,14 @@ public:
   { toStreamImpl( outputStream, toString( tableData ) ); }
 
   /**
-   * @brief Indicate if we print a warning if the table contains any errors By default, show any erros
+   * @brief Indicate if we print the encountered errors on destruction. Enabled by default.
    * @param cond The boolean to turn on/off log errors
    */
   void showErrors( bool cond )
   { m_showErrors = cond; }
 
 private:
-  /// Boolean indicating if we show any erros
+  /// Boolean indicating if we show errors on destruction
   bool m_showErrors = true;
 
 };

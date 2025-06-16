@@ -363,6 +363,20 @@ void TableFunction::outputTableData( OutputOptions const outputOpts ) const
                                setValuesAlignment( TableLayout::Alignment::left ) } );
   TableTextFormatter const tableLog( tableLayout );
   TableData tableData;
+
+  if( outputOpts.writeCSV )
+  {
+    if( !outputOpts.writeInLog )
+    {
+      tableData.addRow( GEOS_FMT( "CSV Generated to:\n{}/{}.csv", getOutputDirectory(), getName() ) );
+      GEOS_LOG( tableLog.toString( tableData ) );
+    }
+    std::ofstream logStream( joinPath( FunctionBase::getOutputDirectory(), getName() + ".csv" ) );
+    TableCSVFormatter csvFormatter;
+    csvFormatter.showErrors( false );
+    logStream << csvFormatter.toString( *this );
+  }
+
   if( outputOpts.writeInLog )
   {
     tableData.addRow( getTableDescription());
@@ -383,22 +397,6 @@ void TableFunction::outputTableData( OutputOptions const outputOpts ) const
       GEOS_LOG( tableLog.toString( *this ) );
   }
 
-  tableData.clearErrors();
-
-  if( outputOpts.writeCSV )
-  {
-    tableData.clearErrors();
-    if( !outputOpts.writeInLog )
-    {
-      tableData.addRow( GEOS_FMT( "CSV Generated to:\n{}/{}.csv", getOutputDirectory(), getName() ) );
-      GEOS_LOG( tableLog.toString( tableData ) );
-    }
-
-    std::ofstream logStream( joinPath( FunctionBase::getOutputDirectory(), getName() + ".csv" ) );
-    TableCSVFormatter csvFormatter;
-    csvFormatter.showErrors( false );
-    logStream << csvFormatter.toString( *this );
-  }
 }
 
 void TableFunction::initializePostSubGroups()
@@ -439,10 +437,7 @@ string TableCSVFormatter::toString< TableFunction >( TableFunction const & table
     coordsX.insert( 0, coordinates[0].begin(), coordinates[0].end());
 
     array1d< real64 > coordsY;
-    if( numDimensions == 2 )
-    {
-      coordsY.insert( 0, coordinates[1].begin(), coordinates[1].end());
-    }
+    coordsY.insert( 0, coordinates[1].begin(), coordinates[1].end());
 
     TableData2D tableData2D;
     TableData2D::TableDataHolder const tableConverted =

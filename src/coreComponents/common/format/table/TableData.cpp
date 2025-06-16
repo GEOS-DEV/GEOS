@@ -105,10 +105,9 @@ void TableData2D::collectTableValues( arrayView1d< real64 const > dim0AxisCoordi
   integer const nRow = rowAxisCoordinates.size();
 
   array1d< real64 > wellFormedValues( values.size() );
-
+  wellFormedValues = values;
   if( nRow * nCol != values.size())
   {
-    wellFormedValues = values;
     if( nRow * nCol > values.size())
     {
       m_errors->addError( GEOS_FMT( "Warning : Not enough data for the number of columns & rows:\n"
