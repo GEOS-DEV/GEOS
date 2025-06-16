@@ -32,8 +32,11 @@ TEST( testDataTypes, testBoundChecking )
   EXPECT_THROW( {
     try
     {
-      std::string crash = vectorBoundsChecking[1];
-      GEOS_UNUSED_VAR( crash );
+      for( integer i = 0; i <= 1; i++ )
+      {
+        std::string crash = vectorBoundsChecking[i];
+        GEOS_UNUSED_VAR( crash );
+      }
     }
     catch( const std::out_of_range & e )
     {
@@ -46,8 +49,11 @@ TEST( testDataTypes, testBoundChecking )
   EXPECT_THROW( {
     try
     {
-      integer crash = mapBoundsChecking[1];
-      GEOS_UNUSED_VAR( crash );
+      for( integer i = 0; i <= 1; i++ )
+      {
+        integer crash = mapBoundsChecking[i];
+        GEOS_UNUSED_VAR( crash );
+      }
     }
     catch( const std::out_of_range & e )
     {
@@ -60,8 +66,11 @@ TEST( testDataTypes, testBoundChecking )
   EXPECT_THROW( {
     try
     {
-      integer crash = unorderedMapBoundsChecking[1];
-      GEOS_UNUSED_VAR( crash );
+      for( integer i = 0; i <= 1; i++ )
+      {
+        integer crash = unorderedMapBoundsChecking[i];
+        GEOS_UNUSED_VAR( crash );
+      }
     }
     catch( const std::out_of_range & e )
     {
