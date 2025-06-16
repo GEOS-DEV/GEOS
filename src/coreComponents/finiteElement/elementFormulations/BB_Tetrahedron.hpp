@@ -1032,11 +1032,11 @@ public:
 
   {
 
-    real64 detJ = abs( jacobianDeterminant( X ));
+    real64 detJ = LvArray::math::abs( jacobianDeterminant( X ));
 
     // height with respect to o2
 
-    real64 detJf1 = abs( faceJacobianDeterminant( o1, X ));
+    real64 detJf1 = LvArray::math::abs( faceJacobianDeterminant( o1, X ));
 
     real64 scal = 1.0;
 
@@ -1045,7 +1045,7 @@ public:
 
       // scalar product
 
-      real64 detJf2 = abs( faceJacobianDeterminant( o2, X ));
+      real64 detJf2 = LvArray::math::abs( faceJacobianDeterminant( o2, X ));
 
       real64 el2[3][2] = { { edgeLength2( x1, x2, X ), edgeLength2( o1, o2, X ) },
 
