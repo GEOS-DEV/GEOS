@@ -105,6 +105,9 @@ public:
    */
   void clear();
 
+  /**
+   * @brief Remove all errors
+   */
   void clearErrors()
   { m_errors->clear(); }
 

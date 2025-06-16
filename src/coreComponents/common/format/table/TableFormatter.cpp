@@ -416,8 +416,8 @@ void TableTextFormatter::populateDataCellsLayout( PreparedTableLayout const & ta
     }
   };
   size_t const nbColumnsToEvaluate = tableLayout.getVisibleLowermostColumnCount() != tableLayout.getTotalLowermostColumnCount() ?
-                               tableLayout.getTotalLowermostColumnCount():
-                               tableLayout.getVisibleLowermostColumnCount();
+                                     tableLayout.getTotalLowermostColumnCount():
+                                     tableLayout.getVisibleLowermostColumnCount();
 
   bool errorInData = false;
   for( size_t idxRow = 0; idxRow < inputDataValues.size(); ++idxRow )
