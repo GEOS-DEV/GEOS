@@ -90,7 +90,7 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
                               targetOMB->getRegisteredFields().begin(),
                               targetOMB->getRegisteredFields().end() );
     }
-    // fieldsNames
+
     subRegion.forSubGroups< Group >( [&]( Group const & constitutiveModel )
     {
       if( constitutiveModel.getName() == ConstitutiveManager::groupKeyStruct::constitutiveModelsString())
@@ -111,7 +111,6 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
       }
     } );
 
-    // sets
     subRegion.sets().forWrappers( [&] ( dataRepository::WrapperBase const & wrapper )
     {
       setsInSubRegion.insert( wrapper.getName());
@@ -126,7 +125,6 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
   // loop over all the FieldSpecification of the XML file
   this->forSubGroups< FieldSpecificationBase >( [&] ( FieldSpecificationBase const & fs )
   {
-    localIndex isFieldNameFound = 0;
     // map from set name to a flag (1 if targetSet empty, 0 otherwise)
     map< string, localIndex > isTargetSetEmpty;
     // map from set name to a flag (1 if targetSet has been created, 0 otherwise)
@@ -157,7 +155,8 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
                                             Group & targetGroup,
                                             string const fieldName )
     {
-      dataRepository::InputFlags const flag = fs.getWrapper< string >( FieldSpecificationBase::viewKeyStruct::fieldNameString() ).getInputFlag();
+      dataRepository::InputFlags const flag = fs.getWrapper< string >(
+        FieldSpecificationBase::viewKeyStruct::fieldNameString() ).getInputFlag();
 
       // 2.a) If we enter this loop, we know that the set has been created
       //      Fracture/fault sets are created later and the "apply" call silently ignores them
@@ -170,10 +169,10 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
       //       - Face boundary conditions that target cell-based quantities, like the face BC of the flow solvers
       if( targetGroup.hasWrapper( fieldName ) ||
           flag == InputFlags::FALSE || // no need to check input if the input flag is false (Aquifer, Traction, Equilibrium do not target a
-          // field)
+                                       // field)
           targetGroup.getName() == MeshLevel::groupStructKeys::faceManagerString() ) // the field names of the face BCs are not always
-      // registered on
-      // the faceManager...
+                                                                                     // registered on
+                                                                                     // the faceManager...
       {
         validRegions[targetGroup.getName()].push_back( 1 );
       }
@@ -243,8 +242,6 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
                                        fmt::join( missingSetNames, ", " ),
                                        FieldSpecificationBase::viewKeyStruct::objectPathString(), fs.getObjectPath() );
 
-      Group const & problemManager = this->getGroupByPath( "/Problem" );
-      string const & objPath = fs.getObjectPath();
       setNamesError.append( stringutilities::join( setsInSubRegion, ", " ));
 
       GEOS_THROW( setNamesError, InputError );
@@ -288,16 +285,14 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
         commonFieldsInRegions = fieldsInSubRegions[invalidRegions[0]];
         if( invalidRegions.size() > 1 )
         {
-          std::vector< string > common = fieldsInSubRegions[invalidRegions[0]];
-
           for( size_t idxRegion = 1; idxRegion < invalidRegions.size(); ++idxRegion )
           {
-            std::vector< string > temp;
+            std::vector< string > intersectionRegions;
             std::set_intersection( commonFieldsInRegions.begin(), commonFieldsInRegions.end(),
                                    fieldsInSubRegions[invalidRegions[idxRegion]].begin(),
                                    fieldsInSubRegions[invalidRegions[idxRegion]].end(),
-                                   std::back_inserter( temp ));
-            commonFieldsInRegions = std::move( temp );
+                                   std::back_inserter( intersectionRegions ));
+            commonFieldsInRegions = intersectionRegions;
           }
         }
 
