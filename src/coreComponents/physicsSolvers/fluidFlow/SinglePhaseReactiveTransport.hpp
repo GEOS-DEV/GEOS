@@ -201,6 +201,23 @@ public:
                      arrayView1d< real64 > const & localRhs ) override;
 
   /**
+   * @brief Apply source flux boundary conditions to the system
+   * @param time current time
+   * @param dt time step
+   * @param dofManager degree-of-freedom manager associated with the linear system
+   * @param domain the domain
+   * @param localMatrix local system matrix
+   * @param localRhs local system right-hand side vector
+   */
+  virtual void
+  applySourceFluxBC( real64 const time_n,
+                     real64 const dt,
+                     DomainPartition & domain,
+                     DofManager const & dofManager,
+                     CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                     arrayView1d< real64 > const & localRhs ) const override;
+
+  /**
    * @brief Function to perform the Application of Dirichlet type BC's
    * @param time current time
    * @param dt time step
