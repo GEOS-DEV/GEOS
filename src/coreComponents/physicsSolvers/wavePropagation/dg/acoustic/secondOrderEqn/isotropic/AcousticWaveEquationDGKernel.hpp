@@ -498,9 +498,7 @@ struct PressureComputationKernel
 
           const int p1 = perm%4-1;
           const int p2 = (perm/4)%4-1;
-          const int p3 = (perm/16)%4-1;
-          const int p4 = (perm/64)%4-1;
-      
+          const int p3 = (perm/16)%4-1;      
 
           const int l2 = order-i2-j2-k2;
           const int Indices[3] = {i2, j2, k2};

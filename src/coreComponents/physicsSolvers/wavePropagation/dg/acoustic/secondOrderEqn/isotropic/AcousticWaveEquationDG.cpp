@@ -369,6 +369,8 @@ real64 AcousticWaveEquationDG::computeTimeStep( real64 & dtOut )
 //TODO: Modify to use on discontinuous variable
 void AcousticWaveEquationDG::applyFreeSurfaceBC( real64 const time, DomainPartition & domain )
 {
+  GEOS_UNUSED_VAR( time,domain );
+  GEOS_ERROR( getDataContext() << ":  Free-Surface computation for acoustic dg wave propagator not yet implemented" );
 //  FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
 //  FunctionManager const & functionManager = FunctionManager::getInstance();
 //
@@ -577,6 +579,7 @@ void AcousticWaveEquationDG::synchronizeUnknowns( real64 const & time_n,
                                                   MeshLevel & mesh,
                                                   string_array const & regionNames )
 {
+  GEOS_UNUSED_PARAM( dt );
 
   mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                         CellElementSubRegion & elementSubRegion )
@@ -609,6 +612,7 @@ real64 AcousticWaveEquationDG::explicitStepInternal( real64 const & time_n,
                                                      integer const cycleNumber,
                                                      DomainPartition & domain )
 {
+  GEOS_UNUSED_PARAM( cycleNumber );
   GEOS_MARK_FUNCTION;
 
   GEOS_LOG_RANK_0_IF( dt < epsilonLoc, "Warning! Value for dt: " << dt << "s is smaller than local threshold: " << epsilonLoc );
@@ -633,7 +637,6 @@ void AcousticWaveEquationDG::cleanup( real64 const time_n, integer const, intege
                                                                 MeshLevel & mesh,
                                                                 string_array const & regionNames )
   {
-    NodeManager & nodeManager = mesh.getNodeManager();
     mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const regionIndex,
                                                                                           CellElementSubRegion & elementSubRegion )
     {
