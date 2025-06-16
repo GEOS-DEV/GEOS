@@ -180,12 +180,6 @@ TEST( testSolverStats, testOutputFiles )
   loadCsvLines( "convergence/SinglePhaseFlow_convergence.csv", csvLines2 );
 
   EXPECT_EQ( csvLines2[0], "Time-steps,Newton Iter,RFlow" );
-  std::cout << "csvLines2" << std::endl;
-  for( auto const & line : csvLines2 )
-  {
-    std::cout << line << std::endl;
-  }
-
 
 }
 
