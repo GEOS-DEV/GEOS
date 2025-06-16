@@ -290,21 +290,21 @@ informations:
 
   Amount of fluid produced by the flux or fluxes. One value is given for each fluid phase.
 
-    - Negative if it’s an injection;
+    - Negative if it is an injection;
 
-    - Otherwise it’s a production.
+    - Otherwise it is a production.
 
 - **m_productionRate [kg/s or mol/s]:**
 
   Flux or fluxes production rate. One value is given for each fluid phase.
 
-    - Negative if it’s an injection;
+    - Negative if it is an injection;
 
-    - Otherwise it’s a production.
+    - Otherwise it is a production.
 
 - **m_elementCount:**
-
-  Total number of elements (meshes) contained in the region or sub-region.
+  
+  It indicates how many mesh cells are directly affected by the source, for example injection or production, and are used in the computation of flux statistics.
 
 The output can be saved in the log file and/or a CSV file if the associated options are specified when the
 program is run.
@@ -388,6 +388,9 @@ You can find an application example `here <https://geosx-geosx.readthedocs-hoste
 
   This component models the reactions between brine and rock. It also includes the effects of pressure and temperature.
 
+- CO2BrineEzrokhiFluid
+
+  This component models the properties of fluids made up of CO2 and brine, such as density and viscosity, without accounting for salinity effects, making it suitable for simulations where salinity is negligible.
 
 The PVT tables generated contains data on the pysical properties of fluids at different pressures and temperatures specified by user (a range must be specified).
 These tables are generated into log and/or CSV file if you have specified the associated option. 
