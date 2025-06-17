@@ -88,74 +88,76 @@ public:
     arraySlice2d< real64 const, constitutive::multifluid::USD_PHASE_DC - 2 > const dPhaseDens = m_dPhaseDens[ei][0];
     arraySlice1d< real64 const, constitutive::multifluid::USD_PHASE - 2 > const phaseVisc = m_phaseVisc[ei][0];
     arraySlice2d< real64 const, constitutive::multifluid::USD_PHASE_DC - 2 > const dPhaseVisc = m_dPhaseVisc[ei][0];
-    arraySlice1d< real64 const, constitutive::relperm::USD_RELPERM - 2 > const phaseRelPerm = m_phaseRelPerm[ei][0];
-    arraySlice2d< real64 const, constitutive::relperm::USD_RELPERM_DS - 2 > const dPhaseRelPerm_dPhaseVolFrac = m_dPhaseRelPerm_dPhaseVolFrac[ei][0];
+    arraySlice2d< real64 const, constitutive::relperm::USD_RELPERM - 2 > const phaseRelPerm = m_phaseRelPerm[ei][0];
+    arraySlice3d< real64 const, constitutive::relperm::USD_RELPERM_DS - 2 > const dPhaseRelPerm_dPhaseVolFrac = m_dPhaseRelPerm_dPhaseVolFrac[ei][0];
     arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const phaseVolFrac = m_phaseVolFrac[ei];
     arraySlice2d< real64 const, compflow::USD_PHASE_DC - 1 > const dPhaseVolFrac = m_dPhaseVolFrac[ei];
-    arraySlice1d< real64, compflow::USD_PHASE - 1 > const phaseMob = m_phaseMob[ei];
-    arraySlice2d< real64, compflow::USD_PHASE_DC - 1 > const dPhaseMob = m_dPhaseMob[ei];
+    arraySlice2d< real64, constitutive::relperm::USD_MOB - 1 > const phaseMob = m_phaseMob[ei];
+    arraySlice3d< real64, constitutive::relperm::USD_MOB_DC - 1 > const dPhaseMob = m_dPhaseMob[ei];
 
     real64 dRelPerm_dC[numComp]{};
     real64 dDens_dC[numComp]{};
     real64 dVisc_dC[numComp]{};
-
-    for( integer ip = 0; ip < numPhase; ++ip )
+    for( int dir = 0; dir < 3; ++dir )
     {
-
-      // compute the phase mobility only if the phase is present
-      bool const phaseExists = (phaseVolFrac[ip] > 0);
-      if( !phaseExists )
+      for( integer ip = 0; ip < numPhase; ++ip )
       {
-        phaseMob[ip] = 0.0;
-        for( integer jc = 0; jc < numComp + 2; ++jc )
+
+        // compute the phase mobility only if the phase is present
+        bool const phaseExists = (phaseVolFrac[ip] > 0);
+        if( !phaseExists )
         {
-          dPhaseMob[ip][jc] = 0.0;
+          phaseMob[ip][dir] = 0.0;
+          for( integer jc = 0; jc < numComp + 2; ++jc )
+          {
+            dPhaseMob[ip][jc][dir] = 0.0;
+          }
+          continue;
         }
-        continue;
-      }
 
-      real64 const density = phaseDens[ip];
-      real64 const dDens_dP = dPhaseDens[ip][Deriv::dP];
-      applyChainRule( numComp, dCompFrac_dCompDens, dPhaseDens[ip], dDens_dC, Deriv::dC );
+        real64 const density = phaseDens[ip];
+        real64 const dDens_dP = dPhaseDens[ip][Deriv::dP];
+        applyChainRule( numComp, dCompFrac_dCompDens, dPhaseDens[ip], dDens_dC, Deriv::dC );
 
-      real64 const viscosity = phaseVisc[ip];
-      real64 const dVisc_dP = dPhaseVisc[ip][Deriv::dP];
-      applyChainRule( numComp, dCompFrac_dCompDens, dPhaseVisc[ip], dVisc_dC, Deriv::dC );
+        real64 const viscosity = phaseVisc[ip];
+        real64 const dVisc_dP = dPhaseVisc[ip][Deriv::dP];
+        applyChainRule( numComp, dCompFrac_dCompDens, dPhaseVisc[ip], dVisc_dC, Deriv::dC );
 
-      real64 const relPerm = phaseRelPerm[ip];
-      real64 dRelPerm_dP = 0.0;
-      for( integer ic = 0; ic < numComp; ++ic )
-      {
-        dRelPerm_dC[ic] = 0.0;
-      }
+        real64 const relPerm = phaseRelPerm[ip][dir];
+        real64 dRelPerm_dP = 0.0;
+        for( integer ic = 0; ic < numComp; ++ic )
+        {
+          dRelPerm_dC[ic] = 0.0;
+        }
 
-      for( integer jp = 0; jp < numPhase; ++jp )
-      {
-        real64 const dRelPerm_dS = dPhaseRelPerm_dPhaseVolFrac[ip][jp];
-        dRelPerm_dP += dRelPerm_dS * dPhaseVolFrac[jp][Deriv::dP];
+        for( integer jp = 0; jp < numPhase; ++jp )
+        {
+          real64 const dRelPerm_dS = dPhaseRelPerm_dPhaseVolFrac[ip][jp][dir];
+          dRelPerm_dP += dRelPerm_dS * dPhaseVolFrac[jp][Deriv::dP];
 
+          for( integer jc = 0; jc < numComp; ++jc )
+          {
+            dRelPerm_dC[jc] += dRelPerm_dS * dPhaseVolFrac[jp][Deriv::dC+jc];
+          }
+        }
+
+        real64 const mobility = relPerm * density / viscosity;
+
+        phaseMob[ip][dir] = mobility;
+        dPhaseMob[ip][Deriv::dP][dir] = dRelPerm_dP * density / viscosity
+                                  + mobility * (dDens_dP / density - dVisc_dP / viscosity);
+
+        // compositional derivatives
         for( integer jc = 0; jc < numComp; ++jc )
         {
-          dRelPerm_dC[jc] += dRelPerm_dS * dPhaseVolFrac[jp][Deriv::dC+jc];
+          dPhaseMob[ip][Deriv::dC+jc][dir] = dRelPerm_dC[jc] * density / viscosity
+                                        + mobility * (dDens_dC[jc] / density - dVisc_dC[jc] / viscosity);
         }
+
+        // call the lambda in the phase loop to allow the reuse of the relperm, density, viscosity, and mobility
+        // possible use: assemble the derivatives wrt temperature
+        phaseMobilityKernelOp( ip, phaseMob[ip][dir], dPhaseMob[ip][dir] );
       }
-
-      real64 const mobility = relPerm * density / viscosity;
-
-      phaseMob[ip] = mobility;
-      dPhaseMob[ip][Deriv::dP] = dRelPerm_dP * density / viscosity
-                                 + mobility * (dDens_dP / density - dVisc_dP / viscosity);
-
-      // compositional derivatives
-      for( integer jc = 0; jc < numComp; ++jc )
-      {
-        dPhaseMob[ip][Deriv::dC+jc] = dRelPerm_dC[jc] * density / viscosity
-                                      + mobility * (dDens_dC[jc] / density - dVisc_dC[jc] / viscosity);
-      }
-
-      // call the lambda in the phase loop to allow the reuse of the relperm, density, viscosity, and mobility
-      // possible use: assemble the derivatives wrt temperature
-      phaseMobilityKernelOp( ip, phaseMob[ip], dPhaseMob[ip] );
     }
   }
 
@@ -177,14 +179,14 @@ protected:
   arrayView4d< real64 const, constitutive::multifluid::USD_PHASE_DC > m_dPhaseVisc;
 
   /// Views on the phase relative permeabilities
-  arrayView3d< real64 const, constitutive::relperm::USD_RELPERM > m_phaseRelPerm;
-  arrayView4d< real64 const, constitutive::relperm::USD_RELPERM_DS > m_dPhaseRelPerm_dPhaseVolFrac;
+  arrayView4d< real64 const, constitutive::relperm::USD_RELPERM > m_phaseRelPerm;
+  arrayView5d< real64 const, constitutive::relperm::USD_RELPERM_DS > m_dPhaseRelPerm_dPhaseVolFrac;
 
   // outputs
 
   /// Views on the phase mobilities
-  arrayView2d< real64, compflow::USD_PHASE > m_phaseMob;
-  arrayView3d< real64, compflow::USD_PHASE_DC > m_dPhaseMob;
+  arrayView3d< real64, constitutive::relperm::USD_MOB > m_phaseMob;
+  arrayView4d< real64, constitutive::relperm::USD_MOB_DC > m_dPhaseMob;
 
 };
 

@@ -81,12 +81,13 @@ struct C1PPUPhaseFlux
            localIndex const ( &seri )[numFluxSupportPoints],
            localIndex const ( &sesri )[numFluxSupportPoints],
            localIndex const ( &sei )[numFluxSupportPoints],
+           // real64 const (&faceNormal)[3],           
            real64 const ( &trans )[2],
            real64 const ( &dTrans_dPres )[2],
            ElementViewConst< arrayView1d< real64 const > > const & pres,
            ElementViewConst< arrayView1d< real64 const > > const & gravCoef,
-           ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & phaseMob,
-           ElementViewConst< arrayView3d< real64 const, compflow::USD_PHASE_DC > > const & dPhaseMob,
+           ElementViewConst< arrayView3d< real64 const, constitutive::relperm::USD_MOB > > const & phaseMob,
+           ElementViewConst< arrayView4d< real64 const, constitutive::relperm::USD_MOB_DC > > const & dPhaseMob,
            ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & phaseVolFrac,
            ElementViewConst< arrayView3d< real64 const, compflow::USD_PHASE_DC > > const & dPhaseVolFrac,
            ElementViewConst< arrayView3d< real64 const, compflow::USD_COMP_DC > > const & dCompFrac_dCompDens,
@@ -124,6 +125,10 @@ struct C1PPUPhaseFlux
       gravHead += gravD;
     }
 
+        // real64 faceNormal[3];
+              real64 faceNormal[3]= {.33,.33,.33};
+        // OV end
+
     // *** upwinding ***
 
     // phase flux and derivatives
@@ -133,8 +138,8 @@ struct C1PPUPhaseFlux
     real64 Ttrans = fabs( trans[0] );
     potGrad = potGrad / Ttrans;
 
-    real64 const mobility_i = phaseMob[seri[0]][sesri[0]][sei[0]][ip];
-    real64 const mobility_j = phaseMob[seri[1]][sesri[1]][sei[1]][ip];
+    real64 const mobility_i = LvArray::tensorOps::AiBi< 3 >( phaseMob[seri[0]][sesri[0]][sei[0]][ip], faceNormal );
+    real64 const mobility_j = LvArray::tensorOps::AiBi< 3 >( phaseMob[seri[1]][sesri[1]][sei[1]][ip], faceNormal );
 
     // compute phase flux, see Eqs. (66) and (69) from the reference above
     real64 smoEps = epsC1PPU;
@@ -151,17 +156,17 @@ struct C1PPUPhaseFlux
 
     // dP
     {
-      real64 const dMob_dP = dPhaseMob[seri[0]][sesri[0]][sei[0]][ip][Deriv::dP];
+      real64 const dMob_dP = LvArray::tensorOps::AiBi< 3 >( dPhaseMob[seri[0]][sesri[0]][sei[0]][ip][Deriv::dP], faceNormal );
       dPhaseFlux_dP[0] += Ttrans * potGrad * dMob_dP;
     }
 
     // dC
     {
-      arraySlice1d< real64 const, compflow::USD_PHASE_DC - 2 >
+      arraySlice2d< real64 const, constitutive::relperm::USD_MOB_DC - 2 >
       dPhaseMobSub = dPhaseMob[seri[0]][sesri[0]][sei[0]][ip];
       for( integer jc = 0; jc < numComp; ++jc )
       {
-        dPhaseFlux_dC[0][jc] += Ttrans * potGrad * dPhaseMobSub[Deriv::dC + jc];
+        dPhaseFlux_dC[0][jc] += Ttrans * potGrad * LvArray::tensorOps::AiBi< 3 >( dPhaseMobSub[Deriv::dC + jc], faceNormal );
       }
     }
 
@@ -183,12 +188,12 @@ struct C1PPUPhaseFlux
       real64 const dSmoMax_dP = -dPotGrad_dP * dSmoMax_x;
       dPhaseFlux_dP[ke] += -dSmoMax_dP * (mobility_j - mobility_i);
 
-      real64 const dMob_dP = dPhaseMob[seri[ke]][sesri[ke]][sei[ke]][ip][Deriv::dP];
+      real64 const dMob_dP = LvArray::tensorOps::AiBi< 3 >( dPhaseMob[seri[ke]][sesri[ke]][sei[ke]][ip][Deriv::dP], faceNormal );
       dPhaseFlux_dP[ke] += -Ttrans * smoMax * dMobDiff_sign[ke] * dMob_dP;
 
       // dC
 
-      arraySlice1d< real64 const, compflow::USD_PHASE_DC - 2 >
+      arraySlice2d< real64 const, constitutive::relperm::USD_MOB_DC - 2 >
       dPhaseMobSub = dPhaseMob[seri[ke]][sesri[ke]][sei[ke]][ip];
 
       for( integer jc = 0; jc < numComp; ++jc )
@@ -201,7 +206,8 @@ struct C1PPUPhaseFlux
         // second part
         real64 const dSmoMax_dC = -dPotGrad_dC * dSmoMax_x;
         dPhaseFlux_dC[ke][jc] += -dSmoMax_dC * (mobility_j - mobility_i);
-        dPhaseFlux_dC[ke][jc] += -Ttrans * smoMax * dMobDiff_sign[ke] * dPhaseMobSub[Deriv::dC + jc];
+        dPhaseFlux_dC[ke][jc] += -Ttrans * smoMax * dMobDiff_sign[ke] *
+                                 LvArray::tensorOps::AiBi< 3 >( dPhaseMobSub[Deriv::dC + jc], faceNormal );
       }
     }
 

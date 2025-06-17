@@ -244,24 +244,33 @@ public:
       localIndex const esr_up_stab = sesri[k_up_stab];
       localIndex const ei_up_stab  = sei[k_up_stab];
 
+      // OV
+      // real64 faceNormal[3];
+      real64 faceNormal[3] = {.33, .33, .33};
+      // OV end
+      m_stencilWrapper.getFaceNormal( iconn, faceNormal );
+
       bool const areInSameMacroElement = stencilMacroElements[0] == stencilMacroElements[1];
       bool const isStabilizationActive = stencilMacroElements[0] >= 0 && stencilMacroElements[1] >= 0;
       if( isStabilizationActive && areInSameMacroElement )
       {
 
-        for( integer ic = 0; ic < numComp; ++ic )
-        {
-          real64 const laggedUpwindCoef = m_phaseDens_n[er_up_stab][esr_up_stab][ei_up_stab][0][ip]
-                                          * m_phaseCompFrac_n[er_up_stab][esr_up_stab][ei_up_stab][0][ip][ic]
-                                          * m_phaseRelPerm_n[er_up_stab][esr_up_stab][ei_up_stab][0][ip];
-          stabFlux[ic] += dPresGradStab * laggedUpwindCoef;
-
-          for( integer ke = 0; ke < numFluxSupportPoints; ++ke )
+        for( int dir = 0; dir < 3; ++dir )
           {
-            real64 const tauStab = m_elementStabConstant[seri[ke]][sesri[ke]][sei[ke]];
-            dStabFlux_dP[ke][ic] += tauStab * stabTrans[ke] * laggedUpwindCoef;
+          for( integer ic = 0; ic < numComp; ++ic )
+          {
+            real64 const laggedUpwindCoef = m_phaseDens_n[er_up_stab][esr_up_stab][ei_up_stab][0][ip]
+                                            * m_phaseCompFrac_n[er_up_stab][esr_up_stab][ei_up_stab][0][ip][ic]
+                                            * LvArray::tensorOps::AiBi< 3 >( m_phaseRelPerm_n[er_up_stab][esr_up_stab][ei_up_stab][0][ip], faceNormal );
+            stabFlux[ic] += dPresGradStab * laggedUpwindCoef;
+
+            for( integer ke = 0; ke < numFluxSupportPoints; ++ke )
+            {
+              real64 const tauStab = m_elementStabConstant[seri[ke]][sesri[ke]][sei[ke]];
+              dStabFlux_dP[ke][ic] += tauStab * stabTrans[ke] * laggedUpwindCoef;
+            }
           }
-        }
+       }
       }
 
       // Step 3: add the stabilization flux and its derivatives to the residual and Jacobian
@@ -291,7 +300,7 @@ protected:
   ElementViewConst< arrayView1d< real64 const > > const m_pres_n;
   ElementViewConst< arrayView3d< real64 const, constitutive::multifluid::USD_PHASE > > const m_phaseDens_n;
   ElementViewConst< arrayView4d< real64 const, constitutive::multifluid::USD_PHASE_COMP > > const m_phaseCompFrac_n;
-  ElementViewConst< arrayView3d< real64 const, constitutive::relperm::USD_RELPERM > > const m_phaseRelPerm_n;
+  ElementViewConst< arrayView4d< real64 const, constitutive::relperm::USD_RELPERM > > const m_phaseRelPerm_n;
 
   /// Views on the macroelement indices and stab constant
   ElementViewConst< arrayView1d< integer const > > const m_macroElementIndex;

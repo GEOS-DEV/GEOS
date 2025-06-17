@@ -21,6 +21,7 @@
 #define GEOS_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONALMULTIPHASEBASEFIELDS_HPP_
 
 #include "common/DataLayouts.hpp"
+#include "constitutive/relativePermeability/layouts.hpp"
 #include "mesh/MeshFields.hpp"
 
 namespace geos
@@ -35,7 +36,9 @@ namespace flow
 {
 
 using array2dLayoutPhase = array2d< real64, compflow::LAYOUT_PHASE >;
+using array3dLayoutPhase = array3d< real64, constitutive::relperm::LAYOUT_MOB >;
 using array3dLayoutPhase_dC = array3d< real64, compflow::LAYOUT_PHASE_DC >;
+using array4dLayoutPhase_dC = array4d< real64, constitutive::relperm::LAYOUT_MOB_DC >;
 using array2dLayoutComp = array2d< real64, compflow::LAYOUT_COMP >;
 using array3dLayoutComp_dC = array3d< real64, compflow::LAYOUT_COMP_DC >;
 using array3dLayoutPhaseComp = array3d< real64, compflow::LAYOUT_PHASE_COMP >;
@@ -123,7 +126,7 @@ DECLARE_FIELD( dPhaseVolumeFraction,
 
 DECLARE_FIELD( phaseMobility,
                "phaseMobility",
-               array2dLayoutPhase,
+               array3dLayoutPhase,
                0,
                LEVEL_0,
                WRITE_AND_READ,
@@ -131,13 +134,12 @@ DECLARE_FIELD( phaseMobility,
 
 DECLARE_FIELD( dPhaseMobility,
                "dPhaseMobility",
-               array3dLayoutPhase_dC,
+               array4dLayoutPhase_dC,
                0,
                NOPLOT,
                NO_WRITE,
                "Derivative of phase volume fraction with respect to pressure, temperature, global component density" );
 
-// this is needed for time step selector
 DECLARE_FIELD( phaseVolumeFraction_n,
                "phaseVolumeFraction_n",
                array2dLayoutPhase,
@@ -145,6 +147,14 @@ DECLARE_FIELD( phaseVolumeFraction_n,
                NOPLOT,
                WRITE_AND_READ,
                "Phase volume fraction at the previous converged time step" );
+
+DECLARE_FIELD( phaseMobility_n,
+               "phaseMobility_n",
+               array3dLayoutPhase,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Phase mobility at the previous converged time step" );
 
 DECLARE_FIELD( phaseOutflux,
                "phaseOutflux",

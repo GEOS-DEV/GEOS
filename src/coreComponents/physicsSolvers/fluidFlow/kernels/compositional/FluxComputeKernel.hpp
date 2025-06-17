@@ -495,8 +495,8 @@ protected:
   ElementViewConst< arrayView3d< real64 const > > const m_dPerm_dPres;
 
   /// Views on phase mobilities
-  ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const m_phaseMob;
-  ElementViewConst< arrayView3d< real64 const, compflow::USD_PHASE_DC > > const m_dPhaseMob;
+  ElementViewConst< arrayView3d< real64 const, constitutive::relperm::USD_MOB > > const m_phaseMob;
+  ElementViewConst< arrayView4d< real64 const, constitutive::relperm::USD_MOB_DC > > const m_dPhaseMob;
 
   /// Views on phase mass densities
   ElementViewConst< arrayView3d< real64 const, constitutive::multifluid::USD_PHASE > > const m_phaseMassDens;

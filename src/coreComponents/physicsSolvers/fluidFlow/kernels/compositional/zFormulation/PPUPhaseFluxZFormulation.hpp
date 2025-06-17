@@ -78,12 +78,13 @@ struct PPUPhaseFluxZFormulation
            localIndex const ( &seri )[numFluxSupportPoints],
            localIndex const ( &sesri )[numFluxSupportPoints],
            localIndex const ( &sei )[numFluxSupportPoints],
+           // real64 const (&faceNormal)[3],           
            real64 const ( &trans )[2],
            real64 const ( &dTrans_dPres )[2],
            ElementViewConst< arrayView1d< real64 const > > const & pres,
            ElementViewConst< arrayView1d< real64 const > > const & gravCoef,
-           ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & phaseMob,
-           ElementViewConst< arrayView3d< real64 const, compflow::USD_PHASE_DC > > const & dPhaseMob,
+           ElementViewConst< arrayView3d< real64 const, constitutive::relperm::USD_MOB > > const & phaseMob,
+           ElementViewConst< arrayView4d< real64 const, constitutive::relperm::USD_MOB_DC > > const & dPhaseMob,
            ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & phaseVolFrac,
            ElementViewConst< arrayView3d< real64 const, compflow::USD_PHASE_DC > > const & dPhaseVolFrac,
            ElementViewConst< arrayView4d< real64 const, constitutive::multifluid::USD_PHASE_COMP > > const & phaseCompFrac,
@@ -110,6 +111,10 @@ struct PPUPhaseFluxZFormulation
                                                                    phaseCapPressure, dPhaseCapPressure_dPhaseVolFrac, potGrad, dPresGrad_dP,
                                                                    dPresGrad_dC, dGravHead_dP, dGravHead_dC );
 
+    
+    // real64 faceNormal[3];
+          real64 faceNormal[3]= {.33,.33,.33};
+    // OV end    
     // *** upwinding ***
 
     // choose upstream cell
@@ -119,7 +124,7 @@ struct PPUPhaseFluxZFormulation
     localIndex const esr_up = sesri[k_up];
     localIndex const ei_up  = sei[k_up];
 
-    real64 const mobility = phaseMob[er_up][esr_up][ei_up][ip];
+    real64 const mobility = phaseMob[er_up][esr_up][ei_up][ip][0];  //definitely fix -Larson
 
     // pressure gradient depends on all points in the stencil
     for( integer ke = 0; ke < numFluxSupportPoints; ++ke )
@@ -135,15 +140,20 @@ struct PPUPhaseFluxZFormulation
     // compute phase flux using upwind mobility.
     phaseFlux = mobility * potGrad;
 
-    real64 const dMob_dP = dPhaseMob[er_up][esr_up][ei_up][ip][Deriv::dP];
-    arraySlice1d< real64 const, compflow::USD_PHASE_DC - 2 > dPhaseMobSub =
-      dPhaseMob[er_up][esr_up][ei_up][ip];
+    // OV 2
+    // real64 const dMob_dP = LvArray::tensorOps::AiBi< 3 >( dPhaseMob[er_up][esr_up][ei_up][ip][Deriv::dP], faceNormal ) ;
+    real64 const dMob_dP = LvArray::tensorOps::AiBi< 3 >( dPhaseMob[er_up][esr_up][ei_up][ip][Deriv::dP], faceNormal );
+    // end OV 2
+    arraySlice2d< real64 const, constitutive::relperm::USD_MOB_DC - 2 > dPhaseMobSub = dPhaseMob[er_up][esr_up][ei_up][ip];
 
     // add contribution from upstream cell mobility derivatives
     dPhaseFlux_dP[k_up] += dMob_dP * potGrad;
     for( integer jc = 0; jc < numComp; ++jc )
     {
-      dPhaseFlux_dC[k_up][jc] += dPhaseMobSub[Deriv::dC+jc] * potGrad;
+      // OV 3
+      // dPhaseFlux_dC[k_up][jc] += LvArray::math::abs( LvArray::tensorOps::AiBi< 3 >( dPhaseMobSub[Deriv::dC + jc], faceNormal ) ) * potGrad;
+      dPhaseFlux_dC[k_up][jc] += LvArray::tensorOps::AiBi< 3 >( dPhaseMobSub[Deriv::dC + jc], faceNormal ) * potGrad;
+      // end OV 3
     }
 
     //distribute on phaseComponentFlux here

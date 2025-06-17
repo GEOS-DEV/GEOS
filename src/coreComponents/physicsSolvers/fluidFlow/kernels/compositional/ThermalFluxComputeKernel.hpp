@@ -293,6 +293,13 @@ public:
       //       computing the following quantities: potGrad, phaseFlux, k_up, er_up, esr_up, ei_up
 
       real64 dPhaseFlux_dT[numFluxSupportPoints]{};
+  
+      // OV
+      // 
+      // real64 faceNormal[3];
+      real64 faceNormal[3] = {.33,.33,.33};
+      // end OV
+      m_stencilWrapper.getFaceNormal( connectionIndex, faceNormal ); 
 
       // Step 3.1: compute the derivative of phase flux wrt temperature
       for( integer ke = 0; ke < numFluxSupportPoints; ++ke )
@@ -305,9 +312,9 @@ public:
       }
       for( integer ke = 0; ke < numFluxSupportPoints; ++ke )
       {
-        dPhaseFlux_dT[ke] *= m_phaseMob[er_up][esr_up][ei_up][ip];
+        dPhaseFlux_dT[ke] *= LvArray::tensorOps::AiBi< 3 >( m_phaseMob[er_up][esr_up][ei_up][ip], faceNormal );
       }
-      dPhaseFlux_dT[k_up] += m_dPhaseMob[er_up][esr_up][ei_up][ip][Deriv::dT] * potGrad;
+      dPhaseFlux_dT[k_up] += LvArray::tensorOps::AiBi< 3 >( m_dPhaseMob[er_up][esr_up][ei_up][ip][Deriv::dT], faceNormal ) * potGrad;
 
       // Step 3.2: compute the derivative of component flux wrt temperature
 

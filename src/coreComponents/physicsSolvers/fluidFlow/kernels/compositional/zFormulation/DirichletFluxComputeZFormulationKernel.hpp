@@ -323,17 +323,27 @@ public:
       // *** upwinding ***
       // Step 3.4: upwinding based on the sign of the phase potential gradient
       // It is easier to hard-code the if/else because it is difficult to address elem and face variables in a uniform way
+      // OV
+      //
+      // real64 faceNormal[3];
+      real64 faceNormal[3] = {.33,.33,.33};
+      // end OV
+      m_stencilWrapper.getFaceNormal( kf, faceNormal );
+
 
       if( potDif >= 0 ) // the element is upstream
       {
 
         // compute the phase flux and derivatives using the element mobility
-        phaseFlux = m_phaseMob[er][esr][ei][ip] * f;
-        dPhaseFlux_dP = m_phaseMob[er][esr][ei][ip] * dF_dP + m_dPhaseMob[er][esr][ei][ip][Deriv::dP] * f;
+        phaseFlux = LvArray::tensorOps::AiBi< 3 >( m_phaseMob[er][esr][ei][ip], faceNormal ) * f;
+        dPhaseFlux_dP =
+          LvArray::tensorOps::AiBi< 3 >( m_phaseMob[er][esr][ei][ip], faceNormal )  * dF_dP +
+          LvArray::tensorOps::AiBi< 3 >( m_dPhaseMob[er][esr][ei][ip][Deriv::dP], faceNormal ) * f;
         for( integer jc = 0; jc < numComp; ++jc )
         {
           dPhaseFlux_dC[jc] =
-            m_phaseMob[er][esr][ei][ip] * dF_dC[jc] + m_dPhaseMob[er][esr][ei][ip][Deriv::dC+jc] * f;
+            LvArray::tensorOps::AiBi< 3 >( m_phaseMob[er][esr][ei][ip], faceNormal ) * dF_dC[jc] +
+            LvArray::tensorOps::AiBi< 3 >( m_dPhaseMob[er][esr][ei][ip][Deriv::dC + jc], faceNormal ) * f;
         }
 
         // slice some constitutive arrays to avoid too much indexing in component loop

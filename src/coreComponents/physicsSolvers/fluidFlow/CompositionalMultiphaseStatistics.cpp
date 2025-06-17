@@ -127,7 +127,7 @@ void CompositionalMultiphaseStatistics::registerDataOnMesh( Group & meshBodies )
               if( pnumComps == 0 )
               {
                 pstatsLayout << description << " (phase " << ip << ") [" << pmassUnit << "]";
-              }
+          }
               else
               {
                 for( int ic = 0; ic < pnumComps; ++ic )
@@ -136,9 +136,9 @@ void CompositionalMultiphaseStatistics::registerDataOnMesh( Group & meshBodies )
                   if( ic == 0 )
                   {
                     pstatsLayout << ",";
-                  }
-                }
-              }
+        }
+      }
+    }
               if( ip == 0 )
               {
                 pstatsLayout << ",";
@@ -182,11 +182,11 @@ void CompositionalMultiphaseStatistics::registerDataOnMesh( Group & meshBodies )
     }
   } );
 
-  // if we have to compute CFL numbers later, we need to register additional variables
-  if( m_computeCFLNumbers )
-  {
+    // if we have to compute CFL numbers later, we need to register additional variables
+    if( m_computeCFLNumbers )
+    {
     m_solver->registerDataForCFL( meshBodies );
-  }
+    }
 }
 
 bool CompositionalMultiphaseStatistics::execute( real64 const time_n,
@@ -282,8 +282,8 @@ void CompositionalMultiphaseStatistics::computeRegionStatistics( real64 const ti
     //get min vol fraction for each phase to dispactche immobile/mobile mass
     string const & relpermName = subRegion.getReference< string >( CompositionalMultiphaseBase::viewKeyStruct::relPermNamesString() );
     RelativePermeabilityBase const & relperm = constitutiveModels.getGroup< RelativePermeabilityBase >( relpermName );
-    arrayView3d< real64 const, relperm::USD_RELPERM > const phaseTrappedVolFrac = relperm.phaseTrappedVolFraction();
-    arrayView3d< real64 const, relperm::USD_RELPERM > const phaseRelperm = relperm.phaseRelPerm();
+    arrayView4d< real64 const, relperm::USD_RELPERM > const phaseTrappedVolFrac = relperm.phaseTrappedVolFraction();
+    arrayView4d< real64 const, relperm::USD_RELPERM > const phaseRelperm = relperm.phaseRelPerm();
 
     real64 subRegionAvgPresNumerator = 0.0;
     real64 subRegionMinPres = 0.0;

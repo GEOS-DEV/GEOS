@@ -102,6 +102,11 @@ public:
     return maxNumPointsInFlux;
   }
 
+  void getFaceNormal( localIndex const iconn, real64 (& faceNormal)[3] ) const
+  {
+    GEOS_UNUSED_VAR( iconn, faceNormal );
+  }
+
 private:
 
   arrayView2d< real64, nodes::REFERENCE_POSITION_USD > m_faceNormal;
@@ -206,7 +211,20 @@ BoundaryStencilWrapper::
   {
     real64 faceConormal[3];
     LvArray::tensorOps::hadamardProduct< 3 >( faceConormal, coef, faceNormal );
-    weight = LvArray::tensorOps::AiBi< 3 >( cellToFace, faceConormal );
+    // weight = LvArray::tensorOps::AiBi< 3 >( cellToFace, faceConormal );
+    // OV -- begin replacement
+    real64 maxnormal = 0;
+    for (int dir = 0; dir < 3; ++dir)
+    {
+      if (fabs(faceNormal[dir]) > maxnormal)
+      {
+        maxnormal = fabs(faceNormal[dir]);
+        weight = coef[dir];
+      }
+    }
+    //                           OV -- end replacement    
+    
+
     LvArray::tensorOps::hadamardProduct< 3 >( dWeight_dCoef, cellToFace, faceNormal );
   };
 

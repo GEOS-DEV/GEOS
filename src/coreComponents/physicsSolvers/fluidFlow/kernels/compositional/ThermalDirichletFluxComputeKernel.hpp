@@ -247,12 +247,21 @@ public:
       //       computing the following quantities: potGrad, phaseFlux
       // It is easier to hard-code the if/else because it is difficult to address elem and face variables in a uniform way
 
+      // OV
+      //
+      // real64 faceNormal[3];
+      real64 faceNormal[3] = {.33,.33,.33};
+      // end OV
+      m_stencilWrapper.getFaceNormal( kf, faceNormal );
+
 
       if( f >= 0 ) // the element is upstream
       {
 
         // Step 3.1.a: compute the derivative of phase flux wrt temperature
-        real64 const dPhaseFlux_dT = m_phaseMob[er][esr][ei][ip] * dF_dT + m_dPhaseMob[er][esr][ei][ip][Deriv::dT] * f;
+        real64 const dPhaseFlux_dT =
+          LvArray::tensorOps::AiBi< 3 >( m_phaseMob[er][esr][ei][ip], faceNormal ) * dF_dT +
+          LvArray::tensorOps::AiBi< 3 >( m_dPhaseMob[er][esr][ei][ip][Deriv::dT], faceNormal ) * f;
 
         // Step 3.2.a: compute the derivative of component flux wrt temperature
 

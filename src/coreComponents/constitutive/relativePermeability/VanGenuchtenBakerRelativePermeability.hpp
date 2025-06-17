@@ -87,7 +87,7 @@ private:
    * @return (void)
    *
    * This function evaluates the relperm function and its derivative at a given phase saturation
-   * Reference: Eclipse technical description and Petrowiki
+   * Reference: Petrowiki
    */
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
@@ -143,7 +143,7 @@ public:
 
 protected:
 
-  virtual void postProcessInput() override;
+  virtual void postInputInitialization() override;
 
   array2d< real64 > m_phaseMinVolumeFraction;
 
@@ -163,9 +163,9 @@ GEOS_HOST_DEVICE
 inline void
 VanGenuchtenBakerRelativePermeabilityUpdate::
   compute( arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseVolFraction,
-           arraySlice2d< real64, relperm::USD_RELPERM - 2 > const & phaseTrappedVolFrac,
-           arraySlice2d< real64, relperm::USD_RELPERM - 2 > const & phaseRelPerm,
-           arraySlice3d< real64, relperm::USD_RELPERM_DS - 2 > const & dPhaseRelPerm_dPhaseVolFrac ) const
+           arraySlice2d< real64, constitutive::relperm::USD_RELPERM - 2 > const & phaseTrappedVolFrac,
+           arraySlice2d< real64, constitutive::relperm::USD_RELPERM - 2 > const & phaseRelPerm,
+           arraySlice3d< real64, constitutive::relperm::USD_RELPERM_DS - 2 > const & dPhaseRelPerm_dPhaseVolFrac ) const
 {
   LvArray::forValuesInSlice( dPhaseRelPerm_dPhaseVolFrac, []( real64 & val ){ val = 0.0; } );
 

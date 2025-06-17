@@ -271,7 +271,10 @@ public:
                         Deriv::dC );
 
         // relative permeability
-        real64 const resRelPerm = m_resPhaseRelPerm[er][esr][ei][0][ip];
+
+        //then for well make is an average of direction as there is no normal avail
+        real64 faceNormal[3] = {.33, .33, .33};
+        real64 const resRelPerm = LvArray::tensorOps::AiBi< 3 >(m_resPhaseRelPerm[er][esr][ei][0][ip], faceNormal );
         real64 dRelPerm[CP_Deriv::nDer]{};
         for( integer jc = 0; jc < CP_Deriv::nDer; ++jc )
         {
@@ -279,8 +282,8 @@ public:
         }
         for( integer jp = 0; jp < NP; ++jp )
         {
-          real64 const dResRelPerm_dS = m_dResPhaseRelPerm_dPhaseVolFrac[er][esr][ei][0][ip][jp];
-          dRelPerm[CP_Deriv::dP] += dResRelPerm_dS * m_dResPhaseVolFrac[er][esr][ei][jp][Deriv::dP];
+          //real64 const dResRelPerm_dS = m_dResPhaseRelPerm_dPhaseVolFrac[er][esr][ei][0][ip][jp];
+          real64 const dResRelPerm_dS = LvArray::tensorOps::AiBi< 3 >( m_dResPhaseRelPerm_dPhaseVolFrac[er][esr][ei][0][ip][jp], faceNormal );
           if constexpr ( IS_THERMAL )
           {
             dRelPerm[CP_Deriv::dT] += dResRelPerm_dS * m_dResPhaseVolFrac[er][esr][ei][jp][Deriv::dT];
@@ -380,7 +383,10 @@ public:
 
 
         // relative permeability
-        real64 const resRelPerm = m_resPhaseRelPerm[er][esr][ei][0][ip];
+
+      //then for well make is an average of direction as there is no normal avail
+        real64 faceNormal[3] = {.33, .33, .33};
+        real64 const resRelPerm = LvArray::tensorOps::AiBi< 3 >( m_resPhaseRelPerm[er][esr][ei][0][ip], faceNormal );
         real64 dRelPerm[CP_Deriv::nDer]{};
         for( integer jc = 0; jc < CP_Deriv::nDer; ++jc )
         {
@@ -388,7 +394,8 @@ public:
         }
         for( integer jp = 0; jp < NP; ++jp )
         {
-          real64 const dResRelPerm_dS = m_dResPhaseRelPerm_dPhaseVolFrac[er][esr][ei][0][ip][jp];
+          // real64 const dResRelPerm_dS = m_dResPhaseRelPerm_dPhaseVolFrac[er][esr][ei][0][ip][jp][0];
+          real64 const dResRelPerm_dS = LvArray::tensorOps::AiBi< 3 >( m_dResPhaseRelPerm_dPhaseVolFrac[er][esr][ei][0][ip][jp], faceNormal );
           dRelPerm[CP_Deriv::dP] += dResRelPerm_dS * m_dResPhaseVolFrac[er][esr][ei][jp][Deriv::dP];
           if constexpr ( IS_THERMAL )
           {
@@ -498,8 +505,8 @@ protected:
   ElementViewConst< arrayView4d< real64 const, constitutive::multifluid::USD_PHASE_DC > > const m_dResPhaseVisc;
   ElementViewConst< arrayView4d< real64 const, constitutive::multifluid::USD_PHASE_COMP > > const m_resPhaseCompFrac;
   ElementViewConst< arrayView5d< real64 const, constitutive::multifluid::USD_PHASE_COMP_DC > > const m_dResPhaseCompFrac;
-  ElementViewConst< arrayView3d< real64 const, constitutive::relperm::USD_RELPERM > > const m_resPhaseRelPerm;
-  ElementViewConst< arrayView4d< real64 const, constitutive::relperm::USD_RELPERM_DS > > const m_dResPhaseRelPerm_dPhaseVolFrac;
+  ElementViewConst< arrayView4d< real64 const, constitutive::relperm::USD_RELPERM > > const m_resPhaseRelPerm;
+  ElementViewConst< arrayView5d< real64 const, constitutive::relperm::USD_RELPERM_DS > > const m_dResPhaseRelPerm_dPhaseVolFrac;
   arrayView1d< real64 const > const m_wellElemGravCoef;
   arrayView1d< real64 const > const m_wellElemPres;
   arrayView2d< real64 const, compflow::USD_COMP > const m_wellElemCompDens;

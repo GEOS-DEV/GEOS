@@ -128,6 +128,10 @@ public:
     return maxNumPointsInFlux;
   }
 
+  void getFaceNormal( localIndex const iconn, real64 (& faceNormal)[3] ) const
+  {
+    LvArray::tensorOps::copy< 3 >( faceNormal, m_faceNormal[iconn] );
+  }
 private:
 
   arrayView2d< real64 > m_faceNormal;
@@ -245,9 +249,21 @@ CellElementStencilTPFAWrapper::
     real64 faceConormal[3];
     real64 dFaceConormal_dVar[3];
     LvArray::tensorOps::hadamardProduct< 3 >( faceConormal, coefficient[er][esr][ei][0], faceNormal );
-    LvArray::tensorOps::hadamardProduct< 3 >( dFaceConormal_dVar, dCoeff_dVar[er][esr][ei][0], faceNormal );
-    halfWeight[i] *= LvArray::tensorOps::AiBi< 3 >( m_cellToFaceVec[iconn][i], faceConormal );
+    // OV -- begin replacement
+    real64 maxnormal = 0;
+    for (int dir = 0; dir < 3; ++dir)
+    {
+      if (fabs(faceNormal[dir]) > maxnormal)
+      {
+        maxnormal = fabs(faceNormal[dir]);
+        halfWeight[i] = m_weights[iconn][i] * coefficient[er][esr][ei][0][dir];
+        //dHalfWeight_dVar[i] = m_weights[iconn][i] * dCoeff_dVar[er][esr][ei][0][dir];
+      }
+    }
+    // OV -- end replacement
+    LvArray::tensorOps::hadamardProduct< 3 >( dFaceConormal_dVar, dCoeff_dVar[er][esr][ei][0], faceNormal );// halfWeight[i] *= LvArray::tensorOps::AiBi< 3 >( m_cellToFaceVec[iconn][i], faceConormal );
     dHalfWeight_dVar[i] *= LvArray::tensorOps::AiBi< 3 >( m_cellToFaceVec[iconn][i], dFaceConormal_dVar );
+// note for dCoeff
 
     // correct negative weight issue arising from non-K-orthogonal grids
     if( halfWeight[i] < 0.0 )
