@@ -233,6 +233,7 @@ void TwoPointFluxApproximation::fillConnectionMap( MeshLevel & mesh ) const
   mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( targetRegions, [&]( localIndex const, 
                                                                                           CellElementSubRegion & subRegion )
   {
+    subRegion.resizeConnectorMap( subRegion.size() );
     forAll< serialPolicy >( subRegion.size(), [&]( localIndex const ke )
     {
       auto aka = subRegion.getConnectionMap();

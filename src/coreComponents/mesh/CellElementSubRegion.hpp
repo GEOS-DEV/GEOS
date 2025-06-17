@@ -359,6 +359,11 @@ public:
                                             FaceManager const & faceManager ) override;
 
 
+  void resizeConnectorMap( localIndex const numElements )
+  {
+    m_toConnectors.resize( numElements );
+  }
+                                            
   void addToConnectorList( localIndex const elemIndex, 
                            localIndex const connectorIndex ) 
   { 
@@ -366,7 +371,9 @@ public:
   }
 
   ArrayOfArraysView< localIndex const > const getConnectionMap() const
-  { return m_toConnectors.toViewConst(); }
+  { 
+    return m_toConnectors.toViewConst();
+  }
 
 private:
 
