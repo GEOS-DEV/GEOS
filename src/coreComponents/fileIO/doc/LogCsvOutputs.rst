@@ -246,19 +246,19 @@ At each simulation timestep, the following quantities are reported:
 
   This gives us the number of moles of fluid present for each phase.
 
-- **Trapped phase mass (metric 1** \ [2]_ **) [Mass or Mole]:**
+- **Trapped phase mass ( metric 1** \ [2]_ **) [Mass or Mole]:**
 
   This gives us, for each phase, the mass of fluid that is immobile because it is trapped in the porous structure.
 
-- **Non-trapped phase mass (metric 1** \ [2]_ **) [Mass or Mole]:**
+- **Non-trapped phase mass ( metric 1** \ [2]_ **) [Mass or Mole]:**
 
   This gives us, for each phase, the potentially mobile mass of fluid, i.e. not trapped but not necessarily in motion.
 
-- **Immobile phase mass (metric 2** \ [3]_ **) [Mass or Mole]:**
+- **Immobile phase mass ( metric 2** \ [3]_ **) [Mass or Mole]:**
 
   This gives us, for each phase, the mass of fluid that does not move in the simulation, for whatever reason (trapped, viscosity, pressure threshold, etc.).
 
-- **Mobile phase mass (metric 2** \ [3]_ **) [Mass or Mole]:**
+- **Mobile phase mass ( metric 2** \ [3]_ **) [Mass or Mole]:**
 
   This gives us, for each phase, the mass of the fluid that is in motion or that can move depending on the simulation conditions.
 
