@@ -1224,6 +1224,11 @@ kernelOp( k, seri, sesri, sei, connectionIndex, alpha_ip[ip], mobility, potGrad_
 else
 {
 
+  // Definition of the arg
+  // Member host decice static inline
+  // Follow up GPU in a separate PR
+  // 
+  
 // Create an output file stream object (ofstream) for analyzing the local solver's performance
 std::ofstream outFile("iterations.csv");
 
