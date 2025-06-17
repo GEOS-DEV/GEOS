@@ -584,9 +584,6 @@ void AcousticWaveEquationDG::synchronizeUnknowns( real64 const & time_n,
                                                                                         CellElementSubRegion & elementSubRegion )
   {
 
-    arrayView2d< real32 const > const p_np1 = elementSubRegion.getField< acousticfieldsdg::Pressure_np1 >();
-    arrayView2d< real32 const > const p_n = elementSubRegion.getField< acousticfieldsdg::Pressure_n >();
-
     FieldIdentifiers fieldsToBeSync;
     fieldsToBeSync.addElementFields( {acousticfieldsdg::Pressure_nm1::key(), acousticfieldsdg::Pressure_n::key(), acousticfieldsdg::Pressure_np1::key()}, regionNames );
 

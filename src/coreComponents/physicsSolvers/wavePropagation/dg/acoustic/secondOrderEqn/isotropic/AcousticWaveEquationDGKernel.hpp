@@ -323,64 +323,66 @@ struct PrecomputePenaltyGeomKernel
   }
 };
 
-struct PrecomputeMassDampingKernel
-{
-  using EXEC_POLICY = parallelDevicePolicy< >;
 
-  /**
-   * @brief Launches the precomputation of the inverse of the reference mass matrix in the bulk, as well as
-   *   the inverse mass + damping term for the boundary elements.
-   * @tparam EXEC_POLICY execution policy
-   * @tparam FE_TYPE finite element type
-   * @param[in] size the number of elements
-   * @param[in] nodeCoords coordinates of the nodes
-   * @param[in] elemsToNodes map from element to nodes
-   * @param[in] elemToOpposite DG element-to-opposite map
-   * @param[out] referenceInvMassMatrix computed M^{-1} for the reference element
-   * @param[out] boundaryInvMassPlusDamping (M + dt/2 D)^{-1} for boundary elements
-   * @param[in] dt time-step
-   */
-  template< typename EXEC_POLICY, typename ATOMIC_POLICY, typename FE_TYPE >
-  static void
-  launch( localIndex const size,
-          arrayView2d< real32 const, nodes::REFERENCE_POSITION_USD > const nodeCoords,
-          arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes,
-          arrayView2d< localIndex const > const & elemsToOpposite,
-          array2d< real64 > & referenceInvMassMatrix,
-          array3d< real64 > & boundaryInvMassPlusDamping,
-          real64 const dt )
-  {
-    // Precompute reference mass matrix for non-boundary elements
-    referenceInvMassMatrix.resizeDimension< 0, 1 >( FE_TYPE::numNodes, FE_TYPE::numNodes );
-    array2d< real64 > massMatrix;
-    massMatrix.resize( FE_TYPE::numNodes, FE_TYPE::numNodes );
-    massMatrix.zero();
-    FE_TYPE::computeReferenceMassMatrix( massMatrix );
-    BlasLapackLA::matrixInverse( massMatrix, referenceInvMassMatrix );
-    // Precompute local mass + damping matrix on the boundary elements
-    localIndex nAbsBdryElems = 0;
-    forAll< EXEC_POLICY >( size, [&] ( localIndex const k )
-    {
-      bool bdry = false;
-      for( int i = 0; i < 4; i++ )
-      {
-        if( elemsToOpposite[ k ][ i ] == -1 )
-        {
-          bdry = true;
-          break;
-        }
-      }
-      if( bdry )
-      {
-        RAJA::atomicInc< ATOMIC_POLICY >( &nAbsBdryElems );
-      }
-    } );
-
-    boundaryInvMassPlusDamping.resizeDimension< 0, 1, 2 >( nAbsBdryElems, FE_TYPE::numNodes, FE_TYPE::numNodes );
-    forAll< EXEC_POLICY >( size, [&] ( localIndex const k )
-    {} );
-  }
-};
+//TODO : in the future if needed for boundary condition 
+//struct PrecomputeMassDampingKernel
+//{
+//  using EXEC_POLICY = parallelDevicePolicy< >;
+//
+//  /**
+//   * @brief Launches the precomputation of the inverse of the reference mass matrix in the bulk, as well as
+//   *   the inverse mass + damping term for the boundary elements.
+//   * @tparam EXEC_POLICY execution policy
+//   * @tparam FE_TYPE finite element type
+//   * @param[in] size the number of elements
+//   * @param[in] nodeCoords coordinates of the nodes
+//   * @param[in] elemsToNodes map from element to nodes
+//   * @param[in] elemToOpposite DG element-to-opposite map
+//   * @param[out] referenceInvMassMatrix computed M^{-1} for the reference element
+//   * @param[out] boundaryInvMassPlusDamping (M + dt/2 D)^{-1} for boundary elements
+//   * @param[in] dt time-step
+//   */
+//  template< typename EXEC_POLICY, typename ATOMIC_POLICY, typename FE_TYPE >
+//  static void
+//  launch( localIndex const size,
+//          arrayView2d< real32 const, nodes::REFERENCE_POSITION_USD > const nodeCoords,
+//          arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes,
+//          arrayView2d< localIndex const > const & elemsToOpposite,
+//          array2d< real64 > & referenceInvMassMatrix,
+//          array3d< real64 > & boundaryInvMassPlusDamping,
+//          real64 const dt )
+//  {
+//    // Precompute reference mass matrix for non-boundary elements
+//    referenceInvMassMatrix.resizeDimension< 0, 1 >( FE_TYPE::numNodes, FE_TYPE::numNodes );
+//    array2d< real64 > massMatrix;
+//    massMatrix.resize( FE_TYPE::numNodes, FE_TYPE::numNodes );
+//    massMatrix.zero();
+//    FE_TYPE::computeReferenceMassMatrix( massMatrix );
+//    BlasLapackLA::matrixInverse( massMatrix, referenceInvMassMatrix );
+//    // Precompute local mass + damping matrix on the boundary elements
+//    localIndex nAbsBdryElems = 0;
+//    forAll< EXEC_POLICY >( size, [&] ( localIndex const k )
+//    {
+//      bool bdry = false;
+//      for( int i = 0; i < 4; i++ )
+//      {
+//        if( elemsToOpposite[ k ][ i ] == -1 )
+//        {
+//          bdry = true;
+//          break;
+//        }
+//      }
+//      if( bdry )
+//      {
+//        RAJA::atomicInc< ATOMIC_POLICY >( &nAbsBdryElems );
+//      }
+//    } );
+//
+//    boundaryInvMassPlusDamping.resizeDimension< 0, 1, 2 >( nAbsBdryElems, FE_TYPE::numNodes, FE_TYPE::numNodes );
+//    forAll< EXEC_POLICY >( size, [&] ( localIndex const k )
+//    {} );
+//  }
+//};
 
 
 
