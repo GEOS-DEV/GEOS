@@ -157,7 +157,7 @@ Single-phase simulation statistics
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This component manages and computes statistics for single-phase fluid simulations.
-The output generated gives the following information for a given wrapper\ [*]_, a given region at a
+The output generated gives the following information for a given wrapper\ [1]_, a given region at a
 given time:
 
 - **Pressure [Pa]:**
@@ -184,7 +184,7 @@ given time:
 The output can be saved in the log file if this option is specified (as mentionned `here <#how-to-generate-these-outputs>`_) when the program is run.
 
 
-.. [*] A wrapper is a tool that makes a software component (such as a material model or a solver) accessible and configurable from input files.
+.. [1] A wrapper is a tool that makes a software component (such as a material model or a solver) accessible and configurable from input files.
   It is used to connect the inside of the GEOS code with what you can see, modify and use. 
   For example, CompositionalMultiphaseFVM is a solver and its associated wrapper allow us to configure it via input files. 
   You can find more information in the following page `Wrapper <https://geosx-geosx.readthedocs-hosted.com/en/latest/coreComponents/dataRepository/docs/Wrapper.html?_sm_au_=iVVFWf2SqSTnZPfQQ0WpHK6H8sjL6>`_.
@@ -246,21 +246,21 @@ At each simulation timestep, the following quantities are reported:
 
   This gives us the number of moles of fluid present for each phase.
 
-- **Trapped phase mass (metric 1) [Mass or Mole]:**
+- **Trapped phase mass (metric 1\ [2]_) [Mass or Mole]:**
 
-  This gives us, for each phase, the number of moles of fluid trapped in the system, representing the mass of the non-mobile phase.
+  This gives us, for each phase, the mass of fluid that is immobile because it is trapped in the porous structure.
 
-- **nonTrappedPhaseMass [Mass or Mole]:**
+- **Non-trapped phase mass (metric 1\ [2]_) [Mass or Mole]:**
 
-  This gives us, for each phase, the number of moles of free fluid in the system, representing the mass of the mobile phase.
+  This gives us, for each phase, the potentially mobile mass of fluid, i.e. not trapped but not necessarily in motion.
 
-- **Immobile phase mass (metric 2) [Mass or Mole]:**
+- **Immobile phase mass (metric 2\ [3]_) [Mass or Mole]:**
 
-  This gives us, for each phase, the number of moles of fluid remaining immobile in the system, indicating the mass of the non-mobile phase.
+  This gives us, for each phase, the mass of fluid that does not move in the simulation, for whatever reason (trapped, viscosity, pressure threshold, etc.).
 
-- **Mobile phase mass (metric 2) [Mass or Mole]:**
+- **Mobile phase mass (metric 2\ [3]_) [Mass or Mole]:**
 
-  This gives us, for each phase, the number of moles of fluid able to move freely in the system, thus representing the mass of the mobile phase.
+  This gives us, for each phase, the mass of the fluid that is in motion or that can move depending on the simulation conditions.
 
 - **Component mass [Mass or Mole]:**
 
@@ -269,6 +269,9 @@ At each simulation timestep, the following quantities are reported:
 
 The output can be saved in the log file and/or a CSV file if these options are specified (as mentionned `here <#how-to-generate-these-outputs>`_) when the program is run.
 
+.. [2] Metric 1 is based on the fluid's ability to be trapped or not, regardless of its actual mobility.
+
+.. [3] Metric 2 is based on the effective mobility of the fluid in the system.
 
 SourceFlux
 ----------
