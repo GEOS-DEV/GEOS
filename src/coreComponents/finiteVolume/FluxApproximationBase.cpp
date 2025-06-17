@@ -133,6 +133,9 @@ void FluxApproximationBase::initializePostInitialConditionsPreSubGroups()
         // but between the fracture and the matrix as well).
         computeFractureStencil( mesh );
 
+        // Register connection map
+        fillConnectionMap( mesh );
+
         Group & stencilParentGroup = mesh.getGroup( groupKeyStruct::stencilMeshGroupString() );
         Group & stencilGroup = stencilParentGroup.getGroup( getName() );
         // For each face-based Dirichlet boundary condition on target field, create a boundary stencil
@@ -184,6 +187,11 @@ void FluxApproximationBase::addFieldName( string const & name )
 void FluxApproximationBase::setCoeffName( string const & name )
 {
   m_coeffName = name;
+}
+
+void FluxApproximationBase::fillConnectionMap( MeshLevel & mesh ) const
+{
+  return;
 }
 
 

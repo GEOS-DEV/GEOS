@@ -151,7 +151,7 @@ private:
    * 
    * @param mesh The mesh object.
    */
-  void fillConnectionMap( MeshLevel & mesh ) const;                             
+  virtual void fillConnectionMap( MeshLevel & mesh ) const override;                             
 
   /// mean permeability coefficient
   real64 m_meanPermCoefficient;

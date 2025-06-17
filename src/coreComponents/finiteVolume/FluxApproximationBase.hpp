@@ -237,6 +237,12 @@ protected:
   virtual void computeCellStencil( MeshLevel & mesh ) const = 0;
 
   /**
+   * @brief Fill the connection map for the stencils.
+   * @param[inout] mesh the mesh on which to perform the computation.
+   */
+  virtual void fillConnectionMap( MeshLevel & mesh ) const;
+
+  /**
    * @brief Actual Computation of the fracture related stencils.
    * @param[inout] mesh the mesh on which to perform the computation.
    *

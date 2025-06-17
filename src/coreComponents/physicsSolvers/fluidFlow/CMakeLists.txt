@@ -109,6 +109,8 @@ set( fluidFlowSolvers_headers
      kernels/compositional/ThermalSolutionCheckKernel.hpp
      kernels/compositional/ThermalSolutionScalingKernel.hpp
      kernels/immiscibleMultiphase/ImmiscibleMultiphaseKernels.hpp
+     kernels/immiscibleMultiphase/ImmiscibleTrustRegionKernels.hpp
+     kernels/immiscibleMultiphase/KernelLaunchSelectors.hpp
      wells/CompositionalMultiphaseWell.hpp
      wells/CompositionalMultiphaseWellFields.hpp
      wells/SinglePhaseWell.hpp
