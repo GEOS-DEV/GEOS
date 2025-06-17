@@ -172,7 +172,7 @@ given time:
 
   This gives us the minimum, average and maximum temperature for this region.
 
-- **Total dynamic pore volume [rm^3]:**
+- **Total dynamic pore volume [rm³]:**
 
   This gives us the total pore volume available in a rock reservoir that can hold fluids.
 
@@ -234,11 +234,11 @@ At each simulation timestep, the following quantities are reported:
 
   This gives us the pressure loss or gain in the reservoir since the start of the simulation.
 
-- **Total dynamic pore volume [rm^3]:**
+- **Total dynamic pore volume [rm³]:**
 
   This gives us the total pore volume available for all phases combined.
 
-- **Phase dynamic pore volume [rm^3]:**
+- **Phase dynamic pore volume [rm³]:**
 
   This gives us the pore volume available for each phase.
 
@@ -352,11 +352,11 @@ The files provide the following informations:
 
   The total connection rate of the fluid to the well.
 
-- **Total volumetric production rate [m^3/s]:**
+- **Total volumetric production rate [m³/s]:**
 
   The total volumetric rate of the fluid. It is the total flow rate out of the well. 
 
-- **Volumetric production rate for each phase [m^3/s]::**
+- **Volumetric production rate for each phase [m³/s]::**
 
   The volumetric rates for each phase like oil, gas, water. 
 
