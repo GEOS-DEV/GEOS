@@ -73,6 +73,14 @@ struct CubicEOSPhaseModel
 {
   using Deriv = geos::constitutive::multifluid::DerivativeOffset;
 
+  // Enumeration for selected root
+  enum class SelectedRoot : int
+  {
+    AUTO = 0,
+    MINIMUM = 1,
+    MAXIMUM = 2
+  };
+
   template< typename T, bool DERIVATIVES >
   struct StackVariables_Impl
   {
@@ -193,13 +201,13 @@ public:
    * @param[in] componentProperties The compositional component properties
    * @param[out] compressibilityFactor the current compressibility factor
    */
-  template< integer USD1, integer USD2 >
+  template< integer USD >
   GEOS_HOST_DEVICE
   static void
   computeCompressibilityFactor( integer const numComps,
                                 real64 const & pressure,
                                 real64 const & temperature,
-                                arraySlice1d< real64 const, USD1 > const & composition,
+                                arraySlice1d< real64 const, USD > const & composition,
                                 ComponentProperties::KernelWrapper const & componentProperties,
                                 real64 & compressibilityFactor );
 
@@ -283,6 +291,7 @@ public:
    * @param[in] data The component mixture properties
    * @param[out] compressibilityFactor compressibility factor
    * @param[out] compressibilityFactorDerivs derivatives of the compressibility factor
+   * @param[in] selectedRoot Indicates which root is to be preferred in the case of 3 roots
    */
   template< integer USD, bool DERIVATIVES = false >
   GEOS_HOST_DEVICE
@@ -292,7 +301,8 @@ public:
                                 arraySlice2d< real64 const > const & binaryInteractionCoefficients,
                                 StackVariables< DERIVATIVES > const & data,
                                 real64 & compressibilityFactor,
-                                typename StackVariables< DERIVATIVES >::DerivativeType<> const & compressibilityFactorDerivs );
+                                typename StackVariables< DERIVATIVES >::DerivativeType<> const & compressibilityFactorDerivs,
+                                SelectedRoot const selectedRoot = SelectedRoot::AUTO );
 
   /**
    * @brief Compute the log of the fugacity coefficients using compositions, BICs, compressibility factor and mixture coefficients

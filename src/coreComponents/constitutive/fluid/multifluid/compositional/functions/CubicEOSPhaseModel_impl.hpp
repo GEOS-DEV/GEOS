@@ -186,14 +186,14 @@ computeLogFugacityCoefficientsAndDerivs( integer const numComps,
 }
 
 template< typename EOS_TYPE >
-template< integer USD1, integer USD2 >
+template< integer USD >
 GEOS_HOST_DEVICE
 void
 CubicEOSPhaseModel< EOS_TYPE >::
 computeCompressibilityFactor( integer const numComps,
                               real64 const & pressure,
                               real64 const & temperature,
-                              arraySlice1d< real64 const, USD1 > const & composition,
+                              arraySlice1d< real64 const, USD > const & composition,
                               ComponentProperties::KernelWrapper const & componentProperties,
                               real64 & compressibilityFactor )
 {
@@ -307,29 +307,36 @@ computePureCoefficients( integer const ic,
   real64 const alpha = sqrtAlpha*sqrtAlpha;
 
   // Values
-  stack.aic[ic] = EOS_TYPE::omegaA * Pr / (Tr*Tr) * alpha;
-  stack.bic[ic] = EOS_TYPE::omegaB * Pr / Tr;
+  stack.aic[ic] = EOS_TYPE::omegaA * Pr * alpha / (Tr*Tr);
+  stack.bic[ic] = EOS_TYPE::omegaB * Pr  / Tr;
 
   if constexpr (DERIVATIVES)
   {
-    // Derivatives of alpha
-    real64 const dalpha_dT = -kappa * sqrtAlpha / (Tc * sqrtTr);
-    real64 const d2alpha_dT2 = kappa * (kappa + 1.0) / (2.0 * Tc * Tc * Tr);
     // Derivatives w.r.t pressure
-    stack.daic_dp[ic] = EOS_TYPE::omegaA * alpha / (Tr * Tr * Pc);
-    stack.dbic_dp[ic] = EOS_TYPE::omegaB / (Tr * Pc);
+    stack.daic_dp[ic] = EOS_TYPE::omegaA * alpha / (Pc * Tr * Tr);
+    stack.dbic_dp[ic] = EOS_TYPE::omegaB / (Pc * Tr);
 
     // Derivatives w.r.t temperature
-    stack.daic_dt[ic] = EOS_TYPE::omegaA * Pr * ((dalpha_dT / (Tr * Tr)) - (2.0 * alpha / (Tc * Tr * Tr)));
+
+    // Derivatives of alpha
+    real64 const dalpha_dTr = -kappa / (2.0 * sqrtTr) * 2.0 * sqrtAlpha;
+    real64 const d2alpha_dTr2 = kappa / (4.0 * Tr * sqrtTr) * 2.0 * sqrtAlpha - kappa * kappa / (4.0 * Tr);
+
+    // Convert to temperature derivatives
+    real64 const dTr_dT = 1.0 / Tc;
+
+    real64 const dalpha_dT = dalpha_dTr * dTr_dT;
+    real64 const d2alpha_dT2 = d2alpha_dTr2 * dTr_dT * dTr_dT;
+
+    real64 const da_dT = EOS_TYPE::omegaA * Pr * (dalpha_dT / (Tr * Tr) - 2.0 * alpha / (Tc * Tr * Tr * Tr));
+    real64 const d2a_dT2 = EOS_TYPE::omegaA * Pr / (Tr * Tr) * (d2alpha_dT2 - 4.0 * dalpha_dT / (Tc * Tr ) + 6.0 * alpha / (Tc * Tc * Tr * Tr));
+
+    stack.daic_dt[ic] = da_dT;
     stack.dbic_dt[ic] = -EOS_TYPE::omegaB * Pr / (Tc * Tr * Tr);
 
     // Second derivatives w.r.t temperature
-    stack.d2aic_dt2[ic] = EOS_TYPE::omegaA * Pr * (
-      (d2alpha_dT2 / (Tr * Tr))
-      - (4.0 * dalpha_dT / (Tc * Tr * Tr))
-      + (6.0 * alpha / (Tc * Tc * Tr * Tr))
-      );
-    stack.d2bic_dt2[ic] = 2.0 * EOS_TYPE::omegaB * Pr / (Tc * Tc * Tr * Tr);
+    stack.d2aic_dt2[ic] = d2a_dT2;
+    stack.d2bic_dt2[ic] =  2.0 * EOS_TYPE::omegaB * Pr / (Tc * Tc * Tr * Tr * Tr);
   }
 }
 
@@ -357,7 +364,7 @@ computeMixtureCoefficients( integer const numComps,
   {
     for( integer jc = 0; jc < numComps; ++jc )
     {
-      stack.aMixture += composition[ic] * composition[jc] * ( 1.0 - kij( ic, jc ) ) * sqrt( stack.aic[ic] * stack.aic[jc] );
+      stack.aMixture += composition[ic] * composition[jc] * ( 1.0 - kij( ic, jc ) ) * LvArray::math::sqrt( stack.aic[ic] * stack.aic[jc] );
     }
     stack.bMixture += composition[ic] * stack.bic[ic];
   }
@@ -367,7 +374,6 @@ computeMixtureCoefficients( integer const numComps,
     LvArray::forValuesInSlice( stack.dbMixture, setZero );
     for( integer ic = 0; ic < numComps; ++ic )
     {
-      stack.dbMixture[Deriv::dC+ic] = stack.bic[ic];
       for( integer jc = 0; jc < numComps; ++jc )
       {
         real64 const sqrt_aiaj = LvArray::math::sqrt( stack.aic[ic] * stack.aic[jc] );
@@ -382,9 +388,11 @@ computeMixtureCoefficients( integer const numComps,
         stack.daMixture[Deriv::dP] += composition[ic] * composition[jc] * daij_dP;
         stack.daMixture[Deriv::dT] += composition[ic] * composition[jc] * daij_dT;
         stack.daMixture[Deriv::dC+ic] += composition[jc] * aij;
+        stack.daMixture[Deriv::dC+jc] += composition[ic] * aij;
       }
       stack.dbMixture[Deriv::dP] += composition[ic] * stack.dbic_dp[ic];
       stack.dbMixture[Deriv::dT] += composition[ic] * stack.dbic_dt[ic];
+      stack.dbMixture[Deriv::dC+ic] = stack.bic[ic];
     }
   }
 }
@@ -399,13 +407,14 @@ computeCompressibilityFactor( integer const numComps,
                               arraySlice2d< real64 const > const & binaryInteractionCoefficients,
                               StackVariables< DERIVATIVES > const & stack,
                               real64 & compressibilityFactor,
-                              typename StackVariables< DERIVATIVES >::DerivativeType<> const & compressibilityFactorDerivs )
+                              typename StackVariables< DERIVATIVES >::DerivativeType<> const & compressibilityFactorDerivs,
+                              SelectedRoot const selectedRoot )
 {
   // a Z^3 + b Z^2 + c Z + d = 0
   real64 const A = stack.aMixture;
   real64 const B = stack.bMixture;
-  real64 const d1pd2 = EOS_TYPE::delta1 + EOS_TYPE::delta2;
-  real64 const d1xd2 = EOS_TYPE::delta1 * EOS_TYPE::delta2;
+  real64 constexpr d1pd2 = EOS_TYPE::delta1 + EOS_TYPE::delta2;
+  real64 constexpr d1xd2 = EOS_TYPE::delta1 * EOS_TYPE::delta2;
 
   real64 const a = 1.0;
   real64 const b = (d1pd2 - 1.0) * B - 1.0;
@@ -422,9 +431,52 @@ computeCompressibilityFactor( integer const numComps,
   }
   else
   {
-    GEOS_UNUSED_VAR( binaryInteractionCoefficients );
-    GEOS_UNUSED_VAR( composition );
-    compressibilityFactor = roots[0];
+    // Choose
+    real64 zMin = LvArray::NumericLimits< real64 >::max;
+    real64 zMax = -LvArray::NumericLimits< real64 >::max;
+    for( integer r = 0; r < numRoots; r++ )
+    {
+      if( roots[r] > B )
+      {
+        zMin = LvArray::math::min( zMin, roots[r] );
+        zMax = LvArray::math::max( zMax, roots[r] );
+      }
+    }
+    if( selectedRoot == SelectedRoot::MINIMUM )
+    {
+      compressibilityFactor = zMin;
+    }
+    else if( selectedRoot == SelectedRoot::MAXIMUM )
+    {
+      compressibilityFactor = zMax;
+    }
+    else
+    {
+      integer constexpr maxNumComp = StackVariables< true >::maxNumComp;
+      real64 minEnergy = LvArray::NumericLimits< real64 >::max;
+      StackArray< real64, 1, maxNumComp > logFugacityCoefficients( numComps );
+      for( real64 const z : {zMin, zMax} )
+      {
+        computeLogFugacityCoefficients< USD, false >( numComps,
+                                                      composition,
+                                                      binaryInteractionCoefficients,
+                                                      stack,
+                                                      z,
+                                                      nullptr,
+                                                      logFugacityCoefficients.toSlice(),
+                                                      nullptr );
+        real64 dG = 0.0;
+        for( integer ic = 0; ic < numComps; ++ic )
+        {
+          dG += composition[ic] * logFugacityCoefficients[ic];
+        }
+        if( dG < minEnergy )
+        {
+          minEnergy = dG;
+          compressibilityFactor = z;
+        }
+      }
+    }
   }
   if constexpr (DERIVATIVES)
   {
@@ -518,7 +570,7 @@ computeLogFugacityCoefficients( integer const numComps,
       for( integer jc = 0; jc < numComps; ++jc )
       {
         real64 const sqrtAic_jc = LvArray::math::sqrt( stack.aic[jc] );
-        real64 const kij = binaryInteractionCoefficients[ic][jc];
+        real64 const kij = binaryInteractionCoefficients( ic, jc );
 
         // Derivative with respect to pressure
         real64 const dSqrt_dP = 0.5 * (sqrtAic_jc / sqrtAic_ic * stack.daic_dp[ic] + sqrtAic_ic / sqrtAic_jc * stack.daic_dp[jc]);
@@ -552,7 +604,7 @@ computeLogFugacityCoefficients( integer const numComps,
       for( integer ic = 0; ic < numComps; ++ic )
       {
         real64 const Bi = stack.bic[ic] / B;
-        real64 dBi_dX = -B*dB[idof] / B;
+        real64 dBi_dX = -Bi*dB[idof] / B;
         if( idof == Deriv::dP )
         {
           dBi_dX += stack.dbic_dp[ic] / B;
