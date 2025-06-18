@@ -1863,7 +1863,7 @@ protected:
 
 GEOS_HOST_DEVICE
 inline
-static void local_solver(real64 uT, std::vector<real64> saturations, std::vector<real64> const relPermWrapper, std::vector<real64> const capPressureWrapper){
+static void local_solver(real64 uT, std::vector<real64> saturations, std::vector<RelativePermeabilityBase> const relPermWrapper, std::vector<CapillaryPressureBase> const capPressureWrapper, std::vector<real64> phi, std::vector<real64> grad_phi){
   
   int aka = 0;
 }
