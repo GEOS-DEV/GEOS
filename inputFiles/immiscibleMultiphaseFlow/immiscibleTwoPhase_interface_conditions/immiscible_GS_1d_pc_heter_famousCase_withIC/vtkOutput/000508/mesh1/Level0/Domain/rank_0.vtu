@@ -1,0 +1,194 @@
+<?xml version="1.0"?>
+<VTKFile type="UnstructuredGrid" version="0.1" byte_order="LittleEndian" header_type="UInt32" compressor="vtkZLibDataCompressor">
+  <UnstructuredGrid>
+    <FieldData>
+      <DataArray type="Float64" Name="TIME" NumberOfTuples="1" format="binary" RangeMin="41904000" RangeMax="41904000">
+        AQAAAACAAAAIAAAAEAAAAA==eJxjYGBgsPnd7AgABTAB/A==
+      </DataArray>
+    </FieldData>
+    <Piece NumberOfPoints="84" NumberOfCells="20">
+      <PointData>
+        <DataArray type="Int64" Name="localToGlobalMap" format="binary" RangeMin="0" RangeMax="83">
+          AQAAAACAAACgAgAAlQAAAA==eJwtxdciAgAAAMCWRIhEWW2VjJZCRVF2FP7/X3pw93KBwL+gQw474hVHveqY17zuuDe86S0nvO0dJ73rlPe877QzPvChj3zsE2edc94FF11y2aeuuOqaz1z3uS986Ss33HTLbXd87a57vvGt79z3wEPf+8Ejj/3oJ0889bNf/Oo3v/vDn575y9+ee+Ef//rPSxHkDZ8=
+        </DataArray>
+        <DataArray type="Int32" Name="ghostRank" format="binary" RangeMin="-2" RangeMax="-2">
+          AQAAAACAAABQAQAAEQAAAA==eJz79////3+jmGoYACFETmw=
+        </DataArray>
+      </PointData>
+      <CellData>
+        <DataArray type="Float64" Name="relperm_phaseTrappedVolFraction" NumberOfComponents="2" ComponentName0="gas" ComponentName1="water" format="binary" RangeMin="0" RangeMax="0">
+          AQAAAACAAABAAQAADQAAAA==eJxjYBgFlAAAAUAAAQ==
+          <InformationKey name="L2_NORM_RANGE" location="vtkDataArray" length="2">
+            <Value index="0">
+              0
+            </Value>
+            <Value index="1">
+              0
+            </Value>
+          </InformationKey>
+        </DataArray>
+        <DataArray type="Float64" Name="relperm_phaseRelPerm" NumberOfComponents="2" ComponentName0="gas" ComponentName1="water" format="binary" RangeMin="0.3491419135485913" RangeMax="0.997501691201659">
+          AQAAAACAAABAAQAAQAEAAA==eJxrVHqcWyb0xl4yXoHBOizVPpHLRC908kv7zr2rdmfL1Nk/duzweSD23N5dJLx7yZo++2DpmZze2U/s9c3aNvpumW1/5AbvZB7eh/ZOkhz9lvEr7Vnuiy9dtu6K/XSNUwfOvTpgv3+x5yzVuJ32UYlnpeR8rtt3nv5Z0XJosX1gjEt49NcH9qJCYewn1k+yd+zac/xV6hP7ikyrnXdEau3TjKaFmx95bm9Zfaez6tV7+3bdmW+D+zbZZVSc+tn++r394pxLfbtPbLDbZbN2VQeQ/+LqLteZxzfYSU/0ywLxT62Y9JwJKM/D2iUL4tsdbH7cAOTP+FtxB6S/Wf7DmtdA/pw9m/pB/AkRkuszT26wUzy7zBfEd0h1Er8G5Iuava4B8bP/PWzsAPK339+V4QjkH+C+/C/YdqMdAOp4oqY=
+          <InformationKey name="L2_NORM_RANGE" location="vtkDataArray" length="2">
+            <Value index="0">
+              0.34914191355
+            </Value>
+            <Value index="1">
+              0.9975016912
+            </Value>
+          </InformationKey>
+        </DataArray>
+        <DataArray type="Float64" Name="rockPorosity_referencePorosity" format="binary" RangeMin="0.25" RangeMax="0.25">
+          AQAAAACAAACgAAAAEQAAAA==eJxjYACBC/YMg5QGAG92FS0=
+        </DataArray>
+        <DataArray type="Float64" Name="rockPorosity_porosity" format="binary" RangeMin="0.25231336214886163" RangeMax="0.2525050373253556">
+          AQAAAACAAACgAAAAmQAAAA==eJwrPh/xmEvzgn3/HVaFGxoX7E/xmm5ZCqSL+Hj/FANphdBpB5yB9Ob7kj8kgHSJaogFM5Cet2mK2y/1C/aaXvPOfAbSIn4Ktu+AdHL+8ltbgfSHJZbZTUB6gwDfHz8gLVD1oEcaSO9ftkH2hdoF+74Jdeu2AOkiWy/7RiC9ernwBV8g/W3LrQQpIN1ZvfHjM9UL9gCcxEnk
+        </DataArray>
+        <DataArray type="Float64" Name="rockPerm_permeability" NumberOfComponents="3" format="binary" RangeMin="8.547006493867708e-14" RangeMax="1.9230764611202342e-13">
+          AQAAAACAAADgAQAAHQAAAA==eJyTOW2hU+lgbyszQui8t37qHce1RwwNAL9ZtNM=
+          <InformationKey name="L2_NORM_RANGE" location="vtkDataArray" length="2">
+            <Value index="0">
+              8.5470064939e-14
+            </Value>
+            <Value index="1">
+              1.9230764611e-13
+            </Value>
+          </InformationKey>
+        </DataArray>
+        <DataArray type="Float64" Name="fluid_phaseViscosity" NumberOfComponents="2" format="binary" RangeMin="0.001414213562373095" RangeMax="0.001414213562373095">
+          AQAAAACAAABAAQAAFQAAAA==eJz7s/LjJd+kAPs/ozRZNABRG7nx
+          <InformationKey name="L2_NORM_RANGE" location="vtkDataArray" length="2">
+            <Value index="0">
+              0.0014142135624
+            </Value>
+            <Value index="1">
+              0.0014142135624
+            </Value>
+          </InformationKey>
+        </DataArray>
+        <DataArray type="Float64" Name="capPressure_phaseCapPressure" NumberOfComponents="2" ComponentName0="water" ComponentName1="gas" format="binary" RangeMin="50913.25524962336" RangeMax="83745.0380047775">
+          AQAAAACAAABAAQAArAAAAA==eJwTdWLU1rjzwoEBClRWn37pJPUSzs98FL7wejSCL59u+Sd8NYI/R0bxAJfKKzh/gcX3bcLVr+H8Do9i7tC/7+D8xZO0zdi5PsL54pO/sG2p/QTnH3+6arZA0Rc435+L27EoHSG/eePZ9y5IfI9drDPVkfibDqQGcCHxFaqDON6mIfiVSrH7zyPx9X++LNuExO/sXaw7FYm/81DB3XIkPlei5644JD4AY0lNTQ==
+          <InformationKey name="L2_NORM_RANGE" location="vtkDataArray" length="2">
+            <Value index="0">
+              50913.25525
+            </Value>
+            <Value index="1">
+              83745.038005
+            </Value>
+          </InformationKey>
+        </DataArray>
+        <DataArray type="Float64" Name="fluid_phaseDensity" NumberOfComponents="2" format="binary" RangeMin="1004.987562112089" RangeMax="1004.987562112089">
+          AQAAAACAAABAAQAAFwAAAA==eJxjYAACh34HBjCIhNCjfKL5AJQMISE=
+          <InformationKey name="L2_NORM_RANGE" location="vtkDataArray" length="2">
+            <Value index="0">
+              1004.9875621
+            </Value>
+            <Value index="1">
+              1004.9875621
+            </Value>
+          </InformationKey>
+        </DataArray>
+        <DataArray type="Int64" Name="FlowSolver_elemDofField_dofIndex" format="binary" RangeMin="0" RangeMax="38">
+          AQAAAACAAACgAAAANgAAAA==eJwtxdEGgDAAAMDJJJnJTDKTJP3/J+5hdy8XwrQ4evXm3cnZh4urT19u7r79+PXn3wNTwAF9
+        </DataArray>
+        <DataArray type="Float64" Name="phaseMobility" NumberOfComponents="2" format="binary" RangeMin="65558.60584225475" RangeMax="997501.6912011626">
+          AQAAAACAAABAAQAAQgEAAA==eJy78iG5svuolmPfpo7Hke4FDmaSLC9YUzQcd22e+5HvZ5vDt4U1DLysao4r7vd5iqdPd5jsvnm2UqWyo/nWhrb/Sksdeh+8vXjVScHx6N33M8uiNzu8/n4yJX6nsKN+xZtdnhdOOuQ+ChfxNfzhEHbx0nanYw8d5CXfz9W98cghdj1HQ9KDlw7hgvLx2pcuOpQJsMUzK7x32Ltjqv/P3bsdQo4zVT5W/ORQ0rHwyM98PUeJ29kXcgL22NtIm+z8VaDnyHL1rIH3nJ32dnJPE38D+UvM2BwmzNppH3W1UQXEP6sxK89w9k57iy3et0Hq977SWP0RyN8RZDcXxBd9dnDOFKD+5xPYQkD8wzznHoXM3Wn/4xmnKIi/f72t7y8gf8EBWScQ/1qZ/utmIL/pOkvudiD/3PEtXiZ+u+wBsjObcg==
+          <InformationKey name="L2_NORM_RANGE" location="vtkDataArray" length="2">
+            <Value index="0">
+              65558.605842
+            </Value>
+            <Value index="1">
+              997501.6912
+            </Value>
+          </InformationKey>
+        </DataArray>
+        <DataArray type="Float64" Name="bcPhaseVolumeFraction" NumberOfComponents="2" format="binary" RangeMin="0" RangeMax="0">
+          AQAAAACAAABAAQAADQAAAA==eJxjYBgFlAAAAUAAAQ==
+          <InformationKey name="L2_NORM_RANGE" location="vtkDataArray" length="2">
+            <Value index="0">
+              0
+            </Value>
+            <Value index="1">
+              0
+            </Value>
+          </InformationKey>
+        </DataArray>
+        <DataArray type="Float64" Name="phaseMass" NumberOfComponents="2" format="binary" RangeMin="20556.89359971304" RangeMax="126079.50164997976">
+          AQAAAACAAABAAQAASwEAAA==eJwBQAG//hykDBUTQP1AEgRuK6kihEB7EvvP4S38QK6woNi96ZBA3PAoRWsM+0DUm8Wf5iOYQKGK0nrvv/lAp47dYLY4oEAjY2t8EvX3QOzqncXs86VAaguo3vic80DeFhgC0OyxQP326btVcuhATp/r1nC/vUC+QHw218PgQI3xwMdD8sFAUhUC23rZ2EDYNrKcqq7DQNVr8GnMCNFAwogIBMU+xUDxlKoV8sf+QPGdrob6iypAUYMrBPjH/kBl6OO0Dz8pQPHAIUeWx/5AoOPV/+Q9KUArrQUtNMf+QLCmuxLkPSlANOEdDtLG/kDUAq5w8j0pQHq9tfNvxv5At0KFW/I9KUDRIMbUDcb+QIzwA7cAPilAuvf1uavF/kAKgkTTAT4pQI9208pJxf5AxoHMG3c9KUDYSCvEzMT+QC2BDnCekylA+eSpYw==
+          <InformationKey name="L2_NORM_RANGE" location="vtkDataArray" length="2">
+            <Value index="0">
+              20556.8936
+            </Value>
+            <Value index="1">
+              126079.50165
+            </Value>
+          </InformationKey>
+        </DataArray>
+        <DataArray type="Float64" Name="phaseVolumeFraction" NumberOfComponents="2" format="binary" RangeMin="0.7220518620077728" RangeMax="0.999000427069238">
+          AQAAAACAAABAAQAAMwEAAA==eJxb+uZi3OvYd/YbTB8KeSmusp++Tr52nuNbe49uJnGez1vtm9muqOSLvrF/cTr+ZlvIfnvbHbNZe/a8sueRn/jyPO9Re6XNB3ckP3hhX2H8U6aw7oy9i+PyaVdin9hX1G68FOZy3X7f2+17biXdtFfkXLJwkt9j+wP5vxMvZVy0V/BgOj/N+7m9SmqNJ/+5k/bbny3Qrel5aW8dwxVbveGg/ceMvRoPJ7+2N5R5WJn0/b09w7zjtjzWgfaiZw5nnQPxr6VXaCUH2LfKLNgI5n87tn9OUoC90r5r08H8Pc1BF4D8oleilWC+jPYVXqD6HAnWeDBf4/xXRyA/aaqzA5hvc7WiHshfa39OFcxf1pC8Bcg3Wr/XAsyfs7ClD8i//+O86iYQ34kvYcvsAHsAfNGdsA==
+          <InformationKey name="L2_NORM_RANGE" location="vtkDataArray" length="2">
+            <Value index="0">
+              0.72205186201
+            </Value>
+            <Value index="1">
+              0.99900042707
+            </Value>
+          </InformationKey>
+        </DataArray>
+        <DataArray type="Float64" Name="temperature" format="binary" RangeMin="300" RangeMax="300">
+          AQAAAACAAACgAAAAEgAAAA==eJxjYACCA0UODIOUBgDZyBzp
+        </DataArray>
+        <DataArray type="Float64" Name="elementVolume" format="binary" RangeMin="499.9999999999987" RangeMax="500.0000000000013">
+          AQAAAACAAACgAAAAMgAAAA==eJz7/x8I7OsdGEDAAUH/JyCOLv8byheH8l9C+SxQ/j8onwvK/4HG/4dmHkweAD+5RbY=
+        </DataArray>
+        <DataArray type="Float64" Name="deltaPressure" format="binary" RangeMin="0" RangeMax="0">
+          AQAAAACAAACgAAAADAAAAA==eJxjYBjcAAAAoAAB
+        </DataArray>
+        <DataArray type="Float64" Name="elementCenter" NumberOfComponents="3" format="binary" RangeMin="7.5" RangeMax="97.75607398008576">
+          AQAAAACAAADgAQAAVwAAAA==eJxjYAABEQcGFJoFjQ+j5XCIa2IXbzDEIW6GQ9wau7iDA3bxA0441LviUO+OQ70XDvU+ONT7Yxd/EIBdXCEIu3hCMHbxBSE4zA/FYX44DvMjHAD94B9u
+          <InformationKey name="L2_NORM_RANGE" location="vtkDataArray" length="2">
+            <Value index="0">
+              7.5
+            </Value>
+            <Value index="1">
+              97.75607398
+            </Value>
+          </InformationKey>
+        </DataArray>
+        <DataArray type="Int32" Name="ghostRank" format="binary" RangeMin="-2" RangeMax="-2">
+          AQAAAACAAABQAAAADwAAAA==eJz79////39UxACZFE+d
+        </DataArray>
+        <DataArray type="Float64" Name="pressure" format="binary" RangeMin="19253448.595446493" RangeMax="20020149.301422533">
+          AQAAAACAAACgAAAAqwAAAA==eJwBoABf/2+g0lS7F3NBUaAmn+kLc0HGSWJJLABzQSYRJ8iY9HJBNwT26V3pckFV4+nWZ99yQbWy0X1X2nJBS082XkLYckH2xPFXwNZyQfSoM+l01XJB2eydH1TIckHyS7JXWrxyQcYxMZ9gsHJBW1Q45makckG1H7osbZhyQY0jtXJzjHJBu8IquHmAckHbphn9f3RyQTOye0GGaHJB5/KGiYxcckFnDU4q
+        </DataArray>
+        <DataArray type="Int64" Name="localToGlobalMap" format="binary" RangeMin="0" RangeMax="19">
+          AQAAAACAAACgAAAAMAAAAA==eJwtxUkCgBAAAECpiKLt/391MHOZEKbF0as3707OPlxcffpyc/ftx68//x4qMAC/
+        </DataArray>
+      </CellData>
+      <Points>
+        <DataArray type="Float32" Name="Points" NumberOfComponents="3" format="binary" RangeMin="0" RangeMax="100.99504938362078">
+          AQAAAACAAADwAwAAvgAAAA==eJxt0LENwyAQBVAPkCEYwgMkqTyEh2AG19TUV7t2Tc04HiFyQfwU5STEv+PpCqbJSq/pb3/dv2/xvGdXHm7MR3aX+5x5RmX6jM/YjA984AMf+I7v+I7v+BN/4k/8iX+8b3/l4cd85O//4BM+4RN+xs/4GT/jF/yCX/ALfsWv+BW/4jM+4zM+4zf8ht/wG77gC77gC77iK77iKz7wgQ984Hf8jt/xO/7AH/gDf+AbvuEbvuE7vuM7vr8/34Vc6Q==
+          <InformationKey name="L2_NORM_RANGE" location="vtkDataArray" length="2">
+            <Value index="0">
+              0
+            </Value>
+            <Value index="1">
+              100.99504938
+            </Value>
+          </InformationKey>
+        </DataArray>
+      </Points>
+      <Cells>
+        <DataArray type="Int64" Name="connectivity" format="binary" RangeMin="0" RangeMax="83">
+          AQAAAACAAAAABQAArgAAAA==eJyNyUVCAgAABVFABOmSlm4JpUG6kVDi/ndhwRzgz+YtxmB4ZsQXNKEZX9GKFvG/oQ0daBe/E13oQbf4vejDAPrF/45BDGNI/BGMYhxj4v/ABKYwKf40ZjCHWfHnsYAlLIq/jBWs4qf4a1jHL2yI/xub2MaW+DvYxT72xD/AIY7wR/xjnOAMp+Kf4wJXuBT/Gje4w6349/iLRzyI/4Rn/Mc/8V/wine84QNmVBnx
+        </DataArray>
+        <DataArray type="Int64" Name="offsets" format="binary" RangeMin="8" RangeMax="160">
+          AQAAAACAAACgAAAAOwAAAA==eJwtxRECgDAAAMBhOAzDMByGw2E4HIZhGA7DPTXoTm4Kv+jZi1dvTt6dXXy4uvn05duPu18Pf4GvBpE=
+        </DataArray>
+        <DataArray type="UInt8" Name="types" format="binary" RangeMin="12" RangeMax="12">
+          AQAAAACAAAAUAAAACwAAAA==eJzj4cEEAAnsAPE=
+        </DataArray>
+      </Cells>
+    </Piece>
+  </UnstructuredGrid>
+</VTKFile>
