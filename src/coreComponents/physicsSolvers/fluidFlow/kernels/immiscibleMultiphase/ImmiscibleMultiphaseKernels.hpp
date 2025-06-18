@@ -1812,6 +1812,9 @@ public:
           outFile.close();
 
 
+          real64 ref_flux_idx0 = -0.025036541263908453;
+          real64 diff = ref_flux_idx0 - (halfFluxVal[0][0] + halfFluxVal[0][1]);
+          
 // Global residual and jacobian update:
           for( integer ip = 0; ip < m_numPhases; ++ip )
           {
@@ -1857,6 +1860,13 @@ protected:
 };
 
 /****************************************** */
+
+GEOS_HOST_DEVICE
+inline
+static void local_solver(real64 uT, std::vector<real64> saturations, std::vector<real64> const relPermWrapper, std::vector<real64> const capPressureWrapper){
+  
+  int aka = 0;
+}
 
 /**
  * @class FluxComputeKernelFactory
