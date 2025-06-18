@@ -15,6 +15,7 @@
 #include "common/logger/ErrorHandling.hpp"
 #include "common/logger/Logger.hpp"
 #include "dataRepository/DataContext.hpp"
+#include "common/initializeEnvironment.hpp"
 
 #include <gtest/gtest.h>
 
@@ -66,7 +67,8 @@ TEST( ErrorHandling, testYaml )
 int main( int ac, char * av[] )
 {
   ::testing::InitGoogleTest( &ac, av );
+  geos::setupEnvironment( ac, av );
   int const result = RUN_ALL_TESTS();
-
+  geos::cleanupEnvironment();
   return result;
 }
