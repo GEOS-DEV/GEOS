@@ -1698,9 +1698,7 @@ public:
       return;
     }    
     
-    auto connectionMap = subRegion.getConnectionMap();
-    auto number_facets_ke_0 = connectionMap[0].size();
-    GEOS_ASSERT(number_facets_ke_0 == 2);
+    ArrayOfArraysView< localIndex const > const connectionMap = subRegion.getConnectionMap();
     
     integer constexpr NUM_EQN = 2;
     integer constexpr NUM_DOF = 2;

@@ -236,10 +236,10 @@ void TwoPointFluxApproximation::fillConnectionMap( MeshLevel & mesh ) const
     subRegion.resizeConnectorMap( subRegion.size() );
     forAll< serialPolicy >( subRegion.size(), [&]( localIndex const ke )
     {
-      auto const & faceList = subRegion.faceList();
+      FixedOneToManyRelation const & faceList = subRegion.faceList();
       for ( auto kf : faceList[ke] )
       {
-        auto it = connectorIndices.find( kf );
+        unordered_map<localIndex, localIndex>::const_iterator it = connectorIndices.find( kf );
         if ( it != connectorIndices.end())
         {
           localIndex const connector = it->second;
