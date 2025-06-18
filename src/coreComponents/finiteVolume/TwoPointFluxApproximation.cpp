@@ -236,13 +236,13 @@ void TwoPointFluxApproximation::fillConnectionMap( MeshLevel & mesh ) const
     subRegion.resizeConnectorMap( subRegion.size() );
     forAll< serialPolicy >( subRegion.size(), [&]( localIndex const ke )
     {
-      auto aka = subRegion.getConnectionMap();
-      for ( auto kf : subRegion.faceList() )
+      auto const & faceList = subRegion.faceList();
+      for ( auto kf : faceList[ke] )
       {
-        bool is_member_Q = connectorIndices.find( kf ) != connectorIndices.end();
-        if ( is_member_Q ) // with c++20 this can be connectorIndices.contains( kf )
+        auto it = connectorIndices.find( kf );
+        if ( it != connectorIndices.end())
         {
-          localIndex const connector = connectorIndices.at( kf );
+          localIndex const connector = it->second;
           subRegion.addToConnectorList( ke, connector );
         } 
       }
