@@ -161,7 +161,7 @@ void WellSolverBase::initializePostSubGroups()
 void WellSolverBase::setupDofs( DomainPartition const & domain,
                                 DofManager & dofManager ) const
 {
-  stdMap< std::pair< string, string >, string_array > meshTargets;
+  map< std::pair< string, string >, string_array > meshTargets;
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const & meshBodyName,
                                                                MeshLevel const & meshLevel,
                                                                string_array const & regionNames )

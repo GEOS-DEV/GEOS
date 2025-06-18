@@ -896,7 +896,7 @@ public:
    * @brief accessor for m_meshTargets
    * @return reference to m_meshTargets
    */
-  stdMap< std::pair< string, string >, string_array > const & getMeshTargets() const
+  map< std::pair< string, string >, string_array > const & getMeshTargets() const
   {
     return m_meshTargets;
   }
@@ -1062,7 +1062,7 @@ private:
   string_array m_targetRegionNames;
 
   /// Map containing the array of target regions (value) for each MeshBody (key).
-  stdMap< std::pair< string, string >, string_array > m_meshTargets;
+  map< std::pair< string, string >, string_array > m_meshTargets;
 
   /**
    * @brief This function sets constitutive name fields on an

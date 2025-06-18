@@ -381,8 +381,8 @@ localIndex unpackNewAndModifiedObjectsOnOwningRanks( NeighborCommunicator * cons
   std::set< localIndex > & allModifiedEdges = receivedObjects.modifiedEdges;
   std::set< localIndex > & allNewFaces      = receivedObjects.newFaces;
   std::set< localIndex > & allModifiedFaces = receivedObjects.modifiedFaces;
-  stdMap< std::pair< localIndex, localIndex >, std::set< localIndex > > & allNewElements = receivedObjects.newElements;
-  stdMap< std::pair< localIndex, localIndex >, std::set< localIndex > > & allModifiedElements = receivedObjects.modifiedElements;
+  map< std::pair< localIndex, localIndex >, std::set< localIndex > > & allNewElements = receivedObjects.newElements;
+  map< std::pair< localIndex, localIndex >, std::set< localIndex > > & allModifiedElements = receivedObjects.modifiedElements;
 
   allNewNodes.insert( newLocalNodes.begin(), newLocalNodes.end() );
   allModifiedNodes.insert( modifiedLocalNodes.begin(), modifiedLocalNodes.end() );
@@ -752,7 +752,7 @@ void updateConnectorsToFaceElems( std::set< localIndex > const & newFaceElements
                                   FaceElementSubRegion & faceElemSubRegion )
 {
   ArrayOfArrays< localIndex > & connectorToElem = faceElemSubRegion.m_2dFaceTo2dElems;
-  stdMap< localIndex, localIndex > & edgesToConnectorEdges = faceElemSubRegion.m_edgesTo2dFaces;
+  map< localIndex, localIndex > & edgesToConnectorEdges = faceElemSubRegion.m_edgesTo2dFaces;
   array1d< localIndex > & connectorEdgesToEdges = faceElemSubRegion.m_2dFaceToEdge;
 
   ArrayOfArraysView< localIndex const > const facesToEdges = faceElemSubRegion.edgeList().toViewConst();

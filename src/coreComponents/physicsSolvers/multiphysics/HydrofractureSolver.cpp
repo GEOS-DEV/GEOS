@@ -444,8 +444,8 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::setupCoupling( DomainPartition
     string const flowDiscretizationName = flowSolver()->getDiscretizationName();
 
     // restrict coupling to fracture regions only (as done originally in setupSystem)
-    stdMap< std::pair< string, string >, string_array > dispMeshTargets;
-    stdMap< std::pair< string, string >, string_array > presMeshTargets;
+    map< std::pair< string, string >, string_array > dispMeshTargets;
+    map< std::pair< string, string >, string_array > presMeshTargets;
 
     forDiscretizationOnMeshTargets( domain.getMeshBodies(),
                                     [&] ( string const & meshBodyName,

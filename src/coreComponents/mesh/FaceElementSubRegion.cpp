@@ -883,9 +883,9 @@ array1d< localIndex > build2dFaceToEdge( stdMap< localIndex, localIndex > const 
  * @param face2dToEdges The mappings to be inverted.
  * @return The mapping
  */
-stdMap< localIndex, localIndex > buildEdgesToFace2d( arrayView1d< localIndex const > const face2dToEdges )
+map< localIndex, localIndex > buildEdgesToFace2d( arrayView1d< localIndex const > const face2dToEdges )
 {
-  stdMap< localIndex, localIndex > edgesToFace2d;
+  map< localIndex, localIndex > edgesToFace2d;
   localIndex const num2dFaces = face2dToEdges.size();
 
   for( localIndex i = 0; i < num2dFaces; ++i )

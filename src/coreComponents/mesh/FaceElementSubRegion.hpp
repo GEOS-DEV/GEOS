@@ -284,7 +284,7 @@ public:
   SortedArray< localIndex > m_recalculateConnectionsFor2dFaces;
 
   /// A map of edge local indices to the fracture connector local indices.
-  stdMap< localIndex, localIndex > m_edgesTo2dFaces;
+  map< localIndex, localIndex > m_edgesTo2dFaces;
 
   /// A map of fracture connector local indices to edge local indices.
   array1d< localIndex > m_2dFaceToEdge;
