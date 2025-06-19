@@ -1223,7 +1223,7 @@ ImmiscibleMultiphaseFlow::scalingForSystemSolution( DomainPartition & domain,
   {    
     mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                           CellElementSubRegion const & subRegion )
-    {
+    {      
       // Build wrappers to the fluid, relative permeability and capillary pressure model objects
       string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
       TwoPhaseImmiscibleFluid const & fluid = getConstitutiveModel< TwoPhaseImmiscibleFluid >( subRegion, fluidName );
@@ -1245,12 +1245,13 @@ ImmiscibleMultiphaseFlow::scalingForSystemSolution( DomainPartition & domain,
         capPressureWrapper = &wrapper;
       }
 
-      if ( m_fluxInflection == 1 )
+      fluxApprox.forAllStencils( mesh, [&]( auto & stencil )
       {
-        fluxApprox.forAllStencils( mesh, [&]( auto & stencil )
-        {
-          real64 stencilInflectionFactor;
+        real64 stencilInflectionFactor;
 
+        // Use flux inflection analysis
+        if ( m_fluxInflection == 1 && stencil.size() > 0 && subRegion.size() > 0 )
+        {
           // step 2.1a: compute the inflection damping factor in the subRegion
 
           typename TYPEOFREF( stencil ) ::KernelWrapper stencilWrapper = stencil.createKernelWrapper();
@@ -1272,14 +1273,10 @@ ImmiscibleMultiphaseFlow::scalingForSystemSolution( DomainPartition & domain,
           // step 2.2a: local reduction across meshBodies/regions/subRegions/stencils
 
           localInflectionFactor = fmin( localInflectionFactor, stencilInflectionFactor );
-        } );
-      }
-      else
-      {           
-        fluxApprox.forAllStencils( mesh, [&]( auto & stencil )
+        }
+        // Use residual inflection analysis
+        else if ( stencil.size() > 0 && subRegion.size() > 0 )
         {
-          real64 stencilInflectionFactor;
-
           // step 2.1b: compute the inflection damping factor in the subRegion
 
           typename TYPEOFREF( stencil ) ::KernelWrapper stencilWrapper = stencil.createKernelWrapper();
@@ -1305,8 +1302,8 @@ ImmiscibleMultiphaseFlow::scalingForSystemSolution( DomainPartition & domain,
           // step 2.2b: local reduction across meshBodies/regions/subRegions/stencils
 
           localInflectionFactor = fmin( localInflectionFactor, stencilInflectionFactor );
-        } );
-      }
+        }      
+      } );    
     } );
   } );
 

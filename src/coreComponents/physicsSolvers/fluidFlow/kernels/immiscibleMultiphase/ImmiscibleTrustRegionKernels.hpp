@@ -1097,13 +1097,13 @@ public:
   static constexpr integer m_maxIter = 5;
 
   /// Minimum potential difference to apply a damping factor
-  static constexpr real64 m_d2RMin = 1.0; // 7000
+  static constexpr real64 m_d2RMin = 1.0e-14; // 7000
 
   /// Minimum dampining factor
   static constexpr real64 m_minFactor = 0.1; 
   
   /// Minimum dampining factor
-  static constexpr real64 m_resThres = 0.2;
+  static constexpr real64 m_resThres = 0.6; // 0.0, 0.2
 
 
   ResidualInflectionFactorKernel( integer const numPhases,
@@ -1185,11 +1185,7 @@ public:
   GEOS_HOST_DEVICE
   void computeInflection( localIndex const ei,
                           StackVariables & stack ) const
-  {
-    if ( m_connMap.size() == 0 )
-    {
-      return; // no connections for this subregion
-    }
+  {    
     // get list of with the connection number associated to the faces of the current cell
     arraySlice1d< localIndex const > const connList = m_connMap[ei];
     integer numConns = m_connMap.sizeOfArray( ei );
@@ -1223,7 +1219,7 @@ public:
     }
     
     constexpr int signPotDiff[2] = {1, -1};
-    real64 eps[2]{1.0};
+    real64 eps[2]{1.0, 1.0};
     
     // analyze residual inflections for each phase
     for( integer ip = 0; ip < m_numPhases; ++ip )
@@ -1401,7 +1397,18 @@ public:
     {  
       phaseVolFrac[ke] = ip == 0 ? m_phaseVolFrac[seri[ke]][sesri[ke]][sei[ke]][ip] + eps * dS[ke] :  // S = S +- e.dS
                                    m_phaseVolFrac[seri[ke]][sesri[ke]][sei[ke]][ip] - eps * dS[ke] ;
-             
+      
+      // check physical bounds for saturation
+      if ( phaseVolFrac[ke] < 0.0 )
+      {
+        phaseVolFrac[ke] = 0.0;
+        dS[ke] = -m_phaseVolFrac[seri[ke]][sesri[ke]][sei[ke]][ip]; // dS' = S' - S0
+      }
+      else if ( phaseVolFrac[ke] > 1.0 )
+      {
+        phaseVolFrac[ke] = 1.0;
+        dS[ke] = 1.0 - m_phaseVolFrac[seri[ke]][sesri[ke]][sei[ke]][ip]; // dS' = S' - S0
+      }
     }
 
     // get grav coef, rel perm and capillary pressure + derivatives      
@@ -1440,6 +1447,13 @@ public:
       for ( integer ke = 0; ke < 2; ++ke )
       {
         pressure[ke] = m_pres[seri[ke]][sesri[ke]][sei[ke]] + eps * dP[ke];  // P = P1 || P2
+
+        // check physical bounds for pressure
+        if ( pressure[ke] < 0.0 )
+        {
+          pressure[ke] = 0.0;
+          dP[ke] = -m_pres[seri[ke]][sesri[ke]][sei[ke]]; // dP' = P' - P0
+        }        
 
         real64 dDens;   
         real64 dVisc;    
@@ -1696,9 +1710,7 @@ public:
     {
       inflectionFactor = 1.0; // no connections, no inflection damping
       return;
-    }    
-    
-    ArrayOfArraysView< localIndex const > const connectionMap = subRegion.getConnectionMap();
+    }
     
     integer constexpr NUM_EQN = 2;
     integer constexpr NUM_DOF = 2;
