@@ -732,7 +732,7 @@ int SurfaceGenerator::separationDriver( DomainPartition & domain,
       for( localIndex k=0; k<faceManager.size(); ++k )
       {
 //        if( faceToRegionMap[k][0] == -1 )
-        if( faceLocalToGlobalMap[k] == 253 )
+        if( faceLocalToGlobalMap[k] == 257 || faceLocalToGlobalMap[k] == 10 )
         {
           globalIndex const gElem[2] = { faceToElementMap[k][0] >=0 ? elementLocalToGlobalMap[faceToElementMap[k][0]] : -1,
                                          faceToElementMap[k][1] >=0 ? elementLocalToGlobalMap[faceToElementMap[k][1]] : -1 };
@@ -795,7 +795,7 @@ int SurfaceGenerator::separationDriver( DomainPartition & domain,
       for( localIndex k=0; k<faceManager.size(); ++k )
       {
 //        if( faceToRegionMap[k][0] == -1 )
-        if( faceLocalToGlobalMap[k] == 253 )
+        if( faceLocalToGlobalMap[k] == 257 || faceLocalToGlobalMap[k] == 10 )
         {
           globalIndex const gElem[2] = { faceToElementMap[k][0] >=0 ? elementLocalToGlobalMap[faceToElementMap[k][0]] : -1,
                                          faceToElementMap[k][1] >=0 ? elementLocalToGlobalMap[faceToElementMap[k][1]] : -1 };
