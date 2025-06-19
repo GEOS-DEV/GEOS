@@ -165,7 +165,6 @@ public:
   /**
    * @brief Calculate shape functions values for each support point at a
    *   quadrature point.
-   * @param q Index of the quadrature point.
    * @param N An array to pass back the shape function values for each support
    *   point.
    */
@@ -201,7 +200,6 @@ public:
   /**
    * @brief Calculate shape functions values at a single point using De Casteljau's algorithm.
    * @param[in] lambda barycentric coordinates of the point in thetetrahedron
-   * @param[out] ORDER The shape function values.
    */
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
@@ -246,8 +244,10 @@ public:
   /**
    * @brief Calculate shape functions values at a single point, given the coordinates of the tetrahedron vertices, using De Casteljau's
    * algorithm.
+   * @param[in] X Array containing the coordinates of the support points.
    * @param[in] coords The parent coordinates at which to evaluate the shape function value, in the reference element
-   * @param[out] ORDER The shape function values.
+   * @param[in] N An array to pass back the shape function values for each support
+   *   point
    */
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
@@ -342,6 +342,7 @@ public:
   /**
    * @brief Calculate the shape functions values and derivatives at a single point, given the coorginates of the tetrahedron vertices, using
    * De Casteljau's algorithm.
+   * @param[in] X An array containing the coordinates of the tetrahedra
    * @param[in] coords The parent coordinates at which to evaluate the shape function value, in the reference element
    * @param[out] ORDER The shape function values.
    */
@@ -392,105 +393,6 @@ public:
     }
   }
 
-//  /**
-//   * @brief Calculate shape functions values at a single point on a face using De Casteljau's algorithm.
-//   * @param[in] lambda barycentric coordinates of the point in triangle
-//   * @param[out] N The shape function values.
-//   */
-//  GEOS_HOST_DEVICE
-//  GEOS_FORCE_INLINE
-//  static void calcN( real64 const ( & lambda)[3],
-//                     real64 (& N)[numNodesPerFace] )
-//  {
-//    N[ 0 ] = 2.0;
-//    int prev;
-//    int c;
-//    int limits[ 3 ] = { 1, 1, 1 };
-//    for( int np = 1; np <= ORDER; np++)
-//    {
-//      prev = np * ( np + 1 ) / 2 - 1;
-//      c = ( np + 1 ) * ( np + 2 ) / 2 - 1;
-//      for( int i = 0; i < 3; i++ )
-//      {
-//        int denominator = i == 0 ? np : 1;
-//        int offset = 0;
-//        int c1 = np - 1;
-//        int c2 = i + np - 2;
-//        int repetitionCount = i == 0 ? 1 : limits[ i - 1 ];
-//        for( int j = 0; j < limits[ i ] ; j++ )
-//        {
-//          if( j - offset >=  repetitionCount )
-//          {
-//            denominator++;
-//            offset += repetitionCount;
-//            repetitionCount = repetitionCount * c1 / c2;
-//            c1--;
-//            c2--;
-//          }
-//          N[ c-- ] = N[ prev - j ] * lambda[2 - i] * ( np + 2 ) / denominator;
-//        }
-//      }
-//      for( int i = 1; i < 3; i++ )
-//      {
-//        limits[ i ] += limits[ i - 1 ];
-//      }
-//    }
-//  }
-//
-//  /**
-//   * @brief Calculate the derivatives of shape functions with respect to barycentric coordinates at a single point on a face using De
-// Casteljau's algorithm.
-//   * @param[in] lambda barycentric coordinates of the point in the triangle
-//   * @param[out] ORDER The shape function values.
-//   * @param[out] gradN The derivatives of the shape functions with respect to the lambdas
-//   */
-//  GEOS_HOST_DEVICE
-//  GEOS_FORCE_INLINE
-//  static void calcNandGradN( real64 const ( & lambda)[ 3 ],
-//                             real64 const ( & N)[ numNodes ],
-//                             real64 (& gradN)[ numNodes ][ 3 ] )
-//  {
-//    gradN[ 0 ][ 0 ] = 0.0;
-//    gradN[ 0 ][ 1 ] = 0.0;
-//    gradN[ 0 ][ 2 ] = 0.0;
-//    N[ 0 ] = 2.0;
-//    int prev;
-//    int c;
-//    int limits[ 3 ] = { 1, 1, 1 };
-//    for( int np = 1; np <= ORDER; np++)
-//    {
-//      prev = np * ( np + 1 ) / 2 - 1;
-//      c = ( np + 1 ) * ( np + 2 ) / 2 - 1;
-//      for( int i = 0; i < 3; i++ )
-//      {
-//        int denominator = i == 0 ? np : 1;
-//        int offset = 0;
-//        int c1 = np - 1;
-//        int c2 = i + np - 2;
-//        int repetitionCount = i == 0 ? 1 : limits[ i - 1 ];
-//        for( int j = 0; j < limits[ i ] ; j++ )
-//        {
-//          if( j - offset >=  repetitionCount )
-//          {
-//            denominator++;
-//            offset += repetitionCount;
-//            repetitionCount = repetitionCount * c1 / c2;
-//            c1--;
-//            c2--;
-//          }
-//          gradN[ c ][ 0 ] = gradN[ prev - j ][ 0 ] * lambda[ 2 - i ] * ( np + 2 )/ denominator;
-//          gradN[ c ][ 1 ] = gradN[ prev - j ][ 1 ] * lambda[ 2 - i ] * ( np + 2 )/ denominator;
-//          gradN[ c ][ 2 ] = gradN[ prev - j ][ 2 ] * lambda[ 2 - i ] * ( np + 2 )/ denominator;
-//          gradN[ c ][ 2 - i ] += N[ prev - j ] * ( np + 2 ) / denominator;
-//          N[ c-- ] = N[ prev - j ] * lambda[ 2 - i ] * ( np + 2 ) / denominator;
-//        }
-//      }
-//      for( int i = 1; i < 3; i++ )
-//      {
-//        limits[ i ] += limits[ i - 1 ];
-//      }
-//    }
-//  }
 
   /**
    * @brief Calculate the shape functions derivatives wrt the physical
@@ -528,9 +430,10 @@ public:
   GEOS_FORCE_INLINE
   static real64 calcGradN( localIndex const q,
                            real64 const (&X)[numNodes][3],
-                           StackVariables const & GEOS_UNUSED_PARAM( stack ),
+                           StackVariables const &  stack ,
                            real64 ( & gradN )[numNodes][3] )
   {
+    GEOS_UNUSED_PARAM(stack);
     return calcGradN( q, X, gradN );
   }
 
@@ -790,6 +693,7 @@ public:
   /**
    * @brief Helper function for loop over barycentric coordinates
    * @tparam FUNC the callback function
+   * @param func the callback function to call for each index
    */
   template< typename FUNC >
   GEOS_HOST_DEVICE
