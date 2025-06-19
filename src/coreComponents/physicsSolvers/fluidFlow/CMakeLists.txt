@@ -26,8 +26,8 @@ set( fluidFlowSolvers_headers
      CompositionalMultiphaseFVM.hpp
      CompositionalMultiphaseHybridFVM.hpp
      CompositionalMultiphaseUtilities.hpp
-     ImmiscibleMultiphaseFlow.hpp
-     ImmiscibleMultiphaseFlowFields.hpp
+     #ImmiscibleMultiphaseFlow.hpp
+     #ImmiscibleMultiphaseFlowFields.hpp
      LogLevelsInfo.hpp
      ReactiveCompositionalMultiphaseOBL.hpp
      ReactiveCompositionalMultiphaseOBLFields.hpp
@@ -108,7 +108,7 @@ set( fluidFlowSolvers_headers
      kernels/compositional/ThermalResidualNormKernel.hpp
      kernels/compositional/ThermalSolutionCheckKernel.hpp
      kernels/compositional/ThermalSolutionScalingKernel.hpp
-     kernels/immiscibleMultiphase/ImmiscibleMultiphaseKernels.hpp
+     #kernels/immiscibleMultiphase/ImmiscibleMultiphaseKernels.hpp
      wells/CompositionalMultiphaseWell.hpp
      wells/CompositionalMultiphaseWellFields.hpp
      wells/SinglePhaseWell.hpp
@@ -130,7 +130,7 @@ set( fluidFlowSolvers_sources
      CompositionalMultiphaseFVM.cpp
      CompositionalMultiphaseStatistics.cpp
      CompositionalMultiphaseHybridFVM.cpp
-     ImmiscibleMultiphaseFlow.cpp
+     #ImmiscibleMultiphaseFlow.cpp
      ReactiveCompositionalMultiphaseOBL.cpp
      FlowSolverBase.cpp
      SinglePhaseBase.cpp
