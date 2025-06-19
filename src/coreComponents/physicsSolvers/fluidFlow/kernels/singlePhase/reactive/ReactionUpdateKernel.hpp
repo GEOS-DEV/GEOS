@@ -59,13 +59,14 @@ struct MixedSystemReactionUpdateKernel
   static void launch( REACTIVE_FLUID const & fluid,
                       arrayView1d< real64 const > const & pres,
                       arrayView1d< real64 const > const & temp,
-                      arrayView2d< real64 const, compflow::USD_COMP > const logPrimaryConc )
+                      arrayView2d< real64 const, compflow::USD_COMP > const logPrimaryConc,
+                      arrayView2d< real64 const, compflow::USD_COMP > const surfaceArea )
   {
     std::visit( [&]( auto const reactionWrapper )
     {
       forAll< parallelDevicePolicy<> >( reactionWrapper.numElems(), [=] GEOS_HOST_DEVICE ( localIndex const k )
       {
-        reactionWrapper.updateMixedReactionSystem( k, pres[k], temp[k], logPrimaryConc[k] );
+        reactionWrapper.updateMixedReactionSystem( k, pres[k], temp[k], logPrimaryConc[k], surfaceArea[k] );
       } );
     }, fluid.createReactionKernelWrapper());
   }

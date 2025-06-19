@@ -160,6 +160,9 @@ void SinglePhaseReactiveTransport::registerDataOnMesh( Group & meshBodies )
       
       subRegion.registerField< kineticReactionMolarIncrements >( getName() ).
         reference().resizeDimension< 1 >( m_numKineticReactions );
+
+      subRegion.registerField< surfaceArea >( getName() ).
+        reference().resizeDimension< 1 >( m_numKineticReactions );  
     } );
   } );
 }
@@ -618,6 +621,8 @@ void SinglePhaseReactiveTransport::updateMixedReactionSystem( ElementSubRegionBa
   arrayView1d< real64 const > const pres = subRegion.getField< fields::flow::pressure >();
   arrayView1d< real64 const > const temp = subRegion.getField< fields::flow::temperature >();
   arrayView2d< real64 const, compflow::USD_COMP > const logPrimaryConc = subRegion.getField< fields::flow::logPrimarySpeciesConcentration >();
+  arrayView2d< real64 const, compflow::USD_COMP > const surfaceArea = subRegion.getField< fields::flow::surfaceArea >();
+
 
   if( m_isThermal )
   {
@@ -626,7 +631,7 @@ void SinglePhaseReactiveTransport::updateMixedReactionSystem( ElementSubRegionBa
 
     constitutive::constitutiveUpdatePassThru( fluid, [&]( auto & castedFluid )
     {
-      singlePhaseReactiveBaseKernels::MixedSystemReactionUpdateKernel::launch( castedFluid, pres, temp, logPrimaryConc );
+      singlePhaseReactiveBaseKernels::MixedSystemReactionUpdateKernel::launch( castedFluid, pres, temp, logPrimaryConc, surfaceArea );
     } );
   }
   else
@@ -636,7 +641,7 @@ void SinglePhaseReactiveTransport::updateMixedReactionSystem( ElementSubRegionBa
 
     constitutive::constitutiveUpdatePassThru( fluid, [&]( auto & castedFluid )
     {
-      singlePhaseReactiveBaseKernels::MixedSystemReactionUpdateKernel::launch( castedFluid, pres, temp, logPrimaryConc );
+      singlePhaseReactiveBaseKernels::MixedSystemReactionUpdateKernel::launch( castedFluid, pres, temp, logPrimaryConc, surfaceArea );
     } );
   }
 }
