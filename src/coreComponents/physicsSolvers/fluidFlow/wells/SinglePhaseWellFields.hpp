@@ -33,45 +33,50 @@ namespace fields
 namespace well
 {
 
-DECLARE_FIELD( connectionRate,
-               "connectionRate",
-               array1d< real64 >,
-               0,
-               LEVEL_0,
-               WRITE_AND_READ,
-               "Connection rate" );
+DECLARE_FIELD_WITH_NAMESPACE( connectionRate,
+                              "connectionRate",
+                              array1d< real64 >,
+                              0,
+                              LEVEL_0,
+                              WRITE_AND_READ,
+                              "Connection rate" ,
+                              "well" );
 
-DECLARE_FIELD( connectionRate_n,
-               "connectionRate_n",
-               array1d< real64 >,
-               0,
-               NOPLOT,
-               WRITE_AND_READ,
-               "Connection rate at the previous converged time step" );
+DECLARE_FIELD_WITH_NAMESPACE( connectionRate_n,
+                              "connectionRate_n",
+                              array1d< real64 >,
+                              0,
+                              NOPLOT,
+                              WRITE_AND_READ,
+                              "Connection rate at the previous converged time step" ,
+                              "well" );
 
-DECLARE_FIELD( density_n,
-               "density_n",
-               array1d< real64 >,
-               0,
-               NOPLOT,
-               WRITE_AND_READ,
-               "Density at the previous converged time step" );
+DECLARE_FIELD_WITH_NAMESPACE( density_n,
+                              "density_n",
+                              array1d< real64 >,
+                              0,
+                              NOPLOT,
+                              WRITE_AND_READ,
+                              "Density at the previous converged time step" ,
+                              "well" );
 
-DECLARE_FIELD( perforationRate,
-               "perforationRate",
-               array1d< real64 >,
-               0,
-               NOPLOT,
-               WRITE_AND_READ,
-               "Perforation rate" );
+DECLARE_FIELD_WITH_NAMESPACE( perforationRate,
+                              "perforationRate",
+                              array1d< real64 >,
+                              0,
+                              NOPLOT,
+                              WRITE_AND_READ,
+                              "Perforation rate" ,
+                              "well" );
 
-DECLARE_FIELD( dPerforationRate_dPres,
-               "dPerforationRate_dPres",
-               array2d< real64 >,
-               0,
-               NOPLOT,
-               WRITE_AND_READ,
-               "Derivative of perforation rate with respect to pressure" );
+DECLARE_FIELD_WITH_NAMESPACE( dPerforationRate_dPres,
+                              "dPerforationRate_dPres",
+                              array2d< real64 >,
+                              0,
+                              NOPLOT,
+                              WRITE_AND_READ,
+                              "Derivative of perforation rate with respect to pressure" ,
+                              "well" );
 
 }
 

@@ -33,13 +33,14 @@ namespace fields
 namespace poromechanics
 {
 
-DECLARE_FIELD( bulkDensity,
-               "bulkDensity",
-               array2d< real64 >,
-               0,
-               NOPLOT,
-               WRITE_AND_READ,
-               "Bulk density" );
+DECLARE_FIELD_WITH_NAMESPACE( bulkDensity,
+                              "bulkDensity",
+                              array2d< real64 >,
+                              0,
+                              NOPLOT,
+                              WRITE_AND_READ,
+                              "Bulk density",
+                              "poromechanics" );
 
 }
 

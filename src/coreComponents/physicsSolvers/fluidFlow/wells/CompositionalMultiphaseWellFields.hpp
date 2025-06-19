@@ -42,120 +42,134 @@ using array3dLayoutComp_dC = array3d< real64, compflow::LAYOUT_COMP_DC >;
 using array3dLayoutPhaseComp = array3d< real64, compflow::LAYOUT_PHASE_COMP >;
 
 
-DECLARE_FIELD( globalCompDensity,
-               "globalCompDensity",
-               array2dLayoutComp,
-               0,
-               LEVEL_0,
-               WRITE_AND_READ,
-               "Global component density" );
+DECLARE_FIELD_WITH_NAMESPACE( globalCompDensity,
+                              "globalCompDensity",
+                              array2dLayoutComp,
+                              0,
+                              LEVEL_0,
+                              WRITE_AND_READ,
+                              "Global component density",
+                              "well" );
 
-DECLARE_FIELD( globalCompDensity_n,
-               "globalCompDensity_n",
-               array2dLayoutComp,
-               0,
-               NOPLOT,
-               WRITE_AND_READ,
-               "Global component density at the previous converged time step" );
+DECLARE_FIELD_WITH_NAMESPACE( globalCompDensity_n,
+                              "globalCompDensity_n",
+                              array2dLayoutComp,
+                              0,
+                              NOPLOT,
+                              WRITE_AND_READ,
+                              "Global component density at the previous converged time step",
+                              "well" );
 
-DECLARE_FIELD( mixtureConnectionRate,
-               "wellElementMixtureConnectionRate",
-               array1d< real64 >,
-               0,
-               LEVEL_0,
-               WRITE_AND_READ,
-               "Mixture connection rate" );
+DECLARE_FIELD_WITH_NAMESPACE( mixtureConnectionRate,
+                              "wellElementMixtureConnectionRate",
+                              array1d< real64 >,
+                              0,
+                              LEVEL_0,
+                              WRITE_AND_READ,
+                              "Mixture connection rate",
+                              "well" );
 
-DECLARE_FIELD( mixtureConnectionRate_n,
-               "wellElementMixtureConnectionRate_n",
-               array1d< real64 >,
-               0,
-               NOPLOT,
-               WRITE_AND_READ,
-               "Mixture connection rate at the previous converged time step" );
+DECLARE_FIELD_WITH_NAMESPACE( mixtureConnectionRate_n,
+                              "wellElementMixtureConnectionRate_n",
+                              array1d< real64 >,
+                              0,
+                              NOPLOT,
+                              WRITE_AND_READ,
+                              "Mixture connection rate at the previous converged time step",
+                              "well" );
 
-DECLARE_FIELD( globalCompFraction,
-               "globalCompFraction",
-               array2dLayoutComp,
-               0,
-               LEVEL_0,
-               WRITE_AND_READ,
-               "Global component fraction" );
+DECLARE_FIELD_WITH_NAMESPACE( globalCompFraction,
+                              "globalCompFraction",
+                              array2dLayoutComp,
+                              0,
+                              LEVEL_0,
+                              WRITE_AND_READ,
+                              "Global component fraction",
+                              "well" );
 
-DECLARE_FIELD( dGlobalCompFraction_dGlobalCompDensity,
-               "dGlobalCompFraction_dGlobalCompDensity",
-               array3dLayoutComp_dC,
-               0,
-               NOPLOT,
-               NO_WRITE,
-               "Derivative of global component fraction with respect to component density" );
+DECLARE_FIELD_WITH_NAMESPACE( dGlobalCompFraction_dGlobalCompDensity,
+                              "dGlobalCompFraction_dGlobalCompDensity",
+                              array3dLayoutComp_dC,
+                              0,
+                              NOPLOT,
+                              NO_WRITE,
+                              "Derivative of global component fraction with respect to component density",
+                              "well" );
 
-DECLARE_FIELD( phaseVolumeFraction,
-               "phaseVolumeFraction",
-               array2dLayoutPhase,
-               0,
-               LEVEL_0,
-               WRITE_AND_READ,
-               "Phase volume fraction" );
+DECLARE_FIELD_WITH_NAMESPACE( phaseVolumeFraction,
+                              "phaseVolumeFraction",
+                              array2dLayoutPhase,
+                              0,
+                              LEVEL_0,
+                              WRITE_AND_READ,
+                              "Phase volume fraction",
+                              "well" );
 
-DECLARE_FIELD( dPhaseVolumeFraction,
-               "dPhaseVolumeFraction",
-               array3dLayoutPhase_dC,
-               0,
-               NOPLOT,
-               NO_WRITE,
-               "Derivative of phase volume fraction with respect to pressure, temperature, and global component density" );
+DECLARE_FIELD_WITH_NAMESPACE( dPhaseVolumeFraction,
+                              "dPhaseVolumeFraction",
+                              array3dLayoutPhase_dC,
+                              0,
+                              NOPLOT,
+                              NO_WRITE,
+                              "Derivative of phase volume fraction with respect to pressure, temperature, and global component density",
+                              "well" );
 
-DECLARE_FIELD( phaseVolumeFraction_n,
-               "phaseVolumeFraction_n",
-               array2dLayoutPhase,
-               0,
-               NOPLOT,
-               WRITE_AND_READ,
-               "Phase volume fraction at the previous converged time step" );
+DECLARE_FIELD_WITH_NAMESPACE( phaseVolumeFraction_n,
+                              "phaseVolumeFraction_n",
+                              array2dLayoutPhase,
+                              0,
+                              NOPLOT,
+                              WRITE_AND_READ,
+                              "Phase volume fraction at the previous converged time step",
+                              "well" );
 
-DECLARE_FIELD( totalMassDensity,
-               "totalMassDensity",
-               array1d< real64 >,
-               0,
-               LEVEL_0,
-               WRITE_AND_READ,
-               "Total mass density" );
+DECLARE_FIELD_WITH_NAMESPACE( totalMassDensity,
+                              "totalMassDensity",
+                              array1d< real64 >,
+                              0,
+                              LEVEL_0,
+                              WRITE_AND_READ,
+                              "Total mass density",
+                              "well" );
 
-DECLARE_FIELD( dTotalMassDensity,
-               "dTotalMassDensity",
-               array2dLayoutFluid_dC,
-               0,
-               NOPLOT,
-               NO_WRITE,
-               "Derivative of total mass density with respect to pressure, temperature, and global component density" );
-
-
-DECLARE_FIELD( compPerforationRate,
-               "compPerforationRate",
-               array2d< real64 >,
-               0,
-               LEVEL_0,
-               WRITE_AND_READ,
-               "Component perforation rate" );
-
-DECLARE_FIELD( dCompPerforationRate,
-               "dCompPerforationRate",
-               array4d< real64 >,
-               0,
-               NOPLOT,
-               NO_WRITE,
-               "Derivative of component perforation rate with respect to pressure temperature and global component density" );
+DECLARE_FIELD_WITH_NAMESPACE( dTotalMassDensity,
+                              "dTotalMassDensity",
+                              array2dLayoutFluid_dC,
+                              0,
+                              NOPLOT,
+                              NO_WRITE,
+                              "Derivative of total mass density with respect to pressure, temperature, and global component density",
+                              "well" );
 
 
+DECLARE_FIELD_WITH_NAMESPACE( compPerforationRate,
+                              "compPerforationRate",
+                              array2d< real64 >,
+                              0,
+                              LEVEL_0,
+                              WRITE_AND_READ,
+                              "Component perforation rate",
+                              "well" );
 
-DECLARE_FIELD( globalCompDensityScalingFactor,
-               "globalCompDensityScalingFactor",
-               array1d< real64 >,
-               1,
-               NOPLOT,
-               NO_WRITE,
-               "Scaling factors for global component densities" );
+DECLARE_FIELD_WITH_NAMESPACE( dCompPerforationRate,
+                              "dCompPerforationRate",
+                              array4d< real64 >,
+                              0,
+                              NOPLOT,
+                              NO_WRITE,
+                              "Derivative of component perforation rate with respect to pressure temperature and global component density",
+                              "well" );
+
+
+
+DECLARE_FIELD_WITH_NAMESPACE( globalCompDensityScalingFactor,
+                              "globalCompDensityScalingFactor",
+                              array1d< real64 >,
+                              1,
+                              NOPLOT,
+                              NO_WRITE,
+                              "Scaling factors for global component densities",
+                              "well" );
 
 
 }

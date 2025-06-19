@@ -55,95 +55,106 @@ using arrayView2dLayoutAcceleration = arrayView2d< real64, nodes::ACCELERATION_U
 using arrayViewConst2dLayoutAcceleration = arrayView2d< real64 const, nodes::ACCELERATION_USD >;
 
 
-DECLARE_FIELD( totalDisplacement,
-               "totalDisplacement",
-               array2dLayoutTotalDisplacement,
-               0,
-               LEVEL_0,
-               WRITE_AND_READ,
-               "Total displacements at the nodes" );
+DECLARE_FIELD_WITH_NAMESPACE( totalDisplacement,
+                              "totalDisplacement",
+                              array2dLayoutTotalDisplacement,
+                              0,
+                              LEVEL_0,
+                              WRITE_AND_READ,
+                              "Total displacements at the nodes",
+                              "solidMechanics" );
 
-DECLARE_FIELD( incrementalDisplacement,
-               "incrementalDisplacement",
-               array2dLayoutIncrDisplacement,
-               0,
-               LEVEL_3,
-               WRITE_AND_READ,
-               "Incremental displacements for the current time step on the nodes" );
+DECLARE_FIELD_WITH_NAMESPACE( incrementalDisplacement,
+                              "incrementalDisplacement",
+                              array2dLayoutIncrDisplacement,
+                              0,
+                              LEVEL_3,
+                              WRITE_AND_READ,
+                              "Incremental displacements for the current time step on the nodes",
+                              "solidMechanics" );
 
-DECLARE_FIELD( strain,
-               "strain",
-               array2dLayoutStrain,
-               0,
-               LEVEL_0,
-               WRITE_AND_READ,
-               "Average strain in cell" );
+DECLARE_FIELD_WITH_NAMESPACE( strain,
+                              "strain",
+                              array2dLayoutStrain,
+                              0,
+                              LEVEL_0,
+                              WRITE_AND_READ,
+                              "Average strain in cell",
+                              "solidMechanics" );
 
-DECLARE_FIELD( plasticStrain,
-               "plasticStrain",
-               array2dLayoutStrain,
-               0,
-               LEVEL_0,
-               WRITE_AND_READ,
-               "Average plastic strain in cell" );
+DECLARE_FIELD_WITH_NAMESPACE( plasticStrain,
+                              "plasticStrain",
+                              array2dLayoutStrain,
+                              0,
+                              LEVEL_0,
+                              WRITE_AND_READ,
+                              "Average plastic strain in cell",
+                              "solidMechanics" );
 
-DECLARE_FIELD( velocity,
-               "velocity",
-               array2dLayoutVelocity,
-               0,
-               LEVEL_0,
-               WRITE_AND_READ,
-               "Current velocity on the nodes" );
+DECLARE_FIELD_WITH_NAMESPACE( velocity,
+                              "velocity",
+                              array2dLayoutVelocity,
+                              0,
+                              LEVEL_0,
+                              WRITE_AND_READ,
+                              "Current velocity on the nodes",
+                              "solidMechanics" );
 
-DECLARE_FIELD( acceleration,
-               "acceleration",
-               array2dLayoutAcceleration,
-               0,
-               LEVEL_1,
-               WRITE_AND_READ,
-               "Current acceleration on the nodes. This array also is used "
-               "to hold the summation of nodal forces resulting from the governing equations" );
+DECLARE_FIELD_WITH_NAMESPACE( acceleration,
+                              "acceleration",
+                              array2dLayoutAcceleration,
+                              0,
+                              LEVEL_1,
+                              WRITE_AND_READ,
+                              "Current acceleration on the nodes. This array also is used "
+                              "to hold the summation of nodal forces resulting from the governing equations",
+                              "solidMechanics" );
 
-DECLARE_FIELD( externalForce,
-               "externalForce",
-               array2d< real64 >,
-               0,
-               LEVEL_0,
-               WRITE_AND_READ,
-               "External forces on the nodes. This includes any boundary"
-               " conditions as well as coupling forces such as hydraulic forces" );
+DECLARE_FIELD_WITH_NAMESPACE( externalForce,
+                              "externalForce",
+                              array2d< real64 >,
+                              0,
+                              LEVEL_0,
+                              WRITE_AND_READ,
+                              "External forces on the nodes. This includes any boundary"
+                              " conditions as well as coupling forces such as hydraulic forces",
+                              "solidMechanics" );
 
-DECLARE_FIELD( mass,
-               "mass",
-               array1d< real64 >,
-               0,
-               LEVEL_0,
-               WRITE_AND_READ,
-               "Mass on the nodes" );
+DECLARE_FIELD_WITH_NAMESPACE( mass,
+                              "mass",
+                              array1d< real64 >,
+                              0,
+                              LEVEL_0,
+                              WRITE_AND_READ,
+                              "Mass on the nodes",
+                              "solidMechanics" );
 
-DECLARE_FIELD( velocityTilde,
-               "velocityTilde",
-               array2d< real64 >,
-               0,
-               NOPLOT,
-               WRITE_AND_READ,
-               "Velocity predictors on the nodes" );
+DECLARE_FIELD_WITH_NAMESPACE( velocityTilde,
+                              "velocityTilde",
+                              array2d< real64 >,
+                              0,
+                              NOPLOT,
+                              WRITE_AND_READ,
+                              "Velocity predictors on the nodes",
+                              "solidMechanics" );
 
-DECLARE_FIELD( uhatTilde,
-               "uhatTilde",
-               array2d< real64 >,
-               0,
-               NOPLOT,
-               WRITE_AND_READ,
-               "Incremental displacement predictors on the nodes" );
+DECLARE_FIELD_WITH_NAMESPACE( uhatTilde,
+                              "uhatTilde",
+                              array2d< real64 >,
+                              0,
+                              NOPLOT,
+                              WRITE_AND_READ,
+                              "Incremental displacement predictors on the nodes",
+                              "solidMechanics" );
 
-DECLARE_FIELD( contactForce,
-               "contactForce",
-               array2d< real64 >,
-               0,
-               NOPLOT,
-               WRITE_AND_READ,
-               "Contact force" );
+DECLARE_FIELD_WITH_NAMESPACE( contactForce,
+                              "contactForce",
+                              array2d< real64 >,
+                              0,
+                              NOPLOT,
+                              WRITE_AND_READ,
+                              "Contact force",
+                              "solidMechanics" );
 
 }
 

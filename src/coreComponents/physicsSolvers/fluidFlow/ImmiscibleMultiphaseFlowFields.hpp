@@ -37,86 +37,96 @@ namespace immiscibleMultiphaseFlow
 using array2dLayoutPhase = array2d< real64, immiscibleFlow::LAYOUT_PHASE >;
 using array3dLayoutPhase_dS = array3d< real64, immiscibleFlow::LAYOUT_PHASE_DS >;
 
-DECLARE_FIELD( phaseVolumeFraction,
-               "phaseVolumeFraction",
-               array2dLayoutPhase,
-               0,
-               LEVEL_0,
-               WRITE_AND_READ,
-               "Phase volume fraction" );
+DECLARE_FIELD_WITH_NAMESPACE( phaseVolumeFraction,
+                              "phaseVolumeFraction",
+                              array2dLayoutPhase,
+                              0,
+                              LEVEL_0,
+                              WRITE_AND_READ,
+                              "Phase volume fraction",
+                              "immiscibleMultiphaseFlow" );
 
-DECLARE_FIELD( phaseVolumeFraction_n,
-               "phaseVolumeFraction_n",
-               array2dLayoutPhase,
-               0,
-               NOPLOT,
-               WRITE_AND_READ,
-               "Phase volume fraction at the previous converged time step" );
+DECLARE_FIELD_WITH_NAMESPACE( phaseVolumeFraction_n,
+                              "phaseVolumeFraction_n",
+                              array2dLayoutPhase,
+                              0,
+                              NOPLOT,
+                              WRITE_AND_READ,
+                              "Phase volume fraction at the previous converged time step",
+                              "immiscibleMultiphaseFlow" );
 
-DECLARE_FIELD( bcPhaseVolumeFraction,
-               "bcPhaseVolumeFraction",
-               array2dLayoutPhase,
-               0,
-               LEVEL_0,
-               WRITE_AND_READ,
-               "Boundary condition phase volume fraction" );
+DECLARE_FIELD_WITH_NAMESPACE( bcPhaseVolumeFraction,
+                              "bcPhaseVolumeFraction",
+                              array2dLayoutPhase,
+                              0,
+                              LEVEL_0,
+                              WRITE_AND_READ,
+                              "Boundary condition phase volume fraction",
+                              "immiscibleMultiphaseFlow" );
 
-DECLARE_FIELD( phaseMass,
-               "phaseMass",
-               array2dLayoutPhase,
-               0,
-               LEVEL_0,
-               WRITE_AND_READ,
-               "Phase mass" );
+DECLARE_FIELD_WITH_NAMESPACE( phaseMass,
+                              "phaseMass",
+                              array2dLayoutPhase,
+                              0,
+                              LEVEL_0,
+                              WRITE_AND_READ,
+                              "Phase mass",
+                              "immiscibleMultiphaseFlow" );
 
-DECLARE_FIELD( phaseMass_n,
-               "phaseMass_n",
-               array2dLayoutPhase,
-               0,
-               NOPLOT,
-               WRITE_AND_READ,
-               "Phase mass at the previous converged time step" );
+DECLARE_FIELD_WITH_NAMESPACE( phaseMass_n,
+                              "phaseMass_n",
+                              array2dLayoutPhase,
+                              0,
+                              NOPLOT,
+                              WRITE_AND_READ,
+                              "Phase mass at the previous converged time step",
+                              "immiscibleMultiphaseFlow" );
 
-DECLARE_FIELD( phaseMobility,
-               "phaseMobility",
-               array2dLayoutPhase,
-               0,
-               LEVEL_0,
-               WRITE_AND_READ,
-               "Phase mobility" );
+DECLARE_FIELD_WITH_NAMESPACE( phaseMobility,
+                              "phaseMobility",
+                              array2dLayoutPhase,
+                              0,
+                              LEVEL_0,
+                              WRITE_AND_READ,
+                              "Phase mobility",
+                              "immiscibleMultiphaseFlow" );
 
-DECLARE_FIELD( dPhaseVolumeFraction,
-               "dPhaseVolumeFraction",
-               array3dLayoutPhase_dS,
-               0,
-               NOPLOT,
-               NO_WRITE,
-               "Derivative of phase volume fraction with respect to pressure, temperature, global component density" );
+DECLARE_FIELD_WITH_NAMESPACE( dPhaseVolumeFraction,
+                              "dPhaseVolumeFraction",
+                              array3dLayoutPhase_dS,
+                              0,
+                              NOPLOT,
+                              NO_WRITE,
+                              "Derivative of phase volume fraction with respect to pressure, temperature, global component density",
+                              "immiscibleMultiphaseFlow" );
 
-DECLARE_FIELD( dPhaseMobility,
-               "dPhaseMobility",
-               array3dLayoutPhase_dS,
-               0,
-               NOPLOT,
-               NO_WRITE,
-               "Derivative of phase mobility with respect to pressure, temperature, global component density" );
+DECLARE_FIELD_WITH_NAMESPACE( dPhaseMobility,
+                              "dPhaseMobility",
+                              array3dLayoutPhase_dS,
+                              0,
+                              NOPLOT,
+                              NO_WRITE,
+                              "Derivative of phase mobility with respect to pressure, temperature, global component density",
+                              "immiscibleMultiphaseFlow" );
 
 
-DECLARE_FIELD( phaseOutflux,
-               "phaseOutflux",
-               array2dLayoutPhase,
-               0,
-               NOPLOT,
-               NO_WRITE,
-               "Phase outflux" );
+DECLARE_FIELD_WITH_NAMESPACE( phaseOutflux,
+                              "phaseOutflux",
+                              array2dLayoutPhase,
+                              0,
+                              NOPLOT,
+                              NO_WRITE,
+                              "Phase outflux",
+                              "immiscibleMultiphaseFlow" );
 
-DECLARE_FIELD( phaseCFLNumber,
-               "phaseCFLNumber",
-               array1d< real64 >,
-               0,
-               LEVEL_0,
-               NO_WRITE,
-               "Phase CFL number" );
+DECLARE_FIELD_WITH_NAMESPACE( phaseCFLNumber,
+                              "phaseCFLNumber",
+                              array1d< real64 >,
+                              0,
+                              LEVEL_0,
+                              NO_WRITE,
+                              "Phase CFL number",
+                              "immiscibleMultiphaseFlow" );
 }
 }
 
