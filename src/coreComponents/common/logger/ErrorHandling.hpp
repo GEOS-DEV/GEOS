@@ -99,9 +99,10 @@ public:
     MsgType m_type = ErrorLogger::MsgType::Undefined;
     // the erreur message that can be completed
     std::string m_msg;
-    // the source location (file and line corresponding to the error in the code)
+    // the source location file corresponding to the error in the code
     std::string m_file;
-    integer m_line;
+    // the source location line corresponding to the error in the code (default is 0)
+    integer m_line = 0;
     // the rank(s) on which the error occured
     std::vector< int > m_ranksInfo;
     // Additional information about the error in the input file
