@@ -776,6 +776,8 @@ public:
    * @brief Helper function for static for loop
    * @tparam FUNC the callback function
    * @tparam ...Is integer indices of the loop
+   * @param func the callback function to call for each index
+   * @param Is the integer indices of the loop
    */
   template< typename FUNC, int... Is >
   GEOS_HOST_DEVICE
@@ -802,6 +804,7 @@ public:
   /**
    * @brief Helper function for loop over tet basis functions
    * @tparam FUNC the callback function
+   * @param func the callback function to call for each index
    */
   template< typename FUNC >
   GEOS_HOST_DEVICE
@@ -902,6 +905,10 @@ public:
     }, std::make_integer_sequence< int, ORDER + 1 > {} );
   }
 
+  /**
+   * @brief Helper function for loop over barycentric coordinates of a face.
+   * @tparam FUNC the callback function
+   */
   template< typename FUNC >
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
@@ -1020,19 +1027,18 @@ public:
     } );
   }
 
-
+  /**
+   * @brief Function to compute the factor for the flux derivative term
+   * @param X Array containing the coordinates of the support points.
+   * @param x1 Index of the first edge vertex
+   * @param x2 Index of the second edge vertex
+   * @param o1 Index of the first face vertex
+   * @param o2 Index of the second face vertex
+   */
   GEOS_HOST_DEVICE
-
   GEOS_FORCE_INLINE
-
-  static
-
-  constexpr
-
-  real64
-
+  static constexpr real64
   computeFluxDerivativeFactor( real64 const (&X)[4][3], int x1, int x2, int o1, int o2 )    // Order x1, x2, o1, o2
-
   {
 
     real64 detJ = LvArray::math::abs( jacobianDeterminant( X ));
@@ -1141,6 +1147,13 @@ public:
     } );
   }
 
+  /**
+   * Compute th length of the edge between two vertices i1 and i2
+   * @param i1 Index of the first vertex
+   * @param i2 Index of the second vertex
+   * @param X Array containing the coordinates of the support points.
+   * @return The squared length of the edge between the two vertices
+   */
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
   static real64 edgeLength2( localIndex i1,
@@ -1240,218 +1253,20 @@ public:
       } );
     } );
   }
-//  /**
-//   * @brief Calculate the integration weights for a quadrature point.
-//   * @param q Index of the quadrature point.
-//   * @param X Array containing the coordinates of the support points.
-//   * @return The product of the quadrature rule weight and the determinate of
-//   *   the parent/physical transformation matrix.
-//   */
-//  GEOS_HOST_DEVICE
-//  GEOS_FORCE_INLINE
-//  static real64 transformedQuadratureWeight( localIndex const q,
-//                                             real64 const (&X)[numNodes][3] )
-//  {
-//    // not needed since the integrals are not computed via quadratures
-//    GEOS_ERROR(" Quadrature rules are not implemented for Bernstein-Bézier bases. ");
-//    return 0;
-//  }
-//
-//  /**
-//   * @brief Calculates the isoparametric "Jacobian" transformation
-//   *   matrix/mapping from the parent space to the physical space.
-//   * @param q The quadrature point index
-//   * @param X Array containing the coordinates of the mesh support points.
-//   * @param J Array to store the Jacobian transformation.
-//   * @return The determinant of the Jacobian transformation matrix.
-//   */
-//  GEOS_HOST_DEVICE
-//  GEOS_FORCE_INLINE
-//  static real64 invJacobianTransformation( int const q,
-//                                           real64 const (&X)[8][3],
-//                                           real64 ( & J )[3][3] )
-//  {
-//    // TODO
-//  }
-//
-//
-//  /**
-//   * @brief Calculate the symmetric gradient of a vector valued support field
-//   *   at a quadrature point using the stored inverse of the Jacobian
-//   *   transformation matrix.
-//   * @param q The quadrature point index
-//   * @param invJ The inverse of the Jacobian transformation matrix.
-//   * @param var The vector valued support field to apply the gradient
-//   *   operator on.
-//   * @param grad The symmetric gradient in Voigt notation.
-//   */
-//  GEOS_HOST_DEVICE
-//  GEOS_FORCE_INLINE
-//  static void symmetricGradient( int const q,
-//                                 real64 const (&invJ)[3][3],
-//                                 real64 const (&var)[numNodes][3],
-//                                 real64 ( &grad )[6] )
-//  {
-//    // TODO
-//
-//  }
-//
-//  /**
-//   * @brief Calculate the gradient of a vector valued support field at a point
-//   *   using the stored basis function gradients for all support points.
-//   * @param q The quadrature point index
-//   * @param invJ The inverse of the Jacobian transformation matrix.
-//   * @param var The vector valued support field to apply the gradient
-//   *   operator on.
-//   * @param grad The gradient.
-//   *
-//   * More precisely, the operator is defined as:
-//   * \f[
-//   * grad_{ij}  = \sum_a^{nSupport} \left ( \frac{\partial N_a}{\partial X_j} var_{ai}\right ),
-//   * \f]
-//   *
-//   */
-//  GEOS_HOST_DEVICE
-//  GEOS_FORCE_INLINE
-//  static void gradient( int const q,
-//                        real64 const (&invJ)[3][3],
-//                        real64 const (&var)[numNodes][3],
-//                        real64 ( &grad )[3][3] )
-//  {
-//    // TODO
-//  }
-//
-//  /**
-//   * @brief Inner product of all basis function gradients and a rank-2
-//   *   symmetric tensor evaluated at a quadrature point.
-//   * @param q The 3d quadrature point index
-//   * @param invJ The inverse of the Jacobian transformation matrix.
-//   * @param var The rank-2 symmetric tensor at @p q.
-//   * @param R The vector resulting from the tensor contraction.
-//   *
-//   * More precisely, the operator is defined as:
-//   * \f[
-//   * R_i = \sum_a^{nSupport} \left( \frac{\partial N_a}{\partial X_j} var_{ij} \right),
-//   * \f]
-//   * where \f$\frac{\partial N_a}{\partial X_j}\f$ is the basis function gradient,
-//   *   \f$var_{ij}\f$ is the rank-2 symmetric tensor.
-//   */
-//  GEOS_HOST_DEVICE
-//  GEOS_FORCE_INLINE
-//  static void plusGradNajAij( int const q,
-//                              real64 const (&invJ)[3][3],
-//                              real64 const (&var)[6],
-//                              real64 ( &R )[numNodes][3] )
-//  {
-//    // TODO
-//  }
-//
-//
-//  /**
-//   * @brief Calculates the isoparametric "Jacobian" transformation
-//   *   matrix/mapping from the parent space to the physical space at a single point.
-//   * @param coords The parent coordinates at which to evaluate the shape function value
-//   * @param X Array containing the coordinates of the support points.
-//   * @param J Array to store the Jacobian transformation.
-//   */
-//  GEOS_HOST_DEVICE
-//  GEOS_FORCE_INLINE
-//  static void jacobianTransformation( real64 const (&coords)[3],
-//                                      real64 const (&X)[numNodes][3],
-//                                      real64 ( &J )[3][3] )
-//  {
-//    // TOOD
-//  }
-//
-//
-//  /**
-//   * @brief computes the real-world coordinates of the support nodes
-//   * @param[in] Xmesh Array containing the coordinates of the corners of the mesh element
-//   * @param[out] X Array containing the coordinates of the support points.
-//   */
-//  GEOS_HOST_DEVICE
-//  GEOS_FORCE_INLINE
-//  static void computeLocalCoords( real64 const (&Xmesh)[8][3],
-//                                  real64 const (&X)[numNodes][3] )
-//  {
-//    // TODO
-//  }
-//
-//
-//
-//  template< typename FUNC >
-//  GEOS_HOST_DEVICE
-//  GEOS_FORCE_INLINE
-//  static void computeStiffnessxyTerm( localIndex const q,
-//                                      real64 const (&X)[8][3],
-//                                      FUNC && func )
-//  {
-//    // TODO
-//  }
-//
-//  /**
-//   * @brief computes the non-zero contributions of the d.o.f. indexed by q to the
-//   *   partial-stiffness matrix R, i.e., the superposition matrix of first derivatives in z only
-//   *   of the shape functions. Warning, the matrix B is obtained by computeBzMatrix instead of usual one.
-//   * @param q The quadrature point index
-//   * @param X Array containing the coordinates of the support points.
-//   * @param func Callback function accepting three parameters: i, j and R_ij
-//   */
-//  template< typename FUNC >
-//  GEOS_HOST_DEVICE
-//  GEOS_FORCE_INLINE
-//  static void computeStiffnesszTerm( localIndex const q,
-//                                     real64 const (&X)[8][3],
-//                                     FUNC && func )
-//  {
-//    // TODO
-//  }
-//
-//
-//
-//  /**
-//   * @brief Apply a Jacobian transformation matrix from the parent space to the
-//   *   physical space on the parent shape function derivatives, producing the
-//   *   shape function derivatives in the physical space.
-//   * @param q The quadrature point index
-//   * @param invJ The Jacobian transformation from parent->physical space.
-//   * @param gradN Array to contain the shape function derivatives for all
-//   *   support points at the coordinates of the quadrature point @p q.
-//   */
-//  GEOS_HOST_DEVICE
-//  GEOS_FORCE_INLINE
-//  static void applyTransformationToParentGradients( int const q,
-//                                                    real64 const ( &invJ )[3][3],
-//                                                    real64 ( &gradN )[numNodes][3] )
-//  {
-//    // TODO
-//  }
-//
-//  /**
-//   * @brief Apply a Jacobian transformation matrix from the parent space to the
-//   *   physical space on the parent shape function derivatives, producing the
-//   *   shape function derivatives in the physical space at a single point.
-//   * @param coords The parent coordinates at which to apply the transformation
-//   * @param invJ The Jacobian transformation from parent->physical space.
-//   * @param gradN Array to contain the shape function derivatives for all
-//   *   support points at the coordinates of the quadrature point @p q.
-//   */
-//  GEOS_HOST_DEVICE
-//  GEOS_FORCE_INLINE
-//  static void applyTransformationToParentGradients( real64 const (&coords)[3],
-//                                                    real64 const ( &invJ )[3][3],
-//                                                    real64 ( &gradN )[numNodes][3] )
-//  {
-//    // TODO
-//  }
-//
+
 };
 
 /**
- * Fixed-degree classes
+ *  Tetrahedron element with Bernstein-Bézier basis functions of order 1.
  */
 using BB1_Tetrahedron = BB_Tetrahedron< 1 >;
+/**
+ *  Tetrahedron element with Bernstein-Bézier basis functions of order 2.
+ */
 using BB2_Tetrahedron = BB_Tetrahedron< 2 >;
+/**
+ *  Tetrahedron element with Bernstein-Bézier basis functions of order 3.
+ */
 using BB3_Tetrahedron = BB_Tetrahedron< 3 >;
 //using BB4_Tetrahedron = BB_Tetrahedron< 4 >;
 //using BB5_Tetrahedron = BB_Tetrahedron< 5 >;
