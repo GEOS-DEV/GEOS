@@ -510,7 +510,7 @@ public:
     gradN[ q ][ 0 ] = 0.0;
     gradN[ q ][ 1 ] = 0.0;
     gradN[ q ][ 2 ] = 0.0;
-    GEOS_UNUSED_VAR(q, X, gradN);
+    GEOS_UNUSED_VAR( q, X, gradN );
     GEOS_ERROR( "Bernstein-Bézier basis is modal, not nodal. No quadrature points are defined." );
     return 0;
   }
@@ -1097,14 +1097,14 @@ public:
     }
     basisLoop( [&func, &dLambdadX, &detJ] ( auto const cc1, auto const ci1, auto const cj1, auto const ck1, auto const cl1 )
     {
-      
+
       constexpr int c1 = cc1;
       constexpr int i1 = ci1;
       constexpr int j1 = cj1;
       constexpr int k1 = ck1;
       constexpr int l1 = cl1;
       //Not used in some combinations, but needed for constexpr
-      GEOS_UNUSED_VAR(c1,i1,j1,k1,l1);
+      GEOS_UNUSED_VAR( c1, i1, j1, k1, l1 );
       basisLoop( [&func, &dLambdadX, &detJ] ( auto const cc2, auto const ci2, auto const cj2, auto const ck2, auto const cl2 )
       {
         constexpr int c2 = cc2;
@@ -1113,7 +1113,7 @@ public:
         constexpr int k2 = ck2;
         constexpr int l2 = cl2;
         //Not used in some combinations, but needed for constexpr
-        GEOS_UNUSED_VAR(c2,i2,j2,k2,l2);
+        GEOS_UNUSED_VAR( c2, i2, j2, k2, l2 );
         barycentricCoordinateLoop( [&func, &dLambdadX, &detJ] ( auto const cd1 )
         {
           constexpr int d1 = cd1;

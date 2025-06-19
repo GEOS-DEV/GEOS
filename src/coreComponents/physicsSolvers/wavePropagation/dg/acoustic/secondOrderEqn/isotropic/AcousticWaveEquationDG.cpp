@@ -312,7 +312,7 @@ void AcousticWaveEquationDG::initializePostInitialConditionsPreSubGroups()
 
           // Pre-compute inverse of mass + damping matrix for each boundary element
           // localIndex nAbsBdryElems = 0;
-         
+
           AcousticWaveEquationDGKernels::PrecomputePenaltyGeomKernel::
             launch< EXEC_POLICY >
             ( elementSubRegion.size(),
@@ -369,7 +369,7 @@ real64 AcousticWaveEquationDG::computeTimeStep( real64 & dtOut )
 //TODO: Modify to use on discontinuous variable
 void AcousticWaveEquationDG::applyFreeSurfaceBC( real64 const time, DomainPartition & domain )
 {
-  GEOS_UNUSED_VAR( time,domain );
+  GEOS_UNUSED_VAR( time, domain );
   GEOS_ERROR( getDataContext() << ":  Free-Surface computation for acoustic dg wave propagator not yet implemented" );
 //  FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
 //  FunctionManager const & functionManager = FunctionManager::getInstance();
@@ -479,7 +479,7 @@ void AcousticWaveEquationDG::prepareNextTimestep( MeshLevel & mesh )
 
 }
 
-void AcousticWaveEquationDG::updatePressure( localIndex const size, localIndex const numNodesPerElem, arrayView2d< real32 > const p_nm1,arrayView2d< real32 > const p_n, arrayView2d< real32 >  p_np1 )
+void AcousticWaveEquationDG::updatePressure( localIndex const size, localIndex const numNodesPerElem, arrayView2d< real32 > const p_nm1, arrayView2d< real32 > const p_n, arrayView2d< real32 >  p_np1 )
 {
   forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const k )
   {
@@ -525,7 +525,7 @@ void AcousticWaveEquationDG::computeUnknowns( real64 const & time_n,
     arrayView2d< real32 > const p_n = elementSubRegion.getField< acousticfieldsdg::Pressure_n >();
     arrayView2d< real32 > const p_np1 = elementSubRegion.getField< acousticfieldsdg::Pressure_np1 >();
     arrayView1d< real32 const > const characteristicSize = elementSubRegion.getField< acousticfieldsdg::CharacteristicSize >();
-    
+
     arrayView2d< real64 >referenceInvMassMatrix = m_referenceInvMassMatrix[0][0].toView();
 
 
@@ -574,14 +574,14 @@ void AcousticWaveEquationDG::computeUnknowns( real64 const & time_n,
 }
 
 void AcousticWaveEquationDG::synchronizeUnknowns( real64 const & time_n,
-                                                  real64 const & ,
+                                                  real64 const &,
                                                   DomainPartition & domain,
                                                   MeshLevel & mesh,
                                                   string_array const & regionNames )
 {
 
   mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
-                                                                                        CellElementSubRegion & elementSubRegion )
+                                                                                        CellElementSubRegion & )
   {
 
     FieldIdentifiers fieldsToBeSync;
@@ -605,7 +605,7 @@ void AcousticWaveEquationDG::synchronizeUnknowns( real64 const & time_n,
 
 real64 AcousticWaveEquationDG::explicitStepInternal( real64 const & time_n,
                                                      real64 const & dt,
-                                                     integer const ,
+                                                     integer const,
                                                      DomainPartition & domain )
 {
   GEOS_MARK_FUNCTION;

@@ -478,7 +478,7 @@ struct WaveSolverUtils
       v2[1] = spxf[1][1];
       v2[2] = spxf[2][1];
       LvArray::tensorOps::crossProduct( cross, v1, v2 );
-      hs = hs + LvArray::math::sqrt( LvArray::tensorOps::l2NormSquared<3>( cross ));
+      hs = hs + LvArray::math::sqrt( LvArray::tensorOps::l2NormSquared< 3 >( cross ));
     }
 
     for( int i = 0; i < 3; i++ )

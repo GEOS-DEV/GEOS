@@ -92,7 +92,7 @@ public:
   int getOrder() const { return m_order; }
 
   Formulation getFormulation() const { return m_formulation; }
-  
+
 private:
 
   struct viewKeyStruct

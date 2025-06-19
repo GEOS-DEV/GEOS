@@ -76,7 +76,7 @@ public:
                                        DomainPartition & domain,
                                        integer const computeGradient ) override;
 
-  
+
 
   /**@}*/
 
@@ -132,7 +132,7 @@ public:
 
   void prepareNextTimestep( MeshLevel & mesh );
 
-  void updatePressure(localIndex const size, localIndex const numNodesPerElem, arrayView2d< real32 > const p_nm1,arrayView2d< real32 > const p_n, arrayView2d< real32 >  p_np1);
+  void updatePressure( localIndex const size, localIndex const numNodesPerElem, arrayView2d< real32 > const p_nm1, arrayView2d< real32 > const p_n, arrayView2d< real32 >  p_np1 );
 
 protected:
 
