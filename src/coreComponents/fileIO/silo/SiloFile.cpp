@@ -709,7 +709,7 @@ void SiloFile::writeMaterialMapsFullStorage( ElementRegionBase const & elemRegio
   if( nmat > 0 )
   {
     array1d< int > matnos( nmat );
-    std::vector< string > materialNameStrings( nmat );
+    stdVector< string > materialNameStrings( nmat );
     array1d< char const * > materialNames( nmat+1 );
     materialNames.back() = nullptr;
 
@@ -822,7 +822,7 @@ void SiloFile::writeMaterialMapsFullStorage( ElementRegionBase const & elemRegio
       int const size = MpiWrapper::commSize( MPI_COMM_GEOS );
 
       string_array vBlockNames( size );
-      std::vector< char * > BlockNames( size );
+      stdVector< char * > BlockNames( size );
       char currentDirectory[256];
 
       DBGetDir( m_dbBaseFilePtr, currentDirectory );
@@ -1226,7 +1226,7 @@ void SiloFile::writeElementRegionSilo( ElementRegionBase const & elemRegion,
   dataRepository::Group fakeGroup( elemRegion.getName(), conduitNode );
 
   localIndex numElems = 0;
-  std::vector< std::map< string, WrapperBase const * > > viewPointers;
+  stdVector< std::map< string, WrapperBase const * > > viewPointers;
 
   viewPointers.resize( elemRegion.numSubRegions() );
   elemRegion.forElementSubRegionsIndex< ElementSubRegionBase >(
@@ -1327,7 +1327,7 @@ void SiloFile::writeDomainPartition( DomainPartition const & domain,
 
 }
 
-static std::vector< int > getSiloNodeOrdering( ElementType const elementType )
+static stdVector< int > getSiloNodeOrdering( ElementType const elementType )
 {
   switch( elementType )
   {
@@ -1410,7 +1410,7 @@ void SiloFile::writeElementMesh( ElementRegionBase const & elementRegion,
     array1d< char > ghostZoneFlag;
 
 
-    std::vector< FixedOneToManyRelation > elementToNodeMap( numElementShapes );
+    stdVector< FixedOneToManyRelation > elementToNodeMap( numElementShapes );
 
     int count = 0;
 
@@ -1424,7 +1424,7 @@ void SiloFile::writeElementMesh( ElementRegionBase const & elementRegion,
       elementToNodeMap[count].resize( elementSubRegion.size(), elementSubRegion.numNodesPerElement() );
 
       arrayView1d< integer const > const & elemGhostRank = elementSubRegion.ghostRank();
-      std::vector< int > const nodeOrdering = getSiloNodeOrdering( elementSubRegion.getElementType() );
+      stdVector< int > const nodeOrdering = getSiloNodeOrdering( elementSubRegion.getElementType() );
       for( localIndex k = 0; k < elementSubRegion.size(); ++k )
       {
         integer const numNodesPerElement = LvArray::integerConversion< int >( elementSubRegion.numNodesPerElement( k ) );
@@ -1689,9 +1689,9 @@ void SiloFile::writeMeshLevel( MeshLevel const & meshLevel,
       // It is not documented in silo manual.
       array1d< localIndex * > faceConnectivity( numFaceTypes );
       array1d< globalIndex const * > globalFaceNumbers( numFaceTypes );
-      std::vector< int > fshapecnt( numFaceTypes );
-      std::vector< int > fshapetype( numFaceTypes );
-      std::vector< int > fshapesize( numFaceTypes );
+      stdVector< int > fshapecnt( numFaceTypes );
+      stdVector< int > fshapetype( numFaceTypes );
+      stdVector< int > fshapesize( numFaceTypes );
 
       array1d< array1d< localIndex > > faceToNodeMapCopy( numFaceTypes );
       {
@@ -1740,9 +1740,9 @@ void SiloFile::writeMeshLevel( MeshLevel const & meshLevel,
 
       array1d< localIndex * > faceConnectivity( numFaceTypes );
       array1d< globalIndex const * > globalFaceNumbers( numFaceTypes );
-      std::vector< int > fshapecnt( numFaceTypes );
-      std::vector< int > fshapetype( numFaceTypes );
-      std::vector< int > fshapesize( numFaceTypes );
+      stdVector< int > fshapecnt( numFaceTypes );
+      stdVector< int > fshapetype( numFaceTypes );
+      stdVector< int > fshapesize( numFaceTypes );
 
       array1d< array2d< localIndex > > faceToNodeMapCopy( numFaceTypes );
 
@@ -1812,9 +1812,9 @@ void SiloFile::writeMeshLevel( MeshLevel const & meshLevel,
 
     array1d< localIndex * > edgeConnectivity( numEdgeTypes );
     array1d< globalIndex const * > globalEdgeNumbers( numEdgeTypes );
-    std::vector< int > eshapecnt( numEdgeTypes );
-    std::vector< int > eshapetype( numEdgeTypes );
-    std::vector< int > eshapesize( numEdgeTypes );
+    stdVector< int > eshapecnt( numEdgeTypes );
+    stdVector< int > eshapetype( numEdgeTypes );
+    stdVector< int > eshapesize( numEdgeTypes );
 
     array1d< array2d< localIndex > > edgeToNodeMap( numEdgeTypes );
 
@@ -1922,8 +1922,8 @@ void SiloFile::writePolygonMeshObject( const string & meshName,
 
     DBClearOptlist( optlist );
 
-    std::vector< int > nodelist( lnodelist );
-    std::vector< globalIndex > globalZoneNumber( lnodelist );
+    stdVector< int > nodelist( lnodelist );
+    stdVector< globalIndex > globalZoneNumber( lnodelist );
 
     int elemCount = 0;
     for( int j = 0; j < lnodelist; ++j )

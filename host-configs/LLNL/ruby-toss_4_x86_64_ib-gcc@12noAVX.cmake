@@ -60,15 +60,15 @@ set(ENABLE_CUDA OFF CACHE BOOL "")
 
 set(ENABLE_CHAI ON CACHE BOOL "")
 
-set(CHAI_DIR "/usr/gapps/GEOSX/thirdPartyLibs/2025-03-21/ruby-gcc-12noAVX_tpls/gcc-12noAVX/chai-git.df7741f1dbbdc5fff5f7d626151fdf1904e62b19_develop-wtbhnhf2zdlchyvk3xfgwni2wnjxo3js" CACHE PATH "")
+set(CHAI_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2025-05-05/ruby-gcc-12noAVX_tpls/gcc-12noAVX/chai-git.4b9060b18b9bec1167026cfb3132bd540c4bd56b_develop-44liirgqt77y5jx6chuabzw6v5rpj22r" CACHE PATH "")
 
-set(RAJA_DIR "/usr/gapps/GEOSX/thirdPartyLibs/2025-03-21/ruby-gcc-12noAVX_tpls/gcc-12noAVX/raja-git.4d7fcba55ebc7cb972b7cc9f6778b48e43792ea1_develop-e2mjbgvxgfyunnduvgkuntfkblvmrvjo" CACHE PATH "")
+set(RAJA_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2025-05-05/ruby-gcc-12noAVX_tpls/gcc-12noAVX/raja-git.1d70abf171474d331f1409908bdf1b1c3fe19222_develop-jkwf235s5cewqgnoe6me7gv4hty5hfuw" CACHE PATH "")
 
 set(ENABLE_UMPIRE ON CACHE BOOL "")
 
-set(UMPIRE_DIR "/usr/gapps/GEOSX/thirdPartyLibs/2025-03-21/ruby-gcc-12noAVX_tpls/gcc-12noAVX/umpire-git.abd729f40064175e999a83d11d6b073dac4c01d2_develop-ixn6mth7nl44zyt34hztcdnqit6h6aqy" CACHE PATH "")
+set(UMPIRE_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2025-05-05/ruby-gcc-12noAVX_tpls/gcc-12noAVX/umpire-git.1ed0669c57f041baa1f1070693991c3a7a43e7ee_develop-f5nd3amxl5vi32gpxuebjy3hza3i46xr" CACHE PATH "")
 
-set(CAMP_DIR "/usr/gapps/GEOSX/thirdPartyLibs/2025-03-21/ruby-gcc-12noAVX_tpls/gcc-12noAVX/camp-git.0f07de4240c42e0b38a8d872a20440cb4b33d9f5_main-mjbymoc6da5vwtgx7kgfcg6x37ilciyg" CACHE PATH "")
+set(CAMP_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2025-05-05/ruby-gcc-12noAVX_tpls/gcc-12noAVX/camp-git.ee0a3069a7ae72da8bcea63c06260fad34901d43_main-ozknqlixdd5t2fggyzzahyp2uwgtpqxe" CACHE PATH "")
 
 #--------------------------------------------------------------------------------
 # IO TPLs
@@ -76,21 +76,23 @@ set(CAMP_DIR "/usr/gapps/GEOSX/thirdPartyLibs/2025-03-21/ruby-gcc-12noAVX_tpls/g
 
 set(ENABLE_CALIPER ON CACHE BOOL "")
 
-set(CALIPER_DIR "/usr/gapps/GEOSX/thirdPartyLibs/2025-03-21/ruby-gcc-12noAVX_tpls/gcc-12noAVX/caliper-git.287b7f3ad2d12f520aad04268d44f353cd05403c_2.12.0-olusdj2xpppf5tam6ktcysn6ogeq4i2d" CACHE PATH "")
+set(CALIPER_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2025-05-05/ruby-gcc-12noAVX_tpls/gcc-12noAVX/caliper-git.287b7f3ad2d12f520aad04268d44f353cd05403c_2.12.0-fpt5fqjl57zcfp7juq2723exiqbiafue" CACHE PATH "")
 
-set(adiak_DIR "/usr/gapps/GEOSX/thirdPartyLibs/2025-03-21/ruby-gcc-12noAVX_tpls/gcc-12noAVX/adiak-0.4.0-kgrknuu6drw34t7svfcen5t5u37i4jnf/lib/cmake/adiak" CACHE PATH "")
+set(adiak_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2025-05-05/ruby-gcc-12noAVX_tpls/gcc-12noAVX/adiak-0.4.0-ic6ousqruhancnroudaj2ramn26nnzxt/lib/cmake/adiak" CACHE PATH "")
 
-set(HDF5_DIR "/usr/gapps/GEOSX/thirdPartyLibs/2025-03-21/ruby-gcc-12noAVX_tpls/gcc-12noAVX/hdf5-1.12.1-chdwkirwhv5wph3ui6yuenspycyu4o5g" CACHE PATH "")
+set(ZLIB_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2025-05-05/ruby-gcc-12noAVX_tpls/gcc-12noAVX/zlib-1.3.1-yed2ynyxzfkhibckigaw4ev7r4urixwx" CACHE PATH "")
 
-set(CONDUIT_DIR "/usr/gapps/GEOSX/thirdPartyLibs/2025-03-21/ruby-gcc-12noAVX_tpls/gcc-12noAVX/conduit-git.ad86e316ad56a75c099d30ca5ce75cff275b5924_develop-dc5zun6rptqzosk3ntitczne2umvfvoe" CACHE PATH "")
+set(HDF5_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2025-05-05/ruby-gcc-12noAVX_tpls/gcc-12noAVX/hdf5-1.12.1-gde7rzb5axcjosct7jnzil5mqznuphym" CACHE PATH "")
 
-set(SILO_DIR "/usr/gapps/GEOSX/thirdPartyLibs/2025-03-21/ruby-gcc-12noAVX_tpls/gcc-12noAVX/silo-4.11.1-bsd-wmvom3aodvg5tpn4b7tymog4j5o2bjdl" CACHE PATH "")
+set(CONDUIT_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2025-05-05/ruby-gcc-12noAVX_tpls/gcc-12noAVX/conduit-git.ad86e316ad56a75c099d30ca5ce75cff275b5924_develop-xwnrnqd7jpyvg7e6ak3n2lrjb2teflv3" CACHE PATH "")
 
-set(PUGIXML_DIR "/usr/gapps/GEOSX/thirdPartyLibs/2025-03-21/ruby-gcc-12noAVX_tpls/gcc-12noAVX/pugixml-1.13-lzydzfiimopvd46asgg6wsswe4tkzbvm" CACHE PATH "")
+set(SILO_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2025-05-05/ruby-gcc-12noAVX_tpls/gcc-12noAVX/silo-4.11.1-bsd-qgi3yuajumhnem5jyfxudgaxymsxsry2" CACHE PATH "")
 
-set(VTK_DIR "/usr/gapps/GEOSX/thirdPartyLibs/2025-03-21/ruby-gcc-12noAVX_tpls/gcc-12noAVX/vtk-9.3.1-rtmsf25pdwhvyygjqmzsezgoomzqf6fi" CACHE PATH "")
+set(PUGIXML_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2025-05-05/ruby-gcc-12noAVX_tpls/gcc-12noAVX/pugixml-1.13-czxwgb3p5ogoeiqftrp3bqahzr6lgr5n" CACHE PATH "")
 
-set(FMT_DIR "/usr/gapps/GEOSX/thirdPartyLibs/2025-03-21/ruby-gcc-12noAVX_tpls/gcc-12noAVX/fmt-10.0.0-na2mo7xln32wmq2hjrmbdyzacr7yqxev" CACHE PATH "")
+set(VTK_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2025-05-05/ruby-gcc-12noAVX_tpls/gcc-12noAVX/vtk-9.4.2-74r4y5vhyb24cm4ljesn3zmj4t7a2rhg" CACHE PATH "")
+
+set(FMT_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2025-05-05/ruby-gcc-12noAVX_tpls/gcc-12noAVX/fmt-10.0.0-2mwtki3p7acfmyns4d27f6pvtwgbxdaw" CACHE PATH "")
 
 #--------------------------------------------------------------------------------
 # System Math Libraries
@@ -100,7 +102,7 @@ set(ENABLE_MKL ON CACHE BOOL "")
 
 set(MKL_INCLUDE_DIRS "/usr/tce/packages/mkl/mkl-2022.1.0/include" CACHE PATH "")
 
-set(MKL_LIBRARIES /usr/tce/packages/mkl/mkl-2022.1.0/mkl/2022.1.0/lib/intel64/libmkl_gf_lp64.so
+set(MKL_LIBRARIES /usr/tce/packages/mkl/mkl-2022.1.0/mkl/2022.1.0/lib/intel64/libmkl_intel_lp64.so
                   /usr/tce/packages/mkl/mkl-2022.1.0/mkl/2022.1.0/lib/intel64/libmkl_gnu_thread.so
                   /usr/tce/packages/mkl/mkl-2022.1.0/mkl/2022.1.0/lib/intel64/libmkl_core.so
                   /lib/../lib64/libomp.so
@@ -112,19 +114,19 @@ set(MKL_LIBRARIES /usr/tce/packages/mkl/mkl-2022.1.0/mkl/2022.1.0/lib/intel64/li
 # Math TPLs
 #--------------------------------------------------------------------------------
 
-set(METIS_DIR "/usr/gapps/GEOSX/thirdPartyLibs/2025-03-21/ruby-gcc-12noAVX_tpls/gcc-12noAVX/metis-5.1.0-klusyacs6uicwrr6t2uh4inudrz25oog" CACHE PATH "")
+set(METIS_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2025-05-05/ruby-gcc-12noAVX_tpls/gcc-12noAVX/metis-5.1.0-hemq6k3gyqbppgsvok3b2kcrtx24oglo" CACHE PATH "")
 
-set(PARMETIS_DIR "/usr/gapps/GEOSX/thirdPartyLibs/2025-03-21/ruby-gcc-12noAVX_tpls/gcc-12noAVX/parmetis-4.0.3-v5legva4mfqqce3sdgesl4th77brabgp" CACHE PATH "")
+set(PARMETIS_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2025-05-05/ruby-gcc-12noAVX_tpls/gcc-12noAVX/parmetis-4.0.3-jbpzgcnoj3trxe3jjjbxxqjxgm4666h2" CACHE PATH "")
 
-set(SCOTCH_DIR "/usr/gapps/GEOSX/thirdPartyLibs/2025-03-21/ruby-gcc-12noAVX_tpls/gcc-12noAVX/scotch-7.0.3-o4ndyzzae5dofc4ntxfnw3ujd2qluj2d" CACHE PATH "")
+set(SCOTCH_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2025-05-05/ruby-gcc-12noAVX_tpls/gcc-12noAVX/scotch-7.0.3-frgphccdsmcv57rmsmizi7kzn7ggyazg" CACHE PATH "")
 
-set(SUPERLU_DIST_DIR "/usr/gapps/GEOSX/thirdPartyLibs/2025-03-21/ruby-gcc-12noAVX_tpls/gcc-12noAVX/superlu-dist-git.0f6efc377df2440c235452d13d28d2c717f832a1_6.3.0-git.8-ippbrqdxoazamofylj5pmuwrh6inr7wj" CACHE PATH "")
+set(SUPERLU_DIST_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2025-05-05/ruby-gcc-12noAVX_tpls/gcc-12noAVX/superlu-dist-git.0f6efc377df2440c235452d13d28d2c717f832a1_6.3.0-git.8-kutepd3wey2t6z72ln7tcyyeclxpfj4m" CACHE PATH "")
 
-set(SUITESPARSE_DIR "/usr/gapps/GEOSX/thirdPartyLibs/2025-03-21/ruby-gcc-12noAVX_tpls/gcc-12noAVX/suite-sparse-5.10.1-webltrnxup4nbupu53no5257splerdr6" CACHE PATH "")
+set(SUITESPARSE_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2025-05-05/ruby-gcc-12noAVX_tpls/gcc-12noAVX/suite-sparse-5.10.1-i6e7qqrkbistqhfir3lmlhw5oc5ghwoh" CACHE PATH "")
 
-set(TRILINOS_DIR "/usr/gapps/GEOSX/thirdPartyLibs/2025-03-21/ruby-gcc-12noAVX_tpls/gcc-12noAVX/trilinos-16.0.0-ysargtkfdb5xy5fzx6ulphazmjvezelh" CACHE PATH "")
+set(TRILINOS_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2025-05-05/ruby-gcc-12noAVX_tpls/gcc-12noAVX/trilinos-16.1.0-ummkoh33hrslvibofwc6m4xktisxltn2" CACHE PATH "")
 
-set(HYPRE_DIR "/usr/gapps/GEOSX/thirdPartyLibs/2025-03-21/ruby-gcc-12noAVX_tpls/gcc-12noAVX/hypre-git.21e5953ddc6daaa24699236108866afa597a415c_2.32.0-git.33-ml4eq3rh265fw2id2loqeuxr4h4juz27" CACHE PATH "")
+set(HYPRE_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2025-05-05/ruby-gcc-12noAVX_tpls/gcc-12noAVX/hypre-git.be52325a3ed8923fb93af348b1262ecfe44ab5d2_2.33.0-git.12-wytsytvye27jyj64tncsyavp56yfdafb" CACHE PATH "")
 
 set(ENABLE_PETSC OFF CACHE BOOL "")
 
@@ -148,7 +150,7 @@ set(ENABLE_PYGEOSX ON CACHE BOOL "")
 
 set(SPHINX_EXECUTABLE "/usr/gapps/GEOSX/thirdPartyLibs/python/quartz-gcc-python/python/bin/sphinx-build" CACHE PATH "")
 
-set(DOXYGEN_EXECUTABLE "/usr/gapps/GEOSX/thirdPartyLibs/2025-03-21/ruby-gcc-12noAVX_tpls/gcc-12noAVX/doxygen-1.8.20-c4zarmc366msdoizvmau2bs7n76ob7vo/bin/doxygen" CACHE PATH "")
+set(DOXYGEN_EXECUTABLE "/usr/WS1/GEOS/GEOSX/TPLs_2025-05-05/ruby-gcc-12noAVX_tpls/gcc-12noAVX/doxygen-1.8.20-gimiza4fo3e3l6hk7is2i6ldsx5tzjdz/bin/doxygen" CACHE PATH "")
 
 #--------------------------------------------------------------------------------
 # Development tools
@@ -156,7 +158,7 @@ set(DOXYGEN_EXECUTABLE "/usr/gapps/GEOSX/thirdPartyLibs/2025-03-21/ruby-gcc-12no
 
 set(ENABLE_UNCRUSTIFY ON CACHE BOOL "")
 
-set(UNCRUSTIFY_EXECUTABLE "/usr/gapps/GEOSX/thirdPartyLibs/2025-03-21/ruby-gcc-12noAVX_tpls/gcc-12noAVX/uncrustify-git.401a4098bce9dcc47e024987403f2d59d9ba7bd2_0.70.1-git.319-2mqopy2akzlsxtxeg27byz3abovta3nh/bin/uncrustify" CACHE PATH "")
+set(UNCRUSTIFY_EXECUTABLE "/usr/WS1/GEOS/GEOSX/TPLs_2025-05-05/ruby-gcc-12noAVX_tpls/gcc-12noAVX/uncrustify-git.401a4098bce9dcc47e024987403f2d59d9ba7bd2_0.70.1-git.319-eecq2jjtthgyzmdi3sk5enloz6xw5bzw/bin/uncrustify" CACHE PATH "")
 
 #--------------------------------------------------------------------------------
 # addr2line
@@ -172,7 +174,7 @@ set(ADDR2LINE_EXEC  "/usr/bin/addr2line" CACHE PATH "")
 
 set(ENABLE_MATHPRESSO ON CACHE BOOL "")
 
-set(MATHPRESSO_DIR "/usr/gapps/GEOSX/thirdPartyLibs/2025-03-21/ruby-gcc-12noAVX_tpls/gcc-12noAVX/mathpresso-geos-oxuork75cuchoi2oejgmbuucnru7llce" CACHE PATH "")
+set(MATHPRESSO_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2025-05-05/ruby-gcc-12noAVX_tpls/gcc-12noAVX/mathpresso-geos-vqn7cjtawyzaitoivbgkxqbclcdhog2j" CACHE PATH "")
 
 set(ENABLE_XML_UPDATES ON CACHE BOOL "")
 
