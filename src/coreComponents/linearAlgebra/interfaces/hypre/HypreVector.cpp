@@ -102,7 +102,6 @@ void HypreVector::create( localIndex const localSize,
 
   // Set up the parallel and local vector data structures
   m_vec = hypre_ParVectorCreate( comm, globalSize, partitioning );
-  hypre_ParVectorOwnsData( m_vec ) = false;
 
   hypre_Vector * const localVector = hypre_ParVectorLocalVector( m_vec );
   hypre_VectorOwnsData( localVector ) = false;

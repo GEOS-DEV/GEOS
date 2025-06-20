@@ -1319,6 +1319,8 @@ void PhysicsSolverBase::solveLinearSystem( DofManager const & dofManager,
   // Apply physics-based scaling to the linear system if enabled
   if( m_usePhysicsScaling )
   {
+    Timer timer_setup( m_timers["linear solver scaling"] );
+
     matrix.computeScalingVector( m_scaling );
     matrix.leftRightScale( m_scaling, m_scaling );
     rhs.pointwiseScale( m_scaling );
@@ -1369,6 +1371,8 @@ void PhysicsSolverBase::solveLinearSystem( DofManager const & dofManager,
   // Unscale the solution vector if physics-based scaling was applied
   if( m_usePhysicsScaling )
   {
+    Timer timer_setup( m_timers["linear solver scaling"] );
+
     solution.pointwiseScale( m_scaling );
   }
 }
