@@ -1483,7 +1483,7 @@ void HypreMatrix::computeScalingVector(HypreVector & scaling) const
   HYPRE_ParVector *hypre_vec_ptr = &hypre_vec;
 
   // Compute scaling vector
-  GEOS_LAI_CHECK_ERROR( HYPRE_ParCSRMatrixCompScalingTagged( m_parcsr_mat, 0, num_tags, pointMarkers.data(), hypre_vec_ptr ) );
+  GEOS_LAI_CHECK_ERROR( HYPRE_ParCSRMatrixCompScalingTagged( m_parcsr_mat, 1, num_tags, pointMarkers.data(), hypre_vec_ptr ) );
 }
 
 }// end namespace geos

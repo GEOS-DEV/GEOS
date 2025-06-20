@@ -1280,6 +1280,7 @@ U MpiWrapper::prefixSum( T const value, MPI_Comm comm )
   U const convertedValue = value;
   int const error = MPI_Exscan( &convertedValue, &localResult, 1, internal::getMpiType< U >(), MPI_SUM, comm );
   MPI_CHECK_ERROR( error );
+  MPI_Barrier( comm );
 #endif
   if( commRank() == 0 )
   {
