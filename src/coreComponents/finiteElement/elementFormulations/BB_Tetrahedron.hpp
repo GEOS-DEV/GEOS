@@ -138,6 +138,7 @@ public:
   /**
    * @brief Calculate the determinant of the jacobian on the face opposite to the given vertex
    * @param[in] face The index of the vertex opposite to the desired face
+   * @param[in] X The coordinates of the tetrahedron
    * @return the (absolute value of the) determinant of the Jacobian on the face
    */
   GEOS_HOST_DEVICE
@@ -200,6 +201,7 @@ public:
   /**
    * @brief Calculate shape functions values at a single point using De Casteljau's algorithm.
    * @param[in] lambda barycentric coordinates of the point in thetetrahedron
+   * @param[out] N The shape function.
    */
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
@@ -344,7 +346,8 @@ public:
    * De Casteljau's algorithm.
    * @param[in] X An array containing the coordinates of the tetrahedra
    * @param[in] coords The parent coordinates at which to evaluate the shape function value, in the reference element
-   * @param[out] ORDER The shape function values.
+   * @param[in] N An array to pass back the shape function values for each support
+   * @param[out] gradN The derivatives of the shape functions with respect to the lambdas
    */
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
@@ -629,58 +632,12 @@ public:
     return -1;
   }
 
-
-  /**
-   * @brief Computes the local degree of freedom index given the shape function indices for each vertex
-   * @tparam C The dof index in the element
-   * @tparam VTX the vertex with respect to
-   * @return i, j, k, l if VTX= 0, 1, 2 or 3 resepctively (with i + j + k + l = order)
-   */
-
-  GEOS_HOST_DEVICE
-  GEOS_FORCE_INLINE
-  static
-  constexpr
-  int
-  indexToIJKL( int C, int VTX )
-  {
-    //static_assert( VTX >= 0 && VTX < 4 );
-    // compute the indices of c in the current element using tetrahedral and triangular roots
-    int cc1 = C + 1;
-    real64 tetr = cbrt( 3.0 * cc1 + sqrt( 9.0 * cc1 * cc1 - 1.0 / 27.0 ) )
-                  + cbrt( 3.0 * cc1 - sqrt( 9.0 * cc1 * cc1 - 1.0 / 27.0 ) ) - 2;
-    int i = ORDER - round( tetr * 10.0 ) / 10;
-    int cc2 = C - ( ORDER - i ) * ( ORDER - i + 1 ) * ( ORDER - i + 2 ) / 6 + 1;
-    real64 trir = ( sqrt( 8.0 * cc2 + 1.0 ) - 1.0 ) / 2.0 - 1;
-    int j = ORDER - i - round( trir * 10.0 ) / 10;
-    int k = ORDER - i - j - ( C - (ORDER - i ) * ( ORDER - i + 1 ) * ( ORDER - i + 2 ) / 6
-                              - ( ORDER - i - j ) * ( ORDER - i - j + 1 ) / 2 );
-    if( VTX == 0 )
-    {
-      return i;
-    }
-    else if( VTX == 1 )
-    {
-      return j;
-    }
-    else if( VTX == 2 )
-    {
-      return k;
-    }
-    else if( VTX == 3 )
-    {
-      return ORDER - i - j - k;
-    }
-    return -1;
-  }
-
-
   /**
    * @brief Helper function for static for loop
    * @tparam FUNC the callback function
    * @tparam ...Is integer indices of the loop
    * @param func the callback function to call for each index
-   * @param Is the integer indices of the loop
+   * @tparam Is the integer indices of the loop
    */
   template< typename FUNC, int... Is >
   GEOS_HOST_DEVICE
@@ -747,6 +704,7 @@ public:
    *   If multiple indices are in the given list, the callback is called multiple times.
    * @tparam FUNC the callback function
    * @tparam Is the setindices
+   * @param func the callback function to call for each index
    */
   template< int... Is, typename FUNC >
   GEOS_HOST_DEVICE
@@ -812,6 +770,7 @@ public:
   /**
    * @brief Helper function for loop over barycentric coordinates of a face.
    * @tparam FUNC the callback function
+   * @param func the callback function to call for each index
    */
   template< typename FUNC >
   GEOS_HOST_DEVICE
@@ -938,6 +897,7 @@ public:
    * @param x2 Index of the second edge vertex
    * @param o1 Index of the first face vertex
    * @param o2 Index of the second face vertex
+   * @return The factor for the flux derivative term
    */
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
