@@ -82,7 +82,7 @@ void ReactiveSinglePhaseFluid< BASE >::postInputInitialization()
       break;
 
     case ChemicalSystemType::carbonate:
-      m_numPrimarySpecies = 8; 
+      m_numPrimarySpecies = 7; 
       m_numSecondarySpecies = 10; 
       m_numKineticReactions = 1;
       break;
