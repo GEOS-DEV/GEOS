@@ -433,10 +433,10 @@ public:
   GEOS_FORCE_INLINE
   static real64 calcGradN( localIndex const q,
                            real64 const (&X)[numNodes][3],
-                           StackVariables const &  stack ,
+                           StackVariables const & stack,
                            real64 ( & gradN )[numNodes][3] )
   {
-    GEOS_UNUSED_PARAM(stack);
+    GEOS_UNUSED_PARAM( stack );
     return calcGradN( q, X, gradN );
   }
 
