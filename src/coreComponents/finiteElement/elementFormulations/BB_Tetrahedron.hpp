@@ -436,7 +436,7 @@ public:
                            StackVariables const & stack,
                            real64 ( & gradN )[numNodes][3] )
   {
-    GEOS_UNUSED_PARAM( stack );
+    GEOS_UNUSED_VAR( stack );
     return calcGradN( q, X, gradN );
   }
 
