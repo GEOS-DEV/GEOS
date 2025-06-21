@@ -69,7 +69,8 @@ template< int NC >
 using TestData = std::tuple<
   real64 const,         // Pressure
   real64 const,         // Temperature
-  Feed< NC > const      // Input composition
+  Feed< NC > const,     // Input composition
+  real64 const          // Expected Z-factor
   >;
 
 template< integer NC, typename EOS_TYPE >
@@ -93,80 +94,12 @@ public:
   void testPureCoefficients( ParamType const & testData );
   void testMixtureCoefficients( ParamType const & testData );
   void testCompressibilityFactor( ParamType const & testData );
+  void testCompressibilityFactorValue( ParamType const & testData );
   void testLogFugacityCoefficients( ParamType const & testData );
 
 protected:
   std::unique_ptr< TestFluid< NC > > m_fluid{};
 };
-
-template< int NC >
-using CompressibilityData = std::tuple<
-  real64 const,         // Pressure
-  real64 const,         // Temperature
-  Feed< NC > const,     // Input composition
-  real64 const          // Z-factor
-  >;
-
-template< integer NC, typename EOS_TYPE >
-class CubicEOSCompressibilityTestFixture : public ::testing::TestWithParam< CompressibilityData< NC > >
-{
-public:
-  static constexpr integer numComps = NC;
-  static constexpr integer numDofs = NC + 2;
-  static constexpr real64 absTol = 1.0e-4;
-  static constexpr real64 relTol = 1.0e-5;
-  using ParamType = CompressibilityData< NC >;
-  using EOS = CubicEOSPhaseModel< EOS_TYPE >;
-
-public:
-  CubicEOSCompressibilityTestFixture():
-    m_fluid( FluidData< NC >::create() )
-  {}
-  ~CubicEOSCompressibilityTestFixture() = default;
-
-  void testCompressibilityFactor( ParamType const & testData );
-
-protected:
-  std::unique_ptr< TestFluid< NC > > m_fluid{};
-};
-
-template< int NC >
-std::vector< TestData< NC > > generateTestData()
-{
-  auto const pressures = {1.0e+05, 1.83959e+06, 1.83959e+08};
-  auto const temperatures = {297.15, 363.0};
-  std::vector< TestData< NC > > testData;
-  for( const auto & composition : FluidData< NC >::feeds )
-  {
-    for( const real64 pressure : pressures )
-    {
-      for( const real64 temperature : temperatures )
-      {
-        testData.emplace_back( pressure, temperature, composition );
-      }
-    }
-  }
-  return testData;
-}
-
-template< int NC >
-std::vector< CompressibilityData< NC > > generateCompressibilityTestData()
-{
-  auto const pressures = {1.0e+05, 1.83959e+06, 1.83959e+08};
-  auto const temperatures = {297.15, 363.0};
-  std::vector< CompressibilityData< NC > > testData;
-  for( const auto & composition : FluidData< NC >::feeds )
-  {
-    for( const real64 pressure : pressures )
-    {
-      for( const real64 temperature : temperatures )
-      {
-        testData.emplace_back( pressure, temperature, composition, 0.0 );
-      }
-    }
-  }
-  return testData;
-}
 
 template< integer NC, typename EOS_TYPE >
 void
@@ -175,10 +108,10 @@ CubicEOSPhaseModelTestFixture< NC, EOS_TYPE >::testPureCoefficients( ParamType c
   auto componentProperties = this->m_fluid->createKernelWrapper();
   real64 const pressure = std::get< 0 >( testData );
   real64 const temperature = std::get< 1 >( testData );
-  stackArray1d< real64, numComps > composition;
-  TestFluid< numComps >::createArray( composition, std::get< 2 >( testData ));
 
-  typename EOS::template StackVariables< true > stack( numComps );
+  auto const binaryInteractionCoefficients = componentProperties.m_componentBinaryCoeff.toSliceConst();
+
+  typename EOS::template StackVariables< true > stack( numComps, binaryInteractionCoefficients, arraySlice2d< real64 const >( nullptr, {0}, {0} ) );
   EOS::initialiseStack( numComps,
                         pressure,
                         temperature,
@@ -202,7 +135,7 @@ CubicEOSPhaseModelTestFixture< NC, EOS_TYPE >::testPureCoefficients( ParamType c
   concatValues( stack.daic_dp, stack.dbic_dp, derivatives, pressureScale );
   internal::testNumericalDerivative< numValues >( pressure, dp, derivatives.toSliceConst(), [&]( real64 const p, auto & values )
   {
-    typename EOS::template StackVariables< false > valueStack( numComps );
+    typename EOS::template StackVariables< false > valueStack( numComps, binaryInteractionCoefficients );
     EOS::initialiseStack( numComps, p, temperature, componentProperties, valueStack );
     concatValues( valueStack.aic, valueStack.bic, values, pressureScale );
   }, absTol, relTol );
@@ -212,7 +145,7 @@ CubicEOSPhaseModelTestFixture< NC, EOS_TYPE >::testPureCoefficients( ParamType c
   concatValues( stack.daic_dt, stack.dbic_dt, derivatives );
   internal::testNumericalDerivative< numValues >( temperature, dT, derivatives.toSliceConst(), [&]( real64 const t, auto & values )
   {
-    typename EOS::template StackVariables< false > valueStack( numComps );
+    typename EOS::template StackVariables< false > valueStack( numComps, binaryInteractionCoefficients );
     EOS::initialiseStack( numComps, pressure, t, componentProperties, valueStack );
     concatValues( valueStack.aic, valueStack.bic, values );
   }, absTol, relTol );
@@ -221,7 +154,7 @@ CubicEOSPhaseModelTestFixture< NC, EOS_TYPE >::testPureCoefficients( ParamType c
   concatValues( stack.d2aic_dt2, stack.d2bic_dt2, derivatives );
   internal::testNumericalSecondDerivative< numValues >( temperature, dT, derivatives.toSliceConst(), [&]( real64 const t, auto const & values )
   {
-    typename EOS::template StackVariables< false > valueStack( numComps );
+    typename EOS::template StackVariables< false > valueStack( numComps, binaryInteractionCoefficients );
     EOS::initialiseStack( numComps, pressure, t, componentProperties, valueStack );
     concatValues( valueStack.aic, valueStack.bic, values );
   }, absTol, relTol );
@@ -239,7 +172,7 @@ CubicEOSPhaseModelTestFixture< NC, EOS_TYPE >::testMixtureCoefficients( ParamTyp
 
   auto const binaryInteractionCoefficients = componentProperties.m_componentBinaryCoeff.toSliceConst();
 
-  typename EOS::template StackVariables< true > stack( numComps );
+  typename EOS::template StackVariables< true > stack( numComps, binaryInteractionCoefficients, arraySlice2d< real64 const >( nullptr, {0}, {0} ) );
   EOS::initialiseStack( numComps,
                         pressure,
                         temperature,
@@ -249,7 +182,6 @@ CubicEOSPhaseModelTestFixture< NC, EOS_TYPE >::testMixtureCoefficients( ParamTyp
                                    pressure,
                                    temperature,
                                    composition.toSliceConst(),
-                                   binaryInteractionCoefficients,
                                    stack );
 
   integer constexpr numValues = 2;
@@ -270,9 +202,9 @@ CubicEOSPhaseModelTestFixture< NC, EOS_TYPE >::testMixtureCoefficients( ParamTyp
   concatDerivatives( stack, Deriv::dP, derivatives, pressureScale );
   internal::testNumericalDerivative< numValues >( pressure, dp, derivatives.toSliceConst(), [&]( real64 const p, auto & values )
   {
-    typename EOS::template StackVariables< false > valueStack( numComps );
+    typename EOS::template StackVariables< false > valueStack( numComps, binaryInteractionCoefficients );
     EOS::initialiseStack( numComps, p, temperature, componentProperties, valueStack );
-    EOS::computeMixtureCoefficients( numComps, p, temperature, composition.toSliceConst(), binaryInteractionCoefficients, valueStack );
+    EOS::computeMixtureCoefficients( numComps, p, temperature, composition.toSliceConst(), valueStack );
     concatValues( valueStack, values, pressureScale );
   }, absTol, relTol );
 
@@ -281,9 +213,9 @@ CubicEOSPhaseModelTestFixture< NC, EOS_TYPE >::testMixtureCoefficients( ParamTyp
   concatDerivatives( stack, Deriv::dT, derivatives );
   internal::testNumericalDerivative< numValues >( temperature, dT, derivatives.toSliceConst(), [&]( real64 const t, auto & values )
   {
-    typename EOS::template StackVariables< false > valueStack( numComps );
+    typename EOS::template StackVariables< false > valueStack( numComps, binaryInteractionCoefficients );
     EOS::initialiseStack( numComps, pressure, t, componentProperties, valueStack );
-    EOS::computeMixtureCoefficients( numComps, pressure, t, composition.toSliceConst(), binaryInteractionCoefficients, valueStack );
+    EOS::computeMixtureCoefficients( numComps, pressure, t, composition.toSliceConst(), valueStack );
     concatValues( valueStack, values );
   }, absTol, relTol );
 
@@ -297,9 +229,9 @@ CubicEOSPhaseModelTestFixture< NC, EOS_TYPE >::testMixtureCoefficients( ParamTyp
     {
       real64 const z_orig = composition[ic];
       composition[ic] += z;
-      typename EOS::template StackVariables< false > valueStack( numComps );
+      typename EOS::template StackVariables< false > valueStack( numComps, binaryInteractionCoefficients );
       EOS::initialiseStack( numComps, pressure, temperature, componentProperties, valueStack );
-      EOS::computeMixtureCoefficients( numComps, pressure, temperature, composition.toSliceConst(), binaryInteractionCoefficients, valueStack );
+      EOS::computeMixtureCoefficients( numComps, pressure, temperature, composition.toSliceConst(), valueStack );
       concatValues( valueStack, values );
       composition[ic] = z_orig;
     }, absTol, relTol );
@@ -394,7 +326,6 @@ CubicEOSPhaseModelTestFixture< NC, EOS_TYPE >::testLogFugacityCoefficients( Para
   stackArray1d< real64, numComps > logFugacityCoefficients( numComps );
   stackArray2d< real64, numComps *numDofs > logFugacityCoefficientDerivs( numComps, numDofs );
 
-  typename EOS::template StackVariables< true > stack( numComps );
   EOS::computeLogFugacityCoefficientsAndDerivs( numComps,
                                                 pressure,
                                                 temperature,
@@ -460,7 +391,7 @@ CubicEOSPhaseModelTestFixture< NC, EOS_TYPE >::testLogFugacityCoefficients( Para
 
 template< integer NC, typename EOS_TYPE >
 void
-CubicEOSCompressibilityTestFixture< NC, EOS_TYPE >::testCompressibilityFactor( ParamType const & testData )
+CubicEOSPhaseModelTestFixture< NC, EOS_TYPE >::testCompressibilityFactorValue( ParamType const & testData )
 {
   auto componentProperties = this->m_fluid->createKernelWrapper();
   real64 const pressure = std::get< 0 >( testData );
@@ -481,8 +412,6 @@ CubicEOSCompressibilityTestFixture< NC, EOS_TYPE >::testCompressibilityFactor( P
 
 using PengRobinson4 = CubicEOSPhaseModelTestFixture< 4, PengRobinsonEOS >;
 using SoaveRedlichKwong2 = CubicEOSPhaseModelTestFixture< 2, SoaveRedlichKwongEOS >;
-using PengRobinsonCompressibility4 = CubicEOSCompressibilityTestFixture< 4, PengRobinsonEOS >;
-using SoaveRedlichKwongCompressibility2 = CubicEOSCompressibilityTestFixture< 2, SoaveRedlichKwongEOS >;
 
 TEST_P( PengRobinson4, testCubicModel )
 {
@@ -490,6 +419,7 @@ TEST_P( PengRobinson4, testCubicModel )
   testPureCoefficients( testParam );
   testMixtureCoefficients( testParam );
   testCompressibilityFactor( testParam );
+  testCompressibilityFactorValue( testParam );
   testLogFugacityCoefficients( testParam );
 }
 
@@ -499,28 +429,14 @@ TEST_P( SoaveRedlichKwong2, testCubicModel )
   testPureCoefficients( testParam );
   testMixtureCoefficients( testParam );
   testCompressibilityFactor( testParam );
+  testCompressibilityFactorValue( testParam );
   testLogFugacityCoefficients( testParam );
 }
 
-TEST_P( PengRobinsonCompressibility4, testCubicModel )
-{
-  auto const testParam = GetParam();
-  testCompressibilityFactor( testParam );
-}
-
-TEST_P( SoaveRedlichKwongCompressibility2, testCubicModel )
-{
-  auto const testParam = GetParam();
-  testCompressibilityFactor( testParam );
-}
-
-INSTANTIATE_TEST_SUITE_P( CubicEOSPhaseModelTestFixture, PengRobinson4, ::testing::ValuesIn( generateTestData< 4 >()) );
-INSTANTIATE_TEST_SUITE_P( CubicEOSPhaseModelTestFixture, SoaveRedlichKwong2, ::testing::ValuesIn( generateTestData< 2 >()) );
-
 /* UNCRUSTIFY-OFF */
 
-INSTANTIATE_TEST_SUITE_P( CubicEOSCompressibilityTestFixture, PengRobinsonCompressibility4,
-  ::testing::ValuesIn<CompressibilityData< 4 >>({
+INSTANTIATE_TEST_SUITE_P( CubicEOSPhaseModelTestFixture, PengRobinson4,
+  ::testing::ValuesIn<TestData< 4 >>({
     {1.000e+05, 297.15, { 0.0309330, 0.3196830, 0.6378610, 0.0115230 }, 0.9958115},
     {1.000e+05, 363.00, { 0.0309330, 0.3196830, 0.6378610, 0.0115230 }, 0.9978260},
     {1.840e+06, 297.15, { 0.0309330, 0.3196830, 0.6378610, 0.0115230 }, 0.9211853},
@@ -548,8 +464,8 @@ INSTANTIATE_TEST_SUITE_P( CubicEOSCompressibilityTestFixture, PengRobinsonCompre
   })
 );
 
-INSTANTIATE_TEST_SUITE_P( CubicEOSCompressibilityTestFixture, SoaveRedlichKwongCompressibility2,
-  ::testing::ValuesIn<CompressibilityData< 2 >>({
+INSTANTIATE_TEST_SUITE_P( CubicEOSPhaseModelTestFixture, SoaveRedlichKwong2,
+  ::testing::ValuesIn<TestData< 2 >>({
     {1.000e+05, 297.15, { 0.9950000, 0.0050000 }, 0.0009671},
     {1.000e+05, 363.00, { 0.9950000, 0.0050000 }, 0.0008352},
     {1.840e+06, 297.15, { 0.9950000, 0.0050000 }, 0.0177905},

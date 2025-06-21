@@ -33,26 +33,37 @@ namespace compositional
 {
 
 template< typename EOS_TYPE >
+template< typename T, bool DERIVATIVES >
 SoreideWhitsonEOSPhaseModel< EOS_TYPE >::
-StackVariables_Val::StackVariables_Val( integer numComps ):
-  kij( numComps, numComps )
+StackVariables_Val< T, DERIVATIVES >::StackVariables_Val( integer numComps ):
+  kij_data( numComps, numComps )
+{}
+
+template< typename EOS_TYPE >
+template< typename T >
+SoreideWhitsonEOSPhaseModel< EOS_TYPE >::
+StackVariables_Val< T, true >::StackVariables_Val( integer numComps ):
+  StackVariables_Val< T, false >( numComps ),
+  dkij_dT_data( numComps, numComps )
 {}
 
 template< typename EOS_TYPE >
 template< typename T, bool DERIVATIVES >
 SoreideWhitsonEOSPhaseModel< EOS_TYPE >::
 StackVariables_Impl< T, DERIVATIVES >::StackVariables_Impl( integer numComps ):
-  StackVariables_Val( numComps ),
-  CubicModel::template StackVariables< DERIVATIVES >( numComps )
+  StackVariables_Val< T, DERIVATIVES >( numComps ),
+  CubicModel::template StackVariables< DERIVATIVES >( numComps,
+                                                      StackVariables_Val< T, DERIVATIVES >::kij_data.toSliceConst() )
 {}
 
 template< typename EOS_TYPE >
 template< typename T >
 SoreideWhitsonEOSPhaseModel< EOS_TYPE >::
 StackVariables_Impl< T, true >::StackVariables_Impl( integer numComps ):
-  StackVariables_Val( numComps ),
-  CubicModel::template StackVariables< true >( numComps ),
-  dkij_dT( numComps, numComps )
+  StackVariables_Val< T, true >( numComps ),
+  CubicModel::template StackVariables< true >( numComps,
+                                               StackVariables_Val< T, true >::kij_data.toSliceConst(),
+                                               StackVariables_Val< T, true >::dkij_dT_data.toSliceConst() )
 {}
 
 template< typename EOS_TYPE >
@@ -95,8 +106,8 @@ initialiseStack( integer const numComps,
   {
     for( integer ic = 0; ic < numComps; ++ic )
     {
-      stack.kij( ic, ic ) = 0.0;
-      stack.dkij_dT( ic, ic ) = 0.0;
+      stack.kij_data( ic, ic ) = 0.0;
+      stack.dkij_dT_data( ic, ic ) = 0.0;
       for( integer jc = 0; jc < ic; ++jc )
       {
         getBinaryInteractionCoefficient( pressure,
@@ -107,10 +118,10 @@ initialiseStack( integer const numComps,
                                          jc,
                                          kij,
                                          dkij_dT );
-        stack.kij( ic, jc ) = kij;
-        stack.kij( jc, ic ) = kij;
-        stack.dkij_dT( ic, jc ) = dkij_dT;
-        stack.dkij_dT( jc, ic ) = dkij_dT;
+        stack.kij_data( ic, jc ) = kij;
+        stack.kij_data( jc, ic ) = kij;
+        stack.dkij_dT_data( ic, jc ) = dkij_dT;
+        stack.dkij_dT_data( jc, ic ) = dkij_dT;
       }
     }
   }
@@ -118,7 +129,7 @@ initialiseStack( integer const numComps,
   {
     for( integer ic = 0; ic < numComps; ++ic )
     {
-      stack.kij( ic, ic ) = 0.0;
+      stack.kij_data( ic, ic ) = 0.0;
       for( integer jc = 0; jc < ic; ++jc )
       {
         getBinaryInteractionCoefficient( pressure,
@@ -129,8 +140,8 @@ initialiseStack( integer const numComps,
                                          jc,
                                          kij,
                                          dkij_dT );
-        stack.kij( ic, jc ) = kij;
-        stack.kij( jc, ic ) = kij;
+        stack.kij_data( ic, jc ) = kij;
+        stack.kij_data( jc, ic ) = kij;
       }
     }
   }
@@ -165,13 +176,11 @@ computeLogFugacityCoefficients( integer const numComps,
                                           pressure,
                                           temperature,
                                           composition,
-                                          stack.kij,
                                           stack );
 
   // Step 3: Compute the compressibility factor (Z)
   CubicModel::computeCompressibilityFactor( numComps,
                                             composition,
-                                            stack.kij,
                                             stack,
                                             compressibilityFactor,
                                             nullptr /* No derivatives */ );
@@ -179,7 +188,6 @@ computeLogFugacityCoefficients( integer const numComps,
   // Step 4: Use mixture coefficients and compressibility factor to update fugacity coefficients
   CubicModel::computeLogFugacityCoefficients( numComps,
                                               composition,
-                                              stack.kij,
                                               stack,
                                               compressibilityFactor,
                                               nullptr, /* No derivatives */
@@ -221,13 +229,11 @@ computeLogFugacityCoefficientsAndDerivs( integer const numComps,
                                           pressure,
                                           temperature,
                                           composition,
-                                          stack.kij,
                                           stack );
 
   // Step 3: Compute the compressibility factor (Z)
   CubicModel::computeCompressibilityFactor( numComps,
                                             composition,
-                                            stack.kij,
                                             stack,
                                             compressibilityFactor,
                                             compressibilityFactorDerivs.toSlice() );
@@ -235,7 +241,6 @@ computeLogFugacityCoefficientsAndDerivs( integer const numComps,
   // Step 4: Use mixture coefficients and compressibility factor to update fugacity coefficients
   CubicModel::computeLogFugacityCoefficients( numComps,
                                               composition,
-                                              stack.kij.toSliceConst(),
                                               stack,
                                               compressibilityFactor,
                                               compressibilityFactorDerivs.toSliceConst(),
@@ -270,13 +275,11 @@ computeCompressibilityFactor( integer const numComps,
                                           pressure,
                                           temperature,
                                           composition,
-                                          stack.kij,
                                           stack );
 
   // Step 3: Compute the compressibility factor (Z)
   CubicModel::computeCompressibilityFactor( numComps,
                                             composition,
-                                            stack.kij,
                                             stack,
                                             compressibilityFactor,
                                             nullptr /* No derivatives */ );
@@ -310,13 +313,11 @@ computeCompressibilityFactorAndDerivs( integer const numComps,
                                           pressure,
                                           temperature,
                                           composition,
-                                          stack.kij,
                                           stack );
 
   // Step 3: Compute the compressibility factor (Z)
   CubicModel::computeCompressibilityFactor( numComps,
                                             composition,
-                                            stack.kij,
                                             stack,
                                             compressibilityFactor,
                                             compressibilityFactorDerivs );
@@ -353,7 +354,6 @@ computeWaterCoefficients( integer const h2o_index,
   // sqrtAlpha and alpha
   real64 const sqrtAlpha = 1.0 + 0.4530 * (1.0 - Tr * (1.0 - 0.0103 * m_s)) + 0.0034 * (invTr3 - 1.0);
   real64 const alpha = sqrtAlpha * sqrtAlpha;
-
   stack.aic[h2o_index] = EOS_TYPE::omegaA * Pr * invTr2 * alpha;
 
   if constexpr (DERIVATIVES)
@@ -367,8 +367,9 @@ computeWaterCoefficients( integer const h2o_index,
     real64 const d2alpha_dT2 = 2.0 * (dsqrtAlpha_dT * dsqrtAlpha_dT + sqrtAlpha * d2sqrtAlpha_dT2);
 
     // Derivatives of a
-    stack.daic_dt[h2o_index] = EOS_TYPE::omegaA * Pr * (dalpha_dT * invTr2 - 2.0 * alpha * invTr4);
-    stack.d2aic_dt2[h2o_index] = EOS_TYPE::omegaA * Pr * ( d2alpha_dT2 * invTr2 - 4.0 * dalpha_dT * invTr3 + 6.0 * alpha * invTr4 );
+    stack.daic_dp[h2o_index] = EOS_TYPE::omegaA * invTr2 * alpha / Pc;
+    stack.daic_dt[h2o_index] = EOS_TYPE::omegaA * Pr * (dalpha_dT * invTr2 - 2.0 * alpha * invTr3 / Tc);
+    stack.d2aic_dt2[h2o_index] = EOS_TYPE::omegaA * Pr * ( d2alpha_dT2 * invTr2 - 4.0 * dalpha_dT * invTr3 / Tc + 6.0 * alpha * invTr4 / (Tc*Tc));
   }
 }
 

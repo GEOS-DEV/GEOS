@@ -92,8 +92,10 @@ struct CubicEOSPhaseModel
     template< integer DIM=1 >
     using ConstDerivativeType = const T *;
 
-    StackVariables_Impl( integer numComps );
+    StackVariables_Impl( integer const numComps,
+                         arraySlice2d< real64 const > const bip );
 
+    arraySlice2d< real64 const > kij;
     real64 aMixture{0.0};
     real64 bMixture{0.0};
     StackArray< real64, 2, 2*maxNumComp > m_data;
@@ -113,8 +115,11 @@ struct CubicEOSPhaseModel
     template< integer DIM=1 >
     using ConstDerivativeType = ArraySlice< real64 const, DIM >;
 
-    StackVariables_Impl( integer numComps );
+    StackVariables_Impl( integer const numComps,
+                         arraySlice2d< real64 const > const bip,
+                         arraySlice2d< real64 const > const dbip_dT );
 
+    arraySlice2d< real64 const > dkij_dT;
     StackArray< real64, 2, 8*maxNumDof > m_derivativeData;
     DerivativeType<> const daic_dp;
     DerivativeType<> const dbic_dp;
@@ -269,7 +274,6 @@ public:
    * @param[in] pressure pressure
    * @param[in] temperature temperature
    * @param[in] composition composition of the phase
-   * @param[in] binaryInteractionCoefficients The binary interaction coefficients
    * @param[in/out] data The component mixture properties
    */
   template< integer USD, bool DERIVATIVES = false >
@@ -279,7 +283,6 @@ public:
                               real64 const & pressure,
                               real64 const & temperature,
                               arraySlice1d< real64 const, USD > const & composition,
-                              arraySlice2d< real64 const > const & binaryInteractionCoefficients,
                               StackVariables< DERIVATIVES > & data );
 
   /**
@@ -287,7 +290,6 @@ public:
    * @tparam DERIVATIVES a flag to indicate if derivatives should be calculated
    * @param[in] numComps number of components
    * @param[in] composition composition of the phase
-   * @param[in] binaryInteractionCoefficients The binary interaction coefficients
    * @param[in] data The component mixture properties
    * @param[out] compressibilityFactor compressibility factor
    * @param[out] compressibilityFactorDerivs derivatives of the compressibility factor
@@ -298,7 +300,6 @@ public:
   static void
   computeCompressibilityFactor( integer const numComps,
                                 arraySlice1d< real64 const, USD > const & composition,
-                                arraySlice2d< real64 const > const & binaryInteractionCoefficients,
                                 StackVariables< DERIVATIVES > const & data,
                                 real64 & compressibilityFactor,
                                 typename StackVariables< DERIVATIVES >::DerivativeType<> const & compressibilityFactorDerivs,
@@ -309,7 +310,6 @@ public:
    * @tparam DERIVATIVES a flag to indicate if derivatives should be calculated
    * @param[in] numComps number of components
    * @param[in] composition composition of the phase
-   * @param[in] binaryInteractionCoefficients binary coefficients (currently not implemented)
    * @param[in] data The component mixture properties
    * @param[in] compressibilityFactor compressibility factor
    * @param[in] compressibilityFactorDerivs derivatives of the compressibility factor
@@ -321,7 +321,6 @@ public:
   static void
   computeLogFugacityCoefficients( integer const numComps,
                                   arraySlice1d< real64 const, USD > const & composition,
-                                  arraySlice2d< real64 const > const & binaryInteractionCoefficients,
                                   StackVariables< DERIVATIVES > const & data,
                                   real64 const & compressibilityFactor,
                                   typename StackVariables< DERIVATIVES >::ConstDerivativeType<> const & compressibilityFactorDerivs,

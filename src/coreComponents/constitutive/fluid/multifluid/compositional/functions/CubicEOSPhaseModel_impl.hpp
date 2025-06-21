@@ -35,7 +35,9 @@ namespace compositional
 template< typename EOS_TYPE >
 template< typename T, bool DERIVATIVES >
 CubicEOSPhaseModel< EOS_TYPE >::
-StackVariables_Impl< T, DERIVATIVES >::StackVariables_Impl( integer numComps ):
+StackVariables_Impl< T, DERIVATIVES >::StackVariables_Impl( integer const numComps,
+                                                            arraySlice2d< real64 const > const bip ):
+  kij( bip ),
   m_data( 2, numComps ),
   aic( m_data[0] ),
   bic( m_data[1] )
@@ -44,8 +46,11 @@ StackVariables_Impl< T, DERIVATIVES >::StackVariables_Impl( integer numComps ):
 template< typename EOS_TYPE >
 template< typename T >
 CubicEOSPhaseModel< EOS_TYPE >::
-StackVariables_Impl< T, true >::StackVariables_Impl( integer numComps ):
-  StackVariables_Impl< T, false >( numComps ),
+StackVariables_Impl< T, true >::StackVariables_Impl( integer const numComps,
+                                                     arraySlice2d< real64 const > const bip,
+                                                     arraySlice2d< real64 const > const dbip_dT ):
+  StackVariables_Impl< T, false >( numComps, bip ),
+  dkij_dT( dbip_dT ),
   m_derivativeData( 8, numComps+2 ),
   daic_dp( m_derivativeData[0] ),
   dbic_dp( m_derivativeData[1] ),
@@ -92,10 +97,10 @@ computeLogFugacityCoefficients( integer const numComps,
 {
   real64 compressibilityFactor = 0.0;
 
-  arraySlice2d< real64 const > const & binaryInteractionCoefficients = componentProperties.m_componentBinaryCoeff;
+  arraySlice2d< real64 const > const & binaryInteractionCoefficients = componentProperties.m_componentBinaryCoeff.toSlice();
 
   // Step 1: Allocate the stack memory needed for the update
-  StackVariables< false > stack( numComps );
+  StackVariables< false > stack( numComps, binaryInteractionCoefficients );
   initialiseStack( numComps,
                    pressure,
                    temperature,
@@ -107,13 +112,11 @@ computeLogFugacityCoefficients( integer const numComps,
                               pressure,
                               temperature,
                               composition,
-                              binaryInteractionCoefficients,
                               stack );
 
   // Step 3: Compute the compressibility factor (Z)
   computeCompressibilityFactor( numComps,
                                 composition,
-                                binaryInteractionCoefficients,
                                 stack,
                                 compressibilityFactor,
                                 nullptr /* No derivatives */ );
@@ -121,7 +124,6 @@ computeLogFugacityCoefficients( integer const numComps,
   // Step 4: Use mixture coefficients and compressibility factor to update fugacity coefficients
   computeLogFugacityCoefficients( numComps,
                                   composition,
-                                  binaryInteractionCoefficients,
                                   stack,
                                   compressibilityFactor,
                                   nullptr, /* No derivatives */
@@ -148,10 +150,10 @@ computeLogFugacityCoefficientsAndDerivs( integer const numComps,
   real64 compressibilityFactor = 0.0;
   StackArray< real64, 1, numMaxDofs > compressibilityFactorDerivs( numDofs );
 
-  arraySlice2d< real64 const > const & binaryInteractionCoefficients = componentProperties.m_componentBinaryCoeff;
+  arraySlice2d< real64 const > const & binaryInteractionCoefficients = componentProperties.m_componentBinaryCoeff.toSlice();
 
   // Step 1: Allocate the stack memory needed for the update
-  StackVariables< true > stack( numComps );
+  StackVariables< true > stack( numComps, binaryInteractionCoefficients, arraySlice2d< real64 const >( nullptr, {0}, {0} ) );
   initialiseStack( numComps,
                    pressure,
                    temperature,
@@ -163,13 +165,11 @@ computeLogFugacityCoefficientsAndDerivs( integer const numComps,
                               pressure,
                               temperature,
                               composition,
-                              binaryInteractionCoefficients,
                               stack );
 
   // Step 3: Compute the compressibility factor (Z)
   computeCompressibilityFactor( numComps,
                                 composition,
-                                binaryInteractionCoefficients,
                                 stack,
                                 compressibilityFactor,
                                 compressibilityFactorDerivs.toSlice() );
@@ -177,7 +177,6 @@ computeLogFugacityCoefficientsAndDerivs( integer const numComps,
   // Step 4: Use mixture coefficients and compressibility factor to update fugacity coefficients
   computeLogFugacityCoefficients( numComps,
                                   composition,
-                                  binaryInteractionCoefficients,
                                   stack,
                                   compressibilityFactor,
                                   compressibilityFactorDerivs.toSliceConst(),
@@ -197,10 +196,10 @@ computeCompressibilityFactor( integer const numComps,
                               ComponentProperties::KernelWrapper const & componentProperties,
                               real64 & compressibilityFactor )
 {
-  arraySlice2d< real64 const > const & binaryInteractionCoefficients = componentProperties.m_componentBinaryCoeff;
+  arraySlice2d< real64 const > const & binaryInteractionCoefficients = componentProperties.m_componentBinaryCoeff.toSlice();
 
   // Step 1: Allocate the stack memory needed for the update
-  StackVariables< false > stack( numComps );
+  StackVariables< false > stack( numComps, binaryInteractionCoefficients );
   initialiseStack( numComps,
                    pressure,
                    temperature,
@@ -212,13 +211,11 @@ computeCompressibilityFactor( integer const numComps,
                               pressure,
                               temperature,
                               composition,
-                              binaryInteractionCoefficients,
                               stack );
 
   // Step 3: Compute the compressibility factor (Z)
   computeCompressibilityFactor( numComps,
                                 composition,
-                                binaryInteractionCoefficients,
                                 stack,
                                 compressibilityFactor,
                                 nullptr /* No derivatives */ );
@@ -237,10 +234,10 @@ computeCompressibilityFactorAndDerivs( integer const numComps,
                                        real64 & compressibilityFactor,
                                        arraySlice1d< real64, USD2 > const & compressibilityFactorDerivs )
 {
-  arraySlice2d< real64 const > const & binaryInteractionCoefficients = componentProperties.m_componentBinaryCoeff;
+  arraySlice2d< real64 const > const & binaryInteractionCoefficients = componentProperties.m_componentBinaryCoeff.toSlice();
 
   // Step 1: Allocate the stack memory needed for the update
-  StackVariables< true > stack( numComps );
+  StackVariables< true > stack( numComps, binaryInteractionCoefficients, arraySlice2d< real64 const >( nullptr, {0}, {0} ) );
   initialiseStack( numComps,
                    pressure,
                    temperature,
@@ -252,13 +249,11 @@ computeCompressibilityFactorAndDerivs( integer const numComps,
                               pressure,
                               temperature,
                               composition,
-                              binaryInteractionCoefficients,
                               stack );
 
   // Step 3: Compute the compressibility factor (Z)
   computeCompressibilityFactor( numComps,
                                 composition,
-                                binaryInteractionCoefficients,
                                 stack,
                                 compressibilityFactor,
                                 compressibilityFactorDerivs );
@@ -350,13 +345,12 @@ computeMixtureCoefficients( integer const numComps,
                             real64 const & pressure,
                             real64 const & temperature,
                             arraySlice1d< real64 const, USD > const & composition,
-                            arraySlice2d< real64 const > const & binaryInteractionCoefficients,
                             StackVariables< DERIVATIVES > & stack )
 {
   GEOS_UNUSED_VAR( pressure );
   GEOS_UNUSED_VAR( temperature );
   // Binary interaction coefficients
-  arraySlice2d< real64 const > const & kij = binaryInteractionCoefficients;
+  arraySlice2d< real64 const > const & kij = stack.kij;
 
   stack.aMixture = 0.0;
   stack.bMixture = 0.0;
@@ -404,7 +398,6 @@ void
 CubicEOSPhaseModel< EOS_TYPE >::
 computeCompressibilityFactor( integer const numComps,
                               arraySlice1d< real64 const, USD > const & composition,
-                              arraySlice2d< real64 const > const & binaryInteractionCoefficients,
                               StackVariables< DERIVATIVES > const & stack,
                               real64 & compressibilityFactor,
                               typename StackVariables< DERIVATIVES >::DerivativeType<> const & compressibilityFactorDerivs,
@@ -459,7 +452,6 @@ computeCompressibilityFactor( integer const numComps,
       {
         computeLogFugacityCoefficients< USD, false >( numComps,
                                                       composition,
-                                                      binaryInteractionCoefficients,
                                                       stack,
                                                       z,
                                                       nullptr,
@@ -515,7 +507,6 @@ void
 CubicEOSPhaseModel< EOS_TYPE >::
 computeLogFugacityCoefficients( integer const numComps,
                                 arraySlice1d< real64 const, USD > const & composition,
-                                arraySlice2d< real64 const > const & binaryInteractionCoefficients,
                                 StackVariables< DERIVATIVES > const & stack,
                                 real64 const & compressibilityFactor,
                                 typename StackVariables< DERIVATIVES >::ConstDerivativeType<> const & compressibilityFactorDerivs,
@@ -531,7 +522,7 @@ computeLogFugacityCoefficients( integer const numComps,
     ki[ic] = 0.0;
     for( integer jc = 0; jc < numComps; ++jc )
     {
-      ki[ic] += composition[jc] * ( 1.0 - binaryInteractionCoefficients( ic, jc ) ) * sqrt( stack.aic[ic] * stack.aic[jc] );
+      ki[ic] += composition[jc] * ( 1.0 - stack.kij( ic, jc ) ) * sqrt( stack.aic[ic] * stack.aic[jc] );
     }
   }
 
@@ -570,7 +561,7 @@ computeLogFugacityCoefficients( integer const numComps,
       for( integer jc = 0; jc < numComps; ++jc )
       {
         real64 const sqrtAic_jc = LvArray::math::sqrt( stack.aic[jc] );
-        real64 const kij = binaryInteractionCoefficients( ic, jc );
+        real64 const kij = stack.kij( ic, jc );
 
         // Derivative with respect to pressure
         real64 const dSqrt_dP = 0.5 * (sqrtAic_jc / sqrtAic_ic * stack.daic_dp[ic] + sqrtAic_ic / sqrtAic_jc * stack.daic_dp[jc]);

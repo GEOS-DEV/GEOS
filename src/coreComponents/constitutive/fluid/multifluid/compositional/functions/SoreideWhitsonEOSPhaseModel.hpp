@@ -37,6 +37,7 @@ struct SoreideWhitsonEOSPhaseModel
   using CubicModel = CubicEOSPhaseModel< EOS_TYPE >;
   using Deriv = typename CubicModel::Deriv;
 
+  template< typename T, bool DERIVATIVES >
   struct StackVariables_Val
   {
     static constexpr integer maxNumComp = CubicModel::template StackVariables< false >::maxNumComp;
@@ -45,14 +46,23 @@ struct SoreideWhitsonEOSPhaseModel
 
     real64 salinity{0.0};
     // Binary interaction coefficients (temperature dependent)
-    StackArray< real64, 2, maxNumComp *maxNumComp > kij;
+    StackArray< real64, 2, maxNumComp *maxNumComp > kij_data;
+  };
+
+  template< typename T >
+  struct StackVariables_Val< T, true > : public StackVariables_Val< T, false >
+  {
+    using StackVariables_Val< T, false >::maxNumComp;
+
+    StackVariables_Val( integer numComps );
+
+    // Derivatives of binary interaction coefficients wrt temperature
+    StackArray< real64, 2, maxNumComp *maxNumComp > dkij_dT_data;
   };
 
   template< typename T, bool DERIVATIVES >
-  struct StackVariables_Impl : public StackVariables_Val, public CubicModel::StackVariables< DERIVATIVES >
+  struct StackVariables_Impl : public StackVariables_Val< T, DERIVATIVES >, public CubicModel::StackVariables< DERIVATIVES >
   {
-    using StackVariables_Val::maxNumComp;
-
     StackVariables_Impl( integer numComps );
 
     using CubicModel::template StackVariables< DERIVATIVES >::DerivativeType;
@@ -60,17 +70,12 @@ struct SoreideWhitsonEOSPhaseModel
   };
 
   template< typename T >
-  struct StackVariables_Impl< T, true > : public StackVariables_Val, public CubicModel::StackVariables< true >
+  struct StackVariables_Impl< T, true > : public StackVariables_Val< T, true >, public CubicModel::StackVariables< true >
   {
-    using StackVariables_Val::maxNumComp;
+    StackVariables_Impl( integer numComps );
 
     using CubicModel::template StackVariables< true >::DerivativeType;
     using CubicModel::template StackVariables< true >::ConstDerivativeType;
-
-    StackVariables_Impl( integer numComps );
-
-    // Derivatives of binary interaction coefficients wrt temperature
-    StackArray< real64, 2, maxNumComp *maxNumComp > dkij_dT;
   };
 
   template< bool DERIVATIVES = false >
