@@ -388,6 +388,18 @@ computeMixtureCoefficients( integer const numComps,
       stack.dbMixture[Deriv::dT] += composition[ic] * stack.dbic_dt[ic];
       stack.dbMixture[Deriv::dC+ic] = stack.bic[ic];
     }
+    if( 0 < stack.dkij_dT.size())
+    {
+      for( integer ic = 0; ic < numComps; ++ic )
+      {
+        for( integer jc = 0; jc < numComps; ++jc )
+        {
+          real64 const sqrt_aiaj = LvArray::math::sqrt( stack.aic[ic] * stack.aic[jc] );
+          real64 const dkij_term_dT = -stack.dkij_dT( ic, jc );
+          stack.daMixture[Deriv::dT] += composition[ic] * composition[jc] * dkij_term_dT * sqrt_aiaj;
+        }
+      }
+    }
   }
 }
 
