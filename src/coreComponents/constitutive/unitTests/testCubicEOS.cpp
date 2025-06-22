@@ -171,8 +171,9 @@ CubicEOSPhaseModelTestFixture< NC, EOS_TYPE >::testMixtureCoefficients( ParamTyp
   TestFluid< numComps >::createArray( composition, std::get< 2 >( testData ));
 
   auto const binaryInteractionCoefficients = componentProperties.m_componentBinaryCoeff.toSliceConst();
-
-  typename EOS::template StackVariables< true > stack( numComps, binaryInteractionCoefficients, arraySlice2d< real64 const >( nullptr, {0}, {0} ) );
+  integer sizes[2] = {0, 0};
+  arraySlice2d< real64 const > derivs( nullptr, sizes, sizes );
+  typename EOS::template StackVariables< true > stack( numComps, binaryInteractionCoefficients, derivs );
   EOS::initialiseStack( numComps,
                         pressure,
                         temperature,

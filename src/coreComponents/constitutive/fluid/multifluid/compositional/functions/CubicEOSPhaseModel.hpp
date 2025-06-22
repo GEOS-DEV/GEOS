@@ -95,7 +95,7 @@ struct CubicEOSPhaseModel
     StackVariables_Impl( integer const numComps,
                          arraySlice2d< real64 const > const bip );
 
-    arraySlice2d< real64 const > kij;
+    arraySlice2d< real64 const > const kij;
     real64 aMixture{0.0};
     real64 bMixture{0.0};
     StackArray< real64, 2, 2*maxNumComp > m_data;
@@ -119,7 +119,7 @@ struct CubicEOSPhaseModel
                          arraySlice2d< real64 const > const bip,
                          arraySlice2d< real64 const > const dbip_dT );
 
-    arraySlice2d< real64 const > dkij_dT;
+    arraySlice2d< real64 const > const dkij_dT;
     StackArray< real64, 2, 8*maxNumDof > m_derivativeData;
     DerivativeType<> const daic_dp;
     DerivativeType<> const dbic_dp;

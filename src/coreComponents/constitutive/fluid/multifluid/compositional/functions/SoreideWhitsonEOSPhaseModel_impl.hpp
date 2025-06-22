@@ -360,7 +360,7 @@ computeWaterCoefficients( integer const h2o_index,
   {
     // Derivatives of sqrtAlpha
     real64 const dsqrtAlpha_dT = -0.4530 * (1.0 - 0.0103 * m_s) / Tc - 0.0034 * 3.0 * invTr4 / Tc;
-    real64 const d2sqrtAlpha_dT2 = 0.4530 * (1.0 - 0.0103 * m_s) / (Tc * Tc) + 0.0034 * 12.0 * invTr5 / (Tc * Tc);
+    real64 const d2sqrtAlpha_dT2 = 0.0034 * 12.0 * invTr5 / (Tc * Tc);
 
     // Derivatives of alpha
     real64 const dalpha_dT = 2.0 * sqrtAlpha * dsqrtAlpha_dT;

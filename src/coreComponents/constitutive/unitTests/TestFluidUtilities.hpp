@@ -143,18 +143,27 @@ void testNumericalSecondDerivative( real64 const x,
   function( x+dx, values[3] );
   function( x+2.0*dx, values[4] );
 
+  real64 constexpr stencils[6][5] = {
+    {1.0, -2.0, 1.0, 0.0, 0.0},
+    {-1.0, 4.0, -5.0, 2.0, 0.0},
+    {-1.0/12.0, 16.0/12.0, -30.0/12.0, 16.0/12.0, -1.0/12.0},
+    {0.0, 1.0, -2.0, 1.0, 0.0},
+    {0.0, -1.0, 4.0, -5.0, 2.0},
+    {0.0, 0.0, 1.0, -2.0, 1.0},
+  };
   real64 const invdx2 = 1.0 / (dx*dx);
-  // Use the same space to calculate the left-sided and right sided derivatives
   for( integer i = 0; i < numValues; ++i )
   {
-    // Choose from the left, central and right derivatives, the one that's nearest the analytical value
     real64 minError = LvArray::NumericLimits< real64 >::max;
-    real64 const leftDerivative = invdx2*( values( 0, i ) - 2.0*values( 1, i ) + values( 2, i ) );
-    real64 const centreDerivative = invdx2*( values( 1, i ) - 2.0*values( 2, i ) + values( 3, i ) );
-    real64 const rightDerivative = invdx2*( values( 2, i ) - 2.0*values( 3, i ) + values( 4, i ) );
     real64 selectedDerivative = 0.0;
-    for( real64 const deriv : {centreDerivative, leftDerivative, rightDerivative} )
+    for( integer si = 0; si < 6; si++ )
     {
+      real64 deriv = 0.0;
+      for( integer ci = 0; ci < 5; ci++ )
+      {
+        deriv += stencils[si][ci]*values( ci, i );
+      }
+      deriv *= invdx2;
       real64 const error = LvArray::math::abs( deriv - derivatives[i] );
       if( error < minError )
       {

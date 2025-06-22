@@ -153,7 +153,9 @@ computeLogFugacityCoefficientsAndDerivs( integer const numComps,
   arraySlice2d< real64 const > const & binaryInteractionCoefficients = componentProperties.m_componentBinaryCoeff.toSlice();
 
   // Step 1: Allocate the stack memory needed for the update
-  StackVariables< true > stack( numComps, binaryInteractionCoefficients, arraySlice2d< real64 const >( nullptr, {0}, {0} ) );
+  integer sizes[2] = {0, 0};
+  arraySlice2d< real64 const > derivs( nullptr, sizes, sizes );
+  StackVariables< true > stack( numComps, binaryInteractionCoefficients, derivs.toSliceConst() );
   initialiseStack( numComps,
                    pressure,
                    temperature,
@@ -237,7 +239,9 @@ computeCompressibilityFactorAndDerivs( integer const numComps,
   arraySlice2d< real64 const > const & binaryInteractionCoefficients = componentProperties.m_componentBinaryCoeff.toSlice();
 
   // Step 1: Allocate the stack memory needed for the update
-  StackVariables< true > stack( numComps, binaryInteractionCoefficients, arraySlice2d< real64 const >( nullptr, {0}, {0} ) );
+  integer sizes[2] = {0, 0};
+  arraySlice2d< real64 const > derivs( nullptr, sizes, sizes );
+  StackVariables< true > stack( numComps, binaryInteractionCoefficients, derivs );
   initialiseStack( numComps,
                    pressure,
                    temperature,
@@ -312,16 +316,13 @@ computePureCoefficients( integer const ic,
     stack.dbic_dp[ic] = EOS_TYPE::omegaB / (Pc * Tr);
 
     // Derivatives w.r.t temperature
+    // Derivatives of sqrtAlpha
+    real64 const dsqrtAlpha_dT = -0.5 * kappa / (Tc * sqrtTr);
+    real64 const d2sqrtAlpha_dT2 = -0.5 * dsqrtAlpha_dT / (Tr*Tc);
 
     // Derivatives of alpha
-    real64 const dalpha_dTr = -kappa / (2.0 * sqrtTr) * 2.0 * sqrtAlpha;
-    real64 const d2alpha_dTr2 = kappa / (4.0 * Tr * sqrtTr) * 2.0 * sqrtAlpha - kappa * kappa / (4.0 * Tr);
-
-    // Convert to temperature derivatives
-    real64 const dTr_dT = 1.0 / Tc;
-
-    real64 const dalpha_dT = dalpha_dTr * dTr_dT;
-    real64 const d2alpha_dT2 = d2alpha_dTr2 * dTr_dT * dTr_dT;
+    real64 const dalpha_dT = 2.0 * dsqrtAlpha_dT * sqrtAlpha;
+    real64 const d2alpha_dT2 = 2.0 * (dsqrtAlpha_dT * dsqrtAlpha_dT + sqrtAlpha * d2sqrtAlpha_dT2);
 
     real64 const da_dT = EOS_TYPE::omegaA * Pr * (dalpha_dT / (Tr * Tr) - 2.0 * alpha / (Tc * Tr * Tr * Tr));
     real64 const d2a_dT2 = EOS_TYPE::omegaA * Pr / (Tr * Tr) * (d2alpha_dT2 - 4.0 * dalpha_dT / (Tc * Tr ) + 6.0 * alpha / (Tc * Tc * Tr * Tr));
@@ -351,7 +352,6 @@ computeMixtureCoefficients( integer const numComps,
   GEOS_UNUSED_VAR( temperature );
   // Binary interaction coefficients
   arraySlice2d< real64 const > const & kij = stack.kij;
-
   stack.aMixture = 0.0;
   stack.bMixture = 0.0;
   for( integer ic = 0; ic < numComps; ++ic )
@@ -388,7 +388,7 @@ computeMixtureCoefficients( integer const numComps,
       stack.dbMixture[Deriv::dT] += composition[ic] * stack.dbic_dt[ic];
       stack.dbMixture[Deriv::dC+ic] = stack.bic[ic];
     }
-    if( 0 < stack.dkij_dT.size())
+    if( 0 < stack.dkij_dT.size( 0 ))
     {
       for( integer ic = 0; ic < numComps; ++ic )
       {
@@ -585,6 +585,18 @@ computeLogFugacityCoefficients( integer const numComps,
 
         // Derivative with respect to composition
         dki( ic, Deriv::dC + jc ) = (1.0 - kij) * sqrtAic_ic * sqrtAic_jc;
+      }
+    }
+    if( 0 < stack.dkij_dT.size() )
+    {
+      for( integer ic = 0; ic < numComps; ++ic )
+      {
+        for( integer jc = 0; jc < numComps; ++jc )
+        {
+          real64 const sqrt_aiaj = LvArray::math::sqrt( stack.aic[ic] * stack.aic[jc] );
+          real64 const dkij_term_dT = -stack.dkij_dT( ic, jc );
+          dki( ic, Deriv::dT ) += composition[jc] * dkij_term_dT * sqrt_aiaj;
+        }
       }
     }
 
