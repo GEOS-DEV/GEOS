@@ -1,18 +1,52 @@
 <?xml version="1.0" ?>
 
 <Problem>
+
+<!--   <NumericalMethods>
+    <FiniteVolume>
+      <HybridMimeticDiscretization
+        name="singlePhaseHybridMimetic"
+        innerProductType="TPFA"/>
+    </FiniteVolume>
+  </NumericalMethods>
+
   <Solvers
     gravityVector="{ 0.0, 0.0, -9.81 }">
     <SinglePhaseHybridFVM
       name="flowSolver"
-      discretization="singlePhaseHybridMimetic"
+      discretization="singlePhaseHybridMimetic"   
       targetRegions="{ Region1, Region2 }">
       <NonlinearSolverParameters
-        newtonTol="1.0e-6"
-        newtonMaxIter="8"/>
+        newtonTol="1.0e-8"
+        newtonMaxIter="20"/>
       <LinearSolverParameters
-        directParallel="0"/>
+         solverType="gmres"
+          preconditionerType="amg" 
+          krylovTol="1.0e-10"/>
     </SinglePhaseHybridFVM>
+  </Solvers> -->
+
+  <NumericalMethods>
+  <FiniteVolume> 
+      <TwoPointFluxApproximation
+        name="singlePhaseTPFA"/>
+  </FiniteVolume>
+  </NumericalMethods>
+
+  <Solvers
+    gravityVector="{ 0.0, 0.0, -9.81 }">
+    <SinglePhaseFVM
+      name="flowSolver"
+      discretization="singlePhaseTPFA"      
+      targetRegions="{ Region1, Region2 }">
+      <NonlinearSolverParameters
+        newtonTol="1.0e-8"
+        newtonMaxIter="20"/>
+      <LinearSolverParameters
+        solverType="gmres"
+          preconditionerType="amg" 
+          krylovTol="1.0e-10"/>
+    </SinglePhaseFVM>        
   </Solvers>
 
   <Mesh>
@@ -22,8 +56,8 @@
       xCoords="{ 0, 5, 10 }"
       yCoords="{ 0, 3 }"
       zCoords="{ 0, 1 }"
-      nx="{ 5, 5 }"
-      ny="{ 3 }"
+      nx="{ 50, 50 }"
+      ny="{ 30 }"
       nz="{ 1 }"
       cellBlockNames="{ cb-0_0_0, cb-1_0_0 }"/>
   </Mesh>
@@ -39,20 +73,6 @@
       xMin="{ 8.99, 0.99, -0.01 }"
       xMax="{ 10.01, 2.01, 1.01 }"/>
 
-    <Box
-      name="impermeableBarrier1"
-      xMin="{ 1.99, -0.01, -0.01 }"
-      xMax="{ 2.01, 2.01, 1.01 }"/>
-
-    <Box
-      name="impermeableBarrier2"
-      xMin="{ 1.99, 1.99, -0.01 }"
-      xMax="{ 4.01, 2.01, 1.01 }"/>
-
-    <Box
-      name="lowPermBarrier"
-      xMin="{ 3.99, 1.99, -0.01 }"
-      xMax="{ 4.01, 3.01, 1.01 }"/>
   </Geometry>
 
   <Events
@@ -60,38 +80,24 @@
     <PeriodicEvent
       name="outputs"
       timeFrequency="100.0"
-      target="/Outputs/siloOutput"/>
+      target="/Outputs/vtkOutputSimpleMFD"/>
 
     <PeriodicEvent
       name="solverApplications"
       forceDt="1e2"
       target="/Solvers/flowSolver"/>
-
-    <PeriodicEvent
-      name="restarts"
-      timeFrequency="1e3"
-      targetExactTimestep="0"
-      target="/Outputs/restartOutput"/>
   </Events>
-
-  <NumericalMethods>
-    <FiniteVolume>
-      <HybridMimeticDiscretization
-        name="singlePhaseHybridMimetic"
-        innerProductType="quasiTPFA"/>
-    </FiniteVolume>
-  </NumericalMethods>
 
   <ElementRegions>
     <CellElementRegion
       name="Region1"
       cellBlocks="{ cb-0_0_0 }"
-      materialList="{ fluid1, rock }"/>
+      materialList="{ fluid1, rock1 }"/>
 
     <CellElementRegion
       name="Region2"
       cellBlocks="{ cb-1_0_0 }"
-      materialList="{ fluid2, rock }"/>
+      materialList="{ fluid2, rock2 }"/>
   </ElementRegions>
 
   <Constitutive>
@@ -100,7 +106,7 @@
       defaultDensity="1000"
       defaultViscosity="0.001"
       referencePressure="0.0"
-      compressibility="5e-10"
+      compressibility="1.0e-18"
       viscosibility="0.0"/>
 
     <CompressibleSinglePhaseFluid
@@ -108,15 +114,20 @@
       defaultDensity="1000"
       defaultViscosity="0.001"
       referencePressure="0.0"
-      compressibility="5e-10"
-      referenceViscosity="0.0001"
+      compressibility="1.0e-18"
       viscosibility="0.0"/>
 
     <CompressibleSolidConstantPermeability
-      name="rock"
+      name="rock1"
       solidModelName="nullSolid"
       porosityModelName="rockPorosity"
-      permeabilityModelName="rockPerm"/>
+      permeabilityModelName="rockPerm1"/>
+
+    <CompressibleSolidConstantPermeability
+      name="rock2"
+      solidModelName="nullSolid"
+      porosityModelName="rockPorosity"
+      permeabilityModelName="rockPerm2"/>      
 
     <NullModel
       name="nullSolid"/>
@@ -125,11 +136,16 @@
       name="rockPorosity"
       defaultReferencePorosity="0.05"
       referencePressure="0.0"
-      compressibility="1.0e-9"/>
+      compressibility="1.0e-18"/>
 
     <ConstantPermeability
-      name="rockPerm"
-      permeabilityComponents="{ 2.0e-16, 2.0e-16, 2.0e-16 }"/>
+      name="rockPerm1"
+      permeabilityComponents="{ 2.0e-20, 2.0e-20, 2.0e-20 }"/>
+
+    <ConstantPermeability
+      name="rockPerm2"
+      permeabilityComponents="{ 2.0e-10, 2.0e-10, 2.0e-10 }"/>
+
   </Constitutive>
 
   <FieldSpecifications>
@@ -152,21 +168,21 @@
     <!-- Note that with the HybridFVM solver, it is not possible to -->
     <!-- set a transMultiplier to 0, since it makes the system singular -->
     <!-- This happens because then one of the face constraints becomes 0 = 0...  -->
-    <FieldSpecification
+<!--     <FieldSpecification
       name="impermeableBarrierTransMult"
       initialCondition="1"
       setNames="{ impermeableBarrier1, impermeableBarrier2 }"
       objectPath="faceManager"
       fieldName="permeabilityTransMultiplier"
-      scale="0.1"/>
+      scale="1.0"/>
 
     <FieldSpecification
       name="lowPermBarrierTransMult"
       initialCondition="1"
       objectPath="faceManager"
       fieldName="permeabilityTransMultiplier"
-      scale="0.9"
-      setNames="{ lowPermBarrier }"/>
+      scale="1.0"
+      setNames="{ lowPermBarrier }"/> -->
 
     <FieldSpecification
       name="sourceTerm"
@@ -180,15 +196,13 @@
       name="sinkTerm"
       objectPath="ElementRegions"
       fieldName="pressure"
-      scale="5e5"
+      scale="5e6"
       setNames="{ sink }"/>
   </FieldSpecifications>
 
   <Outputs>
-    <Silo
-      name="siloOutput"/>
-
-    <Restart
-      name="restartOutput"/>
-  </Outputs>
+    <VTK
+      name="vtkOutputSimpleMFD"
+      fieldNames="{ initialPressure, skeletonChannel_density }"/>
+    </Outputs>
 </Problem>
