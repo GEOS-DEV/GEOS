@@ -44,7 +44,7 @@ std::unique_ptr< TestFluid< NC > > createFluid();
 template<>
 std::unique_ptr< TestFluid< 4 > > createFluid< 4 >()
 {
-  return TestFluid< 4 >::create( {Fluid::N2, Fluid::C8, Fluid::C10, Fluid::H2O} );
+  return TestFluid< 4 >::create( {Fluid::N2, Fluid::C8H18, Fluid::C10H22, Fluid::H2O} );
 }
 
 template< typename EOS_TYPE, integer NC >
@@ -205,62 +205,19 @@ private:
                             arraySlice1d< real64 > const molarDensityDerivs ) const
   {
     auto const componentProperties = this->m_fluid->createKernelWrapper();
-    auto const binaryInteractionCoefficients = componentProperties.m_componentBinaryCoeff;
     auto const volumeShift = componentProperties.m_componentVolumeShift;
 
     real64 compressibilityFactor = 0.0;
-    stackArray1d< real64, numComps > aPureCoefficient( numComps );
-    stackArray1d< real64, numComps > bPureCoefficient( numComps );
-    real64 aMixtureCoefficient = 0.0;
-    real64 bMixtureCoefficient = 0.0;
-
-    CubicEOSPhaseModel< EOS_TYPE >::
-    computeMixtureCoefficients( numComps,
-                                pressure,
-                                temperature,
-                                composition,
-                                componentProperties,
-                                aPureCoefficient.toSlice(),
-                                bPureCoefficient.toSlice(),
-                                aMixtureCoefficient,
-                                bMixtureCoefficient );
-
-    stackArray1d< real64, numDof > aMixtureCoefficientDerivs( numDof );
-    stackArray1d< real64, numDof > bMixtureCoefficientDerivs( numDof );
-
-    CubicEOSPhaseModel< EOS_TYPE >::
-    computeMixtureCoefficients( numComps,
-                                pressure,
-                                temperature,
-                                composition,
-                                componentProperties,
-                                aPureCoefficient.toSliceConst(),
-                                bPureCoefficient.toSliceConst(),
-                                aMixtureCoefficient,
-                                bMixtureCoefficient,
-                                aMixtureCoefficientDerivs.toSlice(),
-                                bMixtureCoefficientDerivs.toSlice() );
-
-    CubicEOSPhaseModel< EOS_TYPE >::
-    computeCompressibilityFactor( numComps,
-                                  composition,
-                                  binaryInteractionCoefficients,
-                                  aPureCoefficient.toSliceConst(),
-                                  bPureCoefficient.toSliceConst(),
-                                  aMixtureCoefficient,
-                                  bMixtureCoefficient,
-                                  compressibilityFactor );
-
     stackArray1d< real64, numDof > compressibilityFactorDerivs( numDof );
 
     CubicEOSPhaseModel< EOS_TYPE >::
-    computeCompressibilityFactor( numComps,
-                                  aMixtureCoefficient,
-                                  bMixtureCoefficient,
-                                  compressibilityFactor,
-                                  aMixtureCoefficientDerivs.toSliceConst(),
-                                  bMixtureCoefficientDerivs.toSliceConst(),
-                                  compressibilityFactorDerivs.toSlice() );
+    computeCompressibilityFactorAndDerivs( numComps,
+                                           pressure,
+                                           temperature,
+                                           composition,
+                                           componentProperties,
+                                           compressibilityFactor,
+                                           compressibilityFactorDerivs.toSlice() );
 
     CompositionalProperties::
       computeMolarDensity( numComps,

@@ -95,7 +95,7 @@ protected:
 private:
   static std::unique_ptr< TestFluid< numComps > > createFluid()
   {
-    std::unique_ptr< TestFluid< numComps > > fluid = TestFluid< numComps >::create( {Fluid::C1, Fluid::C3} );
+    std::unique_ptr< TestFluid< numComps > > fluid = TestFluid< numComps >::create( {Fluid::CH4, Fluid::C3H8} );
     fluid->setBinaryCoefficients( Feed< 1 >{ 0.1 } );
     return fluid;
   }

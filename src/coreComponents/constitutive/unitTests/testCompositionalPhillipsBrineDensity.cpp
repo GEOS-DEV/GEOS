@@ -50,7 +50,7 @@ struct FluidData< 4 >
 {
   static std::unique_ptr< TestFluid< 4 > > createFluid()
   {
-    return TestFluid< 4 >::create( {Fluid::CO2, Fluid::H2O, Fluid::C1, Fluid::N2} );
+    return TestFluid< 4 >::create( {Fluid::CO2, Fluid::H2O, Fluid::CH4, Fluid::N2} );
   }
 };
 

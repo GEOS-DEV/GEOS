@@ -36,7 +36,7 @@ struct FluidData< 2 >
 {
   static std::unique_ptr< TestFluid< 2 > > createFluid()
   {
-    return TestFluid< 2 >::create( {Fluid::CO2, Fluid::C5} );
+    return TestFluid< 2 >::create( {Fluid::CO2, Fluid::C5H12} );
   }
 };
 
@@ -45,7 +45,7 @@ struct FluidData< 4 >
 {
   static std::unique_ptr< TestFluid< 4 > > createFluid()
   {
-    return TestFluid< 4 >::create( {Fluid::N2, Fluid::C8, Fluid::C10, Fluid::H2O} );
+    return TestFluid< 4 >::create( {Fluid::N2, Fluid::C8H18, Fluid::C10H22, Fluid::H2O} );
   }
 };
 
