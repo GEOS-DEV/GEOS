@@ -18,14 +18,6 @@
 
   <Geometry>
       <Box
-      name="topBC"
-      xMin="{ 0.0, 0.0, 19.99}"
-      xMax="{ 1.0, 1.0, 20.01}"/>
-      <Box
-      name="bottomBC"
-      xMin="{ 0.0, 0.0, -0.01}"
-      xMax="{ 1.0, 1.0, 0.01}"/>
-      <Box
       name="source"
       xMin="{ -0.1, -0.1, -0.01}"
       xMax="{ 1.1, 1.1, 0.251}"/>
@@ -46,7 +38,7 @@
       materialList="{rockBarrier, fluid, relperm }"/>
   </ElementRegions>
 
-  <Solvers gravityVector="{ 0.0, 0.0, -90.0}"> </Solvers>
+  <Solvers gravityVector="{ 0.0, 0.0, -100.0}"> </Solvers>
 
   <Constitutive>
 
@@ -54,7 +46,7 @@
       name="fluid"
       phaseNames="{ gas, water }"
       componentNames="{ co2, water }"
-      componentMolarWeight="{ 44.0e-3, 44.0e-3 }"
+      componentMolarWeight="{ 44e-3, 18e-3 }"
       phasePVTParaFiles="{ linear_pvt_tables/pvtgas.txt, linear_pvt_tables/pvtliquid.txt }"
       flashModelParaFile="linear_pvt_tables/co2flash.txt"/>
     
@@ -87,7 +79,7 @@
       name="rockPorosityChannel"
       defaultReferencePorosity="0.2"
       referencePressure="0.0"
-      compressibility="0.0e-9"/>
+      compressibility="0.0"/>
 
     <ConstantPermeability
       name="rockPermBarrier"
@@ -98,7 +90,7 @@
       name="rockPorosityBarrier"
       defaultReferencePorosity="0.2"
       referencePressure="0.0"
-      compressibility="0.0e-9"/>
+      compressibility="0.0"/>
 
   </Constitutive>
 
@@ -114,68 +106,6 @@
       componentFractionVsElevationTableNames="{ initCO2CompFracTable,
                                                 initWaterCompFracTable }"
       temperatureVsElevationTableName="initTempTable"/>
-
-    <!-- Boundary conditions at topBC  -->
-    <!--    <FieldSpecification
-      name="top_pressure"
-      setNames="{ topBC }"
-      objectPath="faceManager"
-      fieldName="pressure"
-      scale="2.0e7" />
-    <FieldSpecification
-      name="top_temperature"
-      setNames="{ topBC }"
-      objectPath="faceManager"
-      fieldName="temperature"
-      scale="350.0" />      
-    <FieldSpecification
-      name="outlet_co2"
-      setNames="{ topBC }"
-      objectPath="faceManager"
-      fieldName="globalCompFraction"
-      component="0"
-      scale="0.0" />
-    <FieldSpecification
-      name="outlet_h2o"
-      setNames="{ topBC }"
-      objectPath="faceManager"
-      fieldName="globalCompFraction"
-      component="1"
-      scale="1.0" />
-    <FieldSpecification
-      name="bottom_pressure"
-      setNames="{ bottomBC }"
-      objectPath="faceManager"
-      fieldName="pressure"
-      scale="2.0e7" />
-    <FieldSpecification
-      name="bottom_temperature"
-      setNames="{ bottomBC }"
-      objectPath="faceManager"
-      fieldName="temperature"
-      scale="300.0" />   
-
-    <FieldSpecification
-      name="inlet_co2"
-      setNames="{ bottomBC }"
-      objectPath="faceManager"
-      fieldName="globalCompFraction"
-      component="0"
-      scale="0.0" />
-    <FieldSpecification
-      name="inlet_h2o"
-      setNames="{ bottomBC }"
-      objectPath="faceManager"
-      fieldName="globalCompFraction"
-      component="1"
-      scale="1.0" />  -->
-
-    <!-- <SourceFlux
-      name="sourceTerm"
-      objectPath="ElementRegions"
-      component="0"
-      scale="-0.000"
-      setNames="{source}"/>  -->
 
    <FieldSpecification
       name="sinkTermPressure"
@@ -209,7 +139,7 @@
       setNames="{ source }"/> 
 
 
-    <!-- Injection stream: pure water -->
+    <!-- Injection stream: pure CO2 -->
     <FieldSpecification
       name="sourceTermComposition_CO2"
       objectPath="ElementRegions"
@@ -256,19 +186,5 @@
       values="{ 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 }"/>
   </Functions>
 
-  <Functions>
-    <TableFunction
-      name="producerPhaseRateTable"
-      inputVarNames="{ time }"
-      coordinates="{ -1e9, 0, 1e9 }"
-      values="{ 0, 100, 100 }" 
-      interpolation="lower"/>
-    <TableFunction
-      name="injectorTotalRateTable"
-      inputVarNames="{ time }"
-      coordinates="{ -1e9, 0, 1e9 }"
-      values="{ 0, 7, 7 }" 
-      interpolation="lower"/>
-  </Functions>
   
 </Problem>
