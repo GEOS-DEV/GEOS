@@ -140,7 +140,7 @@ given time:
 
 - **Delta pressure [Pa]:**
 
-  This gives us the variation in minimum and maximum pressure for this region.
+  This gives us the pressure loss or gain in the reservoir since the start of the simulation.
 
 - **Temperature [K]:**
 
