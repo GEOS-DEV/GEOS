@@ -19,6 +19,8 @@ To generate a CSV output, you must specify ``writeCSV="1"`` as follows:
   :start-after: <!-- SPHINX_FIELD_CASE_CSV_OUTPUT -->
   :end-before: <!-- SPHINX_FIELD_CASE_CSV_OUTPUT_END -->
 
+*[Source: /inputFiles/compositionalMultiphaseFlow/co2_flux_dirichlet.xml]*
+
 If you do not want CSV output, do not add this line.
 
 Log outputs 
