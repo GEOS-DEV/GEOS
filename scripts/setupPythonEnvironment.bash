@@ -121,7 +121,7 @@ fi
 
 # Updating pip
 echo "Updating pip"
-$PYTHON_TARGET -m pip install --upgrade pip
+$PYTHON_TARGET -m pip install --upgrade pip setuptools wheel
 
 # Install packages
 echo "Installing python packages..."
