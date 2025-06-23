@@ -1,0 +1,64 @@
+<?xml version="1.0" ?>
+
+<Problem>
+
+  <Included>
+    <File name="./buoyancy_column_co2_3d_base.xml"/>
+  </Included>
+
+  <NumericalMethods>
+  <FiniteVolume> 
+      <TwoPointFluxApproximation
+        name="fluidTPFA"/>
+
+  </FiniteVolume>
+  </NumericalMethods>
+
+ <Solvers>
+ <CompositionalMultiphaseFVM
+      name="twoPhaseFlow"
+      logLevel="1"
+      discretization="fluidTPFA"
+      targetRelativePressureChangeInTimeStep="1"
+      targetPhaseVolFractionChangeInTimeStep="1"
+      targetRegions="{ channel, barrier  }"
+      temperature="300"
+      useMass="1">
+    <NonlinearSolverParameters
+        newtonTol="1.0e-5"
+        lineSearchAction="Attempt"
+        newtonMaxIter="50"/>
+      <LinearSolverParameters
+              directParallel="0"/>
+  </CompositionalMultiphaseFVM> 
+  </Solvers>
+
+  <Events
+    minTime="0.0"  
+    maxTime="432000">
+    
+    <PeriodicEvent
+      name="outputs"
+      timeFrequency="4320"
+      target="/Outputs/vtkOutputTPFA"/>
+
+    
+    <PeriodicEvent
+      name="solverApplications1"
+      endTime="432000"
+      maxEventDt="4320"
+      target="/Solvers/twoPhaseFlow"/>
+
+  </Events>
+
+  <Outputs>
+    <VTK
+      name="vtkOutputTPFA"
+      fieldNames="{ initialPressure, skeletonChannel_density }"/>
+  </Outputs>
+
+  <Tasks>
+    
+  </Tasks>
+  
+</Problem>

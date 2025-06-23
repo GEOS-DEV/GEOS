@@ -1,0 +1,162 @@
+<?xml version="1.0" ?>
+
+<Problem>
+
+  <Mesh>
+    <InternalMesh
+      name="mesh"
+      elementTypes="{ C3D8 }"
+      xCoords="{ 0, 1}"
+      yCoords="{ 0, 1}"
+      zCoords="{ 0, 48, 49, 50}"
+      nx="{ 1  }"
+      ny="{ 1  }"
+      nz="{ 192, 4, 4 }"
+      cellBlockNames="{ b00, b01, b02}">
+  </InternalMesh>
+</Mesh>
+
+  <Geometry>
+      <Box
+      name="source"
+      xMin="{ -0.1, -0.1, -0.01}"
+      xMax="{ 1.1, 1.1, 0.251}"/>  
+  </Geometry>
+
+  <ElementRegions>
+    <CellElementRegion
+      name="channel"
+      cellBlocks="{ b00, b02}"
+      materialList="{rockChannel, fluid, relperm }"/>
+    <CellElementRegion
+      name="barrier"
+      cellBlocks="{ b01 }"
+      materialList="{rockBarrier, fluid, relperm }"/>
+  </ElementRegions>
+
+  <Solvers gravityVector="{ 0.0, 0.0, -100.0}"> </Solvers>
+
+  <Constitutive>
+
+    <CO2BrinePhillipsFluid
+      name="fluid"
+      phaseNames="{ gas, water }"
+      componentNames="{ co2, water }"
+      componentMolarWeight="{ 44e-3, 18e-3 }"
+      phasePVTParaFiles="{ linear_pvt_tables/pvtgas.txt, linear_pvt_tables/pvtliquid.txt }"
+      flashModelParaFile="linear_pvt_tables/co2flash.txt"/>
+    
+    <TableRelativePermeability
+      name="relperm"
+      phaseNames="{ gas, water }"
+      wettingNonWettingRelPermTableNames="{ waterRelativePermeabilityTable,
+                                            gasRelativePermeabilityTable }"/>
+    
+    <CompressibleSolidConstantPermeability
+      name="rockChannel"
+      solidModelName="nullSolid"
+      porosityModelName="rockPorosityChannel"
+      permeabilityModelName="rockPermChannel"/>
+
+
+    <CompressibleSolidConstantPermeability
+      name="rockBarrier"
+      solidModelName="nullSolid"
+      porosityModelName="rockPorosityBarrier"
+      permeabilityModelName="rockPermBarrier"/>
+
+    <NullModel
+      name="nullSolid"/>
+
+    <ConstantPermeability
+      name="rockPermChannel"
+      permeabilityComponents="{ 9.8e-13, 9.8e-13, 9.8e-13 }"/>
+    <PressurePorosity
+      name="rockPorosityChannel"
+      defaultReferencePorosity="0.2"
+      referencePressure="0.0"
+      compressibility="0.0"/>
+
+    <ConstantPermeability
+      name="rockPermBarrier"
+      permeabilityComponents="{ 9.8e-17, 9.8e-17, 9.8e-17 }"/>
+
+
+    <PressurePorosity
+      name="rockPorosityBarrier"
+      defaultReferencePorosity="0.2"
+      referencePressure="0.0"
+      compressibility="0.0"/>
+
+  </Constitutive>
+
+  <FieldSpecifications>
+
+    <HydrostaticEquilibrium
+      name="equil"
+      objectPath="ElementRegions"      
+      datumElevation="20"
+      datumPressure="1e7"
+      initialPhaseName="water"
+      componentNames="{ co2, water }"
+      componentFractionVsElevationTableNames="{ initCO2CompFracTable,
+                                                initWaterCompFracTable }"
+      temperatureVsElevationTableName="initTempTable"/> 
+
+    <FieldSpecification
+      name="sourceTermPressure"
+      objectPath="ElementRegions"
+      fieldName="pressure"
+      scale="1.2e7"
+      setNames="{ source }"/> 
+
+
+    <!-- Injection stream: pure CO2 -->
+    <FieldSpecification
+      name="sourceTermComposition_CO2"
+      objectPath="ElementRegions"
+      fieldName="globalCompFraction"
+      component="0"
+      scale="1.0"
+      setNames="{ source }"/>
+
+    <FieldSpecification
+      name="sourceTermComposition_H2O"
+      objectPath="ElementRegions"
+      fieldName="globalCompFraction"
+      component="1"
+      scale="0.0"
+      setNames="{ source }"/>
+    
+
+  </FieldSpecifications>
+
+  <Functions>
+   <TableFunction
+      name="initCO2CompFracTable"
+      coordinates="{ 0.0, 50.0 }"
+      values="{ 0.0, 0.0 }"/>
+    <TableFunction
+      name="initWaterCompFracTable"
+      coordinates="{ 0.0, 50.0 }"
+      values="{ 1.0, 1.0 }"/>
+    <TableFunction
+      name="initTempTable"
+      coordinates="{ 0.0, 50.0 }"
+      values="{ 300.0, 300.0 }"/>
+    <TableFunction
+      name="waterRelativePermeabilityTable"
+      coordinates="{ 0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.5, 0.55, 0.6, 0.65, 0.7, 0.75, 0.8, 0.85, 0.9, 0.95, 1.0 }"
+      values="{ 0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.5, 0.55, 0.6, 0.65, 0.7, 0.75, 0.8, 0.85, 0.9, 0.95, 1.0}"/>
+    <TableFunction
+      name="gasRelativePermeabilityTable"
+      coordinates="{ 0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.5, 0.55, 0.6, 0.65, 0.7, 0.75, 0.8, 0.85, 0.9, 0.95, 1.0 }"
+      values="{ 0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.5, 0.55, 0.6, 0.65, 0.7, 0.75, 0.8, 0.85, 0.9, 0.95, 1.0}"/>
+    <TableFunction
+      name="jFunctionTable"
+      coordinates="{ 0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.5, 0.55, 0.6, 0.65, 0.7, 0.75, 0.8, 0.85, 0.9, 0.95, 1.0 }"
+      values="{ 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 }"/>
+  </Functions>
+
+  
+</Problem>
