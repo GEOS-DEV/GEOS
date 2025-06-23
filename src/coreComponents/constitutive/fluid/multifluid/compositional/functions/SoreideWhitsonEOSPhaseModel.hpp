@@ -34,9 +34,12 @@ namespace compositional
 template< typename EOS_TYPE >
 struct SoreideWhitsonEOSPhaseModel
 {
+private:
+  static constexpr integer maxNumComps = MultiFluidConstants::MAX_NUM_COMPONENTS;
+
+public:
   using CubicModel = CubicEOSPhaseModel< EOS_TYPE >;
   using Deriv = typename CubicModel::Deriv;
-  static constexpr integer maxNumComps = MultiFluidConstants::MAX_NUM_COMPONENTS;
 
   /**
    * @brief Main entry point of the Soreide-Whitson EOS model
@@ -74,14 +77,14 @@ struct SoreideWhitsonEOSPhaseModel
   template< integer USD >
   GEOS_HOST_DEVICE
   static void
-  computeLogFugacityCoefficients( integer const numComps,
-                                  real64 const & pressure,
-                                  real64 const & temperature,
-                                  arraySlice1d< real64 const, USD > const & composition,
-                                  ComponentProperties::KernelWrapper const & componentProperties,
-                                  real64 const & salinity,
-                                  arraySlice1d< real64 const > const & logFugacityCoefficients,
-                                  arraySlice2d< real64 > const & logFugacityCoefficientDerivs );
+  computeLogFugacityCoefficientDerivs( integer const numComps,
+                                       real64 const & pressure,
+                                       real64 const & temperature,
+                                       arraySlice1d< real64 const, USD > const & composition,
+                                       ComponentProperties::KernelWrapper const & componentProperties,
+                                       real64 const & salinity,
+                                       arraySlice1d< real64 const > const & logFugacityCoefficients,
+                                       arraySlice2d< real64 > const & logFugacityCoefficientDerivs );
 
   /**
    * @brief Calculate the pure coefficients
@@ -121,17 +124,17 @@ struct SoreideWhitsonEOSPhaseModel
    */
   GEOS_HOST_DEVICE
   static void
-  computePureCoefficients( integer const ic,
-                           real64 const & pressure,
-                           real64 const & temperature,
-                           ComponentProperties::KernelWrapper const & componentProperties,
-                           real64 const & salinity,
-                           real64 & aCoefficient,
-                           real64 & bCoefficient,
-                           real64 & daCoefficient_dp,
-                           real64 & dbCoefficient_dp,
-                           real64 & daCoefficient_dt,
-                           real64 & dbCoefficient_dt );
+  computePureCoefficientsAndDerivs( integer const ic,
+                                    real64 const & pressure,
+                                    real64 const & temperature,
+                                    ComponentProperties::KernelWrapper const & componentProperties,
+                                    real64 const & salinity,
+                                    real64 & aCoefficient,
+                                    real64 & bCoefficient,
+                                    real64 & daCoefficient_dp,
+                                    real64 & dbCoefficient_dp,
+                                    real64 & daCoefficient_dt,
+                                    real64 & dbCoefficient_dt );
 
   /**
    * @brief Compute the mixture coefficients using pressure, temperature, composition and input
@@ -179,18 +182,18 @@ struct SoreideWhitsonEOSPhaseModel
   template< integer USD >
   GEOS_HOST_DEVICE
   static void
-  computeMixtureCoefficients( integer const numComps,
-                              real64 const & pressure,
-                              real64 const & temperature,
-                              arraySlice1d< real64 const, USD > const & composition,
-                              ComponentProperties::KernelWrapper const & componentProperties,
-                              real64 const & salinity,
-                              arraySlice1d< real64 const > const & aPureCoefficient,
-                              arraySlice1d< real64 const > const & bPureCoefficient,
-                              real64 const aMixtureCoefficient,
-                              real64 const bMixtureCoefficient,
-                              arraySlice1d< real64 > const & aMixtureCoefficientDerivs,
-                              arraySlice1d< real64 > const & bMixtureCoefficientDerivs );
+  computeMixtureCoefficientDerivs( integer const numComps,
+                                   real64 const & pressure,
+                                   real64 const & temperature,
+                                   arraySlice1d< real64 const, USD > const & composition,
+                                   ComponentProperties::KernelWrapper const & componentProperties,
+                                   real64 const & salinity,
+                                   arraySlice1d< real64 const > const & aPureCoefficient,
+                                   arraySlice1d< real64 const > const & bPureCoefficient,
+                                   real64 const aMixtureCoefficient,
+                                   real64 const bMixtureCoefficient,
+                                   arraySlice1d< real64 > const & aMixtureCoefficientDerivs,
+                                   arraySlice1d< real64 > const & bMixtureCoefficientDerivs );
 
   /**
    * @brief Compute compressibility factor
@@ -215,27 +218,27 @@ struct SoreideWhitsonEOSPhaseModel
                                 real64 & compressibilityFactor );
 
   /**
-   * @brief Compute compressibility factor derivatives
+   * @brief Compute compressibility factor and derivatives
    * @details Computes the compressibility factor (z-factor) for the cubic EOS model including derivatives
    * @param[in] numComps number of components
    * @param[in] pressure pressure
    * @param[in] temperature temperature
    * @param[in] composition composition of the phase
    * @param[in] componentProperties The compositional component properties
-   * @param[in] compressibilityFactor the current compressibility factor
+   * @param[out] compressibilityFactor the current compressibility factor
    * @param[out] compressibilityFactorDerivs derivatives of the compressibility factor
    */
-  template< integer USD >
+  template< integer USD1, integer USD2 >
   GEOS_HOST_DEVICE
   static void
-  computeCompressibilityFactor( integer const numComps,
-                                real64 const & pressure,
-                                real64 const & temperature,
-                                arraySlice1d< real64 const, USD > const & composition,
-                                ComponentProperties::KernelWrapper const & componentProperties,
-                                real64 const & salinity,
-                                real64 const & compressibilityFactor,
-                                arraySlice1d< real64 > const & compressibilityFactorDerivs );
+  computeCompressibilityFactorAndDerivs( integer const numComps,
+                                         real64 const & pressure,
+                                         real64 const & temperature,
+                                         arraySlice1d< real64 const, USD1 > const & composition,
+                                         ComponentProperties::KernelWrapper const & componentProperties,
+                                         real64 const & salinity,
+                                         real64 & compressibilityFactor,
+                                         arraySlice1d< real64, USD2 > const & compressibilityFactorDerivs );
 
   /**
    * @brief Get the binary interaction coefficient between two components
@@ -250,7 +253,7 @@ struct SoreideWhitsonEOSPhaseModel
    */
   GEOS_HOST_DEVICE
   static void
-  getBinaryInteractionCiefficient( real64 const & pressure,
+  getBinaryInteractionCoefficient( real64 const & pressure,
                                    real64 const & temperature,
                                    ComponentProperties::KernelWrapper const & componentProperties,
                                    real64 const & salinity,
