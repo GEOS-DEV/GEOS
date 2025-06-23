@@ -59,6 +59,7 @@ public:
 protected:
   //virtual void postProcessInput() override final;
   virtual void postInputInitialization() override final;
+
   // Event variables
   array2d< real64 > m_temperatureTable;
   int m_interpType;

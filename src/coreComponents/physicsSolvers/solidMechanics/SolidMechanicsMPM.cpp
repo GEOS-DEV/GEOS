@@ -9025,6 +9025,81 @@ void SolidMechanicsMPM::interpolateStressTable( real64 dt,
                     m_fTableInterpType );
 }
 
+
+void SolidMechanicsMPM::interpolateTempTable( real64 x, 
+                                          real64 dx,
+                                          arrayView2d< real64 const > const table,
+                                          arrayView1d< real64 > const output,
+                                          SolidMechanicsMPM::InterpolationOption interpolationType )
+{
+  int numRows = table.size(0);
+  int numColumns = table.size(1);
+  int numDims = numColumns - 1;
+
+  real64 xNext = x + dx;
+
+  // If we preceed table use first row
+  if( xNext <= table[0][0] )
+  {
+    for( int i = 0; i < numDims; i++ )
+    {
+      output[i] = table[0][i + 1];
+    }
+    return;
+  }
+
+  // If we exceed table use last row
+  if( xNext >= table[numRows - 1][0] )
+  {
+    for( int i = 0; i < numDims; i++ )
+    {
+      output[i] = table[numRows - 1][i + 1];
+    }
+    return;
+  }
+
+  int tableInterval = 0;
+  for( localIndex i = 0; i < numRows; i++ )
+  {
+    if( x + dx / 2 > table[i][0] )
+    {
+      tableInterval = i;
+    }
+  }
+
+  real64 timeInterval = table[tableInterval + 1][0] - table[tableInterval][0]; // Time fInterval for current part of F table we're in
+  real64 timePast = xNext - table[tableInterval][0]; // Time elapsed since switching intervals in F table
+  real64 timeFrac = timePast / timeInterval;
+
+  for( int i = 0; i < numDims; i++ )
+  {
+      switch( interpolationType )
+      {
+        case SolidMechanicsMPM::InterpolationOption::Linear:
+          // default linear interpolation
+          output[i] = table[tableInterval][i + 1] * ( 1.0 - timeFrac ) + table[tableInterval + 1][i + 1] * timeFrac;
+          break;
+        case SolidMechanicsMPM::InterpolationOption::Cosine:
+          // smooth-step interpolation with cosine, zero endpoint velocity
+          output[i] = table[tableInterval][i + 1] - 0.5 * ( table[tableInterval + 1][i + 1] - table[tableInterval][i + 1] ) * ( cos( 3.141592653589793 * timeFrac ) - 1.0 );
+          break;
+        case SolidMechanicsMPM::InterpolationOption::Smoothstep:
+          // smooth-step interpolation with 5th order polynomial, zero endpoint velocity and acceleration
+          output[i] = table[tableInterval][i+1] + ( table[tableInterval+1][i+1] - table[tableInterval][i+1] ) *
+                      ( 10.0 * pow( timeFrac, 3 ) - 15.0 * pow( timeFrac, 4 ) + 6.0 * pow( timeFrac, 5 ) );
+          break;
+        default:
+          GEOS_ERROR( "No interpolation option of that type!" );
+          break;
+      }
+  }
+}
+
+
+
+
+
+
 void SolidMechanicsMPM::gridToParticle( real64 dt,
                                         ParticleManager & particleManager,
                                         NodeManager & nodeManager,
@@ -12319,7 +12394,7 @@ void SolidMechanicsMPM::applyThermalDeformations( real64 const dt,
     arrayView3d< real64 > const particleFDot = subRegion.getField< fields::mpm::particleFDot >();
     arrayView3d< real64 > const particleVelocityGradient = subRegion.getField< fields::mpm::particleVelocityGradient >();
 
-    arrayView1d< int const > const particleShrinkageFlag = subRegion.getParticleShrinkageFlag();
+    //arrayView1d< int const > const particleShrinkageFlag = subRegion.getParticleShrinkageFlag();
     arrayView1d< real64 const > const particleInitialTemperature = subRegion.getField< fields::mpm::particleInitialTemperature >();
     arrayView1d< real64 const > const particleTemperature = subRegion.getField< fields::mpm::particleTemperature >();
     arrayView1d< real64 const > const particleReferenceVolume = subRegion.getField< fields::mpm::particleReferenceVolume >();
