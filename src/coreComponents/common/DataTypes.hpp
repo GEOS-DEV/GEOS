@@ -313,35 +313,6 @@ using CRSMatrixView = LvArray::CRSMatrixView< T, COL_INDEX, localIndex const, Lv
 //END_SPHINX_INCLUDE_00
 
 /**
- * @name Ordered and unordered map types.
- */
-///@{
-
-/**
- * @brief Base template for ordered and unordered maps.
- * @tparam TKEY key type
- * @tparam TVAL value type
- * @tparam SORTED a @p std::integral_constant<bool> indicating whether map is ordered
- */
-template< typename TKEY, typename TVAL, typename SORTED >
-class mapType
-{};
-
-/// @cond DO_NOT_DOCUMENT
-template< typename TKEY, typename TVAL >
-class mapType< TKEY, TVAL, std::integral_constant< bool, true > > : public stdMap< TKEY, TVAL >
-{
-  using stdMap< TKEY, TVAL >::stdMap; // enable list initialization
-};
-
-template< typename TKEY, typename TVAL >
-class mapType< TKEY, TVAL, std::integral_constant< bool, false > > : public stdUnorderedMap< TKEY, TVAL >
-{
-  using stdUnorderedMap< TKEY, TVAL >::stdUnorderedMap; // enable list initialization
-};
-/// @endcond
-
-/**
  * @brief Stream output operator for map types.
  * @tparam K key type
  * @tparam V value type
