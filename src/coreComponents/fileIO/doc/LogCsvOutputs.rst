@@ -14,12 +14,10 @@ CSV outputs
 ~~~~~~~~~~~
 To generate a CSV output, you must specify ``writeCSV="1"`` as follows: 
 
-.. literalinclude:: ../../../../../inputFiles/compositionalMultiphaseFlow/co2_flux_dirichlet.xml
+.. literalinclude:: ../../../../inputFiles/compositionalMultiphaseFlow/co2_flux_dirichlet.xml
   :language: xml
   :start-after: <!-- SPHINX_FIELD_CASE_CSV_OUTPUT -->
   :end-before: <!-- SPHINX_FIELD_CASE_CSV_OUTPUT_END -->
-
-*[Source: /inputFiles/compositionalMultiphaseFlow/co2_flux_dirichlet.xml]*
 
 If you do not want CSV output, do not add this line.
 
@@ -28,7 +26,7 @@ Log outputs
 
 To generate a log output, you must specify ``logLevel="x"``, where ``x`` can be 0, 1, 2 or 3, as follows: 
 
-.. literalinclude:: ../../../../../inputFiles/compositionalMultiphaseFlow/deadoil_2ph_staircase_gravity_segregation_3d.xml
+.. literalinclude:: ../../../../inputFiles/compositionalMultiphaseFlow/deadoil_2ph_staircase_gravity_segregation_3d.xml
   :language: xml
   :start-after: <!-- SPHINX_FIELD_CASE_LOG_OUTPUT -->
   :end-before: <!-- SPHINX_FIELD_CASE_LOG_OUTPUT_END -->
