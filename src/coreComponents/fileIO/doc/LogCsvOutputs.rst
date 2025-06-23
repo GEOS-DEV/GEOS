@@ -148,9 +148,10 @@ given time:
 
 - **Total dynamic pore volume [rm³]:**
 
-  This gives us the total pore volume available in a rock reservoir that can hold fluids.
+  This gives us the total pore volume occupied by fluids in a rock reservoir. 
+  This value is dynamic and depends on the pressure.
 
-- **Total fluid mass [Mass or Mole]:**
+- **Total fluid mass [kg or mol]:**
 
   This gives us the total mass of fluid present in the given region.
 
@@ -205,39 +206,39 @@ At each simulation timestep, the following quantities are reported:
 
 - **Temperature [K]:**
 
-  This gives us the pressure loss or gain in the reservoir since the start of the simulation.
+  This gives us the minimum, average and maximum temperature for this region.
 
 - **Total dynamic pore volume [rm³]:**
 
-  This gives us the total pore volume available for all phases combined.
+  This gives us the total pore volume occupied by all phases combined. This value is dynamic and depends on the pressure.
 
 - **Phase dynamic pore volume [rm³]:**
 
   This gives us the pore volume available for each phase.
 
-- **Phase mass [Mass or Mole]:**
+- **Phase mass [kg or mol]:**
 
-  This gives us the number of moles of fluid present for each phase.
+  This gives us the mass or number of moles of fluid present for each phase.
 
-- **Trapped phase mass ( metric 1** \ [2]_ **) [Mass or Mole]:**
+- **Trapped phase mass ( metric 1** \ [2]_ **) [kg or mol]:**
 
-  This gives us, for each phase, the mass of fluid that is immobile because it is trapped in the porous structure.
+  This gives us, for each phase, the mass or number of moles of fluid that is immobile because it is trapped in the porous structure.
 
-- **Non-trapped phase mass ( metric 1** \ [2]_ **) [Mass or Mole]:**
+- **Non-trapped phase mass ( metric 1** \ [2]_ **) [kg or mol]:**
 
-  This gives us, for each phase, the potentially mobile mass of fluid, i.e. not trapped but not necessarily in motion.
+  This gives us, for each phase, the potentially mobile mass or number of moles of fluid, i.e. not trapped but not necessarily in motion.
 
-- **Immobile phase mass ( metric 2** \ [3]_ **) [Mass or Mole]:**
+- **Immobile phase mass ( metric 2** \ [3]_ **) [kg or mol]:**
 
-  This gives us, for each phase, the mass of fluid that does not move in the simulation, for whatever reason (trapped, viscosity, pressure threshold, etc.).
+  This gives us, for each phase, the mass or number of moles that does not move in the simulation, for whatever reason (trapped, viscosity, pressure threshold, etc.).
 
-- **Mobile phase mass ( metric 2** \ [3]_ **) [Mass or Mole]:**
+- **Mobile phase mass ( metric 2** \ [3]_ **) [kg or mol]:**
 
-  This gives us, for each phase, the mass of the fluid that is in motion or that can move depending on the simulation conditions.
+  This gives us, for each phase, the mass or number of molesd that is in motion or that can move depending on the simulation conditions.
 
-- **Component mass [Mass or Mole]:**
+- **Component mass [kg or mol]:**
 
-  This gives us, for each phase, the number of moles of each component, enabling us to assess the composition of the mixture.
+  This gives us, for each phase, the mass or number of moles of each component, enabling us to assess the composition of the mixture.
 
 
 The output can be saved in the log file and/or a CSV file if these options are specified (as mentionned `here <#how-to-generate-these-outputs>`_) when the program is run.
