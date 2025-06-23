@@ -103,7 +103,10 @@ public:
     createArray( testFluid->criticalVolume, components, Fluid::Vc, Fluid::data );
     createArray( testFluid->acentricFactor, components, Fluid::Ac, Fluid::data );
     createArray( testFluid->molecularWeight, components, Fluid::Mw, Fluid::data );
+    testFluid->volumeShift.resize( NC );
+    testFluid->volumeShift.zero();
     testFluid->binaryCoeff.resize( NC, NC );
+    testFluid->binaryCoeff.zero();
     return testFluid;
   }
 
