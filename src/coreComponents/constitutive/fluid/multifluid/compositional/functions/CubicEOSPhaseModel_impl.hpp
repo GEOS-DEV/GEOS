@@ -34,6 +34,7 @@ namespace compositional
 
 template< typename EOS_TYPE >
 template< typename T, bool DERIVATIVES >
+GEOS_HOST_DEVICE
 CubicEOSPhaseModel< EOS_TYPE >::
 StackVariables_Impl< T, DERIVATIVES >::StackVariables_Impl( integer const numComps,
                                                             arraySlice2d< real64 const > const bip ):
@@ -45,6 +46,7 @@ StackVariables_Impl< T, DERIVATIVES >::StackVariables_Impl( integer const numCom
 
 template< typename EOS_TYPE >
 template< typename T >
+GEOS_HOST_DEVICE
 CubicEOSPhaseModel< EOS_TYPE >::
 StackVariables_Impl< T, true >::StackVariables_Impl( integer const numComps,
                                                      arraySlice2d< real64 const > const bip,
@@ -224,17 +226,17 @@ computeCompressibilityFactor( integer const numComps,
 }
 
 template< typename EOS_TYPE >
-template< integer USD1, integer USD2 >
+template< integer USD >
 GEOS_HOST_DEVICE
 void
 CubicEOSPhaseModel< EOS_TYPE >::
 computeCompressibilityFactorAndDerivs( integer const numComps,
                                        real64 const & pressure,
                                        real64 const & temperature,
-                                       arraySlice1d< real64 const, USD1 > const & composition,
+                                       arraySlice1d< real64 const, USD > const & composition,
                                        ComponentProperties::KernelWrapper const & componentProperties,
                                        real64 & compressibilityFactor,
-                                       arraySlice1d< real64, USD2 > const & compressibilityFactorDerivs )
+                                       arraySlice1d< real64 > const & compressibilityFactorDerivs )
 {
   arraySlice2d< real64 const > const & binaryInteractionCoefficients = componentProperties.m_componentBinaryCoeff.toSlice();
 

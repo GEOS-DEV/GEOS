@@ -92,6 +92,7 @@ struct CubicEOSPhaseModel
     template< integer DIM=1 >
     using ConstDerivativeType = const T *;
 
+    GEOS_HOST_DEVICE
     StackVariables_Impl( integer const numComps,
                          arraySlice2d< real64 const > const bip );
 
@@ -115,6 +116,7 @@ struct CubicEOSPhaseModel
     template< integer DIM=1 >
     using ConstDerivativeType = ArraySlice< real64 const, DIM >;
 
+    GEOS_HOST_DEVICE
     StackVariables_Impl( integer const numComps,
                          arraySlice2d< real64 const > const bip,
                          arraySlice2d< real64 const > const dbip_dT );
@@ -227,16 +229,16 @@ public:
    * @param[out] compressibilityFactor the current compressibility factor
    * @param[out] compressibilityFactorDerivs derivatives of the compressibility factor
    */
-  template< integer USD1, integer USD2 >
+  template< integer USD >
   GEOS_HOST_DEVICE
   static void
   computeCompressibilityFactorAndDerivs( integer const numComps,
                                          real64 const & pressure,
                                          real64 const & temperature,
-                                         arraySlice1d< real64 const, USD1 > const & composition,
+                                         arraySlice1d< real64 const, USD > const & composition,
                                          ComponentProperties::KernelWrapper const & componentProperties,
                                          real64 & compressibilityFactor,
-                                         arraySlice1d< real64, USD2 > const & compressibilityFactorDerivs );
+                                         arraySlice1d< real64 > const & compressibilityFactorDerivs );
 
   /**
    * @brief Calculate the dimensional volume shift

@@ -34,6 +34,7 @@ namespace compositional
 
 template< typename EOS_TYPE >
 template< typename T, bool DERIVATIVES >
+GEOS_HOST_DEVICE
 SoreideWhitsonEOSPhaseModel< EOS_TYPE >::
 StackVariables_Val< T, DERIVATIVES >::StackVariables_Val( integer numComps ):
   kij_data( numComps, numComps )
@@ -41,6 +42,7 @@ StackVariables_Val< T, DERIVATIVES >::StackVariables_Val( integer numComps ):
 
 template< typename EOS_TYPE >
 template< typename T >
+GEOS_HOST_DEVICE
 SoreideWhitsonEOSPhaseModel< EOS_TYPE >::
 StackVariables_Val< T, true >::StackVariables_Val( integer numComps ):
   StackVariables_Val< T, false >( numComps ),
@@ -49,6 +51,7 @@ StackVariables_Val< T, true >::StackVariables_Val( integer numComps ):
 
 template< typename EOS_TYPE >
 template< typename T, bool DERIVATIVES >
+GEOS_HOST_DEVICE
 SoreideWhitsonEOSPhaseModel< EOS_TYPE >::
 StackVariables_Impl< T, DERIVATIVES >::StackVariables_Impl( integer numComps ):
   StackVariables_Val< T, DERIVATIVES >( numComps ),
@@ -58,6 +61,7 @@ StackVariables_Impl< T, DERIVATIVES >::StackVariables_Impl( integer numComps ):
 
 template< typename EOS_TYPE >
 template< typename T >
+GEOS_HOST_DEVICE
 SoreideWhitsonEOSPhaseModel< EOS_TYPE >::
 StackVariables_Impl< T, true >::StackVariables_Impl( integer numComps ):
   StackVariables_Val< T, true >( numComps ),

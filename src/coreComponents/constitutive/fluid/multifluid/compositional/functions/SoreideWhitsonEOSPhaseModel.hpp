@@ -42,6 +42,7 @@ struct SoreideWhitsonEOSPhaseModel
   {
     static constexpr integer maxNumComp = CubicModel::template StackVariables< false >::maxNumComp;
 
+    GEOS_HOST_DEVICE
     StackVariables_Val( integer numComps );
 
     real64 salinity{0.0};
@@ -54,6 +55,7 @@ struct SoreideWhitsonEOSPhaseModel
   {
     using StackVariables_Val< T, false >::maxNumComp;
 
+    GEOS_HOST_DEVICE
     StackVariables_Val( integer numComps );
 
     // Derivatives of binary interaction coefficients wrt temperature
@@ -61,8 +63,9 @@ struct SoreideWhitsonEOSPhaseModel
   };
 
   template< typename T, bool DERIVATIVES >
-  struct StackVariables_Impl : public StackVariables_Val< T, DERIVATIVES >, public CubicModel::StackVariables< DERIVATIVES >
+  struct StackVariables_Impl : public StackVariables_Val< T, DERIVATIVES >, public CubicModel::template StackVariables< DERIVATIVES >
   {
+    GEOS_HOST_DEVICE
     StackVariables_Impl( integer numComps );
 
     using CubicModel::template StackVariables< DERIVATIVES >::DerivativeType;
@@ -70,8 +73,9 @@ struct SoreideWhitsonEOSPhaseModel
   };
 
   template< typename T >
-  struct StackVariables_Impl< T, true > : public StackVariables_Val< T, true >, public CubicModel::StackVariables< true >
+  struct StackVariables_Impl< T, true > : public StackVariables_Val< T, true >, public CubicModel::template StackVariables< true >
   {
+    GEOS_HOST_DEVICE
     StackVariables_Impl( integer numComps );
 
     using CubicModel::template StackVariables< true >::DerivativeType;
