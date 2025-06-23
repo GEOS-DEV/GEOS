@@ -79,7 +79,7 @@
 
     <ConstantPermeability
       name="rockPermBarrier"
-      permeabilityComponents="{ 9.8e-13, 9.8e-13, 9.8e-13 }"/>
+      permeabilityComponents="{ 9.8e-17, 9.8e-17, 9.8e-17 }"/>
 
 
     <PressurePorosity
