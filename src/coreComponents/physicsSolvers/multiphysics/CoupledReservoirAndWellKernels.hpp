@@ -221,6 +221,9 @@ public:
     }
     compFluxKernelOp( resOffset, wellElemOffset, dofColIndices, iwelem );
 
+    if( m_numCrossFlowPerforations > 0 )
+      GEOS_LOG_RANK( "tjb xflow "<< m_numCrossFlowPerforations );
+
   }
 
 

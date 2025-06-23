@@ -333,6 +333,7 @@ real64 SinglePhaseWell::updateSubRegionState( WellElementSubRegion & subRegion )
 {
   // update volumetric rates for the well constraints
   // Warning! This must be called before updating the fluid model
+
   updateVolRateForConstraint( subRegion );
 
   // update density in the well elements
@@ -345,6 +346,13 @@ real64 SinglePhaseWell::updateSubRegionState( WellElementSubRegion & subRegion )
   return 0.0;  // change in phasevolume fraction doesnt apply
 }
 
+void SinglePhaseWell::initializeWell( DomainPartition & domain, MeshLevel & mesh, WellElementSubRegion & subRegion, real64 const & time_n )
+{
+  GEOS_UNUSED_VAR( domain );
+  GEOS_UNUSED_VAR( mesh );
+  GEOS_UNUSED_VAR( subRegion );
+  GEOS_UNUSED_VAR( time_n );
+};
 void SinglePhaseWell::initializeWells( DomainPartition & domain, real64 const & time_n )
 {
   GEOS_MARK_FUNCTION;
@@ -415,7 +423,7 @@ void SinglePhaseWell::initializeWells( DomainPartition & domain, real64 const & 
         // 4) Recompute the pressure-dependent properties
         // Note: I am leaving that here because I would like to use the perforationRates (computed in UpdateState)
         //       to better initialize the rates
-        updateSubRegionState( subRegion );
+        updateSubRegionState( subRegion);
 
         string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
         SingleFluidBase & fluid = subRegion.getConstitutiveModel< SingleFluidBase >( fluidName );
@@ -991,6 +999,7 @@ SinglePhaseWell::applySystemSolution( DofManager const & dofManager,
 void SinglePhaseWell::resetStateToBeginningOfStep( DomainPartition & domain )
 {
 
+
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
                                                                 string_array const & regionNames )
@@ -1014,7 +1023,7 @@ void SinglePhaseWell::resetStateToBeginningOfStep( DomainPartition & domain )
         subRegion.getField< fields::well::connectionRate_n >();
       connRate.setValues< parallelDevicePolicy<> >( connRate_n );
 
-      updateSubRegionState( subRegion );
+      updateSubRegionState( subRegion);
     } );
   } );
 }

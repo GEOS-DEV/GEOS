@@ -374,7 +374,8 @@ public:
                            real64 const GEOS_UNUSED_PARAM( scalingFactor ),
                            real64 const GEOS_UNUSED_PARAM( dt ),
                            DomainPartition & GEOS_UNUSED_PARAM( domain ),
-                           MeshLevel & GEOS_UNUSED_PARAM( mesh ) ) {};
+                           MeshLevel & GEOS_UNUSED_PARAM( mesh ),
+                           WellElementSubRegion & GEOS_UNUSED_PARAM( subRegion ) ) {};
 
   /**
    * @brief Function to perform line search
@@ -464,7 +465,7 @@ protected:
    * @param domain the domain containing the well manager to access individual wells
    */
   virtual void initializeWells( DomainPartition & domain, real64 const & time_n ) = 0;
-
+  virtual void initializeWell( DomainPartition & domain, MeshLevel & mesh, WellElementSubRegion & subRegion, real64 const & time_n ) = 0;
   /**
    * @brief Make sure that the well constraints are compatible
    * @param time_n the time at the beginning of the time step
@@ -536,6 +537,8 @@ protected:
   std::map< std::string, DofManager >   m_estimatorDoFManager;
 
   integer my_ctime;
+
+  real64 m_nextDt;
 
 };
 

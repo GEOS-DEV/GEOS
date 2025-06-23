@@ -24,6 +24,7 @@
 #include "common/format/EnumStrings.hpp"
 #include "dataRepository/Group.hpp"
 #include "functions/TableFunction.hpp"
+#include "constitutive/fluid/multifluid/MultiFluidBase.hpp"
 
 namespace geos
 {
@@ -292,6 +293,16 @@ public:
    */
   void setNextDtFromTables( real64 const currentTime, real64 & nextDt );
 
+    /**
+   * @brief setter for multi fluid separator 
+   * @param[in] fluidSeparatorPtr single or multiphase separator
+   */
+   void setFluidSeparator(std::unique_ptr< constitutive::ConstitutiveBase > fluidSeparatorPtr)  {  m_fluidSeparatorPtr = std::move(fluidSeparatorPtr);}
+  /**
+   * @brief Getter for multi fluid separator 
+   * @return reference to separator
+   */
+  constitutive::MultiFluidBase & getMultiFluidSeparator()  { return dynamicCast< constitutive::MultiFluidBase & > (*m_fluidSeparatorPtr); }
   ///@}
 
   /**
@@ -440,6 +451,10 @@ private:
   TableFunction const * m_statusTable;
 
   bool m_wellOpen;
+
+    // Fuild model to compute properties for constraint equation user specified conditions
+  std::unique_ptr< constitutive::ConstitutiveBase >  m_fluidSeparatorPtr;
+
 };
 
 ENUM_STRINGS( WellControls::Type,

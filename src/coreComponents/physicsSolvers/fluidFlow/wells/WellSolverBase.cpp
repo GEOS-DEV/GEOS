@@ -53,8 +53,10 @@ WellSolverBase::WellSolverBase( string const & name,
   m_globalNumTimeSteps( -1 ),
   m_currentDt( -1.0 ),
   m_estimateSolution( 0 ),
-  my_ctime( 0 )
+  my_ctime( 0 ),
+  m_nextDt( -1 )
 {
+
   registerWrapper( viewKeyStruct::isThermalString(), &m_isThermal ).
     setApplyDefaultValue( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -233,9 +235,39 @@ void WellSolverBase::implicitStepSetup( real64 const & time_n,
 {
   GEOS_UNUSED_VAR( dt );
   // Initialize the primary and secondary variables for the first time step
+  if( !m_estimateSolution )
+  {
+    initializeWells( domain, time_n );
+  }
+  else
+  {
+    forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                  MeshLevel & mesh,
+                                                                  string_array const & regionNames )
+    {
+      ElementRegionManager & elemManager = mesh.getElemManager();
+      elemManager.forElementSubRegions< WellElementSubRegion >( regionNames,
+                                                                [&]( localIndex const,
+                                                                     WellElementSubRegion & subRegion )
+      {
+        WellControls & wellControls = getWellControls( subRegion );
+        PerforationData const & perforationData = *subRegion.getPerforationData();
+        arrayView2d< real64 const > const compPerfRate = perforationData.getField< fields::well::compPerforationRate >();
 
-  initializeWells( domain, time_n );
+        bool const hasNonZeroRate = MpiWrapper::max< integer >( hasNonZero( compPerfRate ));
 
+        if( time_n <= 0.0  || ( wellControls.isWellOpen( time_n ) && !hasNonZeroRate ) )
+        {
+          GEOS_LOG_RANK( "tjb initialize wells "<< subRegion.getName());
+          if( !wellControls.getWellState() && isThermal() ) // tjb add as schema option
+          {
+            m_nextDt=43200;
+          }
+        }
+      } );
+
+    } );
+  }
 }
 
 void WellSolverBase::setupWellDofs( DomainPartition & domain )
@@ -284,7 +316,6 @@ void WellSolverBase::estimateWellSolution( real64 const & time_n,
 {
   GEOS_MARK_FUNCTION;
 
-
   //GEOS_LOG_RANK( "**** Estimate Well Solution - Start **** " << getName() );
   setupWellDofs( domain );
 
@@ -301,9 +332,24 @@ void WellSolverBase::estimateWellSolution( real64 const & time_n,
       WellElementSubRegion & subRegion = region.getGroup( ElementRegionBase::viewKeyStruct::elementSubRegions() )
                                            .getGroup< WellElementSubRegion >( region.getSubRegionName() );
       WellControls & wellControls = getWellControls( subRegion );
+      if( wellControls.isWellOpen( time_n ) )
+      {
+        if( !wellControls.getWellState() )
+        {
+          wellControls.setWellState( 1 );
+
+          initializeWell( domain, meshLevel, subRegion, time_n );
+        }
+      }
+      else
+      {
+        wellControls.setWellState( 0 );
+      }
+
+
       if( wellControls.getWellState())
       {
-
+        GEOS_LOG_RANK( "**** Estimate Well Solution - Start **** " << subRegion.getName() );
         auto it = m_estimatorDoFManager.find( region.getName());
         if( it == m_estimatorDoFManager.end())
         {
@@ -340,6 +386,7 @@ void WellSolverBase::estimateWellSolution( real64 const & time_n,
                               elementRegionManager,
                               subRegion,
                               dofManager );
+        GEOS_LOG_RANK( "**** Estimate Well Solution End **** " << subRegion.getName());
       }
 
     } );
@@ -375,14 +422,13 @@ void WellSolverBase::setupWellSystem( DomainPartition & domain,
 void WellSolverBase::updateState( DomainPartition & domain )
 {
   GEOS_MARK_FUNCTION;
-
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel & mesh,
                                                                string_array const & regionNames )
   {
     mesh.getElemManager().forElementSubRegions< WellElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                           WellElementSubRegion & subRegion )
-    { updateSubRegionState( subRegion ); } );
+    { updateSubRegionState( subRegion); } );
   } );
 }
 
@@ -584,6 +630,11 @@ real64 WellSolverBase::setNextDt( real64 const & currentTime, const real64 & cur
 {
   real64 nextDt = PhysicsSolverBase::setNextDt( currentTime, currentDt, domain );
 
+  if( m_nextDt > 0 )
+  {
+    nextDt = m_nextDt;
+    m_nextDt=-1;
+  }
   if( m_timeStepFromTables )
   {
     forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
@@ -598,22 +649,6 @@ real64 WellSolverBase::setNextDt( real64 const & currentTime, const real64 & cur
         wellControls.setNextDtFromTables( currentTime, nextDt );
         if( m_nonlinearSolverParameters.getLogLevel() > 0 && nextDt < nextDt_orig )
           GEOS_LOG_RANK_0( GEOS_FMT( "{}: next time step based on tables coordinates = {}", getName(), nextDt ));
-      } );
-    } );
-    forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
-                                                                 MeshLevel & mesh,
-                                                                 string_array const & regionNames )
-    {
-      mesh.getElemManager().forElementSubRegions< WellElementSubRegion >( regionNames, [&]( localIndex const,
-                                                                                            WellElementSubRegion & subRegion )
-      {
-        WellControls & wellControls = getWellControls( subRegion );
-        real64 const nextDt_orig = nextDt;
-        if( m_nonlinearSolverParameters.getLogLevel() > 0 && nextDt < nextDt_orig )
-          GEOS_LOG_RANK_0( GEOS_FMT( "{}: next time step to 0.5 days = {}", getName(), nextDt ));
-
-        if( wellControls.isWellOpen( currentTime+nextDt ) && !wellControls.getWellState() && isThermal())
-          nextDt= 43200;
       } );
     } );
   }
@@ -692,7 +727,8 @@ bool WellSolverBase::solveNonlinearSystem( real64 const & time_n,
         m_assemblyCallback( m_localMatrix, std::move( localRhsCopy ) );
       }
     }
-
+    outputSingleWellDebug( time_n, stepDt, 0, newtonIter, 0,
+                           mesh, subRegion, dofManager, m_localMatrix.toViewConstSizes(), m_rhs.values()  );
     real64 residualNorm = 0;
     {
       Timer timer( m_timers["convergence check"] );
@@ -703,8 +739,8 @@ bool WellSolverBase::solveNonlinearSystem( real64 const & time_n,
                              GEOS_FMT( "        ( R ) = ( {:4.2e} )", residualNorm ) );
     }
     //auto iterInfo = currentIter( time_n, dt );
-    outputSingleWellDebug( time_n, stepDt, 0, newtonIter, 0,
-                           mesh, subRegion, dofManager, m_localMatrix.toViewConstSizes(), m_rhs.values()  );
+    //outputSingleWellDebug( time_n, stepDt, 0, newtonIter, 0,
+    //                       mesh, subRegion, dofManager, m_localMatrix.toViewConstSizes(), m_rhs.values()  );
 // if the residual norm is less than the Newton tolerance we denote that we have
 // converged and break from the Newton loop immediately.
     if( residualNorm < newtonTol && newtonIter >= minNewtonIter )
@@ -838,13 +874,14 @@ bool WellSolverBase::solveNonlinearSystem( real64 const & time_n,
       }
 
 // apply the system solution to the fields/variables
-      applyWellSystemSolution( dofManager, m_solution.values(), scaleFactor, stepDt, domain, mesh );
+      applyWellSystemSolution( dofManager, m_solution.values(), scaleFactor, stepDt, domain, mesh, subRegion );
     }
 
     {
       Timer timer( m_timers["update state"] );
 
 // update non-primary variables (constitutive models)
+
       updateWellState( subRegion );
     }
 
@@ -900,10 +937,10 @@ bool WellSolverBase::lineSearch1( real64 const & time_n,
     }
 
 
-    applyWellSystemSolution( dofManager, solution.values(), localScaleFactor, dt, domain, mesh );
+    applyWellSystemSolution( dofManager, solution.values(), localScaleFactor, dt, domain, mesh, subRegion );
     // update non-primary variables (constitutive models)
 
-    updateWellState( subRegion );
+    updateWellState( subRegion);
     // re-assemble system
     localMatrix.zero();
     rhs.zero();

@@ -132,7 +132,8 @@ public:
                            real64 const scalingFactor,
                            real64 const dt,
                            DomainPartition & domain,
-                           MeshLevel & mesh ) override;
+                           MeshLevel & mesh,
+                           WellElementSubRegion & subRegion ) override;
 
   virtual void
   applySystemSolution( DofManager const & dofManager,
@@ -220,7 +221,7 @@ public:
   virtual real64 updateWellState( WellElementSubRegion & subRegion ) override;
   virtual void updateState( DomainPartition & domain ) override;
 
-  virtual real64 updateSubRegionState( WellElementSubRegion & subRegion ) override;
+  virtual real64 updateSubRegionState( WellElementSubRegion & subRegion) override;
 
   virtual string wellElementDofName() const override { return viewKeyStruct::dofFieldString(); }
 
@@ -414,6 +415,7 @@ protected:
 
   virtual void initializePostInitialConditionsPreSubGroups() override;
 
+  void saveState( WellElementSubRegion & subRegion );
   /*
    * @brief Utility function that checks the consistency of the constitutive models
    * @param[in] domain the domain partition
@@ -465,6 +467,8 @@ private:
    * @param domain the domain containing the well manager to access individual wells
    */
   void initializeWells( DomainPartition & domain, real64 const & time_n ) override;
+
+  void initializeWell( DomainPartition & domain, MeshLevel & mesh, WellElementSubRegion & subRegion, real64 const & time_n ) override;
 
   virtual void setConstitutiveNames( ElementSubRegionBase & subRegion ) const override;
 

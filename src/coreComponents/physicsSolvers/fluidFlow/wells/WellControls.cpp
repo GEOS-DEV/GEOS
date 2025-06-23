@@ -43,7 +43,7 @@ WellControls::WellControls( string const & name, Group * const parent )
   m_useSurfaceConditions( 0 ),
   m_surfacePres( 0.0 ),
   m_surfaceTemp( 0.0 ),
-  m_isCrossflowEnabled( 1 ),
+  m_isCrossflowEnabled( 0 ),
   m_initialPressureCoefficient( 0.1 ),
   m_rateSign( -1.0 ),
   m_targetTotalRateTable( nullptr ),
