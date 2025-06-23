@@ -20,11 +20,7 @@
       <Box
       name="source"
       xMin="{ -0.1, -0.1, -0.01}"
-      xMax="{ 1.1, 1.1, 0.251}"/>
-      <Box
-      name="sink"
-      xMin="{ -0.1, -0.1, 49.749}"
-      xMax="{ 1.1, 1.1, 50.01}"/>      
+      xMax="{ 1.1, 1.1, 0.251}"/>  
   </Geometry>
 
   <ElementRegions>
@@ -83,7 +79,7 @@
 
     <ConstantPermeability
       name="rockPermBarrier"
-      permeabilityComponents="{ 9.8e-17, 9.8e-17, 9.8e-17 }"/>
+      permeabilityComponents="{ 9.8e-13, 9.8e-13, 9.8e-13 }"/>
 
 
     <PressurePorosity
@@ -105,37 +101,13 @@
       componentNames="{ co2, water }"
       componentFractionVsElevationTableNames="{ initCO2CompFracTable,
                                                 initWaterCompFracTable }"
-      temperatureVsElevationTableName="initTempTable"/>
-
-   <FieldSpecification
-      name="sinkTermPressure"
-      objectPath="ElementRegions"
-      fieldName="pressure"
-      scale="1e7"
-      setNames="{ sink }"/>
-
-    <!-- Production stream: pure water -->
-    <FieldSpecification
-      name="sinkTermComposition_CO2"
-      objectPath="ElementRegions"
-      fieldName="globalCompFraction"
-      component="0"
-      scale="0.0"
-      setNames="{ sink }"/>
-
-    <FieldSpecification
-      name="sinkTermComposition_H2O"
-      objectPath="ElementRegions"
-      fieldName="globalCompFraction"
-      component="1"
-      scale="1.0"
-      setNames="{ sink }"/>      
+      temperatureVsElevationTableName="initTempTable"/> 
 
     <FieldSpecification
       name="sourceTermPressure"
       objectPath="ElementRegions"
       fieldName="pressure"
-      scale="1.01e7"
+      scale="1.2e7"
       setNames="{ source }"/> 
 
 
@@ -162,16 +134,16 @@
   <Functions>
    <TableFunction
       name="initCO2CompFracTable"
-      coordinates="{ 0.0, 20.0 }"
+      coordinates="{ 0.0, 50.0 }"
       values="{ 0.0, 0.0 }"/>
     <TableFunction
       name="initWaterCompFracTable"
-      coordinates="{ 0.0, 20.0 }"
+      coordinates="{ 0.0, 50.0 }"
       values="{ 1.0, 1.0 }"/>
     <TableFunction
       name="initTempTable"
-      coordinates="{ 0.0, 20.0 }"
-      values="{ 300.0, 350.0 }"/>
+      coordinates="{ 0.0, 50.0 }"
+      values="{ 300.0, 300.0 }"/>
     <TableFunction
       name="waterRelativePermeabilityTable"
       coordinates="{ 0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.5, 0.55, 0.6, 0.65, 0.7, 0.75, 0.8, 0.85, 0.9, 0.95, 1.0 }"
