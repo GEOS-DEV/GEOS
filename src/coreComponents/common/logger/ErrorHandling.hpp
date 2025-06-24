@@ -64,13 +64,13 @@ public:
       DataPath
     };
 
-    // The map contains contextual information about the error
-    // It could be something like
-    // "file" = "/path/to/file.xml"
-    // "line" = "24"
-    // or something like
-    // "dataPath" = "/Functions/co2brine_philipsDensityTable
-    // The key is a field of the Attribute enumeration and is converted to a string for writing in the YAML
+    /// The map contains contextual information about the error
+    /// It could be something like
+    /// "file" = "/path/to/file.xml"
+    /// "line" = "24"
+    /// or something like
+    /// "dataPath" = "/Functions/co2brine_philipsDensityTable
+    /// The key is a field of the Attribute enumeration and is converted to a string for writing in the YAML
     map< Attribute, std::string > m_attributes;
     integer m_priority = 0;
 
@@ -95,19 +95,19 @@ public:
    */
   struct ErrorMsg
   {
-    // the error type (Warning, Error or Exception)
+    /// the error type (Warning, Error or Exception)
     MsgType m_type = ErrorLogger::MsgType::Undefined;
-    // the erreur message that can be completed
+    /// the erreur message that can be completed
     std::string m_msg;
-    // the source location file corresponding to the error in the code
+    /// the source location file corresponding to the error in the code
     std::string m_file;
-    // the source location line corresponding to the error in the code (default is 0)
+    /// the source location line corresponding to the error in the code (default is 0)
     integer m_line = 0;
-    // the rank(s) on which the error occured
+    /// the rank(s) on which the error occured
     std::vector< int > m_ranksInfo;
-    // Additional information about the error in the input file
+    /// Additional information about the error in the input file
     std::vector< ErrorContext > m_contextsInfo;
-    // the stack trace
+    /// the stack trace
     std::vector< std::string > m_sourceCallStack;
 
     /**
@@ -232,6 +232,7 @@ private:
    * @return the string representation of the message type
    */
   static std::string toString( MsgType type );
+
   /**
    * @brief Write all the information retrieved about the error/warning message into the YAML file
    * @param errorMsg a constant reference to the error
@@ -239,11 +240,11 @@ private:
   void flushErrorMsg( ErrorMsg & errorMsg );
 
 private:
-  // The error constructed via exceptions
+  /// The error constructed via exceptions
   ErrorMsg m_currentErrorMsg;
-  // Indicate whether the write to YAML command line option is enabled
+  /// Indicate whether the write to YAML command line option is enabled
   bool m_writeYaml = false;
-  // YAML file name
+  /// YAML file name
   std::string_view m_filename = "errors.yaml";
 
   /**
