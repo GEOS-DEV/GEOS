@@ -8,7 +8,6 @@ Phase behavior is modeled by an equation of state (EOS) and partitioning of comp
 phases is computed based on instantaneous chemical equilibrium via a two-phase flash.
 Each component (species) is characterized by molar weight and critical properties that
 serve as input parameters for the EOS.
-See `Petrowiki`_ for more information.
 
 In this model the fluid is described by :math:`N_c` components with :math:`z_c` being the total
 mole fraction of component :math:`c`. The fluid can partition into a liquid phase, denoted :math:`\ell`,
