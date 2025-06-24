@@ -128,6 +128,8 @@ public:
     /**
      * @brief Add text to the current error msg
      * @param e the exception containing text to add
+     * @param toEnd indicates whether to add the message at the beginning (true) or at the end (false)
+     * default is false 
      * @return the reference to the current instance
      */
     ErrorMsg & addToMsg( std::exception const & e, bool toEnd = false );
@@ -135,6 +137,8 @@ public:
     /**
      * @brief Add text to the current error msg
      * @param msg the text to add
+     * @param toEnd indicates whether to add the message at the beginning (true) or at the end (false)
+     * default is false 
      * @return the reference to the current instance
      */
     ErrorMsg & addToMsg( std::string_view msg, bool toEnd = false );
@@ -214,7 +218,8 @@ private:
   { m_filename = filename; }
 
   /**
-   * @brief Return the error message information at this point
+   * @brief Gives acces to the error message that is currently being constructed, potencially at various application layers.  
+   * Use flushErrorMsg() when the message is fully constructed and you want it to be output.  
    * @return the reference to the current instance
    */
   ErrorMsg & currentErrorMsg()
