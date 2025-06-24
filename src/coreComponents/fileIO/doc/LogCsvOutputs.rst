@@ -375,15 +375,15 @@ PVT Tables are used to define fluid properties as a function of pressure and tem
 They are integrated into fluid and relative permeability models enabling accurate simulations of multiphase flows in reservoirs.
 You can find an application example `here <https://geosx-geosx.readthedocs-hosted.com/en/latest/docs/sphinx/basicExamples/co2Injection/Example.html#constitutive-laws>`_.
 
-- CO2BrinePhillipsFluid
+- **CO2BrinePhillipsFluid:**
 
   This component models the properties of fluids made up of CO2 and brine. This model takes into account the solubility of CO2 in brine as a function of pressure and temperature.
 
-- ReactiveBrineFluid
+- **ReactiveBrineFluid:**
 
   This component models the reactions between brine and rock. It also includes the effects of pressure and temperature.
 
-- CO2BrineEzrokhiFluid
+- **CO2BrineEzrokhiFluid:**
 
   This component models the properties of fluids made up of CO2 and brine, such as density and viscosity, without accounting for salinity effects, making it suitable for simulations where salinity is negligible.
 
