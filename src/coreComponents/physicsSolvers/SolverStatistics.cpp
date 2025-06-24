@@ -174,7 +174,7 @@ void IterationsStatistics::outputStatistics( bool writeCSV ) const
 
   if( writeCSV )
   {
-    std::ofstream logStream( m_IterationsFileName );
+    std::ofstream logStream( m_iterationsFileName );
 
     TableLayout const statsLayout( {  "Time-steps", "Time steps cut",
                                       "Successful outer loop", "Successful nonlinear", "Successful linear",
@@ -196,6 +196,12 @@ ConvergenceStatistics::ConvergenceStatistics():
       std::variant< string_view, TableLayout::Column >{"Time-steps"},
       std::variant< string_view, TableLayout::Column >{"Newton Iter"}
     } );
+
+  m_nonLinearNormsLayout->addColumns( {"RMass", "RVol", "REnergy",
+                                       "RFlow", "RBubbleDisp", "RFrac",
+                                       "Rstick", "Rslip", "Ropen",
+                                       "RSolid", "RContact", "RProppant",
+                                       "RWell", "RDamage", "RTotal"} );
 }
 
 
@@ -214,16 +220,12 @@ void ConvergenceStatistics::registerResidualNormToTable()
 {
   std::vector< TableData::CellData > residualsNormCells;
 
-  auto hasValue = []( real64 value )
-  {
-    return std::fabs( value - std::numeric_limits< real64 >::max()) > std::numeric_limits< real64 >::epsilon();
-  };
-
   struct ResidualInfo
   {
     const real64 & value;
     string_view columnName;
   };
+
   ResidualInfo residuals[] = {
     { m_residualMass, "RMass" },
     { m_residualVol, "RVol" },
@@ -242,19 +244,6 @@ void ConvergenceStatistics::registerResidualNormToTable()
     { m_totalResidual, "RTotal" }
   };
 
-  std::cout << "m_numTimeSteps " << m_numTimeSteps << " m_currentNewtonIter "<< m_currentNewtonIter << std::endl;
-  if( m_numTimeSteps == 0 && m_currentNewtonIter == 0 )
-  {
-    for( auto const & residual : residuals )
-    {
-      if( hasValue( residual.value ) )
-      {
-        std::cout << " residual.columnName "<< residual.columnName << std::endl;
-        m_nonLinearNormsLayout->addColumn( residual.columnName );
-      }
-    }
-  }
-
   residualsNormCells.emplace_back( TableData::CellData( {CellType::Value,
                                                          GEOS_FMT( "{}", m_numTimeSteps )} ));
   residualsNormCells.emplace_back( TableData::CellData( {CellType::Value,
@@ -262,11 +251,11 @@ void ConvergenceStatistics::registerResidualNormToTable()
 
   for( auto const & residual : residuals )
   {
-    if( hasValue( residual.value ) )
-    {
-      residualsNormCells.emplace_back( TableData::CellData( {CellType::Value,
-                                                             GEOS_FMT( "{}", residual.value )} ));
-    }
+    residualsNormCells.emplace_back( TableData::CellData(
+      {
+        CellType::Value,
+        !std::isnan( residual.value ) ? GEOS_FMT( "{}", residual.value ) : "0"
+      } ));
   }
 
   m_nonLinearNormsData.addRow( residualsNormCells );

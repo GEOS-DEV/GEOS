@@ -155,13 +155,13 @@ public:
    * @param filename The filename as a string_view.
    */
   void setFilename( string_view filename )
-  { m_IterationsFileName = filename; }
+  { m_iterationsFileName = filename; }
 
 private:
   /// Table containing statistics relative to non linear parameter
   TableData m_nonLinearData;
   /// Filename for the iterations CSV.
-  string m_IterationsFileName;
+  string m_iterationsFileName;
 };
 
 /**
@@ -183,49 +183,49 @@ public:
   integer m_currentNewtonIter = 0;
 
   /// Maximum value for residual mass.
-  real64 m_residualMass = std::numeric_limits< real64 >::max();
+  real64 m_residualMass = std::numeric_limits< real64 >::quiet_NaN();
 
   /// Maximum value for residual volume.
-  real64 m_residualVol = std::numeric_limits< real64 >::max();
+  real64 m_residualVol = std::numeric_limits< real64 >::quiet_NaN();
 
   /// Maximum value for residual energy.
-  real64 m_residualEnergy = std::numeric_limits< real64 >::max();
+  real64 m_residualEnergy = std::numeric_limits< real64 >::quiet_NaN();
 
   /// Maximum value for residual flow.
-  real64 m_residualFlow = std::numeric_limits< real64 >::max();
+  real64 m_residualFlow = std::numeric_limits< real64 >::quiet_NaN();
 
   /// Maximum value for residual bubble displacement.
-  real64 m_residualBubbleDisp = std::numeric_limits< real64 >::max();
+  real64 m_residualBubbleDisp = std::numeric_limits< real64 >::quiet_NaN();
 
   /// Maximum value for residual fracture.
-  real64 m_residualFracture = std::numeric_limits< real64 >::max();
+  real64 m_residualFracture = std::numeric_limits< real64 >::quiet_NaN();
 
   /// Maximum value for residual stick.
-  real64 m_residualStick = std::numeric_limits< real64 >::max();
+  real64 m_residualStick = std::numeric_limits< real64 >::quiet_NaN();
 
   /// Maximum value for residual slip.
-  real64 m_residualSlip = std::numeric_limits< real64 >::max();
+  real64 m_residualSlip = std::numeric_limits< real64 >::quiet_NaN();
 
   /// Maximum value for residual open.
-  real64 m_residualOpen = std::numeric_limits< real64 >::max();
+  real64 m_residualOpen = std::numeric_limits< real64 >::quiet_NaN();
 
   /// Maximum value for residual solid.
-  real64 m_residualSolid = std::numeric_limits< real64 >::max();
+  real64 m_residualSolid = std::numeric_limits< real64 >::quiet_NaN();
 
   /// Maximum value for residual contact.
-  real64 m_residualContact = std::numeric_limits< real64 >::max();
+  real64 m_residualContact = std::numeric_limits< real64 >::quiet_NaN();
 
   /// Maximum value for residual proppant.
-  real64 m_residualProppant = std::numeric_limits< real64 >::max();
+  real64 m_residualProppant = std::numeric_limits< real64 >::quiet_NaN();
 
   /// Maximum value for residual well.
-  real64 m_residualWell = std::numeric_limits< real64 >::max();
+  real64 m_residualWell = std::numeric_limits< real64 >::quiet_NaN();
 
   /// Maximum value for residual damage.
-  real64 m_residualDamage = std::numeric_limits< real64 >::max();
+  real64 m_residualDamage = std::numeric_limits< real64 >::quiet_NaN();
 
   /// Maximum total residual value.
-  real64 m_totalResidual = std::numeric_limits< real64 >::max();
+  real64 m_totalResidual = std::numeric_limits< real64 >::quiet_NaN();
 
   /**
    * @brief Output the cumulative statistics to the terminal
