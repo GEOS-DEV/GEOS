@@ -34,7 +34,7 @@
       materialList="{rockBarrier, fluid, relperm }"/>
   </ElementRegions>
 
-  <Solvers gravityVector="{ 0.0, 0.0, 0.0}"> </Solvers>
+  <Solvers gravityVector="{ 0.0, 0.0, -10.0}"> </Solvers>
 
   <Constitutive>
 
@@ -106,7 +106,7 @@
       name="sourceTerm"
       objectPath="ElementRegions"
       component="0"
-      scale="-10.0"
+      scale="-100.0"
       setNames="{source}"/>
   </FieldSpecifications>
 
