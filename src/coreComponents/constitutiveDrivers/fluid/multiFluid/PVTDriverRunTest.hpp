@@ -67,21 +67,22 @@ void PVTDriver::runTest( FLUID_TYPE & fluid, arrayView2d< real64 > const & table
   bool const outputMassDensity = (m_outputMassDensity != 0);
   bool const outputCompressibility = (m_outputCompressibility != 0);
   bool const outputPhaseComposition = (m_outputPhaseComposition != 0);
-  bool const isThermal = fluid.isThermal();
+  bool const outputEnthalpy = fluid.isThermal();
 
   integer const numSteps = m_numSteps;
   using ExecPolicy = typename FLUID_TYPE::exec_policy;
   forAll< ExecPolicy >( composition.size( 0 ),
-                        [outputMassDensity, outputCompressibility, outputPhaseComposition, isThermal,
+                        [outputMassDensity, outputCompressibility, outputPhaseComposition, outputEnthalpy,
                          numPhases, numComponents, numSteps, kernelWrapper,
                          table, composition]
                         GEOS_HOST_DEVICE ( localIndex const i )
   {
     // Index for start of phase properties
-    integer const PHASE_FRACTION = outputCompressibility ? TEMP + 3 : TEMP + 2;
+    integer const PHASE_FRACTION = TEMP + 2 + (outputCompressibility ? 1 : 0);
     integer const PHASE_DENSITY = PHASE_FRACTION + numPhases;
-    integer const PHASE_VISCOSITY = outputMassDensity ? PHASE_DENSITY + 2*numPhases : PHASE_DENSITY + numPhases;
-    integer const PHASE_ENTHALPY = isThermal ? PHASE_VISCOSITY + numPhases : PHASE_VISCOSITY;
+    integer const PHASE_MASS_DENSITY = PHASE_DENSITY + (outputMassDensity ? numPhases : 0);
+    integer const PHASE_VISCOSITY = PHASE_MASS_DENSITY + numPhases;
+    integer const PHASE_ENTHALPY = PHASE_VISCOSITY + (outputEnthalpy ? numPhases : 0);
     integer const PHASE_COMP = PHASE_ENTHALPY + numPhases;
 
     // Temporary space for phase mole fractions
@@ -107,10 +108,10 @@ void PVTDriver::runTest( FLUID_TYPE & fluid, arrayView2d< real64 > const & table
       {
         for( integer p = 0; p < numPhases; ++p )
         {
-          table( n, PHASE_DENSITY + numPhases + p ) = kernelWrapper.phaseMassDensity()( i, 0, p );
+          table( n, PHASE_MASS_DENSITY + p ) = kernelWrapper.phaseMassDensity()( i, 0, p );
         }
       }
-      if( isThermal )
+      if( outputEnthalpy )
       {
         for( integer p = 0; p < numPhases; ++p )
         {
