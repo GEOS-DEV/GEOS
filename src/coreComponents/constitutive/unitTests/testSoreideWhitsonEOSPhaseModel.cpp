@@ -268,11 +268,7 @@ SoreideWhitsonEOSPhaseModelTestFixture< NC, EOS_TYPE >::testMixtureCoefficients(
                         componentProperties,
                         salinity,
                         stack );
-  CubicModel::computeMixtureCoefficients( numComps,
-                                          pressure,
-                                          temperature,
-                                          composition.toSliceConst(),
-                                          stack );
+  CubicModel::template computeMixtureCoefficients< 0, true >( numComps, composition.toSliceConst(), stack );
 
   integer constexpr numValues = 2;
   stackArray1d< real64, numValues > derivatives( numValues );
@@ -294,7 +290,7 @@ SoreideWhitsonEOSPhaseModelTestFixture< NC, EOS_TYPE >::testMixtureCoefficients(
   {
     typename EOS::template StackVariables< false > valueStack( numComps );
     EOS::initialiseStack( numComps, p, temperature, componentProperties, salinity, valueStack );
-    CubicModel::computeMixtureCoefficients( numComps, p, temperature, composition.toSliceConst(), valueStack );
+    CubicModel::computeMixtureCoefficients( numComps, composition.toSliceConst(), valueStack );
     concatValues( valueStack, values, pressureScale );
   }, absTol, relTol );
 
@@ -306,7 +302,7 @@ SoreideWhitsonEOSPhaseModelTestFixture< NC, EOS_TYPE >::testMixtureCoefficients(
   {
     typename EOS::template StackVariables< false > valueStack( numComps );
     EOS::initialiseStack( numComps, pressure, t, componentProperties, salinity, valueStack );
-    CubicModel::computeMixtureCoefficients( numComps, pressure, t, composition.toSliceConst(), valueStack );
+    CubicModel::computeMixtureCoefficients( numComps, composition.toSliceConst(), valueStack );
     concatValues( valueStack, values, temperatureScale );
   }, absTol, relTol );
 
@@ -322,7 +318,7 @@ SoreideWhitsonEOSPhaseModelTestFixture< NC, EOS_TYPE >::testMixtureCoefficients(
       composition[ic] += z;
       typename EOS::template StackVariables< false > valueStack( numComps );
       EOS::initialiseStack( numComps, pressure, temperature, componentProperties, salinity, valueStack );
-      CubicModel::computeMixtureCoefficients( numComps, pressure, temperature, composition.toSliceConst(), valueStack );
+      CubicModel::computeMixtureCoefficients( numComps, composition.toSliceConst(), valueStack );
       concatValues( valueStack, values );
       composition[ic] = z_orig;
     }, absTol, relTol );

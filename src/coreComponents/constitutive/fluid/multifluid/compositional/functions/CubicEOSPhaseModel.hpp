@@ -279,8 +279,6 @@ public:
    * @brief Compute the mixture coefficients using pressure, temperature, composition and input
    * @tparam DERIVATIVES a flag to indicate if derivatives should be calculated
    * @param[in] numComps number of components
-   * @param[in] pressure pressure
-   * @param[in] temperature temperature
    * @param[in] composition composition of the phase
    * @param[in/out] data The component mixture properties
    */
@@ -288,8 +286,6 @@ public:
   GEOS_HOST_DEVICE
   static void
   computeMixtureCoefficients( integer const numComps,
-                              real64 const & pressure,
-                              real64 const & temperature,
                               arraySlice1d< real64 const, USD > const & composition,
                               StackVariables< DERIVATIVES > & data );
 

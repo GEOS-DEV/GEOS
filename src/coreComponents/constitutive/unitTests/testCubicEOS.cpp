@@ -110,13 +110,15 @@ CubicEOSPhaseModelTestFixture< NC, EOS_TYPE >::testPureCoefficients( ParamType c
   real64 const temperature = std::get< 1 >( testData );
 
   auto const binaryInteractionCoefficients = componentProperties.m_componentBinaryCoeff.toSliceConst();
-
-  typename EOS::template StackVariables< true > stack( numComps, binaryInteractionCoefficients, arraySlice2d< real64 const >( nullptr, {0}, {0} ) );
-  EOS::initialiseStack( numComps,
-                        pressure,
-                        temperature,
-                        componentProperties,
-                        stack );
+  integer sizes[2] = {0, 0};
+  arraySlice2d< real64 const > derivs( nullptr, sizes, sizes );
+  typename EOS::template StackVariables< true > stack( numComps, binaryInteractionCoefficients, derivs );
+  EOS::template initialiseStack< true >(
+    numComps,
+    pressure,
+    temperature,
+    componentProperties,
+    stack );
 
   integer constexpr numValues = 2*numComps;
   stackArray1d< real64, numValues > derivatives( numValues );
@@ -174,16 +176,13 @@ CubicEOSPhaseModelTestFixture< NC, EOS_TYPE >::testMixtureCoefficients( ParamTyp
   integer sizes[2] = {0, 0};
   arraySlice2d< real64 const > derivs( nullptr, sizes, sizes );
   typename EOS::template StackVariables< true > stack( numComps, binaryInteractionCoefficients, derivs );
-  EOS::initialiseStack( numComps,
-                        pressure,
-                        temperature,
-                        componentProperties,
-                        stack );
-  EOS::computeMixtureCoefficients( numComps,
-                                   pressure,
-                                   temperature,
-                                   composition.toSliceConst(),
-                                   stack );
+  EOS::template initialiseStack< true >(
+    numComps,
+    pressure,
+    temperature,
+    componentProperties,
+    stack );
+  EOS::template computeMixtureCoefficients< 0, true >( numComps, composition.toSliceConst(), stack );
 
   integer constexpr numValues = 2;
   stackArray1d< real64, numValues > derivatives( numValues );
@@ -205,7 +204,7 @@ CubicEOSPhaseModelTestFixture< NC, EOS_TYPE >::testMixtureCoefficients( ParamTyp
   {
     typename EOS::template StackVariables< false > valueStack( numComps, binaryInteractionCoefficients );
     EOS::initialiseStack( numComps, p, temperature, componentProperties, valueStack );
-    EOS::computeMixtureCoefficients( numComps, p, temperature, composition.toSliceConst(), valueStack );
+    EOS::computeMixtureCoefficients( numComps, composition.toSliceConst(), valueStack );
     concatValues( valueStack, values, pressureScale );
   }, absTol, relTol );
 
@@ -216,7 +215,7 @@ CubicEOSPhaseModelTestFixture< NC, EOS_TYPE >::testMixtureCoefficients( ParamTyp
   {
     typename EOS::template StackVariables< false > valueStack( numComps, binaryInteractionCoefficients );
     EOS::initialiseStack( numComps, pressure, t, componentProperties, valueStack );
-    EOS::computeMixtureCoefficients( numComps, pressure, t, composition.toSliceConst(), valueStack );
+    EOS::computeMixtureCoefficients( numComps, composition.toSliceConst(), valueStack );
     concatValues( valueStack, values );
   }, absTol, relTol );
 
@@ -232,7 +231,7 @@ CubicEOSPhaseModelTestFixture< NC, EOS_TYPE >::testMixtureCoefficients( ParamTyp
       composition[ic] += z;
       typename EOS::template StackVariables< false > valueStack( numComps, binaryInteractionCoefficients );
       EOS::initialiseStack( numComps, pressure, temperature, componentProperties, valueStack );
-      EOS::computeMixtureCoefficients( numComps, pressure, temperature, composition.toSliceConst(), valueStack );
+      EOS::computeMixtureCoefficients( numComps, composition.toSliceConst(), valueStack );
       concatValues( valueStack, values );
       composition[ic] = z_orig;
     }, absTol, relTol );

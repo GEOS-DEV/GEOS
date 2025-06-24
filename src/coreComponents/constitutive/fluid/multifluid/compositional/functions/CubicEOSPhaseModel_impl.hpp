@@ -77,11 +77,11 @@ initialiseStack( integer const numComps,
 {
   for( integer ic = 0; ic < numComps; ++ic )
   {
-    computePureCoefficients( ic,
-                             pressure,
-                             temperature,
-                             componentProperties,
-                             stack );
+    computePureCoefficients< DERIVATIVES >( ic,
+                                            pressure,
+                                            temperature,
+                                            componentProperties,
+                                            stack );
   }
 }
 
@@ -110,11 +110,7 @@ computeLogFugacityCoefficients( integer const numComps,
                    stack );
 
   // Step 2: Compute the mixture coefficients
-  computeMixtureCoefficients( numComps,
-                              pressure,
-                              temperature,
-                              composition,
-                              stack );
+  computeMixtureCoefficients( numComps, composition, stack );
 
   // Step 3: Compute the compressibility factor (Z)
   computeCompressibilityFactor( numComps,
@@ -158,34 +154,30 @@ computeLogFugacityCoefficientsAndDerivs( integer const numComps,
   integer sizes[2] = {0, 0};
   arraySlice2d< real64 const > derivs( nullptr, sizes, sizes );
   StackVariables< true > stack( numComps, binaryInteractionCoefficients, derivs.toSliceConst() );
-  initialiseStack( numComps,
-                   pressure,
-                   temperature,
-                   componentProperties,
-                   stack );
+  initialiseStack< true >( numComps,
+                           pressure,
+                           temperature,
+                           componentProperties,
+                           stack );
 
   // Step 2: Compute the mixture coefficients
-  computeMixtureCoefficients( numComps,
-                              pressure,
-                              temperature,
-                              composition,
-                              stack );
+  computeMixtureCoefficients< USD, true >( numComps, composition, stack );
 
   // Step 3: Compute the compressibility factor (Z)
-  computeCompressibilityFactor( numComps,
-                                composition,
-                                stack,
-                                compressibilityFactor,
-                                compressibilityFactorDerivs.toSlice() );
+  computeCompressibilityFactor< USD, true >( numComps,
+                                             composition,
+                                             stack,
+                                             compressibilityFactor,
+                                             compressibilityFactorDerivs.toSlice() );
 
   // Step 4: Use mixture coefficients and compressibility factor to update fugacity coefficients
-  computeLogFugacityCoefficients( numComps,
-                                  composition,
-                                  stack,
-                                  compressibilityFactor,
-                                  compressibilityFactorDerivs.toSliceConst(),
-                                  logFugacityCoefficients,
-                                  logFugacityCoefficientDerivs );
+  computeLogFugacityCoefficients< USD, true >( numComps,
+                                               composition,
+                                               stack,
+                                               compressibilityFactor,
+                                               compressibilityFactorDerivs.toSliceConst(),
+                                               logFugacityCoefficients,
+                                               logFugacityCoefficientDerivs );
 }
 
 template< typename EOS_TYPE >
@@ -211,11 +203,7 @@ computeCompressibilityFactor( integer const numComps,
                    stack );
 
   // Step 2: Compute the mixture coefficients
-  computeMixtureCoefficients( numComps,
-                              pressure,
-                              temperature,
-                              composition,
-                              stack );
+  computeMixtureCoefficients( numComps, composition, stack );
 
   // Step 3: Compute the compressibility factor (Z)
   computeCompressibilityFactor( numComps,
@@ -244,25 +232,21 @@ computeCompressibilityFactorAndDerivs( integer const numComps,
   integer sizes[2] = {0, 0};
   arraySlice2d< real64 const > derivs( nullptr, sizes, sizes );
   StackVariables< true > stack( numComps, binaryInteractionCoefficients, derivs );
-  initialiseStack( numComps,
-                   pressure,
-                   temperature,
-                   componentProperties,
-                   stack );
+  initialiseStack< true >( numComps,
+                           pressure,
+                           temperature,
+                           componentProperties,
+                           stack );
 
   // Step 2: Compute the mixture coefficients
-  computeMixtureCoefficients( numComps,
-                              pressure,
-                              temperature,
-                              composition,
-                              stack );
+  computeMixtureCoefficients< USD, true >( numComps, composition, stack );
 
   // Step 3: Compute the compressibility factor (Z)
-  computeCompressibilityFactor( numComps,
-                                composition,
-                                stack,
-                                compressibilityFactor,
-                                compressibilityFactorDerivs );
+  computeCompressibilityFactor< USD, true >( numComps,
+                                             composition,
+                                             stack,
+                                             compressibilityFactor,
+                                             compressibilityFactorDerivs );
 }
 
 template< typename EOS_TYPE >
@@ -345,13 +329,9 @@ GEOS_FORCE_INLINE
 void
 CubicEOSPhaseModel< EOS_TYPE >::
 computeMixtureCoefficients( integer const numComps,
-                            real64 const & pressure,
-                            real64 const & temperature,
                             arraySlice1d< real64 const, USD > const & composition,
                             StackVariables< DERIVATIVES > & stack )
 {
-  GEOS_UNUSED_VAR( pressure );
-  GEOS_UNUSED_VAR( temperature );
   // Binary interaction coefficients
   arraySlice2d< real64 const > const & kij = stack.kij;
   stack.aMixture = 0.0;
