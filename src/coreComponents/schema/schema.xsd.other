@@ -341,15 +341,11 @@
 	</xsd:complexType>
 	<xsd:complexType name="FunctionsType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
-			<xsd:element name="CompositeFunction" type="CompositeFunctionType" />
 			<xsd:element name="MultivariableTableFunction" type="MultivariableTableFunctionType" />
-			<xsd:element name="SymbolicFunction" type="SymbolicFunctionType" />
 			<xsd:element name="TableFunction" type="TableFunctionType" />
 		</xsd:choice>
 	</xsd:complexType>
-	<xsd:complexType name="CompositeFunctionType" />
 	<xsd:complexType name="MultivariableTableFunctionType" />
-	<xsd:complexType name="SymbolicFunctionType" />
 	<xsd:complexType name="TableFunctionType" />
 	<xsd:complexType name="GeometryType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -3528,6 +3524,10 @@
 		<xsd:attribute name="topWellElementIndex" type="integer" />
 		<!--wellControlsName => (no description available)-->
 		<xsd:attribute name="wellControlsName" type="groupNameRef" />
+		<!--wellLocalElementGlobaleIndex => (no description available)-->
+		<xsd:attribute name="wellLocalElementGlobaleIndex" type="globalIndex_array" />
+		<!--wellLocalElementStatus => (no description available)-->
+		<xsd:attribute name="wellLocalElementStatus" type="integer_array" />
 	</xsd:complexType>
 	<xsd:complexType name="ConstitutiveModelsType" />
 	<xsd:complexType name="wellElementSubRegionType">
@@ -3553,6 +3553,10 @@
 		<xsd:attribute name="maxGlobalIndex" type="globalIndex" />
 		<!--numPerforationsGlobal => (no description available)-->
 		<xsd:attribute name="numPerforationsGlobal" type="globalIndex" />
+		<!--perforationName => Perforation name-->
+		<xsd:attribute name="perforationName" type="string_array" />
+		<!--perforationStatus => Table of time vs perforation open/close status -->
+		<xsd:attribute name="perforationStatus" type="integer_array" />
 		<!--reservoirElementGlobalIndex => For each perforation, global element index of the perforated element-->
 		<xsd:attribute name="reservoirElementGlobalIndex" type="globalIndex_array" />
 		<!--reservoirElementIndex => For each perforation, element index of the perforated element-->

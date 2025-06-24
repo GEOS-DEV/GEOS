@@ -44,7 +44,7 @@ public:
    */
   enum WellElemParallelStatus : unsigned
   {
-    UNOWNED = 0,             // there are no perforations on this element
+    UNOWNED = 0,             // there are no perforations on this mesh partition
     REMOTE = 1,              // all perforations are remote
     LOCAL  = 2,              // all perforations are local
     SHARED = REMOTE | LOCAL  // both remote and local perforations

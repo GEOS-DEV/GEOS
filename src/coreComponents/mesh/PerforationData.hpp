@@ -340,7 +340,7 @@ private:
   /// Name of perforations
   string_array m_perfName;
 
-  /// Local perforation's status
+  /// Local perforation's status (open or closed)
   array1d< localIndex > m_localPerfStatus;
 
 };
