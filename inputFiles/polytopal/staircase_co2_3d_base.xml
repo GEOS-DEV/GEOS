@@ -9,8 +9,8 @@
       xCoords="{ 0, 250, 500 }"
       yCoords="{ 0, 250, 500 }"
       zCoords="{ 0, 62.5, 125, 187.5, 250 }"
-      nx="{ 16, 16 }"
-      ny="{ 16, 16 }"
+      nx="{ 8, 8 }"
+      ny="{ 8, 8 }"
       nz="{ 4, 4, 4, 4 }"
       cellBlockNames="{ b00, b01, b02, b03, b04, b05, b06, b07, b08, b09, b10, b11, b12, b13, b14, b15 }">
   </InternalMesh>
@@ -21,6 +21,10 @@
       name="source"
       xMin="{ 468.5, -0.1, -0.1}"
       xMax="{ 500.1, 31.5, 62.6}"/>
+      <Box
+      name="fixed_pressure"
+      xMin="{ -0.1, 468.65, 218.65}"
+      xMax="{ 31.35, 500.1, 250.1}"/> 
   </Geometry>
 
   <ElementRegions>
@@ -101,6 +105,29 @@
       componentFractionVsElevationTableNames="{ initCO2CompFracTable,
                                                 initWaterCompFracTable }"
       temperatureVsElevationTableName="initTempTable"/>
+
+    <FieldSpecification
+      name="sourceTermPressure"
+      objectPath="ElementRegions"
+      fieldName="pressure"
+      scale="1.5e7"
+      setNames="{ fixed_pressure }"/> 
+
+    <FieldSpecification
+      name="sourceTermComposition_CO2"
+      objectPath="ElementRegions"
+      fieldName="globalCompFraction"
+      component="0"
+      scale="0.0"
+      setNames="{ fixed_pressure }"/>
+
+    <FieldSpecification
+      name="sourceTermComposition_H2O"
+      objectPath="ElementRegions"
+      fieldName="globalCompFraction"
+      component="1"
+      scale="1.0"
+      setNames="{ fixed_pressure }"/>      
 
     <SourceFlux
       name="sourceTerm"

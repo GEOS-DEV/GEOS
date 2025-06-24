@@ -35,18 +35,18 @@
 
   <Events
     minTime="0.0"  
-    maxTime="864000">
+    maxTime="8640000">
     
     <PeriodicEvent
       name="outputs"
-      timeFrequency="86400"
+      timeFrequency="864000"
       target="/Outputs/vtkOutputTPFA"/>
 
     
     <PeriodicEvent
       name="solverApplications1"
-      endTime="864000"
-      maxEventDt="86400"
+      endTime="8640000"
+      maxEventDt="864000"
       target="/Solvers/twoPhaseFlow"/>
 
   </Events>
