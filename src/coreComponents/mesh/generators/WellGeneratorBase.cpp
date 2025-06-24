@@ -119,6 +119,7 @@ void WellGeneratorBase::generateWellGeometry( )
   m_perfSkinFactor.resize( m_numPerforations );
   m_perfTargetRegion.resize( m_numPerforations );
   m_perfElemId.resize( m_numPerforations );
+  m_perfStatusTableName.resize( m_numPerforations );
   m_perfName.resize( m_numPerforations );
 
   // construct a reverse map from the polyline nodes to the segments
@@ -355,6 +356,7 @@ void WellGeneratorBase::connectPerforationsToWellElements()
     m_perfTransmissibility[iperf] = perf.getWellTransmissibility();
     m_perfSkinFactor[iperf] = perf.getWellSkinFactor();
     m_perfTargetRegion[iperf] = perf.getTargetRegion();
+    m_perfStatusTableName[iperf] = perf.getPerfStatusTableName();
     m_perfName[iperf] = perf.getName();
 
     // search in all the elements of this well between head and bottom

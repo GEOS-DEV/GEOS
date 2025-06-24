@@ -175,6 +175,13 @@ public:
   arrayView1d< globalIndex const > getPerfElemIndex() const override final { return m_perfElemId; }
 
   /**
+   * @brief Set the perforation status table name array
+   * @param perfStatusTable perforation status table names
+   */
+  void setPerfStatusTableName ( string_array perfStatusTable ) { m_perforationStatusTableList = perfStatusTable; }
+  string_array const & getPerfStatusTableName() const override final { return m_perforationStatusTableList; }
+
+  /**
    * @brief Set the perforation name array
    * @param perfName perforation names
    */
@@ -263,6 +270,9 @@ private:
   /// Global index of the well element
   array1d< globalIndex > m_perfElemId;
   // Perforation data
+
+  /// List of perforation status table names
+  string_array m_perforationStatusTableList;
 
   /// List of perforation names
   string_array m_perforationList;

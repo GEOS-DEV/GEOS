@@ -104,9 +104,15 @@ public:
 
   /**
    * @brief Get the target region for the perforation.
-   * @return the list of target regions
+   * @return region name
    */
   string const & getTargetRegion() const { return m_targetRegionName; }
+
+  /**
+   * @brief Get the name of perforation status table function
+   * @return table function name
+   */
+  string const & getPerfStatusTableName() const { return m_perfStatusTableName; }
 
   ///@}
 
@@ -124,6 +130,8 @@ public:
     static constexpr char const *wellSkinFactorString() { return "skinFactor"; }
     /// @return Target region for this perforation
     static constexpr char const *targetRegionString() { return "targetRegion"; }
+    /// @return Name of table function defining the open/close status for this perforation
+    static constexpr char const *perfStatusTableNameString() { return "perfStatusTableName"; }
     /// @return Open/closed status this perforation
     static constexpr char const *perfStatusTableString() { return "perfStatusTable"; }
   }
@@ -146,7 +154,10 @@ private:
   /// Name of region the perforation will be connected to
   string m_targetRegionName;
 
-  /// Time versus perforation status table
+  /// Perforation status table name (for table defined as function)
+  string m_perfStatusTableName;
+
+  /// Time versus perforation status table (table defined in Perforation object)
   array2d< real64 > m_perfStatusTable;
 };
 

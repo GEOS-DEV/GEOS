@@ -216,14 +216,13 @@ void WellSolverBase::setPerforationStatus( real64 const & time_n, DomainPartitio
 
       // Set perforation status
 
-
       PerforationData & perforationData = *subRegion.getPerforationData();
-      string_array const & perfName = perforationData.getPerfName();
+      string_array const & perfStatusTableName = perforationData.getPerfStatusTableName();
       arrayView1d< integer > perfStatus = perforationData.getLocalPerfStatus();
       // for now set to open
       for( integer i=0; i<perforationData.size(); i++ )
       {
-        TableFunction * tableFunction =  functionManager.getGroupPointer< TableFunction >( perfName[i] );
+        TableFunction * tableFunction =  functionManager.getGroupPointer< TableFunction >( perfStatusTableName[i] );
         perfStatus[i]=PerforationData::PerforationStatus::OPEN;
         if( tableFunction->evaluate( &time_n ) < LvArray::NumericLimits< real64 >::epsilon )
         {
@@ -412,12 +411,12 @@ real64 WellSolverBase::setNextDt( real64 const & currentTime, const real64 & cur
         WellControls & wellControls = getWellControls( subRegion );
         // Find min dt from perf status tables
         PerforationData & perforationData = *subRegion.getPerforationData();
-        string_array const & perfName = perforationData.getPerfName();
+        string_array const & perfStatusTableName = perforationData.getPerfStatusTableName();
 
         // Get dt for local perforations
         for( integer i=0; i<perforationData.size(); i++ )
         {
-          TableFunction * tableFunction =  functionManager.getGroupPointer< TableFunction >( perfName[i] );
+          TableFunction * tableFunction =  functionManager.getGroupPointer< TableFunction >( perfStatusTableName[i] );
           WellControls::setNextDtFromTable( tableFunction, currentTime, nextDt_perf );
         }
         nextDt = MpiWrapper::min< real64 >( nextDt_perf );

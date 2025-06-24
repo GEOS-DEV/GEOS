@@ -198,6 +198,13 @@ public:
   arrayView1d< globalIndex const > getPerfElemIndex() const { return m_perfElemId; }
 
   /**
+   * @brief Get name of perforation status table function
+   * @return perforation table names
+   */
+  string_array const & getPerfStatusTableName() const { return m_perfStatusTableName; };
+
+
+  /**
    * @brief Get name of perforations
    * @return perforation names
    */
@@ -407,6 +414,9 @@ protected:
 
   /// Target region for the perforation
   string_array m_perfTargetRegion;
+
+  /// Perforation status table function name
+  string_array m_perfStatusTableName;
 
   /// Perforation name
   string_array m_perfName;

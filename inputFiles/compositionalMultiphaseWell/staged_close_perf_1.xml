@@ -64,7 +64,7 @@
         numElementsPerSegment="5">
         <Perforation
           name="producer1_perf0"
-          perfStatusTable="{{0, 0.5e4},{1.0,0.0}}"
+          perfStatusTableName="perf0_status"
           distanceFromHead="0.5"/>
         <Perforation
           name="producer1_perf1"
@@ -218,6 +218,11 @@
   </FieldSpecifications>
 
   <Functions>
+    <TableFunction
+        name="perf0_status"
+        coordinates="{0, 0.5e4}"
+        values="{1.0,0.0}"/>
+
     <TableFunction
         name="initCO2CompFracTable"
         coordinates="{ -3000.0, 0.0 }"

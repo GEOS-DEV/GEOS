@@ -818,6 +818,7 @@ void WellElementSubRegion::connectPerforationsToMeshElements( MeshLevel & mesh,
   arrayView1d< real64 const > const perfWellSkinFactorGlobal = lineBlock.getPerfSkinFactor();
   string_array const & perfTargetRegionGlobal = lineBlock.getPerfTargetRegion();
   string_array const & perfName = lineBlock.getPerfName();
+  string_array const & perfStatusTableName = lineBlock.getPerfStatusTableName();
   m_perforationData.resize( perfCoordsGlobal.size( 0 ) );
   localIndex iperfLocal = 0;
 
@@ -874,6 +875,7 @@ void WellElementSubRegion::connectPerforationsToMeshElements( MeshLevel & mesh,
 
         // copy perf name
         m_perforationData.getPerfName()[iperfLocal] = perfName[iperfGlobal];
+        m_perforationData.getPerfStatusTableName()[iperfLocal] = perfStatusTableName[iperfGlobal];
 
         // increment the local to global map
         m_perforationData.localToGlobalMap()[iperfLocal++] = iperfGlobal;

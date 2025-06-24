@@ -53,10 +53,16 @@ Perforation::Perforation( string const & name, Group * const parent )
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Target region to connect the perforation" );
 
+  registerWrapper( viewKeyStruct::perfStatusTableNameString(), &m_perfStatusTableName ).
+    setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription(
+    "Name of table function defining perforation status as a function of time. If none specified, a table function with be created internally and assigned the same name as the perforation." );
+
   registerWrapper( viewKeyStruct::perfStatusTableString(), &m_perfStatusTable ).
     setInputFlag( InputFlags::OPTIONAL ).
     setSizedFromParent( 0 ).
-    setDescription( "Table defining perforation status as a function of time. If enterned in Functions section, the name must be the same as the perforation name" );
+    setDescription( "Table defining perforation status as a function of time. The name must correspond to a TableFunction in the Functions section." );
 
 
 }
@@ -71,27 +77,44 @@ void Perforation::postInputInitialization()
   // Setup perforation status function
   FunctionManager & functionManager = FunctionManager::getInstance();
 
-  if( !functionManager.hasGroup< TableFunction >( getName() ) )
+  if( m_perfStatusTableName.empty() )
   {
-    TableFunction * tableFunction = dynamicCast< TableFunction * >( functionManager.createChild( "TableFunction", getName() ) );
+    // No table function provide, defaults name to perforation name
+    m_perfStatusTableName=getName();
+  }
+  else
+  {
+    // Table name provide as input , check that it exists
+    GEOS_THROW_IF( !functionManager.hasGroup< TableFunction >( m_perfStatusTableName ),
+                   GEOS_FMT( "Perforation status table function missing  : {}", m_perfStatusTableName ),
+                   InputError );
+  }
+
+  if( !functionManager.hasGroup< TableFunction >( m_perfStatusTableName ) )
+  {
+    //  Create the time-dependent perforation status table
+    TableFunction * tableFunction = dynamicCast< TableFunction * >( functionManager.createChild( "TableFunction", m_perfStatusTableName ) );
 
     array1d< array1d< real64 > > timeCoord;
     timeCoord.resize( 1 );
     array1d< real64 > values;
-    //  Create the time-dependent perforation status table
+
 
     if( m_perfStatusTable.size( 0 ) == 0 )
     {
+      // No table supplied set all perfs to open
       real64 alwaysOpen = 1.0;
       timeCoord[0].emplace_back( 0 );
       values.emplace_back( alwaysOpen );
     }
     else
     {
-      // If a name is explicitly given, then check that it exists
+      // User supplied table in Perforation section
+
       GEOS_THROW_IF( m_perfStatusTable[0].size() != m_perfStatusTable[1].size(),
                      GEOS_FMT( "Perforation status table missing time or status : {}", getName() ),
                      InputError );
+
       for( std::ptrdiff_t i=0; i<m_perfStatusTable[0].size(); i++ )
       {
         timeCoord[0].emplace_back( m_perfStatusTable[0][i] );

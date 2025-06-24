@@ -229,6 +229,18 @@ public:
   string_array const & getPerfName() const { return m_perfName; }
 
   /**
+   * @brief Get perforation status table name
+   * @return array of names
+   */
+  string_array & getPerfStatusTableName()  { return m_perfStatusTableName; }
+
+  /**
+   * @brief Get perforation status table name
+   * @return array of names
+   */
+  string_array const & getPerfStatusTableName() const { return m_perfStatusTableName; }
+
+  /**
    * @brief Get perforation's status
    * @return status array
    */
@@ -286,6 +298,8 @@ public:
     /// @return String key for the global number of perforations
     static constexpr char const * numPerforationsGlobalString() { return "numPerforationsGlobal"; }
     /// @return String key for perforation names
+    static constexpr char const * perforationStatusTableName() { return "perforationStatusTableName"; }
+    /// @return String key for perforation names
     static constexpr char const * perforationName() { return "perforationName"; }
   }
   /// ViewKey struct for the PerforationData class
@@ -339,6 +353,9 @@ private:
 
   /// Name of perforations
   string_array m_perfName;
+
+  /// Name of perforation table function defining perforation status as a function of time
+  string_array m_perfStatusTableName;
 
   /// The status (open or closed) of perforations belonging to mesh partition for this rank
   array1d< localIndex > m_localPerfStatus;

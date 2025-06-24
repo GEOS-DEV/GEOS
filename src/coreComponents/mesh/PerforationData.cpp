@@ -47,6 +47,11 @@ PerforationData::PerforationData( string const & name, Group * const parent )
   registerField( fields::perforation::wellSkinFactor{}, &m_wellSkinFactor );
   registerField( fields::perforation::perforationStatus{}, &m_localPerfStatus );
 
+  registerWrapper( viewKeyStruct::perforationStatusTableName(), &m_perfStatusTableName ).
+    setInputFlag( InputFlags::INVALID ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setDescription( "Perforation status table name" );
+
   registerWrapper( viewKeyStruct::perforationName(), &m_perfName ).
     setInputFlag( InputFlags::INVALID ).
     setRestartFlags( RestartFlags::NO_WRITE ).
