@@ -347,7 +347,7 @@ localIndex Unpack( buffer_unit_type const * & buffer,
       localIndex const recvElemSubRegionIndex = recvElemSubRegionIndices[b];
       globalIndex const globalElementIndex = globalElementIndices[b];
       localIndex const recvElemIndex = recvElemIndices[b];
-      globalIndex const existingGlobalIndex = existingGlobalIndices[b];
+      //globalIndex const existingGlobalIndex = existingGlobalIndices[b];
 
       // if clearFlag then just overwrite it. simple.
       if( clearFlag )
