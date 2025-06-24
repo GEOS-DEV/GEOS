@@ -20,10 +20,9 @@
 #ifndef GEOS_CONSTITUTIVE_FLUID_MULTIFLUID_COMPOSITIONAL_FUNCTIONS_CUBICEOSPHASEMODEL_HPP_
 #define GEOS_CONSTITUTIVE_FLUID_MULTIFLUID_COMPOSITIONAL_FUNCTIONS_CUBICEOSPHASEMODEL_HPP_
 
-#include "common/DataTypes.hpp"
+#include "EOSStackVariables.hpp"
 #include "constitutive/fluid/multifluid/Layouts.hpp"
 #include "constitutive/fluid/multifluid/compositional/parameters/ComponentProperties.hpp"
-#include "constitutive/fluid/multifluid/MultiFluidConstants.hpp"
 
 namespace geos
 {
