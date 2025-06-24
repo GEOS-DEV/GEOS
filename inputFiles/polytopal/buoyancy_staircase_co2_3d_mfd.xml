@@ -3,22 +3,22 @@
 <Problem>
 
   <Included>
-    <File name="./column_co2_3d_linear_base.xml"/>
-  </Included>
+    <File name="./staircase_co2_3d_base.xml"/>
+  </Included>  
 
   <NumericalMethods>
   <FiniteVolume> 
-      <TwoPointFluxApproximation
-        name="fluidTPFA"/>
-
+      <HybridMimeticDiscretization
+        name="fluidHybridMimetic"
+        innerProductType="TPFA"/>
   </FiniteVolume>
   </NumericalMethods>
 
- <Solvers>
- <CompositionalMultiphaseFVM
+<Solvers>     
+    <CompositionalMultiphaseHybridFVM
       name="twoPhaseFlow"
       logLevel="1"
-      discretization="fluidTPFA"
+      discretization="fluidHybridMimetic"
       targetRelativePressureChangeInTimeStep="1"
       targetPhaseVolFractionChangeInTimeStep="1"
       targetRegions="{ channel, barrier  }"
@@ -29,9 +29,9 @@
         lineSearchAction="Attempt"
         newtonMaxIter="40"/>
       <LinearSolverParameters
-              directParallel="0"/>
-  </CompositionalMultiphaseFVM> 
-  </Solvers>
+         directParallel="0"/>
+    </CompositionalMultiphaseHybridFVM> 
+    </Solvers>
 
   <Events
     minTime="0.0"  
@@ -40,7 +40,7 @@
     <PeriodicEvent
       name="outputs"
       timeFrequency="86400"
-      target="/Outputs/vtkOutputTPFA"/>
+      target="/Outputs/vtkOutputMFD"/>
 
     
     <PeriodicEvent
@@ -53,7 +53,7 @@
 
   <Outputs>
     <VTK
-      name="vtkOutputTPFA"
+      name="vtkOutputMFD"
       fieldNames="{ initialPressure, skeletonChannel_density }"/>
   </Outputs>
 
