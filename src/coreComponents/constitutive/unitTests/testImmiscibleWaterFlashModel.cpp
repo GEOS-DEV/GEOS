@@ -103,12 +103,11 @@ public:
     equationOfState->m_equationsOfStateNames.emplace_back( eosName );
     equationOfState->m_equationsOfStateNames.emplace_back( eosName );
 
-    array1d< integer > phaseTypes;
-    phaseTypes.emplace_back( static_cast< integer >(PhaseType::LIQUID));
-    phaseTypes.emplace_back( static_cast< integer >(PhaseType::VAPOUR));
-    phaseTypes.emplace_back( static_cast< integer >(PhaseType::AQUEOUS));
+    m_phaseTypes.emplace_back( static_cast< integer >(PhaseType::LIQUID));
+    m_phaseTypes.emplace_back( static_cast< integer >(PhaseType::VAPOUR));
+    m_phaseTypes.emplace_back( static_cast< integer >(PhaseType::AQUEOUS));
 
-    m_flash = std::make_unique< ImmiscibleWaterFlashModel >( "FlashModel", componentProperties, *m_parameters, phaseTypes );
+    m_flash = std::make_unique< ImmiscibleWaterFlashModel >( "FlashModel", componentProperties, *m_parameters, m_phaseTypes );
   }
 
   ~ImmiscibleWaterFlashModelTestFixture() = default;
@@ -288,6 +287,7 @@ protected:
   std::unique_ptr< TestFluid< NC > > m_fluid{};
   std::unique_ptr< ImmiscibleWaterFlashModel > m_flash{};
   std::unique_ptr< ModelParameters > m_parameters{};
+  array1d< integer > m_phaseTypes{};
 };
 
 using ImmiscibleWaterFlashModel3 = ImmiscibleWaterFlashModelTestFixture< 3 >;
