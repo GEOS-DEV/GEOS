@@ -136,6 +136,12 @@ struct CubicEOSPhaseModel
   template< bool DERIVATIVES >
   using StackVariables = StackVariables_Impl< void, DERIVATIVES >;
 
+  template< integer DIM, bool DERIVATIVES >
+  using StackDerivativeType = typename StackVariables< DERIVATIVES >::template DerivativeType< DIM >;
+
+  template< integer DIM, bool DERIVATIVES >
+  using StackConstDerivativeType = typename StackVariables< DERIVATIVES >::template ConstDerivativeType< DIM >;
+
 public:
   /**
    * @brief Allocate and initialise composition independent data
@@ -304,7 +310,7 @@ public:
                                 arraySlice1d< real64 const, USD > const & composition,
                                 StackVariables< DERIVATIVES > const & data,
                                 real64 & compressibilityFactor,
-                                typename StackVariables< DERIVATIVES >::DerivativeType<> const & compressibilityFactorDerivs,
+                                StackDerivativeType< 1, DERIVATIVES > const & compressibilityFactorDerivs,
                                 SelectedRoot const selectedRoot = SelectedRoot::AUTO );
 
   /**
@@ -325,9 +331,9 @@ public:
                                   arraySlice1d< real64 const, USD > const & composition,
                                   StackVariables< DERIVATIVES > const & data,
                                   real64 const & compressibilityFactor,
-                                  typename StackVariables< DERIVATIVES >::ConstDerivativeType<> const & compressibilityFactorDerivs,
+                                  StackConstDerivativeType< 1, DERIVATIVES > const & compressibilityFactorDerivs,
                                   arraySlice1d< real64 > const & logFugacityCoefficients,
-                                  typename StackVariables< DERIVATIVES >::DerivativeType< 2 > const & logFugacityCoefficientDerivs );
+                                  StackDerivativeType< 2, DERIVATIVES > const & logFugacityCoefficientDerivs );
 
   /**
    * @brief Helper functions solving a cubic equation using trigonometry

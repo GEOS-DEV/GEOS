@@ -414,7 +414,7 @@ computeCompressibilityFactor( integer const numComps,
                               arraySlice1d< real64 const, USD > const & composition,
                               StackVariables< DERIVATIVES > const & stack,
                               real64 & compressibilityFactor,
-                              typename StackVariables< DERIVATIVES >::DerivativeType<> const & compressibilityFactorDerivs,
+                              StackDerivativeType< 1, DERIVATIVES > const & compressibilityFactorDerivs,
                               SelectedRoot const selectedRoot )
 {
   // a Z^3 + b Z^2 + c Z + d = 0
@@ -523,9 +523,9 @@ computeLogFugacityCoefficients( integer const numComps,
                                 arraySlice1d< real64 const, USD > const & composition,
                                 StackVariables< DERIVATIVES > const & stack,
                                 real64 const & compressibilityFactor,
-                                typename StackVariables< DERIVATIVES >::ConstDerivativeType<> const & compressibilityFactorDerivs,
+                                StackConstDerivativeType< 1, DERIVATIVES > const & compressibilityFactorDerivs,
                                 arraySlice1d< real64 > const & logFugacityCoefficients,
-                                typename StackVariables< DERIVATIVES >::DerivativeType< 2 > const & logFugacityCoefficientDerivs )
+                                StackDerivativeType< 2, DERIVATIVES > const & logFugacityCoefficientDerivs )
 {
   constexpr integer maxNumComp = StackVariables< DERIVATIVES >::maxNumComp;
   StackArray< real64, 1, maxNumComp > ki( numComps );

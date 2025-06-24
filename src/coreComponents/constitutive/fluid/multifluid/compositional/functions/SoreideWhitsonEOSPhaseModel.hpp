@@ -63,13 +63,17 @@ struct SoreideWhitsonEOSPhaseModel
   };
 
   template< typename T, bool DERIVATIVES >
-  struct StackVariables_Impl : public StackVariables_Val< T, DERIVATIVES >, public CubicModel::template StackVariables< DERIVATIVES >
+  struct StackVariables_Impl
+  {};
+
+  template< typename T >
+  struct StackVariables_Impl< T, false > : public StackVariables_Val< T, false >, public CubicModel::template StackVariables< false >
   {
     GEOS_HOST_DEVICE
     StackVariables_Impl( integer numComps );
 
-    using CubicModel::template StackVariables< DERIVATIVES >::DerivativeType;
-    using CubicModel::template StackVariables< DERIVATIVES >::ConstDerivativeType;
+    using CubicModel::template StackVariables< false >::DerivativeType;
+    using CubicModel::template StackVariables< false >::ConstDerivativeType;
   };
 
   template< typename T >
