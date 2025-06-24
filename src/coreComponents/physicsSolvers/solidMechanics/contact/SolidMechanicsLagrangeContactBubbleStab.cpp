@@ -103,7 +103,7 @@ void SolidMechanicsLagrangeContactBubbleStab::registerDataOnMesh( Group & meshBo
 {
   ContactSolverBase::registerDataOnMesh( meshBodies );
 
-  m_solverStatistics.setOutputFilesName( getName() );
+  
 
 
   forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,

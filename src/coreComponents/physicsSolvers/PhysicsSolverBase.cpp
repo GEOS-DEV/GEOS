@@ -117,6 +117,7 @@ PhysicsSolverBase::PhysicsSolverBase( string const & name,
   registerGroup( groupKeyStruct::nonlinearSolverParametersString(), &m_nonlinearSolverParameters );
   registerGroup( groupKeyStruct::solverStatisticsString(), &m_solverStatistics );
 
+  m_solverStatistics.setOutputFilesName( getName() );
   m_localMatrix.setName( this->getName() + "/localMatrix" );
   m_matrix.setDofManager( &m_dofManager );
 }

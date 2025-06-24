@@ -200,7 +200,7 @@ void CompositionalMultiphaseFVM::initializePreSubGroups()
 {
   CompositionalMultiphaseBase::initializePreSubGroups();
 
-  m_solverStatistics.setOutputFilesName( getName() );
+  
 
   m_linearSolverParameters.get().mgr.strategy = m_isThermal
                                                 ? LinearSolverParameters::MGR::StrategyType::thermalCompositionalMultiphaseFVM

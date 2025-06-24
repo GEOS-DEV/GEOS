@@ -129,7 +129,7 @@ void ReactiveCompositionalMultiphaseOBL::initializePreSubGroups()
 {
   FlowSolverBase::initializePreSubGroups();
 
-  m_solverStatistics.setOutputFilesName( getName() );
+  
 
   checkDiscretizationName();
 }

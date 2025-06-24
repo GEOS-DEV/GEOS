@@ -161,7 +161,7 @@ void SolidMechanicsLagrangeContact::initializePreSubGroups()
 {
   ContactSolverBase::initializePreSubGroups();
 
-  m_solverStatistics.setOutputFilesName( getName() );
+  
 
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
 

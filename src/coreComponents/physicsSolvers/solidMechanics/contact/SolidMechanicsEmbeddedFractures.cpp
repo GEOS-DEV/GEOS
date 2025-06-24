@@ -119,7 +119,7 @@ void SolidMechanicsEmbeddedFractures::initializePostInitialConditionsPreSubGroup
 {
   SolidMechanicsLagrangianFEM::initializePostInitialConditionsPreSubGroups();
 
-  m_solverStatistics.setOutputFilesName( getName() );
+  
 
   updateState( this->getGroupByPath< DomainPartition >( "/Problem/domain" ) );
 }

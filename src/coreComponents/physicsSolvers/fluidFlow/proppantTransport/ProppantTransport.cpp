@@ -154,7 +154,7 @@ void ProppantTransport::initializePreSubGroups()
 {
   FlowSolverBase::initializePreSubGroups();
 
-  m_solverStatistics.setOutputFilesName( getName() );
+  
 
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
   ConstitutiveManager & cm = domain.getConstitutiveManager();

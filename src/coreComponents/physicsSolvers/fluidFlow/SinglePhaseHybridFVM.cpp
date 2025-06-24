@@ -99,7 +99,7 @@ void SinglePhaseHybridFVM::initializePreSubGroups()
 {
   SinglePhaseBase::initializePreSubGroups();
 
-  m_solverStatistics.setOutputFilesName( getName() );
+  
 
   GEOS_THROW_IF( m_isThermal,
                  GEOS_FMT( "{} {}: The thermal option is not supported by SinglePhaseHybridFVM",

@@ -100,7 +100,7 @@ PhaseFieldDamageFEM::~PhaseFieldDamageFEM()
 
 void PhaseFieldDamageFEM::registerDataOnMesh( Group & meshBodies )
 {
-  m_solverStatistics.setOutputFilesName( getName() );
+  
 
   forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
                                                     MeshLevel & mesh,

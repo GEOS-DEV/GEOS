@@ -673,7 +673,7 @@ protected:
   {
     setSubSolvers();
 
-    m_solverStatistics.setOutputFilesName( getName() );
+    
 
     bool const isSequential = getNonlinearSolverParameters().couplingType() == NonlinearSolverParameters::CouplingType::Sequential;
     bool const usesLineSearch = getNonlinearSolverParameters().m_lineSearchAction != NonlinearSolverParameters::LineSearchAction::None;
