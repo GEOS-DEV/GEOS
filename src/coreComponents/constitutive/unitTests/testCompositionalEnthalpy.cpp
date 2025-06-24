@@ -45,7 +45,7 @@ struct FluidData< 4 >
 {
   static std::unique_ptr< TestFluid< 4 > > createFluid()
   {
-    return TestFluid< 4 >::create( {Fluid::CO2, Fluid::H2, Fluid::C1, Fluid::C2} );
+    return TestFluid< 4 >::create( {Fluid::CO2, Fluid::H2, Fluid::CH4, Fluid::C2H6} );
   }
 
   static void populateCoefficients( HeatCapacityCoefficients * coefficients )
@@ -57,9 +57,9 @@ struct FluidData< 4 >
     coefficients->m_coefficients.resize( 1, 4, 5 );
     std::array< real64, 5*4 > coefficientsData{
       0.0, 0.0, 0.0, 0.0, 0.0,
-      2.883,  0.003681, -7.720e-06,  6.920e-09, -2.130e-12,
-      4.568, -0.008975,  3.631e-05, -3.407e-08,  1.091e-11,
-      4.178, -0.004427,  5.660e-05, -6.651e-08,  2.487e-11
+      2.883, 0.003681, -7.720e-06, 6.920e-09, -2.130e-12,
+      4.568, -0.008975, 3.631e-05, -3.407e-08, 1.091e-11,
+      4.178, -0.004427, 5.660e-05, -6.651e-08, 2.487e-11
     };
     for( int ic = 0; ic < 4; ++ic )
     {
@@ -113,19 +113,19 @@ public:
     real64 enthalpy = 0.0;
     stackArray1d< real64, numDofs > tempDerivs( numDofs );
 
-    for (real64 t = 250.00; t <= 799.00; t += 50.0)
+    for( real64 t = 250.00; t <= 799.00; t += 50.0 )
     {
-    kernelWrapper.compute( componentProperties,
-                           pressure,
-                           t,
-                           phaseComposition.toSliceConst(),
-                           enthalpy,
-                           tempDerivs.toSlice(),
-                           false );
-                           std::cout << std::fixed << std::setprecision(0) << t << " "
-                            << std::fixed << std::setprecision(5) << enthalpy << " "
-                            << std::fixed << std::setprecision(5) << tempDerivs[1] << " "
-                            << std::endl;
+      kernelWrapper.compute( componentProperties,
+                             pressure,
+                             t,
+                             phaseComposition.toSliceConst(),
+                             enthalpy,
+                             tempDerivs.toSlice(),
+                             false );
+      std::cout << std::fixed << std::setprecision( 0 ) << t << " "
+                << std::fixed << std::setprecision( 5 ) << enthalpy << " "
+                << std::fixed << std::setprecision( 5 ) << tempDerivs[1] << " "
+                << std::endl;
     }
     //checkRelativeError( enthalpy, expectedEnthalpy, relTol, absTol );
   }

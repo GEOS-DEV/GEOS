@@ -177,8 +177,6 @@ computeLogFugacityCoefficients( integer const numComps,
 
   // Step 2: Compute the mixture coefficients
   CubicModel::computeMixtureCoefficients( numComps,
-                                          pressure,
-                                          temperature,
                                           composition,
                                           stack );
 
@@ -230,8 +228,6 @@ computeLogFugacityCoefficientsAndDerivs( integer const numComps,
 
   // Step 2: Compute the mixture coefficients
   CubicModel::computeMixtureCoefficients( numComps,
-                                          pressure,
-                                          temperature,
                                           composition,
                                           stack );
 
@@ -276,8 +272,6 @@ computeCompressibilityFactor( integer const numComps,
 
   // Step 2: Compute the mixture coefficients
   CubicModel::computeMixtureCoefficients( numComps,
-                                          pressure,
-                                          temperature,
                                           composition,
                                           stack );
 
@@ -314,8 +308,6 @@ computeCompressibilityFactorAndDerivs( integer const numComps,
 
   // Step 2: Compute the mixture coefficients
   CubicModel::computeMixtureCoefficients( numComps,
-                                          pressure,
-                                          temperature,
                                           composition,
                                           stack );
 
