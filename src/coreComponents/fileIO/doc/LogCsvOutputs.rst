@@ -262,8 +262,8 @@ The output can be saved in the log file and/or a CSV file if these options are s
 
 .. [3] Metric 2 is based on the effective mobility of the fluid in the system.
 
-SourceFlux
-----------
+SourceFluxStatistics
+--------------------
 
 Production and injection statistics by region
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -283,10 +283,10 @@ informations:
   It is defined with the ``scale`` attribute.
 
     - If ``scale = 0``, nothing happens;
+  
+    - If ``scale < 0``, an injection is performed, with an injected amount equal to the product of the rate and a scaling factor;
 
-    - If ``scale < 0``, it is an injection and rate * scale is injected;
-
-    - If ``scale > 0``, it is a production and rate * scale is produced.
+    - If ``scale > 0``, a production is performed, with a produced amount equal to the product of the rate and a scaling factor.
 
 - **m_productionRate [kg/s or mol/s]:**
 
@@ -305,6 +305,7 @@ informations:
 
 The output can be saved in the log file and/or a CSV file if the associated options are specified  (as mentionned `here <#how-to-generate-these-outputs>`_) when the program is run.
 If the CSV option is enabled, the start of the statistical measurement period is added to the table.
+You can find more information about the log and CSV options `here <https://geosx-geosx.readthedocs-hosted.com/en/latest/docs/sphinx/datastructure/SourceFluxStatistics.html#:~:text=When%20set%20to%201%2C%20write%20the%20statistics%20into%20a%20CSV%20file>`_.
 
 TableFunction
 -------------
