@@ -75,9 +75,9 @@ void FieldSpecificationManager::expandObjectCatalogs()
 
 void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) const
 {
-  std::map< std::string, std::vector< localIndex > > validRegions;
-  std::map< std::string, std::vector< string > > fieldsInSubRegions;
-  std::set< string > setsInSubRegion;
+  std::map< std::string, std::map< string, localIndex > > validRegions;
+  std::map< std::string, std::vector< string > > allPresentFieldsName;
+  std::set< string > allPresentSets;
 
   mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion const & subRegion )
   {
@@ -99,6 +99,7 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
         {
           ConstitutiveBase const * constitutiveBase = dynamic_cast< ConstitutiveBase const * >(&constitutive);
           auto const consititutiveFields = constitutiveBase->getFields();
+          // log consititutiveFields ()
           constitutive.forWrappers(
             [&] ( dataRepository::WrapperBase const & wrapper )
           {
@@ -113,18 +114,18 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
 
     subRegion.sets().forWrappers( [&] ( dataRepository::WrapperBase const & wrapper )
     {
-      setsInSubRegion.insert( wrapper.getName());
+      allPresentSets.insert( wrapper.getName());
     } );
 
     if( !subRegionFields.empty())
     {
-      fieldsInSubRegions[subRegion.getName()] = subRegionFields;
+      allPresentFieldsName[subRegion.getName()] = subRegionFields;
     }
   } );
-
   // loop over all the FieldSpecification of the XML file
   this->forSubGroups< FieldSpecificationBase >( [&] ( FieldSpecificationBase const & fs )
   {
+    std::cout << " Step 1 "<< std::endl;
     // map from set name to a flag (1 if targetSet empty, 0 otherwise)
     map< string, localIndex > isTargetSetEmpty;
     // map from set name to a flag (1 if targetSet has been created, 0 otherwise)
@@ -147,6 +148,8 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
       return;
     }
 
+
+
     // Step 2: apply the boundary condition
     fs.apply< dataRepository::Group >( mesh,
                                        [&]( FieldSpecificationBase const &,
@@ -155,13 +158,13 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
                                             Group & targetGroup,
                                             string const fieldName )
     {
+      std::cout << "Step 2 fieldName "<< targetGroup.getName() << " : " <<fieldName<< std::endl;
       dataRepository::InputFlags const flag = fs.getWrapper< string >(
         FieldSpecificationBase::viewKeyStruct::fieldNameString() ).getInputFlag();
 
       // 2.a) If we enter this loop, we know that the set has been created
       //      Fracture/fault sets are created later and the "apply" call silently ignores them
       isTargetSetCreated.at( setName ) = 1;
-
       // 2.b) If the fieldName is registered on this target, we record it
       //      Unfortunately, we need two exceptions:
       //       - FieldSpecification that do not target a field, like Aquifer, Traction, Equilibrium, etc. For these, the check is not
@@ -174,11 +177,11 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
                                                                                      // registered on
                                                                                      // the faceManager...
       {
-        validRegions[targetGroup.getName()].push_back( 1 );
+        validRegions[targetGroup.getName()][fieldName] =  1;
       }
       else
       {
-        validRegions[targetGroup.getName()].push_back( 0 );
+        validRegions[targetGroup.getName()][fieldName] = 0;
       }
 
       // 2.c) If the target set is not empty, we record it
@@ -189,12 +192,14 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
       }
     } );
 
+
+
     // Step 3: MPI synchronization
-    for( auto const & [key, validFieldsName] : validRegions )
+    for( auto & [regions, fieldsNames] : validRegions )
     {
-      for( auto const fieldName : validFieldsName )
+      for( auto & [field, isValid] : fieldsNames )
       {
-        validRegions[key][fieldName] = MpiWrapper::max( validRegions[key][fieldName] );
+        isValid = MpiWrapper::max( isValid );
       }
     }
 
@@ -242,7 +247,7 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
                                        fmt::join( missingSetNames, ", " ),
                                        FieldSpecificationBase::viewKeyStruct::objectPathString(), fs.getObjectPath() );
 
-      setNamesError.append( stringutilities::join( setsInSubRegion, ", " ));
+      setNamesError.append( stringutilities::join( allPresentSets, ", " ));
 
       GEOS_THROW( setNamesError, InputError );
     }
@@ -257,11 +262,16 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
                                     fs.getDataContext(), mapEntry.first, fs.getObjectPath() ) );
     }
 
+
+
     std::vector< string > invalidRegions;
-    for( const auto & [key, validFieldsName] : validRegions )
+    for( auto const & [region, fieldsNames] : validRegions )
     {
-      if( std::find( validFieldsName.begin(), validFieldsName.end(), 0 ) != validFieldsName.end() )
-        invalidRegions.push_back( key );
+      for( auto const & [field, isValid] : fieldsNames )
+      {
+        if( !isValid )
+          invalidRegions.push_back( region );
+      }
     }
 
     if( !invalidRegions.empty() )
@@ -282,30 +292,22 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
       else
       {
         std::vector< string > commonFieldsInRegions;
-        commonFieldsInRegions = fieldsInSubRegions[invalidRegions[0]];
+        commonFieldsInRegions = allPresentFieldsName[invalidRegions[0]];
         if( invalidRegions.size() > 1 )
         {
           for( size_t idxRegion = 1; idxRegion < invalidRegions.size(); ++idxRegion )
           {
             std::vector< string > intersectionRegions;
             std::set_intersection( commonFieldsInRegions.begin(), commonFieldsInRegions.end(),
-                                   fieldsInSubRegions[invalidRegions[idxRegion]].begin(),
-                                   fieldsInSubRegions[invalidRegions[idxRegion]].end(),
+                                   allPresentFieldsName[invalidRegions[idxRegion]].begin(),
+                                   allPresentFieldsName[invalidRegions[idxRegion]].end(),
                                    std::back_inserter( intersectionRegions ));
             commonFieldsInRegions = intersectionRegions;
           }
         }
 
         fieldNameNotFoundMessage << GEOS_FMT( "Available fields in {} are:\n", fs.getObjectPath() );
-
-        for( auto it=commonFieldsInRegions.begin(); it!=commonFieldsInRegions.end(); ++it )
-        {
-          fieldNameNotFoundMessage << *it;
-          if( it != std::prev( commonFieldsInRegions.end()))
-          {
-            fieldNameNotFoundMessage << ", ";
-          }
-        }
+        fieldNameNotFoundMessage << stringutilities::join( commonFieldsInRegions, ", " );
 
         GEOS_THROW( fieldNameNotFoundMessage.str(), InputError );
       };
