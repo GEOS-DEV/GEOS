@@ -48,7 +48,7 @@ To generate a log output, you must specify ``logLevel="x"``, where ``x`` can be 
 
 If you do not want log output, do not add this line.
 
-Depending on the value of the ``logLevel`` parameter and the asssociated compmonent, different levels of detail are available in the
+Depending on the value of the ``logLevel`` parameter and the asssociated component, different levels of detail are available in the
 statistics displayed. 
 To find out which value to choose for ``logLevel``, refer to the GEOS documentation for the associated component.
 
@@ -249,7 +249,7 @@ At each simulation timestep, the following quantities are reported:
 
 - **Mobile phase mass ( metric 2** \ [3]_ **) [kg or mol]:**
 
-  This gives us, for each phase, the mass or number of molesd that is in motion or that can move depending on the simulation conditions.
+  This gives us, for each phase, the mass or number of moles that is in motion or that can move depending on the simulation conditions.
 
 - **Component mass [kg or mol]:**
 
@@ -280,18 +280,24 @@ informations:
 - **m_producedMass [kg or mol]:**
 
   Amount of fluid produced by the flux or fluxes. One value is given for each fluid phase.
+  It is defined with the ``scale`` attribute.
 
-    - Negative if it is an injection;
+    - If ``scale = 0``, nothing happens;
 
-    - Otherwise it is a production.
+    - If ``scale < 0``, it is an injection and rate * scale is injected;
+
+    - If ``scale > 0``, it is a production and rate * scale is produced.
 
 - **m_productionRate [kg/s or mol/s]:**
 
   Flux or fluxes production rate. One value is given for each fluid phase.
+  It is defined with the ``scale`` attribute.
 
-    - Negative if it is an injection;
+    - If ``scale = 0``, nothing happens;
 
-    - Otherwise it is a production.
+    - If ``scale < 0``, an injection is performed, with an injected amount equal to the product of the rate and a scaling factor;
+
+    - If ``scale > 0``, a production is performed, with a produced amount equal to the product of the rate and a scaling factor.
 
 - **m_elementCount:**
   
