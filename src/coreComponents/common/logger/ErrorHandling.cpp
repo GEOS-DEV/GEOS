@@ -198,27 +198,10 @@ void ErrorLogger::flushErrorMsg( ErrorLogger::ErrorMsg & errorMsg )
       yamlFile << g_level1Next << "contexts:\n";
       for( ErrorContext const & ctxInfo : errorMsg.m_contextsInfo )
       {
-        bool isFirst = true;
+        yamlFile << g_level3Start << "priority: " << ctxInfo.m_priority << "\n";
         for( auto const & [key, value] : ctxInfo.m_attributes )
         {
-          if( isFirst )
-          {
-            yamlFile << g_level3Start << ErrorContext::attributeToString( key ) << ": " << value << "\n";
-            isFirst = false;
-          }
-          else
-          {
             yamlFile << g_level3Next << ErrorContext::attributeToString( key ) << ": " << value << "\n";
-          }
-        }
-        if( isFirst )
-        {
-          yamlFile << g_level3Start << "priority: " << ctxInfo.m_priority << "\n";
-          isFirst = false;
-        }
-        else
-        {
-          yamlFile << g_level3Next << "priority: " <<ctxInfo.m_priority << "\n";
         }
       }
     }
