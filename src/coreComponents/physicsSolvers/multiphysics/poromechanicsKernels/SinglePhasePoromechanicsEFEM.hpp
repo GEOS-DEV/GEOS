@@ -21,6 +21,7 @@
 #define GEOS_PHYSICSSOLVERS_MULTIPHYSICS_POROMECHANICSKERNELS_SINGLEPHASEPOROMECHANICSEFEM_HPP_
 
 #include "finiteElement/kernelInterface/ImplicitKernelBase.hpp"
+#include "constitutive/fluid/singlefluid/SingleFluidLayouts.hpp"
 #include "codingUtilities/Utilities.hpp"
 
 namespace geos

@@ -37,8 +37,6 @@
 #include "fieldSpecification/FieldSpecificationManager.hpp"
 #include "kernels/surfaceGenerationKernels.hpp"
 
-#include "ParallelTopologyChange.hpp"
-
 #include <algorithm>
 
 namespace geos
@@ -47,57 +45,6 @@ namespace geos
 using namespace dataRepository;
 using namespace constitutive;
 using namespace fields;
-
-void ModifiedObjectLists::clearNewFromModified()
-{
-  for( localIndex const a : newNodes )
-  {
-    modifiedNodes.erase( a );
-  }
-
-  for( localIndex const a : newEdges )
-  {
-    modifiedEdges.erase( a );
-  }
-
-  for( localIndex const a : newFaces )
-  {
-    modifiedFaces.erase( a );
-  }
-}
-
-void ModifiedObjectLists::insert( ModifiedObjectLists const & modifiedObjects )
-{
-  newNodes.insert( modifiedObjects.newNodes.begin(),
-                   modifiedObjects.newNodes.end() );
-  modifiedNodes.insert( modifiedObjects.modifiedNodes.begin(),
-                        modifiedObjects.modifiedNodes.end() );
-
-  newEdges.insert( modifiedObjects.newEdges.begin(),
-                   modifiedObjects.newEdges.end() );
-  modifiedEdges.insert( modifiedObjects.modifiedEdges.begin(),
-                        modifiedObjects.modifiedEdges.end() );
-
-  newFaces.insert( modifiedObjects.newFaces.begin(),
-                   modifiedObjects.newFaces.end() );
-  modifiedFaces.insert( modifiedObjects.modifiedFaces.begin(),
-                        modifiedObjects.modifiedFaces.end() );
-
-  for( auto & iter : modifiedObjects.newElements )
-  {
-    std::pair< localIndex, localIndex > const & key = iter.first;
-    std::set< localIndex > const & values = iter.second;
-    newElements[key].insert( values.begin(), values.end() );
-  }
-
-  for( auto & iter : modifiedObjects.modifiedElements )
-  {
-    std::pair< localIndex, localIndex > const & key = iter.first;
-    std::set< localIndex > const & values = iter.second;
-    modifiedElements[key].insert( values.begin(), values.end() );
-  }
-
-}
 
 static localIndex GetOtherFaceEdge( const map< localIndex, std::pair< localIndex, localIndex > > & localFacesToEdges,
                                     const localIndex thisFace, const localIndex thisEdge )
@@ -120,7 +67,7 @@ static localIndex GetOtherFaceEdge( const map< localIndex, std::pair< localIndex
   return nextEdge;
 }
 
-static void CheckForAndRemoveDeadEndPath( const localIndex edgeIndex,
+static void checkForAndRemoveDeadEndPath( const localIndex edgeIndex,
                                           arrayView1d< integer const > const & isEdgeExternal,
                                           map< localIndex, std::set< localIndex > > & edgesToRuptureReadyFaces,
                                           map< localIndex, std::pair< localIndex, localIndex > > & localVFacesToVEdges,
@@ -1198,7 +1145,7 @@ bool SurfaceGenerator::findFracturePlanes( localIndex const nodeID,
   for( localIndex const edgeIndex : m_originalNodetoEdges[ parentNodeIndex ] )
   {
 
-    CheckForAndRemoveDeadEndPath( edgeIndex,
+    checkForAndRemoveDeadEndPath( edgeIndex,
                                   isEdgeExternal,
                                   edgesToRuptureReadyFaces,
                                   nodeLocalFacesToEdges,
