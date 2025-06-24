@@ -55,7 +55,7 @@ public:
 
     /**
      * @enum Attribute
-     * Enumeration used to secure potential map keys.
+     * Enumeration used to secure potential map keys
      */
     enum class Attribute
     {
@@ -218,8 +218,9 @@ private:
   { m_filename = filename; }
 
   /**
-   * @brief Gives acces to the error message that is currently being constructed, potencially at various application layers.  
-   * Use flushErrorMsg() when the message is fully constructed and you want it to be output.  
+   * @brief Gives acces to the error message that is currently being constructed, 
+   * potencially at various application layers  
+   * Use flushErrorMsg() when the message is fully constructed and you want it to be output
    * @return the reference to the current instance
    */
   ErrorMsg & currentErrorMsg()
@@ -240,6 +241,7 @@ private:
 
   /**
    * @brief Write all the information retrieved about the error/warning message into the YAML file
+   * and reset the errorMsg instance to its initial state
    * @param errorMsg a constant reference to the error
    */
   void flushErrorMsg( ErrorMsg & errorMsg );
@@ -255,7 +257,7 @@ private:
   /**
    * @brief Write the error message in the YAML file regarding indentation and line break
    * @param msg the message to write in the YAML
-   * For the exception type, this message can be added as needed.
+   * For the exception type, this message can be added as needed
    */
   void streamMultilineYamlAttribute( std::string_view msg, std::ofstream & yamlFile,
                                      std::string_view indent );

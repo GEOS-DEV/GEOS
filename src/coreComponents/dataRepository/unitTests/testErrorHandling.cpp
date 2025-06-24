@@ -31,6 +31,7 @@ TEST( ErrorHandling, testYaml )
   int x = 5;
 
   DataFileContext const context = DataFileContext( "Base Test Class", __FILE__, __LINE__ );
+  DataFileContext const additionalContext = DataFileContext( "Base Test Class", "/path/to/file.xml", 14 );
 
   if( g_errorLogger.isOutputFileEnabled() )
   {
@@ -48,7 +49,7 @@ TEST( ErrorHandling, testYaml )
     GEOS_THROW_CTX_IF( x == 5,
                        "Group " << context.toString() << " has no wrapper named" << std::endl,
                        std::domain_error,
-                       context );
+                       context, additionalContext );
   }
   catch( std::domain_error const & ex )
   {

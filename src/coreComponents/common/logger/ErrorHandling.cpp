@@ -37,11 +37,11 @@ static constexpr std::string_view g_callStackMessage =
 ErrorLogger g_errorLogger{};
 
 void ErrorLogger::createFile()
-{ 
+{
   std::ofstream yamlFile( std::string( m_filename ), std::ios::out );
   if( yamlFile.is_open() )
   {
-    yamlFile << "errors: \n";
+    yamlFile << "errors: \n\n";
     yamlFile.close();
   }
   else
@@ -50,7 +50,7 @@ void ErrorLogger::createFile()
   }
 }
 
-std::string ErrorLogger::ErrorContext::attributeToString(  ErrorLogger::ErrorContext::Attribute attribute )
+std::string ErrorLogger::ErrorContext::attributeToString( ErrorLogger::ErrorContext::Attribute attribute )
 {
   switch( attribute )
   {
@@ -71,7 +71,7 @@ ErrorLogger::ErrorMsg & ErrorLogger::ErrorMsg::addToMsg( std::exception const & 
   {
     m_msg = e.what() + m_msg;
   }
-  return *this; 
+  return *this;
 }
 
 ErrorLogger::ErrorMsg & ErrorLogger::ErrorMsg::addToMsg( std::string_view errorMsg, bool toEnd )
@@ -177,7 +177,7 @@ void ErrorLogger::flushErrorMsg( ErrorLogger::ErrorMsg & errorMsg )
   if( yamlFile.is_open() )
   {
     // General errors info (type, rank on which the error occured)
-    yamlFile << "\n" << g_level1Start << "type: " << g_errorLogger.toString( errorMsg.m_type ) << "\n";
+    yamlFile << g_level1Start << "type: " << g_errorLogger.toString( errorMsg.m_type ) << "\n";
     yamlFile << g_level1Next << "rank: ";
     for( auto const & info: errorMsg.m_ranksInfo )
     {
@@ -189,6 +189,11 @@ void ErrorLogger::flushErrorMsg( ErrorLogger::ErrorMsg & errorMsg )
     streamMultilineYamlAttribute( errorMsg.m_msg, yamlFile, g_level2Next );
     if( !errorMsg.m_contextsInfo.empty() )
     {
+      // Sort contextual information by decreasing priority
+      std::sort( errorMsg.m_contextsInfo.begin(), errorMsg.m_contextsInfo.end(),
+                 []( const ErrorLogger::ErrorContext & a, const ErrorLogger::ErrorContext & b ) {
+        return a.m_priority > b.m_priority;
+      } );
       // Additional informations about the context of the error and priority information of each context
       yamlFile << g_level1Next << "contexts:\n";
       for( ErrorContext const & ctxInfo : errorMsg.m_contextsInfo )
@@ -234,6 +239,7 @@ void ErrorLogger::flushErrorMsg( ErrorLogger::ErrorMsg & errorMsg )
         yamlFile << g_level3Start << "frame" << i << ": " << errorMsg.m_sourceCallStack[i] << "\n";
       }
     }
+    yamlFile << "\n";
     yamlFile.flush();
     errorMsg = ErrorMsg();
     GEOS_LOG_RANK( GEOS_FMT( "The error file {} was appended.", m_filename ) );
