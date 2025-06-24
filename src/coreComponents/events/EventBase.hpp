@@ -168,19 +168,6 @@ public:
   void getExecutionOrder( array1d< integer > & eventCounters );
 
   /**
-   * @brief Get the track of substeps
-   * @return A vector containing the the track of substeps
-   */
-  std::vector< real64 > const & getSubStepDts() const {  return m_target->getSubStepDts(); }
-
-  /**
-   * @brief Get number of time sub-steps allowed for the solver
-   * @return The number of substeps taken
-   */
-  size_t getNumOfSubSteps() const {  return m_target->getSubStepDts().size(); }
-
-
-  /**
    * @brief Update the event progress for the event/sub-events.
    * @note This method is used to determine how to handle the timestamp for an event
    * @note If the event occurs after anything targeting a PhysicsSolverBase object, then

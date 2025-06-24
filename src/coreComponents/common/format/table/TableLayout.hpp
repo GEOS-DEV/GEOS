@@ -730,9 +730,6 @@ protected:
   /// Columns settings hierarchy
   ColumnsList m_tableColumns;
 
-  /// Columns registry ensuring having unique column name
-  std::map< string, integer > m_columnsRegistry;
-
   /// Indicate if we have a line break a the beginning of the table
   bool m_lineBreakAtBegin = true;
 

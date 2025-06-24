@@ -42,20 +42,14 @@ void TableLayout::addColumns( stdVector< TableLayout::Column > const & columns )
 
 void TableLayout::addColumn( string_view columnName )
 {
-
-  if( m_columnsRegistry.insert( std::pair< string, integer >{columnName, m_columnsRegistry.size()} ).second )
-  {
     TableLayout::Column column = TableLayout::Column().setName( columnName );
     m_tableColumns.emplace_back( column );
-  }
+
 }
 
 void TableLayout::addColumn( TableLayout::Column const & column )
 {
-  if( m_columnsRegistry.insert( std::pair< string, integer >{column.getName(), m_columnsRegistry.size()} ).second )
-  {
     m_tableColumns.emplace_back( column );
-  }
 }
 
 TableLayout & TableLayout::setTitle( string_view title )
