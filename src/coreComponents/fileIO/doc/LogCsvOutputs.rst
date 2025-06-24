@@ -275,11 +275,7 @@ These conditions generally represent injection or production wells applied to ce
 the simulated domain such as fractures or reservoir zones. The table provide the following
 informations:
 
-- **elementSetName:**
-
-  Name of a region, sub-region or set of regions in the simulated domain i.e. corresponds to a user-defined geometric entity.
-
-- **m_producedMass [kg or mol]:**
+- **Produced mass [kg or mol]:**
 
   Amount of fluid produced by the flux or fluxes. One value is given for each fluid phase.
   It is defined with the ``scale`` attribute.
@@ -290,7 +286,7 @@ informations:
 
     - If ``scale > 0``, a production is performed, with a produced amount equal to the product of the rate and a scaling factor.
 
-- **m_productionRate [kg/s or mol/s]:**
+- **Production rate [kg/s or mol/s]:**
 
   Flux or fluxes production rate. One value is given for each fluid phase.
   It is defined with the ``scale`` attribute.
@@ -301,7 +297,7 @@ informations:
 
     - If ``scale > 0``, a production is performed, with a produced amount equal to the product of the rate and a scaling factor.
 
-- **m_elementCount:**
+- **Element Count:**
   
   It indicates how many mesh cells are directly affected by the source, for example injection or production, and are used in the computation of flux statistics.
 
