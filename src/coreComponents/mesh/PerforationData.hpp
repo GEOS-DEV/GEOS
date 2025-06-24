@@ -340,7 +340,7 @@ private:
   /// Name of perforations
   string_array m_perfName;
 
-  /// Local perforation's status (open or closed)
+  /// The status (open or closed) of perforations belonging to mesh partition for this rank
   array1d< localIndex > m_localPerfStatus;
 
 };
