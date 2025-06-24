@@ -99,7 +99,9 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
             if( std::find( consititutiveFields.begin(), consititutiveFields.end(),
                            wrapper.getName()) != consititutiveFields.end())
               subRegionFields.insert( subRegionFields.end(),
-                                      GEOS_FMT( "{}_{}", constitutive.getName(), wrapper.getName()));
+                                      ConstitutiveBase::makeFieldName( constitutive.getName(),
+                                                                       wrapper.getName()));
+
           } );
         } );
       }
