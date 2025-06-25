@@ -49,12 +49,12 @@ public:
   struct viewKeyStruct
   {
     static constexpr char const * temperatureTableString() { return "temperatureTable"; }
-    static constexpr char const * interpTempTypeString() { return "interpTempType"; }
+    static constexpr char const * interpTypeString() { return "interpType"; }
   } TemperatureProfileMPMEventViewKeys;
   /// @endcond
 
   arrayView2d< real64 > getTemperatureTable() const { return m_temperatureTable; } 
-  int getInterpTempType() const { return m_interTempType; } 
+  int getInterpType() const { return m_interpType; } 
 
 protected:
   //virtual void postProcessInput() override final;
@@ -62,7 +62,7 @@ protected:
 
   // Event variables
   array2d< real64 > m_temperatureTable;
-  int m_interpTempType;
+  int m_interpType;
 
 };
 

@@ -975,6 +975,7 @@ protected:
   real64 m_implicitContinuumFluidPressure; // Borehole collapse
   real64 m_initialTemperature;
   real64 m_temperature;
+  InterpolationOption m_interpType;
 
 private:
   struct BinKey

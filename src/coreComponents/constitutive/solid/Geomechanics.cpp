@@ -56,7 +56,7 @@ Geomechanics::Geomechanics( string const & name, Group * const parent ):
   m_fractureSofteningExponent( 1.0 ),
   m_fractureStress( 0.0 ),
   m_initialTemperature( 0.0 ),
-  m_temperature (0,0),
+  m_temperature( 0.0 ),
   m_brittleDuctileTransition( 0.0 ),
   m_damageEvolutionCriterion( 0 ),
   m_cr( 0.0 ),
@@ -360,7 +360,6 @@ void Geomechanics::allocateConstitutiveData( dataRepository::Group & parent,
   m_plasticStrain.resize( 0, numConstitutivePointsPerParentIndex, 6 );
   m_porosity.resize( 0, numConstitutivePointsPerParentIndex );
   m_damage.resize( 0, numConstitutivePointsPerParentIndex );
-  m_temperature.resize(0, numConstitutivePointsPerParentIndex);
 }
 
 

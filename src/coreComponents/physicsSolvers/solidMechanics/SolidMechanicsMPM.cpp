@@ -234,7 +234,8 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
   m_nextXProfileWriteTime( 0.0 ),
   m_xProfileVx0( 0.0 ),
   m_initialTemperature( 25.0 ),
-  m_temperature( 25.0 )
+  m_temperature( 25.0 ),
+  m_interpType( SolidMechanicsMPM::InterpolationOption::Linear )
 {
   // setInputFlags( InputFlags::OPTIONAL );
 
@@ -1939,7 +1940,7 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
     arrayView1d< real64 const > const particleVolume = subRegion.getParticleVolume();
     arrayView2d< real64 const > const particlePosition = subRegion.getParticleCenter();
     arrayView1d< real64 const > const particlePorosity = subRegion.getParticlePorosity();
-    //arrayView1d< real64 const > const particleTemperature = subRegion.getParticleTemperature();  
+    arrayView1d< real64 const > const particleTemperature = subRegion.getParticleTemperature();  
     arrayView3d< real64 const > const particleRVectors = subRegion.getParticleRVectors();
     arrayView2d< real64 const > const particleMaterialDirection = subRegion.getParticleMaterialDirection();
     arrayView2d< real64 const > const particleSurfaceNormal = subRegion.getParticleSurfaceNormal();
@@ -3525,7 +3526,7 @@ void SolidMechanicsMPM::triggerEvents( const real64 dt,
         
         arrayView2d< real64 const > const temperatureTable = temperatureProfile.getTemperatureTable();
 
-        SolidMechanicsMPM::InterpolationOption interpTempType = static_cast<SolidMechanicsMPM::InterpolationOption>(temperatureProfile.getInterpType());
+        SolidMechanicsMPM::InterpolationOption interpType = static_cast<SolidMechanicsMPM::InterpolationOption>(temperatureProfile.getInterpType());
 
         array1d< real64 > tempOut(1);
         interpolateTempTable( time_n, dt, temperatureTable, tempOut, interpType );
@@ -3583,10 +3584,18 @@ void SolidMechanicsMPM::performMaterialSwap( ParticleManager & particleManager,
 
     // Get constitutive handles for density and state variables
     string const & sourceSolidMaterialName = sourceSubRegion.template getReference< string >( viewKeyStruct::solidMaterialNamesString() );
+    string const & destinationSolidMaterialName = destinationSubRegion.template getReference< string >( viewKeyStruct::solidMaterialNamesString() );
+
+    //SolidBase & sourceSolidModel = getConstitutiveModel< SolidBase >( sourceSubRegion, sourceSolidMaterialName );
+    //SolidBase & destinationSolidModel = getConstitutiveModel< SolidBase >( destinationSubRegion, destinationSolidMaterialName );
+
+    //SortedArrayView< localIndex const > const activeParticleIndices = sourceSubRegion.activeParticleIndices();
+
+
+
     ContinuumBase & sourceConstitutiveModel = getConstitutiveModel< ContinuumBase >( sourceSubRegion, sourceSolidMaterialName );
     arrayView3d< real64 const > const sourceOldStress = sourceConstitutiveModel.getReference< array3d< real64 > >( constitutive::ContinuumBase::viewKeyStruct::oldStressString() );
 
-    string const & destinationSolidMaterialName = destinationSubRegion.template getReference< string >( viewKeyStruct::solidMaterialNamesString() );
     ContinuumBase & destinationConstitutiveModel = getConstitutiveModel< ContinuumBase >( destinationSubRegion, destinationSolidMaterialName );
     real64 const destinationDefaultConstitutiveDensity = destinationConstitutiveModel.getReference< real64 >( constitutive::ContinuumBase::viewKeyStruct::defaultDensityString() );
     arrayView3d< real64 > const destinationOldStress = destinationConstitutiveModel.getReference< array3d< real64 > >( constitutive::ContinuumBase::viewKeyStruct::oldStressString() );
@@ -3602,8 +3611,6 @@ void SolidMechanicsMPM::performMaterialSwap( ParticleManager & particleManager,
     {
       LvArray::tensorOps::copy< 6 >( destinationOldStress[p][0], sourceOldStress[p][0] );
     } );
-
-
 
 
     sourceSubRegion.forWrappers( [&]( WrapperBase & sourceWrapper )
@@ -3678,8 +3685,6 @@ void SolidMechanicsMPM::performMaterialSwap( ParticleManager & particleManager,
     sourceSubRegion.setActiveParticleIndices();
     destinationSubRegion.setActiveParticleIndices();
   }
-
-
 
 }
 
@@ -6048,6 +6053,8 @@ void SolidMechanicsMPM::updateConstitutiveModelDependencies( ParticleManager & p
     // Get constitutive model reference
     string const & solidMaterialName = subRegion.template getReference< string >( viewKeyStruct::solidMaterialNamesString() );
     ContinuumBase & constitutiveModel = getConstitutiveModel< ContinuumBase >( subRegion, solidMaterialName );
+    SolidBase & solidModel = getConstitutiveModel< SolidBase >( subRegion, solidMaterialName );
+
 
     // Pass whatever data the constitutive models may need
     if( constitutiveModel.hasWrapper( "lengthScale" ) ) // Fragile code because someone could change this key without our knowledge. TODO: Make an
@@ -6095,16 +6102,18 @@ void SolidMechanicsMPM::updateConstitutiveModelDependencies( ParticleManager & p
       } );
     }
 
-    if(  constitutiveModel.hasWrapper( "temperature" ) ) //not sure if this should be the solid model or the constitutive, model, since we put it into Geomechanics
+
+    if(  solidModel.hasWrapper( "temperature" ) )
     {
-      arrayView1d< real64 const > const particleTemperature = subRegion.getParticleTemperature();
-      arrayView1d< real64 > const constitutiveTemperature = constitutiveModel.getReference< array1d< real64 > >( "temperature" );
+      arrayView1d< real64 > const particleTemperature = subRegion.getField< fields::mpm::particleTemperature >();
+      arrayView1d< real64 > const constitutiveTemperature = solidModel.getReference< array1d< real64 > >( "temperature" );
       forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST_DEVICE ( localIndex const pp )
       {
         localIndex const p = activeParticleIndices[pp];
-        constitutiveTemperature[p] = particleTemperature[p];
+        constitutiveTemperature[p] = particleTemperature[p]; 
       } );
     }
+
 
     if(  constitutiveModel.hasWrapper( "crackTipDistance" ) )
     {
@@ -6557,6 +6566,8 @@ void SolidMechanicsMPM::computeBoxMetrics( ParticleManager & particleManager,
     // Get fields
     arrayView1d< real64 > const particleVolume = subRegion.getParticleVolume();
     arrayView2d< real64 > const particleStress = subRegion.getField< fields::mpm::particleStress >();
+    //string const & solidMaterialName = subRegion.template getReference< string >( viewKeyStruct::solidMaterialNamesString() );
+    //SolidBase & solidModel = getConstitutiveModel< SolidBase >( subRegion, solidMaterialName );
 
     // Accumulate values
     SortedArrayView< localIndex const > const activeParticleIndices = subRegion.activeParticleIndices();
@@ -6575,16 +6586,6 @@ void SolidMechanicsMPM::computeBoxMetrics( ParticleManager & particleManager,
       }
     } );
 
-    if(  solidModel.hasWrapper( "temperature" ) )
-        {
-          arrayView1d< real64 > const particleTemperature = subRegion.getField< fields::mpm::particleTemperature >();
-          arrayView1d< real64 > const constitutiveTemperature = solidModel.getReference< array1d< real64 > >( "temperature" );
-          forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST_DEVICE ( localIndex const pp )
-          {
-            localIndex const p = activeParticleIndices[pp];
-            particleTemperature[p] = constitutiveTemperature[p]; 
-          } );
-      }
   } );
 
   // Additive sync: sxx, syy, szz, sxy, syz, sxz, mass, particle volume, damage
@@ -9825,7 +9826,9 @@ void SolidMechanicsMPM::updateSolverDependencies( ParticleManager & particleMana
     // Get constitutive model reference
     string const & solidMaterialName = subRegion.template getReference< string >( viewKeyStruct::solidMaterialNamesString() );
     ContinuumBase & constitutiveModel = getConstitutiveModel< ContinuumBase >( subRegion, solidMaterialName );
+    SolidBase & solidModel = getConstitutiveModel< SolidBase >( subRegion, solidMaterialName );
     SortedArrayView< localIndex const > const activeParticleIndices = subRegion.activeParticleIndices();
+
 
     if( constitutiveModel.hasWrapper( "damage" ) ) // Fragile code because someone could change the damage key without our knowledge. TODO: Make an
                                             // integrated test that checks this
@@ -9891,7 +9894,7 @@ void SolidMechanicsMPM::updateSolverDependencies( ParticleManager & particleMana
         particleTemperature[p] = constitutiveTemperature[p]; 
       } );
     }
-
+    
   } );
 }
 
