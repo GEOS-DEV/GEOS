@@ -33,38 +33,6 @@ namespace compositional
 {
 
 template< typename EOS_TYPE >
-template< typename T, bool DERIVATIVES >
-GEOS_HOST_DEVICE
-CubicEOSPhaseModel< EOS_TYPE >::
-StackVariables_Impl< T, DERIVATIVES >::StackVariables_Impl( integer const numComps,
-                                                            arraySlice2d< real64 const > const bip ):
-  kij( bip ),
-  m_data( 2, numComps ),
-  aic( m_data[0] ),
-  bic( m_data[1] )
-{}
-
-template< typename EOS_TYPE >
-template< typename T >
-GEOS_HOST_DEVICE
-CubicEOSPhaseModel< EOS_TYPE >::
-StackVariables_Impl< T, true >::StackVariables_Impl( integer const numComps,
-                                                     arraySlice2d< real64 const > const bip,
-                                                     arraySlice2d< real64 const > const dbip_dT ):
-  StackVariables_Impl< T, false >( numComps, bip ),
-  dkij_dT( dbip_dT ),
-  m_derivativeData( 8, numComps+2 ),
-  daic_dp( m_derivativeData[0] ),
-  dbic_dp( m_derivativeData[1] ),
-  daic_dt( m_derivativeData[2] ),
-  dbic_dt( m_derivativeData[3] ),
-  d2aic_dt2( m_derivativeData[4] ),
-  d2bic_dt2( m_derivativeData[5] ),
-  daMixture( m_derivativeData[6] ),
-  dbMixture( m_derivativeData[7] )
-{}
-
-template< typename EOS_TYPE >
 template< bool DERIVATIVES >
 GEOS_HOST_DEVICE
 void

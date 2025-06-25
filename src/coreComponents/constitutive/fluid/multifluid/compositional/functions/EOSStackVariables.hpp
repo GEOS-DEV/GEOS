@@ -163,22 +163,22 @@ struct EOSStackVariables_Impl< T, true > : public EOSStackVariables_Impl< T, fal
   StackArray< real64, 2, 8 * maxNumDof > m_derivativeData;
 
   /// Pressure derivatives of component-specific 'a_i' coefficients (da_i/dp).
-  arraySlice2d< real64 > const daic_dp;
+  arraySlice1d< real64 > const daic_dp;
 
   /// Pressure derivatives of component-specific 'b_i' coefficients (db_i/dp).
-  arraySlice2d< real64 > const dbic_dp;
+  arraySlice1d< real64 > const dbic_dp;
 
   /// Temperature derivatives of component-specific 'a_i' coefficients (da_i/dT).
-  arraySlice2d< real64 > const daic_dt;
+  arraySlice1d< real64 > const daic_dt;
 
   /// Temperature derivatives of component-specific 'b_i' coefficients (db_i/dT).
-  arraySlice2d< real64 > const dbic_dt;
+  arraySlice1d< real64 > const dbic_dt;
 
   /// Second temperature derivatives of 'a_i' coefficients (d2a_i/dT2).
-  arraySlice2d< real64 > const d2aic_dt2;
+  arraySlice1d< real64 > const d2aic_dt2;
 
   /// Second temperature derivatives of 'b_i' coefficients (d2b_i/dT2).
-  arraySlice2d< real64 > const d2bic_dt2;
+  arraySlice1d< real64 > const d2bic_dt2;
 
   /// Derivatives of mixture parameter 'a' with respect to all degrees of freedom.
   DerivativeType<> const daMixture;
@@ -319,8 +319,8 @@ struct SalinityStackVariables_Impl< T, true > : public BICStackVariables_Impl< T
   SalinityStackVariables_Impl( integer numComps ):
     BICStackVariables_Impl< T, true >( numComps ),
     EOSStackVariables_Impl< T, true >( numComps,
-                                       EOSStackVariables_Impl< T, true >::kij_data.toSliceConst(),
-                                       EOSStackVariables_Impl< T, true >::dkij_dT_data.toSliceConst() )
+                                       BICStackVariables_Impl< T, true >::kij_data.toSliceConst(),
+                                       BICStackVariables_Impl< T, true >::dkij_dT_data.toSliceConst() )
   {}
 };
 

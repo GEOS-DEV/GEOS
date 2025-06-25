@@ -33,44 +33,6 @@ namespace compositional
 {
 
 template< typename EOS_TYPE >
-template< typename T, bool DERIVATIVES >
-GEOS_HOST_DEVICE
-SoreideWhitsonEOSPhaseModel< EOS_TYPE >::
-StackVariables_Val< T, DERIVATIVES >::StackVariables_Val( integer numComps ):
-  kij_data( numComps, numComps )
-{}
-
-template< typename EOS_TYPE >
-template< typename T >
-GEOS_HOST_DEVICE
-SoreideWhitsonEOSPhaseModel< EOS_TYPE >::
-StackVariables_Val< T, true >::StackVariables_Val( integer numComps ):
-  StackVariables_Val< T, false >( numComps ),
-  dkij_dT_data( numComps, numComps )
-{}
-
-template< typename EOS_TYPE >
-template< typename T >
-GEOS_HOST_DEVICE
-SoreideWhitsonEOSPhaseModel< EOS_TYPE >::
-StackVariables_Impl< T, false >::StackVariables_Impl( integer numComps ):
-  StackVariables_Val< T, false >( numComps ),
-  CubicModel::template StackVariables< false >( numComps,
-                                                StackVariables_Val< T, false >::kij_data.toSliceConst() )
-{}
-
-template< typename EOS_TYPE >
-template< typename T >
-GEOS_HOST_DEVICE
-SoreideWhitsonEOSPhaseModel< EOS_TYPE >::
-StackVariables_Impl< T, true >::StackVariables_Impl( integer numComps ):
-  StackVariables_Val< T, true >( numComps ),
-  CubicModel::template StackVariables< true >( numComps,
-                                               StackVariables_Val< T, true >::kij_data.toSliceConst(),
-                                               StackVariables_Val< T, true >::dkij_dT_data.toSliceConst() )
-{}
-
-template< typename EOS_TYPE >
 template< bool DERIVATIVES >
 GEOS_HOST_DEVICE
 void

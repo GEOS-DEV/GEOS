@@ -37,57 +37,8 @@ struct SoreideWhitsonEOSPhaseModel
   using CubicModel = CubicEOSPhaseModel< EOS_TYPE >;
   using Deriv = typename CubicModel::Deriv;
 
-  template< typename T, bool DERIVATIVES >
-  struct StackVariables_Val
-  {
-    static constexpr integer maxNumComp = CubicModel::template StackVariables< false >::maxNumComp;
-
-    GEOS_HOST_DEVICE
-    StackVariables_Val( integer numComps );
-
-    real64 salinity{0.0};
-    // Binary interaction coefficients (temperature dependent)
-    StackArray< real64, 2, maxNumComp *maxNumComp > kij_data;
-  };
-
-  template< typename T >
-  struct StackVariables_Val< T, true > : public StackVariables_Val< T, false >
-  {
-    using StackVariables_Val< T, false >::maxNumComp;
-
-    GEOS_HOST_DEVICE
-    StackVariables_Val( integer numComps );
-
-    // Derivatives of binary interaction coefficients wrt temperature
-    StackArray< real64, 2, maxNumComp *maxNumComp > dkij_dT_data;
-  };
-
-  template< typename T, bool DERIVATIVES >
-  struct StackVariables_Impl
-  {};
-
-  template< typename T >
-  struct StackVariables_Impl< T, false > : public StackVariables_Val< T, false >, public CubicModel::template StackVariables< false >
-  {
-    GEOS_HOST_DEVICE
-    StackVariables_Impl( integer numComps );
-
-    using CubicModel::template StackVariables< false >::DerivativeType;
-    using CubicModel::template StackVariables< false >::ConstDerivativeType;
-  };
-
-  template< typename T >
-  struct StackVariables_Impl< T, true > : public StackVariables_Val< T, true >, public CubicModel::template StackVariables< true >
-  {
-    GEOS_HOST_DEVICE
-    StackVariables_Impl( integer numComps );
-
-    using CubicModel::template StackVariables< true >::DerivativeType;
-    using CubicModel::template StackVariables< true >::ConstDerivativeType;
-  };
-
   template< bool DERIVATIVES = false >
-  using StackVariables = StackVariables_Impl< void, DERIVATIVES >;
+  using StackVariables = SalinityStackVariables_Impl< void, DERIVATIVES >;
 
   /**
    * @brief Allocate and initialise composition independent data
