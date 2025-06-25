@@ -357,12 +357,16 @@ void TableFunction::outputTableData( OutputOptions const outputOpts ) const
 
   bool const logOutputFailed = isTableTooLargeForLog( *this );
 
+  std::ofstream logStream;
   TableLayout tableLayout( { TableLayout::Column().
                                setName( getName() ).
                                setHeaderAlignment( TableLayout::Alignment::center ).
                                setValuesAlignment( TableLayout::Alignment::left ) } );
   TableTextFormatter const tableLog( tableLayout );
   TableData tableData;
+
+  if( outputOpts.writeCSV || (logOutputFailed && outputOpts.writeInLog) )
+    logStream.open(joinPath( FunctionBase::getOutputDirectory(), getName() + ".csv" ));
 
   if( outputOpts.writeCSV )
   {
@@ -371,7 +375,6 @@ void TableFunction::outputTableData( OutputOptions const outputOpts ) const
       tableData.addRow( GEOS_FMT( "CSV Generated to:\n{}/{}.csv", getOutputDirectory(), getName() ) );
       GEOS_LOG( tableLog.toString( tableData ) );
     }
-    std::ofstream logStream( joinPath( FunctionBase::getOutputDirectory(), getName() + ".csv" ) );
     TableCSVFormatter csvFormatter;
     csvFormatter.showErrors( false );
     logStream << csvFormatter.toString( *this );
@@ -388,11 +391,16 @@ void TableFunction::outputTableData( OutputOptions const outputOpts ) const
     }
     tableData.addSeparator();
 
-    if( outputOpts.writeCSV )
+    if( outputOpts.writeCSV || logOutputFailed )
       tableData.addRow( GEOS_FMT( "CSV Generated to:\n{}/{}.csv", getOutputDirectory(), getName() ) );
 
     if( logOutputFailed )
+    {
+      TableCSVFormatter csvFormatter;
+      csvFormatter.showErrors( false );
+      logStream << csvFormatter.toString( *this );
       GEOS_LOG( tableLog.toString( tableData ) );
+    }
     else
       GEOS_LOG( tableLog.toString( *this ) );
   }
@@ -489,10 +497,6 @@ string TableTextFormatter::toString< TableFunction >( TableFunction const & tabl
 
       TableData tableData;
       collectTableValues( tableData, numDimensions, coordinates, values );
-      tableData.addSeparator();
-      tableData.addRow( CellType::MergeNext,
-                        GEOS_FMT( "CSV Generated to:\n{}/{}.csv",
-                                  tableFunction.getOutputDirectory(), tableFunction.getName() ) );
       logOutput = logTable.toString( tableData );
     }
     else if( numDimensions == 2 )
