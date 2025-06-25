@@ -208,17 +208,35 @@ if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
   echo "Running the integrated tests has been requested."
   # We install the python environment required by ATS to run the integrated tests.
   or_die apt-get update
-  or_die apt-get install -y virtualenv python3-dev python-is-python3
+  or_die apt-get install -y python3.10-venv python3-pip python3-setuptools python3-wheel python-is-python3
+
   ATS_PYTHON_HOME=/tmp/run_integrated_tests_virtualenv
-  or_die virtualenv ${ATS_PYTHON_HOME}
+  or_die python3 -m venv ${ATS_PYTHON_HOME}
+  source ${ATS_PYTHON_HOME}/bin/activate
 
-  # Force setuptools to use its own bundled distutils instead of the system's.
-  # This is a direct fix for the AssertionError related to /usr/lib/python3.10/distutils/core.py
-  export SETUPTOOLS_USE_DISTUTILS=local
 
-  or_die ${ATS_PYTHON_HOME}/bin/python3 -m pip install --upgrade pip setuptools
+  # 🔍 Debug the Python environment
+  echo "Python binary:"
+  which python
+  echo "Python version:"
+  python --version
+  echo "Ensurepip version:"
+  python -m ensurepip --version || echo "ensurepip not available"
+  echo "Distutils location before upgrade:"
+  python -c "import distutils; print(distutils.__file__)" || echo "distutils not found"
+  echo "Setuptools location before upgrade:"
+  python -c "import setuptools; print(setuptools.__file__)" || echo "setuptools not found"
 
-  ${ATS_PYTHON_HOME}/bin/python3 -m pip cache purge
+  # Upgrade pip and setuptools inside the venv
+  pip install --upgrade pip setuptools wheel
+
+  echo "Distutils location after upgrade:"
+  python -c "import distutils; print(distutils.__file__)" || echo "distutils not found"
+  echo "Setuptools location after upgrade:"
+  python -c "import setuptools; print(setuptools.__file__)" || echo "setuptools not found"
+
+  # Clear pip cache
+  pip cache purge
 
   # Setup a temporary directory to hold tests
   tempdir=$(mktemp -d)
