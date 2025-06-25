@@ -233,7 +233,8 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
   m_xProfileWriteInterval( 0.0 ),
   m_nextXProfileWriteTime( 0.0 ),
   m_xProfileVx0( 0.0 ),
-  m_initialDomainTemperature( 25.0 )
+  m_initialTemperature( 25.0 ),
+  m_temperature( 25.0 )
 {
   // setInputFlags( InputFlags::OPTIONAL );
 
@@ -1037,11 +1038,17 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
     setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "Pressure of implicit continuum fluid" );
 
-  registerWrapper( "initialDomainTemperature", &m_initialDomainTemperature ).
+  registerWrapper( "initialTemperature", &m_initialTemperature ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDefaultValue( m_initialDomainTemperature ).
+    setDefaultValue( m_initialTemperature ).
     setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "Initial particle temperature" );
+
+  registerWrapper( "temperature", &m_temperature ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDefaultValue( m_temperature ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setDescription( "updated temperature" );
 
   m_mpmEventManager = &registerGroup< MPMEventManager >( groupKeys.mpmEventManager );
 }
@@ -1984,8 +1991,8 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
 
     for( int p=0; p<subRegion.size(); p++ )
     {     
-      particleInitialTemperature[p] = m_initialDomainTemperature;
-      particleTemperature[p] = m_initialDomainTemperature;
+      particleInitialTemperature[p] = m_initialTemperature;
+      particleTemperature[p] = m_initialTemperature;
 
       for( int i=0; i<3; i++ )
       {
@@ -3511,13 +3518,14 @@ void SolidMechanicsMPM::triggerEvents( const real64 dt,
 
         event.setIsComplete( 1 );
       }
+
       if( event.getName() == "TemperatureProfile" )
       {
         TemperatureProfileMPMEvent & temperatureProfile = dynamicCast< TemperatureProfileMPMEvent & >( event );
         
         arrayView2d< real64 const > const temperatureTable = temperatureProfile.getTemperatureTable();
 
-        SolidMechanicsMPM::InterpolationOption interpType = static_cast<SolidMechanicsMPM::InterpolationOption>(temperatureProfile.getInterpType());
+        SolidMechanicsMPM::InterpolationOption interpTempType = static_cast<SolidMechanicsMPM::InterpolationOption>(temperatureProfile.getInterpType());
 
         array1d< real64 > tempOut(1);
         interpolateTempTable( time_n, dt, temperatureTable, tempOut, interpType );
@@ -6566,6 +6574,17 @@ void SolidMechanicsMPM::computeBoxMetrics( ParticleManager & particleManager,
         boxStress[i] += particleStress[p][i] * particleVolume[p]; // volume weighted average, will normalize later.
       }
     } );
+
+    if(  solidModel.hasWrapper( "temperature" ) )
+        {
+          arrayView1d< real64 > const particleTemperature = subRegion.getField< fields::mpm::particleTemperature >();
+          arrayView1d< real64 > const constitutiveTemperature = solidModel.getReference< array1d< real64 > >( "temperature" );
+          forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST_DEVICE ( localIndex const pp )
+          {
+            localIndex const p = activeParticleIndices[pp];
+            particleTemperature[p] = constitutiveTemperature[p]; 
+          } );
+      }
   } );
 
   // Additive sync: sxx, syy, szz, sxy, syz, sxz, mass, particle volume, damage
@@ -9861,6 +9880,18 @@ void SolidMechanicsMPM::updateSolverDependencies( ParticleManager & particleMana
         particleWavespeed[p] = constitutiveWavespeed[p][0]; 
       } );
     }
+
+    if(  solidModel.hasWrapper( "temperature" ) )
+    {
+      arrayView1d< real64 > const particleTemperature = subRegion.getField< fields::mpm::particleTemperature >();
+      arrayView1d< real64 > const constitutiveTemperature = solidModel.getReference< array1d< real64 > >( "temperature" );
+      forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST_DEVICE ( localIndex const pp )
+      {
+        localIndex const p = activeParticleIndices[pp];
+        particleTemperature[p] = constitutiveTemperature[p]; 
+      } );
+    }
+
   } );
 }
 
@@ -11636,6 +11667,8 @@ void SolidMechanicsMPM::computeSPHJacobian( ParticleManager & particleManager )
     arrayView1d< real64 const > const particleReferenceVolume = subRegion.getField< fields::mpm::particleReferenceVolume >();
     arrayView1d< real64 const > const particleMass = subRegion.getField< fields::mpm::particleMass >();
     arrayView1d< real64 > const particleSPHJacobian = subRegion.getField< fields::mpm::particleSPHJacobian >();
+    arrayView1d< real64 > const particleTemperature = subRegion.getField< fields::mpm::particleTemperature >();
+
 
     ParticleRegion & region = dynamicCast< ParticleRegion & >( subRegion.getParent().getParent() );
     localIndex regionIndexOfSubRegion = region.getIndexInParent();

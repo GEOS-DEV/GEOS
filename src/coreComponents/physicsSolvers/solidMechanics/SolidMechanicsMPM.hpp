@@ -973,7 +973,8 @@ protected:
   real64 m_xProfileVx0;
 
   real64 m_implicitContinuumFluidPressure; // Borehole collapse
-  real64 m_initialDomainTemperature;
+  real64 m_initialTemperature;
+  real64 m_temperature;
 
 private:
   struct BinKey
