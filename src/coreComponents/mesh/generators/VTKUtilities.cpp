@@ -1195,7 +1195,7 @@ splitCellsByTypeAndAttribute( std::map< ElementType, stdVector< vtkIdType > > & 
   {
     ElementType const elemType = t2c.first;
     stdVector< vtkIdType > & cells = t2c.second;
-    std::map< int, stdVector< vtkIdType > > & attributeToCells = typeToAttributeToCells[elemType];
+    std::unordered_map< int, stdVector< vtkIdType > > & attributeToCells = typeToAttributeToCells[elemType];
 
     if( attributeDataArray == nullptr )
     {
@@ -1209,7 +1209,7 @@ splitCellsByTypeAndAttribute( std::map< ElementType, stdVector< vtkIdType > > & 
       {
         using ArrayType = TYPEOFPTR( attributeArray );
         vtkDataArrayAccessor< ArrayType > attribute( attributeArray );
-        std::map< int, size_t > cellCounts;
+        std::unordered_map< int, size_t > cellCounts;
         for( vtkIdType c: cells )
         {
           int const region = static_cast< int >( attribute.Get( c, 0 ) );
@@ -1329,7 +1329,7 @@ stdVector< localIndex > getHexahedronNodeOrderingFromPolyhedron( vtkCell * const
   stdVector< localIndex > nodeOrder( 8 );
 
   // Generate global to local map
-  std::map< localIndex, localIndex > G2L;
+  std::unordered_map< localIndex, localIndex > G2L;
   for( localIndex iPoint = 0; iPoint < 8; ++iPoint )
   {
     G2L[cell->GetPointId( iPoint )] = iPoint;
@@ -1406,7 +1406,7 @@ stdVector< localIndex > getWedgeNodeOrderingFromPolyhedron( vtkCell * const cell
   stdVector< localIndex > nodeOrder( 6 );
 
   // Generate global to local map
-  std::map< localIndex, localIndex > G2L;
+  std::unordered_map< localIndex, localIndex > G2L;
   for( localIndex iPoint = 0; iPoint < 6; ++iPoint )
   {
     G2L[cell->GetPointId( iPoint )] = iPoint;
@@ -1501,7 +1501,7 @@ stdVector< localIndex > getPyramidNodeOrderingFromPolyhedron( vtkCell * const ce
   stdVector< localIndex > nodeOrder( 5 );
 
   // Generate global to local map
-  std::map< localIndex, localIndex > G2L;
+  std::unordered_map< localIndex, localIndex > G2L;
   for( iPoint = 0; iPoint < 5; ++iPoint )
   {
     G2L[cell->GetPointId( iPoint )] = iPoint;
@@ -1575,7 +1575,7 @@ stdVector< localIndex > getPrismNodeOrderingFromPolyhedron( vtkCell * const cell
   stdVector< localIndex > nodeOrder( 2*NUM_SIDES );
 
   // Generate global to local map
-  std::map< localIndex, localIndex > G2L;
+  std::unordered_map< localIndex, localIndex > G2L;
   for( localIndex iPoint = 0; iPoint < cell->GetNumberOfPoints(); ++iPoint )
   {
     G2L[cell->GetPointId( iPoint )] = iPoint;
@@ -2114,7 +2114,7 @@ void writeCells( integer const logLevel,
     {
       continue;
     }
-    std::map< int, stdVector< vtkIdType > > const & regionIdToCellIds = typeRegions.second;
+    std::unordered_map< int, stdVector< vtkIdType > > const & regionIdToCellIds = typeRegions.second;
     for( auto const & regionCells : regionIdToCellIds )
     {
       int const regionId = regionCells.first;

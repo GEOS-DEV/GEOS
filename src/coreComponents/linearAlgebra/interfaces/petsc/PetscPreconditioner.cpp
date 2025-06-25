@@ -77,7 +77,7 @@ PCType getPetscSmootherType( LinearSolverParameters::PreconditionerType const & 
 
 PCJacobiType getPetscJacobiType( LinearSolverParameters::PreconditionerType const & type )
 {
-  static std::map< LinearSolverParameters::PreconditionerType, PCJacobiType > const typeMap =
+  static map< LinearSolverParameters::PreconditionerType, PCJacobiType > const typeMap =
   {
     { LinearSolverParameters::PreconditionerType::jacobi, PC_JACOBI_DIAGONAL },
     { LinearSolverParameters::PreconditionerType::l1jacobi, PC_JACOBI_ROWSUM },
@@ -87,7 +87,7 @@ PCJacobiType getPetscJacobiType( LinearSolverParameters::PreconditionerType cons
 
 MatSORType getPetscSORType( LinearSolverParameters::PreconditionerType const & type )
 {
-  static std::map< LinearSolverParameters::PreconditionerType, MatSORType > const typeMap =
+  static map< LinearSolverParameters::PreconditionerType, MatSORType > const typeMap =
   {
     { LinearSolverParameters::PreconditionerType::fgs, SOR_FORWARD_SWEEP },
     { LinearSolverParameters::PreconditionerType::bgs, SOR_BACKWARD_SWEEP },
@@ -129,7 +129,7 @@ void createPetscSmoother( LinearSolverParameters const & params, PC const precon
 
 PCMGCycleType getPetscMGCycleType( LinearSolverParameters::AMG::CycleType const & type )
 {
-  static std::map< LinearSolverParameters::AMG::CycleType, PCMGCycleType > const typeMap =
+  static map< LinearSolverParameters::AMG::CycleType, PCMGCycleType > const typeMap =
   {
     { LinearSolverParameters::AMG::CycleType::V, PC_MG_CYCLE_V },
     { LinearSolverParameters::AMG::CycleType::W, PC_MG_CYCLE_W }

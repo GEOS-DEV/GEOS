@@ -681,7 +681,7 @@ bool ImmiscibleMultiphaseFlow::validateDirichletBC( DomainPartition & domain,
                                                                string_array const & )
   {
     // map: regionName -> subRegionName -> setName -> numPhases to check pressure/phase are present consistent
-    std::map< string, std::map< string, std::map< string, ComponentMask< MAX_NP > > > > bcPresCompStatusMap;
+    map< string, map< string, map< string, ComponentMask< MAX_NP > > > > bcPresCompStatusMap;
 
     // 1. Check pressure Dirichlet BCs
     fsManager.apply< ElementSubRegionBase >( time,

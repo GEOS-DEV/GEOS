@@ -342,8 +342,6 @@ using map = mapBase< TKEY, TVAL, std::integral_constant< bool, true > >;
 template< typename TKEY, typename TVAL >
 using unordered_map = mapBase< TKEY, TVAL, std::integral_constant< bool, false > >;
 
-///@}
-
 /**
  * @name Aliases for commonly used array types.
  */

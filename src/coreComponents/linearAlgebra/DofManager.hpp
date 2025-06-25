@@ -179,7 +179,7 @@ public:
   /**
    * @copydoc addField(string const &, FieldLocation, integer, stdVector< FieldSupport > const &)
    *
-   * Overload for  stdstdMap< string, string_array > bodyFieldSupport used by physics solvers.
+   * Overload for  map< string, string_array > bodyFieldSupport used by physics solvers.
    */
   void addField( string const & fieldName,
                  FieldLocation location,
@@ -642,7 +642,7 @@ private:
   stdVector< FieldDescription > m_fields;
 
   /// Table of connector types within and between fields
-  map< std::pair< localIndex, localIndex >, CouplingDescription > m_coupling;
+  std::map< std::pair< localIndex, localIndex >, CouplingDescription > m_coupling;
 
   /// Flag indicating that DOFs have been reordered rank-wise.
   bool m_reordered = false;

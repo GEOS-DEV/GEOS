@@ -79,12 +79,14 @@ constexpr bool is_packable_set< SortedArray< T > > = is_packable_helper< T >::va
 template< typename T >
 constexpr bool is_packable_set< set< T > > = is_packable_helper< T >::value;
 
+
 template< typename >
 constexpr bool is_packable_map = false;
 
 template< typename T_KEY, typename T_VAL, typename SORTED >
 constexpr bool is_packable_map< mapBase< T_KEY, T_VAL, SORTED > > = is_packable_helper< T_KEY >::value &&
                                                                     is_packable_helper< T_VAL >::value;
+
 
 template< typename T >
 struct is_packable_helper

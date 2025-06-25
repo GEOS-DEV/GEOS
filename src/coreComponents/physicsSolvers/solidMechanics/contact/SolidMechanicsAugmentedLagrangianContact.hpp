@@ -103,7 +103,7 @@ public:
   {
 
     std::map< string,
-            array1d< localIndex > > const & faceTypesToFaceElements = m_faceTypesToFaceElements.at( meshName );
+              array1d< localIndex > > const & faceTypesToFaceElements = m_faceTypesToFaceElements.at( meshName );
 
     for( const auto & [finiteElementName, faceElementList] : faceTypesToFaceElements )
     {
