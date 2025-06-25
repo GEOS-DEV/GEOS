@@ -19,6 +19,7 @@
 #include "constitutive/ConstitutiveManager.hpp"
 #include "mesh/MeshObjectPath.hpp"
 #include "mesh/MeshManager.hpp"
+#include "mesh/MeshFields.hpp"
 #include "mesh/generators/InternalWellboreGenerator.hpp"
 #include "mesh/generators/VTKMeshGenerator.hpp"
 #include "mesh/NodeManager.hpp"
@@ -78,7 +79,8 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
   std::map< std::string, std::vector< localIndex > > validRegions;
   std::map< std::string, std::vector< string > > fieldsInSubRegions;
   std::set< string > setsInSubRegion;
-
+  // Group const & problemManager = this->getGroupByPath( "/Problem" );
+  // problemManager.printDataHierarchy();
   mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion const & subRegion )
   {
     std::vector< string > subRegionFields;
@@ -267,6 +269,26 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
     if( !invalidRegions.empty() )
     {
       std::ostringstream fieldNameNotFoundMessage;
+      std::vector< std::string > solverNames;
+      std::cout << "field à seek "  << fs.getFieldName() << std::endl;
+      for( auto const & [key, values] : NamespaceFields::getFields() )
+      {
+        std::cout << key << std::endl;
+        for( auto const & e : values )
+        {
+          std::cout << e << ", ";
+          if( fs.getFieldName() == e )
+          {
+            solverNames.push_back( key );
+          }
+        }
+        std::cout << std::endl;
+      }
+
+      for( auto const & solverN : solverNames )
+      {
+        std::cout << "solver dispo : " <<  solverN << std::endl;
+      }
 
       std::string fieldNamePath =
         GEOS_FMT( "\n{}: there is no {} named `{}` under the region `{}`.\n",

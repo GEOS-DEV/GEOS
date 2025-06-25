@@ -263,6 +263,7 @@ CO2BrineFluid< PHASE1, PHASE2, FLASH >::KernelWrapper::
   integer constexpr numPhase = 2;
   integer const ip1 = m_p1Index;
   integer const ip2 = m_p2Index;
+                       std::cout <<"phase 1 "<< std::endl;
 
   // 1. Convert input mass fractions to mole fractions and keep derivatives
 
@@ -471,6 +472,7 @@ CO2BrineFluid< PHASE1, PHASE2, FLASH >::KernelWrapper::
   computeTotalDensity( phaseFraction,
                        phaseDensity,
                        totalDensity );
+
 }
 
 template< typename PHASE1, typename PHASE2, typename FLASH >

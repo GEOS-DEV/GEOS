@@ -23,6 +23,7 @@
 #include "dataRepository/Group.hpp"
 #include "common/TimingMacros.hpp"
 #include "mpiCommunications/NeighborData.hpp"
+#include "MeshFields.hpp"
 
 namespace geos
 {
@@ -571,6 +572,7 @@ public:
 
     // This is required for the Tensor classes.
     typename FIELD_TRAIT::dataType defaultValue( FIELD_TRAIT::defaultValue() );
+    FIELD_TRAIT::addFields();
 
     m_registeredField.insert( FIELD_TRAIT::key());
 
@@ -593,6 +595,8 @@ public:
   dataRepository::Wrapper< typename FIELD_TRAIT::type > & registerField( FIELD_TRAIT const & fieldTrait,
                                                                          typename FIELD_TRAIT::type * newObject )
   {
+
+    FIELD_TRAIT::addFields();
 
     m_registeredField.insert( FIELD_TRAIT::key());
 

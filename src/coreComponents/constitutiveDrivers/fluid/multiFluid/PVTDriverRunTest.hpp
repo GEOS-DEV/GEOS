@@ -33,7 +33,7 @@ void PVTDriver::runTest( FLUID_TYPE & fluid, arrayView2d< real64 > const & table
 
   integer const numComponents = fluid.numFluidComponents();
   integer const numPhases = fluid.numFluidPhases();
-
+  std::cout << "test pvt"<< std::endl;
   // prefer output in mass
 
   fluid.setMassFlag( true );

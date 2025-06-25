@@ -24,6 +24,21 @@
 #include "dataRepository/RestartFlags.hpp"
 #include "common/DataTypes.hpp"
 
+
+class NamespaceFields
+{
+public:
+  static std::unordered_map< std::string, std::set< std::string > > & getFields()
+  {
+    static std::unordered_map< std::string, std::set< std::string > > nsFields;
+    return nsFields;
+  }
+
+  static void addField( const std::string & namespaceKey, const std::string & fieldKey )
+  { getFields()[namespaceKey].insert( fieldKey ); }
+};
+
+
 /**
  * @brief Generates a traits struct.
  * @param NAME Name of the traits struct.
@@ -36,13 +51,14 @@
  * @param DESCRIPTION A string literal that contains a description of the data for
  *   use in sphinx documentation.
  */
-#define DECLARE_FIELD( NAME, \
-                       KEY, \
-                       TYPE, \
-                       DEFAULT, \
-                       PLOTLEVEL, \
-                       RESTARTFLAG, \
-                       DESCRIPTION ) \
+#define DECLARE_FIELD_WITH_NAMESPACE( NAME, \
+                                      KEY, \
+                                      TYPE, \
+                                      DEFAULT, \
+                                      PLOTLEVEL, \
+                                      RESTARTFLAG, \
+                                      DESCRIPTION, \
+                                      NAMESPACE ) \
 /** @struct NAME */ \
 /** @brief Trait struct for NAME data */ \
   struct NAME \
@@ -63,7 +79,30 @@
     static constexpr dataRepository::RestartFlags restartFlag = dataRepository::RestartFlags::RESTARTFLAG; \
     /** Description of the NAME data for use in sphinx documentation */ \
     static constexpr char const * description = DESCRIPTION; \
+    static void addFields() \
+    { NamespaceFields::addField( NAMESPACE, key());  } \
   }
+
+/**
+ * @brief Generates a traits struct.
+ * @param NAME Name of the traits struct.
+ * @param KEY The string literal that will be used as the key to register and
+ *   lookup the data in the repository.
+ * @param TYPE The type of data that will be registered.
+ * @param DEFAULT The default value for the data.
+ * @param PLOTLEVEL The default plot level for the wrapper that will contain the data.
+ * @param RESTARTFLAG The default restart flag for the wrapper that contains the data.
+ * @param DESCRIPTION A string literal that contains a description of the data for
+ *   use in sphinx documentation.
+ */
+#define DECLARE_FIELD( NAME, \
+                       KEY, \
+                       TYPE, \
+                       DEFAULT, \
+                       PLOTLEVEL, \
+                       RESTARTFLAG, \
+                       DESCRIPTION ) \
+  DECLARE_FIELD_WITH_NAMESPACE( NAME, KEY, TYPE, DEFAULT, PLOTLEVEL, RESTARTFLAG, DESCRIPTION, "test" )
 
 namespace geos
 {

@@ -123,7 +123,10 @@ void PhysicsSolverBase::generateMeshTargetsFromTargetRegions( Group const & mesh
   {
 
     stdVector< string > targetTokens = stringutilities::tokenize( target, "/" );
-
+    for(auto const & tt : targetTokens)
+    {
+      std::cout << " target test "<< tt << std::endl;
+    }
     if( targetTokens.size()==1 ) // no MeshBody or MeshLevel specified
     {
       GEOS_ERROR_IF( meshBodies.numSubGroups() != 1,
@@ -341,24 +344,18 @@ void PhysicsSolverBase::logEndOfCycleInformation( integer const cycleNumber,
                                                   std::vector< real64 > const & subStepDts ) const
 {
   LogPart logpart( "TIMESTEP", MpiWrapper::commRank() == 0 );
-  logpart.addEndDescription( "- Cycle ", cycleNumber );
-  logpart.addEndDescription( "- N substeps ", numOfSubSteps );
-
-  std::stringstream logMessage;
+  // The formating here is a work in progress.
+  GEOS_LOG_LEVEL_RANK_0( logInfo::TimeStep, "\n------------------------- TIMESTEP END -------------------------" );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::TimeStep, GEOS_FMT( "    - Cycle:      {}", cycleNumber ) );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::TimeStep, GEOS_FMT( "    - N substeps: {}", numOfSubSteps ) );
+  std::string logMessage = "    - dt:";
   for( integer i = 0; i < numOfSubSteps; ++i )
   {
-    if( i > 0 )
-    {
-      logMessage << ", ";
-    }
-    logMessage << subStepDts[i] << " " << units::getSymbol( units::Unit::Time );
+    logMessage += "  " + units::TimeFormatInfo::fromSeconds( subStepDts[i] ).toString();
   }
-
-  if( logMessage.rdbuf()->in_avail() == 0 )
-    logMessage << "/";
-
-  logpart.addEndDescription( "- substep dts ", logMessage.str() );
-  logpart.end();
+  // Log the complete message once
+  GEOS_LOG_LEVEL_RANK_0( logInfo::TimeStep, logMessage );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::TimeStep, "------------------------------------------------------------------\n" );
 }
 
 real64 PhysicsSolverBase::setNextDt( real64 const & GEOS_UNUSED_PARAM( currentTime ),

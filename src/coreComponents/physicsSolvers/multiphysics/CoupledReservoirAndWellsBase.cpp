@@ -19,6 +19,9 @@
  */
 
 #include "CoupledReservoirAndWellsBase.hpp"
+#include "physicsSolvers/PhysicsSolverManager.hpp"
+#include "physicsSolvers/PhysicsSolverBase.hpp"
+#include "physicsSolvers/fluidFlow/FlowSolverBase.hpp"
 
 namespace geos
 {
@@ -125,6 +128,7 @@ bool validateWellPerforations( PhysicsSolverBase const * const reservoirSolver,
                                                                             string_array const & regionNames )
   {
     ElementRegionManager const & elemManager = meshLevel.getElemManager();
+
     elemManager.forElementSubRegions< WellElementSubRegion >( regionNames, [&]( localIndex const, WellElementSubRegion const & subRegion )
     {
       PerforationData const * const perforationData = subRegion.getPerforationData();
@@ -151,7 +155,7 @@ bool validateWellPerforations( PhysicsSolverBase const * const reservoirSolver,
   localIndex const hasBadPerforations = MpiWrapper::max( badPerforation.first.empty() ? 0 : 1 );
 
   GEOS_THROW_IF( !badPerforation.first.empty(),
-                 GEOS_FMT( "{}: The well {} has a connection to the region {} which is not targeted by the solver",
+                 GEOS_FMT( "{}: The well {} has a connection to the region {} which is not targeted by the flow solver",
                            wellSolver->getDataContext(), badPerforation.first, badPerforation.second ),
                  std::runtime_error );
   return hasBadPerforations == 0;
