@@ -187,7 +187,7 @@ MeshObjectPath::fillPathTokens( string const & path,
 
 
 template< typename SUBNODE >
-static SUBNODE & insertPathNode( std::map< string, SUBNODE > & node, string const & name )
+static SUBNODE & insertPathNode( map< string, SUBNODE > & node, string const & name )
 {
   return node[ name ];
 }
@@ -251,14 +251,14 @@ void MeshObjectPath::processPathTokens( stdVector< string > const & pathTokens,
                                      pathTokens[0],
                                      m_pathPermutations,
                                      [this, &pathTokens] ( MeshBody const & meshBody,
-                                                           std::map< string, std::map< string, stdVector< string > > > & meshBodyNode )
+                                                           map< string, map< string, stdVector< string > > > & meshBodyNode )
   {
     dataRepository::Group const & meshLevels = meshBody.getMeshLevels();
     processTokenRecursive< MeshLevel >( meshLevels,
                                         pathTokens[1],
                                         meshBodyNode,
                                         [this, &pathTokens]( MeshLevel const & meshLevel,
-                                                             std::map< string, stdVector< string > > & meshLevelNode )
+                                                             map< string, stdVector< string > > & meshLevelNode )
     {
       if( m_objectType == ObjectTypes::elems )
       {

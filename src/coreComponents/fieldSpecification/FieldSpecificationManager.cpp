@@ -73,12 +73,12 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
   this->forSubGroups< FieldSpecificationBase >( [&] ( FieldSpecificationBase const & fs )
   {
     localIndex isFieldNameFound = 0;
-    // std::map from set name to a flag (1 if targetSet empty, 0 otherwise)
-    std::map< string, localIndex > isTargetSetEmpty;
-    // std::map from set name to a flag (1 if targetSet has been created, 0 otherwise)
-    std::map< string, localIndex > isTargetSetCreated;
+    // map from set name to a flag (1 if targetSet empty, 0 otherwise)
+    map< string, localIndex > isTargetSetEmpty;
+    // map from set name to a flag (1 if targetSet has been created, 0 otherwise)
+    map< string, localIndex > isTargetSetCreated;
 
-    // Step 1: collect all the set names in a std::map (this is made necessary by the "apply" loop pattern
+    // Step 1: collect all the set names in a map (this is made necessary by the "apply" loop pattern
 
     string_array const & setNames = fs.getSetNames();
     for( size_t i = 0; i < setNames.size(); ++i )
@@ -169,7 +169,7 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
     // if all sets are missing, we stop the simulation.
     if( areAllSetsMissing )
     {
-      // loop again over the std::map to collect the set names
+      // loop again over the map to collect the set names
       string_array missingSetNames;
       for( auto const & stdMapEntry : isTargetSetCreated )
       {

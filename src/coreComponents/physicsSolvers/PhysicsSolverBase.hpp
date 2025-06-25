@@ -896,7 +896,7 @@ public:
    * @brief accessor for m_meshTargets
    * @return reference to m_meshTargets
    */
-  std::map< std::pair< string, string >, string_array > const & getMeshTargets() const
+  map< std::pair< string, string >, string_array > const & getMeshTargets() const
   {
     return m_meshTargets;
   }
@@ -1055,14 +1055,14 @@ protected:
   std::function< void( CRSMatrix< real64, globalIndex >, array1d< real64 > ) > m_assemblyCallback;
 
   /// Timers for the aggregate profiling of the solver
-  std::map< std::string, std::chrono::system_clock::duration > m_timers;
+  map< std::string, std::chrono::system_clock::duration > m_timers;
 
 private:
   /// List of names of regions the solver will be applied to
   string_array m_targetRegionNames;
 
   /// Map containing the array of target regions (value) for each MeshBody (key).
-  std::map< std::pair< string, string >, string_array > m_meshTargets;
+  map< std::pair< string, string >, string_array > m_meshTargets;
 
   /**
    * @brief This function sets constitutive name fields on an

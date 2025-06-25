@@ -33,7 +33,7 @@ struct NewObjectLists
 {
   std::set< localIndex > newNodes;
   std::set< localIndex > newEdges;
-  std::map< std::pair< localIndex, localIndex >, std::set< localIndex > > newElements;
+  map< std::pair< localIndex, localIndex >, std::set< localIndex > > newElements;
 
   void insert( NewObjectLists const & newObjects )
   {

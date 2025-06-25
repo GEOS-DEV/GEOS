@@ -1135,7 +1135,7 @@ bool CompositionalMultiphaseFVM::validateFaceDirichletBC( DomainPartition & doma
 
     // maps to check consistent application of BC
     // maps: setName (-> numComps)
-    std::map< string, ComponentMask< MAX_NC > > bcPresCompStatusMap; // check that pressure/comp are present/consistent
+    map< string, ComponentMask< MAX_NC > > bcPresCompStatusMap; // check that pressure/comp are present/consistent
     set< string > bcTempStatusMap; // check that temperature is present/consistent
 
     // 1. Check pressure Dirichlet BCs

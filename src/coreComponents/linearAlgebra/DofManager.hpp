@@ -184,7 +184,7 @@ public:
   void addField( string const & fieldName,
                  FieldLocation location,
                  integer components,
-                 std::map< std::pair< string, string >, string_array > const & regions );
+                 map< std::pair< string, string >, string_array > const & regions );
 
   /**
    * @brief Set the local reodering of the dof numbers
@@ -244,7 +244,7 @@ public:
   void addCoupling( string const & rowFieldName,
                     string const & colFieldName,
                     Connector connectivity,
-                    std::map< std::pair< string, string >, string_array > const & regions,
+                    map< std::pair< string, string >, string_array > const & regions,
                     bool symmetric = true );
 
   /**
@@ -642,7 +642,7 @@ private:
   stdVector< FieldDescription > m_fields;
 
   /// Table of connector types within and between fields
-  std::map< std::pair< localIndex, localIndex >, CouplingDescription > m_coupling;
+  map< std::pair< localIndex, localIndex >, CouplingDescription > m_coupling;
 
   /// Flag indicating that DOFs have been reordered rank-wise.
   bool m_reordered = false;

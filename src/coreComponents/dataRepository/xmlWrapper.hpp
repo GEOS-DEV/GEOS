@@ -183,9 +183,9 @@ public:
    */
   string const * getOriginalBuffer( string const & filePath ) const;
   /**
-   * @return a std::map containing the original buffers of the document and its includes, indexed by file path.
+   * @return a map containing the original buffers of the document and its includes, indexed by file path.
    */
-  std::map< string, string > const & getOriginalBuffers() const;
+  map< string, string > const & getOriginalBuffers() const;
   /**
    * @return If loadFile() has been loaded, returns the path of the source file.
    * If another load method has been called, it returns a generated unique value.
@@ -262,7 +262,7 @@ private:
   pugi::xml_document pugiDocument;
 
   /// Used to retrieve node positions as pugixml buffer is private and processed.
-  std::map< string, string > m_originalBuffers;
+  map< string, string > m_originalBuffers;
   /// @see getFilePath()
   string m_rootFilePath;
 };

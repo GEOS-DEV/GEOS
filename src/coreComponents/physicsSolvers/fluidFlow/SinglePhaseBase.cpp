@@ -415,7 +415,7 @@ void SinglePhaseBase::computeHydrostaticEquilibrium( DomainPartition & domain )
 
   // Step 1: count individual equilibriums (there may be multiple ones)
 
-  std::map< string, localIndex > equilNameToEquilId;
+  map< string, localIndex > equilNameToEquilId;
   localIndex equilCounter = 0;
 
   fsManager.forSubGroups< EquilibriumInitialCondition >( [&] ( EquilibriumInitialCondition const & bc )
@@ -949,7 +949,7 @@ void SinglePhaseBase::applySourceFluxBC( real64 const time_n,
 
   // Step 1: count individual source flux boundary conditions
 
-  std::map< string, localIndex > bcNameToBcId;
+  map< string, localIndex > bcNameToBcId;
   localIndex bcCounter = 0;
 
   fsManager.forSubGroups< SourceFluxBoundaryCondition >( [&] ( SourceFluxBoundaryCondition const & bc )

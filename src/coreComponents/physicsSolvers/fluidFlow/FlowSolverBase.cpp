@@ -630,7 +630,7 @@ void FlowSolverBase::updatePorosityAndPermeability( SurfaceElementSubRegion & su
 
 
 void FlowSolverBase::findMinMaxElevationInEquilibriumTarget( DomainPartition & domain, // cannot be const...
-                                                             std::map< string, localIndex > const & equilNameToEquilId,
+                                                             map< string, localIndex > const & equilNameToEquilId,
                                                              arrayView1d< real64 > const & maxElevation,
                                                              arrayView1d< real64 > const & minElevation ) const
 {
@@ -683,7 +683,7 @@ void FlowSolverBase::findMinMaxElevationInEquilibriumTarget( DomainPartition & d
 void FlowSolverBase::computeSourceFluxSizeScalingFactor( real64 const & time,
                                                          real64 const & dt,
                                                          DomainPartition & domain, // cannot be const...
-                                                         std::map< string, localIndex > const & bcNameToBcId,
+                                                         map< string, localIndex > const & bcNameToBcId,
                                                          arrayView1d< globalIndex > const & bcAllSetsSize ) const
 {
   FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
@@ -750,7 +750,7 @@ void FlowSolverBase::saveAquiferConvergedState( real64 const & time,
 
   // Step 1: count individual aquifers
 
-  std::map< string, localIndex > aquiferNameToAquiferId;
+  map< string, localIndex > aquiferNameToAquiferId;
   localIndex aquiferCounter = 0;
 
   fsManager.forSubGroups< AquiferBoundaryCondition >( [&] ( AquiferBoundaryCondition const & bc )

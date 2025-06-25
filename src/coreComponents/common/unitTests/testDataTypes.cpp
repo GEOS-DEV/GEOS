@@ -44,7 +44,7 @@ TEST( testDataTypes, testBoundChecking )
     }
   }, std::out_of_range );
 
-  internal::StdMapWrapper< std::map< integer, integer >,
+  internal::StdMapWrapper< map< integer, integer >,
                            true > mapBoundsChecking{{0, 1}};
   EXPECT_THROW( {
     try

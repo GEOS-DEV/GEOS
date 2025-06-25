@@ -1052,7 +1052,7 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium( DomainPartition
 
   // Step 1: count individual equilibriums (there may be multiple ones)
 
-  std::map< string, localIndex > equilNameToEquilId;
+  map< string, localIndex > equilNameToEquilId;
   localIndex equilCounter = 0;
 
   fsManager.forSubGroups< EquilibriumInitialCondition >( [&] ( EquilibriumInitialCondition const & bc )
@@ -1531,7 +1531,7 @@ void CompositionalMultiphaseBase::applySourceFluxBC( real64 const time,
 
   // Step 1: count individual source flux boundary conditions
 
-  std::map< string, localIndex > bcNameToBcId;
+  map< string, localIndex > bcNameToBcId;
   localIndex bcCounter = 0;
 
   fsManager.forSubGroups< SourceFluxBoundaryCondition >( [&] ( SourceFluxBoundaryCondition const & bc )
@@ -1696,10 +1696,10 @@ bool CompositionalMultiphaseBase::validateDirichletBC( DomainPartition & domain,
                                                                MeshLevel & mesh,
                                                                string_array const & )
   {
-    // std::map: regionName -> subRegionName -> setName -> numComps to check pressure/comp are present consistent
-    std::map< string, std::map< string, std::map< string, ComponentMask< MAX_NC > > > > bcPresCompStatusMap;
-    // std::map: regionName -> subRegionName -> setName check to that temperature is present/consistent
-    std::map< string, std::map< string, set< string > > > bcTempStatusMap;
+    // map: regionName -> subRegionName -> setName -> numComps to check pressure/comp are present consistent
+    map< string, map< string, map< string, ComponentMask< MAX_NC > > > > bcPresCompStatusMap;
+    // map: regionName -> subRegionName -> setName check to that temperature is present/consistent
+    map< string, map< string, set< string > > > bcTempStatusMap;
 
     // 1. Check pressure Dirichlet BCs
     fsManager.apply< ElementSubRegionBase >( time,
