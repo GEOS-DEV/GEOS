@@ -79,6 +79,8 @@ struct HydrostaticPressureKernel
 
     bool isSinglePhaseFlow = true;
 
+    std::cout << "\nTest Line" << std::endl;
+
     // Step 1: compute the hydrostatic pressure at the current elevation
 
     real64 const gravCoef = gravVector[2] * ( refElevation - newElevation );
