@@ -208,16 +208,17 @@ if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
   echo "Running the integrated tests has been requested."
   # We install the python environment required by ATS to run the integrated tests.
   or_die apt-get update
-  or_die apt-get install -y python3.10-venv python3-dev python-is-python3
+  or_die apt-get install -y virtualenv python3-dev python-is-python3
   ATS_PYTHON_HOME=/tmp/run_integrated_tests_virtualenv
-  
-  # Python 3.10+ deprecates distutils, and virtualenv may still rely on it, switch to using the built-in venv module
-  or_die python3 -m venv ${ATS_PYTHON_HOME}
-  # Force Install setuptools and wheel After Environment Creation
-  source ${ATS_PYTHON_HOME}/bin/activate
-  pip install --upgrade pip setuptools wheel
+  or_die virtualenv ${ATS_PYTHON_HOME}
 
-  python3 -m pip cache purge
+  # Force setuptools to use its own bundled distutils instead of the system's.
+  # This is a direct fix for the AssertionError related to /usr/lib/python3.10/distutils/core.py
+  export SETUPTOOLS_USE_DISTUTILS=local
+
+  or_die ${ATS_PYTHON_HOME}/bin/python3 -m pip install --upgrade pip setuptools
+
+  ${ATS_PYTHON_HOME}/bin/python3 -m pip cache purge
 
   # Setup a temporary directory to hold tests
   tempdir=$(mktemp -d)
