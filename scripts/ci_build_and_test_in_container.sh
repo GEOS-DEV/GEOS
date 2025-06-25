@@ -212,6 +212,11 @@ if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
   ATS_PYTHON_HOME=/tmp/run_integrated_tests_virtualenv
   or_die virtualenv ${ATS_PYTHON_HOME}
 
+  # Upgrade pip and setuptools inside the virtualenv to prevent distutils conflicts.
+  # We use the full path to the venv's python to ensure we're modifying the correct environment.
+  echo "Upgrading Python packaging tools in the virtual environment..."
+  or_die ${ATS_PYTHON_HOME}/bin/python3 -m pip install --upgrade pip setuptools
+
   python3 -m pip cache purge
 
   # Setup a temporary directory to hold tests
