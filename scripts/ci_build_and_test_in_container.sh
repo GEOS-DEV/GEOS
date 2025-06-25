@@ -210,12 +210,12 @@ if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
   or_die apt-get update
   or_die apt-get install -y virtualenv python3-dev python-is-python3
   ATS_PYTHON_HOME=/tmp/run_integrated_tests_virtualenv
-  or_die virtualenv ${ATS_PYTHON_HOME}
-
-  # Upgrade pip and setuptools inside the virtualenv to prevent distutils conflicts.
-  # We use the full path to the venv's python to ensure we're modifying the correct environment.
-  echo "Upgrading Python packaging tools in the virtual environment..."
-  or_die ${ATS_PYTHON_HOME}/bin/python3 -m pip install --upgrade pip setuptools
+  
+  # Python 3.10+ deprecates distutils, and virtualenv may still rely on it, switch to using the built-in venv module
+  or_die python3 -m venv ${ATS_PYTHON_HOME}
+  # Force Install setuptools and wheel After Environment Creation
+  source ${ATS_PYTHON_HOME}/bin/activate
+  pip install --upgrade pip setuptools wheel
 
   python3 -m pip cache purge
 
