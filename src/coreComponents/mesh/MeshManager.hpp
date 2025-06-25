@@ -88,7 +88,7 @@ public:
                             string const & regionName,
                             ElementSubRegionBase & subRegion,
                             MeshGeneratorBase::Block block,
-                            map< string, string > const & fieldsMapping,
+                            std::map< string, string > const & fieldsMapping,
                             FieldIdentifiers & fieldsToBeSync );
 
 private:

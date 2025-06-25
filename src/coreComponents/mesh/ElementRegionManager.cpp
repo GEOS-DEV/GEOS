@@ -835,7 +835,7 @@ void ElementRegionManager::outputObjectConnectivity() const
 
           printf( "\n  ElementToNodes map ( global nodes sorted by global elems):\n" );
           map< globalIndex, localIndex > const sortedGlobalToLocalMap( elemGlobalToLocal.begin(),
-                                                                          elemGlobalToLocal.end());
+                                                                       elemGlobalToLocal.end());
           for( auto indexPair : sortedGlobalToLocalMap )
           {
             globalIndex const gk = indexPair.first;

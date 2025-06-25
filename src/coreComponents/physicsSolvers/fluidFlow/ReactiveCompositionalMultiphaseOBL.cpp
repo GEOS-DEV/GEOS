@@ -794,7 +794,7 @@ void ReactiveCompositionalMultiphaseOBL::applySourceFluxBC( real64 const time,
 
   // Step 1: count individual source flux boundary conditions
 
-  map< string, localIndex > bcNameToBcId;
+  std::map< string, localIndex > bcNameToBcId;
   localIndex bcCounter = 0;
 
   fsManager.forSubGroups< SourceFluxBoundaryCondition >( [&] ( SourceFluxBoundaryCondition const & bc )
@@ -936,7 +936,7 @@ bool ReactiveCompositionalMultiphaseOBL::validateDirichletBC( DomainPartition & 
   {
     // map to check consistent application of BC
     // this is used as bcStatusMap[regionName][subRegionName][setName] which returns the corresponding ComponentMask (if is has been set)
-    map< string, map< string, map< string, ComponentMask< MAX_NC > > > > bcStatusMap;
+    std::map< string, std::map< string, std::map< string, ComponentMask< MAX_NC > > > > bcStatusMap;
     integer const numCompWithEnergy = numComp + enableEnergyBalance;
 
     // 1. Check pressure Dirichlet BCs

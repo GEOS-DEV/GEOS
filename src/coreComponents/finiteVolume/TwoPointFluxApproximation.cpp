@@ -884,7 +884,7 @@ void TwoPointFluxApproximation::computeAquiferStencil( DomainPartition & domain,
 
   // Step 1: count individual aquifers
 
-  map< string, localIndex > aquiferNameToAquiferId;
+  std::map< string, localIndex > aquiferNameToAquiferId;
   localIndex aquiferCounter = 0;
 
   fsManager.forSubGroups< AquiferBoundaryCondition >( [&] ( AquiferBoundaryCondition const & bc )

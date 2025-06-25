@@ -87,7 +87,7 @@ void CommunicationTools::assignGlobalIndices( ObjectManagerBase & manager,
   // such that the key is the lowest global index of the composition object that make up this object.
   // The value of the map is a pair, with the array being the remaining composition object global indices,
   // and the second being the global index of the object itself.
-  map< globalIndex, stdVector< std::pair< stdVector< globalIndex >, localIndex > > > indexByFirstCompositionIndex;
+  std::map< globalIndex, stdVector< std::pair< stdVector< globalIndex >, localIndex > > > indexByFirstCompositionIndex;
 
   localIndex bufferSize = 0;
   for( localIndex a = 0; a < objectToCompositionObject.size(); ++a )
@@ -170,7 +170,7 @@ void CommunicationTools::assignGlobalIndices( ObjectManagerBase & manager,
   // this baby is an Array (for each neighbor) of maps, with the key of lowest composition index, and a value
   // containing an array containing the std::pairs of the remaining composition indices, and the globalIndex of the
   // object.
-  stdVector< map< globalIndex, stdVector< std::pair< stdVector< globalIndex >, globalIndex > > > > neighborCompositionObjects( neighbors.size() );
+  stdVector< std::map< globalIndex, stdVector< std::pair< stdVector< globalIndex >, globalIndex > > > > neighborCompositionObjects( neighbors.size() );
 
   for( std::size_t count=0; count<neighbors.size(); ++count )
   {
@@ -293,7 +293,7 @@ void CommunicationTools::assignNewGlobalIndices( ObjectManagerBase & manager,
 
 void
 CommunicationTools::assignNewGlobalIndices( ElementRegionManager & elementManager,
-                                            map< std::pair< localIndex, localIndex >, std::set< localIndex > > const & newElems )
+                                            std::map< std::pair< localIndex, localIndex >, std::set< localIndex > > const & newElems )
 {
   localIndex numberOfNewObjectsHere = 0;
   for( auto const & iter : newElems )
@@ -446,7 +446,7 @@ CommunicationTools::
  * @param mpiRankToNodes For each involved mpi rank, all the nodes that need to be sent.
  * @return The sanitized mapping: only the ranks with the minimal MPI rank will be in charged of sending the proper nodes.
  */
-map< int, array1d< globalIndex > > reorganizeRequestedNodes( map< int, array1d< globalIndex > > const & mpiRankToNodes )
+std::map< int, array1d< globalIndex > > reorganizeRequestedNodes( std::map< int, array1d< globalIndex > > const & mpiRankToNodes )
 {
   class MinInt
   {
@@ -466,9 +466,9 @@ private:
     int m_value = std::numeric_limits< int >::max();
   };
 
-  map< int, array1d< globalIndex > > minMpiRankToNodes;  // Will be returned.
+  std::map< int, array1d< globalIndex > > minMpiRankToNodes;  // Will be returned.
 
-  map< globalIndex, MinInt > nodeToMpiRank;
+  std::map< globalIndex, MinInt > nodeToMpiRank;
   for( auto const & [mpiRank, nodes]: mpiRankToNodes )
   {
     for( globalIndex const & gi: nodes )
@@ -496,7 +496,7 @@ void CommunicationTools::findMatchedPartitionBoundaryNodes( NodeManager & nodeMa
   auto const & g2l = nodeManager.globalToLocalMap();
   integer const numNeighbors = LvArray::integerConversion< integer >( allNeighbors.size() );
 
-  map< int, array1d< globalIndex > > requestedMatchesMap;  // The key of the map is the MPI rank of the `neighbor`, not the index.
+  std::map< int, array1d< globalIndex > > requestedMatchesMap;  // The key of the map is the MPI rank of the `neighbor`, not the index.
 
   {
     array1d< array1d< globalIndex > > const neighborBoundaryNodes = this->buildNeighborPartitionBoundaryObjects( nodeManager, allNeighbors );
@@ -700,7 +700,7 @@ void fixReceiveLists( ObjectManagerBase & objectManager,
     stdVector< localIndex > ghostsToFix;
 
     /// Map from owning MPI rank to an array of local objects we need to fix.
-    std::unordered_map< int, stdVector< localIndex > > ghostsBySecondNeighbor;
+    std::map< int, stdVector< localIndex > > ghostsBySecondNeighbor;
 
     arrayView1d< integer > const & ghostRank = objectManager.ghostRank();
 

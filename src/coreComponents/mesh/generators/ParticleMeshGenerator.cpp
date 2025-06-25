@@ -177,7 +177,7 @@ void ParticleMeshGenerator::fillParticleBlockManager( ParticleBlockManager & par
 
   // Distribute particle information to particle blocks
   map< std::string, stdVector< int > > indexMap; // This will keep track of the indices of particleData associated with each particle
-                                                    // block. It's populated in the loop that checks for which particles belong to a block.
+                                                 // block. It's populated in the loop that checks for which particles belong to a block.
   map< std::string, int > sizeMap;  // This keeps track of the size of each particle block so we can resize the ParticleRegions later
   for( auto & particleBlockName : m_blockNames )
   {
