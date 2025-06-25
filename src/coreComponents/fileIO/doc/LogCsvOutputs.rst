@@ -387,28 +387,28 @@ The files provide the following informations:
 
 - **For** ``SinglePhaseWell`` **you have:**
 
-  - **Total reservoir volumetric rate [rm3/s]:**
+  - **Total reservoir volumetric rate [rm³/s]:**
 
     | The total volume flow at reservoir conditions (pressure, temperature, etc.). 
     | It is enabled if ``useSurfaceCondition="0"`` on the ``WellControls``.
 
-  - **Total surface volumetric rate [sm3/s]:**
+  - **Total surface volumetric rate [sm³/s]:**
 
     | The total volume flow at surface conditions. 
     | It is enabled if ``useSurfaceCondition="1"`` on the ``WellControls``.
     
 - **For** ``CompositionalMultiphaseWell`` **you have:**
 
-  - **Total reservoir volumetric rate [rm3/s]:**
+  - **Total reservoir volumetric rate [rm³/s]:**
 
     The total volume flow at reservoir conditions (pressure, temperature, etc.). 
 
-  - **Phase** ``i`` **reservoir volumetric rate [rm3/s]:**
+  - **Phase** ``i`` **reservoir volumetric rate [rm³/s]:**
 
     | The volume flow rate of phase ``i`` (like oil, gas, water) at reservoir conditions.
     | It is enabled if ``useSurfaceCondition="0"`` on the ``WellControls``.
 
-  - **Phase** ``i`` **surface volumetric rate [sm3/s]:**
+  - **Phase** ``i`` **surface volumetric rate [sm³/s]:**
 
     The volume flow of phase ``i`` at surface conditions.
     It is enabled if ``useSurfaceCondition="1"`` on the ``WellControls``.
