@@ -374,7 +374,8 @@ The files provide the following informations:
 
 - **dt [s]:**
 
-  The time interval used for this step.
+  | The time interval used for this step.
+  | You do not have this information for ``SinglePhaseWell``. 
 
 - **BHP [Pa]:**
 
@@ -383,20 +384,34 @@ The files provide the following informations:
 - **Total rate [kg/s]:**
 
   The total mass flow produced or injected by the well at the current time. 
-  
-- **Total reservoir volumetric rate [rm3/s]:**
 
-  The total volume flow at reservoir conditions (pressure, temperature, etc.). 
+- **For** ``SinglePhaseWell`` **you have:**
 
-- **Phase** ``i`` **reservoir volumetric rate [rm3/s]:**
+  - **Total reservoir volumetric rate [rm3/s]:**
 
-  | The volume flow rate of phase ``i`` (like oil, gas, water) at reservoir conditions.
-  | It is enabled if ``useSurfaceCondition="0"`` on the ``WellControls``.
+    | The total volume flow at reservoir conditions (pressure, temperature, etc.). 
+    | It is enabled if ``useSurfaceCondition="0"`` on the ``WellControls``.
 
-- **Phase** ``i`` **surface volumetric rate [sm3/s]:**
+  - **Total surface volumetric rate [sm3/s]:**
 
-  The volume flow of phase ``i`` at surface conditions.
-  It is enabled if ``useSurfaceCondition="1"`` on the ``WellControls``.
+    | The total volume flow at surface conditions. 
+    | It is enabled if ``useSurfaceCondition="1"`` on the ``WellControls``.
+    
+- **For** ``CompositionalMultiphaseWell`` **you have:**
+
+  - **Total reservoir volumetric rate [rm3/s]:**
+
+    The total volume flow at reservoir conditions (pressure, temperature, etc.). 
+
+  - **Phase** ``i`` **reservoir volumetric rate [rm3/s]:**
+
+    | The volume flow rate of phase ``i`` (like oil, gas, water) at reservoir conditions.
+    | It is enabled if ``useSurfaceCondition="0"`` on the ``WellControls``.
+
+  - **Phase** ``i`` **surface volumetric rate [sm3/s]:**
+
+    The volume flow of phase ``i`` at surface conditions.
+    It is enabled if ``useSurfaceCondition="1"`` on the ``WellControls``.
 
 
 | The output can be saved in the log file and/or a CSV file if these options are specified 
