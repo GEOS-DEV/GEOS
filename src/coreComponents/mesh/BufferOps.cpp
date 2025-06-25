@@ -314,7 +314,7 @@ localIndex Unpack( buffer_unit_type const * & buffer,
     stdVector<localIndex> existingGlobalIndices(numSubIndicesUnpacked);
     stdVector<int> mapEntryProcessed(numSubIndicesUnpacked);
 
-    // read in all the recieved indices
+    // read in all the received indices
     for( localIndex b=0; b<numSubIndicesUnpacked; ++b )
     {
       mapEntryProcessed[b] = false;
@@ -340,7 +340,7 @@ localIndex Unpack( buffer_unit_type const * & buffer,
     }
 
 
-    // now process the recieved indices
+    // now process the received indices
     for( localIndex b=0; b<numSubIndicesUnpacked; ++b )
     {
       localIndex const recvElemRegionIndex = recvElemRegionIndices[b];
@@ -360,7 +360,7 @@ localIndex Unpack( buffer_unit_type const * & buffer,
       // else peform unique insertions...without reordering?? I am not sure this is what we would want
       else
       {
-        // only perform insertions if the recieved indices are valid
+        // only perform insertions if the received indices are valid
         if( recvElemRegionIndex!=-1 && recvElemSubRegionIndex!=-1 && globalElementIndex!=-1 )
         {
           // loop over existing indices to figure out if we are to do an insertion
@@ -371,7 +371,7 @@ localIndex Unpack( buffer_unit_type const * & buffer,
             localIndex & elemIndex = var.m_toElementIndex[index][c];
             //globalIndex & globalElemIndex = localToGlobalMap[elemIndex];
             
-            // if the recieved "b" indices match the existing "c" indices, 
+            // if the received "b" indices match the existing "c" indices, 
             // do nothing and break out of "c" loop
             if( ( elemRegionIndex==recvElemRegionIndex &&
                   elemSubRegionIndex==recvElemSubRegionIndex &&
