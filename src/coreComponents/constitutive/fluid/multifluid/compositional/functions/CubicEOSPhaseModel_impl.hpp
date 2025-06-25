@@ -34,38 +34,6 @@ namespace compositional
 {
 
 template< typename EOS_TYPE >
-template< typename T, bool DERIVATIVES >
-GEOS_HOST_DEVICE
-CubicEOSPhaseModel< EOS_TYPE >::
-StackVariables_Impl< T, DERIVATIVES >::StackVariables_Impl( integer const numComps,
-                                                            arraySlice2d< real64 const > const bip ):
-  kij( bip ),
-  m_data( 2, numComps ),
-  aic( m_data[0] ),
-  bic( m_data[1] )
-{}
-
-template< typename EOS_TYPE >
-template< typename T >
-GEOS_HOST_DEVICE
-CubicEOSPhaseModel< EOS_TYPE >::
-StackVariables_Impl< T, true >::StackVariables_Impl( integer const numComps,
-                                                     arraySlice2d< real64 const > const bip,
-                                                     arraySlice2d< real64 const > const dbip_dT ):
-  StackVariables_Impl< T, false >( numComps, bip ),
-  dkij_dT( dbip_dT ),
-  m_derivativeData( 8, numComps+2 ),
-  daic_dp( m_derivativeData[0] ),
-  dbic_dp( m_derivativeData[1] ),
-  daic_dt( m_derivativeData[2] ),
-  dbic_dt( m_derivativeData[3] ),
-  d2aic_dt2( m_derivativeData[4] ),
-  d2bic_dt2( m_derivativeData[5] ),
-  daMixture( m_derivativeData[6] ),
-  dbMixture( m_derivativeData[7] )
-{}
-
-template< typename EOS_TYPE >
 template< bool DERIVATIVES >
 GEOS_HOST_DEVICE
 void
@@ -78,11 +46,11 @@ initialiseStack( integer const numComps,
 {
   for( integer ic = 0; ic < numComps; ++ic )
   {
-    computePureCoefficients( ic,
-                             pressure,
-                             temperature,
-                             componentProperties,
-                             stack );
+    computePureCoefficients< DERIVATIVES >( ic,
+                                            pressure,
+                                            temperature,
+                                            componentProperties,
+                                            stack );
   }
 }
 
@@ -111,9 +79,7 @@ computeLogFugacityCoefficients( integer const numComps,
                    stack );
 
   // Step 2: Compute the mixture coefficients
-  computeMixtureCoefficients( numComps,
-                              composition,
-                              stack );
+  computeMixtureCoefficients( numComps, composition, stack );
 
   // Step 3: Compute the compressibility factor (Z)
   computeCompressibilityFactor( numComps,
@@ -157,32 +123,30 @@ computeLogFugacityCoefficientsAndDerivs( integer const numComps,
   integer sizes[2] = {0, 0};
   arraySlice2d< real64 const > derivs( nullptr, sizes, sizes );
   StackVariables< true > stack( numComps, binaryInteractionCoefficients, derivs.toSliceConst() );
-  initialiseStack( numComps,
-                   pressure,
-                   temperature,
-                   componentProperties,
-                   stack );
+  initialiseStack< true >( numComps,
+                           pressure,
+                           temperature,
+                           componentProperties,
+                           stack );
 
   // Step 2: Compute the mixture coefficients
-  computeMixtureCoefficients( numComps,
-                              composition,
-                              stack );
+  computeMixtureCoefficients< USD, true >( numComps, composition, stack );
 
   // Step 3: Compute the compressibility factor (Z)
-  computeCompressibilityFactor( numComps,
-                                composition,
-                                stack,
-                                compressibilityFactor,
-                                compressibilityFactorDerivs.toSlice() );
+  computeCompressibilityFactor< USD, true >( numComps,
+                                             composition,
+                                             stack,
+                                             compressibilityFactor,
+                                             compressibilityFactorDerivs.toSlice() );
 
   // Step 4: Use mixture coefficients and compressibility factor to update fugacity coefficients
-  computeLogFugacityCoefficients( numComps,
-                                  composition,
-                                  stack,
-                                  compressibilityFactor,
-                                  compressibilityFactorDerivs.toSliceConst(),
-                                  logFugacityCoefficients,
-                                  logFugacityCoefficientDerivs );
+  computeLogFugacityCoefficients< USD, true >( numComps,
+                                               composition,
+                                               stack,
+                                               compressibilityFactor,
+                                               compressibilityFactorDerivs.toSliceConst(),
+                                               logFugacityCoefficients,
+                                               logFugacityCoefficientDerivs );
 }
 
 template< typename EOS_TYPE >
@@ -208,9 +172,7 @@ computeCompressibilityFactor( integer const numComps,
                    stack );
 
   // Step 2: Compute the mixture coefficients
-  computeMixtureCoefficients( numComps,
-                              composition,
-                              stack );
+  computeMixtureCoefficients( numComps, composition, stack );
 
   // Step 3: Compute the compressibility factor (Z)
   computeCompressibilityFactor( numComps,
@@ -239,23 +201,21 @@ computeCompressibilityFactorAndDerivs( integer const numComps,
   integer sizes[2] = {0, 0};
   arraySlice2d< real64 const > derivs( nullptr, sizes, sizes );
   StackVariables< true > stack( numComps, binaryInteractionCoefficients, derivs );
-  initialiseStack( numComps,
-                   pressure,
-                   temperature,
-                   componentProperties,
-                   stack );
+  initialiseStack< true >( numComps,
+                           pressure,
+                           temperature,
+                           componentProperties,
+                           stack );
 
   // Step 2: Compute the mixture coefficients
-  computeMixtureCoefficients( numComps,
-                              composition,
-                              stack );
+  computeMixtureCoefficients< USD, true >( numComps, composition, stack );
 
   // Step 3: Compute the compressibility factor (Z)
-  computeCompressibilityFactor( numComps,
-                                composition,
-                                stack,
-                                compressibilityFactor,
-                                compressibilityFactorDerivs );
+  computeCompressibilityFactor< USD, true >( numComps,
+                                             composition,
+                                             stack,
+                                             compressibilityFactor,
+                                             compressibilityFactorDerivs );
 }
 
 template< typename EOS_TYPE >
@@ -477,7 +437,7 @@ computeCompressibilityFactor( integer const numComps,
                               arraySlice1d< real64 const, USD > const & composition,
                               StackVariables< DERIVATIVES > const & stack,
                               real64 & compressibilityFactor,
-                              typename StackVariables< DERIVATIVES >::DerivativeType<> const & compressibilityFactorDerivs,
+                              StackDerivativeType< 1, DERIVATIVES > const & compressibilityFactorDerivs,
                               SelectedRoot const selectedRoot )
 {
   // a Z^3 + b Z^2 + c Z + d = 0
@@ -586,9 +546,9 @@ computeLogFugacityCoefficients( integer const numComps,
                                 arraySlice1d< real64 const, USD > const & composition,
                                 StackVariables< DERIVATIVES > const & stack,
                                 real64 const & compressibilityFactor,
-                                typename StackVariables< DERIVATIVES >::ConstDerivativeType<> const & compressibilityFactorDerivs,
+                                StackConstDerivativeType< 1, DERIVATIVES > const & compressibilityFactorDerivs,
                                 arraySlice1d< real64 > const & logFugacityCoefficients,
-                                typename StackVariables< DERIVATIVES >::DerivativeType< 2 > const & logFugacityCoefficientDerivs )
+                                StackDerivativeType< 2, DERIVATIVES > const & logFugacityCoefficientDerivs )
 {
   constexpr integer maxNumComp = StackVariables< DERIVATIVES >::maxNumComp;
   StackArray< real64, 1, maxNumComp > ki( numComps );

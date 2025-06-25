@@ -60,7 +60,10 @@ public:
   // Compares the calculated molar density against the expected value from PVT package
   void testMolarDensity( TestData< NC > const & data )
   {
-    const auto [pressure, temperature, composition] = getInputData( data );
+    real64 const pressure = std::get< 0 >( data );
+    real64 const temperature = std::get< 1 >( data );
+    array1d< real64 > composition;
+    TestFluid< NC >::createArray( composition, std::get< 2 >( data ));
     real64 const expectedMolarDensity = std::get< 3 >( data );
 
     real64 const molarDensity = computeMolarDensity( pressure,
@@ -73,7 +76,10 @@ public:
   // finite difference values
   void testMolarDensityDerivative( TestData< NC > const & data )
   {
-    const auto [pressure, temperature, composition] = getInputData( data );
+    real64 const pressure = std::get< 0 >( data );
+    real64 const temperature = std::get< 1 >( data );
+    array1d< real64 > composition;
+    TestFluid< NC >::createArray( composition, std::get< 2 >( data ));
     real64 constexpr molarDensityScale = 1.0e-3;
 
     real64 molarDensity = 0.0;
@@ -115,7 +121,10 @@ public:
   // Compares the calculated mass density against the expected value from PVT package
   void testMassDensity( TestData< NC > const & data )
   {
-    const auto [pressure, temperature, composition] = getInputData( data );
+    real64 const pressure = std::get< 0 >( data );
+    real64 const temperature = std::get< 1 >( data );
+    array1d< real64 > composition;
+    TestFluid< NC >::createArray( composition, std::get< 2 >( data ));
     real64 const expectedMassDensity = std::get< 4 >( data );
 
     real64 const massDensity = computeMassDensity( pressure,
@@ -128,7 +137,10 @@ public:
   // finite difference values
   void testMassDensityDerivative( TestData< NC > const & data )
   {
-    const auto [pressure, temperature, composition] = getInputData( data );
+    real64 const pressure = std::get< 0 >( data );
+    real64 const temperature = std::get< 1 >( data );
+    array1d< real64 > composition;
+    TestFluid< NC >::createArray( composition, std::get< 2 >( data ));
     real64 constexpr massDensityScale = 1.0e-2;
 
     real64 massDensity = 0.0;
@@ -168,16 +180,6 @@ public:
   }
 
 private:
-  std::tuple< real64 const, real64 const, array1d< real64 > >
-  getInputData( TestData< NC > const & data )
-  {
-    real64 const pressure = std::get< 0 >( data );
-    real64 const temperature = std::get< 1 >( data );
-    array1d< real64 > composition;
-    TestFluid< NC >::createArray( composition, std::get< 2 >( data ));
-    return {pressure, temperature, composition};
-  }
-
   real64 computeMolarDensity( real64 const pressure, real64 const temperature,
                               arraySlice1d< real64 const > const & composition ) const
   {

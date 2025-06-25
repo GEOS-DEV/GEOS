@@ -89,6 +89,7 @@ set( constitutive_headers
      fluid/multifluid/compositional/functions/CompositionalProperties.hpp
      fluid/multifluid/compositional/functions/CubicEOSPhaseModel_impl.hpp
      fluid/multifluid/compositional/functions/CubicEOSPhaseModel.hpp
+     fluid/multifluid/compositional/functions/EOSStackVariables.hpp
      fluid/multifluid/compositional/functions/FlashData.hpp
      fluid/multifluid/compositional/functions/FugacityCalculator.hpp
      fluid/multifluid/compositional/functions/KValueInitialization.hpp

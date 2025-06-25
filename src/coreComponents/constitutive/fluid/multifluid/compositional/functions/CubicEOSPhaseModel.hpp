@@ -20,10 +20,9 @@
 #ifndef GEOS_CONSTITUTIVE_FLUID_MULTIFLUID_COMPOSITIONAL_FUNCTIONS_CUBICEOSPHASEMODEL_HPP_
 #define GEOS_CONSTITUTIVE_FLUID_MULTIFLUID_COMPOSITIONAL_FUNCTIONS_CUBICEOSPHASEMODEL_HPP_
 
-#include "common/DataTypes.hpp"
+#include "EOSStackVariables.hpp"
 #include "constitutive/fluid/multifluid/Layouts.hpp"
 #include "constitutive/fluid/multifluid/compositional/parameters/ComponentProperties.hpp"
-#include "constitutive/fluid/multifluid/MultiFluidConstants.hpp"
 
 namespace geos
 {
@@ -72,6 +71,7 @@ template< typename EOS_TYPE >
 struct CubicEOSPhaseModel
 {
   using Deriv = geos::constitutive::multifluid::DerivativeOffset;
+  using CubicModel = CubicEOSPhaseModel< EOS_TYPE >;
 
   // Enumeration for selected root
   enum class SelectedRoot : int
@@ -81,60 +81,14 @@ struct CubicEOSPhaseModel
     MAXIMUM = 2
   };
 
-  template< typename T, bool DERIVATIVES >
-  struct StackVariables_Impl
-  {
-    static integer constexpr maxNumComp = MultiFluidConstants::MAX_NUM_COMPONENTS;
-
-    template< integer DIM=1 >
-    using DerivativeType = T *;
-
-    template< integer DIM=1 >
-    using ConstDerivativeType = const T *;
-
-    GEOS_HOST_DEVICE
-    StackVariables_Impl( integer const numComps,
-                         arraySlice2d< real64 const > const bip );
-
-    arraySlice2d< real64 const > const kij;
-    real64 aMixture{0.0};
-    real64 bMixture{0.0};
-    StackArray< real64, 2, 2*maxNumComp > m_data;
-    arraySlice1d< real64 > const aic;
-    arraySlice1d< real64 > const bic;
-  };
-
-  template< typename T >
-  struct StackVariables_Impl< T, true > : public StackVariables_Impl< T, false >
-  {
-    using StackVariables_Impl< T, false >::maxNumComp;
-    static integer constexpr maxNumDof = maxNumComp + 2;
-
-    template< integer DIM=1 >
-    using DerivativeType = ArraySlice< real64, DIM >;
-
-    template< integer DIM=1 >
-    using ConstDerivativeType = ArraySlice< real64 const, DIM >;
-
-    GEOS_HOST_DEVICE
-    StackVariables_Impl( integer const numComps,
-                         arraySlice2d< real64 const > const bip,
-                         arraySlice2d< real64 const > const dbip_dT );
-
-    arraySlice2d< real64 const > const dkij_dT;
-    StackArray< real64, 2, 8*maxNumDof > m_derivativeData;
-    DerivativeType<> const daic_dp;
-    DerivativeType<> const dbic_dp;
-    DerivativeType<> const daic_dt;
-    DerivativeType<> const dbic_dt;
-    DerivativeType<> const d2aic_dt2;
-    DerivativeType<> const d2bic_dt2;
-    DerivativeType<> const daMixture;
-    DerivativeType<> const dbMixture;
-  };
-
   template< bool DERIVATIVES >
-  using StackVariables = StackVariables_Impl< void, DERIVATIVES >;
+  using StackVariables = EOSStackVariables_Impl< void, DERIVATIVES >;
+
+  template< integer DIM, bool DERIVATIVES >
+  using StackDerivativeType = typename StackVariables< DERIVATIVES >::template DerivativeType< DIM >;
+
+  template< integer DIM, bool DERIVATIVES >
+  using StackConstDerivativeType = typename StackVariables< DERIVATIVES >::template ConstDerivativeType< DIM >;
 
 public:
   /**
@@ -342,7 +296,7 @@ public:
                                 arraySlice1d< real64 const, USD > const & composition,
                                 StackVariables< DERIVATIVES > const & data,
                                 real64 & compressibilityFactor,
-                                typename StackVariables< DERIVATIVES >::DerivativeType<> const & compressibilityFactorDerivs,
+                                StackDerivativeType< 1, DERIVATIVES > const & compressibilityFactorDerivs,
                                 SelectedRoot const selectedRoot = SelectedRoot::AUTO );
 
   /**
@@ -363,9 +317,9 @@ public:
                                   arraySlice1d< real64 const, USD > const & composition,
                                   StackVariables< DERIVATIVES > const & data,
                                   real64 const & compressibilityFactor,
-                                  typename StackVariables< DERIVATIVES >::ConstDerivativeType<> const & compressibilityFactorDerivs,
+                                  StackConstDerivativeType< 1, DERIVATIVES > const & compressibilityFactorDerivs,
                                   arraySlice1d< real64 > const & logFugacityCoefficients,
-                                  typename StackVariables< DERIVATIVES >::DerivativeType< 2 > const & logFugacityCoefficientDerivs );
+                                  StackDerivativeType< 2, DERIVATIVES > const & logFugacityCoefficientDerivs );
 
   /**
    * @brief Compute the residual enthalpy

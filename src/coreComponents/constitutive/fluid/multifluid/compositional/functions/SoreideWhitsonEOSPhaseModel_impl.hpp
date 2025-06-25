@@ -33,44 +33,6 @@ namespace compositional
 {
 
 template< typename EOS_TYPE >
-template< typename T, bool DERIVATIVES >
-GEOS_HOST_DEVICE
-SoreideWhitsonEOSPhaseModel< EOS_TYPE >::
-StackVariables_Val< T, DERIVATIVES >::StackVariables_Val( integer numComps ):
-  kij_data( numComps, numComps )
-{}
-
-template< typename EOS_TYPE >
-template< typename T >
-GEOS_HOST_DEVICE
-SoreideWhitsonEOSPhaseModel< EOS_TYPE >::
-StackVariables_Val< T, true >::StackVariables_Val( integer numComps ):
-  StackVariables_Val< T, false >( numComps ),
-  dkij_dT_data( numComps, numComps )
-{}
-
-template< typename EOS_TYPE >
-template< typename T, bool DERIVATIVES >
-GEOS_HOST_DEVICE
-SoreideWhitsonEOSPhaseModel< EOS_TYPE >::
-StackVariables_Impl< T, DERIVATIVES >::StackVariables_Impl( integer numComps ):
-  StackVariables_Val< T, DERIVATIVES >( numComps ),
-  CubicModel::template StackVariables< DERIVATIVES >( numComps,
-                                                      StackVariables_Val< T, DERIVATIVES >::kij_data.toSliceConst() )
-{}
-
-template< typename EOS_TYPE >
-template< typename T >
-GEOS_HOST_DEVICE
-SoreideWhitsonEOSPhaseModel< EOS_TYPE >::
-StackVariables_Impl< T, true >::StackVariables_Impl( integer numComps ):
-  StackVariables_Val< T, true >( numComps ),
-  CubicModel::template StackVariables< true >( numComps,
-                                               StackVariables_Val< T, true >::kij_data.toSliceConst(),
-                                               StackVariables_Val< T, true >::dkij_dT_data.toSliceConst() )
-{}
-
-template< typename EOS_TYPE >
 template< bool DERIVATIVES >
 GEOS_HOST_DEVICE
 void
@@ -82,11 +44,12 @@ initialiseStack( integer const numComps,
                  real64 const & salinity,
                  StackVariables< DERIVATIVES > & stack )
 {
+  typename CubicModel::template StackVariables< DERIVATIVES > & cubicStack = stack;
   CubicModel::initialiseStack( numComps,
                                pressure,
                                temperature,
                                componentProperties,
-                               stack );
+                               cubicStack );
 
   stack.salinity = salinity;
   arraySlice1d< integer const > const & componentType = componentProperties.m_componentType;
@@ -176,9 +139,7 @@ computeLogFugacityCoefficients( integer const numComps,
                    stack );
 
   // Step 2: Compute the mixture coefficients
-  CubicModel::computeMixtureCoefficients( numComps,
-                                          composition,
-                                          stack );
+  CubicModel::computeMixtureCoefficients( numComps, composition, stack );
 
   // Step 3: Compute the compressibility factor (Z)
   CubicModel::computeCompressibilityFactor( numComps,
@@ -219,33 +180,33 @@ computeLogFugacityCoefficientsAndDerivs( integer const numComps,
 
   // Step 1: Allocate the stack memory needed for the update
   StackVariables< true > stack( numComps );
-  initialiseStack( numComps,
-                   pressure,
-                   temperature,
-                   componentProperties,
-                   salinity,
-                   stack );
+  initialiseStack< true >( numComps,
+                           pressure,
+                           temperature,
+                           componentProperties,
+                           salinity,
+                           stack );
 
   // Step 2: Compute the mixture coefficients
-  CubicModel::computeMixtureCoefficients( numComps,
-                                          composition,
-                                          stack );
+  CubicModel::template computeMixtureCoefficients< USD, true >( numComps, composition, stack );
 
   // Step 3: Compute the compressibility factor (Z)
-  CubicModel::computeCompressibilityFactor( numComps,
-                                            composition,
-                                            stack,
-                                            compressibilityFactor,
-                                            compressibilityFactorDerivs.toSlice() );
+  CubicModel::template computeCompressibilityFactor< USD, true >(
+    numComps,
+    composition,
+    stack,
+    compressibilityFactor,
+    compressibilityFactorDerivs.toSlice() );
 
   // Step 4: Use mixture coefficients and compressibility factor to update fugacity coefficients
-  CubicModel::computeLogFugacityCoefficients( numComps,
-                                              composition,
-                                              stack,
-                                              compressibilityFactor,
-                                              compressibilityFactorDerivs.toSliceConst(),
-                                              logFugacityCoefficients,
-                                              logFugacityCoefficientDerivs );
+  CubicModel::template computeLogFugacityCoefficients< USD, true >(
+    numComps,
+    composition,
+    stack,
+    compressibilityFactor,
+    compressibilityFactorDerivs.toSliceConst(),
+    logFugacityCoefficients,
+    logFugacityCoefficientDerivs );
 }
 
 template< typename EOS_TYPE >
@@ -271,9 +232,7 @@ computeCompressibilityFactor( integer const numComps,
                    stack );
 
   // Step 2: Compute the mixture coefficients
-  CubicModel::computeMixtureCoefficients( numComps,
-                                          composition,
-                                          stack );
+  CubicModel::computeMixtureCoefficients( numComps, composition, stack );
 
   // Step 3: Compute the compressibility factor (Z)
   CubicModel::computeCompressibilityFactor( numComps,
@@ -299,24 +258,23 @@ computeCompressibilityFactorAndDerivs( integer const numComps,
 {
   // Step 1: Allocate the stack memory needed for the update
   StackVariables< true > stack( numComps );
-  initialiseStack( numComps,
-                   pressure,
-                   temperature,
-                   componentProperties,
-                   salinity,
-                   stack );
+  initialiseStack< true >( numComps,
+                           pressure,
+                           temperature,
+                           componentProperties,
+                           salinity,
+                           stack );
 
   // Step 2: Compute the mixture coefficients
-  CubicModel::computeMixtureCoefficients( numComps,
-                                          composition,
-                                          stack );
+  CubicModel::template computeMixtureCoefficients< USD1, true >( numComps, composition, stack );
 
   // Step 3: Compute the compressibility factor (Z)
-  CubicModel::computeCompressibilityFactor( numComps,
-                                            composition,
-                                            stack,
-                                            compressibilityFactor,
-                                            compressibilityFactorDerivs );
+  CubicModel::template computeCompressibilityFactor< USD1, true >(
+    numComps,
+    composition,
+    stack,
+    compressibilityFactor,
+    compressibilityFactorDerivs );
 }
 
 template< typename EOS_TYPE >
