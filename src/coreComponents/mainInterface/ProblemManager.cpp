@@ -502,7 +502,7 @@ void ProblemManager::parseXMLDocument( xmlWrapper::xmlDocument & xmlDocument )
                                             regionName, regionNodePos.toString() );
           g_errorLogger.currentErrorMsg()
             .addToMsg( errorMsg )
-            .addContextInfo( getDataContext().getContextInfo().setPriority( 1 ) );
+            .addContextInfo( getDataContext().getContextInfo().setPriority( -1 ) );
           throw InputError( e, errorMsg );
         }
       }

@@ -131,7 +131,7 @@ public:
       GEOS_ERROR_CTX_IF( hydraulicApertureModelName.empty(),
                          GEOS_FMT( "{}: HydraulicApertureBase model not found on subregion {}",
                                    this->getDataContext(), subRegion.getDataContext() ),
-                         this->getDataContext() );
+                         this->getDataContext(), subRegion.getDataContext() );
     }
 
   }
@@ -161,7 +161,7 @@ public:
         GEOS_THROW_CTX_IF( porousName.empty(),
                            GEOS_FMT( "{} {} : Solid model not found on subregion {}",
                                      this->getCatalogName(), this->getDataContext().toString(), subRegion.getName() ),
-                           InputError, this->getDataContext() );
+                           InputError, this->getDataContext(), subRegion.getDataContext() );
 
         string & porosityModelName = subRegion.getReference< string >( constitutive::CoupledSolidBase::viewKeyStruct::porosityModelNameString() );
         porosityModelName = this->template getConstitutiveName< constitutive::PorosityBase >( subRegion );

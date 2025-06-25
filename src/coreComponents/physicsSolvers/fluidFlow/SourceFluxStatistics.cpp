@@ -61,7 +61,8 @@ void SourceFluxStatsAggregator::postInputInitialization()
     GEOS_WARNING_CTX_IF( m_fluxNames.empty(),
                          GEOS_FMT( "{}: No {} was found in {}.",
                                    getDataContext(), SourceFluxBoundaryCondition::catalogName(),
-                                   fsManager.getDataContext() ), getDataContext() );
+                                   fsManager.getDataContext() ),
+                         getDataContext(), fsManager.getDataContext() );
   }
   else
   {

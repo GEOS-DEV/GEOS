@@ -70,7 +70,8 @@ void SinglePhaseProppantBase::setConstitutiveNames( ElementSubRegionBase & subRe
   fluidMaterialName = PhysicsSolverBase::getConstitutiveName< SlurryFluidBase >( subRegion );
   GEOS_ERROR_CTX_IF( fluidMaterialName.empty(),
                      GEOS_FMT( "{}: Fluid model not found on subregion {}",
-                               getDataContext(), subRegion.getName() ), getDataContext() );
+                               getDataContext(), subRegion.getName() ),
+                     getDataContext(), subRegion.getDataContext() );
 }
 
 void SinglePhaseProppantBase::validateConstitutiveModels( DomainPartition & domain ) const

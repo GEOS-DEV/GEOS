@@ -162,7 +162,8 @@ void TimeHistoryOutput::initializePostInitialConditionsPostSubGroups()
                                         getWrapperDataContext( viewKeys::timeHistoryOutputTargetString() ) );
       g_errorLogger.currentErrorMsg()
         .addToMsg( errorMsg )
-        .addContextInfo( getWrapperDataContext( viewKeys::timeHistoryOutputTargetString() ).getContextInfo().setPriority( 1 ) );
+        .addContextInfo( getWrapperDataContext( viewKeys::timeHistoryOutputTargetString() ).getContextInfo()
+                           .setPriority( 1 ) );
       throw InputError( e, errorMsg );
     }
   }

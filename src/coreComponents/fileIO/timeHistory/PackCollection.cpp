@@ -156,7 +156,8 @@ void PackCollection::updateSetsIndices( DomainPartition const & domain )
     g_errorLogger.currentErrorMsg()
       .addToMsg( getWrapperDataContext( viewKeysStruct::fieldNameString() ).toString() +
                  ": Target not found !\n" )
-      .addContextInfo( getWrapperDataContext( viewKeysStruct::fieldNameString() ).getContextInfo().setPriority( 1 ) );
+      .addContextInfo( getWrapperDataContext( viewKeysStruct::fieldNameString() ).getContextInfo()
+                         .setPriority( 1 ) );
     throw InputError( e, getWrapperDataContext( viewKeysStruct::fieldNameString() ).toString() +
                       ": Target not found !\n" );
   }

@@ -19,6 +19,7 @@
 
 #include "ErrorHandling.hpp"
 #include "common/logger/Logger.hpp"
+#include "common/format/StringUtilities.hpp"
 
 #include <fstream>
 #include <string_view>
@@ -38,15 +39,23 @@ ErrorLogger g_errorLogger{};
 
 void ErrorLogger::createFile()
 {
-  std::ofstream yamlFile( std::string( m_filename ), std::ios::out );
-  if( yamlFile.is_open() )
+  if( stringutilities::endsWith( m_filename, ".yaml") )
   {
-    yamlFile << "errors: \n\n";
-    yamlFile.close();
+    std::ofstream yamlFile( std::string( m_filename ), std::ios::out );
+    if( yamlFile.is_open() )
+    {
+      yamlFile << "errors: \n\n";
+      yamlFile.close();
+    }
+    else
+    {
+      GEOS_LOG_RANK( GEOS_FMT( "Unable to open error file for writing: {}", m_filename ) );
+    }
   }
   else
   {
-    GEOS_LOG_RANK( GEOS_FMT( "Unable to open error file for writing: {}", m_filename ) );
+    enableFileOutput( false );
+    GEOS_LOG_RANK( GEOS_FMT( "{} is a bad file name argument. The file must be in yaml format.", m_filename ) );
   }
 }
 
