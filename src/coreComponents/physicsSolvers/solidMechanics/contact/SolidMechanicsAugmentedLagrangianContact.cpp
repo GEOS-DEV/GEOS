@@ -175,7 +175,7 @@ void SolidMechanicsAugmentedLagrangianContact::setupDofs( DomainPartition const 
   GEOS_MARK_FUNCTION;
   SolidMechanicsLagrangianFEM::setupDofs( domain, dofManager );
 
-  stdMap< std::pair< string, string >, string_array > meshTargets;
+  std::map< std::pair< string, string >, string_array > meshTargets;
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const & meshBodyName,
                                                                 MeshLevel const & meshLevel,
                                                                 string_array const & )

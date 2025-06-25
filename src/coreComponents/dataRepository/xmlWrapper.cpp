@@ -344,11 +344,11 @@ string const & xmlDocument::getOriginalBuffer() const
 
 string const * xmlDocument::getOriginalBuffer( string const & filePath ) const
 {
-  stdMap< string, string >::const_iterator it = m_originalBuffers.find( filePath );
+  std::map< string, string >::const_iterator it = m_originalBuffers.find( filePath );
   return it != m_originalBuffers.cend() ? &it->second : nullptr;
 }
 
-stdMap< string, string > const & xmlDocument::getOriginalBuffers() const
+std::map< string, string > const & xmlDocument::getOriginalBuffers() const
 { return m_originalBuffers; }
 
 xmlNodePos xmlDocument::getNodePosition( xmlNode const & node ) const

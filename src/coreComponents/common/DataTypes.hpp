@@ -336,11 +336,11 @@ std::ostream & operator<< ( std::ostream & stream, mapType< K, V, SORTED > const
 
 /// Ordered map type.
 template< typename TKEY, typename TVAL >
-using map = mapType< TKEY, TVAL, std::integral_constant< bool, true > >;
+using map = mapBase< TKEY, TVAL, std::integral_constant< bool, true > >;
 
 /// Unordered map type.
 template< typename TKEY, typename TVAL >
-using unordered_map = mapType< TKEY, TVAL, std::integral_constant< bool, false > >;
+using unordered_map = mapBase< TKEY, TVAL, std::integral_constant< bool, false > >;
 
 ///@}
 

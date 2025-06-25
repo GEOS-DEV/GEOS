@@ -41,7 +41,7 @@ public:
    * @param cellBlocksRegion A map of the cellblocks name lists for each region attributes value.
    */
   CellElementRegionSelector( dataRepository::Group const & cellBlocks,
-                             stdMap< integer, std::set< string > > const & cellBlocksRegion );
+                             std::map< integer, std::set< string > > const & cellBlocksRegion );
 
   /**
    * @brief Select the mesh cell-blocks for the specified region following the user inputs.
@@ -67,16 +67,16 @@ private:
   static constexpr string_view cellBlockTypeSeparator = "_";
 
   /// @brief A map that link every cell-block name to the CellElementRegion(s) that references it.
-  stdMap< string, stdVector< CellElementRegion const * > > m_cellBlocksOwners;
+  std::map< string, stdVector< CellElementRegion const * > > m_cellBlocksOwners;
 
   /// @brief A map that link every region attribute values to the CellElementRegion(s) that references it.
-  stdMap< string, stdVector< CellElementRegion const * > > m_regionAttributesOwners;
+  std::map< string, stdVector< CellElementRegion const * > > m_regionAttributesOwners;
 
   /**
    * @brief A map of the cellblocks name lists for each region attributes value. Internal attribute type
    *        is integer to facilitate comparison with cellBlock qualifiers.
    */
-  stdMap< string, std::set< string > const & > m_regionAttributesCellBlocks;
+  std::map< string, std::set< string > const & > m_regionAttributesCellBlocks;
 
   /**
    * @return A set of the FNMatch pattern from the provided lists.

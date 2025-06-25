@@ -598,8 +598,8 @@ void ProblemManager::generateMesh()
   meshManager.generateMeshes( domain );
 
   // get all the discretizations from the numerical methods.
-  // stdMap< pair< mesh body name, pointer to discretization>, array of region names >
-  stdMap< std::pair< string, Group const * const >, string_array const & >
+  // std::map< pair< mesh body name, pointer to discretization>, array of region names >
+  std::map< std::pair< string, Group const * const >, string_array const & >
   discretizations = getDiscretizations();
 
   // setup the base discretizations (hard code this for now)
@@ -715,7 +715,7 @@ void ProblemManager::generateMesh()
         // These neighbor cells are providing the node information to the fracture elements.
         subRegion.calculateElementGeometricQuantities( nodeManager, faceManager );
 
-        // 2. Reorder the face stdMap based on global numbering of neighboring cells
+        // 2. Reorder the face std::map based on global numbering of neighboring cells
         subRegion.flipFaceMap( faceManager, elementManager );
 
         // 3. We flip the face normals of faces adjacent to the faceElements if they are not pointing in the
@@ -748,18 +748,18 @@ void ProblemManager::applyNumericalMethods()
 
   // this contains a key tuple< mesh body name, mesh level name, region name, subregion name> with a value of the number of quadrature
   // points.
-  stdMap< std::tuple< string, string, string, string >, localIndex > const regionQuadrature = calculateRegionQuadrature( meshBodies );
+  std::map< std::tuple< string, string, string, string >, localIndex > const regionQuadrature = calculateRegionQuadrature( meshBodies );
 
   setRegionQuadrature( meshBodies, constitutiveManager, regionQuadrature );
 }
 
 
 
-stdMap< std::pair< string, Group const * const >, string_array const & >
+std::map< std::pair< string, Group const * const >, string_array const & >
 ProblemManager::getDiscretizations() const
 {
 
-  stdMap< std::pair< string, Group const * const >, string_array const & > meshDiscretizations;
+  std::map< std::pair< string, Group const * const >, string_array const & > meshDiscretizations;
 
   NumericalMethodsManager const &
   numericalMethodManager = getGroup< NumericalMethodsManager >( groupKeys.numericalMethodsManager.key() );
@@ -899,13 +899,13 @@ void ProblemManager::generateMeshLevel( MeshLevel & meshLevel,
 }
 
 
-stdMap< std::tuple< string, string, string, string >, localIndex > ProblemManager::calculateRegionQuadrature( Group & meshBodies )
+std::map< std::tuple< string, string, string, string >, localIndex > ProblemManager::calculateRegionQuadrature( Group & meshBodies )
 {
 
   NumericalMethodsManager const &
   numericalMethodManager = getGroup< NumericalMethodsManager >( groupKeys.numericalMethodsManager.key() );
 
-  stdMap< std::tuple< string, string, string, string >, localIndex > regionQuadrature;
+  std::map< std::tuple< string, string, string, string >, localIndex > regionQuadrature;
 
   for( localIndex solverIndex=0; solverIndex<m_physicsSolverManager->numSubGroups(); ++solverIndex )
   {
@@ -1038,7 +1038,7 @@ stdMap< std::tuple< string, string, string, string >, localIndex > ProblemManage
 
 void ProblemManager::setRegionQuadrature( Group & meshBodies,
                                           ConstitutiveManager const & constitutiveManager,
-                                          stdMap< std::tuple< string, string, string, string >, localIndex > const & regionQuadratures )
+                                          std::map< std::tuple< string, string, string, string >, localIndex > const & regionQuadratures )
 {
   for( auto const & regionQuadrature : regionQuadratures )
   {

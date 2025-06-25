@@ -117,20 +117,20 @@ public:
    * @brief Get the name mapping between mesh volumic field names and internal GEOS volumic field names.
    * @return The string to string mapping of field names.
    */
-  stdMap< string, string > const & getVolumicFieldsMapping() const { return m_volumicFields; }
+  std::map< string, string > const & getVolumicFieldsMapping() const { return m_volumicFields; }
 
   /**
    * @brief Get the name mapping between mesh surfacic field names and internal GEOS surfacic field names.
    * @return The string to string mapping of field names.
    */
-  stdMap< string, string > const & getSurfacicFieldsMapping() const { return m_surfacicFields; }
+  std::map< string, string > const & getSurfacicFieldsMapping() const { return m_surfacicFields; }
 
 protected:
   /// Mapping from volumic field source to GEOS field.
-  stdMap< string, string > m_volumicFields;
+  std::map< string, string > m_volumicFields;
 
   /// Mapping from surfacic field source to GEOS field.
-  stdMap< string, string > m_surfacicFields;
+  std::map< string, string > m_surfacicFields;
 
 private:
   /**

@@ -381,7 +381,7 @@ void NodeManager::outputObjectConnectivity() const
       }
 
       printf( "\n  Reference positions (sorted by global):\n" );
-      stdMap< globalIndex, localIndex > const sortedGlobalToLocalMap( m_globalToLocalMap.begin(), m_globalToLocalMap.end());
+      std::map< globalIndex, localIndex > const sortedGlobalToLocalMap( m_globalToLocalMap.begin(), m_globalToLocalMap.end());
       for( auto indexPair : sortedGlobalToLocalMap )
       {
         localIndex const a = indexPair.second;

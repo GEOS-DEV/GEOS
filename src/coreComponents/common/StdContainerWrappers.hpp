@@ -307,6 +307,37 @@ class mapType< TKEY, TVAL, std::integral_constant< bool, false > > : public stdU
 };
 /// @endcond
 
+
+/**
+ * @name Ordered and unordered map types.
+ *  OLD VERSION, TO BE REMOVED
+ */
+///@{
+
+/**
+ * @brief Base template for ordered and unordered maps.
+ * @tparam TKEY key type
+ * @tparam TVAL value type
+ * @tparam SORTED a @p std::integral_constant<bool> indicating whether map is ordered
+ */
+template< typename TKEY, typename TVAL, typename SORTED >
+class mapBase
+{};
+
+/// @cond DO_NOT_DOCUMENT
+template< typename TKEY, typename TVAL >
+class mapBase< TKEY, TVAL, std::integral_constant< bool, true > > : public std::map< TKEY, TVAL >
+{
+  using std::map< TKEY, TVAL >::map; // enable list initialization
+};
+
+template< typename TKEY, typename TVAL >
+class mapBase< TKEY, TVAL, std::integral_constant< bool, false > > : public std::unordered_map< TKEY, TVAL >
+{
+  using std::unordered_map< TKEY, TVAL >::unordered_map; // enable list initialization
+};
+/// @endcond
+
 } // namespace geos
 
 #endif /* GEOS_COMMON_STD_CONTAINER_WRAPPERS_HPP */

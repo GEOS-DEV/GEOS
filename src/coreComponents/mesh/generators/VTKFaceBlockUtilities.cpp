@@ -53,7 +53,7 @@ public:
       CellBlock const & cb = cellBlocks.getGroup< CellBlock >( c );
       auto const & l2g = cb.localToGlobalMapConstView();
 
-      stdMap< globalIndex, localIndex > g2l;
+      std::map< globalIndex, localIndex > g2l;
 
       for( auto l = 0; l < l2g.size(); ++l )
       {
@@ -103,13 +103,13 @@ public:
 
 private:
   /// global element index to the local cell block index
-  stdMap< globalIndex, localIndex > m_elementToCellBlock;
+  std::map< globalIndex, localIndex > m_elementToCellBlock;
 
   /// Cell block index to a mapping from global element index to the local (to the cell block) element index.
-  stdMap< localIndex, stdMap< globalIndex, localIndex > > m_cbe;
+  std::map< localIndex, std::map< globalIndex, localIndex > > m_cbe;
 
   /// Cell block index to a mapping from global element index to the faces indices.
-  stdMap< localIndex, arrayView2d< localIndex const > > m_cbf;
+  std::map< localIndex, arrayView2d< localIndex const > > m_cbf;
 };
 
 } // end of namespace internal
@@ -238,7 +238,7 @@ ArrayOfArrays< localIndex > buildFace2dToElems2d( vtkPolyData * edges,
 {
   // Each edge is first associated to an hash and to an id.
   // Then we loop over all the edges of each cell and compute its hash to recover the associated id.
-  stdUnorderedMap< std::pair< vtkIdType, vtkIdType >, int, pairHashComputer > face2dIds;
+  std::unordered_map< std::pair< vtkIdType, vtkIdType >, int, pairHashComputer > face2dIds;
   for( int i = 0; i < edges->GetNumberOfCells(); ++i )
   {
     vtkCell * c = edges->GetCell( i );
@@ -280,7 +280,7 @@ array1d< localIndex > buildFace2dToEdge( vtkIdTypeArray const * globalPtIds,
                                          CollocatedNodes const & collocatedNodes,
                                          ArrayOfArraysView< localIndex const > nodeToEdges )
 {
-  stdMap< globalIndex, stdVector< localIndex > > n2e;
+  std::map< globalIndex, stdVector< localIndex > > n2e;
   for( auto i = 0; i < nodeToEdges.size(); ++i )
   {
     stdVector< localIndex > es;
@@ -308,7 +308,7 @@ array1d< localIndex > buildFace2dToEdge( vtkIdTypeArray const * globalPtIds,
         allDuplicatedNodesOfEdge.emplace_back( d );
       }
     }
-    stdMap< vtkIdType, int > edgeCount;
+    std::map< vtkIdType, int > edgeCount;
     for( vtkIdType const & d: allDuplicatedNodesOfEdge )
     {
       localIndex const dd = LvArray::integerConversion< localIndex >( d );
@@ -442,7 +442,7 @@ Elem2dTo3dInfo buildElem2dTo3dElemAndFaces( vtkSmartPointer< vtkDataSet > faceMe
   vtkIdTypeArray const * globalPtIds = vtkIdTypeArray::FastDownCast( mesh->GetPointData()->GetGlobalIds() );
   vtkIdTypeArray const * globalCellIds = vtkIdTypeArray::FastDownCast( mesh->GetCellData()->GetGlobalIds() );
 
-  stdMap< vtkIdType, localIndex > ng2l;  // global to local mapping for nodes.
+  std::map< vtkIdType, localIndex > ng2l;  // global to local mapping for nodes.
   for( vtkIdType i = 0; i < globalPtIds->GetNumberOfValues(); ++i )
   {
     ng2l[globalPtIds->GetValue( i )] = i;
@@ -451,7 +451,7 @@ Elem2dTo3dInfo buildElem2dTo3dElemAndFaces( vtkSmartPointer< vtkDataSet > faceMe
   // Let's build the elem2d to elem3d mapping.
   // We need to find the 3d elements (and only the 3d elements, so we can safely ignore the others).
   // First we compute the mapping from all the boundary nodes to the 3d elements that rely on those nodes.
-  stdMap< vtkIdType, stdVector< vtkIdType > > nodesToCellsFull;
+  std::map< vtkIdType, stdVector< vtkIdType > > nodesToCellsFull;
   for( vtkIdType i = 0; i < boundary->GetNumberOfCells(); ++i )
   {
     vtkIdType const cellId = boundaryCells->GetValue( i );
@@ -468,7 +468,7 @@ Elem2dTo3dInfo buildElem2dTo3dElemAndFaces( vtkSmartPointer< vtkDataSet > faceMe
   }
 
   // Then we only keep the duplicated nodes. It's only for optimisation purpose.
-  stdMap< vtkIdType, std::set< vtkIdType > > nodesToCells;
+  std::map< vtkIdType, std::set< vtkIdType > > nodesToCells;
   { // scope reduction
     std::set< vtkIdType > allDuplicatedNodes;
     for( std::size_t i = 0; i < collocatedNodes.size(); ++i )
@@ -526,7 +526,7 @@ Elem2dTo3dInfo buildElem2dTo3dElemAndFaces( vtkSmartPointer< vtkDataSet > faceMe
     }
 
     // Here, we collect all the 3d elements that are concerned by at least one of those duplicated elements.
-    stdMap< vtkIdType, std::set< vtkIdType > > elem3dToDuplicatedNodes;
+    std::map< vtkIdType, std::set< vtkIdType > > elem3dToDuplicatedNodes;
     for( vtkIdType const & n: duplicatedPointOfElem2d )
     {
       auto const ncs = nodesToCells.find( n );

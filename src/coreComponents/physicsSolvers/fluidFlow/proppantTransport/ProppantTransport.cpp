@@ -705,7 +705,7 @@ void ProppantTransport::applyBoundaryConditions( real64 const time_n,
     //  Apply Dirichlet BC for component concentration
     if( m_numComponents > 0 )
     {
-      stdMap< string, stdMap< string, array1d< bool > > > bcStatusMap; // map to check consistent application of BC
+      std::map< string, std::map< string, array1d< bool > > > bcStatusMap; // map to check consistent application of BC
 
       fsManager.apply< ElementSubRegionBase >( time_n + dt,
                                                mesh,

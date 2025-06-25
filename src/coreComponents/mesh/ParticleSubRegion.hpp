@@ -133,7 +133,7 @@ public:
 private:
 
   /// Map used for constitutive grouping
-  stdMap< string, localIndex_array > m_constitutiveGrouping;
+  std::map< string, localIndex_array > m_constitutiveGrouping;
 
   /// Name of the properties registered from an external mesh
   string_array m_externalPropertyNames;

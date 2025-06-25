@@ -164,7 +164,7 @@ void MeshManager::importFields( MeshGeneratorBase const & generator,
                                 string const & regionName,
                                 ElementSubRegionBase & subRegion,
                                 MeshGeneratorBase::Block const block,
-                                stdMap< string, string > const & fieldsMapping,
+                                std::map< string, string > const & fieldsMapping,
                                 FieldIdentifiers & fieldsToBeSync )
 {
   std::unordered_set< string > const materialWrapperNames = getMaterialWrapperNames( subRegion );
