@@ -230,13 +230,18 @@ computeEnthalpy( integer const numComps,
                  ComponentProperties::KernelWrapper const & componentProperties,
                  real64 & enthalpy )
 {
-  GEOS_UNUSED_VAR( numComps );
-  GEOS_UNUSED_VAR( pressure );
-  GEOS_UNUSED_VAR( temperature );
-  GEOS_UNUSED_VAR( composition );
-  GEOS_UNUSED_VAR( componentProperties );
-  GEOS_UNUSED_VAR( enthalpy );
-  GEOS_UNUSED_VAR( numComps );
+  integer constexpr numMaxDofs = StackVariables< true >::maxNumDof;
+  integer const numDofs = 2 + numComps;
+
+  StackArray< real64, 1, numMaxDofs > tempDerivs( numDofs );
+
+  computeEnthalpyAndDerivs( numComps,
+                            pressure,
+                            temperature,
+                            composition,
+                            componentProperties,
+                            enthalpy,
+                            tempDerivs.toSlice());
 }
 
 template< typename EOS_TYPE >
@@ -255,9 +260,12 @@ computeEnthalpyAndDerivs( integer const numComps,
   integer constexpr numMaxDofs = StackVariables< true >::maxNumDof;
   integer const numDofs = 2 + numComps;
 
-  // Allocate space for the compressibility derivatives
+  // Allocate space for the intermediate values and derivatives
+  StackArray< real64, 2, 2*numMaxDofs > tempDerivs( 2, numDofs );
   real64 compressibilityFactor = 0.0;
-  StackArray< real64, 1, numMaxDofs > compressibilityFactorDerivs( numDofs );
+  real64 dA_dT = 0.0;
+  auto const compressibilityFactorDerivs = tempDerivs[0];
+  auto const dA_dTDerivs = tempDerivs[1];
 
   arraySlice2d< real64 const > const & binaryInteractionCoefficients = componentProperties.m_componentBinaryCoeff.toSlice();
 
@@ -283,11 +291,22 @@ computeEnthalpyAndDerivs( integer const numComps,
                                 compressibilityFactor,
                                 compressibilityFactorDerivs );
 
-  // Step 4: Compute the residual enthalpy
+  // Step 4: Compute the derivative of the attraction parameter
+  computeAttractionParemeterDerivative( numComps,
+                                        pressure,
+                                        composition,
+                                        stack,
+                                        dA_dT,
+                                        dA_dTDerivs );
+
+  // Step 5: Compute the residual enthalpy
   computeEnthalpy( numComps,
+                   temperature,
                    stack,
                    compressibilityFactor,
                    compressibilityFactorDerivs.toSliceConst(),
+                   dA_dT,
+                   dA_dTDerivs.toSliceConst(),
                    enthalpy,
                    enthalpyDerivs );
 }
@@ -690,7 +709,8 @@ computeLogFugacityCoefficients( integer const numComps,
     auto const & dA = stack.daMixture;
     auto const & dB = stack.dbMixture;
 
-    auto const calculateDerivatives = [&]( integer const idof ){
+    for( integer idof = 0; idof < numDofs; ++idof )
+    {
       real64 const dE_dX =  (dZ[idof] + EOS_TYPE::delta1*dB[idof])/( Z + EOS_TYPE::delta1 * B )
                            -(dZ[idof] + EOS_TYPE::delta2*dB[idof])/( Z + EOS_TYPE::delta2 * B );
 
@@ -723,13 +743,6 @@ computeLogFugacityCoefficients( integer const numComps,
           - G * ( 2 * dki( ic, idof ) - dA_dX * Bi - A * dBi_dX ) * E
           - G * ( 2 * ki[ic] - A * Bi ) * dE_dX;
       }
-    };
-
-    calculateDerivatives( Deriv::dP );
-    calculateDerivatives( Deriv::dT );
-    for( integer jc = 0; jc < numComps; ++jc )
-    {
-      calculateDerivatives( Deriv::dC+jc );
     }
   }
   else
@@ -740,7 +753,7 @@ computeLogFugacityCoefficients( integer const numComps,
 }
 
 template< typename EOS_TYPE >
-template< integer USD, bool DERIVATIVES >
+template< bool DERIVATIVES >
 GEOS_HOST_DEVICE
 void
 CubicEOSPhaseModel< EOS_TYPE >::
@@ -749,6 +762,8 @@ computeEnthalpy( integer const numComps,
                  StackVariables< DERIVATIVES > const & stack,
                  real64 const & compressibilityFactor,
                  StackConstDerivativeType< 1, DERIVATIVES > const & compressibilityFactorDerivs,
+                 real64 const & dA_dT,
+                 StackConstDerivativeType< 1, DERIVATIVES > const & dA_dTDerivs,
                  real64 & enthalpy,
                  StackDerivativeType< 1, DERIVATIVES > const & enthalpyDerivs )
 {
@@ -757,7 +772,6 @@ computeEnthalpy( integer const numComps,
   real64 constexpr R = constants::gasConstant;
   real64 const A = stack.aMixture;
   real64 const B = stack.bMixture;
-  real64 const dA_dT = stack.daMixture[Deriv::dT];
 
   real64 const expE = ( Z + EOS_TYPE::delta1 * B ) / ( Z + EOS_TYPE::delta2 * B );
   real64 const E = log( expE );
@@ -783,7 +797,7 @@ computeEnthalpy( integer const numComps,
       real64 const dG_dX = -G * dB_dX / B;
 
       real64 const dA_dX = dA[idof];
-      real64 const d2A_dTdX = 0.0;
+      real64 const d2A_dTdX = dA_dTDerivs[idof];
 
       // H = R*T*(Z - 1.0) + G*(T*dA_dT - A)*E;
       real64 const dH_dX = R*T*dZ_dX +
@@ -797,6 +811,7 @@ computeEnthalpy( integer const numComps,
   {
     GEOS_UNUSED_VAR( compressibilityFactorDerivs );
     GEOS_UNUSED_VAR( enthalpyDerivs );
+    GEOS_UNUSED_VAR( dA_dTDerivs );
   }
 }
 

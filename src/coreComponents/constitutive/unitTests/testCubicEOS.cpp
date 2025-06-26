@@ -96,6 +96,7 @@ public:
   void testAttractionParemeterDerivative( ParamType const & testData );
   void testCompressibilityFactor( ParamType const & testData );
   void testCompressibilityFactorValue( ParamType const & testData );
+  void testEnthalpy( ParamType const & testData );
   void testLogFugacityCoefficients( ParamType const & testData );
 
 protected:
@@ -489,6 +490,82 @@ CubicEOSPhaseModelTestFixture< NC, EOS_TYPE >::testCompressibilityFactorValue( P
   checkRelativeError( zFactor, expectedZFactor, relTol, absTol );
 }
 
+template< integer NC, typename EOS_TYPE >
+void
+CubicEOSPhaseModelTestFixture< NC, EOS_TYPE >::testEnthalpy( ParamType const & testData )
+{
+  auto componentProperties = this->m_fluid->createKernelWrapper();
+  real64 const pressure = std::get< 0 >( testData );
+  real64 const temperature = std::get< 1 >( testData );
+  stackArray1d< real64, numComps > composition;
+  TestFluid< numComps >::createArray( composition, std::get< 2 >( testData ));
+
+  real64 enthalpy = 0.0;
+  stackArray1d< real64, numDofs > enthalpyDerivs( numDofs );
+
+  EOS::computeEnthalpyAndDerivs( numComps,
+                                 pressure,
+                                 temperature,
+                                 composition.toSliceConst(),
+                                 componentProperties,
+                                 enthalpy,
+                                 enthalpyDerivs.toSlice() );
+
+  // Pressure derivative
+  real64 constexpr pressureScale = 1.0e6;
+  real64 const dp = 1.0e-5 * pressure;
+  internal::testNumericalDerivative( pressure, dp, pressureScale*enthalpyDerivs[Deriv::dP],
+                                     [&]( real64 const p ) -> real64
+  {
+    real64 H = 0.0;
+    EOS::computeEnthalpy( numComps,
+                          p,
+                          temperature,
+                          composition.toSliceConst(),
+                          componentProperties,
+                          H );
+    return pressureScale*H;
+  }, absTol, relTol );
+
+  // Temperature derivatives
+  real64 constexpr temperatureScale = 1.0e1;
+  real64 const dT = 1.0e-6 * temperature;
+  internal::testNumericalDerivative( temperature, dT, temperatureScale*enthalpyDerivs[Deriv::dT],
+                                     [&]( real64 const t ) -> real64
+  {
+    real64 H = 0.0;
+    EOS::computeEnthalpy( numComps,
+                          pressure,
+                          t,
+                          composition.toSliceConst(),
+                          componentProperties,
+                          H );
+    return temperatureScale*H;
+  }, absTol, relTol );
+
+  // Composition derivatives
+  real64 const dz = 1.0e-6;
+  for( integer ic = 0; ic < numComps; ++ic )
+  {
+    integer const idof = Deriv::dC + ic;
+    internal::testNumericalDerivative( 0.0, dz, enthalpyDerivs[idof],
+                                       [&]( real64 const z ) -> real64
+    {
+      real64 H = 0.0;
+      real64 const z_orig = composition[ic];
+      composition[ic] += z;
+      EOS::computeEnthalpy( numComps,
+                            pressure,
+                            temperature,
+                            composition.toSliceConst(),
+                            componentProperties,
+                            H );
+      composition[ic] = z_orig;
+      return H;
+    }, absTol, relTol );
+  }
+}
+
 using PengRobinson4 = CubicEOSPhaseModelTestFixture< 4, PengRobinsonEOS >;
 using SoaveRedlichKwong2 = CubicEOSPhaseModelTestFixture< 2, SoaveRedlichKwongEOS >;
 
@@ -500,6 +577,7 @@ TEST_P( PengRobinson4, testCubicModel )
   testAttractionParemeterDerivative( testParam );
   testCompressibilityFactor( testParam );
   testCompressibilityFactorValue( testParam );
+  testEnthalpy( testParam );
   testLogFugacityCoefficients( testParam );
 }
 
@@ -511,6 +589,7 @@ TEST_P( SoaveRedlichKwong2, testCubicModel )
   testAttractionParemeterDerivative( testParam );
   testCompressibilityFactor( testParam );
   testCompressibilityFactorValue( testParam );
+  testEnthalpy( testParam );
   testLogFugacityCoefficients( testParam );
 }
 

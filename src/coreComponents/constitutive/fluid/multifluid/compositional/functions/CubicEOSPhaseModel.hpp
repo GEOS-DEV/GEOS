@@ -349,10 +349,12 @@ public:
    * @param[in] data The component mixture properties
    * @param[in] compressibilityFactor compressibility factor
    * @param[in] compressibilityFactorDerivs derivatives of the compressibility factor
+   * @param[in] dA_dT derivative of the mixture attraction parameter wrt temperature
+   * @param[in] dA_dTDerivs derivatives dA_dT wrt all the primary variables
    * @param[out] enthalpy the residual enthalpy of the phase
    * @param[out] enthalpyDerivs derivatives of the log of the residual enthalpy
    */
-  template< integer USD, bool DERIVATIVES = false >
+  template< bool DERIVATIVES = false >
   GEOS_HOST_DEVICE
   static void
   computeEnthalpy( integer const numComps,
@@ -360,6 +362,8 @@ public:
                    StackVariables< DERIVATIVES > const & data,
                    real64 const & compressibilityFactor,
                    StackConstDerivativeType< 1, DERIVATIVES > const & compressibilityFactorDerivs,
+                   real64 const & dA_dT,
+                   StackConstDerivativeType< 1, DERIVATIVES > const & dA_dTDerivs,
                    real64 & enthalpy,
                    StackDerivativeType< 1, DERIVATIVES > const & enthalpyDerivs );
 
