@@ -208,14 +208,17 @@ if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
   echo "Running the integrated tests has been requested."
   # We install the python environment required by ATS to run the integrated tests.
   or_die apt-get update
-  or_die apt-get install -y python3.10-venv python3-pip python3-setuptools python3-wheel python-is-python3
+
+  # We only install the bare minimum needed to create a virtual environment.
+  # 'pip', 'setuptools', and 'wheel' will be installed *inside* the venv.
+  # --no-install-recommends is CRITICAL to prevent apt from installing the conflicting system `python3-distutils`.
+  or_die apt-get install -y --no-install-recommends python3.10-venv python-is-python3
 
   ATS_PYTHON_HOME=/tmp/run_integrated_tests_virtualenv
   or_die python3 -m venv ${ATS_PYTHON_HOME}
   source ${ATS_PYTHON_HOME}/bin/activate
 
-
-  # 🔍 Debug the Python environment
+  # Debug the Python environment
   echo "Python binary:"
   which python
   echo "Python version:"
@@ -227,7 +230,7 @@ if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
   echo "Setuptools location before upgrade:"
   python -c "import setuptools; print(setuptools.__file__)" || echo "setuptools not found"
 
-  # Upgrade pip and setuptools inside the venv
+  # Upgrade pip and setuptools inside the venv. This will install modern, self-contained versions.
   pip install --upgrade pip setuptools wheel
 
   echo "Distutils location after upgrade:"
