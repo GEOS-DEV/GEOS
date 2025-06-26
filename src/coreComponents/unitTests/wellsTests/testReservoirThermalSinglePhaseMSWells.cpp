@@ -172,7 +172,6 @@ template< typename T, typename COL_INDEX >
 void printCompareLocalMatrices( CRSMatrixView< T const, COL_INDEX const > const & matrix1,
                                 CRSMatrixView< T const, COL_INDEX const > const & matrix2, std::string const & testName )
 {
-  std::cout << matrix1.numRows() << " " << matrix2.numColumns()  << std::endl;
   std::ofstream omat1( testName+".csv" );
 
 
@@ -488,7 +487,7 @@ void testNumericalJacobian( SinglePhaseReservoirAndWells<> & solver,
   assembleFunction( jacobian.toViewConstSizes(), residual.toView() );
 
   compareLocalMatrices( jacobian.toViewConst(), jacobianFD.toViewConst(), relTol );
-  printCompareLocalMatrices( jacobian.toViewConst(), jacobianFD.toViewConst(), testName );
+  //printCompareLocalMatrices( jacobian.toViewConst(), jacobianFD.toViewConst(), testName );
 }
 
 
