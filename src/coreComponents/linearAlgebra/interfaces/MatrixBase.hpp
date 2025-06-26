@@ -167,11 +167,11 @@ protected:
     return m_dofManager;
   }
 
-    /**
+  /**
    * @brief Compute left and right scaling vectors for diagonal scaling.
    * @param scaling Vector to be filled with scaling factors.
    */
-  virtual void computeScalingVector(Vector & scaling) const = 0;
+  virtual void computeScalingVector( Vector & scaling ) const = 0;
 
   ///@}
 
