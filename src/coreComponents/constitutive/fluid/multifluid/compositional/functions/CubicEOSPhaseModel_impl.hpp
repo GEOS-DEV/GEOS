@@ -429,6 +429,67 @@ computeMixtureCoefficients( integer const numComps,
 }
 
 template< typename EOS_TYPE >
+template< integer USD >
+GEOS_HOST_DEVICE
+void
+CubicEOSPhaseModel< EOS_TYPE >::
+computeAttractionParemeterDerivative( integer const numComps,
+                                      real64 const & pressure,
+                                      arraySlice1d< real64 const, USD > const & composition,
+                                      StackVariables< true > const & stack,
+                                      real64 & dA_dT,
+                                      StackDerivativeType< 1, true > const & dA_dTDerivs )
+{
+  arraySlice2d< real64 const > const & kij = stack.kij;
+
+  dA_dT = 0.0;
+  LvArray::forValuesInSlice( dA_dTDerivs, setZero );
+  for( integer ic = 0; ic < numComps; ++ic )
+  {
+    for( integer jc = 0; jc < numComps; ++jc )
+    {
+      real64 const ai = stack.aic[ic];
+      real64 const aj = stack.aic[jc];
+      real64 const dai_dp = stack.daic_dp[ic];
+      real64 const daj_dp = stack.daic_dp[jc];
+      real64 const dai_dT = stack.daic_dt[ic];
+      real64 const daj_dT = stack.daic_dt[jc];
+
+      real64 const d2ai_dTdp = dai_dT / pressure;
+      real64 const d2aj_dTdp = daj_dT / pressure;
+      real64 const d2ai_dT2 = stack.d2aic_dt2[ic];
+      real64 const d2aj_dT2 = stack.d2aic_dt2[jc];
+
+      real64 const sqrt_aiaj = LvArray::math::sqrt( ai * aj );
+      real64 const kij_term = 1.0 - kij( ic, jc );
+      real64 const coeff = composition[ic] * composition[jc] * kij_term;
+
+      // Intermediate expressions
+      real64 const daij_dp = dai_dp * aj + ai * daj_dp;
+      real64 const daij_dT = dai_dT * aj + ai * daj_dT;
+      real64 const C = 1.0 / (ai * aj * sqrt_aiaj);
+
+      // Pressure derivative
+      real64 const dsqrt_aiaj_dp = 0.5 / sqrt_aiaj * daij_dp;
+      real64 const d2sqrt_aiaj_dTdp = 0.5 / sqrt_aiaj * (d2ai_dTdp * aj + dai_dp * daj_dT + dai_dT * daj_dp + ai * d2aj_dTdp) - 0.25 * daij_dT * daij_dp * C;
+      dA_dTDerivs[Deriv::dP] += coeff * d2sqrt_aiaj_dTdp;
+
+      // Temperature derivative
+      real64 const dsqrt_aiaj_dT = 0.5 / sqrt_aiaj * daij_dT;
+      real64 const d2sqrt_aiaj_dT2 = 0.5 / sqrt_aiaj * (d2ai_dT2 * aj + 2.0 * dai_dT * daj_dT + ai * d2aj_dT2) - 0.25 * daij_dT * daij_dT * C;
+      dA_dTDerivs[Deriv::dT] += coeff * d2sqrt_aiaj_dT2;
+
+      // Composition derivatives
+      dA_dTDerivs[Deriv::dC+ic] += composition[jc] * kij_term * dsqrt_aiaj_dT;
+      dA_dTDerivs[Deriv::dC+jc] += composition[ic] * kij_term * dsqrt_aiaj_dT;
+
+      // Value
+      dA_dT += coeff * dsqrt_aiaj_dT;
+    }
+  }
+}
+
+template< typename EOS_TYPE >
 template< integer USD, bool DERIVATIVES >
 GEOS_HOST_DEVICE
 void
@@ -687,9 +748,9 @@ computeEnthalpy( integer const numComps,
                  real64 const & temperature,
                  StackVariables< DERIVATIVES > const & stack,
                  real64 const & compressibilityFactor,
-                 typename StackVariables< DERIVATIVES >::ConstDerivativeType<> const & compressibilityFactorDerivs,
+                 StackConstDerivativeType< 1, DERIVATIVES > const & compressibilityFactorDerivs,
                  real64 & enthalpy,
-                 typename StackVariables< DERIVATIVES >::DerivativeType<> const & enthalpyDerivs )
+                 StackDerivativeType< 1, DERIVATIVES > const & enthalpyDerivs )
 {
   real64 const Z = compressibilityFactor;
   real64 const T = temperature;
@@ -700,11 +761,38 @@ computeEnthalpy( integer const numComps,
 
   real64 const expE = ( Z + EOS_TYPE::delta1 * B ) / ( Z + EOS_TYPE::delta2 * B );
   real64 const E = log( expE );
-  real64 const G = 1.0 / ( ( EOS_TYPE::delta1 - EOS_TYPE::delta2 ) * B );  
+  real64 const G = 1.0 / ( ( EOS_TYPE::delta1 - EOS_TYPE::delta2 ) * B );
   enthalpy = R*T*(Z - 1.0) + G*(T*dA_dT - A)*E;
 
   if constexpr (DERIVATIVES)
-  {}
+  {
+    integer const numDofs = 2 + numComps;
+
+    auto const & dZ = compressibilityFactorDerivs;
+    auto const & dA = stack.daMixture;
+    auto const & dB = stack.dbMixture;
+
+    for( integer idof = 0; idof < numDofs; ++idof )
+    {
+      real64 const dZ_dX = dZ[idof];
+      real64 const dB_dX = dB[idof];
+      real64 const dE_dX =  (dZ_dX + EOS_TYPE::delta1*dB_dX)/( Z + EOS_TYPE::delta1 * B )
+                           -(dZ_dX + EOS_TYPE::delta2*dB_dX)/( Z + EOS_TYPE::delta2 * B );
+
+      // real64 const G = 1.0 / ( ( EOS_TYPE::delta1 - EOS_TYPE::delta2 ) * B );
+      real64 const dG_dX = -G * dB_dX / B;
+
+      real64 const dA_dX = dA[idof];
+      real64 const d2A_dTdX = 0.0;
+
+      // H = R*T*(Z - 1.0) + G*(T*dA_dT - A)*E;
+      real64 const dH_dX = R*T*dZ_dX +
+                           dG_dX*(T*dA_dT - A)*E + G*(T*d2A_dTdX - dA_dX)*E + G*(T*dA_dT - A)*dE_dX;
+      enthalpyDerivs[idof] = dH_dX;
+    }
+
+    enthalpyDerivs[Deriv::dT] += R*(Z - 1.0) + G*dA_dT*E;
+  }
   else
   {
     GEOS_UNUSED_VAR( compressibilityFactorDerivs );

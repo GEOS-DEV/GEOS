@@ -93,6 +93,7 @@ public:
 
   void testPureCoefficients( ParamType const & testData );
   void testMixtureCoefficients( ParamType const & testData );
+  void testAttractionParemeterDerivative( ParamType const & testData );
   void testCompressibilityFactor( ParamType const & testData );
   void testCompressibilityFactorValue( ParamType const & testData );
   void testLogFugacityCoefficients( ParamType const & testData );
@@ -234,6 +235,84 @@ CubicEOSPhaseModelTestFixture< NC, EOS_TYPE >::testMixtureCoefficients( ParamTyp
       EOS::computeMixtureCoefficients( numComps, composition.toSliceConst(), valueStack );
       concatValues( valueStack, values );
       composition[ic] = z_orig;
+    }, absTol, relTol );
+  }
+}
+
+template< integer NC, typename EOS_TYPE >
+void
+CubicEOSPhaseModelTestFixture< NC, EOS_TYPE >::testAttractionParemeterDerivative( ParamType const & testData )
+{
+  auto componentProperties = this->m_fluid->createKernelWrapper();
+  real64 const pressure = std::get< 0 >( testData );
+  real64 const temperature = std::get< 1 >( testData );
+  stackArray1d< real64, numComps > composition;
+  TestFluid< numComps >::createArray( composition, std::get< 2 >( testData ));
+
+  auto const binaryInteractionCoefficients = componentProperties.m_componentBinaryCoeff.toSliceConst();
+  integer sizes[2] = {0, 0};
+  arraySlice2d< real64 const > derivs( nullptr, sizes, sizes );
+  typename EOS::template StackVariables< true > stack( numComps, binaryInteractionCoefficients, derivs );
+  EOS::template initialiseStack< true >(
+    numComps,
+    pressure,
+    temperature,
+    componentProperties,
+    stack );
+  EOS::template computeMixtureCoefficients< 0, true >( numComps, composition.toSliceConst(), stack );
+
+  // Inflate values to avoid false passes due to absolute difference check
+  real64 constexpr dAdTScale = 1.0e4;
+
+  real64 dA_dT = 0.0;
+  stackArray1d< real64, numDofs > dA_dTDerivs( numDofs );
+
+  EOS::template computeAttractionParemeterDerivative< 0 >( numComps,
+                                                           pressure,
+                                                           composition.toSliceConst(),
+                                                           stack,
+                                                           dA_dT,
+                                                           dA_dTDerivs.toSlice() );
+
+  // The value of dA/dT should be equal to the one in the derivative container
+  checkRelativeError( dA_dT, stack.daMixture[Deriv::dT], relTol, absTol );
+
+  // Pressure derivatives
+  real64 constexpr pressureScale = 1.0e6*dAdTScale;
+  real64 const dp = 1.0e-4 * pressure;
+  internal::testNumericalDerivative( pressure, dp, pressureScale*dA_dTDerivs[Deriv::dP], [&]( real64 const p ) -> real64
+  {
+    typename EOS::template StackVariables< true > valueStack( numComps, binaryInteractionCoefficients, derivs );
+    EOS::initialiseStack( numComps, p, temperature, componentProperties, valueStack );
+    EOS::template computeMixtureCoefficients< 0, true >( numComps, composition.toSliceConst(), valueStack );
+    return pressureScale*valueStack.daMixture[Deriv::dT];
+  }, absTol, relTol );
+
+  // Temperature derivatives
+  real64 const dT = 1.0e-6 * temperature;
+  real64 constexpr temperatureScale = 1.0e4*dAdTScale;
+  internal::testNumericalDerivative( temperature, dT, temperatureScale*dA_dTDerivs[Deriv::dT], [&]( real64 const t ) -> real64
+  {
+    typename EOS::template StackVariables< true > valueStack( numComps, binaryInteractionCoefficients, derivs );
+    EOS::initialiseStack( numComps, pressure, t, componentProperties, valueStack );
+    EOS::template computeMixtureCoefficients< 0, true >( numComps, composition.toSliceConst(), valueStack );
+    return temperatureScale * valueStack.daMixture[Deriv::dT];
+  }, absTol, relTol );
+
+  // Composition derivatives
+  real64 const dz = 1.0e-6;
+  for( integer ic = 0; ic < numComps; ++ic )
+  {
+    integer const idof = Deriv::dC + ic;
+    internal::testNumericalDerivative( 0, dz, dAdTScale*dA_dTDerivs[idof], [&]( real64 const z ) -> real64
+    {
+      real64 const z_orig = composition[ic];
+      composition[ic] += z;
+      typename EOS::template StackVariables< true > valueStack( numComps, binaryInteractionCoefficients, derivs );
+      EOS::initialiseStack( numComps, pressure, temperature, componentProperties, valueStack );
+      EOS::template computeMixtureCoefficients< 0, true >( numComps, composition.toSliceConst(), valueStack );
+      composition[ic] = z_orig;
+      return dAdTScale * valueStack.daMixture[Deriv::dT];
     }, absTol, relTol );
   }
 }
@@ -418,6 +497,7 @@ TEST_P( PengRobinson4, testCubicModel )
   auto const testParam = GetParam();
   testPureCoefficients( testParam );
   testMixtureCoefficients( testParam );
+  testAttractionParemeterDerivative( testParam );
   testCompressibilityFactor( testParam );
   testCompressibilityFactorValue( testParam );
   testLogFugacityCoefficients( testParam );
@@ -428,6 +508,7 @@ TEST_P( SoaveRedlichKwong2, testCubicModel )
   auto const testParam = GetParam();
   testPureCoefficients( testParam );
   testMixtureCoefficients( testParam );
+  testAttractionParemeterDerivative( testParam );
   testCompressibilityFactor( testParam );
   testCompressibilityFactorValue( testParam );
   testLogFugacityCoefficients( testParam );

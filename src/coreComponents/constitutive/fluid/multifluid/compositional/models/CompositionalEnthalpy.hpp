@@ -68,7 +68,7 @@ public:
   GEOS_FORCE_INLINE
   GEOS_HOST_DEVICE
   static void evaluatePolynomial( real64 const & T,
-                                  arraySlice1d< const real64 > const & a,
+                                  arraySlice1d< real64 const > const & a,
                                   real64 & enthalpy,
                                   real64 & heatCapacity )
   {
@@ -137,7 +137,7 @@ void CompositionalEnthalpyUpdate::compute(
 
   integer const numComps = componentProperties.m_componentMolarWeight.size();
 
-  // 1. Calculate the ideal gas
+  // 1. Calculate the ideal gas enthalpy
   real64 hIdealGas = 0.0;
   auto const & dhIdealGas = dEnthalpy;
   dhIdealGas[Deriv::dT] = 0.0;
@@ -152,7 +152,7 @@ void CompositionalEnthalpyUpdate::compute(
     dhIdealGas[Deriv::dT] += phaseComposition[ic] * heatCapacityI;
     dhIdealGas[Deriv::dC+ic] = enthalpyI;
   }
-
+  ((void)m_equationOfState);
 }
 
 } // end namespace compositional

@@ -280,6 +280,26 @@ public:
                               StackVariables< DERIVATIVES > & data );
 
   /**
+   * @brief Compute the temperature derivative of the mixture attractive parameter
+   * @tparam DERIVATIVES a flag to indicate if derivatives should be calculated
+   * @param[in] numComps number of components
+   * @param[in] pressure pressure
+   * @param[in] composition composition of the phase
+   * @param[in] data The component mixture properties
+   * @param[out] dA_dT The temperature derivative of the mixture attractive parameter
+   * @param[out] dA_dTDerivs Derivatives of dA_dT wrt all primary variables
+   */
+  template< integer USD >
+  GEOS_HOST_DEVICE
+  static void
+  computeAttractionParemeterDerivative( integer const numComps,
+                                        real64 const & pressure,
+                                        arraySlice1d< real64 const, USD > const & composition,
+                                        StackVariables< true > const & data,
+                                        real64 & dA_dT,
+                                        StackDerivativeType< 1, true > const & dA_dTDerivs );
+
+  /**
    * @brief Compute the compressibility factor using compositions, BICs, and mixture coefficients
    * @tparam DERIVATIVES a flag to indicate if derivatives should be calculated
    * @param[in] numComps number of components
@@ -339,9 +359,9 @@ public:
                    real64 const & temperature,
                    StackVariables< DERIVATIVES > const & data,
                    real64 const & compressibilityFactor,
-                   typename StackVariables< DERIVATIVES >::ConstDerivativeType<> const & compressibilityFactorDerivs,
+                   StackConstDerivativeType< 1, DERIVATIVES > const & compressibilityFactorDerivs,
                    real64 & enthalpy,
-                   typename StackVariables< DERIVATIVES >::DerivativeType<> const & enthalpyDerivs );
+                   StackDerivativeType< 1, DERIVATIVES > const & enthalpyDerivs );
 
   /**
    * @brief Helper functions solving a cubic equation using trigonometry
