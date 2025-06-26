@@ -142,10 +142,10 @@ do
 
         # Try installing the package
         if $VERBOSE
-            INSTALL_MSG=$($PYTHON_TARGET -m $PIP_CMD install --upgrade $PACKAGE_DIR/$p)
+            INSTALL_MSG=$($PYTHON_TARGET -m $PIP_CMD install --upgrade --force-reinstall $PACKAGE_DIR/$p)
             INSTALL_RC=$?
         then
-            INSTALL_MSG=$($PYTHON_TARGET -m $PIP_CMD install --upgrade $PACKAGE_DIR/$p 2>&1)
+            INSTALL_MSG=$($PYTHON_TARGET -m $PIP_CMD install --upgrade --force-reinstall $PACKAGE_DIR/$p 2>&1)
             INSTALL_RC=$?
         fi
 
