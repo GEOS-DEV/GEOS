@@ -221,6 +221,7 @@ void testNumericalJacobian( SinglePhaseReservoirAndWells<> & solver,
                             real64 const relTol, bool diag_check, std::string const & testName,
                             LAMBDA && assembleFunction )
 {
+  GEOS_UNUSED_VAR( testName );
   SinglePhaseWell & wellSolver = *solver.wellSolver();
   SinglePhaseFVM< SinglePhaseBase > & flowSolver = dynamicCast< SinglePhaseFVM< SinglePhaseBase > & >( *solver.reservoirSolver() );
 
