@@ -318,7 +318,7 @@ fi
 
 if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
   # fix the setuptools/distutils conflict
-  # export SETUPTOOLS_USE_DISTUTILS=stdlib
+  export SETUPTOOLS_USE_DISTUTILS=stdlib
 
   # We split the process in two steps. First installing the environment, then running the tests.
   or_die cmake --build . --target ats_environment
