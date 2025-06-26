@@ -49,10 +49,14 @@ public:
   struct viewKeyStruct
   {
     static constexpr char const * temperatureTableString() { return "temperatureTable"; }
+    static constexpr char const * targetRegionString() { return "targetRegion"; }
     static constexpr char const * interpTypeString() { return "interpType"; }
+    dataRepository::ViewKey targetRegion = { targetRegionString() };
+
   } TemperatureProfileMPMEventViewKeys;
   /// @endcond
 
+  string getTargetRegion() const { return m_targetRegion; }
   arrayView2d< real64 > getTemperatureTable() const { return m_temperatureTable; } 
   int getInterpType() const { return m_interpType; } 
 
@@ -61,6 +65,7 @@ protected:
   virtual void postInputInitialization() override final;
 
   // Event variables
+  string m_targetRegion;
   array2d< real64 > m_temperatureTable;
   int m_interpType;
 

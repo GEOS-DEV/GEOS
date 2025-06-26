@@ -1940,7 +1940,7 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
     arrayView1d< real64 const > const particleVolume = subRegion.getParticleVolume();
     arrayView2d< real64 const > const particlePosition = subRegion.getParticleCenter();
     arrayView1d< real64 const > const particlePorosity = subRegion.getParticlePorosity();
-    arrayView1d< real64 const > const particleTemperature = subRegion.getParticleTemperature();  
+    // arrayView1d< real64 const > const particleTemperature = subRegion.getParticleTemperature();  
     arrayView3d< real64 const > const particleRVectors = subRegion.getParticleRVectors();
     arrayView2d< real64 const > const particleMaterialDirection = subRegion.getParticleMaterialDirection();
     arrayView2d< real64 const > const particleSurfaceNormal = subRegion.getParticleSurfaceNormal();
@@ -2163,20 +2163,19 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
   int maxLocalGroupNumber = 0; // Maximum contact group number on this partition.
   int maxGlobalGroupNumber; // Maximum contact group number on global domain.
 
-//  particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
-//  {
-//    arrayView1d< int > const particleGroup = subRegion.getParticleGroup();
-//    for( int p=0; p<subRegion.size(); p++ )
-//    {
-//      particleInitialTemperature[p] = m_initialTemperature;
-//      particleTemperature[p] = m_initialTemperature;
-//
-//      if( particleGroup[p] > maxLocalGroupNumber )
-//      {
-//        maxLocalGroupNumber = particleGroup[p];
-//      }
-//    }
-//  } );
+  particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
+  {
+    arrayView1d< int > const particleGroup = subRegion.getParticleGroup();
+    for( int p=0; p<subRegion.size(); p++ )
+    {
+      if( particleGroup[p] > maxLocalGroupNumber )
+      {
+        maxLocalGroupNumber = particleGroup[p];
+      }
+    }
+  } );
+
+
   MPI_Allreduce( &maxLocalGroupNumber,
                  &maxGlobalGroupNumber,
                  1,
@@ -3520,30 +3519,120 @@ void SolidMechanicsMPM::triggerEvents( const real64 dt,
         event.setIsComplete( 1 );
       }
 
+
+
+
+
       if( event.getName() == "TemperatureProfile" )
-      {
+        {
         TemperatureProfileMPMEvent & temperatureProfile = dynamicCast< TemperatureProfileMPMEvent & >( event );
-        
+
+      
+        particleManager.forParticleRegions< ParticleRegion >( [&]( ParticleRegion & region )
+        {
+          if( region.getName() == temperatureProfile.getTargetRegion() || temperatureProfile.getTargetRegion() == "all" )
+          {
+            // Copy particle data from source sub region to destination sub region
+            subGroupMap & targetSubRegions = region.getSubRegions();
+            for( int r=0; r < targetSubRegions.size(); ++r)
+            {
+              ParticleSubRegion & targetSubRegion = dynamicCast< ParticleSubRegion & >( *targetSubRegions[r] );
+
+
+              SortedArrayView< localIndex const > const activeParticleIndices = targetSubRegion.activeParticleIndices();
+              string const & solidMaterialName = targetSubRegion.template getReference< string >( viewKeyStruct::solidMaterialNamesString() );
+              SolidBase & solidModel = getConstitutiveModel< SolidBase >( targetSubRegion, solidMaterialName );
+
+
+              if( solidModel.hasWrapper( "temperature" ) )
+              {
+                real64 & temperature = solidModel.getReference< real64 >( "temperature" );
+                temperature *= 1e-100;
+              }
+
+              if( solidModel.hasWrapper( "initialTemperature" ) )
+              {
+                real64 & initialTemperature = solidModel.getReference< real64 >( "initialTemperature" );
+                initialTemperature *= 1e-100;
+              }
+            }
+          }
+        });
+      
+      //  particleManager.forParticleRegions< ParticleRegion >( [&]( ParticleRegion & region )
+      //  {
+      //  // Scale constitutive model crackspeed so damage does not evolve while healing
+      //                SolidBase & solidModel = getConstitutiveModel< SolidBase >( subRegion, solidMaterialName );
+      //                if( solidModel.hasWrapper( "initialTemperature" ) )
+      //                {
+      //                  real64 & initialTemperature = solidModel.getReference< real64 >( "initialTemperature" );
+      //                  initialTemperature *= 1e-100;
+      //                }
+//
+      //  // Scale constitutive model crackspeed so damage does not evolve while healing
+      //                if( solidModel.hasWrapper( "temperature" ) )
+      //                {
+      //                  real64 & temperature = solidModel.getReference< real64 >( "temperature" );
+      //                  temperature *= 1e-100;
+      //                }
+      //  }
+
+
+        //TemperatureProfileMPMEvent & temperatureProfile = dynamicCast< TemperatureProfileMPMEvent & >( event );
+        //std::cout << " print 1 " << m_boreholePressure <<  std::endl;
+
         arrayView2d< real64 const > const temperatureTable = temperatureProfile.getTemperatureTable();
+        //std::cout << " print 2 " << m_boreholePressure <<  std::endl;
 
         SolidMechanicsMPM::InterpolationOption interpType = static_cast<SolidMechanicsMPM::InterpolationOption>(temperatureProfile.getInterpType());
+        //std::cout << " print 3 " << m_boreholePressure <<  std::endl;
 
         array1d< real64 > tempOut(1);
+        //std::cout << " print 4 " << m_boreholePressure <<  std::endl;
+
         interpolateTempTable( time_n, dt, temperatureTable, tempOut, interpType );
+        //std::cout << " print 5 " << m_boreholePressure <<  std::endl;
+
         real64 currentTemp = tempOut[0];
+        //std::cout << "print 6 " << m_boreholePressure <<  std::endl;
 
         particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
         {
           arrayView1d< real64 > const particleTemperature = subRegion.getField< fields::mpm::particleTemperature >();
+          //std::cout << "print 7 " << m_boreholePressure <<  std::endl;
+
 
           SortedArrayView< localIndex const > const activeParticleIndices = subRegion.activeParticleIndices();
+          //std::cout << "print 8 " << m_boreholePressure <<  std::endl;
+
           forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST ( localIndex const pp )
           {
             localIndex const p = activeParticleIndices[pp];
+            //std::cout << "print 9 " << m_boreholePressure <<  std::endl;
 
             particleTemperature[p] = currentTemp;
+            //std::cout << "print 10 " << m_boreholePressure <<  std::endl;
+
           });
         });
+
+        if( event.isComplete() )
+              {
+                if( solidModel.hasWrapper( "initialTemperature" ) )
+                {
+                  real64 & initialTemperature = solidModel.getReference< real64 >( "initialTemperature" );
+                  initialTemperature *= 1e100;
+                }
+              }
+        if( event.isComplete() )
+              {
+                if( solidModel.hasWrapper( "temperature" ) )
+                {
+                  real64 & temperature = solidModel.getReference< real64 >( "temperature" );
+                  initialemperature *= 1e100;
+                }
+              }
+
       }
 
     }
@@ -4111,6 +4200,10 @@ void SolidMechanicsMPM::computeGridSurfaceNormals( ParticleManager & particleMan
   localIndex subRegionIndex = 0;
   particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
   {
+
+
+
+
     // Particle fields
     arrayView1d< int const > const particleGroup = subRegion.getParticleGroup();
     // arrayView1d< real64 const > const particleMass = subRegion.getField< mpm::fields::particleMass >();

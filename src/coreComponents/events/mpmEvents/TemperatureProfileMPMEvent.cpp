@@ -26,11 +26,16 @@ namespace geos
   TemperatureProfileMPMEvent::TemperatureProfileMPMEvent( const string & name,
                                                     Group * const parent ) :
                                                     MPMEventBase(  name, parent ),
+                                                    m_targetRegion( "mat1" ),
                                                     m_temperatureTable()
   {  
     registerWrapper( viewKeyStruct::temperatureTableString(), &m_temperatureTable ).
         setInputFlag( InputFlags::REQUIRED ).
         setDescription( "Temperature profile specified as a table" );
+
+    registerWrapper( viewKeyStruct::targetRegionString(), &m_targetRegion ).
+        setInputFlag( InputFlags::REQUIRED ).
+        setDescription( "Particle region to perform heal on" );    
 
     registerWrapper( viewKeyStruct::interpTypeString(), &m_interpType ).
         setInputFlag( InputFlags::OPTIONAL ).
@@ -55,7 +60,8 @@ namespace geos
     GEOS_LOG_RANK_0( "TemperatureProfileEvent: " << 
                      "Time=" << m_time << ", " << 
                      "Interval=" << m_interval << ", " << 
-                     "interpType=" << m_interpType );
+                     "interpType=" << m_interpType << ", " << 
+                     "targetRegion=" << std::string( m_targetRegion ));
                      //TODO write temperature table to console
   }
 
