@@ -35,7 +35,7 @@ namespace geos
 
     registerWrapper( viewKeyStruct::targetRegionString(), &m_targetRegion ).
         setInputFlag( InputFlags::REQUIRED ).
-        setDescription( "Particle region to perform heal on" );    
+        setDescription( "Particle region to cnahge temp on" );    
 
     registerWrapper( viewKeyStruct::interpTypeString(), &m_interpType ).
         setInputFlag( InputFlags::OPTIONAL ).
@@ -61,7 +61,7 @@ namespace geos
                      "Time=" << m_time << ", " << 
                      "Interval=" << m_interval << ", " << 
                      "interpType=" << m_interpType << ", " << 
-                     "targetRegion=" << std::string( m_targetRegion ));
+                     "targetRegion=" << m_targetRegion );
                      //TODO write temperature table to console
   }
 

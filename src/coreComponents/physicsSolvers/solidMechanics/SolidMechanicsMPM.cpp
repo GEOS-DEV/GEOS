@@ -3539,7 +3539,7 @@ void SolidMechanicsMPM::triggerEvents( const real64 dt,
               ParticleSubRegion & targetSubRegion = dynamicCast< ParticleSubRegion & >( *targetSubRegions[r] );
 
 
-              SortedArrayView< localIndex const > const activeParticleIndices = targetSubRegion.activeParticleIndices();
+              //SortedArrayView< localIndex const > const activeParticleIndices = targetSubRegion.activeParticleIndices();
               string const & solidMaterialName = targetSubRegion.template getReference< string >( viewKeyStruct::solidMaterialNamesString() );
               SolidBase & solidModel = getConstitutiveModel< SolidBase >( targetSubRegion, solidMaterialName );
 
@@ -3629,7 +3629,7 @@ void SolidMechanicsMPM::triggerEvents( const real64 dt,
                 if( solidModel.hasWrapper( "temperature" ) )
                 {
                   real64 & temperature = solidModel.getReference< real64 >( "temperature" );
-                  initialemperature *= 1e100;
+                  initialTemperature *= 1e100;
                 }
               }
 
