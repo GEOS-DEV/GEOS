@@ -232,6 +232,8 @@ if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
       rm -rf "${CONFLICT_DIR}"
       echo "[SUCCESS] System distutils removed."
   else
+      echo "[INFO] System distutils was not present to be removed."
+  fi
 
   # Debug the Python environment
   echo "Python binary:"
