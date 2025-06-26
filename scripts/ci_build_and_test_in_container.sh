@@ -218,6 +218,20 @@ if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
   or_die python3 -m venv ${ATS_PYTHON_HOME}
   source ${ATS_PYTHON_HOME}/bin/activate
 
+  SYSTEM_DISTUTILS_PATH="/usr/lib/python3.10/distutils"
+
+  echo "Checking for conflicting system distutils at: ${SYSTEM_DISTUTILS_PATH}"
+  if [ -d "${SYSTEM_DISTUTILS_PATH}" ]; then
+      echo "CONFLICT CONFIRMED: System distutils found. Forcibly removing it..."
+      # This command removes the problematic directory from the system.
+      # The 'sudo' might be needed if the script doesn't run as the root user.
+      # If this line fails, try removing 'sudo'.
+      sudo rm -rf "${SYSTEM_DISTUTILS_PATH}"
+      echo "System distutils removed."
+  else
+      echo "System distutils not found. The environment should be clean."
+  fi
+
   # Debug the Python environment
   echo "Python binary:"
   which python
