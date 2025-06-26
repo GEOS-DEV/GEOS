@@ -283,10 +283,11 @@ public:
 
   struct viewKeyStruct : PhysicsSolverBase::viewKeyStruct
   {
-    static constexpr char const * fluidNamesString() { return "fluidNames"; }
     static constexpr char const * isThermalString() { return "isThermal"; }
     static constexpr char const * writeCSVFlagString() { return "writeCSV"; }
     static constexpr char const * timeStepFromTablesFlagString() { return "timeStepFromTables"; }
+
+    static constexpr char const * fluidNamesString() { return "fluidNames"; }
   };
 
 private:
@@ -296,9 +297,6 @@ private:
    * @param domain the domain parition
    */
   void precomputeData( DomainPartition & domain );
-
-  virtual void setConstitutiveNamesCallSuper( ElementSubRegionBase & subRegion ) const override;
-
 
 protected:
 
@@ -354,7 +352,7 @@ protected:
   integer m_timeStepFromTables;
 
   /// flag to freeze the initial state during initialization in coupled problems
-  integer m_keepVariablesConstantDuringInitStep;
+  bool m_keepVariablesConstantDuringInitStep;
 
   /// name of the fluid constitutive model used as a reference for component/phase description
   string m_referenceFluidModelName;
