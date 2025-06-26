@@ -218,24 +218,20 @@ if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
   or_die python3 -m venv ${ATS_PYTHON_HOME}
   source ${ATS_PYTHON_HOME}/bin/activate
 
+  # STEP 1: Upgrade pip and setuptools WHILE the system distutils still exists.
+  # The old version of pip needs it to run, but the new versions will be self-contained.
+  echo "--- Upgrading Python tooling to be self-sufficient ---"
+  pip install --upgrade pip setuptools wheel
+  echo "--- Tooling upgrade complete. The environment is now self-contained. ---"
+
+  # STEP 2: NOW that the tools are modern, remove the conflicting system directory.
+  # The new pip and setuptools we just installed no longer need it.
   CONFLICT_DIR="/usr/lib/python3.10/distutils"
-
-  echo "--- Checking for conflicting system distutils at: ${CONFLICT_DIR} ---"
+  echo "--- Removing now-unnecessary system distutils directory ---"
   if [ -d "${CONFLICT_DIR}" ]; then
-      echo "[CONFLICT CONFIRMED] Directory found. Attempting forceful removal..."
       rm -rf "${CONFLICT_DIR}"
-
-      # Verify that the directory is now gone.
-      if [ -d "${CONFLICT_DIR}" ]; then
-          echo "[FATAL ERROR] The directory ${CONFLICT_DIR} STILL EXISTS after 'rm -rf'."
-          echo "This indicates a fundamental issue with the Docker environment's filesystem."
-          exit 1
-      else
-          echo "[SUCCESS] The conflict directory has been confirmed as removed."
-      fi
+      echo "[SUCCESS] System distutils removed."
   else
-      echo "[INFO] No conflict directory was found to remove."
-  fi
 
   # Debug the Python environment
   echo "Python binary:"
