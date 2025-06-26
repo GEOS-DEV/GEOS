@@ -121,7 +121,16 @@ fi
 
 # Updating pip
 echo "Updating pip"
-$PYTHON_TARGET -m pip install --upgrade pip
+echo "Before upgrade: $PYTHON_TARGET"
+$PYTHON_TARGET --version
+$PYTHON_TARGET -c "import distutils; print(distutils.__file__)"
+
+$PYTHON_TARGET -m pip install --upgrade pip setuptools
+
+echo "After upgrade: $PYTHON_TARGET"
+$PYTHON_TARGET --version
+$PYTHON_TARGET -c "import distutils; print(distutils.__file__)"
+
 
 # Install packages
 echo "Installing python packages..."
