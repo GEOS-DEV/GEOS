@@ -82,6 +82,7 @@ Geomechanics::Geomechanics( string const & name, Group * const parent ):
   m_deformationGradient(),
   m_plasticStrain(),
   m_damage(),
+  m_temperature(),
   m_lengthScale(),
   m_strengthScale()
 {
@@ -323,6 +324,11 @@ Geomechanics::Geomechanics( string const & name, Group * const parent ):
     setPlotLevel( PlotLevel::LEVEL_0 ).
     setDescription( "Array of quadrature point damage values" );
 
+  registerWrapper( viewKeyStruct::temperatureString(), &m_temperature ).
+    setApplyDefaultValue( 300.0 ).
+    setPlotLevel( PlotLevel::LEVEL_0 ).
+    setDescription( "Array of quadrature point temperature values" );
+
   registerWrapper( viewKeyStruct::lengthScaleString(), &m_lengthScale ).
     setApplyDefaultValue( DBL_MIN ).
     setPlotLevel( PlotLevel::NOPLOT ).
@@ -349,6 +355,7 @@ void Geomechanics::allocateConstitutiveData( dataRepository::Group & parent,
   m_plasticStrain.resize( 0, numConstitutivePointsPerParentIndex, 6 );
   m_porosity.resize( 0, numConstitutivePointsPerParentIndex );
   m_damage.resize( 0, numConstitutivePointsPerParentIndex );
+  m_temperature.resize( 0, numConstitutivePointsPerParentIndex );
 }
 
 void Geomechanics::postInputInitialization()

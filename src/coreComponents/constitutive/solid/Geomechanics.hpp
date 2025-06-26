@@ -84,6 +84,7 @@ public:
    * @param[in] plasticStrain The ArrayView holding the plastic strain for each quadrature point.
    * @param[in] porosity The ArrayView holding the porosity for each quadrature point.
    * @param[in] damage The ArrayView holding the damage for each quardrature point.
+   * @param[in] temperature The ArrayView holding the temperature for each quardrature point.
    * @param[in] thermalExpansionCoefficient The ArrayView holding the thermal expansion coefficient data for each element.
    * @param[in] newStress The ArrayView holding the new stress data for each quadrature point.
    * @param[in] oldStress The ArrayView holding the old stress data for each quadrature point.
@@ -149,6 +150,7 @@ public:
                        arrayView3d< real64 > const plasticStrain,
                        arrayView2d< real64 > const porosity,
                        arrayView2d< real64 > const damage,
+                       arrayView2d< real64 > const temperature,
                        arrayView1d< real64 > const lengthScale,
                        arrayView1d< real64 > const strengthScale,
                        arrayView1d< real64 > const & thermalExpansionCoefficient,
@@ -221,6 +223,7 @@ public:
     m_plasticStrain( plasticStrain ),
     m_porosity( porosity ),
     m_damage( damage ),
+    m_temperature( temperature ),
     m_lengthScale( lengthScale ),
     m_strengthScale( strengthScale )
   {
@@ -590,6 +593,9 @@ private:
   /// A reference to the ArrayView holding the damage for each quadrature point.
   arrayView2d< real64 > const m_damage;
 
+    /// A reference to the ArrayView holding the temperature for each quadrature point.
+  arrayView2d< real64 > const m_temperature;
+
   /// A reference to the ArrayView holding the length scale for each element/particle.
   arrayView1d< real64 > const m_lengthScale;
 
@@ -865,6 +871,7 @@ void GeomechanicsUpdates::smallStrainUpdateHelper( localIndex const k,
                    "oldPorosity: " << oldPorosity << ", " << 
                    "newPorosity: " << newPorosity << ", " << 
                    "damage: " << m_damage[k] << ", " << 
+                   "temperature: " << m_temperature[k] << ", " << 
                    "oldStress: {" << oldStress[0] << ", " << 
                                      oldStress[1] << ", " << 
                                      oldStress[2] << ", " << 
@@ -3206,6 +3213,9 @@ public:
     /// string/key for quadrature point damage value
     static constexpr char const * damageString() { return "damage"; }
 
+    /// string/key for quadrature point temperature value
+    static constexpr char const * temperatureString() { return "temperature"; }
+
     /// string/key for element/particle length scale
     static constexpr char const * lengthScaleString() { return "lengthScale"; }
 
@@ -3277,6 +3287,7 @@ public:
                                 m_plasticStrain,
                                 m_porosity,
                                 m_damage,
+                                m_temperature,
                                 m_lengthScale,
                                 m_strengthScale,
                                 m_thermalExpansionCoefficient,
@@ -3356,6 +3367,7 @@ public:
                           m_plasticStrain,
                           m_porosity,
                           m_damage,
+                          m_temperature,
                           m_lengthScale,
                           m_strengthScale,
                           m_thermalExpansionCoefficient,
@@ -3542,6 +3554,9 @@ protected:
 
   /// State variable: The damage values for each quadrature point
   array2d< real64 > m_damage;
+
+  /// State variable: The temperature values for each quadrature point
+  array2d< real64 > m_temperature;
 
   /// Discretization-sized variable: The length scale for each element/particle
   array1d< real64 > m_lengthScale;

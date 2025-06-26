@@ -608,6 +608,8 @@ void interpolateValueInRange( real64 const & x,
 
   void interpolateStressTable( real64 dt, real64 time_n );
 
+  void interpolateTemperatureTable( real64 dt, real64 time_n );
+
   void gridToParticle( real64 dt,
                        ParticleManager & particleManager,
                        NodeManager & nodeManager,
@@ -804,10 +806,19 @@ protected:
   array1d< int > m_stressControl;
   InterpolationOption m_stressTableInterpType;
   array2d< real64 > m_stressTable;
+
+  InterpolationOption m_temperatureTableInterpType;
+  array2d< real64 > m_temperatureTable;
+
+  
+
   real64 m_stressControlKp;
   real64 m_stressControlKi;
   real64 m_stressControlKd;
   array1d< real64 > m_domainStress;
+  real64 m_domainTemperature;
+  int m_setDomainTemperature;
+
   array1d< real64 > m_stressControlLastError;
   array1d< real64 > m_stressControlITerm;
 

@@ -135,10 +135,13 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
   m_confiningPressureBoxMax( ),
   m_stressControl(),
   m_stressTableInterpType( SolidMechanicsMPM::InterpolationOption::Linear ),
+  m_temperatureTableInterpType( SolidMechanicsMPM::InterpolationOption::Linear ),
   m_stressControlKp( 0.1 ),
   m_stressControlKi( 0.0 ),
   m_stressControlKd( 0.0 ),
   m_domainStress(),
+  m_domainTemperature(),
+  m_setDomainTemperature(),
   m_stressControlLastError(),
   m_stressControlITerm(),
   m_boxAverageHistory( 0 ),
@@ -434,6 +437,17 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
     setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "Array that stores the time-depended grid aligned stresses" );
 
+  registerWrapper( "temperatureTableInterpType", &m_temperatureTableInterpType ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setApplyDefaultValue( m_temperatureTableInterpType ).
+    setDescription( "The type of temperature table interpolation. Options are 0 (linear), 1 (cosine), 2 (quintic polynomial)." );
+
+  registerWrapper( "temperatureTable", &m_temperatureTable ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setDescription( "Array that stores the time-depended domain Temperature" );
+
   registerWrapper( "stressControlKp", &m_stressControlKp ).
     setInputFlag( InputFlags::OPTIONAL ).
     setRestartFlags( RestartFlags::NO_WRITE ).
@@ -453,6 +467,16 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
     setInputFlag( InputFlags::FALSE ).
     setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "Stores current target domain stress as driven by stress control" );
+
+  registerWrapper( "domainTemperature", &m_domainTemperature ).
+    setInputFlag( InputFlags::FALSE ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
+    setDescription( "Stores current target domain temperature as driven by temp table or other event" );
+
+  registerWrapper( "setDomainTemperature", &m_setDomainTemperature ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setDescription( "Flag that activates domain temperature interpolation from table." );
 
   registerWrapper( "stressControlLastError", &m_stressControlLastError ).
     setInputFlag( InputFlags::FALSE ).
@@ -2629,7 +2653,6 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
     interpolateStressTable( dt, time_n );
   }
 
-
   //#######################################################################################
   GEOS_LOG_RANK_IF( m_debugFlag == 1 && ( !( m_stressControl[0] && m_stressControl[1]&& m_stressControl[2] ) && ( m_prescribedBoundaryFTable == 1 || m_prescribedFTable == 1 ) ), "Interpolate F table" );
   solverProfilingIf( "Interpolate F table", !( m_stressControl[0] && m_stressControl[1]&& m_stressControl[2] ) && ( m_prescribedBoundaryFTable == 1 || m_prescribedFTable == 1 ) );
@@ -3463,30 +3486,23 @@ void SolidMechanicsMPM::triggerEvents( const real64 dt,
 
         event.setIsComplete( 1 );
       }
+
       if( event.getName() == "TemperatureProfile" )
-      {
+      { // Read from domain temperature table and set global temp value to all particles.
         TemperatureProfileMPMEvent & temperatureProfile = dynamicCast< TemperatureProfileMPMEvent & >( event );
-        
-        arrayView2d< real64 const > const temperatureTable = temperatureProfile.getTemperatureTable();
 
-        SolidMechanicsMPM::InterpolationOption interpType = static_cast<SolidMechanicsMPM::InterpolationOption>(temperatureProfile.getInterpType());
-
-        array1d< real64 > tempOut(1);
-        array1d< real64 > tempRateOut(1);
-        interpolateTable( time_n, dt, temperatureTable, tempOut, tempRateOut, interpType );
-        real64 currentTemp = tempOut[0];
+        interpolateTemperatureTable( dt, time_n );
 
         particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
-        {
-          arrayView1d< real64 > const particleTemperature = subRegion.getField< fields::mpm::particleTemperature >();
-
+        {        
           SortedArrayView< localIndex const > const activeParticleIndices = subRegion.activeParticleIndices();
-          forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST ( localIndex const pp )
+          arrayView1d< real64 > particleTemperature = subRegion.getParticleTemperature();
+          forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST_DEVICE ( localIndex const pp )
           {
             localIndex const p = activeParticleIndices[pp];
+            particleTemperature[p] = m_domainTemperature; 
+          } );
 
-            particleTemperature[p] = currentTemp;
-          });
         });
       }
 
@@ -8967,7 +8983,26 @@ void SolidMechanicsMPM::interpolateStressTable( real64 dt,
                     m_stressTable,
                     m_domainStress,
                     stress_rate,
-                    m_fTableInterpType );
+                    m_stressTableInterpType );
+}
+
+void SolidMechanicsMPM::interpolateTemperatureTable( real64 dt,
+                                              real64 time_n )
+{
+  GEOS_MARK_FUNCTION;
+
+  array1d< real64 > temperature(1); // not used
+  array1d< real64 > temperature_rate(1); // not used
+
+  interpolateTable( time_n, 
+                    dt,
+                    m_temperatureTable,
+                    temperature, // This is set by the interpolation
+                    temperature_rate, // unused
+                    m_temperatureTableInterpType );
+  
+  m_domainTemperature = temperature[0];
+
 }
 
 void SolidMechanicsMPM::gridToParticle( real64 dt,
@@ -9710,7 +9745,7 @@ void SolidMechanicsMPM::updateSolverDependencies( ParticleManager & particleMana
 
     if(  constitutiveModel.hasWrapper( "temperature" ) )
     {
-      arrayView1d< real64 > const particleTemperature = subRegion.getParticleTemperature();
+      arrayView1d< real64 > particleTemperature = subRegion.getParticleTemperature();
       arrayView1d< real64 const > const constitutiveTemperature = constitutiveModel.getReference< array1d< real64 > >( "temperature" );
       forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST_DEVICE ( localIndex const pp )
       {
