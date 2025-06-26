@@ -3463,6 +3463,33 @@ void SolidMechanicsMPM::triggerEvents( const real64 dt,
 
         event.setIsComplete( 1 );
       }
+      if( event.getName() == "TemperatureProfile" )
+      {
+        TemperatureProfileMPMEvent & temperatureProfile = dynamicCast< TemperatureProfileMPMEvent & >( event );
+        
+        arrayView2d< real64 const > const temperatureTable = temperatureProfile.getTemperatureTable();
+
+        SolidMechanicsMPM::InterpolationOption interpType = static_cast<SolidMechanicsMPM::InterpolationOption>(temperatureProfile.getInterpType());
+
+        array1d< real64 > tempOut(1);
+        array1d< real64 > tempRateOut(1);
+        interpolateTable( time_n, dt, temperatureTable, tempOut, tempRateOut, interpType );
+        real64 currentTemp = tempOut[0];
+
+        particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
+        {
+          arrayView1d< real64 > const particleTemperature = subRegion.getField< fields::mpm::particleTemperature >();
+
+          SortedArrayView< localIndex const > const activeParticleIndices = subRegion.activeParticleIndices();
+          forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST ( localIndex const pp )
+          {
+            localIndex const p = activeParticleIndices[pp];
+
+            particleTemperature[p] = currentTemp;
+          });
+        });
+      }
+
     }
   } );
 
@@ -8351,7 +8378,7 @@ void SolidMechanicsMPM::computeCohesiveTraction( int g,
     tB[i] += normalForce * nAB[i] * (1.0 - m_cohesiveGridNodeDamages[g][B]);
   }
 
-  if ( fabs(totalTangentialDisplacement) > 1e-20 )
+  if ( fabs(totalTangentialDisplacement) > 7e-14 * std::min({ m_hEl[0], m_hEl[1], m_hEl[2] }) )
   {
     real64 tAB[3] = { 0 }; // Tangent unit vector
     LvArray::tensorOps::copy< 3 >( tAB, tangentialInterfaceDisplacement );

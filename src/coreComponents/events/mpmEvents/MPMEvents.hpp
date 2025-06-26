@@ -32,4 +32,5 @@
 #include "events/mpmEvents/DeformationUpdateMPMEvent.hpp"
 #include "events/mpmEvents/BoreholePressureMPMEvent.hpp"
 #include "events/mpmEvents/ConfiningPressureMPMEvent.hpp"
+#include "events/mpmEvents/TemperatureProfileMPMEvent.hpp"
 #endif /* GEOSX_MPMEVENTS_HPP_ */
