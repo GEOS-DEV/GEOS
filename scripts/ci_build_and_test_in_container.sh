@@ -208,55 +208,11 @@ if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
   echo "Running the integrated tests has been requested."
   # We install the python environment required by ATS to run the integrated tests.
   or_die apt-get update
-
-  # We only install the bare minimum needed to create a virtual environment.
-  # 'pip', 'setuptools', and 'wheel' will be installed *inside* the venv.
-  # --no-install-recommends is CRITICAL to prevent apt from installing the conflicting system `python3-distutils`.
-  or_die apt-get install -y --no-install-recommends python3.10-venv python-is-python3
-
+  or_die apt-get install -y virtualenv python3-dev python-is-python3
   ATS_PYTHON_HOME=/tmp/run_integrated_tests_virtualenv
-  or_die python3 -m venv ${ATS_PYTHON_HOME}
-  source ${ATS_PYTHON_HOME}/bin/activate
+  or_die virtualenv ${ATS_PYTHON_HOME}
 
-  # STEP 1: Upgrade pip and setuptools WHILE the system distutils still exists.
-  # The old version of pip needs it to run, but the new versions will be self-contained.
-  echo "--- Upgrading Python tooling to be self-sufficient ---"
-  pip install --upgrade pip setuptools wheel
-  echo "--- Tooling upgrade complete. The environment is now self-contained. ---"
-
-  # STEP 2: NOW that the tools are modern, remove the conflicting system directory.
-  # The new pip and setuptools we just installed no longer need it.
-  CONFLICT_DIR="/usr/lib/python3.10/distutils"
-  echo "--- Removing now-unnecessary system distutils directory ---"
-  if [ -d "${CONFLICT_DIR}" ]; then
-      rm -rf "${CONFLICT_DIR}"
-      echo "[SUCCESS] System distutils removed."
-  else
-      echo "[INFO] System distutils was not present to be removed."
-  fi
-
-  # Debug the Python environment
-  echo "Python binary:"
-  which python
-  echo "Python version:"
-  python --version
-  echo "Ensurepip version:"
-  python -m ensurepip --version || echo "ensurepip not available"
-  echo "Distutils location before upgrade:"
-  python -c "import distutils; print(distutils.__file__)" || echo "distutils not found"
-  echo "Setuptools location before upgrade:"
-  python -c "import setuptools; print(setuptools.__file__)" || echo "setuptools not found"
-
-  # Upgrade pip and setuptools inside the venv. This will install modern, self-contained versions.
-  pip install --upgrade pip setuptools wheel
-
-  echo "Distutils location after upgrade:"
-  python -c "import distutils; print(distutils.__file__)" || echo "distutils not found"
-  echo "Setuptools location after upgrade:"
-  python -c "import setuptools; print(setuptools.__file__)" || echo "setuptools not found"
-
-  # Clear pip cache
-  pip cache purge
+  python3 -m pip cache purge
 
   # Setup a temporary directory to hold tests
   tempdir=$(mktemp -d)
@@ -361,6 +317,9 @@ if [[ "${RUN_UNIT_TESTS}" = true ]]; then
 fi
 
 if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
+  # fix the setuptools/distutils conflict
+  export SETUPTOOLS_USE_DISTUTILS=stdlib
+  
   # We split the process in two steps. First installing the environment, then running the tests.
   or_die cmake --build . --target ats_environment
 

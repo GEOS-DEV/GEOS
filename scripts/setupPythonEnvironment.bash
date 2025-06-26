@@ -11,11 +11,10 @@ PIP_CMD="pip --disable-pip-version-check"
 PACKAGE_BRANCH=main
 
 
-declare -a TARGET_PACKAGES=("geos-mesh"
+declare -a TARGET_PACKAGES=("geos-utils"
+                            "geos-mesh"
                             "geos-xml-tools"
                             "hdf5-wrapper"
-                            "geos-utils"
-                            "geos-mesh"
                             "pygeos-tools"
                             "geos-ats")
 declare -a LINK_SCRIPTS=("preprocess_xml"
@@ -121,16 +120,7 @@ fi
 
 # Updating pip
 echo "Updating pip"
-echo "Before upgrade: $PYTHON_TARGET"
-$PYTHON_TARGET --version
-$PYTHON_TARGET -c "import distutils; print(distutils.__file__)"
-
-$PYTHON_TARGET -m pip install --upgrade pip setuptools
-
-echo "After upgrade: $PYTHON_TARGET"
-$PYTHON_TARGET --version
-$PYTHON_TARGET -c "import distutils; print(distutils.__file__)"
-
+$PYTHON_TARGET -m pip install --upgrade pip
 
 # Install packages
 echo "Installing python packages..."
@@ -142,10 +132,10 @@ do
 
         # Try installing the package
         if $VERBOSE
-            INSTALL_MSG=$($PYTHON_TARGET -m $PIP_CMD install --upgrade --force-reinstall $PACKAGE_DIR/$p)
+            INSTALL_MSG=$($PYTHON_TARGET -m $PIP_CMD install --upgrade $PACKAGE_DIR/$p)
             INSTALL_RC=$?
         then
-            INSTALL_MSG=$($PYTHON_TARGET -m $PIP_CMD install --upgrade --force-reinstall $PACKAGE_DIR/$p 2>&1)
+            INSTALL_MSG=$($PYTHON_TARGET -m $PIP_CMD install --upgrade $PACKAGE_DIR/$p 2>&1)
             INSTALL_RC=$?
         fi
 
