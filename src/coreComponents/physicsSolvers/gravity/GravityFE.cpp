@@ -17,18 +17,12 @@
 /**
  * @file GravityFE.cpp
  */
-#include <iostream>
 
 #include "GravityFE.hpp"
 #include "GravityFEKernel.hpp"
 
-#include "discretizationMethods/NumericalMethodsManager.hpp"
 #include "finiteElement/FiniteElementDiscretization.hpp"
-#include "fieldSpecification/FieldSpecificationManager.hpp"
-#include "mainInterface/ProblemManager.hpp"
-#include "mesh/ElementType.hpp"
 #include "mesh/DomainPartition.hpp"
-#include "mesh/mpiCommunications/CommunicationTools.hpp"
 
 
 namespace geos
@@ -70,7 +64,6 @@ void GravityFE::initializePreSubGroups()
 
 void GravityFE::registerDataOnMesh( Group & meshBodies )
 {
-
   forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
                                                     MeshLevel & mesh,
                                                     string_array const & )
@@ -131,16 +124,6 @@ real64 GravityFE::explicitStepModeling( real64 const & time_n,
     arrayView1d< real64 > const volumeIntegral = nodeManager.getField< fields::VolumeIntegral >();
     volumeIntegral.setValues< parallelHostPolicy >( 0. );
 
-
-#if 0
-    // Print size and type of "CellElements" partitions.
-    mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
-                                                                                          CellElementSubRegion & elementSubRegion )
-    {
-      GEOS_LOG_RANK_0( "GravityFE: Rank 0: Partition[ " << elementSubRegion.getElementType() << " ] = "<< elementSubRegion.size());
-    } );
-#endif
-
     // Loop over all sub-regions in regions of type "CellElements".
     mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                           CellElementSubRegion & elementSubRegion )
@@ -166,7 +149,7 @@ real64 GravityFE::explicitStepModeling( real64 const & time_n,
         using FE_TYPE = TYPEOFREF( finiteElement );
 
         gravityFEKernel::
-          DensityVolumeIntegralKernel< FE_TYPE > kernel( finiteElement );
+          ForwardVolumeIntegralKernel< FE_TYPE > kernel( finiteElement );
         kernel.template launch< EXEC_POLICY, ATOMIC_POLICY >
           ( elementSubRegion.size(),
           X,
@@ -183,7 +166,7 @@ real64 GravityFE::explicitStepModeling( real64 const & time_n,
           volumeIntegral[a]=0.;
         }
       } );
-    } );  // loop on cellElements
+    } );  // loop cellElements
 
 
     // Step #2: Compute contribution to all stations.
@@ -218,17 +201,8 @@ real64 GravityFE::explicitStepModeling( real64 const & time_n,
   // In place: Source==Destination.
   MpiWrapper::allReduce( localGzAtStations, localGzAtStations, MpiWrapper::Reduction::Sum, MPI_COMM_GEOS );
 
-#if 0
-  arrayView1d< real64 > const gzAtStations = m_gzAtStations.toView();
-  for( localIndex istation=0; istation<m_stationCoordinates.size( 0 ); ++istation )
-  {
-    gzAtStations[istation]=localGzAtStations[istation];
-  }
-#else
   arrayView1d< real64 > gzAtStations = m_gzAtStations.toView();
   gzAtStations = localGzAtStations;
-#endif
-
 
   for( localIndex iStation = 0; iStation < m_stationCoordinates.size( 0 ); ++iStation )
   {
@@ -243,8 +217,6 @@ real64 GravityFE::explicitStepModeling( real64 const & time_n,
               << std::setw( 14 ) << gzAtStations[iStation];
     GEOS_LOG_RANK_0( logStream.str() );
   }
-
-
 
   // Dump result to disk...
   if( (rank==0) &&  ( this->m_outputGz == 1 ))
@@ -263,8 +235,6 @@ real64 GravityFE::explicitStepAdjoint( real64 const & time_n,
 {
   GEOS_MARK_FUNCTION;
   GEOS_UNUSED_VAR( time_n, cycleNumber );
-
-  //int const rank = MpiWrapper::commRank( MPI_COMM_GEOSX );
 
   array1d< real64 > localGzAtStations( m_stationCoordinates.size( 0 ) );
   localGzAtStations.setValues< parallelHostPolicy >( 0. );
@@ -304,7 +274,7 @@ real64 GravityFE::explicitStepAdjoint( real64 const & time_n,
         using FE_TYPE = TYPEOFREF( finiteElement );
 
         gravityFEKernel::
-          VolumeIntegralKernel_uni2< FE_TYPE > kernel( finiteElement );
+          AdjointVolumeIntegralKernel< FE_TYPE > kernel( finiteElement );
         kernel.template launch< EXEC_POLICY, ATOMIC_POLICY >
           ( elementSubRegion.size(),
           X,
@@ -317,11 +287,6 @@ real64 GravityFE::explicitStepAdjoint( real64 const & time_n,
       {
         // Deal with one station.
         auto const & coords = m_stationCoordinates[iStation];
-#if 0
-        real64 const coords[3] = { m_stationCoordinates[iStation][0],
-                                   m_stationCoordinates[iStation][1],
-                                   m_stationCoordinates[iStation][2] };
-#endif
         real64 const res=residue[iStation];
 
         forAll< EXEC_POLICY >( elementSubRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const k )
@@ -336,9 +301,7 @@ real64 GravityFE::explicitStepAdjoint( real64 const & time_n,
             real64 r2 = dx*dx + dy*dy + dz*dz;
             real64 r3 = sqrt( r2 ) * r2;
             adjoint[k] += GRAVITATIONAL_CONSTANT * volumeIntegral2d[k][iLoc] * res * dz / r3;
-
           }
-
         } );  // Loop elem
       }   //Loop station
 
@@ -352,7 +315,7 @@ real64 GravityFE::explicitStepAdjoint( real64 const & time_n,
         }
       }
 
-    } );// Loop subregion
+    } ); // Loop subregion
   } );   // Loop mesh
 
   return dt;

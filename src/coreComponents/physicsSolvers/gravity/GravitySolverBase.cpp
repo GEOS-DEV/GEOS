@@ -18,26 +18,13 @@
  */
 
 #include "GravitySolverBase.hpp"
-
-#include "dataRepository/KeyNames.hpp"
-#include "finiteElement/FiniteElementDiscretization.hpp"
-#include "fieldSpecification/FieldSpecificationManager.hpp"
-#include "mainInterface/ProblemManager.hpp"
-#include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include <filesystem>
+
 
 namespace geos
 {
 
 using namespace dataRepository;
-
-
-
-const std::unordered_map< std::string, GravitySolverBase::GravityMode > GravitySolverBase::modeMap = {
-  { "modeling", GravitySolverBase::GravityMode::Modeling },
-  { "adjoint", GravitySolverBase::GravityMode::Adjoint }
-};
-
 
 GravitySolverBase::GravitySolverBase( const std::string & name, Group * const parent )
   : PhysicsSolverBase( name, parent )
@@ -75,6 +62,31 @@ GravitySolverBase::GravitySolverBase( const std::string & name, Group * const pa
 
 GravitySolverBase::~GravitySolverBase() = default;
 
+
+GravitySolverBase::GravityMode GravitySolverBase::parseMode( const std::string & modeStr )
+{
+  std::string lowerMode = modeStr;
+  std::transform( lowerMode.begin(), lowerMode.end(), lowerMode.begin(),
+                  [] ( unsigned char c ) -> unsigned char { return std::tolower( c ); } );
+
+  auto it = modeMap.find( lowerMode );
+  if( it != modeMap.end())
+    return it->second;
+
+  std::ostringstream oss;
+  oss << "Invalid gravity mode string: '" << modeStr << "'. Valid options are: ";
+  bool first = true;
+  for( const auto & pair : modeMap )
+  {
+    if( !first )
+      oss << ", ";
+    oss << pair.first;
+    first = false;
+  }
+  throw std::invalid_argument( oss.str());
+}
+
+
 void GravitySolverBase::reinit()
 {
   initializePostInitialConditionsPreSubGroups();
@@ -88,7 +100,6 @@ void GravitySolverBase::initializePreSubGroups()
 void GravitySolverBase::initializePostInitialConditionsPreSubGroups()
 {
   PhysicsSolverBase::initializePostInitialConditionsPreSubGroups();
-
 
   try
   {
@@ -107,24 +118,6 @@ void GravitySolverBase::initializePostInitialConditionsPreSubGroups()
   }
 
 
-
-#if 0
-  if( m_modeString == "modeling" )
-  {
-    m_mode = GravityMode_Modeling;
-  }
-  else if( m_modeString == "adjoint" )
-  {
-    m_mode = GravityMode_Adjoint;
-    GEOS_THROW_IF( m_stationCoordinates.size( 0 ) != m_residue.size( 0 ),
-                   "GravitySolverBase: Residue size does not match the number of stations",
-                   InputError );
-  }
-  else
-  {
-    GEOS_THROW( "Invalid mode string: " + m_modeString, InputError );
-  }
-#endif
   constexpr auto yesno = [] (int flag) noexcept->const char * { return flag ? "yes" : "no"; };
 
   LogPart gravitySolverLog( "Gravity Solver: ", MpiWrapper::commRank() == 0 );
@@ -195,7 +188,7 @@ void GravitySolverBase::saveGz( real64 const & time_n,
   fout.write( reinterpret_cast< const char * >(tmp32.data()), tmp32.size() * sizeof(float));
 
   // Header file
-  const std::string headerFilename = basename + GEOS_FMT( "_{:015}.H", time_n );
+  std::filesystem::path headerFilename = basename + GEOS_FMT( "_{:015}.H", time_n );
   std::ofstream fheader( headerFilename );
   if( !fheader )
     throw std::ios_base::failure( "Failed to open header file" );

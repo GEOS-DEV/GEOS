@@ -21,9 +21,8 @@
 #ifndef GEOS_PHYSICSSOLVERS_GRAVITY_GRAVITYFE_HPP_
 #define GEOS_PHYSICSSOLVERS_GRAVITY_GRAVITYFE_HPP_
 
-#include "physicsSolvers/PhysicsSolverBase.hpp"
 #include "GravitySolverBase.hpp"
-
+#include "mesh/MeshFields.hpp"
 
 
 namespace geos
@@ -86,12 +85,7 @@ protected:
 
   virtual void initializePostInitialConditionsPreSubGroups() override final;
 
-
-private:
-
-
 };
-
 
 
 namespace fields
@@ -128,7 +122,6 @@ DECLARE_FIELD( Adjoint,
                WRITE_AND_READ,
                "Adjoint field." );
 }
-
 
 
 } /* namespace geos */

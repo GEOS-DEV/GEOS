@@ -21,7 +21,6 @@
 #ifndef GEOS_PHYSICSSOLVERS_GRAVITY_GRAVITYFEKERNEL_HPP_
 #define GEOS_PHYSICSSOLVERS_GRAVITY_GRAVITYFEKERNEL_HPP_
 
-//#include "finiteElement/kernelInterface/ImplicitKernelBase.hpp"
 
 namespace geos
 {
@@ -31,9 +30,9 @@ namespace gravityFEKernel
 {
 
 template< typename FE_TYPE >
-struct DensityVolumeIntegralKernel
+struct ForwardVolumeIntegralKernel
 {
-  explicit DensityVolumeIntegralKernel( FE_TYPE const & finiteElement )
+  explicit ForwardVolumeIntegralKernel( FE_TYPE const & finiteElement )
     : m_finiteElement( finiteElement )
   {}
 
@@ -98,9 +97,9 @@ private:
 
 
 template< typename FE_TYPE >
-struct VolumeIntegralKernel_uni2
+struct AdjointVolumeIntegralKernel
 {
-  explicit VolumeIntegralKernel_uni2( FE_TYPE const & finiteElement )
+  explicit AdjointVolumeIntegralKernel( FE_TYPE const & finiteElement )
     : m_finiteElement( finiteElement )
   {}
 
@@ -156,10 +155,7 @@ private:
   FE_TYPE const & m_finiteElement;
 };
 
-
-
 } // namespace gravityFEKernel
-
 } // namespace geos
 
 #endif // GEOS_PHYSICSSOLVERS_GRAVITY_GRAVITYFEKERNEL_HPP_

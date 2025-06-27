@@ -20,7 +20,6 @@
 #ifndef GEOS_PHYSICSSOLVERS_GRAVITY_GRAVITYSOLVERBASE_HPP_
 #define GEOS_PHYSICSSOLVERS_GRAVITY_GRAVITYSOLVERBASE_HPP_
 
-#include "mesh/MeshFields.hpp"
 #include "physicsSolvers/PhysicsSolverBase.hpp"
 
 
@@ -69,11 +68,8 @@ public:
   {
     static constexpr char const * modeString() { return "mode"; }
     static constexpr char const * stationCoordinatesString() { return "stationCoordinates"; }
-    static constexpr char const * outputPropertyLogString() { return "outputPropertyLog"; }
-    static constexpr char const * outputGzLogString() { return "outputGzLog"; }
     static constexpr char const * outputGzString() { return "outputGz"; }
     static constexpr char const * outputGzBasenameString() { return "outputGzBasename"; }
-    static constexpr char const * outputAdjointLogString() { return "outputAdjointLog"; }
     static constexpr char const * residueString() { return "residue"; }
     static constexpr char const * gzAtStationsString() { return "gzAtStations"; }
   };
@@ -83,10 +79,18 @@ public:
 
 protected:
 
-  void saveGz( real64 const & time_n,
-               integer const cycleNumber,
-               string const basename,
-               arrayView1d< real64 > const & gzAtStations );
+  enum class GravityMode { Modeling, Adjoint };
+
+  inline static const std::unordered_map< std::string, GravityMode > modeMap = {
+    {"modeling", GravityMode::Modeling},
+    {"adjoint", GravityMode::Adjoint}
+  };
+
+  static GravityMode parseMode( const std::string & modeStr );
+
+  std::string m_modeString;
+  GravityMode m_mode;
+
 
   virtual real64 explicitStepModeling( real64 const & time_n,
                                        real64 const & dt,
@@ -98,25 +102,10 @@ protected:
                                       integer const cycleNumber,
                                       DomainPartition & domain ) = 0;
 
-
-  enum class GravityMode { Modeling, Adjoint };
-  static const std::unordered_map< std::string, GravityMode > modeMap;
-
-
-  GravityMode parseMode( const std::string & modeStr )
-  {
-    auto it = modeMap.find( modeStr );
-    if( it != modeMap.end())
-      return it->second;
-    throw std::invalid_argument( "Invalid mode string: " + modeStr );
-  }
-
-
-
-  std::string m_modeString;
-
-  GravityMode m_mode;
-
+  void saveGz( real64 const & time_n,
+               integer const cycleNumber,
+               string const basename,
+               arrayView1d< real64 > const & gzAtStations );
 
   /// Coordinates of the gravimeter stations
   array2d< real64 > m_stationCoordinates;
