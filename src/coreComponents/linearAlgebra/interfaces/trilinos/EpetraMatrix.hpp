@@ -244,7 +244,7 @@ public:
   virtual void leftRightScale( EpetraVector const & vecLeft,
                                EpetraVector const & vecRight ) override;
 
-  virtual void computeScalingVector( EpetraVector & scaling ) override;
+  virtual void computeScalingVector( EpetraVector & scaling ) const override;
 
   virtual void rescaleRows( arrayView1d< globalIndex const > const & rowIndices,
                             RowSumType const rowSumType ) override;

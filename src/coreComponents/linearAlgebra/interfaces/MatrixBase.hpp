@@ -167,12 +167,6 @@ protected:
     return m_dofManager;
   }
 
-  /**
-   * @brief Compute left and right scaling vectors for diagonal scaling.
-   * @param scaling Vector to be filled with scaling factors.
-   */
-  virtual void computeScalingVector( Vector & scaling ) const = 0;
-
   ///@}
 
   /**
@@ -709,6 +703,12 @@ protected:
    */
   virtual void leftRightScale( Vector const & vecLeft,
                                Vector const & vecRight ) = 0;
+
+  /**
+   * @brief Compute left and right scaling vectors for diagonal scaling.
+   * @param scaling Vector to be filled with scaling factors.
+   */
+  virtual void computeScalingVector( Vector & scaling ) const = 0;
 
   /**
    * @brief Rescales selected rows of matrix using row sum reciprocal as a factor.
