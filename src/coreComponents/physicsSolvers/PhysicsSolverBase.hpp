@@ -1030,7 +1030,7 @@ protected:
   /// System solution vector
   ParallelVector m_solution;
 
-  /// Scaling vector (A^\tilde = D * A * D, b^\tilde = D * b, x = D * x^\tilde)
+  /// Diagonal scaling vector D (Ahat = D * A * D, bhat = D * b, x = D * xhat)
   ParallelVector m_scaling;
 
   /// Flag to decide whether to apply physics-based scaling to the linear system
