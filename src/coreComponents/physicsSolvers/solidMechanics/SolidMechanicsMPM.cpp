@@ -3548,8 +3548,6 @@ void SolidMechanicsMPM::triggerEvents( const real64 dt,
 
       if( event.getName() == "TemperatureProfile" )
       { // Read from domain temperature table and set global temp value to all particles.
-        TemperatureProfileMPMEvent & temperatureProfile = dynamicCast< TemperatureProfileMPMEvent & >( event );
-
         interpolateTemperatureTable( dt, time_n );
 
         particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
