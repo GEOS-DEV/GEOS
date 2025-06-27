@@ -29,14 +29,24 @@ class StdVectorWrapper : public std::vector< T, Allocator >
 public:
   /// Type alias for the base class (i.e., std::vector)
   using Base = std::vector< T, Allocator >;
+
+  /// using to inherit constructors from the base class
   using Base::Base;  // Inherit constructors
- 
-  StdVectorWrapper( Base const & other ): 
-    Base( other ) 
+
+  /**
+   * @brief copy constructor.
+   * @param other The vector to copy from.
+   */
+  StdVectorWrapper( Base const & other ):
+    Base( other )
   {}
 
-  StdVectorWrapper( Base && other ): 
-    Base( std::move( other ) ) 
+  /**
+   * @brief move constructor.
+   * @param other The vector to move from.
+   */
+  StdVectorWrapper( Base && other ):
+    Base( std::move( other ) )
   {}
 
   /**
