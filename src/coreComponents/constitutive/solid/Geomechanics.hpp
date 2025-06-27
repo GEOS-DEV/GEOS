@@ -134,7 +134,6 @@ public:
                        real64 const & fractureSofteningExponent,
                        real64 const & fractureStress,
                        real64 const & initialTemperature,
-                       real64 const & temperature,
                        real64 const & brittleDuctileTransition,
                        int const & damageEvolutionCriterion,
                        real64 const & cr,
@@ -214,7 +213,6 @@ public:
     m_fractureSofteningExponent( fractureSofteningExponent ),
     m_fractureStress( fractureStress ),
     m_initialTemperature( initialTemperature ),
-    m_temperature( temperature ),
     m_brittleDuctileTransition( brittleDuctileTransition ),
     m_damageEvolutionCriterion ( damageEvolutionCriterion ),
     m_cr( cr ),
@@ -575,7 +573,6 @@ private:
   real64 const & m_fractureSofteningExponent;
   real64 const & m_fractureStress;
   real64 const & m_initialTemperature;
-  real64 const & m_temperature;
   real64 const & m_brittleDuctileTransition;
   int const & m_damageEvolutionCriterion;
   real64 const & m_cr;
@@ -1143,7 +1140,7 @@ int GeomechanicsUpdates::computeStep( real64 const ( & D )[6],               // 
     real64 equilibriumPorosityOffset = m_creepE;  // volumetric creep rate parameter
     real64 compactionRatePressureExponent = m_creepF;  // volumetric creep rate parameter
     real64 Temp_0 = m_initialTemperature; // temperature at start of simulation
-    real64 Temp_new = m_temperature; // updated temperature
+    //real64 Temp_new = m_temperature; // updated temperature
 
     real64 rootTwoThirds = 0.81649658092772603273242802490196; 
 
@@ -1237,7 +1234,7 @@ int GeomechanicsUpdates::computeStep( real64 const ( & D )[6],               // 
     // unloaded porosity at the start of the step.
     real64 phi_p = std::max( 1.e-10 , 1.0 + exp(-evp)*( phi_i - 1 ) ); 
     // equilibrium porosity at the start of the step.
-		real64 phi_e = std::max(1.e-10 , A * exp( -std::pow(p,equilibriumPorosityPressureExponent) / B ) + equilibriumPorosityOffset ) + (0. * Temp_0 * Temp_new);    
+		real64 phi_e = std::max(1.e-10 , A * exp( -std::pow(p,equilibriumPorosityPressureExponent) / B ) + equilibriumPorosityOffset ) + (0. * Temp_0);    
 
     // uncomment for debugging:
     //std::cout<<"pn = "<<p<<", evp_n = "<<evp<<", phi_p_n = "<<phi_p<<", phi_e_n = "<<phi_e<<", X_n = "<<X_old<<std::endl;
@@ -3015,8 +3012,8 @@ void GeomechanicsUpdates::computeLimitParameters( real64 & a1,
 		                                              real64 & a4,
 		                                              const real64 & coher,
                                                   const real64 & hardening,
-                                                  const real64 & buckling
-                                                  const real64 & GEOS_UNUSED_PARAM( strengthScale )
+                                                  const real64 & buckling,
+                                                  const real64 & strengthScale
 ) const 
 { // Value of I1 at strength=0 (Perturbed by variability)
   // The shear limit surface is defined in terms of the a1,a2,a3,a4 parameters, but
@@ -3251,9 +3248,6 @@ public:
 
     /// string/key for initialDomainTemperature
     static constexpr char const * initialTemperatureString() { return "initialTemperature"; }
-
-    /// string/key for temperature
-    static constexpr char const * temperatureString() { return "temperature"; }
 
     /// string/keay for brittleDuctileTransition
     static constexpr char const * brittleDuctileTransitionString() { return "brittleDuctileTransition"; }
