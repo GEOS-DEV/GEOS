@@ -136,7 +136,7 @@ public:
 
   virtual void pointwiseProduct( PetscVector const & x ) override;
 
-  virtual void pointwiseDivision( PetscVector const & x ) override;
+  virtual void pointwiseDivide( PetscVector const & x ) override;
 
   /**
    * @copydoc VectorBase<PetscVector>::norm1

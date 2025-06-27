@@ -125,7 +125,7 @@ public:
 
   virtual void pointwiseProduct( EpetraVector const & x ) override;
 
-  virtual void pointwiseDivision( EpetraVector const & x ) override;
+  virtual void pointwiseDivide( EpetraVector const & x ) override;
 
   /**
    * @copydoc VectorBase<EpetraVector>::norm1
