@@ -113,6 +113,11 @@ if( GEOS_ENABLE_WAVEPROPAGATION )
   list( APPEND dependencyList wavePropagationSolvers )
 endif()
 
+if ( GEOS_ENABLE_GRAVITY )
+  add_subdirectory( gravity )
+  list( APPEND dependencyList gravitySolvers )
+endif()
+
 if( GEOS_ENABLE_MULTIPHYSICS )
   add_subdirectory( multiphysics )
   list( APPEND dependencyList multiPhysicsSolvers )
