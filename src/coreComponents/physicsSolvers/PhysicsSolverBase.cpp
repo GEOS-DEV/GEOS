@@ -50,7 +50,7 @@ PhysicsSolverBase::PhysicsSolverBase( string const & name,
   m_systemSetupTimestamp( 0 )
 {
   // Physics-scaling is enabled by default only with hypre builds
-#ifdef (GEOS_USE_HYPRE)
+#ifdef GEOS_USE_HYPRE
   integer usePhysicsScaling = 1;
 #else
   integer usePhysicsScaling = 0;
