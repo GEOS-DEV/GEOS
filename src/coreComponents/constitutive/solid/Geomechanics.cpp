@@ -355,7 +355,7 @@ void Geomechanics::allocateConstitutiveData( dataRepository::Group & parent,
   m_plasticStrain.resize( 0, numConstitutivePointsPerParentIndex, 6 );
   m_porosity.resize( 0, numConstitutivePointsPerParentIndex );
   m_damage.resize( 0, numConstitutivePointsPerParentIndex );
-  m_temperature.resize( 0, numConstitutivePointsPerParentIndex );
+  //m_temperature.resize( 0, numConstitutivePointsPerParentIndex );
 }
 
 void Geomechanics::postInputInitialization()

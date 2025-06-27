@@ -25,24 +25,18 @@ namespace geos
   
   TemperatureProfileMPMEvent::TemperatureProfileMPMEvent( const string & name,
                                                     Group * const parent ) :
-                                                    MPMEventBase(  name, parent ),
-                                                    m_targetRegion( "mat1" )
-  {  
-    registerWrapper( viewKeyStruct::targetRegionString(), &m_targetRegion ).
-        setInputFlag( InputFlags::REQUIRED ).
-        setDescription( "Particle region to change temp on" ); // not implemented yet    
+                                                    MPMEventBase(  name, parent )
+  {     
   }
 
   TemperatureProfileMPMEvent::~TemperatureProfileMPMEvent() 
   {}
 
-  //void TemperatureProfileMPMEvent::postProcessInput()
   void TemperatureProfileMPMEvent::postInputInitialization()
   {
     GEOS_LOG_RANK_0( "TemperatureProfileEvent: " << 
                      "Time=" << m_time << ", " << 
-                     "Interval=" << m_interval << ", " << 
-                     "targetRegion=" << m_targetRegion );
+                     "Interval=" << m_interval );
   }
 
   REGISTER_CATALOG_ENTRY( MPMEventBase, TemperatureProfileMPMEvent, string const &, Group * const )

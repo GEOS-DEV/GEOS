@@ -150,7 +150,7 @@ public:
                        arrayView3d< real64 > const plasticStrain,
                        arrayView2d< real64 > const porosity,
                        arrayView2d< real64 > const damage,
-                       arrayView2d< real64 > const temperature,
+                       arrayView1d< real64 > const temperature,
                        arrayView1d< real64 > const lengthScale,
                        arrayView1d< real64 > const strengthScale,
                        arrayView1d< real64 > const & thermalExpansionCoefficient,
@@ -304,7 +304,8 @@ public:
   int computeStep( real64 const ( & D )[6],              
                    const real64 & Dt,
                    const real64 & lch,  
-                   const real64 & strengthScale,                    
+                   const real64 & strengthScale,  
+                   const real64 & temperature,                    
                    const real64 & Zeta_n,                
                    const real64 & coher_n,               
                    const real64 & porosity_n,            
@@ -594,7 +595,7 @@ private:
   arrayView2d< real64 > const m_damage;
 
     /// A reference to the ArrayView holding the temperature for each quadrature point.
-  arrayView2d< real64 > const m_temperature;
+  arrayView1d< real64 > const m_temperature;
 
   /// A reference to the ArrayView holding the length scale for each element/particle.
   arrayView1d< real64 > const m_lengthScale;
@@ -815,6 +816,7 @@ void GeomechanicsUpdates::smallStrainUpdateHelper( localIndex const k,
   real64 characteristicLength = m_lengthScale[k];
   
   real64 strengthScale = m_strengthScale[k];
+  real64 temperature = m_temperature[k];
 
   real64 oldZeta = 0.0;
   real64 oldCoher = 1.0 - m_damage[k][q];
@@ -825,6 +827,7 @@ void GeomechanicsUpdates::smallStrainUpdateHelper( localIndex const k,
   real64 newStress[6] = {0.};
   real64 newPlasticStrain[6] = {0.};
 
+  // TODO: make elastic properties temperature dependent
   computeElasticProperties( oldStress,
                             oldPlasticStrain,
 		                        0.,
@@ -850,6 +853,7 @@ void GeomechanicsUpdates::smallStrainUpdateHelper( localIndex const k,
                timeIncrement,                     // time step (s)
                characteristicLength,                    // length scale
                strengthScale,           // scaler for strength
+               temperature,             // scalar for temperature
                oldZeta,                 // trace of isotropic backstress at start of step(t_n)
                oldCoher,                // scalar-valued coherence at start of step(t_n)
 						   oldPorosity,             // scalar-valued coherence at start of step(t_n)
@@ -923,6 +927,7 @@ int GeomechanicsUpdates::computeStep( real64 const ( & D )[6],               // 
                                       const real64 & Dt,                     // time step (s)
                                       const real64 & lch,                    // length scale
                                       const real64 & strengthScale,          // strength scale
+                                      const real64 & temperature,            // temperature
                                       const real64 & Zeta_n,                 // trace of isotropic backstress at start of step(t_n)
                                       const real64 & coher_n,                // scalar-valued coherence at start of step(t_n)
 						                          const real64 & porosity_n,             // scalar-valued coherence at start of step(t_n)
@@ -1083,7 +1088,20 @@ int GeomechanicsUpdates::computeStep( real64 const ( & D )[6],               // 
   // the starting point for the plasticity solution.
 	if ( m_enableCreep == 1 )
 	{
-		real64 c0 = m_creepC0;
+    // This is where temperature will modify creep rate parameters.
+    // If creep rate is A*exp[-E_a/(R*T)], where E_a is an activation energy
+    // and R is the gas constant, and T is absolute temperature, then the
+    // rate multiplier going from reference temperature T0 to temperature T
+    // is ( A*exp[-E_a/(R*T)] ) / ( A*exp[-E_a/(R*T0)] ) = Exp[-Ea*( 1/(R*T) - 1./(R*T0) )]
+
+    real64 m_referenceTemperature = 300.0; // This could be an input variable
+    real64 m_gasConstantR = 8.314;  // this is J/(mol*K) and also works for mm,mg,us,K units, but this should be a user input 
+                                    // to allow for other unit systems.
+    real64 m_creepActivationEnergy = 1.0;  // This will be a user input that can be used to fit temperature dependence.
+
+    real64 creepRateTemperatureMultiplier = exp(-1.0*m_creepActivationEnergy*( 1.0/(m_gasConstantR*temperature) - 1.0/(m_gasConstantR*m_referenceTemperature) ) ); 
+		
+    real64 c0 = m_creepC0;
 		real64 c1 = m_creepC1;
     real64 c2 = m_creepC2;
     real64 A = m_creepA;  // volumetric creep rate parameter
@@ -1145,7 +1163,7 @@ int GeomechanicsUpdates::computeStep( real64 const ( & D )[6],               // 
       //shear strain for TXCr tests
       real64 equilibriumShearStrainConstant = c0;
       real64 equilibriumShearStrainExponent = c1;
-      real64 shearStrainRateConstant = c2;
+      real64 shearStrainRateConstant = creepRateTemperatureMultiplier*c2;
 
       // relax shear stress until equivalent plastic shear strain reaches the equilibrium value for the current level of shear stress.
       real64 plasticVMshearStrain = rootTwoThirds*ep_rootJ2_old;
@@ -1195,7 +1213,7 @@ int GeomechanicsUpdates::computeStep( real64 const ( & D )[6],               // 
 
     if ( (phi_p - phi_e > 1.e-10) && (p > 1.e-12) && (C > 1.e-16) && ( evp + m_p3 > 1.e-10 ) )
  		  {  // creep compaction
- 			  real64 dphidt = -1.0*std::pow(p,compactionRatePressureExponent)*C*( phi_p - phi_e );  // creep compaction rate:
+ 			  real64 dphidt = -1.0*creepRateTemperatureMultiplier*std::pow(p,compactionRatePressureExponent)*C*( phi_p - phi_e );  // creep compaction rate:
  			  real64 phi_c = std::max( phi_e, phi_p + dphidt*dt ); // unloaded porosity after creep, don't let it go below equilibrium level
  			  real64 evp_c = log( (phi_i - 1. ) / ( phi_c - 1. ) ); // vol. strain after creep.
  			  evp_c = std::max( evp_c, - m_p3 ); // don't let porosity go negative.
@@ -3556,7 +3574,7 @@ protected:
   array2d< real64 > m_damage;
 
   /// State variable: The temperature values for each quadrature point
-  array2d< real64 > m_temperature;
+  array1d< real64 > m_temperature;
 
   /// Discretization-sized variable: The length scale for each element/particle
   array1d< real64 > m_lengthScale;

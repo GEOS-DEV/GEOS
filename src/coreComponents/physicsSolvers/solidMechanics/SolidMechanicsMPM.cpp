@@ -3489,10 +3489,7 @@ void SolidMechanicsMPM::triggerEvents( const real64 dt,
 
       if( event.getName() == "TemperatureProfile" )
       { // Read from domain temperature table and set global temp value to all particles.
-        TemperatureProfileMPMEvent & temperatureProfile = dynamicCast< TemperatureProfileMPMEvent & >( event );
-
         interpolateTemperatureTable( dt, time_n );
-
         particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
         {        
           SortedArrayView< localIndex const > const activeParticleIndices = subRegion.activeParticleIndices();
@@ -9003,6 +9000,8 @@ void SolidMechanicsMPM::interpolateTemperatureTable( real64 dt,
   
   m_domainTemperature = temperature[0];
 
+  std::cout<<"time: "<<time_n<<", temperature = "<<temperature<<", m_domainTemperature = "<<m_domainTemperature<<std::endl;
+
 }
 
 void SolidMechanicsMPM::gridToParticle( real64 dt,
@@ -9745,8 +9744,10 @@ void SolidMechanicsMPM::updateSolverDependencies( ParticleManager & particleMana
 
     if(  constitutiveModel.hasWrapper( "temperature" ) )
     {
-      arrayView1d< real64 > particleTemperature = subRegion.getParticleTemperature();
+      arrayView1d< real64 > const particleTemperature = subRegion.getParticleTemperature();
       arrayView1d< real64 const > const constitutiveTemperature = constitutiveModel.getReference< array1d< real64 > >( "temperature" );
+
+
       forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST_DEVICE ( localIndex const pp )
       {
         localIndex const p = activeParticleIndices[pp];
