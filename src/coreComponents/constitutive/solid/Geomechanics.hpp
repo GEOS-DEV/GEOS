@@ -840,6 +840,7 @@ void GeomechanicsUpdates::smallStrainUpdateHelper( localIndex const k,
   m_plasticStrain[k][q][5] *= 2.0;
 
   m_damage[k][q] = 1. - newCoher; // Copy to material data:
+  // do not add anything for temperature here. 
   m_porosity[k][q] = newPorosity; // Copy to material data:
 
   //return;
