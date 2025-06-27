@@ -80,7 +80,6 @@ public:
    * @param[in] fractureSofteningExponent controls shape of softening with damage
    * @param[in] fractureStress The root J2 value for the fracture stress
    * @param[in] initialTemperature initial temperature
-   * @param[in] temperature updated temperature
    * @param[in] brittleDuctileTransition The root J2 value for the fracture stress 
    * @param[in] damageEvolutionCriterion this is to trigger the damage for TXCo tests 0 or 1 for dilation vs pressure
    * @param[in] cr The value for the cap shape paramter
@@ -3402,7 +3401,6 @@ public:
                                 m_fractureSofteningExponent,
                                 m_fractureStress,
                                 m_initialTemperature,
-                                m_temperature,
                                 m_brittleDuctileTransition,
                                 m_damageEvolutionCriterion,
                                 m_cr,
@@ -3489,7 +3487,6 @@ public:
                           m_fractureSofteningExponent,
                           m_fractureStress,
                           m_initialTemperature,
-                          m_temperature,
                           m_brittleDuctileTransition,
                           m_damageEvolutionCriterion,
                           m_cr,
@@ -3654,7 +3651,6 @@ protected:
   real64 m_fractureStress;
   // not in the fractuer/damage, but MM was using the Fracture stress as template for initalTemperature
   real64 m_initialTemperature;
-  real64 m_temperature;
 
   real64 m_brittleDuctileTransition;
 
