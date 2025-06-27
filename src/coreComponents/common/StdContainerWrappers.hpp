@@ -33,6 +33,17 @@ public:
   /// using to inherit constructors from the base class
   using Base::Base;  // Inherit constructors
 
+
+  /**
+   * @brief constructor.
+   * @param count The number of elements to initialize the vector with.
+   * @param value The value to initialize each element with.
+   */
+  StdVectorWrapper( size_t const count, T const & value ):
+    Base( count, value )
+  {}
+
+
   /**
    * @brief copy constructor.
    * @param other The vector to copy from.
