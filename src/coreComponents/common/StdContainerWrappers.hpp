@@ -29,6 +29,15 @@ class StdVectorWrapper : public std::vector< T, Allocator >
 public:
   /// Type alias for the base class (i.e., std::vector)
   using Base = std::vector< T, Allocator >;
+  using Base::Base;  // Inherit constructors
+ 
+  StdVectorWrapper( Base const & other ): 
+    Base( other ) 
+  {}
+
+  StdVectorWrapper( Base && other ): 
+    Base( std::move( other ) ) 
+  {}
 
   /**
    * Access element at index with bounds checking if USE_STD_CONTAINER_BOUNDS_CHECKING is true.
