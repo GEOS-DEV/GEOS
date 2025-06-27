@@ -41,6 +41,16 @@ SolidBase::SolidBase( string const & name, Group * const parent ):
   registerWrapper( viewKeyStruct::thermalExpansionCoefficientString(), &m_thermalExpansionCoefficient ).
     setApplyDefaultValue( -1.0 ). // will be overwritten
     setDescription( "Linear Thermal Expansion Coefficient Field" );
+
+
+  registerWrapper( viewKeyStruct::defaultThermalExpansionCoefficientString(), &m_defaultThermalExpansionCoefficient ).
+    setApplyDefaultValue( 0.0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Default Linear Thermal Expansion Coefficient of the Solid Rock Frame" );
+
+  registerWrapper( viewKeyStruct::thermalExpansionCoefficientString(), &m_thermalExpansionCoefficient ).
+    setApplyDefaultValue( -1.0 ). // will be overwritten
+    setDescription( "Linear Thermal Expansion Coefficient Field" );
 }
 
 
@@ -55,6 +65,8 @@ void SolidBase::postInputInitialization()
   this->getWrapper< array1d< real64 > >( viewKeyStruct::thermalExpansionCoefficientString() ).
     setApplyDefaultValue( m_defaultThermalExpansionCoefficient );
 }
+
+
 
 
 void SolidBase::allocateConstitutiveData( dataRepository::Group & parent,

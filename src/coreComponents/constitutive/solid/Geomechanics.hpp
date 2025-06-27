@@ -30,6 +30,9 @@
 namespace geos
 {
 
+class ParticleManager;
+class MeshLevel;
+
 namespace constitutive
 {
 
@@ -50,6 +53,11 @@ public:
    * @param[in] b2 The value for the tangent elastic bulk modulus paramter 2
    * @param[in] b3 The value for the tangent elastic bulk modulus paramter 3
    * @param[in] b4 The value for the tangent elastic bulk modulus paramter 4
+   * @param[in] C1a The value (constant) for hardened stren
+   * @param[in] C2a The value (constant) for hardened fslope
+   * @param[in] C3 The value (constant) for hardened peakI1
+   * @param[in] C4 The value (constant) for hardened X, p0
+   * @param[in] C5 The value (constant) for hardened cr
    * @param[in] g0 The value for the tangent elastic shear modulus paramter 0
    * @param[in] g1 The value for the tangent elastic shear modulus paramter 1
    * @param[in] g2 The value for the tangent elastic shear modulus paramter 2
@@ -70,7 +78,9 @@ public:
    * @param[in] t2RateDependence The value for the rate dependence parameter 2
    * @param[in] fractureEnergyReleaseRate The value for the fracture energy release rate
    * @param[in] fractureSofteningExponent controls shape of softening with damage
-   * @param[in] fractureStress The root J2 value for the fracture stress 
+   * @param[in] fractureStress The root J2 value for the fracture stress
+   * @param[in] initialTemperature initial temperature
+   * @param[in] temperature updated temperature
    * @param[in] brittleDuctileTransition The root J2 value for the fracture stress 
    * @param[in] damageEvolutionCriterion this is to trigger the damage for TXCo tests 0 or 1 for dilation vs pressure
    * @param[in] cr The value for the cap shape paramter
@@ -97,6 +107,11 @@ public:
                        real64 const & b2,
                        real64 const & b3,
                        real64 const & b4,
+                       real64 const & C1a,
+                       real64 const & C2a,
+                       real64 const & C3,
+                       real64 const & C4,
+                       real64 const & C5,
                        real64 const & g0,
                        real64 const & g1,
                        real64 const & g2,
@@ -118,6 +133,8 @@ public:
                        real64 const & fractureEnergyReleaseRate,
                        real64 const & fractureSofteningExponent,
                        real64 const & fractureStress,
+                       real64 const & initialTemperature,
+                       real64 const & temperature,
                        real64 const & brittleDuctileTransition,
                        int const & damageEvolutionCriterion,
                        real64 const & cr,
@@ -170,6 +187,11 @@ public:
     m_b2( b2 ),
     m_b3( b3 ),
     m_b4( b4 ),
+    m_C1a( C1a ),
+    m_C2a( C2a ),
+    m_C3( C3 ),
+    m_C4( C4 ),
+    m_C5( C5 ),
     m_g0( g0 ),
     m_g1( g1 ),
     m_g2( g2 ),
@@ -191,6 +213,8 @@ public:
     m_fractureEnergyReleaseRate( fractureEnergyReleaseRate ),
     m_fractureSofteningExponent( fractureSofteningExponent ),
     m_fractureStress( fractureStress ),
+    m_initialTemperature( initialTemperature ),
+    m_temperature( temperature ),
     m_brittleDuctileTransition( brittleDuctileTransition ),
     m_damageEvolutionCriterion ( damageEvolutionCriterion ),
     m_cr( cr ),
@@ -524,6 +548,11 @@ private:
   real64 const & m_b2;
   real64 const & m_b3;
   real64 const & m_b4;
+  real64 const & m_C1a;
+  real64 const & m_C2a;
+  real64 const & m_C3;
+  real64 const & m_C4;
+  real64 const & m_C5;
   real64 const & m_g0;
   real64 const & m_g1;
   real64 const & m_g2;
@@ -545,6 +574,8 @@ private:
   real64 const & m_fractureEnergyReleaseRate;
   real64 const & m_fractureSofteningExponent;
   real64 const & m_fractureStress;
+  real64 const & m_initialTemperature;
+  real64 const & m_temperature;
   real64 const & m_brittleDuctileTransition;
   int const & m_damageEvolutionCriterion;
   real64 const & m_cr;
@@ -916,6 +947,7 @@ void GeomechanicsUpdates::smallStrainUpdateHelper( localIndex const k,
   m_plasticStrain[k][q][5] *= 2.0;
 
   m_damage[k][q] = 1. - newCoher; // Copy to material data:
+  // do not add anything for temperature here. 
   m_porosity[k][q] = newPorosity; // Copy to material data:
 
   //return;
@@ -1110,7 +1142,8 @@ int GeomechanicsUpdates::computeStep( real64 const ( & D )[6],               // 
     real64 equilibriumPorosityPressureExponent = m_creepD;  // volumetric creep rate parameter
     real64 equilibriumPorosityOffset = m_creepE;  // volumetric creep rate parameter
     real64 compactionRatePressureExponent = m_creepF;  // volumetric creep rate parameter
-
+    real64 Temp_0 = m_initialTemperature; // temperature at start of simulation
+    real64 Temp_new = m_temperature; // updated temperature
 
     real64 rootTwoThirds = 0.81649658092772603273242802490196; 
 
@@ -1204,7 +1237,7 @@ int GeomechanicsUpdates::computeStep( real64 const ( & D )[6],               // 
     // unloaded porosity at the start of the step.
     real64 phi_p = std::max( 1.e-10 , 1.0 + exp(-evp)*( phi_i - 1 ) ); 
     // equilibrium porosity at the start of the step.
-		real64 phi_e = std::max(1.e-10 , A * exp( -std::pow(p,equilibriumPorosityPressureExponent) / B ) + equilibriumPorosityOffset );    
+		real64 phi_e = std::max(1.e-10 , A * exp( -std::pow(p,equilibriumPorosityPressureExponent) / B ) + equilibriumPorosityOffset ) + (0. * Temp_0 * Temp_new);    
 
     // uncomment for debugging:
     //std::cout<<"pn = "<<p<<", evp_n = "<<evp<<", phi_p_n = "<<phi_p<<", phi_e_n = "<<phi_e<<", X_n = "<<X_old<<std::endl;
@@ -1348,6 +1381,7 @@ int GeomechanicsUpdates::computeStep( real64 const ( & D )[6],               // 
 
     stepFlag  = 0;
     return stepFlag;
+    
 
   // (8) Failed step, Send ParticleDelete Flag to Host Code, Store Inputs to particle data:
   // CC: TODO pass model particle delete flag
@@ -1363,6 +1397,7 @@ int GeomechanicsUpdates::computeStep( real64 const ( & D )[6],               // 
     stepFlag  = 1;
 
     return stepFlag;
+
 }
 
 GEOS_HOST_DEVICE
@@ -1984,6 +2019,9 @@ int GeomechanicsUpdates::computeSubstep( real64 const ( & D )[6],         // str
 
   // Compute strain hardening applied to the STREN parameter
   real64 hardening = 0.0;
+	//std::cout<<"hardeningK: " << m_strainHardeningK << std::endl;
+
+
    if (m_strainHardeningK > 0)
    {
 
@@ -1995,10 +2033,12 @@ int GeomechanicsUpdates::computeSubstep( real64 const ( & D )[6],         // str
    	real64 ep_J2 = ep_old[0]*ep_old[0] + ep_old[1]*ep_old[1] + ep_old[2]*ep_old[2]
 		 	   + 3*ep_old[3]*ep_old[3] + 3*ep_old[4]*ep_old[4] + 3*ep_old[5]*ep_old[5]
 		 	   - ep_old[1]*ep_old[2] - ep_old[0]*ep_old[1] - ep_old[0]*ep_old[2]; 
-
+    //std::cout<< " ep_J2: " << ep_J2 << std::endl;
 		if (ep_J2 > 0.)
 		{
 			real64 equilivantPlasticStrain = (2./3.)*sqrt(ep_J2);
+			//real64 equilivantPlasticStrain = 1;
+      //MM adjusting for new hardening formula on March 16 25
 			hardening = m_strainHardeningK*( 1.0 - exp(-1.0*m_strainHardeningN*equilivantPlasticStrain) );
 		}
    }
@@ -2442,29 +2482,39 @@ int GeomechanicsUpdates::nonHardeningReturn( const real64 & I1_trial,           
   // The following are the input parameters, modified by hardening and or damage
   //  Any change to peakI1 should be copied in the non-hardening return and
   //  yield function updates, which have branch points based on the peakI1 value.
-  real64 peakI1_h, fSlope_h; //
+
 
   // raise coher to an exponent before softening to allow control of softening rate.
+  //MM edits on March 16 2025:
   real64 nonlinearCoher = std::pow(coher,m_fractureSofteningExponent);
-  fSlope_h = nonlinearCoher*m_fSlope + ( 1. - nonlinearCoher )*m_fSlopeFailed;
-  peakI1_h = (fSlope_h > 1.e-12) ? nonlinearCoher*(m_peakI1 + hardening/fSlope_h) : nonlinearCoher*m_peakI1;
-  peakI1_h = strengthScale*peakI1_h;
+  //Damagev2 is just damage (1-coherence) But sinces there is already another damage variable, MM is making damageV2
+  real64 damageV2 = 1. - nonlinearCoher;
+  //fSlope_h = nonlinearCoher*m_fSlope + ( 1. - nonlinearCoher )*m_fSlopeFailed;
+  //peakI1_h = (fSlope_h > 1.e-12) ? nonlinearCoher*(m_peakI1 + hardening/fSlope_h) : nonlinearCoher*m_peakI1;
+  //peakI1_h = strengthScale*peakI1_h;
 
+  // PEAKI1 AND FSLOPE AS FUNCTIONS OF HARDENING and DAMAGE 
+  //real64   fSlope_h = (m_fSlope*(1+hardening*m_C2/m_g0));
+  //real64   fSlope_hd = (nonlinearCoher)*fSlope_h + ( damageV2 )*m_fSlopeFailed;
+  
+  real64 peakI1_h = m_peakI1+hardening*m_C3;
+  real64 peakI1_hd = (nonlinearCoher)*peakI1_h + ( damageV2 )*0;
+  
   // It may be better to use an interior point at the center of the yield surface, rather than at zeta, in particular
   // when PEAKI1=0.  Picking the midpoint between PEAKI1 and X would be problematic when the user has specified
   // some no porosity condition (e.g. p0=-1e99)
-  if( I1trialMinusZeta>= peakI1_h ) // Trial is past vertex
+  if( I1trialMinusZeta>= peakI1_hd ) // Trial is past vertex
   { 
 	  real64 lTrial = sqrt(I1trialMinusZeta * I1trialMinusZeta + rJ2_trial * rJ2_trial),
-			     lYield = 0.5 * (peakI1_h - X);
-	  I1_0 = Zeta + peakI1_h - std::min(lTrial, lYield);
+			     lYield = 0.5 * (peakI1_hd - X);
+	  I1_0 = Zeta + peakI1_hd - std::min(lTrial, lYield);
   }
-  else if( (I1trialMinusZeta < peakI1_h) && (I1trialMinusZeta > X) ){ // Trial is above yield surface
+  else if( (I1trialMinusZeta < peakI1_hd) && (I1trialMinusZeta > X) ){ // Trial is above yield surface
 	  I1_0 = I1_trial;
   }
   else if( I1trialMinusZeta <= X ) // Trial is past X, use yield midpoint as interior point
   {
-	  I1_0 = Zeta + 0.5 * (peakI1_h + X);
+	  I1_0 = Zeta + 0.5 * (peakI1_hd + X);
   }
   else
   { // Shouldn't get here
@@ -2768,7 +2818,7 @@ int GeomechanicsUpdates::computeYieldFunction( const real64 & I1,
                                                const real64 & Zeta,
 									                             const real64 & coher,
                                                const real64 & hardening,
-                                               const real64 & strengthScale,
+                                               const real64 & GEOS_UNUSED_PARAM( strengthScale ),
 									                             const real64 & a1,
 									                             const real64 & a2,
 									                             const real64 & a3,
@@ -2791,11 +2841,33 @@ int GeomechanicsUpdates::computeYieldFunction( const real64 & I1,
 	real64 I1mZ = I1 - Zeta;    // Shifted stress to evalue yield criteria
 
   // Parameters modified by damage and/or hardening
-  real64 peakI1_h, fSlope_h; //
+  //real64 peakI1_h; //
+  //real64 peakI1_h, fSlope_h; //
+  //MM edits on March 16 2025
+  //real64 nonlinearCoher = std::pow(coher,m_fractureSofteningExponent);
+  //fSlope_h = nonlinearCoher*m_fSlope + ( 1. - nonlinearCoher )*m_fSlopeFailed;
+  //peakI1_h = (fSlope_h > 1.e-12) ? nonlinearCoher*(m_peakI1 + hardening/fSlope_h) : nonlinearCoher*m_peakI1;
+  //peakI1_h = strengthScale*peakI1_h;
+  //fSlope_h = m_fSlope*(hardening*m_C2/m_g0);
+  //peakI1_h = m_peakI1+hardening*m_C3;
+
+
+
+
   real64 nonlinearCoher = std::pow(coher,m_fractureSofteningExponent);
-  fSlope_h = nonlinearCoher*m_fSlope + ( 1. - nonlinearCoher )*m_fSlopeFailed;
-  peakI1_h = (fSlope_h > 1.e-12) ? nonlinearCoher*(m_peakI1 + hardening/fSlope_h) : nonlinearCoher*m_peakI1;
-  peakI1_h = strengthScale*peakI1_h;
+  //Damagev2 is just damage (1-coherence) But sinces there is already another damage variable, MM is making damageV2
+  real64 damageV2 = 1. - nonlinearCoher;
+  // PEAKI1 AND FSLOPE AS FUNCTIONS OF HARDENING and DAMAGE 
+  //real64   fSlope_h = (m_fSlope*(1+hardening*m_C2/m_g0));
+  //real64   fSlope_hd = (nonlinearCoher)*fSlope_h + ( damageV2 )*m_fSlopeFailed;
+  
+  real64 peakI1_h = m_peakI1+hardening*m_C3;
+  real64 peakI1_hd = (nonlinearCoher)*peakI1_h + ( damageV2 )*0;
+
+  real64 X_h = m_p0 + (hardening*m_C4) + (X*0);
+
+  real64 CR_h = m_cr * (1+((hardening*m_C5)/m_g0) );
+  //std::cout<<" X/p0_new: " << X << " CR_new: " << CR_h << std::endl;
 
 
 	// --------------------------------------------------------------------
@@ -2808,7 +2880,7 @@ int GeomechanicsUpdates::computeYieldFunction( const real64 & I1,
 	// --------------------------------------------------------------------
 	// *** Branch Point (Kappa) ***
 	// --------------------------------------------------------------------
-	real64  Kappa  = peakI1_h-m_cr*(peakI1_h-X); // Branch Point
+	real64  Kappa  = peakI1_hd- CR_h*(peakI1_hd-X_h); // Branch Point
 
 	// --------------------------------------------------------------------
 	// *** COMPOSITE YIELD FUNCTION ***
@@ -2816,11 +2888,11 @@ int GeomechanicsUpdates::computeYieldFunction( const real64 & I1,
 	// Evaluate Composite Yield Function F(I1) = Ff(I1)*fc(I1) in each region.
 	// The elseif statements have nested if statements, which is not equivalent
 	// to them having a single elseif(A&&B&&C)
-	if( I1mZ < X )
+	if( I1mZ < X_h )
 	{//---------------------------------------------------(I1<X)
 		YIELD = 1;
 	}
-	else if(( I1mZ < Kappa )&&( I1mZ >= X )) 
+	else if(( I1mZ < Kappa )&&( I1mZ >= X_h )) 
   {// ---------------(X<I1<kappa)
 		// p3 is the maximum achievable volumetric plastic strain in compresson
 		// so if a value of 0 has been specified this indicates the user
@@ -2829,19 +2901,19 @@ int GeomechanicsUpdates::computeYieldFunction( const real64 & I1,
 		// **Elliptical Cap Function: (fc)**
 		// fc = sqrt(1.0 - Pow((Kappa-I1mZ)/(Kappa-X)),2.0);
 		// faster version: fc2 = fc^2
-		real64 fc2 = 1.0 - ((Kappa-I1mZ)/(Kappa-X))*((Kappa-I1mZ)/(Kappa-X));
+		real64 fc2 = 1.0 - ((Kappa-I1mZ)/(Kappa-X_h))*((Kappa-I1mZ)/(Kappa-X_h));
 		if(rJ2*rJ2 > Ff*Ff*fc2 )
 		{
 			YIELD = 1;
 		}
 	}
-	else if(( I1mZ <= peakI1_h )&&( I1mZ >= Kappa ))
+	else if(( I1mZ <= peakI1_hd )&&( I1mZ >= Kappa ))
   { // -----(kappa<I1<PEAKI1)
 		if(rJ2 > Ff) {
 			YIELD = 1;
 		}
 	}
-	else if( I1mZ > peakI1_h )
+	else if( I1mZ > peakI1_hd )
 	{// --------------------------------(peakI1<I1)
     YIELD = 1;
 	};
@@ -2943,8 +3015,8 @@ void GeomechanicsUpdates::computeLimitParameters( real64 & a1,
 		                                              real64 & a4,
 		                                              const real64 & coher,
                                                   const real64 & hardening,
-                                                  const real64 & strengthScale,
                                                   const real64 & buckling
+                                                  const real64 & GEOS_UNUSED_PARAM( strengthScale )
 ) const 
 { // Value of I1 at strength=0 (Perturbed by variability)
   // The shear limit surface is defined in terms of the a1,a2,a3,a4 parameters, but
@@ -2956,51 +3028,88 @@ void GeomechanicsUpdates::computeLimitParameters( real64 & a1,
   // The following are the input parameters, modified by hardening and or damage
   //  Any change to peakI1 should be copied in the non-hardening return and
   //  yield function updates, which have branch points based on the peakI1 value.
-  real64 stren_h, peakI1_h, fSlope_h, ySlope_h;  
-  real64 nonlinearCoher = std::pow(coher,m_fractureSofteningExponent);
+  //real64 stren_h, peakI1_h, fSlope_h, ySlope_h;  
+	//real64 stren_h = m_stren + hardening*m_C1;
+  //real64 peakI1_h, fSlope_h, ySlope_h;  
+  //real64 nonlinearCoher = std::pow(coher,m_fractureSofteningExponent);
 
-  stren_h = buckling*(m_stren + hardening);
+  //stren_h = m_stren + hardening;
+  //fSlope_h = nonlinearCoher*m_fSlope + ( 1. - nonlinearCoher )*m_fSlopeFailed;
+  //ySlope_h = std::min( 0.99999*fSlope_h, m_ySlope );
+  //peakI1_h = (fSlope_h > 1.e-12) ? nonlinearCoher*(m_peakI1 + hardening/fSlope_h) : nonlinearCoher*m_peakI1;
+  //peakI1_h = strengthScale*peakI1_h;
+  //fSlope_h = m_fSlope*(1+hardening*m_C2/m_g0);
+  //peakI1_h = m_peakI1+hardening*m_C3;
+  //ySlope_h = std::min( 0.9*fSlope_h, m_ySlope );
+
+
+  real64 nonlinearCoher = std::pow(coher,m_fractureSofteningExponent);
+  //Damagev2 is just damage (1-coherence) But sinces there is already another damage variable, MM is making damageV2
+  real64 damageV2 = 1. - nonlinearCoher;
+  // FUNCTIONS OF HARDENING and DAMAGE 
+  real64   fSlope_h = (m_fSlope*(1+hardening*m_C2a/m_g0));
+  real64   fSlope_hd = (nonlinearCoher)*fSlope_h + ( damageV2 )*m_fSlopeFailed;
+  
+  real64 peakI1_h = m_peakI1+hardening*m_C3 ;
+  real64 peakI1_hd = (nonlinearCoher)*peakI1_h + ( damageV2 )*0;
+
+  real64 ySlope_h = std::min( 0.9*fSlope_h, m_ySlope );
+  real64 ySlope_hd = (nonlinearCoher)*ySlope_h + ( damageV2 )*0;
+
+
+
+  real64 stren_h = buckling*(m_stren + hardening*m_C1a);
+  real64 stren_hd =(nonlinearCoher)*stren_h + ( damageV2 )*0;
   fSlope_h = nonlinearCoher*m_fSlope + ( 1. - nonlinearCoher )*m_fSlopeFailed;
   ySlope_h = std::min( 0.99999*fSlope_h, m_ySlope );
   peakI1_h = (fSlope_h > 1.e-12) ? nonlinearCoher*(m_peakI1 + hardening/fSlope_h) : nonlinearCoher*m_peakI1;
   peakI1_h = strengthScale*peakI1_h*buckling;
 
-  if (fSlope_h > 0.0 && peakI1_h >= 0.0 && m_stren == 0.0 && ySlope_h == 0.0)
+
+
+
+  if (fSlope_hd > 0.0 && peakI1_hd >= 0.0 && m_stren == 0.0 && ySlope_hd == 0.0)
   {// ----------------------------------------------Linear Drucker-Prager
-    a1 = peakI1_h * fSlope_h;
+    a1 = peakI1_hd * fSlope_hd;
     a2 = 0.0;
     a3 = 0.0;
-    a4 = fSlope_h;
+    a4 = fSlope_hd;
   }
-  else if (fSlope_h == 0.0 && peakI1_h == 0.0 && stren_h > 0.0 && ySlope_h == 0.0)
+  else if (fSlope_hd == 0.0 && peakI1_hd == 0.0 && stren_hd > 0.0 && ySlope_hd == 0.0)
   { // ------------------------------------------------------- Von Mises
-    a1 = stren_h*nonlinearCoher;
+    a1 = stren_hd*nonlinearCoher;
     a2 = 0.0;
     a3 = 0.0;
     a4 = 0.0;
   }
-  else if (fSlope_h > 0.0 && ySlope_h  == 0.0 && stren_h > 0.0 && peakI1_h == 0.0)
+  else if (fSlope_hd > 0.0 && ySlope_hd  == 0.0 && stren_hd > 0.0 && peakI1_hd == 0.0)
   { // ------------------------------------------------------- 0 PEAKI1 to vonMises
-    a1 = stren_h;
-    a2 = fSlope_h / stren_h;
-    a3 = stren_h;
+    a1 = stren_hd;
+    a2 = fSlope_hd / stren_hd;
+    a3 = stren_hd;
     a4 = 0.0;
   }
-  else if (fSlope_h > ySlope_h && ySlope_h > 0.0 && stren_h > ySlope_h*peakI1_h && peakI1_h >= 0.0)
+  else if (fSlope_hd > ySlope_hd && ySlope_hd > 0.0 && stren_hd > ySlope_hd*peakI1_hd && peakI1_hd >= 0.0)
   { // ------------------------------------------------------- Nonlinear Drucker-Prager
-    a1 = stren_h;
-    a2 = (fSlope_h-ySlope_h )/(stren_h - ySlope_h*peakI1_h);
-    a3 = (stren_h-ySlope_h*peakI1_h)*std::exp(-a2*peakI1_h);
-    a4 = ySlope_h ;
+    a1 = stren_hd;
+    a2 = (fSlope_hd-ySlope_hd )/(stren_hd - ySlope_hd*peakI1_hd);
+    a3 = (stren_hd-ySlope_hd*peakI1_hd)*std::exp(-a2*peakI1_hd);
+    a4 = ySlope_hd ;
+    //std::cout<<" hardening: " << hardening << "FSLOPEH: "<< fSlope_h << " YSLOPEH: " << ySlope_h << "STRENh: " << stren_h << "PEAKI1H: "<< peakI1_h << std::endl;
+    //std::cout<<" hardening: " << hardening << "FSLOPEHD: "<< fSlope_hd << " YSLOPEHD: " << ySlope_hd << "STRENhD: " << stren_hd << "PEAKI1HD: "<< peakI1_hd << std::endl;
+
   }
   else
   {
-	  std::cout<<"bad limit surface parameters."<<std::endl;
-  }
+	  //std::cout<<"bad limit surface parameters. hardening: " << hardening << "FSLOPEH: "<< fSlope_h << " YSLOPEH: " << ySlope_h << "STRENh: " << stren_h << "PEAKI1H: "<< peakI1_h << std::endl;
+	  //std::cout<<"bad limit surface parameters. hardening: " << hardening << "FSLOPEDH: "<< fSlope_hd << " YSLOPEHD: " << ySlope_hd << "STRENhd: " << stren_hd << "PEAKI1HD: "<< peakI1_hd << std::endl;  
+}
 
   //std::cout<<"m_peakI1 = "<<m_peakI1<<", m_stren = "<<m_stren<<", m_ySlope = "<<m_ySlope<<", m_fSlope = "<<m_fSlope<<std::endl;
   //std::cout<<"peakI1_h = "<<peakI1_h<<", stren_h = "<<stren_h<<", ySlope_h = "<<ySlope_h<<", fSlope_h = "<<fSlope_h<<std::endl;
   //std::cout<<"a1 = "<<a1<<", a2 = "<<a2<<", a3 = "<<a3<<", a4 = "<<a4<<std::endl;
+  //std::cout<<" strenhd: " << stren_hd << "FSLOPEHD: "<< fSlope_hd << " peakI1hd: " << peakI1_hd << "YSLOPEHD: " << ySlope_hd  <<std::endl;
+
 }
 
 
@@ -3071,6 +3180,21 @@ public:
     /// string/key for tangent elastic bulk modulus parameter 4 
     static constexpr char const * b4String() { return "b4"; }
 
+    /// string/key for constant for tuning hardened stren
+    static constexpr char const * C1aString() { return "C1a"; }
+
+    /// string/key for constant for tuning  hardened fslope
+    static constexpr char const * C2aString() { return "C2a"; }
+
+    /// string/key for constant for tuning hardened peakI1
+    static constexpr char const * C3String() { return "C3"; }
+
+    /// string/key for constant for tuning hardened peakI1
+    static constexpr char const * C4String() { return "C4"; }
+
+    /// string/key for constant for tuning hardened peakI1
+    static constexpr char const * C5String() { return "C5"; }
+
     /// string/key for tangent elastic shear modulus parameter 0 
     static constexpr char const * g0String() { return "g0"; }
 
@@ -3121,10 +3245,15 @@ public:
 
     /// string/key for fracture softening shape parameter
     static constexpr char const * fractureSofteningExponentString() { return "fractureSofteningExponent"; }
-   
 
     /// string/key for fracture stress
     static constexpr char const * fractureStressString() { return "fractureStress"; }
+
+    /// string/key for initialDomainTemperature
+    static constexpr char const * initialTemperatureString() { return "initialTemperature"; }
+
+    /// string/key for temperature
+    static constexpr char const * temperatureString() { return "temperature"; }
 
     /// string/keay for brittleDuctileTransition
     static constexpr char const * brittleDuctileTransitionString() { return "brittleDuctileTransition"; }
@@ -3252,6 +3381,11 @@ public:
                                 m_b2,
                                 m_b3,
                                 m_b4,
+                                m_C1a,
+                                m_C2a,
+                                m_C3,
+                                m_C4,
+                                m_C5,
                                 m_g0,
                                 m_g1,
                                 m_g2,
@@ -3273,6 +3407,8 @@ public:
                                 m_fractureEnergyReleaseRate,
                                 m_fractureSofteningExponent,
                                 m_fractureStress,
+                                m_initialTemperature,
+                                m_temperature,
                                 m_brittleDuctileTransition,
                                 m_damageEvolutionCriterion,
                                 m_cr,
@@ -3332,6 +3468,11 @@ public:
                           m_b2,
                           m_b3,
                           m_b4,
+                          m_C1a,
+                          m_C2a,
+                          m_C3,
+                          m_C4,
+                          m_C5,
                           m_g0,
                           m_g1,
                           m_g2,
@@ -3353,6 +3494,8 @@ public:
                           m_fractureEnergyReleaseRate,
                           m_fractureSofteningExponent,
                           m_fractureStress,
+                          m_initialTemperature,
+                          m_temperature,
                           m_brittleDuctileTransition,
                           m_damageEvolutionCriterion,
                           m_cr,
@@ -3476,6 +3619,12 @@ protected:
   real64 m_b3;
   real64 m_b4;
 
+  //  hardening constants
+  real64 m_C1a;
+  real64 m_C2a;
+  real64 m_C3;
+  real64 m_C4;
+  real64 m_C5;
 
   // Tangent elastic shear modulus parameters
   real64 m_g0;
@@ -3509,7 +3658,12 @@ protected:
   real64 m_fractureEnergyReleaseRate;
   real64 m_fractureSofteningExponent;  // shape parameter that controls softening with damage
   real64 m_fractureStress;
+  // not in the fractuer/damage, but MM was using the Fracture stress as template for initalTemperature
+  real64 m_initialTemperature;
+  real64 m_temperature;
+
   real64 m_brittleDuctileTransition;
+
   int m_damageEvolutionCriterion;
 
   // Cap shape parameter

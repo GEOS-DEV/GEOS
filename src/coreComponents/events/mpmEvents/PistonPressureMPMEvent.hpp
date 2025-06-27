@@ -13,11 +13,11 @@
  */
 
 /**
- * @file TemperatureRampMPMEvent.hpp
+ * @file PistonPressureMPMEvent.hpp
  */
 
-#ifndef GEOSX_TEMPERATURERAMP_MPMEVENT_HPP_
-#define GEOSX_TEMPERATURERAMP_MPMEVENT_HPP_
+#ifndef GEOSX_BOREHOLEPRESSURE_MPMEVENT_HPP_
+#define GEOSX_BOREHOLEPRESSURE_MPMEVENT_HPP_
 
 #include "MPMEventBase.hpp"
 
@@ -25,50 +25,52 @@ namespace geos
 {
 
 /**
- * @class TemperatureRampMPMEvent
+ * @class PistonPressureMPMEvent
  *
- * This class implements the material swap mpm event for the solid mechanics material point method solver
+ * This class implements a virtual fluid boundary condition for a region in the X-Y plane defined by a borehole radius.
  */
-class TemperatureRampMPMEvent : public MPMEventBase
+class PistonPressureMPMEvent : public MPMEventBase
 {
 public:
   /// @copydoc geos::dataRepository::Group::Group( string const & name, Group * const parent )
-  TemperatureRampMPMEvent( const string & name,
+  PistonPressureMPMEvent( const string & name,
                   Group * const parent );
 
   /// Destructor
-  virtual ~TemperatureRampMPMEvent() override;
+  virtual ~PistonPressureMPMEvent() override;
 
   /**
    * @brief Catalog name interface.
    * @return This type's catalog name.
    **/
-  static string catalogName() { return "TemperatureRamp"; }
+  static string catalogName() { return "PistonPressure"; }
 
  /// @cond DO_NOT_DOCUMENT
   struct viewKeyStruct
   {
-    static constexpr char const * startTemperatureString() { return "startTemperature"; }
-    static constexpr char const * endTemperatureString() { return "endTemperature"; }
+    static constexpr char const * boreholeRadiusString() { return "boreholeRadius"; }
+    static constexpr char const * startPressureString() { return "startPressure"; }
+    static constexpr char const * endPressureString() { return "endPressure"; }
     static constexpr char const * interpTypeString() { return "interpType"; }
-  } TemperatureRampMPMEventViewKeys;
+  } PistonPressureMPMEventViewKeys;
   /// @endcond
 
-  real64 getStartTemperature() const { return m_startTemperature; } 
-  real64 getEndTemperature() const { return m_endTemperature; } 
+  real64 getPistonRadius() const { return m_boreholeRadius; } 
+  real64 getStartPressure() const { return m_startPressure; } 
+  real64 getEndPressure() const { return m_endPressure; } 
   int getInterpType() const { return m_interpType; } 
 
 protected:
   virtual void postInputInitialization() override final;
-  //virtual void postProcessInput() override final;
 
   // Event variables
-  real64 m_startTemperature;
-  real64 m_endTemperature;
+  real64 m_boreholeRadius;
+  real64 m_startPressure;
+  real64 m_endPressure;
   int m_interpType;
 
 };
 
 } /* namespace geos */
 
-#endif /* GEOSX_TEMPERATURERAMP_MPMEVENT_HPP_ */
+#endif /* GEOSX_BOREHOLEPRESSURE_MPMEVENT_HPP_ */
