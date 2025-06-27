@@ -67,6 +67,7 @@ public:
     UNINITIALIZED, /**< This is the current well control before postInputInitialization (needed to restart from file properly) */
   };
 
+  //using constraint_array = stdVector< WellConstraint>;
 
   /**
    * @name Constructor / Destructor
@@ -114,6 +115,35 @@ public:
   WellControls & operator=( WellControls && ) = delete;
 
   ///@}
+
+  /**
+   * @brief Create a new geometric object (box, plane, etc) as a child of this group.
+   * @param childKey the catalog key of the new geometric object to create
+   * @param childName the name of the new geometric object in the repository
+   * @return the group child
+   */
+  virtual Group * createChild( string const & childKey, string const & childName ) override;
+  /// Expand catalog for schema generation
+
+  virtual void expandObjectCatalogs() override;
+
+  /*
+   * @brief This function is used to launch kernel function over the specified target element subregions
+   * @tparam LOOKUP_CONTAINER type of container of names or indices
+   * @tparam LAMBDA type of the user-provided function
+   * @param targetRegions target element region names or indices
+   * @param lambda kernel function
+
+     template< typename LOOKUP_CONTAINER, typename LAMBDA >
+     void forWellP( LOOKUP_CONTAINER const & targetRegions, LAMBDA && lambda )
+     {
+     forElementSubRegionsComplete< CellElementSubRegion, FaceElementSubRegion, EmbeddedSurfaceSubRegion, WellElementSubRegion >(
+      *targetRegions,
+                                                                                                                              std::forward<
+                                                                                                                               *LAMBDA >(
+                                                                                                                               *lambda ) );
+     }
+   */
 
   /**
    * @name Getters / Setters
@@ -293,16 +323,16 @@ public:
    */
   void setNextDtFromTables( real64 const currentTime, real64 & nextDt );
 
-    /**
-   * @brief setter for multi fluid separator 
+  /**
+   * @brief setter for multi fluid separator
    * @param[in] fluidSeparatorPtr single or multiphase separator
    */
-   void setFluidSeparator(std::unique_ptr< constitutive::ConstitutiveBase > fluidSeparatorPtr)  {  m_fluidSeparatorPtr = std::move(fluidSeparatorPtr);}
+  void setFluidSeparator( std::unique_ptr< constitutive::ConstitutiveBase > fluidSeparatorPtr )  {  m_fluidSeparatorPtr = std::move( fluidSeparatorPtr );}
   /**
-   * @brief Getter for multi fluid separator 
+   * @brief Getter for multi fluid separator
    * @return reference to separator
    */
-  constitutive::MultiFluidBase & getMultiFluidSeparator()  { return dynamicCast< constitutive::MultiFluidBase & > (*m_fluidSeparatorPtr); }
+  constitutive::MultiFluidBase & getMultiFluidSeparator()  { return dynamicCast< constitutive::MultiFluidBase & >( *m_fluidSeparatorPtr ); }
   ///@}
 
   /**
@@ -354,6 +384,10 @@ public:
     /// string key for the initial pressure coefficient
     static constexpr char const * initialPressureCoefficientString() { return "initialPressureCoefficient"; }
 
+    /// string key for the minimum BHP presssure for a producer
+    static constexpr char const * minBHPConstraintString() { return "MinBHPConstraint"; }
+    /// string key for the maximum phase rate for a producer
+    static constexpr char const * maxPhaseRateConstraintString() { return "MaxPhaseRateConstraint"; }
   }
   /// ViewKey struct for the WellControls class
   viewKeysWellControls;
@@ -452,8 +486,11 @@ private:
 
   bool m_wellOpen;
 
-    // Fuild model to compute properties for constraint equation user specified conditions
+  // Fuild model to compute properties for constraint equation user specified conditions
   std::unique_ptr< constitutive::ConstitutiveBase >  m_fluidSeparatorPtr;
+
+  /// List of constraints
+  //constraint_array m_ConstraintList;
 
 };
 

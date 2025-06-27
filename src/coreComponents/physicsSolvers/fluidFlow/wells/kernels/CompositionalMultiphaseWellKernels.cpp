@@ -36,19 +36,19 @@ GEOS_HOST_DEVICE
 inline
 void
 ControlEquationHelper::
-  switchControl( bool const isProducer,
-                 WellControls::Control const & inputControl,
-                 WellControls::Control const & currentControl,
-                 integer const phasePhaseIndex,
-                 real64 const & targetBHP,
-                 real64 const & targetPhaseRate,
-                 real64 const & targetTotalRate,
-                 real64 const & targetMassRate,
-                 real64 const & currentBHP,
-                 arrayView1d< real64 const > const & currentPhaseVolRate,
-                 real64 const & currentTotalVolRate,
-                 real64 const & currentMassRate,
-                 WellControls::Control & newControl )
+  selectLimitingConstraint( bool const isProducer,
+                            WellControls::Control const & inputControl,
+                            WellControls::Control const & currentControl,
+                            integer const phasePhaseIndex,
+                            real64 const & targetBHP,
+                            real64 const & targetPhaseRate,
+                            real64 const & targetTotalRate,
+                            real64 const & targetMassRate,
+                            real64 const & currentBHP,
+                            arrayView1d< real64 const > const & currentPhaseVolRate,
+                            real64 const & currentTotalVolRate,
+                            real64 const & currentMassRate,
+                            WellControls::Control & newControl )
 {
   // if isViable is true at the end of the following checks, no need to switch
   bool controlIsViable = false;
@@ -96,7 +96,7 @@ ControlEquationHelper::
       controlIsViable = ( currentBHP <= targetBHP );
     }
   }
-  GEOS_LOG_RANK("tjb currentControl " << currentControl << " controlIsViable " << controlIsViable);
+  GEOS_LOG_RANK( "tjb currentControl " << currentControl << " controlIsViable " << controlIsViable );
   if( controlIsViable )
   {
     newControl = currentControl;
@@ -125,7 +125,7 @@ ControlEquationHelper::
       }
     }
   }
-  GEOS_LOG_RANK("tjb newControl " << newControl );
+  GEOS_LOG_RANK( "tjb newControl " << newControl );
 }
 
 template< integer NC, integer IS_THERMAL >
@@ -204,7 +204,7 @@ ControlEquationHelper::
   else if( currentControl == WellControls::Control::TOTALVOLRATE )
   {
     controlEqn = currentTotalVolRate - targetTotalRate;
-    GEOS_LOG_RANK("tjb volrate "<< currentTotalVolRate << " " << targetTotalRate);
+    GEOS_LOG_RANK( "tjb volrate "<< currentTotalVolRate << " " << targetTotalRate );
     dControlEqn[COFFSET_WJ::dP] = dCurrentTotalVolRate[COFFSET_WJ::dP];
     dControlEqn[COFFSET_WJ::dQ] = dCurrentTotalVolRate[COFFSET_WJ::dQ];
     for( integer ic = 0; ic < NC; ++ic )
@@ -219,7 +219,7 @@ ControlEquationHelper::
   else if( currentControl == WellControls::Control::MASSRATE )
   {
     controlEqn = massDensity*currentTotalVolRate - targetMassRate;
-    GEOS_LOG_RANK("tjb massrate "<< massDensity*currentTotalVolRate << " " << targetMassRate);
+    GEOS_LOG_RANK( "tjb massrate "<< massDensity*currentTotalVolRate << " " << targetMassRate );
     dControlEqn[COFFSET_WJ::dP] = massDensity*dCurrentTotalVolRate[COFFSET_WJ::dP];
     dControlEqn[COFFSET_WJ::dQ] = massDensity*dCurrentTotalVolRate[COFFSET_WJ::dQ];
     for( integer ic = 0; ic < NC; ++ic )
@@ -359,19 +359,19 @@ PressureRelationKernel::
     if( iwelemNext < 0 && isLocallyOwned ) // if iwelemNext < 0, form control equation
     {
       WellControls::Control newControl = currentControl;
-      ControlEquationHelper::switchControl( isProducer,
-                                            inputControl,
-                                            currentControl,
-                                            targetPhaseIndex,
-                                            targetBHP,
-                                            targetPhaseRate,
-                                            targetTotalRate,
-                                            targetMassRate,
-                                            currentBHP,
-                                            currentPhaseVolRate,
-                                            currentTotalVolRate,
-                                            currentMassRate,
-                                            newControl );
+      ControlEquationHelper::selectLimitingConstraint( isProducer,
+                                                       inputControl,
+                                                       currentControl,
+                                                       targetPhaseIndex,
+                                                       targetBHP,
+                                                       targetPhaseRate,
+                                                       targetTotalRate,
+                                                       targetMassRate,
+                                                       currentBHP,
+                                                       currentPhaseVolRate,
+                                                       currentTotalVolRate,
+                                                       currentMassRate,
+                                                       newControl );
       if( currentControl != newControl )
       {
         switchControl.max( 1 );
@@ -642,7 +642,8 @@ PresTempCompFracInitializationKernel::
   forAll< parallelDevicePolicy<> >( subRegionSize, [=] GEOS_HOST_DEVICE ( localIndex const iwelem )
   {
     wellElemPres[iwelem] = refPres + avgTotalMassDens * ( wellElemGravCoef[iwelem] - refWellElemGravCoef );
-    GEOS_LOG_RANK( "tjb pinit " << iwelem << " " << wellElemPres[iwelem] << " " << refPres << " gravCoef " << wellElemGravCoef[iwelem] << " refGravCoef " << refWellElemGravCoef << " aveTemp " << avgTemp);
+    GEOS_LOG_RANK( "tjb pinit " << iwelem << " " << wellElemPres[iwelem] << " " << refPres << " gravCoef " << wellElemGravCoef[iwelem] << " refGravCoef " << refWellElemGravCoef << " aveTemp " <<
+        avgTemp );
 
     wellElemTemp[iwelem] = avgTemp;
 

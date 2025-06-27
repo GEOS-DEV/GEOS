@@ -221,7 +221,7 @@ public:
   virtual real64 updateWellState( WellElementSubRegion & subRegion ) override;
   virtual void updateState( DomainPartition & domain ) override;
 
-  virtual real64 updateSubRegionState( WellElementSubRegion & subRegion) override;
+  virtual real64 updateSubRegionState( WellElementSubRegion & subRegion ) override;
 
   virtual string wellElementDofName() const override { return viewKeyStruct::dofFieldString(); }
 

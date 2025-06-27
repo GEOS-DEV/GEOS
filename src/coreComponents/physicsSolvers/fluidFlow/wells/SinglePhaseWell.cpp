@@ -423,7 +423,7 @@ void SinglePhaseWell::initializeWells( DomainPartition & domain, real64 const & 
         // 4) Recompute the pressure-dependent properties
         // Note: I am leaving that here because I would like to use the perforationRates (computed in UpdateState)
         //       to better initialize the rates
-        updateSubRegionState( subRegion);
+        updateSubRegionState( subRegion );
 
         string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
         SingleFluidBase & fluid = subRegion.getConstitutiveModel< SingleFluidBase >( fluidName );
@@ -1023,7 +1023,7 @@ void SinglePhaseWell::resetStateToBeginningOfStep( DomainPartition & domain )
         subRegion.getField< fields::well::connectionRate_n >();
       connRate.setValues< parallelDevicePolicy<> >( connRate_n );
 
-      updateSubRegionState( subRegion);
+      updateSubRegionState( subRegion );
     } );
   } );
 }

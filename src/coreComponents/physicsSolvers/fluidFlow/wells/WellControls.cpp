@@ -19,6 +19,7 @@
 
 #include "LogLevelsInfo.hpp"
 #include "WellControls.hpp"
+#include "WellConstraint.hpp"
 #include "WellConstants.hpp"
 #include "dataRepository/InputFlags.hpp"
 #include "functions/FunctionManager.hpp"
@@ -176,6 +177,28 @@ WellControls::WellControls( string const & name, Group * const parent )
 
 WellControls::~WellControls()
 {}
+
+Group * WellControls::createChild( string const & childKey, string const & childName )
+{
+  GEOS_LOG_RANK_0( GEOS_FMT( "{}: adding {} {}", getName(), childKey, childName ) );
+  ////const auto childTypes = { viewKeyStruct::perforationString() };
+  //GEOS_ERROR_IF( childKey != viewKeyStruct::perforationString(),
+  //               CatalogInterface::unknownTypeError( childKey, getDataContext(), childTypes ) );
+
+  Group * constraint = nullptr;
+  if( childKey == viewKeyStruct::minBHPConstraintString() )
+  {
+    WellBHPConstraint & bhpConstraint = registerGroup< WellBHPConstraint >( childName );
+    bhpConstraint.setWellType( Type::PRODUCER );
+    constraint = &bhpConstraint;
+  }
+  return constraint;
+}
+
+void WellControls::expandObjectCatalogs()
+{
+  //createChild( keys::wellControls, keys::wellControls );
+}
 
 void WellControls::switchToBHPControl( real64 const & val )
 {

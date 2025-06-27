@@ -428,7 +428,7 @@ void WellSolverBase::updateState( DomainPartition & domain )
   {
     mesh.getElemManager().forElementSubRegions< WellElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                           WellElementSubRegion & subRegion )
-    { updateSubRegionState( subRegion); } );
+    { updateSubRegionState( subRegion ); } );
   } );
 }
 
@@ -940,7 +940,7 @@ bool WellSolverBase::lineSearch1( real64 const & time_n,
     applyWellSystemSolution( dofManager, solution.values(), localScaleFactor, dt, domain, mesh, subRegion );
     // update non-primary variables (constitutive models)
 
-    updateWellState( subRegion);
+    updateWellState( subRegion );
     // re-assemble system
     localMatrix.zero();
     rhs.zero();
