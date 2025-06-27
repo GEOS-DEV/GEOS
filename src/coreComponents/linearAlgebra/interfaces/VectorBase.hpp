@@ -246,7 +246,7 @@ protected:
    * @param x Vector to multiply with.
    * @note This modifies the current vector in place: this[i] *= x[i]
    */
-  virtual void pointwiseScale( Vector const & x ) = 0;
+  virtual void pointwiseProduct( Vector const & x ) = 0;
 
   /**
    * @brief Element-wise division of this vector by another vector.

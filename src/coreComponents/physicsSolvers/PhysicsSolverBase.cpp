@@ -1323,7 +1323,7 @@ void PhysicsSolverBase::solveLinearSystem( DofManager const & dofManager,
 
     matrix.computeScalingVector( m_scaling );
     matrix.leftRightScale( m_scaling, m_scaling );
-    rhs.pointwiseScale( m_scaling );
+    rhs.pointwiseProduct( m_scaling );
     // Assume the solution is zeroed out, thus no need to scale it
   }
 
@@ -1373,7 +1373,7 @@ void PhysicsSolverBase::solveLinearSystem( DofManager const & dofManager,
   {
     Timer timer_setup( m_timers["linear solver scaling"] );
 
-    solution.pointwiseScale( m_scaling );
+    solution.pointwiseProduct( m_scaling );
   }
 }
 

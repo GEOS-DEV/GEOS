@@ -222,7 +222,7 @@ void HypreVector::axpby( real64 const alpha,
   }
 }
 
-void HypreVector::pointwiseScale( HypreVector const & x )
+void HypreVector::pointwiseProduct( HypreVector const & x )
 {
   GEOS_LAI_ASSERT( ready() );
   GEOS_LAI_ASSERT( x.ready() );
