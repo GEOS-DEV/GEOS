@@ -141,9 +141,9 @@ public:
                       real64 const beta ) override;
 
   /**
-   * @copydoc VectorBase<HypreVector>::pointwiseScale
+   * @copydoc VectorBase<HypreVector>::pointwiseProduct
    */
-  virtual void pointwiseScale( HypreVector const & x ) override;
+  virtual void pointwiseProduct( HypreVector const & x ) override;
 
   /**
    * @copydoc VectorBase<HypreVector>::pointwiseDivide

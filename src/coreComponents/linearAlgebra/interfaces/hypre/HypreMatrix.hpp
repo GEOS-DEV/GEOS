@@ -273,7 +273,7 @@ public:
   /**
    * @copydoc MatrixBase<HypreMatrix>::computeScalingVector
    */
-  virtual void computeScalingVector(HypreVector & scaling) const override;
+  virtual void computeScalingVector( HypreVector & scaling ) const override;
 
   /**
    * @copydoc MatrixBase<HypreMatrix>::leftRightScale

@@ -1464,14 +1464,14 @@ MPI_Comm HypreMatrix::comm() const
   return hypre_IJMatrixComm( m_ij_mat );
 }
 
-void HypreMatrix::computeScalingVector(HypreVector & scaling) const
+void HypreMatrix::computeScalingVector( HypreVector & scaling ) const
 {
   GEOS_LAI_ASSERT( ready() );
 
   // Get number of components
   HYPRE_Int num_tags = LvArray::integerConversion< HYPRE_Int >(
-      (m_dofManager->*static_cast<integer (geos::DofManager::*)() const>(&geos::DofManager::numComponents))()
-  );
+    (m_dofManager->*static_cast< integer (geos::DofManager::*)() const >(&geos::DofManager::numComponents))()
+    );
 
   // Get local dof component labels
   array1d< HYPRE_Int > pointMarkers( numLocalRows() );
@@ -1483,7 +1483,8 @@ void HypreMatrix::computeScalingVector(HypreVector & scaling) const
   HYPRE_ParVector *hypre_vec_ptr = &hypre_vec;
 
   // Compute scaling vector
-  GEOS_LAI_CHECK_ERROR( HYPRE_ParCSRMatrixCompScalingTagged( m_parcsr_mat, 1, num_tags, pointMarkers.data(), hypre_vec_ptr ) );
+  GEOS_LAI_CHECK_ERROR( HYPRE_ParCSRMatrixComputeScalingTagged( m_parcsr_mat, 1, HYPRE_MEMORY_HOST, num_tags,
+                                                                pointMarkers.data(), hypre_vec_ptr ) );
 }
 
 }// end namespace geos
