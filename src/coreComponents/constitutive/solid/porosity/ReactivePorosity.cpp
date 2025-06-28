@@ -30,8 +30,13 @@ namespace constitutive
 ReactivePorosity::ReactivePorosity( string const & name, Group * const parent ):
   PorosityBase( name, parent )
 {
-  registerWrapper( viewKeyStruct::initialVolumeFractionsString(), &m_initialVolumeFractions ).
+  registerWrapper( viewKeyStruct::defaultInitialVolumeFractionsString(), &m_defaultInitialVolumeFractions ).
     setInputFlag( InputFlags::REQUIRED ).
+    setDescription( "Default initial volume fractions" );
+
+  registerWrapper( viewKeyStruct::initialVolumeFractionsString(), &m_initialVolumeFractions ).
+    setApplyDefaultValue( 0.0 ).
+    setPlotLevel( PlotLevel::LEVEL_0 ).
     setDescription( "Initial volume fractions" );
 
   registerWrapper( viewKeyStruct::volumeFractionsString(), &m_volumeFractions ).
@@ -68,17 +73,17 @@ void ReactivePorosity::postInputInitialization()
 {
   PorosityBase::postInputInitialization();
 
-  GEOS_THROW_IF_NE_MSG( m_molarWeights.size(), m_initialVolumeFractions.size(),
+  GEOS_THROW_IF_NE_MSG( m_molarWeights.size(), m_defaultInitialVolumeFractions.size(),
                         GEOS_FMT( "{}: mismatch in number of components in porosity model attribute '{}' and '{}", 
                         getFullName(), viewKeyStruct::molarWeightsString(), viewKeyStruct::initialVolumeFractionsString() ),
                         InputError );
 
-  GEOS_THROW_IF_NE_MSG( m_mineralDensities.size(), m_initialVolumeFractions.size(),
+  GEOS_THROW_IF_NE_MSG( m_mineralDensities.size(), m_defaultInitialVolumeFractions.size(),
                         GEOS_FMT( "{}: mismatch in number of components in porosity model attribute '{}' and '{}", 
                         getFullName(), viewKeyStruct::mineralDensitiesString(), viewKeyStruct::initialVolumeFractionsString() ),
                         InputError );
 
-  m_numKineticReactions = m_initialVolumeFractions.size();
+  m_numKineticReactions = m_defaultInitialVolumeFractions.size();
 }
 
 void ReactivePorosity::allocateConstitutiveData( dataRepository::Group & parent,
@@ -94,6 +99,7 @@ void ReactivePorosity::resizeFields( localIndex const size, localIndex const num
 {
   integer const numKineticReactions = this->numKineticReactions();
 
+  m_initialVolumeFractions.resize( size, numPts, numKineticReactions );
   m_volumeFractions.resize( size, numPts, numKineticReactions );
   m_volumeFractions_n.resize( size, numPts, numKineticReactions );
 }
@@ -106,7 +112,7 @@ void ReactivePorosity::saveConvergedState() const
 }
 
 void ReactivePorosity::initializeState() const
-{
+{  
   integer const numKineticReactions = this->numKineticReactions();
 
   for( localIndex ei = 0; ei < m_newPorosity.size( 0 ); ++ei )
@@ -125,8 +131,9 @@ void ReactivePorosity::initializeState() const
     {
       for( integer r = 0; r < numKineticReactions; ++r )
       {
-        m_volumeFractions[ei][q][r] = m_initialVolumeFractions[r]; 
-        m_volumeFractions_n[ei][q][r] = m_initialVolumeFractions[r]; 
+        m_volumeFractions[ei][q][r] = m_defaultInitialVolumeFractions[r]; 
+        m_initialVolumeFractions[ei][q][r] = m_defaultInitialVolumeFractions[r]; 
+        m_volumeFractions_n[ei][q][r] = m_defaultInitialVolumeFractions[r]; 
       }
     }
   }

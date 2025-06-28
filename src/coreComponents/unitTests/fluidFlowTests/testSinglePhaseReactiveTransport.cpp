@@ -122,205 +122,132 @@ char const * xmlInputCarbonate =
                           fieldName="pressure"
                           scale="1.2e6" />
 
+      <FieldSpecification name="surfaceArea"
+                          initialCondition="1"
+                          setNames="{ all }"
+                          objectPath="ElementRegions/region/cb"
+                          fieldName="initialSurfaceArea"
+                          component="0"
+                          scale="1.0"/>
+
       <FieldSpecification
-        name="initialAggregate_CaCO3"
+        name="initialAggregate_H_all"
         initialCondition="1"
         setNames="{ all }"
         objectPath="ElementRegions/region/cb"
         fieldName="water_primarySpeciesAggregateConcentration"
         component="0"
-        scale="3.76e-3"/>
+        scale="1.585e-7"/>
 
       <FieldSpecification
-        name="initialAggregate_H"
+        name="initialAggregate_HCO3_all"
         initialCondition="1"
         setNames="{ all }"
         objectPath="ElementRegions/region/cb"
         fieldName="water_primarySpeciesAggregateConcentration"
         component="1"
-        scale="3.76e-1"/>
+        scale="8.293e-3"/>
 
       <FieldSpecification
-        name="initialAggregate_HCO3"
+        name="initialAggregate_Ca_all"
         initialCondition="1"
         setNames="{ all }"
         objectPath="ElementRegions/region/cb"
         fieldName="water_primarySpeciesAggregateConcentration"
         component="2"
-        scale="3.76e-1"/>
+        scale="2.171e-3"/>
 
       <FieldSpecification
-        name="initialAggregate_Ca"
+        name="initialAggregate_SO4_all"
         initialCondition="1"
         setNames="{ all }"
         objectPath="ElementRegions/region/cb"
         fieldName="water_primarySpeciesAggregateConcentration"
         component="3"
-        scale="3.87e-2"/>
+        scale="1.666e-6"/>
 
       <FieldSpecification
-        name="initialAggregate_SO4"
+        name="initialAggregate_Cl_all"
         initialCondition="1"
         setNames="{ all }"
         objectPath="ElementRegions/region/cb"
         fieldName="water_primarySpeciesAggregateConcentration"
         component="4"
-        scale="3.21e-2"/>
+        scale="2.821e-5"/>
 
       <FieldSpecification
-        name="initialAggregate_Cl"
+        name="initialAggregate_Mg_all"
         initialCondition="1"
         setNames="{ all }"
         objectPath="ElementRegions/region/cb"
         fieldName="water_primarySpeciesAggregateConcentration"
         component="5"
-        scale="1.89"/>
-
+        scale="1.605e-3"/>
+      
       <FieldSpecification
-        name="initialAggregate_Mg"
+        name="initialAggregate_Na_all"
         initialCondition="1"
         setNames="{ all }"
         objectPath="ElementRegions/region/cb"
         fieldName="water_primarySpeciesAggregateConcentration"
         component="6"
-        scale="1.65e-2"/>
-      
-      <FieldSpecification
-        name="initialAggregate_Na"
-        initialCondition="1"
-        setNames="{ all }"
-        objectPath="ElementRegions/region/cb"
-        fieldName="water_primarySpeciesAggregateConcentration"
-        component="7"
-        scale="1.09"/>
+        scale="7.817e-4"/>
 
       <FieldSpecification
-        name="sourceLog_CaCO3"
+        name="log_H_source"
         setNames="{ source }"
         objectPath="ElementRegions/region/cb"
         fieldName="logPrimarySpeciesConcentration"
         component="0"
-        scale="-5.5833363216"/>
+        scale="-19.21448423"/>
 
       <FieldSpecification
-        name="sourceLog_H"
+        name="log_HCO3_source"
         setNames="{ source }"
         objectPath="ElementRegions/region/cb"
         fieldName="logPrimarySpeciesConcentration"
         component="1"
-        scale="-7.7294305998"/>
+        scale="-2.73216432"/>
 
       <FieldSpecification
-        name="sourceLog_HCO3"
+        name="log_Ca_source"
         setNames="{ source }"
         objectPath="ElementRegions/region/cb"
         fieldName="logPrimarySpeciesConcentration"
         component="2"
-        scale="-7.8958055517"/>
-      
+        scale="-4.77653747"/>
+
       <FieldSpecification
-        name="sourceLog_Ca"
+        name="log_SO4_source"
         setNames="{ source }"
         objectPath="ElementRegions/region/cb"
         fieldName="logPrimarySpeciesConcentration"
         component="3"
-        scale="-4.2187815037"/>
+        scale="-14.28117504"/>
 
       <FieldSpecification
-        name="sourceLog_SO4"
+        name="log_Cl_source"
         setNames="{ source }"
         objectPath="ElementRegions/region/cb"
         fieldName="logPrimarySpeciesConcentration"
         component="4"
-        scale="-5.9949216104"/>
+        scale="-10.47763277"/>
 
       <FieldSpecification
-        name="sourceLog_Cl"
+        name="log_Mg_source"
         setNames="{ source }"
         objectPath="ElementRegions/region/cb"
         fieldName="logPrimarySpeciesConcentration"
         component="5"
-        scale="0.61982840898"/>
-
-      <FieldSpecification
-        name="sourceLog_Mg"
-        setNames="{ source }"
-        objectPath="ElementRegions/region/cb"
-        fieldName="logPrimarySpeciesConcentration"
-        component="6"
-        scale="-4.6170530778"/>
-
-      <FieldSpecification
-        name="sourceLog_Na"
-        setNames="{ source }"
-        objectPath="ElementRegions/region/cb"
-        fieldName="logPrimarySpeciesConcentration"
-        component="7"
-        scale="0.069813174359"/>
-
-      <FieldSpecification
-        name="sinkLog_CaCO3"
-        setNames="{ sink }"
-        objectPath="ElementRegions/region/cb"
-        fieldName="logPrimarySpeciesConcentration"
-        component="0"
-        scale="-5.5833363216"/>
-
-      <FieldSpecification
-        name="sinkLog_H"
-        setNames="{ sink }"
-        objectPath="ElementRegions/region/cb"
-        fieldName="logPrimarySpeciesConcentration"
-        component="1"
-        scale="-7.7294305998"/>
-
-      <FieldSpecification
-        name="sinkLog_HCO3"
-        setNames="{ sink }"
-        objectPath="ElementRegions/region/cb"
-        fieldName="logPrimarySpeciesConcentration"
-        component="2"
-        scale="-7.8958055517"/>
+        scale="-6.43480025"/>
       
       <FieldSpecification
-        name="sinkLog_Ca"
-        setNames="{ sink }"
-        objectPath="ElementRegions/region/cb"
-        fieldName="logPrimarySpeciesConcentration"
-        component="3"
-        scale="-4.2187815037"/>
-
-      <FieldSpecification
-        name="sinkLog_SO4"
-        setNames="{ sink }"
-        objectPath="ElementRegions/region/cb"
-        fieldName="logPrimarySpeciesConcentration"
-        component="4"
-        scale="-5.9949216104"/>
-
-      <FieldSpecification
-        name="sinkLog_Cl"
-        setNames="{ sink }"
-        objectPath="ElementRegions/region/cb"
-        fieldName="logPrimarySpeciesConcentration"
-        component="5"
-        scale="0.61982840898"/>
-
-      <FieldSpecification
-        name="sinkLog_Mg"
-        setNames="{ sink }"
+        name="log_Na_source"
+        setNames="{ source }"
         objectPath="ElementRegions/region/cb"
         fieldName="logPrimarySpeciesConcentration"
         component="6"
-        scale="-4.6170530778"/>
-
-      <FieldSpecification
-        name="sinkLog_Na"
-        setNames="{ sink }"
-        objectPath="ElementRegions/region/cb"
-        fieldName="logPrimarySpeciesConcentration"
-        component="7"
-        scale="0.069813174359"/>
+        scale="-7.15404368"/>
     </FieldSpecifications>
   </Problem>
   )xml";

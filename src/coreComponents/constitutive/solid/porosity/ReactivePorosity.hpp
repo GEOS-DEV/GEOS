@@ -40,6 +40,7 @@ public:
                            arrayView2d< real64 const > const & initialPorosity,
                            arrayView1d< real64 const > const & referencePorosity,
                            arrayView3d< real64, reactivefluid::USD_SPECIES > const & volumeFractions,
+                           arrayView3d< real64 const, reactivefluid::USD_SPECIES > const & initialVolumeFractions,
                            arrayView3d< real64 const, reactivefluid::USD_SPECIES > const & volumeFractions_n,
                            integer const numKineticReactions,
                            arrayView1d< real64 const > const & molarWeights,
@@ -51,6 +52,7 @@ public:
                          initialPorosity,
                          referencePorosity ),
     m_volumeFractions( volumeFractions ),
+    m_initialVolumeFractions( initialVolumeFractions ),
     m_volumeFractions_n( volumeFractions_n ),
     m_numKineticReactions( numKineticReactions ),
     m_molarWeights( molarWeights ),
@@ -105,9 +107,28 @@ public:
                      m_mineralDensities );
   }
 
+  GEOS_HOST_DEVICE
+  inline
+  real64 getVolumeFractionForMineral( localIndex const k,
+                                      localIndex const q,
+                                      localIndex const r ) const
+  {
+    return m_volumeFractions[k][q][r];
+  }
+
+  GEOS_HOST_DEVICE
+  inline
+  real64 getInitialVolumeFractionForMineral( localIndex const k,
+                                             localIndex const q,
+                                             localIndex const r ) const
+  {
+    return m_initialVolumeFractions[k][q][r];
+  }
+
 protected:
 
   arrayView3d< real64, reactivefluid::USD_SPECIES > m_volumeFractions;
+  arrayView3d< real64 const, reactivefluid::USD_SPECIES > m_initialVolumeFractions;
   arrayView3d< real64 const, reactivefluid::USD_SPECIES > const m_volumeFractions_n;
 
   integer const m_numKineticReactions; 
@@ -140,12 +161,14 @@ public:
 
   struct viewKeyStruct : public PorosityBase::viewKeyStruct
   {
+    static constexpr char const * defaultInitialVolumeFractionsString() { return "defaultInitialVolumeFractions"; }
     static constexpr char const * initialVolumeFractionsString() { return "initialVolumeFractions"; }
     static constexpr char const * volumeFractionsString() { return "volumeFractions"; }
     static constexpr char const * volumeFractions_nString() { return "volumeFractions_n"; }
     static constexpr char const * molarWeightsString() { return "molarWeights"; }
     static constexpr char const * mineralDensitiesString() { return "mineralDensities"; }
   } viewKeys;
+
 
   using KernelWrapper = ReactivePorosityUpdates;
 
@@ -162,6 +185,7 @@ public:
                           m_initialPorosity,
                           m_referencePorosity,
                           m_volumeFractions,
+                          m_initialVolumeFractions,
                           m_volumeFractions_n,
                           m_numKineticReactions,
                           m_molarWeights,
@@ -174,9 +198,10 @@ private:
 
   virtual void resizeFields( localIndex const size, localIndex const numPts );
 
-  array1d< real64 > m_initialVolumeFractions;
+  array1d< real64 > m_defaultInitialVolumeFractions;
 
   array3d< real64, constitutive::reactivefluid::LAYOUT_SPECIES > m_volumeFractions;
+  array3d< real64, constitutive::reactivefluid::LAYOUT_SPECIES > m_initialVolumeFractions;
   array3d< real64, constitutive::reactivefluid::LAYOUT_SPECIES > m_volumeFractions_n;
   
   integer m_numKineticReactions; 

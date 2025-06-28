@@ -28,6 +28,7 @@
 #include "constitutive/fluid/reactivefluid/ReactiveSinglePhaseFluid.cpp"
 #include "constitutive/fluid/reactivefluid/ReactiveFluidSelector.hpp"
 #include "constitutive/solid/CoupledSolidBase.hpp"
+#include "constitutive/solid/ReactiveSolid.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
 #include "fieldSpecification/LogLevelsInfo.hpp"
 #include "fieldSpecification/SourceFluxBoundaryCondition.hpp"
@@ -52,7 +53,8 @@ SinglePhaseReactiveTransport::SinglePhaseReactiveTransport( const string & name,
   m_numPrimarySpecies( 0 ),
   m_numKineticReactions( 0 ),
   m_hasDiffusion( 0 ),
-  m_isUpdateReactivePorosity( 0 )
+  m_isUpdateReactivePorosity( 0 ),
+  m_isUpdateSurfaceArea( 0 )
 {
   // To add modeling parameters we want to add here
 
@@ -60,6 +62,11 @@ SinglePhaseReactiveTransport::SinglePhaseReactiveTransport( const string & name,
     setApplyDefaultValue( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Flag indicating whether use the reactive porosity or not" );
+
+  this->registerWrapper( viewKeyStruct::isUpdateSurfaceAreaString(), &m_isUpdateSurfaceArea ).
+    setApplyDefaultValue( 0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Flag indicating whether to update the surface area or not" );
 }
 
 // TODO: we need to update the class of ReactiveSingleFluid to be consistent with the chemistry module!!!
@@ -162,7 +169,10 @@ void SinglePhaseReactiveTransport::registerDataOnMesh( Group & meshBodies )
         reference().resizeDimension< 1 >( m_numKineticReactions );
 
       subRegion.registerField< surfaceArea >( getName() ).
-        reference().resizeDimension< 1 >( m_numKineticReactions );  
+        reference().resizeDimension< 1 >( m_numKineticReactions ); 
+        
+      subRegion.registerField< initialSurfaceArea >( getName() ).
+        reference().resizeDimension< 1 >( m_numKineticReactions ); 
     } );
   } );
 }
@@ -618,11 +628,12 @@ void SinglePhaseReactiveTransport::updateMixedReactionSystem( ElementSubRegionBa
 {
   GEOS_MARK_FUNCTION;
 
+  updateSurfaceArea( subRegion );
+
   arrayView1d< real64 const > const pres = subRegion.getField< fields::flow::pressure >();
   arrayView1d< real64 const > const temp = subRegion.getField< fields::flow::temperature >();
   arrayView2d< real64 const, compflow::USD_COMP > const logPrimaryConc = subRegion.getField< fields::flow::logPrimarySpeciesConcentration >();
   arrayView2d< real64 const, compflow::USD_COMP > const surfaceArea = subRegion.getField< fields::flow::surfaceArea >();
-
 
   if( m_isThermal )
   {
@@ -642,6 +653,44 @@ void SinglePhaseReactiveTransport::updateMixedReactionSystem( ElementSubRegionBa
     constitutive::constitutiveUpdatePassThru( fluid, [&]( auto & castedFluid )
     {
       singlePhaseReactiveBaseKernels::MixedSystemReactionUpdateKernel::launch( castedFluid, pres, temp, logPrimaryConc, surfaceArea );
+    } );
+  }
+}
+
+void SinglePhaseReactiveTransport::updateSurfaceArea( ElementSubRegionBase & subRegion ) const
+{
+  GEOS_MARK_FUNCTION;
+
+  arrayView2d< real64 const, compflow::USD_COMP > const initialSurfaceArea = subRegion.getField< fields::flow::initialSurfaceArea >();
+  arrayView2d< real64, compflow::USD_COMP > const surfaceArea = subRegion.getField< fields::flow::surfaceArea >();
+
+  if( m_isUpdateReactivePorosity && m_isUpdateSurfaceArea )
+  {
+    string const & solidName = subRegion.getReference< string >( viewKeyStruct::solidNamesString() );
+    CoupledSolidBase & porousSolid = subRegion.template getConstitutiveModel< CoupledSolidBase >( solidName );
+
+    constitutive::ConstitutivePassThru< ReactiveSolidBase >::execute( porousSolid, [=, &subRegion] ( auto & castedPorousSolid )
+    {
+      typename TYPEOFREF( castedPorousSolid ) ::KernelWrapper porousWrapper = castedPorousSolid.createKernelUpdates();
+      forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_DEVICE ( localIndex const k )
+      {
+        for( localIndex q = 0; q < porousWrapper.numGauss(); ++q )
+        {
+          porousWrapper.updateSurfaceArea( k, q,
+                                           initialSurfaceArea[k],
+                                           surfaceArea[k] );
+        }
+      } );
+    } );
+  }
+  else
+  {
+    forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const ei )
+    {
+      for( integer ir = 0; ir < m_numKineticReactions; ++ir )
+      {
+        surfaceArea[ei][ir] = initialSurfaceArea[ei][ir];
+      }
     } );
   }
 }

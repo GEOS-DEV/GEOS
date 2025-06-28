@@ -144,6 +144,8 @@ public:
 
   void updateMixedReactionSystem( ElementSubRegionBase & subRegion ) const;
 
+  void updateSurfaceArea( ElementSubRegionBase & subRegion ) const;
+
   void updateSpeciesAmount( ElementSubRegionBase & subRegion ) const;
 
   void updateKineticReactionMolarIncrements( real64 const dt,
@@ -279,6 +281,7 @@ public:
   {
     static constexpr char const * diffusionNamesString() { return "diffusionNames"; }
     static constexpr char const * isUpdateReactivePorosityString() { return "isUpdateReactivePorosity"; }
+    static constexpr char const * isUpdateSurfaceAreaString() { return "isUpdateSurfaceArea"; }
   };
 
 protected:
@@ -297,6 +300,9 @@ protected:
 
   /// flag to determine whether or not to use the reactive porosity
   integer m_isUpdateReactivePorosity;
+
+  /// flag to determine whether or not to update the surface area
+  integer m_isUpdateSurfaceArea;
 };
 
 template< typename OBJECT_TYPE >

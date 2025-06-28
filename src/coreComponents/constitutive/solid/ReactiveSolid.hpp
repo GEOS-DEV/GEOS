@@ -64,6 +64,24 @@ public:
     real64 const porosity = m_porosityUpdate.getPorosity( k, q );
     m_permUpdate.updateFromPressureAndPorosity( k, q, pressure, porosity );
   }
+
+  GEOS_HOST_DEVICE
+  void updateSurfaceArea( localIndex const k,
+                          localIndex const q,
+                          arraySlice1d< real64 const, reactivefluid::USD_SPECIES - 2 > const & initialSurfaceArea,
+                          arraySlice1d< real64, reactivefluid::USD_SPECIES - 2 > const & surfaceArea ) const
+  {
+    real64 const porosity = m_porosityUpdate.getPorosity( k, q );
+    real64 const initialPorosity = m_porosityUpdate.getInitialPorosity( k, q );
+
+    for( integer r=0; r < initialSurfaceArea.size(); ++r )
+    {
+      real64 const volumeFraction_r = m_porosityUpdate.getVolumeFractionForMineral( k, q, r );
+      real64 const initialVolumeFraction_r = m_porosityUpdate.getInitialVolumeFractionForMineral( k, q, r );
+      surfaceArea[r] = initialSurfaceArea[r] * pow( volumeFraction_r / initialVolumeFraction_r, 2.0/3.0 ) 
+                                             * pow( porosity / initialPorosity, 2.0/3.0 );
+    }
+  }
   
 private:
   using CoupledSolidUpdates< NullModel, ReactivePorosity, PERM_TYPE >::m_solidUpdate;
@@ -120,6 +138,24 @@ public:
    * @return Catalog name string
    */
   virtual string getCatalogName() const override { return catalogName(); }
+
+  /*
+   * @brief get the volume fractions.
+   * return a constant arrayView3d to the new volume fractions
+   */
+  arrayView3d< real64 const > const getVolumeFractions() const
+  {
+    return getPorosityModel().getVolumeFractions();
+  }
+
+  /*
+   * @brief get the initial volume fractions.
+   * return a constant arrayView1d to the initial volume fractions
+   */
+  arrayView1d< real64 const > const getInitialVolumeFractions() const
+  {
+    return getPorosityModel().getInitialVolumeFractions();
+  }
 
 
   /**
