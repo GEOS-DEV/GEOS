@@ -6,6 +6,8 @@
 #include <unordered_map>
 #include <memory>
 
+#include <iostream>
+
 namespace geos
 {
 
@@ -70,6 +72,10 @@ public:
   {
     if constexpr (USE_STD_CONTAINER_BOUNDS_CHECKING)
     {
+      if( index >= this->size() )
+      {
+        std::cout<<"noooooooooo"<<std::endl;
+      }
       return Base::at( index );
     }
     else
@@ -88,6 +94,10 @@ public:
   {
     if constexpr (USE_STD_CONTAINER_BOUNDS_CHECKING)
     {
+      if( index >= this->size() )
+      {
+        std::cout<<"noooooooooo"<<std::endl;
+      }
       return Base::at( index );  // Throws std::out_of_range if out of bounds
     }
     else

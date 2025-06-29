@@ -134,7 +134,11 @@ HDFHistoryIO::HDFHistoryIO( string const & filename,
     m_typeCount *= m_dims[dd];
   }
   m_dataBuffer.resize( initAlloc * m_typeSize * m_typeCount );
-  m_bufferHead = &m_dataBuffer[0];
+
+  if( m_dataBuffer.size() > 0 )
+  {
+    m_bufferHead = &m_dataBuffer[0];
+  }
 }
 
 void HDFHistoryIO::setupPartition( globalIndex localIdxCount )
@@ -402,7 +406,14 @@ size_t HDFHistoryIO::getRowBytes()
 void HDFHistoryIO::emptyBuffer()
 {
   m_bufferedCount = 0;
-  m_bufferHead = &m_dataBuffer[0];
+  if( m_dataBuffer.size() > 0 )
+  {
+    m_bufferHead = &m_dataBuffer[0];
+  }
+  else
+  {
+    m_bufferHead = nullptr;
+  }
 }
 
 void HDFHistoryIO::resizeBuffer()
@@ -412,16 +423,19 @@ void HDFHistoryIO::resizeBuffer()
   m_localIdxCounts_buffered.emplace_back( m_dims[0] );
 
   size_t const capacity = m_dataBuffer.size();
-  size_t const inUse = m_bufferHead - &m_dataBuffer[0];
-  size_t const nextRow = getRowBytes( );
-  // if needed, resize the buffer
-  if( inUse + nextRow > capacity )
+  if( capacity > 0 && m_bufferHead )
   {
-    // resize based on the ammount currently in use rather than on the capacity ( less aggressive w/ changing sizes )
-    m_dataBuffer.resize( inUse + ( nextRow * m_overallocMultiple ) );
+    size_t const inUse = m_bufferHead - &m_dataBuffer[0];
+    size_t const nextRow = getRowBytes( );
+    // if needed, resize the buffer
+    if( inUse + nextRow > capacity )
+    {
+      // resize based on the ammount currently in use rather than on the capacity ( less aggressive w/ changing sizes )
+      m_dataBuffer.resize( inUse + ( nextRow * m_overallocMultiple ) );
+    }
+    // reset the buffer head and advance based on count in case the underlying data buffer moves during a resize
+    m_bufferHead = &m_dataBuffer[0] + inUse;
   }
-  // reset the buffer head and advance based on count in case the underlying data buffer moves during a resize
-  m_bufferHead = &m_dataBuffer[0] + inUse;
 }
 
 void HDFHistoryIO::updateCollectingCount( localIndex count )
