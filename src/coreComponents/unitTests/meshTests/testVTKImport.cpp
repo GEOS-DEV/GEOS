@@ -494,16 +494,16 @@ TEST( VTKImport, supportedElements )
     CellBlockABC const & prism11Block = cellBlockManager.getCellBlocks().getGroup< CellBlockABC >( geos::vtk::buildCellBlockName( ElementType::Prism11, 10 ) );
 
     stdVector< string > const elementNames{ "tetrahedra",
-                                              "pyramids",
-                                              "wedges",
-                                              "hexahedra",
-                                              "pentagonalPrisms",
-                                              "hexagonalPrisms",
-                                              "heptagonalPrisms",
-                                              "octagonalPrisms",
-                                              "nonagonalPrisms",
-                                              "decagonalPrisms",
-                                              "hendecagonalPrisms" };
+                                            "pyramids",
+                                            "wedges",
+                                            "hexahedra",
+                                            "pentagonalPrisms",
+                                            "hexagonalPrisms",
+                                            "heptagonalPrisms",
+                                            "octagonalPrisms",
+                                            "nonagonalPrisms",
+                                            "decagonalPrisms",
+                                            "hendecagonalPrisms" };
     for( std::size_t prefix: { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 } )
     {
       for( std::size_t i = 0; i < 11; ++i )
