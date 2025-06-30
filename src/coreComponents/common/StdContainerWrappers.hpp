@@ -1,6 +1,8 @@
 #ifndef GEOS_COMMON_STD_CONTAINER_WRAPPERS_HPP
 #define GEOS_COMMON_STD_CONTAINER_WRAPPERS_HPP
 
+#include "logger/Logger.hpp"
+
 #include <vector>
 #include <map>
 #include <unordered_map>
