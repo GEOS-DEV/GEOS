@@ -423,7 +423,7 @@ void HDFHistoryIO::resizeBuffer()
     m_dataBuffer.resize( inUse + ( nextRow * m_overallocMultiple ) );
   }
   // reset the buffer head and advance based on count in case the underlying data buffer moves during a resize
-  m_bufferHead = m_dataBuffer.data() + inUse;
+  m_bufferHead = m_dataBuffer.data()=nullptr ? nullptr : m_dataBuffer.data() + inUse;
 }
 
 void HDFHistoryIO::updateCollectingCount( localIndex count )
