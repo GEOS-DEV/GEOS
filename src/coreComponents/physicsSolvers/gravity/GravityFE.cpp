@@ -202,20 +202,26 @@ real64 GravityFE::explicitStepModeling( real64 const & time_n,
   MpiWrapper::allReduce( localGzAtStations, localGzAtStations, MpiWrapper::Reduction::Sum, MPI_COMM_GEOS );
 
   arrayView1d< real64 > gzAtStations = m_gzAtStations.toView();
-  gzAtStations = localGzAtStations;
-
-  for( localIndex iStation = 0; iStation < m_stationCoordinates.size( 0 ); ++iStation )
+  for( localIndex i = 0; i < gzAtStations.size(); ++i )
   {
-    auto const & coords = m_stationCoordinates[iStation];
-    std::ostringstream logStream;
-    logStream << std::fixed << std::setprecision( 2 );
-    logStream << "GravityFE: station[" << std::setw( 5 ) << iStation << "] "
-              << std::setw( 15 ) << coords[0] << " "
-              << std::setw( 15 ) << coords[1] << " "
-              << std::setw( 10 )  << coords[2] << " "
-              << std::scientific << std::setprecision( 6 )
-              << std::setw( 14 ) << gzAtStations[iStation];
-    GEOS_LOG_RANK_0( logStream.str() );
+    gzAtStations[i] = localGzAtStations[i];
+  }
+
+  if( this->getLogLevel()>1 )
+  {
+    for( localIndex iStation = 0; iStation < m_stationCoordinates.size( 0 ); ++iStation )
+    {
+      auto const & coords = m_stationCoordinates[iStation];
+      std::ostringstream logStream;
+      logStream << std::fixed << std::setprecision( 2 );
+      logStream << "GravityFE: station[" << std::setw( 5 ) << iStation << "] "
+                << std::setw( 15 ) << coords[0] << " "
+                << std::setw( 15 ) << coords[1] << " "
+                << std::setw( 10 )  << coords[2] << " "
+                << std::scientific << std::setprecision( 6 )
+                << std::setw( 14 ) << gzAtStations[iStation];
+      GEOS_LOG_RANK_0( logStream.str() );
+    }
   }
 
   // Dump result to disk...
