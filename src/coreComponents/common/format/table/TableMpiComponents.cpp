@@ -122,15 +122,13 @@ void TableTextMpiOutput::outputTableDataToRank0( std::ostream & tableOutput,
   }
 
   // all other ranks than rank 0 render their output in a string and comunicate its size
-  stdVector< integer > ranksStrsSizes{ ranksCount, 0 };
+  auto ranksStrsSizes = std::vector( ranksCount, 0 );
   string const rankStr = !status.m_isMasterRank && status.m_isContributing ? localStringStream.str() : "";
   integer const rankStrSize = rankStr.size();
-
-  localStringStream.clear();
   MpiWrapper::allgather( &rankStrSize, 1, ranksStrsSizes.data(), 1 );
 
   // we compute the memory layout of the ranks strings
-  stdVector< integer > ranksStrsDisps{ ranksCount, 0 };
+  auto ranksStrsDisps = std::vector( ranksCount, 0 );
   integer ranksStrsTotalSize = 0;
   for( integer rankId = 1; rankId < ranksCount; ++rankId )
   {
