@@ -138,10 +138,10 @@ public:
      void forWellP( LOOKUP_CONTAINER const & targetRegions, LAMBDA && lambda )
      {
      forElementSubRegionsComplete< CellElementSubRegion, FaceElementSubRegion, EmbeddedSurfaceSubRegion, WellElementSubRegion >(
-      *targetRegions,
+   * targetRegions,
                                                                                                                               std::forward<
-                                                                                                                               *LAMBDA >(
-                                                                                                                               *lambda ) );
+   * LAMBDA >(
+   * lambda ) );
      }
    */
 

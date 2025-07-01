@@ -19,7 +19,11 @@
 
 #include "LogLevelsInfo.hpp"
 #include "WellControls.hpp"
-#include "WellConstraint.hpp"
+
+#include "WellPressureConstraints.hpp"
+#include "WellVolumeRateConstraints.hpp"
+#include "WellPhaseRateConstraints.hpp"
+
 #include "WellConstants.hpp"
 #include "dataRepository/InputFlags.hpp"
 #include "functions/FunctionManager.hpp"
@@ -188,8 +192,7 @@ Group * WellControls::createChild( string const & childKey, string const & child
   Group * constraint = nullptr;
   if( childKey == viewKeyStruct::minBHPConstraintString() )
   {
-    WellBHPConstraint & bhpConstraint = registerGroup< WellBHPConstraint >( childName );
-    bhpConstraint.setWellType( Type::PRODUCER );
+    MinimumBHPConstraint & bhpConstraint = registerGroup< MinimumBHPConstraint >( childName );
     constraint = &bhpConstraint;
   }
   return constraint;

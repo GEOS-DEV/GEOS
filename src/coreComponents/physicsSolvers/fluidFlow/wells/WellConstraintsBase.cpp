@@ -14,11 +14,11 @@
  */
 
 /*
- * @file WellConstraint.cpp
+ * @file WellConstraintBase.cpp
  */
 
 #include "LogLevelsInfo.hpp"
-#include "WellConstraint.hpp"
+#include "WellConstraintsBase.hpp"
 #include "WellConstants.hpp"
 #include "dataRepository/InputFlags.hpp"
 #include "functions/FunctionManager.hpp"
@@ -49,14 +49,17 @@ TableFunction * createConstraintScheduleTable( string const & tableName,
   table->setInterpolationMethod( TableFunction::InterpolationType::Lower );
   return table;
 }
+
+
+
 }
 
-WellConstraint::WellConstraint( string const & name, Group * const parent )
+WellConstraintBase::WellConstraintBase( string const & name, Group * const parent )
   : Group( name, parent ),
+  m_constraintValue( 0 ),
   m_constraintScheduleTable( nullptr )
 {
   setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
-
 
   registerWrapper( viewKeyStruct::constraintScheduleTableNameString(), &m_constraintScheduleTableName ).
     setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
@@ -66,22 +69,56 @@ WellConstraint::WellConstraint( string const & name, Group * const parent )
 }
 
 
-WellConstraint::~WellConstraint()
+WellConstraintBase::~WellConstraintBase()
 {}
 
 
+void WellConstraintBase::postInputInitialization()
+{
 
-void WellConstraint::postInputInitialization()
-{}
+  // check constraint value
+  GEOS_THROW_IF( m_constraintValue < 0,
+                 getWrapperDataContext( constraintViewStruct::constraintValueKey::constraintValueString() ) << ": Target value is negative",
+                 InputError );
+
+  //  Create time-dependent constraint table
+  if( m_constraintScheduleTableName.empty() )
+  {
+    m_constraintScheduleTableName = getName()+"_ConstantValue_table";
+    m_constraintScheduleTable = createConstraintScheduleTable( m_constraintScheduleTableName, m_constraintValue );
+  }
+  else
+  {
+    FunctionManager & functionManager = FunctionManager::getInstance();
+    m_constraintScheduleTable = &(functionManager.getGroup< TableFunction const >( m_constraintScheduleTableName ));
+
+    GEOS_THROW_IF( m_constraintScheduleTable->getInterpolationMethod() != TableFunction::InterpolationType::Lower,
+                   getConstraintKey() << " " << getDataContext() << ": The interpolation method for the schedule table "
+                                      << m_constraintScheduleTable->getName() << " should be TableFunction::InterpolationType::Lower",
+                   InputError );
+  }
 
 
+  GEOS_THROW_IF( ((m_constraintValue > 0.0 && !m_constraintScheduleTableName.empty())),
+                 getConstraintKey() << " " << getDataContext() << ": You have provided redundant information for well constraint value ." <<
+                 " The keywords " << constraintViewStruct::constraintValueKey::constraintValueString() << " and " << constraintViewStruct::constraintValueKey::constraintScheduleTableNameString() << " cannot be specified together",
+                 InputError );
 
-void WellConstraint::setNextDtFromTables( real64 const currentTime, real64 & nextDt )
+  GEOS_THROW_IF  ((m_constraintValue <= 0.0 && m_constraintScheduleTableName.empty()),
+                  getConstraintKey() << " " << getDataContext() << ": You need to specify a volume rate constraint. \n" <<
+                  "The  rate constraint can be specified using " <<
+                  "either " << constraintViewStruct::constraintValueKey::constraintValueString() <<
+                  " or " << constraintViewStruct::constraintValueKey::constraintScheduleTableNameString(),
+                  InputError );
+
+}
+
+void WellConstraintBase::setNextDtFromTables( real64 const currentTime, real64 & nextDt )
 {
   setNextDtFromTable( m_constraintScheduleTable, currentTime, nextDt );
 }
 
-void WellConstraint::setNextDtFromTable( TableFunction const * table, real64 const currentTime, real64 & nextDt )
+void WellConstraintBase::setNextDtFromTable( TableFunction const * table, real64 const currentTime, real64 & nextDt )
 {
   if( table )
   {
@@ -94,63 +131,5 @@ void WellConstraint::setNextDtFromTable( TableFunction const * table, real64 con
     }
   }
 }
-
-
-WellBHPConstraint::WellBHPConstraint( string const & name, Group * const parent )
-  : WellConstraint( name, parent ),
-  m_targetBHP( 0.0 )
-{
-  setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
-
-  registerWrapper( viewKeyStruct::targetBHPString(), &m_targetBHP ).
-    setDefaultValue( 0.0 ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setRestartFlags( RestartFlags::WRITE_AND_READ ).
-    setDescription( "Target bottom-hole pressure [Pa]" );
-
-}
-
-
-WellBHPConstraint::~WellBHPConstraint()
-{}
-
-void WellBHPConstraint::postInputInitialization()
-{
-
-  // check target BHP
-  GEOS_THROW_IF( m_targetBHP < 0,
-                 getWrapperDataContext( viewKeyStruct::targetBHPString() ) <<
-                 ": Target bottom-hole pressure is negative",
-                 InputError );
-
-
-  if( m_targetBHP <= 0.0 && m_constraintScheduleTableName.empty() )
-  {
-    m_targetBHP = isProductionConstraint() ? WellConstants::defaultProducerBHP : WellConstants::defaultInjectorBHP;
-    GEOS_LOG_LEVEL_RANK_0( logInfo::WellControl,
-                           GEOS_FMT( "WellBHPConstraint {}: Setting {}  to default value {}", getDataContext(), viewKeyStruct::targetBHPString(), m_targetBHP ));
-
-  }
-
-  //  Create time-dependent BHP table
-  if( m_constraintScheduleTableName.empty() )
-  {
-    m_constraintScheduleTableName = getName()+"_ConstantBHP_table";
-    m_constraintScheduleTable = createConstraintScheduleTable( m_constraintScheduleTableName, m_targetBHP );
-  }
-  else
-  {
-    FunctionManager & functionManager = FunctionManager::getInstance();
-    m_constraintScheduleTable = &(functionManager.getGroup< TableFunction const >( m_constraintScheduleTableName ));
-
-    GEOS_THROW_IF( m_constraintScheduleTable->getInterpolationMethod() != TableFunction::InterpolationType::Lower,
-                   "WellBHPConstraint " << getDataContext() << ": The interpolation method for the schedule table "
-                                        << m_constraintScheduleTable->getName() << " should be TableFunction::InterpolationType::Lower",
-                   InputError );
-  }
-
-
-}
-
 
 } //namespace geos

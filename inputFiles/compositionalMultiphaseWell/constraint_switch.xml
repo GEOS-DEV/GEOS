@@ -38,14 +38,9 @@
         targetBHP="3e6"
         targetPhaseRate="2e-6"
         targetPhaseName="oil">
-        <MinBHPConstraint
+        <MinimumBHPConstraint
          name="minBHP"
          targetBHP="3e6"/>
-        <MaxPhaseRateConstraint
-         name="maxOil""
-         targetPhase="oil"
-         useSurfaceConditions="1"
-         targetPhaseRate="2e-6"/>
         </WellControls>
       <WellControls
         name="wellControls2"

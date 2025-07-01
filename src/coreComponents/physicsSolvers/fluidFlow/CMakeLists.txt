@@ -115,7 +115,11 @@ set( fluidFlowSolvers_headers
      wells/SinglePhaseWellFields.hpp
      wells/WellConstants.hpp
      wells/WellControls.hpp
-     wells/WellConstraint.hpp
+     wells/WellConstraintsBase.hpp
+     wells/WellPressureConstraints.hpp
+     wells/WellVolumeRateConstraints.hpp
+     wells/WellMassRateConstraints.hpp
+     wells/WellPhaseRateConstraints.hpp
      wells/WellSolverBase.hpp
      wells/WellSolverBaseFields.hpp
      wells/LogLevelsInfo.hpp
@@ -151,7 +155,11 @@ set( fluidFlowSolvers_sources
      wells/SinglePhaseWell.cpp
      wells/kernels/SinglePhaseWellKernels.cpp
      wells/WellControls.cpp
-     wells/WellConstraint.cpp
+     wells/WellConstraintsBase.cpp
+     wells/WellPressureConstraints.cpp
+     wells/WellVolumeRateConstraints.cpp
+     wells/WellMassRateConstraints.cpp
+     wells/WellPhaseRateConstraints.cpp
      wells/WellSolverBase.cpp 
      proppantTransport/ProppantTransport.cpp
      proppantTransport/ProppantTransportKernels.cpp )
