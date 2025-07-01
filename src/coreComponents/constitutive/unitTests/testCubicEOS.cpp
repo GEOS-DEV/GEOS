@@ -329,11 +329,11 @@ std::array< Feed< 4 >, 3 > const TestFeed< 4 >::feeds = {
 };
 
 template< int NC >
-std::vector< TestData< NC > > generateTestData()
+stdVector< TestData< NC > > generateTestData()
 {
   std::array< real64 const, 2 > pressures( {1.83959e+06, 1.83959e+08} );
   std::array< real64 const, 2 > temperatures( {2.97150e+02, 3.63000e+02} );
-  std::vector< TestData< NC > > testData;
+  stdVector< TestData< NC > > testData;
   for( const real64 pressure : pressures )
   {
     for( const real64 temperature : temperatures )
