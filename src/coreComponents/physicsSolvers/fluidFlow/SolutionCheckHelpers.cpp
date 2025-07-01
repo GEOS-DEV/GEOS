@@ -81,18 +81,12 @@ void ElementsReporterOutput::outputTooLowValues( string_view linesPrefix,
         integer const signaledCount = m_buffer.getSignaledElementsCount();
         integer const collectedCount = m_buffer.getCollectedElementsCount();
         integer const omittedCount = signaledCount - collectedCount;
-        integer const tableColumnsCount = MpiWrapper::max( 1 + collectedCount + integer( omittedCount > 0 ) );
 
         TableMpiLayout mpiLayout;
         mpiLayout.m_separatorBetweenRanks = true;
 
         if( signaledCount > 0 )
         {
-          // adding a columns for row name, each collected value, and one last if a "..." have to be added
-          auto & cells = data.getCellsData();
-          static constexpr integer globalIdLine = 0;
-          static constexpr integer valuesLine = 1;
-
           mpiLayout.m_rankTitle = GEOS_FMT( "Rank {}, {} / {} values",
                                             MpiWrapper::commRank(), collectedCount, signaledCount );
 
@@ -101,6 +95,7 @@ void ElementsReporterOutput::outputTooLowValues( string_view linesPrefix,
             data.addRow( report.m_id, report.m_value );
           }
 
+          // adding one last line for signaling partial data & readability
           if( omittedCount > 0 )
           {
             data.addRow( "...", "..." );
