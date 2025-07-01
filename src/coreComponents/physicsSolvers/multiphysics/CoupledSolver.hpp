@@ -161,11 +161,12 @@ public:
   virtual void
   implicitStepComplete( real64 const & time_n,
                         real64 const & dt,
+                        integer const cycleNumber,
                         DomainPartition & domain ) override
   {
     forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
     {
-      solver->implicitStepComplete( time_n, dt, domain );
+      solver->implicitStepComplete( time_n, dt, cycleNumber, domain );
     } );
   }
 
@@ -419,7 +420,7 @@ protected:
    */
   virtual real64 sequentiallyCoupledSolverStep( real64 const & time_n,
                                                 real64 const & dt,
-                                                int const cycleNumber,
+                                                integer const cycleNumber,
                                                 DomainPartition & domain )
   {
     GEOS_MARK_FUNCTION;
@@ -526,7 +527,7 @@ protected:
         // Save time step statistics for the subsolvers
         forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
         {
-          solver->getSolverStatistics().m_iterationsStats.saveTimeStepStatistics();
+          solver->getSolverStatistics().m_iterationsStats.iterateTimeStepStatistics();
         } );
         // get out of the time loop
         break;
@@ -561,7 +562,7 @@ protected:
       }
     }
 
-    implicitStepComplete( time_n, stepDt, domain );
+    implicitStepComplete( time_n, stepDt, cycleNumber, domain );
 
     return stepDt;
   }
@@ -673,7 +674,7 @@ protected:
   {
     setSubSolvers();
 
-    
+
 
     bool const isSequential = getNonlinearSolverParameters().couplingType() == NonlinearSolverParameters::CouplingType::Sequential;
     bool const usesLineSearch = getNonlinearSolverParameters().m_lineSearchAction != NonlinearSolverParameters::LineSearchAction::None;

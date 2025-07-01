@@ -305,7 +305,7 @@ real64 HydrofractureSolver< POROMECHANICS_SOLVER >::fullyCoupledSolverStep( real
   }
 
   // final step for completion of timestep. typically secondary variable updates and cleanup.
-  implicitStepComplete( time_n, dtReturn, domain );
+  implicitStepComplete( time_n, dtReturn, cycleNumber, domain );
   m_numResolves[1] = solveIter;
 
   return dtReturn;
@@ -1019,9 +1019,10 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::updateState( DomainPartition &
 template< typename POROMECHANICS_SOLVER >
 void HydrofractureSolver< POROMECHANICS_SOLVER >::implicitStepComplete( real64 const & time_n,
                                                                         real64 const & dt,
+                                                                        integer const cycleNumber,
                                                                         DomainPartition & domain )
 {
-  Base::implicitStepComplete( time_n, dt, domain );
+  Base::implicitStepComplete( time_n, dt, cycleNumber, domain );
 
   if( m_isLaggingFractureStencilWeightsUpdate )
   {

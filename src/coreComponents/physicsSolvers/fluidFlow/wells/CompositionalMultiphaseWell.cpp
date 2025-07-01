@@ -519,7 +519,7 @@ void CompositionalMultiphaseWell::initializePostInitialConditionsPreSubGroups()
 {
   WellSolverBase::initializePostInitialConditionsPreSubGroups();
 
-  
+
 
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
@@ -1491,7 +1491,6 @@ CompositionalMultiphaseWell::scalingForSystemSolution( DomainPartition & domain,
                                      getName(), minTempScalingFactor ) );
   }
 
-
   return LvArray::math::max( scalingFactor, m_minScalingFactor );
 
 }
@@ -2079,22 +2078,25 @@ void CompositionalMultiphaseWell::implicitStepSetup( real64 const & time_n,
       updateSubRegionState( subRegion );
     } );
   } );
+  doSmthEarlyStep( time_n, dt );
 }
 
 void CompositionalMultiphaseWell::implicitStepComplete( real64 const & time_n,
                                                         real64 const & dt,
+                                                        integer const cycleNumber,
                                                         DomainPartition & domain )
 {
-  WellSolverBase::implicitStepComplete( time_n, dt, domain );
+  WellSolverBase::implicitStepComplete( time_n, dt, cycleNumber, domain );
 
   if( getLogLevel() > 0 )
   {
-    printRates( time_n, dt, domain );
+    printRates( time_n, dt, cycleNumber, domain );
   }
 }
 
 void CompositionalMultiphaseWell::printRates( real64 const & time_n,
                                               real64 const & dt,
+                                              integer const cycleNumber,
                                               DomainPartition & domain )
 {
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
@@ -2237,6 +2239,7 @@ void CompositionalMultiphaseWell::printRates( real64 const & time_n,
       } );
     } );
   } );
+  doSmthEndStep( time_n, dt, cycleNumber );
 }
 
 REGISTER_CATALOG_ENTRY( PhysicsSolverBase, CompositionalMultiphaseWell, string const &, Group * const )

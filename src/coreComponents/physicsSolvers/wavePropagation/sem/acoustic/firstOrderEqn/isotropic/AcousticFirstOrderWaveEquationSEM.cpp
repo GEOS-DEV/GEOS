@@ -394,7 +394,7 @@ void AcousticFirstOrderWaveEquationSEM::applyFreeSurfaceBC( real64 const time, D
 // Here for retrocompatibily
 real64 AcousticFirstOrderWaveEquationSEM::explicitStepForward( real64 const & time_n,
                                                                real64 const & dt,
-                                                               integer cycleNumber,
+                                                               integer const cycleNumber,
                                                                DomainPartition & domain,
                                                                integer GEOS_UNUSED_PARAM( computeGradient ) )
 {
@@ -406,7 +406,7 @@ real64 AcousticFirstOrderWaveEquationSEM::explicitStepForward( real64 const & ti
 
 real64 AcousticFirstOrderWaveEquationSEM::explicitStepBackward( real64 const & time_n,
                                                                 real64 const & dt,
-                                                                integer cycleNumber,
+                                                                integer const cycleNumber,
                                                                 DomainPartition & domain,
                                                                 integer GEOS_UNUSED_PARAM( computeGradient ) )
 {

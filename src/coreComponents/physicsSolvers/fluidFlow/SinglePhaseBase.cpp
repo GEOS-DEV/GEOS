@@ -679,6 +679,7 @@ void SinglePhaseBase::implicitStepSetup( real64 const & GEOS_UNUSED_PARAM( time_
 
 void SinglePhaseBase::implicitStepComplete( real64 const & time,
                                             real64 const & dt,
+                                            integer const cycleNumber,
                                             DomainPartition & domain )
 {
   GEOS_MARK_FUNCTION;

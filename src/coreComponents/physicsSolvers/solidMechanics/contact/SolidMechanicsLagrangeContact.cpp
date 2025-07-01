@@ -161,7 +161,7 @@ void SolidMechanicsLagrangeContact::initializePreSubGroups()
 {
   ContactSolverBase::initializePreSubGroups();
 
-  
+
 
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
 
@@ -222,14 +222,17 @@ void SolidMechanicsLagrangeContact::implicitStepSetup( real64 const & time_n,
   computeTolerances( domain );
   computeFaceDisplacementJump( domain );
 
+  doSmthEarlyStep( time_n, dt );
+
   SolidMechanicsLagrangianFEM::implicitStepSetup( time_n, dt, domain );
 }
 
-void SolidMechanicsLagrangeContact::implicitStepComplete( real64 const & time_n,
+void SolidMechanicsLagrangeContact::implicitStepComplete( real64 const & time,
                                                           real64 const & dt,
+                                                          integer const cycleNumber,
                                                           DomainPartition & domain )
 {
-  SolidMechanicsLagrangianFEM::implicitStepComplete( time_n, dt, domain );
+  SolidMechanicsLagrangianFEM::implicitStepComplete( time, dt, cycleNumber, domain );
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
@@ -265,6 +268,8 @@ void SolidMechanicsLagrangeContact::implicitStepComplete( real64 const & time_n,
                                                          true );
 
   } );
+
+  doSmthEndStep( time, dt, cycleNumber );
 }
 
 SolidMechanicsLagrangeContact::~SolidMechanicsLagrangeContact()

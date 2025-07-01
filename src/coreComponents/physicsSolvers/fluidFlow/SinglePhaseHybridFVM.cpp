@@ -190,9 +190,10 @@ void SinglePhaseHybridFVM::implicitStepSetup( real64 const & time_n,
 
 void SinglePhaseHybridFVM::implicitStepComplete( real64 const & time,
                                                  real64 const & dt,
+                                                 integer const cycleNumber,
                                                  DomainPartition & domain )
 {
-  SinglePhaseBase::implicitStepComplete( time, dt, domain );
+  SinglePhaseBase::implicitStepComplete( time, dt, cycleNumber, domain );
 }
 
 void SinglePhaseHybridFVM::setupDofs( DomainPartition const & GEOS_UNUSED_PARAM( domain ),

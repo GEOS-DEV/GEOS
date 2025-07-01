@@ -129,7 +129,7 @@ void ReactiveCompositionalMultiphaseOBL::initializePreSubGroups()
 {
   FlowSolverBase::initializePreSubGroups();
 
-  
+
 
   checkDiscretizationName();
 }
@@ -151,6 +151,7 @@ void ReactiveCompositionalMultiphaseOBL::setupDofs( DomainPartition const & doma
 
 void ReactiveCompositionalMultiphaseOBL::implicitStepComplete( real64 const & time,
                                                                real64 const & dt,
+                                                               integer const cycleNumber,
                                                                DomainPartition & domain )
 {
   GEOS_UNUSED_VAR( time );

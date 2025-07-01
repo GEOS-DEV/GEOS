@@ -62,7 +62,7 @@ SolidMechanicsLagrangeContactBubbleStab::~SolidMechanicsLagrangeContactBubbleSta
 
 real64 SolidMechanicsLagrangeContactBubbleStab::solverStep( real64 const & time_n,
                                                             real64 const & dt,
-                                                            const integer cycleNumber,
+                                                            integer const cycleNumber,
                                                             DomainPartition & domain )
 {
   if( cycleNumber == 0 )
@@ -103,7 +103,6 @@ void SolidMechanicsLagrangeContactBubbleStab::registerDataOnMesh( Group & meshBo
 {
   ContactSolverBase::registerDataOnMesh( meshBodies );
 
-  
 
 
   forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
@@ -436,9 +435,10 @@ void SolidMechanicsLagrangeContactBubbleStab::assembleContact( real64 const dt,
 
 void SolidMechanicsLagrangeContactBubbleStab::implicitStepComplete( real64 const & time_n,
                                                                     real64 const & dt,
+                                                                    integer const cycleNumber,
                                                                     DomainPartition & domain )
 {
-  SolidMechanicsLagrangianFEM::implicitStepComplete( time_n, dt, domain );
+  SolidMechanicsLagrangianFEM::implicitStepComplete( time_n, dt, cycleNumber, domain );
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,

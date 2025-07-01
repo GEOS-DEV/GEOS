@@ -932,7 +932,7 @@ void AcousticWaveEquationSEM::applyPML( real64 const time, DomainPartition & dom
 
 real64 AcousticWaveEquationSEM::explicitStepForward( real64 const & time_n,
                                                      real64 const & dt,
-                                                     integer cycleNumber,
+                                                     integer const cycleNumber,
                                                      DomainPartition & domain,
                                                      integer computeGradient )
 {
@@ -1003,7 +1003,7 @@ real64 AcousticWaveEquationSEM::explicitStepForward( real64 const & time_n,
 
 real64 AcousticWaveEquationSEM::explicitStepBackward( real64 const & time_n,
                                                       real64 const & dt,
-                                                      integer cycleNumber,
+                                                      integer const cycleNumber,
                                                       DomainPartition & domain,
                                                       integer computeGradient )
 {

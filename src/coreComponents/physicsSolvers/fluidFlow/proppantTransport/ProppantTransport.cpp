@@ -399,6 +399,7 @@ void ProppantTransport::preStepUpdate( real64 const & time,
 
 void ProppantTransport::postStepUpdate( real64 const & time_n,
                                         real64 const & dt_return,
+                                        integer const cycleNumber,
                                         DomainPartition & domain )
 {
   GEOS_MARK_FUNCTION;
@@ -463,6 +464,7 @@ void ProppantTransport::implicitStepSetup( real64 const & GEOS_UNUSED_PARAM( tim
 
 void ProppantTransport::implicitStepComplete( real64 const & GEOS_UNUSED_PARAM( time_n ),
                                               real64 const & GEOS_UNUSED_PARAM( dt ),
+                                              integer const GEOS_UNUSED_PARAM( cycleNumber ),
                                               DomainPartition & domain )
 {
   GEOS_MARK_FUNCTION;

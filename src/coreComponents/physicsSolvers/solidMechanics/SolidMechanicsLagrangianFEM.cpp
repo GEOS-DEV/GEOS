@@ -461,7 +461,7 @@ void SolidMechanicsLagrangianFEM::initializePostInitialConditionsPreSubGroups()
 
 real64 SolidMechanicsLagrangianFEM::solverStep( real64 const & time_n,
                                                 real64 const & dt,
-                                                const int cycleNumber,
+                                                integer const cycleNumber,
                                                 DomainPartition & domain )
 {
   GEOS_MARK_FUNCTION;
@@ -521,7 +521,7 @@ real64 SolidMechanicsLagrangianFEM::solverStep( real64 const & time_n,
         GEOS_LOG_RANK_0( GEOS_FMT( "Fracture Occurred. Resolve: {}", solveIter + 1 ) );
       }
     }
-    implicitStepComplete( time_n, dt, domain );
+    implicitStepComplete( time_n, dt, cycleNumber, domain );
   }
 
   return dtReturn;
@@ -828,7 +828,7 @@ void SolidMechanicsLagrangianFEM::applyChomboPressure( DofManager const & dofMan
 
 void
 SolidMechanicsLagrangianFEM::
-  implicitStepSetup( real64 const & GEOS_UNUSED_PARAM( time_n ),
+  implicitStepSetup( real64 const & time_n,
                      real64 const & dt,
                      DomainPartition & domain )
 {
@@ -893,11 +893,12 @@ SolidMechanicsLagrangianFEM::
       constitutiveRelation.saveConvergedState();
     } );
   } );
-
+  doSmthEarlyStep( time_n, dt );
 }
 
-void SolidMechanicsLagrangianFEM::implicitStepComplete( real64 const & GEOS_UNUSED_PARAM( time_n ),
+void SolidMechanicsLagrangianFEM::implicitStepComplete( real64 const & time_n,
                                                         real64 const & dt,
+                                                        integer const cycleNumber,
                                                         DomainPartition & domain )
 {
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
@@ -975,7 +976,7 @@ void SolidMechanicsLagrangianFEM::implicitStepComplete( real64 const & GEOS_UNUS
 
     } );
   } );
-
+  doSmthEndStep( time_n, dt, cycleNumber );
 }
 
 void SolidMechanicsLagrangianFEM::setupDofs( DomainPartition const & GEOS_UNUSED_PARAM( domain ),
@@ -1270,6 +1271,9 @@ SolidMechanicsLagrangianFEM::
 
   GEOS_LOG_LEVEL_RANK_0( logInfo::ResidualNorm,
                          GEOS_FMT( "        ( R{} ) = ( {:4.2e} )", coupledSolverAttributePrefix(), totalResidualNorm ));
+  m_solverStatistics.m_convergenceStats.m_residualSolid = totalResidualNorm;
+
+  m_solverStatistics.m_convergenceStats.registerResidualNormToTable();
 
   return totalResidualNorm;
 }

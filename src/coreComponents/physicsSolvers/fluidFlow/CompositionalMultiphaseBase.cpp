@@ -1324,8 +1324,8 @@ void CompositionalMultiphaseBase::initializePostInitialConditionsPreSubGroups()
 }
 
 void
-CompositionalMultiphaseBase::implicitStepSetup( real64 const & GEOS_UNUSED_PARAM( time_n ),
-                                                real64 const & GEOS_UNUSED_PARAM( dt ),
+CompositionalMultiphaseBase::implicitStepSetup( real64 const & time_n,
+                                                real64 const & dt,
                                                 DomainPartition & domain )
 {
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
@@ -1358,6 +1358,7 @@ CompositionalMultiphaseBase::implicitStepSetup( real64 const & GEOS_UNUSED_PARAM
 
     } );
   } );
+  doSmthEarlyStep( time_n, dt );
 }
 
 void CompositionalMultiphaseBase::assembleSystem( real64 const GEOS_UNUSED_PARAM( time_n ),
@@ -2533,6 +2534,7 @@ void CompositionalMultiphaseBase::resetStateToBeginningOfStep( DomainPartition &
 
 void CompositionalMultiphaseBase::implicitStepComplete( real64 const & time,
                                                         real64 const & dt,
+                                                        integer const cycleNumber,
                                                         DomainPartition & domain )
 {
   // Step 1: save the converged aquifer state
@@ -2627,6 +2629,7 @@ void CompositionalMultiphaseBase::implicitStepComplete( real64 const & time,
       }
     } );
   } );
+  doSmthEndStep( time, dt, cycleNumber );
 }
 
 void CompositionalMultiphaseBase::saveConvergedState( ElementSubRegionBase & subRegion ) const
@@ -2743,7 +2746,6 @@ void CompositionalMultiphaseBase::updateState( DomainPartition & domain )
   } );
 
   maxDeltaPhaseVolFrac = MpiWrapper::max( maxDeltaPhaseVolFrac );
-
   GEOS_LOG_LEVEL_RANK_0( logInfo::Solution,
                          GEOS_FMT( "        {}: Max phase volume fraction change = {}", getName(), fmt::format( "{:.{}f}", maxDeltaPhaseVolFrac, 4 ) ) );
 }

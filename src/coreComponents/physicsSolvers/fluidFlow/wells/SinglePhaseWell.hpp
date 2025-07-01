@@ -126,6 +126,7 @@ public:
   virtual void
   implicitStepComplete( real64 const & time,
                         real64 const & dt,
+                        integer const cycleNumber,
                         DomainPartition & domain ) override;
 
   /**@}*/
@@ -273,6 +274,7 @@ protected:
 
   void printRates( real64 const & time_n,
                    real64 const & dt,
+                   integer const cycleNumber,
                    DomainPartition & domain ) override;
 
   /// flag if negative pressure is allowed
