@@ -23,7 +23,9 @@
 
 #include "dataRepository/Group.hpp"
 #include "common/format/table/TableData.hpp"
+#include "common/format/table/TableFormatter.hpp"
 #include "common/format/table/TableLayout.hpp"
+#include "common/format/table/TableTypes.hpp"
 
 namespace geos
 {
@@ -137,7 +139,7 @@ public:
   /**
    * @brief Save the statistics for the individual time step and increment the cumulative stats
    */
-  void saveTimeStepStatistics();
+  void iterateTimeStepStatistics();
 
   /**
    * @brief Register the corresponding solver statistics to the TableData
@@ -145,23 +147,29 @@ public:
   void registerStatsToTable();
 
   /**
-   * @brief Output the statistics to the console and csv file if needed
-   * @param writeCSV Indicate if we output to CSV FILE
-   */
-  void outputStatistics( bool writeCSV ) const;
-
-  /**
    * @brief  Set the filename output file.
    * @param filename The filename as a string_view.
    */
   void setFilename( string_view filename )
-  { m_iterationsFileName = filename; }
+  { m_iterationsFilename = filename; }
 
 private:
+
+  /**
+   * @brief Output the statistics to the console and csv file if needed
+   * @param writeCSV Indicate if we output to CSV FILE
+   */
+  void outputStatistics( bool writeCSV );
+
   /// Table containing statistics relative to non linear parameter
-  TableData m_nonLinearData;
-  /// Filename for the iterations CSV.
-  string m_iterationsFileName;
+  TableData m_iterationData;
+  ///
+  std::unique_ptr< TableLayout > m_iterationCSVLayout;
+  ///
+  std::unique_ptr< TableCSVFormatter > m_iterationCSVFormatter;
+  /// Filename for the convergence CSV.
+  string m_iterationsFilename;
+  std::ofstream logStream;
 };
 
 /**
@@ -231,7 +239,7 @@ public:
    * @brief Output the cumulative statistics to the terminal
    * @param writeCSV Indicates if the output should be written to a CSV file.
    */
-  void outputResidualNorm( bool writeCSV ) const;
+  void outputResidualNorm( bool writeCSV );
 
   /**
    * @brief Prepare the layout and register the corresponding residuals norms to the TableData
@@ -257,13 +265,19 @@ public:
   void setFilename( string_view filename )
   { m_convergenceFilename = filename; }
 
+  std::ofstream logStream;
+
 private:
   /// Table containing statistics related  to non linear norms
-  std::unique_ptr< TableLayout > m_nonLinearNormsLayout;
+  std::unique_ptr< TableLayout > m_convergenceLayout;
   /// Table containing statistics data for nonlinear norms.
-  TableData m_nonLinearNormsData;
+  TableData m_convergenceData;
+  ///
+  std::unique_ptr< TableCSVFormatter > m_convergenceFormatter;
   /// Filename for the convergence CSV.
   string m_convergenceFilename;
+
+
 };
 
 /**
@@ -314,6 +328,8 @@ private:
 
   /// Output directory for solver statistics (CSV), passed in the constructor.
   string m_outputDir;
+
+  std::ofstream logStream;
 };
 
 

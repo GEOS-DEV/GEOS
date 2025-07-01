@@ -118,6 +118,8 @@ PhysicsSolverBase::PhysicsSolverBase( string const & name,
   registerGroup( groupKeyStruct::solverStatisticsString(), &m_solverStatistics );
 
   m_solverStatistics.setOutputFilesName( getName() );
+
+
   m_localMatrix.setName( this->getName() + "/localMatrix" );
   m_matrix.setDofManager( &m_dofManager );
 }
@@ -232,11 +234,11 @@ bool PhysicsSolverBase::registerCallback( void * func, const std::type_info & fu
 
 real64 PhysicsSolverBase::solverStep( real64 const & time_n,
                                       real64 const & dt,
-                                      const integer cycleNumber,
+                                      integer const cycleNumber,
                                       DomainPartition & domain )
 {
   GEOS_MARK_FUNCTION;
-
+  std::cout << "name "<< this->getName()<< std::endl;
   // Only build the sparsity pattern if the mesh has changed
   Timestamp const meshModificationTimestamp = getMeshModificationTimestamp( domain );
 
@@ -261,7 +263,7 @@ real64 PhysicsSolverBase::solverStep( real64 const & time_n,
   // final step for completion of timestep. typically secondary variable updates and cleanup.
   {
     Timer timer( m_timers["step complete"] );
-    implicitStepComplete( time_n, dt_return, domain );
+    implicitStepComplete( time_n, dt, cycleNumber, domain );
   }
 
   return dt_return;
@@ -270,7 +272,7 @@ real64 PhysicsSolverBase::solverStep( real64 const & time_n,
 bool PhysicsSolverBase::execute( real64 const time_n,
                                  real64 const dt,
                                  integer const cycleNumber,
-                                 integer const GEOS_UNUSED_PARAM( eventCounter ),
+                                 integer const eventCounter,
                                  real64 const GEOS_UNUSED_PARAM( eventProgress ),
                                  DomainPartition & domain )
 {
@@ -287,9 +289,9 @@ bool PhysicsSolverBase::execute( real64 const time_n,
 
   for( integer subStep = 0; subStep < maxSubSteps && dtRemaining > 0.0; ++subStep )
   {
+    std::cout << "la on reset physics solver" << std::endl;
     // reset number of nonlinear and linear iterations
     m_solverStatistics.m_iterationsStats.resetCurrentTimeStepStatistics();
-
     real64 const dtAccepted = solverStep( time_n + (dt - dtRemaining),
                                           nextDt,
                                           cycleNumber,
@@ -297,9 +299,10 @@ bool PhysicsSolverBase::execute( real64 const time_n,
 
     numOfSubSteps++;
     subStepDts[subStep] = dtAccepted;
+    std::cout << "la on incremente dans physics solver" << std::endl;
 
     // increment the cumulative number of nonlinear and linear iterations
-    m_solverStatistics.m_iterationsStats.saveTimeStepStatistics();
+    m_solverStatistics.m_iterationsStats.iterateTimeStepStatistics();
     m_solverStatistics.m_convergenceStats.m_numTimeSteps++;
 
     /*
@@ -348,6 +351,7 @@ bool PhysicsSolverBase::execute( real64 const time_n,
 
   logEndOfCycleInformation( cycleNumber, numOfSubSteps, subStepDts );
 
+  std::cout << "on ecrit dans physcs solver "<< std::endl;
   if( m_writeSolverIterationsCSV )
     getSolverStatistics().m_iterationsStats.registerStatsToTable();
 
@@ -508,7 +512,7 @@ real64 PhysicsSolverBase::setNextDtBasedOnIterNumber( real64 const & currentDt )
 
 real64 PhysicsSolverBase::linearImplicitStep( real64 const & time_n,
                                               real64 const & dt,
-                                              integer const GEOS_UNUSED_PARAM( cycleNumber ),
+                                              integer const cycleNumber,
                                               DomainPartition & domain )
 {
   // call setup for physics solver. Pre step allocations etc.
@@ -575,6 +579,7 @@ real64 PhysicsSolverBase::linearImplicitStep( real64 const & time_n,
   }
 
   // Increment the solver statistics for reporting purposes
+  std::cout <<" logNonlinearIteration "<< getName()<<std::endl;
   m_solverStatistics.m_iterationsStats.logNonlinearIteration( m_linearSolverResult.numIterations );
 
   // Output the linear system solution for debugging purposes
@@ -595,7 +600,7 @@ real64 PhysicsSolverBase::linearImplicitStep( real64 const & time_n,
   }
 
   // final step for completion of timestep. typically secondary variable updates and cleanup.
-  implicitStepComplete( time_n, dt, domain );
+  implicitStepComplete( time_n, dt, cycleNumber, domain );
 
   // return the achieved timestep
   return dt;
@@ -916,6 +921,7 @@ real64 PhysicsSolverBase::nonlinearImplicitStep( real64 const & time_n,
     }
     else
     {
+      cleanup( time_n, dt, 0, cycleNumber, domain );
       GEOS_ERROR( "Nonconverged solutions not allowed. Terminating..." );
     }
   }
@@ -944,6 +950,7 @@ bool PhysicsSolverBase::solveNonlinearSystem( real64 const & time_n,
 
   for( newtonIter = 0; newtonIter < maxNewtonIter; ++newtonIter )
   {
+    std::cout << "newter iter de "<< getName() << std::endl;
     m_solverStatistics.m_convergenceStats.logNewtonIter( newtonIter );
     GEOS_LOG_LEVEL_RANK_0( logInfo::NonlinearSolver,
                            GEOS_FMT( "    Attempt: {:2}, ConfigurationIter: {:2}, NewtonIter: {:2}", dtAttempt, configurationLoopIter, newtonIter ));
@@ -1166,6 +1173,26 @@ void PhysicsSolverBase::setupDofs( DomainPartition const & GEOS_UNUSED_PARAM( do
                                    DofManager & GEOS_UNUSED_PARAM( dofManager ) ) const
 {
   GEOS_ERROR( "PhysicsSolverBase::setupDofs called!. Should be overridden." );
+}
+
+void PhysicsSolverBase::doSmthEarlyStep( real64 const & time_n, real64 const & dt )
+{
+  std::cout << "begin for " << getName() << " time_n " << time_n << " dt " << dt << std::endl;
+  // m_solverStatistics.m_iterationsStats.resetCurrentTimeStepStatistics();
+}
+
+void PhysicsSolverBase::doSmthEndStep( real64 const & time_n, real64 const & dt, integer const cycleNumber )
+{
+  std::cout << "end for " << getName() << " time_n " << time_n << " dt " << dt << std::endl;
+  if( m_writeSolvingConvergenceCSV )
+  {
+    getSolverStatistics().m_convergenceStats.registerResidualNormToTable();
+  }
+  if( m_writeSolverIterationsCSV )
+  {
+    getSolverStatistics().m_iterationsStats.registerStatsToTable();
+  }
+
 }
 
 void PhysicsSolverBase::setupSystem( DomainPartition & domain,
@@ -1429,6 +1456,7 @@ bool PhysicsSolverBase::resetConfigurationToDefault( DomainPartition & GEOS_UNUS
 
 void PhysicsSolverBase::implicitStepComplete( real64 const & GEOS_UNUSED_PARAM( time ),
                                               real64 const & GEOS_UNUSED_PARAM( dt ),
+                                              integer const GEOS_UNUSED_PARAM( cycleNumber ),
                                               DomainPartition & GEOS_UNUSED_PARAM( domain ) )
 {
   GEOS_ERROR( "PhysicsSolverBase::ImplicitStepComplete called!. Should be overridden." );
@@ -1440,8 +1468,7 @@ void PhysicsSolverBase::cleanup( real64 const GEOS_UNUSED_PARAM( time_n ),
                                  real64 const GEOS_UNUSED_PARAM( eventProgress ),
                                  DomainPartition & GEOS_UNUSED_PARAM( domain ) )
 {
-  m_solverStatistics.m_iterationsStats.outputStatistics( m_writeSolverIterationsCSV );
-  m_solverStatistics.m_convergenceStats.outputResidualNorm( m_writeSolvingConvergenceCSV );
+  m_solverStatistics.m_iterationsStats.iterateTimeStepStatistics();
 
   for( auto & timer : m_timers )
   {

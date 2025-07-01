@@ -369,6 +369,9 @@ public:
                      real64 const & dt,
                      DomainPartition & domain );
 
+  void doSmthEarlyStep( real64 const & time_n, real64 const & dt );
+  void doSmthEndStep( real64 const & time_n, real64 const & dt, integer const cycleNumber );
+
   /**
    * @brief Populate degree-of-freedom manager with fields relevant to this solver
    * @param domain the domain containing the mesh and fields
@@ -631,6 +634,7 @@ public:
   virtual void
   implicitStepComplete( real64 const & time,
                         real64 const & dt,
+                        integer const cycleNumber,
                         DomainPartition & domain );
 
 
