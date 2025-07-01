@@ -185,6 +185,9 @@ public:
    */
   ConvergenceStatistics();
 
+  /// Current cycle number
+  integer m_cycleNumber = 0;
+
   /// Number of time steps
   integer m_numTimeSteps = 0;
 
@@ -252,6 +255,11 @@ public:
    * @note This is done based on the number of Newton iterations.
    */
   void removeInvalidResidualNorms();
+
+  void updateCycleNumber( integer const cycleNumber )
+  {
+    m_cycleNumber = cycleNumber;
+  }
 
   /**
    * @brief Save the current newton iteration

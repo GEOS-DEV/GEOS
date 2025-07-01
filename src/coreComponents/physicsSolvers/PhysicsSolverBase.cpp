@@ -1177,13 +1177,15 @@ void PhysicsSolverBase::setupDofs( DomainPartition const & GEOS_UNUSED_PARAM( do
 
 void PhysicsSolverBase::doSmthEarlyStep( real64 const & time_n, real64 const & dt )
 {
-  std::cout << "begin for " << getName() << " time_n " << time_n << " dt " << dt << std::endl;
+  // std::cout << "begin for " << getName() << " time_n " << time_n << " dt " << dt << std::endl;
   // m_solverStatistics.m_iterationsStats.resetCurrentTimeStepStatistics();
 }
 
 void PhysicsSolverBase::doSmthEndStep( real64 const & time_n, real64 const & dt, integer const cycleNumber )
 {
   std::cout << "end for " << getName() << " time_n " << time_n << " dt " << dt << std::endl;
+  getSolverStatistics().m_convergenceStats.updateCycleNumber( cycleNumber );
+  //getSolverStatistics().m_iterationsStats.updateCycleNumber( cycleNumber );
   if( m_writeSolvingConvergenceCSV )
   {
     getSolverStatistics().m_convergenceStats.writeResidualNormToTable();

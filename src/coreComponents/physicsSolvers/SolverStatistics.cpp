@@ -86,7 +86,7 @@ IterationsStatistics::IterationsStatistics( string const & name, Group * const p
     setApplyDefaultValue( 0 ).
     setDescription( "Cumulative number of discarded linear iterations" );
 
-  m_iterationCSVLayout = std::make_unique< TableLayout >(  );
+  m_iterationCSVLayout = std::make_unique< TableLayout >();
   m_iterationCSVLayout->setTitle( GEOS_FMT( "{} iterations", getParent().getName()));
   m_iterationCSVLayout->addColumns( { "m_numTimeSteps", "m_numTimeStepCuts",
                                       "Successful outer loop", "Successful nonlinear", "Successful linear",
@@ -195,15 +195,12 @@ void IterationsStatistics::outputStatistics( bool writeCSV )
 ConvergenceStatistics::ConvergenceStatistics():
   m_currentNewtonIter( 0 )
 {
-  using TableLayoutArgs = std::initializer_list< std::variant< string_view, TableLayout::Column > >;
+//  using TableLayoutArgs = std::initializer_list< std::variant< string_view, TableLayout::Column > >;
 
-  m_convergenceLayout = std::make_unique< TableLayout >(
-    TableLayoutArgs{
-      std::variant< string_view, TableLayout::Column >{"Time-steps"},
-      std::variant< string_view, TableLayout::Column >{"Newton Iter"}
-    } );
+  m_convergenceLayout = std::make_unique< TableLayout >();
 
-  m_convergenceLayout->addColumns( {"RMass", "RVol", "REnergy",
+  m_convergenceLayout->addColumns( {"Cycle number", "Time-steps", "Newton Iter",
+                                    "RMass", "RVol", "REnergy",
                                     "RFlow", "RBubbleDisp", "RFrac",
                                     "Rstick", "Rslip", "Ropen",
                                     "RSolid", "RContact", "RProppant",
@@ -250,6 +247,8 @@ void ConvergenceStatistics::writeResidualNormToTable()
     { m_totalResidual, "RTotal" }
   };
 
+  residualsNormCells.emplace_back( TableData::CellData( {CellType::Value,
+                                                         GEOS_FMT( "{}", m_cycleNumber )} ));
   residualsNormCells.emplace_back( TableData::CellData( {CellType::Value,
                                                          GEOS_FMT( "{}", m_numTimeSteps )} ));
   residualsNormCells.emplace_back( TableData::CellData( {CellType::Value,
