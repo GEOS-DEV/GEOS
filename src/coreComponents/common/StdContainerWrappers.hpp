@@ -1,8 +1,6 @@
 #ifndef GEOS_COMMON_STD_CONTAINER_WRAPPERS_HPP
 #define GEOS_COMMON_STD_CONTAINER_WRAPPERS_HPP
 
-#include "LvArray/src/Macros.hpp"
-
 #include <vector>
 #include <map>
 #include <unordered_map>
@@ -77,10 +75,9 @@ public:
       // bounds check...and a line to breakpoint
       if( index >= this->size() )
       {
-        LVARRAY_ERROR( "Index out of bounds in StdVectorWrapper::operator[]: index = " + std::to_string( index ) + ", size = " + std::to_string( this->size()) );
+        std::cout<< "Index out of bounds in StdVectorWrapper::operator[]: index = " + std::to_string( index ) + ", size = " + std::to_string( this->size());
       }
-      return Base::operator[]( index );  // if there is a range error, we should have caught it with the preceding check.
-      //return Base::at( index );  // Throws std::out_of_range if out of bounds...but not needed
+      return Base::at( index );  // Throws std::out_of_range if out of bounds...but not needed
     }
     else
     {
@@ -101,10 +98,9 @@ public:
       // bounds check...and a line to breakpoint
       if( index >= this->size() )
       {
-        LVARRAY_ERROR( "Index out of bounds in StdVectorWrapper::operator[]: index = " + std::to_string( index ) + ", size = " + std::to_string( this->size()) );
+        std::cout<< "Index out of bounds in StdVectorWrapper::operator[]: index = " + std::to_string( index ) + ", size = " + std::to_string( this->size());
       }
-      return Base::operator[]( index );  // if there is a range error, we should have caught it with the preceding check.
-      //return Base::at( index );  // Throws std::out_of_range if out of bounds...but not needed
+      return Base::at( index );  // Throws std::out_of_range if out of bounds...but not needed
     }
     else
     {
