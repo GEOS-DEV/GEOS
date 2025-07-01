@@ -287,6 +287,8 @@ public:
     m_performStressInitialization = performStressInitialization;
   }
 
+  real64 m_contactPenaltyStiffness;
+
 protected:
   virtual void postInputInitialization() override;
 
@@ -310,8 +312,6 @@ protected:
 
   /// Rigid body modes
   array1d< ParallelVector > m_rigidBodyModes;
-
-  real64 m_contactPenaltyStiffness;
 
 private:
 

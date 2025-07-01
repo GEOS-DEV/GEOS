@@ -354,6 +354,9 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::updateHydraulicApertureAndFrac
     string const & hydraulicApertureRelationName = subRegion.template getReference< string >( viewKeyStruct::hydraulicApertureRelationNameString()  );
     HydraulicApertureBase const & hydraulicApertureModel = this->template getConstitutiveModel< HydraulicApertureBase >( subRegion, hydraulicApertureRelationName );
 
+    real64 const penaltyStiffness = solidMechanicsSolver()->m_contactPenaltyStiffness;
+    arrayView1d< real64 const > const oldHydraulicAperture = subRegion.getField< flow::aperture0 >();
+
     arrayView1d< real64 > const aperture = subRegion.getElementAperture();
     arrayView1d< real64 > const hydraulicAperture = subRegion.getField< flow::hydraulicAperture >();
     arrayView1d< real64 const > const volume = subRegion.getElementVolume();
@@ -399,7 +402,9 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::updateHydraulicApertureAndFrac
                                                                       deltaVolume,
                                                                       aperture,
                                                                       fractureState,
-                                                                      hydraulicAperture
+                                                                      hydraulicAperture,
+                                                                      penaltyStiffness,
+                                                                      oldHydraulicAperture
 #ifdef GEOS_USE_SEPARATION_COEFFICIENT
                                                                       ,
                                                                       apertureF,
@@ -957,6 +962,8 @@ assembleFluidMassResidualDerivativeWrtDisplacement( DomainPartition const & doma
       string const & hydraulicApertureRelationName = subRegion.template getReference< string >( viewKeyStruct::hydraulicApertureRelationNameString()  );
       HydraulicApertureBase const & hydraulicApertureModel = this->template getConstitutiveModel< HydraulicApertureBase >( subRegion, hydraulicApertureRelationName );
 
+      real64 const penaltyStiffness = solidMechanicsSolver()->m_contactPenaltyStiffness;
+
       string const & fluidName = subRegion.getReference< string >( FlowSolverBase::viewKeyStruct::fluidNamesString() );
       SingleFluidBase const & fluid = this->template getConstitutiveModel< SingleFluidBase >( subRegion, fluidName );
 
@@ -991,6 +998,7 @@ assembleFluidMassResidualDerivativeWrtDisplacement( DomainPartition const & doma
                                             area,
                                             aperture,
                                             fractureState,
+                                            penaltyStiffness,
                                             presDofNumber,
                                             dispDofNumber,
                                             dens,
@@ -1023,7 +1031,7 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::updateState( DomainPartition &
     flowSolver()->updateStencilWeights( domain );
   }
 
-  flowSolver()->updateState( domain );
+  // flowSolver()->updateState( domain );
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
