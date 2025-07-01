@@ -127,6 +127,8 @@ public:
 
     static constexpr char const * useVtiString() { return "useVTI"; }
 
+    static constexpr char const * useTtiString() { return "useTTI"; }
+
   } waveEquationViewKeys;
 
 
@@ -233,6 +235,12 @@ private:
 
   /// Flag to appliy VTI anisotropy
   integer m_useVTI;
+
+  /// Flag to appliy TTI anisotropy
+  integer m_useTTI;
+
+  real64 m_rotationMatrix[ 3 ][ 3 ]{};
+
 
 };
 

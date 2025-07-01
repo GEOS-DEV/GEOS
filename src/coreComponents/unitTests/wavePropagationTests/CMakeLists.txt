@@ -6,6 +6,7 @@ set( gtest_geosx_tests
      testWavePropagationElasticFirstOrder.cpp
      testWavePropagationDAS.cpp
      testWavePropagationElasticVTI.cpp
+     testWavePropagationElasticTTI.cpp
      testWavePropagationAttenuationElastic.cpp
      testWavePropagationAttenuationAcoustic.cpp
      testWavePropagationAttenuationAcousticVTI.cpp
