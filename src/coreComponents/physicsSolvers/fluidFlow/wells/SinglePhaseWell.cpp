@@ -872,7 +872,7 @@ SinglePhaseWell::calculateResidualNorm( real64 const & time_n,
                          GEOS_FMT( "        ( R{} ) = ( {:4.2e} )", coupledSolverAttributePrefix(), residualNorm ));
 
   m_solverStatistics.m_convergenceStats.m_residualWell = residualNorm;
-  m_solverStatistics.m_convergenceStats.registerResidualNormToTable();
+  m_solverStatistics.m_convergenceStats.writeResidualNormToTable();
 
   return residualNorm;
 }

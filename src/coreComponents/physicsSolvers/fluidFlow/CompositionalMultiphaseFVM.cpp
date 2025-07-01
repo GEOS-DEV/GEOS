@@ -610,7 +610,7 @@ real64 CompositionalMultiphaseFVM::calculateResidualNorm( real64 const & GEOS_UN
     m_solverStatistics.m_convergenceStats.m_residualVol = globalResidualNorm[1];
     m_solverStatistics.m_convergenceStats.m_totalResidual = residualNorm;
   }
-  m_solverStatistics.m_convergenceStats.registerResidualNormToTable();
+  m_solverStatistics.m_convergenceStats.writeResidualNormToTable();
 
   return residualNorm;
 }

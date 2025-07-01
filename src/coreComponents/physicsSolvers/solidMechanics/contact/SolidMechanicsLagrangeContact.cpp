@@ -886,7 +886,7 @@ real64 SolidMechanicsLagrangeContact::calculateContactResidualNorm( DomainPartit
   m_solverStatistics.m_convergenceStats.m_residualOpen = openResidual;
   m_solverStatistics.m_convergenceStats.m_totalResidual = totalResidualNorm;
 
-  m_solverStatistics.m_convergenceStats.registerResidualNormToTable();
+  m_solverStatistics.m_convergenceStats.writeResidualNormToTable();
 
 
   return totalResidualNorm;

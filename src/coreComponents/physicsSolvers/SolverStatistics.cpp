@@ -89,8 +89,8 @@ IterationsStatistics::IterationsStatistics( string const & name, Group * const p
   m_iterationCSVLayout = std::make_unique< TableLayout >(  );
   m_iterationCSVLayout->setTitle( GEOS_FMT( "{} iterations", getParent().getName()));
   m_iterationCSVLayout->addColumns( { "m_numTimeSteps", "m_numTimeStepCuts",
-                                     "Successful outer loop", "Successful nonlinear", "Successful linear",
-                                     "Discarded outer loop", "Discarded nonlinear", "Discarded linear"} );
+                                      "Successful outer loop", "Successful nonlinear", "Successful linear",
+                                      "Discarded outer loop", "Discarded nonlinear", "Discarded linear"} );
   //m_iterationCSVLayout->addColumn( "Iter" );
 
 }
@@ -103,26 +103,26 @@ void IterationsStatistics::resetCurrentTimeStepStatistics()
   m_currentNumLinearIterations = 0;
 }
 
-void IterationsStatistics::logNonlinearIteration( integer const numLinearIterations )// update
+void IterationsStatistics::updateNonlinearIteration( integer const numLinearIterations )
 {
   // we have just performed a Newton iteration, so we increment the individual-timestep counters
   m_currentNumNonlinearIterations++;
   m_currentNumLinearIterations += numLinearIterations;
 }
 
-void IterationsStatistics::logNonlinearIteration() // update
+void IterationsStatistics::updateNonlinearIteration()
 {
   // we have just performed an outer iteration, so we increment the individual-timestep counter (number of outer iteration)
   m_currentNumNonlinearIterations++;
 }
 
-void IterationsStatistics::logOuterLoopIteration() // update
+void IterationsStatistics::incrementNonlinearIteration()
 {
   // we have just performed an outer loop iteration, so we increment the individual-timestep counter for outer loop iterations
   m_currentNumOuterLoopIterations++;
 }
 
-void IterationsStatistics::iterateTimeStepStatistics( /*bool writeCSV*/ ) // update
+void IterationsStatistics::iterateTimeStepStatistics( /*bool writeCSV*/ )
 {
   // the timestep has converged, so we increment the cumulative counters for successful timesteps
   m_numSuccessfulOuterLoopIterations += m_currentNumOuterLoopIterations;
@@ -131,7 +131,7 @@ void IterationsStatistics::iterateTimeStepStatistics( /*bool writeCSV*/ ) // upd
   m_numTimeSteps++;
 }
 
-void IterationsStatistics::logTimeStepCut() // update
+void IterationsStatistics::updateTimeStepCut()
 {
   // we have just cut the time step, so we increment the cumulative counters for discarded timesteps
   m_numDiscardedOuterLoopIterations += m_currentNumOuterLoopIterations;
@@ -143,7 +143,7 @@ void IterationsStatistics::logTimeStepCut() // update
   resetCurrentTimeStepStatistics();
 }
 
-void IterationsStatistics::registerStatsToTable()
+void IterationsStatistics::writeStatsToTable()
 {
   m_iterationData.addRow( m_numTimeSteps,
                           m_numTimeStepCuts,
@@ -217,12 +217,12 @@ void ConvergenceStatistics::removeInvalidResidualNorms()
     m_convergenceData.getTableDataRows().pop_back();
 }
 
-void ConvergenceStatistics::logNewtonIter( integer currentNewtonIter )
+void ConvergenceStatistics::updateNewtonIter( integer currentNewtonIter )
 { m_currentNewtonIter = currentNewtonIter; }
 
 
 
-void ConvergenceStatistics::registerResidualNormToTable()
+void ConvergenceStatistics::writeResidualNormToTable()
 {
   std::vector< TableData::CellData > residualsNormCells;
 

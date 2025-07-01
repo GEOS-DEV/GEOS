@@ -118,23 +118,23 @@ public:
    * @param[in] numLinearIterations the number of linear iterations done by the linear solver
    * @detail This function is well suited for Newton's method, or for single-physics solvers in sequential schemes
    */
-  void logNonlinearIteration( integer const numLinearIterations );
+  void updateNonlinearIteration( integer const numLinearIterations );
 
   /**
    * @brief Tell the solverStatistics that we are doing a nonlinear iteration
    * @detail This function is well suited for the outer loop in sequential schemes
    */
-  void logNonlinearIteration();
+  void updateNonlinearIteration();
 
   /**
    * @brief Tell the solverStatistics that we are doing an outer loop iteration
    */
-  void logOuterLoopIteration();
+  void incrementNonlinearIteration();
 
   /**
    * @brief Tell the solverStatistics that there is a time step cut
    */
-  void logTimeStepCut();
+  void updateTimeStepCut();
 
   /**
    * @brief Save the statistics for the individual time step and increment the cumulative stats
@@ -144,7 +144,7 @@ public:
   /**
    * @brief Register the corresponding solver statistics to the TableData
    */
-  void registerStatsToTable();
+  void writeStatsToTable();
 
   /**
    * @brief  Set the filename output file.
@@ -163,12 +163,13 @@ private:
 
   /// Table containing statistics relative to non linear parameter
   TableData m_iterationData;
-  ///
+  /// Table Layout contenaning header for both CSV and log
   std::unique_ptr< TableLayout > m_iterationCSVLayout;
-  ///
+  /// Format the CSV iterations Data
   std::unique_ptr< TableCSVFormatter > m_iterationCSVFormatter;
   /// Filename for the convergence CSV.
   string m_iterationsFilename;
+  // Ouput stream for each timestep
   std::ofstream logStream;
 };
 
@@ -244,7 +245,7 @@ public:
   /**
    * @brief Prepare the layout and register the corresponding residuals norms to the TableData
    */
-  void registerResidualNormToTable();
+  void writeResidualNormToTable();
 
   /**
    * @brief Remove the last residual norms when a configuration did not converge.
@@ -256,7 +257,7 @@ public:
    * @brief Save the current newton iteration
    * @param currentNewtonIter The current newton iteration performed by the the linear solver
    */
-  void logNewtonIter( integer currentNewtonIter );
+  void updateNewtonIter( integer currentNewtonIter );
 
   /**
    * @brief  Set the filename output file.
@@ -265,19 +266,17 @@ public:
   void setFilename( string_view filename )
   { m_convergenceFilename = filename; }
 
-  std::ofstream logStream;
-
 private:
   /// Table containing statistics related  to non linear norms
   std::unique_ptr< TableLayout > m_convergenceLayout;
   /// Table containing statistics data for nonlinear norms.
   TableData m_convergenceData;
-  ///
+  /// Format the CSV convergence Data
   std::unique_ptr< TableCSVFormatter > m_convergenceFormatter;
   /// Filename for the convergence CSV.
   string m_convergenceFilename;
-
-
+  // Ouput stream for each timestep
+  std::ofstream logStream;
 };
 
 /**

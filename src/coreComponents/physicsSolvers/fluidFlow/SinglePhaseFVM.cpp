@@ -239,7 +239,7 @@ real64 SinglePhaseFVM< BASE >::calculateResidualNorm( real64 const & GEOS_UNUSED
     BASE:: m_solverStatistics.m_convergenceStats.m_residualFlow = residualNorm;
     std::cout <<" not thermal "<< std::endl;
   }
-  BASE::m_solverStatistics.m_convergenceStats.registerResidualNormToTable();
+  BASE::m_solverStatistics.m_convergenceStats.writeResidualNormToTable();
   std::cout <<" registered in SingleFVM "<< std::endl;
   return residualNorm;
 }

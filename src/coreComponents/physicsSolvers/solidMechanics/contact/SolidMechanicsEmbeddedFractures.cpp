@@ -597,13 +597,13 @@ real64 SolidMechanicsEmbeddedFractures::calculateResidualNorm( real64 const & ti
 
     m_solverStatistics.m_convergenceStats.m_residualFracture = fractureResidualNorm;
     m_solverStatistics.m_convergenceStats.m_totalResidual = totalResidualNorm;
-    m_solverStatistics.m_convergenceStats.registerResidualNormToTable();
+    m_solverStatistics.m_convergenceStats.writeResidualNormToTable();
 
     return totalResidualNorm;
   }
   else
   {
-    m_solverStatistics.m_convergenceStats.registerResidualNormToTable();
+    m_solverStatistics.m_convergenceStats.writeResidualNormToTable();
     return solidResidualNorm;
   }
 }

@@ -1273,7 +1273,7 @@ SolidMechanicsLagrangianFEM::
                          GEOS_FMT( "        ( R{} ) = ( {:4.2e} )", coupledSolverAttributePrefix(), totalResidualNorm ));
   m_solverStatistics.m_convergenceStats.m_residualSolid = totalResidualNorm;
 
-  m_solverStatistics.m_convergenceStats.registerResidualNormToTable();
+  m_solverStatistics.m_convergenceStats.writeResidualNormToTable();
 
   return totalResidualNorm;
 }

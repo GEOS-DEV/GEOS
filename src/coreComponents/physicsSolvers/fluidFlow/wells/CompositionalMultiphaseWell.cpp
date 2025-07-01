@@ -1372,7 +1372,7 @@ CompositionalMultiphaseWell::calculateResidualNorm( real64 const & time_n,
     m_solverStatistics.m_convergenceStats.m_residualWell = resNorm;
   }
 
-  m_solverStatistics.m_convergenceStats.registerResidualNormToTable();
+  m_solverStatistics.m_convergenceStats.writeResidualNormToTable();
 
   return resNorm;
 }

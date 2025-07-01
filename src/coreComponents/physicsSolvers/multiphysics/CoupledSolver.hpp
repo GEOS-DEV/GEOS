@@ -473,7 +473,7 @@ protected:
       {
         // Increment the solver statistics for reporting purposes
         // Pass a "0" as argument (0 linear iteration) to skip the output of linear iteration stats at the end
-        m_solverStatistics.m_iterationsStats.logNonlinearIteration( 0 );
+        m_solverStatistics.m_iterationsStats.updateNonlinearIteration( 0 );
 
         startSequentialIteration( iter, domain );
 
@@ -540,10 +540,10 @@ protected:
         GEOS_LOG_LEVEL_RANK_0( logInfo::TimeStep, GEOS_FMT( "New dt = {}", stepDt ) );
 
         // notify the solver statistics counter that this is a time step cut
-        m_solverStatistics.m_iterationsStats.logTimeStepCut();
+        m_solverStatistics.m_iterationsStats.updateTimeStepCut();
         forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
         {
-          solver->getSolverStatistics().m_iterationsStats.logTimeStepCut();
+          solver->getSolverStatistics().m_iterationsStats.updateTimeStepCut();
         } );
       }
     }
