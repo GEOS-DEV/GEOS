@@ -24,6 +24,18 @@ namespace geos
 namespace python
 {
 
+
+struct PyWrapper
+{
+  PyObject_HEAD
+
+  static constexpr char const * docString =
+    "A Python interface to geos::dataRepository::WrapperBase.";
+
+  dataRepository::WrapperBase * wrapper;
+};
+
+
 /**
  *
  */
@@ -33,6 +45,10 @@ PyObject * createNewPyWrapper( dataRepository::WrapperBase & wrapper );
  *
  */
 PyTypeObject * getPyWrapperType();
+
+
+PyObject * PyWrapper_setValue( PyWrapper * self, PyObject * args );
+
 
 } // namespace python
 } // namespace geos

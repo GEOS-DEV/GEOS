@@ -7,6 +7,11 @@ set( dataRepository_tests
      testXmlWrapper.cpp
      testBufferOps.cpp )
 
+
+if( ENABLE_PYGEOSX )
+   list( APPEND dataRepository_tests testPyWrapper_setValue.cpp )
+endif()
+
 set( dependencyList ${parallelDeps} gtest dataRepository )
 
 if( ENABLE_CUDA AND ENABLE_CUDA_NVTOOLSEXT )
