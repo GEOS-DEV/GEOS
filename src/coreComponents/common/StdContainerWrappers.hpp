@@ -72,12 +72,11 @@ public:
   {
     if constexpr (USE_STD_CONTAINER_BOUNDS_CHECKING)
     {
-      // bounds check...and a line to breakpoint
       if( index >= this->size() )
       {
         std::cout<< "Index out of bounds in StdVectorWrapper::operator[]: index = " + std::to_string( index ) + ", size = " + std::to_string( this->size());
       }
-      return Base::at( index );  // Throws std::out_of_range if out of bounds...but not needed
+      return Base::at( index );  // Throws std::out_of_range if out of bounds.
     }
     else
     {
@@ -95,12 +94,11 @@ public:
   {
     if constexpr (USE_STD_CONTAINER_BOUNDS_CHECKING)
     {
-      // bounds check...and a line to breakpoint
       if( index >= this->size() )
       {
         std::cout<< "Index out of bounds in StdVectorWrapper::operator[]: index = " + std::to_string( index ) + ", size = " + std::to_string( this->size());
       }
-      return Base::at( index );  // Throws std::out_of_range if out of bounds...but not needed
+      return Base::at( index );  // Throws std::out_of_range if out of bounds.
     }
     else
     {
