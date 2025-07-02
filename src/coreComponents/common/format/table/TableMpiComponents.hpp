@@ -26,9 +26,15 @@
 namespace geos
 {
 
+/**
+ * @struct TableMpiLayout
+ * @brief Layout information specific to MPI distributed tables, completing those in TableLayout.
+ */
 struct TableMpiLayout
 {
+  /// Enable a separating line between ranks in the table output.
   bool m_separatorBetweenRanks = false;
+  /// Title for each rank's section visible in the separating line.
   string m_rankTitle;
 };
 
@@ -45,12 +51,14 @@ public:
   /**
    * @brief Construct a default Table Formatter without layout specification (to only insert data in it,
    * without any column / title). Feature is not tested.
+   * @param mpiLayout MPI-specific layout information (default is having contiguous ranks data).
    */
   TableTextMpiOutput( TableMpiLayout mpiLayout = TableMpiLayout() );
 
   /**
    * @brief Construct a new TableTextMpiOutput from a tableLayout
    * @param tableLayout Contain all tableColumnData names and optionnaly the table title
+   * @param mpiLayout MPI-specific layout information (default is having contiguous ranks data).
    */
   TableTextMpiOutput( TableLayout const & tableLayout,
                       TableMpiLayout mpiLayout = TableMpiLayout() );

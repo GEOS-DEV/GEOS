@@ -643,16 +643,21 @@ private:
   /**
    * @brief Set the indentation of the whole table.
    * @param spacesCount The number of indentation spaces.
+   * @return the TableLayout instance, for builder pattern
    */
   TableLayout & setIndentation( size_t spacesCount );
 
   /**
    * @brief Sets the default value for columns header cells alignement. Used with column-free layout.
+   * @param alignment The desired alignment
+   * @return the TableLayout instance, for builder pattern
    */
   TableLayout & setDefaultHeaderAlignment( Alignment alignment );
 
   /**
    * @brief Sets the default value for data cells alignement. Used with column-free layout.
+   * @param alignment The desired alignment
+   * @return the TableLayout instance, for builder pattern
    */
   TableLayout & setDefaultValueAlignment( Alignment alignment );
 
@@ -701,30 +706,35 @@ private:
   /**
    * @brief Create and add columns to the columns vector given a string vector
    * @param columnNames The columns name
+   * @return the TableLayout instance, for builder pattern
    */
   TableLayout & addColumns( stdVector< Column > const & columnNames );
 
   /**
    * @brief Create and add columns to the columns vector given a string vector
    * @param columns The columns list
+   * @return the TableLayout instance, for builder pattern
    */
   TableLayout & addColumns( stdVector< string > const & columns );
 
   /**
    * @brief Create and add columns to the columns vector given a string and/or columns
    * @param columns brace enclosed parameters, consisting of column names or Column instances
+   * @return the TableLayout instance, for builder pattern
    */
   TableLayout & addColumns( TableLayoutArgs columns );
 
   /**
    * @brief Create and add a column to the columns vector given a string
    * @param columnName The column name
+   * @return the TableLayout instance, for builder pattern
    */
   TableLayout & addColumn( string_view columnName );
 
   /**
    * @brief Create and add a column to the columns vector given a Column
    * @param column Vector containing addition information on the column
+   * @return the TableLayout instance, for builder pattern
    */
   TableLayout & addColumn( Column const & column );
 

@@ -185,11 +185,10 @@ protected:
                             ColumnWidthModifier columnWidthModifier ) const;
 
   /**
-   * @brief Outputs the formatted table to the provided output stream.
-   * @param tableLayout The layout of the table
+   * @brief Outputs the top part of the formatted table to the provided output stream.
    * @param tableOutput A reference to an `std::ostream` where the formatted table will be written.
-   * @param headerCellsLayout The layout of the header rows
-   * @param dataCellsLayout The layout of the data rows
+   * @param tableLayout The layout of the table
+   * @param headerCellsLayout The header rows in a grid layout
    * @param separatorLine A string that will be used as the table separator line
    */
   void outputTableHeader( std::ostream & tableOutput,
@@ -198,22 +197,21 @@ protected:
                           string_view separatorLine ) const;
 
   /**
-   * @brief Outputs the formatted table to the provided output stream.
+   * @brief Outputs the data part of the formatted table to the provided output stream.
    * @param tableOutput A reference to an `std::ostream` where the formatted table will be written.
    * @param tableLayout The layout of the table
-   * @param dataCellsLayout The layout of the data rows
+   * @param dataCellsLayout The data rows in a grid layout
    */
   void outputTableData( std::ostream & tableOutput,
                         PreparedTableLayout const & tableLayout,
                         CellLayoutRows const & dataCellsLayout ) const;
 
   /**
-   * @brief Outputs the formatted table to the provided output stream.
-   * @param tableLayout The layout of the table
+   * @brief Outputs the bottom part of the formatted table to the provided output stream.
    * @param tableOutput A reference to an `std::ostream` where the formatted table will be written.
-   * @param headerCellsLayout The layout of the header rows
-   * @param dataCellsLayout The layout of the data rows
+   * @param tableLayout The layout of the table
    * @param separatorLine A string that will be used as the table separator line
+   * @param hasData Indicates whether there is data in the table TableData.
    */
   void outputTableBottom( std::ostream & tableOutput,
                           PreparedTableLayout const & tableLayout,
