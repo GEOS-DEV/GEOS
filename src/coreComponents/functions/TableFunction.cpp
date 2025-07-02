@@ -356,57 +356,48 @@ void TableFunction::outputTableData( OutputOptions const outputOpts ) const
     return;
 
   bool const logOutputFailed = isTableTooLargeForLog( *this );
+  string csvName =  joinPath( FunctionBase::getOutputDirectory(), getName() + ".csv" );
 
-  std::ofstream logStream;
-  TableLayout tableLayout( { TableLayout::Column().
-                               setName( getName() ).
-                               setHeaderAlignment( TableLayout::Alignment::center ).
-                               setValuesAlignment( TableLayout::Alignment::left ) } );
-  TableTextFormatter const tableLog( tableLayout );
-  TableData tableData;
+  TableLayout logLayout( { TableLayout::Column().
+                             setName( getName() ).
+                             setHeaderAlignment( TableLayout::Alignment::center ).
+                             setValuesAlignment( TableLayout::Alignment::left ) } );
+  TableCSVFormatter csvFormatter;
 
-  if( outputOpts.writeCSV || (logOutputFailed && outputOpts.writeInLog) )
-    logStream.open(joinPath( FunctionBase::getOutputDirectory(), getName() + ".csv" ));
-
-  if( outputOpts.writeCSV )
+  if( outputOpts.writeCSV || logOutputFailed )
   {
-    if( !outputOpts.writeInLog )
-    {
-      tableData.addRow( GEOS_FMT( "CSV Generated to:\n{}/{}.csv", getOutputDirectory(), getName() ) );
-      GEOS_LOG( tableLog.toString( tableData ) );
-    }
-    TableCSVFormatter csvFormatter;
+    logLayout.addColumn( GEOS_FMT( "- CSV Generated to:\n  {}/{}.csv", getOutputDirectory(), getName() ) );
+    std::ofstream csvStream( csvName );
     csvFormatter.showErrors( false );
-    logStream << csvFormatter.toString( *this );
+    csvStream << csvFormatter.toString( *this );
   }
 
-  if( outputOpts.writeInLog )
+  if( outputOpts.writeInLog || outputOpts.writeCSV )
   {
-    tableData.addRow( getTableDescription());
-    if( logOutputFailed )
-    {
-      tableData.addSeparator();
-      tableData.addRow( " / \\ The table was too heavy for log output.\n"
-                        "/ ! \\ To visualize the table, please refer to the generated csv." );
-    }
-    tableData.addSeparator();
+    TableTextFormatter logFormatter( logLayout );
+    logFormatter.getErrorsList().appendErrors( csvFormatter.getErrorsList().getErrors() );
 
-    if( outputOpts.writeCSV || logOutputFailed )
-      tableData.addRow( GEOS_FMT( "CSV Generated to:\n{}/{}.csv", getOutputDirectory(), getName() ) );
-
-    if( logOutputFailed )
+    if( outputOpts.writeInLog && !logOutputFailed )
     {
-      TableCSVFormatter csvFormatter;
-      csvFormatter.showErrors( false );
-      logStream << csvFormatter.toString( *this );
-      GEOS_LOG( tableLog.toString( tableData ) );
+      GEOS_LOG( logFormatter.toString( *this ) );
     }
     else
-      GEOS_LOG( tableLog.toString( *this ) );
+    {
+      TableData logTableData;
+      logTableData.addRow( getTableDescription());
+      if( logOutputFailed )
+      {
+        logTableData.addSeparator();
+        logTableData.addRow( " / \\ The table was too heavy for log output.\n"
+                             "/ ! \\ To visualize the table, please refer to the generated csv." );
+      }
+      logTableData.addSeparator();
+
+      GEOS_LOG( logFormatter.toString( logTableData ) );
+    }
   }
 
 }
-
 void TableFunction::initializePostSubGroups()
 {
   // Output user defined tables (not generated PVT tables)
@@ -520,9 +511,6 @@ string TableTextFormatter::toString< TableFunction >( TableFunction const & tabl
                                         setMargin( TableLayout::MarginValue::small );
       TableTextFormatter const table2DLog( tableLayout );
       tableConverted.tableData.addSeparator();
-      tableConverted.tableData.addRow( CellType::MergeNext,
-                                       GEOS_FMT( "CSV Generated to:\n{}/{}.csv",
-                                                 tableFunction.getOutputDirectory(), tableFunction.getName() ) );
       logOutput =  table2DLog.toString( tableConverted.tableData );
     }
   }
