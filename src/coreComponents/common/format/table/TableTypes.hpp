@@ -89,6 +89,12 @@ public:
   std::vector< string > const & getErrors() const
   { return m_errorList; }
 
+  /**
+   * @return A reference to the errors vector.
+   */
+  std::vector< string > & getErrors()
+  { return m_errorList; }
+
 private:
   /// Contain all the errors  to display at the end of the table
   std::vector< string > m_errorList;
