@@ -140,7 +140,7 @@
       defaultShearModulus="16.2601626016e3"
       lengthScale="0.5"
       defaultCriticalFractureEnergy="12e-3"
-      criticalStrainEnergy="0.0"
+      defaultCriticalStrainEnergy="0.0"
       degradationLowerLimit="1e-6"/>
 
     <BiotPorosity

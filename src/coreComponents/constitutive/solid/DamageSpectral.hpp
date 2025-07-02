@@ -47,7 +47,7 @@ public:
                          arrayView2d< real64 > const & inputExtDrivingForce,
                          real64 const & inputLengthScale,
                          arrayView1d< real64 > const & inputCriticalFractureEnergy,
-                         real64 const & inputcriticalStrainEnergy,
+                         arrayView1d< real64 > const & inputcriticalStrainEnergy,
                          real64 const & inputDegradationLowerLimit,
                          int const & inputExtDrivingForceFlag,
                          arrayView1d< real64 > const & inputTensileStrength,
@@ -99,9 +99,9 @@ public:
                                       localIndex const q ) const override
   {
     #if QUADRATIC_DISSIPATION
-    real64 m = m_criticalFractureEnergy[k]/(2*m_lengthScale*m_criticalStrainEnergy);
+    real64 m = m_criticalFractureEnergy[k]/(2*m_lengthScale*m_criticalStrainEnergy[k]);
     #else
-    real64 m = 3*m_criticalFractureEnergy[k]/(8*m_lengthScale*m_criticalStrainEnergy);
+    real64 m = 3*m_criticalFractureEnergy[k]/(8*m_lengthScale*m_criticalStrainEnergy[k]);
     #endif
     real64 p = 1;
     return pow( 1 - m_newDamage( k, q ), 2 ) /( pow( 1 - m_newDamage( k, q ), 2 ) + m * m_newDamage( k, q ) * (1 + p*m_newDamage( k, q )) );
@@ -113,9 +113,9 @@ public:
   virtual real64 getDegradationDerivative( localIndex const k, real64 const d ) const override
   {
     #if QUADRATIC_DISSIPATION
-    real64 m = m_criticalFractureEnergy[k]/(2*m_lengthScale*m_criticalStrainEnergy);
+    real64 m = m_criticalFractureEnergy[k]/(2*m_lengthScale*m_criticalStrainEnergy[k]);
     #else
-    real64 m = 3*m_criticalFractureEnergy[k]/(8*m_lengthScale*m_criticalStrainEnergy);
+    real64 m = 3*m_criticalFractureEnergy[k]/(8*m_lengthScale*m_criticalStrainEnergy[k]);
     #endif
     real64 p = 1;
     return -m*(1 - d)*(1 + (2*p + 1)*d) / pow( pow( 1-d, 2 ) + m*d*(1+p*d), 2 );
@@ -127,9 +127,9 @@ public:
   virtual real64 getDegradationSecondDerivative( localIndex const k, real64 const d ) const override
   {
     #if QUADRATIC_DISSIPATION
-    real64 m = m_criticalFractureEnergy[k]/(2*m_lengthScale*m_criticalStrainEnergy);
+    real64 m = m_criticalFractureEnergy[k]/(2*m_lengthScale*m_criticalStrainEnergy[k]);
     #else
-    real64 m = 3*m_criticalFractureEnergy[k]/(8*m_lengthScale*m_criticalStrainEnergy);
+    real64 m = 3*m_criticalFractureEnergy[k]/(8*m_lengthScale*m_criticalStrainEnergy[k]);
     #endif
     real64 p = 1;
     return -2*m*( pow( d, 3 )*(2*m*p*p + m*p + 2*p + 1) + pow( d, 2 )*(-3*m*p*p -3*p) + d*(-3*m*p - 3) + (-m+p+2) )/pow( pow( 1-d, 2 ) + m*d*(1+p*d), 3 );
@@ -281,10 +281,9 @@ public:
   virtual real64 getEnergyThreshold( localIndex const k,
                                      localIndex const q ) const override final
   {
-    GEOS_UNUSED_VAR( k );
     GEOS_UNUSED_VAR( q );
 
-    return m_criticalStrainEnergy;
+    return m_criticalStrainEnergy[k];
   }
 
 };
@@ -331,7 +330,7 @@ public:
                                                                        m_extDrivingForce.toView(),
                                                                        m_lengthScale,
                                                                        m_criticalFractureEnergy.toView(),
-                                                                       m_criticalStrainEnergy,
+                                                                       m_criticalStrainEnergy.toView(),
                                                                        m_degradationLowerLimit,
                                                                        m_extDrivingForceFlag,
                                                                        m_tensileStrength.toView(),

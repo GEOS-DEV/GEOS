@@ -78,7 +78,7 @@ public:
                  arrayView2d< real64 > const & inputExtDrivingForce,
                  real64 const & inputLengthScale,
                  arrayView1d< real64 > const & inputCriticalFractureEnergy,
-                 real64 const & inputcriticalStrainEnergy,
+                 arrayView1d< real64 > const & inputcriticalStrainEnergy,
                  real64 const & inputDegradationLowerLimit,
                  integer const & inputExtDrivingForceFlag,
                  arrayView1d< real64 > const & inputTensileStrength,
@@ -336,7 +336,7 @@ public:
                                      localIndex const q ) const
   {
     #if LORENTZ
-    return m_criticalStrainEnergy;
+    return m_criticalStrainEnergy[k];
     #else
     if( m_extDrivingForceFlag )
       return 3*m_criticalFractureEnergy[k]/(16 * m_lengthScale) + 0.5 * m_extDrivingForce( k, q );
@@ -386,8 +386,8 @@ public:
   /// A reference view to the critical fracture energy for each element
   arrayView1d< real64 > const m_criticalFractureEnergy;
 
-  /// The value of the critical strain energy above which crack/damage initiates
-  real64 const m_criticalStrainEnergy;
+  /// A reference view to the critical strain energy above which crack/damage initiates
+  arrayView1d< real64 > const m_criticalStrainEnergy;
 
   /// The lower limit of the degradation function
   real64 const m_degradationLowerLimit;
@@ -450,7 +450,7 @@ public:
                                                                        m_extDrivingForce.toView(),
                                                                        m_lengthScale,
                                                                        m_criticalFractureEnergy.toView(),
-                                                                       m_criticalStrainEnergy,
+                                                                       m_criticalStrainEnergy.toView(),
                                                                        m_degradationLowerLimit,
                                                                        m_extDrivingForceFlag,
                                                                        m_tensileStrength.toView(),
@@ -473,7 +473,9 @@ public:
     static constexpr char const * defaultCriticalFractureEnergyString() { return "defaultCriticalFractureEnergy"; }
     /// string/key for Gc
     static constexpr char const * criticalFractureEnergyString() { return "criticalFractureEnergy"; }
-    /// string/key for sigma_c
+    /// string/key for default psi_c
+    static constexpr char const * defaultCriticalStrainEnergyString() { return "defaultCriticalStrainEnergy"; }
+    /// string/key for psi_c
     static constexpr char const * criticalStrainEnergyString() { return "criticalStrainEnergy"; }
     /// string/key for degradation lower limit
     static constexpr char const * degradationLowerLimitString() { return "degradationLowerLimit"; }
@@ -523,7 +525,7 @@ protected:
   real64 m_defaultCriticalFractureEnergy;
 
   /// The value of the critical strain energy above which crack/damage initiates
-  real64 m_criticalStrainEnergy;
+  real64 m_defaultCriticalStrainEnergy;
 
   /// The lower limit of the degradation function
   real64 m_degradationLowerLimit;
@@ -545,6 +547,9 @@ protected:
 
   /// The critical fracture energy for each cell
   array1d< real64 > m_criticalFractureEnergy;
+
+  /// The critical strain energy for each cell
+  array1d< real64 > m_criticalStrainEnergy;
 
   /// The tensile strength for each cell
   array1d< real64 > m_tensileStrength;
