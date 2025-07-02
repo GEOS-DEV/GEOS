@@ -882,7 +882,7 @@ bool SinglePhaseWell::checkSystemSolution( DomainPartition & domain,
 
   string const wellDofKey = dofManager.getKey( wellElementDofName() );
   ElementsReporterBuffer rankNegPressureIds{ isLogLevelActive< logInfo::WellValidity >( getLogLevel() ),
-                                       isLogLevelActive< logInfo::WellValidityDetails >( getLogLevel() ) ? 16 : 0 };
+                                             isLogLevelActive< logInfo::WellValidityDetails >( getLogLevel() ) ? 16 : 0 };
   real64 minNegPres = 0.0;
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
@@ -924,7 +924,7 @@ bool SinglePhaseWell::checkSystemSolution( DomainPartition & domain,
 
   ElementsReporterOutput const rankNegPressureIdsOutput = rankNegPressureIds.createOutput();
   rankNegPressureIdsOutput.outputTooLowValues( GEOS_FMT( "        {}: ", getName() ),
-                                              "negative pressure", minNegPres, units::Unit::Pressure );
+                                               "negative pressure", minNegPres, units::Unit::Pressure );
 
   return (m_allowNegativePressure || rankNegPressureIdsOutput.getRanksSignaledIdsCount() == 0) ? 1 : 0;
 }

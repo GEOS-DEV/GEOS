@@ -1551,9 +1551,9 @@ CompositionalMultiphaseWell::checkSystemSolution( DomainPartition & domain,
     real64 minPres = 0.0, minDens = 0.0, minTotalDens = 0.0;
     integer numNegTotalDens = 0;
     ElementsReporterBuffer rankNegPressureIds{ isLogLevelActive< logInfo::WellValidity >( getLogLevel() ),
-                                         isLogLevelActive< logInfo::WellValidityDetails >( getLogLevel() ) ? 16 : 0 };
+                                               isLogLevelActive< logInfo::WellValidityDetails >( getLogLevel() ) ? 16 : 0 };
     ElementsReporterBuffer rankNegDensityIds{ isLogLevelActive< logInfo::WellValidity >( getLogLevel() ),
-                                        isLogLevelActive< logInfo::WellValidityDetails >( this->getLogLevel() ) ? 16 : 0 };
+                                              isLogLevelActive< logInfo::WellValidityDetails >( this->getLogLevel() ) ? 16 : 0 };
 
     forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                  MeshLevel & mesh,
@@ -1636,11 +1636,11 @@ CompositionalMultiphaseWell::checkSystemSolution( DomainPartition & domain,
     numNegTotalDens = MpiWrapper::sum( numNegTotalDens );
 
     rankNegPressureIds.createOutput().outputTooLowValues( GEOS_FMT( "        {}: ", getName() ),
-                                                         "negative pressure", minPres, units::Unit::Pressure );
+                                                          "negative pressure", minPres, units::Unit::Pressure );
 
     units::Unit const massUnit = m_useMass ? units::Unit::Density : units::Unit::MolarDensity;
     rankNegDensityIds.createOutput().outputTooLowValues( GEOS_FMT( "        {}: ", getName() ),
-                                                        "negative component density", minDens, massUnit );
+                                                         "negative component density", minDens, massUnit );
     if( numNegTotalDens > 0 )
     {
       GEOS_LOG_LEVEL_RANK_0( logInfo::WellValidity,

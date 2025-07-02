@@ -1298,7 +1298,7 @@ bool SinglePhaseBase::checkSystemSolution( DomainPartition & domain,
 
   string const dofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
   ElementsReporterBuffer rankNegPressureIds{ isLogLevelActive< logInfo::Solution >( getLogLevel() ),
-                                       isLogLevelActive< logInfo::SolutionDetails >( getLogLevel() ) ? 16 : 0 };
+                                             isLogLevelActive< logInfo::SolutionDetails >( getLogLevel() ) ? 16 : 0 };
   real64 minPressure = 0.0;
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
@@ -1329,7 +1329,7 @@ bool SinglePhaseBase::checkSystemSolution( DomainPartition & domain,
   } );
 
   rankNegPressureIds.createOutput().outputTooLowValues( GEOS_FMT( "        {}: ", getName() ),
-                                                       "negative pressure", minPressure, units::Unit::Pressure );
+                                                        "negative pressure", minPressure, units::Unit::Pressure );
 
   return (m_allowNegativePressure || rankNegPressureIds.getSignaledElementsCount() == 0) ?  1 : 0;
 }

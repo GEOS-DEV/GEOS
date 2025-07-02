@@ -166,7 +166,7 @@ protected:
   static constexpr char m_horizontalLine = '-';
 
   /// A functor which allow to customize the columns width after their computation.
-  using ColumnWidthModifier = std::function< void( stdVector< size_t > & ) >;
+  using ColumnWidthModifier = std::function< void ( stdVector< size_t > & ) >;
 
   /**
    * @brief Initializes the table layout with the given table data and prepares necessary layouts for headers and data cells.
