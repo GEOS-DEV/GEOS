@@ -366,7 +366,6 @@ void TableFunction::outputTableData( OutputOptions const outputOpts ) const
 
   if( outputOpts.writeCSV || logOutputFailed )
   {
-    logLayout.addColumn( GEOS_FMT( "- CSV Generated to:\n  {}/{}.csv", getOutputDirectory(), getName() ) );
     std::ofstream csvStream( csvName );
     csvFormatter.showErrors( false );
     csvStream << csvFormatter.toString( *this );
@@ -392,6 +391,7 @@ void TableFunction::outputTableData( OutputOptions const outputOpts ) const
                              "/ ! \\ To visualize the table, please refer to the generated csv." );
       }
       logTableData.addSeparator();
+      logTableData.addRow( GEOS_FMT( "- CSV Generated to:\n  {}/{}.csv", getOutputDirectory(), getName() ) );
 
       GEOS_LOG( logFormatter.toString( logTableData ) );
     }
