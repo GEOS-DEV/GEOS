@@ -45,7 +45,7 @@ struct TableMpiLayout
 class TableTextMpiOutput : public TableTextFormatter
 {
 public:
-
+  /// base class
   using Base = TableTextFormatter;
 
   /**
