@@ -153,14 +153,24 @@ public:
   void setFilename( string_view filename )
   { m_iterationsFilename = filename; }
 
-private:
-
   /**
    * @brief Output the statistics to the console and csv file if needed
    * @param writeCSV Indicate if we output to CSV FILE
    */
   void outputStatistics( bool writeCSV );
 
+  /**
+   * @brief Set the Residual Norms filename
+   * @param solverName The solverName as a string_view.
+   */
+  void setSolverName( string_view solverName )
+  {
+    m_solverName = solverName;
+  }
+
+private:
+  ///
+  string m_solverName;
   /// Table containing statistics relative to non linear parameter
   TableData m_iterationData;
   /// Table Layout contenaning header for both CSV and log
@@ -239,6 +249,9 @@ public:
   /// Maximum total residual value.
   real64 m_totalResidual = std::numeric_limits< real64 >::quiet_NaN();
 
+  /// Maximum value for residual norm at the end of line search
+  real64 m_residualNormT = std::numeric_limits< real64 >::quiet_NaN();
+
   /**
    * @brief Output the cumulative statistics to the terminal
    * @param writeCSV Indicates if the output should be written to a CSV file.
@@ -257,9 +270,7 @@ public:
   void removeInvalidResidualNorms();
 
   void updateCycleNumber( integer const cycleNumber )
-  {
-    m_cycleNumber = cycleNumber;
-  }
+  { m_cycleNumber = cycleNumber; }
 
   /**
    * @brief Save the current newton iteration

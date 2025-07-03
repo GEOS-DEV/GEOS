@@ -119,7 +119,6 @@ PhysicsSolverBase::PhysicsSolverBase( string const & name,
 
   m_solverStatistics.setOutputFilesName( getName() );
 
-
   m_localMatrix.setName( this->getName() + "/localMatrix" );
   m_matrix.setDofManager( &m_dofManager );
 }
@@ -671,6 +670,8 @@ bool PhysicsSolverBase::lineSearch( real64 const & time_n,
     GEOS_LOG_LEVEL_RANK_0( logInfo::LineSearch,
                            GEOS_FMT( "        ( R ) = ( {:4.2e} )", residualNorm ) );
 
+    m_solverStatistics.m_convergenceStats.m_residualNormT = residualNorm;
+
     // if the residual norm is less than the last residual, we can proceed to the
     // solution step
     if( residualNorm < lastResidual )
@@ -768,9 +769,10 @@ bool PhysicsSolverBase::lineSearchWithParabolicInterpolation( real64 const & tim
 
     // get residual norm
     residualNormT = calculateResidualNorm( time_n, dt, domain, dofManager, rhs.values() );
-    GEOS_LOG_LEVEL_RANK_0( logInfo::LineSearch,
+    GEOS_LOG_LEVEL_RANK_0( logInfo::ResidualNorm,
                            GEOS_FMT( "        ( R ) = ( {:4.2e} )", residualNormT ) );
 
+    m_solverStatistics.m_convergenceStats.m_residualNormT = residualNormT;
 
     ffm = ffT;
     ffT = residualNormT*residualNormT;
@@ -1002,8 +1004,9 @@ bool PhysicsSolverBase::solveNonlinearSystem( real64 const & time_n,
 
       // get residual norm
       residualNorm = calculateResidualNorm( time_n, stepDt, domain, m_dofManager, m_rhs.values() );
-      GEOS_LOG_LEVEL_RANK_0( logInfo::Convergence,
+      GEOS_LOG_LEVEL_RANK_0( logInfo::ResidualNorm,
                              GEOS_FMT( "        ( R ) = ( {:4.2e} )", residualNorm ) );
+      m_solverStatistics.m_convergenceStats.m_residualNormT = residualNorm;
     }
 
     // if the residual norm is less than the Newton tolerance we denote that we have
@@ -1470,7 +1473,7 @@ void PhysicsSolverBase::cleanup( real64 const GEOS_UNUSED_PARAM( time_n ),
                                  real64 const GEOS_UNUSED_PARAM( eventProgress ),
                                  DomainPartition & GEOS_UNUSED_PARAM( domain ) )
 {
-  m_solverStatistics.m_iterationsStats.iterateTimeStepStatistics();
+  m_solverStatistics.m_iterationsStats.outputStatistics( true );
 
   for( auto & timer : m_timers )
   {

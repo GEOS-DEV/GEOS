@@ -38,6 +38,7 @@ SolverStatistics::SolverStatistics( string const & name, Group * const parent )
 void SolverStatistics::setOutputFilesName( string_view solverName )
 {
   m_iterationsStats.setFilename( GEOS_FMT( "{}/{}_iterations.csv", getOutputDir(), solverName ));
+  m_iterationsStats.setSolverName( solverName);
   m_convergenceStats.setFilename( GEOS_FMT( "{}/{}_convergence.csv", getOutputDir(), solverName ));
 }
 
@@ -172,7 +173,10 @@ void IterationsStatistics::outputStatistics( bool writeCSV )
     GEOS_LOG_RANK_0( GEOS_FMT( "{}, number of Time-steps: {}", getParent().getName(), m_numTimeSteps ) );
     GEOS_LOG_RANK_0( GEOS_FMT( "{}, number of Time steps cut: {}", getParent().getName(), m_numTimeStepCuts ) );
 
-    TableTextFormatter const statsFormatter( *m_iterationCSVLayout );
+    TableLayout iterationLogLayout ( GEOS_FMT( "{} iterations", m_solverName ),
+                                     { "Components", "Iter  "} );
+
+    TableTextFormatter const statsFormatter( iterationLogLayout );
 
     TableData iterationDataLog;
     iterationDataLog.addRow( "Successful outer loop", m_numSuccessfulOuterLoopIterations );
@@ -204,7 +208,7 @@ ConvergenceStatistics::ConvergenceStatistics():
                                     "RFlow", "RBubbleDisp", "RFrac",
                                     "Rstick", "Rslip", "Ropen",
                                     "RSolid", "RContact", "RProppant",
-                                    "RWell", "RDamage", "RTotal"} );
+                                    "RWell", "RDamage", "RTotal", "R"} );
 }
 
 
@@ -244,7 +248,8 @@ void ConvergenceStatistics::writeResidualNormToTable()
     { m_residualProppant, "RProppant" },
     { m_residualWell, "RWell" },
     { m_residualDamage, "RDamage" },
-    { m_totalResidual, "RTotal" }
+    { m_totalResidual, "RTotal" },
+    { m_residualNormT, "R" }
   };
 
   residualsNormCells.emplace_back( TableData::CellData( {CellType::Value,
