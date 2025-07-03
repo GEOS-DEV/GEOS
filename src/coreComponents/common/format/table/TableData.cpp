@@ -106,20 +106,19 @@ void TableData2D::collectTableValues( arrayView1d< real64 const > dim0AxisCoordi
 
   array1d< real64 > wellFormedValues( values.size() );
   wellFormedValues = values;
-  if( nRow * nCol != values.size())
+  if( values.size() < nRow * nCol )
   {
-    if( nRow * nCol > values.size())
-    {
-      m_errors->addError( GEOS_FMT( "Warning : Not enough data for the number of columns & rows:\n"
-                                    "Expected {} values, Found {} values", nRow * nCol, values.size() ) );
-      wellFormedValues.resizeDefault( nRow * nCol, 0 );
-    }
-    else
-    {
-      m_errors->addError( GEOS_FMT( "Warning : Too much data for the number of columns * rows:\n"
-                                    "Expected {} values, Found {} values\n"
-                                    "Data may be missaligned", nRow * nCol, values.size() ) );
-    }
+    m_errors->addError( GEOS_FMT( "Warning: Not enough for the number of columns & rows:\n"
+                                  "  - Expected {} values ({} columns x {} rows),\n  - Found {} values",
+                                  nRow * nCol, nCol, nRow, values.size() ) );
+    wellFormedValues.resizeDefault( nRow * nCol, 0 );
+  }
+  else
+  {
+    m_errors->addError( GEOS_FMT( "Warning: Too much data for the number of columns & rows:\n"
+                                  "  - Expected {} values ({} columns x {} rows),\n  - Found {} values",
+                                  "Data may be missaligned",
+                                  nRow * nCol, nCol, nRow, values.size() ) );
   }
 
   for( integer y = 0; y < nRow; y++ )

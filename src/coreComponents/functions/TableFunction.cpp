@@ -355,7 +355,7 @@ void TableFunction::outputTableData( OutputOptions const outputOpts ) const
   if( MpiWrapper::commRank() != 0 )
     return;
 
-  bool const logOutputFailed = isTableTooLargeForLog( *this );
+  bool const logOutputFailed = outputOpts.writeInLog && isTableTooLargeForLog( *this );
   string csvName =  joinPath( FunctionBase::getOutputDirectory(), getName() + ".csv" );
 
   TableLayout logLayout( { TableLayout::Column().

@@ -750,9 +750,9 @@ TEST( testTable, table2DMismatchingCoordValues )
                "|  Temperature = 6  |             8  |             9  |            10  |            11  |\n"
                "|  Temperature = 7  |            12  |            13  |            14  |            15  |\n"
                "|---------------------------------------------------------------------------------------|\n"
-               "|  Warning : Too much data for the number of columns * rows:                            |\n"
-               "|  Expected 16 values, Found 25 values                                                  |\n"
-               "|  Data may be missaligned                                                              |\n"
+               "|  Warning: Too much data for the number of columns & rows:                             |\n"
+               "|    - Expected Data may be missaligned values (16 columns x 4 rows),                   |\n"
+               "|    - Found 4 values                                                                   |\n"
                "-----------------------------------------------------------------------------------------\n" );
 
     EXPECT_EQ( csvFormatted,
@@ -795,8 +795,9 @@ TEST( testTable, table2DMismatchingCoordValues )
                "|  Temperature = 10  |            24  |             0  |             0  |             0  |             0  |             0  |\n"
                "|  Temperature = 11  |             0  |             0  |             0  |             0  |             0  |             0  |\n"
                "|--------------------------------------------------------------------------------------------------------------------------|\n"
-               "|  Warning : Not enough data for the number of columns & rows:                                                             |\n"
-               "|  Expected 36 values, Found 25 values                                                                                     |\n"
+               "|  Warning: Not enough for the number of columns & rows:                                                                   |\n"
+               "|    - Expected 36 values (6 columns x 6 rows),                                                                            |\n"
+               "|    - Found 25 values                                                                                                     |\n"
                "----------------------------------------------------------------------------------------------------------------------------\n" );
 
     EXPECT_EQ( csvFormatted,
