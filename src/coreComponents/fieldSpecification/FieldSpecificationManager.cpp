@@ -89,15 +89,15 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
     {
       if( constitutiveModel.getName() == ConstitutiveManager::groupKeyStruct::constitutiveModelsString())
       {
-        constitutiveModel.forSubGroups< Group >( [&]( Group const & constitutive )
+        constitutiveModel.forSubGroups< Group >( [&]( Group  const & constitutive )
         {
           ConstitutiveBase const * constitutiveBase = dynamic_cast< ConstitutiveBase const * >(&constitutive);
-          auto const consititutiveFields = constitutiveBase->getFields();
+          auto const constitutiveFields = constitutiveBase->getUserFields();
           constitutive.forWrappers(
             [&] ( dataRepository::WrapperBase const & wrapper )
           {
-            if( std::find( consititutiveFields.begin(), consititutiveFields.end(),
-                           wrapper.getName()) != consititutiveFields.end())
+            if( std::find( constitutiveFields.begin(), constitutiveFields.end(),
+                           wrapper.getName()) != constitutiveFields.end())
               subRegionFields.insert( subRegionFields.end(),
                                       ConstitutiveBase::makeFieldName( constitutive.getName(),
                                                                        wrapper.getName()));
