@@ -1160,7 +1160,7 @@ void ImmiscibleMultiphaseFlow::applySystemSolution( DofManager const & dofManage
                                                                 MeshLevel & mesh,
                                                                 string_array const & regionNames )
   {
-    std::vector< string > fields{ fields::flow::pressure::key(), fields::immiscibleMultiphaseFlow::phaseVolumeFraction::key() };
+    stdVector< string > fields{ fields::flow::pressure::key(), fields::immiscibleMultiphaseFlow::phaseVolumeFraction::key() };
 
     FieldIdentifiers fieldsToBeSync;
     fieldsToBeSync.addElementFields( fields, regionNames );

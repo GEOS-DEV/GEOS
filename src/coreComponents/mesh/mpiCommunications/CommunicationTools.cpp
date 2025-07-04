@@ -1116,7 +1116,7 @@ bool CommunicationTools::asyncUnpack( MeshLevel & mesh,
 
   int recvCount = 0;
   stdVector< int > neighborIndices;
-  neighborIndices.reserve( icomm.size() );
+  neighborIndices.resize( icomm.size() );
   MpiWrapper::testSome( icomm.size(),
                         icomm.mpiRecvBufferRequest(),
                         &recvCount,
