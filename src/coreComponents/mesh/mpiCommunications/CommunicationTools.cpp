@@ -1078,7 +1078,7 @@ bool CommunicationTools::asyncUnpack( ObjectManagerBase & manager,
   MpiWrapper::testSome( icomm.size(),
                         icomm.mpiRecvBufferRequest(),
                         &recvCount,
-                        &neighborIndices[0],
+                        neighborIndices.data(),
                         icomm.mpiRecvBufferStatus() );
 
   for( int recvIdx = 0; recvIdx < recvCount; ++recvIdx )
