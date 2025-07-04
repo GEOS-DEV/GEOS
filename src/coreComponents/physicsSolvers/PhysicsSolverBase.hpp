@@ -883,6 +883,26 @@ public:
   virtual bool registerCallback( void * func, const std::type_info & funcType ) final override;
 
   /**
+   * @return An IterationsStatistics for the "root" solver.
+   * Otherwise return an empty IterationsStatistics
+   */
+  IterationsStatistics & getIterationStats()
+  {
+    if( m_shouldIterate )
+    {
+      return m_solverStatistics.m_iterationsStats;
+    }
+    return m_nullIterationStats;
+  }
+  /**
+   * @return A ConvergenceStatistics for all sub-solvers
+   */
+  ConvergenceStatistics & getConvergenceStats()
+  {
+    return m_solverStatistics.m_convergenceStats;
+  }
+
+  /**
    * @brief accessor for the solver statistics.
    * @return reference to m_solverStatistics
    */
@@ -910,6 +930,8 @@ public:
   {
     return m_meshTargets;
   }
+
+  bool m_shouldIterate = true;
 protected:
 
   /**
@@ -1074,6 +1096,9 @@ protected:
   std::map< std::string, std::chrono::system_clock::duration > m_timers;
 
 private:
+  /// "Trash" object returned for sub-solvers
+  IterationsStatistics m_nullIterationStats;
+
   /// List of names of regions the solver will be applied to
   string_array m_targetRegionNames;
 

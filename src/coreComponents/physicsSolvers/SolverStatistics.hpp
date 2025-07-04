@@ -107,63 +107,66 @@ public:
     /// String key for the discarded number of linear iterations
     static constexpr char const * numDiscardedLinearIterationsString() { return "numDiscardedLinearIterations"; }
   };
-
+/**
+ * @
+ *
+ */
   /**
    * @brief Initialize the counters used for an individual time step
    */
-  void resetCurrentTimeStepStatistics();
+  virtual void resetCurrentTimeStepStatistics();
 
   /**
    * @brief Tell the solverStatistics that we are doing a nonlinear iteration
    * @param[in] numLinearIterations the number of linear iterations done by the linear solver
    * @detail This function is well suited for Newton's method, or for single-physics solvers in sequential schemes
    */
-  void updateNonlinearIteration( integer const numLinearIterations );
+  virtual void updateNonlinearIteration( integer const numLinearIterations );
 
   /**
    * @brief Tell the solverStatistics that we are doing a nonlinear iteration
    * @detail This function is well suited for the outer loop in sequential schemes
    */
-  void updateNonlinearIteration();
+  virtual void updateNonlinearIteration();
 
   /**
    * @brief Tell the solverStatistics that we are doing an outer loop iteration
    */
-  void incrementNonlinearIteration();
+  virtual void incrementNonlinearIteration();
 
   /**
    * @brief Tell the solverStatistics that there is a time step cut
    */
-  void updateTimeStepCut();
+  virtual void updateTimeStepCut();
 
   /**
    * @brief Save the statistics for the individual time step and increment the cumulative stats
    */
-  void iterateTimeStepStatistics();
+  virtual void iterateTimeStepStatistics();
 
   /**
    * @brief Register the corresponding solver statistics to the TableData
    */
-  void writeStatsToTable();
+  virtual void writeStatsToTable();
 
   /**
    * @brief  Set the filename output file.
    * @param filename The filename as a string_view.
    */
-  void setFilename( string_view filename )
+  virtual void setFilename( string_view filename )
   { m_iterationsFilename = filename; }
 
   /**
    * @brief Output the statistics to the console and csv file if needed
    * @param writeCSV Indicate if we output to CSV FILE
    */
-  void outputStatistics( bool writeCSV );
+  virtual void outputStatistics( bool writeCSV );
 
   /**
    * @brief Set the Residual Norms filename
    * @param solverName The solverName as a string_view.
    */
-  void setSolverName( string_view solverName )
+  virtual void setSolverName( string_view solverName )
   {
     m_solverName = solverName;
   }
@@ -181,6 +184,47 @@ private:
   string m_iterationsFilename;
   // Ouput stream for each timestep
   std::ofstream logStream;
+};
+
+/**
+ * @brief An empty class used for all sub-solvers instances
+ */
+class NullIterationsStatistics : public IterationsStatistics
+{
+public:
+
+  NullIterationsStatistics( string const & name,
+                            dataRepository::Group * const parent ): IterationsStatistics( name, parent ){}
+
+  /**
+   * @brief Group key associated with NullIterationsStatistics.
+   */
+  struct groupKeyStruct
+  {
+    /// @return string for the NullIterationsStatistics wrapper
+    static constexpr char const * NullIterationsStatisticsString() { return "NullIterationsStatistics"; }
+  };
+///@{
+/// @cond DO_NOT_DOCUMENT
+  void resetCurrentTimeStepStatistics() override {}
+
+  void updateNonlinearIteration( integer const numLinearIterations )override {}
+
+  void updateNonlinearIteration() override {}
+
+  void incrementNonlinearIteration() override {}
+
+  void updateTimeStepCut() override {}
+
+  void iterateTimeStepStatistics() override {}
+
+  void writeStatsToTable() override {}
+
+  void outputStatistics( bool writeCSV ) {}
+
+  void setSolverName( string_view solverName ){}
+  /// @endcond
+///@}
 };
 
 /**

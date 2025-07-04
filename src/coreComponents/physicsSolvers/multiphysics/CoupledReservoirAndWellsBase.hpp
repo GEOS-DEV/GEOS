@@ -209,7 +209,7 @@ public:
   postInputInitialization() override
   {
     Base::postInputInitialization();
-
+    wellSolver()->m_shouldIterate = false;
     setMGRStrategy();
   }
 
