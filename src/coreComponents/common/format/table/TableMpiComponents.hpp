@@ -66,7 +66,7 @@ public:
   /**
    * @brief Convert a data source to a table string.
    * @param tableData The data source to convert.
-   * @param outputStream The target output stream for rank 0, to output the table strin grepresentation
+   * @param outputStream The target output stream for rank 0, to output the table string representation
    *                     of the TableData. Each rank contributing to the common rank 0 output stream
    *                     with their local data. It may be the log or a file stream.
    * @note This method must be called by all MPI ranks.
