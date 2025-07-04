@@ -122,24 +122,24 @@ void TableTextMpiOutput::outputTableDataToRank0( std::ostream & tableOutput,
   }
 
   // all other ranks than rank 0 render their output in a string and comunicate its size
-  auto ranksStrsSizes = std::vector( ranksCount, 0 );
+  std::vector< integer > ranksStrsSizes = std::vector( ranksCount, 0 );
   string const rankStr = !status.m_isMasterRank && status.m_isContributing ? localStringStream.str() : "";
   integer const rankStrSize = rankStr.size();
   MpiWrapper::allgather( &rankStrSize, 1, ranksStrsSizes.data(), 1 );
 
   // we compute the memory layout of the ranks strings
-  auto ranksStrsDisps = std::vector( ranksCount, 0 );
+  std::vector< integer > ranksStrsOffsets = std::vector( ranksCount, 0 );
   integer ranksStrsTotalSize = 0;
   for( integer rankId = 1; rankId < ranksCount; ++rankId )
   {
-    ranksStrsDisps[rankId] = ranksStrsTotalSize;
+    ranksStrsOffsets[rankId] = ranksStrsTotalSize;
     ranksStrsTotalSize += ranksStrsSizes[rankId];
   }
 
   // finally, we can send all text data to rank 0, then we output it in the output stream.
   string ranksStrs = string( ranksStrsTotalSize, '\0' );
   MpiWrapper::gatherv( &rankStr[0], rankStrSize,
-                       &ranksStrs[0], ranksStrsSizes.data(), ranksStrsDisps.data(),
+                       &ranksStrs[0], ranksStrsSizes.data(), ranksStrsOffsets.data(),
                        0, MPI_COMM_GEOS );
   if( status.m_isMasterRank )
   {
@@ -147,7 +147,7 @@ void TableTextMpiOutput::outputTableDataToRank0( std::ostream & tableOutput,
     {
       if( ranksStrsSizes[rankId] > 0 )
       {
-        tableOutput << string_view( &ranksStrs[ranksStrsDisps[rankId]], ranksStrsSizes[rankId] );
+        tableOutput << string_view( &ranksStrs[ranksStrsOffsets[rankId]], ranksStrsSizes[rankId] );
       }
     }
   }
