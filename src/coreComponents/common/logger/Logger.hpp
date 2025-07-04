@@ -142,20 +142,21 @@
   { \
     if( EXP ) \
     { \
+      std::ostringstream __msgoss; \
+      __msgoss << MSG; \
+      std::string message =  __msgoss.str(); \
       std::ostringstream __oss; \
       __oss << "***** ERROR\n"; \
       __oss << "***** LOCATION: " LOCATION "\n"; \
       __oss << "***** Controlling expression (should be false): " STRINGIZE( EXP ) "\n"; \
-      __oss << MSG << "\n"; \
+      __oss << message << "\n"; \
       std::string stackHistory = LvArray::system::stackTrace( true ); \
       __oss << stackHistory; \
       std::cout << __oss.str() << std::endl; \
-      std::ostringstream __msgoss; \
-      __msgoss << MSG; \
       if( g_errorLogger.isOutputFileEnabled() ) \
       { \
         ErrorLogger::ErrorMsg msgStruct( ErrorLogger::MsgType::Error, \
-                                         __msgoss.str(), \
+                                         message, \
                                          __FILE__, \
                                          __LINE__ ); \
         msgStruct.setRank( ::geos::logger::internal::rank ); \
@@ -177,20 +178,21 @@
   { \
     if( EXP ) \
     { \
+      std::ostringstream __msgoss; \
+      __msgoss << MSG; \
+      std::string message =  __msgoss.str(); \
       std::ostringstream __oss; \
       __oss << "***** ERROR\n"; \
       __oss << "***** LOCATION: " LOCATION "\n"; \
       __oss << "***** Controlling expression (should be false): " STRINGIZE( EXP ) "\n"; \
-      __oss << MSG << "\n"; \
+      __oss << message << "\n"; \
       std::string stackHistory = LvArray::system::stackTrace( true ); \
       __oss << stackHistory; \
       std::cout << __oss.str() << std::endl; \
-      std::ostringstream __msgoss; \
-      __msgoss << MSG; \
       if( g_errorLogger.isOutputFileEnabled() ) \
       { \
         ErrorLogger::ErrorMsg msgStruct( ErrorLogger::MsgType::Error, \
-                                         __msgoss.str(), \
+                                         message, \
                                          __FILE__, \
                                          __LINE__ ); \
         msgStruct.setRank( ::geos::logger::internal::rank ); \
@@ -230,23 +232,22 @@
   { \
     if( EXP ) \
     { \
+      std::ostringstream __msgoss; \
+      __msgoss << MSG; \
+      std::string message =  __msgoss.str(); \
       std::ostringstream __oss; \
       __oss << "\n"; \
       __oss << "***** LOCATION: " LOCATION "\n"; \
       __oss << "***** Controlling expression (should be false): " STRINGIZE( EXP ) "\n"; \
-      __oss << MSG << "\n"; \
+      __oss << message << "\n"; \
       std::string stackHistory = LvArray::system::stackTrace( true ); \
       __oss << stackHistory; \
-      std::cout << __oss.str() << std::endl; \
-      std::ostringstream __msgoss; \
-      __msgoss << MSG; \
-      std::string msg =  __msgoss.str(); \
       if( g_errorLogger.isOutputFileEnabled() ) \
       { \
         g_errorLogger.currentErrorMsg() \
           .setType( ErrorLogger::MsgType::Exception ) \
           .setCodeLocation( __FILE__, __LINE__ ) \
-          .addToMsg( msg ) \
+          .addToMsg( message ) \
           .setRank( ::geos::logger::internal::rank ) \
           .addCallStackInfo( stackHistory ); \
       } \
@@ -266,23 +267,22 @@
   { \
     if( EXP ) \
     { \
+      std::ostringstream __msgoss; \
+      __msgoss << MSG; \
+      std::string message =  __msgoss.str(); \
       std::ostringstream __oss; \
       __oss << "\n"; \
       __oss << "***** LOCATION: " LOCATION "\n"; \
       __oss << "***** Controlling expression (should be false): " STRINGIZE( EXP ) "\n"; \
-      __oss << MSG << "\n"; \
+      __oss << message << "\n"; \
       std::string stackHistory = LvArray::system::stackTrace( true ); \
       __oss << stackHistory; \
-      std::cout << __oss.str() << std::endl; \
-      std::ostringstream __msgoss; \
-      __msgoss << MSG; \
-      std::string msg =  __msgoss.str(); \
       if( g_errorLogger.isOutputFileEnabled() ) \
       { \
         g_errorLogger.currentErrorMsg() \
           .setType( ErrorLogger::MsgType::Exception ) \
           .setCodeLocation( __FILE__, __LINE__ ) \
-          .addToMsg( msg ) \
+          .addToMsg( message ) \
           .setRank( ::geos::logger::internal::rank ) \
           .addCallStackInfo( stackHistory ) \
           .addContextInfo( __VA_ARGS__ ); \
@@ -316,18 +316,19 @@
   { \
     if( EXP ) \
     { \
+      std::ostringstream __msgoss; \
+      __msgoss << MSG; \
+      std::string message = __msgoss.str(); \
       std::ostringstream __oss; \
       __oss << "***** WARNING\n"; \
       __oss << "***** LOCATION: " LOCATION "\n"; \
       __oss << "***** Controlling expression (should be false): " STRINGIZE( EXP ) "\n"; \
-      __oss << MSG; \
+      __oss << message << "\n"; \
       std::cout << __oss.str() << std::endl; \
-      std::ostringstream __msgoss; \
-      __msgoss << MSG; \
       if( g_errorLogger.isOutputFileEnabled() ) \
       { \
         ErrorLogger::ErrorMsg msgStruct( ErrorLogger::MsgType::Warning, \
-                                         __msgoss.str(), \
+                                         message, \
                                          __FILE__, \
                                          __LINE__ ); \
         msgStruct.setRank( ::geos::logger::internal::rank ); \
@@ -348,18 +349,19 @@
   { \
     if( EXP ) \
     { \
+      std::ostringstream __msgoss; \
+      __msgoss << MSG; \
+      std::string message = __msgoss.str(); \
       std::ostringstream __oss; \
       __oss << "***** WARNING\n"; \
       __oss << "***** LOCATION: " LOCATION "\n"; \
       __oss << "***** Controlling expression (should be false): " STRINGIZE( EXP ) "\n"; \
-      __oss << MSG; \
+      __oss << message << "\n"; \
       std::cout << __oss.str() << std::endl; \
-      std::ostringstream __msgoss; \
-      __msgoss << MSG; \
       if( g_errorLogger.isOutputFileEnabled() ) \
       { \
         ErrorLogger::ErrorMsg msgStruct( ErrorLogger::MsgType::Warning, \
-                                         __msgoss.str(), \
+                                         message, \
                                          __FILE__, \
                                          __LINE__ ); \
         msgStruct.setRank( ::geos::logger::internal::rank ); \
