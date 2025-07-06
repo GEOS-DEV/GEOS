@@ -1177,7 +1177,7 @@ ImmiscibleMultiphaseFlow::scalingForSystemSolution( DomainPartition & domain,
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel const & mesh,
-                                                               string_array const & regionNames )
+                                                               string_array const & )
   {
     fluxApprox.forAllStencils( mesh, [&]( auto & stencil )
     {
@@ -1211,7 +1211,7 @@ ImmiscibleMultiphaseFlow::scalingForSystemSolution( DomainPartition & domain,
   real64 localInflectionFactor = 1.0;  
 
   // Compute residual norm if performing residual inflection analysis
-  real64 resNorm;
+  real64 resNorm = 0;
   if ( m_fluxInflection == 0 )
   {
     resNorm = calculateResidualNorm( 0, 0, domain, dofManager, localResidual );

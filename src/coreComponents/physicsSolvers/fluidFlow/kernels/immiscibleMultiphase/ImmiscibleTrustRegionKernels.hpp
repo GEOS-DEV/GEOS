@@ -308,7 +308,8 @@ public:
   GEOS_HOST_DEVICE
   void complete( localIndex const iconn,
                  StackVariables & stack ) const
-  {    
+  { 
+    GEOS_UNUSED_VAR( iconn );
     for( integer ic = 0; ic < stack.nConn; ++ic )
     {
       for (integer ip = 0; ip < m_numPhases; ++ip )
@@ -865,6 +866,7 @@ public:
   void complete( localIndex const iconn,
                  StackVariables & stack ) const
   {
+    GEOS_UNUSED_VAR( iconn );
     for( integer ic = 0; ic < stack.nConn; ++ic )
     {
       for (integer ip = 0; ip < m_numPhases; ++ip )
@@ -1161,7 +1163,7 @@ public:
       m_seri( stencilWrapper.getElementRegionIndices() ),
       m_sesri( stencilWrapper.getElementSubRegionIndices() ),
       m_sei( stencilWrapper.getElementIndices() )
-  {}  
+  { GEOS_UNUSED_VAR( poroAccessors );}  
 
   struct StackVariables
   {
@@ -1537,6 +1539,7 @@ public:
   void complete( localIndex const ei,
                  StackVariables & stack ) const
   {
+    GEOS_UNUSED_VAR( ei );
     for ( integer ip = 0; ip < m_numPhases; ++ip )
     {
       stack.elemFactor = LvArray::math::min( stack.elemFactor, stack.localEps[ip] );

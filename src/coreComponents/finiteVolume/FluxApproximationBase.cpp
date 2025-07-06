@@ -191,6 +191,7 @@ void FluxApproximationBase::setCoeffName( string const & name )
 
 void FluxApproximationBase::fillConnectionMap( MeshLevel & mesh ) const
 {
+  GEOS_UNUSED_VAR(mesh);
   return;
 }
 
