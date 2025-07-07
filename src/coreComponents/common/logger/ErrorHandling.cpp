@@ -270,11 +270,11 @@ void ErrorLogger::flushErrorMsg( ErrorLogger::ErrorMsg & errorMsg )
     yamlFile << "\n";
     yamlFile.flush();
     errorMsg = ErrorMsg();
-    GEOS_LOG_RANK( GEOS_FMT( "The error file {} was appended.", m_filename ) );
+    GEOS_LOG_RANK( GEOS_FMT( "The error file {} has been appended.\n", m_filename ) );
   }
   else
   {
-    GEOS_LOG_RANK( GEOS_FMT( "Unable to open error file for writing: {}", m_filename ) );
+    GEOS_LOG_RANK( GEOS_FMT( "Unable to open error file for writing ({}).\n", m_filename ) );
 
   }
 }
