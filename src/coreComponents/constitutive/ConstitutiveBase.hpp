@@ -133,7 +133,7 @@ public:
                                                                          typename FIELD_TRAIT::type * newObject )
   {
     if( FIELD_TRAIT::plotLevel != dataRepository::PlotLevel::NOPLOT )
-      m_userFields .emplace_back( fieldTrait.key() );
+      m_userFields.emplace_back( fieldTrait.key() );
 
     return registerWrapper( fieldTrait.key(), newObject ).
              setApplyDefaultValue( fieldTrait.defaultValue() ).
@@ -173,7 +173,7 @@ public:
    */
   std::vector< std::string > const & getUserFields() const
   {
-    return m_userFields ;
+    return m_userFields;
   }
 
 private:
@@ -190,7 +190,7 @@ private:
   bool m_isClone;
 
   // Vector containing all fields registered with `registerField()`
-  std::vector< std::string > m_userFields ;
+  std::vector< std::string > m_userFields;
 };
 
 }

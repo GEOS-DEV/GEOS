@@ -89,7 +89,7 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
     {
       if( constitutiveModel.getName() == ConstitutiveManager::groupKeyStruct::constitutiveModelsString())
       {
-        constitutiveModel.forSubGroups< Group >( [&]( Group  const & constitutive )
+        constitutiveModel.forSubGroups< Group >( [&]( Group const & constitutive )
         {
           ConstitutiveBase const * constitutiveBase = dynamic_cast< ConstitutiveBase const * >(&constitutive);
           auto const constitutiveFields = constitutiveBase->getUserFields();
