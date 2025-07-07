@@ -34,7 +34,11 @@ class OutputStreamDeviation
 {
 public:
 
-  using LineHandlingFunctor = std::function< void(std::string_view) >;
+  /**
+   * @brief A functor executed for each independant lines to process, taking the line as the 1st
+   *        string_view parameter, and the detectionLocation as the 2nd.
+   */
+  using LineHandlingFunctor = std::function< void (std::string_view, std::string_view) >;
 
   /**
    * @brief Construct and enable a new pipe redirection.
@@ -50,10 +54,11 @@ public:
 
   /**
    * @brief Flush the buffer from the original output pipe in a string, allowing to log it where needed.
-   * @param lineProcessingFunctor A functor executed for each independant lines taking them as a
-   *                             string_view parameter.
+   * @param lineProcessingFunctor see LineHandlingFunctor.
+   * @param detectionLocation A label to describe when the flush() operation is being made, thus
+   *                          explaining to the user when the error has been detected.
    */
-  void flush( LineHandlingFunctor const & lineProcessingFunctor );
+  void flush( LineHandlingFunctor const & lineProcessingFunctor, std::string_view detectionLocation );
 
 private:
   struct Pipe
@@ -87,6 +92,11 @@ class ExternalErrorHandler
 {
 public:
 
+  /**
+   * @brief A functor executed for each error mesage to process, taking the message as the 1st
+   *        string_view parameter, and the detectionLocation as the 2nd.
+   * @see defaultErrorHandling() for a default implementation.
+   */
   using ErrorHandlingFunctor = OutputStreamDeviation::LineHandlingFunctor;
 
   /**
@@ -104,8 +114,7 @@ public:
   /**
    * @brief Set the function that process the external errors that have been captured. The processing
    *        typically consists in using the given error message, adding metadata, and logging the message.
-   * @param errorHandlingFunctor A functor that takes each errors as a string_view parameter, allowing
-   *                             to process them.
+   * @param errorHandlingFunctor see ErrorHandlingFunctor.
    * @note Implementation treat each independant lines as an single error.
    */
   void setErrorHandling( ErrorHandlingFunctor && errorHandlingFunctor )
@@ -121,9 +130,19 @@ public:
 
   /**
    * @brief Process all awaiting captured errors that were produced externally, then clear the error stream.
-   * @see setErrorHandling() to set the error processing behaviour.
+   * @param detectionLocation A label to describe when the flush() operation is being made, thus
+   *                          explaining to the user when the error has been detected.
+   * @see setErrorHandling() to set the error processing procedure.
    */
-  void flush();
+  void flush( std::string_view detectionLocation );
+
+  /**
+   * @brief Not designed for direct calls, error handling function in default use if never calling
+   *        setErrorHandling().
+   * @param errorMsg the error text message.
+   * @param detectionLocation A label to describe to the user when the error has been detected.
+   */
+  static void defaultErrorHandling( std::string_view errorMsg, std::string_view detectionLocation );
 
 private:
   std::unique_ptr< OutputStreamDeviation > m_stderrDeviation;

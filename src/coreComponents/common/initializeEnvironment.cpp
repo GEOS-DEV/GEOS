@@ -86,7 +86,8 @@ void setupLogger()
     } );
 
     ///// set external error handling behaviour /////
-    ExternalErrorHandler::instance().setErrorHandling( []( string_view errorMsg ) -> void
+    ExternalErrorHandler::instance().setErrorHandling( []( string_view errorMsg,
+                                                           string_view detectionLocation )
     {
       std::string const stackHistory = LvArray::system::stackTrace( true );
       ErrorLogger::ErrorMsg error;
@@ -94,11 +95,14 @@ void setupLogger()
       error.addToMsg( errorMsg );
       error.setRank( ::geos::logger::internal::rank );
       error.addCallStackInfo( stackHistory );
+      error.addContextInfo( ErrorLogger::ContextInfo{ {
+        { string( "detectionLocation" ), string( detectionLocation ) }
+      } } );
 
       GEOS_LOG( GEOS_FMT( "***** ERROR\n"
-                          "***** LOCATION: (external code)\n"
+                          "***** LOCATION: (external error, detected {})\n"
                           "{}\n{}",
-                          error.m_msg, stackHistory ) );
+                          detectionLocation, error.m_msg, stackHistory ) );
       g_errorLogger.write( error );
 
       // we do not terminate the program as 1. the error could be non-fatal, 2. there may be more messages to output.
@@ -110,8 +114,9 @@ void setupLogger()
     {
       // Disable signal handling to prevent catching exit signal (infinite loop)
       LvArray::system::setSignalHandling( nullptr );
+
       // first of all, external error can await to be output, we must output them
-      ExternalErrorHandler::instance().flush();
+      ExternalErrorHandler::instance().flush( "before signal error output" );
 
       // error message output
       std::string const stackHistory = LvArray::system::stackTrace( true );
@@ -120,10 +125,13 @@ void setupLogger()
       error.addSignalToMsg( signal );
       error.setRank( ::geos::logger::internal::rank );
       error.addCallStackInfo( stackHistory );
+      error.addContextInfo( ErrorLogger::ContextInfo{ {
+        { string( "detectionLocation" ), string( "signal handler" ) }
+      } } );
 
       GEOS_LOG( GEOS_FMT( "***** ERROR\n"
-                          "***** LOCATION: (external code)\n"
                           "***** SIGNAL: {}\n"
+                          "***** LOCATION: (external error, captured by signal handler)\n"
                           "{}\n{}",
                           signal, error.m_msg, stackHistory ) );
       g_errorLogger.write( error );

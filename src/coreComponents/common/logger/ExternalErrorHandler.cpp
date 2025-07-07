@@ -121,7 +121,8 @@ OutputStreamDeviation::~OutputStreamDeviation()
 }
 
 
-void OutputStreamDeviation::flush( OutputStreamDeviation::LineHandlingFunctor const & lineFunctor )
+void OutputStreamDeviation::flush( OutputStreamDeviation::LineHandlingFunctor const & lineFunctor,
+                                   std::string_view detectionLocation )
 {
   std::array< char, 8192 > readBuffer;
   ssize_t bytesRead;
@@ -142,7 +143,7 @@ void OutputStreamDeviation::flush( OutputStreamDeviation::LineHandlingFunctor co
     {
       std::string_view line = std::string_view( m_unprocessedData.data() + lineStart,
                                                 lineEnd - lineStart );
-      lineFunctor( line );
+      lineFunctor( line, detectionLocation );
       lineStart = lineEnd + 1;
     }
 
@@ -159,13 +160,8 @@ void OutputStreamDeviation::flush( OutputStreamDeviation::LineHandlingFunctor co
 }
 
 
-void defaultErrorHandling( std::string_view errorMsg )
-{
-  std::cout << "External error: " << errorMsg << std::endl;
-}
-
 ExternalErrorHandler::ExternalErrorHandler():
-  m_processErrorFunctor( defaultErrorHandling )
+  m_processErrorFunctor( ExternalErrorHandler::defaultErrorHandling )
 {}
 
 ExternalErrorHandler::~ExternalErrorHandler()
@@ -191,12 +187,18 @@ void ExternalErrorHandler::enableStderrPipe( bool enable )
   }
 }
 
-void ExternalErrorHandler::flush()
+void ExternalErrorHandler::flush( std::string_view detectionLocation )
 {
   if( m_stderrDeviation && m_processErrorFunctor )
   {
-    m_stderrDeviation->flush( m_processErrorFunctor );
+    m_stderrDeviation->flush( m_processErrorFunctor, detectionLocation );
   }
+}
+
+void ExternalErrorHandler::defaultErrorHandling( std::string_view errorMsg,
+                                                 std::string_view detectionLocation )
+{
+  std::cout << "External error, detected" << detectionLocation << ": " << errorMsg << std::endl;
 }
 
 } /* namespace geos */

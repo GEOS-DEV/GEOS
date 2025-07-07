@@ -118,7 +118,7 @@ bool EventManager::run( DomainPartition & domain )
   integer exitFlag = 0;
 
   // flush stderr pipe in case any error happened during GEOS loading
-  ExternalErrorHandler::instance().flush();
+  ExternalErrorHandler::instance().flush( "post GEOS loading" );
 
   // Setup event targets, sequence indicators
   array1d< integer > eventCounters( 2 );
@@ -204,7 +204,7 @@ bool EventManager::run( DomainPartition & domain )
       }
 
       // check stderr pipe in case any error happened during subevent
-      ExternalErrorHandler::instance().flush();
+      ExternalErrorHandler::instance().flush( GEOS_FMT( "post {} sub-event processing", subEvent->getName() ) );
 
       // Check the exit flag
       // Note: Currently, this is only being used by the HaltEvent
