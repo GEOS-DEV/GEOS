@@ -24,6 +24,11 @@
 #include <fstream>
 #include <string_view>
 
+// signal management
+#include <csignal>
+#include <cfenv>
+#include <cstring>
+
 namespace geos
 {
 static constexpr std::string_view g_level1Start = "  - ";
@@ -94,6 +99,37 @@ ErrorLogger::ErrorMsg & ErrorLogger::ErrorMsg::addToMsg( std::string_view errorM
     m_msg = std::string( errorMsg ) + m_msg;
   }
   return *this;
+}
+
+ErrorLogger::ErrorMsg & ErrorLogger::ErrorMsg::addSignalToMsg( int sig )
+{
+  if( sig == SIGFPE )
+  {
+    std::string errorMsg = "Floating point error encountered: \n";
+
+    if( std::fetestexcept( FE_DIVBYZERO ) )
+      errorMsg += "- Division by zero operation.\n";
+
+    if( std::fetestexcept( FE_INEXACT ) )
+      errorMsg += "- Inexact result.\n";
+
+    if( std::fetestexcept( FE_INVALID ) )
+      errorMsg += "- Domain error occurred in an earlier floating-point operation.\n";
+
+    if( std::fetestexcept( FE_OVERFLOW ) )
+      errorMsg += "- The result of the earlier floating-point operation was too large to be representable.\n";
+
+    if( std::fetestexcept( FE_UNDERFLOW ) )
+      errorMsg += "- The result of the earlier floating-point operation was subnormal with a loss of precision.\n";
+
+    return addToMsg( errorMsg );
+  }
+  else
+  {
+    // standard messages
+    return addToMsg( GEOS_FMT( "Signal no. {} encountered: {}\n",
+                               sig, ::strsignal( sig ) ) );
+  }
 }
 
 ErrorLogger::ErrorMsg & ErrorLogger::ErrorMsg::setCodeLocation( std::string_view msgFile, integer msgLine )

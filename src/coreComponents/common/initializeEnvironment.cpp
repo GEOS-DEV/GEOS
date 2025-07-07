@@ -91,7 +91,30 @@ void setupLvArray()
     std::abort();
   } );
 
-  LvArray::system::setSignalHandling( []( int const signal ) { LvArray::system::stackTraceHandler( signal, true ); } );
+  LvArray::system::setSignalHandling( []( int const signal )
+  {
+    std::string stackHistory = LvArray::system::stackTrace( true );
+    ErrorLogger::ErrorMsg errorMsg( ErrorLogger::MsgType::Error,
+                                    GEOS_FMT( "***** ERROR\n"
+                                              "***** SIGNAL: {}\n",
+                                              signal ),
+                                    __FILE__,
+                                    __LINE__ );
+    errorMsg.addSignalToMsg( signal );
+
+    // output everything in log at once, to not get the stacktrace uncoupled from the msg between rank messages.
+    GEOS_LOG( errorMsg.m_msg << "\n" << stackHistory );
+
+    errorMsg.setRank( ::geos::logger::internal::rank );
+    errorMsg.addCallStackInfo( stackHistory );
+    g_errorLogger.write( errorMsg );
+
+    // disable signal handling to prevent catching exit signal (infinite loop)
+    LvArray::system::setSignalHandling( nullptr );
+
+    // call program termination
+    LvArray::system::callErrorHandler();
+  } );
 
 #if defined(GEOS_USE_FPE)
   LvArray::system::setFPE();
