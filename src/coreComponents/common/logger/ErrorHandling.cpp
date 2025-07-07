@@ -44,7 +44,7 @@ ErrorLogger g_errorLogger{};
 
 void ErrorLogger::createFile()
 {
-  if( stringutilities::endsWith( m_filename, ".yaml") )
+  if( stringutilities::endsWith( m_filename, ".yaml" ) )
   {
     std::ofstream yamlFile( std::string( m_filename ), std::ios::out );
     if( yamlFile.is_open() )
@@ -248,22 +248,26 @@ void ErrorLogger::flushErrorMsg( ErrorLogger::ErrorMsg & errorMsg )
         yamlFile << g_level3Start << "priority: " << ctxInfo.m_priority << "\n";
         for( auto const & [key, value] : ctxInfo.m_attributes )
         {
-            yamlFile << g_level3Next << ErrorContext::attributeToString( key ) << ": " << value << "\n";
+          yamlFile << g_level3Next << ErrorContext::attributeToString( key ) << ": " << value << "\n";
         }
       }
     }
     // Location of the error in the code
-    yamlFile << g_level1Next << "sourceLocation:\n";
-    yamlFile << g_level2Next << "file: " << errorMsg.m_file << "\n";
-    yamlFile << g_level2Next << "line: " << errorMsg.m_line << "\n";
+    if( !errorMsg.m_file.empty() )
+    {
+      yamlFile << g_level1Next << "sourceLocation:\n";
+      yamlFile << g_level2Next << "file: " << errorMsg.m_file << "\n";
+      yamlFile << g_level2Next << "line: " << errorMsg.m_line << "\n";
+    }
     // Information about the stack trace
-    yamlFile << g_level1Next << "sourceCallStack:\n";
     if( !errorMsg.isValidStackTrace() )
     {
+      yamlFile << g_level1Next << "sourceCallStack:\n";
       yamlFile << g_level3Start << "callStackMessage: " << errorMsg.m_sourceCallStack[0] << "\n";
     }
-    else
+    else if (errorMsg.m_sourceCallStack.size() > 0)
     {
+      yamlFile << g_level1Next << "sourceCallStack:\n";
       for( size_t i = 0; i < errorMsg.m_sourceCallStack.size(); i++ )
       {
         yamlFile << g_level3Start << "frame" << i << ": " << errorMsg.m_sourceCallStack[i] << "\n";
