@@ -47,7 +47,7 @@ TEST( TestNeighborComms, testBuffers )
 {
   {
     size_t sz = 100;
-    std::vector< char > sd( sz );
+    stdVector< char > sd( sz );
     for( size_t ii = 0; ii < sz; ++ii )
       sd[ii] = crand();
 
