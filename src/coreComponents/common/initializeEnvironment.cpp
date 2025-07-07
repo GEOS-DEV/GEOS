@@ -100,7 +100,7 @@ void setupLvArray()
                                               signal ),
                                     __FILE__,
                                     __LINE__ );
-    errorMsg.addSignalToMsg( signal );
+    errorMsg.addSignalToMsg( signal, true );
 
     // output everything in log at once, to not get the stacktrace uncoupled from the msg between rank messages.
     GEOS_LOG( errorMsg.m_msg << "\n" << stackHistory );

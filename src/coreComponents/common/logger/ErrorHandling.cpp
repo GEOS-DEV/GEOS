@@ -101,7 +101,7 @@ ErrorLogger::ErrorMsg & ErrorLogger::ErrorMsg::addToMsg( std::string_view errorM
   return *this;
 }
 
-ErrorLogger::ErrorMsg & ErrorLogger::ErrorMsg::addSignalToMsg( int sig )
+ErrorLogger::ErrorMsg & ErrorLogger::ErrorMsg::addSignalToMsg( int sig, bool toEnd )
 {
   if( sig == SIGFPE )
   {
@@ -122,13 +122,15 @@ ErrorLogger::ErrorMsg & ErrorLogger::ErrorMsg::addSignalToMsg( int sig )
     if( std::fetestexcept( FE_UNDERFLOW ) )
       errorMsg += "- The result of the earlier floating-point operation was subnormal with a loss of precision.\n";
 
-    return addToMsg( errorMsg );
+    return addToMsg( errorMsg,
+                     toEnd );
   }
   else
   {
     // standard messages
     return addToMsg( GEOS_FMT( "Signal no. {} encountered: {}\n",
-                               sig, ::strsignal( sig ) ) );
+                               sig, ::strsignal( sig ) ),
+                     toEnd );
   }
 }
 
