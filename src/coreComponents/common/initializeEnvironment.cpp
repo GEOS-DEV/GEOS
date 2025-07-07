@@ -21,6 +21,7 @@
 #include "common/format/table/TableFormatter.hpp"
 #include "common/LifoStorageCommon.hpp"
 #include "common/MemoryInfos.hpp"
+#include "logger/ExternalErrorHandler.hpp"
 #include <umpire/TypedAllocator.hpp>
 // TPL includes
 #include <umpire/ResourceManager.hpp>
@@ -67,6 +68,71 @@ void setupLogger()
 #else
   logger::InitializeLogger();
 #endif
+
+  { // setup error handling (using LvArray helper system functions)
+
+    ///// set Post-Handled Error behaviour /////
+    LvArray::system::setErrorHandler( []()
+    {
+  #if defined( GEOS_USE_MPI )
+      int mpi = 0;
+      MPI_Initialized( &mpi );
+      if( mpi )
+      {
+        MPI_Abort( MPI_COMM_WORLD, EXIT_FAILURE );
+      }
+  #endif
+      std::abort();
+    } );
+
+    ///// set external error handling behaviour /////
+    ExternalErrorHandler::instance().setErrorHandling( []( string_view errorMsg ) -> void
+    {
+      std::string const stackHistory = LvArray::system::stackTrace( true );
+      ErrorLogger::ErrorMsg error;
+      error.setType( ErrorLogger::MsgType::Error );
+      error.addToMsg( errorMsg );
+      error.setRank( ::geos::logger::internal::rank );
+      error.addCallStackInfo( stackHistory );
+
+      GEOS_LOG( GEOS_FMT( "***** ERROR\n"
+                          "***** LOCATION: (external code)\n"
+                          "{}\n{}",
+                          error.m_msg, stackHistory ) );
+      g_errorLogger.write( error );
+
+      // we do not terminate the program as 1. the error could be non-fatal, 2. there may be more messages to output.
+    } );
+    ExternalErrorHandler::instance().enableStderrPipe( true );
+
+    ///// set signal handling behaviour /////
+    LvArray::system::setSignalHandling( []( int const signal )
+    {
+      // Disable signal handling to prevent catching exit signal (infinite loop)
+      LvArray::system::setSignalHandling( nullptr );
+      // first of all, external error can await to be output, we must output them
+      ExternalErrorHandler::instance().flush();
+
+      // error message output
+      std::string const stackHistory = LvArray::system::stackTrace( true );
+      ErrorLogger::ErrorMsg error;
+      error.setType( ErrorLogger::MsgType::Error );
+      error.addSignalToMsg( signal );
+      error.setRank( ::geos::logger::internal::rank );
+      error.addCallStackInfo( stackHistory );
+
+      GEOS_LOG( GEOS_FMT( "***** ERROR\n"
+                          "***** LOCATION: (external code)\n"
+                          "***** SIGNAL: {}\n"
+                          "{}\n{}",
+                          signal, error.m_msg, stackHistory ) );
+      g_errorLogger.write( error );
+
+      // call program termination
+      LvArray::system::callErrorHandler();
+    } );
+
+  }
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -78,44 +144,6 @@ void finalizeLogger()
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void setupLvArray()
 {
-  LvArray::system::setErrorHandler( []()
-  {
-  #if defined( GEOS_USE_MPI )
-    int mpi = 0;
-    MPI_Initialized( &mpi );
-    if( mpi )
-    {
-      MPI_Abort( MPI_COMM_WORLD, EXIT_FAILURE );
-    }
-  #endif
-    std::abort();
-  } );
-
-  LvArray::system::setSignalHandling( []( int const signal )
-  {
-    std::string stackHistory = LvArray::system::stackTrace( true );
-    ErrorLogger::ErrorMsg errorMsg( ErrorLogger::MsgType::Error,
-                                    GEOS_FMT( "***** ERROR\n"
-                                              "***** SIGNAL: {}\n",
-                                              signal ),
-                                    __FILE__,
-                                    __LINE__ );
-    errorMsg.addSignalToMsg( signal, true );
-
-    // output everything in log at once, to not get the stacktrace uncoupled from the msg between rank messages.
-    GEOS_LOG( errorMsg.m_msg << "\n" << stackHistory );
-
-    errorMsg.setRank( ::geos::logger::internal::rank );
-    errorMsg.addCallStackInfo( stackHistory );
-    g_errorLogger.write( errorMsg );
-
-    // disable signal handling to prevent catching exit signal (infinite loop)
-    LvArray::system::setSignalHandling( nullptr );
-
-    // call program termination
-    LvArray::system::callErrorHandler();
-  } );
-
 #if defined(GEOS_USE_FPE)
   LvArray::system::setFPE();
 #else

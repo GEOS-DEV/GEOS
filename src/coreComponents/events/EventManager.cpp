@@ -23,6 +23,7 @@
 #include "events/EventBase.hpp"
 #include "common/MpiWrapper.hpp"
 #include "common/Units.hpp"
+#include "common/logger/ExternalErrorHandler.hpp"
 #include "events/LogLevelsInfo.hpp"
 
 namespace geos
@@ -116,6 +117,9 @@ bool EventManager::run( DomainPartition & domain )
 
   integer exitFlag = 0;
 
+  // flush stderr pipe in case any error happened during GEOS loading
+  ExternalErrorHandler::instance().flush();
+
   // Setup event targets, sequence indicators
   array1d< integer > eventCounters( 2 );
   this->forSubGroups< EventBase >( [&]( EventBase & subEvent )
@@ -198,6 +202,9 @@ bool EventManager::run( DomainPartition & domain )
       {
         earlyReturn = subEvent->execute( m_time, m_dt, m_cycle, 0, 0, domain );
       }
+
+      // check stderr pipe in case any error happened during subevent
+      ExternalErrorHandler::instance().flush();
 
       // Check the exit flag
       // Note: Currently, this is only being used by the HaltEvent

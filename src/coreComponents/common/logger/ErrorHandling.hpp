@@ -149,8 +149,8 @@ public:
      *        - if the signal is SIGFPE, the nature of floating point error will be interpreted.
      * @param signal The signal, from ISO C99 or POSIX standard.
      * @param toEnd adds the message to the end if true, at the start otherwise.
-     * @return The instance, for builder pattern.  
-     */  
+     * @return The instance, for builder pattern.
+     */
     ErrorMsg & addSignalToMsg( int signal, bool toEnd = false );
 
     /**
