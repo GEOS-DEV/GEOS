@@ -70,6 +70,7 @@ void setupLogger()
 #endif
 
   { // setup error handling (using LvArray helper system functions)
+    using ErrorContext = ErrorLogger::ErrorContext;
 
     ///// set Post-Handled Error behaviour /////
     LvArray::system::setErrorHandler( []()
@@ -95,9 +96,8 @@ void setupLogger()
       error.addToMsg( errorMsg );
       error.setRank( ::geos::logger::internal::rank );
       error.addCallStackInfo( stackHistory );
-      error.addContextInfo( ErrorLogger::ContextInfo{ {
-        { string( "detectionLocation" ), string( detectionLocation ) }
-      } } );
+      error.addContextInfo( 
+        ErrorContext{ { { ErrorContext::Attribute::DetectionLoc, string( detectionLocation ) } } } );
 
       GEOS_LOG( GEOS_FMT( "***** ERROR\n"
                           "***** LOCATION: (external error, detected {})\n"
@@ -125,9 +125,9 @@ void setupLogger()
       error.addSignalToMsg( signal );
       error.setRank( ::geos::logger::internal::rank );
       error.addCallStackInfo( stackHistory );
-      error.addContextInfo( ErrorLogger::ContextInfo{ {
-        { string( "detectionLocation" ), string( "signal handler" ) }
-      } } );
+      error.addContextInfo( 
+        ErrorContext{ { { ErrorContext::Attribute::Signal, std::to_string( signal ) } }, 1 },
+        ErrorContext{ { { ErrorContext::Attribute::DetectionLoc, string( "signal handler" ) } }, 0 } );
 
       GEOS_LOG( GEOS_FMT( "***** ERROR\n"
                           "***** SIGNAL: {}\n"

@@ -71,7 +71,8 @@ std::string ErrorLogger::ErrorContext::attributeToString( ErrorLogger::ErrorCont
     case ErrorLogger::ErrorContext::Attribute::InputFile: return "inputFile";
     case ErrorLogger::ErrorContext::Attribute::InputLine: return "inputLine";
     case ErrorLogger::ErrorContext::Attribute::DataPath: return "dataPath";
-    case ErrorLogger::ErrorContext::Attribute::DetectionLocation: return "detectionLocation";
+    case ErrorLogger::ErrorContext::Attribute::DetectionLoc: return "detectionLocation";
+    case ErrorLogger::ErrorContext::Attribute::Signal: return "signal";
     default: return "unknown";
   }
 }

@@ -61,7 +61,9 @@ public:
     {
       InputFile,
       InputLine,
-      DataPath
+      DataPath,
+      DetectionLoc,
+      Signal,
     };
 
     /// The map contains contextual information about the error
