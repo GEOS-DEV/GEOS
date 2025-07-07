@@ -47,7 +47,7 @@ PhysicsSolverBase::PhysicsSolverBase( string const & name,
   m_nonlinearSolverParameters( groupKeyStruct::nonlinearSolverParametersString(), this ),
   m_solverStatistics( groupKeyStruct::solverStatisticsString(), this ),
   m_systemSetupTimestamp( 0 ),
-  m_nullIterationStats( groupKeyStruct::NullIterationsStatisticsString, this )
+  m_nullIterationStats( groupKeyStruct::NullIterationsStatisticsString(), this )
 {
   setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
 
@@ -238,7 +238,6 @@ real64 PhysicsSolverBase::solverStep( real64 const & time_n,
                                       DomainPartition & domain )
 {
   GEOS_MARK_FUNCTION;
-  std::cout << "name "<< this->getName()<< std::endl;
   // Only build the sparsity pattern if the mesh has changed
   Timestamp const meshModificationTimestamp = getMeshModificationTimestamp( domain );
 
@@ -289,7 +288,6 @@ bool PhysicsSolverBase::execute( real64 const time_n,
 
   for( integer subStep = 0; subStep < maxSubSteps && dtRemaining > 0.0; ++subStep )
   {
-    std::cout << "la on reset physics solver" << std::endl;
     // reset number of nonlinear and linear iterations
     getIterationStats().resetCurrentTimeStepStatistics();
     real64 const dtAccepted = solverStep( time_n + (dt - dtRemaining),
@@ -299,7 +297,6 @@ bool PhysicsSolverBase::execute( real64 const time_n,
 
     numOfSubSteps++;
     subStepDts[subStep] = dtAccepted;
-    std::cout << "la on incremente dans physics solver" << std::endl;
 
     // increment the cumulative number of nonlinear and linear iterations
     getIterationStats().iterateTimeStepStatistics();
@@ -351,7 +348,6 @@ bool PhysicsSolverBase::execute( real64 const time_n,
 
   logEndOfCycleInformation( cycleNumber, numOfSubSteps, subStepDts );
 
-  std::cout << "on ecrit dans physcs solver "<< std::endl;
   if( m_writeSolverIterationsCSV )
     getIterationStats().writeStatsToTable();
 
@@ -579,7 +575,6 @@ real64 PhysicsSolverBase::linearImplicitStep( real64 const & time_n,
   }
 
   // Increment the solver statistics for reporting purposes
-  std::cout <<" updateNonlinearIteration "<< getName()<<std::endl;
   getIterationStats().updateNonlinearIteration( m_linearSolverResult.numIterations );
 
   // Output the linear system solution for debugging purposes
@@ -633,7 +628,6 @@ bool PhysicsSolverBase::lineSearch( real64 const & time_n,
   // subtract a portion of the previous solution.
   real64 localScaleFactor = -scaleFactor;
   real64 cumulativeScale = scaleFactor;
-  std::cout << "line search "<< maxNumberLineSearchCuts << std::endl;
   // main loop for the line search.
   for( integer lineSearchIteration = 0; lineSearchIteration < maxNumberLineSearchCuts; ++lineSearchIteration )
   {
@@ -953,7 +947,6 @@ bool PhysicsSolverBase::solveNonlinearSystem( real64 const & time_n,
 
   for( newtonIter = 0; newtonIter < maxNewtonIter; ++newtonIter )
   {
-    std::cout << "newter iter de "<< getName() << std::endl;
     getConvergenceStats().updateNewtonIter( newtonIter );
     GEOS_LOG_LEVEL_RANK_0( logInfo::NonlinearSolver,
                            GEOS_FMT( "    Attempt: {:2}, ConfigurationIter: {:2}, NewtonIter: {:2}", dtAttempt, configurationLoopIter, newtonIter ));
@@ -1187,7 +1180,6 @@ void PhysicsSolverBase::doSmthEarlyStep( real64 const & time_n, real64 const & d
 
 void PhysicsSolverBase::doSmthEndStep( real64 const & time_n, real64 const & dt, integer const cycleNumber )
 {
-  std::cout << "end for " << getName() << " time_n " << time_n << " dt " << dt << std::endl;
   getConvergenceStats().updateCycleNumber( cycleNumber );
   //getIterationStats().updateCycleNumber( cycleNumber );
   if( m_writeSolvingConvergenceCSV )

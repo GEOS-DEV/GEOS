@@ -718,6 +718,9 @@ public:
 
     /// @return string for the solverStatistics wrapper
     static constexpr char const * solverStatisticsString() { return "SolverStatistics"; }
+
+    /// @return string for the NullIterationsStatistics wrapper
+    static constexpr char const * NullIterationsStatisticsString() { return "NullIterationsStatistics"; }
   };
 
   /**
@@ -1097,7 +1100,7 @@ protected:
 
 private:
   /// "Trash" object returned for sub-solvers
-  IterationsStatistics m_nullIterationStats;
+  NullIterationsStatistics m_nullIterationStats;
 
   /// List of names of regions the solver will be applied to
   string_array m_targetRegionNames;

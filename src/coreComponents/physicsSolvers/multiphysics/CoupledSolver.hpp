@@ -96,6 +96,7 @@ public:
       GEOS_LOG_LEVEL_RANK_0( logInfo::Coupling,
                              GEOS_FMT( "{}: found {} solver named {}",
                                        getName(), solver->getCatalogName(), solverName ) );
+      solver->m_shouldIterate = false;
     } );
   }
 

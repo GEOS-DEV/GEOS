@@ -38,7 +38,6 @@ SolverStatistics::SolverStatistics( string const & name, Group * const parent )
 void SolverStatistics::setOutputFilesName( string_view solverName )
 {
   m_iterationsStats.setFilename( GEOS_FMT( "{}/{}_iterations.csv", getOutputDir(), solverName ));
-  m_iterationsStats.setSolverName( solverName);
   m_convergenceStats.setFilename( GEOS_FMT( "{}/{}_convergence.csv", getOutputDir(), solverName ));
 }
 
@@ -172,8 +171,7 @@ void IterationsStatistics::outputStatistics( bool writeCSV )
   { // output to log
     GEOS_LOG_RANK_0( GEOS_FMT( "{}, number of Time-steps: {}", getParent().getName(), m_numTimeSteps ) );
     GEOS_LOG_RANK_0( GEOS_FMT( "{}, number of Time steps cut: {}", getParent().getName(), m_numTimeStepCuts ) );
-
-    TableLayout iterationLogLayout ( GEOS_FMT( "{} iterations", m_solverName ),
+    TableLayout iterationLogLayout ( GEOS_FMT( "{} iterations", getParent().getName() ),
                                      { "Components", "Iter  "} );
 
     TableTextFormatter const statsFormatter( iterationLogLayout );

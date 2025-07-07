@@ -199,11 +199,6 @@ public:
   /**
    * @brief Group key associated with NullIterationsStatistics.
    */
-  struct groupKeyStruct
-  {
-    /// @return string for the NullIterationsStatistics wrapper
-    static constexpr char const * NullIterationsStatisticsString() { return "NullIterationsStatistics"; }
-  };
 ///@{
 /// @cond DO_NOT_DOCUMENT
   void resetCurrentTimeStepStatistics() override {}
