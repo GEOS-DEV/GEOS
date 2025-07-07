@@ -39,7 +39,7 @@ struct TestCase
 {
   string name;
   bool isExpectedToPass = true;
-  std::vector< string > stringsToMention;
+  stdVector< string > stringsToMention;
   string_view xmlRegions;
 };
 
