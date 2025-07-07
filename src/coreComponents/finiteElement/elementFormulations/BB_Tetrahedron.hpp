@@ -642,10 +642,20 @@ public:
   template< typename FUNC, int... Is >
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
-  static constexpr void loop( FUNC && func, std::integer_sequence< int, Is... > )
+  static constexpr void loop_impl( FUNC && func, std::integer_sequence< int, Is... > )
   {
     ( func( std::integral_constant< int, Is >{} ), ... );
   }
+
+  template< int N, typename FUNC >
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
+  static constexpr void loop( FUNC && func )
+  {
+    loop_impl( std::forward< FUNC >( func ), std::make_integer_sequence< int, N >{} );
+  }
+
+
 
   /**
    * @brief Helper function for loop over barycentric coordinates
@@ -657,9 +667,7 @@ public:
   GEOS_FORCE_INLINE
   static constexpr void barycentricCoordinateLoop( FUNC && func )
   {
-    loop( [&func] ( auto const i ) {
-      func( std::integral_constant< int, i >{} );
-    }, std::make_integer_sequence< int, 4 >{} );
+    loop_impl( std::forward< FUNC >( func ), std::make_integer_sequence< int, 4 >{} );
   }
 
   /**
@@ -672,15 +680,16 @@ public:
   GEOS_FORCE_INLINE
   static constexpr void basisLoop( FUNC && func )
   {
-    loop( [&func] ( auto const i )
+    loop< ORDER + 1 >( [&func] ( auto const iic )
     {
+      constexpr int i = decltype(iic)::value;
       constexpr int i1 = ORDER - i;
-      loop( [&func] ( auto const j )
+      loop< ORDER + 1 >( [&func] ( auto const j )
       {
         constexpr int j1 = ORDER - j;
         if constexpr ( j1 <= ORDER - i1 )
         {
-          loop( [&func] ( auto const k )
+          loop< ORDER + 1 >( [&func] ( auto const k )
           {
             constexpr int k1 = ORDER - k;
             if constexpr ( k1 <= ORDER - i1 - j1 )
@@ -693,10 +702,10 @@ public:
                     std::integral_constant< int, k1 >{},
                     std::integral_constant< int, l1 >{} );
             }
-          }, std::make_integer_sequence< int, ORDER + 1 > {} );
+          } );
         }
-      }, std::make_integer_sequence< int, ORDER + 1 > {} );
-    }, std::make_integer_sequence< int, ORDER + 1 > {} );
+      } );
+    } );
   }
 
   /**
@@ -711,60 +720,32 @@ public:
   GEOS_FORCE_INLINE
   static constexpr void conditionalBasisLoop( FUNC && func )
   {
-    loop( [&func] ( auto const i )
+    loop< ORDER + 1 >( [&func] ( auto const i )
     {
-      constexpr int i1 = ORDER -  i;
-      loop( [&func, i1] ( auto const j )
+      std::integral_constant< int, ORDER -  decltype(i)::value > i1;
+      loop< ORDER + 1 >( [&func, i1] ( auto const j )
       {
-        constexpr int j1 = ORDER - j;
+        std::integral_constant< int, ORDER - decltype(j)::value > j1;
         constexpr int ii1 = ORDER -i1;
         if constexpr ( j1 <= ii1 )
         {
-          loop( [&func, i1, j1] ( auto const k )
+          loop< ORDER + 1 >( [&func, i1, j1] ( auto const k )
           {
-            constexpr int k1 = ORDER - k;
-            constexpr int ji1 = ORDER - i1 - j1;
+            std::integral_constant< int, ORDER - k > k1;
+            std::integral_constant< int, ORDER - i1 - j1 > ji1;
             if constexpr ( k1 <= ji1 )
             {
-              constexpr int l1 = ORDER - i1 - j1 - k1;
-              constexpr int c1 = dofIndex< i1, j1, k1 >();
-              ( ( (i1 == Is) &&
-                  ( void( func(
-                            std::integral_constant< int, 0 >{},
-                            std::integral_constant< int, i1 >{},
-                            std::integral_constant< int, c1 >{},
-                            std::integral_constant< int, j1 >{},
-                            std::integral_constant< int, k1 >{},
-                            std::integral_constant< int, l1 >{} ) ), 1 ) ) || ... );
-              ( ( (j1 == Is) &&
-                  ( void( func(
-                            std::integral_constant< int, 1 >{},
-                            std::integral_constant< int, j1 >{},
-                            std::integral_constant< int, c1 >{},
-                            std::integral_constant< int, i1 >{},
-                            std::integral_constant< int, k1 >{},
-                            std::integral_constant< int, l1 >{} ) ), 1 ) ) || ... );
-              ( ( (k1 == Is) &&
-                  ( void( func(
-                            std::integral_constant< int, 2 >{},
-                            std::integral_constant< int, k1 >{},
-                            std::integral_constant< int, c1 >{},
-                            std::integral_constant< int, i1 >{},
-                            std::integral_constant< int, j1 >{},
-                            std::integral_constant< int, l1 >{} ) ), 1 ) ) || ... );
-              ( ( (l1 == Is) &&
-                  ( void( func(
-                            std::integral_constant< int, 3 >{},
-                            std::integral_constant< int, l1 >{},
-                            std::integral_constant< int, c1 >{},
-                            std::integral_constant< int, i1 >{},
-                            std::integral_constant< int, j1 >{},
-                            std::integral_constant< int, k1 >{} ) ), 1 ) ) || ...);
+              std::integral_constant< int, ORDER - i1 - j1 - k1 > l1;
+              std::integral_constant< int, dofIndex< i1, j1, k1 >() > c1;
+              (void)( ( (i1 == Is) && ( void( func( std::integral_constant< int, 0 >{}, i1, c1, j1, k1, l1 ) ), 1 ) ) || ... );
+              (void)( ( (j1 == Is) && ( void( func( std::integral_constant< int, 1 >{}, j1, c1, i1, k1, l1 ) ), 1 ) ) || ... );
+              (void)( ( (k1 == Is) && ( void( func( std::integral_constant< int, 2 >{}, k1, c1, i1, j1, l1 ) ), 1 ) ) || ... );
+              (void)( ( (l1 == Is) && ( void( func( std::integral_constant< int, 3 >{}, l1, c1, i1, j1, k1 ) ), 1 ) ) || ... );
             }
-          }, std::make_integer_sequence< int, ORDER + 1 > {} );
+          } );
         }
-      }, std::make_integer_sequence< int, ORDER + 1 > {} );
-    }, std::make_integer_sequence< int, ORDER + 1 > {} );
+      } );
+    } );
   }
 
   /**
@@ -777,9 +758,7 @@ public:
   GEOS_FORCE_INLINE
   static constexpr void faceBarycentricCoordinateLoop( FUNC && func )
   {
-    loop( [&func] ( auto const i ) {
-      func( std::integral_constant< int, i >{} );
-    }, std::make_integer_sequence< int, 3 >{} );
+    loop< 3 >( std::forward< FUNC >( func ) );
   }
 
   /**
@@ -797,11 +776,11 @@ public:
   {
     basisLoop( [ &m ] ( auto const cc1, auto const ii1, auto const jj1, auto const kk1, auto const ll1 )
     {
-      constexpr int c1 = cc1;
-      constexpr int i1 = ii1;
-      constexpr int j1 = jj1;
-      constexpr int k1 = kk1;
-      constexpr int l1 = ll1;
+      constexpr int c1 = decltype(cc1)::value;
+      constexpr int i1 = decltype(ii1)::value;
+      constexpr int j1 = decltype(jj1)::value;
+      constexpr int k1 = decltype(kk1)::value;
+      constexpr int l1 = decltype(ll1)::value;
       // Needed for compilers that do not support constexpr lambdas
       GEOS_UNUSED_VAR( c1, i1, j1, k1, l1 );
       basisLoop( [ &m ] ( auto const c2, auto const i2, auto const j2, auto const k2, auto const l2 )
@@ -1056,23 +1035,23 @@ public:
   {
     real64 detJf[4] = { faceJacobianDeterminant( 0, X ), faceJacobianDeterminant( 1, X ),
                         faceJacobianDeterminant( 2, X ), faceJacobianDeterminant( 3, X ) };
-    conditionalBasisLoop< 0, 1 >( [&funcP, &funcF, &detJf]  ( auto const cf1, auto const cd, auto const cc1, auto const ci1, auto const cj1, auto const ck1 )
+    conditionalBasisLoop< 0, 1 >( [&]  ( auto const cf1, auto const cd, auto const cc1, auto const ci1, auto const cj1, auto const ck1 )
     {
-      constexpr int f1 = cf1;
-      constexpr int d1 = cd;
-      constexpr int c1 = cc1;
-      constexpr int i1 = ci1;
-      constexpr int j1 = cj1;
-      constexpr int k1 = ck1;
+      constexpr int f1 = decltype(cf1)::value;
+      constexpr int d1 = decltype(cd)::value;
+      constexpr int c1 = decltype(cc1)::value;
+      constexpr int i1 = decltype(ci1)::value;
+      constexpr int j1 = decltype(cj1)::value;
+      constexpr int k1 = decltype(ck1)::value;
       // Not used in some combinations, but needed for constexpr
       GEOS_UNUSED_VAR( c1, i1, j1, k1 );
-      conditionalBasisLoop< 0 >( [&funcP, &funcF, &detJf]  ( auto const cf2, auto const, auto const cc2, auto const ci2, auto const cj2, auto const ck2 )
+      conditionalBasisLoop< 0 >( [&]  ( auto const cf2, auto const, auto const cc2, auto const ci2, auto const cj2, auto const ck2 )
       {
-        constexpr int f2 = cf2;
-        constexpr int c2 = cc2;
-        constexpr int i2 = ci2;
-        constexpr int j2 = cj2;
-        constexpr int k2 = ck2;
+        constexpr int f2 = decltype(cf2)::value;
+        constexpr int c2 = decltype(cc2)::value;
+        constexpr int i2 = decltype(ci2)::value;
+        constexpr int j2 = decltype(cj2)::value;
+        constexpr int k2 = decltype(ck2)::value;
         // Not used in some combinations, but needed for constexpr
         GEOS_UNUSED_VAR( c2, i2, j2, k2 );
 
