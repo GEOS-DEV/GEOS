@@ -58,7 +58,10 @@ enum class KernelFlags
   /// Flag indicating whether IHU is used or not
   IHU = 1 << 6, // 64
   /// Flag indicating whether HU 2-phase simplified version is used or not
-  HU2PH = 1 << 7 // 128
+  HU2PH = 1 << 7, // 128
+  /// Flag indicating that velocity should be computed as a field (most liektly to use in linear dispersion)
+  VelocityCompute = 1 << 7  //128
+                    /// Add more flags like that if needed:
 };
 
 /******************************** FluxComputeKernelBase ********************************/
@@ -82,6 +85,8 @@ public:
 
   using DofNumberAccessor = ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > >;
 
+  using GlobalCellDimAccessor = ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > >;
+
   using CompFlowAccessors =
     StencilAccessors< fields::ghostRank,
                       fields::flow::gravityCoefficient,
@@ -89,6 +94,7 @@ public:
                       fields::flow::dGlobalCompFraction_dGlobalCompDensity,
                       fields::flow::phaseVolumeFraction,
                       fields::flow::dPhaseVolumeFraction,
+                      fields::flow::phaseVelocity,
                       fields::flow::phaseMobility,
                       fields::flow::dPhaseMobility >;
   using MultiFluidAccessors =
@@ -125,6 +131,7 @@ public:
   FluxComputeKernelBase( integer const numPhases,
                          globalIndex const rankOffset,
                          DofNumberAccessor const & dofNumberAccessor,
+                         GlobalCellDimAccessor const & globalCellDimAccessor,
                          CompFlowAccessors const & compFlowAccessors,
                          MultiFluidAccessors const & multiFluidAccessors,
                          real64 const dt,
@@ -146,6 +153,9 @@ protected:
   /// Views on dof numbers
   ElementViewConst< arrayView1d< globalIndex const > > const m_dofNumber;
 
+  /// Views on cellDims for velocity recontstruction
+  ElementViewConst< arrayView2d< real64 const > > const m_globalCellDims;
+
   /// Views on ghost rank numbers and gravity coefficients
   ElementViewConst< arrayView1d< integer const > > const m_ghostRank;
   ElementViewConst< arrayView1d< real64 const > > const m_gravCoef;
@@ -162,10 +172,13 @@ protected:
   /// Views on derivatives of comp fractions
   ElementViewConst< arrayView3d< real64 const, compflow::USD_COMP_DC > > const m_dCompFrac_dCompDens;
 
+
+  /// Views on phase velocity
+  ElementRegionManager::ElementView< arrayView3d< real64, compflow::USD_PHASE_VELOCITY > > const m_phaseVelocity;
+
   /// Views on phase component fractions
   ElementViewConst< arrayView4d< real64 const, constitutive::multifluid::USD_PHASE_COMP > > const m_phaseCompFrac;
   ElementViewConst< arrayView5d< real64 const, constitutive::multifluid::USD_PHASE_COMP_DC > > const m_dPhaseCompFrac;
-
   // Residual and jacobian
 
   /// View on the local CRS matrix

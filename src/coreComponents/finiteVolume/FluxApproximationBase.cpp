@@ -29,6 +29,8 @@ namespace geos
 
 using namespace dataRepository;
 
+
+
 FluxApproximationBase::FluxApproximationBase( string const & name, Group * const parent )
   : Group( name, parent ),
   m_lengthScale( 1.0 )
@@ -59,7 +61,6 @@ FluxApproximationBase::FluxApproximationBase( string const & name, Group * const
     setApplyDefaultValue( UpwindingScheme::PPU ).
     setDescription( "Type of upwinding scheme. "
                     "Valid options:\n* " + EnumStrings< UpwindingScheme >::concat( "\n* " ) );
-
 }
 
 FluxApproximationBase::CatalogInterface::CatalogType &

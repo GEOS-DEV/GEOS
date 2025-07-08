@@ -113,6 +113,7 @@ public:
                                         globalIndex const rankOffset,
                                         STENCILWRAPPER const & stencilWrapper,
                                         DofNumberAccessor const & dofNumberAccessor,
+                                        GlobalCellDimAccessor const & cellCartDimAccessor,
                                         CompFlowAccessors const & compFlowAccessors,
                                         MultiFluidAccessors const & multiFluidAccessors,
                                         DiffusionAccessors const & diffusionAccessors,
@@ -125,6 +126,7 @@ public:
     : FluxComputeKernelBase( numPhases,
                              rankOffset,
                              dofNumberAccessor,
+                             cellCartDimAccessor,
                              compFlowAccessors,
                              multiFluidAccessors,
                              dt,
@@ -383,13 +385,6 @@ public:
   {
     using Deriv = constitutive::multifluid::DerivativeOffset;
 
-    // first, compute the transmissibilities at this face
-    // note that the dispersion tensor is lagged in iteration
-    m_stencilWrapper.computeWeights( iconn,
-                                     m_dispersivity,
-                                     m_dispersivity, // this is just to pass something, but the resulting derivative won't be used
-                                     stack.transmissibility,
-                                     stack.dTrans_dTemp ); // will not be used
 
 
     localIndex k[numFluxSupportPoints]{};
@@ -409,13 +404,21 @@ public:
         real64 dDispersionFlux_dC[numFluxSupportPoints][numComp][numComp]{};
         real64 dDens_dC[numComp]{};
 
-        real64 const trans[numFluxSupportPoints] = { stack.transmissibility[connectionIndex][0],
-                                                     stack.transmissibility[connectionIndex][1] };
-
         //***** calculation of flux *****
         // loop over phases, compute and upwind phase flux and sum contributions to each component's flux
         for( integer ip = 0; ip < m_numPhases; ++ip )
         {
+          // first, compute the transmissibilities at this face
+          // note that the dispersion tensor is lagged in iteration
+          m_stencilWrapper.computeWeights( iconn,
+                                           ip,
+                                           m_dispersivity,
+                                           m_dispersivity,   // this is just to pass something, but the resulting derivative won't be used
+                                           stack.transmissibility,
+                                           stack.dTrans_dTemp );   // will not be used
+
+          real64 const trans[numFluxSupportPoints] = { stack.transmissibility[connectionIndex][0],
+                                                       stack.transmissibility[connectionIndex][1] };
 
           // loop over components
           for( integer ic = 0; ic < numComp; ++ic )
@@ -678,7 +681,7 @@ protected:
   ElementViewConst< arrayView3d< real64 const > > const m_phaseDiffusivityMultiplier;
 
   /// Views on dispersivity
-  ElementViewConst< arrayView3d< real64 const > > const m_dispersivity;
+  ElementViewConst< arrayView4d< real64 const > > const m_dispersivity;
 
   /// View on the reference porosity
   ElementViewConst< arrayView1d< real64 const > > const m_referencePorosity;
@@ -742,6 +745,10 @@ public:
         elemManager.constructArrayViewAccessor< globalIndex, 1 >( dofKey );
       dofNumberAccessor.setName( solverName + "/accessors/" + dofKey );
 
+      ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > cellCartDimAccessor =
+        elemManager.constructArrayViewAccessor< real64, 2 >(
+          CellElementSubRegion::viewKeyStruct::cellCartesianDimString() );
+
       using kernelType = DiffusionDispersionFluxComputeKernel< NUM_COMP, NUM_DOF, STENCILWRAPPER >;
       typename kernelType::CompFlowAccessors compFlowAccessors( elemManager, solverName );
       typename kernelType::MultiFluidAccessors multiFluidAccessors( elemManager, solverName );
@@ -750,7 +757,7 @@ public:
       typename kernelType::PorosityAccessors porosityAccessors( elemManager, solverName );
 
       kernelType kernel( numPhases, rankOffset, stencilWrapper,
-                         dofNumberAccessor, compFlowAccessors, multiFluidAccessors,
+                         dofNumberAccessor, cellCartDimAccessor, compFlowAccessors, multiFluidAccessors,
                          diffusionAccessors, dispersionAccessors, porosityAccessors,
                          dt, localMatrix, localRhs, kernelFlags );
       kernelType::template launch< POLICY >( stencilWrapper.size(),

@@ -27,6 +27,7 @@
 #include "common/DataTypes.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
 #include "constitutive/fluid/multifluid/MultiFluidFields.hpp"
+#include "finiteVolume/CellElementStencilTPFA.hpp"  // included this as well
 #include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseBaseFields.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseUtilities.hpp"
@@ -36,6 +37,7 @@
 #include "physicsSolvers/fluidFlow/kernels/compositional/C1PPUPhaseFlux.hpp"
 #include "physicsSolvers/fluidFlow/kernels/compositional/IHUPhaseFlux.hpp"
 #include "physicsSolvers/fluidFlow/kernels/compositional/HU2PhaseFlux.hpp"
+#include "physicsSolvers/fluidFlow/kernels/compositional/PhaseComponentFlux.hpp"
 #include "physicsSolvers/fluidFlow/kernels/compositional/PhaseComponentFlux.hpp"
 
 namespace geos
@@ -96,6 +98,7 @@ public:
                      globalIndex const rankOffset,
                      STENCILWRAPPER const & stencilWrapper,
                      DofNumberAccessor const & dofNumberAccessor,
+                     GlobalCellDimAccessor const & globalCellDimAccessor,
                      CompFlowAccessors const & compFlowAccessors,
                      MultiFluidAccessors const & multiFluidAccessors,
                      CapPressureAccessors const & capPressureAccessors,
@@ -107,6 +110,7 @@ public:
     : FluxComputeKernelBase( numPhases,
                              rankOffset,
                              dofNumberAccessor,
+                             globalCellDimAccessor,
                              compFlowAccessors,
                              multiFluidAccessors,
                              dt,
@@ -214,6 +218,18 @@ public:
         stack.dofColIndices[i * numDof + jdof] = offset + jdof;
       }
     }
+  }
+
+/**
+ * @brief Initialize velocity container
+ * @param[in] iconn the connection index
+ */
+  GEOS_HOST_DEVICE
+  inline
+  void initVelocity( localIndex const iconn ) const
+  {
+    if constexpr ( std::is_same< CellElementStencilTPFAWrapper, STENCILWRAPPER >::value)
+      StencilUtils::initVelocity( m_stencilWrapper, iconn, m_phaseVelocity );
   }
 
   /**
@@ -372,6 +388,19 @@ public:
                                        m_phaseCompFrac, m_dPhaseCompFrac, m_dCompFrac_dCompDens,
                                        phaseFlux, dPhaseFlux_dP, dPhaseFlux_dC, dPhaseFlux_dTrans,
                                        compFlux, dCompFlux_dP, dCompFlux_dC, dCompFlux_dTrans );
+          if( m_kernelFlags.isSet( KernelFlags::VelocityCompute ))
+          {
+            if constexpr (std::is_same< CellElementStencilTPFAWrapper, STENCILWRAPPER >::value) {
+              StencilUtils::computeVelocity( m_stencilWrapper,
+                                             iconn, ip,
+                                             phaseFlux,
+                                             {m_globalCellDims[seri[0]][sesri[0]][sei[0]],
+                                              m_globalCellDims[seri[1]][sesri[1]][sei[1]]},
+                                             {m_ghostRank[seri[0]][sesri[0]][sei[0]],
+                                              m_ghostRank[seri[1]][sesri[1]][sei[1]]},
+                                             m_phaseVelocity );
+            }
+          }
 
           // call the lambda in the phase loop to allow the reuse of the phase fluxes and their derivatives
           // possible use: assemble the derivatives wrt temperature, and the flux term of the energy equation for this phase
@@ -477,6 +506,11 @@ public:
           KERNEL_TYPE const & kernelComponent )
   {
     GEOS_MARK_FUNCTION;
+    //velocity has to be reset on all faces prior computing flux. (to be specific on all stencil extends)
+    forAll< POLICY >( numConnections, [=] GEOS_HOST_DEVICE ( localIndex const iconn ) {
+      kernelComponent.initVelocity( iconn );
+    } );
+
     forAll< POLICY >( numConnections, [=] GEOS_HOST_DEVICE ( localIndex const iconn )
     {
       typename KERNEL_TYPE::StackVariables stack( kernelComponent.stencilSize( iconn ),
@@ -564,13 +598,17 @@ public:
         elemManager.constructArrayViewAccessor< globalIndex, 1 >( dofKey );
       dofNumberAccessor.setName( solverName + "/accessors/" + dofKey );
 
+      ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > cellCartDimAccessor =
+        elemManager.constructArrayViewAccessor< real64, 2 >(
+          CellElementSubRegion::viewKeyStruct::cellCartesianDimString() );
+
       using kernelType = FluxComputeKernel< NUM_COMP, NUM_DOF, STENCILWRAPPER >;
       typename kernelType::CompFlowAccessors compFlowAccessors( elemManager, solverName );
       typename kernelType::MultiFluidAccessors multiFluidAccessors( elemManager, solverName );
       typename kernelType::CapPressureAccessors capPressureAccessors( elemManager, solverName );
       typename kernelType::PermeabilityAccessors permeabilityAccessors( elemManager, solverName );
 
-      kernelType kernel( numPhases, rankOffset, stencilWrapper, dofNumberAccessor,
+      kernelType kernel( numPhases, rankOffset, stencilWrapper, dofNumberAccessor, cellCartDimAccessor,
                          compFlowAccessors, multiFluidAccessors, capPressureAccessors, permeabilityAccessors,
                          dt, localMatrix, localRhs, kernelFlags );
       kernelType::template launch< POLICY >( stencilWrapper.size(), kernel );

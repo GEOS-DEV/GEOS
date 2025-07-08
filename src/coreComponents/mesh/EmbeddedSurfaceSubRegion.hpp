@@ -125,6 +125,9 @@ public:
    */
   void calculateElementGeometricQuantities( arrayView2d< real64 const > const intersectionPoints,
                                             localIndex k );
+
+
+
   /**
    * @brief Function to add a new embedded surface element.
    * @param cellIndex cell element index
