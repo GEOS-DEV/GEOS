@@ -785,9 +785,13 @@ public:
       constexpr int l1 = decltype(ll1)::value;
       // Needed for compilers that do not support constexpr lambdas
       GEOS_UNUSED_VAR( c1, i1, j1, k1, l1 );
-      basisLoop( [ &m ] GEOS_DEVICE (  auto const c2, auto const i2, auto const j2, auto const k2, auto const l2 )
+      basisLoop( [ &m ] GEOS_DEVICE (  auto const cc2, auto const ii2, auto const jj2, auto const kk2, auto const ll2 )
       {
-        //constexpr int c2 = decltype(cc2)::value;
+        constexpr int c2 = decltype(cc2)::value;
+        constexpr int i2 = decltype(ii2)::value;
+        constexpr int j2 = decltype(jj2)::value;
+        constexpr int k2 = decltype(kk2)::value;
+        constexpr int l2 = decltype(ll2)::value;
         constexpr real64 val = computeSuperpositionIntegral( i1, j1, k1, l1, i2, j2, k2, l2 );
         m[ c1 ][ c2 ] = val;
       } );
@@ -820,9 +824,9 @@ public:
         d[ c1 ][ c2 ] = 0;
       }
     }
-    conditionalBasisLoop< 0 >( [&] GEOS_DEVICE( auto const f1, auto const, auto const c1, auto const i1, auto const j1, auto const k1 )
+    conditionalBasisLoop< 0 >( [&] ( auto const f1, auto const, auto const c1, auto const i1, auto const j1, auto const k1 )
     {
-      conditionalBasisLoop< 0 >( [&] GEOS_DEVICE ( auto const f2, auto const, auto const c2, auto const i2, auto const j2, auto const k2 )
+      conditionalBasisLoop< 0 >( [&] ( auto const f2, auto const, auto const c2, auto const i2, auto const j2, auto const k2 )
       {
         if constexpr ( f1 == f2 )
         {
@@ -864,8 +868,12 @@ public:
       constexpr int l1 = ll1;
       //Needed for compilors that do not support constexpr lambdas
       GEOS_UNUSED_VAR( c1, i1, j1, k1, l1 );
-      basisLoop( [&func, &detJ] GEOS_DEVICE( auto const c2, auto const i2, auto const j2, auto const k2, auto const l2 )
+      basisLoop( [&func, &detJ] ( auto const c2, auto const ii2, auto const jj2, auto const kk2, auto const ll2 )
       {
+        constexpr int i2 = decltype(ii2)::value;
+        constexpr int j2 = decltype(jj2)::value;
+        constexpr int k2 = decltype(kk2)::value;
+        constexpr int l2 = decltype(ll2)::value; 
         constexpr real64 val = computeSuperpositionIntegral( i1, j1, k1, l1, i2, j2, k2, l2 );
         func( c1, c2, val * detJ );
       } );
