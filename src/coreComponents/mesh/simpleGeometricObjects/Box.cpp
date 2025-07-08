@@ -72,7 +72,7 @@ void Box::postInputInitialization()
     if( m_max[i]<m_min[i] )
     {
       std::swap( m_max[i], m_min[i] );
-      GEOS_LOG_RANK_0( GEOS_FMT( "Reordering box definition for {} component as {} < {} ", i, m_max[i], m_min[i] ) );
+      GEOS_LOG_RANK_0( GEOS_FMT( "Reordering box definition {} for {} component as {} < {} ", getName(), i, m_max[i], m_min[i] ) );
     }
   }
 
