@@ -49,7 +49,8 @@ public:
 
   /// using to inherit constructors from the base class
   using Base::Base;  // Inherit constructors
-  
+
+
   /**
    * @brief constructor.
    * @param count The number of elements to initialize the vector with.
