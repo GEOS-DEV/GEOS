@@ -722,16 +722,15 @@ public:
   GEOS_FORCE_INLINE
   static constexpr void conditionalBasisLoop( FUNC && func )
   {
-    loop< ORDER + 1 >( [&func] ( auto const i )
+    loop< ORDER + 1 >( [&] ( auto const i )
     {
       std::integral_constant< int, ORDER -  decltype(i)::value > i1;
-      loop< ORDER + 1 >( [&func, i1] ( auto const j )
+      loop< ORDER + 1 >( [&] ( auto const j )
       {
         std::integral_constant< int, ORDER - decltype(j)::value > j1;
-        constexpr int ii1 = ORDER -i1;
-        if constexpr ( j1 <= ii1 )
+        if constexpr ( j1 <= decltype(i)::value )
         {
-          loop< ORDER + 1 >( [&func, i1, j1] ( auto const k )
+          loop< ORDER + 1 >( [&] ( auto const k )
           {
             std::integral_constant< int, ORDER - k > k1;
             std::integral_constant< int, ORDER - i1 - j1 > ji1;
