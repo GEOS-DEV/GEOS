@@ -785,7 +785,7 @@ public:
       constexpr int l1 = decltype(ll1)::value;
       // Needed for compilers that do not support constexpr lambdas
       GEOS_UNUSED_VAR( c1, i1, j1, k1, l1 );
-      basisLoop( [ &m ] GEOS_DEVICE (  auto const cc2, auto const ii2, auto const jj2, auto const kk2, auto const ll2 )
+      basisLoop( [ &m ] (  auto const cc2, auto const ii2, auto const jj2, auto const kk2, auto const ll2 )
       {
         constexpr int c2 = decltype(cc2)::value;
         constexpr int i2 = decltype(ii2)::value;
@@ -977,7 +977,7 @@ public:
         barycentricCoordinateLoop( [&func, &dLambdadX, &detJ] ( auto const cd1 )
         {
           constexpr int d1 = cd1;
-          barycentricCoordinateLoop( [&func, &dLambdadX, &detJ] GEOS_DEVICE ( auto const d2 )
+          barycentricCoordinateLoop( [&func, &dLambdadX, &detJ]  ( auto const d2 )
           {
             constexpr int ii1 = i1 + ( d1 == 0 ) * ( -1 );
             constexpr int ij1 = j1 + ( d1 == 1 ) * ( -1 );
@@ -1048,7 +1048,7 @@ public:
                         faceJacobianDeterminant( 2, X ), faceJacobianDeterminant( 3, X ) };
     conditionalBasisLoop< 0, 1 >( [&]  ( auto const cf1, auto const cd, auto const cc1, auto const ci1, auto const cj1, auto const ck1 )
     {
-      conditionalBasisLoop< 0 >( [&] GEOS_DEVICE ( auto const cf2, auto const, auto const cc2, auto const ci2, auto const cj2, auto const ck2 )
+      conditionalBasisLoop< 0 >( [&] ( auto const cf2, auto const, auto const cc2, auto const ci2, auto const cj2, auto const ck2 )
       {
         constexpr int c1 = decltype(cc1)::value;
         constexpr int i1 = decltype(ci1)::value;
@@ -1086,7 +1086,7 @@ public:
           // In this case, one can derive it wrt to any other face.
           else if constexpr ( std::decay_t< decltype(cd) >::value == 0 )
           {
-            faceBarycentricCoordinateLoop( [ &funcF, &detJf ] GEOS_DEVICE ( auto const cl )
+            faceBarycentricCoordinateLoop( [ &funcF, &detJf ] ( auto const cl )
             {
               constexpr int l = cl;
               constexpr int ii1 = i1 + ( l == 0 ) * ( -1 );
