@@ -1057,10 +1057,10 @@ public:
         GEOS_UNUSED_VAR( c2, i2, j2, k2 );
 
         // The second function is nonzero on the face indexed by f2, so we integrate on this face.
-        if constexpr (  std::decay_t<decltype(cf1)>::value == std::decay_t<decltype(cf2)>::value)
+        if constexpr (  std::decay_t< decltype(cf1) >::value == std::decay_t< decltype(cf2) >::value)
         {
           // compute penalty term iff the other function is also nonzero on the same face (i.e., d1==0)
-          if constexpr ( std::decay_t<decltype(cd)>::value == 0 )
+          if constexpr ( std::decay_t< decltype(cd) >::value == 0 )
           {
             constexpr real64 val = computeFaceSuperpositionIntegral( i1, j1, k1, i2, j2, k2 );
             funcP( c1, c2, f2, i1, j1, k1, i2, j2, k2, val * detJf[ f2 ] );
@@ -1068,7 +1068,7 @@ public:
           // Compute flux term. This is nonzero in two cases.
           // first case: function has exponent 1 wrt to the same face. In this case, one can derive it once wrt to the
           // corresponding lambda and it will obtain a nonzero function on the face.
-          if constexpr ( std::decay_t<decltype(cd)>::value == 1 )
+          if constexpr ( std::decay_t< decltype(cd) >::value == 1 )
           {
             constexpr real64 derFactor = ( i1 + j1 + k1 + 4 );
             constexpr real64 val = computeFaceSuperpositionIntegral( i1, j1, k1, i2, j2, k2 ) * derFactor;
@@ -1076,7 +1076,7 @@ public:
           }
           // second case: function has exponent zero wrt f2.
           // In this case, one can derive it wrt to any other face.
-          else if constexpr ( std::decay_t<decltype(cd)>::value == 0 )
+          else if constexpr ( std::decay_t< decltype(cd) >::value == 0 )
           {
             faceBarycentricCoordinateLoop( [ &funcF, &detJf ]( auto const cl )
             {
