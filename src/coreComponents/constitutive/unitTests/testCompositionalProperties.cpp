@@ -37,7 +37,7 @@ using CompositionalPropertiesTestData = std::tuple<
   >;
 
 template< typename EOS_TYPE, integer NC >
-std::vector< CompositionalPropertiesTestData< NC > > generateTestData();
+stdVector< CompositionalPropertiesTestData< NC > > generateTestData();
 
 template< integer NC >
 std::unique_ptr< TestFluid< NC > > createFluid();
@@ -338,7 +338,7 @@ TEST_P( PR4Comp, testMassDensityDerivative )
 // Test data generated from PVT package
 // All compositions are single phase
 template<>
-std::vector< CompositionalPropertiesTestData< 4 > > generateTestData< PengRobinsonEOS, 4 >()
+stdVector< CompositionalPropertiesTestData< 4 > > generateTestData< PengRobinsonEOS, 4 >()
 {
   return {
     { 1.000000e+05, 2.771500e+02, { 0.000000, 0.495099, 0.495118, 0.009783 }, 3.733061e+03, 1.271768e+02, 4.747588e+02 },
