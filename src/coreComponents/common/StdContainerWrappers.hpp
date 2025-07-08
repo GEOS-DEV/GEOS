@@ -6,6 +6,8 @@
 #include <unordered_map>
 #include <memory>
 
+#include <iostream>
+
 namespace geos
 {
 
@@ -45,87 +47,34 @@ public:
   /// Type alias for the base class (i.e., std::vector)
   using Base = std::vector< T, Allocator >;
 
-  /*
-   * We cannot automatically import the constructors aka `Base::vector`
-   * due to a compiler bug on `testMultiFluidDeadOil.cpp` that causes a recursive evaluation of default argument.
-   * The constructors are therefore imported manually.
+  /// using to inherit constructors from the base class
+  using Base::Base;  // Inherit constructors
+  
+  /**
+   * @brief constructor.
+   * @param count The number of elements to initialize the vector with.
+   * @param value The value to initialize each element with.
    */
-  /// @cond DO_NOT_DOCUMENT
-  StdVectorWrapper(): std::vector< T, Allocator >()
+  StdVectorWrapper( size_t const count, T const & value ):
+    Base( count, value )
   {}
 
-  StdVectorWrapper( const Allocator & alloc ): std::vector< T, Allocator >( alloc )
+
+  /**
+   * @brief copy constructor.
+   * @param other The vector to copy from.
+   */
+  StdVectorWrapper( Base const & other ):
+    Base( other )
   {}
 
-  StdVectorWrapper( size_t n, const Allocator & alloc = Allocator())
-    : std::vector< T, Allocator >( n, alloc )
+  /**
+   * @brief move constructor.
+   * @param other The vector to move from.
+   */
+  StdVectorWrapper( Base && other ):
+    Base( std::move( other ) )
   {}
-
-  StdVectorWrapper( size_t n, const T & value,
-                    const Allocator & alloc = Allocator())
-    : std::vector< T, Allocator >( n, value, alloc )
-  {}
-
-  StdVectorWrapper( const StdVectorWrapper & x )
-    : std::vector< T, Allocator >( x )
-  {}
-
-  StdVectorWrapper( const StdVectorWrapper & x, const Allocator & alloc )
-    : std::vector< T, Allocator >( x, alloc )
-  {}
-
-  StdVectorWrapper( std::initializer_list< T > l, const Allocator & alloc =  Allocator())
-    : std::vector< T, Allocator >( l, alloc )
-  {}
-
-  StdVectorWrapper( StdVectorWrapper && x )
-    : std::vector< T, Allocator >( std::move( x ))
-  {}
-
-  StdVectorWrapper( const StdVectorWrapper && rv, const Allocator & alloc )
-    : std::vector< T, Allocator >( std::move( rv ), alloc )
-  {}
-
-  template< typename _InputIterator >
-  StdVectorWrapper( _InputIterator first, _InputIterator last,
-                    const Allocator & alloc = Allocator())
-    : std::vector< T, Allocator >( first, last, alloc )
-  {}
-
-  StdVectorWrapper & operator=( const StdVectorWrapper & x )
-  {
-    if( this != &x )
-    {
-      std::vector< T, Allocator >::operator=( x );
-    }
-    return *this;
-  }
-
-  StdVectorWrapper & operator=( StdVectorWrapper && x ) noexcept
-  {
-    if( this != &x )
-    {
-      std::vector< T, Allocator >::operator=( std::move(x));
-    }
-    return *this;
-  }
-
-  StdVectorWrapper & operator=( std::initializer_list< T > l )
-  {
-    std::vector< T, Allocator >::operator=( l );
-    return *this;
-  }
-
-  StdVectorWrapper( const std::vector< T, Allocator > & vec )
-    : std::vector< T, Allocator >( vec ) {}
-
-  StdVectorWrapper( std::vector< T, Allocator > && vec )
-    : std::vector< T, Allocator >( std::move( vec )) {}
-
-  template< typename U, typename A >
-  StdVectorWrapper( std::vector< U, A > & vec )
-    : std::vector< T, A >( vec.begin(), vec.end()) {}
-  /// @endcond
 
   /**
    * Access element at index with bounds checking if USE_STD_CONTAINER_BOUNDS_CHECKING is true.
@@ -138,7 +87,11 @@ public:
   {
     if constexpr (USE_BOUNDS_CHECKING)
     {
-      return Base::at( index );
+      if( index >= this->size() )
+      {
+        std::cout<< "Index out of bounds in StdVectorWrapper::operator[]: index = " + std::to_string( index ) + ", size = " + std::to_string( this->size());
+      }
+      return Base::at( index );  // Throws std::out_of_range if out of bounds.
     }
     else
     {
@@ -156,7 +109,11 @@ public:
   {
     if constexpr (USE_BOUNDS_CHECKING)
     {
-      return Base::at( index );  // Throws std::out_of_range if out of bounds
+      if( index >= this->size() )
+      {
+        std::cout<< "Index out of bounds in StdVectorWrapper::operator[]: index = " + std::to_string( index ) + ", size = " + std::to_string( this->size());
+      }
+      return Base::at( index );  // Throws std::out_of_range if out of bounds.
     }
     else
     {
