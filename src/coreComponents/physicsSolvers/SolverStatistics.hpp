@@ -31,7 +31,7 @@ namespace geos
 {
 
 /**
- * @brief Class containing iteration data for a time-step
+ * @brief Class containing solver iterations data for a time-step
  */
 class IterationsStatistics : public dataRepository::Group
 {
@@ -107,10 +107,7 @@ public:
     /// String key for the discarded number of linear iterations
     static constexpr char const * numDiscardedLinearIterationsString() { return "numDiscardedLinearIterations"; }
   };
-/**
- * @
- *
- */
+
   /**
    * @brief Initialize the counters used for an individual time step
    */
@@ -162,28 +159,17 @@ public:
    */
   virtual void outputStatistics( bool writeCSV );
 
-  /**
-   * @brief Set the Residual Norms filename
-   * @param solverName The solverName as a string_view.
-   */
-  virtual void setSolverName( string_view solverName )
-  {
-    m_solverName = solverName;
-  }
-
 private:
-  ///
-  string m_solverName;
-  /// Table containing statistics relative to non linear parameter
-  TableData m_iterationData;
+  /// Stream output for the iteration statistics
+  std::ofstream logStream;
   /// Table Layout contenaning header for both CSV and log
   std::unique_ptr< TableLayout > m_iterationCSVLayout;
-  /// Format the CSV iterations Data
+  /// Contain the iteration data for both CSV and log output
+  TableData m_iterationData;
+  /// Format the iteration statistics for the CSV file
   std::unique_ptr< TableCSVFormatter > m_iterationCSVFormatter;
-  /// Filename for the convergence CSV.
+  /// Filename for the iteration CSV file.
   string m_iterationsFilename;
-  // Ouput stream for each timestep
-  std::ofstream logStream;
 };
 
 /**
@@ -216,8 +202,6 @@ public:
   void writeStatsToTable() override {}
 
   void outputStatistics( bool writeCSV ) {}
-
-  void setSolverName( string_view solverName ){}
   /// @endcond
 ///@}
 };
@@ -233,6 +217,12 @@ public:
    * @brief Construct a new Convergence Statistics object
    */
   ConvergenceStatistics();
+
+  /// The time at the beginning of the step
+  real64 m_time_n = 0;
+
+  /// The desired timestepr
+  real64 m_dt = 0;
 
   /// Current cycle number
   integer m_cycleNumber = 0;
@@ -308,8 +298,18 @@ public:
    */
   void removeInvalidResidualNorms();
 
-  void updateCycleNumber( integer const cycleNumber )
-  { m_cycleNumber = cycleNumber; }
+  /**
+   * @brief Update the solver step information
+   * @param time_n The time at the beginning of the step
+   * @param dt The desired timestep
+   * @param cycleNumber  The current cycle number
+   */
+  void updateSolverStep( real64 const & time_n, real64 const & dt, integer const cycleNumber )
+  {
+    m_time_n = time_n;
+    m_dt = dt;
+    m_cycleNumber = cycleNumber;
+  }
 
   /**
    * @brief Save the current newton iteration
@@ -325,16 +325,17 @@ public:
   { m_convergenceFilename = filename; }
 
 private:
-  /// Table containing statistics related  to non linear norms
-  std::unique_ptr< TableLayout > m_convergenceLayout;
-  /// Table containing statistics data for nonlinear norms.
-  TableData m_convergenceData;
-  /// Format the CSV convergence Data
-  std::unique_ptr< TableCSVFormatter > m_convergenceFormatter;
-  /// Filename for the convergence CSV.
-  string m_convergenceFilename;
-  // Ouput stream for each timestep
+  /// Stream output for the convergence statistics
   std::ofstream logStream;
+  /// Contain the layout for both the CSV and log output.
+  /// For a solver, output all residuals residuals name available
+  std::unique_ptr< TableLayout > m_convergenceLayout;
+  /// Contain the convergence data for both CSV and log output
+  TableData m_convergenceData;
+  /// Format the convergence statistics for the CSV file
+  std::unique_ptr< TableCSVFormatter > m_convergenceFormatter;
+  /// Filename for the solver CSV convergence file.
+  string m_convergenceFilename;
 };
 
 /**
@@ -363,12 +364,6 @@ public:
   };
 
   /**
-   * @return The output directory where all statistics related to the solver are atored
-   */
-  string_view getOutputDir() const
-  { return m_outputDir; }
-
-  /**
    * @brief Set the Residual Norms filename
    * @param solverName The solverName as a string_view.
    */
@@ -379,17 +374,14 @@ public:
   /// Contain convergence data given a time step
   ConvergenceStatistics m_convergenceStats;
 
-private:
-  /// Name of the directory containing solvers statistics csv
-  string m_directoryName = "convergence";
-
+protected:
   /// Output directory for solver statistics (CSV), passed in the constructor.
   string m_outputDir;
 
-  std::ofstream logStream;
+private:
+  /// Name of the directory containing solvers statistics csv
+  string m_directoryName = "convergence";
 };
-
-
 
 } //namespace geos
 

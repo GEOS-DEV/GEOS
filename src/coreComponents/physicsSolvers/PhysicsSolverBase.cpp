@@ -1180,8 +1180,8 @@ void PhysicsSolverBase::doSmthEarlyStep( real64 const & time_n, real64 const & d
 
 void PhysicsSolverBase::doSmthEndStep( real64 const & time_n, real64 const & dt, integer const cycleNumber )
 {
-  getConvergenceStats().updateCycleNumber( cycleNumber );
-  //getIterationStats().updateCycleNumber( cycleNumber );
+  getConvergenceStats().updateSolverStep( time_n, dt, cycleNumber );
+  std::cout << getName() << " : solver time "<< time_n << " dt "<<  dt << " cycleNumber "<<  cycleNumber << std::endl;
   if( m_writeSolvingConvergenceCSV )
   {
     getConvergenceStats().writeResidualNormToTable();

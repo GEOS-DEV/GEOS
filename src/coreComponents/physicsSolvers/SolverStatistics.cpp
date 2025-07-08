@@ -29,16 +29,16 @@ using namespace dataRepository;
 SolverStatistics::SolverStatistics( string const & name, Group * const parent )
   : Group( name, parent ),
   m_iterationsStats( groupKeyStruct::IterationsStatisticsString(), this ),
-  m_convergenceStats(),
-  m_outputDir( joinPath( OutputBase::getOutputDirectory(), m_directoryName ))
+  m_convergenceStats()
 {
+  m_outputDir =  joinPath( OutputBase::getOutputDirectory(), m_directoryName );
   makeDirsForPath( m_outputDir );
 }
 
 void SolverStatistics::setOutputFilesName( string_view solverName )
 {
-  m_iterationsStats.setFilename( GEOS_FMT( "{}/{}_iterations.csv", getOutputDir(), solverName ));
-  m_convergenceStats.setFilename( GEOS_FMT( "{}/{}_convergence.csv", getOutputDir(), solverName ));
+  m_iterationsStats.setFilename( GEOS_FMT( "{}/{}_iterations.csv", m_outputDir, solverName ));
+  m_convergenceStats.setFilename( GEOS_FMT( "{}/{}_convergence.csv", m_outputDir, solverName ));
 }
 
 IterationsStatistics::IterationsStatistics( string const & name, Group * const parent )
@@ -201,7 +201,7 @@ ConvergenceStatistics::ConvergenceStatistics():
 
   m_convergenceLayout = std::make_unique< TableLayout >();
 
-  m_convergenceLayout->addColumns( {"Cycle number", "Time-steps", "Newton Iter",
+  m_convergenceLayout->addColumns( {"time_n (s)", "dt (s)", "Cycle number", "Time-steps", "Newton Iter",
                                     "RMass", "RVol", "REnergy",
                                     "RFlow", "RBubbleDisp", "RFrac",
                                     "Rstick", "Rslip", "Ropen",
@@ -250,6 +250,10 @@ void ConvergenceStatistics::writeResidualNormToTable()
     { m_residualNormT, "R" }
   };
 
+  residualsNormCells.emplace_back( TableData::CellData( {CellType::Value,
+                                                         GEOS_FMT( "{}", m_time_n )} ));
+  residualsNormCells.emplace_back( TableData::CellData( {CellType::Value,
+                                                         GEOS_FMT( "{}", m_dt )} ));
   residualsNormCells.emplace_back( TableData::CellData( {CellType::Value,
                                                          GEOS_FMT( "{}", m_cycleNumber )} ));
   residualsNormCells.emplace_back( TableData::CellData( {CellType::Value,
