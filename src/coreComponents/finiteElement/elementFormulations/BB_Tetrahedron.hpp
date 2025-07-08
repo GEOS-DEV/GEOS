@@ -684,13 +684,15 @@ public:
     {
       constexpr int i = decltype(iic)::value;
       constexpr int i1 = ORDER - i;
-      loop< ORDER + 1 >( [&func] ( auto const j )
+      loop< ORDER + 1 >( [&func] ( auto const jjc )
       {
+        constexpr int j = decltype(jjc)::value;
         constexpr int j1 = ORDER - j;
         if constexpr ( j1 <= ORDER - i1 )
         {
-          loop< ORDER + 1 >( [&func] ( auto const k )
+          loop< ORDER + 1 >( [&func] ( auto const kkc )
           {
+            constexpr int k = decltype(kkc)::value;
             constexpr int k1 = ORDER - k;
             if constexpr ( k1 <= ORDER - i1 - j1 )
             {
@@ -783,8 +785,9 @@ public:
       constexpr int l1 = decltype(ll1)::value;
       // Needed for compilers that do not support constexpr lambdas
       GEOS_UNUSED_VAR( c1, i1, j1, k1, l1 );
-      basisLoop( [ &m ] ( auto const c2, auto const i2, auto const j2, auto const k2, auto const l2 )
+      basisLoop( [ &m ] ( auto const cc2, auto const i2, auto const j2, auto const k2, auto const l2 )
       {
+        constexpr int c2 = decltype(cc2)::value;
         constexpr real64 val = computeSuperpositionIntegral( i1, j1, k1, l1, i2, j2, k2, l2 );
         m[ c1 ][ c2 ] = val;
       } );
