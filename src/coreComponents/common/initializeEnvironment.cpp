@@ -103,7 +103,7 @@ void setupLogger()
                           "***** LOCATION: (external error, detected {})\n"
                           "{}\n{}",
                           detectionLocation, error.m_msg, stackHistory ) );
-      g_errorLogger.write( error );
+      g_errorLogger.flushErrorMsg( error );
 
       // we do not terminate the program as 1. the error could be non-fatal, 2. there may be more messages to output.
     } );
@@ -134,7 +134,7 @@ void setupLogger()
                           "***** LOCATION: (external error, captured by signal handler)\n"
                           "{}\n{}",
                           signal, error.m_msg, stackHistory ) );
-      g_errorLogger.write( error );
+      g_errorLogger.flushErrorMsg( error );
 
       // call program termination
       LvArray::system::callErrorHandler();
