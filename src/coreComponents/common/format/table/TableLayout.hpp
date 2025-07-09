@@ -121,7 +121,7 @@ public:
     /**
      * @return The view on each cell line.
      */
-    std::vector< string_view > const & getLines() const
+    stdVector< string_view > const & getLines() const
     { return m_lines; }
 
     /**
@@ -148,7 +148,7 @@ private:
     /// The width of the cell, which must be constrained by the content lines length.
     size_t m_cellWidth;
     /// vector containing each cell content, separated by lines.
-    std::vector< string_view > m_lines;
+    stdVector< string_view > m_lines;
   };
 
   /**
@@ -243,7 +243,7 @@ private:
   {
 public:
     /// Alias for the list of columns.
-    using ColumnsList = std::vector< Column >;
+    using ColumnsList = stdVector< Column >;
 
     /// The header cell
     Cell m_header;
@@ -344,7 +344,7 @@ public:
      * @param subColNames A list of sub-column names to add.
      * @return The current column object
      */
-    Column & addSubColumns( std::vector< string > const & subColNames );
+    Column & addSubColumns( stdVector< string > const & subColNames );
 
     /**
      * @brief Adds a single sub-column to the column.
@@ -533,7 +533,7 @@ private:
    * @param columns A vector containing all column initialized
    */
   TableLayout( string_view title,
-               std::vector< TableLayout::Column > const & columns )
+               stdVector< TableLayout::Column > const & columns )
   {
     setMargin( MarginValue::medium );
     setTitle( title );
@@ -570,7 +570,7 @@ private:
    * @param args An initializer_list containing string / column
    */
   TableLayout( string_view title,
-               std::vector< string > const & args )
+               stdVector< string > const & args )
   {
     setMargin( MarginValue::medium );
     setTitle( title );
@@ -674,13 +674,13 @@ private:
    * @brief Create and add columns to the columns vector given a string vector
    * @param columnNames The columns name
    */
-  void addColumns( std::vector< TableLayout::Column > const & columnNames );
+  void addColumns( stdVector< TableLayout::Column > const & columnNames );
 
   /**
    * @brief Create and add columns to the columns vector given a string vector
    * @param columns The columns list
    */
-  void addColumns( std::vector< string > const & columns );
+  void addColumns( stdVector< string > const & columns );
 
   /**
    * @brief Create and add a column to the columns vector given a string
@@ -805,7 +805,7 @@ private:
    * @brief Recursive part of column layout preparation, see constructor documentation.
    * @param columns The list of columns to prepare.
    */
-  void prepareLayoutRecusive( std::vector< TableLayout::Column > & columns, size_t level );
+  void prepareLayoutRecusive( stdVector< TableLayout::Column > & columns, size_t level );
 
 };
 

@@ -138,7 +138,7 @@ private:
   /// The discrete number of time history states expected to be written to the file
   integer m_recordCount;
   /// The buffered time history output objects for each collector to collect data into and to use to configure/write to file.
-  std::vector< std::unique_ptr< BufferedHistoryIO > > m_io;
+  stdVector< std::unique_ptr< BufferedHistoryIO > > m_io;
 };
 }
 

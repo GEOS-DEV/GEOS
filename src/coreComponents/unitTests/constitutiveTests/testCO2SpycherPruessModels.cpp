@@ -81,7 +81,7 @@ CO2SolubilitySpycherPruessTestFixture::makeFlashModel( string const & fileConten
   componentMolarWeight[1] = 18.0e-3;
 
   // Read file parameters
-  string_array const strs = stringutilities::tokenizeBySpaces< std::vector >( fileContent );
+  string_array const strs = stringutilities::tokenizeBySpaces< stdVector >( fileContent );
 
   TableFunction::OutputOptions const flashOutputOpts = {
     false,  // writeCSV
@@ -254,7 +254,7 @@ TEST_P( CO2SolubilitySpycherPruessTestFixture, testNumericalDerivatives )
 }
 
 // Test data
-std::vector< TestParam > generateTestData()
+stdVector< TestParam > generateTestData()
 {
   return {
     {1.00000000e+05, 1.00000000e+01, 0.00000000e+00, 0.00000000e+00, 0.00000000e+00, 0.00000000e+00},

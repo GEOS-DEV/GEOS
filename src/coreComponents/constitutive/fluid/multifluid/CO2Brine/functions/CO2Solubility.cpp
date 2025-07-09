@@ -201,6 +201,11 @@ makeSolubilityTables( string const & functionName,
       badSolData.addRow( badValues( row, 0 ), badValues( row, 1 ), badValues( row, 2 ), badValues( row, 3 ));
     }
 
+    if( badCount > maxBad )
+    {
+      badSolData.addRow( "...", "...", "...", "..." );
+    }
+
     TableTextFormatter const tableFormatter( badSolubilityLayout );
     GEOS_LOG_RANK_0( tableFormatter.toString( badSolData ) );
   }

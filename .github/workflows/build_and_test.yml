@@ -75,7 +75,7 @@ on:
         required: false
         type: string
         default: '--ninja'
-      ENABLE_LVARRAY_BOUNDS_CHECK:
+      GEOS_ENABLE_BOUNDS_CHECK:
         required: false
         type: string
     secrets:
@@ -114,7 +114,7 @@ jobs:
 
     - id: 'auth'
       if: ${{ inputs.GCP_BUCKET || inputs.USE_SCCACHE }}
-      uses: 'google-github-actions/auth@v2.1.8'
+      uses: 'google-github-actions/auth@v2.1.10'
       with:
         credentials_json: '${{ secrets.GOOGLE_CLOUD_GCP }}'
         create_credentials_file: true
@@ -199,8 +199,8 @@ jobs:
         docker_args+=(--volume=${GITHUB_WORKSPACE}:${GITHUB_WORKSPACE_MOUNT_POINT})
         script_args+=(--repository ${GITHUB_WORKSPACE_MOUNT_POINT})
 
-        if [ ! -z "${{ inputs.ENABLE_LVARRAY_BOUNDS_CHECK }}" ]; then
-          script_args+=(--enable-lvarray-bounds-check "${{ inputs.ENABLE_LVARRAY_BOUNDS_CHECK }}")
+        if [ ! -z "${{ inputs.GEOS_ENABLE_BOUNDS_CHECK }}" ]; then
+          script_args+=(--geos-enable-bounds-check "${{ inputs.GEOS_ENABLE_BOUNDS_CHECK }}")
         fi
         
         # The linear algebra environment variables (ENABLE_HYPRE, ENABLE_HYPRE_DEVICE & ENABLE_TRILINOS)
@@ -238,7 +238,7 @@ jobs:
 
         DOCKER_REPOSITORY=${{ inputs.DOCKER_REPOSITORY }}
         SPLIT_DOCKER_REPOSITORY=(${DOCKER_REPOSITORY//// })
-        CONTAINER_NAME=geosx_build_${SPLIT_DOCKER_REPOSITORY[1]}_${GITHUB_SHA:0:7}
+        CONTAINER_NAME=geosx_build_${SPLIT_DOCKER_REPOSITORY[1]}_${GITHUB_SHA:0:7}_${{ inputs.CMAKE_BUILD_TYPE }}
         echo "CONTAINER_NAME: ${CONTAINER_NAME}"
         if [ "$(docker ps -aq -f name=${CONTAINER_NAME})" ]; then
           docker rm -f ${CONTAINER_NAME}
@@ -358,7 +358,7 @@ jobs:
 
     - name: Upload coverage to Codecov
       if: inputs.CODE_COVERAGE
-      uses: codecov/codecov-action@v5.3.1
+      uses: codecov/codecov-action@v5.4.2
       with:
         files: ${GITHUB_WORKSPACE}/geos_coverage.info.cleaned
         fail_ci_if_error: true

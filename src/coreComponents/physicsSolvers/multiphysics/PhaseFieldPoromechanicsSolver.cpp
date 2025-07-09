@@ -140,7 +140,7 @@ void PhaseFieldPoromechanicsSolver::applyDamageOnTractionBC( DomainPartition & d
 
     fsManager.forSubGroups< TractionBoundaryCondition >( [&] ( TractionBoundaryCondition & fs )
     {
-      std::vector< string > const targetPath = stringutilities::tokenize( fs.getObjectPath(), "/" );
+      stdVector< string > const targetPath = stringutilities::tokenize( fs.getObjectPath(), "/" );
 
       dataRepository::Group * targetGroup = &mesh;
 

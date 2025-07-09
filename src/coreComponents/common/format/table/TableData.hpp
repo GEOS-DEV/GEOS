@@ -44,7 +44,20 @@ public:
     CellType type;
     /// The cell value
     string value;
+
+    /**
+     * @brief Comparison operator for cell value
+     * @param other The cell data value to compare
+     * @return The comparison result
+     */
+    bool operator==( CellData const & other ) const
+    {
+      return value == other.value;
+    }
   };
+
+  /// Alias for table data rows with cells values
+  using DataRows = stdVector< stdVector< CellData > >;
 
   /**
    * @brief Add a row to the table.
@@ -58,7 +71,7 @@ public:
    * @brief Add a row to the table
    * @param row A vector of string representing a row
    */
-  void addRow( std::vector< CellData > const & row );
+  void addRow( stdVector< CellData > const & row );
 
   /**
    * @brief Add a line separator to the table
@@ -74,20 +87,37 @@ public:
   /**
    * @return The rows of the table
    */
-  std::vector< std::vector< CellData > > const & getTableDataRows() const;
+  stdVector< stdVector< CellData > > const & getTableDataRows() const;
 
   /**
    * @brief Get all error messages
    * @return The vector of error messages
    */
-  std::vector< string > const & getErrorMsgs() const;
+  stdVector< string > const & getErrorMsgs() const;
+
+  /**
+   * @return The const table data rows
+   */
+  DataRows const & getCellsData() const
+  { return m_rows; }
+
+  /**
+   * @brief Comparison operator for data rows
+   * @param comparingTable The tableData values to compare
+   * @return The comparison result
+   */
+  inline bool operator==( TableData const & comparingTable ) const
+  {
+
+    return getCellsData() == comparingTable.getCellsData();
+  }
 
 private:
-
   /// vector containing all rows with cell values
-  std::vector< std::vector< CellData > > m_rows;
+  DataRows m_rows;
 
 };
+
 
 /**
  * @brief Class for managing 2D table m_data
@@ -106,7 +136,7 @@ public:
   {
     /// Vector containing all columns names
     /// A header value is presented as "pressure [K] = {}"
-    std::vector< string > headerNames;
+    stdVector< string > headerNames;
     /// TableData to be built
     TableData tableData;
   };
@@ -179,7 +209,7 @@ constexpr bool isCellType = std::is_same_v< T, CellType >;
 template< typename ... Args >
 void TableData::addRow( Args const &... args )
 {
-  std::vector< CellData > cells;
+  stdVector< CellData > cells;
   ( [&] {
     static_assert( has_formatter_v< decltype(args) > || isCellType< std::decay_t< decltype(args) > >, "Argument passed in addRow cannot be converted to string nor a CellType" );
     if constexpr (std::is_same_v< Args, CellType >) {
