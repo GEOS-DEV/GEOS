@@ -647,14 +647,16 @@ public:
     ( func( std::integral_constant< int, Is >{} ), ... );
   }
 
-  template< int N, typename FUNC >
-  GEOS_HOST_DEVICE
-  GEOS_FORCE_INLINE
-  static constexpr void loop( FUNC && func )
+  template<int N, typename FUNC>
+GEOS_HOST_DEVICE
+static constexpr void loop(FUNC const& func)
+{
+  if constexpr (N > 0)
   {
-    loop_impl( std::forward< FUNC >( func ), std::make_integer_sequence< int, N >{} );
+    loop<N - 1>(func);
+    func(std::integral_constant<int, N - 1>{});
   }
-
+}
 
 
   /**
@@ -717,38 +719,68 @@ public:
    * @tparam Is the setindices
    * @param func the callback function to call for each index
    */
-  template< int... Is, typename FUNC >
-  GEOS_HOST_DEVICE
-  GEOS_FORCE_INLINE
-  static constexpr void conditionalBasisLoop( FUNC && func )
-  {
-    loop< ORDER + 1 >( [&func] ( auto const i )
-    {
-      std::integral_constant< int, ORDER -  decltype(i)::value > i1;
-      loop< ORDER + 1 >( [&func,i1] ( auto const j )
-      {
-        std::integral_constant< int, ORDER - decltype(j)::value > j1;
-        constexpr int iic = decltype(i)::value;
-        if constexpr ( j1.value <= iic )
-        {
-          loop< ORDER + 1 >( [&func,i1,j1] ( auto const k )
-          {
-            std::integral_constant< int, ORDER - k > k1;
-            std::integral_constant< int, ORDER - i1 - j1 > ji1;
-            if constexpr ( k1.value <= ji1.value )
-            {
-              std::integral_constant< int, ORDER - i1 - j1 - k1 > l1;
-              std::integral_constant< int, dofIndex< i1, j1, k1 >() > c1;
-              (void)( ( (i1 == Is) && ( void( func( std::integral_constant< int, 0 >{}, i1, c1, j1, k1, l1 ) ), 1 ) ) || ... );
-              (void)( ( (j1 == Is) && ( void( func( std::integral_constant< int, 1 >{}, j1, c1, i1, k1, l1 ) ), 1 ) ) || ... );
-              (void)( ( (k1 == Is) && ( void( func( std::integral_constant< int, 2 >{}, k1, c1, i1, j1, l1 ) ), 1 ) ) || ... );
-              (void)( ( (l1 == Is) && ( void( func( std::integral_constant< int, 3 >{}, l1, c1, i1, j1, k1 ) ), 1 ) ) || ... );
-            }
-          } );
-        }
-      } );
-    } );
-  }
+template <int... Is, typename FUNC>
+GEOS_HOST_DEVICE
+static constexpr void conditionalBasisLoop(FUNC const& func)
+{
+  loop<ORDER + 1>([&](auto const i) {
+    constexpr int iVal = decltype(i)::value;
+    constexpr int i1 = ORDER - iVal;
+
+    loop<ORDER + 1>([&](auto const j) {
+      constexpr int jVal = decltype(j)::value;
+      constexpr int j1 = ORDER - jVal;
+
+      if constexpr (j1 <= i1) {
+        loop<ORDER + 1>([&](auto const k) {
+          constexpr int kVal = decltype(k)::value;
+          constexpr int k1 = ORDER - kVal;
+
+          if constexpr (k1 <= (ORDER - i1 - j1)) {
+            constexpr int l1 = ORDER - i1 - j1 - k1;
+            constexpr int c1 = dofIndex<
+              std::integral_constant<int, i1>{},
+              std::integral_constant<int, j1>{},
+              std::integral_constant<int, k1>{}
+            >();
+
+            (void)(((std::integral_constant<int, i1>{} == Is) &&
+              (void(func(std::integral_constant<int, 0>{},
+                         std::integral_constant<int, i1>{},
+                         std::integral_constant<int, c1>{},
+                         std::integral_constant<int, j1>{},
+                         std::integral_constant<int, k1>{},
+                         std::integral_constant<int, l1>{})), 1)) || ...);
+
+            (void)(((std::integral_constant<int, j1>{} == Is) &&
+              (void(func(std::integral_constant<int, 1>{},
+                         std::integral_constant<int, j1>{},
+                         std::integral_constant<int, c1>{},
+                         std::integral_constant<int, i1>{},
+                         std::integral_constant<int, k1>{},
+                         std::integral_constant<int, l1>{})), 1)) || ...);
+
+            (void)(((std::integral_constant<int, k1>{} == Is) &&
+              (void(func(std::integral_constant<int, 2>{},
+                         std::integral_constant<int, k1>{},
+                         std::integral_constant<int, c1>{},
+                         std::integral_constant<int, i1>{},
+                         std::integral_constant<int, j1>{},
+                         std::integral_constant<int, l1>{})), 1)) || ...);
+
+            (void)(((std::integral_constant<int, l1>{} == Is) &&
+              (void(func(std::integral_constant<int, 3>{},
+                         std::integral_constant<int, l1>{},
+                         std::integral_constant<int, c1>{},
+                         std::integral_constant<int, i1>{},
+                         std::integral_constant<int, j1>{},
+                         std::integral_constant<int, k1>{})), 1)) || ...);
+          }
+        });
+      }
+    });
+  });
+}
 
   /**
    * @brief Helper function for loop over barycentric coordinates of a face.
