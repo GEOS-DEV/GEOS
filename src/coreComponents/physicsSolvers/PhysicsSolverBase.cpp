@@ -253,7 +253,7 @@ real64 PhysicsSolverBase::solverStep( real64 const & time_n,
 
   {
     Timer timer( m_timers["step setup"] );
-    implicitStepSetup( time_n, dt, domain );
+    implicitStepSetup( time_n, dt, cycleNumber, domain );
   }
 
   // currently the only method is implicit time integration
@@ -348,8 +348,8 @@ bool PhysicsSolverBase::execute( real64 const time_n,
 
   logEndOfCycleInformation( cycleNumber, numOfSubSteps, subStepDts );
 
-  if( m_writeSolverIterationsCSV )
-    getIterationStats().writeStatsToTable();
+  // if( m_writeSolverIterationsCSV )
+  //   getIterationStats().writeStatsToTable();
 
   return false;
 }
@@ -513,7 +513,8 @@ real64 PhysicsSolverBase::linearImplicitStep( real64 const & time_n,
 {
   // call setup for physics solver. Pre step allocations etc.
   // TODO: Nonlinear step does not call its own setup, need to decide on consistent behavior
-  implicitStepSetup( time_n, dt, domain );
+  implicitStepSetup( time_n, dt, cycleNumber, domain );
+
 
   {
     Timer timer( m_timers["assemble"] );
@@ -947,7 +948,7 @@ bool PhysicsSolverBase::solveNonlinearSystem( real64 const & time_n,
 
   for( newtonIter = 0; newtonIter < maxNewtonIter; ++newtonIter )
   {
-    getConvergenceStats().updateNewtonIter( newtonIter );
+    getIterationStats().updateNewtonIter( newtonIter );
     GEOS_LOG_LEVEL_RANK_0( logInfo::NonlinearSolver,
                            GEOS_FMT( "    Attempt: {:2}, ConfigurationIter: {:2}, NewtonIter: {:2}", dtAttempt, configurationLoopIter, newtonIter ));
 
@@ -1146,6 +1147,10 @@ bool PhysicsSolverBase::solveNonlinearSystem( real64 const & time_n,
 
     lastResidual = residualNorm;
   }
+  if( m_writeSolverIterationsCSV )
+    getIterationStats().writeStatsToTable();
+
+  getIterationStats().resetSolverLinearTime();
 
   return isNewtonConverged;
 }
@@ -1161,6 +1166,7 @@ real64 PhysicsSolverBase::explicitStep( real64 const & GEOS_UNUSED_PARAM( time_n
 
 void PhysicsSolverBase::implicitStepSetup( real64 const & GEOS_UNUSED_PARAM( time_n ),
                                            real64 const & GEOS_UNUSED_PARAM( dt ),
+                                           integer const & GEOS_UNUSED_PARAM( cycleNumber ),
                                            DomainPartition & GEOS_UNUSED_PARAM( domain ) )
 {
   GEOS_THROW( "PhysicsSolverBase::ImplicitStepSetup called!. Should be overridden.", std::runtime_error );
@@ -1172,16 +1178,13 @@ void PhysicsSolverBase::setupDofs( DomainPartition const & GEOS_UNUSED_PARAM( do
   GEOS_ERROR( "PhysicsSolverBase::setupDofs called!. Should be overridden." );
 }
 
-void PhysicsSolverBase::doSmthEarlyStep( real64 const & time_n, real64 const & dt )
+void PhysicsSolverBase::doSmthEarlyStep( integer const & time_n, real64 const & dt, real64 const & cycleNumber )
 {
-  // std::cout << "begin for " << getName() << " time_n " << time_n << " dt " << dt << std::endl;
-  // getIterationStats().resetCurrentTimeStepStatistics();
+  getConvergenceStats().updateSolverStep( time_n, dt, cycleNumber );
 }
 
 void PhysicsSolverBase::doSmthEndStep( real64 const & time_n, real64 const & dt, integer const cycleNumber )
 {
-  getConvergenceStats().updateSolverStep( time_n, dt, cycleNumber );
-  std::cout << getName() << " : solver time "<< time_n << " dt "<<  dt << " cycleNumber "<<  cycleNumber << std::endl;
   if( m_writeSolvingConvergenceCSV )
   {
     getConvergenceStats().writeResidualNormToTable();
@@ -1355,6 +1358,7 @@ void PhysicsSolverBase::solveLinearSystem( DofManager const & dofManager,
   LinearSolverParameters const & params = m_linearSolverParameters.get();
   matrix.setDofManager( &dofManager );
 
+
   if( params.solverType == LinearSolverParameters::SolverType::direct || !m_precond )
   {
     std::unique_ptr< LinearSolverBase< LAInterface > > solver = LAInterface::createSolver( params );
@@ -1367,6 +1371,7 @@ void PhysicsSolverBase::solveLinearSystem( DofManager const & dofManager,
       solver->solve( rhs, solution );
     }
     m_linearSolverResult = solver->result();
+    getIterationStats().accumulateSolverLinearTime( m_linearSolverResult.setupTime, m_linearSolverResult.solveTime );
   }
   else
   {
@@ -1380,6 +1385,7 @@ void PhysicsSolverBase::solveLinearSystem( DofManager const & dofManager,
       solver->solve( rhs, solution );
     }
     m_linearSolverResult = solver->result();
+    getIterationStats().accumulateSolverLinearTime( m_linearSolverResult.setupTime, m_linearSolverResult.solveTime );
   }
 
   GEOS_LOG_LEVEL_RANK_0( logInfo::LinearSolver,

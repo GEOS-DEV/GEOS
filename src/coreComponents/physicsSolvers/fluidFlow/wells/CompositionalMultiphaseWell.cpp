@@ -1372,8 +1372,6 @@ CompositionalMultiphaseWell::calculateResidualNorm( real64 const & time_n,
     getConvergenceStats().m_residualWell = resNorm;
   }
 
-  getConvergenceStats().writeResidualNormToTable();
-
   return resNorm;
 }
 
@@ -2017,10 +2015,11 @@ void CompositionalMultiphaseWell::assemblePressureRelations( real64 const & time
 
 void CompositionalMultiphaseWell::implicitStepSetup( real64 const & time_n,
                                                      real64 const & dt,
+                                                     integer const & cycleNumber,
                                                      DomainPartition & domain )
 {
-  WellSolverBase::implicitStepSetup( time_n, dt, domain );
-
+  WellSolverBase::implicitStepSetup( time_n, dt, cycleNumber, domain );
+  doSmthEarlyStep( time_n, dt, cycleNumber );
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
                                                                 string_array const & regionNames )
@@ -2078,7 +2077,6 @@ void CompositionalMultiphaseWell::implicitStepSetup( real64 const & time_n,
       updateSubRegionState( subRegion );
     } );
   } );
-  doSmthEarlyStep( time_n, dt );
 }
 
 void CompositionalMultiphaseWell::implicitStepComplete( real64 const & time_n,

@@ -111,6 +111,7 @@ real64 LaplaceBaseH1::solverStep( real64 const & time_n,
  */
 void LaplaceBaseH1::implicitStepSetup( real64 const & GEOS_UNUSED_PARAM( time_n ),
                                        real64 const & GEOS_UNUSED_PARAM( dt ),
+                                       integer const & GEOS_UNUSED_PARAM( cycleNumber ),
                                        DomainPartition & domain )
 {
   Timestamp const meshModificationTimestamp = getMeshModificationTimestamp( domain );

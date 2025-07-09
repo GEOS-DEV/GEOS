@@ -43,6 +43,7 @@ void SolverStatistics::setOutputFilesName( string_view solverName )
 
 IterationsStatistics::IterationsStatistics( string const & name, Group * const parent )
   : Group( name, parent ),
+  m_currentNewtonIter( 0 ),
   m_currentNumOuterLoopIterations( 0 ),
   m_currentNumNonlinearIterations( 0 ),
   m_currentNumLinearIterations( 0 )
@@ -88,7 +89,8 @@ IterationsStatistics::IterationsStatistics( string const & name, Group * const p
 
   m_iterationCSVLayout = std::make_unique< TableLayout >();
   m_iterationCSVLayout->setTitle( GEOS_FMT( "{} iterations", getParent().getName()));
-  m_iterationCSVLayout->addColumns( { "m_numTimeSteps", "m_numTimeStepCuts",
+  m_iterationCSVLayout->addColumns( { "numTimeSteps", "newton Iteration", "numTimeStepCuts",
+                                      "setup time", "solve time",
                                       "Successful outer loop", "Successful nonlinear", "Successful linear",
                                       "Discarded outer loop", "Discarded nonlinear", "Discarded linear"} );
   //m_iterationCSVLayout->addColumn( "Iter" );
@@ -146,7 +148,10 @@ void IterationsStatistics::updateTimeStepCut()
 void IterationsStatistics::writeStatsToTable()
 {
   m_iterationData.addRow( m_numTimeSteps,
+                          m_currentNewtonIter,
                           m_numTimeStepCuts,
+                          m_setupTime,
+                          m_solveTime,
                           m_numSuccessfulOuterLoopIterations,
                           m_numSuccessfulNonlinearIterations,
                           m_numSuccessfulLinearIterations,
@@ -194,14 +199,13 @@ void IterationsStatistics::outputStatistics( bool writeCSV )
   logStream.close();
 }
 
-ConvergenceStatistics::ConvergenceStatistics():
-  m_currentNewtonIter( 0 )
+ConvergenceStatistics::ConvergenceStatistics()
 {
 //  using TableLayoutArgs = std::initializer_list< std::variant< string_view, TableLayout::Column > >;
 
   m_convergenceLayout = std::make_unique< TableLayout >();
 
-  m_convergenceLayout->addColumns( {"time_n (s)", "dt (s)", "Cycle number", "Time-steps", "Newton Iter",
+  m_convergenceLayout->addColumns( {"time_n (s)", "dt (s)", "Cycle number", "Time-steps",
                                     "RMass", "RVol", "REnergy",
                                     "RFlow", "RBubbleDisp", "RFrac",
                                     "Rstick", "Rslip", "Ropen",
@@ -212,14 +216,9 @@ ConvergenceStatistics::ConvergenceStatistics():
 
 void ConvergenceStatistics::removeInvalidResidualNorms()
 {
-  for( int i = 0; i <= m_currentNewtonIter; i++ )
-    m_convergenceData.getTableDataRows().pop_back();
+  // for( int i = 0; i <= m_currentNewtonIter; i++ )
+  // m_convergenceData.getTableDataRows().pop_back();
 }
-
-void ConvergenceStatistics::updateNewtonIter( integer currentNewtonIter )
-{ m_currentNewtonIter = currentNewtonIter; }
-
-
 
 void ConvergenceStatistics::writeResidualNormToTable()
 {
@@ -258,8 +257,6 @@ void ConvergenceStatistics::writeResidualNormToTable()
                                                          GEOS_FMT( "{}", m_cycleNumber )} ));
   residualsNormCells.emplace_back( TableData::CellData( {CellType::Value,
                                                          GEOS_FMT( "{}", m_numTimeSteps )} ));
-  residualsNormCells.emplace_back( TableData::CellData( {CellType::Value,
-                                                         GEOS_FMT( "{}", m_currentNewtonIter )} ));
 
   for( auto const & residual : residuals )
   {

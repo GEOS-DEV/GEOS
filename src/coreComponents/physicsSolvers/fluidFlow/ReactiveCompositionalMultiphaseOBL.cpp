@@ -371,7 +371,6 @@ real64 ReactiveCompositionalMultiphaseOBL::calculateResidualNorm( real64 const &
   GEOS_LOG_LEVEL_RANK_0_NLR( logInfo::ResidualNorm, GEOS_FMT( "        ( Rflow ) = ( {:4.2e} )", residual ) );
 
   getConvergenceStats().m_residualFlow = residual;
-  getConvergenceStats().writeResidualNormToTable();
 
   return residual;
 }
@@ -610,6 +609,7 @@ void ReactiveCompositionalMultiphaseOBL::initializePostInitialConditionsPreSubGr
 void
 ReactiveCompositionalMultiphaseOBL::implicitStepSetup( real64 const & GEOS_UNUSED_PARAM( time_n ),
                                                        real64 const & GEOS_UNUSED_PARAM( dt ),
+                                                       integer const & GEOS_UNUSED_PARAM( cycleNumber ),
                                                        DomainPartition & domain )
 {
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,

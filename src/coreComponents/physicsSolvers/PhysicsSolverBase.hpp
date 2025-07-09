@@ -367,9 +367,10 @@ public:
   virtual void
   implicitStepSetup( real64 const & time_n,
                      real64 const & dt,
+                     integer const & cycleNumber,
                      DomainPartition & domain );
 
-  void doSmthEarlyStep( real64 const & time_n, real64 const & dt );
+  void doSmthEarlyStep( integer const & cycleNumber, real64 const & time_n, real64 const & dt );
   void doSmthEndStep( real64 const & time_n, real64 const & dt, integer const cycleNumber );
 
   /**

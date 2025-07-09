@@ -350,6 +350,7 @@ void ProppantTransport::initializePostInitialConditionsPreSubGroups()
 
 void ProppantTransport::preStepUpdate( real64 const & time,
                                        real64 const & GEOS_UNUSED_PARAM( dt ),
+                                       integer const & GEOS_UNUSED_PARAM( cycleNumber ),
                                        DomainPartition & domain )
 {
   GEOS_MARK_FUNCTION;
@@ -440,6 +441,7 @@ void ProppantTransport::postStepUpdate( real64 const & time_n,
 
 void ProppantTransport::implicitStepSetup( real64 const & GEOS_UNUSED_PARAM( time_n ),
                                            real64 const & GEOS_UNUSED_PARAM( dt ),
+                                           integer const & GEOS_UNUSED_PARAM( cycleNumber ),
                                            DomainPartition & domain )
 {
   GEOS_MARK_FUNCTION;
@@ -892,7 +894,6 @@ ProppantTransport::calculateResidualNorm( real64 const & GEOS_UNUSED_PARAM( time
                          GEOS_FMT( "        ( R{} ) = ( {:4.2e} )", coupledSolverAttributePrefix(), residualNorm ));
 
   getConvergenceStats().m_residualProppant = residualNorm;
-  getConvergenceStats().writeResidualNormToTable();
 
   return residualNorm;
 }

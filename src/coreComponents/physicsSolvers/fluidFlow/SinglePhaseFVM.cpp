@@ -237,10 +237,7 @@ real64 SinglePhaseFVM< BASE >::calculateResidualNorm( real64 const & GEOS_UNUSED
     GEOS_LOG_LEVEL_RANK_0_NLR( logInfo::ResidualNorm,
                                GEOS_FMT( "        ( R{} ) = ( {:4.2e} )", FlowSolverBase::coupledSolverAttributePrefix(), residualNorm ));
     BASE:: getConvergenceStats().m_residualFlow = residualNorm;
-    std::cout <<" not thermal "<< std::endl;
   }
-  BASE::getConvergenceStats().writeResidualNormToTable();
-  std::cout <<" registered in SingleFVM "<< std::endl;
   return residualNorm;
 }
 

@@ -99,7 +99,7 @@ void SinglePhaseHybridFVM::initializePreSubGroups()
 {
   SinglePhaseBase::initializePreSubGroups();
 
-  
+
 
   GEOS_THROW_IF( m_isThermal,
                  GEOS_FMT( "{} {}: The thermal option is not supported by SinglePhaseHybridFVM",
@@ -165,13 +165,15 @@ void SinglePhaseHybridFVM::initializePostInitialConditionsPreSubGroups()
 
 void SinglePhaseHybridFVM::implicitStepSetup( real64 const & time_n,
                                               real64 const & dt,
+                                              integer const & cycleNumber,
                                               DomainPartition & domain )
 {
   GEOS_MARK_FUNCTION;
 
   // setup the cell-centered fields
-  SinglePhaseBase::implicitStepSetup( time_n, dt, domain );
-
+  SinglePhaseBase::implicitStepSetup( time_n, dt, cycleNumber, domain );
+  doSmthEarlyStep( time_n, dt, cycleNumber );
+  
   // setup the face fields
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
@@ -586,7 +588,6 @@ real64 SinglePhaseHybridFVM::calculateResidualNorm( real64 const & GEOS_UNUSED_P
 
   GEOS_LOG_LEVEL_RANK_0( logInfo::ResidualNorm, GEOS_FMT( "        ( R{} ) = ( {:4.2e} )", coupledSolverAttributePrefix(), residualNorm ));
   getConvergenceStats().m_residualProppant = residualNorm;
-  getConvergenceStats().writeResidualNormToTable();
 
   return residualNorm;
 }

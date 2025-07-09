@@ -216,9 +216,10 @@ public:
   virtual void
   implicitStepSetup( real64 const & time_n,
                      real64 const & dt,
+                     integer const & cycleNumber,
                      DomainPartition & domain ) override
   {
-    Base::implicitStepSetup( time_n, dt, domain );
+    Base::implicitStepSetup( time_n, dt, cycleNumber, domain );
 
     // we delay the computation of the transmissibility until the last minute
     // because we want to make sure that the permeability has been updated (in the flow solver)

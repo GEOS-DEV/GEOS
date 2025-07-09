@@ -52,6 +52,13 @@ public:
   /// Number of time step cuts
   integer m_numTimeStepCuts = 0;
 
+  real64 m_setupTime = 0.0;
+
+  real64 m_solveTime = 0.0;
+
+  /// Maximum number of current Newton iterations.
+  integer m_currentNewtonIter = 0;
+
 
   /// Number of outer loop iterations in the current time step (utility variable constantly overwritten)
   integer m_currentNumOuterLoopIterations = 0;
@@ -119,6 +126,25 @@ public:
    * @detail This function is well suited for Newton's method, or for single-physics solvers in sequential schemes
    */
   virtual void updateNonlinearIteration( integer const numLinearIterations );
+
+  /**
+   * @brief Save the current newton iteration
+   * @param currentNewtonIter The current newton iteration performed by the the linear solver
+   */
+  virtual void updateNewtonIter( integer currentNewtonIter )
+  {m_currentNewtonIter = currentNewtonIter;}
+
+  virtual void accumulateSolverLinearTime( real64 setupTime, real64 solveTime )
+  {
+    m_setupTime += setupTime;
+    m_solveTime += solveTime;
+  }
+
+  virtual void resetSolverLinearTime()
+  {
+    m_setupTime = 0.0;
+    m_solveTime = 0.0;
+  }
 
   /**
    * @brief Tell the solverStatistics that we are doing a nonlinear iteration
@@ -193,6 +219,14 @@ public:
 
   void updateNonlinearIteration() override {}
 
+  /**
+   * @brief Save the current newton iteration
+   * @param currentNewtonIter The current newton iteration performed by the the linear solver
+   */
+  void updateNewtonIter( integer ) override {};
+
+  void accumulateSolverLinearTime( real64, real64 ) override { }
+
   void incrementNonlinearIteration() override {}
 
   void updateTimeStepCut() override {}
@@ -201,7 +235,7 @@ public:
 
   void writeStatsToTable() override {}
 
-  void outputStatistics( bool writeCSV ) {}
+  void outputStatistics( bool ) {}
   /// @endcond
 ///@}
 };
@@ -219,19 +253,16 @@ public:
   ConvergenceStatistics();
 
   /// The time at the beginning of the step
-  real64 m_time_n = 0;
+  real64 m_time_n = 0.0;
 
   /// The desired timestepr
-  real64 m_dt = 0;
+  real64 m_dt = 0.0;
 
   /// Current cycle number
   integer m_cycleNumber = 0;
 
   /// Number of time steps
   integer m_numTimeSteps = 0;
-
-  /// Maximum number of current Newton iterations.
-  integer m_currentNewtonIter = 0;
 
   /// Maximum value for residual mass.
   real64 m_residualMass = std::numeric_limits< real64 >::quiet_NaN();
@@ -310,12 +341,6 @@ public:
     m_dt = dt;
     m_cycleNumber = cycleNumber;
   }
-
-  /**
-   * @brief Save the current newton iteration
-   * @param currentNewtonIter The current newton iteration performed by the the linear solver
-   */
-  void updateNewtonIter( integer currentNewtonIter );
 
   /**
    * @brief  Set the filename output file.

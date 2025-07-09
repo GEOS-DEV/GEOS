@@ -266,10 +266,13 @@ void SolidMechanicsAugmentedLagrangianContact::setupSystem( DomainPartition & do
 
 void SolidMechanicsAugmentedLagrangianContact::implicitStepSetup( real64 const & time_n,
                                                                   real64 const & dt,
+                                                                  integer const & cycleNumber,
                                                                   DomainPartition & domain )
 {
 
-  SolidMechanicsLagrangianFEM::implicitStepSetup( time_n, dt, domain );
+  SolidMechanicsLagrangianFEM::implicitStepSetup( time_n, dt, cycleNumber, domain );
+
+  doSmthEarlyStep( time_n, dt, cycleNumber );
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,

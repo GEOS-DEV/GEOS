@@ -151,11 +151,12 @@ public:
   virtual void
   implicitStepSetup( real64 const & time_n,
                      real64 const & dt,
+                     integer const & cycleNumber,
                      DomainPartition & domain ) override
   {
     forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
     {
-      solver->implicitStepSetup( time_n, dt, domain );
+      solver->implicitStepSetup( time_n, dt, cycleNumber, domain );
     } );
   }
 
@@ -441,7 +442,7 @@ protected:
       }
     } );
 
-    implicitStepSetup( time_n, dt, domain );
+    implicitStepSetup( time_n, dt, cycleNumber, domain );
 
     NonlinearSolverParameters & solverParams = getNonlinearSolverParameters();
     integer const maxNumberDtCuts = solverParams.m_maxTimeStepCuts;

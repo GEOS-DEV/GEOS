@@ -481,7 +481,7 @@ real64 SolidMechanicsLagrangianFEM::solverStep( real64 const & time_n,
   {
     int const maxNumResolves = m_maxNumResolves;
     int globallyFractured = 0;
-    implicitStepSetup( time_n, dt, domain );
+    implicitStepSetup( time_n, dt, cycleNumber, domain );
     for( int solveIter=0; solveIter<maxNumResolves+1; ++solveIter )
     {
       GEOS_ERROR_IF( solveIter == maxNumResolves, "Maximum number of resolves achieved" );
@@ -830,6 +830,7 @@ void
 SolidMechanicsLagrangianFEM::
   implicitStepSetup( real64 const & time_n,
                      real64 const & dt,
+                     integer const & cycleNumber,
                      DomainPartition & domain )
 {
 
@@ -893,7 +894,7 @@ SolidMechanicsLagrangianFEM::
       constitutiveRelation.saveConvergedState();
     } );
   } );
-  doSmthEarlyStep( time_n, dt );
+  // doSmthEarlyStep( time_n, dt );
 }
 
 void SolidMechanicsLagrangianFEM::implicitStepComplete( real64 const & time_n,

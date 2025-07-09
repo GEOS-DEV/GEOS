@@ -487,7 +487,7 @@ protected:
                          solver->getSystemRhs(),
                          solver->getSystemSolution() );
 
-    solver->implicitStepSetup( time, dt, domain );
+    solver->implicitStepSetup( time, dt, 0 ,domain);
 
   }
 

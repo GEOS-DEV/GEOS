@@ -872,7 +872,6 @@ SinglePhaseWell::calculateResidualNorm( real64 const & time_n,
                          GEOS_FMT( "        ( R{} ) = ( {:4.2e} )", coupledSolverAttributePrefix(), residualNorm ));
 
   getConvergenceStats().m_residualWell = residualNorm;
-  getConvergenceStats().writeResidualNormToTable();
 
   return residualNorm;
 }
@@ -1003,9 +1002,12 @@ void SinglePhaseWell::resetStateToBeginningOfStep( DomainPartition & domain )
 
 void SinglePhaseWell::implicitStepSetup( real64 const & time,
                                          real64 const & dt,
+                                         integer const & cycleNumber,
                                          DomainPartition & domain )
 {
-  WellSolverBase::implicitStepSetup( time, dt, domain );
+  WellSolverBase::implicitStepSetup( time, dt, cycleNumber, domain );
+
+  doSmthEarlyStep( time, dt, cycleNumber );
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,

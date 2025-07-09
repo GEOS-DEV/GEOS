@@ -216,15 +216,16 @@ void SolidMechanicsLagrangeContact::setupSystem( DomainPartition & domain,
 
 void SolidMechanicsLagrangeContact::implicitStepSetup( real64 const & time_n,
                                                        real64 const & dt,
+                                                       integer const & cycleNumber,
                                                        DomainPartition & domain )
 {
   computeRotationMatrices( domain );
   computeTolerances( domain );
   computeFaceDisplacementJump( domain );
 
-  doSmthEarlyStep( time_n, dt );
+  doSmthEarlyStep( time_n, dt, cycleNumber );
 
-  SolidMechanicsLagrangianFEM::implicitStepSetup( time_n, dt, domain );
+  SolidMechanicsLagrangianFEM::implicitStepSetup( time_n, dt, cycleNumber, domain );
 }
 
 void SolidMechanicsLagrangeContact::implicitStepComplete( real64 const & time,
