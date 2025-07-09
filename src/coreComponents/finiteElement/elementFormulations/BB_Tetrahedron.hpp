@@ -729,7 +729,7 @@ public:
       {
         std::integral_constant< int, ORDER - decltype(j)::value > j1;
         constexpr int iic = decltype(i)::value;
-        if constexpr ( j1 <= iic )
+        GEOS_HOST_DEVICE if constexpr ( j1 <= iic )
         {
           loop< ORDER + 1 >( [&func,i1,j1] ( auto const k )
           {
