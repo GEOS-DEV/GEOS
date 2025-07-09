@@ -1125,10 +1125,12 @@ int GeomechanicsUpdates::computeStep( real64 const ( & D )[6],               // 
     real64 m_referenceTemperature = 300.0; // This could be an input variable
     real64 m_gasConstantR = 8.314;  // this is J/(mol*K) and also works for mm,mg,us,K units, but this should be a user input 
                                     // to allow for other unit systems.
-    real64 m_creepActivationEnergy = 1.0;  // This will be a user input that can be used to fit temperature dependence.
+    real64 m_creepActivationEnergy = 2.0;  // This will be a user input that can be used to fit temperature dependence.
 
-    real64 creepRateTemperatureMultiplier = exp(-1.0*m_creepActivationEnergy*( 1.0/(m_gasConstantR*temperature) - 1.0/(m_gasConstantR*m_referenceTemperature) ) ); 
-		
+    //real64 creepRateTemperatureMultiplier = exp(-1.0*m_creepActivationEnergy*( 1.0/(m_gasConstantR*temperature) - 1.0/(m_gasConstantR*m_referenceTemperature) ) ); 
+	
+    real64 creepRateTemperatureMultiplier = 0.0024*temperature + 0.2982
+
     real64 c0 = m_creepC0;
 		real64 c1 = m_creepC1;
     real64 c2 = m_creepC2;
@@ -1243,7 +1245,7 @@ int GeomechanicsUpdates::computeStep( real64 const ( & D )[6],               // 
     if ( (phi_p - phi_e > 1.e-10) && (p > 1.e-12) && (C > 1.e-16) && ( evp + m_p3 > 1.e-10 ) )
  		  {  // creep compaction
  			  //real64 dphidt = -1.0*creepRateTemperatureMultiplier*std::pow(p,compactionRatePressureExponent)*C*( phi_p - phi_e );  // creep compaction rate:
- 			  real64 dphidt = -1.0*creepRateTemperatureMultiplier*std::pow(p,(compactionRatePressureExponent/m_b0))*C*( phi_p - phi_e );  // creep compaction rate:
+ 			  real64 dphidt = -1.0*creepRateTemperatureMultiplier*std::pow((p/m_b0),compactionRatePressureExponent)*C*( phi_p - phi_e );  // creep compaction rate:
 
  			  real64 phi_c = std::max( phi_e, phi_p + dphidt*dt ); // unloaded porosity after creep, don't let it go below equilibrium level
  			  real64 evp_c = log( (phi_i - 1. ) / ( phi_c - 1. ) ); // vol. strain after creep.
