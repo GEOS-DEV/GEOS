@@ -71,7 +71,7 @@ real64_array FunctionBase::evaluateStats( dataRepository::Group const & group,
     result[2] = std::max( result[2], sub[ii] );
     // OV end
   }
-  result[1] /= N;
+  result[1] /= (N +1e-60);
 
   return result;
 }
