@@ -729,13 +729,13 @@ public:
       {
         std::integral_constant< int, ORDER - decltype(j)::value > j1;
         constexpr int iic = decltype(i)::value;
-        GEOS_HOST_DEVICE if constexpr ( j1 <= iic )
+        if constexpr ( j1.value <= iic )
         {
           loop< ORDER + 1 >( [&func,i1,j1] ( auto const k )
           {
             std::integral_constant< int, ORDER - k > k1;
             std::integral_constant< int, ORDER - i1 - j1 > ji1;
-            if constexpr ( k1 <= ji1 )
+            if constexpr ( k1.value <= ji1.value )
             {
               std::integral_constant< int, ORDER - i1 - j1 - k1 > l1;
               std::integral_constant< int, dofIndex< i1, j1, k1 >() > c1;
