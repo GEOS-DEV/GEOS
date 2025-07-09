@@ -486,7 +486,7 @@
 		<!--fractureStencil => (no description available)-->
 		<xsd:attribute name="fractureStencil" type="geos_SurfaceElementStencil" />
 		<!--targetRegions => List of regions to build the stencil for-->
-		<xsd:attribute name="targetRegions" type="geos_mapBase_lt_string_cm_-std_vector_lt_string_cm_-std_allocator_lt_string-_gt_-_gt__cm_-std_integral_constant_lt_bool_cm_-true_gt_-_gt_" />
+		<xsd:attribute name="targetRegions" type="geos_mapBase_lt_string_cm_-geos_internal_StdVectorWrapper_lt_string_cm_-std_allocator_lt_string-_gt__cm_-true_gt__cm_-std_integral_constant_lt_bool_cm_-true_gt_-_gt_" />
 	</xsd:complexType>
 	<xsd:complexType name="OutputsType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -574,6 +574,27 @@
 			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
 			<xsd:element name="SolverStatistics" type="SolverStatisticsType" />
 		</xsd:choice>
+<<<<<<< HEAD
+=======
+	</xsd:complexType>
+	<xsd:complexType name="SolverStatisticsType">
+		<!--numDiscardedLinearIterations => Cumulative number of discarded linear iterations-->
+		<xsd:attribute name="numDiscardedLinearIterations" type="integer" />
+		<!--numDiscardedNonlinearIterations => Cumulative number of discarded nonlinear iterations-->
+		<xsd:attribute name="numDiscardedNonlinearIterations" type="integer" />
+		<!--numDiscardedOuterLoopIterations => Cumulative number of discarded outer loop iterations-->
+		<xsd:attribute name="numDiscardedOuterLoopIterations" type="integer" />
+		<!--numSuccessfulLinearIterations => Cumulative number of successful linear iterations-->
+		<xsd:attribute name="numSuccessfulLinearIterations" type="integer" />
+		<!--numSuccessfulNonlinearIterations => Cumulative number of successful nonlinear iterations-->
+		<xsd:attribute name="numSuccessfulNonlinearIterations" type="integer" />
+		<!--numSuccessfulOuterLoopIterations => Cumulative number of successful outer loop iterations-->
+		<xsd:attribute name="numSuccessfulOuterLoopIterations" type="integer" />
+		<!--numTimeStepCuts => Number of time step cuts-->
+		<xsd:attribute name="numTimeStepCuts" type="integer" />
+		<!--numTimeSteps => Number of time steps-->
+		<xsd:attribute name="numTimeSteps" type="integer" />
+>>>>>>> origin/feature/rey/dataHierarchy-and-nosim-params
 	</xsd:complexType>
 	<xsd:complexType name="SolverStatisticsType" />
 	<xsd:complexType name="AcousticFirstOrderSEMType">
@@ -1326,7 +1347,7 @@
 			<xsd:element name="MeshBodies" type="MeshBodiesType" />
 		</xsd:choice>
 		<!--Neighbors => (no description available)-->
-		<xsd:attribute name="Neighbors" type="std_vector_lt_geos_NeighborCommunicator_cm_-std_allocator_lt_geos_NeighborCommunicator_gt_-_gt_" />
+		<xsd:attribute name="Neighbors" type="geos_internal_StdVectorWrapper_lt_geos_NeighborCommunicator_cm_-std_allocator_lt_geos_NeighborCommunicator_gt__cm_-true_gt_" />
 		<!--partitionManager => (no description available)-->
 		<xsd:attribute name="partitionManager" type="geos_PartitionBase" />
 	</xsd:complexType>

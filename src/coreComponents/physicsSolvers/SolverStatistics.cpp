@@ -222,7 +222,7 @@ void ConvergenceStatistics::removeInvalidResidualNorms()
 
 void ConvergenceStatistics::writeResidualNormToTable()
 {
-  std::vector< TableData::CellData > residualsNormCells;
+  stdVector< TableData::CellData > residualsNormCells;
 
   struct ResidualInfo
   {
