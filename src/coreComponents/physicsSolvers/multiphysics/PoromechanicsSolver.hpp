@@ -181,7 +181,7 @@ public:
   virtual void registerDataOnMesh( dataRepository::Group & meshBodies ) override
   {
     PhysicsSolverBase::registerDataOnMesh( meshBodies );
-    
+
     flowSolver()->m_shouldIterate = false;
     solidMechanicsSolver()->m_shouldIterate = false;
 

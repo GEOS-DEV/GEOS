@@ -85,7 +85,7 @@ void CompositionalMultiphaseHybridFVM::initializePreSubGroups()
 {
   CompositionalMultiphaseBase::initializePreSubGroups();
 
-  
+
 
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
@@ -241,7 +241,7 @@ void CompositionalMultiphaseHybridFVM::implicitStepSetup( real64 const & time_n,
 
   // setup the elem-centered fields
   CompositionalMultiphaseBase::implicitStepSetup( time_n, dt, cycleNumber, domain );
-  
+
   doSmthEarlyStep( time_n, dt, cycleNumber );
   // setup the face fields
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,

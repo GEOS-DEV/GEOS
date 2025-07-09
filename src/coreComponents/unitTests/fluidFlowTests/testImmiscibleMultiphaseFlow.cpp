@@ -397,7 +397,7 @@ protected:
                          solver->getSystemRhs(),
                          solver->getSystemSolution());
 
-    solver->implicitStepSetup( time, dt, 0 ,domain);
+    solver->implicitStepSetup( time, dt, 0, domain );
   }
 
   static real64 constexpr time = 0.0;

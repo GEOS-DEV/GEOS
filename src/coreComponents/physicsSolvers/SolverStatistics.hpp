@@ -52,8 +52,10 @@ public:
   /// Number of time step cuts
   integer m_numTimeStepCuts = 0;
 
+  /// Linear solver setup
   real64 m_setupTime = 0.0;
 
+  /// Linear solver solve
   real64 m_solveTime = 0.0;
 
   /// Maximum number of current Newton iterations.
@@ -134,12 +136,20 @@ public:
   virtual void updateNewtonIter( integer currentNewtonIter )
   {m_currentNewtonIter = currentNewtonIter;}
 
+  /**
+   * @brief Accumulate the setupTime & solveTime result over each newton iteration
+   * @param setupTime The linear setup time
+   * @param solveTime The linear solve time
+   */
   virtual void accumulateSolverLinearTime( real64 setupTime, real64 solveTime )
   {
     m_setupTime += setupTime;
     m_solveTime += solveTime;
   }
 
+  /**
+   * @brief Reset  the setupTime & solveTime to 0 at the end of each cycle
+   */
   virtual void resetSolverLinearTime()
   {
     m_setupTime = 0.0;
@@ -215,14 +225,10 @@ public:
 /// @cond DO_NOT_DOCUMENT
   void resetCurrentTimeStepStatistics() override {}
 
-  void updateNonlinearIteration( integer const numLinearIterations )override {}
+  void updateNonlinearIteration( integer const )override {}
 
   void updateNonlinearIteration() override {}
 
-  /**
-   * @brief Save the current newton iteration
-   * @param currentNewtonIter The current newton iteration performed by the the linear solver
-   */
   void updateNewtonIter( integer ) override {};
 
   void accumulateSolverLinearTime( real64, real64 ) override { }
