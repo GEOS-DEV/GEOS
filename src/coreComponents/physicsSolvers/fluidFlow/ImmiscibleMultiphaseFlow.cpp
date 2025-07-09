@@ -1164,7 +1164,10 @@ ImmiscibleMultiphaseFlow::scalingForSystemSolution( DomainPartition & domain,
   if ( m_trustRegion == 0 )
   {
     return 1.0;
-  }  
+  }
+
+  // Compute residual norm
+  real64 resNorm = calculateResidualNorm( 0, 0, domain, dofManager, localResidual );
 
   // Compute kink scaling factor 
   real64 localKinkFactor = 1.0;
@@ -1191,10 +1194,12 @@ ImmiscibleMultiphaseFlow::scalingForSystemSolution( DomainPartition & domain,
                                                                             dofManager.rankOffset(),                                                                            
                                                                             dofKey,
                                                                             localSolution,
+                                                                            localResidual,
                                                                             getName(),
                                                                             mesh.getElemManager(),
                                                                             stencilWrapper,
                                                                             m_hasCapPressure,
+                                                                            resNorm,
                                                                             stencilKinkFactor );           
 
       // step 1.2: local reduction across stencils
@@ -1209,13 +1214,6 @@ ImmiscibleMultiphaseFlow::scalingForSystemSolution( DomainPartition & domain,
 
   // Compute inflection scaling factor
   real64 localInflectionFactor = 1.0;  
-
-  // Compute residual norm if performing residual inflection analysis
-  real64 resNorm = 0;
-  if ( m_fluxInflection == 0 )
-  {
-    resNorm = calculateResidualNorm( 0, 0, domain, dofManager, localResidual );
-  }
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel const & mesh,
@@ -1315,7 +1313,7 @@ ImmiscibleMultiphaseFlow::scalingForSystemSolution( DomainPartition & domain,
   globalInflectionFactor = fmax( globalInflectionFactor, 0.1 ); // 0.4
 
   // step 2.4: global combined damping factor
-  real64 scalingFactor = fmax( globalKinkFactor * globalInflectionFactor, 0.01 ); /////// 0.1, 0.2, 0.4, 1.0
+  real64 scalingFactor = fmax( globalKinkFactor * globalInflectionFactor, 0.1 ); /////// 0.01, 0.1, 0.2, 0.4, 1.0
 
   return scalingFactor;
 }

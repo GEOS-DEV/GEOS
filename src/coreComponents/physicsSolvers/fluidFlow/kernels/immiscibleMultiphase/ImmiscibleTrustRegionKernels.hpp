@@ -115,16 +115,22 @@ public:
   /// Minimum dampining factor
    static constexpr real64 m_minFactor = 0.1;
 
+   /// Minimum dampining factor
+  static constexpr real64 m_resThres = 0.0; // 0.0, 0.05, 0.2
+  static constexpr real64 m_AbsResThres = 1e2; // 0.0, 1e3
+
 
   KinkFactorKernel( integer const numPhases,
                     globalIndex const rankOffset,
                     arrayView1d< real64 const > const & localSolution,
+                    arrayView1d< real64 const > const & localResidual,
                     STENCILWRAPPER const & stencilWrapper,
                     DofNumberAccessor const & dofNumberAccessor,
                     ImmiscibleMultiphaseFlowAccessors const & flowAccessors,
                     MultiphaseFluidAccessors const & fluidAccessors,
                     CapPressureAccessors const & capPressureAccessors,                    
-                    integer const hasCapPressure )
+                    integer const hasCapPressure,
+                    real64 const resNorm )
     : m_numPhases( numPhases ),
       m_rankOffset( rankOffset ),
       m_dofNumber( dofNumberAccessor.toNestedViewConst() ),
@@ -136,6 +142,8 @@ public:
       m_phaseCapPressure( capPressureAccessors.get( fields::cappres::phaseCapPressure {} ) ),
       m_dPhaseCapPressure_dPhaseVolFrac( capPressureAccessors.get( fields::cappres::dPhaseCapPressure_dPhaseVolFraction {} ) ),
       m_localSolution ( localSolution ),
+      m_localResidual( localResidual ),
+      m_resNorm( resNorm ),
       m_hasCapPressure ( hasCapPressure ),
       m_stencilWrapper( stencilWrapper ),      
       m_seri( stencilWrapper.getElementRegionIndices() ),
@@ -153,8 +161,8 @@ public:
     GEOS_HOST_DEVICE
     StackVariables( localIndex numElems )
       : numFluxElems( numElems ),
-        nConn( numElems * (numElems - 1) / 2 ),
-        localEps( numElems * (numElems - 1) / 2 * numEqn ),
+        nConn( 0 ),
+        localEps( numElems * (numElems - 1) / 2 * numEqn ),   // Number of connections * number of equations
         connFactor( 1.0 )
     {}
 
@@ -162,7 +170,7 @@ public:
     localIndex const numFluxElems;    
 
     /// Number of pairwise connections
-    localIndex const nConn; 
+    localIndex nConn; 
 
     /// Storage for the face local damping factors
     stackArray1d< real64, maxNumConn * numEqn > localEps;
@@ -210,6 +218,8 @@ public:
         real64 dP[2]{};
         real64 dS[2]{};
 
+        localIndex localRow[2]{};
+
         // cell indices
         localIndex const seri[2]  = {m_seri( iconn, k[0] ), m_seri( iconn, k[1] )};
         localIndex const sesri[2] = {m_sesri( iconn, k[0] ), m_sesri( iconn, k[1] )};
@@ -219,16 +229,24 @@ public:
         for ( integer ke = 0; ke < 2; ++ke )
         {
           globalIndex const globalRow = m_dofNumber[seri[ke]][sesri[ke]][sei[ke]];
-          localIndex const localRow = LvArray::integerConversion< localIndex >( globalRow - m_rankOffset );
-          GEOS_ASSERT_GE( localRow, 0 );
+          localRow[ke] = LvArray::integerConversion< localIndex >( globalRow - m_rankOffset );
+          GEOS_ASSERT_GE( localRow[ke], 0 );
 
-          dP[ke] = m_localSolution[localRow];     // dP = { dP1 , dP2 }
-          dS[ke] = m_localSolution[localRow + 1]; // dS = { dS1 , dS2 }          
+          dP[ke] = m_localSolution[localRow[ke]];     // dP = { dP1 , dP2 }
+          dS[ke] = m_localSolution[localRow[ke] + 1]; // dS = { dS1 , dS2 }          
         }                                                                        
 
         // loop over phases
         for( integer ip = 0; ip < m_numPhases; ++ip )
         {
+          { // adaptive damping based on significant residual values           
+            if( (fabs( m_localResidual[localRow[0] + ip] ) < m_resThres * m_resNorm || fabs( m_localResidual[localRow[0] + ip] ) < m_AbsResThres) &&
+                (fabs( m_localResidual[localRow[1] + ip] ) < m_resThres * m_resNorm || fabs( m_localResidual[localRow[1] + ip] ) < m_AbsResThres) )            
+            {
+              continue;
+            }
+          }
+          
           constexpr int signPotDiff[2] = {1, -1};
 
           // compute average density and derivatives
@@ -281,6 +299,7 @@ public:
           }
 
           stack.localEps[connectionIndex * numEqn + ip] = eps[ip];
+          stack.nConn++;
 
         } // loop over phases
         
@@ -312,10 +331,7 @@ public:
     GEOS_UNUSED_VAR( iconn );
     for( integer ic = 0; ic < stack.nConn; ++ic )
     {
-      for (integer ip = 0; ip < m_numPhases; ++ip )
-      {
-        stack.connFactor = LvArray::math::min( stack.connFactor, stack.localEps[ic * numEqn + ip] );
-      }  
+      stack.connFactor = LvArray::math::min( stack.connFactor, stack.localEps[ic] );  
     }   
   }  
 
@@ -377,8 +393,12 @@ protected:
   ElementViewConst< arrayView3d< real64 const, cappres::USD_CAPPRES > > const m_phaseCapPressure;
   ElementViewConst< arrayView4d< real64 const, cappres::USD_CAPPRES_DS > > const m_dPhaseCapPressure_dPhaseVolFrac;  
 
-  /// View on the local solution
-  arrayView1d< real64 const > const m_localSolution;  
+  /// View on the local solution and residual
+  arrayView1d< real64 const > const m_localSolution; 
+  arrayView1d< real64 const > const m_localResidual;
+
+  /// Residual norm for adaptive residual analysis
+  real64 const m_resNorm;  
 
   /// Flags
   integer const m_hasCapPressure;
@@ -405,7 +425,8 @@ public:
    * @param[in] numPhases the number of fluid phases
    * @param[in] rankOffset the offset of my MPI rank
    * @param[in] dofKey the string key to retrieve the degress of freedom numbers
-   * @param[in] localSolution the residual vector on my MPI rank
+   * @param[in] localSolution the solution vector on my MPI rank
+   * @param[in] localResidual the residual vector on my MPI rank
    * @param[in] solverName name of the solver (to name accessors)
    * @param[in] elemManager reference to the element region manager
    * @param[in] stencilWrapper reference to the stencil wrapper
@@ -418,10 +439,12 @@ public:
                    globalIndex const rankOffset,
                    string const dofKey,
                    arrayView1d< real64 const > const & localSolution,
+                   arrayView1d< real64 const > const & localResidual,
                    string const & solverName,
                    ElementRegionManager const & elemManager,
                    STENCILWRAPPER const & stencilWrapper, 
-                   integer const hasCapPressure,                  
+                   integer const hasCapPressure,
+                   real64 const resNorm,                 
                    real64 & kinkFactor )
   {
     integer constexpr NUM_EQN = 2;
@@ -436,9 +459,9 @@ public:
     typename kernelType::MultiphaseFluidAccessors fluidAccessors( elemManager, solverName );
     typename kernelType::CapPressureAccessors capPressureAccessors( elemManager, solverName );
 
-    kernelType kernel( numPhases, rankOffset, localSolution, stencilWrapper, 
+    kernelType kernel( numPhases, rankOffset, localSolution, localResidual, stencilWrapper, 
                        dofNumberAccessor, flowAccessors, fluidAccessors, capPressureAccessors,
-                       hasCapPressure );
+                       hasCapPressure, resNorm );
     kernelType::template launch< POLICY >( stencilWrapper.size(), kernel, kinkFactor );    
   }
 };
@@ -1231,7 +1254,7 @@ public:
         localIndex const localRow = LvArray::integerConversion< localIndex >( globalRow - m_rankOffset );
         GEOS_ASSERT_GE( localRow, 0 );      
 
-        if( m_localResidual[localRow + ip] < m_resThres * m_resNorm )
+        if( fabs( m_localResidual[localRow + ip] ) < m_resThres * m_resNorm )
         {           
           continue; // skip analysis if phase residual is below minimum threshold
         }

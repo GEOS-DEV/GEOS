@@ -7,11 +7,11 @@
   </Included>
 
   <Events
-    maxTime="8.64e5">
+    maxTime="8.64e7">
 
     <PeriodicEvent
       name="solverApplications"
-      forceDt="8.64e5"
+      forceDt="8.64e7"
       target="/Solvers/FlowSolver"/>
 
     <PeriodicEvent

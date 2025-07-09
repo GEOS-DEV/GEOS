@@ -8,17 +8,17 @@
       name="FlowSolver"
       logLevel="1"
       discretization="fluidTPFA"
-      targetRegions="{ reservoir }"      
+      targetRegions="{ region }"      
       temperature="300"
-      initialDt="8.64e7">
+      initialDt="1.728e6">
       <NonlinearSolverParameters
       newtonTol="1e-3"
       newtonMaxIter="200"
       maxTimeStepCuts="1"
       lineSearchAction="Attempt"/>
       <LinearSolverParameters
-        solverType="direct"
-        directParallel="0"/>
+        solverType="gmres"
+        preconditionerType="mgr"/>
     </ImmiscibleMultiphaseFlow>
   </Solvers>
 
@@ -31,8 +31,8 @@
 
   <ElementRegions>
     <CellElementRegion
-      name="reservoir"
-      cellBlocks="{ * }"
+      name="region"
+      cellBlocks="{ block }"
       materialList="{ fluid, rock, relperm }"/>
   </ElementRegions>
 
@@ -49,16 +49,13 @@
       solidModelName="nullSolid"
       porosityModelName="rockPorosity"
       permeabilityModelName="rockPermeability"/>
-
     <NullModel
       name="nullSolid"/>
-
     <PressurePorosity
       name="rockPorosity"
       defaultReferencePorosity="0.1463"
-      referencePressure="2.758e7"
-      compressibility="1.45e-8"/>
-
+      referencePressure="1.0e7"
+      compressibility="1.0e-10"/>
     <ConstantPermeability
       name="rockPermeability"
       permeabilityComponents="{ 6.7593e-14, 6.7593e-14, 6.7593e-15 }"/>
@@ -78,7 +75,7 @@
       component="0"
       initialCondition="1"
       setNames="{ all }"
-      objectPath="ElementRegions/reservoir/block"
+      objectPath="ElementRegions/region/block"
       fieldName="rockPermeability_permeability"
       functionName="permxFunc"
       scale="9.869233e-16"/>
@@ -87,7 +84,7 @@
       component="1"
       initialCondition="1"
       setNames="{ all }"
-      objectPath="ElementRegions/reservoir/block"
+      objectPath="ElementRegions/region/block"
       fieldName="rockPermeability_permeability"
       functionName="permyFunc"
       scale="9.869233e-16"/>
@@ -96,7 +93,7 @@
       component="2"
       initialCondition="1"
       setNames="{ all }"
-      objectPath="ElementRegions/reservoir/block"
+      objectPath="ElementRegions/region/block"
       fieldName="rockPermeability_permeability"
       functionName="permzFunc"
       scale="9.869233e-16"/>
@@ -105,7 +102,7 @@
       name="referencePorosity"
       initialCondition="1"
       setNames="{ all }"
-      objectPath="ElementRegions/reservoir/block"
+      objectPath="ElementRegions/region/block"
       fieldName="rockPorosity_referencePorosity"
       functionName="poroFunc"
       scale="1.0"/>
@@ -114,14 +111,14 @@
       name="initialPressure"
       initialCondition="1"
       setNames="{ all }"
-      objectPath="ElementRegions/reservoir/block"
+      objectPath="ElementRegions/region/block"
       fieldName="pressure"
-      scale="2.8959e+7"/>
+      scale="3.44738e+7"/>
     <FieldSpecification
       name="initial_oil"
       initialCondition="1"
       setNames="{ all }"
-      objectPath="ElementRegions/reservoir/block"
+      objectPath="ElementRegions/region/block"
       fieldName="phaseVolumeFraction"
       component="0"
       scale="0.9999"/>
@@ -129,35 +126,35 @@
       name="initial_water"
       initialCondition="1"
       setNames="{ all }"
-      objectPath="ElementRegions/reservoir/block"
+      objectPath="ElementRegions/region/block"
       fieldName="phaseVolumeFraction"
       component="1"
       scale="0.0001"/>
     
     <SourceFlux
       name="sourceTerm"
-      objectPath="ElementRegions/reservoir/block"
-      scale="-0.0477"
+      objectPath="ElementRegions/region/block"
+      scale="-0.1466"
       component="1"
       setNames="{ source }"/>
 
     <FieldSpecification
       name="sinkPressure"
-      setNames="{ sink }"         
-      objectPath="ElementRegions/reservoir/block"
+      setNames="{ sink1, sink2, sink3, sink4 }"         
+      objectPath="ElementRegions/region/block"
       fieldName="pressure"
-      scale="2.758e+7"/>
-   <FieldSpecification
-      name="sinkOil"
-      setNames="{ sink }"
-      objectPath="ElementRegions/reservoir/block"
+      scale="2.413166e+7"/>
+    <FieldSpecification
+      name="sink_oil"
+      setNames="{ sink1, sink2, sink3, sink4 }"
+      objectPath="ElementRegions/region/block"
       fieldName="phaseVolumeFraction"
       component="0"
       scale="0.9999"/>
     <FieldSpecification
-      name="sinkWater"
-      setNames="{ sink }"
-      objectPath="ElementRegions/reservoir/block"
+      name="sink_water"
+      setNames="{ sink1, sink2, sink3, sink4 }"
+      objectPath="ElementRegions/region/block"
       fieldName="phaseVolumeFraction"
       component="1"
       scale="0.0001"/>
@@ -183,7 +180,6 @@
       coordinateFiles="{xlin.geos,ylin.geos,zlin.geos}"
       voxelFile="permz.geos"
       interpolation="linear" />
-
     <TableFunction 
       name="poroFunc"
       inputVarNames="{elementCenter}"
@@ -192,31 +188,47 @@
       interpolation="linear" />
 
     <TableFunction
-      name="densityTableOil"
-      coordinateFiles="{ pres.txt }"
-      voxelFile="denso.txt"
+      name="B_o_table"
+      coordinateFiles="{ fluid1/pres_pvdo.txt }"
+      voxelFile="fluid1/dens_pvdo.txt"
       interpolation="linear"/>
+
+    <TableFunction
+      name="visc_o_table"
+      coordinateFiles="{ fluid1/pres_pvdo.txt }"
+      voxelFile="fluid1/visc_pvdo.txt"
+      interpolation="linear"/>
+
+
+    <TableFunction
+      name="densityTableOil"
+      coordinateFiles="{ fluid1/pres_pvdo.txt }"
+      voxelFile="fluid1/dens_pvdo.txt"
+      interpolation="linear"/>
+
     <TableFunction
       name="viscosityTableOil"
-      coordinateFiles="{ pres.txt }"
-      voxelFile="visco.txt"
+      coordinateFiles="{ fluid1/pres_pvdo.txt }"
+      voxelFile="fluid1/visc_pvdo.txt"
       interpolation="linear"/>
+
     <TableFunction
       name="densityTableWater"
-      coordinateFiles="{ pres.txt }"
-      voxelFile="densw.txt"
+      coordinateFiles="{ fluid1/pres_pvdo.txt }"
+      voxelFile="fluid1/dens_pvdw.txt"
       interpolation="linear"/>
+
     <TableFunction
       name="viscosityTableWater"
-      coordinateFiles="{ pres.txt }"
-      voxelFile="viscw.txt"
-      interpolation="linear"/>     
+      coordinateFiles="{ fluid1/pres_pvdo.txt }"
+      voxelFile="fluid1/visc_pvdw.txt"
+      interpolation="linear"/>      
     
   </Functions>
 
   <Outputs>
     <VTK
-      name="SPE10_small"/>
+      name="spe10_dt20"/>
   </Outputs>
   
 </Problem>
