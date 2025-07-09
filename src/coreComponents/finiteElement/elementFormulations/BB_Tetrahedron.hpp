@@ -744,11 +744,8 @@ static constexpr void conditionalBasisLoop(FUNC const& func)
           constexpr bool valid_k1 = (k1 <= (ORDER - i1 - j1));
           if constexpr (valid_k1) {
             constexpr int l1 = ORDER - i1 - j1 - k1;
-            constexpr int c1 = dofIndex<
-              std::integral_constant<int, i1>{},
-              std::integral_constant<int, j1>{},
-              std::integral_constant<int, k1>{}
-            >();
+            constexpr int c1 = dofIndex<i1,j1,k1>();
+
 
             // Pour chaque Is...
             (void)(((std::integral_constant<int, i1>{} == std::integral_constant<int, Is>{}) &&
