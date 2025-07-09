@@ -801,7 +801,7 @@ void SinglePhaseWell::computePerforationRates( real64 const & time_n,
       PerforationData * const perforationData = subRegion.getPerforationData();
 
       WellControls const & wellControls = getWellControls( subRegion );
-      if( wellControls.isWellOpen( time_n ) && !m_keepVariablesConstantDuringInitStep )
+      if( wellControls.isWellOpen( ) && !m_keepVariablesConstantDuringInitStep )
       {
 
         string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );

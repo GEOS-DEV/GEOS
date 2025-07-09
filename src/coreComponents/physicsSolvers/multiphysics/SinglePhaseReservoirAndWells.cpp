@@ -248,7 +248,7 @@ assembleCouplingTerms( real64 const time_n,
                        CRSMatrixView< real64, globalIndex const > const & localMatrix,
                        arrayView1d< real64 > const & localRhs )
 {
-
+  GEOS_UNUSED_VAR( time_n );
   GEOS_THROW_IF( !Base::m_isWellTransmissibilityComputed,
                  GEOS_FMT( "{} {}: The well transmissibility has not been computed yet",
                            this->getCatalogName(), this->getName() ),
@@ -283,7 +283,7 @@ assembleCouplingTerms( real64 const time_n,
       }
       bool const isProducer = wellControls.isProducer();
       areWellsShut = 0;
-      
+
       if( Base::wellSolver()->isThermal() )
       {
         coupledReservoirAndSinglePhaseWellKernels::
