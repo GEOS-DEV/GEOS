@@ -818,7 +818,7 @@ static constexpr void conditionalBasisLoop(FUNC const& func)
             //              std::integral_constant<int, j1>{},
             //              std::integral_constant<int, k1>{})), 1)) || ...);
 
-                        (void)(((is_equal<i1,Is>()) &&
+                        (void)(((i1 ==Is) &&
               (void(func(
                          HDInt<0>{},
                          HDInt<i1>{},
@@ -827,7 +827,7 @@ static constexpr void conditionalBasisLoop(FUNC const& func)
                           HDInt<k1>{},
                           HDInt<l1>{})), 1)) || ...);
 
-            (void)(((is_equal<j1,Is>()) &&
+            (void)(((j1==Is) &&
               (void(func(HDInt<1>{},
                          HDInt<j1>{},
                          HDInt<c1>{},
@@ -835,7 +835,7 @@ static constexpr void conditionalBasisLoop(FUNC const& func)
                          HDInt<k1>{},
                          HDInt<l1>{})), 1)) || ...);
 
-            (void)(((is_equal<k1,Is>()) &&
+            (void)(((k1==Is) &&
               (void(func(
                          HDInt<2>{},
                          HDInt<k1>{},
@@ -844,7 +844,7 @@ static constexpr void conditionalBasisLoop(FUNC const& func)
                          HDInt<j1>{},
                          HDInt<l1>{})), 1)) || ...);
 
-            (void)(((is_equal<l1,Is>()) &&
+            (void)(((l1==Is) &&
               (void(func(
                          HDInt<3>{},
                          HDInt<l1>{},
@@ -1221,7 +1221,7 @@ static constexpr void conditionalBasisLoop(FUNC const& func)
           {
             faceBarycentricCoordinateLoop( [ &funcF, &detJf ] ( auto const cl )
             {
-              constexpr int l = cl;
+              constexpr int l = decltype(cl)::value;
               constexpr int ii1 = i1 + ( l == 0 ) * ( -1 );
               constexpr int ij1 = j1 + ( l == 1 ) * ( -1 );
               constexpr int ik1 = k1 + ( l == 2 ) * ( -1 );
