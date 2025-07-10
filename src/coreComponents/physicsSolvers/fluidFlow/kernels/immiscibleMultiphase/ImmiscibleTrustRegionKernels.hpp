@@ -239,13 +239,12 @@ public:
         // loop over phases
         for( integer ip = 0; ip < m_numPhases; ++ip )
         {
-          { // adaptive damping based on significant residual values           
-            if( (fabs( m_localResidual[localRow[0] + ip] ) < m_resThres * m_resNorm || fabs( m_localResidual[localRow[0] + ip] ) < m_AbsResThres) &&
-                (fabs( m_localResidual[localRow[1] + ip] ) < m_resThres * m_resNorm || fabs( m_localResidual[localRow[1] + ip] ) < m_AbsResThres) )            
-            {
-              continue;
-            }
-          }
+          // adaptive damping based on significant residual values           
+          if( (fabs( m_localResidual[localRow[0] + ip] ) < m_resThres * m_resNorm || fabs( m_localResidual[localRow[0] + ip] ) < m_AbsResThres) &&
+              (fabs( m_localResidual[localRow[1] + ip] ) < m_resThres * m_resNorm || fabs( m_localResidual[localRow[1] + ip] ) < m_AbsResThres) )            
+          {
+            continue;
+          }          
           
           constexpr int signPotDiff[2] = {1, -1};
 
@@ -1129,6 +1128,7 @@ public:
   
   /// Minimum dampining factor
   static constexpr real64 m_resThres = 0.6; // 0.0, 0.2
+  static constexpr real64 m_AbsResThres = 1e2; // 0.0, 1e3
 
 
   ResidualInflectionFactorKernel( integer const numPhases,
@@ -1249,16 +1249,15 @@ public:
     // analyze residual inflections for each phase
     for( integer ip = 0; ip < m_numPhases; ++ip )
     {        
-      { // Adaptive residual analysis
-        globalIndex const globalRow = m_dofNumberElem[ei];
-        localIndex const localRow = LvArray::integerConversion< localIndex >( globalRow - m_rankOffset );
-        GEOS_ASSERT_GE( localRow, 0 );      
-
-        if( fabs( m_localResidual[localRow + ip] ) < m_resThres * m_resNorm )
-        {           
-          continue; // skip analysis if phase residual is below minimum threshold
-        }
-      }
+      // Adaptive residual analysis
+      globalIndex const globalRow = m_dofNumberElem[ei];
+      localIndex const localRow = LvArray::integerConversion< localIndex >( globalRow - m_rankOffset );
+      GEOS_ASSERT_GE( localRow, 0 );  
+      if( fabs( m_localResidual[localRow + ip] ) < m_resThres * m_resNorm ||
+          fabs( m_localResidual[localRow + ip] ) < m_AbsResThres )        
+      {           
+        continue; // skip analysis if phase residual is below minimum threshold
+      }      
       
       real64 dPhi[maxNumConn]{};      
       real64 compressibility[maxNumConn][2]{};
