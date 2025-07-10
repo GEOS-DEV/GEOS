@@ -172,7 +172,7 @@ void ImmiscibleWaterFlashModelUpdate::compute( ComponentProperties::KernelWrappe
     // Hydrocarbon phases
 
     // Calculate normalised hyrdocarbon composition
-    stackArray1d< real64, maxNumComps > composition( m_numComponents );
+    StackArray< real64, 1, maxNumComps > composition( m_numComponents );
     for( integer ic = 0; ic < m_numComponents; ++ic )
     {
       composition[ic] = compFraction[ic] / z_hc;
