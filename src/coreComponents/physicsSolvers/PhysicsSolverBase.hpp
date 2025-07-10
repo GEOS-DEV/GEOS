@@ -370,7 +370,7 @@ public:
                      integer const & cycleNumber,
                      DomainPartition & domain );
 
-  void doSmthEarlyStep( integer const & cycleNumber, real64 const & time_n, real64 const & dt );
+  void doSmthEarlyStep( real64 const & time_n, real64 const & dt, integer const & cycleNumber );
 
   void doSmthEndStep();
 

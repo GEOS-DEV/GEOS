@@ -439,13 +439,13 @@ void ProppantTransport::postStepUpdate( real64 const & time_n,
   }
 }
 
-void ProppantTransport::implicitStepSetup( real64 const & GEOS_UNUSED_PARAM( time_n ),
-                                           real64 const & GEOS_UNUSED_PARAM( dt ),
-                                           integer const & GEOS_UNUSED_PARAM( cycleNumber ),
+void ProppantTransport::implicitStepSetup( real64 const & time_n,
+                                           real64 const & dt,
+                                           integer const & cycleNumber,
                                            DomainPartition & domain )
 {
   GEOS_MARK_FUNCTION;
-
+  doSmthEarlyStep( time_n, dt, cycleNumber );
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel & mesh,
                                                                string_array const & regionNames )

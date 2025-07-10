@@ -607,11 +607,12 @@ void ReactiveCompositionalMultiphaseOBL::initializePostInitialConditionsPreSubGr
 }
 
 void
-ReactiveCompositionalMultiphaseOBL::implicitStepSetup( real64 const & GEOS_UNUSED_PARAM( time_n ),
-                                                       real64 const & GEOS_UNUSED_PARAM( dt ),
-                                                       integer const & GEOS_UNUSED_PARAM( cycleNumber ),
+ReactiveCompositionalMultiphaseOBL::implicitStepSetup( real64 const & time_n,
+                                                       real64 const & dt,
+                                                       integer const & cycleNumber,
                                                        DomainPartition & domain )
 {
+  doSmthEarlyStep( time_n, dt, cycleNumber );
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel & mesh,
                                                                string_array const & regionNames )

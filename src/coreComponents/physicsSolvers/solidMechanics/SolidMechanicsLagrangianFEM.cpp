@@ -894,7 +894,9 @@ SolidMechanicsLagrangianFEM::
       constitutiveRelation.saveConvergedState();
     } );
   } );
-  // doSmthEarlyStep( time_n, dt );
+  std::cout << time_n << " " << dt << " " << cycleNumber << " " << std::endl;
+  doSmthEarlyStep( time_n, dt, cycleNumber );
+  std::cout <<"cronch" << std::endl;
 }
 
 void SolidMechanicsLagrangianFEM::implicitStepComplete( real64 const & time_n,
