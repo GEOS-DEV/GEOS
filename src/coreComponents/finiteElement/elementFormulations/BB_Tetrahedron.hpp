@@ -749,6 +749,20 @@ static constexpr bool is_equal()
   return A == B;
 }
 
+  /**
+   * @brief Helper function to call a function if a compile-time integer matches one of the given indices.
+   * @tparam x the integer to match
+   * @tparam FUNC the callback function type
+   * @tparam Is the set of indices to match against
+   * @param f the callback function to call if x matches one of Is
+   */
+template <int x, int... Is, typename F>
+GEOS_HOST_DEVICE
+static constexpr void callIfMatch(F const& f)
+{
+  using discard = int[];
+  (void)discard{ 0, ((x == Is ? (void)f(), 0 : 0))... };
+}
 
   /**
    * @brief Helper function for loop over tet basis functions that have one index in a given set of indices.
@@ -818,40 +832,57 @@ static constexpr void conditionalBasisLoop(FUNC const& func)
             //              std::integral_constant<int, j1>{},
             //              std::integral_constant<int, k1>{})), 1)) || ...);
 
-                        (void)(((i1 ==Is) &&
-              (void(func(
-                         HDInt<0>{},
-                         HDInt<i1>{},
-                         HDInt<c1>{},
-                          HDInt<j1>{},
-                          HDInt<k1>{},
-                          HDInt<l1>{})), 1)) || ...);
+            //             (void)(((i1 ==Is) &&
+            //   (void(func(
+            //              HDInt<0>{},
+            //              HDInt<i1>{},
+            //              HDInt<c1>{},
+            //               HDInt<j1>{},
+            //               HDInt<k1>{},
+            //               HDInt<l1>{})), 1)) || ...);
 
-            (void)(((j1==Is) &&
-              (void(func(HDInt<1>{},
-                         HDInt<j1>{},
-                         HDInt<c1>{},
-                         HDInt<i1>{},
-                         HDInt<k1>{},
-                         HDInt<l1>{})), 1)) || ...);
+            // (void)(((j1==Is) &&
+            //   (void(func(HDInt<1>{},
+            //              HDInt<j1>{},
+            //              HDInt<c1>{},
+            //              HDInt<i1>{},
+            //              HDInt<k1>{},
+            //              HDInt<l1>{})), 1)) || ...);
 
-            (void)(((k1==Is) &&
-              (void(func(
-                         HDInt<2>{},
-                         HDInt<k1>{},
-                         HDInt<c1>{},
-                         HDInt<i1>{},
-                         HDInt<j1>{},
-                         HDInt<l1>{})), 1)) || ...);
+            // (void)(((k1==Is) &&
+            //   (void(func(
+            //              HDInt<2>{},
+            //              HDInt<k1>{},
+            //              HDInt<c1>{},
+            //              HDInt<i1>{},
+            //              HDInt<j1>{},
+            //              HDInt<l1>{})), 1)) || ...);
 
-            (void)(((l1==Is) &&
-              (void(func(
-                         HDInt<3>{},
-                         HDInt<l1>{},
-                         HDInt<c1>{},
-                         HDInt<i1>{},
-                         HDInt<j1>{},
-                         HDInt<k1>{})), 1)) || ...);
+            // (void)(((l1==Is) &&
+            //   (void(func(
+            //              HDInt<3>{},
+            //              HDInt<l1>{},
+            //              HDInt<c1>{},
+            //              HDInt<i1>{},
+            //              HDInt<j1>{},
+            //              HDInt<k1>{})), 1)) || ...);
+                        // i1 matching
+             callIfMatch<i1, Is...>([&] {
+              func(HDInt<0>{}, HDInt<i1>{}, HDInt<c1>{}, HDInt<j1>{}, HDInt<k1>{}, HDInt<l1>{});
+            });
+
+            callIfMatch<j1, Is...>([&] {
+              func(HDInt<1>{}, HDInt<j1>{}, HDInt<c1>{}, HDInt<i1>{}, HDInt<k1>{}, HDInt<l1>{});
+            });
+
+            callIfMatch<k1, Is...>([&] {
+              func(HDInt<2>{}, HDInt<k1>{}, HDInt<c1>{}, HDInt<i1>{}, HDInt<j1>{}, HDInt<l1>{});
+            });
+
+            callIfMatch<l1, Is...>([&] {
+              func(HDInt<3>{}, HDInt<l1>{}, HDInt<c1>{}, HDInt<i1>{}, HDInt<j1>{}, HDInt<k1>{});
+            });
+
 
           }
         });
