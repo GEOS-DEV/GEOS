@@ -370,9 +370,9 @@ public:
                      integer const & cycleNumber,
                      DomainPartition & domain );
 
-  void doSmthEarlyStep( real64 const & time_n, real64 const & dt, integer const & cycleNumber );
+  void updateSolverStatistics( real64 const & time_n, real64 const & dt, integer const & cycleNumber );
 
-  void doSmthEndStep();
+  void writeStatisticsToTable();
 
   /**
    * @brief Populate degree-of-freedom manager with fields relevant to this solver

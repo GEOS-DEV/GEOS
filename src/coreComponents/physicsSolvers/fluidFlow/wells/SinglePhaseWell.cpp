@@ -1120,7 +1120,7 @@ void SinglePhaseWell::implicitStepSetup( real64 const & time,
 {
   WellSolverBase::implicitStepSetup( time, dt, cycleNumber, domain );
 
-  doSmthEarlyStep( time, dt, cycleNumber );
+  updateSolverStatistics( time, dt, cycleNumber );
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,

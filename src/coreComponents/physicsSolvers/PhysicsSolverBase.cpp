@@ -1183,12 +1183,12 @@ void PhysicsSolverBase::setupDofs( DomainPartition const & GEOS_UNUSED_PARAM( do
   GEOS_ERROR( "PhysicsSolverBase::setupDofs called!. Should be overridden." );
 }
 
-void PhysicsSolverBase::doSmthEarlyStep( real64 const & time_n, real64 const & dt, integer const & cycleNumber )
+void PhysicsSolverBase::updateSolverStatistics( real64 const & time_n, real64 const & dt, integer const & cycleNumber )
 {
   getConvergenceStats().updateSolverStep( time_n, dt, cycleNumber );
 }
 
-void PhysicsSolverBase::doSmthEndStep()
+void PhysicsSolverBase::writeStatisticsToTable()
 {
   if( m_writeSolvingConvergenceCSV )
   {

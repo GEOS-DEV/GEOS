@@ -628,7 +628,7 @@ void SinglePhaseBase::implicitStepSetup( real64 const & time_n,
                                          integer const & cycleNumber,
                                          DomainPartition & domain )
 {
-  doSmthEarlyStep( time_n, dt, cycleNumber );
+  updateSolverStatistics( time_n, dt, cycleNumber );
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel & mesh,
                                                                string_array const & regionNames )

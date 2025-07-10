@@ -315,7 +315,7 @@ void SolidMechanicsLagrangeContactBubbleStab::implicitStepSetup( real64 const & 
 {
   SolidMechanicsLagrangianFEM::implicitStepSetup( time_n, dt, cycleNumber, domain );
 
-  doSmthEarlyStep( time_n, dt, cycleNumber );
+  updateSolverStatistics( time_n, dt, cycleNumber );
 }
 
 void SolidMechanicsLagrangeContactBubbleStab::assembleSystem( real64 const time,

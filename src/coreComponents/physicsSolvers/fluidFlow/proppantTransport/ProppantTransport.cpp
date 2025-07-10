@@ -443,7 +443,7 @@ void ProppantTransport::implicitStepSetup( real64 const & time_n,
                                            DomainPartition & domain )
 {
   GEOS_MARK_FUNCTION;
-  doSmthEarlyStep( time_n, dt, cycleNumber );
+  updateSolverStatistics( time_n, dt, cycleNumber );
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel & mesh,
                                                                string_array const & regionNames )

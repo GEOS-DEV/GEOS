@@ -894,7 +894,7 @@ SolidMechanicsLagrangianFEM::
       constitutiveRelation.saveConvergedState();
     } );
   } );
-  doSmthEarlyStep( time_n, dt, cycleNumber );
+  updateSolverStatistics( time_n, dt, cycleNumber );
 }
 
 void SolidMechanicsLagrangianFEM::implicitStepComplete( real64 const & time_n,
@@ -977,7 +977,7 @@ void SolidMechanicsLagrangianFEM::implicitStepComplete( real64 const & time_n,
 
     } );
   } );
-  doSmthEndStep();
+  writeStatisticsToTable();
 }
 
 void SolidMechanicsLagrangianFEM::setupDofs( DomainPartition const & GEOS_UNUSED_PARAM( domain ),

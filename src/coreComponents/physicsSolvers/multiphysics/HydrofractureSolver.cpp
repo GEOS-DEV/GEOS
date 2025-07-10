@@ -165,7 +165,7 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::implicitStepSetup( real64 cons
 {
   Base::implicitStepSetup( time_n, dt, cycleNumber, domain );
 
-  Base::doSmthEarlyStep( time_n, dt, cycleNumber );
+  Base::updateSolverStatistics( time_n, dt, cycleNumber );
 
   updateHydraulicApertureAndFracturePermeability( domain );
 
