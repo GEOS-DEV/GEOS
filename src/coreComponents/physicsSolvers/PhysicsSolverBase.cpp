@@ -277,7 +277,7 @@ real64 PhysicsSolverBase::solverStep( real64 const & time_n,
 bool PhysicsSolverBase::execute( real64 const time_n,
                                  real64 const dt,
                                  integer const cycleNumber,
-                                 integer const eventCounter,
+                                 integer const GEOS_UNUSED_PARAM( eventCounter ),
                                  real64 const GEOS_UNUSED_PARAM( eventProgress ),
                                  DomainPartition & domain )
 {

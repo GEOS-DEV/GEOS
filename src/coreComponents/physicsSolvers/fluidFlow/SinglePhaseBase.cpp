@@ -686,6 +686,8 @@ void SinglePhaseBase::implicitStepComplete( real64 const & time,
 {
   GEOS_MARK_FUNCTION;
 
+   GEOS_UNUSED_PARAM( cycleNumber );
+
   // note: we have to save the aquifer state **before** updating the pressure,
   // otherwise the aquifer flux is saved with the wrong pressure time level
   saveAquiferConvergedState( time, dt, domain );
