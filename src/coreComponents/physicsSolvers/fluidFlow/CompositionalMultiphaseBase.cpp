@@ -2538,7 +2538,7 @@ void CompositionalMultiphaseBase::implicitStepComplete( real64 const & time,
                                                         integer const cycleNumber,
                                                         DomainPartition & domain )
 {
-  GEOS_UNUSED_PARAM( cycleNumber );
+  GEOS_UNUSED_VAR( cycleNumber );
 
   // Step 1: save the converged aquifer state
   // note: we have to save the aquifer state **before** updating the pressure,

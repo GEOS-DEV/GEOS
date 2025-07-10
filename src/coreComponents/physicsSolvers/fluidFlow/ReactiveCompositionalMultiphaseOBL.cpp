@@ -154,7 +154,7 @@ void ReactiveCompositionalMultiphaseOBL::implicitStepComplete( real64 const & ti
 {
   GEOS_UNUSED_VAR( time );
   GEOS_UNUSED_VAR( dt );
-  GEOS_UNUSED_PARAM( cycleNumber );
+  GEOS_UNUSED_VAR( cycleNumber );
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel & mesh,

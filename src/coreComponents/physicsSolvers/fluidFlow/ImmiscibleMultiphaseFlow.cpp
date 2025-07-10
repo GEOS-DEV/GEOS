@@ -1238,11 +1238,9 @@ void ImmiscibleMultiphaseFlow::resetStateToBeginningOfStep( DomainPartition & do
 
 void ImmiscibleMultiphaseFlow::implicitStepComplete( real64 const & time,
                                                      real64 const & dt,
-                                                     integer const cycleNumber,
+                                                     integer const GEOS_UNUSED_PARAM( cycleNumber ),
                                                      DomainPartition & domain )
 {
-
-    GEOS_UNUSED_PARAM( cycleNumber );
   // Step 1: save the converged aquifer state
   // note: we have to save the aquifer state **before** updating the pressure,
   // otherwise the aquifer flux is saved with the wrong pressure time level
