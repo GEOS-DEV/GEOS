@@ -3316,6 +3316,8 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="timestepStabilityLimit" type="integer" default="0" />
 		<!--useDAS => Flag to indicate if DAS data will be modeled, and which DAS type to use: "none" to deactivate DAS, "strainIntegration" for strain integration, "dipole" for displacement difference-->
 		<xsd:attribute name="useDAS" type="geos_WaveSolverUtils_DASType" default="none" />
+		<!--useTTI => Flag to apply TTI anisotropy. The default is to use isotropic physic.-->
+		<xsd:attribute name="useTTI" type="integer" default="0" />
 		<!--useVTI => Flag to apply VTI anisotropy. The default is to use isotropic physic.-->
 		<xsd:attribute name="useVTI" type="integer" default="0" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->

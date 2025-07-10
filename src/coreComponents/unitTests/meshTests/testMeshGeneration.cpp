@@ -233,7 +233,7 @@ TEST_F( MeshGenerationTest, nodeToElemMap )
       {
         localIndex const elemID = i + j * elem_dJ + k * elem_dK;
 
-        std::vector< localIndex > expectedElems;
+        stdVector< localIndex > expectedElems;
         if( k < numElemsInZ )
         {
           if( i < numElemsInX && j < numElemsInY )
@@ -262,7 +262,7 @@ TEST_F( MeshGenerationTest, nodeToElemMap )
         ASSERT_EQ( numElems, nodeToElemMap.sizeOfArray( nodeIndex ) );
 
         localIndex const * const nodeElems = nodeToElemMap[ nodeIndex ];
-        std::vector< localIndex > elems( nodeElems, nodeElems + numElems );
+        stdVector< localIndex > elems( nodeElems, nodeElems + numElems );
 
         std::sort( elems.begin(), elems.end() );
         std::sort( expectedElems.begin(), expectedElems.end() );
