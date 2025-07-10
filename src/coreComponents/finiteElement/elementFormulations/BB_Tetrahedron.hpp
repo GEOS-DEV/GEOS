@@ -712,6 +712,20 @@ static constexpr void loop(FUNC const& func)
     } );
   }
 
+/**
+   * @brief Helper function to check if two compile-time integers are equal.
+   * @tparam A the first integer
+   * @tparam B the second integer
+   * @return true if A and B are equal, false otherwise
+   */
+template <int A, int B>
+GEOS_HOST_DEVICE
+static constexpr bool is_equal() 
+{
+  return A == B;
+}
+
+
   /**
    * @brief Helper function for loop over tet basis functions that have one index in a given set of indices.
    *   If multiple indices are in the given list, the callback is called multiple times.
@@ -748,7 +762,7 @@ static constexpr void conditionalBasisLoop(FUNC const& func)
 
 
             // Pour chaque Is...
-            (void)(((std::integral_constant<int, i1>{} == std::integral_constant<int, Is>{}) &&
+            (void)(((is_equal<i1,Is>()) &&
               (void(func(std::integral_constant<int, 0>{},
                          std::integral_constant<int, i1>{},
                          std::integral_constant<int, c1>{},
@@ -756,7 +770,7 @@ static constexpr void conditionalBasisLoop(FUNC const& func)
                          std::integral_constant<int, k1>{},
                          std::integral_constant<int, l1>{})), 1)) || ...);
 
-            (void)(((std::integral_constant<int, j1>{} == std::integral_constant<int, Is>{}) &&
+            (void)(((is_equal<j1,Is>()) &&
               (void(func(std::integral_constant<int, 1>{},
                          std::integral_constant<int, j1>{},
                          std::integral_constant<int, c1>{},
@@ -764,7 +778,7 @@ static constexpr void conditionalBasisLoop(FUNC const& func)
                          std::integral_constant<int, k1>{},
                          std::integral_constant<int, l1>{})), 1)) || ...);
 
-            (void)(((std::integral_constant<int, k1>{} == std::integral_constant<int, Is>{}) &&
+            (void)(((is_equal<k1,Is>()) &&
               (void(func(std::integral_constant<int, 2>{},
                          std::integral_constant<int, k1>{},
                          std::integral_constant<int, c1>{},
@@ -772,7 +786,7 @@ static constexpr void conditionalBasisLoop(FUNC const& func)
                          std::integral_constant<int, j1>{},
                          std::integral_constant<int, l1>{})), 1)) || ...);
 
-            (void)(((std::integral_constant<int, l1>{} == std::integral_constant<int, Is>{}) &&
+            (void)(((is_equal<l1,Is>()) &&
               (void(func(std::integral_constant<int, 3>{},
                          std::integral_constant<int, l1>{},
                          std::integral_constant<int, c1>{},
@@ -1034,8 +1048,9 @@ static constexpr void conditionalBasisLoop(FUNC const& func)
         barycentricCoordinateLoop( [&func, &dLambdadX, &detJ] ( auto const cd1 )
         {
           constexpr int d1 = decltype(cd1)::value;
-          barycentricCoordinateLoop( [&func, &dLambdadX, &detJ]  ( auto const d2 )
+          barycentricCoordinateLoop( [&func, &dLambdadX, &detJ]  ( auto const cd2 )
           {
+            constexpr int d2 = decltype(cd2)::value;
             constexpr int ii1 = i1 + ( d1 == 0 ) * ( -1 );
             constexpr int ij1 = j1 + ( d1 == 1 ) * ( -1 );
             constexpr int ik1 = k1 + ( d1 == 2 ) * ( -1 );
