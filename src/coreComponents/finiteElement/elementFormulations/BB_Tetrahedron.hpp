@@ -658,6 +658,30 @@ static constexpr void loop(FUNC const& func)
   }
 }
 
+template <int N>
+struct HDInt {
+    static constexpr int value = N;
+
+    GEOS_HOST_DEVICE
+     constexpr operator int() const noexcept 
+     {
+        return N;
+    }
+
+    GEOS_HOST_DEVICE
+     constexpr bool operator==(const HDInt<N>&) const noexcept 
+     {
+        return true;
+    }
+
+    template <int M>
+    GEOS_HOST_DEVICE
+     constexpr bool operator==(const HDInt<M>&) const noexcept 
+     {
+        return N == M;
+    }
+};
+
 
   /**
    * @brief Helper function for loop over barycentric coordinates
@@ -762,37 +786,73 @@ static constexpr void conditionalBasisLoop(FUNC const& func)
 
 
             // Pour chaque Is...
-            (void)(((is_equal<i1,Is>()) &&
-              (void(func(std::integral_constant<int, 0>{},
-                         std::integral_constant<int, i1>{},
-                         std::integral_constant<int, c1>{},
-                         std::integral_constant<int, j1>{},
-                         std::integral_constant<int, k1>{},
-                         std::integral_constant<int, l1>{})), 1)) || ...);
+            // (void)(((is_equal<i1,Is>()) &&
+            //   (void(func(std::integral_constant<int, 0>{},
+            //              std::integral_constant<int, i1>{},
+            //              std::integral_constant<int, c1>{},
+            //              std::integral_constant<int, j1>{},
+            //              std::integral_constant<int, k1>{},
+            //              std::integral_constant<int, l1>{})), 1)) || ...);
+
+            // (void)(((is_equal<j1,Is>()) &&
+            //   (void(func(std::integral_constant<int, 1>{},
+            //              std::integral_constant<int, j1>{},
+            //              std::integral_constant<int, c1>{},
+            //              std::integral_constant<int, i1>{},
+            //              std::integral_constant<int, k1>{},
+            //              std::integral_constant<int, l1>{})), 1)) || ...);
+
+            // (void)(((is_equal<k1,Is>()) &&
+            //   (void(func(std::integral_constant<int, 2>{},
+            //              std::integral_constant<int, k1>{},
+            //              std::integral_constant<int, c1>{},
+            //              std::integral_constant<int, i1>{},
+            //              std::integral_constant<int, j1>{},
+            //              std::integral_constant<int, l1>{})), 1)) || ...);
+
+            // (void)(((is_equal<l1,Is>()) &&
+            //   (void(func(std::integral_constant<int, 3>{},
+            //              std::integral_constant<int, l1>{},
+            //              std::integral_constant<int, c1>{},
+            //              std::integral_constant<int, i1>{},
+            //              std::integral_constant<int, j1>{},
+            //              std::integral_constant<int, k1>{})), 1)) || ...);
+
+                        (void)(((is_equal<i1,Is>()) &&
+              (void(func(
+                         HDInt<0>{},
+                         HDInt<i1>{},
+                         HDInt<c1>{},
+                          HDInt<j1>{},
+                          HDInt<k1>{},
+                          HDInt<l1>{})), 1)) || ...);
 
             (void)(((is_equal<j1,Is>()) &&
-              (void(func(std::integral_constant<int, 1>{},
-                         std::integral_constant<int, j1>{},
-                         std::integral_constant<int, c1>{},
-                         std::integral_constant<int, i1>{},
-                         std::integral_constant<int, k1>{},
-                         std::integral_constant<int, l1>{})), 1)) || ...);
+              (void(func(HDInt<1>{},
+                         HDInt<j1>{},
+                         HDInt<c1>{},
+                         HDInt<i1>{},
+                         HDInt<k1>{},
+                         HDInt<l1>{})), 1)) || ...);
 
             (void)(((is_equal<k1,Is>()) &&
-              (void(func(std::integral_constant<int, 2>{},
-                         std::integral_constant<int, k1>{},
-                         std::integral_constant<int, c1>{},
-                         std::integral_constant<int, i1>{},
-                         std::integral_constant<int, j1>{},
-                         std::integral_constant<int, l1>{})), 1)) || ...);
+              (void(func(
+                         HDInt<2>{},
+                         HDInt<k1>{},
+                         HDInt<c1>{},
+                         HDInt<i1>{},
+                         HDInt<j1>{},
+                         HDInt<l1>{})), 1)) || ...);
 
             (void)(((is_equal<l1,Is>()) &&
-              (void(func(std::integral_constant<int, 3>{},
-                         std::integral_constant<int, l1>{},
-                         std::integral_constant<int, c1>{},
-                         std::integral_constant<int, i1>{},
-                         std::integral_constant<int, j1>{},
-                         std::integral_constant<int, k1>{})), 1)) || ...);
+              (void(func(
+                         HDInt<3>{},
+                         HDInt<l1>{},
+                         HDInt<c1>{},
+                         HDInt<i1>{},
+                         HDInt<j1>{},
+                         HDInt<k1>{})), 1)) || ...);
+
           }
         });
       }
@@ -946,7 +1006,7 @@ static constexpr void conditionalBasisLoop(FUNC const& func)
         constexpr int l2 = decltype(ll2)::value;
     
         constexpr real64 val = computeSuperpositionIntegral( i1, j1, k1, l1, i2, j2, k2, l2 );
-        func( std::integral_constant<int, c1>{}, std::integral_constant<int, c2v>{}, val * detJ );
+        func( HDInt<c1>(), HDInt<c2v>(), val * detJ );
       } );
     } );
   }
