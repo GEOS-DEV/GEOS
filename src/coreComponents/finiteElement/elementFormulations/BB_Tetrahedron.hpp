@@ -1015,25 +1015,25 @@ static constexpr void conditionalBasisLoop(FUNC const& func)
     basisLoop( [&func, &dLambdadX, &detJ] ( auto const cc1, auto const ci1, auto const cj1, auto const ck1, auto const cl1 )
     {
 
-      constexpr int c1 = cc1;
-      constexpr int i1 = ci1;
-      constexpr int j1 = cj1;
-      constexpr int k1 = ck1;
-      constexpr int l1 = cl1;
+      constexpr int c1 = decltype(cc1)::value;
+      constexpr int i1 = decltype(ci1)::value;
+      constexpr int j1 = decltype(cj1)::value;
+      constexpr int k1 = decltype(ck1)::value;
+      constexpr int l1 = decltype(cl1)::value;
       //Not used in some combinations, but needed for constexpr
       GEOS_UNUSED_VAR( c1, i1, j1, k1, l1 );
       basisLoop( [&func, &dLambdadX, &detJ] ( auto const cc2, auto const ci2, auto const cj2, auto const ck2, auto const cl2 )
       {
-        constexpr int c2 = cc2;
-        constexpr int i2 = ci2;
-        constexpr int j2 = cj2;
-        constexpr int k2 = ck2;
-        constexpr int l2 = cl2;
+        constexpr int c2 = decltype(cc2)::value;
+        constexpr int i2 = decltype(ci2)::value;
+        constexpr int j2 = decltype(cj2)::value;
+        constexpr int k2 = decltype(ck2)::value;
+        constexpr int l2 = decltype(cl2)::value;
         //Not used in some combinations, but needed for constexpr
         GEOS_UNUSED_VAR( c2, i2, j2, k2, l2 );
         barycentricCoordinateLoop( [&func, &dLambdadX, &detJ] ( auto const cd1 )
         {
-          constexpr int d1 = cd1;
+          constexpr int d1 = decltype(cd1)::value;
           barycentricCoordinateLoop( [&func, &dLambdadX, &detJ]  ( auto const d2 )
           {
             constexpr int ii1 = i1 + ( d1 == 0 ) * ( -1 );
