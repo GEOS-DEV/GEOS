@@ -96,7 +96,7 @@ public:
       GEOS_LOG_LEVEL_RANK_0( logInfo::Coupling,
                              GEOS_FMT( "{}: found {} solver named {}",
                                        getName(), solver->getCatalogName(), solverName ) );
-      solver->m_shouldIterate = false;
+      solver->getIterationStats().setIterativeSolver( false );
     } );
   }
 
@@ -636,8 +636,10 @@ protected:
 
         // finally, we perform the convergence check on the multiphysics residual
         residualNorm = sqrt( residualNorm );
-        GEOS_LOG_LEVEL_RANK_0( logInfo::Convergence,
+        GEOS_LOG_LEVEL_RANK_0( logInfo::ResidualNorm,
                                GEOS_FMT( "        ( R ) = ( {:4.2e} )", residualNorm ) );
+        getConvergenceStats().m_residualNormT = residualNorm;
+        std::cout << "oui bjr "<< getName() <<" "<< residualNorm << std::endl;
         isConverged = ( residualNorm < params.m_newtonTol );
 
       }
@@ -675,8 +677,6 @@ protected:
   postInputInitialization() override
   {
     setSubSolvers();
-
-
 
     bool const isSequential = getNonlinearSolverParameters().couplingType() == NonlinearSolverParameters::CouplingType::Sequential;
     bool const usesLineSearch = getNonlinearSolverParameters().m_lineSearchAction != NonlinearSolverParameters::LineSearchAction::None;

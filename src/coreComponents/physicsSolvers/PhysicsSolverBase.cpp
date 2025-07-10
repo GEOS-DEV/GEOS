@@ -46,8 +46,7 @@ PhysicsSolverBase::PhysicsSolverBase( string const & name,
   m_linearSolverParameters( groupKeyStruct::linearSolverParametersString(), this ),
   m_nonlinearSolverParameters( groupKeyStruct::nonlinearSolverParametersString(), this ),
   m_solverStatistics( groupKeyStruct::solverStatisticsString(), this ),
-  m_systemSetupTimestamp( 0 ),
-  m_nullIterationStats( groupKeyStruct::NullIterationsStatisticsString(), this )
+  m_systemSetupTimestamp( 0 )
 {
   setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
 
@@ -297,7 +296,7 @@ bool PhysicsSolverBase::execute( real64 const time_n,
 
     numOfSubSteps++;
     subStepDts[subStep] = dtAccepted;
-
+    
     // increment the cumulative number of nonlinear and linear iterations
     getIterationStats().iterateTimeStepStatistics();
     getConvergenceStats().m_numTimeSteps++;
@@ -870,7 +869,6 @@ real64 PhysicsSolverBase::nonlinearImplicitStep( real64 const & time_n,
         {
           // increment the solver statistics for reporting purposes
           getIterationStats().incrementNonlinearIteration();
-          getConvergenceStats().removeInvalidResidualNorms();
           GEOS_LOG_LEVEL_RANK_0( logInfo::NonlinearSolver,
                                  "---------- Configuration did not converge. Testing new configuration. ----------" );
         }
@@ -1002,7 +1000,7 @@ bool PhysicsSolverBase::solveNonlinearSystem( real64 const & time_n,
       GEOS_LOG_LEVEL_RANK_0( logInfo::ResidualNorm,
                              GEOS_FMT( "        ( R ) = ( {:4.2e} )", residualNorm ) );
       getConvergenceStats().m_residualNormT = residualNorm;
-    }
+          }
 
     // if the residual norm is less than the Newton tolerance we denote that we have
     // converged and break from the Newton loop immediately.
@@ -1148,7 +1146,10 @@ bool PhysicsSolverBase::solveNonlinearSystem( real64 const & time_n,
     lastResidual = residualNorm;
   }
   if( m_writeSolverIterationsCSV )
+  {
     getIterationStats().writeStatsToTable();
+    getConvergenceStats().writeResidualNormToTable();
+  }
 
   getIterationStats().resetSolverLinearTime();
 
@@ -1183,7 +1184,7 @@ void PhysicsSolverBase::doSmthEarlyStep( integer const & time_n, real64 const & 
   getConvergenceStats().updateSolverStep( time_n, dt, cycleNumber );
 }
 
-void PhysicsSolverBase::doSmthEndStep( real64 const & time_n, real64 const & dt, integer const cycleNumber )
+void PhysicsSolverBase::doSmthEndStep()
 {
   if( m_writeSolvingConvergenceCSV )
   {

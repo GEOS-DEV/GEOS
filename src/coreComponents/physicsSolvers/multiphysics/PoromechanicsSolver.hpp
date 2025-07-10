@@ -182,9 +182,9 @@ public:
   {
     PhysicsSolverBase::registerDataOnMesh( meshBodies );
 
-    flowSolver()->m_shouldIterate = false;
-    solidMechanicsSolver()->m_shouldIterate = false;
-
+    flowSolver()->getIterationStats().setIterativeSolver( false );
+    solidMechanicsSolver()->getIterationStats().setIterativeSolver( false );
+    
     if( this->getNonlinearSolverParameters().m_couplingType == NonlinearSolverParameters::CouplingType::Sequential )
     {
       // to let the solid mechanics solver that there is a pressure and temperature RHS in the mechanics solve

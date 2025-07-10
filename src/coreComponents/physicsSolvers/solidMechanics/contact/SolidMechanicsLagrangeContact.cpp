@@ -270,7 +270,7 @@ void SolidMechanicsLagrangeContact::implicitStepComplete( real64 const & time,
 
   } );
 
-  doSmthEndStep( time, dt, cycleNumber );
+  doSmthEndStep();
 }
 
 SolidMechanicsLagrangeContact::~SolidMechanicsLagrangeContact()
@@ -886,8 +886,6 @@ real64 SolidMechanicsLagrangeContact::calculateContactResidualNorm( DomainPartit
   getConvergenceStats().m_residualSlip = slipResidual;
   getConvergenceStats().m_residualOpen = openResidual;
   getConvergenceStats().m_totalResidual = totalResidualNorm;
-
-  getConvergenceStats().writeResidualNormToTable();
 
 
   return totalResidualNorm;

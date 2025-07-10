@@ -977,7 +977,7 @@ void SolidMechanicsLagrangianFEM::implicitStepComplete( real64 const & time_n,
 
     } );
   } );
-  doSmthEndStep( time_n, dt, cycleNumber );
+  doSmthEndStep();
 }
 
 void SolidMechanicsLagrangianFEM::setupDofs( DomainPartition const & GEOS_UNUSED_PARAM( domain ),
@@ -1273,8 +1273,6 @@ SolidMechanicsLagrangianFEM::
   GEOS_LOG_LEVEL_RANK_0( logInfo::ResidualNorm,
                          GEOS_FMT( "        ( R{} ) = ( {:4.2e} )", coupledSolverAttributePrefix(), totalResidualNorm ));
   getConvergenceStats().m_residualSolid = totalResidualNorm;
-
-  getConvergenceStats().writeResidualNormToTable();
 
   return totalResidualNorm;
 }

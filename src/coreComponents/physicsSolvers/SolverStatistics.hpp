@@ -46,6 +46,9 @@ public:
   IterationsStatistics( string const & name,
                         dataRepository::Group * const parent );
 
+  /// indicate if the containing solver does non-linear iterations (and so, produces iterations statistics)
+  bool m_isIterativeSolver = true;
+
   /// Number of time steps
   integer m_numTimeSteps = 0;
 
@@ -118,82 +121,83 @@ public:
   };
 
   /**
+   * @brief Set the Iterative Solver
+   * @param isIterative
+   */
+  void setIterativeSolver( bool isIterative )
+  {
+    m_isIterativeSolver = isIterative;
+  }
+
+  /**
    * @brief Initialize the counters used for an individual time step
    */
-  virtual void resetCurrentTimeStepStatistics();
+  void resetCurrentTimeStepStatistics();
 
   /**
    * @brief Tell the solverStatistics that we are doing a nonlinear iteration
    * @param[in] numLinearIterations the number of linear iterations done by the linear solver
    * @detail This function is well suited for Newton's method, or for single-physics solvers in sequential schemes
    */
-  virtual void updateNonlinearIteration( integer const numLinearIterations );
+  void updateNonlinearIteration( integer const numLinearIterations );
 
   /**
    * @brief Save the current newton iteration
    * @param currentNewtonIter The current newton iteration performed by the the linear solver
    */
-  virtual void updateNewtonIter( integer currentNewtonIter )
-  {m_currentNewtonIter = currentNewtonIter;}
+  void updateNewtonIter( integer currentNewtonIter )
+  { if( m_isIterativeSolver ) m_currentNewtonIter = currentNewtonIter; }
 
   /**
    * @brief Accumulate the setupTime & solveTime result over each newton iteration
    * @param setupTime The linear setup time
    * @param solveTime The linear solve time
    */
-  virtual void accumulateSolverLinearTime( real64 setupTime, real64 solveTime )
-  {
-    m_setupTime += setupTime;
-    m_solveTime += solveTime;
-  }
+  void accumulateSolverLinearTime( real64 setupTime, real64 solveTime );
 
   /**
    * @brief Reset  the setupTime & solveTime to 0 at the end of each cycle
    */
-  virtual void resetSolverLinearTime()
-  {
-    m_setupTime = 0.0;
-    m_solveTime = 0.0;
-  }
+  void resetSolverLinearTime();
 
   /**
    * @brief Tell the solverStatistics that we are doing a nonlinear iteration
    * @detail This function is well suited for the outer loop in sequential schemes
    */
-  virtual void updateNonlinearIteration();
+  void updateNonlinearIteration();
 
   /**
    * @brief Tell the solverStatistics that we are doing an outer loop iteration
    */
-  virtual void incrementNonlinearIteration();
+  void incrementNonlinearIteration();
 
   /**
    * @brief Tell the solverStatistics that there is a time step cut
    */
-  virtual void updateTimeStepCut();
+  void updateTimeStepCut();
 
   /**
    * @brief Save the statistics for the individual time step and increment the cumulative stats
    */
-  virtual void iterateTimeStepStatistics();
+  void iterateTimeStepStatistics();
 
   /**
    * @brief Register the corresponding solver statistics to the TableData
    */
-  virtual void writeStatsToTable();
+  void writeStatsToTable();
 
   /**
    * @brief  Set the filename output file.
    * @param filename The filename as a string_view.
    */
-  virtual void setFilename( string_view filename )
-  { m_iterationsFilename = filename; }
+  void setFilename( string_view filename )
+  { if( m_isIterativeSolver ) m_iterationsFilename = filename; }
 
   /**
    * @brief Output the statistics to the console and csv file if needed
    * @param writeCSV Indicate if we output to CSV FILE
    */
-  virtual void outputStatistics( bool writeCSV );
+  void outputStatistics( bool writeCSV );
 
 private:
   /// Stream output for the iteration statistics
@@ -206,44 +210,6 @@ private:
   std::unique_ptr< TableCSVFormatter > m_iterationCSVFormatter;
   /// Filename for the iteration CSV file.
   string m_iterationsFilename;
-};
-
-/**
- * @brief An empty class used for all sub-solvers instances
- */
-class NullIterationsStatistics : public IterationsStatistics
-{
-public:
-
-  NullIterationsStatistics( string const & name,
-                            dataRepository::Group * const parent ): IterationsStatistics( name, parent ){}
-
-  /**
-   * @brief Group key associated with NullIterationsStatistics.
-   */
-///@{
-/// @cond DO_NOT_DOCUMENT
-  void resetCurrentTimeStepStatistics() override {}
-
-  void updateNonlinearIteration( integer const )override {}
-
-  void updateNonlinearIteration() override {}
-
-  void updateNewtonIter( integer ) override {};
-
-  void accumulateSolverLinearTime( real64, real64 ) override { }
-
-  void incrementNonlinearIteration() override {}
-
-  void updateTimeStepCut() override {}
-
-  void iterateTimeStepStatistics() override {}
-
-  void writeStatsToTable() override {}
-
-  void outputStatistics( bool ) {}
-  /// @endcond
-///@}
 };
 
 /**
@@ -330,23 +296,18 @@ public:
   void writeResidualNormToTable();
 
   /**
-   * @brief Remove the last residual norms when a configuration did not converge.
-   * @note This is done based on the number of Newton iterations.
-   */
-  void removeInvalidResidualNorms();
-
-  /**
    * @brief Update the solver step information
    * @param time_n The time at the beginning of the step
    * @param dt The desired timestep
    * @param cycleNumber  The current cycle number
    */
-  void updateSolverStep( real64 const & time_n, real64 const & dt, integer const cycleNumber )
-  {
-    m_time_n = time_n;
-    m_dt = dt;
-    m_cycleNumber = cycleNumber;
-  }
+  void updateSolverStep( real64 const & time_n, real64 const & dt, integer const cycleNumber );
+
+  /**
+   * @brief Reset the solid residuals value.
+   * Call by SolidMechanicsStateReset.
+   */
+  void resetResidualsValue();
 
   /**
    * @brief  Set the filename output file.

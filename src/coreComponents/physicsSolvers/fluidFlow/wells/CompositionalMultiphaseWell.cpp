@@ -2237,7 +2237,7 @@ void CompositionalMultiphaseWell::printRates( real64 const & time_n,
       } );
     } );
   } );
-  doSmthEndStep( time_n, dt, cycleNumber );
+  doSmthEndStep();
 }
 
 REGISTER_CATALOG_ENTRY( PhysicsSolverBase, CompositionalMultiphaseWell, string const &, Group * const )

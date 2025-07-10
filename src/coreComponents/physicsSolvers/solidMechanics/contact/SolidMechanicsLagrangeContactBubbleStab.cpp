@@ -482,8 +482,6 @@ real64 SolidMechanicsLagrangeContactBubbleStab::calculateResidualNorm( real64 co
   getConvergenceStats().m_residualContact = contactResidual;
   getConvergenceStats().m_totalResidual = totalResidual;
 
-  getConvergenceStats().writeResidualNormToTable();
-
   return totalResidual;
 }
 

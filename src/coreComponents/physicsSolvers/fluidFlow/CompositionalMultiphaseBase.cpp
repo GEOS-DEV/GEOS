@@ -2630,7 +2630,7 @@ void CompositionalMultiphaseBase::implicitStepComplete( real64 const & time,
       }
     } );
   } );
-  doSmthEndStep( time, dt, cycleNumber );
+  doSmthEndStep();
 }
 
 void CompositionalMultiphaseBase::saveConvergedState( ElementSubRegionBase & subRegion ) const

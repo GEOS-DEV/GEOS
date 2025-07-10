@@ -371,7 +371,8 @@ public:
                      DomainPartition & domain );
 
   void doSmthEarlyStep( integer const & cycleNumber, real64 const & time_n, real64 const & dt );
-  void doSmthEndStep( real64 const & time_n, real64 const & dt, integer const cycleNumber );
+
+  void doSmthEndStep();
 
   /**
    * @brief Populate degree-of-freedom manager with fields relevant to this solver
@@ -719,9 +720,6 @@ public:
 
     /// @return string for the solverStatistics wrapper
     static constexpr char const * solverStatisticsString() { return "SolverStatistics"; }
-
-    /// @return string for the NullIterationsStatistics wrapper
-    static constexpr char const * NullIterationsStatisticsString() { return "NullIterationsStatistics"; }
   };
 
   /**
@@ -892,11 +890,7 @@ public:
    */
   IterationsStatistics & getIterationStats()
   {
-    if( m_shouldIterate )
-    {
-      return m_solverStatistics.m_iterationsStats;
-    }
-    return m_nullIterationStats;
+    return m_solverStatistics.m_iterationsStats;
   }
   /**
    * @return A ConvergenceStatistics for all sub-solvers
@@ -935,7 +929,6 @@ public:
     return m_meshTargets;
   }
 
-  bool m_shouldIterate = true;
 protected:
 
   /**
@@ -1100,8 +1093,6 @@ protected:
   std::map< std::string, std::chrono::system_clock::duration > m_timers;
 
 private:
-  /// "Trash" object returned for sub-solvers
-  NullIterationsStatistics m_nullIterationStats;
 
   /// List of names of regions the solver will be applied to
   string_array m_targetRegionNames;

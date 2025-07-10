@@ -715,8 +715,6 @@ real64 SolidMechanicsAugmentedLagrangianContact::calculateResidualNorm( real64 c
   getConvergenceStats().m_residualBubbleDisp = bubbleResidualNorm;
   getConvergenceStats().m_totalResidual = totalResidualNorm;
 
-  getConvergenceStats().writeResidualNormToTable();
-
   return totalResidualNorm;
 }
 
