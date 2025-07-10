@@ -245,7 +245,7 @@ ConvergenceStatistics::ConvergenceStatistics()
 {
   m_convergenceLayout = std::make_unique< TableLayout >();
 
-  m_convergenceLayout->addColumns( {"Cycle number", "time_n (s)", "dt (s)", "Time-steps",
+  m_convergenceLayout->addColumns( {"Cycle number", "time_n (s)", "dt (s)",
                                     "RMass", "RVol", "REnergy",
                                     "RFlow", "RBubbleDisp", "RFrac",
                                     "Rstick", "Rslip", "Ropen",
@@ -288,8 +288,6 @@ void ConvergenceStatistics::writeResidualNormToTable()
                                                          GEOS_FMT( "{}", m_time_n )} ));
   residualsNormCells.emplace_back( TableData::CellData( {CellType::Value,
                                                          GEOS_FMT( "{}", m_dt )} ));
-  residualsNormCells.emplace_back( TableData::CellData( {CellType::Value,
-                                                         GEOS_FMT( "{}", m_numTimeSteps )} ));
 
   for( auto const & residual : residuals )
   {

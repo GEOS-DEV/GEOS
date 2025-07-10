@@ -233,9 +233,6 @@ public:
   /// Current cycle number
   integer m_cycleNumber = 0;
 
-  /// Number of time steps
-  integer m_numTimeSteps = 0;
-
   /// Maximum value for residual mass.
   real64 m_residualMass = std::numeric_limits< real64 >::quiet_NaN();
 

@@ -299,7 +299,7 @@ bool PhysicsSolverBase::execute( real64 const time_n,
     
     // increment the cumulative number of nonlinear and linear iterations
     getIterationStats().iterateTimeStepStatistics();
-    getConvergenceStats().m_numTimeSteps++;
+    getConvergenceStats().m_cycleNumber++;
 
     /*
      * Let us check convergence history of previous solve:
