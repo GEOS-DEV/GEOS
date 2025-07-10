@@ -28,6 +28,9 @@
 namespace geos
 {
 
+constexpr real64 GRAVITATIONAL_CONSTANT = 6.67430e-11; // in m³·kg⁻¹·s⁻²
+
+
 class GravityFE : public GravitySolverBase
 {
 public:

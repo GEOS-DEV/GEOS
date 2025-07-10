@@ -21,6 +21,8 @@
 #ifndef GEOS_PHYSICSSOLVERS_GRAVITY_GRAVITYFEKERNEL_HPP_
 #define GEOS_PHYSICSSOLVERS_GRAVITY_GRAVITYFEKERNEL_HPP_
 
+#include "common/DataTypes.hpp"
+#include "common/GEOS_RAJA_Interface.hpp"
 
 namespace geos
 {

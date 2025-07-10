@@ -112,26 +112,37 @@ void GravitySolverBase::initializePostInitialConditionsPreSubGroups()
 
   if( m_mode == GravityMode::Adjoint )
   {
-    GEOS_THROW_IF( m_stationCoordinates.size( 0 ) != m_residue.size( 0 ),
-                   "GravitySolverBase: Residue size does not match the number of stations",
-                   InputError );
+
+
+    const auto stationCount = m_stationCoordinates.size( 0 );
+    const auto residueCount = m_residue.size( 0 );
+
+    GEOS_THROW_IF(
+      stationCount != residueCount,
+      "GravitySolverBase: Residue size (" + std::to_string( residueCount ) +
+      ") does not match the number of stations (" + std::to_string( stationCount ) + ")",
+      InputError
+      );
   }
 
 
-  constexpr auto yesno = [] (int flag) noexcept->const char * { return flag ? "yes" : "no"; };
+  if( this->getLogLevel()>0 )
+  {
+    constexpr auto yesno = [] (int flag) noexcept->const char * { return flag ? "yes" : "no"; };
 
-  LogPart gravitySolverLog( "Gravity Solver: ", MpiWrapper::commRank() == 0 );
-  gravitySolverLog.begin();
-  GEOS_LOG_RANK_0( "Name:                        " << getName());
-  GEOS_LOG_RANK_0( "Mode:                        " << m_modeString );
-  GEOS_LOG_RANK_0( "Number of stations:          " << m_stationCoordinates.size( 0 ));
-  GEOS_LOG_RANK_0( "Output Gz to file:           " << yesno( m_outputGz ));
-  GEOS_LOG_RANK_0( "Output Gz basename:          " << m_outputGzBasename );
-  GEOS_LOG_RANK_0( "Log level:                   " << getLogLevel());
-  GEOS_LOG_RANK_0( "  Output Gz to logs:         " << yesno( getLogLevel() > 1 ));
-  GEOS_LOG_RANK_0( "  Output Adjoint to logs:    " << yesno( getLogLevel() > 2 ));
-  GEOS_LOG_RANK_0( "  Output Properties to logs: " << yesno( getLogLevel() > 3 ));
-  gravitySolverLog.end();
+    LogPart gravitySolverLog( "Gravity Solver: ", MpiWrapper::commRank() == 0 );
+    gravitySolverLog.begin();
+    GEOS_LOG_RANK_0( "Name:                        " << getName());
+    GEOS_LOG_RANK_0( "Mode:                        " << m_modeString );
+    GEOS_LOG_RANK_0( "Number of stations:          " << m_stationCoordinates.size( 0 ));
+    GEOS_LOG_RANK_0( "Output Gz to file:           " << yesno( m_outputGz ));
+    GEOS_LOG_RANK_0( "Output Gz basename:          " << m_outputGzBasename );
+    GEOS_LOG_RANK_0( "Log level:                   " << getLogLevel());
+    GEOS_LOG_RANK_0( "  Output Gz to logs:         " << yesno( getLogLevel() > 1 ));
+    GEOS_LOG_RANK_0( "  Output Adjoint to logs:    " << yesno( getLogLevel() > 2 ));
+    GEOS_LOG_RANK_0( "  Output Properties to logs: " << yesno( getLogLevel() > 3 ));
+    gravitySolverLog.end();
+  }
 }
 
 void GravitySolverBase::postInputInitialization()

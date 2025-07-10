@@ -31,7 +31,6 @@ namespace geos
 using namespace constitutive;
 using namespace dataRepository;
 
-constexpr real64 GRAVITATIONAL_CONSTANT = 6.67430e-11; // in m3.kg-1.s-2  // Older value: 6.6738480e-11
 constexpr localIndex MAX_SUPPORT_POINTS = 8;
 
 

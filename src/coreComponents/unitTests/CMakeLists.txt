@@ -34,3 +34,7 @@ if( GEOS_ENABLE_FLUIDFLOW )
 endif()
 add_subdirectory( wellsTests )
 add_subdirectory( wavePropagationTests ) 
+if( GEOS_ENABLE_GRAVITY )
+  add_subdirectory( gravityTests )
+endif()
+
