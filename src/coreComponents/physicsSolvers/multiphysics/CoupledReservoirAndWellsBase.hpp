@@ -210,6 +210,10 @@ public:
   {
     Base::postInputInitialization();
     wellSolver()->getIterationStats().setIterativeSolver( false );
+
+    Base::getIterationStats().setCSVOutput( Base::m_writeSolverIterationsCSV );
+    Base::getConvergenceStats().setCSVOutput( Base::m_writeSolvingConvergenceCSV );
+
     setMGRStrategy();
   }
 

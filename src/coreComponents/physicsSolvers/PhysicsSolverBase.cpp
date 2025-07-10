@@ -123,6 +123,13 @@ PhysicsSolverBase::PhysicsSolverBase( string const & name,
   m_matrix.setDofManager( &m_dofManager );
 }
 
+void PhysicsSolverBase::postInputInitialization()
+{
+  m_solverStatistics.makeDir( m_writeSolverIterationsCSV, m_writeSolvingConvergenceCSV );
+  getIterationStats().setCSVOutput( m_writeSolverIterationsCSV );
+  getConvergenceStats().setCSVOutput( m_writeSolvingConvergenceCSV );
+}
+
 PhysicsSolverBase::~PhysicsSolverBase() = default;
 
 void PhysicsSolverBase::initialize_postMeshGeneration()
@@ -296,7 +303,7 @@ bool PhysicsSolverBase::execute( real64 const time_n,
 
     numOfSubSteps++;
     subStepDts[subStep] = dtAccepted;
-    
+
     // increment the cumulative number of nonlinear and linear iterations
     getIterationStats().iterateTimeStepStatistics();
     getConvergenceStats().m_cycleNumber++;
@@ -997,7 +1004,7 @@ bool PhysicsSolverBase::solveNonlinearSystem( real64 const & time_n,
       GEOS_LOG_LEVEL_RANK_0( logInfo::ResidualNorm,
                              GEOS_FMT( "        ( R ) = ( {:4.2e} )", residualNorm ) );
       getConvergenceStats().m_residualNormT = residualNorm;
-          }
+    }
 
     // if the residual norm is less than the Newton tolerance we denote that we have
     // converged and break from the Newton loop immediately.
@@ -1469,7 +1476,7 @@ void PhysicsSolverBase::cleanup( real64 const GEOS_UNUSED_PARAM( time_n ),
                                  real64 const GEOS_UNUSED_PARAM( eventProgress ),
                                  DomainPartition & GEOS_UNUSED_PARAM( domain ) )
 {
-  getIterationStats().outputStatistics( true );
+  getIterationStats().outputStatistics();
 
   for( auto & timer : m_timers )
   {

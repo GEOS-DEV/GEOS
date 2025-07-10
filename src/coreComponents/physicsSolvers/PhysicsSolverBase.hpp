@@ -930,6 +930,8 @@ public:
   }
 protected:
 
+  virtual void postInputInitialization() override;
+
   /**
    * @brief Eisenstat-Walker adaptive tolerance
    *

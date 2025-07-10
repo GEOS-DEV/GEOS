@@ -32,7 +32,6 @@ SolverStatistics::SolverStatistics( string const & name, Group * const parent )
   m_convergenceStats()
 {
   m_outputDir =  joinPath( OutputBase::getOutputDirectory(), m_directoryName );
-  makeDirsForPath( m_outputDir );
 }
 
 void SolverStatistics::setOutputFilesName( string_view solverName )
@@ -154,7 +153,7 @@ void IterationsStatistics::incrementNonlinearIteration()
   }
 }
 
-void IterationsStatistics::iterateTimeStepStatistics( /*bool writeCSV*/ )
+void IterationsStatistics::iterateTimeStepStatistics()
 {
   if( m_isIterativeSolver )
   {
@@ -183,7 +182,7 @@ void IterationsStatistics::updateTimeStepCut()
 
 void IterationsStatistics::writeStatsToTable()
 {
-  if( !m_isIterativeSolver )
+  if( !m_isIterativeSolver || !m_csvOutput )
     return;
 
   m_iterationData.addRow( m_numTimeSteps,
@@ -210,12 +209,12 @@ void IterationsStatistics::writeStatsToTable()
   m_iterationData.clear();
 }
 
-void IterationsStatistics::outputStatistics( bool writeCSV )
+void IterationsStatistics::outputStatistics()
 {
-  if( !m_isIterativeSolver )
+  if( !m_isIterativeSolver || !m_csvOutput )
     return;
 
-  { // output to log
+  {
     GEOS_LOG_RANK_0( GEOS_FMT( "{}, number of Time-steps: {}", getParent().getName(), m_numTimeSteps ) );
     GEOS_LOG_RANK_0( GEOS_FMT( "{}, number of Time steps cut: {}", getParent().getName(), m_numTimeStepCuts ) );
     TableLayout iterationLogLayout ( GEOS_FMT( "{} iterations", getParent().getName() ),
@@ -234,10 +233,6 @@ void IterationsStatistics::outputStatistics( bool writeCSV )
     GEOS_LOG_RANK_0( statsFormatter.toString( iterationDataLog ));
   }
 
-  if( writeCSV )
-  {
-    logStream << m_iterationCSVFormatter->dataToString( m_iterationData );
-  }
   logStream.close();
 }
 
@@ -255,6 +250,10 @@ ConvergenceStatistics::ConvergenceStatistics()
 
 void ConvergenceStatistics::writeResidualNormToTable()
 {
+
+  if( !m_csvOutput )
+    return;
+    
   stdVector< TableData::CellData > residualsNormCells;
 
   struct ResidualInfo
@@ -325,9 +324,9 @@ void ConvergenceStatistics::resetResidualsValue()
   m_residualNormT=0;
 }
 
-void ConvergenceStatistics::outputResidualNorm( bool writeCSV )
+void ConvergenceStatistics::outputResidualNorm()
 {
-  if( writeCSV )
+  if( m_csvOutput )
   {
     logStream << m_convergenceFormatter->dataToString( m_convergenceData );
   }

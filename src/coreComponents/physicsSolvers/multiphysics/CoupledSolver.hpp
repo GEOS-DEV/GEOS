@@ -677,6 +677,9 @@ protected:
   {
     setSubSolvers();
 
+    getIterationStats().setCSVOutput( m_writeSolverIterationsCSV );
+    getConvergenceStats().setCSVOutput( m_writeSolvingConvergenceCSV );
+
     bool const isSequential = getNonlinearSolverParameters().couplingType() == NonlinearSolverParameters::CouplingType::Sequential;
     bool const usesLineSearch = getNonlinearSolverParameters().m_lineSearchAction != NonlinearSolverParameters::LineSearchAction::None;
     GEOS_THROW_IF( isSequential && usesLineSearch,

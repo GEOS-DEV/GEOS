@@ -49,6 +49,8 @@ public:
   /// indicate if the containing solver does non-linear iterations (and so, produces iterations statistics)
   bool m_isIterativeSolver = true;
 
+  bool m_csvOutput = false;
+
   /// Number of time steps
   integer m_numTimeSteps = 0;
 
@@ -130,6 +132,13 @@ public:
   }
 
   /**
+   * @brief Set the csv state output
+   * @param state csv state
+   */
+  void setCSVOutput( bool state )
+  { m_csvOutput = state; }
+
+  /**
    * @brief Initialize the counters used for an individual time step
    */
   void resetCurrentTimeStepStatistics();
@@ -194,10 +203,9 @@ public:
   { if( m_isIterativeSolver ) m_iterationsFilename = filename; }
 
   /**
-   * @brief Output the statistics to the console and csv file if needed
-   * @param writeCSV Indicate if we output to CSV FILE
+   * @brief Output the statistics to the console
    */
-  void outputStatistics( bool writeCSV );
+  void outputStatistics();
 
 private:
   /// Stream output for the iteration statistics
@@ -223,6 +231,8 @@ public:
    * @brief Construct a new Convergence Statistics object
    */
   ConvergenceStatistics();
+
+  bool m_csvOutput = false;
 
   /// The time at the beginning of the step
   real64 m_time_n = 0.0;
@@ -285,7 +295,14 @@ public:
    * @brief Output the cumulative statistics to the terminal
    * @param writeCSV Indicates if the output should be written to a CSV file.
    */
-  void outputResidualNorm( bool writeCSV );
+  void outputResidualNorm();
+
+  /**
+   * @brief Set the csv state output
+   * @param state csv state
+   */
+  void setCSVOutput( bool state )
+  { m_csvOutput = state; }
 
   /**
    * @brief Prepare the layout and register the corresponding residuals norms to the TableData
@@ -351,6 +368,14 @@ public:
     /// @return string for the IterationsStatistics wrapper
     static constexpr char const * IterationsStatisticsString() { return "IterationsStatistics"; }
   };
+
+  /**
+   * @brief Create a convergence directory if we enable the csv for iteration or convergence statistics
+   * @param writeConvergence Boolean for convergencce CSV output 
+   * @param writeIteration Boolean for iteration CSV output 
+   */
+  void makeDir( bool writeConvergence, bool writeIteration )
+  {if( writeConvergence || writeIteration ) makeDirsForPath( m_outputDir ); std::cout << "pliplop "<<writeConvergence<<writeIteration<<  m_outputDir <<std::endl; }
 
   /**
    * @brief Set the Residual Norms filename
