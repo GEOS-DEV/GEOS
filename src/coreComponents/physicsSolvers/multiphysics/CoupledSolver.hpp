@@ -639,7 +639,6 @@ protected:
         GEOS_LOG_LEVEL_RANK_0( logInfo::ResidualNorm,
                                GEOS_FMT( "        ( R ) = ( {:4.2e} )", residualNorm ) );
         getConvergenceStats().m_residualNormT = residualNorm;
-        std::cout << "oui bjr "<< getName() <<" "<< residualNorm << std::endl;
         isConverged = ( residualNorm < params.m_newtonTol );
 
       }

@@ -139,6 +139,7 @@ public:
    */
   TimesteppingBehavior getTimesteppingBehavior() const { return m_timesteppingBehavior; }
 
+private:
 
   TimesteppingBehavior m_timesteppingBehavior = TimesteppingBehavior::DoesNotDetermineTimeStepSize;
 };

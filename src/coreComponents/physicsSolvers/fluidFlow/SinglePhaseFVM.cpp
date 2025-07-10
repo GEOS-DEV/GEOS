@@ -126,7 +126,7 @@ real64 SinglePhaseFVM< BASE >::calculateResidualNorm( real64 const & GEOS_UNUSED
                                                       arrayView1d< real64 const > const & localRhs )
 {
   GEOS_MARK_FUNCTION;
-  std::cout <<" calculateResidualNorm "<< std::endl;
+  
   integer constexpr numNorm = 2; // mass balance and energy balance
   array1d< real64 > localResidualNorm;
   array1d< real64 > localResidualNormalizer;

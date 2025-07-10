@@ -347,9 +347,6 @@ bool PhysicsSolverBase::execute( real64 const time_n,
 
   logEndOfCycleInformation( cycleNumber, numOfSubSteps, subStepDts );
 
-  // if( m_writeSolverIterationsCSV )
-  //   getIterationStats().writeStatsToTable();
-
   return false;
 }
 
@@ -431,7 +428,6 @@ real64 PhysicsSolverBase::setNextDt( real64 const & GEOS_UNUSED_PARAM( currentTi
                              GEOS_FMT( "{}: time-step required will be kept the same based on state change.",
                                        getName()));
     }
-
   }
 
   real64 nextDt = LvArray::math::min( nextDtIter, nextDtStateChange );
@@ -628,6 +624,7 @@ bool PhysicsSolverBase::lineSearch( real64 const & time_n,
   // subtract a portion of the previous solution.
   real64 localScaleFactor = -scaleFactor;
   real64 cumulativeScale = scaleFactor;
+
   // main loop for the line search.
   for( integer lineSearchIteration = 0; lineSearchIteration < maxNumberLineSearchCuts; ++lineSearchIteration )
   {
@@ -1358,7 +1355,6 @@ void PhysicsSolverBase::solveLinearSystem( DofManager const & dofManager,
 
   LinearSolverParameters const & params = m_linearSolverParameters.get();
   matrix.setDofManager( &dofManager );
-
 
   if( params.solverType == LinearSolverParameters::SolverType::direct || !m_precond )
   {

@@ -928,7 +928,6 @@ public:
   {
     return m_meshTargets;
   }
-
 protected:
 
   /**
@@ -1093,7 +1092,6 @@ protected:
   std::map< std::string, std::chrono::system_clock::duration > m_timers;
 
 private:
-
   /// List of names of regions the solver will be applied to
   string_array m_targetRegionNames;
 

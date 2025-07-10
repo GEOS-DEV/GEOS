@@ -200,8 +200,6 @@ void CompositionalMultiphaseFVM::initializePreSubGroups()
 {
   CompositionalMultiphaseBase::initializePreSubGroups();
 
-
-
   m_linearSolverParameters.get().mgr.strategy = m_isThermal
                                                 ? LinearSolverParameters::MGR::StrategyType::thermalCompositionalMultiphaseFVM
                                                 : LinearSolverParameters::MGR::StrategyType::compositionalMultiphaseFVM;
@@ -568,7 +566,6 @@ real64 CompositionalMultiphaseFVM::calculateResidualNorm( real64 const & GEOS_UN
   globalResidualNorm.resize( numNorm );
   if( m_isThermal )
   {
-    std::cout << " im thermal "<< std::endl;
     if( normType == physicsSolverBaseKernels::NormType::Linf )
     {
       physicsSolverBaseKernels::LinfResidualNormHelper::

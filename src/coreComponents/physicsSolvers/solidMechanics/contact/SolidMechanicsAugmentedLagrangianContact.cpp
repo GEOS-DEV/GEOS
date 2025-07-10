@@ -112,8 +112,6 @@ void SolidMechanicsAugmentedLagrangianContact::registerDataOnMesh( dataRepositor
 
   ContactSolverBase::registerDataOnMesh( meshBodies );
 
-
-
   forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
                                                     MeshLevel & meshLevel,
                                                     string_array const & )
