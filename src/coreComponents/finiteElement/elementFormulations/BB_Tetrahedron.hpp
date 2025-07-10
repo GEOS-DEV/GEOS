@@ -923,7 +923,7 @@ static constexpr void conditionalBasisLoop(FUNC const& func)
       constexpr int l1 = decltype(ll1)::value;
       GEOS_UNUSED_VAR( c1, i1, j1, k1, l1 );
     
-      basisLoop( [&func, &detJ, c1, i1, j1, k1, l1] ( auto c2, auto ii2, auto jj2, auto kk2, auto ll2 )
+      basisLoop( [&func, &detJ, i1, j1, k1, l1] ( auto c2, auto ii2, auto jj2, auto kk2, auto ll2 )
       {
         constexpr int c2v = decltype(c2)::value;
         constexpr int i2 = decltype(ii2)::value;
@@ -997,131 +997,67 @@ static constexpr void conditionalBasisLoop(FUNC const& func)
   static
   constexpr
   void
-  //computeStiffnessTerm( real64 const (&X)[4][3],
-  //                      FUNC && func )
-  //{
-  //  real64 detJ = LvArray::math::abs( jacobianDeterminant( X ));
-  //  real64 dLambdadX[4][3] = {};
-  //  for( int j = 0; j < 3; j++ )
-  //  {
-  //    dLambdadX[1][j] =
-  //      ( ( X[ 2 ][ (j+1)%3 ] - X[ 0 ][ (j+1)%3 ]) * ( X[ 3 ][ (j+2)%3 ] - X[ 0 ][ (j+2)%3 ] ) - ( X[ 3 ][ (j+1)%3 ] - X[ 0 ][ (j+1)%3 ]) * ( X[ 2 ][ (j+2)%3 ] - X[ 0 ][ (j+2)%3 ] ) ) / detJ;
-  //    dLambdadX[2][j] =
-  //      ( ( X[ 3 ][ (j+1)%3 ] - X[ 0 ][ (j+1)%3 ]) * ( X[ 1 ][ (j+2)%3 ] - X[ 0 ][ (j+2)%3 ] ) - ( X[ 1 ][ (j+1)%3 ] - X[ 0 ][ (j+1)%3 ]) * ( X[ 3 ][ (j+2)%3 ] - X[ 0 ][ (j+2)%3 ] ) ) / detJ;
-  //    dLambdadX[3][j] =
-  //      ( ( X[ 1 ][ (j+1)%3 ] - X[ 0 ][ (j+1)%3 ]) * ( X[ 2 ][ (j+2)%3 ] - X[ 0 ][ (j+2)%3 ] ) - ( X[ 2 ][ (j+1)%3 ] - X[ 0 ][ (j+1)%3 ]) * ( X[ 1 ][ (j+2)%3 ] - X[ 0 ][ (j+2)%3 ] ) ) / detJ;
-  //    dLambdadX[0][j] = -dLambdadX[1][j] - dLambdadX[2][j] - dLambdadX[3][j];
-  //  }
-  //  basisLoop( [&func, &dLambdadX, &detJ] ( auto const cc1, auto const ci1, auto const cj1, auto const ck1, auto const cl1 )
-  //  {
-//
-  //    constexpr int c1 = cc1;
-  //    constexpr int i1 = ci1;
-  //    constexpr int j1 = cj1;
-  //    constexpr int k1 = ck1;
-  //    constexpr int l1 = cl1;
-  //    //Not used in some combinations, but needed for constexpr
-  //    GEOS_UNUSED_VAR( c1, i1, j1, k1, l1 );
-  //    basisLoop( [&func, &dLambdadX, &detJ] ( auto const cc2, auto const ci2, auto const cj2, auto const ck2, auto const cl2 )
-  //    {
-  //      constexpr int c2 = cc2;
-  //      constexpr int i2 = ci2;
-  //      constexpr int j2 = cj2;
-  //      constexpr int k2 = ck2;
-  //      constexpr int l2 = cl2;
-  //      //Not used in some combinations, but needed for constexpr
-  //      GEOS_UNUSED_VAR( c2, i2, j2, k2, l2 );
-  //      barycentricCoordinateLoop( [&func, &dLambdadX, &detJ] ( auto const cd1 )
-  //      {
-  //        constexpr int d1 = cd1;
-  //        barycentricCoordinateLoop( [&func, &dLambdadX, &detJ]  ( auto const d2 )
-  //        {
-  //          constexpr int ii1 = i1 + ( d1 == 0 ) * ( -1 );
-  //          constexpr int ij1 = j1 + ( d1 == 1 ) * ( -1 );
-  //          constexpr int ik1 = k1 + ( d1 == 2 ) * ( -1 );
-  //          constexpr int il1 = l1 + ( d1 == 3 ) * ( -1 );
-  //          constexpr int ii2 = i2 + ( d2 == 0 ) * ( -1 );
-  //          constexpr int ij2 = j2 + ( d2 == 1 ) * ( -1 );
-  //          constexpr int ik2 = k2 + ( d2 == 2 ) * ( -1 );
-  //          constexpr int il2 = l2 + ( d2 == 3 ) * ( -1 );
-  //          constexpr real64 factor1 = correctionFactorDerivative( i1, j1, k1, l1, ii1, ij1, ik1, il1, 3 );
-  //          constexpr real64 factor2 = correctionFactorDerivative( i2, j2, k2, l2, ii2, ij2, ik2, il2, 3 );
-  //          if constexpr (ii1 >= 0 && ij1 >= 0 && ik1 >= 0 && il1 >= 0 &&
-  //                        ii2 >= 0 && ij2 >= 0 && ik2 >= 0 && il2 >= 0)
-  //          {
-  //            constexpr real64 val = computeSuperpositionIntegral( ii1, ij1, ik1, il1, ii2, ij2, ik2, il2 ) * factor1 * factor2;
-  //            func( c1, c2, val * detJ * ( dLambdadX[d1][0]*dLambdadX[d2][0] + dLambdadX[d1][1]*dLambdadX[d2][1] + dLambdadX[d1][2]*dLambdadX[d2][2] ) );
-  //          }
-  //        } );
-  //      } );
-  //    } );
-  //  } );
-  //}
-  computeStiffnessTerm( real64 const (&X)[4][3], FUNC && func )
-{
-  real64 detJ = LvArray::math::abs( jacobianDeterminant( X ));
-  real64 dLambdadX[4][3] = {};
-  for( int j = 0; j < 3; j++ )
+  computeStiffnessTerm( real64 const (&X)[4][3],
+                        FUNC && func )
   {
-    dLambdadX[1][j] =
-      ( ( X[ 2 ][ (j+1)%3 ] - X[ 0 ][ (j+1)%3 ]) * ( X[ 3 ][ (j+2)%3 ] - X[ 0 ][ (j+2)%3 ] ) - ( X[ 3 ][ (j+1)%3 ] - X[ 0 ][ (j+1)%3 ]) * ( X[ 2 ][ (j+2)%3 ] - X[ 0 ][ (j+2)%3 ] ) ) / detJ;
-    dLambdadX[2][j] =
-      ( ( X[ 3 ][ (j+1)%3 ] - X[ 0 ][ (j+1)%3 ]) * ( X[ 1 ][ (j+2)%3 ] - X[ 0 ][ (j+2)%3 ] ) - ( X[ 1 ][ (j+1)%3 ] - X[ 0 ][ (j+1)%3 ]) * ( X[ 3 ][ (j+2)%3 ] - X[ 0 ][ (j+2)%3 ] ) ) / detJ;
-    dLambdadX[3][j] =
-      ( ( X[ 1 ][ (j+1)%3 ] - X[ 0 ][ (j+1)%3 ]) * ( X[ 2 ][ (j+2)%3 ] - X[ 0 ][ (j+2)%3 ] ) - ( X[ 2 ][ (j+1)%3 ] - X[ 0 ][ (j+1)%3 ]) * ( X[ 1 ][ (j+2)%3 ] - X[ 0 ][ (j+2)%3 ] ) ) / detJ;
-    dLambdadX[0][j] = -dLambdadX[1][j] - dLambdadX[2][j] - dLambdadX[3][j];
-  }
-
-  basisLoop( [&func, &dLambdadX, &detJ] ( auto cc1, auto ci1, auto cj1, auto ck1, auto cl1 )
-  {
-    constexpr int c1 = decltype(cc1)::value;
-    constexpr int i1 = decltype(ci1)::value;
-    constexpr int j1 = decltype(cj1)::value;
-    constexpr int k1 = decltype(ck1)::value;
-    constexpr int l1 = decltype(cl1)::value;
-
-    basisLoop( [&func, &dLambdadX, &detJ, c1, i1, j1, k1, l1] ( auto cc2, auto ci2, auto cj2, auto ck2, auto cl2 )
+    real64 detJ = LvArray::math::abs( jacobianDeterminant( X ));
+    real64 dLambdadX[4][3] = {};
+    for( int j = 0; j < 3; j++ )
     {
-      constexpr int c2 = decltype(cc2)::value;
-      constexpr int i2 = decltype(ci2)::value;
-      constexpr int j2 = decltype(cj2)::value;
-      constexpr int k2 = decltype(ck2)::value;
-      constexpr int l2 = decltype(cl2)::value;
+      dLambdadX[1][j] =
+        ( ( X[ 2 ][ (j+1)%3 ] - X[ 0 ][ (j+1)%3 ]) * ( X[ 3 ][ (j+2)%3 ] - X[ 0 ][ (j+2)%3 ] ) - ( X[ 3 ][ (j+1)%3 ] - X[ 0 ][ (j+1)%3 ]) * ( X[ 2 ][ (j+2)%3 ] - X[ 0 ][ (j+2)%3 ] ) ) / detJ;
+      dLambdadX[2][j] =
+        ( ( X[ 3 ][ (j+1)%3 ] - X[ 0 ][ (j+1)%3 ]) * ( X[ 1 ][ (j+2)%3 ] - X[ 0 ][ (j+2)%3 ] ) - ( X[ 1 ][ (j+1)%3 ] - X[ 0 ][ (j+1)%3 ]) * ( X[ 3 ][ (j+2)%3 ] - X[ 0 ][ (j+2)%3 ] ) ) / detJ;
+      dLambdadX[3][j] =
+        ( ( X[ 1 ][ (j+1)%3 ] - X[ 0 ][ (j+1)%3 ]) * ( X[ 2 ][ (j+2)%3 ] - X[ 0 ][ (j+2)%3 ] ) - ( X[ 2 ][ (j+1)%3 ] - X[ 0 ][ (j+1)%3 ]) * ( X[ 1 ][ (j+2)%3 ] - X[ 0 ][ (j+2)%3 ] ) ) / detJ;
+      dLambdadX[0][j] = -dLambdadX[1][j] - dLambdadX[2][j] - dLambdadX[3][j];
+    }
+    basisLoop( [&func, &dLambdadX, &detJ] ( auto const cc1, auto const ci1, auto const cj1, auto const ck1, auto const cl1 )
+    {
 
-      barycentricCoordinateLoop( [&func, &dLambdadX, &detJ, c1, i1, j1, k1, l1, c2, i2, j2, k2, l2] ( auto cd1 )
+      constexpr int c1 = cc1;
+      constexpr int i1 = ci1;
+      constexpr int j1 = cj1;
+      constexpr int k1 = ck1;
+      constexpr int l1 = cl1;
+      //Not used in some combinations, but needed for constexpr
+      GEOS_UNUSED_VAR( c1, i1, j1, k1, l1 );
+      basisLoop( [&func, &dLambdadX, &detJ] ( auto const cc2, auto const ci2, auto const cj2, auto const ck2, auto const cl2 )
       {
-        constexpr int d1 = decltype(cd1)::value;
-
-        barycentricCoordinateLoop( [&func, &dLambdadX, &detJ, c1, i1, j1, k1, l1, c2, i2, j2, k2, l2, d1] ( auto cd2 )
+        constexpr int c2 = cc2;
+        constexpr int i2 = ci2;
+        constexpr int j2 = cj2;
+        constexpr int k2 = ck2;
+        constexpr int l2 = cl2;
+        //Not used in some combinations, but needed for constexpr
+        GEOS_UNUSED_VAR( c2, i2, j2, k2, l2 );
+        barycentricCoordinateLoop( [&func, &dLambdadX, &detJ] ( auto const cd1 )
         {
-          constexpr int d2 = decltype(cd2)::value;
-
-          constexpr int ii1 = i1 + ( d1 == 0 ? -1 : 0 );
-          constexpr int ij1 = j1 + ( d1 == 1 ? -1 : 0 );
-          constexpr int ik1 = k1 + ( d1 == 2 ? -1 : 0 );
-          constexpr int il1 = l1 + ( d1 == 3 ? -1 : 0 );
-
-          constexpr int ii2 = i2 + ( d2 == 0 ? -1 : 0 );
-          constexpr int ij2 = j2 + ( d2 == 1 ? -1 : 0 );
-          constexpr int ik2 = k2 + ( d2 == 2 ? -1 : 0 );
-          constexpr int il2 = l2 + ( d2 == 3 ? -1 : 0 );
-
-          constexpr real64 factor1 = correctionFactorDerivative( i1, j1, k1, l1, ii1, ij1, ik1, il1, 3 );
-          constexpr real64 factor2 = correctionFactorDerivative( i2, j2, k2, l2, ii2, ij2, ik2, il2, 3 );
-
-          if constexpr (ii1 >= 0 && ij1 >= 0 && ik1 >= 0 && il1 >= 0 &&
-                        ii2 >= 0 && ij2 >= 0 && ik2 >= 0 && il2 >= 0)
+          constexpr int d1 = cd1;
+          barycentricCoordinateLoop( [&func, &dLambdadX, &detJ]  ( auto const d2 )
           {
-            constexpr real64 val = computeSuperpositionIntegral( ii1, ij1, ik1, il1, ii2, ij2, ik2, il2 ) * factor1 * factor2;
-            func( c1, c2, val * detJ * 
-              ( dLambdadX[d1][0]*dLambdadX[d2][0] + dLambdadX[d1][1]*dLambdadX[d2][1] + dLambdadX[d1][2]*dLambdadX[d2][2] )
-            );
-          }
+            constexpr int ii1 = i1 + ( d1 == 0 ) * ( -1 );
+            constexpr int ij1 = j1 + ( d1 == 1 ) * ( -1 );
+            constexpr int ik1 = k1 + ( d1 == 2 ) * ( -1 );
+            constexpr int il1 = l1 + ( d1 == 3 ) * ( -1 );
+            constexpr int ii2 = i2 + ( d2 == 0 ) * ( -1 );
+            constexpr int ij2 = j2 + ( d2 == 1 ) * ( -1 );
+            constexpr int ik2 = k2 + ( d2 == 2 ) * ( -1 );
+            constexpr int il2 = l2 + ( d2 == 3 ) * ( -1 );
+            constexpr real64 factor1 = correctionFactorDerivative( i1, j1, k1, l1, ii1, ij1, ik1, il1, 3 );
+            constexpr real64 factor2 = correctionFactorDerivative( i2, j2, k2, l2, ii2, ij2, ik2, il2, 3 );
+            if constexpr (ii1 >= 0 && ij1 >= 0 && ik1 >= 0 && il1 >= 0 &&
+                          ii2 >= 0 && ij2 >= 0 && ik2 >= 0 && il2 >= 0)
+            {
+              constexpr real64 val = computeSuperpositionIntegral( ii1, ij1, ik1, il1, ii2, ij2, ik2, il2 ) * factor1 * factor2;
+              func( c1, c2, val * detJ * ( dLambdadX[d1][0]*dLambdadX[d2][0] + dLambdadX[d1][1]*dLambdadX[d2][1] + dLambdadX[d1][2]*dLambdadX[d2][2] ) );
+            }
+          } );
         } );
       } );
     } );
-  } );
-}
+  }
+
 
   /**
    * Compute th length of the edge between two vertices i1 and i2
