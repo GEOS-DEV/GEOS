@@ -2151,7 +2151,7 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
         throw std::ios_base::failure( std::strerror( errno ) );
       }
       file.exceptions( file.exceptions() | std::ios::failbit | std::ifstream::badbit );
-      file << "Time, Sxx, Syy, Szz, Syz, Sxz, Sxy, Density, Damage, Internal Energy, Kinetic Energy, epxx, epyy, epzz, epyz, epxz, epxy, volume, F00, F11, F22" << std::endl;
+      file << "Time, Sxx, Syy, Szz, Syz, Sxz, Sxy, Density, Damage, Internal Energy, Kinetic Energy, epxx, epyy, epzz, epyz, epxz, epxy, volume, Temperature, F00, F11, F22" << std::endl;
     }
     MpiWrapper::barrier( MPI_COMM_GEOSX ); // wait for the header to be written
 
@@ -6393,6 +6393,7 @@ void SolidMechanicsMPM::computeAndWriteBoxAverage( const real64 dt,
   real64 boxParticleReferenceVolume = 0.0;
   real64 boxDamage = 0.0; // we sum damage * reference volume, additive sync, then divide by total reference volume in box
   real64 boxInternalEnergy = 0.0;
+  real64 boxTemperature = 0.0;
   real64 boxKineticEnergy = 0.0;
   real64 boxMatVolume = 0.0; // Sum volume of all particles
 
@@ -6417,10 +6418,11 @@ void SolidMechanicsMPM::computeAndWriteBoxAverage( const real64 dt,
     arrayView1d< real64 const > const particleDamage = subRegion.getParticleDamage();
     arrayView1d< real64 > const particleKineticEnergy = subRegion.getField< fields::mpm::particleKineticEnergy >();
     arrayView1d< real64 const > const particleInternalEnergy = subRegion.getField< fields::mpm::particleInternalEnergy >();
+    arrayView1d< real64 const > const particleTemperature = subRegion.getField< fields::mpm::particleTemperature >();
 
     // Accumulate values
     SortedArrayView< localIndex const > const activeParticleIndices = subRegion.activeParticleIndices();
-    forAll< serialPolicy >( activeParticleIndices.size(), [=, &boxMass, &boxParticleReferenceVolume, &boxStress, &boxPlasticStrain, &boxDamage, &boxMatVolume, &boxInternalEnergy, & boxKineticEnergy] GEOS_HOST ( localIndex const pp ) // This
+    forAll< serialPolicy >( activeParticleIndices.size(), [=, &boxMass, &boxParticleReferenceVolume, &boxStress, &boxPlasticStrain, &boxDamage, &boxMatVolume, &boxInternalEnergy, & boxKineticEnergy, &boxTemperature] GEOS_HOST ( localIndex const pp ) // This
                                                                                                                                                                                 // can
                                                                                                                                                                                 // be
                                                                                                                                                                                 // parallelized
@@ -6440,6 +6442,7 @@ void SolidMechanicsMPM::computeAndWriteBoxAverage( const real64 dt,
         boxParticleReferenceVolume += particleReferenceVolume[p];
         boxKineticEnergy += particleKineticEnergy[p] * particleVolume[p];
         boxInternalEnergy += particleInternalEnergy[p] * particleVolume[p];
+        boxTemperature += particleTemperature[p] * particleVolume[p];
         for( int i=0; i<6; i++ )
         {
           boxStress[i] += particleStress[p][i] * particleVolume[p]; // volume weighted average, will normalize later.
@@ -6452,7 +6455,7 @@ void SolidMechanicsMPM::computeAndWriteBoxAverage( const real64 dt,
 
   // Additive sync: sxx, syy, szz, sxy, syz, sxz, mass, particle volume, damage
   // Check the voigt indexing of stress
-  real64 boxSums[18];
+  real64 boxSums[19];
   boxSums[0] = boxStress[0];       // sig_xx * volume
   boxSums[1] = boxStress[1];       // sig_yy * volume
   boxSums[2] = boxStress[2];       // sig_zz * volume
@@ -6471,6 +6474,7 @@ void SolidMechanicsMPM::computeAndWriteBoxAverage( const real64 dt,
   boxSums[15] = boxPlasticStrain[4]; // plasticStrain_xz
   boxSums[16] = boxPlasticStrain[5]; // plasticStrain_xy
   boxSums[17] = boxMatVolume;
+  boxSums[18] = boxTemperature; // temperature
       
   // Do an MPI sync to total these values and write from proc0 to a file.  Also compute global F
   // so file is directly plottable in excel as CSV or something.
@@ -6503,7 +6507,7 @@ void SolidMechanicsMPM::computeAndWriteBoxAverage( const real64 dt,
     }
     //make sure write fails with exception if something is wrong
     file.exceptions( file.exceptions() | std::ios::failbit | std::ifstream::badbit );
-    // time | sig_xx | sig_yy | sig_zz | sig_xy | sig_yz | sig_zx | density | damage | internal energy | kinetic energy | epxx | epyy | epzz | epyz | epxz | epxy | total particle volume | F00 | F11 | F22
+    // time | sig_xx | sig_yy | sig_zz | sig_xy | sig_yz | sig_zx | density | damage | internal energy | kinetic energy | epxx | epyy | epzz | epyz | epxz | epxy | total particle volume | F00 | F11 | F22 | temperature
     file << time_n + dt
          << ","
          << boxSums[0] / boxVolume
@@ -6540,6 +6544,8 @@ void SolidMechanicsMPM::computeAndWriteBoxAverage( const real64 dt,
          << boxSums[16] / boxVolume
          << ", "
          << boxSums[17]
+         << ", "
+         << boxSums[18] / boxVolume //treat temperature like internal energy (boxSums[9])
          << ", "
          << m_domainF[0]
          << ", "

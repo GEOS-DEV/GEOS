@@ -118,8 +118,10 @@ def read_from_box_average_file(filename):
   epxz = DataObj("epxz", box_data[1:,15]) # plastic strain xx
   epxy = DataObj("epxy", box_data[1:,16]) # plastic strain xx
   matVol = DataObj("MatVol", box_data[1:,17]) # material volume
+  temperature = DataObj("temp", box_data[1:,18]) # material temperature
 
-  return time, sxx, syy, szz, sxy, syz, sxz, density, damage, internalEnergy, kineticEnergy, epxx, epyy, epzz, epyz, epxz, epxy, matVol
+
+  return time, sxx, syy, szz, sxy, syz, sxz, density, damage, internalEnergy, kineticEnergy, epxx, epyy, epzz, epyz, epxz, epxy, matVol, temperature
 
 
 def write_data_to_csv(filename, data_array):
@@ -484,7 +486,7 @@ class MPMJob:
     self.registerField(DataObj("Bepyz", box_data[1:,14])) # plastic strain xx
     self.registerField(DataObj("Bepxz", box_data[1:,15])) # plastic strain xx
     self.registerField(DataObj("Bepxy", box_data[1:,16])) # plastic strain xx
-    self.registerField(DataObj("BMatVol", box_data[1:,17])) # material volume
+    self.registerField(DataObj("BTemp", box_data[1:,18])) # material temperature
 
   def registerField(self, field):
     self.fields[field.name] = field

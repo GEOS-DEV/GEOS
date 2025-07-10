@@ -1122,14 +1122,13 @@ int GeomechanicsUpdates::computeStep( real64 const ( & D )[6],               // 
     // rate multiplier going from reference temperature T0 to temperature T
     // is ( A*exp[-E_a/(R*T)] ) / ( A*exp[-E_a/(R*T0)] ) = Exp[-Ea*( 1/(R*T) - 1./(R*T0) )]
 
-    real64 m_referenceTemperature = 300.0; // This could be an input variable
+    real64 m_referenceTemperature =  m_initialTemperature; // This could be an input variable
     real64 m_gasConstantR = 8.314;  // this is J/(mol*K) and also works for mm,mg,us,K units, but this should be a user input 
                                     // to allow for other unit systems.
     real64 m_creepActivationEnergy = 2.0;  // This will be a user input that can be used to fit temperature dependence.
 
-    //real64 creepRateTemperatureMultiplier = exp(-1.0*m_creepActivationEnergy*( 1.0/(m_gasConstantR*temperature) - 1.0/(m_gasConstantR*m_referenceTemperature) ) ); 
+    real64 creepRateTemperatureMultiplier = exp(-1.0*m_creepActivationEnergy*( 1.0/(m_gasConstantR*temperature) - 1.0/(m_gasConstantR*m_referenceTemperature) ) ); 
 	
-    real64 creepRateTemperatureMultiplier = 0.0024*temperature + 0.2982
 
     real64 c0 = m_creepC0;
 		real64 c1 = m_creepC1;
@@ -1140,7 +1139,7 @@ int GeomechanicsUpdates::computeStep( real64 const ( & D )[6],               // 
     real64 equilibriumPorosityPressureExponent = m_creepD;  // volumetric creep rate parameter
     real64 equilibriumPorosityOffset = m_creepE;  // volumetric creep rate parameter
     real64 compactionRatePressureExponent = m_creepF;  // volumetric creep rate parameter
-    real64 Temp_0 = m_initialTemperature; // temperature at start of simulation
+    //real64 Temp_0 = m_initialTemperature; // temperature at start of simulation
     //real64 Temp_new = m_temperature; // updated temperature
 
     real64 rootTwoThirds = 0.81649658092772603273242802490196; 
@@ -1235,7 +1234,7 @@ int GeomechanicsUpdates::computeStep( real64 const ( & D )[6],               // 
     // unloaded porosity at the start of the step.
     real64 phi_p = std::max( 1.e-10 , 1.0 + exp(-evp)*( phi_i - 1 ) ); 
     // equilibrium porosity at the start of the step.
-		real64 phi_e = std::max(1.e-10 , A * exp( -std::pow(p,equilibriumPorosityPressureExponent) / B ) + equilibriumPorosityOffset ) + (0. * Temp_0);    
+		real64 phi_e = std::max(1.e-10 , A * exp( -std::pow(p,equilibriumPorosityPressureExponent) / B ) + equilibriumPorosityOffset  + std::max(temperature - m_referenceTemperature, 0.0) * (-0.0004) +0.3377);    
 
     // uncomment for debugging:
     //std::cout<<"pn = "<<p<<", evp_n = "<<evp<<", phi_p_n = "<<phi_p<<", phi_e_n = "<<phi_e<<", X_n = "<<X_old<<std::endl;
