@@ -161,7 +161,7 @@ public:
 
   virtual void implicitStepComplete( real64 const & GEOS_UNUSED_PARAM( time_n ),
                                      real64 const & GEOS_UNUSED_PARAM( dt ),
-                                     integer const cycleNumber,
+                                     integer const GEOS_UNUSED_PARAM( cycleNumber ),
                                      DomainPartition & GEOS_UNUSED_PARAM( domain ) ) override {}
 
   virtual void applyBoundaryConditions( real64 const GEOS_UNUSED_PARAM( time_n ),
