@@ -1234,7 +1234,7 @@ int GeomechanicsUpdates::computeStep( real64 const ( & D )[6],               // 
     // unloaded porosity at the start of the step.
     real64 phi_p = std::max( 1.e-10 , 1.0 + exp(-evp)*( phi_i - 1 ) ); 
     // equilibrium porosity at the start of the step.
-		real64 phi_e = std::max(1.e-10 , A * exp( -std::pow(p,equilibriumPorosityPressureExponent) / B ) + equilibriumPorosityOffset  + std::max(temperature - m_referenceTemperature, 0.0) * (-0.0004) +0.3377);    
+		real64 phi_e = std::max(1.e-10 , A * exp( -std::pow(p,equilibriumPorosityPressureExponent) / B ) + equilibriumPorosityOffset  + std::max(temperature - m_referenceTemperature, 0.0) * (-0.00004) );    
 
     // uncomment for debugging:
     //std::cout<<"pn = "<<p<<", evp_n = "<<evp<<", phi_p_n = "<<phi_p<<", phi_e_n = "<<phi_e<<", X_n = "<<X_old<<std::endl;
