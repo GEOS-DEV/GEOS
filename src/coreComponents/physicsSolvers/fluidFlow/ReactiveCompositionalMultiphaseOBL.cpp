@@ -608,7 +608,7 @@ void ReactiveCompositionalMultiphaseOBL::initializePostInitialConditionsPreSubGr
 void
 ReactiveCompositionalMultiphaseOBL::implicitStepSetup( real64 const & time_n,
                                                        real64 const & dt,
-                                                       integer const & cycleNumber,
+                                                       integer const cycleNumber,
                                                        DomainPartition & domain )
 {
   updateSolverStatistics( time_n, dt, cycleNumber );

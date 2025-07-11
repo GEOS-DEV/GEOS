@@ -39,7 +39,7 @@ FlowProppantTransportSolver::FlowProppantTransportSolver( const string & name,
 
 void FlowProppantTransportSolver::preStepUpdate( real64 const & time_n,
                                                  real64 const & dt,
-                                                 integer const & cycleNumber,
+                                                 integer const cycleNumber,
                                                  DomainPartition & domain )
 {
   if( time_n <= 0.0 )

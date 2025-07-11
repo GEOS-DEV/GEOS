@@ -1115,7 +1115,7 @@ void SinglePhaseWell::resetStateToBeginningOfStep( DomainPartition & domain )
 
 void SinglePhaseWell::implicitStepSetup( real64 const & time,
                                          real64 const & dt,
-                                         integer const & cycleNumber,
+                                         integer const cycleNumber,
                                          DomainPartition & domain )
 {
   WellSolverBase::implicitStepSetup( time, dt, cycleNumber, domain );
@@ -1176,7 +1176,6 @@ void SinglePhaseWell::printRates( real64 const & time_n,
                                   real64 const & GEOS_UNUSED_PARAM( dt ),
                                   DomainPartition & domain )
 {
-
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
                                                                 string_array const & regionNames )

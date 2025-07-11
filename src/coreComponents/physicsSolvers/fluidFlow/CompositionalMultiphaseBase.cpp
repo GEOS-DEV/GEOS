@@ -1326,7 +1326,7 @@ void CompositionalMultiphaseBase::initializePostInitialConditionsPreSubGroups()
 void
 CompositionalMultiphaseBase::implicitStepSetup( real64 const & time_n,
                                                 real64 const & dt,
-                                                integer const & cycleNumber,
+                                                integer const cycleNumber,
                                                 DomainPartition & domain )
 {
   updateSolverStatistics( time_n, dt, cycleNumber );

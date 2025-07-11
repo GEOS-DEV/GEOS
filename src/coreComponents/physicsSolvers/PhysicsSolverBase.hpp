@@ -368,7 +368,7 @@ public:
   virtual void
   implicitStepSetup( real64 const & time_n,
                      real64 const & dt,
-                     integer const & cycleNumber,
+                     integer const cycleNumber,
                      DomainPartition & domain );
 
   /**
@@ -377,7 +377,7 @@ public:
    * @param dt The desired timestepr
    * @param cycleNumber Current cycle number
    */
-  void updateSolverStatistics( real64 const & time_n, real64 const & dt, integer const & cycleNumber );
+  void updateSolverStatistics( real64 const & time_n, real64 const & dt, integer const cycleNumber );
 
   /**
    * @brief Write all the statistics (iteration & convergence) stored into a CSV file

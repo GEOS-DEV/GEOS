@@ -1171,7 +1171,7 @@ real64 PhysicsSolverBase::explicitStep( real64 const & GEOS_UNUSED_PARAM( time_n
 
 void PhysicsSolverBase::implicitStepSetup( real64 const & GEOS_UNUSED_PARAM( time_n ),
                                            real64 const & GEOS_UNUSED_PARAM( dt ),
-                                           integer const & GEOS_UNUSED_PARAM( cycleNumber ),
+                                           integer const GEOS_UNUSED_PARAM( cycleNumber ),
                                            DomainPartition & GEOS_UNUSED_PARAM( domain ) )
 {
   GEOS_THROW( "PhysicsSolverBase::ImplicitStepSetup called!. Should be overridden.", std::runtime_error );
@@ -1183,7 +1183,7 @@ void PhysicsSolverBase::setupDofs( DomainPartition const & GEOS_UNUSED_PARAM( do
   GEOS_ERROR( "PhysicsSolverBase::setupDofs called!. Should be overridden." );
 }
 
-void PhysicsSolverBase::updateSolverStatistics( real64 const & time_n, real64 const & dt, integer const & cycleNumber )
+void PhysicsSolverBase::updateSolverStatistics( real64 const & time_n, real64 const & dt, integer const cycleNumber )
 {
   getConvergenceStats().updateSolverStep( time_n, dt, cycleNumber );
 }

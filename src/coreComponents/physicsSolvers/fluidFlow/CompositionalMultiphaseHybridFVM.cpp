@@ -232,7 +232,7 @@ void CompositionalMultiphaseHybridFVM::precomputeData( MeshLevel & mesh, string_
 
 void CompositionalMultiphaseHybridFVM::implicitStepSetup( real64 const & time_n,
                                                           real64 const & dt,
-                                                          integer const & cycleNumber,
+                                                          integer const cycleNumber,
                                                           DomainPartition & domain )
 {
   GEOS_MARK_FUNCTION;

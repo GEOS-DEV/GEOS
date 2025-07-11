@@ -110,7 +110,7 @@ public:
   virtual void
   implicitStepSetup( real64 const &,
                      real64 const &,
-                     integer const &,
+                     integer const,
                      DomainPartition & ) override {}
 
   virtual void implicitStepComplete( real64 const & time,

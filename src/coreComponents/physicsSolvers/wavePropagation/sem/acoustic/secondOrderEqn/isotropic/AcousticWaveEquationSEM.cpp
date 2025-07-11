@@ -259,7 +259,7 @@ void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & baseM
   nodesToElements.freeOnDevice();
 }
 
-void AcousticWaveEquationSEM::addSourceToRightHandSide( integer const & cycleNumber, arrayView1d< real32 > const rhs )
+void AcousticWaveEquationSEM::addSourceToRightHandSide( integer const cycleNumber, arrayView1d< real32 > const rhs )
 {
   arrayView2d< localIndex const > const sourceNodeIds = m_sourceNodeIds.toViewConst();
   arrayView2d< real64 const > const sourceConstants   = m_sourceConstants.toViewConst();
@@ -1160,7 +1160,7 @@ void AcousticWaveEquationSEM::prepareNextTimestep( MeshLevel & mesh )
 
 void AcousticWaveEquationSEM::computeUnknowns( real64 const & time_n,
                                                real64 const & dt,
-                                               integer const & cycleNumber,
+                                               integer const cycleNumber,
                                                DomainPartition & domain,
                                                MeshLevel & mesh,
                                                string_array const & regionNames )
@@ -1354,7 +1354,7 @@ void AcousticWaveEquationSEM::synchronizeUnknowns( real64 const & time_n,
 
 real64 AcousticWaveEquationSEM::explicitStepInternal( real64 const & time_n,
                                                       real64 const & dt,
-                                                      integer const & cycleNumber,
+                                                      integer const cycleNumber,
                                                       DomainPartition & domain )
 {
   GEOS_MARK_FUNCTION;
