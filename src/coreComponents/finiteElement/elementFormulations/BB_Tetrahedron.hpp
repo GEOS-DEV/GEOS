@@ -764,6 +764,65 @@ static constexpr bool is_equal()
 //   (void)discard{ 0, ((x == Is ? (void)f(), 0 : 0))... };
 // }
 
+// Helper pour éviter l'ICE de GCC 9.4 - Version avec logique conditionnelle
+template<int c1, int i1, int j1, int k1, int l1, typename F, int... Is>
+static constexpr void call_matching_cases(F&& func, std::integer_sequence<int, Is...>) {
+    // Décomposer les fold expressions complexes
+
+    // Cas 0: si i1 correspond �|  un des Is
+    auto check_i1 = [&](auto I) {
+        if constexpr (i1 == decltype(I)::value) {
+            func(std::integral_constant<int, 0>{},
+                 std::integral_constant<int, i1>{},
+                 std::integral_constant<int, c1>{},
+                 std::integral_constant<int, j1>{},
+                 std::integral_constant<int, k1>{},
+                 std::integral_constant<int, l1>{});
+        }
+    };
+      (check_i1(std::integral_constant<int, Is>{}), ...);
+
+    // Cas 1: si j1 correspond �|  un des Is
+    auto check_j1 = [&](auto I) {
+        if constexpr (j1 == decltype(I)::value) {
+            func(std::integral_constant<int, 1>{},
+                 std::integral_constant<int, j1>{},
+                 std::integral_constant<int, c1>{},
+                 std::integral_constant<int, i1>{},
+                 std::integral_constant<int, k1>{},
+                 std::integral_constant<int, l1>{});
+        }
+    };
+    (check_j1(std::integral_constant<int, Is>{}), ...);
+
+    // Cas 2: si k1 correspond �|  un des Is
+    auto check_k1 = [&](auto I) {
+        if constexpr (k1 == decltype(I)::value) {
+            func(std::integral_constant<int, 2>{},
+                 std::integral_constant<int, k1>{},
+                 std::integral_constant<int, c1>{},
+                 std::integral_constant<int, i1>{},
+                 std::integral_constant<int, j1>{},
+                 std::integral_constant<int, l1>{});
+        }
+    };
+        (check_k1(std::integral_constant<int, Is>{}), ...);
+
+    // Cas 3: si l1 correspond �|  un des Is
+    auto check_l1 = [&](auto I) {
+        if constexpr (l1 == decltype(I)::value) {
+            func(std::integral_constant<int, 3>{},
+                 std::integral_constant<int, l1>{},
+                 std::integral_constant<int, c1>{},
+                 std::integral_constant<int, i1>{},
+                 std::integral_constant<int, j1>{},
+                 std::integral_constant<int, k1>{});
+        }
+    };
+    (check_l1(std::integral_constant<int, Is>{}), ...);
+}
+
+
   /**
    * @brief Helper function for loop over tet basis functions that have one index in a given set of indices.
    *   If multiple indices are in the given list, the callback is called multiple times.
@@ -797,40 +856,43 @@ static constexpr void conditionalBasisLoop(FUNC const& func)
           if constexpr (valid_k1) {
             constexpr int l1 = ORDER - i1 - j1 - k1;
             constexpr int c1 = dofIndex<i1,j1,k1>();
-
+            
+            call_matching_cases<c1, i1, j1, k1, l1>(func, std::integer_sequence<int, Is...>{});
 
             // Pour chaque Is...
-            (void)(((i1 == Is) &&
-              (void(func(std::integral_constant<int, 0>{},
-                         std::integral_constant<int, i1>{},
-                         std::integral_constant<int, c1>{},
-                         std::integral_constant<int, j1>{},
-                         std::integral_constant<int, k1>{},
-                         std::integral_constant<int, l1>{})), 1)) || ...);
+            // (void)(((i1 == Is) &&
+            //   (void(func(std::integral_constant<int, 0>{},
+            //              std::integral_constant<int, i1>{},
+            //              std::integral_constant<int, c1>{},
+            //              std::integral_constant<int, j1>{},
+            //              std::integral_constant<int, k1>{},
+            //              std::integral_constant<int, l1>{})), 1)) || ...);
 
-            (void)(((j1 == Is) &&
-              (void(func(std::integral_constant<int, 1>{},
-                         std::integral_constant<int, j1>{},
-                         std::integral_constant<int, c1>{},
-                         std::integral_constant<int, i1>{},
-                         std::integral_constant<int, k1>{},
-                         std::integral_constant<int, l1>{})), 1)) || ...);
+            // (void)(((j1 == Is) &&
+            //   (void(func(std::integral_constant<int, 1>{},
+            //              std::integral_constant<int, j1>{},
+            //              std::integral_constant<int, c1>{},
+            //              std::integral_constant<int, i1>{},
+            //              std::integral_constant<int, k1>{},
+            //              std::integral_constant<int, l1>{})), 1)) || ...);
 
-            (void)(((k1==Is) &&
-              (void(func(std::integral_constant<int, 2>{},
-                         std::integral_constant<int, k1>{},
-                         std::integral_constant<int, c1>{},
-                         std::integral_constant<int, i1>{},
-                         std::integral_constant<int, j1>{},
-                         std::integral_constant<int, l1>{})), 1)) || ...);
+            // (void)(((k1==Is) &&
+            //   (void(func(std::integral_constant<int, 2>{},
+            //              std::integral_constant<int, k1>{},
+            //              std::integral_constant<int, c1>{},
+            //              std::integral_constant<int, i1>{},
+            //              std::integral_constant<int, j1>{},
+            //              std::integral_constant<int, l1>{})), 1)) || ...);
 
-            (void)(((l1 ==Is) &&
-              (void(func(std::integral_constant<int, 3>{},
-                         std::integral_constant<int, l1>{},
-                         std::integral_constant<int, c1>{},
-                         std::integral_constant<int, i1>{},
-                         std::integral_constant<int, j1>{},
-                         std::integral_constant<int, k1>{})), 1)) || ...);
+            // (void)(((l1 ==Is) &&
+            //   (void(func(std::integral_constant<int, 3>{},
+            //              std::integral_constant<int, l1>{},
+            //              std::integral_constant<int, c1>{},
+            //              std::integral_constant<int, i1>{},
+            //              std::integral_constant<int, j1>{},
+            //              std::integral_constant<int, k1>{})), 1)) || ...);
+
+
 
             //             (void)(((i1 ==Is) &&
             //   (void(func(
