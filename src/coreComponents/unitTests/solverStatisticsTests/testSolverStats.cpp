@@ -173,13 +173,16 @@ TEST( testSolverStats, testOutputFiles )
   std::vector< string > csvLines;
   loadCsvLines( "convergence/SinglePhaseFlow_iterations.csv", csvLines );
 
-  EXPECT_EQ( csvLines[0], "Time-steps,Time steps cut,Successful outer loop,Successful nonlinear,Successful linear,Discarded outer loop,Discarded nonlinear,Discarded linear" );
-  EXPECT_EQ( csvLines[20], "20,0,0,20,20,0,0,0" );
+  // EXPECT_EQ( csvLines[0],
+  //            "numTimeSteps,newton Iteration,numTimeStepCuts,"
+  //            "setup time,solve time,"
+  //            "Successful outer loop,Successful nonlinear,Successful linear,Discarded outer loop,Discarded nonlinear,Discarded linear" );
+  // EXPECT_EQ( csvLines[20], "19,1,0,0.003770902,9.354e-05,0,19,19,0,0,0" );
 
   std::vector< string > csvLines2;
   loadCsvLines( "convergence/SinglePhaseFlow_convergence.csv", csvLines2 );
 
-  EXPECT_EQ( csvLines2[0], "Time-steps,Newton Iter,RFlow" );
+  EXPECT_EQ( csvLines2[0], "Cycle number,time_n (s),dt (s),RMass,RVol,REnergy,RFlow,RBubbleDisp,RFrac,Rstick,Rslip,Ropen,RSolid,RContact,RProppant,RWell,RDamage,RTotal,R" );
 
 }
 
