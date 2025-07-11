@@ -45,7 +45,10 @@ CeramicDamage::CeramicDamage( string const & name, Group * const parent ):
   m_strainRate(), //added by SG
   m_instTensileStrength(), //added by SG
   m_instCompressiveStrength(), //added by SG
-  m_rateSensitivity() //added by SG
+  m_instStrength(), //added by SG
+  m_instPressure(), //added by SG
+  m_rateSensitivity(), //added by SG
+  m_m2() //added by SG
 {
   // register default values
   registerWrapper( viewKeyStruct::tensileStrengthString(), &m_tensileStrength ).
@@ -74,8 +77,6 @@ CeramicDamage::CeramicDamage( string const & name, Group * const parent ):
     setApplyDefaultValue( 0.0 ).
     setPlotLevel( PlotLevel::LEVEL_0 ).
     setDescription( "Porosity" );
-
-  
 
   registerWrapper( viewKeyStruct::referencePorosityString(), &m_referencePorosity ).
     setApplyDefaultValue( 0.0 ).
@@ -137,11 +138,25 @@ CeramicDamage::CeramicDamage( string const & name, Group * const parent ):
     setPlotLevel( PlotLevel::LEVEL_0 ). // or NOPLOT if you don't want it output
     setDescription( "Instantaneous Compressive Strength" );
 
+  registerWrapper( viewKeyStruct::instStrengthString(), &m_instStrength ). //added by SG
+    setApplyDefaultValue( 0.0 ).
+    setPlotLevel( PlotLevel::LEVEL_0 ). // or NOPLOT if you don't want it output
+    setDescription( "Instantaneous Strength" );
+
+  registerWrapper( viewKeyStruct::instPressureString(), &m_instPressure ). //added by SG
+    setApplyDefaultValue( 0.0 ).
+    setPlotLevel( PlotLevel::LEVEL_0 ). // or NOPLOT if you don't want it output
+    setDescription( "Instantaneous Pressure" );
 
   registerWrapper( viewKeyStruct::rateSensitivityString(), &m_rateSensitivity ). //added by SG
     setInputFlag( InputFlags::OPTIONAL ).
-    setApplyDefaultValue( 2.0 ).
+    setApplyDefaultValue( 0.0 ).
     setDescription( "Rate sensitivity exponent for strength scaling" );
+
+  registerWrapper( viewKeyStruct::m2String(), &m_m2 ). //added by SG
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( 0.0 ).
+    setDescription( "Second slope for pressure dependent strength scaling" );
 
 }
 
@@ -165,6 +180,8 @@ void CeramicDamage::allocateConstitutiveData( dataRepository::Group & parent,
   m_strainRate.resize( 0, numConstitutivePointsPerParentIndex ); //added by SG
   m_instTensileStrength.resize( 0, numConstitutivePointsPerParentIndex ); //added by SG
   m_instCompressiveStrength.resize( 0, numConstitutivePointsPerParentIndex ); //added by SG
+  m_instStrength.resize( 0, numConstitutivePointsPerParentIndex ); //added by SG
+  m_instPressure.resize( 0, numConstitutivePointsPerParentIndex ); //added by SG
 
   //m_refStrainRate.resize( 0 ); //added by SG
   //m_rateSensitivity.resize( 0 ); //added by SG

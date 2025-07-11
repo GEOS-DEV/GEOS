@@ -1370,6 +1370,8 @@ void SolidMechanicsMPM::registerDataOnMesh( Group & meshBodies )
         subRegion.registerField< particleStrainRate >( getName() ); // <-- Added this line
         subRegion.registerField< particleinstTensileStrength >( getName() ); // <-- Added this line
         subRegion.registerField< particleinstCompressiveStrength >( getName() ); // <-- Added this line
+        subRegion.registerField< particleinstStrength >( getName() ); // <-- Added this line
+        subRegion.registerField< particleinstPressure >( getName() ); // <-- Added this line
 
         subRegion.registerField< particleWavespeed >( getName() );
         subRegion.registerField< particleHeatCapacity >( getName() );
@@ -1948,6 +1950,8 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
     arrayView1d< real64 > const particleStrainRate = subRegion.getField< fields::mpm::particleStrainRate >();
     arrayView1d< real64 > const particleinstTensileStrength = subRegion.getField< fields::mpm::particleinstTensileStrength >();
     arrayView1d< real64 > const particleinstCompressiveStrength = subRegion.getField< fields::mpm::particleinstCompressiveStrength >();
+    arrayView1d< real64 > const particleinstStrength = subRegion.getField< fields::mpm::particleinstStrength >();
+    arrayView1d< real64 > const particleinstPressure = subRegion.getField< fields::mpm::particleinstPressure >();
 
 
 
@@ -9974,6 +9978,31 @@ void SolidMechanicsMPM::updateSolverDependencies( ParticleManager & particleMana
         particleinstCompressiveStrength[p] = constitutiveinstCompressiveStrength[p][0]; // assuming [0] is the scalar strain rate
       } );
     }
+
+     if( constitutiveModel.hasWrapper( "instStrength" ) )
+    {
+      arrayView1d< real64 > const particleinstStrength = subRegion.getField< fields::mpm::particleinstStrength >();
+      arrayView2d< real64 const > const constitutiveinstStrength = constitutiveModel.getReference< array2d< real64 > >( "instStrength" );
+
+      forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST_DEVICE ( localIndex const pp )
+      {
+        localIndex const p = activeParticleIndices[pp];
+        particleinstStrength[p] = constitutiveinstStrength[p][0]; // assuming [0] is the scalar strain rate
+      } );
+    }
+
+     if( constitutiveModel.hasWrapper( "instPressure" ) )
+    {
+      arrayView1d< real64 > const particleinstPressure = subRegion.getField< fields::mpm::particleinstPressure >();
+      arrayView2d< real64 const > const constitutiveinstPressure = constitutiveModel.getReference< array2d< real64 > >( "instPressure" );
+
+      forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST_DEVICE ( localIndex const pp )
+      {
+        localIndex const p = activeParticleIndices[pp];
+        particleinstPressure[p] = constitutiveinstPressure[p][0]; // assuming [0] is the scalar strain rate
+      } );
+    }
+
 
 
 

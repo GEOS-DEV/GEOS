@@ -74,7 +74,10 @@ public:
    * @param[in] strainRate The ArrayView holding the strain rate data for each quadrature point (for rate-dependent scaling). //added here by SG
    * @param[in] instTensileStrength Instantaneous Tensile Strength values.
    * @param[in] instCompressiveStrength Instantaneous Compressive Strength values.
+   * @param[in] instStrength Instantaneous Strength values.
+   * @param[in] instPressure Instantaneous pressure values.
    * @param[in] rateSensitivity The rate sensitivity for rate-dependent strength scaling.
+   * @param[in] m2 The second slope for pressure dependent strength scaling.
    */
   CeramicDamageUpdates( arrayView2d< real64 > const & damage,
                         arrayView2d< real64 > const & jacobian,
@@ -101,7 +104,10 @@ public:
                         arrayView2d< real64 > const & strainRate, //added by SG
                         arrayView2d< real64 > const & instTensileStrength, //added by SG
                         arrayView2d< real64 > const & instCompressiveStrength, //added by SG
+                        arrayView2d< real64 > const & instStrength, //added by SG
+                        arrayView2d< real64 > const & instPressure, //added by SG
                         real64  const & rateSensitivity,
+                        real64  const & m2,
                         bool const & disableInelasticity ):
     ElasticIsotropicUpdates( bulkModulus,
                              shearModulus,
@@ -129,7 +135,10 @@ public:
     m_strainRate( strainRate ), // <-- Added by SG
     m_instTensileStrength( instTensileStrength ), // <-- Added by SG
     m_instCompressiveStrength( instCompressiveStrength ), // <-- Added by SG
-    m_rateSensitivity( rateSensitivity )
+    m_instStrength( instStrength ), // <-- Added by SG
+    m_instPressure( instPressure ), // <-- Added by SG
+    m_rateSensitivity( rateSensitivity ),  // <-- Added by SG
+    m_m2( m2 )  // <-- Added by SG
 
   {}
 
@@ -224,7 +233,8 @@ real64 ceramicdY20dp(const real64 p, // pressure
                                 const real64 mu,  // friction slope
                                 const real64 Yc,  // unconfined compressive strength
                                 const real64 Yt0,  // unconfined tensile strength before 3rd invariant scaling
-                                const real64 Ymax ) const; // max shear stress
+                                const real64 Ymax, // max shear stress
+                                const real64 m2 ) const; 
 
 GEOS_HOST_DEVICE
 real64 smoothStep(const real64 x,
@@ -297,7 +307,13 @@ private:
 
   arrayView2d< real64 > const m_instCompressiveStrength; //Added by SG
 
-  real64 m_rateSensitivity;     // <-- AND THIS
+  arrayView2d< real64 > const m_instStrength; //Added by SG
+
+  arrayView2d< real64 > const m_instPressure; //Added by SG
+
+  real64 m_rateSensitivity;     // <-- Added by SG
+
+  real64 m_m2;     // <-- Added by SG
 
   
 
@@ -480,7 +496,7 @@ void CeramicDamageUpdates::smallStrainUpdateHelper( localIndex const k,
   strainIncrement[2]*strainIncrement[2] +
   2*strainIncrement[3]*strainIncrement[3] +
   2*strainIncrement[4]*strainIncrement[4] +
-  2*strainIncrement[5]*strainIncrement[5] ) / timeIncrement );
+  2*strainIncrement[5]*strainIncrement[5] )) / timeIncrement ;
 
   //  //added by SG
   m_strainRate[k][q] = SR;
@@ -516,6 +532,10 @@ void CeramicDamageUpdates::smallStrainUpdateHelper( localIndex const k,
   real64 pmin0 = -( 2.0 * Yc * Yt0 ) / ( 3.0 * ( Yc - Yt0 ) );
   pmin0 = fmin( pmin0, -1.0e-12 );
   real64 pmin = ( 1.0 - m_damage[k][q] ) * pmin0;
+
+
+  //added by SG
+  m_instPressure[k][q]=pressure;
 
   // Enforce vertex solution
   // if( trialPressure < 0 )
@@ -576,6 +596,10 @@ void CeramicDamageUpdates::smallStrainUpdateHelper( localIndex const k,
       newDeviatorMagnitude = strength;
     }
 
+
+    //added by SG
+    m_instStrength[k][q]=strength;
+
     // Radial return
     twoInvariant::stressRecomposition( -pressure,
                                        newDeviatorMagnitude,
@@ -599,8 +623,11 @@ real64 CeramicDamageUpdates::getStrength( const real64 damage,     // damage
   real64 oneOverGamma = 1.0;
 
   real64 p1 = Yc / 3.0;
-  real64 p2 = Ymax / mu;
+  //real64 p2 = Ymax / mu;
 
+  real64 m2=m_m2; // slope m2 which should be smaller than m1
+  real64 p2=(Yc-p1*m2)/(mu-m2); //added by SG
+  
   // Determine scaled strength
   if( pressure <= p1 )
   {
@@ -611,18 +638,21 @@ real64 CeramicDamageUpdates::getStrength( const real64 damage,     // damage
   
   if( pressure < p2 )
   {
-    dfdp = ceramicdY20dp( pressure, damage, mu, Yc, Yt0, Ymax );
+    dfdp = ceramicdY20dp( pressure, damage, mu, Yc, Yt0, Ymax, m2 ); //m2 was added by SG
 	  oneOverGamma = m_thirdInvariantDependence == 1 ? thirdInvariantStrengthScaling( J2, J3, dfdp ) : 1.0;
 
     real64 m1 = oneOverGamma * ceramicdY10dp( damage, mu, Yc, Yt0 );
     real64 y1 = oneOverGamma * ceramicY10( p1, damage, mu, Yt0, Yc);
-    real64 y2 = oneOverGamma * Ymax;
+   // real64 y2 = oneOverGamma * Ymax;
+    //real64 y2 = y1+ oneOverGamma * (p2-p1)*m2; //added by SG
+    real64 y2 = oneOverGamma * (Ymax + m2 * p2); //added by SG
     return pow((pressure - p2) / (p1 - p2), m1 * (p1 - p2) / (y1 - y2)) * (y1 - y2) + y2;
   }
   else
   {
-    oneOverGamma = m_thirdInvariantDependence == 1 ? thirdInvariantStrengthScaling( J2, J3, dfdp ) : 1.0;
-    return oneOverGamma * Ymax;
+    oneOverGamma = m_thirdInvariantDependence == 1 ? thirdInvariantStrengthScaling( J2, J3, m2 ) : 1.0; //changed dfdp to m2
+    //return oneOverGamma * Ymax;
+    return oneOverGamma * (Ymax+m2 * (pressure-p2)); //added by SG -p2 add this
   }
 }
 
@@ -660,16 +690,26 @@ real64 CeramicDamageUpdates::ceramicdY20dp( const real64 p, // pressure
                                             const real64 mu,  // friction slope
                                             const real64 Yc,  // unconfined compressive strength
                                             const real64 Yt0,  // unconfined tensile strength before 3rd invariant scaling
-                                            const real64 Ymax ) const // max shear stress
+                                            const real64 Ymax, // max shear stress
+                                            const real64 m2 ) const // new: slope of high-pressure asymptote
+                                             
 {
   // This slope is just used to define the third invatiant dependence scaling, rather than use the actual
   // dfdp, which is discontinuous at Ymax/mu for d=1, we use a smooth blending function.
 
   real64 dfdp1 = ceramicdY10dp( d, mu, Yc, Yt0 );
   real64 p1 = Yc/3;
-  real64 p2 = Ymax/mu;
+  real64 p2 = (Yc-p1*m2)/(mu-m2); 
+  //real64 p2 = Ymax/mu;
+  //return dfdp1*( 1.0 - smoothStep(p,p1,p2) );
 
-  return dfdp1*( 1.0 - smoothStep(p,p1,p2) );
+  (void)Ymax; //added by SG
+
+  // Blend from dfdp1 at p1 to m2 at p2
+    real64 s = smoothStep(p, p1, p2); //added by SG
+    return dfdp1 * (1.0 - s) + m2 * s;//added by SG
+
+  
 }
 
 GEOS_HOST_DEVICE
@@ -832,7 +872,13 @@ public:
 
     static constexpr char const * instCompressiveStrengthString() { return "instCompressiveStrength"; } // added by SG
 
+    static constexpr char const * instStrengthString() { return "instStrength"; } // added by SG
+
+    static constexpr char const * instPressureString() { return "instPressure"; } // added by SG
+
     static constexpr char const * rateSensitivityString() { return "rateSensitivity"; } //added by SG
+
+    static constexpr char const * m2String() { return "m2"; } //added by SG
 
     
 
@@ -870,7 +916,10 @@ public:
                                  m_strainRate,  // <-- Added this
                                  m_instTensileStrength,  // <-- Added this
                                  m_instCompressiveStrength,  // <-- Added this
-                                 m_rateSensitivity,
+                                 m_instStrength,  // <-- Added this
+                                 m_instPressure,  // <-- Added this
+                                 m_rateSensitivity, // <-- Added this
+                                 m_m2, // <-- Added this
                                  m_disableInelasticity );
   }
 
@@ -910,7 +959,10 @@ public:
                           m_strainRate,  // <-- Added this
                           m_instTensileStrength,  // <-- Added this
                           m_instCompressiveStrength,  // <-- Added this
-                          m_rateSensitivity,
+                          m_instStrength,  // <-- Added this
+                          m_instPressure,  // <-- Added this
+                          m_rateSensitivity,  // <-- Added this
+                          m_m2,  // <-- Added this
                           m_disableInelasticity );
   }
 
@@ -972,8 +1024,17 @@ protected:
    /// Material parameter: The reference strain rate (scalar)
   array2d< real64 > m_instCompressiveStrength; //added by SG
 
+    /// Material parameter: The reference strain rate (scalar)
+  array2d< real64 > m_instStrength; //added by SG
+
+    /// Material parameter: The reference strain rate (scalar)
+  array2d< real64 > m_instPressure; //added by SG
+
 /// Material parameter: The rate sensitivity (scalar)
   real64 m_rateSensitivity;
+
+  /// Material parameter: The second slope for pressure dependent strength scaling  
+  real64 m_m2; //added by SG
 
 
 };

@@ -385,6 +385,25 @@ DECLARE_FIELD( particleinstCompressiveStrength,
                LEVEL_1,
                WRITE_AND_READ,
                "An array that stores the effective strain rate at each particle." );
+
+//Added by SG
+DECLARE_FIELD( particleinstStrength,
+               "particleinstStrength",
+               array1d< real64 >,
+               0.0,
+               LEVEL_1,
+               WRITE_AND_READ,
+               "An array that stores the effective strain rate at each particle." );
+
+//Added by SG
+DECLARE_FIELD( particleinstPressure,
+               "particleinstPressure",
+               array1d< real64 >,
+               0.0,
+               LEVEL_1,
+               WRITE_AND_READ,
+               "An array that stores the effective strain rate at each particle." );
+         
          
 }
 

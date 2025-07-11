@@ -192,6 +192,7 @@ public:
                                 real64 const timeIncrement,
                                 real64 const ( & beginningRotation )[3][3],
                                 real64 const ( & endRotation )[3][3],
+                                real64 const ( &strainIncrement )[6], //added by SG
                                 real64 ( &stress )[6] ) const; 
 
   GEOS_HOST_DEVICE
@@ -341,6 +342,7 @@ void CeramicDamageUpdates::smallStrainUpdate( localIndex const k,
                                                  timeIncrement, 
                                                  beginningRotation, 
                                                  endRotation, 
+                                                 strainIncrement, //added by SG
                                                  stress ); 
 
   // It doesn't make sense to modify stiffness with this model
@@ -416,6 +418,7 @@ void CeramicDamageUpdates::smallStrainUpdate_StressOnly( localIndex const k,
                                                  timeIncrement,
                                                  beginningRotation, 
                                                  endRotation, 
+                                                 strainIncrement,
                                                  stress );
 
   // Save new stress and return
@@ -430,10 +433,12 @@ void CeramicDamageUpdates::smallStrainUpdateHelper( localIndex const k,
                                                     real64 const timeIncrement,
                                                     real64 const ( & beginningRotation )[3][3],
                                                     real64 const ( & endRotation )[3][3],
+                                                    real64 const ( &strainIncrement )[6], //added by SG
                                                     real64 ( & stress )[6] ) const 
 {
   GEOS_UNUSED_VAR( beginningRotation );
   GEOS_UNUSED_VAR( endRotation );
+
 
   //static real64 maxStrainRate = 0.0;
 
@@ -449,55 +454,45 @@ void CeramicDamageUpdates::smallStrainUpdateHelper( localIndex const k,
   real64 Ycmax = m_maximumStrength;
   real64 Ytmax = Ycmax / gamma;
 
+  (void) Ycmax;
+  (void) Ytmax;
+
   //strain rate
 
   real64 Yt_baseline=Yt;
   real64 Yc_baseline=Yc;
+  
+  // real64 dEdt = 0.0;
+  // for( int i = 0; i < 3; ++i )
+  // {
+  //   for( int j = 0; j < 3; ++j )
+  //   {
+  //     real64 symPart = 0.5 * ( m_velocityGradient[k][i][j] + m_velocityGradient[k][j][i]  );
+  //     dEdt += symPart * symPart;
+  //   }
+  // }
 
-  real64 dEdt = 0.0;
-  for( int i = 0; i < 3; ++i )
-  {
-    for( int j = 0; j < 3; ++j )
-    {
-      real64 symPart = 0.5 * ( m_velocityGradient[k][q][i][j] + m_velocityGradient[k][q][j][i]  );
-      dEdt += symPart * symPart;
-    }
-  }
+  // real64 SR = std::sqrt( 2.0 * dEdt );
 
-  real64 SR = std::sqrt( 2.0 * dEdt );
+  real64 SR =
+  sqrt( (strainIncrement[0]*strainIncrement[0] +
+  strainIncrement[1]*strainIncrement[1] +
+  strainIncrement[2]*strainIncrement[2] +
+  2*strainIncrement[3]*strainIncrement[3] +
+  2*strainIncrement[4]*strainIncrement[4] +
+  2*strainIncrement[5]*strainIncrement[5] )) / timeIncrement ;
 
   //  //added by SG
   m_strainRate[k][q] = SR;
 
-  real64 rateScaling_T=std::pow( (SR / (m_refStrainRate + 1e-12)), m_rateSensitivity );
-  real64 rateScaling_C=std::pow( (SR / (m_refStrainRate + 1e-12)), m_rateSensitivity );
+  real64 rateScaling_T=std::pow( (SR / (m_refStrainRate)), m_rateSensitivity );
+  real64 rateScaling_C=std::pow( (SR / (m_refStrainRate)), m_rateSensitivity );
 
   Yt *= (rateScaling_T);
   Yc *= (rateScaling_C);
 
   Yt = std::max(Yt_baseline,Yt); //added for cutoff strength cannot go below initial
   Yc = std::max(Yc_baseline,Yc); //added for cutoff strength cannot go below initial
-
-
-  // std::cout << "strainRate = " << strainRate
-  //         << ", refStrainRate = " << m_refStrainRate
-  //         << ", rateSensitivity = " << m_rateSensitivity
-  //         << ", rateScaling = " << rateScaling << std::endl;
-
-
-  // if( strainRate > maxStrainRate )
-  // {
-  //   maxStrainRate = strainRate;
-  //   std::cout << "New peak strainRate = " << maxStrainRate
-  //             << ", refStrainRate = " << m_refStrainRate
-  //             << ", rateSensitivity = " << m_rateSensitivity
-  //             << ", rateScaling = " << rateScaling << std::endl;
-  // }
-
-// end of strain rate strengthening
-
-  Yt = std::min(Yt, 0.999*Ytmax); //no capping
-  Yc = std::min(Yc, 0.999*Ycmax);
 
   //added by SG
 
