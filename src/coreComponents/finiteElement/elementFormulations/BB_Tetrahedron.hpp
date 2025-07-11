@@ -867,22 +867,64 @@ static constexpr void conditionalBasisLoop(FUNC const& func)
             //              HDInt<j1>{},
             //              HDInt<k1>{})), 1)) || ...);
                         // i1 matching
-             callIfMatch<i1, Is...>([&] {
-              func(HDInt<0>{}, HDInt<i1>{}, HDInt<c1>{}, HDInt<j1>{}, HDInt<k1>{}, HDInt<l1>{});
-            });
+            //  callIfMatch<i1, Is...>([&] {
+            //   func(HDInt<0>{}, HDInt<i1>{}, HDInt<c1>{}, HDInt<j1>{}, HDInt<k1>{}, HDInt<l1>{});
+            // });
 
+            // callIfMatch<j1, Is...>([&] {
+            //   func(HDInt<1>{}, HDInt<j1>{}, HDInt<c1>{}, HDInt<i1>{}, HDInt<k1>{}, HDInt<l1>{});
+            // });
+
+            // callIfMatch<k1, Is...>([&] {
+            //   func(HDInt<2>{}, HDInt<k1>{}, HDInt<c1>{}, HDInt<i1>{}, HDInt<j1>{}, HDInt<l1>{});
+            // });
+
+            // callIfMatch<l1, Is...>([&] {
+            //   func(HDInt<3>{}, HDInt<l1>{}, HDInt<c1>{}, HDInt<i1>{}, HDInt<j1>{}, HDInt<k1>{});
+            // });
+           callIfMatch<i1, Is...>([&] {
+              constexpr auto h0  = HDInt<0>{};
+              constexpr auto hi1 = HDInt<i1>{};
+              constexpr auto hc1 = HDInt<c1>{};
+              constexpr auto hj1 = HDInt<j1>{};
+              constexpr auto hk1 = HDInt<k1>{};
+              constexpr auto hl1 = HDInt<l1>{};
+            
+              func(h0, hi1, hc1, hj1, hk1, hl1);
+            });
+            
             callIfMatch<j1, Is...>([&] {
-              func(HDInt<1>{}, HDInt<j1>{}, HDInt<c1>{}, HDInt<i1>{}, HDInt<k1>{}, HDInt<l1>{});
+              constexpr auto h1  = HDInt<1>{};
+              constexpr auto hj1 = HDInt<j1>{};
+              constexpr auto hc1 = HDInt<c1>{};
+              constexpr auto hi1 = HDInt<i1>{};
+              constexpr auto hk1 = HDInt<k1>{};
+              constexpr auto hl1 = HDInt<l1>{};
+            
+              func(h1, hj1, hc1, hi1, hk1, hl1);
             });
-
+            
             callIfMatch<k1, Is...>([&] {
-              func(HDInt<2>{}, HDInt<k1>{}, HDInt<c1>{}, HDInt<i1>{}, HDInt<j1>{}, HDInt<l1>{});
+              constexpr auto h2  = HDInt<2>{};
+              constexpr auto hk1 = HDInt<k1>{};
+              constexpr auto hc1 = HDInt<c1>{};
+              constexpr auto hi1 = HDInt<i1>{};
+              constexpr auto hj1 = HDInt<j1>{};
+              constexpr auto hl1 = HDInt<l1>{};
+            
+              func(h2, hk1, hc1, hi1, hj1, hl1);
             });
-
+            
             callIfMatch<l1, Is...>([&] {
-              func(HDInt<3>{}, HDInt<l1>{}, HDInt<c1>{}, HDInt<i1>{}, HDInt<j1>{}, HDInt<k1>{});
+              constexpr auto h3  = HDInt<3>{};
+              constexpr auto hl1 = HDInt<l1>{};
+              constexpr auto hc1 = HDInt<c1>{};
+              constexpr auto hi1 = HDInt<i1>{};
+              constexpr auto hj1 = HDInt<j1>{};
+              constexpr auto hk1 = HDInt<k1>{};
+            
+              func(h3, hl1, hc1, hi1, hj1, hk1);
             });
-
 
           }
         });
