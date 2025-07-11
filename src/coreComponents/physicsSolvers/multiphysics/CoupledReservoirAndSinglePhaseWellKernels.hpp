@@ -14,60 +14,53 @@
  */
 
 /**
- * @file ThermalCompositionalMultiphaseWellKernels.hpp
+ * @file ThermalSinglePhaseWellKernels.hpp
  */
 
-#ifndef GEOS_PHYSICSSOLVERS_MULTIPHYSICS_COUPLEDRESERVOIRANDWELLS_HPP
-#define GEOS_PHYSICSSOLVERS_MULTIPHYSICS_COUPLEDRESERVOIRANDWELLS_HPP
+#ifndef GEOS_PHYSICSSOLVERS_FLUIDFLOW_WELLS_THERMALSINGLEPHASEWELLKERNELS_HPP
+#define GEOS_PHYSICSSOLVERS_FLUIDFLOW_WELLS_THERMALSINGLEPHASEWELLKERNELS_HPP
 
 
 #include "common/DataTypes.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
-#include "constitutive/fluid/multifluid/Layouts.hpp"
-#include "physicsSolvers/fluidFlow/wells/kernels/CompositionalMultiphaseWellKernels.hpp"
-#include "physicsSolvers/fluidFlow/wells/CompositionalMultiphaseWellFields.hpp"
+#include "constitutive/fluid/singlefluid/SingleFluidLayouts.hpp"
+#include "physicsSolvers/fluidFlow/wells/SinglePhaseWellFields.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellTags.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellFields.hpp"
 namespace geos
 {
 
-namespace coupledReservoirAndWellKernels
+namespace coupledReservoirAndSinglePhaseWellKernels
 {
-
-using namespace constitutive;
-
 /**
  * @class FaceBasedAssemblyKernel
  * @tparam NUM_COMP number of fluid components
  * @brief Define the interface for the assembly kernel in charge of flux terms
  */
-template< integer NC, integer IS_THERMAL >
-class IsothermalCompositionalMultiPhaseFluxKernel
+template< integer IS_THERMAL >
+class IsothermalSinglePhaseFluxKernel
 {
 public:
 
   /// Compile time value for the number of components
-  static constexpr integer numComp = NC;
-  static constexpr integer resNumDOF  = NC+1+IS_THERMAL;
+  static constexpr integer resNumDOF  = 1+IS_THERMAL;
 
   // Well jacobian column and row indicies
-  using WJ_COFFSET = compositionalMultiphaseWellKernels::ColOffset_WellJac< NC, IS_THERMAL >;
-  using WJ_ROFFSET = compositionalMultiphaseWellKernels::RowOffset_WellJac< NC, IS_THERMAL >;
+  using WJ_COFFSET = singlePhaseWellKernels::ColOffset_WellJac< IS_THERMAL >;
+  using WJ_ROFFSET = singlePhaseWellKernels::RowOffset_WellJac< IS_THERMAL >;
 
-  using ROFFSET = compositionalMultiphaseWellKernels::RowOffset;
-  using COFFSET = compositionalMultiphaseWellKernels::ColOffset;
+  using ROFFSET = singlePhaseWellKernels::RowOffset;
+  using COFFSET = singlePhaseWellKernels::ColOffset;
 
-  using CP_Deriv = multifluid::DerivativeOffsetC< NC, IS_THERMAL >;
+  using CP_Deriv = constitutive::singlefluid::DerivativeOffsetC< IS_THERMAL >;
 
-  using TAG = compositionalMultiphaseWellKernels::SubRegionTag;
-
-
+  using TAG = singlePhaseWellKernels::SubRegionTag;
 
   /// Compute time value for the number of degrees of freedom
   static constexpr integer numDof = WJ_COFFSET::nDer;
 
   /// Compile time value for the number of equations except volume and momentum
-  static constexpr integer numEqn = WJ_ROFFSET::nEqn - 2;
+  static constexpr integer numEqn = WJ_ROFFSET::nEqn - 2;  // tjb revisit
 
   /**
    * @brief Constructor for the kernel interface
@@ -83,36 +76,28 @@ public:
    * @param[inout] localRhs the local right-hand side vector
    * @param[in] kernelFlags flags packed together
    */
-  IsothermalCompositionalMultiPhaseFluxKernel( real64 const dt,
-                                               globalIndex const rankOffset,
-                                               string const wellDofKey,
-                                               WellElementSubRegion const & subRegion,
-                                               ElementRegionManager::ElementViewConst< arrayView1d< globalIndex const > > const resDofNumber,
-                                               PerforationData const * const perforationData,
-                                               MultiFluidBase const & fluid,
-
-                                               arrayView1d< real64 > const & localRhs,
-                                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                               bool const & detectCrossflow,
-                                               integer & numCrossFlowPerforations,
-                                               BitFlags< isothermalCompositionalMultiphaseBaseKernels::KernelFlags > kernelFlags )
+  IsothermalSinglePhaseFluxKernel( real64 const dt,
+                                   globalIndex const rankOffset,
+                                   string const wellDofKey,
+                                   ElementRegionManager::ElementViewConst< arrayView1d< globalIndex const > > const resDofNumber,
+                                   WellElementSubRegion const & subRegion,
+                                   PerforationData const * const perforationData,
+                                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                   arrayView1d< real64 > const & localRhs )
     :
     m_dt( dt ),
-    m_numPhases ( fluid.numFluidPhases()),
     m_rankOffset( rankOffset ),
-    m_compPerfRate( perforationData->getField< fields::well::compPerforationRate >() ),
-    m_dCompPerfRate( perforationData->getField< fields::well::dCompPerforationRate >() ),
+    m_perfRate( perforationData->getField< fields::well::perforationRate >() ),
+    m_dPerfRate( perforationData->getField< fields::well::dPerforationRate >() ),
     m_perfWellElemIndex( perforationData->getField< fields::perforation::wellElementIndex >() ),
     m_wellElemDofNumber( subRegion.getReference< array1d< globalIndex > >( wellDofKey ) ),
     m_resElemDofNumber( resDofNumber ),
     m_resElementRegion( perforationData->getField< fields::perforation::reservoirElementRegion >() ),
     m_resElementSubRegion( perforationData->getField< fields::perforation::reservoirElementSubRegion >() ),
     m_resElementIndex( perforationData->getField< fields::perforation::reservoirElementIndex >() ),
-    m_localRhs( localRhs ),
     m_localMatrix( localMatrix ),
-    m_detectCrossflow( detectCrossflow ),
-    m_numCrossFlowPerforations( numCrossFlowPerforations ),
-    m_useTotalMassEquation ( kernelFlags.isSet( isothermalCompositionalMultiphaseBaseKernels::KernelFlags::TotalMassEquation ) )
+    m_localRhs( localRhs )
+
   { }
 
 
@@ -131,92 +116,65 @@ public:
                     FUNC && compFluxKernelOp = NoOpFunc{} ) const
   {
 
-    using namespace compositionalMultiphaseUtilities;
     // local working variables and arrays
-    stackArray1d< localIndex, 2* numComp > eqnRowIndices( 2 * numComp );
+
+    stackArray1d< localIndex, 2 > eqnRowIndices( 2 );
     stackArray1d< globalIndex, 2*resNumDOF > dofColIndices( 2 * resNumDOF );
 
-    stackArray1d< real64, 2 * numComp > localPerf( 2 * numComp );
-    stackArray2d< real64, 2 * resNumDOF * 2 * numComp > localPerfJacobian( 2 * numComp, 2 * resNumDOF );
+    stackArray1d< real64, 2 > localPerf( 2 );
+    stackArray2d< real64, 2 * resNumDOF * 2 > localPerfJacobian( 2, 2 * resNumDOF );
+
 
     // get the reservoir (sub)region and element indices
-    localIndex const er  = m_resElementRegion[iperf];
+    localIndex const er = m_resElementRegion[iperf];
     localIndex const esr = m_resElementSubRegion[iperf];
-    localIndex const ei  = m_resElementIndex[iperf];
+    localIndex const ei = m_resElementIndex[iperf];
 
     // get the well element index for this perforation
     localIndex const iwelem = m_perfWellElemIndex[iperf];
-    globalIndex const resOffset = m_resElemDofNumber[er][esr][ei];
     globalIndex const wellElemOffset = m_wellElemDofNumber[iwelem];
+    globalIndex const resOffset = m_resElemDofNumber[er][esr][ei];
 
-    for( integer ic = 0; ic < numComp; ++ic )
-    {
-      eqnRowIndices[TAG::RES * numComp + ic] = LvArray::integerConversion< localIndex >( resOffset - m_rankOffset ) + ic;
-      eqnRowIndices[TAG::WELL * numComp + ic] = LvArray::integerConversion< localIndex >( wellElemOffset - m_rankOffset ) + WJ_ROFFSET::MASSBAL + ic;
-    }
-    // Note res and well have same col lineup for P and compdens
-    for( integer jdof = 0; jdof < NC+1; ++jdof )
-    {
-      dofColIndices[TAG::RES * resNumDOF + jdof] = resOffset + jdof;
-      dofColIndices[TAG::WELL * resNumDOF + jdof] = wellElemOffset + WJ_COFFSET::dP + jdof;
-    }
-    // For temp its different
+    // row index on reservoir side
+    eqnRowIndices[TAG::RES] = m_resElemDofNumber[er][esr][ei] - m_rankOffset;
+    // column index on reservoir side
+    dofColIndices[TAG::RES] = resOffset;
+
+    // row index on well side
+    eqnRowIndices[TAG::WELL] = LvArray::integerConversion< localIndex >( wellElemOffset - m_rankOffset ) + ROFFSET::MASSBAL;
+    // column index on well side
+    dofColIndices[TAG::WELL * resNumDOF] = wellElemOffset + WJ_COFFSET::dP;
+
     if constexpr ( IS_THERMAL )
     {
-      dofColIndices[TAG::RES * resNumDOF + NC+1 ] = resOffset + NC+1;
-      dofColIndices[TAG::WELL * resNumDOF + NC+1 ] = wellElemOffset + WJ_COFFSET::dT;
+      dofColIndices[TAG::RES * resNumDOF + 1 ] = resOffset +  1;
+      dofColIndices[TAG::WELL * resNumDOF + 1 ] = wellElemOffset + WJ_COFFSET::dT;
     }
     // populate local flux vector and derivatives
-    for( integer ic = 0; ic < numComp; ++ic )
+    localPerf[TAG::RES] = m_dt * m_perfRate[iperf];
+    localPerf[TAG::WELL] = -localPerf[TAG::RES];
+
+    for( integer ke = 0; ke < 2; ++ke )
     {
-      localPerf[TAG::RES * numComp + ic] = m_dt * m_compPerfRate[iperf][ic];
-      localPerf[TAG::WELL * numComp + ic] = -m_dt * m_compPerfRate[iperf][ic];
-
-      if( m_detectCrossflow )
+      localIndex localDofIndexPres = ke * resNumDOF;
+      localPerfJacobian[TAG::RES][localDofIndexPres] = m_dt * m_dPerfRate[iperf][ke][CP_Deriv::dP];
+      localPerfJacobian[TAG::WELL][localDofIndexPres] = -localPerfJacobian[TAG::RES][localDofIndexPres];
+      if constexpr ( IS_THERMAL )
       {
-        if( m_compPerfRate[iperf][ic] > LvArray::NumericLimits< real64 >::epsilon )
-        {
-          m_numCrossFlowPerforations += 1;
-        }
-      }
-      for( integer ke = 0; ke < 2; ++ke )
-      {
-        localIndex localDofIndexPres = ke * resNumDOF;
-
-        localPerfJacobian[TAG::RES * numComp + ic][localDofIndexPres] = m_dt *  m_dCompPerfRate[iperf][ke][ic][CP_Deriv::dP];
-        localPerfJacobian[TAG::WELL * numComp + ic][localDofIndexPres] = -m_dt *  m_dCompPerfRate[iperf][ke][ic][CP_Deriv::dP];
-        for( integer jc = 0; jc < numComp; ++jc )
-        {
-          localIndex const localDofIndexComp = localDofIndexPres + jc + 1;
-
-          localPerfJacobian[TAG::RES * numComp + ic][localDofIndexComp] = m_dt * m_dCompPerfRate[iperf][ke][ic][CP_Deriv::dC+jc];
-          localPerfJacobian[TAG::WELL * numComp + ic][localDofIndexComp] = -m_dt * m_dCompPerfRate[iperf][ke][ic][CP_Deriv::dC+jc];
-        }
-        if constexpr ( IS_THERMAL )
-        {
-          localIndex localDofIndexTemp  = localDofIndexPres + NC + 1;
-          localPerfJacobian[TAG::RES * numComp + ic][localDofIndexTemp] = m_dt *  m_dCompPerfRate[iperf][ke][ic][CP_Deriv::dT];
-          localPerfJacobian[TAG::WELL * numComp + ic][localDofIndexTemp] = -m_dt *  m_dCompPerfRate[iperf][ke][ic][CP_Deriv::dT];
-        }
+        localIndex localDofIndexTemp  = localDofIndexPres + 1;
+        localPerfJacobian[TAG::RES ][localDofIndexTemp] = m_dt *  m_dPerfRate[iperf][ke][CP_Deriv::dT];
+        localPerfJacobian[TAG::WELL ][localDofIndexTemp] = -m_dt *  m_dPerfRate[iperf][ke][CP_Deriv::dT];
       }
     }
 
-    if( m_useTotalMassEquation )
-    {
-      // Apply equation/variable change transformation(s)
-      stackArray1d< real64, 2 * resNumDOF > work( 2 * resNumDOF );
-      shiftBlockRowsAheadByOneAndReplaceFirstRowWithColumnSum( numComp, numComp, resNumDOF * 2, 2, localPerfJacobian, work );
-      shiftBlockElementsAheadByOneAndReplaceFirstElementWithSum( numComp, numComp, 2, localPerf );
-    }
-
-    for( localIndex i = 0; i < localPerf.size(); ++i )
+    for( integer i = 0; i < localPerf.size(); ++i )
     {
       if( eqnRowIndices[i] >= 0 && eqnRowIndices[i] < m_localMatrix.numRows() )
       {
         m_localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( eqnRowIndices[i],
                                                                             dofColIndices.data(),
                                                                             localPerfJacobian[i].dataIfContiguous(),
-                                                                            2 * resNumDOF );
+                                                                            2* resNumDOF );
         RAJA::atomicAdd( parallelDeviceAtomic{}, &m_localRhs[eqnRowIndices[i]], localPerf[i] );
       }
     }
@@ -251,13 +209,10 @@ protected:
   /// Time step size
   real64 const m_dt;
 
-  /// Number of phases
-  integer const m_numPhases;
-
   globalIndex const m_rankOffset;
   // Perfoation variables
-  arrayView2d< real64 const > const m_compPerfRate;
-  arrayView4d< real64 const > const m_dCompPerfRate;
+  arrayView1d< real64 const > const m_perfRate;
+  arrayView3d< real64 const > const m_dPerfRate;
   arrayView1d< localIndex const > const m_perfWellElemIndex;
 
   // Element region, subregion, index
@@ -268,18 +223,15 @@ protected:
   arrayView1d< localIndex const > const m_resElementIndex;
 
   // RHS and Jacobian
-  arrayView1d< real64 > const m_localRhs;
   CRSMatrixView< real64, globalIndex const >  m_localMatrix;
+  arrayView1d< real64 > const m_localRhs;
 
-  bool const m_detectCrossflow;
-  integer & m_numCrossFlowPerforations;
-  integer const m_useTotalMassEquation;
 };
 
 /**
  * @class FaceBasedAssemblyKernelFactory
  */
-class IsothermalCompositionalMultiPhaseFluxKernelFactory
+class IsothermalSinglePhaseFluxKernelFactory
 {
 public:
 
@@ -298,75 +250,62 @@ public:
    */
   template< typename POLICY >
   static void
-  createAndLaunch( integer const numComps,
-                   real64 const dt,
+  createAndLaunch( real64 const dt,
                    globalIndex const rankOffset,
                    string const wellDofKey,
-                   WellElementSubRegion const & subRegion,
+
                    ElementRegionManager::ElementViewConst< arrayView1d< globalIndex const > > const resDofNumber,
+                   WellElementSubRegion const & subRegion,
                    PerforationData const * const perforationData,
-                   MultiFluidBase const & fluid,
-                   BitFlags< isothermalCompositionalMultiphaseBaseKernels::KernelFlags > kernelFlags,
-                   bool const & detectCrossflow,
-                   integer & numCrossFlowPerforations,
-                   arrayView1d< real64 > const & localRhs,
-                   CRSMatrixView< real64, globalIndex const > const & localMatrix
+                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                   arrayView1d< real64 > const & localRhs
                    )
   {
-    isothermalCompositionalMultiphaseBaseKernels::internal::kernelLaunchSelectorCompSwitch( numComps, [&]( auto NC )
-    {
-      integer constexpr NUM_COMP = NC();
-
-      using kernelType = IsothermalCompositionalMultiPhaseFluxKernel< NUM_COMP, 0 >;
-      kernelType kernel( dt, rankOffset, wellDofKey, subRegion, resDofNumber, perforationData,
-                         fluid, localRhs, localMatrix, detectCrossflow, numCrossFlowPerforations, kernelFlags );
-      kernelType::template launch< POLICY >( perforationData->size(), kernel );
-    } );
-
+    using kernelType = IsothermalSinglePhaseFluxKernel< 0 >;
+    kernelType kernel( dt, rankOffset, wellDofKey, resDofNumber, subRegion, perforationData, localMatrix,
+                       localRhs );
+    kernelType::template launch< POLICY >( perforationData->size(), kernel );
   }
 };
 
 
 /**
  * @class FaceBasedAssemblyKernel
- * @tparam NUM_COMP number of fluid components
+ * @tparam IS_THERMAL flag to include temperature derivatives and energy balance
  * @brief Define the interface for the assembly kernel in charge of flux terms
  */
-template< integer NC, integer IS_THERMAL >
-class ThermalCompositionalMultiPhaseFluxKernel : public IsothermalCompositionalMultiPhaseFluxKernel< NC, IS_THERMAL >
+template< integer IS_THERMAL >
+class ThermalSinglePhaseFluxKernel : public IsothermalSinglePhaseFluxKernel< IS_THERMAL >
 {
 public:
-  using Base = IsothermalCompositionalMultiPhaseFluxKernel< NC, IS_THERMAL >;
-  /// Compile time value for the number of components
-  static constexpr integer numComp = NC;
-  static constexpr integer resNumDOF  = NC+1+IS_THERMAL;
+  using Base = IsothermalSinglePhaseFluxKernel< IS_THERMAL >;
+  // Reservoir degrees of freedom
+  static constexpr integer resNumDOF  =  1+IS_THERMAL;
 
   // Well jacobian column and row indicies
-  using WJ_COFFSET = compositionalMultiphaseWellKernels::ColOffset_WellJac< NC, IS_THERMAL >;
-  using WJ_ROFFSET = compositionalMultiphaseWellKernels::RowOffset_WellJac< NC, IS_THERMAL >;
+  using WJ_COFFSET = singlePhaseWellKernels::ColOffset_WellJac< IS_THERMAL >;
+  using WJ_ROFFSET = singlePhaseWellKernels::RowOffset_WellJac< IS_THERMAL >;
 
-  using ROFFSET = compositionalMultiphaseWellKernels::RowOffset;
-  using COFFSET = compositionalMultiphaseWellKernels::ColOffset;
+  //using ROFFSET = singlePhaseWellKernels::RowOffset;
+  //using COFFSET = singlePhaseWellKernels::ColOffset;
 
-  using CP_Deriv = multifluid::DerivativeOffsetC< NC, IS_THERMAL >;
+  using CP_Deriv = constitutive::singlefluid::DerivativeOffsetC< IS_THERMAL >;
 
-  using TAG = compositionalMultiphaseWellKernels::SubRegionTag;
+  using TAG = singlePhaseWellKernels::SubRegionTag;
 
   using Base::m_dt;
   using Base::m_localRhs;
   using Base::m_localMatrix;
   using Base::m_rankOffset;
 
-
-
   /// Compute time value for the number of degrees of freedom
   static constexpr integer numDof = WJ_COFFSET::nDer;
 
   /// Compile time value for the number of equations except volume and momentum
-  static constexpr integer numEqn = WJ_ROFFSET::nEqn - 2;
+  static constexpr integer numEqn = WJ_ROFFSET::nEqn - 2;  // tjb revisity
 
   /**
-   * @brief Constructor for the kernel interface
+   * @brief Constructor for the kernel interface   // tjb clean up
    * @param[in] rankOffset the offset of my MPI rank
    * @param[in] stencilWrapper reference to the stencil wrapper
    * @param[in] dofNumberAccessor
@@ -377,33 +316,26 @@ public:
    * @param[in] dt time step size
    * @param[inout] localMatrix the local CRS matrix
    * @param[inout] localRhs the local right-hand side vector
-   * @param[in] kernelFlags flags packed together
    */
-  ThermalCompositionalMultiPhaseFluxKernel( real64 const dt,
-                                            integer const isProducer,
-                                            globalIndex const rankOffset,
-                                            string const wellDofKey,
-                                            WellElementSubRegion const & subRegion,
-                                            ElementRegionManager::ElementViewConst< arrayView1d< globalIndex const > > const resDofNumber,
-                                            PerforationData const * const perforationData,
-                                            MultiFluidBase const & fluid,
-                                            arrayView1d< real64 > const & localRhs,
-                                            CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                            bool const & detectCrossflow,
-                                            integer & numCrossFlowPerforations,
-                                            BitFlags< isothermalCompositionalMultiphaseBaseKernels::KernelFlags > kernelFlags )
+  ThermalSinglePhaseFluxKernel( integer const isProducer,
+                                real64 const dt,
+
+                                globalIndex const rankOffset,
+                                string const wellDofKey,
+
+                                ElementRegionManager::ElementViewConst< arrayView1d< globalIndex const > > const resDofNumber,
+                                WellElementSubRegion const & subRegion,
+                                PerforationData const * const perforationData,
+                                CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                arrayView1d< real64 > const & localRhs )
     : Base( dt,
             rankOffset,
             wellDofKey,
-            subRegion,
             resDofNumber,
+            subRegion,
             perforationData,
-            fluid,
-            localRhs,
             localMatrix,
-            detectCrossflow,
-            numCrossFlowPerforations,
-            kernelFlags ),
+            localRhs ),
     m_isProducer( isProducer ),
     m_globalWellElementIndex( subRegion.getGlobalWellElementIndex() ),
     m_energyPerfFlux( perforationData->getField< fields::well::energyPerforationFlux >()),
@@ -438,14 +370,14 @@ public:
           return;
       }
       // local working variables and arrays
-      stackArray1d< localIndex, 2* numComp > eqnRowIndices( 2 );
+      stackArray1d< localIndex, 2 > eqnRowIndices( 2 );
 
-      stackArray1d< real64, 2 * numComp > localPerf( 2 );
-      stackArray2d< real64, 2 * resNumDOF * 2 * numComp > localPerfJacobian( 2, 2 * resNumDOF );
+      stackArray1d< real64, 2 > localPerf( 2 );
+      stackArray2d< real64, 2*2 * resNumDOF > localPerfJacobian( 2, 2 * resNumDOF );
 
 
       // equantion offsets - note res and well have different equation lineups
-      eqnRowIndices[TAG::RES  ] = LvArray::integerConversion< localIndex >( resOffset - m_rankOffset )      + NC + 1;
+      eqnRowIndices[TAG::RES  ] = LvArray::integerConversion< localIndex >( resOffset - m_rankOffset )  + 1;
       eqnRowIndices[TAG::WELL ] = LvArray::integerConversion< localIndex >( wellElemOffset - m_rankOffset ) + WJ_ROFFSET::ENERGYBAL;
 
       // populate local flux vector and derivatives
@@ -458,15 +390,8 @@ public:
         localPerfJacobian[TAG::RES  ][localDofIndexPres] = m_dt *  m_dEnergyPerfFlux[iperf][ke][CP_Deriv::dP];
         localPerfJacobian[TAG::WELL ][localDofIndexPres] = -m_dt *  m_dEnergyPerfFlux[iperf][ke][CP_Deriv::dP];
 
-        // populate local flux vector and derivatives
-        for( integer ic = 0; ic < numComp; ++ic )
-        {
-          localIndex const localDofIndexComp = localDofIndexPres + ic + 1;
-          localPerfJacobian[TAG::RES ][localDofIndexComp] = m_dt * m_dEnergyPerfFlux[iperf][ke][CP_Deriv::dC+ic];
-          localPerfJacobian[TAG::WELL][localDofIndexComp] = -m_dt * m_dEnergyPerfFlux[iperf][ke][CP_Deriv::dC+ic];
-        }
-        localPerfJacobian[TAG::RES ][localDofIndexPres+NC+1] = m_dt * m_dEnergyPerfFlux[iperf][ke][CP_Deriv::dT];
-        localPerfJacobian[TAG::WELL][localDofIndexPres+NC+1] = -m_dt * m_dEnergyPerfFlux[iperf][ke][CP_Deriv::dT];
+        localPerfJacobian[TAG::RES ][localDofIndexPres+1] = m_dt * m_dEnergyPerfFlux[iperf][ke][CP_Deriv::dT];
+        localPerfJacobian[TAG::WELL][localDofIndexPres+1] = -m_dt * m_dEnergyPerfFlux[iperf][ke][CP_Deriv::dT];
       }
 
 
@@ -520,9 +445,9 @@ protected:
 };
 
 /**
- * @class ThermalCompositionalMultiPhaseFluxKernelFactory
+ * @class ThermalSinglePhaseFluxKernelFactory
  */
-class ThermalCompositionalMultiPhaseFluxKernelFactory
+class ThermalSinglePhaseFluxKernelFactory
 {
 public:
 
@@ -532,7 +457,6 @@ public:
    * @param[in] numComps the number of fluid components
    * @param[in] dt time step size
    * @param[in] rankOffset the offset of my MPI rank
-   * @param[in] useTotalMassEquation flag specifying whether to replace one component bal eqn with total mass eqn
    * @param[in] dofKey string to get the element degrees of freedom numbers
    * @param[in] wellControls object holding well control/constraint information
    * @param[in] subregion well subregion
@@ -541,32 +465,20 @@ public:
    */
   template< typename POLICY >
   static void
-  createAndLaunch( integer const numComps,
-                   integer const isProducer,
+  createAndLaunch( integer const isProducer,
                    real64 const dt,
                    globalIndex const rankOffset,
                    string const wellDofKey,
-                   WellElementSubRegion const & subRegion,
                    ElementRegionManager::ElementViewConst< arrayView1d< globalIndex const > > const resDofNumber,
+                   WellElementSubRegion const & subRegion,
                    PerforationData const * const perforationData,
-                   MultiFluidBase const & fluid,
-                   BitFlags< isothermalCompositionalMultiphaseBaseKernels::KernelFlags > kernelFlags,
-                   bool const & detectCrossflow,
-                   integer & numCrossFlowPerforations,
-                   arrayView1d< real64 > const & localRhs,
-                   CRSMatrixView< real64, globalIndex const > const & localMatrix
-                   )
+                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                   arrayView1d< real64 > const & localRhs )
   {
-    isothermalCompositionalMultiphaseBaseKernels::internal::kernelLaunchSelectorCompSwitch( numComps, [&]( auto NC )
-    {
-      integer constexpr NUM_COMP = NC();
-
-      using kernelType = ThermalCompositionalMultiPhaseFluxKernel< NUM_COMP, 1 >;
-      kernelType kernel( dt, isProducer, rankOffset, wellDofKey, subRegion, resDofNumber, perforationData,
-                         fluid, localRhs, localMatrix, detectCrossflow, numCrossFlowPerforations, kernelFlags );
-      kernelType::template launch< POLICY >( perforationData->size(), kernel );
-    } );
-
+    using kernelType = ThermalSinglePhaseFluxKernel< 1 >;
+    kernelType kernel( isProducer, dt, rankOffset, wellDofKey, resDofNumber, subRegion, perforationData, localMatrix,
+                       localRhs );
+    kernelType::template launch< POLICY >( perforationData->size(), kernel );
   }
 };
 
@@ -574,4 +486,4 @@ public:
 
 } // end namespace geos
 
-#endif // GEOS_PHYSICSSOLVERS_MULTIPHYSICS_COUPLEDRESERVOIRANDWELLS_HPP
+#endif // GEOS_PHYSICSSOLVERS_FLUIDFLOW_WELLS_THERMALSINGLEPHASEWELLKERNELS_HPP
