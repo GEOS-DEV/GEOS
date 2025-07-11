@@ -128,6 +128,7 @@ void PhysicsSolverBase::postInputInitialization()
   m_solverStatistics.makeDir( m_writeSolverIterationsCSV, m_writeSolvingConvergenceCSV );
   getIterationStats().setCSVOutput( m_writeSolverIterationsCSV );
   getConvergenceStats().setCSVOutput( m_writeSolvingConvergenceCSV );
+  getIterationStats().setLogOutput( logInfo::Convergence::getMinLogLevel() >= 1 );
 }
 
 PhysicsSolverBase::~PhysicsSolverBase() = default;
@@ -1151,8 +1152,8 @@ bool PhysicsSolverBase::solveNonlinearSystem( real64 const & time_n,
   }
   if( m_writeSolverIterationsCSV )
   {
-    getIterationStats().writeStatsToTable();
-    getConvergenceStats().writeResidualNormToTable();
+    getIterationStats().writeIterationStatsToTable();
+    getConvergenceStats().writeConvergenceStatsToTable();
   }
 
   getIterationStats().resetSolverLinearTime();
@@ -1192,11 +1193,11 @@ void PhysicsSolverBase::writeStatisticsToTable()
 {
   if( m_writeSolvingConvergenceCSV )
   {
-    getConvergenceStats().writeResidualNormToTable();
+    getConvergenceStats().writeConvergenceStatsToTable();
   }
   if( m_writeSolverIterationsCSV )
   {
-    getIterationStats().writeStatsToTable();
+    getIterationStats().writeIterationStatsToTable();
   }
 
 }

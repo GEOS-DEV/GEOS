@@ -678,6 +678,7 @@ protected:
 
     getIterationStats().setCSVOutput( m_writeSolverIterationsCSV );
     getConvergenceStats().setCSVOutput( m_writeSolvingConvergenceCSV );
+    getIterationStats().setLogOutput( logInfo::Convergence::getMinLogLevel() >= 1 );
 
     bool const isSequential = getNonlinearSolverParameters().couplingType() == NonlinearSolverParameters::CouplingType::Sequential;
     bool const usesLineSearch = getNonlinearSolverParameters().m_lineSearchAction != NonlinearSolverParameters::LineSearchAction::None;

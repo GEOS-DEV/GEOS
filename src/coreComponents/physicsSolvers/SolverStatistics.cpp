@@ -180,7 +180,7 @@ void IterationsStatistics::updateTimeStepCut()
   }
 }
 
-void IterationsStatistics::writeStatsToTable()
+void IterationsStatistics::writeIterationStatsToTable()
 {
   if( !m_isIterativeSolver || !m_csvOutput )
     return;
@@ -211,19 +211,18 @@ void IterationsStatistics::writeStatsToTable()
 
 void IterationsStatistics::outputStatistics()
 {
-  if( !m_isIterativeSolver || !m_csvOutput )
+  if( !m_isIterativeSolver || !m_logOutput )
     return;
 
   {
-    GEOS_LOG_RANK_0( GEOS_FMT( "{}, number of Time-steps: {}", getParent().getName(), m_numTimeSteps ) );
-    GEOS_LOG_RANK_0( GEOS_FMT( "{}, number of Time steps cut: {}", getParent().getName(), m_numTimeStepCuts ) );
     TableLayout iterationLogLayout ( GEOS_FMT( "{} iterations", getParent().getName() ),
                                      { "Components", "Iter  "} );
 
     TableTextFormatter const statsFormatter( iterationLogLayout );
 
     TableData iterationDataLog;
-    iterationDataLog.addRow( "Successful outer loop", m_numSuccessfulOuterLoopIterations );
+    iterationDataLog.addRow( "Number of Time-steps:", m_numTimeSteps );
+    iterationDataLog.addRow( "Number of Time steps cut", m_numTimeStepCuts );
     iterationDataLog.addRow( "Successful nonlinear", m_numSuccessfulNonlinearIterations );
     iterationDataLog.addRow( "Successful linear", m_numSuccessfulLinearIterations );
     iterationDataLog.addRow( "Discarded outer loop", m_numDiscardedOuterLoopIterations );
@@ -232,8 +231,6 @@ void IterationsStatistics::outputStatistics()
 
     GEOS_LOG_RANK_0( statsFormatter.toString( iterationDataLog ));
   }
-
-  logStream.close();
 }
 
 ConvergenceStatistics::ConvergenceStatistics()
@@ -248,7 +245,7 @@ ConvergenceStatistics::ConvergenceStatistics()
                                     "RWell", "RDamage", "RTotal", "R"} );
 }
 
-void ConvergenceStatistics::writeResidualNormToTable()
+void ConvergenceStatistics::writeConvergenceStatsToTable()
 {
 
   if( !m_csvOutput )
@@ -322,16 +319,6 @@ void ConvergenceStatistics::resetResidualsValue()
   m_residualSolid = 0;
   m_totalResidual=0;
   m_residualNormT=0;
-}
-
-void ConvergenceStatistics::outputResidualNorm()
-{
-  if( m_csvOutput )
-  {
-    logStream << m_convergenceFormatter->dataToString( m_convergenceData );
-  }
-  logStream.close();
-
 }
 
 } // namespace geos

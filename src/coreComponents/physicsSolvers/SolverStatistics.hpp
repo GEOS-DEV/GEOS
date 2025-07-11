@@ -49,7 +49,11 @@ public:
   /// indicate if the containing solver does non-linear iterations (and so, produces iterations statistics)
   bool m_isIterativeSolver = true;
 
+  /// State of CSV output.
   bool m_csvOutput = false;
+  
+  /// State of log output.
+  bool m_logOutput = false;
 
   /// Number of time steps
   integer m_numTimeSteps = 0;
@@ -123,8 +127,8 @@ public:
   };
 
   /**
-   * @brief Set the Iterative Solver
-   * @param isIterative
+   * @brief Set whether the solver is iterative.
+   * @param isIterative The iterative state.
    */
   void setIterativeSolver( bool isIterative )
   {
@@ -133,10 +137,17 @@ public:
 
   /**
    * @brief Set the csv state output
-   * @param state csv state
+   * @param state The csv state
    */
   void setCSVOutput( bool state )
   { m_csvOutput = state; }
+
+  /**
+   * @brief Set the log state output
+   * @param state The log state
+   */
+  void setLogOutput( bool state )
+  { m_logOutput = state; }
 
   /**
    * @brief Initialize the counters used for an individual time step
@@ -165,7 +176,7 @@ public:
   void accumulateSolverLinearTime( real64 setupTime, real64 solveTime );
 
   /**
-   * @brief Reset  the setupTime & solveTime to 0 at the end of each cycle
+   * @brief Reset the setupTime & solveTime to 0 at the end of each cycle
    */
   void resetSolverLinearTime();
 
@@ -191,9 +202,9 @@ public:
   void iterateTimeStepStatistics();
 
   /**
-   * @brief Register the corresponding solver statistics to the TableData
+   * @brief Write all the iteration statistics into the ouput stream
    */
-  void writeStatsToTable();
+  void writeIterationStatsToTable();
 
   /**
    * @brief  Set the filename output file.
@@ -203,7 +214,7 @@ public:
   { if( m_isIterativeSolver ) m_iterationsFilename = filename; }
 
   /**
-   * @brief Output the statistics to the console
+   * @brief Output the statistics to the console in table format
    */
   void outputStatistics();
 
@@ -232,12 +243,13 @@ public:
    */
   ConvergenceStatistics();
 
+  /// State of csv output.
   bool m_csvOutput = false;
 
   /// The time at the beginning of the step
   real64 m_time_n = 0.0;
 
-  /// The desired timestepr
+  /// The desired timestepe
   real64 m_dt = 0.0;
 
   /// Current cycle number
@@ -292,12 +304,6 @@ public:
   real64 m_residualNormT = std::numeric_limits< real64 >::quiet_NaN();
 
   /**
-   * @brief Output the cumulative statistics to the terminal
-   * @param writeCSV Indicates if the output should be written to a CSV file.
-   */
-  void outputResidualNorm();
-
-  /**
    * @brief Set the csv state output
    * @param state csv state
    */
@@ -305,15 +311,15 @@ public:
   { m_csvOutput = state; }
 
   /**
-   * @brief Prepare the layout and register the corresponding residuals norms to the TableData
+   * @brief Write all the convergence statistics into the ouput stream
    */
-  void writeResidualNormToTable();
+  void writeConvergenceStatsToTable();
 
   /**
-   * @brief Update the solver step information
+   * @brief Update the solver step with the time informations
    * @param time_n The time at the beginning of the step
    * @param dt The desired timestep
-   * @param cycleNumber  The current cycle number
+   * @param cycleNumber The current cycle number
    */
   void updateSolverStep( real64 const & time_n, real64 const & dt, integer const cycleNumber );
 
@@ -324,7 +330,7 @@ public:
   void resetResidualsValue();
 
   /**
-   * @brief  Set the filename output file.
+   * @brief Set the filename output file.
    * @param filename The filename as a string_view.
    */
   void setFilename( string_view filename )
