@@ -681,12 +681,9 @@ void SinglePhaseBase::implicitStepSetup( real64 const & time_n,
 
 void SinglePhaseBase::implicitStepComplete( real64 const & time,
                                             real64 const & dt,
-                                            integer const cycleNumber,
                                             DomainPartition & domain )
 {
   GEOS_MARK_FUNCTION;
-
-  GEOS_UNUSED_VAR( cycleNumber );
 
   // note: we have to save the aquifer state **before** updating the pressure,
   // otherwise the aquifer flux is saved with the wrong pressure time level

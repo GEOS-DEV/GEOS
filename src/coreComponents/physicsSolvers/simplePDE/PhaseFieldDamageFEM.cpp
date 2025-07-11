@@ -186,7 +186,6 @@ real64 PhaseFieldDamageFEM::explicitStep( real64 const & GEOS_UNUSED_PARAM( time
 
 void PhaseFieldDamageFEM::implicitStepComplete( real64 const & GEOS_UNUSED_PARAM( time_n ),
                                                 real64 const & GEOS_UNUSED_PARAM( dt ),
-                                                integer const GEOS_UNUSED_PARAM( cycleNumber ),
                                                 DomainPartition & GEOS_UNUSED_PARAM( domain ) )
 {}
 

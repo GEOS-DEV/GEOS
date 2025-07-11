@@ -521,7 +521,7 @@ real64 SolidMechanicsLagrangianFEM::solverStep( real64 const & time_n,
         GEOS_LOG_RANK_0( GEOS_FMT( "Fracture Occurred. Resolve: {}", solveIter + 1 ) );
       }
     }
-    implicitStepComplete( time_n, dt, cycleNumber, domain );
+    implicitStepComplete( time_n, dt, domain );
   }
 
   return dtReturn;
@@ -899,7 +899,6 @@ SolidMechanicsLagrangianFEM::
 
 void SolidMechanicsLagrangianFEM::implicitStepComplete( real64 const & GEOS_UNUSED_PARAM( time_n ),
                                                         real64 const & dt,
-                                                        integer const GEOS_UNUSED_PARAM( cycleNumber ),
                                                         DomainPartition & domain )
 {
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,

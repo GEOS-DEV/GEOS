@@ -1160,22 +1160,20 @@ void SinglePhaseWell::implicitStepSetup( real64 const & time,
 
 void SinglePhaseWell::implicitStepComplete( real64 const & time_n,
                                             real64 const & dt,
-                                            integer const cycleNumber,
                                             DomainPartition & domain )
 {
-  WellSolverBase::implicitStepComplete( time_n, dt, cycleNumber, domain );
+  WellSolverBase::implicitStepComplete( time_n, dt, domain );
 
   writeStatisticsToTable();
 
   if( getLogLevel() > 0 )
   {
-    printRates( time_n, dt, cycleNumber, domain );
+    printRates( time_n, dt, domain );
   }
 }
 
 void SinglePhaseWell::printRates( real64 const & time_n,
                                   real64 const & GEOS_UNUSED_PARAM( dt ),
-                                  integer const GEOS_UNUSED_PARAM( cycleNumber ),
                                   DomainPartition & domain )
 {
 

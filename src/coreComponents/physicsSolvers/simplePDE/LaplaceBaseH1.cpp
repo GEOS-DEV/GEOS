@@ -126,7 +126,6 @@ void LaplaceBaseH1::implicitStepSetup( real64 const & GEOS_UNUSED_PARAM( time_n 
 
 void LaplaceBaseH1::implicitStepComplete( real64 const & GEOS_UNUSED_PARAM( time_n ),
                                           real64 const & GEOS_UNUSED_PARAM( dt ),
-                                          integer const GEOS_UNUSED_PARAM( cycleNumber ),
                                           DomainPartition & GEOS_UNUSED_PARAM( domain ) )
 {}
 

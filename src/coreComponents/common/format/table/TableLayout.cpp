@@ -44,7 +44,6 @@ void TableLayout::addColumn( string_view columnName )
 {
   TableLayout::Column column = TableLayout::Column().setName( columnName );
   m_tableColumns.emplace_back( column );
-
 }
 
 void TableLayout::addColumn( TableLayout::Column const & column )

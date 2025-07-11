@@ -1238,7 +1238,6 @@ void ImmiscibleMultiphaseFlow::resetStateToBeginningOfStep( DomainPartition & do
 
 void ImmiscibleMultiphaseFlow::implicitStepComplete( real64 const & time,
                                                      real64 const & dt,
-                                                     integer const GEOS_UNUSED_PARAM( cycleNumber ),
                                                      DomainPartition & domain )
 {
   // Step 1: save the converged aquifer state

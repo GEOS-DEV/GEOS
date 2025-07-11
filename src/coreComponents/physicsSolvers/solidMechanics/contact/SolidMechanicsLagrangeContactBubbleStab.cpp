@@ -438,10 +438,9 @@ void SolidMechanicsLagrangeContactBubbleStab::assembleContact( real64 const dt,
 
 void SolidMechanicsLagrangeContactBubbleStab::implicitStepComplete( real64 const & time_n,
                                                                     real64 const & dt,
-                                                                    integer const cycleNumber,
                                                                     DomainPartition & domain )
 {
-  SolidMechanicsLagrangianFEM::implicitStepComplete( time_n, dt, cycleNumber, domain );
+  SolidMechanicsLagrangianFEM::implicitStepComplete( time_n, dt, domain );
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,

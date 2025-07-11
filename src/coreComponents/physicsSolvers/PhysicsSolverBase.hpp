@@ -634,7 +634,6 @@ public:
    * @brief perform cleanup for implicit timestep
    * @param time the time at the beginning of the step
    * @param dt the desired timestep
-   * @param cycleNumber The current cycle
    * @param domain the domain partition
    *
    * This function performs whatever tasks are required to complete an implicit timestep. For
@@ -647,7 +646,6 @@ public:
   virtual void
   implicitStepComplete( real64 const & time,
                         real64 const & dt,
-                        integer const cycleNumber,
                         DomainPartition & domain );
 
 

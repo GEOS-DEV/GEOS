@@ -1369,7 +1369,6 @@ CompositionalMultiphaseWell::calculateResidualNorm( real64 const & time_n,
                                                             coupledSolverAttributePrefix(), resNorm ));
     getConvergenceStats().m_residualWell = resNorm;
   }
-
   return resNorm;
 }
 
@@ -2080,20 +2079,18 @@ void CompositionalMultiphaseWell::implicitStepSetup( real64 const & time_n,
 
 void CompositionalMultiphaseWell::implicitStepComplete( real64 const & time_n,
                                                         real64 const & dt,
-                                                        integer const cycleNumber,
                                                         DomainPartition & domain )
 {
-  WellSolverBase::implicitStepComplete( time_n, dt, cycleNumber, domain );
+  WellSolverBase::implicitStepComplete( time_n, dt, domain );
 
   if( getLogLevel() > 0 )
   {
-    printRates( time_n, dt, cycleNumber, domain );
+    printRates( time_n, dt, domain );
   }
 }
 
 void CompositionalMultiphaseWell::printRates( real64 const & time_n,
                                               real64 const & dt,
-                                              integer const GEOS_UNUSED_PARAM( cycleNumber ),
                                               DomainPartition & domain )
 {
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,

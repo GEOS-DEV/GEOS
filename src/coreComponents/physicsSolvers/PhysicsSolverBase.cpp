@@ -268,7 +268,7 @@ real64 PhysicsSolverBase::solverStep( real64 const & time_n,
   // final step for completion of timestep. typically secondary variable updates and cleanup.
   {
     Timer timer( m_timers["step complete"] );
-    implicitStepComplete( time_n, dt, cycleNumber, domain );
+    implicitStepComplete( time_n, dt, domain );
   }
 
   return dt_return;
@@ -598,7 +598,7 @@ real64 PhysicsSolverBase::linearImplicitStep( real64 const & time_n,
   }
 
   // final step for completion of timestep. typically secondary variable updates and cleanup.
-  implicitStepComplete( time_n, dt, cycleNumber, domain );
+  implicitStepComplete( time_n, dt, domain );
 
   // return the achieved timestep
   return dt;
@@ -1464,7 +1464,6 @@ bool PhysicsSolverBase::resetConfigurationToDefault( DomainPartition & GEOS_UNUS
 
 void PhysicsSolverBase::implicitStepComplete( real64 const & GEOS_UNUSED_PARAM( time ),
                                               real64 const & GEOS_UNUSED_PARAM( dt ),
-                                              integer const GEOS_UNUSED_PARAM( cycleNumber ),
                                               DomainPartition & GEOS_UNUSED_PARAM( domain ) )
 {
   GEOS_ERROR( "PhysicsSolverBase::ImplicitStepComplete called!. Should be overridden." );

@@ -149,12 +149,10 @@ void ReactiveCompositionalMultiphaseOBL::setupDofs( DomainPartition const & doma
 
 void ReactiveCompositionalMultiphaseOBL::implicitStepComplete( real64 const & time,
                                                                real64 const & dt,
-                                                               integer const cycleNumber,
                                                                DomainPartition & domain )
 {
   GEOS_UNUSED_VAR( time );
   GEOS_UNUSED_VAR( dt );
-  GEOS_UNUSED_VAR( cycleNumber );
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel & mesh,

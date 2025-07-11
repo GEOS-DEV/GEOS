@@ -79,12 +79,11 @@ void FlowProppantTransportSolver::preStepUpdate( real64 const & time_n,
 
 void FlowProppantTransportSolver::postStepUpdate( real64 const & time_n,
                                                   real64 const & dt,
-                                                  integer const cycleNumber,
                                                   DomainPartition & domain )
 {
-  flowSolver()->implicitStepComplete( time_n, dt, cycleNumber, domain );
-  proppantTransportSolver()->implicitStepComplete( time_n, dt, cycleNumber, domain );
-  proppantTransportSolver()->postStepUpdate( time_n, dt, cycleNumber, domain );
+  flowSolver()->implicitStepComplete( time_n, dt, domain );
+  proppantTransportSolver()->implicitStepComplete( time_n, dt, domain );
+  proppantTransportSolver()->postStepUpdate( time_n, dt, domain );
 }
 
 real64 FlowProppantTransportSolver::sequentiallyCoupledSolverStep( real64 const & time_n,
@@ -142,7 +141,7 @@ real64 FlowProppantTransportSolver::sequentiallyCoupledSolverStep( real64 const 
     ++iter;
   }
 
-  postStepUpdate( time_n, dtReturn, cycleNumber, domain );
+  postStepUpdate( time_n, dtReturn, domain );
 
   return dtReturn;
 }
