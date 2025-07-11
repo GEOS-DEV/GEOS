@@ -1226,7 +1226,7 @@ static constexpr void conditionalBasisLoop(FUNC const& func)
         constexpr int j2 = decltype(cj2)::value;
         constexpr int k2 = decltype(ck2)::value;
         // Not used in some combinations, but needed for constexpr
-        GEOS_UNUSED_VAR( c2, i2, j2, k2 );
+        GEOS_UNUSED_VAR( c2, i2, j2, k2, f2 );
 
         // The second function is nonzero on the face indexed by f2, so we integrate on this face.
         if constexpr (  std::decay_t< decltype(cf1) >::value == std::decay_t< decltype(cf2) >::value)
