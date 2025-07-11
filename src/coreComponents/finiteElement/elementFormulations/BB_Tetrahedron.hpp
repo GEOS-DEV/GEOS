@@ -742,12 +742,12 @@ static constexpr void loop(FUNC const& func)
    * @tparam B the second integer
    * @return true if A and B are equal, false otherwise
    */
-template <int A, int B>
-GEOS_HOST_DEVICE
-static constexpr bool is_equal() 
-{
-  return A == B;
-}
+//template <int A, int B>
+//GEOS_HOST_DEVICE
+//static constexpr bool is_equal() 
+//{
+//  return A == B;
+//}
 
   /**
    * @brief Helper function to call a function if a compile-time integer matches one of the given indices.
@@ -766,6 +766,7 @@ static constexpr bool is_equal()
 
 // Helper pour éviter l'ICE de GCC 9.4 - Version avec logique conditionnelle
 template<int c1, int i1, int j1, int k1, int l1, typename F, int... Is>
+GEOS_HOST_DEVICE
 static constexpr void call_matching_cases(F&& func, std::integer_sequence<int, Is...>) {
     // Décomposer les fold expressions complexes
 
