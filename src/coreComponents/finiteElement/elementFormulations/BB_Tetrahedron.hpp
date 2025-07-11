@@ -658,29 +658,29 @@ static constexpr void loop(FUNC const& func)
   }
 }
 
-template <int N>
-struct HDInt {
-    static constexpr int value = N;
+// template <int N>
+// struct HDInt {
+//     static constexpr int value = N;
 
-    GEOS_HOST_DEVICE
-     constexpr operator int() const noexcept 
-     {
-        return N;
-    }
+//     GEOS_HOST_DEVICE
+//      constexpr operator int() const noexcept 
+//      {
+//         return N;
+//     }
 
-    GEOS_HOST_DEVICE
-     constexpr bool operator==(const HDInt<N>&) const noexcept 
-     {
-        return true;
-    }
+    // GEOS_HOST_DEVICE
+    //  constexpr bool operator==(const HDInt<N>&) const noexcept 
+    //  {
+    //     return true;
+    // }
 
-    template <int M>
-    GEOS_HOST_DEVICE
-     constexpr bool operator==(const HDInt<M>&) const noexcept 
-     {
-        return N == M;
-    }
-};
+    // template <int M>
+    // GEOS_HOST_DEVICE
+    //  constexpr bool operator==(const HDInt<M>&) const noexcept 
+    //  {
+    //     return N == M;
+    // }
+//};
 
 
   /**
@@ -756,13 +756,13 @@ static constexpr bool is_equal()
    * @tparam Is the set of indices to match against
    * @param f the callback function to call if x matches one of Is
    */
-template <int x, int... Is, typename F>
-GEOS_HOST_DEVICE
-static constexpr void callIfMatch(F const& f)
-{
-  using discard = int[];
-  (void)discard{ 0, ((x == Is ? (void)f(), 0 : 0))... };
-}
+// template <int x, int... Is, typename F>
+// GEOS_HOST_DEVICE
+// static constexpr void callIfMatch(F const& f)
+// {
+//   using discard = int[];
+//   (void)discard{ 0, ((x == Is ? (void)f(), 0 : 0))... };
+// }
 
   /**
    * @brief Helper function for loop over tet basis functions that have one index in a given set of indices.
@@ -800,37 +800,37 @@ static constexpr void conditionalBasisLoop(FUNC const& func)
 
 
             // Pour chaque Is...
-            // (void)(((is_equal<i1,Is>()) &&
-            //   (void(func(std::integral_constant<int, 0>{},
-            //              std::integral_constant<int, i1>{},
-            //              std::integral_constant<int, c1>{},
-            //              std::integral_constant<int, j1>{},
-            //              std::integral_constant<int, k1>{},
-            //              std::integral_constant<int, l1>{})), 1)) || ...);
+            (void)(((i1 == Is) &&
+              (void(func(std::integral_constant<int, 0>{},
+                         std::integral_constant<int, i1>{},
+                         std::integral_constant<int, c1>{},
+                         std::integral_constant<int, j1>{},
+                         std::integral_constant<int, k1>{},
+                         std::integral_constant<int, l1>{})), 1)) || ...);
 
-            // (void)(((is_equal<j1,Is>()) &&
-            //   (void(func(std::integral_constant<int, 1>{},
-            //              std::integral_constant<int, j1>{},
-            //              std::integral_constant<int, c1>{},
-            //              std::integral_constant<int, i1>{},
-            //              std::integral_constant<int, k1>{},
-            //              std::integral_constant<int, l1>{})), 1)) || ...);
+            (void)(((j1 == Is) &&
+              (void(func(std::integral_constant<int, 1>{},
+                         std::integral_constant<int, j1>{},
+                         std::integral_constant<int, c1>{},
+                         std::integral_constant<int, i1>{},
+                         std::integral_constant<int, k1>{},
+                         std::integral_constant<int, l1>{})), 1)) || ...);
 
-            // (void)(((is_equal<k1,Is>()) &&
-            //   (void(func(std::integral_constant<int, 2>{},
-            //              std::integral_constant<int, k1>{},
-            //              std::integral_constant<int, c1>{},
-            //              std::integral_constant<int, i1>{},
-            //              std::integral_constant<int, j1>{},
-            //              std::integral_constant<int, l1>{})), 1)) || ...);
+            (void)(((k1==Is) &&
+              (void(func(std::integral_constant<int, 2>{},
+                         std::integral_constant<int, k1>{},
+                         std::integral_constant<int, c1>{},
+                         std::integral_constant<int, i1>{},
+                         std::integral_constant<int, j1>{},
+                         std::integral_constant<int, l1>{})), 1)) || ...);
 
-            // (void)(((is_equal<l1,Is>()) &&
-            //   (void(func(std::integral_constant<int, 3>{},
-            //              std::integral_constant<int, l1>{},
-            //              std::integral_constant<int, c1>{},
-            //              std::integral_constant<int, i1>{},
-            //              std::integral_constant<int, j1>{},
-            //              std::integral_constant<int, k1>{})), 1)) || ...);
+            (void)(((l1 ==Is) &&
+              (void(func(std::integral_constant<int, 3>{},
+                         std::integral_constant<int, l1>{},
+                         std::integral_constant<int, c1>{},
+                         std::integral_constant<int, i1>{},
+                         std::integral_constant<int, j1>{},
+                         std::integral_constant<int, k1>{})), 1)) || ...);
 
             //             (void)(((i1 ==Is) &&
             //   (void(func(
@@ -882,49 +882,49 @@ static constexpr void conditionalBasisLoop(FUNC const& func)
             // callIfMatch<l1, Is...>([&] {
             //   func(HDInt<3>{}, HDInt<l1>{}, HDInt<c1>{}, HDInt<i1>{}, HDInt<j1>{}, HDInt<k1>{});
             // });
-           callIfMatch<i1, Is...>([&] {
-              constexpr auto h0  = HDInt<0>{};
-              constexpr auto hi1 = HDInt<i1>{};
-              constexpr auto hc1 = HDInt<c1>{};
-              constexpr auto hj1 = HDInt<j1>{};
-              constexpr auto hk1 = HDInt<k1>{};
-              constexpr auto hl1 = HDInt<l1>{};
+          //  callIfMatch<i1, Is...>([&] {
+          //     constexpr auto h0  = HDInt<0>{};
+          //     constexpr auto hi1 = HDInt<i1>{};
+          //     constexpr auto hc1 = HDInt<c1>{};
+          //     constexpr auto hj1 = HDInt<j1>{};
+          //     constexpr auto hk1 = HDInt<k1>{};
+          //     constexpr auto hl1 = HDInt<l1>{};
             
-              func(h0, hi1, hc1, hj1, hk1, hl1);
-            });
+          //     func(h0, hi1, hc1, hj1, hk1, hl1);
+          //   });
             
-            callIfMatch<j1, Is...>([&] {
-              constexpr auto h1  = HDInt<1>{};
-              constexpr auto hj1 = HDInt<j1>{};
-              constexpr auto hc1 = HDInt<c1>{};
-              constexpr auto hi1 = HDInt<i1>{};
-              constexpr auto hk1 = HDInt<k1>{};
-              constexpr auto hl1 = HDInt<l1>{};
+          //   callIfMatch<j1, Is...>([&] {
+          //     constexpr auto h1  = HDInt<1>{};
+          //     constexpr auto hj1 = HDInt<j1>{};
+          //     constexpr auto hc1 = HDInt<c1>{};
+          //     constexpr auto hi1 = HDInt<i1>{};
+          //     constexpr auto hk1 = HDInt<k1>{};
+          //     constexpr auto hl1 = HDInt<l1>{};
             
-              func(h1, hj1, hc1, hi1, hk1, hl1);
-            });
+          //     func(h1, hj1, hc1, hi1, hk1, hl1);
+          //   });
             
-            callIfMatch<k1, Is...>([&] {
-              constexpr auto h2  = HDInt<2>{};
-              constexpr auto hk1 = HDInt<k1>{};
-              constexpr auto hc1 = HDInt<c1>{};
-              constexpr auto hi1 = HDInt<i1>{};
-              constexpr auto hj1 = HDInt<j1>{};
-              constexpr auto hl1 = HDInt<l1>{};
+          //   callIfMatch<k1, Is...>([&] {
+          //     constexpr auto h2  = HDInt<2>{};
+          //     constexpr auto hk1 = HDInt<k1>{};
+          //     constexpr auto hc1 = HDInt<c1>{};
+          //     constexpr auto hi1 = HDInt<i1>{};
+          //     constexpr auto hj1 = HDInt<j1>{};
+          //     constexpr auto hl1 = HDInt<l1>{};
             
-              func(h2, hk1, hc1, hi1, hj1, hl1);
-            });
+          //     func(h2, hk1, hc1, hi1, hj1, hl1);
+          //   });
             
-            callIfMatch<l1, Is...>([&] {
-              constexpr auto h3  = HDInt<3>{};
-              constexpr auto hl1 = HDInt<l1>{};
-              constexpr auto hc1 = HDInt<c1>{};
-              constexpr auto hi1 = HDInt<i1>{};
-              constexpr auto hj1 = HDInt<j1>{};
-              constexpr auto hk1 = HDInt<k1>{};
+          //   callIfMatch<l1, Is...>([&] {
+          //     constexpr auto h3  = HDInt<3>{};
+          //     constexpr auto hl1 = HDInt<l1>{};
+          //     constexpr auto hc1 = HDInt<c1>{};
+          //     constexpr auto hi1 = HDInt<i1>{};
+          //     constexpr auto hj1 = HDInt<j1>{};
+          //     constexpr auto hk1 = HDInt<k1>{};
             
-              func(h3, hl1, hc1, hi1, hj1, hk1);
-            });
+          //     func(h3, hl1, hc1, hi1, hj1, hk1);
+          //   });
 
           }
         });
@@ -1079,7 +1079,7 @@ static constexpr void conditionalBasisLoop(FUNC const& func)
         constexpr int l2 = decltype(ll2)::value;
     
         constexpr real64 val = computeSuperpositionIntegral( i1, j1, k1, l1, i2, j2, k2, l2 );
-        func( HDInt<c1>(), HDInt<c2v>(), val * detJ );
+        func( c1,c2v, val * detJ );
       } );
     } );
   }
