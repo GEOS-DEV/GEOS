@@ -304,6 +304,9 @@ public:
   void setWellState( bool open );
   bool getWellState();
 
+
+  void setConstraintSwitch( bool constraintSwitch );
+  bool getConstraintSwitch() const;
   /**
    * @brief Getter for the flag to enable crossflow
    * @return the flag deciding whether crossflow is allowed or not
@@ -385,9 +388,21 @@ public:
     static constexpr char const * initialPressureCoefficientString() { return "initialPressureCoefficient"; }
 
     /// string key for the minimum BHP presssure for a producer
-    static constexpr char const * minBHPConstraintString() { return "MinBHPConstraint"; }
+    static constexpr char const * minimumBHPConstraintString() { return "MinimumBHPConstraint"; }
+    /// string key for the maximum BHP presssure for a injection
+    static constexpr char const * maximumBHPConstraintString() { return "MaximumBHPConstraint"; }
     /// string key for the maximum phase rate for a producer
-    static constexpr char const * maxPhaseRateConstraintString() { return "MaxPhaseRateConstraint"; }
+    static constexpr char const * phaseProductionConstraintString() { return "PhaseProductionConstraint"; }
+    /// string key for the maximum phase rate for a injection
+    static constexpr char const * phaseInjectionConstraintString() { return "PhaseInjectionConstraint"; }
+    /// string key for the maximum volume rate for a producer
+    static constexpr char const * volumeProductionConstraintString() { return "VolumeProductionConstraint"; }
+    /// string key for the maximum volume rate for a injector
+    static constexpr char const * volumeInjectionConstraintString() { return "VolumeInjectionConstraint"; }
+    /// string key for the maximum mass rate for a producer
+    static constexpr char const * massProductionConstraintString() { return "massProductionConstraint"; }
+    /// string key for the maximum mass rate for a injector
+    static constexpr char const * massInjectionConstraintString() { return "massInjectionConstraint"; }
   }
   /// ViewKey struct for the WellControls class
   viewKeysWellControls;
@@ -491,6 +506,8 @@ private:
 
   /// List of constraints
   //constraint_array m_ConstraintList;
+  // Bool to trigger old/new constraint switch logic
+  bool m_constraintSwitch;
 
 };
 

@@ -39,23 +39,10 @@ MassProductionConstraint::MassProductionConstraint( string const & name, Group *
     setDefaultValue( 0.0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setRestartFlags( RestartFlags::WRITE_AND_READ ).
-    setDescription( "Maximum Masstric production rate (if useSurfaceConditions: [surface m^3/s]; else [reservoir m^3/s])" );
+    setDescription( "Maximum mass production rate (if useSurfaceConditions: [surface m^3/s]; else [reservoir m^3/s])" );
 
-  registerWrapper( constraintViewStruct::surfaceConditionsKey::useSurfaceConditionsString(), &m_useSurfaceConditions ).
-    setDefaultValue( 0 ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Flag to specify whether rates are checked at surface or reservoir conditions.\n"
-                    "Equal to 1 for surface conditions, and to 0 for reservoir conditions" );
-
-  registerWrapper( constraintViewStruct::surfaceConditionsKey::surfacePressureString(), &m_surfacePres ).
-    setDefaultValue( 0 ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Surface pressure used to compute Masstric rates when surface conditions are used [Pa]" );
-
-  registerWrapper( constraintViewStruct::surfaceConditionsKey::surfaceTemperatureString(), &m_surfaceTemp ).
-    setDefaultValue( 0 ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Surface temperature used to compute Masstric rates when surface conditions are used [K]" );
+  // Field registration
+  registerSurfaceConditions( m_useSurfaceConditions, m_surfacePres, m_surfaceTemp, *this );
 
 
 }
@@ -66,8 +53,11 @@ MassProductionConstraint::~MassProductionConstraint()
 
 void MassProductionConstraint::postInputInitialization()
 {
+  // Validate value and table options
   WellConstraintBase::postInputInitialization();
 
+  // Validate surface conditions
+  validateSurfaceConditions( m_useSurfaceConditions, dataRepository::keys::MassInjectionConstraint, *this );
 }
 
 MassInjectionConstraint::MassInjectionConstraint( string const & name, Group * const parent )
@@ -79,36 +69,11 @@ MassInjectionConstraint::MassInjectionConstraint( string const & name, Group * c
     setDefaultValue( 0.0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setRestartFlags( RestartFlags::WRITE_AND_READ ).
-    setDescription( "Maximum Masstric injection rate (if useSurfaceConditions: [surface m^3/s]; else [reservoir m^3/s])" );
+    setDescription( "Maximum mass injection rate (if useSurfaceConditions: [surface m^3/s]; else [reservoir m^3/s])" );
 
-  registerWrapper( constraintViewStruct::surfaceConditionsKey::useSurfaceConditionsString(), &m_useSurfaceConditions ).
-    setDefaultValue( 0 ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Flag to specify whether rates are checked at surface or reservoir conditions.\n"
-                    "Equal to 1 for surface conditions, and to 0 for reservoir conditions" );
-
-  registerWrapper( constraintViewStruct::surfaceConditionsKey::surfacePressureString(), &m_surfacePres ).
-    setDefaultValue( 0 ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Surface pressure used to compute Masstric rates when surface conditions are used [Pa]" );
-
-  registerWrapper( constraintViewStruct::surfaceConditionsKey::surfaceTemperatureString(), &m_surfaceTemp ).
-    setDefaultValue( 0 ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Surface temperature used to compute Masstric rates when surface conditions are used [K]" );
-
-
-
-  registerWrapper( constraintViewStruct::injectionStreamKey::injectionStreamString(), &m_injectionStream ).
-    setDefaultValue( -1 ).
-    setSizedFromParent( 0 ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Global component densities of the injection stream [moles/m^3 or kg/m^3]" );
-
-  registerWrapper( constraintViewStruct::injectionStreamKey::injectionTemperatureString(), &m_injectionTemperature ).
-    setDefaultValue( -1 ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Temperature of the injection stream [K]" );
+  // Field registration
+  registerSurfaceConditions( m_useSurfaceConditions, m_surfacePres, m_surfaceTemp, *this );
+  registerInjectionStream( m_injectionStream, m_injectionTemperature, *this );
 
 }
 
@@ -119,8 +84,13 @@ MassInjectionConstraint::~MassInjectionConstraint()
 void MassInjectionConstraint::postInputInitialization()
 {
 
+  // Validate value and table options
+  WellConstraintBase::postInputInitialization();
+
+  // Validate surface conditions
+  validateSurfaceConditions( m_useSurfaceConditions, dataRepository::keys::MassInjectionConstraint, *this );
 // Validate the injection stream and temperature
-  validateInjectionStream( m_injectionStream, m_injectionTemperature, dataRepository::keys::MassProductionConstraint, *this, getDataContext() );
+  validateInjectionStream( m_injectionStream, m_injectionTemperature, dataRepository::keys::MassProductionConstraint, *this );
 
 
 }

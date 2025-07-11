@@ -33,7 +33,7 @@
       <WellControls
         name="wellControls1"
         type="producer"
-        control="BHP"
+        control="phaseVolRate"
         referenceElevation="2"
         targetBHP="3e6"
         targetPhaseRate="2e-6"
@@ -41,6 +41,11 @@
         <MinimumBHPConstraint
          name="minBHP"
          targetBHP="3e6"/>
+        <PhaseProductionConstraint
+         name="maxOil"
+         targetPhaseName="oil"
+         useSurfaceConditions="1"
+         targetPhaseRate="2e-6"/>
         </WellControls>
       <WellControls
         name="wellControls2"
@@ -50,7 +55,16 @@
         targetBHP="1e8"
         targetTotalRate="28e-7"
         injectionTemperature="297.15"
-        injectionStream="{ 0.1, 0.1, 0.1, 0.7 }"/>
+        injectionStream="{ 0.1, 0.1, 0.1, 0.7 }">
+        <PhaseInjectionConstraint
+         name="maxGas"
+         targetPhaseName="gas"
+         useSurfaceConditions="1"
+         targetPhaseRate="28e-6"
+         injectionTemperature="297.15"
+         injectionStream="{ 0.1, 0.1, 0.1, 0.7 }"/>
+        </WellControls>
+
     </CompositionalMultiphaseWell>
   </Solvers>
 
@@ -96,6 +110,13 @@
     </InternalMesh>
   </Mesh>
 
+  <Geometry>
+   <Box
+    name="monitoredCell"
+    xMin="{ 4.5, 0, 2 }"
+    xMax="{ 4.5, 0, 0.5 }" />
+   </Geometry>
+
   <Events
     maxTime="2.5e4">
     <PeriodicEvent
@@ -108,12 +129,33 @@
       timeFrequency="2.5e3"
       target="/Outputs/vtkOutput"/>
 
+
+    <PeriodicEvent
+      name="timeHistoryOutput1"
+      timeFrequency="1.0e3"
+      target="/Outputs/timeHistoryOutput1"/>
+    <PeriodicEvent
+      name="timeHistoryOutput2"
+      timeFrequency="1.0e3"
+      target="/Outputs/timeHistoryOutput2"/>
+
     <PeriodicEvent
       name="restarts"
       timeFrequency="1.25e4"
       targetExactTimestep="0"
       target="/Outputs/restartOutput"/>
   </Events>
+
+  <Tasks>
+      <PackCollection
+      name="wellRateCollection1"
+      objectPath="ElementRegions/wellRegion1/wellRegion1UniqueSubRegion"
+      fieldName="wellElementMixtureConnectionRate"/>
+      <PackCollection
+      name="wellPhaseVolumeFraction"
+      objectPath="ElementRegions/wellRegion1/wellRegion1UniqueSubRegion"
+      fieldName="phaseVolumeFraction"/>
+  </Tasks>
 
   <NumericalMethods>
     <FiniteVolume>
@@ -232,6 +274,14 @@
   <Outputs>
     <VTK
       name="vtkOutput"/>
+    <TimeHistory
+      name="timeHistoryOutput1"
+      sources="{ /Tasks/wellRateCollection1 }"
+      filename="wellRateHistory1"/>
+    <TimeHistory
+      name="timeHistoryOutput2"
+      sources="{ /Tasks/wellPhaseVolumeFraction }"
+      filename="wellpvf"/>
 
     <Restart
       name="restartOutput"/>

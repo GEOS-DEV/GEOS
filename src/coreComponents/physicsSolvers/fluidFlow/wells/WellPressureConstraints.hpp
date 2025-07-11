@@ -96,6 +96,9 @@ public:
    * @name Getters / Setters
    */
   ///@{
+
+  // Temp interface - tjb
+  virtual WellControls::Control getControl() const override { return WellControls::Control::BHP; };
   /**
    * @brief Get name of constraint
    * @return constraint key
@@ -180,7 +183,8 @@ public:
    * @name Getters / Setters
    */
   ///@{
-
+  // Temp interface - tjb
+  virtual WellControls::Control getControl() const override { return WellControls::Control::BHP; };
   /**
    * @brief Get name of constraint
    * @return constraint key

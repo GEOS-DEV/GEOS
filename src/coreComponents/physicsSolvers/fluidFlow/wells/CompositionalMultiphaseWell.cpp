@@ -52,7 +52,11 @@
 
 #include "physicsSolvers/multiphysics/CoupledReservoirAndWellKernels.hpp" // ouch
 
-#include "physicsSolvers/fluidFlow/wells/WellFields.hpp"
+#include "physicsSolvers/fluidFlow/wells/WellPressureConstraints.hpp"
+#include "physicsSolvers/fluidFlow/wells/WellVolumeRateConstraints.hpp"
+#include "physicsSolvers/fluidFlow/wells/WellPhaseRateConstraints.hpp"
+#include "physicsSolvers/fluidFlow/wells/WellMassRateConstraints.hpp"
+
 
 #include "common/MpiWrapper.hpp"
 #include "physicsSolvers/fluidFlow/StencilAccessors.hpp"
@@ -3811,5 +3815,118 @@ void CompositionalMultiphaseWell::printRates( real64 const & time_n,
   } );
 }
 
+
+bool CompositionalMultiphaseWell::evaluateProductionConstraints( real64 const & time_n,
+                                                                 real64 const & dt,
+                                                                 integer const cycleNumber,
+                                                                 DomainPartition & domain,
+                                                                 MeshLevel & mesh,
+                                                                 ElementRegionManager & elemManager,
+                                                                 WellElementSubRegion & subRegion,
+                                                                 DofManager const & dofManager )
+{
+  WellControls & wellControls = getWellControls( subRegion );
+
+  MinimumBHPConstraint * bhpConstraint = wellControls.getGroupPointer< MinimumBHPConstraint >( "minBHP" ); //dataRepository::keys::minimumBHPConstraint
+
+
+  // Evaluate BHP first to determine if other constraints should be evaluated
+  real64 minbhp;
+  WellControls::Control currentControl;
+  wellControls.forSubGroups< MinimumBHPConstraint >( [&]( auto & constraint )
+  {
+    std::cout << constraint.getName() << std::endl;
+    currentControl = constraint.getControl();
+    wellControls.setControl( currentControl );
+    solveNonlinearSystem( time_n,
+                          dt,
+                          cycleNumber,
+                          domain,
+                          mesh,
+                          elemManager,
+                          subRegion,
+                          dofManager );
+
+    constraint.setBHP ( wellControls.getReference< real64 >( CompositionalMultiphaseWell::viewKeyStruct::currentBHPString() ));
+    constraint.setPhaseVolumeRates ( wellControls.getReference< array1d< real64 > >(
+                                       CompositionalMultiphaseWell::viewKeyStruct::currentPhaseVolRateString() ) );
+    constraint.setTotalVolumeRate ( wellControls.getReference< real64 >(
+                                      CompositionalMultiphaseWell::viewKeyStruct::currentTotalVolRateString() ));
+    constraint.setMassRate( wellControls.getReference< real64 >( CompositionalMultiphaseWell::viewKeyStruct::currentMassRateString() ));
+
+    std::cout << constraint.getName() << " " << constraint.bottomHolePressure() << " " << constraint.phaseVolumeRates() << " " << constraint.totalVolumeRate() << " " << constraint.massRate() << std::endl;
+  } );
+  minbhp = bhpConstraint->bottomHolePressure();
+  wellControls.forSubGroups< PhaseProductionConstraint, MassProductionConstraint >( [&]( auto & constraint )
+  {
+    std::cout << constraint.getName() << std::endl;
+
+    wellControls.setControl( constraint.getControl());
+    solveNonlinearSystem( time_n,
+                          dt,
+                          cycleNumber,
+                          domain,
+                          mesh,
+                          elemManager,
+                          subRegion,
+                          dofManager );
+
+    constraint.setBHP ( wellControls.getReference< real64 >( CompositionalMultiphaseWell::viewKeyStruct::currentBHPString() ));
+    constraint.setPhaseVolumeRates ( wellControls.getReference< array1d< real64 > >(
+                                       CompositionalMultiphaseWell::viewKeyStruct::currentPhaseVolRateString() ) );
+    constraint.setTotalVolumeRate ( wellControls.getReference< real64 >(
+                                      CompositionalMultiphaseWell::viewKeyStruct::currentTotalVolRateString() ));
+    constraint.setMassRate( wellControls.getReference< real64 >( CompositionalMultiphaseWell::viewKeyStruct::currentMassRateString() ));
+
+    std::cout << constraint.getName() << " " << constraint.bottomHolePressure() << " " << constraint.phaseVolumeRates() << " " << constraint.totalVolumeRate() << " " << constraint.massRate() << std::endl;
+    if( constraint.bottomHolePressure() > minbhp )
+    {
+      currentControl = constraint.getControl();
+    }
+
+  } );
+  wellControls.setControl( currentControl );
+  solveNonlinearSystem( time_n,
+                        dt,
+                        cycleNumber,
+                        domain,
+                        mesh,
+                        elemManager,
+                        subRegion,
+                        dofManager );
+  return true;
+}
+
+bool CompositionalMultiphaseWell::evaluateInjectionConstraints( real64 const & time_n,
+                                                                real64 const & dt,
+                                                                integer const cycleNumber,
+                                                                DomainPartition & domain,
+                                                                MeshLevel & mesh,
+                                                                ElementRegionManager & elemManager,
+                                                                WellElementSubRegion & subRegion,
+                                                                DofManager const & dofManager )
+{
+  WellControls & wellControls = getWellControls( subRegion );
+  real64 minbhp;
+  WellControls::Control currentControl;
+
+  // Evaluate BHP first to determine if other constraints should be evaluated
+
+  wellControls.forSubGroups< MaximumBHPConstraint >( [&]( auto & constraint )
+  {
+    std::cout << constraint.getName() << std::endl;
+    currentControl = constraint.getControl();
+    wellControls.setControl( currentControl );
+    solveNonlinearSystem( time_n,
+                          dt,
+                          cycleNumber,
+                          domain,
+                          mesh,
+                          elemManager,
+                          subRegion,
+                          dofManager );
+  } );
+  return true;
+}
 REGISTER_CATALOG_ENTRY( PhysicsSolverBase, CompositionalMultiphaseWell, string const &, Group * const )
 } // namespace geos

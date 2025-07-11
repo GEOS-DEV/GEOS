@@ -460,6 +460,24 @@ protected:
                       integer current_newton_iteration,
                       DomainPartition & domain );
 
+  virtual bool evaluateProductionConstraints( real64 const & time_n,
+                                              real64 const & stepDt,
+                                              integer const cycleNumber,
+                                              DomainPartition & domain,
+                                              MeshLevel & mesh,
+                                              ElementRegionManager & elemManager,
+                                              WellElementSubRegion & subRegion,
+                                              DofManager const & dofManager ) override;
+
+  virtual bool evaluateInjectionConstraints( real64 const & time_n,
+                                             real64 const & stepDt,
+                                             integer const cycleNumber,
+                                             DomainPartition & domain,
+                                             MeshLevel & mesh,
+                                             ElementRegionManager & elemManager,
+                                             WellElementSubRegion & subRegion,
+                                             DofManager const & dofManager )override;
+
 private:
 
   /**

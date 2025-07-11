@@ -65,6 +65,73 @@ struct injectionStreamKey
 };
 
 }
+/**
+ * @brief Register fields required to define surface conditions for constraint
+ * @param[in] useSurfaceConditions 0 - use reservoir conditions, 1 use specified P &  T
+ * @param[in] surfacePres surface pressure
+ * @param[in] surfaceTemp surface pressure
+ */
+template< typename T >
+void registerSurfaceConditions( integer & useSurfaceConditions,
+                                real64 & surfacePres,
+                                real64 & surfaceTemp,
+                                T & context )
+{
+  context.registerWrapper( constraintViewStruct::surfaceConditionsKey::useSurfaceConditionsString(), &useSurfaceConditions ).
+    setDefaultValue( 0 ).
+    setInputFlag( dataRepository::InputFlags::OPTIONAL ).
+    setDescription( "Flag to specify whether rates are checked at surface or reservoir conditions.\n"
+                    "Equal to 1 for surface conditions, and to 0 for reservoir conditions" );
+
+  context.registerWrapper( constraintViewStruct::surfaceConditionsKey::surfacePressureString(), &surfacePres ).
+    setDefaultValue( 0 ).
+    setInputFlag( dataRepository::InputFlags::OPTIONAL ).
+    setDescription( "Surface pressure used to compute volumetric rates when surface conditions are used [Pa]" );
+
+  context.registerWrapper( constraintViewStruct::surfaceConditionsKey::surfaceTemperatureString(), &surfaceTemp ).
+    setDefaultValue( 0 ).
+    setInputFlag( dataRepository::InputFlags::OPTIONAL ).
+    setDescription( "Surface temperature used to compute volumetric rates when surface conditions are used [K]" );
+}
+
+/**
+ * @brief Register fields required to define an injection stream.
+ * @param[in] injectionStream the injection stream vector
+ * @param[in] injectionTemperature the injection temperature
+ * @param[in] context class needing fields
+ */
+template< typename T >
+void registerInjectionStream( array1d< real64 > & injectionStream,
+                              real64 & injectionTemperature,
+                              T & context )
+{
+  context.registerWrapper( constraintViewStruct::injectionStreamKey::injectionStreamString(), &injectionStream ).
+    setDefaultValue( -1 ).
+    setSizedFromParent( 0 ).
+    setInputFlag( dataRepository::InputFlags::OPTIONAL ).
+    setDescription( "Global component densities of the injection stream [moles/m^3 or kg/m^3]" );
+
+  context.registerWrapper( constraintViewStruct::injectionStreamKey::injectionTemperatureString(), &injectionTemperature ).
+    setDefaultValue( -1 ).
+    setInputFlag( dataRepository::InputFlags::OPTIONAL ).
+    setDescription( "Temperature of the injection stream [K]" );
+}
+/**
+ * @brief Validate the surface conditions
+ * @param[in] useSurfaceConditions 0 - use reservoir conditions, 1 use specified P &  T
+ * @param[in] className owner of fields
+ * @param[in] dataContext context for error messages
+ */
+template< typename T >
+void validateSurfaceConditions( integer useSurfaceConditions,
+                                std::string const & className,
+                                T const & context )
+{
+  GEOS_THROW_IF( useSurfaceConditions != 0 &&  useSurfaceConditions != 1,
+                 className << " "  << context.getDataContext()  << ": The flag to select surface/reservoir conditions must be equal to 0 or 1",
+                 InputError );
+}
+
 
 /**
  * @brief Validate the injection stream and temperature.
@@ -76,13 +143,11 @@ template< typename T >
 void validateInjectionStream( array1d< real64 > const & injectionStream,
                               real64 const & injectionTemperature,
                               std::string const & className,
-                              T const & context,
-                              dataRepository::DataContext const & dataContext )
+                              T const & context )
 {
-
   GEOS_THROW_IF( (injectionStream.empty()  && injectionTemperature >= 0) ||
                  (!injectionStream.empty() && injectionTemperature < 0),
-                 className << " "  << dataContext << ": Both "
+                 className << " "  << context.getDataContext() << ": Both "
                            << constraintViewStruct::injectionStreamKey::injectionStreamString() << " and " << constraintViewStruct::injectionStreamKey::injectionTemperatureString()
                            << " must be specified for multiphase simulations",
                  InputError );
@@ -177,6 +242,8 @@ public:
    */
   ///@{
 
+  // Temp interface - tjb
+  virtual WellControls::Control getControl() const = 0;
 
   /**
    * @brief Get name of constraint
@@ -212,6 +279,37 @@ public:
   /// ViewKey struct for the WellControls class
   viewKeysWellConstraint;
 
+  //
+  void setBHP( real64 bhp ){ m_BHP=bhp;};
+  void setPhaseVolumeRates( array1d< real64 > const & phaseVolumeRates ) { m_phaseVolumeRates = phaseVolumeRates; };
+  void setTotalVolumeRate( real64 totalVolumeRate ){ m_totalVolumeRate = totalVolumeRate; };
+  void setMassRate( real64 massRate ){ m_massRate = massRate; };
+
+  /**
+   * @brief Getter for the bottom hole pressure
+   * @return bottom hole pressure
+   */
+  real64 bottomHolePressure() const { return m_BHP; }
+
+  /**
+   * @brief Getter for the phase volume rates
+   * @return an arrayView1d storing the phase volume rates
+   */
+  arrayView1d< real64 const > phaseVolumeRates() const { return m_phaseVolumeRates; }
+
+  /**
+   * @brief Getter for the total volume rate
+   * @return mass rate
+   */
+  real64 totalVolumeRate() const { return m_totalVolumeRate; }
+
+  /**
+   * @brief Getter for the mass rate
+   * @return mass rate
+   */
+  real64 massRate() const { return m_massRate; }
+
+
 protected:
 
   virtual void postInputInitialization() override;
@@ -236,6 +334,20 @@ protected:
 
   /// Constraint values versus time
   TableFunction const * m_constraintScheduleTable;
+
+  // Quantities computed from well constraint solve with this boundary condition
+
+  // botton hole pressure
+  real64 m_BHP;
+
+  // phase rates
+  array1d< real64 >  m_phaseVolumeRates;
+
+  // total volume rate
+  real64 m_totalVolumeRate;
+
+  // mass rate
+  real64 m_massRate;
 
 };
 

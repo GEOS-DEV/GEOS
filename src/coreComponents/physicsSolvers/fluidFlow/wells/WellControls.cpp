@@ -23,6 +23,7 @@
 #include "WellPressureConstraints.hpp"
 #include "WellVolumeRateConstraints.hpp"
 #include "WellPhaseRateConstraints.hpp"
+#include "WellMassRateConstraints.hpp"
 
 #include "WellConstants.hpp"
 #include "dataRepository/InputFlags.hpp"
@@ -55,7 +56,8 @@ WellControls::WellControls( string const & name, Group * const parent )
   m_targetPhaseRateTable( nullptr ),
   m_targetBHPTable( nullptr ),
   m_statusTable( nullptr ),
-  m_wellOpen( false )
+  m_wellOpen( false ),
+  m_constraintSwitch( true )
 {
   setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
 
@@ -190,10 +192,45 @@ Group * WellControls::createChild( string const & childKey, string const & child
   //               CatalogInterface::unknownTypeError( childKey, getDataContext(), childTypes ) );
 
   Group * constraint = nullptr;
-  if( childKey == viewKeyStruct::minBHPConstraintString() )
+  if( childKey == viewKeyStruct::minimumBHPConstraintString() )
   {
     MinimumBHPConstraint & bhpConstraint = registerGroup< MinimumBHPConstraint >( childName );
     constraint = &bhpConstraint;
+  }
+  else if( childKey == viewKeyStruct::maximumBHPConstraintString() )
+  {
+    MaximumBHPConstraint & bhpConstraint = registerGroup< MaximumBHPConstraint >( childName );
+    constraint = &bhpConstraint;
+  }
+  else if( childKey == viewKeyStruct::phaseProductionConstraintString() )
+  {
+    PhaseProductionConstraint & phaseConstraint = registerGroup< PhaseProductionConstraint >( childName );
+    constraint = &phaseConstraint;
+  }
+  else if( childKey == viewKeyStruct::phaseInjectionConstraintString() )
+  {
+    PhaseInjectionConstraint & phaseConstraint = registerGroup< PhaseInjectionConstraint >( childName );
+    constraint = &phaseConstraint;
+  }
+  else if( childKey == viewKeyStruct::volumeProductionConstraintString() )
+  {
+    VolumeProductionConstraint & volConstraint = registerGroup< VolumeProductionConstraint >( childName );
+    constraint = &volConstraint;
+  }
+  else if( childKey == viewKeyStruct::volumeInjectionConstraintString() )
+  {
+    VolumeInjectionConstraint & volConstraint = registerGroup< VolumeInjectionConstraint >( childName );
+    constraint = &volConstraint;
+  }
+  else if( childKey == viewKeyStruct::massProductionConstraintString() )
+  {
+    MassProductionConstraint & massConstraint = registerGroup< MassProductionConstraint >( childName );
+    constraint = &massConstraint;
+  }
+  else if( childKey == viewKeyStruct::massInjectionConstraintString() )
+  {
+    MassInjectionConstraint & massConstraint = registerGroup< MassInjectionConstraint >( childName );
+    constraint = &massConstraint;
   }
   return constraint;
 }
@@ -519,8 +556,19 @@ bool WellControls::getWellState()
 {
   return m_wellOpen;
 }
+
+void WellControls::setConstraintSwitch( bool constraintSwitch )
+{
+  m_constraintSwitch = constraintSwitch;
+}
+
+bool WellControls::getConstraintSwitch() const
+{
+  return m_constraintSwitch;
+}
 void WellControls::setNextDtFromTables( real64 const currentTime, real64 & nextDt )
 {
+  // replace with iter over constraints - tjb
   setNextDtFromTable( m_targetBHPTable, currentTime, nextDt );
   setNextDtFromTable( m_targetMassRateTable, currentTime, nextDt );
   setNextDtFromTable( m_targetPhaseRateTable, currentTime, nextDt );

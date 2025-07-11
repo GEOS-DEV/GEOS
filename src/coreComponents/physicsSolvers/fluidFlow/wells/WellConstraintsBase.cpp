@@ -81,6 +81,12 @@ void WellConstraintBase::postInputInitialization()
                  getWrapperDataContext( constraintViewStruct::constraintValueKey::constraintValueString() ) << ": Target value is negative",
                  InputError );
 
+
+  GEOS_THROW_IF( ((m_constraintValue > 0.0 && !m_constraintScheduleTableName.empty())),
+                 getConstraintKey() << " " << getDataContext() << ": You have provided redundant information for well constraint value ." <<
+                 " A constraint value and table of constraint values cannot be specified together",
+                 InputError );
+
   //  Create time-dependent constraint table
   if( m_constraintScheduleTableName.empty() )
   {
@@ -99,10 +105,6 @@ void WellConstraintBase::postInputInitialization()
   }
 
 
-  GEOS_THROW_IF( ((m_constraintValue > 0.0 && !m_constraintScheduleTableName.empty())),
-                 getConstraintKey() << " " << getDataContext() << ": You have provided redundant information for well constraint value ." <<
-                 " The keywords " << constraintViewStruct::constraintValueKey::constraintValueString() << " and " << constraintViewStruct::constraintValueKey::constraintScheduleTableNameString() << " cannot be specified together",
-                 InputError );
 
   GEOS_THROW_IF  ((m_constraintValue <= 0.0 && m_constraintScheduleTableName.empty()),
                   getConstraintKey() << " " << getDataContext() << ": You need to specify a volume rate constraint. \n" <<

@@ -480,6 +480,23 @@ protected:
                            real64 const & dt,
                            DomainPartition & domain ) = 0;
 
+  virtual bool evaluateProductionConstraints( real64 const & time_n,
+                                              real64 const & stepDt,
+                                              integer const cycleNumber,
+                                              DomainPartition & domain,
+                                              MeshLevel & mesh,
+                                              ElementRegionManager & elemManager,
+                                              WellElementSubRegion & subRegion,
+                                              DofManager const & dofManager ) { return false;};
+
+  virtual bool evaluateInjectionConstraints( real64 const & time_n,
+                                             real64 const & stepDt,
+                                             integer const cycleNumber,
+                                             DomainPartition & domain,
+                                             MeshLevel & mesh,
+                                             ElementRegionManager & elemManager,
+                                             WellElementSubRegion & subRegion,
+                                             DofManager const & dofManager ) {return true;};
   /// name of the flow solver
   string m_flowSolverName;
 

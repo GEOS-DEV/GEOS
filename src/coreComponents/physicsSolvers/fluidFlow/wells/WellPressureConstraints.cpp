@@ -70,8 +70,8 @@ MaximumBHPConstraint::~MaximumBHPConstraint()
 
 void MaximumBHPConstraint::postInputInitialization()
 {
+  // Validate value and table options
   WellConstraintBase::postInputInitialization();
-
 
 }
 

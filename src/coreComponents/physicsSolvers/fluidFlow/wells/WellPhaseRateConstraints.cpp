@@ -51,49 +51,18 @@ PhaseProductionConstraint::PhaseProductionConstraint( string const & name, Group
     setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "Name of the target phase" );
 
-  registerWrapper( constraintViewStruct::surfaceConditionsKey::useSurfaceConditionsString(), &m_useSurfaceConditions ).
-    setDefaultValue( 0 ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Flag to specify whether rates are checked at surface or reservoir conditions.\n"
-                    "Equal to 1 for surface conditions, and to 0 for reservoir conditions" );
-
-  registerWrapper( constraintViewStruct::surfaceConditionsKey::surfacePressureString(), &m_surfacePres ).
-    setDefaultValue( 0 ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Surface pressure used to compute volumetric rates when surface conditions are used [Pa]" );
-
-  registerWrapper( constraintViewStruct::surfaceConditionsKey::surfaceTemperatureString(), &m_surfaceTemp ).
-    setDefaultValue( 0 ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Surface temperature used to compute volumetric rates when surface conditions are used [K]" );
-
+  // Field registration
+  registerSurfaceConditions( m_useSurfaceConditions, m_surfacePres, m_surfaceTemp, *this );
 
 }
-
 
 PhaseProductionConstraint::~PhaseProductionConstraint()
 {}
 
 void PhaseProductionConstraint::postInputInitialization()
 {
+  // Validate value and table options
   WellConstraintBase::postInputInitialization();
-
-  registerWrapper( constraintViewStruct::surfaceConditionsKey::useSurfaceConditionsString(), &m_useSurfaceConditions ).
-    setDefaultValue( 0 ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Flag to specify whether rates are checked at surface or reservoir conditions.\n"
-                    "Equal to 1 for surface conditions, and to 0 for reservoir conditions" );
-
-  registerWrapper( constraintViewStruct::surfaceConditionsKey::surfacePressureString(), &m_surfacePres ).
-    setDefaultValue( 0 ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Surface pressure used to compute volumetric rates when surface conditions are used [Pa]" );
-
-  registerWrapper( constraintViewStruct::surfaceConditionsKey::surfaceTemperatureString(), &m_surfaceTemp ).
-    setDefaultValue( 0 ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Surface temperature used to compute volumetric rates when surface conditions are used [K]" );
-
 
 }
 
@@ -119,33 +88,9 @@ PhaseInjectionConstraint::PhaseInjectionConstraint( string const & name, Group *
     setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "Name of the target phase" );
 
-  registerWrapper( constraintViewStruct::surfaceConditionsKey::useSurfaceConditionsString(), &m_useSurfaceConditions ).
-    setDefaultValue( 0 ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Flag to specify whether rates are checked at surface or reservoir conditions.\n"
-                    "Equal to 1 for surface conditions, and to 0 for reservoir conditions" );
-
-  registerWrapper( constraintViewStruct::surfaceConditionsKey::surfacePressureString(), &m_surfacePres ).
-    setDefaultValue( 0 ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Surface pressure used to compute volumetric rates when surface conditions are used [Pa]" );
-
-  registerWrapper( constraintViewStruct::surfaceConditionsKey::surfaceTemperatureString(), &m_surfaceTemp ).
-    setDefaultValue( 0 ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Surface temperature used to compute volumetric rates when surface conditions are used [K]" );
-
-
-  registerWrapper( constraintViewStruct::injectionStreamKey::injectionStreamString(), &m_injectionStream ).
-    setDefaultValue( -1 ).
-    setSizedFromParent( 0 ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Global component densities of the injection stream [moles/m^3 or kg/m^3]" );
-
-  registerWrapper( constraintViewStruct::injectionStreamKey::injectionTemperatureString(), &m_injectionTemperature ).
-    setDefaultValue( -1 ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Temperature of the injection stream [K]" );
+  // Field registration
+  registerSurfaceConditions( m_useSurfaceConditions, m_surfacePres, m_surfaceTemp, *this );
+  registerInjectionStream( m_injectionStream, m_injectionTemperature, *this );
 
 
 }
@@ -157,10 +102,11 @@ PhaseInjectionConstraint::~PhaseInjectionConstraint()
 void PhaseInjectionConstraint::postInputInitialization()
 {
 
+  // Validate value and table options
   WellConstraintBase::postInputInitialization();
 
 // Validate the injection stream and temperature
-  validateInjectionStream( m_injectionStream, m_injectionTemperature, dataRepository::keys::phaseInjectionConstraint, *this, getDataContext() );
+  validateInjectionStream( m_injectionStream, m_injectionTemperature, dataRepository::keys::phaseInjectionConstraint, *this );
 
 
 }

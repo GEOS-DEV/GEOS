@@ -28,6 +28,8 @@
 #include "physicsSolvers/fluidFlow/FlowSolverBase.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
 
+
+
 #include "physicsSolvers/fluidFlow/wells/WellControls.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellSolverBaseFields.hpp"
 #include "physicsSolvers/fluidFlow/wells/kernels/ThermalCompositionalMultiphaseWellKernels.hpp"
@@ -368,6 +370,31 @@ void WellSolverBase::estimateWellSolution( real64 const & time_n,
           //std::ostringstream oss;
           //m_dofManager.printFieldInfo( oss );
           //GEOS_LOG_LEVEL( logInfo::Fields, oss.str())
+        }
+
+
+        wellControls.setConstraintSwitch( false );
+        if( wellControls.isProducer())
+        {
+          evaluateProductionConstraints( time_n,
+                                         dt,
+                                         cycleNumber,
+                                         domain,
+                                         meshLevel,
+                                         elementRegionManager,
+                                         subRegion,
+                                         dofManager );
+        }
+        else
+        {
+          evaluateInjectionConstraints( time_n,
+                                        dt,
+                                        cycleNumber,
+                                        domain,
+                                        meshLevel,
+                                        elementRegionManager,
+                                        subRegion,
+                                        dofManager );
         }
 
         //implicitStepSetup( time_n, dt, domain );
