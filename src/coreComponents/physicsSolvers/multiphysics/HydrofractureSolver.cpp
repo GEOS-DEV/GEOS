@@ -1027,6 +1027,7 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::implicitStepComplete( real64 c
                                                                         DomainPartition & domain )
 {
   Base::implicitStepComplete( time_n, dt, cycleNumber, domain );
+  flowSolver()->writeStatisticsToTable();
 
   if( m_isLaggingFractureStencilWeightsUpdate )
   {

@@ -481,6 +481,8 @@ void ProppantTransport::implicitStepComplete( real64 const & GEOS_UNUSED_PARAM( 
       proppantLiftFlux.zero();
     } );
   } );
+
+  writeStatisticsToTable();
 }
 
 void ProppantTransport::setupDofs( DomainPartition const & GEOS_UNUSED_PARAM( domain ),

@@ -1292,6 +1292,8 @@ void ImmiscibleMultiphaseFlow::implicitStepComplete( real64 const & time,
       }
     } );
   } );
+
+  writeStatisticsToTable();
 }
 
 void ImmiscibleMultiphaseFlow::saveConvergedState( ElementSubRegionBase & subRegion ) const

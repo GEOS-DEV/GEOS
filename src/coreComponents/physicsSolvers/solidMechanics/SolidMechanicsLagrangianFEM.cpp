@@ -897,9 +897,9 @@ SolidMechanicsLagrangianFEM::
   updateSolverStatistics( time_n, dt, cycleNumber );
 }
 
-void SolidMechanicsLagrangianFEM::implicitStepComplete( real64 const & time_n,
+void SolidMechanicsLagrangianFEM::implicitStepComplete( real64 const & GEOS_UNUSED_PARAM( time_n ),
                                                         real64 const & dt,
-                                                        integer const cycleNumber,
+                                                        integer const GEOS_UNUSED_PARAM( cycleNumber ),
                                                         DomainPartition & domain )
 {
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,

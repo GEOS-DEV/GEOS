@@ -371,8 +371,8 @@ public:
 
   /**
    * @brief Create a convergence directory if we enable the csv for iteration or convergence statistics
-   * @param writeConvergence Boolean for convergencce CSV output 
-   * @param writeIteration Boolean for iteration CSV output 
+   * @param writeConvergence Boolean for convergencce CSV output
+   * @param writeIteration Boolean for iteration CSV output
    */
   void makeDir( bool writeConvergence, bool writeIteration )
   {if( writeConvergence || writeIteration ) makeDirsForPath( m_outputDir ); std::cout << "pliplop "<<writeConvergence<<writeIteration<<  m_outputDir <<std::endl; }

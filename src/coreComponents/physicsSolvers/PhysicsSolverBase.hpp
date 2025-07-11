@@ -356,6 +356,7 @@ public:
    * @brief function to perform setup for implicit timestep
    * @param time_n the time at the beginning of the step
    * @param dt the desired timestep
+   * @param cycleNumber The current cycle
    * @param domain the domain partition
    *
    * This function should contain any step level initialization required to perform an implicit
@@ -370,8 +371,17 @@ public:
                      integer const & cycleNumber,
                      DomainPartition & domain );
 
+  /**
+   * @brief Update solver statistics data
+   * @param time_n  The time at the beginning of the step
+   * @param dt The desired timestepr
+   * @param cycleNumber Current cycle number
+   */
   void updateSolverStatistics( real64 const & time_n, real64 const & dt, integer const & cycleNumber );
 
+  /**
+   * @brief Write all the statistics (iteration & convergence) stored into a CSV file
+   */
   void writeStatisticsToTable();
 
   /**
@@ -624,6 +634,7 @@ public:
    * @brief perform cleanup for implicit timestep
    * @param time the time at the beginning of the step
    * @param dt the desired timestep
+   * @param cycleNumber The current cycle
    * @param domain the domain partition
    *
    * This function performs whatever tasks are required to complete an implicit timestep. For

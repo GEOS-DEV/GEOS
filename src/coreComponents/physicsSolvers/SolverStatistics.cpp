@@ -253,7 +253,7 @@ void ConvergenceStatistics::writeResidualNormToTable()
 
   if( !m_csvOutput )
     return;
-    
+
   stdVector< TableData::CellData > residualsNormCells;
 
   struct ResidualInfo
