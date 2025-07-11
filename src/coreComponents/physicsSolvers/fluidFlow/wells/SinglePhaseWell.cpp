@@ -1173,9 +1173,10 @@ void SinglePhaseWell::implicitStepComplete( real64 const & time_n,
 
 void SinglePhaseWell::printRates( real64 const & time_n,
                                   real64 const & GEOS_UNUSED_PARAM( dt ),
-                                  integer const cycleNumber,
+                                  integer const GEOS_UNUSED_PARAM( cycleNumber) ,
                                   DomainPartition & domain )
 {
+   
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
                                                                 string_array const & regionNames )

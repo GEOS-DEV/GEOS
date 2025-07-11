@@ -2093,7 +2093,7 @@ void CompositionalMultiphaseWell::implicitStepComplete( real64 const & time_n,
 
 void CompositionalMultiphaseWell::printRates( real64 const & time_n,
                                               real64 const & dt,
-                                              integer const cycleNumber,
+                                              integer const GEOS_UNUSED_PARAM( cycleNumber ),
                                               DomainPartition & domain )
 {
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
