@@ -75,8 +75,7 @@ public:
   constexpr static int numSamplingPoints = numSamplingPointsPerDirection * numSamplingPointsPerDirection * numSamplingPointsPerDirection;
 
   GEOS_HOST_DEVICE
-  virtual ~H1_Wedge_Lagrange1_Gauss6() override
-  {}
+  virtual ~H1_Wedge_Lagrange1_Gauss6() override = default;
 
   GEOS_HOST_DEVICE
   virtual localIndex getNumQuadraturePoints() const override

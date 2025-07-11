@@ -70,8 +70,7 @@ public:
   constexpr static localIndex numQuadraturePoints = NUM_Q_POINTS::value;
 
   GEOS_HOST_DEVICE
-  virtual ~H1_TriangleFace_Lagrange1_Gauss() override
-  {}
+  virtual ~H1_TriangleFace_Lagrange1_Gauss() override = default;
 
   GEOS_HOST_DEVICE
   virtual localIndex getNumQuadraturePoints() const override
