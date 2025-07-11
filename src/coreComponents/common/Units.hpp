@@ -197,7 +197,10 @@ constexpr inline std::string_view getVariableSymbol( Unit unit )
     case Solubility:        return "S";
     case Mass:              return "m";
     case Mole:              return "n";
-    case MolarVolume:       return "Vm";
+    case MassRate:          return "Q_m";
+    case MoleRate:          return "Q_n";
+    case Transmissibility:  return "T_r";
+    case MolarVolume:       return "V_m";
     case MolarDensity:      return "rho_n";
     case Permeability:      return "K";
   }
