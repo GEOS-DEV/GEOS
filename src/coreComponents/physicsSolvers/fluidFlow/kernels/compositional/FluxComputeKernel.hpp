@@ -32,10 +32,7 @@
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseUtilities.hpp"
 #include "physicsSolvers/fluidFlow/StencilAccessors.hpp"
 #include "physicsSolvers/fluidFlow/kernels/compositional/KernelLaunchSelectors.hpp"
-#include "physicsSolvers/fluidFlow/kernels/compositional/PPUPhaseFlux.hpp"
-#include "physicsSolvers/fluidFlow/kernels/compositional/C1PPUPhaseFlux.hpp"
-#include "physicsSolvers/fluidFlow/kernels/compositional/IHUPhaseFlux.hpp"
-#include "physicsSolvers/fluidFlow/kernels/compositional/HU2PhaseFlux.hpp"
+#include "physicsSolvers/fluidFlow/kernels/compositional/CompositionalPhaseFlux.hpp"
 #include "physicsSolvers/fluidFlow/kernels/compositional/PhaseComponentFlux.hpp"
 
 namespace geos
@@ -274,95 +271,28 @@ public:
           real64 dPhaseFlux_dC[numFluxSupportPoints][numComp]{};
           real64 dPhaseFlux_dTrans = 0.0; // not really used
 
-          if( m_kernelFlags.isSet( KernelFlags::C1PPU ) )
-          {
-            C1PPUPhaseFlux::compute< numComp, numFluxSupportPoints >
-              ( m_numPhases,
-              ip,
-              m_kernelFlags.isSet( KernelFlags::CapPressure ),
-              m_kernelFlags.isSet( KernelFlags::CheckPhasePresenceInGravity ),
-              seri, sesri, sei,
-              trans,
-              dTrans_dPres,
-              m_pres,
-              m_gravCoef,
-              m_phaseMob, m_dPhaseMob,
-              m_phaseVolFrac, m_dPhaseVolFrac,
-              m_dCompFrac_dCompDens,
-              m_phaseMassDens, m_dPhaseMassDens,
-              m_phaseCapPressure, m_dPhaseCapPressure_dPhaseVolFrac,
-              potGrad,
-              phaseFlux,
-              dPhaseFlux_dP,
-              dPhaseFlux_dC );
-          }
-          else if( m_kernelFlags.isSet( KernelFlags::IHU ) )
-          {
-            IHUPhaseFlux::compute< numComp, numFluxSupportPoints >
-              ( m_numPhases,
-              ip,
-              m_kernelFlags.isSet( KernelFlags::CapPressure ),
-              m_kernelFlags.isSet( KernelFlags::CheckPhasePresenceInGravity ),
-              seri, sesri, sei,
-              trans,
-              dTrans_dPres,
-              m_pres,
-              m_gravCoef,
-              m_phaseMob, m_dPhaseMob,
-              m_phaseVolFrac, m_dPhaseVolFrac,
-              m_dCompFrac_dCompDens,
-              m_phaseMassDens, m_dPhaseMassDens,
-              m_phaseCapPressure, m_dPhaseCapPressure_dPhaseVolFrac,
-              potGrad,
-              phaseFlux,
-              dPhaseFlux_dP,
-              dPhaseFlux_dC );
-          }
-          else if( m_kernelFlags.isSet( KernelFlags::HU2PH ) )
-          {
-            HU2PhaseFlux::compute< numComp, numFluxSupportPoints >
-              ( m_numPhases,
-              ip,
-              m_kernelFlags.isSet( KernelFlags::CapPressure ),
-              m_kernelFlags.isSet( KernelFlags::CheckPhasePresenceInGravity ),
-              seri, sesri, sei,
-              trans,
-              dTrans_dPres,
-              m_pres,
-              m_gravCoef,
-              m_phaseMob, m_dPhaseMob,
-              m_phaseVolFrac, m_dPhaseVolFrac,
-              m_dCompFrac_dCompDens,
-              m_phaseMassDens, m_dPhaseMassDens,
-              m_phaseCapPressure, m_dPhaseCapPressure_dPhaseVolFrac,
-              potGrad,
-              phaseFlux,
-              dPhaseFlux_dP,
-              dPhaseFlux_dC );
-          }
-          else
-          {
-            PPUPhaseFlux::compute< numComp, numFluxSupportPoints >
-              ( m_numPhases,
-              ip,
-              m_kernelFlags.isSet( KernelFlags::CapPressure ),
-              m_kernelFlags.isSet( KernelFlags::CheckPhasePresenceInGravity ),
-              seri, sesri, sei,
-              trans,
-              dTrans_dPres,
-              m_pres,
-              m_gravCoef,
-              m_phaseMob, m_dPhaseMob,
-              m_phaseVolFrac, m_dPhaseVolFrac,
-              m_dCompFrac_dCompDens,
-              m_phaseMassDens, m_dPhaseMassDens,
-              m_phaseCapPressure, m_dPhaseCapPressure_dPhaseVolFrac,
-              potGrad,
-              phaseFlux,
-              dPhaseFlux_dP,
-              dPhaseFlux_dC,
-              dPhaseFlux_dTrans );
-          }
+          // Calculation of phase flux via a stateless interface
+          // It encapsulates the logic of choosing the right kernel.
+          CompositionalPhaseFlux::dispatch<numComp, numFluxSupportPoints>(
+            m_kernelFlags, // The key for dispatching
+            m_numPhases,
+            ip,
+            seri, sesri, sei,
+            trans,
+            dTrans_dPres,
+            m_pres,
+            m_gravCoef,
+            m_phaseMob, m_dPhaseMob,
+            m_phaseVolFrac, m_dPhaseVolFrac,
+            m_dCompFrac_dCompDens,
+            m_phaseMassDens, m_dPhaseMassDens,
+            m_phaseCapPressure, m_dPhaseCapPressure_dPhaseVolFrac,
+            potGrad,
+            phaseFlux,
+            dPhaseFlux_dP,
+            dPhaseFlux_dC,
+            dPhaseFlux_dTrans
+          );
 
           // choose upstream cell for composition upwinding
           localIndex const k_up = (phaseFlux >= 0) ? 0 : 1;

@@ -69,6 +69,9 @@ set( fluidFlowSolvers_headers
      kernels/compositional/AquiferBCKernel.hpp
      kernels/compositional/PPUPhaseFlux.hpp
      kernels/compositional/C1PPUPhaseFlux.hpp
+     kernels/compositional/IHUPhaseFlux.hpp
+     kernels/compositional/HU2PhaseFlux.hpp
+     kernels/compositional/CompositionalPhaseFlux.hpp    
      kernels/compositional/CapillaryPressureUpdateKernel.hpp
      kernels/compositional/CFLKernel.hpp
      kernels/compositional/CompositionalMultiphaseHybridFVMKernels.hpp
@@ -81,8 +84,6 @@ set( fluidFlowSolvers_headers
      kernels/compositional/FluxComputeKernelBase.hpp
      kernels/compositional/GlobalComponentFractionKernel.hpp
      kernels/compositional/HydrostaticPressureKernel.hpp
-     kernels/compositional/IHUPhaseFlux.hpp
-     kernels/compositional/HU2PhaseFlux.hpp
      kernels/compositional/KernelLaunchSelectors.hpp
      kernels/compositional/PhaseComponentFlux.hpp
      kernels/compositional/PhaseMobilityKernel.hpp
