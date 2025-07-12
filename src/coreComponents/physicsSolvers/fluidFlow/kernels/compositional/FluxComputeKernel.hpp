@@ -273,7 +273,7 @@ public:
 
           // Calculation of phase flux via a stateless interface
           // It encapsulates the logic of choosing the right kernel.
-          CompositionalPhaseFlux::dispatch<numComp, numFluxSupportPoints>(
+          CompositionalPhaseFlux::dispatch< numComp, numFluxSupportPoints >(
             m_kernelFlags, // The key for dispatching
             m_numPhases,
             ip,
@@ -292,7 +292,7 @@ public:
             dPhaseFlux_dP,
             dPhaseFlux_dC,
             dPhaseFlux_dTrans
-          );
+            );
 
           // choose upstream cell for composition upwinding
           localIndex const k_up = (phaseFlux >= 0) ? 0 : 1;

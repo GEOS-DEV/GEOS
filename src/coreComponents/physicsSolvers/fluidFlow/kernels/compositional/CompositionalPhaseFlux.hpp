@@ -39,79 +39,98 @@ using KernelFlags = isothermalCompositionalMultiphaseFVMKernels::KernelFlags;
 struct CompositionalPhaseFlux
 {
   /**
-   * @brief Selects and calls the appropriate static compute function based on kernelFlags.
-   *
-   * @tparam NumComp The number of components.
-   * @tparam NumSupportPoints The number of support points for the flux.
-   * @param kernelFlags The runtime flags used to select the compute kernel.
-   * @param ...args The full list of arguments to be forwarded to the compute kernels.
+   * @brief Form the lUpwind discretization
+   * @tparam numComp number of components
+   * @tparam numFluxSupportPoints number of flux support points
+   * @param numPhase number of phases
+   * @param kernelFlags collection of boolean flags
+   * @param ip phase index
+   * @param hasCapPressure flag indicating if there is capillary pressure
+   * @param seri arraySlice of the stencil-implied element region index
+   * @param sesri arraySlice of the stencil-implied element subregion index
+   * @param sei arraySlice of the stencil-implied element index
+   * @param trans transmissibility at the connection
+   * @param dTrans_dPres derivative of transmissibility wrt pressure
+   * @param pres pressure
+   * @param gravCoef gravitational coefficient
+   * @param phaseMob phase mobility
+   * @param dPhaseMob derivative of phase mobility wrt pressure, temperature, comp density
+   * @param dPhaseVolFrac derivative of phase volume fraction wrt pressure, temperature, comp density
+   * @param dCompFrac_dCompDens derivative of component fraction wrt component density
+   * @param phaseMassDens phase mass density
+   * @param dPhaseMassDens derivative of phase mass density wrt pressure, temperature, comp fraction
+   * @param phaseCapPressure phase capillary pressure
+   * @param dPhaseCapPressure_dPhaseVolFrac derivative of phase capillary pressure wrt phase volume fraction
+   * @param potGrad potential gradient for this phase
+   * @param phaseFlux phase flux
+   * @param dPhaseFlux_dP derivative of phase flux wrt pressure
+   * @param dPhaseFlux_dC derivative of phase flux wrt comp density
+   * @param dPhaseFlux_dTrans derivative of phase flux wrt transmissibility
    */
-  template<int NumComp, int NumSupportPoints>
-  static GEOS_HOST_DEVICE inline void dispatch(
-                                               
-                                               BitFlags< KernelFlags > const & kernelFlags,
-                                               // --- Pass-through arguments for the compute kernels ---
-                                               const integer numPhases,
-                                               const integer ip,
-                                               localIndex const ( &seri )[NumSupportPoints],
-                                               localIndex const ( &sesri )[NumSupportPoints],
-                                               localIndex const ( &sei )[NumSupportPoints],
-                                               real64 const ( &trans )[2],
-                                               real64 const ( &dTrans_dPres )[2],
-                                               ElementViewConst< arrayView1d< real64 const > > const & pres,
-                                               ElementViewConst< arrayView1d< real64 const > > const & gravCoef,
-                                               ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & phaseMob,
-                                               ElementViewConst< arrayView3d< real64 const, compflow::USD_PHASE_DC > > const & dPhaseMob,
-                                               ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & phaseVolFrac,
-                                               ElementViewConst< arrayView3d< real64 const, compflow::USD_PHASE_DC > > const & dPhaseVolFrac,
-                                               ElementViewConst< arrayView3d< real64 const, compflow::USD_COMP_DC > > const & dCompFrac_dCompDens,
-                                               ElementViewConst< arrayView3d< real64 const, constitutive::multifluid::USD_PHASE > > const & phaseMassDens,
-                                               ElementViewConst< arrayView4d< real64 const, constitutive::multifluid::USD_PHASE_DC > > const & dPhaseMassDens,
-                                               ElementViewConst< arrayView3d< real64 const, constitutive::cappres::USD_CAPPRES > > const & phaseCapPressure,
-                                               ElementViewConst< arrayView4d< real64 const, constitutive::cappres::USD_CAPPRES_DS > > const & dPhaseCapPressure_dPhaseVolFrac,
-                                               // --- Output Arguments ---
-                                               real64 & potGrad,
-                                               real64 & phaseFlux,
-                                               real64 ( & dPhaseFlux_dP )[NumSupportPoints],
-                                               real64 ( & dPhaseFlux_dC )[NumSupportPoints][NumComp],
-                                               real64 & dPhaseFlux_dTrans
-                                               )
+  template< int NumComp, int NumSupportPoints >
+  static GEOS_HOST_DEVICE inline void
+  dispatch( BitFlags< KernelFlags > const & kernelFlags,
+            // --- Pass-through arguments for the compute kernels ---
+            const integer numPhases,
+            const integer ip,
+            localIndex const ( &seri )[NumSupportPoints],
+            localIndex const ( &sesri )[NumSupportPoints],
+            localIndex const ( &sei )[NumSupportPoints],
+            real64 const ( &trans )[2],
+            real64 const ( &dTrans_dPres )[2],
+            ElementViewConst< arrayView1d< real64 const > > const & pres,
+            ElementViewConst< arrayView1d< real64 const > > const & gravCoef,
+            ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & phaseMob,
+            ElementViewConst< arrayView3d< real64 const, compflow::USD_PHASE_DC > > const & dPhaseMob,
+            ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & phaseVolFrac,
+            ElementViewConst< arrayView3d< real64 const, compflow::USD_PHASE_DC > > const & dPhaseVolFrac,
+            ElementViewConst< arrayView3d< real64 const, compflow::USD_COMP_DC > > const & dCompFrac_dCompDens,
+            ElementViewConst< arrayView3d< real64 const, constitutive::multifluid::USD_PHASE > > const & phaseMassDens,
+            ElementViewConst< arrayView4d< real64 const, constitutive::multifluid::USD_PHASE_DC > > const & dPhaseMassDens,
+            ElementViewConst< arrayView3d< real64 const, constitutive::cappres::USD_CAPPRES > > const & phaseCapPressure,
+            ElementViewConst< arrayView4d< real64 const, constitutive::cappres::USD_CAPPRES_DS > > const & dPhaseCapPressure_dPhaseVolFrac,
+            real64 & potGrad,
+            real64 & phaseFlux,
+            real64 ( & dPhaseFlux_dP )[NumSupportPoints],
+            real64 ( & dPhaseFlux_dC )[NumSupportPoints][NumComp],
+            real64 & dPhaseFlux_dTrans
+            )
   {
     // The dispatcher reads the flags and passes the correct boolean arguments down.
-    const bool hasCapPressure = kernelFlags.isSet(KernelFlags::CapPressure);
-    const bool checkPhasePresenceInGravity = kernelFlags.isSet(KernelFlags::CheckPhasePresenceInGravity);
-    
-    if (kernelFlags.isSet(KernelFlags::C1PPU))
+    const bool hasCapPressure = kernelFlags.isSet( KernelFlags::CapPressure );
+    const bool checkPhasePresenceInGravity = kernelFlags.isSet( KernelFlags::CheckPhasePresenceInGravity );
+
+    if( kernelFlags.isSet( KernelFlags::C1PPU ))
     {
-      C1PPUPhaseFlux::compute<NumComp, NumSupportPoints>(
-                                                         numPhases, ip, hasCapPressure, checkPhasePresenceInGravity, seri, sesri, sei, trans, dTrans_dPres,
-                                                         pres, gravCoef, phaseMob, dPhaseMob, phaseVolFrac, dPhaseVolFrac, dCompFrac_dCompDens,
-                                                         phaseMassDens, dPhaseMassDens, phaseCapPressure, dPhaseCapPressure_dPhaseVolFrac,
-                                                         potGrad, phaseFlux, dPhaseFlux_dP, dPhaseFlux_dC);
+      C1PPUPhaseFlux::compute< NumComp, NumSupportPoints >(
+        numPhases, ip, hasCapPressure, checkPhasePresenceInGravity, seri, sesri, sei, trans, dTrans_dPres,
+        pres, gravCoef, phaseMob, dPhaseMob, phaseVolFrac, dPhaseVolFrac, dCompFrac_dCompDens,
+        phaseMassDens, dPhaseMassDens, phaseCapPressure, dPhaseCapPressure_dPhaseVolFrac,
+        potGrad, phaseFlux, dPhaseFlux_dP, dPhaseFlux_dC );
     }
-    else if (kernelFlags.isSet(KernelFlags::IHU))
+    else if( kernelFlags.isSet( KernelFlags::IHU ))
     {
-      IHUPhaseFlux::compute<NumComp, NumSupportPoints>(
-                                                       numPhases, ip, hasCapPressure, checkPhasePresenceInGravity, seri, sesri, sei, trans, dTrans_dPres,
-                                                       pres, gravCoef, phaseMob, dPhaseMob, phaseVolFrac, dPhaseVolFrac, dCompFrac_dCompDens,
-                                                       phaseMassDens, dPhaseMassDens, phaseCapPressure, dPhaseCapPressure_dPhaseVolFrac,
-                                                       potGrad, phaseFlux, dPhaseFlux_dP, dPhaseFlux_dC);
+      IHUPhaseFlux::compute< NumComp, NumSupportPoints >(
+        numPhases, ip, hasCapPressure, checkPhasePresenceInGravity, seri, sesri, sei, trans, dTrans_dPres,
+        pres, gravCoef, phaseMob, dPhaseMob, phaseVolFrac, dPhaseVolFrac, dCompFrac_dCompDens,
+        phaseMassDens, dPhaseMassDens, phaseCapPressure, dPhaseCapPressure_dPhaseVolFrac,
+        potGrad, phaseFlux, dPhaseFlux_dP, dPhaseFlux_dC );
     }
-    else if (kernelFlags.isSet(KernelFlags::HU2PH))
+    else if( kernelFlags.isSet( KernelFlags::HU2PH ))
     {
-      HU2PhaseFlux::compute<NumComp, NumSupportPoints>(
-                                                       numPhases, ip, hasCapPressure, checkPhasePresenceInGravity, seri, sesri, sei, trans, dTrans_dPres,
-                                                       pres, gravCoef, phaseMob, dPhaseMob, phaseVolFrac, dPhaseVolFrac, dCompFrac_dCompDens,
-                                                       phaseMassDens, dPhaseMassDens, phaseCapPressure, dPhaseCapPressure_dPhaseVolFrac,
-                                                       potGrad, phaseFlux, dPhaseFlux_dP, dPhaseFlux_dC);
+      HU2PhaseFlux::compute< NumComp, NumSupportPoints >(
+        numPhases, ip, hasCapPressure, checkPhasePresenceInGravity, seri, sesri, sei, trans, dTrans_dPres,
+        pres, gravCoef, phaseMob, dPhaseMob, phaseVolFrac, dPhaseVolFrac, dCompFrac_dCompDens,
+        phaseMassDens, dPhaseMassDens, phaseCapPressure, dPhaseCapPressure_dPhaseVolFrac,
+        potGrad, phaseFlux, dPhaseFlux_dP, dPhaseFlux_dC );
     }
     else
     {
-      PPUPhaseFlux::compute<NumComp, NumSupportPoints>(
-                                                       numPhases, ip, hasCapPressure, checkPhasePresenceInGravity, seri, sesri, sei, trans, dTrans_dPres,
-                                                       pres, gravCoef, phaseMob, dPhaseMob, phaseVolFrac, dPhaseVolFrac, dCompFrac_dCompDens,
-                                                       phaseMassDens, dPhaseMassDens, phaseCapPressure, dPhaseCapPressure_dPhaseVolFrac,
-                                                       potGrad, phaseFlux, dPhaseFlux_dP, dPhaseFlux_dC, dPhaseFlux_dTrans);
+      PPUPhaseFlux::compute< NumComp, NumSupportPoints >(
+        numPhases, ip, hasCapPressure, checkPhasePresenceInGravity, seri, sesri, sei, trans, dTrans_dPres,
+        pres, gravCoef, phaseMob, dPhaseMob, phaseVolFrac, dPhaseVolFrac, dCompFrac_dCompDens,
+        phaseMassDens, dPhaseMassDens, phaseCapPressure, dPhaseCapPressure_dPhaseVolFrac,
+        potGrad, phaseFlux, dPhaseFlux_dP, dPhaseFlux_dC, dPhaseFlux_dTrans );
     }
   }
 };
