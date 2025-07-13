@@ -36,7 +36,7 @@ using KernelFlags = isothermalCompositionalMultiphaseFVMKernels::KernelFlags;
 /**
  * @brief A stateless, static dispatcher for selecting a compositional phase flux discretization.
  */
-struct CompositionalPhaseFlux
+struct PhaseFlux
 {
   /**
    * @brief Form the lUpwind discretization

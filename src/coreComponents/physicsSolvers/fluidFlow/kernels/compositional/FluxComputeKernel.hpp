@@ -32,7 +32,7 @@
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseUtilities.hpp"
 #include "physicsSolvers/fluidFlow/StencilAccessors.hpp"
 #include "physicsSolvers/fluidFlow/kernels/compositional/KernelLaunchSelectors.hpp"
-#include "physicsSolvers/fluidFlow/kernels/compositional/CompositionalPhaseFlux.hpp"
+#include "physicsSolvers/fluidFlow/kernels/compositional/PhaseFlux.hpp"
 #include "physicsSolvers/fluidFlow/kernels/compositional/PhaseComponentFlux.hpp"
 
 namespace geos
@@ -273,7 +273,7 @@ public:
 
           // Calculation of phase flux via a stateless interface
           // It encapsulates the logic of choosing the right kernel.
-          CompositionalPhaseFlux::dispatch< numComp, numFluxSupportPoints >(
+          PhaseFlux::dispatch< numComp, numFluxSupportPoints >(
             m_kernelFlags, // The key for dispatching
             m_numPhases,
             ip,
