@@ -127,7 +127,7 @@ void ImplicitSmallStrainQuasiStatic< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE 
 
   typename CONSTITUTIVE_TYPE::KernelWrapper::DiscretizationOps stiffness;
 
-  FE_TYPE::symmetricGradient( dNdX, stack.uhat_local, strainInc );
+  finiteElement::feOps::symmetricGradient( dNdX, stack.uhat_local, strainInc );
 
   m_constitutiveUpdate.smallStrainUpdate( k, q, m_dt, strainInc, stress, stiffness );
 
@@ -144,7 +144,7 @@ void ImplicitSmallStrainQuasiStatic< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE 
 
   real64 N[numNodesPerElem];
   FE_TYPE::calcN( q, stack.feStack, N );
-  FE_TYPE::plusGradNajAijPlusNaFi( dNdX,
+  finiteElement::feOps::plusGradNajAijPlusNaFi( dNdX,
                                    stress,
                                    N,
                                    gravityForce,

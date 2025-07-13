@@ -176,10 +176,10 @@ public:
     FE_TYPE::calcN( q, N );
 
     real64 qp_damage = 0.0;
-    FE_TYPE::value( N, stack.nodalDamageLocal, qp_damage );
+    finiteElement::feOps::value( N, stack.nodalDamageLocal, qp_damage );
 
     real64 qp_disp[3] = {0, 0, 0};
-    FE_TYPE::value( N, stack.u_local, qp_disp );
+    finiteElement::feOps::value( N, stack.u_local, qp_disp );
 
     real64 elemPresGradient[3] = {0, 0, 0};
     for( integer i=0; i<3; ++i )

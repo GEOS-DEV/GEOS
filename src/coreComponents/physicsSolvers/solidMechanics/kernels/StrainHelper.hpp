@@ -23,6 +23,7 @@
 #include "common/DataTypes.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
 #include "finiteElement/FiniteElementDispatch.hpp"
+#include "finiteElement/elementFormulations/FiniteElementOperators.hpp"
 #include "constitutive/ConstitutivePassThru.hpp"
 #include "mesh/CellElementSubRegion.hpp"
 #include "mesh/utilities/AverageOverQuadraturePointsKernel.hpp"
@@ -136,8 +137,8 @@ public:
     real64 const detJxW = m_finiteElementSpace.template getGradN< FE_TYPE >( k, q, stack.xLocal, stack.feStack, dNdX );
     real64 strain[6] = {0.0};
     real64 strainInc[6] = {0.0};
-    FE_TYPE::symmetricGradient( dNdX, stack.uLocal, strain );
-    FE_TYPE::symmetricGradient( dNdX, stack.uHatLocal, strainInc );
+    finiteElement::feOps::symmetricGradient( dNdX, stack.uLocal, strain );
+    finiteElement::feOps::symmetricGradient( dNdX, stack.uHatLocal, strainInc );
 
     real64 elasticStrainInc[6] = {0.0};
     m_solidUpdate.getElasticStrainInc( k, q, elasticStrainInc );

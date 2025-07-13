@@ -118,10 +118,6 @@ public:
                              ( num1dNodes - 1 ) * ( k / 2 ) );
   }
 
-  /** @cond Doxygen_Suppress */
-  USING_FINITEELEMENTBASE
-  /** @endcond Doxygen_Suppress */
-
   ~Qk_Hexahedron_Lagrange_GaussLobatto() = default;
 
   GEOS_HOST_DEVICE

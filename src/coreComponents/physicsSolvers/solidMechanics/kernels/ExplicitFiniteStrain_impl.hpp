@@ -94,8 +94,8 @@ void ExplicitFiniteStrain< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::quadrat
   real64 Ldt[3][3] = { {0} };
   real64 fInv[3][3] = { {0} };
 
-  FE_TYPE::gradient( dNdX, stack.varLocal, dUhatdX );
-  FE_TYPE::gradient( dNdX, stack.uLocal, dUdX );
+  finiteElement::feOps::gradient( dNdX, stack.varLocal, dUhatdX );
+  finiteElement::feOps::gradient( dNdX, stack.uLocal, dUdX );
 
   LvArray::tensorOps::scale< 3, 3 >( dUhatdX, m_dt );
 
@@ -127,7 +127,7 @@ void ExplicitFiniteStrain< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::quadrat
   LvArray::tensorOps::Rij_eq_symAikBjk< 3 >( P, stress, fInv );
   LvArray::tensorOps::scale< 3, 3 >( P, -detJ * detF );
 
-  FE_TYPE::plusGradNajAij( dNdX, P, stack.fLocal );
+  finiteElement::feOps::plusGradNajAij( dNdX, P, stack.fLocal );
 }
 
 

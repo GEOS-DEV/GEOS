@@ -21,6 +21,7 @@
 #define GEOS_PHYSICSSOLVERS_SIMPLEPDE_PHASEFIELDDAMAGEKERNELS_HPP_
 
 #include "finiteElement/kernelInterface/ImplicitKernelBase.hpp"
+#include "finiteElement/elementFormulations/FiniteElementOperators.hpp"
 
 namespace geos
 {
@@ -215,7 +216,7 @@ public:
 
     real64 qp_damage = 0.0;
     real64 qp_grad_damage[3] = {0, 0, 0};
-    FE_TYPE::valueAndGradient( N, dNdX, stack.nodalDamageLocal, qp_damage, qp_grad_damage );
+    finiteElement::feOps::valueAndGradient( N, dNdX, stack.nodalDamageLocal, qp_damage, qp_grad_damage );
 
     real64 D = 0;                                                                   //max between threshold and
                                                                                     // Elastic energy

@@ -15,6 +15,7 @@
 
 
 #include "finiteElement/elementFormulations/FiniteElementBase.hpp"
+#include "finiteElement/elementFormulations/FiniteElementOperators.hpp"
 #include "gtest/gtest.h"
 #include "testFiniteElementHelpers.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
@@ -219,7 +220,7 @@ TEST( FiniteElementBase, test_value )
     real64 referenceScalarValue = -1.0;
     real64 feBaseScalarValue = -1.0;
     value( N, scalar, referenceScalarValue );
-    FiniteElementBase::value( N, scalar, feBaseScalarValue );
+    finiteElement::feOps::value( N, scalar, feBaseScalarValue );
 
     EXPECT_FLOAT_EQ( feBaseScalarValue, referenceScalarValue );
 
@@ -227,7 +228,7 @@ TEST( FiniteElementBase, test_value )
     real64 referenceVectorValue[3] = {-1, -1, -1};
     real64 feBaseVectorValue[3] = {-1, -1, -1};
     value( N, vector, referenceVectorValue );
-    FiniteElementBase::value( N, vector, feBaseVectorValue );
+    finiteElement::feOps::value( N, vector, feBaseVectorValue );
 
     EXPECT_FLOAT_EQ( feBaseVectorValue[0], referenceVectorValue[0] );
     EXPECT_FLOAT_EQ( feBaseVectorValue[1], referenceVectorValue[1] );
@@ -274,7 +275,7 @@ TEST( FiniteElementBase, test_symmetricGradient )
     real64 referenceVectorGradient[6] = {-1, -1, -1, -1, -1, -1};
     real64 feBaseVectorGradient[6] = {-1, -1, -1, -1, -1, -1};
     symmetricGradient( gradN, vector, referenceVectorGradient );
-    FiniteElementBase::symmetricGradient( gradN, vector, feBaseVectorGradient );
+    finiteElement::feOps::symmetricGradient( gradN, vector, feBaseVectorGradient );
 
     for( int i=0; i<6; ++i )
     {
@@ -344,13 +345,13 @@ TEST( FiniteElementBase, test_gradient )
     real64 referenceScalarGradient[3] = {-1, -1, -1};
     real64 feBaseScalarGradient[3] = {-1, -1, -1};
     gradient( gradN, scalar, referenceScalarGradient );
-    FiniteElementBase::gradient( gradN, scalar, feBaseScalarGradient );
+    finiteElement::feOps::gradient( gradN, scalar, feBaseScalarGradient );
 
 
     real64 referenceVectorGradient[3][3] = {{-1, -1, -1}, {-1, -1, -1}, {-1, -1, -1}};
     real64 feBaseVectorGradient[3][3] = {{-1, -1, -1}, {-1, -1, -1}, {-1, -1, -1}};
     gradient( gradN, vector, referenceVectorGradient );
-    FiniteElementBase::gradient( gradN, vector, feBaseVectorGradient );
+    finiteElement::feOps::gradient( gradN, vector, feBaseVectorGradient );
 
     for( int i=0; i<3; ++i )
     {
@@ -411,7 +412,7 @@ TEST( FiniteElementBase, test_valueAndGradient )
     real64 referenceScalarGradient[3] = {-1, -1, -1};
     real64 feBaseScalarGradient[3] = {-1, -1, -1};
     valueAndGradient( N, gradN, scalar, referenceScalarValue, referenceScalarGradient );
-    FiniteElementBase::valueAndGradient( N, gradN, scalar, feBaseScalarValue, feBaseScalarGradient );
+    finiteElement::feOps::valueAndGradient( N, gradN, scalar, feBaseScalarValue, feBaseScalarGradient );
 
     EXPECT_FLOAT_EQ( feBaseScalarValue, referenceScalarValue );
     for( int i=0; i<3; ++i )
@@ -425,7 +426,7 @@ TEST( FiniteElementBase, test_valueAndGradient )
 //    real64 referenceVectorGradient[3][3] = {{-1,-1,-1},{-1,-1,-1},{-1,-1,-1}};
 //    real64 feBaseVectorGradient[3][3] = {{-1,-1,-1},{-1,-1,-1},{-1,-1,-1}};
 //    valueAndGradient( N, gradN, vector, referenceVectorValue, referenceVectorGradient );
-//    FiniteElementBase::valueAndGradient( N, gradN, vector, feBaseVectorValue, feBaseVectorGradient );
+//    finiteElement::feOps::valueAndGradient( N, gradN, vector, feBaseVectorValue, feBaseVectorGradient );
 //
 //
 //    for( int i=0; i<3; ++i )
@@ -495,10 +496,10 @@ TEST( FiniteElementBase, test_plusGradNajAij )
     randomVar( r2SymmTensor );
 
     plusGradNajAij( gradN, r2Tensor, baselineResult );
-    FiniteElementBase::plusGradNajAij( gradN, r2Tensor, feResult );
+    finiteElement::feOps::plusGradNajAij( gradN, r2Tensor, feResult );
 
     plusGradNajAij( gradN, r2SymmTensor, baselineResultSym );
-    FiniteElementBase::plusGradNajAij( gradN, r2SymmTensor, feResultSym );
+    finiteElement::feOps::plusGradNajAij( gradN, r2SymmTensor, feResultSym );
   }
 
   for( int a=0; a<NUM_SUPPORT_POINTS; ++a )
@@ -542,7 +543,7 @@ TEST( FiniteElementBase, test_plusNaFi )
     randomVar( f );
 
     plusNaFi( N, f, baselineResult );
-    FiniteElementBase::plusNaFi( N, f, feResult );
+    finiteElement::feOps::plusNaFi( N, f, feResult );
   }
 
   for( int a=0; a<NUM_SUPPORT_POINTS; ++a )
@@ -614,10 +615,10 @@ TEST( FiniteElementBase, test_plusGradNajAijPlusNaFi )
     randomVar( f );
 
     plusGradNajAijPlusNaFi( gradN, r2Tensor, N, f, baselineResult );
-    FiniteElementBase::plusGradNajAijPlusNaFi( gradN, r2Tensor, N, f, feResult );
+    finiteElement::feOps::plusGradNajAijPlusNaFi( gradN, r2Tensor, N, f, feResult );
 
     plusGradNajAijPlusNaFi( gradN, r2SymmTensor, N, f, baselineResultSym );
-    FiniteElementBase::plusGradNajAijPlusNaFi( gradN, r2SymmTensor, N, f, feResultSym );
+    finiteElement::feOps::plusGradNajAijPlusNaFi( gradN, r2SymmTensor, N, f, feResultSym );
   }
 
   for( int a=0; a<NUM_SUPPORT_POINTS; ++a )

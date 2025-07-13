@@ -21,6 +21,7 @@
 #define GEOS_PHYSICSSOLVERS_SOLIDMECHANICS_KERNELS_FIXEDSTRESSTHERMOPOROMECHANICS_IMPL_HPP_
 
 #include "FixedStressThermoPoromechanics.hpp"
+#include "finiteElement/elementFormulations/FiniteElementOperators.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
 #include "physicsSolvers/multiphysics/PoromechanicsFields.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsFields.hpp"
@@ -132,7 +133,7 @@ quadraturePointKernel( localIndex const k,
 
   typename CONSTITUTIVE_TYPE::KernelWrapper::DiscretizationOps stiffness;
 
-  FE_TYPE::symmetricGradient( dNdX, stack.uhat_local, strainInc );
+  finiteElement::feOps::symmetricGradient( dNdX, stack.uhat_local, strainInc );
 
   // Evaluate total stress and its derivatives
   // TODO: allow for a customization of the kernel to pass the average pressure to the small strain update (to account for cap pressure
@@ -160,7 +161,7 @@ quadraturePointKernel( localIndex const k,
 
   real64 N[numNodesPerElem];
   FE_TYPE::calcN( q, stack.feStack, N );
-  FE_TYPE::plusGradNajAijPlusNaFi( dNdX,
+  finiteElement::feOps::plusGradNajAijPlusNaFi( dNdX,
                                    totalStress,
                                    N,
                                    gravityForce,

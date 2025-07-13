@@ -144,7 +144,7 @@ struct DamageAndDamageGradientInterpolationKernel
 
         real64 qDamage = 0.0;
         real64 qDamageGrad[3] = {0, 0, 0};
-        FE_TYPE::valueAndGradient( N, dNdX, nodalDamageLocal, qDamage, qDamageGrad );
+        finiteElement::feOps::valueAndGradient( N, dNdX, nodalDamageLocal, qDamage, qDamageGrad );
 
         damageFieldOnMaterial( k, q ) = qDamage;
 

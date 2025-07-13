@@ -29,6 +29,7 @@ set( finiteElement_headers
      LinearFormUtilities.hpp
      PDEUtilities.hpp
      elementFormulations/FiniteElementBase.hpp
+     elementFormulations/FiniteElementOperators.hpp
      elementFormulations/H1_Hexahedron_Lagrange1_GaussLegendre2.hpp
      elementFormulations/H1_Pyramid_Lagrange1_Gauss5.hpp
      elementFormulations/H1_QuadrilateralFace_Lagrange1_GaussLegendre2.hpp
