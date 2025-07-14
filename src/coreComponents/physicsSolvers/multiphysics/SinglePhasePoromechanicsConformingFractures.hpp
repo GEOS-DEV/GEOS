@@ -22,7 +22,6 @@
 
 #include "physicsSolvers/multiphysics/PoromechanicsConformingFractures.hpp"
 #include "physicsSolvers/multiphysics/SinglePhasePoromechanics.hpp"
-#include "physicsSolvers/solidMechanics/contact/SolidMechanicsLagrangeContact.hpp"
 
 namespace geos
 {

@@ -19,25 +19,6 @@
 
 #include "SinglePhasePoromechanicsConformingFractures.hpp"
 
-#include "dataRepository/LogLevelsInfo.hpp"
-#include "constitutive/solid/PorousSolid.hpp"
-#include "constitutive/fluid/singlefluid/SingleFluidBase.hpp"
-#include "constitutive/contact/HydraulicApertureRelationSelector.hpp"
-#include "linearAlgebra/solvers/BlockPreconditioner.hpp"
-#include "linearAlgebra/solvers/SeparateComponentPreconditioner.hpp"
-#include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
-#include "physicsSolvers/multiphysics/poromechanicsKernels/SinglePhasePoromechanics.hpp"
-#include "physicsSolvers/multiphysics/poromechanicsKernels/ThermalSinglePhasePoromechanics.hpp"
-#include "physicsSolvers/multiphysics/poromechanicsKernels/SinglePhasePoromechanicsFractures.hpp"
-#include "physicsSolvers/solidMechanics/SolidMechanicsFields.hpp"
-#include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
-#include "physicsSolvers/solidMechanics/contact/ContactFields.hpp"
-#include "finiteVolume/FluxApproximationBase.hpp"
-
-#include "physicsSolvers/multiphysics/poromechanicsKernels/PoromechanicsKernelsDispatchTypeList.hpp"
-#include "physicsSolvers/multiphysics/poromechanicsKernels/ThermoPoromechanicsKernelsDispatchTypeList.hpp"
-#include "physicsSolvers/solidMechanics/kernels/SolidMechanicsKernelsDispatchTypeList.hpp"
-
 namespace geos
 {
 
