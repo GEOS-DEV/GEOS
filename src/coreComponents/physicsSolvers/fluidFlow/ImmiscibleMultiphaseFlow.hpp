@@ -101,6 +101,7 @@ public:
                             DofManager const & dofManager,
                             arrayView1d< real64 const > const & localSolution,
                             arrayView1d< real64 const > const & localResidual ) override;
+
   virtual void
   applySystemSolution( DofManager const & dofManager,
                        arrayView1d< real64 const > const & localSolution,
@@ -135,6 +136,11 @@ public:
   virtual void saveConvergedState( ElementSubRegionBase & subRegion ) const override final;
 
   virtual void updateState( DomainPartition & domain ) override final;
+
+  void
+  updateSolutionField( DofManager const & dofManager,
+                       arrayView1d< real64 const > const & localSolution,
+                       DomainPartition & domain );
 
   /**
    * @brief Getter for the number of fluid phases
@@ -222,6 +228,7 @@ public:
     static constexpr char const * capPressureNamesString() { return "capPressureNames"; }
     static constexpr char const * relPermNamesString() { return "relPermNames"; }
     static constexpr char const * elemDofFieldString() { return "elemDofField"; }
+    static constexpr char const * elemDofUpdateFieldString() { return "elemDofUpdateField"; }
 
     // density averaging scheme
     static constexpr char const * gravityDensitySchemeString()    { return "gravityDensityScheme"; }

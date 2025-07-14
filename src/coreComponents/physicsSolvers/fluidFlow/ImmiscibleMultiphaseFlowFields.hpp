@@ -101,7 +101,6 @@ DECLARE_FIELD( dPhaseMobility,
                NO_WRITE,
                "Derivative of phase mobility with respect to pressure, temperature, global component density" );
 
-
 DECLARE_FIELD( phaseOutflux,
                "phaseOutflux",
                array2dLayoutPhase,
@@ -117,6 +116,14 @@ DECLARE_FIELD( phaseCFLNumber,
                LEVEL_0,
                NO_WRITE,
                "Phase CFL number" );
+
+DECLARE_FIELD( solutionUpdate,
+               "solutionUpdate",
+               array2dLayoutPhase,
+               0,
+               NOPLOT,
+               NO_WRITE,
+               "Solution update for current Newton iteration" );
 }
 }
 

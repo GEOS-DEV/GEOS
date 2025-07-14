@@ -83,7 +83,8 @@ public:
   using ImmiscibleMultiphaseFlowAccessors =
     StencilAccessors< fields::ghostRank,
                       fields::flow::pressure,
-                      fields::flow::gravityCoefficient >;
+                      fields::flow::gravityCoefficient,
+                      fields::immiscibleMultiphaseFlow::solutionUpdate >;
 
   using MultiphaseFluidAccessors =
     StencilMaterialAccessors< constitutive::TwoPhaseImmiscibleFluid,
@@ -141,7 +142,8 @@ public:
       m_dDens_dPres( fluidAccessors.get( fields::twophaseimmisciblefluid::dPhaseDensity {} ) ),
       m_phaseCapPressure( capPressureAccessors.get( fields::cappres::phaseCapPressure {} ) ),
       m_dPhaseCapPressure_dPhaseVolFrac( capPressureAccessors.get( fields::cappres::dPhaseCapPressure_dPhaseVolFraction {} ) ),
-      m_localSolution ( localSolution ),
+      m_localSolution ( flowAccessors.get( fields::immiscibleMultiphaseFlow::solutionUpdate {} ) ), // localSolution
+      m_localSolution2 ( localSolution ),
       m_localResidual( localResidual ),
       m_resNorm( resNorm ),
       m_hasCapPressure ( hasCapPressure ),
@@ -218,7 +220,7 @@ public:
         real64 dP[2]{};
         real64 dS[2]{};
 
-        localIndex localRow[2]{};
+        localIndex localRow[2]{-1, -1};
 
         // cell indices
         localIndex const seri[2]  = {m_seri( iconn, k[0] ), m_seri( iconn, k[1] )};
@@ -226,26 +228,55 @@ public:
         localIndex const sei[2]   = {m_sei( iconn, k[0] ), m_sei( iconn, k[1] )};
 
         // get pressure and saturation updates for connection elements
+        // for ( integer ke = 0; ke < 2; ++ke )
+        // {
+        //   globalIndex const globalRow = m_dofNumber[seri[ke]][sesri[ke]][sei[ke]];
+        //   localRow[ke] = LvArray::integerConversion< localIndex >( globalRow - m_rankOffset );
+        //   GEOS_ASSERT_GE( localRow[ke], 0 );
+
+        //   dP[ke] = m_localSolution[localRow[ke]];     // dP = { dP1 , dP2 }
+        //   dS[ke] = m_localSolution[localRow[ke] + 1]; // dS = { dS1 , dS2 }          
+        // }                                                                        
         for ( integer ke = 0; ke < 2; ++ke )
         {
-          globalIndex const globalRow = m_dofNumber[seri[ke]][sesri[ke]][sei[ke]];
-          localRow[ke] = LvArray::integerConversion< localIndex >( globalRow - m_rankOffset );
-          GEOS_ASSERT_GE( localRow[ke], 0 );
-
-          dP[ke] = m_localSolution[localRow[ke]];     // dP = { dP1 , dP2 }
-          dS[ke] = m_localSolution[localRow[ke] + 1]; // dS = { dS1 , dS2 }          
-        }                                                                        
+          dP[ke] = m_localSolution[seri[ke]][sesri[ke]][sei[ke]][0];     // dP = { dP1 , dP2 }
+          dS[ke] = m_localSolution[seri[ke]][sesri[ke]][sei[ke]][1];     // dS = { dS1 , dS2 } 
+          
+          if ( m_ghostRank[seri[ke]][sesri[ke]][sei[ke]] < 0 )
+          {
+            globalIndex const globalRow = m_dofNumber[seri[ke]][sesri[ke]][sei[ke]];
+            localRow[ke] = LvArray::integerConversion< localIndex >( globalRow - m_rankOffset );
+            GEOS_ASSERT_GE( localRow[ke], 0 );
+          }
+        }
 
         // loop over phases
         for( integer ip = 0; ip < m_numPhases; ++ip )
         {
           // adaptive damping based on significant residual values           
-          if( (fabs( m_localResidual[localRow[0] + ip] ) < m_resThres * m_resNorm || fabs( m_localResidual[localRow[0] + ip] ) < m_AbsResThres) &&
-              (fabs( m_localResidual[localRow[1] + ip] ) < m_resThres * m_resNorm || fabs( m_localResidual[localRow[1] + ip] ) < m_AbsResThres) )            
+          // if( (fabs( m_localResidual[localRow[0] + ip] ) < m_resThres * m_resNorm || fabs( m_localResidual[localRow[0] + ip] ) < m_AbsResThres) &&
+          //     (fabs( m_localResidual[localRow[1] + ip] ) < m_resThres * m_resNorm || fabs( m_localResidual[localRow[1] + ip] ) < m_AbsResThres) )            
+          // {
+          //   continue;
+          // }
+          bool skipConnection = true;
+          for( integer ke = 0; ke < 2; ++ke )
+          {
+            if ( localRow[ke] >= 0 )
+            {              
+              if( fabs( m_localResidual[localRow[ke] + ip] ) > m_resThres * m_resNorm || 
+                  fabs( m_localResidual[localRow[ke] + ip] ) > m_AbsResThres )
+              {
+                skipConnection = false;
+                break;
+              }
+            }
+          }
+          if ( skipConnection )
           {
             continue;
-          }          
-          
+          }
+
           constexpr int signPotDiff[2] = {1, -1};
 
           // compute average density and derivatives
@@ -393,7 +424,9 @@ protected:
   ElementViewConst< arrayView4d< real64 const, cappres::USD_CAPPRES_DS > > const m_dPhaseCapPressure_dPhaseVolFrac;  
 
   /// View on the local solution and residual
-  arrayView1d< real64 const > const m_localSolution; 
+  // arrayView1d< real64 const > const m_localSolution; 
+  ElementViewConst< arrayView2d< real64 const, immiscibleFlow::USD_PHASE > > const m_localSolution;
+  arrayView1d< real64 const > const m_localSolution2; 
   arrayView1d< real64 const > const m_localResidual;
 
   /// Residual norm for adaptive residual analysis
@@ -1077,7 +1110,8 @@ public:
     StencilAccessors< fields::ghostRank,
                       fields::flow::pressure,
                       fields::flow::gravityCoefficient,
-                      fields::immiscibleMultiphaseFlow::phaseVolumeFraction >;
+                      fields::immiscibleMultiphaseFlow::phaseVolumeFraction,
+                      fields::immiscibleMultiphaseFlow::solutionUpdate >;
 
   using PermeabilityAccessors =
     StencilMaterialAccessors< PermeabilityBase,
@@ -1128,13 +1162,13 @@ public:
   
   /// Minimum dampining factor
   static constexpr real64 m_resThres = 0.6; // 0.0, 0.2
-  static constexpr real64 m_AbsResThres = 1e2; // 0.0, 1e3
+  static constexpr real64 m_AbsResThres = 0.0; // 0.0, 1e2, 1e3
 
 
   ResidualInflectionFactorKernel( integer const numPhases,
                                   globalIndex const rankOffset,
                                   string const dofKey,
-                                  arrayView1d< real64 const > const & localSolution,
+                                  arrayView1d< real64 const > const & GEOS_UNUSED_PARAM( localSolution ),
                                   arrayView1d< real64 const > const & localResidual,
                                   real64 const resNorm,
                                   real64 const globalKinkFactor,
@@ -1174,7 +1208,7 @@ public:
       m_volume( subRegion.getElementVolume() ),
       m_porosity( solid.getPorosity() ), // poroAccessors.get( fields::porosity::porosity {} )
       m_dPoro_dPres( solid.getDporosity_dPressure() ), // poroAccessors.get( fields::porosity::dPorosity_dPressure {} )
-      m_localSolution( localSolution ),
+      m_localSolution( flowAccessors.get( fields::immiscibleMultiphaseFlow::solutionUpdate {} ) ), // localSolution
       m_localResidual( localResidual ),
       m_resNorm( resNorm ),
       m_globalKinkFactor( globalKinkFactor ),  
@@ -1406,14 +1440,19 @@ public:
     localIndex const sei[2]   = {m_sei( iconn, 0 ), m_sei( iconn, 1 )};
 
     // get pressure and saturation updates for connection elements
+    // for ( integer ke = 0; ke < 2; ++ke )
+    // {
+    //   globalIndex const globalRow = m_dofNumber[seri[ke]][sesri[ke]][sei[ke]];
+    //   localIndex const localRow = LvArray::integerConversion< localIndex >( globalRow - m_rankOffset );
+    //   GEOS_ASSERT_GE( localRow, 0 );      
+
+    //   dP[ke] = m_localSolution[localRow] * m_globalKinkFactor;     // dP = { dP1 , dP2 }
+    //   dS[ke] = m_localSolution[localRow + 1] * m_globalKinkFactor; // dS = { dS1 , dS2 }
+    // }
     for ( integer ke = 0; ke < 2; ++ke )
     {
-      globalIndex const globalRow = m_dofNumber[seri[ke]][sesri[ke]][sei[ke]];
-      localIndex const localRow = LvArray::integerConversion< localIndex >( globalRow - m_rankOffset );
-      GEOS_ASSERT_GE( localRow, 0 );      
-
-      dP[ke] = m_localSolution[localRow] * m_globalKinkFactor;     // dP = { dP1 , dP2 }
-      dS[ke] = m_localSolution[localRow + 1] * m_globalKinkFactor; // dS = { dS1 , dS2 }
+      dP[ke] = m_localSolution[seri[ke]][sesri[ke]][sei[ke]][0];     // dP = { dP1 , dP2 }
+      dS[ke] = m_localSolution[seri[ke]][sesri[ke]][sei[ke]][1];     // dS = { dS1 , dS2 }
     }
 
     // compute saturation of updated state
@@ -1661,7 +1700,8 @@ protected:
   arrayView2d< real64 const > const m_dPoro_dPres;
 
   /// View on the local solution and residual
-  arrayView1d< real64 const > const m_localSolution; 
+  //arrayView1d< real64 const > const m_localSolution; 
+  ElementViewConst< arrayView2d< real64 const, immiscibleFlow::USD_PHASE > > const m_localSolution;
   arrayView1d< real64 const > const m_localResidual;
 
   /// Residual norm for adaptive residual analysis

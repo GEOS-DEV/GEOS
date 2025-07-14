@@ -86,11 +86,13 @@ ImmiscibleMultiphaseFlow::ImmiscibleMultiphaseFlow( const string & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( 0.5 ).
     setDescription( "Damping factor for solution change targets" );
+
   this->registerWrapper( viewKeyStruct::targetRelativePresChangeString(), &m_targetRelativePresChange ).
     setSizedFromParent( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( 0.2 ).
     setDescription( "Target (relative) change in pressure in a time step (expected value between 0 and 1)" );
+    
   this->registerWrapper( viewKeyStruct::targetPhaseVolFracChangeString(), &m_targetPhaseVolFracChange ).
     setSizedFromParent( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -175,6 +177,9 @@ void ImmiscibleMultiphaseFlow::registerDataOnMesh( Group & meshBodies )
 
       subRegion.registerField< dPhaseMobility >( getName() ).
         reference().resizeDimension< 1, 2 >( m_numPhases, m_numPhases ); // dP, dS
+
+      subRegion.registerField< solutionUpdate >( getName() ).
+        reference().resizeDimension< 1 >( m_numPhases );
 
     } );
 
@@ -1166,6 +1171,9 @@ ImmiscibleMultiphaseFlow::scalingForSystemSolution( DomainPartition & domain,
     return 1.0;
   }
 
+  // Update solution field
+  updateSolutionField( dofManager, localSolution, domain );
+
   // Compute residual norm
   real64 resNorm = calculateResidualNorm( 0, 0, domain, dofManager, localResidual );
 
@@ -1348,6 +1356,36 @@ void ImmiscibleMultiphaseFlow::applySystemSolution( DofManager const & dofManage
                                                                 string_array const & regionNames )
   {
     std::vector< string > fields{ fields::flow::pressure::key(), fields::immiscibleMultiphaseFlow::phaseVolumeFraction::key() };
+
+    FieldIdentifiers fieldsToBeSync;
+    fieldsToBeSync.addElementFields( fields, regionNames );
+
+    CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync, mesh, domain.getNeighbors(), true );
+  } );
+}
+
+
+void ImmiscibleMultiphaseFlow::updateSolutionField( DofManager const & dofManager,
+                                                    arrayView1d< real64 const > const & localSolution,
+                                                    DomainPartition & domain )
+{
+  GEOS_MARK_FUNCTION;
+
+  DofManager::CompMask allDofMask( m_numDofPerCell, 0, 2 );
+
+  // copy updates to field
+  dofManager.copyVectorToField( localSolution,
+                                viewKeyStruct::elemDofFieldString(),
+                                fields::immiscibleMultiphaseFlow::solutionUpdate::key(),
+                                1.0,
+                                allDofMask );
+
+  // synchronize
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                MeshLevel & mesh,
+                                                                string_array const & regionNames )
+  {
+    std::vector< string > fields{ fields::immiscibleMultiphaseFlow::solutionUpdate::key() };
 
     FieldIdentifiers fieldsToBeSync;
     fieldsToBeSync.addElementFields( fields, regionNames );

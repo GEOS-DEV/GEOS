@@ -10,10 +10,10 @@
       discretization="TPFA"
       targetRegions="{ reservoir }"      
       temperature="300"
-      initialDt="4.32e7">
+      initialDt="4.32e8">
       <NonlinearSolverParameters
         newtonTol="1.0e-3"
-        newtonMaxIter="2000"
+        newtonMaxIter="200"
         maxTimeStepCuts="1"
         lineSearchAction="None"/>
       <LinearSolverParameters
@@ -51,7 +51,7 @@
   </Geometry>
 
   <Events
-    maxTime="4.32e7">
+    maxTime="4.32e8">
 
    <PeriodicEvent
       name="outputs"
@@ -62,7 +62,7 @@
     
     <PeriodicEvent
       name="solverApplications"
-      forceDt="4.32e7"  
+      forceDt="4.32e8"  
       target="/Solvers/FlowSolver"/>
   </Events>
   <!-- maxEventDt="2e6" -->
