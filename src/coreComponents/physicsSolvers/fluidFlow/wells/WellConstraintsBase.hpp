@@ -309,6 +309,11 @@ public:
    */
   real64 massRate() const { return m_massRate; }
 
+  /**
+   * @brief Check if this constraint is violated
+   * @return true if limiting constraint, false otherwise
+   */
+  virtual bool checkViolation( WellConstraintBase const & currentConstraint, real64 const & currentTime ) const = 0;
 
 protected:
 
@@ -320,6 +325,7 @@ protected:
    * @param[inout] nextDt the time step
    */
   void setNextDtFromTables( real64 const currentTime, real64 & nextDt );
+
 
 protected:
 

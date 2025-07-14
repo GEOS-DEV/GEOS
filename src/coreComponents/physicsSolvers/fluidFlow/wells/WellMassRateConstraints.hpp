@@ -124,9 +124,12 @@ public:
   // Surface condition definition keyes
   constraintViewStruct::surfaceConditionsKey viewKeysSurfaceCondtions;
 
+  virtual bool checkViolation( WellConstraintBase const & currentConstraint, real64 const & currentTime ) const override;
+
 protected:
 
   virtual void postInputInitialization() override;
+
 
 private:
 
@@ -220,6 +223,8 @@ public:
 
   // Injection stream definition keys
   constraintViewStruct::injectionStreamKey viewKeysInjectionStream;
+
+  virtual bool checkViolation( WellConstraintBase const & currentConstraint, real64 const & currentTime ) const override;
 
 protected:
 

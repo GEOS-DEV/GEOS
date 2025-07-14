@@ -459,6 +459,14 @@ void CompositionalMultiphaseWell::validateWellConstraints( real64 const & time_n
   string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString());
   MultiFluidBase const & fluid = subRegion.getConstitutiveModel< MultiFluidBase >( fluidName );
 
+  // tjb
+  WellControls & wellControls = getWellControls( subRegion );
+  wellControls.forSubGroups< PhaseProductionConstraint, PhaseInjectionConstraint >( [&]( auto & constraint )
+  {
+    constraint.validatePhaseType( fluid );
+  } );
+
+
   // now that we know we are single-phase, we can check a few things in the constraints
   WellControls const & wellControls = getWellControls( subRegion );
   WellControls::Control const currentControl = wellControls.getControl();
@@ -3854,11 +3862,31 @@ bool CompositionalMultiphaseWell::evaluateProductionConstraints( real64 const & 
                                       CompositionalMultiphaseWell::viewKeyStruct::currentTotalVolRateString() ));
     constraint.setMassRate( wellControls.getReference< real64 >( CompositionalMultiphaseWell::viewKeyStruct::currentMassRateString() ));
 
-    std::cout << constraint.getName() << " " << constraint.bottomHolePressure() << " " << constraint.phaseVolumeRates() << " " << constraint.totalVolumeRate() << " " << constraint.massRate() << std::endl;
+    std::cout << constraint.getName() << " " << constraint.bottomHolePressure() << " " << constraint.phaseVolumeRates() << " " << constraint.totalVolumeRate() << " " <<
+      constraint.massRate() << std::endl;
+
   } );
-  minbhp = bhpConstraint->bottomHolePressure();
-  wellControls.forSubGroups< PhaseProductionConstraint, MassProductionConstraint >( [&]( auto & constraint )
+
+ 
+#if 1
+  limitingConstraint = this->template calculateLimitingConstraint <  PhaseProductionConstraint,
+                                          MassProductionConstraint >(limitingConstraint, time_n,
+                                                                     dt,
+                                                                     cycleNumber,
+                                                                     domain,
+                                                                     mesh,
+                                                                     elemManager,
+                                                                     subRegion,
+                                                                     dofManager );
+#else
+  wellControls.forSubGroups< PhaseProductionConstraint,
+                             MassProductionConstraint >( [&]( auto & constraint )
   {
+
+    if( constraint.checkViolation( *limitingConstraint, time_n ) )
+    {
+      limitingConstraint = &constraint;
+
     std::cout << constraint.getName() << std::endl;
 
     wellControls.setControl( constraint.getControl());
@@ -3878,14 +3906,12 @@ bool CompositionalMultiphaseWell::evaluateProductionConstraints( real64 const & 
                                       CompositionalMultiphaseWell::viewKeyStruct::currentTotalVolRateString() ));
     constraint.setMassRate( wellControls.getReference< real64 >( CompositionalMultiphaseWell::viewKeyStruct::currentMassRateString() ));
 
-    std::cout << constraint.getName() << " " << constraint.bottomHolePressure() << " " << constraint.phaseVolumeRates() << " " << constraint.totalVolumeRate() << " " << constraint.massRate() << std::endl;
-    if( constraint.bottomHolePressure() > minbhp )
-    {
-      currentControl = constraint.getControl();
+      std::cout << constraint.getName() << " " << constraint.bottomHolePressure() << " " << constraint.phaseVolumeRates() << " " << constraint.totalVolumeRate() << " " << constraint.massRate() <<
+        std::endl;
     }
-
   } );
-  wellControls.setControl( currentControl );
+#endif
+  wellControls.setControl( limitingConstraint->getControl() );
   solveNonlinearSystem( time_n,
                         dt,
                         cycleNumber,
@@ -3897,7 +3923,9 @@ bool CompositionalMultiphaseWell::evaluateProductionConstraints( real64 const & 
   return true;
 }
 
-bool CompositionalMultiphaseWell::evaluateInjectionConstraints( real64 const & time_n,
+bool
+CompositionalMultiphaseWell::
+  evaluateInjectionConstraints( real64 const & time_n,
                                                                 real64 const & dt,
                                                                 integer const cycleNumber,
                                                                 DomainPartition & domain,
@@ -3928,5 +3956,6 @@ bool CompositionalMultiphaseWell::evaluateInjectionConstraints( real64 const & t
   } );
   return true;
 }
+
 REGISTER_CATALOG_ENTRY( PhysicsSolverBase, CompositionalMultiphaseWell, string const &, Group * const )
 } // namespace geos

@@ -60,6 +60,11 @@ void MassProductionConstraint::postInputInitialization()
   validateSurfaceConditions( m_useSurfaceConditions, dataRepository::keys::MassInjectionConstraint, *this );
 }
 
+bool MassProductionConstraint::checkViolation( WellConstraintBase const & currentConstraint, real64 const & currentTime ) const
+{
+  return currentConstraint.massRate() > getConstraintValue( currentTime );
+}
+
 MassInjectionConstraint::MassInjectionConstraint( string const & name, Group * const parent )
   : WellConstraintBase( name, parent )
 {
@@ -94,5 +99,11 @@ void MassInjectionConstraint::postInputInitialization()
 
 
 }
+
+bool MassInjectionConstraint::checkViolation( WellConstraintBase const & currentConstraint, real64 const & currentTime )const
+{
+  return currentConstraint.massRate() >  getConstraintValue( currentTime );
+}
+
 
 } //namespace geos

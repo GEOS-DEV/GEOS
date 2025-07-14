@@ -70,6 +70,12 @@ void VolumeProductionConstraint::postInputInitialization()
 
 }
 
+bool VolumeProductionConstraint::checkViolation( WellConstraintBase const & currentConstraint, real64 const & currentTime )const
+{
+  return -1.0*currentConstraint.totalVolumeRate() >  getConstraintValue( currentTime );
+}
+
+
 VolumeInjectionConstraint::VolumeInjectionConstraint( string const & name, Group * const parent )
   : WellConstraintBase( name, parent )
 {
@@ -97,7 +103,11 @@ void VolumeInjectionConstraint::postInputInitialization()
 // Validate the injection stream and temperature
   validateInjectionStream( m_injectionStream, m_injectionTemperature, dataRepository::keys::volumeProductionConstraint, *this );
 
+}
 
+bool VolumeInjectionConstraint::checkViolation( WellConstraintBase const & currentConstraint, real64 const & currentTime )const
+{
+  return currentConstraint.totalVolumeRate() >  getConstraintValue( currentTime );
 }
 
 } //namespace geos

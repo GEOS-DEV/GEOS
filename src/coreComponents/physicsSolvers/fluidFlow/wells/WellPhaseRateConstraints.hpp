@@ -43,11 +43,25 @@ namespace constraintViewStruct
 struct phaseConstraintKey
 {
   /// String key for the well target phase rate
-  static constexpr char const * targetPhaseRateString() { return "targetPhaseRate"; }
+  static constexpr char const * phaseRateString() { return "phaseRate"; }
   /// String key for the well target phase name
-  static constexpr char const * targetPhaseNameString() { return "targetPhaseName"; }
+  static constexpr char const * phaseNameString() { return "phaseName"; }
 };
 
+}
+template< typename T >
+localIndex getPhaseIndex( T const & fluidModel, std::string const & inputPhase )
+{
+  localIndex phaseIndex=-1;
+  // Find target phase index for phase rate constraint
+  for( integer ip = 0; ip < fluidModel.numFluidPhases(); ++ip )
+  {
+    if( fluidModel.phaseNames()[ip] == inputPhase )
+    {
+      phaseIndex = ip;
+    }
+  }
+  return phaseIndex;
 }
 
 /**
@@ -120,6 +134,8 @@ public:
    */
   virtual std::string getConstraintKey( ) const override { return dataRepository::keys::phaseProductionConstraint; };
 
+
+  virtual bool checkViolation( WellConstraintBase const & currentConstraint, real64 const & currentTime ) const override;
   ///@}
 
   // Phase constraint defintion keys
@@ -128,13 +144,20 @@ public:
   // Surface condition definition keyes
   constraintViewStruct::surfaceConditionsKey viewKeysSurfaceCondtions;
 
+  /**
+   * @brief Validate phase type is consistent with fluidmodel
+   */
+  template< typename T > void validatePhaseType( T const & fluidModel );
 protected:
 
   virtual void postInputInitialization() override;
 
 private:
   /// Name of the targeted phase
-  string m_targetPhaseName;
+  string m_phaseName;
+
+  /// Index of the target phase, used to impose the phase rate constraint
+  localIndex m_phaseIndex;
 
   /// Flag to decide whether rates are controlled at rates or surface conditions
   integer m_useSurfaceConditions;
@@ -145,6 +168,18 @@ private:
   /// Surface temperature
   real64 m_surfaceTemp;
 };
+
+template< typename T >
+void PhaseProductionConstraint::validatePhaseType( T const & fluidModel )
+{
+  // Find target phase index for phase rate constraint
+  m_phaseIndex = getPhaseIndex( fluidModel, getReference< string >( constraintViewStruct::phaseConstraintKey::phaseNameString()));
+
+  GEOS_THROW_IF( m_phaseIndex == -1,
+                 "PhaseProductionConstraint " << getReference< string >( constraintViewStruct::phaseConstraintKey::phaseNameString())   <<
+                 ": Invalid phase type for simulation fluid model",
+                 InputError );
+}
 
 /**
  * @class PhaseInjectionConstraint
@@ -232,14 +267,23 @@ public:
   // Injection stream definition keys
   constraintViewStruct::injectionStreamKey viewKeysInjectionStream;
 
+  /**
+   * @brief Validate phase type is consistent with fluidmodel
+   */
+  template< typename T > void validatePhaseType( T const & fluidModel );
+  ///@}
 
+  virtual bool checkViolation( WellConstraintBase const & currentConstraint, real64 const & currentTime ) const override;
 protected:
 
   virtual void postInputInitialization() override;
 
 private:
   /// Name of the targeted phase
-  string m_targetPhaseName;
+  string m_phaseName;
+
+  /// Index of the target phase, used to impose the phase rate constraint
+  localIndex m_phaseIndex;
 
   /// Vector with global component fractions at the injector
   array1d< real64 > m_injectionStream;
@@ -260,6 +304,17 @@ private:
 };
 
 
+template< typename T >
+void PhaseInjectionConstraint::validatePhaseType( T const & fluidModel )
+{
+  // Find target phase index for phase rate constraint
+  m_phaseIndex = getPhaseIndex( fluidModel, getReference< string >( constraintViewStruct::phaseConstraintKey::phaseNameString()));
+
+  GEOS_THROW_IF( m_phaseIndex == -1,
+                 "PhaseInjectionConstraint " << getReference< string >( constraintViewStruct::phaseConstraintKey::phaseNameString())   <<
+                 ": Invalid phase type for simulation fluid model",
+                 InputError );
+}
 
 } //namespace geos
 

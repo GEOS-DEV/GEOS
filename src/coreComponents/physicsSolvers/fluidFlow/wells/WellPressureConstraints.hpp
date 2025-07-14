@@ -116,9 +116,12 @@ public:
   }
   viewKeysWellBHPConstraint;
 
+  virtual bool checkViolation( WellConstraintBase const & currentConstraint, real64 const & currentTime ) const override;
+
 protected:
 
   virtual void postInputInitialization() override;
+
 
 
 };
@@ -203,9 +206,12 @@ public:
   }
   viewKeysWellBHPConstraint;
 
+  virtual bool checkViolation( WellConstraintBase const & currentConstraint, real64 const & currentTime ) const override;
 protected:
 
   virtual void postInputInitialization() override;
+
+
 
 private:
 

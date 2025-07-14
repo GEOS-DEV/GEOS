@@ -52,6 +52,11 @@ void MinimumBHPConstraint::postInputInitialization()
 
 }
 
+bool MinimumBHPConstraint::checkViolation( WellConstraintBase const & currentConstraint, real64 const & currentTime ) const
+{
+  return currentConstraint.bottomHolePressure()  > getConstraintValue( currentTime );
+}
+
 MaximumBHPConstraint::MaximumBHPConstraint( string const & name, Group * const parent )
   : WellConstraintBase( name, parent )
 {
@@ -73,6 +78,10 @@ void MaximumBHPConstraint::postInputInitialization()
   // Validate value and table options
   WellConstraintBase::postInputInitialization();
 
+}
+bool MaximumBHPConstraint::checkViolation( WellConstraintBase const & currentConstraint, real64 const & currentTime ) const
+{
+  return currentConstraint.bottomHolePressure() > getConstraintValue( currentTime );
 }
 
 } //namespace geos

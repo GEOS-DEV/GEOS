@@ -23,6 +23,10 @@
 #include "physicsSolvers/fluidFlow/wells/WellSolverBase.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseBase.hpp"
 
+#include "physicsSolvers/fluidFlow/wells/WellPressureConstraints.hpp"
+#include "physicsSolvers/fluidFlow/wells/WellVolumeRateConstraints.hpp"
+#include "physicsSolvers/fluidFlow/wells/WellPhaseRateConstraints.hpp"
+#include "physicsSolvers/fluidFlow/wells/WellMassRateConstraints.hpp"
 namespace geos
 {
 
@@ -490,7 +494,16 @@ private:
 
   virtual void setConstitutiveNames( ElementSubRegionBase & subRegion ) const override;
 
-
+  template< typename GROUPTYPE , typename ... GROUPTYPES >
+  WellConstraintBase *  calculateLimitingConstraint( WellConstraintBase * currentConstraint,
+                                     real64 const & time_n,
+                                     real64 const & stepDt,
+                                     integer const cycleNumber,
+                                     DomainPartition & domain,
+                                     MeshLevel & mesh,
+                                     ElementRegionManager & elemManager,
+                                     WellElementSubRegion & subRegion,
+                                     DofManager const & dofManager );
 
   /// flag indicating whether mass or molar formulation should be used
   integer m_useMass;
@@ -526,6 +539,50 @@ private:
 
 
 };
+template< typename GROUPTYPE = WellConstraintBase, typename ... GROUPTYPES >
+WellConstraintBase * CompositionalMultiphaseWell::calculateLimitingConstraint( WellConstraintBase * limitingConstraint,
+                                                       real64 const & time_n,
+                                                       real64 const & dt,
+                                                       integer const cycleNumber,
+                                                       DomainPartition & domain,
+                                                       MeshLevel & mesh,
+                                                       ElementRegionManager & elemManager,
+                                                       WellElementSubRegion & subRegion,
+                                                       DofManager const & dofManager )
+{
+
+  WellControls & wellControls = getWellControls( subRegion );
+  wellControls.forSubGroups< GROUPTYPE, GROUPTYPES... >(  [&]( auto & constraint )
+  {
+    if (limitingConstraint == nullptr || constraint.checkViolation( *limitingConstraint, time_n ))
+    {
+      limitingConstraint = &constraint;
+
+      std::cout << constraint.getName() << std::endl;
+
+      wellControls.setControl( constraint.getControl());
+      solveNonlinearSystem( time_n,
+                            dt,
+                            cycleNumber,
+                            domain,
+                            mesh,
+                            elemManager,
+                            subRegion,
+                            dofManager );
+
+      constraint.setBHP ( wellControls.getReference< real64 >( CompositionalMultiphaseWell::viewKeyStruct::currentBHPString() ));
+      constraint.setPhaseVolumeRates ( wellControls.getReference< array1d< real64 > >(
+                                         CompositionalMultiphaseWell::viewKeyStruct::currentPhaseVolRateString() ) );
+      constraint.setTotalVolumeRate ( wellControls.getReference< real64 >(
+                                        CompositionalMultiphaseWell::viewKeyStruct::currentTotalVolRateString() ));
+      constraint.setMassRate( wellControls.getReference< real64 >( CompositionalMultiphaseWell::viewKeyStruct::currentMassRateString() ));
+
+      std::cout << constraint.getName() << " " << constraint.bottomHolePressure() << " " << constraint.phaseVolumeRates() << " " << constraint.totalVolumeRate() << " " << constraint.massRate() <<
+        std::endl;
+    }
+  } );
+  return limitingConstraint;
+}
 
 } // namespace geos
 
