@@ -21,6 +21,7 @@
 
 #include "constitutive/fluid/multifluid/CO2Brine/functions/PVTFunctionHelpers.hpp"
 #include "constitutive/fluid/multifluid/MultiFluidFields.hpp"
+#include "constitutive/fluid/multifluid/compositional/parameters/PhaseType.hpp"
 #include "codingUtilities/Utilities.hpp"
 #include "common/format/StringUtilities.hpp"
 
@@ -70,9 +71,6 @@ CompositionalMultiphaseFluid( string const & name, Group * const parent )
   m_parameters->registerParameters( this );
 
   // Register extra wrappers to enable auto-cloning
-  registerWrapper( "phaseOrder", &m_phaseOrder )
-    .setSizedFromParent( 0 )
-    .setRestartFlags( RestartFlags::NO_WRITE );
   registerWrapper( "componentType", &m_componentProperties->m_componentType )
     .setSizedFromParent( 0 )
     .setRestartFlags( RestartFlags::NO_WRITE );
@@ -81,8 +79,16 @@ CompositionalMultiphaseFluid( string const & name, Group * const parent )
 template< typename FLASH, typename PHASE1, typename PHASE2, typename PHASE3 >
 integer CompositionalMultiphaseFluid< FLASH, PHASE1, PHASE2, PHASE3 >::getWaterPhaseIndex() const
 {
-  integer const aqueous = static_cast< integer >(PhaseType::AQUEOUS);
-  return m_phaseOrder.size() > aqueous ? m_phaseOrder[aqueous] : -1;
+  auto const phaseTypes = getPhaseTypes();
+  integer const aqueous = static_cast< integer >(compositional::PhaseType::AQUEOUS);
+  for( integer ip = 0; ip < numFluidPhases(); ++ip )
+  {
+    if( phaseTypes[ip] == aqueous )
+    {
+      return ip;
+    }
+  }
+  return -1;
 }
 
 template< typename FLASH, typename PHASE1, typename PHASE2, typename PHASE3 >
@@ -115,6 +121,19 @@ void CompositionalMultiphaseFluid< FLASH, PHASE1, PHASE2, PHASE3 >::postInputIni
                         GEOS_FMT( "{}: invalid number of phases in '{}'. There should be {} phases",
                                   getFullName(), viewKeyStruct::phaseNamesString(), NUM_PHASES ),
                         InputError );
+
+  // Phase types should not be repeated
+  auto const phaseTypes = getPhaseTypes();
+  std::set< integer > uniquePhases;
+  for( integer ip = 0; ip < NP; ++ip )
+  {
+    string const type_name = EnumStrings< compositional::PhaseType >::toString( static_cast< compositional::PhaseType >(phaseTypes[ip]));
+    GEOS_THROW_IF ( uniquePhases.find( phaseTypes[ip] ) != uniquePhases.end(),
+                    GEOS_FMT( "{}: phase with name {} is of type {} which is repeated. "
+                              "Phase types should be unique.", getFullName(), m_phaseNames[ip],
+                              type_name ), InputError );
+    uniquePhases.insert( phaseTypes[ip] );
+  }
 
   auto const checkInputSize = [&]( auto const & array, integer const expected, string const & attribute )
   {
@@ -167,12 +186,6 @@ void CompositionalMultiphaseFluid< FLASH, PHASE1, PHASE2, PHASE3 >::postInputIni
                             InputError );
     }
   }
-
-  // Determine the phase ordering
-  m_phaseOrder.resize( 3 );
-  m_phaseOrder[PhaseType::LIQUID] = findPhaseIndex( "oil,liq,liquid" );
-  m_phaseOrder[PhaseType::VAPOUR] = findPhaseIndex( "gas,vap,vapor,vapour" );
-  m_phaseOrder[PhaseType::AQUEOUS] = findPhaseIndex( "wat,water,aqueous" );
 
   m_parameters->postInputInitialization( this, *m_componentProperties );
 }
@@ -232,9 +245,16 @@ CompositionalMultiphaseFluid< FLASH, PHASE1, PHASE2, PHASE3 >::createKernelWrapp
 template< typename FLASH, typename PHASE1, typename PHASE2, typename PHASE3 >
 void CompositionalMultiphaseFluid< FLASH, PHASE1, PHASE2, PHASE3 >::createModels()
 {
+  m_phaseType = getPhaseTypes();
+
+  // Determine the phase ordering
+  m_phaseOrder.resize( m_phaseType.size() );
+  FlashModel::calculatePhaseOrdering( m_phaseType.toViewConst(), m_phaseOrder );
+
   m_flash = std::make_unique< FLASH >( getName() + '_' + FLASH::catalogName(),
                                        *m_componentProperties,
-                                       *m_parameters );
+                                       *m_parameters,
+                                       m_phaseType.toViewConst() );
 
   m_phase1 = std::make_unique< PHASE1 >( GEOS_FMT( "{}_PhaseModel1", getName() ),
                                          *m_componentProperties,
@@ -253,19 +273,15 @@ void CompositionalMultiphaseFluid< FLASH, PHASE1, PHASE2, PHASE3 >::createModels
 }
 
 template< typename FLASH, typename PHASE1, typename PHASE2, typename PHASE3 >
-integer CompositionalMultiphaseFluid< FLASH, PHASE1, PHASE2, PHASE3 >::findPhaseIndex( string names ) const
+array1d< integer > CompositionalMultiphaseFluid< FLASH, PHASE1, PHASE2, PHASE3 >::getPhaseTypes() const
 {
-  auto const nameContainer = stringutilities::tokenize( names, ",", true, false );
-
-  for( integer ip = 0; ip < numFluidPhases(); ++ip )
+  integer const numPhases = numFluidPhases();
+  array1d< integer > phaseTypes( numPhases );
+  for( integer ip = 0; ip < numPhases; ++ip )
   {
-    std::string const phaseName = stringutilities::toLower( m_phaseNames[ip] );
-    if( std::find( nameContainer.begin(), nameContainer.end(), phaseName ) != nameContainer.end())
-    {
-      return ip;
-    }
+    phaseTypes[ip] = static_cast< integer >(compositional::getPhaseTypeFromName( m_phaseNames[ip] ));
   }
-  return -1;
+  return phaseTypes;
 }
 
 // Create the fluid models

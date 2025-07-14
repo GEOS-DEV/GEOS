@@ -167,7 +167,7 @@ void SolidMechanicsStatistics::computeNodeStatistics( MeshLevel & mesh, real64 c
     TableLayout const mechanicsLayout( title, { " ", "Displacement (X, Y, Z)"} );
 
     TableTextFormatter mechanicsFormatter( mechanicsLayout );
-    mechanicsFormatter.toString( mechanicsData );
+    GEOS_LOG_RANK_0( mechanicsFormatter.toString( mechanicsData ) );
   }
 
 

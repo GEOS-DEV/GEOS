@@ -139,7 +139,7 @@ DECLARE_FIELD( phaseInternalEnergy,
                "phaseInternalEnergy",
                array3dLayoutPhase,
                0,
-               NOPLOT, // default behavior overridden by thermal models
+               LEVEL_0, // default behavior overridden by thermal models
                NO_WRITE,
                "Phase internal energy" );
 
