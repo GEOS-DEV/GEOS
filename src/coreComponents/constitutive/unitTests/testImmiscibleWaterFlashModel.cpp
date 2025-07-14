@@ -18,6 +18,7 @@
 #include "constitutive/fluid/multifluid/MultiFluidUtils.hpp"
 #include "constitutive/fluid/multifluid/compositional/parameters/EquationOfState.hpp"
 #include "constitutive/fluid/multifluid/compositional/parameters/CriticalVolume.hpp"
+#include "constitutive/fluid/multifluid/compositional/parameters/PhaseType.hpp"
 #include "constitutive/fluid/multifluid/compositional/models/ImmiscibleWaterFlashModel.hpp"
 #include "TestFluid.hpp"
 #include "TestFluidUtilities.hpp"
@@ -106,7 +107,11 @@ public:
     auto * criticalVolume = const_cast< CriticalVolume * >(m_parameters->get< CriticalVolume >());
     TestFluid< NC >::createArray( criticalVolume->m_componentCriticalVolume, this->m_fluid->criticalVolume );
 
-    m_flash = std::make_unique< ImmiscibleWaterFlashModel >( "FlashModel", componentProperties, *m_parameters );
+    m_phaseTypes.emplace_back( static_cast< integer >(PhaseType::LIQUID));
+    m_phaseTypes.emplace_back( static_cast< integer >(PhaseType::VAPOUR));
+    m_phaseTypes.emplace_back( static_cast< integer >(PhaseType::AQUEOUS));
+
+    m_flash = std::make_unique< ImmiscibleWaterFlashModel >( "FlashModel", componentProperties, *m_parameters, m_phaseTypes );
   }
 
   ~ImmiscibleWaterFlashModelTestFixture() = default;
@@ -286,6 +291,7 @@ protected:
   std::unique_ptr< TestFluid< NC > > m_fluid{};
   std::unique_ptr< ImmiscibleWaterFlashModel > m_flash{};
   std::unique_ptr< ModelParameters > m_parameters{};
+  array1d< integer > m_phaseTypes{};
 };
 
 using ImmiscibleWaterFlashModel3 = ImmiscibleWaterFlashModelTestFixture< 3 >;
