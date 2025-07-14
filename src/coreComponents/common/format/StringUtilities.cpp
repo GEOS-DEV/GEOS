@@ -176,12 +176,12 @@ stdVector< STRING_T > divideLines( size_t & linesWidth, string_view value )
 }
 
 template< typename STRING_T >
-std::vector< STRING_T > divideLines( string_view value )
+stdVector< STRING_T > divideLines( string_view value )
 {
   size_t current = 0;
   size_t end = value.find( '\n' );
 
-  std::vector< STRING_T > lines;
+  stdVector< STRING_T > lines;
 
   // Process each line until no more newlines are found
   while( end != STRING_T::npos )
@@ -196,8 +196,8 @@ std::vector< STRING_T > divideLines( string_view value )
 
   return lines;
 }
-template std::vector< string > divideLines( size_t &, string_view );
-template std::vector< string_view > divideLines( size_t &, string_view );
+template stdVector< string > divideLines( size_t &, string_view );
+template stdVector< string_view > divideLines( size_t &, string_view );
 
 
 template< typename STRING_T >
