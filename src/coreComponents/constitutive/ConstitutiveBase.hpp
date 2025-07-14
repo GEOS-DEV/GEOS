@@ -132,6 +132,9 @@ public:
   dataRepository::Wrapper< typename FIELD_TRAIT::type > & registerField( FIELD_TRAIT const & fieldTrait,
                                                                          typename FIELD_TRAIT::type * newObject )
   {
+    if( FIELD_TRAIT::plotLevel != dataRepository::PlotLevel::NOPLOT )
+      m_userFields.emplace_back( fieldTrait.key() );
+
     return registerWrapper( fieldTrait.key(), newObject ).
              setApplyDefaultValue( fieldTrait.defaultValue() ).
              setPlotLevel( FIELD_TRAIT::plotLevel ).
@@ -165,6 +168,14 @@ public:
     return this->getWrapper< typename FIELD_TRAIT::type >( FIELD_TRAIT::key() );
   }
 
+  /**
+   * @return A const vector containing all fields
+   */
+  std::vector< std::string > const & getUserFields() const
+  {
+    return m_userFields;
+  }
+
 private:
 
   /**
@@ -177,6 +188,9 @@ private:
 
   /// Indicate if this constitutive model a clone
   bool m_isClone;
+
+  // Vector containing all fields registered with `registerField()`
+  std::vector< std::string > m_userFields;
 };
 
 }

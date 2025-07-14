@@ -874,8 +874,8 @@ computeCompressibilityFactor( integer const numComps,
       }
     }
 
-    stackArray1d< real64, MultiFluidConstants::MAX_NUM_COMPONENTS > logFugacityCoefficientsMax( numComps );
-    stackArray1d< real64, MultiFluidConstants::MAX_NUM_COMPONENTS > logFugacityCoefficientsMin( numComps );
+    StackArray< real64, 1, MultiFluidConstants::MAX_NUM_COMPONENTS > logFugacityCoefficientsMax( numComps );
+    StackArray< real64, 1, MultiFluidConstants::MAX_NUM_COMPONENTS > logFugacityCoefficientsMin( numComps );
     computeLogFugacityCoefficients( numComps, composition, binaryInteractionCoefficients, zMin,
                                     aPureCoefficient, bPureCoefficient, aMixtureCoefficient, bMixtureCoefficient,
                                     logFugacityCoefficientsMin.toSlice() );
