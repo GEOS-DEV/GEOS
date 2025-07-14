@@ -65,7 +65,7 @@ void fill( std::pair< T, U > val, localIndex maxSize )
 }
 
 template< typename T >
-void fill( std::vector< T > & val, localIndex const maxSize )
+void fill( stdVector< T > & val, localIndex const maxSize )
 {
   val.resize( rand( 0, maxSize ) );
   for( T & v : val )
