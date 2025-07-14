@@ -66,7 +66,7 @@ checkIntegralMeanDerivativesConsistency( FiniteElementBase const & feBase,
   for( localIndex q = 0; q < VEM::numQuadraturePoints; ++q )
   {
     real64 basisDerivativesIntegralMean[maxSupportPoints][3]{};
-    feBase.template getGradN< VEM >( k, q, dummy, stack, basisDerivativesIntegralMean );
+    VEM::calcGradN( q, dummy, stack, basisDerivativesIntegralMean );
     sumXDerivatives = 0; sumYDerivatives = 0; sumZDerivatives = 0;
     for( localIndex iBasisFun = 0; iBasisFun < VEM::getNumSupportPoints( stack ); ++iBasisFun )
     {

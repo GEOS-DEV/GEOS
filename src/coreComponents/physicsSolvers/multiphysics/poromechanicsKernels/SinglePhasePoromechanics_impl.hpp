@@ -366,7 +366,7 @@ quadraturePointKernel( localIndex const k,
   real64 N[numNodesPerElem]{};
   real64 dNdX[numNodesPerElem][3]{};
   FE_TYPE::calcN( q, stack.feStack, N );
-  real64 const detJxW = m_finiteElementSpace.template getGradN< FE_TYPE >( k, q, stack.xLocal,
+  real64 const detJxW = FE_TYPE::calcGradN( q, stack.xLocal,
                                                                            stack.feStack, dNdX );
 
   // Step 2: compute strain increment

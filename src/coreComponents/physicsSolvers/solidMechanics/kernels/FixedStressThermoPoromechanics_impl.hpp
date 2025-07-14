@@ -95,9 +95,7 @@ setup( localIndex const k,
 
     for( int i = 0; i < 3; ++i )
     {
-#if defined(CALC_FEM_SHAPE_IN_KERNEL)
       stack.xLocal[ a ][ i ] = m_X[ localNodeIndex ][ i ];
-#endif
       stack.u_local[ a ][i] = m_disp[ localNodeIndex ][i];
       stack.uhat_local[ a ][i] = m_uhat[ localNodeIndex ][i];
       stack.localRowDofIndex[a*3+i] = m_dofNumber[localNodeIndex]+i;
@@ -125,7 +123,7 @@ quadraturePointKernel( localIndex const k,
                        StackVariables & stack ) const
 {
   real64 dNdX[ numNodesPerElem ][ 3 ];
-  real64 const detJxW = m_finiteElementSpace.template getGradN< FE_TYPE >( k, q, stack.xLocal,
+  real64 const detJxW = FE_TYPE::calcGradN( q, stack.xLocal,
                                                                            stack.feStack, dNdX );
 
   real64 strainInc[6] = {0};

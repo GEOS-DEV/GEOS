@@ -192,7 +192,7 @@ struct AcousticPMLSEM
         {
 
           /// compute the shape functions gradients
-          real32 const detJ = m_finiteElement.template getGradN< FE_TYPE >( k, i, xLocal, gradN );
+          real32 const detJ = FE_TYPE::calcGradN( i, xLocal, gradN );
           GEOS_UNUSED_VAR ( detJ );
 
           /// compute the gradient of the pressure and the PML auxiliary variables at the node

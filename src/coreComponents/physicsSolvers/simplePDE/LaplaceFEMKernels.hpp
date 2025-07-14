@@ -138,13 +138,8 @@ public:
             primaryField_local{ 0.0 }
     {}
 
-#if !defined(CALC_FEM_SHAPE_IN_KERNEL)
-    /// Dummy
-    int xLocal;
-#else
     /// C-array stack storage for element local the nodal positions.
     real64 xLocal[ maxNumTestSupportPointsPerElem ][ 3 ];
-#endif
 
     /// C-array storage for the element local primary field variable.
     real64 primaryField_local[ maxNumTestSupportPointsPerElem ];
@@ -171,12 +166,10 @@ public:
     {
       localIndex const localNodeIndex = m_elemsToNodes( k, a );
 
-#if defined(CALC_FEM_SHAPE_IN_KERNEL)
       for( int i=0; i<3; ++i )
       {
         stack.xLocal[ a ][ i ] = m_X[ localNodeIndex ][ i ];
       }
-#endif
 
       stack.primaryField_local[ a ] = m_primaryField[ localNodeIndex ];
       stack.localRowDofIndex[a] = m_dofNumber[localNodeIndex];
@@ -197,7 +190,7 @@ public:
                               StackVariables & stack ) const
   {
     real64 dNdX[ maxNumTestSupportPointsPerElem ][ 3 ];
-    real64 const detJ = m_finiteElementSpace.template getGradN< FE_TYPE >( k, q, stack.xLocal,
+    real64 const detJ = FE_TYPE::calcGradN( q, stack.xLocal,
                                                                            stack.feStack, dNdX );
     for( localIndex a = 0; a < stack.numRows; ++a )
     {

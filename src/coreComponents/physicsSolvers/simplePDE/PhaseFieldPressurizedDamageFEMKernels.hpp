@@ -172,7 +172,7 @@ public:
     //Interpolate d and grad_d
     real64 N[ numNodesPerElem ];
     real64 dNdX[ numNodesPerElem ][ 3 ];
-    real64 const detJ = m_finiteElementSpace.template getGradN< FE_TYPE >( k, q, stack.xLocal, dNdX );
+    real64 const detJ = FE_TYPE::calcGradN( q, stack.xLocal, dNdX );
     FE_TYPE::calcN( q, N );
 
     real64 qp_damage = 0.0;

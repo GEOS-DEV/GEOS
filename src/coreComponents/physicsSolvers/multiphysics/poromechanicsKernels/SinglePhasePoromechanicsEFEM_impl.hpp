@@ -199,7 +199,7 @@ quadraturePointKernel( localIndex const k,
   // derivatives (dNdX), and (iii) determinant of the Jacobian transformation
   // matrix times the quadrature weight (detJxW)
   real64 dNdX[numNodesPerElem][3];
-  real64 const detJ = m_finiteElementSpace.template getGradN< FE_TYPE >( k, q, stack.xLocal, dNdX );
+  real64 const detJ = FE_TYPE::calcGradN( q, stack.xLocal, dNdX );
 
   // EFEM part starts here
   constexpr int nUdof = numNodesPerElem*3;

@@ -402,7 +402,6 @@ void SolidMechanicsLagrangianFEM::initializePostInitialConditionsPreSubGroups()
             localIndex const numSupportPoints =
               finiteElement.getNumSupportPoints( feStack );
 
-//#if ! defined( CALC_FEM_SHAPE_IN_KERNEL ) // we don't calculate detJ in this case
             for( localIndex q=0; q<numQuadraturePointsPerElem; ++q )
             {
               FE_TYPE::calcN( q, feStack, N );
@@ -412,7 +411,6 @@ void SolidMechanicsLagrangianFEM::initializePostInitialConditionsPreSubGroups()
                 mass[elemsToNodes[k][a]] += rho[k][q] * detJ[k][q] * N[a];
               }
             }
-//#endif
 
             bool isAttachedToGhostNode = false;
             for( localIndex a=0; a<elementSubRegion.numNodesPerElement(); ++a )

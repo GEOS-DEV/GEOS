@@ -17,11 +17,6 @@
  * @file FiniteElementBase.hpp
  */
 
-#if defined(GEOS_USE_DEVICE)
-#define CALC_FEM_SHAPE_IN_KERNEL
-#endif
-
-
 
 #ifndef GEOS_FINITEELEMENT_ELEMENTFORMULATIONS_FINITEELEMENTBASE_HPP_
 #define GEOS_FINITEELEMENT_ELEMENTFORMULATIONS_FINITEELEMENTBASE_HPP_
@@ -58,18 +53,7 @@ public:
    * @brief Copy Constructor
    * @param source The object to copy.
    */
-  GEOS_HOST_DEVICE
-  FiniteElementBase( FiniteElementBase const & source ):
-#ifdef CALC_FEM_SHAPE_IN_KERNEL
-    m_viewGradN(),
-    m_viewDetJ()
-#else
-    m_viewGradN( source.m_viewGradN ),
-    m_viewDetJ( source.m_viewDetJ )
-#endif
-  {
-    GEOS_UNUSED_VAR( source ); // suppress warning when CALC_FEM_SHAPE_IN_KERNEL is defined
-  }
+  FiniteElementBase( FiniteElementBase const & source ) = default;
 
   /// Default Move constructor
   FiniteElementBase( FiniteElementBase && ) = default;
@@ -238,80 +222,6 @@ public:
   GEOS_HOST_DEVICE
   virtual localIndex getMaxSupportPoints() const = 0;
 
-  /**
-   * @brief Get the shape function gradients.
-   * @tparam LEAF Type of the derived finite element implementation.
-   * @param k The element index.
-   * @param q The quadrature point index.
-   * @param X Array of coordinates as the reference for the gradients.
-   * @param gradN Return array of the shape function gradients.
-   * @return The determinant of the Jacobian transformation matrix.
-   *
-   * This function calls the function to calculate shape function gradients.
-   */
-  template< typename LEAF >
-  GEOS_HOST_DEVICE
-  real64 getGradN( localIndex const k,
-                   localIndex const q,
-                   real64 const (&X)[LEAF::maxSupportPoints][3],
-                   real64 ( &gradN )[LEAF::maxSupportPoints][3] ) const;
-
-  /**
-   * @brief Get the shape function gradients.
-   * @tparam LEAF Type of the derived finite element implementation.
-   * @param k The element index.
-   * @param q The quadrature point index.
-   * @param X Array of coordinates as the reference for the gradients.
-   * @param stack Stack variables relative to the element @p k created by a call to @ref setup.
-   * @param gradN Return array of the shape function gradients.
-   * @return The determinant of the Jacobian transformation matrix.
-   *
-   * This function calls the function to calculate shape function gradients.
-   */
-  template< typename LEAF >
-  GEOS_HOST_DEVICE
-  real64 getGradN( localIndex const k,
-                   localIndex const q,
-                   real64 const (&X)[LEAF::maxSupportPoints][3],
-                   typename LEAF::StackVariables const & stack,
-                   real64 ( &gradN )[LEAF::maxSupportPoints][3] ) const;
-
-  /**
-   * @brief Get the shape function gradients.
-   * @tparam LEAF Type of the derived finite element implementation.
-   * @param k The element index.
-   * @param q The quadrature point index.
-   * @param X dummy variable.
-   * @param gradN Return array of the shape function gradients.
-   * @return The determinant of the Jacobian transformation matrix.
-   *
-   * This function returns pre-calculated shape function gradients.
-   */
-  template< typename LEAF >
-  GEOS_HOST_DEVICE
-  real64 getGradN( localIndex const k,
-                   localIndex const q,
-                   int const X,
-                   real64 ( &gradN )[LEAF::maxSupportPoints][3] ) const;
-  /**
-   * @brief Get the shape function gradients.
-   * @tparam LEAF Type of the derived finite element implementation.
-   * @param k The element index.
-   * @param q The quadrature point index.
-   * @param X dummy variable.
-   * @param stack Stack variables relative to the element @p k created by a call to @ref setup.
-   * @param gradN Return array of the shape function gradients.
-   * @return The determinant of the Jacobian transformation matrix.
-   *
-   * This function returns pre-calculated shape function gradients.
-   */
-  template< typename LEAF >
-  GEOS_HOST_DEVICE
-  real64 getGradN( localIndex const k,
-                   localIndex const q,
-                   int const X,
-                   typename LEAF::StackVariables const & stack,
-                   real64 ( &gradN )[LEAF::maxSupportPoints][3] ) const;
 
 
   /**
@@ -425,64 +335,6 @@ public:
 
 
 
-
-  /**
-   * @brief Sets m_viewGradN equal to an input view.
-   * @param source The view to assign to m_viewGradN.
-   */
-  void setGradNView( arrayView4d< real64 const > const & source )
-  {
-    GEOS_ERROR_IF_NE_MSG( source.size( 1 ),
-                          getNumQuadraturePoints(),
-                          "2nd-dimension of gradN array does not match number of quadrature points" );
-    GEOS_ERROR_IF_NE_MSG( source.size( 2 ),
-                          getMaxSupportPoints(),
-                          "3rd-dimension of gradN array does not match number of support points" );
-    GEOS_ERROR_IF_NE_MSG( source.size( 3 ),
-                          3,
-                          "4th-dimension of gradN array does not match 3" );
-
-    m_viewGradN = source;
-  }
-
-  /**
-   * @brief Sets m_viewDetJ equal to an input view.
-   * @param source The view to assign to m_viewDetJ.
-   */
-  void setDetJView( arrayView2d< real64 const > const & source )
-  {
-    GEOS_ERROR_IF_NE_MSG( source.size( 1 ),
-                          getNumQuadraturePoints(),
-                          "2nd-dimension of gradN array does not match number of quadrature points" );
-    m_viewDetJ = source;
-  }
-
-  /**
-   * @brief Getter for m_viewGradN
-   * @return A new arrayView copy of m_viewGradN.
-   */
-  arrayView4d< real64 const > getGradNView() const
-  {
-    return m_viewGradN;
-  }
-
-  /**
-   * @brief Getter for m_viewDetJ
-   * @return A new arrayView copy of m_viewDetJ.
-   */
-  arrayView2d< real64 const > getDetJView() const
-  {
-    return m_viewDetJ;
-  }
-
-
-protected:
-  /// View to potentially hold pre-calculated shape function gradients.
-  arrayView4d< real64 const > m_viewGradN;
-
-  /// View to potentially hold pre-calculated weighted jacobian transformation
-  /// determinants.
-  arrayView2d< real64 const > m_viewDetJ;
 };
 
 /// @cond Doxygen_Suppress
@@ -518,62 +370,7 @@ constexpr PDEUtilities::FunctionSpace FiniteElementBase::getFunctionSpace()
   return FunctionSpaceHelper< N >::getFunctionSpace();
 }
 
-template< typename LEAF >
-GEOS_HOST_DEVICE
-GEOS_FORCE_INLINE
-real64 FiniteElementBase::getGradN( localIndex const k,
-                                    localIndex const q,
-                                    real64 const (&X)[LEAF::maxSupportPoints][3],
-                                    real64 (& gradN)[LEAF::maxSupportPoints][3] ) const
-{
-  GEOS_UNUSED_VAR( k );
-  return LEAF::calcGradN( q, X, gradN );
-}
 
-template< typename LEAF >
-GEOS_HOST_DEVICE
-GEOS_FORCE_INLINE
-real64 FiniteElementBase::getGradN( localIndex const k,
-                                    localIndex const q,
-                                    real64 const (&X)[LEAF::maxSupportPoints][3],
-                                    typename LEAF::StackVariables const & stack,
-                                    real64 ( & gradN )[LEAF::maxSupportPoints][3] ) const
-{
-  GEOS_UNUSED_VAR( k );
-  return LEAF::calcGradN( q, X, stack, gradN );
-}
-
-template< typename LEAF >
-GEOS_HOST_DEVICE
-GEOS_FORCE_INLINE
-real64 FiniteElementBase::getGradN( localIndex const k,
-                                    localIndex const q,
-                                    int const X,
-                                    real64 (& gradN)[LEAF::maxSupportPoints][3] ) const
-{
-  GEOS_UNUSED_VAR( X );
-
-  LvArray::tensorOps::copy< LEAF::maxSupportPoints, 3 >( gradN, m_viewGradN[ k ][ q ] );
-
-  return m_viewDetJ( k, q );
-}
-
-template< typename LEAF >
-GEOS_HOST_DEVICE
-GEOS_FORCE_INLINE
-real64 FiniteElementBase::getGradN( localIndex const k,
-                                    localIndex const q,
-                                    int const X,
-                                    typename LEAF::StackVariables const & stack,
-                                    real64 (& gradN)[LEAF::maxSupportPoints][3] ) const
-{
-  GEOS_UNUSED_VAR( X );
-  GEOS_UNUSED_VAR( stack );
-
-  LvArray::tensorOps::copy< LEAF::maxSupportPoints, 3 >( gradN, m_viewGradN[ k ][ q ] );
-
-  return m_viewDetJ( k, q );
-}
 /// @endcond
 
 

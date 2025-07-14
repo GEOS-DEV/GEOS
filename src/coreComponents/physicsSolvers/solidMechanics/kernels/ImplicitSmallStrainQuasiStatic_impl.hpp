@@ -90,9 +90,7 @@ setup( localIndex const k,
     // #pragma unroll
     for( int i = 0; i < numDofPerTestSupportPoint; ++i )
     {
-#if defined(CALC_FEM_SHAPE_IN_KERNEL)
       stack.xLocal[ a ][ i ] = m_X[ localNodeIndex ][ i ];
-#endif
       stack.u_local[ a ][i] = m_disp[ localNodeIndex ][i];
       stack.uhat_local[ a ][i] = m_uhat[ localNodeIndex ][i];
       stack.localRowDofIndex[a*3+i] = m_dofNumber[localNodeIndex]+i;
@@ -120,7 +118,7 @@ void ImplicitSmallStrainQuasiStatic< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE 
                                                                                                           STRESS_MODIFIER && stressModifier ) const
 {
   real64 dNdX[ numNodesPerElem ][ 3 ];
-  real64 const detJxW = m_finiteElementSpace.template getGradN< FE_TYPE >( k, q, stack.xLocal, stack.feStack, dNdX );
+  real64 const detJxW = FE_TYPE::calcGradN( q, stack.xLocal, stack.feStack, dNdX );
 
   real64 strainInc[6] = {0};
   real64 stress[6] = {0};

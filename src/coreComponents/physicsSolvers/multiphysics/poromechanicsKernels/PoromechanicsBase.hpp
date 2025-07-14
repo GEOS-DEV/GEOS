@@ -150,13 +150,8 @@ public:
       localPressureDofIndex{ 0 }
     {}
 
-#if !defined(CALC_FEM_SHAPE_IN_KERNEL)
-    /// Dummy
-    int xLocal;
-#else
     /// C-array stack storage for element local the nodal positions.
     real64 xLocal[numNodesPerElem][3];
-#endif
 
     // Storage for displacements
 
@@ -232,9 +227,7 @@ public:
 
       for( integer i = 0; i < numDims; ++i )
       {
-#if defined(CALC_FEM_SHAPE_IN_KERNEL)
         stack.xLocal[a][i] = m_X[localNodeIndex][i];
-#endif
         stack.u_local[a][i] = m_disp[localNodeIndex][i];
         stack.uhat_local[a][i] = m_uhat[localNodeIndex][i];
         stack.localRowDofIndex[a*numDims+i] = m_dofNumber[localNodeIndex]+i;

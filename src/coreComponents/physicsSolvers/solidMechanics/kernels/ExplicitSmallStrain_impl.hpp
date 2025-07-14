@@ -74,10 +74,7 @@ void ExplicitSmallStrain< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::setup( l
     localIndex const nodeIndex = m_elemsToNodes( k, a );
     for( int i=0; i<numDofPerTrialSupportPoint; ++i )
     {
-#if defined(CALC_FEM_SHAPE_IN_KERNEL)
       stack.xLocal[ a ][ i ] = m_X[ nodeIndex ][ i ];
-#endif
-
 #if UPDATE_STRESS==2
       stack.varLocal[ a ][ i ] = m_vel[ nodeIndex ][ i ] * m_dt;
 #else
@@ -99,7 +96,7 @@ void ExplicitSmallStrain< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::quadratu
 //#define USE_JACOBIAN
 #if !defined( USE_JACOBIAN )
   real64 dNdX[ numNodesPerElem ][ 3 ];
-  real64 const detJ = m_finiteElementSpace.template getGradN< FE_TYPE >( k, q, stack.xLocal, dNdX );
+  real64 const detJ = FE_TYPE::calcGradN( q, stack.xLocal, dNdX );
   /// Macro to substitute in the shape function derivatives.
   real64 strain[6] = {0};
   //real64 timeIncrement = 0.0;

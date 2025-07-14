@@ -134,7 +134,7 @@ public:
     //real64 const weight = FE_TYPE::transformedQuadratureWeight( q, stack.xLocal, stack.feStack ) / m_elementVolume[k];
 
     real64 dNdX[ FE_TYPE::maxSupportPoints ][3];
-    real64 const detJxW = m_finiteElementSpace.template getGradN< FE_TYPE >( k, q, stack.xLocal, stack.feStack, dNdX );
+    real64 const detJxW = FE_TYPE::calcGradN( q, stack.xLocal, stack.feStack, dNdX );
     real64 strain[6] = {0.0};
     real64 strainInc[6] = {0.0};
     finiteElement::feOps::symmetricGradient( dNdX, stack.uLocal, strain );
