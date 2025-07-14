@@ -139,6 +139,11 @@ blt_add_executable( NAME geosx
                                ${extraComponentsLinkList}
                                ${externalComponentsLinkList} )
 
+if(APPLE)
+  target_link_options(geosx PRIVATE "-Wl,-export_dynamic")
+endif()
+
+
 # Seems to be required on some CMake versions (e.g. 3.16) to get enforce device linking
 if( ${ENABLE_HYPRE_DEVICE} STREQUAL "CUDA"  )
   set_target_properties( geosx PROPERTIES CUDA_RESOLVE_DEVICE_SYMBOLS TRUE )

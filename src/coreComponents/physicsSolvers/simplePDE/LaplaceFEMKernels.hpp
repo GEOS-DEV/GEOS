@@ -189,9 +189,9 @@ public:
                               localIndex const q,
                               StackVariables & stack ) const
   {
+    GEOS_UNUSED_VAR( k );
     real64 dNdX[ maxNumTestSupportPointsPerElem ][ 3 ];
-    real64 const detJ = FE_TYPE::calcGradN( q, stack.xLocal,
-                                                                           stack.feStack, dNdX );
+    real64 const detJ = FE_TYPE::calcGradN( q, stack.xLocal, stack.feStack, dNdX );
     for( localIndex a = 0; a < stack.numRows; ++a )
     {
       for( localIndex b = 0; b < stack.numCols; ++b )

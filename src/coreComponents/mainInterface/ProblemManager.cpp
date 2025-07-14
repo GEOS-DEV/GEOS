@@ -935,7 +935,6 @@ map< std::tuple< string, string, string, string >, localIndex > ProblemManager::
         ElementRegionManager & elemManager = meshLevel.getElemManager();
         FaceManager const & faceManager = meshLevel.getFaceManager();
         EdgeManager const & edgeManager = meshLevel.getEdgeManager();
-        arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X = nodeManager.referencePosition();
 
         for( auto const & regionName : regionNames )
         {

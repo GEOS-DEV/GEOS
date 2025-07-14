@@ -35,8 +35,7 @@ constexpr real64 relTol = geos::testing::DEFAULT_REL_TOL*10;
 
 template< typename VEM >
 GEOS_HOST_DEVICE
-static void checkIntegralMeanConsistency( FiniteElementBase const & feBase,
-                                          typename VEM::StackVariables const & stack,
+static void checkIntegralMeanConsistency( typename VEM::StackVariables const & stack,
                                           real64 & sumBasisFunctions )
 {
   static constexpr localIndex
@@ -53,8 +52,7 @@ static void checkIntegralMeanConsistency( FiniteElementBase const & feBase,
 template< typename VEM >
 GEOS_HOST_DEVICE
 static void
-checkIntegralMeanDerivativesConsistency( FiniteElementBase const & feBase,
-                                         typename VEM::StackVariables const & stack,
+checkIntegralMeanDerivativesConsistency( typename VEM::StackVariables const & stack,
                                          real64 & sumXDerivatives,
                                          real64 & sumYDerivatives,
                                          real64 & sumZDerivatives )
@@ -62,7 +60,6 @@ checkIntegralMeanDerivativesConsistency( FiniteElementBase const & feBase,
   static constexpr localIndex
     maxSupportPoints = VEM::maxSupportPoints;
   real64 const dummy[VEM::numNodes][3] { { 0.0 } };
-  localIndex const k = 0;
   for( localIndex q = 0; q < VEM::numQuadraturePoints; ++q )
   {
     real64 basisDerivativesIntegralMean[maxSupportPoints][3]{};
@@ -218,9 +215,9 @@ static void testCellsInMeshLevel( MeshLevel const & mesh )
     VEM virtualElement;
     virtualElement.template setup< VEM >( cellIndex, meshData, stack );
 
-    checkIntegralMeanConsistency< VEM >( virtualElement, stack,
+    checkIntegralMeanConsistency< VEM >( stack, 
                                          sumBasisFunctionsView( cellIndex ) );
-    checkIntegralMeanDerivativesConsistency< VEM >( virtualElement, stack,
+    checkIntegralMeanDerivativesConsistency< VEM >( stack,
                                                     sumXDerivativesView( cellIndex ),
                                                     sumYDerivativesView( cellIndex ),
                                                     sumZDerivativesView( cellIndex )
