@@ -376,10 +376,10 @@ void NegativeTwoPhaseFlash::computeDerivatives(
   else
   {
     // Calculate the liquid and vapour fugacities and derivatives
-    stackArray1d< real64, maxNumComps > logLiquidFugacity( numComps );
-    stackArray1d< real64, maxNumComps > logVapourFugacity( numComps );
-    stackArray2d< real64, maxNumComps * maxNumDofs > logLiquidFugacityDerivs( numComps, numDofs );
-    stackArray2d< real64, maxNumComps * maxNumDofs > logVapourFugacityDerivs( numComps, numDofs );
+    StackArray< real64, 1, maxNumComps > logLiquidFugacity( numComps );
+    StackArray< real64, 1, maxNumComps > logVapourFugacity( numComps );
+    StackArray< real64, 2, maxNumComps * maxNumDofs, MatrixLayout::ROW_MAJOR_PERM > logLiquidFugacityDerivs( numComps, numDofs );
+    StackArray< real64, 2, maxNumComps * maxNumDofs, MatrixLayout::ROW_MAJOR_PERM > logVapourFugacityDerivs( numComps, numDofs );
 
     FugacityCalculator::computeLogFugacityDerivatives( numComps,
                                                        pressure,
