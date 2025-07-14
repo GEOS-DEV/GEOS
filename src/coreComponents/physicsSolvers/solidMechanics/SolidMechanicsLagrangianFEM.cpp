@@ -400,7 +400,7 @@ void SolidMechanicsLagrangianFEM::initializePostInitialConditionsPreSubGroups()
             typename FE_TYPE::StackVariables feStack;
             finiteElement.template setup< FE_TYPE >( k, meshData, feStack );
             localIndex const numSupportPoints =
-              finiteElement.template numSupportPoints< FE_TYPE >( feStack );
+              finiteElement.getNumSupportPoints( feStack );
 
 //#if ! defined( CALC_FEM_SHAPE_IN_KERNEL ) // we don't calculate detJ in this case
             for( localIndex q=0; q<numQuadraturePointsPerElem; ++q )

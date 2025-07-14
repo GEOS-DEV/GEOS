@@ -395,7 +395,7 @@ complete( localIndex const k,
   real64 const maxForce = Base::complete( k, stack );
 
   localIndex const numSupportPoints =
-    m_finiteElementSpace.template numSupportPoints< FE_TYPE >( stack.feStack );
+    m_finiteElementSpace.getNumSupportPoints( stack.feStack );
   integer numDisplacementDofs = numSupportPoints * numDofPerTestSupportPoint;
 
   // Step 1: assemble the derivatives of linear momentum balance wrt temperature into the global matrix

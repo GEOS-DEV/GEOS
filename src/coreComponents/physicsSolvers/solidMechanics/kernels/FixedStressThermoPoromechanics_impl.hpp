@@ -85,7 +85,7 @@ setup( localIndex const k,
 {
   m_finiteElementSpace.template setup< FE_TYPE >( k, m_meshData, stack.feStack );
   localIndex const numSupportPoints =
-    m_finiteElementSpace.template numSupportPoints< FE_TYPE >( stack.feStack );
+    m_finiteElementSpace.getNumSupportPoints( stack.feStack );
   stack.numRows = 3 * numSupportPoints;
   stack.numCols = stack.numRows;
 
@@ -191,7 +191,7 @@ complete( localIndex const k,
   // TODO: Does this work if BTDB is non-symmetric?
   CONSTITUTIVE_TYPE::KernelWrapper::DiscretizationOps::template fillLowerBTDB< numNodesPerElem >( stack.localJacobian );
   localIndex const numSupportPoints =
-    m_finiteElementSpace.template numSupportPoints< FE_TYPE >( stack.feStack );
+    m_finiteElementSpace.getNumSupportPoints( stack.feStack );
   for( int localNode = 0; localNode < numSupportPoints; ++localNode )
   {
     for( int dim = 0; dim < numDofPerTestSupportPoint; ++dim )

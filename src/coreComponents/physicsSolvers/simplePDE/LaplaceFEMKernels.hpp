@@ -165,7 +165,7 @@ public:
               StackVariables & stack ) const
   {
     m_finiteElementSpace.template setup< FE_TYPE >( k, m_meshData, stack.feStack );
-    stack.numRows = m_finiteElementSpace.template numSupportPoints< FE_TYPE >( stack.feStack );
+    stack.numRows = m_finiteElementSpace.getNumSupportPoints( stack.feStack );
     stack.numCols = stack.numRows;
     for( localIndex a = 0; a < stack.numRows; ++a )
     {

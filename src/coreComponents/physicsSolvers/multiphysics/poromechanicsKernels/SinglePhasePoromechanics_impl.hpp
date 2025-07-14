@@ -399,7 +399,7 @@ complete( localIndex const k,
   GEOS_UNUSED_VAR( k );
   real64 maxForce = 0;
   localIndex const numSupportPoints =
-    m_finiteElementSpace.template numSupportPoints< FE_TYPE >( stack.feStack );
+    m_finiteElementSpace.getNumSupportPoints( stack.feStack );
   integer numDisplacementDofs = numSupportPoints * numDofPerTestSupportPoint;
 
   for( int localNode = 0; localNode < numSupportPoints; ++localNode )

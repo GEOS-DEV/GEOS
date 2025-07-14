@@ -184,7 +184,7 @@ public:
               StackVariables & stack ) const
   {
     m_finiteElementSpace.template setup< FE_TYPE >( k, m_meshData, stack.feStack );
-    localIndex numTestSupportPoints = m_finiteElementSpace.template numSupportPoints< FE_TYPE >( stack.feStack );
+    localIndex numTestSupportPoints = m_finiteElementSpace.getNumSupportPoints( stack.feStack );
     localIndex numTrialSupportPoints = numTestSupportPoints;
     stack.numRows = numTestSupportPoints * numDofPerTestSupportPoint;
     stack.numCols = numTrialSupportPoints * numDofPerTrialSupportPoint;

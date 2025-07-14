@@ -230,19 +230,6 @@ public:
   constexpr static PDEUtilities::FunctionSpace getFunctionSpace();
 
   /**
-   * @brief Getter for the number of support points per element.
-   * @tparam LEAF Type of the derived finite element implementation.
-   * @param stack Stack variables created by a call to @ref setup.
-   * @return The number of support points per element.
-   */
-  template< typename LEAF >
-  GEOS_HOST_DEVICE
-  localIndex numSupportPoints( typename LEAF::StackVariables const & stack ) const
-  {
-    return LEAF::getNumSupportPoints( stack );
-  }
-
-  /**
    * @brief Get the maximum number of support points for this element.
    * @details This should be used to know the size of pre-allocated objects whose size depend on the
    * number of support points.

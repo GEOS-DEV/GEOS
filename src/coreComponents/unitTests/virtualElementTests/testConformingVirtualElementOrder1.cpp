@@ -44,8 +44,7 @@ static void checkIntegralMeanConsistency( FiniteElementBase const & feBase,
   real64 basisFunctionsIntegralMean[maxSupportPoints];
   VEM::calcN( 0, stack, basisFunctionsIntegralMean );
   sumBasisFunctions = 0;
-  for( localIndex iBasisFun = 0;
-       iBasisFun < feBase.template numSupportPoints< VEM >( stack ); ++iBasisFun )
+  for( localIndex iBasisFun = 0; iBasisFun < VEM::getNumSupportPoints( stack ); ++iBasisFun )
   {
     sumBasisFunctions += basisFunctionsIntegralMean[iBasisFun];
   }
@@ -69,9 +68,7 @@ checkIntegralMeanDerivativesConsistency( FiniteElementBase const & feBase,
     real64 basisDerivativesIntegralMean[maxSupportPoints][3]{};
     feBase.template getGradN< VEM >( k, q, dummy, stack, basisDerivativesIntegralMean );
     sumXDerivatives = 0; sumYDerivatives = 0; sumZDerivatives = 0;
-    for( localIndex iBasisFun = 0;
-         iBasisFun < feBase.template numSupportPoints< VEM >( stack );
-         ++iBasisFun )
+    for( localIndex iBasisFun = 0; iBasisFun < VEM::getNumSupportPoints( stack ); ++iBasisFun )
     {
       sumXDerivatives += basisDerivativesIntegralMean[iBasisFun][0];
       sumYDerivatives += basisDerivativesIntegralMean[iBasisFun][1];

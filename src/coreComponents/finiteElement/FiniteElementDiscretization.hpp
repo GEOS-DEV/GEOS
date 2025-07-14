@@ -153,7 +153,7 @@ FiniteElementDiscretization::
     typename FE_TYPE::StackVariables feStack;
     finiteElement.template setup< FE_TYPE >( k, meshData, feStack );
     real64 xLocal[numNodesPerElem][3];
-    localIndex numSupportPoints = finiteElement.template numSupportPoints< FE_TYPE >( feStack );
+    localIndex numSupportPoints = finiteElement.getNumSupportPoints( feStack );
     for( localIndex a=0; a< numSupportPoints; ++a )
     {
       localIndex const nodeIndex = elemsToNodes[ k][ a ];

@@ -224,7 +224,7 @@ public:
 
     m_finiteElementSpace.template setup< FE_TYPE >( k, m_meshData, stack.feStack );
     localIndex const numSupportPoints =
-      m_finiteElementSpace.template numSupportPoints< FE_TYPE >( stack.feStack );
+      m_finiteElementSpace.getNumSupportPoints( stack.feStack );
 
     for( localIndex a=0; a<numSupportPoints; ++a )
     {

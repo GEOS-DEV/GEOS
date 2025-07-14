@@ -77,7 +77,7 @@ setup( localIndex const k,
 {
   m_finiteElementSpace.template setup< FE_TYPE >( k, m_meshData, stack.feStack );
 
-  localIndex const numSupportPoints = m_finiteElementSpace.template numSupportPoints< FE_TYPE >( stack.feStack );
+  localIndex const numSupportPoints = m_finiteElementSpace.getNumSupportPoints( stack.feStack );
 
   stack.numRows =  3 * numSupportPoints;
   stack.numCols = stack.numRows;
@@ -177,7 +177,7 @@ real64 ImplicitSmallStrainQuasiStatic< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYP
   // TODO: Does this work if BTDB is non-symmetric?
   CONSTITUTIVE_TYPE::KernelWrapper::DiscretizationOps::template fillLowerBTDB< numNodesPerElem >( stack.localJacobian );
 #endif
-  localIndex const numSupportPoints = m_finiteElementSpace.template numSupportPoints< FE_TYPE >( stack.feStack );
+  localIndex const numSupportPoints = m_finiteElementSpace.getNumSupportPoints( stack.feStack );
 
   // #pragma unroll
   for( int localNode = 0; localNode < numSupportPoints; ++localNode )
