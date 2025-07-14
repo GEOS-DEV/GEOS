@@ -129,9 +129,9 @@ using MultiFluidBlackOilTestMass = MultiFluidBlackOilTestFixture< true >;
 using MultiFluidBlackOilTestMolar = MultiFluidBlackOilTestFixture< false >;
 
 template< typename FIXTURE >
-std::vector< typename FIXTURE::Base::TestPoint > getTestData()
+stdVector< typename FIXTURE::Base::TestPoint > getTestData()
 {
-  std::vector< typename FIXTURE::Base::TestPoint > testData;
+  stdVector< typename FIXTURE::Base::TestPoint > testData;
   auto const samples = {
     Feed< 3 >{ 0.49500, 0.50000, 0.00500 },
     Feed< 3 >{ 0.60000, 0.20000, 0.20000 }
