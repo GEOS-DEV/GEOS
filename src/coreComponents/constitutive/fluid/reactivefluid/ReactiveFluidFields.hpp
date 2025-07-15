@@ -95,7 +95,7 @@ DECLARE_FIELD( kineticReactionRates,
                "kineticReactionRates",
                array3dLayoutSpecies,
                0,
-               LEVEL_0,
+               NOPLOT,
                WRITE_AND_READ,
                "kineticReactionRates" );
 

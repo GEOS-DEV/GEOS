@@ -1,0 +1,74 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <Included>
+    <File name="./MoMaS_base.xml" />
+    <File name="./MoMaS_initialAggregate.xml" />
+    <File name="./MoMaS_logConc.xml" />
+  </Included>
+
+  <Mesh>
+    <InternalMesh
+      name="mesh1"
+      elementTypes="{ C3D8 }"
+      xCoords="{ 0, 1, 1.1, 2.1 }"
+      yCoords="{ 0, 0.2 }"
+      zCoords="{ 0, 0.2 }"
+      nx="{ 10, 5, 10 }"
+      ny="{ 1 }"
+      nz="{ 1 }"
+      cellBlockNames="{ cb-0_0_0, cb-1_0_0, cb-2_0_0 }"/>
+  </Mesh>
+
+  <Geometry>
+    <Box
+      name="source"
+      xMin="{ -0.01, -0.01, -0.01 }"
+      xMax="{ 0.11, 0.21, 0.21 }"/>
+
+    <Box
+      name="sink"
+      xMin="{ 1.99, -0.01, -0.01 }"
+      xMax="{ 2.11, 0.21, 0.21 }"/>
+  </Geometry>
+
+  <Events
+    maxTime="100">
+    <PeriodicEvent
+      name="outputs"
+      cycleFrequency="1"
+      target="/Outputs/vtkOutput"/>
+
+    <PeriodicEvent
+      name="logPrimarySpeciesMediumAHistoryCollection1"
+      cycleFrequency="1"
+      target="/Tasks/logPrimarySpeciesMediumACollection1"/>
+    <PeriodicEvent
+      name="logPrimarySpeciesMediumAHistoryCollection2"
+      cycleFrequency="1"
+      target="/Tasks/logPrimarySpeciesMediumACollection2"/>
+    <PeriodicEvent
+      name="logPrimarySpeciesMediumATimeHistoryOutput1"
+      cycleFrequency="1"
+      target="/Outputs/logPrimarySpeciesMediumAHistoryOutput1"/>
+    <PeriodicEvent
+      name="logPrimarySpeciesMediumATimeHistoryOutput2"
+      cycleFrequency="1"
+      target="/Outputs/logPrimarySpeciesMediumAHistoryOutput2"/>
+
+    <PeriodicEvent
+      name="logPrimarySpeciesMediumBHistoryCollection"
+      cycleFrequency="1"
+      target="/Tasks/logPrimarySpeciesMediumBCollection"/>
+    <PeriodicEvent
+      name="logPrimarySpeciesMediumBTimeHistoryOutput"
+      cycleFrequency="1"
+      target="/Outputs/logPrimarySpeciesMediumBHistoryOutput"/>
+
+    <PeriodicEvent
+      name="solverApplications"
+      forceDt="1"
+      target="/Solvers/SinglePhaseReactiveFlow"/>
+  </Events>
+
+</Problem>

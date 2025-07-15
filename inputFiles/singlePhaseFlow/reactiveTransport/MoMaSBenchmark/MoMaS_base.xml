@@ -1,0 +1,174 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <Solvers
+    gravityVector="{ 0.0, 0.0, 0.0 }">
+    <SinglePhaseReactiveTransport
+      name="SinglePhaseReactiveFlow"
+      discretization="singlePhaseTPFA"
+      targetRegions="{ MediumA, MediumB }"
+      writeLinearSystem="0"
+      immobilePrimarySpeciesIndices="{ 4 }"
+      logLevel="2">
+      <NonlinearSolverParameters
+        newtonTol="1.0e-6"
+        maxTimeStepCuts="5"
+        newtonMaxIter="40"
+        logLevel="2"
+        maxAllowedResidualNorm="1e100"/>
+      <LinearSolverParameters
+        directParallel="0"/>
+    </SinglePhaseReactiveTransport>
+  </Solvers>
+
+  <NumericalMethods>
+    <FiniteVolume>
+      <TwoPointFluxApproximation
+        name="singlePhaseTPFA"/>
+    </FiniteVolume>
+  </NumericalMethods>
+
+  <ElementRegions>
+    <!-- <CellElementRegion
+      name="Region1"
+      cellBlocks="{ * }"
+      materialList="{ water, rock, diffusion }"/> -->
+    <CellElementRegion
+      name="MediumA"
+      cellBlocks="{ cb-0_0_0, cb-2_0_0 }"
+      materialList="{ water, rock_a }"/>
+
+    <CellElementRegion
+      name="MediumB"
+      cellBlocks="{ cb-1_0_0 }"
+      materialList="{ water, rock_b }"/>
+  </ElementRegions>
+
+  <Constitutive>
+    <ReactiveCompressibleSinglePhaseFluid
+      name="water"
+      defaultDensity="1000"
+      defaultViscosity="0.001"
+      referencePressure="0.0"
+      compressibility="0.0"
+      viscosibility="0.0"
+      chemicalSystemType="momas"/>
+
+    <CompressibleSolidConstantPermeability
+      name="rock_a"
+      solidModelName="nullSolid"
+      porosityModelName="rockPorosityA"
+      permeabilityModelName="rockPermA"/>
+
+    <NullModel
+      name="nullSolid"/>
+
+    <PressurePorosity
+      name="rockPorosityA"
+      defaultReferencePorosity="0.25"
+      referencePressure="0.0"
+      compressibility="0.0"/>
+
+    <ConstantPermeability
+      name="rockPermA"
+      permeabilityComponents="{ 1e-9, 1e-9, 1e-9 }"/>
+
+    <CompressibleSolidConstantPermeability
+      name="rock_b"
+      solidModelName="nullSolid"
+      porosityModelName="rockPorosityB"
+      permeabilityModelName="rockPermB"/>
+
+    <PressurePorosity
+      name="rockPorosityB"
+      defaultReferencePorosity="0.5"
+      referencePressure="0.0"
+      compressibility="0.0"/>
+
+    <ConstantPermeability
+      name="rockPermB"
+      permeabilityComponents="{ 1e-12, 1e-12, 1e-12 }"/>
+
+    <!-- <ConstantDiffusion
+      name="diffusion"
+      phaseNames="{ water }"
+      defaultPhaseDiffusivityMultipliers="{ 1 }"
+      diffusivityComponents="{ 1e-2, 1e-2, 1e-2 }"/> -->
+  </Constitutive>
+
+  <FieldSpecifications>
+    <FieldSpecification
+      name="PorosityMediumA"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/MediumA"
+      fieldName="rockPorosityA_referencePorosity"
+      scale="0.25"/>
+
+    <FieldSpecification
+      name="PorosityMediumB"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/MediumB"
+      fieldName="rockPorosityB_referencePorosity"
+      scale="0.5"/>
+
+    <FieldSpecification
+      name="initialPressure"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions"
+      fieldName="pressure"
+      scale="1e6"/>
+
+    <SourceFlux
+      name="sourceTerm"
+      setNames="{ source }"
+      objectPath="ElementRegions"
+      scale="-5.5"/>
+
+    <FieldSpecification
+      name="sinkPressure"
+      setNames="{ sink }"
+      objectPath="ElementRegions"
+      fieldName="pressure"
+      scale="1.0e6"/>
+  </FieldSpecifications>
+
+  <Tasks>
+    <PackCollection
+      name="logPrimarySpeciesMediumACollection1"
+      objectPath="ElementRegions/MediumA/cb-0_0_0"
+      fieldName="logPrimarySpeciesConcentration"/>
+
+    <PackCollection
+      name="logPrimarySpeciesMediumACollection2"
+      objectPath="ElementRegions/MediumA/cb-2_0_0"
+      fieldName="logPrimarySpeciesConcentration"/>
+
+    <PackCollection
+      name="logPrimarySpeciesMediumBCollection"
+      objectPath="ElementRegions/MediumB/cb-1_0_0"
+      fieldName="logPrimarySpeciesConcentration"/>
+  </Tasks>
+
+  <Outputs>
+    <TimeHistory
+      name="logPrimarySpeciesMediumAHistoryOutput1"
+      sources="{ /Tasks/logPrimarySpeciesMediumACollection1 }"
+      filename="logPrimarySpeciesMediumAHistory1"/>
+
+    <TimeHistory
+      name="logPrimarySpeciesMediumAHistoryOutput2"
+      sources="{ /Tasks/logPrimarySpeciesMediumACollection2 }"
+      filename="logPrimarySpeciesMediumAHistory2"/>
+
+    <TimeHistory
+      name="logPrimarySpeciesMediumBHistoryOutput"
+      sources="{ /Tasks/logPrimarySpeciesMediumBCollection }"
+      filename="logPrimarySpeciesMediumBHistory"/>
+
+    <VTK
+      name="vtkOutput"/>
+  </Outputs>
+</Problem>
