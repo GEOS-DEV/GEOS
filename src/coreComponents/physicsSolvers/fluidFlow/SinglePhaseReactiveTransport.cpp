@@ -67,6 +67,11 @@ SinglePhaseReactiveTransport::SinglePhaseReactiveTransport( const string & name,
     setApplyDefaultValue( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Flag indicating whether to update the surface area or not" );
+
+  this->registerWrapper( viewKeyStruct::immobilePrimarySpeciesIndicesString(), &m_immobilePrimarySpeciesIndices ).
+    setApplyDefaultValue( { } ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Array to store the indices of immobile species. Default is {}, which indicates no immobile species." );
 }
 
 // TODO: we need to update the class of ReactiveSingleFluid to be consistent with the chemistry module!!!
@@ -404,6 +409,23 @@ void SinglePhaseReactiveTransport::assembleFluxTerms( real64 const dt,
                                                       CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                       arrayView1d< real64 > const & localRhs )
 {
+  array1d< integer > mobilePrimarySpeciesFlags;
+  mobilePrimarySpeciesFlags.resize( m_numPrimarySpecies );
+
+  for( integer i=0; i<mobilePrimarySpeciesFlags.size(); ++i )
+  {
+    mobilePrimarySpeciesFlags[i] = 1;
+  }
+
+  if( m_immobilePrimarySpeciesIndices.size() > 0 )
+  {
+    for( integer i = 0; i < m_immobilePrimarySpeciesIndices.size(); ++i )
+    {
+      localIndex const immobileSpeciesIndex = m_immobilePrimarySpeciesIndices[i];
+      mobilePrimarySpeciesFlags[immobileSpeciesIndex] = 0;
+    }
+  }
+  
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel const & mesh,
                                                                string_array const & )
@@ -423,6 +445,7 @@ void SinglePhaseReactiveTransport::assembleFluxTerms( real64 const dt,
         thermalSinglePhaseReactiveFVMKernels::
           FluxComputeKernelFactory::createAndLaunch< parallelDevicePolicy<> >( m_numPrimarySpecies,
                                                                                m_hasDiffusion,
+                                                                               mobilePrimarySpeciesFlags.toViewConst(),
                                                                                dofManager.rankOffset(),
                                                                                dofKey,
                                                                                getName(),
@@ -437,6 +460,7 @@ void SinglePhaseReactiveTransport::assembleFluxTerms( real64 const dt,
         singlePhaseReactiveFVMKernels::
           FluxComputeKernelFactory::createAndLaunch< parallelDevicePolicy<> >( m_numPrimarySpecies,
                                                                                m_hasDiffusion,
+                                                                               mobilePrimarySpeciesFlags.toViewConst(),
                                                                                dofManager.rankOffset(),
                                                                                dofKey,
                                                                                getName(),

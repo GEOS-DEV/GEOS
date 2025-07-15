@@ -96,8 +96,8 @@ public:
 
   using ReactiveSinglePhaseFluidAccessors =
     StencilMaterialAccessors< constitutive::reactivefluid::ReactiveSinglePhaseFluid< BASE_FLUID_TYPE >,
-                              fields::reactivefluid::primarySpeciesAggregateConcentration,
-                              fields::reactivefluid::dPrimarySpeciesAggregateConcentration_dLogPrimarySpeciesConcentrations >;
+                              fields::reactivefluid::primarySpeciesMobileAggregateConcentration,
+                              fields::reactivefluid::dPrimarySpeciesMobileAggregateConcentration_dLogPrimarySpeciesConcentrations >;
 
   using DiffusionAccessors =
     StencilMaterialAccessors< constitutive::DiffusionBase,
@@ -121,6 +121,7 @@ public:
    * @param[in] diffusionAccessors
    * @param[in] porosityAccessors
    * @param[in] hasDiffusion the flag to turn on diffusion calculation
+   * @param[in] mobilePrimarySpeciesFlags the array of flags to indicate mobile primary species
    * @param[in] dt time step size
    * @param[inout] localMatrix the local CRS matrix
    * @param[inout] localRhs the local right-hand side vector
@@ -136,6 +137,7 @@ public:
                      DiffusionAccessors const & diffusionAccessors,
                      PorosityAccessors const & porosityAccessors,
                      integer const & hasDiffusion,
+                     arrayView1d< integer const > const & mobilePrimarySpeciesFlags,
                      real64 const & dt,
                      CRSMatrixView< real64, globalIndex const > const & localMatrix,
                      arrayView1d< real64 > const & localRhs )
@@ -150,12 +152,13 @@ public:
             localRhs ),
     m_logPrimarySpeciesConc( reactiveSinglePhaseFlowAccessors.get( fields::flow::logPrimarySpeciesConcentration {} ) ),
     m_dMob_dLogPrimaryConc( reactiveSinglePhaseFlowAccessors.get( fields::flow::dMobility_dLogPrimaryConc {} ) ),
-    m_primarySpeciesAggregateConc( reactiveSinglePhaseFluidAccessors.get( fields::reactivefluid::primarySpeciesAggregateConcentration {} ) ),
-    m_dPrimarySpeciesAggregateConc_dLogPrimaryConc( reactiveSinglePhaseFluidAccessors.get( fields::reactivefluid::dPrimarySpeciesAggregateConcentration_dLogPrimarySpeciesConcentrations {} ) ),
+    m_primarySpeciesMobileAggregateConc( reactiveSinglePhaseFluidAccessors.get( fields::reactivefluid::primarySpeciesMobileAggregateConcentration {} ) ),
+    m_dPrimarySpeciesMobileAggregateConc_dLogPrimaryConc( reactiveSinglePhaseFluidAccessors.get( fields::reactivefluid::dPrimarySpeciesMobileAggregateConcentration_dLogPrimarySpeciesConcentrations {} ) ),
     m_diffusivity( diffusionAccessors.get( fields::diffusion::diffusivity {} ) ),
     m_dDiffusivity_dTemp( diffusionAccessors.get( fields::diffusion::dDiffusivity_dTemperature {} ) ),
     m_referencePorosity( porosityAccessors.get( fields::porosity::referencePorosity {} ) ),
-    m_hasDiffusion( hasDiffusion )
+    m_hasDiffusion( hasDiffusion ),
+    m_mobilePrimarySpeciesFlags( mobilePrimarySpeciesFlags )
   {}
 
   /**
@@ -245,7 +248,7 @@ public:
       // compute species fluxes and derivatives using upstream cell concentration
       for( integer is = 0; is < numSpecies; ++is )
       {
-        real64 const aggregateConc_i = m_primarySpeciesAggregateConc[er_up][esr_up][ei_up][0][is];
+        real64 const aggregateConc_i = m_primarySpeciesMobileAggregateConc[er_up][esr_up][ei_up][0][is];
         speciesFlux[is] = aggregateConc_i / fluidDens_up * fluxVal;
 
         for( integer ke = 0; ke < numFluxSupportPoints; ++ke )
@@ -257,7 +260,7 @@ public:
 
         for( integer js = 0; js < numSpecies; ++js )
         {
-          real64 const dAggregateConc_i_dLogConc_j = m_dPrimarySpeciesAggregateConc_dLogPrimaryConc[er_up][esr_up][ei_up][0][is][js];
+          real64 const dAggregateConc_i_dLogConc_j = m_dPrimarySpeciesMobileAggregateConc_dLogPrimaryConc[er_up][esr_up][ei_up][0][is][js];
           dSpeciesFlux_dLogConc[k_up][is][js] += dAggregateConc_i_dLogConc_j / fluidDens_up * fluxVal;
         }
       }
@@ -268,20 +271,20 @@ public:
         integer const eqIndex0 = k[0] * numEqn + numEqn - numSpecies + is;
         integer const eqIndex1 = k[1] * numEqn + numEqn - numSpecies + is;
 
-        stack.localFlux[eqIndex0] +=  m_dt * speciesFlux[is];
-        stack.localFlux[eqIndex1] -=  m_dt * speciesFlux[is];
+        stack.localFlux[eqIndex0] +=  m_dt * speciesFlux[is] * m_mobilePrimarySpeciesFlags[is];
+        stack.localFlux[eqIndex1] -=  m_dt * speciesFlux[is] * m_mobilePrimarySpeciesFlags[is];
 
         for( integer ke = 0; ke < numFluxSupportPoints; ++ke )
         {
           localIndex const localDofIndexPres = k[ke] * numDof;
-          stack.localFluxJacobian[eqIndex0][localDofIndexPres] += m_dt * dSpeciesFlux_dP[ke][is];
-          stack.localFluxJacobian[eqIndex1][localDofIndexPres] -= m_dt * dSpeciesFlux_dP[ke][is];
+          stack.localFluxJacobian[eqIndex0][localDofIndexPres] += m_dt * dSpeciesFlux_dP[ke][is] * m_mobilePrimarySpeciesFlags[is];
+          stack.localFluxJacobian[eqIndex1][localDofIndexPres] -= m_dt * dSpeciesFlux_dP[ke][is] * m_mobilePrimarySpeciesFlags[is];
 
           for( integer js = 0; js < numSpecies; ++js )
           {
             localIndex const localDofIndexSpecies = localDofIndexPres + js + numDof - numSpecies;
-            stack.localFluxJacobian[eqIndex0][localDofIndexSpecies] += m_dt * dSpeciesFlux_dLogConc[ke][is][js];
-            stack.localFluxJacobian[eqIndex1][localDofIndexSpecies] -= m_dt * dSpeciesFlux_dLogConc[ke][is][js];
+            stack.localFluxJacobian[eqIndex0][localDofIndexSpecies] += m_dt * dSpeciesFlux_dLogConc[ke][is][js] * m_mobilePrimarySpeciesFlags[is];
+            stack.localFluxJacobian[eqIndex1][localDofIndexSpecies] -= m_dt * dSpeciesFlux_dLogConc[ke][is][js] * m_mobilePrimarySpeciesFlags[is];
           }
         }
       }
@@ -339,7 +342,7 @@ public:
           //***** calculation of flux *****
           // loop over primary species
           for( integer is = 0; is < numSpecies; ++is )
-          {
+          { 
             // real64 dSpeciesGrad_i_dP[numFluxSupportPoints]{}; // Turn on if speciesGrad is pressure-dependent
             real64 dSpeciesGrad_i_dLogConc[numFluxSupportPoints][numSpecies]{};
 
@@ -350,13 +353,13 @@ public:
               localIndex const esr = sesri[ke];
               localIndex const ei  = sei[ke];
 
-              real64 const aggregateConc_i = m_primarySpeciesAggregateConc[er][esr][ei][0][is];
+              real64 const aggregateConc_i = m_primarySpeciesMobileAggregateConc[er][esr][ei][0][is];
 
               speciesGrad[is] += diffusionTrans[ke] * aggregateConc_i;
 
               for( integer js = 0; js < numSpecies; ++js )
               {
-                real64 const dAggregateConc_i_dLogConc_j = m_dPrimarySpeciesAggregateConc_dLogPrimaryConc[er][esr][ei][0][is][js];
+                real64 const dAggregateConc_i_dLogConc_j = m_dPrimarySpeciesMobileAggregateConc_dLogPrimaryConc[er][esr][ei][0][is][js];
 
                 dSpeciesGrad_i_dLogConc[ke][js] += diffusionTrans[ke] * dAggregateConc_i_dLogConc_j;
               }
@@ -385,20 +388,20 @@ public:
             integer const eqIndex0 = k[0] * numEqn + numEqn - numSpecies + is;
             integer const eqIndex1 = k[1] * numEqn + numEqn - numSpecies + is;
 
-            stack.localFlux[eqIndex0] += m_dt * diffusionFlux[is];
-            stack.localFlux[eqIndex1] -= m_dt * diffusionFlux[is];
+            stack.localFlux[eqIndex0] += m_dt * diffusionFlux[is] * m_mobilePrimarySpeciesFlags[is];
+            stack.localFlux[eqIndex1] -= m_dt * diffusionFlux[is] * m_mobilePrimarySpeciesFlags[is];
 
             for( integer ke = 0; ke < numFluxSupportPoints; ++ke )
             {
               localIndex const localDofIndexPres = k[ke] * numDof;
-              // stack.localFluxJacobian[eqIndex0][localDofIndexPres] += m_dt * dDiffusionFlux_dP[ke][is];
-              // stack.localFluxJacobian[eqIndex1][localDofIndexPres] -= m_dt * dDiffusionFlux_dP[ke][is];
+              // stack.localFluxJacobian[eqIndex0][localDofIndexPres] += m_dt * dDiffusionFlux_dP[ke][is] * m_mobilePrimarySpeciesFlags[is];
+              // stack.localFluxJacobian[eqIndex1][localDofIndexPres] -= m_dt * dDiffusionFlux_dP[ke][is] * m_mobilePrimarySpeciesFlags[is];
 
               for( integer js = 0; js < numSpecies; ++js )
               {
                 localIndex const localDofIndexSpecies = localDofIndexPres + js + numDof - numSpecies;
-                stack.localFluxJacobian[eqIndex0][localDofIndexSpecies] += m_dt * dDiffusionFlux_dLogConc[ke][is][js];
-                stack.localFluxJacobian[eqIndex1][localDofIndexSpecies] -= m_dt * dDiffusionFlux_dLogConc[ke][is][js];
+                stack.localFluxJacobian[eqIndex0][localDofIndexSpecies] += m_dt * dDiffusionFlux_dLogConc[ke][is][js] * m_mobilePrimarySpeciesFlags[is];
+                stack.localFluxJacobian[eqIndex1][localDofIndexSpecies] -= m_dt * dDiffusionFlux_dLogConc[ke][is][js] * m_mobilePrimarySpeciesFlags[is];
               }
             }
 
@@ -479,10 +482,10 @@ protected:
   ElementViewConst< arrayView2d< real64 const, compflow::USD_FLUID_DC > > const m_dMob_dLogPrimaryConc;
 
   /// Views on primary species aggregate concentration
-  ElementViewConst< arrayView3d< real64 const, constitutive::reactivefluid::USD_SPECIES > > const m_primarySpeciesAggregateConc;
+  ElementViewConst< arrayView3d< real64 const, constitutive::reactivefluid::USD_SPECIES > > const m_primarySpeciesMobileAggregateConc;
 
-  /// Views on the derivative of primary species aggregate concentration wrt log of primary concentration
-  ElementViewConst< arrayView4d< real64 const, constitutive::reactivefluid::USD_SPECIES_DC > > const m_dPrimarySpeciesAggregateConc_dLogPrimaryConc;
+  /// Views on the derivative of primary species mobile aggregate concentration wrt log of primary concentration
+  ElementViewConst< arrayView4d< real64 const, constitutive::reactivefluid::USD_SPECIES_DC > > const m_dPrimarySpeciesMobileAggregateConc_dLogPrimaryConc;
 
   /// Views on diffusivity
   ElementViewConst< arrayView3d< real64 const > > const m_diffusivity;
@@ -493,6 +496,9 @@ protected:
 
   /// Flag of adding the diffusion term
   integer const m_hasDiffusion;
+
+  /// Array of flags to indicate mobile primary species
+  arrayView1d< integer const > const m_mobilePrimarySpeciesFlags;
 };
 
 /**
@@ -508,6 +514,7 @@ public:
    * @tparam STENCILWRAPPER the type of the stencil wrapper
    * @param[in] numSpecies the number of primary species
    * @param[in] hasDiffusion the flag of adding diffusion term
+   * @param[in] mobilePrimarySpeciesFlags the array of flags to indicate mobile primary species
    * @param[in] rankOffset the offset of my MPI rank
    * @param[in] dofKey string to get the element degrees of freedom numbers
    * @param[in] solverName name of the solver (to name accessors)
@@ -521,6 +528,7 @@ public:
   static void
   createAndLaunch( integer const numSpecies,
                    integer const hasDiffusion,
+                   arrayView1d< integer const > const mobilePrimarySpeciesFlags,
                    globalIndex const rankOffset,
                    string const & dofKey,
                    string const & solverName,
@@ -551,7 +559,7 @@ public:
 
       KernelType kernel( rankOffset, stencilWrapper, dofNumberAccessor,
                          flowAccessors, reactiveFlowAccessors, fluidAccessors, reactiveFluidAccessors,
-                         permAccessors, diffusionAccessors, porosityAccessors, hasDiffusion,
+                         permAccessors, diffusionAccessors, porosityAccessors, hasDiffusion, mobilePrimarySpeciesFlags,
                          dt, localMatrix, localRhs );
       KernelType::template launch< POLICY >( stencilWrapper.size(), kernel );
     } );

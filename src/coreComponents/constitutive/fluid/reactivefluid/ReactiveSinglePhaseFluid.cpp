@@ -46,7 +46,9 @@ ReactiveSinglePhaseFluid( string const & name, Group * const parent ):
   this->registerField( fields::reactivefluid::secondarySpeciesConcentration{}, &m_secondarySpeciesConcentration );
   this->registerField( fields::reactivefluid::primarySpeciesAggregateConcentration{}, &m_primarySpeciesAggregateConcentration );
   this->registerField( fields::reactivefluid::primarySpeciesAggregateConcentration_n{}, &m_primarySpeciesAggregateConcentration_n );
+  this->registerField( fields::reactivefluid::primarySpeciesMobileAggregateConcentration{}, &m_primarySpeciesMobileAggregateConcentration );
   this->registerField( fields::reactivefluid::dPrimarySpeciesAggregateConcentration_dLogPrimarySpeciesConcentrations{}, &m_dPrimarySpeciesAggregateConcentration_dLogPrimarySpeciesConcentrations );
+  this->registerField( fields::reactivefluid::dPrimarySpeciesMobileAggregateConcentration_dLogPrimarySpeciesConcentrations{}, &m_dPrimarySpeciesMobileAggregateConcentration_dLogPrimarySpeciesConcentrations );
   this->registerField( fields::reactivefluid::kineticReactionRates{}, &m_kineticReactionRates );
   this->registerField( fields::reactivefluid::aggregateSpeciesRates{}, &m_aggregateSpeciesRates );
   this->registerField( fields::reactivefluid::dAggregateSpeciesRates_dLogPrimarySpeciesConcentrations{}, &m_dAggregateSpeciesRates_dLogPrimarySpeciesConcentrations );
@@ -94,8 +96,8 @@ void ReactiveSinglePhaseFluid< BASE >::postInputInitialization()
       break;
 
     default:
-      m_numPrimarySpecies = 3; 
-      m_numSecondarySpecies = 2; 
+      m_numPrimarySpecies = 5; 
+      m_numSecondarySpecies = 7; 
       m_numKineticReactions = 0;
       break;
   }
@@ -119,7 +121,9 @@ void ReactiveSinglePhaseFluid< BASE >::resizeFields( localIndex const size, loca
   m_secondarySpeciesConcentration.resize( size, numPts, numSecondarySpecies );
   m_primarySpeciesAggregateConcentration.resize( size, numPts, numPrimarySpecies );
   m_primarySpeciesAggregateConcentration_n.resize( size, numPts, numPrimarySpecies );
+  m_primarySpeciesMobileAggregateConcentration.resize( size, numPts, numPrimarySpecies );
   m_dPrimarySpeciesAggregateConcentration_dLogPrimarySpeciesConcentrations.resize( size, numPts, numPrimarySpecies, numPrimarySpecies );
+  m_dPrimarySpeciesMobileAggregateConcentration_dLogPrimarySpeciesConcentrations.resize( size, numPts, numPrimarySpecies, numPrimarySpecies );
   m_kineticReactionRates.resize( size, numPts, numKineticReactions );
   m_aggregateSpeciesRates.resize( size, numPts, numPrimarySpecies );
   m_dAggregateSpeciesRates_dLogPrimarySpeciesConcentrations.resize( size, numPts, numPrimarySpecies, numPrimarySpecies );

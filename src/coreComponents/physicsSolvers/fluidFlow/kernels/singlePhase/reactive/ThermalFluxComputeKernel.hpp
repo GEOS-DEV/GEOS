@@ -85,8 +85,9 @@ public:
   using Base::m_seri;
   using Base::m_sesri;
   using Base::m_sei;
-  using Base::m_primarySpeciesAggregateConc;
+  using Base::m_primarySpeciesMobileAggregateConc;
   using Base::m_referencePorosity;
+  using Base::m_mobilePrimarySpeciesFlags;
 
   using ThermalSinglePhaseFlowAccessors =
     StencilAccessors< fields::flow::temperature >;
@@ -118,6 +119,7 @@ public:
    * @param[in] porosityAccessors accessor for wrappers registered by the porosity model
    * @param[in] thermalConductivityAccessors accessor for wrappers registered by the thermal conductivity model
    * @param[in] hasDiffusion the flag to turn on diffusion calculation
+   * @param[in] mobilePrimarySpeciesFlags the array of flags to indicate mobile primary species
    * @param[in] dt time step size
    * @param[inout] localMatrix the local CRS matrix
    * @param[inout] localRhs the local right-hand side vector
@@ -136,6 +138,7 @@ public:
                      PorosityAccessors const & porosityAccessors,
                      ThermalConductivityAccessors const & thermalConductivityAccessors,
                      integer const & hasDiffusion,
+                     arrayView1d< integer const > const & mobilePrimarySpeciesFlags,
                      real64 const & dt,
                      CRSMatrixView< real64, globalIndex const > const & localMatrix,
                      arrayView1d< real64 > const & localRhs )
@@ -150,13 +153,14 @@ public:
             diffusionAccessors,
             porosityAccessors,
             hasDiffusion,
+            mobilePrimarySpeciesFlags,
             dt,
             localMatrix,
             localRhs ),
     m_temp( thermalSinglePhaseFlowAccessors.get( fields::flow::temperature {} ) ),
     m_enthalpy( thermalReactiveSinglePhaseFluidAccessors.get( fields::singlefluid::enthalpy {} ) ),
     m_dEnthalpy( thermalReactiveSinglePhaseFluidAccessors.get( fields::singlefluid::dEnthalpy {} ) ),
-    // m_dPrimarySpeciesAggregateConcentration_dTemp( fluid.dPrimarySpeciesAggregateConcentration_dTemp() ),
+    // m_dPrimarySpeciesMobileAggregateConcentration_dTemp( fluid.dPrimarySpeciesMobileAggregateConcentration_dTemp() ),
     m_thermalConductivity( thermalConductivityAccessors.get( fields::thermalconductivity::effectiveConductivity {} ) ),
     m_dThermalCond_dT( thermalConductivityAccessors.get( fields::thermalconductivity::dEffectiveConductivity_dT {} ) )
   {}
@@ -322,10 +326,10 @@ public:
 
         // Step 2.2: compute speciesFlux derivative wrt temperature
         for( integer is = 0; is < numSpecies; ++is )
-        {
-          real64 const aggregateConc_i = m_primarySpeciesAggregateConc[er_up][esr_up][ei_up][0][is];
+        { 
+          real64 const aggregateConc_i = m_primarySpeciesMobileAggregateConc[er_up][esr_up][ei_up][0][is];
 
-          // real64 const dAggregateConc_i_dTemp = m_dPrimarySpeciesAggregateConcentration_dTemp[er_up][esr_up][ei_up][is];
+          // real64 const dAggregateConc_i_dTemp = m_dPrimarySpeciesMobileAggregateConcentration_dTemp[er_up][esr_up][ei_up][is];
           // dSpeciesFlux_dT[k_up][is] += dAggregateConc_i_dTemp * fluxVal / fluidDens_up;
           dSpeciesFlux_dT[k_up][is] += -aggregateConc_i * fluxVal * dDens_dTemp / (fluidDens_up * fluidDens_up);
 
@@ -346,8 +350,8 @@ public:
         {
           localIndex const localDofIndexTemp = k[ke] * numDof + numDof - numSpecies - 1;
 
-          stack.localFluxJacobian[eqIndex0][localDofIndexTemp] += m_dt * dSpeciesFlux_dT[ke][is];
-          stack.localFluxJacobian[eqIndex1][localDofIndexTemp] -= m_dt * dSpeciesFlux_dT[ke][is];
+          stack.localFluxJacobian[eqIndex0][localDofIndexTemp] += m_dt * dSpeciesFlux_dT[ke][is] * m_mobilePrimarySpeciesFlags[is];
+          stack.localFluxJacobian[eqIndex1][localDofIndexTemp] -= m_dt * dSpeciesFlux_dT[ke][is] * m_mobilePrimarySpeciesFlags[is];
         }
       }
 
@@ -482,9 +486,9 @@ public:
         localIndex const ei  = sei[ke];
 
         // dSpeciesGrad_dT[ke] += stack.diffusionTransmissibility[connectionIndex][ke]
-        //                        * m_dPrimarySpeciesAggregateConcentration_dTemp[er][esr][ei][is];
+        //                        * m_dPrimarySpeciesMobileAggregateConcentration_dTemp[er][esr][ei][is];
 
-        dSpeciesGrad_dT[ke] += stack.dDiffusionTrans_dT[connectionIndex][ke] * m_primarySpeciesAggregateConc[er][esr][ei][0][is];
+        dSpeciesGrad_dT[ke] += stack.dDiffusionTrans_dT[connectionIndex][ke] * m_primarySpeciesMobileAggregateConc[er][esr][ei][0][is];
       }
 
       for( integer ke = 0; ke < numFluxSupportPoints; ke++ )
@@ -503,8 +507,8 @@ public:
       for( integer ke = 0; ke < numFluxSupportPoints; ++ke )
       {
         localIndex const localDofIndexTemp = k[ke] * numDof + numDof - numSpecies - 1;
-        stack.localFluxJacobian[eqIndex0][localDofIndexTemp] += m_dt * dDiffusionFlux_dT[ke];
-        stack.localFluxJacobian[eqIndex1][localDofIndexTemp] -= m_dt * dDiffusionFlux_dT[ke];
+        stack.localFluxJacobian[eqIndex0][localDofIndexTemp] += m_dt * dDiffusionFlux_dT[ke] * m_mobilePrimarySpeciesFlags[is];
+        stack.localFluxJacobian[eqIndex1][localDofIndexTemp] -= m_dt * dDiffusionFlux_dT[ke] * m_mobilePrimarySpeciesFlags[is];
       }
     } );
   }
@@ -568,6 +572,7 @@ public:
    * @tparam STENCILWRAPPER the type of the stencil wrapper
    * @param[in] numSpecies the number of primary species
    * @param[in] hasDiffusion the flag of adding diffusion term
+   * @param[in] mobilePrimarySpeciesFlags the array of flags to indicate mobile primary species
    * @param[in] rankOffset the offset of my MPI rank
    * @param[in] dofKey string to get the element degrees of freedom numbers
    * @param[in] solverName name of the solver (to name accessors)
@@ -581,6 +586,7 @@ public:
   static void
   createAndLaunch( integer const numSpecies,
                    integer const hasDiffusion,
+                   arrayView1d< integer const > const mobilePrimarySpeciesFlags,
                    globalIndex const rankOffset,
                    string const & dofKey,
                    string const & solverName,
@@ -615,7 +621,7 @@ public:
       KernelType kernel( rankOffset, stencilWrapper, dofNumberAccessor,
                          flowAccessors, reactiveFlowAccessors, thermalFlowAccessors, fluidAccessors, reactiveFluidAccessors, thermalFluidAccessors,
                          permAccessors, diffusionAccessors, porosityAccessors, thermalConductivityAccessors,
-                         hasDiffusion, dt, localMatrix, localRhs );
+                         hasDiffusion, mobilePrimarySpeciesFlags, dt, localMatrix, localRhs );
       KernelType::template launch< POLICY >( stencilWrapper.size(), kernel );
     } );
   }

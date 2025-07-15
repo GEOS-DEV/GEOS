@@ -29,6 +29,7 @@
 
 #include "constitutive/HPCReact/src/reactions/geochemistry/GeochemicalSystems.hpp"
 #include "constitutive/HPCReact/src/reactions/exampleSystems/BulkGeneric.hpp"
+#include "constitutive/HPCReact/src/reactions/exampleSystems/MoMasBenchmark.hpp"
 #include "constitutive/HPCReact/src/reactions/reactionsSystems/EquilibriumReactions.hpp"
 #include "constitutive/HPCReact/src/reactions/reactionsSystems/MixedEquilibriumKineticReactions.hpp"
 #include "constitutive/HPCReact/src/reactions/massActions/MassActions.hpp"
@@ -50,7 +51,7 @@ enum class ChemicalSystemType : integer
   carbonate,
   carbonateAllEquilibrium,
   ultramafic,
-  simple
+  momas
 };
 
 template< typename BASE >
@@ -82,8 +83,14 @@ public:
   arrayView3d< real64 const, reactivefluid::USD_SPECIES > primarySpeciesAggregateConcentration_n() const
   { return m_primarySpeciesAggregateConcentration_n; }
 
+  arrayView3d< real64 const, reactivefluid::USD_SPECIES > primarySpeciesMobileAggregateConcentration() const
+  { return m_primarySpeciesMobileAggregateConcentration; }
+
   arrayView4d< real64 const, reactivefluid::USD_SPECIES_DC > dPrimarySpeciesAggregateConcentration_dLogPrimarySpeciesConcentrations() const
   { return m_dPrimarySpeciesAggregateConcentration_dLogPrimarySpeciesConcentrations; }
+
+  arrayView4d< real64 const, reactivefluid::USD_SPECIES_DC > dPrimarySpeciesMobileAggregateConcentration_dLogPrimarySpeciesConcentrations() const
+  { return m_dPrimarySpeciesMobileAggregateConcentration_dLogPrimarySpeciesConcentrations; }
 
   arrayView3d< real64 const, reactivefluid::USD_SPECIES > secondarySpeciesConcentration() const
   { return m_secondarySpeciesConcentration; }
@@ -113,7 +120,9 @@ public:
 public:
 
     ReactionKernelWrapper( arrayView3d< real64, reactivefluid::USD_SPECIES > const & primarySpeciesAggregateConcentration,
+                           arrayView3d< real64, reactivefluid::USD_SPECIES > const & primarySpeciesMobileAggregateConcentration,
                            arrayView4d< real64, reactivefluid::USD_SPECIES_DC > const & dPrimarySpeciesAggregateConcentration_dLogPrimarySpeciesConcentrations,
+                           arrayView4d< real64, reactivefluid::USD_SPECIES_DC > const & dPrimarySpeciesMobileAggregateConcentration_dLogPrimarySpeciesConcentrations,
                            arrayView3d< real64, reactivefluid::USD_SPECIES > const & secondarySpeciesConcentration,
                            arrayView3d< real64, reactivefluid::USD_SPECIES > const & kineticReactionRates,
                            arrayView3d< real64, reactivefluid::USD_SPECIES > const & aggregateSpeciesRates,
@@ -126,7 +135,9 @@ public:
       m_numSecondarySpecies( numSecondarySpecies ),
       m_numKineticReactions( numKineticReactions ),
       m_primarySpeciesAggregateConcentration( primarySpeciesAggregateConcentration ),
+      m_primarySpeciesMobileAggregateConcentration( primarySpeciesMobileAggregateConcentration ),
       m_dPrimarySpeciesAggregateConcentration_dLogPrimarySpeciesConcentrations( dPrimarySpeciesAggregateConcentration_dLogPrimarySpeciesConcentrations ),
+      m_dPrimarySpeciesMobileAggregateConcentration_dLogPrimarySpeciesConcentrations( dPrimarySpeciesMobileAggregateConcentration_dLogPrimarySpeciesConcentrations ),
       m_secondarySpeciesConcentration( secondarySpeciesConcentration ),
       m_kineticReactionRates( kineticReactionRates ),
       m_aggregateSpeciesRates( aggregateSpeciesRates ),
@@ -165,8 +176,10 @@ public:
                                                  arraySlice1d< real64 const, reactivefluid::USD_SPECIES - 2 > const & logPrimarySpeciesConcentration,
                                                  arraySlice1d< real64 const, reactivefluid::USD_SPECIES - 2 > const & surfaceArea,
                                                  arraySlice1d< real64, reactivefluid::USD_SPECIES - 2 > const & logSecondarySpeciesConcentration,
-                                                 arraySlice1d< real64, reactivefluid::USD_SPECIES - 2 > const & aggregatePrimarySpeciesConcentrations,
-                                                 arraySlice2d< real64, reactivefluid::USD_SPECIES_DC - 2 > const & dAggregatePrimarySpeciesConcentrations_dLogPrimarySpeciesConcentrations,
+                                                 arraySlice1d< real64, reactivefluid::USD_SPECIES - 2 > const & primarySpeciesAggregateConcentration,
+                                                 arraySlice1d< real64, reactivefluid::USD_SPECIES - 2 > const & primarySpeciesMobileAggregateConcentration,
+                                                 arraySlice2d< real64, reactivefluid::USD_SPECIES_DC - 2 > const & dPrimarySpeciesAggregateConcentration_dLogPrimarySpeciesConcentrations,
+                                                 arraySlice2d< real64, reactivefluid::USD_SPECIES_DC - 2 > const & dPrimarySpeciesMobileAggregateConcentration_dLogPrimarySpeciesConcentrations,
                                                  arraySlice1d< real64, reactivefluid::USD_SPECIES - 2 > const & reactionRates,
                                                  arraySlice2d< real64, reactivefluid::USD_SPECIES_DC - 2 > const & dReactionRates_dLogPrimarySpeciesConcentrations,
                                                  arraySlice1d< real64, reactivefluid::USD_SPECIES - 2 > const & aggregateSpeciesRates,
@@ -182,7 +195,11 @@ protected:
 
     arrayView3d< real64, reactivefluid::USD_SPECIES >  m_primarySpeciesAggregateConcentration;
 
+    arrayView3d< real64, reactivefluid::USD_SPECIES >  m_primarySpeciesMobileAggregateConcentration;
+
     arrayView4d< real64, reactivefluid::USD_SPECIES_DC >  m_dPrimarySpeciesAggregateConcentration_dLogPrimarySpeciesConcentrations;
+
+    arrayView4d< real64, reactivefluid::USD_SPECIES_DC >  m_dPrimarySpeciesMobileAggregateConcentration_dLogPrimarySpeciesConcentrations;
 
     arrayView3d< real64, reactivefluid::USD_SPECIES >  m_secondarySpeciesConcentration;
 
@@ -199,58 +216,67 @@ protected:
     typename ReactiveSinglePhaseFluid< BASE >::template ReactionKernelWrapper< hpcReact::geochemistry::ultramaficSystemType >,
     typename ReactiveSinglePhaseFluid< BASE >::template ReactionKernelWrapper< hpcReact::geochemistry::carbonateSystemType >,
     typename ReactiveSinglePhaseFluid< BASE >::template ReactionKernelWrapper< hpcReact::geochemistry::carbonateSystemAllEquilibriumType >,
-    typename ReactiveSinglePhaseFluid< BASE >::template ReactionKernelWrapper< hpcReact::bulkGeneric::simpleTestType > >
+    typename ReactiveSinglePhaseFluid< BASE >::template ReactionKernelWrapper< hpcReact::MomMasBenchmark::simpleSystemType > >
   createReactionKernelWrapper() const
   {
     using namespace hpcReact::geochemistry;
+    using namespace hpcReact::MomMasBenchmark;
     using namespace hpcReact::bulkGeneric;
     switch( m_chemicalSystemType )
     {
       case ChemicalSystemType::ultramafic:
         return ReactionKernelWrapper< ultramaficSystemType >( m_primarySpeciesAggregateConcentration,
-                                                                                    m_dPrimarySpeciesAggregateConcentration_dLogPrimarySpeciesConcentrations,
-                                                                                    m_secondarySpeciesConcentration,
-                                                                                    m_kineticReactionRates,
-                                                                                    m_aggregateSpeciesRates,
-                                                                                    m_dAggregateSpeciesRates_dLogPrimarySpeciesConcentrations,
-                                                                                    m_numPrimarySpecies,
-                                                                                    m_numSecondarySpecies,
-                                                                                    m_numKineticReactions,
-                                                                                    ultramaficSystem );
+                                                              m_primarySpeciesMobileAggregateConcentration,
+                                                              m_dPrimarySpeciesAggregateConcentration_dLogPrimarySpeciesConcentrations,
+                                                              m_dPrimarySpeciesMobileAggregateConcentration_dLogPrimarySpeciesConcentrations,
+                                                              m_secondarySpeciesConcentration,
+                                                              m_kineticReactionRates,
+                                                              m_aggregateSpeciesRates,
+                                                              m_dAggregateSpeciesRates_dLogPrimarySpeciesConcentrations,
+                                                              m_numPrimarySpecies,
+                                                              m_numSecondarySpecies,
+                                                              m_numKineticReactions,
+                                                              ultramaficSystem );
       
       case ChemicalSystemType::carbonate:
         return ReactionKernelWrapper< carbonateSystemType >( m_primarySpeciesAggregateConcentration,
-                                                                                    m_dPrimarySpeciesAggregateConcentration_dLogPrimarySpeciesConcentrations,
-                                                                                    m_secondarySpeciesConcentration,
-                                                                                    m_kineticReactionRates,
-                                                                                    m_aggregateSpeciesRates,
-                                                                                    m_dAggregateSpeciesRates_dLogPrimarySpeciesConcentrations,
-                                                                                    m_numPrimarySpecies,
-                                                                                    m_numSecondarySpecies,
-                                                                                    m_numKineticReactions,
-                                                                                    carbonateSystem );
+                                                             m_primarySpeciesMobileAggregateConcentration,
+                                                             m_dPrimarySpeciesAggregateConcentration_dLogPrimarySpeciesConcentrations,
+                                                             m_dPrimarySpeciesMobileAggregateConcentration_dLogPrimarySpeciesConcentrations,
+                                                             m_secondarySpeciesConcentration,
+                                                             m_kineticReactionRates,
+                                                             m_aggregateSpeciesRates,
+                                                             m_dAggregateSpeciesRates_dLogPrimarySpeciesConcentrations,
+                                                             m_numPrimarySpecies,
+                                                             m_numSecondarySpecies,
+                                                             m_numKineticReactions,
+                                                             carbonateSystem );
       case ChemicalSystemType::carbonateAllEquilibrium:
         return ReactionKernelWrapper< carbonateSystemAllEquilibriumType >( m_primarySpeciesAggregateConcentration,
-                                                                                                  m_dPrimarySpeciesAggregateConcentration_dLogPrimarySpeciesConcentrations,
-                                                                                                  m_secondarySpeciesConcentration,
-                                                                                                  m_kineticReactionRates,
-                                                                                                  m_aggregateSpeciesRates,
-                                                                                                  m_dAggregateSpeciesRates_dLogPrimarySpeciesConcentrations,
-                                                                                                  m_numPrimarySpecies,
-                                                                                                  m_numSecondarySpecies,
-                                                                                                  m_numKineticReactions,
-                                                                                                  carbonateSystemAllEquilibrium );
+                                                                           m_primarySpeciesMobileAggregateConcentration,
+                                                                           m_dPrimarySpeciesAggregateConcentration_dLogPrimarySpeciesConcentrations,
+                                                                           m_dPrimarySpeciesMobileAggregateConcentration_dLogPrimarySpeciesConcentrations,
+                                                                           m_secondarySpeciesConcentration,
+                                                                           m_kineticReactionRates,
+                                                                           m_aggregateSpeciesRates,
+                                                                           m_dAggregateSpeciesRates_dLogPrimarySpeciesConcentrations,
+                                                                           m_numPrimarySpecies,
+                                                                           m_numSecondarySpecies,
+                                                                           m_numKineticReactions,
+                                                                           carbonateSystemAllEquilibrium );
       default:
-        return ReactionKernelWrapper< simpleTestType >( m_primarySpeciesAggregateConcentration,
-                                                                               m_dPrimarySpeciesAggregateConcentration_dLogPrimarySpeciesConcentrations,
-                                                                               m_secondarySpeciesConcentration,
-                                                                               m_kineticReactionRates,
-                                                                               m_aggregateSpeciesRates,
-                                                                               m_dAggregateSpeciesRates_dLogPrimarySpeciesConcentrations,
-                                                                               m_numPrimarySpecies,
-                                                                               m_numSecondarySpecies,
-                                                                               m_numKineticReactions,
-                                                                               simpleTestRateParams );
+        return ReactionKernelWrapper< simpleSystemType >( m_primarySpeciesAggregateConcentration,
+                                                          m_primarySpeciesMobileAggregateConcentration,
+                                                          m_dPrimarySpeciesAggregateConcentration_dLogPrimarySpeciesConcentrations,
+                                                          m_dPrimarySpeciesMobileAggregateConcentration_dLogPrimarySpeciesConcentrations,
+                                                          m_secondarySpeciesConcentration,
+                                                          m_kineticReactionRates,
+                                                          m_aggregateSpeciesRates,
+                                                          m_dAggregateSpeciesRates_dLogPrimarySpeciesConcentrations,
+                                                          m_numPrimarySpecies,
+                                                          m_numSecondarySpecies,
+                                                          m_numKineticReactions,
+                                                          simpleSystemParams );
     }
   }
 
@@ -277,7 +303,11 @@ protected:
 
   array3d< real64, constitutive::reactivefluid::LAYOUT_SPECIES >  m_primarySpeciesAggregateConcentration_n;
 
+  array3d< real64, constitutive::reactivefluid::LAYOUT_SPECIES >  m_primarySpeciesMobileAggregateConcentration;
+
   array4d< real64, constitutive::reactivefluid::LAYOUT_SPECIES_DC >  m_dPrimarySpeciesAggregateConcentration_dLogPrimarySpeciesConcentrations;
+
+  array4d< real64, constitutive::reactivefluid::LAYOUT_SPECIES_DC >  m_dPrimarySpeciesMobileAggregateConcentration_dLogPrimarySpeciesConcentrations;
 
   array3d< real64, constitutive::reactivefluid::LAYOUT_SPECIES >  m_kineticReactionRates;
 
@@ -366,7 +396,9 @@ updateMixedReactionSystem( localIndex const k,
                                           surfaceArea,
                                           logSecondarySpeciesConcentration.toSlice(),
                                           m_primarySpeciesAggregateConcentration[k][0],
+                                          m_primarySpeciesMobileAggregateConcentration[k][0],
                                           m_dPrimarySpeciesAggregateConcentration_dLogPrimarySpeciesConcentrations[k][0],
+                                          m_dPrimarySpeciesMobileAggregateConcentration_dLogPrimarySpeciesConcentrations[k][0],
                                           m_kineticReactionRates[k][0],
                                           dReactionRates_dLogPrimarySpeciesConcentrations.toSlice(),
                                           m_aggregateSpeciesRates[k][0],
@@ -387,8 +419,10 @@ computeAggregateConcentrationsAndRates( real64 const pressure,
                                         arraySlice1d< real64 const, reactivefluid::USD_SPECIES - 2 > const & logPrimarySpeciesConcentration,
                                         arraySlice1d< real64 const, reactivefluid::USD_SPECIES - 2 > const & surfaceArea,
                                         arraySlice1d< real64, reactivefluid::USD_SPECIES - 2 > const & logSecondarySpeciesConcentration,
-                                        arraySlice1d< real64, reactivefluid::USD_SPECIES - 2 > const & aggregatePrimarySpeciesConcentrations,
-                                        arraySlice2d< real64, reactivefluid::USD_SPECIES_DC - 2 > const & dAggregatePrimarySpeciesConcentrations_dLogPrimarySpeciesConcentrations,
+                                        arraySlice1d< real64, reactivefluid::USD_SPECIES - 2 > const & primarySpeciesAggregateConcentration,
+                                        arraySlice1d< real64, reactivefluid::USD_SPECIES - 2 > const & primarySpeciesMobileAggregateConcentration,
+                                        arraySlice2d< real64, reactivefluid::USD_SPECIES_DC - 2 > const & dPrimarySpeciesAggregateConcentration_dLogPrimarySpeciesConcentrations,
+                                        arraySlice2d< real64, reactivefluid::USD_SPECIES_DC - 2 > const & dPrimarySpeciesMobileAggregateConcentration_dLogPrimarySpeciesConcentrations,
                                         arraySlice1d< real64, reactivefluid::USD_SPECIES - 2 > const & reactionRates,
                                         arraySlice2d< real64, reactivefluid::USD_SPECIES_DC - 2 > const & dReactionRates_dLogPrimarySpeciesConcentrations,
                                         arraySlice1d< real64, reactivefluid::USD_SPECIES - 2 > const & aggregateSpeciesRates,
@@ -402,8 +436,10 @@ computeAggregateConcentrationsAndRates( real64 const pressure,
                      logPrimarySpeciesConcentration,
                      surfaceArea,
                      logSecondarySpeciesConcentration,
-                     aggregatePrimarySpeciesConcentrations,
-                     dAggregatePrimarySpeciesConcentrations_dLogPrimarySpeciesConcentrations,
+                     primarySpeciesAggregateConcentration,
+                     primarySpeciesMobileAggregateConcentration,
+                     dPrimarySpeciesAggregateConcentration_dLogPrimarySpeciesConcentrations,
+                     dPrimarySpeciesMobileAggregateConcentration_dLogPrimarySpeciesConcentrations,
                      reactionRates,
                      dReactionRates_dLogPrimarySpeciesConcentrations,
                      aggregateSpeciesRates,
@@ -414,7 +450,7 @@ ENUM_STRINGS( ChemicalSystemType,
               "carbonate",
               "carbonateAllEquilibrium",
               "ultramafic",
-              "simple" );
+              "momas" );
 
 } // namespace reactivefluid
 

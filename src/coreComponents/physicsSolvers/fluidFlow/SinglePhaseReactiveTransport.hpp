@@ -282,6 +282,7 @@ public:
     static constexpr char const * diffusionNamesString() { return "diffusionNames"; }
     static constexpr char const * isUpdateReactivePorosityString() { return "isUpdateReactivePorosity"; }
     static constexpr char const * isUpdateSurfaceAreaString() { return "isUpdateSurfaceArea"; }
+    static constexpr char const * immobilePrimarySpeciesIndicesString() { return "immobilePrimarySpeciesIndices"; }
   };
 
 protected:
@@ -303,6 +304,10 @@ protected:
 
   /// flag to determine whether or not to update the surface area
   integer m_isUpdateSurfaceArea;
+
+  /// array to store the indices of immobile primary species
+  array1d< integer > m_immobilePrimarySpeciesIndices; 
+
 };
 
 template< typename OBJECT_TYPE >
