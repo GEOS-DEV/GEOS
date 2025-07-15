@@ -1700,7 +1700,6 @@ public:
     localIndex const iwelemNext = m_nextWellElemIndex[iwelem];
     real64 const currentConnRate = m_connRate[iwelem];
     localIndex iwelemUp = -1;
-
     if( iwelemNext < 0 && !m_isProducer )  // exit connection, injector
     {
       // we still need to define iwelemUp for Jacobian assembly
