@@ -348,15 +348,28 @@ Note that if the override value contains any spaces, it may need to be surrounde
 Units
 ------------------------------
 
-The units for any input values to GEOS can be in any self-consistent system.
-In many cases, it is useful to override this behavior by explicitly specifying the units of the input.
-These are specified by appending a valid number with a unit definition in square braces.
-During pre-processing, these units are converted into base-SI units (we plan to support other unit systems in the future).
+## GEOS Unit System Generalities:
+
+Typically, all operations within GEOS are conducted using SI units (International System of Units).
+If he wants to, the user can use any self-consistent unit system (in that case, every input value must be in that system).
+
+
+## Physical Scales Default Units:
+
+[add generated table here]
+
+
+## XML Preprocessor Unit Manager:
+
+Users wishing to work with non-SI units for specific values can define these explicitly via XML parameters postfixes.
+The XML preprocessor ensures that any user-specified units within input files are converted into GEOS supported values prior to simulation.
+
+The user can specify units by appending a valid value with a unit definition in square braces.
 
 The unit manager supports most common units and SI prefixes, using both long- and abbreviated names (e.g.: c, centi, k, kilo, etc.).
 Units may include predefined composite units (dyne, N, etc.) or may be built up from sub-units using a python syntax (e.g.: [N], [kg*m/s**2]).
 Any (or no) amount of whitespace is allowed between the number and the unit bracket.
-The following shows a set of parameters with units specified:
+Here is a set of parameters with units specified:
 
 .. code-block:: xml
 
