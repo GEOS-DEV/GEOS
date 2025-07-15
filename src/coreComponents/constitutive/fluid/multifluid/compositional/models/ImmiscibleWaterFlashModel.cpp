@@ -22,6 +22,7 @@
 #include "constitutive/fluid/multifluid/compositional/parameters/EquationOfState.hpp"
 #include "constitutive/fluid/multifluid/compositional/parameters/CriticalVolume.hpp"
 #include "constitutive/fluid/multifluid/compositional/parameters/BrineSalinity.hpp"
+#include "constitutive/fluid/multifluid/compositional/parameters/PhaseType.hpp"
 
 namespace geos
 {
@@ -40,9 +41,11 @@ string ImmiscibleWaterFlashModel::catalogName()
 
 ImmiscibleWaterFlashModel::ImmiscibleWaterFlashModel( string const & name,
                                                       ComponentProperties const & componentProperties,
-                                                      ModelParameters const & modelParameters ):
+                                                      ModelParameters const & modelParameters,
+                                                      arrayView1d< integer const > const phaseTypes ):
   FunctionBase( name, componentProperties ),
-  m_parameters( modelParameters )
+  m_parameters( modelParameters ),
+  m_phaseTypes( phaseTypes )
 {
   m_waterComponentIndex = ImmiscibleWaterParameters::getWaterComponentIndex( componentProperties );
 }
@@ -50,9 +53,12 @@ ImmiscibleWaterFlashModel::ImmiscibleWaterFlashModel( string const & name,
 ImmiscibleWaterFlashModel::KernelWrapper
 ImmiscibleWaterFlashModel::createKernelWrapper() const
 {
-  constexpr integer liquidIndex = 0;
-  constexpr integer vapourIndex = 1;
-  constexpr integer aqueousIndex = 2;
+  array1d< integer > phaseOrder( KernelWrapper::getNumberOfPhases());
+  calculatePhaseOrdering( m_phaseTypes, phaseOrder );
+  integer const liquidIndex = phaseOrder[0];
+  integer const vapourIndex = phaseOrder[1];
+  integer const aqueousIndex = phaseOrder[2];
+
   EquationOfState const * equationOfState = m_parameters.get< EquationOfState >();
   EquationOfStateType const liquidEos =  EnumStrings< EquationOfStateType >::fromString( equationOfState->m_equationsOfStateNames[liquidIndex] );
   EquationOfStateType const vapourEos =  EnumStrings< EquationOfStateType >::fromString( equationOfState->m_equationsOfStateNames[vapourIndex] );
@@ -103,6 +109,34 @@ ImmiscibleWaterFlashModel::createParameters( std::unique_ptr< ModelParameters > 
   auto params = NegativeTwoPhaseFlashModel::createParameters( std::move( parameters ) );
   params = ImmiscibleWaterParameters::create( std::move( params ) );
   return params;
+}
+
+void ImmiscibleWaterFlashModel::calculatePhaseOrdering( arrayView1d< integer const > const & phaseTypes,
+                                                        arrayView1d< integer > const & phaseOrder )
+{
+  integer liquidIndex = -1;
+  integer vapourIndex = -1;
+  integer aqueousIndex = -1;
+
+  for( integer ip = 0; ip < KernelWrapper::getNumberOfPhases(); ++ip )
+  {
+    if( isPhaseType( phaseTypes[ip], PhaseType::LIQUID ))
+    {
+      liquidIndex = ip;
+    }
+    if( isPhaseType( phaseTypes[ip], PhaseType::VAPOUR ))
+    {
+      vapourIndex = ip;
+    }
+    if( isPhaseType( phaseTypes[ip], PhaseType::AQUEOUS ))
+    {
+      aqueousIndex = ip;
+    }
+  }
+
+  phaseOrder[0] = liquidIndex;
+  phaseOrder[1] = vapourIndex;
+  phaseOrder[2] = aqueousIndex;
 }
 
 } // end namespace compositional

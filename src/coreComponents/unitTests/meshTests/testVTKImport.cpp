@@ -364,7 +364,7 @@ TEST( VTKImport, cube )
     localIndex const expectedNumNodes = rankswap ? expectedNumNodesRank2 : expectedNumNodesRank1;
     auto expectedSwap = [=] ( int seq, std::initializer_list< int > par )
     {
-      std::vector< int > tmp( par );
+      stdVector< int > tmp( par );
       if( rankswap )
         return expected( seq, { tmp[1], tmp[0] } );
       else
@@ -493,17 +493,17 @@ TEST( VTKImport, supportedElements )
     CellBlockABC const & prism10Block = cellBlockManager.getCellBlocks().getGroup< CellBlockABC >( geos::vtk::buildCellBlockName( ElementType::Prism10, 9 ) );
     CellBlockABC const & prism11Block = cellBlockManager.getCellBlocks().getGroup< CellBlockABC >( geos::vtk::buildCellBlockName( ElementType::Prism11, 10 ) );
 
-    std::vector< string > const elementNames{ "tetrahedra",
-                                              "pyramids",
-                                              "wedges",
-                                              "hexahedra",
-                                              "pentagonalPrisms",
-                                              "hexagonalPrisms",
-                                              "heptagonalPrisms",
-                                              "octagonalPrisms",
-                                              "nonagonalPrisms",
-                                              "decagonalPrisms",
-                                              "hendecagonalPrisms" };
+    stdVector< string > const elementNames{ "tetrahedra",
+                                            "pyramids",
+                                            "wedges",
+                                            "hexahedra",
+                                            "pentagonalPrisms",
+                                            "hexagonalPrisms",
+                                            "heptagonalPrisms",
+                                            "octagonalPrisms",
+                                            "nonagonalPrisms",
+                                            "decagonalPrisms",
+                                            "hendecagonalPrisms" };
     for( std::size_t prefix: { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 } )
     {
       for( std::size_t i = 0; i < 11; ++i )
