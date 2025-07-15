@@ -162,7 +162,7 @@ public:
                            localRhs );
   }
 
-  void updateState( DomainPartition & domain )
+  virtual void updateState( DomainPartition & domain ) override
   {
     GEOS_MARK_FUNCTION;
 
