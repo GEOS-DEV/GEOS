@@ -180,6 +180,7 @@ void GeosxState::run()
   if( getCommandLineOptions().onlyValidateInput )
   {
     m_state = State::COMPLETED;
+    GEOS_LOG( "Input validation completed, terminating GEOS..." );
   }
   else if( !getProblemManager().runSimulation() )
   {
