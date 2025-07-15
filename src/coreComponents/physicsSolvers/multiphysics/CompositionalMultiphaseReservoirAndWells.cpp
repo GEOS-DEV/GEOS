@@ -151,11 +151,19 @@ initializePreSubGroups()
   CompositionalMultiphaseBase const * const flowSolver = this->flowSolver();
   Base::wellSolver()->setFlowSolverName( flowSolver->getName() );
 
-  bool const useMassFlow = flowSolver->getReference< integer >( CompositionalMultiphaseBase::viewKeyStruct::useMassFlagString() );;
+  bool const useMassFlow = flowSolver->getReference< integer >( CompositionalMultiphaseBase::viewKeyStruct::useMassFlagString() );
   bool const useMassWell = Base::wellSolver()->template getReference< integer >( CompositionalMultiphaseWell::viewKeyStruct::useMassFlagString() );
   GEOS_THROW_IF( useMassFlow != useMassWell,
                  GEOS_FMT( "{}: the input flag {} must be the same in the flow and well solvers, respectively '{}' and '{}'",
                            this->getDataContext(), CompositionalMultiphaseBase::viewKeyStruct::useMassFlagString(),
+                           Base::reservoirSolver()->getDataContext(), Base::wellSolver()->getDataContext() ),
+                 InputError );
+
+  bool const isThermalFlow = flowSolver->getReference< integer >( CompositionalMultiphaseBase::viewKeyStruct::isThermalString() );
+  bool const isThermalWell = Base::wellSolver()->template getReference< integer >( CompositionalMultiphaseWell::viewKeyStruct::isThermalString() );
+  GEOS_THROW_IF( isThermalFlow != isThermalWell,
+                 GEOS_FMT( "{}: the input flag {} must be the same in the flow and well solvers, respectively '{}' and '{}'",
+                           this->getDataContext(), CompositionalMultiphaseBase::viewKeyStruct::isThermalString(),
                            Base::reservoirSolver()->getDataContext(), Base::wellSolver()->getDataContext() ),
                  InputError );
 }
@@ -183,7 +191,7 @@ addCouplingSparsityPattern( DomainPartition const & domain,
     integer const wellNDOF = Base::wellSolver()->numDofPerWellElement();
 
     integer constexpr maxNumComp = MultiFluidBase::MAX_NUM_COMPONENTS;
-    integer constexpr maxNumDof  = maxNumComp + 2;
+    integer constexpr maxNumDof  = maxNumComp + 3;
 
     string const wellDofKey = dofManager.getKey( Base::wellSolver()->wellElementDofName() );
     string const resDofKey  = dofManager.getKey( Base::wellSolver()->resElementDofName() );
