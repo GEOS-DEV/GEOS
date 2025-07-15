@@ -80,10 +80,10 @@ void PVTDriver::runTest( FLUID_TYPE & fluid, arrayView2d< real64 > const & table
     // Index for start of phase properties
     integer const PHASE_FRACTION = TEMP + 2 + (outputCompressibility ? 1 : 0);
     integer const PHASE_DENSITY = PHASE_FRACTION + numPhases;
-    integer const PHASE_MASS_DENSITY = PHASE_DENSITY + (outputMassDensity ? numPhases : 0);
-    integer const PHASE_VISCOSITY = PHASE_MASS_DENSITY + numPhases;
-    integer const PHASE_ENTHALPY = PHASE_VISCOSITY + (outputEnthalpy ? numPhases : 0);
-    integer const PHASE_COMP = PHASE_ENTHALPY + numPhases;
+    integer const PHASE_MASS_DENSITY = PHASE_DENSITY + numPhases;
+    integer const PHASE_VISCOSITY = PHASE_MASS_DENSITY + (outputMassDensity ? numPhases : 0);
+    integer const PHASE_ENTHALPY = PHASE_VISCOSITY + numPhases;
+    integer const PHASE_COMP = PHASE_ENTHALPY + (outputEnthalpy ? numPhases : 0);
 
     // Temporary space for phase mole fractions
     stackArray1d< real64, constitutive::MultiFluidConstants::MAX_NUM_COMPONENTS > phaseComposition( numComponents );
