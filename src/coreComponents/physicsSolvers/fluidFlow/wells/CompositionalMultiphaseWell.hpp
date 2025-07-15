@@ -494,7 +494,7 @@ private:
 
   virtual void setConstitutiveNames( ElementSubRegionBase & subRegion ) const override;
 
-  template< typename GROUPTYPE , typename ... GROUPTYPES >
+  template< typename GROUPTYPE, typename ... GROUPTYPES >
   WellConstraintBase *  calculateLimitingConstraint( WellConstraintBase * currentConstraint,
                                      real64 const & time_n,
                                      real64 const & stepDt,
@@ -552,9 +552,9 @@ WellConstraintBase * CompositionalMultiphaseWell::calculateLimitingConstraint( W
 {
 
   WellControls & wellControls = getWellControls( subRegion );
-  wellControls.forSubGroups< GROUPTYPE, GROUPTYPES... >(  [&]( auto & constraint )
+  wellControls.forSubGroups< GROUPTYPE, GROUPTYPES... >( [&]( auto & constraint )
   {
-    if (limitingConstraint == nullptr || constraint.checkViolation( *limitingConstraint, time_n ))
+    if( limitingConstraint == nullptr || constraint.checkViolation( *limitingConstraint, time_n ))
     {
       limitingConstraint = &constraint;
 
