@@ -25,6 +25,7 @@
 #include "dataRepository/Group.hpp"
 #include "functions/TableFunction.hpp"
 #include "constitutive/fluid/multifluid/MultiFluidBase.hpp"
+#include "physicsSolvers/fluidFlow/wells/WellConstraintsBase.hpp"
 
 namespace geos
 {
@@ -36,7 +37,7 @@ static constexpr auto wellControls = "WellControls";
 }
 }
 
-
+class WellConstraintBase;
 /**
  * @class WellControls
  * @brief This class describes the controls used to operate a well.
@@ -307,6 +308,11 @@ public:
 
   void setConstraintSwitch( bool constraintSwitch );
   bool getConstraintSwitch() const;
+
+  void setCurrentConstraint( WellConstraintBase * currentConstraint ) { m_currentConstraint = currentConstraint;}
+  WellConstraintBase *  getCurrentConstraint() { return m_currentConstraint; }
+    WellConstraintBase  const *  getCurrentConstraint() const { return m_currentConstraint; }
+
   /**
    * @brief Getter for the flag to enable crossflow
    * @return the flag deciding whether crossflow is allowed or not
@@ -508,6 +514,9 @@ private:
   //constraint_array m_ConstraintList;
   // Bool to trigger old/new constraint switch logic
   bool m_constraintSwitch;
+
+  // Current constraint
+  WellConstraintBase * m_currentConstraint;
 
 };
 

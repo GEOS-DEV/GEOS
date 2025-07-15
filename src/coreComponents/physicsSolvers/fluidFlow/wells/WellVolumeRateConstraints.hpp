@@ -110,7 +110,7 @@ public:
    */
 
   // Temp interface - tjb
-  virtual WellControls::Control getControl() const override { return WellControls::Control::TOTALVOLRATE; };
+  virtual ConstraintTypeId getControl() const override { return ConstraintTypeId::TOTALVOLRATE; };
 
   /**
    * @brief Get name of constraint
@@ -205,7 +205,7 @@ public:
   ///@{
 
   // Temp interface - tjb
-  virtual WellControls::Control getControl() const override { return WellControls::Control::TOTALVOLRATE; };
+  virtual ConstraintTypeId getControl() const override { return ConstraintTypeId::TOTALVOLRATE; };
   /**
    * @brief Get name of constraint
    * @return constraint key

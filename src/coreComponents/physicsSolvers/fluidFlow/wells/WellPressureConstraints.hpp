@@ -98,7 +98,7 @@ public:
   ///@{
 
   // Temp interface - tjb
-  virtual WellControls::Control getControl() const override { return WellControls::Control::BHP; };
+  virtual ConstraintTypeId getControl() const override { return ConstraintTypeId::BHP; };
   /**
    * @brief Get name of constraint
    * @return constraint key
@@ -187,7 +187,7 @@ public:
    */
   ///@{
   // Temp interface - tjb
-  virtual WellControls::Control getControl() const override { return WellControls::Control::BHP; };
+  virtual ConstraintTypeId getControl() const override { return ConstraintTypeId::BHP; };
   /**
    * @brief Get name of constraint
    * @return constraint key

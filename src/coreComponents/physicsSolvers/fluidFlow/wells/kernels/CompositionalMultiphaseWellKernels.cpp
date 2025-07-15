@@ -141,6 +141,7 @@ ControlEquationHelper::
            real64 const & targetTotalRate,
            real64 const & targetMassRate,
            real64 const & currentBHP,
+           real64 const & targetValue,
            arrayView1d< real64 const > const & dCurrentBHP,
            arrayView1d< real64 const > const & currentPhaseVolRate,
            arrayView2d< real64 const > const & dCurrentPhaseVolRate,
@@ -198,7 +199,7 @@ ControlEquationHelper::
       dControlEqn[COFFSET_WJ::dC+ic] = dCurrentPhaseVolRate[targetPhaseIndex][COFFSET_WJ::dC+ic];
     }
     if constexpr ( IS_THERMAL )
-      dControlEqn[COFFSET_WJ::dT] = dCurrentBHP[Deriv::dT];
+      dControlEqn[COFFSET_WJ::dT] = dCurrentPhaseVolRate[targetPhaseIndex][COFFSET_WJ::dT];
   }
   // Total volumetric rate control
   else if( currentControl == WellControls::Control::TOTALVOLRATE )
@@ -323,11 +324,17 @@ PressureRelationKernel::
   bool const isProducer = wellControls.isProducer();
   WellControls::Control const currentControl = wellControls.getControl();
   WellControls::Control const inputControl = wellControls.getInputControl();
+  bool const constraintSwitch = wellControls.getConstraintSwitch();
+
   real64 const targetBHP = wellControls.getTargetBHP( time );
   real64 const targetTotalRate = wellControls.getTargetTotalRate( time );
   real64 const targetPhaseRate = wellControls.getTargetPhaseRate( time );
   real64 const targetMassRate = wellControls.getTargetMassRate( time );
+
+  real64 const targetValue = wellControls.getCurrentConstraint()->getConstraintValue(time);
+
   // dynamic well control data
+  // All possible quantites for all constraint types
   real64 const & currentBHP =
     wellControls.getReference< real64 >( CompositionalMultiphaseWell::viewKeyStruct::currentBHPString() );
   arrayView1d< real64 const > const & dCurrentBHP =
@@ -359,30 +366,40 @@ PressureRelationKernel::
     if( iwelemNext < 0 && isLocallyOwned ) // if iwelemNext < 0, form control equation
     {
       WellControls::Control newControl = currentControl;
-      ControlEquationHelper::selectLimitingConstraint( isProducer,
-                                                       inputControl,
-                                                       currentControl,
-                                                       targetPhaseIndex,
-                                                       targetBHP,
-                                                       targetPhaseRate,
-                                                       targetTotalRate,
-                                                       targetMassRate,
-                                                       currentBHP,
-                                                       currentPhaseVolRate,
-                                                       currentTotalVolRate,
-                                                       currentMassRate,
-                                                       newControl );
+      if( constraintSwitch )
+      {
+
+        ControlEquationHelper::selectLimitingConstraint( isProducer,
+                                                         inputControl,
+                                                         currentControl,
+                                                         targetPhaseIndex,
+                                                         targetBHP,
+                                                         targetPhaseRate,
+                                                         targetTotalRate,
+                                                         targetMassRate,
+                                                         currentBHP,
+                                                         currentPhaseVolRate,
+                                                         currentTotalVolRate,
+                                                         currentMassRate,
+                                                         newControl );
+      }
+      else
+      {
+        newControl = currentControl;
+      }
+
       if( currentControl != newControl )
       {
         switchControl.max( 1 );
       }
       ControlEquationHelper::compute< NC, IS_THERMAL >( rankOffset,
                                                         newControl,
-                                                        targetPhaseIndex,
-                                                        targetBHP,
-                                                        targetPhaseRate,
-                                                        targetTotalRate,
-                                                        targetMassRate,
+                                                        targetPhaseIndex, // tjb - remove ?
+                                                        targetBHP,      // tjb - remove
+                                                        targetPhaseRate, // tjb - remove
+                                                        targetTotalRate, // tjb - remove
+                                                        targetMassRate, // tjb - remove
+                                                        targetValue, // tjb  
                                                         currentBHP,
                                                         dCurrentBHP,
                                                         currentPhaseVolRate,
@@ -643,7 +660,7 @@ PresTempCompFracInitializationKernel::
   {
     wellElemPres[iwelem] = refPres + avgTotalMassDens * ( wellElemGravCoef[iwelem] - refWellElemGravCoef );
     GEOS_LOG_RANK( "tjb pinit " << iwelem << " " << wellElemPres[iwelem] << " " << refPres << " gravCoef " << wellElemGravCoef[iwelem] << " refGravCoef " << refWellElemGravCoef << " aveTemp " <<
-        avgTemp );
+                   avgTemp );
 
     wellElemTemp[iwelem] = avgTemp;
 

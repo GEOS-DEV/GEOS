@@ -168,6 +168,15 @@ void validateInjectionStream( array1d< real64 > const & injectionStream,
 }
 
 
+enum class ConstraintTypeId : integer
+{
+  BHP,    /**< The well operates at a specified bottom hole pressure (BHP) */
+  PHASEVOLRATE,   /**< The well operates at a specified phase volumetric flow rate */
+  TOTALVOLRATE,   /**< The well operates at a specified total volumetric flow rate */
+  MASSRATE,   /**<The well operates at a specified mass rate */
+  UNINITIALIZED,   /**< This is the current well control before postInputInitialization (needed to restart from file properly) */
+};
+
 /*
    class WellContraint : public dataRepository::Group
    {
@@ -243,7 +252,7 @@ public:
   ///@{
 
   // Temp interface - tjb
-  virtual WellControls::Control getControl() const = 0;
+  virtual ConstraintTypeId getControl() const = 0;
 
   /**
    * @brief Get name of constraint

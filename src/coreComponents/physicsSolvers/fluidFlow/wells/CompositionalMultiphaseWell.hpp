@@ -267,6 +267,7 @@ public:
                                               DofManager const & dofManager,
                                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                               arrayView1d< real64 > const & localRhs ) override;
+
   /**
    * @brief assembles the accumulation term for all the well elements
    * @param domain the physical domain object
@@ -560,7 +561,21 @@ WellConstraintBase * CompositionalMultiphaseWell::calculateLimitingConstraint( W
 
       std::cout << constraint.getName() << std::endl;
 
-      wellControls.setControl( constraint.getControl());
+      wellControls.setControl( static_cast< WellControls::Control >(limitingConstraint->getControl()) ); // tjb old
+      wellControls.setCurrentConstraint( limitingConstraint );
+      // If a well is opened and then timestep is cut resulting in the well being shut, if the well is opened
+// the well initialization code requires control type to by synced
+      integer owner = -1;
+// Only subregion owner evaluates well control and control changes need to be broadcast to all ranks
+      if( subRegion.isLocallyOwned() )
+      {
+        owner = MpiWrapper::commRank( MPI_COMM_GEOS );
+      }
+      owner = MpiWrapper::max( owner );
+      WellControls::Control wellControl = wellControls.getControl();
+      MpiWrapper::broadcast( wellControl, owner );
+      wellControls.setControl( wellControl );
+
       solveNonlinearSystem( time_n,
                             dt,
                             cycleNumber,

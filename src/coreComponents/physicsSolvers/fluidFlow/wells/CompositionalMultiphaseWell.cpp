@@ -3847,7 +3847,8 @@ bool CompositionalMultiphaseWell::evaluateProductionConstraints( real64 const & 
                           dofManager );
 
 
-  wellControls.setControl( limitingConstraint->getControl() );
+  wellControls.setControl( static_cast< WellControls::Control >(limitingConstraint->getControl()) );  // old
+  wellControls.setCurrentConstraint( limitingConstraint ); // new
   solveNonlinearSystem( time_n,
                         dt,
                         cycleNumber,
@@ -3884,7 +3885,8 @@ CompositionalMultiphaseWell::
                                                                                               dofManager );
 
 
-  wellControls.setControl( limitingConstraint->getControl() );
+  wellControls.setControl( static_cast< WellControls::Control >(limitingConstraint->getControl()) );  // old
+  wellControls.setCurrentConstraint( limitingConstraint ); // new
     solveNonlinearSystem( time_n,
                           dt,
                           cycleNumber,
