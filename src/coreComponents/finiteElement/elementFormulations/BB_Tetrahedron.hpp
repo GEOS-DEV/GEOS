@@ -884,7 +884,7 @@ static constexpr void conditionalBasisLoop(FUNC const& func)
       constexpr int jVal = j_t::value;
       constexpr int j1 = ORDER - jVal;
 
-      constexpr bool valid_j1_i1 = (j1 <= i1);
+      //constexpr bool valid_j1_i1 = (j1 <= i1);
      // if constexpr (valid_j1_i1) {
         conditional_loop<i1, j1>([&func,i1, j1] ( auto const k ) 
         {
@@ -897,9 +897,9 @@ static constexpr void conditionalBasisLoop(FUNC const& func)
           if constexpr (valid_k1) 
           {
             constexpr int l1 = ORDER - i1 - j1 - k1;
-            constexpr int c1 = dofIndex<i1,j1,k1>();
+            constexpr int c1 = BB_Tetrahedron<ORDER>::dofIndex<i1,j1,k1>();
             
-            call_matching_cases<c1, i1, j1, k1, l1>(func, std::integer_sequence<int, Is...>{});
+            BB_Tetrahedron<ORDER>::call_matching_cases<c1, i1, j1, k1, l1>(func, std::integer_sequence<int, Is...>{});
 
             // Pour chaque Is...
             // (void)(((i1 == Is) &&
