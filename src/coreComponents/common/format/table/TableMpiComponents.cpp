@@ -40,11 +40,13 @@ template<>
 void TableTextMpiOutput::toStream< TableData >( std::ostream & tableOutput,
                                                 TableData const & tableData ) const
 {
-  TableTextMpiOutputStatus status {
+  TableTextMpiOutput::Status status {
     // m_isMasterRank (only the master rank does the output of the header && bottom of the table)
     MpiWrapper::commRank() == 0,
     // m_isContributing (some ranks does not have any output to produce)
     !tableData.getCellsData().empty(),
+    // m_hasContent
+    false,
     // m_sepLine
     ""
   };
@@ -73,13 +75,13 @@ void TableTextMpiOutput::toStream< TableData >( std::ostream & tableOutput,
 
   if( status.m_isMasterRank )
   {
-    outputTableBottom( tableOutput, m_tableLayout, status.m_sepLine, !dataCellsLayout.empty() );
+    outputTableBottom( tableOutput, m_tableLayout, status.m_sepLine, status.m_hasContent );
     tableOutput.flush();
   }
 }
 
 void TableTextMpiOutput::stretchColumnsByRanks( stdVector< size_t > & columnsWidth,
-                                                TableTextMpiOutputStatus const status ) const
+                                                TableTextMpiOutput::Status const & status ) const
 {
   { // we ensure we have the correct amount of columns on all ranks (for correct MPI reduction operation)
     size_t const rankColumnsCount = columnsWidth.size();
@@ -103,7 +105,7 @@ void TableTextMpiOutput::stretchColumnsByRanks( stdVector< size_t > & columnsWid
 void TableTextMpiOutput::outputTableDataToRank0( std::ostream & tableOutput,
                                                  PreparedTableLayout const & tableLayout,
                                                  CellLayoutRows const & dataCellsLayout,
-                                                 TableTextMpiOutputStatus const status ) const
+                                                 TableTextMpiOutput::Status & status ) const
 {
   integer const ranksCount = MpiWrapper::commSize();
 
@@ -147,6 +149,7 @@ void TableTextMpiOutput::outputTableDataToRank0( std::ostream & tableOutput,
     {
       if( ranksStrsSizes[rankId] > 0 )
       {
+        status.m_hasContent = true;
         tableOutput << string_view( &ranksStrs[ranksStrsOffsets[rankId]], ranksStrsSizes[rankId] );
       }
     }

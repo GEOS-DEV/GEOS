@@ -79,19 +79,15 @@ private:
   // hiding toString() methods as they are not implemented with MPI support.
   using Base::toString;
 
-  struct TableTextMpiOutputStatus
+  struct Status
   {
     bool const m_isMasterRank;
     bool const m_isContributing;
+    bool m_hasContent;
     string m_sepLine;
   };
 
   TableMpiLayout m_mpiLayout;
-
-  void outputTableDataToRank0( std::ostream & tableOutput,
-                               PreparedTableLayout const & tableLayout,
-                               CellLayoutRows const & dataCellsLayout,
-                               TableTextMpiOutputStatus const status ) const;
 
   /**
    * @brief Expend the columns width to accomodate with the content of all MPI ranks.
@@ -100,7 +96,12 @@ private:
    * @param tableGrid The grid of cells containing content.
    */
   void stretchColumnsByRanks( stdVector< size_t > & columnsWidth,
-                              TableTextMpiOutputStatus const status ) const;
+                              Status const & status ) const;
+
+  void outputTableDataToRank0( std::ostream & tableOutput,
+                               PreparedTableLayout const & tableLayout,
+                               CellLayoutRows const & dataCellsLayout,
+                               Status & status ) const;
 
 };
 
