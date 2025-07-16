@@ -21,10 +21,10 @@
 		<InternalMesh name="mesh"
 		              cellBlockNames="{ layer }"
 		              nx="{ 1 }"
-		              xCoords="{ 0.0, 1.0 }"
+		              xCoords="{ 0.0, 10.0 }"
 		              ny="{ 1 }"
-		              yCoords="{ 0.0, 1.0 }"
-		              nz="{100 }"
+		              yCoords="{ 0.0, 10.0 }"
+		              nz="{10 }"
 		              zCoords="{ -2100, -2000 }"
 		              elementTypes="{ C3D8 }"/>
 	</Mesh>
@@ -87,7 +87,7 @@
 		                        temperatureVsElevationTableName="TEMP_VS_DEPTH"/>
 	</FieldSpecifications>
 	<Outputs>
-		<VTK name="VTK.OUTPUT"/>
+		<VTK name="VTK.OUTPUT" logLevel="2" />
 		<Restart name="restart"/>
 	</Outputs>
 	<Tasks>

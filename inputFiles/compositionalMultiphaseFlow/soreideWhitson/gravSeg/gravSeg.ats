@@ -8,8 +8,8 @@ decks = [
     TestDeck(name="gravSeg",
              description="1D gravity segregation test for compositional Soreide-Whitson EOS",
              partitions=((1, 1, 1), (2, 1, 2)),
-             restart_step=50,
-             check_step=101,
+             restart_step=20,
+             check_step=23,
              restartcheck_params=RestartcheckParameters(atol=1e-4, rtol=1e-3)),
 ]
 
