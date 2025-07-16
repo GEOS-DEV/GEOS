@@ -81,8 +81,8 @@ private:
 
   struct TableTextMpiOutputStatus
   {
-    bool m_isMasterRank;
-    bool m_isContributing;
+    bool const m_isMasterRank;
+    bool const m_isContributing;
     string m_sepLine;
   };
 
