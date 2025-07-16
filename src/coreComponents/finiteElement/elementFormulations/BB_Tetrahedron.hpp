@@ -658,19 +658,6 @@ static constexpr void loop(FUNC const& func)
   }
 }
 
-/**
- * @brief Helper function for static for loop (used for retrocompatibility)
- * @tparam N the number of iterations
- * @tparam Func the callback function
- * @param func the callback function to call for each index
- * @return a callable that executes the loop
- */
-template<int N, typename Func>
-static constexpr auto call_loop(Func&& func) {
-    return loop<N>(std::forward<Func>(func));
-}
-
-
 
 
 // template <int N>
@@ -729,9 +716,12 @@ static constexpr auto call_loop(Func&& func) {
       {
         constexpr int j = decltype(jjc)::value;
         constexpr int j1 = ORDER - j;
+
+        
         if constexpr ( j1 <= ORDER - i1 )
         {
-          call_loop< ORDER + 1 >( [&func] ( auto const kkc )
+          constexpr int N = ORDER + 1;
+          auto lambda = [&func] ( auto const kkc )
           {
             constexpr int k = decltype(kkc)::value;
             constexpr int k1 = ORDER - k;
@@ -745,7 +735,8 @@ static constexpr auto call_loop(Func&& func) {
                     std::integral_constant< int, k1 >{},
                     std::integral_constant< int, l1 >{} );
             }
-          } );
+          };
+          loop< N >( lambda );
         }
       } );
     } );
@@ -863,7 +854,7 @@ static constexpr void conditionalBasisLoop(FUNC const& func)
       constexpr bool valid_j1_i1 = (j1 <= i1);
       if constexpr (valid_j1_i1) {
 
-        call_loop<ORDER + 1>([&](auto const k) {
+        loop<ORDER + 1>([&](auto const k) {
           using k_t = decltype(k);
           constexpr int kVal = k_t::value;
           constexpr int k1 = ORDER - kVal;
