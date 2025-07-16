@@ -698,7 +698,7 @@ static constexpr void loop(FUNC const& func)
   GEOS_FORCE_INLINE
   static constexpr void conditional_loop(FUNC const& func) 
   {
-    if constexpr ( j <= ORDER - i ) 
+    if constexpr ( j <= i ) 
     {
         loop<ORDER + 1>(func);
     }
@@ -756,14 +756,14 @@ static constexpr void loop(FUNC const& func)
         //     }
         //   } );
         // }
-        conditional_loop<i1, j1>([&func] ( auto const kkc )
+        conditional_loop< ORDER-i1 , j1>([&func] ( auto const kkc )
         {
           constexpr int k = decltype(kkc)::value;
           constexpr int k1 = ORDER - k;
           if constexpr ( k1 <= ORDER - i1 - j1 )
           {
             constexpr int l1 = ORDER - i1 - j1 - k1;
-            constexpr int c1 = dofIndex< i1, j1, k1 >();
+            constexpr int c1 = BB_Tetrahedron<ORDER>::dofIndex< i1, j1, k1 >();
             func( std::integral_constant< int, c1 >{},
                   std::integral_constant< int, i1 >{},
                   std::integral_constant< int, j1 >{},
@@ -886,8 +886,8 @@ static constexpr void conditionalBasisLoop(FUNC const& func)
 
       constexpr bool valid_j1_i1 = (j1 <= i1);
       if constexpr (valid_j1_i1) {
-
-        loop<ORDER + 1>([&](auto const k) {
+        conditional_loop<i1, j1>([&func,i1] ( auto const k ) {
+        //loop<ORDER + 1>([&](auto const k) {
           using k_t = decltype(k);
           constexpr int kVal = k_t::value;
           constexpr int k1 = ORDER - kVal;
@@ -1047,6 +1047,18 @@ static constexpr void conditionalBasisLoop(FUNC const& func)
     loop< 3 >( std::forward< FUNC >( func ) );
   }
 
+  
+
+  template<typename CD, typename FUNC>
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
+  static constexpr void conditional_face_loop(FUNC const& func) {
+  if constexpr ( std::decay_t< CD >::value == 0 ) 
+  {
+        faceBarycentricCoordinateLoop(func);
+  }
+}
+
   /**
    * @brief Computes the reference mass matrix, i.e., the superposition matrix of the shape functions
    *   in barycentric coordinates. The real-world mass matrix can be obtained by using the multiplying
@@ -1114,7 +1126,7 @@ static constexpr void conditionalBasisLoop(FUNC const& func)
       {
         if constexpr ( f1 == f2 )
         {
-          constexpr real64 val = computeFaceSuperpositionIntegral( i1, j1, k1, i2, j2, k2 );
+          constexpr real64 val = BB_Tetrahedron<ORDER>::computeFaceSuperpositionIntegral( i1, j1, k1, i2, j2, k2 );
           if( ( f1 == 0 && face1Damped ) ||
               ( f1 == 1 && face2Damped ) ||
               ( f1 == 2 && face3Damped ) ||
@@ -1299,7 +1311,7 @@ static constexpr void conditionalBasisLoop(FUNC const& func)
             if constexpr (ii1 >= 0 && ij1 >= 0 && ik1 >= 0 && il1 >= 0 &&
                           ii2 >= 0 && ij2 >= 0 && ik2 >= 0 && il2 >= 0)
             {
-              constexpr real64 val = computeSuperpositionIntegral( ii1, ij1, ik1, il1, ii2, ij2, ik2, il2 ) * factor1 * factor2;
+              constexpr real64 val =  BB_Tetrahedron<ORDER>::computeSuperpositionIntegral( ii1, ij1, ik1, il1, ii2, ij2, ik2, il2 ) * factor1 * factor2;
               func( c1, c2, val * detJ * ( dLambdadX[d1][0]*dLambdadX[d2][0] + dLambdadX[d1][1]*dLambdadX[d2][1] + dLambdadX[d1][2]*dLambdadX[d2][2] ) );
             }
           } );
@@ -1378,7 +1390,7 @@ static constexpr void conditionalBasisLoop(FUNC const& func)
           // compute penalty term iff the other function is also nonzero on the same face (i.e., d1==0)
           if constexpr ( std::decay_t< decltype(cd) >::value == 0 )
           {
-            constexpr real64 val = computeFaceSuperpositionIntegral( i1, j1, k1, i2, j2, k2 );
+            constexpr real64 val = BB_Tetrahedron<ORDER>::computeFaceSuperpositionIntegral( i1, j1, k1, i2, j2, k2 );
             funcP( c1, c2, f2, i1, j1, k1, i2, j2, k2, val * detJf[ f2 ] );
           }
           // Compute flux term. This is nonzero in two cases.
@@ -1387,28 +1399,43 @@ static constexpr void conditionalBasisLoop(FUNC const& func)
           if constexpr ( std::decay_t< decltype(cd) >::value == 1 )
           {
             constexpr real64 derFactor = ( i1 + j1 + k1 + 4 );
-            constexpr real64 val = computeFaceSuperpositionIntegral( i1, j1, k1, i2, j2, k2 ) * derFactor;
+            constexpr real64 val = BB_Tetrahedron<ORDER>::computeFaceSuperpositionIntegral( i1, j1, k1, i2, j2, k2 ) * derFactor;
             funcF( c1, c2, f2, -1, i1, j1, k1, i2, j2, k2, val * detJf[ f2 ] );
           }
           // second case: function has exponent zero wrt f2.
           // In this case, one can derive it wrt to any other face.
-          else if constexpr ( std::decay_t< decltype(cd) >::value == 0 )
+          //else if constexpr ( std::decay_t< decltype(cd) >::value == 0 )
+          //{
+          //   conditional_face_loop<decltype(cd)>( [ &funcF, &detJf ] ( auto const cl ) 
+            
+          // //faceBarycentricCoordinateLoop( [ &funcF, &detJf ] ( auto const cl )
+          //   {
+          //     constexpr int l = decltype(cl)::value;
+          //     constexpr int ii1 = i1 + ( l == 0 ) * ( -1 );
+          //     constexpr int ij1 = j1 + ( l == 1 ) * ( -1 );
+          //     constexpr int ik1 = k1 + ( l == 2 ) * ( -1 );
+          //     if constexpr (ii1 >= 0 && ij1 >= 0 && ik1 >= 0)
+          //     {
+          //       constexpr real64 derFactor = ( ii1 + ij1 + ik1 + 4 );
+          //       constexpr real64 val = BB_Tetrahedron<ORDER>::computeFaceSuperpositionIntegral( ii1, ij1, ik1, i2, j2, k2 ) * derFactor;
+          //       constexpr int f = l >= f2 ? l + 1 : l;
+          //       funcF( c1, c2, f2, f, i1, j1, k1, i2, j2, k2, val * detJf[f2] );
+          //     }
+          //   } );
+          conditional_face_loop<decltype(cd)>( [ &funcF, &detJf ] ( auto const cl )
           {
-            faceBarycentricCoordinateLoop( [ &funcF, &detJf ] ( auto const cl )
-            {
               constexpr int l = decltype(cl)::value;
               constexpr int ii1 = i1 + ( l == 0 ) * ( -1 );
               constexpr int ij1 = j1 + ( l == 1 ) * ( -1 );
               constexpr int ik1 = k1 + ( l == 2 ) * ( -1 );
               if constexpr (ii1 >= 0 && ij1 >= 0 && ik1 >= 0)
               {
-                constexpr real64 derFactor = ( ii1 + ij1 + ik1 + 4 );
-                constexpr real64 val = computeFaceSuperpositionIntegral( ii1, ij1, ik1, i2, j2, k2 ) * derFactor;
-                constexpr int f = l >= f2 ? l + 1 : l;
-                funcF( c1, c2, f2, f, i1, j1, k1, i2, j2, k2, val * detJf[f2] );
+                  constexpr real64 derFactor = ( ii1 + ij1 + ik1 + 4 );
+                  constexpr real64 val = BB_Tetrahedron<ORDER>::computeFaceSuperpositionIntegral( ii1, ij1, ik1, i2, j2, k2 ) * derFactor;
+                  constexpr int f = l >= f2 ? l + 1 : l;
+                  funcF( c1, c2, f2, f, i1, j1, k1, i2, j2, k2, val * detJf[f2] );
               }
-            } );
-          }
+          } );
         }
       } );
     } );
