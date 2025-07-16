@@ -42,60 +42,98 @@ public:
 
 TEST( testMpiTables, testDifferentRankData )
 {
-  stdVector< stdVector< std::pair< integer, real64 > > > const testValues = {
-    { {1, 0.502} },
-    { {2, 0.624}, {3, 0.791} },
-    {},
-    { {4, 0.243}, {5, 0.804}, {6, 0.302} },
+  struct TestCase
+  {
+    stdVector< stdVector< std::pair< integer, real64 > > > m_ranksValues;
+    string m_expectedResult;
   };
 
-  int const rankId = MpiWrapper::commRank();
-  int const nbRanks = MpiWrapper::commSize();
-  if( nbRanks > 1 )
+  stdVector< TestCase > const testCases =
   {
-    ASSERT_EQ( nbRanks, 4 );
-
-    TableLayout const layout = TableLayout().
-                                 setTitle( "Summary of negative pressure elements" ).
-                                 addColumns( { "Global Id", "pressure [Pa]" } ).
-                                 setDefaultHeaderAlignment( TableLayout::Alignment::left );
-    TableData data;
-    auto const & rankTestData = testValues[rankId];
-
-    TableMpiLayout mpiLayout;
-    mpiLayout.m_separatorBetweenRanks = true;
-
-    if( !rankTestData.empty() )
     {
-      mpiLayout.m_rankTitle = GEOS_FMT( "Rank {}, {} values", rankId, rankTestData.size() );
-      for( auto const & [id, value] : rankTestData )
+      { // m_ranksValues: in this test, rank 2 has no value
+        { {1, 0.502} },
+        { {2, 0.624}, {3, 0.791} },
+        {},
+        { {4, 0.243}, {5, 0.804}, {6, 0.302} },
+      },
+      "\n" // m_expectedResult
+      "-------------------------------------------\n"
+      "|  Summary of negative pressure elements  |\n"
+      "|-----------------------------------------|\n"
+      "|    Global Id     |    pressure [Pa]     |\n"
+      "|------------------|----------------------|\n"
+      "|------------Rank 0, 1 values-------------|\n"
+      "|               1  |               0.502  |\n"
+      "|------------Rank 1, 2 values-------------|\n"
+      "|               2  |               0.624  |\n"
+      "|               3  |               0.791  |\n"
+      "|------------Rank 3, 3 values-------------|\n"
+      "|               4  |               0.243  |\n"
+      "|               5  |               0.804  |\n"
+      "|               6  |               0.302  |\n"
+      "-------------------------------------------\n"
+    },
+    { // m_ranksValues: in this test, rank 0 has no value
       {
-        data.addRow( id, value );
-      }
-    }
-
-    TableTextMpiOutput const formatter = TableTextMpiOutput( layout, mpiLayout );
-    std::ostringstream oss;
-    formatter.toStream( oss, data );
-    if( rankId == 0 )
+        {},
+        { {4, 0.243}, {5, 0.804}, {6, 0.302} },
+        { {1, 0.502} },
+        { {2, 0.624}, {3, 0.791} },
+      },
+      "\n" // m_expectedResult
+      "-------------------------------------------\n"
+      "|  Summary of negative pressure elements  |\n"
+      "|-----------------------------------------|\n"
+      "|    Global Id     |    pressure [Pa]     |\n"
+      "|------------------|----------------------|\n"
+      "|------------Rank 1, 3 values-------------|\n"
+      "|               4  |               0.243  |\n"
+      "|               5  |               0.804  |\n"
+      "|               6  |               0.302  |\n"
+      "|------------Rank 2, 1 values-------------|\n"
+      "|               1  |               0.502  |\n"
+      "|------------Rank 3, 2 values-------------|\n"
+      "|               2  |               0.624  |\n"
+      "|               3  |               0.791  |\n"
+      "-------------------------------------------\n"
+    },
+  };
+  for( TestCase const & testCase: testCases )
+  {
+    int const rankId = MpiWrapper::commRank();
+    int const nbRanks = MpiWrapper::commSize();
+    if( nbRanks > 1 )
     {
-      EXPECT_STREQ( "\n"
-                    "-------------------------------------------\n"
-                    "|  Summary of negative pressure elements  |\n"
-                    "|-----------------------------------------|\n"
-                    "|    Global Id     |    pressure [Pa]     |\n"
-                    "|------------------|----------------------|\n"
-                    "|------------Rank 0, 1 values-------------|\n"
-                    "|               1  |               0.502  |\n"
-                    "|------------Rank 1, 2 values-------------|\n"
-                    "|               2  |               0.624  |\n"
-                    "|               3  |               0.791  |\n"
-                    "|------------Rank 3, 3 values-------------|\n"
-                    "|               4  |               0.243  |\n"
-                    "|               5  |               0.804  |\n"
-                    "|               6  |               0.302  |\n"
-                    "-------------------------------------------\n",
-                    oss.str().data() );
+      ASSERT_EQ( nbRanks, 4 );
+
+      TableLayout const layout = TableLayout().
+                                   setTitle( "Summary of negative pressure elements" ).
+                                   addColumns( { "Global Id", "pressure [Pa]" } ).
+                                   setDefaultHeaderAlignment( TableLayout::Alignment::left );
+      TableData data;
+      auto const & rankTestData = testCase.m_ranksValues[rankId];
+
+      TableMpiLayout mpiLayout;
+      mpiLayout.m_separatorBetweenRanks = true;
+
+      if( !rankTestData.empty() )
+      {
+        mpiLayout.m_rankTitle = GEOS_FMT( "Rank {}, {} values", rankId, rankTestData.size() );
+        for( auto const & [id, value] : rankTestData )
+        {
+          data.addRow( id, value );
+        }
+      }
+
+      TableTextMpiOutput const formatter = TableTextMpiOutput( layout, mpiLayout );
+      std::ostringstream oss;
+      formatter.toStream( oss, data );
+      if( rankId == 0 )
+      {
+        EXPECT_STREQ( testCase.m_expectedResult.data(),
+                      oss.str().data() );
+      }
     }
   }
 }
