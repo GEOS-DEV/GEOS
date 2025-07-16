@@ -717,11 +717,11 @@ static constexpr void loop(FUNC const& func)
         constexpr int j = decltype(jjc)::value;
         constexpr int j1 = ORDER - j;
 
-        
-        if constexpr ( j1 <= ORDER - i1 )
+        [&func]() {
+       if constexpr ( j1 <= ORDER - i1 )
         {
-          constexpr int N = ORDER + 1;
-          auto lambda = [&func] ( auto const kkc )
+
+          loop<ORDER + 1>([&func] ( auto const kkc )
           {
             constexpr int k = decltype(kkc)::value;
             constexpr int k1 = ORDER - k;
@@ -735,9 +735,10 @@ static constexpr void loop(FUNC const& func)
                     std::integral_constant< int, k1 >{},
                     std::integral_constant< int, l1 >{} );
             }
-          };
-          loop< N >( lambda );
+          } );
+          
         }
+      }();
       } );
     } );
   }
