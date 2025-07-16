@@ -885,15 +885,17 @@ static constexpr void conditionalBasisLoop(FUNC const& func)
       constexpr int j1 = ORDER - jVal;
 
       constexpr bool valid_j1_i1 = (j1 <= i1);
-      if constexpr (valid_j1_i1) {
-        conditional_loop<i1, j1>([&func,i1] ( auto const k ) {
+     // if constexpr (valid_j1_i1) {
+        conditional_loop<i1, j1>([&func,i1, j1] ( auto const k ) 
+        {
         //loop<ORDER + 1>([&](auto const k) {
           using k_t = decltype(k);
           constexpr int kVal = k_t::value;
           constexpr int k1 = ORDER - kVal;
 
           constexpr bool valid_k1 = (k1 <= (ORDER - i1 - j1));
-          if constexpr (valid_k1) {
+          if constexpr (valid_k1) 
+          {
             constexpr int l1 = ORDER - i1 - j1 - k1;
             constexpr int c1 = dofIndex<i1,j1,k1>();
             
@@ -1030,7 +1032,7 @@ static constexpr void conditionalBasisLoop(FUNC const& func)
 
           }
         });
-      }
+      //}
     });
   });
 }
