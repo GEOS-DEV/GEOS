@@ -8,8 +8,8 @@ decks = [
     TestDeck(name="1D_smoke",
              description="1D displacement test for compositional Soreide-Whitson EOS",
              partitions=((1, 1, 1), (2, 1, 2)),
-             restart_step=134,
-             check_step=198,
+             restart_step=35,
+             check_step=41,
              restartcheck_params=RestartcheckParameters(atol=1e-4, rtol=1e-3)),
 ]
 
