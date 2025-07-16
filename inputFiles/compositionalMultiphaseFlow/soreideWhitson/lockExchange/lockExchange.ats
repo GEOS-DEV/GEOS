@@ -11,15 +11,12 @@ decks = [
              restart_step=75,
              check_step=108,
              restartcheck_params=RestartcheckParameters(atol=1e-4, rtol=1e-3)),
-]
-
-decks = [
     TestDeck(name="lockExchange_Z",
              description="1D lock exchange test for compositional Soreide-Whitson EOS (Z-formulation)",
              partitions=((1, 1, 1), (2, 1, 2)),
              restart_step=50,
              check_step=75,
-             restartcheck_params=RestartcheckParameters(atol=1e-4, rtol=1e-3)),
+             restartcheck_params=RestartcheckParameters(atol=1e-4, rtol=1e-3))
 ]
 
 generate_geos_tests(decks)
