@@ -694,6 +694,8 @@ static constexpr void loop(FUNC const& func)
    * @param func the callback function to call for each index
    */
   template<int i, int j, typename FUNC>
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
   static constexpr void conditional_loop(FUNC const& func) 
   {
     if constexpr ( j <= ORDER - i ) 
