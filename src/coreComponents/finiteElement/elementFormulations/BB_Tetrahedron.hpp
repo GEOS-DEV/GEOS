@@ -889,11 +889,14 @@ static constexpr void conditionalBasisLoop(FUNC const& func)
         conditional_loop<i1, j1>([&func,i1, j1] ( auto const k ) 
         {
         //loop<ORDER + 1>([&](auto const k) {
+        constexpr int local_i1 = i1;  // Force l'utilisation
+        constexpr int local_j1 = j1;
+
           using k_t = decltype(k);
           constexpr int kVal = k_t::value;
           constexpr int k1 = ORDER - kVal;
 
-          constexpr bool valid_k1 = (k1 <= (ORDER - i1 - j1));
+          constexpr bool valid_k1 = (k1 <= (ORDER - local_i1 - local_j1));
           if constexpr (valid_k1) 
           {
             constexpr int l1 = ORDER - i1 - j1 - k1;
