@@ -144,18 +144,18 @@
 	</Functions>
 	<Events maxTime="8640000">
 		<PeriodicEvent name="VTK.OUTPUT.01"
-		               timeFrequency="864000"
+		               cycleFrequency="10"
 		               targetExactTimestep="1"
 		               target="/Outputs/VTK.OUTPUT"/>
 		<PeriodicEvent name="STATISTICS.01"
-		               timeFrequency="864000"
+		               cycleFrequency="10"
 		               targetExactTimestep="1"
 		               target="/Tasks/FLOW.STATISTICS"/>
 		<PeriodicEvent name="SOLVER.APPLICATION.01"
 		               target="/Solvers/FLOW.SOLVER"
 		               maxEventDt="864000"/>
 		<PeriodicEvent name="restarts"
-		               timeFrequency="864000"
+		               cycleFrequency="10"
 		               targetExactTimestep="1"
 		               target="/Outputs/restart"/>
 	</Events>
