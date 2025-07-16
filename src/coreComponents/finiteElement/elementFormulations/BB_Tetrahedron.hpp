@@ -686,6 +686,24 @@ static constexpr void loop(FUNC const& func)
 
 
   /**
+   * @brief Helper function for static for loop
+   * @tparam i the index of the loop
+   * @tparam j the index of the inner loop
+   * @tparam ORDER the order of the polynomial
+   * @tparam FUNC the callback function
+   * @param func the callback function to call for each index
+   */
+  template<int i, int j, typename FUNC>
+  static constexpr void conditional_loop(FUNC const& func) 
+  {
+    if constexpr ( j <= ORDER - i ) 
+    {
+        loop<ORDER + 1>(func);
+    }
+  }
+
+
+  /**
    * @brief Helper function for loop over barycentric coordinates
    * @tparam FUNC the callback function
    * @param func the callback function to call for each index
@@ -717,28 +735,40 @@ static constexpr void loop(FUNC const& func)
         constexpr int j = decltype(jjc)::value;
         constexpr int j1 = ORDER - j;
 
-        [&func]() {
-       if constexpr ( j1 <= ORDER - i1 )
+        
+        // if constexpr ( j1 <= ORDER - i1 )
+        // {
+        //   loop< ORDER + 1 >( [&func] ( auto const kkc )
+        //   {
+        //     constexpr int k = decltype(kkc)::value;
+        //     constexpr int k1 = ORDER - k;
+        //     if constexpr ( k1 <= ORDER - i1 - j1 )
+        //     {
+        //       constexpr int l1 = ORDER - i1 - j1 - k1;
+        //       constexpr int c1 = dofIndex< i1, j1, k1 >();
+        //       func( std::integral_constant< int, c1 >{},
+        //             std::integral_constant< int, i1 >{},
+        //             std::integral_constant< int, j1 >{},
+        //             std::integral_constant< int, k1 >{},
+        //             std::integral_constant< int, l1 >{} );
+        //     }
+        //   } );
+        // }
+        conditional_loop<i1, j1>([&func] ( auto const kkc )
         {
-
-          loop<ORDER + 1>([&func] ( auto const kkc )
+          constexpr int k = decltype(kkc)::value;
+          constexpr int k1 = ORDER - k;
+          if constexpr ( k1 <= ORDER - i1 - j1 )
           {
-            constexpr int k = decltype(kkc)::value;
-            constexpr int k1 = ORDER - k;
-            if constexpr ( k1 <= ORDER - i1 - j1 )
-            {
-              constexpr int l1 = ORDER - i1 - j1 - k1;
-              constexpr int c1 = dofIndex< i1, j1, k1 >();
-              func( std::integral_constant< int, c1 >{},
-                    std::integral_constant< int, i1 >{},
-                    std::integral_constant< int, j1 >{},
-                    std::integral_constant< int, k1 >{},
-                    std::integral_constant< int, l1 >{} );
-            }
-          } );
-          
-        }
-      }();
+            constexpr int l1 = ORDER - i1 - j1 - k1;
+            constexpr int c1 = dofIndex< i1, j1, k1 >();
+            func( std::integral_constant< int, c1 >{},
+                  std::integral_constant< int, i1 >{},
+                  std::integral_constant< int, j1 >{},
+                  std::integral_constant< int, k1 >{},
+                  std::integral_constant< int, l1 >{} );
+          }
+        } );
       } );
     } );
   }
