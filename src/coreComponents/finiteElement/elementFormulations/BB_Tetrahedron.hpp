@@ -658,6 +658,21 @@ static constexpr void loop(FUNC const& func)
   }
 }
 
+/**
+ * @brief Helper function for static for loop (used for retrocompatibility)
+ * @tparam N the number of iterations
+ * @tparam Func the callback function
+ * @param func the callback function to call for each index
+ * @return a callable that executes the loop
+ */
+template<int N, typename Func>
+static constexpr auto call_loop(Func&& func) {
+    return loop<N>(std::forward<Func>(func));
+}
+
+
+
+
 // template <int N>
 // struct HDInt {
 //     static constexpr int value = N;
@@ -716,7 +731,7 @@ static constexpr void loop(FUNC const& func)
         constexpr int j1 = ORDER - j;
         if constexpr ( j1 <= ORDER - i1 )
         {
-          loop< ORDER + 1 >( [&func] ( auto const kkc )
+          call_loop< ORDER + 1 >( [&func] ( auto const kkc )
           {
             constexpr int k = decltype(kkc)::value;
             constexpr int k1 = ORDER - k;
@@ -848,7 +863,7 @@ static constexpr void conditionalBasisLoop(FUNC const& func)
       constexpr bool valid_j1_i1 = (j1 <= i1);
       if constexpr (valid_j1_i1) {
 
-        loop<ORDER + 1>([&](auto const k) {
+        call_loop<ORDER + 1>([&](auto const k) {
           using k_t = decltype(k);
           constexpr int kVal = k_t::value;
           constexpr int k1 = ORDER - kVal;
