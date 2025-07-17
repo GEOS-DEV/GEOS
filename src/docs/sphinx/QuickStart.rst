@@ -355,6 +355,7 @@ This should print out a brief summary of the available command line arguments:
 .. code-block:: sh
 
     USAGE: geosx -i input.xml [options]
+           geosx -s schema-output.xml
 
     Options:
     -?, --help
@@ -371,7 +372,10 @@ This should print out a brief summary of the available command line arguments:
     -o, --output,            Directory to put the output files
     -t, --timers,            String specifying the type of timer output
     --trace-data-migration,  Trace host-device data migration
+    -m, --memory-usage,      Minimum threshold for printing out memory allocations in a member of the data repository.
     --pause-for,             Pause geosx for a given number of seconds before starting execution
+
+    Rank 0: No XML input file nor schema specified. Exiting...
 
 Obviously this doesn't do much interesting, but it will at least confirm that the executable runs.
 In typical usage, an input XML must be provided describing the problem to be run, e.g.
