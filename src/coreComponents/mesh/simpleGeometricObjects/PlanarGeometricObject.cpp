@@ -18,7 +18,6 @@
  */
 
 #include "PlanarGeometricObject.hpp"
-#include "LvArray/src/tensorOps.hpp"
 
 namespace geos
 {

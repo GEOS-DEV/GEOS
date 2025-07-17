@@ -21,8 +21,6 @@
 
 #include "SinglePhasePoromechanics.hpp"
 
-#include "constitutive/solid/PorousSolid.hpp"
-#include "constitutive/solid/PorousDamageSolid.hpp"
 #include "constitutive/fluid/singlefluid/SingleFluidBase.hpp"
 #include "linearAlgebra/solvers/BlockPreconditioner.hpp"
 #include "linearAlgebra/solvers/SeparateComponentPreconditioner.hpp"
