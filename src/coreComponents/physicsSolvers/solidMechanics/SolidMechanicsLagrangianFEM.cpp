@@ -153,6 +153,8 @@ SolidMechanicsLagrangianFEM::~SolidMechanicsLagrangianFEM()
 
 void SolidMechanicsLagrangianFEM::registerDataOnMesh( Group & meshBodies )
 {
+  PhysicsSolverBase::registerDataOnMesh( meshBodies );
+
   string const voightLabels[6] = { "XX", "YY", "ZZ", "YZ", "XZ", "XY" };
 
   forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
@@ -164,11 +166,8 @@ void SolidMechanicsLagrangianFEM::registerDataOnMesh( Group & meshBodies )
                                                               [&]( localIndex const,
                                                                    ElementSubRegionBase & subRegion )
     {
-      setConstitutiveNamesCallSuper( subRegion );
-
       subRegion.registerField< solidMechanics::strain >( getName() ).setDimLabels( 1, voightLabels ).reference().resizeDimension< 1 >( 6 );
       subRegion.registerField< solidMechanics::plasticStrain >( getName() ).setDimLabels( 1, voightLabels ).reference().resizeDimension< 1 >( 6 );
-
     } );
 
     NodeManager & nodes = meshLevel.getNodeManager();
@@ -239,7 +238,10 @@ void SolidMechanicsLagrangianFEM::setConstitutiveNamesCallSuper( ElementSubRegio
 {
   PhysicsSolverBase::setConstitutiveNamesCallSuper( subRegion );
 
-  setConstitutiveName< SolidBase >( subRegion, viewKeyStruct::solidMaterialNamesString(), "solid" );
+  if( dynamic_cast< CellElementSubRegion * >( &subRegion ) )
+  {
+    setConstitutiveName< SolidBase >( subRegion, viewKeyStruct::solidMaterialNamesString(), "solid" );
+  }
 }
 
 void SolidMechanicsLagrangianFEM::initializePreSubGroups()
@@ -247,24 +249,7 @@ void SolidMechanicsLagrangianFEM::initializePreSubGroups()
   PhysicsSolverBase::initializePreSubGroups();
 
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
-
-
-  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                                MeshLevel & meshLevel,
-                                                                string_array const & regionNames )
-  {
-    ElementRegionManager & elementRegionManager = meshLevel.getElemManager();
-    elementRegionManager.forElementSubRegions< CellElementSubRegion >( regionNames,
-                                                                       [&]( localIndex const,
-                                                                            CellElementSubRegion & subRegion )
-    {
-      string & solidMaterialName = subRegion.getReference< string >( viewKeyStruct::solidMaterialNamesString() );
-      solidMaterialName = PhysicsSolverBase::getConstitutiveName< SolidBase >( subRegion );
-    } );
-  } );
-
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
-
   FiniteElementDiscretizationManager const &
   feDiscretizationManager = numericalMethodManager.getFiniteElementDiscretizationManager();
 

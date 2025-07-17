@@ -54,6 +54,7 @@ namespace geos
 
 using namespace dataRepository;
 using namespace constitutive;
+using namespace fields;
 using namespace singlePhaseBaseKernels;
 using namespace singlePhaseFVMKernels;
 
@@ -249,13 +250,13 @@ void SinglePhaseFVM< BASE >::applySystemSolution( DofManager const & dofManager,
 
     dofManager.addVectorToField( localSolution,
                                  BASE::viewKeyStruct::elemDofFieldString(),
-                                 fields::flow::pressure::key(),
+                                 flow::pressure::key(),
                                  scalingFactor,
                                  pressureMask );
 
     dofManager.addVectorToField( localSolution,
                                  BASE::viewKeyStruct::elemDofFieldString(),
-                                 fields::flow::temperature::key(),
+                                 flow::temperature::key(),
                                  scalingFactor,
                                  temperatureMask );
   }
@@ -263,7 +264,7 @@ void SinglePhaseFVM< BASE >::applySystemSolution( DofManager const & dofManager,
   {
     dofManager.addVectorToField( localSolution,
                                  BASE::viewKeyStruct::elemDofFieldString(),
-                                 fields::flow::pressure::key(),
+                                 flow::pressure::key(),
                                  scalingFactor );
   }
 
@@ -271,11 +272,11 @@ void SinglePhaseFVM< BASE >::applySystemSolution( DofManager const & dofManager,
                                                                       MeshLevel & mesh,
                                                                       string_array const & regionNames )
   {
-    stdVector< string > fields{ fields::flow::pressure::key() };
+    stdVector< string > fields{ flow::pressure::key() };
 
     if( m_isThermal )
     {
-      fields.emplace_back( fields::flow::temperature::key() );
+      fields.emplace_back( flow::temperature::key() );
     }
 
     FieldIdentifiers fieldsToBeSync;
@@ -419,16 +420,16 @@ void SinglePhaseFVM< SinglePhaseProppantBase >::assembleFluxTerms( real64 const 
                                                                      dofManager.rankOffset(),
                                                                      elemDofNumber.toNestedViewConst(),
                                                                      flowAccessors.get< fields::ghostRank >(),
-                                                                     flowAccessors.get< fields::flow::pressure >(),
-                                                                     flowAccessors.get< fields::flow::gravityCoefficient >(),
+                                                                     flowAccessors.get< flow::pressure >(),
+                                                                     flowAccessors.get< flow::gravityCoefficient >(),
                                                                      fluidAccessors.get< fields::singlefluid::density >(),
                                                                      fluidAccessors.get< fields::singlefluid::dDensity >(),
-                                                                     flowAccessors.get< fields::flow::mobility >(),
-                                                                     flowAccessors.get< fields::flow::dMobility >(),
-                                                                     permAccessors.get< fields::permeability::permeability >(),
-                                                                     permAccessors.get< fields::permeability::dPerm_dPressure >(),
-                                                                     permAccessors.get< fields::permeability::dPerm_dDispJump >(),
-                                                                     permAccessors.get< fields::permeability::permeabilityMultiplier >(),
+                                                                     flowAccessors.get< flow::mobility >(),
+                                                                     flowAccessors.get< flow::dMobility >(),
+                                                                     permAccessors.get< permeability::permeability >(),
+                                                                     permAccessors.get< permeability::dPerm_dPressure >(),
+                                                                     permAccessors.get< permeability::dPerm_dDispJump >(),
+                                                                     permAccessors.get< permeability::permeabilityMultiplier >(),
                                                                      this->gravityVector(),
                                                                      localMatrix,
                                                                      localRhs );
@@ -687,7 +688,7 @@ void SinglePhaseFVM< BASE >::applyFaceDirichletBC( real64 const time_n,
       // Take BCs defined for "pressure" field and apply values to "facePressure"
       fsManager.apply< FaceManager >( time_n + dt,
                                       mesh,
-                                      fields::flow::pressure::key(),
+                                      flow::pressure::key(),
                                       [&] ( FieldSpecificationBase const & fs,
                                             string const & setName,
                                             SortedArrayView< localIndex const > const & targetSet,
@@ -717,13 +718,13 @@ void SinglePhaseFVM< BASE >::applyFaceDirichletBC( real64 const time_n,
                             parallelDevicePolicy<> >( targetSet,
                                                       time_n + dt,
                                                       targetGroup,
-                                                      fields::flow::facePressure::key() );
+                                                      flow::facePressure::key() );
       } );
 
       // Take BCs defined for "temperature" field and apply values to "faceTemperature"
       fsManager.apply< FaceManager >( time_n + dt,
                                       mesh,
-                                      fields::flow::temperature::key(),
+                                      flow::temperature::key(),
                                       [&] ( FieldSpecificationBase const & fs,
                                             string const & setName,
                                             SortedArrayView< localIndex const > const & targetSet,
@@ -752,7 +753,7 @@ void SinglePhaseFVM< BASE >::applyFaceDirichletBC( real64 const time_n,
                             parallelDevicePolicy<> >( targetSet,
                                                       time_n + dt,
                                                       targetGroup,
-                                                      fields::flow::faceTemperature::key() );
+                                                      flow::faceTemperature::key() );
 
       } );
 
@@ -793,7 +794,7 @@ void SinglePhaseFVM< BASE >::applyFaceDirichletBC( real64 const time_n,
       // Take BCs defined for "pressure" field and apply values to "facePressure"
       fsManager.apply< FaceManager >( time_n + dt,
                                       mesh,
-                                      fields::flow::pressure::key(),
+                                      flow::pressure::key(),
                                       [&] ( FieldSpecificationBase const & fs,
                                             string const & setName,
                                             SortedArrayView< localIndex const > const & targetSet,
@@ -822,7 +823,7 @@ void SinglePhaseFVM< BASE >::applyFaceDirichletBC( real64 const time_n,
                             parallelDevicePolicy<> >( targetSet,
                                                       time_n + dt,
                                                       targetGroup,
-                                                      fields::flow::facePressure::key() );
+                                                      flow::facePressure::key() );
 
 
         // TODO: currently we just use model from the first cell in this stencil
@@ -921,9 +922,9 @@ void SinglePhaseFVM<>::applyAquiferBC( real64 const time,
                                                       flowAccessors.get< fields::ghostRank >(),
                                                       aquiferBCWrapper,
                                                       aquiferDens,
-                                                      flowAccessors.get< fields::flow::pressure >(),
-                                                      flowAccessors.get< fields::flow::pressure_n >(),
-                                                      flowAccessors.get< fields::flow::gravityCoefficient >(),
+                                                      flowAccessors.get< flow::pressure >(),
+                                                      flowAccessors.get< flow::pressure_n >(),
+                                                      flowAccessors.get< flow::gravityCoefficient >(),
                                                       fluidAccessors.get< fields::singlefluid::density >(),
                                                       fluidAccessors.get< fields::singlefluid::dDensity >(),
                                                       time,
