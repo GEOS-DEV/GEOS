@@ -109,7 +109,9 @@ std::unique_ptr< CommandLineOptions > parseCommandLineOptions( int argc, char * 
 
   const option::Descriptor usage[] =
   {
-    { UNKNOWN, 0, "", "", Arg::unknown, "USAGE: geosx -i input.xml [options]\n\nOptions:" },
+    { UNKNOWN, 0, "", "", Arg::unknown, "USAGE: geosx -i input.xml [options]\n"
+                                        "       geosx -s schema-output.xml\n\n"
+                                        "Options:" },
     { HELP, 0, "?", "help", Arg::None, "\t-?, --help" },
     { INPUT, 0, "i", "input", Arg::nonEmpty, "\t-i, --input, \t Input xml filename (required)" },
     { RESTART, 0, "r", "restart", Arg::nonEmpty, "\t-r, --restart, \t Target restart filename" },
@@ -143,7 +145,13 @@ std::unique_ptr< CommandLineOptions > parseCommandLineOptions( int argc, char * 
     int columns = getenv( "COLUMNS" ) ? atoi( getenv( "COLUMNS" )) : 120;
     option::printUsage( fwrite, stdout, usage, columns );
 
-    if( options[HELP] )
+    if( noXML )
+    {
+      std::cout << '\n';
+      GEOS_LOG_RANK( "No XML input file nor schema specified. Exiting..." );
+      throw NotAnError();
+    }
+    else if( options[HELP] )
     {
       throw NotAnError();
     }
