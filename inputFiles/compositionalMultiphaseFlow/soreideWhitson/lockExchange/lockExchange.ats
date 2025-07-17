@@ -14,8 +14,8 @@ decks = [
     TestDeck(name="lockExchange_Z",
              description="1D lock exchange test for compositional Soreide-Whitson EOS (Z-formulation)",
              partitions=((1, 1, 1), (2, 1, 2)),
-             restart_step=50,
-             check_step=60,
+             restart_step=30,
+             check_step=40,
              restartcheck_params=RestartcheckParameters(atol=1e-4, rtol=1e-3))
 ]
 
