@@ -48,8 +48,6 @@ public:
   using Base::m_pressure;
   using Base::m_compDens;
 
-  static constexpr int maxWrongValueIds = 16;
-
   /**
    * @brief Create a new kernel instance
    * @param[in] allowCompDensChopping flag to allow the component density chopping
@@ -343,7 +341,7 @@ public:
                    ElementSubRegionBase & subRegion,
                    arrayView1d< real64 const > const localSolution,
                    ElementsReporterCollector const & negPressureIds,
-                   ElementsReporterCollector const & negDensityIds ) // TODO : ajouter bool reportWrongValues
+                   ElementsReporterCollector const & negDensityIds )
   {
     SolutionCheckKernel kernel( allowCompDensChopping, allowNegativePressure, scalingType, scalingFactor,
                                 pressure, compDens, pressureScalingFactor, compDensScalingFactor, rankOffset,

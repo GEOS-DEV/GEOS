@@ -20,7 +20,6 @@
 
 #include "TableMpiComponents.hpp"
 #include "common/MpiWrapper.hpp"
-#include "common/format/StringUtilities.hpp" // todo delete
 
 namespace geos
 {

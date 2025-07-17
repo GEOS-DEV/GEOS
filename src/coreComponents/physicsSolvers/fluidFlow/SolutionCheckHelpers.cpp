@@ -100,10 +100,6 @@ void ElementsReporterOutput::outputTooLowValues( string_view linesPrefix,
           {
             data.addRow( "...", "..." );
           }
-          else
-          {
-            data.addRow( "", "" );
-          }
         }
 
         TableTextMpiOutput const formatter = TableTextMpiOutput( layout, mpiLayout );
