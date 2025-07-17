@@ -24,6 +24,7 @@ namespace geos
 FieldSpecificationManager * FieldSpecificationManager::m_instance = nullptr;
 
 using namespace dataRepository;
+using namespace constitutive;
 
 FieldSpecificationManager::FieldSpecificationManager( string const & name, Group * const parent ):
   Group( name, parent )
