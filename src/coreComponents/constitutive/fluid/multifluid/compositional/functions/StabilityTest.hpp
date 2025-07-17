@@ -26,6 +26,7 @@
 #include "constitutive/fluid/multifluid/Layouts.hpp"
 #include "constitutive/fluid/multifluid/MultiFluidConstants.hpp"
 #include "constitutive/fluid/multifluid/compositional/parameters/ComponentProperties.hpp"
+#include "constitutive/fluid/multifluid/compositional/parameters/FlashParameters.hpp"
 #include "constitutive/fluid/multifluid/compositional/functions/FlashData.hpp"
 
 namespace geos
@@ -51,6 +52,8 @@ public:
    * @param[in] componentProperties The compositional component properties
    * @param[in] equationOfState The equation of state
    * @param[in] flashData The parameters required for the flash
+   * @param[in] continuousFlashParameters List of continuous (float) parameters for flash
+   * @param[in] discreteFlashParameters List of discrete (integer) parameters for flash
    * @param[out] tangentPlaneDistance the minimum tangent plane distance (TPD)
    * @param[out] kValues the k-values estimated from the stationary points
    * @return a flag indicating that 2 stationary points have been found
@@ -64,6 +67,8 @@ public:
                        ComponentProperties::KernelWrapper const & componentProperties,
                        EquationOfStateType const & equationOfState,
                        FlashData const & flashData,
+                       arraySlice1d< real64 const > const & continuousFlashParameters,
+                       arraySlice1d< integer const > const & discreteFlashParameters,
                        real64 & tangentPlaneDistance,
                        arraySlice1d< real64, USD2 > const & kValues )
   {
@@ -78,6 +83,11 @@ public:
     auto const presentComponents = availableComponents.toSliceConst();
 
     LvArray::forValuesInSlice( workSpace.toSlice(), []( real64 & a ){ a = 0.0; } );
+
+    // Extract flash parameters
+    integer const maxIterations = discreteFlashParameters[FlashParameters::STABILITY_MAX_ITERATIONS];
+    real64 const stabilityThreshold = continuousFlashParameters[FlashParameters::STABILITY_THRESHOLD];
+    real64 const stabilityTolerance = continuousFlashParameters[FlashParameters::STABILITY_TOLERANCE];
 
     // Calculate the hyperplane parameter
     // h_i = log( z_i ) + log( phi_i )
@@ -97,10 +107,10 @@ public:
     // The mimimum TPD over all trial compositions
     tangentPlaneDistance = LvArray::NumericLimits< real64 >::max;
 
-    // Maximum error (convergence failure) over all trial compositions
-    real64 maxError = -LvArray::NumericLimits< real64 >::max;
+    // Flag to indicate all trial compositions converged
+    bool allConverged = true;
 
-    for( real64 const & alpha : { 1.0, -1.0, 3.0, -3.0 } )
+    for( real64 const alpha : { 1.0, -1.0, 3.0, -3.0 } )
     {
       // Initialise next sample
       for( integer const ic : presentComponents )
@@ -109,8 +119,9 @@ public:
         normalizedComposition[ic] = LvArray::math::exp( logTrialComposition[ic] );
       }
 
-      real64 trialError = LvArray::NumericLimits< real64 >::max;
-      for( localIndex iterationCount = 0; iterationCount < MultiFluidConstants::maxSSIIterations; ++iterationCount )
+      // Start iterations for this sample
+      bool converged = false;
+      for( localIndex iterationCount = 0; iterationCount < maxIterations; ++iterationCount )
       {
         // Normalise the composition and calculate the fugacity
         real64 const totalMoles = normalizeComposition( numComps, normalizedComposition );
@@ -133,8 +144,9 @@ public:
         {
           tangentPlaneDistance = tpd;
         }
-        if( tangentPlaneDistance < -MultiFluidConstants::fugacityTolerance )
+        if( tangentPlaneDistance < stabilityThreshold )
         {
+          converged = true;
           break;
         }
 
@@ -146,9 +158,9 @@ public:
           error += (dG*dG);
         }
         error = LvArray::math::sqrt( error );
-        trialError = LvArray::math::min( trialError, error );
-        if( trialError < MultiFluidConstants::fugacityTolerance )
+        if( error < stabilityTolerance )
         {
+          converged = true;
           break;
         }
 
@@ -159,13 +171,14 @@ public:
           normalizedComposition[ic] = LvArray::math::exp( logTrialComposition[ic] );
         }
       }
-      maxError = LvArray::math::max( maxError, trialError );
-      if( tangentPlaneDistance < -MultiFluidConstants::fugacityTolerance )
+      allConverged = allConverged && converged;
+      if( tangentPlaneDistance < stabilityThreshold )
       {
         break;
       }
     }
-    return ( tangentPlaneDistance < -MultiFluidConstants::fugacityTolerance ) || (maxError < MultiFluidConstants::fugacityTolerance);
+    // The test is successful if either we have a negative TPD or all test compositions converged to stationarity
+    return (tangentPlaneDistance < stabilityThreshold) || (allConverged);
   }
 };
 

@@ -24,6 +24,7 @@ set( gtest_geosx_tests
      testMultiFluidSelector.cpp
      testNegativeTwoPhaseFlash.cpp
      testNegativeTwoPhaseFlash9Comp.cpp
+     testNegativeTwoPhaseFlashModel.cpp
      testParticleFluidEnums.cpp
      testPressureTemperatureCoordinates.cpp
      testPropertyConversions.cpp

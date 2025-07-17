@@ -116,6 +116,7 @@ set( constitutive_headers
      fluid/multifluid/compositional/parameters/ComponentType.hpp
      fluid/multifluid/compositional/parameters/CriticalVolume.hpp
      fluid/multifluid/compositional/parameters/EquationOfState.hpp
+     fluid/multifluid/compositional/parameters/FlashParameters.hpp
      fluid/multifluid/compositional/parameters/ImmiscibleWaterParameters.hpp
      fluid/multifluid/compositional/parameters/ModelParameters.hpp
      fluid/multifluid/compositional/parameters/PhaseType.hpp
@@ -270,6 +271,7 @@ set( constitutive_sources
      fluid/multifluid/compositional/parameters/BrineSalinity.cpp
      fluid/multifluid/compositional/parameters/ComponentProperties.cpp
      fluid/multifluid/compositional/parameters/CriticalVolume.cpp
+     fluid/multifluid/compositional/parameters/FlashParameters.cpp
      fluid/multifluid/compositional/parameters/ImmiscibleWaterParameters.cpp
      fluid/multifluid/compositional/parameters/PhaseType.cpp
      fluid/multifluid/compositional/parameters/PressureTemperatureCoordinates.cpp

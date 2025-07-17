@@ -75,6 +75,9 @@ public:
                                                         componentProperties,
                                                         kValues.toSlice() );
 
+    auto const parameters = FlashParameters::create( std::make_unique< ModelParameters >() );
+    auto const * flashParameters = parameters->get< FlashParameters >();
+
     bool const stabilityStatus = StabilityTest::compute( numComps,
                                                          pressure,
                                                          temperature,
@@ -82,6 +85,8 @@ public:
                                                          componentProperties,
                                                          EOS_TYPE,
                                                          flashData,
+                                                         flashParameters->m_continuousParameters,
+                                                         flashParameters->m_discreteParameters,
                                                          tangentPlaneDistance,
                                                          kValues.toSlice() );
 

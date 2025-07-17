@@ -48,15 +48,15 @@ public:
   using PhaseComp = MultiFluidVar< real64, 4, constitutive::multifluid::LAYOUT_PHASE_COMP, constitutive::multifluid::LAYOUT_PHASE_COMP_DC >;
   using Deriv = constitutive::multifluid::DerivativeOffset;
 
-  static constexpr real64 stabilityTolerance = MultiFluidConstants::fugacityTolerance;
-
   NegativeTwoPhaseFlashModelUpdate( integer const numComponents,
                                     integer const liquidIndex,
                                     integer const vapourIndex,
                                     EquationOfStateType const liquidEos,
                                     EquationOfStateType const vapourEos,
                                     real64 const salinity,
-                                    arrayView1d< real64 const > const componentCriticalVolume );
+                                    arrayView1d< real64 const > const componentCriticalVolume,
+                                    arrayView1d< real64 const > const continuousFlashParameters,
+                                    arrayView1d< integer const > const discreteFlashParameters );
 
   // Mark as a 2-phase flash
   GEOS_HOST_DEVICE
@@ -109,11 +109,14 @@ public:
                                                          componentProperties,
                                                          m_flashData.liquidEos,
                                                          m_flashData,
+                                                         m_continuousFlashParameters.toSliceConst(),
+                                                         m_discreteFlashParameters.toSliceConst(),
                                                          tangentPlaneDistance,
                                                          kValues[0] );
 
     // If the stability test failed to converge to a stationary point then we will assume the mixture is unstable
-    if( tangentPlaneDistance < -stabilityTolerance || !stabilityStatus )
+    real64 const stabilityThreshold = m_continuousFlashParameters[FlashParameters::STABILITY_THRESHOLD];
+    if( tangentPlaneDistance < stabilityThreshold || !stabilityStatus )
     {
       // Unstable mixture
       // Iterative solve to converge flash
@@ -207,6 +210,8 @@ private:
   integer const m_vapourIndex;
   FlashData m_flashData;
   arrayView1d< real64 const > const m_componentCriticalVolume;
+  arrayView1d< real64 const > const m_continuousFlashParameters;
+  arrayView1d< integer const > const m_discreteFlashParameters;
 };
 
 class NegativeTwoPhaseFlashModel : public FunctionBase
