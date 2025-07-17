@@ -647,7 +647,14 @@ public:
     ( func( std::integral_constant< int, Is >{} ), ... );
   }
 
-  template<int N, typename FUNC>
+ /**
+   * @brief Helper function for static for loop
+   * @tparam N the number of iterations
+   * @tparam FUNC the callback function
+   * @param func the callback function to call for each index
+   * This function recursively calls itself until N reaches 0, at which point it stops.
+   */
+template<int N, typename FUNC>
 GEOS_HOST_DEVICE
 static constexpr void loop(FUNC const& func)
 {
@@ -658,29 +665,7 @@ static constexpr void loop(FUNC const& func)
   }
 }
 
-// template <int N>
-// struct HDInt {
-//     static constexpr int value = N;
 
-//     GEOS_HOST_DEVICE
-//      constexpr operator int() const noexcept 
-//      {
-//         return N;
-//     }
-
-    // GEOS_HOST_DEVICE
-    //  constexpr bool operator==(const HDInt<N>&) const noexcept 
-    //  {
-    //     return true;
-    // }
-
-    // template <int M>
-    // GEOS_HOST_DEVICE
-    //  constexpr bool operator==(const HDInt<M>&) const noexcept 
-    //  {
-    //     return N == M;
-    // }
-//};
 
 
   /**
@@ -736,41 +721,24 @@ static constexpr void loop(FUNC const& func)
     } );
   }
 
-/**
-   * @brief Helper function to check if two compile-time integers are equal.
-   * @tparam A the first integer
-   * @tparam B the second integer
-   * @return true if A and B are equal, false otherwise
-   */
-//template <int A, int B>
-//GEOS_HOST_DEVICE
-//static constexpr bool is_equal() 
-//{
-//  return A == B;
-//}
 
   /**
-   * @brief Helper function to call a function if a compile-time integer matches one of the given indices.
-   * @tparam x the integer to match
-   * @tparam FUNC the callback function type
-   * @tparam Is the set of indices to match against
-   * @param f the callback function to call if x matches one of Is
+   * @brief Helper function for loop over tet basis functions that have one index in a given set of indices.
+   *   If multiple indices are in the given list, the callback is called multiple times.
+   *   This herlper is useful to avoid too much fold operations.
+   * @tparam c1 the dof index in the element
+   * @tparam i1 the index with respect to the first vertex
+   * @tparam j1 the index with respect to the second vertex
+   * @tparam k1 the index with respect to the third vertex
+   * @tparam l1 the index with respect to the fourth vertex
+   * @tparam F the callback function type
+   * @tparam Is the set of indices to check against
+   * @param func the callback function to call for each matching index
    */
-// template <int x, int... Is, typename F>
-// GEOS_HOST_DEVICE
-// static constexpr void callIfMatch(F const& f)
-// {
-//   using discard = int[];
-//   (void)discard{ 0, ((x == Is ? (void)f(), 0 : 0))... };
-// }
-
-// Helper pour éviter l'ICE de GCC 9.4 - Version avec logique conditionnelle
 template<int c1, int i1, int j1, int k1, int l1, typename F, int... Is>
 GEOS_HOST_DEVICE
 static constexpr void call_matching_cases(F&& func, std::integer_sequence<int, Is...>) {
-    // Décomposer les fold expressions complexes
 
-    // Cas 0: si i1 correspond �|  un des Is
     auto check_i1 = [&](auto I) {
         if constexpr (i1 == decltype(I)::value) {
             func(std::integral_constant<int, 0>{},
@@ -783,7 +751,6 @@ static constexpr void call_matching_cases(F&& func, std::integer_sequence<int, I
     };
       (check_i1(std::integral_constant<int, Is>{}), ...);
 
-    // Cas 1: si j1 correspond �|  un des Is
     auto check_j1 = [&](auto I) {
         if constexpr (j1 == decltype(I)::value) {
             func(std::integral_constant<int, 1>{},
@@ -796,7 +763,6 @@ static constexpr void call_matching_cases(F&& func, std::integer_sequence<int, I
     };
     (check_j1(std::integral_constant<int, Is>{}), ...);
 
-    // Cas 2: si k1 correspond �|  un des Is
     auto check_k1 = [&](auto I) {
         if constexpr (k1 == decltype(I)::value) {
             func(std::integral_constant<int, 2>{},
@@ -809,7 +775,6 @@ static constexpr void call_matching_cases(F&& func, std::integer_sequence<int, I
     };
         (check_k1(std::integral_constant<int, Is>{}), ...);
 
-    // Cas 3: si l1 correspond �|  un des Is
     auto check_l1 = [&](auto I) {
         if constexpr (l1 == decltype(I)::value) {
             func(std::integral_constant<int, 3>{},
