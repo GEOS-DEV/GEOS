@@ -20,6 +20,7 @@
 #include "NegativeTwoPhaseFlashModel.hpp"
 #include "constitutive/fluid/multifluid/compositional/parameters/CriticalVolume.hpp"
 #include "constitutive/fluid/multifluid/compositional/parameters/BrineSalinity.hpp"
+#include "constitutive/fluid/multifluid/compositional/parameters/PhaseType.hpp"
 
 namespace geos
 {
@@ -38,16 +39,21 @@ string NegativeTwoPhaseFlashModel::catalogName()
 
 NegativeTwoPhaseFlashModel::NegativeTwoPhaseFlashModel( string const & name,
                                                         ComponentProperties const & componentProperties,
-                                                        ModelParameters const & modelParameters ):
+                                                        ModelParameters const & modelParameters,
+                                                        arrayView1d< integer const > const phaseTypes ):
   FunctionBase( name, componentProperties ),
-  m_parameters( modelParameters )
+  m_parameters( modelParameters ),
+  m_phaseTypes( phaseTypes )
 {}
 
 NegativeTwoPhaseFlashModel::KernelWrapper
 NegativeTwoPhaseFlashModel::createKernelWrapper() const
 {
-  constexpr integer liquidIndex = 0;
-  constexpr integer vapourIndex = 1;
+  array1d< integer > phaseOrder( KernelWrapper::getNumberOfPhases());
+  calculatePhaseOrdering( m_phaseTypes, phaseOrder );
+  integer const liquidIndex = phaseOrder[0];
+  integer const vapourIndex = phaseOrder[1];
+
   EquationOfState const * equationOfState = m_parameters.get< EquationOfState >();
   EquationOfStateType const liquidEos =  EnumStrings< EquationOfStateType >::fromString( equationOfState->m_equationsOfStateNames[liquidIndex] );
   EquationOfStateType const vapourEos =  EnumStrings< EquationOfStateType >::fromString( equationOfState->m_equationsOfStateNames[vapourIndex] );
@@ -90,6 +96,53 @@ NegativeTwoPhaseFlashModel::createParameters( std::unique_ptr< ModelParameters >
   std::unique_ptr< ModelParameters > params = EquationOfState::create( std::move( parameters ) );
   params = CriticalVolume::create( std::move( params ) );
   return params;
+}
+
+void NegativeTwoPhaseFlashModel::calculatePhaseOrdering( arrayView1d< integer const > const & phaseTypes,
+                                                         arrayView1d< integer > const & phaseOrder )
+{
+  integer li = -1;
+  integer vi = -1;
+  integer ai = -1;
+  for( integer ip = 0; ip < KernelWrapper::getNumberOfPhases(); ++ip )
+  {
+    if( isPhaseType( phaseTypes[ip], PhaseType::LIQUID ))
+    {
+      li = ip;
+    }
+    if( isPhaseType( phaseTypes[ip], PhaseType::VAPOUR ))
+    {
+      vi = ip;
+    }
+    if( isPhaseType( phaseTypes[ip], PhaseType::AQUEOUS ))
+    {
+      ai = ip;
+    }
+  }
+
+  integer liquidIndex = -1;
+  integer vapourIndex = -1;
+  if( vi < 0 )
+  {
+    // If there's no gas then there is oil and water: oil is the wetting phase
+    vapourIndex = li;
+    liquidIndex = ai;
+  }
+  else if( 0 <= li )
+  {
+    // Oil and gas both present: gas is the wetting phase
+    vapourIndex = vi;
+    liquidIndex = li;
+  }
+  else
+  {
+    // Gas and water: gas is the wetting phase
+    vapourIndex = vi;
+    liquidIndex = ai;
+  }
+
+  phaseOrder[0] = liquidIndex;
+  phaseOrder[1] = vapourIndex;
 }
 
 } // end namespace compositional

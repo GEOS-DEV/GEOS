@@ -279,13 +279,20 @@ void CompositionalMultiphaseWell::registerDataOnMesh( Group & meshBodies )
         string const conditionKey = useSurfaceConditions ? "surface" : "reservoir";
         string const unitKey = useSurfaceConditions ? "s" : "r";
         integer const numPhase = m_numPhases;
+        integer const numComp = m_numComponents;
         // format: time,bhp,total_rate,total_vol_rate,phase0_vol_rate,phase1_vol_rate,...
         makeDirsForPath( m_ratesOutputDir );
         GEOS_LOG( GEOS_FMT( "{}: Rates CSV generated at {}", getName(), fileName ) );
         std::ofstream outputFile( fileName );
         outputFile << "Time [s],dt[s],BHP [Pa],Total rate [" << massUnit << "/s],Total " << conditionKey << " volumetric rate [" << unitKey << "m3/s]";
         for( integer ip = 0; ip < numPhase; ++ip )
+        {
           outputFile << ",Phase" << ip << " " << conditionKey << " volumetric rate [" << unitKey << "m3/s]";
+        }
+        for( integer ic = 0; ic < numComp; ++ic )
+        {
+          outputFile << ",Component" << ic << " rate [" << massUnit << "/s]";
+        }
         outputFile << std::endl;
         outputFile.close();
       }
