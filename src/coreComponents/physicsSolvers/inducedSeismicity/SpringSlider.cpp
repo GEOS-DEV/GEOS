@@ -19,7 +19,6 @@
 
 #include "SpringSlider.hpp"
 
-#include "dataRepository/InputFlags.hpp"
 #include "mesh/DomainPartition.hpp"
 #include "rateAndStateFields.hpp"
 #include "physicsSolvers/solidMechanics/contact/ContactFields.hpp"
