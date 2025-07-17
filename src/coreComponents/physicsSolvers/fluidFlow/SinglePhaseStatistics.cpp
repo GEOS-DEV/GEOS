@@ -20,9 +20,7 @@
 #include "SinglePhaseStatistics.hpp"
 
 #include "mesh/DomainPartition.hpp"
-#include "mainInterface/ProblemManager.hpp"
 #include "physicsSolvers/LogLevelsInfo.hpp"
-#include "physicsSolvers/PhysicsSolverManager.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBaseFields.hpp"

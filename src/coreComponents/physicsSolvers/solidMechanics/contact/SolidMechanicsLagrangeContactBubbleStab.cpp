@@ -28,7 +28,6 @@
 #include "physicsSolvers/solidMechanics/contact/LogLevelsInfo.hpp"
 #include "physicsSolvers/LogLevelsInfo.hpp"
 
-#include "constitutive/ConstitutiveManager.hpp"
 #include "constitutive/contact/FrictionSelector.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
 

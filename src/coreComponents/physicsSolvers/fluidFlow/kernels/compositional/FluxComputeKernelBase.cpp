@@ -19,10 +19,6 @@
 
 #include "physicsSolvers/fluidFlow/kernels/compositional/FluxComputeKernelBase.hpp"
 
-#include "finiteVolume/CellElementStencilTPFA.hpp"
-#include "finiteVolume/SurfaceElementStencil.hpp"
-#include "finiteVolume/EmbeddedSurfaceToCellStencil.hpp"
-#include "finiteVolume/FaceElementToCellStencil.hpp"
 #include "mesh/utilities/MeshMapUtilities.hpp"
 
 namespace geos

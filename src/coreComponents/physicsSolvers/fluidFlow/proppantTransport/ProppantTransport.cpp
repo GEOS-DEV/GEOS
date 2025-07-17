@@ -28,7 +28,6 @@
 #include "constitutive/fluid/singlefluid/ParticleFluidSelector.hpp"
 #include "constitutive/fluid/singlefluid/ParticleFluidFields.hpp"
 #include "constitutive/permeability/PermeabilityFields.hpp"
-#include "constitutive/permeability/ProppantPermeability.hpp"
 #include "discretizationMethods/NumericalMethodsManager.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
 #include "mesh/DomainPartition.hpp"

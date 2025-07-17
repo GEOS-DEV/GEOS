@@ -22,7 +22,6 @@
 #include "finiteVolume/SurfaceElementStencil.hpp"
 #include "finiteVolume/EmbeddedSurfaceToCellStencil.hpp"
 #include "finiteVolume/FaceElementToCellStencil.hpp"
-#include "CFLKernel.hpp"
 
 namespace geos
 {
