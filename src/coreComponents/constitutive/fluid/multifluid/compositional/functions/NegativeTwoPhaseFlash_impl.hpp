@@ -24,6 +24,7 @@
 #include "KValueInitialization.hpp"
 #include "FugacityCalculator.hpp"
 #include "Utilities.hpp"
+#include "constitutive/fluid/multifluid/compositional/parameters/FlashParameters.hpp"
 #include "denseLinearAlgebra/interfaces/blaslapack/BlasLapackLA.hpp"
 
 namespace geos
@@ -42,21 +43,28 @@ bool NegativeTwoPhaseFlash::compute( integer const numComps,
                                      arraySlice1d< real64 const > const & composition,
                                      ComponentProperties::KernelWrapper const & componentProperties,
                                      FlashData const & flashData,
+                                     arraySlice1d< real64 const > const & continuousFlashParameters,
+                                     arraySlice1d< integer const > const & discreteFlashParameters,
                                      arraySlice2d< real64, USD1 > const & kValues,
                                      real64 & vapourPhaseMoleFraction,
                                      arraySlice1d< real64, USD2 > const & liquidComposition,
                                      arraySlice1d< real64, USD2 > const & vapourComposition )
 {
   constexpr integer maxNumComps = MultiFluidConstants::MAX_NUM_COMPONENTS;
-  stackArray1d< real64, maxNumComps > logLiquidFugacity( numComps );
-  stackArray1d< real64, maxNumComps > logVapourFugacity( numComps );
-  stackArray1d< real64, maxNumComps > fugacityRatios( numComps );
+  StackArray< real64, 2, 3*maxNumComps > workSpace( 3, maxNumComps );
+  arraySlice1d< real64 > logLiquidFugacity = workSpace[0];
+  arraySlice1d< real64 > logVapourFugacity = workSpace[1];
+  arraySlice1d< real64 > fugacityRatios = workSpace[2];
   stackArray1d< integer, maxNumComps > componentIndices( numComps );
   auto const & kVapourLiquid = kValues[0];
 
   calculatePresentComponents( numComps, composition, componentIndices );
 
   auto const presentComponents = componentIndices.toSliceConst();
+
+  // Extract flash parameters
+  integer const maxIterations = discreteFlashParameters[FlashParameters::FLASH_MAX_ITERATIONS];
+  real64 const flashTolerance = continuousFlashParameters[FlashParameters::FLASH_TOLERANCE];
 
   // Initialise compositions to feed composition
   for( integer ic = 0; ic < numComps; ++ic )
@@ -66,7 +74,7 @@ bool NegativeTwoPhaseFlash::compute( integer const numComps,
   }
 
   bool converged = false;
-  for( localIndex iterationCount = 0; iterationCount < MultiFluidConstants::maxSSIIterations; ++iterationCount )
+  for( localIndex iterationCount = 0; iterationCount < maxIterations; ++iterationCount )
   {
     real64 const error = computeFugacityRatio( numComps,
                                                pressure,
@@ -79,12 +87,12 @@ bool NegativeTwoPhaseFlash::compute( integer const numComps,
                                                vapourPhaseMoleFraction,
                                                liquidComposition,
                                                vapourComposition,
-                                               logLiquidFugacity.toSlice(),
-                                               logVapourFugacity.toSlice(),
-                                               fugacityRatios.toSlice() );
+                                               logLiquidFugacity,
+                                               logVapourFugacity,
+                                               fugacityRatios );
 
     // Compute fugacity ratios and check convergence
-    converged = (error < MultiFluidConstants::fugacityTolerance);
+    converged = (error < flashTolerance);
 
     if( converged )
     {

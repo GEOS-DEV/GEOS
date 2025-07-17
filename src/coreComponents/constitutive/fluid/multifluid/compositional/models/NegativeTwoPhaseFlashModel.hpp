@@ -126,6 +126,8 @@ public:
                                                                compFraction,
                                                                componentProperties,
                                                                m_flashData,
+                                                               m_continuousFlashParameters.toSliceConst(),
+                                                               m_discreteFlashParameters.toSliceConst(),
                                                                kValues,
                                                                phaseFraction.value[m_vapourIndex],
                                                                phaseCompFraction.value[m_liquidIndex],

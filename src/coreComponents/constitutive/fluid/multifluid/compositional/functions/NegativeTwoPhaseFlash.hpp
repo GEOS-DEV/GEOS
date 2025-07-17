@@ -45,6 +45,8 @@ public:
    * @param[in] composition composition of the mixture
    * @param[in] componentProperties The compositional component properties
    * @param[in] flashData The parameters required for the flash
+   * @param[in] continuousFlashParameters List of continuous (float) parameters for flash
+   * @param[in] discreteFlashParameters List of discrete (integer) parameters for flash
    * @param[in/out] kValues The phase equilibrium ratios
    * @param[out] vapourPhaseMoleFraction the calculated vapour (gas) mole fraction
    * @param[out] liquidComposition the calculated liquid phase composition
@@ -59,6 +61,8 @@ public:
                        arraySlice1d< real64 const > const & composition,
                        ComponentProperties::KernelWrapper const & componentProperties,
                        FlashData const & flashData,
+                       arraySlice1d< real64 const > const & continuousFlashParameters,
+                       arraySlice1d< integer const > const & discreteFlashParameters,
                        arraySlice2d< real64, USD1 > const & kValues,
                        real64 & vapourPhaseMoleFraction,
                        arraySlice1d< real64, USD2 > const & liquidComposition,

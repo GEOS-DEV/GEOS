@@ -38,8 +38,10 @@ FlashParameters::FlashParameters( std::unique_ptr< ModelParameters > parameters 
 {
   m_continuousParameters[STABILITY_THRESHOLD] = -1.0e-8;
   m_continuousParameters[STABILITY_TOLERANCE] = 1.0e-8;
+  m_continuousParameters[FLASH_TOLERANCE] = 1.0e-8;
 
   m_discreteParameters[STABILITY_MAX_ITERATIONS] = 300;
+  m_discreteParameters[FLASH_MAX_ITERATIONS] = 300;
 }
 
 std::unique_ptr< ModelParameters > FlashParameters::create( std::unique_ptr< ModelParameters > parameters )
@@ -67,6 +69,16 @@ void FlashParameters::registerParametersImpl( MultiFluidBase * fluid )
     setInputFlag( dataRepository::InputFlags::OPTIONAL ).
     setDefaultValue( m_discreteParameters[STABILITY_MAX_ITERATIONS] ).
     setDescription( "The maximum number of successive substitution iterations used during the stability test" );
+
+  fluid->registerWrapper( viewKeyStruct::flashMaxIterationsString(), &m_discreteParameters[FLASH_MAX_ITERATIONS] ).
+    setInputFlag( dataRepository::InputFlags::OPTIONAL ).
+    setDefaultValue( m_discreteParameters[FLASH_MAX_ITERATIONS] ).
+    setDescription( "The maximum number of iterations used during the flash" );
+
+  fluid->registerWrapper( viewKeyStruct::flashToleranceString(), &m_continuousParameters[FLASH_TOLERANCE] ).
+    setInputFlag( dataRepository::InputFlags::OPTIONAL ).
+    setDefaultValue( m_continuousParameters[FLASH_TOLERANCE] ).
+    setDescription( "The tolerance to use to determine convergece of the flash" );
 }
 
 void FlashParameters::postInputInitializationImpl( MultiFluidBase const * fluid,
@@ -101,9 +113,17 @@ void FlashParameters::postInputInitializationImpl( MultiFluidBase const * fluid,
   real64 const stabilityTolerance = m_continuousParameters[STABILITY_TOLERANCE];
   checkLowerBound( stabilityTolerance, epsilon, viewKeyStruct::stabilityThresholdString() );
 
-  // Max number of iterations should be at least 1
+  // Max number of stability iterations should be at least 1
   integer const stabilityMaxIterations = m_discreteParameters[STABILITY_MAX_ITERATIONS];
   checkLowerBound( stabilityMaxIterations, 1, viewKeyStruct::stabilityMaxIterationsString() );
+
+  // Flash tolerance should be positive
+  real64 const flashTolerance = m_continuousParameters[FLASH_TOLERANCE];
+  checkLowerBound( flashTolerance, epsilon, viewKeyStruct::flashToleranceString() );
+
+  // Max number of flash iterations should be at least 1
+  integer const flashMaxIterations = m_discreteParameters[FLASH_MAX_ITERATIONS];
+  checkLowerBound( flashMaxIterations, 1, viewKeyStruct::flashMaxIterationsString() );
 }
 
 } // end namespace compositional

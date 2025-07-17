@@ -107,6 +107,9 @@ public:
                                                         componentProperties,
                                                         kValues[0] );
 
+    auto const parameters = FlashParameters::create( std::make_unique< ModelParameters >() );
+    auto const * flashParameters = parameters->get< FlashParameters >();
+
     bool status = NegativeTwoPhaseFlash::compute(
       numComps,
       pressure,
@@ -114,6 +117,8 @@ public:
       composition.toSliceConst(),
       componentProperties,
       flashData,
+      flashParameters->m_continuousParameters,
+      flashParameters->m_discreteParameters,
       kValues.toSlice(),
       vapourFraction,
       liquidComposition,
@@ -176,6 +181,9 @@ public:
                                                         componentProperties,
                                                         kValues[0] );
 
+    auto const parameters = FlashParameters::create( std::make_unique< ModelParameters >() );
+    auto const * flashParameters = parameters->get< FlashParameters >();
+
     stackArray1d< real64, numDofs > vapourFractionDerivs( numDofs );
     stackArray2d< real64, numComps * numDofs > liquidCompositionDerivs( numComps, numDofs );
     stackArray2d< real64, numComps * numDofs > vapourCompositionDerivs( numComps, numDofs );
@@ -208,6 +216,8 @@ public:
         zmf.toSliceConst(),
         componentProperties,
         flashData,
+        flashParameters->m_continuousParameters,
+        flashParameters->m_discreteParameters,
         kValues.toSlice(),
         values[0],
         displacedLiquidComposition.toSlice(),
@@ -226,6 +236,8 @@ public:
       composition.toSliceConst(),
       componentProperties,
       flashData,
+      flashParameters->m_continuousParameters,
+      flashParameters->m_discreteParameters,
       kValues.toSlice(),
       vapourFraction,
       liquidComposition.toSlice(),

@@ -39,19 +39,29 @@ public:
    * Flash variables
    * These are indices into an array that holds the actual values
    */
-  /** The value of the tangent plane distance below which a mixture is determined to be unstable. */
-  static integer constexpr STABILITY_THRESHOLD = 0;
+
+  // --- integer parameters ---
+  /** The maximum number of iterations used during the flash. */
+  static integer constexpr FLASH_MAX_ITERATIONS = 0;
 
   /** The maximum number of iterations used during the stability test. */
-  static integer constexpr STABILITY_MAX_ITERATIONS = 0;
+  static integer constexpr STABILITY_MAX_ITERATIONS = 1;
+
+  /* Number of discrete variables */
+  static integer constexpr NUM_INTEGER = 2;
+
+  // --- real parameters ---
+  /** The tolerance to use to determine convergece of the flash. */
+  static integer constexpr FLASH_TOLERANCE = 0;
+
+  /** The value of the tangent plane distance below which a mixture is determined to be unstable. */
+  static integer constexpr STABILITY_THRESHOLD = 1;
 
   /** The tolerance to use to determine convergece to a stationary point in the stability test. */
-  static integer constexpr STABILITY_TOLERANCE = 1;
+  static integer constexpr STABILITY_TOLERANCE = 2;
 
   /* Number of continuous variables */
-  static integer constexpr NUM_FLOAT = 2;
-  /* Number of discrete variables */
-  static integer constexpr NUM_INTEGER = 1;
+  static integer constexpr NUM_FLOAT = 3;
 
 public:
   FlashParameters( std::unique_ptr< ModelParameters > parameters );
@@ -61,6 +71,8 @@ public:
 
   struct viewKeyStruct
   {
+    static constexpr char const * flashToleranceString() { return "flashTolerance"; }
+    static constexpr char const * flashMaxIterationsString() { return "flashMaxIterations"; }
     static constexpr char const * stabilityThresholdString() { return "stabilityThreshold"; }
     static constexpr char const * stabilityToleranceString() { return "stabilityTolerance"; }
     static constexpr char const * stabilityMaxIterationsString() { return "stabilityMaxIterations"; }

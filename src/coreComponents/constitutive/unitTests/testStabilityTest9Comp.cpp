@@ -118,6 +118,7 @@ public:
                                                         temperature,
                                                         componentProperties,
                                                         kValues[0] );
+
     auto const parameters = FlashParameters::create( std::make_unique< ModelParameters >() );
     auto const * flashParameters = parameters->get< FlashParameters >();
 
@@ -145,6 +146,8 @@ public:
       composition.toSliceConst(),
       componentProperties,
       flashData,
+      flashParameters->m_continuousParameters,
+      flashParameters->m_discreteParameters,
       kValues.toSlice(),
       vapourFraction,
       liquidComposition.toSlice(),
