@@ -1139,9 +1139,9 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::initializeNewFractureFields( r
     arrayView2d< real64 const > faceNormal = faceManager.faceNormal();
 
     solidMechanics::arrayView2dLayoutIncrDisplacement const incrementalDisplacement =
-      nodeManager.getField< fields::solidMechanics::incrementalDisplacement >();
+      nodeManager.getField< solidMechanics::incrementalDisplacement >();
     solidMechanics::arrayView2dLayoutTotalDisplacement const totalDisplacement =
-      nodeManager.getField< fields::solidMechanics::totalDisplacement >();
+      nodeManager.getField< solidMechanics::totalDisplacement >();
 
     elemManager.forElementRegions< SurfaceElementRegion >( regionNames,
                                                            [=] ( localIndex const,
@@ -1156,13 +1156,13 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::initializeNewFractureFields( r
 
         arrayView2d< localIndex const > const faceMap = subRegion.faceList().toViewConst();
 
-        arrayView1d< real64 > const fluidPressure_n = subRegion.getField< fields::flow::pressure_n >();
-        arrayView1d< real64 > const fluidPressure = subRegion.getField< fields::flow::pressure >();
+        arrayView1d< real64 > const fluidPressure_n = subRegion.getField< flow::pressure_n >();
+        arrayView1d< real64 > const fluidPressure = subRegion.getField< flow::pressure >();
         string const & fluidName = subRegion.getReference< string >( FlowSolverBase::viewKeyStruct::fluidNamesString() );
         SingleFluidBase const & fluid = subRegion.getConstitutiveModel< SingleFluidBase >( fluidName );
         real64 const defaultDensity = fluid.defaultDensity();
-        arrayView1d< real64 > const massCreated  = subRegion.getField< fields::flow::massCreated >();
-        arrayView1d< real64 > const fractureCreationTime = subRegion.getField< fields::flow::fractureCreationTime >();
+        arrayView1d< real64 > const massCreated  = subRegion.getField< flow::massCreated >();
+        arrayView1d< real64 > const fractureCreationTime = subRegion.getField< flow::fractureCreationTime >();
 
 
         arrayView1d< real64 > const aperture = subRegion.getField< fields::elementAperture >();
