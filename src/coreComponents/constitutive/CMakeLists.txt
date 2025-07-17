@@ -92,6 +92,7 @@ set( constitutive_headers
      fluid/multifluid/compositional/functions/FlashData.hpp
      fluid/multifluid/compositional/functions/FugacityCalculator.hpp
      fluid/multifluid/compositional/functions/KValueInitialization.hpp
+     fluid/multifluid/compositional/functions/NegativeTwoPhaseFlash_impl.hpp
      fluid/multifluid/compositional/functions/NegativeTwoPhaseFlash.hpp
      fluid/multifluid/compositional/functions/RachfordRice.hpp
      fluid/multifluid/compositional/functions/SoreideWhitsonEOSPhaseModel_impl.hpp

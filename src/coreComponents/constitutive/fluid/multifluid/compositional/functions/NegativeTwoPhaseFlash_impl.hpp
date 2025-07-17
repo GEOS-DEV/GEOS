@@ -14,19 +14,16 @@
  */
 
 /**
- * @file NegativeTwoPhaseFlash.hpp
+ * @file NegativeTwoPhaseFlash_impl.hpp
  */
 
-#ifndef GEOS_CONSTITUTIVE_FLUID_MULTIFLUID_COMPOSITIONAL_FUNCTIONS_NEGATIVETWOPHASEFLASH_HPP_
-#define GEOS_CONSTITUTIVE_FLUID_MULTIFLUID_COMPOSITIONAL_FUNCTIONS_NEGATIVETWOPHASEFLASH_HPP_
+#ifndef GEOS_CONSTITUTIVE_FLUID_MULTIFLUID_COMPOSITIONAL_FUNCTIONS_NEGATIVETWOPHASEFLASH_IMPL_HPP_
+#define GEOS_CONSTITUTIVE_FLUID_MULTIFLUID_COMPOSITIONAL_FUNCTIONS_NEGATIVETWOPHASEFLASH_IMPL_HPP_
 
 #include "RachfordRice.hpp"
 #include "KValueInitialization.hpp"
 #include "FugacityCalculator.hpp"
-#include "FlashData.hpp"
 #include "Utilities.hpp"
-#include "constitutive/fluid/multifluid/MultiFluidConstants.hpp"
-#include "constitutive/fluid/multifluid/compositional/parameters/ComponentProperties.hpp"
 #include "denseLinearAlgebra/interfaces/blaslapack/BlasLapackLA.hpp"
 
 namespace geos
@@ -36,128 +33,6 @@ namespace constitutive
 {
 namespace compositional
 {
-
-struct NegativeTwoPhaseFlash
-{
-  using Deriv = constitutive::multifluid::DerivativeOffset;
-
-public:
-  /**
-   * @brief Perform negative two-phase EOS flash
-   * @param[in] numComps number of components
-   * @param[in] pressure pressure
-   * @param[in] temperature temperature
-   * @param[in] composition composition of the mixture
-   * @param[in] componentProperties The compositional component properties
-   * @param[in] flashData The parameters required for the flash
-   * @param[in/out] kValues The phase equilibrium ratios
-   * @param[out] vapourPhaseMoleFraction the calculated vapour (gas) mole fraction
-   * @param[out] liquidComposition the calculated liquid phase composition
-   * @param[out] vapourComposition the calculated vapour phase composition
-   * @return an indicator of success of the flash
-   */
-  template< int USD1, int USD2 >
-  GEOS_HOST_DEVICE
-  static bool compute( integer const numComps,
-                       real64 const pressure,
-                       real64 const temperature,
-                       arraySlice1d< real64 const > const & composition,
-                       ComponentProperties::KernelWrapper const & componentProperties,
-                       FlashData const & flashData,
-                       arraySlice2d< real64, USD1 > const & kValues,
-                       real64 & vapourPhaseMoleFraction,
-                       arraySlice1d< real64, USD2 > const & liquidComposition,
-                       arraySlice1d< real64, USD2 > const & vapourComposition );
-
-  /**
-   * @brief Calculate derivatives from the two-phase negative flash
-   * @param[in] numComps number of components
-   * @param[in] pressure pressure
-   * @param[in] temperature temperature
-   * @param[in] composition composition of the mixture
-   * @param[in] componentProperties The compositional component properties
-   * @param[in] flashData The parameters required for the flash
-   * @param[in] vapourFraction the calculated vapour (gas) mole fraction
-   * @param[in] liquidComposition the calculated liquid phase composition
-   * @param[in] vapourComposition the calculated vapour phase composition
-   * @param[out] vapourFractionDerivs derivatives of the calculated vapour (gas) mole fraction
-   * @param[out] liquidCompositionDerivs derivatives of the calculated liquid phase composition
-   * @param[out] vapourCompositionDerivs derivatives of the calculated vapour phase composition
-   */
-  template< integer USD1, integer USD2, integer USD3 >
-  GEOS_HOST_DEVICE
-  static void computeDerivatives( integer const numComps,
-                                  real64 const pressure,
-                                  real64 const temperature,
-                                  arraySlice1d< real64 const > const & composition,
-                                  ComponentProperties::KernelWrapper const & componentProperties,
-                                  FlashData const & flashData,
-                                  real64 const & vapourFraction,
-                                  arraySlice1d< real64 const, USD1 > const & liquidComposition,
-                                  arraySlice1d< real64 const, USD1 > const & vapourComposition,
-                                  arraySlice1d< real64, USD2 > const & vapourFractionDerivs,
-                                  arraySlice2d< real64, USD3 > const & liquidCompositionDerivs,
-                                  arraySlice2d< real64, USD3 > const & vapourCompositionDerivs );
-
-private:
-  /**
-   * @brief Calculate the logarithms of the fugacity ratios
-   * @param[in] numComps number of components
-   * @param[in] pressure pressure
-   * @param[in] temperature temperature
-   * @param[in] composition composition of the mixture
-   * @param[in] componentProperties The compositional component properties
-   * @param[in] flashData The parameters required for the flash
-   * @param[in] kValues The k-values
-   * @param[in] presentComponents The indices of the present components
-   * @param[out] vapourPhaseMoleFraction the calculated vapour (gas) mole fraction
-   * @param[out] liquidComposition the calculated liquid phase composition
-   * @param[out] vapourComposition the calculated vapour phase composition
-   * @param[out] logLiquidFugacity the calculated log fugacity ratios for the liquid phase
-   * @param[out] logVapourFugacity the calculated log fugacity ratios for the vapour phase
-   * @param[out] fugacityRatios the fugacity rations
-   * @return The error
-   */
-  template< integer USD1, integer USD2 >
-  GEOS_HOST_DEVICE
-  static real64 computeFugacityRatio(
-    integer const numComps,
-    real64 const pressure,
-    real64 const temperature,
-    arraySlice1d< real64 const > const & composition,
-    ComponentProperties::KernelWrapper const & componentProperties,
-    FlashData const & flashData,
-    arraySlice1d< real64 const, USD1 > const & kValues,
-    arraySlice1d< integer const > const & presentComponents,
-    real64 & vapourPhaseMoleFraction,
-    arraySlice1d< real64, USD2 > const & liquidComposition,
-    arraySlice1d< real64, USD2 > const & vapourComposition,
-    arraySlice1d< real64 > const & logLiquidFugacity,
-    arraySlice1d< real64 > const & logVapourFugacity,
-    arraySlice1d< real64 > const & fugacityRatios );
-
-  /**
-   * @brief Solve the lineat system for the derivatives of the flash
-   * @param[in/out] A the coefficient matrix. Destroyed after call
-   * @param[in/out] X the rhs and solution
-   * @return @c true if the problem is well solved @c false otherwise
-   */
-  template< int USD >
-  GEOS_HOST_DEVICE
-  static bool solveLinearSystem( arraySlice2d< real64, USD > const & A,
-                                 arraySlice2d< real64, USD > const & X )
-  {
-#if defined(GEOS_DEVICE_COMPILE)
-    GEOS_UNUSED_VAR( A );
-    GEOS_UNUSED_VAR( X );
-    return false;
-#else
-    BlasLapackLA::solveLinearSystem( A, X );
-    return true;
-#endif
-  }
-
-};
 
 template< int USD1, int USD2 >
 GEOS_HOST_DEVICE
@@ -452,10 +327,25 @@ real64 NegativeTwoPhaseFlash::computeFugacityRatio(
   return LvArray::math::sqrt( error );
 }
 
+template< int USD >
+GEOS_HOST_DEVICE
+bool NegativeTwoPhaseFlash::solveLinearSystem( arraySlice2d< real64, USD > const & A,
+                                               arraySlice2d< real64, USD > const & X )
+{
+#if defined(GEOS_DEVICE_COMPILE)
+  GEOS_UNUSED_VAR( A );
+  GEOS_UNUSED_VAR( X );
+  return false;
+#else
+  BlasLapackLA::solveLinearSystem( A, X );
+  return true;
+#endif
+}
+
 } // namespace compositional
 
 } // namespace constitutive
 
 } // namespace geos
 
-#endif //GEOS_CONSTITUTIVE_FLUID_MULTIFLUID_COMPOSITIONAL_FUNCTIONS_NEGATIVETWOPHASEFLASH_HPP_
+#endif //GEOS_CONSTITUTIVE_FLUID_MULTIFLUID_COMPOSITIONAL_FUNCTIONS_NEGATIVETWOPHASEFLASH_IMPL_HPP_
