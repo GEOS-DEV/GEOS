@@ -19,6 +19,8 @@
 
 #include "KValueFlashModel.hpp"
 #include "constitutive/fluid/multifluid/compositional/parameters/KValueFlashParameters.hpp"
+#include "constitutive/fluid/multifluid/compositional/models/NegativeTwoPhaseFlashModel.hpp"
+#include "constitutive/fluid/multifluid/compositional/models/ImmiscibleWaterFlashModel.hpp"
 
 #include "functions/FunctionManager.hpp"
 
@@ -56,8 +58,10 @@ string KValueFlashModel< NUM_PHASE >::catalogName()
 template< integer NUM_PHASE >
 KValueFlashModel< NUM_PHASE >::KValueFlashModel( string const & name,
                                                  ComponentProperties const & componentProperties,
-                                                 ModelParameters const & modelParameters ):
-  FunctionBase( name, componentProperties )
+                                                 ModelParameters const & modelParameters,
+                                                 arrayView1d< integer const > const phaseTypes ):
+  FunctionBase( name, componentProperties ),
+  m_phaseTypes( phaseTypes )
 {
   m_parameters = modelParameters.get< KValueFlashParameters< NUM_PHASE > >();
   integer const numComps = m_componentProperties.getNumberOfComponents();
@@ -72,17 +76,27 @@ template< integer NUM_PHASE >
 typename KValueFlashModel< NUM_PHASE >::KernelWrapper
 KValueFlashModel< NUM_PHASE >::createKernelWrapper() const
 {
+  array1d< integer > phaseOrder( KernelWrapper::getNumberOfPhases());
+  calculatePhaseOrdering( m_phaseTypes, phaseOrder );
+  integer const liquidIndex = phaseOrder[0];
+  integer const vapourIndex = phaseOrder[1];
+  integer const aqueousIndex = (NUM_PHASE == 3) ? phaseOrder[2] : -1;
+
   string pressureTableName;
   string temperatureTableName;
   m_parameters->createTables( functionName(),
                               pressureTableName,
                               temperatureTableName );
 
+
   FunctionManager const & functionManager = FunctionManager::getInstance();
   TableFunction const * pressureTable = functionManager.getGroupPointer< TableFunction >( pressureTableName );
   TableFunction const * temperatureTable = functionManager.getGroupPointer< TableFunction >( temperatureTableName );
 
   return KernelWrapper( m_componentProperties.getNumberOfComponents(),
+                        liquidIndex,
+                        vapourIndex,
+                        aqueousIndex,
                         *pressureTable,
                         *temperatureTable,
                         m_presentComponents,
@@ -91,10 +105,16 @@ KValueFlashModel< NUM_PHASE >::createKernelWrapper() const
 
 template< integer NUM_PHASE >
 KValueFlashModelUpdate< NUM_PHASE >::KValueFlashModelUpdate( integer const numComponents,
+                                                             integer const liquidIndex,
+                                                             integer const vapourIndex,
+                                                             integer const aqueousIndex,
                                                              TableFunction const & pressureTable,
                                                              TableFunction const & temperatureTable,
                                                              arrayView1d< integer const > const & presentComponents,
                                                              arrayView4d< real64 const > const & kValues ):
+  m_liquidIndex( liquidIndex ),
+  m_vapourIndex( vapourIndex ),
+  m_aquoesIndex( aqueousIndex ),
   m_numComponents( numComponents ),
   m_numPressurePoints( pressureTable.getCoordinates()[0].size()),
   m_numTemperaturePoints( temperatureTable.getCoordinates()[0].size()),
@@ -109,6 +129,20 @@ std::unique_ptr< ModelParameters >
 KValueFlashModel< NUM_PHASE >::createParameters( std::unique_ptr< ModelParameters > parameters )
 {
   return KValueFlashParameters< NUM_PHASE >::create( std::move( parameters ) );
+}
+
+template< integer NUM_PHASE >
+void KValueFlashModel< NUM_PHASE >::calculatePhaseOrdering( arrayView1d< integer const > const & phaseTypes,
+                                                            arrayView1d< integer > const & phaseOrder )
+{
+  if constexpr (NUM_PHASE == 2)
+  {
+    NegativeTwoPhaseFlashModel::calculatePhaseOrdering( phaseTypes, phaseOrder );
+  }
+  else if constexpr (NUM_PHASE == 3)
+  {
+    ImmiscibleWaterFlashModel::calculatePhaseOrdering( phaseTypes, phaseOrder );
+  }
 }
 
 // Instantiate

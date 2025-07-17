@@ -15,6 +15,7 @@
 
 #include "constitutive/fluid/multifluid/compositional/models/KValueFlashModel.hpp"
 #include "constitutive/fluid/multifluid/compositional/parameters/KValueFlashParameters.hpp"
+#include "constitutive/fluid/multifluid/compositional/parameters/PhaseType.hpp"
 #include "constitutive/fluid/multifluid/compositional/parameters/EquationOfState.hpp"
 #include "constitutive/fluid/multifluid/compositional/CompositionalMultiphaseFluid.hpp"
 #include "constitutive/unitTests/TestFluid.hpp"
@@ -42,7 +43,7 @@ struct TestData< 9 >
   static constexpr integer testComponents[numTestComps] = {0, 2, 8};
   static std::unique_ptr< TestFluid< 9 > > createFluid()
   {
-    auto fluid = TestFluid< 9 >::create( {Fluid::H2O, Fluid::CO2, Fluid::N2, Fluid::C1, Fluid::C2, Fluid::C3, Fluid::C4, Fluid::C5, Fluid::C10} );
+    auto fluid = TestFluid< 9 >::create( {Fluid::H2O, Fluid::CO2, Fluid::N2, Fluid::CH4, Fluid::C2H6, Fluid::C3H8, Fluid::C4H10, Fluid::C5H12, Fluid::C10H22} );
     const std::array< real64 const, 36 > bics = {
       0.01, 0, 0.003732, 0, 0.01, 0, 0, 0.01, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
       0, 0, 0, 0.01, 0, 0.028, 0.01, 0.01, 0, 0, 0.01, 0, 0.04532, 0.01, 0.01, 0, 0, 0
@@ -88,6 +89,7 @@ protected:
   std::unique_ptr< TestFluid< numComps > > m_fluid{};
   std::unique_ptr< ModelParameters > m_parameters{};
   std::unique_ptr< FlashModelType > m_flash{};
+  array1d< integer > m_phaseTypes{};
 
 private:
   void generateTables( string_array & names, string const fluidName );
@@ -126,8 +128,14 @@ KValueFlashTestFixture< numPhases, numComps >::KValueFlashTestFixture()
 
   ComponentProperties const & componentProperties = this->m_fluid->getComponentProperties();
 
-  string const fluidName = GEOS_FMT( "fluid_{}_{}", numPhases, numComps );
+  m_phaseTypes.emplace_back( static_cast< integer >(PhaseType::LIQUID));
+  m_phaseTypes.emplace_back( static_cast< integer >(PhaseType::VAPOUR));
+  if constexpr (numPhases == 3)
+  {
+    m_phaseTypes.emplace_back( static_cast< integer >(PhaseType::AQUEOUS));
+  }
 
+  string const fluidName = GEOS_FMT( "fluid_{}_{}", numPhases, numComps );
   m_parameters = FlashModelType::createParameters( std::move( m_parameters ));
   FlashModelParamType * parameters = const_cast< FlashModelParamType * >(m_parameters->get< FlashModelParamType >());
   parameters->m_kValueTables.resize( (numPhases-1)*numComps );
@@ -138,7 +146,7 @@ KValueFlashTestFixture< numPhases, numComps >::KValueFlashTestFixture()
   m_parameters->postInputInitialization( &mockFluid, componentProperties );
 
   string const flashName = GEOS_FMT( "{}_flash", fluidName );
-  m_flash = std::make_unique< FlashModelType >( flashName, componentProperties, *m_parameters );
+  m_flash = std::make_unique< FlashModelType >( flashName, componentProperties, *m_parameters, m_phaseTypes );
 }
 
 template< integer numPhases, integer numComps >

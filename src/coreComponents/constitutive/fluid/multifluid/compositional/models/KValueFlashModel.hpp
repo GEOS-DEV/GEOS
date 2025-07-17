@@ -54,6 +54,9 @@ public:
   using Deriv = constitutive::multifluid::DerivativeOffset;
 
   KValueFlashModelUpdate( integer const numComponents,
+                          integer const liquidIndex,
+                          integer const vapourIndex,
+                          integer const aqueousIndex,
                           TableFunction const & pressureTable,
                           TableFunction const & temperatureTable,
                           arrayView1d< integer const > const & presentComponents,
@@ -74,9 +77,9 @@ public:
                 PhaseComp::SliceType const phaseCompFraction ) const;
 
 private:
-  static integer constexpr m_liquidIndex = 0;
-  static integer constexpr m_vapourIndex = 1;
-  static integer constexpr m_aqueousIndex = 2;
+  integer const m_liquidIndex;
+  integer const m_vapourIndex;
+  integer const m_aquoesIndex;
 
   integer const m_numComponents{0};
   integer const m_numPressurePoints{0};
@@ -101,7 +104,8 @@ class KValueFlashModel : public FunctionBase
 public:
   KValueFlashModel( string const & name,
                     ComponentProperties const & componentProperties,
-                    ModelParameters const & modelParameters );
+                    ModelParameters const & modelParameters,
+                    arrayView1d< integer const > const phaseTypes );
 
   static string catalogName();
 
@@ -122,11 +126,15 @@ public:
   // Create parameters unique to this model
   static std::unique_ptr< ModelParameters > createParameters( std::unique_ptr< ModelParameters > parameters );
 
+// Determine phase ordering
+  static void calculatePhaseOrdering( arrayView1d< integer const > const & phaseTypes,
+                                      arrayView1d< integer > const & phaseOrder );
 private:
   /// Index of present componenyt
   array1d< integer > m_presentComponents;
 
   KValueFlashParameters< NUM_PHASE > const * m_parameters{};
+  arrayView1d< integer const > const m_phaseTypes;
 };
 
 template< integer NUM_PHASE >

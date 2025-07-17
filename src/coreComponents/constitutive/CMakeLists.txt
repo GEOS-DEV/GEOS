@@ -272,6 +272,7 @@ set( constitutive_sources
      fluid/multifluid/compositional/parameters/BrineSalinity.cpp
      fluid/multifluid/compositional/parameters/ComponentProperties.cpp
      fluid/multifluid/compositional/parameters/CriticalVolume.cpp
+     fluid/multifluid/compositional/parameters/KValueFlashParameters.cpp
      fluid/multifluid/compositional/parameters/ImmiscibleWaterParameters.cpp
      fluid/multifluid/compositional/parameters/PhaseType.cpp
      fluid/multifluid/compositional/parameters/PressureTemperatureCoordinates.cpp

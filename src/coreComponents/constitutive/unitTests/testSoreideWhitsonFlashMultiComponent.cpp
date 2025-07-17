@@ -18,6 +18,7 @@
 #include "constitutive/fluid/multifluid/compositional/parameters/EquationOfState.hpp"
 #include "constitutive/fluid/multifluid/compositional/parameters/CriticalVolume.hpp"
 #include "constitutive/fluid/multifluid/compositional/parameters/BrineSalinity.hpp"
+#include "constitutive/fluid/multifluid/compositional/parameters/PhaseType.hpp"
 #include "constitutive/fluid/multifluid/compositional/models/NegativeTwoPhaseFlashModel.hpp"
 #include "TestFluid.hpp"
 
@@ -49,13 +50,7 @@ struct FluidData< 4 >
 {
   static std::unique_ptr< TestFluid< 4 > > createFluid()
   {
-    auto fluid = TestFluid< 4 >::create( {0, 0, 0, 0} );
-    fluid->componentNames = { "H2", "CH4", "CO2", "H2O" };
-    TestFluid< 4 >::populateArray( fluid->criticalPressure, Feed< 4 >{1.29640e+06, 4.59920e+06, 7.37730e+06, 2.20640e+07} );
-    TestFluid< 4 >::populateArray( fluid->criticalTemperature, Feed< 4 >{3.31450e+01, 1.90564e+02, 3.04128e+02, 6.47096e+02} );
-    TestFluid< 4 >::populateArray( fluid->criticalVolume, Feed< 4 >{6.44828e-05, 9.86278e-05, 9.41185e-05, 5.59480e-05} );
-    TestFluid< 4 >::populateArray( fluid->acentricFactor, Feed< 4 >{-2.19000e-01, 1.14200e-02, 2.23940e-01, 3.44300e-01} );
-    TestFluid< 4 >::populateArray( fluid->molecularWeight, Feed< 4 >{2.01588e-03, 1.60425e-02, 4.40095e-02, 1.80153e-02} );
+    auto fluid = TestFluid< 4 >::create( {Fluid::H2, Fluid::CH4, Fluid::CO2, Fluid::H2O} );
     fluid->setBinaryCoefficients( Feed< 6 >{ 0.0000, 0.0000, 0.0000, -0.3776, 0.4850, 0.1896 } );
     return fluid;
   }
@@ -89,11 +84,14 @@ public:
       EnumStrings< EquationOfStateType >::toString( EquationOfStateType::PengRobinson )
     };
 
+    m_phaseTypes.emplace_back( static_cast< integer >(PhaseType::LIQUID));
+    m_phaseTypes.emplace_back( static_cast< integer >(PhaseType::VAPOUR));
+
     auto * brineSalinity = const_cast< BrineSalinity * >(m_parameters->get< BrineSalinity >());
     real64 const massFraction = 1.0e-6*PPM;
-    brineSalinity->m_salinity = massFraction / 58.44e-3;
+    brineSalinity->m_salinity = massFraction / brineSalinity->m_saltMolarWeight;
 
-    m_flash = std::make_unique< NegativeTwoPhaseFlashModel >( "Flash", componentProperties, *m_parameters );
+    m_flash = std::make_unique< NegativeTwoPhaseFlashModel >( "Flash", componentProperties, *m_parameters, m_phaseTypes );
   }
 
   ~SoreideWhitsonFlashMultiComponentTestFixture() = default;
@@ -137,6 +135,7 @@ protected:
   std::unique_ptr< TestFluid< NCOMP > > m_fluid{};
   std::unique_ptr< NegativeTwoPhaseFlashModel > m_flash{};
   std::unique_ptr< ModelParameters > m_parameters{};
+  array1d< integer > m_phaseTypes{};
 };
 
 using SoreideWhitson4 = SoreideWhitsonFlashMultiComponentTestFixture< 4 >;
