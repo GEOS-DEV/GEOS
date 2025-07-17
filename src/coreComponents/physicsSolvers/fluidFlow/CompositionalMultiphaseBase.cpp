@@ -1064,6 +1064,7 @@ void CompositionalMultiphaseBase::initializeThermalState( MeshLevel & mesh, stri
 void CompositionalMultiphaseBase::computeHydrostaticEquilibrium( DomainPartition & domain )
 {
   FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
+  FunctionManager & functionManager = FunctionManager::getInstance();
 
   integer const numComps = m_numComponents;
   integer const numPhases = m_numPhases;
@@ -1093,6 +1094,17 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium( DomainPartition
                    "   - Remove the hydrostatic equilibrium initial condition from the XML file",
                    InputError );
 
+    // ensure that the temperature and composition tables are defined
+    GEOS_THROW_IF( bc.getTemperatureVsElevationTableName().empty(),
+                   getCatalogName() << " " << bc.getDataContext()
+                                    << ": " << EquilibriumInitialCondition::viewKeyStruct::temperatureVsElevationTableNameString()
+                                    << " must be provided for a multiphase simulation",
+                   InputError );
+    GEOS_THROW_IF( bc.getComponentFractionVsElevationTableNames().empty(),
+                   getCatalogName() << " " << bc.getDataContext()
+                                    << ": " << EquilibriumInitialCondition::viewKeyStruct::componentFractionVsElevationTableNamesString()
+                                    << " must be provided for a multiphase simulation",
+                   InputError );
   } );
 
   if( equilCounter == 0 )
@@ -1163,8 +1175,6 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium( DomainPartition
       pressureValues.resize( numPointsInTable );
 
       // Step 3.2: retrieve the user-defined tables (temperature and comp fraction)
-
-      FunctionManager & functionManager = FunctionManager::getInstance();
 
       array1d< TableFunction::KernelWrapper > compFracTableWrappers;
       string_array const & compFracTableNames = fs.getComponentFractionVsElevationTableNames();
