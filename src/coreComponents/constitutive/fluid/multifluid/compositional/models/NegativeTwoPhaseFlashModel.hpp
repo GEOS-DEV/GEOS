@@ -25,6 +25,7 @@
 
 #include "constitutive/fluid/multifluid/Layouts.hpp"
 #include "constitutive/fluid/multifluid/MultiFluidUtils.hpp"
+#include "constitutive/fluid/multifluid/compositional/functions/Utilities.hpp"
 #include "constitutive/fluid/multifluid/compositional/functions/FlashData.hpp"
 #include "constitutive/fluid/multifluid/compositional/functions/StabilityTest.hpp"
 #include "constitutive/fluid/multifluid/compositional/functions/NegativeTwoPhaseFlash.hpp"
@@ -72,6 +73,32 @@ public:
                 PhaseComp::SliceType const phaseCompFraction ) const
   {
     integer const numDofs = 2 + m_numComponents;
+
+    // Check if k-Values need to be initialised
+    auto kVapourLiquid = kValues[0];
+    bool const needInitialisation = hasZero( m_numComponents, kVapourLiquid.toSliceConst() );
+    if( needInitialisation )
+    {
+      if( m_flashData.liquidEos == EquationOfStateType::SoreideWhitson )
+      {
+        // Initialise the trial compositions using SW uniform values
+        KValueInitialization::computeSoreideWhitsonKvalue( m_numComponents,
+                                                           pressure,
+                                                           temperature,
+                                                           componentProperties,
+                                                           compFraction,
+                                                           kVapourLiquid );
+      }
+      else
+      {
+        // Initialise the trial compositions using Wilson k-Values
+        KValueInitialization::computeWilsonGasLiquidKvalue( m_numComponents,
+                                                            pressure,
+                                                            temperature,
+                                                            componentProperties,
+                                                            kVapourLiquid );
+      }
+    }
 
     // Perform stability test to check that we have 2 phases
     real64 tangentPlaneDistance = 0.0;

@@ -22,6 +22,7 @@
 
 #include "KValueInitialization.hpp"
 #include "FugacityCalculator.hpp"
+#include "Utilities.hpp"
 #include "constitutive/fluid/multifluid/Layouts.hpp"
 #include "constitutive/fluid/multifluid/MultiFluidConstants.hpp"
 #include "constitutive/fluid/multifluid/compositional/parameters/ComponentProperties.hpp"
@@ -91,26 +92,6 @@ public:
     for( integer const ic : presentComponents )
     {
       hyperplane[ic] = LvArray::math::log( composition[ic] ) + logFugacity[ic];
-    }
-
-    if( equationOfState == EquationOfStateType::SoreideWhitson )
-    {
-      // Initialise the trial compositions using SW uniform values
-      KValueInitialization::computeSoreideWhitsonKvalue( numComps,
-                                                         pressure,
-                                                         temperature,
-                                                         componentProperties,
-                                                         presentComponents,
-                                                         kValues );
-    }
-    else
-    {
-      // Initialise the trial compositions using Wilson k-Values
-      KValueInitialization::computeWilsonGasLiquidKvalue( numComps,
-                                                          pressure,
-                                                          temperature,
-                                                          componentProperties,
-                                                          kValues );
     }
 
     // The mimimum TPD over all trial compositions
@@ -185,60 +166,6 @@ public:
       }
     }
     return ( tangentPlaneDistance < -MultiFluidConstants::fugacityTolerance ) || (maxError < MultiFluidConstants::fugacityTolerance);
-  }
-
-private:
-  /**
-   * @brief Calculate which components are present.
-   * @details Creates a list of indices whose components have non-zero mole fraction.
-   * @param[in] numComps number of components
-   * @param[in] composition the composition of the fluid
-   * @param[out] presentComponents the list of present components
-   * @return the number of present components
-   */
-  GEOS_HOST_DEVICE
-  GEOS_FORCE_INLINE
-  static integer calculatePresentComponents( integer const numComps,
-                                             arraySlice1d< real64 const > const & composition,
-                                             stackArray1d< integer, maxNumComps > & presentComponents )
-  {
-    // Check for machine-zero feed values
-    integer presentCount = 0;
-    for( integer ic = 0; ic < numComps; ++ic )
-    {
-      if( MultiFluidConstants::epsilon < composition[ic] )
-      {
-        presentComponents[presentCount++] = ic;
-      }
-    }
-    presentComponents.resize( presentCount );
-    return presentCount;
-  }
-
-  /**
-   * @brief Normalise a composition in place to ensure that the components add up to unity
-   * @param[in] numComps number of components
-   * @param[in/out] composition composition to be normalized
-   * @return the sum of the given values
-   */
-  template< integer USD >
-  GEOS_HOST_DEVICE
-  GEOS_FORCE_INLINE
-  static real64 normalizeComposition( integer const numComps,
-                                      arraySlice1d< real64, USD > const & composition )
-  {
-    real64 totalMoles = 0.0;
-    for( integer ic = 0; ic < numComps; ++ic )
-    {
-      totalMoles += composition[ic];
-    }
-    GEOS_ASSERT( MultiFluidConstants::epsilon < totalMoles );
-    real64 const oneOverTotalMoles = 1.0 / totalMoles;
-    for( integer ic = 0; ic < numComps; ++ic )
-    {
-      composition[ic] *= oneOverTotalMoles;
-    }
-    return totalMoles;
   }
 };
 

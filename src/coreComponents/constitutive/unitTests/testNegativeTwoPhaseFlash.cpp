@@ -100,7 +100,12 @@ public:
     auto const liquidComposition = compositionData[0];
     auto const vapourComposition = compositionData[1];
     stackArray2d< real64, numComps > kValues( 1, numComps );
-    kValues.zero();
+
+    KValueInitialization::computeWilsonGasLiquidKvalue( numComps,
+                                                        pressure,
+                                                        temperature,
+                                                        componentProperties,
+                                                        kValues[0] );
 
     bool status = NegativeTwoPhaseFlash::compute(
       numComps,
@@ -164,7 +169,12 @@ public:
     stackArray1d< real64, numComps > liquidComposition( numComps );
     stackArray1d< real64, numComps > vapourComposition( numComps );
     stackArray2d< real64, numComps > kValues( 1, numComps );
-    kValues.zero();
+
+    KValueInitialization::computeWilsonGasLiquidKvalue( numComps,
+                                                        pressure,
+                                                        temperature,
+                                                        componentProperties,
+                                                        kValues[0] );
 
     stackArray1d< real64, numDofs > vapourFractionDerivs( numDofs );
     stackArray2d< real64, numComps * numDofs > liquidCompositionDerivs( numComps, numDofs );
@@ -180,12 +190,16 @@ public:
         derivs[1+ic+numComps] = ymf( ic, kc );
       }
     };
-    std::cout << std::scientific << std::setprecision( 8 );
 
     auto const evaluateFlash = [&]( real64 const p, real64 const t, auto const & zmf, auto & values ){
       stackArray1d< real64, numComps > displacedLiquidComposition( numComps );
       stackArray1d< real64, numComps > displacedVapourComposition( numComps );
-      kValues.zero();
+
+      KValueInitialization::computeWilsonGasLiquidKvalue( numComps,
+                                                          p,
+                                                          t,
+                                                          componentProperties,
+                                                          kValues[0] );
 
       NegativeTwoPhaseFlash::compute(
         numComps,

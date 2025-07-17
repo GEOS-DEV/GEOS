@@ -24,6 +24,7 @@
 #include "KValueInitialization.hpp"
 #include "FugacityCalculator.hpp"
 #include "FlashData.hpp"
+#include "Utilities.hpp"
 #include "constitutive/fluid/multifluid/MultiFluidConstants.hpp"
 #include "constitutive/fluid/multifluid/compositional/parameters/ComponentProperties.hpp"
 #include "denseLinearAlgebra/interfaces/blaslapack/BlasLapackLA.hpp"
@@ -99,59 +100,6 @@ public:
                                   arraySlice2d< real64, USD3 > const & vapourCompositionDerivs );
 
 private:
-  /**
-   * @brief Calculate which components are present.
-   * @details Creates a list of indices whose components have non-zero mole fraction.
-   * @param[in] numComps number of components
-   * @param[in] composition the composition of the fluid
-   * @param[out] presentComponents the list of present components
-   * @return the number of present components
-   */
-  template< typename ARRAY >
-  GEOS_HOST_DEVICE
-  GEOS_FORCE_INLINE
-  static integer calculatePresentComponents( integer const numComps,
-                                             arraySlice1d< real64 const > const & composition,
-                                             ARRAY & presentComponents )
-  {
-    // Check for machine-zero feed values
-    integer presentCount = 0;
-    for( integer ic = 0; ic < numComps; ++ic )
-    {
-      if( MultiFluidConstants::minForSpeciesPresence < composition[ic] )
-      {
-        presentComponents[presentCount++] = ic;
-      }
-    }
-    presentComponents.resize( presentCount );
-    return presentCount;
-  }
-
-  /**
-   * @brief Normalise a composition in place to ensure that the components add up to unity
-   * @param[in] numComps number of components
-   * @param[in/out] composition composition to be normalized
-   * @return the sum of the given values
-   */
-  template< integer USD >
-  GEOS_HOST_DEVICE
-  GEOS_FORCE_INLINE
-  static real64 normalizeComposition( integer const numComps,
-                                      arraySlice1d< real64, USD > const & composition )
-  {
-    real64 totalMoles = 0.0;
-    for( integer ic = 0; ic < numComps; ++ic )
-    {
-      totalMoles += composition[ic];
-    }
-    real64 const oneOverTotalMoles = 1.0 / (totalMoles + MultiFluidConstants::epsilon);
-    for( integer ic = 0; ic < numComps; ++ic )
-    {
-      composition[ic] *= oneOverTotalMoles;
-    }
-    return totalMoles;
-  }
-
   /**
    * @brief Calculate the logarithms of the fugacity ratios
    * @param[in] numComps number of components
@@ -240,38 +188,6 @@ bool NegativeTwoPhaseFlash::compute( integer const numComps,
   {
     liquidComposition[ic] = composition[ic];
     vapourComposition[ic] = composition[ic];
-  }
-
-  // Check if k-Values need to be initialised
-  bool needInitialisation = false;
-  for( integer ic = 0; ic < numComps; ++ic )
-  {
-    if( kVapourLiquid[ic] < MultiFluidConstants::epsilon )
-    {
-      needInitialisation = true;
-      break;
-    }
-  }
-
-  if( needInitialisation )
-  {
-    if( flashData.liquidEos == EquationOfStateType::SoreideWhitson )
-    {
-      KValueInitialization::computeSoreideWhitsonKvalue( numComps,
-                                                         pressure,
-                                                         temperature,
-                                                         componentProperties,
-                                                         presentComponents,
-                                                         kVapourLiquid );
-    }
-    else
-    {
-      KValueInitialization::computeWilsonGasLiquidKvalue( numComps,
-                                                          pressure,
-                                                          temperature,
-                                                          componentProperties,
-                                                          kVapourLiquid );
-    }
   }
 
   bool converged = false;

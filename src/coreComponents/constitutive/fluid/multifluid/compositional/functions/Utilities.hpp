@@ -1,0 +1,118 @@
+/*
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
+ *
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 TotalEnergies
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2023-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
+ * All rights reserved
+ *
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
+ */
+
+/**
+ * @file Utilities.hpp
+ */
+
+#ifndef GEOS_CONSTITUTIVE_FLUID_MULTIFLUID_COMPOSITIONAL_FUNCTIONS_UTILITIES_HPP_
+#define GEOS_CONSTITUTIVE_FLUID_MULTIFLUID_COMPOSITIONAL_FUNCTIONS_UTILITIES_HPP_
+
+#include "constitutive/fluid/multifluid/MultiFluidConstants.hpp"
+
+namespace geos
+{
+namespace constitutive
+{
+namespace compositional
+{
+
+/**
+ * @brief Set a value to zero. Used for array initialisation
+ */
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
+static void setZero( real64 & value ){ value = 0.0; }
+
+/**
+ * @brief Normalise a composition in place to ensure that the components add up to unity
+ * @param[in] numComps number of components
+ * @param[in/out] composition composition to be normalized
+ * @return the sum of the given values
+ */
+template< integer USD >
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
+static real64 normalizeComposition( integer const numComps,
+                                    arraySlice1d< real64, USD > const & composition )
+{
+  real64 totalMoles = 0.0;
+  for( integer ic = 0; ic < numComps; ++ic )
+  {
+    totalMoles += composition[ic];
+  }
+  real64 const oneOverTotalMoles = 1.0 / (totalMoles + MultiFluidConstants::epsilon);
+  for( integer ic = 0; ic < numComps; ++ic )
+  {
+    composition[ic] *= oneOverTotalMoles;
+  }
+  return totalMoles;
+}
+
+/**
+ * @brief Checks if a composition array has numerically small values
+ * @param[in] numComps number of values in the composition array
+ * @param[in] composition composition to be checked
+ * @return true of there is one zero value
+ */
+template< integer USD >
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
+static bool hasZero( integer const numComps,
+                     arraySlice1d< real64 const, USD > const & composition )
+{
+  for( integer ic = 0; ic < numComps; ++ic )
+  {
+    if( composition[ic] < MultiFluidConstants::epsilon )
+    {
+      return true;
+    }
+  }
+  return false;
+}
+
+/**
+ * @brief Calculate which components are present.
+ * @details Creates a list of indices whose components have non-zero mole fraction.
+ * @param[in] numComps number of components
+ * @param[in] composition the composition of the fluid
+ * @param[out] presentComponents the list of present components
+ * @return the number of present components
+ */
+template< integer USD, typename ARRAY >
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
+static integer calculatePresentComponents( integer const numComps,
+                                           arraySlice1d< real64 const, USD > const & composition,
+                                           ARRAY & presentComponents )
+{
+  // Check for machine-zero feed values
+  integer presentCount = 0;
+  for( integer ic = 0; ic < numComps; ++ic )
+  {
+    if( MultiFluidConstants::epsilon < composition[ic] )
+    {
+      presentComponents[presentCount++] = ic;
+    }
+  }
+  presentComponents.resize( presentCount );
+  return presentCount;
+}
+
+} // namespace compositional
+} // namespace constitutive
+} // namespace geos
+
+#endif //GEOS_CONSTITUTIVE_FLUID_MULTIFLUID_COMPOSITIONAL_FUNCTIONS_UTILITIES_HPP_

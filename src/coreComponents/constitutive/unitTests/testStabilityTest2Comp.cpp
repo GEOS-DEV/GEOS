@@ -69,6 +69,12 @@ public:
     real64 tangentPlaneDistance = LvArray::NumericLimits< real64 >::max;
     stackArray1d< real64, numComps > kValues( numComps );
 
+    KValueInitialization::computeWilsonGasLiquidKvalue( numComps,
+                                                        pressure,
+                                                        temperature,
+                                                        componentProperties,
+                                                        kValues.toSlice() );
+
     bool const stabilityStatus = StabilityTest::compute( numComps,
                                                          pressure,
                                                          temperature,
