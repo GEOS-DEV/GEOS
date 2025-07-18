@@ -68,6 +68,7 @@ public:
 
     real64 tangentPlaneDistance = LvArray::NumericLimits< real64 >::max;
     stackArray1d< real64, numComps > kValues( numComps );
+    stackArray1d< real64, numComps > incipientComposition( numComps );
 
     KValueInitialization::computeWilsonGasLiquidKvalue( numComps,
                                                         pressure,
@@ -85,10 +86,11 @@ public:
                                                          componentProperties,
                                                          EOS_TYPE,
                                                          flashData,
+                                                         kValues.toSliceConst(),
                                                          flashParameters->m_continuousParameters,
                                                          flashParameters->m_discreteParameters,
                                                          tangentPlaneDistance,
-                                                         kValues.toSlice() );
+                                                         incipientComposition.toSlice() );
 
     // Expect this to succeed
     ASSERT_EQ( stabilityStatus, true );

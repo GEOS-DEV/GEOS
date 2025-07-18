@@ -68,7 +68,8 @@ void FlashParameters::registerParametersImpl( MultiFluidBase * fluid )
   fluid->registerWrapper( viewKeyStruct::stabilityMaxIterationsString(), &m_discreteParameters[STABILITY_MAX_ITERATIONS] ).
     setInputFlag( dataRepository::InputFlags::OPTIONAL ).
     setDefaultValue( m_discreteParameters[STABILITY_MAX_ITERATIONS] ).
-    setDescription( "The maximum number of successive substitution iterations used during the stability test" );
+    setDescription( "The maximum number of successive substitution iterations used during the stability test. "
+                    "A zero or negative value skips the stability test" );
 
   fluid->registerWrapper( viewKeyStruct::flashMaxIterationsString(), &m_discreteParameters[FLASH_MAX_ITERATIONS] ).
     setInputFlag( dataRepository::InputFlags::OPTIONAL ).
@@ -112,10 +113,6 @@ void FlashParameters::postInputInitializationImpl( MultiFluidBase const * fluid,
   // Stability tolerance should be positive
   real64 const stabilityTolerance = m_continuousParameters[STABILITY_TOLERANCE];
   checkLowerBound( stabilityTolerance, epsilon, viewKeyStruct::stabilityThresholdString() );
-
-  // Max number of stability iterations should be at least 1
-  integer const stabilityMaxIterations = m_discreteParameters[STABILITY_MAX_ITERATIONS];
-  checkLowerBound( stabilityMaxIterations, 1, viewKeyStruct::stabilityMaxIterationsString() );
 
   // Flash tolerance should be positive
   real64 const flashTolerance = m_continuousParameters[FLASH_TOLERANCE];

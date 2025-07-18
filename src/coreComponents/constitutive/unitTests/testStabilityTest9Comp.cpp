@@ -68,6 +68,7 @@ public:
 
     real64 tangentPlaneDistance = LvArray::NumericLimits< real64 >::max;
     stackArray1d< real64, numComps > kValues( numComps );
+    stackArray1d< real64, numComps > incipientComposition( numComps );
 
     KValueInitialization::computeWilsonGasLiquidKvalue( numComps,
                                                         pressure,
@@ -85,10 +86,11 @@ public:
                                                          componentProperties,
                                                          EOS_TYPE,
                                                          flashData,
+                                                         kValues.toSliceConst(),
                                                          flashParameters->m_continuousParameters,
                                                          flashParameters->m_discreteParameters,
                                                          tangentPlaneDistance,
-                                                         kValues.toSlice() );
+                                                         incipientComposition.toSlice() );
 
     // Expect this to succeed
     ASSERT_EQ( stabilityStatus, true );
@@ -112,6 +114,7 @@ public:
 
     real64 tangentPlaneDistance = LvArray::NumericLimits< real64 >::max;
     stackArray2d< real64, numComps > kValues( 1, numComps );
+    stackArray1d< real64, numComps > incipientComposition( numComps );
 
     KValueInitialization::computeWilsonGasLiquidKvalue( numComps,
                                                         pressure,
@@ -129,10 +132,11 @@ public:
                             componentProperties,
                             EOS_TYPE,
                             flashData,
+                            kValues[0].toSliceConst(),
                             flashParameters->m_continuousParameters,
                             flashParameters->m_discreteParameters,
                             tangentPlaneDistance,
-                            kValues[0] );
+                            incipientComposition.toSlice() );
 
     // Now perform the nagative flash
     real64 vapourFraction = -1.0;

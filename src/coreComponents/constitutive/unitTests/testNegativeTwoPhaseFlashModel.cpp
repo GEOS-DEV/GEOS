@@ -18,6 +18,7 @@
 #include "constitutive/fluid/multifluid/MultiFluidUtils.hpp"
 #include "constitutive/fluid/multifluid/compositional/parameters/EquationOfState.hpp"
 #include "constitutive/fluid/multifluid/compositional/parameters/CriticalVolume.hpp"
+#include "constitutive/fluid/multifluid/compositional/parameters/FlashParameters.hpp"
 #include "constitutive/fluid/multifluid/compositional/models/NegativeTwoPhaseFlashModel.hpp"
 #include "constitutive/fluid/multifluid/compositional/parameters/PhaseType.hpp"
 #include "TestFluid.hpp"
@@ -61,6 +62,19 @@ struct FluidData< 3 >
 };
 
 template<>
+struct FluidData< 4 >
+{
+  static constexpr integer testComponents[numTestComps] = {0, 1, 3};
+  static std::unique_ptr< TestFluid< 4 > > createFluid()
+  {
+    auto fluid = TestFluid< 4 >::create( {Fluid::CH4, Fluid::CO2, Fluid::N2, Fluid::H2O} );
+    const std::array< real64 const, 6 > bics = { 0.0, 0.0, 0.0, 0.4850, 0.1896, 0.4778 };
+    fluid->setBinaryCoefficients( bics );
+    return fluid;
+  }
+};
+
+template<>
 struct FluidData< 9 >
 {
   static constexpr integer testComponents[numTestComps] = {0, 3, 8};
@@ -76,7 +90,7 @@ struct FluidData< 9 >
   }
 };
 
-template< integer NC >
+template< integer NC, EquationOfStateType EOS = EquationOfStateType::PengRobinson >
 class NegativeTwoPhaseFlashModelTestFixture :  public ::testing::TestWithParam< FlashData< NC > >
 {
   static constexpr real64 relTol = 1.0e-5;
@@ -88,6 +102,10 @@ class NegativeTwoPhaseFlashModelTestFixture :  public ::testing::TestWithParam< 
   using PhasePropSlice = NegativeTwoPhaseFlashModelUpdate::PhaseProp::SliceType;
   using PhaseCompSlice = NegativeTwoPhaseFlashModelUpdate::PhaseComp::SliceType;
 
+  using CompProp =  StackArray< real64, 3, numPhases, multifluid::LAYOUT_PHASE >;
+  using PhaseProp = StackArray< real64, 4, numPhases *numDofs, multifluid::LAYOUT_PHASE_DC >;
+  using PhaseComp = StackArray< real64, 5, numPhases *numComps *numDofs, multifluid::LAYOUT_PHASE_COMP_DC >;
+
 public:
   NegativeTwoPhaseFlashModelTestFixture()
     : m_fluid( FluidData< NC >::createFluid() )
@@ -97,17 +115,21 @@ public:
     m_parameters = NegativeTwoPhaseFlashModel::createParameters( std::move( m_parameters ) );
 
     auto * equationOfState = const_cast< EquationOfState * >(m_parameters->get< EquationOfState >());
-    string const eosName = EnumStrings< EquationOfStateType >::toString( EquationOfStateType::PengRobinson );
+    string eosName = EnumStrings< EquationOfStateType >::toString( EOS );
     equationOfState->m_equationsOfStateNames.emplace_back( eosName );
+    eosName = EnumStrings< EquationOfStateType >::toString( EquationOfStateType::PengRobinson );
     equationOfState->m_equationsOfStateNames.emplace_back( eosName );
 
     auto * criticalVolume = const_cast< CriticalVolume * >(m_parameters->get< CriticalVolume >());
     criticalVolume->m_componentCriticalVolume.resize( numComps );
-    TestFluid< NC >::createArray( criticalVolume->m_componentCriticalVolume, this->m_fluid->criticalVolume );
+    TestFluid< NC >::populateArray( criticalVolume->m_componentCriticalVolume, this->m_fluid->criticalVolume );
 
-m_phaseTypes.emplace_back( static_cast< integer >(PhaseType::LIQUID));
+    auto * flashParameters = const_cast< FlashParameters * >(m_parameters->get< FlashParameters >());
+    flashParameters->m_continuousParameters[FlashParameters::STABILITY_TOLERANCE] = 1.0e-5;
+
+    m_phaseTypes.emplace_back( static_cast< integer >(PhaseType::LIQUID));
     m_phaseTypes.emplace_back( static_cast< integer >(PhaseType::VAPOUR));
-    
+
     m_flash = std::make_unique< NegativeTwoPhaseFlashModel >( "FlashModel", componentProperties, *m_parameters, m_phaseTypes );
   }
 
@@ -126,10 +148,10 @@ m_phaseTypes.emplace_back( static_cast< integer >(PhaseType::LIQUID));
     stackArray2d< real64, (numPhases-1)*numComps > kValues( numPhases-1, numComps );
     LvArray::forValuesInSlice( kValues.toSlice(), []( real64 & v ){ v = 0.0; } );
 
-    StackArray< real64, 3, numPhases, multifluid::LAYOUT_PHASE > phaseFractionData( 1, 1, numPhases );
-    StackArray< real64, 4, numPhases *numDofs, multifluid::LAYOUT_PHASE_DC > dPhaseFractionData( 1, 1, numPhases, numDofs );
-    StackArray< real64, 4, numPhases *numComps, multifluid::LAYOUT_PHASE_COMP > phaseComponentFractionData( 1, 1, numPhases, numComps );
-    StackArray< real64, 5, numPhases *numComps *numDofs, multifluid::LAYOUT_PHASE_COMP_DC > dPhaseComponentFractionData( 1, 1, numPhases, numComps, numDofs );
+    CompProp phaseFractionData( 1, 1, numPhases );
+    PhaseProp dPhaseFractionData( 1, 1, numPhases, numDofs );
+    PhaseProp phaseComponentFractionData( 1, 1, numPhases, numComps );
+    PhaseComp dPhaseComponentFractionData( 1, 1, numPhases, numComps, numDofs );
 
     auto phaseFraction = phaseFractionData[0][0];
     auto dPhaseFraction = dPhaseFractionData[0][0];
@@ -172,10 +194,10 @@ m_phaseTypes.emplace_back( static_cast< integer >(PhaseType::LIQUID));
     stackArray2d< real64, (numPhases-1)*numComps > kValues( numPhases-1, numComps );
     LvArray::forValuesInSlice( kValues.toSlice(), []( real64 & v ){ v = 0.0; } );
 
-    StackArray< real64, 3, numPhases, multifluid::LAYOUT_PHASE > phaseFractionData( 1, 1, numPhases );
-    StackArray< real64, 4, numPhases *numDofs, multifluid::LAYOUT_PHASE_DC > dPhaseFractionData( 1, 1, numPhases, numDofs );
-    StackArray< real64, 4, numPhases *numComps, multifluid::LAYOUT_PHASE_COMP > phaseComponentFractionData( 1, 1, numPhases, numComps );
-    StackArray< real64, 5, numPhases *numComps *numDofs, multifluid::LAYOUT_PHASE_COMP_DC > dPhaseComponentFractionData( 1, 1, numPhases, numComps, numDofs );
+    CompProp phaseFractionData( 1, 1, numPhases );
+    PhaseProp dPhaseFractionData( 1, 1, numPhases, numDofs );
+    PhaseProp phaseComponentFractionData( 1, 1, numPhases, numComps );
+    PhaseComp dPhaseComponentFractionData( 1, 1, numPhases, numComps, numDofs );
 
     auto phaseFraction = phaseFractionData[0][0];
     auto dPhaseFraction = dPhaseFractionData[0][0];
@@ -194,25 +216,9 @@ m_phaseTypes.emplace_back( static_cast< integer >(PhaseType::LIQUID));
                                 PhasePropSlice( phaseFraction, dPhaseFraction ),
                                 PhaseCompSlice( phaseComponentFraction, dPhaseComponentFraction ) );
 
-
-/**
-
-   Z: { 0.10900000, 0.00300000, 0.23470000, 0.11460000, 0.08790000, 0.04560000, 0.02090000, 0.01510000, 0.36920000 }
-   X: { 0.15807941, 0.00337666, 0.07159711, 0.02384273, 0.10085780, 0.06146075, 0.02939718, 0.00974393, 0.54164443 }
-   Y: { 0.00396181, 0.00219389, 0.58376764, 0.30883583, 0.06016813, 0.01165533, 0.00271459, 0.02656289, 0.00013988 }
-
- */
-    std::cout << " Z: " << composition.toSliceConst() << std::endl;
-    std::cout << " X: " << phaseComponentFraction[0] << std::endl;
-    std::cout << " Y: " << phaseComponentFraction[1] << std::endl;
-    std::cout << " V: " << phaseFraction.toSliceConst() << std::endl;
-    std::cout << std::scientific;
-    std::cout << "DV: " << dPhaseFraction[0] << std::endl;
-    std::cout << "DV: " << dPhaseFraction[1] << std::endl;
-/**
     // Combine derivatives into a single output
-    auto const concatDerivatives = []( integer const kc, auto & derivs, auto const & phaseFractionDerivs, auto const &
-       phaseComponentFractionDerivs ){
+    auto const concatDerivatives = []( integer const kc, auto & derivs, auto const & phaseFractionDerivs,
+                                       auto const & phaseComponentFractionDerivs ){
       integer j = 0;
       for( integer ip = 0; ip < numPhases; ++ip )
       {
@@ -225,17 +231,17 @@ m_phaseTypes.emplace_back( static_cast< integer >(PhaseType::LIQUID));
     };
 
     auto const evaluateFlash = [&]( real64 const p, real64 const t, auto const & zmf, auto & values ){
-      StackArray< real64, 3, numPhases, multifluid::LAYOUT_PHASE > displacedPhaseFractionData( 1, 1, numPhases );
-      StackArray< real64, 4, numPhases *numDofs, multifluid::LAYOUT_PHASE_DC > displacedPhaseFractionDerivsData( 1, 1, numPhases, numDofs );
-      StackArray< real64, 4, numPhases *numComps, multifluid::LAYOUT_PHASE_COMP > displacedPhaseComponentFractionData( 1, 1, numPhases,
-         numComps );
-      StackArray< real64, 5, numPhases *numComps *numDofs, multifluid::LAYOUT_PHASE_COMP_DC > displacedPhaseComponentFractionDerivsData( 1,
-         1, numPhases, numComps, numDofs );
+      CompProp displacedPhaseFractionData( 1, 1, numPhases );
+      PhaseProp displacedPhaseFractionDerivsData( 1, 1, numPhases, numDofs );
+      PhaseProp displacedPhaseComponentFractionData( 1, 1, numPhases, numComps );
+      PhaseComp displacedPhaseComponentFractionDerivsData( 1, 1, numPhases, numComps, numDofs );
 
       auto displacedPhaseFraction = displacedPhaseFractionData[0][0];
       auto displacedPhaseFractionDerivs = displacedPhaseFractionDerivsData[0][0];
       auto displacedPhaseComponentFraction = displacedPhaseComponentFractionData[0][0];
       auto displacedPhaseComponentFractionDerivs = displacedPhaseComponentFractionDerivsData[0][0];
+
+      LvArray::forValuesInSlice( kValues.toSlice(), []( real64 & v ){ v = 0.0; } );
 
       flashKernelWrapper.compute( componentProperties,
                                   p,
@@ -267,15 +273,14 @@ m_phaseTypes.emplace_back( static_cast< integer >(PhaseType::LIQUID));
 
     // -- Temperature derivative
     concatDerivatives( Deriv::dT, derivatives, dPhaseFraction, dPhaseComponentFraction );
-    real64 const dT = 1.0e-6 * temperature;
+    real64 const dT = 1.0e-4 * temperature;
     geos::testing::internal::testNumericalDerivative< numValues >(
       temperature, dT, derivatives,
       [&]( real64 const t, auto & values ) {
       evaluateFlash( pressure, t, composition.toSliceConst(), values );
     } );
-
     // -- Composition derivatives derivative
-    real64 const dz = 1.0e-7;
+    real64 const dz = 1.0e-6;
     for( integer const ic : FluidData< numComps >::testComponents )
     {
       real64 sumZ = 0.0;
@@ -301,7 +306,6 @@ m_phaseTypes.emplace_back( static_cast< integer >(PhaseType::LIQUID));
         evaluateFlash( pressure, temperature, zmf.toSliceConst(), values );
       } );
     }
- */
   }
 
 protected:
@@ -312,7 +316,8 @@ protected:
 };
 
 //using NegativeTwoPhaseFlashModel3 = NegativeTwoPhaseFlashModelTestFixture< 3 >;
-using NegativeTwoPhaseFlashModel9 = NegativeTwoPhaseFlashModelTestFixture< 9 >;
+//using PengRobinson9 = NegativeTwoPhaseFlashModelTestFixture< 9 >;
+using SoreideWhitson4 = NegativeTwoPhaseFlashModelTestFixture< 4, EquationOfStateType::SoreideWhitson >;
 
 //TEST_P( NegativeTwoPhaseFlashModel3, testFlash )
 //{
@@ -327,7 +332,11 @@ using NegativeTwoPhaseFlashModel9 = NegativeTwoPhaseFlashModelTestFixture< 9 >;
 //{
 //  testFlash( GetParam() );
 //}
-TEST_P( NegativeTwoPhaseFlashModel9, testFlashDerivatives )
+//TEST_P( PengRobinson9, testFlashDerivatives )
+//{
+//  testFlashDerivatives( GetParam() );
+//}
+TEST_P( SoreideWhitson4, testFlashDerivatives )
 {
   testFlashDerivatives( GetParam() );
 }
@@ -336,36 +345,27 @@ TEST_P( NegativeTwoPhaseFlashModel9, testFlashDerivatives )
 // Data
 //-------------------------------------------------------------------------------
 /* UNCRUSTIFY-OFF */
+/**
+INSTANTIATE_TEST_SUITE_P(
+  NegativeTwoPhaseFlashModel, PengRobinson9,
+  ::testing::ValuesIn<FlashData<9>>({
+    //{1.0000e+07, 293.15, {0.10900000, 0.00300000, 0.23470000, 0.11460000, 0.08790000, 0.04560000, 0.02090000, 0.01510000, 0.36920000}, 0.185888, 0.414112, {0.000000, 0.111648, 0.551139}, {0.000000, 0.731628, 0.000000}}
+    //{1.5000e+07, 293.15, {0.13701652, 0.00320982, 0.10906376, 0.08659405, 0.09558042, 0.05469515, 0.02598050, 0.01902140, 0.46883838}, 0.185888, 0.414112, {0.000000, 0.111648, 0.551139}, {0.000000, 0.731628, 0.000000}},
+    //{1.0000e+07, 293.15, {0.13701652, 0.00320982, 0.10906370, 0.08659405, 0.09558042, 0.05469515, 0.02598050, 0.01902140, 0.46883844}, 0.185888, 0.414112, {0.000000, 0.111648, 0.551139}, {0.000000, 0.731628, 0.000000}}
+    {1.0000e+07, 293.15, {0.13701652, 0.00320982, 0.10906370, 0.00000000, 0.09558042, 0.05469515, 0.02598050, 0.01902140, 0.55543249}, 0.185888, 0.414112, {0.000000, 0.111648, 0.551139}, {0.000000, 0.731628, 0.000000}}
+    //{1.0001e+07, 293.15, {0.13701652, 0.00320982, 0.10906376, 0.08659405, 0.09558042, 0.05469515, 0.02598050, 0.01902140, 0.46883838}, 0.185888, 0.414112, {0.000000, 0.111648, 0.551139}, {0.000000, 0.731628, 0.000000}}
+    //FlashData<9>{1.0000e+07, 293.15, {0.00396181, 0.00219389, 0.58376764, 0.30883583, 0.06016813, 0.01165533, 0.00271459, 0.02656289, 0.00013988}, 0.185888, 0.414112, {0.000000, 0.111648, 0.551139}, {0.000000, 0.731628, 0.000000}}
+  })
+);
+*/
 
 INSTANTIATE_TEST_SUITE_P(
-  NegativeTwoPhaseFlashModel, NegativeTwoPhaseFlashModel9,
-  ::testing::ValuesIn<FlashData<9>>({
-    {1.0000e+07, 293.15, {0.10900000, 0.00300000, 0.23470000, 0.11460000, 0.08790000, 0.04560000, 0.02090000, 0.01510000, 0.36920000}, 0.185888, 0.414112, {0.000000, 0.111648, 0.551139}, {0.000000, 0.731628, 0.000000}},
-    {1.5000e+07, 293.15, {0.13701652, 0.00320982, 0.10906376, 0.08659405, 0.09558042, 0.05469515, 0.02598050, 0.01902140, 0.46883838}, 0.185888, 0.414112, {0.000000, 0.111648, 0.551139}, {0.000000, 0.731628, 0.000000}},
-    {1.0000e+07, 293.15, {0.13701652, 0.00320982, 0.10906376, 0.08659405, 0.09558042, 0.05469515, 0.02598050, 0.01902140, 0.46883838}, 0.185888, 0.414112, {0.000000, 0.111648, 0.551139}, {0.000000, 0.731628, 0.000000}},
-    {0.9999e+07, 293.15, {0.13701652, 0.00320982, 0.10906376, 0.08659405, 0.09558042, 0.05469515, 0.02598050, 0.01902140, 0.46883838}, 0.185888, 0.414112, {0.000000, 0.111648, 0.551139}, {0.000000, 0.731628, 0.000000}}
-    //FlashData<9>{1.0000e+07, 293.15, {0.00396181, 0.00219389, 0.58376764, 0.30883583, 0.06016813, 0.01165533, 0.00271459, 0.02656289, 0.00013988}, 0.185888, 0.414112, {0.000000, 0.111648, 0.551139}, {0.000000, 0.731628, 0.000000}}
-
-        /**,
-    FlashData<9>{1.0e+06, 293.15, {0.009000, 0.003000, 0.534700, 0.114600, 0.087900, 0.045600, 0.020900, 0.015100, 0.169200}, 0.198828, 0.792172, 0.009000, {0.000000, 0.011551, 0.850986}, {0.000000, 0.672081, 0.000000}, {1.000000, 0.000000, 0.000000}},
-    FlashData<9>{1.0e+07, 293.15, {0.009000, 0.003000, 0.534700, 0.114600, 0.087900, 0.045600, 0.020900, 0.015100, 0.169200}, 0.307007, 0.683993, 0.009000, {0.000000, 0.111647, 0.551128}, {0.000000, 0.731621, 0.000000}, {1.000000, 0.000000, 0.000000}},
-    FlashData<9>{1.0e+08, 293.15, {0.009000, 0.003000, 0.534700, 0.114600, 0.087900, 0.045600, 0.020900, 0.015100, 0.169200}, 0.991000, 0.000000, 0.009000, {0.000000, 0.539556, 0.170737}, {0.000000, 0.539556, 0.170737}, {1.000000, 0.000000, 0.000000}},
-    FlashData<9>{1.0e+06, 313.15, {0.009000, 0.003000, 0.534700, 0.114600, 0.087900, 0.045600, 0.020900, 0.015100, 0.169200}, 0.190493, 0.800507, 0.009000, {0.000000, 0.010985, 0.888223}, {0.000000, 0.665337, 0.000000}, {1.000000, 0.000000, 0.000000}},
-    FlashData<9>{1.0e+07, 313.15, {0.009000, 0.003000, 0.534700, 0.114600, 0.087900, 0.045600, 0.020900, 0.015100, 0.169200}, 0.288620, 0.702380, 0.009000, {0.000000, 0.106713, 0.586237}, {0.000000, 0.717418, 0.000001}, {1.000000, 0.000000, 0.000000}},
-    FlashData<9>{1.0e+08, 313.15, {0.009000, 0.003000, 0.534700, 0.114600, 0.087900, 0.045600, 0.020900, 0.015100, 0.169200}, 0.991000, 0.000000, 0.009000, {0.000000, 0.539556, 0.170737}, {0.000000, 0.539556, 0.170737}, {1.000000, 0.000000, 0.000000}},
-    FlashData<9>{1.0e+06, 353.15, {0.009000, 0.003000, 0.534700, 0.114600, 0.087900, 0.045600, 0.020900, 0.015100, 0.169200}, 0.181787, 0.809213, 0.009000, {0.000000, 0.010453, 0.930750}, {0.000000, 0.658417, 0.000003}, {1.000000, 0.000000, 0.000000}},
-    FlashData<9>{1.0e+07, 353.15, {0.009000, 0.003000, 0.534700, 0.114600, 0.087900, 0.045600, 0.020900, 0.015100, 0.169200}, 0.261660, 0.729340, 0.009000, {0.000000, 0.101277, 0.646622}, {0.000000, 0.696794, 0.000007}, {1.000000, 0.000000, 0.000000}},
-    FlashData<9>{1.0e+08, 353.15, {0.009000, 0.003000, 0.534700, 0.114600, 0.087900, 0.045600, 0.020900, 0.015100, 0.169200}, 0.947424, 0.043576, 0.009000, {0.000000, 0.529993, 0.178339}, {0.000000, 0.747468, 0.005438}, {1.000000, 0.000000, 0.000000}},
-    FlashData<9>{1.0e+06, 293.15, {0.400000, 0.001820, 0.323730, 0.069380, 0.053220, 0.027610, 0.012650, 0.009140, 0.102450}, 0.120388, 0.479612, 0.400000, {0.000000, 0.011551, 0.850996}, {0.000000, 0.672084, 0.000000}, {1.000000, 0.000000, 0.000000}},
-    FlashData<9>{1.0e+08, 293.15, {0.400000, 0.001820, 0.323730, 0.069380, 0.053220, 0.027610, 0.012650, 0.009140, 0.102450}, 0.600000, 0.000000, 0.400000, {0.000000, 0.539550, 0.170750}, {0.000000, 0.539550, 0.170750}, {1.000000, 0.000000, 0.000000}},
-    FlashData<9>{1.0e+06, 313.15, {0.400000, 0.001820, 0.323730, 0.069380, 0.053220, 0.027610, 0.012650, 0.009140, 0.102450}, 0.115342, 0.484658, 0.400000, {0.000000, 0.010985, 0.888229}, {0.000000, 0.665341, 0.000000}, {1.000000, 0.000000, 0.000000}},
-    FlashData<9>{1.0e+07, 313.15, {0.400000, 0.001820, 0.323730, 0.069380, 0.053220, 0.027610, 0.012650, 0.009140, 0.102450}, 0.174755, 0.425245, 0.400000, {0.000000, 0.106714, 0.586247}, {0.000000, 0.717425, 0.000001}, {1.000000, 0.000000, 0.000000}},
-    FlashData<9>{1.0e+08, 313.15, {0.400000, 0.001820, 0.323730, 0.069380, 0.053220, 0.027610, 0.012650, 0.009140, 0.102450}, 0.600000, 0.000000, 0.400000, {0.000000, 0.539550, 0.170750}, {0.000000, 0.539550, 0.170750}, {1.000000, 0.000000, 0.000000}},
-    FlashData<9>{1.0e+06, 353.15, {0.400000, 0.001820, 0.323730, 0.069380, 0.053220, 0.027610, 0.012650, 0.009140, 0.102450}, 0.110071, 0.489929, 0.400000, {0.000000, 0.010453, 0.930753}, {0.000000, 0.658421, 0.000003}, {1.000000, 0.000000, 0.000000}},
-    FlashData<9>{1.0e+07, 353.15, {0.400000, 0.001820, 0.323730, 0.069380, 0.053220, 0.027610, 0.012650, 0.009140, 0.102450}, 0.158432, 0.441568, 0.400000, {0.000000, 0.101278, 0.646630}, {0.000000, 0.696800, 0.000007}, {1.000000, 0.000000, 0.000000}},
-    FlashData<9>{1.0e+08, 353.15, {0.400000, 0.001820, 0.323730, 0.069380, 0.053220, 0.027610, 0.012650, 0.009140, 0.102450}, 0.573644, 0.026356, 0.400000, {0.000000, 0.529997, 0.178345}, {0.000000, 0.747479, 0.005437}, {1.000000, 0.000000, 0.000000}},
-    FlashData<9>{1.0e+06, 313.15, {1.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000}, 0.000000, 0.000000, 1.000000, {0.000000, 0.125000, 0.125000}, {0.000000, 0.125000, 0.125000}, {1.000000, 0.000000, 0.000000}},
-    FlashData<9>{1.0e+08, 353.15, {1.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000}, 0.000000, 0.000000, 1.000000, {0.000000, 0.125000, 0.125000}, {0.000000, 0.125000, 0.125000}, {1.000000, 0.000000, 0.000000}}*/
+  NegativeTwoPhaseFlashModel, SoreideWhitson4,
+  ::testing::ValuesIn<FlashData<4>>({
+    //{1.0e+07, 293.15, {0.000000, 0.000000, 0.000000, 1.000000}, 0.000000, 1.000000, {0.000000, 0.125000, 0.125000}, {0.000000, 0.125000, 0.125000}}
+    //{1.0e+07, 293.15, {0.000005, 0.000005, 0.000005, 0.999985}, 0.000000, 1.000000, {0.000000, 0.125000, 0.125000}, {0.000000, 0.125000, 0.125000}}
+    //{1.0e+07, 293.15, {0.000000, 1.000000, 0.000000, 0.000000}, 0.000000, 1.000000, {0.000000, 0.125000, 0.125000}, {0.000000, 0.125000, 0.125000}}
+    {1.0e+07, 293.15, {0.000005, 0.999985, 0.000005, 0.000005}, 0.000000, 1.000000, {0.000000, 0.125000, 0.125000}, {0.000000, 0.125000, 0.125000}}
   })
 );
 

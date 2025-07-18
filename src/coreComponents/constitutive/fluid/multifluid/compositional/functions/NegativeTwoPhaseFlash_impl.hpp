@@ -25,7 +25,6 @@
 #include "FugacityCalculator.hpp"
 #include "Utilities.hpp"
 #include "constitutive/fluid/multifluid/compositional/parameters/FlashParameters.hpp"
-#include "denseLinearAlgebra/interfaces/blaslapack/BlasLapackLA.hpp"
 
 namespace geos
 {
@@ -50,6 +49,8 @@ bool NegativeTwoPhaseFlash::compute( integer const numComps,
                                      arraySlice1d< real64, USD2 > const & liquidComposition,
                                      arraySlice1d< real64, USD2 > const & vapourComposition )
 {
+  GEOS_MARK_FUNCTION;
+
   constexpr integer maxNumComps = MultiFluidConstants::MAX_NUM_COMPONENTS;
   StackArray< real64, 2, 3*maxNumComps > workSpace( 3, maxNumComps );
   arraySlice1d< real64 > logLiquidFugacity = workSpace[0];
@@ -145,6 +146,8 @@ void NegativeTwoPhaseFlash::computeDerivatives(
   arraySlice2d< real64, USD3 > const & liquidCompositionDerivs,
   arraySlice2d< real64, USD3 > const & vapourCompositionDerivs )
 {
+  GEOS_MARK_FUNCTION;
+
   constexpr integer maxNumComps = MultiFluidConstants::MAX_NUM_COMPONENTS;
   constexpr integer maxNumDofs = MultiFluidConstants::MAX_NUM_COMPONENTS + 2;
 
@@ -333,21 +336,6 @@ real64 NegativeTwoPhaseFlash::computeFugacityRatio(
     error += (fugacityRatios[ic]*fugacityRatios[ic]);
   }
   return LvArray::math::sqrt( error );
-}
-
-template< int USD >
-GEOS_HOST_DEVICE
-bool NegativeTwoPhaseFlash::solveLinearSystem( arraySlice2d< real64, USD > const & A,
-                                               arraySlice2d< real64, USD > const & X )
-{
-#if defined(GEOS_DEVICE_COMPILE)
-  GEOS_UNUSED_VAR( A );
-  GEOS_UNUSED_VAR( X );
-  return false;
-#else
-  BlasLapackLA::solveLinearSystem( A, X );
-  return true;
-#endif
 }
 
 } // namespace compositional

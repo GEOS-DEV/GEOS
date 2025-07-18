@@ -21,6 +21,7 @@
 #define GEOS_CONSTITUTIVE_FLUID_MULTIFLUID_COMPOSITIONAL_FUNCTIONS_UTILITIES_HPP_
 
 #include "constitutive/fluid/multifluid/MultiFluidConstants.hpp"
+#include "denseLinearAlgebra/interfaces/blaslapack/BlasLapackLA.hpp"
 
 namespace geos
 {
@@ -109,6 +110,27 @@ static integer calculatePresentComponents( integer const numComps,
   }
   presentComponents.resize( presentCount );
   return presentCount;
+}
+
+/**
+ * @brief Solve the lineat system for the derivatives of the flash
+ * @param[in/out] A the coefficient matrix. Destroyed after call
+ * @param[in/out] X the rhs and solution
+ * @return @c true if the problem is well solved @c false otherwise
+ */
+template< int USD >
+GEOS_HOST_DEVICE
+static bool solveLinearSystem( arraySlice2d< real64, USD > const & A,
+                               arraySlice2d< real64, USD > const & X )
+{
+#if defined(GEOS_DEVICE_COMPILE)
+  GEOS_UNUSED_VAR( A );
+  GEOS_UNUSED_VAR( X );
+  return false;
+#else
+  BlasLapackLA::solveLinearSystem( A, X );
+  return true;
+#endif
 }
 
 } // namespace compositional

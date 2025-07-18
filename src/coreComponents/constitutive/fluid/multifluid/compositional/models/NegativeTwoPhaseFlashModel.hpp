@@ -43,6 +43,10 @@ class ModelParameters;
 
 class NegativeTwoPhaseFlashModelUpdate final : public FunctionBaseUpdate
 {
+private:
+  // Tolerance on temperature for phase labelling
+  static constexpr real64 temperatureTolerance = 0.1;
+
 public:
   using PhaseProp = MultiFluidVar< real64, 3, constitutive::multifluid::LAYOUT_PHASE, constitutive::multifluid::LAYOUT_PHASE_DC >;
   using PhaseComp = MultiFluidVar< real64, 4, constitutive::multifluid::LAYOUT_PHASE_COMP, constitutive::multifluid::LAYOUT_PHASE_COMP_DC >;
@@ -72,7 +76,11 @@ public:
                 PhaseProp::SliceType const phaseFraction,
                 PhaseComp::SliceType const phaseCompFraction ) const
   {
+    constexpr integer maxNumComps = MultiFluidConstants::MAX_NUM_COMPONENTS;
+
     integer const numDofs = 2 + m_numComponents;
+
+    stackArray1d< real64, maxNumComps > incipientComposition( m_numComponents );
 
     // Check if k-Values need to be initialised
     auto kVapourLiquid = kValues[0];
@@ -101,18 +109,24 @@ public:
     }
 
     // Perform stability test to check that we have 2 phases
+    integer const stabilityIterations = m_discreteFlashParameters[FlashParameters::STABILITY_MAX_ITERATIONS];
     real64 tangentPlaneDistance = 0.0;
-    bool const stabilityStatus = StabilityTest::compute( m_numComponents,
-                                                         pressure,
-                                                         temperature,
-                                                         compFraction,
-                                                         componentProperties,
-                                                         m_flashData.liquidEos,
-                                                         m_flashData,
-                                                         m_continuousFlashParameters.toSliceConst(),
-                                                         m_discreteFlashParameters.toSliceConst(),
-                                                         tangentPlaneDistance,
-                                                         kValues[0] );
+    bool stabilityStatus = false;
+    if( 0 < stabilityIterations || needInitialisation )
+    {
+      stabilityStatus = StabilityTest::compute( m_numComponents,
+                                                pressure,
+                                                temperature,
+                                                compFraction,
+                                                componentProperties,
+                                                m_flashData.liquidEos,
+                                                m_flashData,
+                                                kVapourLiquid.toSliceConst(),
+                                                m_continuousFlashParameters.toSliceConst(),
+                                                m_discreteFlashParameters.toSliceConst(),
+                                                tangentPlaneDistance,
+                                                incipientComposition.toSlice() );
+    }
 
     // If the stability test failed to converge to a stationary point then we will assume the mixture is unstable
     real64 const stabilityThreshold = m_continuousFlashParameters[FlashParameters::STABILITY_THRESHOLD];
@@ -154,20 +168,53 @@ public:
     else
     {
       // Stable mixture - simply label
-      calculateLiCorrelation( componentProperties,
-                              temperature,
-                              compFraction,
-                              phaseFraction.value[m_vapourIndex] );
+      // The gas phase has a lower Li-temperature
+      real64 const sampleTemperature = calculateLiTemperature( componentProperties, compFraction );
+      real64 const incipientTemperature = calculateLiTemperature( componentProperties, incipientComposition.toSliceConst());
+
+      int sampleIndex = m_liquidIndex;
+      int incipientIndex = m_vapourIndex;
+      if( sampleTemperature < incipientTemperature - temperatureTolerance )
+      {
+        sampleIndex = m_vapourIndex;
+        incipientIndex = m_liquidIndex;
+      }
+      else if( incipientTemperature < sampleTemperature - temperatureTolerance )
+      {
+        /* Do nothing */
+      }
+      else if( sampleTemperature < temperature )
+      {
+        sampleIndex = m_vapourIndex;
+        incipientIndex = m_liquidIndex;
+      }
+      std::cout << "LI " << sampleTemperature << " " << incipientTemperature << " " << incipientTemperature-sampleTemperature << " "
+                << "{" << sampleIndex << ", " << incipientIndex << "} "
+                << "{" << m_liquidIndex << ", " << m_vapourIndex << "} "
+                << "\n";
+
+      phaseFraction.value[m_vapourIndex] = (sampleIndex == m_vapourIndex) ? 1.0 : 0.0;
 
       LvArray::forValuesInSlice( phaseFraction.derivs[m_vapourIndex], setZero );
-      LvArray::forValuesInSlice( phaseCompFraction.derivs[m_liquidIndex], setZero );
-      LvArray::forValuesInSlice( phaseCompFraction.derivs[m_vapourIndex], setZero );
+
+      StabilityTest::computeDerivatives( m_numComponents,
+                                         pressure,
+                                         temperature,
+                                         compFraction,
+                                         componentProperties,
+                                         m_flashData.liquidEos,
+                                         m_flashData,
+                                         incipientComposition.toSliceConst(),
+                                         phaseCompFraction.derivs[incipientIndex],
+                                         phaseCompFraction.derivs[sampleIndex] );
+
+      LvArray::forValuesInSlice( phaseCompFraction.derivs[sampleIndex], setZero );
       for( integer ic = 0; ic < m_numComponents; ++ic )
       {
-        phaseCompFraction.value( m_vapourIndex, ic ) = compFraction[ic];
-        phaseCompFraction.value( m_liquidIndex, ic ) = compFraction[ic];
-        phaseCompFraction.derivs( m_vapourIndex, ic, Deriv::dC + ic ) = 1.0;
-        phaseCompFraction.derivs( m_liquidIndex, ic, Deriv::dC + ic ) = 1.0;
+        phaseCompFraction.value( sampleIndex, ic ) = compFraction[ic];
+        phaseCompFraction.derivs( sampleIndex, ic, Deriv::dC + ic ) = 1.0;
+
+        phaseCompFraction.value( incipientIndex, ic ) = incipientComposition[ic];
       }
     }
 
@@ -181,10 +228,8 @@ public:
 
   template< int USD >
   GEOS_HOST_DEVICE
-  void calculateLiCorrelation( ComponentProperties::KernelWrapper const & componentProperties,
-                               real64 const & temperature,
-                               arraySlice1d< real64 const, USD > const & composition,
-                               real64 & vapourFraction ) const
+  real64 calculateLiTemperature( ComponentProperties::KernelWrapper const & componentProperties,
+                                 arraySlice1d< real64 const, USD > const & composition ) const
   {
     real64 sumVz = 0.0;
     real64 sumVzt = 0.0;
@@ -195,15 +240,7 @@ public:
       sumVz += Vz;
       sumVzt += Vz * criticalTemperature[ic];
     }
-    real64 const pseudoCritTemperature = sumVzt / sumVz;
-    if( pseudoCritTemperature < temperature )
-    {
-      vapourFraction = 1.0;
-    }
-    else
-    {
-      vapourFraction = 0.0;
-    }
+    return sumVzt / sumVz;
   }
 
 private:

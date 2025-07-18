@@ -134,18 +134,6 @@ private:
     arraySlice1d< real64 > const & logLiquidFugacity,
     arraySlice1d< real64 > const & logVapourFugacity,
     arraySlice1d< real64 > const & fugacityRatios );
-
-  /**
-   * @brief Solve the lineat system for the derivatives of the flash
-   * @param[in/out] A the coefficient matrix. Destroyed after call
-   * @param[in/out] X the rhs and solution
-   * @return @c true if the problem is well solved @c false otherwise
-   */
-  template< int USD >
-  GEOS_HOST_DEVICE
-  static bool solveLinearSystem( arraySlice2d< real64, USD > const & A,
-                                 arraySlice2d< real64, USD > const & X );
-
 };
 
 } // namespace compositional
