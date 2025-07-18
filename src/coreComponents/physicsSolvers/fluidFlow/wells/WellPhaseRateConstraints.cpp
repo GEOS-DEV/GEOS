@@ -30,32 +30,41 @@ namespace geos
 using namespace dataRepository;
 
 // *** Phase Constraint for Production Well  ***************************************************************
-PhaseProductionConstraint::PhaseProductionConstraint( string const & name, Group * const parent )
+PhaseConstraint::PhaseConstraint( string const & name, Group * const parent )
   : WellConstraintBase( name, parent ),
-  m_phaseIndex( -1 ),
-  m_useSurfaceConditions( 0 ),
-  m_surfacePres( 0.0 ),
-  m_surfaceTemp( 0.0 )
+  m_phaseIndex( -1 )
 {
   setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
 
-  registerWrapper( constraintViewStruct::phaseConstraintKey::phaseRateString(), &m_constraintValue ).
+  registerWrapper( viewKeyStruct::phaseRateString(), &m_constraintValue ).
     setDefaultValue( 0.0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "Maximum phase production rate,  (if useSurfaceConditions: [surface m^3/s]; else [reservoir m^3/s]) " );
 
-  registerWrapper( constraintViewStruct::phaseConstraintKey::phaseNameString(), &m_phaseName ).
+  registerWrapper( viewKeyStruct::phaseNameString(), &m_phaseName ).
     setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
     setDefaultValue( "" ).
     setInputFlag( InputFlags::OPTIONAL ).
     setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "Name of the target phase" );
 
-  // Field registration
-  registerSurfaceConditions( m_useSurfaceConditions, m_surfacePres, m_surfaceTemp, *this );
-
 }
+
+PhaseConstraint::~PhaseConstraint()
+{}
+
+void PhaseConstraint::postInputInitialization()
+{
+  // Validate value and table options
+  WellConstraintBase::postInputInitialization();
+}
+
+
+// *** Phase Constraint for Production Well  ***************************************************************
+PhaseProductionConstraint::PhaseProductionConstraint( string const & name, Group * const parent )
+  : PhaseConstraint( name, parent )
+{}
 
 PhaseProductionConstraint::~PhaseProductionConstraint()
 {}
@@ -63,7 +72,7 @@ PhaseProductionConstraint::~PhaseProductionConstraint()
 void PhaseProductionConstraint::postInputInitialization()
 {
   // Validate value and table options
-  WellConstraintBase::postInputInitialization();
+  PhaseConstraint::postInputInitialization();
 
 }
 
@@ -72,34 +81,22 @@ bool PhaseProductionConstraint::checkViolation( WellConstraintBase const & curre
   return -1.0*currentConstraint.phaseVolumeRates()[m_phaseIndex] > getConstraintValue( currentTime );
 }
 
+
+
 // *** Phase Constraint for Injection Well  ***************************************************************
 PhaseInjectionConstraint::PhaseInjectionConstraint( string const & name, Group * const parent )
-  : WellConstraintBase( name, parent ),
-  m_phaseIndex( -1 ),
-  m_useSurfaceConditions( 0 ),
-  m_surfacePres( 0.0 ),
-  m_surfaceTemp( 0.0 )
+  : PhaseConstraint( name, parent )
 {
-  setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
-
-  registerWrapper( constraintViewStruct::phaseConstraintKey::phaseRateString(), &m_constraintValue ).
-    setDefaultValue( 0.0 ).
+  registerWrapper( constraintViewStruct::injectionStreamKey::injectionStreamString(), &m_injectionStream ).
+    setDefaultValue( -1 ).
+    setSizedFromParent( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setRestartFlags( RestartFlags::WRITE_AND_READ ).
-    setDescription( "Maximum phase injection rate,  (if useSurfaceConditions: [surface m^3/s]; else [reservoir m^3/s]) " );
+    setDescription( "Global component densities of the injection stream [moles/m^3 or kg/m^3]" );
 
-  registerWrapper( constraintViewStruct::phaseConstraintKey::phaseNameString(), &m_phaseName ).
-    setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
-    setDefaultValue( "" ).
+  registerWrapper( constraintViewStruct::injectionStreamKey::injectionTemperatureString(), &m_injectionTemperature ).
+    setDefaultValue( -1 ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setRestartFlags( RestartFlags::WRITE_AND_READ ).
-    setDescription( "Name of the target phase" );
-
-  // Field registration
-  registerSurfaceConditions( m_useSurfaceConditions, m_surfacePres, m_surfaceTemp, *this );
-  registerInjectionStream( m_injectionStream, m_injectionTemperature, *this );
-
-
+    setDescription( "Temperature of the injection stream [K]" );
 }
 
 
@@ -110,18 +107,18 @@ void PhaseInjectionConstraint::postInputInitialization()
 {
 
   // Validate value and table options
-  WellConstraintBase::postInputInitialization();
+  PhaseConstraint::postInputInitialization();
 
 // Validate the injection stream and temperature
   validateInjectionStream( m_injectionStream, m_injectionTemperature, dataRepository::keys::phaseInjectionConstraint, *this );
 
-
 }
-
 
 bool PhaseInjectionConstraint::checkViolation( WellConstraintBase const & currentConstraint, real64 const & currentTime ) const
 {
   return currentConstraint.phaseVolumeRates()[m_phaseIndex] > getConstraintValue( currentTime );
 }
+
+
 
 } //namespace geos

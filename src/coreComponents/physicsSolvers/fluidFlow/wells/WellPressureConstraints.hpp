@@ -37,10 +37,119 @@ static constexpr auto maximumBHPConstraint = "MaximumBHPConstraint";
 }
 
 /**
+ * @class BHPConstraint
+ * @brief This class describes a minimum pressure constraint used to control a injection well.
+ */
+class BHPConstraint : public WellConstraintBase
+{
+public:
+
+  /**
+   * @name Constructor / Destructor
+   */
+  ///@{
+
+  /**
+   * @brief Constructor for WellControls Objects.
+   * @param[in] name the name of this instantiation of WellControls in the repository
+   * @param[in] parent the parent group of this instantiation of WellControls
+   */
+  explicit BHPConstraint( string const & name, dataRepository::Group * const parent );
+
+
+  /**
+   * @brief Default destructor.
+   */
+  ~BHPConstraint() override;
+
+  /**
+   * @brief Deleted default constructor.
+   */
+  BHPConstraint() = delete;
+
+  /**
+   * @brief Deleted copy constructor.
+   */
+  BHPConstraint( BHPConstraint const & ) = delete;
+
+  /**
+   * @brief Deleted move constructor.
+   */
+  BHPConstraint( BHPConstraint && ) = delete;
+
+  /**
+   * @brief Deleted assignment operator.
+   * @return a reference to a constraint object
+   */
+  BHPConstraint & operator=( BHPConstraint const & ) = delete;
+
+  /**
+   * @brief Deleted move operator.
+   * @return a reference to a constraint object
+   */
+  BHPConstraint & operator=( BHPConstraint && ) = delete;
+
+  ///@}
+
+
+  /**
+   * @name Getters / Setters
+   */
+  ///@{
+
+  // Temp interface - tjb
+  virtual ConstraintTypeId getControl() const override { return ConstraintTypeId::BHP; };
+
+  ///@}
+  /**
+   * @brief Struct to serve as a container for variable strings and keys.
+   * @struct viewKeyStruct
+   */
+  struct viewKeyStruct
+  {
+    /// String key for the well target BHP
+    static constexpr char const * targetBHPString() { return "targetBHP"; }
+    /// String key for the well reference elevation (for BHP control)
+    static constexpr char const * refElevString() { return "referenceElevation"; }
+  }
+  viewKeysWellBHPConstraint;
+
+  //virtual bool checkViolation( WellConstraintBase const & currentConstraint, real64 const & currentTime ) const override;
+
+  /**
+   * @brief Getter for the reference elevation where the BHP control is enforced
+   * @return the reference elevation
+   */
+  real64 getReferenceElevation() const { return m_refElevation; }
+
+  /**
+   * @brief Getter for the reference gravity coefficient
+   * @return the reference gravity coefficient
+   */
+  real64 getReferenceGravityCoef() const { return m_refGravCoef; }
+
+  /**
+   * @brief Setter for the reference gravity
+   */
+  void setReferenceGravityCoef( real64 const & refGravCoef ) { m_refGravCoef = refGravCoef; }
+
+protected:
+
+  virtual void postInputInitialization() override;
+
+  /// Reference elevation
+  real64 m_refElevation;
+
+  /// Gravity coefficient of the reference elevation
+  real64 m_refGravCoef;
+
+};
+
+/**
  * @class MinimumBHPConstraint
  * @brief This class describes a minimum pressure constraint used to control a injection well.
  */
-class MinimumBHPConstraint : public WellConstraintBase
+class MinimumBHPConstraint : public BHPConstraint
 {
 public:
 
@@ -123,14 +232,13 @@ protected:
   virtual void postInputInitialization() override;
 
 
-
 };
 
 /**
  * @class WellMinimumBHPConstraint
  * @brief This class describes a maximum pressure constraint used to control a injection well.
  */
-class MaximumBHPConstraint : public WellConstraintBase
+class MaximumBHPConstraint : public BHPConstraint
 {
 public:
 

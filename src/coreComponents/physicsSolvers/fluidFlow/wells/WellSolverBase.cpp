@@ -56,7 +56,8 @@ WellSolverBase::WellSolverBase( string const & name,
   m_currentDt( -1.0 ),
   m_estimateSolution( 0 ),
   my_ctime( 0 ),
-  m_nextDt( -1 )
+  m_nextDt( -1 ),
+  m_useNewCode( true )
 {
 
   registerWrapper( viewKeyStruct::isThermalString(), &m_isThermal ).
@@ -81,6 +82,11 @@ WellSolverBase::WellSolverBase( string const & name,
     setApplyDefaultValue( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Flag to esitmate well solution prior to coupled reservoir and well solve." );
+
+  this->registerWrapper( viewKeyStruct::useNewCodeString(), &m_useNewCode ).
+    setApplyDefaultValue( 1 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Use new code" );
 
   this->registerWrapper( viewKeyStruct::writeSegDebugFlagString(), &m_writeSegDebug ).
     setApplyDefaultValue( 0 ).
@@ -311,6 +317,7 @@ void WellSolverBase::setupWellDofs( DomainPartition & domain )
     } );
   }
 }
+
 void WellSolverBase::estimateWellSolution( real64 const & time_n,
                                            real64 const & dt,
                                            const integer cycleNumber,
@@ -480,6 +487,10 @@ void WellSolverBase::assembleWellSystem( real64 const time_n,
                                          arrayView1d< real64 > const & localRhs )
 {
   assembleWellAccumulationTerms( time_n, dt, subRegion, dofManager, localMatrix.toViewConstSizes(), localRhs );
+  if( m_useNewCode )
+  {
+    assembleWellConstraintTerms( time_n, dt, subRegion, dofManager, localMatrix.toViewConstSizes(), localRhs );
+  }
   assembleWellPressureRelations( time_n, dt, subRegion, dofManager, localMatrix.toViewConstSizes(), localRhs );
   computeWellPerforationRates( time_n, dt, elementRegionManager, subRegion );
   assembleWellFluxTerms( time_n, dt, subRegion, dofManager, localMatrix.toViewConstSizes(), localRhs );
@@ -649,8 +660,15 @@ void WellSolverBase::precomputeData( DomainPartition & domain )
         wellElemGravCoef[iwelem] = LvArray::tensorOps::AiBi< 3 >( wellElemLocation[iwelem], gravVector );
       } );
 
+      wellControls.forSubGroups< BHPConstraint >( [&]( auto & constraint )
+      {
       // set the reference well element where the BHP control is applied
-      wellControls.setReferenceGravityCoef( refElev * gravVector[2] );
+        real64 const refElev = constraint.getReferenceElevation();
+        constraint.setReferenceGravityCoef( refElev * gravVector[2] );
+      } );
+
+      // set the reference well element where the BHP control is applied
+      wellControls.setReferenceGravityCoef( refElev * gravVector[2] );  // tjb remove
     } );
   } );
 }
@@ -695,6 +713,7 @@ real64 WellSolverBase::setNextDt( real64 const & currentTime, const real64 & cur
 
   return nextDt;
 }
+
 
 bool WellSolverBase::solveNonlinearSystem( real64 const & time_n,
                                            real64 const & stepDt,

@@ -47,6 +47,80 @@ struct volumeConstraintKey
 
 }
 
+/**
+ * @class VolumeConstraint
+ * @brief This class describes a volume rate constraint used to control a well.
+ */
+
+class VolumeConstraint : public WellConstraintBase
+{
+public:
+
+  /**
+   * @name Constructor / Destructor
+   */
+  ///@{
+
+  /**
+   * @brief Constructor for WellControls Objects.
+   * @param[in] name the name of this instantiation of WellControls in the repository
+   * @param[in] parent the parent group of this instantiation of WellControls
+   */
+  explicit VolumeConstraint( string const & name, dataRepository::Group * const parent );
+
+
+  /**
+   * @brief Default destructor.
+   */
+  ~VolumeConstraint() override;
+
+  /**
+   * @brief Deleted default constructor.
+   */
+  VolumeConstraint() = delete;
+
+  /**
+   * @brief Deleted copy constructor.
+   */
+  VolumeConstraint( VolumeConstraint const & ) = delete;
+
+  /**
+   * @brief Deleted move constructor.
+   */
+  VolumeConstraint( VolumeConstraint && ) = delete;
+
+  /**
+   * @brief Deleted assignment operator.
+   * @return a reference to a constraint object
+   */
+  VolumeConstraint & operator=( VolumeConstraint const & ) = delete;
+
+  /**
+   * @brief Deleted move operator.
+   * @return a reference to a constraint object
+   */
+  VolumeConstraint & operator=( VolumeConstraint && ) = delete;
+
+  ///@}
+
+  /**
+   * @name Getters / Setters
+   */
+
+  // Temp interface - tjb
+  virtual ConstraintTypeId getControl() const override { return ConstraintTypeId::TOTALVOLRATE; };
+
+
+  // volume constraint defintion keys
+  constraintViewStruct::volumeConstraintKey viewKeysVolumeConstraint;
+
+
+  //virtual bool checkViolation( WellConstraintBase const & currentConstraint, real64 const & currentTime ) const override;
+protected:
+
+  virtual void postInputInitialization() override;
+
+};
 
 
 /**
@@ -54,7 +128,7 @@ struct volumeConstraintKey
  * @brief This class describes a volume rate constraint used to control a production well.
  */
 
-class VolumeProductionConstraint : public WellConstraintBase
+class VolumeProductionConstraint : public VolumeConstraint
 {
 public:
 
@@ -109,9 +183,6 @@ public:
    * @name Getters / Setters
    */
 
-  // Temp interface - tjb
-  virtual ConstraintTypeId getControl() const override { return ConstraintTypeId::TOTALVOLRATE; };
-
   /**
    * @brief Get name of constraint
    * @return constraint key
@@ -122,24 +193,12 @@ public:
   // volume constraint defintion keys
   constraintViewStruct::volumeConstraintKey viewKeysVolumeConstraint;
 
-  // Surface condition definition keyes
-  constraintViewStruct::surfaceConditionsKey viewKeysSurfaceCondtions;
 
   virtual bool checkViolation( WellConstraintBase const & currentConstraint, real64 const & currentTime ) const override;
 protected:
 
   virtual void postInputInitialization() override;
 
-private:
-
-  /// Flag to decide whether rates are controlled at rates or surface conditions
-  integer m_useSurfaceConditions;
-
-  /// Surface pressure
-  real64 m_surfacePres;
-
-  /// Surface temperature
-  real64 m_surfaceTemp;
 };
 
 /**
@@ -147,7 +206,7 @@ private:
  * @brief This class describes a volume rate constraint used to control a injection well.
  */
 
-class VolumeInjectionConstraint : public WellConstraintBase
+class VolumeInjectionConstraint : public VolumeConstraint
 {
 public:
 
@@ -204,8 +263,6 @@ public:
    */
   ///@{
 
-  // Temp interface - tjb
-  virtual ConstraintTypeId getControl() const override { return ConstraintTypeId::TOTALVOLRATE; };
   /**
    * @brief Get name of constraint
    * @return constraint key
@@ -216,8 +273,6 @@ public:
   // volume constraint defintion keys
   constraintViewStruct::volumeConstraintKey viewKeysVolumeConstraint;
 
-  // Surface condition definition keyes
-  constraintViewStruct::surfaceConditionsKey viewKeysSurfaceCondtions;
 
   // Injection stream definition keys
   constraintViewStruct::injectionStreamKey viewKeysInjectionStream;
@@ -235,14 +290,6 @@ private:
   /// Temperature at the injector
   real64 m_injectionTemperature;
 
-  /// Flag to decide whether rates are controlled at rates or surface conditions
-  integer m_useSurfaceConditions;
-
-  /// Surface pressure
-  real64 m_surfacePres;
-
-  /// Surface temperature
-  real64 m_surfaceTemp;
 };
 
 

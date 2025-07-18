@@ -25,7 +25,7 @@
 #include "dataRepository/Group.hpp"
 #include "functions/TableFunction.hpp"
 #include "constitutive/fluid/multifluid/MultiFluidBase.hpp"
-#include "physicsSolvers/fluidFlow/wells/WellConstraintsBase.hpp"
+
 
 namespace geos
 {
@@ -311,7 +311,8 @@ public:
 
   void setCurrentConstraint( WellConstraintBase * currentConstraint ) { m_currentConstraint = currentConstraint;}
   WellConstraintBase *  getCurrentConstraint() { return m_currentConstraint; }
-    WellConstraintBase  const *  getCurrentConstraint() const { return m_currentConstraint; }
+  WellConstraintBase const *  getCurrentConstraint() const { return m_currentConstraint; }
+
 
   /**
    * @brief Getter for the flag to enable crossflow

@@ -29,8 +29,39 @@ namespace geos
 
 using namespace dataRepository;
 
+BHPConstraint::BHPConstraint( string const & name, Group * const parent )
+  : WellConstraintBase( name, parent ),
+  m_refElevation( 0.0 ),
+  m_refGravCoef( 0.0 )
+{
+  setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
+
+  registerWrapper( viewKeyStruct::targetBHPString(), &m_constraintValue ).
+    setDefaultValue( 0.0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
+    setDescription( "Minimun bottom-hole production pressure [Pa]" );
+
+  registerWrapper( viewKeyStruct::refElevString(), &m_refElevation ).
+    setDefaultValue( -1 ).
+    setInputFlag( InputFlags::REQUIRED ).
+    setDescription( "Reference elevation where BHP control is enforced [m]" );
+
+}
+
+
+BHPConstraint::~BHPConstraint()
+{}
+
+void BHPConstraint::postInputInitialization()
+{
+
+  WellConstraintBase::postInputInitialization();
+
+}
+
 MinimumBHPConstraint::MinimumBHPConstraint( string const & name, Group * const parent )
-  : WellConstraintBase( name, parent )
+  : BHPConstraint( name, parent )
 {
   setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
 
@@ -48,7 +79,7 @@ MinimumBHPConstraint::~MinimumBHPConstraint()
 void MinimumBHPConstraint::postInputInitialization()
 {
 
-  WellConstraintBase::postInputInitialization();
+  BHPConstraint::postInputInitialization();
 
 }
 
@@ -58,15 +89,10 @@ bool MinimumBHPConstraint::checkViolation( WellConstraintBase const & currentCon
 }
 
 MaximumBHPConstraint::MaximumBHPConstraint( string const & name, Group * const parent )
-  : WellConstraintBase( name, parent )
+  : BHPConstraint( name, parent )
 {
   setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
 
-  registerWrapper( viewKeyStruct::targetBHPString(), &m_constraintValue ).
-    setDefaultValue( 0.0 ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setRestartFlags( RestartFlags::WRITE_AND_READ ).
-    setDescription( "Maximum bottom-hole injection pressure [Pa]" );
 }
 
 
@@ -76,7 +102,7 @@ MaximumBHPConstraint::~MaximumBHPConstraint()
 void MaximumBHPConstraint::postInputInitialization()
 {
   // Validate value and table options
-  WellConstraintBase::postInputInitialization();
+  BHPConstraint::postInputInitialization();
 
 }
 bool MaximumBHPConstraint::checkViolation( WellConstraintBase const & currentConstraint, real64 const & currentTime ) const

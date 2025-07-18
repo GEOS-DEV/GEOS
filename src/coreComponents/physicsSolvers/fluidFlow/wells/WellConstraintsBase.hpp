@@ -24,7 +24,7 @@
 #include "common/format/EnumStrings.hpp"
 #include "dataRepository/Group.hpp"
 #include "functions/TableFunction.hpp"
-#include "WellControls.hpp"
+
 namespace geos
 {
 namespace dataRepository

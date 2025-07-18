@@ -189,6 +189,21 @@ public:
   void updateFluidModel( WellElementSubRegion & subRegion );
 
   /**
+   * @brief Update well separator using current values of pressure and composition at the reference element
+   * @param subRegion the well subregion containing all the primary and dependent fields
+   * @param targetIndex the targetIndex of the subRegion
+   */
+  void updateSeparator( WellElementSubRegion & subRegion );
+
+  /**
+   * @brief  Calculate well rates at reference element
+   * @param subRegion the well subregion containing all the primary and dependent fields
+   * @param targetIndex the targetIndex of the subRegion
+   */
+
+  void calculateReferenceElementRates( WellElementSubRegion & subRegion );
+
+  /**
    * @brief Recompute phase volume fractions (saturations) from constitutive and primary variables
    * @param subRegion the well subregion containing all the primary and dependent fields
    * @param targetIndex the targetIndex of the subRegion
@@ -281,6 +296,14 @@ public:
                                           DofManager const & dofManager,
                                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                           arrayView1d< real64 > const & localRhs ) override;
+
+  virtual void assembleWellConstraintTerms( real64 const & time_n,
+                                            real64 const & dt,
+                                            WellElementSubRegion const & subRegion,
+                                            DofManager const & dofManager,
+                                            CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                            arrayView1d< real64 > const & localRhs ) override;
+
 
   virtual void assembleWellPressureRelations( real64 const & time_n,
                                               real64 const & dt,
@@ -540,64 +563,6 @@ private:
 
 
 };
-template< typename GROUPTYPE = WellConstraintBase, typename ... GROUPTYPES >
-WellConstraintBase * CompositionalMultiphaseWell::calculateLimitingConstraint( WellConstraintBase * limitingConstraint,
-                                                       real64 const & time_n,
-                                                       real64 const & dt,
-                                                       integer const cycleNumber,
-                                                       DomainPartition & domain,
-                                                       MeshLevel & mesh,
-                                                       ElementRegionManager & elemManager,
-                                                       WellElementSubRegion & subRegion,
-                                                       DofManager const & dofManager )
-{
-
-  WellControls & wellControls = getWellControls( subRegion );
-  wellControls.forSubGroups< GROUPTYPE, GROUPTYPES... >( [&]( auto & constraint )
-  {
-    if( limitingConstraint == nullptr || constraint.checkViolation( *limitingConstraint, time_n ))
-    {
-      limitingConstraint = &constraint;
-
-      std::cout << constraint.getName() << std::endl;
-
-      wellControls.setControl( static_cast< WellControls::Control >(limitingConstraint->getControl()) ); // tjb old
-      wellControls.setCurrentConstraint( limitingConstraint );
-      // If a well is opened and then timestep is cut resulting in the well being shut, if the well is opened
-// the well initialization code requires control type to by synced
-      integer owner = -1;
-// Only subregion owner evaluates well control and control changes need to be broadcast to all ranks
-      if( subRegion.isLocallyOwned() )
-      {
-        owner = MpiWrapper::commRank( MPI_COMM_GEOS );
-      }
-      owner = MpiWrapper::max( owner );
-      WellControls::Control wellControl = wellControls.getControl();
-      MpiWrapper::broadcast( wellControl, owner );
-      wellControls.setControl( wellControl );
-
-      solveNonlinearSystem( time_n,
-                            dt,
-                            cycleNumber,
-                            domain,
-                            mesh,
-                            elemManager,
-                            subRegion,
-                            dofManager );
-
-      constraint.setBHP ( wellControls.getReference< real64 >( CompositionalMultiphaseWell::viewKeyStruct::currentBHPString() ));
-      constraint.setPhaseVolumeRates ( wellControls.getReference< array1d< real64 > >(
-                                         CompositionalMultiphaseWell::viewKeyStruct::currentPhaseVolRateString() ) );
-      constraint.setTotalVolumeRate ( wellControls.getReference< real64 >(
-                                        CompositionalMultiphaseWell::viewKeyStruct::currentTotalVolRateString() ));
-      constraint.setMassRate( wellControls.getReference< real64 >( CompositionalMultiphaseWell::viewKeyStruct::currentMassRateString() ));
-
-      std::cout << constraint.getName() << " " << constraint.bottomHolePressure() << " " << constraint.phaseVolumeRates() << " " << constraint.totalVolumeRate() << " " << constraint.massRate() <<
-        std::endl;
-    }
-  } );
-  return limitingConstraint;
-}
 
 } // namespace geos
 

@@ -40,6 +40,10 @@
 #include "physicsSolvers/fluidFlow/wells/WellControls.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellSolverBaseFields.hpp"
 
+#include "physicsSolvers/fluidFlow/wells/WellPressureConstraints.hpp"
+#include "physicsSolvers/fluidFlow/wells/WellVolumeRateConstraints.hpp"
+#include "physicsSolvers/fluidFlow/wells/WellPhaseRateConstraints.hpp"
+#include "physicsSolvers/fluidFlow/wells/WellMassRateConstraints.hpp"
 namespace geos
 {
 
@@ -159,6 +163,7 @@ struct ControlEquationHelper
            real64 const & targetTotalRate,
            real64 const & targetMassRate,
            real64 const & currentBHP,
+           real64 const & targetValue,
            arrayView1d< real64 const > const & dCurrentBHP,
            arrayView1d< real64 const > const & currentPhaseVolRate,
            arrayView2d< real64 const > const & dCurrentPhaseVolRate,

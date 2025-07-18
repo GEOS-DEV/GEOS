@@ -259,6 +259,7 @@ public:
                                               CRSMatrixView< real64, globalIndex const > const & GEOS_UNUSED_PARAM( localMatrix ),
                                               arrayView1d< real64 > const & GEOS_UNUSED_PARAM( localRhs ) ) {};
 
+
   /**
    * @brief assembles the accumulation term for all the well elements
    * @param domain the physical domain object
@@ -273,6 +274,12 @@ public:
                                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                           arrayView1d< real64 > const & localRhs ) = 0;
 
+  virtual void assembleWellConstraintTerms( real64 const & GEOS_UNUSED_PARAM( time ),
+                                            real64 const & GEOS_UNUSED_PARAM( dt ),
+                                            WellElementSubRegion const & GEOS_UNUSED_PARAM( subRegion ),
+                                            DofManager const & GEOS_UNUSED_PARAM( dofManager ),
+                                            CRSMatrixView< real64, globalIndex const > const & GEOS_UNUSED_PARAM( localMatrix ),
+                                            arrayView1d< real64 > const & GEOS_UNUSED_PARAM( localRhs ) ) {};
 
   virtual void assembleWellPressureRelations( real64 const & GEOS_UNUSED_PARAM( time ),
                                               real64 const & GEOS_UNUSED_PARAM( dt ),
@@ -437,6 +444,7 @@ public:
     static constexpr char const * timeStepFromTablesFlagString() { return "timeStepFromTables"; }
     static constexpr char const * estimateWellSolutionString() { return "estimateWellSolution"; }
     static constexpr char const * writeSegDebugFlagString() { return "writeSegDebug"; }
+    static constexpr char const * useNewCodeString() { return "useNewCodeString"; }
   };
 
 
@@ -556,6 +564,8 @@ protected:
   integer my_ctime;
 
   real64 m_nextDt;
+
+  integer m_useNewCode;
 
 };
 

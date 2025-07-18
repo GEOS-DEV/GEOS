@@ -18,12 +18,12 @@
  */
 
 #include "LogLevelsInfo.hpp"
-#include "WellControls.hpp"
+#include "physicsSolvers/fluidFlow/wells/WellControls.hpp"
 
-#include "WellPressureConstraints.hpp"
-#include "WellVolumeRateConstraints.hpp"
-#include "WellPhaseRateConstraints.hpp"
-#include "WellMassRateConstraints.hpp"
+#include "physicsSolvers/fluidFlow/wells/WellPressureConstraints.hpp"
+#include "physicsSolvers/fluidFlow/wells/WellVolumeRateConstraints.hpp"
+#include "physicsSolvers/fluidFlow/wells/WellPhaseRateConstraints.hpp"
+#include "physicsSolvers/fluidFlow/wells/WellMassRateConstraints.hpp"
 
 #include "WellConstants.hpp"
 #include "dataRepository/InputFlags.hpp"
@@ -38,23 +38,23 @@ using namespace dataRepository;
 WellControls::WellControls( string const & name, Group * const parent )
   : Group( name, parent ),
   m_type( Type::PRODUCER ),
-  m_refElevation( 0.0 ),
-  m_refGravCoef( 0.0 ),
-  m_inputControl( Control::UNINITIALIZED ),
-  m_currentControl( Control::UNINITIALIZED ),
+  m_refElevation( 0.0 ),  // tjb remove
+  m_refGravCoef( 0.0 ),  // tjb remove
+  m_inputControl( Control::UNINITIALIZED ), // tjb remove
+  m_currentControl( Control::UNINITIALIZED ), // tjb remove
   m_targetBHP( 0.0 ),
-  m_targetTotalRate( 0.0 ),
-  m_targetPhaseRate( 0.0 ),
-  m_targetMassRate( 0.0 ),
+  m_targetTotalRate( 0.0 ),  // tjb remove
+  m_targetPhaseRate( 0.0 ), // tjb remove
+  m_targetMassRate( 0.0 ), // tjb remove
   m_useSurfaceConditions( 0 ),
-  m_surfacePres( 0.0 ),
-  m_surfaceTemp( 0.0 ),
+  m_surfacePres( -1.0 ),
+  m_surfaceTemp( -1.0 ),
   m_isCrossflowEnabled( 0 ),
   m_initialPressureCoefficient( 0.1 ),
   m_rateSign( -1.0 ),
-  m_targetTotalRateTable( nullptr ),
-  m_targetPhaseRateTable( nullptr ),
-  m_targetBHPTable( nullptr ),
+  m_targetTotalRateTable( nullptr ), // tjb remove
+  m_targetPhaseRateTable( nullptr ), // tjb remove
+  m_targetBHPTable( nullptr ), // tjb remove
   m_statusTable( nullptr ),
   m_wellOpen( false ),
   m_constraintSwitch( true )
@@ -399,6 +399,13 @@ void WellControls::postInputInitialization()
                  "WellControls " << getDataContext() << ": Option only valid if useSurfaceConditions set to 1",
                  InputError );
 
+  GEOS_THROW_IF( ((m_useSurfaceConditions==1 &&  m_surfacePres< 0.0)),
+                 "WellControls " << getDataContext() << " " << viewKeyStruct::surfacePressureString()<< " not set ",
+                 InputError );
+  GEOS_THROW_IF( ((m_useSurfaceConditions==1 &&  m_surfaceTemp<0.0)),
+                 "WellControls " << getDataContext() << " " << viewKeyStruct::surfaceTemperatureString()<< " not set ",
+                 InputError );
+
   // 6.1) If the well is under BHP control then the BHP must be specified.
   //      Otherwise the BHP will be set to a default value.
   if( m_currentControl == Control::BHP )
@@ -566,6 +573,7 @@ bool WellControls::getConstraintSwitch() const
 {
   return m_constraintSwitch;
 }
+
 void WellControls::setNextDtFromTables( real64 const currentTime, real64 & nextDt )
 {
   // replace with iter over constraints - tjb

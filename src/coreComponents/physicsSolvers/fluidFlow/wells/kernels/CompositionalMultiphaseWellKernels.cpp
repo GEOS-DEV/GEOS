@@ -331,7 +331,7 @@ PressureRelationKernel::
   real64 const targetPhaseRate = wellControls.getTargetPhaseRate( time );
   real64 const targetMassRate = wellControls.getTargetMassRate( time );
 
-  real64 const targetValue = wellControls.getCurrentConstraint()->getConstraintValue(time);
+  real64 const targetValue = wellControls.getCurrentConstraint()->getConstraintValue( time );
 
   // dynamic well control data
   // All possible quantites for all constraint types

@@ -30,20 +30,31 @@ namespace geos
 using namespace dataRepository;
 
 
-MassProductionConstraint::MassProductionConstraint( string const & name, Group * const parent )
+MassConstraint::MassConstraint( string const & name, Group * const parent )
   : WellConstraintBase( name, parent )
 {
   setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
+}
 
+MassConstraint::~MassConstraint()
+{}
+
+void MassConstraint::postInputInitialization()
+{
+  // Validate value and table options
+  WellConstraintBase::postInputInitialization();
+
+}
+
+MassProductionConstraint::MassProductionConstraint( string const & name, Group * const parent )
+  : MassConstraint( name, parent )
+{
+  setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
   registerWrapper( constraintViewStruct::constraintValueKey::constraintValueString(), &m_constraintValue ).
     setDefaultValue( 0.0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setRestartFlags( RestartFlags::WRITE_AND_READ ).
-    setDescription( "Maximum mass production rate (if useSurfaceConditions: [surface m^3/s]; else [reservoir m^3/s])" );
-
-  // Field registration
-  registerSurfaceConditions( m_useSurfaceConditions, m_surfacePres, m_surfaceTemp, *this );
-
+    setDescription( "Maximum mass injection rate (if useSurfaceConditions: [surface m^3/s]; else [reservoir m^3/s])" );
 
 }
 
@@ -54,10 +65,8 @@ MassProductionConstraint::~MassProductionConstraint()
 void MassProductionConstraint::postInputInitialization()
 {
   // Validate value and table options
-  WellConstraintBase::postInputInitialization();
+  MassConstraint::postInputInitialization();
 
-  // Validate surface conditions
-  validateSurfaceConditions( m_useSurfaceConditions, dataRepository::keys::MassInjectionConstraint, *this );
 }
 
 bool MassProductionConstraint::checkViolation( WellConstraintBase const & currentConstraint, real64 const & currentTime ) const
@@ -65,8 +74,9 @@ bool MassProductionConstraint::checkViolation( WellConstraintBase const & curren
   return currentConstraint.massRate() > getConstraintValue( currentTime );
 }
 
+
 MassInjectionConstraint::MassInjectionConstraint( string const & name, Group * const parent )
-  : WellConstraintBase( name, parent )
+  : MassConstraint( name, parent )
 {
   setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
 
@@ -75,29 +85,18 @@ MassInjectionConstraint::MassInjectionConstraint( string const & name, Group * c
     setInputFlag( InputFlags::OPTIONAL ).
     setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "Maximum mass injection rate (if useSurfaceConditions: [surface m^3/s]; else [reservoir m^3/s])" );
-
-  // Field registration
-  registerSurfaceConditions( m_useSurfaceConditions, m_surfacePres, m_surfaceTemp, *this );
-  registerInjectionStream( m_injectionStream, m_injectionTemperature, *this );
-
 }
-
 
 MassInjectionConstraint::~MassInjectionConstraint()
 {}
 
 void MassInjectionConstraint::postInputInitialization()
 {
-
   // Validate value and table options
-  WellConstraintBase::postInputInitialization();
+  MassConstraint::postInputInitialization();
 
-  // Validate surface conditions
-  validateSurfaceConditions( m_useSurfaceConditions, dataRepository::keys::MassInjectionConstraint, *this );
 // Validate the injection stream and temperature
   validateInjectionStream( m_injectionStream, m_injectionTemperature, dataRepository::keys::MassProductionConstraint, *this );
-
-
 }
 
 bool MassInjectionConstraint::checkViolation( WellConstraintBase const & currentConstraint, real64 const & currentTime )const

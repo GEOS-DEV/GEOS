@@ -125,6 +125,7 @@ set( fluidFlowSolvers_headers
      wells/LogLevelsInfo.hpp
      wells/kernels/SinglePhaseWellKernels.hpp
      wells/kernels/CompositionalMultiphaseWellKernels.hpp
+     wells/kernels/WellConstraintKernels.hpp
      proppantTransport/ProppantTransport.hpp
      proppantTransport/ProppantTransportFields.hpp
      proppantTransport/ProppantTransportKernels.hpp )

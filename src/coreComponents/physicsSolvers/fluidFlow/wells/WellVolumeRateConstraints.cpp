@@ -29,9 +29,26 @@ namespace geos
 
 using namespace dataRepository;
 
+VolumeConstraint::VolumeConstraint( string const & name, Group * const parent )
+  : WellConstraintBase( name, parent )
+{
+  setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
+
+}
+
+
+VolumeConstraint::~VolumeConstraint()
+{}
+
+void VolumeConstraint::postInputInitialization()
+{
+  WellConstraintBase::postInputInitialization();
+
+}
+
 
 VolumeProductionConstraint::VolumeProductionConstraint( string const & name, Group * const parent )
-  : WellConstraintBase( name, parent )
+  : VolumeConstraint( name, parent )
 {
   setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
 
@@ -40,22 +57,6 @@ VolumeProductionConstraint::VolumeProductionConstraint( string const & name, Gro
     setInputFlag( InputFlags::OPTIONAL ).
     setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "Maximum volumetric production rate (if useSurfaceConditions: [surface m^3/s]; else [reservoir m^3/s])" );
-
-  registerWrapper( constraintViewStruct::surfaceConditionsKey::useSurfaceConditionsString(), &m_useSurfaceConditions ).
-    setDefaultValue( 0 ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Flag to specify whether rates are checked at surface or reservoir conditions.\n"
-                    "Equal to 1 for surface conditions, and to 0 for reservoir conditions" );
-
-  registerWrapper( constraintViewStruct::surfaceConditionsKey::surfacePressureString(), &m_surfacePres ).
-    setDefaultValue( 0 ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Surface pressure used to compute volumetric rates when surface conditions are used [Pa]" );
-
-  registerWrapper( constraintViewStruct::surfaceConditionsKey::surfaceTemperatureString(), &m_surfaceTemp ).
-    setDefaultValue( 0 ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Surface temperature used to compute volumetric rates when surface conditions are used [K]" );
 
 
 }
@@ -66,7 +67,7 @@ VolumeProductionConstraint::~VolumeProductionConstraint()
 
 void VolumeProductionConstraint::postInputInitialization()
 {
-  WellConstraintBase::postInputInitialization();
+  VolumeConstraint::postInputInitialization();
 
 }
 
@@ -77,7 +78,7 @@ bool VolumeProductionConstraint::checkViolation( WellConstraintBase const & curr
 
 
 VolumeInjectionConstraint::VolumeInjectionConstraint( string const & name, Group * const parent )
-  : WellConstraintBase( name, parent )
+  : VolumeConstraint( name, parent )
 {
   setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
 
@@ -89,7 +90,6 @@ VolumeInjectionConstraint::VolumeInjectionConstraint( string const & name, Group
 
 
   // Field registration
-  registerSurfaceConditions( m_useSurfaceConditions, m_surfacePres, m_surfaceTemp, *this );
   registerInjectionStream( m_injectionStream, m_injectionTemperature, *this );
 }
 

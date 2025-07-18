@@ -47,6 +47,81 @@ struct MassConstraintKey
 
 }
 
+/**
+ * @class MassConstraint
+ * @brief This class describes a mass rate constraint used to control a  well.
+ */
+
+class MassConstraint : public WellConstraintBase
+{
+public:
+
+  /**
+   * @name Constructor / Destructor
+   */
+  ///@{
+
+  /**
+   * @brief Constructor for WellControls Objects.
+   * @param[in] name the name of this instantiation of WellControls in the repository
+   * @param[in] parent the parent group of this instantiation of WellControls
+   */
+  explicit MassConstraint( string const & name, dataRepository::Group * const parent );
+
+
+  /**
+   * @brief Default destructor.
+   */
+  ~MassConstraint() override;
+
+  /**
+   * @brief Deleted default constructor.
+   */
+  MassConstraint() = delete;
+
+  /**
+   * @brief Deleted copy constructor.
+   */
+  MassConstraint( MassConstraint const & ) = delete;
+
+  /**
+   * @brief Deleted move constructor.
+   */
+  MassConstraint( MassConstraint && ) = delete;
+
+  /**
+   * @brief Deleted assignment operator.
+   * @return a reference to a constraint object
+   */
+  MassConstraint & operator=( MassConstraint const & ) = delete;
+
+  /**
+   * @brief Deleted move operator.
+   * @return a reference to a constraint object
+   */
+  MassConstraint & operator=( MassConstraint && ) = delete;
+
+  ///@}
+
+  /**
+   * @name Getters / Setters
+   */
+
+  // Temp interface - tjb
+  virtual ConstraintTypeId getControl() const override { return ConstraintTypeId::MASSRATE; };
+  ///@}
+
+  // Mass constraint defintion keys
+  constraintViewStruct::MassConstraintKey viewKeysMassConstraint;
+
+
+protected:
+
+  virtual void postInputInitialization() override;
+
+
+
+};
 
 
 /**
@@ -54,7 +129,7 @@ struct MassConstraintKey
  * @brief This class describes a mass rate constraint used to control a production well.
  */
 
-class MassProductionConstraint : public WellConstraintBase
+class MassProductionConstraint : public MassConstraint
 {
 public:
 
@@ -109,8 +184,6 @@ public:
    * @name Getters / Setters
    */
 
-  // Temp interface - tjb
-  virtual ConstraintTypeId getControl() const override { return ConstraintTypeId::MASSRATE; };
   /**
    * @brief Get name of constraint
    * @return constraint key
@@ -121,8 +194,7 @@ public:
   // Mass constraint defintion keys
   constraintViewStruct::MassConstraintKey viewKeysMassConstraint;
 
-  // Surface condition definition keyes
-  constraintViewStruct::surfaceConditionsKey viewKeysSurfaceCondtions;
+
 
   virtual bool checkViolation( WellConstraintBase const & currentConstraint, real64 const & currentTime ) const override;
 
@@ -131,16 +203,7 @@ protected:
   virtual void postInputInitialization() override;
 
 
-private:
 
-  /// Flag to decide whether rates are controlled at rates or surface conditions
-  integer m_useSurfaceConditions;
-
-  /// Surface pressure
-  real64 m_surfacePres;
-
-  /// Surface temperature
-  real64 m_surfaceTemp;
 };
 
 /**
@@ -148,7 +211,7 @@ private:
  * @brief This class describes a Mass rate constraint used to control a injection well.
  */
 
-class MassInjectionConstraint : public WellConstraintBase
+class MassInjectionConstraint : public MassConstraint
 {
 public:
 
@@ -204,10 +267,6 @@ public:
    * @name Getters / Setters
    */
   ///@{
-
-  // Temp interface - tjb
-  virtual ConstraintTypeId getControl() const override { return ConstraintTypeId::MASSRATE; };
-
   /**
    * @brief Get name of constraint
    * @return constraint key
@@ -218,8 +277,7 @@ public:
   // Mass constraint defintion keys
   constraintViewStruct::MassConstraintKey viewKeysMassConstraint;
 
-  // Surface condition definition keyes
-  constraintViewStruct::surfaceConditionsKey viewKeysSurfaceCondtions;
+
 
   // Injection stream definition keys
   constraintViewStruct::injectionStreamKey viewKeysInjectionStream;
@@ -238,14 +296,6 @@ private:
   /// Temperature at the injector
   real64 m_injectionTemperature;
 
-  /// Flag to decide whether rates are controlled at rates or surface conditions
-  integer m_useSurfaceConditions;
-
-  /// Surface pressure
-  real64 m_surfacePres;
-
-  /// Surface temperature
-  real64 m_surfaceTemp;
 };
 
 
