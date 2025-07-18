@@ -809,8 +809,9 @@ public:
         using j_t = decltype(j);
         constexpr int jVal = j_t::value;
         constexpr int j1 = ORDER - jVal;
+        constexpr int ii1 = ORDER -i1;
 
-        constexpr bool valid_j1_i1 = (j1 <= i1);
+        constexpr bool valid_j1_i1 = (j1 <= ii1);
         if constexpr (valid_j1_i1) {
 
           loop< ORDER + 1 >( [&]( auto const k ) {
