@@ -61,6 +61,8 @@ assembleFluidMassResidualDerivativeWrtDisplacement( MeshLevel const & mesh,
 {
   GEOS_MARK_FUNCTION;
 
+  using namespace contact;
+
   FaceManager const & faceManager = mesh.getFaceManager();
   NodeManager const & nodeManager = mesh.getNodeManager();
   EdgeManager const & edgeManager = mesh.getEdgeManager();
@@ -118,7 +120,7 @@ assembleFluidMassResidualDerivativeWrtDisplacement( MeshLevel const & mesh,
 
       stackArray1d< real64, 2*3*m_maxFaceNodes > dRdU( 2*3*m_maxFaceNodes );
 
-      bool const isFractureOpen = ( fractureState[kfe] == contact::FractureState::Open );
+      bool const isFractureOpen = ( fractureState[kfe] == FractureState::Open );
 
       // Accumulation derivative
       if( isFractureOpen )
@@ -179,7 +181,7 @@ assembleFluidMassResidualDerivativeWrtDisplacement( MeshLevel const & mesh,
         real64 const dR_dAper = values[kfe1];
         localIndex const kfe2 = columns[kfe1];
 
-        bool const isOpen = ( fractureState[kfe2] == contact::FractureState::Open );
+        bool const isOpen = ( fractureState[kfe2] == FractureState::Open );
         skipAssembly &= !isOpen;
 
         for( localIndex kf=0; kf<2; ++kf )
