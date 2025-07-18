@@ -344,7 +344,7 @@ bool PhysicsSolverBase::execute( real64 const time_n,
 
 void PhysicsSolverBase::logEndOfCycleInformation( integer const cycleNumber,
                                                   integer const numOfSubSteps,
-                                                  std::vector< real64 > const & subStepDts ) const
+                                                  stdVector< real64 > const & subStepDts ) const
 {
   LogPart logpart( "TIMESTEP", MpiWrapper::commRank() == 0 );
   logpart.addEndDescription( "- Cycle ", cycleNumber );

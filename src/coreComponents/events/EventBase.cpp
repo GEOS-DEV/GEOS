@@ -22,7 +22,6 @@
 
 #include "events/LogLevelsInfo.hpp"
 #include "common/DataTypes.hpp"
-#include "common/TimingMacros.hpp"
 
 namespace geos
 {

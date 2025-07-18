@@ -175,6 +175,7 @@ void PhillipsBrineDensityUpdate::compute(
 
   using Deriv = constitutive::multifluid::DerivativeOffset;
 
+  integer constexpr maxNumDofs = MultiFluidConstants::MAX_NUM_COMPONENTS + 2;
   integer const numComps = componentProperties.m_componentMolarWeight.size();
   integer const numDofs = 2 + numComps;
 
@@ -186,7 +187,7 @@ void PhillipsBrineDensityUpdate::compute(
   // Calculate the compressibility factor of the mixture from the equation of state
   // Use molar density space for temporary derivatives
   real64 compressibilityFactor = 0.0;
-  arraySlice1d< real64, USD2 > const & dCompressibilityFactor = dMolarDensity;
+  StackArray< real64, 1, maxNumDofs > dCompressibilityFactor( numDofs );
   CompositionalDensityUpdate::computeCompressibilityFactor( numComps,
                                                             pressure,
                                                             temperature,
@@ -195,7 +196,7 @@ void PhillipsBrineDensityUpdate::compute(
                                                             m_equationOfState,
                                                             m_salinity,
                                                             compressibilityFactor,
-                                                            dCompressibilityFactor );
+                                                            dCompressibilityFactor.toSlice() );
 
   // Convert to molar volume by scaling by (RT/P)
   // Scaling factor to convert compressibility factor (Z) to volume.
