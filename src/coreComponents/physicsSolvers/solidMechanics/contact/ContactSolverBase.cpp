@@ -64,15 +64,13 @@ void ContactSolverBase::registerDataOnMesh( dataRepository::Group & meshBodies )
 
   setFractureRegions( meshBodies );
 
+  string const labels[3] = { "normal", "tangent1", "tangent2" };
+  string const labelsTangent[2] = { "tangent1", "tangent2" };
+
   forFractureRegionOnMeshTargets( meshBodies, [&] ( SurfaceElementRegion & fractureRegion )
   {
-    string const labels[3] = { "normal", "tangent1", "tangent2" };
-    string const labelsTangent[2] = { "tangent1", "tangent2" };
-
     fractureRegion.forElementSubRegions< SurfaceElementSubRegion >( [&]( SurfaceElementSubRegion & subRegion )
     {
-      setConstitutiveNamesCallSuper( subRegion );
-
       subRegion.registerField< contact::dispJump >( getName() ).
         setDimLabels( 1, labels ).
         reference().resizeDimension< 1 >( 3 );
@@ -136,7 +134,7 @@ void ContactSolverBase::computeFractureStateStatistics( MeshLevel const & mesh,
                                                         globalIndex & numSlip,
                                                         globalIndex & numOpen ) const
 {
-  using namespace fields::contact;
+  using namespace contact;
 
   ElementRegionManager const & elemManager = mesh.getElemManager();
 

@@ -23,6 +23,7 @@
 
 #include "physicsSolvers/solidMechanics/contact/SolidMechanicsLagrangeContact.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsFields.hpp"
+#include "physicsSolvers/fluidFlow/FlowSolverBase.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
 #include "physicsSolvers/solidMechanics/contact/ContactFields.hpp"
 #include "physicsSolvers/multiphysics/poromechanicsKernels/SinglePhasePoromechanicsFractures.hpp"
