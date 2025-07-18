@@ -146,7 +146,7 @@ void VTKMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockManager
     {
       if( MpiWrapper::commRank() == 0 )
       {
-        std::vector< vtkSmartPointer< vtkPartitionedDataSet > > partitions;
+        stdVector< vtkSmartPointer< vtkPartitionedDataSet > > partitions;
         vtkNew< vtkAppendFilter > appender;
         appender->MergePointsOn();
         for( auto & [key, value] : this->getSubGroups())
@@ -202,8 +202,8 @@ void VTKMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockManager
     m_faceBlockMeshes = redistributedMeshes.getFaceBlocks();
     m_embeddedSurfaceBlockMeshes = redistributedMeshes.getEmbeddedSurfaceBlocks();
     GEOS_LOG_LEVEL_RANK_0( logInfo::VTKSteps, GEOS_FMT( "{} '{}': finding neighbor ranks...", catalogName(), getName() ) );
-    std::vector< vtkBoundingBox > boxes = vtk::exchangeBoundingBoxes( *m_vtkMesh, comm );
-    std::vector< int > const neighbors = vtk::findNeighborRanks( std::move( boxes ) );
+    stdVector< vtkBoundingBox > boxes = vtk::exchangeBoundingBoxes( *m_vtkMesh, comm );
+    stdVector< int > const neighbors = vtk::findNeighborRanks( std::move( boxes ) );
     partition.setMetisNeighborList( std::move( neighbors ) );
     GEOS_LOG_LEVEL_RANK_0( logInfo::VTKSteps, GEOS_FMT( "{} '{}': done!", catalogName(), getName() ) );
   }

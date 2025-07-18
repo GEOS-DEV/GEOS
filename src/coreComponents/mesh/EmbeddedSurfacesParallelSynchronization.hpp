@@ -22,6 +22,10 @@
 #define GEOS_PHYSICSSOLVERS_SURFACEGENERATION_EMBEDDEDSURFACESPARALLELSYNCHRONIZATION_HPP_
 
 #include "common/DataTypes.hpp"
+<<<<<<< HEAD:src/coreComponents/mesh/EmbeddedSurfacesParallelSynchronization.hpp
+=======
+#include "common/StdContainerWrappers.hpp"
+>>>>>>> origin/develop:src/coreComponents/physicsSolvers/surfaceGeneration/EmbeddedSurfacesParallelSynchronization.hpp
 
 namespace geos
 {
@@ -37,16 +41,40 @@ struct NewObjectLists
 
 class MeshLevel;
 class NeighborCommunicator;
-struct ModifiedObjectLists;
+
+struct NewObjectLists
+{
+  std::set< localIndex > newNodes;
+  std::set< localIndex > newEdges;
+  map< std::pair< localIndex, localIndex >, std::set< localIndex > > newElements;
+
+  void insert( NewObjectLists const & newObjects )
+  {
+    newNodes.insert( newObjects.newNodes.begin(),
+                     newObjects.newNodes.end() );
+
+    newEdges.insert( newObjects.newEdges.begin(),
+                     newObjects.newEdges.end() );
+
+    for( auto & iter : newObjects.newElements )
+    {
+      std::pair< localIndex, localIndex > const & key = iter.first;
+      std::set< localIndex > const & values = iter.second;
+      newElements[key].insert( values.begin(), values.end() );
+    }
+
+  }
+
+};
 
 namespace embeddedSurfacesParallelSynchronization
 {
 
-void sychronizeTopology( MeshLevel & mesh,
-                         std::vector< NeighborCommunicator > & neighbors,
-                         NewObjectLists & newObjects,
-                         int const mpiCommOrder,
-                         string const fractureRegionName );
+void synchronizeTopology( MeshLevel & mesh,
+                          stdVector< NeighborCommunicator > & neighbors,
+                          NewObjectLists & newObjects,
+                          int const mpiCommOrder,
+                          string const fractureRegionName );
 }
 
 } /* namespace geos */

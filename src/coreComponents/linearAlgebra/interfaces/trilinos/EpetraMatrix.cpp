@@ -546,7 +546,8 @@ void EpetraMatrix::separateComponentFilter( EpetraMatrix & dst,
                                             integer const dofsPerNode ) const
 {
   localIndex const maxRowEntries = maxRowLength();
-  GEOS_LAI_ASSERT_EQ( maxRowEntries % dofsPerNode, 0 );
+  integer const remainder = maxRowEntries % dofsPerNode;
+  GEOS_LAI_ASSERT_EQ( remainder, 0 );
 
   CRSMatrix< real64 > tempMat;
   tempMat.resize( numLocalRows(), numGlobalCols(), maxRowEntries / dofsPerNode );

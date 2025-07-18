@@ -170,9 +170,9 @@ void fastInsert( OrderedVariableToManyParticleRelation & relation,
  */
 void insertMany( OrderedVariableToManyParticleRelation & relation,
                  localIndex const firstIndex,
-                 std::vector< localIndex > const & erArray,
-                 std::vector< localIndex > const & esrArray,
-                 std::vector< localIndex > const & eiArray );
+                 stdVector< localIndex > const & erArray,
+                 stdVector< localIndex > const & esrArray,
+                 stdVector< localIndex > const & eiArray );
 
 /**
  * @brief Reserve a set number of entities for a particle to relate to

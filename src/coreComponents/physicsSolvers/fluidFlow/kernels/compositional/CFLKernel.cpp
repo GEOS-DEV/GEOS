@@ -22,14 +22,14 @@
 #include "finiteVolume/SurfaceElementStencil.hpp"
 #include "finiteVolume/EmbeddedSurfaceToCellStencil.hpp"
 #include "finiteVolume/FaceElementToCellStencil.hpp"
-#include "CFLKernel.hpp"
 
 namespace geos
 {
-using namespace constitutive;
 
 namespace isothermalCompositionalMultiphaseFVMKernels
 {
+
+using namespace constitutive;
 
 /******************************** CFLFluxKernel ********************************/
 
