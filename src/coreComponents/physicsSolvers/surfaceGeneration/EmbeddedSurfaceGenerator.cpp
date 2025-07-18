@@ -18,14 +18,8 @@
  */
 
 #include "EmbeddedSurfaceGenerator.hpp"
-<<<<<<< HEAD
-#include "mesh/EmbeddedSurfacesParallelSynchronization.hpp"
-#include "mesh/mpiCommunications/CommunicationTools.hpp"
-#include "mesh/mpiCommunications/NeighborCommunicator.hpp"
-=======
 #include "EmbeddedSurfacesParallelSynchronization.hpp"
 
->>>>>>> origin/develop
 #include "mesh/mpiCommunications/SpatialPartition.hpp"
 #include "finiteVolume/FiniteVolumeManager.hpp"
 #include "finiteVolume/FluxApproximationBase.hpp"

@@ -25,10 +25,6 @@
 #include "mesh/MeshLevel.hpp"
 #include "mesh/mpiCommunications/MPI_iCommData.hpp"
 #include "mesh/mpiCommunications/NeighborCommunicator.hpp"
-<<<<<<< HEAD:src/coreComponents/mesh/EmbeddedSurfacesParallelSynchronization.cpp
-#include "mesh/MeshLevel.hpp"
-=======
->>>>>>> origin/develop:src/coreComponents/physicsSolvers/surfaceGeneration/EmbeddedSurfacesParallelSynchronization.cpp
 
 namespace geos
 {

@@ -22,10 +22,7 @@
 #define GEOS_PHYSICSSOLVERS_SURFACEGENERATION_EMBEDDEDSURFACESPARALLELSYNCHRONIZATION_HPP_
 
 #include "common/DataTypes.hpp"
-<<<<<<< HEAD:src/coreComponents/mesh/EmbeddedSurfacesParallelSynchronization.hpp
-=======
 #include "common/StdContainerWrappers.hpp"
->>>>>>> origin/develop:src/coreComponents/physicsSolvers/surfaceGeneration/EmbeddedSurfacesParallelSynchronization.hpp
 
 namespace geos
 {
