@@ -698,13 +698,16 @@ public:
       {
         constexpr int j = decltype(jjc)::value;
         constexpr int j1 = ORDER - j;
-        if constexpr ( j1 <= ORDER - i1 )
+        constexpr bool valid_j1_i1 = (j1 <= ORDER -i1);
+        //if constexpr ( j1 <= ORDER - i1 )
+        if constexpr ( valid_j1_i1 )
         {
           loop< ORDER + 1 >( [&func] ( auto const kkc )
           {
             constexpr int k = decltype(kkc)::value;
             constexpr int k1 = ORDER - k;
-            if constexpr ( k1 <= ORDER - i1 - j1 )
+            constexpr bool valid_k1_i1_j1 = ( k1 <= ORDER - i1 - j1 );
+            if constexpr ( valid_k1_i1_j1 )
             {
               constexpr int l1 = ORDER - i1 - j1 - k1;
               constexpr int c1 = dofIndex< i1, j1, k1 >();
@@ -809,9 +812,8 @@ public:
         using j_t = decltype(j);
         constexpr int jVal = j_t::value;
         constexpr int j1 = ORDER - jVal;
-        constexpr int ii1 = ORDER -i1;
 
-        constexpr bool valid_j1_i1 = (j1 <= ii1);
+        constexpr bool valid_j1_i1 = (j1 <= iVal);
         if constexpr (valid_j1_i1) {
 
           loop< ORDER + 1 >( [&]( auto const k ) {
