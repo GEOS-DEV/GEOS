@@ -803,11 +803,11 @@ void ProblemManager::generateEmbeddedSurfacesMesh()
 
       embeddedSurfaceSubRegion.inheritGhostRank( cellElemGhostRank );
 
-      embeddedSurfacesParallelSynchronization::sychronizeTopology( meshLevel,
-                                                                   domain.getNeighbors(),
-                                                                   newObjects,
-                                                                   1,
-                                                                   surfaceRegion.getName() );
+      embeddedSurfacesParallelSynchronization::synchronizeTopology( meshLevel,
+                                                                    domain.getNeighbors(),
+                                                                    newObjects,
+                                                                    1,
+                                                                    surfaceRegion.getName() );
 
       // addEmbeddedElementsToSets( elemManager, embeddedSurfaceSubRegion );
 
