@@ -6,13 +6,17 @@ This file is designed to track changes to the integrated test baselines.
 Any developer who updates the baseline ID in the .integrated_tests.yaml file is expected to create an entry in this file with the pull request number, date, and their justification for rebaselining.
 These notes should be in reverse-chronological order, and use the following time format: (YYYY-MM-DD).
 
-PR #3730 (2025-07-16) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3730-12180-7682d66.tar.gz>
+PR #3730 (2025-07-18) <>
 =====================
 Add 3 tests for compositional Soreide-Whitson EOS.
 
+PR #3659 (2025-07-17) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3517-12189-54b7075.tar.gz>
+=====================
+Fields and constitutives refactor.
+
 PR #3659 (2025-07-08) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3659-12039-3662bde.tar.gz>
 =====================
-Add thermal to single-phase well. Baselines updated due to schema changes.
+Add thermal to single-phase well.  Baselines updated due to schema changes.
 
 PR #3635 (2025-06-11) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3635-11765-c0e7e87.tar.gz>
 =====================
