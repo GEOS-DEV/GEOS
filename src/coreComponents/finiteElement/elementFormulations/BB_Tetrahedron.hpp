@@ -699,7 +699,6 @@ public:
         constexpr int j = decltype(jjc)::value;
         constexpr int j1 = ORDER - j;
         if constexpr ( j1 <= ORDER - i1 )
-        if constexpr ( valid_j1_i1 )
         {
           loop< ORDER + 1 >( [&func] ( auto const kkc )
           {
