@@ -41,7 +41,6 @@ PhysicsSolverBase::PhysicsSolverBase( string const & name,
   ExecutableGroup( name, parent ),
   m_cflFactor(),
   m_nextDt( 1e99 ),
-  m_numTimestepsSinceLastDtCut( -1 ),
   m_dofManager( name ),
   m_usePhysicsScaling(),
   m_linearSolverParameters( groupKeyStruct::linearSolverParametersString(), this ),
@@ -101,10 +100,15 @@ PhysicsSolverBase::PhysicsSolverBase( string const & name,
     setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "Cut time step if linear solution fail without going until max nonlinear iterations." );
 
-  registerWrapper( viewKeyStruct::usePhysicsScalingString(), &m_usePhysicsScaling )
-    .setApplyDefaultValue( usePhysicsScaling )
-    .setInputFlag( InputFlags::OPTIONAL )
-    .setDescription( "Enable physics-based scaling of the linear system. Default: true." );
+  registerWrapper( viewKeyStruct::usePhysicsScalingString(), &m_usePhysicsScaling ).
+    setApplyDefaultValue( usePhysicsScaling ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Enable physics-based scaling of the linear system. Default: true." );
+
+  registerWrapper( viewKeyStruct::numTimestepsSinceLastDtCutString(), &m_numTimestepsSinceLastDtCut ).
+    setApplyDefaultValue( -1 ).
+    setInputFlag( InputFlags::FALSE ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ );
 
   addLogLevel< logInfo::Fields >();
   addLogLevel< logInfo::LinearSolver >();
@@ -351,7 +355,7 @@ bool PhysicsSolverBase::execute( real64 const time_n,
 
 void PhysicsSolverBase::logEndOfCycleInformation( integer const cycleNumber,
                                                   integer const numOfSubSteps,
-                                                  std::vector< real64 > const & subStepDts ) const
+                                                  stdVector< real64 > const & subStepDts ) const
 {
   LogPart logpart( "TIMESTEP", MpiWrapper::commRank() == 0 );
   logpart.addEndDescription( "- Cycle ", cycleNumber );

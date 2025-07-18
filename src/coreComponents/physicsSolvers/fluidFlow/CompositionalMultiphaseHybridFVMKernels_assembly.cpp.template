@@ -108,17 +108,17 @@ namespace compositionalMultiphaseHybridFVMKernels
   GEOS_HOST_DEVICE
   void
   AssemblerKernelHelper::
-    assembleFaceConstraints< NF, NC, NP >( arrayView1d< globalIndex const > const & faceDofNumber,
-                                           arrayView1d< integer const > const & faceGhostRank,
-                                           arraySlice1d< localIndex const > const & elemToFaces,
-                                           globalIndex const elemDofNumber,
-                                           globalIndex const rankOffset,
-                                           real64 const (&oneSidedVolFlux)[ NF ],
-                                           real64 const (&dOneSidedVolFlux_dPres)[ NF ],
-                                           real64 const (&dOneSidedVolFlux_dFacePres)[ NF ][ NF ],
-                                           real64 const (&dOneSidedVolFlux_dCompDens)[ NF ][ NC ],
-                                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                           arrayView1d< real64 > const & localRhs );
+    assembleFaceConstraints< NF, NC >( arrayView1d< globalIndex const > const & faceDofNumber,
+                                       arrayView1d< integer const > const & faceGhostRank,
+                                       arraySlice1d< localIndex const > const & elemToFaces,
+                                       globalIndex const elemDofNumber,
+                                       globalIndex const rankOffset,
+                                       real64 const (&oneSidedVolFlux)[ NF ],
+                                       real64 const (&dOneSidedVolFlux_dPres)[ NF ],
+                                       real64 const (&dOneSidedVolFlux_dFacePres)[ NF ][ NF ],
+                                       real64 const (&dOneSidedVolFlux_dCompDens)[ NF ][ NC ],
+                                       CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                       arrayView1d< real64 > const & localRhs );
 
   @EXTERN@
   template
