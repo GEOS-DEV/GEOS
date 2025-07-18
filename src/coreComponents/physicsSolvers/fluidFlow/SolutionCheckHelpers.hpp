@@ -26,20 +26,41 @@
 namespace geos
 {
 
+/**
+ * @brief A class to report elements collected by the solver.
+ */
 class ElementsReporterOutput
 {
 public:
 
+  /// Type alias for elements count (e.g., localIndex, globalIndex).
   using ElementCount = ElementsReporterCollector::ElementCount;
 
+  /**
+   * @brief Construct a preallocated buffer for collecting element ids in kernels.
+   * @param buffer The buffer that will be utilized for counting & collecting elements IDs during kernel execution.
+   */
   ElementsReporterOutput( ElementsReporterBuffer const & buffer );
 
-  ElementCount getRanksSignaledIdsCount() const
-  { return m_ranksSignaledElementsCount; }
+  /**
+   * @return The number of ranks that have signaled an id.
+   */
+  ElementCount getRanksSignaledIdsCount() const;
 
-  ElementCount getRanksCollectedIdsCount() const
-  { return m_ranksCollectedElementsCount; }
+  /**
+   * @return The total count of collected elements across all ranks for signaling ids.
+   */
+  ElementCount getRanksCollectedIdsCount() const;
 
+  /**
+  * @brief Report elements with values below a specified threshold in the log:
+  *        Outputs lines indicating which variables have collected element ids whose corresponding 
+  *        solution components are too low, potentially signaling underflow or numerical instability.
+  * @param linesPrefix Prefix for the line of text to be printed
+  * @param valueNaming The name used when referring to variables within this context (e.g., "pressure", "density").
+  * @param minValue Minimum acceptable solution component values. Values below this threshold are reported.
+  * @param valueUnit Unit in which `minValue` is expressed.
+  */
   void outputTooLowValues( string_view linesPrefix,
                            string_view valueNaming,
                            real64 minValue,
@@ -47,18 +68,26 @@ public:
 
 private:
 
+  /// Preallocated buffer for collecting ids.
   ElementsReporterBuffer const & m_buffer;
 
+  /// Count of signaled elements per rank.
   ElementCount m_ranksSignaledElementsCount;
 
+  /// Total collected signaling id count across ranks.
   ElementCount m_ranksCollectedElementsCount;
 
 };
 
+/**
+ * @brief A buffer to count and store element ids during kernel execution.
+ *        This facilitates the reporting mechanism by allowing a preallocated space for storing & counting elements.
+ */
 class ElementsReporterBuffer
 {
 public:
 
+  /// Type alias for elements count (e.g., localIndex, globalIndex).
   using ElementCount = ElementsReporterCollector::ElementCount;
 
   /**
@@ -68,35 +97,71 @@ public:
    */
   ElementsReporterBuffer( bool enabled, ElementCount maxCollectionSize );
 
-  // TODO: Proper docs. can be moved without any issue.
+  /**
+   * @brief Transfers ownership of an ElementsReporterBuffer to another instance (move semantics).
+   */
   ElementsReporterBuffer( ElementsReporterBuffer && other ) = default;
+
+  /**
+   * @brief Transfers ownership of an ElementsReporterBuffer to another instance (move semantics).
+   */
   ElementsReporterBuffer & operator=( ElementsReporterBuffer && other ) = default;
 
-  // TODO: Proper docs. copying prevented has it doesn't seem useful / relevant.
-  ElementsReporterBuffer( ElementsReporterBuffer const & other ) = delete;
-  ElementsReporterBuffer & operator=( ElementsReporterBuffer const & other ) = delete;
+  /**
+   * @brief Copying prevented as it doesn't seem relevant / useful.
+   */
+  ElementsReporterBuffer( ElementsReporterBuffer const & ) = delete;
 
+  /**
+   * @brief Copying prevented as it doesn't seem relevant / useful.
+   */
+  ElementsReporterBuffer & operator=( ElementsReporterBuffer const & ) = delete;
+
+  /**
+   * @return the count of signaled elements.
+   */
   ElementCount getSignaledElementsCount() const
   { return m_elementsCounter.empty() ? 0 : m_elementsCounter[0]; }
 
+  /**
+   * @return the collected elements that could effectivly be stored (zero if no collection is enabled).
+   */
   ElementCount getCollectedElementsCount() const
   { return LvArray::math::min( getSignaledElementsCount(), m_elementsBuffer.size() ); }
 
+  /**
+   * @return a reference to an element report by its ID within the buffer (0 -> collected count-1).
+   */
   ElementReport const & operator[]( ElementCount id ) const
   { return m_elementsBuffer[id]; }
 
+  /**
+   * @return iterator pointing at beginning of collected elements in the buffer.
+   */
   auto begin() const
   { return m_elementsBuffer.begin(); }
 
+  /**
+   * @return iterator pointing after the last collected element in the buffer.
+   */
   auto end() const
   { return m_elementsBuffer.begin() + getCollectedElementsCount(); }
 
+  /**
+   * @return true when the collection of elements is enabled.
+   */
   bool enabled() const
   { return !m_elementsCounter.empty(); }
 
+  /**
+   * @return true when there are no elements collected (always false when enabled() is false).
+   */
   bool empty() const
   { return getCollectedElementsCount() == 0; }
 
+  /**
+   * @return true if the collection of elements completely fills the buffer.
+   */
   bool isComplete() const
   { return getCollectedElementsCount() < getSignaledElementsCount(); }
 
@@ -112,7 +177,7 @@ private:
   // array of one element to get benefit of managed host-device memory.
   array1d< ElementCount > m_elementsCounter;
 
-  // ids of detected elements
+  // Preallocated array of ids of detected elements
   array1d< ElementReport > m_elementsBuffer;
 
 };

@@ -36,9 +36,10 @@ struct ElementReport
 };
 
 /**
- * @brief TODO
- * @tparam ElementCount TODO
- * @tparam IdType TODO
+ * @brief Collects and reports elements ids and data using an atomic counter.
+ *        This class provides functionality to collect data from multiple threads safely by incrementing
+ *        through an atomic counter for each reported element's ID. The collected IDs are stored in a
+ *        size limited buffer, which can be used later for reporting or analysis purposes.
  */
 class ElementsReporterCollector
 {
@@ -47,11 +48,23 @@ public:
 
   using ElementCount = int32_t;
 
-  // TODO : proper docs. can be copied & moved as this class only has views to the internal chai memory buffers
+  /**
+   * @name Constructors
+   * @brief This object can be copied and moved as it only provides views to internal memory buffers.
+   */
+  ///@{
+  /** @cond DO_NOT_DOCUMENT */
+
   ElementsReporterCollector( ElementsReporterCollector const & other ) = default;
+
   ElementsReporterCollector( ElementsReporterCollector && other ) = default;
+
   ElementsReporterCollector & operator=( ElementsReporterCollector const & other ) = default;
+
   ElementsReporterCollector & operator=( ElementsReporterCollector && other ) = default;
+
+  /** @endcond */
+  ///@}
 
   static ElementsReporterCollector disabled()
   {
@@ -61,12 +74,10 @@ public:
   }
 
   /**
-   * @brief TODO
-   * @tparam CollectorAtomicPolicy The policy of the atomic increment on the ids counter.
-   * @param m_elementsCounter The ids counter to increment with an atomic operation.
-   * @param m_elementsBuffer The output id buffer, in the same memory space as m_elementsCounter.
-   *                  If its size is 0 (= disabled output) or not not large enought, the buffer is not filled.
-   * @param id The Id to add to the buffer.
+   * @brief Collects a single element report and adds its ID to the output buffer if not disabled and
+   *        there are available slots in the buffer.
+   * @tparam CollectorAtomicPolicy The atomic increment operation to use for thread-safe counter increments.
+   * @param report A constant reference to an `ElementReport` object containing data from a single element
    */
   template< typename CollectorAtomicPolicy >
   GEOS_HOST_DEVICE
@@ -100,13 +111,14 @@ public:
 
 private:
 
-  // array of one element to get benefit of chai managed memory.
+  /// array of one element to get benefit of chai managed memory.
   arrayView1d< ElementCount > m_elementsCounter;
 
-  // ids of detected elements, quantity limited to 'maxIdsCount'
+  /// ids of detected elements, quantity limited to 'maxIdsCount'
   arrayView1d< ElementReport > m_elementsBuffer;
 
-  arrayView1d< globalIndex const > m_localToGlobalId;
+  /// Maps local element IDs to their respective global indices.
+  arrayView1d<const GlobalIndex> m_localToGlobalId;
 
   ElementsReporterCollector( arrayView1d< ElementCount > const & elementsCounter,
                              arrayView1d< ElementReport > const & elementsBuffer,
