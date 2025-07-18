@@ -20,7 +20,7 @@ Add thermal to single-phase well.  Baselines updated due to schema changes.
 
 PR #3635 (2025-06-11) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3635-11765-c0e7e87.tar.gz>
 =====================
-Add new wave solver (elastic anisotropic TTI)
+Add new wave solver (elastic anisotropic TTI).
 
 PR #3679 (2025-05-27) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3679-11653-e066fbb.tar.gz>
 =====================
