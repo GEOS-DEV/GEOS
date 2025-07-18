@@ -311,9 +311,9 @@ private:
 
   string_array m_interfaceFaceSetNames;
 
-  stdVector< std::array< std::tuple< constitutive::ConstitutiveBase *,
-                                     constitutive::ConstitutiveBase *,
-                                     constitutive::ConstitutiveBase * >, 2 > >  m_interfaceConstitutivePairs;
+  stdVector< std::array< std::tuple< constitutive::RelativePermeabilityBase *,
+                                     constitutive::CapillaryPressureBase *,
+                                     constitutive::TwoPhaseImmiscibleFluid * >, 2 > >  m_interfaceConstitutivePairs;
 
   unordered_map< localIndex, localIndex >  m_interfaceRegionByConnector;
   unordered_map< localIndex, localIndex >  m_connectorIndicesByInterfaceRegion;
