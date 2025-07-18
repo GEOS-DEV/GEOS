@@ -118,7 +118,7 @@ private:
   arrayView1d< ElementReport > m_elementsBuffer;
 
   /// Maps local element IDs to their respective global indices.
-  arrayView1d<const GlobalIndex> m_localToGlobalId;
+  arrayView1d< globalIndex const > m_localToGlobalId;
 
   ElementsReporterCollector( arrayView1d< ElementCount > const & elementsCounter,
                              arrayView1d< ElementReport > const & elementsBuffer,
