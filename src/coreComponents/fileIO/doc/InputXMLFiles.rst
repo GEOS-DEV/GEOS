@@ -356,7 +356,61 @@ If he wants to, the user can use any self-consistent unit system (in that case, 
 
 ## Physical Scales Default Units:
 
-[add generated table here]
+.. list-table:: Physical Scale Default Unit
+  :widths: auto
+  :header-rows: 1
+
+  * - Physical scale
+    - Default Unit Formula
+    - Default Unit Description
+  * - pressure
+    - :math:`Pa`
+    - `pascals`
+  * - temperature
+    - :math:`K`
+    - `kelvin`
+  * - distance
+    - :math:`m`
+    - `meters`
+  * - time
+    - :math:`s`
+    - `seconds`
+  * - viscosity
+    - :math:`Pa·s`
+    - `pascal-seconds`
+  * - enthalpy
+    - :math:`J/kg`
+    - `joules` per `kilogram`
+  * - density
+    - :math:`kg/m^3`
+    - `kilograms` per `cubic meter`
+  * - solubility
+    - :math:`g/L`
+    - `grams` per `liter`
+  * - mass
+    - :math:`kg`
+    - `kilograms`
+  * - mole
+    - :math:`mol`
+    - `moles`
+  * - mass rate
+    - :math:`kg/s`
+    - `kilograms` per `second`
+  * - mole rate
+    - :math:`mol/s`
+    - `moles` per `second`
+  * - transmissibility
+    - :math:`(Pa·s·rm^3)/Pa`
+    - `viscosity` times `reservoir cubic meters` per `pascal`
+  * - molar volume
+    - :math:`m^3/mol`
+    - `cubic meters` per `mole`
+  * - molar density
+    - :math:`mol/m^3`
+    - `moles` per `cubic meter`
+  * - permeability
+    - :math:`m^2`
+    - `square meters`
 
 
 ## XML Preprocessor Unit Manager:
