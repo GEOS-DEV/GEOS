@@ -31,7 +31,7 @@ struct ElementReport
 {
   /// the global id of the reported element
   globalIndex m_id;
-  /// a single value to report for the given element (i.e. a negative pressure, a density...)
+  /// a value to report for the given element (i.e. a negative pressure, a density... Or if needed could be of a templated type for composite values)
   real64 m_value;
 };
 
