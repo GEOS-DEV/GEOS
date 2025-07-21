@@ -116,21 +116,29 @@ void MeshManager::importFields( DomainPartition & domain )
   GEOS_MARK_FUNCTION;
   forSubGroups< MeshGeneratorBase >( [&domain]( MeshGeneratorBase const & generator )
   {
+    printf("here0\n");
     if( !domain.hasMeshBody( generator.getName() ) )
     {
+    printf("here1\n");
       return;
     }
     else if( domain.getMeshBody( generator.getName() ).hasParticles() ) // field import is not currently compatible with particle mesh
                                                                         // bodies
     {
+    printf("here2\n");
       return;
     }
 
+    printf("here3\n");
     GEOS_LOG_RANK_0( GEOS_FMT( "{}: importing field data from mesh dataset", generator.getName() ) );
+    printf("here4\n");
     MeshBody & meshBody = domain.getMeshBody( generator.getName() );
+    printf("here5\n");
     meshBody.forMeshLevels( [&]( MeshLevel & meshLevel )
     {
+    printf("here6\n");
       GEOS_LOG_RANK_0( GEOS_FMT( "  mesh level = {}", meshLevel.getName() ) );
+    printf("here7\n");
       FieldIdentifiers fieldsToBeSync;
       meshLevel.getElemManager().forElementSubRegionsComplete< CellElementSubRegion >(
         [&]( localIndex,
@@ -138,7 +146,9 @@ void MeshManager::importFields( DomainPartition & domain )
              ElementRegionBase const & region,
              CellElementSubRegion & subRegion )
       {
+    printf("here8\n");
         GEOS_LOG_RANK_0( GEOS_FMT( "  volumic fields on {}/{}", region.getName(), subRegion.getName() ) );
+    printf("here9\n");
         importFields( generator, region.getName(), subRegion, MeshGeneratorBase::Block::VOLUMIC, generator.getVolumicFieldsMapping(), fieldsToBeSync );
         printf("afterimportfield\n");
       } );
