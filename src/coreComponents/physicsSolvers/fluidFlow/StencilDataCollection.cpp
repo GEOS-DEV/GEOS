@@ -28,7 +28,6 @@
 #include "physicsSolvers/fluidFlow/FlowSolverBase.hpp"
 #include "physicsSolvers/fluidFlow/LogLevelsInfo.hpp"
 #include "physicsSolvers/fluidFlow/StencilAccessors.hpp"
-#include "physicsSolvers/PhysicsSolverManager.hpp"
 #include "common/format/table/TableFormatter.hpp"
 
 namespace geos
@@ -36,7 +35,7 @@ namespace geos
 
 using namespace constitutive;
 using namespace dataRepository;
-
+using namespace fields;
 
 StencilDataCollection::StencilDataCollection( const string & name,
                                               Group * const parent ):
@@ -153,7 +152,7 @@ public:
   using ElementViewConst = ElementRegionManager::ElementViewConst< VIEWTYPE >;
 
   using PermeabilityAccessors = StencilMaterialAccessors< PermeabilityBase,
-                                                          fields::permeability::permeability >;
+                                                          permeability::permeability >;
 
 
   /**
@@ -211,7 +210,7 @@ StencilDataCollection::gatherConnectionData( STENCILWRAPPER_T const & stencilWra
   typename Kernel::PermeabilityAccessors accessor( elemManager, m_solver->getName() );
 
   Kernel::launch< parallelDevicePolicy<> >( kernelData.toView(), stencilWrapper,
-                                            accessor.get< fields::permeability::permeability >() );
+                                            accessor.get< permeability::permeability >() );
 
   return kernelData;
 }

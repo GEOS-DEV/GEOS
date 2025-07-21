@@ -15,13 +15,11 @@
 
 // Source includes
 #include "Group.hpp"
-#include "ConduitRestart.hpp"
 #include "common/format/StringUtilities.hpp"
 #include "common/format/table/TableData.hpp"
 #include "common/format/table/TableFormatter.hpp"
 #include "common/format/table/TableLayout.hpp"
 #include "codingUtilities/Utilities.hpp"
-#include "common/TimingMacros.hpp"
 #include "GroupContext.hpp"
 #if defined(GEOS_USE_PYGEOSX)
 #include "python/PyGroupType.hpp"

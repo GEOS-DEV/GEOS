@@ -96,7 +96,7 @@ static constexpr std::array< std::string_view, 5 > expectedFileBits = {
     sourceLocation:
       file: )",
   R"(src/coreComponents/dataRepository/unitTests/testErrorHandling.cpp
-      line: 195
+      line: 196
     sourceCallStack:
       - frame0:  void testing::internal::HandleExceptionsInMethodIfSupported<testing::Test, void>(testing::Test*, void (testing::Test::*)(), char const*) 
       - frame1:  testing::Test::Run() 
@@ -122,7 +122,7 @@ static constexpr std::array< std::string_view, 5 > expectedFileBits = {
     sourceLocation:
       file: )",
   R"(src/coreComponents/dataRepository/unitTests/testErrorHandling.cpp
-      line: 196
+      line: 197
     sourceCallStack:
       - frame0:  void testing::internal::HandleExceptionsInMethodIfSupported<testing::Test, void>(testing::Test*, void (testing::Test::*)(), char const*) 
       - frame1:  testing::Test::Run() 
@@ -152,7 +152,7 @@ static constexpr std::array< std::string_view, 5 > expectedFileBits = {
     sourceLocation:
       file: )",
   R"(src/coreComponents/dataRepository/unitTests/testErrorHandling.cpp
-      line: 202
+      line: 203
     sourceCallStack:
       - frame0:  void testing::internal::HandleExceptionsInMethodIfSupported<testing::Test, void>(testing::Test*, void (testing::Test::*)(), char const*) 
       - frame1:  testing::Test::Run() 
@@ -192,6 +192,7 @@ TEST( ErrorHandling, testYaml )
   }
 
   GEOS_WARNING( "Conflicting pressure boundary conditions" );
+
   GEOS_WARNING_IF( x == 5, "Pressure value is too small." );
   GEOS_WARNING_CTX_IF( x == 5,
                        GEOS_FMT( "{}: option should be between {} and {}. A value of {} will be used.",
@@ -229,8 +230,8 @@ TEST( ErrorHandling, testYaml )
   EXPECT_EQ( additionalExceptionInformation, exceptionFormat );
 
   EXPECT_EXIT( GEOS_ERROR_CTX_IF( x == 5,
-                                  GEOS_FMT( "{}: option should be between {} and {}. A value of {} will be used.",
-                                            context.toString(), minPrecision, maxPrecision, minPrecision ),
+                                  GEOS_FMT( "{}: option should be between {} and {}. A value of {} will be used.PID  {}",
+                                            context.toString(), minPrecision, maxPrecision, minPrecision, getpid() ),
                                   context, additionalContext ),
                ::testing::ExitedWithCode( 1 ),
                ".*" );

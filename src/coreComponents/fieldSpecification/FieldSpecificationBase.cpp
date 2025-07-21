@@ -15,7 +15,6 @@
 
 #include "FieldSpecificationBase.hpp"
 
-#include "common/MpiWrapper.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
 #include "fieldSpecification/LogLevelsInfo.hpp"
 

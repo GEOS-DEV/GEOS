@@ -22,7 +22,6 @@
 #include "common/TimingMacros.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "SurfaceElementRegion.hpp"
-#include "FaceManager.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
 #include "mesh/NodeManager.hpp"
 #include "mesh/MeshLevel.hpp"

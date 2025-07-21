@@ -21,7 +21,6 @@
 
 #include "fieldSpecification/SourceFluxBoundaryCondition.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
-#include "LvArray/src/tensorOps.hpp"
 #include "physicsSolvers/fluidFlow/LogLevelsInfo.hpp"
 
 namespace geos
