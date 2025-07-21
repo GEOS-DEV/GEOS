@@ -36,14 +36,14 @@ void LogPart::addDescription( string_view description )
 {
   size_t compareWidth = m_width;
   m_startDescription.m_names.push_back( stringutilities::divideLines< string >( compareWidth, description ) );
-  m_startDescription.m_values.push_back( std::vector< string >() );
+  m_startDescription.m_values.push_back( stdVector< string >() );
 }
 
 void LogPart::addEndDescription( string_view description )
 {
   size_t compareWidth = m_width;
   m_endDescription.m_names.push_back( stringutilities::divideLines< string >( compareWidth, description ) );
-  m_endDescription.m_values.push_back( std::vector< string >() );
+  m_endDescription.m_values.push_back( stdVector< string >() );
 
 }
 
@@ -67,7 +67,7 @@ double clamp( double v, double min, double max )
 void LogPart::formatDescriptions( LogPart::Description & description,
                                   FormattedDescription & formattedDescription )
 {
-  std::vector< string > & formattedLines = formattedDescription.m_lines;
+  stdVector< string > & formattedLines = formattedDescription.m_lines;
   size_t const borderSpaceWidth = m_nbBorderChar * 2 + m_borderMargin * 2;
 
   size_t const formattingCharSize = borderSpaceWidth;
@@ -109,7 +109,7 @@ void LogPart::formatDescriptions( LogPart::Description & description,
     auto wrappedValues = stringutilities::wrapTextToMaxLength( nonFormattedValues, maxLineLength );
 
     // format name
-    std::vector< string > formatNames {nonFormattedNames};
+    stdVector< string > formatNames {nonFormattedNames};
     for( size_t idxSubName = 0; idxSubName < formatNames.size(); idxSubName++ )
     {
       size_t const spaces = idxSubName < wrappedValues.size() ?
