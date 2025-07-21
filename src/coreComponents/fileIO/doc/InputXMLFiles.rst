@@ -378,7 +378,7 @@ Physical Scales Default Units
     - :math:`s`
     - `seconds`
   * - viscosity
-    - :math:`Pa·s`
+    - :math:`Pa \cdot s`
     - `pascal-seconds`
   * - enthalpy
     - :math:`J/kg`
@@ -402,7 +402,7 @@ Physical Scales Default Units
     - :math:`mol/s`
     - `moles` per `second`
   * - transmissibility
-    - :math:`(Pa·s·rm^3)/Pa`
+    - :math:`(Pa \cdot s \cdot rm^3)/Pa`
     - `viscosity` times `reservoir cubic meters` per `pascal`
   * - molar volume
     - :math:`m^3/mol`
