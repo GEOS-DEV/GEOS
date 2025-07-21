@@ -183,7 +183,7 @@ void ErrorLogger::streamMultilineYamlAttribute( std::string_view msg, std::ofstr
 void ErrorLogger::flushErrorMsg( ErrorLogger::ErrorMsg & errorMsg )
 {
   std::ofstream yamlFile( std::string( m_filename ), std::ios::app );
-  if( yamlFile.is_open() )
+  if( yamlFile.is_open() && g_errorLogger.isOutputFileEnabled() )
   {
     // General errors info (type, rank on which the error occured)
     yamlFile << g_level1Start << "type: " << g_errorLogger.toString( errorMsg.m_type ) << "\n";
@@ -238,7 +238,8 @@ void ErrorLogger::flushErrorMsg( ErrorLogger::ErrorMsg & errorMsg )
   }
   else
   {
-    GEOS_LOG_RANK( GEOS_FMT( "Unable to open error file for writing: {}", m_filename ) );
+    GEOS_LOG_RANK( GEOS_FMT( "Unable to open error file for writing.\n- Error file: {}\n- Error file enabled = {}).\n",
+                             m_filename, g_errorLogger.isOutputFileEnabled() ) );
   }
 }
 
