@@ -348,13 +348,15 @@ Note that if the override value contains any spaces, it may need to be surrounde
 Units
 ------------------------------
 
-## GEOS Unit System Generalities:
+GEOS Unit System Generalities
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Typically, all operations within GEOS are conducted using SI units (International System of Units).
 If he wants to, the user can use any self-consistent unit system (in that case, every input value must be in that system).
 
 
-## Physical Scales Default Units:
+Physical Scales Default Units
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. list-table:: Physical Scale Default Unit
   :widths: auto
@@ -413,7 +415,8 @@ If he wants to, the user can use any self-consistent unit system (in that case, 
     - `square meters`
 
 
-## XML Preprocessor Unit Manager:
+XML Preprocessor Unit Manager
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Users wishing to work with non-SI units for specific values can define these explicitly via XML parameters postfixes.
 The XML preprocessor ensures that any user-specified units within input files are converted into GEOS supported values prior to simulation.
@@ -428,10 +431,10 @@ Here is a set of parameters with units specified:
 .. code-block:: xml
 
   <Parameters>
-    <Parameter name="paramter_a" value="2[m]"/>
-    <Parameter name="paramter_b" value="1.2 [cm]"/>
-    <Parameter name="paramter_c" value="1.23e4 [bbl/day]"/>
-    <Parameter name="paramter_d" value="1.23E-4 [km**2]"/>
+    <Parameter name="parameter_a" value="2[m]"/>
+    <Parameter name="parameter_b" value="1.2 [cm]"/>
+    <Parameter name="parameter_c" value="1.23e4 [bbl/day]"/>
+    <Parameter name="parameter_d" value="1.23E-4 [km**2]"/>
   </Parameters>
 
 
