@@ -147,7 +147,10 @@ void MeshManager::importFields( DomainPartition & domain )
              CellElementSubRegion & subRegion )
       {
     printf("here8\n");
-        //GEOS_LOG_RANK_0( GEOS_FMT( "  volumic fields on {}/{}", region.getName(), subRegion.getName() ) );
+    printf("region.getName()=%s\n", region.getName());
+    printf("subRegion.getName()=%s\n",subRegion.getName());
+    printf("still here8\n");
+    //GEOS_LOG_RANK_0( GEOS_FMT( "  volumic fields on {}/{}", region.getName(), subRegion.getName() ) );
     printf("here9\n");
         importFields( generator, region.getName(), subRegion, MeshGeneratorBase::Block::VOLUMIC, generator.getVolumicFieldsMapping(), fieldsToBeSync );
         printf("afterimportfield\n");
