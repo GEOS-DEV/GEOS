@@ -172,6 +172,7 @@ void MeshManager::importFields( MeshGeneratorBase const & generator,
 {
   std::unordered_set< string > const materialWrapperNames = getMaterialWrapperNames( subRegion );
   // Writing properties
+  printf("beforeloopimportfield\n");
   for( auto const & pair : fieldsMapping )
   {
     string const & meshFieldName = pair.first;
@@ -186,17 +187,23 @@ void MeshManager::importFields( MeshGeneratorBase const & generator,
 
       continue;
     }
+  printf("afterloopimportfield\n");
 
     // Now that we know that the subRegion has this wrapper,
     // we can add the geosFieldName to the list of fields to synchronize
+    printf("ligne1\n");
     fieldsToBeSync.addElementFields( { geosFieldName }, { regionName } );
+    printf("ligne2\n");
     WrapperBase & wrapper = subRegion.getWrapperBase( geosFieldName );
+    printf("ligne3\n");
     GEOS_LOG_LEVEL_RANK_0_ON_GROUP( logInfo::ImportFields,
                                     GEOS_FMT( "    {} -> {}", meshFieldName, geosFieldName ),
                                     generator );
 
     bool const isMaterialField = materialWrapperNames.count( geosFieldName ) > 0 && wrapper.numArrayDims() > 1;
+    printf("ligne4\n");
     generator.importFieldOnArray( block, subRegion.getName(), meshFieldName, isMaterialField, wrapper );
+    printf("ligne5\n");
   }
 }
 
