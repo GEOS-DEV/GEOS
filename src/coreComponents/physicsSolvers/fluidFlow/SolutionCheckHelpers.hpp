@@ -45,13 +45,13 @@ public:
   /**
    * @return The number of ranks that have signaled an id.
    */
-  ElementCount getRanksSignaledIdsCount() const;
+  ElementCount getRanksSignaledIdsCount() const
   { return m_ranksSignaledElementsCount; }
 
   /**
    * @return The total count of collected elements across all ranks for signaling ids.
    */
-  ElementCount getRanksCollectedIdsCount() const;
+  ElementCount getRanksCollectedIdsCount() const
   { return m_ranksCollectedElementsCount; }
 
   /**
