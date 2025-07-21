@@ -6,6 +6,8 @@
 #include <unordered_map>
 #include <memory>
 
+#include <iostream>
+
 namespace geos
 {
 
@@ -30,6 +32,36 @@ public:
   /// Type alias for the base class (i.e., std::vector)
   using Base = std::vector< T, Allocator >;
 
+  /// using to inherit constructors from the base class
+  using Base::Base;  // Inherit constructors
+
+
+  /**
+   * @brief constructor.
+   * @param count The number of elements to initialize the vector with.
+   * @param value The value to initialize each element with.
+   */
+  StdVectorWrapper( size_t const count, T const & value ):
+    Base( count, value )
+  {}
+
+
+  /**
+   * @brief copy constructor.
+   * @param other The vector to copy from.
+   */
+  StdVectorWrapper( Base const & other ):
+    Base( other )
+  {}
+
+  /**
+   * @brief move constructor.
+   * @param other The vector to move from.
+   */
+  StdVectorWrapper( Base && other ):
+    Base( std::move( other ) )
+  {}
+
   /**
    * Access element at index with bounds checking if USE_STD_CONTAINER_BOUNDS_CHECKING is true.
    * Otherwise, uses operator[] for unchecked access.
@@ -40,7 +72,11 @@ public:
   {
     if constexpr (USE_STD_CONTAINER_BOUNDS_CHECKING)
     {
-      return Base::at( index );
+      if( index >= this->size() )
+      {
+        std::cout<< "Index out of bounds in StdVectorWrapper::operator[]: index = " + std::to_string( index ) + ", size = " + std::to_string( this->size());
+      }
+      return Base::at( index );  // Throws std::out_of_range if out of bounds.
     }
     else
     {
@@ -58,7 +94,11 @@ public:
   {
     if constexpr (USE_STD_CONTAINER_BOUNDS_CHECKING)
     {
-      return Base::at( index );  // Throws std::out_of_range if out of bounds
+      if( index >= this->size() )
+      {
+        std::cout<< "Index out of bounds in StdVectorWrapper::operator[]: index = " + std::to_string( index ) + ", size = " + std::to_string( this->size());
+      }
+      return Base::at( index );  // Throws std::out_of_range if out of bounds.
     }
     else
     {

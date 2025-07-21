@@ -254,7 +254,7 @@ TEST_P( CO2SolubilitySpycherPruessTestFixture, testNumericalDerivatives )
 }
 
 // Test data
-std::vector< TestParam > generateTestData()
+stdVector< TestParam > generateTestData()
 {
   return {
     {1.00000000e+05, 1.00000000e+01, 0.00000000e+00, 0.00000000e+00, 0.00000000e+00, 0.00000000e+00},

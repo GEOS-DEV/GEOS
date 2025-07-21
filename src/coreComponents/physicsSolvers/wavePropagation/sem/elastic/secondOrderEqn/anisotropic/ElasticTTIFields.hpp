@@ -13,13 +13,15 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
+
 /**
- * @file DiffusionFields.hpp
+ * @file ElasticTTIFields.hpp
  */
 
-#ifndef GEOS_CONSTITUTIVE_DIFFUSION_DIFFUSIONFIELDS_HPP_
-#define GEOS_CONSTITUTIVE_DIFFUSION_DIFFUSIONFIELDS_HPP_
+#ifndef GEOS_PHYSICSSOLVERS_WAVEPROPAGATION_ELASTICTTIFIELDS_HPP_
+#define GEOS_PHYSICSSOLVERS_WAVEPROPAGATION_ELASTICTTIFIELDS_HPP_
 
+#include "common/DataLayouts.hpp"
 #include "mesh/MeshFields.hpp"
 
 namespace geos
@@ -28,38 +30,28 @@ namespace geos
 namespace fields
 {
 
-namespace diffusion
+namespace elasticttifields
 {
-
-DECLARE_FIELD( diffusivity,
-               "diffusivity",
-               array3d< real64 >,
-               0,
-               LEVEL_0,
-               WRITE_AND_READ,
-               "Diffusivity" );
-
-DECLARE_FIELD( dDiffusivity_dTemperature,
-               "dDiffusivity_dTemperature",
-               array3d< real64 >,
+DECLARE_FIELD( Theta,
+               "theta",
+               array1d< real32 >,
                0,
                NOPLOT,
-               NO_WRITE,
-               "Derivatives of diffusivity with respect to temperature" );
-
-DECLARE_FIELD( phaseDiffusivityMultiplier,
-               "phaseDiffusivityMultiplier",
-               array3d< real64 >,
-               0,
-               LEVEL_0,
                WRITE_AND_READ,
-               "Phase multipliers for the diffusivity coefficients" );
+               "Tilt angle for Elastic TTI" );
 
+DECLARE_FIELD( Phi,
+               "phi",
+               array1d< real32 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Azimuth angle for Elastic TTI" );
 
 }
 
 }
 
-}
+} /* namespace geos */
 
-#endif // GEOS_CONSTITUTIVE_DIFFUSION_DIFFUSIONFIELDS_HPP_
+#endif /* GEOS_PHYSICSSOLVERS_WAVEPROPAGATION__HPP_ELASTICTTIFIELDS */
