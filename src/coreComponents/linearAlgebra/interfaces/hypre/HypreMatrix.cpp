@@ -1469,9 +1469,7 @@ void HypreMatrix::computeScalingVector( HypreVector & scaling ) const
   GEOS_LAI_ASSERT( ready() );
 
   // Get number of components
-  HYPRE_Int num_tags = LvArray::integerConversion< HYPRE_Int >(
-    (m_dofManager->*static_cast< integer (geos::DofManager::*)() const >(&geos::DofManager::numComponents))()
-    );
+  HYPRE_Int num_tags = LvArray::integerConversion< HYPRE_Int >( m_dofManager->numComponents() );
 
   // Get local dof component labels
   array1d< HYPRE_Int > pointMarkers( numLocalRows() );
