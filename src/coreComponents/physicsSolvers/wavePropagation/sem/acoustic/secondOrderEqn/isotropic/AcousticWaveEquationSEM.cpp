@@ -65,13 +65,16 @@ AcousticWaveEquationSEM::~AcousticWaveEquationSEM()
 void AcousticWaveEquationSEM::initializePreSubGroups()
 {
 
+  printf("initpresubgroupsstart\n");
   WaveSolverBase::initializePreSubGroups();
-  printf("initpresubgroups\n");
+  printf("initpresubgroupsend\n");
 }
 
 
 void AcousticWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
 {
+  
+  printf("registerdatastart\n");
   WaveSolverBase::registerDataOnMesh( meshBodies );
   forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
                                                     MeshLevel & mesh,
@@ -127,6 +130,8 @@ void AcousticWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
     } );
 
   } );
+  
+  printf("registerdataend\n");
 }
 
 
@@ -142,6 +147,9 @@ void AcousticWaveEquationSEM::postInputInitialization()
 real32 AcousticWaveEquationSEM::getGlobalMinWavespeed( MeshLevel & mesh, string_array const & regionNames )
 {
 
+  
+  printf("getglobalminwavespeedStart\n");
+
   real32 localMinWavespeed = 1e8;
 
   mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
@@ -154,6 +162,10 @@ real32 AcousticWaveEquationSEM::getGlobalMinWavespeed( MeshLevel & mesh, string_
       localMinWavespeed = subRegionMinWavespeed;
     }
   } );
+  
+  
+  printf("getglobalminwavespeedEnd\n");
+
 
   real32 const globalMinWavespeed = MpiWrapper::min( localMinWavespeed );
 
@@ -166,6 +178,9 @@ void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & baseM
 {
 
   GEOS_MARK_FUNCTION;
+
+  
+  printf("precomputeSourceAndReceiver\n");
 
   arrayView1d< globalIndex const > const nodeLocalToGlobalMap = baseMesh.getNodeManager().localToGlobalMap().toViewConst();
   ArrayOfArraysView< localIndex const > const nodesToElements = baseMesh.getNodeManager().elementList().toViewConst();
@@ -446,8 +461,12 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
       printf("aftergetmin\n");
 
       arrayView1d< real32 > const taperCoeff = nodeManager.getField< fields::taperCoeff >();
+      
+  printf("computetaperstart\n");
       TaperKernel::computeTaperCoeff< EXEC_POLICY >( nodeManager.size(), nodeCoords, m_thicknessTaper, m_timeStep, vMin, m_reflectivityCoeff,
                                                      taperCoeff );
+                                                     
+  printf("computetaperend\n");
     }
   } );
 
