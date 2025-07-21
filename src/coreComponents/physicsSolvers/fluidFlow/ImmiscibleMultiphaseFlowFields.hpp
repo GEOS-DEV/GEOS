@@ -124,6 +124,14 @@ DECLARE_FIELD( solutionUpdate,
                NOPLOT,
                NO_WRITE,
                "Solution update for current Newton iteration" );
+
+DECLARE_FIELD( phaseVolumeFractionScalingFactor,
+               "phaseVolumeFractionScalingFactor",
+               array1d< real64 >,
+               1,
+               NOPLOT,
+               NO_WRITE,
+               "Scaling factors for saturations" );
 }
 }
 

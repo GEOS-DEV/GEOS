@@ -45,6 +45,7 @@
 #include "physicsSolvers/PhysicsSolverBaseKernels.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
 #include "physicsSolvers/fluidFlow/ImmiscibleMultiphaseFlowFields.hpp"
+#include "physicsSolvers/fluidFlow/ImmiscibleMultiphaseFlow.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseUtilities.hpp"
 #include "physicsSolvers/fluidFlow/StencilAccessors.hpp"
 #include "physicsSolvers/fluidFlow/kernels/compositional/RelativePermeabilityUpdateKernel.hpp"
@@ -131,7 +132,8 @@ public:
                     MultiphaseFluidAccessors const & fluidAccessors,
                     CapPressureAccessors const & capPressureAccessors,                    
                     integer const hasCapPressure,
-                    real64 const resNorm )
+                    real64 const resNorm,
+                    ImmiscibleMultiphaseFlow::TrustRegionParameters const & trustRegionParams ):
     : m_numPhases( numPhases ),
       m_rankOffset( rankOffset ),
       m_dofNumber( dofNumberAccessor.toNestedViewConst() ),
@@ -142,11 +144,11 @@ public:
       m_dDens_dPres( fluidAccessors.get( fields::twophaseimmisciblefluid::dPhaseDensity {} ) ),
       m_phaseCapPressure( capPressureAccessors.get( fields::cappres::phaseCapPressure {} ) ),
       m_dPhaseCapPressure_dPhaseVolFrac( capPressureAccessors.get( fields::cappres::dPhaseCapPressure_dPhaseVolFraction {} ) ),
-      m_localSolution ( flowAccessors.get( fields::immiscibleMultiphaseFlow::solutionUpdate {} ) ), // localSolution
-      m_localSolution2 ( localSolution ),
+      m_localSolution ( flowAccessors.get( fields::immiscibleMultiphaseFlow::solutionUpdate {} ) ), // localSolution      
       m_localResidual( localResidual ),
       m_resNorm( resNorm ),
       m_hasCapPressure ( hasCapPressure ),
+      m_trustRegionParams( trustRegionParams ),
       m_stencilWrapper( stencilWrapper ),      
       m_seri( stencilWrapper.getElementRegionIndices() ),
       m_sesri( stencilWrapper.getElementSubRegionIndices() ),
@@ -423,10 +425,8 @@ protected:
   ElementViewConst< arrayView3d< real64 const, cappres::USD_CAPPRES > > const m_phaseCapPressure;
   ElementViewConst< arrayView4d< real64 const, cappres::USD_CAPPRES_DS > > const m_dPhaseCapPressure_dPhaseVolFrac;  
 
-  /// View on the local solution and residual
-  // arrayView1d< real64 const > const m_localSolution; 
-  ElementViewConst< arrayView2d< real64 const, immiscibleFlow::USD_PHASE > > const m_localSolution;
-  arrayView1d< real64 const > const m_localSolution2; 
+  /// View on the local solution and residual   
+  ElementViewConst< arrayView2d< real64 const, immiscibleFlow::USD_PHASE > > const m_localSolution;   
   arrayView1d< real64 const > const m_localResidual;
 
   /// Residual norm for adaptive residual analysis
@@ -434,6 +434,9 @@ protected:
 
   /// Flags
   integer const m_hasCapPressure;
+
+  /// Trust region parameters
+  ImmiscibleMultiphaseFlow::TrustRegionParameters const m_trustRegionParams;
 
   /// Reference to the stencil wrapper
   STENCILWRAPPER const m_stencilWrapper;
@@ -476,7 +479,8 @@ public:
                    ElementRegionManager const & elemManager,
                    STENCILWRAPPER const & stencilWrapper, 
                    integer const hasCapPressure,
-                   real64 const resNorm,                 
+                   real64 const resNorm,  
+                   ImmiscibleMultiphaseFlow::TrustRegionParameters const trustRegionParams,               
                    real64 & kinkFactor )
   {
     integer constexpr NUM_EQN = 2;
@@ -493,7 +497,7 @@ public:
 
     kernelType kernel( numPhases, rankOffset, localSolution, localResidual, stencilWrapper, 
                        dofNumberAccessor, flowAccessors, fluidAccessors, capPressureAccessors,
-                       hasCapPressure, resNorm );
+                       hasCapPressure, resNorm, trustRegionParams );
     kernelType::template launch< POLICY >( stencilWrapper.size(), kernel, kinkFactor );    
   }
 };
@@ -578,7 +582,8 @@ public:
                               MultiphaseFluidAccessors const & fluidAccessors,
                               RelPermAccessors const & relPermAccessor,
                               CapPressureAccessors const & capPressureAccessors,                    
-                              integer const hasCapPressure )
+                              integer const hasCapPressure,
+                              ImmiscibleMultiphaseFlow::TrustRegionParameters const & trustRegionParams )
     : m_numPhases( numPhases ),
       m_rankOffset( rankOffset ),
       m_dofNumber( dofNumberAccessor.toNestedViewConst() ),
@@ -597,6 +602,7 @@ public:
       m_localSolution( localSolution ),
       m_globalKinkFactor( globalKinkFactor ),  
       m_hasCapPressure( hasCapPressure ),
+      m_trustRegionParams( trustRegionParams ),
       m_stencilWrapper( stencilWrapper ),
       m_fluidWrapper( fluidWrapper ),
       m_relPermWrapper( relPermWrapper ),   
@@ -1010,6 +1016,9 @@ protected:
   /// Flags
   integer const m_hasCapPressure;
 
+  /// Trust region parameters
+  ImmiscibleMultiphaseFlow::TrustRegionParameters const m_trustRegionParams;
+
   /// Reference to the wrappers
   STENCILWRAPPER const m_stencilWrapper;
   FLUIDWRAPPER const m_fluidWrapper;
@@ -1059,7 +1068,8 @@ public:
                    FLUIDWRAPPER const & fluidWrapper,
                    RELPERMWRAPPER const & relPermWrapper,
                    CAPPRESWRAPPER const * capPressureWrapper,
-                   integer const hasCapPressure,                  
+                   integer const hasCapPressure,
+                   ImmiscibleMultiphaseFlow::TrustRegionParameters const trustRegionParams,                 
                    real64 & inflectionFactor )
   {
     integer constexpr NUM_EQN = 2;
@@ -1078,7 +1088,7 @@ public:
     kernelType kernel( numPhases, rankOffset, localSolution, globalKinkFactor,
                        stencilWrapper, fluidWrapper, relPermWrapper, capPressureWrapper,
                        dofNumberAccessor, flowAccessors, fluidAccessors, relPermAccessor,
-                       capPressureAccessors, hasCapPressure );
+                       capPressureAccessors, hasCapPressure, trustRegionParams );
     kernelType::template launch< POLICY >( stencilWrapper.size(), kernel, inflectionFactor );    
   }
 };
@@ -1185,7 +1195,8 @@ public:
                                   RelPermAccessors const & relPermAccessors,
                                   PorosityAccessors const & poroAccessors,
                                   CapPressureAccessors const & capPressureAccessors,                    
-                                  integer const hasCapPressure )
+                                  integer const hasCapPressure,
+                                  ImmiscibleMultiphaseFlow::TrustRegionParameters const trustRegionParams )
     : m_numPhases( numPhases ),
       m_rankOffset( rankOffset ),
       m_dofNumber( dofNumberAccessor.toNestedViewConst() ),
@@ -1213,6 +1224,7 @@ public:
       m_resNorm( resNorm ),
       m_globalKinkFactor( globalKinkFactor ),  
       m_hasCapPressure( hasCapPressure ),
+      m_trustRegionParams( trustRegionParams ),
       m_stencilWrapper( stencilWrapper ),
       m_fluidWrapper( fluidWrapper ),
       m_relPermWrapper( relPermWrapper ),   
@@ -1713,6 +1725,9 @@ protected:
   /// Flags
   integer const m_hasCapPressure;
 
+  /// Trust region parameters
+  ImmiscibleMultiphaseFlow::TrustRegionParameters const m_trustRegionParams;
+
   /// Reference to the wrappers
   STENCILWRAPPER const m_stencilWrapper;
   FLUIDWRAPPER const m_fluidWrapper;
@@ -1768,7 +1783,8 @@ public:
                    RELPERMWRAPPER const & relPermWrapper,
                    CAPPRESWRAPPER const * capPressureWrapper,
                    integer const hasCapPressure,
-                   real64 const resNorm,                
+                   real64 const resNorm,
+                   ImmiscibleMultiphaseFlow::TrustRegionParameters const trustRegionParams,             
                    real64 & inflectionFactor )
   {
     if ( subRegion.getConnectionMap().size() == 0 )
@@ -1795,7 +1811,7 @@ public:
     kernelType kernel( numPhases, rankOffset, dofKey, localSolution, localResidual, resNorm, globalKinkFactor, subRegion,
                        solid, stencilWrapper, fluidWrapper, relPermWrapper, capPressureWrapper,
                        dofNumberAccessor, permeabilityAccessors, flowAccessors, fluidAccessors, 
-                       relPermAccessors, poroAccessors, capPressureAccessors, hasCapPressure );
+                       relPermAccessors, poroAccessors, capPressureAccessors, hasCapPressure, trustRegionParams );
     kernelType::template launch< POLICY >( subRegion.size(), kernel, inflectionFactor );    
   }
 };

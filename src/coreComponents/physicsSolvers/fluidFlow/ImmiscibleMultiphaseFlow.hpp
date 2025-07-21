@@ -22,10 +22,37 @@
 
 #include "physicsSolvers/fluidFlow/FlowSolverBase.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
-#include "physicsSolvers/fluidFlow/kernels/immiscibleMultiphase/ImmiscibleMultiphaseKernels.hpp"
+//#include "physicsSolvers/fluidFlow/kernels/immiscibleMultiphase/ImmiscibleMultiphaseKernels.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseFVM.hpp"  // For GravityDensityScheme
 namespace geos
 {
+
+namespace immiscibleFlowUtilities
+{
+  
+enum class ScalingType : integer
+{
+  Global,         // Scale the Newton update with a unique scaling factor
+  Local           // Scale the Newton update locally (modifies the Newton direction)
+};
+
+enum class ScalingFactorType : integer
+{
+  MaxVariation,
+  TrustRegion
+};
+
+ENUM_STRINGS( ScalingType,
+              "Global",
+              "Local" );
+
+ENUM_STRINGS( ScalingFactorType,
+              "MaxVariation",
+              "TrustRegion" );
+
+} // namespace immiscibleFlowUtilities
+
+using namespace immiscibleFlowUtilities;
 
 //START_SPHINX_INCLUDE_00
 /**
@@ -101,6 +128,18 @@ public:
                             DofManager const & dofManager,
                             arrayView1d< real64 const > const & localSolution,
                             arrayView1d< real64 const > const & localResidual ) override;
+
+  real64
+  scalingForSystemSolutionTrustRegion( DomainPartition & domain,
+                                       DofManager const & dofManager,
+                                       arrayView1d< real64 const > const & localSolution,
+                                       arrayView1d< real64 const > const & localResidual );
+
+  virtual bool
+  checkSystemSolution( DomainPartition & domain,
+                       DofManager const & dofManager,
+                       arrayView1d< real64 const > const & localSolution,
+                       real64 const scalingFactor ) override;
 
   virtual void
   applySystemSolution( DofManager const & dofManager,
@@ -231,16 +270,37 @@ public:
     static constexpr char const * elemDofUpdateFieldString() { return "elemDofUpdateField"; }
 
     // density averaging scheme
-    static constexpr char const * gravityDensitySchemeString()    { return "gravityDensityScheme"; }
+    static constexpr char const * gravityDensitySchemeString() { return "gravityDensityScheme"; }
+
+    // scaling scheme
+    static constexpr char const * scalingTypeString() { return "scalingType"; }
+    static constexpr char const * scalingFactorTypeString() { return "scalingFactorType"; }
+    static constexpr char const * maxAbsolutePresChangeString() { return "maxAbsolutePressureChange"; }
+    static constexpr char const * maxRelativePresChangeString() { return "maxRelativePressureChange"; }
+    static constexpr char const * maxAbsoluteSatChangeString() { return "maxAbsoluteSaturationChange"; }
+    static constexpr char const * maxRelativeSatChangeString() { return "maxRelativeSaturationChange"; }
+
+    // trust region parameters
+    static constexpr char const * trustRegionMaxIterString() { return "trustRegionMaxIter"; }
+    static constexpr char const * trustRegionMinPotentialDiffString() { return "trustRegionMinPotentialDiff"; }
+    static constexpr char const * trustRegionMinInflectionString() { return "trustRegionMinInflection"; }
+    static constexpr char const * trustRegionMinKinkFactorString() { return "trustRegionMinKinkFactor"; }
+    static constexpr char const * trustRegionMinInfFactorString() { return "trustRegionMinInfFactor"; }
+    static constexpr char const * trustRegionKinkFactorDeltaString() { return "trustRegionKinkFactorDelta"; }
+    static constexpr char const * trustRegionRelResThresString() { return "trustRegionRelResidualThreshold"; }
+    static constexpr char const * trustRegionAbsResThresString() { return "trustRegionAbsResidualThreshold"; }
 
     // time stepping controls
     static constexpr char const * solutionChangeScalingFactorString() { return "solutionChangeScalingFactor"; }
     static constexpr char const * targetRelativePresChangeString() { return "targetRelativePressureChangeInTimeStep"; }
     static constexpr char const * targetPhaseVolFracChangeString() { return "targetPhaseVolFractionChangeInTimeStep"; }
 
-    // nonlinear solver parameters
-    static constexpr char const * maxRelativePresChangeString() { return "maxRelativePressureChange"; }
+    // nonlinear solver parameters    
     static constexpr char const * useTotalMassEquationString() { return "useTotalMassEquation"; }
+    static constexpr char const * allowNegativePressureString() { return "allowNegativePressure"; }
+    static constexpr char const * allowOutOfBoundSatString() { return "allowOutOfBoundSaturation"; }
+    static constexpr char const * allowLocalSatChoppingString() { return "allowLocalSatChopping"; }
+    static constexpr char const * minScalingFactorString() { return "minScalingFactor"; }
   };
 
 
@@ -289,6 +349,12 @@ private:
                         string const fieldKey,
                         string const boundaryFieldKey ) const;
 
+  /**
+   * @brief Utility function to chop saturations that lie outside of physical bounds
+   * @param[in] domain the domain object
+   */
+  void chopOutOfBoundPhaseVolFrac ( DomainPartition & domain );
+
   /// the max number of fluid phases
   integer m_numPhases;
 
@@ -298,14 +364,41 @@ private:
   /// flag to determine whether or not to use total velocity formulation
   integer m_useTotalMassEquation;
 
-  /// flag to determine whether or not to use trust region solver
-  integer m_trustRegion;
-
   /// flag to determine whether to use the flux or the residual inflection algorithm
   integer m_fluxInflection;
 
+  /// flag to determine whether to allow negative pressures
+  integer m_allowNegativePressure;
+
+  /// flag to determine whether to allow out of bounds saturation
+  integer m_allowOutOfBoundSaturation;
+
+  /// flag to determine whether to chop saturations that lie outside of physical bounds
+  integer m_allowSatChopping;
+
+  /// maximum (absolute) pressure change in a Newton iteration
+  real64 m_maxAbsolutePresChange;
+
+  /// maximum (absolute) saturation change in a Newton iteration
+  real64 m_maxAbsoluteSatChange;
+
+  /// maximum (relative) change in pressure in a Newton iteration
+  real64 m_maxRelativePresChange;
+
+  /// maximum (relative) change in saturation in a Newton iteration
+  real64 m_maxRelativeSatChange;
+
   /// scheme for density treatment in gravity
   GravityDensityScheme m_gravityDensityScheme;
+
+  /// scaling type for solution update  
+  ScalingType m_scalingType;
+
+  /// scaling type for solution update  
+  ScalingFactorType m_scalingFactorType;
+
+  /// minimum value of the scaling factor
+  real64 m_minScalingFactor;  
 
   /// target (relative) change in pressure in a time step
   real64 m_targetRelativePresChange;
@@ -316,6 +409,36 @@ private:
   /// damping factor for solution change targets
   real64 m_solutionChangeScalingFactor;
 
+public:
+
+  /// trust region parameters
+  struct TrustRegionParameters
+  {
+    /// maximum number of nonlinear iterations
+    integer maxIter;
+
+    /// minimum potential difference to apply a damping factor
+    real64 dPhiMin;
+
+    /// minimum directional second derivative to apply a damping factor
+    real64 d2RMin;
+   
+    /// minimum discontinuity damping factor
+    real64 minKinkFactor;
+
+    /// minimum inflection damping factor
+    real64 minInfFactor;
+
+    /// stretching factor applied to damping factor to allow for a small crossing of discontinuities
+    real64 kinkFactorDelta;
+
+    /// minimum relative residual threshold for applying damping factor
+    real64 relResThres;
+
+    /// minimum absolute residual threshold for applying damping factor
+    real64 absResThres;
+
+  } m_trustRegionParams;
 
 private:
 
@@ -366,7 +489,6 @@ void ImmiscibleMultiphaseFlow::applyFieldValue( real64 const & time_n,
                                                   boundaryFieldKey );
   } );
 }
-
 
 } // namespace geos
 

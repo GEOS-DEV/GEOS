@@ -53,6 +53,7 @@ using namespace dataRepository;
 using namespace constitutive;
 using namespace fields::immiscibleMultiphaseFlow;
 using namespace immiscibleMultiphaseKernels;
+using namespace immiscibleFlowUtilities;
 
 
 ImmiscibleMultiphaseFlow::ImmiscibleMultiphaseFlow( const string & name,
@@ -61,9 +62,7 @@ ImmiscibleMultiphaseFlow::ImmiscibleMultiphaseFlow( const string & name,
   FlowSolverBase( name, parent ),
   m_numPhases( 2 ),
   m_hasCapPressure( 0 ),
-  m_useTotalMassEquation ( 1 ),
-  m_trustRegion ( 1 ),
-  m_fluxInflection ( 0 )
+  m_fluxInflection ( 0 )  
 {
   this->registerWrapper( viewKeyStruct::inputTemperatureString(), &m_inputTemperature ).
     setInputFlag( InputFlags::REQUIRED ).
@@ -72,7 +71,7 @@ ImmiscibleMultiphaseFlow::ImmiscibleMultiphaseFlow( const string & name,
   this->registerWrapper( viewKeyStruct::useTotalMassEquationString(), &m_useTotalMassEquation ).
     setSizedFromParent( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setApplyDefaultValue( 1 ).
+    setApplyDefaultValue( 0 ).
     setDescription( "Flag indicating whether total mass equation is used" );
 
   this->registerWrapper( viewKeyStruct::gravityDensitySchemeString(), &m_gravityDensityScheme ).
@@ -98,15 +97,136 @@ ImmiscibleMultiphaseFlow::ImmiscibleMultiphaseFlow( const string & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( 0.2 ).
     setDescription( "Target (absolute) change in phase volume fraction in a time step" );
+
+  this->registerWrapper( viewKeyStruct::scalingTypeString(), &m_scalingType ).
+    setInputFlag( dataRepository::InputFlags::OPTIONAL ).
+    setApplyDefaultValue( ScalingType::Local ).
+    setDescription( "Solution scaling type."
+                    "Valid options:\n* " + EnumStrings< ScalingType >::concat( "\n* " ) );
+
+  this->registerWrapper( viewKeyStruct::scalingFactorTypeString(), &m_scalingFactorType ).
+    setInputFlag( dataRepository::InputFlags::OPTIONAL ).
+    setApplyDefaultValue( ScalingFactorType::MaxVariation ).
+    setDescription( "Scaling factor type."
+                    "Valid options:\n* " + EnumStrings< ScalingFactorType >::concat( "\n* " ) );
+
+  this->registerWrapper( viewKeyStruct::minScalingFactorString(), &m_minScalingFactor ).
+    setSizedFromParent( 0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( 0.1 ).
+    setDescription( "Minimum value for solution scaling factor" );
+
+  this->registerWrapper( viewKeyStruct::maxAbsolutePresChangeString(), &m_maxAbsolutePresChange ).
+    setSizedFromParent( 0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( -1.0 ).       // disabled by default
+    setDescription( "Maximum (absolute) pressure change in a Newton iteration" );
+
+  this->registerWrapper( viewKeyStruct::maxRelativePresChangeString(), &m_maxRelativePresChange ).
+    setSizedFromParent( 0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( -1.0 ).
+    setDescription( "Maximum (relative) change in pressure in a Newton iteration" );  
+  
+  this->registerWrapper( viewKeyStruct::maxAbsoluteSatChangeString(), &m_maxAbsoluteSatChange ).
+    setSizedFromParent( 0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( 0.2 ).       // << Appleyard chopping limit >>
+    setDescription( "Maximum (absolute) saturation change in a Newton iteration" );
+
+  this->registerWrapper( viewKeyStruct::maxRelativeSatChangeString(), &m_maxRelativeSatChange ).
+    setSizedFromParent( 0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( -1.0 ).     // disabled by default
+    setDescription( "Maximum (relative) change in saturation in a Newton iteration" );  
+
+  this->registerWrapper( viewKeyStruct::allowNegativePressureString(), &m_allowNegativePressure ).    
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( 0 ). // negative pressure is not allowed by default
+    setDescription( "Flag indicating if negative pressure is allowed" );
+
+  this->registerWrapper( viewKeyStruct::allowOutOfBoundSatString(), &m_allowOutOfBoundSaturation ).    
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( 1 ). // out of bound saturation is allowed by default
+    setDescription( "Flag indicating if out of bound saturation is allowed" );
+
+  this->registerWrapper( viewKeyStruct::allowLocalSatChoppingString(), &m_allowSatChopping ).
+    setSizedFromParent( 0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( 0 ). // local saturation chopping is allowed by default
+    setDescription( "Flag indicating whether local (cell-wise) chopping of out of bound saturation is allowed" );
+
+  this->registerWrapper( viewKeyStruct::trustRegionMaxIterString(), &m_trustRegionParams.maxIter ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( 5 ).
+    setDescription( "Maximum number of trust region iterations" );
+
+  this->registerWrapper( viewKeyStruct::trustRegionMinPotentialDiffString(), &m_trustRegionParams.dPhiMin ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( 1.0 ).
+    setDescription( "Minimum potential difference to apply a damping factor" );
+
+  this->registerWrapper( viewKeyStruct::trustRegionMinInflectionString(), &m_trustRegionParams.d2RMin ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( 0.1 ).
+    setDescription( "Minimum directional second derivative to apply a damping factor" );
+
+  this->registerWrapper( viewKeyStruct::trustRegionMinKinkFactorString(), &m_trustRegionParams.minKinkFactor ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( 0.1 ).
+    setDescription( "Minimum discontinuity damping factor" );
+
+  this->registerWrapper( viewKeyStruct::trustRegionMinInfFactorString(), &m_trustRegionParams.minInfFactor ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( 0.1 ).
+    setDescription( "Minimum inflection damping factor" );
+
+  this->registerWrapper( viewKeyStruct::trustRegionKinkFactorDeltaString(), &m_trustRegionParams.kinkFactorDelta ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( 1.05 ).
+    setDescription( "Stretching factor applied to damping factor to allow for a small crossing of discontinuities" );
+
+  this->registerWrapper( viewKeyStruct::trustRegionRelResThresString(), &m_trustRegionParams.relResThres ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( 0.6 ).
+    setDescription( "Minimum relative residual threshold for applying damping factor" );
+
+  this->registerWrapper( viewKeyStruct::trustRegionAbsResThresString(), &m_trustRegionParams.absResThres ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( 1e-1 ).
+    setDescription( "Minimum absolute residual threshold for applying damping factor" );
+  
 }
 
 void ImmiscibleMultiphaseFlow::postInputInitialization()
 {
   FlowSolverBase::postInputInitialization();
+
+  GEOS_ERROR_IF_GT_MSG( m_maxAbsoluteSatChange, 1.0,
+                        getWrapperDataContext( viewKeyStruct::maxAbsoluteSatChangeString() ) <<
+                        ": The maximum absolute change in component saturation in a Newton iteration must be smaller than or equal to 1.0" ); 
+  GEOS_ERROR_IF_LE_MSG( m_targetRelativePresChange, 0.0,
+                        getWrapperDataContext( viewKeyStruct::targetRelativePresChangeString() ) <<
+                        ": The target relative change in pressure in a time step must be larger than 0.0" );  
+  GEOS_ERROR_IF_LE_MSG( m_targetPhaseVolFracChange, 0.0,
+                        getWrapperDataContext( viewKeyStruct::targetPhaseVolFracChangeString() ) <<
+                        ": The target change in phase volume fraction in a time step must be larger than or equal to 0.0" );
+  GEOS_ERROR_IF_LT_MSG( m_solutionChangeScalingFactor, 0.0,
+                        getWrapperDataContext( viewKeyStruct::solutionChangeScalingFactorString() ) <<
+                        ": The solution change scaling factor must be larger or equal to 0.0" );
+  GEOS_ERROR_IF_GT_MSG( m_solutionChangeScalingFactor, 1.0,
+                        getWrapperDataContext( viewKeyStruct::solutionChangeScalingFactorString() ) <<
+                        ": The solution change scaling factor must be smaller or equal to 1.0" );
+  GEOS_ERROR_IF_LE_MSG( m_minScalingFactor, 0.0,
+                        getWrapperDataContext( viewKeyStruct::minScalingFactorString() ) <<
+                        ": The minumum scaling factor must be larger than 0.0" );
+  GEOS_ERROR_IF_GT_MSG( m_minScalingFactor, 1.0,
+                        getWrapperDataContext( viewKeyStruct::minScalingFactorString() ) <<
+                        ": The minumum scaling factor must be smaller than or equal to 1.0" );
 }
 
 void ImmiscibleMultiphaseFlow::registerDataOnMesh( Group & meshBodies )
-{
+{  
   FlowSolverBase::registerDataOnMesh( meshBodies );
 
   // 0. Find a "reference" fluid model name (at this point, models are already attached to subregions)
@@ -180,6 +300,9 @@ void ImmiscibleMultiphaseFlow::registerDataOnMesh( Group & meshBodies )
 
       subRegion.registerField< solutionUpdate >( getName() ).
         reference().resizeDimension< 1 >( m_numPhases );
+
+      subRegion.registerField< fields::flow::pressureScalingFactor >( getName() );
+      subRegion.registerField< phaseVolumeFractionScalingFactor >( getName() );
 
     } );
 
@@ -1159,6 +1282,173 @@ real64 ImmiscibleMultiphaseFlow::calculateResidualNorm( real64 const & GEOS_UNUS
   return residualNorm;
 }
 
+// real64
+// ImmiscibleMultiphaseFlow::scalingForSystemSolution( DomainPartition & domain,
+//                                                     DofManager const & dofManager,
+//                                                     arrayView1d< real64 const > const & localSolution,
+//                                                     arrayView1d< real64 const > const & localResidual )
+// {
+//   GEOS_MARK_FUNCTION; // Trust Region Solver
+//   if ( m_trustRegion == 0 )
+//   {
+//     return 1.0;
+//   }
+
+//   // Update solution field
+//   updateSolutionField( dofManager, localSolution, domain );
+
+//   // Compute residual norm
+//   real64 resNorm = calculateResidualNorm( 0, 0, domain, dofManager, localResidual );
+
+//   // Compute kink scaling factor 
+//   real64 localKinkFactor = 1.0;
+
+//   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
+//   FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
+//   FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( m_discretizationName );
+  
+//   string const dofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
+
+//   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
+//                                                                MeshLevel const & mesh,
+//                                                                string_array const & )
+//   {
+//     fluxApprox.forAllStencils( mesh, [&]( auto & stencil )
+//     {
+//       real64 stencilKinkFactor;            
+
+//       // step 1.1: compute the kink damping factor in the stencil
+
+//       typename TYPEOFREF( stencil ) ::KernelWrapper stencilWrapper = stencil.createKernelWrapper();
+//       immiscibleMultiphaseKernels::
+//         KinkFactorKernelFactory::createAndLaunch< parallelDevicePolicy<> >( m_numPhases,
+//                                                                             dofManager.rankOffset(),                                                                            
+//                                                                             dofKey,
+//                                                                             localSolution,
+//                                                                             localResidual,
+//                                                                             getName(),
+//                                                                             mesh.getElemManager(),
+//                                                                             stencilWrapper,
+//                                                                             m_hasCapPressure,
+//                                                                             resNorm,
+//                                                                             stencilKinkFactor );           
+
+//       // step 1.2: local reduction across stencils
+
+//       localKinkFactor = fmin( localKinkFactor, stencilKinkFactor );
+//     } );
+//   } );
+
+//   // step 1.3: global reduction across mpi ranks
+
+//   real64 globalKinkFactor = MpiWrapper::min( localKinkFactor );
+
+//   // Compute inflection scaling factor
+//   real64 localInflectionFactor = 1.0;  
+
+//   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
+//                                                                MeshLevel const & mesh,
+//                                                                string_array const & regionNames )
+//   {    
+//     mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
+//                                                                                           CellElementSubRegion const & subRegion )
+//     {      
+//       // Build wrappers to the fluid, relative permeability and capillary pressure model objects
+//       string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
+//       TwoPhaseImmiscibleFluid const & fluid = getConstitutiveModel< TwoPhaseImmiscibleFluid >( subRegion, fluidName );
+//       TwoPhaseImmiscibleFluid::KernelWrapper fluidWrapper = fluid.createKernelWrapper();
+
+//       string const & relPermName = subRegion.getReference< string >( viewKeyStruct::relPermNamesString() );
+//       BrooksCoreyRelativePermeability const & relPerm = getConstitutiveModel< BrooksCoreyRelativePermeability >( subRegion, relPermName );
+//       BrooksCoreyRelativePermeability::KernelWrapper relPermWrapper = relPerm.createKernelWrapper();
+
+//       string const & solidName = subRegion.getReference< string >( viewKeyStruct::solidNamesString() );
+//       CoupledSolidBase const & solid = getConstitutiveModel< CoupledSolidBase >( subRegion, solidName );
+
+//       BrooksCoreyCapillaryPressure::KernelWrapper* capPressureWrapper = nullptr;
+//       if ( m_hasCapPressure )
+//       {
+//         string const & cappresName = subRegion.getReference< string >( viewKeyStruct::capPressureNamesString() );
+//         BrooksCoreyCapillaryPressure const & capPressure = getConstitutiveModel< BrooksCoreyCapillaryPressure >( subRegion, cappresName );
+//         BrooksCoreyCapillaryPressure::KernelWrapper wrapper = capPressure.createKernelWrapper();
+//         capPressureWrapper = &wrapper;
+//       }
+
+//       fluxApprox.forAllStencils( mesh, [&]( auto & stencil )
+//       {
+//         real64 stencilInflectionFactor;
+
+//         // Use flux inflection analysis
+//         if ( m_fluxInflection == 1 && stencil.size() > 0 && subRegion.size() > 0 )
+//         {
+//           // step 2.1a: compute the inflection damping factor in the subRegion
+
+//           typename TYPEOFREF( stencil ) ::KernelWrapper stencilWrapper = stencil.createKernelWrapper();
+//           immiscibleMultiphaseKernels::
+//             FluxInflectionFactorKernelFactory::createAndLaunch< parallelDevicePolicy<> >( m_numPhases,
+//                                                                                           dofManager.rankOffset(),                                                                            
+//                                                                                           dofKey,
+//                                                                                           localSolution,
+//                                                                                           globalKinkFactor,
+//                                                                                           getName(),
+//                                                                                           mesh.getElemManager(),
+//                                                                                           stencilWrapper,
+//                                                                                           fluidWrapper,
+//                                                                                           relPermWrapper,
+//                                                                                           capPressureWrapper,
+//                                                                                           m_hasCapPressure,
+//                                                                                           stencilInflectionFactor );           
+
+//           // step 2.2a: local reduction across meshBodies/regions/subRegions/stencils
+
+//           localInflectionFactor = fmin( localInflectionFactor, stencilInflectionFactor );
+//         }
+//         // Use residual inflection analysis
+//         else if ( stencil.size() > 0 && subRegion.size() > 0 )
+//         {
+//           // step 2.1b: compute the inflection damping factor in the subRegion
+
+//           typename TYPEOFREF( stencil ) ::KernelWrapper stencilWrapper = stencil.createKernelWrapper();
+//           immiscibleMultiphaseKernels::
+//             ResidualInflectionFactorKernelFactory::createAndLaunch< parallelDevicePolicy<> >( m_numPhases,
+//                                                                                               dofManager.rankOffset(),                                                                            
+//                                                                                               dofKey,
+//                                                                                               localSolution,
+//                                                                                               localResidual,
+//                                                                                               globalKinkFactor,
+//                                                                                               getName(),                                                                                              
+//                                                                                               mesh.getElemManager(),
+//                                                                                               subRegion,
+//                                                                                               solid,
+//                                                                                               stencilWrapper,
+//                                                                                               fluidWrapper,
+//                                                                                               relPermWrapper,
+//                                                                                               capPressureWrapper,
+//                                                                                               m_hasCapPressure,
+//                                                                                               resNorm,
+//                                                                                               stencilInflectionFactor );           
+
+//           // step 2.2b: local reduction across meshBodies/regions/subRegions/stencils
+
+//           localInflectionFactor = fmin( localInflectionFactor, stencilInflectionFactor );
+//         }      
+//       } );    
+//     } );
+//   } );
+
+//   // step 2.3: global reduction across mpi ranks
+
+//   real64 globalInflectionFactor = MpiWrapper::min( localInflectionFactor );
+
+//   globalKinkFactor = fmax( globalKinkFactor, 0.1 ); // 0.8
+//   globalInflectionFactor = fmax( globalInflectionFactor, 0.1 ); // 0.4
+
+//   // step 2.4: global combined damping factor
+//   real64 scalingFactor = fmax( globalKinkFactor * globalInflectionFactor, 0.1 ); /////// 0.01, 0.1, 0.2, 0.4, 1.0
+
+//   return scalingFactor;
+// }
+
 real64
 ImmiscibleMultiphaseFlow::scalingForSystemSolution( DomainPartition & domain,
                                                     DofManager const & dofManager,
@@ -1166,11 +1456,102 @@ ImmiscibleMultiphaseFlow::scalingForSystemSolution( DomainPartition & domain,
                                                     arrayView1d< real64 const > const & localResidual )
 {
   GEOS_MARK_FUNCTION; // Trust Region Solver
-  if ( m_trustRegion == 0 )
+  if ( m_scalingFactorType == ScalingFactorType::TrustRegion )
   {
-    return 1.0;
+    return scalingForSystemSolutionTrustRegion( domain, dofManager, localSolution, localResidual );
   }
 
+  string const dofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
+  real64 scalingFactor = 1.0;
+  real64 minPresScalingFactor = 1.0, minSatScalingFactor = 1.0;
+
+  stdVector< MpiWrapper::PairType< real64, globalIndex > > regionDeltaPresMaxLoc;
+  stdVector< MpiWrapper::PairType< real64, globalIndex > > regionDeltaSatMaxLoc;
+
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                                               MeshLevel & mesh,
+                                                               string_array const & regionNames )
+  {
+    mesh.getElemManager().forElementSubRegions( regionNames,
+                                                [&]( localIndex const,
+                                                     ElementSubRegionBase & subRegion )
+    {
+      arrayView1d< globalIndex const > const localToGlobalMap = subRegion.localToGlobalMap();
+      arrayView1d< real64 const > const pressure = subRegion.getField< fields::flow::pressure >();
+      arrayView2d< real64 const, immiscibleFlow::USD_PHASE > const phaseVolFrac = subRegion.getField< fields::immiscibleMultiphaseFlow::phaseVolumeFraction >();
+      arrayView1d< real64 > pressureScalingFactor = subRegion.getField< fields::flow::pressureScalingFactor >();
+      arrayView1d< real64 > saturationScalingFactor = subRegion.getField< fields::immiscibleMultiphaseFlow::phaseVolumeFractionScalingFactor >();
+
+       auto const subRegionData =
+       immiscibleMultiphaseKernels::
+         SolutionScalingKernelFactory::
+         createAndLaunch< parallelDevicePolicy<> >( m_maxRelativePresChange,
+                                                    m_maxAbsolutePresChange,                                                    
+                                                    m_maxRelativeSatChange,
+                                                    m_maxAbsoluteSatChange,
+                                                    pressure,
+                                                    phaseVolFrac,
+                                                    pressureScalingFactor,
+                                                    saturationScalingFactor,
+                                                    dofManager.rankOffset(),
+                                                    m_numPhases,
+                                                    dofKey,
+                                                    subRegion,
+                                                    localSolution );
+
+      if( subRegion.size() > 0 || subRegion.size() !=  subRegion.getNumberOfGhosts() )
+      {
+        if( m_scalingType == ScalingType::Global )
+        {
+          scalingFactor = std::min( scalingFactor, subRegionData.localMinVal );
+        }
+
+        regionDeltaPresMaxLoc.push_back( { subRegionData.localMaxDeltaPres,
+                                           subRegionData.localMaxDeltaPresLoc >= 0 ? localToGlobalMap[subRegionData.localMaxDeltaPresLoc] : -1 } );
+        minPresScalingFactor = std::min( minPresScalingFactor, subRegionData.localMinPresScalingFactor );
+
+        regionDeltaSatMaxLoc.push_back( { subRegionData.localMaxDeltaSat,
+                                          subRegionData.localMaxDeltaSatLoc >= 0 ? localToGlobalMap[subRegionData.localMaxDeltaSatLoc] : -1 } );
+        minSatScalingFactor = std::min( minSatScalingFactor, subRegionData.localMinSatScalingFactor );
+      }
+    } );
+  } );
+
+  auto globalDeltaPresMax = MpiWrapper::max< real64, globalIndex >( regionDeltaPresMaxLoc );
+  auto globalDeltaSatMax = MpiWrapper::max< real64, globalIndex >( regionDeltaSatMaxLoc );
+
+  scalingFactor = MpiWrapper::min( scalingFactor );
+  minPresScalingFactor = MpiWrapper::min( minPresScalingFactor );
+  minSatScalingFactor = MpiWrapper::min( minSatScalingFactor );
+
+  GEOS_LOG_LEVEL_RANK_0( logInfo::Solution,
+                         GEOS_FMT( "        {}: Max pressure change = {:.3f} Pa (before scaling) at cell {}",
+                                   getName(), globalDeltaPresMax.first, globalDeltaPresMax.second ) );
+
+  GEOS_LOG_LEVEL_RANK_0( logInfo::Solution,
+                         GEOS_FMT( "        {}: Max component saturation change = {:.3f} (before scaling) at cell {}",
+                                   getName(), globalDeltaSatMax.first, globalDeltaSatMax.second ) );
+
+  if( m_scalingType == ScalingType::Local )
+  {
+    GEOS_LOG_LEVEL_RANK_0( logInfo::Solution, GEOS_FMT( "        {}: Min pressure scaling factor = {}", getName(), minPresScalingFactor ) );
+    GEOS_LOG_LEVEL_RANK_0( logInfo::Solution, GEOS_FMT( "        {}: Min component saturation scaling factor = {}", getName(), minSatScalingFactor ) );
+  }
+
+  return LvArray::math::max( scalingFactor, m_minScalingFactor );
+}
+
+real64
+ImmiscibleMultiphaseFlow::scalingForSystemSolutionTrustRegion( DomainPartition & domain,
+                                                               DofManager const & dofManager,
+                                                               arrayView1d< real64 const > const & localSolution,
+                                                               arrayView1d< real64 const > const & localResidual )
+{
+  if ( m_scalingType == ScalingType::Local )
+  {
+    return 1.0; // Trust region solver currently implemented only for global scaling
+  }
+  
   // Update solution field
   updateSolutionField( dofManager, localSolution, domain );
 
@@ -1207,7 +1588,8 @@ ImmiscibleMultiphaseFlow::scalingForSystemSolution( DomainPartition & domain,
                                                                             mesh.getElemManager(),
                                                                             stencilWrapper,
                                                                             m_hasCapPressure,
-                                                                            resNorm,
+                                                                            resNorm,                                                                       
+                                                                            m_trustRegionParams,
                                                                             stencilKinkFactor );           
 
       // step 1.2: local reduction across stencils
@@ -1274,6 +1656,7 @@ ImmiscibleMultiphaseFlow::scalingForSystemSolution( DomainPartition & domain,
                                                                                           relPermWrapper,
                                                                                           capPressureWrapper,
                                                                                           m_hasCapPressure,
+                                                                                          m_trustRegionParams,
                                                                                           stencilInflectionFactor );           
 
           // step 2.2a: local reduction across meshBodies/regions/subRegions/stencils
@@ -1303,6 +1686,7 @@ ImmiscibleMultiphaseFlow::scalingForSystemSolution( DomainPartition & domain,
                                                                                               capPressureWrapper,
                                                                                               m_hasCapPressure,
                                                                                               resNorm,
+                                                                                              m_trustRegionParams,
                                                                                               stencilInflectionFactor );           
 
           // step 2.2b: local reduction across meshBodies/regions/subRegions/stencils
@@ -1326,31 +1710,140 @@ ImmiscibleMultiphaseFlow::scalingForSystemSolution( DomainPartition & domain,
   return scalingFactor;
 }
 
+bool ImmiscibleMultiphaseFlow::checkSystemSolution( DomainPartition & domain,
+                                                    DofManager const & dofManager,
+                                                    arrayView1d< real64 const > const & localSolution,
+                                                    real64 const scalingFactor )
+{
+  GEOS_MARK_FUNCTION;
+
+  string const dofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
+  integer localCheck = 1;
+  real64 minPres = 0.0, minSat = 0.0, maxSat = 1.0;
+  integer numNegPres = 0, numNegSat = 0, numUnitySat = 0;
+
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                                                 MeshLevel & mesh,
+                                                                 string_array const & regionNames )
+  {
+    mesh.getElemManager().forElementSubRegions( regionNames,
+                                                [&]( localIndex const,
+                                                     ElementSubRegionBase & subRegion )
+    {
+      arrayView1d< real64 const > const pressure =
+        subRegion.getField< fields::flow::pressure >();
+      arrayView2d< real64 const, immiscibleFlow::USD_PHASE > const phaseVolFrac =
+        subRegion.getField< fields::immiscibleMultiphaseFlow::phaseVolumeFraction >();
+      arrayView1d< real64 > pressureScalingFactor = subRegion.getField< fields::flow::pressureScalingFactor >();
+      arrayView1d< real64 > saturationScalingFactor = subRegion.getField< fields::immiscibleMultiphaseFlow::phaseVolumeFractionScalingFactor >();
+
+      auto subRegionData =
+      immiscibleMultiphaseKernels::
+        SolutionCheckKernelFactory::
+        createAndLaunch< parallelDevicePolicy<> >( m_numPhases,
+                                                   subRegion,
+                                                   dofManager.rankOffset(),
+                                                   dofKey,
+                                                   localSolution,                                                   
+                                                   pressure,
+                                                   phaseVolFrac,
+                                                   m_scalingType,
+                                                   scalingFactor,
+                                                   pressureScalingFactor,
+                                                   saturationScalingFactor,                                                   
+                                                   m_allowNegativePressure,
+                                                   m_allowOutOfBoundSaturation );
+
+    localCheck = fmin( localCheck, subRegionData.localMinVal );
+
+    minPres  = fmin( minPres, subRegionData.localMinPres );
+    minSat = fmin( minSat, subRegionData.localMinSat );
+    maxSat = fmax( maxSat, subRegionData.localMaxSat );
+    numNegPres += subRegionData.localNumNegPressures;
+    numNegSat += subRegionData.localNumNegSat;
+    numUnitySat += subRegionData.localNumUnitySat;
+    } );
+  } );
+
+  minPres  = MpiWrapper::min( minPres );
+  minSat = MpiWrapper::min( minSat );
+  maxSat = MpiWrapper::max( maxSat );
+  numNegPres = MpiWrapper::sum( numNegPres );
+  numNegSat = MpiWrapper::sum( numNegSat );
+  numUnitySat = MpiWrapper::sum( numUnitySat );
+
+  if( numNegPres > 0 )
+    GEOS_LOG_LEVEL_RANK_0( logInfo::Solution,
+                            GEOS_FMT( "        {}: Number of negative pressure values: {}, minimum value: {} Pa",
+                                      getName(), numNegPres, fmt::format( "{:.{}f}", minPres, 3 ) ) );
+  if( numNegSat > 0 )
+    GEOS_LOG_LEVEL_RANK_0( logInfo::Solution,
+                            GEOS_FMT( "        {}: Number of negative component saturation values: {}, minimum value: {}",
+                                      getName(), numNegSat, fmt::format( "{:.{}f}", minSat, 3 ) ) );
+  if( numUnitySat > 0 )
+    GEOS_LOG_LEVEL_RANK_0( logInfo::Solution,
+                            GEOS_FMT( "        {}: Number of saturation values above unity: {}, maximum value: {}",
+                                      getName(), numUnitySat, fmt::format( "{:.{}f}", maxSat, 3 ) ) );
+
+  return MpiWrapper::min( localCheck );
+}                                                      
+
 void ImmiscibleMultiphaseFlow::applySystemSolution( DofManager const & dofManager,
                                                     arrayView1d< real64 const > const & localSolution,
                                                     real64 const scalingFactor,
                                                     real64 const dt,
                                                     DomainPartition & domain )
 {
+  GEOS_MARK_FUNCTION;
   GEOS_UNUSED_VAR( dt );
+
+  bool const globalScaling = m_scalingType == ScalingType::Global;
 
   DofManager::CompMask pressureMask( m_numDofPerCell, 0, 1 );
 
   // 1. apply the pressure update
-  dofManager.addVectorToField( localSolution,
-                               viewKeyStruct::elemDofFieldString(),
-                               fields::flow::pressure::key(),
-                               scalingFactor,
-                               pressureMask );
+  if ( globalScaling )
+  {
+    dofManager.addVectorToField( localSolution,
+                                 viewKeyStruct::elemDofFieldString(),
+                                 fields::flow::pressure::key(),
+                                 scalingFactor,
+                                 pressureMask );
+  }
+  else
+  {
+    dofManager.addVectorToField( localSolution,
+                                 viewKeyStruct::elemDofFieldString(),
+                                 fields::flow::pressure::key(),
+                                 fields::flow::pressureScalingFactor::key(),
+                                 pressureMask );
+  }  
 
   // 2. apply the phaseVolumeFraction update
-  dofManager.addVectorToField( localSolution,
-                               viewKeyStruct::elemDofFieldString(),
-                               fields::immiscibleMultiphaseFlow::phaseVolumeFraction::key(),
-                               scalingFactor,
-                               ~pressureMask );
+  if( globalScaling )
+  {
+    dofManager.addVectorToField( localSolution,
+                                 viewKeyStruct::elemDofFieldString(),
+                                 fields::immiscibleMultiphaseFlow::phaseVolumeFraction::key(),
+                                 scalingFactor,
+                                 ~pressureMask );
+  }
+  else
+  {
+    dofManager.addVectorToField( localSolution,
+                                 viewKeyStruct::elemDofFieldString(),
+                                 fields::immiscibleMultiphaseFlow::phaseVolumeFraction::key(),
+                                 fields::immiscibleMultiphaseFlow::phaseVolumeFractionScalingFactor::key(),
+                                 ~pressureMask );
+  }
 
-  // 3. synchronize
+  // 3. ensure primary variables are within physical bounds
+  if ( m_allowSatChopping )
+  {
+    chopOutOfBoundPhaseVolFrac( domain );
+  }
+
+  // 4. synchronize
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
                                                                 string_array const & regionNames )
@@ -1629,6 +2122,48 @@ real64 ImmiscibleMultiphaseFlow::setNextDtBasedOnStateChange( real64 const & cur
 
   return std::min( nextDtPressure, nextDtPhaseVolFrac );
 
+}
+
+void ImmiscibleMultiphaseFlow::chopOutOfBoundPhaseVolFrac( DomainPartition & domain )
+{
+  GEOS_MARK_FUNCTION;
+
+  integer const numPhase = m_numPhases;
+  real64 const minSat = 0.0;
+  real64 const maxSat = 1.0;
+
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                                               MeshLevel & mesh,
+                                                               string_array const & regionNames )
+  {
+    mesh.getElemManager().forElementSubRegions( regionNames,
+                                                [&]( localIndex const,
+                                                     ElementSubRegionBase & subRegion )
+    {
+      arrayView1d< integer const > const ghostRank = subRegion.ghostRank();
+
+      arrayView2d< real64, immiscibleFlow::USD_PHASE > const phaseVolFrac =
+      subRegion.getField< fields::immiscibleMultiphaseFlow::phaseVolumeFraction >();
+
+      forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const ei )
+      {
+        if( ghostRank[ei] < 0 )
+        {
+          for( integer ip = 0; ip < numPhase; ++ip )
+          {
+            if( phaseVolFrac[ei][ip] < minSat )
+            {
+              phaseVolFrac[ei][ip] = minSat;
+            }
+            else if( phaseVolFrac[ei][ip] > maxSat )
+            {
+              phaseVolFrac[ei][ip] = maxSat;
+            }
+          }
+        }
+      } );
+    } );
+  } );
 }
 
 

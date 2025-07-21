@@ -52,6 +52,7 @@ namespace geos
 namespace immiscibleMultiphaseKernels
 {
 using namespace constitutive;
+using namespace immiscibleFlowUtilities;
 
 
 /******************************** FluxComputeKernelBase ********************************/
@@ -1428,6 +1429,659 @@ public:
     }
   }
 
+};
+
+/******************************** SolutionCheckKernel ********************************/
+
+/**
+ * @class SolutionCheckKernel
+ * @brief Define the kernel for checking the updated solution
+ */
+class SolutionCheckKernel
+{
+public:
+
+  /**
+ * @brief Create a new kernel instance
+ * @param[in] numPhases the number of fluid phases
+ * @param[in] subRegion the element subregion
+ * @param[in] rankOffset the offset of my MPI rank
+ * @param[in] dofKey the string key to retrieve the degress of freedom numbers
+ * @param[in] localSolution the solution vector on my MPI rank
+ * @param[in] pressure pressure vector
+ * @param[in] phaseVolFrac phase volume fraction vector
+ * @param[in] pressureScalingFactor scaling factor for pressure
+ * @param[in] compDensScalingFactor scaling factor for component density
+ * @param[in] allowNegativePressure flag to allow negative pressure
+ * @param[in] allowOutOfBoundsSaturation flag to allow out of bounds saturation
+ * @param[out] StackVariables information about the solution update inside the subRegion
+ */
+  SolutionCheckKernel( integer const numPhases,
+                       ElementSubRegionBase const & subRegion,
+                       globalIndex const rankOffset,
+                       string const dofKey,
+                       arrayView1d< real64 const > const & localSolution,                       
+                       arrayView1d< real64 const > const pressure,
+                       arrayView2d< real64 const > const phaseVolFrac,
+                       ScalingType const scalingType,
+                       real64 const scalingFactor,
+                       arrayView1d< real64 > pressureScalingFactor,
+                       arrayView1d< real64 > saturationScalingFactor,
+                       integer const allowNegativePressure,
+                       integer const allowOutOfBoundsSaturation )
+    : m_numPhase( numPhases ),
+    m_rankOffset( rankOffset ),
+    m_dofNumber( subRegion.getReference< array1d< globalIndex > >( dofKey ) ),
+    m_ghostRank( subRegion.ghostRank() ),
+    m_localSolution( localSolution ),
+    m_pressure( pressure ),
+    m_phaseVolFrac( phaseVolFrac ),
+    m_scalingType( scalingType ),
+    m_scalingFactor( scalingFactor ),
+    m_pressureScalingFactor( pressureScalingFactor ),
+    m_saturationScalingFactor( saturationScalingFactor ),
+    m_allowNegativePressure( allowNegativePressure ),
+    m_allowOutOfBoundsSaturation( allowOutOfBoundsSaturation )
+  {}
+
+  /**
+   * @struct StackVariables
+   * @brief Kernel variables located on the stack
+   */
+  struct StackVariables
+  {
+    GEOS_HOST_DEVICE
+    StackVariables()
+    { } 
+
+    StackVariables( real64 _localMinVal,
+                    real64 _localMinPres,
+                    real64 _localMinSat,
+                    real64 _localMaxSat,
+                    integer _localNumNegPressures,
+                    integer _localNumNegSat,
+                    integer _localNumUnitySat )
+      :
+      localMinVal( _localMinVal ),
+      localRow( -1 ),
+      localMinPres( _localMinPres ),
+      localMinSat( _localMinSat ),
+      localMaxSat( _localMaxSat ),
+      localNumNegPressures( _localNumNegPressures ),
+      localNumNegSat( _localNumNegSat ),
+      localNumUnitySat( _localNumUnitySat )
+    { }
+
+    integer localMinVal;
+    localIndex localRow;
+
+    real64 localMinPres;
+    real64 localMinSat;
+    real64 localMaxSat;
+
+    integer localNumNegPressures;
+    integer localNumNegSat;
+    integer localNumUnitySat;
+
+  };
+
+  /**
+   * @brief Getter for the ghost rank
+   * @param[in] i the looping index of the element/node/face
+   * @return the ghost rank of the element/node/face
+   */
+  GEOS_HOST_DEVICE
+  integer ghostRank( localIndex const i ) const
+  { return m_ghostRank( i ); }
+
+  /**
+   * @brief Performs the kernel launch
+   * @tparam POLICY the policy used in the RAJA kernels
+   * @tparam KERNEL_TYPE the kernel type
+   * @param[in] numElems the number of elements
+   * @param[inout] kernelComponent the kernel component providing access to the compute function
+   */
+  template< typename POLICY, typename KERNEL_TYPE >
+  static StackVariables
+  launch( localIndex const numElems,
+          KERNEL_TYPE const & kernelComponent )
+  {
+    RAJA::ReduceMin< ReducePolicy< POLICY >, integer > globalMinVal( 1 );
+
+    RAJA::ReduceMin< ReducePolicy< POLICY >, real64 > minPres( 0.0 );
+    RAJA::ReduceMin< ReducePolicy< POLICY >, real64 > minSat( 0.0 );
+    RAJA::ReduceMax< ReducePolicy< POLICY >, real64 > maxSat( 1.0 );
+
+    RAJA::ReduceSum< ReducePolicy< POLICY >, integer > numNegPressures( 0 );
+    RAJA::ReduceSum< ReducePolicy< POLICY >, integer > numNegSat( 0 );
+    RAJA::ReduceSum< ReducePolicy< POLICY >, integer > numUnitySat( 0 );
+
+    forAll< POLICY >( numElems, [=] GEOS_HOST_DEVICE ( localIndex const ei )
+    {
+      if( kernelComponent.ghostRank( ei ) >= 0 )
+      {
+        return;
+      }
+
+      StackVariables stack;
+      kernelComponent.setup( ei, stack );
+      kernelComponent.compute( ei, stack );
+
+      globalMinVal.min( stack.localMinVal );
+
+      minPres.min( stack.localMinPres );
+      minSat.min( stack.localMinSat );
+      maxSat.max( stack.localMaxSat );
+
+      numNegPressures += stack.localNumNegPressures;
+      numNegSat += stack.localNumNegSat;
+      numUnitySat += stack.localNumUnitySat;
+    } );
+
+    return StackVariables( globalMinVal.get(),
+                           minPres.get(),
+                           minSat.get(),
+                           maxSat.get(),
+                           numNegPressures.get(),
+                           numNegSat.get(),
+                           numUnitySat.get() );
+  }
+
+  GEOS_HOST_DEVICE
+  void setup( localIndex const ei,
+              StackVariables & stack ) const
+  {
+    stack.localMinVal = 1;
+
+    stack.localRow = m_dofNumber[ei] - m_rankOffset;
+
+    stack.localMinPres = 0.0;
+    stack.localMinSat = 0.0;
+    stack.localMaxSat = 1.0;
+
+    stack.localNumNegPressures = 0;
+    stack.localNumNegSat = 0;
+    stack.localNumUnitySat = 0;
+  }
+
+  /**
+   * @brief Compute the local value
+   * @param[in] ei the element index
+   * @param[inout] stack the stack variables
+   */
+  GEOS_HOST_DEVICE
+  void compute( localIndex const ei,
+                StackVariables & stack ) const
+  {
+    bool const localScaling = m_scalingType == ScalingType::Local;
+
+    real64 const newPres = m_pressure[ei] + (localScaling ? m_pressureScalingFactor[ei] : m_scalingFactor) * m_localSolution[stack.localRow];
+    if( newPres < 0 )
+    {
+      if( !m_allowNegativePressure )
+      {
+        stack.localMinVal = 0;
+      }
+      stack.localNumNegPressures += 1;
+      if( newPres < stack.localMinPres )
+      {
+        stack.localMinPres = newPres;
+      }
+    }
+
+    for( integer ip = 0; ip < m_numPhase; ++ip )
+    {
+      real64 const newSat = ip == 0 ? m_phaseVolFrac[ei][ip] + (localScaling ? m_saturationScalingFactor[ei] : m_scalingFactor) * m_localSolution[stack.localRow + 1] :  // S = S + dS || S = S - dS
+                                      m_phaseVolFrac[ei][ip] - (localScaling ? m_saturationScalingFactor[ei] : m_scalingFactor) * m_localSolution[stack.localRow + 1] ;
+      
+      if( newSat < 0.0 )
+      {        
+        if( !m_allowOutOfBoundsSaturation )
+        {
+          stack.localMinVal = 0;
+        }
+        stack.localNumNegSat += 1;
+        if( newSat < stack.localMinSat )
+        {
+          stack.localMinSat = newSat;
+        }
+      }
+      else if( newSat > 1.0 )
+      {
+        if( !m_allowOutOfBoundsSaturation )
+        {
+          stack.localMinVal = 0;
+        }
+        stack.localNumUnitySat += 1;
+        if( newSat > stack.localMaxSat )
+        {
+          stack.localMaxSat = newSat;
+        }
+      }      
+    }
+  }
+
+protected:
+
+  /// Number of components
+  integer const m_numPhase;  
+
+  /// Offset for my MPI rank
+  globalIndex const m_rankOffset;  
+
+  /// View on the dof numbers
+  arrayView1d< globalIndex const > const m_dofNumber;
+
+  /// View on the ghost ranks
+  arrayView1d< integer const > const m_ghostRank;
+
+  /// View on the local residual
+  arrayView1d< real64 const > const m_localSolution;
+
+  /// View on the primary variables
+  arrayView1d< real64 const > const m_pressure;
+  arrayView2d< real64 const, immiscibleFlow::USD_PHASE > const m_phaseVolFrac;
+
+  /// scaling type (global or local)
+  ScalingType const m_scalingType;
+
+  /// scaling factor
+  real64 const m_scalingFactor;
+
+  /// View on the scaling factors
+  arrayView1d< real64 > const m_pressureScalingFactor;
+  arrayView1d< real64 > const m_saturationScalingFactor;  
+
+  /// flag to allow negative pressure values
+  integer const m_allowNegativePressure;
+
+  /// flag to allow the component density chopping
+  integer const m_allowOutOfBoundsSaturation;
+};
+
+/**
+ * @class SolutionCheckKernelFactory
+ */
+class SolutionCheckKernelFactory
+{
+public:
+
+/**
+   * @brief Create a new kernel and launch
+   * @tparam POLICY the policy used in the RAJA kernel
+   * @param[in] numPhases the number of fluid phases
+   * @param[in] subRegion the element subregion
+   * @param[in] rankOffset the offset of my MPI rank
+   * @param[in] dofKey the string key to retrieve the degress of freedom numbers
+   * @param[in] localSolution the solution vector on my MPI rank
+   * @param[in] pressure pressure vector
+   * @param[in] phaseVolFrac phase volume fraction vector
+   * @param[in] pressureScalingFactor scaling factor for pressure
+   * @param[in] compDensScalingFactor scaling factor for component density
+   * @param[in] allowNegativePressure flag to allow negative pressure
+   * @param[in] allowOutOfBoundsSaturation flag to allow out of bounds saturation
+   * @param[in] allowSatChopping flag to allow saturation chopping
+   * @param[in] satChangeLimit saturation change limit
+   * @param[out] StackVariables information about the solution update inside the subRegion
+   */
+  template< typename POLICY >
+  static SolutionCheckKernel::StackVariables
+  createAndLaunch( integer const numPhases,
+                   ElementSubRegionBase const & subRegion,
+                   globalIndex const rankOffset,
+                   string const dofKey,
+                   arrayView1d< real64 const > const & localSolution,                   
+                   arrayView1d< real64 const > const pressure,
+                   arrayView2d< real64 const, immiscibleFlow::USD_PHASE > const phaseVolFrac,
+                   ScalingType const scalingType,
+                   real64 const scalingFactor,
+                   arrayView1d< real64 > pressureScalingFactor,
+                   arrayView1d< real64 > saturationScalingFactor,
+                   integer const allowNegativePressure,
+                   integer const allowOutOfBoundsSaturation )
+  {                                                
+    SolutionCheckKernel kernel( numPhases, subRegion, rankOffset, dofKey, localSolution,
+                                pressure, phaseVolFrac, scalingType, scalingFactor,
+                                pressureScalingFactor, saturationScalingFactor,
+                                allowNegativePressure, allowOutOfBoundsSaturation );
+    return SolutionCheckKernel::launch< POLICY >( subRegion.size(), kernel );                                           
+  }
+
+};
+
+
+/******************************** SolutionScalingKernel ********************************/
+
+/**
+ * @class SolutionScalingKernel
+ * @brief Define the kernel for scaling the Newton update
+ */
+class SolutionScalingKernel
+{
+public:
+
+/**
+   * @brief Create a new kernel instance
+   * @param[in] maxRelativePresChange the max allowed relative pressure change
+   * @param[in] maxAbsolutePresChange the max allowed absolute pressure change
+   * @param[in] maxCompFracChange the max allowed comp fraction change
+   * @param[in] maxRelativeCompDensChange the max allowed comp density change
+   * @param[in] rankOffset the rank offset
+   * @param[in] numComp the number of components
+   * @param[in] dofKey the dof key to get dof numbers
+   * @param[in] subRegion the subRegion
+   * @param[in] localSolution the Newton update
+   * @param[in] pressure the pressure vector
+   * @param[in] compDens the component density vector
+   * @param[in] pressureScalingFactor the pressure local scaling factor
+   * @param[in] compDensScalingFactor the component density local scaling factor
+   */
+  SolutionScalingKernel( real64 const maxRelativePresChange,
+                         real64 const maxAbsolutePresChange,
+                         real64 const maxRelativeSatChange,
+                         real64 const maxAbsoluteSatChange,
+                         globalIndex const rankOffset,
+                         integer const numPhases,
+                         string const dofKey,
+                         ElementSubRegionBase const & subRegion,
+                         arrayView1d< real64 const > const localSolution,
+                         arrayView1d< real64 const > const pressure,
+                         arrayView2d< real64 const, immiscibleFlow::USD_PHASE > const phaseVolFrac,
+                         arrayView1d< real64 > pressureScalingFactor,
+                         arrayView1d< real64 > saturationScalingFactor )
+    : m_rankOffset( rankOffset ),
+    m_numPhases( numPhases ),
+    m_dofNumber( subRegion.getReference< array1d< globalIndex > >( dofKey ) ),
+    m_ghostRank( subRegion.ghostRank() ),
+    m_localSolution( localSolution ),
+    m_pressure( pressure ),   
+    m_phaseVolFrac( phaseVolFrac ),  
+    m_pressureScalingFactor( pressureScalingFactor ),
+    m_saturationScalingFactor( saturationScalingFactor ),
+    m_maxRelativePresChange( maxRelativePresChange ),
+    m_maxAbsolutePresChange( maxAbsolutePresChange ),
+    m_maxRelativeSatChange( maxRelativeSatChange ),
+    m_maxAbsoluteSatChange( maxAbsoluteSatChange )
+  {}
+
+  /**
+   * @struct StackVariables
+   * @brief Kernel variables located on the stack
+   */
+  struct StackVariables
+  {
+    GEOS_HOST_DEVICE
+    StackVariables()
+    { }
+
+    StackVariables( real64 _localMinVal,
+                    real64 _localMaxDeltaPres,
+                    localIndex _localMaxDeltaPresLoc,                    
+                    real64 _localMaxDeltaSat,
+                    localIndex _localMaxDeltaSatLoc,
+                    real64 _localMinPresScalingFactor,
+                    real64 _localMinSatScalingFactor )
+      :
+      localRow( -1 ),
+      localMinVal( _localMinVal ),
+      localMaxDeltaPres( _localMaxDeltaPres ),
+      localMaxDeltaPresLoc( _localMaxDeltaPresLoc ),      
+      localMaxDeltaSat( _localMaxDeltaSat ),
+      localMaxDeltaSatLoc( _localMaxDeltaSatLoc ),
+      localMinPresScalingFactor( _localMinPresScalingFactor ),
+      localMinSatScalingFactor( _localMinSatScalingFactor )
+    { }
+
+    localIndex localRow;
+    real64 localMinVal;    
+
+    real64 localMaxDeltaPres;
+    localIndex localMaxDeltaPresLoc;    
+    real64 localMaxDeltaSat;
+    localIndex localMaxDeltaSatLoc;
+
+    real64 localMinPresScalingFactor;
+    real64 localMinSatScalingFactor;
+
+  };
+
+  /**
+   * @brief Performs the kernel launch
+   * @tparam POLICY the policy used in the RAJA kernels
+   * @tparam KERNEL_TYPE the kernel type
+   * @param[in] numElems the number of elements
+   * @param[inout] kernelComponent the kernel component providing access to the compute function
+   */
+  template< typename POLICY, typename KERNEL_TYPE >
+  static StackVariables
+  launch( localIndex const numElems,
+          KERNEL_TYPE const & kernelComponent )
+  {
+    RAJA::ReduceMin< ReducePolicy< POLICY >, real64 > globalScalingFactor( 1.0 );
+
+    RAJA::ReduceMaxLoc< ReducePolicy< POLICY >, real64 > maxDeltaPres( std::numeric_limits< real64 >::min(), -1 );    
+    RAJA::ReduceMaxLoc< ReducePolicy< POLICY >, real64 > maxDeltaSat( std::numeric_limits< real64 >::min(), -1 );
+
+    RAJA::ReduceMin< ReducePolicy< POLICY >, real64 > minPresScalingFactor( 1.0 );    
+    RAJA::ReduceMin< ReducePolicy< POLICY >, real64 > minSatScalingFactor( 1.0 );
+
+    forAll< POLICY >( numElems, [=] GEOS_HOST_DEVICE ( localIndex const ei )
+    {
+      if( kernelComponent.ghostRank( ei ) >= 0 )
+      {
+        return;
+      }
+
+      StackVariables stack;
+      kernelComponent.setup( ei, stack );
+      kernelComponent.compute( ei, stack );
+
+      globalScalingFactor.min( stack.localMinVal );
+
+      maxDeltaPres.maxloc( stack.localMaxDeltaPres, ei );      
+      maxDeltaSat.maxloc( stack.localMaxDeltaSat, ei );
+
+      minPresScalingFactor.min( stack.localMinPresScalingFactor );      
+      minSatScalingFactor.min( stack.localMinSatScalingFactor );
+    } );
+
+    return StackVariables( globalScalingFactor.get(),
+                           maxDeltaPres.get(),
+                           maxDeltaPres.getLoc(),                           
+                           maxDeltaSat.get(),
+                           maxDeltaSat.getLoc(),
+                           minPresScalingFactor.get(),                           
+                           minSatScalingFactor.get() );
+  }
+
+  GEOS_HOST_DEVICE
+  void setup( localIndex const ei,
+              StackVariables & stack ) const
+  {
+    stack.localRow = m_dofNumber[ei] - m_rankOffset;
+    stack.localMinVal = 1.0;
+
+    stack.localMaxDeltaPres = 0.0;
+    stack.localMaxDeltaPresLoc = -1;
+    stack.localMaxDeltaSat = 0.0;
+    stack.localMaxDeltaSatLoc =-1;
+
+    stack.localMinPresScalingFactor = 1.0;
+    stack.localMinSatScalingFactor = 1.0;
+  }
+
+  /**
+   * @brief Compute the local value
+   * @param[in] ei the element index
+   * @param[inout] stack the stack variables
+   */
+  GEOS_HOST_DEVICE
+  void compute( localIndex const ei,
+                StackVariables & stack ) const
+  {
+    // compute the change in pressure
+    real64 const pres = m_pressure[ei];
+    real64 const absPresChange = LvArray::math::abs( m_localSolution[stack.localRow] );
+    if( stack.localMaxDeltaPres < absPresChange )
+    {
+      stack.localMaxDeltaPres = absPresChange;
+    }
+
+    // compute pressure scaling factor
+    real64 presScalingFactor = 1.0;
+    // when enabled, absolute change scaling has a priority over relative change
+    if( m_maxAbsolutePresChange > 0.0 ) // maxAbsolutePresChange <= 0.0 means that absolute scaling is disabled
+    {
+      if( absPresChange > m_maxAbsolutePresChange )
+      {
+        presScalingFactor = m_maxAbsolutePresChange / absPresChange;
+      }
+    }
+    else if( m_maxRelativePresChange > 0.0 && pres > minDensForDivision )
+    {
+      real64 const relativePresChange = absPresChange / pres;
+      if( relativePresChange > m_maxRelativePresChange )
+      {
+        presScalingFactor = m_maxRelativePresChange / relativePresChange;
+      }
+    }
+    m_pressureScalingFactor[ei] = presScalingFactor;
+    if( stack.localMinVal > presScalingFactor )
+    {
+      stack.localMinVal = presScalingFactor;
+    }
+    if( stack.localMinPresScalingFactor > presScalingFactor )
+    {
+      stack.localMinPresScalingFactor = presScalingFactor;
+    }
+
+
+    // compute the change in saturation
+    real64 const phaseVolFrac = m_phaseVolFrac[ei][0];
+    real64 const absSatChange = LvArray::math::abs( m_localSolution[stack.localRow + 1] );
+    if( stack.localMaxDeltaSat < absSatChange )
+    {
+      stack.localMaxDeltaSat = absSatChange;
+    }
+    // compute saturation scaling factor
+    real64 satScalingFactor = 1.0;
+    // when enabled, absolute change scaling has a priority over relative change
+    if( m_maxAbsoluteSatChange > 0.0 ) // maxAbsoluteSatChange <= 0.0 means that absolute scaling is disabled
+    {
+      if( absSatChange > m_maxAbsoluteSatChange )
+      {
+        satScalingFactor = m_maxAbsoluteSatChange / absSatChange;
+      }
+    }
+    else if( m_maxRelativeSatChange > 0.0 && phaseVolFrac > minDensForDivision )
+    {
+      real64 const relativeSatChange = absSatChange / phaseVolFrac;
+      if( relativeSatChange > m_maxRelativeSatChange )
+      {
+        satScalingFactor = m_maxRelativeSatChange / relativeSatChange;
+      }
+    }
+    m_saturationScalingFactor[ei] = satScalingFactor;
+    if( stack.localMinVal > satScalingFactor )
+    {
+      stack.localMinVal = satScalingFactor;
+    }
+    if( stack.localMinSatScalingFactor > satScalingFactor )
+    {
+      stack.localMinSatScalingFactor = satScalingFactor;
+    }
+  }
+
+  /**
+   * @brief Getter for the ghost rank
+   * @param[in] i the looping index of the element/node/face
+   * @return the ghost rank of the element/node/face
+   */
+  GEOS_HOST_DEVICE
+  integer ghostRank( localIndex const i ) const
+  { return m_ghostRank( i ); }
+
+protected:
+
+  static constexpr real64 minDensForDivision = 1e-10;
+
+  /// Offset for my MPI rank
+  globalIndex const m_rankOffset;
+
+  /// Number of phases
+  real64 const m_numPhases;
+
+  /// View on the dof numbers
+  arrayView1d< globalIndex const > const m_dofNumber;
+
+  /// View on the ghost ranks
+  arrayView1d< integer const > const m_ghostRank;
+
+  /// View on the local residual
+  arrayView1d< real64 const > const m_localSolution;
+
+  /// View on the primary variables
+  arrayView1d< real64 const > const m_pressure;
+  arrayView2d< real64 const, immiscibleFlow::USD_PHASE > const m_phaseVolFrac;
+
+  /// View on the scaling factors
+  arrayView1d< real64 > const m_pressureScalingFactor;
+  arrayView1d< real64 > const m_saturationScalingFactor;
+
+  /// Max allowed changes in primary variables
+  real64 const m_maxRelativePresChange;
+  real64 const m_maxAbsolutePresChange;
+  real64 const m_maxRelativeSatChange;
+  real64 const m_maxAbsoluteSatChange;
+
+};
+
+
+/**
+ * @class SolutionScalingKernelFactory
+ */
+class SolutionScalingKernelFactory
+{
+public:
+
+  /**
+   * @brief Create and launch the kernel computing the scaling factor
+   * @tparam POLICY the kernel policy
+   * @param[in] maxRelativePresChange the max allowed relative pressure change
+   * @param[in] maxAbsolutePresChange the max allowed absolute pressure change
+   * @param[in] maxRelativeSatChange the max allowed relative saturation change
+   * @param[in] maxAbsoluteSatChange the max allowed absolute saturation change
+   * @param[in] pressure the pressure vector
+   * @param[in] phaseVolFrac the phase volume fraction vector
+   * @param[in] pressureScalingFactor the scaling factor for pressure
+   * @param[in] saturationScalingFactor the scaling factor for saturation
+   * @param[in] rankOffset the rank offset
+   * @param[in] numPhases the number of phases
+   * @param[in] dofKey the dof key to get dof numbers
+   * @param[in] subRegion the subRegion
+   * @param[in] localSolution the Newton update
+   * @param[out] StackVariables information about the scaling factors inside the subRegion
+   */
+  template< typename POLICY >
+  static SolutionScalingKernel::StackVariables
+  createAndLaunch( real64 const maxRelativePresChange,
+                   real64 const maxAbsolutePresChange,
+                   real64 const maxRelativeSatChange,
+                   real64 const maxAbsoluteSatChange,
+                   arrayView1d< real64 const > const pressure,
+                   arrayView2d< real64 const, immiscibleFlow::USD_PHASE > const phaseVolFrac,
+                   arrayView1d< real64 > pressureScalingFactor,
+                   arrayView1d< real64 > saturationScalingFactor,
+                   globalIndex const rankOffset,
+                   integer const numPhases,
+                   string const dofKey,
+                   ElementSubRegionBase & subRegion,
+                   arrayView1d< real64 const > const localSolution )
+  {
+    SolutionScalingKernel kernel( maxRelativePresChange, maxAbsolutePresChange, maxRelativeSatChange, maxAbsoluteSatChange, rankOffset,
+                                  numPhases, dofKey, subRegion, localSolution, pressure, phaseVolFrac, pressureScalingFactor, saturationScalingFactor );
+    return SolutionScalingKernel::launch< POLICY >( subRegion.size(), kernel );
+  }
 };
 
 } // namespace immiscible multiphasekernels
