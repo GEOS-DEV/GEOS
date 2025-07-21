@@ -444,7 +444,7 @@ public:
     static constexpr char const * timeStepFromTablesFlagString() { return "timeStepFromTables"; }
     static constexpr char const * estimateWellSolutionString() { return "estimateWellSolution"; }
     static constexpr char const * writeSegDebugFlagString() { return "writeSegDebug"; }
-    static constexpr char const * useNewCodeString() { return "useNewCodeString"; }
+    static constexpr char const * useNewCodeString() { return "useNewCode"; }
   };
 
 
@@ -488,23 +488,23 @@ protected:
                            real64 const & dt,
                            DomainPartition & domain ) = 0;
 
-  virtual bool evaluateProductionConstraints( real64 const & time_n,
-                                              real64 const & stepDt,
-                                              integer const cycleNumber,
-                                              DomainPartition & domain,
-                                              MeshLevel & mesh,
-                                              ElementRegionManager & elemManager,
-                                              WellElementSubRegion & subRegion,
-                                              DofManager const & dofManager ) { return false;};
+  virtual bool evaluateProductionConstraints( real64 const & GEOS_UNUSED_PARAM( time_n ),
+                                              real64 const & GEOS_UNUSED_PARAM( stepDt ),
+                                              integer const GEOS_UNUSED_PARAM( cycleNumber ),
+                                              DomainPartition & GEOS_UNUSED_PARAM( domain ),
+                                              MeshLevel & GEOS_UNUSED_PARAM( mesh ),
+                                              ElementRegionManager & GEOS_UNUSED_PARAM( elemManager ),
+                                              WellElementSubRegion & GEOS_UNUSED_PARAM( subRegion ),
+                                              DofManager const & GEOS_UNUSED_PARAM( dofManager ) ) { return false;};
 
-  virtual bool evaluateInjectionConstraints( real64 const & time_n,
-                                             real64 const & stepDt,
-                                             integer const cycleNumber,
-                                             DomainPartition & domain,
-                                             MeshLevel & mesh,
-                                             ElementRegionManager & elemManager,
-                                             WellElementSubRegion & subRegion,
-                                             DofManager const & dofManager ) {return true;};
+  virtual bool evaluateInjectionConstraints( real64 const & GEOS_UNUSED_PARAM( time_n ),
+                                             real64 const & GEOS_UNUSED_PARAM( stepDt ),
+                                             integer const GEOS_UNUSED_PARAM( cycleNumber ),
+                                             DomainPartition & GEOS_UNUSED_PARAM( domain ),
+                                             MeshLevel & GEOS_UNUSED_PARAM( mesh ),
+                                             ElementRegionManager & GEOS_UNUSED_PARAM( elemManager ),
+                                             WellElementSubRegion & GEOS_UNUSED_PARAM( subRegion ),
+                                             DofManager const & GEOS_UNUSED_PARAM( dofManager ) ) {return true;};
   /// name of the flow solver
   string m_flowSolverName;
 

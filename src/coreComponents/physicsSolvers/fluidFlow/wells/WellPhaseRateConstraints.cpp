@@ -40,7 +40,7 @@ PhaseConstraint::PhaseConstraint( string const & name, Group * const parent )
     setDefaultValue( 0.0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setRestartFlags( RestartFlags::WRITE_AND_READ ).
-    setDescription( "Maximum phase production rate,  (if useSurfaceConditions: [surface m^3/s]; else [reservoir m^3/s]) " );
+    setDescription( "Phase rate,  (if useSurfaceConditions: [surface m^3/s]; else [reservoir m^3/s]) " );
 
   registerWrapper( viewKeyStruct::phaseNameString(), &m_phaseName ).
     setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
@@ -110,7 +110,7 @@ void PhaseInjectionConstraint::postInputInitialization()
   PhaseConstraint::postInputInitialization();
 
 // Validate the injection stream and temperature
-  validateInjectionStream( m_injectionStream, m_injectionTemperature, dataRepository::keys::phaseInjectionConstraint, *this );
+  validateInjectionStream( m_injectionStream, m_injectionTemperature, getConstraintKey(), *this );
 
 }
 

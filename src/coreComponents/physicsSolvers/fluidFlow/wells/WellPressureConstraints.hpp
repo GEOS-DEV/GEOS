@@ -27,14 +27,6 @@
 #include "WellConstraintsBase.hpp"
 namespace geos
 {
-namespace dataRepository
-{
-namespace keys
-{
-static constexpr auto minimumBHPConstraint = "MinimumBHPConstraint";
-static constexpr auto maximumBHPConstraint = "MaximumBHPConstraint";
-}
-}
 
 /**
  * @class BHPConstraint
@@ -99,6 +91,17 @@ public:
 
   // Temp interface - tjb
   virtual ConstraintTypeId getControl() const override { return ConstraintTypeId::BHP; };
+
+  /**
+   * @name Getters / Setters
+   */
+  ///@{
+  /**
+   * @brief Get name of constraint
+   * @return constraint key
+   */
+  virtual std::string getConstraintKey( ) const override { return "VolumeInjectionConstraint"; };
+  ///@}
 
   ///@}
   /**
@@ -212,7 +215,7 @@ public:
    * @brief Get name of constraint
    * @return constraint key
    */
-  virtual std::string  getConstraintKey( ) const override { return dataRepository::keys::minimumBHPConstraint; };
+  virtual std::string  getConstraintKey( ) const override { return "MinimumBHPConstraint"; };
   ///@}
   /**
    * @brief Struct to serve as a container for variable strings and keys.
@@ -300,7 +303,7 @@ public:
    * @brief Get name of constraint
    * @return constraint key
    */
-  virtual std::string getConstraintKey( ) const override { return dataRepository::keys::maximumBHPConstraint; };
+  virtual std::string getConstraintKey( ) const override { return "MaximumBHPConstraint"; };
 
   ///@}
   /**

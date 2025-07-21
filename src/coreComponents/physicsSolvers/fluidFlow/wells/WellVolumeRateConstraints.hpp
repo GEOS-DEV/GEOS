@@ -36,16 +36,6 @@ static constexpr auto volumeInjectionConstraint = "VolumeInjectionConstraint";
 }
 }
 
-namespace constraintViewStruct
-{
-
-struct volumeConstraintKey
-{
-  // String key for the well target volume rate
-  static constexpr char const * targetVolumeRateString() { return "targetVolumeRate"; }
-};
-
-}
 
 /**
  * @class VolumeConstraint
@@ -102,20 +92,29 @@ public:
   VolumeConstraint & operator=( VolumeConstraint && ) = delete;
 
   ///@}
-
+  /**
+   * @brief Struct to serve as a container for variable strings and keys.
+   * @struct viewKeyStruct
+   */
+  struct viewKeyStruct
+  {
+    /// String key for the volume rate
+    static constexpr char const * volumeRateString() { return "volumeRate"; }
+  };
   /**
    * @name Getters / Setters
    */
+  ///@{
+  /**
+   * @brief Get name of constraint
+   * @return constraint key
+   */
+  virtual std::string getConstraintKey( ) const override { return "VolumeInjectionConstraint"; };
+  ///@}
 
   // Temp interface - tjb
   virtual ConstraintTypeId getControl() const override { return ConstraintTypeId::TOTALVOLRATE; };
 
-
-  // volume constraint defintion keys
-  constraintViewStruct::volumeConstraintKey viewKeysVolumeConstraint;
-
-
-  //virtual bool checkViolation( WellConstraintBase const & currentConstraint, real64 const & currentTime ) const override;
 protected:
 
   virtual void postInputInitialization() override;
@@ -182,17 +181,13 @@ public:
   /**
    * @name Getters / Setters
    */
-
+  ///@{
   /**
    * @brief Get name of constraint
    * @return constraint key
    */
-  virtual std::string  getConstraintKey( ) const override { return dataRepository::keys::volumeProductionConstraint; };
+  virtual std::string getConstraintKey( ) const override { return "VolumeProductionConstraint"; };
   ///@}
-
-  // volume constraint defintion keys
-  constraintViewStruct::volumeConstraintKey viewKeysVolumeConstraint;
-
 
   virtual bool checkViolation( WellConstraintBase const & currentConstraint, real64 const & currentTime ) const override;
 protected:
@@ -263,16 +258,8 @@ public:
    */
   ///@{
 
-  /**
-   * @brief Get name of constraint
-   * @return constraint key
-   */
-  virtual std::string getConstraintKey( ) const override { return dataRepository::keys::volumeInjectionConstraint; };
+
   ///@}
-
-  // volume constraint defintion keys
-  constraintViewStruct::volumeConstraintKey viewKeysVolumeConstraint;
-
 
   // Injection stream definition keys
   constraintViewStruct::injectionStreamKey viewKeysInjectionStream;

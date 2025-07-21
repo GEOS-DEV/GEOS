@@ -96,7 +96,7 @@ void MassInjectionConstraint::postInputInitialization()
   MassConstraint::postInputInitialization();
 
 // Validate the injection stream and temperature
-  validateInjectionStream( m_injectionStream, m_injectionTemperature, dataRepository::keys::MassProductionConstraint, *this );
+  validateInjectionStream( m_injectionStream, m_injectionTemperature, getConstraintKey(), *this );
 }
 
 bool MassInjectionConstraint::checkViolation( WellConstraintBase const & currentConstraint, real64 const & currentTime )const

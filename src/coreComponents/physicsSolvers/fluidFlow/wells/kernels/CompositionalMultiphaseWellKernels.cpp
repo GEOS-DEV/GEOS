@@ -140,8 +140,8 @@ ControlEquationHelper::
            real64 const & targetPhaseRate,
            real64 const & targetTotalRate,
            real64 const & targetMassRate,
-           real64 const & currentBHP,
            real64 const & targetValue,
+           real64 const & currentBHP,
            arrayView1d< real64 const > const & dCurrentBHP,
            arrayView1d< real64 const > const & currentPhaseVolRate,
            arrayView2d< real64 const > const & dCurrentPhaseVolRate,
@@ -153,7 +153,7 @@ ControlEquationHelper::
            CRSMatrixView< real64, globalIndex const > const & localMatrix,
            arrayView1d< real64 > const & localRhs )
 {
-
+  GEOS_UNUSED_VAR( targetValue );  // tjb keeping this around if needed to compare with old constraint eqn jacgen
   using COFFSET_WJ = compositionalMultiphaseWellKernels::ColOffset_WellJac< NC, IS_THERMAL >;
   using Deriv = multifluid::DerivativeOffset;
 
@@ -331,7 +331,10 @@ PressureRelationKernel::
   real64 const targetPhaseRate = wellControls.getTargetPhaseRate( time );
   real64 const targetMassRate = wellControls.getTargetMassRate( time );
 
-  real64 const targetValue = wellControls.getCurrentConstraint()->getConstraintValue( time );
+  // temp tjb. only needed if new code path
+  real64 targetValue =0.0;
+  if( wellControls.getCurrentConstraint() != nullptr )
+    targetValue = wellControls.getCurrentConstraint()->getConstraintValue( time );
 
   // dynamic well control data
   // All possible quantites for all constraint types
@@ -399,7 +402,7 @@ PressureRelationKernel::
                                                         targetPhaseRate, // tjb - remove
                                                         targetTotalRate, // tjb - remove
                                                         targetMassRate, // tjb - remove
-                                                        targetValue, // tjb  
+                                                        targetValue, // tjb
                                                         currentBHP,
                                                         dCurrentBHP,
                                                         currentPhaseVolRate,

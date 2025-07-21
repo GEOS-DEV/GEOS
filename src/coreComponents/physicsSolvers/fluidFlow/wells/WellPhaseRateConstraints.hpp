@@ -28,15 +28,6 @@
 
 namespace geos
 {
-namespace dataRepository
-{
-namespace keys
-{
-static constexpr auto phaseProductionConstraint = "PhaseProductionConstraint";
-static constexpr auto phaseInjectionConstraint  =  "PhaseInjectionConstraint";
-}
-}
-
 
 
 template< typename T >
@@ -215,7 +206,7 @@ public:
    * @brief Get name of constraint
    * @return constraint key
    */
-  virtual std::string getConstraintKey( ) const override { return dataRepository::keys::phaseProductionConstraint; };
+  virtual std::string getConstraintKey( ) const override { return "PhaseProductionConstraint"; };
 
 
   virtual bool checkViolation( WellConstraintBase const & currentConstraint, real64 const & currentTime ) const override;
@@ -309,7 +300,7 @@ public:
    * @brief Get name of constraint
    * @return constraint key
    */
-  virtual std::string getConstraintKey( ) const override { return dataRepository::keys::phaseInjectionConstraint; };
+  virtual std::string getConstraintKey( ) const override { return "PhaseInjectionConstraint"; };
   ///@}
 
   /**

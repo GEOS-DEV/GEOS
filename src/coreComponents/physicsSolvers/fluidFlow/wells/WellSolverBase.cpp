@@ -662,7 +662,7 @@ void WellSolverBase::precomputeData( DomainPartition & domain )
 
       wellControls.forSubGroups< BHPConstraint >( [&]( auto & constraint )
       {
-      // set the reference well element where the BHP control is applied
+        // set the reference well element where the BHP control is applied
         real64 const refElev = constraint.getReferenceElevation();
         constraint.setReferenceGravityCoef( refElev * gravVector[2] );
       } );

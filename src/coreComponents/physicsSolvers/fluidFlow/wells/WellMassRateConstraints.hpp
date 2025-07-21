@@ -27,25 +27,6 @@
 #include "WellConstraintsBase.hpp"
 namespace geos
 {
-namespace dataRepository
-{
-namespace keys
-{
-static constexpr auto MassProductionConstraint = "MassProductionConstraint";
-static constexpr auto MassInjectionConstraint = "MassInjectionConstraint";
-}
-}
-
-namespace constraintViewStruct
-{
-
-struct MassConstraintKey
-{
-  // String key for the well target mass rate
-  static constexpr char const * targetMassRateString() { return "targetMassRate"; }
-};
-
-}
 
 /**
  * @class MassConstraint
@@ -110,9 +91,6 @@ public:
   // Temp interface - tjb
   virtual ConstraintTypeId getControl() const override { return ConstraintTypeId::MASSRATE; };
   ///@}
-
-  // Mass constraint defintion keys
-  constraintViewStruct::MassConstraintKey viewKeysMassConstraint;
 
 
 protected:
@@ -188,13 +166,8 @@ public:
    * @brief Get name of constraint
    * @return constraint key
    */
-  virtual std::string  getConstraintKey( ) const override { return dataRepository::keys::MassProductionConstraint; };
+  virtual std::string  getConstraintKey( ) const override { return "MassProductionConstraint"; };
   ///@}
-
-  // Mass constraint defintion keys
-  constraintViewStruct::MassConstraintKey viewKeysMassConstraint;
-
-
 
   virtual bool checkViolation( WellConstraintBase const & currentConstraint, real64 const & currentTime ) const override;
 
@@ -271,13 +244,8 @@ public:
    * @brief Get name of constraint
    * @return constraint key
    */
-  virtual std::string getConstraintKey( ) const override { return dataRepository::keys::MassInjectionConstraint; };
+  virtual std::string getConstraintKey( ) const override { return "MassInjectionConstraint"; };
   ///@}
-
-  // Mass constraint defintion keys
-  constraintViewStruct::MassConstraintKey viewKeysMassConstraint;
-
-
 
   // Injection stream definition keys
   constraintViewStruct::injectionStreamKey viewKeysInjectionStream;

@@ -1375,12 +1375,9 @@ void CompositionalMultiphaseWell::calculateReferenceElementRates( WellElementSub
 
   // subRegion data
   arrayView1d< real64 const > const & connRate = subRegion.getField< fields::well::mixtureConnectionRate >();
-  arrayView2d< real64 const, compflow::USD_COMP > const & compFrac = subRegion.getField< fields::well::globalCompFraction >();
-  arrayView1d< real64 > const & totalMassDens = subRegion.getField< fields::well::totalMassDensity >();
 
   // fluid data
   constitutive::MultiFluidBase & fluidSeparator =  wellControls.getMultiFluidSeparator();
-  integer isThermal = fluidSeparator.isThermal();
   arrayView3d< real64 const, multifluid::USD_PHASE > const & phaseFrac = fluidSeparator.phaseFraction();
   arrayView2d< real64 const, multifluid::USD_FLUID > const & totalDens = fluidSeparator.totalDensity();
   arrayView3d< real64 const, multifluid::USD_PHASE > const & phaseDens = fluidSeparator.phaseDensity();
@@ -1680,11 +1677,6 @@ real64 CompositionalMultiphaseWell::updateSubRegionState( WellElementSubRegion &
   {
     if( m_useNewCode )
     {
-
-      string & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
-      fluidName = getConstitutiveName< constitutive::MultiFluidBase >( subRegion );
-      constitutive::MultiFluidBase const & fluid = subRegion.getConstitutiveModel< constitutive::MultiFluidBase >( fluidName );
-
       // update properties
       updateGlobalComponentFraction( subRegion );
 
@@ -1710,22 +1702,22 @@ real64 CompositionalMultiphaseWell::updateSubRegionState( WellElementSubRegion &
 
     }
     else
-  {
-    // update properties
-    updateGlobalComponentFraction( subRegion );
+    {
+      // update properties
+      updateGlobalComponentFraction( subRegion );
 
-    // update volumetric rates for the well constraints
-    // note: this must be called before updateFluidModel
+      // update volumetric rates for the well constraints
+      // note: this must be called before updateFluidModel
 
-    updateVolRatesForConstraint( subRegion );
+      updateVolRatesForConstraint( subRegion );
 
-    // update densities, phase fractions, phase volume fractions
+      // update densities, phase fractions, phase volume fractions
 
-    updateFluidModel( subRegion ); //  Calculate fluid properties;
-    maxPhaseVolChange = updatePhaseVolumeFraction( subRegion );
-    updateTotalMassDensity( subRegion );
-    // update the current BHP pressure
-    updateBHPForConstraint( subRegion );
+      updateFluidModel( subRegion ); //  Calculate fluid properties;
+      maxPhaseVolChange = updatePhaseVolumeFraction( subRegion );
+      updateTotalMassDensity( subRegion );
+      // update the current BHP pressure
+      updateBHPForConstraint( subRegion );
     }
 
   }
@@ -4115,13 +4107,13 @@ bool CompositionalMultiphaseWell::evaluateProductionConstraints( real64 const & 
 
   limitingConstraint = this->template calculateLimitingConstraint< MinimumBHPConstraint, PhaseProductionConstraint,
                                                                    MassProductionConstraint >( limitingConstraint, time_n,
-                          dt,
-                          cycleNumber,
-                          domain,
-                          mesh,
-                          elemManager,
-                          subRegion,
-                          dofManager );
+                                                                                               dt,
+                                                                                               cycleNumber,
+                                                                                               domain,
+                                                                                               mesh,
+                                                                                               elemManager,
+                                                                                               subRegion,
+                                                                                               dofManager );
 
 
   wellControls.setControl( static_cast< WellControls::Control >(limitingConstraint->getControl()) );     // old
@@ -4140,13 +4132,13 @@ bool CompositionalMultiphaseWell::evaluateProductionConstraints( real64 const & 
 bool
 CompositionalMultiphaseWell::
   evaluateInjectionConstraints( real64 const & time_n,
-                                                                real64 const & dt,
-                                                                integer const cycleNumber,
-                                                                DomainPartition & domain,
-                                                                MeshLevel & mesh,
-                                                                ElementRegionManager & elemManager,
-                                                                WellElementSubRegion & subRegion,
-                                                                DofManager const & dofManager )
+                                real64 const & dt,
+                                integer const cycleNumber,
+                                DomainPartition & domain,
+                                MeshLevel & mesh,
+                                ElementRegionManager & elemManager,
+                                WellElementSubRegion & subRegion,
+                                DofManager const & dofManager )
 {
   WellControls & wellControls = getWellControls( subRegion );
   WellConstraintBase * limitingConstraint = nullptr;     // Keep tabs on limiting constraint
@@ -4164,14 +4156,14 @@ CompositionalMultiphaseWell::
 
   wellControls.setControl( static_cast< WellControls::Control >(limitingConstraint->getControl()) );     // old
   wellControls.setCurrentConstraint( limitingConstraint );     // new
-    solveNonlinearSystem( time_n,
-                          dt,
-                          cycleNumber,
-                          domain,
-                          mesh,
-                          elemManager,
-                          subRegion,
-                          dofManager );
+  solveNonlinearSystem( time_n,
+                        dt,
+                        cycleNumber,
+                        domain,
+                        mesh,
+                        elemManager,
+                        subRegion,
+                        dofManager );
   return true;
 }
 

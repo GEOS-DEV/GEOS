@@ -33,6 +33,11 @@ VolumeConstraint::VolumeConstraint( string const & name, Group * const parent )
   : WellConstraintBase( name, parent )
 {
   setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
+  registerWrapper( viewKeyStruct::volumeRateString(), &m_constraintValue ).
+    setDefaultValue( 0.0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
+    setDescription( "Volumetric rate (if useSurfaceConditions: [surface m^3/s]; else [reservoir m^3/s])" );
 
 }
 
@@ -51,13 +56,6 @@ VolumeProductionConstraint::VolumeProductionConstraint( string const & name, Gro
   : VolumeConstraint( name, parent )
 {
   setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
-
-  registerWrapper( constraintViewStruct::constraintValueKey::constraintValueString(), &m_constraintValue ).
-    setDefaultValue( 0.0 ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setRestartFlags( RestartFlags::WRITE_AND_READ ).
-    setDescription( "Maximum volumetric production rate (if useSurfaceConditions: [surface m^3/s]; else [reservoir m^3/s])" );
-
 
 }
 
@@ -82,12 +80,6 @@ VolumeInjectionConstraint::VolumeInjectionConstraint( string const & name, Group
 {
   setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
 
-  registerWrapper( constraintViewStruct::constraintValueKey::constraintValueString(), &m_constraintValue ).
-    setDefaultValue( 0.0 ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setRestartFlags( RestartFlags::WRITE_AND_READ ).
-    setDescription( "Maximum volumetric injection rate (if useSurfaceConditions: [surface m^3/s]; else [reservoir m^3/s])" );
-
 
   // Field registration
   registerInjectionStream( m_injectionStream, m_injectionTemperature, *this );
@@ -101,7 +93,7 @@ void VolumeInjectionConstraint::postInputInitialization()
 {
 
 // Validate the injection stream and temperature
-  validateInjectionStream( m_injectionStream, m_injectionTemperature, dataRepository::keys::volumeProductionConstraint, *this );
+  validateInjectionStream( m_injectionStream, m_injectionTemperature, getConstraintKey(), *this );
 
 }
 

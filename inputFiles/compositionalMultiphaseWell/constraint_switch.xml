@@ -28,24 +28,26 @@
       logLevel="1"
       writeCSV="1"
       writeSegDebug="0"
-      estimateWellSolution="0"
+      useNewCode="1"
+      estimateWellSolution="1"
       targetRegions="{ wellRegion1, wellRegion2 }">
       <WellControls
         name="wellControls1"
         type="producer"
         control="phaseVolRate"
+        useSurfaceConditions="0"
         referenceElevation="2"
         targetBHP="3e6"
         targetPhaseRate="2e-6"
         targetPhaseName="oil">
         <MinimumBHPConstraint
          name="minBHP"
+         referenceElevation="2"
          targetBHP="3e6"/>
         <PhaseProductionConstraint
          name="maxOil"
-         targetPhaseName="oil"
-         useSurfaceConditions="1"
-         targetPhaseRate="2e-6"/>
+         phaseName="oil"
+         phaseRate="2e-6"/>
         </WellControls>
       <WellControls
         name="wellControls2"
@@ -54,13 +56,16 @@
         referenceElevation="2"
         targetBHP="1e8"
         targetTotalRate="28e-7"
+        useSurfaceConditions="0"
         injectionTemperature="297.15"
         injectionStream="{ 0.1, 0.1, 0.1, 0.7 }">
-        <PhaseInjectionConstraint
-         name="maxGas"
-         targetPhaseName="gas"
-         useSurfaceConditions="1"
-         targetPhaseRate="28e-6"
+        <MaximumBHPConstraint
+         name="maxBHP"
+         referenceElevation="2"
+         targetBHP="1e8"/>
+        <VolumeInjectionConstraint
+         name="maxVol"
+         volumeRate="28e-6"
          injectionTemperature="297.15"
          injectionStream="{ 0.1, 0.1, 0.1, 0.7 }"/>
         </WellControls>

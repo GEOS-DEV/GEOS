@@ -71,9 +71,6 @@ struct ConstraintHelper< NC, IS_THERMAL, BHPConstraint >
     {
       dofColIndices[ ic ] =  wellElemDofNumber[iwelemRef] + ic;
     }
-    // fluid data
-    constitutive::MultiFluidBase & fluidSeparator =  wellControls.getMultiFluidSeparator();
-    integer isThermal = fluidSeparator.isThermal();
 
     // constraint data
     real64 const & targetBHP = constraint.getConstraintValue( time_n );
@@ -131,15 +128,10 @@ struct ConstraintHelper< NC, IS_THERMAL, PhaseConstraint >
                                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                           arrayView1d< real64 > const & localRhs )
   {
-
-    integer constexpr maxNumComp = constitutive::MultiFluidBase::MAX_NUM_COMPONENTS;
-
     // subRegion data
 
     localIndex const iwelemRef = subRegion.getTopWellElementIndex();
     arrayView1d< globalIndex const > const & wellElemDofNumber = subRegion.getReference< array1d< globalIndex > >( wellDofKey );
-    arrayView1d< real64 const > const & pres = subRegion.getField< fields::well::pressure >();
-    arrayView1d< real64 const > const & temp = subRegion.getField< fields::well::temperature >();
     arrayView1d< real64 const > const & connRate = subRegion.getField< fields::well::mixtureConnectionRate >();
     arrayView2d< real64 const, compflow::USD_COMP > const & compFrac = subRegion.getField< fields::well::globalCompFraction >();
     arrayView3d< real64 const, compflow::USD_COMP_DC > const & dCompFrac_dCompDens = subRegion.getField< fields::well::dGlobalCompFraction_dGlobalCompDensity >();
@@ -158,9 +150,7 @@ struct ConstraintHelper< NC, IS_THERMAL, PhaseConstraint >
 
     // fluid data
     constitutive::MultiFluidBase & fluidSeparator =  wellControls.getMultiFluidSeparator();
-    integer isThermal = fluidSeparator.isThermal();
-    integer const numComp = fluidSeparator.numFluidComponents();
-    integer const numPhase = fluidSeparator.numFluidPhases();
+
     arrayView3d< real64 const, constitutive::multifluid::USD_PHASE > const & phaseFrac = fluidSeparator.phaseFraction();
     arrayView4d< real64 const, constitutive::multifluid::USD_PHASE_DC > const & dPhaseFrac = fluidSeparator.dPhaseFraction();
     arrayView3d< real64 const, constitutive::multifluid::USD_PHASE > const & phaseDens = fluidSeparator.phaseDensity();
@@ -247,15 +237,10 @@ struct ConstraintHelper< NC, IS_THERMAL, VolumeConstraint >
                                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                           arrayView1d< real64 > const & localRhs )
   {
-
-    integer constexpr maxNumComp = constitutive::MultiFluidBase::MAX_NUM_COMPONENTS;
-
     // subRegion data
 
     localIndex const iwelemRef = subRegion.getTopWellElementIndex();
     arrayView1d< globalIndex const > const & wellElemDofNumber = subRegion.getReference< array1d< globalIndex > >( wellDofKey );
-    arrayView1d< real64 const > const & pres = subRegion.getField< fields::well::pressure >();
-    arrayView1d< real64 const > const & temp = subRegion.getField< fields::well::temperature >();
     arrayView1d< real64 const > const & connRate = subRegion.getField< fields::well::mixtureConnectionRate >();
     arrayView2d< real64 const, compflow::USD_COMP > const & compFrac = subRegion.getField< fields::well::globalCompFraction >();
     arrayView3d< real64 const, compflow::USD_COMP_DC > const & dCompFrac_dCompDens = subRegion.getField< fields::well::dGlobalCompFraction_dGlobalCompDensity >();
@@ -274,14 +259,11 @@ struct ConstraintHelper< NC, IS_THERMAL, VolumeConstraint >
 
     // fluid data
     constitutive::MultiFluidBase & fluidSeparator =  wellControls.getMultiFluidSeparator();
-    integer isThermal = fluidSeparator.isThermal();
-    integer const numComp = fluidSeparator.numFluidComponents();
-    integer const numPhase = fluidSeparator.numFluidPhases();
+
     arrayView2d< real64 const, constitutive::multifluid::USD_FLUID > const & totalDens = fluidSeparator.totalDensity();
     arrayView3d< real64 const, constitutive::multifluid::USD_FLUID_DC > const & dTotalDens = fluidSeparator.dTotalDensity();
 
     // constraint data
-    integer ip = getPhaseIndex( fluidSeparator, constraint.getPhaseName());
     real64 const & targetTotalVolRate = constraint.getConstraintValue( time_n );
 
     // current constraint value
@@ -359,15 +341,10 @@ struct ConstraintHelper< NC, IS_THERMAL, MassConstraint >
                                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                           arrayView1d< real64 > const & localRhs )
   {
-
-    integer constexpr maxNumComp = constitutive::MultiFluidBase::MAX_NUM_COMPONENTS;
-
     // subRegion data
 
     localIndex const iwelemRef = subRegion.getTopWellElementIndex();
     arrayView1d< globalIndex const > const & wellElemDofNumber = subRegion.getReference< array1d< globalIndex > >( wellDofKey );
-    arrayView1d< real64 const > const & pres = subRegion.getField< fields::well::pressure >();
-    arrayView1d< real64 const > const & temp = subRegion.getField< fields::well::temperature >();
     arrayView1d< real64 const > const & connRate = subRegion.getField< fields::well::mixtureConnectionRate >();
     arrayView2d< real64 const, compflow::USD_COMP > const & compFrac = subRegion.getField< fields::well::globalCompFraction >();
     arrayView3d< real64 const, compflow::USD_COMP_DC > const & dCompFrac_dCompDens = subRegion.getField< fields::well::dGlobalCompFraction_dGlobalCompDensity >();
@@ -386,9 +363,6 @@ struct ConstraintHelper< NC, IS_THERMAL, MassConstraint >
 
     // fluid data
     constitutive::MultiFluidBase & fluidSeparator =  wellControls.getMultiFluidSeparator();
-    integer isThermal = fluidSeparator.isThermal();
-    integer const numComp = fluidSeparator.numFluidComponents();
-    integer const numPhase = fluidSeparator.numFluidPhases();
     arrayView2d< real64 const, constitutive::multifluid::USD_FLUID > const & totalDens = fluidSeparator.totalDensity();
     arrayView3d< real64 const, constitutive::multifluid::USD_FLUID_DC > const & dTotalDens = fluidSeparator.dTotalDensity();
 
