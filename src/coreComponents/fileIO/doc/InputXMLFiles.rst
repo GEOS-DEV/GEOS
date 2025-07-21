@@ -349,14 +349,14 @@ Units
 ------------------------------
 
 GEOS Unit System Generalities
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Typically, all operations within GEOS are conducted using SI units (International System of Units).
 If he wants to, the user can use any self-consistent unit system (in that case, every input value must be in that system).
 
 
 Physical Scales Default Units
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. list-table:: Physical Scale Default Unit
   :widths: auto
@@ -416,7 +416,7 @@ Physical Scales Default Units
 
 
 XML Preprocessor Unit Manager
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Users wishing to work with non-SI units for specific values can define these explicitly via XML parameters postfixes.
 The XML preprocessor ensures that any user-specified units within input files are converted into GEOS supported values prior to simulation.
