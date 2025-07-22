@@ -51,7 +51,7 @@ char const * xmlInput =
                                 { 99.9, 0.1, 0.1 }, { 99.9, 0.1, 99.9 }, { 99.9, 99.9, 0.1 }, { 99.9, 99.9, 99.9 },
                                 { 50, 50, 50 } }"
         outputSeismoTrace="0"
-        timestepStabilityLimit="1"
+        timestepStabilityLimit="0"
         useTaper="1"
         thicknessTaper="50.0"
         reflectivityCoeff="0.00001"
