@@ -697,6 +697,9 @@ public:
 
     /// @return string for the chopWhenUpdateStateFailed wrapper
     static constexpr char const * chopWhenUpdateStateFailedString() { return "chopWhenUpdateStateFailed"; }
+
+    /// @return string for the numTimestepsSinceLastDtCut wrapper
+    static constexpr char const * numTimestepsSinceLastDtCutString() { return "numTimestepsSinceLastDtCut"; }
   };
 
   /**

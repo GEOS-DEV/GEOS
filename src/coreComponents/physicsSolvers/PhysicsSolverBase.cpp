@@ -41,7 +41,6 @@ PhysicsSolverBase::PhysicsSolverBase( string const & name,
   ExecutableGroup( name, parent ),
   m_cflFactor(),
   m_nextDt( 1e99 ),
-  m_numTimestepsSinceLastDtCut( -1 ),
   m_dofManager( name ),
   m_linearSolverParameters( groupKeyStruct::linearSolverParametersString(), this ),
   m_nonlinearSolverParameters( groupKeyStruct::nonlinearSolverParametersString(), this ),
@@ -93,11 +92,16 @@ PhysicsSolverBase::PhysicsSolverBase( string const & name,
     setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "Cut time step if linear solution fail without going until max nonlinear iterations." );
 
-  this->registerWrapper( viewKeyStruct::chopWhenUpdateStateFailedString(), &m_chopWhenUpdateStateFailed ).
+  registerWrapper( viewKeyStruct::chopWhenUpdateStateFailedString(), &m_chopWhenUpdateStateFailed ).
     setSizedFromParent( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( 0 ).
     setDescription( "Flag indicating whether time step is chopped when update status failed" );
+
+  registerWrapper( viewKeyStruct::numTimestepsSinceLastDtCutString(), &m_numTimestepsSinceLastDtCut ).
+    setApplyDefaultValue( -1 ).
+    setInputFlag( InputFlags::FALSE ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ );
 
   addLogLevel< logInfo::Fields >();
   addLogLevel< logInfo::LinearSolver >();
