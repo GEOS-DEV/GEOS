@@ -105,26 +105,12 @@ public:
   /// Compute time value for the number of equations
   static constexpr integer numEqn = NUM_EQN;
 
-  /// Maximum number of elements at the face (equivalent to a connection with 4 elements)
+  /// Maximum number of elements at the face (equivalent to a connection with 4 elements, such as a fracture intersection)
   static constexpr localIndex maxNumConn = 6;
-
-  /// Minimum potential difference to apply a damping factor
-  static constexpr real64 m_dPhiMin = 1.0; // 7000
-
-  /// Stretching factor applied to damping factor to allow for a small crossing of the kink
-   static constexpr real64 m_dPhiStretch = 1.05;
-
-  /// Minimum dampining factor
-   static constexpr real64 m_minFactor = 0.1;
-
-   /// Minimum dampining factor
-  static constexpr real64 m_resThres = 0.0; // 0.0, 0.05, 0.2
-  static constexpr real64 m_AbsResThres = 1e2; // 0.0, 1e3
-
 
   KinkFactorKernel( integer const numPhases,
                     globalIndex const rankOffset,
-                    arrayView1d< real64 const > const & localSolution,
+                    arrayView1d< real64 const > const & GEOS_UNUSED_PARAM( localSolution ),
                     arrayView1d< real64 const > const & localResidual,
                     STENCILWRAPPER const & stencilWrapper,
                     DofNumberAccessor const & dofNumberAccessor,
@@ -133,7 +119,7 @@ public:
                     CapPressureAccessors const & capPressureAccessors,                    
                     integer const hasCapPressure,
                     real64 const resNorm,
-                    ImmiscibleMultiphaseFlow::TrustRegionParameters const & trustRegionParams ):
+                    ImmiscibleMultiphaseFlow::TrustRegionParameters const & trustRegionParams )
     : m_numPhases( numPhases ),
       m_rankOffset( rankOffset ),
       m_dofNumber( dofNumberAccessor.toNestedViewConst() ),
@@ -148,7 +134,11 @@ public:
       m_localResidual( localResidual ),
       m_resNorm( resNorm ),
       m_hasCapPressure ( hasCapPressure ),
-      m_trustRegionParams( trustRegionParams ),
+      m_dPhiMin( trustRegionParams.dPhiMin ),
+      m_kinkFactorDelta( trustRegionParams.kinkFactorDelta ),
+      m_minFactor( trustRegionParams.minKinkFactor ),
+      m_relResThres( trustRegionParams.relResThres ),
+      m_absResThres( trustRegionParams.absResThres ),
       m_stencilWrapper( stencilWrapper ),      
       m_seri( stencilWrapper.getElementRegionIndices() ),
       m_sesri( stencilWrapper.getElementSubRegionIndices() ),
@@ -256,8 +246,8 @@ public:
         for( integer ip = 0; ip < m_numPhases; ++ip )
         {
           // adaptive damping based on significant residual values           
-          // if( (fabs( m_localResidual[localRow[0] + ip] ) < m_resThres * m_resNorm || fabs( m_localResidual[localRow[0] + ip] ) < m_AbsResThres) &&
-          //     (fabs( m_localResidual[localRow[1] + ip] ) < m_resThres * m_resNorm || fabs( m_localResidual[localRow[1] + ip] ) < m_AbsResThres) )            
+          // if( (fabs( m_localResidual[localRow[0] + ip] ) < m_relResThres * m_resNorm || fabs( m_localResidual[localRow[0] + ip] ) < m_absResThres) &&
+          //     (fabs( m_localResidual[localRow[1] + ip] ) < m_relResThres * m_resNorm || fabs( m_localResidual[localRow[1] + ip] ) < m_absResThres) )            
           // {
           //   continue;
           // }
@@ -266,8 +256,8 @@ public:
           {
             if ( localRow[ke] >= 0 )
             {              
-              if( fabs( m_localResidual[localRow[ke] + ip] ) > m_resThres * m_resNorm || 
-                  fabs( m_localResidual[localRow[ke] + ip] ) > m_AbsResThres )
+              if( fabs( m_localResidual[localRow[ke] + ip] ) > m_relResThres * m_resNorm || 
+                  fabs( m_localResidual[localRow[ke] + ip] ) > m_absResThres )
               {
                 skipConnection = false;
                 break;
@@ -323,7 +313,7 @@ public:
                fabs( dPhi[ip] )                 > m_dPhiMin && 
                fabs( dPhi[ip] + dDPhi[ip] )     > m_dPhiMin )
           {
-            eps[ip] = fmax( fmin( -dPhi[ip] / dDPhi[ip] * m_dPhiStretch, 1.0 ), m_minFactor );
+            eps[ip] = fmax( fmin( -dPhi[ip] / dDPhi[ip] * m_kinkFactorDelta, 1.0 ), m_minFactor );
           }
           else
           {
@@ -436,7 +426,20 @@ protected:
   integer const m_hasCapPressure;
 
   /// Trust region parameters
-  ImmiscibleMultiphaseFlow::TrustRegionParameters const m_trustRegionParams;
+  /// Minimum potential difference to apply a damping factor
+  real64 const m_dPhiMin; //1.0, 7000
+
+  /// Stretching factor applied to damping factor to allow for a small crossing of the kink
+  real64 const m_kinkFactorDelta; // 1.05
+
+  /// Minimum dampining factor
+  real64 const m_minFactor; // 0.1
+
+   /// Minimum relative residual threshold
+  real64 const m_relResThres; // 0.0, 0.05, 0.2
+
+  /// Minimum absolute residual threshold
+  real64 const m_absResThres; // 1e2, 0.0, 1e3
 
   /// Reference to the stencil wrapper
   STENCILWRAPPER const m_stencilWrapper;
@@ -1161,20 +1164,6 @@ public:
   /// Maximum number of elements at the face
   static constexpr localIndex maxNumConn = 6;
 
-  /// Maximum number of nonlinear iterations
-  static constexpr integer m_maxIter = 5;
-
-  /// Minimum potential difference to apply a damping factor
-  static constexpr real64 m_d2RMin = 1.0e-14; // 7000
-
-  /// Minimum dampining factor
-  static constexpr real64 m_minFactor = 0.1; 
-  
-  /// Minimum dampining factor
-  static constexpr real64 m_resThres = 0.6; // 0.0, 0.2
-  static constexpr real64 m_AbsResThres = 0.0; // 0.0, 1e2, 1e3
-
-
   ResidualInflectionFactorKernel( integer const numPhases,
                                   globalIndex const rankOffset,
                                   string const dofKey,
@@ -1224,7 +1213,11 @@ public:
       m_resNorm( resNorm ),
       m_globalKinkFactor( globalKinkFactor ),  
       m_hasCapPressure( hasCapPressure ),
-      m_trustRegionParams( trustRegionParams ),
+      m_maxIter( trustRegionParams.maxIter ),
+      m_d2RMin( trustRegionParams.d2RMin ),
+      m_minFactor( trustRegionParams.minInfFactor ),
+      m_relResThres( trustRegionParams.relResThres ),
+      m_absResThres( trustRegionParams.absResThres ),
       m_stencilWrapper( stencilWrapper ),
       m_fluidWrapper( fluidWrapper ),
       m_relPermWrapper( relPermWrapper ),   
@@ -1299,8 +1292,8 @@ public:
       globalIndex const globalRow = m_dofNumberElem[ei];
       localIndex const localRow = LvArray::integerConversion< localIndex >( globalRow - m_rankOffset );
       GEOS_ASSERT_GE( localRow, 0 );  
-      if( fabs( m_localResidual[localRow + ip] ) < m_resThres * m_resNorm ||
-          fabs( m_localResidual[localRow + ip] ) < m_AbsResThres )        
+      if( fabs( m_localResidual[localRow + ip] ) < m_relResThres * m_resNorm ||
+          fabs( m_localResidual[localRow + ip] ) < m_absResThres )        
       {           
         continue; // skip analysis if phase residual is below minimum threshold
       }      
@@ -1726,7 +1719,20 @@ protected:
   integer const m_hasCapPressure;
 
   /// Trust region parameters
-  ImmiscibleMultiphaseFlow::TrustRegionParameters const m_trustRegionParams;
+  /// Maximum number of nonlinear iterations
+  integer const m_maxIter; // 5
+
+  /// Minimum second derivative to apply a damping factor
+  real64 const m_d2RMin; // 1.0e-14
+
+  /// Minimum dampining factor
+  real64 const m_minFactor; // 0.1
+
+   /// Minimum relative residual threshold
+  real64 const m_relResThres; // 0.6 
+
+  /// Minimum absolute residual threshold
+  real64 const m_absResThres; // 0.0  
 
   /// Reference to the wrappers
   STENCILWRAPPER const m_stencilWrapper;

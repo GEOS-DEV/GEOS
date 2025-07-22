@@ -283,7 +283,7 @@ public:
     // trust region parameters
     static constexpr char const * trustRegionMaxIterString() { return "trustRegionMaxIter"; }
     static constexpr char const * trustRegionMinPotentialDiffString() { return "trustRegionMinPotentialDiff"; }
-    static constexpr char const * trustRegionMinInflectionString() { return "trustRegionMinInflection"; }
+    static constexpr char const * trustRegionMinDerivativeString() { return "trustRegionMinDerivative"; }
     static constexpr char const * trustRegionMinKinkFactorString() { return "trustRegionMinKinkFactor"; }
     static constexpr char const * trustRegionMinInfFactorString() { return "trustRegionMinInfFactor"; }
     static constexpr char const * trustRegionKinkFactorDeltaString() { return "trustRegionKinkFactorDelta"; }
@@ -297,9 +297,10 @@ public:
 
     // nonlinear solver parameters    
     static constexpr char const * useTotalMassEquationString() { return "useTotalMassEquation"; }
-    static constexpr char const * allowNegativePressureString() { return "allowNegativePressure"; }
+    static constexpr char const * allowOutOfBoundPressureString() { return "allowOutOfBoundPressure"; }
     static constexpr char const * allowOutOfBoundSatString() { return "allowOutOfBoundSaturation"; }
     static constexpr char const * allowLocalSatChoppingString() { return "allowLocalSatChopping"; }
+    static constexpr char const * allowLocalPresChoppingString() { return "allowLocalPresChopping"; }
     static constexpr char const * minScalingFactorString() { return "minScalingFactor"; }
   };
 
@@ -355,6 +356,12 @@ private:
    */
   void chopOutOfBoundPhaseVolFrac ( DomainPartition & domain );
 
+  /**
+   * @brief Utility function to chop pressures that lie outside of physical bounds
+   * @param[in] domain the domain object
+   */
+  void chopOutOfBoundPressure( DomainPartition & domain );
+
   /// the max number of fluid phases
   integer m_numPhases;
 
@@ -368,7 +375,10 @@ private:
   integer m_fluxInflection;
 
   /// flag to determine whether to allow negative pressures
-  integer m_allowNegativePressure;
+  integer m_allowOutOfBoundPressure;
+
+  /// flag to determine whether to chop negative pressures
+  integer m_allowPresChopping;
 
   /// flag to determine whether to allow out of bounds saturation
   integer m_allowOutOfBoundSaturation;

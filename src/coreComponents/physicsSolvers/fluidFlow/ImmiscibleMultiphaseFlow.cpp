@@ -140,10 +140,16 @@ ImmiscibleMultiphaseFlow::ImmiscibleMultiphaseFlow( const string & name,
     setApplyDefaultValue( -1.0 ).     // disabled by default
     setDescription( "Maximum (relative) change in saturation in a Newton iteration" );  
 
-  this->registerWrapper( viewKeyStruct::allowNegativePressureString(), &m_allowNegativePressure ).    
+  this->registerWrapper( viewKeyStruct::allowOutOfBoundPressureString(), &m_allowOutOfBoundPressure ).    
+    setSizedFromParent( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( 0 ). // negative pressure is not allowed by default
     setDescription( "Flag indicating if negative pressure is allowed" );
+
+  this->registerWrapper( viewKeyStruct::allowLocalPresChoppingString(), &m_allowPresChopping ).    
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( 0 ). 
+    setDescription( "Flag indicating whether local (cell-wise) chopping of negative pressure is allowed" );
 
   this->registerWrapper( viewKeyStruct::allowOutOfBoundSatString(), &m_allowOutOfBoundSaturation ).    
     setInputFlag( InputFlags::OPTIONAL ).
@@ -166,7 +172,7 @@ ImmiscibleMultiphaseFlow::ImmiscibleMultiphaseFlow( const string & name,
     setApplyDefaultValue( 1.0 ).
     setDescription( "Minimum potential difference to apply a damping factor" );
 
-  this->registerWrapper( viewKeyStruct::trustRegionMinInflectionString(), &m_trustRegionParams.d2RMin ).
+  this->registerWrapper( viewKeyStruct::trustRegionMinDerivativeString(), &m_trustRegionParams.d2RMin ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( 0.1 ).
     setDescription( "Minimum directional second derivative to apply a damping factor" );
@@ -188,12 +194,12 @@ ImmiscibleMultiphaseFlow::ImmiscibleMultiphaseFlow( const string & name,
 
   this->registerWrapper( viewKeyStruct::trustRegionRelResThresString(), &m_trustRegionParams.relResThres ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setApplyDefaultValue( 0.6 ).
+    setApplyDefaultValue( 0.0 ).
     setDescription( "Minimum relative residual threshold for applying damping factor" );
 
   this->registerWrapper( viewKeyStruct::trustRegionAbsResThresString(), &m_trustRegionParams.absResThres ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setApplyDefaultValue( 1e-1 ).
+    setApplyDefaultValue( 1e2 ). // 1e-1
     setDescription( "Minimum absolute residual threshold for applying damping factor" );
   
 }
@@ -1700,12 +1706,12 @@ ImmiscibleMultiphaseFlow::scalingForSystemSolutionTrustRegion( DomainPartition &
   // step 2.3: global reduction across mpi ranks
 
   real64 globalInflectionFactor = MpiWrapper::min( localInflectionFactor );
-
-  globalKinkFactor = fmax( globalKinkFactor, 0.1 ); // 0.8
-  globalInflectionFactor = fmax( globalInflectionFactor, 0.1 ); // 0.4
-
+  
   // step 2.4: global combined damping factor
-  real64 scalingFactor = fmax( globalKinkFactor * globalInflectionFactor, 0.1 ); /////// 0.01, 0.1, 0.2, 0.4, 1.0
+  real64 scalingFactor = fmax( globalKinkFactor * globalInflectionFactor, m_minScalingFactor ); /////// 0.01, 0.1, 0.2, 0.4, 1.0
+
+  GEOS_LOG_LEVEL_RANK_0( logInfo::Solution, GEOS_FMT( "        {}: Global discontinuity scaling factor = {}", getName(), globalKinkFactor ) );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::Solution, GEOS_FMT( "        {}: Global inflection scaling factor = {}", getName(), globalInflectionFactor ) );
 
   return scalingFactor;
 }
@@ -1751,7 +1757,7 @@ bool ImmiscibleMultiphaseFlow::checkSystemSolution( DomainPartition & domain,
                                                    scalingFactor,
                                                    pressureScalingFactor,
                                                    saturationScalingFactor,                                                   
-                                                   m_allowNegativePressure,
+                                                   m_allowOutOfBoundPressure,
                                                    m_allowOutOfBoundSaturation );
 
     localCheck = fmin( localCheck, subRegionData.localMinVal );
@@ -1841,6 +1847,10 @@ void ImmiscibleMultiphaseFlow::applySystemSolution( DofManager const & dofManage
   if ( m_allowSatChopping )
   {
     chopOutOfBoundPhaseVolFrac( domain );
+  }
+  if ( m_allowPresChopping )
+  {
+    chopOutOfBoundPressure( domain );
   }
 
   // 4. synchronize
@@ -2129,8 +2139,8 @@ void ImmiscibleMultiphaseFlow::chopOutOfBoundPhaseVolFrac( DomainPartition & dom
   GEOS_MARK_FUNCTION;
 
   integer const numPhase = m_numPhases;
-  real64 const minSat = 0.0;
-  real64 const maxSat = 1.0;
+  real64 const minSat = 0.0; // technically should be the irreducible saturation
+  real64 const maxSat = 1.0; // technically should be the residual saturation
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel & mesh,
@@ -2165,6 +2175,44 @@ void ImmiscibleMultiphaseFlow::chopOutOfBoundPhaseVolFrac( DomainPartition & dom
     } );
   } );
 }
+
+void ImmiscibleMultiphaseFlow::chopOutOfBoundPressure( DomainPartition & domain )
+{
+  GEOS_MARK_FUNCTION;
+
+  real64 const minPres = 0.0; // could be the minimum presure for which the fluid model is valid
+  real64 const maxPres = LvArray::NumericLimits< real64 >::max; // could be the maximum presure for which the fluid model is valid
+
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                                               MeshLevel & mesh,
+                                                               string_array const & regionNames )
+  {
+    mesh.getElemManager().forElementSubRegions( regionNames,
+                                                [&]( localIndex const,
+                                                     ElementSubRegionBase & subRegion )
+    {
+      arrayView1d< integer const > const ghostRank = subRegion.ghostRank();
+
+      arrayView1d< real64 > const pressure = subRegion.getField< fields::flow::pressure >();
+
+      forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const ei )
+      {
+        if( ghostRank[ei] < 0 )
+        {
+          if( pressure[ei] < minPres )
+          {
+            pressure[ei] = minPres;
+          }
+          else if( pressure[ei] > maxPres )
+          {
+            pressure[ei] = maxPres;
+          }
+        }
+      } );
+    } );
+  } );
+}
+
 
 
 REGISTER_CATALOG_ENTRY( PhysicsSolverBase, ImmiscibleMultiphaseFlow, string const &, Group * const )

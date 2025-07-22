@@ -10,7 +10,24 @@
       discretization="TPFA"
       targetRegions="{ reservoir }"      
       temperature="300"
-      initialDt="4.32e8">
+      initialDt="4.32e8"
+
+      scalingType="Global"
+      scalingFactorType="TrustRegion"
+      allowOutOfBoundPressure="1"
+      allowLocalPresChopping="0"
+      allowOutOfBoundSaturation="1"
+      allowLocalSatChopping="0"
+      trustRegionMaxIter="5"
+      trustRegionMinPotentialDiff="1.0"
+      trustRegionKinkFactorDelta="1.05"
+      trustRegionMinDerivative="0.1"
+      trustRegionRelResidualThreshold="0.0"
+      trustRegionAbsResidualThreshold="1e-2"
+      trustRegionMinKinkFactor="0.2"
+      trustRegionMinInfFactor="0.1"
+      minScalingFactor="0.01">
+
       <NonlinearSolverParameters
         newtonTol="1.0e-3"
         newtonMaxIter="200"
