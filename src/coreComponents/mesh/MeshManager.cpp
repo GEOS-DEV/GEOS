@@ -130,7 +130,7 @@ void MeshManager::importFields( DomainPartition & domain )
     }
 
     printf("here3\n");
-    GEOS_LOG_RANK_0( GEOS_FMT( "{}: importing field data from mesh dataset", generator.getName() ) );
+    //GEOS_LOG_RANK_0( GEOS_FMT( "{}: importing field data from mesh dataset", generator.getName() ) );
     printf("here4\n");
     MeshBody & meshBody = domain.getMeshBody( generator.getName() );
     printf("here5\n");
