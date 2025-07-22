@@ -112,7 +112,7 @@ void Perforation::postInputInitialization()
       // User supplied table in Perforation section
 
       GEOS_THROW_IF( m_perfStatusTable[0].size() != m_perfStatusTable[1].size(),
-                     GEOS_FMT( "Perforation status table missing time or status : {}", getName() ),
+                     GEOS_FMT( "{}: Perforation status table missing time or status.", getDataContext() ),
                      InputError );
 
       for( std::ptrdiff_t i=0; i<m_perfStatusTable[0].size(); i++ )
