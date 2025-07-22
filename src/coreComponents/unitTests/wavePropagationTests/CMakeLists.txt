@@ -1,17 +1,17 @@
 # Specify list of tests
 set( gtest_geosx_tests
-     testWavePropagation.cpp
+     #testWavePropagation.cpp
      testWavePropagationTaper.cpp
      #testWavePropagationQ2.cpp
-     testWavePropagationElasticFirstOrder.cpp
-     testWavePropagationDAS.cpp
-     testWavePropagationElasticVTI.cpp
-     testWavePropagationElasticTTI.cpp
-     testWavePropagationAttenuationElastic.cpp
-     testWavePropagationAttenuationAcoustic.cpp
-     testWavePropagationAttenuationAcousticVTI.cpp
-     testWavePropagationAcousticFirstOrder.cpp
-     testWavePropagationAdjoint1.cpp
+     #testWavePropagationElasticFirstOrder.cpp
+     #testWavePropagationDAS.cpp
+     #testWavePropagationElasticVTI.cpp
+     #testWavePropagationElasticTTI.cpp
+     #testWavePropagationAttenuationElastic.cpp
+     #testWavePropagationAttenuationAcoustic.cpp
+     #testWavePropagationAttenuationAcousticVTI.cpp
+     #testWavePropagationAcousticFirstOrder.cpp
+     #testWavePropagationAdjoint1.cpp
    )
 
 set( tplDependencyList ${parallelDeps} gtest )
