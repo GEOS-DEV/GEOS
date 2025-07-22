@@ -51,9 +51,9 @@ char const * xmlInput =
                                 { 99.9, 0.1, 0.1 }, { 99.9, 0.1, 99.9 }, { 99.9, 99.9, 0.1 }, { 99.9, 99.9, 99.9 },
                                 { 50, 50, 50 } }"
         outputSeismoTrace="0"
-        timestepStabilityLimit="0"
+        timestepStabilityLimit="1"
         useTaper="1"
-        thicknessTaper="50.0"
+        thicknessTaper="10.0"
         reflectivityCoeff="0.00001"
         cflFactor="0.95"
         dtSeismoTrace="0.1"/>
@@ -110,13 +110,6 @@ char const * xmlInput =
         initialCondition="1"
         objectPath="ElementRegions/Region/cb"
         fieldName="acousticDensity"
-        scale="1"
-        setNames="{ all }"/>
-      <FieldSpecification
-        name="taperField"
-        initialCondition="1"
-        objectPath="nodeManager"
-        fieldName="taperCoeff"
         scale="1"
         setNames="{ all }"/>
       <FieldSpecification
