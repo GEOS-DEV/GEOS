@@ -57,8 +57,11 @@ Perforation::Perforation( string const & name, Group * const parent )
     setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription(
-    "Name of table function defining perforation status as a function of time. If none specified, a table function with be created internally and assigned the same name as the perforation." );
-
+    "Name of table function defining perforation status as a function of time:\n"
+    "- The first row sets the perforation time coordinates,\n"
+    "- The following row is the perforation status ( 0.0 for closed, 1.0 for opened) for each time coordinate.\n"
+    "If none specified, a table function with be created internally and assigned the name formed by well and perforation names, separated by '_'.\n"
+    "A table that opens the perforation at t=100, and closes it at t=200 could be `{{ 0, 100, 200 },{ 0.0, 1.0, 0.0 }}`" );
   registerWrapper( viewKeyStruct::perfStatusTableString(), &m_perfStatusTable ).
     setInputFlag( InputFlags::OPTIONAL ).
     setSizedFromParent( 0 ).
@@ -80,7 +83,7 @@ void Perforation::postInputInitialization()
   if( m_perfStatusTableName.empty() )
   {
     // No table function provide, defaults name to perforation name
-    m_perfStatusTableName=getName();
+    m_perfStatusTableName=getParent().getName()+"_"+getName();
   }
   else
   {
@@ -119,6 +122,9 @@ void Perforation::postInputInitialization()
       for( std::ptrdiff_t i=0; i<m_perfStatusTable[0].size(); i++ )
       {
         timeCoord[0].emplace_back( m_perfStatusTable[0][i] );
+        GEOS_THROW_IF( ( !isZero( m_perfStatusTable[1][i] )|| !isZero( 1-m_perfStatusTable[1][i] ) ),
+                       GEOS_FMT( "{}: Perforation status value must be 0 or 1.", getDataContext() ),
+                       InputError );
         values.emplace_back( m_perfStatusTable[1][i] );
       }
     }
