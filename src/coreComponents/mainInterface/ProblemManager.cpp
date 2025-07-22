@@ -188,7 +188,7 @@ void ProblemManager::problemSetup()
 //  initialize_postMeshGeneration();
   LogPart numericalMethodLog( "Numerical Methods", MpiWrapper::commRank() == 0 );
   numericalMethodLog.begin();
-  applyNumericalMethods();
+  //applyNumericalMethods();
   printf("after apply num methods\n");
   numericalMethodLog.end();
 
