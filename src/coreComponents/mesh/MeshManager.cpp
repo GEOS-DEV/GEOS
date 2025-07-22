@@ -139,7 +139,7 @@ void MeshManager::importFields( DomainPartition & domain )
     printf("here6\n");
 
     printf("meshLevel.getName()=%s\n", meshLevel.getName().c_str());
-      GEOS_LOG_RANK_0( GEOS_FMT( "  mesh level = {}", meshLevel.getName() ) );
+      //GEOS_LOG_RANK_0( GEOS_FMT( "  mesh level = {}", meshLevel.getName() ) );
 
     printf("here7\n");
       FieldIdentifiers fieldsToBeSync;
