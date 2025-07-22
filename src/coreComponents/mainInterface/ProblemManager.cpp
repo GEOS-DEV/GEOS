@@ -1049,8 +1049,8 @@ void ProblemManager::setRegionQuadrature( Group & meshBodies,
     string const regionName = std::get< 2 >( key );
     string const subRegionName = std::get< 3 >( key );
 
-    GEOS_LOG_RANK_0( "regionQuadrature: meshBodyName, meshLevelName, regionName, subRegionName = "<<
-                     meshBodyName<<", "<<meshLevelName<<", "<<regionName<<", "<<subRegionName );
+    //GEOS_LOG_RANK_0( "regionQuadrature: meshBodyName, meshLevelName, regionName, subRegionName = "<<
+                     //meshBodyName<<", "<<meshLevelName<<", "<<regionName<<", "<<subRegionName );
 
 
 
