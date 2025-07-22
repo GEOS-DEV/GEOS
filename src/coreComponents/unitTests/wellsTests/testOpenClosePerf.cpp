@@ -263,14 +263,14 @@ void testOpenTopDownPerfCheck( CompositionalMultiphaseReservoirAndWells<> & solv
   CompositionalMultiphaseWell & wellSolver = *solver.wellSolver();
 
   typedef std::map< real64, std::vector< int > > map_type;
-  map_type refVal;
-  refVal[4800.0] = { 0, 0, 0, 0, 0};
-  refVal[14800.0] = { 1, 0, 0, 0, 0};
-  refVal[19800.0] = { 1, 1, 0, 0, 0};
-  refVal[29800.0] = { 1, 1, 1, 0, 0};
-  refVal[39800.0] = { 1, 1, 1, 1, 1};
-  map_type::iterator it = refVal.begin();
-  while( it != refVal.end() )
+  map_type refPerfTable;
+  refPerfTable[4800.0] = { 0, 0, 0, 0, 0};
+  refPerfTable[14800.0] = { 1, 0, 0, 0, 0};
+  refPerfTable[19800.0] = { 1, 1, 0, 0, 0};
+  refPerfTable[29800.0] = { 1, 1, 1, 0, 0};
+  refPerfTable[39800.0] = { 1, 1, 1, 1, 1};
+  map_type::iterator it = refPerfTable.begin();
+  while( it != refPerfTable.end() )
   {
     perfFunction( it->first );
 
