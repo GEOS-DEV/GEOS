@@ -194,11 +194,11 @@ void ProblemManager::problemSetup()
 
 
   printf("start registerDataOnMeshRecursive\n");
-  //registerDataOnMeshRecursive( getDomainPartition().getMeshBodies() );
+  registerDataOnMeshRecursive( getDomainPartition().getMeshBodies() );
 
   printf("end registerDataOnMeshRecursive, start initialize\n");
 
-  //initialize();
+  initialize();
 
   printf("end initialize\n");
 
@@ -206,7 +206,7 @@ void ProblemManager::problemSetup()
 
   printf("start import fields\n");
   importFieldsLog.begin();
-  //importFields();
+  importFields();
 
   printf("end import fields\n");
   importFieldsLog.end();
