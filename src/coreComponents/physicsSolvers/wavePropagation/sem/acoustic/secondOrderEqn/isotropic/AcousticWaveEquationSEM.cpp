@@ -73,7 +73,7 @@ void AcousticWaveEquationSEM::initializePreSubGroups()
 
 void AcousticWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
 {
-  
+
   printf("registerdatastart\n");
   WaveSolverBase::registerDataOnMesh( meshBodies );
   forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
@@ -112,6 +112,11 @@ void AcousticWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
       nodeManager.getField< acousticfields::AuxiliaryVar2PML >().resizeDimension< 1 >( 3 );
     }
 
+    if(m_useTaper)
+    {
+      nodeManager.registerField<fields::Tapercoeff> (getName() );
+    }
+
     FaceManager & faceManager = mesh.getFaceManager();
     faceManager.registerField< acousticfields::AcousticFreeSurfaceFaceIndicator >( getName() );
 
@@ -130,7 +135,7 @@ void AcousticWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
     } );
 
   } );
-  
+
   printf("registerdataend\n");
 }
 
@@ -147,7 +152,7 @@ void AcousticWaveEquationSEM::postInputInitialization()
 real32 AcousticWaveEquationSEM::getGlobalMinWavespeed( MeshLevel & mesh, string_array const & regionNames )
 {
 
-  
+
   printf("getglobalminwavespeedStart\n");
 
   real32 localMinWavespeed = 1e8;
@@ -162,8 +167,8 @@ real32 AcousticWaveEquationSEM::getGlobalMinWavespeed( MeshLevel & mesh, string_
       localMinWavespeed = subRegionMinWavespeed;
     }
   } );
-  
-  
+
+
   printf("getglobalminwavespeedEnd\n");
 
 
@@ -179,7 +184,7 @@ void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & baseM
 
   GEOS_MARK_FUNCTION;
 
-  
+
   printf("precomputeSourceAndReceiver\n");
 
   arrayView1d< globalIndex const > const nodeLocalToGlobalMap = baseMesh.getNodeManager().localToGlobalMap().toViewConst();
@@ -461,11 +466,11 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
       printf("aftergetmin\n");
 
       arrayView1d< real32 > const taperCoeff = nodeManager.getField< fields::taperCoeff >();
-      
+
   printf("computetaperstart\n");
       TaperKernel::computeTaperCoeff< EXEC_POLICY >( nodeManager.size(), nodeCoords, m_thicknessTaper, m_timeStep, vMin, m_reflectivityCoeff,
                                                      taperCoeff );
-                                                     
+
   printf("computetaperend\n");
     }
   } );
