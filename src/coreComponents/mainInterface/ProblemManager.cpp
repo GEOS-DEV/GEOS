@@ -170,44 +170,44 @@ void ProblemManager::problemSetup()
 {
   GEOS_MARK_FUNCTION;
 
-  
+
   printf("start postInputInitializationRecursive\n");
   postInputInitializationRecursive();
-  
+
   printf("end postInputInitializationRecursive\n");
 
   LogPart meshGenerationLog( "Mesh generation", MpiWrapper::commRank() == 0 );
   meshGenerationLog.begin();
-  
+
   printf("start generateMesh\n");
-  generateMesh();
-  
+ // generateMesh();
+
   printf("end generateMesh\n");
   meshGenerationLog.end();
 
 //  initialize_postMeshGeneration();
   LogPart numericalMethodLog( "Numerical Methods", MpiWrapper::commRank() == 0 );
   numericalMethodLog.begin();
-  applyNumericalMethods();
+  //applyNumericalMethods();
   printf("after apply num methods\n");
   numericalMethodLog.end();
 
-  
+
   printf("start registerDataOnMeshRecursive\n");
   registerDataOnMeshRecursive( getDomainPartition().getMeshBodies() );
-  
+
   printf("end registerDataOnMeshRecursive, start initialize\n");
 
-  initialize();
-    
+  //initialize();
+
   printf("end initialize\n");
 
   LogPart importFieldsLog( "Import fields", MpiWrapper::commRank() == 0 );
-  
+
   printf("start import fields\n");
   importFieldsLog.begin();
-  importFields();
-  
+  //importFields();
+
   printf("end import fields\n");
   importFieldsLog.end();
 }
@@ -1120,10 +1120,10 @@ void ProblemManager::setRegionQuadrature( Group & meshBodies,
       }
       printf("after allocate loop no particles\n");
     }
-    
+
       printf("last message of quad loop\n");
   }
-  
+
       printf("last message of quad loop\n");
 
   // check that every mesh element entity got a discretization
