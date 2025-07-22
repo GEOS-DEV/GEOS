@@ -113,6 +113,13 @@ char const * xmlInput =
         scale="1"
         setNames="{ all }"/>
       <FieldSpecification
+        name="taperField"
+        initialCondition="1"
+        objectPath="nodeManager"
+        fieldName="taperCoeff"
+        scale="1"
+        setNames="{ all }"/>
+      <FieldSpecification
         name="zposFreeSurface"
         objectPath="faceManager"
         fieldName="FreeSurface"
