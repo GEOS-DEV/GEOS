@@ -752,9 +752,9 @@ void ProblemManager::generateMesh()
 
 void ProblemManager::importFields()
 {
-  GEOS_MARK_FUNCTION;
-  DomainPartition & domain = getDomainPartition();
-  MeshManager & meshManager = this->getGroup< MeshManager >( groupKeys.meshManager );
+  //GEOS_MARK_FUNCTION;
+  //DomainPartition & domain = getDomainPartition();
+  //MeshManager & meshManager = this->getGroup< MeshManager >( groupKeys.meshManager );
   //meshManager.importFields( domain );
 }
 
