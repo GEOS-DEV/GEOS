@@ -178,10 +178,12 @@ void NegativeTwoPhaseFlash::computeDerivatives(
   else
   {
     // Calculate the liquid and vapour fugacities and derivatives
-    StackArray< real64, 1, maxNumComps > logLiquidFugacity( numComps );
-    StackArray< real64, 1, maxNumComps > logVapourFugacity( numComps );
-    StackArray< real64, 2, maxNumComps * maxNumDofs, MatrixLayout::ROW_MAJOR_PERM > logLiquidFugacityDerivs( numComps, numDofs );
-    StackArray< real64, 2, maxNumComps * maxNumDofs, MatrixLayout::ROW_MAJOR_PERM > logVapourFugacityDerivs( numComps, numDofs );
+    StackArray< real64, 2, 2*maxNumComps > logFugacity( 2, numComps );
+    StackArray< real64, 3, 2*maxNumComps * maxNumDofs > logFugacityDerivs( 2, numComps, numDofs );
+    arraySlice1d< real64 > const logLiquidFugacity = logFugacity[0];
+    arraySlice1d< real64 > const logVapourFugacity = logFugacity[1];
+    arraySlice2d< real64 > const logLiquidFugacityDerivs = logFugacityDerivs[0];
+    arraySlice2d< real64 > const logVapourFugacityDerivs = logFugacityDerivs[1];
 
     FugacityCalculator::computeLogFugacityDerivatives( numComps,
                                                        pressure,
@@ -190,8 +192,8 @@ void NegativeTwoPhaseFlash::computeDerivatives(
                                                        componentProperties,
                                                        flashData.liquidEos,
                                                        flashData,
-                                                       logLiquidFugacity.toSlice(),
-                                                       logLiquidFugacityDerivs.toSlice() );
+                                                       logLiquidFugacity,
+                                                       logLiquidFugacityDerivs );
     FugacityCalculator::computeLogFugacityDerivatives( numComps,
                                                        pressure,
                                                        temperature,
@@ -199,83 +201,127 @@ void NegativeTwoPhaseFlash::computeDerivatives(
                                                        componentProperties,
                                                        flashData.vapourEos,
                                                        flashData,
-                                                       logVapourFugacity.toSlice(),
-                                                       logVapourFugacityDerivs.toSlice() );
+                                                       logVapourFugacity,
+                                                       logVapourFugacityDerivs );
 
-    constexpr integer maxNumVals = 2*MultiFluidConstants::MAX_NUM_COMPONENTS+1;
-    integer const numVals = 2*numComps;
-    StackArray< real64, 2, maxNumVals * maxNumVals, MatrixLayout::COL_MAJOR_PERM > A( numVals + 1, numVals + 1 );
-    StackArray< real64, 2, maxNumVals * maxNumVals, MatrixLayout::COL_MAJOR_PERM > X( numVals + 1, numVals + 1 );
+    constexpr integer maxNumVals = MultiFluidConstants::MAX_NUM_COMPONENTS+1;
+    StackArray< real64, 2, maxNumVals * maxNumVals, MatrixLayout::COL_MAJOR_PERM > A( numComps + 1, numComps + 1 );
+    StackArray< real64, 2, maxNumVals * maxNumDofs, MatrixLayout::COL_MAJOR_PERM > X( numComps + 1, numDofs );
 
-    LvArray::forValuesInSlice( A.toSlice(), setZero );
-    LvArray::forValuesInSlice( X.toSlice(), setZero );
-
-    for( integer ic = 0; ic < numComps; ++ic )
+    arraySlice1d< real64 > const & liquidFugacity = logLiquidFugacity;
+    arraySlice1d< real64 > const & vapourFugacity = logVapourFugacity;
+    for( integer i = 0; i < numComps; ++i )
     {
-      integer const xi = ic;
-      integer const yi = ic + numComps;
-      integer const vi = numVals;
-
-      integer e = ic;
-      A( e, xi ) = 1.0 - vapourFraction;
-      A( e, yi ) = vapourFraction;
-      A( e, vi ) = vapourComposition[ic] - liquidComposition[ic];
-
-      e = ic + numComps;
-      real64 const phiL = exp( logLiquidFugacity( ic ) );
-      real64 const phiV = exp( logVapourFugacity( ic ) );
-      for( integer jc = 0; jc < numComps; ++jc )
-      {
-        integer const xj = jc;
-        integer const yj = jc + numComps;
-        real64 const dPhiLdx = logLiquidFugacityDerivs( ic, Deriv::dC+jc );
-        real64 const dPhiVdy = logVapourFugacityDerivs( ic, Deriv::dC+jc );
-        A( e, xj ) =  liquidComposition[ic] * phiL * dPhiLdx;
-        A( e, yj ) = -vapourComposition[ic] * phiV * dPhiVdy;
-      }
-      A( e, xi ) += phiL;
-      A( e, yi ) -= phiV;
-
-      e = numVals;
-      A( e, xi ) = -1.0;
-      A( e, yi ) =  1.0;
+      liquidFugacity[i] = LvArray::math::exp( logLiquidFugacity[i] );
+      vapourFugacity[i] = LvArray::math::exp( logVapourFugacity[i] );
     }
+
+    // Precalculate some factors
+    real64 const V = vapourFraction;
+    real64 const factor1 = V / (1.0 - V);
+    real64 const factor2 = 1.0 / (1.0 - V);
+
+    for( integer i = 0; i < numComps; ++i )
+    {
+      real64 const phi_L_i = liquidFugacity[i];
+      real64 const phi_V_i = vapourFugacity[i];
+
+      real64 const xi = liquidComposition[i];
+      real64 const yi = vapourComposition[i];
+
+      real64 col_N = 0.0;
+      for( integer j = 0; j < numComps; ++j )
+      {
+        real64 const xj = liquidComposition[j];
+        real64 const yj = vapourComposition[j];
+
+        real64 const c1_ij = xi * phi_L_i * logLiquidFugacityDerivs( i, Deriv::dC+j );
+        real64 const c2_ij = -yi * phi_V_i * logVapourFugacityDerivs( i, Deriv::dC+j );
+
+        A( i, j ) = c2_ij - factor1 * c1_ij;
+
+        col_N += c1_ij * (yj - xj);
+      }
+
+      A( i, i ) -= (phi_V_i + factor1 * phi_L_i);
+
+      col_N += phi_L_i * (yi - xi);
+
+      A( i, numComps ) = -factor2 * col_N;
+      A( numComps, i ) = factor2;
+    }
+    A( numComps, numComps ) = 0.0;
 
     // Pressure and temperature derivatives
     for( integer ic = 0; ic < numComps; ++ic )
     {
-      real64 const phiL = -liquidComposition[ic] * exp( logLiquidFugacity( ic ) );
-      real64 const phiV = vapourComposition[ic] * exp( logVapourFugacity( ic ) );
-      X( ic + numComps, Deriv::dP ) = phiL * logLiquidFugacityDerivs( ic, Deriv::dP ) +
-                                      phiV * logVapourFugacityDerivs( ic, Deriv::dP );
-      X( ic + numComps, Deriv::dT ) = phiL * logLiquidFugacityDerivs( ic, Deriv::dT ) +
-                                      phiV * logVapourFugacityDerivs( ic, Deriv::dT );
+      real64 const phiL = -liquidComposition[ic] * liquidFugacity[ic];
+      real64 const phiV = vapourComposition[ic] * vapourFugacity[ ic ];
+      X( ic, Deriv::dP ) = phiL * logLiquidFugacityDerivs( ic, Deriv::dP ) +
+                           phiV * logVapourFugacityDerivs( ic, Deriv::dP );
+      X( ic, Deriv::dT ) = phiL * logLiquidFugacityDerivs( ic, Deriv::dT ) +
+                           phiV * logVapourFugacityDerivs( ic, Deriv::dT );
     }
+    X( numComps, Deriv::dP ) = 0.0;
+    X( numComps, Deriv::dT ) = 0.0;
 
     // Composition derivatives
-    for( integer kc = 0; kc < numComps; ++kc )
+    for( integer k = 0; k < numComps; ++k )
     {
-      integer const idof = Deriv::dC + kc;
+      integer const idof = Deriv::dC + k;
 
-      for( integer ic = 0; ic < numComps; ++ic )
+      for( integer i = 0; i < numComps; ++i )
       {
-        X( ic, idof ) = -composition[ic];
+        real64 const phi_L_i = liquidFugacity[i];
+        real64 const xi = liquidComposition[i];
+        real64 const zi = composition[i];
+
+        real64 row_i = 0.0;
+        for( integer j = 0; j < numComps; ++j )
+        {
+          row_i -= xi * phi_L_i * logLiquidFugacityDerivs( i, Deriv::dC + j ) * composition[j];
+        }
+        row_i += xi * phi_L_i * logLiquidFugacityDerivs( i, Deriv::dC + k );
+        row_i -= phi_L_i * zi;
+
+        X( i, idof ) = -factor2 * row_i;
       }
-      X( kc, idof ) += 1.0;
+      X( k, idof ) -= factor2 * liquidFugacity[k];
+      X( numComps, idof ) = 0.0;
     }
 
     // Solve linear system
     solveLinearSystem( A.toSlice(), X.toSlice() );
 
     // Fill in the derivatives
-    for( integer idof = 0; idof < numDofs; ++idof )
+    for( integer i = 0; i < numComps; ++i )
     {
-      for( integer ic = 0; ic < numComps; ++ic )
+      real64 const xi = liquidComposition[i];
+      real64 const yi = vapourComposition[i];
+      real64 const zi = composition[i];
+
+      for( integer const idof : {Deriv::dP, Deriv::dT} )
       {
-        liquidCompositionDerivs( ic, idof ) = X( ic, idof );
-        vapourCompositionDerivs( ic, idof ) = X( ic + numComps, idof );
+        real64 const dV = X( numComps, idof );
+        real64 const dy = X( i, idof );
+        real64 const dx = factor2*((xi - yi)*dV - V*dy);
+
+        vapourFractionDerivs( idof ) = dV;
+        vapourCompositionDerivs( i, idof ) = dy;
+        liquidCompositionDerivs( i, idof ) = dx;
       }
-      vapourFractionDerivs( idof ) = X( numVals, idof );
+      for( integer j = 0; j < numComps; ++j )
+      {
+        integer const idof = Deriv::dC+j;
+        real64 const dV = X( numComps, idof );
+        real64 const dy = X( i, idof );
+        real64 const dx = factor2*(-zi + (xi - yi)*dV - V*dy);
+
+        vapourFractionDerivs( idof ) = dV;
+        vapourCompositionDerivs( i, idof ) = dy;
+        liquidCompositionDerivs( i, idof ) = dx;
+      }
+      liquidCompositionDerivs( i, Deriv::dC+i ) += factor2;
     }
   }
 }

@@ -80,7 +80,8 @@ public:
 
     integer const numDofs = 2 + m_numComponents;
 
-    stackArray1d< real64, maxNumComps > incipientComposition( m_numComponents );
+    StackArray< real64, 2, maxNumComps > compositions( 1, m_numComponents );
+    arraySlice1d< real64 > incipientComposition = compositions[0];
 
     // Check if k-Values need to be initialised
     auto kVapourLiquid = kValues[0];
@@ -125,7 +126,7 @@ public:
                                                 m_continuousFlashParameters.toSliceConst(),
                                                 m_discreteFlashParameters.toSliceConst(),
                                                 tangentPlaneDistance,
-                                                incipientComposition.toSlice() );
+                                                incipientComposition );
     }
 
     // If the stability test failed to converge to a stationary point then we will assume the mixture is unstable
@@ -188,10 +189,6 @@ public:
         sampleIndex = m_vapourIndex;
         incipientIndex = m_liquidIndex;
       }
-      std::cout << "LI " << sampleTemperature << " " << incipientTemperature << " " << incipientTemperature-sampleTemperature << " "
-                << "{" << sampleIndex << ", " << incipientIndex << "} "
-                << "{" << m_liquidIndex << ", " << m_vapourIndex << "} "
-                << "\n";
 
       phaseFraction.value[m_vapourIndex] = (sampleIndex == m_vapourIndex) ? 1.0 : 0.0;
 

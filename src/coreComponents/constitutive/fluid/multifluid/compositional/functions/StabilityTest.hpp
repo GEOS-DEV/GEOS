@@ -122,13 +122,24 @@ public:
     // Measure of distance to trivial solution
     real64 maxDistanceToTrivialSolution = 0.0;
 
-    for( real64 const alpha : { 1.0, -1.0 } )
+    for( real64 const alpha : { 1.0, -1.0, 0.0 } )
     {
       // Initialise next sample
-      for( integer const ic : presentComponents )
+      if( LvArray::math::abs( alpha ) < MultiFluidConstants::epsilon )
       {
-        logTrialComposition[ic] = LvArray::math::log( composition[ic] ) + alpha*LvArray::math::log( kValues[ic] );
-        normalizedComposition[ic] = LvArray::math::exp( logTrialComposition[ic] );
+        for( integer const ic : presentComponents )
+        {
+          logTrialComposition[ic] = 0.0;
+          normalizedComposition[ic] = 1.0;
+        }
+      }
+      else
+      {
+        for( integer const ic : presentComponents )
+        {
+          logTrialComposition[ic] = LvArray::math::log( composition[ic] ) + alpha*LvArray::math::log( kValues[ic] );
+          normalizedComposition[ic] = LvArray::math::exp( logTrialComposition[ic] );
+        }
       }
       // Start iterations for this sample
       bool converged = false;
@@ -159,14 +170,6 @@ public:
         {
           tangentPlaneDistance = tpd;
         }
-        std::cout
-          << std::fixed << std::setprecision( 1 ) << std::setw( 4 ) << alpha << " "
-          << std::setw( 3 ) << iterationCount << " "
-          << std::fixed << std::setprecision( 6 ) << std::setw( 4 ) << normalizedComposition << " "
-          << std::scientific << std::setprecision( 6 ) << logFugacity << " "
-          << std::scientific << std::setprecision( 6 ) << std::setw( 13 ) << tpd << " "
-          << std::scientific << std::setprecision( 6 ) << std::setw( 13 ) << error << " "
-          << "\n";
 
         // Check stationarity
         if( error < stabilityTolerance )
