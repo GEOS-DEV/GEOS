@@ -181,15 +181,26 @@ void ProblemManager::problemSetup()
   LogPart numericalMethodLog( "Numerical Methods", MpiWrapper::commRank() == 0 );
   numericalMethodLog.begin();
   applyNumericalMethods();
+  printf("after apply num methods\n");
   numericalMethodLog.end();
 
+  
+  printf("start registerDataOnMeshRecursive\n");
   registerDataOnMeshRecursive( getDomainPartition().getMeshBodies() );
+  
+  printf("end registerDataOnMeshRecursive, start initialize\n");
 
   initialize();
+    
+  printf("end initialize\n");
 
   LogPart importFieldsLog( "Import fields", MpiWrapper::commRank() == 0 );
+  
+  printf("start import fields\n");
   importFieldsLog.begin();
   importFields();
+  
+  printf("end import fields\n");
   importFieldsLog.end();
 }
 
