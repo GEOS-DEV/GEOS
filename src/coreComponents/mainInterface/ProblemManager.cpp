@@ -194,7 +194,7 @@ void ProblemManager::problemSetup()
 
 
   printf("start registerDataOnMeshRecursive\n");
-  registerDataOnMeshRecursive( getDomainPartition().getMeshBodies() );
+  //registerDataOnMeshRecursive( getDomainPartition().getMeshBodies() );
 
   printf("end registerDataOnMeshRecursive, start initialize\n");
 
