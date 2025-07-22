@@ -170,11 +170,19 @@ void ProblemManager::problemSetup()
 {
   GEOS_MARK_FUNCTION;
 
+  
+  printf("start postInputInitializationRecursive\n");
   postInputInitializationRecursive();
+  
+  printf("end postInputInitializationRecursive\n");
 
   LogPart meshGenerationLog( "Mesh generation", MpiWrapper::commRank() == 0 );
   meshGenerationLog.begin();
+  
+  printf("start generateMesh\n");
   generateMesh();
+  
+  printf("end generateMesh\n");
   meshGenerationLog.end();
 
 //  initialize_postMeshGeneration();
