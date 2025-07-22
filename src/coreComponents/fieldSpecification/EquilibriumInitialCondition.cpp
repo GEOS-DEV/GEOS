@@ -73,6 +73,10 @@ EquilibriumInitialCondition::EquilibriumInitialCondition( string const & name, G
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Name of the table specifying the (temperature [K] vs elevation) relationship" );
 
+  registerWrapper( viewKeyStruct::phaseContactsString(), &m_phaseContacts ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Phase contacts' elevations [m]" );  
+
   getWrapper< string >( FieldSpecificationBase::viewKeyStruct::fieldNameString() ).
     setInputFlag( InputFlags::FALSE );
   setFieldName( catalogName() );
