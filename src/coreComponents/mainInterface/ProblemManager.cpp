@@ -1074,7 +1074,9 @@ void ProblemManager::setRegionQuadrature( Group & meshBodies,
                                    subRegionName,
                                    materialName,
                                    numQuadraturePoints ) );
+        printf("after allocate message particles\n");
       }
+      printf("after allocate loop particles\n");
     }
 //    if( meshLevel.isShallowCopy() )
     else
@@ -1094,9 +1096,16 @@ void ProblemManager::setRegionQuadrature( Group & meshBodies,
                                    subRegionName,
                                    materialName,
                                    numQuadraturePoints ) );
+
+        printf("after allocate message no particles\n");
       }
+      printf("after allocate loop no particles\n");
     }
+    
+      printf("last message of quad loop\n");
   }
+  
+      printf("last message of quad loop\n");
 
   // check that every mesh element entity got a discretization
 //  for( localIndex a = 0; a < meshBodies.getSubGroups().size(); ++a )
