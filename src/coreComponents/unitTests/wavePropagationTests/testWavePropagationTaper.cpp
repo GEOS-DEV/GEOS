@@ -78,6 +78,21 @@ char const * xmlInput =
         targetExactStartStop="0"
         targetExactTimestep="0"
         target="/Solvers/acousticSolver"/>
+      <PeriodicEvent
+        name="waveFieldNp1Collection"
+        timeFrequency="0.1"
+        targetExactTimestep="0"
+        target="/Tasks/waveFieldNp1Collection" />
+      <PeriodicEvent
+        name="waveFieldNCollection"
+        timeFrequency="0.1"
+        targetExactTimestep="0"
+        target="/Tasks/waveFieldNCollection" />
+      <PeriodicEvent
+        name="waveFieldNm1Collection"
+        timeFrequency="0.1"
+        targetExactTimestep="0"
+        target="/Tasks/waveFieldNm1Collection" />
     </Events>
     <NumericalMethods>
       <FiniteElements>
@@ -99,6 +114,20 @@ char const * xmlInput =
     </Constitutive>
     <FieldSpecifications>
       <FieldSpecification
+        name="initialPressureN"
+        initialCondition="1"
+        setNames="{ all }"
+        objectPath="nodeManager"
+        fieldName="pressure_n"
+        scale="0.0"/>
+      <FieldSpecification
+        name="initialPressureNm1"
+        initialCondition="1"
+        setNames="{ all }"
+        objectPath="nodeManager"
+        fieldName="pressure_nm1"
+        scale="0.0"/>
+      <FieldSpecification
         name="cellVelocity"
         initialCondition="1"
         objectPath="ElementRegions/Region/cb"
@@ -119,6 +148,20 @@ char const * xmlInput =
         scale="0.0"
         setNames="{ zpos }"/>
     </FieldSpecifications>
+    <Tasks>
+      <PackCollection
+        name="waveFieldNp1Collection"
+        objectPath="nodeManager"
+        fieldName="pressure_np1"/>
+      <PackCollection
+        name="waveFieldNCollection"
+        objectPath="nodeManager"
+        fieldName="pressure_n"/>
+      <PackCollection
+        name="waveFieldNm1Collection"
+        objectPath="nodeManager"
+        fieldName="pressure_nm1"/>
+    </Tasks>
   </Problem>
   )xml";
 
