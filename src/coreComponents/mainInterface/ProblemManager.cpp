@@ -188,7 +188,7 @@ void ProblemManager::problemSetup()
 //  initialize_postMeshGeneration();
   LogPart numericalMethodLog( "Numerical Methods", MpiWrapper::commRank() == 0 );
   numericalMethodLog.begin();
-  //applyNumericalMethods();
+  applyNumericalMethods();
   printf("after apply num methods\n");
   numericalMethodLog.end();
 
@@ -769,7 +769,7 @@ void ProblemManager::applyNumericalMethods()
   // points.
   map< std::tuple< string, string, string, string >, localIndex > const regionQuadrature = calculateRegionQuadrature( meshBodies );
 
-  setRegionQuadrature( meshBodies, constitutiveManager, regionQuadrature );
+  //setRegionQuadrature( meshBodies, constitutiveManager, regionQuadrature );
 }
 
 
