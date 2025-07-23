@@ -615,12 +615,15 @@ void ProblemManager::generateMesh()
 
   MeshManager & meshManager = this->getGroup< MeshManager >( groupKeys.meshManager );
 
+  printf(("heremesh0\n");
   meshManager.generateMeshes( domain );
 
+  printf(("heremesh1\n");
   // get all the discretizations from the numerical methods.
   // map< pair< mesh body name, pointer to discretization>, array of region names >
   map< std::pair< string, Group const * const >, string_array const & >
   discretizations = getDiscretizations();
+  printf(("heremesh2\n");
 
   // setup the base discretizations (hard code this for now)
   domain.forMeshBodies( [&]( MeshBody & meshBody )
