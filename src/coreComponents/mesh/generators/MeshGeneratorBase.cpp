@@ -65,11 +65,15 @@ void MeshGeneratorBase::generateMesh( Group & parent, SpatialPartition & partiti
   }
   else
   {
+    printf("insidemeshgenbase0\n");
     CellBlockManager & cellBlockManager = parent.registerGroup< CellBlockManager >( keys::cellManager );
+    printf("insidemeshgenbase1\n");
 
     fillCellBlockManager( cellBlockManager, partition );
+    printf("insidemeshgenbase2\n");
 
     this->attachWellInfo( cellBlockManager );
+    printf("insidemeshgenbase3\n");
   }
 }
 
