@@ -80,8 +80,9 @@ public:
 
     integer const numDofs = 2 + m_numComponents;
 
-    StackArray< real64, 2, maxNumComps > compositions( 1, m_numComponents );
+    StackArray< real64, 2, 2*maxNumComps > compositions( 2, m_numComponents );
     arraySlice1d< real64 > incipientComposition = compositions[0];
+    arraySlice1d< real64 > tempComposition = compositions[1];
 
     // Check if k-Values need to be initialised
     auto kVapourLiquid = kValues[0];
@@ -109,28 +110,55 @@ public:
       }
     }
 
-    // Perform stability test to check that we have 2 phases
     integer const stabilityIterations = m_discreteFlashParameters[FlashParameters::STABILITY_MAX_ITERATIONS];
-    real64 tangentPlaneDistance = 0.0;
+    real64 const stabilityThreshold = m_continuousFlashParameters[FlashParameters::STABILITY_THRESHOLD];
+
+    real64 tangentPlaneDistance = LvArray::NumericLimits< real64 >::max;
     bool stabilityStatus = false;
+    EquationOfStateType stabilityEquationOfState = m_flashData.liquidEos;
+
     if( 0 < stabilityIterations || needInitialisation )
     {
-      stabilityStatus = StabilityTest::compute( m_numComponents,
-                                                pressure,
-                                                temperature,
-                                                compFraction,
-                                                componentProperties,
-                                                m_flashData.liquidEos,
-                                                m_flashData,
-                                                kVapourLiquid.toSliceConst(),
-                                                m_continuousFlashParameters.toSliceConst(),
-                                                m_discreteFlashParameters.toSliceConst(),
-                                                tangentPlaneDistance,
-                                                incipientComposition );
+      EquationOfStateType const eos[2]{m_flashData.liquidEos, m_flashData.vapourEos};
+      integer const numEos = (m_flashData.liquidEos == m_flashData.vapourEos) ? 1 : 2;
+
+      for( integer eosIteration = 0; eosIteration < numEos; ++eosIteration )
+      {
+        real64 tpd = 0.0;
+        bool const status = StabilityTest::compute( m_numComponents,
+                                                    pressure,
+                                                    temperature,
+                                                    compFraction,
+                                                    componentProperties,
+                                                    eos[eosIteration],
+                                                    m_flashData,
+                                                    kVapourLiquid.toSliceConst(),
+                                                    m_continuousFlashParameters.toSliceConst(),
+                                                    m_discreteFlashParameters.toSliceConst(),
+                                                    tpd,
+                                                    tempComposition );
+        stabilityStatus = stabilityStatus || status;
+        if( eosIteration == 1 && status )
+        {
+          tangentPlaneDistance = LvArray::math::min( tangentPlaneDistance, tpd );
+        }
+        else if( eosIteration == 0 )
+        {
+          tangentPlaneDistance = tpd;
+          for( integer ic = 0; ic < m_numComponents; ++ic )
+          {
+            incipientComposition[ic] = tempComposition[ic];
+          }
+
+          if( tangentPlaneDistance < stabilityThreshold )
+          {
+            break;
+          }
+        }
+      }
     }
 
     // If the stability test failed to converge to a stationary point then we will assume the mixture is unstable
-    real64 const stabilityThreshold = m_continuousFlashParameters[FlashParameters::STABILITY_THRESHOLD];
     if( tangentPlaneDistance < stabilityThreshold || !stabilityStatus )
     {
       // Unstable mixture
@@ -165,6 +193,29 @@ public:
                                                  phaseFraction.derivs[m_vapourIndex],
                                                  phaseCompFraction.derivs[m_liquidIndex],
                                                  phaseCompFraction.derivs[m_vapourIndex] );
+
+      // Handle the negative flash
+      integer singlePhaseIndex = -1;
+      real64 const & V = phaseFraction.value[m_vapourIndex];
+      if( V < MultiFluidConstants::epsilon )
+      {
+        singlePhaseIndex = m_liquidIndex;
+      }
+      else if( 1.0 - V < MultiFluidConstants::epsilon )
+      {
+        singlePhaseIndex = m_vapourIndex;
+      }
+      if( 0 <= singlePhaseIndex )
+      {
+        phaseFraction.value[m_vapourIndex] = (singlePhaseIndex == m_vapourIndex) ? 1.0 : 0.0;
+        LvArray::forValuesInSlice( phaseFraction.derivs[m_vapourIndex], setZero );
+        LvArray::forValuesInSlice( phaseCompFraction.derivs[singlePhaseIndex], setZero );
+        for( integer ic = 0; ic < m_numComponents; ++ic )
+        {
+          phaseCompFraction.value( singlePhaseIndex, ic ) = compFraction[ic];
+          phaseCompFraction.derivs( singlePhaseIndex, ic, Deriv::dC + ic ) = 1.0;
+        }
+      }
     }
     else
     {
@@ -199,7 +250,7 @@ public:
                                          temperature,
                                          compFraction,
                                          componentProperties,
-                                         m_flashData.liquidEos,
+                                         stabilityEquationOfState,
                                          m_flashData,
                                          incipientComposition.toSliceConst(),
                                          phaseCompFraction.derivs[incipientIndex],

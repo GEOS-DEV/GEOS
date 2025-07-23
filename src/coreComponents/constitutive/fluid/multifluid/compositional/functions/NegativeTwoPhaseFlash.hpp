@@ -134,6 +134,22 @@ private:
     arraySlice1d< real64 > const & logLiquidFugacity,
     arraySlice1d< real64 > const & logVapourFugacity,
     arraySlice1d< real64 > const & fugacityRatios );
+
+  template< integer USD1, integer USD2, integer USD3 >
+  GEOS_HOST_DEVICE
+  static void computeDerivatives(
+    integer const numComps,
+    arraySlice1d< real64 const > const & totalComposition,
+    real64 const & phase1Fraction,
+    arraySlice1d< real64 const, USD1 > const & phase1Composition,
+    arraySlice1d< real64 const, USD1 > const & phase2Composition,
+    arraySlice1d< real64 const > const & phase1Fugacity,
+    arraySlice1d< real64 const > const & phase2Fugacity,
+    arraySlice2d< real64 const > const & phase1LogFugacityDerivs,
+    arraySlice2d< real64 const > const & phase2LogFugacityDerivs,
+    arraySlice1d< real64, USD2 > const & phase1FractionDerivs,
+    arraySlice2d< real64, USD3 > const & phase1CompositionDerivs,
+    arraySlice2d< real64, USD3 > const & phase2CompositionDerivs );
 };
 
 } // namespace compositional
