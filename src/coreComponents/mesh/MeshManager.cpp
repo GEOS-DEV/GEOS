@@ -64,11 +64,16 @@ void MeshManager::generateMeshes( DomainPartition & domain )
 {
   forSubGroups< MeshGeneratorBase >( [&]( MeshGeneratorBase & meshGen )
   {
+    printf("insidegeneratemeshes\n");
     MeshBody & meshBody = domain.getMeshBodies().registerGroup< MeshBody >( meshGen.getName() );
+    printf("insidegeneratemeshes1\n");
     meshBody.createMeshLevel( 0 );
+    printf("insidegeneratemeshes2\n");
     SpatialPartition & partition = dynamic_cast< SpatialPartition & >(domain.getReference< PartitionBase >( keys::partitionManager ) );
+    printf("insidegeneratemeshes2\n");
 
     meshGen.generateMesh( meshBody, partition );
+    printf("insidegeneratemeshes3\n");
 
     if( !meshBody.hasParticles() )
     {
