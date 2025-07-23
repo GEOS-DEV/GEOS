@@ -122,7 +122,7 @@ void Perforation::postInputInitialization()
       for( std::ptrdiff_t i=0; i<m_perfStatusTable[0].size(); i++ )
       {
         timeCoord[0].emplace_back( m_perfStatusTable[0][i] );
-        GEOS_THROW_IF( ( !isZero( m_perfStatusTable[1][i] )|| !isZero( 1-m_perfStatusTable[1][i] ) ),
+        GEOS_THROW_IF( ( !isZero( m_perfStatusTable[1][i] )  && !isZero( 1-m_perfStatusTable[1][i] ) ),
                        GEOS_FMT( "{}: Perforation status value must be 0 or 1.", getDataContext() ),
                        InputError );
         values.emplace_back( m_perfStatusTable[1][i] );
