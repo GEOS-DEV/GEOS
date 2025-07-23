@@ -762,7 +762,7 @@ void ProblemManager::applyNumericalMethods()
 {
 
   DomainPartition & domain  = getDomainPartition();
-  ConstitutiveManager & constitutiveManager = domain.getGroup< ConstitutiveManager >( groupKeys.constitutiveManager );
+  //ConstitutiveManager & constitutiveManager = domain.getGroup< ConstitutiveManager >( groupKeys.constitutiveManager );
   Group & meshBodies = domain.getMeshBodies();
 
   // this contains a key tuple< mesh body name, mesh level name, region name, subregion name> with a value of the number of quadrature
