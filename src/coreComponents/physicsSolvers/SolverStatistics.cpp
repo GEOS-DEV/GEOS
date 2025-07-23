@@ -197,15 +197,15 @@ void IterationsStatistics::writeIterationStatsToTable()
                           m_numDiscardedNonlinearIterations,
                           m_numDiscardedLinearIterations );
 
-  if( !logStream.is_open() )
+  if( !m_logStream.is_open() )
   {
-    logStream.open( m_iterationsFilename );
+    m_logStream.open( m_iterationsFilename );
     m_iterationCSVFormatter.reset( new TableCSVFormatter( *m_iterationCSVLayout ));
-    logStream << m_iterationCSVFormatter->headerToString( );
+    m_logStream << m_iterationCSVFormatter->headerToString( );
   }
 
-  logStream << m_iterationCSVFormatter->dataToString( m_iterationData );
-  logStream.flush();
+  m_logStream << m_iterationCSVFormatter->dataToString( m_iterationData );
+  m_logStream.flush();
   m_iterationData.clear();
 }
 
@@ -296,15 +296,15 @@ void ConvergenceStatistics::writeConvergenceStatsToTable()
 
   m_convergenceData.addRow( residualsNormCells );
 
-  if( !logStream.is_open() )
+  if( !m_logStream.is_open() )
   {
-    logStream.open( m_convergenceFilename );
+    m_logStream.open( m_convergenceFilename );
     m_convergenceFormatter.reset( new TableCSVFormatter( *m_convergenceLayout ));
-    logStream << m_convergenceFormatter->headerToString( );
+    m_logStream << m_convergenceFormatter->headerToString( );
   }
 
-  logStream << m_convergenceFormatter->dataToString( m_convergenceData );
-  logStream.flush();
+  m_logStream << m_convergenceFormatter->dataToString( m_convergenceData );
+  m_logStream.flush();
   m_convergenceData.clear();
 }
 

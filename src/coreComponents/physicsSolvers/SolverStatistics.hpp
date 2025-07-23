@@ -220,7 +220,7 @@ public:
 
 private:
   /// Stream output for the iteration statistics
-  std::ofstream logStream;
+  std::ofstream m_logStream;
   /// Table Layout contenaning header for both CSV and log
   std::unique_ptr< TableLayout > m_iterationCSVLayout;
   /// Contain the iteration data for both CSV and log output
@@ -338,7 +338,7 @@ public:
 
 private:
   /// Stream output for the convergence statistics
-  std::ofstream logStream;
+  std::ofstream m_logStream;
   /// Contain the layout for both the CSV and log output.
   /// For a solver, output all residuals residuals name available
   std::unique_ptr< TableLayout > m_convergenceLayout;
