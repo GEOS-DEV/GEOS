@@ -517,7 +517,7 @@ void DomainPartition::outputPartitionInformation() const
     } );
   } );
 
-printf("endprintinformation"):
+printf("endprintinformation");
 
 }
 
