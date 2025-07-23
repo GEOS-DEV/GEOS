@@ -609,6 +609,7 @@ void ProblemManager::initializationOrder( string_array & order )
 
 void ProblemManager::generateMesh()
 {
+  printf("insidegeneratemeshstart\n");
   GEOS_MARK_FUNCTION;
   DomainPartition & domain = getDomainPartition();
 
