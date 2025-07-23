@@ -88,8 +88,8 @@ IterationsStatistics::IterationsStatistics( string const & name, Group * const p
 
   m_iterationCSVLayout = std::make_unique< TableLayout >();
   m_iterationCSVLayout->setTitle( GEOS_FMT( "{} iterations", getParent().getName()));
-  m_iterationCSVLayout->addColumns( { "numTimeSteps", "newton Iteration", "numTimeStepCuts",
-                                      "setup time", "solve time",
+  m_iterationCSVLayout->addColumns( { "Number of time steps", "Newton iteration", "Number of time step cuts",
+                                      "Setup time", "Solve time",
                                       "Successful outer loop", "Successful nonlinear", "Successful linear",
                                       "Discarded outer loop", "Discarded nonlinear", "Discarded linear"} );
   //m_iterationCSVLayout->addColumn( "Iter" );

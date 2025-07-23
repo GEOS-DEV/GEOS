@@ -51,7 +51,7 @@ public:
 
   /// State of CSV output.
   bool m_csvOutput = false;
-  
+
   /// State of log output.
   bool m_logOutput = false;
 
@@ -381,7 +381,7 @@ public:
    * @param writeIteration Boolean for iteration CSV output
    */
   void makeDir( bool writeConvergence, bool writeIteration )
-  {if( writeConvergence || writeIteration ) makeDirsForPath( m_outputDir ); std::cout << "pliplop "<<writeConvergence<<writeIteration<<  m_outputDir <<std::endl; }
+  { if( writeConvergence || writeIteration ) makeDirsForPath( m_outputDir ); }
 
   /**
    * @brief Set the Residual Norms filename

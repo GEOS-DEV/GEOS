@@ -273,7 +273,7 @@ real64 PhysicsSolverBase::solverStep( real64 const & time_n,
   // final step for completion of timestep. typically secondary variable updates and cleanup.
   {
     Timer timer( m_timers["step complete"] );
-    implicitStepComplete( time_n, dt, domain );
+    implicitStepComplete( time_n, dt_return, domain );
   }
 
   return dt_return;
