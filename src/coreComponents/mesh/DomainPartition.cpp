@@ -517,6 +517,8 @@ void DomainPartition::outputPartitionInformation() const
     } );
   } );
 
+printf("endprintinformation"):
+
 }
 
 } /* namespace geos */
