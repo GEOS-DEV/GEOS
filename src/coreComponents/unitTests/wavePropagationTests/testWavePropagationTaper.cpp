@@ -171,8 +171,7 @@ protected:
 
   void SetUp() override
   {
-    //setupProblemFromXML( state.getProblemManager(), xmlInput );
-    setupProblemFromXML( state.getProblemManager(), xmlInput.c_str() );
+    setupProblemFromXML( state.getProblemManager(), xmlInput );
   }
 
   static real64 constexpr time = 0.0;
