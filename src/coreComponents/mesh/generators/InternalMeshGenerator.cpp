@@ -611,6 +611,7 @@ void InternalMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockMa
                            MpiWrapper::Reduction::Max,
                            MPI_COMM_GEOS );
   }
+  printf("meshgenerator6\n");
 
   // Find starting/ending index
   // Get the first and last indices in this partition each direction
@@ -641,6 +642,7 @@ void InternalMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockMa
       }
     }
   }
+  printf("meshgenerator7\n");
 
   // Calculate number of elements in this partition from each region, and the
   // total number of nodes
@@ -677,6 +679,7 @@ void InternalMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockMa
       }
     }
   }
+  printf("meshgenerator8\n");
 
   // TODO This needs to be rewritten for dimensions lower than 3.
   localIndex regionOffset = 0;
@@ -691,6 +694,7 @@ void InternalMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockMa
       }
     }
   }
+  printf("meshgenerator9\n");
 
   regionOffset = 0;
   {
@@ -720,6 +724,7 @@ void InternalMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockMa
       }
     }
   }
+  printf("meshgenerator10\n");
 
   localIndex numNodes = 1;
   integer numNodesInDir[3] = { 1, 1, 1 };
@@ -736,6 +741,7 @@ void InternalMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockMa
 
   arrayView1d< globalIndex > const nodeLocalToGlobal = cellBlockManager.getNodeLocalToGlobal();
 
+  printf("meshgenerator11\n");
   {
     localIndex localNodeIndex = 0;
     for( integer k = 0; k < numNodesInDir[2]; ++k )
@@ -795,6 +801,7 @@ void InternalMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockMa
       }
     }
   }
+  printf("meshgenerator12\n");
 
   {
     array1d< integer > numElements;
@@ -934,6 +941,7 @@ void InternalMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockMa
       }
     }
   }
+  printf("meshgenerator13\n");
 
   // Node perturbation
   if( m_fPerturb > 0 )
@@ -955,6 +963,7 @@ void InternalMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockMa
     }
   }
 
+  printf("meshgenerator14\n");
   if( std::fabs( m_skewAngle ) > 0.0 )
   {
     for( localIndex iN = 0; iN != numNodes; ++iN )
@@ -971,6 +980,7 @@ void InternalMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockMa
                              ( m_numElemsTotal[0] + 1 ) * ( m_numElemsTotal[1] + 1 ) * ( m_numElemsTotal[2] + 1 ) ) );
   GEOS_LOG_RANK_0( GEOS_FMT( "{}: total number of elems = {}", getName(),
                              m_numElemsTotal[0] * m_numElemsTotal[1] * m_numElemsTotal[2] ) );
+  printf("meshgenerator14\n");
 }
 
 void
