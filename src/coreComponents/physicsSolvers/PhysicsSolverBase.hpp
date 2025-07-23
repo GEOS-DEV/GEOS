@@ -714,6 +714,9 @@ public:
 
     /// @return string for the writeLinearSystem wrapper
     static constexpr char const * writeSolverIterationsCSVFlagString() { return "writeSolverIterationsCSV"; }
+
+    /// @return string for the numTimestepsSinceLastDtCut wrapper
+    static constexpr char const * numTimestepsSinceLastDtCutString() { return "numTimestepsSinceLastDtCut"; }
   };
 
   /**
@@ -991,6 +994,17 @@ protected:
   static string getConstitutiveName( ParticleSubRegionBase const & subRegion ); // particle overload
 
   /**
+   * @brief Register wrapper with given name and store constitutive model name on the subregion
+   *
+   * @tparam CONSTITUTIVE the base type of the constitutive model.
+   * @param subRegion the subregion on which the constitutive model is registered.
+   * @param wrapperName the wrapper name to register.
+   * @param constitutiveType the type description of the constitutive model.
+   */
+  template< typename CONSTITUTIVE >
+  void setConstitutiveName( ElementSubRegionBase & subRegion, string const & wrapperName, string const & constitutiveType ) const;
+
+  /**
    * @brief This function sets constitutive name fields on an
    *  ElementSubRegionBase, and calls the base function it overrides.
    * @param subRegion The ElementSubRegionBase that will have constitutive
@@ -1030,14 +1044,16 @@ protected:
   }
 
   /**
-   * @brief Set the Constitutive Name object
-   * @tparam CONSTITUTIVE_TYPE the type of the constitutive model.
-   * @param subRegion the element subregion on which the constitutive model is registered
-   * @param wrapperName the name of the wrapper to set
-   * @param constitutiveType the constitutive model name for error message output
+   * @brief Get the Constitutive Model object
+   * @tparam CONSTITUTIVE_TYPE the base type of the constitutive model.
+   * @param subRegion the element subregion on which the constitutive model is registered.
+   * @return the constitutive model of type @p CONSTITUTIVE_TYPE registered on the @p subRegion.
    */
-  template< typename CONSTITUTIVE >
-  void setConstitutiveName( ElementSubRegionBase & subRegion, string const & wrapperName, string const & constitutiveType ) const;
+  template< typename CONSTITUTIVE_TYPE >
+  static CONSTITUTIVE_TYPE & getConstitutiveModel( ElementSubRegionBase & subRegion )
+  {
+    return getConstitutiveModel< CONSTITUTIVE_TYPE >( subRegion, getConstitutiveName< CONSTITUTIVE_TYPE >( subRegion ) );
+  }
 
   /// Courant–Friedrichs–Lewy factor for the timestep
   real64 m_cflFactor;
@@ -1153,6 +1169,7 @@ string PhysicsSolverBase::getConstitutiveName( ElementSubRegionBase const & subR
     GEOS_ERROR_IF( !validName.empty(), "A valid constitutive model was already found." );
     validName = model.getName();
   } );
+
   return validName;
 }
 

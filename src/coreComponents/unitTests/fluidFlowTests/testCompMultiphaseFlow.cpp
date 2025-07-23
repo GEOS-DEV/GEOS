@@ -15,13 +15,11 @@
 
 #include "constitutive/fluid/multifluid/MultiFluidBase.hpp"
 #include "finiteVolume/FiniteVolumeManager.hpp"
-#include "finiteVolume/FluxApproximationBase.hpp"
 #include "mainInterface/initialization.hpp"
 #include "mainInterface/GeosxState.hpp"
 #include "physicsSolvers/PhysicsSolverManager.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseBaseFields.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseFVM.hpp"
-#include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
 #include "unitTests/fluidFlowTests/testCompFlowUtils.hpp"
 
 using namespace geos;

@@ -16,7 +16,6 @@
 #include "constitutive/fluid/multifluid/MultiFluidBase.hpp"
 #include "finiteVolume/FiniteVolumeManager.hpp"
 #include "mainInterface/initialization.hpp"
-#include "discretizationMethods/NumericalMethodsManager.hpp"
 #include "mainInterface/ProblemManager.hpp"
 #include "mainInterface/GeosxState.hpp"
 #include "physicsSolvers/PhysicsSolverManager.hpp"

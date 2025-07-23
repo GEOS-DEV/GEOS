@@ -23,7 +23,7 @@
 #include "physicsSolvers/fluidFlow/FlowSolverBase.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
 #include "physicsSolvers/fluidFlow/kernels/immiscibleMultiphase/ImmiscibleMultiphaseKernels.hpp"
-#include "physicsSolvers/fluidFlow/CompositionalMultiphaseFVM.hpp"  // For GravityDensityScheme
+
 namespace geos
 {
 
