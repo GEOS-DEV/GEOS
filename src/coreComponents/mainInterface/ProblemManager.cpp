@@ -631,6 +631,7 @@ void ProblemManager::generateMesh()
     {
       ParticleBlockManagerABC & particleBlockManager = meshBody.getGroup< ParticleBlockManagerABC >( keys::particleManager );
 
+      printf("inmeshlevel\n");
       this->generateMeshLevel( baseMesh,
                                particleBlockManager,
                                junk );
@@ -687,6 +688,7 @@ void ProblemManager::generateMesh()
         // Just create a shallow copy of the base discretization.
         else if( order==1 )
         {
+      printf("inshallowcopy\n");
           meshBody.createShallowMeshLevel( MeshBody::groupStructKeys::baseDiscretizationString(),
                                            discretizationName );
         }
