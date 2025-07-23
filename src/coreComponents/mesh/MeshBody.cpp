@@ -58,13 +58,18 @@ MeshLevel & MeshBody::createMeshLevel( string const & sourceLevelName,
 MeshLevel & MeshBody::createShallowMeshLevel( string const & sourceLevelName,
                                               string const & newLevelName )
 {
+  printf("here0\n");
   MeshLevel & sourceMeshLevel = this->getMeshLevel( sourceLevelName );
+  printf("here1\n");
 
+  printf("here2\n");
   MeshLevel & rval = m_meshLevels.registerGroup( newLevelName,
                                                  std::make_unique< MeshLevel >( newLevelName,
                                                                                 this,
                                                                                 sourceMeshLevel ) );
+  printf("here3\n");
   rval.setRestartFlags( RestartFlags::NO_WRITE );
+  printf("here4\n");
 
   return rval;
 }
