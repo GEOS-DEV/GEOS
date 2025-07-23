@@ -1888,8 +1888,6 @@
 		<xsd:attribute name="phaseInternalEnergy_n" type="real64_array3d" />
 		<!--phaseMassDensity => Phase mass density-->
 		<xsd:attribute name="phaseMassDensity" type="real64_array3d" />
-		<!--phaseOrder => (no description available)-->
-		<xsd:attribute name="phaseOrder" type="integer_array" />
 		<!--phaseViscosity => Phase viscosity-->
 		<xsd:attribute name="phaseViscosity" type="real64_array3d" />
 		<!--totalDensity => Total density-->
@@ -1940,8 +1938,6 @@
 		<xsd:attribute name="phaseInternalEnergy_n" type="real64_array3d" />
 		<!--phaseMassDensity => Phase mass density-->
 		<xsd:attribute name="phaseMassDensity" type="real64_array3d" />
-		<!--phaseOrder => (no description available)-->
-		<xsd:attribute name="phaseOrder" type="integer_array" />
 		<!--phaseViscosity => Phase viscosity-->
 		<xsd:attribute name="phaseViscosity" type="real64_array3d" />
 		<!--totalDensity => Total density-->
@@ -1992,8 +1988,6 @@
 		<xsd:attribute name="phaseInternalEnergy_n" type="real64_array3d" />
 		<!--phaseMassDensity => Phase mass density-->
 		<xsd:attribute name="phaseMassDensity" type="real64_array3d" />
-		<!--phaseOrder => (no description available)-->
-		<xsd:attribute name="phaseOrder" type="integer_array" />
 		<!--phaseViscosity => Phase viscosity-->
 		<xsd:attribute name="phaseViscosity" type="real64_array3d" />
 		<!--totalDensity => Total density-->
@@ -2044,8 +2038,6 @@
 		<xsd:attribute name="phaseInternalEnergy_n" type="real64_array3d" />
 		<!--phaseMassDensity => Phase mass density-->
 		<xsd:attribute name="phaseMassDensity" type="real64_array3d" />
-		<!--phaseOrder => (no description available)-->
-		<xsd:attribute name="phaseOrder" type="integer_array" />
 		<!--phaseViscosity => Phase viscosity-->
 		<xsd:attribute name="phaseViscosity" type="real64_array3d" />
 		<!--totalDensity => Total density-->

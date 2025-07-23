@@ -18,7 +18,6 @@
  */
 
 #include "constitutive/fluid/multifluid/CO2Brine/functions/PVTFunctionHelpers.hpp"
-#include "LvArray/src/sortedArrayManipulation.hpp"
 
 namespace geos
 {
