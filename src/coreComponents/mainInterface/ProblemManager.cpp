@@ -180,7 +180,7 @@ void ProblemManager::problemSetup()
   meshGenerationLog.begin();
 
   printf("start generateMesh\n");
-// generateMesh();
+ generateMesh();
 
   printf("end generateMesh\n");
   meshGenerationLog.end();
@@ -689,8 +689,8 @@ void ProblemManager::generateMesh()
         else if( order==1 )
         {
       printf("inshallowcopy\n");
-          meshBody.createShallowMeshLevel( MeshBody::groupStructKeys::baseDiscretizationString(),
-                                           discretizationName );
+          //meshBody.createShallowMeshLevel( MeshBody::groupStructKeys::baseDiscretizationString(),
+          //                                 discretizationName );
         }
       }
       else // this is a finite volume discretization...i hope
