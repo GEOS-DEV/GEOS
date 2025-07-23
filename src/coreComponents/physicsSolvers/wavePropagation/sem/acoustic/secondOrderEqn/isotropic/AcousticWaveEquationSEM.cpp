@@ -149,34 +149,34 @@ void AcousticWaveEquationSEM::postInputInitialization()
   m_pressureNp1AtReceivers.resize( m_nsamplesSeismoTrace, m_receiverCoordinates.size( 0 ) + 1 );
 }
 
-//real32 AcousticWaveEquationSEM::getGlobalMinWavespeed( MeshLevel & mesh, string_array const & regionNames )
-//{
-//
-//
-//  printf("getglobalminwavespeedStart\n");
-//
-//  real32 localMinWavespeed = 1e8;
-//
-//  //mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
-//  //                                                                                      CellElementSubRegion & elementSubRegion )
-//  //{
-//  //  arrayView1d< real32 const > const velocity = elementSubRegion.getField< acousticfields::AcousticVelocity >();
-//  //  real32 subRegionMinWavespeed = *std::min_element( velocity.begin(), velocity.end());
-//  //  if( localMinWavespeed > subRegionMinWavespeed )
-//  //  {
-//  //    localMinWavespeed = subRegionMinWavespeed;
-//  //  }
-//  //} );
-//
-//
-//  printf("getglobalminwavespeedEnd\n");
-//
-//
-//  real32 const globalMinWavespeed = 1500;
-//
-//  return globalMinWavespeed;
-//
-//}
+real32 AcousticWaveEquationSEM::getGlobalMinWavespeed( MeshLevel & mesh, string_array const & regionNames )
+{
+
+
+  printf("getglobalminwavespeedStart\n");
+
+  real32 localMinWavespeed = 1e8;
+
+  //mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
+  //                                                                                      CellElementSubRegion & elementSubRegion )
+  //{
+  //  arrayView1d< real32 const > const velocity = elementSubRegion.getField< acousticfields::AcousticVelocity >();
+  //  real32 subRegionMinWavespeed = *std::min_element( velocity.begin(), velocity.end());
+  //  if( localMinWavespeed > subRegionMinWavespeed )
+  //  {
+  //    localMinWavespeed = subRegionMinWavespeed;
+  //  }
+  //} );
+
+
+  printf("getglobalminwavespeedEnd\n");
+
+
+  real32 const globalMinWavespeed = 1500;
+
+  return globalMinWavespeed;
+
+}
 
 void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & baseMesh, MeshLevel & mesh,
                                                                string_array const & regionNames )
