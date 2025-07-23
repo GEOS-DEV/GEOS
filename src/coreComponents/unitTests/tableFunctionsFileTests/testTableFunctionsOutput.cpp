@@ -305,11 +305,11 @@ TEST( testTableFunctionsOutput, testOutputFiles )
   EXPECT_TRUE( std::filesystem::exists( f4 ));
   EXPECT_FALSE( std::filesystem::exists( f5 ));
 
-  std::filesystem::remove("fluid_phaseModel1_PhillipsBrineDensity_table.csv");
-  std::filesystem::remove("fluid_phaseModel2_SpanWagnerCO2Density_table.csv");
-  std::filesystem::remove("fluid_phaseModel2_FenghourCO2Viscosity_table.csv");
-  std::filesystem::remove("fluid_CO2Solubility_co2Dissolution_table.csv");
-  std::filesystem::remove("fluid_phaseModel1_PhillipsBrineViscosity_table.csv");
+  std::filesystem::remove( "fluid_phaseModel1_PhillipsBrineDensity_table.csv" );
+  std::filesystem::remove( "fluid_phaseModel2_SpanWagnerCO2Density_table.csv" );
+  std::filesystem::remove( "fluid_phaseModel2_FenghourCO2Viscosity_table.csv" );
+  std::filesystem::remove( "fluid_CO2Solubility_co2Dissolution_table.csv" );
+  std::filesystem::remove( "fluid_phaseModel1_PhillipsBrineViscosity_table.csv" );
 }
 
 int main( int argc, char * * argv )
