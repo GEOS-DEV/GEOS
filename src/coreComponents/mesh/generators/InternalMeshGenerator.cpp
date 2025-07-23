@@ -544,6 +544,7 @@ void InternalMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockMa
 {
   GEOS_MARK_FUNCTION;
 
+  printf("meshgenerator1"\n);
   // Partition based on even spacing to get load balance
   // Partition geometrical boundaries will be corrected in the end.
   {
@@ -557,6 +558,7 @@ void InternalMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockMa
 
     partition.setSizes( m_min, m_max );
   }
+  printf("meshgenerator2"\n);
 
   // Make sure that the node manager fields are initialized
   auto & nodeSets = cellBlockManager.getNodeSets();
@@ -564,6 +566,7 @@ void InternalMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockMa
   real64 size[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( m_max );
   LvArray::tensorOps::subtract< 3 >( size, m_min );
   cellBlockManager.setGlobalLength( LvArray::tensorOps::l2Norm< 3 >( size ) );
+  printf("meshgenerator3"\n);
 
 //  bool isRadialWithOneThetaPartition = false;
 
@@ -575,6 +578,7 @@ void InternalMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockMa
     cellBlock.setElementType( EnumStrings< ElementType >::fromString( m_elementType[aa++] ) );
   }
 
+  printf("meshgenerator4"\n);
   SortedArray< localIndex > & xnegNodes = nodeSets["xneg"];
   SortedArray< localIndex > & xposNodes = nodeSets["xpos"];
   SortedArray< localIndex > & ynegNodes = nodeSets["yneg"];
@@ -582,6 +586,7 @@ void InternalMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockMa
   SortedArray< localIndex > & znegNodes = nodeSets["zneg"];
   SortedArray< localIndex > & zposNodes = nodeSets["zpos"];
   SortedArray< localIndex > & allNodes = nodeSets["all"];
+  printf("meshgenerator5"\n);
 
   // Find elemCenters for even uniform element sizes
   array1d< array1d< real64 > > elemCenterCoords( 3 );
