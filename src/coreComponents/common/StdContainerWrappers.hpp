@@ -47,35 +47,89 @@ public:
   /// Type alias for the base class (i.e., std::vector)
   using Base = std::vector< T, Allocator >;
 
-  /// using to inherit constructors from the base class
-  using Base::Base;  // Inherit constructors
-
-
-  /**
-   * @brief constructor.
-   * @param count The number of elements to initialize the vector with.
-   * @param value The value to initialize each element with.
+  /*
+   * We cannot automatically import the constructors aka `Base::vector`
+   * due to a compiler bug on `testMultiFluidDeadOil.cpp` that causes a recursive evaluation of default argument.
+   * The constructors are therefore imported manually.
    */
-  StdVectorWrapper( size_t const count, T const & value ):
-    Base( count, value )
+
+  /// @cond DO_NOT_DOCUMENT
+  StdVectorWrapper(): Base()
   {}
 
-
-  /**
-   * @brief copy constructor.
-   * @param other The vector to copy from.
-   */
-  StdVectorWrapper( Base const & other ):
-    Base( other )
+  StdVectorWrapper( Allocator const & alloc ): Base( alloc )
   {}
 
-  /**
-   * @brief move constructor.
-   * @param other The vector to move from.
-   */
-  StdVectorWrapper( Base && other ):
-    Base( std::move( other ) )
+  StdVectorWrapper( size_t n, const Allocator & alloc = Allocator())
+    : Base( n, alloc )
   {}
+
+  StdVectorWrapper( size_t n, T const & value,
+                    const Allocator & alloc = Allocator())
+    : Base( n, value, alloc )
+  {}
+
+  StdVectorWrapper( StdVectorWrapper const & x )
+    : Base( x )
+  {}
+
+  StdVectorWrapper( StdVectorWrapper const & x, Allocator const & alloc )
+    : Base( x, alloc )
+  {}
+
+  StdVectorWrapper( std::initializer_list< T > l, Allocator const & alloc =  Allocator())
+    : Base( l, alloc )
+  {}
+
+  StdVectorWrapper( StdVectorWrapper && x )
+    : Base( std::move( x ))
+  {}
+
+  StdVectorWrapper( StdVectorWrapper const && rv, Allocator const & alloc )
+    : Base( std::move( rv ), alloc )
+  {}
+
+  template< typename _InputIterator >
+  StdVectorWrapper( _InputIterator first, _InputIterator last,
+                    Allocator const & alloc = Allocator())
+    : Base( first, last, alloc )
+  {}
+
+  StdVectorWrapper & operator=( StdVectorWrapper const & x )
+  {
+    if( this != &x )
+    {
+      Base::operator=( x );
+    }
+    return *this;
+  }
+
+  StdVectorWrapper & operator=( StdVectorWrapper && x ) noexcept
+  {
+    if( this != &x )
+    {
+      Base::operator=( std::move(x));
+    }
+    return *this;
+  }
+
+  StdVectorWrapper & operator=( std::initializer_list< T > l )
+  {
+    Base::operator=( l );
+    return *this;
+  }
+
+  StdVectorWrapper( Base const & other )
+    : Base( other ) {}
+
+  StdVectorWrapper( Base && other )
+    : Base( std::move( other )) {}
+
+  template< typename U, typename A >
+  StdVectorWrapper( std::vector< U, A > & vec )
+    : std::vector< T, A >( vec.begin(), vec.end()) {}
+
+  /// @endcond
 
   /**
    * Access element at index with bounds checking if USE_STD_CONTAINER_BOUNDS_CHECKING is true.
