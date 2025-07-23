@@ -36,7 +36,7 @@ namespace geos
 {
 
 using namespace dataRepository;
-using namespace constitutive;
+using namespace fields;
 
 template< typename RESERVOIR_SOLVER >
 SinglePhaseReservoirAndWells< RESERVOIR_SOLVER >::
@@ -174,15 +174,15 @@ addCouplingSparsityPattern( DomainPartition const & domain,
 
         // get the well element indices corresponding to each perforation
         arrayView1d< localIndex const > const & perfWellElemIndex =
-          perforationData->getField< fields::perforation::wellElementIndex >();
+          perforationData->getField< perforation::wellElementIndex >();
 
         // get the element region, subregion, index
         arrayView1d< localIndex const > const & resElementRegion =
-          perforationData->getField< fields::perforation::reservoirElementRegion >();
+          perforationData->getField< perforation::reservoirElementRegion >();
         arrayView1d< localIndex const > const & resElementSubRegion =
-          perforationData->getField< fields::perforation::reservoirElementSubRegion >();
+          perforationData->getField< perforation::reservoirElementSubRegion >();
         arrayView1d< localIndex const > const & resElementIndex =
-          perforationData->getField< fields::perforation::reservoirElementIndex >();
+          perforationData->getField< perforation::reservoirElementIndex >();
 
         // Insert the entries corresponding to reservoir-well perforations
         // This will fill J_WR, and J_RW

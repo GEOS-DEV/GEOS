@@ -24,6 +24,7 @@ set( multiPhysicsSolvers_headers
     CoupledReservoirAndWellKernels.hpp
     CoupledSolver.hpp
     PoromechanicsSolver.hpp
+    PoromechanicsConformingFractures.hpp
     FlowProppantTransportSolver.hpp
     HydrofractureSolver.hpp
     HydrofractureSolverKernels.hpp

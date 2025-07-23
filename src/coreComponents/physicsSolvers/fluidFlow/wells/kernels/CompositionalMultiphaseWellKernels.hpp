@@ -789,53 +789,6 @@ public:
 
 };
 
-/******************************** SolutionCheckKernel ********************************/
-
-/**
- * @class SolutionCheckKernelFactory
- */
-class SolutionCheckKernelFactory
-{
-public:
-
-  /**
-   * @brief Create a new kernel and launch
-   * @tparam POLICY the policy used in the RAJA kernel
-   * @param[in] allowCompDensChopping flag to allow the component density chopping
-   * @param[in] scalingFactor the scaling factor
-   * @param[in] rankOffset the rank offset
-   * @param[in] numComp the number of components
-   * @param[in] dofKey the dof key to get dof numbers
-   * @param[in] subRegion the subRegion
-   * @param[in] localSolution the Newton update
-   */
-  template< typename POLICY >
-  static isothermalCompositionalMultiphaseBaseKernels::SolutionCheckKernel::StackVariables
-  createAndLaunch( integer const allowCompDensChopping,
-                   compositionalMultiphaseUtilities::ScalingType const scalingType,
-                   real64 const scalingFactor,
-                   arrayView1d< real64 const > const pressure,
-                   arrayView2d< real64 const, compflow::USD_COMP > const compDens,
-                   arrayView1d< real64 > pressureScalingFactor,
-                   arrayView1d< real64 > compDensScalingFactor,
-                   globalIndex const rankOffset,
-                   integer const numComp,
-                   string const dofKey,
-                   ElementSubRegionBase & subRegion,
-                   arrayView1d< real64 const > const localSolution )
-  {
-
-    isothermalCompositionalMultiphaseBaseKernels::
-      SolutionCheckKernel kernel( allowCompDensChopping, 0, scalingType, scalingFactor,
-                                  pressure, compDens, pressureScalingFactor, compDensScalingFactor, rankOffset,
-                                  numComp, dofKey, subRegion, localSolution );
-    return isothermalCompositionalMultiphaseBaseKernels::
-             SolutionCheckKernel::
-             launch< POLICY >( subRegion.size(), kernel );
-  }
-
-};
-
 /******************************** ElementBasedAssemblyKernel ********************************/
 
 /**
