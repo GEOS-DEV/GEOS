@@ -26,7 +26,7 @@ TEST( testXmlWrapper, array3d_errors )
   array3d< int > array;
 
   {
-    std::vector< string > workingInputs = {
+    stdVector< string > workingInputs = {
       // testing without spaces with various array sizes
       "{{{0}}}",
       "{{{0,1,2}}}",
@@ -54,7 +54,7 @@ TEST( testXmlWrapper, array3d_errors )
     }
   }
   {
-    std::vector< string > erroneousInputs = {
+    stdVector< string > erroneousInputs = {
       // fordbiden characters
       "{{{0,1,2},{3, hello,5},{3,4,5}},{{6,7,8},{9,10,11},{12,13,14}},{{15,16,17},{18,19,20},{21,22,23}}}",
       "{{{0,1,2 + 2},{3, 2 * 2,5},{3,4,5}},{{6,7,8},{9,10,11},{12,13,14}},{{15,16,17},{18,19,20},{21,22,23}}}",
@@ -369,7 +369,7 @@ TEST( testXmlWrapper, testGroupNamesFormats )
   string groupName;
 
   {
-    std::vector< GroupNameTest > workingInputs = {
+    stdVector< GroupNameTest > workingInputs = {
       GroupNameTest( groupNameRegex, "testname" ),
       GroupNameTest( groupNameRegex, "testname01" ),
       GroupNameTest( groupNameRegex, "test_name" ),
@@ -383,7 +383,7 @@ TEST( testXmlWrapper, testGroupNamesFormats )
     }
   }
   {
-    std::vector< GroupNameTest > erroneousInputs = {
+    stdVector< GroupNameTest > erroneousInputs = {
       //empty entries
       GroupNameTest( groupNameRegex, "" ),
       GroupNameTest( groupNameRegex, " " ),

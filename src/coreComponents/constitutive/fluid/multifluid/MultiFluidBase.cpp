@@ -187,6 +187,26 @@ void MultiFluidBase::postInputInitialization()
                           InputError );
   }
 
+  // Make sure that phase names and component names are not repeated
+  std::set< std::string > uniqueNames;
+  for( integer ip = 0; ip < numPhase; ++ip )
+  {
+    std::string const lowerCaseName = stringutilities::toLower( m_phaseNames[ip] );
+    GEOS_THROW_IF ( uniqueNames.find( lowerCaseName ) != uniqueNames.end(),
+                    GEOS_FMT( "{}: phase name {} is repeated. "
+                              "Phase names should be unique.", getFullName(), m_phaseNames[ip] ), InputError );
+    uniqueNames.insert( lowerCaseName );
+  }
+  uniqueNames.clear();
+  for( integer ic = 0; ic < numComp; ++ic )
+  {
+    std::string const lowerCaseName = stringutilities::toLower( m_componentNames[ic] );
+    GEOS_THROW_IF ( uniqueNames.find( lowerCaseName ) != uniqueNames.end(),
+                    GEOS_FMT( "{}: component name {} is repeated. "
+                              "Component names should be unique.", getFullName(), m_componentNames[ic] ), InputError );
+    uniqueNames.insert( lowerCaseName );
+  }
+
   // call to correctly set member array tertiary sizes on the 'main' material object
   resizeFields( 0, 0 );
 
