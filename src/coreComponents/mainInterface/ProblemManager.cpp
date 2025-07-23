@@ -631,13 +631,13 @@ void ProblemManager::generateMesh()
     {
       ParticleBlockManagerABC & particleBlockManager = meshBody.getGroup< ParticleBlockManagerABC >( keys::particleManager );
 
-      printf("inmeshlevel\n");
       this->generateMeshLevel( baseMesh,
                                particleBlockManager,
                                junk );
     }
     else
     {
+      printf("inmeshlevel\n");
       CellBlockManagerABC & cellBlockManager = meshBody.getGroup< CellBlockManagerABC >( keys::cellManager );
 
       this->generateMeshLevel( baseMesh,
@@ -831,6 +831,7 @@ void ProblemManager::generateMeshLevel( MeshLevel & meshLevel,
                                         Group const * const discretization,
                                         string_array const & )
 {
+  printf("ingeneratemesholevel\n");
   if( discretization != nullptr )
   {
     auto const * const
