@@ -141,12 +141,6 @@ char const * xmlInput =
         fieldName="acousticDensity"
         scale="1"
         setNames="{ all }"/>
-      <FieldSpecification
-        name="zposFreeSurface"
-        objectPath="faceManager"
-        fieldName="FreeSurface"
-        scale="0.0"
-        setNames="{ zpos }"/>
     </FieldSpecifications>
     <Tasks>
       <PackCollection
