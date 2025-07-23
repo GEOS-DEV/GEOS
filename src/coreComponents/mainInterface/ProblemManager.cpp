@@ -180,7 +180,7 @@ void ProblemManager::problemSetup()
   meshGenerationLog.begin();
 
   printf("start generateMesh\n");
- generateMesh();
+// generateMesh();
 
   printf("end generateMesh\n");
   meshGenerationLog.end();
