@@ -206,7 +206,7 @@ void ProblemManager::problemSetup()
 
   printf("start import fields\n");
   importFieldsLog.begin();
-  //importFields();
+  importFields();
 
   printf("end import fields\n");
   importFieldsLog.end();
