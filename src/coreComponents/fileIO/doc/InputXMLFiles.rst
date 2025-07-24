@@ -192,6 +192,74 @@ To do this, GEOS does the following:
   4) Define any expected deviations from the schema via ``ManagedGroup::SetSchemaDeviations()``.
 
 
+Units
+=================================
+
+GEOS Unit System Generalities
+------------------------------
+
+Typically, all operations within GEOS are conducted using SI units (International System of Units).
+If he wants to, the user can use any self-consistent unit system (in that case, every input value must be in that system).
+
+Physical Scales Default Units
+------------------------------
+
+.. list-table:: Physical Scale Default Unit
+  :widths: auto
+  :header-rows: 1
+
+  * - Physical scale
+    - Default Unit Formula
+    - Default Unit Description
+  * - pressure
+    - :math:`Pa`
+    - `pascal`
+  * - temperature
+    - :math:`K`
+    - `kelvin`
+  * - distance
+    - :math:`m`
+    - `meter`
+  * - time
+    - :math:`s`
+    - `second`
+  * - viscosity
+    - :math:`Pa \cdot s`
+    - `pascal-second`
+  * - enthalpy
+    - :math:`J/kg`
+    - `joule` per `kilogram`
+  * - density
+    - :math:`kg/m^3`
+    - `kilogram` per `cubic meter`
+  * - solubility
+    - :math:`g/L`
+    - `gram` per `liter`
+  * - mass
+    - :math:`kg`
+    - `kilogram`
+  * - mole
+    - :math:`mol`
+    - `mole`
+  * - mass rate
+    - :math:`kg/s`
+    - `kilogram` per `second`
+  * - mole rate
+    - :math:`mol/s`
+    - `mole` per `second`
+  * - transmissibility
+    - :math:`(Pa \cdot s \cdot rm^3)/Pa`
+    - `viscosity` times `reservoir cubic meter` per `pascal`
+  * - molar volume
+    - :math:`m^3/mol`
+    - `cubic meter` per `mole`
+  * - molar density
+    - :math:`mol/m^3`
+    - `mole` per `cubic meter`
+  * - permeability
+    - :math:`m^2`
+    - `square meter`
+
 .. _AdvancedXMLFeatures:
 
 Advanced XML Features
@@ -344,79 +412,8 @@ The following example uses parameters to set the root path for a table function,
 Any number of parameter overrides can be issued from the command line using the `-p name value` argument in the preprocessor script.
 Note that if the override value contains any spaces, it may need to be surrounded by quotation marks (`-p name "paramter with spaces"`).
 
-
-Units
-------------------------------
-
-GEOS Unit System Generalities
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-Typically, all operations within GEOS are conducted using SI units (International System of Units).
-If he wants to, the user can use any self-consistent unit system (in that case, every input value must be in that system).
-
-
-Physical Scales Default Units
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-.. list-table:: Physical Scale Default Unit
-  :widths: auto
-  :header-rows: 1
-
-  * - Physical scale
-    - Default Unit Formula
-    - Default Unit Description
-  * - pressure
-    - :math:`Pa`
-    - `pascal`
-  * - temperature
-    - :math:`K`
-    - `kelvin`
-  * - distance
-    - :math:`m`
-    - `meter`
-  * - time
-    - :math:`s`
-    - `second`
-  * - viscosity
-    - :math:`Pa \cdot s`
-    - `pascal-second`
-  * - enthalpy
-    - :math:`J/kg`
-    - `joule` per `kilogram`
-  * - density
-    - :math:`kg/m^3`
-    - `kilogram` per `cubic meter`
-  * - solubility
-    - :math:`g/L`
-    - `gram` per `liter`
-  * - mass
-    - :math:`kg`
-    - `kilogram`
-  * - mole
-    - :math:`mol`
-    - `mole`
-  * - mass rate
-    - :math:`kg/s`
-    - `kilogram` per `second`
-  * - mole rate
-    - :math:`mol/s`
-    - `mole` per `second`
-  * - transmissibility
-    - :math:`(Pa \cdot s \cdot rm^3)/Pa`
-    - `viscosity` times `reservoir cubic meter` per `pascal`
-  * - molar volume
-    - :math:`m^3/mol`
-    - `cubic meter` per `mole`
-  * - molar density
-    - :math:`mol/m^3`
-    - `mole` per `cubic meter`
-  * - permeability
-    - :math:`m^2`
-    - `square meter`
-
-
 XML Preprocessor Unit Manager
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+------------------------------
 
 Users wishing to work with non-SI units for specific values can define these explicitly via XML parameters postfixes.
 The XML preprocessor ensures that any user-specified units within input files are converted into GEOS supported values prior to simulation.
@@ -439,7 +436,6 @@ Here is a set of parameters with units specified:
 
 
 Please note that the preprocessor currently does not check whether any user-specified units are appropriate for a given input or symbolic expression.
-
 
 Symbolic Expressions
 ------------------------------
