@@ -189,7 +189,7 @@ real64 constexpr AcousticWaveEquationSEMTest::eps;
 TEST_F( AcousticWaveEquationSEMTest, SeismoTrace )
 {
 
-  DomainPartition & domain = state.getProblemManager().getDomainPartition();
+  //DomainPartition & domain = state.getProblemManager().getDomainPartition();
   propagator = &state.getProblemManager().getPhysicsSolverManager().getGroup< AcousticWaveEquationSEM >( "acousticSolver" );
 
 
