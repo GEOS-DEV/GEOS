@@ -506,15 +506,15 @@ void ElasticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
     }
 
 
-    // if( m_useTaper==1 )
-    // {
-    //   real32 vMin;
-    //   vMin = getGlobalMinWavespeed( mesh, regionNames );
+    if( m_useTaper==1 )
+    {
+      real32 vMin;
+      vMin = getGlobalMinWavespeed( mesh, regionNames );
 
-    //   arrayView1d< real32 > const taperCoeff = nodeManager.getField< fields::taperCoeff >();
-    //   TaperKernel::computeTaperCoeff< EXEC_POLICY >( nodeManager.size(), nodeCoords, m_thicknessTaper, m_timeStep, vMin, m_reflectivityCoeff,
-    //                                                  taperCoeff );
-    // }
+      arrayView1d< real32 > const taperCoeff = nodeManager.getField< fields::taperCoeff >();
+      TaperKernel::computeTaperCoeff< EXEC_POLICY >( nodeManager.size(), nodeCoords, m_thicknessTaper, m_timeStep, vMin, m_reflectivityCoeff,
+                                                     taperCoeff );
+    }
 
   } );
 
@@ -905,15 +905,15 @@ void ElasticWaveEquationSEM::computeUnknowns( real64 const & time_n,
                                     stiffnessVectorz, rhsx, rhsy, rhsz, solverTargetNodesSet );
   }
 
-  // if( m_useTaper==1 )
-  // {
-  //   TaperKernel::multiplyByTaperCoeff< EXEC_POLICY >( nodeManager.size(), taperCoeff, ux_np1 );
-  //   TaperKernel::multiplyByTaperCoeff< EXEC_POLICY >( nodeManager.size(), taperCoeff, ux_n );
-  //   TaperKernel::multiplyByTaperCoeff< EXEC_POLICY >( nodeManager.size(), taperCoeff, uy_np1 );
-  //   TaperKernel::multiplyByTaperCoeff< EXEC_POLICY >( nodeManager.size(), taperCoeff, uy_n );
-  //   TaperKernel::multiplyByTaperCoeff< EXEC_POLICY >( nodeManager.size(), taperCoeff, uz_np1 );
-  //   TaperKernel::multiplyByTaperCoeff< EXEC_POLICY >( nodeManager.size(), taperCoeff, uz_n );
-  // }
+  if( m_useTaper==1 )
+  {
+    TaperKernel::multiplyByTaperCoeff< EXEC_POLICY >( nodeManager.size(), taperCoeff, ux_np1 );
+    TaperKernel::multiplyByTaperCoeff< EXEC_POLICY >( nodeManager.size(), taperCoeff, ux_n );
+    TaperKernel::multiplyByTaperCoeff< EXEC_POLICY >( nodeManager.size(), taperCoeff, uy_np1 );
+    TaperKernel::multiplyByTaperCoeff< EXEC_POLICY >( nodeManager.size(), taperCoeff, uy_n );
+    TaperKernel::multiplyByTaperCoeff< EXEC_POLICY >( nodeManager.size(), taperCoeff, uz_np1 );
+    TaperKernel::multiplyByTaperCoeff< EXEC_POLICY >( nodeManager.size(), taperCoeff, uz_n );
+  }
 
 
 }

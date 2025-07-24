@@ -114,7 +114,7 @@ void AcousticWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
 
     if(m_useTaper)
     {
-      nodeManager.registerField<acousticfields::TaperCoeff> (getName() );
+      nodeManager.registerField<fields::TaperCoeff> (getName() );
     }
 
     FaceManager & faceManager = mesh.getFaceManager();

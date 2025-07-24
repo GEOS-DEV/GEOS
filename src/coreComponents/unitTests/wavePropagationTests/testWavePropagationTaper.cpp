@@ -174,7 +174,7 @@ protected:
   {
     setupProblemFromXML( state.getProblemManager(), xmlInput );
 
-   // propagator = &state.getProblemManager().getPhysicsSolverManager().getGroup< AcousticWaveEquationSEM >( "acousticSolverTaper" );
+    propagator = &state.getProblemManager().getPhysicsSolverManager().getGroup< AcousticWaveEquationSEM >( "acousticSolverTaper" );
   }
 
   static real64 constexpr time = 0.0;
