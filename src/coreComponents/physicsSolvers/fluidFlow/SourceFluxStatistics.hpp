@@ -20,8 +20,8 @@
 #ifndef SRC_CORECOMPONENTS_PHYSICSSOLVERS_FLUIDFLOW_SOURCEFLUXSTATISTICS_HPP_
 #define SRC_CORECOMPONENTS_PHYSICSSOLVERS_FLUIDFLOW_SOURCEFLUXSTATISTICS_HPP_
 
-#include "../FieldStatisticsBase.hpp"
-#include "FlowSolverBase.hpp"
+#include "physicsSolvers/FieldStatisticsBase.hpp"
+#include "physicsSolvers/fluidFlow/FlowSolverBase.hpp"
 #include "mesh/DomainPartition.hpp"
 #include "common/format/table/TableData.hpp"
 #include "common/format/table/TableFormatter.hpp"
