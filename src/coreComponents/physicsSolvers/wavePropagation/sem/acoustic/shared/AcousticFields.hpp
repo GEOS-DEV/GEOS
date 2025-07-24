@@ -243,14 +243,6 @@ DECLARE_FIELD( AuxiliaryVar4PML,
                WRITE_AND_READ,
                "PML scalar auxiliary variable 4." );
 
-DECLARE_FIELD( TaperCoeff,
-               "taperCoeff",
-               array1d< real32 >,
-               1,
-               NOPLOT,
-               WRITE_AND_READ,
-               "Taper coefficient for the tapering function." );
-
 }
 
 }
