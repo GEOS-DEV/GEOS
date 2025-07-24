@@ -26,7 +26,6 @@
 #include "physicsSolvers/PhysicsSolverManager.hpp"
 #include "physicsSolvers/wavePropagation/shared/WaveSolverBase.hpp"
 #include "physicsSolvers/wavePropagation/sem/acoustic/secondOrderEqn/isotropic/AcousticWaveEquationSEM.hpp"
-#include "physicsSolvers/wavePropagation/shared/TaperKernel.hpp"
 
 #include <gtest/gtest.h>
 
