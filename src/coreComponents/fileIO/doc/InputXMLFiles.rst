@@ -367,52 +367,52 @@ Physical Scales Default Units
     - Default Unit Description
   * - pressure
     - :math:`Pa`
-    - `pascals`
+    - `pascal`
   * - temperature
     - :math:`K`
     - `kelvin`
   * - distance
     - :math:`m`
-    - `meters`
+    - `meter`
   * - time
     - :math:`s`
-    - `seconds`
+    - `second`
   * - viscosity
     - :math:`Pa \cdot s`
-    - `pascal-seconds`
+    - `pascal-second`
   * - enthalpy
     - :math:`J/kg`
-    - `joules` per `kilogram`
+    - `joule` per `kilogram`
   * - density
     - :math:`kg/m^3`
-    - `kilograms` per `cubic meter`
+    - `kilogram` per `cubic meter`
   * - solubility
     - :math:`g/L`
-    - `grams` per `liter`
+    - `gram` per `liter`
   * - mass
     - :math:`kg`
-    - `kilograms`
+    - `kilogram`
   * - mole
     - :math:`mol`
-    - `moles`
+    - `mole`
   * - mass rate
     - :math:`kg/s`
-    - `kilograms` per `second`
+    - `kilogram` per `second`
   * - mole rate
     - :math:`mol/s`
-    - `moles` per `second`
+    - `mole` per `second`
   * - transmissibility
     - :math:`(Pa \cdot s \cdot rm^3)/Pa`
-    - `viscosity` times `reservoir cubic meters` per `pascal`
+    - `viscosity` times `reservoir cubic meter` per `pascal`
   * - molar volume
     - :math:`m^3/mol`
-    - `cubic meters` per `mole`
+    - `cubic meter` per `mole`
   * - molar density
     - :math:`mol/m^3`
-    - `moles` per `cubic meter`
+    - `mole` per `cubic meter`
   * - permeability
     - :math:`m^2`
-    - `square meters`
+    - `square meter`
 
 
 XML Preprocessor Unit Manager
