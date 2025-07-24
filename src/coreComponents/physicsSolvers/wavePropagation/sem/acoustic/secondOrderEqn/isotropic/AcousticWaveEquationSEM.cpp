@@ -112,10 +112,10 @@ void AcousticWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
       nodeManager.getField< acousticfields::AuxiliaryVar2PML >().resizeDimension< 1 >( 3 );
     }
 
-    //if(m_useTaper)
-    //{
+    if(m_useTaper)
+    {
       nodeManager.registerField<fields::taperCoeff> (getName() );
-    //}
+    }
 
     FaceManager & faceManager = mesh.getFaceManager();
     faceManager.registerField< acousticfields::AcousticFreeSurfaceFaceIndicator >( getName() );
@@ -458,8 +458,8 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
     }
 
     printf("beforeuse\n");
-    //if( m_useTaper==1 )
-    //{
+    if( m_useTaper )
+    {
       real32 vMin;
       printf("getforegetmin\n");
       vMin = 1500;//getGlobalMinWavespeed( mesh, regionNames );
@@ -472,7 +472,7 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
                                                      taperCoeff );
 
   printf("computetaperend\n");
-    //}
+    }
   } );
 
   // check anelasticity coefficient and/or compute it if needed
@@ -1334,11 +1334,11 @@ void AcousticWaveEquationSEM::computeUnknowns( real64 const & time_n,
                                                  rhs, freeSurfaceNodeIndicator, solverTargetNodesSet );
     }
 
-    //if( m_useTaper==1 )
-    //{
+    if( m_useTaper )
+    {
       TaperKernel::multiplyByTaperCoeff< EXEC_POLICY >( nodeManager.size(), taperCoeff, p_np1 );
       TaperKernel::multiplyByTaperCoeff< EXEC_POLICY >( nodeManager.size(), taperCoeff, p_n );
-    //}
+    }
   }
   else
   {
