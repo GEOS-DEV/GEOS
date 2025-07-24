@@ -42,7 +42,7 @@ char const * xmlInput =
   <Problem>
     <Solvers>
       <AcousticSEM
-        name="acousticSolver"
+        name="acousticSolverTaper"
         discretization="FE1"
         targetRegions="{ Region }"
         sourceCoordinates="{ { 50, 50, 50 } }"
@@ -172,11 +172,15 @@ protected:
   void SetUp() override
   {
     setupProblemFromXML( state.getProblemManager(), xmlInput );
+
+    propagator = &state.getProblemManager().getPhysicsSolverManager().getGroup< AcousticWaveEquationSEM >( "acousticSolverTaper" );
   }
 
   static real64 constexpr time = 0.0;
   static real64 constexpr dt = 1e-1;
   static real64 constexpr eps = std::numeric_limits< real64 >::epsilon();
+
+
 
   GeosxState state;
   AcousticWaveEquationSEM * propagator;
@@ -190,7 +194,7 @@ TEST_F( AcousticWaveEquationSEMTest, SeismoTrace )
 {
 
   //DomainPartition & domain = state.getProblemManager().getDomainPartition();
-  propagator = &state.getProblemManager().getPhysicsSolverManager().getGroup< AcousticWaveEquationSEM >( "acousticSolver" );
+  
 
 
   //Assert on time-step computed with the automatci time-step routine
