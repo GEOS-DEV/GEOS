@@ -18,7 +18,6 @@
  */
 
 #include "MeshFields.hpp"
-#include "EdgeManager.hpp"
 #include "SurfaceElementRegion.hpp"
 #include "common/MpiWrapper.hpp"
 
