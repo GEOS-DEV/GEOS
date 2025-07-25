@@ -30,7 +30,6 @@
 #include "mesh/NodeManager.hpp"
 #include "mesh/utilities/MeshMapUtilities.hpp"
 #include "utilities/ComputationalGeometry.hpp"
-#include "CellElementRegion.hpp"
 
 namespace geos
 {

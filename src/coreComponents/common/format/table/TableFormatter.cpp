@@ -22,7 +22,6 @@
 #include <numeric>
 #include "common/format/StringUtilities.hpp"
 #include "common/logger/Logger.hpp"
-#include "TableFormatter.hpp"
 
 namespace geos
 {
