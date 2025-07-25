@@ -235,6 +235,9 @@ protected:
 
   virtual void initializePreSubGroups() override;
 
+  /**
+   * @brief Checks the validity of the discretization name for the FiniteVolume method.
+   */
   void checkDiscretizationName() const;
 
   virtual void initializePostInitialConditionsPreSubGroups() override;
