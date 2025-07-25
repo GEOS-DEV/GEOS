@@ -282,7 +282,7 @@ void ErrorLogger::flushErrorMsg( ErrorLogger::ErrorMsg & errorMsg )
   }
   else
   {
-    GEOS_LOG_RANK( GEOS_FMT( "Unable to open error file for writing.\n- Error file: {}\n- Error file enabled = {}).\n",
+    GEOS_LOG_RANK( GEOS_FMT( "Unable to open error file for writing.\n- Error file: {}\n- Error file enabled = {}.\n",
                              m_filename, g_errorLogger.isOutputFileEnabled() ) );
   }
 }
