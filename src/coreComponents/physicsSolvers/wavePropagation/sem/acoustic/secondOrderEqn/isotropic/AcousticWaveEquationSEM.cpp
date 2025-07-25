@@ -112,10 +112,10 @@ void AcousticWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
       nodeManager.getField< acousticfields::AuxiliaryVar2PML >().resizeDimension< 1 >( 3 );
     }
 
-    if(m_useTaper)
-    {
-      nodeManager.registerField<fields::taperCoeff> (getName() );
-    }
+    //if(m_useTaper)
+    //{
+    //  nodeManager.registerField<fields::taperCoeff> (getName() );
+    //}
 
     FaceManager & faceManager = mesh.getFaceManager();
     faceManager.registerField< acousticfields::AcousticFreeSurfaceFaceIndicator >( getName() );
