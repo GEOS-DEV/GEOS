@@ -115,18 +115,11 @@ protected:
 
   virtual void resizeFields( localIndex const size, localIndex const numPts ) override;
 
-  enum PhaseType : integer
-  {
-    LIQUID = 0,
-    VAPOUR = 1,
-    AQUEOUS = 2,
-  };
-
 private:
   // Create the fluid models
   void createModels();
 
-  integer findPhaseIndex( string names ) const;
+  array1d< integer > getPhaseTypes() const;
 
   static std::unique_ptr< compositional::ModelParameters > createModelParameters();
 
@@ -134,7 +127,8 @@ private:
   std::unique_ptr< FLASH > m_flash{};
 
   // Phase ordering
-  array1d< integer > m_phaseOrder;
+  array1d< integer > m_phaseOrder{};
+  array1d< integer > m_phaseType{};
 
   // Phase models
   std::unique_ptr< PHASE1 > m_phase1{};
