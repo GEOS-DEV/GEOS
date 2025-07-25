@@ -91,19 +91,23 @@ void setupLogger()
                                                            string_view detectionLocation )
     {
       std::string const stackHistory = LvArray::system::stackTrace( true );
-      ErrorLogger::ErrorMsg error;
-      error.setType( ErrorLogger::MsgType::Error );
-      error.addToMsg( errorMsg );
-      error.setRank( ::geos::logger::internal::rank );
-      error.addCallStackInfo( stackHistory );
-      error.addContextInfo( 
-        ErrorContext{ { { ErrorContext::Attribute::DetectionLoc, string( detectionLocation ) } } } );
 
       GEOS_LOG( GEOS_FMT( "***** ERROR\n"
                           "***** LOCATION: (external error, detected {})\n"
                           "{}\n{}",
-                          detectionLocation, error.m_msg, stackHistory ) );
-      g_errorLogger.flushErrorMsg( error );
+                          detectionLocation, errorMsg, stackHistory ) );
+      if( g_errorLogger.isOutputFileEnabled() )
+      {
+        ErrorLogger::ErrorMsg error;
+        error.setType( ErrorLogger::MsgType::Error );
+        error.addToMsg( errorMsg );
+        error.setRank( ::geos::logger::internal::rank );
+        error.addCallStackInfo( stackHistory );
+        error.addContextInfo(
+          ErrorContext{ { { ErrorContext::Attribute::DetectionLoc, string( detectionLocation ) } } } );
+
+        g_errorLogger.flushErrorMsg( error );
+      }
 
       // we do not terminate the program as 1. the error could be non-fatal, 2. there may be more messages to output.
     } );
@@ -121,20 +125,25 @@ void setupLogger()
       // error message output
       std::string const stackHistory = LvArray::system::stackTrace( true );
       ErrorLogger::ErrorMsg error;
-      error.setType( ErrorLogger::MsgType::Error );
       error.addSignalToMsg( signal );
-      error.setRank( ::geos::logger::internal::rank );
-      error.addCallStackInfo( stackHistory );
-      error.addContextInfo( 
-        ErrorContext{ { { ErrorContext::Attribute::Signal, std::to_string( signal ) } }, 1 },
-        ErrorContext{ { { ErrorContext::Attribute::DetectionLoc, string( "signal handler" ) } }, 0 } );
 
       GEOS_LOG( GEOS_FMT( "***** ERROR\n"
                           "***** SIGNAL: {}\n"
                           "***** LOCATION: (external error, captured by signal handler)\n"
                           "{}\n{}",
                           signal, error.m_msg, stackHistory ) );
-      g_errorLogger.flushErrorMsg( error );
+
+      if( g_errorLogger.isOutputFileEnabled() )
+      {
+        error.setType( ErrorLogger::MsgType::Error );
+        error.setRank( ::geos::logger::internal::rank );
+        error.addCallStackInfo( stackHistory );
+        error.addContextInfo(
+          ErrorContext{ { { ErrorContext::Attribute::Signal, std::to_string( signal ) } }, 1 },
+          ErrorContext{ { { ErrorContext::Attribute::DetectionLoc, string( "signal handler" ) } }, 0 } );
+
+        g_errorLogger.flushErrorMsg( error );
+      }
 
       // call program termination
       LvArray::system::callErrorHandler();
