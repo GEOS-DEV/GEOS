@@ -173,7 +173,6 @@ protected:
   {
     setupProblemFromXML( state.getProblemManager(), xmlInput );
 
-    propagator = &state.getProblemManager().getPhysicsSolverManager().getGroup< AcousticWaveEquationSEM >( "acousticSolverTaper" );
   }
 
   static real64 constexpr time = 0.0;
@@ -193,8 +192,9 @@ real64 constexpr AcousticWaveEquationSEMTest::eps;
 TEST_F( AcousticWaveEquationSEMTest, SeismoTrace )
 {
 
-  //DomainPartition & domain = state.getProblemManager().getDomainPartition();
-  
+  DomainPartition & domain = state.getProblemManager().getDomainPartition();
+  propagator = &state.getProblemManager().getPhysicsSolverManager().getGroup< AcousticWaveEquationSEM >( "acousticSolverTaper" );
+
 
 
   //Assert on time-step computed with the automatci time-step routine
@@ -202,61 +202,54 @@ TEST_F( AcousticWaveEquationSEMTest, SeismoTrace )
   //real64 const Vp = 1500.0;
   //real64 const h = 100.0;
   //real64 const cflConstant = 1/sqrt( 3 );
-  //real64 const dtTheo = (cflConstant*h)/Vp;
-  //ASSERT_TRUE( dtOut < dtTheo );
-//
-//  real64 time_n = time;
-//  // run for 1s (10 steps)
-//  for( int i=0; i<10; i++ )
-//  {
-//    propagator->explicitStepForward( time_n, dt, i, domain, 0 );
-//    time_n += dt;
-//  }
-//  // cleanup (triggers calculation of the remaining seismograms data points)
-//  propagator->cleanup( 1.0, 10, 0, 0, domain );
-//
-//  // retrieve seismo
-//  arrayView2d< real32 > const pReceivers = propagator->getReference< array2d< real32 > >( AcousticWaveEquationSEM::viewKeyStruct::pressureNp1AtReceiversString() ).toView();
-//
-//  // move it to CPU, if needed
-//  pReceivers.move( hostMemorySpace, false );
-//
-//  // check number of seismos and trace length
-//  ASSERT_EQ( pReceivers.size( 1 ), 10 );
-//  ASSERT_EQ( pReceivers.size( 0 ), 11 );
-//
-//  // check seismo content. The pressure values cannot be directly checked as the problem is too small.
-//  // Since the basis is linear, check that the seismograms are nonzero (for t>0) and the seismogram at the center is equal
-//  // to the average of the others.
-//  for( int i = 0; i < 11; i++ )
-//  {
-//    if( i > 0 )
-//    {
-//      ASSERT_TRUE( std::abs( pReceivers[i][8] ) > 0 );
-//    }
-//    double avg = 0;
-//    for( int r=0; r<8; r++ )
-//    {
-//      avg += pReceivers[i][r];
-//    }
-//    avg /= 8.0;
-//    ASSERT_TRUE( std::abs( pReceivers[i][8] - avg ) < 0.00001 );
-//  }
-//  // check again the seismo content.
-//  for( int i = 0; i < 11; i++ )
-//  {
-//    if( i > 0 )
-//    {
-//      ASSERT_TRUE( std::abs( pReceivers[i][8] ) > 0 );
-//    }
-//    double avg = 0;
-//    for( int r=0; r<8; r++ )
-//    {
-//      avg += pReceivers[i][r];
-//    }
-//    avg /= 8.0;
-//    ASSERT_TRUE( std::abs( pReceivers[i][8] - avg ) < 0.00001 );
-//  }
+  //real64 const dtTheo = (cflConstant*h)/Vp;/ASSERT_TRUE( dtOut < dtTheo );
+ real64 time_n = time;
+ // run for 1s (10 steps)
+ for( int i=0; i<10; i++ )
+ {
+   propagator->explicitStepForward( time_n, dt, i, domain, 0 );
+   time_n += dt;
+ }
+ // cleanup (triggers calculation of the remaining seismograms data points)
+ propagator->cleanup( 1.0, 10, 0, 0, domain );
+ // retrieve seismo
+ arrayView2d< real32 > const pReceivers = propagator->getReference< array2d< real32 > >( AcousticWaveEquationSEM::viewKeyStruct::pressureNp1AtReceiversString() ).toView();
+ // move it to CPU, if needed
+ pReceivers.move( hostMemorySpace, false );
+ // check number of seismos and trace length
+ ASSERT_EQ( pReceivers.size( 1 ), 10 );
+ ASSERT_EQ( pReceivers.size( 0 ), 11 );
+ // check seismo content. The pressure values cannot be directly checked as the problem is too small.
+ // Since the basis is linear, check that the seismograms are nonzero (for t>0) and the seismogram at the center is equal
+ // to the average of the others.
+ for( int i = 0; i < 11; i++ )
+ {
+   if( i > 0 )
+   {
+     ASSERT_TRUE( std::abs( pReceivers[i][8] ) > 0 );
+   }
+   double avg = 0;
+   for( int r=0; r<8; r++ )
+   {
+     avg += pReceivers[i][r];
+   }
+   avg /= 8.0;
+   ASSERT_TRUE( std::abs( pReceivers[i][8] - avg ) < 0.00001 );
+ }
+ // check again the seismo content.
+ for( int i = 0; i < 11; i++ )
+ {
+   if( i > 0 )
+   {
+     ASSERT_TRUE( std::abs( pReceivers[i][8] ) > 0 );
+   }
+   double avg = 0;
+   for( int r=0; r<8; r++ )
+   {
+     avg += pReceivers[i][r];
+   }
+   avg /= 8.0;
+   ASSERT_TRUE( std::abs( pReceivers[i][8] - avg ) < 0.00001 );  }
 }
 
 int main( int argc, char * * argv )
