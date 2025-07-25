@@ -606,7 +606,7 @@ protected:
         arrayView1d< real64 > const aperture                 = subRegion.getElementAperture();
         arrayView1d< real64 > const hydraulicAperture        = subRegion.getField< fields::flow::hydraulicAperture >();
         arrayView1d< real64 > const deltaVolume              = subRegion.getField< fields::flow::deltaVolume >();
-        arrayView1d< integer > const & fractureState   = subRegion.getField< contact::fractureState >();
+        arrayView1d< integer > const & fractureState   = subRegion.getField< fields::contact::fractureState >();
 
         string const porousSolidName = subRegion.getReference< string >( FlowSolverBase::viewKeyStruct::solidNamesString() );
         CoupledSolidBase & porousSolid = subRegion.getConstitutiveModel< CoupledSolidBase >( porousSolidName );
