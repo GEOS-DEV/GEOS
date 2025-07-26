@@ -1127,8 +1127,19 @@ int GeomechanicsUpdates::computeStep( real64 const ( & D )[6],               // 
                                     // to allow for other unit systems.
     real64 m_creepActivationEnergy = 2.0;  // This will be a user input that can be used to fit temperature dependence.
 
-    real64 creepRateTemperatureMultiplier = exp(-1.0*m_creepActivationEnergy*( 1.0/(m_gasConstantR*temperature) - 1.0/(m_gasConstantR*m_referenceTemperature) ) ); 
-	
+    std::cout << "temperature = " << temperature << std::endl;
+    std::cout << "referenceTemperature = " << m_referenceTemperature << std::endl;
+    std::cout << "m_gasConstantR = " << m_gasConstantR << std::endl;
+    std::cout << "m_creepActivationEnergy = " << m_creepActivationEnergy << std::endl;
+
+    real64 creepRateTemperatureMultiplier = exp(-1.0*m_creepActivationEnergy*( 1.0/(m_gasConstantR*(temperature)) - 1.0/(m_gasConstantR*m_referenceTemperature) ) ); 
+    double exponent = -1.0 * m_creepActivationEnergy * (1.0/(m_gasConstantR*(temperature)) - 1.0/(m_gasConstantR*m_referenceTemperature));
+    std::cout << "Exponent for exp() = " << exponent << std::endl;    
+
+    if (std::isinf(creepRateTemperatureMultiplier) || std::isnan(creepRateTemperatureMultiplier)) {
+    creepRateTemperatureMultiplier = 1.0;
+    std::cout << "Warning: creepRateTemperatureMultiplier overflow, set to 1.0" << std::endl;
+    }
 
     real64 c0 = m_creepC0;
 		real64 c1 = m_creepC1;
@@ -1234,19 +1245,29 @@ int GeomechanicsUpdates::computeStep( real64 const ( & D )[6],               // 
     // unloaded porosity at the start of the step.
     real64 phi_p = std::max( 1.e-10 , 1.0 + exp(-evp)*( phi_i - 1 ) ); 
     // equilibrium porosity at the start of the step.
-		real64 phi_e = std::max(1.e-10 , A * exp( -std::pow(p,equilibriumPorosityPressureExponent) / B ) + equilibriumPorosityOffset  + std::max(temperature - m_referenceTemperature, 0.0) * (-0.00004) );    
+		//real64 phi_e = std::max(1.e-10 , A * exp( -std::pow(p,equilibriumPorosityPressureExponent) / B ) + equilibriumPorosityOffset  + 0.*(std::max(temperature - m_referenceTemperature, 0.0) * (-0.00004)) );    
+		//real64 phi_e = std::max(1.e-10 , A * exp( -std::pow(p,equilibriumPorosityPressureExponent) / B ) + equilibriumPorosityOffset  + std::max(temperature - m_referenceTemperature, 0.0) * (-0.00004) );    
+		real64 phi_e = std::max(1.e-10 , A * exp( -std::pow(p/B ,equilibriumPorosityPressureExponent) ) + equilibriumPorosityOffset  + (std::max(temperature - m_referenceTemperature, 0.0) * (-0.0004)) );    
+
 
     // uncomment for debugging:
     //std::cout<<"pn = "<<p<<", evp_n = "<<evp<<", phi_p_n = "<<phi_p<<", phi_e_n = "<<phi_e<<", X_n = "<<X_old<<std::endl;
+    std::cout << "p = " << p << ", phi_p = " << phi_p << ", phi_e = " << phi_e << ", evp = " << evp<< std::endl;
+    std::cout << "creepRateTemperatureMultiplier = " << creepRateTemperatureMultiplier << std::endl;
+    std::cout << "C = " << C << std::endl;
+    std::cout << "phi_p - phi_e = " << (phi_p - phi_e) << std::endl;
 
     // TODO: have the creep model use actual bulk, not the conservative bulk=b0+b1
-
-    if ( (phi_p - phi_e > 1.e-10) && (p > 1.e-12) && (C > 1.e-16) && ( evp + m_p3 > 1.e-10 ) )
+    //    if ( (phi_p - phi_e > 1.e-10) && (p > 1.e-12) && (C > 1.e-16) && ( evp + m_p3 > 1.e-10 ) )
+    if ( (phi_p - phi_e > 0.) && (p > 1.e-12) && (C > 1.e-16) && ( evp + m_p3 > 1.e-10 ) )
  		  {  // creep compaction
  			  //real64 dphidt = -1.0*creepRateTemperatureMultiplier*std::pow(p,compactionRatePressureExponent)*C*( phi_p - phi_e );  // creep compaction rate:
  			  real64 dphidt = -1.0*creepRateTemperatureMultiplier*std::pow((p/m_b0),compactionRatePressureExponent)*C*( phi_p - phi_e );  // creep compaction rate:
-
- 			  real64 phi_c = std::max( phi_e, phi_p + dphidt*dt ); // unloaded porosity after creep, don't let it go below equilibrium level
+        std::cout << " dphidt = " << dphidt << " dphi = " << dphidt * dt << std::endl;
+        real64 dphidt2 = -1.0 * 1.0 * 1.0 * 1e-12 * 0.01;  // Just a small negative constant
+        std::cout << "Forced dphidt = " << dphidt2 << std::endl;
+ 			  
+        real64 phi_c = std::max( phi_e, phi_p + dphidt*dt ); // unloaded porosity after creep, don't let it go below equilibrium level
  			  real64 evp_c = log( (phi_i - 1. ) / ( phi_c - 1. ) ); // vol. strain after creep.
  			  evp_c = std::max( evp_c, - m_p3 ); // don't let porosity go negative.
         real64 devp = evp_c - evp;  // creep vol. strain increment
@@ -1288,7 +1309,7 @@ int GeomechanicsUpdates::computeStep( real64 const ( & D )[6],               // 
         buckling );
 
         // uncomment for debugging:
-        //std::cout<<"Creep compaction: dphidt = "<<dphidt<<", phi_c = "<<phi_c<<", evp_c = "<<evp_c<<", devp = "<<devp<<", p_c = "<<p_c<<", X_c = "<<X_old<<std::endl;
+        std::cout<<"Creep compaction: dphidt = "<<dphidt<<", phi_c = "<<phi_c<<", evp_c = "<<evp_c<<", devp = "<<devp<<", p_c = "<<p_c<<", X_c = "<<X_old<<std::endl;
  		  }
 
 
