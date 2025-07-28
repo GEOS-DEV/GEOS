@@ -23,6 +23,8 @@
 namespace geos
 {
 
+using namespace fields;
+
 namespace coupledReservoirAndWellsInternal
 {
 
@@ -64,15 +66,15 @@ addCouplingNumNonzeros( PhysicsSolverBase const * const solver,
 
       // get the well element indices corresponding to each perforation
       arrayView1d< localIndex const > const & perfWellElemIndex =
-        perforationData->getField< fields::perforation::wellElementIndex >();
+        perforationData->getField< perforation::wellElementIndex >();
 
       // get the element region, subregion, index
       arrayView1d< localIndex const > const & resElementRegion =
-        perforationData->getField< fields::perforation::reservoirElementRegion >();
+        perforationData->getField< perforation::reservoirElementRegion >();
       arrayView1d< localIndex const > const & resElementSubRegion =
-        perforationData->getField< fields::perforation::reservoirElementSubRegion >();
+        perforationData->getField< perforation::reservoirElementSubRegion >();
       arrayView1d< localIndex const > const & resElementIndex =
-        perforationData->getField< fields::perforation::reservoirElementIndex >();
+        perforationData->getField< perforation::reservoirElementIndex >();
 
       // Loop over perforations and increase row lengths for reservoir and well elements accordingly
       forAll< serialPolicy >( perforationData->size(), [=] ( localIndex const iperf )
@@ -131,7 +133,7 @@ bool validateWellPerforations( PhysicsSolverBase const * const reservoirSolver,
       WellControls const & wellControls = wellSolver->getWellControls( subRegion );
 
       arrayView1d< localIndex const > const & resElementRegion =
-        perforationData->getField< fields::perforation::reservoirElementRegion >();
+        perforationData->getField< perforation::reservoirElementRegion >();
 
       // Loop over perforations and check the reservoir region to which each perforation is connected to
       // If the name of the region is not in the list of targetted regions, then we have a "bad" connection.
@@ -151,7 +153,7 @@ bool validateWellPerforations( PhysicsSolverBase const * const reservoirSolver,
   localIndex const hasBadPerforations = MpiWrapper::max( badPerforation.first.empty() ? 0 : 1 );
 
   GEOS_THROW_IF( !badPerforation.first.empty(),
-                 GEOS_FMT( "{}: The well {} has a connection to the region {} which is not targeted by the solver",
+                 GEOS_FMT( "{}: The well {} has a connection to the region {} which is not targeted by the flow solver",
                            wellSolver->getDataContext(), badPerforation.first, badPerforation.second ),
                  std::runtime_error );
   return hasBadPerforations == 0;

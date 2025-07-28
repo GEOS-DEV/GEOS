@@ -74,7 +74,7 @@ T expected( T expectedSerial,
   else
   {
     GEOS_ASSERT( expectedParallel.size() == std::size_t( mpiSize ) );
-    std::vector< T > tmp( expectedParallel );
+    stdVector< T > tmp( expectedParallel );
     return tmp[MpiWrapper::commRank( comm )];
   }
 }

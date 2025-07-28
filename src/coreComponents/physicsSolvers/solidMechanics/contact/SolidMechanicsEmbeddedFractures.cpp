@@ -21,9 +21,7 @@
 
 #include "common/TimingMacros.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
-#include "constitutive/ConstitutiveManager.hpp"
 #include "constitutive/contact/FrictionSelector.hpp"
-#include "constitutive/solid/ElasticIsotropic.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
 #include "finiteElement/elementFormulations/FiniteElementBase.hpp"
 #include "linearAlgebra/utilities/LAIHelperFunctions.hpp"
@@ -37,6 +35,8 @@
 #include "physicsSolvers/solidMechanics/contact/kernels/SolidMechanicsEFEMStaticCondensationKernels.hpp"
 #include "physicsSolvers/solidMechanics/contact/kernels/SolidMechanicsEFEMJumpUpdateKernels.hpp"
 #include "physicsSolvers/solidMechanics/contact/ContactFields.hpp"
+
+#include "physicsSolvers/solidMechanics/kernels/SolidMechanicsKernelsDispatchTypeList.hpp"
 
 namespace geos
 {
@@ -115,7 +115,7 @@ void SolidMechanicsEmbeddedFractures::registerDataOnMesh( dataRepository::Group 
 
 void SolidMechanicsEmbeddedFractures::initializePostInitialConditionsPreSubGroups()
 {
-  SolidMechanicsLagrangianFEM::initializePostInitialConditionsPreSubGroups();
+  ContactSolverBase::initializePostInitialConditionsPreSubGroups();
   updateState( this->getGroupByPath< DomainPartition >( "/Problem/domain" ) );
 }
 
@@ -348,12 +348,11 @@ void SolidMechanicsEmbeddedFractures::assembleSystem( real64 const time,
       real64 maxTraction = finiteElement::
                              regionBasedKernelApplication
                            < parallelDevicePolicy< >,
-                             constitutive::ElasticIsotropic,
-                             CellElementSubRegion >( mesh,
-                                                     regionNames,
-                                                     getDiscretizationName(),
-                                                     SolidMechanicsLagrangianFEM::viewKeyStruct::solidMaterialNamesString(),
-                                                     kernelFactory );
+                             SolidMechanicsKernelsDispatchTypeList >( mesh,
+                                                                      regionNames,
+                                                                      getDiscretizationName(),
+                                                                      SolidMechanicsLagrangianFEM::viewKeyStruct::solidMaterialNamesString(),
+                                                                      kernelFactory );
 
       GEOS_UNUSED_VAR( maxTraction );
 
@@ -370,12 +369,11 @@ void SolidMechanicsEmbeddedFractures::assembleSystem( real64 const time,
       real64 maxTraction = finiteElement::
                              regionBasedKernelApplication
                            < parallelDevicePolicy< >,
-                             constitutive::SolidBase,
-                             CellElementSubRegion >( mesh,
-                                                     regionNames,
-                                                     getDiscretizationName(),
-                                                     SolidMechanicsLagrangianFEM::viewKeyStruct::solidMaterialNamesString(),
-                                                     kernelFactory );
+                             SolidMechanicsKernelsDispatchTypeList >( mesh,
+                                                                      regionNames,
+                                                                      getDiscretizationName(),
+                                                                      SolidMechanicsLagrangianFEM::viewKeyStruct::solidMaterialNamesString(),
+                                                                      kernelFactory );
 
       GEOS_UNUSED_VAR( maxTraction );
 
@@ -748,12 +746,11 @@ void SolidMechanicsEmbeddedFractures::updateJump( DofManager const & dofManager,
     real64 maxTraction = finiteElement::
                            regionBasedKernelApplication
                          < parallelDevicePolicy< >,
-                           constitutive::SolidBase,
-                           CellElementSubRegion >( mesh,
-                                                   regionNames,
-                                                   getDiscretizationName(),
-                                                   SolidMechanicsLagrangianFEM::viewKeyStruct::solidMaterialNamesString(),
-                                                   kernelFactory );
+                           SolidMechanicsKernelsDispatchTypeList >( mesh,
+                                                                    regionNames,
+                                                                    getDiscretizationName(),
+                                                                    SolidMechanicsLagrangianFEM::viewKeyStruct::solidMaterialNamesString(),
+                                                                    kernelFactory );
 
     GEOS_UNUSED_VAR( maxTraction );
   } );

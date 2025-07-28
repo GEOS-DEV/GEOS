@@ -21,7 +21,6 @@
 
 #include "fieldSpecification/SourceFluxBoundaryCondition.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
-#include "LvArray/src/tensorOps.hpp"
 #include "physicsSolvers/fluidFlow/LogLevelsInfo.hpp"
 
 namespace geos
@@ -93,7 +92,7 @@ SourceFluxStatsAggregator::registerWrappedStats( Group & group,
 
     string const logMassColumn = GEOS_FMT( "Produced mass [{}]", massUnit );
     string const logRateColumn = GEOS_FMT( "Production rate [{}]", massUnit );
-    TableLayout const statsLogLayout( "", { "region", logMassColumn, logRateColumn, "Element Count" } );
+    TableLayout statsLogLayout( "", { "region", logMassColumn, logRateColumn, "Element Count" } );
 
     m_logLayout = statsLogLayout;
 

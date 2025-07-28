@@ -75,7 +75,8 @@ public:
   /**
    * @brief default destructor
    */
-  virtual ~SinglePhaseBase() override = default;
+  virtual ~SinglePhaseBase() override
+  {}
 
   virtual void registerDataOnMesh( Group & meshBodies ) override;
 
@@ -361,6 +362,8 @@ public:
                                             CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                             arrayView1d< real64 > const & localRhs ) const;
 
+  void applyDeltaVolume( ElementSubRegionBase & subRegion ) const;
+
 protected:
 
   /**
@@ -374,42 +377,14 @@ protected:
    */
   void initializeAquiferBC() const;
 
-  virtual void setConstitutiveNamesCallSuper( ElementSubRegionBase & subRegion ) const override;
-
   /**
    * @brief Utility function to save the converged state
    * @param[in] subRegion the element subRegion
    */
   virtual void saveConvergedState( ElementSubRegionBase & subRegion ) const override;
 
-  /**
-   * @brief Structure holding views into fluid properties used by the base solver.
-   */
-  struct FluidPropViews
-  {
-    arrayView2d< real64 const, constitutive::singlefluid::USD_FLUID > const dens;             ///< density
-    arrayView3d< real64 const, constitutive::singlefluid::USD_FLUID_DER > const dDens;             ///< density derivatives
-    arrayView2d< real64 const, constitutive::singlefluid::USD_FLUID > const visc;             ///< viscosity
-    arrayView3d< real64 const, constitutive::singlefluid::USD_FLUID_DER > const dVisc;             ///< viscosity derivatives
-    real64 const defaultDensity;                     ///< default density to use for new elements
-    real64 const defaultViscosity;                    ///< default vi to use for new elements
-  };
-
-
-  /**
-   * @brief Extract properties from a fluid.
-   * @param fluid base reference to the fluid object
-   * @return structure with property views
-   *
-   * This function enables derived solvers to substitute SingleFluidBase for a different,
-   * unrelated fluid class, and customize property extraction. For example, it is used by
-   * SinglePhaseProppantBase to allow using  constitutive::SlurryFluidBase, which does not inherit from
-   * SingleFluidBase currently (but this design may need to be revised).
-   */
-  virtual FluidPropViews getFluidProperties( constitutive::ConstitutiveBase const & fluid ) const;
-
-
 private:
+
   virtual void setConstitutiveNames( ElementSubRegionBase & subRegion ) const override;
 
 };

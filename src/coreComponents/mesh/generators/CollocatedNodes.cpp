@@ -24,25 +24,27 @@ namespace geos::vtk
 {
 
 CollocatedNodes::CollocatedNodes( string const & faceBlockName,
-                                  vtkSmartPointer< vtkDataSet > faceMesh,
-                                  bool isParallel )
+                                  vtkSmartPointer< vtkDataSet > faceMesh )
 {
   // The vtk field to the collocated nodes for fractures.
   string const COLLOCATED_NODES = "collocated_nodes";
 
   vtkIdTypeArray const * collocatedNodes = vtkIdTypeArray::FastDownCast( faceMesh->GetPointData()->GetArray( COLLOCATED_NODES.c_str() ) );
-  if( isParallel )
+
+  // Depending on the parallel split, the vtk face mesh may be empty on a rank.
+  // In that case, vtk will not provide any field for the emtpy mesh.
+  // Therefore, not finding the duplicated nodes field on a rank cannot be interpreted as a globally missing field.
+  // Converting the address into an integer and exchanging it through the MPI ranks let us find out
+  // if the field is globally missing or not.
+  std::uintptr_t const address = MpiWrapper::max( reinterpret_cast< std::uintptr_t >(collocatedNodes) );
+  if( address == 0 )
   {
-    // Depending on the parallel split, the vtk face mesh may be empty on a rank.
-    // In that case, vtk will not provide any field for the emtpy mesh.
-    // Therefore, not finding the duplicated nodes field on a rank cannot be interpreted as a globally missing field.
-    // Converting the address into an integer and exchanging it through the MPI ranks let us find out
-    // if the field is globally missing or not.
-    std::uintptr_t const address = MpiWrapper::max( reinterpret_cast< std::uintptr_t >(collocatedNodes) );
-    if( address == 0 )
+    GEOS_LOG_RANK_0( "Available point data fields in '" << faceBlockName << "':" );
+    for( int i = 0; i < faceMesh->GetPointData()->GetNumberOfArrays(); ++i )
     {
-      GEOS_ERROR_IF( collocatedNodes == nullptr, "Could not find valid field \"" << COLLOCATED_NODES << "\" for fracture \"" << faceBlockName << "\"." );
+      GEOS_LOG_RANK_0( " - " << faceMesh->GetPointData()->GetArrayName( i ) << " of type '" << faceMesh->GetPointData()->GetArray( i )->GetDataTypeAsString() << "'" );
     }
+    GEOS_ERROR( "Could not find valid field \"" << COLLOCATED_NODES << "\" for fracture \"" << faceBlockName << "\"." );
   }
 
   if( collocatedNodes )

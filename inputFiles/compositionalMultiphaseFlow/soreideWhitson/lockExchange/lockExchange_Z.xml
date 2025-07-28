@@ -1,0 +1,25 @@
+<?xml version="1.0" ?>
+<Problem>
+	<Solvers>
+		<CompositionalMultiphaseFVM name="FLOW.SOLVER"
+		                            logLevel="2"
+		                            initialDt="300"
+		                            discretization="FLUID.TPFA"
+		                            targetRegions="{ RESERVOIR }"
+		                            temperature="349.15"
+		                            useMass="0"
+		                            formulationType="OverallComposition">
+			<NonlinearSolverParameters newtonTol="1.0e-3"
+			                           lineSearchAction="None"
+			                           maxTimeStepCuts="100"
+			                           maxSubSteps="1000"
+			                           newtonMaxIter="10"
+				                   minTimeStepIncreaseInterval="0"
+			                           logLevel="1"/>
+			<LinearSolverParameters directParallel="0"/>
+		</CompositionalMultiphaseFVM>
+	</Solvers>
+	<Included>
+		<File name="lockExchange_base.xml"/>
+	</Included>
+</Problem>
