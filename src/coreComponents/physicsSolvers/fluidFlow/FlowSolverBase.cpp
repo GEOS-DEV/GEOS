@@ -365,16 +365,15 @@ void FlowSolverBase::checkDiscretizationName() const
 
   string discretizationMethods;
 
-  FiniteVolumeManager const * const finiteVolumeManager = numericalMethodManager.getFiniteVolumeManagerPtr();
-  if( finiteVolumeManager )
+  FiniteVolumeManager const & finiteVolumeManager = numericalMethodManager.getFiniteVolumeManager();
   {
-    finiteVolumeManager->forSubGroups( [&]( Group const & fv )
+    finiteVolumeManager.forSubGroups( [&]( Group const & fv )
     {
       discretizationMethods = fv.getName();
     } );
   }
 
-  if( !finiteVolumeManager->hasGroup< FluxApproximationBase >( m_discretizationName ) )
+  if( !finiteVolumeManager.hasGroup< FluxApproximationBase >( m_discretizationName ) )
   {
     if( !discretizationMethods.empty())
     {

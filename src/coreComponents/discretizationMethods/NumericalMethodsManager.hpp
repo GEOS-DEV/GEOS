@@ -72,42 +72,32 @@ public:
   };
 
   /**
-   * @brief @return  Return const pointer to const FiniteElementDiscretizationManager m_finiteElementDiscretizationManager
-   */
-  FiniteElementDiscretizationManager const * getFiniteElementDiscretizationManagerPtr() const { return m_finiteElementDiscretizationManager.get(); }
-
-  /**
    * @brief @return Returns reference to const FiniteElementDiscretizationManager m_finiteElementDiscretizationManager.
    */
-  FiniteElementDiscretizationManager const & getFiniteElementDiscretizationManager() const { return *m_finiteElementDiscretizationManager; }
+  FiniteElementDiscretizationManager const & getFiniteElementDiscretizationManager() const { return m_finiteElementDiscretizationManager; }
 
   /**
    * @brief @return Returns reference to FiniteElementDiscretizationManager m_finiteElementDiscretizationManager.
    */
-  FiniteElementDiscretizationManager & getFiniteElementDiscretizationManager() { return *m_finiteElementDiscretizationManager; }
-
-  /**
-   * @brief @return  Return const pointer to const FiniteVolumeManager m_finiteVolumeManager
-   */
-  FiniteVolumeManager const * getFiniteVolumeManagerPtr()  const { return m_finiteVolumeManager.get(); }
+  FiniteElementDiscretizationManager & getFiniteElementDiscretizationManager() { return m_finiteElementDiscretizationManager; }
 
   /**
    * @brief @return Returns reference to FiniteVolumeManager m_finiteVolumeManager.
    */
-  FiniteVolumeManager & getFiniteVolumeManager()       { return *m_finiteVolumeManager; }
+  FiniteVolumeManager & getFiniteVolumeManager()       { return m_finiteVolumeManager; }
 
   /**
    * @brief @return Returns reference to const FiniteVolumeManager m_finiteVolumeManager.
    */
-  FiniteVolumeManager const & getFiniteVolumeManager() const { return *m_finiteVolumeManager; }
+  FiniteVolumeManager const & getFiniteVolumeManager() const { return m_finiteVolumeManager; }
 
 private:
 
   /// Contains the finite element discretizations
-  std::unique_ptr< FiniteElementDiscretizationManager > m_finiteElementDiscretizationManager{};
+  FiniteElementDiscretizationManager m_finiteElementDiscretizationManager;
 
   /// Contains the finite volume discretizations.
-  std::unique_ptr< FiniteVolumeManager > m_finiteVolumeManager{};
+  FiniteVolumeManager m_finiteVolumeManager;
 
 };
 
