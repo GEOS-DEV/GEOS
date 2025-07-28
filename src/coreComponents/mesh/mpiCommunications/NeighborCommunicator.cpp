@@ -34,8 +34,8 @@ NeighborCommunicator::NeighborCommunicator( int rank ):
   m_neighborRank( rank ),
   m_sendBufferSize(),
   m_receiveBufferSize(),
-  m_sendBuffer( maxComm, 0 ),
-  m_receiveBuffer( maxComm, 0 )
+  m_sendBuffer( maxComm ),
+  m_receiveBuffer( maxComm )
 {}
 
 void NeighborCommunicator::mpiISendReceive( buffer_unit_type const * const sendBuffer,
