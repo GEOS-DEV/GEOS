@@ -350,18 +350,12 @@ CompositionalMultiphaseFluidUpdates< FLASH, PHASE1, PHASE2, PHASE3 >::compute(
   if( m_useMass )
   {
     real64 phaseMolecularWeight[maxNumPhase]{};
-    real64 dPhaseMolecularWeight[maxNumPhase][maxNumComp+2]{};
+    real64 dPhaseMolecularWeight[maxNumPhase][maxNumDof]{};
 
     arrayView1d< real64 const > const & componentMolarWeight = m_componentProperties.m_componentMolarWeight;
 
     for( integer ip = 0; ip < numPhase; ++ip )
     {
-      phaseMolecularWeight[ip] = 0.0;
-      for( integer kc = 0; kc < numDof; ++kc )
-      {
-        dPhaseMolecularWeight[ip][kc] = 0.0;
-      }
-
       auto const & phaseComposition = phaseCompFrac.value[ip].toSliceConst();
       auto const & dPhaseComposition = phaseCompFrac.derivs[ip].toSliceConst();
 
@@ -374,15 +368,26 @@ CompositionalMultiphaseFluidUpdates< FLASH, PHASE1, PHASE2, PHASE3 >::compute(
         }
       }
     }
+
     convertToMassFractions( dCompMoleFrac_dCompMassFrac,
                             phaseMolecularWeight,
                             dPhaseMolecularWeight,
                             phaseFrac,
                             phaseCompFrac,
-                            phaseDens.derivs,
+                            phaseMassDensity.derivs,
                             phaseVisc.derivs,
                             phaseEnthalpy.derivs,
                             phaseInternalEnergy.derivs );
+
+    // Molar density equals mass density
+    for( integer ip = 0; ip < numPhase; ++ip )
+    {
+      phaseDens.value[ip] = phaseMassDensity.value[ip];
+      for( integer idof = 0; idof < numDof; ++idof )
+      {
+        phaseDens.derivs( ip, idof ) = phaseMassDensity.derivs( ip, idof );
+      }
+    }
   }
 
   // 7. Compute total fluid mass/molar density and derivatives

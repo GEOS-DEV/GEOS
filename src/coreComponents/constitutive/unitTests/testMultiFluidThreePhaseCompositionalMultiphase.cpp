@@ -19,6 +19,7 @@
 
 #include "FluidModelTest.hpp"
 #include "constitutive/fluid/multifluid/compositional/CompositionalMultiphaseFluid.hpp"
+#include "constitutive/fluid/multifluid/compositional/parameters/ImmiscibleWaterParameters.hpp"
 #include "common/initializeEnvironment.hpp"
 
 using namespace geos::constitutive;
@@ -29,44 +30,23 @@ namespace geos
 namespace testing
 {
 
-enum class VISCOSITY_TYPE : int { CONSTANT, LBC };
-ENUM_STRINGS( VISCOSITY_TYPE, "Constant", "LohrenzBrayClark" );
-
-template< VISCOSITY_TYPE VISCOSITY >
-struct Viscosity {};
-
-template<>
-struct Viscosity< VISCOSITY_TYPE::CONSTANT >
-{
-  using FluidType = CompositionalTwoPhaseConstantViscosity;
-};
-template<>
-struct Viscosity< VISCOSITY_TYPE::LBC >
-{
-  using FluidType = CompositionalTwoPhaseLohrenzBrayClarkViscosity;
-};
-
-template< typename FluidModel, integer NUM_COMP >
+template< integer NUM_COMP >
 struct FluidData
 {};
 
 template< typename TEST_TYPE >
-class MultiFluidCompositionalMultiphaseTestFixture : public FluidModelTest<
-    typename Viscosity< std::tuple_element_t< 1, TEST_TYPE >::value >::FluidType,
-    std::tuple_element_t< 2, TEST_TYPE >::value >
+class MultiFluidCompositionalMultiphaseTestFixture : public FluidModelTest< CompositionalThreePhaseLohrenzBrayClarkViscosity, std::tuple_element_t< 1, TEST_TYPE >::value, 3 >
 {
 public:
   static constexpr EquationOfStateType EquationOfState = std::tuple_element_t< 0, TEST_TYPE >::value;
-  static constexpr VISCOSITY_TYPE ViscosityModel = std::tuple_element_t< 1, TEST_TYPE >::value;
-  using CompositionalMultiphaseFluid = typename Viscosity< ViscosityModel >::FluidType;
-  using Base = FluidModelTest< CompositionalMultiphaseFluid, std::tuple_element_t< 2, TEST_TYPE >::value >;
+  using Base = FluidModelTest< CompositionalThreePhaseLohrenzBrayClarkViscosity, std::tuple_element_t< 1, TEST_TYPE >::value, 3 >;
   static constexpr real64 relTol = 1.0e-4;
   static constexpr real64 absTol = 1.0e-3;
 
 public:
   MultiFluidCompositionalMultiphaseTestFixture()
   {
-    Base::createFluid( getFluidName(), []( CompositionalMultiphaseFluid & fluid ){
+    Base::createFluid( getFluidName(), []( CompositionalThreePhaseLohrenzBrayClarkViscosity & fluid ){
       fillPhysicalProperties( fluid );
     } );
   }
@@ -75,12 +55,12 @@ public:
 
   void testNumericalDerivatives( const bool useMass )
   {
-    CompositionalMultiphaseFluid * fluid = this->getFluid( this->getFluidName() );
+    CompositionalThreePhaseLohrenzBrayClarkViscosity * fluid = this->getFluid( this->getFluidName() );
 
     fluid->setMassFlag( useMass );
 
     array2d< real64 > samples;
-    FluidData< CompositionalMultiphaseFluid, Base::numComp >::getSamples( samples );
+    FluidData< Base::numComp >::getSamples( samples );
     integer const sampleCount = samples.size( 0 );
     Feed< Base::numComp > sample;
 
@@ -109,16 +89,15 @@ public:
   static string getFluidName();
 
 private:
-  static void fillPhysicalProperties( CompositionalMultiphaseFluid & fluid );
+  static void fillPhysicalProperties( CompositionalThreePhaseLohrenzBrayClarkViscosity & fluid );
 };
 
 template< typename TEST_TYPE >
 string MultiFluidCompositionalMultiphaseTestFixture< TEST_TYPE >::getFluidName()
 {
-  return GEOS_FMT( "fluid_{}_{}_{}",
+  return GEOS_FMT( "fluid_{}_{}",
                    Base::numComp,
-                   EnumStrings< EquationOfStateType >::toString( EquationOfState ),
-                   EnumStrings< VISCOSITY_TYPE >::toString( ViscosityModel ) );
+                   EnumStrings< EquationOfStateType >::toString( EquationOfState ) );
 }
 
 template< integer NUM_COMP >
@@ -146,27 +125,26 @@ static void populateArray( arraySlice1d< real64 > array, std::array< real64 cons
   }
 }
 
-template< typename FluidModel >
-struct FluidData< FluidModel, 4 >
+template<>
+struct FluidData< 4 >
 {
   static void fillProperties( dataRepository::Group & fluid )
   {
-    using Keys = typename FluidModel::viewKeyStruct;
+    using Keys = typename CompositionalThreePhaseLohrenzBrayClarkViscosity::viewKeyStruct;
+
+    auto testFluid = TestFluid< 4 >::create( {Fluid::N2, Fluid::CO2, Fluid::H2O, Fluid::CH4} );
 
     string_array & componentNames = fluid.getReference< string_array >( Keys::componentNamesString() );
-    componentNames = {"N2", "C5", "C20", "H20"};
+    componentNames = testFluid->componentNames;
 
     array1d< real64 > & molarWeight = fluid.getReference< array1d< real64 > >( Keys::componentMolarWeightString() );
-    TestFluid< 4 >::createArray( molarWeight, Feed< 4 >{28e-3, 134e-3, 275e-3, 18e-3} );
-
+    TestFluid< 4 >::createArray( molarWeight, testFluid->molecularWeight );
     array1d< real64 > & criticalPressure = fluid.getReference< array1d< real64 > >( Keys::componentCriticalPressureString() );
-    TestFluid< 4 >::createArray( criticalPressure, Feed< 4 >{34e5, 33.68e5, 14.6e5, 220.5e5} );
+    TestFluid< 4 >::createArray( criticalPressure, testFluid->criticalPressure );
     array1d< real64 > & criticalTemperature = fluid.getReference< array1d< real64 > >( Keys::componentCriticalTemperatureString() );
-    TestFluid< 4 >::createArray( criticalTemperature, Feed< 4 >{126.2, 469.7, 782.0, 647.0} );
+    TestFluid< 4 >::createArray( criticalTemperature, testFluid->criticalTemperature );
     array1d< real64 > & acentricFactor = fluid.getReference< array1d< real64 > >( Keys::componentAcentricFactorString() );
-    TestFluid< 4 >::createArray( acentricFactor, Feed< 4 >{0.04, 0.2510, 0.816, 0.344} );
-    array2d< real64 > & binaryCoeff = fluid.getReference< array2d< real64 > >( Keys::componentBinaryCoeffString() );
-    fillBinaryCoeffs< 4 >( binaryCoeff, {0.0, 0.1, 0.0, 0.0, 0.0, 0.0} );
+    TestFluid< 4 >::createArray( acentricFactor, testFluid->acentricFactor );
   }
 
   static void getSamples( array2d< real64 > & samples )
@@ -178,68 +156,38 @@ struct FluidData< FluidModel, 4 >
   }
 };
 
-template< typename FluidModel >
-struct FluidData< FluidModel, 5 >
-{
-  static void fillProperties( dataRepository::Group & fluid )
-  {
-    using Keys = typename FluidModel::viewKeyStruct;
-
-    string_array & componentNames = fluid.getReference< string_array >( Keys::componentNamesString() );
-    componentNames = {"CO2", "N2", "C1", "C2", "C4"};
-
-    array1d< real64 > & molarWeight = fluid.getReference< array1d< real64 > >( Keys::componentMolarWeightString() );
-    TestFluid< 5 >::createArray( molarWeight, Feed< 5 >{44.0098e-3, 28.0135e-3, 16.0428e-3, 30.0700e-3, 82.4191e-3} );
-
-    array1d< real64 > & criticalPressure = fluid.getReference< array1d< real64 > >( Keys::componentCriticalPressureString() );
-    TestFluid< 5 >::createArray( criticalPressure, Feed< 5 >{73.77300e5, 33.95800e5, 45.99200e5, 48.71800e5, 33.20710e5} );
-    array1d< real64 > & criticalTemperature = fluid.getReference< array1d< real64 > >( Keys::componentCriticalTemperatureString() );
-    TestFluid< 5 >::createArray( criticalTemperature, Feed< 5 >{304.1280, 126.1920, 190.5640, 305.3300, 504.2160} );
-    array1d< real64 > & acentricFactor = fluid.getReference< array1d< real64 > >( Keys::componentAcentricFactorString() );
-    TestFluid< 5 >::createArray( acentricFactor, Feed< 5 >{0.223000, 0.037200, 0.010400, 0.099100, 0.250274} );
-    array1d< real64 > & volumeShift = fluid.getReference< array1d< real64 > >( Keys::componentVolumeShiftString() );
-    TestFluid< 5 >::createArray( volumeShift, Feed< 5 >{1.845465e-01, -1.283880e-01, 9.225800e-02, 6.458060e-02, 0.000000e+00} );
-    array2d< real64 > & binaryCoeff = fluid.getReference< array2d< real64 > >( Keys::componentBinaryCoeffString() );
-    fillBinaryCoeffs< 5 >( binaryCoeff, {0.0, 0.1, 0.03, 0.139, 0.032, 0.0, 0.12, 0.03, 0.0, 0.0} );
-  }
-
-  static void getSamples( array2d< real64 > & samples )
-  {
-    samples.resize( 1, 5 );
-    populateArray< 5 >( samples[0], {0.050, 0.150, 0.550, 0.150, 0.100} );
-  }
-};
-
 template< typename TEST_TYPE >
-void MultiFluidCompositionalMultiphaseTestFixture< TEST_TYPE >::fillPhysicalProperties( CompositionalMultiphaseFluid & fluid )
+void MultiFluidCompositionalMultiphaseTestFixture< TEST_TYPE >::fillPhysicalProperties( CompositionalThreePhaseLohrenzBrayClarkViscosity & fluid )
 {
   string_array & phaseNames = fluid.template getReference< string_array >( MultiFluidBase::viewKeyStruct::phaseNamesString() );
-  phaseNames = {"oil", "gas"};
+  phaseNames = {"oil", "gas", "water"};
 
   string const eosName = EnumStrings< EquationOfStateType >::toString( EquationOfState );
   string_array & equationOfState = fluid.template getReference< string_array >( EquationOfState::viewKeyStruct::equationsOfStateString() );
-  equationOfState = {eosName, eosName};
+  equationOfState = {eosName, eosName, eosName};
 
   dataRepository::Group & group = fluid;
-  FluidData< CompositionalMultiphaseFluid, Base::numComp >::fillProperties( group );
+  FluidData< Base::numComp >::fillProperties( group );
+
+  // Water properties
+  using WaterKeys = typename ImmiscibleWaterParameters::viewKeyStruct;
+  real64 & waterDensity = fluid.template getReference< real64 >( WaterKeys::waterDensityString() );
+  waterDensity = 1020.0;
+  real64 & waterCompressibility = fluid.template getReference< real64 >( WaterKeys::waterCompressibilityString() );
+  waterCompressibility = 4.4e-10;
+  real64 & waterViscosity = fluid.template getReference< real64 >( WaterKeys::waterViscosityString() );
+  waterViscosity = 5.4650e-04;
 }
 
-template< EquationOfStateType EOS, VISCOSITY_TYPE VISCOSITY, integer NUM_COMP >
+template< EquationOfStateType EOS, integer NUM_COMP >
 using TestType = std::tuple<
   std::integral_constant< EquationOfStateType, EOS >,
-  std::integral_constant< VISCOSITY_TYPE, VISCOSITY >,
   std::integral_constant< integer, NUM_COMP >
   >;
 
 using TestTypes = ::testing::Types<
-  TestType< EquationOfStateType::PengRobinson, VISCOSITY_TYPE::CONSTANT, 4 >,
-  TestType< EquationOfStateType::PengRobinson, VISCOSITY_TYPE::CONSTANT, 5 >,
-  TestType< EquationOfStateType::PengRobinson, VISCOSITY_TYPE::LBC, 4 >,
-  TestType< EquationOfStateType::PengRobinson, VISCOSITY_TYPE::LBC, 5 >,
-  TestType< EquationOfStateType::SoaveRedlichKwong, VISCOSITY_TYPE::CONSTANT, 4 >,
-  TestType< EquationOfStateType::SoaveRedlichKwong, VISCOSITY_TYPE::CONSTANT, 5 >,
-  TestType< EquationOfStateType::SoaveRedlichKwong, VISCOSITY_TYPE::LBC, 4 >,
-  TestType< EquationOfStateType::SoaveRedlichKwong, VISCOSITY_TYPE::LBC, 5 >
+  TestType< EquationOfStateType::PengRobinson, 4 >,
+  TestType< EquationOfStateType::SoaveRedlichKwong, 4 >
   >;
 
 class NameGenerator
