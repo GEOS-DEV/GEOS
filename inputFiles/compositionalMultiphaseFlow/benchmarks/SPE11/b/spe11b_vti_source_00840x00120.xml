@@ -16,7 +16,7 @@
     </VTKMesh>
   </Mesh>
 
-<!-- SPHINX_GEOM-->
+<!-- SPHINX_GEOM -->
   <Geometry>
     <Box
       name="top"
@@ -35,8 +35,9 @@
        xMin="{ 5099.99, -0.01, 699.99 }"
        xMax="{ 5110.01,  1.01, 710.01 }" />
   </Geometry>
-  <!-- SPHINX_GEOM_END-->
+  <!-- SPHINX_GEOM_END -->
 
+  <!-- SPHINX_BUFFER_FN -->
   <Functions>
     <TableFunction
       name="bufferVolume"
@@ -45,6 +46,7 @@
       values="{ 500100 }"
       interpolation="lower" />
   </Functions>
+  <!-- SPHINX_BUFFER_FN_END -->
 
 
    <!-- SPHINX_EVENTS -->

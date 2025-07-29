@@ -405,7 +405,7 @@
       fieldName="thermalCond_rockThermalConductivity"
       scale="2" />
 
-<!-- SPHINX_BUFFER_FIELDS -->
+ <!-- SPHINX_BUFFER_FIELDS -->
     <FieldSpecification
       name="vol12"
       initialCondition="1"

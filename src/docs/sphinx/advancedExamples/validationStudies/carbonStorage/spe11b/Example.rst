@@ -39,6 +39,8 @@ As its precursor it is composed of 7 facies with different properties.
     :width: 500
     :figclass: align-center
 
+    Schematic representation of SPE11B case and its reporting boxes. Image extracted from `arxiv version <https://arxiv.org/abs/2507.15861>`__
+
 Here blue, red and orange boxes are materialization of the prescribed reporting boxes, respectively denoted box A , B and C in the description.
 They are places for observing first anticline accumulation, top anticlines accumulation through heterogeneous structure's dripping and
 convective mixing finger structures.
@@ -74,7 +76,7 @@ It is then followed by a 950 years of migration, dissolution and convection.
 As we can see in the snippet above, `SourceFlux` is the modeling choice for incoming fluxes (rather than wellbores). It goes with a
 `FieldSpecification` setting the temperature at the same place to mimic imposed injected *CO2* temperature. This includes to object
 left to be defined a set ``thermalSources1`` (respectively ``thermalSources2``) and a `Function` that can vary flux over time. These will
-be discussed in the :ref:`BCSection`.
+be discussed below.
 
 
 ------------------------------------------------------------------------
@@ -218,7 +220,7 @@ Then we need an `HydrostaticEquilibrium` to be computed from the inital pressure
 
 Then, the only thing left to fully set the initialization is for the simulation to start at *-1000 years* as it is done in the `Events`
 
-.. literalinclude:: ../../../../../../../inputFiles/compositionalMultiphaseFlow/benchmarks/SPE11/b/spe11b_vti_source_base.xml
+.. literalinclude:: ../../../../../../../inputFiles/compositionalMultiphaseFlow/benchmarks/SPE11/b/spe11b_vti_source_00840x00120.xml
     :language: xml
     :start-after: <!-- SPHINX_EVENTS -->
     :end-before: <!-- SPHINX_EVENTS_END -->
@@ -228,7 +230,7 @@ Then, the only thing left to fully set the initialization is for the simulation 
     the maximal dt from experience in these time range is quite different. ``solverApplication1`` is then ensuring stability as the injection starts.
 
 We are then left with the imposition of domain boundary conditions. The top and bottom temperatures are imposed with the help of the subfile
-included as seen in :ref:`KRPCSection`. Content of the inclusion is FieldSpecification on geometrical sets defined earlier in this section.
+included as seen below. Content of the inclusion is FieldSpecification on geometrical sets defined earlier in this section.
 
 .. literalinclude:: ../../../../../../../inputFiles/compositionalMultiphaseFlow/benchmarks/SPE11/b/include/dirichlet_boundary_vti.xml
     :language: xml
@@ -266,34 +268,44 @@ Hereafter are reported respectively, temperature, saturation and dissolved CO2 f
 
 .. _spe11b_T_500:
 .. figure:: ./pictures/spe11b_thermal_T.0100.png
-    :align: left
-    :width: 250
-    :figclass: align-left
+    :align: center
+    :figwidth: 45%
+    :figclass: align-center
+
+    Thermal state after 500 years
+
 .. _spe11b_T_1000:
 .. figure:: ./pictures/spe11b_thermal_T.0200.png
-    :align: right
-    :width: 250
-    :figclass: align-right
-.. _spe11b_s_500:
-.. figure:: ./pictures/spe11b_thermal_sat.0100.png
-    :align: left
-    :width: 250
-    :figclass: align-left
-.. _spe11b_s_1000:
-.. figure:: ./pictures/spe11b_thermal_sat.0200.png
-    :align: right
-    :width: 250
-    :figclass: align-right
-.. _spe11b_x_500:
-.. figure:: ./pictures/spe11b_thermal_xcp.0100.png
-    :align: left
-    :width: 250
-    :figclass: align-left
-.. _spe11b_x_1000:
-.. figure:: ./pictures/spe11b_thermal_xcp.0200.png
-    :align: right
-    :width: 250
-    :figclass: align-right
+    :align: center
+    :figwidth: 45%
+    :figclass: align-center
+
+    Thermal state after 1000 years
+
+.. .. _spe11b_s_500:
+.. .. figure:: ./pictures/spe11b_thermal_sat.0100.png
+..     :align: left
+..     :width: 250
+..     :figclass: align-left
+..
+.. .. _spe11b_s_1000:
+.. .. figure:: ./pictures/spe11b_thermal_sat.0200.png
+..     :align: right
+..     :width: 250
+..     :figclass: align-right
+..
+.. .. _spe11b_x_500:
+.. .. figure:: ./pictures/spe11b_thermal_xcp.0100.png
+..     :align: left
+..     :width: 250
+..     :figclass: align-left
+..
+.. .. _spe11b_x_1000:
+.. .. figure:: ./pictures/spe11b_thermal_xcp.0200.png
+..     :align: right
+..     :width: 250
+..     :figclass: align-right
+
 
 Firstly, saturation is showing that, for this mesh resolution, almost all gaseous CO2 is trapped then dissolved after 1000 years
 of the injection scenario. Then the reporting of the dissolved fraction clearly shows evidence of on-set of convective mixing
