@@ -276,6 +276,9 @@ protected:
   integer m_allowNegativePressure;
 
 private:
+
+  virtual void setConstitutiveNames( ElementSubRegionBase & subRegion ) const override;
+
   /**
    * @brief Initialize all the primary and secondary variables in all the wells
    * @param domain the domain containing the well manager to access individual wells

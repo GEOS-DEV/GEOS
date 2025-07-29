@@ -6,17 +6,29 @@ This file is designed to track changes to the integrated test baselines.
 Any developer who updates the baseline ID in the .integrated_tests.yaml file is expected to create an entry in this file with the pull request number, date, and their justification for rebaselining.
 These notes should be in reverse-chronological order, and use the following time format: (YYYY-MM-DD).
 
-PR #3621 (2025-07-10) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3621-12071-1b6d409.tar.gz>
+PR #3740 (2025-07-25) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3740-12360-2177cb4.tar.gz>
 =====================
-Add option to use reservoir average press in well volume rate constraint .  Baselines updated due to schema changes.
+Add missing hydraulic aperture update for sequential poromechanics with conforming fractures.
+
+PR #3732 (2025-07-18) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3732-12212-a92d996.tar.gz>
+=====================
+Add `numTimestepsSinceLastDtCut` to restart.
+
+PR #3730 (2025-07-18) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3730-12201-ebfc7cf.tar.gz>
+=====================
+Add 3 tests for compositional Soreide-Whitson EOS.
+
+PR #3659 (2025-07-17) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3517-12189-54b7075.tar.gz>
+=====================
+Fields and constitutives refactor.
 
 PR #3659 (2025-07-08) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3659-12039-3662bde.tar.gz>
 =====================
-Add thermal to single phase well .  Baselines updated due to schema changes.
+Add thermal to single-phase well.  Baselines updated due to schema changes.
 
 PR #3635 (2025-06-11) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3635-11765-c0e7e87.tar.gz>
 =====================
-Add new wave solver (elastic anisotropic TTI)
+Add new wave solver (elastic anisotropic TTI).
 
 PR #3679 (2025-05-27) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3679-11653-e066fbb.tar.gz>
 =====================
