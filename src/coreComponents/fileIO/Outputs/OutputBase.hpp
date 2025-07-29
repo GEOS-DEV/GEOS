@@ -116,6 +116,7 @@ public:
   {
     static constexpr auto childDirectoryString = "childDirectory";
     static constexpr auto parallelThreadsString = "parallelThreads";
+
   } outputBaseViewKeys;
   /// @endcond
 

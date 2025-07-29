@@ -49,11 +49,11 @@ public:
   /// indicate if the containing solver does non-linear iterations (and so, produces iterations statistics)
   bool m_isIterativeSolver = true;
 
-  /// State of CSV output.
-  bool m_csvOutput = false;
-
-  /// State of log output.
+  /// State of log output. True when writeSolverStatistics is set to 1
   bool m_logOutput = false;
+
+  /// State of csv output. True when writeSolverStatistics is set to 2
+  bool m_csvOutput = false;
 
   /// Number of time steps
   integer m_numTimeSteps = 0;
@@ -243,7 +243,7 @@ public:
    */
   ConvergenceStatistics();
 
-  /// State of csv output.
+  /// State of csv output. True when writeSolverStatistics is set to 2
   bool m_csvOutput = false;
 
   /// The time at the beginning of the step
@@ -290,9 +290,6 @@ public:
 
   /// Maximum value for residual proppant.
   real64 m_residualProppant = std::numeric_limits< real64 >::quiet_NaN();
-
-  /// Maximum value for residual well.
-  real64 m_residualWell = std::numeric_limits< real64 >::quiet_NaN();
 
   /// Maximum value for residual damage.
   real64 m_residualDamage = std::numeric_limits< real64 >::quiet_NaN();
@@ -380,14 +377,17 @@ public:
    * @param writeConvergence Boolean for convergencce CSV output
    * @param writeIteration Boolean for iteration CSV output
    */
-  void makeDir( bool writeConvergence, bool writeIteration )
-  { if( writeConvergence || writeIteration ) makeDirsForPath( m_outputDir ); }
+  void makeDir( bool writeSolverIteration )
+  { if( writeSolverIteration ) makeDirsForPath( m_outputDir ); }
 
   /**
    * @brief Set the Residual Norms filename
    * @param solverName The solverName as a string_view.
    */
   void setOutputFilesName( string_view solverName );
+
+  string_view getDirectory() const
+  { return m_directoryName;}
 
   /// Contain iteration data given a time step
   IterationsStatistics m_iterationsStats;

@@ -713,7 +713,7 @@ public:
     static constexpr char const * writeSolvingConvergenceCSVFlagString() { return "writeSolvingConvergenceCSV"; }
 
     /// @return string for the writeLinearSystem wrapper
-    static constexpr char const * writeSolverIterationsCSVFlagString() { return "writeSolverIterationsCSV"; }
+    static constexpr char const * writeSolverStatisticsFlagString() { return "writeSolverStatistics"; }
 
     /// @return string for the numTimestepsSinceLastDtCut wrapper
     static constexpr char const * numTimestepsSinceLastDtCutString() { return "numTimestepsSinceLastDtCut"; }
@@ -1091,11 +1091,9 @@ protected:
   /// flag for debug output of matrix, rhs, and solution
   integer m_writeLinearSystem;
 
-  /// Output csv file containing informations about interations
-  integer m_writeSolverIterationsCSV;
-
-  /// Output csv file containing informations about convergence
-  integer m_writeSolvingConvergenceCSV;
+  /// When set to 1 output to log iterations information
+  /// When set to 2 additionnaly output csv file containing iterations informations 
+  integer m_writeSolverStatistics;
 
   /// Linear solver parameters
   LinearSolverParametersInput m_linearSolverParameters;

@@ -211,8 +211,10 @@ public:
     Base::postInputInitialization();
     wellSolver()->getIterationStats().setIterativeSolver( false );
 
-    Base::getIterationStats().setCSVOutput( Base::m_writeSolverIterationsCSV );
-    Base::getConvergenceStats().setCSVOutput( Base::m_writeSolvingConvergenceCSV );
+    geos::dataRepository::Wrapper< integer > &  tt = this->template getWrapper< integer >( Base::viewKeyStruct::writeSolverStatisticsFlagString());
+
+    Base::getIterationStats().setCSVOutput( tt.reference() > 2 );
+    Base::getConvergenceStats().setCSVOutput( tt.reference() > 2  );
 
     setMGRStrategy();
   }

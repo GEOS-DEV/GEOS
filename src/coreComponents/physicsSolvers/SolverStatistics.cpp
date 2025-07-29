@@ -242,12 +242,11 @@ ConvergenceStatistics::ConvergenceStatistics()
                                     "RFlow", "RBubbleDisp", "RFrac",
                                     "Rstick", "Rslip", "Ropen",
                                     "RSolid", "RContact", "RProppant",
-                                    "RWell", "RDamage", "RTotal", "R"} );
+                                    "RDamage", "RTotal", "R"} );
 }
 
 void ConvergenceStatistics::writeConvergenceStatsToTable()
 {
-
   if( !m_csvOutput )
     return;
 
@@ -272,7 +271,6 @@ void ConvergenceStatistics::writeConvergenceStatsToTable()
     { m_residualSolid, "RSolid" },
     { m_residualContact, "RContact" },
     { m_residualProppant, "RProppant" },
-    { m_residualWell, "RWell" },
     { m_residualDamage, "RDamage" },
     { m_totalResidual, "RTotal" },
     { m_residualNormT, "R" }

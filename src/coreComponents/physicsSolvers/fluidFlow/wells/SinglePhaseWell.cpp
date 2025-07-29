@@ -956,7 +956,7 @@ SinglePhaseWell::calculateResidualNorm( real64 const & time_n,
                                                             coupledSolverAttributePrefix(), resNorm ));
   }
 
-  getConvergenceStats().m_residualWell = resNorm;
+  getConvergenceStats().m_residualMass = resNorm;
 
   return resNorm;
 }

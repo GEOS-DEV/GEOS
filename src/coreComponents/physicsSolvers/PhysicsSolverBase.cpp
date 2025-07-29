@@ -97,18 +97,11 @@ PhysicsSolverBase::PhysicsSolverBase( string const & name,
     setInputFlag( InputFlags::FALSE ).
     setRestartFlags( RestartFlags::WRITE_AND_READ );
 
-  registerWrapper( viewKeyStruct::writeSolverIterationsCSVFlagString(), &m_writeSolverIterationsCSV ).
+  registerWrapper( viewKeyStruct::writeSolverStatisticsFlagString(), &m_writeSolverStatistics ).
     setApplyDefaultValue( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setRestartFlags( RestartFlags::NO_WRITE ).
-    setDescription( "When set to 1, output interations information to a csv" );
-
-  registerWrapper( viewKeyStruct::writeSolvingConvergenceCSVFlagString(), &m_writeSolvingConvergenceCSV ).
-    setApplyDefaultValue( 0 ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setRestartFlags( RestartFlags::NO_WRITE ).
-    setDescription( "When set to 1, output convergence information to a csv" );
-
+    setDescription( "When set to 1, output interations information to a csv\nWhen set to 2 output convergence information to a csv" );
 
   addLogLevel< logInfo::Fields >();
   addLogLevel< logInfo::LinearSolver >();
@@ -129,10 +122,14 @@ PhysicsSolverBase::PhysicsSolverBase( string const & name,
 
 void PhysicsSolverBase::postInputInitialization()
 {
-  m_solverStatistics.makeDir( m_writeSolverIterationsCSV, m_writeSolvingConvergenceCSV );
-  getIterationStats().setCSVOutput( m_writeSolverIterationsCSV );
-  getConvergenceStats().setCSVOutput( m_writeSolvingConvergenceCSV );
-  getIterationStats().setLogOutput( logInfo::Convergence::getMinLogLevel() >= 1 );
+  bool const solverStatsLogFlag = getWrapper< integer >( viewKeyStruct::writeSolverStatisticsFlagString()).reference() >= 1;
+  bool const solverStatsCSVFlag = getWrapper< integer >( viewKeyStruct::writeSolverStatisticsFlagString()).reference() >= 2;
+  std::cout << "solverStatsCSVFlag"<< solverStatsCSVFlag << std::endl;
+  m_solverStatistics.makeDir( solverStatsCSVFlag );
+
+  getIterationStats().setLogOutput( solverStatsLogFlag );
+  getIterationStats().setCSVOutput( solverStatsCSVFlag );
+  getConvergenceStats().setCSVOutput( solverStatsCSVFlag );
 }
 
 PhysicsSolverBase::~PhysicsSolverBase() = default;
@@ -1154,7 +1151,7 @@ bool PhysicsSolverBase::solveNonlinearSystem( real64 const & time_n,
 
     lastResidual = residualNorm;
   }
-  if( m_writeSolverIterationsCSV )
+  if( getWrapper< integer >( viewKeyStruct::writeSolverStatisticsFlagString()).reference() >= 1 )
   {
     getIterationStats().writeIterationStatsToTable();
     getConvergenceStats().writeConvergenceStatsToTable();
@@ -1195,15 +1192,8 @@ void PhysicsSolverBase::updateSolverStatistics( real64 const & time_n, real64 co
 
 void PhysicsSolverBase::writeStatisticsToTable()
 {
-  if( m_writeSolvingConvergenceCSV )
-  {
     getConvergenceStats().writeConvergenceStatsToTable();
-  }
-  if( m_writeSolverIterationsCSV )
-  {
     getIterationStats().writeIterationStatsToTable();
-  }
-
 }
 
 void PhysicsSolverBase::setupSystem( DomainPartition & domain,
