@@ -54,7 +54,7 @@
 #cmakedefine GEOS_USE_CUDA_NVTOOLSEXT
 
 /// Sets the CUDA stack size in KB (CMake option CUDA_STACK_SIZE)
-#cmakedefine GEOS_USE_CUDA_STACK_SIZE @GEOS_USE_CUDA_STACK_SIZE@
+#cmakedefine GEOS_CUDA_STACK_SIZE @GEOS_CUDA_STACK_SIZE@
 
 /// Enables use of HIP (CMake option ENABLE_HIP)
 #cmakedefine GEOS_USE_HIP

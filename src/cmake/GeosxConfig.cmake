@@ -3,6 +3,7 @@ set( PREPROCESSOR_DEFINES BOUNDS_CHECK
                           CHAI
                           CUDA
                           CUDA_NVTOOLSEXT
+                          CUDA_STACK_SIZE
                           HIP
                           FMT_CONST_FORMATTER_WORKAROUND
                           FORTRAN_MANGLE_NO_UNDERSCORE
@@ -50,8 +51,8 @@ endforeach( )
 set( GEOS_USE_HYPRE_DEVICE "GEOS_USE_HYPRE_${ENABLE_HYPRE_DEVICE}" )
 message( STATUS "GEOS_USE_HYPRE_DEVICE = ${GEOS_USE_HYPRE_DEVICE}")
 
-if ( CUDA_STACK_SIZE )
-  set( GEOS_USE_CUDA_STACK_SIZE ${CUDA_STACK_SIZE} )
+if ( GEOS_USE_CUDA AND GEOS_USE_CUDA_STACK_SIZE AND CUDA_STACK_SIZE )
+  set( GEOS_CUDA_STACK_SIZE ${CUDA_STACK_SIZE} )
 endif()
 
 set( GEOS_CMAKE_BUILD_TYPE "\"${CMAKE_BUILD_TYPE}\"" )
