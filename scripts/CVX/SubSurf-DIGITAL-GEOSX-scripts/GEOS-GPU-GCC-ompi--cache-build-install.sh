@@ -66,7 +66,8 @@ else
     : ${comp:="gcc/11.4.0-rh8"} 
 fi
 
-: ${modules:="bison/3.8.2-gcc-13.2.0-io5a5qf flex/2.6.3-gcc-13.2.0-io5a5qf git/2.39.1 git/lfs_3.2.0 CMake_3.28.3 "}
+: ${modules:="bison/3.8.2-gcc-13.2.0-io5a5qf flex/2.6.3-gcc-13.2.0-io5a5qf git/2.39.1 git/lfs_3.2.0 CMake_4.0.3 "}
+# : ${modules:="bison/3.8.2-gcc-13.2.0-io5a5qf flex/2.6.3-gcc-13.2.0-io5a5qf git/2.39.1 git/lfs_3.2.0 CMake_3.28.3 "}
 
 export MODULES=" ${modules} ${mpi} ${comp} ${gpu_comp} "
 

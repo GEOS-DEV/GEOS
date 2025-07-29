@@ -56,10 +56,10 @@ export gitTPL gitGEOS
 
 : ${CUDA:="12"} 
 : ${mpi:="hpcx"}
-: ${comp:="gcc/13.2.0-rh8"}
-# : ${comp:="gcc/10.4.0"}
-: ${modules:="bison/3.8.2-gcc-13.2.0-io5a5qf flex/2.6.3-gcc-13.2.0-io5a5qf git/2.39.1 git/lfs_3.2.0 CMake_3.28.3 "}
-#: ${modules:=" bison/3.8.2-gcc-13.2.0-io5a5qf flex/2.6.3-gcc-13.2.0-io5a5qf /devl/geophys/util/modules/ModuleFiles/git/2.27.0 git-lfs_3.2.0 CMake_3.28.3 "}
+: ${comp:="gcc/14.2.0-rh8"}
+# : ${comp:="gcc/13.2.0-rh8"}
+: ${modules:="bison/3.8.2-gcc-13.2.0-io5a5qf flex/2.6.3-gcc-13.2.0-io5a5qf git/2.39.1 git/lfs_3.2.0 CMake_4.0.3 "}
+# : ${modules:="bison/3.8.2-gcc-13.2.0-io5a5qf flex/2.6.3-gcc-13.2.0-io5a5qf /devl/geophys/util/modules/ModuleFiles/git/2.27.0 git-lfs_3.2.0 CMake_3.28.3 "}
 # CMake_3.24.1
 
 export MODULES=" ${mpi} ${modules} ${comp} "
