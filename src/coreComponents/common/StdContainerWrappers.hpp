@@ -47,37 +47,36 @@ public:
   /// Type alias for the base class (i.e., std::vector)
   using Base = std::vector< T, Allocator >;
 
-  StdVectorWrapper( const Allocator & alloc = Allocator() ):
-    Base( alloc ){}
+  StdVectorWrapper() noexcept(noexcept(Allocator())): Base( Allocator()) {}
 
+  explicit StdVectorWrapper( const Allocator & alloc ) noexcept: Base( alloc ) {}
 
-  StdVectorWrapper( size_t count, const Allocator & alloc = Allocator()):
-    Base( count, alloc ){}
+  explicit StdVectorWrapper( size_t count, const Allocator & alloc = Allocator())
+    : Base( count, alloc ) {}
 
-  StdVectorWrapper( size_t count, const T & value,
-                    const Allocator & alloc = Allocator() ):
-    Base( count, value, alloc ){}
+  explicit StdVectorWrapper( size_t count, const T & value,
+                             const Allocator & alloc = Allocator())
+    : Base( count, value, alloc ) {}
 
   template< class InputIt >
   StdVectorWrapper( InputIt first, InputIt last,
-                    const Allocator & alloc = Allocator() ):
-    Base( first, last, alloc ){}
+                    const Allocator & alloc = Allocator())
+    : Base( first, last, alloc ) {}
 
-  StdVectorWrapper( const Base & other ):
-    Base( other ){}
+  StdVectorWrapper( const Base & other ): Base( other ) {}
 
-  StdVectorWrapper( Base && other ):
-    Base( other ){}
+  StdVectorWrapper( Base && other ): Base( other ) {}
 
-  StdVectorWrapper( const Base & other, const Allocator & alloc ):
-    Base( other, alloc ){}
+  StdVectorWrapper( const Base & other, const Allocator & alloc )
+    : Base( other, alloc ) {}
 
-  constexpr StdVectorWrapper( Base && other, const Allocator & alloc ):
-    Base( other, alloc ){}
+  constexpr StdVectorWrapper( Base && other, const Allocator & alloc )
+    : Base( other, alloc ) {}
 
   StdVectorWrapper( std::initializer_list< T > init,
-                    const Allocator & alloc = Allocator() ):
-    Base( init, alloc ){}
+                    const Allocator & alloc = Allocator())
+    : Base( init, alloc ) {}
+
 
   /**
    * Access element at index with bounds checking if USE_STD_CONTAINER_BOUNDS_CHECKING is true.

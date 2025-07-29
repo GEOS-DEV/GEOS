@@ -279,60 +279,14 @@ public:
 
   void resizeSendBuffer( std::vector< signed char >::size_type commID, int const newSize )
   {
-    // Log des valeurs d'entrée
-    std::cout << "m_sendBuffer " << (long)&m_sendBuffer <<  " send buffer size " << m_sendBuffer.size() << std::endl;
-    std::cout << "Attempting to resize send buffer. commID: " << commID << ", newSize: " << newSize << std::endl;
-    // Vérification de la taille du vecteur m_receiveBuffer
-    if( commID >= m_sendBuffer.size())
-    {
-      std::cerr << "Error: commID is out of range: " << commID << std::endl;
-      throw std::out_of_range( "commID is out of range" );
-    }
-
-    // Vérification de newSize
-    if( newSize < 0 )
-    {
-      std::cerr << "Error: newSize must be non-negative: " << newSize << std::endl;
-      throw std::invalid_argument( "newSize must be non-negative" );
-    }
-
-    // Log avant la modification
-    std::cout << "Current send buffer size for commID " << commID << ": " << m_sendBuffer[commID].size() << std::endl;
-
     m_sendBufferSize[commID] = newSize;
     m_sendBuffer[commID].resize( newSize );
-
-    // Log après la modification
-    std::cout << "Send Buffer resized for commID " << commID << ". New size: " << m_sendBuffer[commID].size() << std::endl;
   }
 
   void resizeRecvBuffer( std::vector< signed char >::size_type commID, int const newSize )
   {
-    // Log des valeurs d'entrée
-    std::cout << "Attempting to resize recv buffer. commID: " << commID << ", newSize: " << newSize << std::endl;
-
-    // Vérification de la taille du vecteur m_receiveBuffer
-    if( commID >= m_receiveBuffer.size())
-    {
-      std::cerr << "Error: commID is out of range: " << commID << std::endl;
-      throw std::out_of_range( "commID is out of range" );
-    }
-
-    // Vérification de newSize
-    if( newSize < 0 )
-    {
-      std::cerr << "Error: newSize must be non-negative: " << newSize << std::endl;
-      throw std::invalid_argument( "newSize must be non-negative" );
-    }
-
-    // Log avant la modification
-    std::cout << "Current recv buffer size for commID " << commID << ": " << m_receiveBuffer[commID].size() << std::endl;
-
     m_receiveBufferSize[commID] = newSize;
     m_receiveBuffer[commID].resize( newSize );
-
-    std::cout << "Send Buffer resized for commID " << commID << ". New size: " << m_receiveBuffer[commID].size() << std::endl;
-
   }
 
   void addNeighborGroupToMesh( MeshLevel & mesh ) const;
