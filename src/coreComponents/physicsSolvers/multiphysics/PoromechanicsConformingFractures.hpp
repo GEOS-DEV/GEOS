@@ -23,6 +23,7 @@
 
 #include "physicsSolvers/solidMechanics/contact/SolidMechanicsLagrangeContact.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsFields.hpp"
+#include "physicsSolvers/fluidFlow/FlowSolverBase.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
 #include "physicsSolvers/solidMechanics/contact/ContactFields.hpp"
 #include "physicsSolvers/multiphysics/poromechanicsKernels/SinglePhasePoromechanicsFractures.hpp"
@@ -580,6 +581,26 @@ protected:
                                                                    DofManager const & dofManager,
                                                                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                                    arrayView1d< real64 > const & localRhs ) = 0;
+
+  virtual void mapSolutionBetweenSolvers( DomainPartition & domain, integer const solverType ) override
+  {
+    GEOS_MARK_FUNCTION;
+
+    /// After the solid mechanics solver
+    if( solverType == static_cast< integer >( Base::SolverType::SolidMechanics )
+        && !this->m_performStressInitialization ) // do not update during poromechanics initialization
+    {
+      // remove the contribution of the hydraulic aperture from the stencil weights
+      this->flowSolver()->prepareStencilWeights( domain );
+
+      updateHydraulicApertureAndFracturePermeability( domain );
+
+      // update the stencil weights using the updated hydraulic aperture
+      this->flowSolver()->updateStencilWeights( domain );
+    }
+
+    Base::mapSolutionBetweenSolvers( domain, solverType );
+  }
 
   void updateHydraulicApertureAndFracturePermeability( DomainPartition & domain )
   {

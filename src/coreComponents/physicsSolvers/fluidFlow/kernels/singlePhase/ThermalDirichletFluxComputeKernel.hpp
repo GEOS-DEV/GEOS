@@ -22,6 +22,7 @@
 
 #include "physicsSolvers/fluidFlow/kernels/singlePhase/FluxComputeKernel.hpp"
 
+#include "constitutive/fluid/singlefluid/SingleFluidSelector.hpp"
 #include "constitutive/thermalConductivity/SinglePhaseThermalConductivityBase.hpp"
 #include "constitutive/thermalConductivity/ThermalConductivityFields.hpp"
 
