@@ -18,8 +18,8 @@
  */
 
 
-#ifndef GEOS_PHYSICSSOLVERS_FLUIDFLOW_WELLS_WELLPRESSURECONSTRAINTS_HPP
-#define GEOS_PHYSICSSOLVERS_FLUIDFLOW_WELLS_WELLPRESSURECONSTRAINTS_HPP
+#ifndef GEOS_PHYSICSSOLVERS_FLUIDFLOW_WELLS_WELLBHPCONSTRAINTS_HPP
+#define GEOS_PHYSICSSOLVERS_FLUIDFLOW_WELLS_WELLBHPCONSTRAINTS_HPP
 
 #include "common/format/EnumStrings.hpp"
 #include "dataRepository/Group.hpp"
@@ -100,7 +100,7 @@ public:
    * @brief Get name of constraint
    * @return constraint key
    */
-  virtual std::string getConstraintKey( ) const override { return "VolumeInjectionConstraint"; };
+  virtual std::string getConstraintKey( ) const override { return "BHPConstraint"; };
   ///@}
 
   ///@}
@@ -332,4 +332,4 @@ private:
 
 } //namespace geos
 
-#endif //GEOS_PHYSICSSOLVERS_FLUIDFLOW_WELLS_WELLPRESSURECONSTRAINTS_HPP
+#endif //GEOS_PHYSICSSOLVERS_FLUIDFLOW_WELLS_WELLBHPCONSTRAINTS_HPP

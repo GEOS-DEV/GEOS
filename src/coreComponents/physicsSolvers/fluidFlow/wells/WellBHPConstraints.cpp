@@ -18,7 +18,7 @@
  */
 
 #include "LogLevelsInfo.hpp"
-#include "WellPressureConstraints.hpp"
+#include "WellBHPConstraints.hpp"
 #include "WellConstants.hpp"
 #include "dataRepository/InputFlags.hpp"
 #include "functions/FunctionManager.hpp"

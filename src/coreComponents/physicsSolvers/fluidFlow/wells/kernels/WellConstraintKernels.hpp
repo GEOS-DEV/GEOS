@@ -26,7 +26,7 @@
 
 
 #include "physicsSolvers/fluidFlow/wells/WellControls.hpp"
-#include "physicsSolvers/fluidFlow/wells/WellPressureConstraints.hpp"
+#include "physicsSolvers/fluidFlow/wells/WellBHPConstraints.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellVolumeRateConstraints.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellPhaseRateConstraints.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellMassRateConstraints.hpp"

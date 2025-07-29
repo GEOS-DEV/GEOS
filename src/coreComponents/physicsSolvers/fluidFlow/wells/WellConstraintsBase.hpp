@@ -174,6 +174,7 @@ enum class ConstraintTypeId : integer
   PHASEVOLRATE,   /**< The well operates at a specified phase volumetric flow rate */
   TOTALVOLRATE,   /**< The well operates at a specified total volumetric flow rate */
   MASSRATE,   /**<The well operates at a specified mass rate */
+  WHP,  /**< The well operates at a specified wellhead   pressure (BHP) */
   UNINITIALIZED,   /**< This is the current well control before postInputInitialization (needed to restart from file properly) */
 };
 
@@ -344,7 +345,7 @@ protected:
 
   void setNextDtFromTable( TableFunction const * table, real64 const currentTime, real64 & nextDt );
 
-  /// Total rate table name
+  /// Constraint schedule table name
   string m_constraintScheduleTableName;
 
   /// Constraint values versus time
