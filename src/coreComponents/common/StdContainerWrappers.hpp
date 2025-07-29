@@ -47,7 +47,7 @@ public:
   /// Type alias for the base class (i.e., std::vector)
   using Base = std::vector< T, Allocator >;
 
-  /// We have to declare explictly all constructor because `using Base::Base` causes bugs during compilation
+  /// We have to declare explicitly all constructor because `using Base::Base` causes bugs during compilation
   /// @cond DO_NOT_DOCUMENT
   StdVectorWrapper() noexcept(noexcept(Allocator())): Base( Allocator()) {}
 
