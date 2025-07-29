@@ -114,3 +114,5 @@ set( ENABLE_DOXYGEN OFF CACHE BOOL "" FORCE )
 # Disable MathPresso. Not supported in this architecture
 set( ENABLE_MATHPRESSO OFF CACHE BOOL "" FORCE )
 
+# Increase CUDA stack size to 4KB
+set( CUDA_STACK_SIZE "4" )
