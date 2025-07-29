@@ -143,6 +143,20 @@ void finalizeMPI()
   MpiWrapper::finalize();
 }
 
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+void setupCUDA()
+{
+#if defined( GEOS_USE_CUDA )and defined( GEOS_USE_CUDA_STACK_SIZE )
+  size_t const stackSize = GEOS_USE_CUDA_STACK_SIZE * 1024;
+  if( 0 < stackSize )
+  {
+    cudaError_t status = cudaDeviceSetLimit( cudaLimitStackSize, stackSize );
+    GEOS_ERROR_IF( status != cudaSuccess,
+                   "Failed to set CUDA stack size. Error " << status << ": " << cudaGetErrorString( status ) );
+  }
+#endif
+}
+
 #if defined( GEOS_USE_CALIPER )
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -359,27 +373,7 @@ static void addUmpireHighWaterMarks()
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void setupEnvironment( int argc, char * argv[] )
 {
-    cudaError_t error;
-    size_t p_val;
-    error = cudaDeviceGetLimit(&p_val, cudaLimitStackSize);
-    if (error != cudaSuccess) {
-        printf("cudaDeviceGetLimit failed with %d, line(%d)\n", error, __LINE__);
-    }
-    printf("stack size limit: %ld\n", p_val);
-
-
-    error = cudaDeviceSetLimit(cudaLimitStackSize, 64 * 1024);
-    if (error != cudaSuccess) {
-        printf("cudaDeviceSetLimit failed with %d, line(%d)\n", error, __LINE__);
-    }
-
-    error = cudaDeviceGetLimit(&p_val, cudaLimitStackSize);
-    if (error != cudaSuccess) {
-        printf("cudaDeviceGetLimit failed with %d, line(%d)\n", error, __LINE__);
-    }
-
-    printf("stack size limit: %ld\n", p_val);
-
+  setupCUDA();
   setupMPI( argc, argv );
   setupLogger();
   setupLvArray();

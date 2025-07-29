@@ -5,7 +5,7 @@
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2023-2024 Chevron 
+ * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
@@ -52,6 +52,9 @@
 
 /// Enables use of CUDA NVToolsExt (CMake option ENABLE_CUDA_NVTOOLSEXT)
 #cmakedefine GEOS_USE_CUDA_NVTOOLSEXT
+
+/// Sets the CUDA stack size in KB (CMake option CUDA_STACK_SIZE)
+#cmakedefine GEOS_USE_CUDA_STACK_SIZE @GEOS_USE_CUDA_STACK_SIZE@
 
 /// Enables use of HIP (CMake option ENABLE_HIP)
 #cmakedefine GEOS_USE_HIP
@@ -200,4 +203,3 @@
 #endif
 
 #endif  /* GEOS_CONFIG_HPP */
-
