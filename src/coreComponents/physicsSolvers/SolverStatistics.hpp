@@ -386,6 +386,9 @@ public:
    */
   void setOutputFilesName( string_view solverName );
 
+  /**
+   * @return Return the string directory where all CSV are generated
+   */
   string_view getDirectory() const
   { return m_directoryName;}
 

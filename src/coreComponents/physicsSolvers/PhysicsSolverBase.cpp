@@ -124,7 +124,6 @@ void PhysicsSolverBase::postInputInitialization()
 {
   bool const solverStatsLogFlag = getWrapper< integer >( viewKeyStruct::writeSolverStatisticsFlagString()).reference() >= 1;
   bool const solverStatsCSVFlag = getWrapper< integer >( viewKeyStruct::writeSolverStatisticsFlagString()).reference() >= 2;
-  std::cout << "solverStatsCSVFlag"<< solverStatsCSVFlag << std::endl;
   m_solverStatistics.makeDir( solverStatsCSVFlag );
 
   getIterationStats().setLogOutput( solverStatsLogFlag );
@@ -1192,8 +1191,8 @@ void PhysicsSolverBase::updateSolverStatistics( real64 const & time_n, real64 co
 
 void PhysicsSolverBase::writeStatisticsToTable()
 {
-    getConvergenceStats().writeConvergenceStatsToTable();
-    getIterationStats().writeIterationStatsToTable();
+  getConvergenceStats().writeConvergenceStatsToTable();
+  getIterationStats().writeIterationStatsToTable();
 }
 
 void PhysicsSolverBase::setupSystem( DomainPartition & domain,
