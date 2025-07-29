@@ -491,6 +491,7 @@ protected:
   virtual bool evaluateProductionConstraints( real64 const & time_n,
                                               real64 const & stepDt,
                                               integer const cycleNumber,
+                                              integer const coupledIterationNumber,
                                               DomainPartition & domain,
                                               MeshLevel & mesh,
                                               ElementRegionManager & elemManager,
@@ -500,6 +501,7 @@ protected:
   virtual bool evaluateInjectionConstraints( real64 const & time_n,
                                              real64 const & stepDt,
                                              integer const cycleNumber,
+                                             integer const coupledIterationNumber,
                                              DomainPartition & domain,
                                              MeshLevel & mesh,
                                              ElementRegionManager & elemManager,
@@ -519,15 +521,15 @@ private:
   virtual void setConstitutiveNames( ElementSubRegionBase & subRegion ) const override;
 
   template< typename GROUPTYPE, typename ... GROUPTYPES >
-  WellConstraintBase *  calculateLimitingConstraint( WellConstraintBase * currentConstraint,
-                                                     real64 const & time_n,
-                                                     real64 const & stepDt,
-                                                     integer const cycleNumber,
-                                                     DomainPartition & domain,
-                                                     MeshLevel & mesh,
-                                                     ElementRegionManager & elemManager,
-                                                     WellElementSubRegion & subRegion,
-                                                     DofManager const & dofManager );
+  void calculateLimitingConstraint( real64 const & time_n,
+                                    real64 const & stepDt,
+                                    integer const cycleNumber,
+                                    integer const coupledIterationNumber,
+                                    DomainPartition & domain,
+                                    MeshLevel & mesh,
+                                    ElementRegionManager & elemManager,
+                                    WellElementSubRegion & subRegion,
+                                    DofManager const & dofManager );
 
   /// flag indicating whether mass or molar formulation should be used
   integer m_useMass;

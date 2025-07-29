@@ -54,7 +54,6 @@ WellSolverBase::WellSolverBase( string const & name,
   m_writeSegDebug( 0 ),
   m_globalNumTimeSteps( -1 ),
   m_currentDt( -1.0 ),
-  m_estimateSolution( 0 ),
   my_ctime( 0 ),
   m_nextDt( -1 ),
   m_useNewCode( true )
@@ -77,11 +76,6 @@ WellSolverBase::WellSolverBase( string const & name,
     setApplyDefaultValue( 0 ).
     setInputFlag( dataRepository::InputFlags::OPTIONAL ).
     setDescription( "Choose time step to honor rates/bhp tables time intervals" );
-
-  this->registerWrapper( viewKeyStruct::estimateWellSolutionString(), &m_estimateSolution ).
-    setApplyDefaultValue( 0 ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Flag to esitmate well solution prior to coupled reservoir and well solve." );
 
   this->registerWrapper( viewKeyStruct::useNewCodeString(), &m_useNewCode ).
     setApplyDefaultValue( 1 ).
@@ -243,7 +237,7 @@ void WellSolverBase::implicitStepSetup( real64 const & time_n,
 {
   GEOS_UNUSED_VAR( dt );
   // Initialize the primary and secondary variables for the first time step
-  if( !m_estimateSolution )
+  if( !m_useNewCode )
   {
     initializeWells( domain, time_n );
   }
@@ -318,9 +312,10 @@ void WellSolverBase::setupWellDofs( DomainPartition & domain )
   }
 }
 
-void WellSolverBase::estimateWellSolution( real64 const & time_n,
+void WellSolverBase::selectWellConstraint( real64 const & time_n,
                                            real64 const & dt,
                                            const integer cycleNumber,
+                                           const integer coupledIterationNumber,
                                            DomainPartition & domain )
 {
   GEOS_MARK_FUNCTION;
@@ -371,6 +366,7 @@ void WellSolverBase::estimateWellSolution( real64 const & time_n,
 
         if( meshModificationTimestamp > getSystemSetupTimestamp() )
         {
+          // These are esitmator matrices
           setupWellSystem( domain, dofManager, m_localMatrix, m_rhs, m_solution );
           //setSystemSetupTimestamp( meshModificationTimestamp );
 
@@ -386,17 +382,20 @@ void WellSolverBase::estimateWellSolution( real64 const & time_n,
           evaluateProductionConstraints( time_n,
                                          dt,
                                          cycleNumber,
+                                         coupledIterationNumber,
                                          domain,
                                          meshLevel,
                                          elementRegionManager,
                                          subRegion,
                                          dofManager );
+
         }
         else
         {
           evaluateInjectionConstraints( time_n,
                                         dt,
                                         cycleNumber,
+                                        coupledIterationNumber,
                                         domain,
                                         meshLevel,
                                         elementRegionManager,
@@ -423,8 +422,8 @@ void WellSolverBase::estimateWellSolution( real64 const & time_n,
 
 // final step for completion of timestep. typically secondary variable updates and cleanup.
         //implicitStepComplete( time_n, dt_return, domain );
-
-        solveNonlinearSystem( time_n,
+        /*
+           solveNonlinearSystem( time_n,
                               dt,
                               cycleNumber,
                               domain,
@@ -432,6 +431,8 @@ void WellSolverBase::estimateWellSolution( real64 const & time_n,
                               elementRegionManager,
                               subRegion,
                               dofManager );
+         */
+
         GEOS_LOG_RANK( "**** Estimate Well Solution End **** " << subRegion.getName());
       }
 
@@ -487,18 +488,24 @@ void WellSolverBase::assembleWellSystem( real64 const time_n,
                                          arrayView1d< real64 > const & localRhs )
 {
   assembleWellAccumulationTerms( time_n, dt, subRegion, dofManager, localMatrix.toViewConstSizes(), localRhs );
-  if( m_useNewCode )
+  WellControls & wellControls = getWellControls( subRegion );
+  if( !wellControls.getConstraintSwitch() )
   {
+
     assembleWellConstraintTerms( time_n, dt, subRegion, dofManager, localMatrix.toViewConstSizes(), localRhs );
   }
   assembleWellPressureRelations( time_n, dt, subRegion, dofManager, localMatrix.toViewConstSizes(), localRhs );
   computeWellPerforationRates( time_n, dt, elementRegionManager, subRegion );
   assembleWellFluxTerms( time_n, dt, subRegion, dofManager, localMatrix.toViewConstSizes(), localRhs );
   my_ctime=my_ctime+1;
-
-  //auto iterInfo = currentIter( time_n, dt );
-  //outputWellDebug( time_n, dt, std::get< 0 >( iterInfo ), std::get< 1 >( iterInfo ), std::get< 2 >( iterInfo ),
-  //                 domain, dofManager, localMatrix, localRhs );
+  /*
+     if ( !m_useNewCode )
+     {
+     auto iterInfo = currentIter( time_n, dt );
+     outputWellDebug( time_n, dt, std::get< 0 >( iterInfo ), std::get< 1 >( iterInfo ), std::get< 2 >( iterInfo ),
+                    domain, dofManager, localMatrix, localRhs );
+     }
+   */
 }
 
 void WellSolverBase::assembleSystem( real64 const time,
@@ -508,25 +515,17 @@ void WellSolverBase::assembleSystem( real64 const time,
                                      CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                      arrayView1d< real64 > const & localRhs )
 {
-  if( m_estimateSolution == 1000 )
+
+  if( m_useNewCode )
   {
-    if( geos::currentCoupledNewton%2 == 0 )
-    {
-      estimateWellSolution( time, dt, 0, domain );
-    }
+    // selects constraints one of 2 ways
+    //  wellEstimator flag set to 0 => orginal logic rates are computed during update state and constraints are selected every newton
+    // iteration
+    //  wellEstimator flag > 0 =>   well esitmator solved for each constraint and then selects the constraint
+    //                         =>   estimator solve only performed first "wellEstimator" iterations
+
+    selectWellConstraint( time, dt, 0, geos::currentCoupledNewton, domain );
   }
-  else if( m_estimateSolution == 1001 )
-  {
-    if( geos::currentCoupledNewton%2 != 0 )
-    {
-      estimateWellSolution( time, dt, 0, domain );
-    }
-  }
-  else if( geos::currentCoupledNewton < m_estimateSolution )
-  {
-    estimateWellSolution( time, dt, 0, domain );
-  }
-  string const wellDofKey = dofManager.getKey( wellElementDofName());
 
 
   // assemble the accumulation term in the mass balance equations
@@ -534,6 +533,25 @@ void WellSolverBase::assembleSystem( real64 const time,
 
   // then assemble the pressure relations between well elements
   assemblePressureRelations( time, dt, domain, dofManager, localMatrix, localRhs );
+  //if(  false && m_useNewCode )
+  {
+    forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                                                 MeshLevel & mesh,
+                                                                 string_array const & regionNames )
+    {
+      ElementRegionManager & elementRegionManager = mesh.getElemManager();
+      elementRegionManager.forElementRegions< WellElementRegion >( regionNames,
+                                                                   [&]( localIndex const,
+                                                                        WellElementRegion & region )
+      {
+        WellElementSubRegion & subRegion = region.getGroup( ElementRegionBase::viewKeyStruct::elementSubRegions() )
+                                             .getGroup< WellElementSubRegion >( region.getSubRegionName() );
+        WellControls & wellControls = getWellControls( subRegion );
+        if( !wellControls.getConstraintSwitch() )
+          assembleWellConstraintTerms( time, dt, subRegion, dofManager, localMatrix.toViewConstSizes(), localRhs );
+      } );
+    } );
+  }
   // then compute the perforation rates (later assembled by the coupled solver)
   computePerforationRates( time, dt, domain );
 
@@ -541,6 +559,13 @@ void WellSolverBase::assembleSystem( real64 const time,
   // get a reference to the degree-of-freedom numbers
   // then assemble the flux terms in the mass balance equations
   assembleFluxTerms( time, dt, domain, dofManager, localMatrix, localRhs );
+
+  // sort out how this work with well estimator
+  auto iterInfo = currentIter( time, dt );
+  outputWellDebug( time, dt, std::get< 0 >( iterInfo ), std::get< 1 >( iterInfo ), std::get< 2 >( iterInfo ),
+                   domain, dofManager, localMatrix, localRhs );
+
+
   my_ctime=my_ctime+1;
 
 }

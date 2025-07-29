@@ -49,6 +49,7 @@ void MassConstraint::postInputInitialization()
 MassProductionConstraint::MassProductionConstraint( string const & name, Group * const parent )
   : MassConstraint( name, parent )
 {
+  m_rateSign = -1.0;
   setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
   registerWrapper( constraintViewStruct::constraintValueKey::constraintValueString(), &m_constraintValue ).
     setDefaultValue( 0.0 ).
@@ -71,7 +72,7 @@ void MassProductionConstraint::postInputInitialization()
 
 bool MassProductionConstraint::checkViolation( WellConstraintBase const & currentConstraint, real64 const & currentTime ) const
 {
-  return currentConstraint.massRate() > getConstraintValue( currentTime );
+  return currentConstraint.massRate() < getConstraintValue( currentTime );
 }
 
 

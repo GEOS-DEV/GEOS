@@ -57,7 +57,9 @@ TableFunction * createConstraintScheduleTable( string const & tableName,
 WellConstraintBase::WellConstraintBase( string const & name, Group * const parent )
   : Group( name, parent ),
   m_constraintValue( 0 ),
-  m_constraintScheduleTable( nullptr )
+  m_constraintScheduleTable( nullptr ),
+  m_rateSign( 1.0 ) // Default to positive rate sign for injection, set to -1.0 for production wells
+
 {
   setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
 

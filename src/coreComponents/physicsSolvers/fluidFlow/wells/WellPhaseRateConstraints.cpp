@@ -64,7 +64,9 @@ void PhaseConstraint::postInputInitialization()
 // *** Phase Constraint for Production Well  ***************************************************************
 PhaseProductionConstraint::PhaseProductionConstraint( string const & name, Group * const parent )
   : PhaseConstraint( name, parent )
-{}
+{
+  m_rateSign=-1.0;
+}
 
 PhaseProductionConstraint::~PhaseProductionConstraint()
 {}
@@ -78,7 +80,7 @@ void PhaseProductionConstraint::postInputInitialization()
 
 bool PhaseProductionConstraint::checkViolation( WellConstraintBase const & currentConstraint, real64 const & currentTime ) const
 {
-  return -1.0*currentConstraint.phaseVolumeRates()[m_phaseIndex] > getConstraintValue( currentTime );
+  return currentConstraint.phaseVolumeRates()[m_phaseIndex] < getConstraintValue( currentTime );
 }
 
 

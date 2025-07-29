@@ -96,14 +96,14 @@ struct ConstraintHelper< NC, IS_THERMAL, BHPConstraint >
                                 &refGravCoef] ( localIndex const )
     {
       real64 const diffGravCoef = refGravCoef - wellElemGravCoef[iwelemRef];
-      dControlEqn[Deriv::dP] =   1 + dTotalMassDens[iwelemRef][Deriv::dP] * diffGravCoef;
+      dControlEqn[COFFSET_WJ::dP] =   1 + dTotalMassDens[iwelemRef][Deriv::dP] * diffGravCoef;
       for( integer ic = 0; ic < NC; ++ic )
       {
-        dControlEqn[Deriv::dC+ic] = dTotalMassDens[iwelemRef][Deriv::dC+ic] * diffGravCoef;
+        dControlEqn[COFFSET_WJ::dC+ic] = dTotalMassDens[iwelemRef][Deriv::dC+ic] * diffGravCoef;
       }
       if constexpr ( IS_THERMAL )
       {
-        dControlEqn[Deriv::dT] =  dTotalMassDens[iwelemRef][Deriv::dT] * diffGravCoef;
+        dControlEqn[COFFSET_WJ::dT] =  dTotalMassDens[iwelemRef][Deriv::dT] * diffGravCoef;
       }
     } );
 
@@ -230,7 +230,7 @@ struct ConstraintHelper< NC, IS_THERMAL, VolumeConstraint >
 {
   static void assembleConstraintEquation( real64 const & time_n,
                                           WellControls & wellControls,
-                                          PhaseConstraint & constraint,
+                                          VolumeConstraint & constraint,
                                           WellElementSubRegion const & subRegion,
                                           string const & wellDofKey,
                                           localIndex const & rankOffset,

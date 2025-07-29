@@ -105,11 +105,7 @@ public:
    */
   integer isThermal() const { return m_isThermal; }
 
-  /**
-   * @brief getter for esitmator switch
-   * @return True if estimate well solution
-   */
-  integer estimateSolution() const { return m_estimateSolution; }
+
   /**
    * @brief get the name of DOF defined on well elements
    * @return name of the DOF field used by derived solver type
@@ -157,9 +153,10 @@ public:
 
   virtual void registerDataOnMesh( Group & meshBodies ) override;
 
-  void estimateWellSolution( real64 const & time_n,
+  void selectWellConstraint( real64 const & time_n,
                              real64 const & dt,
                              integer const cycleNumber,
+                             integer const coupledIterationNumber,
                              DomainPartition & domain );
 
 
@@ -442,7 +439,6 @@ public:
     static constexpr char const * isThermalString() { return "isThermal"; }
     static constexpr char const * writeCSVFlagString() { return "writeCSV"; }
     static constexpr char const * timeStepFromTablesFlagString() { return "timeStepFromTables"; }
-    static constexpr char const * estimateWellSolutionString() { return "estimateWellSolution"; }
     static constexpr char const * writeSegDebugFlagString() { return "writeSegDebug"; }
     static constexpr char const * useNewCodeString() { return "useNewCode"; }
   };
@@ -491,6 +487,7 @@ protected:
   virtual bool evaluateProductionConstraints( real64 const & GEOS_UNUSED_PARAM( time_n ),
                                               real64 const & GEOS_UNUSED_PARAM( stepDt ),
                                               integer const GEOS_UNUSED_PARAM( cycleNumber ),
+                                              integer const GEOS_UNUSED_PARAM( coupledIterationNumber ),
                                               DomainPartition & GEOS_UNUSED_PARAM( domain ),
                                               MeshLevel & GEOS_UNUSED_PARAM( mesh ),
                                               ElementRegionManager & GEOS_UNUSED_PARAM( elemManager ),
@@ -500,6 +497,7 @@ protected:
   virtual bool evaluateInjectionConstraints( real64 const & GEOS_UNUSED_PARAM( time_n ),
                                              real64 const & GEOS_UNUSED_PARAM( stepDt ),
                                              integer const GEOS_UNUSED_PARAM( cycleNumber ),
+                                             integer const GEOS_UNUSED_PARAM( coupledIterationNumber ),
                                              DomainPartition & GEOS_UNUSED_PARAM( domain ),
                                              MeshLevel & GEOS_UNUSED_PARAM( mesh ),
                                              ElementRegionManager & GEOS_UNUSED_PARAM( elemManager ),

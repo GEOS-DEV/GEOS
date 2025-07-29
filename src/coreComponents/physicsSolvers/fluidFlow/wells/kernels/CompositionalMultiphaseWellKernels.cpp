@@ -369,7 +369,7 @@ PressureRelationKernel::
     if( iwelemNext < 0 && isLocallyOwned ) // if iwelemNext < 0, form control equation
     {
       WellControls::Control newControl = currentControl;
-      if( constraintSwitch )
+      if( false && constraintSwitch )
       {
 
         ControlEquationHelper::selectLimitingConstraint( isProducer,
@@ -395,24 +395,27 @@ PressureRelationKernel::
       {
         switchControl.max( 1 );
       }
-      ControlEquationHelper::compute< NC, IS_THERMAL >( rankOffset,
-                                                        newControl,
-                                                        targetPhaseIndex, // tjb - remove ?
-                                                        targetBHP,      // tjb - remove
-                                                        targetPhaseRate, // tjb - remove
-                                                        targetTotalRate, // tjb - remove
-                                                        targetMassRate, // tjb - remove
-                                                        targetValue, // tjb
-                                                        currentBHP,
-                                                        dCurrentBHP,
-                                                        currentPhaseVolRate,
-                                                        dCurrentPhaseVolRate,
-                                                        currentTotalVolRate,
-                                                        dCurrentTotalVolRate,
-                                                        massDensity,
-                                                        wellElemDofNumber[iwelemControl],
-                                                        localMatrix,
-                                                        localRhs );
+      if( constraintSwitch )
+      {
+        ControlEquationHelper::compute< NC, IS_THERMAL >( rankOffset,
+                                                          newControl,
+                                                          targetPhaseIndex, // tjb - remove ?
+                                                          targetBHP,    // tjb - remove
+                                                          targetPhaseRate, // tjb - remove
+                                                          targetTotalRate, // tjb - remove
+                                                          targetMassRate, // tjb - remove
+                                                          targetValue, // tjb
+                                                          currentBHP,
+                                                          dCurrentBHP,
+                                                          currentPhaseVolRate,
+                                                          dCurrentPhaseVolRate,
+                                                          currentTotalVolRate,
+                                                          dCurrentTotalVolRate,
+                                                          massDensity,
+                                                          wellElemDofNumber[iwelemControl],
+                                                          localMatrix,
+                                                          localRhs );
+      }
       // TODO: for consistency, we should assemble here, not in compute...
 
     }

@@ -267,7 +267,7 @@ public:
    */
   real64 getConstraintValue( real64 const & currentTime ) const
   {
-    return m_constraintScheduleTable->evaluate( &currentTime );
+    return m_rateSign*m_constraintScheduleTable->evaluate( &currentTime );
   }
 
   ///@}
@@ -364,6 +364,8 @@ protected:
   // mass rate
   real64 m_massRate;
 
+  /// Rate sign. +1 for injector, -1 for producer
+  real64 m_rateSign;
 };
 
 

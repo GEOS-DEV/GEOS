@@ -57,7 +57,9 @@ WellControls::WellControls( string const & name, Group * const parent )
   m_targetBHPTable( nullptr ), // tjb remove
   m_statusTable( nullptr ),
   m_wellOpen( false ),
-  m_constraintSwitch( true )
+  m_estimateSolution( 0 ),
+  m_constraintSwitch( true ),
+  m_currentConstraint( nullptr )
 {
   setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
 
@@ -176,6 +178,12 @@ WellControls::WellControls( string const & name, Group * const parent )
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Name of the well status table when the status of the well is a time dependent function. \n"
                     "If the status function evaluates to a positive value at the current time, the well will be open otherwise the well will be shut." );
+
+
+  this->registerWrapper( viewKeyStruct::estimateWellSolutionString(), &m_estimateSolution ).
+    setApplyDefaultValue( 0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Flag to esitmate well solution prior to coupled reservoir and well solve." );
 
   addLogLevel< logInfo::WellControl >();
 }
@@ -359,6 +367,7 @@ void WellControls::postInputInitialization()
                  InputError );
 
   // 4) check that at least one rate constraint has been defined
+#if 0
   GEOS_THROW_IF( ((m_targetPhaseRate <= 0.0 && m_targetPhaseRateTableName.empty()) &&
                   (m_targetMassRate <= 0.0 && m_targetMassRateTableName.empty()) &&
                   (m_targetTotalRate <= 0.0 && m_targetTotalRateTableName.empty())),
@@ -373,7 +382,7 @@ void WellControls::postInputInitialization()
                  "either " << viewKeyStruct::targetMassRateString() <<
                  " or " << viewKeyStruct::targetMassRateTableNameString(),
                  InputError );
-
+#endif
   // 5) check whether redundant information has been provided
   GEOS_THROW_IF( ((m_targetPhaseRate > 0.0 && !m_targetPhaseRateTableName.empty())),
                  "WellControls " << getDataContext() << ": You have provided redundant information for well phase rate." <<
@@ -559,7 +568,7 @@ void WellControls::setWellState( bool open )
   m_wellOpen = open;
 }
 
-bool WellControls::getWellState()
+bool WellControls::getWellState() const
 {
   return m_wellOpen;
 }

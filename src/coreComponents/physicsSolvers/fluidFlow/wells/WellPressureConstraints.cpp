@@ -85,7 +85,7 @@ void MinimumBHPConstraint::postInputInitialization()
 
 bool MinimumBHPConstraint::checkViolation( WellConstraintBase const & currentConstraint, real64 const & currentTime ) const
 {
-  return currentConstraint.bottomHolePressure()  > getConstraintValue( currentTime );
+  return currentConstraint.bottomHolePressure() < getConstraintValue( currentTime );
 }
 
 MaximumBHPConstraint::MaximumBHPConstraint( string const & name, Group * const parent )

@@ -7,7 +7,7 @@
       flowSolverName="compositionalMultiphaseFlow"
       wellSolverName="compositionalMultiphaseWell"
       logLevel="1"
-      targetRegions="{ Region1, wellRegion1, wellRegion2 }">
+      targetRegions="{ Region1,  wellRegion2 }">
       <NonlinearSolverParameters
         newtonTol="1.0e-8"
         lineSearchAction="None"
@@ -27,34 +27,16 @@
       name="compositionalMultiphaseWell"
       logLevel="1"
       writeCSV="1"
-      writeSegDebug="0"
       useNewCode="1"
-      estimateWellSolution="1"
-      targetRegions="{ wellRegion1, wellRegion2 }">
-      <WellControls
-        name="wellControls1"
-        type="producer"
-        control="phaseVolRate"
-        useSurfaceConditions="0"
-        referenceElevation="2"
-        targetBHP="3e6"
-        targetPhaseRate="2e-6"
-        targetPhaseName="oil">
-        <MinimumBHPConstraint
-         name="minBHP"
-         referenceElevation="2"
-         targetBHP="3e6"/>
-        <PhaseProductionConstraint
-         name="maxOil"
-         phaseName="oil"
-         phaseRate="2e-6"/>
-        </WellControls>
+      writeSegDebug="0"
+      targetRegions="{ wellRegion2 }">
       <WellControls
         name="wellControls2"
+         estimateWellSolution="2"
         type="injector"
         control="totalVolRate"
         referenceElevation="2"
-        targetBHP="1e8"
+        targetBHP="1e7"
         targetTotalRate="28e-7"
         useSurfaceConditions="0"
         injectionTemperature="297.15"
@@ -62,10 +44,10 @@
         <MaximumBHPConstraint
          name="maxBHP"
          referenceElevation="2"
-         targetBHP="1e8"/>
+         targetBHP="1e7"/>
         <VolumeInjectionConstraint
          name="maxVol"
-         volumeRate="28e-6"
+         volumeRate="28e-7"
          injectionTemperature="297.15"
          injectionStream="{ 0.1, 0.1, 0.1, 0.7 }"/>
         </WellControls>
@@ -85,19 +67,6 @@
       nz="{ 1 }"
       cellBlockNames="{ cb1 }">
 
-      <InternalWell
-        name="well_producer1"
-        wellRegionName="wellRegion1"
-        wellControlsName="wellControls1"
-        polylineNodeCoords="{ { 4.5, 0, 2 },
-                              { 4.5, 0, 0.5 } }"
-        polylineSegmentConn="{ { 0, 1 } }"
-        radius="0.1"
-        numElementsPerSegment="2">
-        <Perforation
-          name="producer1_perf1"
-          distanceFromHead="1.45"/>
-      </InternalWell>
 
       <InternalWell
         name="well_injector1"
@@ -153,12 +122,12 @@
 
   <Tasks>
       <PackCollection
-      name="wellRateCollection1"
-      objectPath="ElementRegions/wellRegion1/wellRegion1UniqueSubRegion"
+      name="wellRateCollection2"
+      objectPath="ElementRegions/wellRegion2/wellRegion2UniqueSubRegion"
       fieldName="wellElementMixtureConnectionRate"/>
       <PackCollection
       name="wellPhaseVolumeFraction"
-      objectPath="ElementRegions/wellRegion1/wellRegion1UniqueSubRegion"
+      objectPath="ElementRegions/wellRegion2/wellRegion2UniqueSubRegion"
       fieldName="phaseVolumeFraction"/>
   </Tasks>
 
@@ -176,9 +145,6 @@
       cellBlocks="{ * }"
       materialList="{ fluid1, rock, relperm }"/>
 
-    <WellElementRegion
-      name="wellRegion1"
-      materialList="{ fluid1 }"/>
 
     <WellElementRegion
       name="wellRegion2"
@@ -281,8 +247,8 @@
       name="vtkOutput"/>
     <TimeHistory
       name="timeHistoryOutput1"
-      sources="{ /Tasks/wellRateCollection1 }"
-      filename="wellRateHistory1"/>
+      sources="{ /Tasks/wellRateCollection2 }"
+      filename="wellRateHistory2"/>
     <TimeHistory
       name="timeHistoryOutput2"
       sources="{ /Tasks/wellPhaseVolumeFraction }"

@@ -303,7 +303,7 @@ public:
   bool isWellOpen( real64 const & currentTime ) const;
 
   void setWellState( bool open );
-  bool getWellState();
+  bool getWellState() const;
 
 
   void setConstraintSwitch( bool constraintSwitch );
@@ -343,6 +343,13 @@ public:
    * @return reference to separator
    */
   constitutive::MultiFluidBase & getMultiFluidSeparator()  { return dynamicCast< constitutive::MultiFluidBase & >( *m_fluidSeparatorPtr ); }
+
+  /**
+   * @brief getter for esitmator switch
+   * @return True if estimate well solution
+   */
+  integer estimateSolution() const { return m_estimateSolution; }
+
   ///@}
 
   /**
@@ -393,6 +400,8 @@ public:
     static constexpr char const * enableCrossflowString() { return "enableCrossflow"; }
     /// string key for the initial pressure coefficient
     static constexpr char const * initialPressureCoefficientString() { return "initialPressureCoefficient"; }
+    /// string key for the esitmate well solution flag
+    static constexpr char const * estimateWellSolutionString() { return "estimateWellSolution"; }
 
     /// string key for the minimum BHP presssure for a producer
     static constexpr char const * minimumBHPConstraintString() { return "MinimumBHPConstraint"; }
@@ -507,6 +516,9 @@ private:
   TableFunction const * m_statusTable;
 
   bool m_wellOpen;
+
+  /// flag to use the estimator
+  integer m_estimateSolution;
 
   // Fuild model to compute properties for constraint equation user specified conditions
   std::unique_ptr< constitutive::ConstitutiveBase >  m_fluidSeparatorPtr;

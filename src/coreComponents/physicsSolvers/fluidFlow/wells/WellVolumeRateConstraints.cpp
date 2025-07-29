@@ -56,6 +56,7 @@ VolumeProductionConstraint::VolumeProductionConstraint( string const & name, Gro
   : VolumeConstraint( name, parent )
 {
   setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
+  m_rateSign=-1.0;
 
 }
 
@@ -71,7 +72,7 @@ void VolumeProductionConstraint::postInputInitialization()
 
 bool VolumeProductionConstraint::checkViolation( WellConstraintBase const & currentConstraint, real64 const & currentTime )const
 {
-  return -1.0*currentConstraint.totalVolumeRate() >  getConstraintValue( currentTime );
+  return currentConstraint.totalVolumeRate() <  getConstraintValue( currentTime );
 }
 
 
@@ -92,6 +93,7 @@ VolumeInjectionConstraint::~VolumeInjectionConstraint()
 void VolumeInjectionConstraint::postInputInitialization()
 {
 
+  VolumeConstraint::postInputInitialization();
 // Validate the injection stream and temperature
   validateInjectionStream( m_injectionStream, m_injectionTemperature, getConstraintKey(), *this );
 
