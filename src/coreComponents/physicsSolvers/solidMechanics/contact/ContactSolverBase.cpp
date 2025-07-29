@@ -64,15 +64,13 @@ void ContactSolverBase::registerDataOnMesh( dataRepository::Group & meshBodies )
 
   setFractureRegions( meshBodies );
 
+  string const labels[3] = { "normal", "tangent1", "tangent2" };
+  string const labelsTangent[2] = { "tangent1", "tangent2" };
+
   forFractureRegionOnMeshTargets( meshBodies, [&] ( SurfaceElementRegion & fractureRegion )
   {
-    string const labels[3] = { "normal", "tangent1", "tangent2" };
-    string const labelsTangent[2] = { "tangent1", "tangent2" };
-
     fractureRegion.forElementSubRegions< SurfaceElementSubRegion >( [&]( SurfaceElementSubRegion & subRegion )
     {
-      setConstitutiveNamesCallSuper( subRegion );
-
       subRegion.registerField< contact::dispJump >( getName() ).
         setDimLabels( 1, labels ).
         reference().resizeDimension< 1 >( 3 );
@@ -136,7 +134,7 @@ void ContactSolverBase::computeFractureStateStatistics( MeshLevel const & mesh,
                                                         globalIndex & numSlip,
                                                         globalIndex & numOpen ) const
 {
-  using namespace fields::contact;
+  using namespace contact;
 
   ElementRegionManager const & elemManager = mesh.getElemManager();
 
@@ -254,15 +252,7 @@ void ContactSolverBase::setConstitutiveNamesCallSuper( ElementSubRegionBase & su
   }
   else if( dynamic_cast< SurfaceElementSubRegion * >( &subRegion ) )
   {
-    subRegion.registerWrapper< string >( viewKeyStruct::frictionLawNameString() ).
-      setPlotLevel( PlotLevel::NOPLOT ).
-      setRestartFlags( RestartFlags::NO_WRITE ).
-      setSizedFromParent( 0 );
-
-    string & frictionLawName = subRegion.getReference< string >( viewKeyStruct::frictionLawNameString() );
-    frictionLawName = PhysicsSolverBase::getConstitutiveName< FrictionBase >( subRegion );
-    GEOS_ERROR_IF( frictionLawName.empty(), GEOS_FMT( "{}: FrictionBase model not found on subregion {}",
-                                                      getDataContext(), subRegion.getDataContext() ) );
+    setConstitutiveName< FrictionBase >( subRegion, viewKeyStruct::frictionLawNameString(), "friction" );
   }
 }
 

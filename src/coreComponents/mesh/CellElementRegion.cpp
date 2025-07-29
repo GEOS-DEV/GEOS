@@ -17,8 +17,6 @@
 #include "CellElementSubRegion.hpp"
 #include "mesh/generators/CellBlockABC.hpp"
 
-#include <fnmatch.h>
-
 namespace geos
 {
 using namespace dataRepository;
@@ -26,7 +24,7 @@ using namespace dataRepository;
 CellElementRegion::CellElementRegion( string const & name, Group * const parent ):
   ElementRegionBase( name, parent )
 {
-  std::vector< string > elementNames;
+  stdVector< string > elementNames;
   for( int i = 0; i < numElementTypes(); ++i )
   {
     if( getElementDim( (ElementType)i ) == 3 )
