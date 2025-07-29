@@ -176,12 +176,12 @@ Graphite::Graphite( string const & name, Group * const parent ):
 
   registerWrapper( viewKeyStruct::relaxationString(), &m_relaxation).
     setApplyDefaultValue( 0.0 ).
-    setPlotLevel( PlotLevel::LEVEL_0 ).
+    setPlotLevel( PlotLevel::NOPLOT ).
     setDescription( "Relaxation" );
 
   registerWrapper( viewKeyStruct::damageString(), &m_damage ).
     setApplyDefaultValue( 0.0 ).
-    setPlotLevel( PlotLevel::LEVEL_0 ).
+    setPlotLevel( PlotLevel::NOPLOT ).
     setDescription( "Array of quadrature point damage values" );
 
 registerWrapper( viewKeyStruct::jacobianString(), &m_jacobian ).

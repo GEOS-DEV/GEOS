@@ -66,22 +66,22 @@ CeramicDamage::CeramicDamage( string const & name, Group * const parent ):
   // register fields
   registerWrapper( viewKeyStruct::strengthScaleString(), &m_strengthScale ).
     setApplyDefaultValue( 1.0 ).
-    setPlotLevel( PlotLevel::LEVEL_0).
+    setPlotLevel( PlotLevel::NOPLOT).
     setDescription( "Strength scale" );
 
   registerWrapper( viewKeyStruct::porosityString(), &m_porosity ).
     setApplyDefaultValue( 0.0 ).
-    setPlotLevel( PlotLevel::LEVEL_0 ).
+    setPlotLevel( PlotLevel::NOPLOT ).
     setDescription( "Porosity" );
 
   registerWrapper( viewKeyStruct::referencePorosityString(), &m_referencePorosity ).
     setApplyDefaultValue( 0.0 ).
-    setPlotLevel( PlotLevel::LEVEL_0 ).
+    setPlotLevel( PlotLevel::NOPLOT ).
     setDescription( "Reference porosity" );
 
   registerWrapper( viewKeyStruct::damageString(), &m_damage ).
     setApplyDefaultValue( 0.0 ).
-    setPlotLevel( PlotLevel::LEVEL_0 ).
+    setPlotLevel( PlotLevel::NOPLOT ).
     setDescription( "Array of quadrature point damage values" );
 
   registerWrapper( viewKeyStruct::jacobianString(), &m_jacobian ).
@@ -97,11 +97,13 @@ CeramicDamage::CeramicDamage( string const & name, Group * const parent ):
   registerWrapper( viewKeyStruct::damagedMaterialFrictionSlopeString(), &m_damagedMaterialFrictionSlope ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( 0.5773502691896258 ).
+    setPlotLevel( PlotLevel::NOPLOT).
     setDescription( "Value of the damaged material friction slope");
 
   registerWrapper( viewKeyStruct::thirdInvariantDependenceString(), &m_thirdInvariantDependence ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( 0 ).
+    setPlotLevel( PlotLevel::NOPLOT).
     setDescription( "Flag to enable third invariant dependence" );
 
   registerWrapper( viewKeyStruct::velocityGradientString(), &m_velocityGradient).
@@ -141,17 +143,19 @@ CeramicDamage::CeramicDamage( string const & name, Group * const parent ):
   registerWrapper( viewKeyStruct::accumulatedModeIWorkString(), &m_accumulatedModeIWork).
     setInputFlag( InputFlags::FALSE ).
     setApplyDefaultValue( 0.0 ).
+    setPlotLevel( PlotLevel::NOPLOT).    
     setDescription( "Accumulated mode I work" );
   
   registerWrapper( viewKeyStruct::accumulatedModeIIWorkString(), &m_accumulatedModeIIWork).
     setInputFlag( InputFlags::FALSE ).
     setApplyDefaultValue( 0.0 ).
+    setPlotLevel( PlotLevel::NOPLOT).    
     setDescription( "Accumulated mode II work" );
   
   registerWrapper( viewKeyStruct::distanceToCrackTipString(), &m_distanceToCrackTip ).
     setInputFlag( InputFlags::FALSE ).
     setApplyDefaultValue( 0.0 ).
-    setPlotLevel( PlotLevel::LEVEL_0).
+    setPlotLevel( PlotLevel::NOPLOT).
     setDescription( "Distance to crack tip" );
 
   registerWrapper( viewKeyStruct::surfaceFlagString(), &m_surfaceFlag).

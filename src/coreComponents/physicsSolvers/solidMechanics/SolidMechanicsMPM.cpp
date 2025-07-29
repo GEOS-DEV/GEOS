@@ -2861,6 +2861,16 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
   }
 
   //#######################################################################################
+  GEOS_LOG_RANK_IF( m_debugFlag == 1 && m_resetDefGradForFullyDamagedParticles == 1, "Set F to scaled value for damaged particles, maintain J" );
+  solverProfilingIf( "Set F to scaled value for damaged particles, maintain J",  m_resetDefGradForFullyDamagedParticles == 1 );
+  //#######################################################################################
+  // Option to set F for fully damaged particles to J^(1/3)*[I], in 3D, so we don't get
+  // negative J for super sheared particles with finite precision F Update.  This
+  // Should only be used when all materials in the domain have a hypo-elastic
+  // deviatoric update.
+  resetDeformationGradient( particleManager );
+
+  //#######################################################################################
   GEOS_LOG_RANK_IF( m_debugFlag == 1, "Calculate stable time step" );
   solverProfiling( "Calculate stable time step" );
   //#######################################################################################
@@ -2905,15 +2915,7 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
 
 
 
- //#######################################################################################
-  GEOS_LOG_RANK_IF( m_debugFlag == 1 && m_resetDefGradForFullyDamagedParticles == 1, "Set F to scaled value for damaged particles, maintain J" );
-  solverProfilingIf( "Set F to scaled value for damaged particles, maintain J",  m_resetDefGradForFullyDamagedParticles == 1 );
-  //#######################################################################################
-  // Option to set F for fully damaged particles to J^(1/3)*[I], in 3D, so we don't get
-  // negative J for super sheared particles with finite precision F Update.  This
-  // Should only be used when all materials in the domain have a hypo-elastic
-  // deviatoric update.
-  resetDeformationGradient( particleManager );
+
 
 
   //#######################################################################################

@@ -632,6 +632,7 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
     // strength scale factor, combining plastic softening and damage
     real64 fac = (1.0 - m_damage[k][q])*(1.0 - m_relaxation[k][q]);
 
+    plasicHardening = m_hardeningIncrement*m_relaxation
     // CC: debug
     // GEOS_LOG_RANK( "Particle " << k << ": dmg: " << m_damage[k][q] << ", Fac: " << fac );
 

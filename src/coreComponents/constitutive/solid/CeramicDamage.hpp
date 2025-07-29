@@ -570,7 +570,6 @@ void CeramicDamageUpdates::smallStrainUpdateHelper( localIndex const k,
   {
     yielding = true;
   }
-
   
   if( yielding == false )
   { // ELASTIC
@@ -584,18 +583,33 @@ void CeramicDamageUpdates::smallStrainUpdateHelper( localIndex const k,
     }
   }
   else
-  { // PLASTIC
+  { // PLASTIC 
     real64 oldAccumulatedModeIWork = m_accumulatedModeIWork[k];  // beginning-of-step stress work
     real64 elasticStrainEnergy; // elastic strain energy computed from end-of-step stress.
     
     if( m_enableEnergyFailureCriterion )   
-    { // Adjust damage so that the total dissiaption associated with setting damage = 1 is consistent
+    { // Adjust damage so that the total dissipation associated with setting damage = 1 is consistent
       // with the regularized fracture energy release rate.  If the element size is too large, there
       // will be too much elastic strain energy at the failure stress, so instead we partially damage
       // the material and activate a surface flag.  This will only be effective if used with
       // field-gradient partitioning, so the surface flag creates a fracture surface.
       // 
       // Compute the nominal fully-damaged yield stress for crack-tip correction and regularization.
+
+      // MH: TODO: FIXME:  We want the model to increment damage if:
+      // devStress > shearStrength/stressConcentration, for stressConcentration>=1
+      // But the continuum stress in the element should probably be the strength of the material,
+      // until damage progresses.  
+      // crackTipStress = stressConcentration*vonMisesTrialStress
+      // if (crackTipStress > strength ):
+      //   Dnew = incrementDamage()
+      //   shearStressNew = (1-D)*strength + D*strength/stressConcentration
+      // else:
+      //   shearStressNew = vonMisesTrialStress
+      //
+      // Note that if stressConcentration=1, the plastic case is just shearStressNew = strength, as it should be
+
+
       real64 nominalFullyDamagedStrength;
       if( trialPressure > 0.0 ) 
       {
@@ -609,6 +623,9 @@ void CeramicDamageUpdates::smallStrainUpdateHelper( localIndex const k,
       // Compute the elastic strain energy minus the strain energy that would exist at the current pressure with damage=1;
       // i.e. the energy that would be dissipated if damage were set equal to 1, without unloading.
       real64 nominalElasticStrainEnergy = 0.5*trialPressure*trialPressure/bulk + pow(nominalIntactStrength - nominalFullyDamagedStrength,2) / (6.*m_shearModulus[k]);
+
+
+
 
       if ( nominalElasticStrainEnergy < m_fractureEnergyReleaseRate / m_lengthScale[k] )
       { // Increment damage to ramp down stress until energy criteria is met.   
@@ -808,6 +825,7 @@ void CeramicDamageUpdates::plasticReturn( const real64 damage,        // damage
 {
   real64 pressure = trialPressure;
   real64 strength = 0.;
+  real64 newShearStress = 0.0;
   if( trialPressure <= ( 1.0 - damage ) * pmin0 ) 
   { 
     // Pressure is on the vertex
@@ -823,17 +841,24 @@ void CeramicDamageUpdates::plasticReturn( const real64 damage,        // damage
   }
   else
   {          
+    // We may be in this loop if the shear stress exceed strength/crackTipStressConcentration,
+    // but the continuum stress isn't above the continuum strength.
+
     // Strength at current value of damage and trial pressure
     strength = CeramicDamageUpdates::getStrength( damage, pressure, J2, J3, mu, Yc, Yt0, Ycmax );
     // scale deviatoric stress and return reconstructed stress:
+
+    // trialJ2 = trialVonMises * trialVonMises / 3.0;
+    // trialVonMises = sqrt(3.0*J2);
+    newShearStress = std::min( sqrt(3.0*J2) , strength );
     twoInvariant::stressRecomposition( -pressure,
-                                      strength/crackTipStressConcentration,  // new magnitude of deviatoric stress
+                                      newShearStress,  // new magnitude of deviatoric stress
                                       deviator,
                                       stress );
   }
 
   // Elastic strain energy at end-of-step stress based on linear-elasticity.
-  elasticStrainEnergy = 0.5*pressure*pressure/bulk + std::pow( strength / crackTipStressConcentration , 2 ) / (6.*shear);
+  elasticStrainEnergy = 0.5*pressure*pressure/bulk + newShearStress*newShearStress/(6.*shear);
 }
 
 
