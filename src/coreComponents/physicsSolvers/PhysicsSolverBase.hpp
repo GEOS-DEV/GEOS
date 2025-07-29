@@ -1016,6 +1016,8 @@ protected:
     return getConstitutiveModel< CONSTITUTIVE_TYPE >( subRegion, getConstitutiveName< CONSTITUTIVE_TYPE >( subRegion ) );
   }
 
+  bool detectOscillations();
+
   /// Courant–Friedrichs–Lewy factor for the timestep
   real64 m_cflFactor;
 
@@ -1072,6 +1074,8 @@ protected:
 
   /// Timers for the aggregate profiling of the solver
   std::map< std::string, std::chrono::system_clock::duration > m_timers;
+
+  ArrayOfArrays< real64 > m_localSolutionHistory;
 
 private:
   /// List of names of regions the solver will be applied to

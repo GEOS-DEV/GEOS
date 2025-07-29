@@ -1143,7 +1143,10 @@ void PhysicsSolverBase::implicitStepSetup( real64 const & GEOS_UNUSED_PARAM( tim
                                            real64 const & GEOS_UNUSED_PARAM( dt ),
                                            DomainPartition & GEOS_UNUSED_PARAM( domain ) )
 {
-  GEOS_THROW( "PhysicsSolverBase::ImplicitStepSetup called!. Should be overridden.", std::runtime_error );
+  for(integer i = 0; i < m_localSolutionHistory.size(); ++i)
+  {
+    m_localSolutionHistory.eraseArray(i);
+  }
 }
 
 void PhysicsSolverBase::setupDofs( DomainPartition const & GEOS_UNUSED_PARAM( domain ),
@@ -1366,9 +1369,17 @@ bool PhysicsSolverBase::checkSystemSolution( DomainPartition & GEOS_UNUSED_PARAM
 
 real64 PhysicsSolverBase::scalingForSystemSolution( DomainPartition & GEOS_UNUSED_PARAM( domain ),
                                                     DofManager const & GEOS_UNUSED_PARAM( dofManager ),
-                                                    arrayView1d< real64 const > const & GEOS_UNUSED_PARAM( localSolution ) )
+                                                    arrayView1d< real64 const > const & localSolution )
 {
-  return 1.0;
+  real64 scalingFactor = 1.0;
+
+  // Check for oscillations
+  if(detectOscillations())
+    scalingFactor *= 0.95;
+
+  m_localSolutionHistory.appendArray(localSolution.begin(), localSolution.end());
+
+  return scalingFactor;
 }
 
 void PhysicsSolverBase::applySystemSolution( DofManager const & GEOS_UNUSED_PARAM( dofManager ),
@@ -1402,7 +1413,10 @@ void PhysicsSolverBase::resetConfigurationToBeginningOfStep( DomainPartition & G
 
 void PhysicsSolverBase::resetStateToBeginningOfStep( DomainPartition & GEOS_UNUSED_PARAM( domain ) )
 {
-  GEOS_ERROR( "PhysicsSolverBase::ResetStateToBeginningOfStep called!. Should be overridden." );
+  for(integer i = 0; i < m_localSolutionHistory.size(); ++i)
+  {
+    m_localSolutionHistory.eraseArray(i);
+  }
 }
 
 bool PhysicsSolverBase::resetConfigurationToDefault( DomainPartition & GEOS_UNUSED_PARAM( domain ) ) const
@@ -1480,6 +1494,44 @@ void PhysicsSolverBase::saveSequentialIterationState( DomainPartition & GEOS_UNU
 {
   // up to specific solver to save what is needed
   GEOS_ERROR( "Call to PhysicsSolverBase::saveSequentialIterationState. Method should be overloaded by the solver" );
+}
+
+// Detect oscillations for all dofs in the solution history
+bool PhysicsSolverBase::detectOscillations()
+{
+  if(m_localSolutionHistory.size() < 3) 
+    return false;
+
+  for(size_t i = m_localSolutionHistory.size() - 1; i > 1; --i)
+  {
+    localIndex const numDofs = m_localSolutionHistory[i].size();
+    for(int dof = 0; dof < numDofs; ++dof)
+    {
+      real64 v0 = m_localSolutionHistory[i][dof];
+      real64 v1 = m_localSolutionHistory[i-1][dof];
+      real64 v2 = m_localSolutionHistory[i-2][dof];
+
+      if( std::abs(v0) < 0.01 || std::abs(v1) < 0.01 || std::abs(v2) < 0.01 )
+        break;
+
+      // Check all values are "close" in absolute value (relative difference small)
+      real64 maxAbs = std::max({std::abs(v0), std::abs(v1), std::abs(v2), 1e-12});
+      if( std::abs(v0+v1)/maxAbs > 0.01 || std::abs(v1+v2)/maxAbs > 0.01 )
+        break;
+
+      // Check sign is oscillating
+      if( (v0 > 0 && v1 < 0 && v2 > 0) ||
+          (v0 < 0 && v1 > 0 && v2 < 0) )
+      {
+        std::cout << "Oscillation detected at dof " << dof << " in localSolution time history!" << std::endl;
+        std::cout << "History: " << v0 << ", " << v1 << ", " << v2 << std::endl;
+        //history.clear(); // clear history
+        return true; // oscillation detected
+      }
+    }
+  }
+
+  return false; // no oscillations detected
 }
 
 #if defined(GEOS_USE_PYGEOSX)
