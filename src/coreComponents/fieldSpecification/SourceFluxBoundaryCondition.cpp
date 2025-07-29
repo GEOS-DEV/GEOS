@@ -19,7 +19,6 @@
  */
 
 #include "SourceFluxBoundaryCondition.hpp"
-#include "physicsSolvers/fluidFlow/CompositionalMultiphaseBase.hpp"
 
 namespace geos
 {
@@ -35,10 +34,9 @@ SourceFluxBoundaryCondition::SourceFluxBoundaryCondition( string const & name, G
   getWrapper< string >( FieldSpecificationBase::viewKeyStruct::functionNameString() ).
     setDescription( GEOS_FMT( "Name of a function that specifies the variation of the production rate variations of this {}."
                               "Multiplied by {}. If no function is provided, a constant value of 1 is used."
-                              "The producted fluid rate unit is in kg by default, or in mole if the flow solver has a {} of 0.",
+                              "The produced fluid rate unit is in kg by default, or in mole if the flow solver uses moles.",
                               catalogName(),
-                              FieldSpecificationBase::viewKeyStruct::scaleString(),
-                              CompositionalMultiphaseBase::viewKeyStruct::useMassFlagString() ) );
+                              FieldSpecificationBase::viewKeyStruct::scaleString() ) );
 
   getWrapper< real64 >( FieldSpecificationBase::viewKeyStruct::scaleString() ).
     setDescription( GEOS_FMT( "Multiplier of the {0} value. If no {0} is provided, this value is used directly.",

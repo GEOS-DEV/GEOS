@@ -17,8 +17,6 @@
 #include "CellElementSubRegion.hpp"
 #include "mesh/generators/CellBlockABC.hpp"
 
-#include <fnmatch.h>
-
 namespace geos
 {
 using namespace dataRepository;

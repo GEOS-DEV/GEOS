@@ -17,10 +17,7 @@
 #include "codingUtilities/UnitTestUtilities.hpp"
 #include "constitutive/fluid/multifluid/MultiFluidConstants.hpp"
 #include "constitutive/fluid/multifluid/compositional/functions/StabilityTest.hpp"
-#include "constitutive/fluid/multifluid/compositional/functions/NegativeTwoPhaseFlash.hpp"
-#include "constitutive/fluid/multifluid/compositional/functions/CubicEOSPhaseModel.hpp"
 #include "TestFluid.hpp"
-#include "TestFluidUtilities.hpp"
 
 using namespace geos::constitutive;
 using namespace geos::constitutive::compositional;
@@ -61,6 +58,10 @@ public:
     real64 const zCH4 = std::get< 2 >( data );
     real64 const expectedTangentPlaneDistance = std::get< 3 >( data );
 
+    constitutive::compositional::FlashData flashData;
+    flashData.liquidEos = EOS_TYPE;
+    flashData.vapourEos = EOS_TYPE;
+
     stackArray1d< real64, numComps > composition( numComps );
     composition[0] = zCH4;
     composition[1] = 1.0 - zCH4;
@@ -74,6 +75,7 @@ public:
                                                          composition.toSliceConst(),
                                                          componentProperties,
                                                          EOS_TYPE,
+                                                         flashData,
                                                          tangentPlaneDistance,
                                                          kValues.toSlice() );
 
@@ -90,7 +92,7 @@ protected:
 private:
   static std::unique_ptr< TestFluid< numComps > > createFluid()
   {
-    std::unique_ptr< TestFluid< numComps > > fluid = TestFluid< numComps >::create( {Fluid::C1, Fluid::C3} );
+    std::unique_ptr< TestFluid< numComps > > fluid = TestFluid< numComps >::create( {Fluid::CH4, Fluid::C3H8} );
     fluid->setBinaryCoefficients( Feed< 1 >{ 0.1 } );
     return fluid;
   }
@@ -113,28 +115,27 @@ TEST_P( SoaveRedlichKwong, testStabilityTest )
 
 /* UNCRUSTIFY-OFF */
 
-INSTANTIATE_TEST_SUITE_P(
-  StabilityTest, PengRobinson,
-  ::testing::Values(
-    StabilityData{ 1.00000e+06, 297.15, 0.2,   1.1102230e-16 },
-    StabilityData{ 1.00000e+06, 353.15, 0.2,  -2.2204460e-16 },
-    StabilityData{ 5.00000e+06, 297.15, 0.2,  -1.0160710e+00 },
-    StabilityData{ 5.00000e+06, 353.15, 0.2,  -1.4627298e-03 },
-    StabilityData{ 2.00000e+07, 297.15, 0.2,  -3.3306691e-16 },
-    StabilityData{ 2.00000e+07, 353.15, 0.2,  -6.6613381e-16 }    
-  )
+INSTANTIATE_TEST_SUITE_P(StabilityTest, PengRobinson,
+  ::testing::ValuesIn<StabilityData>({
+    {1.0e+06, 297.15, 0.400, -2.7755576e-16},
+    {1.0e+06, 353.15, 0.400, -1.1102230e-16},
+    {5.0e+06, 297.15, 0.400, -1.8699196e-01},
+    {5.0e+06, 353.15, 0.400,  1.6653345e-16},
+    {2.0e+07, 297.15, 0.400, -1.2767565e-15},
+    {2.0e+07, 353.15, 0.400, -1.6653345e-16}
+  })
 );
 
 INSTANTIATE_TEST_SUITE_P(
   StabilityTest, SoaveRedlichKwong,
-  ::testing::Values(
-    StabilityData{ 1.00000e+06, 297.15, 0.2,  -2.2204460e-16 },
-    StabilityData{ 1.00000e+06, 353.15, 0.2,  -3.3306691e-16 },
-    StabilityData{ 5.00000e+06, 297.15, 0.2,  -1.0780446e+00 },
-    StabilityData{ 5.00000e+06, 353.15, 0.2,  -3.1421339e-03 },
-    StabilityData{ 2.00000e+07, 297.15, 0.2,  -2.4424907e-15 },
-    StabilityData{ 2.00000e+07, 353.15, 0.2,  -7.7715612e-16 }
-  )
+  ::testing::ValuesIn<StabilityData>({
+    {1.0e+06, 297.15, 0.350, -2.7755576e-16},
+    {1.0e+06, 353.15, 0.350, -3.8857806e-16},
+    {5.0e+06, 297.15, 0.350, -2.0115518e-01},
+    {5.0e+06, 353.15, 0.350, -2.7755576e-16},
+    {2.0e+07, 297.15, 0.350, -6.6613381e-16},
+    {2.0e+07, 353.15, 0.350, -7.7715612e-16}
+  })
 );
 
 /* UNCRUSTIFY-ON */

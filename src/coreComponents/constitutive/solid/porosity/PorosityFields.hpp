@@ -67,7 +67,7 @@ DECLARE_FIELD( initialPorosity,
                "initialPorosity",
                array2d< real64 >,
                0.0,
-               NOPLOT,
+               LEVEL_0,
                WRITE_AND_READ,
                "Initial porosity" );
 

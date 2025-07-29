@@ -22,7 +22,6 @@
 #include <numeric>
 #include "common/format/StringUtilities.hpp"
 #include "common/logger/Logger.hpp"
-#include "TableFormatter.hpp"
 
 namespace geos
 {
@@ -475,9 +474,8 @@ void TableTextFormatter::stretchColumnsByMergedCellsWidth( stdVector< size_t > &
       {
         CellLayoutRow & row = tableGrid[rowId];
         TableLayout::CellLayout const & cell = row.cells[columnId];
-        TableLayout::CellLayout const & leftCell = row.cells[columnId - 1];
         bool const isToMergeWithRight = cell.m_cellType == CellType::MergeNext;
-        bool const isToMergeWithLeft = columnId > 0 && leftCell.m_cellType == CellType::MergeNext;
+        bool const isToMergeWithLeft = ( columnId > 0 ) ? ( row.cells[columnId - 1].m_cellType == CellType::MergeNext ) : false;
         bool const isFirstToMerge = isToMergeWithRight && !isToMergeWithLeft;
         if( isFirstToMerge )
         { // we detected a set of cells to merge, let's compute its total width

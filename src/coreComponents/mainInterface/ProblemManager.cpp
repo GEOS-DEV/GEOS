@@ -32,6 +32,7 @@
 #include "events/tasks/TasksManager.hpp"
 #include "events/EventManager.hpp"
 #include "finiteElement/FiniteElementDiscretization.hpp"
+#include "common/format/LogPart.hpp"
 #include "finiteElement/FiniteElementDiscretizationManager.hpp"
 #include "finiteVolume/FluxApproximationBase.hpp"
 #include "finiteVolume/HybridMimeticDiscretization.hpp"
@@ -61,7 +62,7 @@ using namespace dataRepository;
 using namespace constitutive;
 
 ProblemManager::ProblemManager( conduit::Node & root ):
-  dataRepository::Group( dataRepository::keys::ProblemManager, root ),
+  Group( keys::ProblemManager, root ),
   m_physicsSolverManager( nullptr ),
   m_eventManager( nullptr ),
   m_functionManager( nullptr ),
@@ -168,19 +169,28 @@ Group * ProblemManager::createChild( string const & GEOS_UNUSED_PARAM( childKey 
 void ProblemManager::problemSetup()
 {
   GEOS_MARK_FUNCTION;
+
   postInputInitializationRecursive();
 
+  LogPart meshGenerationLog( "Mesh generation", MpiWrapper::commRank() == 0 );
+  meshGenerationLog.begin();
   generateMesh();
+  meshGenerationLog.end();
 
 //  initialize_postMeshGeneration();
-
+  LogPart numericalMethodLog( "Numerical Methods", MpiWrapper::commRank() == 0 );
+  numericalMethodLog.begin();
   applyNumericalMethods();
+  numericalMethodLog.end();
 
   registerDataOnMeshRecursive( getDomainPartition().getMeshBodies() );
 
   initialize();
 
+  LogPart importFieldsLog( "Import fields", MpiWrapper::commRank() == 0 );
+  importFieldsLog.begin();
   importFields();
+  importFieldsLog.end();
 }
 
 
@@ -959,7 +969,7 @@ map< std::tuple< string, string, string, string >, localIndex > ProblemManager::
 
                 finiteElement::FiniteElementBase &
                 fe = subRegion.template registerWrapper< finiteElement::FiniteElementBase >( discretizationName, std::move( newFE ) ).
-                       setRestartFlags( dataRepository::RestartFlags::NO_WRITE ).reference();
+                       setRestartFlags( RestartFlags::NO_WRITE ).reference();
                 subRegion.excludeWrappersFromPacking( { discretizationName } );
 
                 finiteElement::FiniteElementDispatchHandler< ALL_FE_TYPES >::dispatch3D( fe,

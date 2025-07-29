@@ -21,8 +21,6 @@
 
 #include "SinglePhasePoromechanics.hpp"
 
-#include "constitutive/solid/PorousSolid.hpp"
-#include "constitutive/solid/PorousDamageSolid.hpp"
 #include "constitutive/fluid/singlefluid/SingleFluidBase.hpp"
 #include "linearAlgebra/solvers/BlockPreconditioner.hpp"
 #include "linearAlgebra/solvers/SeparateComponentPreconditioner.hpp"
@@ -35,6 +33,11 @@
 #include "physicsSolvers/solidMechanics/contact/SolidMechanicsLagrangeContact.hpp"
 #include "physicsSolvers/solidMechanics/contact/SolidMechanicsEmbeddedFractures.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseHybridFVM.hpp"
+
+#include "physicsSolvers/multiphysics/poromechanicsKernels/PoromechanicsKernelsDispatchTypeList.hpp"
+#include "physicsSolvers/multiphysics/poromechanicsKernels/ThermoPoromechanicsKernelsDispatchTypeList.hpp"
+#include "physicsSolvers/multiphysics/poromechanicsKernels/PoromechanicsDamageKernelsDispatchTypeList.hpp"
+#include "physicsSolvers/solidMechanics/kernels/SolidMechanicsKernelsDispatchTypeList.hpp"
 
 namespace geos
 {
@@ -292,7 +295,7 @@ void SinglePhasePoromechanics< FLOW_SOLVER, MECHANICS_SOLVER >::assembleElementB
     if( m_damageFlag )
     {
       poromechanicsMaxForce =
-        this->template assemblyLaunch< constitutive::PorousDamageSolidBase,
+        this->template assemblyLaunch< PoromechanicsDamageKernelsDispatchTypeList,
                                        poromechanicsDamageKernels::SinglePhasePoromechanicsDamageKernelFactory >( mesh,
                                                                                                                   dofManager,
                                                                                                                   regionNames,
@@ -307,7 +310,7 @@ void SinglePhasePoromechanics< FLOW_SOLVER, MECHANICS_SOLVER >::assembleElementB
     else if( this->m_isThermal )
     {
       poromechanicsMaxForce =
-        this->template assemblyLaunch< constitutive::PorousSolidBase,
+        this->template assemblyLaunch< ThermoPoromechanicsKernelsDispatchTypeList,
                                        thermalPoromechanicsKernels::ThermalSinglePhasePoromechanicsKernelFactory >( mesh,
                                                                                                                     dofManager,
                                                                                                                     regionNames,
@@ -322,7 +325,7 @@ void SinglePhasePoromechanics< FLOW_SOLVER, MECHANICS_SOLVER >::assembleElementB
     else
     {
       poromechanicsMaxForce =
-        this->template assemblyLaunch< constitutive::PorousSolidBase,
+        this->template assemblyLaunch< PoromechanicsKernelsDispatchTypeList,
                                        poromechanicsKernels::SinglePhasePoromechanicsKernelFactory >( mesh,
                                                                                                       dofManager,
                                                                                                       regionNames,
@@ -361,7 +364,7 @@ void SinglePhasePoromechanics< FLOW_SOLVER, MECHANICS_SOLVER >::assembleElementB
     }
 
     mechanicsMaxForce =
-      this->template assemblyLaunch< constitutive::SolidBase,
+      this->template assemblyLaunch< SolidMechanicsKernelsDispatchTypeList,
                                      solidMechanicsLagrangianFEMKernels::QuasiStaticFactory >( mesh,
                                                                                                dofManager,
                                                                                                filteredRegionNames,
@@ -407,11 +410,11 @@ template< typename FLOW_SOLVER, typename MECHANICS_SOLVER >
 void SinglePhasePoromechanics< FLOW_SOLVER, MECHANICS_SOLVER >::updateBulkDensity( ElementSubRegionBase & subRegion )
 {
   // get the fluid model (to access fluid density)
-  string const fluidName = subRegion.getReference< string >( FlowSolverBase::viewKeyStruct::fluidNamesString() );
+  string const & fluidName = subRegion.getReference< string >( FlowSolverBase::viewKeyStruct::fluidNamesString() );
   SingleFluidBase const & fluid = this->template getConstitutiveModel< SingleFluidBase >( subRegion, fluidName );
 
   // get the solid model (to access porosity and solid density)
-  string const solidName = subRegion.getReference< string >( viewKeyStruct::porousMaterialNamesString() );
+  string const & solidName = subRegion.getReference< string >( viewKeyStruct::porousMaterialNamesString() );
   CoupledSolidBase const & solid = this->template getConstitutiveModel< CoupledSolidBase >( subRegion, solidName );
 
   // update the bulk density

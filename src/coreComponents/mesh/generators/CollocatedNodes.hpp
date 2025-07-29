@@ -35,14 +35,9 @@ public:
    * @brief Build a convenience wrapper around the raw vtk collocated nodes information.
    * @param faceBlockName The face block name.
    * @param faceMesh The face mesh for which the collocated nodes structure will be fed.
-   * @param isParallel Even if the global simulation is parallel,
-   * this structure can be built on one unique rank or on multiple ranks.
-   * When built on multiple ranks for the same face mesh, some additional extra checks are performed.
-   * Those checks are useless when the data is manipulated on one unique rank.
    */
   CollocatedNodes( string const & faceBlockName,
-                   vtkSmartPointer< vtkDataSet > faceMesh,
-                   bool isParallel = true );
+                   vtkSmartPointer< vtkDataSet > faceMesh );
 
   /**
    * @brief For node @p i of the face block, returns all the duplicated global node indices in the main 3d mesh.
