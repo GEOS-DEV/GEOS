@@ -277,7 +277,7 @@ public:
     return m_sendBuffer[commID];
   }
 
-  void resizeSendBuffer( std::vector< signed char >::size_type commID, int const newSize )
+  void resizeSendBuffer( int const commID, int const newSize )
   {
     m_sendBufferSize[commID] = newSize;
     m_sendBuffer[commID].resize( newSize );
