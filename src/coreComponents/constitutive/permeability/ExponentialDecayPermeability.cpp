@@ -18,7 +18,6 @@
  */
 
 #include "ExponentialDecayPermeability.hpp"
-#include "LvArray/src/tensorOps.hpp"
 #include "constitutive/permeability/PermeabilityFields.hpp"
 
 namespace geos
