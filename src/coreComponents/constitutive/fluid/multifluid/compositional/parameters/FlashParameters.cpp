@@ -39,6 +39,7 @@ FlashParameters::FlashParameters( std::unique_ptr< ModelParameters > parameters 
   m_continuousParameters[STABILITY_THRESHOLD] = -1.0e-8;
   m_continuousParameters[STABILITY_TOLERANCE] = 1.0e-8;
   m_continuousParameters[FLASH_TOLERANCE] = 1.0e-8;
+  m_continuousParameters[NEGATIVE_FLASH_TOLERANCE] = -1.0e-1;
 
   m_discreteParameters[STABILITY_MAX_ITERATIONS] = 300;
   m_discreteParameters[FLASH_MAX_ITERATIONS] = 300;

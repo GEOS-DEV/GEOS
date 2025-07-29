@@ -110,7 +110,16 @@ void testNumericalDerivative( real64 const x,
     }
     checkRelativeError( derivatives[i], selectedDerivative, relTolerance, absTolerance,
                         GEOS_FMT( "Numerical derivative for component {}", i ) );
+std::cout
+<< std::setw(2) << i << " "
+<< std::scientific << std::setprecision(5) << std::setw(12) << derivatives[i] << " "
+<< std::scientific << std::setprecision(5) << std::setw(12) << selectedDerivative << " | "
+<< std::scientific << std::setprecision(5) << std::setw(12) << leftValues[i] << " " << centreValues[i] << " " << rightValues[i] << " | "
+<< std::scientific << std::setprecision(5) << std::setw(12) << derivatives[i]-selectedDerivative << " "
+<< (relTolerance+absTolerance) << " "
+<< "\n";
   }
+std::cout << "-------------------------------------------------\n";
 }
 
 /**

@@ -54,14 +54,17 @@ public:
   /** The tolerance to use to determine convergece of the flash. */
   static integer constexpr FLASH_TOLERANCE = 0;
 
+  /** The limit for negative flash tolerance. */
+  static integer constexpr NEGATIVE_FLASH_TOLERANCE = 1;
+
   /** The value of the tangent plane distance below which a mixture is determined to be unstable. */
-  static integer constexpr STABILITY_THRESHOLD = 1;
+  static integer constexpr STABILITY_THRESHOLD = 2;
 
   /** The tolerance to use to determine convergece to a stationary point in the stability test. */
-  static integer constexpr STABILITY_TOLERANCE = 2;
+  static integer constexpr STABILITY_TOLERANCE = 3;
 
   /* Number of continuous variables */
-  static integer constexpr NUM_FLOAT = 3;
+  static integer constexpr NUM_FLOAT = 4;
 
 public:
   FlashParameters( std::unique_ptr< ModelParameters > parameters );

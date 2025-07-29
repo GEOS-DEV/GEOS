@@ -105,7 +105,7 @@ public:
     equationOfState->m_equationsOfStateNames.emplace_back( eosName );
 
     auto * criticalVolume = const_cast< CriticalVolume * >(m_parameters->get< CriticalVolume >());
-    TestFluid< NC >::populateArray( criticalVolume->m_componentCriticalVolume, this->m_fluid->criticalVolume );
+    TestFluid< NC >::createArray( criticalVolume->m_componentCriticalVolume, this->m_fluid->criticalVolume );
 
     m_phaseTypes.emplace_back( static_cast< integer >(PhaseType::LIQUID));
     m_phaseTypes.emplace_back( static_cast< integer >(PhaseType::VAPOUR));

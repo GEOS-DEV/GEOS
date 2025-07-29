@@ -137,25 +137,6 @@ void NegativeTwoPhaseFlash::computeDerivatives(
   LvArray::forValuesInSlice( liquidCompositionDerivs, setZero );
   LvArray::forValuesInSlice( vapourCompositionDerivs, setZero );
 
-  // Check if we are single or 2-phase
-  if( false && vapourFraction < MultiFluidConstants::epsilon )
-  {
-    for( integer ic = 0; ic < numComps; ++ic )
-    {
-      liquidCompositionDerivs( ic, Deriv::dC + ic ) = 1.0;
-      vapourCompositionDerivs( ic, Deriv::dC + ic ) = 1.0;
-    }
-  }
-  else if( false && 1.0 - vapourFraction < MultiFluidConstants::epsilon )
-  {
-    for( integer ic = 0; ic < numComps; ++ic )
-    {
-      liquidCompositionDerivs( ic, Deriv::dC + ic ) = 1.0;
-      vapourCompositionDerivs( ic, Deriv::dC + ic ) = 1.0;
-    }
-  }
-  else
-  {
     // Calculate the liquid and vapour fugacities and derivatives
     StackArray< real64, 2, 2*maxNumComps > logFugacity( 2, numComps );
     StackArray< real64, 3, 2*maxNumComps * maxNumDofs > logFugacityDerivs( 2, numComps, numDofs );
@@ -221,7 +202,6 @@ void NegativeTwoPhaseFlash::computeDerivatives(
                           liquidCompositionDerivs,
                           vapourCompositionDerivs );
       LvArray::forValuesInSlice( vapourFractionDerivs, []( real64 & v ){ v *= -1.0; } );
-    }
   }
 }
 
@@ -252,7 +232,7 @@ void NegativeTwoPhaseFlash::computeDerivatives(
   real64 const VL = phase1Fraction;
   real64 const factor1 = VL / (1.0 - VL);
   real64 const factor2 = 1.0 / (1.0 - VL);
-
+  real64 sumDiffxy = 0.0;
   for( integer i = 0; i < numComps; ++i )
   {
     real64 const phi_2_i = phase2Fugacity[i];
@@ -260,6 +240,8 @@ void NegativeTwoPhaseFlash::computeDerivatives(
 
     real64 const xi = phase2Composition[i];
     real64 const yi = phase1Composition[i];
+
+sumDiffxy *= ((xi-yi)*(xi-yi));
 
     real64 col_N = 0.0;
     for( integer j = 0; j < numComps; ++j )
@@ -283,6 +265,16 @@ void NegativeTwoPhaseFlash::computeDerivatives(
     A( numComps, i ) = factor2;
   }
   A( numComps, numComps ) = 0.0;
+
+  // Check for single phase trivial solution
+  if (sumDiffxy < MultiFluidConstants::fugacityTolerance)
+  {
+    for( integer i = 0; i < numComps; ++i )
+    {
+      A( numComps, i ) = 0.0;
+    }
+    A( numComps, numComps ) = 1.0;
+  }
 
   // Pressure and temperature derivatives
   for( integer ic = 0; ic < numComps; ++ic )
