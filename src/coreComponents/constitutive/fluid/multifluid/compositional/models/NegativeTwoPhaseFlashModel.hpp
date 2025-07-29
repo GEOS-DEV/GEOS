@@ -187,7 +187,8 @@ class NegativeTwoPhaseFlashModel : public FunctionBase
 public:
   NegativeTwoPhaseFlashModel( string const & name,
                               ComponentProperties const & componentProperties,
-                              ModelParameters const & modelParameters );
+                              ModelParameters const & modelParameters,
+                              arrayView1d< integer const > const phaseTypes );
 
   static string catalogName();
 
@@ -208,8 +209,13 @@ public:
   // Create parameters unique to this model
   static std::unique_ptr< ModelParameters > createParameters( std::unique_ptr< ModelParameters > parameters );
 
+  // Determine phase ordering
+  static void calculatePhaseOrdering( arrayView1d< integer const > const & phaseTypes,
+                                      arrayView1d< integer > const & phaseOrder );
+
 private:
   ModelParameters const & m_parameters;
+  arrayView1d< integer const > const m_phaseTypes;
 };
 
 } // end namespace compositional
