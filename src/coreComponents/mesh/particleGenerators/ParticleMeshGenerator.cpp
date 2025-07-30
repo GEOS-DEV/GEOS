@@ -330,6 +330,7 @@ void ParticleMeshGenerator::fillParticleBlockManager( ParticleBlockManager & par
         case ParticleType::SinglePointBSpline:
         {
           GEOS_ERROR("SinglePointBSpline particle type is not implemented!");
+          break;
         }
         case ParticleType::CPDI:
         {
@@ -358,14 +359,17 @@ void ParticleMeshGenerator::fillParticleBlockManager( ParticleBlockManager & par
         case ParticleType::CPTI:
         {
           GEOS_ERROR("CPTI particle type is not implemented!");
+          break;
         }
         case ParticleType::CPDI2:
         {
           GEOS_ERROR("CPDI2 particle type is not implemented!");
+          break;
         }
         default:
         {
           GEOS_ERROR( "Invalid particle type: " << particleBlock.getParticleType() );
+          break;
         }
       }
 
