@@ -285,9 +285,6 @@ TEST( testSolverStats, testOutputFiles )
   problem.applyInitialConditions();
   problem.runSimulation();
 
-  PhysicsSolverBase const & solver = problem.getGroupByPath< PhysicsSolverBase >( string( "/Solvers/SinglePhaseFlow" ) );
-  SolverStatistics const & solverStat = solver.getSolverStatistics();
-
   auto loadCsvLines = []( string const & filename, std::vector< string > & lines ) {
     std::ifstream is( filename );
     EXPECT_TRUE( is.good());
