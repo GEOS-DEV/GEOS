@@ -37,7 +37,7 @@ PipeFlowTableFunction::PipeFlowTableFunction( const string & name,
     setSizedFromParent( 0 ).
     setDescription( "Type of rate entered in the rates array. Valid entires are ..." );
 
-  registerWrapper( viewKeyStruct::rateType(), &m_rate ).
+  registerWrapper( viewKeyStruct::rateArray(), &m_rate ).
     setInputFlag( InputFlags::REQUIRED ).
     setSizedFromParent( 0 ).
     setDescription( "Array of rates" );
@@ -47,7 +47,7 @@ PipeFlowTableFunction::PipeFlowTableFunction( const string & name,
     setSizedFromParent( 0 ).
     setDescription( "Type of water fraction  entered in the wfr array. Valid entires are ..." );
 
-  registerWrapper( viewKeyStruct::rateType(), &m_wfr ).
+  registerWrapper( viewKeyStruct::waterFractionArray(), &m_wfr ).
     setInputFlag( InputFlags::REQUIRED ).
     setSizedFromParent( 0 ).
     setDescription( "Array of water fractions " );
@@ -57,7 +57,7 @@ PipeFlowTableFunction::PipeFlowTableFunction( const string & name,
     setSizedFromParent( 0 ).
     setDescription( "Type of gas fraction  entered in the wfr array. Valid entires are ..." );
 
-  registerWrapper( viewKeyStruct::rateType(), &m_gfr ).
+  registerWrapper( viewKeyStruct::gasFractionArray(), &m_gfr ).
     setInputFlag( InputFlags::REQUIRED ).
     setSizedFromParent( 0 ).
     setDescription( "Array of gas fractions " );
@@ -76,7 +76,7 @@ PipeFlowTableFunction::PipeFlowTableFunction( const string & name,
 
 void PipeFlowTableFunction::initializeFunction()
 {
-  
+
 }
 REGISTER_CATALOG_ENTRY( FunctionBase, PipeFlowTableFunction, string const &, Group * const )
 

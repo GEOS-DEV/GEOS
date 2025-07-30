@@ -61,23 +61,23 @@ public:
     /// @return String key type of flow rate associated with the "rate" array
     static constexpr char const *rateType() { return "rateType"; }
     /// @return String key for "rate" array
-    static constexpr char const *rateArray() { return "rateArray"; }
+    static constexpr char const *rateArray() { return "rate"; }
 
     /// @return String key for "whp" array
-    static constexpr char const *wellHeadPressureArray() { return "wellHeadPressureArray"; }
+    static constexpr char const *wellHeadPressureArray() { return "wellHeadPressure"; }
 
     /// @return String key type of water fraction associated with the "wfr" array
     static constexpr char const *waterFractionType() { return "waterFractionType"; }
     /// @return String key for "wfr" array
-    static constexpr char const *waterFractionArray() { return "waterFractionArray"; }
+    static constexpr char const *waterFractionArray() { return "wfr"; }
 
     /// @return String key type of gass fraction associated with the "gfr" array
     static constexpr char const *gasFractionType() { return "gasFractionType"; }
     /// @return String key for "wfr" array
-    static constexpr char const *gasFractionArray() { return "gasFractionArray"; }
+    static constexpr char const *gasFractionArray() { return "gfr"; }
 
     /// @return String key for "bhp" array
-    static constexpr char const *bottomHolePressureArray() { return "bottomHolePressureArray"; }
+    static constexpr char const *bottomHolePressureArray() { return "bottomHolePressure"; }
   }
   /// ViewKey struct for the Perforation class
   viewKeysPipeFlowTableFunction;
