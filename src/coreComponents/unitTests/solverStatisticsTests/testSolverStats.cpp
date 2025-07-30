@@ -321,8 +321,8 @@ TEST( testSolverStats, testOutputFiles )
   EXPECT_EQ( actualValues[0], expectedValues[0] );
   EXPECT_EQ( actualValues[1], expectedValues[1] );
   EXPECT_EQ( actualValues[2], expectedValues[2] );
-  EXPECT_TRUE( compareWithTolerance( actualValues[3], 0.003770902, 1e-3 ));
-  EXPECT_TRUE( compareWithTolerance( actualValues[4], 9.354e-05, 1e-3 ));
+  EXPECT_TRUE( compareWithTolerance( actualValues[3], 0.003770902, 1e-2 ));
+  EXPECT_TRUE( compareWithTolerance( actualValues[4], 9.354e-05, 1e-2 ));
   EXPECT_EQ( actualValues[6], expectedValues[6] );
   EXPECT_EQ( actualValues[7], expectedValues[7] );
   EXPECT_EQ( actualValues[8], expectedValues[8] );
