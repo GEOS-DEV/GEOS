@@ -20,7 +20,6 @@
 #include "PoromechanicsInitialization.hpp"
 
 #include "events/tasks/TasksManager.hpp"
-#include "physicsSolvers/PhysicsSolverManager.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsStatistics.hpp"
 #include "physicsSolvers/multiphysics/MultiphasePoromechanics.hpp"
 #include "physicsSolvers/multiphysics/MultiphasePoromechanicsConformingFractures.hpp"
