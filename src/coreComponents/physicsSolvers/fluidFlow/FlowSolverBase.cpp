@@ -361,7 +361,6 @@ void FlowSolverBase::checkDiscretizationName() const
 {
   DomainPartition const & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
-  Group const & problemManager = this->getGroupByPath( "/Problem" );
 
   string discretizationMethods;
 
@@ -377,13 +376,13 @@ void FlowSolverBase::checkDiscretizationName() const
   {
     if( !discretizationMethods.empty())
     {
-      GEOS_ERROR( GEOS_FMT( "{}: can not find discretization named '{}'.\nFound discretization : {}",
+      GEOS_ERROR( GEOS_FMT( "{}: can not find discretization named '{}' in 'FiniteVolume.\nFound discretization : {}",
                             getDataContext(), m_discretizationName, discretizationMethods,
                             stringutilities::join( discretizationMethods, ", " )));
     }
     else
     {
-      GEOS_ERROR( GEOS_FMT( "{}: can not find discretization named '{}'.\n" \
+      GEOS_ERROR( GEOS_FMT( "{}: can not find discretization named '{}' in 'FiniteVolume.\n" \
                             "No discretization found, check that you have correctly entered a numerical method",
                             getDataContext(), m_discretizationName ));
     }
