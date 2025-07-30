@@ -72,7 +72,7 @@ public:
   StdVectorWrapper( const Base & other, const Allocator & alloc )
     : Base( other, alloc ) {}
 
-  constexpr StdVectorWrapper( Base && other, const Allocator & alloc )
+  StdVectorWrapper( Base && other, const Allocator & alloc )
     : Base( other, alloc ) {}
 
   StdVectorWrapper( std::initializer_list< T > init,
