@@ -241,7 +241,7 @@ void NegativeTwoPhaseFlash::computeDerivatives(
     real64 const xi = phase2Composition[i];
     real64 const yi = phase1Composition[i];
 
-sumDiffxy *= ((xi-yi)*(xi-yi));
+sumDiffxy += ((xi-yi)*(xi-yi));
 
     real64 col_N = 0.0;
     for( integer j = 0; j < numComps; ++j )

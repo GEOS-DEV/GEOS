@@ -103,7 +103,7 @@ static integer calculatePresentComponents( integer const numComps,
   integer presentCount = 0;
   for( integer ic = 0; ic < numComps; ++ic )
   {
-    if( MultiFluidConstants::epsilon < composition[ic] )
+    if( MultiFluidConstants::minForSpeciesPresence < composition[ic] )
     {
       presentComponents[presentCount++] = ic;
     }
