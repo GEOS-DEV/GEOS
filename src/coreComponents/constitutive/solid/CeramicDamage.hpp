@@ -595,19 +595,15 @@ void CeramicDamageUpdates::smallStrainUpdateHelper( localIndex const k,
       // field-gradient partitioning, so the surface flag creates a fracture surface.
       // 
       // Compute the nominal fully-damaged yield stress for crack-tip correction and regularization.
-
-      // MH: TODO: FIXME:  We want the model to increment damage if:
-      // devStress > shearStrength/stressConcentration, for stressConcentration>=1
-      // But the continuum stress in the element should probably be the strength of the material,
-      // until damage progresses.  
-      // crackTipStress = stressConcentration*vonMisesTrialStress
-      // if (crackTipStress > strength ):
-      //   Dnew = incrementDamage()
-      //   shearStressNew = (1-D)*strength + D*strength/stressConcentration
-      // else:
-      //   shearStressNew = vonMisesTrialStress
       //
-      // Note that if stressConcentration=1, the plastic case is just shearStressNew = strength, as it should be
+      // FIXME:TODO:MH:
+      //   strength/streccConcentration < trialStress < strength
+      // We want to increment damage, but the plastic return will just give the trial stress...resulting
+      // in no dissipation to increment the fracture-energy based damage evolution.
+      // What behavior do we want?
+      // Do we just set damage equal to whatever value is needed to satisfy the fracture energy criterion,
+      // evolving the fracture in a single step?  That will work for cases where the strain energy less the
+      // residual value meets the energy dissipation criterion..but not in general.  
 
 
       real64 nominalFullyDamagedStrength;
