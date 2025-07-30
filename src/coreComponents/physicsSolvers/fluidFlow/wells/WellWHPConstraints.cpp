@@ -47,7 +47,7 @@ WHPConstraint::WHPConstraint( string const & name, Group * const parent )
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Reference elevation where WHP control is enforced [m]" );
 
-      registerWrapper( viewKeyStruct::whpTableNameString(), &m_whpTableName ).
+  registerWrapper( viewKeyStruct::whpTableNameString(), &m_whpTableName ).
     setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Name of the well WHP TABLE. \n" );

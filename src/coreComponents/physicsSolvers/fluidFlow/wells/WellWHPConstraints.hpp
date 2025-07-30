@@ -114,8 +114,8 @@ public:
     static constexpr char const * targetWHPString() { return "targetWHP"; }
     /// String key for the well reference elevation (for WHP control)
     static constexpr char const * refElevString() { return "referenceElevation"; }
-      /// string key for constraint values entered table name
-  static constexpr char const * whpTableNameString() { return "whpTableName"; }
+    /// string key for constraint values entered table name
+    static constexpr char const * whpTableNameString() { return "whpTableName"; }
   }
   viewKeysWellWHPConstraint;
 
