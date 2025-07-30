@@ -4323,7 +4323,7 @@ void SolidMechanicsMPM::computeGridSurfaceNormalWeights( ParticleManager & parti
 
         gridSurfaceNormalWeights[mappedNode][fieldIndex] += LvArray::tensorOps::AiBi< 3 >( gridSurfaceNormal[mappedNode][fieldIndex], surfaceNormal ) * shapeFunctionValues[pp][g] * particleMass[p];
 
-        if( LvArray::tensorOps::l2NormSquared< 3 >( particleSurfaceNormal[p] ) )
+        if( isNotZero( LvArray::tensorOps::l2NormSquared< 3 >( particleSurfaceNormal[p] ) ) )
         {
           gridSurfaceNormalWeightNormalization[mappedNode][fieldIndex] += shapeFunctionValues[pp][g] * particleMass[p];
         }

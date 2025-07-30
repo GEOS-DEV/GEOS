@@ -502,7 +502,7 @@ void CeramicDamageUpdates::smallStrainUpdateHelper( localIndex const k,
   // Tensile cutoff pressure (negative value in tension) is scaled by damage. 
   // so we also scale the bulk modulus in tension so unloading from a damaged vertex
   // smoothly appraoches p=0 as J=1
-  real64 bulk = m_bulkModulus[k] ? m_jacobian[k][q] <= 1.0 : ( 1.0 - m_damage[k][q] )*m_bulkModulus[k];
+  real64 bulk = isNotZero( m_bulkModulus[k] ) ? m_jacobian[k][q] <= 1.0 : ( 1.0 - m_damage[k][q] )*m_bulkModulus[k];
   real64 trialPressure = -bulk * log( m_jacobian[k][q] );
 
   // The tensile strength is Yt = (1/Gamma)*Yt0, where Gamma is the third-invariant dependence function
@@ -586,7 +586,7 @@ void CeramicDamageUpdates::smallStrainUpdateHelper( localIndex const k,
   else
   { // PLASTIC
     real64 oldAccumulatedModeIWork = m_accumulatedModeIWork[k];  // beginning-of-step stress work
-    real64 elasticStrainEnergy; // elastic strain energy computed from end-of-step stress.
+    real64 elasticStrainEnergy = 0.0; // elastic strain energy computed from end-of-step stress.
     
     if( m_enableEnergyFailureCriterion )   
     { // Adjust damage so that the total dissiaption associated with setting damage = 1 is consistent
