@@ -362,27 +362,27 @@ void FlowSolverBase::checkDiscretizationName() const
   DomainPartition const & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
 
-  string discretizationMethods;
+  string_array discretizationMethods;
 
   FiniteVolumeManager const & finiteVolumeManager = numericalMethodManager.getFiniteVolumeManager();
+
+  finiteVolumeManager.forSubGroups< FluxApproximationBase >( [&]( FluxApproximationBase const & fv )
   {
-    finiteVolumeManager.forSubGroups( [&]( Group const & fv )
-    {
-      discretizationMethods = fv.getName();
-    } );
-  }
+    discretizationMethods.push_back( fv.getName() );
+  } );
+
 
   if( !finiteVolumeManager.hasGroup< FluxApproximationBase >( m_discretizationName ) )
   {
     if( !discretizationMethods.empty())
     {
-      GEOS_ERROR( GEOS_FMT( "{}: can not find discretization named '{}' in 'FiniteVolume.\nFound discretization : {}",
+      GEOS_ERROR( GEOS_FMT( "{}: can not find discretization named '{}' in 'FiniteVolume'.\nFound discretization : {}",
                             getDataContext(), m_discretizationName, discretizationMethods,
                             stringutilities::join( discretizationMethods, ", " )));
     }
     else
     {
-      GEOS_ERROR( GEOS_FMT( "{}: can not find discretization named '{}' in 'FiniteVolume.\n" \
+      GEOS_ERROR( GEOS_FMT( "{}: can not find discretization named '{}' in 'FiniteVolume'.\n" \
                             "No discretization found, check that you have correctly entered a numerical method",
                             getDataContext(), m_discretizationName ));
     }
