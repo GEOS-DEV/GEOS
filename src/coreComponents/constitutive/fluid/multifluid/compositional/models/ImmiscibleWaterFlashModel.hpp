@@ -106,7 +106,8 @@ class ImmiscibleWaterFlashModel : public FunctionBase
 public:
   ImmiscibleWaterFlashModel( string const & name,
                              ComponentProperties const & componentProperties,
-                             ModelParameters const & modelParameters );
+                             ModelParameters const & modelParameters,
+                             arrayView1d< integer const > const phaseTypes );
 
   static string catalogName();
 
@@ -127,8 +128,13 @@ public:
   // Create parameters unique to this model
   static std::unique_ptr< ModelParameters > createParameters( std::unique_ptr< ModelParameters > parameters );
 
+  // Determine phase ordering
+  static void calculatePhaseOrdering( arrayView1d< integer const > const & phaseTypes,
+                                      arrayView1d< integer > const & phaseOrder );
+
 private:
   ModelParameters const & m_parameters;
+  arrayView1d< integer const > const m_phaseTypes;
   integer m_waterComponentIndex{-1};
 };
 
@@ -172,7 +178,7 @@ void ImmiscibleWaterFlashModelUpdate::compute( ComponentProperties::KernelWrappe
     // Hydrocarbon phases
 
     // Calculate normalised hyrdocarbon composition
-    stackArray1d< real64, maxNumComps > composition( m_numComponents );
+    StackArray< real64, 1, maxNumComps > composition( m_numComponents );
     for( integer ic = 0; ic < m_numComponents; ++ic )
     {
       composition[ic] = compFraction[ic] / z_hc;

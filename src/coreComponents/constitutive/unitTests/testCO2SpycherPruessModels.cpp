@@ -14,14 +14,14 @@
  */
 
 // Source includes
+#include "common/initializeEnvironment.hpp"
 #include "codingUtilities/UnitTestUtilities.hpp"
 #include "constitutive/fluid/multifluid/CO2Brine/functions/CO2Solubility.hpp"
 #include "constitutive/fluid/multifluid/MultiFluidUtils.hpp"
-#include "mainInterface/GeosxState.hpp"
-#include "mainInterface/initialization.hpp"
 #include "functions/FunctionManager.hpp"
 
 // TPL includes
+#include <conduit.hpp>
 #include <gtest/gtest.h>
 
 using namespace geos;
@@ -254,7 +254,7 @@ TEST_P( CO2SolubilitySpycherPruessTestFixture, testNumericalDerivatives )
 }
 
 // Test data
-std::vector< TestParam > generateTestData()
+stdVector< TestParam > generateTestData()
 {
   return {
     {1.00000000e+05, 1.00000000e+01, 0.00000000e+00, 0.00000000e+00, 0.00000000e+00, 0.00000000e+00},
@@ -370,11 +370,15 @@ int main( int argc, char * * argv )
 {
   ::testing::InitGoogleTest( &argc, argv );
 
-  geos::GeosxState state( geos::basicSetup( argc, argv ) );
+  geos::setupEnvironment( argc, argv );
+
+  conduit::Node node;
+  dataRepository::Group parent( "parent", node );
+  auto functionManager = std::make_unique< FunctionManager >( FunctionManager::catalogName(), &parent );
 
   int const result = RUN_ALL_TESTS();
 
-  geos::basicCleanup();
+  geos::cleanupEnvironment();
 
   return result;
 }
