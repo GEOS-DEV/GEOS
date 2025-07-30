@@ -900,20 +900,39 @@ void CompositionalMultiphaseBase::initializeFluidState( MeshLevel & mesh,
                                               [&]( localIndex const,
                                                    ElementSubRegionBase & subRegion )
   {
+    string const & fluidName = subRegion.template getReference< string >( viewKeyStruct::fluidNamesString() );
+    MultiFluidBase const & fluid = getConstitutiveModel< MultiFluidBase >( subRegion, fluidName );
+    string_array const & componentNames = fluid.componentNames();
+
+    // check the global component fractions values
+    arrayView2d< real64 const, compflow::USD_COMP > const compFrac =
+      subRegion.getField< flow::globalCompFraction >();
+
+    forAll< parallelDevicePolicy<> >( subRegion.size(), [&] GEOS_HOST_DEVICE ( localIndex const ei )
+    {
+      real64 sumCompFrac = 0.0;
+      for( integer ic = 0; ic < numComp; ++ic )
+      {
+        GEOS_ERROR_IF( compFrac[ei][ic] < 0.0,
+                       GEOS_FMT( "{}: negative component fraction {} for component {} in subregion '{}' for element {}",
+                                 getName(), compFrac[ei][ic], componentNames[ic], subRegion.getName(), ei ) );
+        sumCompFrac += compFrac[ei][ic];
+      }
+      GEOS_ERROR_IF( LvArray::math::abs( sumCompFrac - 1.0 ) > 1.0e-6,
+                     GEOS_FMT( "{}: component fractions do not sum to 1.0 (sum = {}) for subregion '{}' for element {}",
+                               getName(), sumCompFrac, subRegion.getName(), ei ) );
+    } );
+
     // Assume global component fractions have been prescribed.
     // Initialize constitutive state to get fluid density.
     updateFluidModel( subRegion );
 
     // Back-calculate global component densities from fractions and total fluid density
     // in order to initialize the primary solution variables
-    string const & fluidName = subRegion.template getReference< string >( viewKeyStruct::fluidNamesString() );
-    MultiFluidBase const & fluid = getConstitutiveModel< MultiFluidBase >( subRegion, fluidName );
     arrayView2d< real64 const, constitutive::multifluid::USD_FLUID > const totalDens = fluid.totalDensity();
 
     if( m_formulationType == CompositionalMultiphaseFormulationType::ComponentDensities )
     {
-      arrayView2d< real64 const, compflow::USD_COMP > const compFrac =
-        subRegion.getField< flow::globalCompFraction >();
       arrayView2d< real64, compflow::USD_COMP > const compDens =
         subRegion.getField< flow::globalCompDensity >();
 
