@@ -80,6 +80,7 @@ public:
    * @param[in] fractureSofteningExponent controls shape of softening with damage
    * @param[in] fractureStress The root J2 value for the fracture stress
    * @param[in] initialTemperature initial temperature
+   * @param[in] Q activation energy
    * @param[in] brittleDuctileTransition The root J2 value for the fracture stress 
    * @param[in] damageEvolutionCriterion this is to trigger the damage for TXCo tests 0 or 1 for dilation vs pressure
    * @param[in] cr The value for the cap shape paramter
@@ -133,6 +134,7 @@ public:
                        real64 const & fractureSofteningExponent,
                        real64 const & fractureStress,
                        real64 const & initialTemperature,
+                       real64 const & Q,
                        real64 const & brittleDuctileTransition,
                        int const & damageEvolutionCriterion,
                        real64 const & cr,
@@ -212,6 +214,7 @@ public:
     m_fractureSofteningExponent( fractureSofteningExponent ),
     m_fractureStress( fractureStress ),
     m_initialTemperature( initialTemperature ),
+    m_Q( Q ),
     m_brittleDuctileTransition( brittleDuctileTransition ),
     m_damageEvolutionCriterion ( damageEvolutionCriterion ),
     m_cr( cr ),
@@ -572,6 +575,7 @@ private:
   real64 const & m_fractureSofteningExponent;
   real64 const & m_fractureStress;
   real64 const & m_initialTemperature;
+  real64 const & m_Q;
   real64 const & m_brittleDuctileTransition;
   int const & m_damageEvolutionCriterion;
   real64 const & m_cr;
@@ -1125,7 +1129,7 @@ int GeomechanicsUpdates::computeStep( real64 const ( & D )[6],               // 
     real64 m_referenceTemperature =  m_initialTemperature; // This could be an input variable
     real64 m_gasConstantR = 8.314;  // this is J/(mol*K) and also works for mm,mg,us,K units, but this should be a user input 
                                     // to allow for other unit systems.
-    real64 m_creepActivationEnergy = 2.0;  // This will be a user input that can be used to fit temperature dependence.
+    real64 m_creepActivationEnergy = m_Q;  // This will be a user input that can be used to fit temperature dependence.
 
     std::cout << "temperature = " << temperature << std::endl;
     std::cout << "referenceTemperature = " << m_referenceTemperature << std::endl;
@@ -1247,8 +1251,17 @@ int GeomechanicsUpdates::computeStep( real64 const ( & D )[6],               // 
     // equilibrium porosity at the start of the step.
 		//real64 phi_e = std::max(1.e-10 , A * exp( -std::pow(p,equilibriumPorosityPressureExponent) / B ) + equilibriumPorosityOffset  + 0.*(std::max(temperature - m_referenceTemperature, 0.0) * (-0.00004)) );    
 		//real64 phi_e = std::max(1.e-10 , A * exp( -std::pow(p,equilibriumPorosityPressureExponent) / B ) + equilibriumPorosityOffset  + std::max(temperature - m_referenceTemperature, 0.0) * (-0.00004) );    
-		real64 phi_e = std::max(1.e-10 , A * exp( -std::pow(p/B ,equilibriumPorosityPressureExponent) ) + equilibriumPorosityOffset  + (std::max(temperature - m_referenceTemperature, 0.0) * (-0.0004)) );    
+		
+    
+    std::cout << "A = " << (A) << std::endl;
+    std::cout << "p = " << (p) << std::endl;
+    std::cout << "B = " << (B) << std::endl;
+    std::cout << "D = " << (equilibriumPorosityPressureExponent) << std::endl;
+    std::cout << "E = " << (equilibriumPorosityOffset) << std::endl;
 
+    //real64 phi_e = std::max(1.e-10 , A * exp( -std::pow(p/B ,equilibriumPorosityPressureExponent) ) + equilibriumPorosityOffset  + (std::max(temperature - m_referenceTemperature, 0.0) * (-0.0003)) );    
+		real64 phi_e = std::max(1.e-10 , A * exp( -std::pow(p/B ,equilibriumPorosityPressureExponent) ) + equilibriumPorosityOffset  + (-3.e-6 * std::pow(std::max(temperature - m_referenceTemperature, 0.0), 2.)) + (0.0014 * std::max(temperature - m_referenceTemperature, 0.0)));    
+    std::cout << "phi_e = " << (phi_e) << std::endl;
 
     // uncomment for debugging:
     //std::cout<<"pn = "<<p<<", evp_n = "<<evp<<", phi_p_n = "<<phi_p<<", phi_e_n = "<<phi_e<<", X_n = "<<X_old<<std::endl;
@@ -3272,6 +3285,9 @@ public:
     /// string/key for initialDomainTemperature
     static constexpr char const * initialTemperatureString() { return "initialTemperature"; }
 
+    /// string/key for activation energy
+    static constexpr char const * QString() { return "Q"; }
+
     /// string/keay for brittleDuctileTransition
     static constexpr char const * brittleDuctileTransitionString() { return "brittleDuctileTransition"; }
 
@@ -3279,7 +3295,7 @@ public:
     static constexpr char const * damageEvolutionCriterionString() { return "damageEvolutionCriterion"; }
 
     /// string/key for peak t1 shear limit parameter
-    static constexpr char const * peakI1String() { return "peakI1"; }
+    static constexpr char const * peakI1String()  { return "peakI1"; }
 
     /// string/key for F slope shear limit parameter
     static constexpr char const * fSlopeString() { return "fSlope"; }
@@ -3425,6 +3441,7 @@ public:
                                 m_fractureSofteningExponent,
                                 m_fractureStress,
                                 m_initialTemperature,
+                                m_Q,
                                 m_brittleDuctileTransition,
                                 m_damageEvolutionCriterion,
                                 m_cr,
@@ -3511,6 +3528,7 @@ public:
                           m_fractureSofteningExponent,
                           m_fractureStress,
                           m_initialTemperature,
+                          m_Q,
                           m_brittleDuctileTransition,
                           m_damageEvolutionCriterion,
                           m_cr,
@@ -3675,6 +3693,7 @@ protected:
   real64 m_fractureStress;
   // not in the fractuer/damage, but MM was using the Fracture stress as template for initalTemperature
   real64 m_initialTemperature;
+  real64 m_Q;
 
   real64 m_brittleDuctileTransition;
 

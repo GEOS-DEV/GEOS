@@ -56,6 +56,7 @@ Geomechanics::Geomechanics( string const & name, Group * const parent ):
   m_fractureSofteningExponent( 1.0 ),
   m_fractureStress( 0.0 ),
   m_initialTemperature( 0.0 ),
+  m_Q( 0.0 ),
   m_brittleDuctileTransition( 0.0 ),
   m_damageEvolutionCriterion( 0 ),
   m_cr( 0.0 ),
@@ -210,6 +211,10 @@ Geomechanics::Geomechanics( string const & name, Group * const parent ):
   registerWrapper( viewKeyStruct::initialTemperatureString(), &m_initialTemperature ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "initial Temperature" );
+
+  registerWrapper( viewKeyStruct::QString(), &m_Q ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "activation energy" );
 
   registerWrapper( viewKeyStruct::damageEvolutionCriterionString(), &m_damageEvolutionCriterion ).
     setInputFlag( InputFlags::OPTIONAL ).
