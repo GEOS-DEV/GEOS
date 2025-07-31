@@ -1516,12 +1516,13 @@ bool PhysicsSolverBase::detectOscillations()
   if( m_solutionHistory.size() < oscillationCheckDepth )
     return false; // not enough history to check oscillations
 
-  localIndex oscillationCount = 0;
+  RAJA::ReduceSum< parallelDeviceReduce, localIndex > oscillationCount = 0;
 
   localIndex const numDofs = m_solutionHistory[0].size();
   localIndex const historySize = m_solutionHistory.size();
 
-  for( localIndex dof = 0; dof < numDofs; ++dof )
+  RAJA::forall< parallelDevicePolicy<> >( RAJA::TypedRangeSegment< localIndex >( 0, numDofs ),
+                                      [&] GEOS_HOST ( localIndex const dof )
   {
     bool oscillationDetected = true;
     for( localIndex i = historySize - 1; i > historySize - oscillationCheckDepth; --i )
@@ -1529,14 +1530,14 @@ bool PhysicsSolverBase::detectOscillations()
       real64 dxCur = m_solutionHistory[i][dof];
       real64 dxPrev = m_solutionHistory[i-1][dof];
 
-      if( std::abs( dxCur ) < oscillationTolerance || std::abs( dxPrev ) < oscillationTolerance )
+      if( LvArray::math::abs( dxCur ) < oscillationTolerance || LvArray::math::abs( dxPrev ) < oscillationTolerance )
       {
         oscillationDetected = false;
         break; // solution changes are too small
       }
 
       real64 maxAbs = LvArray::math::max( LvArray::math::abs( dxCur ), LvArray::math::abs( dxPrev ) );
-      if( std::abs( dxCur + dxPrev ) / maxAbs > oscillationTolerance )
+      if( LvArray::math::abs( dxCur + dxPrev ) / maxAbs > oscillationTolerance )
       {
         oscillationDetected = false;
         break; // solution changes are not oscillating
@@ -1551,11 +1552,11 @@ bool PhysicsSolverBase::detectOscillations()
 
     if(oscillationDetected)
     {
-      ++oscillationCount;
+      oscillationCount += 1;
     }
-  }
+  } );
 
-  real64 const f = static_cast< real64 >(oscillationCount) / numDofs;
+  real64 const f = static_cast< real64 >( MpiWrapper::sum( oscillationCount.get() ) ) / numDofs;
 
   return f > oscillationFraction;
 }
