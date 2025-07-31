@@ -2203,7 +2203,7 @@ bool SolidMechanicsLagrangeContact::resetConfigurationToDefault( DomainPartition
     {
       if( subRegion.hasField< contact::traction >() )
       {
-        arrayView1d< integer > const fractureState;
+        arrayView1d< integer > const fractureState = subRegion.getField< contact::fractureState >();
         forAll< parallelHostPolicy >( subRegion.size(), [=] ( localIndex const kfe )
         {
           if( fractureState[kfe] != FractureState::Open )
