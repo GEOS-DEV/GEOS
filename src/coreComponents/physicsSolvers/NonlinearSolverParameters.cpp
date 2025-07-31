@@ -181,7 +181,7 @@ NonlinearSolverParameters::NonlinearSolverParameters( string const & name,
     setDescription( "Nonlinear acceleration type for sequential solver." );
 
   registerWrapper( viewKeysStruct::oscillationScalingString(), &m_oscillationScaling ).
-  setApplyDefaultValue( 0 ).
+    setApplyDefaultValue( 0 ).
     setInputFlag( dataRepository::InputFlags::OPTIONAL ).
     setDescription( "Flag to enable oscillation detection and scaling. "
                     "If set to 1, oscillation detection is enabled and the solution will be scaled if oscillations are detected." );
