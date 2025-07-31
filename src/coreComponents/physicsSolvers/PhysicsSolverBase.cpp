@@ -518,7 +518,6 @@ real64 PhysicsSolverBase::linearImplicitStep( real64 const & time_n,
   // TODO: Nonlinear step does not call its own setup, need to decide on consistent behavior
   implicitStepSetup( time_n, dt, cycleNumber, domain );
 
-
   {
     Timer timer( m_timers["assemble"] );
 

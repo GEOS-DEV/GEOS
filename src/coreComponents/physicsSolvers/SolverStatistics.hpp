@@ -127,7 +127,7 @@ public:
   };
 
   /**
-   * @brief Set whether the solver is iterative.
+   * @brief Indicate if the solver is iterative.
    * @param isIterative The iterative state.
    */
   void setIterativeSolver( bool isIterative )

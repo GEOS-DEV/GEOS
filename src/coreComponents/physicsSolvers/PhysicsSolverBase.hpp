@@ -1092,7 +1092,7 @@ protected:
   integer m_writeLinearSystem;
 
   /// When set to 1 output to log iterations information
-  /// When set to 2 additionnaly output csv file containing iterations informations
+  /// When set to 2 additionnaly output csv files containing iterations information
   integer m_writeSolverStatistics;
 
   /// Linear solver parameters
