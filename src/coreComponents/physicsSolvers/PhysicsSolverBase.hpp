@@ -1075,7 +1075,7 @@ protected:
   /// Timers for the aggregate profiling of the solver
   std::map< std::string, std::chrono::system_clock::duration > m_timers;
 
-  ArrayOfArrays< real64 > m_localSolutionHistory;
+  ArrayOfArrays< real64 > m_solutionHistory;
 
 private:
   /// List of names of regions the solver will be applied to

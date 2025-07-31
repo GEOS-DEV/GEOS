@@ -1143,9 +1143,9 @@ void PhysicsSolverBase::implicitStepSetup( real64 const & GEOS_UNUSED_PARAM( tim
                                            real64 const & GEOS_UNUSED_PARAM( dt ),
                                            DomainPartition & GEOS_UNUSED_PARAM( domain ) )
 {
-  for(integer i = 0; i < m_localSolutionHistory.size(); ++i)
+  for( integer i = 0; i < m_solutionHistory.size(); ++i )
   {
-    m_localSolutionHistory.eraseArray(i);
+    m_solutionHistory.eraseArray( i );
   }
 }
 
@@ -1374,10 +1374,19 @@ real64 PhysicsSolverBase::scalingForSystemSolution( DomainPartition & GEOS_UNUSE
   real64 scalingFactor = 1.0;
 
   // Check for oscillations
-  if(detectOscillations())
-    scalingFactor *= 0.95;
+  if( m_nonlinearSolverParameters.m_oscillationScaling && detectOscillations() )
+  {
+    scalingFactor *= m_nonlinearSolverParameters.m_oscillationScalingFactor;
+    GEOS_LOG_LEVEL_RANK_0( logInfo::NonlinearSolver,
+                           GEOS_FMT( "        {}: oscillation detected, scaling factor set to {}", getName(), scalingFactor ) );
+  }
 
-  m_localSolutionHistory.appendArray(localSolution.begin(), localSolution.end());
+  m_solutionHistory.appendArray( localSolution.begin(), localSolution.end());
+  if( m_solutionHistory.size() > m_nonlinearSolverParameters.m_oscillationCheckDepth )
+  {
+    // remove the oldest solution from the history
+    m_solutionHistory.eraseArray( 0 );
+  }
 
   return scalingFactor;
 }
@@ -1413,9 +1422,9 @@ void PhysicsSolverBase::resetConfigurationToBeginningOfStep( DomainPartition & G
 
 void PhysicsSolverBase::resetStateToBeginningOfStep( DomainPartition & GEOS_UNUSED_PARAM( domain ) )
 {
-  for(integer i = 0; i < m_localSolutionHistory.size(); ++i)
+  for( integer i = 0; i < m_solutionHistory.size(); ++i )
   {
-    m_localSolutionHistory.eraseArray(i);
+    m_solutionHistory.eraseArray( i );
   }
 }
 
@@ -1499,39 +1508,56 @@ void PhysicsSolverBase::saveSequentialIterationState( DomainPartition & GEOS_UNU
 // Detect oscillations for all dofs in the solution history
 bool PhysicsSolverBase::detectOscillations()
 {
-  if(m_localSolutionHistory.size() < 3) 
-    return false;
+  // grab the parameters
+  integer const oscillationCheckDepth = m_nonlinearSolverParameters.m_oscillationCheckDepth;
+  real64 const oscillationTolerance = m_nonlinearSolverParameters.m_oscillationTolerance;
+  real64 const oscillationFraction = m_nonlinearSolverParameters.m_oscillationFraction;
 
-  for(size_t i = m_localSolutionHistory.size() - 1; i > 1; --i)
+  if( m_solutionHistory.size() < oscillationCheckDepth )
+    return false; // not enough history to check oscillations
+
+  localIndex oscillationCount = 0;
+
+  localIndex const numDofs = m_solutionHistory[0].size();
+  localIndex const historySize = m_solutionHistory.size();
+
+  for( localIndex dof = 0; dof < numDofs; ++dof )
   {
-    localIndex const numDofs = m_localSolutionHistory[i].size();
-    for(int dof = 0; dof < numDofs; ++dof)
+    bool oscillationDetected = true;
+    for( localIndex i = historySize - 1; i > historySize - oscillationCheckDepth; --i )
     {
-      real64 v0 = m_localSolutionHistory[i][dof];
-      real64 v1 = m_localSolutionHistory[i-1][dof];
-      real64 v2 = m_localSolutionHistory[i-2][dof];
+      real64 dxCur = m_solutionHistory[i][dof];
+      real64 dxPrev = m_solutionHistory[i-1][dof];
 
-      if( std::abs(v0) < 0.01 || std::abs(v1) < 0.01 || std::abs(v2) < 0.01 )
-        break;
-
-      // Check all values are "close" in absolute value (relative difference small)
-      real64 maxAbs = std::max({std::abs(v0), std::abs(v1), std::abs(v2), 1e-12});
-      if( std::abs(v0+v1)/maxAbs > 0.01 || std::abs(v1+v2)/maxAbs > 0.01 )
-        break;
-
-      // Check sign is oscillating
-      if( (v0 > 0 && v1 < 0 && v2 > 0) ||
-          (v0 < 0 && v1 > 0 && v2 < 0) )
+      if( std::abs( dxCur ) < oscillationTolerance || std::abs( dxPrev ) < oscillationTolerance )
       {
-        std::cout << "Oscillation detected at dof " << dof << " in localSolution time history!" << std::endl;
-        std::cout << "History: " << v0 << ", " << v1 << ", " << v2 << std::endl;
-        //history.clear(); // clear history
-        return true; // oscillation detected
+        oscillationDetected = false;
+        break; // solution changes are too small
       }
+
+      real64 maxAbs = LvArray::math::max( LvArray::math::abs( dxCur ), LvArray::math::abs( dxPrev ) );
+      if( std::abs( dxCur + dxPrev ) / maxAbs > oscillationTolerance )
+      {
+        oscillationDetected = false;
+        break; // solution changes are not oscillating
+      }
+
+      if( dxCur * dxPrev > 0 )
+      {
+        oscillationDetected = false;
+        break; // sign is not oscillating
+      }
+    }
+
+    if(oscillationDetected)
+    {
+      ++oscillationCount;
     }
   }
 
-  return false; // no oscillations detected
+  real64 const f = static_cast< real64 >(oscillationCount) / numDofs;
+
+  return f > oscillationFraction;
 }
 
 #if defined(GEOS_USE_PYGEOSX)
