@@ -1145,12 +1145,24 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium( DomainPartition
       real64 const datumElevation = fs.getDatumElevation();
       real64 const datumPressure = fs.getDatumPressure();
       string const initPhaseName = fs.getInitPhaseName();   // will go away when GOC/WOC are implemented
+      array1d< real64 > const& phaseContacts = fs.getPhaseContacts();
+      // std::cout << "Phase Contacts from CompositionalMultiphaseBase:" << std::endl;
+      // for ( const real64& val : phaseContacts )
+      // {
+      //   std::cout << val << std::endl;
+      // }
 
       localIndex const equilIndex = equilNameToEquilId.at( fs.getName() );
       real64 const minElevation = LvArray::math::min( globalMinElevation[equilIndex], datumElevation );
       real64 const maxElevation = LvArray::math::max( globalMaxElevation[equilIndex], datumElevation );
       real64 const elevationIncrement = LvArray::math::min( fs.getElevationIncrement(), maxElevation - minElevation );
+
+      // localIndex const customPoints = phaseContacts.size() + 1; // custom points are the datum and phase contacts
+      // localIndex const numPointsInTable = ( elevationIncrement > 0 ) ? std::ceil( (maxElevation - minElevation) / elevationIncrement ) + 1 + customPoints : 1;
+
       localIndex const numPointsInTable = ( elevationIncrement > 0 ) ? std::ceil( (maxElevation - minElevation) / elevationIncrement ) + 1 : 1;
+
+      // std::cout << "minElevation = " << minElevation << ", maxElevation = " << maxElevation << ", elevationIncrement = " << elevationIncrement << ", customPoints = " << customPoints << ", numPointsInTable = " << numPointsInTable << std::endl;
 
       real64 const eps = 0.1 * (maxElevation - minElevation);   // we add a small buffer to only log in the pathological cases
       GEOS_LOG_RANK_0_IF( ( (datumElevation > globalMaxElevation[equilIndex]+eps)  || (datumElevation < globalMinElevation[equilIndex]-eps) ),
@@ -1163,10 +1175,15 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium( DomainPartition
                           " but the initial condition may be inaccurate." );
 
       array1d< array1d< real64 > > elevationValues;
-      array1d< real64 > pressureValues;
       elevationValues.resize( 1 );
       elevationValues[0].resize( numPointsInTable );
-      pressureValues.resize( numPointsInTable );
+      array2d< real64 > pressureValues( numPointsInTable, numPhases );
+      array2d< real64 > phaseMassDens( numPointsInTable, numPhases );
+      array3d< real64 > phaseCompFrac( numPointsInTable, numPhases, numComps );
+      // for ( localIndex ip = 0; ip < numPhases; ++ip )
+      // {
+      //   pressureValues[ip].resize( numPointsInTable );
+      // }
 
       // Step 3.2: retrieve the user-defined tables (temperature and comp fraction)
 
@@ -1233,6 +1250,7 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium( DomainPartition
                                                numPhases,
                                                ipInit,
                                                maxNumEquilIterations,
+                                               phaseContacts.toViewConst(),
                                                equilTolerance,
                                                gravVector,
                                                minElevation,
@@ -1243,7 +1261,11 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium( DomainPartition
                                                compFracTableWrappers.toViewConst(),
                                                tempTableWrapper,
                                                elevationValues.toNestedView(),
-                                               pressureValues.toView() );
+                                               pressureValues.toView(), 
+                                               phaseMassDens.toView(),
+                                               phaseCompFrac.toView() );
+                                              //  elevationValues,
+                                              //  pressureValues );
 
         GEOS_THROW_IF( returnValue ==  isothermalCompositionalMultiphaseBaseKernels::HydrostaticPressureKernel::ReturnType::FAILED_TO_CONVERGE,
                        getCatalogName() << " " << getDataContext() <<
@@ -1261,12 +1283,78 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium( DomainPartition
 
       } );
 
+      std::cout << "elevationValues after hydrostatic computations = ";
+      for ( const real64& val : elevationValues[0] )
+      {
+        std::cout << val << ", ";
+      }
+      std::cout << std::endl;
+
+      // std::cout << "pressureValues after hydrostatic computations = ";
+      // for ( const real64& val : pressureValues[0] )
+      // {
+      //   std::cout << val << ", ";
+      // }
+      // std::cout << std::endl;
+
+      array1d< real64 > pressureValues_tmp;
+      pressureValues_tmp.resize( numPointsInTable );
+
+      for (localIndex i = 0; i < numPointsInTable; ++i)
+      {
+        pressureValues_tmp[i] = pressureValues[i][0];
+      }
+
+      // CapillaryPressureBase const & capPressure =
+      //   getConstitutiveModel< CapillaryPressureBase >( subRegion, subRegion.template getReference< string >( viewKeyStruct::capPressureNamesString() ) );
+      // auto pc = capPressure.phaseCapPressure(); // arrayView3d
+
+      // std::cout << "pc.size() = " << pc.size() << ", pc[0].size() = " << pc[0].size() << ", pc[0][0].size() = " << pc[0][0].size() << std::endl;
+      // for ( localIndex i = 0; i < pc.size(); ++i )
+      // {
+      //  for ( localIndex j = 0; j < pc[i].size(); ++j )
+      //  {
+      //   for ( localIndex k = 0; k < pc[i][j].size(); ++k )
+      //   {
+      //     std::cout << "pc[" << i << "][" << j << "][" << k << "] = " << pc[i][j][k] << std::endl;
+      //   }
+      //  }
+      // }
+
+      if( m_hasCapPressure )
+      {
+        arrayView2d< real64 const, compflow::USD_PHASE > const phaseVolFrac =
+          subRegion.getField< flow::phaseVolumeFraction >();
+
+        std::cout << "phaseVolFrac.size() = " << phaseVolFrac.size() << ", phaseVolFrac[0].size() = " << phaseVolFrac[0].size() << std::endl;
+        for ( localIndex i = 0; i < phaseVolFrac.size(); ++i )
+        {
+          for ( localIndex j = 0; j < phaseVolFrac[i].size(); ++j )
+          {
+            std::cout << "phaseVolFrac[" << i << "][" << j << "] = " << phaseVolFrac[i][j] << std::endl;
+          }
+        }
+        // string const & cappresName = dataGroup.getReference< string >( viewKeyStruct::capPressureNamesString() );
+        // CapillaryPressureBase & capPressure = getConstitutiveModel< CapillaryPressureBase >( dataGroup, cappresName );
+
+        // constitutive::constitutiveUpdatePassThru( capPressure, [&] ( auto & castedCapPres )
+        // {
+        //   typename TYPEOFREF( castedCapPres ) ::KernelWrapper capPresWrapper = castedCapPres.createKernelWrapper();
+
+        //   isothermalCompositionalMultiphaseBaseKernels::
+        //     CapillaryPressureUpdateKernel::
+        //     launch< parallelDevicePolicy<> >( dataGroup.size(),
+        //                                       capPresWrapper,
+        //                                       phaseVolFrac );
+        // } );
+      }
+
       // Step 3.5: create hydrostatic pressure table
 
       string const tableName = fs.getName() + "_" + subRegion.getName() + "_" + phaseNames[ipInit] + "_table";
       TableFunction * const presTable = dynamicCast< TableFunction * >( functionManager.createChild( TableFunction::catalogName(), tableName ) );
       presTable->setTableCoordinates( elevationValues, { units::Distance } );
-      presTable->setTableValues( pressureValues, units::Pressure );
+      presTable->setTableValues( pressureValues_tmp, units::Pressure );
       presTable->setInterpolationMethod( TableFunction::InterpolationType::Linear );
       TableFunction::KernelWrapper presTableWrapper = presTable->createKernelWrapper();
 
