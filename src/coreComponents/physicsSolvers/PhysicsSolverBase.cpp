@@ -1143,9 +1143,10 @@ void PhysicsSolverBase::implicitStepSetup( real64 const & GEOS_UNUSED_PARAM( tim
                                            real64 const & GEOS_UNUSED_PARAM( dt ),
                                            DomainPartition & GEOS_UNUSED_PARAM( domain ) )
 {
-  for( integer i = 0; i < m_solutionHistory.size(); ++i )
+  // clean the solution history
+  while( m_solutionHistory.size() > 0 )
   {
-    m_solutionHistory.eraseArray( i );
+    m_solutionHistory.eraseArray( 0 );
   }
 }
 
@@ -1422,9 +1423,10 @@ void PhysicsSolverBase::resetConfigurationToBeginningOfStep( DomainPartition & G
 
 void PhysicsSolverBase::resetStateToBeginningOfStep( DomainPartition & GEOS_UNUSED_PARAM( domain ) )
 {
-  for( integer i = 0; i < m_solutionHistory.size(); ++i )
+  // clean the solution history
+  while( m_solutionHistory.size() > 0 )
   {
-    m_solutionHistory.eraseArray( i );
+    m_solutionHistory.eraseArray( 0 );
   }
 }
 
