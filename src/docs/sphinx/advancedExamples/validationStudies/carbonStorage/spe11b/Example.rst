@@ -313,7 +313,53 @@ fingers, with heavier CO2-saturated brine sinking. Reader can in particular focu
 to the first injector. Here dissolved CO2 will sink and accumulate. This observation is repeated looking at the temperature maps report.
 
 
-Here we will draft base of reporting scripts ...
+GEOS run can be post-treated leveraging `Paraview <https://www.paraview.org/>`_ (as mentioned in other tutorials) or `pyvtk <https://pypi.org/project/PyVTK/>`_. Here is an example of the latter.
+It is built around two main driver `write()` and `plot()` functions which respectively write the integrated mass balance in
+the reporting boxes A and B and re-read the generated file and plot it to png. It requires usual dependencies such as `re`, `os`, `pandas`,
+`numpy`, `scipy (for interpolation) <https://docs.scipy.org/doc/scipy/tutorial/interpolate.html>`_ and `pyplot`
+
+.. literalinclude:: ./example_script.py
+    :language: python
+    :start-after: #SPHINX_IMPORT_BEGIN
+    :end-before: #SPHINX_IMPORT_END
+
+in addition to `pyvtk <https://pypi.org/project/PyVTK/>`_. The main drivers hereafter,
+
+.. literalinclude:: ./example_script.py
+    :language: python
+    :start-after: #SPHINX_MAIN_BEGIN
+    :end-before: #SPHINX_MAIN_END
+
+are using simple data structure to gather info and to link GEOS' name to name used in formulas,
+
+.. literalinclude:: ./example_script.py
+    :language: python
+    :start-after: #SPHINX_DATA_BEGIN
+    :end-before: #SPHINX_DATA_END
+
+It uses a string interpreted function `process_keys(formula, fielddict)` to build the observable from the fields loaded from GEOS :
+
+.. literalinclude:: ./example_script.py
+    :language: python
+    :start-after: #SPHINX_UTILS_BEGIN
+    :end-before: #SPHINX_UTILS_END
+
+and a tool set to interpolate and integrate them over the correct boxes,
+
+.. literalinclude:: ./example_script.py
+    :language: python
+    :start-after: #SPHINX_INTERPOLATE_BEGIN
+    :end-before: #SPHINX_INTERPOLATE_END
+
+Eventually, the per-time driver, load usefull specific fields from the correct time in the multi-block VTK format GEOS is using,
+
+.. literalinclude:: ./example_script.py
+    :language: python
+    :start-after: #SPHINX_PTIME_BEGIN
+    :end-before: #SPHINX_PTIME_END
+
+and this function is mapped over the schedule of the simulation.
+
 
 ------------------------------------------------------------------
 To go further
