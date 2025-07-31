@@ -1016,6 +1016,10 @@ protected:
     return getConstitutiveModel< CONSTITUTIVE_TYPE >( subRegion, getConstitutiveName< CONSTITUTIVE_TYPE >( subRegion ) );
   }
 
+  /**
+   * @brief Detect oscillations in the solution
+   * @return true if oscillations are detected, false otherwise
+   */
   bool detectOscillations();
 
   /// Courant–Friedrichs–Lewy factor for the timestep
@@ -1075,6 +1079,7 @@ protected:
   /// Timers for the aggregate profiling of the solver
   std::map< std::string, std::chrono::system_clock::duration > m_timers;
 
+  /// History of the solution vector, used for oscillation detection
   ArrayOfArrays< real64 > m_solutionHistory;
 
 private:
