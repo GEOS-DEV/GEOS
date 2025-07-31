@@ -33,7 +33,6 @@ InverseCapillaryPressureUpdate< CAP_PRESSURE >::InverseCapillaryPressureUpdate( 
   : m_capPressureWrapper( capPressure.createKernelWrapper() ),
   m_phaseMinVolumeFraction( phaseMinVolumeFraction )
 {
-  m_sumMinVolumeFraction = 0.0;
   for( real64 const saturation : m_phaseMinVolumeFraction )
   {
     m_sumMinVolumeFraction += saturation;
