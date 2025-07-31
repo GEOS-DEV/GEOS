@@ -159,6 +159,7 @@ public:
     static constexpr char const * phaseNamesString() { return "phaseNames"; }
     static constexpr char const * phaseTypesString() { return "phaseTypes"; }
     static constexpr char const * phaseOrderString() { return "phaseOrder"; }
+    static constexpr char const * phaseMinVolumeFractionString() { return "phaseMinVolumeFraction"; }
   };
 
 private:
@@ -185,6 +186,9 @@ protected:
   // phase ordering info
   array1d< integer > m_phaseTypes;
   array1d< integer > m_phaseOrder;
+
+  // Minimum phase volume fractions
+  array1d< real64 > m_phaseMinVolumeFraction;
 
   // output quantities
   array3d< real64, cappres::LAYOUT_CAPPRES >  m_phaseCapPressure;
