@@ -7,31 +7,29 @@ Assessment of CO2 Storage residual and dissolution trapping mechanism
 
 **Context**
 
-In this article, we consider the benchmark proposed in `(Nordbotten et al.,2024) <https://norceresearch.brage.unit.no/norceresearch-xmlui/bitstream/handle/11250/3137806/spe-218015-pa.pdf?sequence=1>`__
+We consider the benchmark proposed in `(Nordbotten et al.,2024) <https://norceresearch.brage.unit.no/norceresearch-xmlui/bitstream/handle/11250/3137806/spe-218015-pa.pdf?sequence=1>`__
 to showcase the effect of the convective mixing in addition to the usually considered residual trapping in a multi-facies resevoir.
-Using a thermal formulation, the effect of injecting cold CO2 can be observed.
+Also, using a thermal formulation, the effect of injecting cold CO2 can be observed.
 
 This example can serve as a guideline to set-up the input XML deck to reproduce the published results on `SPE11 CSP <https://github.com/Simulation-Benchmarks/11thSPE-CSP>`__.
-The reader can also find `decks <https://github.com/Simulation-Benchmarks/11thSPE-CSP/tree/main/input_decks>`__ for
-other open-source simulators and can try to benchmark a subset of them,
-even if the use of other simulators is not in the scope of this article.
+The input decks for other simulators can be found at `decks <https://github.com/Simulation-Benchmarks/11thSPE-CSP/tree/main/input_decks>`__.
 
 .. note::
-    Interested reader can refer to the `official comparative website <https://moyner.github.io/SPE11-plot-test-deploy/>`__ to see all
-    submitted results
+    We refer to the `official comparative website <https://moyner.github.io/SPE11-plot-test-deploy/>`__ to see all
+    submitted results.
 
 ------------------------------------------------------------------------
 Brief case description
 ------------------------------------------------------------------------
 
 As the detailed description is available in `(Nordbotten et al.,2024) <https://norceresearch.brage.unit.no/norceresearch-xmlui/bitstream/handle/11250/3137806/spe-218015-pa.pdf?sequence=1>`__,
-we will only briefly mentioned data that will be referred to in the following sections and let the interested reader read
+we will only briefly review the data set that will be used to in the following sections and let the interested reader read
 the full version.
 
-The spe11-b is a reservoir-like 2D case rescaled from the `FluidFlower <https://arxiv.org/pdf/2302.10986>`__ experiment.
-It consists in a 8.4 km large and 1.2 km deep reservoir which top depth is at 2km from free surface.
-A global geothermal gradient of 25K/km is imposed from the bottom surface at 70 Celsius.
-As its precursor it is composed of 7 facies with different properties.
+The spe11-b is a reservoir-like 2D case rescaled from the `FluidFlower <https://link.springer.com/article/10.1007/s11242-023-01977-7>`__ experiment.
+It consists in a 8.4 km large and 1.2 km deep reservoir which top depth is at 2km from the surface.
+A global geothermal gradient of 25 °C/km is imposed from the bottom surface at 70 °C.
+The reservoir is composed of 7 facies with different properties:
 
 .. _spe11b_facies:
 .. figure:: ./pictures/spe11b_presentation.png
@@ -41,8 +39,8 @@ As its precursor it is composed of 7 facies with different properties.
 
     Schematic representation of SPE11B case and its reporting boxes. Image extracted from `arxiv version <https://arxiv.org/abs/2507.15861>`__
 
-Here blue, red and orange boxes are materialization of the prescribed reporting boxes, respectively denoted box A , B and C in the description.
-They are places for observing first anticline accumulation, top anticlines accumulation through heterogeneous structure's dripping and
+Here blue, red and orange boxes are representing the prescribed reporting boxes, respectively denoted box A, B and C from the description.
+They are places for observing first anticline accumulation, top anticlines accumulation through heterogeneous structure's dripping, and
 convective mixing finger structures.
 
 ------------------------------------------------------------------------
@@ -61,23 +59,21 @@ it includes
 
   inputFiles/compositionalMultiphaseFlow/benchmarks/SPE11/b/spe11b_vti_source_base.xml
 
-for all its non-discretization-related parameters. The full simulation involves a 1000 years of thermal equilibration.
-Hydrostatic equilibration indeed does not includes thermal effects and it is then required to let the system equilibrate
-under the geothermal gradient before starting the injection schedule.
+for all parameters not related to the mesh discretization. The full simulation involves 1000 years of initial thermal equilibration
+required to let the system stabilize under the geothermal gradient before starting the injection schedule.
 
-The injection schedule is of 50 years from the bottom injector and 25 years with a 25 year delayed start from the top injector.
+The wells schedule consists of 50 years of injection for bottom injector and 25 years with a 25 year delayed start for the top injector.
 It is then followed by a 950 years of migration, dissolution and convection.
+
+As we can see in the snippet below, `SourceFlux` was choosen to model the injection (rather than wellbores). It goes with a
+`FieldSpecification` setting for the temperature at the same place to define the imposed injected *CO2* temperature. This also includes to object
+defined elsewhere as a set ``thermalSources1`` (respectively ``thermalSources2``) and a `Function` that varies over time to represent the flux schedule.
+These will be discussed in more details below.
 
 .. literalinclude:: ../../../../../../../inputFiles/compositionalMultiphaseFlow/benchmarks/SPE11/b/spe11b_vti_source_base.xml
     :language: xml
     :start-after: <!-- SPHINX_SOURCES -->
     :end-before: <!-- SPHINX_SOURCES_END -->
-
-As we can see in the snippet above, `SourceFlux` is the modeling choice for incoming fluxes (rather than wellbores). It goes with a
-`FieldSpecification` setting the temperature at the same place to mimic imposed injected *CO2* temperature. This includes to object
-left to be defined a set ``thermalSources1`` (respectively ``thermalSources2``) and a `Function` that can vary flux over time. These will
-be discussed below.
-
 
 ------------------------------------------------------------------------
 Constitutives and includes
@@ -85,140 +81,124 @@ Constitutives and includes
 
 .. _KRPCSection:
 
-The capillary and residual trapping in such a multi-facies reservoir occurs due to the heterogeneous properties. For instance, jumping from
-anticline facies \#5 to the upper layers a large entry pressure has to be reached. The box A is the design such that it can monitor the
-expected trapped *CO2* dissolving and making the surrounding brine heavier. This then will result in sinking brine and start convective
-mixing instabilites.
+The capillary and residual trapping in such a multi-facies reservoir occur due to the heterogeneous properties. For instance, a large entry pressure
+jump exists between anticline facies \#5 to the upper layers. The box A is chosen such that it can monitor the expected trapped *CO2* dissolution.
+The dissolved *CO2* and makes the brine heavier which results in its sinking and starts the convective mixing instabilites.
+
+Below we show the sets of relative permeabilities (left) and capillary pressure (right) produced from their tabulated values. The facies \#5 is highlighted
+as playing an important role in the overall trapping.
 
 .. plot:: ../inputFiles/compositionalMultiphaseFlow/benchmarks/SPE11/b/include/plotAllKrPc.py
 
-Above are reported the sets of relative permeabilities (left) and capillary pressure (right) from their tabulated values. The facies \#5 is highlighted
-as playing an important role in the overall trapping. The import in the simulation deck is done through the ``include/`` folder
+The tables import in the simulation deck is done as the following:
 
 .. literalinclude:: ../../../../../../../inputFiles/compositionalMultiphaseFlow/benchmarks/SPE11/b/include/kr.xml
     :language: xml
     :start-after: <!-- SPHINX_KR_TABLE -->
     :end-before: <!-- SPHINX_KR_TABLE_END -->
 
-and through the definition of relative permeabilities and capillary pressure under the `Constitutive` tag. As an example, definition of
- relperm for the facies \#1 is reported,
-
+Then, relative permeabilities and capillary pressure are defined under the `Constitutive` tag. For example, the relative permeability for the facies \#1 
+is defined as
 
 .. literalinclude:: ../../../../../../../inputFiles/compositionalMultiphaseFlow/benchmarks/SPE11/b/spe11b_vti_source_base.xml
     :language: xml
     :start-after: <!-- SPHINX_KR_CONST -->
     :end-before: <!-- SPHINX_KR_CONST_END -->
 
-There is also properties such as permeabilities, diffusivity and rock thermal conductivity that are modeled as constant per facies
-and then needs to be defined as such. They then will be defined as
-
-.. literalinclude:: ../../../../../../../inputFiles/compositionalMultiphaseFlow/benchmarks/SPE11/b/include/properties_vti.xml
-    :language: xml
-    :start-after: <!-- SPHINX_THC_FIELD -->
-    :end-before: <!-- SPHINX_THC_FIELD_END -->
-
-scaling their `Constitutive` 's values that are defined,
+Other properties such as permeabilities, diffusivity, and rock thermal conductivity that are modeled as constant per facies 
+(thermal conductivity definition is shown as an example):
 
 .. literalinclude:: ../../../../../../../inputFiles/compositionalMultiphaseFlow/benchmarks/SPE11/b/spe11b_vti_source_base.xml
     :language: xml
     :start-after: <!-- SPHINX_THC_CONST -->
     :end-before: <!-- SPHINX_THC_CONST_END -->
 
+In addition, the scaling of the `Constitutive` values is defined to represent the facies:
+
+.. literalinclude:: ../../../../../../../inputFiles/compositionalMultiphaseFlow/benchmarks/SPE11/b/include/properties_vti.xml
+    :language: xml
+    :start-after: <!-- SPHINX_THC_FIELD -->
+    :end-before: <!-- SPHINX_THC_FIELD_END -->
+
 .. note::
 
-    Their `FieldSpecification` scaling definition is linked to their `Constitutive` 's through the generated field name, for instance *thermalCond_rockThermalConductivity*.
-    The prefix being extracted from the `Constitutive` 's `name` attributes.
+    Their `FieldSpecification` scaling definition is linked to the `Constitutive` definition through the generated field name, for instance *thermalCond_rockThermalConductivity*.
+    The prefix being extracted from the `Constitutive` `name` attributes.
 
- .. note::
-
-     The permeabilities and porosities being also heterogeneous per facies, we let the reader inspect the files in ``include/`` and make themselves aware
-     of the places where fields are imported and defined similarly to the rock thermal conductivities.
-
-The diffusivity being non heterogeneous in the specifications of the case, it is solely defined in its `Constitutive` model.
+The permeabilities and porosities are defined similarly to the rock thermal conductivities using the scaling approach.
+The diffusivity being non-heterogeneous in the specifications of the case, it is solely defined in its `Constitutive` model.
 
 Eventually, one has to pick a model for both brine and *CO2* densities and viscosities with respect to varying pressure, temperature and
-composition.
+composition. It is done using the `CO2BrinePhillipsThermalFluid` tag. It lists files that include the related parameters. For instance, *CO2* density
+is modeled through *Span Wagner* model, while the viscosities are obtained via *Fenghour* model (see :ref:`CO2-EOS` for more details).
 
 .. literalinclude:: ../../../../../../../inputFiles/compositionalMultiphaseFlow/benchmarks/SPE11/b/spe11b_vti_source_base.xml
     :language: xml
     :start-after: <!-- SPHINX_EOS_CONST -->
     :end-before: <!-- SPHINX_EOS_CONST_END -->
 
-It is done using the `CO2BrinePhillipsThermalFluid` tag. It lists files that includes table generator's parameters. For instance, *CO2*'s density
-is modeled through *Span Wagner* model, while the viscosities are obtained via *Fenghour* model. For more detail, read :ref:`CO2-EOS`.
-Their conformity to NIST values is assessed in the following plot,
+The model conformity to NIST values is assessed in the following plots:
 
 .. plot:: ../inputFiles/compositionalMultiphaseFlow/benchmarks/SPE11/b/tables/plotNIST.py
 
- Above is the one to one comparison with respect to pressure range used for a variety of pressures. The dotted lines represent *GEOS* values while
- the solid-and-stars are the values from NIST database.
+Fluid model comparison with NIST data. The dotted lines represent *GEOS* values while the solid-and-stars are the values from NIST database.
 
- This shows the validity of the selected models with respect to the provided NIST tables over the range of pressures and temperatures.
- The next step is to set-up the `Solvers` with some attributes foreseeing non-linear difficulties.
+The plots demonstrate the validity of the selected models with respect to the provided NIST tables over the range of pressures and temperatures.
 
 ------------------------------------------------------------------------
 Flow solver
 ------------------------------------------------------------------------
 
-Now that the physics in our case is set, with its global and spatialized parameters defined, let's dive into `Solvers`
-tunning. It is how we connect together these definition, up to a initial and boundary conditions (discussed in the next section).
+The `CompositionalMultiphaseFVM` solver uses the finite volume discretization on the `targetRegions`. The `discretization` will be TPFA and here is
+linked-by-name to the `TwoPointFluxApproximation` XML block. The *Phase Potential Upwind (PPU)* scheme is used.
 
 .. literalinclude:: ../../../../../../../inputFiles/compositionalMultiphaseFlow/benchmarks/SPE11/b/spe11b_vti_source_base.xml
     :language: xml
     :start-after: <!-- SPHINX_FLOW_SOL -->
     :end-before: <!-- SPHINX_FLOW_SOL_END -->
 
-The `CompositionalMultiphaseFVM` will handle Finite Volume discretization of the `targetRegions`. The `discretization` will be TPFA and here is
-linked-by-name to a `TwoPointFluxApproximation` XML block lower. It is at this place that upwind interpolation will be selected, for instance. By default *Phase Potential Upwind (PPU)*
-is selected.
 
-Note the important `isThermal` and `useMass` that are triggered on. `targetPhaseVolFractionChangeInTimeStep` and `maxCompFractionChange` are usual bounds time-step wise that
-prevents from going non-convergent. The next Child XML tags `NonlinearSolverParameters` and `LinearSolverParameters` are of particular interest.
-
-The `NonlinearSolverParameters` states the nonlinear tolerance,
-the triggering of *line search* and the coefficient to the usual powerlaw of time step increase and decrease. It is brought to reader's attention that those parameters are usually
-heuristic.
-
-The `LinearSolverParameters` states the linear method use to solve the linearized Newton system. The standard pick here is *Flexible GMRES* with the *HYPRE*'s specific *Multi Grid Reduction*.
+Note the important `isThermal` and `useMass` flags are triggered on. The `targetPhaseVolFractionChangeInTimeStep` parameter controls the time step selection 
+and the `maxCompFractionChange` parameter controls the solution chopping strategy in the solver. The `NonlinearSolverParameters` contains the nonlinear tolerance,
+*line search* parameters, and the parameters for the time step increase and decrease. The `LinearSolverParameters` contains parameters for the linear solver:
+the standard pick here is *Flexible GMRES* iterative solve with *Multi Grid Reduction* preconditioner.
 
 ------------------------------------------------------------------------
 Initial and boundary conditions
 ------------------------------------------------------------------------
 .. _BCSection:
 
-In the following, we will cover how to set both the injections and the left and right buffers used to mimic large
-connected aquifers. This will also cover the initialization.
+In the following, we will provide more details about the initialization and describe how to set both the injections and the left and right buffers used to mimic large
+connected aquifers.
 
+As mentioned above, the injection description refers to a cell set to be applied on and a `Function` defining incoming flux over time.
 
-As mentioned above, the injection description lacks a `Geometry` cell set to be applied on and a `Function` varying incoming flux over time.
-The first point is defined in the discretization-specific file (also root file) and the latter is found in the base file.
+The cell sets are defined using boxes in the discretization-specific file (also root file):
 
 .. literalinclude:: ../../../../../../../inputFiles/compositionalMultiphaseFlow/benchmarks/SPE11/b/spe11b_vti_source_00840x00120.xml
     :language: xml
     :start-after: <!-- SPHINX_GEOM -->
     :end-before: <!-- SPHINX_GEOM_END -->
 
-.. note::
-    Note that the units here are in *mass* as the `useMass=1` attribute is set in `Solvers` used.
-    Default will be volumetric.
-
-
-The lower-interpolated 1D function over time serve as a scaler for the incoming flux.
+The lower-interpolated 1D function over time serve as a scaler for the incoming flux:
 
 .. literalinclude:: ../../../../../../../inputFiles/compositionalMultiphaseFlow/benchmarks/SPE11/b/spe11b_vti_source_base.xml
     :language: xml
     :start-after: <!-- SPHINX_FUNCTIONS -->
     :end-before: <!-- SPHINX_FUNCTIONS_END -->
 
-From the `Functions` we can also imposed the initial geo-thermal gradient as well as initial compositions.
-Then we need an `HydrostaticEquilibrium` to be computed from the inital pressure and composition, as shown below:
+.. note::
+    Note that the units here are in *mass* as the `useMass=1` attribute is set in `Solvers`.
+
+Using `Functions` we also imposed the initial geothermal gradient as well as initial compositions.
+Then we need to define the `HydrostaticEquilibrium` to be computed, as shown below:
 
 .. literalinclude:: ../../../../../../../inputFiles/compositionalMultiphaseFlow/benchmarks/SPE11/b/spe11b_vti_source_base.xml
     :language: xml
     :start-after: <!-- SPHINX_EQUIL -->
     :end-before: <!-- SPHINX_EQUIL_END -->
 
-Then, the only thing left to fully set the initialization is for the simulation to start at *-1000 years* as it is done in the `Events`
+Finally, the the equilibration stage is defined in the `Events` by setting the simulation to start at *-1000 years*:
 
 .. literalinclude:: ../../../../../../../inputFiles/compositionalMultiphaseFlow/benchmarks/SPE11/b/spe11b_vti_source_00840x00120.xml
     :language: xml
@@ -227,44 +207,39 @@ Then, the only thing left to fully set the initialization is for the simulation 
 
 .. note::
     The time tags in *GEOS* are in seconds. Here a split between equilibration, start of the injection and injection-post-injection is chosen as
-    the maximal dt from experience in these time range is quite different. ``solverApplication1`` is then ensuring stability as the injection starts.
+    the maximum time steps in these stages are quite different. Specifically, separate ``solverApplication1`` definition is ensuring stability as the injection starts.
 
-We are then left with the imposition of domain boundary conditions. The top and bottom temperatures are imposed with the help of the subfile
-included as seen below. Content of the inclusion is FieldSpecification on geometrical sets defined earlier in this section.
+The boundary conditions for the domain are imposed as follows. The top and bottom temperatures are set using the `FieldSpecification` on `top` and `bottom` geometrical sets defined above:
 
 .. literalinclude:: ../../../../../../../inputFiles/compositionalMultiphaseFlow/benchmarks/SPE11/b/include/dirichlet_boundary_vti.xml
     :language: xml
     :start-after: <!-- SPHINX_TOP_BOTTOM -->
     :end-before: <!-- SPHINX_TOP_BOTTOM_END -->
 
-The last point to be tackled is how to set the *fictive* aquifers that are used to damped pressure build up that would occur otherwise
-in such a 2D constrained domain. It is done as for the sources to the exception that, instead of capturing the cellset thanks to a box,
-it has already been tagged as a region in the construction of the mesh, namely ``12_hexahedra`` to ``15_hexahedra``. It is then easy to
-rescale the volume in those regions,
+*Fictive* aquifers are used as buffers to damp the pressure buildup
+(see `(Nordbotten et al.,2024) <https://norceresearch.brage.unit.no/norceresearch-xmlui/bitstream/handle/11250/3137806/spe-218015-pa.pdf?sequence=1>`__, for details about these buffers definition).
+They are set similar to the sources definition but instead of using the boxes for cell sets,
+we use tags created during the construction of the mesh, namely ``12_hexahedra`` to ``15_hexahedra``. It is then easy to
+rescale the volumes in those regions:
 
 .. literalinclude:: ../../../../../../../inputFiles/compositionalMultiphaseFlow/benchmarks/SPE11/b/include/properties_vti.xml
     :language: xml
     :start-after: <!-- SPHINX_BUFFER_FIELDS -->
     :end-before: <!-- SPHINX_BUFFER_FIELDS_END -->
 
-that then is scaled in the discretization-specific file, as the scaling factor depends on the minimal distance that the discretization is
-able to capture, hence the discretization itself. (see.  `(Nordbotten et al.,2024) <https://norceresearch.brage.unit.no/norceresearch-xmlui/bitstream/handle/11250/3137806/spe-218015-pa.pdf?sequence=1>`__, for details about this buffer definition).
+The scaling factor depends on the discretization and hence that is defined in the discretization-specific file:
 
 .. literalinclude:: ../../../../../../../inputFiles/compositionalMultiphaseFlow/benchmarks/SPE11/b/spe11b_vti_source_00840x00120.xml
     :language: xml
     :start-after: <!-- SPHINX_BUFFER_FN -->
     :end-before: <!-- SPHINX_BUFFER_FN_END -->
 
-We are now set to launch the simulation.
 
 ------------------------------------------------------------------------
-Post-treating and prescribed reports
+Post-processing and reporting
 ------------------------------------------------------------------------
 
-First inspection of the results is done using Paraview as in the usual GEOS workflow. A short time after injection, the pressure
-build up has been damped by the boundary *buffers* and is only inspected as a dynamic response.
-
-Hereafter are reported respectively, temperature, saturation and dissolved CO2 fraction for 500 years and 1000 years.
+First, inspection of the results is done using Paraview as in the usual GEOS workflow. Here, we report temperature, saturation and dissolved CO2 fraction for 500 years and 1000 years:
 
 .. _spe11b_T_500:
 .. figure:: ./pictures/spe11b_thermal_T.0100.png
@@ -307,10 +282,10 @@ Hereafter are reported respectively, temperature, saturation and dissolved CO2 f
 ..     :figclass: align-right
 
 
-Firstly, saturation is showing that, for this mesh resolution, almost all gaseous CO2 is trapped then dissolved after 1000 years
-of the injection scenario. Then the reporting of the dissolved fraction clearly shows evidence of on-set of convective mixing
-fingers, with heavier CO2-saturated brine sinking. Reader can in particular focus on the lower left part of the domain, perpendicular
-to the first injector. Here dissolved CO2 will sink and accumulate. This observation is repeated looking at the temperature maps report.
+The saturation distribution is showing that, for this mesh resolution, almost all gaseous CO2 is trapped and then dissolved after 1000 years
+of the injection scenario. The reporting of the dissolved fraction clearly shows evidence of on-set of convective mixing
+fingers, with heavier CO2-saturated brine sinking. In particular, the dissolved CO2 sinks and accumulates in the lower left part of the domain, 
+perpendicular to the first injector. This behavior is similar for the temperature distributions.
 
 
 GEOS run can be post-treated leveraging `Paraview <https://www.paraview.org/>`_ (as mentioned in other tutorials) or `pyvtk <https://pypi.org/project/PyVTK/>`_. Here is an example of the latter.
