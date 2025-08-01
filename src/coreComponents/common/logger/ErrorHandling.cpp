@@ -193,9 +193,12 @@ void ErrorLogger::flushErrorMsg( ErrorLogger::ErrorMsg & errorMsg )
       yamlFile << info;
     }
     yamlFile << "\n";
+
     // Error message
     yamlFile << g_level1Next << "message: >-\n";
     streamMultilineYamlAttribute( errorMsg.m_msg, yamlFile, g_level2Next );
+
+    // context information
     if( !errorMsg.m_contextsInfo.empty() )
     {
       // Sort contextual information by decreasing priority
@@ -214,10 +217,12 @@ void ErrorLogger::flushErrorMsg( ErrorLogger::ErrorMsg & errorMsg )
         }
       }
     }
+
     // Location of the error in the code
     yamlFile << g_level1Next << "sourceLocation:\n";
     yamlFile << g_level2Next << "file: " << errorMsg.m_file << "\n";
     yamlFile << g_level2Next << "line: " << errorMsg.m_line << "\n";
+
     // Information about the stack trace
     yamlFile << g_level1Next << "sourceCallStack:\n";
     if( !errorMsg.isValidStackTrace() )
@@ -231,6 +236,7 @@ void ErrorLogger::flushErrorMsg( ErrorLogger::ErrorMsg & errorMsg )
         yamlFile << g_level3Start << "frame" << i << ": " << errorMsg.m_sourceCallStack[i] << "\n";
       }
     }
+
     yamlFile << "\n";
     yamlFile.flush();
     errorMsg = ErrorMsg();
