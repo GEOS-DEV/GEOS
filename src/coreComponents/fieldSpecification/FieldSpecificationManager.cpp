@@ -246,7 +246,7 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
                                        FieldSpecificationBase::viewKeyStruct::fieldNameString(),
                                        fs.getFieldName(), fs.getObjectPath() );;
 
-      string_array const splitPath =  stringutilities::splitStringWithDelim( fs.getObjectPath(), '/' );
+      string_array const splitPath =  stringutilities::tokenize( fs.getObjectPath(), "/" );
       string const targetRegion = splitPath.size() > 1 ? splitPath.at( 1 ) : splitPath.at( 0 );
 
       string_array availableRegions;

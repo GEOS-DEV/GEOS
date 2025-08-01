@@ -268,14 +268,6 @@ stdVector< STRING_T > wrapTextToMaxLength( stdVector< STRING_T > const & lines,
                                            size_t & maxLineLength );
 
 /**
- * @brief Splits a string into a vector of substrings using a specified delimiter.
- * @param s The input string to be split.
- * @param delim The character used as the delimiter for splitting the string.
- * @return A vector containing the substrings obtained from the input string.
- */
-string_array splitStringWithDelim( string const & s, char const delim );
-
-/**
  * @brief Take a string, and return a array1d with the cast values
  * @tparam T the type to which the string will be cast
  * @param[in] str the string to turn into an array1d
