@@ -150,6 +150,12 @@ void PVTDriver::postInputInitialization()
     numCols += m_numPhases;
   }
 
+  // If fluid is thermal then add NP columns for the enthalpy
+  if( baseFluid.isThermal() )
+  {
+    numCols += m_numPhases;
+  }
+
   // If the total compressibility is requested then add a column
   if( m_outputCompressibility != 0 )
   {
@@ -265,6 +271,7 @@ void PVTDriver::outputResults()
 {
   // TODO: improve file path output to grab command line -o directory
   //       for the moment, we just use the specified m_outputFile directly
+  constitutive::MultiFluidBase & baseFluid = getFluid();
 
   FILE * fp = fopen( m_outputFile.c_str(), "w" );
 
@@ -278,7 +285,7 @@ void PVTDriver::outputResults()
     fprintf( fp, "# column %d = total compressibility\n", ++columnIndex );
   }
 
-  auto const phaseNames = getFluid().phaseNames();
+  auto const phaseNames = baseFluid.phaseNames();
 
   fprintf( fp, "# columns %d-%d = phase fractions\n", columnIndex+1, columnIndex + m_numPhases );
   columnIndex += m_numPhases;
@@ -292,9 +299,15 @@ void PVTDriver::outputResults()
   fprintf( fp, "# columns %d-%d = phase viscosities\n", columnIndex+1, columnIndex + m_numPhases );
   columnIndex += m_numPhases;
 
+  if( baseFluid.isThermal())
+  {
+    fprintf( fp, "# columns %d-%d = phase enthalpies\n", columnIndex+1, columnIndex + m_numPhases );
+    columnIndex += m_numPhases;
+  }
+
   if( m_outputPhaseComposition != 0 )
   {
-    string const componentNames = stringutilities::join( getFluid().componentNames(), ", " );
+    string const componentNames = stringutilities::join( baseFluid.componentNames(), ", " );
     for( integer ip = 0; ip < m_numPhases; ++ip )
     {
       fprintf( fp, "# columns %d-%d = %s phase fractions [%s]\n", columnIndex+1, columnIndex + m_numComponents,
@@ -334,6 +347,10 @@ void PVTDriver::compareWithBaseline()
   if( m_outputMassDensity )
   {
     headerRows++;
+  }
+  if( getFluid().isThermal())
+  {
+    headerRows++; // Enthalpy
   }
   if( m_outputPhaseComposition )
   {
