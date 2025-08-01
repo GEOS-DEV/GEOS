@@ -183,10 +183,10 @@ void ErrorLogger::streamMultilineYamlAttribute( std::string_view msg, std::ofstr
 void ErrorLogger::flushErrorMsg( ErrorLogger::ErrorMsg & errorMsg )
 {
   std::ofstream yamlFile( std::string( m_filename ), std::ios::app );
-  if( yamlFile.is_open() && g_errorLogger.isOutputFileEnabled() )
+  if( yamlFile.is_open() && isOutputFileEnabled() )
   {
     // General errors info (type, rank on which the error occured)
-    yamlFile << g_level1Start << "type: " << g_errorLogger.toString( errorMsg.m_type ) << "\n";
+    yamlFile << g_level1Start << "type: " << ErrorLogger::toString( errorMsg.m_type ) << "\n";
     yamlFile << g_level1Next << "rank: ";
     for( auto const & info: errorMsg.m_ranksInfo )
     {
