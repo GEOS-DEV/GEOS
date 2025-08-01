@@ -79,7 +79,7 @@ public:
   /**
    * @brief @return Returns reference to FiniteElementDiscretizationManager m_finiteElementDiscretizationManager.
    */
-  FiniteElementDiscretizationManager & getFiniteElementDiscretizationManager()   { return m_finiteElementDiscretizationManager; }
+  FiniteElementDiscretizationManager & getFiniteElementDiscretizationManager() { return m_finiteElementDiscretizationManager; }
 
   /**
    * @brief @return Returns reference to FiniteVolumeManager m_finiteVolumeManager.
