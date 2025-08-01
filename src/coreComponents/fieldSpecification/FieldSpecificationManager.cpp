@@ -256,8 +256,8 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
         availableRegions.push_back( elemRegion.getName());
         if( targetRegion == elemRegion.getName() && !elemRegion.getMaterialList().empty())
         {
-          errorMessageBuilder << GEOS_FMT( "Available fieldname in {} are:\n", fs.getObjectPath() );
-          errorMessageBuilder << stringutilities::join( allPresentFieldsName[invalidRegion], ", " );
+          errorMessageBuilder << GEOS_FMT( "Available fieldname in {} are:\n{{ {} }}", fs.getObjectPath(),
+                                           stringutilities::join( allPresentFieldsName[invalidRegion], ", " ));
           foundMaterialInTargetRegion = true;
         }
       } );
@@ -270,9 +270,9 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
           const auto & vec = pair.second;
           uniqueFields.insert( vec.begin(), vec.end());
         }
-        errorMessageBuilder << GEOS_FMT( " {} contain the following fields : {}\n", fs.getObjectPath(),
+        errorMessageBuilder << GEOS_FMT( "{} contain the following fields :\n{{ {} }}\n", fs.getObjectPath(),
                                          stringutilities::join( uniqueFields, ", " ) );
-        errorMessageBuilder << GEOS_FMT( "There are also {} CellElementsRegions that can be appended under {} : {}.",
+        errorMessageBuilder << GEOS_FMT( "There are also {} CellElementsRegions that can be appended under {} : [{}].",
                                          availableRegions.size(), fs.getObjectPath(),
                                          stringutilities::join( availableRegions, ", " ) );
       }
