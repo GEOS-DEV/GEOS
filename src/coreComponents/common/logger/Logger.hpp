@@ -149,7 +149,7 @@
       __oss << "***** ERROR\n"; \
       __oss << "***** LOCATION: " LOCATION "\n"; \
       __oss << "***** Controlling expression (should be false): " STRINGIZE( EXP ) "\n"; \
-      __oss << message << "\n"; \
+      __oss << "***** Rank " << ::geos::logger::internal::rankString << ": " << message << "\n"; \
       std::string stackHistory = LvArray::system::stackTrace( true ); \
       __oss << stackHistory; \
       std::cout << __oss.str() << std::endl; \
@@ -185,7 +185,7 @@
       __oss << "***** ERROR\n"; \
       __oss << "***** LOCATION: " LOCATION "\n"; \
       __oss << "***** Controlling expression (should be false): " STRINGIZE( EXP ) "\n"; \
-      __oss << message << "\n"; \
+      __oss << "***** Rank " << ::geos::logger::internal::rankString << ": " << message << "\n"; \
       std::string stackHistory = LvArray::system::stackTrace( true ); \
       __oss << stackHistory; \
       std::cout << __oss.str() << std::endl; \
@@ -239,7 +239,7 @@
       __oss << "\n"; \
       __oss << "***** LOCATION: " LOCATION "\n"; \
       __oss << "***** Controlling expression (should be false): " STRINGIZE( EXP ) "\n"; \
-      __oss << message << "\n"; \
+      __oss << "***** Rank " << ::geos::logger::internal::rankString << ": " << message << "\n"; \
       std::string stackHistory = LvArray::system::stackTrace( true ); \
       __oss << stackHistory; \
       if( g_errorLogger.isOutputFileEnabled() ) \
@@ -274,7 +274,7 @@
       __oss << "\n"; \
       __oss << "***** LOCATION: " LOCATION "\n"; \
       __oss << "***** Controlling expression (should be false): " STRINGIZE( EXP ) "\n"; \
-      __oss << message << "\n"; \
+      __oss << "***** Rank " << ::geos::logger::internal::rankString << ": " << message << "\n"; \
       std::string stackHistory = LvArray::system::stackTrace( true ); \
       __oss << stackHistory; \
       if( g_errorLogger.isOutputFileEnabled() ) \
