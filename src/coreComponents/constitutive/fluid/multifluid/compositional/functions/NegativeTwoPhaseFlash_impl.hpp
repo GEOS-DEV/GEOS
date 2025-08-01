@@ -49,8 +49,6 @@ bool NegativeTwoPhaseFlash::compute( integer const numComps,
                                      arraySlice1d< real64, USD2 > const & liquidComposition,
                                      arraySlice1d< real64, USD2 > const & vapourComposition )
 {
-  GEOS_MARK_FUNCTION;
-
   constexpr integer maxNumComps = MultiFluidConstants::MAX_NUM_COMPONENTS;
   StackArray< real64, 2, 3*maxNumComps > workSpace( 3, maxNumComps );
   arraySlice1d< real64 > logLiquidFugacity = workSpace[0];
@@ -166,8 +164,6 @@ void NegativeTwoPhaseFlash::computeDerivatives(
   arraySlice2d< real64, USD3 > const & liquidCompositionDerivs,
   arraySlice2d< real64, USD3 > const & vapourCompositionDerivs )
 {
-  GEOS_MARK_FUNCTION;
-
   constexpr integer maxNumComps = MultiFluidConstants::MAX_NUM_COMPONENTS;
   constexpr integer maxNumDofs = MultiFluidConstants::MAX_NUM_COMPONENTS + 2;
 

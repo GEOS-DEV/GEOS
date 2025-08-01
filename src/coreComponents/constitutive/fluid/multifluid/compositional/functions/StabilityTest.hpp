@@ -28,7 +28,6 @@
 #include "constitutive/fluid/multifluid/compositional/parameters/ComponentProperties.hpp"
 #include "constitutive/fluid/multifluid/compositional/parameters/FlashParameters.hpp"
 #include "constitutive/fluid/multifluid/compositional/functions/FlashData.hpp"
-#include "common/TimingMacros.hpp"
 
 namespace geos
 {
@@ -78,8 +77,6 @@ public:
                        EquationOfStateType & incipientEquationOfState,
                        arraySlice1d< real64 > const & incipientComposition )
   {
-    GEOS_MARK_FUNCTION;
-
     stackArray2d< real64, 4*maxNumComps > workSpace( 4, numComps );
     arraySlice1d< real64 > logFugacity = workSpace[0];
     arraySlice1d< real64 > normalizedComposition = workSpace[1];
@@ -260,8 +257,6 @@ public:
                                   arraySlice2d< real64, USD2 > const & incipientCompositionDerivs,
                                   arraySlice2d< real64, USD2 > const & compositionDerivs )
   {
-    GEOS_MARK_FUNCTION;
-
     integer constexpr maxNumRows = MultiFluidConstants::MAX_NUM_COMPONENTS + 1;
     integer constexpr maxDofs = MultiFluidConstants::MAX_NUM_COMPONENTS + 2;
 
