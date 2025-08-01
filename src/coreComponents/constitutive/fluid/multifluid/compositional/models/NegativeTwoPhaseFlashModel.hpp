@@ -116,18 +116,18 @@ public:
 
     if( 0 < stabilityIterations || needInitialisation )
     {
-        stabilityStatus = StabilityTest::compute( m_numComponents,
-                                                    pressure,
-                                                    temperature,
-                                                    compFraction,
-                                                    componentProperties,
-                                                    m_flashData,
-                                                    kVapourLiquid.toSliceConst(),
-                                                    m_continuousFlashParameters.toSliceConst(),
-                                                    m_discreteFlashParameters.toSliceConst(),
-                                                    unstableMixture,
-                                                    incipientEquationOfState,
-                                                    incipientComposition.toSlice() );
+      stabilityStatus = StabilityTest::compute( m_numComponents,
+                                                pressure,
+                                                temperature,
+                                                compFraction,
+                                                componentProperties,
+                                                m_flashData,
+                                                kVapourLiquid.toSliceConst(),
+                                                m_continuousFlashParameters.toSliceConst(),
+                                                m_discreteFlashParameters.toSliceConst(),
+                                                unstableMixture,
+                                                incipientEquationOfState,
+                                                incipientComposition.toSlice() );
     }
 
     // If the stability test failed to converge to a stationary point then we will assume the mixture is unstable
@@ -246,17 +246,6 @@ public:
     {
       phaseFraction.derivs[m_liquidIndex][ic] = -phaseFraction.derivs[m_vapourIndex][ic];
     }
-//std::cout
-//<< "PVT(2) " << unstableMixture << " "
-//<< std::fixed << std::setprecision(6) << phaseFraction.value[m_vapourIndex] << " "
-//<< std::scientific << std::setprecision(4) << kVapourLiquid << "\n"
-//<< std::fixed << std::setprecision(6)
-//<< " G " << incipientComposition.toSliceConst() << "\n"
-//<< " Z " << compFraction.toSliceConst() << "\n"
-//<< " X " << phaseCompFraction.value[0].toSliceConst() << "\n"
-//<< " Y " << phaseCompFraction.value[1].toSliceConst() << "\n"
-//<< "----------------------------------------------------------------------"
-//<<"\n";
   }
 
   template< int USD >
