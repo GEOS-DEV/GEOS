@@ -361,19 +361,16 @@ void FlowSolverBase::checkDiscretizationName() const
 {
   DomainPartition const & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
-
-
   FiniteVolumeManager const & finiteVolumeManager = numericalMethodManager.getFiniteVolumeManager();
-
-  string_array discretizationMethods;
-  finiteVolumeManager.forSubGroups< FluxApproximationBase >( [&]( FluxApproximationBase const & fv )
-  {
-    discretizationMethods.push_back( fv.getName() );
-  } );
-
 
   if( !finiteVolumeManager.hasGroup< FluxApproximationBase >( m_discretizationName ) )
   {
+    string_array discretizationMethods;
+    finiteVolumeManager.forSubGroups< FluxApproximationBase >( [&]( FluxApproximationBase const & fv )
+    {
+      discretizationMethods.push_back( fv.getName() );
+    } );
+
     if( !discretizationMethods.empty())
     {
       GEOS_ERROR( GEOS_FMT( "{}: can not find discretization named '{}' in 'FiniteVolume'.\nFound discretization : {}",
