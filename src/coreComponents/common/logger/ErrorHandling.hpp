@@ -173,18 +173,19 @@ public:
     ErrorMsg & addCallStackInfo( std::string_view ossStackTrace );
 
     /**
+     * @brief Adds one or more context elements to the error
+     * @tparam Args variadic pack of argument types
+     * @param args list of DataContexts
+     * @return the reference to the current instance
+     */
+    template< typename ... Args >
+    ErrorMsg & addContextInfo( Args && ... args );
+
+    /**
      * @return true if the YAML file output is enabled
      */
     bool isValidStackTrace() const
     { return m_isValidStackTrace; }
-
-    /**
-     * @brief Adds one or more context elements to the error
-     * @tparam Args variadic pack of argument types
-     * @param args list of DataContexts
-     */
-    template< typename ... Args >
-    void addContextInfo( Args && ... args );
 
 private:
     /**
@@ -266,9 +267,10 @@ private:
 extern ErrorLogger g_errorLogger;
 
 template< typename ... Args >
-void ErrorLogger::ErrorMsg::addContextInfo( Args && ... args )
+ErrorLogger::ErrorMsg & ErrorLogger::ErrorMsg::addContextInfo( Args && ... args )
 {
   ( this->addContextInfoImpl( ErrorContext( args ) ), ... );
+  return *this;
 }
 
 } /* namespace geos */
