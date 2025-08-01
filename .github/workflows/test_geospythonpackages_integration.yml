@@ -1,0 +1,86 @@
+name: Test GEOS Integration from geosPythonPackages
+
+on:
+  workflow_dispatch:
+    inputs:
+      python_package_repo:
+        description: 'Python packages repository URL'
+        required: true
+        default: 'https://github.com/GEOS-DEV/geosPythonPackages.git'
+      python_package_branch:
+        description: 'Python packages branch/PR to test'
+        required: true
+        default: 'main'
+      python_package_pr:
+        description: 'Python packages PR number (if testing a PR)'
+        required: false
+      requested_by:
+        description: 'Who requested this test (for reference)'
+        required: false
+
+# Cancels in-progress workflows for a PR when updated
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.inputs.python_package_branch }}
+  cancel-in-progress: true
+
+jobs:
+  validate_geos_integration:
+    runs-on: ubuntu-22.04
+    outputs:
+      DOCKER_IMAGE_TAG: ${{ steps.extract_docker_image_tag.outputs.DOCKER_IMAGE_TAG }}
+    steps:
+    - name: Log test request
+      run: |
+        echo "Testing GEOS integration with geosPythonPackages"
+        echo "Repository: ${{ github.event.inputs.python_package_repo }}"
+        echo "Branch: ${{ github.event.inputs.python_package_branch }}"
+        echo "PR: ${{ github.event.inputs.python_package_pr }}"
+        echo "Requested by: ${{ github.event.inputs.requested_by }}"
+
+    # Extract docker image tag from the codespaces configuration
+    - name: Checkout .devcontainer/devcontainer.json
+      uses: actions/checkout@v4.2.2
+      with:
+        sparse-checkout: |
+          .devcontainer/devcontainer.json
+        sparse-checkout-cone-mode: false
+        submodules: false
+        lfs: false
+        fetch-depth: 1
+    - name: Extract docker image tag
+      id: extract_docker_image_tag
+      run: |
+        echo "DOCKER_IMAGE_TAG=$(jq '.build.args.GEOS_TPL_TAG' -r .devcontainer/devcontainer.json)" >> "$GITHUB_OUTPUT"
+
+  test_python_integration:
+    needs: [validate_geos_integration]
+    uses: ./.github/workflows/python_integration_test.yml
+    secrets: inherit
+    with:
+      PYTHON_PACKAGE_REPO: ${{ github.event.inputs.python_package_repo }}
+      PYTHON_PACKAGE_BRANCH: ${{ github.event.inputs.python_package_branch }}
+      DOCKER_IMAGE_TAG: ${{ needs.validate_geos_integration.outputs.DOCKER_IMAGE_TAG }}
+      DOCKER_REPOSITORY: geosx/ubuntu22.04-gcc12
+      RUNS_ON: ubuntu-22.04
+
+  report_results:
+    needs: [test_python_integration]
+    runs-on: ubuntu-22.04
+    if: always()
+    steps:
+    - name: Report test results
+      run: |
+        echo "GEOS Integration Test Results:"
+        echo "Repository: ${{ github.event.inputs.python_package_repo }}"
+        echo "Branch: ${{ github.event.inputs.python_package_branch }}"
+        echo "PR: ${{ github.event.inputs.python_package_pr }}"
+        echo "Test Result: ${{ needs.test_python_integration.result }}"
+        
+        if [[ "${{ needs.test_python_integration.result }}" == "success" ]]; then
+          echo "✅ GEOS integration test PASSED"
+          echo "The geosPythonPackages changes are compatible with GEOS"
+        else
+          echo "❌ GEOS integration test FAILED"
+          echo "The geosPythonPackages changes may break GEOS functionality"
+          exit 1
+        fi
