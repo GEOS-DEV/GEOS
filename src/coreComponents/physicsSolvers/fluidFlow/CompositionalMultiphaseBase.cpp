@@ -922,7 +922,7 @@ void CompositionalMultiphaseBase::initializeFluidState( MeshLevel & mesh,
 
       localIndex const negativeValues = MpiWrapper::sum( localNegativeValues.get() );
       GEOS_ERROR_IF( negativeValues > 0,
-                     GEOS_FMT( "{}: negative component fraction values found in subregion '{}' for {} elements",
+                     GEOS_FMT( "{}: negative global component fraction values found in subregion '{}' for {} elements",
                                getName(), subRegion.getName(), negativeValues ) );
 
       localIndex const wrongSum = MpiWrapper::sum( localWrongSum.get() );
