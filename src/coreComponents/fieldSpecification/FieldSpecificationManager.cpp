@@ -240,54 +240,49 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
 
     if( isFieldNameFound == 0 )
     {
-      std::ostringstream fieldNameNotFoundMessage;
-      std::string fieldNamePath =
-        GEOS_FMT( "\n{}: there are no {} named `{}` under the region `{}`.\n",
-                  fs.getWrapperDataContext( FieldSpecificationBase::viewKeyStruct::fieldNameString() ),
-                  FieldSpecificationBase::viewKeyStruct::fieldNameString(),
-                  fs.getFieldName(), fs.getObjectPath() );
-
-      fieldNameNotFoundMessage << fieldNamePath;
+      std::ostringstream errorMessageBuilder;
+      errorMessageBuilder << GEOS_FMT( "\n{}: there are no {} named `{}` under the region `{}`.\n",
+                                       fs.getWrapperDataContext( FieldSpecificationBase::viewKeyStruct::fieldNameString() ),
+                                       FieldSpecificationBase::viewKeyStruct::fieldNameString(),
+                                       fs.getFieldName(), fs.getObjectPath() );;
 
       string_array const splitPath =  stringutilities::splitStringWithDelim( fs.getObjectPath(), '/' );
-      string_array availableRegion;
       string const targetRegion = splitPath.size() > 1 ? splitPath.at( 1 ) : splitPath.at( 0 );
+
+      string_array availableRegions;
       bool foundMaterialInTargetRegion = false;
       mesh.getElemManager().forElementRegions< CellElementRegion >( [&]( CellElementRegion const & elemRegion )
       {
-        availableRegion.push_back( elemRegion.getName());
+        availableRegions.push_back( elemRegion.getName());
         if( targetRegion == elemRegion.getName() && !elemRegion.getMaterialList().empty())
         {
-          fieldNameNotFoundMessage << GEOS_FMT( "Available fieldname in {} are:\n", fs.getObjectPath() );
-          fieldNameNotFoundMessage << stringutilities::join( allPresentFieldsName[invalidRegion], ", " );
+          errorMessageBuilder << GEOS_FMT( "Available fieldname in {} are:\n", fs.getObjectPath() );
+          errorMessageBuilder << stringutilities::join( allPresentFieldsName[invalidRegion], ", " );
           foundMaterialInTargetRegion = true;
         }
       } );
+
       if( splitPath.size()==1 )
       {
-        std::set< std::string > set;
+        std::set< std::string > uniqueFields;
         for( const auto & pair : allPresentFieldsName )
         {
-          const auto & vec = pair.second; // Obtenir le vecteur
-          set.insert( vec.begin(), vec.end()); // Insérer les éléments du vecteur
+          const auto & vec = pair.second;
+          uniqueFields.insert( vec.begin(), vec.end());
         }
-        fieldNameNotFoundMessage << GEOS_FMT( " {} contain the following fields : {}\n", fs.getObjectPath(),
-                                              stringutilities::join( set, ", " ) );
-        fieldNameNotFoundMessage << GEOS_FMT( "There are also {} CellElementsRegions that can be appended under {} : {}.",
-                                              availableRegion.size(), fs.getObjectPath(),
-                                              stringutilities::join( availableRegion, ", " ) );
+        errorMessageBuilder << GEOS_FMT( " {} contain the following fields : {}\n", fs.getObjectPath(),
+                                         stringutilities::join( uniqueFields, ", " ) );
+        errorMessageBuilder << GEOS_FMT( "There are also {} CellElementsRegions that can be appended under {} : {}.",
+                                         availableRegions.size(), fs.getObjectPath(),
+                                         stringutilities::join( availableRegions, ", " ) );
       }
-      else
+      else if( !foundMaterialInTargetRegion )
       {
-        if( !foundMaterialInTargetRegion )
-        {
-          fieldNameNotFoundMessage << GEOS_FMT( "No material found under {}.\n", fs.getObjectPath() );
-        }
+        errorMessageBuilder << GEOS_FMT( "No material found under {}.\n", fs.getObjectPath() );
       }
 
-      GEOS_THROW( fieldNameNotFoundMessage.str(), InputError );
+      GEOS_THROW( errorMessageBuilder.str(), InputError );
     }
-    ;
   } );
 }
 
