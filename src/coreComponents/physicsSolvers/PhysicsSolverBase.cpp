@@ -97,7 +97,7 @@ PhysicsSolverBase::PhysicsSolverBase( string const & name,
     setInputFlag( InputFlags::FALSE ).
     setRestartFlags( RestartFlags::WRITE_AND_READ );
 
-  registerWrapper( viewKeyStruct::writeSolverStatisticsFlagString(), &m_writeSolverStatistics ).
+  registerWrapper( viewKeyStruct::writeSolverString(), &m_writeSolverStatistics ).
     setApplyDefaultValue( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setRestartFlags( RestartFlags::NO_WRITE ).
@@ -122,8 +122,8 @@ PhysicsSolverBase::PhysicsSolverBase( string const & name,
 
 void PhysicsSolverBase::postInputInitialization()
 {
-  bool const solverStatsLogFlag = getWrapper< integer >( viewKeyStruct::writeSolverStatisticsFlagString()).reference() >= 1;
-  bool const solverStatsCSVFlag = getWrapper< integer >( viewKeyStruct::writeSolverStatisticsFlagString()).reference() >= 2;
+  bool const solverStatsLogFlag = getWrapper< integer >( viewKeyStruct::writeSolverString()).reference() >= 1;
+  bool const solverStatsCSVFlag = getWrapper< integer >( viewKeyStruct::writeSolverString()).reference() >= 2;
   m_solverStatistics.makeDir( solverStatsCSVFlag );
 
   getIterationStats().setLogOutput( solverStatsLogFlag );
@@ -765,7 +765,7 @@ bool PhysicsSolverBase::lineSearchWithParabolicInterpolation( real64 const & tim
       GEOS_LOG_LEVEL_RANK_0( logInfo::LineSearch,
                              GEOS_FMT( "        Line search @ {:0.3f}:      ", cumulativeScale ) );
     }
-
+    std::cout << " R tested "<< std::endl;
     // get residual norm
     residualNormT = calculateResidualNorm( time_n, dt, domain, dofManager, rhs.values() );
     GEOS_LOG_LEVEL_RANK_0( logInfo::ResidualNorm,
@@ -1149,7 +1149,7 @@ bool PhysicsSolverBase::solveNonlinearSystem( real64 const & time_n,
 
     lastResidual = residualNorm;
   }
-  if( getWrapper< integer >( viewKeyStruct::writeSolverStatisticsFlagString()).reference() >= 1 )
+  if( getWrapper< integer >( viewKeyStruct::writeSolverString()).reference() >= 1 )
   {
     getIterationStats().writeIterationStatsToTable();
     getConvergenceStats().writeConvergenceStatsToTable();

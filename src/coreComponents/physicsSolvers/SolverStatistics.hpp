@@ -49,10 +49,10 @@ public:
   /// indicate if the containing solver does non-linear iterations (and so, produces iterations statistics)
   bool m_isIterativeSolver = true;
 
-  /// State of log output. True when writeSolverStatistics is set to 1
+  /// State of log output. True when writeSolver is set to 1
   bool m_logOutput = false;
 
-  /// State of csv output. True when writeSolverStatistics is set to 2
+  /// State of csv output. True when writeSolver is set to 2
   bool m_csvOutput = false;
 
   /// Number of time steps
@@ -243,7 +243,7 @@ public:
    */
   ConvergenceStatistics();
 
-  /// State of csv output. True when writeSolverStatistics is set to 2
+  /// State of csv output. True when writeSolver is set to 2
   bool m_csvOutput = false;
 
   /// The time at the beginning of the step

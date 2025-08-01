@@ -37,7 +37,7 @@ static const string basicXml =
         name="SinglePhaseFlow"
         discretization="singlePhaseTPFA"
         targetRegions="{ Channel }"
-        writeSolverStatistics="1" >
+        writeSolver="1" >
         <NonlinearSolverParameters
             newtonTol="1.0e-6"
             newtonMaxIter="8"/>
@@ -146,7 +146,7 @@ static const string basicXmlCSV =
         name="SinglePhaseFlow"
         discretization="singlePhaseTPFA"
         targetRegions="{ Channel }"
-        writeSolverStatistics="2" >
+        writeSolver="2" >
         <NonlinearSolverParameters
             newtonTol="1.0e-6"
             newtonMaxIter="8"/>

@@ -710,10 +710,7 @@ public:
     static constexpr char const * allowNonConvergedLinearSolverSolutionString() { return "allowNonConvergedLinearSolverSolution"; }
 
     /// @return string for the writeLinearSystem wrapper
-    static constexpr char const * writeSolvingConvergenceCSVFlagString() { return "writeSolvingConvergenceCSV"; }
-
-    /// @return string for the writeLinearSystem wrapper
-    static constexpr char const * writeSolverStatisticsFlagString() { return "writeSolverStatistics"; }
+    static constexpr char const * writeSolverString() { return "writeSolver"; }
 
     /// @return string for the numTimestepsSinceLastDtCut wrapper
     static constexpr char const * numTimestepsSinceLastDtCutString() { return "numTimestepsSinceLastDtCut"; }

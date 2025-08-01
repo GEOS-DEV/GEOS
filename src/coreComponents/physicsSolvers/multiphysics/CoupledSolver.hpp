@@ -675,7 +675,7 @@ protected:
   postInputInitialization() override
   {
     setSubSolvers();
-    bool const solverStatsFlag = getWrapper< integer >( viewKeyStruct::writeSolverStatisticsFlagString()).reference() >= 2;
+    bool const solverStatsFlag = getWrapper< integer >( viewKeyStruct::writeSolverString()).reference() >= 2;
     getIterationStats().setCSVOutput( solverStatsFlag );
     getConvergenceStats().setCSVOutput( solverStatsFlag );
     getIterationStats().setLogOutput( logInfo::Convergence::getMinLogLevel() >= 1 );
