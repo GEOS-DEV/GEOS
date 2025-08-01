@@ -38,20 +38,32 @@ struct NegativeTwoPhaseFlash
 
 public:
   /**
-   * @brief Perform negative two-phase EOS flash
-   * @param[in] numComps number of components
-   * @param[in] pressure pressure
-   * @param[in] temperature temperature
-   * @param[in] composition composition of the mixture
-   * @param[in] componentProperties The compositional component properties
-   * @param[in] flashData The parameters required for the flash
-   * @param[in] continuousFlashParameters List of continuous (float) parameters for flash
-   * @param[in] discreteFlashParameters List of discrete (integer) parameters for flash
-   * @param[in/out] kValues The phase equilibrium ratios
-   * @param[out] vapourPhaseMoleFraction the calculated vapour (gas) mole fraction
-   * @param[out] liquidComposition the calculated liquid phase composition
-   * @param[out] vapourComposition the calculated vapour phase composition
-   * @return an indicator of success of the flash
+   * @brief Perform a two-phase EOS flash calculation.
+   *
+   * @details
+   * Executes a negative flash calculation using an equation of state (EOS) model
+   * to determine the equilibrium phase split of a multicomponent mixture at a given
+   * pressure and temperature. The function computes the vapor phase mole fraction,
+   * as well as the compositions of the vapor and liquid phases, based on the provided
+   * initial estimates and component properties. Uses successive substitution.
+   *
+   * @tparam USD1 Unique stride descriptor for the K-values array.
+   * @tparam USD2 Unique stride descriptor for the phase composition arrays.
+   *
+   * @param[in] numComps Number of components in the mixture.
+   * @param[in] pressure System pressure [Pa].
+   * @param[in] temperature System temperature [K].
+   * @param[in] composition Overall composition of the mixture (z_i).
+   * @param[in] componentProperties Thermodynamic properties of each component.
+   * @param[in] flashData Precomputed data and parameters required for the flash calculation.
+   * @param[in] continuousFlashParameters List of continuous (floating-point) parameters for the flash.
+   * @param[in] discreteFlashParameters List of discrete (integer) parameters for the flash.
+   * @param[in,out] kValues Phase equilibrium ratios (K-values), updated during the flash.
+   * @param[out] vapourPhaseMoleFraction Calculated vapor phase mole fraction (V).
+   * @param[out] liquidComposition Calculated composition of the liquid phase (x_i).
+   * @param[out] vapourComposition Calculated composition of the vapor phase (y_i).
+   *
+   * @return True if the flash calculation was successful; false otherwise.
    */
   template< int USD1, int USD2 >
   GEOS_HOST_DEVICE
@@ -99,42 +111,6 @@ public:
                                   arraySlice2d< real64, USD3 > const & vapourCompositionDerivs );
 
 private:
-  /**
-   * @brief Calculate the logarithms of the fugacity ratios
-   * @param[in] numComps number of components
-   * @param[in] pressure pressure
-   * @param[in] temperature temperature
-   * @param[in] composition composition of the mixture
-   * @param[in] componentProperties The compositional component properties
-   * @param[in] flashData The parameters required for the flash
-   * @param[in] kValues The k-values
-   * @param[in] presentComponents The indices of the present components
-   * @param[out] vapourPhaseMoleFraction the calculated vapour (gas) mole fraction
-   * @param[out] liquidComposition the calculated liquid phase composition
-   * @param[out] vapourComposition the calculated vapour phase composition
-   * @param[out] logLiquidFugacity the calculated log fugacity ratios for the liquid phase
-   * @param[out] logVapourFugacity the calculated log fugacity ratios for the vapour phase
-   * @param[out] fugacityRatios the fugacity rations
-   * @return The error
-   */
-  template< integer USD1, integer USD2 >
-  GEOS_HOST_DEVICE
-  static real64 computeFugacityRatio(
-    integer const numComps,
-    real64 const pressure,
-    real64 const temperature,
-    arraySlice1d< real64 const > const & composition,
-    ComponentProperties::KernelWrapper const & componentProperties,
-    FlashData const & flashData,
-    arraySlice1d< real64 const, USD1 > const & kValues,
-    arraySlice1d< integer const > const & presentComponents,
-    real64 & vapourPhaseMoleFraction,
-    arraySlice1d< real64, USD2 > const & liquidComposition,
-    arraySlice1d< real64, USD2 > const & vapourComposition,
-    arraySlice1d< real64 > const & logLiquidFugacity,
-    arraySlice1d< real64 > const & logVapourFugacity,
-    arraySlice1d< real64 > const & fugacityRatios );
-
   /**
    * @brief Calculate the derivatives of the flash.
    *
@@ -186,6 +162,7 @@ private:
    * @return @c true if truncation should be applied
    */
   template< integer USD1, integer USD2 >
+  GEOS_FORCE_INLINE
   GEOS_HOST_DEVICE
   static bool truncateCompositions( integer const numComps,
                                     arraySlice1d< real64 const, USD1 > const & totalComposition,

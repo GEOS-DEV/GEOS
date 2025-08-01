@@ -77,20 +77,44 @@ bool NegativeTwoPhaseFlash::compute( integer const numComps,
   bool converged = false;
   for( localIndex iterationCount = 0; iterationCount < maxIterations; ++iterationCount )
   {
-    real64 const error = computeFugacityRatio( numComps,
-                                               pressure,
-                                               temperature,
-                                               composition,
-                                               componentProperties,
-                                               flashData,
-                                               kVapourLiquid.toSliceConst(),
-                                               presentComponents,
-                                               vapourPhaseMoleFraction,
-                                               liquidComposition,
-                                               vapourComposition,
-                                               logLiquidFugacity,
-                                               logVapourFugacity,
-                                               fugacityRatios );
+    // Solve Rachford-Rice Equation
+    vapourPhaseMoleFraction = RachfordRice::solve( kVapourLiquid.toSliceConst(), composition, presentComponents );
+
+    // Assign phase compositions
+    for( integer ic = 0; ic < numComps; ++ic )
+    {
+      liquidComposition[ic] = composition[ic] / ( 1.0 + vapourPhaseMoleFraction * ( kVapourLiquid[ic] - 1.0 ) );
+      vapourComposition[ic] = kVapourLiquid[ic] * liquidComposition[ic];
+    }
+
+    normalizeComposition( numComps, liquidComposition );
+    normalizeComposition( numComps, vapourComposition );
+
+    FugacityCalculator::computeLogFugacity( numComps,
+                                            pressure,
+                                            temperature,
+                                            liquidComposition.toSliceConst(),
+                                            componentProperties,
+                                            flashData.liquidEos,
+                                            flashData,
+                                            logLiquidFugacity );
+    FugacityCalculator::computeLogFugacity( numComps,
+                                            pressure,
+                                            temperature,
+                                            vapourComposition.toSliceConst(),
+                                            componentProperties,
+                                            flashData.vapourEos,
+                                            flashData,
+                                            logVapourFugacity );
+
+    // Compute fugacity ratios and calculate the error
+    real64 error = 0.0;
+    for( integer const ic : presentComponents )
+    {
+      fugacityRatios[ic] = ( logLiquidFugacity[ic] - logVapourFugacity[ic] ) + log( liquidComposition[ic] ) - log( vapourComposition[ic] );
+      error += (fugacityRatios[ic]*fugacityRatios[ic]);
+    }
+    error = LvArray::math::sqrt( error );
 
     // Compute fugacity ratios and check convergence
     converged = (error < flashTolerance);
@@ -373,64 +397,7 @@ void NegativeTwoPhaseFlash::computeDerivatives(
 }
 
 template< integer USD1, integer USD2 >
-GEOS_HOST_DEVICE
-real64 NegativeTwoPhaseFlash::computeFugacityRatio(
-  integer const numComps,
-  real64 const pressure,
-  real64 const temperature,
-  arraySlice1d< real64 const > const & composition,
-  ComponentProperties::KernelWrapper const & componentProperties,
-  FlashData const & flashData,
-  arraySlice1d< real64 const, USD1 > const & kValues,
-  arraySlice1d< integer const > const & presentComponents,
-  real64 & vapourPhaseMoleFraction,
-  arraySlice1d< real64, USD2 > const & liquidComposition,
-  arraySlice1d< real64, USD2 > const & vapourComposition,
-  arraySlice1d< real64 > const & logLiquidFugacity,
-  arraySlice1d< real64 > const & logVapourFugacity,
-  arraySlice1d< real64 > const & fugacityRatios )
-{
-  // Solve Rachford-Rice Equation
-  vapourPhaseMoleFraction = RachfordRice::solve( kValues, composition, presentComponents );
-
-  // Assign phase compositions
-  for( integer ic = 0; ic < numComps; ++ic )
-  {
-    liquidComposition[ic] = composition[ic] / ( 1.0 + vapourPhaseMoleFraction * ( kValues[ic] - 1.0 ) );
-    vapourComposition[ic] = kValues[ic] * liquidComposition[ic];
-  }
-
-  normalizeComposition( numComps, liquidComposition );
-  normalizeComposition( numComps, vapourComposition );
-
-  FugacityCalculator::computeLogFugacity( numComps,
-                                          pressure,
-                                          temperature,
-                                          liquidComposition.toSliceConst(),
-                                          componentProperties,
-                                          flashData.liquidEos,
-                                          flashData,
-                                          logLiquidFugacity );
-  FugacityCalculator::computeLogFugacity( numComps,
-                                          pressure,
-                                          temperature,
-                                          vapourComposition.toSliceConst(),
-                                          componentProperties,
-                                          flashData.vapourEos,
-                                          flashData,
-                                          logVapourFugacity );
-
-  // Compute fugacity ratios and calculate the error
-  real64 error = 0.0;
-  for( integer const ic : presentComponents )
-  {
-    fugacityRatios[ic] = ( logLiquidFugacity[ic] - logVapourFugacity[ic] ) + log( liquidComposition[ic] ) - log( vapourComposition[ic] );
-    error += (fugacityRatios[ic]*fugacityRatios[ic]);
-  }
-  return LvArray::math::sqrt( error );
-}
-
-template< integer USD1, integer USD2 >
+GEOS_FORCE_INLINE
 GEOS_HOST_DEVICE
 bool NegativeTwoPhaseFlash::truncateCompositions( integer const numComps,
                                                   arraySlice1d< real64 const, USD1 > const & totalComposition,

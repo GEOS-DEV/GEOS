@@ -408,9 +408,6 @@ update( localIndex const k,
         real64 const temperature,
         arraySlice1d< geos::real64 const, compflow::USD_COMP - 1 > const & composition ) const
 {
-//  m_kValues[k][q][0][0] = 0.0;
-//std::ostringstream os;
-//os << "PVT: " << std::setw(2) << k << " ";
   compute( pressure,
            temperature,
            composition,
@@ -423,19 +420,6 @@ update( localIndex const k,
            m_phaseCompFraction( k, q ),
            m_totalDensity( k, q ),
            m_kValues[k][q] );
-//os 
-//<< std::scientific << std::setprecision(5) << std::setw(13) << pressure << " "
-//<< std::fixed << std::setprecision(2) << temperature << " "
-//<< std::fixed << std::setprecision(5)
-//<< composition << " "
-//<< m_phaseCompFraction( k, q ).value[0] << " "
-//<< m_phaseCompFraction( k, q ).value[1] << " | "
-//<< std::scientific << std::setprecision(5) << std::setw(13) << m_phaseFraction( k, q ).value[1] << " | "
-//<< std::scientific << std::setprecision(5) << std::setw(13) << m_phaseMassDensity( k, q ).value[0] << " "
-//<< std::scientific << std::setprecision(5) << std::setw(13) << m_phaseMassDensity( k, q ).value[1] << " | "
-//<< std::scientific << std::setprecision(5) << std::setw(13) << m_totalDensity( k, q ).value << " | "
-//<< "\n";
-//std::cout << os.str();
 }
 
 template< typename FLASH, typename PHASE1, typename PHASE2, typename PHASE3 >
