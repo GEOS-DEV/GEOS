@@ -245,7 +245,7 @@ std::unique_ptr< CommandLineOptions > parseCommandLineOptions( int argc, char * 
         g_errorLogger.enableFileOutput( true );
         if( options[ERRORSOUTPUT].arg != nullptr )
         {
-          std::string_view filename =  options[ERRORSOUTPUT].arg; 
+          std::string_view filename =  options[ERRORSOUTPUT].arg;
           g_errorLogger.setOutputFilename( filename );
         }
         g_errorLogger.createFile();

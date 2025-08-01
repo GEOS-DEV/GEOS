@@ -39,7 +39,7 @@ ErrorLogger g_errorLogger{};
 
 void ErrorLogger::createFile()
 {
-  if( stringutilities::endsWith( m_filename, ".yaml") )
+  if( stringutilities::endsWith( m_filename, ".yaml" ) )
   {
     std::ofstream yamlFile( std::string( m_filename ), std::ios::out );
     if( yamlFile.is_open() )
@@ -210,7 +210,7 @@ void ErrorLogger::flushErrorMsg( ErrorLogger::ErrorMsg & errorMsg )
         yamlFile << g_level3Start << "priority: " << ctxInfo.m_priority << "\n";
         for( auto const & [key, value] : ctxInfo.m_attributes )
         {
-            yamlFile << g_level3Next << ErrorContext::attributeToString( key ) << ": " << value << "\n";
+          yamlFile << g_level3Next << ErrorContext::attributeToString( key ) << ": " << value << "\n";
         }
       }
     }

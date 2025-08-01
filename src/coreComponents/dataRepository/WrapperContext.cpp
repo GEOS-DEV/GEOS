@@ -40,7 +40,7 @@ string WrapperContext::toString() const
 
 ErrorLogger::ErrorContext WrapperContext::getContextInfo() const
 {
-  ErrorLogger::ErrorContext ctxInfo{ 
+  ErrorLogger::ErrorContext ctxInfo{
     { { ErrorLogger::ErrorContext::Attribute::DataPath, toString() } } // m_attributes
   };
   return ctxInfo;

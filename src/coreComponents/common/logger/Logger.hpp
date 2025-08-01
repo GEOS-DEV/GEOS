@@ -171,7 +171,7 @@
  * @brief Conditionally raise a hard error and terminate the program.
  * @param EXP an expression that will be evaluated as a predicate
  * @param MSG a message to log (any expression that can be stream inserted)
- * @param ... One or more DataContext (current error context information) 
+ * @param ... One or more DataContext (current error context information)
  */
 #define GEOS_ERROR_CTX_IF( EXP, MSG, ... ) \
   do \
@@ -260,7 +260,7 @@
  * @param EXP an expression that will be evaluated as a predicate
  * @param MSG a message to log (any expression that can be stream inserted)
  * @param TYPE the type of exception to throw
- * @param ... One or more DataContext (current error context information) 
+ * @param ... One or more DataContext (current error context information)
  */
 #define GEOS_THROW_CTX_IF( EXP, MSG, EXCEPTIONTYPE, ... ) \
   do \
@@ -342,7 +342,7 @@
  * @brief Conditionally report a warning
  * @param EXP an expression that will be evaluated as a predicate
  * @param MSG a message to log (any expression that can be stream inserted)
- * @param ... One or more DataContext (current error context information) 
+ * @param ... One or more DataContext (current error context information)
  */
 #define GEOS_WARNING_CTX_IF( EXP, MSG, ... ) \
   do \
@@ -408,10 +408,10 @@
  */
 #define GEOS_ERROR_IF_OP_MSG( lhs, OP, NOP, rhs, msg ) \
   GEOS_ERROR_IF_IMPL( lhs OP rhs, \
-                    msg << "\n" << \
-                    "Expected " << #lhs << " " << #NOP << " " << #rhs << "\n" << \
-                    "  " << #lhs << " = " << lhs << "\n" << \
-                    "  " << #rhs << " = " << rhs << "\n" )
+                      msg << "\n" << \
+                      "Expected " << #lhs << " " << #NOP << " " << #rhs << "\n" << \
+                      "  " << #lhs << " = " << lhs << "\n" << \
+                      "  " << #rhs << " = " << rhs << "\n" )
 
 /**
  * @brief Raise a hard error if two values are equal.
@@ -440,10 +440,10 @@
  */
 #define GEOS_THROW_IF_OP_MSG( lhs, OP, NOP, rhs, msg, TYPE ) \
   GEOS_THROW_IF_IMPL( lhs OP rhs, \
-                    msg << "\n" << \
-                    "Expected " << #lhs << " " << #NOP << " " << #rhs << "\n" << \
-                    "  " << #lhs << " = " << lhs << "\n" << \
-                    "  " << #rhs << " = " << rhs << "\n", TYPE )
+                      msg << "\n" << \
+                      "Expected " << #lhs << " " << #NOP << " " << #rhs << "\n" << \
+                      "  " << #lhs << " = " << lhs << "\n" << \
+                      "  " << #rhs << " = " << rhs << "\n", TYPE )
 
 /**
  * @brief Throw an exception if two values are equal.

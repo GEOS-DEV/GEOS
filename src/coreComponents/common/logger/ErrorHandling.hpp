@@ -41,7 +41,7 @@ public:
   {
     Error,
     Warning,
-    Exception, 
+    Exception,
     Undefined
   };
 
@@ -124,12 +124,12 @@ public:
      */
     ErrorMsg( MsgType msgType, std::string_view msgContent, std::string_view msgFile, integer msgLine )
       : m_type( msgType ), m_msg( msgContent ), m_file( msgFile ), m_line( msgLine ) {}
-    
+
     /**
      * @brief Add text to the current error msg
      * @param e the exception containing text to add
      * @param toEnd indicates whether to add the message at the beginning (true) or at the end (false)
-     * default is false 
+     * default is false
      * @return the reference to the current instance
      */
     ErrorMsg & addToMsg( std::exception const & e, bool toEnd = false );
@@ -138,7 +138,7 @@ public:
      * @brief Add text to the current error msg
      * @param msg the text to add
      * @param toEnd indicates whether to add the message at the beginning (true) or at the end (false)
-     * default is false 
+     * default is false
      * @return the reference to the current instance
      */
     ErrorMsg & addToMsg( std::string_view msg, bool toEnd = false );
@@ -172,11 +172,11 @@ public:
      */
     ErrorMsg & addCallStackInfo( std::string_view ossStackTrace );
 
-      /**
-       * @return true if the YAML file output is enabled
-       */
-      bool isValidStackTrace() const
-      { return m_isValidStackTrace; }
+    /**
+     * @return true if the YAML file output is enabled
+     */
+    bool isValidStackTrace() const
+    { return m_isValidStackTrace; }
 
     /**
      * @brief Adds one or more context elements to the error
@@ -218,8 +218,8 @@ private:
   { m_filename = filename; }
 
   /**
-   * @brief Gives acces to the error message that is currently being constructed, 
-   * potencially at various application layers  
+   * @brief Gives acces to the error message that is currently being constructed,
+   * potencially at various application layers
    * Use flushErrorMsg() when the message is fully constructed and you want it to be output
    * @return the reference to the current instance
    */
