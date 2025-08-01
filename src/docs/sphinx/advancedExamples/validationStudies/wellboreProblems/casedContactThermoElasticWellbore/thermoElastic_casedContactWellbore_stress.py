@@ -39,9 +39,9 @@ def main():
 		temperature = np.asarray( hf_temperature.get('temperature') )
 
 		# Compute total stress
-		stress_xx_total = stress[:,:,0] - 3 * bulkModuli[idx] * thermalExpansionCoefficients[idx] * temperature
-		stress_yy_total = stress[:,:,1] - 3 * bulkModuli[idx] * thermalExpansionCoefficients[idx] * temperature
-		stress_zz_total = stress[:,:,2] - 3 * bulkModuli[idx] * thermalExpansionCoefficients[idx] * temperature
+		stress_xx_total = stress[:,:,0] - 3 * bulkModuli[idx] * thermalExpansionCoefficients[idx] * (temperature-100)
+		stress_yy_total = stress[:,:,1] - 3 * bulkModuli[idx] * thermalExpansionCoefficients[idx] * (temperature-100)
+		stress_zz_total = stress[:,:,2] - 3 * bulkModuli[idx] * thermalExpansionCoefficients[idx] * (temperature-100)
 		stress_yz_total = stress[:,:,3]
 		stress_xz_total = stress[:,:,4]
 		stress_xy_total = stress[:,:,5]

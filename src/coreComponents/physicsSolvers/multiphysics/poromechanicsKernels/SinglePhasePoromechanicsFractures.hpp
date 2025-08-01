@@ -19,6 +19,7 @@
 
 #ifndef GEOS_PHYSICSSOLVERS_MULTIPHYSICS_POROMECHANICSKERNELS_SINGLEPHASEPOROMECHANICSFRACTURES_HPP_
 #define GEOS_PHYSICSSOLVERS_MULTIPHYSICS_POROMECHANICSKERNELS_SINGLEPHASEPOROMECHANICSFRACTURES_HPP_
+#include "physicsSolvers/solidMechanics/contact/FractureState.hpp"
 
 namespace geos
 {
@@ -61,7 +62,8 @@ struct StateUpdateKernel
           arrayView1d< real64 > const & aperture,
           arrayView1d< real64 const > const & oldHydraulicAperture,
           arrayView1d< real64 > const & hydraulicAperture,
-          arrayView2d< real64 const > const & fractureTraction )
+          arrayView2d< real64 const > const & fractureTraction,
+          arrayView1d< integer > const & fractureState )
   {
 
     forAll< POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const k )
@@ -73,6 +75,7 @@ struct StateUpdateKernel
       real64 dHydraulicAperture_dNormalTraction = 0.0;
       hydraulicAperture[k] = contactWrapper.computeHydraulicAperture( aperture[k],
                                                                       fractureTraction[k][0],
+                                                                      fractureState[k],
                                                                       dHydraulicAperture_dNormalJump,
                                                                       dHydraulicAperture_dNormalTraction );
 
