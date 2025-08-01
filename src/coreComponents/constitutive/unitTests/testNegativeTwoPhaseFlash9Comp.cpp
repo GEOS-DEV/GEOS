@@ -223,11 +223,6 @@ public:
       liquidComposition.toSlice(),
       vapourComposition.toSlice() );
 
-    if (vapourFraction < 1.0e-7 || 1.0 - vapourFraction < 1.0e-7)
-    {
-      return;
-    }
-
     NegativeTwoPhaseFlash::computeDerivatives(
       numComps,
       pressure,
@@ -244,7 +239,6 @@ public:
 
     // Test against numerically calculated values
     // --- Pressure derivatives ---
-/**
     concatDerivatives( Deriv::dP, derivatives, vapourFractionDerivs, liquidCompositionDerivs, vapourCompositionDerivs );
     real64 const dp = 1.0e-4 * pressure;
     geos::testing::internal::testNumericalDerivative< numValues >(
@@ -252,7 +246,7 @@ public:
       [&]( real64 const p, auto & values ) {
       evaluateFlash( p, temperature, composition, values );
     } );
-*/
+
     // --- Temperature derivatives ---
     concatDerivatives( Deriv::dT, derivatives, vapourFractionDerivs, liquidCompositionDerivs, vapourCompositionDerivs );
     real64 const dT = 1.0e-6 * temperature;
@@ -261,7 +255,7 @@ public:
       [&]( real64 const t, auto & values ) {
       evaluateFlash( pressure, t, composition, values );
     } );
-/**
+
     // --- Composition derivatives ---
     real64 constexpr dz = 1.0e-7;
     for( integer jc = 0; jc < numComps; ++jc )
@@ -277,7 +271,7 @@ public:
         evaluateFlash( pressure, temperature, composition, values );
         composition[jc] = originalFraction;
       }, 10*relTol, 10*absTol );
-    }*/
+    }
   }
 
 protected:
@@ -315,7 +309,7 @@ using SoaveRedlichKwong = NegativeTwoPhaseFlashTest9CompFixture< EquationOfState
 
 TEST_P( PengRobinson, testNegativeFlash )
 {
-  //testFlash( GetParam() );
+  testFlash( GetParam() );
 }
 
 TEST_P( PengRobinson, testNegativeFlashDerivatives )
@@ -325,12 +319,12 @@ TEST_P( PengRobinson, testNegativeFlashDerivatives )
 
 TEST_P( SoaveRedlichKwong, testNegativeFlash )
 {
-  //testFlash( GetParam() );
+  testFlash( GetParam() );
 }
 
 TEST_P( SoaveRedlichKwong, testNegativeFlashDerivatives )
 {
-  //testFlashDerivatives( GetParam() );
+  testFlashDerivatives( GetParam() );
 }
 
 //-------------------------------------------------------------------------------

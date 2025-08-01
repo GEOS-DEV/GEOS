@@ -107,6 +107,22 @@ bool NegativeTwoPhaseFlash::compute( integer const numComps,
     }
   }
 
+  // Test if we have converged to a null or trivial solution
+  bool const testNegativeFlash = truncateCompositions( numComps,
+                                                       composition,
+                                                       vapourPhaseMoleFraction,
+                                                       liquidComposition.toSliceConst(),
+                                                       vapourComposition.toSliceConst());
+  if( testNegativeFlash )
+  {
+    vapourPhaseMoleFraction = LvArray::math::min( 1.0, LvArray::math::max( 0.0, vapourPhaseMoleFraction ));
+    for( integer ic = 0; ic < numComps; ++ic )
+    {
+      liquidComposition[ic] = composition[ic];
+      vapourComposition[ic] = composition[ic];
+    }
+  }
+
   return converged;
 }
 
@@ -137,6 +153,25 @@ void NegativeTwoPhaseFlash::computeDerivatives(
   LvArray::forValuesInSlice( liquidCompositionDerivs, setZero );
   LvArray::forValuesInSlice( vapourCompositionDerivs, setZero );
 
+  // Check for a trivial solution
+  real64 diffXY = 0.0;
+  for( integer ic = 0; ic < numComps; ++ic )
+  {
+    real64 const dxy = liquidComposition[ic] - vapourComposition[ic];
+    diffXY += (dxy*dxy);
+  }
+  diffXY = LvArray::math::sqrt( diffXY );
+
+  if( diffXY <  MultiFluidConstants::minForSpeciesPresence )
+  {
+    for( integer ic = 0; ic < numComps; ++ic )
+    {
+      liquidCompositionDerivs( ic, Deriv::dC + ic ) = 1.0;
+      vapourCompositionDerivs( ic, Deriv::dC + ic ) = 1.0;
+    }
+  }
+  else
+  {
     // Calculate the liquid and vapour fugacities and derivatives
     StackArray< real64, 2, 2*maxNumComps > logFugacity( 2, numComps );
     StackArray< real64, 3, 2*maxNumComps * maxNumDofs > logFugacityDerivs( 2, numComps, numDofs );
@@ -202,6 +237,7 @@ void NegativeTwoPhaseFlash::computeDerivatives(
                           liquidCompositionDerivs,
                           vapourCompositionDerivs );
       LvArray::forValuesInSlice( vapourFractionDerivs, []( real64 & v ){ v *= -1.0; } );
+    }
   }
 }
 
@@ -232,7 +268,6 @@ void NegativeTwoPhaseFlash::computeDerivatives(
   real64 const VL = phase1Fraction;
   real64 const factor1 = VL / (1.0 - VL);
   real64 const factor2 = 1.0 / (1.0 - VL);
-  real64 sumDiffxy = 0.0;
   for( integer i = 0; i < numComps; ++i )
   {
     real64 const phi_2_i = phase2Fugacity[i];
@@ -240,8 +275,6 @@ void NegativeTwoPhaseFlash::computeDerivatives(
 
     real64 const xi = phase2Composition[i];
     real64 const yi = phase1Composition[i];
-
-sumDiffxy += ((xi-yi)*(xi-yi));
 
     real64 col_N = 0.0;
     for( integer j = 0; j < numComps; ++j )
@@ -265,16 +298,6 @@ sumDiffxy += ((xi-yi)*(xi-yi));
     A( numComps, i ) = factor2;
   }
   A( numComps, numComps ) = 0.0;
-
-  // Check for single phase trivial solution
-  if (sumDiffxy < MultiFluidConstants::fugacityTolerance)
-  {
-    for( integer i = 0; i < numComps; ++i )
-    {
-      A( numComps, i ) = 0.0;
-    }
-    A( numComps, numComps ) = 1.0;
-  }
 
   // Pressure and temperature derivatives
   for( integer ic = 0; ic < numComps; ++ic )
@@ -407,10 +430,25 @@ real64 NegativeTwoPhaseFlash::computeFugacityRatio(
   return LvArray::math::sqrt( error );
 }
 
+template< integer USD1, integer USD2 >
+GEOS_HOST_DEVICE
+bool NegativeTwoPhaseFlash::truncateCompositions( integer const numComps,
+                                                  arraySlice1d< real64 const, USD1 > const & totalComposition,
+                                                  real64 const & vapourPhaseMoleFraction,
+                                                  arraySlice1d< real64 const, USD2 > const & liquidComposition,
+                                                  arraySlice1d< real64 const, USD2 > const & vapourComposition )
+{
+  GEOS_UNUSED_VAR( numComps );
+  GEOS_UNUSED_VAR( totalComposition );
+  GEOS_UNUSED_VAR( liquidComposition );
+  GEOS_UNUSED_VAR( vapourComposition );
+  real64 const V = vapourPhaseMoleFraction;
+  real64 const L = 1.0 - vapourPhaseMoleFraction;
+  return (V < MultiFluidConstants::epsilon|| L < MultiFluidConstants::epsilon);
+}
+
 } // namespace compositional
-
 } // namespace constitutive
-
 } // namespace geos
 
 #endif //GEOS_CONSTITUTIVE_FLUID_MULTIFLUID_COMPOSITIONAL_FUNCTIONS_NEGATIVETWOPHASEFLASH_IMPL_HPP_

@@ -135,6 +135,31 @@ private:
     arraySlice1d< real64 > const & logVapourFugacity,
     arraySlice1d< real64 > const & fugacityRatios );
 
+  /**
+   * @brief Calculate the derivatives of the flash.
+   *
+   * @details
+   * Implicitly computes the derivatives of the flash problem after the iterative
+   * solution has converged. This includes the derivatives of the vapor fraction
+   * and the phase compositions with respect to all primary variables
+   *
+   * @tparam USD1 Unique stride descriptor for phase compositions.
+   * @tparam USD2 Unique stride descriptor for vapor fraction derivatives.
+   * @tparam USD3 Unique stride descriptor for composition derivatives.
+   *
+   * @param[in] numComps Number of components in the system.
+   * @param[in] totalComposition Overall composition vector (z_i).
+   * @param[in] phase1Fraction Mole fraction of phase 1 (typically vapour).
+   * @param[in] phase1Composition Composition of phase 1 (y_i).
+   * @param[in] phase2Composition Composition of phase 2 (x_i).
+   * @param[in] phase1Fugacity Fugacity coefficients in phase 1 (exp(\phi_V,i)).
+   * @param[in] phase2Fugacity Fugacity coefficients in phase 2 (exp(\phi_L,i)).
+   * @param[in] phase1LogFugacityDerivs Derivatives of log fugacity in phase 1.
+   * @param[in] phase2LogFugacityDerivs Derivatives of log fugacity in phase 2.
+   * @param[out] phase1FractionDerivs Derivatives of phase1Fraction.
+   * @param[out] phase1CompositionDerivs Derivatives of phase1Composition.
+   * @param[out] phase2CompositionDerivs Derivatives of phase2Composition.
+   */
   template< integer USD1, integer USD2, integer USD3 >
   GEOS_HOST_DEVICE
   static void computeDerivatives(
@@ -150,6 +175,23 @@ private:
     arraySlice1d< real64, USD2 > const & phase1FractionDerivs,
     arraySlice2d< real64, USD3 > const & phase1CompositionDerivs,
     arraySlice2d< real64, USD3 > const & phase2CompositionDerivs );
+
+  /**
+   * @brief A test for when the result of the negative flash should be truncated immediately
+   * @param[in] numComps Number of components in the mixture.
+   * @param[in] totalComposition Total overall composition of the system (z_i).
+   * @param[in] vapourPhaseMoleFraction Mole fraction of the vapor phase (V).
+   * @param[in] liquidComposition Mole fractions in the liquid phase (x_i).
+   * @param[in] vapourComposition Mole fractions in the vapor phase (y_i).
+   * @return @c true if truncation should be applied
+   */
+  template< integer USD1, integer USD2 >
+  GEOS_HOST_DEVICE
+  static bool truncateCompositions( integer const numComps,
+                                    arraySlice1d< real64 const, USD1 > const & totalComposition,
+                                    real64 const & vapourPhaseMoleFraction,
+                                    arraySlice1d< real64 const, USD2 > const & liquidComposition,
+                                    arraySlice1d< real64 const, USD2 > const & vapourComposition );
 };
 
 } // namespace compositional
