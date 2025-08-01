@@ -82,11 +82,11 @@ Constitutives and includes
 .. _KRPCSection:
 
 The capillary and residual trapping in such a multi-facies reservoir occur due to the heterogeneous properties. For instance, a large entry pressure
-jump exists between anticline facies \#5 to the upper layers. The box A is chosen such that it can monitor the expected trapped *CO2* dissolution.
-The dissolved *CO2* and makes the brine heavier which results in its sinking and starts the convective mixing instabilites.
+jump exists between anticline facies \#5 and the upper layers. The box A is chosen such that it can monitor the expected trapped *CO2* dissolution.
+The dissolved *CO2* makes the brine heavier which results in its sinking and starts the convective mixing instabilites.
 
 Below we show the sets of relative permeabilities (left) and capillary pressure (right) produced from their tabulated values. The facies \#5 is highlighted
-as playing an important role in the overall trapping.
+as it plays an important role in the overall trapping.
 
 .. plot:: ../inputFiles/compositionalMultiphaseFlow/benchmarks/SPE11/b/include/plotAllKrPc.py
 
@@ -105,7 +105,7 @@ is defined as
     :start-after: <!-- SPHINX_KR_CONST -->
     :end-before: <!-- SPHINX_KR_CONST_END -->
 
-Other properties such as permeabilities, diffusivity, and rock thermal conductivity that are modeled as constant per facies 
+Other properties such as permeabilities, diffusivity, and rock thermal conductivity are modeled as constant per facies
 (thermal conductivity definition is shown as an example):
 
 .. literalinclude:: ../../../../../../../inputFiles/compositionalMultiphaseFlow/benchmarks/SPE11/b/spe11b_vti_source_base.xml
@@ -149,8 +149,15 @@ The plots demonstrate the validity of the selected models with respect to the pr
 Flow solver
 ------------------------------------------------------------------------
 
-The `CompositionalMultiphaseFVM` solver uses the finite volume discretization on the `targetRegions`. The `discretization` will be TPFA and here is
-linked-by-name to the `TwoPointFluxApproximation` XML block. The *Phase Potential Upwind (PPU)* scheme is used.
+The `CompositionalMultiphaseFVM` solver uses the finite volume discretization on the `targetRegions`. The `discretization` will be TPFA
+
+
+.. literalinclude:: ../../../../../../../inputFiles/compositionalMultiphaseFlow/benchmarks/SPE11/b/spe11b_vti_source_base.xml
+    :language: xml
+    :start-after: <!-- SPHINX_TPFA -->
+    :end-before: <!-- SPHINX_TPFA_END -->
+
+and here is linked-by-name to the `TwoPointFluxApproximation` XML block. The *Phase Potential Upwind (PPU)* scheme is used.
 
 .. literalinclude:: ../../../../../../../inputFiles/compositionalMultiphaseFlow/benchmarks/SPE11/b/spe11b_vti_source_base.xml
     :language: xml
@@ -158,7 +165,7 @@ linked-by-name to the `TwoPointFluxApproximation` XML block. The *Phase Potentia
     :end-before: <!-- SPHINX_FLOW_SOL_END -->
 
 
-Note the important `isThermal` and `useMass` flags are triggered on. The `targetPhaseVolFractionChangeInTimeStep` parameter controls the time step selection 
+Note the important `isThermal` and `useMass` flags are enabled. The `targetPhaseVolFractionChangeInTimeStep` parameter controls the time step selection
 and the `maxCompFractionChange` parameter controls the solution chopping strategy in the solver. The `NonlinearSolverParameters` contains the nonlinear tolerance,
 *line search* parameters, and the parameters for the time step increase and decrease. The `LinearSolverParameters` contains parameters for the linear solver:
 the standard pick here is *Flexible GMRES* iterative solve with *Multi Grid Reduction* preconditioner.
@@ -206,7 +213,7 @@ Finally, the the equilibration stage is defined in the `Events` by setting the s
     :end-before: <!-- SPHINX_EVENTS_END -->
 
 .. note::
-    The time tags in *GEOS* are in seconds. Here a split between equilibration, start of the injection and injection-post-injection is chosen as
+    The time tags in *GEOS* are in seconds. Here a split between equilibration, start of the injection and post-injection is chosen as
     the maximum time steps in these stages are quite different. Specifically, separate ``solverApplication1`` definition is ensuring stability as the injection starts.
 
 The boundary conditions for the domain are imposed as follows. The top and bottom temperatures are set using the `FieldSpecification` on `top` and `bottom` geometrical sets defined above:

@@ -64,12 +64,14 @@
       materialList="{ fluid, rock, relperm7, cappres7, thermalCond, noDiffusion }" />
   </ElementRegions>
 
+  <!-- SPHINX_TPFA -->
   <NumericalMethods>
     <FiniteVolume>
       <TwoPointFluxApproximation
         name="fluidTPFA" />
     </FiniteVolume>
   </NumericalMethods>
+  <!-- SPHINX_TPFA_END -->
 
   <Constitutive>
     <!-- SPHINX_EOS_CONST -->
