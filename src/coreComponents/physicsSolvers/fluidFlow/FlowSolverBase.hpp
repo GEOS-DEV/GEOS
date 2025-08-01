@@ -236,7 +236,7 @@ protected:
   virtual void initializePreSubGroups() override;
 
   /**
-   * @brief Checks the validity of the discretization name for the FiniteVolume method. (errors if issues are detected).
+   * @brief Checks the validity of the discretization name for the FiniteVolume method (errors if issues are detected)
    */
   void checkDiscretizationName() const;
 
