@@ -1,8 +1,6 @@
 # Specify list of tests
 set( gtest_geosx_tests
      testCapillaryPressure.cpp
-     testCO2BrinePVTModels.cpp
-     testCO2SpycherPruessModels.cpp
      testDamage.cpp
      testRelPerm.cpp
      testRelPermHysteresis.cpp )

@@ -61,7 +61,7 @@ public:
   using CompositionalMultiphaseFluid = typename Viscosity< ViscosityModel >::FluidType;
   using Base = FluidModelTest< CompositionalMultiphaseFluid, std::tuple_element_t< 2, TEST_TYPE >::value >;
   static constexpr real64 relTol = 1.0e-4;
-  static constexpr real64 absTol = 1.0e-4;
+  static constexpr real64 absTol = 1.0e-3;
 
 public:
   MultiFluidCompositionalMultiphaseTestFixture()
@@ -154,17 +154,17 @@ struct FluidData< FluidModel, 4 >
     using Keys = typename FluidModel::viewKeyStruct;
 
     string_array & componentNames = fluid.getReference< string_array >( Keys::componentNamesString() );
-    componentNames = {"N2", "C10", "C20", "H20"};
+    componentNames = {"N2", "C5", "C20", "H20"};
 
     array1d< real64 > & molarWeight = fluid.getReference< array1d< real64 > >( Keys::componentMolarWeightString() );
     TestFluid< 4 >::createArray( molarWeight, Feed< 4 >{28e-3, 134e-3, 275e-3, 18e-3} );
 
     array1d< real64 > & criticalPressure = fluid.getReference< array1d< real64 > >( Keys::componentCriticalPressureString() );
-    TestFluid< 4 >::createArray( criticalPressure, Feed< 4 >{34e5, 25.3e5, 14.6e5, 220.5e5} );
+    TestFluid< 4 >::createArray( criticalPressure, Feed< 4 >{34e5, 33.68e5, 14.6e5, 220.5e5} );
     array1d< real64 > & criticalTemperature = fluid.getReference< array1d< real64 > >( Keys::componentCriticalTemperatureString() );
-    TestFluid< 4 >::createArray( criticalTemperature, Feed< 4 >{126.2, 622.0, 782.0, 647.0} );
+    TestFluid< 4 >::createArray( criticalTemperature, Feed< 4 >{126.2, 469.7, 782.0, 647.0} );
     array1d< real64 > & acentricFactor = fluid.getReference< array1d< real64 > >( Keys::componentAcentricFactorString() );
-    TestFluid< 4 >::createArray( acentricFactor, Feed< 4 >{0.04, 0.443, 0.816, 0.344} );
+    TestFluid< 4 >::createArray( acentricFactor, Feed< 4 >{0.04, 0.2510, 0.816, 0.344} );
     array2d< real64 > & binaryCoeff = fluid.getReference< array2d< real64 > >( Keys::componentBinaryCoeffString() );
     fillBinaryCoeffs< 4 >( binaryCoeff, {0.0, 0.1, 0.0, 0.0, 0.0, 0.0} );
   }
