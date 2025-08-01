@@ -362,10 +362,10 @@ void FlowSolverBase::checkDiscretizationName() const
   DomainPartition const & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
 
-  string_array discretizationMethods;
 
   FiniteVolumeManager const & finiteVolumeManager = numericalMethodManager.getFiniteVolumeManager();
 
+  string_array discretizationMethods;
   finiteVolumeManager.forSubGroups< FluxApproximationBase >( [&]( FluxApproximationBase const & fv )
   {
     discretizationMethods.push_back( fv.getName() );
