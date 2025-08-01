@@ -192,15 +192,6 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
     {
       mapEntry.second = MpiWrapper::min( mapEntry.second );
     }
-    bool areAllSetsEmpty = true;
-    for( std::pair< string const, localIndex > & mapEntry : isTargetSetEmpty )
-    {
-      if( mapEntry.second == 0 ) // target set is not empty
-      {
-        areAllSetsEmpty = false;
-        break;
-      }
-    }
 
     for( std::pair< string const, localIndex > & mapEntry : isTargetSetCreated )
     {
@@ -227,7 +218,7 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
         missingSetNames.emplace_back( mapEntry.first );
       }
 
-      string setNamesError = GEOS_FMT( "\n{}: there is/are no set(s) named `{}` under the {} `{}`.\n",
+      string setNamesError = GEOS_FMT( "\n{}: there are no set(s) named `{}` under the {} `{}`.\n",
                                        fs.getWrapperDataContext( FieldSpecificationBase::viewKeyStruct::objectPathString() ),
                                        fmt::join( missingSetNames, ", " ),
                                        FieldSpecificationBase::viewKeyStruct::objectPathString(), fs.getObjectPath() );
@@ -251,24 +242,52 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
     {
       std::ostringstream fieldNameNotFoundMessage;
       std::string fieldNamePath =
-        GEOS_FMT( "\n{}: there is no {} named `{}` under the region `{}`.\n",
+        GEOS_FMT( "\n{}: there are no {} named `{}` under the region `{}`.\n",
                   fs.getWrapperDataContext( FieldSpecificationBase::viewKeyStruct::fieldNameString() ),
                   FieldSpecificationBase::viewKeyStruct::fieldNameString(),
                   fs.getFieldName(), fs.getObjectPath() );
 
       fieldNameNotFoundMessage << fieldNamePath;
-      if( areAllSetsEmpty )
+
+      string_array const splitPath =  stringutilities::splitStringWithDelim( fs.getObjectPath(), '/' );
+      string_array availableRegion;
+      string const targetRegion = splitPath.size() > 1 ? splitPath.at( 1 ) : splitPath.at( 0 );
+      bool foundMaterialInTargetRegion = false;
+      mesh.getElemManager().forElementRegions< CellElementRegion >( [&]( CellElementRegion const & elemRegion )
       {
-        GEOS_LOG_RANK_0( fieldNameNotFoundMessage.str() );
+        availableRegion.push_back( elemRegion.getName());
+        if( targetRegion == elemRegion.getName() && !elemRegion.getMaterialList().empty())
+        {
+          fieldNameNotFoundMessage << GEOS_FMT( "Available fieldname in {} are:\n", fs.getObjectPath() );
+          fieldNameNotFoundMessage << stringutilities::join( allPresentFieldsName[invalidRegion], ", " );
+          foundMaterialInTargetRegion = true;
+        }
+      } );
+      if( splitPath.size()==1 )
+      {
+        std::set< std::string > set;
+        for( const auto & pair : allPresentFieldsName )
+        {
+          const auto & vec = pair.second; // Obtenir le vecteur
+          set.insert( vec.begin(), vec.end()); // Insérer les éléments du vecteur
+        }
+        fieldNameNotFoundMessage << GEOS_FMT( " {} contain the following fields : {}\n", fs.getObjectPath(),
+                                              stringutilities::join( set, ", " ) );
+        fieldNameNotFoundMessage << GEOS_FMT( "There are also {} CellElementsRegions that can be appended under {} : {}.",
+                                              availableRegion.size(), fs.getObjectPath(),
+                                              stringutilities::join( availableRegion, ", " ) );
       }
       else
       {
-        fieldNameNotFoundMessage << GEOS_FMT( "Available fields in {} are:\n", fs.getObjectPath() );
-        fieldNameNotFoundMessage << stringutilities::join( allPresentFieldsName[invalidRegion], ", " );
+        if( !foundMaterialInTargetRegion )
+        {
+          fieldNameNotFoundMessage << GEOS_FMT( "No material found under {}.\n", fs.getObjectPath() );
+        }
+      }
 
-        GEOS_THROW( fieldNameNotFoundMessage.str(), InputError );
-      };
+      GEOS_THROW( fieldNameNotFoundMessage.str(), InputError );
     }
+    ;
   } );
 }
 
