@@ -476,10 +476,6 @@ real64 SolidMechanicsLagrangeContactBubbleStab::calculateResidualNorm( real64 co
 
   real64 const totalResidual = sqrt( solidResidual * solidResidual + contactResidual * contactResidual );
 
-  getConvergenceStats().m_residualSolid = solidResidual;
-  getConvergenceStats().m_residualContact = contactResidual;
-  getConvergenceStats().m_totalResidual = totalResidual;
-
   return totalResidual;
 }
 
@@ -526,7 +522,9 @@ real64 SolidMechanicsLagrangeContactBubbleStab::calculateContactResidualNorm( Do
   GEOS_LOG_LEVEL_RANK_0( logInfo::ResidualNorm,
                          GEOS_FMT( "        ( Rt  ) = ( {:15.6e}  )", stickResidual ));
 
-  return sqrt( stickResidual * stickResidual );
+  getConvergenceStats().m_residuals["Rt"] = stickResidual;
+
+  return stickResidual;
 }
 
 

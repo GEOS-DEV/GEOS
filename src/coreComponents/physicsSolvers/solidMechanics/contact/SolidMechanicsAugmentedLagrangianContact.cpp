@@ -707,8 +707,7 @@ real64 SolidMechanicsAugmentedLagrangianContact::calculateResidualNorm( real64 c
 
   real64 totalResidualNorm = sqrt( solidResidualNorm * solidResidualNorm + bubbleResidualNorm * bubbleResidualNorm );
 
-  getConvergenceStats().m_residualBubbleDisp = bubbleResidualNorm;
-  getConvergenceStats().m_totalResidual = totalResidualNorm;
+  getConvergenceStats().m_residuals["RBubbleDisp"] = bubbleResidualNorm;
 
   return totalResidualNorm;
 }

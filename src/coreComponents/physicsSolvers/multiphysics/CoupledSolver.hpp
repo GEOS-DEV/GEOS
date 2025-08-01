@@ -637,7 +637,7 @@ protected:
         residualNorm = sqrt( residualNorm );
         GEOS_LOG_LEVEL_RANK_0( logInfo::ResidualNorm,
                                GEOS_FMT( "        ( R ) = ( {:4.2e} )", residualNorm ) );
-        getConvergenceStats().m_residualNormT = residualNorm;
+        getConvergenceStats().m_residuals["R"] = residualNorm;
         isConverged = ( residualNorm < params.m_newtonTol );
 
       }

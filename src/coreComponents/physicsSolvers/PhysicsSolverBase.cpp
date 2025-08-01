@@ -669,8 +669,6 @@ bool PhysicsSolverBase::lineSearch( real64 const & time_n,
     GEOS_LOG_LEVEL_RANK_0( logInfo::LineSearch,
                            GEOS_FMT( "        ( R ) = ( {:4.2e} )", residualNorm ) );
 
-    getConvergenceStats().m_residualNormT = residualNorm;
-
     // if the residual norm is less than the last residual, we can proceed to the
     // solution step
     if( residualNorm < lastResidual )
@@ -770,8 +768,6 @@ bool PhysicsSolverBase::lineSearchWithParabolicInterpolation( real64 const & tim
     residualNormT = calculateResidualNorm( time_n, dt, domain, dofManager, rhs.values() );
     GEOS_LOG_LEVEL_RANK_0( logInfo::ResidualNorm,
                            GEOS_FMT( "        ( R ) = ( {:4.2e} )", residualNormT ) );
-
-    getConvergenceStats().m_residualNormT = residualNormT;
 
     ffm = ffT;
     ffT = residualNormT*residualNormT;
@@ -1003,7 +999,7 @@ bool PhysicsSolverBase::solveNonlinearSystem( real64 const & time_n,
       residualNorm = calculateResidualNorm( time_n, stepDt, domain, m_dofManager, m_rhs.values() );
       GEOS_LOG_LEVEL_RANK_0( logInfo::ResidualNorm,
                              GEOS_FMT( "        ( R ) = ( {:4.2e} )", residualNorm ) );
-      getConvergenceStats().m_residualNormT = residualNorm;
+      getConvergenceStats().m_residuals["R"] = residualNorm;
     }
 
     // if the residual norm is less than the Newton tolerance we denote that we have

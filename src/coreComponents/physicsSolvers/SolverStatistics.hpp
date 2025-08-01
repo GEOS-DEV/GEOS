@@ -255,50 +255,8 @@ public:
   /// Current cycle number
   integer m_cycleNumber = 0;
 
-  /// Maximum value for residual mass.
-  real64 m_residualMass = std::numeric_limits< real64 >::quiet_NaN();
-
-  /// Maximum value for residual volume.
-  real64 m_residualVol = std::numeric_limits< real64 >::quiet_NaN();
-
-  /// Maximum value for residual energy.
-  real64 m_residualEnergy = std::numeric_limits< real64 >::quiet_NaN();
-
-  /// Maximum value for residual flow.
-  real64 m_residualFlow = std::numeric_limits< real64 >::quiet_NaN();
-
-  /// Maximum value for residual bubble displacement.
-  real64 m_residualBubbleDisp = std::numeric_limits< real64 >::quiet_NaN();
-
-  /// Maximum value for residual fracture.
-  real64 m_residualFracture = std::numeric_limits< real64 >::quiet_NaN();
-
-  /// Maximum value for residual stick.
-  real64 m_residualStick = std::numeric_limits< real64 >::quiet_NaN();
-
-  /// Maximum value for residual slip.
-  real64 m_residualSlip = std::numeric_limits< real64 >::quiet_NaN();
-
-  /// Maximum value for residual open.
-  real64 m_residualOpen = std::numeric_limits< real64 >::quiet_NaN();
-
-  /// Maximum value for residual solid.
-  real64 m_residualSolid = std::numeric_limits< real64 >::quiet_NaN();
-
-  /// Maximum value for residual contact.
-  real64 m_residualContact = std::numeric_limits< real64 >::quiet_NaN();
-
-  /// Maximum value for residual proppant.
-  real64 m_residualProppant = std::numeric_limits< real64 >::quiet_NaN();
-
-  /// Maximum value for residual damage.
-  real64 m_residualDamage = std::numeric_limits< real64 >::quiet_NaN();
-
-  /// Maximum total residual value.
-  real64 m_totalResidual = std::numeric_limits< real64 >::quiet_NaN();
-
-  /// Maximum value for residual norm at the end of line search
-  real64 m_residualNormT = std::numeric_limits< real64 >::quiet_NaN();
+  /// Residuals with their names
+  std::map< string, real64 > m_residuals;
 
   /**
    * @brief Set the csv state output

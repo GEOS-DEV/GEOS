@@ -237,12 +237,14 @@ ConvergenceStatistics::ConvergenceStatistics()
 {
   m_convergenceLayout = std::make_unique< TableLayout >();
 
-  m_convergenceLayout->addColumns( {"Cycle number", "time_n (s)", "dt (s)",
-                                    "RMass", "RVol", "REnergy",
-                                    "RFlow", "RBubbleDisp", "RFrac",
-                                    "Rstick", "Rslip", "Ropen",
-                                    "RSolid", "RContact", "RProppant",
-                                    "RDamage", "RTotal", "R"} );
+  string_array header = {"Cycle number", "time_n (s)", "dt (s)" };
+
+  for( auto const & residual : m_residuals )
+  {
+    header.emplace_back( residual.first ); // TODO this should move somewhere else, we need to have the residual names available
+  }
+
+  m_convergenceLayout->addColumns( header );
 }
 
 void ConvergenceStatistics::writeConvergenceStatsToTable()
@@ -252,30 +254,6 @@ void ConvergenceStatistics::writeConvergenceStatsToTable()
 
   stdVector< TableData::CellData > residualsNormCells;
 
-  struct ResidualInfo
-  {
-    const real64 & value;
-    string_view columnName;
-  };
-
-  ResidualInfo residuals[] = {
-    { m_residualMass, "RMass" },
-    { m_residualVol, "RVol" },
-    { m_residualEnergy, "REnergy" },
-    { m_residualFlow, "RFlow" },
-    { m_residualBubbleDisp, "RBubbleDisp" },
-    { m_residualFracture, "RFrac" },
-    { m_residualStick, "Rstick" },
-    { m_residualSlip, "Rslip" },
-    { m_residualOpen, "Ropen" },
-    { m_residualSolid, "RSolid" },
-    { m_residualContact, "RContact" },
-    { m_residualProppant, "RProppant" },
-    { m_residualDamage, "RDamage" },
-    { m_totalResidual, "RTotal" },
-    { m_residualNormT, "R" }
-  };
-
   residualsNormCells.emplace_back( TableData::CellData( {CellType::Value,
                                                          GEOS_FMT( "{}", m_cycleNumber )} ));
   residualsNormCells.emplace_back( TableData::CellData( {CellType::Value,
@@ -283,12 +261,12 @@ void ConvergenceStatistics::writeConvergenceStatsToTable()
   residualsNormCells.emplace_back( TableData::CellData( {CellType::Value,
                                                          GEOS_FMT( "{}", m_dt )} ));
 
-  for( auto const & residual : residuals )
+  for( auto const & residual : m_residuals )
   {
     residualsNormCells.emplace_back( TableData::CellData(
       {
         CellType::Value,
-        !std::isnan( residual.value ) ? GEOS_FMT( "{}", residual.value ) : "0"
+        !std::isnan( residual.second ) ? GEOS_FMT( "{}", residual.second ) : "0"
       } ));
   }
 
@@ -312,11 +290,13 @@ void ConvergenceStatistics::updateSolverStep( real64 const & time_n, real64 cons
   m_dt = dt;
   m_cycleNumber = cycleNumber;
 }
+
 void ConvergenceStatistics::resetResidualsValue()
 {
-  m_residualSolid = 0;
-  m_totalResidual=0;
-  m_residualNormT=0;
+  for( auto & residual : m_residuals )
+  {
+    residual.second = 0.0;
+  }
 }
 
 } // namespace geos
