@@ -39,20 +39,20 @@
   </Geometry>
 
   <Events
-      maxTime="1.0368e8">
+      maxTime="5184000">
     <PeriodicEvent
         name="outputs"
-        timeFrequency="1.728e6"
+        timeFrequency="518400"
         target="/Outputs/vtkOutput"/>
 
     <PeriodicEvent
         name="solverApplications1"
-        forceDt="1.728e6"
+        timeFrequency="518400"
         target="/Solvers/compflow"/>
 
     <PeriodicEvent
         name="restarts"
-        timeFrequency="3e7"
+        timeFrequency="518400"
         targetExactTimestep="0"
         target="/Outputs/restartOutput"/>
   </Events>
