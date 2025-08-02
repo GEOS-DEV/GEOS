@@ -47,7 +47,7 @@
 
     <PeriodicEvent
         name="solverApplications1"
-        timeFrequency="518400"
+        forceDt="518400"
         target="/Solvers/compflow"/>
 
     <PeriodicEvent
