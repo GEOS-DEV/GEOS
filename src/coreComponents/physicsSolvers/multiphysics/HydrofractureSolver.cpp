@@ -1032,8 +1032,6 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::implicitStepComplete( real64 c
     // update the stencil weights using the updated hydraulic aperture
     flowSolver()->updateStencilWeights( domain );
   }
-
-  this->getIterationStats().writeIterationStatsToTable();
 }
 
 template< typename POROMECHANICS_SOLVER >

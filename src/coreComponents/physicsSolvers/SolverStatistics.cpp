@@ -42,8 +42,6 @@ void SolverStatistics::setOutputFilesName( string_view solverName )
 
 IterationsStatistics::IterationsStatistics( string const & name, Group * const parent )
   : Group( name, parent ),
-  m_currentNewtonIter( 0 ),
-  m_currentNumOuterLoopIterations( 0 ),
   m_currentNumNonlinearIterations( 0 ),
   m_currentNumLinearIterations( 0 )
 {
@@ -55,11 +53,6 @@ IterationsStatistics::IterationsStatistics( string const & name, Group * const p
     setApplyDefaultValue( 0 ).
     setDescription( "Number of time step cuts" );
 
-  registerWrapper( viewKeyStruct::numSuccessfulOuterLoopIterationsString(),
-                   &m_numSuccessfulOuterLoopIterations ).
-    setApplyDefaultValue( 0 ).
-    setDescription( "Cumulative number of successful outer loop iterations" );
-
   registerWrapper( viewKeyStruct::numSuccessfulNonlinearIterationsString(),
                    &m_numSuccessfulNonlinearIterations ).
     setApplyDefaultValue( 0 ).
@@ -69,12 +62,6 @@ IterationsStatistics::IterationsStatistics( string const & name, Group * const p
                    &m_numSuccessfulLinearIterations ).
     setApplyDefaultValue( 0 ).
     setDescription( "Cumulative number of successful linear iterations" );
-
-
-  registerWrapper( viewKeyStruct::numDiscardedOuterLoopIterationsString(),
-                   &m_numDiscardedOuterLoopIterations ).
-    setApplyDefaultValue( 0 ).
-    setDescription( "Cumulative number of discarded outer loop iterations" );
 
   registerWrapper( viewKeyStruct::numDiscardedNonlinearIterationsString(),
                    &m_numDiscardedNonlinearIterations ).
@@ -88,16 +75,15 @@ IterationsStatistics::IterationsStatistics( string const & name, Group * const p
 
   m_iterationCSVLayout = std::make_unique< TableLayout >();
   m_iterationCSVLayout->setTitle( GEOS_FMT( "{} iterations", getParent().getName()));
-  m_iterationCSVLayout->addColumns( { "Number of time steps", "Newton iteration", "Number of time step cuts",
-                                      "Setup time", "Solve time",
-                                      "Successful outer loop", "Successful nonlinear", "Successful linear",
-                                      "Discarded outer loop", "Discarded nonlinear", "Discarded linear"} );
+  m_iterationCSVLayout->addColumns( { "Number of time steps", "Number of time step cuts",
+                                      "Successful nonlinear", "Successful linear",
+                                      "Discarded nonlinear", "Discarded linear",
+                                      "Setup time", "Solve time",} );
 }
 
 void IterationsStatistics::resetCurrentTimeStepStatistics()
 {
   // the time step begins, we reset the individual-timestep counters
-  m_currentNumOuterLoopIterations = 0;
   m_currentNumNonlinearIterations = 0;
   m_currentNumLinearIterations = 0;
 }
@@ -107,12 +93,6 @@ void IterationsStatistics::updateNonlinearIteration( integer const numLinearIter
   // we have just performed a Newton iteration, so we increment the individual-timestep counters
   m_currentNumNonlinearIterations++;
   m_currentNumLinearIterations += numLinearIterations;
-}
-
-void IterationsStatistics::updateNonlinearIteration()
-{
-  // we have just performed an outer iteration, so we increment the individual-timestep counter (number of outer iteration)
-  m_currentNumNonlinearIterations++;
 }
 
 void IterationsStatistics::accumulateSolverLinearTime( real64 setupTime, real64 solveTime )
@@ -127,16 +107,9 @@ void IterationsStatistics::resetSolverLinearTime()
   m_solveTime = 0.0;
 }
 
-void IterationsStatistics::incrementNonlinearIteration()
-{
-  // we have just performed an outer loop iteration, so we increment the individual-timestep counter for outer loop iterations
-  m_currentNumOuterLoopIterations++;
-}
-
 void IterationsStatistics::iterateTimeStepStatistics()
 {
   // the timestep has converged, so we increment the cumulative counters for successful timesteps
-  m_numSuccessfulOuterLoopIterations += m_currentNumOuterLoopIterations;
   m_numSuccessfulNonlinearIterations += m_currentNumNonlinearIterations;
   m_numSuccessfulLinearIterations += m_currentNumLinearIterations;
   m_numTimeSteps++;
@@ -145,7 +118,6 @@ void IterationsStatistics::iterateTimeStepStatistics()
 void IterationsStatistics::updateTimeStepCut()
 {
   // we have just cut the time step, so we increment the cumulative counters for discarded timesteps
-  m_numDiscardedOuterLoopIterations += m_currentNumOuterLoopIterations;
   m_numDiscardedNonlinearIterations += m_currentNumNonlinearIterations;
   m_numDiscardedLinearIterations += m_currentNumLinearIterations;
   m_numTimeStepCuts++;
@@ -160,16 +132,13 @@ void IterationsStatistics::writeIterationStatsToTable()
     return;
 
   m_iterationData.addRow( m_numTimeSteps,
-                          m_currentNewtonIter,
                           m_numTimeStepCuts,
-                          m_setupTime,
-                          m_solveTime,
-                          m_numSuccessfulOuterLoopIterations,
                           m_numSuccessfulNonlinearIterations,
                           m_numSuccessfulLinearIterations,
-                          m_numDiscardedOuterLoopIterations,
                           m_numDiscardedNonlinearIterations,
-                          m_numDiscardedLinearIterations );
+                          m_numDiscardedLinearIterations,
+                          m_setupTime,
+                          m_solveTime );
 
   if( !m_logStream.is_open() )
   {
@@ -189,18 +158,17 @@ void IterationsStatistics::outputStatistics()
     return;
 
   {
-    TableLayout iterationLogLayout ( getParent().getName(), {} );
+    TableLayout iterationLogLayout ( getParent().getName(), {"", ""} );
 
     TableTextFormatter const statsFormatter( iterationLogLayout );
 
     TableData iterationDataLog;
-    iterationDataLog.addRow( "Number of Time-steps:", m_numTimeSteps );
-    iterationDataLog.addRow( "Number of Time steps cut", m_numTimeStepCuts );
-    iterationDataLog.addRow( "Successful nonlinear", m_numSuccessfulNonlinearIterations );
-    iterationDataLog.addRow( "Successful linear", m_numSuccessfulLinearIterations );
-    iterationDataLog.addRow( "Discarded outer loop", m_numDiscardedOuterLoopIterations );
-    iterationDataLog.addRow( "Discarded nonlinear", m_numDiscardedNonlinearIterations );
-    iterationDataLog.addRow( "Discarded linear", m_numDiscardedLinearIterations );
+    iterationDataLog.addRow( "Time steps", m_numTimeSteps );
+    iterationDataLog.addRow( "Time step cuts", m_numTimeStepCuts );
+    iterationDataLog.addRow( "Successful nonlinear iterations", m_numSuccessfulNonlinearIterations );
+    iterationDataLog.addRow( "Successful linear iterations", m_numSuccessfulLinearIterations );
+    iterationDataLog.addRow( "Discarded nonlinear iterations", m_numDiscardedNonlinearIterations );
+    iterationDataLog.addRow( "Discarded linear iterations", m_numDiscardedLinearIterations );
 
     GEOS_LOG_RANK_0( statsFormatter.toString( iterationDataLog ));
   }

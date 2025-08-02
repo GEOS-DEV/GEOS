@@ -1165,8 +1165,6 @@ void SinglePhaseWell::implicitStepComplete( real64 const & time_n,
 {
   WellSolverBase::implicitStepComplete( time_n, dt, domain );
 
-  getIterationStats().writeIterationStatsToTable();
-
   if( getLogLevel() > 0 )
   {
     printRates( time_n, dt, domain );

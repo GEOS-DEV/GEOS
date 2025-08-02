@@ -260,10 +260,8 @@ TEST( testSolverStats, testLog )
 
   EXPECT_EQ( solverStat.m_iterationsStats.m_numTimeSteps, 20 );
   EXPECT_EQ( solverStat.m_iterationsStats.m_numTimeStepCuts, 0 );
-  EXPECT_EQ( solverStat.m_iterationsStats.m_numSuccessfulOuterLoopIterations, 0 );
   EXPECT_EQ( solverStat.m_iterationsStats.m_numSuccessfulNonlinearIterations, 20 );
   EXPECT_EQ( solverStat.m_iterationsStats.m_numSuccessfulLinearIterations, 20 );
-  EXPECT_EQ( solverStat.m_iterationsStats.m_numDiscardedOuterLoopIterations, 0 );
   EXPECT_EQ( solverStat.m_iterationsStats.m_numDiscardedNonlinearIterations, 0 );
   EXPECT_EQ( solverStat.m_iterationsStats.m_numDiscardedLinearIterations, 0 );
 }

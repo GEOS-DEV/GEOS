@@ -183,8 +183,6 @@ void ReactiveCompositionalMultiphaseOBL::implicitStepComplete( real64 const & ti
       porousMaterial.saveConvergedState();
     } );
   } );
-
-  getIterationStats().writeIterationStatsToTable();
 }
 
 void ReactiveCompositionalMultiphaseOBL::postInputInitialization()

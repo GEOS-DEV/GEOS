@@ -2653,8 +2653,6 @@ void CompositionalMultiphaseBase::implicitStepComplete( real64 const & time,
       }
     } );
   } );
-
-  getIterationStats().writeIterationStatsToTable();
 }
 
 void CompositionalMultiphaseBase::saveConvergedState( ElementSubRegionBase & subRegion ) const

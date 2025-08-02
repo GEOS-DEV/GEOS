@@ -1288,8 +1288,6 @@ void ImmiscibleMultiphaseFlow::implicitStepComplete( real64 const & time,
       }
     } );
   } );
-
-  getIterationStats().writeIterationStatsToTable();
 }
 
 void ImmiscibleMultiphaseFlow::saveConvergedState( ElementSubRegionBase & subRegion ) const

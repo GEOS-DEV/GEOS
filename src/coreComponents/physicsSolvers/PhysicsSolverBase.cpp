@@ -270,7 +270,6 @@ real64 PhysicsSolverBase::solverStep( real64 const & time_n,
   {
     Timer timer( m_timers["step complete"] );
     implicitStepComplete( time_n, dt_return, domain );
-    getIterationStats().writeIterationStatsToTable();
   }
 
   return dt_return;
@@ -308,7 +307,7 @@ bool PhysicsSolverBase::execute( real64 const time_n,
 
     // increment the cumulative number of nonlinear and linear iterations
     getIterationStats().iterateTimeStepStatistics();
-    getConvergenceStats().m_cycleNumber++;
+    getIterationStats().writeIterationStatsToTable();
 
     /*
      * Let us check convergence history of previous solve:
@@ -869,7 +868,6 @@ real64 PhysicsSolverBase::nonlinearImplicitStep( real64 const & time_n,
         else
         {
           // increment the solver statistics for reporting purposes
-          getIterationStats().incrementNonlinearIteration();
           GEOS_LOG_LEVEL_RANK_0( logInfo::NonlinearSolver,
                                  "---------- Configuration did not converge. Testing new configuration. ----------" );
         }
@@ -905,6 +903,7 @@ real64 PhysicsSolverBase::nonlinearImplicitStep( real64 const & time_n,
 
       // notify the solver statistics counter that this is a time step cut
       getIterationStats().updateTimeStepCut();
+      getIterationStats().writeIterationStatsToTable();
     }
   } // end of outer loop (dt chopping strategy)
 
@@ -947,7 +946,6 @@ bool PhysicsSolverBase::solveNonlinearSystem( real64 const & time_n,
 
   for( newtonIter = 0; newtonIter < maxNewtonIter; ++newtonIter )
   {
-    getIterationStats().updateNewtonIter( newtonIter );
     GEOS_LOG_LEVEL_RANK_0( logInfo::NonlinearSolver,
                            GEOS_FMT( "    Attempt: {:2}, ConfigurationIter: {:2}, NewtonIter: {:2}", dtAttempt, configurationLoopIter, newtonIter ));
 
@@ -1001,6 +999,12 @@ bool PhysicsSolverBase::solveNonlinearSystem( real64 const & time_n,
       GEOS_LOG_LEVEL_RANK_0( logInfo::ResidualNorm,
                              GEOS_FMT( "        ( R ) = ( {:4.2e} )", residualNorm ) );
       getConvergenceStats().m_residuals["R"] = residualNorm;
+
+      if( m_writeStatistics >= 2 )
+      {
+        getConvergenceStats().updateSolverStep( time_n, stepDt, cycleNumber, newtonIter );
+        getConvergenceStats().writeConvergenceStatsToTable();
+      }
     }
 
     // if the residual norm is less than the Newton tolerance we denote that we have
@@ -1145,12 +1149,6 @@ bool PhysicsSolverBase::solveNonlinearSystem( real64 const & time_n,
     }
 
     lastResidual = residualNorm;
-
-    if( m_writeStatistics >= 2 )
-    {
-      getConvergenceStats().updateSolverStep( time_n, stepDt, cycleNumber, newtonIter );
-      getConvergenceStats().writeConvergenceStatsToTable();
-    }
   }
 
   getIterationStats().resetSolverLinearTime();
@@ -1180,16 +1178,6 @@ void PhysicsSolverBase::setupDofs( DomainPartition const & GEOS_UNUSED_PARAM( do
 {
   GEOS_ERROR( "PhysicsSolverBase::setupDofs called!. Should be overridden." );
 }
-
-//void PhysicsSolverBase::updateSolverStatistics( real64 const & time_n, real64 const & dt, integer const cycleNumber, integer const iterNumber )
-//{
-//  getConvergenceStats().updateSolverStep( time_n, dt, cycleNumber, iterNumber );
-//}
-
-//void PhysicsSolverBase::writeStatisticsToTable()
-//{
-//  getIterationStats().writeIterationStatsToTable();
-//}
 
 void PhysicsSolverBase::setupSystem( DomainPartition & domain,
                                      DofManager & dofManager,
@@ -1365,7 +1353,6 @@ void PhysicsSolverBase::solveLinearSystem( DofManager const & dofManager,
       solver->solve( rhs, solution );
     }
     m_linearSolverResult = solver->result();
-    getIterationStats().accumulateSolverLinearTime( m_linearSolverResult.setupTime, m_linearSolverResult.solveTime );
   }
   else
   {
@@ -1379,8 +1366,9 @@ void PhysicsSolverBase::solveLinearSystem( DofManager const & dofManager,
       solver->solve( rhs, solution );
     }
     m_linearSolverResult = solver->result();
-    getIterationStats().accumulateSolverLinearTime( m_linearSolverResult.setupTime, m_linearSolverResult.solveTime );
   }
+
+  getIterationStats().accumulateSolverLinearTime( m_linearSolverResult.setupTime, m_linearSolverResult.solveTime );
 
   GEOS_LOG_LEVEL_RANK_0( logInfo::LinearSolver,
                          GEOS_FMT( "        Last LinSolve(iter,res) = ( {:3}, {:4.2e} )",

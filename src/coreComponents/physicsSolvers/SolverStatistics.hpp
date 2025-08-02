@@ -58,28 +58,11 @@ public:
   /// Number of time step cuts
   integer m_numTimeStepCuts = 0;
 
-  /// Linear solver setup
-  real64 m_setupTime = 0.0;
-
-  /// Linear solver solve
-  real64 m_solveTime = 0.0;
-
-  /// Maximum number of current Newton iterations.
-  integer m_currentNewtonIter = 0;
-
-
-  /// Number of outer loop iterations in the current time step (utility variable constantly overwritten)
-  integer m_currentNumOuterLoopIterations = 0;
-
   /// Number of nonlinear iterations in the current time step (utility variable constantly overwritten)
   integer m_currentNumNonlinearIterations = 0;
 
   /// Number of linear iterations in the current time step (utility variable constantly overwritten)
   integer m_currentNumLinearIterations = 0;
-
-
-  /// Cumulative number of successful outer loop iterations
-  integer m_numSuccessfulOuterLoopIterations = 0;
 
   /// Cumulative number of successful nonlinear iterations
   integer m_numSuccessfulNonlinearIterations = 0;
@@ -87,15 +70,17 @@ public:
   /// Cumulative number of successful linear iterations
   integer m_numSuccessfulLinearIterations = 0;
 
-
-  /// Cumulative number of discarded outer loop iterations
-  integer m_numDiscardedOuterLoopIterations = 0;
-
   /// Cumulative number of discarded nonlinear iterations
   integer m_numDiscardedNonlinearIterations = 0;
 
   /// Cumulative number of discarded linear iterations
   integer m_numDiscardedLinearIterations = 0;
+
+  /// Linear solver setup
+  real64 m_setupTime = 0.0;
+
+  /// Linear solver solve
+  real64 m_solveTime = 0.0;
 
   /**
    * @brief Struct to serve as a container for variable strings and keys.
@@ -108,15 +93,11 @@ public:
     /// String key for the number of time step cuts
     static constexpr char const * numTimeStepCutsString() { return "numTimeStepCuts"; }
 
-    /// String key for the successful number of outer loop iterations
-    static constexpr char const * numSuccessfulOuterLoopIterationsString() { return "numSuccessfulOuterLoopIterations"; }
     /// String key for the successful number of nonlinear iterations
     static constexpr char const * numSuccessfulNonlinearIterationsString() { return "numSuccessfulNonlinearIterations"; }
     /// String key for the successful number of linear iterations
     static constexpr char const * numSuccessfulLinearIterationsString() { return "numSuccessfulLinearIterations"; }
 
-    /// String key for the discarded number of outer loop iterations
-    static constexpr char const * numDiscardedOuterLoopIterationsString() { return "numDiscardedOuterLoopIterations"; }
     /// String key for the discarded number of nonlinear iterations
     static constexpr char const * numDiscardedNonlinearIterationsString() { return "numDiscardedNonlinearIterations"; }
     /// String key for the discarded number of linear iterations
@@ -150,13 +131,6 @@ public:
   void updateNonlinearIteration( integer const numLinearIterations );
 
   /**
-   * @brief Save the current newton iteration
-   * @param currentNewtonIter The current newton iteration performed by the the linear solver
-   */
-  void updateNewtonIter( integer currentNewtonIter )
-  { m_currentNewtonIter = currentNewtonIter; }
-
-  /**
    * @brief Accumulate the setupTime & solveTime result over each newton iteration
    * @param setupTime The linear setup time
    * @param solveTime The linear solve time
@@ -167,17 +141,6 @@ public:
    * @brief Reset the setupTime & solveTime to 0 at the end of each cycle
    */
   void resetSolverLinearTime();
-
-  /**
-   * @brief Tell the solverStatistics that we are doing a nonlinear iteration
-   * @detail This function is well suited for the outer loop in sequential schemes
-   */
-  void updateNonlinearIteration();
-
-  /**
-   * @brief Tell the solverStatistics that we are doing an outer loop iteration
-   */
-  void incrementNonlinearIteration();
 
   /**
    * @brief Tell the solverStatistics that there is a time step cut

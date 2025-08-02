@@ -261,8 +261,6 @@ void SolidMechanicsLagrangeContact::implicitStepComplete( real64 const & time,
                                                          true );
 
   } );
-
-  getIterationStats().writeIterationStatsToTable();
 }
 
 SolidMechanicsLagrangeContact::~SolidMechanicsLagrangeContact()
