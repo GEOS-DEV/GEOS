@@ -164,8 +164,6 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::implicitStepSetup( real64 cons
 {
   Base::implicitStepSetup( time_n, dt, cycleNumber, domain );
 
-  Base::updateSolverStatistics( time_n, dt, cycleNumber );
-
   updateHydraulicApertureAndFracturePermeability( domain );
 
 #ifdef GEOS_USE_SEPARATION_COEFFICIENT
@@ -1025,8 +1023,7 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::implicitStepComplete( real64 c
                                                                         DomainPartition & domain )
 {
   Base::implicitStepComplete( time_n, dt, domain );
-  flowSolver()->writeStatisticsToTable();
-
+  
   if( m_isLaggingFractureStencilWeightsUpdate )
   {
     // remove the contribution of the hydraulic aperture from the stencil weights
@@ -1035,6 +1032,8 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::implicitStepComplete( real64 c
     // update the stencil weights using the updated hydraulic aperture
     flowSolver()->updateStencilWeights( domain );
   }
+
+  this->getIterationStats().writeIterationStatsToTable();
 }
 
 template< typename POROMECHANICS_SOLVER >

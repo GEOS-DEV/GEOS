@@ -268,8 +268,6 @@ void SolidMechanicsAugmentedLagrangianContact::implicitStepSetup( real64 const &
 
   SolidMechanicsLagrangianFEM::implicitStepSetup( time_n, dt, cycleNumber, domain );
 
-  updateSolverStatistics( time_n, dt, cycleNumber );
-
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
                                                                 string_array const & )

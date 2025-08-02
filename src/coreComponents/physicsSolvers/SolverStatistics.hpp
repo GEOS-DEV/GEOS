@@ -46,13 +46,10 @@ public:
   IterationsStatistics( string const & name,
                         dataRepository::Group * const parent );
 
-  /// indicate if the containing solver does non-linear iterations (and so, produces iterations statistics)
-  bool m_isIterativeSolver = true;
-
-  /// State of log output. True when writeSolver is set to 1
+  /// State of log output. True when writeStatistics is set to 1
   bool m_logOutput = false;
 
-  /// State of csv output. True when writeSolver is set to 2
+  /// State of csv output. True when writeStatistics is set to 2
   bool m_csvOutput = false;
 
   /// Number of time steps
@@ -127,15 +124,6 @@ public:
   };
 
   /**
-   * @brief Indicate if the solver is iterative.
-   * @param isIterative The iterative state.
-   */
-  void setIterativeSolver( bool isIterative )
-  {
-    m_isIterativeSolver = isIterative;
-  }
-
-  /**
    * @brief Set the csv state output
    * @param state The csv state
    */
@@ -166,7 +154,7 @@ public:
    * @param currentNewtonIter The current newton iteration performed by the the linear solver
    */
   void updateNewtonIter( integer currentNewtonIter )
-  { if( m_isIterativeSolver ) m_currentNewtonIter = currentNewtonIter; }
+  { m_currentNewtonIter = currentNewtonIter; }
 
   /**
    * @brief Accumulate the setupTime & solveTime result over each newton iteration
@@ -211,7 +199,7 @@ public:
    * @param filename The filename as a string_view.
    */
   void setFilename( string_view filename )
-  { if( m_isIterativeSolver ) m_iterationsFilename = filename; }
+  { m_iterationsFilename = filename; }
 
   /**
    * @brief Output the statistics to the console in table format
@@ -243,7 +231,7 @@ public:
    */
   ConvergenceStatistics();
 
-  /// State of csv output. True when writeSolver is set to 2
+  /// State of csv output. True when writeStatistics in solver is set to 2
   bool m_csvOutput = false;
 
   /// The time at the beginning of the step
@@ -254,6 +242,9 @@ public:
 
   /// Current cycle number
   integer m_cycleNumber = 0;
+
+  /// Current iteration number
+  integer m_iterNumber = 0;
 
   /// Residuals with their names
   std::map< string, real64 > m_residuals;
@@ -275,8 +266,9 @@ public:
    * @param time_n The time at the beginning of the step
    * @param dt The desired timestep
    * @param cycleNumber The current cycle number
+   * @param iterNumber The current iteration number
    */
-  void updateSolverStep( real64 const & time_n, real64 const & dt, integer const cycleNumber );
+  void updateSolverStep( real64 const & time_n, real64 const & dt, integer const cycleNumber, integer const iterNumber );
 
   /**
    * @brief Reset the solid residuals value.

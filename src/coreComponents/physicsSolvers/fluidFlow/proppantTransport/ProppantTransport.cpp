@@ -420,13 +420,13 @@ void ProppantTransport::postStepUpdate( real64 const & time_n,
   }
 }
 
-void ProppantTransport::implicitStepSetup( real64 const & time_n,
-                                           real64 const & dt,
-                                           integer const cycleNumber,
+void ProppantTransport::implicitStepSetup( real64 const & GEOS_UNUSED_PARAM( time_n ),
+                                           real64 const & GEOS_UNUSED_PARAM( dt ),
+                                           integer const GEOS_UNUSED_PARAM( cycleNumber ),
                                            DomainPartition & domain )
 {
   GEOS_MARK_FUNCTION;
-  updateSolverStatistics( time_n, dt, cycleNumber );
+  
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel & mesh,
                                                                string_array const & regionNames )
@@ -464,7 +464,7 @@ void ProppantTransport::implicitStepComplete( real64 const & GEOS_UNUSED_PARAM( 
     } );
   } );
 
-  writeStatisticsToTable();
+  getIterationStats().writeIterationStatsToTable();
 }
 
 void ProppantTransport::setupDofs( DomainPartition const & GEOS_UNUSED_PARAM( domain ),

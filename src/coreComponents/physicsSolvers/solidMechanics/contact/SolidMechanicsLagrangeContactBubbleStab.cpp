@@ -313,8 +313,6 @@ void SolidMechanicsLagrangeContactBubbleStab::implicitStepSetup( real64 const & 
                                                                  DomainPartition & domain )
 {
   SolidMechanicsLagrangianFEM::implicitStepSetup( time_n, dt, cycleNumber, domain );
-
-  updateSolverStatistics( time_n, dt, cycleNumber );
 }
 
 void SolidMechanicsLagrangeContactBubbleStab::assembleSystem( real64 const time,

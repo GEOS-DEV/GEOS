@@ -97,7 +97,7 @@ PhysicsSolverBase::PhysicsSolverBase( string const & name,
     setInputFlag( InputFlags::FALSE ).
     setRestartFlags( RestartFlags::WRITE_AND_READ );
 
-  registerWrapper( viewKeyStruct::writeSolverString(), &m_writeSolverStatistics ).
+  registerWrapper( viewKeyStruct::writeStatisticsString(), &m_writeStatistics ).
     setApplyDefaultValue( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setRestartFlags( RestartFlags::NO_WRITE ).
@@ -122,8 +122,8 @@ PhysicsSolverBase::PhysicsSolverBase( string const & name,
 
 void PhysicsSolverBase::postInputInitialization()
 {
-  bool const solverStatsLogFlag = getWrapper< integer >( viewKeyStruct::writeSolverString()).reference() >= 1;
-  bool const solverStatsCSVFlag = getWrapper< integer >( viewKeyStruct::writeSolverString()).reference() >= 2;
+  bool const solverStatsLogFlag = m_writeStatistics >= 1;
+  bool const solverStatsCSVFlag = m_writeStatistics >= 2;
   m_solverStatistics.makeDir( solverStatsCSVFlag );
 
   getIterationStats().setLogOutput( solverStatsLogFlag );
@@ -270,6 +270,7 @@ real64 PhysicsSolverBase::solverStep( real64 const & time_n,
   {
     Timer timer( m_timers["step complete"] );
     implicitStepComplete( time_n, dt_return, domain );
+    getIterationStats().writeIterationStatsToTable();
   }
 
   return dt_return;
@@ -1144,11 +1145,12 @@ bool PhysicsSolverBase::solveNonlinearSystem( real64 const & time_n,
     }
 
     lastResidual = residualNorm;
-  }
-  if( getWrapper< integer >( viewKeyStruct::writeSolverString()).reference() >= 1 )
-  {
-    getIterationStats().writeIterationStatsToTable();
-    getConvergenceStats().writeConvergenceStatsToTable();
+
+    if( m_writeStatistics >= 2 )
+    {
+      getConvergenceStats().updateSolverStep( time_n, stepDt, cycleNumber, newtonIter );
+      getConvergenceStats().writeConvergenceStatsToTable();
+    }
   }
 
   getIterationStats().resetSolverLinearTime();
@@ -1179,16 +1181,15 @@ void PhysicsSolverBase::setupDofs( DomainPartition const & GEOS_UNUSED_PARAM( do
   GEOS_ERROR( "PhysicsSolverBase::setupDofs called!. Should be overridden." );
 }
 
-void PhysicsSolverBase::updateSolverStatistics( real64 const & time_n, real64 const & dt, integer const cycleNumber )
-{
-  getConvergenceStats().updateSolverStep( time_n, dt, cycleNumber );
-}
+//void PhysicsSolverBase::updateSolverStatistics( real64 const & time_n, real64 const & dt, integer const cycleNumber, integer const iterNumber )
+//{
+//  getConvergenceStats().updateSolverStep( time_n, dt, cycleNumber, iterNumber );
+//}
 
-void PhysicsSolverBase::writeStatisticsToTable()
-{
-  getConvergenceStats().writeConvergenceStatsToTable();
-  getIterationStats().writeIterationStatsToTable();
-}
+//void PhysicsSolverBase::writeStatisticsToTable()
+//{
+//  getIterationStats().writeIterationStatsToTable();
+//}
 
 void PhysicsSolverBase::setupSystem( DomainPartition & domain,
                                      DofManager & dofManager,

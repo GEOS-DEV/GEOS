@@ -1123,8 +1123,6 @@ void SinglePhaseWell::implicitStepSetup( real64 const & time,
 {
   WellSolverBase::implicitStepSetup( time, dt, cycleNumber, domain );
 
-  updateSolverStatistics( time, dt, cycleNumber );
-
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
                                                                 string_array const & regionNames )
@@ -1167,7 +1165,7 @@ void SinglePhaseWell::implicitStepComplete( real64 const & time_n,
 {
   WellSolverBase::implicitStepComplete( time_n, dt, domain );
 
-  writeStatisticsToTable();
+  getIterationStats().writeIterationStatsToTable();
 
   if( getLogLevel() > 0 )
   {

@@ -96,7 +96,6 @@ public:
       GEOS_LOG_LEVEL_RANK_0( logInfo::Coupling,
                              GEOS_FMT( "{}: found {} solver named {}",
                                        getName(), solver->getCatalogName(), solverName ) );
-      solver->getIterationStats().setIterativeSolver( false );
     } );
   }
 
@@ -674,11 +673,9 @@ protected:
   virtual void
   postInputInitialization() override
   {
+    PhysicsSolverBase::postInputInitialization();
+
     setSubSolvers();
-    bool const solverStatsFlag = getWrapper< integer >( viewKeyStruct::writeSolverString()).reference() >= 2;
-    getIterationStats().setCSVOutput( solverStatsFlag );
-    getConvergenceStats().setCSVOutput( solverStatsFlag );
-    getIterationStats().setLogOutput( logInfo::Convergence::getMinLogLevel() >= 1 );
 
     bool const isSequential = getNonlinearSolverParameters().couplingType() == NonlinearSolverParameters::CouplingType::Sequential;
     bool const usesLineSearch = getNonlinearSolverParameters().m_lineSearchAction != NonlinearSolverParameters::LineSearchAction::None;

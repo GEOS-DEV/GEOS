@@ -1349,12 +1349,11 @@ void CompositionalMultiphaseBase::initializePostInitialConditionsPreSubGroups()
 }
 
 void
-CompositionalMultiphaseBase::implicitStepSetup( real64 const & time_n,
-                                                real64 const & dt,
-                                                integer const cycleNumber,
+CompositionalMultiphaseBase::implicitStepSetup( real64 const & GEOS_UNUSED_PARAM( time_n ),
+                                                real64 const & GEOS_UNUSED_PARAM( dt ),
+                                                integer const GEOS_UNUSED_PARAM( cycleNumber ),
                                                 DomainPartition & domain )
 {
-  updateSolverStatistics( time_n, dt, cycleNumber );
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel & mesh,
                                                                string_array const & regionNames )
@@ -2654,7 +2653,8 @@ void CompositionalMultiphaseBase::implicitStepComplete( real64 const & time,
       }
     } );
   } );
-  writeStatisticsToTable();
+
+  getIterationStats().writeIterationStatsToTable();
 }
 
 void CompositionalMultiphaseBase::saveConvergedState( ElementSubRegionBase & subRegion ) const

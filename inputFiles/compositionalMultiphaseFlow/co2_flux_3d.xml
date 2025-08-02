@@ -9,6 +9,7 @@
       temperature="368.15"
       useMass="1"
       useTotalMassEquation="0"
+      writeStatistics="2"
       targetRegions="{ region }">
       <NonlinearSolverParameters
         newtonTol="1.0e-5"

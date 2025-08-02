@@ -376,13 +376,14 @@ public:
    * @param time_n  The time at the beginning of the step
    * @param dt The desired timestepr
    * @param cycleNumber Current cycle number
+   * @param iterNumber Current iteration number
    */
-  void updateSolverStatistics( real64 const & time_n, real64 const & dt, integer const cycleNumber );
+  //void updateSolverStatistics( real64 const & time_n, real64 const & dt, integer const cycleNumber, integer const iterNumber );
 
   /**
    * @brief Write all the statistics (iteration & convergence) stored into a CSV file
    */
-  void writeStatisticsToTable();
+  //void writeStatisticsToTable();
 
   /**
    * @brief Populate degree-of-freedom manager with fields relevant to this solver
@@ -710,7 +711,7 @@ public:
     static constexpr char const * allowNonConvergedLinearSolverSolutionString() { return "allowNonConvergedLinearSolverSolution"; }
 
     /// @return string for the writeLinearSystem wrapper
-    static constexpr char const * writeSolverString() { return "writeSolver"; }
+    static constexpr char const * writeStatisticsString() { return "writeStatistics"; }
 
     /// @return string for the numTimestepsSinceLastDtCut wrapper
     static constexpr char const * numTimestepsSinceLastDtCutString() { return "numTimestepsSinceLastDtCut"; }
@@ -1090,7 +1091,7 @@ protected:
 
   /// When set to 1 output to log iterations information
   /// When set to 2 additionnaly output csv files containing iterations information
-  integer m_writeSolverStatistics;
+  integer m_writeStatistics;
 
   /// Linear solver parameters
   LinearSolverParametersInput m_linearSolverParameters;

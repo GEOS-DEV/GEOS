@@ -218,8 +218,6 @@ void SolidMechanicsLagrangeContact::implicitStepSetup( real64 const & time_n,
   computeTolerances( domain );
   computeFaceDisplacementJump( domain );
 
-  updateSolverStatistics( time_n, dt, cycleNumber );
-
   SolidMechanicsLagrangianFEM::implicitStepSetup( time_n, dt, cycleNumber, domain );
 }
 
@@ -264,7 +262,7 @@ void SolidMechanicsLagrangeContact::implicitStepComplete( real64 const & time,
 
   } );
 
-  writeStatisticsToTable();
+  getIterationStats().writeIterationStatsToTable();
 }
 
 SolidMechanicsLagrangeContact::~SolidMechanicsLagrangeContact()

@@ -164,7 +164,6 @@ void SinglePhaseHybridFVM::implicitStepSetup( real64 const & time_n,
 
   // setup the cell-centered fields
   SinglePhaseBase::implicitStepSetup( time_n, dt, cycleNumber, domain );
-  updateSolverStatistics( time_n, dt, cycleNumber );
 
   // setup the face fields
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,

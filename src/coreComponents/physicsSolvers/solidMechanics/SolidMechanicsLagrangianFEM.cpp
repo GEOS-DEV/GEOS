@@ -810,9 +810,9 @@ void SolidMechanicsLagrangianFEM::applyChomboPressure( DofManager const & dofMan
 
 void
 SolidMechanicsLagrangianFEM::
-  implicitStepSetup( real64 const & time_n,
+  implicitStepSetup( real64 const & GEOS_UNUSED_PARAM( time_n ),
                      real64 const & dt,
-                     integer const cycleNumber,
+                     integer const GEOS_UNUSED_PARAM( cycleNumber ),
                      DomainPartition & domain )
 {
 
@@ -876,7 +876,6 @@ SolidMechanicsLagrangianFEM::
       constitutiveRelation.saveConvergedState();
     } );
   } );
-  updateSolverStatistics( time_n, dt, cycleNumber );
 }
 
 void SolidMechanicsLagrangianFEM::implicitStepComplete( real64 const & GEOS_UNUSED_PARAM( time_n ),
@@ -958,7 +957,8 @@ void SolidMechanicsLagrangianFEM::implicitStepComplete( real64 const & GEOS_UNUS
 
     } );
   } );
-  writeStatisticsToTable();
+  
+  getIterationStats().writeIterationStatsToTable();
 }
 
 void SolidMechanicsLagrangianFEM::setupDofs( DomainPartition const & GEOS_UNUSED_PARAM( domain ),

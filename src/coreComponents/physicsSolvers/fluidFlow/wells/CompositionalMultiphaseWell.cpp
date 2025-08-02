@@ -1972,7 +1972,7 @@ void CompositionalMultiphaseWell::implicitStepSetup( real64 const & time_n,
                                                      DomainPartition & domain )
 {
   WellSolverBase::implicitStepSetup( time_n, dt, cycleNumber, domain );
-  updateSolverStatistics( time_n, dt, cycleNumber );
+
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
                                                                 string_array const & regionNames )
@@ -2188,7 +2188,8 @@ void CompositionalMultiphaseWell::printRates( real64 const & time_n,
       } );
     } );
   } );
-  writeStatisticsToTable();
+
+  getIterationStats().writeIterationStatsToTable();
 }
 
 REGISTER_CATALOG_ENTRY( PhysicsSolverBase, CompositionalMultiphaseWell, string const &, Group * const )
