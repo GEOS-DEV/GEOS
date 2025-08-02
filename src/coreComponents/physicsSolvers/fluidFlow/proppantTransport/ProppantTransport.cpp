@@ -426,7 +426,7 @@ void ProppantTransport::implicitStepSetup( real64 const & GEOS_UNUSED_PARAM( tim
                                            DomainPartition & domain )
 {
   GEOS_MARK_FUNCTION;
-  
+
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel & mesh,
                                                                string_array const & regionNames )

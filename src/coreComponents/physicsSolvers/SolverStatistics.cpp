@@ -78,7 +78,7 @@ IterationsStatistics::IterationsStatistics( string const & name, Group * const p
   m_iterationCSVLayout->addColumns( { "Number of time steps", "Number of time step cuts",
                                       "Successful nonlinear", "Successful linear",
                                       "Discarded nonlinear", "Discarded linear",
-                                      "Setup time", "Solve time",} );
+                                      "Setup time", "Solve time", } );
 }
 
 void IterationsStatistics::resetCurrentTimeStepStatistics()
@@ -157,21 +157,19 @@ void IterationsStatistics::outputStatistics()
   if( !m_logOutput )
     return;
 
-  {
-    TableLayout iterationLogLayout ( getParent().getName(), {"", ""} );
+  TableLayout iterationLogLayout(getParent().getParent().getName(), {"", "Value"});
 
-    TableTextFormatter const statsFormatter( iterationLogLayout );
+  TableTextFormatter const statsFormatter( iterationLogLayout );
 
-    TableData iterationDataLog;
-    iterationDataLog.addRow( "Time steps", m_numTimeSteps );
-    iterationDataLog.addRow( "Time step cuts", m_numTimeStepCuts );
-    iterationDataLog.addRow( "Successful nonlinear iterations", m_numSuccessfulNonlinearIterations );
-    iterationDataLog.addRow( "Successful linear iterations", m_numSuccessfulLinearIterations );
-    iterationDataLog.addRow( "Discarded nonlinear iterations", m_numDiscardedNonlinearIterations );
-    iterationDataLog.addRow( "Discarded linear iterations", m_numDiscardedLinearIterations );
+  TableData iterationDataLog;
+  iterationDataLog.addRow( "Time steps", m_numTimeSteps );
+  iterationDataLog.addRow( "Time step cuts", m_numTimeStepCuts );
+  iterationDataLog.addRow( "Successful nonlinear iterations", m_numSuccessfulNonlinearIterations );
+  iterationDataLog.addRow( "Successful linear iterations", m_numSuccessfulLinearIterations );
+  iterationDataLog.addRow( "Discarded nonlinear iterations", m_numDiscardedNonlinearIterations );
+  iterationDataLog.addRow( "Discarded linear iterations", m_numDiscardedLinearIterations );
 
-    GEOS_LOG_RANK_0( statsFormatter.toString( iterationDataLog ));
-  }
+  GEOS_LOG_RANK_0( statsFormatter.toString( iterationDataLog ));
 }
 
 ConvergenceStatistics::ConvergenceStatistics()

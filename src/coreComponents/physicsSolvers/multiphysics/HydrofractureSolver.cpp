@@ -1023,7 +1023,7 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::implicitStepComplete( real64 c
                                                                         DomainPartition & domain )
 {
   Base::implicitStepComplete( time_n, dt, domain );
-  
+
   if( m_isLaggingFractureStencilWeightsUpdate )
   {
     // remove the contribution of the hydraulic aperture from the stencil weights

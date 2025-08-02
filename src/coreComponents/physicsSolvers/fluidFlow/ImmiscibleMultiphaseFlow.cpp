@@ -479,7 +479,7 @@ void ImmiscibleMultiphaseFlow::initializePostInitialConditionsPreSubGroups()
 
 void
 ImmiscibleMultiphaseFlow::implicitStepSetup( real64 const & GEOS_UNUSED_PARAM( time_n ),
-                                             real64 const & GEOS_UNUSED_PARAM( dt),
+                                             real64 const & GEOS_UNUSED_PARAM( dt ),
                                              integer const GEOS_UNUSED_PARAM( cycleNumber ),
                                              DomainPartition & domain )
 {

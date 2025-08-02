@@ -999,12 +999,12 @@ bool PhysicsSolverBase::solveNonlinearSystem( real64 const & time_n,
       GEOS_LOG_LEVEL_RANK_0( logInfo::ResidualNorm,
                              GEOS_FMT( "        ( R ) = ( {:4.2e} )", residualNorm ) );
       getConvergenceStats().m_residuals["R"] = residualNorm;
+    }
 
-      if( m_writeStatistics >= 2 )
-      {
-        getConvergenceStats().updateSolverStep( time_n, stepDt, cycleNumber, newtonIter );
-        getConvergenceStats().writeConvergenceStatsToTable();
-      }
+    if( m_writeStatistics >= 2 )
+    {
+      getConvergenceStats().updateSolverStep( time_n, stepDt, cycleNumber, newtonIter );
+      getConvergenceStats().writeConvergenceStatsToTable();
     }
 
     // if the residual norm is less than the Newton tolerance we denote that we have

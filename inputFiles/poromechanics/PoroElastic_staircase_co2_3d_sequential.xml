@@ -13,6 +13,7 @@
       solidSolverName="linearElasticity"
       reservoirAndWellsSolverName="reservoirAndWells"
       logLevel="1"
+      writeStatistics="2"
       targetRegions="{ channel }">
       <NonlinearSolverParameters
         couplingType="Sequential"
@@ -29,6 +30,7 @@
       timeIntegrationOption="QuasiStatic"
       logLevel="1"
       discretization="FE1"
+      writeStatistics="2"
       targetRegions="{ channel, barrier  }"/>
 
     <CompositionalMultiphaseReservoir
@@ -36,6 +38,7 @@
       flowSolverName="twoPhaseFlow"
       wellSolverName="compositionalMultiphaseWell"
       logLevel="1"
+      writeStatistics="2"
       targetRegions="{ channel, wellRegion1, wellRegion2 }">
       <NonlinearSolverParameters
         newtonTol="1.0e-8"
@@ -53,6 +56,7 @@
       targetPhaseVolFractionChangeInTimeStep="1"
       targetRegions="{ channel  }"
       temperature="300"
+      writeStatistics="2"
       useMass="1"/>
 
     <CompositionalMultiphaseWell
@@ -60,6 +64,7 @@
       logLevel="1"
       targetRegions="{ wellRegion1, wellRegion2 }"
       maxCompFractionChange="0.2"
+      writeStatistics="2"
       useMass="1">
       <WellControls
         name="wellControls1"

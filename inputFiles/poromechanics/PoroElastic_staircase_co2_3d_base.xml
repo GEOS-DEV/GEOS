@@ -209,7 +209,7 @@
       name="injectorTotalRateTable"
       inputVarNames="{ time }"
       coordinates="{ -1e9, 0, 1e9 }"
-      values="{ 0, 7, 7 }" 
+      values="{ 0, 70, 70 }" 
       interpolation="lower"/>
   </Functions>
   

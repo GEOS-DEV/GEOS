@@ -504,7 +504,8 @@ protected:
         } );
 
         // Check convergence of the outer loop
-        isConverged = checkSequentialConvergence( iter,
+        isConverged = checkSequentialConvergence( cycleNumber,
+                                                  iter,
                                                   time_n,
                                                   stepDt,
                                                   domain );
@@ -579,7 +580,8 @@ protected:
     GEOS_UNUSED_VAR( domain, solverType );
   }
 
-  virtual bool checkSequentialConvergence( int const & iter,
+  virtual bool checkSequentialConvergence( integer const cycleNumber,
+                                           integer const & iter,
                                            real64 const & time_n,
                                            real64 const & dt,
                                            DomainPartition & domain )
@@ -637,6 +639,13 @@ protected:
         GEOS_LOG_LEVEL_RANK_0( logInfo::ResidualNorm,
                                GEOS_FMT( "        ( R ) = ( {:4.2e} )", residualNorm ) );
         getConvergenceStats().m_residuals["R"] = residualNorm;
+
+        if( m_writeStatistics >= 2 )
+        {
+          getConvergenceStats().updateSolverStep( time_n, dt, cycleNumber, iter + 1 );
+          getConvergenceStats().writeConvergenceStatsToTable();
+        }
+
         isConverged = ( residualNorm < params.m_newtonTol );
 
       }

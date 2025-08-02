@@ -106,7 +106,7 @@ real64 FlowProppantTransportSolver::sequentiallyCoupledSolverStep( real64 const 
 
     GEOS_LOG_LEVEL_RANK_0( logInfo::NonlinearSolver,
                            GEOS_FMT( "  Iteration: {}, FlowSolver: ", iter+1 ) );
-    getIterationStats().updateNonlinearIteration(0);
+    getIterationStats().updateNonlinearIteration( 0 );
 
     dtReturnTemporary = flowSolver()->nonlinearImplicitStep( time_n, dtReturn, cycleNumber, domain );
 
