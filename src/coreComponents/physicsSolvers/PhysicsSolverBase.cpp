@@ -868,6 +868,7 @@ real64 PhysicsSolverBase::nonlinearImplicitStep( real64 const & time_n,
         else
         {
           // increment the solver statistics for reporting purposes
+          getIterationStats().incrementConfigIteration();
           GEOS_LOG_LEVEL_RANK_0( logInfo::NonlinearSolver,
                                  "---------- Configuration did not converge. Testing new configuration. ----------" );
         }

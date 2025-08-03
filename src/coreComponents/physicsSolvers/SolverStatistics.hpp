@@ -58,17 +58,26 @@ public:
   /// Number of time step cuts
   integer m_numTimeStepCuts = 0;
 
+  /// Number of configuration iterations in the current time step (utility variable constantly overwritten)
+  integer m_currentNumConfigIterations = 0;
+
   /// Number of nonlinear iterations in the current time step (utility variable constantly overwritten)
   integer m_currentNumNonlinearIterations = 0;
 
   /// Number of linear iterations in the current time step (utility variable constantly overwritten)
   integer m_currentNumLinearIterations = 0;
 
+  /// Cumulative number of successful configuration iterations
+  integer m_numSuccessfulConfigIterations = 0;
+
   /// Cumulative number of successful nonlinear iterations
   integer m_numSuccessfulNonlinearIterations = 0;
 
   /// Cumulative number of successful linear iterations
   integer m_numSuccessfulLinearIterations = 0;
+
+  /// Cumulative number of discarded configuration iterations
+  integer m_numDiscardedConfigIterations = 0;
 
   /// Cumulative number of discarded nonlinear iterations
   integer m_numDiscardedNonlinearIterations = 0;
@@ -93,11 +102,15 @@ public:
     /// String key for the number of time step cuts
     static constexpr char const * numTimeStepCutsString() { return "numTimeStepCuts"; }
 
+    /// String key for the successful number of configuration iterations
+    static constexpr char const * numSuccessfulConfigIterationsString() { return "numSuccessfulConfigIterations"; }
     /// String key for the successful number of nonlinear iterations
     static constexpr char const * numSuccessfulNonlinearIterationsString() { return "numSuccessfulNonlinearIterations"; }
     /// String key for the successful number of linear iterations
     static constexpr char const * numSuccessfulLinearIterationsString() { return "numSuccessfulLinearIterations"; }
 
+    /// String key for the discarded number of configuration iterations
+    static constexpr char const * numDiscardedConfigIterationsString() { return "numDiscardedConfigIterations"; }
     /// String key for the discarded number of nonlinear iterations
     static constexpr char const * numDiscardedNonlinearIterationsString() { return "numDiscardedNonlinearIterations"; }
     /// String key for the discarded number of linear iterations
@@ -122,6 +135,11 @@ public:
    * @brief Initialize the counters used for an individual time step
    */
   void resetCurrentTimeStepStatistics();
+
+  /**
+   * @brief Tell the solverStatistics that we are doing a configuration iteration
+   */
+  void incrementConfigIteration();
 
   /**
    * @brief Tell the solverStatistics that we are doing a nonlinear iteration

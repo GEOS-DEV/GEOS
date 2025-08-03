@@ -42,6 +42,7 @@ void SolverStatistics::setOutputFilesName( string_view solverName )
 
 IterationsStatistics::IterationsStatistics( string const & name, Group * const parent )
   : Group( name, parent ),
+  m_currentNumConfigIterations( 0 ),
   m_currentNumNonlinearIterations( 0 ),
   m_currentNumLinearIterations( 0 )
 {
@@ -53,6 +54,11 @@ IterationsStatistics::IterationsStatistics( string const & name, Group * const p
     setApplyDefaultValue( 0 ).
     setDescription( "Number of time step cuts" );
 
+  registerWrapper( viewKeyStruct::numSuccessfulConfigIterationsString(),
+                   &m_numSuccessfulConfigIterations ).
+    setApplyDefaultValue( 0 ).
+    setDescription( "Cumulative number of successful configuration iterations" );
+
   registerWrapper( viewKeyStruct::numSuccessfulNonlinearIterationsString(),
                    &m_numSuccessfulNonlinearIterations ).
     setApplyDefaultValue( 0 ).
@@ -62,6 +68,11 @@ IterationsStatistics::IterationsStatistics( string const & name, Group * const p
                    &m_numSuccessfulLinearIterations ).
     setApplyDefaultValue( 0 ).
     setDescription( "Cumulative number of successful linear iterations" );
+
+  registerWrapper( viewKeyStruct::numDiscardedConfigIterationsString(),
+                   &m_numDiscardedConfigIterations ).
+    setApplyDefaultValue( 0 ).
+    setDescription( "Cumulative number of discarded configuration iterations" );
 
   registerWrapper( viewKeyStruct::numDiscardedNonlinearIterationsString(),
                    &m_numDiscardedNonlinearIterations ).
@@ -76,16 +87,23 @@ IterationsStatistics::IterationsStatistics( string const & name, Group * const p
   m_iterationCSVLayout = std::make_unique< TableLayout >();
   m_iterationCSVLayout->setTitle( GEOS_FMT( "{} iterations", getParent().getName()));
   m_iterationCSVLayout->addColumns( { "Number of time steps", "Number of time step cuts",
-                                      "Successful nonlinear", "Successful linear",
-                                      "Discarded nonlinear", "Discarded linear",
+                                      "Successful configuration", "Successful nonlinear", "Successful linear",
+                                      "Discarded configuration", "Discarded nonlinear", "Discarded linear",
                                       "Setup time", "Solve time", } );
 }
 
 void IterationsStatistics::resetCurrentTimeStepStatistics()
 {
   // the time step begins, we reset the individual-timestep counters
+  m_currentNumConfigIterations = 0;
   m_currentNumNonlinearIterations = 0;
   m_currentNumLinearIterations = 0;
+}
+
+void IterationsStatistics::incrementConfigIteration()
+{
+  // we have just performed a configuration iteration, so we increment the individual-timestep counter for configuration iterations
+  m_currentNumConfigIterations++;
 }
 
 void IterationsStatistics::updateNonlinearIteration( integer const numLinearIterations )
@@ -110,6 +128,7 @@ void IterationsStatistics::resetSolverLinearTime()
 void IterationsStatistics::iterateTimeStepStatistics()
 {
   // the timestep has converged, so we increment the cumulative counters for successful timesteps
+  m_numSuccessfulConfigIterations += m_currentNumConfigIterations;
   m_numSuccessfulNonlinearIterations += m_currentNumNonlinearIterations;
   m_numSuccessfulLinearIterations += m_currentNumLinearIterations;
   m_numTimeSteps++;
@@ -118,6 +137,7 @@ void IterationsStatistics::iterateTimeStepStatistics()
 void IterationsStatistics::updateTimeStepCut()
 {
   // we have just cut the time step, so we increment the cumulative counters for discarded timesteps
+  m_numDiscardedConfigIterations += m_currentNumConfigIterations;
   m_numDiscardedNonlinearIterations += m_currentNumNonlinearIterations;
   m_numDiscardedLinearIterations += m_currentNumLinearIterations;
   m_numTimeStepCuts++;
@@ -133,8 +153,10 @@ void IterationsStatistics::writeIterationStatsToTable()
 
   m_iterationData.addRow( m_numTimeSteps,
                           m_numTimeStepCuts,
+                          m_numSuccessfulConfigIterations,
                           m_numSuccessfulNonlinearIterations,
                           m_numSuccessfulLinearIterations,
+                          m_numDiscardedConfigIterations,
                           m_numDiscardedNonlinearIterations,
                           m_numDiscardedLinearIterations,
                           m_setupTime,
@@ -154,18 +176,20 @@ void IterationsStatistics::writeIterationStatsToTable()
 
 void IterationsStatistics::outputStatistics()
 {
-  if( !m_logOutput )
+  if( !m_logOutput || m_numTimeSteps == 0 ) // no statistics to output when no time steps have been recorded
     return;
 
-  TableLayout iterationLogLayout(getParent().getParent().getName(), {"", "Value"});
+  TableLayout iterationLogLayout( getParent().getParent().getName(), {"", "Value"} );
 
   TableTextFormatter const statsFormatter( iterationLogLayout );
 
   TableData iterationDataLog;
   iterationDataLog.addRow( "Time steps", m_numTimeSteps );
   iterationDataLog.addRow( "Time step cuts", m_numTimeStepCuts );
+  iterationDataLog.addRow( "Successful configuration iterations", m_numSuccessfulConfigIterations );
   iterationDataLog.addRow( "Successful nonlinear iterations", m_numSuccessfulNonlinearIterations );
   iterationDataLog.addRow( "Successful linear iterations", m_numSuccessfulLinearIterations );
+  iterationDataLog.addRow( "Discarded configuration iterations", m_numDiscardedConfigIterations );
   iterationDataLog.addRow( "Discarded nonlinear iterations", m_numDiscardedNonlinearIterations );
   iterationDataLog.addRow( "Discarded linear iterations", m_numDiscardedLinearIterations );
 
