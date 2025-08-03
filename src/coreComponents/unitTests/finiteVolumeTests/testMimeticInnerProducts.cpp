@@ -14,6 +14,7 @@
  */
 
 // Source includes
+#include <iostream>
 #include "codingUtilities/UnitTestUtilities.hpp"
 #include "common/logger/Logger.hpp"
 #include "finiteVolume/mimeticInnerProducts/MimeticInnerProductBase.hpp"
@@ -918,6 +919,9 @@ int main( int argc, char * * argv )
   int const result = RUN_ALL_TESTS();
 
   geos::basicCleanup();
+
+  // quick check (local <-> Sherlock)
+  std::cout << "from local to Sherlock" << std::endl;
 
   return result;
 }
