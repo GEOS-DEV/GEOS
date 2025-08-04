@@ -146,7 +146,7 @@ void finalizeMPI()
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void setupCUDA()
 {
-#if defined( GEOS_USE_CUDA )and defined( GEOS_USE_CUDA_STACK_SIZE )
+#if defined( GEOS_USE_CUDA ) && defined( GEOS_USE_CUDA_STACK_SIZE )
   size_t const stackSize = GEOS_USE_CUDA_STACK_SIZE * 1024;
   if( 0 < stackSize )
   {
