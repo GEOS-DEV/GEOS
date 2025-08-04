@@ -659,6 +659,10 @@
 					<xsd:selector xpath="CompositionalTwoPhaseFluidLohrenzBrayClark" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
+				<xsd:unique name="domainConstitutiveCompositionalTwoPhaseFluidPhillipsBrineUniqueName">
+					<xsd:selector xpath="CompositionalTwoPhaseFluidPhillipsBrine" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
 				<xsd:unique name="domainConstitutiveCompressibleSinglePhaseFluidUniqueName">
 					<xsd:selector xpath="CompressibleSinglePhaseFluid" />
 					<xsd:field xpath="@name" />
@@ -2550,7 +2554,7 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="receiverCoordinates" type="real64_array2d" default="{{0}}" />
 		<!--rickerOrder => Flag that indicates the order of the Ricker to be used o, 1 or 2. Order 2 by default-->
 		<xsd:attribute name="rickerOrder" type="integer" default="2" />
-		<!--saveFields => Set to 1 to save fields during forward and restore them during backward-->
+		<!--saveFields => Set to 1 to save fields during forward and restore them during backward. If set to 1, the gradient is computed, and if set to 2, the imaging condition is computed.-->
 		<xsd:attribute name="saveFields" type="integer" default="0" />
 		<!--shotIndex => Set the current shot for temporary files-->
 		<xsd:attribute name="shotIndex" type="integer" default="0" />
@@ -2637,7 +2641,7 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="receiverCoordinates" type="real64_array2d" default="{{0}}" />
 		<!--rickerOrder => Flag that indicates the order of the Ricker to be used o, 1 or 2. Order 2 by default-->
 		<xsd:attribute name="rickerOrder" type="integer" default="2" />
-		<!--saveFields => Set to 1 to save fields during forward and restore them during backward-->
+		<!--saveFields => Set to 1 to save fields during forward and restore them during backward. If set to 1, the gradient is computed, and if set to 2, the imaging condition is computed.-->
 		<xsd:attribute name="saveFields" type="integer" default="0" />
 		<!--shotIndex => Set the current shot for temporary files-->
 		<xsd:attribute name="shotIndex" type="integer" default="0" />
@@ -2713,7 +2717,7 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="receiverCoordinates" type="real64_array2d" default="{{0}}" />
 		<!--rickerOrder => Flag that indicates the order of the Ricker to be used o, 1 or 2. Order 2 by default-->
 		<xsd:attribute name="rickerOrder" type="integer" default="2" />
-		<!--saveFields => Set to 1 to save fields during forward and restore them during backward-->
+		<!--saveFields => Set to 1 to save fields during forward and restore them during backward. If set to 1, the gradient is computed, and if set to 2, the imaging condition is computed.-->
 		<xsd:attribute name="saveFields" type="integer" default="0" />
 		<!--shotIndex => Set the current shot for temporary files-->
 		<xsd:attribute name="shotIndex" type="integer" default="0" />
@@ -3210,7 +3214,7 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="receiverCoordinates" type="real64_array2d" default="{{0}}" />
 		<!--rickerOrder => Flag that indicates the order of the Ricker to be used o, 1 or 2. Order 2 by default-->
 		<xsd:attribute name="rickerOrder" type="integer" default="2" />
-		<!--saveFields => Set to 1 to save fields during forward and restore them during backward-->
+		<!--saveFields => Set to 1 to save fields during forward and restore them during backward. If set to 1, the gradient is computed, and if set to 2, the imaging condition is computed.-->
 		<xsd:attribute name="saveFields" type="integer" default="0" />
 		<!--shotIndex => Set the current shot for temporary files-->
 		<xsd:attribute name="shotIndex" type="integer" default="0" />
@@ -3286,7 +3290,7 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="receiverCoordinates" type="real64_array2d" default="{{0}}" />
 		<!--rickerOrder => Flag that indicates the order of the Ricker to be used o, 1 or 2. Order 2 by default-->
 		<xsd:attribute name="rickerOrder" type="integer" default="2" />
-		<!--saveFields => Set to 1 to save fields during forward and restore them during backward-->
+		<!--saveFields => Set to 1 to save fields during forward and restore them during backward. If set to 1, the gradient is computed, and if set to 2, the imaging condition is computed.-->
 		<xsd:attribute name="saveFields" type="integer" default="0" />
 		<!--shotIndex => Set the current shot for temporary files-->
 		<xsd:attribute name="shotIndex" type="integer" default="0" />
@@ -3312,6 +3316,8 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="timestepStabilityLimit" type="integer" default="0" />
 		<!--useDAS => Flag to indicate if DAS data will be modeled, and which DAS type to use: "none" to deactivate DAS, "strainIntegration" for strain integration, "dipole" for displacement difference-->
 		<xsd:attribute name="useDAS" type="geos_WaveSolverUtils_DASType" default="none" />
+		<!--useTTI => Flag to apply TTI anisotropy. The default is to use isotropic physic.-->
+		<xsd:attribute name="useTTI" type="integer" default="0" />
 		<!--useVTI => Flag to apply VTI anisotropy. The default is to use isotropic physic.-->
 		<xsd:attribute name="useVTI" type="integer" default="0" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
@@ -3500,7 +3506,7 @@ Information output from lower logLevels is added with the desired log level
 		<!--maxNumResolves => Value to indicate how many resolves may be executed to perform surface generation after the execution of flow and mechanics solver. -->
 		<xsd:attribute name="maxNumResolves" type="integer" default="10" />
 		<!--newFractureInitializationType => Type of new fracture element initialization. Can be Pressure or Displacement. -->
-		<xsd:attribute name="newFractureInitializationType" type="geos_HydrofractureSolver_lt_geos_SinglePhasePoromechanics_lt_geos_SinglePhaseBase_cm_-geos_SolidMechanicsLagrangianFEM_gt__gt__InitializationType" default="Pressure" />
+		<xsd:attribute name="newFractureInitializationType" type="geos_HydrofractureSolver_lt_geos_SinglePhasePoromechanics_lt_geos_SinglePhaseBase_cm_-geos_SolidMechanicsLagrangianFEM_gt_-_gt__InitializationType" default="Pressure" />
 		<!--solidSolverName => Name of the solid solver used by the coupled solver-->
 		<xsd:attribute name="solidSolverName" type="groupNameRef" use="required" />
 		<!--stabilizationMultiplier => Constant multiplier of stabilization strength-->
@@ -3523,7 +3529,7 @@ Local- Add jump stabilization on interior of macro elements-->
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
-	<xsd:simpleType name="geos_HydrofractureSolver_lt_geos_SinglePhasePoromechanics_lt_geos_SinglePhaseBase_cm_-geos_SolidMechanicsLagrangianFEM_gt__gt__InitializationType">
+	<xsd:simpleType name="geos_HydrofractureSolver_lt_geos_SinglePhasePoromechanics_lt_geos_SinglePhaseBase_cm_-geos_SolidMechanicsLagrangianFEM_gt_-_gt__InitializationType">
 		<xsd:restriction base="xsd:string">
 			<xsd:pattern value=".*[\[\]`$].*|Pressure|Displacement" />
 		</xsd:restriction>
@@ -5466,6 +5472,7 @@ Information output from lower logLevels is added with the desired log level
 			<xsd:element name="CompositionalThreePhaseFluidLohrenzBrayClark" type="CompositionalThreePhaseFluidLohrenzBrayClarkType" />
 			<xsd:element name="CompositionalTwoPhaseFluid" type="CompositionalTwoPhaseFluidType" />
 			<xsd:element name="CompositionalTwoPhaseFluidLohrenzBrayClark" type="CompositionalTwoPhaseFluidLohrenzBrayClarkType" />
+			<xsd:element name="CompositionalTwoPhaseFluidPhillipsBrine" type="CompositionalTwoPhaseFluidPhillipsBrineType" />
 			<xsd:element name="CompressibleSinglePhaseFluid" type="CompressibleSinglePhaseFluidType" />
 			<xsd:element name="CompressibleSolidCarmanKozenyPermeability" type="CompressibleSolidCarmanKozenyPermeabilityType" />
 			<xsd:element name="CompressibleSolidConstantPermeability" type="CompressibleSolidConstantPermeabilityType" />
@@ -5839,8 +5846,9 @@ Information output from lower logLevels is added with the desired log level
 		<!--componentVolumeShift => Component volume shifts-->
 		<xsd:attribute name="componentVolumeShift" type="real64_array" default="{0}" />
 		<!--equationsOfState => List of equation of state types for each phase. Valid options:
-* pr
-* srk-->
+* PengRobinson
+* SoaveRedlichKwong
+* SoreideWhitson-->
 		<xsd:attribute name="equationsOfState" type="string_array" use="required" />
 		<!--phaseNames => List of fluid phases-->
 		<xsd:attribute name="phaseNames" type="groupNameRef_array" use="required" />
@@ -5890,8 +5898,9 @@ Information output from lower logLevels is added with the desired log level
 		<!--constantPhaseViscosity => Constant phase viscosity-->
 		<xsd:attribute name="constantPhaseViscosity" type="real64_array" default="{0}" />
 		<!--equationsOfState => List of equation of state types for each phase. Valid options:
-* pr
-* srk-->
+* PengRobinson
+* SoaveRedlichKwong
+* SoreideWhitson-->
 		<xsd:attribute name="equationsOfState" type="string_array" use="required" />
 		<!--phaseNames => List of fluid phases-->
 		<xsd:attribute name="phaseNames" type="groupNameRef_array" use="required" />
@@ -5918,8 +5927,9 @@ Information output from lower logLevels is added with the desired log level
 		<!--componentVolumeShift => Component volume shifts-->
 		<xsd:attribute name="componentVolumeShift" type="real64_array" default="{0}" />
 		<!--equationsOfState => List of equation of state types for each phase. Valid options:
-* pr
-* srk-->
+* PengRobinson
+* SoaveRedlichKwong
+* SoreideWhitson-->
 		<xsd:attribute name="equationsOfState" type="string_array" use="required" />
 		<!--phaseNames => List of fluid phases-->
 		<xsd:attribute name="phaseNames" type="groupNameRef_array" use="required" />
@@ -5928,6 +5938,50 @@ Information output from lower logLevels is added with the desired log level
 * Wilke
 * Brokaw-->
 		<xsd:attribute name="viscosityMixingRule" type="string" default="HerningZipperer" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="groupName" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="CompositionalTwoPhaseFluidPhillipsBrineType">
+		<!--checkPVTTablesRanges => Enable (1) or disable (0) an error when the input pressure or temperature of the PVT tables is out of range.-->
+		<xsd:attribute name="checkPVTTablesRanges" type="integer" default="1" />
+		<!--componentAcentricFactor => Component acentric factors-->
+		<xsd:attribute name="componentAcentricFactor" type="real64_array" use="required" />
+		<!--componentBinaryCoeff => Table of binary interaction coefficients-->
+		<xsd:attribute name="componentBinaryCoeff" type="real64_array2d" default="{{0}}" />
+		<!--componentCriticalPressure => Component critical pressures-->
+		<xsd:attribute name="componentCriticalPressure" type="real64_array" use="required" />
+		<!--componentCriticalTemperature => Component critical temperatures-->
+		<xsd:attribute name="componentCriticalTemperature" type="real64_array" use="required" />
+		<!--componentCriticalVolume => Component critical volumes-->
+		<xsd:attribute name="componentCriticalVolume" type="real64_array" default="{0}" />
+		<!--componentMolarWeight => Component molar weights-->
+		<xsd:attribute name="componentMolarWeight" type="real64_array" use="required" />
+		<!--componentNames => List of component names-->
+		<xsd:attribute name="componentNames" type="string_array" use="required" />
+		<!--componentVolumeShift => Component volume shifts-->
+		<xsd:attribute name="componentVolumeShift" type="real64_array" default="{0}" />
+		<!--equationsOfState => List of equation of state types for each phase. Valid options:
+* PengRobinson
+* SoaveRedlichKwong
+* SoreideWhitson-->
+		<xsd:attribute name="equationsOfState" type="string_array" use="required" />
+		<!--phaseNames => List of fluid phases-->
+		<xsd:attribute name="phaseNames" type="groupNameRef_array" use="required" />
+		<!--pressureCoordinates => List of pressure values for interpolation of function values.-->
+		<xsd:attribute name="pressureCoordinates" type="real64_array" default="{0}" />
+		<!--salinity => Brine salinity-->
+		<xsd:attribute name="salinity" type="real64" default="0" />
+		<!--saltMolarWeight => The molar weight for the salt component-->
+		<xsd:attribute name="saltMolarWeight" type="real64" default="0.05844" />
+		<!--temperatureCoordinates => List of temperature values for interpolation of function values.-->
+		<xsd:attribute name="temperatureCoordinates" type="real64_array" default="{0}" />
+		<!--viscosityMixingRule => Viscosity mixing rule to be used for Lohrenz-Bray-Clark computation. Valid options:
+* HerningZipperer
+* Wilke
+* Brokaw-->
+		<xsd:attribute name="viscosityMixingRule" type="string" default="HerningZipperer" />
+		<!--waterCompressibility => The compressibility of pure water.-->
+		<xsd:attribute name="waterCompressibility" type="real64" default="4.5e-10" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>

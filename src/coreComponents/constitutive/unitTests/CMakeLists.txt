@@ -1,6 +1,8 @@
 # Specify list of tests
 set( gtest_geosx_tests
      testBrineSalinity.cpp
+     testCO2SpycherPruessModels.cpp
+     testCO2BrinePVTModels.cpp
      testCompositionalDensity.cpp
      testCompositionalPhillipsBrineDensity.cpp
      testCompositionalPhillipsBrineViscosity.cpp
@@ -26,6 +28,7 @@ set( gtest_geosx_tests
      testPressureTemperatureCoordinates.cpp
      testPropertyConversions.cpp
      testSoreideWhitsonEOSPhaseModel.cpp
+     testSoreideWhitsonFlash.cpp
      testStabilityTest2Comp.cpp
      testStabilityTest9Comp.cpp
      testRachfordRice.cpp
