@@ -1,0 +1,141 @@
+#ifndef GEOS_CONSTITUTIVE_FLUID_MULTIFLUID_INVARIANTIMMISCIBLEFLUID_HPP_
+#define GEOS_CONSTITUTIVE_FLUID_MULTIFLUID_INVARIANTIMMISCIBLEFLUID_HPP_
+
+#include "constitutive/fluid/multifluid/MultiFluidBase.hpp"
+
+namespace geos
+{
+namespace constitutive
+{
+
+/**
+ * @brief Fluid model with constant phase properties (density, viscosity) independent of P, T.
+ *        Formation volume factors are assumed = 1.
+ */
+class InvariantImmiscibleFluid : public MultiFluidBase
+{
+public:
+  InvariantImmiscibleFluid( string const & name, Group * parent );
+
+  static string catalogName() { return "InvariantImmiscibleFluid"; }
+  virtual string getCatalogName() const override { return catalogName(); }
+
+  static constexpr bool isThermalType() { return false; }
+
+  using exec_policy = parallelDevicePolicy<>;
+
+  virtual integer getWaterPhaseIndex() const override;
+
+  void checkTablesParameters( real64 pressure, real64 temperature ) const override;
+
+  /**
+   * @brief Kernel wrapper class for InvariantImmiscibleFluid
+   *        This kernel can be called on the GPU
+   */
+  class KernelWrapper final : public MultiFluidBase::KernelWrapper
+  {
+public:
+    GEOS_HOST_DEVICE
+    virtual void compute( real64 const pressure,
+                          real64 const temperature,
+                          arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & composition,
+                          MultiFluidBase::PhaseProp::SliceType const phaseFraction,
+                          MultiFluidBase::PhaseProp::SliceType const phaseDensity,
+                          MultiFluidBase::PhaseProp::SliceType const phaseMassDensity,
+                          MultiFluidBase::PhaseProp::SliceType const phaseViscosity,
+                          MultiFluidBase::PhaseProp::SliceType const phaseEnthalpy,
+                          MultiFluidBase::PhaseProp::SliceType const phaseInternalEnergy,
+                          MultiFluidBase::PhaseComp::SliceType const phaseCompFraction,
+                          MultiFluidBase::FluidProp::SliceType const totalDensity ) const override;
+
+    GEOS_HOST_DEVICE
+    virtual void update( localIndex const k,
+                         localIndex const q,
+                         real64 const pressure,
+                         real64 const temperature,
+                         arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & composition ) const override;
+
+private:
+    friend class InvariantImmiscibleFluid;
+
+    arrayView1d< real64 const > m_densities;
+    arrayView1d< real64 const > m_viscosities;
+
+    /**
+     * @brief Constructor for the class doing in-kernel fluid property updates
+     * @param[in] densities constant phase densities
+     * @param[in] viscosities constant phase viscosities
+     * @param[in] componentMolarWeight component molecular weights
+     * @param[in] useMass flag to decide whether we return mass or molar densities
+     * @param[in] phaseFraction phase fractions (+ derivatives) in the cell
+     * @param[in] phaseDensity phase mass/molar densities (+ derivatives) in the cell
+     * @param[in] phaseMassDensity phase mass densities (+ derivatives) in the cell
+     * @param[in] phaseViscosity phase viscosities (+ derivatives) in the cell
+     * @param[in] phaseEnthalpy phase enthalpies (+ derivatives) in the cell
+     * @param[in] phaseInternalEnergy phase internal energies (+ derivatives) in the cell
+     * @param[in] phaseCompFraction phase component fractions (+ derivatives) in the cell
+     * @param[in] totalDensity total density in the cell
+     */
+    KernelWrapper( arrayView1d< real64 const > densities,
+                   arrayView1d< real64 const > viscosities,
+                   arrayView1d< real64 const > componentMolarWeight,
+                   bool const useMass,
+                   MultiFluidBase::PhaseProp::ViewType const phaseFraction,
+                   MultiFluidBase::PhaseProp::ViewType const phaseDensity,
+                   MultiFluidBase::PhaseProp::ViewType const phaseMassDensity,
+                   MultiFluidBase::PhaseProp::ViewType const phaseViscosity,
+                   MultiFluidBase::PhaseProp::ViewType const phaseEnthalpy,
+                   MultiFluidBase::PhaseProp::ViewType const phaseInternalEnergy,
+                   MultiFluidBase::PhaseComp::ViewType const phaseCompFraction,
+                   MultiFluidBase::FluidProp::ViewType const totalDensity )
+      : MultiFluidBase::KernelWrapper( std::move( componentMolarWeight ),
+                                       useMass,
+                                       std::move( phaseFraction ),
+                                       std::move( phaseDensity ),
+                                       std::move( phaseMassDensity ),
+                                       std::move( phaseViscosity ),
+                                       std::move( phaseEnthalpy ),
+                                       std::move( phaseInternalEnergy ),
+                                       std::move( phaseCompFraction ),
+                                       std::move( totalDensity )),
+      m_densities( std::move( densities ) ),
+      m_viscosities( std::move( viscosities ) )
+    {}
+
+  };
+
+  /**
+   * @brief Create a KernelWrapper for this fluid model
+   * @return A KernelWrapper instance for this fluid model
+   */
+  KernelWrapper createKernelWrapper() const;
+
+  GEOS_HOST_DEVICE
+  virtual void update( localIndex const k,
+                       localIndex const q,
+                       real64 const pressure,
+                       real64 const temperature,
+                       arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & composition ) const;
+
+  /**
+   * @brief Initialize the fluid model with specified number of cells and quadrature points
+   * @param[in] numCells Number of cells/elements
+   * @param[in] numPoints Number of quadrature points per cell
+   */
+  void initialize( localIndex const numCells, localIndex const numPoints )
+  {
+    resizeFields( numCells, numPoints );
+  }
+
+protected:
+  virtual void postInputInitialization() override;
+
+private:
+  array1d< real64 > m_densities;
+  array1d< real64 > m_viscosities;
+};
+
+} // namespace constitutive
+} // namespace geos
+
+#endif // GEOS_CONSTITUTIVE_FLUID_MULTIFLUID_INVARIANTIMMISCIBLEFLUID_HPP_
