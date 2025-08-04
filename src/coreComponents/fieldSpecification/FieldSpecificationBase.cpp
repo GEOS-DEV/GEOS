@@ -15,8 +15,8 @@
 
 #include "FieldSpecificationBase.hpp"
 
-#include "common/MpiWrapper.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
+#include "fieldSpecification/LogLevelsInfo.hpp"
 
 namespace geos
 {
@@ -88,7 +88,9 @@ FieldSpecificationBase::FieldSpecificationBase( string const & name, Group * par
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Boundary condition is a multiplicative scaling of the values already present." );
 
-  enableLogLevelInput();
+  addLogLevel< logInfo::BoundaryCondition >();
+  addLogLevel< logInfo::FaceBoundaryCondition >();
+  addLogLevel< logInfo::SourceFluxFailure >();
 }
 
 

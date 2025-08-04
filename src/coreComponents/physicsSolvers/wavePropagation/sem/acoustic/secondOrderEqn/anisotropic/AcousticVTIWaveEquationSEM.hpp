@@ -60,14 +60,14 @@ public:
                                       real64 const & dt,
                                       integer const cycleNumber,
                                       DomainPartition & domain,
-                                      bool const computeGradient ) override;
+                                      integer const computeGradient ) override;
 
 
   virtual real64 explicitStepBackward( real64 const & GEOS_UNUSED_PARAM( time_n ),
                                        real64 const & GEOS_UNUSED_PARAM( dt ),
                                        integer const GEOS_UNUSED_PARAM( cycleNumber ),
                                        DomainPartition & GEOS_UNUSED_PARAM( domain ),
-                                       bool const GEOS_UNUSED_PARAM( computeGradient ) ) override;
+                                       integer const GEOS_UNUSED_PARAM( computeGradient ) ) override;
 
   /**@}*/
 
@@ -129,7 +129,7 @@ private:
    * @param baseMesh the level-0 mesh
    * @param mesh mesh of the computational domain
    */
-  virtual void precomputeSourceAndReceiverTerm( MeshLevel & baseMesh, MeshLevel & mesh, arrayView1d< string const > const & regionNames ) override;
+  virtual void precomputeSourceAndReceiverTerm( MeshLevel & baseMesh, MeshLevel & mesh, string_array const & regionNames ) override;
 
   /**
    * @brief Compute the lateral and bottom surface Field indicators of the boxed domain

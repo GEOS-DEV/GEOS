@@ -100,14 +100,7 @@ public:
    * hold the computed projections of basis functions
    */
   struct StackVariables
-  {
-    /**
-     * Default constructor
-     */
-    GEOS_HOST_DEVICE
-    StackVariables()
-    {}
-  };
+  {};
 
   /**
    * @struct MeshData
@@ -115,13 +108,7 @@ public:
    */
   template< typename SUBREGION_TYPE >
   struct MeshData
-  {
-    /**
-     * Constructor
-     */
-    MeshData()
-    {}
-  };
+  {};
 
 
   /**

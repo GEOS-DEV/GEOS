@@ -13,6 +13,8 @@
       logLevel="2"
       timeIntegrationOption="QuasiStatic"
       discretization="FE1"
+      symmetric="0"
+      simultaneous="0"
       targetRegions="{ Region, Fracture }">
       <NonlinearSolverParameters
         newtonTol="1.0e-6"

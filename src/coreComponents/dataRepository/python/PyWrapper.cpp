@@ -77,7 +77,7 @@ static constexpr char const * PyWrapper_valueDocString =
   "str\n"
   "    If the wrapped type is a string this returns a copy of the string.\n"
   "list of str\n"
-  "    If the wrapped type is a `LvArray::Array< string, 1, ... > or a `std::vector< string >`. "
+  "    If the wrapped type is a `LvArray::Array< string, 1, ... > or a `stdVector< string >`. "
   "This is a copy.\n"
   "None\n"
   "    If the wrapped type is not covered by any of the above.";

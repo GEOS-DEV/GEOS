@@ -211,6 +211,28 @@ else()
 endif()
 
 ################################
+# ZLIB 
+################################
+if(DEFINED ZLIB_DIR)
+  list(PREPEND CMAKE_PREFIX_PATH "${ZLIB_DIR}")
+endif()
+
+find_package(ZLIB REQUIRED)
+
+# Print ZLIB info after finding it
+message(STATUS "----> ZLIB version: ${ZLIB_VERSION}")
+message(STATUS "----> ZLIB include dirs: ${ZLIB_INCLUDE_DIRS}")
+message(STATUS "----> ZLIB library: ${ZLIB_LIBRARIES}")
+
+blt_convert_to_system_includes(TARGET ZLIB::ZLIB)
+
+set(ENABLE_ZLIB ON CACHE BOOL "")
+
+unset(_ZLIB_FIND_OPTIONS)
+
+
+
+################################
 # HDF5
 ################################
 if(DEFINED HDF5_DIR)
@@ -229,6 +251,8 @@ if(DEFINED HDF5_DIR)
 else()
     mandatory_tpl_doesnt_exist("hdf5" HDF5_DIR)
 endif()
+
+target_link_libraries(HDF5::HDF5 INTERFACE ZLIB::ZLIB)
 
 ################################
 # SILO
@@ -726,7 +750,13 @@ endif()
 if(DEFINED TRILINOS_DIR AND ENABLE_TRILINOS)
     message(STATUS "TRILINOS_DIR = ${TRILINOS_DIR}")
 
-    include(${TRILINOS_DIR}/lib64/cmake/Trilinos/TrilinosConfig.cmake)
+    if(EXISTS "${TRILINOS_DIR}/lib64/cmake/Trilinos/TrilinosConfig.cmake")
+      include(${TRILINOS_DIR}/lib64/cmake/Trilinos/TrilinosConfig.cmake)
+    endif()
+
+    if(EXISTS "${TRILINOS_DIR}/lib/cmake/Trilinos/TrilinosConfig.cmake")
+      include(${TRILINOS_DIR}/lib/cmake/Trilinos/TrilinosConfig.cmake)
+    endif()
 
     list(REMOVE_ITEM Trilinos_LIBRARIES "gtest")
     list(REMOVE_DUPLICATES Trilinos_LIBRARIES)
@@ -867,7 +897,7 @@ if( ${CMAKE_VERSION} VERSION_LESS "3.19" )
     set( PYTHON_AND_VERSION Python3 )
     set( PYTHON_OPTIONAL_COMPONENTS)
 else()
-    set( PYTHON_AND_VERSION Python3 3.6.0...3.12.2 )
+    set( PYTHON_AND_VERSION Python3 3.6.0...3.13.3 )
     set( PYTHON_OPTIONAL_COMPONENTS OPTIONAL_COMPONENTS Development NumPy)
 endif()
 if(ENABLE_PYGEOSX)

@@ -94,7 +94,7 @@ dataRepository::Group const * HistoryCollectionBase::getTargetObject( DomainPart
     }
     else // relative objectPaths use relative lookup identical to fieldSpecification to make xml input spec easier
     {
-      std::vector< string > targetTokens = stringutilities::tokenize( objectPath, "/" );
+      stdVector< string > targetTokens = stringutilities::tokenize( objectPath, "/" );
       localIndex targetTokenLength = LvArray::integerConversion< localIndex >( targetTokens.size() );
 
       dataRepository::Group const * targetGroup = nullptr;
@@ -189,9 +189,6 @@ dataRepository::Group const * HistoryCollectionBase::getTargetObject( DomainPart
           }
           else
           {
-            string const targetTokensStr = stringutilities::join( targetTokens.begin(),
-                                                                  targetTokens.begin()+pathLevel,
-                                                                  '/' );
             GEOS_THROW( targetTokens[pathLevel] << " not found in path " <<
                         objectPath << std::endl << targetGroup->dumpSubGroupsNames(),
                         std::domain_error );

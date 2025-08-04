@@ -186,6 +186,12 @@ public:
   arrayView1d< real64 const > getPerfSkinFactor() const { return m_perfSkinFactor; };
 
   /**
+   * @brief Get the target region for a perforation.
+   * @return the target regions for a perforation
+   */
+  string_array const & getPerfTargetRegion() const { return m_perfTargetRegion; };
+
+  /**
    * @brief Get the global indices of the well elements connected to each perforation.
    * @return list providing the global index of the connected well element for each perforation
    */
@@ -392,6 +398,9 @@ protected:
 
   /// Physical location of the perforation wrt to well head
   array1d< real64 > m_perfDistFromHead;
+
+  /// Target region for the perforation
+  string_array m_perfTargetRegion;
 
 };
 }

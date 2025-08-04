@@ -153,7 +153,7 @@ void AquiferBoundaryCondition::postInputInitialization()
                         ": the aquifer influx constant is equal to zero or negative, the simulation cannot procede",
                         InputError );
 
-  GEOS_THROW_IF_NE_MSG( m_phaseComponentFraction.size(), m_phaseComponentNames.size(),
+  GEOS_THROW_IF_NE_MSG( m_phaseComponentFraction.size(), LvArray::integerConversion< int >( m_phaseComponentNames.size() ),
                         getCatalogName() << " " << getDataContext() <<
                         ": the sizes of " << viewKeyStruct::aquiferWaterPhaseComponentFractionString() <<
                         " and " << viewKeyStruct::aquiferWaterPhaseComponentNamesString() << " are inconsistent",
