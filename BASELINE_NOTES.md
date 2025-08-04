@@ -6,6 +6,10 @@ This file is designed to track changes to the integrated test baselines.
 Any developer who updates the baseline ID in the .integrated_tests.yaml file is expected to create an entry in this file with the pull request number, date, and their justification for rebaselining.
 These notes should be in reverse-chronological order, and use the following time format: (YYYY-MM-DD).
 
+PR #3662 (2025-08-04) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3662-12531-02dadd8.tar.gz>
+=====================
+Change to single phase handling of flash for compositional fluid model. 
+
 PR #3556 (2025-07-31) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3556-12451-d672aab.tar.gz>
 =====================
 Enable BartonBandis model add new smoke tests. 
