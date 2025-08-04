@@ -66,7 +66,7 @@ static real64 normalizeComposition( integer const numComps,
  * @brief Checks if a composition array has numerically small values
  * @param[in] numComps number of values in the composition array
  * @param[in] composition composition to be checked
- * @return true of there is one zero value
+ * @return true if there is one zero value
  */
 template< integer USD >
 GEOS_HOST_DEVICE
@@ -110,6 +110,49 @@ static integer calculatePresentComponents( integer const numComps,
   }
   presentComponents.resize( presentCount );
   return presentCount;
+}
+
+/**
+ * @brief Determines whether a given composition represents a pure or nearly pure mixture.
+ *
+ * This function checks the mole fractions in a composition array to determine if the mixture
+ * consists of a single dominant component (pure or almost pure). It identifies the index of the
+ * component that is either strictly pure (all others are zero) or nearly pure (others are below a threshold).
+ *
+ * @tparam USD The stride or layout parameter for the array slice.
+ *
+ * @param[in] numComps Number of components in the composition array.
+ * @param[in] composition Array slice containing the mole fractions of each component.
+ * @param[out] pureComponent Index of the component that is strictly pure (only one non-zero mole fraction),
+ *                           or -1 if no such component exists.
+ * @param[out] almostPureComponent Index of the component that is nearly pure (others below a threshold),
+ *                                 or -1 if no such component exists.
+ * @return true if a strictly pure component is found (i.e., only one component has a significant mole fraction),
+ *         false otherwise.
+ */
+template< integer USD >
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
+static bool checkPureMixture( integer const numComps,
+                              arraySlice1d< real64 const, USD > const & composition,
+                              integer & pureComponent,
+                              integer & almostPureComponent )
+{
+  pureComponent = -1;
+  almostPureComponent = -1;
+  for( integer ic = 0; ic < numComps; ++ic )
+  {
+    real64 const zi1 = 1.0 - composition[ic];
+    if( zi1 < MultiFluidConstants::minForSpeciesPresence )
+    {
+      pureComponent = ic;
+    }
+    if( zi1 < MultiFluidConstants::almostPureThreshold )
+    {
+      almostPureComponent = ic;
+    }
+  }
+  return (0 <= pureComponent);
 }
 
 /**

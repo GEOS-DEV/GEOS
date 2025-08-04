@@ -114,6 +114,10 @@ public:
     bool stabilityStatus = false;
     EquationOfStateType incipientEquationOfState = m_flashData.liquidEos;
 
+    integer pureComponent = -1;
+    integer almostPureComponent = -1;
+    checkPureMixture( m_numComponents, compFraction, pureComponent, almostPureComponent );
+
     if( 0 < stabilityIterations || needInitialisation )
     {
       stabilityStatus = StabilityTest::compute( m_numComponents,
@@ -128,6 +132,12 @@ public:
                                                 unstableMixture,
                                                 incipientEquationOfState,
                                                 incipientComposition.toSlice() );
+    }
+
+    // Pure mixtures are always stable
+    if( 0 <= pureComponent )
+    {
+      unstableMixture = false;
     }
 
     // If the stability test failed to converge to a stationary point then we will assume the mixture is unstable
