@@ -10,6 +10,10 @@ PR #3662 (2025-08-04) <https://storage.googleapis.com/geosx/integratedTests/base
 =====================
 Change to single phase handling of flash for compositional fluid model. 
 
+PR #3746 (2025-08-01) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3556-12451-d672aab.tar.gz>
+=====================
+Fix initial composition for `2ph_cap_1d_ihu`.
+
 PR #3556 (2025-07-31) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3556-12451-d672aab.tar.gz>
 =====================
 Enable BartonBandis model add new smoke tests. 
