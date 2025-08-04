@@ -97,10 +97,11 @@ PhysicsSolverBase::PhysicsSolverBase( string const & name,
     setInputFlag( InputFlags::FALSE ).
     setRestartFlags( RestartFlags::WRITE_AND_READ );
 
+  addLogLevel< logInfo::Convergence >();
   addLogLevel< logInfo::Fields >();
   addLogLevel< logInfo::LinearSolver >();
+  addLogLevel< logInfo::ResidualNorm >();
   addLogLevel< logInfo::Solution >();
-  addLogLevel< logInfo::Convergence >();
   addLogLevel< logInfo::TimeStep >();
   addLogLevel< logInfo::Timers >();
 

@@ -215,9 +215,6 @@ LinearSolverParametersInput::LinearSolverParametersInput( string const & name,
     setApplyDefaultValue( m_parameters.ifact.threshold ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "ILU(T) threshold factor" );
-
-  addLogLevel< logInfo::LinearSolver >();
-  addLogLevel< logInfo::LinearSolverConfiguration >();
 }
 
 void LinearSolverParametersInput::postInputInitialization()

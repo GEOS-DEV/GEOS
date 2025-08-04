@@ -29,7 +29,6 @@
 #include "finiteVolume/FluxApproximationBase.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
 #include "fieldSpecification/AquiferBoundaryCondition.hpp"
-#include "fieldSpecification/LogLevelsInfo.hpp"
 #include "physicsSolvers/LogLevelsInfo.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBaseFields.hpp"
@@ -62,9 +61,7 @@ template< typename BASE >
 SinglePhaseFVM< BASE >::SinglePhaseFVM( const string & name,
                                         Group * const parent ):
   BASE( name, parent )
-{
-  BASE::template addLogLevel< logInfo::Convergence >();
-}
+{ }
 
 template< typename BASE >
 void SinglePhaseFVM< BASE >::initializePreSubGroups()
@@ -700,7 +697,7 @@ void SinglePhaseFVM< BASE >::applyFaceDirichletBC( real64 const time_n,
         if( m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
         {
           globalIndex const numTargetFaces = MpiWrapper::sum< globalIndex >( stencil.size() );
-          GEOS_LOG_LEVEL_RANK_0_ON_GROUP( logInfo::FaceBoundaryCondition,
+          GEOS_LOG_LEVEL_RANK_0_ON_GROUP( logInfo::BoundaryConditions,
                                           GEOS_FMT( faceBcLogMessage,
                                                     this->getName(), time_n+dt, fs.getCatalogName(), fs.getName(),
                                                     setName, targetGroup.getName(), numTargetFaces ),
@@ -736,7 +733,7 @@ void SinglePhaseFVM< BASE >::applyFaceDirichletBC( real64 const time_n,
         if( m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
         {
           globalIndex const numTargetFaces = MpiWrapper::sum< globalIndex >( stencil.size() );
-          GEOS_LOG_LEVEL_RANK_0_ON_GROUP( logInfo::FaceBoundaryCondition, GEOS_FMT( faceBcLogMessage,
+          GEOS_LOG_LEVEL_RANK_0_ON_GROUP( logInfo::BoundaryConditions, GEOS_FMT( faceBcLogMessage,
                                                                                     this->getName(), time_n+dt, fs.getCatalogName(), fs.getName(),
                                                                                     setName, targetGroup.getName(), numTargetFaces ),
                                           fs );
@@ -806,7 +803,7 @@ void SinglePhaseFVM< BASE >::applyFaceDirichletBC( real64 const time_n,
         if( m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
         {
           globalIndex const numTargetFaces = MpiWrapper::sum< globalIndex >( stencil.size() );
-          GEOS_LOG_LEVEL_RANK_0_ON_GROUP( logInfo::FaceBoundaryCondition,
+          GEOS_LOG_LEVEL_RANK_0_ON_GROUP( logInfo::BoundaryConditions,
                                           GEOS_FMT( faceBcLogMessage,
                                                     this->getName(), time_n+dt, fs.getCatalogName(), fs.getName(),
                                                     setName, targetGroup.getName(), numTargetFaces ),

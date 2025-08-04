@@ -70,7 +70,6 @@ SolidMechanicsLagrangeContact::SolidMechanicsLagrangeContact( const string & nam
     setDescription( "It be used to increase the scale of the stabilization entries. A value < 1.0 results in larger entries in the stabilization matrix." );
 
   addLogLevel< logInfo::Configuration >();
-  addLogLevel< logInfo::LinearSolverConfiguration >();
 }
 
 void SolidMechanicsLagrangeContact::postInputInitialization()
@@ -91,7 +90,7 @@ void SolidMechanicsLagrangeContact::setMGRStrategy()
   linearSolverParameters.dofsPerNode = 3;
 
   linearSolverParameters.mgr.strategy = LinearSolverParameters::MGR::StrategyType::lagrangianContactMechanics;
-  GEOS_LOG_LEVEL_RANK_0( logInfo::LinearSolverConfiguration, GEOS_FMT( "{}: MGR strategy set to {}", getName(),
+  GEOS_LOG_LEVEL_RANK_0( logInfo::LinearSolver, GEOS_FMT( "{}: MGR strategy set to {}", getName(),
                                                                        EnumStrings< LinearSolverParameters::MGR::StrategyType >::toString( linearSolverParameters.mgr.strategy )));
 }
 

@@ -89,9 +89,9 @@ SolidMechanicsAugmentedLagrangianContact::SolidMechanicsAugmentedLagrangianConta
 
   // Set the default linear solver parameters
   LinearSolverParameters & linSolParams = m_linearSolverParameters.get();
+
   addLogLevel< logInfo::Configuration >();
-  addLogLevel< logInfo::Convergence >();
-  addLogLevel< logInfo::Tolerance >();
+  addLogLevel< logInfo::ContactTolerance >();
 
   // Strategy: AMG with separate displacement components
   linSolParams.dofsPerNode = 3;
@@ -1835,7 +1835,7 @@ void SolidMechanicsAugmentedLagrangianContact::computeTolerances( DomainPartitio
             normalTractionTolerance[kfe] = m_tolNormalTracFac * (averageConstrainedModulus / averageBoxSize0) *
                                            (normalDisplacementTolerance[kfe]);
 
-            GEOS_LOG_LEVEL( logInfo::Tolerance,
+            GEOS_LOG_LEVEL( logInfo::ContactTolerance,
                             GEOS_FMT( "kfe: {}, normalDisplacementTolerance: {}, slidingTolerance: {}, normalTractionTolerance: {}",
                                       kfe, normalDisplacementTolerance[kfe], slidingTolerance[kfe], normalTractionTolerance[kfe] ));
 

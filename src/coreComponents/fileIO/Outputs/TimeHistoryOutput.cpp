@@ -26,20 +26,6 @@ namespace geos
 {
 using namespace dataRepository;
 
-namespace logInfo
-{
-struct TimeHistoryOutputTimer : public OutputTimerBase
-{
-  std::string_view getDescription() const override { return "Time history output timing"; }
-};
-}
-
-logInfo::OutputTimerBase const & TimeHistoryOutput::getTimerCategory() const
-{
-  static logInfo::TimeHistoryOutputTimer timer;
-  return timer;
-}
-
 TimeHistoryOutput::TimeHistoryOutput( string const & name,
                                       Group * const parent ):
   OutputBase( name, parent ),

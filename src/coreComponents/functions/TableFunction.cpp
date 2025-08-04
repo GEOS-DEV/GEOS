@@ -25,6 +25,7 @@
 #include "codingUtilities/Parsing.hpp"
 #include "common/DataTypes.hpp"
 #include "common/MpiWrapper.hpp"
+#include "fileIO/Outputs/OutputBase.hpp"
 
 #include <algorithm>
 
@@ -69,7 +70,7 @@ TableFunction::TableFunction( const string & name,
     setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "When set to 1, write the table into a CSV file" );
 
-  addLogLevel< logInfo::TableDataOutput >();
+  addLogLevel< logInfo::TableLogOutput >();
 }
 
 void TableFunction::readFile( string const & filename, array1d< real64 > & target )
@@ -370,7 +371,7 @@ void TableFunction::outputTableData( OutputOptions const outputOpts ) const
   if( outputOpts.writeCSV || logOutputFailed )
   {
     { // csv output
-      std::ofstream logStream( joinPath( FunctionBase::getOutputDirectory(), getName() + ".csv" ) );
+      std::ofstream logStream( joinPath( getOutputDirectory(), getName() + ".csv" ) );
       TableCSVFormatter csvFormatter;
       logStream << csvFormatter.toString( *this );
     }
@@ -401,10 +402,12 @@ void TableFunction::outputTableData( OutputOptions const outputOpts ) const
 
 void TableFunction::initializePostSubGroups()
 {
+  m_writeInLog = isLogLevelActive< logInfo::TableLogOutput >( getLogLevel() );
+
   // Output user defined tables (not generated PVT tables)
   outputTableData( OutputOptions{
-      m_writeCSV != 0,   // writeCSV
-      isLogLevelActive< logInfo::TableDataOutput >( getLogLevel() )   // writeInLog
+      m_writeCSV != 0,
+      m_writeInLog
     } );
 }
 
