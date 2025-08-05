@@ -943,7 +943,7 @@ SinglePhaseWell::calculateResidualNorm( real64 const & time_n,
     resNorm= std::sqrt( globalResidualNorm[0] * globalResidualNorm[0] + globalResidualNorm[1] * globalResidualNorm[1] );
 
     GEOS_LOG_LEVEL_RANK_0_NLR( logInfo::ResidualNorm, GEOS_FMT( "        ( R{} ) = ( {:4.2e} )        ( Renergy ) = ( {:4.2e} )",
-                                                            coupledSolverAttributePrefix(), globalResidualNorm[0], globalResidualNorm[1] ));
+                                                                coupledSolverAttributePrefix(), globalResidualNorm[0], globalResidualNorm[1] ));
 
   }
   else
@@ -951,7 +951,7 @@ SinglePhaseWell::calculateResidualNorm( real64 const & time_n,
     resNorm = MpiWrapper::max( resNorm );
 
     GEOS_LOG_LEVEL_RANK_0_NLR( logInfo::ResidualNorm, GEOS_FMT( "        ( R{} ) = ( {:4.2e} )",
-                                                            coupledSolverAttributePrefix(), resNorm ));
+                                                                coupledSolverAttributePrefix(), resNorm ));
   }
 
   return resNorm;
