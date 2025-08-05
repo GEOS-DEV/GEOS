@@ -14,7 +14,6 @@
  */
 
 // Source includes
-#include <iostream>
 #include "codingUtilities/UnitTestUtilities.hpp"
 #include "common/logger/Logger.hpp"
 #include "finiteVolume/mimeticInnerProducts/MimeticInnerProductBase.hpp"
@@ -526,11 +525,113 @@ void makeTetra( array2d< real64, nodes::REFERENCE_POSITION_PERM > & nodePosition
   }
 }
 
+template< localIndex NF, typename ARRAY_VIEW_T >
+static void runConsistencyTest( array2d< real64, nodes::REFERENCE_POSITION_PERM > const & nodePosition,
+                                FaceManager::NodeMapType const & faceToNodes,
+                                array1d< localIndex > const & elemToFaces,
+                                real64 const elemCenter[3],
+                                real64 const elemPerm[3],
+                                real64 elemVolume,
+                                ARRAY_VIEW_T const & transMatrix,
+                                std::string const & testName )
+{
+    real64 N[NF][3], C[NF][3], TC[NF][3], K[3][3];
+    real64 faceCenter[3], faceNormal[3];
+
+    // full tensor K
+    real64 perm[3] = { elemPerm[0], elemPerm[1], elemPerm[2] };
+    MimeticInnerProductHelpers::makeFullTensor( perm, K );
+
+    // compute face normals
+    for (localIndex iface = 0; iface < NF; ++iface)
+    {
+        computationalGeometry::centroid_3DPolygon(
+            faceToNodes[iface], nodePosition.toViewConst(),
+            faceCenter, faceNormal );
+
+        for (int d = 0; d < 3; ++d)
+        {
+            N[iface][d] = faceNormal[d];
+        }
+    }
+
+    // C = N * K
+    LvArray::tensorOps::Rij_eq_AikBkj< NF, 3, 3 >( C, N, K );
+//    for (localIndex i = 0; i < NF; ++i)
+//    {
+//        for (localIndex j = 0; j < 3; ++j)
+//        {
+//            C[i][j] = 0.0;
+//            for (localIndex k = 0; k < 3; ++k)
+//            {
+//                C[i][j] += N[i][k] * K[k][j];
+//            }
+//        }
+//    }
+
+    // TC = T * C
+    LvArray::tensorOps::Rij_eq_AikBkj< NF, 3, NF >( TC, transMatrix, C );
+//    for (localIndex i = 0; i < NF; ++i)
+//    {
+//        for (localIndex j = 0; j < 3; ++j)
+//        {
+//            TC[i][j] = 0.0;
+//            for (localIndex k = 0; k < NF; ++k)
+//            {
+//                TC[i][j] += transMatrix( i, k ) * C[k][j];
+//            }
+//        }
+//    }
+
+    // define diffMat and measure its norm
+    real64 diffMat[NF][3];
+    real64 diffNorm = 0.0;
+    
+    for (localIndex i = 0; i < NF; ++i)
+    {
+      for (localIndex j = 0; j < 3; ++j)
+      {
+        diffMat[i][j] = C[i][j] - TC[i][j];
+      }
+    }
+    
+    for( std::ptrdiff_t i = 0; i < NF; ++i )
+    {
+      diffNorm += LvArray::tensorOps::l2NormSquared<3>( diffMat[i] );
+    }
+    diffNorm = std::sqrt( diffNorm );
+        
+//    real64 diffNorm = 0.0;
+//    for (localIndex i = 0; i < NF; ++i)
+//    {
+//        for (localIndex j = 0; j < 3; ++j)
+//        {
+//            real64 diff = C[i][j] - TC[i][j];
+//            diffNorm += diff * diff;
+//        }
+//    }
+//    
+//    diffNorm = std::sqrt( diffNorm );
+    
+    EXPECT_LT( diffNorm, 1e-10 ) << testName << ": norm(NK - TC) = " << diffNorm;
+    
+    if (diffNorm < 1e-10)
+    {
+        std::cout << "[PASSED] " << testName << " consistency test passed: norm(NK - TC) = " << diffNorm << std::endl;
+    }
+    else
+    {
+        std::cout << "[FAILED] " << testName << " consistency test failed: norm(NK - TC) = " << diffNorm << std::endl;
+    }
+}
+
 
 TEST( testMimeticInnerProducts, TPFA_hexa )
 {
+  // total faces (3d)
   localIndex constexpr NF = 6;
-
+    
+  // geometry + reference transmissibility setup
   array2d< real64, nodes::REFERENCE_POSITION_PERM > nodePosition;
   FaceManager::NodeMapType faceToNodes;
   array1d< localIndex > elemToFaces;
@@ -559,7 +660,8 @@ TEST( testMimeticInnerProducts, TPFA_hexa )
   center[1] = elemCenter[1];
   center[2] = elemCenter[2];
   real64 const perm[ 3 ] = { elemPerm[0], elemPerm[1], elemPerm[2] };
-
+    
+  // compute local transmissibility matrix T
   TPFAInnerProduct::compute< NF >( nodePosition.toViewConst(),
                                    transMultiplier.toViewConst(),
                                    faceToNodes.toViewConst(),
@@ -571,6 +673,15 @@ TEST( testMimeticInnerProducts, TPFA_hexa )
                                    transMatrix.toSlice() );
 
   compareTransmissibilityMatrices( transMatrix, transMatrixRef );
+    
+  runConsistencyTest< NF >( nodePosition,
+                            faceToNodes,
+                            elemToFaces,
+                            elemCenter,
+                            elemPerm,
+                            elemVolume,
+                            transMatrix.toViewConst(),
+                            "TPFA_hexa");
 }
 
 
@@ -653,6 +764,7 @@ TEST( testMimeticInnerProducts, Simple_hexa )
   transMultiplier[5] = 0.1;
   transMultiplier[3] = 0.8;
 
+
   stackArray1d< real64, 3 > center( 3 );
   center[0] = elemCenter[0];
   center[1] = elemCenter[1];
@@ -670,6 +782,15 @@ TEST( testMimeticInnerProducts, Simple_hexa )
                                      transMatrix.toSlice() );
 
   compareTransmissibilityMatrices( transMatrix, transMatrixRef );
+    
+  runConsistencyTest< NF >( nodePosition,
+                            faceToNodes,
+                            elemToFaces,
+                            elemCenter,
+                            elemPerm,
+                            elemVolume,
+                            transMatrix.toViewConst(),
+                            "Simple_hexa");
 }
 
 TEST( testMimeticInnerProducts, BdVLM_hexa )
@@ -919,9 +1040,6 @@ int main( int argc, char * * argv )
   int const result = RUN_ALL_TESTS();
 
   geos::basicCleanup();
-
-  // quick check (local <-> Sherlock)
-  std::cout << "from local to Sherlock" << std::endl;
 
   return result;
 }
