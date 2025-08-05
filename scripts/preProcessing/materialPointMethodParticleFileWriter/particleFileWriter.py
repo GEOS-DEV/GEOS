@@ -8,6 +8,13 @@ Created on Wed Mar 1 09:00:00 2017
 Script to automate generation of a GEOSX-MPM input file and particle file
 based on geometric objects.
 
+Particle file format:
+  |x0|y0|z0|vx|vy|vz|mat|r1x|r1y|r1z|r2x|r2y|r2z|r3x|r3y|r3z|
+
+  - mat# is 0-3 currently, specifying a type of built in material module
+  - group = contact group
+  - the r vectors are center-to-face.
+
 Particle file format depends on specified plotting fields.
 
 """
@@ -72,6 +79,10 @@ else:
   comm = MPI.COMM_WORLD # gets communication pool 
   rank = comm.Get_rank()  # gets rank of current process 
   num_ranks = comm.Get_size() # total number of processes
+
+print('running pfw on ',num_ranks,' ranks.  I am rank ',rank)
+
+
 
 
 # ============================================================================================
@@ -321,14 +332,43 @@ ppcx = ppcx if ppcx != None else ppc
 ppcy = ppcy if ppcy != None else ppc
 ppcz = ppcz if ppcz != None else ppc
 
+ 
+
+# User can specify a list of objects or a function that generates objects
+# the latter is prefered if objects are slow to generate (like those requiring
+# voronoi tesselations.  If there are a large number of objects, like for granular
+# systems, it is useful for each rank to only generate the objects it will contain.
+# For this, the user can define a job.make_objects(rankxmin,rankxmax) based on
+# x slices.  TODO: make objects have a construc() method that can be called by
+# pfw, so the list of objects can be generated cheaply and the user doesn't have
+# to worry about rank slicing.
+if ('objects' in pfw):
+  objects = pfw["objects"]
+elif ( hasattr(job, 'make_objects') ):
 # list of geometry creation objects
-if objects == None:
-  objects = job.make_objects()
+  from inspect import signature
+  if str(signature(job.make_objects)) == '()':
+    # Old version, all ranks construct all objects:
+    objects = job.make_objects(rankxmin,rankxmax)
+  else:
+    # This will be used to make objects only be created if their bounding box contains the current
+    # ranks slice.
+    rankxmin = xmin + (rank/num_ranks)*(xmax-xmin)
+    rankxmax = xmin + ( (rank+1)/num_ranks)*(xmax-xmin)
+    objects = job.make_objects(rankxmin,rankxmax)
+else:
+  # Throw error if no objects defined.  you can still specify objects=[] to run with no objects.
+  # but this will error if no objects or make objects function exists in input file.
+  print( "You don't have any objects" )
 
 # Batch parameters for GEOSX runs.  An error will result if there are too many cores for
 # a low resolution simulation.  If there is insufficient run-time to obtain a signal
 # for a given run, that run will have its results ommited from the Hugoniot analysis.
 mPartition = mPartition if not runDebug else "pdebug" 
+
+# mCores is set by number of partitions in each direction, this doesn't need to be
+# an additional input.
+mCores = int(xpar*ypar*zpar)
 
 # We used to set this manually, but coresPerNode changes with each machine.
 # This will ensure consistency since we now have that value for each platform.
@@ -372,6 +412,8 @@ mats = mats.replace("]",'}"')
 mats = mats.replace("'","")
 
 particleTypesPerMat = [set() for m in materials]
+
+print('particleTypesPerMat = ',particleTypesPerMat)
 
 particleRefinement = particleRefinement if particleRefinement != None else [ 1 for i in range(len(materials)) ]# Create list of size materials all ones
 
@@ -445,7 +487,7 @@ if generateParticleFile:
   particleFile = open(rank_particleFileName, 'w')
 
   if(planeStrain):
-    surfaceDepth = 2*np.sqrt(dX*dX + dY*dY) / min(ppcx, ppcy)
+    surfaceDepth = np.sqrt(dX*dX + dY*dY) / min(ppcx, ppcy)
   else:
     surfaceDepth = np.sqrt(dX*dX + dY*dY + dZ*dZ) / min(ppcx, min( ppcy, ppcz))
 
@@ -477,6 +519,8 @@ if generateParticleFile:
     comm.Barrier()
 
   max_num_particles = ni*nj*nk
+  
+
 
   n_p = 0
   for i in range(1+math.ceil(ni*rank/num_ranks), math.ceil(ni*(rank+1)/num_ranks)+1):
@@ -676,6 +720,8 @@ if generateParticleFile:
 
               particleTypesPerMat[mat].add( particleType )
 
+              #print('mat = ',mat,', particleTypesPerMat = ',particleTypesPerMat)
+
               dxr = dx/particleRefinement[mat]
               dyr = dy/particleRefinement[mat]
               dzr = dz if planeStrain else dz/particleRefinement[mat]
@@ -837,11 +883,26 @@ if generateParticleFile:
     print('Particle volume = ',particleVolume,', Domain volume = ',domainVolume )
     print('Particle volume fraction = ',particleVolume/domainVolume )
 
+# only create the restart event if a restart interval was specified.
+if (restartInterval == None):
+  restartEventString = """
+  """
+else:
+  restartEventString = """ <PeriodicEvent
+      name="restart"
+      timeFrequency=""" + '"' + str( restartInterval ) + '"' + """
+      target="/Outputs/restartOutput"/> 
+    <HaltEvent
+      maxRuntime=""" + '"' + str( maxRestartTime ) + '"' + """/>
+  """
 
 # ===========================================
 # CREATE INPUT FILE
 # ===========================================
-print('rank = ',rank)
+# print('rank = ',rank)
+# print('matsOrig = ',matsOrig)
+# print('particleTypesPerMat = ',particleTypesPerMat)
+
 if rank == 0:
   print('Writing input file...')
 
@@ -876,7 +937,6 @@ if rank == 0:
         regionBlocksStr+=", "
       if i < numMats-1:
         particleTypeString+=", "
-
       blockIndex += 1
     
     particleBlockString += regionBlocksStr
@@ -961,12 +1021,7 @@ srun -n """+str(mCores)+""" """+geosPath+""" -i """+geosxInputFileName+"""
       name="outputs"
       timeFrequency="""+'"'+str( plotInterval )+'"'+"""
       target="/Outputs/vtkOutput"/>
-    <PeriodicEvent
-      name="restart"
-      timeFrequency=""" + '"' + str( restartInterval ) + '"' + """
-      target="/Outputs/restartOutput"/> 
-    <HaltEvent
-      maxRuntime=""" + '"' + str( maxRestartTime ) + '"' + """/>
+"""+restartEventString+"""
   </Events>
 
   <NumericalMethods>

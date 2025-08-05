@@ -56,6 +56,9 @@ Graphite::Graphite( string const & name, Group * const parent ):
   m_coupledShearResponseY1(),
   m_coupledShearResponseY2(),
   m_coupledShearResponseM1(),
+  m_distortionStrainHardeningC0(),
+  m_inPlaneStrainHardeningC0(),
+  m_coupledStrainHardeningC0(),
   m_maximumPlasticStrain()
 {
   // register default values
@@ -159,6 +162,21 @@ Graphite::Graphite( string const & name, Group * const parent ):
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Coupled Shear Response M1" );
 
+  registerWrapper( viewKeyStruct::distortionStrainHardeningC0(), &m_distortionStrainHardeningC0).
+    setApplyDefaultValue( 1.0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription("Distortion Strain Hardening Multiplier C0" );
+
+  registerWrapper( viewKeyStruct::inPlaneStrainHardeningC0(), &m_inPlaneStrainHardeningC0).
+    setApplyDefaultValue( 1.0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription("In Plane train Hardening Multiplier C0" );
+
+  registerWrapper( viewKeyStruct::coupledStrainHardeningC0(), &m_coupledStrainHardeningC0).
+    setApplyDefaultValue( 1.0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription("Coupled Strain Hardening Multiplier C0" );
+
   registerWrapper( viewKeyStruct::maximumPlasticStrainString(), &m_maximumPlasticStrain ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Maximum plastic strain" );
@@ -176,12 +194,12 @@ Graphite::Graphite( string const & name, Group * const parent ):
 
   registerWrapper( viewKeyStruct::relaxationString(), &m_relaxation).
     setApplyDefaultValue( 0.0 ).
-    setPlotLevel( PlotLevel::NOPLOT ).
+    setPlotLevel( PlotLevel::LEVEL_0 ).
     setDescription( "Relaxation" );
 
   registerWrapper( viewKeyStruct::damageString(), &m_damage ).
     setApplyDefaultValue( 0.0 ).
-    setPlotLevel( PlotLevel::NOPLOT ).
+    setPlotLevel( PlotLevel::LEVEL_0 ).
     setDescription( "Array of quadrature point damage values" );
 
 registerWrapper( viewKeyStruct::jacobianString(), &m_jacobian ).

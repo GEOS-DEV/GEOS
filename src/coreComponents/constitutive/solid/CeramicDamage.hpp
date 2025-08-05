@@ -216,6 +216,7 @@ public:
                                           ) const;
   GEOS_HOST_DEVICE
   real64 getStrength( const real64 damage,      // damage
+                      const real64 stressConcentration, // stress concentration from crack tip
                       const real64 pressure,    // pressure
                       const real64 J2,          // J2 invariant of stress
                       const real64 J3,          // J3 invariant of stress
@@ -538,7 +539,7 @@ void CeramicDamageUpdates::smallStrainUpdateHelper( localIndex const k,
   real64 nominalIntactStrength;
   if( trialPressure >= pmin ) 
   {
-   nominalIntactStrength = CeramicDamageUpdates::getStrength( 0.0, trialPressure, trialJ2, trialJ3, mu, Yc, Yt0, Ycmax ); 
+   nominalIntactStrength = CeramicDamageUpdates::getStrength( 0.0, 1.0, trialPressure, trialJ2, trialJ3, mu, Yc, Yt0, Ycmax ); 
   }
   else
   {
@@ -559,9 +560,9 @@ void CeramicDamageUpdates::smallStrainUpdateHelper( localIndex const k,
   // test pressure against vertex pressure:
   if( trialPressure >= pmin ) 
   { // strength at trial pressure and current damage.
-    real64 strength = CeramicDamageUpdates::getStrength( m_damage[k][q], trialPressure, trialJ2, trialJ3, mu, Yc, Yt0, Ycmax );
+    real64 strength = CeramicDamageUpdates::getStrength( m_damage[k][q], crackTipStressConcentration, trialPressure, trialJ2, trialJ3, mu, Yc, Yt0, Ycmax );
     // check for yield in shear.
-    if( crackTipStressConcentration*trialVonMises > strength )
+    if( trialVonMises > strength )
     {
       yielding = true;
     }
@@ -596,20 +597,14 @@ void CeramicDamageUpdates::smallStrainUpdateHelper( localIndex const k,
       // 
       // Compute the nominal fully-damaged yield stress for crack-tip correction and regularization.
       //
-      // FIXME:TODO:MH:
-      //   strength/streccConcentration < trialStress < strength
-      // We want to increment damage, but the plastic return will just give the trial stress...resulting
-      // in no dissipation to increment the fracture-energy based damage evolution.
-      // What behavior do we want?
-      // Do we just set damage equal to whatever value is needed to satisfy the fracture energy criterion,
-      // evolving the fracture in a single step?  That will work for cases where the strain energy less the
-      // residual value meets the energy dissipation criterion..but not in general.  
+      // We treat the stress concentration as a strength modifier, so the energy regularization should
+      // behave consistently, meaning the strain to failure will be greater for a crack-tip particle.
 
 
       real64 nominalFullyDamagedStrength;
       if( trialPressure > 0.0 ) 
       {
-        nominalFullyDamagedStrength = CeramicDamageUpdates::getStrength( 1.0, trialPressure, trialJ2, trialJ3, mu, Yc, Yt0, Ycmax ); 
+        nominalFullyDamagedStrength = CeramicDamageUpdates::getStrength( 1.0, crackTipStressConcentration, trialPressure, trialJ2, trialJ3, mu, Yc, Yt0, Ycmax ); 
       }
       else
       {
@@ -841,7 +836,7 @@ void CeramicDamageUpdates::plasticReturn( const real64 damage,        // damage
     // but the continuum stress isn't above the continuum strength.
 
     // Strength at current value of damage and trial pressure
-    strength = CeramicDamageUpdates::getStrength( damage, pressure, J2, J3, mu, Yc, Yt0, Ycmax );
+    strength = CeramicDamageUpdates::getStrength( damage, crackTipStressConcentration, pressure, J2, J3, mu, Yc, Yt0, Ycmax );
     // scale deviatoric stress and return reconstructed stress:
 
     // trialJ2 = trialVonMises * trialVonMises / 3.0;
@@ -862,6 +857,7 @@ void CeramicDamageUpdates::plasticReturn( const real64 damage,        // damage
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
 real64 CeramicDamageUpdates::getStrength( const real64 damage,     // damage
+                                          const real64 stressConcentration, // damage
                                           const real64 pressure,   // pressure
                                           const real64 J2,         // J2 invariant of stress
                                           const real64 J3,         // J3 invariant of stress
@@ -881,7 +877,7 @@ real64 CeramicDamageUpdates::getStrength( const real64 damage,     // damage
   {
     dfdp = ceramicdY10dp( damage, mu, Yc, Yt0 );
     oneOverGamma = m_thirdInvariantDependence == 1 ? thirdInvariantStrengthScaling( J2, J3, dfdp ) : 1.0;
-    return oneOverGamma * ceramicY10( pressure, damage, mu, Yt0, Yc );
+    return ( 1. / stressConcentration ) * ( oneOverGamma * ceramicY10( pressure, damage, mu, Yt0, Yc ) );
   }
   
   if( pressure < p2 )
@@ -892,12 +888,12 @@ real64 CeramicDamageUpdates::getStrength( const real64 damage,     // damage
     real64 m1 = oneOverGamma * ceramicdY10dp( damage, mu, Yc, Yt0 );
     real64 y1 = oneOverGamma * ceramicY10( p1, damage, mu, Yt0, Yc);
     real64 y2 = oneOverGamma * Ymax;
-    return pow((pressure - p2) / (p1 - p2), m1 * (p1 - p2) / (y1 - y2)) * (y1 - y2) + y2;
+    return ( 1. / stressConcentration ) * ( pow((pressure - p2) / (p1 - p2), m1 * (p1 - p2) / (y1 - y2)) * (y1 - y2) + y2 );
   }
   else
   {
     oneOverGamma = m_thirdInvariantDependence == 1 ? thirdInvariantStrengthScaling( J2, J3, dfdp ) : 1.0;
-    return oneOverGamma * Ymax;
+    return ( 1. / stressConcentration ) * ( oneOverGamma * Ymax );
   }
 }
 
