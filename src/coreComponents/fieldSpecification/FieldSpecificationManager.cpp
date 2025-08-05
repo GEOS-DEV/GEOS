@@ -251,7 +251,7 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
 
       string_array availableRegions;
       bool foundMaterialInTargetRegion = false;
-      mesh.getElemManager().forElementRegions< CellElementRegion >( [&]( ElementRegionBase const & elemRegion )
+      mesh.getElemManager().forElementRegions< ElementRegionBase >( [&]( ElementRegionBase const & elemRegion )
       {
         availableRegions.push_back( elemRegion.getName());
         if( targetRegion == elemRegion.getName() && !elemRegion.getMaterialList().empty())
