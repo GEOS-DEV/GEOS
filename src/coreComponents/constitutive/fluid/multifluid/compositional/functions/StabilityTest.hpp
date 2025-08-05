@@ -75,159 +75,7 @@ public:
                        arraySlice1d< integer const > const & discreteFlashParameters,
                        bool & unstableMixture,
                        EquationOfStateType & incipientEquationOfState,
-                       arraySlice1d< real64 > const & incipientComposition )
-  {
-    stackArray2d< real64, 4*maxNumComps > workSpace( 4, numComps );
-    arraySlice1d< real64 > logFugacity = workSpace[0];
-    arraySlice1d< real64 > normalizedComposition = workSpace[1];
-    arraySlice1d< real64 > logTrialComposition = workSpace[2];
-    arraySlice1d< real64 > hyperplane = workSpace[3]; // h-parameter
-    stackArray1d< integer, maxNumComps > availableComponents( numComps );
-
-    //integer const presentCount =
-    calculatePresentComponents( numComps, composition, availableComponents );
-    auto const presentComponents = availableComponents.toSliceConst();
-
-    LvArray::forValuesInSlice( workSpace.toSlice(), setZero );
-
-    // Extract flash parameters
-    integer const maxIterations = discreteFlashParameters[FlashParameters::STABILITY_MAX_ITERATIONS];
-    real64 const stabilityThreshold = continuousFlashParameters[FlashParameters::STABILITY_THRESHOLD];
-    real64 const stabilityTolerance = continuousFlashParameters[FlashParameters::STABILITY_TOLERANCE];
-
-    integer const numConfigSteps = flashData.liquidEos == flashData.vapourEos ? 1 : 2;
-
-    // Initialise by assuming a stable mixture
-    unstableMixture = false;
-
-    // Flag to indicate all trial compositions converged
-    bool allConverged = true;
-
-    // Measure of distance to trivial solution
-    real64 maxDistanceToTrivialSolution = 0.0;
-
-    for( integer configStep = 0; configStep < numConfigSteps; ++configStep )
-    {
-      EquationOfStateType const sampleEos = (configStep == 0) ? flashData.liquidEos : flashData.vapourEos;
-      EquationOfStateType const incipientEos = (configStep == 0) ? flashData.vapourEos : flashData.liquidEos;
-
-      // Calculate the hyperplane parameter
-      // h_i = log( z_i ) + log( phi_i )
-      FugacityCalculator::computeLogFugacity( numComps,
-                                              pressure,
-                                              temperature,
-                                              composition,
-                                              componentProperties,
-                                              sampleEos,
-                                              flashData,
-                                              logFugacity );
-      for( integer const ic : presentComponents )
-      {
-        hyperplane[ic] = LvArray::math::log( composition[ic] ) + logFugacity[ic];
-      }
-
-      for( real64 const alpha : { 1.0, -1.0, 0.0 } )
-      {
-        // Initialise next sample
-        if( LvArray::math::abs( alpha ) < MultiFluidConstants::epsilon )
-        {
-          for( integer const ic : presentComponents )
-          {
-            logTrialComposition[ic] = 0.0;
-            normalizedComposition[ic] = 1.0;
-          }
-        }
-        else
-        {
-          for( integer const ic : presentComponents )
-          {
-            logTrialComposition[ic] = LvArray::math::log( composition[ic] ) + alpha*LvArray::math::log( kValues[ic] );
-            normalizedComposition[ic] = LvArray::math::exp( logTrialComposition[ic] );
-          }
-        }
-
-        // Start iterations for this sample
-        bool converged = false;
-
-        for( localIndex iterationCount = 0; iterationCount < maxIterations; ++iterationCount )
-        {
-          // Normalise the composition and calculate the fugacity
-          normalizeComposition( numComps, normalizedComposition );
-          FugacityCalculator::computeLogFugacity( numComps,
-                                                  pressure,
-                                                  temperature,
-                                                  normalizedComposition.toSliceConst(),
-                                                  componentProperties,
-                                                  incipientEos,
-                                                  flashData,
-                                                  logFugacity );
-
-          // Calculate the stationarity condition
-          real64 error = 0.0;
-          for( integer const ic : presentComponents )
-          {
-            real64 const dG = logTrialComposition[ic] + logFugacity[ic] - hyperplane[ic];
-            error += (dG*dG);
-          }
-          error = LvArray::math::sqrt( error );
-
-          // Check stationarity
-          if( error < stabilityTolerance )
-          {
-            converged = true;
-            break;
-          }
-
-          // Update to next step
-          for( integer const ic : presentComponents )
-          {
-            logTrialComposition[ic] = hyperplane[ic] - logFugacity[ic];
-            normalizedComposition[ic] = LvArray::math::exp( logTrialComposition[ic] );
-          }
-        }
-        allConverged = allConverged && converged;
-
-        // Calculate the tangent-plane-distance (TPD) and distance to the trivial solution
-        real64 tpd = 1.0;
-        real64 distance = 0.0;
-        for( integer const ic : presentComponents )
-        {
-          real64 const dZ = normalizedComposition[ic] - composition[ic];
-          real64 const dG = logTrialComposition[ic] + logFugacity[ic] - hyperplane[ic];
-          tpd += normalizedComposition[ic] * (dG - 1.0);
-          distance += (dZ*dZ);
-        }
-
-        if( maxDistanceToTrivialSolution < distance )
-        {
-          maxDistanceToTrivialSolution = distance;
-          incipientEquationOfState = incipientEos;
-          for( integer ic = 0; ic < numComps; ++ic )
-          {
-            incipientComposition[ic] = normalizedComposition[ic];
-          }
-        }
-        // The mixture is unstable if either the TPD is negative or if the TPD is zero but the incipient composition
-        // is different from the sample composition
-        // stabilityThreshold is negative (default -1e-8)
-        if( tpd < stabilityThreshold )
-        {
-          unstableMixture = true;
-        }
-        else if((tpd < -stabilityThreshold) && (-stabilityThreshold < distance))
-        {
-          unstableMixture = true;
-        }
-        if( unstableMixture )
-        {
-          return true;
-        }
-      }
-    }
-
-    // The test is successful if either we have an unstable mixture or all test compositions converged to stationarity
-    return unstableMixture || allConverged;
-  }
+                       arraySlice1d< real64 > const & incipientComposition );
 
   /**
    * @brief Compute derivatives of the incipient phase composition
@@ -335,6 +183,38 @@ public:
       }
     }
   }
+
+  template< int USD1, int USD2, int USD3 >
+  GEOS_HOST_DEVICE
+  static real64 calculateResidual( integer const numComps,
+                                   arraySlice1d< integer const > const & presentComponents,
+                                   real64 const pressure,
+                                   real64 const temperature,
+                                   ComponentProperties::KernelWrapper const & componentProperties,
+                                   EquationOfStateType const equationOfState,
+                                   FlashData const & flashData,
+                                   arraySlice1d< real64 const, USD1 > const & logTestComposition,
+                                   real64 & tangentPlaneDistance,
+                                   arraySlice1d< real64, USD2 > const & testComposition,
+                                   arraySlice1d< real64 > const & testLogFugacity,
+                                   arraySlice1d< real64, USD3 > const & residual );
+
+  template< int USD1, int USD2, int USD3, int USD4 >
+  GEOS_HOST_DEVICE
+  static real64 calculateResidualAndJacobian( integer const numComps,
+                                              arraySlice1d< integer const > const & presentComponents,
+                                              real64 const pressure,
+                                              real64 const temperature,
+                                              ComponentProperties::KernelWrapper const & componentProperties,
+                                              EquationOfStateType const equationOfState,
+                                              FlashData const & flashData,
+                                              arraySlice1d< real64 const, USD1 > const & logTestComposition,
+                                              real64 & tangentPlaneDistance,
+                                              arraySlice1d< real64, USD2 > const & testComposition,
+                                              arraySlice1d< real64 > const & testFugacity,
+                                              arraySlice2d< real64 > const & logTestFugacityDerivs,
+                                              arraySlice1d< real64, USD3 > const & residual,
+                                              arraySlice2d< real64, USD4 > const & jacobian );
 };
 
 } // namespace compositional
@@ -342,5 +222,8 @@ public:
 } // namespace constitutive
 
 } // namespace geos
+
+// Include the implementation
+#include "StabilityTest_impl.hpp"
 
 #endif //GEOS_CONSTITUTIVE_FLUID_MULTIFLUID_COMPOSITIONAL_FUNCTIONS_STABILITYTEST_HPP_

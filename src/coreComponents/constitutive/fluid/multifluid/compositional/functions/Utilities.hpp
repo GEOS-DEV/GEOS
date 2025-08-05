@@ -133,6 +133,27 @@ static bool solveLinearSystem( arraySlice2d< real64, USD > const & A,
 #endif
 }
 
+/**
+ * @brief Solve the lineat system for the derivatives of the flash
+ * @param[in/out] A the coefficient matrix. Destroyed after call
+ * @param[in/out] X the rhs and solution
+ * @return @c true if the problem is well solved @c false otherwise
+ */
+template< int USD1, int USD2 >
+GEOS_HOST_DEVICE
+static bool solveLinearSystem( arraySlice2d< real64, USD1 > const & A,
+                               arraySlice1d< real64, USD2 > const & x )
+{
+#if defined(GEOS_DEVICE_COMPILE)
+  GEOS_UNUSED_VAR( A );
+  GEOS_UNUSED_VAR( x );
+  return false;
+#else
+  BlasLapackLA::solveLinearSystem( A, x );
+  return true;
+#endif
+}
+
 } // namespace compositional
 } // namespace constitutive
 } // namespace geos

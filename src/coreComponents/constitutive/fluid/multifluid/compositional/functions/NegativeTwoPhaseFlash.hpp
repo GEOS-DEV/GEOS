@@ -110,6 +110,41 @@ public:
                                   arraySlice2d< real64, USD3 > const & liquidCompositionDerivs,
                                   arraySlice2d< real64, USD3 > const & vapourCompositionDerivs );
 
+  template< int USD1, int USD2, int USD3 >
+  GEOS_HOST_DEVICE
+  static real64 calculateResidual( integer const numComps,
+                                   real64 const pressure,
+                                   real64 const temperature,
+                                   arraySlice1d< real64 const > const & composition,
+                                   ComponentProperties::KernelWrapper const & componentProperties,
+                                   FlashData const & flashData,
+                                   arraySlice1d< real64 const, USD1 > const & kValues,
+                                   real64 const & vapourPhaseMoleFraction,
+                                   arraySlice1d< real64, USD2 > const & liquidComposition,
+                                   arraySlice1d< real64, USD2 > const & vapourComposition,
+                                   arraySlice1d< real64 > const & logLiquidFugacity,
+                                   arraySlice1d< real64 > const & logVapourFugacity,
+                                   arraySlice1d< real64, USD3 > const & residual );
+
+  template< int USD1, int USD2, int USD3, int USD4 >
+  GEOS_HOST_DEVICE
+  static void calculateResidualAndJacobian( integer const numComps,
+                                            real64 const pressure,
+                                            real64 const temperature,
+                                            arraySlice1d< real64 const > const & composition,
+                                            ComponentProperties::KernelWrapper const & componentProperties,
+                                            FlashData const & flashData,
+                                            arraySlice1d< real64 const, USD1 > const & kValues,
+                                            real64 const & vapourPhaseMoleFraction,
+                                            arraySlice1d< real64, USD2 > const & liquidComposition,
+                                            arraySlice1d< real64, USD2 > const & vapourComposition,
+                                            arraySlice1d< real64 > const & logLiquidFugacity,
+                                            arraySlice1d< real64 > const & logVapourFugacity,
+                                            arraySlice2d< real64 > const & logLiquidFugacityDerivs,
+                                            arraySlice2d< real64 > const & logVapourFugacityDerivs,
+                                            arraySlice1d< real64, USD3 > const & residual,
+                                            arraySlice2d< real64, USD4 > const & jacobian );
+
 private:
   /**
    * @brief Calculate the derivatives of the flash.
