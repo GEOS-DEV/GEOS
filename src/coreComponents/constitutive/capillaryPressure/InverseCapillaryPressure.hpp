@@ -21,12 +21,13 @@
 #define GEOS_CONSTITUTIVE_CAPILLARYPRESSURE_INVERSECAPILLARYPRESSURE_HPP
 
 #include "constitutive/capillaryPressure/CapillaryPressureBase.hpp"
-#include "constitutive/capillaryPressure/JFunctionCapillaryPressure.hpp"
 
 namespace geos
 {
 namespace constitutive
 {
+
+class JFunctionCapillaryPressure;
 
 template< typename CAP_PRESSURE >
 struct CapillaryPressureEvaluate
@@ -36,54 +37,38 @@ struct CapillaryPressureEvaluate
                        arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseVolumeFraction,
                        arraySlice1d< real64 const > const & jFuncMultiplier,
                        arraySlice1d< real64, cappres::USD_CAPPRES - 2 > const & phaseCapPres,
-                       arraySlice2d< real64 > const & dPhaseCapPres_dSaturation )
+                       arraySlice2d< real64, cappres::USD_CAPPRES_DS - 2 > const & dPhaseCapPres_dSaturation )
   {
     integer constexpr MAX_NUM_PHASES = CapillaryPressureBase::MAX_NUM_PHASES;
     integer const numPhases = phaseVolumeFraction.size();
-    StackArray< real64, 4, MAX_NUM_PHASES *MAX_NUM_PHASES, constitutive::cappres::LAYOUT_CAPPRES_DS > dPhaseCapPres_dPhaseVolFrac( 1, 1, numPhases, numPhases );
     constexpr bool isJFunction = std::is_same_v< CAP_PRESSURE, JFunctionCapillaryPressure >;
     if constexpr ( isJFunction )
     {
-      capPressureWrapper.compute( phaseVolumeFraction, jFuncMultiplier, phaseCapPres, dPhaseCapPres_dPhaseVolFrac[0][0] );
+      capPressureWrapper.compute( phaseVolumeFraction, jFuncMultiplier, phaseCapPres, dPhaseCapPres_dSaturation );
     }
-    else 
+    else
     {
       GEOS_UNUSED_VAR( jFuncMultiplier );
-      capPressureWrapper.compute( phaseVolumeFraction, phaseCapPres, dPhaseCapPres_dPhaseVolFrac[0][0] );
+      capPressureWrapper.compute( phaseVolumeFraction, phaseCapPres, dPhaseCapPres_dSaturation );
     }
-    for( integer ip = 0; ip < numPhases; ++ip )
+  }
+
+  GEOS_HOST_DEVICE
+  static real64 applyScale( real64 const capPressure,
+                            real64 const jFuncMultiplier )
+  {
+    constexpr bool isJFunction = std::is_same_v< CAP_PRESSURE, JFunctionCapillaryPressure >;
+    if constexpr ( isJFunction )
     {
-      for( integer jp = 0; jp < numPhases; ++jp )
-      {
-        dPhaseCapPres_dSaturation[ip][jp] = dPhaseCapPres_dPhaseVolFrac[0][0][ip][jp];
-      }
+      return capPressure * jFuncMultiplier;
+    }
+    else
+    {
+      GEOS_UNUSED_VAR( jFuncMultiplier );
+      return capPressure;
     }
   }
 };
-
-// template< >
-// struct CapillaryPressureEvaluate< JFunctionCapillaryPressure >
-// {
-//   GEOS_HOST_DEVICE
-//   static void compute( typename JFunctionCapillaryPressure::KernelWrapper const & capPressureWrapper,
-//                        arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseVolumeFraction,
-//                        arraySlice1d< real64 const > const & jFuncMultiplier,
-//                        arraySlice1d< real64, cappres::USD_CAPPRES - 2 > const & phaseCapPres,
-//                        arraySlice2d< real64 > const & dPhaseCapPres_dSaturation )
-//   {
-//     integer constexpr MAX_NUM_PHASES = CapillaryPressureBase::MAX_NUM_PHASES;
-//     integer const numPhases = phaseVolumeFraction.size();
-//     StackArray< real64, 4, MAX_NUM_PHASES *MAX_NUM_PHASES, constitutive::cappres::LAYOUT_CAPPRES_DS > dPhaseCapPres_dPhaseVolFrac( 1, 1, numPhases, numPhases );
-//     capPressureWrapper.compute( phaseVolumeFraction, jFuncMultiplier, phaseCapPres, dPhaseCapPres_dPhaseVolFrac[0][0] );
-//     for( integer ip = 0; ip < numPhases; ++ip )
-//     {
-//       for( integer jp = 0; jp < numPhases; ++jp )
-//       {
-//         dPhaseCapPres_dSaturation[ip][jp] = dPhaseCapPres_dPhaseVolFrac[0][0][ip][jp];
-//       }
-//     }
-//   }
-// };
 
 template< typename CAP_PRESSURE >
 class InverseCapillaryPressureUpdate
@@ -96,8 +81,23 @@ private:
   static constexpr integer USD_PC = cappres::USD_CAPPRES - 2;
 
 public:
+  // Property limits. Used to index `m_propertyLimits`
+  // Minimum phase volume fraction for phase
+  static constexpr integer MIN_PORE_VOLUME = 0;
+  // End points for the capillary pressure
+  static constexpr integer MIN_CAP_PRESSURE = 3;
+  static constexpr integer MAX_CAP_PRESSURE = 4;
+  // End points for the saturation dimension
+  // Min saturation is saturation at which PC is minimum
+  // Max saturation is saturation at which PC is maximum
+  static constexpr integer MIN_SATURATION = 1;
+  static constexpr integer MAX_SATURATION = 2;
+public:
   InverseCapillaryPressureUpdate( CAP_PRESSURE & capPressure,
-                                  arrayView1d< real64 const > const & phaseMinVolumeFraction );
+                                  arrayView2d< real64 const > const & propertyLimits,
+                                  arrayView1d< integer const > const & independentPhases,
+                                  integer dependentPhase,
+                                  arrayView1d< integer const > const & jFunctionIndex );
 
   GEOS_HOST_DEVICE
   bool compute( arraySlice1d< real64 const, USD_PC > const & phaseCapillapryPressure,
@@ -112,7 +112,10 @@ private:
 
 private:
   typename CAP_PRESSURE::KernelWrapper m_capPressureWrapper;
-  arrayView1d< real64 const > const m_phaseMinVolumeFraction;
+  arrayView2d< real64 const > const m_propertyLimits;
+  arrayView1d< integer const > const m_independentPhases;
+  integer const m_dependentPhase{-1};
+  arrayView1d< integer const > const m_jFunctionIndex;
   real64 m_sumMinVolumeFraction{0.0};
 };
 
@@ -132,7 +135,37 @@ public:
   KernelWrapper createKernelWrapper();
 
 private:
+  // Calculate the model limits
+  void calculatePropertyLimits( integer numPhases,
+                                typename CAP_PRESSURE::KernelWrapper capPressureWrapper,
+                                arrayView1d< real64 const > const & phaseMinVolumeFraction,
+                                arrayView2d< real64 > const & propertyLimits ) const;
+
+  // Determine which phases are independent and which is dependent
+  void calculateIndependentPhases( integer numPhases,
+                                   arrayView2d< real64 const > const & propertyLimits,
+                                   integer & dependentPhase,
+                                   array1d< integer > & independentPhases ) const;
+
+  // Find the indices for the JFunction multiplier
+  void calculateJFunctionIndex( integer numPhases,
+                                arrayView1d< integer const > const & phaseOrder,
+                                array1d< integer > & jFunctionIndex ) const;
+
+private:
   CAP_PRESSURE & m_capPressure;
+
+  /// Array for saturation and capillary pressure
+  array2d< real64 > m_propertyLimits;
+
+  // List of free phases
+  array1d< integer > m_independentPhases;
+
+  // The non-free phase
+  integer m_dependentPhase{-1};
+
+  // Indices for the JFunction multiplier for each phase
+  array1d< integer > m_jFunctionIndex;
 };
 
 template< typename CAP_PRESSURE >
@@ -146,107 +179,55 @@ InverseCapillaryPressureUpdate< CAP_PRESSURE >::compute(
   constexpr real64 epsilon = LvArray::NumericLimits< real64 >::epsilon;
 
   integer const numPhases = phaseVolumeFraction.size();
-  StackArray< real64, 2, MAX_NUM_PHASES, compflow::LAYOUT_PHASE > sat( 1, numPhases );
-  StackArray< real64, 3, 7*MAX_NUM_PHASES, constitutive::cappres::LAYOUT_CAPPRES > workSpace( 1, 7, numPhases );
-  StackArray< real64, 2, MAX_NUM_PHASES *MAX_NUM_PHASES > dPhaseCapPres_dSaturation( numPhases, numPhases );
-  StackArray< integer, 1, MAX_NUM_PHASES > freePhases( numPhases-1 );
+  StackArray< real64, 3, 3*MAX_NUM_PHASES, cappres::LAYOUT_CAPPRES > workSpace( 1, 3, numPhases );
+  StackArray< real64, 4, MAX_NUM_PHASES *MAX_NUM_PHASES, cappres::LAYOUT_CAPPRES_DS > dPhaseCapPres_dSaturation( 1, 1, numPhases, numPhases );
 
-  auto const minCapPres = workSpace[0][0];
-  auto const maxCapPres = workSpace[0][1];
-  auto const capPres = workSpace[0][2];
-  auto const targetCapPres = workSpace[0][3];
-  auto const saturationStep = workSpace[0][4];
-  auto const minSat = workSpace[0][5];
-  auto const maxSat = workSpace[0][6];
-  auto const saturation = sat[0];
-  auto const jacobian = dPhaseCapPres_dSaturation.toSlice();
+  auto const & minPoreVolume = m_propertyLimits[MIN_PORE_VOLUME];
+  auto const & minSaturation = m_propertyLimits[MIN_SATURATION];
+  auto const & maxSaturation = m_propertyLimits[MAX_SATURATION];
+  auto const & minCapPressure = m_propertyLimits[MIN_CAP_PRESSURE];
+  auto const & maxCapPressure = m_propertyLimits[MAX_CAP_PRESSURE];
 
-  for( integer ip = 0; ip < numPhases; ++ip )
-  {
-    minCapPres[ip] = LvArray::NumericLimits< real64 >::max;
-    maxCapPres[ip] = -LvArray::NumericLimits< real64 >::max;
-  }
-
-  for( integer ip = 0; ip < numPhases; ++ip )
-  {
-    for( integer jp = 0; jp < numPhases; ++jp )
-    {
-      saturation[jp] = m_phaseMinVolumeFraction[jp];
-    }
-    saturation[ip] = 1.0 - m_sumMinVolumeFraction + m_phaseMinVolumeFraction[ip];
-    CapillaryPressureEvaluate< CAP_PRESSURE >::compute( m_capPressureWrapper,
-                                                        saturation.toSliceConst(),
-                                                        jFunctionMultiplier,
-                                                        capPres,
-                                                        jacobian );
-    for( integer jp = 0; jp < numPhases; ++jp )
-    {
-      if( capPres[jp] < minCapPres[jp] )
-      {
-        minSat[jp] = saturation[jp];
-        minCapPres[jp] = capPres[jp];
-      }
-      if( maxCapPres[jp] < capPres[jp] )
-      {
-        maxSat[jp] = saturation[jp];
-        maxCapPres[jp] = capPres[jp];
-      }
-    }
-  }
-
-  // Choose one of the phases to be dependent
-  real64 minDP = LvArray::NumericLimits< real64 >::max;
-  integer dependentPhase = -1;
-  for( integer ip = 0; ip < numPhases; ++ip )
-  {
-    real64 const dp = maxCapPres[ip] - minCapPres[ip];
-    if( dp < minDP )
-    {
-      minDP = dp;
-      dependentPhase = ip;
-    }
-  }
-
-  integer k = 0;
-  for( integer ip = 0; ip < numPhases; ++ip )
-  {
-    if( ip != dependentPhase )
-    {
-      freePhases[k++] = ip;
-    }
-  }
-
-  // Use the limits to solve
-  for( integer ip = 0; ip < numPhases; ++ip )
-  {
-    targetCapPres[ip] = phaseCapillapryPressure[ip];
-    targetCapPres[ip] = LvArray::math::max( minCapPres[ip], targetCapPres[ip] );
-    targetCapPres[ip] = LvArray::math::min( maxCapPres[ip], targetCapPres[ip] );
-  }
+  auto const capPres = workSpace[0][0];
+  auto const targetCapPres = workSpace[0][1];
+  auto const saturationStep = workSpace[0][2];
+  auto const & saturation = phaseVolumeFraction;
+  auto const jacobian = dPhaseCapPres_dSaturation[0][0];
 
   // Initial solution
   real64 sumSaturations = 0.0;
-  for( integer const ip : freePhases )
+  for( integer const ip : m_independentPhases )
   {
     real64 S = phaseVolumeFraction[ip];
-    if( phaseCapillapryPressure[ip] - STEP_TOLERANCE < minCapPres[ip] )
+    real64 const minPc = CapillaryPressureEvaluate< CAP_PRESSURE >
+                         ::applyScale( minCapPressure[ip],
+                                       jFunctionMultiplier[m_jFunctionIndex[ip]] );
+    real64 const maxPc = CapillaryPressureEvaluate< CAP_PRESSURE >
+                         ::applyScale( maxCapPressure[ip],
+                                       jFunctionMultiplier[m_jFunctionIndex[ip]] );
+
+    targetCapPres[ip] = phaseCapillapryPressure[ip];
+    targetCapPres[ip] = LvArray::math::max( minPc, targetCapPres[ip] );
+    targetCapPres[ip] = LvArray::math::min( maxPc, targetCapPres[ip] );
+
+    if( phaseCapillapryPressure[ip] - STEP_TOLERANCE < minPc )
     {
-      S = minSat[ip];
+      S = minSaturation[ip];
     }
-    else if( maxCapPres[ip] < phaseCapillapryPressure[ip] + STEP_TOLERANCE )
+    else if( maxPc < phaseCapillapryPressure[ip] + STEP_TOLERANCE )
     {
-      S = maxSat[ip];
+      S = maxSaturation[ip];
     }
     else
     {
-      S = LvArray::math::max( S, LvArray::math::min( maxSat[ip], minSat[ip] ));
-      S = LvArray::math::min( S, LvArray::math::max( maxSat[ip], minSat[ip] ));
+      S = LvArray::math::max( S, LvArray::math::min( maxSaturation[ip], minSaturation[ip] ));
+      S = LvArray::math::min( S, LvArray::math::max( maxSaturation[ip], minSaturation[ip] ));
     }
     saturation[ip] = S;
     sumSaturations += S;
   }
-  saturation[dependentPhase] = 1.0 - sumSaturations;
-  normalizeSaturations( numPhases, dependentPhase, saturation );
+  saturation[m_dependentPhase] = 1.0 - sumSaturations;
+  normalizeSaturations( numPhases, m_dependentPhase, saturation );
 
   bool converged = false;
   for( integer iterationCount = 0; (iterationCount < MAX_ITERATIONS) && !converged; ++iterationCount )
@@ -260,7 +241,7 @@ InverseCapillaryPressureUpdate< CAP_PRESSURE >::compute(
     // Calculate Newton step
     // Assume diagonal Jacobian
     real64 stepSize = 1.0;
-    for( integer const ip : freePhases )
+    for( integer const ip : m_independentPhases )
     {
       real64 const dp = targetCapPres[ip] - capPres[ip];
       real64 const Aii = jacobian[ip][ip];
@@ -268,7 +249,7 @@ InverseCapillaryPressureUpdate< CAP_PRESSURE >::compute(
       if( epsilon < LvArray::math::abs( dS ))
       {
         // Calculate a step size that does not take us outside the bounds
-        real64 phaseStepSize = LvArray::math::max((maxSat[ip] - saturation[ip])/dS, (minSat[ip] - saturation[ip])/dS );
+        real64 phaseStepSize = LvArray::math::max((minSaturation[ip] - saturation[ip])/dS, (maxSaturation[ip] - saturation[ip])/dS );
         if( phaseStepSize < 1.0 )
         {
           phaseStepSize *= (1.0 - STEP_TOLERANCE);
@@ -279,14 +260,14 @@ InverseCapillaryPressureUpdate< CAP_PRESSURE >::compute(
     }
     real64 saturationChange = 0.0;
     sumSaturations = 0.0;
-    for( integer const ip : freePhases )
+    for( integer const ip : m_independentPhases )
     {
       real64 const dS = stepSize* saturationStep[ip];
       saturation[ip] += dS;
       sumSaturations += saturation[ip];
       saturationChange += dS*dS;
     }
-    saturation[dependentPhase] = 1.0 - sumSaturations;
+    saturation[m_dependentPhase] = 1.0 - sumSaturations;
 
     // Check for convergence: when saturations stop changing
     saturationChange = LvArray::math::sqrt( saturationChange );
@@ -294,12 +275,6 @@ InverseCapillaryPressureUpdate< CAP_PRESSURE >::compute(
     {
       converged = true;
     }
-  }
-
-  // Copy back the solution
-  for( integer ip = 0; ip < numPhases; ++ip )
-  {
-    phaseVolumeFraction[ip] = saturation[ip];
   }
 
   return converged;
