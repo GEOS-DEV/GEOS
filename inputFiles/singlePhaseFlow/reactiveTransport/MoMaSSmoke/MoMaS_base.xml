@@ -6,12 +6,12 @@
     <SinglePhaseReactiveTransport
       name="SinglePhaseReactiveFlow"
       discretization="singlePhaseTPFA"
-      targetRegions="{ MediumA }"
+      targetRegions="{ MediumA, Source }"
       writeLinearSystem="0"
       immobilePrimarySpeciesIndices="{ 4 }"
       logLevel="2">
       <NonlinearSolverParameters
-        newtonTol="1.0e-7"
+        newtonTol="1.0e-4"
         maxTimeStepCuts="10"
         newtonMaxIter="40"
         logLevel="2"
@@ -33,9 +33,15 @@
       name="Region1"
       cellBlocks="{ * }"
       materialList="{ water, rock, diffusion }"/> -->
+
+    <CellElementRegion
+      name="Source"
+      cellBlocks="{ cb-0_0_0 }"
+      materialList="{ water, rock }"/>
+
     <CellElementRegion
       name="MediumA"
-      cellBlocks="{ * }"
+      cellBlocks="{ cb-1_0_0, cb-2_0_0 }"
       materialList="{ water, rock }"/>
   </ElementRegions>
 
@@ -62,7 +68,7 @@
       name="rockPorosity"
       defaultReferencePorosity="0.25"
       referencePressure="0.0"
-      compressibility="1e-10"/>
+      compressibility="0.0"/>
 
     <ConstantPermeability
       name="rockPerm"
@@ -77,6 +83,14 @@
 
   <FieldSpecifications>
     <FieldSpecification
+      name="PorositySource"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Source"
+      fieldName="rockPorosity_referencePorosity"
+      scale="0.25"/>
+
+    <FieldSpecification
       name="PorosityMedium"
       initialCondition="1"
       setNames="{ all }"
@@ -85,39 +99,47 @@
       scale="0.25"/>
 
     <FieldSpecification
-      name="initialPressure"
+      name="initialPressureSource"
       initialCondition="1"
       setNames="{ all }"
-      objectPath="ElementRegions"
+      objectPath="ElementRegions/Source"
+      fieldName="pressure"
+      scale="11945000"/>
+
+    <FieldSpecification
+      name="initialPressureMedium"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/MediumA"
       fieldName="pressure"
       scale="1e6"/>
 
-    <!-- <SourceFlux
+    <SourceFlux
       name="sourceTerm"
-      setNames="{ source }"
-      objectPath="ElementRegions"
-      scale="-1e-1"/> -->
+      setNames="{ all }"
+      objectPath="ElementRegions/Source"
+      scale="-5.5"/>
 
-    <!-- <FieldSpecification
+    <FieldSpecification
       name="sinkPressure"
       setNames="{ sink }"
-      objectPath="ElementRegions"
+      objectPath="ElementRegions/MediumA"
       fieldName="pressure"
-      scale="1.0e6"/> -->
+      scale="1.0e6"/>
   </FieldSpecifications>
 
-  <Tasks>
+  <!-- <Tasks>
     <PackCollection
       name="logPrimarySpeciesMediumACollection"
       objectPath="ElementRegions/MediumA/block1"
       fieldName="logPrimarySpeciesConcentration"/>
-  </Tasks>
+  </Tasks> -->
 
   <Outputs>
-    <TimeHistory
+    <!-- <TimeHistory
       name="logPrimarySpeciesMediumAHistoryOutput"
       sources="{ /Tasks/logPrimarySpeciesMediumACollection }"
-      filename="logPrimarySpeciesMediumAHistory"/>
+      filename="logPrimarySpeciesMediumAHistory"/> -->
 
     <VTK
       name="vtkOutput"

@@ -4,49 +4,45 @@
   <Included>
     <File name="./MoMaS_base.xml" />
     <File name="./MoMaS_initialAggregate.xml" />
-    <!-- <File name="./MoMaS_logConc.xml" /> -->
+    <File name="./MoMaS_logConc.xml" />
+    <File name="./MoMaS_initialLogConc.xml" />
   </Included>
 
   <Mesh>
     <InternalMesh
       name="mesh1"
       elementTypes="{ C3D8 }"
-      xCoords="{ 0, 1 }"
+      xCoords="{ 0, 0.01, 1.99, 2 }"
       yCoords="{ 0, 1 }"
       zCoords="{ 0, 1 }"
-      nx="{ 1 }"
+      nx="{ 1, 100, 1 }"
       ny="{ 1 }"
       nz="{ 1 }"
-      cellBlockNames="{ block1 }"/>
+      cellBlockNames="{ cb-0_0_0, cb-1_0_0, cb-2_0_0 }"/>
   </Mesh>
 
   <Geometry>
     <Box
-      name="source"
-      xMin="{ -0.1, -0.01, -0.01 }"
-      xMax="{ 1.01, 1.01, 1.01 }"/>
-
-    <Box
       name="sink"
-      xMin="{ 1.99, -0.01, -0.01 }"
-      xMax="{ 3.01, 1.01, 1.01 }"/>
+      xMin="{ 1.989, -0.01, -0.01 }"
+      xMax="{ 2.01, 1.01, 1.01 }"/>
   </Geometry>
 
   <Events
-    maxTime="1">
+    maxTime="10">
     <PeriodicEvent
       name="outputs"
       cycleFrequency="1"
       target="/Outputs/vtkOutput"/>
 
-    <PeriodicEvent
+    <!-- <PeriodicEvent
       name="logPrimarySpeciesMediumAHistoryCollection"
       cycleFrequency="1"
       target="/Tasks/logPrimarySpeciesMediumACollection"/>
     <PeriodicEvent
       name="logPrimarySpeciesMediumATimeHistoryOutput"
       cycleFrequency="1"
-      target="/Outputs/logPrimarySpeciesMediumAHistoryOutput"/>
+      target="/Outputs/logPrimarySpeciesMediumAHistoryOutput"/> -->
 
     <PeriodicEvent
       name="solverApplications"

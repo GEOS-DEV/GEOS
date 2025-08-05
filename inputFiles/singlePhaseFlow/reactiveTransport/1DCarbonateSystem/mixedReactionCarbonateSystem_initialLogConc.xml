@@ -1,0 +1,133 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <FieldSpecifications>
+  <!-- AGGREGATE CONCENTRATIONS -->
+    <FieldSpecification
+      name="initialLog_H_all"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Region1/block1"
+      fieldName="logPrimarySpeciesConcentration"
+      component="0"
+      scale="-15.6575112436"/>
+
+    <FieldSpecification
+      name="initialLog_HCO3_all"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Region1/block1"
+      fieldName="logPrimarySpeciesConcentration"
+      component="1"
+      scale="-4.7923434935"/>
+
+    <FieldSpecification
+      name="initialLog_Ca_all"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Region1/block1"
+      fieldName="logPrimarySpeciesConcentration"
+      component="2"
+      scale="-6.1325673881"/>
+
+    <FieldSpecification
+      name="initialLog_SO4_all"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Region1/block1"
+      fieldName="logPrimarySpeciesConcentration"
+      component="3"
+      scale="-13.3050850142"/>
+
+    <FieldSpecification
+      name="initialLog_Cl_all"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Region1/block1"
+      fieldName="logPrimarySpeciesConcentration"
+      component="4"
+      scale="-10.475834033"/>
+
+    <FieldSpecification
+      name="initialLog_Mg_all"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Region1/block1"
+      fieldName="logPrimarySpeciesConcentration"
+      component="5"
+      scale="-6.4346315224"/>
+    
+    <FieldSpecification
+      name="initialLog_Na_all"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Region1/block1"
+      fieldName="logPrimarySpeciesConcentration"
+      component="6"
+      scale="-7.1540395227"/>
+
+    <!-- AGGREGATE CONCENTRATIONS AT SOURCE -->
+    <FieldSpecification
+      name="initialLog_H_source"
+      initialCondition="1"
+      setNames="{ source }"
+      objectPath="ElementRegions/Region1/block1"
+      fieldName="logPrimarySpeciesConcentration"
+      component="0"
+      scale="-15.6575112436"/>
+
+    <FieldSpecification
+      name="initialLog_HCO3_source"
+      initialCondition="1"
+      setNames="{ source }"
+      objectPath="ElementRegions/Region1/block1"
+      fieldName="logPrimarySpeciesConcentration"
+      component="1"
+      scale="-2.6149697781"/>
+
+    <FieldSpecification
+      name="initialLog_Ca_source"
+      initialCondition="1"
+      setNames="{ source }"
+      objectPath="ElementRegions/Region1/block1"
+      fieldName="logPrimarySpeciesConcentration"
+      component="2"
+      scale="-4.1884354856"/>
+
+    <FieldSpecification
+      name="initialLog_SO4_source"
+      initialCondition="1"
+      setNames="{ source }"
+      objectPath="ElementRegions/Region1/block1"
+      fieldName="logPrimarySpeciesConcentration"
+      component="3"
+      scale="-13.3050850142"/>
+
+    <FieldSpecification
+      name="initialLog_Cl_source"
+      initialCondition="1"
+      setNames="{ source }"
+      objectPath="ElementRegions/Region1/block1"
+      fieldName="logPrimarySpeciesConcentration"
+      component="4"
+      scale="-10.475834033"/>
+
+    <FieldSpecification
+      name="initialLog_Mg_source"
+      initialCondition="1"
+      setNames="{ source }"
+      objectPath="ElementRegions/Region1/block1"
+      fieldName="logPrimarySpeciesConcentration"
+      component="5"
+      scale="-6.4346315224"/>
+    
+    <FieldSpecification
+      name="initialLog_Na_source"
+      initialCondition="1"
+      setNames="{ source }"
+      objectPath="ElementRegions/Region1/block1"
+      fieldName="logPrimarySpeciesConcentration"
+      component="6"
+      scale="-7.1540395227"/>
+  </FieldSpecifications>
+</Problem>

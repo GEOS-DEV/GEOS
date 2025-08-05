@@ -5,42 +5,42 @@
   <!-- LOG CONCENTRATIONS AT SOURCE -->
     <FieldSpecification
       name="log_X1_source"
-      setNames="{ source }"
-      objectPath="ElementRegions"
+      setNames="{ all }"
+      objectPath="ElementRegions/Source"
       fieldName="logPrimarySpeciesConcentration"
       component="0"
       scale="-1.2039728043"/>
 
     <FieldSpecification
       name="log_X2_source"
-      setNames="{ source }"
-      objectPath="ElementRegions"
+      setNames="{ all }"
+      objectPath="ElementRegions/Source"
       fieldName="logPrimarySpeciesConcentration"
       component="1"
-      scale="-1.2039728043"/>
+      scale="-1.4206052082"/>
 
     <FieldSpecification
       name="log_X3_source"
-      setNames="{ source }"
-      objectPath="ElementRegions"
+      setNames="{ all }"
+      objectPath="ElementRegions/Source"
       fieldName="logPrimarySpeciesConcentration"
       component="2"
-      scale="-1.2039728043"/>
+      scale="-1.4204810515"/>
 
     <FieldSpecification
       name="log_X4_source"
-      setNames="{ source }"
-      objectPath="ElementRegions"
+      setNames="{ all }"
+      objectPath="ElementRegions/Source"
       fieldName="logPrimarySpeciesConcentration"
       component="3"
-      scale="-20"/>
+      scale="-82.1595397322"/>
 
     <FieldSpecification
       name="log_S_source"
-      setNames="{ source }"
-      objectPath="ElementRegions"
+      setNames="{ all }"
+      objectPath="ElementRegions/Source"
       fieldName="logPrimarySpeciesConcentration"
       component="4"
-      scale="1"/>
+      scale="-19.6464329266"/>
   </FieldSpecifications>
 </Problem>

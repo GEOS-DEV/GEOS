@@ -6,13 +6,13 @@
     <SinglePhaseReactiveTransport
       name="SinglePhaseReactiveFlow"
       discretization="singlePhaseTPFA"
-      targetRegions="{ MediumA, MediumB }"
+      targetRegions="{ MediumA, MediumB, Source }"
       writeLinearSystem="0"
       immobilePrimarySpeciesIndices="{ 4 }"
       logLevel="2">
       <NonlinearSolverParameters
-        newtonTol="1.0e-6"
-        maxTimeStepCuts="5"
+        newtonTol="1.0e-4"
+        maxTimeStepCuts="8"
         newtonMaxIter="40"
         logLevel="2"
         maxAllowedResidualNorm="1e100"/>
@@ -34,13 +34,18 @@
       cellBlocks="{ * }"
       materialList="{ water, rock, diffusion }"/> -->
     <CellElementRegion
+      name="Source"
+      cellBlocks="{ cb-0_0_0 }"
+      materialList="{ water, rock_a }"/>
+
+    <CellElementRegion
       name="MediumA"
-      cellBlocks="{ cb-0_0_0, cb-2_0_0 }"
+      cellBlocks="{ cb-1_0_0, cb-3_0_0, cb-4_0_0 }"
       materialList="{ water, rock_a }"/>
 
     <CellElementRegion
       name="MediumB"
-      cellBlocks="{ cb-1_0_0 }"
+      cellBlocks="{ cb-2_0_0 }"
       materialList="{ water, rock_b }"/>
   </ElementRegions>
 
@@ -98,6 +103,14 @@
 
   <FieldSpecifications>
     <FieldSpecification
+      name="PorositySource"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Source"
+      fieldName="rockPorosityA_referencePorosity"
+      scale="0.25"/>
+
+    <FieldSpecification
       name="PorosityMediumA"
       initialCondition="1"
       setNames="{ all }"
@@ -114,23 +127,39 @@
       scale="0.5"/>
 
     <FieldSpecification
-      name="initialPressure"
+      name="initialPressureSource"
       initialCondition="1"
       setNames="{ all }"
-      objectPath="ElementRegions"
+      objectPath="ElementRegions/Source"
+      fieldName="pressure"
+      scale="1561055"/>
+
+    <FieldSpecification
+      name="initialPressureMediumA"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/MediumA"
+      fieldName="pressure"
+      scale="1e6"/>
+
+    <FieldSpecification
+      name="initialPressureMediumB"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/MediumB"
       fieldName="pressure"
       scale="1e6"/>
 
     <SourceFlux
       name="sourceTerm"
-      setNames="{ source }"
-      objectPath="ElementRegions"
+      setNames="{ all }"
+      objectPath="ElementRegions/Source"
       scale="-5.5"/>
 
     <FieldSpecification
       name="sinkPressure"
       setNames="{ sink }"
-      objectPath="ElementRegions"
+      objectPath="ElementRegions/MediumA"
       fieldName="pressure"
       scale="1.0e6"/>
   </FieldSpecifications>
@@ -138,17 +167,22 @@
   <Tasks>
     <PackCollection
       name="logPrimarySpeciesMediumACollection1"
-      objectPath="ElementRegions/MediumA/cb-0_0_0"
+      objectPath="ElementRegions/MediumA/cb-1_0_0"
       fieldName="logPrimarySpeciesConcentration"/>
 
     <PackCollection
       name="logPrimarySpeciesMediumACollection2"
-      objectPath="ElementRegions/MediumA/cb-2_0_0"
+      objectPath="ElementRegions/MediumA/cb-3_0_0"
+      fieldName="logPrimarySpeciesConcentration"/>
+
+    <PackCollection
+      name="logPrimarySpeciesMediumACollection3"
+      objectPath="ElementRegions/MediumA/cb-4_0_0"
       fieldName="logPrimarySpeciesConcentration"/>
 
     <PackCollection
       name="logPrimarySpeciesMediumBCollection"
-      objectPath="ElementRegions/MediumB/cb-1_0_0"
+      objectPath="ElementRegions/MediumB/cb-2_0_0"
       fieldName="logPrimarySpeciesConcentration"/>
   </Tasks>
 
@@ -162,6 +196,11 @@
       name="logPrimarySpeciesMediumAHistoryOutput2"
       sources="{ /Tasks/logPrimarySpeciesMediumACollection2 }"
       filename="logPrimarySpeciesMediumAHistory2"/>
+
+    <TimeHistory
+      name="logPrimarySpeciesMediumAHistoryOutput3"
+      sources="{ /Tasks/logPrimarySpeciesMediumACollection3 }"
+      filename="logPrimarySpeciesMediumAHistory3"/>
 
     <TimeHistory
       name="logPrimarySpeciesMediumBHistoryOutput"

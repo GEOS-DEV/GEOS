@@ -332,19 +332,11 @@ updateEquilibriumReaction( localIndex const k,
                            real64 const temperature,
                            arraySlice1d< real64, compflow::USD_COMP - 1 > const & logPrimarySpeciesConcentration ) const
 {
-  integer const numPrimarySpecies = m_numPrimarySpecies;
   integer const numSecondarySpecies = m_numSecondarySpecies;
 
-  stackArray1d< real64, 10 > logPrimarySpeciesAggregateConcentration( numPrimarySpecies );
+  stackArray1d< real64, MAX_NUM_SPECIES > logSecondarySpeciesConcentration( numSecondarySpecies );
 
-  for( integer i=0; i < numPrimarySpecies; ++i )
-  {
-    logPrimarySpeciesAggregateConcentration[i] = LvArray::math::log( m_primarySpeciesAggregateConcentration[k][0][i] );
-  }
-
-  stackArray1d< real64, 20 > logSecondarySpeciesConcentration( numSecondarySpecies );
-
-  enforceEquilibrium( pressure, temperature, logPrimarySpeciesAggregateConcentration.toSliceConst(), logPrimarySpeciesConcentration, logSecondarySpeciesConcentration.toSlice() );
+  enforceEquilibrium( pressure, temperature, m_primarySpeciesAggregateConcentration[k][0], logPrimarySpeciesConcentration, logSecondarySpeciesConcentration.toSlice() );
 
   for( integer i=0; i < numSecondarySpecies; ++i )
   {
@@ -359,13 +351,15 @@ inline void
 ReactiveSinglePhaseFluid< BASE >::ReactionKernelWrapper< REACTION_PARAMS_TYPE >::
 enforceEquilibrium( real64 const pressure,
                     real64 const temperature,
-                    arraySlice1d< real64 const, reactivefluid::USD_SPECIES - 2 > const & logPrimarySpeciesAggregateConcentration,
+                    arraySlice1d< real64 const, reactivefluid::USD_SPECIES - 2 > const & targetPrimarySpeciesAggregateConcentration,
                     arraySlice1d< real64, reactivefluid::USD_SPECIES - 2 > const & logPrimarySpeciesConcentration,
                     arraySlice1d< real64, reactivefluid::USD_SPECIES - 2 > const & logSecondarySpeciesConcentration ) const
 {
   GEOS_UNUSED_VAR( pressure );
+
+  arraySlice1d< real64 const, reactivefluid::USD_SPECIES - 2 > const & logPrimarySpeciesConcentration0 = logPrimarySpeciesConcentration;
   // 1. We enforce equilibrium
-  EquilibriumReactionsType::enforceEquilibrium_Aggregate( temperature, m_params, logPrimarySpeciesAggregateConcentration, logPrimarySpeciesConcentration );
+  EquilibriumReactionsType::enforceEquilibrium_Aggregate( temperature, m_params, targetPrimarySpeciesAggregateConcentration, logPrimarySpeciesConcentration0, logPrimarySpeciesConcentration );
 
   // 2. We calculate the secondary species concentration
   hpcReact::massActions::calculateLogSecondarySpeciesConcentration< real64,

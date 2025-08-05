@@ -1,0 +1,97 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <FieldSpecifications>
+  <!-- INITIAL LOG CONCENTRATIONS -->
+    <FieldSpecification
+      name="log_X1_all"
+      setNames="{ all }"
+      initialCondition="1"
+      objectPath="ElementRegions/MediumA"
+      fieldName="logPrimarySpeciesConcentration"
+      component="0"
+      scale="-6.907755279"/>
+
+    <FieldSpecification
+      name="log_X2_all"
+      setNames="{ all }"
+      initialCondition="1"
+      objectPath="ElementRegions/MediumA"
+      fieldName="logPrimarySpeciesConcentration"
+      component="1"
+      scale="-3.9120230054"/>
+
+    <FieldSpecification
+      name="log_X3_all"
+      setNames="{ all }"
+      initialCondition="1"
+      objectPath="ElementRegions/MediumA"
+      fieldName="logPrimarySpeciesConcentration"
+      component="2"
+      scale="-6.907755279"/>
+
+    <FieldSpecification
+      name="log_X4_all"
+      setNames="{ all }"
+      initialCondition="1"
+      objectPath="ElementRegions/MediumA"
+      fieldName="logPrimarySpeciesConcentration"
+      component="3"
+      scale="0.0"/>
+
+    <FieldSpecification
+      name="log_S_all"
+      setNames="{ all }"
+      initialCondition="1"
+      objectPath="ElementRegions/MediumA"
+      fieldName="logPrimarySpeciesConcentration"
+      component="4"
+      scale="0.0"/>
+
+    <!-- INITIAL LOG CONCENTRATIONS AT SOURCE -->
+    <FieldSpecification
+      name="log_X1_source"
+      setNames="{ all }"
+      initialCondition="1"
+      objectPath="ElementRegions/Source"
+      fieldName="logPrimarySpeciesConcentration"
+      component="0"
+      scale="-1.2039728043"/>
+
+    <FieldSpecification
+      name="log_X2_source"
+      setNames="{ all }"
+      initialCondition="1"
+      objectPath="ElementRegions/Source"
+      fieldName="logPrimarySpeciesConcentration"
+      component="1"
+      scale="-1.2039728043"/>
+
+    <FieldSpecification
+      name="log_X3_source"
+      setNames="{ all }"
+      initialCondition="1"
+      objectPath="ElementRegions/Source"
+      fieldName="logPrimarySpeciesConcentration"
+      component="2"
+      scale="-1.2039728043"/>
+
+    <FieldSpecification
+      name="log_X4_source"
+      setNames="{ all }"
+      initialCondition="1"
+      objectPath="ElementRegions/Source"
+      fieldName="logPrimarySpeciesConcentration"
+      component="3"
+      scale="-11.512925465"/>
+
+    <FieldSpecification
+      name="log_S_source"
+      setNames="{ all }"
+      initialCondition="1"
+      objectPath="ElementRegions/Source"
+      fieldName="logPrimarySpeciesConcentration"
+      component="4"
+      scale="-11.512925465"/>
+  </FieldSpecifications>
+</Problem>
