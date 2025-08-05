@@ -239,7 +239,7 @@ void CompositionalMultiphaseHybridFVM::implicitStepSetup( real64 const & time_n,
   // setup the elem-centered fields
   CompositionalMultiphaseBase::implicitStepSetup( time_n, dt, cycleNumber, domain );
 
-  updateSolverStatistics( time_n, dt, cycleNumber );
+  getConvergenceStats().updateSolverStep( time_n, dt, cycleNumber );
   // setup the face fields
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
@@ -731,7 +731,7 @@ real64 CompositionalMultiphaseHybridFVM::calculateResidualNorm( real64 const & G
 
   GEOS_LOG_LEVEL_RANK_0( logInfo::ResidualNorm, GEOS_FMT( "        ( R{} ) = ( {:4.2e} )", coupledSolverAttributePrefix(), residualNorm ));
 
-  getConvergenceStats().m_residualFlow = residualNorm;
+  getConvergenceStats().m_residuals[GEOS_FMT( "R{}", coupledSolverAttributePrefix())] = residualNorm;
 
   return residualNorm;
 }

@@ -263,12 +263,14 @@ void SolidMechanicsAugmentedLagrangianContact::setupSystem( DomainPartition & do
 void SolidMechanicsAugmentedLagrangianContact::implicitStepSetup( real64 const & time_n,
                                                                   real64 const & dt,
                                                                   integer const cycleNumber,
+                                                                  
+                                                                  
                                                                   DomainPartition & domain )
 {
 
   SolidMechanicsLagrangianFEM::implicitStepSetup( time_n, dt, cycleNumber, domain );
 
-  updateSolverStatistics( time_n, dt, cycleNumber );
+  getConvergenceStats().updateSolverStep( time_n, dt, cycleNumber );
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
@@ -707,8 +709,7 @@ real64 SolidMechanicsAugmentedLagrangianContact::calculateResidualNorm( real64 c
 
   real64 totalResidualNorm = sqrt( solidResidualNorm * solidResidualNorm + bubbleResidualNorm * bubbleResidualNorm );
 
-  getConvergenceStats().m_residualBubbleDisp = bubbleResidualNorm;
-  getConvergenceStats().m_totalResidual = totalResidualNorm;
+  getConvergenceStats().m_residuals["RBubbleDisp"] = bubbleResidualNorm;
 
   return totalResidualNorm;
 }

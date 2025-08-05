@@ -1362,8 +1362,8 @@ CompositionalMultiphaseWell::calculateResidualNorm( real64 const & time_n,
     GEOS_LOG_LEVEL_RANK_0( logInfo::ResidualNorm, GEOS_FMT( "        ( R{} ) = ( {:4.2e} )        ( Renergy ) = ( {:4.2e} )",
                                                             coupledSolverAttributePrefix(), globalResidualNorm[0], globalResidualNorm[1] ));
 
-    getConvergenceStats().m_residualMass = globalResidualNorm[0];
-    getConvergenceStats().m_residualEnergy = globalResidualNorm[1];
+    getConvergenceStats().m_residuals[GEOS_FMT( "R{}", coupledSolverAttributePrefix())] = globalResidualNorm[0];
+    getConvergenceStats().m_residuals["Renergy"] = globalResidualNorm[1];
   }
   else
   {
@@ -1371,7 +1371,7 @@ CompositionalMultiphaseWell::calculateResidualNorm( real64 const & time_n,
 
     GEOS_LOG_LEVEL_RANK_0( logInfo::ResidualNorm, GEOS_FMT( "        ( R{} ) = ( {:4.2e} )",
                                                             coupledSolverAttributePrefix(), resNorm ));
-    getConvergenceStats().m_residualMass = resNorm;
+    getConvergenceStats().m_residuals[GEOS_FMT( "R{}", coupledSolverAttributePrefix()) ] = resNorm;
   }
   return resNorm;
 }
@@ -1969,10 +1969,11 @@ void CompositionalMultiphaseWell::assemblePressureRelations( real64 const & time
 void CompositionalMultiphaseWell::implicitStepSetup( real64 const & time_n,
                                                      real64 const & dt,
                                                      integer const cycleNumber,
+                                                     
                                                      DomainPartition & domain )
 {
   WellSolverBase::implicitStepSetup( time_n, dt, cycleNumber, domain );
-  updateSolverStatistics( time_n, dt, cycleNumber );
+  getConvergenceStats().updateSolverStep( time_n, dt, cycleNumber );
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
                                                                 string_array const & regionNames )

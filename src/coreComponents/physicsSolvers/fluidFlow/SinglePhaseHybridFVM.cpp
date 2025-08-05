@@ -158,13 +158,14 @@ void SinglePhaseHybridFVM::initializePostInitialConditionsPreSubGroups()
 void SinglePhaseHybridFVM::implicitStepSetup( real64 const & time_n,
                                               real64 const & dt,
                                               integer const cycleNumber,
+                                              
                                               DomainPartition & domain )
 {
   GEOS_MARK_FUNCTION;
 
   // setup the cell-centered fields
   SinglePhaseBase::implicitStepSetup( time_n, dt, cycleNumber, domain );
-  updateSolverStatistics( time_n, dt, cycleNumber );
+  getConvergenceStats().updateSolverStep( time_n, dt, cycleNumber );
 
   // setup the face fields
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
@@ -578,7 +579,7 @@ real64 SinglePhaseHybridFVM::calculateResidualNorm( real64 const & GEOS_UNUSED_P
   }
 
   GEOS_LOG_LEVEL_RANK_0( logInfo::ResidualNorm, GEOS_FMT( "        ( R{} ) = ( {:4.2e} )", coupledSolverAttributePrefix(), residualNorm ));
-  getConvergenceStats().m_residualFlow = residualNorm;
+  getConvergenceStats().m_residuals[GEOS_FMT( "R{}", coupledSolverAttributePrefix())] = residualNorm;
 
   return residualNorm;
 }

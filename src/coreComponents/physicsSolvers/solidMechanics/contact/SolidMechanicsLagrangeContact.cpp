@@ -218,7 +218,7 @@ void SolidMechanicsLagrangeContact::implicitStepSetup( real64 const & time_n,
   computeTolerances( domain );
   computeFaceDisplacementJump( domain );
 
-  updateSolverStatistics( time_n, dt, cycleNumber );
+  getConvergenceStats().updateSolverStep( time_n, dt, cycleNumber );
 
   SolidMechanicsLagrangianFEM::implicitStepSetup( time_n, dt, cycleNumber, domain );
 }
@@ -876,10 +876,10 @@ real64 SolidMechanicsLagrangeContact::calculateContactResidualNorm( DomainPartit
 
   real64 totalResidualNorm = sqrt( stickResidual * stickResidual + slipResidual * slipResidual + openResidual * openResidual );
 
-  getConvergenceStats().m_residualStick = stickResidual;
-  getConvergenceStats().m_residualSlip = slipResidual;
-  getConvergenceStats().m_residualOpen = openResidual;
-  getConvergenceStats().m_residualContact = totalResidualNorm;
+  getConvergenceStats().m_residuals["Rstick"] = stickResidual;
+  getConvergenceStats().m_residuals["Rslip"] = slipResidual;
+  getConvergenceStats().m_residuals["Ropen"] = openResidual;
+  getConvergenceStats().m_residuals["Contact"] = totalResidualNorm;
 
 
   return totalResidualNorm;

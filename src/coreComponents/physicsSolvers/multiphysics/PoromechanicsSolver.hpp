@@ -114,8 +114,6 @@ public:
                              this->getCatalogName(), this->getName(), this->flowSolver()->getName() ),
                    InputError );
 
-    // flowSolver()->getIterationStats().setIterativeSolver( true );
-    // solidMechanicsSolver()->getIterationStats().setIterativeSolver( false );
   }
 
   virtual void setConstitutiveNamesCallSuper( ElementSubRegionBase & subRegion ) const override final
@@ -222,6 +220,7 @@ public:
   virtual void implicitStepSetup( real64 const & time_n,
                                   real64 const & dt,
                                   integer const cycleNumber,
+                                  
                                   DomainPartition & domain ) override
   {
     flowSolver()->setKeepVariablesConstantDuringInitStep( m_performStressInitialization );
@@ -252,7 +251,8 @@ public:
     this->setupCoupling( domain, dofManager );
   }
 
-  virtual bool checkSequentialConvergence( int const & iter,
+  virtual bool checkSequentialConvergence( integer const cycleNumber,
+                                           integer const iter,
                                            real64 const & time_n,
                                            real64 const & dt,
                                            DomainPartition & domain ) override
@@ -263,7 +263,7 @@ public:
     if( m_performStressInitialization )
       subcycling = 1;
 
-    bool isConverged = Base::checkSequentialConvergence( iter, time_n, dt, domain );
+    bool isConverged = Base::checkSequentialConvergence( cycleNumber, iter, time_n, dt, domain );
 
     // restore original
     subcycling = subcycling_orig;

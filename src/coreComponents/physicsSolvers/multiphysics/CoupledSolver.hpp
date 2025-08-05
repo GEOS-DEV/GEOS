@@ -96,7 +96,6 @@ public:
       GEOS_LOG_LEVEL_RANK_0( logInfo::Coupling,
                              GEOS_FMT( "{}: found {} solver named {}",
                                        getName(), solver->getCatalogName(), solverName ) );
-      // solver->getIterationStats().setIterativeSolver( true );
     } );
   }
 
@@ -152,6 +151,7 @@ public:
   implicitStepSetup( real64 const & time_n,
                      real64 const & dt,
                      integer const cycleNumber,
+                     
                      DomainPartition & domain ) override
   {
     forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
@@ -473,8 +473,7 @@ protected:
       for( iter = 0; iter < solverParams.m_maxIterNewton; iter++ )
       {
         // Increment the solver statistics for reporting purposes
-        // Pass a "0" as argument (0 linear iteration) to skip the output of linear iteration stats at the end
-        getIterationStats().updateNonlinearIteration( 0 );
+        getIterationStats().incrementConfigIteration();
 
         startSequentialIteration( iter, domain );
 
@@ -505,7 +504,8 @@ protected:
         } );
 
         // Check convergence of the outer loop
-        isConverged = checkSequentialConvergence( iter,
+        isConverged = checkSequentialConvergence( cycleNumber,
+                                                  iter,
                                                   time_n,
                                                   stepDt,
                                                   domain );
@@ -580,7 +580,8 @@ protected:
     GEOS_UNUSED_VAR( domain, solverType );
   }
 
-  virtual bool checkSequentialConvergence( int const & iter,
+  virtual bool checkSequentialConvergence( integer const cycleNumber,
+                                           integer const iter,
                                            real64 const & time_n,
                                            real64 const & dt,
                                            DomainPartition & domain )
@@ -637,7 +638,14 @@ protected:
         residualNorm = sqrt( residualNorm );
         GEOS_LOG_LEVEL_RANK_0( logInfo::ResidualNorm,
                                GEOS_FMT( "        ( R ) = ( {:4.2e} )", residualNorm ) );
-        getConvergenceStats().m_residualNormT = residualNorm;
+        getConvergenceStats().m_residuals["R"] = residualNorm;
+
+        if( m_writeStatistics >= 2 )
+        {
+          getConvergenceStats().updateSolverStep( time_n, dt, cycleNumber );
+          getConvergenceStats().writeConvergenceStatsToTable();
+        }
+
         isConverged = ( residualNorm < params.m_newtonTol );
 
       }

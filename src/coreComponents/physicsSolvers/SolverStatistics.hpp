@@ -46,13 +46,10 @@ public:
   IterationsStatistics( string const & name,
                         dataRepository::Group * const parent );
 
-  /// indicate if the containing solver does non-linear iterations (and so, produces iterations statistics)
-  bool m_isIterativeSolver = true;
-
-  /// State of log output. True when writeSolver is set to 1
+  /// State of log output. True when writeStatistics is set to 1
   bool m_logOutput = false;
 
-  /// State of csv output. True when writeSolver is set to 2
+  /// State of csv output. True when writeStatistics is set to 2
   bool m_csvOutput = false;
 
   /// Number of time steps
@@ -61,18 +58,8 @@ public:
   /// Number of time step cuts
   integer m_numTimeStepCuts = 0;
 
-  /// Linear solver setup
-  real64 m_setupTime = 0.0;
-
-  /// Linear solver solve
-  real64 m_solveTime = 0.0;
-
-  /// Maximum number of current Newton iterations.
-  integer m_currentNewtonIter = 0;
-
-
-  /// Number of outer loop iterations in the current time step (utility variable constantly overwritten)
-  integer m_currentNumOuterLoopIterations = 0;
+  /// Number of configuration iterations in the current time step (utility variable constantly overwritten)
+  integer m_currentNumConfigIterations = 0;
 
   /// Number of nonlinear iterations in the current time step (utility variable constantly overwritten)
   integer m_currentNumNonlinearIterations = 0;
@@ -80,9 +67,8 @@ public:
   /// Number of linear iterations in the current time step (utility variable constantly overwritten)
   integer m_currentNumLinearIterations = 0;
 
-
-  /// Cumulative number of successful outer loop iterations
-  integer m_numSuccessfulOuterLoopIterations = 0;
+  /// Cumulative number of successful configuration iterations
+  integer m_numSuccessfulConfigIterations = 0;
 
   /// Cumulative number of successful nonlinear iterations
   integer m_numSuccessfulNonlinearIterations = 0;
@@ -90,15 +76,20 @@ public:
   /// Cumulative number of successful linear iterations
   integer m_numSuccessfulLinearIterations = 0;
 
-
-  /// Cumulative number of discarded outer loop iterations
-  integer m_numDiscardedOuterLoopIterations = 0;
+  /// Cumulative number of discarded configuration iterations
+  integer m_numDiscardedConfigIterations  = 0;
 
   /// Cumulative number of discarded nonlinear iterations
   integer m_numDiscardedNonlinearIterations = 0;
 
   /// Cumulative number of discarded linear iterations
   integer m_numDiscardedLinearIterations = 0;
+
+  /// Linear solver setup
+  real64 m_setupTime = 0.0;
+
+  /// Linear solver solve
+  real64 m_solveTime = 0.0;
 
   /**
    * @brief Struct to serve as a container for variable strings and keys.
@@ -111,29 +102,20 @@ public:
     /// String key for the number of time step cuts
     static constexpr char const * numTimeStepCutsString() { return "numTimeStepCuts"; }
 
-    /// String key for the successful number of outer loop iterations
-    static constexpr char const * numSuccessfulOuterLoopIterationsString() { return "numSuccessfulOuterLoopIterations"; }
+    /// String key for the successful number of configuration iterations
+    static constexpr char const * numSuccessfulConfigIterationsString() { return "numSuccessfulConfigIterations"; }
     /// String key for the successful number of nonlinear iterations
     static constexpr char const * numSuccessfulNonlinearIterationsString() { return "numSuccessfulNonlinearIterations"; }
     /// String key for the successful number of linear iterations
     static constexpr char const * numSuccessfulLinearIterationsString() { return "numSuccessfulLinearIterations"; }
 
-    /// String key for the discarded number of outer loop iterations
-    static constexpr char const * numDiscardedOuterLoopIterationsString() { return "numDiscardedOuterLoopIterations"; }
+    /// String key for the discarded number of configuration iterations
+    static constexpr char const * numDiscardedConfigIterationsString() { return "numDiscardedConfigIterations"; }
     /// String key for the discarded number of nonlinear iterations
     static constexpr char const * numDiscardedNonlinearIterationsString() { return "numDiscardedNonlinearIterations"; }
     /// String key for the discarded number of linear iterations
     static constexpr char const * numDiscardedLinearIterationsString() { return "numDiscardedLinearIterations"; }
   };
-
-  /**
-   * @brief Indicate if the solver is iterative.
-   * @param isIterative The iterative state.
-   */
-  void setIterativeSolver( bool isIterative )
-  {
-    m_isIterativeSolver = isIterative;
-  }
 
   /**
    * @brief Set the csv state output
@@ -149,10 +131,16 @@ public:
   void setLogOutput( bool state )
   { m_logOutput = state; }
 
+
   /**
    * @brief Initialize the counters used for an individual time step
    */
   void resetCurrentTimeStepStatistics();
+
+  /**
+   * @brief Tell the solverStatistics that we are doing a configuration iteration
+   */
+  void incrementConfigIteration();
 
   /**
    * @brief Tell the solverStatistics that we are doing a nonlinear iteration
@@ -160,13 +148,6 @@ public:
    * @detail This function is well suited for Newton's method, or for single-physics solvers in sequential schemes
    */
   void updateNonlinearIteration( integer const numLinearIterations );
-
-  /**
-   * @brief Save the current newton iteration
-   * @param currentNewtonIter The current newton iteration performed by the the linear solver
-   */
-  void updateNewtonIter( integer currentNewtonIter )
-  { if( m_isIterativeSolver ) m_currentNewtonIter = currentNewtonIter; }
 
   /**
    * @brief Accumulate the setupTime & solveTime result over each newton iteration
@@ -179,17 +160,6 @@ public:
    * @brief Reset the setupTime & solveTime to 0 at the end of each cycle
    */
   void resetSolverLinearTime();
-
-  /**
-   * @brief Tell the solverStatistics that we are doing a nonlinear iteration
-   * @detail This function is well suited for the outer loop in sequential schemes
-   */
-  void updateNonlinearIteration();
-
-  /**
-   * @brief Tell the solverStatistics that we are doing an outer loop iteration
-   */
-  void incrementNonlinearIteration();
 
   /**
    * @brief Tell the solverStatistics that there is a time step cut
@@ -211,7 +181,7 @@ public:
    * @param filename The filename as a string_view.
    */
   void setFilename( string_view filename )
-  { if( m_isIterativeSolver ) m_iterationsFilename = filename; }
+  { m_iterationsFilename = filename; }
 
   /**
    * @brief Output the statistics to the console in table format
@@ -255,54 +225,11 @@ public:
   /// Current cycle number
   integer m_cycleNumber = 0;
 
-  /// Maximum value for residual mass.
-  real64 m_residualMass = std::numeric_limits< real64 >::quiet_NaN();
+/// Current iteration number
+  integer m_itererationNumber = 0;
 
-  /// Maximum value for residual volume.
-  real64 m_residualVol = std::numeric_limits< real64 >::quiet_NaN();
-
-  /// Maximum value for residual energy.
-  real64 m_residualEnergy = std::numeric_limits< real64 >::quiet_NaN();
-
-  /// Maximum value for residual flow.
-  real64 m_residualFlow = std::numeric_limits< real64 >::quiet_NaN();
-
-  /// Maximum value for residual bubble displacement.
-  real64 m_residualBubbleDisp = std::numeric_limits< real64 >::quiet_NaN();
-
-  /// Maximum value for residual fracture.
-  real64 m_residualFracture = std::numeric_limits< real64 >::quiet_NaN();
-
-  /// Maximum value for residual stick.
-  real64 m_residualStick = std::numeric_limits< real64 >::quiet_NaN();
-
-  /// Maximum value for residual slip.
-  real64 m_residualSlip = std::numeric_limits< real64 >::quiet_NaN();
-
-  /// Maximum value for residual open.
-  real64 m_residualOpen = std::numeric_limits< real64 >::quiet_NaN();
-
-  /// Maximum value for residual solid.
-  real64 m_residualSolid = std::numeric_limits< real64 >::quiet_NaN();
-
-  /// Maximum value for residual contact.
-  real64 m_residualContact = std::numeric_limits< real64 >::quiet_NaN();
-
-  /// Maximum value for residual proppant.
-  real64 m_residualProppant = std::numeric_limits< real64 >::quiet_NaN();
-
-  /// Maximum value for residual damage.
-  real64 m_residualDamage = std::numeric_limits< real64 >::quiet_NaN();
-
-  /// Maximum value for residual norm at the end of line search
-  real64 m_residualNormT = std::numeric_limits< real64 >::quiet_NaN();
-
-  /// Maximum value for residual norm at the end of line search
-  real64 m_residualWell = std::numeric_limits< real64 >::quiet_NaN();
-
-  /// Maximum total residual value.
-  real64 m_totalResidual = std::numeric_limits< real64 >::quiet_NaN();
-
+  /// Residuals with their names
+  std::map< string, real64 > m_residuals;
 
   /**
    * @brief Set the csv state output
@@ -321,8 +248,11 @@ public:
    * @param time_n The time at the beginning of the step
    * @param dt The desired timestep
    * @param cycleNumber The current cycle number
+   * @param iterNumber The current iteration number
    */
-  void updateSolverStep( real64 const & time_n, real64 const & dt, integer const cycleNumber );
+  void updateSolverStep( real64 const & time_n,
+                         real64 const & dt,
+                         integer const cycleNumber );
 
   /**
    * @brief Reset the solid residuals value.

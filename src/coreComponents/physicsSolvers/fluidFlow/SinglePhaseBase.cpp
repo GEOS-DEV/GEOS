@@ -615,9 +615,10 @@ void SinglePhaseBase::initializeThermalState( MeshLevel & mesh, string_array con
 void SinglePhaseBase::implicitStepSetup( real64 const & time_n,
                                          real64 const & dt,
                                          integer const cycleNumber,
+                                         
                                          DomainPartition & domain )
 {
-  updateSolverStatistics( time_n, dt, cycleNumber );
+  getConvergenceStats().updateSolverStep( time_n, dt, cycleNumber );
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel & mesh,
                                                                string_array const & regionNames )

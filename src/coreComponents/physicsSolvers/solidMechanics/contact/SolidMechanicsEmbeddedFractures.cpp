@@ -588,9 +588,6 @@ real64 SolidMechanicsEmbeddedFractures::calculateResidualNorm( real64 const & ti
     real64 const fractureResidualNorm = calculateFractureResidualNorm( domain, dofManager, localRhs );
     real64 totalResidualNorm = sqrt( solidResidualNorm * solidResidualNorm + fractureResidualNorm * fractureResidualNorm );
 
-    getConvergenceStats().m_residualFracture = fractureResidualNorm;
-    getConvergenceStats().m_totalResidual = totalResidualNorm;
-
     return totalResidualNorm;
   }
   else

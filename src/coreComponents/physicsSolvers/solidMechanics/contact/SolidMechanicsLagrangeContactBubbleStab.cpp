@@ -314,7 +314,7 @@ void SolidMechanicsLagrangeContactBubbleStab::implicitStepSetup( real64 const & 
 {
   SolidMechanicsLagrangianFEM::implicitStepSetup( time_n, dt, cycleNumber, domain );
 
-  updateSolverStatistics( time_n, dt, cycleNumber );
+  getConvergenceStats().updateSolverStep( time_n, dt, cycleNumber );
 }
 
 void SolidMechanicsLagrangeContactBubbleStab::assembleSystem( real64 const time,
@@ -475,9 +475,6 @@ real64 SolidMechanicsLagrangeContactBubbleStab::calculateResidualNorm( real64 co
   real64 const contactResidual = calculateContactResidualNorm( domain, dofManager, localRhs );
 
   real64 const totalResidual = sqrt( solidResidual * solidResidual + contactResidual * contactResidual );
-
-  getConvergenceStats().m_residualContact = contactResidual;
-  getConvergenceStats().m_totalResidual = totalResidual;
 
   return totalResidual;
 }
