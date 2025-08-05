@@ -128,7 +128,8 @@ void TableCapillaryPressureHelpers::populateMinPhaseVolumeFraction(
 
   minPhaseVolumeFraction[ipWater] = minWettingSaturation;
   minPhaseVolumeFraction[ipGas] = minNonWettingSaturation;
-  minPhaseVolumeFraction[ipOil] = LvArray::math::max( 0.0, 1.0 - maxWettingSaturation - maxNonWettingSaturation );
+  // minPhaseVolumeFraction[ipOil] = LvArray::math::max( 0.0, 1.0 - maxWettingSaturation - maxNonWettingSaturation );
+  minPhaseVolumeFraction[ipOil] = LvArray::math::min( 1.0 - maxWettingSaturation, 1 - maxNonWettingSaturation );
 }
 
 } // namespace constitutive

@@ -21,6 +21,7 @@
 #define GEOS_CONSTITUTIVE_CAPILLARYPRESSURE_INVERSECAPILLARYPRESSURE_HPP
 
 #include "constitutive/capillaryPressure/CapillaryPressureBase.hpp"
+#include "constitutive/capillaryPressure/JFunctionCapillaryPressure.hpp"
 
 namespace geos
 {
@@ -37,11 +38,19 @@ struct CapillaryPressureEvaluate
                        arraySlice1d< real64, cappres::USD_CAPPRES - 2 > const & phaseCapPres,
                        arraySlice2d< real64 > const & dPhaseCapPres_dSaturation )
   {
-    GEOS_UNUSED_VAR( jFuncMultiplier );
     integer constexpr MAX_NUM_PHASES = CapillaryPressureBase::MAX_NUM_PHASES;
     integer const numPhases = phaseVolumeFraction.size();
     StackArray< real64, 4, MAX_NUM_PHASES *MAX_NUM_PHASES, constitutive::cappres::LAYOUT_CAPPRES_DS > dPhaseCapPres_dPhaseVolFrac( 1, 1, numPhases, numPhases );
-    capPressureWrapper.compute( phaseVolumeFraction, phaseCapPres, dPhaseCapPres_dPhaseVolFrac[0][0] );
+    constexpr bool isJFunction = std::is_same_v< CAP_PRESSURE, JFunctionCapillaryPressure >;
+    if constexpr ( isJFunction )
+    {
+      capPressureWrapper.compute( phaseVolumeFraction, jFuncMultiplier, phaseCapPres, dPhaseCapPres_dPhaseVolFrac[0][0] );
+    }
+    else 
+    {
+      GEOS_UNUSED_VAR( jFuncMultiplier );
+      capPressureWrapper.compute( phaseVolumeFraction, phaseCapPres, dPhaseCapPres_dPhaseVolFrac[0][0] );
+    }
     for( integer ip = 0; ip < numPhases; ++ip )
     {
       for( integer jp = 0; jp < numPhases; ++jp )
@@ -51,6 +60,30 @@ struct CapillaryPressureEvaluate
     }
   }
 };
+
+// template< >
+// struct CapillaryPressureEvaluate< JFunctionCapillaryPressure >
+// {
+//   GEOS_HOST_DEVICE
+//   static void compute( typename JFunctionCapillaryPressure::KernelWrapper const & capPressureWrapper,
+//                        arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseVolumeFraction,
+//                        arraySlice1d< real64 const > const & jFuncMultiplier,
+//                        arraySlice1d< real64, cappres::USD_CAPPRES - 2 > const & phaseCapPres,
+//                        arraySlice2d< real64 > const & dPhaseCapPres_dSaturation )
+//   {
+//     integer constexpr MAX_NUM_PHASES = CapillaryPressureBase::MAX_NUM_PHASES;
+//     integer const numPhases = phaseVolumeFraction.size();
+//     StackArray< real64, 4, MAX_NUM_PHASES *MAX_NUM_PHASES, constitutive::cappres::LAYOUT_CAPPRES_DS > dPhaseCapPres_dPhaseVolFrac( 1, 1, numPhases, numPhases );
+//     capPressureWrapper.compute( phaseVolumeFraction, jFuncMultiplier, phaseCapPres, dPhaseCapPres_dPhaseVolFrac[0][0] );
+//     for( integer ip = 0; ip < numPhases; ++ip )
+//     {
+//       for( integer jp = 0; jp < numPhases; ++jp )
+//       {
+//         dPhaseCapPres_dSaturation[ip][jp] = dPhaseCapPres_dPhaseVolFrac[0][0][ip][jp];
+//       }
+//     }
+//   }
+// };
 
 template< typename CAP_PRESSURE >
 class InverseCapillaryPressureUpdate

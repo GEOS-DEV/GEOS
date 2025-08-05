@@ -20,7 +20,9 @@
 #include "CompositionalMultiphaseBase.hpp"
 
 #include "constitutive/ConstitutiveManager.hpp"
+#include "constitutive/capillaryPressure/CapillaryPressureFields.hpp"
 #include "constitutive/capillaryPressure/capillaryPressureSelector.hpp"
+#include "constitutive/capillaryPressure/InverseCapillaryPressure.hpp"
 #include "constitutive/ConstitutivePassThru.hpp"
 #include "constitutive/diffusion/DiffusionSelector.hpp"
 #include "constitutive/dispersion/DispersionSelector.hpp"
@@ -1002,6 +1004,13 @@ void CompositionalMultiphaseBase::initializeFluidState( MeshLevel & mesh,
         getConstitutiveModel< CapillaryPressureBase >( subRegion, subRegion.template getReference< string >( viewKeyStruct::capPressureNamesString() ) );
       capPressure.initializeRockState( porosity, permeability );   // this needs to happen before calling updateCapPressureModel
       updateCapPressureModel( subRegion );
+
+      auto phaseMinVolumeFraction = capPressure.phaseMinVolumeFraction();
+      std::cout << "phaseMinVolumeFraction.size() = " << phaseMinVolumeFraction.size() << std::endl;
+      for ( localIndex i = 0; i < phaseMinVolumeFraction.size(); ++i )
+      {
+        std::cout << "phaseMinVolumeFraction[" << i << "] = " << phaseMinVolumeFraction << std::endl;
+      }
     }
 
     // If the diffusion and/or dispersion is/are supported, initialize the two models
@@ -1290,50 +1299,161 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium( DomainPartition
       }
       std::cout << std::endl;
 
-      // std::cout << "pressureValues after hydrostatic computations = ";
-      // for ( const real64& val : pressureValues[0] )
-      // {
-      //   std::cout << val << ", ";
-      // }
-      // std::cout << std::endl;
+    //       if( m_hasCapPressure )
+    // {
+      // initialized porosity
+      CoupledSolidBase const & porousSolid =
+        getConstitutiveModel< CoupledSolidBase >( subRegion, subRegion.template getReference< string >( viewKeyStruct::solidNamesString() ) );
+      arrayView2d< real64 const > const porosity = porousSolid.getPorosity();
 
-      array1d< real64 > pressureValues_tmp;
-      pressureValues_tmp.resize( numPointsInTable );
+      // initialized permeability
+      PermeabilityBase const & permeabilityMaterial =
+        getConstitutiveModel< PermeabilityBase >( subRegion, subRegion.template getReference< string >( viewKeyStruct::permeabilityNamesString() ) );
+      arrayView3d< real64 const > const permeability = permeabilityMaterial.permeability();
 
-      for (localIndex i = 0; i < numPointsInTable; ++i)
+      CapillaryPressureBase const & capPressure =
+        getConstitutiveModel< CapillaryPressureBase >( subRegion, subRegion.template getReference< string >( viewKeyStruct::capPressureNamesString() ) );
+      capPressure.initializeRockState( porosity, permeability );   // this needs to happen before calling updateCapPressureModel
+      updateCapPressureModel( subRegion );
+    // }
+
+      auto phaseOrder = capPressure.phaseOrder();
+      std::cout << "phaseOrder.size() = " << phaseOrder.size() << std::endl;
+      for ( localIndex i = 0; i < phaseOrder.size(); ++i )
       {
-        pressureValues_tmp[i] = pressureValues[i][0];
+        std::cout << "phaseOrder[" << i << "] = " << phaseOrder[i] << std::endl;
       }
 
-      // CapillaryPressureBase const & capPressure =
-      //   getConstitutiveModel< CapillaryPressureBase >( subRegion, subRegion.template getReference< string >( viewKeyStruct::capPressureNamesString() ) );
+      integer const ip_gas = phaseOrder[CapillaryPressureBase::PhaseType::GAS];
+      integer const ip_water = phaseOrder[CapillaryPressureBase::PhaseType::WATER];
+      integer const ip_oil = phaseOrder[CapillaryPressureBase::PhaseType::OIL];
+      std::cout << "ip_gas = " << ip_gas << std::endl;
+      std::cout << "ip_water = " << ip_water << std::endl;
+      std::cout << "ip_oil = " << ip_oil << std::endl;
+
+      array1d< real64 > gasPressureValues;
+      if ( ip_gas >= 0 )
+      {
+        gasPressureValues.resize( numPointsInTable );
+        for (localIndex i = 0; i < numPointsInTable; ++i)
+        {
+          gasPressureValues[i] = pressureValues[i][ip_gas];
+        }
+      }
+
+      array1d< real64 > waterPressureValues( numPointsInTable );
+      if ( ip_water >= 0 )
+      {
+        waterPressureValues.resize( numPointsInTable );
+        for (localIndex i = 0; i < numPointsInTable; ++i)
+        {
+          waterPressureValues[i] = pressureValues[i][ip_water];
+        }
+      }
+
+      array1d< real64 > oilPressureValues( numPointsInTable );
+      oilPressureValues.resize( numPointsInTable );
+      if ( ip_oil >= 0 )
+      {
+        for (localIndex i = 0; i < numPointsInTable; ++i)
+        {
+          oilPressureValues[i] = pressureValues[i][ip_oil];
+        }
+      }
+      else
+      {
+        for (localIndex i = 0; i < numPointsInTable; ++i)
+        {
+          oilPressureValues[i] = pressureValues[i][ip_water]; // water phase pressure as reference pressure
+        }
+      }
+
       // auto pc = capPressure.phaseCapPressure(); // arrayView3d
 
-      // std::cout << "pc.size() = " << pc.size() << ", pc[0].size() = " << pc[0].size() << ", pc[0][0].size() = " << pc[0][0].size() << std::endl;
-      // for ( localIndex i = 0; i < pc.size(); ++i )
+      auto phaseMinVolumeFraction = capPressure.phaseMinVolumeFraction();
+      std::cout << "phaseMinVolumeFraction.size() = " << phaseMinVolumeFraction.size() << std::endl;
+      for ( localIndex i = 0; i < phaseMinVolumeFraction.size(); ++i )
+      {
+        std::cout << "phaseMinVolumeFraction[" << i << "] = " << phaseMinVolumeFraction[i] << std::endl;
+      }
+
+      string const gasTableName = fs.getName() + "_" + subRegion.getName() + "_" + phaseNames[ip_gas] + "_table";
+      TableFunction * const gasPresTable = dynamicCast< TableFunction * >( functionManager.createChild( TableFunction::catalogName(), gasTableName ) );
+      gasPresTable->setTableCoordinates( elevationValues, { units::Distance } );
+      gasPresTable->setTableValues( gasPressureValues, units::Pressure );
+      gasPresTable->setInterpolationMethod( TableFunction::InterpolationType::Linear );
+      TableFunction::KernelWrapper gasPresTableWrapper = gasPresTable->createKernelWrapper();
+
+      string const waterTableName = fs.getName() + "_" + subRegion.getName() + "_" + phaseNames[ip_water] + "_table";
+      TableFunction * const waterPresTable = dynamicCast< TableFunction * >( functionManager.createChild( TableFunction::catalogName(), waterTableName ) );
+      waterPresTable->setTableCoordinates( elevationValues, { units::Distance } );
+      waterPresTable->setTableValues( waterPressureValues, units::Pressure );
+      waterPresTable->setInterpolationMethod( TableFunction::InterpolationType::Linear );
+      TableFunction::KernelWrapper waterPresTableWrapper = waterPresTable->createKernelWrapper();
+
+      arrayView2d< real64 const > const elemCenter =
+        subRegion.getReference< array2d< real64 > >( ElementSubRegionBase::viewKeyStruct::elementCenterString() );
+
+      array2d< real64 > targetPhaseCapPressure( targetSet.size(), geos::constitutive::cappres::USD_CAPPRES );
+      std::cout << "targetSet size = " << targetSet.size() << ", geos::constitutive::cappres::USD_CAPPRES = " << geos::constitutive::cappres::USD_CAPPRES - 2 <<  ", size of targetPhaseCapPressure = " << targetPhaseCapPressure.size() << "x " << targetPhaseCapPressure[0].size() << std::endl;
+      for ( localIndex i = 0; i < targetSet.size(); ++i )
+      {
+        localIndex const k = targetSet[i];
+        real64 const elevation = elemCenter[k][2];
+
+        targetPhaseCapPressure[k][ip_gas] = gasPresTableWrapper.compute( &elevation ) - waterPresTableWrapper.compute( &elevation );
+        // std::cout << "targetPhaseCapPressure[" << k << "][ip_gas] = " << targetPhaseCapPressure[k][ip_gas] << std::endl;
+      }
+
+
+      arrayView2d<real64 const> const jFuncMultiplier = capPressure.getField<geos::fields::cappres::jFuncMultiplier>().reference().toViewConst();
+      std::cout << "jFuncMultiplier size = " << jFuncMultiplier.size() << std::endl;
+      // for ( localIndex i = 0; i < jFuncMultiplier.size(); ++i )
       // {
-      //  for ( localIndex j = 0; j < pc[i].size(); ++j )
-      //  {
-      //   for ( localIndex k = 0; k < pc[i][j].size(); ++k )
-      //   {
-      //     std::cout << "pc[" << i << "][" << j << "][" << k << "] = " << pc[i][j][k] << std::endl;
-      //   }
-      //  }
+      //   std::cout << "jFuncMultiplier[" << i << "] = " << jFuncMultiplier[i] << std::endl;
       // }
 
-      if( m_hasCapPressure )
-      {
-        arrayView2d< real64 const, compflow::USD_PHASE > const phaseVolFrac =
-          subRegion.getField< flow::phaseVolumeFraction >();
+      array2d< real64 > const targetPhaseVolumeFraction( targetSet.size(), numPhases - 1 );
+      array1d< bool > const success( targetSet.size() );
 
-        std::cout << "phaseVolFrac.size() = " << phaseVolFrac.size() << ", phaseVolFrac[0].size() = " << phaseVolFrac[0].size() << std::endl;
-        for ( localIndex i = 0; i < phaseVolFrac.size(); ++i )
+      constitutiveUpdatePassThru( capPressure, [&] ( auto & castCapPressure )
+      {
+        using CapPressureType = TYPEOFREF( castCapPressure );
+        InverseCapillaryPressure< CapPressureType > inverseCapPressureType( castCapPressure );
+
+        auto capPressureWrapper = inverseCapPressureType.createKernelWrapper();
+
+        forAll< parallelDevicePolicy<> >( targetSet.size(), [targetSet,
+                                                             capPressureWrapper,
+                                                             targetPhaseVolumeFraction,
+                                                             jFuncMultiplier,
+                                                             targetPhaseCapPressure,
+                                                             success] GEOS_HOST_DEVICE ( localIndex const i )
         {
-          for ( localIndex j = 0; j < phaseVolFrac[i].size(); ++j )
-          {
-            std::cout << "phaseVolFrac[" << i << "][" << j << "] = " << phaseVolFrac[i][j] << std::endl;
-          }
-        }
+          localIndex const k = targetSet[i];
+          success[k] = capPressureWrapper.compute( targetPhaseCapPressure[k],
+                                                   jFuncMultiplier[k],
+                                                   targetPhaseVolumeFraction[k] );
+
+        } );
+      } );
+
+      std::cout << "success = " << success[0] << std::endl;
+
+
+      // if( m_hasCapPressure )
+      // {
+      //   arrayView2d< real64 const, compflow::USD_PHASE > const phaseVolFrac =
+      //     subRegion.getField< flow::phaseVolumeFraction >();
+
+      //   std::cout << "phaseVolFrac.size() = " << phaseVolFrac.size() << ", phaseVolFrac[0].size() = " << phaseVolFrac[0].size() << std::endl;
+      //   for ( localIndex i = 0; i < phaseVolFrac.size(); ++i )
+      //   {
+      //     for ( localIndex j = 0; j < phaseVolFrac[i].size(); ++j )
+      //     {
+      //       std::cout << "phaseVolFrac[" << i << "][" << j << "] = " << phaseVolFrac[i][j] << std::endl;
+      //     }
+      //   }
         // string const & cappresName = dataGroup.getReference< string >( viewKeyStruct::capPressureNamesString() );
         // CapillaryPressureBase & capPressure = getConstitutiveModel< CapillaryPressureBase >( dataGroup, cappresName );
 
@@ -1347,22 +1467,22 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium( DomainPartition
         //                                       capPresWrapper,
         //                                       phaseVolFrac );
         // } );
-      }
+      // }
 
       // Step 3.5: create hydrostatic pressure table
 
-      string const tableName = fs.getName() + "_" + subRegion.getName() + "_" + phaseNames[ipInit] + "_table";
+      string const tableName = fs.getName() + "_" + subRegion.getName() + "_" + phaseNames[ip_water] + "_table";
       TableFunction * const presTable = dynamicCast< TableFunction * >( functionManager.createChild( TableFunction::catalogName(), tableName ) );
       presTable->setTableCoordinates( elevationValues, { units::Distance } );
-      presTable->setTableValues( pressureValues_tmp, units::Pressure );
+      presTable->setTableValues( waterPressureValues, units::Pressure );
       presTable->setInterpolationMethod( TableFunction::InterpolationType::Linear );
       TableFunction::KernelWrapper presTableWrapper = presTable->createKernelWrapper();
 
       // Step 4: assign pressure, temperature, and component fraction as a function of elevation
       // TODO: this last step should probably be delayed to wait for the creation of FaceElements
       // TODO: this last step should be modified to account for GOC and WOC
-      arrayView2d< real64 const > const elemCenter =
-        subRegion.getReference< array2d< real64 > >( ElementSubRegionBase::viewKeyStruct::elementCenterString() );
+      // arrayView2d< real64 const > const elemCenter =
+      //   subRegion.getReference< array2d< real64 > >( ElementSubRegionBase::viewKeyStruct::elementCenterString() );
 
       arrayView1d< real64 > const pres = subRegion.getReference< array1d< real64 > >( flow::pressure::key() );
       arrayView1d< real64 > const temp = subRegion.getReference< array1d< real64 > >( flow::temperature::key() );

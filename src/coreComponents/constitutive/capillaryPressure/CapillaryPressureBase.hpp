@@ -149,6 +149,18 @@ public:
   arrayView3d< real64 const, cappres::USD_CAPPRES > phaseCapPressure() const { return m_phaseCapPressure; }
 
   /*
+   * @brief Getter for the minimum phase volume fractions for each phase
+   * @return an array of the minimum phase volume fractions for each phase
+   */
+  arrayView1d< real64 const > phaseMinVolumeFraction() const { return m_phaseMinVolumeFraction; }
+
+  /*
+   * @brief Getter for the phase order of each phase
+   * @return an array of the order of each phase
+   */
+  arrayView1d< integer const > phaseOrder() const { return m_phaseOrder; }
+
+  /*
    * @brief Getter for the cell-wise derivatives of phase capillary pressures wrt phase volume fractions
    * @return an array of cell-wise derivatives of phase capillary pressures wrt phase volume fractions
    */

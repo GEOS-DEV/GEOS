@@ -20,6 +20,7 @@
 #include "InverseCapillaryPressure.hpp"
 #include "constitutive/capillaryPressure/BrooksCoreyCapillaryPressure.hpp"
 #include "constitutive/capillaryPressure/TableCapillaryPressure.hpp"
+#include "constitutive/capillaryPressure/VanGenuchtenCapillaryPressure.hpp"
 
 namespace geos
 {
@@ -55,6 +56,8 @@ InverseCapillaryPressure< CAP_PRESSURE >::createKernelWrapper()
 
 template class InverseCapillaryPressure< BrooksCoreyCapillaryPressure >;
 template class InverseCapillaryPressure< TableCapillaryPressure >;
+template class InverseCapillaryPressure< JFunctionCapillaryPressure >;
+template class InverseCapillaryPressure< VanGenuchtenCapillaryPressure >;
 
 } // namespace constitutive
 

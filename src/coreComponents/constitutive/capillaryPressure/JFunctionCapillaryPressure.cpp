@@ -135,6 +135,9 @@ void JFunctionCapillaryPressure::postInputInitialization()
                            getFullName() ),
                  InputError );
 
+  // Populate the minimum phase volume fractions
+  m_phaseMinVolumeFraction.resize( numPhases );
+
   if( numPhases == 2 )
   {
     GEOS_THROW_IF( m_wettingNonWettingJFuncTableName.empty(),
@@ -305,6 +308,9 @@ void JFunctionCapillaryPressure::createAllTableKernelWrappers()
   {
     TableFunction const & jFuncTable = functionManager.getGroup< TableFunction >( m_wettingNonWettingJFuncTableName );
     m_jFuncKernelWrappers.emplace_back( jFuncTable.createKernelWrapper() );
+
+    // Populate the end-points from the tables
+    TableCapillaryPressureHelpers::populateMinPhaseVolumeFraction( m_phaseOrder.toSliceConst(), jFuncTable, m_phaseMinVolumeFraction );
   }
   else if( numPhases == 3 )
   {
@@ -313,6 +319,9 @@ void JFunctionCapillaryPressure::createAllTableKernelWrappers()
     m_jFuncKernelWrappers.emplace_back( jFuncTableWI.createKernelWrapper() );
     TableFunction const & jFuncTableNWI = functionManager.getGroup< TableFunction >( m_nonWettingIntermediateJFuncTableName );
     m_jFuncKernelWrappers.emplace_back( jFuncTableNWI.createKernelWrapper() );
+
+    // Populate the end-points from the tables
+    TableCapillaryPressureHelpers::populateMinPhaseVolumeFraction( m_phaseOrder.toSliceConst(), jFuncTableWI, jFuncTableNWI, m_phaseMinVolumeFraction );
   }
 }
 
