@@ -47,7 +47,7 @@
     <PeriodicEvent
       name="outputs"
       timeFrequency="100.0"
-      target="/Outputs/vtkOutput"/>
+      target="/Outputs/vtkOutput_InvariantFluid"/>
 
     <PeriodicEvent
       name="solverApplications"
