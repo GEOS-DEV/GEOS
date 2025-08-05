@@ -316,6 +316,9 @@ jobs:
         # Send to the bucket and print the download link when it makes sense.
         if [[ ! -z "${{ inputs.GCP_BUCKET }}" ]]; then
           if [[ "${{ inputs.BUILD_TYPE }}" = "integrated_tests" || ${EXIT_STATUS} -eq 0 ]]; then
+            # disable warning about parallel composite upload
+            CLOUDSDK_PYTHON=python3 gcloud config set storage/parallel_composite_upload_enabled True
+
             if [ -f ${DATA_EXCHANGE_DIR}/${DATA_BASENAME} ]; then
               CLOUDSDK_PYTHON=python3 gcloud storage cp --quiet -a publicRead ${DATA_EXCHANGE_DIR}/${DATA_BASENAME} gs://${{ inputs.GCP_BUCKET }}/
               echo "Download the bundle at https://storage.googleapis.com/${{ inputs.GCP_BUCKET }}/${DATA_BASENAME}"
