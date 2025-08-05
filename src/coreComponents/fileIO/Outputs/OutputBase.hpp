@@ -21,7 +21,6 @@
 
 #include "dataRepository/Group.hpp"
 #include "dataRepository/ExecutableGroup.hpp"
-#include "dataRepository/LogLevelsInfo.hpp"  // For logInfo namespace
 #include "common/Timer.hpp"
 
 namespace geos

@@ -57,7 +57,6 @@ TimeHistoryOutput::TimeHistoryOutput( string const & name,
     setDescription( "The current history record to be written, on restart from an earlier time allows use to remove invalid future history." );
 
   addLogLevel< logInfo::DataCollectorInitialization >();
-  addLogLevel< logInfo::OutputEvents >();
   addLogLevel< logInfo::HDF5Writing >();
 }
 

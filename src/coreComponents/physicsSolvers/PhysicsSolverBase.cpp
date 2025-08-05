@@ -24,7 +24,6 @@
 #include "math/interpolation/Interpolation.hpp"
 #include "common/Timer.hpp"
 #include "common/Units.hpp"
-#include "dataRepository/LogLevelsInfo.hpp"
 
 #if defined(GEOS_USE_PYGEOSX)
 #include "python/PySolverType.hpp"

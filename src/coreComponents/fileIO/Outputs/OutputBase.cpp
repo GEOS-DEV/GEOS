@@ -18,7 +18,7 @@
  */
 
 #include "OutputBase.hpp"
-#include "LogLevelsInfo.hpp"
+#include "fileIO/LogLevelsInfo.hpp"
 #include "common/MpiWrapper.hpp"
 #include "functions/FunctionBase.hpp"
 

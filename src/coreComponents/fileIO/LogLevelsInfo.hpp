@@ -22,6 +22,7 @@
 #define GEOS_FILEIO_LOGLEVELSINFO_HPP
 
 #include "common/DataTypes.hpp"
+#include "dataRepository/LogLevelsInfo.hpp"
 
 namespace geos
 {
