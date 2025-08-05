@@ -2,7 +2,7 @@
 
 <Problem>
   <Solvers
-    gravityVector="{ 0.0, 0.0, 0.0 }">
+    gravityVector="{ 0.0, 0.0, -9.81 }">
     <CompositionalMultiphaseFVM
       name="FlowSolver"
       discretization="fluidTPFA"
@@ -10,8 +10,8 @@
       logLevel="3"
       temperature="300">
       <NonlinearSolverParameters
-        newtonTol="1.0e-10"
-        newtonMaxIter="10"/>
+        newtonTol="1.0e-5"
+        newtonMaxIter="100"/>
       <LinearSolverParameters
         directParallel="0"/>
     </CompositionalMultiphaseFVM>
@@ -21,42 +21,37 @@
     <InternalMesh
       name="mesh1"
       elementTypes="{ C3D8 }"
-      xCoords="{ 0, 10 }"
+      xCoords="{ 0, 1 }"
       yCoords="{ 0, 1 }"
-      zCoords="{ 0, 1 }"
-      nx="{ 10 }"
+      zCoords="{ 0, 7 }"
+      nx="{ 1 }"
       ny="{ 1 }"
-      nz="{ 1 }"
+      nz="{ 140 }"
       cellBlockNames="{ blocks }"/>
   </Mesh>
 
   <Geometry>
-    <Box
-      name="source"
-      xMin="{ -0.01, -0.01, -0.01 }"
-      xMax="{ 1.01, 1.01, 1.01 }"/>
-
-    <Box
-      name="sink"
-      xMin="{ 8.99, -0.01, -0.01 }"
-      xMax="{ 10.01, 1.01, 1.01 }"/>
+      <Box
+      name="topBC"
+      xMin="{ 0.0, 0.0, 6.999}"
+      xMax="{ 1.0, 1.0, 7.001}"/>
   </Geometry>
 
   <Events
-    maxTime="2e3">
+    maxTime="432000">
     <PeriodicEvent
       name="outputs"
-      timeFrequency="100.0"
+      timeFrequency="864"
       target="/Outputs/vtkOutput_InvariantFluid"/>
 
     <PeriodicEvent
       name="solverApplications"
-      forceDt="1e2"
+      forceDt="864"
       target="/Solvers/FlowSolver"/>
 
     <PeriodicEvent
       name="restarts"
-      timeFrequency="1e3"
+      timeFrequency="432000"
       targetExactTimestep="0"
       target="/Outputs/restartOutput"/>
   </Events>
@@ -81,9 +76,9 @@
       name="fluid"
       componentNames="{ CH4, H2O }"
       phaseNames="{ gas, water }"
-      componentMolarWeight="{ 16.04, 18.02 }"
-      densities="{ 0.656, 997.0 }"
-      viscosities="{ 1.08e-5, 8.9e-4 }"/>
+      componentMolarWeight="{ 18.0, 18.0 }"
+      densities="{ 100.0, 1000.0 }"
+      viscosities="{ 1.0e-3, 1e-3 }"/>
 
     <CompressibleSolidConstantPermeability
       name="rock"
@@ -96,73 +91,99 @@
 
     <PressurePorosity
       name="rockPorosity"
-      defaultReferencePorosity="0.05"
+      defaultReferencePorosity="0.1"
       referencePressure="0.0"
-      compressibility="1.0e-9"/>
+      compressibility="0.0e-16"/>
 
     <ConstantPermeability
       name="rockPerm"
-      permeabilityComponents="{ 2.0e-16, 2.0e-16, 2.0e-16 }"/>
+      permeabilityComponents="{ 1.0e-13, 1.0e-13, 1.0e-13 }"/>
 
-    <BrooksCoreyRelativePermeability
+    <TableRelativePermeability
       name="relperm"
       phaseNames="{ gas, water }"
-      phaseMinVolumeFraction="{ 0.0, 0.0 }"
-      phaseRelPermExponent="{ 1.5, 1.5 }"
-      phaseRelPermMaxValue="{ 0.9, 0.9 }"/>
+      wettingNonWettingRelPermTableNames="{ waterRelPermTable,
+                                            gasRelPermTable }"/>      
       
   </Constitutive>
 
   <FieldSpecifications>
+
+    <HydrostaticEquilibrium
+      name="equil"
+      objectPath="ElementRegions"      
+      datumElevation="20"
+      datumPressure="1e7"
+      initialPhaseName="water"
+      componentNames="{ CH4, H2O }"
+      componentFractionVsElevationTableNames="{ initCH4CompFracTable,
+                                                initH2OCompFracTable }"
+      temperatureVsElevationTableName="initTempTable"/> 
+
     <FieldSpecification
       name="Porosity"
       initialCondition="1"
       setNames="{ all }"
       objectPath="ElementRegions/Domain"
       fieldName="rockPorosity_referencePorosity"
-      scale="0.05"/>
+      scale="0.1"/>
 
     <FieldSpecification
-      name="initialPressure"
-      initialCondition="1"
-      setNames="{ all }"
-      objectPath="ElementRegions/Domain"
+      name="top_pressure"
+      setNames="{ topBC }"
+      objectPath="faceManager"
       fieldName="pressure"
-      scale="1.0e6"/>
-
+      scale="1.0e7" />
     <FieldSpecification
-      name="initialComposition_CH4"
-      initialCondition="1"
-      setNames="{ all }"
-      objectPath="ElementRegions/Domain"
+      name="top_temperature"
+      setNames="{ topBC }"
+      objectPath="faceManager"
+      fieldName="temperature"
+      scale="300.0" />      
+    <FieldSpecification
+      name="outlet_CH4"
+      setNames="{ topBC }"
+      objectPath="faceManager"
       fieldName="globalCompFraction"
       component="0"
-      scale="0.0"/>
+      scale="0.0" />
     <FieldSpecification
-      name="initialComposition_H2O"
-      initialCondition="1"
-      setNames="{ all }"
-      objectPath="ElementRegions/Domain"
+      name="outlet_H2O"
+      setNames="{ topBC }"
+      objectPath="faceManager"
       fieldName="globalCompFraction"
       component="1"
-      scale="1.0"/>      
-      
-    <FieldSpecification
-      name="injectionPressure"
-      initialCondition="0"
-      setNames="{ source }"
-      objectPath="ElementRegions/Domain"
-      fieldName="pressure"
-      scale="1.2e6"/>
-
-    <FieldSpecification
-      name="productionPressure"
-      initialCondition="0"
-      setNames="{ sink }"
-      objectPath="ElementRegions/Domain"
-      fieldName="pressure"
-      scale="1.0e6"/>
+      scale="1.0" />
   </FieldSpecifications>
+
+
+  <Functions>
+   <TableFunction
+      name="initH2OCompFracTable"
+      coordinates="{ 0.0, 1.0, 1.0000001, 4.999999, 5.0,  50.0 }"
+      values="{ 1.0, 1.0, 0.2, 0.2, 1.0, 1.0 }"/>
+    <TableFunction
+      name="initCH4CompFracTable"
+      coordinates="{ 0.0, 1.0, 1.0000001, 4.999999, 5.0,  50.0 }"
+      values="{ 0.0, 0.0, 0.8, 0.8, 0.0, 0.0 }"/>
+    <TableFunction
+      name="initTempTable"
+      coordinates="{ 0.0, 5.0 }"
+      values="{ 300.0, 300.0 }"/>
+    <TableFunction
+      name="waterRelPermTable"
+      coordinates="{ 0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.5, 0.55, 0.6, 0.65, 0.7, 0.75, 0.8, 0.85, 0.9, 0.95, 1.0 }"
+      values="{ 0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.5, 0.55, 0.6, 0.65, 0.7, 0.75, 0.8, 0.85, 0.9, 0.95, 1.0}"/>
+    <TableFunction
+      name="gasRelPermTable"
+      coordinates="{ 0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.5, 0.55, 0.6, 0.65, 0.7, 0.75, 0.8, 0.85, 0.9, 0.95, 1.0 }"
+      values="{ 0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.5, 0.55, 0.6, 0.65, 0.7, 0.75, 0.8, 0.85, 0.9, 0.95, 1.0}"/>
+    <TableFunction
+      name="jFunctionTable"
+      coordinates="{ 0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.5, 0.55, 0.6, 0.65, 0.7, 0.75, 0.8, 0.85, 0.9, 0.95, 1.0 }"
+      values="{ 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 }"/>
+  </Functions>
+
 
   <Outputs>
     <VTK
