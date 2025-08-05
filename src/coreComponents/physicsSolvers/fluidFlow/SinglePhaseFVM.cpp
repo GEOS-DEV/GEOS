@@ -217,8 +217,8 @@ real64 SinglePhaseFVM< BASE >::calculateResidualNorm( real64 const & GEOS_UNUSED
 
     GEOS_LOG_LEVEL_RANK_0_NLR( logInfo::Convergence, GEOS_FMT( "        ( R{} ) = ( {:4.2e} )        ( Renergy ) = ( {:4.2e} )",
                                                                FlowSolverBase::coupledSolverAttributePrefix(), globalResidualNorm[0], globalResidualNorm[1] ));
-    BASE::getConvergenceStats().m_residualMass = globalResidualNorm[0];
-    BASE::getConvergenceStats().m_residualVol = globalResidualNorm[1];
+    BASE::getConvergenceStats().m_residualFlow = globalResidualNorm[0];
+    BASE::getConvergenceStats().m_residualEnergy = globalResidualNorm[1];
     BASE::getConvergenceStats().m_totalResidual = residualNorm;
   }
   else

@@ -209,12 +209,9 @@ public:
   postInputInitialization() override
   {
     Base::postInputInitialization();
-    wellSolver()->getIterationStats().setIterativeSolver( false );
-
-    geos::dataRepository::Wrapper< integer > & tt = this->template getWrapper< integer >( Base::viewKeyStruct::writeSolverString());
-
-    Base::getIterationStats().setCSVOutput( tt.reference() > 2 );
-    Base::getConvergenceStats().setCSVOutput( tt.reference() > 2 );
+    // wellSolver()->getIterationStats().setIterativeSolver( true );
+    Base::getIterationStats().setCSVOutput( this->m_writeStatistics >= 2 );
+    Base::getConvergenceStats().setCSVOutput(this-> m_writeStatistics >= 2 );
 
     setMGRStrategy();
   }

@@ -114,8 +114,8 @@ public:
                              this->getCatalogName(), this->getName(), this->flowSolver()->getName() ),
                    InputError );
 
-    flowSolver()->getIterationStats().setIterativeSolver( false );
-    solidMechanicsSolver()->getIterationStats().setIterativeSolver( false );
+    // flowSolver()->getIterationStats().setIterativeSolver( true );
+    // solidMechanicsSolver()->getIterationStats().setIterativeSolver( false );
   }
 
   virtual void setConstitutiveNamesCallSuper( ElementSubRegionBase & subRegion ) const override final

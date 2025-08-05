@@ -294,11 +294,15 @@ public:
   /// Maximum value for residual damage.
   real64 m_residualDamage = std::numeric_limits< real64 >::quiet_NaN();
 
+  /// Maximum value for residual norm at the end of line search
+  real64 m_residualNormT = std::numeric_limits< real64 >::quiet_NaN();
+
+  /// Maximum value for residual norm at the end of line search
+  real64 m_residualWell = std::numeric_limits< real64 >::quiet_NaN();
+
   /// Maximum total residual value.
   real64 m_totalResidual = std::numeric_limits< real64 >::quiet_NaN();
 
-  /// Maximum value for residual norm at the end of line search
-  real64 m_residualNormT = std::numeric_limits< real64 >::quiet_NaN();
 
   /**
    * @brief Set the csv state output
@@ -385,12 +389,6 @@ public:
    * @param solverName The solverName as a string_view.
    */
   void setOutputFilesName( string_view solverName );
-
-  /**
-   * @return Return the string directory where all CSV are generated
-   */
-  string_view getDirectory() const
-  { return m_directoryName;}
 
   /// Contain iteration data given a time step
   IterationsStatistics m_iterationsStats;

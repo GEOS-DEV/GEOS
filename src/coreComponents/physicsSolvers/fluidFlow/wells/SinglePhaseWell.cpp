@@ -947,6 +947,8 @@ SinglePhaseWell::calculateResidualNorm( real64 const & time_n,
     GEOS_LOG_LEVEL_RANK_0( logInfo::ResidualNorm, GEOS_FMT( "        ( R{} ) = ( {:4.2e} )        ( Renergy ) = ( {:4.2e} )",
                                                             coupledSolverAttributePrefix(), globalResidualNorm[0], globalResidualNorm[1] ));
 
+    getConvergenceStats().m_residualWell = globalResidualNorm[0];
+    getConvergenceStats().m_residualEnergy = globalResidualNorm[1];
   }
   else
   {
@@ -954,9 +956,9 @@ SinglePhaseWell::calculateResidualNorm( real64 const & time_n,
 
     GEOS_LOG_LEVEL_RANK_0( logInfo::ResidualNorm, GEOS_FMT( "        ( R{} ) = ( {:4.2e} )",
                                                             coupledSolverAttributePrefix(), resNorm ));
+    getConvergenceStats().m_residualWell = resNorm;
   }
 
-  getConvergenceStats().m_residualMass = resNorm;
 
   return resNorm;
 }

@@ -92,8 +92,6 @@ IterationsStatistics::IterationsStatistics( string const & name, Group * const p
                                       "Setup time", "Solve time",
                                       "Successful outer loop", "Successful nonlinear", "Successful linear",
                                       "Discarded outer loop", "Discarded nonlinear", "Discarded linear"} );
-  //m_iterationCSVLayout->addColumn( "Iter" );
-
 }
 
 void IterationsStatistics::resetCurrentTimeStepStatistics()
@@ -242,7 +240,7 @@ ConvergenceStatistics::ConvergenceStatistics()
                                     "RFlow", "RBubbleDisp", "RFrac",
                                     "Rstick", "Rslip", "Ropen",
                                     "RSolid", "RContact", "RProppant",
-                                    "RDamage", "RTotal", "R"} );
+                                    "RDamage","RWell", "RTotal", "R"} );
 }
 
 void ConvergenceStatistics::writeConvergenceStatsToTable()
@@ -272,8 +270,9 @@ void ConvergenceStatistics::writeConvergenceStatsToTable()
     { m_residualContact, "RContact" },
     { m_residualProppant, "RProppant" },
     { m_residualDamage, "RDamage" },
-    { m_totalResidual, "RTotal" },
-    { m_residualNormT, "R" }
+    { m_residualNormT, "R" },
+    { m_residualNormT, "RWell" },
+    { m_totalResidual, "RTotal" }
   };
 
   residualsNormCells.emplace_back( TableData::CellData( {CellType::Value,
@@ -312,6 +311,7 @@ void ConvergenceStatistics::updateSolverStep( real64 const & time_n, real64 cons
   m_dt = dt;
   m_cycleNumber = cycleNumber;
 }
+
 void ConvergenceStatistics::resetResidualsValue()
 {
   m_residualSolid = 0;

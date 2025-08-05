@@ -879,7 +879,7 @@ real64 SolidMechanicsLagrangeContact::calculateContactResidualNorm( DomainPartit
   getConvergenceStats().m_residualStick = stickResidual;
   getConvergenceStats().m_residualSlip = slipResidual;
   getConvergenceStats().m_residualOpen = openResidual;
-  getConvergenceStats().m_totalResidual = totalResidualNorm;
+  getConvergenceStats().m_residualContact = totalResidualNorm;
 
 
   return totalResidualNorm;

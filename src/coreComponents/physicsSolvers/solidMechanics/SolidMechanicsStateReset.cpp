@@ -130,6 +130,7 @@ bool SolidMechanicsStateReset::execute( real64 const time_n,
     } );
   } );
 
+  //TODO ADD DOC for this case
   m_solidSolver->getConvergenceStats().resetResidualsValue();
   return false;
 }

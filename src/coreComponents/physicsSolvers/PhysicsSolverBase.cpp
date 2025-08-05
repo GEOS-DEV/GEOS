@@ -97,7 +97,7 @@ PhysicsSolverBase::PhysicsSolverBase( string const & name,
     setInputFlag( InputFlags::FALSE ).
     setRestartFlags( RestartFlags::WRITE_AND_READ );
 
-  registerWrapper( viewKeyStruct::writeSolverString(), &m_writeSolverStatistics ).
+  registerWrapper( viewKeyStruct::writeStatisticsString(), &m_writeStatistics ).
     setApplyDefaultValue( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setRestartFlags( RestartFlags::NO_WRITE ).
@@ -122,13 +122,11 @@ PhysicsSolverBase::PhysicsSolverBase( string const & name,
 
 void PhysicsSolverBase::postInputInitialization()
 {
-  bool const solverStatsLogFlag = getWrapper< integer >( viewKeyStruct::writeSolverString()).reference() >= 1;
-  bool const solverStatsCSVFlag = getWrapper< integer >( viewKeyStruct::writeSolverString()).reference() >= 2;
-  m_solverStatistics.makeDir( solverStatsCSVFlag );
+  m_solverStatistics.makeDir(  m_writeStatistics >= 2 );
 
-  getIterationStats().setLogOutput( solverStatsLogFlag );
-  getIterationStats().setCSVOutput( solverStatsCSVFlag );
-  getConvergenceStats().setCSVOutput( solverStatsCSVFlag );
+  getIterationStats().setLogOutput( m_writeStatistics >= 1 );
+  getIterationStats().setCSVOutput( m_writeStatistics >= 2 );
+  getConvergenceStats().setCSVOutput( m_writeStatistics >= 2 );
 }
 
 PhysicsSolverBase::~PhysicsSolverBase() = default;
@@ -765,7 +763,6 @@ bool PhysicsSolverBase::lineSearchWithParabolicInterpolation( real64 const & tim
       GEOS_LOG_LEVEL_RANK_0( logInfo::LineSearch,
                              GEOS_FMT( "        Line search @ {:0.3f}:      ", cumulativeScale ) );
     }
-    std::cout << " R tested "<< std::endl;
     // get residual norm
     residualNormT = calculateResidualNorm( time_n, dt, domain, dofManager, rhs.values() );
     GEOS_LOG_LEVEL_RANK_0( logInfo::ResidualNorm,
@@ -1149,11 +1146,14 @@ bool PhysicsSolverBase::solveNonlinearSystem( real64 const & time_n,
 
     lastResidual = residualNorm;
   }
-  if( getWrapper< integer >( viewKeyStruct::writeSolverString()).reference() >= 1 )
-  {
+
+  if( m_writeStatistics >= 1 )
     getIterationStats().writeIterationStatsToTable();
+
+
+  if( m_writeStatistics >= 2 )
     getConvergenceStats().writeConvergenceStatsToTable();
-  }
+
 
   getIterationStats().resetSolverLinearTime();
 

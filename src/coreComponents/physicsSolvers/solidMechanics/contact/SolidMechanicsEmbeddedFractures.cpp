@@ -582,7 +582,6 @@ real64 SolidMechanicsEmbeddedFractures::calculateResidualNorm( real64 const & ti
 
   // Matrix residual
   real64 const solidResidualNorm = SolidMechanicsLagrangianFEM::calculateResidualNorm( time, dt, domain, dofManager, localRhs );
-  getConvergenceStats().m_residualSolid = solidResidualNorm;
 
   if( !m_useStaticCondensation )
   {
