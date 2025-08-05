@@ -24,4 +24,7 @@ __pycache__
 
 # ignore all folders except the template one
 /src/externalComponents/*
-!/src/externalComponents/newComponentTemplate/
+!/src/externalComponents/newComponentTemplate/build-system76-pc-clang-release/
+*.a
+*.so
+*.log
