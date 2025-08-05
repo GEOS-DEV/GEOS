@@ -734,8 +734,8 @@ void SinglePhaseFVM< BASE >::applyFaceDirichletBC( real64 const time_n,
         {
           globalIndex const numTargetFaces = MpiWrapper::sum< globalIndex >( stencil.size() );
           GEOS_LOG_LEVEL_RANK_0_ON_GROUP( logInfo::BoundaryConditions, GEOS_FMT( faceBcLogMessage,
-                                                                                    this->getName(), time_n+dt, fs.getCatalogName(), fs.getName(),
-                                                                                    setName, targetGroup.getName(), numTargetFaces ),
+                                                                                 this->getName(), time_n+dt, fs.getCatalogName(), fs.getName(),
+                                                                                 setName, targetGroup.getName(), numTargetFaces ),
                                           fs );
         }
 
