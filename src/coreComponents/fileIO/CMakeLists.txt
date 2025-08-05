@@ -46,6 +46,7 @@ set( fileIO_sources
      Outputs/OutputBase.cpp
      Outputs/OutputManager.cpp
      Outputs/OutputUtilities.cpp
+     Outputs/PythonOutput.cpp
      Outputs/RestartOutput.cpp
      Outputs/TimeHistoryOutput.cpp
      timeHistory/HDFFile.cpp
