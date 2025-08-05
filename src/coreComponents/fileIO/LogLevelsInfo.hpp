@@ -61,6 +61,12 @@ struct HDF5Writing
   static constexpr std::string_view getDescription() { return "Information on buffered data in an HDF5 file "; }
 };
 
+struct OutputTimers
+{
+  static constexpr int getMinLogLevel() { return 1; }
+  static std::string_view getDescription() { return "Output timing information"; }
+};
+
 /// @endcond
 ///@}
 
