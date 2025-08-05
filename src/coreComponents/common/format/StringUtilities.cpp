@@ -249,5 +249,6 @@ stdVector< STRING_T > wrapTextToMaxLength( stdVector< STRING_T > const & lines,
 }
 template stdVector< string > wrapTextToMaxLength( stdVector< string > const &, size_t & );
 template stdVector< string_view > wrapTextToMaxLength( stdVector< string_view > const &, size_t & );
+
 }
 }
