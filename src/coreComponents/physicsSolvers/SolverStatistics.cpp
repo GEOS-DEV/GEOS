@@ -180,8 +180,7 @@ void IterationsStatistics::outputStatistics()
     return;
 
   {
-    TableLayout iterationLogLayout ( GEOS_FMT( "{} iterations", getParent().getName() ),
-                                     { "Components", "Iter  "} );
+    TableLayout iterationLogLayout ( GEOS_FMT( "{} iterations", getParent().getName(), {"", "Value"} ));
 
     TableTextFormatter const statsFormatter( iterationLogLayout );
 
@@ -233,7 +232,6 @@ void ConvergenceStatistics::writeConvergenceStatsToTable()
 
   if( !m_logStream.is_open() )
   {
-    // create table header
     string_array header = {"Cycle number", "time_n (s)", "dt (s)", "Iteration number"};
     for( auto const & residual : m_residuals )
     {
