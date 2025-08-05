@@ -75,9 +75,7 @@ PipeFlowTableFunction::PipeFlowTableFunction( const string & name,
 }
 
 void PipeFlowTableFunction::initializeFunction()
-{
-
-}
+{}
 REGISTER_CATALOG_ENTRY( FunctionBase, PipeFlowTableFunction, string const &, Group * const )
 
 } // end of namespace geos
