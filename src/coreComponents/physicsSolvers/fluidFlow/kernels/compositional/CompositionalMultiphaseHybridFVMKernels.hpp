@@ -440,7 +440,7 @@ struct AssemblerKernelHelper
    * @param[inout] matrix the jacobian matrix
    * @param[inout] rhs the residual
    */
-  template< integer NF, integer NC, integer NP >
+  template< integer NF, integer NC >
   GEOS_HOST_DEVICE
   static void
   assembleFaceConstraints( arrayView1d< globalIndex const > const & faceDofNumber,

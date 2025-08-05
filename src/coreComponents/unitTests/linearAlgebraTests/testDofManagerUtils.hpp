@@ -78,9 +78,9 @@ void setupProblemFromXML( ProblemManager * const problemManager, char const * co
  *
  * Mainly used to allow empty region lists to mean all regions.
  */
-std::vector< DofManager::FieldSupport > getRegions( DomainPartition const & domain, std::vector< DofManager::FieldSupport > const & input )
+stdVector< DofManager::FieldSupport > getRegions( DomainPartition const & domain, stdVector< DofManager::FieldSupport > const & input )
 {
-  std::vector< DofManager::FieldSupport > regions( input.begin(), input.end() );
+  stdVector< DofManager::FieldSupport > regions( input.begin(), input.end() );
   for( DofManager::FieldSupport & support : regions )
   {
     if( support.regionNames.empty() )
@@ -237,7 +237,7 @@ void forLocalObjects( MeshLevel const & mesh,
  * @return the number of locally owned objects (e.g. nodes)
  */
 template< FieldLocation LOC >
-localIndex countLocalObjects( DomainPartition const & domain, std::vector< DofManager::FieldSupport > const & support )
+localIndex countLocalObjects( DomainPartition const & domain, stdVector< DofManager::FieldSupport > const & support )
 {
   localIndex numLocal = 0;
   for( DofManager::FieldSupport const & regions : support )
@@ -260,7 +260,7 @@ localIndex countLocalObjects( DomainPartition const & domain, std::vector< DofMa
  */
 void makeSparsityTPFA( DomainPartition const & domain,
                        string const & dofIndexKey,
-                       std::vector< DofManager::FieldSupport > const & support,
+                       stdVector< DofManager::FieldSupport > const & support,
                        globalIndex const rankOffset,
                        localIndex const numComp,
                        CRSMatrix< real64 > & sparsity )
@@ -341,7 +341,7 @@ void makeSparsityTPFA( DomainPartition const & domain,
  */
 void makeSparsityFEM( DomainPartition const & domain,
                       string const & dofIndexKey,
-                      std::vector< DofManager::FieldSupport > const & support,
+                      stdVector< DofManager::FieldSupport > const & support,
                       globalIndex const rankOffset,
                       localIndex const numComp,
                       CRSMatrix< real64 > & sparsity )
@@ -406,7 +406,7 @@ void makeSparsityFEM( DomainPartition const & domain,
 void makeSparsityFEM_FVM( DomainPartition const & domain,
                           string const & dofIndexKeyNode,
                           string const & dofIndexKeyElem,
-                          std::vector< DofManager::FieldSupport > const & support,
+                          stdVector< DofManager::FieldSupport > const & support,
                           globalIndex const rankOffset,
                           localIndex const numCompNode,
                           localIndex const numCompElem,
@@ -496,7 +496,7 @@ void makeSparsityFEM_FVM( DomainPartition const & domain,
  */
 void makeSparsityMass( DomainPartition const & domain,
                        string const & dofIndexKey,
-                       std::vector< DofManager::FieldSupport > const & support,
+                       stdVector< DofManager::FieldSupport > const & support,
                        globalIndex const rankOffset,
                        localIndex const numComp,
                        CRSMatrix< real64 > & sparsity )
@@ -549,7 +549,7 @@ void makeSparsityMass( DomainPartition const & domain,
  */
 void makeSparsityFlux( DomainPartition const & domain,
                        string const & dofIndexKey,
-                       std::vector< DofManager::FieldSupport > const & support,
+                       stdVector< DofManager::FieldSupport > const & support,
                        globalIndex const rankOffset,
                        localIndex const numComp,
                        CRSMatrix< real64 > & sparsity )

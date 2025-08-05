@@ -30,7 +30,6 @@
 #include "mesh/NodeManager.hpp"
 #include "mesh/utilities/MeshMapUtilities.hpp"
 #include "utilities/ComputationalGeometry.hpp"
-#include "CellElementRegion.hpp"
 
 namespace geos
 {
@@ -174,7 +173,8 @@ void FaceManager::setGeometricalRelations( CellBlockManagerABC const & cellBlock
       return;
     }
 
-    constexpr char err[] = "Internal error when trying to connect matrix mapping and fracture mapping. Face {} seems wrongly connected.";
+    static constexpr auto err = "Internal error when trying to connect matrix mapping and fracture mapping. Face {} seems wrongly connected.";
+    GEOS_UNUSED_VAR( err ); // Not used in GPU builds.
 
     FaceElementSubRegion const & subRegion = region.getUniqueSubRegion< FaceElementSubRegion >();
     int const esr = 0;  // Since there's only on unique subregion, the index is always 0.

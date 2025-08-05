@@ -19,7 +19,6 @@
 
 #include "SinglePhasePoromechanicsEmbeddedFractures.hpp"
 #include "constitutive/contact/HydraulicApertureRelationSelector.hpp"
-#include "constitutive/fluid/singlefluid/SingleFluidBase.hpp"
 #include "physicsSolvers/solidMechanics/contact/kernels/SolidMechanicsEFEMKernelsHelper.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
 #include "physicsSolvers/multiphysics/poromechanicsKernels/SinglePhasePoromechanicsEFEM.hpp"
@@ -28,7 +27,6 @@
 #include "physicsSolvers/multiphysics/poromechanicsKernels/ThermalSinglePhasePoromechanicsEFEM.hpp"
 #include "physicsSolvers/multiphysics/poromechanicsKernels/SinglePhasePoromechanicsFractures.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
-#include "physicsSolvers/solidMechanics/SolidMechanicsFields.hpp"
 #include "finiteVolume/FluxApproximationBase.hpp"
 
 
@@ -430,8 +428,7 @@ void SinglePhasePoromechanicsEmbeddedFractures::assembleSystem( real64 const tim
     if( m_isThermal )
     {
       solidMechanicsSolver()->getMaxForce() =
-        assemblyLaunch< constitutive::PorousSolid< ElasticIsotropic >, // TODO: change once there is a cmake solution
-                        thermalPoromechanicsKernels::ThermalSinglePhasePoromechanicsKernelFactory,
+        assemblyLaunch< thermalPoromechanicsKernels::ThermalSinglePhasePoromechanicsKernelFactory,
                         thermoPoromechanicsEFEMKernels::ThermalSinglePhasePoromechanicsEFEMKernelFactory >( mesh,
                                                                                                             dofManager,
                                                                                                             regionNames,
@@ -443,8 +440,7 @@ void SinglePhasePoromechanicsEmbeddedFractures::assembleSystem( real64 const tim
     else
     {
       solidMechanicsSolver()->getMaxForce() =
-        assemblyLaunch< constitutive::PorousSolid< ElasticIsotropic >,
-                        poromechanicsKernels::SinglePhasePoromechanicsKernelFactory,
+        assemblyLaunch< poromechanicsKernels::SinglePhasePoromechanicsKernelFactory,
                         poromechanicsEFEMKernels::SinglePhaseKernelFactory >( mesh,
                                                                               dofManager,
                                                                               regionNames,
@@ -509,13 +505,15 @@ void SinglePhasePoromechanicsEmbeddedFractures::updateState( DomainPartition & d
 
       arrayView2d< real64 > const & fractureContactTraction = subRegion.template getField< contact::traction >();
 
+      arrayView1d< integer > const & fractureState = subRegion.template getField< contact::fractureState >();
+
       arrayView1d< real64 const > const & pressure =
         subRegion.template getField< flow::pressure >();
 
       string const & hydraulicApertureRelationName = subRegion.template getReference< string >( viewKeyStruct::hydraulicApertureRelationNameString()  );
       HydraulicApertureBase const & hydraulicApertureModel = this->template getConstitutiveModel< HydraulicApertureBase >( subRegion, hydraulicApertureRelationName );
 
-      string const porousSolidName = subRegion.template getReference< string >( FlowSolverBase::viewKeyStruct::solidNamesString() );
+      string const & porousSolidName = subRegion.template getReference< string >( FlowSolverBase::viewKeyStruct::solidNamesString() );
       CoupledSolidBase & porousSolid = subRegion.template getConstitutiveModel< CoupledSolidBase >( porousSolidName );
 
       constitutive::ConstitutivePassThru< CompressibleSolidBase >::execute( porousSolid, [=, &subRegion, &hydraulicApertureModel] ( auto & castedPorousSolid )
@@ -540,7 +538,8 @@ void SinglePhasePoromechanicsEmbeddedFractures::updateState( DomainPartition & d
                                               aperture,
                                               oldHydraulicAperture,
                                               hydraulicAperture,
-                                              fractureContactTraction );
+                                              fractureContactTraction,
+                                              fractureState );
 
         } );
       } );

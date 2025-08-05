@@ -174,10 +174,10 @@ public:
   void addField( string const & fieldName,
                  FieldLocation location,
                  integer components,
-                 std::vector< FieldSupport > const & regions = {} );
+                 stdVector< FieldSupport > const & regions = {} );
 
   /**
-   * @copydoc addField(string const &, FieldLocation, integer, std::vector< FieldSupport > const &)
+   * @copydoc addField(string const &, FieldLocation, integer, stdVector< FieldSupport > const &)
    *
    * Overload for  map< string, string_array > bodyFieldSupport used by physics solvers.
    */
@@ -236,10 +236,10 @@ public:
   void addCoupling( string const & rowFieldName,
                     string const & colFieldName,
                     Connector connectivity,
-                    std::vector< FieldSupport > const & regions = {},
+                    stdVector< FieldSupport > const & regions = {},
                     bool symmetric = true );
   /**
-   * @copydoc addCoupling( string const & ,string const & ,Connector , std::vector< FieldSupport > const & , bool  );
+   * @copydoc addCoupling( string const & ,string const & ,Connector , stdVector< FieldSupport > const & , bool  );
    */
   void addCoupling( string const & rowFieldName,
                     string const & colFieldName,
@@ -454,8 +454,8 @@ public:
    *       loComp = 0 or hiComp = numComponents(fieldName) (or both). In other words,
    *       filtered out components must not leave "holes" in DOFs.
    */
-  std::vector< SubComponent >
-  filterDofs( std::vector< SubComponent > const & excluded ) const;
+  stdVector< SubComponent >
+  filterDofs( stdVector< SubComponent > const & excluded ) const;
 
   /**
    * @brief Populate this manager from another using a sub-selection of fields/components.
@@ -464,7 +464,7 @@ public:
    * @note this will also allocate new dof
    */
   void setupFrom( DofManager const & source,
-                  std::vector< SubComponent > const & selection );
+                  stdVector< SubComponent > const & selection );
 
   /**
    * @brief Create a matrix that restricts vectors and matrices to a subset of DOFs
@@ -479,7 +479,7 @@ public:
    *       for the restrictor to make sense.
    */
   template< typename MATRIX >
-  void makeRestrictor( std::vector< SubComponent > const & selection,
+  void makeRestrictor( stdVector< SubComponent > const & selection,
                        MPI_Comm const & comm,
                        bool transpose,
                        MATRIX & restrictor ) const;
@@ -501,7 +501,7 @@ private:
     string name;                   ///< field name
     string key;                    ///< string key for index array
     string docstring;              ///< documentation string
-    std::vector< FieldSupport > support;///< list of mesh body/level/region supports
+    stdVector< FieldSupport > support;///< list of mesh body/level/region supports
     FieldLocation location;             ///< support location
     integer numComponents = 1;     ///< number of vector components
     CompMask globallyCoupledComponents; ///< mask to distinguish globally coupled components from locally coupled components (the latter
@@ -520,7 +520,7 @@ private:
   struct CouplingDescription
   {
     Connector connector = Connector::None;  //!< geometric object defining dof connections
-    std::vector< FieldSupport > support; //!< list of region names
+    stdVector< FieldSupport > support; //!< list of region names
     FluxApproximationBase const * stencils = nullptr; //!< pointer to flux stencils for stencil based connections
   };
 
@@ -639,7 +639,7 @@ private:
   DomainPartition * m_domain = nullptr;
 
   /// Array of field descriptions
-  std::vector< FieldDescription > m_fields;
+  stdVector< FieldDescription > m_fields;
 
   /// Table of connector types within and between fields
   std::map< std::pair< localIndex, localIndex >, CouplingDescription > m_coupling;

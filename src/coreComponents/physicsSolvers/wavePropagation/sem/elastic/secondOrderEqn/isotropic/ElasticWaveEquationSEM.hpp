@@ -72,13 +72,13 @@ public:
                                       real64 const & dt,
                                       integer const cycleNumber,
                                       DomainPartition & domain,
-                                      bool const computeGradient ) override;
+                                      integer const computeGradient ) override;
 
   virtual real64 explicitStepBackward( real64 const & time_n,
                                        real64 const & dt,
                                        integer const cycleNumber,
                                        DomainPartition & domain,
-                                       bool const computeGradient ) override;
+                                       integer const computeGradient ) override;
   /**@}*/
 
   /**
@@ -127,6 +127,8 @@ public:
 
     static constexpr char const * useVtiString() { return "useVTI"; }
 
+    static constexpr char const * useTtiString() { return "useTTI"; }
+
   } waveEquationViewKeys;
 
 
@@ -156,12 +158,6 @@ public:
                             string_array const & regionNames );
 
   void prepareNextTimestep( MeshLevel & mesh );
-
-  /**
-   * @brief Computes the minimum attenuation quality factor over all the mesh. This is useful for computing anelasticity coefficients, which
-   * are usually global parameters
-   */
-  real32 computeGlobalMinQFactor();
 
 protected:
 
@@ -228,6 +224,12 @@ private:
 
   /// Flag to appliy VTI anisotropy
   integer m_useVTI;
+
+  /// Flag to appliy TTI anisotropy
+  integer m_useTTI;
+
+  real64 m_rotationMatrix[ 3 ][ 3 ]{};
+
 
 };
 
