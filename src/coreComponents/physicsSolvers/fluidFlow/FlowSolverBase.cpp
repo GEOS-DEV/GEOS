@@ -18,6 +18,7 @@
  */
 
 #include "FlowSolverBase.hpp"
+#include "mainInterface/ProblemManager.hpp"
 
 #include "constitutive/ConstitutivePassThru.hpp"
 #include "constitutive/permeability/PermeabilityFields.hpp"
@@ -360,11 +361,28 @@ void FlowSolverBase::checkDiscretizationName() const
 {
   DomainPartition const & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
-  FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
-  if( !fvManager.hasGroup< FluxApproximationBase >( m_discretizationName ) )
+  FiniteVolumeManager const & finiteVolumeManager = numericalMethodManager.getFiniteVolumeManager();
+
+  if( !finiteVolumeManager.hasGroup< FluxApproximationBase >( m_discretizationName ) )
   {
-    GEOS_ERROR( GEOS_FMT( "{}: can not find discretization named '{}' (a discretization deriving from FluxApproximationBase must be selected for {} solver '{}' )",
-                          getDataContext(), m_discretizationName, getCatalogName(), getName()));
+    string_array discretizationMethods;
+    finiteVolumeManager.forSubGroups< FluxApproximationBase >( [&]( FluxApproximationBase const & fv )
+    {
+      discretizationMethods.push_back( fv.getName() );
+    } );
+
+    if( !discretizationMethods.empty())
+    {
+      GEOS_ERROR( GEOS_FMT( "{}: can not find discretization named '{}' in 'FiniteVolume'.\nFound discretization : {}",
+                            getDataContext(), m_discretizationName, discretizationMethods,
+                            stringutilities::join( discretizationMethods, ", " )));
+    }
+    else
+    {
+      GEOS_ERROR( GEOS_FMT( "{}: can not find discretization named '{}' in 'FiniteVolume'.\n" \
+                            "No discretization found, check that you have correctly entered a numerical method",
+                            getDataContext(), m_discretizationName ));
+    }
   }
 }
 
