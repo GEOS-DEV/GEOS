@@ -7,7 +7,7 @@
       logLevel="1"
       discretization="fluidTPFA"
       temperature="368.15"
-      useMass="1"
+      useMass="0"
       useTotalMassEquation="0"
       targetRegions="{ region }">
       <NonlinearSolverParameters
