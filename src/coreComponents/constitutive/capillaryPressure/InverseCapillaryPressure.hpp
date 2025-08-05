@@ -39,8 +39,8 @@ struct CapillaryPressureEvaluate
                        arraySlice1d< real64, cappres::USD_CAPPRES - 2 > const & phaseCapPres,
                        arraySlice2d< real64, cappres::USD_CAPPRES_DS - 2 > const & dPhaseCapPres_dSaturation )
   {
-    integer constexpr MAX_NUM_PHASES = CapillaryPressureBase::MAX_NUM_PHASES;
-    integer const numPhases = phaseVolumeFraction.size();
+    // integer constexpr MAX_NUM_PHASES = CapillaryPressureBase::MAX_NUM_PHASES;
+    // integer const numPhases = phaseVolumeFraction.size();
     constexpr bool isJFunction = std::is_same_v< CAP_PRESSURE, JFunctionCapillaryPressure >;
     if constexpr ( isJFunction )
     {
@@ -182,7 +182,7 @@ InverseCapillaryPressureUpdate< CAP_PRESSURE >::compute(
   StackArray< real64, 3, 3*MAX_NUM_PHASES, cappres::LAYOUT_CAPPRES > workSpace( 1, 3, numPhases );
   StackArray< real64, 4, MAX_NUM_PHASES *MAX_NUM_PHASES, cappres::LAYOUT_CAPPRES_DS > dPhaseCapPres_dSaturation( 1, 1, numPhases, numPhases );
 
-  auto const & minPoreVolume = m_propertyLimits[MIN_PORE_VOLUME];
+  // auto const & minPoreVolume = m_propertyLimits[MIN_PORE_VOLUME];
   auto const & minSaturation = m_propertyLimits[MIN_SATURATION];
   auto const & maxSaturation = m_propertyLimits[MAX_SATURATION];
   auto const & minCapPressure = m_propertyLimits[MIN_CAP_PRESSURE];

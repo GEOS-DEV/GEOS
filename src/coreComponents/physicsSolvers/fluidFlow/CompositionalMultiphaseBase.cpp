@@ -1340,7 +1340,7 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium( DomainPartition
         getConstitutiveModel< PermeabilityBase >( subRegion, subRegion.template getReference< string >( viewKeyStruct::permeabilityNamesString() ) );
       arrayView3d< real64 const > const permeability = permeabilityMaterial.permeability();
 
-      CapillaryPressureBase const & capPressure =
+      CapillaryPressureBase & capPressure =
         getConstitutiveModel< CapillaryPressureBase >( subRegion, subRegion.template getReference< string >( viewKeyStruct::capPressureNamesString() ) );
       capPressure.initializeRockState( porosity, permeability );   // this needs to happen before calling updateCapPressureModel
       updateCapPressureModel( subRegion );
@@ -1430,19 +1430,11 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium( DomainPartition
         localIndex const k = targetSet[i];
         real64 const elevation = elemCenter[k][2];
 
-        targetPhaseCapPressure[k][ip_gas] = gasPresTableWrapper.compute( &elevation ) - waterPresTableWrapper.compute( &elevation );
+        targetPhaseCapPressure[k][ip_water] = gasPresTableWrapper.compute( &elevation ) - waterPresTableWrapper.compute( &elevation );
         // std::cout << "targetPhaseCapPressure[" << k << "][ip_gas] = " << targetPhaseCapPressure[k][ip_gas] << std::endl;
       }
 
-
-      arrayView2d<real64 const> const jFuncMultiplier = capPressure.getField<geos::fields::cappres::jFuncMultiplier>().reference().toViewConst();
-      std::cout << "jFuncMultiplier size = " << jFuncMultiplier.size() << std::endl;
-      // for ( localIndex i = 0; i < jFuncMultiplier.size(); ++i )
-      // {
-      //   std::cout << "jFuncMultiplier[" << i << "] = " << jFuncMultiplier[i] << std::endl;
-      // }
-
-      array2d< real64 > const targetPhaseVolumeFraction( targetSet.size(), numPhases - 1 );
+      array2d< real64 > const targetPhaseVolumeFraction( targetSet.size(), numPhases );
       array1d< bool > const success( targetSet.size() );
 
       constitutiveUpdatePassThru( capPressure, [&] ( auto & castCapPressure )
@@ -1451,6 +1443,14 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium( DomainPartition
         InverseCapillaryPressure< CapPressureType > inverseCapPressureType( castCapPressure );
 
         auto capPressureWrapper = inverseCapPressureType.createKernelWrapper();
+
+        array2d< real64 > jFuncMultiplierArray( targetSet.size(), numPhases - 1 );
+        arrayView2d< real64 const > jFuncMultiplier = jFuncMultiplierArray.toViewConst();
+        constexpr bool isJFunction = std::is_same_v< CapPressureType, JFunctionCapillaryPressure >;
+        if constexpr ( isJFunction )
+        {
+          jFuncMultiplier = capPressure.getField<geos::fields::cappres::jFuncMultiplier>().reference().toViewConst();
+        }
 
         forAll< parallelDevicePolicy<> >( targetSet.size(), [targetSet,
                                                              capPressureWrapper,
@@ -1463,6 +1463,9 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium( DomainPartition
           success[k] = capPressureWrapper.compute( targetPhaseCapPressure[k],
                                                    jFuncMultiplier[k],
                                                    targetPhaseVolumeFraction[k] );
+          std::cout << "k = " << k << ", success = " << success[k] << ", target pc = "
+          << targetPhaseCapPressure[k] << ", jFuncMultiplier = " << jFuncMultiplier[k]
+          << ", solved sat = " << targetPhaseVolumeFraction[k] << std::endl;
 
         } );
       } );
