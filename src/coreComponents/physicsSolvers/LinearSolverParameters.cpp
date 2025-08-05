@@ -215,6 +215,8 @@ LinearSolverParametersInput::LinearSolverParametersInput( string const & name,
     setApplyDefaultValue( m_parameters.ifact.threshold ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "ILU(T) threshold factor" );
+
+  addLogLevel< logInfo::LinearSolver >();
 }
 
 void LinearSolverParametersInput::postInputInitialization()
@@ -275,7 +277,7 @@ void LinearSolverParametersInput::postInputInitialization()
 
   // TODO input validation for other AMG parameters ?
 
-  if( getLogLevel() > 0 )
+  if( isLogLevelActive< logInfo::LinearSolver >( getLogLevel() ) )
     print();
 }
 
