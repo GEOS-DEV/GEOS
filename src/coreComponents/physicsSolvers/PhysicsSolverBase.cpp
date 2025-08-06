@@ -41,7 +41,6 @@ PhysicsSolverBase::PhysicsSolverBase( string const & name,
   ExecutableGroup( name, parent ),
   m_cflFactor(),
   m_nextDt( 1e99 ),
-  m_numTimestepsSinceLastDtCut( -1 ),
   m_dofManager( name ),
   m_linearSolverParameters( groupKeyStruct::linearSolverParametersString(), this ),
   m_nonlinearSolverParameters( groupKeyStruct::nonlinearSolverParametersString(), this ),
@@ -92,6 +91,11 @@ PhysicsSolverBase::PhysicsSolverBase( string const & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "Cut time step if linear solution fail without going until max nonlinear iterations." );
+
+  registerWrapper( viewKeyStruct::numTimestepsSinceLastDtCutString(), &m_numTimestepsSinceLastDtCut ).
+    setApplyDefaultValue( -1 ).
+    setInputFlag( InputFlags::FALSE ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ );
 
   addLogLevel< logInfo::Fields >();
   addLogLevel< logInfo::LinearSolver >();
@@ -338,7 +342,7 @@ bool PhysicsSolverBase::execute( real64 const time_n,
 
 void PhysicsSolverBase::logEndOfCycleInformation( integer const cycleNumber,
                                                   integer const numOfSubSteps,
-                                                  std::vector< real64 > const & subStepDts ) const
+                                                  stdVector< real64 > const & subStepDts ) const
 {
   LogPart logpart( "TIMESTEP", MpiWrapper::commRank() == 0 );
   logpart.addEndDescription( "- Cycle ", cycleNumber );
@@ -860,6 +864,11 @@ real64 PhysicsSolverBase::nonlinearImplicitStep( real64 const & time_n,
         if( breakLoop )
         {
           break;
+        }
+        else
+        {
+          GEOS_LOG_LEVEL_RANK_0( logInfo::NonlinearSolver,
+                                 "---------- Restarting Newton loop using default configuration. ----------" );
         }
       }
       else

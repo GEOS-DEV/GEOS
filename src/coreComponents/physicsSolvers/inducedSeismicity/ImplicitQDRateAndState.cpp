@@ -32,7 +32,6 @@ namespace geos
 
 using namespace dataRepository;
 using namespace fields;
-using namespace constitutive;
 
 ImplicitQDRateAndState::ImplicitQDRateAndState( const string & name,
                                                 Group * const parent ):

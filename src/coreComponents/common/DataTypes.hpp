@@ -99,15 +99,6 @@ using real64 = double;
 
 ///@}
 
-
-#if defined( GEOS_USE_BOUNDS_CHECK )
-
-#else
-
-#endif
-
-
-
 /**
  * @name Binary buffer data types.
  */
@@ -322,35 +313,6 @@ using CRSMatrixView = LvArray::CRSMatrixView< T, COL_INDEX, localIndex const, Lv
 //END_SPHINX_INCLUDE_00
 
 /**
- * @name Ordered and unordered map types.
- */
-///@{
-
-/**
- * @brief Base template for ordered and unordered maps.
- * @tparam TKEY key type
- * @tparam TVAL value type
- * @tparam SORTED a @p std::integral_constant<bool> indicating whether map is ordered
- */
-template< typename TKEY, typename TVAL, typename SORTED >
-class mapBase
-{};
-
-/// @cond DO_NOT_DOCUMENT
-template< typename TKEY, typename TVAL >
-class mapBase< TKEY, TVAL, std::integral_constant< bool, true > > : public std::map< TKEY, TVAL >
-{
-  using std::map< TKEY, TVAL >::map; // enable list initialization
-};
-
-template< typename TKEY, typename TVAL >
-class mapBase< TKEY, TVAL, std::integral_constant< bool, false > > : public std::unordered_map< TKEY, TVAL >
-{
-  using std::unordered_map< TKEY, TVAL >::unordered_map; // enable list initialization
-};
-/// @endcond
-
-/**
  * @brief Stream output operator for map types.
  * @tparam K key type
  * @tparam V value type
@@ -361,7 +323,7 @@ class mapBase< TKEY, TVAL, std::integral_constant< bool, false > > : public std:
  */
 template< typename K, typename V, typename SORTED >
 inline
-std::ostream & operator<< ( std::ostream & stream, mapBase< K, V, SORTED > const & map )
+std::ostream & operator<< ( std::ostream & stream, mapType< K, V, SORTED > const & map )
 {
   stream << "{\n";
   for( auto const & pair : map )
@@ -379,8 +341,6 @@ using map = mapBase< TKEY, TVAL, std::integral_constant< bool, true > >;
 /// Unordered map type.
 template< typename TKEY, typename TVAL >
 using unordered_map = mapBase< TKEY, TVAL, std::integral_constant< bool, false > >;
-
-///@}
 
 /**
  * @name Aliases for commonly used array types.

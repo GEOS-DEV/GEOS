@@ -1,6 +1,8 @@
 # Specify list of tests
 set( gtest_geosx_tests
      testBrineSalinity.cpp
+     testCO2SpycherPruessModels.cpp
+     testCO2BrinePVTModels.cpp
      testCompositionalDensity.cpp
      testCompositionalPhillipsBrineDensity.cpp
      testCompositionalPhillipsBrineViscosity.cpp
@@ -17,9 +19,9 @@ set( gtest_geosx_tests
      testModifiedCamClay.cpp
      testMultiFluidBlackOil.cpp
      testMultiFluidCO2Brine.cpp
-     testMultiFluidTwoPhaseCompositionalMultiphase.cpp
      testMultiFluidDeadOil.cpp
      testMultiFluidSelector.cpp
+     testMultiFluidTwoPhaseCompositionalMultiphase.cpp
      testNegativeTwoPhaseFlash.cpp
      testNegativeTwoPhaseFlash9Comp.cpp
      testParticleFluidEnums.cpp

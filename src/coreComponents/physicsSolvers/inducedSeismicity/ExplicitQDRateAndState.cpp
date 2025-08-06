@@ -19,13 +19,11 @@
 
 #include "ExplicitQDRateAndState.hpp"
 
-#include "dataRepository/InputFlags.hpp"
 #include "mesh/DomainPartition.hpp"
 #include "kernels/ExplicitRateAndStateKernels.hpp"
 #include "kernels/EmbeddedRungeKuttaKernels.hpp"
 #include "rateAndStateFields.hpp"
 #include "physicsSolvers/LogLevelsInfo.hpp"
-#include "physicsSolvers/solidMechanics/contact/ContactFields.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
 
 namespace geos
@@ -167,8 +165,8 @@ void ExplicitQDRateAndState::stepRateStateODESubstage( integer const stageIndex,
     {
 
       string const & frictionLawName = subRegion.template getReference< string >( viewKeyStruct::frictionLawNameString() );
-      constitutive::ConstitutiveBase & frictionLaw = subRegion.getConstitutiveModel< constitutive::ConstitutiveBase >( frictionLawName );
-      constitutive::ConstitutivePassThru< constitutive::RateAndStateFrictionBase >::execute( frictionLaw, [&] ( auto & castedFrictionLaw )
+      ConstitutiveBase & frictionLaw = subRegion.getConstitutiveModel< ConstitutiveBase >( frictionLawName );
+      ConstitutivePassThru< RateAndStateFrictionBase >::execute( frictionLaw, [&] ( auto & castedFrictionLaw )
       {
         rateAndStateKernels::createAndlaunchStepRateStateODESubstage( subRegion, castedFrictionLaw, m_butcherTable, stageIndex, dt , m_successfulStep);
       } );
@@ -189,8 +187,8 @@ void ExplicitQDRateAndState::stepRateStateODEAndComputeError( real64 const dt, D
     {
 
       string const & frictionLawName = subRegion.template getReference< string >( viewKeyStruct::frictionLawNameString() );
-      constitutive::ConstitutiveBase & frictionLaw = getConstitutiveModel< constitutive::ConstitutiveBase >( subRegion, frictionLawName );
-      constitutive::ConstitutivePassThru< constitutive::RateAndStateFrictionBase >::execute( frictionLaw, [&] ( auto & castedFrictionLaw )
+      ConstitutiveBase & frictionLaw = getConstitutiveModel< ConstitutiveBase >( subRegion, frictionLawName );
+      ConstitutivePassThru< RateAndStateFrictionBase >::execute( frictionLaw, [&] ( auto & castedFrictionLaw )
       {
         rateAndStateKernels::createAndlaunchStepRateStateODEAndComputeError( subRegion,
                                                                              castedFrictionLaw,

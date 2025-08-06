@@ -949,7 +949,7 @@ AssemblerKernelHelper::
   }
 }
 
-template< integer NF, integer NC, integer NP >
+template< integer NF, integer NC >
 GEOS_HOST_DEVICE
 inline
 void
@@ -1142,17 +1142,17 @@ AssemblerKernel::
 
   // use the computed one sided vol fluxes to assemble the constraints
   // enforcing flux continuity at this element's faces
-  AssemblerKernelHelper::assembleFaceConstraints< NF, NC, NP >( faceDofNumber,
-                                                                faceGhostRank,
-                                                                elemToFaces,
-                                                                elemDofNumber[er][esr][ei],
-                                                                rankOffset,
-                                                                oneSidedVolFlux,
-                                                                dOneSidedVolFlux_dPres,
-                                                                dOneSidedVolFlux_dFacePres,
-                                                                dOneSidedVolFlux_dCompDens,
-                                                                localMatrix,
-                                                                localRhs );
+  AssemblerKernelHelper::assembleFaceConstraints< NF, NC >( faceDofNumber,
+                                                            faceGhostRank,
+                                                            elemToFaces,
+                                                            elemDofNumber[er][esr][ei],
+                                                            rankOffset,
+                                                            oneSidedVolFlux,
+                                                            dOneSidedVolFlux_dPres,
+                                                            dOneSidedVolFlux_dFacePres,
+                                                            dOneSidedVolFlux_dCompDens,
+                                                            localMatrix,
+                                                            localRhs );
 }
 
 /******************************** FluxKernel ********************************/
