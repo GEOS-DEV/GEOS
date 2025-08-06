@@ -790,7 +790,6 @@ MultiFluidBase::KernelWrapper::
     totalMolality += compMoleFrac[ic];
   }
 
-  GEOS_ERROR_IF( totalMolality < LvArray::NumericLimits< real64 >::epsilon, "Zero total molality, all component concentrations are equal to zero." );
   real64 const totalMolalityInv = 1.0 / totalMolality;
   for( integer ic = 0; ic < numComps; ++ic )
   {
