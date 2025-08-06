@@ -139,14 +139,107 @@ void InvariantImmiscibleFluid::KernelWrapper::compute( real64 const pressure,
 
   integer nPhase = phaseDensity.value.size();
   integer nComp = phaseCompFraction.value.size( 1 );
+  
+  // Create local storage vector for s with nPhase size
+  real64 s[3];
+  // Create container for derivatives of s with respect to composition
+  real64 ds_dcomp[3][3];
+  
+  if (nPhase == 2) {
+          // Precompute common terms
+          real64 denom = m_densities[0] - composition[0] * m_densities[0] + composition[0] * m_densities[1];
+          real64 denom_squared = denom * denom;
 
-  // phase fractions = composition (assumed composition per phase)
+          // Loop without conditionals
+          for (integer ip = 0; ip < 2; ++ip) {
+              real64 sign = (ip == 0) ? 1.0 : -1.0;
+              real64 numerator = (ip == 0) ? composition[0] * m_densities[1] : (-m_densities[0] + composition[0] * m_densities[0]);
+              s[ip] = sign * numerator / denom;
+              
+              // Calculate derivatives with respect to composition[0]
+              // For ip=0: d(s[0])/d(comp[0]) = d(comp[0]*m_densities[1]/denom)/d(comp[0])
+              // For ip=1: d(s[1])/d(comp[0]) = d((-m_densities[0]+comp[0]*m_densities[0])/denom)/d(comp[0])
+              real64 dnumerator_dcomp0 = (ip == 0) ? m_densities[1] : m_densities[0];
+              real64 ddenom_dcomp0 = -m_densities[0] + m_densities[1];
+              
+              // Quotient rule: d(num/denom)/dx = (denom*dnum/dx - num*ddenom/dx)/denom^2
+              ds_dcomp[ip][0] = sign * (denom * dnumerator_dcomp0 - numerator * ddenom_dcomp0) / denom_squared;
+              
+              // For 2-phase system, we have only one composition variable (comp[0])
+              // Zero out other derivatives
+              for (integer ic = 1; ic < nComp; ++ic) {
+                  ds_dcomp[ip][ic] = 0.0;
+              }
+          }
+
+    } else if (nPhase == 3) {
+        // Precompute common terms
+        real64 denom = composition[2]*m_densities[0]*m_densities[1] + composition[1]*m_densities[0]*m_densities[2] + m_densities[1]*m_densities[2]
+                     - composition[1]*m_densities[1]*m_densities[2] - composition[2]*m_densities[1]*m_densities[2];
+        real64 denom_squared = denom * denom;
+
+        // Numerators for each ip
+        real64 numerators[3];
+        numerators[0] = -( -m_densities[1]*m_densities[2] + composition[1]*m_densities[1]*m_densities[2] + composition[2]*m_densities[1]*m_densities[2] );
+        numerators[1] = composition[1]*m_densities[0]*m_densities[2];
+        numerators[2] = composition[2]*m_densities[0]*m_densities[1];
+
+        // Calculate derivatives of denominator with respect to each composition
+        real64 ddenom_dcomp[3];
+        ddenom_dcomp[0] = 0.0; // Derivative with respect to comp[0] - not present in denom
+        ddenom_dcomp[1] = m_densities[0]*m_densities[2] - m_densities[1]*m_densities[2]; // d(denom)/d(comp[1])
+        ddenom_dcomp[2] = m_densities[0]*m_densities[1] - m_densities[1]*m_densities[2]; // d(denom)/d(comp[2])
+
+        // Loop without conditionals
+        for (integer ip = 0; ip < 3; ++ip) {
+            real64 sign = (ip == 0) ? -1.0 : -1.0; // all negatives
+            s[ip] = sign * numerators[ip] / denom;
+            
+            // Calculate derivatives of numerator with respect to compositions
+            real64 dnumerator_dcomp[3];
+            
+            if (ip == 0) {
+                dnumerator_dcomp[0] = 0.0; // No comp[0] in numerator[0]
+                dnumerator_dcomp[1] = -m_densities[1]*m_densities[2]; // d(numerator[0])/d(comp[1])
+                dnumerator_dcomp[2] = -m_densities[1]*m_densities[2]; // d(numerator[0])/d(comp[2])
+            } else if (ip == 1) {
+                dnumerator_dcomp[0] = 0.0; // No comp[0] in numerator[1]
+                dnumerator_dcomp[1] = m_densities[0]*m_densities[2]; // d(numerator[1])/d(comp[1])
+                dnumerator_dcomp[2] = 0.0; // No comp[2] in numerator[1]
+            } else { // ip == 2
+                dnumerator_dcomp[0] = 0.0; // No comp[0] in numerator[2]
+                dnumerator_dcomp[1] = 0.0; // No comp[1] in numerator[2]
+                dnumerator_dcomp[2] = m_densities[0]*m_densities[1]; // d(numerator[2])/d(comp[2])
+            }
+            
+            // Apply quotient rule for each composition variable
+            for (integer ic = 0; ic < nComp; ++ic) {
+                // Quotient rule: d(num/denom)/dx = (denom*dnum/dx - num*ddenom/dx)/denom^2
+                ds_dcomp[ip][ic] = sign * (denom * dnumerator_dcomp[ic] - numerators[ip] * ddenom_dcomp[ic]) / denom_squared;
+            }
+        }
+
+    } else {
+        // Use device-compatible error handling
+        #ifndef GEOS_USE_DEVICE_CODE
+        std::cerr << "Unsupported number of phases: " << nPhase << std::endl;
+        #endif
+        
+        // Initialize ds_dcomp to zeros for unsupported cases
+        for (integer ip = 0; ip < 3; ++ip) {
+            for (integer ic = 0; ic < 3; ++ic) {
+                ds_dcomp[ip][ic] = 0.0;
+            }
+        }
+    }
+  
+
   for( integer ip=0; ip<nPhase; ++ip )
   {
-    phaseFraction.value[ip] = composition[ip];
-    // derivatives zero
+    phaseFraction.value[ip] = s[ip];
+    // Set derivatives of phase fraction with respect to composition
     for( integer d=0; d<phaseFraction.derivs[ip].size( 0 ); ++d )
-      phaseFraction.derivs[ip][d] = 0.0;
+      phaseFraction.derivs[ip][d] = 0.0; //ds_dcomp[ip][d];
 
     // densities and viscosities constant
     phaseDensity.value[ip] = m_densities[ip];

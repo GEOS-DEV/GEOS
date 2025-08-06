@@ -6,13 +6,14 @@
     <CompositionalMultiphaseFVM
       name="FlowSolver"
       discretization="fluidTPFA"
+      formulationType="OverallComposition"
       targetRegions="{ Domain }"
       logLevel="3"
       temperature="300">
       <NonlinearSolverParameters
-        newtonTol="1.0e-4"
-        newtonMaxIter="50"
-        maxTimeStepCuts="15"
+        newtonTol="1.0e-3"
+        newtonMaxIter="100"
+        maxTimeStepCuts="50"
         lineSearchAction="None"/>
       <LinearSolverParameters
         directParallel="0"/>
@@ -28,7 +29,7 @@
       zCoords="{ 0, 7 }"
       nx="{ 1 }"
       ny="{ 1 }"
-      nz="{ 140 }"
+      nz="{ 280 }"
       cellBlockNames="{ blocks }"/>
   </Mesh>
 
@@ -43,12 +44,12 @@
     maxTime="432000">
     <PeriodicEvent
       name="outputs"
-      timeFrequency="864"
+      timeFrequency="86.40"
       target="/Outputs/vtkOutput_InvariantFluid"/>
 
     <PeriodicEvent
       name="solverApplications"
-      forceDt="86.4"
+      forceDt="86.40"
       target="/Solvers/FlowSolver"/>
 
     <PeriodicEvent
@@ -61,7 +62,8 @@
   <NumericalMethods>
     <FiniteVolume>
       <TwoPointFluxApproximation
-        name="fluidTPFA"/>
+        name="fluidTPFA"
+        upwindingScheme="HU2PH"/>
     </FiniteVolume>
   </NumericalMethods>
 
@@ -78,8 +80,8 @@
       name="fluid"
       componentNames="{ CH4, H2O }"
       phaseNames="{ gas, water }"
-      componentMolarWeight="{ 18.0, 18.0 }"
-      densities="{ 775.0, 1000.0 }"
+      componentMolarWeight="{ 1.0, 1.0 }"
+      densities="{ 550.0, 1000.0 }"
       viscosities="{ 1.0e-3, 1e-3 }"/>
 
     <CompressibleSolidConstantPermeability
@@ -114,7 +116,7 @@
     <HydrostaticEquilibrium
       name="equil"
       objectPath="ElementRegions"      
-      datumElevation="20"
+      datumElevation="7"
       datumPressure="1e7"
       initialPhaseName="water"
       componentNames="{ CH4, H2O }"
