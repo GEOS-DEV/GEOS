@@ -64,7 +64,7 @@ public:
                    arrayView1d< real64 const > const & shapeParameter,
                    arrayView2d< real64 > const & newPreConsolidationPressure,
                    arrayView2d< real64 > const & oldPreConsolidationPressure,
-                   arrayView1d< real64 const > const & bulkModulus,
+                   arrayView1d< real64 > const & bulkModulus,
                    arrayView1d< real64 const > const & shearModulus,
                    arrayView1d< real64 const > const & thermalExpansionCoefficient,
                    arrayView3d< real64, solid::STRESS_USD > const & newStress,

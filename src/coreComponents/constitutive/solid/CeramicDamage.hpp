@@ -93,7 +93,8 @@ public:
                         int const & thirdInvariantDependence,
                         arrayView3d< real64 > const & velocityGradient,
                         arrayView3d< real64 > const & plasticStrain,
-                        arrayView1d< real64 const > const & bulkModulus,
+                        //arrayView1d< real64 const > const & bulkModulus,
+                        arrayView1d< real64 > const & bulkModulus,  //added by SG or rather removed real64 const
                         arrayView1d< real64 const > const & shearModulus,
                         arrayView1d< real64 const > const & thermalExpansionCoefficient,
                         arrayView3d< real64, solid::STRESS_USD > const & newStress,
@@ -329,6 +330,22 @@ void CeramicDamageUpdates::smallStrainUpdate( localIndex const k,
                                               real64 ( & stress )[6],
                                               real64 ( & stiffness )[6][6] ) const
 {
+
+  m_jacobian[k][q] *= exp( strainIncrement[0] + strainIncrement[1] + strainIncrement[2] ); //changed
+
+  real64 epsilon_v = log(m_jacobian[k][q]);
+
+  real64 S=1.61;  //for concrete
+  real64 C0=3.7;
+  real64 rho0=2.4;
+  real64 K_0= rho0*C0*C0; 
+
+  real64 num=C0*C0*rho0*exp(epsilon_v)*(S+1-S*exp(epsilon_v));
+  real64 den=pow((S*exp(epsilon_v)-S+1),3);
+
+
+  m_bulkModulus[k] = fmax(K_0,num/den); // to be changed by SG
+  
   // Elastic trial update (assume strainIncrement is all elastic)
   ElasticIsotropicUpdates::smallStrainUpdate( k, 
                                               q, 
@@ -336,7 +353,7 @@ void CeramicDamageUpdates::smallStrainUpdate( localIndex const k,
                                               strainIncrement, 
                                               stress, 
                                               stiffness );
-  m_jacobian[k][q] *= exp( strainIncrement[0] + strainIncrement[1] + strainIncrement[2] );
+  
 
   if( m_disableInelasticity )
   {
@@ -877,8 +894,8 @@ public:
    * @brief Create a instantiation of the CeramicDamageUpdate class that refers to the data in this.
    * @return An instantiation of CeramicDamageUpdate.
    */
-  CeramicDamageUpdates createKernelUpdates() const
-  {
+  CeramicDamageUpdates createKernelUpdates() const//removed const by SG
+  { 
     return CeramicDamageUpdates( m_damage,
                                  m_jacobian,
                                  m_lengthScale,
@@ -893,7 +910,7 @@ public:
                                  m_thirdInvariantDependence,
                                  m_velocityGradient,
                                  m_plasticStrain,
-                                 m_bulkModulus,
+                                 m_bulkModulus, //added toView by SG     
                                  m_shearModulus,
                                  m_thermalExpansionCoefficient,
                                  m_newStress,

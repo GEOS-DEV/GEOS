@@ -49,7 +49,7 @@ public:
    * @param[in] oldStress    The ArrayView holding the old stress data for each quadrature point.
    * @param[in] disableInelasticity Flag to disable plasticity for inelastic models
    */
-  HyperelasticUpdates( arrayView1d< real64 const > const & bulkModulus,
+  HyperelasticUpdates( arrayView1d< real64 > const & bulkModulus,
                        arrayView1d< real64 const > const & shearModulus,
                        arrayView1d< real64 const > const & thermalExpansionCoefficient,
                        arrayView3d< real64, solid::STRESS_USD > const & newStress,

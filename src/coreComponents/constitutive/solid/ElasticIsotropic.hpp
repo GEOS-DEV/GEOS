@@ -50,7 +50,7 @@ public:
    * @param[in] oldStress    The ArrayView holding the old stress data for each quadrature point.
    * @param[in] disableInelasticity Flag to disable plasticity for inelastic models
    */
-  ElasticIsotropicUpdates( arrayView1d< real64 const > const & bulkModulus,
+  ElasticIsotropicUpdates( arrayView1d< real64 > const & bulkModulus,
                            arrayView1d< real64 const > const & shearModulus,
                            arrayView1d< real64 const > const & thermalExpansionCoefficient,
                            arrayView3d< real64, solid::STRESS_USD > const & newStress,
@@ -186,7 +186,7 @@ public:
 protected:
 
   /// A reference to the ArrayView holding the bulk modulus for each element.
-  arrayView1d< real64 const > const m_bulkModulus;
+  arrayView1d< real64 > const m_bulkModulus; //removed constatnt by SG
 
   /// A reference to the ArrayView holding the shear modulus for each element.
   arrayView1d< real64 const > const m_shearModulus;

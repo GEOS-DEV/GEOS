@@ -76,7 +76,7 @@ public:
                                  real64 const & shearSofteningShapeParameter2,
                                  real64 const & maximumStretch,
                                  // arrayView2d< real64 > const & thermalSoftening,
-                                 arrayView1d< real64 const > const & bulkModulus,
+                                 arrayView1d< real64 > const & bulkModulus,
                                  arrayView1d< real64 const > const & shearModulus,
                                  arrayView1d< real64 const > const & thermalExpansionCoefficient,
                                  arrayView3d< real64, solid::STRESS_USD > const & newStress,
