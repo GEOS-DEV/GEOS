@@ -59,9 +59,12 @@ bool StabilityTest::compute( integer const numComps,
   arraySlice1d< real64 > residual = workSpace[3];
   arraySlice1d< real64 > hyperplane = workSpace[4];   // h-parameter
   stackArray1d< integer, maxNumComps > availableComponents( numComps );
+  stackArray1d< integer, maxNumComps > unavailableComponents( numComps );
 
   calculatePresentComponents( numComps, composition, availableComponents );
+  calculateAbsentComponents( numComps, composition, unavailableComponents );
   auto const presentComponents = availableComponents.toSliceConst();
+  auto const absentComponents = unavailableComponents.toSliceConst();
 
   LvArray::forValuesInSlice( workSpace.toSlice(), setZero );
 
@@ -85,7 +88,7 @@ bool StabilityTest::compute( integer const numComps,
   for( integer configStep = 0; configStep < numConfigSteps; ++configStep )
   {
     EquationOfStateType const sampleEos = (configStep == 0) ? flashData.liquidEos : flashData.vapourEos;
-    EquationOfStateType const incipientEos = (configStep == 0) ? flashData.vapourEos : flashData.liquidEos;
+    EquationOfStateType const incipientEos = sampleEos;
 
     real64 tpd = 0.0;
 
@@ -156,13 +159,6 @@ bool StabilityTest::compute( integer const numComps,
         {
           logTestComposition[ic] -= residual[ic];
         }
-        std::cout << configStep << " "
-                  << std::fixed << std::setprecision( 0 ) << std::setw( 3 ) << alpha << " "
-                  << std::setw( 3 ) << iterationCount << " "
-                  << std::scientific << std::setprecision( 6 ) << std::setw( 13 ) << tpd << " "
-                  << std::scientific << std::setprecision( 6 ) << std::setw( 13 ) << error << " "
-                  << std::fixed << std::setprecision( 6 ) << testComposition << " "
-                  << "\n";
 
         // Check stationarity
         if( error < stabilitySSITolerance )
@@ -171,7 +167,6 @@ bool StabilityTest::compute( integer const numComps,
           break;
         }
       }
-      std::cout << "----------\n";
 
       // Start with Newton iterations
       for(; iterationCount < maxIterations; ++iterationCount )
@@ -194,6 +189,10 @@ bool StabilityTest::compute( integer const numComps,
                                                      derivatives.toSlice(),
                                                      residual,
                                                      jacobian.toSlice() );
+        for( integer const ic : absentComponents )
+        {
+          jacobian(ic, ic) = 1.0;
+        }
         solveLinearSystem( jacobian.toSlice(), residual );
         // Update to next step
         for( integer const ic : presentComponents )
@@ -201,13 +200,6 @@ bool StabilityTest::compute( integer const numComps,
           logTestComposition[ic] -= residual[ic];
         }
 
-        std::cout << configStep << " "
-                  << std::fixed << std::setprecision( 0 ) << std::setw( 3 ) << alpha << " "
-                  << std::setw( 3 ) << iterationCount << " "
-                  << std::scientific << std::setprecision( 6 ) << std::setw( 13 ) << tpd << " "
-                  << std::scientific << std::setprecision( 6 ) << std::setw( 13 ) << error << " "
-                  << std::fixed << std::setprecision( 6 ) << testComposition << " "
-                  << "\n";
         // Check stationarity
         if( error < stabilityTolerance )
         {
@@ -215,7 +207,6 @@ bool StabilityTest::compute( integer const numComps,
           break;
         }
       }
-      std::cout << "-----------------------------------------------------------------\n";
       allConverged = allConverged && converged;
 
       // Calculate the tangent-plane-distance (TPD) and distance to the trivial solution

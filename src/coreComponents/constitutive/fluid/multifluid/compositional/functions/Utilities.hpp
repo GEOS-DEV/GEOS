@@ -113,6 +113,77 @@ static integer calculatePresentComponents( integer const numComps,
 }
 
 /**
+ * @brief Calculate which components are absent.
+ * @details Creates a list of indices whose components have zero mole fraction.
+ * @param[in] numComps number of components
+ * @param[in] composition the composition of the fluid
+ * @param[out] absentComponents the list of absent components
+ * @return the number of absent components
+ */
+template< integer USD, typename ARRAY >
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
+static integer calculateAbsentComponents( integer const numComps,
+                                          arraySlice1d< real64 const, USD > const & composition,
+                                          ARRAY & absentComponents )
+{
+  // Check for machine-zero feed values
+  integer absentCount = 0;
+  for( integer ic = 0; ic < numComps; ++ic )
+  {
+    if( composition[ic] < MultiFluidConstants::minForSpeciesPresence )
+    {
+      absentComponents[absentCount++] = ic;
+    }
+  }
+  absentComponents.resize( absentCount );
+  return absentCount;
+}
+
+/**
+ * @brief Determines whether a given composition represents a pure or nearly pure mixture.
+ *
+ * This function checks the mole fractions in a composition array to determine if the mixture
+ * consists of a single dominant component (pure or almost pure). It identifies the index of the
+ * component that is either strictly pure (all others are zero) or nearly pure (others are below a threshold).
+ *
+ * @tparam USD The stride or layout parameter for the array slice.
+ *
+ * @param[in] numComps Number of components in the composition array.
+ * @param[in] composition Array slice containing the mole fractions of each component.
+ * @param[out] pureComponent Index of the component that is strictly pure (only one non-zero mole fraction),
+ *                           or -1 if no such component exists.
+ * @param[out] almostPureComponent Index of the component that is nearly pure (others below a threshold),
+ *                                 or -1 if no such component exists.
+ * @return true if a strictly pure component is found (i.e., only one component has a significant mole fraction),
+ *         false otherwise.
+ */
+template< integer USD >
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
+static bool checkPureMixture( integer const numComps,
+                              arraySlice1d< real64 const, USD > const & composition,
+                              integer & pureComponent,
+                              integer & almostPureComponent )
+{
+  pureComponent = -1;
+  almostPureComponent = -1;
+  for( integer ic = 0; ic < numComps; ++ic )
+  {
+    real64 const zi1 = 1.0 - composition[ic];
+    if( zi1 < MultiFluidConstants::minForSpeciesPresence )
+    {
+      pureComponent = ic;
+    }
+    if( zi1 < MultiFluidConstants::almostPureThreshold )
+    {
+      almostPureComponent = ic;
+    }
+  }
+  return (0 <= pureComponent);
+}
+
+/**
  * @brief Solve the lineat system for the derivatives of the flash
  * @param[in/out] A the coefficient matrix. Destroyed after call
  * @param[in/out] X the rhs and solution
