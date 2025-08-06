@@ -157,18 +157,18 @@ Element: CeramicDamage
 .. include:: ../../coreComponents/schema/docs/CeramicDamage.rst
 
 
+.. _XML_Chiumenti:
+
+Element: Chiumenti
+==================
+.. include:: ../../coreComponents/schema/docs/Chiumenti.rst
+
+
 .. _XML_ChomboIO:
 
 Element: ChomboIO
 =================
 .. include:: ../../coreComponents/schema/docs/ChomboIO.rst
-
-
-.. _XML_CompositeFunction:
-
-Element: CompositeFunction
-==========================
-.. include:: ../../coreComponents/schema/docs/CompositeFunction.rst
 
 
 .. _XML_CompositionalMultiphaseFVM:
@@ -318,6 +318,13 @@ Element: Constitutive
 .. include:: ../../coreComponents/schema/docs/Constitutive.rst
 
 
+.. _XML_ContinuumBase:
+
+Element: ContinuumBase
+======================
+.. include:: ../../coreComponents/schema/docs/ContinuumBase.rst
+
+
 .. _XML_Coulomb:
 
 Element: Coulomb
@@ -437,6 +444,13 @@ Element: ElasticTransverseIsotropic
 .. include:: ../../coreComponents/schema/docs/ElasticTransverseIsotropic.rst
 
 
+.. _XML_ElasticTransverseIsotropicPressureDependent:
+
+Element: ElasticTransverseIsotropicPressureDependent
+====================================================
+.. include:: ../../coreComponents/schema/docs/ElasticTransverseIsotropicPressureDependent.rst
+
+
 .. _XML_ElementRegions:
 
 Element: ElementRegions
@@ -535,11 +549,32 @@ Element: Functions
 .. include:: ../../coreComponents/schema/docs/Functions.rst
 
 
+.. _XML_Gas:
+
+Element: Gas
+============
+.. include:: ../../coreComponents/schema/docs/Gas.rst
+
+
+.. _XML_Geomechanics:
+
+Element: Geomechanics
+=====================
+.. include:: ../../coreComponents/schema/docs/Geomechanics.rst
+
+
 .. _XML_Geometry:
 
 Element: Geometry
 =================
 .. include:: ../../coreComponents/schema/docs/Geometry.rst
+
+
+.. _XML_Graphite:
+
+Element: Graphite
+=================
+.. include:: ../../coreComponents/schema/docs/Graphite.rst
 
 
 .. _XML_HaltEvent:
@@ -575,6 +610,20 @@ Element: HydrofractureInitialization
 Element: HydrostaticEquilibrium
 ===============================
 .. include:: ../../coreComponents/schema/docs/HydrostaticEquilibrium.rst
+
+
+.. _XML_Hyperelastic:
+
+Element: Hyperelastic
+=====================
+.. include:: ../../coreComponents/schema/docs/Hyperelastic.rst
+
+
+.. _XML_HyperelasticMMS:
+
+Element: HyperelasticMMS
+========================
+.. include:: ../../coreComponents/schema/docs/HyperelasticMMS.rst
 
 
 .. _XML_Included:
@@ -631,6 +680,13 @@ Element: LinearIsotropicDispersion
 Element: LinearSolverParameters
 ===============================
 .. include:: ../../coreComponents/schema/docs/LinearSolverParameters.rst
+
+
+.. _XML_MPMEvents:
+
+Element: MPMEvents
+==================
+.. include:: ../../coreComponents/schema/docs/MPMEvents.rst
 
 
 .. _XML_Mesh:
@@ -1172,6 +1228,13 @@ Element: SlipDependentPermeability
 .. include:: ../../coreComponents/schema/docs/SlipDependentPermeability.rst
 
 
+.. _XML_SolidBase:
+
+Element: SolidBase
+==================
+.. include:: ../../coreComponents/schema/docs/SolidBase.rst
+
+
 .. _XML_SolidInternalEnergy:
 
 Element: SolidInternalEnergy
@@ -1263,6 +1326,13 @@ Element: SourceFluxStatistics
 .. include:: ../../coreComponents/schema/docs/SourceFluxStatistics.rst
 
 
+.. _XML_StrainHardeningPolymer:
+
+Element: StrainHardeningPolymer
+===============================
+.. include:: ../../coreComponents/schema/docs/StrainHardeningPolymer.rst
+
+
 .. _XML_SurfaceElementRegion:
 
 Element: SurfaceElementRegion
@@ -1275,13 +1345,6 @@ Element: SurfaceElementRegion
 Element: SurfaceGenerator
 =========================
 .. include:: ../../coreComponents/schema/docs/SurfaceGenerator.rst
-
-
-.. _XML_SymbolicFunction:
-
-Element: SymbolicFunction
-=========================
-.. include:: ../../coreComponents/schema/docs/SymbolicFunction.rst
 
 
 .. _XML_TableCapillaryPressure:
@@ -1424,6 +1487,13 @@ Element: ViscoModifiedCamClay
 .. include:: ../../coreComponents/schema/docs/ViscoModifiedCamClay.rst
 
 
+.. _XML_VonMisesJ:
+
+Element: VonMisesJ
+==================
+.. include:: ../../coreComponents/schema/docs/VonMisesJ.rst
+
+
 .. _XML_WellControls:
 
 Element: WellControls
@@ -1498,6 +1568,13 @@ Datastructure: AcousticVTISEM
 .. include:: ../../coreComponents/schema/docs/AcousticVTISEM_other.rst
 
 
+.. _DATASTRUCTURE_Anneal:
+
+Datastructure: Anneal
+=====================
+.. include:: ../../coreComponents/schema/docs/Anneal_other.rst
+
+
 .. _DATASTRUCTURE_Aquifer:
 
 Datastructure: Aquifer
@@ -1531,6 +1608,20 @@ Datastructure: BlackOilFluid
 Datastructure: Blueprint
 ========================
 .. include:: ../../coreComponents/schema/docs/Blueprint_other.rst
+
+
+.. _DATASTRUCTURE_BodyForceUpdate:
+
+Datastructure: BodyForceUpdate
+==============================
+.. include:: ../../coreComponents/schema/docs/BodyForceUpdate_other.rst
+
+
+.. _DATASTRUCTURE_BoreholePressure:
+
+Datastructure: BoreholePressure
+===============================
+.. include:: ../../coreComponents/schema/docs/BoreholePressure_other.rst
 
 
 .. _DATASTRUCTURE_Box:
@@ -1617,6 +1708,13 @@ Datastructure: CeramicDamage
 .. include:: ../../coreComponents/schema/docs/CeramicDamage_other.rst
 
 
+.. _DATASTRUCTURE_Chiumenti:
+
+Datastructure: Chiumenti
+========================
+.. include:: ../../coreComponents/schema/docs/Chiumenti_other.rst
+
+
 .. _DATASTRUCTURE_ChomboIO:
 
 Datastructure: ChomboIO
@@ -1624,11 +1722,11 @@ Datastructure: ChomboIO
 .. include:: ../../coreComponents/schema/docs/ChomboIO_other.rst
 
 
-.. _DATASTRUCTURE_CompositeFunction:
+.. _DATASTRUCTURE_CohesiveZoneReference:
 
-Datastructure: CompositeFunction
-================================
-.. include:: ../../coreComponents/schema/docs/CompositeFunction_other.rst
+Datastructure: CohesiveZoneReference
+====================================
+.. include:: ../../coreComponents/schema/docs/CohesiveZoneReference_other.rst
 
 
 .. _DATASTRUCTURE_CompositionalMultiphaseFVM:
@@ -1757,6 +1855,13 @@ Datastructure: CompressibleSolidWillisRichardsPermeability
 .. include:: ../../coreComponents/schema/docs/CompressibleSolidWillisRichardsPermeability_other.rst
 
 
+.. _DATASTRUCTURE_ConfiningPressure:
+
+Datastructure: ConfiningPressure
+================================
+.. include:: ../../coreComponents/schema/docs/ConfiningPressure_other.rst
+
+
 .. _DATASTRUCTURE_ConstantDiffusion:
 
 Datastructure: ConstantDiffusion
@@ -1785,11 +1890,25 @@ Datastructure: ConstitutiveModels
 .. include:: ../../coreComponents/schema/docs/ConstitutiveModels_other.rst
 
 
+.. _DATASTRUCTURE_ContinuumBase:
+
+Datastructure: ContinuumBase
+============================
+.. include:: ../../coreComponents/schema/docs/ContinuumBase_other.rst
+
+
 .. _DATASTRUCTURE_Coulomb:
 
 Datastructure: Coulomb
 ======================
 .. include:: ../../coreComponents/schema/docs/Coulomb_other.rst
+
+
+.. _DATASTRUCTURE_CrystalHeal:
+
+Datastructure: CrystalHeal
+==========================
+.. include:: ../../coreComponents/schema/docs/CrystalHeal_other.rst
 
 
 .. _DATASTRUCTURE_CustomPolarObject:
@@ -1832,6 +1951,13 @@ Datastructure: DamageVolDevElasticIsotropic
 Datastructure: DeadOilFluid
 ===========================
 .. include:: ../../coreComponents/schema/docs/DeadOilFluid_other.rst
+
+
+.. _DATASTRUCTURE_DeformationUpdate:
+
+Datastructure: DeformationUpdate
+================================
+.. include:: ../../coreComponents/schema/docs/DeformationUpdate_other.rst
 
 
 .. _DATASTRUCTURE_DelftEgg:
@@ -1902,6 +2028,13 @@ Datastructure: ElasticSEM
 Datastructure: ElasticTransverseIsotropic
 =========================================
 .. include:: ../../coreComponents/schema/docs/ElasticTransverseIsotropic_other.rst
+
+
+.. _DATASTRUCTURE_ElasticTransverseIsotropicPressureDependent:
+
+Datastructure: ElasticTransverseIsotropicPressureDependent
+==========================================================
+.. include:: ../../coreComponents/schema/docs/ElasticTransverseIsotropicPressureDependent_other.rst
 
 
 .. _DATASTRUCTURE_ElementRegions:
@@ -1988,6 +2121,13 @@ Datastructure: FlowProppantTransport
 .. include:: ../../coreComponents/schema/docs/FlowProppantTransport_other.rst
 
 
+.. _DATASTRUCTURE_FrictionCoefficientSwap:
+
+Datastructure: FrictionCoefficientSwap
+======================================
+.. include:: ../../coreComponents/schema/docs/FrictionCoefficientSwap_other.rst
+
+
 .. _DATASTRUCTURE_FrictionlessContact:
 
 Datastructure: FrictionlessContact
@@ -2002,6 +2142,20 @@ Datastructure: Functions
 .. include:: ../../coreComponents/schema/docs/Functions_other.rst
 
 
+.. _DATASTRUCTURE_Gas:
+
+Datastructure: Gas
+==================
+.. include:: ../../coreComponents/schema/docs/Gas_other.rst
+
+
+.. _DATASTRUCTURE_Geomechanics:
+
+Datastructure: Geomechanics
+===========================
+.. include:: ../../coreComponents/schema/docs/Geomechanics_other.rst
+
+
 .. _DATASTRUCTURE_Geometry:
 
 Datastructure: Geometry
@@ -2009,11 +2163,25 @@ Datastructure: Geometry
 .. include:: ../../coreComponents/schema/docs/Geometry_other.rst
 
 
+.. _DATASTRUCTURE_Graphite:
+
+Datastructure: Graphite
+=======================
+.. include:: ../../coreComponents/schema/docs/Graphite_other.rst
+
+
 .. _DATASTRUCTURE_HaltEvent:
 
 Datastructure: HaltEvent
 ========================
 .. include:: ../../coreComponents/schema/docs/HaltEvent_other.rst
+
+
+.. _DATASTRUCTURE_Heal:
+
+Datastructure: Heal
+===================
+.. include:: ../../coreComponents/schema/docs/Heal_other.rst
 
 
 .. _DATASTRUCTURE_HybridMimeticDiscretization:
@@ -2044,11 +2212,39 @@ Datastructure: HydrostaticEquilibrium
 .. include:: ../../coreComponents/schema/docs/HydrostaticEquilibrium_other.rst
 
 
+.. _DATASTRUCTURE_Hyperelastic:
+
+Datastructure: Hyperelastic
+===========================
+.. include:: ../../coreComponents/schema/docs/Hyperelastic_other.rst
+
+
+.. _DATASTRUCTURE_HyperelasticMMS:
+
+Datastructure: HyperelasticMMS
+==============================
+.. include:: ../../coreComponents/schema/docs/HyperelasticMMS_other.rst
+
+
 .. _DATASTRUCTURE_Included:
 
 Datastructure: Included
 =======================
 .. include:: ../../coreComponents/schema/docs/Included_other.rst
+
+
+.. _DATASTRUCTURE_InitializeStress:
+
+Datastructure: InitializeStress
+===============================
+.. include:: ../../coreComponents/schema/docs/InitializeStress_other.rst
+
+
+.. _DATASTRUCTURE_InsertPeriodicContactSurfaces:
+
+Datastructure: InsertPeriodicContactSurfaces
+============================================
+.. include:: ../../coreComponents/schema/docs/InsertPeriodicContactSurfaces_other.rst
 
 
 .. _DATASTRUCTURE_InternalMesh:
@@ -2105,6 +2301,27 @@ Datastructure: LinearIsotropicDispersion
 Datastructure: LinearSolverParameters
 =====================================
 .. include:: ../../coreComponents/schema/docs/LinearSolverParameters_other.rst
+
+
+.. _DATASTRUCTURE_MPMEvents:
+
+Datastructure: MPMEvents
+========================
+.. include:: ../../coreComponents/schema/docs/MPMEvents_other.rst
+
+
+.. _DATASTRUCTURE_MachineSample:
+
+Datastructure: MachineSample
+============================
+.. include:: ../../coreComponents/schema/docs/MachineSample_other.rst
+
+
+.. _DATASTRUCTURE_MaterialSwap:
+
+Datastructure: MaterialSwap
+===========================
+.. include:: ../../coreComponents/schema/docs/MaterialSwap_other.rst
 
 
 .. _DATASTRUCTURE_Mesh:
@@ -2653,6 +2870,13 @@ Datastructure: SlipDependentPermeability
 .. include:: ../../coreComponents/schema/docs/SlipDependentPermeability_other.rst
 
 
+.. _DATASTRUCTURE_SolidBase:
+
+Datastructure: SolidBase
+========================
+.. include:: ../../coreComponents/schema/docs/SolidBase_other.rst
+
+
 .. _DATASTRUCTURE_SolidInternalEnergy:
 
 Datastructure: SolidInternalEnergy
@@ -2751,6 +2975,13 @@ Datastructure: SourceFluxStatistics
 .. include:: ../../coreComponents/schema/docs/SourceFluxStatistics_other.rst
 
 
+.. _DATASTRUCTURE_StrainHardeningPolymer:
+
+Datastructure: StrainHardeningPolymer
+=====================================
+.. include:: ../../coreComponents/schema/docs/StrainHardeningPolymer_other.rst
+
+
 .. _DATASTRUCTURE_SurfaceElementRegion:
 
 Datastructure: SurfaceElementRegion
@@ -2763,13 +2994,6 @@ Datastructure: SurfaceElementRegion
 Datastructure: SurfaceGenerator
 ===============================
 .. include:: ../../coreComponents/schema/docs/SurfaceGenerator_other.rst
-
-
-.. _DATASTRUCTURE_SymbolicFunction:
-
-Datastructure: SymbolicFunction
-===============================
-.. include:: ../../coreComponents/schema/docs/SymbolicFunction_other.rst
 
 
 .. _DATASTRUCTURE_TableCapillaryPressure:
@@ -2912,6 +3136,13 @@ Datastructure: ViscoModifiedCamClay
 .. include:: ../../coreComponents/schema/docs/ViscoModifiedCamClay_other.rst
 
 
+.. _DATASTRUCTURE_VonMisesJ:
+
+Datastructure: VonMisesJ
+========================
+.. include:: ../../coreComponents/schema/docs/VonMisesJ_other.rst
+
+
 .. _DATASTRUCTURE_WellControls:
 
 Datastructure: WellControls
@@ -3043,6 +3274,13 @@ Datastructure: particleRegionsGroup
 Datastructure: particleSubRegions
 =================================
 .. include:: ../../coreComponents/schema/docs/particleSubRegions_other.rst
+
+
+.. _DATASTRUCTURE_partitionManager:
+
+Datastructure: partitionManager
+===============================
+.. include:: ../../coreComponents/schema/docs/partitionManager_other.rst
 
 
 .. _DATASTRUCTURE_quartz:

@@ -12,7 +12,7 @@ from pfw_geometryObjects import countFileLines
 import argparse
 
 
-def reverse_readline(filename, buf_size=8192):
+def redu -herse_readline(filename, buf_size=8192):
     """A generator that returns the lines of a file in reverse order"""
     with open(filename, 'rb') as fh:
         segment = None

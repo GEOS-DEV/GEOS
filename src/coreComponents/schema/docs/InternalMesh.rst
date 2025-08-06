@@ -9,6 +9,7 @@ name              groupName          required A name is required for any non-uni
 nx                integer_array      required Number of elements in the x-direction within each mesh block                                            
 ny                integer_array      required Number of elements in the y-direction within each mesh block                                            
 nz                integer_array      required Number of elements in the z-direction within each mesh block                                            
+periodic          integer_array      {0}      Flag for periodicity in each direction                                                                  
 positionTolerance real64             1e-10    A position tolerance to verify if a node belong to a nodeset                                            
 trianglePattern   integer            0        Pattern by which to decompose the hex mesh into wedges                                                  
 xBias             real64_array       {1}      Bias of element sizes in the x-direction within each mesh block (dx_left=(1+b)*L/N, dx_right=(1-b)*L/N) 

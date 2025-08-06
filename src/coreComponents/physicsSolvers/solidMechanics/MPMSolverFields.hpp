@@ -351,7 +351,33 @@ DECLARE_FIELD( particleDomainScaledFlag,
                -1,
                LEVEL_1,
                WRITE_AND_READ,
-               "particleDomainScaledFlag" );            
+               "particleDomainScaledFlag" );   
+
+//Added by SG
+DECLARE_FIELD( particleStrainRate,
+               "particleStrainRate",
+               array1d< real64 >,
+               0.0,
+               LEVEL_1,
+               WRITE_AND_READ,
+               "An array that stores the effective strain rate at each particle." );
+//Added by SG
+DECLARE_FIELD( particleinstTensileStrength,
+               "particleinstTensileStrength",
+               array1d< real64 >,
+               0.0,
+               LEVEL_1,
+               WRITE_AND_READ,
+               "An array that stores the effective strain rate at each particle." );
+//Added by SG
+DECLARE_FIELD( particleinstCompressiveStrength,
+               "particleinstCompressiveStrength",
+               array1d< real64 >,
+               0.0,
+               LEVEL_1,
+               WRITE_AND_READ,
+               "An array that stores the effective strain rate at each particle." );
+         
 }
 
 }

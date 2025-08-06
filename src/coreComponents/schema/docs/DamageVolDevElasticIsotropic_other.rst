@@ -12,6 +12,7 @@ shearModulus                real64_array   Elastic Shear Modulus Field
 strainEnergyDensity         real64_array2d Strain Energy Density                      
 stress                      real64_array3d Current Material Stress                    
 thermalExpansionCoefficient real64_array   Linear Thermal Expansion Coefficient Field 
+wavespeed                   real64_array2d Current Material Wavespeed                 
 =========================== ============== ========================================== 
 
 

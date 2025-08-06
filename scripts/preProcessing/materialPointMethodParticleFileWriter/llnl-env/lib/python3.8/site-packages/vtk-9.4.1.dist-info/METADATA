@@ -1,0 +1,148 @@
+Metadata-Version: 2.1
+Name: vtk
+Version: 9.4.1
+Summary: VTK is an open-source toolkit for 3D computer graphics, image processing, and visualization
+Home-page: https://vtk.org
+Download-URL: https://vtk.org/download/
+Author: VTK developers
+License: BSD
+Classifier: License :: OSI Approved :: BSD License
+Classifier: Programming Language :: Python
+Classifier: Programming Language :: C++
+Classifier: Intended Audience :: Developers
+Classifier: Intended Audience :: Education
+Classifier: Intended Audience :: Healthcare Industry
+Classifier: Intended Audience :: Science/Research
+Classifier: Topic :: Multimedia :: Graphics
+Classifier: Topic :: Multimedia :: Graphics :: 3D Modeling
+Classifier: Topic :: Multimedia :: Graphics :: 3D Rendering
+Classifier: Topic :: Scientific/Engineering
+Classifier: Topic :: Scientific/Engineering :: Chemistry
+Classifier: Topic :: Scientific/Engineering :: Information Analysis
+Classifier: Topic :: Scientific/Engineering :: Medical Science Apps.
+Classifier: Topic :: Scientific/Engineering :: Physics
+Classifier: Topic :: Scientific/Engineering :: Visualization
+Classifier: Topic :: Software Development :: Libraries
+Classifier: Operating System :: Microsoft :: Windows
+Classifier: Operating System :: POSIX
+Classifier: Operating System :: Unix
+Classifier: Operating System :: MacOS
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: matplotlib>=2.0.0
+Provides-Extra: gtk
+Provides-Extra: numpy
+Requires-Dist: numpy>=1.9; extra == "numpy"
+Provides-Extra: qt
+Provides-Extra: rendering
+Provides-Extra: rendering-backend-egl
+Provides-Extra: rendering-backend-gl
+Provides-Extra: rendering-offscreen
+Provides-Extra: rendering-offscreen-osmesa
+Provides-Extra: rendering-onscreen
+Provides-Extra: rendering-onscreen-x11
+Provides-Extra: tk
+Provides-Extra: web
+Requires-Dist: wslink>=1.0.4; extra == "web"
+Provides-Extra: wx
+
+![VTK - The Visualization Toolkit][vtk-banner]
+
+Introduction
+============
+
+VTK is an open-source software system for image processing, 3D
+graphics, volume rendering and visualization. VTK includes many
+advanced algorithms (e.g., surface reconstruction, implicit modeling,
+decimation) and rendering techniques (e.g., hardware-accelerated
+volume rendering, LOD control).
+
+VTK is used by academicians for teaching and research; by government
+research institutions such as Los Alamos National Lab in the US or
+CINECA in Italy; and by many commercial firms who use VTK to build or
+extend products.
+
+The origin of VTK is with the textbook "The Visualization Toolkit, an
+Object-Oriented Approach to 3D Graphics" originally published by
+Prentice Hall and now published by Kitware, Inc. (Third Edition ISBN
+1-930934-07-6). VTK has grown (since its initial release in 1994) to a
+world-wide user base in the commercial, academic, and research
+communities.
+
+Learning Resources
+==================
+
+* General information is available at the [VTK Homepage][vtk-homepage].
+
+* Community discussion takes place on the [VTK Discourse][vtk-discourse] forum.
+
+* Commercial [support and training][kitware-support]
+  are available from [Kitware][].
+
+* Doxygen-generated nightly reference documentation is
+  available [online][vtk-doxygen].
+
+* There is now a large collection of [VTK Examples][vtk-examples] that
+  showcase VTK features and provide a useful learning resource.
+
+Reporting Bugs
+==============
+
+If you have found a bug:
+
+1. If you have a patch, please read the [CONTRIBUTING.md][vtk-contributing] document.
+
+2. Otherwise, please join the [VTK Discourse][vtk-discourse] forum and ask
+   about the expected and observed behaviors to determine if it is
+   really a bug.
+
+3. Finally, if the issue is not resolved by the above steps, open
+   an entry in the [VTK Issue Tracker][vtk-issues].
+
+Requirements
+============
+
+In general VTK tries to be as portable as possible; the specific configurations below are known to work and tested.
+
+VTK supports the following compilers:
+
+1. GCC 4.8 or newer
+2. Clang 3.3 or newer
+3. Apple Clang 5.0 (from Xcode 5.0) or newer
+4. Microsoft Visual Studio 2015 or newer
+5. Intel 14.0 or newer
+
+VTK supports the following operating systems:
+
+1. Windows Vista or newer
+2. Mac OS X 10.7 or newer
+3. Linux (ex: Ubuntu 12.04 or newer, Debian 4 or newer)
+
+Building
+========
+
+See [build.md][vtk-build] (in Documentation/dev/) for build instructions.
+
+Contributing
+============
+
+See [CONTRIBUTING.md][vtk-contributing] for instructions to contribute.
+
+License
+=======
+
+VTK is distributed under the OSI-approved BSD 3-clause License.
+See [Copyright.txt][vtk-copyright] for details.
+
+
+[kitware]: https://www.kitware.com/
+[kitware-support]: https://www.kitware.com/support/
+[vtk-banner]: https://gitlab.kitware.com/vtk/vtk/-/raw/master/vtkBanner.gif
+[vtk-build]: https://gitlab.kitware.com/vtk/vtk/-/blob/master/Documentation/docs/build_instructions/build.md
+[vtk-contributing]: https://gitlab.kitware.com/vtk/vtk/-/blob/master/CONTRIBUTING.md#contributing-to-vtk
+[vtk-copyright]: https://gitlab.kitware.com/vtk/vtk/-/raw/master/Copyright.txt
+[vtk-discourse]: https://discourse.vtk.org/
+[vtk-doxygen]: https://www.vtk.org/doc/nightly/html
+[vtk-examples]: https://kitware.github.io/vtk-examples/site/
+[vtk-homepage]: https://www.vtk.org/
+[vtk-issues]: https://gitlab.kitware.com/vtk/vtk/-/issues

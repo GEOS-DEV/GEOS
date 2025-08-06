@@ -55,7 +55,7 @@ pfw["mBatch"]=True
 pfw["mWallTime"]="00:30:00"
 pfw["mCores"]=pfw["xpar"]*pfw["ypar"]*pfw["zpar"]
 pfw["mNodes"]=int(np.ceil(float(pfw["mCores"])/36.)) 
-pfw["mSubmitJobs"]=False
+pfw["mSubmitJobs"]=True
 
 # GEOSX MPM SOLVER PARAMETERS -------------------------------------------------------------------
 

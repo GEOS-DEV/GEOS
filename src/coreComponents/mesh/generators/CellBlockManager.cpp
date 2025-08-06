@@ -249,13 +249,18 @@ struct FaceBuilder
    */
   auto duplicateFaceEquality() const
   {
-    return [duplicateFaces = duplicateFaces.toViewConst()]
+    //return [duplicateFaces = duplicateFaces.toViewConst()
+    return [faces = duplicateFaces.toViewConst()]
              ( NodesAndElementOfFace const & lhs, NodesAndElementOfFace const & rhs )
     {
-      return std::equal( duplicateFaces[ lhs.duplicateFaceNodesIndex ].begin(),
+      /*return std::equal( duplicateFaces[ lhs.duplicateFaceNodesIndex ].begin(),
                          duplicateFaces[ lhs.duplicateFaceNodesIndex ].end(),
                          duplicateFaces[ rhs.duplicateFaceNodesIndex ].begin(),
-                         duplicateFaces[ rhs.duplicateFaceNodesIndex ].end() );
+                         duplicateFaces[ rhs.duplicateFaceNodesIndex ].end() );*/
+
+return std::equal( faces[ lhs.duplicateFaceNodesIndex ].begin(),                                    faces[ lhs.duplicateFaceNodesIndex ].end(),
+                    faces[ rhs.duplicateFaceNodesIndex ].begin(),
+                    faces[ rhs.duplicateFaceNodesIndex ].end() );
     };
   }
 
@@ -1071,8 +1076,9 @@ void CellBlockManager::generateHighOrderMaps( localIndex const order,
                                 [ =, faceToNodesMapSource=faceToNodesMapSource.toView(),
                                   edgeToNodeMapNew=edgeToNodeMapNew.toView(),
                                   faceToNodeMapNew=faceToNodeMapNew.toView(),
-                                  m_faceToEdges=m_faceToEdges.toView(),
-                                  refPosSrc=refPosSource.toView(),
+                                 // m_faceToEdges=m_faceToEdges.toView(),
+                                  faceToEdges=m_faceToEdges.toView(),
+				  refPosSrc=refPosSource.toView(),
                                   refPosNew=refPosNew.toView(),
                                   faceLocalToGlobal=faceLocalToGlobal.toView(),
                                   nodeLocalToGlobalNew=nodeLocalToGlobalNew.toView() ]( localIndex const iter_face )
@@ -1099,8 +1105,9 @@ void CellBlockManager::generateHighOrderMaps( localIndex const order,
       for( localIndex iter_node=0; iter_node<numInternalNodesPerEdge; iter_node++ )
       {
         localIndex nodeIdxInMap = numVerticesPerFace + iter_edge * numInternalNodesPerEdge + iter_node;
-        localIndex edge = m_faceToEdges[ iter_face ][ iter_edge ];
-        faceToNodeMapWork[ nodeIdxInMap ] = edgeToNodeMapNew[ edge ][ iter_node + 1 ];
+        //localIndex edge = m_faceToEdges[ iter_face ][ iter_edge ];
+        localIndex edge = faceToEdges[ iter_face ][ iter_edge ];
+	faceToNodeMapWork[ nodeIdxInMap ] = edgeToNodeMapNew[ edge ][ iter_node + 1 ];
         nodeIDs[ createNodeKey( edgeToNodeMapNew[ edge ][ 0 ], edgeToNodeMapNew[ edge ][ numNodesPerEdge - 1 ], iter_node + 1, order ) ] = nodeIdxInMap;
       }
     }

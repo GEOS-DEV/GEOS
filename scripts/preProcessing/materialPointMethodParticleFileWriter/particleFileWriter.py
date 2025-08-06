@@ -43,7 +43,8 @@ machineList = {
   'dane':112,
   'ruby':56,
   'rzhound':56,
-  'tioga':64
+  'tioga':64,
+  'rockfish':48
 }
 
 node = platform.node()
@@ -57,6 +58,8 @@ for key, value in machineList.items():
   else:
     exec(key+'=False')
 
+coresPerNode=48
+machine='rockfish'
 # # MPI specific variables
 # there seems to be an issue with mpi4py and subprocess launching 
 # slurm scripts that include srun. We've included the '#SBATCH --export=NONE' command
@@ -155,13 +158,13 @@ PWD = os.getcwd()
 parameters = { 'runDebug' : ( False, False ),
                'stopTime' : ( False, False),
                'mBank' : ( None, False ),
-               'mWallTime' : ( "00:30:00", False ),
+               'mWallTime' : ( "48:00:00", False ),
                'mBatch' : ( True, False ),
-               'mCores' : ( 1, False ),
+               'mCores' : ( 48, False ), #changed this from 1 to 48
                'mNodes' : ( 1, False ), 
                'mSubmitJobs' : ( False, False ),
                'autoRestart' : ( False, False ),
-               'mPartition' : ( "pbatch", False ),
+               'mPartition' : ( "bigmem", False ),
                'periodic' : ( [False, False, False], False ),
                'xpar' : ( 1, False ),
                'ypar' : ( 1, False ),
@@ -1023,11 +1026,13 @@ echo "srun command has completed, good bye."
     file.close()
   else:  
     slurmScript = """#!/bin/bash
-#SBATCH -t """+mWallTime+"""
-#SBATCH -N """+str(mNodes)+"""
-#SBATCH -A """+mBank+"""
-#SBATCH --export=NONE
-#SBATCH -p """+ mPartition + """
+#SBATCH --time="""+mWallTime+"""
+#SBATCH --nodes="""+str(mNodes)+"""
+#SBATCH --partition="""+ mPartition + """
+#SBATCH -A rhurley6_bigmem
+#SBATCH --ntasks-per-node="""+ str(coresPerNode) + """
+#SBATCH --mem=0
+#SBATCH --export=ALL
 
 echo "Launching srun command..."
 srun -n """+str(mCores)+""" """+geosPath+""" -i """+geosxInputFileName+""" -x """ + str(xpar) + """ -y """ + str(ypar) + """ -z """ + str(zpar) + """
@@ -1057,10 +1062,13 @@ echo "srun command has completed, good bye."
     print('Auto restart enabled')
     print('run_check output = ',output.strip())
     slurmScript = """#!/bin/bash
-#SBATCH -t 00:02:00
-#SBATCH -N 1
-#SBATCH -p """+ mPartition +"""
-#SBATCH -A """+mBank+"""
+#SBATCH --time="""+mWallTime+"""
+#SBATCH --nodes="""+str(mNodes)+"""
+#SBATCH --partition="""+ mPartition + """
+#SBATCH -A rhurley6_bigmem
+#SBATCH --ntasks-per-node="""+ str(coresPerNode) + """
+#SBATCH --mem=0
+#SBATCH --export=ALL
 #SBATCH --dependency=afterany:"""+jobID+"""
 echo "launching pfw_check script..."
 python3 pfw_check.py """+inputFile+""" """+jobID+"""

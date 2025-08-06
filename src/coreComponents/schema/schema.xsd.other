@@ -330,15 +330,11 @@
 	</xsd:complexType>
 	<xsd:complexType name="FunctionsType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
-			<xsd:element name="CompositeFunction" type="CompositeFunctionType" />
 			<xsd:element name="MultivariableTableFunction" type="MultivariableTableFunctionType" />
-			<xsd:element name="SymbolicFunction" type="SymbolicFunctionType" />
 			<xsd:element name="TableFunction" type="TableFunctionType" />
 		</xsd:choice>
 	</xsd:complexType>
-	<xsd:complexType name="CompositeFunctionType" />
 	<xsd:complexType name="MultivariableTableFunctionType" />
-	<xsd:complexType name="SymbolicFunctionType" />
 	<xsd:complexType name="TableFunctionType" />
 	<xsd:complexType name="GeometryType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -1250,23 +1246,28 @@
 	<xsd:complexType name="SolidMechanics_MPMType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
+			<xsd:element name="MPMEvents" type="MPMEventsType" minOccurs="1" maxOccurs="1" />
 			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
 			<xsd:element name="SolverStatistics" type="SolverStatisticsType" />
 		</xsd:choice>
-		<!--bcTable => Array that stores time-dependent bc types on x-, x+, y-, y+, z- and z+ faces.-->
-		<xsd:attribute name="bcTable" type="real64_array2d" />
-		<!--binSizeMultiplier => Multiplier for setting bin size, used to speed up particle neighbor sorting-->
-		<xsd:attribute name="binSizeMultiplier" type="integer" />
+		<!--cohesiveGridNodeDamages => Cohesive grid node damages-->
+		<xsd:attribute name="cohesiveGridNodeDamages" type="real64_array2d" />
+		<!--cohesiveNodeGlobalIndices => Array of the global indices for cohesive grid nodes-->
+		<xsd:attribute name="cohesiveNodeGlobalIndices" type="LvArray_SortedArray_lt_long-long_cm_-int_cm_-LvArray_ChaiBuffer_gt_" />
 		<!--domainExtent => domain extent-->
 		<xsd:attribute name="domainExtent" type="real64_array" />
 		<!--domainF => domain deformation gradient-->
 		<xsd:attribute name="domainF" type="real64_array" />
 		<!--domainL => domain L-->
 		<xsd:attribute name="domainL" type="real64_array" />
+		<!--domainStress => Stores current target domain stress as driven by stress control-->
+		<xsd:attribute name="domainStress" type="real64_array" />
 		<!--elementSize => Minimum element size in x, y and z-->
 		<xsd:attribute name="elementSize" type="real64_array" />
-		<!--fTable => Array that stores time-dependent grid-aligned stretches interpreted as a global background grid F.-->
-		<xsd:attribute name="fTable" type="real64_array2d" />
+		<!--enableCohesiveLaws => Flag to enable cohesive laws-->
+		<xsd:attribute name="enableCohesiveLaws" type="integer" />
+		<!--globalFaceReactions => Stores the global face reactions for stress control between timesteps-->
+		<xsd:attribute name="globalFaceReactions" type="real64_array" />
 		<!--globalMaximum => global maximum-->
 		<xsd:attribute name="globalMaximum" type="real64_array" />
 		<!--globalMinimum => global minimum-->
@@ -1281,10 +1282,24 @@
 		<xsd:attribute name="localMinimumNoGhost" type="real64_array" />
 		<!--m_ijkMap => Map from indices in each spatial dimension to local node ID-->
 		<xsd:attribute name="m_ijkMap" type="integer_array3d" />
+		<!--maxCohesiveGridNodeNormalDisplacement => Max cohesive normal displacement for each cohesive grid node-->
+		<xsd:attribute name="maxCohesiveGridNodeNormalDisplacement" type="real64_array3d" />
+		<!--maxCohesiveGridNodeTangentialDisplacement => Max cohesive tangential displacement for each cohesive grid node-->
+		<xsd:attribute name="maxCohesiveGridNodeTangentialDisplacement" type="real64_array3d" />
+		<!--maxParticleVelocitySquared => Square of the max particle velocity-->
+		<xsd:attribute name="maxParticleVelocitySquared" type="real64" />
 		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
 		<xsd:attribute name="maxStableDt" type="real64" />
 		<!--meshTargets => MeshBody/Region combinations that the solver will be applied to.-->
 		<xsd:attribute name="meshTargets" type="geos_mapBase_lt_std_pair_lt_string_cm_-string-_gt__cm_-LvArray_Array_lt_string_cm_-1_cm_-camp_int_seq_lt_long_cm_-0l_gt__cm_-int_cm_-LvArray_ChaiBuffer_gt__cm_-std_integral_constant_lt_bool_cm_-true_gt_-_gt_" />
+		<!--nextBoxAverageWriteTime => Next time to write box averages-->
+		<xsd:attribute name="nextBoxAverageWriteTime" type="real64" />
+		<!--nextParticleDataWriteTime => Next time to write particle data-->
+		<xsd:attribute name="nextParticleDataWriteTime" type="real64" />
+		<!--nextReactionWriteTime => Next time to write reactions-->
+		<xsd:attribute name="nextReactionWriteTime" type="real64" />
+		<!--nextXProfileWriteTime => Next x profile writing time-->
+		<xsd:attribute name="nextXProfileWriteTime" type="real64" />
 		<!--numContactFlags => Number of contact flags that can appear due to damage-->
 		<xsd:attribute name="numContactFlags" type="integer" />
 		<!--numContactGroups => Number of prescribed contact groups-->
@@ -1297,37 +1312,290 @@
 		<xsd:attribute name="numVelocityFields" type="integer" />
 		<!--partitionExtent => parititon extent-->
 		<xsd:attribute name="partitionExtent" type="real64_array" />
+		<!--plottableFieldsSorted => Sorted array of plottable fields-->
+		<xsd:attribute name="plottableFieldsSorted" type="LvArray_SortedArray_lt_string_cm_-int_cm_-LvArray_ChaiBuffer_gt_" />
+		<!--referenceCohesiveGridNodeAreas => Reference cohesive grid node areas-->
+		<xsd:attribute name="referenceCohesiveGridNodeAreas" type="real64_array2d" />
+		<!--referenceCohesiveGridNodePartitioningSurfaceNormals => Reference partitioning surface normal for cohesive grid nodes-->
+		<xsd:attribute name="referenceCohesiveGridNodePartitioningSurfaceNormals" type="real64_array2d" />
+		<!--referenceCohesiveGridNodePositions => Reference cohesive grid node positions-->
+		<xsd:attribute name="referenceCohesiveGridNodePositions" type="real64_array2d" />
+		<!--referenceCohesiveGridNodeSurfaceNormals => Reference cohesive grid node surface normals-->
+		<xsd:attribute name="referenceCohesiveGridNodeSurfaceNormals" type="real64_array3d" />
+		<!--referenceCohesiveZone => Flag to reference cohesive zone-->
+		<xsd:attribute name="referenceCohesiveZone" type="integer" />
 		<!--smallMass => The small mass threshold for ignoring extremely low-mass nodes.-->
 		<xsd:attribute name="smallMass" type="real64" />
+		<!--stressControlITerm => Stress control integral term-->
+		<xsd:attribute name="stressControlITerm" type="real64_array" />
+		<!--stressControlLastError => Stress control error from previous timestep-->
+		<xsd:attribute name="stressControlLastError" type="real64_array" />
 	</xsd:complexType>
-	<xsd:complexType name="SolidMechanics_MPMType">
+	<xsd:complexType name="MPMEventsType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
-			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
-			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
-			<xsd:element name="SolverStatistics" type="SolverStatisticsType" />
+			<xsd:element name="Anneal" type="AnnealType" />
+			<xsd:element name="BodyForceUpdate" type="BodyForceUpdateType" />
+			<xsd:element name="BoreholePressure" type="BoreholePressureType" />
+			<xsd:element name="CohesiveZoneReference" type="CohesiveZoneReferenceType" />
+			<xsd:element name="ConfiningPressure" type="ConfiningPressureType" />
+			<xsd:element name="CrystalHeal" type="CrystalHealType" />
+			<xsd:element name="DeformationUpdate" type="DeformationUpdateType" />
+			<xsd:element name="FrictionCoefficientSwap" type="FrictionCoefficientSwapType" />
+			<xsd:element name="Heal" type="HealType" />
+			<xsd:element name="InitializeStress" type="InitializeStressType" />
+			<xsd:element name="InsertPeriodicContactSurfaces" type="InsertPeriodicContactSurfacesType" />
+			<xsd:element name="MachineSample" type="MachineSampleType" />
+			<xsd:element name="MaterialSwap" type="MaterialSwapType" />
 		</xsd:choice>
-		<!--bcTable => Array that stores time-dependent bc types on x-, x+, y-, y+, z- and z+ faces.-->
-		<xsd:attribute name="bcTable" type="real64_array2d" />
-		<!--binSizeMultiplier => Multiplier for setting bin size, used to speed up particle neighbor sorting-->
-		<xsd:attribute name="binSizeMultiplier" type="integer" />
-		<!--fTable => Array that stores time-dependent grid-aligned stretches interpreted as a global background grid F.-->
-		<xsd:attribute name="fTable" type="real64_array2d" />
-		<!--m_ijkMap => Map from indices in each spatial dimension to local node ID-->
-		<xsd:attribute name="m_ijkMap" type="integer_array3d" />
-		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
-		<xsd:attribute name="maxStableDt" type="real64" />
-		<!--meshTargets => MeshBody/Region combinations that the solver will be applied to.-->
-		<xsd:attribute name="meshTargets" type="geos_mapBase&lt;std_pair&lt;string, string &gt;, LvArray_Array&lt;string, 1, camp_int_seq&lt;long, 0l&gt;, int, LvArray_ChaiBuffer&gt;, std_integral_constant&lt;bool, true&gt; &gt;" />
-		<!--numContactFlags => Number of contact flags that can appear due to damage-->
-		<xsd:attribute name="numContactFlags" type="integer" />
-		<!--numContactGroups => Number of prescribed contact groups-->
-		<xsd:attribute name="numContactGroups" type="integer" />
-		<!--numDims => The number of active spatial dimensions, 2 for plane strain, 3 otherwise-->
-		<xsd:attribute name="numDims" type="integer" />
-		<!--numVelocityFields => Number of velocity fields-->
-		<xsd:attribute name="numVelocityFields" type="integer" />
-		<!--smallMass => The small mass threshold for ignoring extremely low-mass nodes.-->
-		<xsd:attribute name="smallMass" type="real64" />
+	</xsd:complexType>
+	<xsd:complexType name="AnnealType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="Anneal" type="AnnealType" />
+			<xsd:element name="BodyForceUpdate" type="BodyForceUpdateType" />
+			<xsd:element name="BoreholePressure" type="BoreholePressureType" />
+			<xsd:element name="CohesiveZoneReference" type="CohesiveZoneReferenceType" />
+			<xsd:element name="ConfiningPressure" type="ConfiningPressureType" />
+			<xsd:element name="CrystalHeal" type="CrystalHealType" />
+			<xsd:element name="DeformationUpdate" type="DeformationUpdateType" />
+			<xsd:element name="FrictionCoefficientSwap" type="FrictionCoefficientSwapType" />
+			<xsd:element name="Heal" type="HealType" />
+			<xsd:element name="InitializeStress" type="InitializeStressType" />
+			<xsd:element name="InsertPeriodicContactSurfaces" type="InsertPeriodicContactSurfacesType" />
+			<xsd:element name="MachineSample" type="MachineSampleType" />
+			<xsd:element name="MaterialSwap" type="MaterialSwapType" />
+		</xsd:choice>
+		<!--isComplete => Flag for whether event has been completed-->
+		<xsd:attribute name="isComplete" type="integer" />
+	</xsd:complexType>
+	<xsd:complexType name="BodyForceUpdateType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="Anneal" type="AnnealType" />
+			<xsd:element name="BodyForceUpdate" type="BodyForceUpdateType" />
+			<xsd:element name="BoreholePressure" type="BoreholePressureType" />
+			<xsd:element name="CohesiveZoneReference" type="CohesiveZoneReferenceType" />
+			<xsd:element name="ConfiningPressure" type="ConfiningPressureType" />
+			<xsd:element name="CrystalHeal" type="CrystalHealType" />
+			<xsd:element name="DeformationUpdate" type="DeformationUpdateType" />
+			<xsd:element name="FrictionCoefficientSwap" type="FrictionCoefficientSwapType" />
+			<xsd:element name="Heal" type="HealType" />
+			<xsd:element name="InitializeStress" type="InitializeStressType" />
+			<xsd:element name="InsertPeriodicContactSurfaces" type="InsertPeriodicContactSurfacesType" />
+			<xsd:element name="MachineSample" type="MachineSampleType" />
+			<xsd:element name="MaterialSwap" type="MaterialSwapType" />
+		</xsd:choice>
+		<!--isComplete => Flag for whether event has been completed-->
+		<xsd:attribute name="isComplete" type="integer" />
+	</xsd:complexType>
+	<xsd:complexType name="BoreholePressureType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="Anneal" type="AnnealType" />
+			<xsd:element name="BodyForceUpdate" type="BodyForceUpdateType" />
+			<xsd:element name="BoreholePressure" type="BoreholePressureType" />
+			<xsd:element name="CohesiveZoneReference" type="CohesiveZoneReferenceType" />
+			<xsd:element name="ConfiningPressure" type="ConfiningPressureType" />
+			<xsd:element name="CrystalHeal" type="CrystalHealType" />
+			<xsd:element name="DeformationUpdate" type="DeformationUpdateType" />
+			<xsd:element name="FrictionCoefficientSwap" type="FrictionCoefficientSwapType" />
+			<xsd:element name="Heal" type="HealType" />
+			<xsd:element name="InitializeStress" type="InitializeStressType" />
+			<xsd:element name="InsertPeriodicContactSurfaces" type="InsertPeriodicContactSurfacesType" />
+			<xsd:element name="MachineSample" type="MachineSampleType" />
+			<xsd:element name="MaterialSwap" type="MaterialSwapType" />
+		</xsd:choice>
+		<!--isComplete => Flag for whether event has been completed-->
+		<xsd:attribute name="isComplete" type="integer" />
+	</xsd:complexType>
+	<xsd:complexType name="CohesiveZoneReferenceType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="Anneal" type="AnnealType" />
+			<xsd:element name="BodyForceUpdate" type="BodyForceUpdateType" />
+			<xsd:element name="BoreholePressure" type="BoreholePressureType" />
+			<xsd:element name="CohesiveZoneReference" type="CohesiveZoneReferenceType" />
+			<xsd:element name="ConfiningPressure" type="ConfiningPressureType" />
+			<xsd:element name="CrystalHeal" type="CrystalHealType" />
+			<xsd:element name="DeformationUpdate" type="DeformationUpdateType" />
+			<xsd:element name="FrictionCoefficientSwap" type="FrictionCoefficientSwapType" />
+			<xsd:element name="Heal" type="HealType" />
+			<xsd:element name="InitializeStress" type="InitializeStressType" />
+			<xsd:element name="InsertPeriodicContactSurfaces" type="InsertPeriodicContactSurfacesType" />
+			<xsd:element name="MachineSample" type="MachineSampleType" />
+			<xsd:element name="MaterialSwap" type="MaterialSwapType" />
+		</xsd:choice>
+		<!--isComplete => Flag for whether event has been completed-->
+		<xsd:attribute name="isComplete" type="integer" />
+	</xsd:complexType>
+	<xsd:complexType name="ConfiningPressureType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="Anneal" type="AnnealType" />
+			<xsd:element name="BodyForceUpdate" type="BodyForceUpdateType" />
+			<xsd:element name="BoreholePressure" type="BoreholePressureType" />
+			<xsd:element name="CohesiveZoneReference" type="CohesiveZoneReferenceType" />
+			<xsd:element name="ConfiningPressure" type="ConfiningPressureType" />
+			<xsd:element name="CrystalHeal" type="CrystalHealType" />
+			<xsd:element name="DeformationUpdate" type="DeformationUpdateType" />
+			<xsd:element name="FrictionCoefficientSwap" type="FrictionCoefficientSwapType" />
+			<xsd:element name="Heal" type="HealType" />
+			<xsd:element name="InitializeStress" type="InitializeStressType" />
+			<xsd:element name="InsertPeriodicContactSurfaces" type="InsertPeriodicContactSurfacesType" />
+			<xsd:element name="MachineSample" type="MachineSampleType" />
+			<xsd:element name="MaterialSwap" type="MaterialSwapType" />
+		</xsd:choice>
+		<!--isComplete => Flag for whether event has been completed-->
+		<xsd:attribute name="isComplete" type="integer" />
+	</xsd:complexType>
+	<xsd:complexType name="CrystalHealType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="Anneal" type="AnnealType" />
+			<xsd:element name="BodyForceUpdate" type="BodyForceUpdateType" />
+			<xsd:element name="BoreholePressure" type="BoreholePressureType" />
+			<xsd:element name="CohesiveZoneReference" type="CohesiveZoneReferenceType" />
+			<xsd:element name="ConfiningPressure" type="ConfiningPressureType" />
+			<xsd:element name="CrystalHeal" type="CrystalHealType" />
+			<xsd:element name="DeformationUpdate" type="DeformationUpdateType" />
+			<xsd:element name="FrictionCoefficientSwap" type="FrictionCoefficientSwapType" />
+			<xsd:element name="Heal" type="HealType" />
+			<xsd:element name="InitializeStress" type="InitializeStressType" />
+			<xsd:element name="InsertPeriodicContactSurfaces" type="InsertPeriodicContactSurfacesType" />
+			<xsd:element name="MachineSample" type="MachineSampleType" />
+			<xsd:element name="MaterialSwap" type="MaterialSwapType" />
+		</xsd:choice>
+		<!--isComplete => Flag for whether event has been completed-->
+		<xsd:attribute name="isComplete" type="integer" />
+		<!--markedParticlesToHeal => Flag whether identification of particles to heal has been performed-->
+		<xsd:attribute name="markedParticlesToHeal" type="integer" />
+	</xsd:complexType>
+	<xsd:complexType name="DeformationUpdateType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="Anneal" type="AnnealType" />
+			<xsd:element name="BodyForceUpdate" type="BodyForceUpdateType" />
+			<xsd:element name="BoreholePressure" type="BoreholePressureType" />
+			<xsd:element name="CohesiveZoneReference" type="CohesiveZoneReferenceType" />
+			<xsd:element name="ConfiningPressure" type="ConfiningPressureType" />
+			<xsd:element name="CrystalHeal" type="CrystalHealType" />
+			<xsd:element name="DeformationUpdate" type="DeformationUpdateType" />
+			<xsd:element name="FrictionCoefficientSwap" type="FrictionCoefficientSwapType" />
+			<xsd:element name="Heal" type="HealType" />
+			<xsd:element name="InitializeStress" type="InitializeStressType" />
+			<xsd:element name="InsertPeriodicContactSurfaces" type="InsertPeriodicContactSurfacesType" />
+			<xsd:element name="MachineSample" type="MachineSampleType" />
+			<xsd:element name="MaterialSwap" type="MaterialSwapType" />
+		</xsd:choice>
+		<!--isComplete => Flag for whether event has been completed-->
+		<xsd:attribute name="isComplete" type="integer" />
+	</xsd:complexType>
+	<xsd:complexType name="FrictionCoefficientSwapType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="Anneal" type="AnnealType" />
+			<xsd:element name="BodyForceUpdate" type="BodyForceUpdateType" />
+			<xsd:element name="BoreholePressure" type="BoreholePressureType" />
+			<xsd:element name="CohesiveZoneReference" type="CohesiveZoneReferenceType" />
+			<xsd:element name="ConfiningPressure" type="ConfiningPressureType" />
+			<xsd:element name="CrystalHeal" type="CrystalHealType" />
+			<xsd:element name="DeformationUpdate" type="DeformationUpdateType" />
+			<xsd:element name="FrictionCoefficientSwap" type="FrictionCoefficientSwapType" />
+			<xsd:element name="Heal" type="HealType" />
+			<xsd:element name="InitializeStress" type="InitializeStressType" />
+			<xsd:element name="InsertPeriodicContactSurfaces" type="InsertPeriodicContactSurfacesType" />
+			<xsd:element name="MachineSample" type="MachineSampleType" />
+			<xsd:element name="MaterialSwap" type="MaterialSwapType" />
+		</xsd:choice>
+		<!--isComplete => Flag for whether event has been completed-->
+		<xsd:attribute name="isComplete" type="integer" />
+	</xsd:complexType>
+	<xsd:complexType name="HealType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="Anneal" type="AnnealType" />
+			<xsd:element name="BodyForceUpdate" type="BodyForceUpdateType" />
+			<xsd:element name="BoreholePressure" type="BoreholePressureType" />
+			<xsd:element name="CohesiveZoneReference" type="CohesiveZoneReferenceType" />
+			<xsd:element name="ConfiningPressure" type="ConfiningPressureType" />
+			<xsd:element name="CrystalHeal" type="CrystalHealType" />
+			<xsd:element name="DeformationUpdate" type="DeformationUpdateType" />
+			<xsd:element name="FrictionCoefficientSwap" type="FrictionCoefficientSwapType" />
+			<xsd:element name="Heal" type="HealType" />
+			<xsd:element name="InitializeStress" type="InitializeStressType" />
+			<xsd:element name="InsertPeriodicContactSurfaces" type="InsertPeriodicContactSurfacesType" />
+			<xsd:element name="MachineSample" type="MachineSampleType" />
+			<xsd:element name="MaterialSwap" type="MaterialSwapType" />
+		</xsd:choice>
+		<!--isComplete => Flag for whether event has been completed-->
+		<xsd:attribute name="isComplete" type="integer" />
+	</xsd:complexType>
+	<xsd:complexType name="InitializeStressType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="Anneal" type="AnnealType" />
+			<xsd:element name="BodyForceUpdate" type="BodyForceUpdateType" />
+			<xsd:element name="BoreholePressure" type="BoreholePressureType" />
+			<xsd:element name="CohesiveZoneReference" type="CohesiveZoneReferenceType" />
+			<xsd:element name="ConfiningPressure" type="ConfiningPressureType" />
+			<xsd:element name="CrystalHeal" type="CrystalHealType" />
+			<xsd:element name="DeformationUpdate" type="DeformationUpdateType" />
+			<xsd:element name="FrictionCoefficientSwap" type="FrictionCoefficientSwapType" />
+			<xsd:element name="Heal" type="HealType" />
+			<xsd:element name="InitializeStress" type="InitializeStressType" />
+			<xsd:element name="InsertPeriodicContactSurfaces" type="InsertPeriodicContactSurfacesType" />
+			<xsd:element name="MachineSample" type="MachineSampleType" />
+			<xsd:element name="MaterialSwap" type="MaterialSwapType" />
+		</xsd:choice>
+		<!--isComplete => Flag for whether event has been completed-->
+		<xsd:attribute name="isComplete" type="integer" />
+	</xsd:complexType>
+	<xsd:complexType name="InsertPeriodicContactSurfacesType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="Anneal" type="AnnealType" />
+			<xsd:element name="BodyForceUpdate" type="BodyForceUpdateType" />
+			<xsd:element name="BoreholePressure" type="BoreholePressureType" />
+			<xsd:element name="CohesiveZoneReference" type="CohesiveZoneReferenceType" />
+			<xsd:element name="ConfiningPressure" type="ConfiningPressureType" />
+			<xsd:element name="CrystalHeal" type="CrystalHealType" />
+			<xsd:element name="DeformationUpdate" type="DeformationUpdateType" />
+			<xsd:element name="FrictionCoefficientSwap" type="FrictionCoefficientSwapType" />
+			<xsd:element name="Heal" type="HealType" />
+			<xsd:element name="InitializeStress" type="InitializeStressType" />
+			<xsd:element name="InsertPeriodicContactSurfaces" type="InsertPeriodicContactSurfacesType" />
+			<xsd:element name="MachineSample" type="MachineSampleType" />
+			<xsd:element name="MaterialSwap" type="MaterialSwapType" />
+		</xsd:choice>
+		<!--isComplete => Flag for whether event has been completed-->
+		<xsd:attribute name="isComplete" type="integer" />
+	</xsd:complexType>
+	<xsd:complexType name="MachineSampleType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="Anneal" type="AnnealType" />
+			<xsd:element name="BodyForceUpdate" type="BodyForceUpdateType" />
+			<xsd:element name="BoreholePressure" type="BoreholePressureType" />
+			<xsd:element name="CohesiveZoneReference" type="CohesiveZoneReferenceType" />
+			<xsd:element name="ConfiningPressure" type="ConfiningPressureType" />
+			<xsd:element name="CrystalHeal" type="CrystalHealType" />
+			<xsd:element name="DeformationUpdate" type="DeformationUpdateType" />
+			<xsd:element name="FrictionCoefficientSwap" type="FrictionCoefficientSwapType" />
+			<xsd:element name="Heal" type="HealType" />
+			<xsd:element name="InitializeStress" type="InitializeStressType" />
+			<xsd:element name="InsertPeriodicContactSurfaces" type="InsertPeriodicContactSurfacesType" />
+			<xsd:element name="MachineSample" type="MachineSampleType" />
+			<xsd:element name="MaterialSwap" type="MaterialSwapType" />
+		</xsd:choice>
+		<!--isComplete => Flag for whether event has been completed-->
+		<xsd:attribute name="isComplete" type="integer" />
+	</xsd:complexType>
+	<xsd:complexType name="MaterialSwapType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="Anneal" type="AnnealType" />
+			<xsd:element name="BodyForceUpdate" type="BodyForceUpdateType" />
+			<xsd:element name="BoreholePressure" type="BoreholePressureType" />
+			<xsd:element name="CohesiveZoneReference" type="CohesiveZoneReferenceType" />
+			<xsd:element name="ConfiningPressure" type="ConfiningPressureType" />
+			<xsd:element name="CrystalHeal" type="CrystalHealType" />
+			<xsd:element name="DeformationUpdate" type="DeformationUpdateType" />
+			<xsd:element name="FrictionCoefficientSwap" type="FrictionCoefficientSwapType" />
+			<xsd:element name="Heal" type="HealType" />
+			<xsd:element name="InitializeStress" type="InitializeStressType" />
+			<xsd:element name="InsertPeriodicContactSurfaces" type="InsertPeriodicContactSurfacesType" />
+			<xsd:element name="MachineSample" type="MachineSampleType" />
+			<xsd:element name="MaterialSwap" type="MaterialSwapType" />
+		</xsd:choice>
+		<!--isComplete => Flag for whether event has been completed-->
+		<xsd:attribute name="isComplete" type="integer" />
 	</xsd:complexType>
 	<xsd:complexType name="SurfaceGeneratorType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -1420,11 +1688,10 @@
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="Constitutive" type="ConstitutiveType" maxOccurs="1" />
 			<xsd:element name="MeshBodies" type="MeshBodiesType" />
+			<xsd:element name="partitionManager" type="partitionManagerType" />
 		</xsd:choice>
 		<!--Neighbors => (no description available)-->
 		<xsd:attribute name="Neighbors" type="std_vector_lt_geos_NeighborCommunicator_cm_-std_allocator_lt_geos_NeighborCommunicator_gt_-_gt_" />
-		<!--partitionManager => (no description available)-->
-		<xsd:attribute name="partitionManager" type="geos_PartitionBase" />
 	</xsd:complexType>
 	<xsd:complexType name="ConstitutiveType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -1440,6 +1707,7 @@
 			<xsd:element name="CO2BrinePhillipsThermalFluid" type="CO2BrinePhillipsThermalFluidType" />
 			<xsd:element name="CarmanKozenyPermeability" type="CarmanKozenyPermeabilityType" />
 			<xsd:element name="CeramicDamage" type="CeramicDamageType" />
+			<xsd:element name="Chiumenti" type="ChiumentiType" />
 			<xsd:element name="CompositionalMultiphaseFluid" type="CompositionalMultiphaseFluidType" />
 			<xsd:element name="CompositionalTwoPhaseFluid" type="CompositionalTwoPhaseFluidType" />
 			<xsd:element name="CompositionalTwoPhaseFluidLohrenzBrayClark" type="CompositionalTwoPhaseFluidLohrenzBrayClarkType" />
@@ -1453,6 +1721,7 @@
 			<xsd:element name="CompressibleSolidWillisRichardsPermeability" type="CompressibleSolidWillisRichardsPermeabilityType" />
 			<xsd:element name="ConstantDiffusion" type="ConstantDiffusionType" />
 			<xsd:element name="ConstantPermeability" type="ConstantPermeabilityType" />
+			<xsd:element name="ContinuumBase" type="ContinuumBaseType" />
 			<xsd:element name="Coulomb" type="CoulombType" />
 			<xsd:element name="DamageElasticIsotropic" type="DamageElasticIsotropicType" />
 			<xsd:element name="DamageSpectralElasticIsotropic" type="DamageSpectralElasticIsotropicType" />
@@ -1464,9 +1733,15 @@
 			<xsd:element name="ElasticIsotropicPressureDependent" type="ElasticIsotropicPressureDependentType" />
 			<xsd:element name="ElasticOrthotropic" type="ElasticOrthotropicType" />
 			<xsd:element name="ElasticTransverseIsotropic" type="ElasticTransverseIsotropicType" />
+			<xsd:element name="ElasticTransverseIsotropicPressureDependent" type="ElasticTransverseIsotropicPressureDependentType" />
 			<xsd:element name="ExponentialDecayPermeability" type="ExponentialDecayPermeabilityType" />
 			<xsd:element name="ExtendedDruckerPrager" type="ExtendedDruckerPragerType" />
 			<xsd:element name="FrictionlessContact" type="FrictionlessContactType" />
+			<xsd:element name="Gas" type="GasType" />
+			<xsd:element name="Geomechanics" type="GeomechanicsType" />
+			<xsd:element name="Graphite" type="GraphiteType" />
+			<xsd:element name="Hyperelastic" type="HyperelasticType" />
+			<xsd:element name="HyperelasticMMS" type="HyperelasticMMSType" />
 			<xsd:element name="JFunctionCapillaryPressure" type="JFunctionCapillaryPressureType" />
 			<xsd:element name="LinearIsotropicDispersion" type="LinearIsotropicDispersionType" />
 			<xsd:element name="ModifiedCamClay" type="ModifiedCamClayType" />
@@ -1499,7 +1774,9 @@
 			<xsd:element name="ReactiveBrineThermal" type="ReactiveBrineThermalType" />
 			<xsd:element name="SinglePhaseConstantThermalConductivity" type="SinglePhaseConstantThermalConductivityType" />
 			<xsd:element name="SlipDependentPermeability" type="SlipDependentPermeabilityType" />
+			<xsd:element name="SolidBase" type="SolidBaseType" />
 			<xsd:element name="SolidInternalEnergy" type="SolidInternalEnergyType" />
+			<xsd:element name="StrainHardeningPolymer" type="StrainHardeningPolymerType" />
 			<xsd:element name="TableCapillaryPressure" type="TableCapillaryPressureType" />
 			<xsd:element name="TableRelativePermeability" type="TableRelativePermeabilityType" />
 			<xsd:element name="TableRelativePermeabilityHysteresis" type="TableRelativePermeabilityHysteresisType" />
@@ -1510,6 +1787,7 @@
 			<xsd:element name="ViscoDruckerPrager" type="ViscoDruckerPragerType" />
 			<xsd:element name="ViscoExtendedDruckerPrager" type="ViscoExtendedDruckerPragerType" />
 			<xsd:element name="ViscoModifiedCamClay" type="ViscoModifiedCamClayType" />
+			<xsd:element name="VonMisesJ" type="VonMisesJType" />
 			<xsd:element name="WillisRichardsPermeability" type="WillisRichardsPermeabilityType" />
 		</xsd:choice>
 	</xsd:complexType>
@@ -1864,12 +2142,46 @@
 		<xsd:attribute name="lengthScale" type="real64_array" />
 		<!--oldStress => Previous Material Stress-->
 		<xsd:attribute name="oldStress" type="real64_array3d" />
+		<!--plasticStrain => Plastic strain-->
+		<xsd:attribute name="plasticStrain" type="real64_array3d" />
+		<!--porosity => Porosity-->
+		<xsd:attribute name="porosity" type="real64_array" />
+		<!--referencePorosity => Reference porosity-->
+		<xsd:attribute name="referencePorosity" type="real64_array" />
 		<!--shearModulus => Elastic Shear Modulus Field-->
 		<xsd:attribute name="shearModulus" type="real64_array" />
+		<!--strengthScale => Strength scale-->
+		<xsd:attribute name="strengthScale" type="real64_array" />
 		<!--stress => Current Material Stress-->
 		<xsd:attribute name="stress" type="real64_array3d" />
 		<!--thermalExpansionCoefficient => Linear Thermal Expansion Coefficient Field-->
 		<xsd:attribute name="thermalExpansionCoefficient" type="real64_array" />
+		<!--velocityGradient => Velocity gradient-->
+		<xsd:attribute name="velocityGradient" type="real64_array3d" />
+		<!--wavespeed => Current Material Wavespeed-->
+		<xsd:attribute name="wavespeed" type="real64_array2d" />
+	</xsd:complexType>
+	<xsd:complexType name="ChiumentiType">
+		<!--damage => Array of quadrature point damage values-->
+		<xsd:attribute name="damage" type="real64_array2d" />
+		<!--density => Material Density-->
+		<xsd:attribute name="density" type="real64_array2d" />
+		<!--lambda => Elastic Bulk Modulus Field-->
+		<xsd:attribute name="lambda" type="real64_array" />
+		<!--lengthScale => Array of quadrature point damage values-->
+		<xsd:attribute name="lengthScale" type="real64_array" />
+		<!--oldStress => Previous Material Stress-->
+		<xsd:attribute name="oldStress" type="real64_array3d" />
+		<!--shearModulus => Elastic Shear Modulus Field-->
+		<xsd:attribute name="shearModulus" type="real64_array" />
+		<!--strengthScale => Strength scale-->
+		<xsd:attribute name="strengthScale" type="real64_array" />
+		<!--stress => Current Material Stress-->
+		<xsd:attribute name="stress" type="real64_array3d" />
+		<!--thermalExpansionCoefficient => Linear Thermal Expansion Coefficient Field-->
+		<xsd:attribute name="thermalExpansionCoefficient" type="real64_array" />
+		<!--wavespeed => Current Material Wavespeed-->
+		<xsd:attribute name="wavespeed" type="real64_array2d" />
 	</xsd:complexType>
 	<xsd:complexType name="CompositionalMultiphaseFluidType">
 		<!--dPhaseCompFraction => Derivative of phase component fraction with respect to pressure, temperature, and global component fractions-->
@@ -2064,6 +2376,16 @@
 		<!--permeability => Rock permeability-->
 		<xsd:attribute name="permeability" type="real64_array3d" />
 	</xsd:complexType>
+	<xsd:complexType name="ContinuumBaseType">
+		<!--density => Material Density-->
+		<xsd:attribute name="density" type="real64_array2d" />
+		<!--oldStress => Previous Material Stress-->
+		<xsd:attribute name="oldStress" type="real64_array3d" />
+		<!--stress => Current Material Stress-->
+		<xsd:attribute name="stress" type="real64_array3d" />
+		<!--wavespeed => Current Material Wavespeed-->
+		<xsd:attribute name="wavespeed" type="real64_array2d" />
+	</xsd:complexType>
 	<xsd:complexType name="CoulombType">
 		<!--elasticSlip => Elastic Slip-->
 		<xsd:attribute name="elasticSlip" type="real64_array2d" />
@@ -2087,6 +2409,8 @@
 		<xsd:attribute name="stress" type="real64_array3d" />
 		<!--thermalExpansionCoefficient => Linear Thermal Expansion Coefficient Field-->
 		<xsd:attribute name="thermalExpansionCoefficient" type="real64_array" />
+		<!--wavespeed => Current Material Wavespeed-->
+		<xsd:attribute name="wavespeed" type="real64_array2d" />
 	</xsd:complexType>
 	<xsd:complexType name="DamageSpectralElasticIsotropicType">
 		<!--bulkModulus => Elastic Bulk Modulus Field-->
@@ -2107,6 +2431,8 @@
 		<xsd:attribute name="stress" type="real64_array3d" />
 		<!--thermalExpansionCoefficient => Linear Thermal Expansion Coefficient Field-->
 		<xsd:attribute name="thermalExpansionCoefficient" type="real64_array" />
+		<!--wavespeed => Current Material Wavespeed-->
+		<xsd:attribute name="wavespeed" type="real64_array2d" />
 	</xsd:complexType>
 	<xsd:complexType name="DamageVolDevElasticIsotropicType">
 		<!--bulkModulus => Elastic Bulk Modulus Field-->
@@ -2127,6 +2453,8 @@
 		<xsd:attribute name="stress" type="real64_array3d" />
 		<!--thermalExpansionCoefficient => Linear Thermal Expansion Coefficient Field-->
 		<xsd:attribute name="thermalExpansionCoefficient" type="real64_array" />
+		<!--wavespeed => Current Material Wavespeed-->
+		<xsd:attribute name="wavespeed" type="real64_array2d" />
 	</xsd:complexType>
 	<xsd:complexType name="DeadOilFluidType">
 		<!--dPhaseCompFraction => Derivative of phase component fraction with respect to pressure, temperature, and global component fractions-->
@@ -2209,6 +2537,8 @@
 		<xsd:attribute name="thermalExpansionCoefficient" type="real64_array" />
 		<!--virginCompressionIndex => Virgin compression index-->
 		<xsd:attribute name="virginCompressionIndex" type="real64_array" />
+		<!--wavespeed => Current Material Wavespeed-->
+		<xsd:attribute name="wavespeed" type="real64_array2d" />
 	</xsd:complexType>
 	<xsd:complexType name="DruckerPragerType">
 		<!--bulkModulus => Elastic Bulk Modulus Field-->
@@ -2233,6 +2563,8 @@
 		<xsd:attribute name="stress" type="real64_array3d" />
 		<!--thermalExpansionCoefficient => Linear Thermal Expansion Coefficient Field-->
 		<xsd:attribute name="thermalExpansionCoefficient" type="real64_array" />
+		<!--wavespeed => Current Material Wavespeed-->
+		<xsd:attribute name="wavespeed" type="real64_array2d" />
 	</xsd:complexType>
 	<xsd:complexType name="ElasticIsotropicType">
 		<!--bulkModulus => Elastic Bulk Modulus Field-->
@@ -2247,6 +2579,8 @@
 		<xsd:attribute name="stress" type="real64_array3d" />
 		<!--thermalExpansionCoefficient => Linear Thermal Expansion Coefficient Field-->
 		<xsd:attribute name="thermalExpansionCoefficient" type="real64_array" />
+		<!--wavespeed => Current Material Wavespeed-->
+		<xsd:attribute name="wavespeed" type="real64_array2d" />
 	</xsd:complexType>
 	<xsd:complexType name="ElasticIsotropicPressureDependentType">
 		<!--density => Material Density-->
@@ -2265,6 +2599,8 @@
 		<xsd:attribute name="stress" type="real64_array3d" />
 		<!--thermalExpansionCoefficient => Linear Thermal Expansion Coefficient Field-->
 		<xsd:attribute name="thermalExpansionCoefficient" type="real64_array" />
+		<!--wavespeed => Current Material Wavespeed-->
+		<xsd:attribute name="wavespeed" type="real64_array2d" />
 	</xsd:complexType>
 	<xsd:complexType name="ElasticOrthotropicType">
 		<!--c11 => Elastic Stiffness Field C11-->
@@ -2293,6 +2629,8 @@
 		<xsd:attribute name="stress" type="real64_array3d" />
 		<!--thermalExpansionCoefficient => Linear Thermal Expansion Coefficient Field-->
 		<xsd:attribute name="thermalExpansionCoefficient" type="real64_array" />
+		<!--wavespeed => Current Material Wavespeed-->
+		<xsd:attribute name="wavespeed" type="real64_array2d" />
 	</xsd:complexType>
 	<xsd:complexType name="ElasticTransverseIsotropicType">
 		<!--c11 => Elastic Stiffness Field C11-->
@@ -2307,12 +2645,68 @@
 		<xsd:attribute name="c66" type="real64_array" />
 		<!--density => Material Density-->
 		<xsd:attribute name="density" type="real64_array2d" />
+		<!--effectiveBulkModulus => Effective bulk modulus for stress control and wavespeed calculations-->
+		<xsd:attribute name="effectiveBulkModulus" type="real64_array" />
+		<!--effectiveShearModulus => Effective shear modulus for stress control and wavespeed calculations-->
+		<xsd:attribute name="effectiveShearModulus" type="real64_array" />
+		<!--materialDirection => Material direction-->
+		<xsd:attribute name="materialDirection" type="real64_array2d" />
 		<!--oldStress => Previous Material Stress-->
 		<xsd:attribute name="oldStress" type="real64_array3d" />
 		<!--stress => Current Material Stress-->
 		<xsd:attribute name="stress" type="real64_array3d" />
 		<!--thermalExpansionCoefficient => Linear Thermal Expansion Coefficient Field-->
 		<xsd:attribute name="thermalExpansionCoefficient" type="real64_array" />
+		<!--wavespeed => Current Material Wavespeed-->
+		<xsd:attribute name="wavespeed" type="real64_array2d" />
+	</xsd:complexType>
+	<xsd:complexType name="ElasticTransverseIsotropicPressureDependentType">
+		<!--c11 => Elastic Stiffness Field C11-->
+		<xsd:attribute name="c11" type="real64_array" />
+		<!--c13 => Elastic Stiffness Field C13-->
+		<xsd:attribute name="c13" type="real64_array" />
+		<!--c33 => Elastic Stiffness Field C33-->
+		<xsd:attribute name="c33" type="real64_array" />
+		<!--c44 => Elastic Stiffness Field C44-->
+		<xsd:attribute name="c44" type="real64_array" />
+		<!--c66 => Elastic Stiffness Field C66-->
+		<xsd:attribute name="c66" type="real64_array" />
+		<!--dc11dp => Elastic Stiffness Field C11 pressure derivative-->
+		<xsd:attribute name="dc11dp" type="real64" />
+		<!--dc13dp => Elastic Stiffness Field C13 pressure derivative-->
+		<xsd:attribute name="dc13dp" type="real64" />
+		<!--dc33dp => Elastic Stiffness Field C33 pressure derivative-->
+		<xsd:attribute name="dc33dp" type="real64" />
+		<!--dc44dp => Elastic Stiffness Field C44 pressure derivative-->
+		<xsd:attribute name="dc44dp" type="real64" />
+		<!--dc66dp => Elastic Stiffness Field C66 pressure derivative-->
+		<xsd:attribute name="dc66dp" type="real64" />
+		<!--density => Material Density-->
+		<xsd:attribute name="density" type="real64_array2d" />
+		<!--effectiveBulkModulus => Effective bulk modulus for stress control and wavespeed calculations-->
+		<xsd:attribute name="effectiveBulkModulus" type="real64_array" />
+		<!--effectiveShearModulus => Effective shear modulus for stress control and wavespeed calculations-->
+		<xsd:attribute name="effectiveShearModulus" type="real64_array" />
+		<!--materialDirection => Material direction-->
+		<xsd:attribute name="materialDirection" type="real64_array2d" />
+		<!--oldStress => Previous Material Stress-->
+		<xsd:attribute name="oldStress" type="real64_array3d" />
+		<!--refC11 => Reference elastic Stiffness Field C11 at 0 pressure-->
+		<xsd:attribute name="refC11" type="real64" />
+		<!--refC13 => Reference elastic Stiffness Field C13 at 0 pressure-->
+		<xsd:attribute name="refC13" type="real64" />
+		<!--refC33 => Reference elastic Stiffness Field C33 at 0 pressure-->
+		<xsd:attribute name="refC33" type="real64" />
+		<!--refC44 => Reference elastic Stiffness Field C44 at 0 pressure-->
+		<xsd:attribute name="refC44" type="real64" />
+		<!--refC66 => Reference elastic Stiffness Field C66 at 0 pressure-->
+		<xsd:attribute name="refC66" type="real64" />
+		<!--stress => Current Material Stress-->
+		<xsd:attribute name="stress" type="real64_array3d" />
+		<!--thermalExpansionCoefficient => Linear Thermal Expansion Coefficient Field-->
+		<xsd:attribute name="thermalExpansionCoefficient" type="real64_array" />
+		<!--wavespeed => Current Material Wavespeed-->
+		<xsd:attribute name="wavespeed" type="real64_array2d" />
 	</xsd:complexType>
 	<xsd:complexType name="ExponentialDecayPermeabilityType">
 		<!--dPerm_dDispJump => Derivative of rock permeability with respect to displacement jump-->
@@ -2351,8 +2745,114 @@
 		<xsd:attribute name="stress" type="real64_array3d" />
 		<!--thermalExpansionCoefficient => Linear Thermal Expansion Coefficient Field-->
 		<xsd:attribute name="thermalExpansionCoefficient" type="real64_array" />
+		<!--wavespeed => Current Material Wavespeed-->
+		<xsd:attribute name="wavespeed" type="real64_array2d" />
 	</xsd:complexType>
 	<xsd:complexType name="FrictionlessContactType" />
+	<xsd:complexType name="GasType">
+		<!--density => Material Density-->
+		<xsd:attribute name="density" type="real64_array2d" />
+		<!--jacobian => Jacobian-->
+		<xsd:attribute name="jacobian" type="real64_array" />
+		<!--oldStress => Previous Material Stress-->
+		<xsd:attribute name="oldStress" type="real64_array3d" />
+		<!--stress => Current Material Stress-->
+		<xsd:attribute name="stress" type="real64_array3d" />
+		<!--temperature => Temperature-->
+		<xsd:attribute name="temperature" type="real64_array" />
+		<!--wavespeed => Current Material Wavespeed-->
+		<xsd:attribute name="wavespeed" type="real64_array2d" />
+	</xsd:complexType>
+	<xsd:complexType name="GeomechanicsType">
+		<!--bulkModulus => Bulk modulus-->
+		<xsd:attribute name="bulkModulus" type="real64_array" />
+		<!--damage => Array of quadrature point damage values-->
+		<xsd:attribute name="damage" type="real64_array2d" />
+		<!--density => Material Density-->
+		<xsd:attribute name="density" type="real64_array2d" />
+		<!--lengthScale => Array of quadrature point length scale values-->
+		<xsd:attribute name="lengthScale" type="real64_array" />
+		<!--oldStress => Previous Material Stress-->
+		<xsd:attribute name="oldStress" type="real64_array3d" />
+		<!--plasticStrain => Plastic strain-->
+		<xsd:attribute name="plasticStrain" type="real64_array3d" />
+		<!--porosity => Porosity-->
+		<xsd:attribute name="porosity" type="real64_array2d" />
+		<!--shearModulus => Shear modulus-->
+		<xsd:attribute name="shearModulus" type="real64_array" />
+		<!--stress => Current Material Stress-->
+		<xsd:attribute name="stress" type="real64_array3d" />
+		<!--thermalExpansionCoefficient => Linear Thermal Expansion Coefficient Field-->
+		<xsd:attribute name="thermalExpansionCoefficient" type="real64_array" />
+		<!--velocityGradient => Velocity gradient-->
+		<xsd:attribute name="velocityGradient" type="real64_array3d" />
+		<!--wavespeed => Current Material Wavespeed-->
+		<xsd:attribute name="wavespeed" type="real64_array2d" />
+	</xsd:complexType>
+	<xsd:complexType name="GraphiteType">
+		<!--damage => Array of quadrature point damage values-->
+		<xsd:attribute name="damage" type="real64_array2d" />
+		<!--density => Material Density-->
+		<xsd:attribute name="density" type="real64_array2d" />
+		<!--effectiveBulkModulus => Effective bulk modulus for stress control and wavespeed calculations-->
+		<xsd:attribute name="effectiveBulkModulus" type="real64_array" />
+		<!--effectiveShearModulus => Effective shear modulus for stress control and wavespeed calculations-->
+		<xsd:attribute name="effectiveShearModulus" type="real64_array" />
+		<!--jacobian => Array of quadrature point jacobian values-->
+		<xsd:attribute name="jacobian" type="real64_array2d" />
+		<!--lengthScale => Array of quadrature point length scale values-->
+		<xsd:attribute name="lengthScale" type="real64_array" />
+		<!--materialDirection => Material direction-->
+		<xsd:attribute name="materialDirection" type="real64_array2d" />
+		<!--oldStress => Previous Material Stress-->
+		<xsd:attribute name="oldStress" type="real64_array3d" />
+		<!--plasticStrain => Plastic strain-->
+		<xsd:attribute name="plasticStrain" type="real64_array3d" />
+		<!--relaxation => Relaxation-->
+		<xsd:attribute name="relaxation" type="real64_array2d" />
+		<!--strengthScale => Array of quadrature point strength scale values-->
+		<xsd:attribute name="strengthScale" type="real64_array" />
+		<!--stress => Current Material Stress-->
+		<xsd:attribute name="stress" type="real64_array3d" />
+		<!--thermalExpansionCoefficient => Linear Thermal Expansion Coefficient Field-->
+		<xsd:attribute name="thermalExpansionCoefficient" type="real64_array" />
+		<!--velocityGradient => Velocity gradient-->
+		<xsd:attribute name="velocityGradient" type="real64_array3d" />
+		<!--wavespeed => Current Material Wavespeed-->
+		<xsd:attribute name="wavespeed" type="real64_array2d" />
+	</xsd:complexType>
+	<xsd:complexType name="HyperelasticType">
+		<!--bulkModulus => Elastic Bulk Modulus Field-->
+		<xsd:attribute name="bulkModulus" type="real64_array" />
+		<!--density => Material Density-->
+		<xsd:attribute name="density" type="real64_array2d" />
+		<!--oldStress => Previous Material Stress-->
+		<xsd:attribute name="oldStress" type="real64_array3d" />
+		<!--shearModulus => Elastic Shear Modulus Field-->
+		<xsd:attribute name="shearModulus" type="real64_array" />
+		<!--stress => Current Material Stress-->
+		<xsd:attribute name="stress" type="real64_array3d" />
+		<!--thermalExpansionCoefficient => Linear Thermal Expansion Coefficient Field-->
+		<xsd:attribute name="thermalExpansionCoefficient" type="real64_array" />
+		<!--wavespeed => Current Material Wavespeed-->
+		<xsd:attribute name="wavespeed" type="real64_array2d" />
+	</xsd:complexType>
+	<xsd:complexType name="HyperelasticMMSType">
+		<!--density => Material Density-->
+		<xsd:attribute name="density" type="real64_array2d" />
+		<!--lambda => Elastic Bulk Modulus Field-->
+		<xsd:attribute name="lambda" type="real64_array" />
+		<!--oldStress => Previous Material Stress-->
+		<xsd:attribute name="oldStress" type="real64_array3d" />
+		<!--shearModulus => Elastic Shear Modulus Field-->
+		<xsd:attribute name="shearModulus" type="real64_array" />
+		<!--stress => Current Material Stress-->
+		<xsd:attribute name="stress" type="real64_array3d" />
+		<!--thermalExpansionCoefficient => Linear Thermal Expansion Coefficient Field-->
+		<xsd:attribute name="thermalExpansionCoefficient" type="real64_array" />
+		<!--wavespeed => Current Material Wavespeed-->
+		<xsd:attribute name="wavespeed" type="real64_array2d" />
+	</xsd:complexType>
 	<xsd:complexType name="JFunctionCapillaryPressureType">
 		<!--dPhaseCapPressure_dPhaseVolFraction => Derivative of phase capillary pressure with respect to phase volume fraction-->
 		<xsd:attribute name="dPhaseCapPressure_dPhaseVolFraction" type="real64_array4d" />
@@ -2396,6 +2896,8 @@
 		<xsd:attribute name="thermalExpansionCoefficient" type="real64_array" />
 		<!--virginCompressionIndex => Virgin compression index-->
 		<xsd:attribute name="virginCompressionIndex" type="real64_array" />
+		<!--wavespeed => Current Material Wavespeed-->
+		<xsd:attribute name="wavespeed" type="real64_array2d" />
 	</xsd:complexType>
 	<xsd:complexType name="MultiPhaseConstantThermalConductivityType">
 		<!--dEffectiveConductivity_dPhaseVolFraction => Derivative of effective conductivity with respect to phase volume fraction-->
@@ -2449,6 +2951,8 @@
 		<xsd:attribute name="stress" type="real64_array3d" />
 		<!--thermalExpansionCoefficient => Linear Thermal Expansion Coefficient Field-->
 		<xsd:attribute name="thermalExpansionCoefficient" type="real64_array" />
+		<!--wavespeed => Current Material Wavespeed-->
+		<xsd:attribute name="wavespeed" type="real64_array2d" />
 		<!--yieldStress => Array of element yield stresses-->
 		<xsd:attribute name="yieldStress" type="real64_array" />
 	</xsd:complexType>
@@ -2690,6 +3194,18 @@
 		<!--permeability => Rock permeability-->
 		<xsd:attribute name="permeability" type="real64_array3d" />
 	</xsd:complexType>
+	<xsd:complexType name="SolidBaseType">
+		<!--density => Material Density-->
+		<xsd:attribute name="density" type="real64_array2d" />
+		<!--oldStress => Previous Material Stress-->
+		<xsd:attribute name="oldStress" type="real64_array3d" />
+		<!--stress => Current Material Stress-->
+		<xsd:attribute name="stress" type="real64_array3d" />
+		<!--thermalExpansionCoefficient => Linear Thermal Expansion Coefficient Field-->
+		<xsd:attribute name="thermalExpansionCoefficient" type="real64_array" />
+		<!--wavespeed => Current Material Wavespeed-->
+		<xsd:attribute name="wavespeed" type="real64_array2d" />
+	</xsd:complexType>
 	<xsd:complexType name="SolidInternalEnergyType">
 		<!--dInternalEnergy_dTemperature => Derivative of the solid internal energy w.r.t. temperature [J/(m^3.K)]-->
 		<xsd:attribute name="dInternalEnergy_dTemperature" type="real64_array2d" />
@@ -2697,6 +3213,32 @@
 		<xsd:attribute name="internalEnergy" type="real64_array2d" />
 		<!--internalEnergy_n => Internal energy of the solid per unit volume at the previous time-step [J/m^3]-->
 		<xsd:attribute name="internalEnergy_n" type="real64_array2d" />
+	</xsd:complexType>
+	<xsd:complexType name="StrainHardeningPolymerType">
+		<!--bulkModulus => Elastic Bulk Modulus Field-->
+		<xsd:attribute name="bulkModulus" type="real64_array" />
+		<!--damage => Array of quadrature point damage values-->
+		<xsd:attribute name="damage" type="real64_array2d" />
+		<!--deformationGradient => Array of element/particle deformation gradient values-->
+		<xsd:attribute name="deformationGradient" type="real64_array3d" />
+		<!--density => Material Density-->
+		<xsd:attribute name="density" type="real64_array2d" />
+		<!--jacobian => Array of quadrature point jacobian values-->
+		<xsd:attribute name="jacobian" type="real64_array2d" />
+		<!--oldStress => Previous Material Stress-->
+		<xsd:attribute name="oldStress" type="real64_array3d" />
+		<!--plasticStrain => Array of element/particle plastic strain values-->
+		<xsd:attribute name="plasticStrain" type="real64_array3d" />
+		<!--shearModulus => Elastic Shear Modulus Field-->
+		<xsd:attribute name="shearModulus" type="real64_array" />
+		<!--stress => Current Material Stress-->
+		<xsd:attribute name="stress" type="real64_array3d" />
+		<!--thermalExpansionCoefficient => Linear Thermal Expansion Coefficient Field-->
+		<xsd:attribute name="thermalExpansionCoefficient" type="real64_array" />
+		<!--wavespeed => Current Material Wavespeed-->
+		<xsd:attribute name="wavespeed" type="real64_array2d" />
+		<!--yieldStrength => Array of element/particle yield strength values-->
+		<xsd:attribute name="yieldStrength" type="real64_array" />
 	</xsd:complexType>
 	<xsd:complexType name="TableCapillaryPressureType">
 		<!--capPresWrappers => (no description available)-->
@@ -2867,6 +3409,8 @@
 		<xsd:attribute name="stress" type="real64_array3d" />
 		<!--thermalExpansionCoefficient => Linear Thermal Expansion Coefficient Field-->
 		<xsd:attribute name="thermalExpansionCoefficient" type="real64_array" />
+		<!--wavespeed => Current Material Wavespeed-->
+		<xsd:attribute name="wavespeed" type="real64_array2d" />
 	</xsd:complexType>
 	<xsd:complexType name="ViscoExtendedDruckerPragerType">
 		<!--bulkModulus => Elastic Bulk Modulus Field-->
@@ -2895,6 +3439,8 @@
 		<xsd:attribute name="stress" type="real64_array3d" />
 		<!--thermalExpansionCoefficient => Linear Thermal Expansion Coefficient Field-->
 		<xsd:attribute name="thermalExpansionCoefficient" type="real64_array" />
+		<!--wavespeed => Current Material Wavespeed-->
+		<xsd:attribute name="wavespeed" type="real64_array2d" />
 	</xsd:complexType>
 	<xsd:complexType name="ViscoModifiedCamClayType">
 		<!--cslSlope => Slope of the critical state line-->
@@ -2921,6 +3467,32 @@
 		<xsd:attribute name="thermalExpansionCoefficient" type="real64_array" />
 		<!--virginCompressionIndex => Virgin compression index-->
 		<xsd:attribute name="virginCompressionIndex" type="real64_array" />
+		<!--wavespeed => Current Material Wavespeed-->
+		<xsd:attribute name="wavespeed" type="real64_array2d" />
+	</xsd:complexType>
+	<xsd:complexType name="VonMisesJType">
+		<!--bulkModulus => Elastic Bulk Modulus Field-->
+		<xsd:attribute name="bulkModulus" type="real64_array" />
+		<!--deformationGradient => Deformation gradient field-->
+		<xsd:attribute name="deformationGradient" type="real64_array3d" />
+		<!--density => Material Density-->
+		<xsd:attribute name="density" type="real64_array2d" />
+		<!--oldStress => Previous Material Stress-->
+		<xsd:attribute name="oldStress" type="real64_array3d" />
+		<!--plasticStrain => Plastic strain field-->
+		<xsd:attribute name="plasticStrain" type="real64_array3d" />
+		<!--shearModulus => Elastic Shear Modulus Field-->
+		<xsd:attribute name="shearModulus" type="real64_array" />
+		<!--stress => Current Material Stress-->
+		<xsd:attribute name="stress" type="real64_array3d" />
+		<!--thermalExpansionCoefficient => Linear Thermal Expansion Coefficient Field-->
+		<xsd:attribute name="thermalExpansionCoefficient" type="real64_array" />
+		<!--velocityGradient => Velocity gradient field-->
+		<xsd:attribute name="velocityGradient" type="real64_array3d" />
+		<!--wavespeed => Current Material Wavespeed-->
+		<xsd:attribute name="wavespeed" type="real64_array2d" />
+		<!--yieldStrength => Yield strength field-->
+		<xsd:attribute name="yieldStrength" type="real64_array" />
 	</xsd:complexType>
 	<xsd:complexType name="WillisRichardsPermeabilityType">
 		<!--dPerm_dDispJump => Derivative of rock permeability with respect to displacement jump-->
@@ -3002,45 +3574,8 @@
 		<!--localToGlobalMap => Array that contains a map from localIndex to globalIndex.-->
 		<xsd:attribute name="localToGlobalMap" type="globalIndex_array" />
 	</xsd:complexType>
-<<<<<<< HEAD
-	<xsd:complexType name="elementSubRegionsType">
-		<xsd:choice minOccurs="0" maxOccurs="unbounded">
-			<xsd:element name="WellElementRegionUniqueSubRegion" type="WellElementRegionUniqueSubRegionType" />
-		</xsd:choice>
-	</xsd:complexType>
-	<xsd:complexType name="neighborDataType" />
-	<xsd:complexType name="setsType">
-		<!--externalSet => (no description available)-->
-		<xsd:attribute name="externalSet" type="LvArray_SortedArray_lt_int_cm_-int_cm_-LvArray_ChaiBuffer_gt_" />
-	</xsd:complexType>
-<<<<<<< HEAD
-	<xsd:complexType name="ParticleRegionsType">
-		<xsd:choice minOccurs="0" maxOccurs="unbounded">
-			<xsd:element name="neighborData" type="neighborDataType" />
-			<xsd:element name="particleRegionsGroup" type="particleRegionsGroupType" />
-			<xsd:element name="sets" type="setsType" />
-			<xsd:element name="ParticleRegion" type="ParticleRegionType" />
-		</xsd:choice>
-		<!--domainBoundaryIndicator => (no description available)-->
-		<xsd:attribute name="domainBoundaryIndicator" type="integer_array" />
-		<!--ghostRank => (no description available)-->
-		<xsd:attribute name="ghostRank" type="integer_array" />
-		<!--globalToLocalMap => (no description available)-->
-		<xsd:attribute name="globalToLocalMap" type="geos_mapBase&lt;long long, int, std_integral_constant&lt;bool, false&gt; &gt;" />
-		<!--isExternal => (no description available)-->
-		<xsd:attribute name="isExternal" type="integer_array" />
-		<!--localToGlobalMap => Array that contains a map from localIndex to globalIndex.-->
-		<xsd:attribute name="localToGlobalMap" type="globalIndex_array" />
-	</xsd:complexType>
 	<xsd:complexType name="particleRegionsGroupType" />
 	<xsd:complexType name="edgeManagerType">
-=======
-	<xsd:complexType name="SurfaceElementRegionType">
->>>>>>> develop
-=======
-	<xsd:complexType name="particleRegionsGroupType" />
-	<xsd:complexType name="edgeManagerType">
->>>>>>> develop
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="neighborData" type="neighborDataType" />
 			<xsd:element name="sets" type="setsType" />
@@ -3175,6 +3710,26 @@
 		<xsd:attribute name="localToGlobalMap" type="globalIndex_array" />
 		<!--primaryField => Primary field variable-->
 		<xsd:attribute name="primaryField" type="real64_array" />
+	</xsd:complexType>
+	<xsd:complexType name="partitionManagerType">
+		<!--blockSize => Length of partition dimensions (excluding ghost objects).-->
+		<xsd:attribute name="blockSize" type="real64_array" />
+		<!--contactGhostMax => Ghost position max.-->
+		<xsd:attribute name="contactGhostMax" type="real64_array" />
+		<!--contactGhostMin => Ghost position min.-->
+		<xsd:attribute name="contactGhostMin" type="real64_array" />
+		<!--gridMax => Maximum extent of problem dimensions (excluding ghost objects).-->
+		<xsd:attribute name="gridMax" type="real64_array" />
+		<!--gridMin => Minimum extent of problem dimensions (excluding ghost objects).-->
+		<xsd:attribute name="gridMin" type="real64_array" />
+		<!--gridSize => Total length of problem dimensions (excluding ghost objects).-->
+		<xsd:attribute name="gridSize" type="real64_array" />
+		<!--max => Maximum extent of partition dimensions (excluding ghost objects)-->
+		<xsd:attribute name="max" type="real64_array" />
+		<!--min => Minimum extent of partition dimensions (excluding ghost objects)-->
+		<xsd:attribute name="min" type="real64_array" />
+		<!--partitionLocations => Locations of partition boundaries-->
+		<xsd:attribute name="partitionLocations" type="LvArray_Array_lt_LvArray_Array_lt_double_cm_-1_cm_-camp_int_seq_lt_long_cm_-0l_gt__cm_-int_cm_-LvArray_ChaiBuffer_gt__cm_-1_cm_-camp_int_seq_lt_long_cm_-0l_gt__cm_-int_cm_-LvArray_ChaiBuffer_gt_" />
 	</xsd:complexType>
 	<xsd:complexType name="CellElementRegionType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -3328,25 +3883,5 @@
 		<!--localToGlobalMap => Array that contains a map from localIndex to globalIndex.-->
 		<xsd:attribute name="localToGlobalMap" type="globalIndex_array" />
 	</xsd:complexType>
-<<<<<<< HEAD
-	<xsd:complexType name="ParticleRegionType">
-		<xsd:choice minOccurs="0" maxOccurs="unbounded">
-			<xsd:element name="neighborData" type="neighborDataType" />
-			<xsd:element name="particleSubRegions" type="particleSubRegionsType" />
-			<xsd:element name="sets" type="setsType" />
-		</xsd:choice>
-		<!--domainBoundaryIndicator => (no description available)-->
-		<xsd:attribute name="domainBoundaryIndicator" type="integer_array" />
-		<!--ghostRank => (no description available)-->
-		<xsd:attribute name="ghostRank" type="integer_array" />
-		<!--globalToLocalMap => (no description available)-->
-		<xsd:attribute name="globalToLocalMap" type="geos_mapBase&lt;long long, int, std_integral_constant&lt;bool, false&gt; &gt;" />
-		<!--isExternal => (no description available)-->
-		<xsd:attribute name="isExternal" type="integer_array" />
-		<!--localToGlobalMap => Array that contains a map from localIndex to globalIndex.-->
-		<xsd:attribute name="localToGlobalMap" type="globalIndex_array" />
-	</xsd:complexType>
-=======
->>>>>>> develop
 	<xsd:complexType name="particleSubRegionsType" />
 </xsd:schema>
