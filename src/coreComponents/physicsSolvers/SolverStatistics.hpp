@@ -225,9 +225,6 @@ public:
   /// Current cycle number
   integer m_cycleNumber = 0;
 
-/// Current iteration number
-  integer m_itererationNumber = 0;
-
   /// Residuals with their names
   std::map< string, real64 > m_residuals;
 

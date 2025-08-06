@@ -147,7 +147,7 @@ void IterationsStatistics::updateTimeStepCut()
 
 void IterationsStatistics::writeIterationStatsToTable()
 {
-  if( !m_csvOutput )
+  if( m_numTimeSteps == 0 || !m_csvOutput )
     return;
 
   m_iterationData.addRow( m_numTimeSteps,
@@ -180,7 +180,7 @@ void IterationsStatistics::outputStatistics()
     return;
 
   {
-    TableLayout iterationLogLayout ( GEOS_FMT( "{} iterations", getParent().getName(), {"", "Value"} ));
+    TableLayout iterationLogLayout ( GEOS_FMT( "{} iterations", getParent().getName()), {"", "Value"} );
 
     TableTextFormatter const statsFormatter( iterationLogLayout );
 
@@ -216,8 +216,6 @@ void ConvergenceStatistics::writeConvergenceStatsToTable()
                                                          GEOS_FMT( "{}", m_time_n )} ));
   residualsNormCells.emplace_back( TableData::CellData( {CellType::Value,
                                                          GEOS_FMT( "{}", m_dt )} ));
-  residualsNormCells.emplace_back( TableData::CellData( {CellType::Value,
-                                                         GEOS_FMT( "{}", m_itererationNumber )} ));
 
   for( auto const & residual : m_residuals )
   {
@@ -232,7 +230,7 @@ void ConvergenceStatistics::writeConvergenceStatsToTable()
 
   if( !m_logStream.is_open() )
   {
-    string_array header = {"Cycle number", "time_n (s)", "dt (s)", "Iteration number"};
+    string_array header = {"Cycle number", "time_n (s)", "dt (s)"};
     for( auto const & residual : m_residuals )
     {
       header.emplace_back( residual.first );

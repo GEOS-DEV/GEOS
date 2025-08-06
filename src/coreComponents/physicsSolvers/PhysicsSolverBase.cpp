@@ -306,6 +306,7 @@ bool PhysicsSolverBase::execute( real64 const time_n,
     // increment the cumulative number of nonlinear and linear iterations
     getIterationStats().iterateTimeStepStatistics();
     getIterationStats().writeIterationStatsToTable();
+    getIterationStats().resetSolverLinearTime();
 
     /*
      * Let us check convergence history of previous solve:
@@ -999,12 +1000,6 @@ bool PhysicsSolverBase::solveNonlinearSystem( real64 const & time_n,
       GEOS_LOG_LEVEL_RANK_0( logInfo::ResidualNorm,
                              GEOS_FMT( "        ( R ) = ( {:4.2e} )", residualNorm ) );
       getConvergenceStats().m_residuals["R"] = residualNorm;
-
-      if( m_writeStatistics >= 2 )
-      {
-        getConvergenceStats().updateSolverStep( time_n, stepDt, cycleNumber );
-        getConvergenceStats().writeConvergenceStatsToTable();
-      }
     }
 
     // if the residual norm is less than the Newton tolerance we denote that we have
@@ -1149,9 +1144,13 @@ bool PhysicsSolverBase::solveNonlinearSystem( real64 const & time_n,
     }
 
     lastResidual = residualNorm;
-  }
 
-  getIterationStats().resetSolverLinearTime();
+    if( m_writeStatistics >= 2 )
+    {
+      getConvergenceStats().updateSolverStep( time_n, stepDt, cycleNumber );
+      getConvergenceStats().writeConvergenceStatsToTable();
+    }
+  }
 
   return isNewtonConverged;
 }
