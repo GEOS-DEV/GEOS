@@ -220,7 +220,6 @@ public:
   virtual void implicitStepSetup( real64 const & time_n,
                                   real64 const & dt,
                                   integer const cycleNumber,
-                                  
                                   DomainPartition & domain ) override
   {
     flowSolver()->setKeepVariablesConstantDuringInitStep( m_performStressInitialization );

@@ -158,7 +158,6 @@ void SinglePhaseHybridFVM::initializePostInitialConditionsPreSubGroups()
 void SinglePhaseHybridFVM::implicitStepSetup( real64 const & time_n,
                                               real64 const & dt,
                                               integer const cycleNumber,
-                                              
                                               DomainPartition & domain )
 {
   GEOS_MARK_FUNCTION;

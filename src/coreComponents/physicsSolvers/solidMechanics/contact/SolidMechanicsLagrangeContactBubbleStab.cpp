@@ -520,7 +520,7 @@ real64 SolidMechanicsLagrangeContactBubbleStab::calculateContactResidualNorm( Do
   stickResidual = sqrt( stickResidual );
 
   GEOS_LOG_LEVEL_RANK_0_NLR( logInfo::ResidualNorm,
-                         GEOS_FMT( "        ( Rt  ) = ( {:15.6e}  )", stickResidual ));
+                             GEOS_FMT( "        ( Rt  ) = ( {:15.6e}  )", stickResidual ));
 
   return sqrt( stickResidual * stickResidual );
 }

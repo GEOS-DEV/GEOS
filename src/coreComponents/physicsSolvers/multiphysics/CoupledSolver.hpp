@@ -151,7 +151,6 @@ public:
   implicitStepSetup( real64 const & time_n,
                      real64 const & dt,
                      integer const cycleNumber,
-                     
                      DomainPartition & domain ) override
   {
     forEachArgInTuple( m_solvers, [&]( auto & solver, auto )

@@ -1969,7 +1969,6 @@ void CompositionalMultiphaseWell::assemblePressureRelations( real64 const & time
 void CompositionalMultiphaseWell::implicitStepSetup( real64 const & time_n,
                                                      real64 const & dt,
                                                      integer const cycleNumber,
-                                                     
                                                      DomainPartition & domain )
 {
   WellSolverBase::implicitStepSetup( time_n, dt, cycleNumber, domain );

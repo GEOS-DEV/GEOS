@@ -160,7 +160,6 @@ template< typename POROMECHANICS_SOLVER >
 void HydrofractureSolver< POROMECHANICS_SOLVER >::implicitStepSetup( real64 const & time_n,
                                                                      real64 const & dt,
                                                                      integer const cycleNumber,
-                                                                     
                                                                      DomainPartition & domain )
 {
   Base::implicitStepSetup( time_n, dt, cycleNumber, domain );

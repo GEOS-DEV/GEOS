@@ -263,7 +263,7 @@ TEST( testSolverStats, testLog )
   EXPECT_EQ( solverStat.m_iterationsStats.m_numSuccessfulConfigIterations, 0 );
   EXPECT_EQ( solverStat.m_iterationsStats.m_numSuccessfulNonlinearIterations, 20 );
   EXPECT_EQ( solverStat.m_iterationsStats.m_numSuccessfulLinearIterations, 20 );
-  EXPECT_EQ( solverStat.m_iterationsStats.m_numDiscardedConfigIterations , 0 );
+  EXPECT_EQ( solverStat.m_iterationsStats.m_numDiscardedConfigIterations, 0 );
   EXPECT_EQ( solverStat.m_iterationsStats.m_numDiscardedNonlinearIterations, 0 );
   EXPECT_EQ( solverStat.m_iterationsStats.m_numDiscardedLinearIterations, 0 );
 }
@@ -332,7 +332,8 @@ TEST( testSolverStats, testOutputFiles )
   // std::vector< string > csvLines2;
   // loadCsvLines( "convergence/SinglePhaseFlow_convergence.csv", csvLines2 );
 
-  // EXPECT_EQ( csvLines2[0], "Cycle number,time_n (s),dt (s),RMass,RVol,REnergy,RFlow,RBubbleDisp,RFrac,Rstick,Rslip,Ropen,RSolid,RContact,RProppant" );
+  // EXPECT_EQ( csvLines2[0], "Cycle number,time_n (s),dt
+  // (s),RMass,RVol,REnergy,RFlow,RBubbleDisp,RFrac,Rstick,Rslip,Ropen,RSolid,RContact,RProppant" );
 
   ASSERT_TRUE( std::remove( "convergence/SinglePhaseFlow_iterations.csv" ) == 0 );
   ASSERT_TRUE( std::remove( "convergence/SinglePhaseFlow_convergence.csv" ) == 0 );
