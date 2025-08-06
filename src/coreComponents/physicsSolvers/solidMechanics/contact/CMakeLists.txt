@@ -1,8 +1,9 @@
 # Specify solver headers
-set( physicsSolvers_headers
-     ${physicsSolvers_headers}
+set( solidMechanicsSolvers_headers
+     ${solidMechanicsSolvers_headers}
      contact/ContactSolverBase.hpp
      contact/ContactFields.hpp
+     contact/LogLevelsInfo.hpp
      contact/SolidMechanicsEmbeddedFractures.hpp
      contact/SolidMechanicsLagrangeContact.hpp
      contact/SolidMechanicsLagrangeContactBubbleStab.hpp
@@ -18,13 +19,12 @@ set( physicsSolvers_headers
      contact/kernels/SolidMechanicsConformingContactKernelsHelper.hpp
      contact/kernels/SolidMechanicsContactFaceBubbleKernels.hpp
      contact/kernels/SolidMechanicsLagrangeContactKernels.hpp 
-     contact/LogLevelsInfo.hpp
      PARENT_SCOPE )
 
 
 # Specify solver sources
-set( physicsSolvers_sources
-     ${physicsSolvers_sources}
+set( solidMechanicsSolvers_sources
+     ${solidMechanicsSolvers_sources}
      contact/ContactSolverBase.cpp
      contact/SolidMechanicsEmbeddedFractures.cpp
      contact/SolidMechanicsLagrangeContact.cpp

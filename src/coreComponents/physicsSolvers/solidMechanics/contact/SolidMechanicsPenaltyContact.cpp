@@ -32,10 +32,8 @@
 namespace geos
 {
 
-using namespace constitutive;
 using namespace dataRepository;
 using namespace fields;
-using namespace finiteElement;
 
 SolidMechanicsPenaltyContact::SolidMechanicsPenaltyContact( const string & name,
                                                             Group * const parent ):
@@ -67,7 +65,7 @@ void SolidMechanicsPenaltyContact::setupSystem( DomainPartition & domain,
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
-                                                                arrayView1d< string const > const & regionNames )
+                                                                string_array const & regionNames )
   {
     NodeManager const & nodeManager = mesh.getNodeManager();
     arrayView1d< globalIndex const > const
@@ -75,7 +73,7 @@ void SolidMechanicsPenaltyContact::setupSystem( DomainPartition & domain,
 
 
     ElementRegionManager const & elemManager = mesh.getElemManager();
-    array1d< string > allFaceElementRegions;
+    string_array allFaceElementRegions;
     elemManager.forElementRegions< SurfaceElementRegion >( [&]( SurfaceElementRegion const & elemRegion )
     {
       allFaceElementRegions.emplace_back( elemRegion.getName() );
@@ -133,7 +131,7 @@ void SolidMechanicsPenaltyContact::assembleContact( DomainPartition & domain,
 {
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
-                                                                arrayView1d< string const > const & )
+                                                                string_array const & )
   {
     FaceManager const & faceManager = mesh.getFaceManager();
     NodeManager & nodeManager = mesh.getNodeManager();

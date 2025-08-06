@@ -9,7 +9,6 @@
     <MultiphasePoromechanicsConformingFractures
       name="poroFractureSolver"
       targetRegions="{ Region, Fault }" 
-      initialDt="1e5"
       flowSolverName="flowSolver"
       solidSolverName="fractureMechSolver"
       logLevel="1">
@@ -20,9 +19,7 @@
         newtonMaxIter="20"
         maxAllowedResidualNorm="1e+15"/>
       <LinearSolverParameters
-        solverType="direct"
-        krylovTol="1e-10"
-        preconditionerType="mgr"/> 
+        solverType="direct"/> 
     </MultiphasePoromechanicsConformingFractures>
 
     <SolidMechanicsLagrangeContact
@@ -90,14 +87,14 @@
   </Geometry>
 
   <Events
-    minTime="-1e5"
-    maxTime="1.0e7">
+    minTime="-1e11"
+    maxTime="1.0e5">
 
     <!-- Initialization -->
     <SoloEvent 
       name="poroelasticityPreEquilibrationStep" 
-      targetTime="-1e5" 
-      beginTime="-1e5" 
+      targetTime="-1e11" 
+      beginTime="-1e11" 
       target="/Tasks/poroelasticityPreEquilibrationStep"
     />
     <!-- Injection -->
@@ -108,23 +105,23 @@
       target="/Outputs/vtkOutput"/>
 
     <PeriodicEvent
-      name="outputs"
-      beginTime="0.0"
-      endTime="1.0e7"
-      timeFrequency="1e5"
-      target="/Outputs/vtkOutput"/>
+      name="solverApplication"
+      endTime="1.0e5"
+      maxEventDt="1.0e5"
+      target="/Solvers/poroFractureSolver"/>
 
     <PeriodicEvent
-      name="solverApplication"
-      endTime="1.0e7"
-      maxEventDt="1e5"
-      target="/Solvers/poroFractureSolver"/>
+      name="outputs"
+      beginTime="0.0"
+      endTime="1.0e5"
+      timeFrequency="1.0e5"
+      target="/Outputs/vtkOutput"/>
 
     <PeriodicEvent
       name="restarts"
       beginTime="0.0"
-      timeFrequency="1e5"
-      endTime="1.0e6"
+      timeFrequency="1.0e5"
+      endTime="1.0e5"
       target="/Outputs/restartOutput"/>
   </Events>
 </Problem>

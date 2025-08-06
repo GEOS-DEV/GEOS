@@ -189,7 +189,7 @@ public:
    * @brief Get the target region for a perforation.
    * @return the target regions for a perforation
    */
-  arrayView1d< string const > getPerfTargetRegion() const { return m_perfTargetRegion; };
+  string_array const & getPerfTargetRegion() const { return m_perfTargetRegion; };
 
   /**
    * @brief Get the global indices of the well elements connected to each perforation.
@@ -400,7 +400,7 @@ protected:
   array1d< real64 > m_perfDistFromHead;
 
   /// Target region for the perforation
-  array1d< string > m_perfTargetRegion;
+  string_array m_perfTargetRegion;
 
 };
 }

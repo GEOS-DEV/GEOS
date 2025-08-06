@@ -58,7 +58,7 @@ VTKHierarchicalDataSource::search( string const & path )
   GEOS_ERROR_IF( node == -1, "Node doesn't exist" );
   GEOS_ERROR_IF( m_dataAssembly->GetNumberOfChildren( node ) > 0, "Only leaf nodes can be queried." );
 
-  std::vector< unsigned int > indices = m_dataAssembly->GetDataSetIndices( node, false );
+  stdVector< unsigned int > indices = m_dataAssembly->GetDataSetIndices( node, false );
 
   GEOS_ERROR_IF( indices.size() == 0, "Queried node has no dataset attached." );
   GEOS_ERROR_IF( indices.size() > 1, "Current constraint each tree node has only one dataset." );

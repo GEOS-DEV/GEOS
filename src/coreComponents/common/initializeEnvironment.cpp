@@ -261,7 +261,7 @@ static void addUmpireHighWaterMarks()
   MPI_Comm_size( MPI_COMM_WORLD, &size );
   size_t nbRank = (std::size_t)size;
   // Get a list of all the allocators and sort it so that it's in the same order on each rank.
-  std::vector< string > allocatorNames = rm.getAllocatorNames();
+  stdVector< string > allocatorNames = rm.getAllocatorNames();
   std::sort( allocatorNames.begin(), allocatorNames.end() );
 
   // If each rank doesn't have the same number of allocators you can't aggregate them.
@@ -345,11 +345,11 @@ static void addUmpireHighWaterMarks()
     pushStatsIntoAdiak( allocatorName + " rank max", mark );
   }
 
-  TableLayout const memoryStatLayout ( { "Umpire Memory Pool\n(reserved / % over total)",
-                                         "Min over ranks",
-                                         "Max  over ranks",
-                                         "Avg  over ranks",
-                                         "Sum over ranks" } );
+  TableLayout const memoryStatLayout { "Umpire Memory Pool\n(reserved / % over total)",
+                                       "Min over ranks",
+                                       "Max over ranks",
+                                       "Avg over ranks",
+                                       "Sum over ranks" };
   TableTextFormatter const memoryStatLog( memoryStatLayout );
 
   GEOS_LOG_RANK_0( memoryStatLog.toString( tableData ));

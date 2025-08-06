@@ -230,12 +230,14 @@ def main(calling_script, args, unknown_args):
     os.chdir(build_path)
     with open(cmake_cmd, "r") as cmd_file:
         logging.info("Executing cmake line: '%s'" % cmd_file.read().rstrip(os.linesep))
-    subprocess.call(cmake_cmd, shell=True)
+    main_return_code = subprocess.call(cmake_cmd, shell=True)
 
     if args.graphviz:
-        subprocess.call(dot_line, shell=True)
+        main_return_code |= subprocess.call(dot_line, shell=True)
 
+    return main_return_code
 
 if __name__ == '__main__':
     logging.basicConfig(format='[%(filename)s]:[%(levelname)s]: %(message)s', level=logging.INFO)
-    main(sys.argv[0], *parse_args(sys.argv[1:]))
+    return_code = main(sys.argv[0], *parse_args(sys.argv[1:]))
+    sys.exit(return_code)

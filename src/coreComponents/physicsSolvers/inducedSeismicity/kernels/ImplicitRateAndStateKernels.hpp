@@ -32,12 +32,13 @@ namespace rateAndStateKernels
  *
  * @details
  */
+template< typename FRICTION_LAW_TYPE >
 class ImplicitFixedStressRateAndStateKernel
 {
 public:
 
   ImplicitFixedStressRateAndStateKernel( SurfaceElementSubRegion & subRegion,
-                                         constitutive::RateAndStateFriction const & frictionLaw,
+                                         FRICTION_LAW_TYPE const & frictionLaw,
                                          real64 const shearImpedance ):
     m_slipRate( subRegion.getField< fields::rateAndState::slipRate >() ),
     m_stateVariable( subRegion.getField< fields::rateAndState::stateVariable >() ),
@@ -214,7 +215,7 @@ private:
 
   real64 const m_shearImpedance;
 
-  constitutive::RateAndStateFriction::KernelWrapper m_frictionLaw;
+  typename FRICTION_LAW_TYPE::KernelWrapper m_frictionLaw;
 
 };
 

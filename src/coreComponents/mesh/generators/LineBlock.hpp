@@ -154,7 +154,7 @@ public:
 
   arrayView1d< real64 const > getPerfSkinFactor() const override final { return m_perfSkinFactor; }
 
-  arrayView1d< string const > getPerfTargetRegion() const override final { return m_perfTargetRegion; }
+  string_array const & getPerfTargetRegion() const override final { return m_perfTargetRegion; }
 
   /**
    * @brief Set the well skin factor at the perforations.
@@ -166,7 +166,7 @@ public:
    * @brief Set the target region for the perforations.
    * @param perfTargetRegion list of target regions for all the perforations on the well
    */
-  void setPerfTargetRegion( arrayView1d< string const > perfTargetRegion ) { m_perfTargetRegion = perfTargetRegion; }
+  void setPerfTargetRegion( string_array const & perfTargetRegion ) { m_perfTargetRegion = perfTargetRegion; }
 
   arrayView1d< globalIndex const > getPerfElemIndex() const override final { return m_perfElemId; }
 
@@ -250,7 +250,7 @@ private:
   array1d< real64 > m_perfSkinFactor;
 
   /// Target region for the perforation
-  array1d< string > m_perfTargetRegion;
+  string_array m_perfTargetRegion;
 
   /// Global index of the well element
   array1d< globalIndex > m_perfElemId;

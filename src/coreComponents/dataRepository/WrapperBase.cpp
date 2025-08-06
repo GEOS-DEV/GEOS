@@ -72,23 +72,6 @@ string WrapperBase::getPath() const
   return noProblem.empty() ? "/" : noProblem;
 }
 
-string WrapperBase::dumpInputOptions( bool const outputHeader ) const
-{
-  string rval;
-  if( outputHeader )
-  {
-    rval.append( "  |         name         |  opt/req  | Description \n" );
-    rval.append( "  |----------------------|-----------|-----------------------------------------\n" );
-  }
-
-  if( getInputFlag() == InputFlags::OPTIONAL || getInputFlag() == InputFlags::REQUIRED )
-  {
-    rval.append( GEOS_FMT( "  | {:20} | {:9} | {} \n", getName(), InputFlagToString( getInputFlag() ), getDescription() ) );
-  }
-
-  return rval;
-}
-
 #if defined(USE_TOTALVIEW_OUTPUT)
 int WrapperBase::setTotalviewDisplay() const
 {

@@ -23,12 +23,11 @@
 #include "dataRepository/KeyNames.hpp"
 #include "finiteElement/FiniteElementDiscretization.hpp"
 
+#include "physicsSolvers/wavePropagation/LogLevelsInfo.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
 #include "fieldSpecification/PerfectlyMatchedLayer.hpp"
 #include "mainInterface/ProblemManager.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
-#include "mesh/DomainPartition.hpp"
-#include "WaveSolverUtils.hpp"
 #include "events/EventManager.hpp"
 
 #include <limits>
@@ -99,7 +98,7 @@ WaveSolverBase::WaveSolverBase( const std::string & name,
   registerWrapper( viewKeyStruct::saveFieldsString(), &m_saveFields ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( 0 ).
-    setDescription( "Set to 1 to save fields during forward and restore them during backward" );
+    setDescription( "Set to 1 to save fields during forward and restore them during backward. If set to 1, the gradient is computed, and if set to 2, the imaging condition is computed." );
 
   registerWrapper( viewKeyStruct::shotIndexString(), &m_shotIndex ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -238,6 +237,7 @@ WaveSolverBase::WaveSolverBase( const std::string & name,
     setDescription( "Names of the table functions, one for each source, that are used to define the source wavelets. If a list is given, it overrides the Ricker wavelet definitions."
                     "The default value is an empty list, which means that a Ricker wavelet is used everywhere." );
 
+  addLogLevel< logInfo::DASType >();
 }
 
 WaveSolverBase::~WaveSolverBase()
@@ -256,7 +256,7 @@ void WaveSolverBase::registerDataOnMesh( Group & meshBodies )
 {
   forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
                                                     MeshLevel & mesh,
-                                                    arrayView1d< string const > const & )
+                                                    string_array const & )
   {
     NodeManager & nodeManager = mesh.getNodeManager();
 
@@ -295,7 +295,7 @@ void WaveSolverBase::initializePreSubGroups()
   {
     FunctionManager const & functionManager = FunctionManager::getInstance();
     m_sourceWaveletTableWrappers.clear();
-    for( integer i = 0; i < m_sourceWaveletTableNames.size(); i++ )
+    for( size_t i = 0; i < m_sourceWaveletTableNames.size(); i++ )
     {
       TableFunction const & sourceWaveletTable = functionManager.getGroup< TableFunction >( m_sourceWaveletTableNames[ i ] );
       m_sourceWaveletTableWrappers.emplace_back( sourceWaveletTable.createKernelWrapper() );
@@ -335,8 +335,9 @@ void WaveSolverBase::postInputInitialization()
 
   if( m_useDAS != WaveSolverUtils::DASType::none )
   {
-    GEOS_LOG_LEVEL_RANK_0( 1, "Modeling linear DAS data is activated" );
-    GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "Linear DAS formulation: {}", m_useDAS == WaveSolverUtils::DASType::strainIntegration ? "strain integration" : "displacement difference" ) );
+    GEOS_LOG_LEVEL_RANK_0( logInfo::DASType, "Modeling linear DAS data is activated" );
+    GEOS_LOG_LEVEL_RANK_0( logInfo::DASType, GEOS_FMT( "Linear DAS formulation: {}",
+                                                       m_useDAS == WaveSolverUtils::DASType::strainIntegration ? "strain integration" : "displacement difference" ) );
 
     GEOS_ERROR_IF( m_linearDASGeometry.size( 1 ) != 3,
                    "Invalid number of geometry parameters for the linear DAS fiber. Three parameters are required: dip, azimuth, gauge length" );
@@ -398,7 +399,7 @@ void WaveSolverBase::postInputInitialization()
     m_nsamplesSeismoTrace = 0;
   }
 
-  GEOS_THROW_IF( m_sourceWaveletTableNames.size() > 0 && m_sourceWaveletTableNames.size() != m_sourceCoordinates.size( 0 ),
+  GEOS_THROW_IF( m_sourceWaveletTableNames.size() > 0 && static_cast< localIndex >(m_sourceWaveletTableNames.size()) != m_sourceCoordinates.size( 0 ),
                  "Invalid number of source wavelet table names. The number of table functions must be equal to the number of sources",
                  InputError );
   m_useSourceWaveletTables = m_sourceWaveletTableNames.size() > 0;
@@ -447,7 +448,7 @@ localIndex WaveSolverBase::getNumNodesPerElem()
   forDiscretizationOnMeshTargets( domain.getMeshBodies(),
                                   [&]( string const &,
                                        MeshLevel const & mesh,
-                                       arrayView1d< string const > const & regionNames )
+                                       string_array const & regionNames )
   {
     ElementRegionManager const & elemManager = mesh.getElemManager();
     elemManager.forElementRegions( regionNames,
@@ -571,6 +572,5 @@ bool WaveSolverBase::directoryExists( std::string const & directoryName )
   struct stat buffer;
   return stat( directoryName.c_str(), &buffer ) == 0;
 }
-
 
 } /* namespace geos */
