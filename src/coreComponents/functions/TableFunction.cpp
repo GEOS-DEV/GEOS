@@ -402,12 +402,11 @@ void TableFunction::outputTableData( OutputOptions const outputOpts ) const
 
 void TableFunction::initializePostSubGroups()
 {
-  m_writeInLog = isLogLevelActive< logInfo::TableLogOutput >( getLogLevel() );
-
   // Output user defined tables (not generated PVT tables)
+  bool const writeLog = isLogLevelActive< logInfo::TableLogOutput >( getLogLevel() );
   outputTableData( OutputOptions{
       m_writeCSV != 0,
-      m_writeInLog
+      writeLog
     } );
 }
 

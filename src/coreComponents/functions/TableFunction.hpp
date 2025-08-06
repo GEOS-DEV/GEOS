@@ -447,11 +447,9 @@ private:
 
   /// Output table in a CSV file
   integer m_writeCSV;
-
-  /// Output table in the log
-  bool m_writeInLog;
 };
 /// @cond DO_NOT_DOCUMENT
+
 template< typename IN_ARRAY >
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
