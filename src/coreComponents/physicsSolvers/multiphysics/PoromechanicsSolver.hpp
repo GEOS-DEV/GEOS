@@ -250,7 +250,7 @@ public:
   }
 
   virtual bool checkSequentialConvergence( integer const cycleNumber,
-                                           integer const & iter,
+                                           integer const iter,
                                            real64 const & time_n,
                                            real64 const & dt,
                                            DomainPartition & domain ) override

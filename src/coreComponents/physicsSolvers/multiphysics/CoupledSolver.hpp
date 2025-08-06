@@ -472,8 +472,7 @@ protected:
       for( iter = 0; iter < solverParams.m_maxIterNewton; iter++ )
       {
         // Increment the solver statistics for reporting purposes
-        // Pass a "0" as argument (0 linear iteration) to skip the output of linear iteration stats at the end
-        getIterationStats().updateNonlinearIteration( 0 );
+        getIterationStats().incrementConfigIteration();
 
         startSequentialIteration( iter, domain );
 

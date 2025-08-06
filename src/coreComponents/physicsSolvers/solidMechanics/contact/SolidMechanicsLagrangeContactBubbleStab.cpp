@@ -102,8 +102,6 @@ void SolidMechanicsLagrangeContactBubbleStab::registerDataOnMesh( Group & meshBo
 {
   ContactSolverBase::registerDataOnMesh( meshBodies );
 
-
-
   forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
                                                     MeshLevel & meshLevel,
                                                     string_array const & )
@@ -517,8 +515,8 @@ real64 SolidMechanicsLagrangeContactBubbleStab::calculateContactResidualNorm( Do
   stickResidual = MpiWrapper::sum( stickResidual );
   stickResidual = sqrt( stickResidual );
 
-  GEOS_LOG_LEVEL_RANK_0( logInfo::ResidualNorm,
-                         GEOS_FMT( "        ( Rt  ) = ( {:15.6e}  )", stickResidual ));
+  GEOS_LOG_LEVEL_RANK_0_NLR( logInfo::ResidualNorm,
+                             GEOS_FMT( "        ( Rt  ) = ( {:15.6e}  )", stickResidual ));
 
   getConvergenceStats().m_residuals["Rt"] = stickResidual;
 

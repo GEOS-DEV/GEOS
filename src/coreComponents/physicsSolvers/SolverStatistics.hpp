@@ -77,7 +77,7 @@ public:
   integer m_numSuccessfulLinearIterations = 0;
 
   /// Cumulative number of discarded configuration iterations
-  integer m_numDiscardedConfigIterations = 0;
+  integer m_numDiscardedConfigIterations  = 0;
 
   /// Cumulative number of discarded nonlinear iterations
   integer m_numDiscardedNonlinearIterations = 0;
@@ -130,6 +130,7 @@ public:
    */
   void setLogOutput( bool state )
   { m_logOutput = state; }
+
 
   /**
    * @brief Initialize the counters used for an individual time step
@@ -316,12 +317,6 @@ public:
    * @param solverName The solverName as a string_view.
    */
   void setOutputFilesName( string_view solverName );
-
-  /**
-   * @return Return the string directory where all CSV are generated
-   */
-  string_view getDirectory() const
-  { return m_directoryName;}
 
   /// Contain iteration data given a time step
   IterationsStatistics m_iterationsStats;

@@ -299,40 +299,42 @@ TEST( testSolverStats, testOutputFiles )
   std::vector< string > csvLines;
   loadCsvLines( "convergence/SinglePhaseFlow_iterations.csv", csvLines );
 
-  std::string expectedLine = "19,1,0,0.003770902,9.354e-05,0,19,19,0,0,0";
-  std::istringstream ss( expectedLine );
-  std::string item;
-  std::vector< std::string > expectedValues;
+  std::string expectedIteration = "20,0,0,20,20,0,0,0,0.00392298,0.00192568";
+  std::istringstream sIterations( expectedIteration );
+  std::string iterationValue;
+  std::vector< std::string > expectedIterationValues;
 
-  while( std::getline( ss, item, ',' ))
-    expectedValues.push_back( item );
+  while( std::getline( sIterations, iterationValue, ',' ))
+    expectedIterationValues.push_back( iterationValue );
 
 
-  std::istringstream ssActual( csvLines[20] );
-  std::vector< std::string > actualValues;
-  while( std::getline( ssActual, item, ',' ))
-    actualValues.push_back( item );
+  std::istringstream sActual( csvLines[20] );
+  std::vector< std::string > actualIterationValues;
+  while( std::getline( sActual, iterationValue, ',' ))
+  {
+    actualIterationValues.push_back( iterationValue );
+  }
 
   EXPECT_EQ( csvLines[0],
-             "Number of time steps,Newton iteration,Number of time step cuts,"
-             "Setup time,Solve time,"
-             "Successful outer loop,Successful nonlinear,Successful linear,Discarded outer loop,Discarded nonlinear,Discarded linear" );
+             "Number of time steps,Number of time step cuts,"
+             "Successful configuration,Successful nonlinear,Successful linear,"
+             "Discarded configuration,Discarded nonlinear,Discarded linear,"
+             "Setup time,Solve time" );
 
-  EXPECT_EQ( actualValues[0], expectedValues[0] );
-  EXPECT_EQ( actualValues[1], expectedValues[1] );
-  EXPECT_EQ( actualValues[2], expectedValues[2] );
-  EXPECT_TRUE( compareWithTolerance( actualValues[3], 0.003770902, 1e-2 ));
-  EXPECT_TRUE( compareWithTolerance( actualValues[4], 9.354e-05, 1e-2 ));
-  EXPECT_EQ( actualValues[6], expectedValues[6] );
-  EXPECT_EQ( actualValues[7], expectedValues[7] );
-  EXPECT_EQ( actualValues[8], expectedValues[8] );
-  EXPECT_EQ( actualValues[9], expectedValues[9] );
-  EXPECT_EQ( actualValues[10], expectedValues[10] );
+  EXPECT_EQ( actualIterationValues[0], expectedIterationValues[0] );
+  EXPECT_EQ( actualIterationValues[1], expectedIterationValues[1] );
+  EXPECT_EQ( actualIterationValues[2], expectedIterationValues[2] );
+  EXPECT_EQ( actualIterationValues[3], expectedIterationValues[3] );
+  EXPECT_EQ( actualIterationValues[4], expectedIterationValues[4] );
+  EXPECT_EQ( actualIterationValues[6], expectedIterationValues[6] );
+  EXPECT_EQ( actualIterationValues[7], expectedIterationValues[7] );
+  EXPECT_TRUE( compareWithTolerance( actualIterationValues[8], 0.00392298, 1e-2 ));
+  EXPECT_TRUE( compareWithTolerance( actualIterationValues[9], 0.00192568, 1e-2 ));
 
   std::vector< string > csvLines2;
   loadCsvLines( "convergence/SinglePhaseFlow_convergence.csv", csvLines2 );
 
-  EXPECT_EQ( csvLines2[0], "Cycle number,time_n (s),dt (s),RMass,RVol,REnergy,RFlow,RBubbleDisp,RFrac,Rstick,Rslip,Ropen,RSolid,RContact,RProppant,RDamage,RTotal,R" );
+  EXPECT_EQ( csvLines2[0], "Cycle number,time_n (s),dt (s),R,Rflow" );
 
   ASSERT_TRUE( std::remove( "convergence/SinglePhaseFlow_iterations.csv" ) == 0 );
   ASSERT_TRUE( std::remove( "convergence/SinglePhaseFlow_convergence.csv" ) == 0 );

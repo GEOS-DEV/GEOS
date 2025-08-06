@@ -372,20 +372,6 @@ public:
                      DomainPartition & domain );
 
   /**
-   * @brief Update solver statistics data
-   * @param time_n  The time at the beginning of the step
-   * @param dt The desired timestepr
-   * @param cycleNumber Current cycle number
-   * @param iterNumber Current iteration number
-   */
-  //void updateSolverStatistics( real64 const & time_n, real64 const & dt, integer const cycleNumber, integer const iterNumber );
-
-  /**
-   * @brief Write all the statistics (iteration & convergence) stored into a CSV file
-   */
-  //void writeStatisticsToTable();
-
-  /**
    * @brief Populate degree-of-freedom manager with fields relevant to this solver
    * @param domain the domain containing the mesh and fields
    * @param dofManager degree-of-freedom manager associated with the linear system
@@ -406,6 +392,8 @@ public:
    * @note While the function is virtual, the base class implementation should be
    *       sufficient for most single-physics solvers.
    */
+
+
   virtual void
   setupSystem( DomainPartition & domain,
                DofManager & dofManager,
@@ -710,7 +698,7 @@ public:
     /// @return string for the allowNonConvergedLinearSolverSolution wrapper
     static constexpr char const * allowNonConvergedLinearSolverSolutionString() { return "allowNonConvergedLinearSolverSolution"; }
 
-    /// @return string for the writeLinearSystem wrapper
+    /// @return string for the writeStatistics wrapper
     static constexpr char const * writeStatisticsString() { return "writeStatistics"; }
 
     /// @return string for the numTimestepsSinceLastDtCut wrapper
@@ -1096,7 +1084,7 @@ protected:
   /// Linear solver parameters
   LinearSolverParametersInput m_linearSolverParameters;
 
-  /// Result of the last linear solve
+  /// Result of the last linear solver
   LinearSolverResult m_linearSolverResult;
 
   /// Nonlinear solver parameters

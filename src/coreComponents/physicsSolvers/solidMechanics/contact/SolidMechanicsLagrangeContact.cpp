@@ -236,7 +236,7 @@ void SolidMechanicsLagrangeContact::implicitStepComplete( real64 const & time,
       arrayView2d< real64 > const & deltaTraction = subRegion.getField< contact::deltaTraction >();
       arrayView2d< real64 const > const & dispJump = subRegion.getField< contact::dispJump >();
       arrayView2d< real64 > const & oldDispJump = subRegion.getField< contact::oldDispJump >();
-      arrayView1d< integer const > const & fractureState = subRegion.getField< contact::fractureState >();
+      arrayView1d< integer const > const fractureState = subRegion.getField< contact::fractureState >();
       arrayView1d< integer > const & oldFractureState = subRegion.getField< contact::oldFractureState >();
 
       forAll< parallelHostPolicy >( subRegion.size(), [=] ( localIndex const kfe )
@@ -468,7 +468,7 @@ void SolidMechanicsLagrangeContact::resetStateToBeginningOfStep( DomainPartition
       arrayView2d< real64 > const & dispJump = subRegion.getField< contact::dispJump >();
       arrayView2d< real64 const > const & oldDispJump = subRegion.getField< contact::oldDispJump >();
 
-      arrayView1d< integer > const & fractureState = subRegion.getField< contact::fractureState >();
+      arrayView1d< integer > const fractureState = subRegion.getField< contact::fractureState >();
       arrayView1d< integer const > const & oldFractureState = subRegion.getField< contact::oldFractureState >();
 
       forAll< parallelHostPolicy >( subRegion.size(), [=] ( localIndex const kfe )
@@ -799,7 +799,7 @@ real64 SolidMechanicsLagrangeContact::calculateContactResidualNorm( DomainPartit
     {
       arrayView1d< globalIndex const > const & dofNumber = subRegion.getReference< array1d< globalIndex > >( dofKey );
       arrayView1d< integer const > const & ghostRank = subRegion.ghostRank();
-      arrayView1d< integer const > const & fractureState = subRegion.getField< contact::fractureState >();
+      arrayView1d< integer const > const fractureState = subRegion.getField< contact::fractureState >();
       arrayView1d< real64 const > const & area = subRegion.getElementArea();
 
       RAJA::ReduceSum< parallelHostReduce, real64 > stickSum( 0.0 );
@@ -875,6 +875,8 @@ real64 SolidMechanicsLagrangeContact::calculateContactResidualNorm( DomainPartit
   getConvergenceStats().m_residuals["Rstick"] = stickResidual;
   getConvergenceStats().m_residuals["Rslip"] = slipResidual;
   getConvergenceStats().m_residuals["Ropen"] = openResidual;
+  getConvergenceStats().m_residuals["Rcontact"] = totalResidualNorm;
+
 
   return totalResidualNorm;
 }
@@ -1483,7 +1485,7 @@ void SolidMechanicsLagrangeContact::
     rotationMatrix = subRegion.getReference< array3d< real64 > >( viewKeyStruct::rotationMatrixString() );
     arrayView2d< localIndex const > const & elemsToFaces = subRegion.faceList().toViewConst();
     arrayView2d< real64 const > const & traction = subRegion.getField< contact::traction >();
-    arrayView1d< integer const > const & fractureState = subRegion.getField< contact::fractureState >();
+    arrayView1d< integer const > const fractureState = subRegion.getField< contact::fractureState >();
     arrayView2d< real64 const > const & dispJump = subRegion.getField< contact::dispJump >();
     arrayView2d< real64 const > const & previousDispJump = subRegion.getField< contact::oldDispJump >();
     arrayView1d< real64 const > const & slidingTolerance = subRegion.getReference< array1d< real64 > >( viewKeyStruct::slidingToleranceString() );
@@ -1740,8 +1742,8 @@ void SolidMechanicsLagrangeContact::assembleStabilization( MeshLevel const & mes
   arrayView2d< localIndex const > const elem2dToFaces = fractureSubRegion.faceList().toViewConst();
 
   // Get the state of fracture elements
-  arrayView1d< integer const > const & fractureState =
-    fractureSubRegion.getReference< array1d< integer > >( viewKeyStruct::fractureStateString() );
+  arrayView1d< integer const > const fractureState =
+    fractureSubRegion.getField< fields::contact::fractureState >();
 
   // Get the tractions and stabilization contribution to the local jump
   arrayView2d< real64 const > const & traction = fractureSubRegion.getField< contact::traction >();
@@ -2210,7 +2212,7 @@ bool SolidMechanicsLagrangeContact::resetConfigurationToDefault( DomainPartition
     {
       if( subRegion.hasField< contact::traction >() )
       {
-        arrayView1d< integer > const & fractureState = subRegion.getField< contact::fractureState >();
+        arrayView1d< integer > const fractureState = subRegion.getField< contact::fractureState >();
         forAll< parallelHostPolicy >( subRegion.size(), [=] ( localIndex const kfe )
         {
           if( fractureState[kfe] != FractureState::Open )
@@ -2248,7 +2250,7 @@ bool SolidMechanicsLagrangeContact::updateConfiguration( DomainPartition & domai
       arrayView1d< integer const > const & ghostRank = subRegion.ghostRank();
       arrayView2d< real64 const > const & traction = subRegion.getField< contact::traction >();
       arrayView2d< real64 const > const & dispJump = subRegion.getField< contact::dispJump >();
-      arrayView1d< integer > const & fractureState = subRegion.getField< contact::fractureState >();
+      arrayView1d< integer > const & fractureState = subRegion.getField< fields::contact::fractureState >();
       arrayView1d< real64 const > const & faceArea = subRegion.getElementArea().toViewConst();
 
       arrayView1d< real64 const > const & normalTractionTolerance =

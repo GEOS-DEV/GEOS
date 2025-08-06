@@ -122,13 +122,11 @@ PhysicsSolverBase::PhysicsSolverBase( string const & name,
 
 void PhysicsSolverBase::postInputInitialization()
 {
-  bool const solverStatsLogFlag = m_writeStatistics >= 1;
-  bool const solverStatsCSVFlag = m_writeStatistics >= 2;
-  m_solverStatistics.makeDir( solverStatsCSVFlag );
+  m_solverStatistics.makeDir( m_writeStatistics >= 2 );
 
-  getIterationStats().setLogOutput( solverStatsLogFlag );
-  getIterationStats().setCSVOutput( solverStatsCSVFlag );
-  getConvergenceStats().setCSVOutput( solverStatsCSVFlag );
+  getIterationStats().setLogOutput( m_writeStatistics >= 1 );
+  getIterationStats().setCSVOutput( m_writeStatistics >= 2 );
+  getConvergenceStats().setCSVOutput( m_writeStatistics >= 2 );
 }
 
 PhysicsSolverBase::~PhysicsSolverBase() = default;
@@ -308,6 +306,7 @@ bool PhysicsSolverBase::execute( real64 const time_n,
     // increment the cumulative number of nonlinear and linear iterations
     getIterationStats().iterateTimeStepStatistics();
     getIterationStats().writeIterationStatsToTable();
+    getIterationStats().resetSolverLinearTime(); // maybe call it directly in writeIterationStatsToTable
 
     /*
      * Let us check convergence history of previous solve:
@@ -512,6 +511,7 @@ real64 PhysicsSolverBase::setNextDtBasedOnIterNumber( real64 const & currentDt )
 real64 PhysicsSolverBase::linearImplicitStep( real64 const & time_n,
                                               real64 const & dt,
                                               integer const cycleNumber,
+
                                               DomainPartition & domain )
 {
   // call setup for physics solver. Pre step allocations etc.
@@ -763,7 +763,6 @@ bool PhysicsSolverBase::lineSearchWithParabolicInterpolation( real64 const & tim
       GEOS_LOG_LEVEL_RANK_0( logInfo::LineSearch,
                              GEOS_FMT( "        Line search @ {:0.3f}:      ", cumulativeScale ) );
     }
-    std::cout << " R tested "<< std::endl;
     // get residual norm
     residualNormT = calculateResidualNorm( time_n, dt, domain, dofManager, rhs.values() );
     GEOS_LOG_LEVEL_RANK_0( logInfo::ResidualNorm,
@@ -881,6 +880,11 @@ real64 PhysicsSolverBase::nonlinearImplicitStep( real64 const & time_n,
         if( breakLoop )
         {
           break;
+        }
+        else
+        {
+          GEOS_LOG_LEVEL_RANK_0( logInfo::NonlinearSolver,
+                                 "---------- Restarting Newton loop using default configuration. ----------" );
         }
       }
       else
@@ -1150,9 +1154,8 @@ bool PhysicsSolverBase::solveNonlinearSystem( real64 const & time_n,
     }
 
     lastResidual = residualNorm;
-  }
 
-  getIterationStats().resetSolverLinearTime();
+  }
 
   return isNewtonConverged;
 }
@@ -1454,6 +1457,7 @@ void PhysicsSolverBase::cleanup( real64 const GEOS_UNUSED_PARAM( time_n ),
                                  real64 const GEOS_UNUSED_PARAM( eventProgress ),
                                  DomainPartition & GEOS_UNUSED_PARAM( domain ) )
 {
+  std::cout << "Solver "<< getName()<< std::endl;
   getIterationStats().outputStatistics();
 
   for( auto & timer : m_timers )

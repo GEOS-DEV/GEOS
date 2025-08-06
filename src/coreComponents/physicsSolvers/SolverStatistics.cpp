@@ -83,13 +83,12 @@ IterationsStatistics::IterationsStatistics( string const & name, Group * const p
                    &m_numDiscardedLinearIterations ).
     setApplyDefaultValue( 0 ).
     setDescription( "Cumulative number of discarded linear iterations" );
-
   m_iterationCSVLayout = std::make_unique< TableLayout >();
   m_iterationCSVLayout->setTitle( GEOS_FMT( "{} iterations", getParent().getName()));
   m_iterationCSVLayout->addColumns( { "Number of time steps", "Number of time step cuts",
                                       "Successful configuration", "Successful nonlinear", "Successful linear",
                                       "Discarded configuration", "Discarded nonlinear", "Discarded linear",
-                                      "Setup time", "Solve time", } );
+                                      "Setup time", "Solve time" } );
 }
 
 void IterationsStatistics::resetCurrentTimeStepStatistics()
@@ -148,7 +147,7 @@ void IterationsStatistics::updateTimeStepCut()
 
 void IterationsStatistics::writeIterationStatsToTable()
 {
-  if( !m_csvOutput )
+  if( m_numTimeSteps == 0 || !m_csvOutput )
     return;
 
   m_iterationData.addRow( m_numTimeSteps,
@@ -176,22 +175,24 @@ void IterationsStatistics::writeIterationStatsToTable()
 
 void IterationsStatistics::outputStatistics()
 {
-  if( !m_logOutput || m_numTimeSteps == 0 ) // no statistics to output when no time steps have been recorded
+  // no statistics to output when no time steps have been recorded
+  if( m_numTimeSteps == 0 ||!m_logOutput )
     return;
 
-  TableLayout iterationLogLayout( getParent().getParent().getName(), {"", "Value"} );
+  {
+    TableLayout iterationLogLayout ( GEOS_FMT( "{} iterations", getParent().getName()), {"", "Value"} );
 
   TableTextFormatter const statsFormatter( iterationLogLayout );
 
-  TableData iterationDataLog;
-  iterationDataLog.addRow( "Time steps", m_numTimeSteps );
-  iterationDataLog.addRow( "Time step cuts", m_numTimeStepCuts );
-  iterationDataLog.addRow( "Successful configuration iterations", m_numSuccessfulConfigIterations );
-  iterationDataLog.addRow( "Successful nonlinear iterations", m_numSuccessfulNonlinearIterations );
-  iterationDataLog.addRow( "Successful linear iterations", m_numSuccessfulLinearIterations );
-  iterationDataLog.addRow( "Discarded configuration iterations", m_numDiscardedConfigIterations );
-  iterationDataLog.addRow( "Discarded nonlinear iterations", m_numDiscardedNonlinearIterations );
-  iterationDataLog.addRow( "Discarded linear iterations", m_numDiscardedLinearIterations );
+    TableData iterationDataLog;
+    iterationDataLog.addRow( "Time steps", m_numTimeSteps );
+    iterationDataLog.addRow( "Time step cuts", m_numTimeStepCuts );
+    iterationDataLog.addRow( "Successful configuration iterations", m_numSuccessfulConfigIterations );
+    iterationDataLog.addRow( "Successful nonlinear iterations", m_numSuccessfulNonlinearIterations );
+    iterationDataLog.addRow( "Successful linear iterations", m_numSuccessfulLinearIterations );
+    iterationDataLog.addRow( "Discarded configuration iterations", m_numDiscardedConfigIterations );
+    iterationDataLog.addRow( "Discarded nonlinear iterations", m_numDiscardedNonlinearIterations );
+    iterationDataLog.addRow( "Discarded linear iterations", m_numDiscardedLinearIterations );
 
   GEOS_LOG_RANK_0( statsFormatter.toString( iterationDataLog ));
 }
