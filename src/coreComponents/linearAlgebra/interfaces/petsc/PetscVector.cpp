@@ -219,7 +219,6 @@ void PetscVector::pointwiseProduct( PetscVector const & x )
   GEOS_LAI_ASSERT( ready() );
   GEOS_LAI_ASSERT( x.ready() );
   GEOS_LAI_ASSERT_EQ( localSize(), x.localSize() );
-  GEOS_LAI_ASSERT_EQ( globalSize(), x.globalSize() );
 
   GEOS_LAI_CHECK_ERROR( VecPointwiseMult( m_vec, m_vec, x.m_vec ) );
   touch();
@@ -230,7 +229,6 @@ void PetscVector::pointwiseDivide( PetscVector const & x )
   GEOS_LAI_ASSERT( ready() );
   GEOS_LAI_ASSERT( x.ready() );
   GEOS_LAI_ASSERT_EQ( localSize(), x.localSize() );
-  GEOS_LAI_ASSERT_EQ( globalSize(), x.globalSize() );
 
   GEOS_LAI_CHECK_ERROR( VecPointwiseDivide( m_vec, m_vec, x.m_vec ) );
   touch();

@@ -192,7 +192,6 @@ void EpetraVector::pointwiseProduct( EpetraVector const & x )
   GEOS_LAI_ASSERT( ready() );
   GEOS_LAI_ASSERT( x.ready() );
   GEOS_LAI_ASSERT_EQ( localSize(), x.localSize() );
-  GEOS_LAI_ASSERT_EQ( globalSize(), x.globalSize() );
 
   GEOS_LAI_CHECK_ERROR( ( unwrapped() ).Multiply( 1.0, unwrapped(), x.unwrapped(), 0.0 ) );
   touch();

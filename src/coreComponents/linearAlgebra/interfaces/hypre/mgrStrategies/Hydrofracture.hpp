@@ -64,7 +64,7 @@ public:
     m_levelFRelaxIters[0]         = 1;
     m_levelInterpType[0]          = MGRInterpolationType::jacobi;
     m_levelRestrictType[0]        = MGRRestrictionType::injection;
-    m_levelCoarseGridMethod[0]    = MGRCoarseGridMethod::nonGalerkin;
+    m_levelCoarseGridMethod[0]    = MGRCoarseGridMethod::galerkin;
     m_levelGlobalSmootherType[0]  = MGRGlobalSmootherType::none;
   }
 
