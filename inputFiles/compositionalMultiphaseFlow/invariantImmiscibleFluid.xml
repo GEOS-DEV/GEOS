@@ -44,12 +44,12 @@
     maxTime="432000">
     <PeriodicEvent
       name="outputs"
-      timeFrequency="86.40"
+      timeFrequency="8640.0"
       target="/Outputs/vtkOutput_InvariantFluid"/>
 
     <PeriodicEvent
       name="solverApplications"
-      forceDt="86.40"
+      forceDt="8640.0"
       target="/Solvers/FlowSolver"/>
 
     <PeriodicEvent
