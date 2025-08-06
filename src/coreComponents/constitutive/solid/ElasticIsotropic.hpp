@@ -50,7 +50,7 @@ public:
    * @param[in] oldStress    The ArrayView holding the old stress data for each quadrature point.
    * @param[in] disableInelasticity Flag to disable plasticity for inelastic models
    */
-  ElasticIsotropicUpdates( arrayView1d< real64 const > const & bulkModulus,
+  ElasticIsotropicUpdates( arrayView1d< real64 > const & bulkModulus,// removed const by SG
                            arrayView1d< real64 const > const & shearModulus,
                            arrayView1d< real64 const > const & thermalExpansionCoefficient,
                            arrayView3d< real64, solid::STRESS_USD > const & newStress,
@@ -67,7 +67,6 @@ public:
     m_bulkModulus( bulkModulus ),
     m_shearModulus( shearModulus )
   {}
-
   /// Deleted default constructor
   ElasticIsotropicUpdates() = delete;
 
@@ -183,13 +182,21 @@ public:
                             real64 ( & stress )[6],
                             real64 ( & stiffness )[6][6] ) const override final;
 
+
+//added by SG
+  // GEOS_HOST_DEVICE
+
+  // real64 computeBulkModulus(localIndex const k, real64 const (&totalStrain)[6]) const;
+
 protected:
 
   /// A reference to the ArrayView holding the bulk modulus for each element.
-  arrayView1d< real64 const > const m_bulkModulus;
+  arrayView1d< real64 > const m_bulkModulus; //removed constant
 
   /// A reference to the ArrayView holding the shear modulus for each element.
   arrayView1d< real64 const > const m_shearModulus;
+
+  
 
 };
 
@@ -202,7 +209,8 @@ void ElasticIsotropicUpdates::getElasticStiffness( localIndex const k,
 {
   GEOS_UNUSED_VAR( q );
   real64 const G = m_shearModulus[k];
-  real64 const lambda = conversions::bulkModAndShearMod::toFirstLame( m_bulkModulus[k], G );
+  real64 const K = m_bulkModulus[k]; 
+  real64 const lambda = conversions::bulkModAndShearMod::toFirstLame( K, G ); //changed from m_bulkModulus[k] to K
 
   LvArray::tensorOps::fill< 6, 6 >( stiffness, 0 );
 
@@ -253,7 +261,13 @@ void ElasticIsotropicUpdates::smallStrainNoStateUpdate_StressOnly( localIndex co
   GEOS_UNUSED_VAR( q );
 
   real64 const twoG   = 2 * m_shearModulus[k];
-  real64 const lambda = conversions::bulkModAndShearMod::toFirstLame( m_bulkModulus[k], m_shearModulus[k] );
+
+
+  //added by SG
+
+  // real64 const K = computeBulkModulus(k, totalStrain);
+  
+  real64 const lambda = conversions::bulkModAndShearMod::toFirstLame( m_bulkModulus[k], m_shearModulus[k] ); //changed from m_bulkModulus[k] to K
   real64 const vol    = lambda * ( totalStrain[0] + totalStrain[1] + totalStrain[2] );
 
   stress[0] = vol + twoG * totalStrain[0];
@@ -289,6 +303,7 @@ void ElasticIsotropicUpdates::smallStrainNoStateUpdate( localIndex const k,
 {
   smallStrainNoStateUpdate_StressOnly( k, q, totalStrain, stress );
   stiffness.m_bulkModulus = m_bulkModulus[k];
+  //stiffness.m_bulkModulus = computeBulkModulus(k, totalStrain); //added by SG
   stiffness.m_shearModulus = m_shearModulus[k];
 }
 
@@ -328,6 +343,25 @@ void ElasticIsotropicUpdates::smallStrainUpdate_StressOnly( localIndex const k,
                                 strainIncrement,
                                 stress );
 }
+
+//added by SG
+
+// GEOS_HOST_DEVICE
+// inline
+// real64 ElasticIsotropicUpdates::computeBulkModulus(localIndex const k, real64 const (&totalStrain)[6]) const
+// {
+//   real64 S=1.61;  //for concrete
+//   real64 C0=m_wavespeed[k][0];
+//   real64 rho0=m_density[k][0];
+ 
+//   real64 epsilon_v = totalStrain[0] + totalStrain[1] + totalStrain[2];
+//   //real64 K0 = m_bulkModulus[k]; // or a separate reference value
+//   real64 num=C0*C0*rho0*exp(epsilon_v)*(S+1-S*exp(epsilon_v));
+//   real64 den=pow((S*exp(epsilon_v)-S+1),3);
+
+//   return num/den;
+// }
+
 
 
 GEOS_HOST_DEVICE
@@ -480,12 +514,15 @@ public:
    * @param[in] name name of the instance in the catalog
    * @param[in] parent the group which contains this instance
    */
-  ElasticIsotropic( string const & name, 
+   ElasticIsotropic( string const & name, 
                     Group * const parent );
 
   /**
    * Default Destructor
    */
+  
+
+  
   virtual ~ElasticIsotropic() override;
 
   /**

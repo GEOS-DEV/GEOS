@@ -52,7 +52,7 @@ public:
    * @param[in] oldStress The ArrayView holding the old stress data for each quadrature point.
    */
   PerfectlyPlasticUpdates( arrayView1d< real64 const > const & yieldStress,
-                           arrayView1d< real64 const > const & bulkModulus,
+                           arrayView1d< real64 > const & bulkModulus, //removed by SG
                            arrayView1d< real64 const > const & shearModulus,
                            arrayView1d< real64 const > const & thermalExpansionCoefficient,
                            arrayView3d< real64, solid::STRESS_USD > const & newStress,

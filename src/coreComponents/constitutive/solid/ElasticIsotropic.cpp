@@ -31,6 +31,7 @@ ElasticIsotropic::ElasticIsotropic( string const & name, Group * const parent ):
   m_defaultShearModulus(),
   m_bulkModulus(),
   m_shearModulus()
+  
 {
   registerWrapper( viewKeyStruct::defaultBulkModulusString(), &m_defaultBulkModulus ).
     setApplyDefaultValue( -1 ).
@@ -74,6 +75,7 @@ void ElasticIsotropic::postInputInitialization()
   real64 & E  = getReference< real64 >( viewKeyStruct::defaultYoungModulusString() );
   real64 & K  = m_defaultBulkModulus;
   real64 & G  = m_defaultShearModulus;
+  
 
   // Poisson ratio range is: -0.5 < nu < 0.5
   // Zero bulk, shear or Young modulus is not accepted to avoid devision to zero

@@ -85,7 +85,7 @@ public:
                         int const & thirdInvariantDependence,
                         arrayView3d< real64 > const & velocityGradient,
                         arrayView3d< real64 > const & plasticStrain,
-                        arrayView1d< real64 const > const & bulkModulus,
+                        arrayView1d< real64 > const & bulkModulus,
                         arrayView1d< real64 const > const & shearModulus,
                         arrayView1d< real64 const > const & thermalExpansionCoefficient,
                         arrayView3d< real64, solid::STRESS_USD > const & newStress,
