@@ -1357,20 +1357,20 @@ CompositionalMultiphaseWell::calculateResidualNorm( real64 const & time_n,
     real64 globalResidualNorm[2]{};
     globalResidualNorm[0] = MpiWrapper::max( localResidualNorm[0] );
     globalResidualNorm[1] = MpiWrapper::max( localResidualNorm[1] );
-    resNorm=sqrt( globalResidualNorm[0] * globalResidualNorm[0] + globalResidualNorm[1] * globalResidualNorm[1] );
+    resNorm = sqrt( globalResidualNorm[0] * globalResidualNorm[0] + globalResidualNorm[1] * globalResidualNorm[1] );
 
-    GEOS_LOG_LEVEL_RANK_0( logInfo::ResidualNorm, GEOS_FMT( "        ( R{} ) = ( {:4.2e} )        ( Renergy ) = ( {:4.2e} )",
-                                                            coupledSolverAttributePrefix(), globalResidualNorm[0], globalResidualNorm[1] ));
+    GEOS_LOG_LEVEL_RANK_0_NLR( logInfo::ResidualNorm, GEOS_FMT( "        ( R{} ) = ( {:4.2e} )        ( Renergy ) = ( {:4.2e} )",
+                                                                coupledSolverAttributePrefix(), globalResidualNorm[0], globalResidualNorm[1] ));
 
     getConvergenceStats().m_residuals[GEOS_FMT( "R{}", coupledSolverAttributePrefix())] = globalResidualNorm[0];
     getConvergenceStats().m_residuals["Renergy"] = globalResidualNorm[1];
   }
   else
   {
-    resNorm= MpiWrapper::max( resNorm );
+    resNorm = MpiWrapper::max( resNorm );
 
-    GEOS_LOG_LEVEL_RANK_0( logInfo::ResidualNorm, GEOS_FMT( "        ( R{} ) = ( {:4.2e} )",
-                                                            coupledSolverAttributePrefix(), resNorm ));
+    GEOS_LOG_LEVEL_RANK_0_NLR( logInfo::ResidualNorm, GEOS_FMT( "        ( R{} ) = ( {:4.2e} )",
+                                                                coupledSolverAttributePrefix(), resNorm ));
     getConvergenceStats().m_residuals[GEOS_FMT( "R{}", coupledSolverAttributePrefix()) ] = resNorm;
   }
   return resNorm;
