@@ -92,7 +92,8 @@
         "CellElementSubRegion"
       ],
       "CONSTITUTIVE_TYPE": [
-        "PorousSolid<ElasticIsotropic>"
+        "PorousSolid<ElasticIsotropic>",
+        "PorousSolid<ModifiedCamClay>"
       ],
       "FE_TYPE": [
         "H1_Hexahedron_Lagrange1_GaussLegendre2",
