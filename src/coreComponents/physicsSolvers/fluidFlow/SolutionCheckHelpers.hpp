@@ -55,14 +55,14 @@ public:
   { return m_ranksCollectedElementsCount; }
 
   /**
-  * @brief Report elements with values below a specified threshold in the log:
-  *        Outputs lines indicating which variables have collected element ids whose corresponding 
-  *        solution components are too low, potentially signaling underflow or numerical instability.
-  * @param linesPrefix Prefix for the line of text to be printed
-  * @param valueNaming The name used when referring to variables within this context (e.g., "pressure", "density").
-  * @param minValue Minimum acceptable solution component values. Values below this threshold are reported.
-  * @param valueUnit Unit in which `minValue` is expressed.
-  */
+   * @brief Report elements with values below a specified threshold in the log:
+   *        Outputs lines indicating which variables have collected element ids whose corresponding
+   *        solution components are too low, potentially signaling underflow or numerical instability.
+   * @param linesPrefix Prefix for the line of text to be printed
+   * @param valueNaming The name used when referring to variables within this context (e.g., "pressure", "density").
+   * @param minValue Minimum acceptable solution component values. Values below this threshold are reported.
+   * @param valueUnit Unit in which `minValue` is expressed.
+   */
   void outputTooLowValues( string_view linesPrefix,
                            string_view valueNaming,
                            real64 minValue,
