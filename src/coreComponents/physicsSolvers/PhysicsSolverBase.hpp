@@ -369,7 +369,6 @@ public:
   implicitStepSetup( real64 const & time_n,
                      real64 const & dt,
                      integer const cycleNumber,
-
                      DomainPartition & domain );
 
   /**
@@ -704,7 +703,7 @@ public:
     /// @return string for the allowNonConvergedLinearSolverSolution wrapper
     static constexpr char const * allowNonConvergedLinearSolverSolutionString() { return "allowNonConvergedLinearSolverSolution"; }
 
-    /// @return string for the writeLinearSystem wrapper
+    /// @return string for the writeStatistics wrapper
     static constexpr char const * writeStatisticsString() { return "writeStatistics"; }
 
     /// @return string for the numTimestepsSinceLastDtCut wrapper

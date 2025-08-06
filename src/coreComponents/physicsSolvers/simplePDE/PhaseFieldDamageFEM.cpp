@@ -95,8 +95,6 @@ PhaseFieldDamageFEM::~PhaseFieldDamageFEM()
 
 void PhaseFieldDamageFEM::registerDataOnMesh( Group & meshBodies )
 {
-
-
   forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
                                                     MeshLevel & mesh,
                                                     string_array const & regionNames )

@@ -116,14 +116,16 @@ public:
   setupDofs( DomainPartition const & domain,
              DofManager & dofManager ) const override;
 
-  virtual void implicitStepSetup( real64 const & time_n,
-                                  real64 const & dt,
-                                  integer const cycleNumber,
-                                  DomainPartition & domain ) override;
+  virtual void
+  implicitStepSetup( real64 const & time_n,
+                     real64 const & dt,
+                     integer const cycleNumber,
+                     DomainPartition & domain ) override;
 
-  virtual void implicitStepComplete( real64 const & time_n,
-                                     real64 const & dt,
-                                     DomainPartition & domain ) override;
+  virtual void
+  implicitStepComplete( real64 const & time_n,
+                        real64 const & dt,
+                        DomainPartition & domain ) override;
 
   virtual void
   setupSystem( DomainPartition & domain,

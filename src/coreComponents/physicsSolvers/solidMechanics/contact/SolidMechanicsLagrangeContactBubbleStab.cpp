@@ -102,8 +102,6 @@ void SolidMechanicsLagrangeContactBubbleStab::registerDataOnMesh( Group & meshBo
 {
   ContactSolverBase::registerDataOnMesh( meshBodies );
 
-
-
   forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
                                                     MeshLevel & meshLevel,
                                                     string_array const & )

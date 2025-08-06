@@ -113,7 +113,6 @@ public:
                    GEOS_FMT( "{} {}: The attribute `{}` of the flow solver must be thermal since the poromechanics solver is thermal",
                              this->getCatalogName(), this->getName(), this->flowSolver()->getName() ),
                    InputError );
-
   }
 
   virtual void setConstitutiveNamesCallSuper( ElementSubRegionBase & subRegion ) const override final
