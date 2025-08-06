@@ -125,27 +125,27 @@ CeramicDamage::CeramicDamage( string const & name, Group * const parent ):
 
   registerWrapper( viewKeyStruct::strainRateString(), &m_strainRate ). //added by SG
     setApplyDefaultValue( 0.0 ).
-    setPlotLevel( PlotLevel::LEVEL_0 ). // or NOPLOT if you don't want it output
+    setPlotLevel( PlotLevel::NOPLOT ). // or NOPLOT if you don't want it output
     setDescription( "Von Mises strain rate used for rate-dependent strength scaling" );
 
   registerWrapper( viewKeyStruct::instTensileStrengthString(), &m_instTensileStrength ). //added by SG
     setApplyDefaultValue( 0.0 ).
-    setPlotLevel( PlotLevel::LEVEL_0 ). // or NOPLOT if you don't want it output
+    setPlotLevel( PlotLevel::NOPLOT ). // or NOPLOT if you don't want it output
     setDescription( "Instantaneous Tensile Strength" );
 
   registerWrapper( viewKeyStruct::instCompressiveStrengthString(), &m_instCompressiveStrength ). //added by SG
     setApplyDefaultValue( 0.0 ).
-    setPlotLevel( PlotLevel::LEVEL_0 ). // or NOPLOT if you don't want it output
+    setPlotLevel( PlotLevel::NOPLOT ). // or NOPLOT if you don't want it output
     setDescription( "Instantaneous Compressive Strength" );
 
   registerWrapper( viewKeyStruct::instStrengthString(), &m_instStrength ). //added by SG
     setApplyDefaultValue( 0.0 ).
-    setPlotLevel( PlotLevel::LEVEL_0 ). // or NOPLOT if you don't want it output
+    setPlotLevel( PlotLevel::NOPLOT ). // or NOPLOT if you don't want it output
     setDescription( "Instantaneous Strength" );
 
   registerWrapper( viewKeyStruct::instPressureString(), &m_instPressure ). //added by SG
     setApplyDefaultValue( 0.0 ).
-    setPlotLevel( PlotLevel::LEVEL_0 ). // or NOPLOT if you don't want it output
+    setPlotLevel( PlotLevel::NOPLOT ). // or NOPLOT if you don't want it output
     setDescription( "Instantaneous Pressure" );
 
   registerWrapper( viewKeyStruct::rateSensitivityString(), &m_rateSensitivity ). //added by SG
