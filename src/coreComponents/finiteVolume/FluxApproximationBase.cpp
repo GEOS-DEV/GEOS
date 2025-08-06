@@ -22,7 +22,6 @@
 
 #include "fieldSpecification/FieldSpecificationManager.hpp"
 #include "fieldSpecification/AquiferBoundaryCondition.hpp"
-#include "mesh/mpiCommunications/CommunicationTools.hpp"
 
 namespace geos
 {
