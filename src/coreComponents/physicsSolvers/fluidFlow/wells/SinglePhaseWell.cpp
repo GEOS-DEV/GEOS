@@ -76,8 +76,6 @@ void SinglePhaseWell::registerDataOnMesh( Group & meshBodies )
 {
   WellSolverBase::registerDataOnMesh( meshBodies );
 
-  m_solverStatistics.setOutputFilesName( getName());
-
   // loop over the wells
   forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
                                                     MeshLevel & mesh,
