@@ -11,7 +11,7 @@
       logLevel="3"
       temperature="300">
       <NonlinearSolverParameters
-        newtonTol="1.0e-3"
+        newtonTol="1.0e-5"
         newtonMaxIter="100"
         maxTimeStepCuts="50"
         lineSearchAction="None"/>
@@ -82,7 +82,7 @@
       phaseNames="{ gas, water }"
       componentMolarWeight="{ 1.0, 1.0 }"
       densities="{ 550.0, 1000.0 }"
-      viscosities="{ 1.0e-3, 1e-3 }"/>
+      viscosities="{ 1.0e-3, 1.0e-3 }"/>
 
     <CompressibleSolidConstantPermeability
       name="rock"
@@ -130,7 +130,7 @@
       setNames="{ all }"
       objectPath="ElementRegions/Domain"
       fieldName="rockPorosity_referencePorosity"
-      scale="0.1"/>
+      scale="1.0"/>
 
     <FieldSpecification
       name="top_pressure"
@@ -165,11 +165,11 @@
    <TableFunction
       name="initH2OCompFracTable"
       coordinates="{ 0.0, 1.0, 1.0000001, 4.999999, 5.0,  50.0 }"
-      values="{ 1.0, 1.0, 0.2, 0.2, 1.0, 1.0 }"/>
+      values="{ 1.0, 1.0, 0.3125, 0.3125, 1.0, 1.0 }"/>
     <TableFunction
       name="initCH4CompFracTable"
       coordinates="{ 0.0, 1.0, 1.0000001, 4.999999, 5.0,  50.0 }"
-      values="{ 0.0, 0.0, 0.8, 0.8, 0.0, 0.0 }"/>
+      values="{ 0.0, 0.0, 0.6875, 0.6875, 0.0, 0.0 }"/>
     <TableFunction
       name="initTempTable"
       coordinates="{ 0.0, 5.0 }"
