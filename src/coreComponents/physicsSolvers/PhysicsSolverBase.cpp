@@ -1146,11 +1146,11 @@ bool PhysicsSolverBase::solveNonlinearSystem( real64 const & time_n,
 
     lastResidual = residualNorm;
 
-    if( m_writeStatistics >= 2 )
-    {
-      getConvergenceStats().updateSolverStep( time_n, stepDt, cycleNumber );
-      getConvergenceStats().writeConvergenceStatsToTable();
-    }
+  }
+  if( m_writeStatistics >= 2 )
+  {
+    getConvergenceStats().updateSolverStep( time_n, stepDt, cycleNumber );
+    getConvergenceStats().writeConvergenceStatsToTable();
   }
 
   return isNewtonConverged;

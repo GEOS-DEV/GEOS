@@ -81,27 +81,6 @@ void SinglePhaseFVM< BASE >::initializePreSubGroups()
   }
 }
 
-template< typename SinglePhaseBase >
-void SinglePhaseFVM< SinglePhaseBase >::implicitStepSetup( real64 const & time_n,
-                                                           real64 const & dt,
-                                                           integer const cycleNumber,
-                                                           DomainPartition & domain )
-{
-  SinglePhaseBase::getConvergenceStats().updateSolverStep( time_n, dt, cycleNumber );
-
-  SinglePhaseBase::implicitStepSetup( time_n, dt, cycleNumber, domain );
-}
-
-template< typename SinglePhaseBase >
-void SinglePhaseFVM< SinglePhaseBase >::implicitStepComplete( real64 const & time_n,
-                                                              real64 const & dt,
-                                                              DomainPartition & domain )
-{
-  SinglePhaseBase::implicitStepComplete( time_n, dt, domain );
-  SinglePhaseBase::writeStatisticsToTable();
-}
-
-
 template< typename BASE >
 void SinglePhaseFVM< BASE >::setupDofs( DomainPartition const & domain,
                                         DofManager & dofManager ) const
