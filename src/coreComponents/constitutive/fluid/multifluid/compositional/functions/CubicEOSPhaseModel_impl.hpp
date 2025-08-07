@@ -98,17 +98,17 @@ computeLogFugacityCoefficients( integer const numComps,
 }
 
 template< typename EOS_TYPE >
-template< integer USD >
+template< integer USD1, integer USD2 >
 GEOS_HOST_DEVICE
 void
 CubicEOSPhaseModel< EOS_TYPE >::
 computeLogFugacityCoefficientsAndDerivs( integer const numComps,
                                          real64 const & pressure,
                                          real64 const & temperature,
-                                         arraySlice1d< real64 const, USD > const & composition,
+                                         arraySlice1d< real64 const, USD1 > const & composition,
                                          ComponentProperties::KernelWrapper const & componentProperties,
                                          arraySlice1d< real64 > const & logFugacityCoefficients,
-                                         arraySlice2d< real64 > const & logFugacityCoefficientDerivs )
+                                         arraySlice2d< real64, USD2 > const & logFugacityCoefficientDerivs )
 {
   integer constexpr numMaxDofs = StackVariables< true >::maxNumDof;
   integer const numDofs = 2 + numComps;
@@ -129,23 +129,23 @@ computeLogFugacityCoefficientsAndDerivs( integer const numComps,
                            stack );
 
   // Step 2: Compute the mixture coefficients
-  computeMixtureCoefficients< USD, true >( numComps, composition, stack );
+  computeMixtureCoefficients< USD1, true >( numComps, composition, stack );
 
   // Step 3: Compute the compressibility factor (Z)
-  computeCompressibilityFactor< USD, true >( numComps,
-                                             composition,
-                                             stack,
-                                             compressibilityFactor,
-                                             compressibilityFactorDerivs.toSlice() );
+  computeCompressibilityFactor< USD1, true >( numComps,
+                                              composition,
+                                              stack,
+                                              compressibilityFactor,
+                                              compressibilityFactorDerivs.toSlice() );
 
   // Step 4: Use mixture coefficients and compressibility factor to update fugacity coefficients
-  computeLogFugacityCoefficients< USD, true >( numComps,
-                                               composition,
-                                               stack,
-                                               compressibilityFactor,
-                                               compressibilityFactorDerivs.toSliceConst(),
-                                               logFugacityCoefficients,
-                                               logFugacityCoefficientDerivs );
+  computeLogFugacityCoefficients< USD1, true >( numComps,
+                                                composition,
+                                                stack,
+                                                compressibilityFactor,
+                                                compressibilityFactorDerivs.toSliceConst(),
+                                                logFugacityCoefficients,
+                                                logFugacityCoefficientDerivs );
 }
 
 template< typename EOS_TYPE >
@@ -412,13 +412,13 @@ computeCompressibilityFactor( integer const numComps,
       StackArray< real64, 1, maxNumComp > logFugacityCoefficients( numComps );
       for( real64 const z : {zMin, zMax} )
       {
-        computeLogFugacityCoefficients< USD, false >( numComps,
-                                                      composition,
-                                                      stack,
-                                                      z,
-                                                      nullptr,
-                                                      logFugacityCoefficients.toSlice(),
-                                                      nullptr );
+        computeLogFugacityCoefficients< USD, false, 0 >( numComps,
+                                                         composition,
+                                                         stack,
+                                                         z,
+                                                         nullptr,
+                                                         logFugacityCoefficients.toSlice(),
+                                                         nullptr );
         real64 dG = 0.0;
         for( integer ic = 0; ic < numComps; ++ic )
         {
@@ -462,18 +462,18 @@ computeCompressibilityFactor( integer const numComps,
 }
 
 template< typename EOS_TYPE >
-template< integer USD, bool DERIVATIVES >
+template< integer USD1, bool DERIVATIVES, integer USD2 >
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
 void
 CubicEOSPhaseModel< EOS_TYPE >::
 computeLogFugacityCoefficients( integer const numComps,
-                                arraySlice1d< real64 const, USD > const & composition,
+                                arraySlice1d< real64 const, USD1 > const & composition,
                                 StackVariables< DERIVATIVES > const & stack,
                                 real64 const & compressibilityFactor,
                                 StackConstDerivativeType< 1, DERIVATIVES > const & compressibilityFactorDerivs,
                                 arraySlice1d< real64 > const & logFugacityCoefficients,
-                                StackDerivativeType< 2, DERIVATIVES > const & logFugacityCoefficientDerivs )
+                                StackDerivativeType< 2, DERIVATIVES, USD2 > const & logFugacityCoefficientDerivs )
 {
   constexpr integer maxNumComp = StackVariables< DERIVATIVES >::maxNumComp;
   StackArray< real64, 1, maxNumComp > ki( numComps );

@@ -159,18 +159,18 @@ computeLogFugacityCoefficients( integer const numComps,
 }
 
 template< typename EOS_TYPE >
-template< integer USD >
+template< integer USD1, integer USD2 >
 GEOS_HOST_DEVICE
 void
 SoreideWhitsonEOSPhaseModel< EOS_TYPE >::
 computeLogFugacityCoefficientsAndDerivs( integer const numComps,
                                          real64 const & pressure,
                                          real64 const & temperature,
-                                         arraySlice1d< real64 const, USD > const & composition,
+                                         arraySlice1d< real64 const, USD1 > const & composition,
                                          ComponentProperties::KernelWrapper const & componentProperties,
                                          real64 const & salinity,
                                          arraySlice1d< real64 > const & logFugacityCoefficients,
-                                         arraySlice2d< real64 > const & logFugacityCoefficientDerivs )
+                                         arraySlice2d< real64, USD2 > const & logFugacityCoefficientDerivs )
 {
   integer constexpr numMaxDofs = StackVariables< true >::maxNumDof;
   integer const numDofs = 2 + numComps;
@@ -188,10 +188,10 @@ computeLogFugacityCoefficientsAndDerivs( integer const numComps,
                            stack );
 
   // Step 2: Compute the mixture coefficients
-  CubicModel::template computeMixtureCoefficients< USD, true >( numComps, composition, stack );
+  CubicModel::template computeMixtureCoefficients< USD1, true >( numComps, composition, stack );
 
   // Step 3: Compute the compressibility factor (Z)
-  CubicModel::template computeCompressibilityFactor< USD, true >(
+  CubicModel::template computeCompressibilityFactor< USD1, true >(
     numComps,
     composition,
     stack,
@@ -199,7 +199,7 @@ computeLogFugacityCoefficientsAndDerivs( integer const numComps,
     compressibilityFactorDerivs.toSlice() );
 
   // Step 4: Use mixture coefficients and compressibility factor to update fugacity coefficients
-  CubicModel::template computeLogFugacityCoefficients< USD, true >(
+  CubicModel::template computeLogFugacityCoefficients< USD1, true, USD2 >(
     numComps,
     composition,
     stack,
