@@ -56,7 +56,9 @@ public:
                                    EquationOfStateType const liquidEos,
                                    EquationOfStateType const vapourEos,
                                    real64 const salinity,
-                                   arrayView1d< real64 const > const componentCriticalVolume );
+                                   arrayView1d< real64 const > const componentCriticalVolume,
+                                   arrayView1d< real64 const > const continuousFlashParameters,
+                                   arrayView1d< integer const > const discreteFlashParameters );
 
   // Mark as a 3-phase flash
   GEOS_HOST_DEVICE
