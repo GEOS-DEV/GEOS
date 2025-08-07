@@ -100,7 +100,15 @@ public:
     auto const liquidComposition = compositionData[0];
     auto const vapourComposition = compositionData[1];
     stackArray2d< real64, numComps > kValues( 1, numComps );
-    kValues.zero();
+
+    KValueInitialization::computeWilsonGasLiquidKvalue( numComps,
+                                                        pressure,
+                                                        temperature,
+                                                        componentProperties,
+                                                        kValues[0] );
+
+    auto const parameters = FlashParameters::create( std::make_unique< ModelParameters >() );
+    auto const * flashParameters = parameters->get< FlashParameters >();
 
     bool status = NegativeTwoPhaseFlash::compute(
       numComps,
@@ -109,6 +117,8 @@ public:
       composition.toSliceConst(),
       componentProperties,
       flashData,
+      flashParameters->m_continuousParameters,
+      flashParameters->m_discreteParameters,
       kValues.toSlice(),
       vapourFraction,
       liquidComposition,
@@ -164,7 +174,15 @@ public:
     stackArray1d< real64, numComps > liquidComposition( numComps );
     stackArray1d< real64, numComps > vapourComposition( numComps );
     stackArray2d< real64, numComps > kValues( 1, numComps );
-    kValues.zero();
+
+    KValueInitialization::computeWilsonGasLiquidKvalue( numComps,
+                                                        pressure,
+                                                        temperature,
+                                                        componentProperties,
+                                                        kValues[0] );
+
+    auto const parameters = FlashParameters::create( std::make_unique< ModelParameters >() );
+    auto const * flashParameters = parameters->get< FlashParameters >();
 
     stackArray1d< real64, numDofs > vapourFractionDerivs( numDofs );
     stackArray2d< real64, numComps * numDofs > liquidCompositionDerivs( numComps, numDofs );
@@ -180,12 +198,16 @@ public:
         derivs[1+ic+numComps] = ymf( ic, kc );
       }
     };
-    std::cout << std::scientific << std::setprecision( 8 );
 
     auto const evaluateFlash = [&]( real64 const p, real64 const t, auto const & zmf, auto & values ){
       stackArray1d< real64, numComps > displacedLiquidComposition( numComps );
       stackArray1d< real64, numComps > displacedVapourComposition( numComps );
-      kValues.zero();
+
+      KValueInitialization::computeWilsonGasLiquidKvalue( numComps,
+                                                          p,
+                                                          t,
+                                                          componentProperties,
+                                                          kValues[0] );
 
       NegativeTwoPhaseFlash::compute(
         numComps,
@@ -194,6 +216,8 @@ public:
         zmf.toSliceConst(),
         componentProperties,
         flashData,
+        flashParameters->m_continuousParameters,
+        flashParameters->m_discreteParameters,
         kValues.toSlice(),
         values[0],
         displacedLiquidComposition.toSlice(),
@@ -212,6 +236,8 @@ public:
       composition.toSliceConst(),
       componentProperties,
       flashData,
+      flashParameters->m_continuousParameters,
+      flashParameters->m_discreteParameters,
       kValues.toSlice(),
       vapourFraction,
       liquidComposition.toSlice(),
@@ -436,7 +462,7 @@ INSTANTIATE_TEST_SUITE_P(NegativeTwoPhaseFlash, PengRobinson4,
     {1.00000e+08, 473.15, {0.05695100, 0.10481800, 0.10482200, 0.73340900}, 0.00000000, {0.05695100, 0.10481800, 0.10482200, 0.73340900}, {0.05695100, 0.10481800, 0.10482200, 0.73340900}},
     {1.00000e+08, 473.15, {0.15695100, 0.10481800, 0.10482200, 0.63340900}, 0.00000000, {0.15695100, 0.10481800, 0.10482200, 0.63340900}, {0.15695100, 0.10481800, 0.10482200, 0.63340900}},
     {1.00000e+08, 473.15, {0.00000000, 0.10481800, 0.10482200, 0.79036000}, 0.72948844, {0.00000000, 0.38748004, 0.38749545, 0.22502451}, {0.00000000, 0.00000023, 0.00000000, 0.99999977}},
-    {1.00000e+08, 473.15, {0.10481800, 0.00000000, 0.10482200, 0.79036000}, 0.00000000, {0.10481800, 0.00000000, 0.10482200, 0.79036000}, {0.10481800, 0.00000000, 0.10482200, 0.79036000}}
+    {1.00000e+08, 473.15, {0.10481800, 0.00000000, 0.10482200, 0.79036000}, 0.00000000, {0.10481800, 0.00000000, 0.10482200, 0.79036000}, {0.10481800, 0.00000000, 0.10482200, 0.79036000}},
   })
 );
 

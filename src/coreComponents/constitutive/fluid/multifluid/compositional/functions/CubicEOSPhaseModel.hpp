@@ -84,11 +84,11 @@ struct CubicEOSPhaseModel
   template< bool DERIVATIVES >
   using StackVariables = EOSStackVariables_Impl< void, DERIVATIVES >;
 
-  template< integer DIM, bool DERIVATIVES >
-  using StackDerivativeType = typename StackVariables< DERIVATIVES >::template DerivativeType< DIM >;
+  template< integer DIM, bool DERIVATIVES, integer USD = 0 >
+  using StackDerivativeType = typename StackVariables< DERIVATIVES >::template DerivativeType< DIM, USD >;
 
-  template< integer DIM, bool DERIVATIVES >
-  using StackConstDerivativeType = typename StackVariables< DERIVATIVES >::template ConstDerivativeType< DIM >;
+  template< integer DIM, bool DERIVATIVES, integer USD = 0 >
+  using StackConstDerivativeType = typename StackVariables< DERIVATIVES >::template ConstDerivativeType< DIM, USD >;
 
 public:
   /**
@@ -141,16 +141,16 @@ public:
    * @param[out] logFugacityCoefficients log of the fugacity coefficients
    * @param[out] logFugacityCoefficientDerivs derivatives of the log of the fugacity coefficients
    */
-  template< integer USD >
+  template< integer USD1, integer USD2 >
   GEOS_HOST_DEVICE
   static void
   computeLogFugacityCoefficientsAndDerivs( integer const numComps,
                                            real64 const & pressure,
                                            real64 const & temperature,
-                                           arraySlice1d< real64 const, USD > const & composition,
+                                           arraySlice1d< real64 const, USD1 > const & composition,
                                            ComponentProperties::KernelWrapper const & componentProperties,
                                            arraySlice1d< real64 > const & logFugacityCoefficients,
-                                           arraySlice2d< real64 > const & logFugacityCoefficientDerivs );
+                                           arraySlice2d< real64, USD2 > const & logFugacityCoefficientDerivs );
 
   /**
    * @brief Compute compressibility factor for the cubic EOS model
@@ -268,16 +268,16 @@ public:
    * @param[out] logFugacityCoefficients log of the fugacity coefficients
    * @param[out] logFugacityCoefficientDerivs derivatives of the log of the fugacity coefficients
    */
-  template< integer USD, bool DERIVATIVES = false >
+  template< integer USD1, bool DERIVATIVES = false, integer USD2 = 0 >
   GEOS_HOST_DEVICE
   static void
   computeLogFugacityCoefficients( integer const numComps,
-                                  arraySlice1d< real64 const, USD > const & composition,
+                                  arraySlice1d< real64 const, USD1 > const & composition,
                                   StackVariables< DERIVATIVES > const & data,
                                   real64 const & compressibilityFactor,
                                   StackConstDerivativeType< 1, DERIVATIVES > const & compressibilityFactorDerivs,
                                   arraySlice1d< real64 > const & logFugacityCoefficients,
-                                  StackDerivativeType< 2, DERIVATIVES > const & logFugacityCoefficientDerivs );
+                                  StackDerivativeType< 2, DERIVATIVES, USD2 > const & logFugacityCoefficientDerivs );
 
   /**
    * @brief Helper functions solving a cubic equation using trigonometry
