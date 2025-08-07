@@ -665,7 +665,7 @@ bool PhysicsSolverBase::lineSearch( real64 const & time_n,
                            GEOS_FMT( "        Line search @ {:0.3f}:      ", cumulativeScale ));
 
     // get residual norm
-    residualNorm = calculateResidualNorm( time_n, dt, cycleNumber, newtonIter, domain, dofManager, rhs.values() );
+    residualNorm = calculateResidualNorm( time_n, dt, domain, dofManager, rhs.values() );
     GEOS_LOG_LEVEL_RANK_0( logInfo::LineSearch,
                            GEOS_FMT( "        ( R ) = ( {:4.2e} )", residualNorm ) );
 
@@ -765,7 +765,7 @@ bool PhysicsSolverBase::lineSearchWithParabolicInterpolation( real64 const & tim
                              GEOS_FMT( "        Line search @ {:0.3f}:      ", cumulativeScale ) );
     }
     // get residual norm
-    residualNormT = calculateResidualNorm( time_n, dt, cycleNumber, newtonIter, domain, dofManager, rhs.values() );
+    residualNormT =  calculateResidualNorm( time_n, dt, domain, dofManager, rhs.values() );
     GEOS_LOG_LEVEL_RANK_0( logInfo::ResidualNorm,
                            GEOS_FMT( "        ( R ) = ( {:4.2e} )", residualNormT ) );
 
@@ -1004,7 +1004,7 @@ bool PhysicsSolverBase::solveNonlinearSystem( real64 const & time_n,
       Timer timer( m_timers["convergence check"] );
 
       // get residual norm
-      residualNorm = calculateResidualNorm( time_n, stepDt, cycleNumber, newtonIter, domain, m_dofManager, m_rhs.values() );
+      residualNorm = calculateResidualNorm( time_n, stepDt, domain, m_dofManager, m_rhs.values() );
       GEOS_LOG_LEVEL_RANK_0( logInfo::ResidualNorm,
                              GEOS_FMT( "        ( R ) = ( {:4.2e} )", residualNorm ) );
       getConvergenceStats().m_residuals["R"] = residualNorm;
@@ -1339,8 +1339,6 @@ void PhysicsSolverBase::debugOutputSolution( real64 const & time,
 real64
 PhysicsSolverBase::calculateResidualNorm( real64 const & GEOS_UNUSED_PARAM( time ),
                                           real64 const & GEOS_UNUSED_PARAM( dt ),
-                                          integer const GEOS_UNUSED_PARAM( cycleNumber ),
-                                          integer const GEOS_UNUSED_PARAM( newtonIter ),
                                           DomainPartition const & GEOS_UNUSED_PARAM( domain ),
                                           DofManager const & GEOS_UNUSED_PARAM( dofManager ),
                                           arrayView1d< real64 const > const & GEOS_UNUSED_PARAM( localRhs ) )

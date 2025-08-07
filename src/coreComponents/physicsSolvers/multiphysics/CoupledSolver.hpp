@@ -251,8 +251,6 @@ public:
   virtual real64
   calculateResidualNorm( real64 const & time_n,
                          real64 const & dt,
-                         integer const cycleNumer,
-                         integer const newtonIter,
                          DomainPartition const & domain,
                          DofManager const & dofManager,
                          arrayView1d< real64 const > const & localRhs ) override
@@ -260,9 +258,10 @@ public:
     real64 norm = 0.0;
     forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
     {
-      real64 const singlePhysicsNorm = solver->calculateResidualNorm( time_n, dt, cycleNumer, newtonIter, domain, dofManager, localRhs );
+      real64 const singlePhysicsNorm = solver->calculateResidualNorm( time_n, dt, domain, dofManager, localRhs );
       norm += singlePhysicsNorm * singlePhysicsNorm;
     } );
+
     return sqrt( norm );
   }
 
@@ -509,6 +508,15 @@ protected:
                                                   stepDt,
                                                   domain );
 
+        forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
+        {
+          if( m_writeStatistics >= 2 )
+          {
+            solver->getConvergenceStats().updateSolverStep( time_n, dt, cycleNumber, iter );
+            solver->writeStatisticsToTable();
+          }
+        } );
+
         if( isConverged )
         {
           // we still want to count current iteration
@@ -627,8 +635,6 @@ protected:
           real64 const singlePhysicsNorm =
             solver->calculateResidualNorm( time_n,
                                            dt,
-                                           cycleNumber,
-                                           iter,
                                            domain,
                                            solver->getDofManager(),
                                            solver->getSystemRhs().values() );

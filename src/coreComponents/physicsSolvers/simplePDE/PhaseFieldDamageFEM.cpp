@@ -501,10 +501,8 @@ void PhaseFieldDamageFEM::applyBoundaryConditions(
 }
 
 real64
-PhaseFieldDamageFEM::calculateResidualNorm( real64 const & time_n,
-                                            real64 const & dt,
-                                            integer const cycleNumber,
-                                            integer const newtonIter,
+PhaseFieldDamageFEM::calculateResidualNorm( real64 const & GEOS_UNUSED_PARAM( time_n ),
+                                            real64 const & GEOS_UNUSED_PARAM( dt ),
                                             DomainPartition const & domain,
                                             DofManager const & dofManager,
                                             arrayView1d< real64 const > const & localRhs )
@@ -573,13 +571,6 @@ PhaseFieldDamageFEM::calculateResidualNorm( real64 const & time_n,
 
 
   getConvergenceStats().m_residuals[GEOS_FMT( "R{}", coupledSolverAttributePrefix())] = residual;
-
-
-  if( m_writeStatistics >= 2 )
-  {
-    getConvergenceStats().updateSolverStep( time_n, dt, cycleNumber, newtonIter );
-    writeStatisticsToTable();
-  }
 
   return residual;
 }

@@ -183,7 +183,6 @@ void ReactiveCompositionalMultiphaseOBL::implicitStepComplete( real64 const & ti
       porousMaterial.saveConvergedState();
     } );
   } );
-
 }
 
 void ReactiveCompositionalMultiphaseOBL::postInputInitialization()
@@ -284,10 +283,8 @@ void ReactiveCompositionalMultiphaseOBL::registerDataOnMesh( Group & meshBodies 
   } );
 }
 
-real64 ReactiveCompositionalMultiphaseOBL::calculateResidualNorm( real64 const & time_n,
-                                                                  real64 const & dt,
-                                                                  integer const cycleNumber,
-                                                                  integer const newtonIter,
+real64 ReactiveCompositionalMultiphaseOBL::calculateResidualNorm( real64 const & GEOS_UNUSED_PARAM( time ),
+                                                                  real64 const & GEOS_UNUSED_PARAM( dt ),
                                                                   DomainPartition const & domain,
                                                                   DofManager const & dofManager,
                                                                   arrayView1d< real64 const > const & localRhs )
@@ -355,11 +352,7 @@ real64 ReactiveCompositionalMultiphaseOBL::calculateResidualNorm( real64 const &
 
   getConvergenceStats().m_residuals["Rflow"] = residual;
 
-  if( m_writeStatistics >= 2 )
-  {
-    getConvergenceStats().updateSolverStep( time_n, dt, cycleNumber, newtonIter );
-    writeStatisticsToTable();
-  }
+
 
   return residual;
 }

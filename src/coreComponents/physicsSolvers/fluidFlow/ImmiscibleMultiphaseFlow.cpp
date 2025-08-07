@@ -1046,10 +1046,8 @@ void ImmiscibleMultiphaseFlow::applySourceFluxBC( real64 const time,
   } );
 }
 
-real64 ImmiscibleMultiphaseFlow::calculateResidualNorm( real64 const & time_n,
-                                                        real64 const & dt,
-                                                        integer const cycleNumber,
-                                                        integer const newtonIter,
+real64 ImmiscibleMultiphaseFlow::calculateResidualNorm( real64 const & GEOS_UNUSED_PARAM( time_n ),
+                                                        real64 const & GEOS_UNUSED_PARAM( dt ),
                                                         DomainPartition const & domain,
                                                         DofManager const & dofManager,
                                                         arrayView1d< real64 const > const & localRhs )
@@ -1127,12 +1125,6 @@ real64 ImmiscibleMultiphaseFlow::calculateResidualNorm( real64 const & time_n,
                                                               coupledSolverAttributePrefix(), residualNorm ))
 
   getConvergenceStats().m_residuals[GEOS_FMT( "R{}", coupledSolverAttributePrefix())] = residualNorm;
-
-  if( m_writeStatistics >= 2 )
-  {
-    getConvergenceStats().updateSolverStep( time_n, dt, cycleNumber, newtonIter );
-    writeStatisticsToTable();
-  }
 
   return residualNorm;
 }

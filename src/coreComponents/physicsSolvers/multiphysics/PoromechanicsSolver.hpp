@@ -255,6 +255,13 @@ public:
 
     bool isConverged = Base::checkSequentialConvergence( cycleNumber, iter, time_n, dt, domain );
 
+    flowSolver()->getConvergenceStats().updateSolverStep( time_n, dt, cycleNumber, iter );
+    flowSolver()->writeStatisticsToTable();
+
+    solidMechanicsSolver()->getConvergenceStats().updateSolverStep( time_n, dt, cycleNumber, iter );
+    solidMechanicsSolver()->writeStatisticsToTable();
+
+
     // restore original
     subcycling = subcycling_orig;
 
