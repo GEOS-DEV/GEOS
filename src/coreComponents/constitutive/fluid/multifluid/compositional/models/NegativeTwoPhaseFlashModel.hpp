@@ -143,6 +143,10 @@ public:
     if( unstableMixture || !stabilityStatus )
     {
       // Unstable mixture
+std::ostringstream os;
+os << "INCIPIENT "
+<< std::scientific << incipientComposition.toSlice() << " "
+<< std::scientific << kVapourLiquid.toSliceConst() << " ";
       // Iterative solve to converge flash
       bool const flashStatus = NegativeTwoPhaseFlash::compute( m_numComponents,
                                                                pressure,
@@ -156,10 +160,11 @@ public:
                                                                phaseFraction.value[m_vapourIndex],
                                                                phaseCompFraction.value[m_liquidIndex],
                                                                phaseCompFraction.value[m_vapourIndex] );
+os << "V " << phaseFraction.value[m_vapourIndex] << " " << kVapourLiquid.toSliceConst() << " ";
 
       GEOS_ERROR_IF( !flashStatus,
-                     GEOS_FMT( "Negative two phase flash failed to converge at pressure {:.5e}, temperature {:.3f} and composition ",
-                               pressure, temperature ) << compFraction );
+                     GEOS_FMT( "Negative two phase flash failed to converge at pressure {:.7e}, temperature {:.8f} and composition ",
+                               pressure, temperature ) << compFraction << " KV " << os.str() );
 
       // Calculate derivatives
       NegativeTwoPhaseFlash::computeDerivatives( m_numComponents,

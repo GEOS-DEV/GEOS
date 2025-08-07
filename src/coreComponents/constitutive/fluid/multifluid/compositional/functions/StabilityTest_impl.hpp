@@ -163,7 +163,6 @@ bool StabilityTest::compute( integer const numComps,
         // Check stationarity
         if( error < stabilitySSITolerance )
         {
-          converged = true;
           break;
         }
       }
@@ -207,6 +206,7 @@ bool StabilityTest::compute( integer const numComps,
           break;
         }
       }
+      
       allConverged = allConverged && converged;
 
       // Calculate the tangent-plane-distance (TPD) and distance to the trivial solution

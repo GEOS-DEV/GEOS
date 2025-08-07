@@ -50,20 +50,28 @@ bool NegativeTwoPhaseFlash::compute( integer const numComps,
                                      arraySlice1d< real64, USD2 > const & vapourComposition )
 {
   constexpr integer maxNumComps = MultiFluidConstants::MAX_NUM_COMPONENTS;
-  StackArray< real64, 2, 3*maxNumComps > workSpace( 3, maxNumComps );
+  constexpr integer maxNumDofs = MultiFluidConstants::MAX_NUM_COMPONENTS + 2;
+
+  integer const numDofs = numComps + 2;
+
+  StackArray< real64, 2, 3*maxNumComps > workSpace( 3, numComps );
+  StackArray< real64, 1, maxNumComps+1 > residualSpace( numComps );
   arraySlice1d< real64 > logLiquidFugacity = workSpace[0];
   arraySlice1d< real64 > logVapourFugacity = workSpace[1];
-  arraySlice1d< real64 > fugacityRatios = workSpace[2];
-  stackArray1d< integer, maxNumComps > componentIndices( numComps );
+  arraySlice1d< real64 > residual = residualSpace.toSlice();
   auto const & kVapourLiquid = kValues[0];
+  stackArray1d< integer, maxNumComps > availableComponents( numComps );
+  stackArray1d< integer, maxNumComps > unavailableComponents( numComps );
 
-  calculatePresentComponents( numComps, composition, componentIndices );
-
-  auto const presentComponents = componentIndices.toSliceConst();
+  calculatePresentComponents( numComps, composition, availableComponents );
+  calculateAbsentComponents( numComps, composition, unavailableComponents );
+  auto const presentComponents = availableComponents.toSliceConst();
+  auto const absentComponents = unavailableComponents.toSliceConst();
 
   // Extract flash parameters
   integer const maxIterations = discreteFlashParameters[FlashParameters::FLASH_MAX_ITERATIONS];
   real64 const flashTolerance = continuousFlashParameters[FlashParameters::FLASH_TOLERANCE];
+  real64 const flashSSITolerance = LvArray::math::max( flashTolerance, continuousFlashParameters[FlashParameters::SSI_TOLERANCE] );
 
   // Initialise compositions to feed composition
   for( integer ic = 0; ic < numComps; ++ic )
@@ -73,61 +81,85 @@ bool NegativeTwoPhaseFlash::compute( integer const numComps,
   }
 
   bool converged = false;
-  for( localIndex iterationCount = 0; iterationCount < maxIterations; ++iterationCount )
+  localIndex iterationCount = 0; 
+
+  // Start SSI iterations
+  for( ; ( !converged ) && (iterationCount < maxIterations); ++iterationCount )
   {
     // Solve Rachford-Rice Equation
     vapourPhaseMoleFraction = RachfordRice::solve( kVapourLiquid.toSliceConst(), composition, presentComponents );
 
-    // Assign phase compositions
-    for( integer ic = 0; ic < numComps; ++ic )
-    {
-      liquidComposition[ic] = composition[ic] / ( 1.0 + vapourPhaseMoleFraction * ( kVapourLiquid[ic] - 1.0 ) );
-      vapourComposition[ic] = kVapourLiquid[ic] * liquidComposition[ic];
-    }
+     real64 const error = calculateResidual(  numComps,
+                        pressure,
+                        temperature,
+                        composition,
+                        componentProperties,
+                        flashData,
+                        kVapourLiquid.toSliceConst(),
+                        vapourPhaseMoleFraction,
+                        liquidComposition,
+                        vapourComposition,
+                       logLiquidFugacity,
+                        logVapourFugacity,
+                        residual );
 
-    normalizeComposition( numComps, liquidComposition );
-    normalizeComposition( numComps, vapourComposition );
-
-    FugacityCalculator::computeLogFugacity( numComps,
-                                            pressure,
-                                            temperature,
-                                            liquidComposition.toSliceConst(),
-                                            componentProperties,
-                                            flashData.liquidEos,
-                                            flashData,
-                                            logLiquidFugacity );
-    FugacityCalculator::computeLogFugacity( numComps,
-                                            pressure,
-                                            temperature,
-                                            vapourComposition.toSliceConst(),
-                                            componentProperties,
-                                            flashData.vapourEos,
-                                            flashData,
-                                            logVapourFugacity );
-
-    // Compute fugacity ratios and calculate the error
-    real64 error = 0.0;
+    // Update K-values
     for( integer const ic : presentComponents )
     {
-      fugacityRatios[ic] = ( logLiquidFugacity[ic] - logVapourFugacity[ic] ) + log( liquidComposition[ic] ) - log( vapourComposition[ic] );
-      error += (fugacityRatios[ic]*fugacityRatios[ic]);
+      kVapourLiquid[ic] = exp( logLiquidFugacity[ic] - logVapourFugacity[ic] );
     }
-    error = LvArray::math::sqrt( error );
 
-    // Compute fugacity ratios and check convergence
-    converged = (error < flashTolerance);
+    // Check convergence
+    converged = ( error < flashTolerance );
 
-    if( converged )
+    if (error < flashSSITolerance)
     {
       break;
     }
-
-    // Update K-values
-    for( integer ic = 0; ic < numComps; ++ic )
-    {
-      kVapourLiquid[ic] *= exp( fugacityRatios[ic] );
-    }
   }
+
+  // Start Newton iterations
+    StackArray< real64, 3, 2*maxNumComps * maxNumDofs > logFugacityDerivs( 2, numComps, numDofs );
+    StackArray< real64, 2, (maxNumComps+1) * (maxNumComps+1) > jacobian( numComps+1, numComps+1 );
+    arraySlice2d< real64 > const logLiquidFugacityDerivs = logFugacityDerivs[0];
+    arraySlice2d< real64 > const logVapourFugacityDerivs = logFugacityDerivs[1];
+
+for( ; ( !converged ) && (iterationCount < maxIterations); ++iterationCount )
+  {
+ real64 const error = calculateResidualAndJacobian( numComps,
+                        pressure,
+                        temperature,
+                        composition,
+                        componentProperties,
+                        flashData,
+                        kVapourLiquid.toSliceConst(),
+                        vapourPhaseMoleFraction,
+                        liquidComposition,
+                        vapourComposition,
+                       logLiquidFugacity,
+                        logVapourFugacity,
+                                            logLiquidFugacityDerivs,
+                                            logVapourFugacityDerivs,
+                                            residual,
+                                            jacobian.toSlice() );
+
+    // Account for missing components in Jacobian
+                                            for( integer const ic : absentComponents )
+        {
+          jacobian(ic, ic) = 1.0;
+        }
+
+        // Solve for next step
+        solveLinearSystem( jacobian.toSlice(), residual );
+            // Update K-values
+    for( integer const ic : presentComponents )
+    {
+      kVapourLiquid[ic] *= exp( -residual[ic] );
+    }       
+    vapourPhaseMoleFraction -= residual[numComps];       
+        // Check convergence
+        converged = ( error < flashTolerance );
+    }
 
   // Test if we have converged to a null or trivial solution
   bool const testNegativeFlash = truncateCompositions( numComps,
@@ -333,7 +365,7 @@ real64 NegativeTwoPhaseFlash::calculateResidual( integer const numComps,
 
 template< int USD1, int USD2, int USD3, int USD4 >
 GEOS_HOST_DEVICE
-void NegativeTwoPhaseFlash::calculateResidualAndJacobian( integer const numComps,
+real64 NegativeTwoPhaseFlash::calculateResidualAndJacobian( integer const numComps,
                                                           real64 const pressure,
                                                           real64 const temperature,
                                                           arraySlice1d< real64 const > const & composition,
@@ -449,6 +481,7 @@ void NegativeTwoPhaseFlash::calculateResidualAndJacobian( integer const numComps
   }
 
   // Calculate the residual vector
+  real64 error = 0.0;
   residual[numComps] = 0.0;
   for( integer ic = 0; ic < numComps; ++ic )
   {
@@ -458,7 +491,10 @@ void NegativeTwoPhaseFlash::calculateResidualAndJacobian( integer const numComps
     real64 const Ki = kValues[ic];
     residual[ic] = xi * liquidFugacity[ic] - yi * vapourFugacity[ic];
     residual[numComps] += zi * (Ki - 1.0) / (1.0 + V * (Ki - 1.0));
+    error += (residual[ic]*residual[ic]);
   }
+  error += (residual[numComps]*residual[numComps]);
+  error = LvArray::math::sqrt( error );
 
   real64 const invSumX = 1.0/sumX;
   real64 const invSumY = 1.0/sumY;
@@ -548,6 +584,8 @@ void NegativeTwoPhaseFlash::calculateResidualAndJacobian( integer const numComps
     sum_j_N_V -= zi * (Ki - 1.0) * (Ki - 1.0) * invKi * invKi;
   }
   jacobian( numComps, numComps ) = sum_j_N_V;
+
+  return error;
 }
 
 template< integer USD1, integer USD2, integer USD3 >

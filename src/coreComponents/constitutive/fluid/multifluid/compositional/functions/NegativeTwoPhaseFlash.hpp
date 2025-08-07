@@ -128,7 +128,7 @@ public:
 
   template< int USD1, int USD2, int USD3, int USD4 >
   GEOS_HOST_DEVICE
-  static void calculateResidualAndJacobian( integer const numComps,
+  static real64 calculateResidualAndJacobian( integer const numComps,
                                             real64 const pressure,
                                             real64 const temperature,
                                             arraySlice1d< real64 const > const & composition,
