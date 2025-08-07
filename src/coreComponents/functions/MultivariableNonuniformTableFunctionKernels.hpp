@@ -14,7 +14,7 @@
  */
 
 /**
- * @file MultivariableTableFunctionKernels.hpp
+ * @file MultivariableNonuniformTableFunctionKernels.hpp
  */
 
 #ifndef GEOS_FUNCTIONS_MULTIVARIABLENONUNIFORMTABLEFUNCTIONKERNELS_HPP_
@@ -23,14 +23,12 @@
 namespace geos
 {
 
-
-
 /**
  * @class MultivariableNonUniformTableFunctionStaticKernel
  *
  * A class for multivariable piecewise interpolation with static storage
  * Functions are interpolated assuming a non uniform discretized space
- *
+ * for independent variables
  * @tparam NUM_DIMS number of dimensions (inputs)
  * @tparam NUM_OPS number of interpolated functions (outputs)
  */
