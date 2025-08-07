@@ -102,8 +102,8 @@ The file is a simple ASCII format with a brief header followed by test data:
   4.0816e-02 3.0000e+06 3.5000e+02 4.9901e+01 1.0000e+00 4.1563e-11 4.9901e+01 1.0066e+03 1.7778e-05 9.9525e-04
   ...
 
-Note that the number of columns will depend on how many phases and components are present.
-In this case, we have a two-phase, two-component mixture.
+Note that the number of columns will depend on how many phases and components are present and on whether the fluid is thermal or not.
+In this case, we have a two-phase, two-component isothermal mixture.
 The total density is reported in column 4, while phase fractions, phase densities, and phase viscosities are reported in subsequent columns.
 If the ``outputCompressibility`` flag is activated, an extra column will be added for the total fluid compressibility after the density.
 This is defined as :math:`c_t=\frac{1}{\rho_t}\left(\partial{\rho_t}/\partial P\right)` where :math:`\rho_t` is the total density.

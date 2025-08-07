@@ -865,6 +865,11 @@ real64 PhysicsSolverBase::nonlinearImplicitStep( real64 const & time_n,
         {
           break;
         }
+        else
+        {
+          GEOS_LOG_LEVEL_RANK_0( logInfo::NonlinearSolver,
+                                 "---------- Restarting Newton loop using default configuration. ----------" );
+        }
       }
       else
       {
