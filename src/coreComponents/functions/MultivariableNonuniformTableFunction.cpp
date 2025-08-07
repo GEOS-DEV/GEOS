@@ -39,9 +39,7 @@ void MultivariableNonuniformTableFunction::initializeFunctionFromFile( string co
 
   integer numDims, numOps;
   globalIndex numPointsTotal = 1;
-  real64_array axisMinimums, axisMaximums;
   real64_array2d axisCoordinates;
-  integer_array axisNumCoordinates;
   integer_array axisPoints;
 
   // 1. Read numDims and numOps
@@ -60,32 +58,42 @@ void MultivariableNonuniformTableFunction::initializeFunctionFromFile( string co
   GEOS_THROW_IF_LT_MSG( numOps, 1, catalogName() << " " << getDataContext() << ": positive integer value expected", InputError );
   GEOS_THROW_IF_GT_MSG( numOps, 100, catalogName() << " " << getDataContext() << ": maximum 100 operators expected", InputError );
 
-  axisMinimums.resize( numDims );
-  axisMaximums.resize( numDims );
-  axisCoordinates.resize( numDims, 2 );
-  axisNumCoordinates.resize( numDims );
-
   axisPoints.resize( numDims );
 
   // 2. Read axis parameters
 
+  std::vector< std::vector< real64 > > coords;
+  coords.resize( numDims );
   for( integer i = 0; i < numDims; i++ )
   {
     file >> axisPoints[i];
     GEOS_THROW_IF( !file, catalogName() << " " << getDataContext() << ": can`t read the number of points for axis " + std::to_string( i ), InputError );
     GEOS_THROW_IF_LE_MSG( axisPoints[i], 1, catalogName() << " " << getDataContext() << ": minimum 2 discretization point per axis are expected", InputError );
-    file >> axisMinimums[i];
-    GEOS_THROW_IF( !file, catalogName() << " " << getDataContext() << ": can`t read minimum value for axis " + std::to_string( i ), InputError );
-    file >> axisMaximums[i];
-    axisCoordinates[i][0]=axisMinimums[i];
-    axisCoordinates[i][1]=axisMaximums[i];
-    axisNumCoordinates[i]=2;
-    GEOS_THROW_IF( !file, catalogName() << " " << getDataContext() << ": can`t read maximum value for axis " + std::to_string( i ), InputError );
-    GEOS_THROW_IF_LT_MSG( axisMaximums[i], axisMinimums[i], catalogName() << " " << getDataContext() << ": maximum axis value is expected to be larger than minimum", InputError );
+    real64 x;
+    for( integer j=0; j<axisPoints[i]; j++ )
+    {
+      file >> x;
+      coords[i].push_back( x );
+    }
+    //GEOS_THROW_IF( !file, catalogName() << " " << getDataContext() << ": can`t read maximum value for axis " + std::to_string( i ),
+    // InputError );
+    GEOS_THROW_IF_LT_MSG( coords[i][coords[i].size()-1], coords[i][0], catalogName() << " " << getDataContext() << ": maximum axis value is expected to be larger than minimum", InputError );
 
     numPointsTotal *= axisPoints[i];
   }
-
+  int maxNumCoords=0;
+  for( integer i = 0; i < numDims; i++ )
+  {
+    maxNumCoords = std::max( maxNumCoords, *std::max_element( axisPoints.begin(), axisPoints.end()));
+  }
+  axisCoordinates.resize( numDims, maxNumCoords );
+  for( integer i = 0; i < numDims; i++ )
+  {
+    for( integer j=0; j<axisPoints[i]; j++ )
+    {
+      axisCoordinates[i][j] = coords[i][j];
+    }
+  }
   // lets limit the point storage size with 1 Gb (taking into account that hypercube storage is 2^numDim larger)
   real64 pointStorageMemoryLimitGB = 1;
 
@@ -113,21 +121,19 @@ void MultivariableNonuniformTableFunction::initializeFunctionFromFile( string co
 
   file.close();
 
-  setTableCoordinates( numDims, numOps, axisNumCoordinates, axisCoordinates, axisPoints );
+  setTableCoordinates( numDims, numOps, axisCoordinates, axisPoints );
   initializeFunction();
 }
 
 
 void MultivariableNonuniformTableFunction::setTableCoordinates( integer const numDims,
                                                                 integer const numOps,
-                                                                integer_array const & axisNumCoordinates,
                                                                 real64_array2d const & axisCoordinates,
                                                                 integer_array const & axisPoints )
 {
   m_numDims = numDims;
   m_numOps = numOps;
   m_numVerts =  1 << numDims;
-  m_axisNumCoordinates = axisNumCoordinates;
   m_axisCoordinates = axisCoordinates;
   m_axisPoints = axisPoints;
 
@@ -180,7 +186,7 @@ void MultivariableNonuniformTableFunction::initializeFunction()
                         InputError );
 #endif
 
-  integer maxDims = *std::max_element( m_axisNumCoordinates.begin(), m_axisNumCoordinates.end());
+  integer maxDims = *std::max_element( m_axisPoints.begin(), m_axisPoints.end());
   m_axisSteps.resize( m_numDims, maxDims );
   m_axisStepInvs.resize( m_numDims, maxDims );
 
@@ -191,7 +197,7 @@ void MultivariableNonuniformTableFunction::initializeFunction()
 
   for( integer dim = 0; dim < m_numDims; dim++ )
   {
-    for( integer j=1; j<m_axisNumCoordinates[dim]; j++ )
+    for( integer j=1; j<m_axisPoints[dim]; j++ )
     {
       m_axisSteps[dim][j-1] =  m_axisCoordinates[dim][j] - m_axisCoordinates[dim][j-1];
       m_axisStepInvs[dim][j-1] = 1 / m_axisSteps[dim][j-1];

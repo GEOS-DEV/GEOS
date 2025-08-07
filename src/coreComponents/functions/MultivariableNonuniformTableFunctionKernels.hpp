@@ -52,9 +52,8 @@ public:
   /**
    * @brief Construct a new Multivariable Table Function Static Kernel object
    *
-   * @param[in] axisMinimums  minimum coordinate for each axis
-   * @param[in] axisMaximums maximum coordinate for each axis
-   * @param[in] axisPoints number of discretization points between minimum and maximum for each axis
+   * @param[in] axisCoordinates  discretization points for each axis
+   * @param[in] axisPoints number of discretization points for each axis
    * @param[in] axisSteps axis interval lengths (nonuniform axis discretization)
    * @param[in] axisStepInvs inversions of axis interval lengths (nonuniform axis discretization)
    * @param[in] axisHypercubeMults  hypercube index mult factors for each axis
