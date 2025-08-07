@@ -84,9 +84,9 @@ public:
            OUT_ARRAY && values ) const
   {
     globalIndex hypercubeIndex = 0;
-    real64 axisLows[numDims];
-    real64 axisStepInv[numDims];
-    real64 axisMults[numDims];
+    real64 axisLows[numDims] = {0.0};
+    real64 axisStepInv[numDims] = {0.0};
+    real64 axisMults[numDims] = {0.0};
 
     for( int i = 0; i < numDims; ++i )
     {
@@ -120,9 +120,9 @@ public:
            OUT_2D_ARRAY && derivatives ) const
   {
     globalIndex hypercubeIndex = 0;
-    real64 axisLows[numDims];
-    real64 axisStepInv[numDims];
-    real64 axisMults[numDims];
+    real64 axisLows[numDims] = {0.0};
+    real64 axisStepInv[numDims] = {0.0};
+    real64 axisMults[numDims] = {0.0};
 
     for( int i = 0; i < numDims; ++i )
     {
