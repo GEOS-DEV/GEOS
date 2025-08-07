@@ -181,9 +181,6 @@ public:
       {
         incipientCompositionDerivs( ic, idof ) = X( ic, idof );
       }
-      A( ic, ic ) += 1.0;
-      A( ic, numComps ) = yi;
-      A( numComps, ic ) = 1.0;
     }
   }
 

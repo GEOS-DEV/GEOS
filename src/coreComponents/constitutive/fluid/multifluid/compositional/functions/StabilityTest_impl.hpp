@@ -46,8 +46,9 @@ bool StabilityTest::compute( integer const numComps,
                              EquationOfStateType & incipientEquationOfState,
                              arraySlice1d< real64 > const & incipientComposition )
 {
-  integer constexpr maxDofs = maxNumComps + 2;
+  GEOS_MARK_SCOPE(geos::constitutive::compositional::StabilityTest::compute);
 
+  integer constexpr maxDofs = maxNumComps + 2;
   integer const numDofs = 2 + numComps;
 
   stackArray2d< real64, 5*maxNumComps > workSpace( 5, numComps );
@@ -72,7 +73,7 @@ bool StabilityTest::compute( integer const numComps,
   integer const maxIterations = discreteFlashParameters[FlashParameters::STABILITY_MAX_ITERATIONS];
   real64 const stabilityThreshold = continuousFlashParameters[FlashParameters::STABILITY_THRESHOLD];
   real64 const stabilityTolerance = continuousFlashParameters[FlashParameters::STABILITY_TOLERANCE];
-  real64 const stabilitySSITolerance = LvArray::math::max( stabilityTolerance, continuousFlashParameters[FlashParameters::SSI_TOLERANCE] );
+  real64 const stabilitySSITolerance = continuousFlashParameters[FlashParameters::SSI_TOLERANCE];
 
   integer const numConfigSteps = flashData.liquidEos == flashData.vapourEos ? 1 : 2;
 
@@ -136,7 +137,7 @@ bool StabilityTest::compute( integer const numComps,
       localIndex iterationCount = 0;
 
       // Start with SSI iterations
-      for(; iterationCount < maxIterations; ++iterationCount )
+      for( ; ((!converged) && (iterationCount < maxIterations)); ++iterationCount )
       {
         for( integer const ic : presentComponents )
         {
@@ -161,6 +162,7 @@ bool StabilityTest::compute( integer const numComps,
         }
 
         // Check stationarity
+        converged = ( error < stabilityTolerance );
         if( error < stabilitySSITolerance )
         {
           break;
@@ -168,7 +170,7 @@ bool StabilityTest::compute( integer const numComps,
       }
 
       // Start with Newton iterations
-      for(; iterationCount < maxIterations; ++iterationCount )
+      for(; ((!converged) && (iterationCount < maxIterations)); ++iterationCount )
       {
         for( integer const ic : presentComponents )
         {
@@ -200,11 +202,7 @@ bool StabilityTest::compute( integer const numComps,
         }
 
         // Check stationarity
-        if( error < stabilityTolerance )
-        {
-          converged = true;
-          break;
-        }
+        converged = ( error < stabilityTolerance );
       }
       
       allConverged = allConverged && converged;
@@ -217,6 +215,8 @@ bool StabilityTest::compute( integer const numComps,
         distance += (dZ*dZ);
       }
 
+      // The incipient phase composition is the converged test composition that is furthest away from the
+      // given sample composition
       if( maxDistanceToTrivialSolution < distance )
       {
         maxDistanceToTrivialSolution = distance;
@@ -226,6 +226,7 @@ bool StabilityTest::compute( integer const numComps,
           incipientComposition[ic] = testComposition[ic];
         }
       }
+
       // The mixture is unstable if either the TPD is negative or if the TPD is zero but the incipient composition
       // is different from the sample composition
       // stabilityThreshold is negative (default -1e-8)
