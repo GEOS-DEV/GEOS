@@ -173,11 +173,9 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::registerDataOnMesh( dataReposi
 template< typename POROMECHANICS_SOLVER >
 void HydrofractureSolver< POROMECHANICS_SOLVER >::implicitStepSetup( real64 const & time_n,
                                                                      real64 const & dt,
-                                                                     integer const cycleNumber,
                                                                      DomainPartition & domain )
 {
-  Base::implicitStepSetup( time_n, dt, cycleNumber, domain );
-
+  Base::implicitStepSetup( time_n, dt, domain );
   updateHydraulicApertureAndFracturePermeability( domain );
 
 #ifdef GEOS_USE_SEPARATION_COEFFICIENT
@@ -251,7 +249,7 @@ real64 HydrofractureSolver< POROMECHANICS_SOLVER >::fullyCoupledSolverStep( real
 
   real64 dtReturn = dt;
 
-  implicitStepSetup( time_n, dt, cycleNumber, domain );
+  implicitStepSetup( time_n, dt, domain );
 
   int const maxIter = m_maxNumResolves + 1;
   m_numResolves[1] = m_numResolves[0];

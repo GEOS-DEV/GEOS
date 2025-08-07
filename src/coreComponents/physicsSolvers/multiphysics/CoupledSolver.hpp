@@ -150,12 +150,11 @@ public:
   virtual void
   implicitStepSetup( real64 const & time_n,
                      real64 const & dt,
-                     integer const cycleNumber,
                      DomainPartition & domain ) override
   {
     forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
     {
-      solver->implicitStepSetup( time_n, dt, cycleNumber, domain );
+      solver->implicitStepSetup( time_n, dt, domain );
     } );
   }
 
@@ -252,6 +251,8 @@ public:
   virtual real64
   calculateResidualNorm( real64 const & time_n,
                          real64 const & dt,
+                         integer const cycleNumer,
+                         integer const newtonIter,
                          DomainPartition const & domain,
                          DofManager const & dofManager,
                          arrayView1d< real64 const > const & localRhs ) override
@@ -259,10 +260,9 @@ public:
     real64 norm = 0.0;
     forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
     {
-      real64 const singlePhysicsNorm = solver->calculateResidualNorm( time_n, dt, domain, dofManager, localRhs );
+      real64 const singlePhysicsNorm = solver->calculateResidualNorm( time_n, dt, cycleNumer, newtonIter, domain, dofManager, localRhs );
       norm += singlePhysicsNorm * singlePhysicsNorm;
     } );
-
     return sqrt( norm );
   }
 
@@ -440,7 +440,7 @@ protected:
       }
     } );
 
-    implicitStepSetup( time_n, dt, cycleNumber, domain );
+    implicitStepSetup( time_n, dt, domain );
 
     NonlinearSolverParameters & solverParams = getNonlinearSolverParameters();
     integer const maxNumberDtCuts = solverParams.m_maxTimeStepCuts;
@@ -627,6 +627,8 @@ protected:
           real64 const singlePhysicsNorm =
             solver->calculateResidualNorm( time_n,
                                            dt,
+                                           cycleNumber,
+                                           iter,
                                            domain,
                                            solver->getDofManager(),
                                            solver->getSystemRhs().values() );

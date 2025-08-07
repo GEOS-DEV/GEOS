@@ -332,7 +332,6 @@ void ProppantTransport::initializePostInitialConditionsPreSubGroups()
 
 void ProppantTransport::preStepUpdate( real64 const & time,
                                        real64 const & GEOS_UNUSED_PARAM( dt ),
-                                       integer const GEOS_UNUSED_PARAM( cycleNumber ),
                                        DomainPartition & domain )
 {
   GEOS_MARK_FUNCTION;
@@ -422,10 +421,10 @@ void ProppantTransport::postStepUpdate( real64 const & time_n,
 
 void ProppantTransport::implicitStepSetup( real64 const & GEOS_UNUSED_PARAM( time_n ),
                                            real64 const & GEOS_UNUSED_PARAM( dt ),
-                                           integer const GEOS_UNUSED_PARAM( cycleNumber ),
                                            DomainPartition & domain )
 {
   GEOS_MARK_FUNCTION;
+
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel & mesh,
                                                                string_array const & regionNames )
@@ -799,8 +798,10 @@ void ProppantTransport::applyBoundaryConditions( real64 const time_n,
 }
 
 real64
-ProppantTransport::calculateResidualNorm( real64 const & GEOS_UNUSED_PARAM( time_n ),
-                                          real64 const & GEOS_UNUSED_PARAM( dt ),
+ProppantTransport::calculateResidualNorm( real64 const & time_n,
+                                          real64 const & dt,
+                                          integer const cycleNumber,
+                                          integer const newtonIter,
                                           DomainPartition const & domain,
                                           DofManager const & dofManager,
                                           arrayView1d< real64 const > const & localRhs )
@@ -873,6 +874,12 @@ ProppantTransport::calculateResidualNorm( real64 const & GEOS_UNUSED_PARAM( time
                              GEOS_FMT( "        ( R{} ) = ( {:4.2e} )", coupledSolverAttributePrefix(), residualNorm ));
 
   getConvergenceStats().m_residuals[GEOS_FMT( "R{}", coupledSolverAttributePrefix())] = residualNorm;
+
+  if( m_writeStatistics >= 2 )
+  {
+    getConvergenceStats().updateSolverStep( time_n, dt, cycleNumber, newtonIter );
+    writeStatisticsToTable();
+  }
 
   return residualNorm;
 }

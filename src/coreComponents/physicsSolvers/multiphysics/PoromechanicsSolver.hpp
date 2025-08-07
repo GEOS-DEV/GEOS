@@ -218,7 +218,6 @@ public:
 
   virtual void implicitStepSetup( real64 const & time_n,
                                   real64 const & dt,
-                                  integer const cycleNumber,
                                   DomainPartition & domain ) override
   {
     flowSolver()->setKeepVariablesConstantDuringInitStep( m_performStressInitialization );
@@ -228,14 +227,7 @@ public:
       this->updateStabilizationParameters( domain );
     }
 
-    Base::implicitStepSetup( time_n, dt, cycleNumber, domain );
-  }
-
-  virtual void implicitStepComplete( real64 const & time_n,
-                                     real64 const & dt,
-                                     DomainPartition & domain ) override
-  {
-    Base::implicitStepComplete( time_n, dt, domain );
+    Base::implicitStepSetup( time_n, dt, domain );
   }
 
   virtual void setupDofs( DomainPartition const & domain,

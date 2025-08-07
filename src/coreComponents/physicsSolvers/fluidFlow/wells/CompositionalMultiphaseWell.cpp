@@ -1250,6 +1250,8 @@ void CompositionalMultiphaseWell::assembleAccumulationTerms( real64 const & time
 real64
 CompositionalMultiphaseWell::calculateResidualNorm( real64 const & time_n,
                                                     real64 const & dt,
+                                                    integer const cycleNumber,
+                                                    integer const newtonIter,
                                                     DomainPartition const & domain,
                                                     DofManager const & dofManager,
                                                     arrayView1d< real64 const > const & localRhs )
@@ -1373,6 +1375,13 @@ CompositionalMultiphaseWell::calculateResidualNorm( real64 const & time_n,
                                                                 coupledSolverAttributePrefix(), resNorm ));
     getConvergenceStats().m_residuals[GEOS_FMT( "R{}", coupledSolverAttributePrefix()) ] = resNorm;
   }
+
+  if( m_writeStatistics >= 2 )
+  {
+    getConvergenceStats().updateSolverStep( time_n, dt, cycleNumber, newtonIter );
+    writeStatisticsToTable();
+  }
+
   return resNorm;
 }
 
@@ -1968,10 +1977,10 @@ void CompositionalMultiphaseWell::assemblePressureRelations( real64 const & time
 
 void CompositionalMultiphaseWell::implicitStepSetup( real64 const & time_n,
                                                      real64 const & dt,
-                                                     integer const cycleNumber,
                                                      DomainPartition & domain )
 {
-  WellSolverBase::implicitStepSetup( time_n, dt, cycleNumber, domain );
+  WellSolverBase::implicitStepSetup( time_n, dt, domain );
+
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
                                                                 string_array const & regionNames )

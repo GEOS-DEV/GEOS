@@ -463,7 +463,7 @@ real64 SolidMechanicsLagrangianFEM::solverStep( real64 const & time_n,
   {
     int const maxNumResolves = m_maxNumResolves;
     int globallyFractured = 0;
-    implicitStepSetup( time_n, dt, cycleNumber, domain );
+    implicitStepSetup( time_n, dt, domain );
     for( int solveIter=0; solveIter<maxNumResolves+1; ++solveIter )
     {
       GEOS_ERROR_IF( solveIter == maxNumResolves, "Maximum number of resolves achieved" );
@@ -812,7 +812,6 @@ void
 SolidMechanicsLagrangianFEM::
   implicitStepSetup( real64 const & GEOS_UNUSED_PARAM( time_n ),
                      real64 const & dt,
-                     integer const GEOS_UNUSED_PARAM( cycleNumber ),
                      DomainPartition & domain )
 {
 
@@ -1172,8 +1171,10 @@ SolidMechanicsLagrangianFEM::
 
 real64
 SolidMechanicsLagrangianFEM::
-  calculateResidualNorm( real64 const & GEOS_UNUSED_PARAM( time_n ),
-                         real64 const & GEOS_UNUSED_PARAM( dt ),
+  calculateResidualNorm( real64 const & time_n,
+                         real64 const & dt,
+                         integer const cycleNumber,
+                         integer const newtonIter,
                          DomainPartition const & domain,
                          DofManager const & dofManager,
                          arrayView1d< real64 const > const & localRhs )
@@ -1252,6 +1253,12 @@ SolidMechanicsLagrangianFEM::
   GEOS_LOG_LEVEL_RANK_0( logInfo::ResidualNorm,
                          GEOS_FMT( "        ( R{} ) = ( {:4.2e} )", coupledSolverAttributePrefix(), totalResidualNorm ));
   getConvergenceStats().m_residuals[GEOS_FMT( "R{}", coupledSolverAttributePrefix())] = totalResidualNorm;
+
+  if( m_writeStatistics >= 2 )
+  {
+    getConvergenceStats().updateSolverStep( time_n, dt, cycleNumber, newtonIter );
+    writeStatisticsToTable();
+  }
 
   return totalResidualNorm;
 }

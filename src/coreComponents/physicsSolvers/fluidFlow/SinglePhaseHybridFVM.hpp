@@ -100,6 +100,8 @@ public:
   virtual real64
   calculateResidualNorm( real64 const & time_n,
                          real64 const & dt,
+                         integer const cycleNumer,
+                         integer const newtonIter,
                          DomainPartition const & domain,
                          DofManager const & dofManager,
                          arrayView1d< real64 const > const & localRhs ) override;
@@ -117,7 +119,6 @@ public:
   virtual void
   implicitStepSetup( real64 const & time_n,
                      real64 const & dt,
-                     integer const cycleNumber,
                      DomainPartition & domain ) override;
 
   virtual void

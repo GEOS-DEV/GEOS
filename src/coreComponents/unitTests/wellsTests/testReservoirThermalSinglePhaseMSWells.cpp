@@ -514,7 +514,7 @@ protected:
                          solver->getSystemRhs(),
                          solver->getSystemSolution() );
 
-    solver->implicitStepSetup( TIME, DT, 0, domain );
+    solver->implicitStepSetup( TIME, DT, domain );
   }
 
   void TestAssembleCouplingTerms()

@@ -459,8 +459,10 @@ void CompositionalMultiphaseFVM::assembleStabilizedFluxTerms( real64 const dt,
   } );
 }
 
-real64 CompositionalMultiphaseFVM::calculateResidualNorm( real64 const & GEOS_UNUSED_PARAM( time_n ),
-                                                          real64 const & GEOS_UNUSED_PARAM( dt ),
+real64 CompositionalMultiphaseFVM::calculateResidualNorm( real64 const & time_n,
+                                                          real64 const & dt,
+                                                          integer const cycleNumber,
+                                                          integer const newtonIter,
                                                           DomainPartition const & domain,
                                                           DofManager const & dofManager,
                                                           arrayView1d< real64 const > const & localRhs )
