@@ -26,6 +26,7 @@
 #include "constitutive/solid/CoupledSolidBase.hpp"
 #include "physicsSolvers/fluidFlow/kernels/compositional/AccumulationKernel.hpp"
 #include "physicsSolvers/fluidFlow/kernels/compositional/ThermalAccumulationKernel.hpp"
+#include "physicsSolvers/fluidFlow/kernels/compositional/zFormulation/AccumulationZFormulationKernel.hpp"
 
 namespace geos
 {
@@ -131,7 +132,7 @@ public:
   void accumulationAssemblyLaunch( DofManager const & dofManager,
                                    SUBREGION_TYPE const & subRegion,
                                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                   arrayView1d< real64 > const & localRhs );
+                                   arrayView1d< real64 > const & localRhs ) const;
 
   virtual void
   resetStateToBeginningOfStep( DomainPartition & domain ) override;
@@ -598,7 +599,7 @@ template< typename SUBREGION_TYPE >
 void CompositionalMultiphaseBase::accumulationAssemblyLaunch( DofManager const & dofManager,
                                                               SUBREGION_TYPE const & subRegion,
                                                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                                              arrayView1d< real64 > const & localRhs )
+                                                              arrayView1d< real64 > const & localRhs ) const
 {
   constitutive::MultiFluidBase const & fluid =
     getConstitutiveModel< constitutive::MultiFluidBase >( subRegion, subRegion.template getReference< string >( viewKeyStruct::fluidNamesString() ) );
@@ -615,10 +616,11 @@ void CompositionalMultiphaseBase::accumulationAssemblyLaunch( DofManager const &
   if( m_useSimpleAccumulation )
     kernelFlags.set( KernelFlags::SimpleAccumulation );
 
-  if( m_isThermal )
+  if( m_formulationType == CompositionalMultiphaseFormulationType::OverallComposition )
   {
-    thermalCompositionalMultiphaseBaseKernels::
-      AccumulationKernelFactory::
+    // isothermal for now
+    isothermalCompositionalMultiphaseBaseKernels::
+      AccumulationZFormulationKernelFactory::
       createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
                                                  m_numPhases,
                                                  dofManager.rankOffset(),
@@ -632,18 +634,36 @@ void CompositionalMultiphaseBase::accumulationAssemblyLaunch( DofManager const &
   }
   else
   {
-    isothermalCompositionalMultiphaseBaseKernels::
-      AccumulationKernelFactory::
-      createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
-                                                 m_numPhases,
-                                                 dofManager.rankOffset(),
-                                                 kernelFlags,
-                                                 dofKey,
-                                                 subRegion,
-                                                 fluid,
-                                                 solid,
-                                                 localMatrix,
-                                                 localRhs );
+    if( m_isThermal )
+    {
+      thermalCompositionalMultiphaseBaseKernels::
+        AccumulationKernelFactory::
+        createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
+                                                   m_numPhases,
+                                                   dofManager.rankOffset(),
+                                                   kernelFlags,
+                                                   dofKey,
+                                                   subRegion,
+                                                   fluid,
+                                                   solid,
+                                                   localMatrix,
+                                                   localRhs );
+    }
+    else
+    {
+      isothermalCompositionalMultiphaseBaseKernels::
+        AccumulationKernelFactory::
+        createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
+                                                   m_numPhases,
+                                                   dofManager.rankOffset(),
+                                                   kernelFlags,
+                                                   dofKey,
+                                                   subRegion,
+                                                   fluid,
+                                                   solid,
+                                                   localMatrix,
+                                                   localRhs );
+    }
   }
 }
 
