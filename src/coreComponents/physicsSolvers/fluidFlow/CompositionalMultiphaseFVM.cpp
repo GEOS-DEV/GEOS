@@ -210,9 +210,10 @@ void CompositionalMultiphaseFVM::initializePreSubGroups()
   FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
   FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( m_discretizationName );
   GEOS_ERROR_CTX_IF( fluxApprox.upwindingParams().upwindingScheme == UpwindingScheme::HU2PH && m_numPhases != 2,
-                 GEOS_FMT( "{}: upwinding scheme {} only supports 2-phase flow", getDataContext(),
-                           EnumStrings< UpwindingScheme >::toString( UpwindingScheme::HU2PH )),
-                 getDataContext() );
+                     GEOS_FMT( "{}: upwinding scheme {} only supports 2-phase flow",
+                               getDataContext(),
+                               EnumStrings< UpwindingScheme >::toString( UpwindingScheme::HU2PH )),
+                     getDataContext() );
 }
 
 void CompositionalMultiphaseFVM::setupDofs( DomainPartition const & domain,

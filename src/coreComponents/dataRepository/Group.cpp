@@ -238,7 +238,7 @@ void Group::processInputFile( xmlWrapper::xmlNode const & targetNode,
     if( pair.second->processInputFile( targetNode, nodePos ) )
     {
       processedAttributes.insert( pair.first );
-    }     
+    }
   }
 
   for( xmlWrapper::xmlAttribute attribute : targetNode.attributes() )

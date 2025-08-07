@@ -317,8 +317,8 @@ void WaveSolverBase::postInputInitialization()
     counter++;
   } );
   GEOS_THROW_CTX_IF( counter > 1,
-                 getDataContext() << ": One single PML field specification is allowed",
-                 InputError, getDataContext() );
+                     getDataContext() << ": One single PML field specification is allowed",
+                     InputError, getDataContext() );
 
   m_usePML = counter;
 
@@ -441,8 +441,8 @@ localIndex WaveSolverBase::getNumNodesPerElem()
   FiniteElementDiscretization const * const
   feDiscretization = feDiscretizationManager.getGroupPointer< FiniteElementDiscretization >( m_discretizationName );
   GEOS_THROW_CTX_IF( feDiscretization == nullptr,
-                 getDataContext() << ": FE discretization not found: " << m_discretizationName,
-                 InputError, getDataContext() );
+                     getDataContext() << ": FE discretization not found: " << m_discretizationName,
+                     InputError, getDataContext() );
 
   localIndex numNodesPerElem = 0;
   forDiscretizationOnMeshTargets( domain.getMeshBodies(),

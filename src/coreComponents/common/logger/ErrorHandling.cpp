@@ -39,7 +39,7 @@ ErrorLogger g_errorLogger{};
 
 void ErrorLogger::createFile()
 {
-  if( stringutilities::endsWith( m_filename, ".yaml") )
+  if( stringutilities::endsWith( m_filename, ".yaml" ) )
   {
     std::ofstream yamlFile( std::string( m_filename ), std::ios::out );
     if( yamlFile.is_open() )
@@ -183,19 +183,22 @@ void ErrorLogger::streamMultilineYamlAttribute( std::string_view msg, std::ofstr
 void ErrorLogger::flushErrorMsg( ErrorLogger::ErrorMsg & errorMsg )
 {
   std::ofstream yamlFile( std::string( m_filename ), std::ios::app );
-  if( yamlFile.is_open() )
+  if( yamlFile.is_open() && isOutputFileEnabled() )
   {
     // General errors info (type, rank on which the error occured)
-    yamlFile << g_level1Start << "type: " << g_errorLogger.toString( errorMsg.m_type ) << "\n";
+    yamlFile << g_level1Start << "type: " << ErrorLogger::toString( errorMsg.m_type ) << "\n";
     yamlFile << g_level1Next << "rank: ";
     for( auto const & info: errorMsg.m_ranksInfo )
     {
       yamlFile << info;
     }
     yamlFile << "\n";
+
     // Error message
     yamlFile << g_level1Next << "message: >-\n";
     streamMultilineYamlAttribute( errorMsg.m_msg, yamlFile, g_level2Next );
+
+    // context information
     if( !errorMsg.m_contextsInfo.empty() )
     {
       // Sort contextual information by decreasing priority
@@ -210,14 +213,16 @@ void ErrorLogger::flushErrorMsg( ErrorLogger::ErrorMsg & errorMsg )
         yamlFile << g_level3Start << "priority: " << ctxInfo.m_priority << "\n";
         for( auto const & [key, value] : ctxInfo.m_attributes )
         {
-            yamlFile << g_level3Next << ErrorContext::attributeToString( key ) << ": " << value << "\n";
+          yamlFile << g_level3Next << ErrorContext::attributeToString( key ) << ": " << value << "\n";
         }
       }
     }
+
     // Location of the error in the code
     yamlFile << g_level1Next << "sourceLocation:\n";
     yamlFile << g_level2Next << "file: " << errorMsg.m_file << "\n";
     yamlFile << g_level2Next << "line: " << errorMsg.m_line << "\n";
+
     // Information about the stack trace
     yamlFile << g_level1Next << "sourceCallStack:\n";
     if( !errorMsg.isValidStackTrace() )
@@ -231,6 +236,7 @@ void ErrorLogger::flushErrorMsg( ErrorLogger::ErrorMsg & errorMsg )
         yamlFile << g_level3Start << "frame" << i << ": " << errorMsg.m_sourceCallStack[i] << "\n";
       }
     }
+
     yamlFile << "\n";
     yamlFile.flush();
     errorMsg = ErrorMsg();
@@ -238,7 +244,8 @@ void ErrorLogger::flushErrorMsg( ErrorLogger::ErrorMsg & errorMsg )
   }
   else
   {
-    GEOS_LOG_RANK( GEOS_FMT( "Unable to open error file for writing: {}", m_filename ) );
+    GEOS_LOG_RANK( GEOS_FMT( "Unable to open error file for writing.\n- Error file: {}\n- Error file enabled = {}.\n",
+                             m_filename, g_errorLogger.isOutputFileEnabled() ) );
   }
 }
 

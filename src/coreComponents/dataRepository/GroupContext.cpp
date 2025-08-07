@@ -56,7 +56,7 @@ string GroupContext::toString() const
 
 ErrorLogger::ErrorContext GroupContext::getContextInfo() const
 {
-  ErrorLogger::ErrorContext ctxInfo{ 
+  ErrorLogger::ErrorContext ctxInfo{
     { { ErrorLogger::ErrorContext::Attribute::DataPath, toString() } } // m_attributes
   };
   return ctxInfo;

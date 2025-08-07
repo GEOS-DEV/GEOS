@@ -60,16 +60,16 @@ public:
    * object comes from.
    */
   virtual string toString() const = 0;
-  
+
   /**
    * @brief Returns contextual information, including the file name and the line number
-   * @return ErrorLogger::ErrorContext 
+   * @return ErrorLogger::ErrorContext
    */
   virtual ErrorLogger::ErrorContext getContextInfo() const = 0;
 
   /**
-   * @brief Conversion operator to ErrorLogger::ErrorContext 
-   * @return ErrorLogger::ErrorContext 
+   * @brief Conversion operator to ErrorLogger::ErrorContext
+   * @return ErrorLogger::ErrorContext
    */
   explicit operator ErrorLogger::ErrorContext() const {
     return getContextInfo();

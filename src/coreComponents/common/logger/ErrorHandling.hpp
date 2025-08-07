@@ -41,7 +41,7 @@ public:
   {
     Error,
     Warning,
-    Exception, 
+    Exception,
     Undefined
   };
 
@@ -124,12 +124,12 @@ public:
      */
     ErrorMsg( MsgType msgType, std::string_view msgContent, std::string_view msgFile, integer msgLine )
       : m_type( msgType ), m_msg( msgContent ), m_file( msgFile ), m_line( msgLine ) {}
-    
+
     /**
      * @brief Add text to the current error msg
      * @param e the exception containing text to add
      * @param toEnd indicates whether to add the message at the beginning (true) or at the end (false)
-     * default is false 
+     *              default is false
      * @return the reference to the current instance
      */
     ErrorMsg & addToMsg( std::exception const & e, bool toEnd = false );
@@ -138,7 +138,7 @@ public:
      * @brief Add text to the current error msg
      * @param msg the text to add
      * @param toEnd indicates whether to add the message at the beginning (true) or at the end (false)
-     * default is false 
+     *              default is false
      * @return the reference to the current instance
      */
     ErrorMsg & addToMsg( std::string_view msg, bool toEnd = false );
@@ -172,19 +172,20 @@ public:
      */
     ErrorMsg & addCallStackInfo( std::string_view ossStackTrace );
 
-      /**
-       * @return true if the YAML file output is enabled
-       */
-      bool isValidStackTrace() const
-      { return m_isValidStackTrace; }
-
     /**
      * @brief Adds one or more context elements to the error
      * @tparam Args variadic pack of argument types
      * @param args list of DataContexts
+     * @return the reference to the current instance
      */
     template< typename ... Args >
-    void addContextInfo( Args && ... args );
+    ErrorMsg & addContextInfo( Args && ... args );
+
+    /**
+     * @return true if the YAML file output is enabled
+     */
+    bool isValidStackTrace() const
+    { return m_isValidStackTrace; }
 
 private:
     /**
@@ -218,9 +219,9 @@ private:
   { m_filename = filename; }
 
   /**
-   * @brief Gives acces to the error message that is currently being constructed, 
-   * potencially at various application layers  
-   * Use flushErrorMsg() when the message is fully constructed and you want it to be output
+   * @brief Gives acces to the error message that is currently being constructed,
+   *        potencially at various application layers
+   *        Use flushErrorMsg() when the message is fully constructed and you want it to be output
    * @return the reference to the current instance
    */
   ErrorMsg & currentErrorMsg()
@@ -241,7 +242,7 @@ private:
 
   /**
    * @brief Write all the information retrieved about the error/warning message into the YAML file
-   * and reset the errorMsg instance to its initial state
+   *        and reset the errorMsg instance to its initial state
    * @param errorMsg a constant reference to the error
    */
   void flushErrorMsg( ErrorMsg & errorMsg );
@@ -257,7 +258,7 @@ private:
   /**
    * @brief Write the error message in the YAML file regarding indentation and line break
    * @param msg the message to write in the YAML
-   * For the exception type, this message can be added as needed
+   *            For the exception type, this message can be added as needed
    */
   void streamMultilineYamlAttribute( std::string_view msg, std::ofstream & yamlFile,
                                      std::string_view indent );
@@ -266,9 +267,10 @@ private:
 extern ErrorLogger g_errorLogger;
 
 template< typename ... Args >
-void ErrorLogger::ErrorMsg::addContextInfo( Args && ... args )
+ErrorLogger::ErrorMsg & ErrorLogger::ErrorMsg::addContextInfo( Args && ... args )
 {
   ( this->addContextInfoImpl( ErrorContext( args ) ), ... );
+  return *this;
 }
 
 } /* namespace geos */

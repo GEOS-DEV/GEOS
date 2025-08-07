@@ -6,6 +6,18 @@ This file is designed to track changes to the integrated test baselines.
 Any developer who updates the baseline ID in the .integrated_tests.yaml file is expected to create an entry in this file with the pull request number, date, and their justification for rebaselining.
 These notes should be in reverse-chronological order, and use the following time format: (YYYY-MM-DD).
 
+PR #3556 (2025-07-31) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3556-12451-d672aab.tar.gz>
+=====================
+Enable BartonBandis model add new smoke tests. 
+
+PR #3568 (2025-07-31) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3568-12439-ac82cb0.tar.gz>
+=====================
+Baselines updated due to set reference state for temperature and add new smoke tests. 
+
+PR #3740 (2025-07-25) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3740-12360-2177cb4.tar.gz>
+=====================
+Add missing hydraulic aperture update for sequential poromechanics with conforming fractures.
+
 PR #3732 (2025-07-18) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3732-12212-a92d996.tar.gz>
 =====================
 Add `numTimestepsSinceLastDtCut` to restart.
