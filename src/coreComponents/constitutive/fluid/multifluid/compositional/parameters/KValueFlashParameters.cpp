@@ -339,7 +339,7 @@ bool KValueFlashParameters< NUM_PHASE >::validateKValues( MultiFluidBase const *
 
   integer const numTableColumns = numComps+3;
   TableData tableData;
-  std::vector< TableData::CellData > tableRow( numTableColumns );
+  stdVector< TableData::CellData > tableRow( numTableColumns );
   for( integer phaseIndex = 0; phaseIndex < numPhases-1; ++phaseIndex )
   {
     for( integer pressureIndex = 0; pressureIndex < numPressures; ++pressureIndex )
