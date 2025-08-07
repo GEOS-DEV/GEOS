@@ -613,8 +613,6 @@ void SolidMechanicsAugmentedLagrangianContact::implicitStepComplete( real64 cons
 
 real64 SolidMechanicsAugmentedLagrangianContact::calculateResidualNorm( real64 const & time,
                                                                         real64 const & dt,
-                                                                        integer const cycleNumber,
-                                                                        integer const newtonIter,
                                                                         DomainPartition const & domain,
                                                                         DofManager const & dofManager,
                                                                         arrayView1d< real64 const > const & localRhs )
@@ -622,7 +620,7 @@ real64 SolidMechanicsAugmentedLagrangianContact::calculateResidualNorm( real64 c
 
   GEOS_MARK_FUNCTION;
 
-  real64 const solidResidualNorm = SolidMechanicsLagrangianFEM::calculateResidualNorm( time, dt, cycleNumber, newtonIter, domain, dofManager, localRhs );
+  real64 const solidResidualNorm = SolidMechanicsLagrangianFEM::calculateResidualNorm( time, dt, domain, dofManager, localRhs );
 
   string const bubbleDofKey = dofManager.getKey( contact::totalBubbleDisplacement::key() );
 
@@ -707,12 +705,6 @@ real64 SolidMechanicsAugmentedLagrangianContact::calculateResidualNorm( real64 c
   real64 totalResidualNorm = sqrt( solidResidualNorm * solidResidualNorm + bubbleResidualNorm * bubbleResidualNorm );
 
   getConvergenceStats().m_residuals["RBubbleDisp"] = bubbleResidualNorm;
-
-  if( m_writeStatistics >= 2 )
-  {
-    getConvergenceStats().updateSolverStep( time, dt, cycleNumber, newtonIter );
-    writeStatisticsToTable();
-  }
 
   return totalResidualNorm;
 }

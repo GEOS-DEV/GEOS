@@ -93,10 +93,8 @@ public:
                                         CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                         arrayView1d< real64 > const & localRhs ) override;
 
-  virtual real64 calculateResidualNorm( real64 const & time_n,
-                                        real64 const & dt,
-                                        integer const cycleNumber,
-                                        integer const newtonIter,
+  virtual real64 calculateResidualNorm( real64 const & GEOS_UNUSED_PARAM( time_n ),
+                                        real64 const & GEOS_UNUSED_PARAM( dt ),
                                         DomainPartition const & domain,
                                         DofManager const & dofManager,
                                         arrayView1d< real64 const > const & localRhs ) override;

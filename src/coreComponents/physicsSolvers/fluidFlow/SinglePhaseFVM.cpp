@@ -116,10 +116,8 @@ void SinglePhaseFVM< BASE >::setupSystem( DomainPartition & domain,
 }
 
 template< typename BASE >
-real64 SinglePhaseFVM< BASE >::calculateResidualNorm( real64 const & time_n,
-                                                      real64 const & dt,
-                                                      integer const cycleNumber,
-                                                      integer const newtonIter,
+real64 SinglePhaseFVM< BASE >::calculateResidualNorm( real64 const & GEOS_UNUSED_PARAM( time_n ),
+                                                      real64 const & GEOS_UNUSED_PARAM( dt ),
                                                       DomainPartition const & domain,
                                                       DofManager const & dofManager,
                                                       arrayView1d< real64 const > const & localRhs )
@@ -236,13 +234,6 @@ real64 SinglePhaseFVM< BASE >::calculateResidualNorm( real64 const & time_n,
                                GEOS_FMT( "        ( R{} ) = ( {:4.2e} )", FlowSolverBase::coupledSolverAttributePrefix(), residualNorm ));
     BASE::getConvergenceStats().m_residuals[GEOS_FMT( "R{}", FlowSolverBase::coupledSolverAttributePrefix())] = residualNorm;
   }
-
-  if( m_writeStatistics >= 2 )
-  {
-    BASE::getConvergenceStats().updateSolverStep( time_n, dt, cycleNumber, newtonIter );
-    BASE::writeStatisticsToTable();
-  }
-
   return residualNorm;
 }
 

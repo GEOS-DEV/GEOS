@@ -50,8 +50,6 @@ public:
   // have to use this->member etc.
   using BASE::m_numDofPerCell;
   using BASE::m_isThermal;
-  using BASE::m_writeStatistics;
-  using BASE::writeStatisticsToTable;
 
   /**
    * @brief main constructor for Group Objects
@@ -137,8 +135,6 @@ public:
   virtual real64
   calculateResidualNorm( real64 const & time_n,
                          real64 const & dt,
-                         integer const cycleNumer,
-                         integer const newtonIter,
                          DomainPartition const & domain,
                          DofManager const & dofManager,
                          arrayView1d< real64 const > const & localRhs ) override;
