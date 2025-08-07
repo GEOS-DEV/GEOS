@@ -7,9 +7,9 @@ Assessment of CO2 Storage residual and dissolution trapping mechanism
 
 **Context**
 
-We consider the benchmark proposed in `(Nordbotten et al.,2024) <https://norceresearch.brage.unit.no/norceresearch-xmlui/bitstream/handle/11250/3137806/spe-218015-pa.pdf?sequence=1>`__
+We consider the benchmark proposed in `(Nordbotten et al., 2024) <https://onepetro.org/SJ/article-pdf/29/05/2507/4090996/spe-218015-pa.pdf/1>`__
 to showcase the effect of the convective mixing in addition to the usually considered residual trapping in a multi-facies resevoir.
-Also, using a thermal formulation, the effect of injecting cold CO2 can be observed.
+Also, by using a thermal formulation, the effect of injecting cold CO2 can be observed.
 
 This example can serve as a guideline to set-up the input XML deck to reproduce the published results on `SPE11 CSP <https://github.com/Simulation-Benchmarks/11thSPE-CSP>`__.
 The input decks for other simulators can be found at `decks <https://github.com/Simulation-Benchmarks/11thSPE-CSP/tree/main/input_decks>`__.
@@ -22,7 +22,7 @@ The input decks for other simulators can be found at `decks <https://github.com/
 Brief case description
 ------------------------------------------------------------------------
 
-As the detailed description is available in `(Nordbotten et al.,2024) <https://norceresearch.brage.unit.no/norceresearch-xmlui/bitstream/handle/11250/3137806/spe-218015-pa.pdf?sequence=1>`__,
+As the detailed description is available in `(Nordbotten et al.,2024) <https://onepetro.org/SJ/article-pdf/29/05/2507/4090996/spe-218015-pa.pdf/1>`__,
 we will only briefly review the data set that will be used to in the following sections and let the interested reader read
 the full version.
 
@@ -40,8 +40,8 @@ The reservoir is composed of 7 facies with different properties:
     Schematic representation of SPE11B case and its reporting boxes. Image extracted from `arxiv version <https://arxiv.org/abs/2507.15861>`__
 
 Here blue, red and orange boxes are representing the prescribed reporting boxes, respectively denoted box A, B and C from the description.
-They are places for observing first anticline accumulation, top anticlines accumulation through heterogeneous structure's dripping, and
-convective mixing finger structures.
+These locations are used to observe the initial accumulation in the first anticline, the accumulation at the top of anticlines due to fluid
+migration through heterogeneous structures, and the development of convective mixing finger patterns.
 
 ------------------------------------------------------------------------
 Input base
@@ -53,7 +53,7 @@ This benchmark test is based on the XML file located below:
 
   inputFiles/compositionalMultiphaseFlow/benchmarks/SPE11/b/spe11b_vti_source_00840x00120.xml
 
-it includes
+which includes
 
 .. code-block:: console
 
@@ -62,7 +62,7 @@ it includes
 for all parameters not related to the mesh discretization. The full simulation involves 1000 years of initial thermal equilibration
 required to let the system stabilize under the geothermal gradient before starting the injection schedule.
 
-The wells schedule consists of 50 years of injection for bottom injector and 25 years with a 25 year delayed start for the top injector.
+The well schedule consists of 50 years of injection for the bottom injector and 25 years with a 25 year delayed start for the top injector.
 It is then followed by a 950 years of migration, dissolution and convection.
 
 As we can see in the snippet below, `SourceFlux` was choosen to model the injection (rather than wellbores). It goes with a
@@ -90,12 +90,17 @@ as it plays an important role in the overall trapping.
 
 .. plot:: ../inputFiles/compositionalMultiphaseFlow/benchmarks/SPE11/b/include/plotAllKrPc.py
 
-The tables import in the simulation deck is done as the following:
+The tables import in the simulation deck is done as the following showing the relative permeability and capillary pressure tables for facies \#5:
 
 .. literalinclude:: ../../../../../../../inputFiles/compositionalMultiphaseFlow/benchmarks/SPE11/b/include/kr.xml
     :language: xml
-    :start-after: <!-- SPHINX_KR_TABLE -->
-    :end-before: <!-- SPHINX_KR_TABLE_END -->
+    :start-after: <!-- SPHINX_KR_TABLE_FACIES_5_START -->
+    :end-before: <!-- SPHINX_KR_TABLE_FACIES_5_END -->
+
+.. literalinclude:: ../../../../../../../inputFiles/compositionalMultiphaseFlow/benchmarks/SPE11/b/include/kr.xml
+    :language: xml
+    :start-after: <!-- SPHINX_PC_TABLE_FACIES_5_START -->
+    :end-before: <!-- SPHINX_PC_TABLE_FACIES_5_END -->
 
 Then, relative permeabilities and capillary pressure are defined under the `Constitutive` tag. For example, the relative permeability for the facies \#1 
 is defined as
@@ -224,7 +229,7 @@ The boundary conditions for the domain are imposed as follows. The top and botto
     :end-before: <!-- SPHINX_TOP_BOTTOM_END -->
 
 *Fictive* aquifers are used as buffers to damp the pressure buildup
-(see `(Nordbotten et al.,2024) <https://norceresearch.brage.unit.no/norceresearch-xmlui/bitstream/handle/11250/3137806/spe-218015-pa.pdf?sequence=1>`__, for details about these buffers definition).
+(see `(Nordbotten et al.,2024) <https://onepetro.org/SJ/article-pdf/29/05/2507/4090996/spe-218015-pa.pdf/1>`__, for details about these buffers definition).
 They are set similar to the sources definition but instead of using the boxes for cell sets,
 we use tags created during the construction of the mesh, namely ``12_hexahedra`` to ``15_hexahedra``. It is then easy to
 rescale the volumes in those regions:

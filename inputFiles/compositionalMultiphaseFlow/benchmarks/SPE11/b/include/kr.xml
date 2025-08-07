@@ -1,7 +1,6 @@
 <?xml version="1.0" ?>
 <Problem>
   <Functions>
-    <!-- SPHINX_KR_TABLE -->
     <TableFunction
       name="waterRelativePermeabilityTable1"
       coordinateFiles="{ ../tables/waterSaturation_spe11b_1.txt }"
@@ -34,6 +33,7 @@
       name="gasRelativePermeabilityTable4"
       coordinateFiles="{ ../tables/gasSaturation_spe11b_4.txt }"
       voxelFile="../tables/gasRelperm_spe11b_4.txt"/>
+    <!-- SPHINX_KR_TABLE_FACIES_5_START -->
     <TableFunction
       name="waterRelativePermeabilityTable5"
       coordinateFiles="{ ../tables/waterSaturation_spe11b_5.txt }"
@@ -42,6 +42,7 @@
       name="gasRelativePermeabilityTable5"
       coordinateFiles="{ ../tables/gasSaturation_spe11b_5.txt }"
       voxelFile="../tables/gasRelperm_spe11b_5.txt"/>
+    <!-- SPHINX_KR_TABLE_FACIES_5_END -->
     <TableFunction
       name="waterRelativePermeabilityTable6"
       coordinateFiles="{ ../tables/waterSaturation_spe11b_6.txt }"
@@ -75,10 +76,12 @@
       name="cappresTable4"
       coordinateFiles="{ ../tables/waterPCSaturation_spe11b_4.txt}"
       voxelFile="../tables/waterCapPres_spe11b_4.txt"/>
+    <!-- SPHINX_PC_TABLE_FACIES_5_START -->
     <TableFunction
       name="cappresTable5"
       coordinateFiles="{ ../tables/waterPCSaturation_spe11b_5.txt}"
       voxelFile="../tables/waterCapPres_spe11b_5.txt"/>
+    <!-- SPHINX_PC_TABLE_FACIES_5_END -->
     <TableFunction
       name="cappresTable6"
       coordinateFiles="{ ../tables/waterPCSaturation_spe11b_6.txt}"
@@ -87,6 +90,5 @@
       name="cappresTable7"
       coordinateFiles="{ ../tables/waterPCSaturation_spe11b_7.txt}"
       voxelFile="../tables/waterCapPres_spe11b_7.txt"/>    
-   <!-- SPHINX_KR_TABLE_END -->
   </Functions>
 </Problem>

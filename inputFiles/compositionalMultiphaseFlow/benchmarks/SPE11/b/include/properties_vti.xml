@@ -438,7 +438,7 @@
       fieldName="elementVolume"
       functionName="bufferVolume"
       scale="1.0" />
-  </FieldSpecifications>
  <!-- SPHINX_BUFFER_FIELDS_END -->
+  </FieldSpecifications>
 
 </Problem>    
