@@ -57,7 +57,6 @@ public:
   TableErrorListing & getErrorsList() const
   { return *m_errors; }
 
-
 protected:
 
   /// Layout for a table

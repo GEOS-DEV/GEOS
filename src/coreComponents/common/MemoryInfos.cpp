@@ -194,10 +194,10 @@ void MemoryLogging::memoryStatsReport() const
     std::size_t const sumMark = MpiWrapper::sum( mark );
     std::size_t const avgMark = sumMark / nbRank;
 
-    float minPercentage;
-    float maxPercentage;
-    float avgPercentage;
-    float sumPercentage;
+    real32 minPercentage;
+    real32 maxPercentage;
+    real32 avgPercentage;
+    real32 sumPercentage;
     if( memInfos.getTotalMemory() == 0 )
     {
       // TODO: after PR 3614, this warning should rather be in table error list.
@@ -205,11 +205,11 @@ void MemoryLogging::memoryStatsReport() const
     }
     else
     {
-      float const memDivider = 1.0f / float( memInfos.getTotalMemory() );
-      minPercentage = 100.0f * ( float( minMark ) * memDivider );
-      maxPercentage = 100.0f * ( float( maxMark ) * memDivider );
-      avgPercentage = 100.0f * ( float( avgMark ) * memDivider );
-      sumPercentage = 100.0f * ( float( sumMark ) * memDivider );
+      real32 const memDivider = 1.0 / real32( memInfos.getTotalMemory() );
+      minPercentage = 100.0 * ( real32( minMark ) * memDivider );
+      maxPercentage = 100.0 * ( real32( maxMark ) * memDivider );
+      avgPercentage = 100.0 * ( real32( avgMark ) * memDivider );
+      sumPercentage = 100.0 * ( real32( sumMark ) * memDivider );
     }
 
     if( m_umpireStatsLogReport )
