@@ -91,7 +91,7 @@ public:
    */
   arrayView1d< globalIndex > getNodeLocalToGlobal();
 
-  std::map< string, SortedArray< localIndex > > const & getNodeSets() const override;
+  stdMap< string, SortedArray< localIndex > > const & getNodeSets() const override;
 
   /**
    * @brief Returns a mutable reference to the node sets.
@@ -101,7 +101,7 @@ public:
    * While the values are sorted arrays which sizes are meant to be managed by the client code.
    * This member function is meant to be used like a setter.
    */
-  std::map< string, SortedArray< localIndex > > & getNodeSets();
+  stdMap< string, SortedArray< localIndex > > & getNodeSets();
 
   /**
    * @brief Defines the number of nodes and resizes some underlying arrays appropriately.
@@ -158,7 +158,7 @@ public:
 
   Group & getCellBlocks() override;
 
-  std::map< integer, std::set< string > > const & getRegionAttributesCellBlocks() const override
+  stdMap< integer, std::set< string > > const & getRegionAttributesCellBlocks() const override
   { return m_regionAttributesCellBlocks; }
 
   Group const & getFaceBlocks() const override;
@@ -281,9 +281,9 @@ private:
 
   array1d< globalIndex > m_nodeLocalToGlobal;
 
-  std::map< string, SortedArray< localIndex > > m_nodeSets;
+  stdMap< string, SortedArray< localIndex > > m_nodeSets;
 
-  std::map< integer, std::set< string > > m_regionAttributesCellBlocks;
+  stdMap< integer, std::set< string > > m_regionAttributesCellBlocks;
 
   real64 m_globalLength;
 

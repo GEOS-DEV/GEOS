@@ -816,12 +816,12 @@ arrayView1d< globalIndex > CellBlockManager::getNodeLocalToGlobal()
   return m_nodeLocalToGlobal.toView();
 }
 
-std::map< string, SortedArray< localIndex > > const & CellBlockManager::getNodeSets() const
+stdMap< string, SortedArray< localIndex > > const & CellBlockManager::getNodeSets() const
 {
   return m_nodeSets;
 }
 
-std::map< string, SortedArray< localIndex > > & CellBlockManager::getNodeSets()
+stdMap< string, SortedArray< localIndex > > & CellBlockManager::getNodeSets()
 {
   return m_nodeSets;
 }

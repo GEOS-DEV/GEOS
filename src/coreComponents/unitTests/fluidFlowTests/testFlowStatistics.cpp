@@ -39,7 +39,7 @@ CommandLineOptions g_commandLineOptions;
 struct TestInputs
 {
   string xmlInput;
-  std::map< string, string > tableFiles;
+  stdMap< string, string > tableFiles;
 
   string sourceFluxName;
   string sinkFluxName;
@@ -149,7 +149,7 @@ class FlowStatisticsTest : public ::testing::Test
 {
 public:
 
-  void writeTableFiles( std::map< string, string > const & files )
+  void writeTableFiles( stdMap< string, string > const & files )
   {
     for( auto const & [fileName, content] : files )
     {

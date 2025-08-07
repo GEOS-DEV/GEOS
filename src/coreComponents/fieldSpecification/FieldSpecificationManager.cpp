@@ -68,7 +68,7 @@ void FieldSpecificationManager::expandObjectCatalogs()
 void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) const
 {
   string invalidRegion = "";
-  std::map< std::string, std::vector< string > > allPresentFieldsName;
+  stdMap< std::string, std::vector< string > > allPresentFieldsName;
   std::set< string > allPresentSets;
 
   mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion const & subRegion )

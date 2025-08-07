@@ -82,7 +82,7 @@ namespace
 
 string getMLCycleType( LinearSolverParameters::AMG::CycleType const & value )
 {
-  static std::map< LinearSolverParameters::AMG::CycleType, string > const optionMap =
+  static stdMap< LinearSolverParameters::AMG::CycleType, string > const optionMap =
   {
     { LinearSolverParameters::AMG::CycleType::V, "MGV" },
     { LinearSolverParameters::AMG::CycleType::W, "MGW" },
@@ -94,7 +94,7 @@ string getMLCycleType( LinearSolverParameters::AMG::CycleType const & value )
 
 string getMLSmootherType( LinearSolverParameters::AMG::SmootherType const & value )
 {
-  static std::map< LinearSolverParameters::AMG::SmootherType, string > const optionMap =
+  static stdMap< LinearSolverParameters::AMG::SmootherType, string > const optionMap =
   {
     { LinearSolverParameters::AMG::SmootherType::default_, "Chebyshev" },
     { LinearSolverParameters::AMG::SmootherType::jacobi, "Jacobi" },
@@ -115,7 +115,7 @@ string getMLSmootherType( LinearSolverParameters::AMG::SmootherType const & valu
 
 string getMLCoarseType( LinearSolverParameters::AMG::CoarseType const & value )
 {
-  static std::map< LinearSolverParameters::AMG::CoarseType, string > const optionMap =
+  static stdMap< LinearSolverParameters::AMG::CoarseType, string > const optionMap =
   {
     { LinearSolverParameters::AMG::CoarseType::default_, "Amesos-KLU" },
     { LinearSolverParameters::AMG::CoarseType::jacobi, "Jacobi" },
@@ -134,7 +134,7 @@ string getMLCoarseType( LinearSolverParameters::AMG::CoarseType const & value )
 
 string getMLPreOrPostSmoothingType( LinearSolverParameters::AMG::PreOrPost const & value )
 {
-  static std::map< LinearSolverParameters::AMG::PreOrPost, string > const optionMap =
+  static stdMap< LinearSolverParameters::AMG::PreOrPost, string > const optionMap =
   {
     { LinearSolverParameters::AMG::PreOrPost::pre, "pre" },
     { LinearSolverParameters::AMG::PreOrPost::post, "post" },
@@ -184,7 +184,7 @@ createMLOperator( LinearSolverParameters const & params,
 
 Ifpack::EPrecType getIfpackPrecondType( LinearSolverParameters::PreconditionerType const & type )
 {
-  static std::map< LinearSolverParameters::PreconditionerType, Ifpack::EPrecType > const typeMap =
+  static stdMap< LinearSolverParameters::PreconditionerType, Ifpack::EPrecType > const typeMap =
   {
     { LinearSolverParameters::PreconditionerType::iluk, Ifpack::ILU },
     { LinearSolverParameters::PreconditionerType::ilut, Ifpack::ILUT },
@@ -203,7 +203,7 @@ Ifpack::EPrecType getIfpackPrecondType( LinearSolverParameters::PreconditionerTy
 }
 string getIfpackRelaxationType( LinearSolverParameters::PreconditionerType const & type )
 {
-  static std::map< LinearSolverParameters::PreconditionerType, string > const typeMap =
+  static stdMap< LinearSolverParameters::PreconditionerType, string > const typeMap =
   {
     { LinearSolverParameters::PreconditionerType::jacobi, "Jacobi" },
     { LinearSolverParameters::PreconditionerType::fgs, "Gauss-Seidel" },

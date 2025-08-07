@@ -145,7 +145,7 @@ namespace internal
 /**
  * Wrapper for the underlying map that allows toggling between bounds-checked access
  * (using at()) and unchecked access (using operator[]).
- * @tparam MapType The type of the underlying map (e.g., std::map).
+ * @tparam MapType The type of the underlying map (e.g., stdMap).
  * @tparam Allocator Allocator type for the vector.
  * @tparam USE_STD_CONTAINER_BOUNDS_CHECKING A boolean flag to enable or disable bounds checking.
  */
@@ -154,7 +154,7 @@ template< typename MapType,
 class StdMapWrapper : public MapType
 {
 public:
-  /// Type alias for the base class (i.e., std::map)
+  /// Type alias for the base class (i.e., stdMap)
   using Base = MapType;
   using KeyType = typename Base::key_type;
   using MappedType = typename Base::mapped_type;
@@ -205,9 +205,9 @@ public:
 } //namespace internal
 
 /**
- * type alias for std::map
- * @tparam Key The unique std::map key.
- * @tparam T Type of elements in the std::map.
+ * type alias for stdMap
+ * @tparam Key The unique stdMap key.
+ * @tparam T Type of elements in the stdMap.
  * @tparam Compare The comparison function used to order the keys. Defaults to std::less<Key>.
  * @tparam Allocator Allocator type for the map. Defaults to std::allocator<std::pair<const Key, T>>
  */

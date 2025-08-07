@@ -89,9 +89,9 @@ void ExternalMeshGeneratorBase::postInputInitialization()
 
   // Building the fields mapping from the two separated input/output vectors.
   auto const buildMapping = [&]( string_array const & from,
-                                 string_array const & to ) -> std::map< string, string >
+                                 string_array const & to ) -> stdMap< string, string >
   {
-    std::map< string, string > mapping;
+    stdMap< string, string > mapping;
     for( size_t i = 0; i < from.size(); i++ )
     {
       mapping[from[i]] = to[i];
