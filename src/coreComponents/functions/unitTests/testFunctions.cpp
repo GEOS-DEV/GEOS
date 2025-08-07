@@ -21,6 +21,8 @@
 #include "functions/TableFunction.hpp"
 #include "functions/MultivariableTableFunction.hpp"
 #include "functions/MultivariableTableFunctionKernels.hpp"
+#include "functions/MultivariableNonuniformTableFunction.hpp"
+#include "functions/MultivariableNonuniformTableFunctionKernels.hpp"
 //#include "mainInterface/GeosxState.hpp"
 
 #ifdef GEOS_USE_MATHPRESSO
@@ -692,6 +694,74 @@ void testMutivariableFunction( MultivariableTableFunction & function,
   } );
 }
 
+template< integer NUM_DIMS, integer NUM_OPS >
+void testNonuniformMultivariableFunction( MultivariableNonuniformTableFunction & function,
+                                          arrayView1d< real64 const > const & inputs,
+                                          arrayView1d< real64 const > const & expectedValues,
+                                          arrayView1d< real64 const > const & expectedDerivatives,
+                                          real64 valuesTolerance = 1e-10,
+                                          real64 derivativesTolerance = 1e-10 )
+{
+  localIndex const numElems = inputs.size() / NUM_DIMS;
+
+  ASSERT_EQ( numElems * NUM_DIMS, inputs.size());
+  ASSERT_EQ( numElems * NUM_OPS, expectedValues.size());
+
+  array1d< real64 > evaluatedValues( numElems * NUM_OPS );
+  array2d< real64 > evaluatedDerivatives( numElems * NUM_OPS, NUM_DIMS );
+  arrayView1d< real64 > evaluatedValuesView = evaluatedValues.toView();
+  arrayView2d< real64 > evaluatedDerivativesView = evaluatedDerivatives.toView();
+
+
+  MultivariableNonuniformTableFunctionStaticKernel< NUM_DIMS, NUM_OPS > kernel( function.getAxisCoordinates(),
+                                                                                function.getAxisPoints(),
+                                                                                function.getAxisSteps(),
+                                                                                function.getAxisStepInvs(),
+                                                                                function.getAxisHypercubeMults(),
+                                                                                function.getHypercubeData()
+                                                                                );
+  // Test values evaluation first
+  forAll< geos::parallelDevicePolicy< > >( numElems, [=] GEOS_HOST_DEVICE
+                                             ( localIndex const elemIndex )
+  {
+    kernel.compute( &inputs[elemIndex * NUM_DIMS], &evaluatedValuesView[elemIndex * NUM_OPS] );
+  } );
+
+  forAll< serialPolicy >( numElems * NUM_OPS, [=] ( localIndex const elemOpIndex )
+  {
+    ASSERT_NEAR( expectedValues[elemOpIndex], evaluatedValuesView[elemOpIndex], valuesTolerance );
+  } );
+
+  // And now - both values and derivatives
+  forAll< geos::parallelDevicePolicy< > >( numElems, [=] GEOS_HOST_DEVICE
+                                             ( localIndex const elemIndex )
+  {
+    // use local 2D array for the kernel
+    real64 derivatives[NUM_OPS][NUM_DIMS];
+
+    kernel.compute( &inputs[elemIndex * NUM_DIMS], &evaluatedValuesView[elemIndex * NUM_OPS], derivatives );
+
+    // now copy results to the view
+    for( auto i = 0; i < NUM_OPS; i++ )
+      for( auto j = 0; j < NUM_DIMS; j++ )
+        evaluatedDerivativesView[elemIndex * NUM_OPS + i][j] = derivatives[i][j];
+  } );
+
+  // Perform checks.
+  forAll< serialPolicy >( numElems * NUM_OPS, [=] ( localIndex const elemOpIndex )
+  {
+    ASSERT_NEAR( expectedValues[elemOpIndex], evaluatedValuesView[elemOpIndex], valuesTolerance );
+  } );
+
+  // Perform checks.
+  forAll< serialPolicy >( numElems * NUM_OPS, [=] ( localIndex const elemOpIndex )
+  {
+    for( auto j = 0; j < NUM_DIMS; j++ )
+      ASSERT_NEAR( expectedDerivatives[elemOpIndex * NUM_DIMS + j], evaluatedDerivativesView[elemOpIndex][j], derivativesTolerance );
+  } );
+}
+
+
 TEST( FunctionTests, 1DMultivariableTable )
 {
   FunctionManager * functionManager = &FunctionManager::getInstance();
@@ -722,6 +792,19 @@ TEST( FunctionTests, 1DMultivariableTable )
   table_f.setTableValues( values );
   table_f.initializeFunction();
 
+  MultivariableNonuniformTableFunction & table_nuif = dynamicCast< MultivariableNonuniformTableFunction & >( *functionManager->createChild( "MultivariableNonuniformTableFunction", "table_nuif" ) );
+  array1d< int > axisNumCoordinates( nDims );
+  axisNumCoordinates[0]=100;
+  array2d< real64 > axisCoordinates( nDims, 100 );
+
+  real64 dx = (axisMaxs[0] - axisMins[0]) / (  axisPoints[0] - 1);
+  for( integer i=0; i<100; i++ )
+    axisCoordinates[0][i] = (i+1)*dx;
+
+  table_nuif.setTableCoordinates( nDims, nOps, axisNumCoordinates, axisCoordinates, axisPoints );
+  table_nuif.setTableValues( values );
+  table_nuif.initializeFunction();
+
 
   // Setup testing coordinates, expected values
   array1d< real64 > testCoordinates( nTest );
@@ -740,6 +823,7 @@ TEST( FunctionTests, 1DMultivariableTable )
 
 
   testMutivariableFunction< nDims, nOps >( table_f, testCoordinates, testExpectedValues, testExpectedDerivatives );
+  testNonuniformMultivariableFunction< nDims, nOps >( table_nuif, testCoordinates, testExpectedValues, testExpectedDerivatives );
 }
 
 real64 operator1 ( real64 const x, real64 const y ) { return 2 * x + 3 * y * y; }
