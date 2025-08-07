@@ -5854,8 +5854,18 @@ Information output from lower logLevels is added with the desired log level
 * SoaveRedlichKwong
 * SoreideWhitson-->
 		<xsd:attribute name="equationsOfState" type="string_array" use="required" />
+		<!--flashMaxIterations => The maximum number of iterations used during the flash-->
+		<xsd:attribute name="flashMaxIterations" type="integer" default="300" />
+		<!--flashTolerance => The tolerance to use to determine convergece of the flash-->
+		<xsd:attribute name="flashTolerance" type="real64" default="1e-08" />
 		<!--phaseNames => List of fluid phases-->
 		<xsd:attribute name="phaseNames" type="groupNameRef_array" use="required" />
+		<!--stabilityMaxIterations => The maximum number of successive substitution iterations used during the stability test. A zero or negative value skips the stability test-->
+		<xsd:attribute name="stabilityMaxIterations" type="integer" default="300" />
+		<!--stabilityThreshold => The value of the tangent plane distance below which a mixture is determined to be unstable-->
+		<xsd:attribute name="stabilityThreshold" type="real64" default="-1e-08" />
+		<!--stabilityTolerance => The tolerance to use to determine convergence to a stationary point in the stability test-->
+		<xsd:attribute name="stabilityTolerance" type="real64" default="1e-08" />
 		<!--viscosityMixingRule => Viscosity mixing rule to be used for Lohrenz-Bray-Clark computation. Valid options:
 * HerningZipperer
 * Wilke
@@ -5906,8 +5916,18 @@ Information output from lower logLevels is added with the desired log level
 * SoaveRedlichKwong
 * SoreideWhitson-->
 		<xsd:attribute name="equationsOfState" type="string_array" use="required" />
+		<!--flashMaxIterations => The maximum number of iterations used during the flash-->
+		<xsd:attribute name="flashMaxIterations" type="integer" default="300" />
+		<!--flashTolerance => The tolerance to use to determine convergece of the flash-->
+		<xsd:attribute name="flashTolerance" type="real64" default="1e-08" />
 		<!--phaseNames => List of fluid phases-->
 		<xsd:attribute name="phaseNames" type="groupNameRef_array" use="required" />
+		<!--stabilityMaxIterations => The maximum number of successive substitution iterations used during the stability test. A zero or negative value skips the stability test-->
+		<xsd:attribute name="stabilityMaxIterations" type="integer" default="300" />
+		<!--stabilityThreshold => The value of the tangent plane distance below which a mixture is determined to be unstable-->
+		<xsd:attribute name="stabilityThreshold" type="real64" default="-1e-08" />
+		<!--stabilityTolerance => The tolerance to use to determine convergence to a stationary point in the stability test-->
+		<xsd:attribute name="stabilityTolerance" type="real64" default="1e-08" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -5935,8 +5955,18 @@ Information output from lower logLevels is added with the desired log level
 * SoaveRedlichKwong
 * SoreideWhitson-->
 		<xsd:attribute name="equationsOfState" type="string_array" use="required" />
+		<!--flashMaxIterations => The maximum number of iterations used during the flash-->
+		<xsd:attribute name="flashMaxIterations" type="integer" default="300" />
+		<!--flashTolerance => The tolerance to use to determine convergece of the flash-->
+		<xsd:attribute name="flashTolerance" type="real64" default="1e-08" />
 		<!--phaseNames => List of fluid phases-->
 		<xsd:attribute name="phaseNames" type="groupNameRef_array" use="required" />
+		<!--stabilityMaxIterations => The maximum number of successive substitution iterations used during the stability test. A zero or negative value skips the stability test-->
+		<xsd:attribute name="stabilityMaxIterations" type="integer" default="300" />
+		<!--stabilityThreshold => The value of the tangent plane distance below which a mixture is determined to be unstable-->
+		<xsd:attribute name="stabilityThreshold" type="real64" default="-1e-08" />
+		<!--stabilityTolerance => The tolerance to use to determine convergence to a stationary point in the stability test-->
+		<xsd:attribute name="stabilityTolerance" type="real64" default="1e-08" />
 		<!--viscosityMixingRule => Viscosity mixing rule to be used for Lohrenz-Bray-Clark computation. Valid options:
 * HerningZipperer
 * Wilke
@@ -5969,6 +5999,10 @@ Information output from lower logLevels is added with the desired log level
 * SoaveRedlichKwong
 * SoreideWhitson-->
 		<xsd:attribute name="equationsOfState" type="string_array" use="required" />
+		<!--flashMaxIterations => The maximum number of iterations used during the flash-->
+		<xsd:attribute name="flashMaxIterations" type="integer" default="300" />
+		<!--flashTolerance => The tolerance to use to determine convergece of the flash-->
+		<xsd:attribute name="flashTolerance" type="real64" default="1e-08" />
 		<!--phaseNames => List of fluid phases-->
 		<xsd:attribute name="phaseNames" type="groupNameRef_array" use="required" />
 		<!--pressureCoordinates => List of pressure values for interpolation of function values.-->
@@ -5977,6 +6011,12 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="salinity" type="real64" default="0" />
 		<!--saltMolarWeight => The molar weight for the salt component-->
 		<xsd:attribute name="saltMolarWeight" type="real64" default="0.05844" />
+		<!--stabilityMaxIterations => The maximum number of successive substitution iterations used during the stability test. A zero or negative value skips the stability test-->
+		<xsd:attribute name="stabilityMaxIterations" type="integer" default="300" />
+		<!--stabilityThreshold => The value of the tangent plane distance below which a mixture is determined to be unstable-->
+		<xsd:attribute name="stabilityThreshold" type="real64" default="-1e-08" />
+		<!--stabilityTolerance => The tolerance to use to determine convergence to a stationary point in the stability test-->
+		<xsd:attribute name="stabilityTolerance" type="real64" default="1e-08" />
 		<!--temperatureCoordinates => List of temperature values for interpolation of function values.-->
 		<xsd:attribute name="temperatureCoordinates" type="real64_array" default="{0}" />
 		<!--viscosityMixingRule => Viscosity mixing rule to be used for Lohrenz-Bray-Clark computation. Valid options:
