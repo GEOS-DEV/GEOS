@@ -2320,7 +2320,7 @@ void ImmiscibleMultiphaseFlow::avoidOutOfBoundPressure( DomainPartition & domain
       {
         if( ghostRank[ei] < 0 )
         {
-          globalIndex const globalRow = dofNumber[ei] - rankOffset;
+          globalIndex const globalRow = dofNumber[ei];
           localIndex const localRow = LvArray::integerConversion< localIndex >( globalRow - rankOffset );
           GEOS_ASSERT_GE( localRow, 0 );
           
@@ -2363,7 +2363,7 @@ void ImmiscibleMultiphaseFlow::avoidOutOfBoundPhaseVolFrac( DomainPartition & do
       {
         if( ghostRank[ei] < 0 )
         {
-          globalIndex const globalRow = dofNumber[ei] - rankOffset;
+          globalIndex const globalRow = dofNumber[ei];
           localIndex const localRow = LvArray::integerConversion< localIndex >( globalRow - rankOffset );
           GEOS_ASSERT_GE( localRow, 0 );
 
