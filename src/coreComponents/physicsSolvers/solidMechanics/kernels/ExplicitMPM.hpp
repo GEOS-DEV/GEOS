@@ -161,8 +161,8 @@ struct StateUpdateKernel
         // Polar decompositions
         real64 rotBeginning[3][3] = { { 0.0 } };
         real64 rotEnd[3][3] = { { 0.0 } };
-        polarDecomposition( rotBeginning, fOld );
-        polarDecomposition( rotEnd, fNew );
+        LvArray::tensorOps::polarDecomposition< 3 >( rotBeginning, fOld );
+        LvArray::tensorOps::polarDecomposition< 3 >( rotEnd, fNew );
 
         // Call stress update
         constitutive::SolidUtilities::hypoUpdate2_StressOnly( constitutiveWrapper,  // the constitutive model

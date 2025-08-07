@@ -96,7 +96,8 @@ public:
     Interior,
     FullyDamaged,
     Surface,
-    Cohesive    
+    Cohesive,
+    DamagedCohesive    
   };
 
   /**
@@ -557,6 +558,20 @@ public:
 
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
+  void computeKernelFieldDivergenceDevice( arraySlice1d< real64 const > const x, // query point
+                                           real64 const & neighborRadius,
+                                           int const & planeStrain,
+                                           localIndex const & numNeighbors,
+                                           arraySlice1d< localIndex const > const regionIndices,
+                                           arraySlice1d< localIndex const > const subRegionIndices,
+                                           arraySlice1d< localIndex const > const particleIndices,
+                                           ParticleManager::ParticleView< arrayView1d< real64 const > > particleVolumeView,
+                                           ParticleManager::ParticleView< arrayView2d< real64 const > > particlePositionView,
+                                           ParticleManager::ParticleView< arrayView2d< real64 const > > particleVectorView,
+                                           real64 & result );
+
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
   void computeKernelVectorGradient( arraySlice1d< real64 const > const x,       // query point
                                     localIndex const numNeighbors,
                                     arrayView2d< real64 const > const & xp,  // List of neighbor particle locations.
@@ -594,6 +609,8 @@ public:
                       ParticleManager & particleManager,
                       SpatialPartition & partition );
 
+  void initializeParticleFields( ParticleManager & particleManager );
+
   void initializeConstitutiveModelDependencies( ParticleManager & particleManager);
 
   void updateConstitutiveModelDependencies( ParticleManager & particleManager );
@@ -601,7 +618,8 @@ public:
   void updateStress( real64 dt,
                      ParticleManager & particleManager );
 
-  void particleKinematicUpdate( ParticleManager & particleManager );
+  void particleKinematicUpdate( const real64 dt,
+                                ParticleManager & particleManager );
 
   void computeAndWriteBoxAverage( const real64 dt,
                                   const real64 time_n,
@@ -709,7 +727,7 @@ public:
                               ParticleManager & particleManager,
                               NodeManager & nodeManager );
 
-  void computeSurfaceTension( NodeManager & nodeManager );
+  void computeSPHSurfaceCurvature( ParticleManager & particleManager );
 
   void gridTrialUpdate( real64 dt,
                         NodeManager & nodeManager );
@@ -845,8 +863,8 @@ void interpolateValueInRange( real64 const & x,
 
   void computeSPHJacobian( ParticleManager & particleManager );
 
-  void overlapCorrection( real64 const dt ,
-                          ParticleManager & particleManager );
+  void sphOverlapCorrection( real64 const dt ,
+                             ParticleManager & particleManager );
 
   void computeInternalEnergyAndTemperature( const real64 dt,
                                             ParticleManager & particleManager );
@@ -912,6 +930,7 @@ protected:
 
   array1d< string > m_plottableFields;
   SortedArray< string > m_plottableFieldsSorted;
+  int m_plotGridFields;
 
   TimeIntegrationOption m_timeIntegrationOption;
   UpdateMethodOption m_updateMethod;
@@ -937,6 +956,9 @@ protected:
   array1d< real64 > m_globalFaceReactions;
 
   array1d< real64 > m_bodyForce;
+
+  int m_enableSurfaceTension;
+  real64 m_surfaceTensionCoefficient;
 
   // borehole fluid pressure and radius used in the boreholePressure event.
   int m_enableBoreholePressure;
@@ -982,6 +1004,7 @@ protected:
   int m_preventCZInterpentration;
   real64 m_normalForceConstant;
   real64 m_shearForceConstant;
+  int m_reinitializeCohesiveZones;
 
   real64 m_numSurfaceIntegrationPoints;
   real64 m_maxCohesiveNormalStress;
@@ -1053,6 +1076,7 @@ protected:
   int m_numVelocityFields;
   int m_hasContact;
   int m_computeNodalArea;
+  int m_useNodePosForArea;
   real64 m_separabilityMinDamage;
   int m_treatFullyDamagedAsSingleField;
   int m_surfaceDetection;
@@ -1062,9 +1086,10 @@ protected:
   ContactNormalTypeOption m_contactNormalType;
   real64 m_contactNormalExponent;
   ContactGapCorrectionOption m_contactGapCorrection;
-  // int m_directionalOverlapCorrection;
+  int m_directionalOverlapCorrection;
 
   int m_resetDefGradForFullyDamagedParticles;
+  int m_useReferenceVectorsForParticleUpdate;
   int m_plotUnscaledParticles;
 
   real64 m_frictionCoefficient;
@@ -1099,6 +1124,19 @@ protected:
   real64 m_xProfileVx0;
 
   real64 m_implicitContinuumFluidPressure; // Borehole collapse
+
+  // // Particle field specific flags
+  // Unsure whether to use flags for these fields yet or just check the wrapper exists
+  // int hasParticleOverlap;
+  // int hasParticleSPHF;
+  // int hasParticleHeatCapacity;
+  // int hasParticleReferenceTemperature;
+  // int hasParticleTemperature;
+  // int hasParticleInternalEnergy;
+  // int hasParticleArtificialViscosity;
+  // int hasParticleDomainScaledFlag;
+  // int hasParticleSubdivideFlag;
+  // int hasParticleCopyFlag;
 
 private:
   struct BinKey

@@ -55,8 +55,8 @@ public:
    * @param[in] disableInelasticity Flag to disable plasticity for inelastic models
    */
   PerfectlyPlasticUpdates( arrayView1d< real64 const > const & yieldStress,
-                           arrayView1d< real64 const > const & bulkModulus,
-                           arrayView1d< real64 const > const & shearModulus,
+                           arrayView1d< real64 > const & bulkModulus,
+                           arrayView1d< real64 > const & shearModulus,
                            arrayView1d< real64 const > const & thermalExpansionCoefficient,
                            arrayView3d< real64, solid::STRESS_USD > const & newStress,
                            arrayView3d< real64, solid::STRESS_USD > const & oldStress,

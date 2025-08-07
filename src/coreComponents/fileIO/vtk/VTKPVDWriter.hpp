@@ -45,6 +45,12 @@ public:
   void setFileName( string fileName );
 
   /*!
+   * @brief Get the output file name
+   * @param[out] filename  the file name (with extension)
+   */
+  string getFileName() { return m_fileName; }
+
+  /*!
    * @brief Reads existing pvd file
    */
   void read();

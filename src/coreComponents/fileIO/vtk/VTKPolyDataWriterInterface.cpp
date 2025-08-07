@@ -40,6 +40,7 @@
 
 #include "mesh/generators/VTKUtilities.hpp"
 
+#include <filesystem>
 
 namespace geos
 {
@@ -1407,7 +1408,8 @@ void VTKPolyDataWriterInterface::write( real64 const time,
     writeVtmFile( cycle, domain, vtmWriter );
 
     // CC: for restarts need the vtk pvd file to be appended to which requires reading it in from file
-    if( m_previousCycle == -1 && cycle != 0)
+    if(std::filesystem::exists(m_pvd.getFileName()) and cycle != 0)
+    // if( m_previousCycle == -1 && cycle != 0)
     {
       GEOS_LOG_RANK_0( "Restart detected, importing existing pvd file!");
       m_pvd.read();

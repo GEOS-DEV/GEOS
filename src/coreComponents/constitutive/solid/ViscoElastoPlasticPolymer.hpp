@@ -49,39 +49,29 @@ public:
    * @param[in] plasticStrain The ArrayView holding the plastic strain for each quadrature point
    * @param[in] damage The ArrayView holding the damage for each quadrature point.
    * @param[in] jacobian The ArrayView holding the jacobian for each quadrature point.
-   * @param[in] yieldStrength The ArrayView holding the current yield strength
-   * @param[in] strainHardeningSlope The strain hardening slope
-   * @param[in] shearSofteningMagnitude The shear softening magnitude
-   * @param[in] shearSofteningShapeParameter1 The shear softening shape parameter 1
-   * @param[in] shearSofteningShapeParameter2 The shear softening shape parameter 2
-   * @param[in] maximumStretch The maximum stretch
-   * @param[in] thermalSoftening not currently implemented (CC: TODO)
-   * @param[in] bulkModulus The ArrayView holding the bulk modulus data for each element.
-   * @param[in] shearModulus The ArrayView holding the shear modulus data for each element.
-   * @param[in] thermalExpansionCoefficient The ArrayView holding the thermal expansion coefficient data for each element.
    * @param[in] newStress The ArrayView holding the new stress data for each quadrature point.
    * @param[in] oldStress The ArrayView holding the old stress data for each quadrature point.
    */
   HyperViscoElastoPlasticUpdates( arrayView3d< real64 > const & deformationGradient,
-                                 arrayView3d< real64 > const & plasticStrain,
-                                 arrayView2d< real64 > const & damage,
-                                 arrayView2d< real64 > const & jacobian,
-                                 arrayView1d< real64 > const & yieldStrength,
-                                 real64 const & strainHardeningSlope,
-                                 real64 const & shearSofteningMagnitude,
-                                 real64 const & shearSofteningShapeParameter1,
-                                 real64 const & shearSofteningShapeParameter2,
-                                 real64 const & maximumStretch,
-                                 // arrayView2d< real64 > const & thermalSoftening,
-                                 arrayView1d< real64 const > const & bulkModulus,
-                                 arrayView1d< real64 const > const & shearModulus,
-                                 arrayView1d< real64 const > const & thermalExpansionCoefficient,
-                                 arrayView3d< real64, solid::STRESS_USD > const & newStress,
-                                 arrayView3d< real64, solid::STRESS_USD > const & oldStress,
-                                 arrayView2d< real64 > const & density,
-                                 arrayView2d< real64 > const & wavespeed,
-                                 bool const & disableInelasticity ):
-                                 SolidBase(), 
+                                  elasticStrain,
+                                  plasticStrain,
+                                  Ain,
+                                  Bin,
+                                  youngModuli,
+                                  elasticPoissonRatio,
+                                  relaxationTimes,
+                                  arrayView1d< real64 const > const & thermalExpansionCoefficient,
+                                  arrayView3d< real64, solid::STRESS_USD > const & newStress,
+                                  arrayView3d< real64, solid::STRESS_USD > const & oldStress,
+                                  arrayView2d< real64 > const & density,
+                                  arrayView2d< real64 > const & wavespeed,
+                                  bool const & disableInelasticity ):
+    SolidBaseUpdates( newStress, 
+                      oldStress,
+                      density,
+                      wavespeed,
+                      thermalExpansionCoefficient, 
+                      disableInelasticity ),
     m_deformationGradient( deformationGradient ),
     m_plasticStrain( plasticStrain ),
     m_damage( damage ),
@@ -480,6 +470,7 @@ public:
 
 protected:
   virtual void postInputInitialization() override;
+
   /// State variable: The deformation gradient values for each element/particle.
   array3d< real64 > m_deformationGradient;
 
