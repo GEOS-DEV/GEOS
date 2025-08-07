@@ -199,7 +199,7 @@ protected:
       intervalStepInv = axisStepInv[axisIntervalIndex];
       axisLow = axisCoordinates[axisIntervalIndex];
       axisMult = (coordinate - axisCoordinates[axisIntervalIndex]) * axisStepInv[axisIntervalIndex];
-      printf( "Interpolation warning: axis coordinate is beyond upper limit ( %lf) with value %lf, extrapolation is applied\n",  axisCoordinates[axisPoints-1], coordinate );
+      printf( "Interpolation warning: axis coordinate is beyond upper limit ( %lf) with value %lf, extrapolation is applied\n", axisCoordinates[axisPoints-1], coordinate );
     }
     else
     {
