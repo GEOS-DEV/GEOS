@@ -10961,19 +10961,19 @@ void SolidMechanicsMPM::enforceContact( real64 dt,
   } );
 }
 
-void SolidMechanicsMPM::logisticRegressionContact( ParticleManager & particleManager,
-                                                   NodeManager & nodeManager )
-{
-  // Flag all nodes with mass in two or more velocity fields
+// void SolidMechanicsMPM::logisticRegressionContact( ParticleManager & particleManager,
+//                                                    NodeManager & nodeManager )
+// {
+//   // Flag all nodes with mass in two or more velocity fields
 
 
-  // First construct a list of list of node-particle connectivity where each index in list is a list of particle ids in support of the node
+//   // First construct a list of list of node-particle connectivity where each index in list is a list of particle ids in support of the node
  
   
-  // Iteratre over each node and all velocity field pairings on that node to compute the normal and offset of mutual surface
+//   // Iteratre over each node and all velocity field pairings on that node to compute the normal and offset of mutual surface
 
 
-}
+// }
 
 void SolidMechanicsMPM::interpolateTable( real64 x,
                                           real64 dx,
