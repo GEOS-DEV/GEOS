@@ -38,7 +38,6 @@ FlowProppantTransportSolver::FlowProppantTransportSolver( const string & name,
 
 void FlowProppantTransportSolver::preStepUpdate( real64 const & time_n,
                                                  real64 const & dt,
-                                                 integer const cycleNumber,
                                                  DomainPartition & domain )
 {
   if( time_n <= 0.0 )
@@ -62,7 +61,7 @@ void FlowProppantTransportSolver::preStepUpdate( real64 const & time_n,
                              flowSolver()->getSystemSolution() );
 
 
-  flowSolver()->implicitStepSetup( time_n, dt, cycleNumber, domain );
+  flowSolver()->implicitStepSetup( time_n, dt, domain );
 
   proppantTransportSolver()->setupSystem( domain,
                                           proppantTransportSolver()->getDofManager(),
@@ -71,9 +70,9 @@ void FlowProppantTransportSolver::preStepUpdate( real64 const & time_n,
                                           proppantTransportSolver()->getSystemSolution() );
 
 
-  proppantTransportSolver()->implicitStepSetup( time_n, dt, cycleNumber, domain );
+  proppantTransportSolver()->implicitStepSetup( time_n, dt, domain );
 
-  proppantTransportSolver()->preStepUpdate( time_n, dt, cycleNumber, domain );
+  proppantTransportSolver()->preStepUpdate( time_n, dt, domain );
 }
 
 void FlowProppantTransportSolver::postStepUpdate( real64 const & time_n,
@@ -93,7 +92,7 @@ real64 FlowProppantTransportSolver::sequentiallyCoupledSolverStep( real64 const 
   real64 dtReturn = dt;
   real64 dtReturnTemporary;
 
-  preStepUpdate( time_n, dt, cycleNumber, domain );
+  preStepUpdate( time_n, dt, domain );
 
   int iter = 0;
   while( iter < this->m_nonlinearSolverParameters.m_maxIterNewton )

@@ -157,14 +157,12 @@ void SinglePhaseHybridFVM::initializePostInitialConditionsPreSubGroups()
 
 void SinglePhaseHybridFVM::implicitStepSetup( real64 const & time_n,
                                               real64 const & dt,
-                                              integer const cycleNumber,
                                               DomainPartition & domain )
 {
   GEOS_MARK_FUNCTION;
 
   // setup the cell-centered fields
-  SinglePhaseBase::implicitStepSetup( time_n, dt, cycleNumber, domain );
-  getConvergenceStats().updateSolverStep( time_n, dt, cycleNumber );
+  SinglePhaseBase::implicitStepSetup( time_n, dt, domain );
 
   // setup the face fields
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
@@ -454,8 +452,10 @@ void SinglePhaseHybridFVM::saveAquiferConvergedState( real64 const & time,
 }
 
 
-real64 SinglePhaseHybridFVM::calculateResidualNorm( real64 const & GEOS_UNUSED_PARAM( time_n ),
+real64 SinglePhaseHybridFVM::calculateResidualNorm( real64 const & time_n,
                                                     real64 const & dt,
+                                                    integer const cycleNumber,
+                                                    integer const newtonIter,
                                                     DomainPartition const & domain,
                                                     DofManager const & dofManager,
                                                     arrayView1d< real64 const > const & localRhs )
@@ -580,6 +580,12 @@ real64 SinglePhaseHybridFVM::calculateResidualNorm( real64 const & GEOS_UNUSED_P
   GEOS_LOG_LEVEL_RANK_0_NLR( logInfo::ResidualNorm,
                              GEOS_FMT( "        ( R{} ) = ( {:4.2e} )", coupledSolverAttributePrefix(), residualNorm ));
   getConvergenceStats().m_residuals[GEOS_FMT( "R{}", coupledSolverAttributePrefix())] = residualNorm;
+
+  if( m_writeStatistics >= 2 )
+  {
+    getConvergenceStats().updateSolverStep( time_n, dt, cycleNumber, newtonIter );
+    writeStatisticsToTable();
+  }
 
   return residualNorm;
 }

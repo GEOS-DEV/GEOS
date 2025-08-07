@@ -307,12 +307,9 @@ void SolidMechanicsLagrangeContactBubbleStab::computeRotationMatrices( DomainPar
 
 void SolidMechanicsLagrangeContactBubbleStab::implicitStepSetup( real64 const & time_n,
                                                                  real64 const & dt,
-                                                                 integer const cycleNumber,
                                                                  DomainPartition & domain )
 {
-  SolidMechanicsLagrangianFEM::implicitStepSetup( time_n, dt, cycleNumber, domain );
-
-  getConvergenceStats().updateSolverStep( time_n, dt, cycleNumber );
+  SolidMechanicsLagrangianFEM::implicitStepSetup( time_n, dt, domain );
 }
 
 void SolidMechanicsLagrangeContactBubbleStab::assembleSystem( real64 const time,
@@ -462,13 +459,15 @@ void SolidMechanicsLagrangeContactBubbleStab::implicitStepComplete( real64 const
 
 real64 SolidMechanicsLagrangeContactBubbleStab::calculateResidualNorm( real64 const & time,
                                                                        real64 const & dt,
+                                                                       integer const cycleNumber,
+                                                                       integer const newtonIter,
                                                                        DomainPartition const & domain,
                                                                        DofManager const & dofManager,
                                                                        arrayView1d< real64 const > const & localRhs )
 {
   GEOS_MARK_FUNCTION;
 
-  real64 const solidResidual = SolidMechanicsLagrangianFEM::calculateResidualNorm( time, dt, domain, dofManager, localRhs );
+  real64 const solidResidual = SolidMechanicsLagrangianFEM::calculateResidualNorm( time, dt, cycleNumber, newtonIter, domain, dofManager, localRhs );
 
   real64 const contactResidual = calculateContactResidualNorm( domain, dofManager, localRhs );
 

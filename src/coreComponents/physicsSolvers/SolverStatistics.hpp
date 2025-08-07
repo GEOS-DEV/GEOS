@@ -225,6 +225,9 @@ public:
   /// Current cycle number
   integer m_cycleNumber = 0;
 
+  /// Current newton iteration
+  integer m_newtonIter = 0;
+
   /// Residuals with their names
   std::map< string, real64 > m_residuals;
 
@@ -249,7 +252,12 @@ public:
    */
   void updateSolverStep( real64 const & time_n,
                          real64 const & dt,
-                         integer const cycleNumber );
+                         integer const cycleNumber,
+                         integer const newtonIter );
+
+  void updateSolverStep( real64 const & time_n,
+                         real64 const & dt,
+                         integer const cycleNumber ){}
 
   /**
    * @brief Reset the solid residuals value.

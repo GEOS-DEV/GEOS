@@ -595,6 +595,10 @@
 				</xsd:unique>
 			</xsd:element>
 			<xsd:element name="Constitutive" type="ConstitutiveType" maxOccurs="1">
+				<xsd:unique name="domainConstitutiveBartonBandisUniqueName">
+					<xsd:selector xpath="BartonBandis" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
 				<xsd:unique name="domainConstitutiveBiotPorosityUniqueName">
 					<xsd:selector xpath="BiotPorosity" />
 					<xsd:field xpath="@name" />
@@ -5605,6 +5609,7 @@ Information output from lower logLevels is added with the desired log level
 	</xsd:simpleType>
 	<xsd:complexType name="ConstitutiveType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="BartonBandis" type="BartonBandisType" />
 			<xsd:element name="BiotPorosity" type="BiotPorosityType" />
 			<xsd:element name="BlackOilFluid" type="BlackOilFluidType" />
 			<xsd:element name="BrooksCoreyBakerRelativePermeability" type="BrooksCoreyBakerRelativePermeabilityType" />
@@ -5696,6 +5701,14 @@ Information output from lower logLevels is added with the desired log level
 			<xsd:element name="ViscoModifiedCamClay" type="ViscoModifiedCamClayType" />
 			<xsd:element name="WillisRichardsPermeability" type="WillisRichardsPermeabilityType" />
 		</xsd:choice>
+	</xsd:complexType>
+	<xsd:complexType name="BartonBandisType">
+		<!--referenceAperture => Reference hydraulic aperture. It is the aperture at zero normal stress.-->
+		<xsd:attribute name="referenceAperture" type="real64" default="1e-06" />
+		<!--referenceNormalStress =>  Reference normal stress.-->
+		<xsd:attribute name="referenceNormalStress" type="real64" use="required" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="BiotPorosityType">
 		<!--defaultGrainBulkModulus => Grain bulk modulus-->

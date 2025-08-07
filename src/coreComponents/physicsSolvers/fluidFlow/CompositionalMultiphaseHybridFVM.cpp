@@ -231,15 +231,13 @@ void CompositionalMultiphaseHybridFVM::precomputeData( MeshLevel & mesh, string_
 
 void CompositionalMultiphaseHybridFVM::implicitStepSetup( real64 const & time_n,
                                                           real64 const & dt,
-                                                          integer const cycleNumber,
                                                           DomainPartition & domain )
 {
   GEOS_MARK_FUNCTION;
 
   // setup the elem-centered fields
-  CompositionalMultiphaseBase::implicitStepSetup( time_n, dt, cycleNumber, domain );
+  CompositionalMultiphaseBase::implicitStepSetup( time_n, dt, domain );
 
-  getConvergenceStats().updateSolverStep( time_n, dt, cycleNumber );
   // setup the face fields
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
@@ -600,8 +598,10 @@ void CompositionalMultiphaseHybridFVM::saveAquiferConvergedState( real64 const &
 }
 
 
-real64 CompositionalMultiphaseHybridFVM::calculateResidualNorm( real64 const & GEOS_UNUSED_PARAM( time_n ),
+real64 CompositionalMultiphaseHybridFVM::calculateResidualNorm( real64 const & time_n,
                                                                 real64 const & dt,
+                                                                integer const cycleNumber,
+                                                                integer const newtonIter,
                                                                 DomainPartition const & domain,
                                                                 DofManager const & dofManager,
                                                                 arrayView1d< real64 const > const & localRhs )
@@ -732,6 +732,12 @@ real64 CompositionalMultiphaseHybridFVM::calculateResidualNorm( real64 const & G
   GEOS_LOG_LEVEL_RANK_0_NLR( logInfo::ResidualNorm, GEOS_FMT( "        ( R{} ) = ( {:4.2e} )", coupledSolverAttributePrefix(), residualNorm ));
 
   getConvergenceStats().m_residuals[GEOS_FMT( "R{}", coupledSolverAttributePrefix())] = residualNorm;
+
+  if( m_writeStatistics >= 2 )
+  {
+    getConvergenceStats().updateSolverStep( time_n, dt, cycleNumber, newtonIter );
+    writeStatisticsToTable();
+  }
 
   return residualNorm;
 }

@@ -612,9 +612,8 @@ void SinglePhaseBase::initializeThermalState( MeshLevel & mesh, string_array con
   } );
 }
 
-void SinglePhaseBase::implicitStepSetup( real64 const & time_n,
-                                         real64 const & dt,
-                                         integer const cycleNumber,
+void SinglePhaseBase::implicitStepSetup( real64 const & GEOS_UNUSED_PARAM( time_n ),
+                                         real64 const & GEOS_UNUSED_PARAM( dt ),
                                          DomainPartition & domain )
 {
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,

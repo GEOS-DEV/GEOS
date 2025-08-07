@@ -1430,6 +1430,7 @@
 	</xsd:complexType>
 	<xsd:complexType name="ConstitutiveType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="BartonBandis" type="BartonBandisType" />
 			<xsd:element name="BiotPorosity" type="BiotPorosityType" />
 			<xsd:element name="BlackOilFluid" type="BlackOilFluidType" />
 			<xsd:element name="BrooksCoreyBakerRelativePermeability" type="BrooksCoreyBakerRelativePermeabilityType" />
@@ -1522,6 +1523,7 @@
 			<xsd:element name="WillisRichardsPermeability" type="WillisRichardsPermeabilityType" />
 		</xsd:choice>
 	</xsd:complexType>
+	<xsd:complexType name="BartonBandisType" />
 	<xsd:complexType name="BiotPorosityType">
 		<!--averageMeanTotalStressIncrement_k => Mean total stress increment averaged over quadrature points at the previous sequential iteration-->
 		<xsd:attribute name="averageMeanTotalStressIncrement_k" type="real64_array" />

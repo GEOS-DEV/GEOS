@@ -574,6 +574,8 @@ void SolidMechanicsEmbeddedFractures::applyTractionBC( real64 const time_n,
 
 real64 SolidMechanicsEmbeddedFractures::calculateResidualNorm( real64 const & time,
                                                                real64 const & dt,
+                                                               integer const cycleNumber,
+                                                               integer const newtonIter,
                                                                DomainPartition const & domain,
                                                                DofManager const & dofManager,
                                                                arrayView1d< real64 const > const & localRhs )
@@ -581,7 +583,7 @@ real64 SolidMechanicsEmbeddedFractures::calculateResidualNorm( real64 const & ti
   GEOS_MARK_FUNCTION;
 
   // Matrix residual
-  real64 const solidResidualNorm = SolidMechanicsLagrangianFEM::calculateResidualNorm( time, dt, domain, dofManager, localRhs );
+  real64 const solidResidualNorm = SolidMechanicsLagrangianFEM::calculateResidualNorm( time, dt, cycleNumber, newtonIter, domain, dofManager, localRhs );
 
   if( !m_useStaticCondensation )
   {
