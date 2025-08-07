@@ -24,7 +24,7 @@ namespace geos
 {
 
 /**
- * @class MultivariableNonUniformTableFunctionStaticKernel
+ * @class MultivariableNonuniformTableFunctionStaticKernel
  *
  * A class for multivariable piecewise interpolation with static storage
  * Functions are interpolated assuming a non uniform discretized space
