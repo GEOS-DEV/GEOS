@@ -39,7 +39,8 @@ enum class ScalingType : integer
 enum class ScalingFactorType : integer
 {
   MaxVariation,
-  TrustRegion
+  TrustRegion,
+  TrustRegionFlux
 };
 
 ENUM_STRINGS( ScalingType,
@@ -48,7 +49,8 @@ ENUM_STRINGS( ScalingType,
 
 ENUM_STRINGS( ScalingFactorType,
               "MaxVariation",
-              "TrustRegion" );
+              "TrustRegion",
+              "TrustRegionFlux" );
 
 } // namespace immiscibleFlowUtilities
 
@@ -126,14 +128,20 @@ public:
   virtual real64
   scalingForSystemSolution( DomainPartition & domain,
                             DofManager const & dofManager,
-                            arrayView1d< real64 const > const & localSolution,
-                            arrayView1d< real64 const > const & localResidual ) override;
+                            arrayView1d< real64 > const & localSolution,
+                            arrayView1d< real64 const > const & localResidual,
+                            real64 const dt,
+                            real64 const residualNorm,
+                            integer const newtonIter ) override;
 
   real64
   scalingForSystemSolutionTrustRegion( DomainPartition & domain,
                                        DofManager const & dofManager,
-                                       arrayView1d< real64 const > const & localSolution,
-                                       arrayView1d< real64 const > const & localResidual );
+                                       arrayView1d< real64 > const & localSolution,
+                                       arrayView1d< real64 const > const & localResidual,
+                                       real64 const dt,
+                                       real64 const residualNorm,
+                                       integer const newtonIter );
 
   virtual bool
   checkSystemSolution( DomainPartition & domain,
@@ -281,6 +289,8 @@ public:
     static constexpr char const * maxRelativeSatChangeString() { return "maxRelativeSaturationChange"; }
 
     // trust region parameters
+    static constexpr char const * trustRegionMinNewtonIterString() { return "trustRegionMinNewtonIter"; }
+    static constexpr char const * trustRegionMinGradientString() { return "trustRegionMinGradient"; } 
     static constexpr char const * trustRegionMaxIterString() { return "trustRegionMaxIter"; }
     static constexpr char const * trustRegionMinPotentialDiffString() { return "trustRegionMinPotentialDiff"; }
     static constexpr char const * trustRegionMinDerivativeString() { return "trustRegionMinDerivative"; }
@@ -289,6 +299,7 @@ public:
     static constexpr char const * trustRegionKinkFactorDeltaString() { return "trustRegionKinkFactorDelta"; }
     static constexpr char const * trustRegionRelResThresString() { return "trustRegionRelResidualThreshold"; }
     static constexpr char const * trustRegionAbsResThresString() { return "trustRegionAbsResidualThreshold"; }
+    static constexpr char const * trustRegionUseAccumString() { return "trustRegionUseAccum"; }
 
     // time stepping controls
     static constexpr char const * solutionChangeScalingFactorString() { return "solutionChangeScalingFactor"; }
@@ -362,6 +373,42 @@ private:
    */
   void chopOutOfBoundPressure( DomainPartition & domain );
 
+/**
+   * @brief Utility function to avoid pressure updates that lead outside of physical bounds
+   * @param[in] domain the domain object
+   * @param[in] dofManager the dof manager
+   * @param[in] localSolution the local solution vector
+   */
+  void avoidOutOfBoundPressure( DomainPartition & domain, 
+                                DofManager const & dofManager,
+                                arrayView1d< real64 > const & localSolution );
+
+  /**
+   * @brief Utility function to avoid phase volume fraction updates that lead outside of physical bounds
+   * @param[in] domain the domain object
+   * @param[in] dofManager the dof manager
+   * @param[in] localSolution the local solution vector
+   */
+  void avoidOutOfBoundPhaseVolFrac( DomainPartition & domain, 
+                                    DofManager const & dofManager,
+                                    arrayView1d< real64 > const & localSolution );
+
+   /**
+   * @brief Utility function to reset the local scaling factors
+   * @param[in] domain the domain object
+   */
+  void resetLocalScalingFactors( DomainPartition & domain );
+
+  /**
+   * @brief Utility function to check the maximum gradient of the update vector
+   * @param[in] domain the domain partition
+   * @param[in] dofManager the dof manager
+   * @param[in] localSolution the local solution vector
+   */
+  real64 checkMaxGradient( DomainPartition & domain, 
+                           DofManager const & dofManager,
+                           arrayView1d< real64 const > const & localSolution );
+
   /// the max number of fluid phases
   integer m_numPhases;
 
@@ -419,11 +466,20 @@ private:
   /// damping factor for solution change targets
   real64 m_solutionChangeScalingFactor;
 
+  /// type of scaling to applying in current Newton iteration
+  ScalingType m_currentScaling;
+
 public:
 
   /// trust region parameters
   struct TrustRegionParameters
   {
+    /// minimum number of Newton iterations before applying trust region
+    integer minNewtonIter;
+
+    /// minimum gradient to enable trust region solver
+    real64 minGradient;
+
     /// maximum number of nonlinear iterations
     integer maxIter;
 
@@ -447,6 +503,9 @@ public:
 
     /// minimum absolute residual threshold for applying damping factor
     real64 absResThres;
+
+    /// flag on whether to use accumulation term
+    integer useAccum;
 
   } m_trustRegionParams;
 

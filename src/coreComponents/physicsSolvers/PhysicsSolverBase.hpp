@@ -544,13 +544,19 @@ public:
    * @param[in] dofManager degree-of-freedom manager associated with the linear system
    * @param[in] localSolution the solution vector
    * @param[in] localResidual the residual vector
+   * @param[in] dt the timestep size
+   * @param[in] residualNorm the norm of the residual vector
+   * @param[in] newtonIter the current Newton iteration count
    * @return The factor that should be used to scale the solution vector values when they are being applied.
    */
   virtual real64
   scalingForSystemSolution( DomainPartition & domain,
                             DofManager const & dofManager,
-                            arrayView1d< real64 const > const & localSolution,
-                            arrayView1d< real64 const > const & localResidual );
+                            arrayView1d< real64 > const & localSolution,
+                            arrayView1d< real64 const > const & localResidual,
+                            real64 const dt,
+                            real64 const residualNorm,
+                            integer const newtonIter );
 
   /**
    * @brief Function to apply the solution vector to the state

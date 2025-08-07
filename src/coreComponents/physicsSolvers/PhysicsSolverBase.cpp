@@ -1095,7 +1095,8 @@ bool PhysicsSolverBase::solveNonlinearSystem( real64 const & time_n,
       // Compute the scaling factor for the Newton update
       if ( m_trustRegion )
       {
-        scaleFactor = scalingForSystemSolution( domain, m_dofManager, m_solution.values(), m_rhs.values() );
+        scaleFactor = scalingForSystemSolution( domain, m_dofManager, m_solution.open(), m_rhs.values(), stepDt, residualNorm, newtonIter );
+        m_solution.close(); // close the solution vector after scaling
       }
       else
       {
@@ -1372,8 +1373,11 @@ real64 PhysicsSolverBase::scalingForSystemSolution( DomainPartition & GEOS_UNUSE
 
 real64 PhysicsSolverBase::scalingForSystemSolution( DomainPartition & GEOS_UNUSED_PARAM( domain ),
                                                     DofManager const & GEOS_UNUSED_PARAM( dofManager ),
-                                                    arrayView1d< real64 const > const & GEOS_UNUSED_PARAM( localSolution ),
-                                                    arrayView1d< real64 const > const & GEOS_UNUSED_PARAM( localResidual ) )
+                                                    arrayView1d< real64 > const & GEOS_UNUSED_PARAM( localSolution ),
+                                                    arrayView1d< real64 const > const & GEOS_UNUSED_PARAM( localResidual ),
+                                                    real64 const GEOS_UNUSED_PARAM( dt ),
+                                                    real64 const GEOS_UNUSED_PARAM( residualNorm ),
+                                                    integer const GEOS_UNUSED_PARAM( newtonIter ) )
 {
   return 1.0;
 }

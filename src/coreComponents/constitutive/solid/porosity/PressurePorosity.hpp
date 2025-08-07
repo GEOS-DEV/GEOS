@@ -68,6 +68,15 @@ public:
   }
 
   GEOS_HOST_DEVICE
+  void compute( localIndex const k,
+                real64 const & pressure,
+                real64 & porosity ) const
+  {
+    real64 const referencePorosity = m_referencePorosity[k]; 
+    porosity = referencePorosity * (m_compressibility * (pressure - m_referencePressure) + 1);
+  }
+
+  GEOS_HOST_DEVICE
   void updateFromPressureAndTemperature( localIndex const k,
                                          localIndex const q,
                                          real64 const & pressure,

@@ -10,12 +10,41 @@
       discretization="fluidTPFA"
       targetRegions="{ reservoir }"      
       temperature="300"
-      initialDt="8.64e7">
+      initialDt="8.64e7"
+      
+      scalingType="Global"
+      scalingFactorType="TrustRegion"
+      allowOutOfBoundPressure="1"
+      allowLocalPresChopping="1"
+      allowOutOfBoundSaturation="1"
+      allowLocalSatChopping="1"
+
+      maxAbsolutePressureChange="-1"
+      maxRelativePressureChange="-1"
+      maxAbsoluteSaturationChange="0.2"
+      maxRelativeSaturationChange="-1"
+
+      trustRegionMinNewtonIter="4"
+      trustRegionMinGradient="0.6"
+      trustRegionUseAccum="1"
+
+      trustRegionMaxIter="10"
+      trustRegionMinPotentialDiff="1.0"
+      trustRegionKinkFactorDelta="1.05"
+      trustRegionMinDerivative="1e-6"
+      trustRegionRelResidualThreshold="0.0"
+      trustRegionAbsResidualThreshold="1e-4"
+      trustRegionMinKinkFactor="0.1"
+      trustRegionMinInfFactor="0.1"
+
+      minScalingFactor="0.05">
+
       <NonlinearSolverParameters
       newtonTol="1e-3"
       newtonMaxIter="200"
       maxTimeStepCuts="1"
-      lineSearchAction="Attempt"/>
+      lineSearchAction="None"
+      lineSearchMaxCuts="2"/>
       <LinearSolverParameters
         solverType="direct"
         directParallel="0"/>
@@ -110,13 +139,20 @@
       functionName="poroFunc"
       scale="1.0"/>
 
-    <FieldSpecification
+    <!-- <FieldSpecification
       name="initialPressure"
       initialCondition="1"
       setNames="{ all }"
       objectPath="ElementRegions/reservoir/block"
       fieldName="pressure"
-      scale="2.8959e+7"/>
+      scale="2.8959e+7"/> -->
+    <HydrostaticEquilibrium
+      name="equil"
+      objectPath="ElementRegions/reservoir/block"      
+      datumElevation="21.335"
+      datumPressure="2.8959e+7"
+      initialPhaseName="oil"/>
+
     <FieldSpecification
       name="initial_oil"
       initialCondition="1"
@@ -137,7 +173,7 @@
     <SourceFlux
       name="sourceTerm"
       objectPath="ElementRegions/reservoir/block"
-      scale="-0.0477"
+      scale="-0.0219"
       component="1"
       setNames="{ source }"/>
 
@@ -211,6 +247,26 @@
       coordinateFiles="{ pres.txt }"
       voxelFile="viscw.txt"
       interpolation="linear"/>     
+    <!-- <TableFunction
+      name="densityTableOil"
+      coordinateFiles="{ pres_pvdo.txt }"
+      voxelFile="density_pvdo.txt"
+      interpolation="linear"/>
+    <TableFunction
+      name="viscosityTableOil"
+      coordinateFiles="{ pres_pvdo.txt }"
+      voxelFile="visc_pvdo.txt"
+      interpolation="linear"/>
+      <TableFunction
+      name="densityTableWater"
+      coordinates="{2068000, 5516000, 30600000.1, 55160000}"
+      values="{980.683, 982.07, 992.23300970873786407766, 1002.265}"
+      interpolation="linear"/>
+    <TableFunction
+      name="viscosityTableWater"
+      coordinates="{0}"
+      values="{0.0003}"
+      interpolation="linear"/> -->
     
   </Functions>
 

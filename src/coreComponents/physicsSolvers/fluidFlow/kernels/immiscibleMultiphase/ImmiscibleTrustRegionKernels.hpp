@@ -35,6 +35,7 @@
 #include "constitutive/relativePermeability/RelativePermeabilityFields.hpp"
 #include "constitutive/solid/porosity/PorosityBase.hpp"
 #include "constitutive/solid/porosity/PorosityFields.hpp"
+#include "constitutive/solid/porosity/PressurePorosity.hpp"
 #include "fieldSpecification/AquiferBoundaryCondition.hpp"
 #include "finiteVolume/BoundaryStencil.hpp"
 #include "finiteVolume/StencilBase.hpp"
@@ -119,7 +120,10 @@ public:
                     CapPressureAccessors const & capPressureAccessors,                    
                     integer const hasCapPressure,
                     real64 const resNorm,
-                    ImmiscibleMultiphaseFlow::TrustRegionParameters const & trustRegionParams )
+                    ImmiscibleMultiphaseFlow::TrustRegionParameters const & trustRegionParams,
+                    ScalingType const scalingType,
+                    arrayView1d< real64 > pressureScalingFactor,
+                    arrayView1d< real64 > saturationScalingFactor )
     : m_numPhases( numPhases ),
       m_rankOffset( rankOffset ),
       m_dofNumber( dofNumberAccessor.toNestedViewConst() ),
@@ -133,12 +137,15 @@ public:
       m_localSolution ( flowAccessors.get( fields::immiscibleMultiphaseFlow::solutionUpdate {} ) ), // localSolution      
       m_localResidual( localResidual ),
       m_resNorm( resNorm ),
+      m_pressureScalingFactor( pressureScalingFactor ),
+      m_saturationScalingFactor( saturationScalingFactor ),  
       m_hasCapPressure ( hasCapPressure ),
       m_dPhiMin( trustRegionParams.dPhiMin ),
       m_kinkFactorDelta( trustRegionParams.kinkFactorDelta ),
       m_minFactor( trustRegionParams.minKinkFactor ),
       m_relResThres( trustRegionParams.relResThres ),
       m_absResThres( trustRegionParams.absResThres ),
+      m_scalingType( scalingType ),
       m_stencilWrapper( stencilWrapper ),      
       m_seri( stencilWrapper.getElementRegionIndices() ),
       m_sesri( stencilWrapper.getElementSubRegionIndices() ),
@@ -191,15 +198,13 @@ public:
   void computeKink( localIndex const iconn,
                     StackVariables & stack ) const
   {
-    localIndex k[2];   
-    localIndex connectionIndex = 0; 
+    localIndex k[2];
 
     // loop over connection elements
     for( k[0] = 0; k[0] < stack.numFluxElems; ++k[0] )
     {
       for( k[1] = k[0] + 1; k[1] < stack.numFluxElems; ++k[1] )
-      {
-        // clear working arrays
+      {        
         real64 densMean[numEqn]{};
         
         real64 dPhi_dS[numEqn][2]{};
@@ -219,20 +224,10 @@ public:
         localIndex const sesri[2] = {m_sesri( iconn, k[0] ), m_sesri( iconn, k[1] )};
         localIndex const sei[2]   = {m_sei( iconn, k[0] ), m_sei( iconn, k[1] )};
 
-        // get pressure and saturation updates for connection elements
-        // for ( integer ke = 0; ke < 2; ++ke )
-        // {
-        //   globalIndex const globalRow = m_dofNumber[seri[ke]][sesri[ke]][sei[ke]];
-        //   localRow[ke] = LvArray::integerConversion< localIndex >( globalRow - m_rankOffset );
-        //   GEOS_ASSERT_GE( localRow[ke], 0 );
-
-        //   dP[ke] = m_localSolution[localRow[ke]];     // dP = { dP1 , dP2 }
-        //   dS[ke] = m_localSolution[localRow[ke] + 1]; // dS = { dS1 , dS2 }          
-        // }                                                                        
+        // get pressure and saturation updates for connection elements                                                                                
         for ( integer ke = 0; ke < 2; ++ke )
         {
-          dP[ke] = m_localSolution[seri[ke]][sesri[ke]][sei[ke]][0];     // dP = { dP1 , dP2 }
-          dS[ke] = m_localSolution[seri[ke]][sesri[ke]][sei[ke]][1];     // dS = { dS1 , dS2 } 
+          dP[ke] = m_localSolution[seri[ke]][sesri[ke]][sei[ke]][0];     // dP = { dP1 , dP2 }          
           
           if ( m_ghostRank[seri[ke]][sesri[ke]][sei[ke]] < 0 )
           {
@@ -244,19 +239,13 @@ public:
 
         // loop over phases
         for( integer ip = 0; ip < m_numPhases; ++ip )
-        {
-          // adaptive damping based on significant residual values           
-          // if( (fabs( m_localResidual[localRow[0] + ip] ) < m_relResThres * m_resNorm || fabs( m_localResidual[localRow[0] + ip] ) < m_absResThres) &&
-          //     (fabs( m_localResidual[localRow[1] + ip] ) < m_relResThres * m_resNorm || fabs( m_localResidual[localRow[1] + ip] ) < m_absResThres) )            
-          // {
-          //   continue;
-          // }
+        {          
           bool skipConnection = true;
           for( integer ke = 0; ke < 2; ++ke )
           {
             if ( localRow[ke] >= 0 )
             {              
-              if( fabs( m_localResidual[localRow[ke] + ip] ) > m_relResThres * m_resNorm || 
+              if( fabs( m_localResidual[localRow[ke] + ip] ) > m_relResThres * m_resNorm && 
                   fabs( m_localResidual[localRow[ke] + ip] ) > m_absResThres )
               {
                 skipConnection = false;
@@ -298,6 +287,9 @@ public:
 
             if( m_hasCapPressure )
             {              
+              dS[ke] = ip == 0 ? m_localSolution[er][esr][ei][1] :
+                                -m_localSolution[er][esr][ei][1] ;     // dS = { dS1 , dS2 }
+
               pot -= m_phaseCapPressure[er][esr][ei][0][ip];   // Phi = P1 - rho g z1 - Pc1 || P2 - rho g z2 - Pc2
 
               dPhi_dS[ip][ke] = -signPotDiff[ke] * m_dPhaseCapPressure_dPhaseVolFrac[er][esr][ei][0][ip][ip];   // dPhi/dS = { -dPc1/dS1 , dPc2/dS2 }
@@ -310,22 +302,21 @@ public:
 
           // compute kink damping factor
           if ( signbit( dPhi[ip] + dDPhi[ip]) != signbit( dPhi[ip] ) && 
-               fabs( dPhi[ip] )                 > m_dPhiMin && 
-               fabs( dPhi[ip] + dDPhi[ip] )     > m_dPhiMin )
+               fabs( dPhi[ip] )                > m_dPhiMin && 
+               fabs( dPhi[ip] + dDPhi[ip] )    > m_dPhiMin )
           {
-            eps[ip] = fmax( fmin( -dPhi[ip] / dDPhi[ip] * m_kinkFactorDelta, 1.0 ), m_minFactor );
+            eps[ip] = fmin( -dPhi[ip] / dDPhi[ip] * m_kinkFactorDelta, 1.0 );
           }
           else
           {
             eps[ip] = 1.0;
           }
-
-          stack.localEps[connectionIndex * numEqn + ip] = eps[ip];
+          
+          stack.localEps[stack.nConn] = eps[ip];
           stack.nConn++;
 
-        } // loop over phases
-        
-        connectionIndex++;        
+        } // loop over phases        
+              
       }
     } // loop over connection elements
     
@@ -349,12 +340,25 @@ public:
   GEOS_HOST_DEVICE
   void complete( localIndex const iconn,
                  StackVariables & stack ) const
-  { 
-    GEOS_UNUSED_VAR( iconn );
+  {         
     for( integer ic = 0; ic < stack.nConn; ++ic )
     {
-      stack.connFactor = LvArray::math::min( stack.connFactor, stack.localEps[ic] );  
-    }   
+      stack.connFactor = LvArray::math::min( stack.connFactor, stack.localEps[ic] );        
+    }
+
+    stack.connFactor = LvArray::math::max( stack.connFactor, m_minFactor );
+
+    if ( m_scalingType == ScalingType::Local )
+    {
+      for( integer ke = 0; ke < 2; ++ke )
+      {
+        if ( m_ghostRank[m_seri( iconn, ke )][m_sesri( iconn, ke )][m_sei( iconn, ke )] < 0 )
+        {
+          RAJA::atomicMin( parallelDeviceAtomic{}, &m_pressureScalingFactor[m_sei( iconn, ke )], stack.connFactor );      
+          RAJA::atomicMin( parallelDeviceAtomic{}, &m_saturationScalingFactor[m_sei( iconn, ke )], stack.connFactor );
+        }        
+      }            
+    }    
   }  
 
   /**
@@ -420,7 +424,11 @@ protected:
   arrayView1d< real64 const > const m_localResidual;
 
   /// Residual norm for adaptive residual analysis
-  real64 const m_resNorm;  
+  real64 const m_resNorm;   
+  
+  /// View on the scaling factors
+  arrayView1d< real64 > const m_pressureScalingFactor;
+  arrayView1d< real64 > const m_saturationScalingFactor;
 
   /// Flags
   integer const m_hasCapPressure;
@@ -440,6 +448,9 @@ protected:
 
   /// Minimum absolute residual threshold
   real64 const m_absResThres; // 1e2, 0.0, 1e3
+
+  /// Scaling type 
+  ScalingType const m_scalingType;
 
   /// Reference to the stencil wrapper
   STENCILWRAPPER const m_stencilWrapper;
@@ -483,7 +494,10 @@ public:
                    STENCILWRAPPER const & stencilWrapper, 
                    integer const hasCapPressure,
                    real64 const resNorm,  
-                   ImmiscibleMultiphaseFlow::TrustRegionParameters const trustRegionParams,               
+                   ImmiscibleMultiphaseFlow::TrustRegionParameters const trustRegionParams,  
+                   ScalingType const scalingType,
+                   arrayView1d< real64 > pressureScalingFactor,
+                   arrayView1d< real64 > saturationScalingFactor,            
                    real64 & kinkFactor )
   {
     integer constexpr NUM_EQN = 2;
@@ -500,7 +514,8 @@ public:
 
     kernelType kernel( numPhases, rankOffset, localSolution, localResidual, stencilWrapper, 
                        dofNumberAccessor, flowAccessors, fluidAccessors, capPressureAccessors,
-                       hasCapPressure, resNorm, trustRegionParams );
+                       hasCapPressure, resNorm, trustRegionParams, scalingType, 
+                       pressureScalingFactor, saturationScalingFactor );
     kernelType::template launch< POLICY >( stencilWrapper.size(), kernel, kinkFactor );    
   }
 };
@@ -532,7 +547,8 @@ public:
     StencilAccessors< fields::ghostRank,
                       fields::flow::pressure,
                       fields::flow::gravityCoefficient,
-                      fields::immiscibleMultiphaseFlow::phaseVolumeFraction >;
+                      fields::immiscibleMultiphaseFlow::phaseVolumeFraction,
+                      fields::immiscibleMultiphaseFlow::solutionUpdate >;
 
   using MultiphaseFluidAccessors =
     StencilMaterialAccessors< constitutive::TwoPhaseImmiscibleFluid,
@@ -562,19 +578,10 @@ public:
   /// Maximum number of elements at the face (equivalent to a connection with 4 elements)
   static constexpr localIndex maxNumConn = 6;
 
-  /// Maximum number of nonlinear iterations
-  static constexpr integer m_maxIter = 5;
-
-  /// Minimum potential difference to apply a damping factor
-  static constexpr real64 m_d2FMin = 1.0; // 7000
-
-  /// Minimum dampining factor
-   static constexpr real64 m_minFactor = 0.1;
-
-
   FluxInflectionFactorKernel( integer const numPhases,
                               globalIndex const rankOffset,
-                              arrayView1d< real64 const > const & localSolution,
+                              arrayView1d< real64 const > const & GEOS_UNUSED_PARAM( localSolution ),
+                              arrayView1d< real64 const > const & localResidual,
                               real64 const globalKinkFactor,
                               STENCILWRAPPER const & stencilWrapper,
                               FLUIDWRAPPER const & fluidWrapper,
@@ -586,7 +593,9 @@ public:
                               RelPermAccessors const & relPermAccessor,
                               CapPressureAccessors const & capPressureAccessors,                    
                               integer const hasCapPressure,
-                              ImmiscibleMultiphaseFlow::TrustRegionParameters const & trustRegionParams )
+                              real64 const resNorm,
+                              ImmiscibleMultiphaseFlow::TrustRegionParameters const & trustRegionParams,
+                              ScalingType const scalingType )
     : m_numPhases( numPhases ),
       m_rankOffset( rankOffset ),
       m_dofNumber( dofNumberAccessor.toNestedViewConst() ),
@@ -602,10 +611,17 @@ public:
       m_dPhaseRelPerm_dPhaseVolFrac( relPermAccessor.get( fields::relperm::dPhaseRelPerm_dPhaseVolFraction {} ) ),
       m_phaseCapPressure( capPressureAccessors.get( fields::cappres::phaseCapPressure {} ) ),
       m_dPhaseCapPressure_dPhaseVolFrac( capPressureAccessors.get( fields::cappres::dPhaseCapPressure_dPhaseVolFraction {} ) ),
-      m_localSolution( localSolution ),
+      m_localSolution( flowAccessors.get( fields::immiscibleMultiphaseFlow::solutionUpdate {} ) ), // localSolution
+      m_localResidual( localResidual ),
+      m_resNorm( resNorm ),
       m_globalKinkFactor( globalKinkFactor ),  
       m_hasCapPressure( hasCapPressure ),
-      m_trustRegionParams( trustRegionParams ),
+      m_maxIter( trustRegionParams.maxIter ),
+      m_d2FMin( trustRegionParams.d2RMin ),
+      m_minFactor( trustRegionParams.minInfFactor ),
+      m_relResThres( trustRegionParams.relResThres ),
+      m_absResThres( trustRegionParams.absResThres ),
+      m_scalingType( scalingType ),
       m_stencilWrapper( stencilWrapper ),
       m_fluidWrapper( fluidWrapper ),
       m_relPermWrapper( relPermWrapper ),   
@@ -624,7 +640,7 @@ public:
     GEOS_HOST_DEVICE
     StackVariables( localIndex numElems )
       : numFluxElems( numElems ),
-        nConn ( numElems * (numElems - 1) / 2 ),
+        nConn ( 0 ),
         localEps( numElems * (numElems - 1) / 2 * numEqn ),
         connFactor( 1.0 ),
         dPhi( numElems * (numElems - 1) / 2 * numEqn )
@@ -634,7 +650,7 @@ public:
     localIndex const numFluxElems;    
 
     /// Number of pairwise connections
-    localIndex const nConn; 
+    localIndex nConn; 
 
     /// Storage for the face local damping factors
     stackArray1d< real64, maxNumConn * numEqn > localEps;
@@ -664,8 +680,7 @@ public:
   void computeInflection( localIndex const iconn,
                           StackVariables & stack ) const
   {
-    localIndex k[2];   
-    localIndex connectionIndex = 0; 
+    localIndex k[2];      
 
     // loop over connection elements
     for( k[0] = 0; k[0] < stack.numFluxElems; ++k[0] )
@@ -678,16 +693,46 @@ public:
 
         real64 dPhi[numEqn]{};        
         real64 d2F[numEqn][2]{};
-        real64 eps[numEqn]{};       
+        real64 eps[numEqn]{};
+        
+        localIndex localRow[2]{-1, -1};
 
         // cell indices
         localIndex const seri[2]  = {m_seri( iconn, k[0] ), m_seri( iconn, k[1] )};
         localIndex const sesri[2] = {m_sesri( iconn, k[0] ), m_sesri( iconn, k[1] )};
         localIndex const sei[2]   = {m_sei( iconn, k[0] ), m_sei( iconn, k[1] )};
 
+        for ( integer ke = 0; ke < 2; ++ke )
+        {                       
+          if ( m_ghostRank[seri[ke]][sesri[ke]][sei[ke]] < 0 )
+          {
+            globalIndex const globalRow = m_dofNumber[seri[ke]][sesri[ke]][sei[ke]];
+            localRow[ke] = LvArray::integerConversion< localIndex >( globalRow - m_rankOffset );
+            GEOS_ASSERT_GE( localRow[ke], 0 );
+          }
+        }
+
         // loop over phases
         for( integer ip = 0; ip < m_numPhases; ++ip )
         {          
+          bool skipConnection = true;
+          for( integer ke = 0; ke < 2; ++ke )
+          {
+            if ( localRow[ke] >= 0 )
+            {              
+              if( fabs( m_localResidual[localRow[ke] + ip] ) > m_relResThres * m_resNorm && 
+                  fabs( m_localResidual[localRow[ke] + ip] ) > m_absResThres )
+              {
+                skipConnection = false;
+                break;
+              }
+            }
+          }
+          if ( skipConnection )
+          {
+            continue;
+          }
+          
           real64 phaseEps[2] {0.0, 1.0}; 
           real64 newD2F {0.0}; 
           eps[ip] = 1.0;    
@@ -725,8 +770,8 @@ public:
           }
 
           // compute directional derivatives before and after update
-          computeDirectionalDerivative(iconn, k, ip, compressibility[ip], viscosibility[ip], dPhi[ip], phaseEps[0], d2F[ip][0]);
-          computeDirectionalDerivative(iconn, k, ip, compressibility[ip], viscosibility[ip], dPhi[ip], phaseEps[1], d2F[ip][1]);
+          computeFluxDirectionalDerivative(iconn, k, ip, compressibility[ip], viscosibility[ip], dPhi[ip], phaseEps[0], d2F[ip][0]);
+          computeFluxDirectionalDerivative(iconn, k, ip, compressibility[ip], viscosibility[ip], dPhi[ip], phaseEps[1], d2F[ip][1]);
 
           // search for root of second derivative if there is an inflection surface in the Newton path
           for ( integer iter = 0; iter < m_maxIter &&
@@ -737,7 +782,7 @@ public:
             real64 slope = (d2F[ip][1] - d2F[ip][0]) / (phaseEps[1] - phaseEps[0]);
             eps[ip] = phaseEps[1] - d2F[ip][1] / slope;
 
-            computeDirectionalDerivative(iconn, k, ip, compressibility[ip], viscosibility[ip], dPhi[ip], eps[ip], newD2F);
+            computeFluxDirectionalDerivative(iconn, k, ip, compressibility[ip], viscosibility[ip], dPhi[ip], eps[ip], newD2F);
 
             if ( signbit( d2F[ip][0] ) == signbit( newD2F ) )
             {
@@ -751,11 +796,11 @@ public:
             }
           }
 
-          stack.localEps[connectionIndex * numEqn + ip] = eps[ip];
+          stack.localEps[stack.nConn] = eps[ip];
+          stack.nConn++;
           
         }  // loop over phases
 
-        connectionIndex++;
       }
     } // loop over connection elements
     
@@ -774,14 +819,14 @@ public:
    * @param[out] d2F directional second derivative at given location in the solution space
    */                                 
   GEOS_HOST_DEVICE
-  void computeDirectionalDerivative( localIndex const iconn,
-                                     localIndex const * k,
-                                     localIndex const ip,
-                                     real64 const * comp,
-                                     real64 const * visc,
-                                     real64 const dPhiv,                                     
-                                     real64 const eps,
-                                     real64 & d2F ) const
+  void computeFluxDirectionalDerivative( localIndex const iconn,
+                                         localIndex const * k,
+                                         localIndex const ip,
+                                         real64 const * comp,
+                                         real64 const * visc,
+                                         real64 const dPhiv,                                     
+                                         real64 const eps,
+                                         real64 & d2F ) const
   {
     localIndex up = dPhiv >= 0.0 ? 0 : 1;
     localIndex down = 1 - up;
@@ -803,8 +848,8 @@ public:
     real64 phaseVolFrac[2]{};
 
     real64 dP[2]{};
-    real64 dS[2]{};    
-
+    real64 dS[2]{}; 
+        
     // cell indices
     localIndex const seri[2]  = {m_seri( iconn, k[0] ), m_seri( iconn, k[1] )};
     localIndex const sesri[2] = {m_sesri( iconn, k[0] ), m_sesri( iconn, k[1] )};
@@ -812,21 +857,16 @@ public:
 
     // get pressure and saturation updates for connection elements
     for ( integer ke = 0; ke < 2; ++ke )
-    {
-      globalIndex const globalRow = m_dofNumber[seri[ke]][sesri[ke]][sei[ke]];
-      localIndex const localRow = LvArray::integerConversion< localIndex >( globalRow - m_rankOffset );
-      GEOS_ASSERT_GE( localRow, 0 );      
-
-      dP[ke] = m_localSolution[localRow] * m_globalKinkFactor;     // dP = { dP1 , dP2 }
-      dS[ke] = m_localSolution[localRow + 1] * m_globalKinkFactor; // dS = { dS1 , dS2 }    // saturation change for nonspecified phase should be negative of dS
+    { 
+      dP[ke] = m_localSolution[seri[ke]][sesri[ke]][sei[ke]][0] * m_globalKinkFactor;            // dP = { dP1 , dP2 }
+      dS[ke] = ip == 0 ? m_localSolution[seri[ke]][sesri[ke]][sei[ke]][1] * m_globalKinkFactor :
+                        -m_localSolution[seri[ke]][sesri[ke]][sei[ke]][1] * m_globalKinkFactor ; // dS = { dS1 , dS2 }           
     }
 
     // compute saturation of updated state
     for ( integer ke = 0; ke < 2; ++ke )
     {  
-      phaseVolFrac[ke] = ip == 0 ? m_phaseVolFrac[seri[ke]][sesri[ke]][sei[ke]][ip] + eps * dS[ke] :  // S = S + e.dS
-                                   m_phaseVolFrac[seri[ke]][sesri[ke]][sei[ke]][ip] - eps * dS[ke] ;
-             
+      phaseVolFrac[ke] = m_phaseVolFrac[seri[ke]][sesri[ke]][sei[ke]][ip] + eps * dS[ke]; // S = S + e.dS             
     }
 
     // get grav coef, rel perm and capillary pressure + derivatives      
@@ -842,17 +882,14 @@ public:
     m_relPermWrapper.compute(phaseVolFrac[up], ip, perm, dperm, d2perm);
     D = gravD[up] - gravD[down];   // D = g (zup - zdown)
 
-
     // get density and potential difference
     if ( eps < 0.001 )
-    {
-      // get density     
+    {           
       for ( integer ke = 0; ke < 2; ++ke )
       {
         dens[ke] = m_dens[seri[ke]][sesri[ke]][sei[ke]][0][ip];       // r = { r1 , r2 }            
       }
-
-      // get potential differece
+      
       dPhi = fabs( dPhiv );
     }
     else // (0 < eps < 1)
@@ -885,7 +922,6 @@ public:
       dPhi = fabs( dPhi );    
     }
 
-
     // compute partial second derivatives
     real64 d2Pi2 = perm * pow( comp[up] - visc[up], 2.0) * dPhi + 2 * perm * (comp[up] - visc[up]) + perm * comp[up] * (visc[up] - 1.5 * comp[up]) * dens[up] * D;
     real64 d2Pj2 = -0.5 * perm * pow( comp[down], 2.0 ) * dens[down] * D;
@@ -908,7 +944,8 @@ public:
 
     // compute directional second derivative
     d2F = d2Pi2 * pow( dP[up], 2.0 ) + d2Pj2 * pow( dP[down], 2.0 ) + d2Si2 * pow( dS[up], 2.0 ) + d2Sj2 * pow( dS[down], 2.0 )
-        + d2PiPj * 2 * dP[up] * dP[down] + d2PiSi * 2  * dP[up] * dS[up] + d2PiSj * 2  * dP[up] * dS[down] + d2PjSi * 2  * dP[down] * dS[up] + d2SiSj * 2  * dS[up] * dS[down];
+        + d2PiPj * 2 * dP[up] * dP[down] + d2PiSi * 2 * dP[up] * dS[up] + d2PiSj * 2  * dP[up] * dS[down]
+        + d2PjSi * 2 * dP[down] * dS[up] + d2SiSj * 2 * dS[up] * dS[down];
   }
 
   /**
@@ -927,18 +964,25 @@ public:
    * @param[inout] stack the stack variables
    */                                 
   GEOS_HOST_DEVICE
-  void complete( localIndex const iconn,
+  void complete( localIndex const GEOS_UNUSED_PARAM( iconn ),
                  StackVariables & stack ) const
-  {
-    GEOS_UNUSED_VAR( iconn );
-    for( integer ic = 0; ic < stack.nConn; ++ic )
+  {       
+    for (integer ic = 0; ic < stack.nConn; ++ic )
     {
-      for (integer ip = 0; ip < m_numPhases; ++ip )
-      {
-        stack.connFactor = LvArray::math::min( stack.connFactor, stack.localEps[ic * numEqn + ip] );
-      }  
-    }
+      stack.connFactor = LvArray::math::min( stack.connFactor, stack.localEps[ic] );
+    }  
+    
     stack.connFactor = LvArray::math::max( stack.connFactor, m_minFactor ); 
+
+    if ( m_scalingType == ScalingType::Local )
+    {
+      // TODO: figure out how to do this part
+      // for( integer ke = 0; ke < 2; ++ke )
+      // {
+      //   RAJA::atomicMin( parallelDeviceAtomic{}, &m_pressureScalingFactor[m_seri( iconn, ke )], stack.connFactor );      
+      //   RAJA::atomicMin( parallelDeviceAtomic{}, &m_saturationScalingFactor[m_seri( iconn, ke )], stack.connFactor );
+      // }            
+    }
   }  
 
   /**
@@ -1011,7 +1055,11 @@ protected:
   ElementViewConst< arrayView4d< real64 const, cappres::USD_CAPPRES_DS > > const m_d2PhaseCapPressure_d2PhaseVolFrac;  
 
   /// View on the local solution
-  arrayView1d< real64 const > const m_localSolution;
+  ElementViewConst< arrayView2d< real64 const, immiscibleFlow::USD_PHASE > > const m_localSolution;
+  arrayView1d< real64 const > const m_localResidual;
+
+  /// Residual norm for adaptive residual analysis
+  real64 const m_resNorm;
 
   /// Kink factor computed previously
   real64 const m_globalKinkFactor;
@@ -1020,7 +1068,23 @@ protected:
   integer const m_hasCapPressure;
 
   /// Trust region parameters
-  ImmiscibleMultiphaseFlow::TrustRegionParameters const m_trustRegionParams;
+  /// Maximum number of nonlinear iterations
+  integer const m_maxIter; // 5
+
+  /// Minimum potential difference to apply a damping factor
+  real64 const m_d2FMin; //1.0, 7000  
+
+  /// Minimum dampining factor
+  real64 const m_minFactor; // 0.1
+
+   /// Minimum relative residual threshold
+  real64 const m_relResThres; // 0.0, 0.05, 0.2
+
+  /// Minimum absolute residual threshold
+  real64 const m_absResThres; // 1e2, 0.0, 1e3  
+
+  /// Scaling type
+  ScalingType const m_scalingType;
 
   /// Reference to the wrappers
   STENCILWRAPPER const m_stencilWrapper;
@@ -1064,6 +1128,7 @@ public:
                    globalIndex const rankOffset,
                    string const dofKey,
                    arrayView1d< real64 const > const & localSolution,
+                   arrayView1d< real64 const > const & localResidual,
                    real64 const globalKinkFactor,
                    string const & solverName,
                    ElementRegionManager const & elemManager,
@@ -1072,7 +1137,9 @@ public:
                    RELPERMWRAPPER const & relPermWrapper,
                    CAPPRESWRAPPER const * capPressureWrapper,
                    integer const hasCapPressure,
-                   ImmiscibleMultiphaseFlow::TrustRegionParameters const trustRegionParams,                 
+                   real64 const resNorm,
+                   ImmiscibleMultiphaseFlow::TrustRegionParameters const trustRegionParams,  
+                   ScalingType const scalingType,               
                    real64 & inflectionFactor )
   {
     integer constexpr NUM_EQN = 2;
@@ -1088,10 +1155,10 @@ public:
     typename kernelType::RelPermAccessors relPermAccessor( elemManager, solverName );
     typename kernelType::CapPressureAccessors capPressureAccessors( elemManager, solverName );
 
-    kernelType kernel( numPhases, rankOffset, localSolution, globalKinkFactor,
+    kernelType kernel( numPhases, rankOffset, localSolution, localResidual, globalKinkFactor,
                        stencilWrapper, fluidWrapper, relPermWrapper, capPressureWrapper,
                        dofNumberAccessor, flowAccessors, fluidAccessors, relPermAccessor,
-                       capPressureAccessors, hasCapPressure, trustRegionParams );
+                       capPressureAccessors, hasCapPressure, resNorm, trustRegionParams, scalingType );
     kernelType::template launch< POLICY >( stencilWrapper.size(), kernel, inflectionFactor );    
   }
 };
@@ -1124,7 +1191,9 @@ public:
                       fields::flow::pressure,
                       fields::flow::gravityCoefficient,
                       fields::immiscibleMultiphaseFlow::phaseVolumeFraction,
-                      fields::immiscibleMultiphaseFlow::solutionUpdate >;
+                      fields::immiscibleMultiphaseFlow::solutionUpdate,
+                      fields::flow::pressureScalingFactor,
+                      fields::immiscibleMultiphaseFlow::phaseVolumeFractionScalingFactor >;
 
   using PermeabilityAccessors =
     StencilMaterialAccessors< PermeabilityBase,
@@ -1167,16 +1236,18 @@ public:
   ResidualInflectionFactorKernel( integer const numPhases,
                                   globalIndex const rankOffset,
                                   string const dofKey,
-                                  arrayView1d< real64 const > const & GEOS_UNUSED_PARAM( localSolution ),
+                                  real64 const dt,
+                                  arrayView1d< real64 const > const & localSolution,
                                   arrayView1d< real64 const > const & localResidual,
                                   real64 const resNorm,
                                   real64 const globalKinkFactor,
                                   CellElementSubRegion const & subRegion,
+                                  TwoPhaseImmiscibleFluid const & fluid,
                                   constitutive::CoupledSolidBase const & solid,
                                   STENCILWRAPPER const & stencilWrapper,
                                   FLUIDWRAPPER const & fluidWrapper,
                                   RELPERMWRAPPER const & relPermWrapper,
-                                  CAPPRESWRAPPER const * capPressureWrapper,
+                                  CAPPRESWRAPPER const * capPressureWrapper,                                  
                                   DofNumberAccessor const & dofNumberAccessor,
                                   PermeabilityAccessors const & permeabilityAccessors,
                                   ImmiscibleMultiphaseFlowAccessors const & flowAccessors,
@@ -1185,7 +1256,10 @@ public:
                                   PorosityAccessors const & poroAccessors,
                                   CapPressureAccessors const & capPressureAccessors,                    
                                   integer const hasCapPressure,
-                                  ImmiscibleMultiphaseFlow::TrustRegionParameters const trustRegionParams )
+                                  ImmiscibleMultiphaseFlow::TrustRegionParameters const trustRegionParams,
+                                  ScalingType scalingType,
+                                  arrayView1d< real64 > pressureScalingFactor,
+                                  arrayView1d< real64 > saturationScalingFactor )
     : m_numPhases( numPhases ),
       m_rankOffset( rankOffset ),
       m_dofNumber( dofNumberAccessor.toNestedViewConst() ),
@@ -1195,10 +1269,14 @@ public:
       m_gravCoef( flowAccessors.get( fields::flow::gravityCoefficient {} ) ),
       m_pres( flowAccessors.get( fields::flow::pressure {} ) ),
       m_phaseVolFrac( flowAccessors.get( fields::immiscibleMultiphaseFlow::phaseVolumeFraction {} ) ),
+      m_presArray( subRegion.getField< fields::flow::pressure >() ),
+      m_phaseVolFracArray( subRegion.getField< fields::immiscibleMultiphaseFlow::phaseVolumeFraction >() ),      
       m_permeability( permeabilityAccessors.get( fields::permeability::permeability {} ) ),
       m_dPerm_dPres( permeabilityAccessors.get( fields::permeability::dPerm_dPressure {} ) ),
       m_dens( fluidAccessors.get( fields::twophaseimmisciblefluid::phaseDensity {} ) ),
       m_dDens_dPres( fluidAccessors.get( fields::twophaseimmisciblefluid::dPhaseDensity {} ) ),
+      m_densArray( fluid.phaseDensity() ),
+      m_dDens_dPresArray( fluid.dPhaseDensity() ),      
       m_phaseVisc( fluidAccessors.get( fields::twophaseimmisciblefluid::phaseViscosity {} ) ),
       m_dPhaseVisc( fluidAccessors.get( fields::twophaseimmisciblefluid::dPhaseViscosity {} ) ),
       m_phaseRelPerm( relPermAccessors.get( fields::relperm::phaseRelPerm {} ) ),
@@ -1208,28 +1286,38 @@ public:
       m_volume( subRegion.getElementVolume() ),
       m_porosity( solid.getPorosity() ), // poroAccessors.get( fields::porosity::porosity {} )
       m_dPoro_dPres( solid.getDporosity_dPressure() ), // poroAccessors.get( fields::porosity::dPorosity_dPressure {} )
-      m_localSolution( flowAccessors.get( fields::immiscibleMultiphaseFlow::solutionUpdate {} ) ), // localSolution
+      m_localSolution( flowAccessors.get( fields::immiscibleMultiphaseFlow::solutionUpdate {} ) ),
       m_localResidual( localResidual ),
+      m_localSolutionArray( localSolution ),
+      m_dt( dt ),
       m_resNorm( resNorm ),
-      m_globalKinkFactor( globalKinkFactor ),  
+      m_globalKinkFactor( globalKinkFactor ),
+      m_pressureScalingFactorArray( pressureScalingFactor ),
+      m_saturationScalingFactorArray( saturationScalingFactor ),  
+      m_pressureScalingFactor( flowAccessors.get( fields::flow::pressureScalingFactor {} ) ),
+      m_saturationScalingFactor( flowAccessors.get( fields::immiscibleMultiphaseFlow::phaseVolumeFractionScalingFactor {} ) ),
       m_hasCapPressure( hasCapPressure ),
       m_maxIter( trustRegionParams.maxIter ),
       m_d2RMin( trustRegionParams.d2RMin ),
       m_minFactor( trustRegionParams.minInfFactor ),
       m_relResThres( trustRegionParams.relResThres ),
       m_absResThres( trustRegionParams.absResThres ),
+      m_useAccum( trustRegionParams.useAccum ),
+      m_scalingType( scalingType ),
       m_stencilWrapper( stencilWrapper ),
       m_fluidWrapper( fluidWrapper ),
       m_relPermWrapper( relPermWrapper ),   
-      m_capPressureWrapper( capPressureWrapper ),      
+      m_capPressureWrapper( capPressureWrapper ),          
       m_seri( stencilWrapper.getElementRegionIndices() ),
       m_sesri( stencilWrapper.getElementSubRegionIndices() ),
       m_sei( stencilWrapper.getElementIndices() )
-  { GEOS_UNUSED_VAR( poroAccessors );}  
+  { GEOS_UNUSED_VAR( poroAccessors ); }  
 
   struct StackVariables
   {
   public:
+    /// Element index
+    localIndex elemIndex = -1;
   
     /// Storage for the phase local damping factors    
     real64 localEps[numEqn]{ 1.0, 1.0 };
@@ -1239,7 +1327,72 @@ public:
 
     /// Storage for the face potential differences
     real64 dPhi[maxNumConn][numEqn]{};
+
+    /// Index of the local row corresponding to this element
+    localIndex localRow = -1;
+
+    // Element pressure before update and update value
+    real64 pressure = 0.0;
+    real64 dPressure = 0.0;
+
+    /// Element phase volume fraction before update and update value
+    real64 phaseVolFrac[numEqn]{};
+    real64 dPhaseVolFrac = 0.0;
+
+    /// Element volume
+    real64 volume = 0.0;
+
+    /// Element porosity before update
+    real64 porosity = 0.0;
+
+    /// Rock compressibility
+    real64 rockComp = 0.0;
+
+    /// Phase density before update
+    real64 density[numEqn]{};
+
+    /// Phase compressibility
+    real64 fluidComp[numEqn]{};
   };  
+
+  /**
+   * @brief Performs the setup phase for the kernel.
+   * @param[in] ei the element index
+   * @param[in] stack the stack variables
+   */
+  GEOS_HOST_DEVICE
+  void setup( localIndex const ei,
+              StackVariables & stack ) const
+  {
+    stack.elemIndex = ei;
+    
+    globalIndex const globalRow = m_dofNumberElem[ei];
+    stack.localRow = LvArray::integerConversion< localIndex >( globalRow - m_rankOffset );
+    GEOS_ASSERT_GE( stack.localRow, 0 );
+
+    stack.volume = m_volume[ei];
+
+    stack.porosity = m_porosity[ei][0];
+
+    real64 dPoro_dP = m_dPoro_dPres[ei][0];
+    stack.rockComp = dPoro_dP / stack.porosity;
+
+    stack.pressure = m_presArray[ei];
+
+    stack.dPressure = m_localSolutionArray[stack.localRow];    
+
+    stack.dPhaseVolFrac = m_localSolutionArray[stack.localRow + 1];
+
+    for ( integer ip = 0; ip < m_numPhases; ++ip )
+    {
+      stack.density[ip] = m_densArray[ei][0][ip];
+      
+      real64 const dDens_dP = m_dDens_dPresArray[ei][0][ip][Deriv::dP];
+      stack.fluidComp[ip] = dDens_dP / stack.density[ip];     
+      
+      stack.phaseVolFrac[ip] = m_phaseVolFracArray[ei][ip];
+    }    
+  }
 
   /**
    * @brief Compute the local inflection damping factors for the connection
@@ -1253,12 +1406,14 @@ public:
     // get list of with the connection number associated to the faces of the current cell
     arraySlice1d< localIndex const > const connList = m_connMap[ei];
     integer numConns = m_connMap.sizeOfArray( ei );
+    
+    localIndex const localRow = stack.localRow;    
 
     localIndex seri[maxNumConn][2]{};
     localIndex sesri[maxNumConn][2]{};
     localIndex sei[maxNumConn][2]{};
 
-    real64 transmissibility[maxNumConn]{};    
+    real64 transmissibility[maxNumConn]{};     
 
     // build cell maps (assuming only 2 cells per connection) and get geometric transmissibilities
     for ( integer conn = 0; conn < numConns; ++conn )
@@ -1288,24 +1443,22 @@ public:
     // analyze residual inflections for each phase
     for( integer ip = 0; ip < m_numPhases; ++ip )
     {        
-      // Adaptive residual analysis
-      globalIndex const globalRow = m_dofNumberElem[ei];
-      localIndex const localRow = LvArray::integerConversion< localIndex >( globalRow - m_rankOffset );
-      GEOS_ASSERT_GE( localRow, 0 );  
-      if( fabs( m_localResidual[localRow + ip] ) < m_relResThres * m_resNorm ||
+      // Adaptive residual analysis        
+      if( fabs( m_localResidual[localRow + ip] ) < m_relResThres * m_resNorm &&
           fabs( m_localResidual[localRow + ip] ) < m_absResThres )        
       {           
         continue; // skip analysis if phase residual is below minimum threshold
-      }      
+      }          
       
-      real64 dPhi[maxNumConn]{};      
+      real64 dPhi[maxNumConn]{};       
       real64 compressibility[maxNumConn][2]{};
       real64 viscosibility[maxNumConn][2]{};              
 
+      integer signFlux[maxNumConn]{};
       real64 phaseEps[2]{0.0, 1.0}; 
       real64 d2F[maxNumConn][2]{};
-      real64 d2R[2]{};      
-      real64 newD2F[maxNumConn]{};            
+      real64 d2A[2]{}; 
+      real64 d2R[2]{};                        
 
       // loop through connections to compute directional derivative at eps = 0 and eps = 1
       for ( integer conn = 0; conn < numConns; ++conn )
@@ -1344,14 +1497,33 @@ public:
           dPhi[conn] += signPotDiff[ke] * pot;           // dPhi = P1 - P2 - rho g (z1 - z2) - Pc1 + Pc2          
         }
 
-        // compute directional derivatives before and after update
-        computeDirectionalDerivative(iconn, ip, transmissibility[conn], compressibility[conn], viscosibility[conn], dPhi[conn], phaseEps[0], d2F[conn][0]);
-        computeDirectionalDerivative(iconn, ip, transmissibility[conn], compressibility[conn], viscosibility[conn], dPhi[conn], phaseEps[1], d2F[conn][1]);
+        // determine sign of the flux
+        if( (ei == sei[conn][0] && signFlux[conn] >= 0) ||
+            (ei == sei[conn][1] && signFlux[conn] < 0 ) )
+        {
+          signFlux[conn] = 1;
+        }
+        else
+        {
+          signFlux[conn] = -1;
+        }
 
-        d2R[0] += d2F[conn][0];
-        d2R[1] += d2F[conn][1];
+        // compute directional derivatives before and after update
+        computeFluxDirectionalDerivative( iconn, ip, transmissibility[conn], compressibility[conn], viscosibility[conn], dPhi[conn], phaseEps[0], d2F[conn][0] );
+        computeFluxDirectionalDerivative( iconn, ip, transmissibility[conn], compressibility[conn], viscosibility[conn], dPhi[conn], phaseEps[1], d2F[conn][1] );
+
+        d2R[0] += signFlux[conn] * d2F[conn][0];
+        d2R[1] += signFlux[conn] * d2F[conn][1];
 
       } // connection loop for initial derivative computations
+      if ( m_useAccum )
+      {
+        // compute accumulation term of derivative
+        computeAccumDirectionalDerivative( ip, stack, phaseEps[0], d2A[0] );
+        computeAccumDirectionalDerivative( ip, stack, phaseEps[1], d2A[1] );
+        d2R[0] += d2A[0];
+        d2R[1] += d2A[1];
+      }      
 
       // check for presence of inflection
       for ( integer iter = 0; iter < m_maxIter &&
@@ -1359,6 +1531,8 @@ public:
                               fabs( d2R[0] ) > m_d2RMin &&
                               fabs( d2R[1] ) > m_d2RMin; ++iter )
       {
+        real64 newD2F[maxNumConn]{};
+        real64 newD2A{};
         real64 newD2R{};
         real64 slope = (d2R[1] - d2R[0]) / (phaseEps[1] - phaseEps[0]);
         eps[ip] = phaseEps[1] - d2R[1] / slope;        
@@ -1367,10 +1541,15 @@ public:
         for ( integer conn = 0; conn < numConns; ++conn )
         {        
           localIndex const iconn = connList[conn];
-          computeDirectionalDerivative(iconn, ip, transmissibility[conn], compressibility[conn], viscosibility[conn], dPhi[conn], eps[ip], newD2F[conn]);
+          computeFluxDirectionalDerivative( iconn, ip, transmissibility[conn], compressibility[conn], viscosibility[conn], dPhi[conn], eps[ip], newD2F[conn] );
 
-          newD2R += newD2F[conn];
+          newD2R += signFlux[conn] * newD2F[conn];
         } // connection loop
+        if ( m_useAccum )
+        {
+          computeAccumDirectionalDerivative( ip, stack, eps[ip], newD2A );
+          newD2R += newD2A;
+        }        
 
         if ( signbit( d2R[0] ) == signbit( newD2R ) )
         {
@@ -1387,8 +1566,7 @@ public:
 
       stack.localEps[ip] = eps[ip];
       
-    } // loop through phases
-    
+    } // loop through phases    
   }
 
   /**
@@ -1407,14 +1585,14 @@ public:
    * @param[out] d2F directional second derivative at given location in the solution space
    */                                 
   GEOS_HOST_DEVICE
-  void computeDirectionalDerivative( localIndex const iconn,
-                                     localIndex const ip,
-                                     real64 const trans,
-                                     real64 const * comp,
-                                     real64 const * visc,
-                                     real64 const dPhiv,                                     
-                                     real64 const eps,
-                                     real64 & d2F ) const
+  void computeFluxDirectionalDerivative( localIndex const iconn,
+                                         localIndex const ip,
+                                         real64 const trans,
+                                         real64 const * comp,
+                                         real64 const * visc,
+                                         real64 const dPhiv,                                     
+                                         real64 const eps,
+                                         real64 & d2F ) const
   {
     localIndex up = dPhiv >= 0.0 ? 0 : 1;
     localIndex down = 1 - up;
@@ -1444,39 +1622,21 @@ public:
     localIndex const sesri[2] = {m_sesri( iconn, 0 ), m_sesri( iconn, 1 )};
     localIndex const sei[2]   = {m_sei( iconn, 0 ), m_sei( iconn, 1 )};
 
-    // get pressure and saturation updates for connection elements
-    // for ( integer ke = 0; ke < 2; ++ke )
-    // {
-    //   globalIndex const globalRow = m_dofNumber[seri[ke]][sesri[ke]][sei[ke]];
-    //   localIndex const localRow = LvArray::integerConversion< localIndex >( globalRow - m_rankOffset );
-    //   GEOS_ASSERT_GE( localRow, 0 );      
-
-    //   dP[ke] = m_localSolution[localRow] * m_globalKinkFactor;     // dP = { dP1 , dP2 }
-    //   dS[ke] = m_localSolution[localRow + 1] * m_globalKinkFactor; // dS = { dS1 , dS2 }
-    // }
+    // get pressure and saturation updates for connection elements    
     for ( integer ke = 0; ke < 2; ++ke )
     {
-      dP[ke] = m_localSolution[seri[ke]][sesri[ke]][sei[ke]][0];     // dP = { dP1 , dP2 }
-      dS[ke] = m_localSolution[seri[ke]][sesri[ke]][sei[ke]][1];     // dS = { dS1 , dS2 }
+      real64 const presFactor = m_scalingType == ScalingType::Global ? m_globalKinkFactor : m_pressureScalingFactor[seri[ke]][sesri[ke]][sei[ke]];
+      real64 const satFactor  = m_scalingType == ScalingType::Global ? m_globalKinkFactor : m_saturationScalingFactor[seri[ke]][sesri[ke]][sei[ke]];
+      
+      dP[ke] = m_localSolution[seri[ke]][sesri[ke]][sei[ke]][0] * presFactor;                // dP = { dP1 , dP2 }
+      dS[ke] = ip == 0 ? m_localSolution[seri[ke]][sesri[ke]][sei[ke]][1] * satFactor :     // dS = { dS1 , dS2 }
+                        -m_localSolution[seri[ke]][sesri[ke]][sei[ke]][1] * satFactor ;     
     }
 
     // compute saturation of updated state
     for ( integer ke = 0; ke < 2; ++ke )
     {  
-      phaseVolFrac[ke] = ip == 0 ? m_phaseVolFrac[seri[ke]][sesri[ke]][sei[ke]][ip] + eps * dS[ke] :  // S = S +- e.dS
-                                   m_phaseVolFrac[seri[ke]][sesri[ke]][sei[ke]][ip] - eps * dS[ke] ;
-      
-      // check physical bounds for saturation
-      if ( phaseVolFrac[ke] < 0.0 )
-      {
-        phaseVolFrac[ke] = 0.0;
-        dS[ke] = -m_phaseVolFrac[seri[ke]][sesri[ke]][sei[ke]][ip]; // dS' = S' - S0
-      }
-      else if ( phaseVolFrac[ke] > 1.0 )
-      {
-        phaseVolFrac[ke] = 1.0;
-        dS[ke] = 1.0 - m_phaseVolFrac[seri[ke]][sesri[ke]][sei[ke]][ip]; // dS' = S' - S0
-      }
+      phaseVolFrac[ke] = m_phaseVolFrac[seri[ke]][sesri[ke]][sei[ke]][ip] + eps * dS[ke]; // S = { S1 + eps.dS1 , S2 + eps.dS2 }      
     }
 
     // get grav coef, rel perm and capillary pressure + derivatives      
@@ -1498,15 +1658,13 @@ public:
 
     // get density, viscosity and potential difference
     if ( eps < 0.001 )
-    {
-      // get density and viscosity   
+    {         
       for ( integer ke = 0; ke < 2; ++ke )
       {
         dens[ke] = m_dens[seri[ke]][sesri[ke]][sei[ke]][0][ip];                 // r  = { r1  , r2  }
         viscosity[ke] = m_phaseVisc[seri[ke]][sesri[ke]][sei[ke]][0][ip];       // mu = { mu1 , mu2 }            
       }
-
-      // get potential differece
+      
       dPhi = fabs( dPhiv );
     }
     else // (0 < eps < 1)
@@ -1514,14 +1672,7 @@ public:
       // compute pressure and density of updated state
       for ( integer ke = 0; ke < 2; ++ke )
       {
-        pressure[ke] = m_pres[seri[ke]][sesri[ke]][sei[ke]] + eps * dP[ke];  // P = P1 || P2
-
-        // check physical bounds for pressure
-        if ( pressure[ke] < 0.0 )
-        {
-          pressure[ke] = 0.0;
-          dP[ke] = -m_pres[seri[ke]][sesri[ke]][sei[ke]]; // dP' = P' - P0
-        }        
+        pressure[ke] = m_pres[seri[ke]][sesri[ke]][sei[ke]] + eps * dP[ke];  // P = P1 + eps.dP1 || P2 + eps.dP2      
 
         real64 dDens;   
         real64 dVisc;    
@@ -1576,6 +1727,68 @@ public:
   }
 
   /**
+   * @brief Compute the directional second derivative of the phase accumulation function
+   *        at a specific location in the solution space, given by the location 
+   *        at the previous iteration plus a restricted update
+   * @param[in] iconn the connection index
+   * @param[in] k the cell index in the connection
+   * @param[in] ip the phase index
+   * @param[in] trans the connection transmissibility
+   * @param[in] comp cell compressibilities
+   * @param[in] visc cell viscosibility
+   * @param[in] dPhiv phase potential difference before update  
+   * @param[in] eps restriction factor that determines where in the update direction to evaluate
+   *                the directional second derivative 
+   * @param[out] d2F directional second derivative at given location in the solution space
+   */                                 
+  GEOS_HOST_DEVICE
+  void computeAccumDirectionalDerivative( localIndex const ip,
+                                          StackVariables const stack,                                                                              
+                                          real64 const eps,
+                                          real64 & d2A ) const
+  {
+    // clear working variables
+    real64 density{};
+    real64 porosity{}; 
+ 
+    // localIndex const elemIndex = stack.elemIndex;
+    real64 const volume = stack.volume;
+    real64 const rockComp = stack.rockComp;
+    real64 const fluidComp = stack.fluidComp[ip];
+
+    real64 const presFactor = m_scalingType == ScalingType::Global ? m_globalKinkFactor : m_pressureScalingFactorArray[stack.elemIndex];
+    real64 const satFactor  = m_scalingType == ScalingType::Global ? m_globalKinkFactor : m_saturationScalingFactorArray[stack.elemIndex];
+
+    real64 dP = stack.dPressure * presFactor;
+    real64 dS = ip == 0 ? stack.dPhaseVolFrac * satFactor :
+                         -stack.dPhaseVolFrac * satFactor ;    // dS = dS || -dS    
+    
+    real64 phaseVolFrac = stack.phaseVolFrac[ip] + eps * dS;             // S = S + eps.dS
+
+    porosity = stack.porosity;     
+
+    // compute density and porosity of updated state
+    if ( eps < 0.001 )
+    {
+      density = stack.density[ip];  // r = r1 || r2      
+    }
+    else // (0 < eps < 1)
+    {
+      real64 pressure = stack.pressure + eps * dP;                         // P = P + eps.dP
+      
+      real64 dDens, visc, dVisc;  
+      m_fluidWrapper.compute( pressure, ip, density, dDens, visc, dVisc );
+      //m_poroWrapper.compute( elemIndex, pressure, porosity );                       TODO: need to get porosityWrapper here to update porosity value
+    }    
+
+    // compute partial second derivatives
+    real64 d2Pi2 = volume / m_dt * density * porosity * phaseVolFrac * pow( rockComp + fluidComp, 2.0 );
+    real64 d2PiSi = volume / m_dt * density * porosity * (rockComp + fluidComp);
+
+    d2A = d2Pi2 * pow( dP, 2.0 ) + d2PiSi * 2 * dP * dS;
+  }
+
+  /**
    * @brief Return true for negative numbers and false for non-negative ones
    * @param[in] x number to check sign
    */                                 
@@ -1611,6 +1824,12 @@ public:
       stack.elemFactor = LvArray::math::min( stack.elemFactor, stack.localEps[ip] );
     }   
     stack.elemFactor = LvArray::math::max( stack.elemFactor, m_minFactor );
+
+    if ( m_scalingType == ScalingType::Local)
+    {
+      m_pressureScalingFactorArray[ei] *= stack.elemFactor;
+      m_saturationScalingFactorArray[ei] *= stack.elemFactor;
+    }    
   }  
 
   /**
@@ -1640,6 +1859,7 @@ public:
       
       typename KERNEL_TYPE::StackVariables stack;
       
+      kernelComponent.setup( ei, stack );
       kernelComponent.computeInflection( ei, stack );
       kernelComponent.complete( ei, stack );
 
@@ -1675,6 +1895,9 @@ protected:
   ElementViewConst< arrayView1d< real64 const > > const m_pres;
   ElementViewConst< arrayView2d< real64 const, immiscibleFlow::USD_PHASE > > const m_phaseVolFrac;  
 
+  arrayView1d< real64 const > const m_presArray;
+  arrayView2d< real64 const, immiscibleFlow::USD_PHASE > const m_phaseVolFracArray;  
+
   /// Views on permeability
   ElementViewConst< arrayView3d< real64 const > > m_permeability;
   ElementViewConst< arrayView3d< real64 const > > m_dPerm_dPres;
@@ -1682,6 +1905,9 @@ protected:
   /// Views on fluid density
   ElementViewConst< arrayView3d< real64 const, constitutive::multifluid::USD_PHASE > > const m_dens;
   ElementViewConst< arrayView4d< real64 const, constitutive::multifluid::USD_PHASE_DC > > const m_dDens_dPres;
+
+  arrayView3d< real64 const, constitutive::multifluid::USD_PHASE > const m_densArray;
+  arrayView4d< real64 const, constitutive::multifluid::USD_PHASE_DC > const m_dDens_dPresArray;
 
   /// Views on the phase viscosities
   ElementViewConst< arrayView3d< real64 const, constitutive::multifluid::USD_PHASE > > const m_phaseVisc;
@@ -1698,22 +1924,33 @@ protected:
   ElementViewConst< arrayView4d< real64 const, cappres::USD_CAPPRES_DS > > const m_d2PhaseCapPressure_d2PhaseVolFrac;
 
   /// View on the element volumes
-  arrayView1d< real64 const > const m_volume;
+  arrayView1d< real64 const > const m_volume;  
 
   /// Views on the porosity
   arrayView2d< real64 const > const m_porosity;
   arrayView2d< real64 const > const m_dPoro_dPres;
 
   /// View on the local solution and residual
-  //arrayView1d< real64 const > const m_localSolution; 
   ElementViewConst< arrayView2d< real64 const, immiscibleFlow::USD_PHASE > > const m_localSolution;
   arrayView1d< real64 const > const m_localResidual;
+
+  arrayView1d< real64 const > const m_localSolutionArray;
+
+  /// Time-step size
+  real64 const m_dt;
 
   /// Residual norm for adaptive residual analysis
   real64 const m_resNorm;
 
   /// Kink factor computed previously
   real64 const m_globalKinkFactor;
+
+  /// View on the scaling factors
+  arrayView1d< real64 > const m_pressureScalingFactorArray;
+  arrayView1d< real64 > const m_saturationScalingFactorArray;
+
+  ElementViewConst< arrayView1d< real64 const > > const m_pressureScalingFactor;
+  ElementViewConst< arrayView1d< real64 const > > const m_saturationScalingFactor;
 
   /// Flags
   integer const m_hasCapPressure;
@@ -1734,11 +1971,18 @@ protected:
   /// Minimum absolute residual threshold
   real64 const m_absResThres; // 0.0  
 
+  /// Flag to indicate whether to use accumulation term
+  integer const m_useAccum;
+
+  /// Scaling type
+  ScalingType m_scalingType;
+
   /// Reference to the wrappers
   STENCILWRAPPER const m_stencilWrapper;
   FLUIDWRAPPER const m_fluidWrapper;
   RELPERMWRAPPER const m_relPermWrapper;
   CAPPRESWRAPPER const * m_capPressureWrapper;
+  //POROWRAPPER const * m_poroWrapper;
 
   /// Connection to element maps
   typename STENCILWRAPPER::IndexContainerViewConstType const m_seri;
@@ -1777,20 +2021,25 @@ public:
   createAndLaunch( integer const numPhases,
                    globalIndex const rankOffset,
                    string const dofKey,
+                   real64 const dt,
                    arrayView1d< real64 const > const & localSolution,
                    arrayView1d< real64 const > const & localResidual,
                    real64 const globalKinkFactor,
                    string const & solverName,
                    ElementRegionManager const & elemManager,
                    CellElementSubRegion const & subRegion,
+                   TwoPhaseImmiscibleFluid const & fluid,
                    constitutive::CoupledSolidBase const & solid,
                    STENCILWRAPPER const & stencilWrapper,
                    FLUIDWRAPPER const & fluidWrapper,
                    RELPERMWRAPPER const & relPermWrapper,
-                   CAPPRESWRAPPER const * capPressureWrapper,
+                   CAPPRESWRAPPER const * capPressureWrapper,                   
                    integer const hasCapPressure,
                    real64 const resNorm,
-                   ImmiscibleMultiphaseFlow::TrustRegionParameters const trustRegionParams,             
+                   ImmiscibleMultiphaseFlow::TrustRegionParameters const trustRegionParams,
+                   ScalingType scalingType,
+                   arrayView1d< real64 > pressureScalingFactor,
+                   arrayView1d< real64 > saturationScalingFactor,             
                    real64 & inflectionFactor )
   {
     if ( subRegion.getConnectionMap().size() == 0 )
@@ -1814,10 +2063,11 @@ public:
     typename kernelType::PorosityAccessors poroAccessors( elemManager, solverName );
     typename kernelType::CapPressureAccessors capPressureAccessors( elemManager, solverName );
 
-    kernelType kernel( numPhases, rankOffset, dofKey, localSolution, localResidual, resNorm, globalKinkFactor, subRegion,
-                       solid, stencilWrapper, fluidWrapper, relPermWrapper, capPressureWrapper,
+    kernelType kernel( numPhases, rankOffset, dofKey, dt, localSolution, localResidual, resNorm, globalKinkFactor, subRegion,
+                       fluid, solid, stencilWrapper, fluidWrapper, relPermWrapper, capPressureWrapper,
                        dofNumberAccessor, permeabilityAccessors, flowAccessors, fluidAccessors, 
-                       relPermAccessors, poroAccessors, capPressureAccessors, hasCapPressure, trustRegionParams );
+                       relPermAccessors, poroAccessors, capPressureAccessors, hasCapPressure, trustRegionParams,
+                       scalingType, pressureScalingFactor, saturationScalingFactor );
     kernelType::template launch< POLICY >( subRegion.size(), kernel, inflectionFactor );    
   }
 };
