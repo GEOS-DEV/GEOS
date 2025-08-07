@@ -213,7 +213,7 @@ public:
    */
   ConvergenceStatistics();
 
-  /// State of csv output. True when writeStatistics in solver is set to 2
+  /// State of csv output. True when writeSolver is set to 2
   bool m_csvOutput = false;
 
   /// The time at the beginning of the step

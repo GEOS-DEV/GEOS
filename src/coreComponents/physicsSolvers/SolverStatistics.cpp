@@ -88,7 +88,7 @@ IterationsStatistics::IterationsStatistics( string const & name, Group * const p
   m_iterationCSVLayout->addColumns( { "Number of time steps", "Number of time step cuts",
                                       "Successful configuration", "Successful nonlinear", "Successful linear",
                                       "Discarded configuration", "Discarded nonlinear", "Discarded linear",
-                                      "Setup time", "Solve time" } );
+                                      "Setup time", "Solve time"} );
 }
 
 void IterationsStatistics::resetCurrentTimeStepStatistics()
@@ -182,7 +182,7 @@ void IterationsStatistics::outputStatistics()
   {
     TableLayout iterationLogLayout ( GEOS_FMT( "{} iterations", getParent().getName()), {"", "Value"} );
 
-  TableTextFormatter const statsFormatter( iterationLogLayout );
+    TableTextFormatter const statsFormatter( iterationLogLayout );
 
     TableData iterationDataLog;
     iterationDataLog.addRow( "Time steps", m_numTimeSteps );
@@ -194,7 +194,8 @@ void IterationsStatistics::outputStatistics()
     iterationDataLog.addRow( "Discarded nonlinear iterations", m_numDiscardedNonlinearIterations );
     iterationDataLog.addRow( "Discarded linear iterations", m_numDiscardedLinearIterations );
 
-  GEOS_LOG_RANK_0( statsFormatter.toString( iterationDataLog ));
+    GEOS_LOG_RANK_0( statsFormatter.toString( iterationDataLog ));
+  }
 }
 
 ConvergenceStatistics::ConvergenceStatistics()
@@ -237,7 +238,7 @@ void ConvergenceStatistics::writeConvergenceStatsToTable()
       header.emplace_back( residual.first );
     }
     m_convergenceLayout->addColumns( header );
-    // open the output file and write the header
+
     m_logStream.open( m_convergenceFilename );
     m_convergenceFormatter.reset( new TableCSVFormatter( *m_convergenceLayout ));
     m_logStream << m_convergenceFormatter->headerToString( );

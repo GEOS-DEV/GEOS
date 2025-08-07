@@ -875,6 +875,7 @@ SolidMechanicsLagrangianFEM::
       constitutiveRelation.saveConvergedState();
     } );
   } );
+
 }
 
 void SolidMechanicsLagrangianFEM::implicitStepComplete( real64 const & GEOS_UNUSED_PARAM( time_n ),
