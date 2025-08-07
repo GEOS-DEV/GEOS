@@ -863,7 +863,6 @@ real64 PhysicsSolverBase::nonlinearImplicitStep( real64 const & time_n,
 
         if( isConfigurationLoopConverged )
         {
-          std::cout <<" here 0"<< std::endl;
 
           break; // get out of configuration loop coz everything converged.
         }
@@ -1034,7 +1033,6 @@ bool PhysicsSolverBase::solveNonlinearSystem( real64 const & time_n,
                                        maxAllowedResidualNormString,
                                        m_nonlinearSolverParameters.m_maxAllowedResidualNorm )  );
       isNewtonConverged = false;
-      std::cout <<" here 2"<< std::endl;
       break;
     }
 
@@ -1087,7 +1085,6 @@ bool PhysicsSolverBase::solveNonlinearSystem( real64 const & time_n,
           // if line search failed, then break out of the main Newton loop. Timestep will be cut.
           GEOS_LOG_LEVEL_RANK_0( logInfo::LineSearch,
                                  "        Line search failed to produce reduced residual. Exiting Newton Loop." );
-          std::cout <<" here 3"<< std::endl;
 
           break;
         }
@@ -1148,7 +1145,6 @@ bool PhysicsSolverBase::solveNonlinearSystem( real64 const & time_n,
       {
         // TODO try chopping (similar to line search)
         GEOS_LOG_RANK_0( GEOS_FMT( "    {}: Solution check failed. Newton loop terminated.", getName()) );
-        std::cout <<" here 4"<< std::endl;
         break;
       }
 
@@ -1164,7 +1160,6 @@ bool PhysicsSolverBase::solveNonlinearSystem( real64 const & time_n,
     }
 
     lastResidual = residualNorm;
-    std::cout << "solver name " << getName()<< newtonIter << std::endl;
     if( m_writeStatistics >= 2 )
     {
       getConvergenceStats().updateSolverStep( time_n, stepDt, cycleNumber, newtonIter );
