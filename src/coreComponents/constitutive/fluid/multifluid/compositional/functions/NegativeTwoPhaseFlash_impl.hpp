@@ -953,7 +953,6 @@ void calculateResidualAndJacobian_gen( int const numComps,
   jacobian[numComps][numComps] = sum_j_N_V;
 }
 
-
 } // namespace compositional
 } // namespace constitutive
 } // namespace geos

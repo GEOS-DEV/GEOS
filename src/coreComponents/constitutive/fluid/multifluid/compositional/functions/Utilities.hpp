@@ -66,7 +66,7 @@ static real64 normalizeComposition( integer const numComps,
  * @brief Checks if a composition array has numerically small values
  * @param[in] numComps number of values in the composition array
  * @param[in] composition composition to be checked
- * @return true of there is one zero value
+ * @return true if there is one zero value
  */
 template< integer USD >
 GEOS_HOST_DEVICE

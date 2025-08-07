@@ -94,6 +94,7 @@ public:
     // Check if k-Values need to be initialised
     auto kVapourLiquid = kValues[0];
     bool const needInitialisation = (pureComponent < 0) && hasZero( m_numComponents, kVapourLiquid.toSliceConst() );
+
     if( needInitialisation )
     {
       if( m_flashData.liquidEos == EquationOfStateType::SoreideWhitson )
@@ -137,6 +138,12 @@ public:
                                                 unstableMixture,
                                                 incipientEquationOfState,
                                                 incipientComposition.toSlice() );
+    }
+
+    // Pure mixtures are always stable
+    if( 0 <= pureComponent )
+    {
+      unstableMixture = false;
     }
 
     // If the stability test failed to converge to a stationary point then we will assume the mixture is unstable

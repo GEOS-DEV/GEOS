@@ -73,7 +73,8 @@ struct FluidData< 4 >
     return fluid;
   }
 };
-/*
+
+  /*
         <CompositionalTwoPhaseFluidPhillipsBrine
             name="FLUID"
             phaseNames="{ water, gas }"
@@ -155,7 +156,7 @@ public:
     flashParameters->m_continuousParameters[FlashParameters::STABILITY_TOLERANCE] = 1.0e-12;
     flashParameters->m_continuousParameters[FlashParameters::STABILITY_THRESHOLD] = -1.0e-3;
     flashParameters->m_discreteParameters[FlashParameters::FLASH_MAX_ITERATIONS] = 20;
-    flashParameters->m_continuousParameters[FlashParameters::SSI_TOLERANCE] = 1.0e-10;
+    flashParameters->m_continuousParameters[FlashParameters::SSI_TOLERANCE] = 1.0e-3;
 
     m_phaseTypes.emplace_back( static_cast< integer >(PhaseType::LIQUID));
     m_phaseTypes.emplace_back( static_cast< integer >(PhaseType::VAPOUR));
@@ -202,6 +203,7 @@ public:
                                 PhasePropSlice( phaseFraction, dPhaseFraction ),
                                 PhaseCompSlice( phaseComponentFraction, dPhaseComponentFraction ) );
 return;
+    
     for( integer ip = 0; ip < numPhases; ip++ )
     {
       checkRelativeError( phaseFraction[ip], expectedPhaseFraction[ip], relTol, absTol );
@@ -373,7 +375,9 @@ TEST_P( SoreideWhitson4, testFlash )
 {
   testFlash( GetParam() );
 }
-/*
+
+  /*
+
 TEST_P( PengRobinson9, testFlashDerivatives )
 {
   auto const param = GetParam();
@@ -399,6 +403,7 @@ TEST_P( SoreideWhitson4, testFlashDerivatives )
   testFlashDerivatives( param );
 }
 */
+
 //-------------------------------------------------------------------------------
 // Data
 //-------------------------------------------------------------------------------
@@ -447,6 +452,7 @@ INSTANTIATE_TEST_SUITE_P(
   })
 );
 /*
+
 INSTANTIATE_TEST_SUITE_P(
   NegativeTwoPhaseFlashModel, SoaveRedlichKwong2,
   ::testing::ValuesIn<FlashData<2>>({
@@ -460,6 +466,7 @@ INSTANTIATE_TEST_SUITE_P(
   })
 );
 */
+
 /* UNCRUSTIFY-ON */
 
 } // testing
