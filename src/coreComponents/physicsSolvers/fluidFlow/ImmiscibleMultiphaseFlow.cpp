@@ -1486,7 +1486,7 @@ ImmiscibleMultiphaseFlow::scalingForSystemSolution( DomainPartition & domain,
   // Check for stagnation and avoid scaling if detected
   bool stagDetected = false;
   real64 const stagTol = 1.0e-5;
-  if( (residualNorm - m_prevResidualNorm) < stagTol && (residualNorm - m_prevResidualNorm2) < stagTol )
+  if( fabs(residualNorm - m_prevResidualNorm) < stagTol && fabs(residualNorm - m_prevResidualNorm2) < stagTol )
   {
     stagDetected = true;
   }
