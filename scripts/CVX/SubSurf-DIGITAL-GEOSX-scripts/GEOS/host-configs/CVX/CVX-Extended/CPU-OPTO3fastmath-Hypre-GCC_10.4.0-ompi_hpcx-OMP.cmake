@@ -1,1 +1,0 @@
-CPU-OPTO3fastmath-Hypre-GCC-ompi_hpcx-OMP.cmake
