@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
  * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
@@ -191,7 +191,7 @@ private:
    * @brief Getter for the aquifer water phase component names
    * @return an array storing the water phase component names
    */
-  arrayView1d< string const > getWaterPhaseComponentNames() const { return m_phaseComponentNames.toViewConst(); }
+  string_array const & getWaterPhaseComponentNames() const { return m_phaseComponentNames; }
 
   /**
    * @brief Flag to allow all phases to flow into the aquifer
@@ -315,7 +315,7 @@ private:
   array1d< real64 > m_phaseComponentFraction;
 
   /// Water phase component names
-  array1d< string > m_phaseComponentNames;
+  string_array m_phaseComponentNames;
 
   /// Total compressibility (rock + water)
   real64 m_totalCompressibility;

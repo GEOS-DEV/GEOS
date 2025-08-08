@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
  * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
@@ -21,6 +21,7 @@
 #define GEOS_LINEARALGEBRA_INTERFACES_HYPREMATRIX_HPP_
 
 #include "common/DataTypes.hpp"
+#include "linearAlgebra/DofManager.hpp"
 #include "linearAlgebra/interfaces/hypre/HypreVector.hpp"
 #include "linearAlgebra/interfaces/hypre/HypreExport.hpp"
 #include "linearAlgebra/common/LinearOperator.hpp"
@@ -268,6 +269,15 @@ public:
                             RowSumType const rowSumType ) override;
 
   virtual void rightScale( HypreVector const & vec ) override;
+
+  /**
+   * @copydoc MatrixBase<HypreMatrix>::computeScalingVector
+   */
+  virtual void computeScalingVector( HypreVector & scaling ) const override;
+
+  /**
+   * @copydoc MatrixBase<HypreMatrix>::leftRightScale
+   */
 
   virtual void leftRightScale( HypreVector const & vecLeft,
                                HypreVector const & vecRight ) override;

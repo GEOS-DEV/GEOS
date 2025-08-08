@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
  * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
@@ -102,6 +102,12 @@ public:
    */
   real64 getWellSkinFactor() const { return m_wellSkinFactor; }
 
+  /**
+   * @brief Get the target region for the perforation.
+   * @return the list of target regions
+   */
+  string const & getTargetRegion() const { return m_targetRegionName; }
+
   ///@}
 
   /**
@@ -116,12 +122,8 @@ public:
     static constexpr char const *wellTransmissibilityString() { return "transmissibility"; }
     /// @return String key for the well skin factor at this perforation
     static constexpr char const *wellSkinFactorString() { return "skinFactor"; }
-    /// ViewKey for the linear distance from well head
-    dataRepository::ViewKey distanceFromHead = {distanceFromHeadString()};
-    /// ViewKey for the well transmissibility at this perforation
-    dataRepository::ViewKey wellTransmissibility = {wellTransmissibilityString()};
-    /// ViewKey for the well transmissibility at this perforation
-    dataRepository::ViewKey wellSkinFactor = { wellSkinFactorString() };
+    /// @return Target region for this perforation
+    static constexpr char const *targetRegionString() { return "targetRegion"; }
   }
   /// ViewKey struct for the Perforation class
   viewKeysPerforation;
@@ -138,6 +140,9 @@ private:
 
   /// Well skin factor at this perforation
   real64 m_wellSkinFactor;
+
+  /// Name of region the perforation will be connected to
+  string m_targetRegionName;
 };
 
 } // namespace geos

@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
  * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
@@ -58,7 +58,7 @@ VTKHierarchicalDataSource::search( string const & path )
   GEOS_ERROR_IF( node == -1, "Node doesn't exist" );
   GEOS_ERROR_IF( m_dataAssembly->GetNumberOfChildren( node ) > 0, "Only leaf nodes can be queried." );
 
-  std::vector< unsigned int > indices = m_dataAssembly->GetDataSetIndices( node, false );
+  stdVector< unsigned int > indices = m_dataAssembly->GetDataSetIndices( node, false );
 
   GEOS_ERROR_IF( indices.size() == 0, "Queried node has no dataset attached." );
   GEOS_ERROR_IF( indices.size() > 1, "Current constraint each tree node has only one dataset." );

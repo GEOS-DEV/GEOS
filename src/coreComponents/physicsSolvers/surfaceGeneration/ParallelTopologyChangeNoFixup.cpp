@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
  * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
@@ -21,10 +21,11 @@
 
 #include "common/GeosxMacros.hpp"
 #include "common/TimingMacros.hpp"
-#include "mesh/ElementRegionManager.hpp"
 #include "mesh/MeshFields.hpp"
+#include "mesh/MeshLevel.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "mesh/mpiCommunications/MPI_iCommData.hpp"
+#include "mesh/mpiCommunications/NeighborCommunicator.hpp"
 
 #if PARALLEL_TOPOLOGY_CHANGE_METHOD==1
 namespace geos
@@ -909,7 +910,7 @@ void updateConnectorsToFaceElems( std::set< localIndex > const & newFaceElements
 
 
 void synchronizeTopologyChange( MeshLevel * const mesh,
-                                std::vector< NeighborCommunicator > & neighbors,
+                                stdVector< NeighborCommunicator > & neighbors,
                                 ModifiedObjectLists & modifiedObjects,
                                 ModifiedObjectLists & receivedObjects,
                                 int mpiCommOrder )
@@ -1013,7 +1014,7 @@ void synchronizeTopologyChange( MeshLevel * const mesh,
   // 1b) On the OR, unpack the new objects that are owned by the rank that has the changes. DO NOT
   //     unpack the maps as they will potentially contain indices that are not on the OR.
   //***********************************************************************************************
-  std::vector< TopologyChangeUnpackStepData > step1bUnpackData( neighbors.size() );
+  stdVector< TopologyChangeUnpackStepData > step1bUnpackData( neighbors.size() );
   for( unsigned int count=0; count<neighbors.size(); ++count )
   {
     int neighborIndex = count;
@@ -1076,7 +1077,7 @@ void synchronizeTopologyChange( MeshLevel * const mesh,
   // finished unpacking
   MPI_iCommData commData2;
   commData2.resize( neighbors.size());
-  std::vector< TopologyChangeStepData > step2and3PackData( neighbors.size() );
+  stdVector< TopologyChangeStepData > step2and3PackData( neighbors.size() );
 
   // pack the new objects to send to ghost ranks
   for( unsigned int neighborIndex=0; neighborIndex<neighbors.size(); ++neighborIndex )

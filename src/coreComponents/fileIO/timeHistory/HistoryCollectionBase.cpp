@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
  * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
@@ -94,7 +94,7 @@ dataRepository::Group const * HistoryCollectionBase::getTargetObject( DomainPart
     }
     else // relative objectPaths use relative lookup identical to fieldSpecification to make xml input spec easier
     {
-      std::vector< string > targetTokens = stringutilities::tokenize( objectPath, "/" );
+      stdVector< string > targetTokens = stringutilities::tokenize( objectPath, "/" );
       localIndex targetTokenLength = LvArray::integerConversion< localIndex >( targetTokens.size() );
 
       dataRepository::Group const * targetGroup = nullptr;
@@ -189,9 +189,6 @@ dataRepository::Group const * HistoryCollectionBase::getTargetObject( DomainPart
           }
           else
           {
-            string const targetTokensStr = stringutilities::join( targetTokens.begin(),
-                                                                  targetTokens.begin()+pathLevel,
-                                                                  '/' );
             GEOS_THROW( targetTokens[pathLevel] << " not found in path " <<
                         objectPath << std::endl << targetGroup->dumpSubGroupsNames(),
                         std::domain_error );

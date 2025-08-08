@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
  * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
@@ -94,7 +94,11 @@ private:
     constexpr static char const * outputMassDensityString() { return "outputMassDensity"; }
     constexpr static char const * outputCompressibilityString() { return "outputCompressibility"; }
     constexpr static char const * outputPhaseCompositionString() { return "outputPhaseComposition"; }
+    constexpr static char const * precisionString() { return "precision"; }
   };
+
+  static constexpr integer minPrecision = 1;
+  static constexpr integer maxPrecision = 8;
 
   integer m_numSteps;      ///< Number of load steps
   integer m_numPhases;     ///< Number of fluid phases
@@ -107,6 +111,7 @@ private:
   integer m_outputMassDensity{0};       ///< Flag to indicate that the mass density of each phase should be output
   integer m_outputCompressibility{0};   ///< Flag to indicate that the total compressibility should be output
   integer m_outputPhaseComposition{0};  ///< Flag to indicate that phase compositions should be output
+  integer m_precision{4};               ///< The precision to use to data out to files
 
   array1d< real64 > m_feed;  ///< User specified feed composition
   array2d< real64 > m_table; ///< Table storing time-history of input/output

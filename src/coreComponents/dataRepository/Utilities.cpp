@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
  * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
@@ -51,7 +51,7 @@ void printMemoryAllocation( Group const & group, integer const indent, real64 co
   }
 
   // store the local allocations for each wrapper
-  std::vector< size_t > localAllocations;
+  stdVector< size_t > localAllocations;
 
   // use the first index for the summation of all Wrappers in a Group
   localAllocations.emplace_back( 0 );
@@ -66,7 +66,7 @@ void printMemoryAllocation( Group const & group, integer const indent, real64 co
   int const numValues = localAllocations.size();
 
   // storage for the gathered values of localAllocation
-  std::vector< size_t > globalAllocations;
+  stdVector< size_t > globalAllocations;
   if( MpiWrapper::commRank()==0 )
   {
     globalAllocations.resize( numRanks * numValues );

@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
  * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
@@ -256,7 +256,7 @@ public:
    * @return value of m_isShallowCopy.
    */
   bool isShallowCopy() const
-  { return m_isShallowCopy; }
+  { return m_shallowParent != nullptr; }
 
   /**
    * @brief Determines if this->MeshLevel is a shallow copy of the input.
@@ -285,28 +285,25 @@ public:
 private:
 
   /// Manager for node data
-  NodeManager * const m_nodeManager;
+  std::shared_ptr< NodeManager > const m_nodeManager;
   /// Manager for particle data
-  ParticleManager * const m_particleManager;
+  std::shared_ptr< ParticleManager > const m_particleManager;
   /// Manager for edge data
-  EdgeManager * const m_edgeManager;
+  std::shared_ptr< EdgeManager > const m_edgeManager;
   /// Manager for face data
-  FaceManager * const m_faceManager;
+  std::shared_ptr< FaceManager > const m_faceManager;
   /// Manager for element data
-  ElementRegionManager * const m_elementManager;
+  std::shared_ptr< ElementRegionManager > const m_elementManager;
 
   ///Manager for embedded surfaces nodes
-  EmbeddedSurfaceNodeManager * const m_embSurfNodeManager;
+  std::shared_ptr< EmbeddedSurfaceNodeManager > const m_embSurfNodeManager;
   /// Manager for embedded surfaces edge data
-  EdgeManager * const m_embSurfEdgeManager;
+  std::shared_ptr< EdgeManager > const m_embSurfEdgeManager;
 
   /// Timestamp of the last modification of the mesh level
   Timestamp m_modificationTimestamp;
 
-  bool const m_isShallowCopy = false;
-
   MeshLevel * const m_shallowParent;
-
 };
 
 } /* namespace geos */

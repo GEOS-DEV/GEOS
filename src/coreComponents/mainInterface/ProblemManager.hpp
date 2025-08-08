@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
  * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
@@ -347,17 +347,17 @@ private:
   map< std::tuple< string, string, string, string >, localIndex > calculateRegionQuadrature( Group & meshBodies );
 
 
-  map< std::pair< string, Group const * const >, arrayView1d< string const > const >
+  map< std::pair< string, Group const * const >, string_array const & >
   getDiscretizations() const;
 
   void generateMeshLevel( MeshLevel & meshLevel,
                           CellBlockManagerABC const & cellBlockManager,
                           Group const * const discretization,
-                          arrayView1d< string const > const & targetRegions );
+                          string_array const & targetRegions );
 
   void generateMeshLevel( MeshLevel & meshLevel,
                           ParticleBlockManagerABC & particleBlockManager,
-                          arrayView1d< string const > const & );
+                          string_array const & );
 
   /**
    * @brief Allocate constitutive relations on each subregion with appropriate

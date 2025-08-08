@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
  * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
@@ -160,9 +160,9 @@ void NodeManager::setGeometricalRelations( CellBlockManagerABC const & cellBlock
   m_referencePosition = cellBlockManager.getNodePositions();
 
   m_toEdgesRelation.base().assimilate< parallelHostPolicy >( cellBlockManager.getNodeToEdges(),
-                                                             LvArray::sortedArrayManipulation::UNSORTED_NO_DUPLICATES );
+                                                             LvArray::sortedArrayManipulation::UNSORTED_WITH_DUPLICATES );
   m_toFacesRelation.base().assimilate< parallelHostPolicy >( cellBlockManager.getNodeToFaces(),
-                                                             LvArray::sortedArrayManipulation::UNSORTED_NO_DUPLICATES );
+                                                             LvArray::sortedArrayManipulation::UNSORTED_WITH_DUPLICATES );
 
   ToCellRelation< ArrayOfArrays< localIndex > > const toCellBlock = cellBlockManager.getNodeToElements();
   array2d< localIndex > const blockToSubRegion = elemRegionManager.getCellBlockToSubRegionMap( cellBlockManager );

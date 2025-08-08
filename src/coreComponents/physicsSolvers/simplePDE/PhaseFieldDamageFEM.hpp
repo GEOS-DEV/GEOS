@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
  * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
@@ -153,6 +153,7 @@ public:
     static constexpr char const * localDissipationOptionString() { return "localDissipation"; }
     static constexpr char const * irreversibilityFlagString() { return "irreversibilityFlag"; }
     static constexpr char const * damageUpperBoundString() { return "damageUpperBound"; }
+    static constexpr char const * fracturePressureTermFlagString() { return "fracturePressureTermFlag"; }
     static constexpr char const * solidModelNamesString() { return "solidMaterialNames"; }
 
     dataRepository::ViewKey timeIntegrationOption = { "timeIntegrationOption" };
@@ -184,6 +185,7 @@ private:
   LocalDissipation m_localDissipationOption;
   integer m_irreversibilityFlag;
   real64 m_damageUpperBound;
+  integer m_fracturePressureTermFlag;
 
   array1d< real64 > m_coeff;
 

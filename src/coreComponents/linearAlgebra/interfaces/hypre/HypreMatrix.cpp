@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
  * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
@@ -803,8 +803,29 @@ void HypreMatrix::leftScale( HypreVector const & vec )
   GEOS_LAI_ASSERT( ready() );
   GEOS_LAI_ASSERT( vec.ready() );
   GEOS_LAI_ASSERT_EQ( vec.localSize(), numLocalRows() );
-  hypre::scaleMatrixRows( hypre_ParCSRMatrixDiag( m_parcsr_mat ), hypre_ParVectorLocalVector( vec.unwrapped() ) );
-  hypre::scaleMatrixRows( hypre_ParCSRMatrixOffd( m_parcsr_mat ), hypre_ParVectorLocalVector( vec.unwrapped() ) );
+
+  GEOS_LAI_CHECK_ERROR( HYPRE_ParCSRMatrixDiagScale( m_parcsr_mat, vec.unwrapped(), nullptr ) );
+}
+
+void HypreMatrix::rightScale( HypreVector const & vec )
+{
+  GEOS_LAI_ASSERT( ready() );
+  GEOS_LAI_ASSERT( vec.ready() );
+  GEOS_LAI_ASSERT_EQ( vec.localSize(), numLocalRows() );
+
+  GEOS_LAI_CHECK_ERROR( HYPRE_ParCSRMatrixDiagScale( m_parcsr_mat, nullptr, vec.unwrapped() ) );
+}
+
+void HypreMatrix::leftRightScale( HypreVector const & vecLeft,
+                                  HypreVector const & vecRight )
+{
+  GEOS_LAI_ASSERT( ready() );
+  GEOS_LAI_ASSERT( vecLeft.ready() );
+  GEOS_LAI_ASSERT( vecRight.ready() );
+  GEOS_LAI_ASSERT_EQ( vecLeft.localSize(), numLocalRows() );
+  GEOS_LAI_ASSERT_EQ( vecRight.localSize(), numLocalRows() );
+
+  GEOS_LAI_CHECK_ERROR( HYPRE_ParCSRMatrixDiagScale( m_parcsr_mat, vecLeft.unwrapped(), vecRight.unwrapped() ) );
 }
 
 void HypreMatrix::rescaleRows( arrayView1d< globalIndex const > const & rowIndices,
@@ -1425,22 +1446,6 @@ real64 HypreMatrix::normMax( arrayView1d< globalIndex const > const & rowIndices
   return MpiWrapper::max( maxNorm, comm() );
 }
 
-void HypreMatrix::rightScale( HypreVector const & vec )
-{
-  GEOS_LAI_ASSERT( ready() );
-  HypreMatrix t;
-  transpose( t );
-  t.leftScale( vec );
-  t.transpose( *this );
-}
-
-void HypreMatrix::leftRightScale( HypreVector const & vecLeft,
-                                  HypreVector const & vecRight )
-{
-  leftScale( vecLeft );
-  rightScale( vecRight );
-}
-
 void HypreMatrix::transpose( HypreMatrix & dst ) const
 {
   GEOS_LAI_ASSERT( ready() );
@@ -1457,6 +1462,27 @@ MPI_Comm HypreMatrix::comm() const
 {
   GEOS_LAI_ASSERT( created() );
   return hypre_IJMatrixComm( m_ij_mat );
+}
+
+void HypreMatrix::computeScalingVector( HypreVector & scaling ) const
+{
+  GEOS_LAI_ASSERT( ready() );
+
+  // Get number of components
+  HYPRE_Int num_tags = LvArray::integerConversion< HYPRE_Int >( m_dofManager->numComponents() );
+
+  // Get local dof component labels
+  array1d< HYPRE_Int > pointMarkers( numLocalRows() );
+  m_dofManager->getLocalDofComponentLabels( pointMarkers );
+
+  // Create scaling vector
+  scaling.create( numLocalRows(), comm() );
+  HYPRE_ParVector hypre_vec = scaling.unwrapped();
+  HYPRE_ParVector *hypre_vec_ptr = &hypre_vec;
+
+  // Compute scaling vector
+  GEOS_LAI_CHECK_ERROR( HYPRE_ParCSRMatrixComputeScalingTagged( m_parcsr_mat, 1, HYPRE_MEMORY_HOST, num_tags,
+                                                                pointMarkers.data(), hypre_vec_ptr ) );
 }
 
 }// end namespace geos

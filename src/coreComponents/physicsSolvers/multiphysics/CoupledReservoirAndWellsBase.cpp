@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
  * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
@@ -23,6 +23,8 @@
 namespace geos
 {
 
+using namespace fields;
+
 namespace coupledReservoirAndWellsInternal
 {
 
@@ -38,7 +40,7 @@ addCouplingNumNonzeros( PhysicsSolverBase const * const solver,
 {
   solver->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                         MeshLevel const & meshLevel,
-                                                                        arrayView1d< string const > const & regionNames )
+                                                                        string_array const & regionNames )
   {
     ElementRegionManager const & elemManager = meshLevel.getElemManager();
 
@@ -64,15 +66,15 @@ addCouplingNumNonzeros( PhysicsSolverBase const * const solver,
 
       // get the well element indices corresponding to each perforation
       arrayView1d< localIndex const > const & perfWellElemIndex =
-        perforationData->getField< fields::perforation::wellElementIndex >();
+        perforationData->getField< perforation::wellElementIndex >();
 
       // get the element region, subregion, index
       arrayView1d< localIndex const > const & resElementRegion =
-        perforationData->getField< fields::perforation::reservoirElementRegion >();
+        perforationData->getField< perforation::reservoirElementRegion >();
       arrayView1d< localIndex const > const & resElementSubRegion =
-        perforationData->getField< fields::perforation::reservoirElementSubRegion >();
+        perforationData->getField< perforation::reservoirElementSubRegion >();
       arrayView1d< localIndex const > const & resElementIndex =
-        perforationData->getField< fields::perforation::reservoirElementIndex >();
+        perforationData->getField< perforation::reservoirElementIndex >();
 
       // Loop over perforations and increase row lengths for reservoir and well elements accordingly
       forAll< serialPolicy >( perforationData->size(), [=] ( localIndex const iperf )
@@ -117,12 +119,12 @@ bool validateWellPerforations( PhysicsSolverBase const * const reservoirSolver,
 {
   std::pair< string, string > badPerforation;
 
-  arrayView1d< string const > const flowTargetRegionNames =
-    reservoirSolver->getReference< array1d< string > >( PhysicsSolverBase::viewKeyStruct::targetRegionsString() );
+  string_array const & flowTargetRegionNames =
+    reservoirSolver->getReference< string_array >( PhysicsSolverBase::viewKeyStruct::targetRegionsString() );
 
   wellSolver->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                             MeshLevel const & meshLevel,
-                                                                            arrayView1d< string const > const & regionNames )
+                                                                            string_array const & regionNames )
   {
     ElementRegionManager const & elemManager = meshLevel.getElemManager();
     elemManager.forElementSubRegions< WellElementSubRegion >( regionNames, [&]( localIndex const, WellElementSubRegion const & subRegion )
@@ -131,7 +133,7 @@ bool validateWellPerforations( PhysicsSolverBase const * const reservoirSolver,
       WellControls const & wellControls = wellSolver->getWellControls( subRegion );
 
       arrayView1d< localIndex const > const & resElementRegion =
-        perforationData->getField< fields::perforation::reservoirElementRegion >();
+        perforationData->getField< perforation::reservoirElementRegion >();
 
       // Loop over perforations and check the reservoir region to which each perforation is connected to
       // If the name of the region is not in the list of targetted regions, then we have a "bad" connection.
@@ -151,7 +153,7 @@ bool validateWellPerforations( PhysicsSolverBase const * const reservoirSolver,
   localIndex const hasBadPerforations = MpiWrapper::max( badPerforation.first.empty() ? 0 : 1 );
 
   GEOS_THROW_IF( !badPerforation.first.empty(),
-                 GEOS_FMT( "{}: The well {} has a connection to the region {} which is not targeted by the solver",
+                 GEOS_FMT( "{}: The well {} has a connection to the region {} which is not targeted by the flow solver",
                            wellSolver->getDataContext(), badPerforation.first, badPerforation.second ),
                  std::runtime_error );
   return hasBadPerforations == 0;

@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
  * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
@@ -78,12 +78,13 @@ ThermalMultiphasePoromechanics( NodeManager const & nodeManager,
   m_rockInternalEnergy_n( inputConstitutiveType.getInternalEnergy_n() ),
   m_rockInternalEnergy( inputConstitutiveType.getInternalEnergy() ),
   m_dRockInternalEnergy_dTemperature( inputConstitutiveType.getDinternalEnergy_dTemperature() ),
+  m_referenceTemperature( elementSubRegion.template getField< fields::flow::initialTemperature >() ),
   m_temperature_n( elementSubRegion.template getField< fields::flow::temperature_n >() ),
   m_temperature( elementSubRegion.template getField< fields::flow::temperature >() )
 {
   // extract fluid constitutive data views
   {
-    string const fluidModelName = elementSubRegion.template getReference< string >( fluidModelKey );
+    string const & fluidModelName = elementSubRegion.template getReference< string >( fluidModelKey );
     constitutive::MultiFluidBase const & fluid =
       elementSubRegion.template getConstitutiveModel< constitutive::MultiFluidBase >( fluidModelName );
 
@@ -109,6 +110,7 @@ setup( localIndex const k,
   stack.localTemperatureDofIndex = stack.localPressureDofIndex + m_numComponents + 1;
   stack.temperature = m_temperature[k];
   stack.deltaTemperatureFromLastStep = m_temperature[k] - m_temperature_n[k];
+  stack.deltaTemperature = m_temperature[k] - m_referenceTemperature[k];
 }
 
 template< typename SUBREGION_TYPE,
@@ -133,7 +135,7 @@ smallStrainUpdate( localIndex const k,
                                                        m_dt,
                                                        m_pressure[k],
                                                        m_pressure_n[k],
-                                                       stack.temperature,
+                                                       stack.deltaTemperature,
                                                        stack.deltaTemperatureFromLastStep,
                                                        stack.strainIncrement,
                                                        stack.totalStress,

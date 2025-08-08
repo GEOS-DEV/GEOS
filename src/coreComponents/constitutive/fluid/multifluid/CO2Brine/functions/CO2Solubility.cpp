@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
  * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
@@ -16,7 +16,9 @@
 /**
  * @file CO2Solubility.cpp
  */
-
+#include "common/format/table/TableData.hpp"
+#include "common/format/table/TableFormatter.hpp"
+#include "common/format/table/TableLayout.hpp"
 #include "constitutive/fluid/multifluid/CO2Brine/functions/CO2Solubility.hpp"
 #include "constitutive/fluid/multifluid/CO2Brine/functions/CO2SolubilitySpycherPruess.hpp"
 #include "constitutive/fluid/multifluid/CO2Brine/functions/CO2SolubilityDuanSun.hpp"
@@ -60,7 +62,6 @@ makeSolubilityTables( string const & functionName,
 {
   FunctionManager & functionManager = FunctionManager::getInstance();
   constitutive::PVTProps::PTTableCoordinates tableCoords;
-
   // Check solubility model for explicit table input
   if( solubilityModel == constitutive::PVTProps::CO2Solubility::SolubilityModel::Tables )
   {
@@ -185,23 +186,28 @@ makeSolubilityTables( string const & functionName,
 
   if( 0 < badCount )
   {
-    std::ostringstream badValueTable;
-    badValueTable
-      << std::setw( 15 ) << "Pressure (Pa)" << " "
-      << std::setw( 15 ) << "Temperature (C)" << " "
-      << std::setw( 23 ) << "CO2 solubility (mol/kg)" << " "
-      << std::setw( 23 ) << "H2O solubility (mol/kg)" << " ";
+    GEOS_LOG_RANK_0( GEOS_FMT( "CO2Solubility: {} negative solubility values encountered." \
+                               "These will be truncated to zero.\nCheck out report table with max {} values.",
+                               badCount, maxBad ) );
+
+    string const pressure = GEOS_FMT( "Pressure ({})", units::getSymbol( units::Unit::Pressure ));
+    string const temperature = GEOS_FMT( "Temperature ({})", units::getSymbol( units::Unit::TemperatureInC ));
+    TableLayout const badSolubilityLayout( "", {pressure, temperature, "CO2 solubility (mol/kg)", "H2O solubility (mol/kg)"} );
+    TableData badSolData;
+
     for( integer row = 0; row < LvArray::math::min( maxBad, badCount ); ++row )
     {
-      badValueTable
-        << "\n"
-        << std::setw( 15 ) << badValues( row, 0 ) << " "
-        << std::setw( 15 ) << badValues( row, 1 ) << " "
-        << std::setw( 23 ) << badValues( row, 2 ) << " "
-        << std::setw( 23 ) << badValues( row, 3 ) << " ";
+
+      badSolData.addRow( badValues( row, 0 ), badValues( row, 1 ), badValues( row, 2 ), badValues( row, 3 ));
     }
-    GEOS_LOG_RANK_0( GEOS_FMT( "CO2Solubility: {} negative solubility values encountered. These will be truncated to zero.\nCheck out report table with max {} values.\n{}",
-                               badCount, maxBad, badValueTable.str() ) );
+
+    if( badCount > maxBad )
+    {
+      badSolData.addRow( "...", "...", "...", "..." );
+    }
+
+    TableTextFormatter const tableFormatter( badSolubilityLayout );
+    GEOS_LOG_RANK_0( tableFormatter.toString( badSolData ) );
   }
 
   TableFunction const * co2SolubilityTable = makeTable( co2TableName, tableCoords, std::move( co2Solubility ), functionManager );
@@ -257,8 +263,8 @@ CO2Solubility::CO2Solubility( string const & name,
 
   std::tie( m_CO2SolubilityTable, m_WaterVapourisationTable ) = makeSolubilityTables( m_modelName, inputParams, solubilityModel );
 
-  m_CO2SolubilityTable->outputPVTTableData( pvtOutputOpts );
-  m_WaterVapourisationTable->outputPVTTableData( pvtOutputOpts );
+  m_CO2SolubilityTable->outputTableData( pvtOutputOpts );
+  m_WaterVapourisationTable->outputTableData( pvtOutputOpts );
 
 }
 

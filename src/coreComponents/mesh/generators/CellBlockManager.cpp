@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
  * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
@@ -46,6 +46,7 @@ void CellBlockManager::resize( integer_array const & numElements,
 
 Group * CellBlockManager::createChild( string const & GEOS_UNUSED_PARAM( childKey ), string const & GEOS_UNUSED_PARAM( childName ) )
 {
+  // Unused as all children are created within the constructor
   return nullptr;
 }
 
@@ -64,9 +65,9 @@ void convertFromCellBlockPairMap( ArrayOfArraysView< CellBlockIndexPair const > 
   toBlock.resizeFromOffsets( numObjects, srcMap.toViewConst().getOffsets() );
   toCell.resizeFromOffsets( numObjects, srcMap.toViewConst().getOffsets() );
 
-  forAll< parallelHostPolicy >( numObjects, [toBlock = toBlock.toView(),
-                                             toCell = toCell.toView(),
-                                             srcMap]( localIndex const objIndex )
+  forAll< POLICY >( numObjects, [toBlock = toBlock.toView(),
+                                 toCell = toCell.toView(),
+                                 srcMap]( localIndex const objIndex )
   {
     arraySlice1d< CellBlockIndexPair const > const cells = srcMap[ objIndex ];
     for( CellBlockIndexPair const & e : cells )

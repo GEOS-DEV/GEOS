@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
  * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
@@ -22,6 +22,7 @@
 
 #include "constitutive/contact/HydraulicApertureBase.hpp"
 #include "functions/TableFunction.hpp"
+#include "physicsSolvers/solidMechanics/contact/FractureState.hpp"
 
 
 namespace geos
@@ -67,6 +68,7 @@ public:
   GEOS_HOST_DEVICE
   real64 computeHydraulicAperture( real64 const aperture,
                                    real64 const normalTraction,
+                                   integer const fractureState,
                                    real64 & dHydraulicAperture_daperture,
                                    real64 & dHydraulicAperture_dNormalStress ) const;
 
@@ -156,10 +158,11 @@ GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
 real64 HydraulicApertureTableUpdates::computeHydraulicAperture( real64 const aperture,
                                                                 real64 const normalTraction,
+                                                                integer const fractureState,
                                                                 real64 & dHydraulicAperture_dAperture,
                                                                 real64 & dHydraulicAperture_dNormalStress ) const
 {
-  GEOS_UNUSED_VAR( normalTraction, dHydraulicAperture_dNormalStress );
+  GEOS_UNUSED_VAR( normalTraction, dHydraulicAperture_dNormalStress, fractureState );
   return m_apertureTable.compute( &aperture, &dHydraulicAperture_dAperture );
 }
 

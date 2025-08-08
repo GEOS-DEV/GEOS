@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
  * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
@@ -264,14 +264,14 @@ public:
    * @brief Get the neighbor communicators. @see DomainPartition#m_neighbors.
    * @return Container of communicators.
    */
-  std::vector< NeighborCommunicator > & getNeighbors()
+  stdVector< NeighborCommunicator > & getNeighbors()
   { return m_neighbors; }
 
   /**
    * @brief Get the neighbor communicators, const version. @see DomainPartition#m_neighbors.
    * @return Container of communicators.
    */
-  std::vector< NeighborCommunicator > const & getNeighbors() const
+  stdVector< NeighborCommunicator > const & getNeighbors() const
   { return m_neighbors; };
 
 private:
@@ -279,7 +279,7 @@ private:
   /**
    * @brief Contains all the communicators from this DomainPartition to its neighbors.
    */
-  std::vector< NeighborCommunicator > m_neighbors;
+  stdVector< NeighborCommunicator > m_neighbors;
 };
 
 } /* namespace geos */

@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
  * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
@@ -30,7 +30,6 @@
 #include "mesh/NodeManager.hpp"
 #include "mesh/utilities/MeshMapUtilities.hpp"
 #include "utilities/ComputationalGeometry.hpp"
-#include "CellElementRegion.hpp"
 
 namespace geos
 {
@@ -174,7 +173,8 @@ void FaceManager::setGeometricalRelations( CellBlockManagerABC const & cellBlock
       return;
     }
 
-    constexpr char err[] = "Internal error when trying to connect matrix mapping and fracture mapping. Face {} seems wrongly connected.";
+    static constexpr auto err = "Internal error when trying to connect matrix mapping and fracture mapping. Face {} seems wrongly connected.";
+    GEOS_UNUSED_VAR( err ); // Not used in GPU builds.
 
     FaceElementSubRegion const & subRegion = region.getUniqueSubRegion< FaceElementSubRegion >();
     int const esr = 0;  // Since there's only on unique subregion, the index is always 0.

@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
  * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
@@ -184,6 +184,12 @@ public:
    * @return the skin factor at a perforation
    */
   arrayView1d< real64 const > getPerfSkinFactor() const { return m_perfSkinFactor; };
+
+  /**
+   * @brief Get the target region for a perforation.
+   * @return the target regions for a perforation
+   */
+  string_array const & getPerfTargetRegion() const { return m_perfTargetRegion; };
 
   /**
    * @brief Get the global indices of the well elements connected to each perforation.
@@ -392,6 +398,9 @@ protected:
 
   /// Physical location of the perforation wrt to well head
   array1d< real64 > m_perfDistFromHead;
+
+  /// Target region for the perforation
+  string_array m_perfTargetRegion;
 
 };
 }

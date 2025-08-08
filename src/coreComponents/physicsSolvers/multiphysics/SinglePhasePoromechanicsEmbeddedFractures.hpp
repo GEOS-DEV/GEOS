@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
  * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
@@ -21,8 +21,10 @@
 #define GEOS_PHYSICSSOLVERS_MULTIPHYSICS_SINGLEPHASEPOROMECHANICSEMBEDDEDFRACTURES_HPP_
 
 #include "physicsSolvers/multiphysics/SinglePhasePoromechanics.hpp"
-#include "physicsSolvers/contact/SolidMechanicsEmbeddedFractures.hpp"
+#include "physicsSolvers/solidMechanics/contact/SolidMechanicsEmbeddedFractures.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
+
+#include "physicsSolvers/multiphysics/poromechanicsKernels/PoromechanicsEFEMKernelsDispatchTypeList.hpp"
 
 namespace geos
 {
@@ -58,8 +60,8 @@ public:
                             bool const setSparsity = true ) override;
 
   virtual void
-  setupDofs( DomainPartition const & domain,
-             DofManager & dofManager ) const override;
+  setupCoupling( DomainPartition const & domain,
+                 DofManager & dofManager ) const override;
 
   virtual void
   assembleSystem( real64 const time,
@@ -105,14 +107,15 @@ protected:
 
   virtual void initializePostInitialConditionsPreSubGroups() override final;
 
+  virtual void setMGRStrategy() override;
+
 private:
 
-  template< typename CONSTITUTIVE_BASE,
-            typename KERNEL_WRAPPER,
+  template< typename KERNEL_WRAPPER,
             typename EFEM_KERNEL_WRAPPER >
   real64 assemblyLaunch( MeshLevel & mesh,
                          DofManager const & dofManager,
-                         arrayView1d< string const > const & regionNames,
+                         string_array const & regionNames,
                          string const & materialNamesString,
                          CRSMatrixView< real64, globalIndex const > const & localMatrix,
                          arrayView1d< real64 > const & localRhs,
@@ -121,12 +124,11 @@ private:
 };
 
 
-template< typename CONSTITUTIVE_BASE,
-          typename KERNEL_WRAPPER,
+template< typename KERNEL_WRAPPER,
           typename EFEM_KERNEL_WRAPPER >
 real64 SinglePhasePoromechanicsEmbeddedFractures::assemblyLaunch( MeshLevel & mesh,
                                                                   DofManager const & dofManager,
-                                                                  arrayView1d< string const > const & regionNames,
+                                                                  string_array const & regionNames,
                                                                   string const & materialNamesString,
                                                                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                                   arrayView1d< real64 > const & localRhs,
@@ -162,12 +164,11 @@ real64 SinglePhasePoromechanicsEmbeddedFractures::assemblyLaunch( MeshLevel & me
   real64 const maxForce =
     finiteElement::
       regionBasedKernelApplication< parallelDevicePolicy< >,
-                                    CONSTITUTIVE_BASE,
-                                    CellElementSubRegion >( mesh,
-                                                            regionNames,
-                                                            solidMechanicsSolver()->getDiscretizationName(),
-                                                            materialNamesString,
-                                                            kernelWrapper );
+                                    PoromechanicsEFEMKernelsDispatchTypeList >( mesh,
+                                                                                regionNames,
+                                                                                solidMechanicsSolver()->getDiscretizationName(),
+                                                                                materialNamesString,
+                                                                                kernelWrapper );
 
   EFEM_KERNEL_WRAPPER EFEMkernelWrapper( subRegion,
                                          dispDofNumber,
@@ -182,12 +183,11 @@ real64 SinglePhasePoromechanicsEmbeddedFractures::assemblyLaunch( MeshLevel & me
 
   finiteElement::
     regionBasedKernelApplication< parallelDevicePolicy< >,
-                                  CONSTITUTIVE_BASE,
-                                  CellElementSubRegion >( mesh,
-                                                          regionNames,
-                                                          solidMechanicsSolver()->getDiscretizationName(),
-                                                          materialNamesString,
-                                                          EFEMkernelWrapper );
+                                  PoromechanicsEFEMKernelsDispatchTypeList >( mesh,
+                                                                              regionNames,
+                                                                              solidMechanicsSolver()->getDiscretizationName(),
+                                                                              materialNamesString,
+                                                                              EFEMkernelWrapper );
 
   return maxForce;
 

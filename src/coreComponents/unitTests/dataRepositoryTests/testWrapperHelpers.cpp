@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
  * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
@@ -111,7 +111,7 @@ TEST( wrapperHelpers, size )
 
   checkSizeMethod( string( "hello" ) );
   checkSizeMethod( std::set< int > { 1, 2, 3 } );
-  checkSizeMethod( std::vector< int > { 1, 2, 3 } );
+  checkSizeMethod( stdVector< int > { 1, 2, 3 } );
   checkSizeMethod( std::array< int, 5 > {} );
   checkSizeMethod( array1d< int >( 5 ) );
   checkSizeMethod( array2d< int >( 5, 5 ) );
@@ -157,7 +157,7 @@ public:
     localIndex const numComponents = node.number_of_children();
     EXPECT_EQ( numComponents, numComponentsPerValue * m_array.size() / m_array.size( 0 ) );
 
-    std::vector< conduit::DataArray< ConduitType > > valuesFromNode;
+    stdVector< conduit::DataArray< ConduitType > > valuesFromNode;
     for( localIndex i = 0; i < numComponents; ++i )
     {
       EXPECT_TRUE( node.child( i ).is_data_external() );

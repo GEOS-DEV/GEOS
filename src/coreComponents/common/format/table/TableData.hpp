@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
  * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
@@ -23,6 +23,7 @@
 #include "common/Units.hpp"
 #include "common/DataTypes.hpp"
 #include "common/format/Format.hpp"
+#include "TableTypes.hpp"
 
 namespace geos
 {
@@ -33,10 +34,56 @@ namespace geos
 class TableData
 {
 public:
+
+  /// @cond DO_NOT_DOCUMENT
+  TableData();
+
+  TableData( TableData const & other );
+
+  TableData( TableData && other );
+
+  TableData & operator=( TableData const & other );
+
+  TableData & operator=( TableData && other );
+  ///@endcond
+
+  /**
+   * @brief Lexicographic sorting
+   * @param other The table data to compate
+   * @return true
+   */
+  bool operator<( TableData const & other ) const;
+
+  /**
+   * @brief Representing a data in TableData
+   */
+  struct CellData
+  {
+    /// The cell type
+    CellType type;
+    /// The cell value
+    string value;
+
+    /// @cond DO_NOT_DOCUMENT
+    bool operator==( CellData const & other ) const
+    {
+      return value == other.value;
+    }
+
+    bool operator<( CellData const & other ) const
+    {
+      return value < other.value;
+    }
+    ///@endcond
+  };
+
+  /// Alias for table data rows with cells values
+  using DataRows = stdVector< stdVector< CellData > >;
+
   /**
    * @brief Add a row to the table.
    * The values passed to addRow (can be any type).
-   * @param args Cell values to be added to the row.
+   * @param args CellData values to be added to the row.
    */
   template< typename ... Args >
   void addRow( Args const & ... args );
@@ -45,7 +92,13 @@ public:
    * @brief Add a row to the table
    * @param row A vector of string representing a row
    */
-  void addRow( std::vector< string > const & row );
+  void addRow( stdVector< CellData > const & row );
+
+  /**
+   * @brief Add a line separator to the table
+   * You must have filled values in TableData before using it
+   */
+  void addSeparator();
 
   /**
    * @brief Reset data in the table
@@ -53,25 +106,62 @@ public:
   void clear();
 
   /**
+   * @brief Remove all errors
+   */
+  void clearErrors()
+  { m_errors->clear(); }
+
+  /**
    * @return The rows of the table
    */
-  std::vector< std::vector< string > > const & getTableDataRows() const;
+  stdVector< stdVector< CellData > > const & getTableDataRows() const;
 
   /**
    * @brief Get all error messages
    * @return The vector of error messages
    */
-  std::vector< string > const & getErrorMsgs() const;
+  stdVector< string > const & getErrorMsgs() const;
+
+  /**
+   * @return The const table data rows
+   */
+  DataRows const & getCellsData() const
+  { return m_rows; }
+
+  /**
+   * @brief Comparison operator for data rows
+   * @param comparingTable The tableData values to compare
+   * @return The comparison result
+   */
+  inline bool operator==( TableData const & comparingTable ) const
+  {
+
+    return getCellsData() == comparingTable.getCellsData();
+  }
+
+  /**
+   * @brief Get all error messages
+   * @return The list of error messages
+   */
+  TableErrorListing const & getErrorsList() const
+  { return *m_errors; }
+
+  /**
+   * @brief Get all error messages
+   * @return The list of error messages
+   */
+  TableErrorListing & getErrorsList()
+  { return *m_errors; }
 
 private:
+  /// @brief vector containing all rows with cell values
+  DataRows m_rows;
 
-  /// vector containing all rows with cell values
-  std::vector< std::vector< string > > m_rows;
-
-  /// store error if there are any inconsistencies related to the table
-  std::vector< string > m_errorsMsg;
+  /// @brief Store all errors that can be found during the generation of the TableData
+  std::unique_ptr< geos::TableErrorListing > m_errors;
 
 };
+
 
 /**
  * @brief Class for managing 2D table m_data
@@ -90,7 +180,7 @@ public:
   {
     /// Vector containing all columns names
     /// A header value is presented as "pressure [K] = {}"
-    std::vector< string > headerNames;
+    stdVector< string > headerNames;
     /// TableData to be built
     TableData tableData;
   };
@@ -98,7 +188,7 @@ public:
   /**
    * @brief Add a cell to the table. If necessary, create automatically the containing column & row.
    * @tparam T The value passed to addCell (can be any type).
-   * @param value Cell value to be added.
+   * @param value CellData value to be added.
    * @param rowValue The value of the row containing the cell.
    * @param columnValue The value of the column containing the cell.
    */
@@ -107,27 +197,33 @@ public:
 
   /**
    * @brief Collects all the values needed to build the table
-   * @param rowAxisValues Vector containing all row axis values
-   * @param columnAxisValues Vector containing all column axis values
-   * @param values Vector containing all table values
+   * @param dim0AxisCoordinates Vector containing all row axis values
+   * @param dim1AxisCoordinates Vector containing all column axis values
+   * @param values Array containing all table values contiguously
+   * @param columnMajorValues Set the row/column major convention
    */
-  void collectTableValues( arraySlice1d< real64 const > rowAxisValues,
-                           arraySlice1d< real64 const > columnAxisValues,
-                           arrayView1d< real64 const > values );
+  void collectTableValues( arrayView1d< real64 const > dim0AxisCoordinates,
+                           arrayView1d< real64 const > dim1AxisCoordinates,
+                           arrayView1d< real64 const > values,
+                           bool columnMajorValues );
 
   /**
-   * @param values Vector containing all table values
-   * @param valueUnit The table unit value
-   * @param coordinates Array containing row/column axis values
+   * @brief Convert from 2D axis/values a structure the information needed to build a TableFormatter
+   * @param coordX Array containing row axis values
+   * @param coordY Array containing column axis values
    * @param rowAxisDescription The description for a row unit value
    * @param columnAxisDescription The description for a column unit value
+   * @param values Vector containing all table values
+   * @param columnMajorValues Set the row/column major convention
+   * @param valueDescription The description of the value (typically, the value unit description)
    * @return A struct containing the tableData converted and all header values ;
    */
-  TableData2D::TableDataHolder convertTable2D( arrayView1d< real64 const > const values,
-                                               units::Unit const valueUnit,
-                                               ArrayOfArraysView< real64 const > const coordinates,
+  TableData2D::TableDataHolder convertTable2D( arrayView1d< real64 const > coordX, arrayView1d< real64 const > coordY,
                                                string_view rowAxisDescription,
-                                               string_view columnAxisDescription );
+                                               string_view columnAxisDescription,
+                                               arrayView1d< real64 const > const values,
+                                               bool columnMajorValues,
+                                               string_view valueDescription );
 
   /**
    * @return Convert and return a struct containing a 1D Table, the column names list from a TableData2D and any errors related to the table
@@ -141,25 +237,54 @@ public:
   TableDataHolder buildTableData( string_view dataDescription,
                                   string_view rowFmt = "{}", string_view columnFmt = "{}" ) const;
 
+  /**
+   * @brief Clear all data stored in TableData
+   */
+  inline void clear()
+  {
+    m_data.clear();
+    m_columnValues.clear();
+    m_errors->clear();
+  }
+
 private:
   /// @brief all cell values by their [ row ][ column ]
   std::map< RowType, std::map< ColumnType, string > > m_data;
-
   /// @brief Store all column values when adding cell
   std::set< real64 > m_columnValues;
+  /// @brief Store all errors that can be found during the generation of the TableData
+  std::unique_ptr< geos::TableErrorListing > m_errors = std::make_unique< geos::TableErrorListing >();
 };
+
+/**
+ * @brief Trait to check is the args is a special type of cell
+ * @tparam T The type of a cell
+ */
+template< typename T >
+constexpr bool isCellType = std::is_same_v< T, CellType >;
 
 template< typename ... Args >
 void TableData::addRow( Args const &... args )
 {
-  std::vector< string > m_cellsValue;
+  stdVector< CellData > cells;
   ( [&] {
-    static_assert( has_formatter_v< decltype(args) >, "Argument passed in addRow cannot be converted to string" );
-    string const cellValue = GEOS_FMT( "{}", args );
-    m_cellsValue.push_back( cellValue );
+    static_assert( has_formatter_v< decltype(args) > || isCellType< std::decay_t< decltype(args) > >, "Argument passed in addRow cannot be converted to string nor a CellType" );
+    if constexpr (std::is_same_v< Args, CellType >) {
+      cells.push_back( { args, string() } );
+    }
+    else if constexpr (std::is_floating_point_v< std::decay_t< decltype(args) > >) {
+      if( !getErrorsList().hasErrors() && (std::isnan( args ) ||  std::isinf( args )))
+      {
+        m_errors->addError( "Warning : Invalid values detected (nan/inf)." );
+      }
+      cells.push_back( {CellType::Value, GEOS_FMT( "{}", args )} );
+    }
+    else
+    {
+      cells.push_back( {CellType::Value, GEOS_FMT( "{}", args )} );
+    }
   } (), ...);
-
-  addRow( m_cellsValue );
+  addRow( cells );
 }
 
 template< typename T >

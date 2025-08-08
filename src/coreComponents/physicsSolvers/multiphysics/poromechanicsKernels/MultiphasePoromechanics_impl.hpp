@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
  * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
@@ -90,7 +90,7 @@ MultiphasePoromechanics( NodeManager const & nodeManager,
 
   // extract fluid constitutive data views
   {
-    string const fluidModelName = elementSubRegion.template getReference< string >( fluidModelKey );
+    string const & fluidModelName = elementSubRegion.template getReference< string >( fluidModelKey );
     constitutive::MultiFluidBase const & fluid =
       elementSubRegion.template getConstitutiveModel< constitutive::MultiFluidBase >( fluidModelName );
 
@@ -161,7 +161,7 @@ smallStrainUpdate( localIndex const k,
                                                        m_dt,
                                                        m_pressure[k],
                                                        m_pressure_n[k],
-                                                       stack.temperature,
+                                                       stack.deltaTemperature,
                                                        stack.deltaTemperatureFromLastStep,
                                                        stack.strainIncrement,
                                                        stack.totalStress,

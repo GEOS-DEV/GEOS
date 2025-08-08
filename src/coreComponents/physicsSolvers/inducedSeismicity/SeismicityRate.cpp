@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
  * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
@@ -22,10 +22,11 @@
 #include "dataRepository/InputFlags.hpp"
 #include "mainInterface/GeosxState.hpp"
 #include "mesh/DomainPartition.hpp"
-#include "mesh/mpiCommunications/CommunicationTools.hpp"
+#include "fieldSpecification/LogLevelsInfo.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 #include "kernels/SeismicityRateKernels.hpp"
 #include "physicsSolvers/inducedSeismicity/inducedSeismicityFields.hpp"
+#include "physicsSolvers/fluidFlow/FlowSolverBase.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
 
 #include "fieldSpecification/FieldSpecificationManager.hpp"
@@ -101,7 +102,7 @@ void SeismicityRate::registerDataOnMesh( Group & meshBodies )
 
   forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
                                                     MeshLevel & mesh,
-                                                    arrayView1d< string const > const & regionNames )
+                                                    string_array const & regionNames )
   {
     ElementRegionManager & elemManager = mesh.getElemManager();
 
@@ -173,7 +174,7 @@ void SeismicityRate::updateFaultTraction( ElementSubRegionBase & subRegion ) con
 
     string const & porousSolidModelName = subRegion.getReference< string >( FlowSolverBase::viewKeyStruct::solidNamesString() );
     CoupledSolidBase & porousSolid = getConstitutiveModel< CoupledSolidBase >( subRegion, porousSolidModelName );
-    constitutive::ConstitutivePassThru< CoupledSolidBase >::execute( porousSolid, [&] ( auto & castedPorousSolid )
+    ConstitutivePassThru< CoupledSolidBase >::execute( porousSolid, [&] ( auto & castedPorousSolid )
     {
       // Initialize biotCoefficient as const arrayView before passing it through the lambda cast
       arrayView1d< real64 const > const biotCoefficient = castedPorousSolid.getBiotCoefficient();
@@ -227,7 +228,7 @@ void SeismicityRate::initializeFaultTraction( real64 const time_n, integer const
 
     forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                  MeshLevel & mesh,
-                                                                 arrayView1d< string const > const & regionNames )
+                                                                 string_array const & regionNames )
 
     {
       mesh.getElemManager().forElementSubRegions( regionNames,
@@ -289,7 +290,7 @@ real64 SeismicityRate::solverStep( real64 const & time_n,
   // Loop over subRegions to solve for seismicity rate
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel & mesh,
-                                                               arrayView1d< string const > const & regionNames )
+                                                               string_array const & regionNames )
 
   {
     mesh.getElemManager().forElementSubRegions( regionNames,
@@ -323,7 +324,7 @@ real64 SeismicityRate::updateStresses( real64 const & time_n,
     // 2. Loop over subRegions to update stress on faults
     forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                  MeshLevel & mesh,
-                                                                 arrayView1d< string const > const & regionNames )
+                                                                 string_array const & regionNames )
 
     {
       mesh.getElemManager().forElementSubRegions( regionNames,
@@ -346,13 +347,13 @@ real64 SeismicityRate::updateStresses( real64 const & time_n,
 
     forDiscretizationOnMeshTargets ( domain.getMeshBodies(), [&] ( string const &,
                                                                    MeshLevel & mesh,
-                                                                   arrayView1d< string const > const & )
+                                                                   string_array const & )
     {
 
       FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
 
-      std::vector< string > const keys = { inducedSeismicity::projectedNormalTraction::key(),
-                                           inducedSeismicity::projectedShearTraction::key() };
+      stdVector< string > const keys = { inducedSeismicity::projectedNormalTraction::key(),
+                                         inducedSeismicity::projectedShearTraction::key() };
 
       for( auto const & key : keys )
       {
@@ -365,13 +366,12 @@ real64 SeismicityRate::updateStresses( real64 const & time_n,
                                                       ElementSubRegionBase & subRegion,
                                                       string const & )
         {
-          if( fs.getLogLevel() >= 1 )
-          {
-            globalIndex const numTargetElems = MpiWrapper::sum< globalIndex >( lset.size() );
-            GEOS_LOG_RANK_0( GEOS_FMT( bcLogMessage,
-                                       this->getName(), time_n+dt, FieldSpecificationBase::catalogName(),
-                                       fs.getName(), setName, subRegion.getName(), fs.getScale(), numTargetElems ) );
-          }
+          globalIndex const numTargetElems = MpiWrapper::sum< globalIndex >( lset.size() );
+          GEOS_LOG_LEVEL_RANK_0_ON_GROUP( logInfo::FaceBoundaryCondition,
+                                          GEOS_FMT( bcLogMessage,
+                                                    this->getName(), time_n+dt, FieldSpecificationBase::catalogName(),
+                                                    fs.getName(), setName, subRegion.getName(), fs.getScale(), numTargetElems ),
+                                          fs );
 
           // Specify the bc value of the field
           fs.applyFieldValue< FieldSpecificationEqual,

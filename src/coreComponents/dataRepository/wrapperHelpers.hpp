@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
  * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
@@ -190,39 +190,13 @@ resize( T & GEOS_UNUSED_PARAM( value ),
 {}
 
 template< typename T >
-inline std::enable_if_t< traits::HasMemberFunction_resizeDefault< T > &&
-                         DefaultValue< T >::has_default_value >
+inline void
 resizeDefault( T & value,
                localIndex const newSize,
                DefaultValue< T > const & defaultValue,
                string const & )
 { value.resizeDefault( newSize, defaultValue.value ); }
 
-template< typename T >
-inline std::enable_if_t< !( traits::HasMemberFunction_resizeDefault< T > &&
-                            DefaultValue< T >::has_default_value ) >
-resizeDefault( T & value,
-               localIndex const newSize,
-               DefaultValue< T > const & GEOS_UNUSED_PARAM( defaultValue ),
-               string const & name )
-{
-#if !defined(NDEBUG)
-  GEOS_LOG_RANK_0( GEOS_FMT( "Warning: For Wrapper<{}>::name() = {}:\n"
-                             "  wrapperHelpers::resizeDefault<{}>() called, but the SFINAE filter failed:\n"
-                             "    traits::HasMemberFunction_resizeDefault< {} > = {}\n "
-                             "    DefaultValue< {} >::has_default_value = {}",
-                             LvArray::system::demangleType< T >(),
-                             name,
-                             LvArray::system::demangleType< T >(),
-                             LvArray::system::demangleType< T >(),
-                             traits::HasMemberFunction_resizeDefault< T >,
-                             LvArray::system::demangleType< T >(),
-                             DefaultValue< T >::has_default_value ) );
-#else
-  GEOS_UNUSED_VAR( name );
-#endif
-  resize( value, newSize );
-}
 
 
 template< typename T, int NDIM, typename PERMUTATION >
@@ -658,7 +632,7 @@ addBlueprintField( ArrayView< T const, NDIM, USD > const & var,
                    conduit::Node & fields,
                    string const & fieldName,
                    string const & topology,
-                   std::vector< string > const & componentNames )
+                   stdVector< string > const & componentNames )
 {
   GEOS_ERROR_IF_LE( var.size(), 0 );
 
@@ -717,7 +691,7 @@ void addBlueprintField( T const &,
                         conduit::Node & fields,
                         string const &,
                         string const &,
-                        std::vector< string > const & )
+                        stdVector< string > const & )
 {
   GEOS_ERROR( "Cannot create a mcarray out of " << LvArray::system::demangleType< T >() <<
               "\nWas trying to write it to " << fields.path() );
@@ -728,7 +702,7 @@ template< typename T, int NDIM, int USD >
 std::enable_if_t< std::is_arithmetic< T >::value || traits::is_tensorT< T > >
 populateMCArray( ArrayView< T const, NDIM, USD > const & var,
                  conduit::Node & node,
-                 std::vector< string > const & componentNames )
+                 stdVector< string > const & componentNames )
 {
   GEOS_ERROR_IF_LE( var.size(), 0 );
 
@@ -764,7 +738,7 @@ populateMCArray( ArrayView< T const, NDIM, USD > const & var,
 template< typename T >
 void populateMCArray( T const &,
                       conduit::Node & node,
-                      std::vector< string > const & )
+                      stdVector< string > const & )
 {
   GEOS_ERROR( "Cannot create a mcarray out of " << LvArray::system::demangleType< T >() <<
               "\nWas trying to write it to " << node.path() );
@@ -825,6 +799,12 @@ template< typename T, int NDIM, int USD >
 int numArrayDims( ArrayView< T const, NDIM, USD > const & GEOS_UNUSED_PARAM( var ) )
 {
   return NDIM;
+}
+
+template< typename T >
+int numArrayDims( stdVector< T > const & GEOS_UNUSED_PARAM( var ) )
+{
+  return 1;
 }
 
 template< typename T >

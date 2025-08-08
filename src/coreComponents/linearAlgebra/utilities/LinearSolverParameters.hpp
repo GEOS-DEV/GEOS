@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
  * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
@@ -281,12 +281,13 @@ struct LinearSolverParameters
       thermalSinglePhasePoromechanics,           ///< thermal single phase poromechanics with finite volume single phase flow
       hybridSinglePhasePoromechanics,            ///< single phase poromechanics with hybrid finite volume single phase flow
       singlePhasePoromechanicsEmbeddedFractures, ///< single phase poromechanics with FV embedded fractures
-      singlePhasePoromechanicsConformingFractures, ///< single phase poromechanics with FV embedded fractures
+      singlePhasePoromechanicsConformingFractures, ///< single phase poromechanics with conforming fractures
       singlePhasePoromechanicsReservoirFVM,      ///< single phase poromechanics with finite volume single phase flow with wells
       compositionalMultiphaseFVM,                ///< finite volume compositional multiphase flow
       compositionalMultiphaseHybridFVM,          ///< hybrid finite volume compositional multiphase flow
       compositionalMultiphaseReservoirFVM,       ///< finite volume compositional multiphase flow with wells
       compositionalMultiphaseReservoirHybridFVM, ///< hybrid finite volume compositional multiphase flow with wells
+      immiscibleMultiphaseFVM,                     ///< finite volume immiscible multiphase flow
       reactiveCompositionalMultiphaseOBL,        ///< finite volume reactive compositional flow with OBL
       thermalCompositionalMultiphaseFVM,         ///< finite volume thermal compositional multiphase flow
       thermalCompositionalMultiphaseReservoirFVM,///< finite volume thermal compositional multiphase flow
@@ -295,6 +296,8 @@ struct LinearSolverParameters
       thermalMultiphasePoromechanics,            ///< thermal multiphase poromechanics with finite volume compositional multiphase flow
       hydrofracture,                             ///< hydrofracture
       lagrangianContactMechanics,                ///< Lagrangian contact mechanics
+      augmentedLagrangianContactMechanics,       ///< Augmented Lagrangian contact mechanics
+      lagrangianContactMechanicsBubbleStab,      ///< Lagrangian contact mechanics with bubble stabilization
       solidMechanicsEmbeddedFractures            ///< Embedded fractures mechanics
     };
 
@@ -379,6 +382,7 @@ ENUM_STRINGS( LinearSolverParameters::MGR::StrategyType,
               "compositionalMultiphaseHybridFVM",
               "compositionalMultiphaseReservoirFVM",
               "compositionalMultiphaseReservoirHybridFVM",
+              "immiscibleMultiphaseFVM",
               "reactiveCompositionalMultiphaseOBL",
               "thermalCompositionalMultiphaseFVM",
               "thermalCompositionalMultiphaseReservoirFVM",
@@ -387,6 +391,8 @@ ENUM_STRINGS( LinearSolverParameters::MGR::StrategyType,
               "thermalMultiphasePoromechanics",
               "hydrofracture",
               "lagrangianContactMechanics",
+              "augmentedLagrangianContactMechanics",
+              "lagrangianContactMechanicsBubbleStab",
               "solidMechanicsEmbeddedFractures" );
 
 /// Declare strings associated with enumeration values.

@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
  * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
@@ -52,7 +52,7 @@ public:
  * @param location location where the fields provided have been registered.
  * @param fieldNames vector of names of the  element-based fields to be added to the map.
  */
-  void addFields( FieldLocation const location, std::vector< string > const & fieldNames )
+  void addFields( FieldLocation const location, stdVector< string > const & fieldNames )
   {
     string key;
     generateKey( location, key );
@@ -64,8 +64,8 @@ public:
  * @param fieldNames vector of names of the  element-based fields to be added to the map.
  * @param regionNames vector of the regions on which these fields exist.
  */
-  template< typename T = std::vector< string > >
-  void addElementFields( std::vector< string > const & fieldNames, T const & regionNames )
+  template< typename T = stdVector< string > >
+  void addElementFields( stdVector< string > const & fieldNames, T const & regionNames )
   {
     for( auto const & regionName : regionNames )
     {
@@ -76,9 +76,9 @@ public:
 /**
  * @brief Get the Fields object which is the map containing the fields existing for each location.
  *
- * @return std::map< string, array1d< string > > const&
+ * @return std::map< string, string_array > const&
  */
-  std::map< string, array1d< string > > const & getFields() const
+  std::map< string, string_array > const & getFields() const
   {
     return m_fields;
   }
@@ -98,11 +98,11 @@ public:
  * @brief Get the Location object
  *
  * @param key key used to store the list of fields in the map.
- * @param location mesh location where fields defined by the key provided were registered.
+ * @return mesh location where fields defined by the key provided were registered.
  */
-  void getLocation( string const & key,
-                    FieldLocation & location ) const
+  FieldLocation getLocation( string const & key ) const
   {
+    FieldLocation location{};
     if( key.find( m_locationKeys.nodesKey() ) != string::npos )
     {
       location = FieldLocation::Node;
@@ -123,11 +123,12 @@ public:
     {
       GEOS_ERROR( GEOS_FMT( "Invalid key, {}, was provided. Location cannot be retrieved.", key ) );
     }
+    return location;
   }
 
 private:
   ///
-  std::map< string, array1d< string > > m_fields;
+  std::map< string, string_array > m_fields;
 
   struct keysStruct
   {
@@ -191,7 +192,7 @@ private:
  * @param fieldNames list of the names of the fields to sync
  * @param key key used to registered teh fields in the map.
  */
-  void addFields( std::vector< string > const fieldNames, string const key )
+  void addFields( stdVector< string > const fieldNames, string const key )
   {
     for( string const & field : fieldNames )
     {

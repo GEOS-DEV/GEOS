@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
  * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
@@ -20,17 +20,16 @@
 #include "EmbeddedSurfacesParallelSynchronization.hpp"
 
 #include "common/GeosxMacros.hpp"
-#include "common/TimingMacros.hpp"
 #include "mesh/ElementRegionManager.hpp"
 #include "mesh/MeshFields.hpp"
-#include "mesh/mpiCommunications/CommunicationTools.hpp"
+#include "mesh/MeshLevel.hpp"
 #include "mesh/mpiCommunications/MPI_iCommData.hpp"
-
+#include "mesh/mpiCommunications/NeighborCommunicator.hpp"
 
 namespace geos
 {
 
-namespace  embeddedSurfacesParallelSynchronization
+namespace embeddedSurfacesParallelSynchronization
 {
 
 using namespace dataRepository;
@@ -376,7 +375,7 @@ void unpackFracturedToGhosts( NeighborCommunicator * const neighbor,
 }
 
 void synchronizeNewNodes( MeshLevel & mesh,
-                          std::vector< NeighborCommunicator > & neighbors,
+                          stdVector< NeighborCommunicator > & neighbors,
                           NewObjectLists & newObjects,
                           int const mpiCommOrder )
 {
@@ -451,7 +450,7 @@ void synchronizeNewNodes( MeshLevel & mesh,
 }
 
 void synchronizeNewSurfaces( MeshLevel & mesh,
-                             std::vector< NeighborCommunicator > & neighbors,
+                             stdVector< NeighborCommunicator > & neighbors,
                              NewObjectLists & newObjects,
                              int const mpiCommOrder )
 {
@@ -525,7 +524,7 @@ void synchronizeNewSurfaces( MeshLevel & mesh,
 }
 
 void synchronizeFracturedElements( MeshLevel & mesh,
-                                   std::vector< NeighborCommunicator > & neighbors,
+                                   stdVector< NeighborCommunicator > & neighbors,
                                    string const fractureRegionName )
 {
   MPI_iCommData commData;
@@ -593,11 +592,11 @@ void synchronizeFracturedElements( MeshLevel & mesh,
 
 using namespace parallelSynchronizationHelpers;
 
-void sychronizeTopology( MeshLevel & mesh,
-                         std::vector< NeighborCommunicator > & neighbors,
-                         NewObjectLists & newObjects,
-                         int const mpiCommOrder,
-                         string const fractureRegionName )
+void synchronizeTopology( MeshLevel & mesh,
+                          stdVector< NeighborCommunicator > & neighbors,
+                          NewObjectLists & newObjects,
+                          int const mpiCommOrder,
+                          string const fractureRegionName )
 {
 
   // Synchronize nodes

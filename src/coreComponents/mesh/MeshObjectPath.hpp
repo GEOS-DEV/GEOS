@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
  * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
@@ -44,7 +44,7 @@ public:
    * The third key is the name of an ElementRegion
    * The third value is a vector of subregion names
    */
-  using permutationMapType = std::map< string, std::map< string, std::map< string, std::vector< string > > > >;
+  using permutationMapType = std::map< string, std::map< string, std::map< string, stdVector< string > > > >;
 
   /**
    * @brief Contains enums for the types of objects
@@ -155,8 +155,8 @@ public:
     return checkObjectTypeConsistency< OBJECT_TYPE >();
   }
 
-  std::vector< string > testFillPathTokens( string const & path,
-                                            dataRepository::Group const & meshBodies )
+  stdVector< string > testFillPathTokens( string const & path,
+                                          dataRepository::Group const & meshBodies )
   {
     return fillPathTokens( path, meshBodies );
   }
@@ -177,13 +177,13 @@ private:
    */
   template< typename OBJECT_TYPE,
             typename FUNC >
-  void forObjectsInPath( std::pair< string const, std::map< string, std::vector< string > > > const & levelPair,
+  void forObjectsInPath( std::pair< string const, std::map< string, stdVector< string > > > const & levelPair,
                          MeshLevel & meshLevel,
                          FUNC && func ) const;
 
   template< typename OBJECT_TYPE,
             typename FUNC >
-  void forObjectsInPath( std::pair< string const, std::map< string, std::vector< string > > > const & levelPair,
+  void forObjectsInPath( std::pair< string const, std::map< string, stdVector< string > > > const & levelPair,
                          MeshLevel const & meshLevel,
                          FUNC && func ) const;
 
@@ -206,10 +206,10 @@ private:
    * @brief Create a tokenized version of the path
    * @param path The input path
    * @param meshBodies The Group that contains the MeshBody objects on the domain
-   * @return std::vector< string >  A tokenized representation of the path.
+   * @return stdVector< string >  A tokenized representation of the path.
    */
-  std::vector< string > fillPathTokens( string const & path,
-                                        dataRepository::Group const & meshBodies ) const;
+  stdVector< string > fillPathTokens( string const & path,
+                                      dataRepository::Group const & meshBodies ) const;
 
   /**
    * @brief Convert the tokenized path into a collection of permutations and fill
@@ -217,7 +217,7 @@ private:
    * @param pathTokens The tokenized path
    * @param meshBodies The Group that contains the MeshBody objects on the domain
    */
-  void processPathTokens( std::vector< string > const & pathTokens,
+  void processPathTokens( stdVector< string > const & pathTokens,
                           dataRepository::Group const & meshBodies );
 
 
@@ -273,7 +273,7 @@ bool MeshObjectPath::checkObjectTypeConsistency() const
 
 template< typename OBJECT_TYPE,
           typename FUNC >
-void MeshObjectPath::forObjectsInPath( std::pair< string const, std::map< string, std::vector< string > > > const & levelPair,
+void MeshObjectPath::forObjectsInPath( std::pair< string const, std::map< string, stdVector< string > > > const & levelPair,
                                        MeshLevel & meshLevel,
                                        FUNC && func ) const
 {
@@ -285,7 +285,7 @@ void MeshObjectPath::forObjectsInPath( std::pair< string const, std::map< string
 
 template< typename OBJECT_TYPE,
           typename FUNC >
-void MeshObjectPath::forObjectsInPath( std::pair< string const, std::map< string, std::vector< string > > > const & levelPair,
+void MeshObjectPath::forObjectsInPath( std::pair< string const, std::map< string, stdVector< string > > > const & levelPair,
                                        MeshLevel const & meshLevel,
                                        FUNC && func ) const
 {

@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
  * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
@@ -18,7 +18,6 @@
  */
 
 #include "constitutive/fluid/multifluid/CO2Brine/functions/PVTFunctionHelpers.hpp"
-#include "LvArray/src/sortedArrayManipulation.hpp"
 
 namespace geos
 {
@@ -98,8 +97,7 @@ BlackOilTables::buildAllTables( localIndex const ipOil,
 {
 
   // check if both oil and gas are defined
-  auto lower = LvArray::sortedArrayManipulation::find( phaseTypes.begin(), phaseTypes.size(), int(ipOil) );
-  bool const containsOil = lower != phaseTypes.size();
+  bool const containsOil = std::find( phaseTypes.begin(), phaseTypes.end(), static_cast< integer >(ipOil) ) != phaseTypes.end();
   GEOS_ERROR_IF( !containsOil, "The oil phase must be defined for all PVT models" );
 
   // reading data from files

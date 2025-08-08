@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
  * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
@@ -85,11 +85,20 @@ public:
   virtual void updateStateFromPressureAndTemperature( localIndex const k,
                                                       localIndex const q,
                                                       real64 const & pressure,
-                                                      real64 const & pressure_k,
-                                                      real64 const & pressure_n,
-                                                      real64 const & temperature,
-                                                      real64 const & temperature_k,
-                                                      real64 const & temperature_n ) const
+                                                      real64 const & temperature ) const
+  {
+    GEOS_UNUSED_VAR( k, q, pressure, temperature );
+  }
+
+  GEOS_HOST_DEVICE
+  virtual void updateStateFixedStress( localIndex const k,
+                                       localIndex const q,
+                                       real64 const & pressure,
+                                       real64 const & pressure_k,
+                                       real64 const & pressure_n,
+                                       real64 const & temperature,
+                                       real64 const & temperature_k,
+                                       real64 const & temperature_n ) const
   {
     GEOS_UNUSED_VAR( k, q,
                      pressure, pressure_k, pressure_n,

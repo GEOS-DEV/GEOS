@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
  * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
@@ -19,6 +19,7 @@
 #include "functions/FunctionManager.hpp"
 #include "functions/TableFunction.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
+#include "constitutiveDrivers/fluid/multiFluid/LogLevelsInfo.hpp"
 #include "constitutive/relativePermeability/RelativePermeabilityBase.hpp"
 #include "constitutive/relativePermeability/RelativePermeabilitySelector.hpp"
 
@@ -33,8 +34,6 @@ RelpermDriver::RelpermDriver( const geos::string & name,
   :
   TaskBase( name, parent )
 {
-  enableLogLevelInput();
-
   registerWrapper( viewKeyStruct::relpermNameString(), &m_relpermName ).
     setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
     setInputFlag( InputFlags::REQUIRED ).
@@ -53,6 +52,9 @@ RelpermDriver::RelpermDriver( const geos::string & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( "none" ).
     setDescription( "Baseline file" );
+
+  addLogLevel< logInfo::Initialisation >();
+  addLogLevel< logInfo::Results >();
 }
 
 
@@ -89,10 +91,10 @@ void RelpermDriver::outputResults()
 
 void RelpermDriver::postInputInitialization()
 {
-  constitutive::ConstitutiveManager
-  & constitutiveManager = this->getGroupByPath< constitutive::ConstitutiveManager >( "/Problem/domain/Constitutive" );
-  constitutive::RelativePermeabilityBase
-  & baseRelperm = constitutiveManager.getGroup< constitutive::RelativePermeabilityBase >( m_relpermName );
+  ConstitutiveManager
+  & constitutiveManager = this->getGroupByPath< ConstitutiveManager >( "/Problem/domain/Constitutive" );
+  RelativePermeabilityBase
+  & baseRelperm = constitutiveManager.getGroup< RelativePermeabilityBase >( m_relpermName );
 
   m_numPhases = baseRelperm.numFluidPhases();
 
@@ -112,21 +114,18 @@ bool RelpermDriver::execute( const geos::real64 GEOS_UNUSED_PARAM( time_n ),
   GEOS_THROW_IF( MpiWrapper::commRank() > 0, "RelpermDriver should only be run in serial", std::runtime_error );
 
 
-  constitutive::ConstitutiveManager
-  & constitutiveManager = this->getGroupByPath< constitutive::ConstitutiveManager >( "/Problem/domain/Constitutive" );
-  constitutive::RelativePermeabilityBase
-  & baseRelperm = constitutiveManager.getGroup< constitutive::RelativePermeabilityBase >( m_relpermName );
+  ConstitutiveManager
+  & constitutiveManager = this->getGroupByPath< ConstitutiveManager >( "/Problem/domain/Constitutive" );
+  RelativePermeabilityBase
+  & baseRelperm = constitutiveManager.getGroup< RelativePermeabilityBase >( m_relpermName );
 
-  if( getLogLevel() > 0 )
-  {
-    GEOS_LOG_RANK_0( "Launching Relperm Driver" );
-    GEOS_LOG_RANK_0( "  Relperm .................. " << m_relpermName );
-    GEOS_LOG_RANK_0( "  Type ................... " << baseRelperm.getCatalogName() );
-    GEOS_LOG_RANK_0( "  No. of Phases .......... " << m_numPhases );
-    GEOS_LOG_RANK_0( "  Steps .................. " << m_numSteps );
-    GEOS_LOG_RANK_0( "  Output ................. " << m_outputFile );
-    GEOS_LOG_RANK_0( "  Baseline ............... " << m_baselineFile );
-  }
+  GEOS_LOG_LEVEL_RANK_0( logInfo::Initialisation, "Launching Relperm Driver" );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::Initialisation, "  Relperm .................. " << m_relpermName );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::Initialisation, "  Type ................... " << baseRelperm.getCatalogName() );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::Initialisation, "  No. of Phases .......... " << m_numPhases );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::Initialisation, "  Steps .................. " << m_numSteps );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::Initialisation, "  Output ................. " << m_outputFile );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::Initialisation, "  Baseline ............... " << m_baselineFile );
 
   // create a dummy discretization with one quadrature point for
   // storing constitutive data
@@ -165,12 +164,12 @@ bool RelpermDriver::execute( const geos::real64 GEOS_UNUSED_PARAM( time_n ),
 template< typename RELPERM_TYPE >
 void RelpermDriver::resizeTables()
 {
-  constitutive::ConstitutiveManager
-  & constitutiveManager = this->getGroupByPath< constitutive::ConstitutiveManager >( "/Problem/domain/Constitutive" );
-  constitutive::RelativePermeabilityBase
-  & baseRelperm = constitutiveManager.getGroup< constitutive::RelativePermeabilityBase >( m_relpermName );
+  ConstitutiveManager
+  & constitutiveManager = this->getGroupByPath< ConstitutiveManager >( "/Problem/domain/Constitutive" );
+  RelativePermeabilityBase
+  & baseRelperm = constitutiveManager.getGroup< RelativePermeabilityBase >( m_relpermName );
 
-  using PT = constitutive::RelativePermeabilityBase::PhaseType;
+  using PT = RelativePermeabilityBase::PhaseType;
   integer const ipWater = baseRelperm.getPhaseOrder()[PT::WATER];
   integer const ipOil = baseRelperm.getPhaseOrder()[PT::OIL];
   integer const ipGas = baseRelperm.getPhaseOrder()[PT::GAS];
@@ -246,7 +245,7 @@ void RelpermDriver::resizeTables()
 
 
 template< typename RELPERM_TYPE >
-std::enable_if_t< std::is_same< constitutive::TableRelativePermeabilityHysteresis, RELPERM_TYPE >::value, void >
+std::enable_if_t< std::is_same< TableRelativePermeabilityHysteresis, RELPERM_TYPE >::value, void >
 RelpermDriver::resizeTable()
 {
   if( m_numPhases > 2 )
@@ -261,7 +260,7 @@ RelpermDriver::resizeTable()
 }
 
 template< typename RELPERM_TYPE >
-std::enable_if_t< !std::is_same< constitutive::TableRelativePermeabilityHysteresis, RELPERM_TYPE >::value, void >
+std::enable_if_t< !std::is_same< TableRelativePermeabilityHysteresis, RELPERM_TYPE >::value, void >
 RelpermDriver::resizeTable()
 {
   if( m_numPhases > 2 )
@@ -323,10 +322,7 @@ void RelpermDriver::compareWithBaseline()
 
   // success
 
-  if( getLogLevel() > 0 )
-  {
-    GEOS_LOG_RANK_0( "  Comparison ............. Internal results consistent with baseline." );
-  }
+  GEOS_LOG_LEVEL_RANK_0( logInfo::Results, "  Comparison ............. Internal results consistent with baseline." );
 
   file.close();
 }

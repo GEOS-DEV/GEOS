@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: LGPL-2.1-only
 #
 # Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
-# Copyright (c) 2018-2024 Total, S.A
+# Copyright (c) 2018-2024 TotalEnergies
 # Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
 # Copyright (c) 2023-2024 Chevron
 # Copyright (c) 2019-     GEOS/GEOSX Contributors
@@ -56,5 +56,9 @@ blt_add_library( NAME       mainInterface
 add_dependencies( mainInterface generate_version )
 
 target_include_directories( mainInterface PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )
+
+if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+  target_link_options(mainInterface PUBLIC -Wl,--no-as-needed)
+endif()
 
 install( TARGETS mainInterface LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib )

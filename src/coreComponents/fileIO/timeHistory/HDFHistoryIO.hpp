@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
  * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
@@ -48,7 +48,7 @@ public:
    */
   HDFHistoryIO( string const & filename,
                 localIndex rank,
-                std::vector< localIndex > const & dims,
+                stdVector< localIndex > const & dims,
                 string const & name,
                 std::type_index typeId,
                 localIndex writeHead = 0,
@@ -174,9 +174,9 @@ private:
   /// The rank of the data set
   hsize_t m_rank;
   /// The dimensions of the data set
-  std::vector< hsize_t > m_dims;
+  stdVector< hsize_t > m_dims;
   ///
-  std::vector< globalIndex > m_localIdxCounts_buffered;
+  stdVector< globalIndex > m_localIdxCounts_buffered;
   /// The name of the data set
   string m_name;
   /// The communicator across which the data set is distributed

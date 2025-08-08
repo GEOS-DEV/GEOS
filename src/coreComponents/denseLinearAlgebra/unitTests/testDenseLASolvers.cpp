@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
  * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
@@ -88,6 +88,8 @@ public:
   {
     std::mt19937 generator( seed );
     std::uniform_real_distribution< real64 > distribution( -10.0, 10.0 );
+
+    solution[N-1] = 0.0;
     for( ptrdiff_t i=0; i<N-1; ++i )
     {
       solution[i] = 0.0;

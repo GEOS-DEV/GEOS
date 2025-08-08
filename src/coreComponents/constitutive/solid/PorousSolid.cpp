@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
  * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
@@ -25,9 +25,6 @@
 #include "DelftEgg.hpp"
 #include "DruckerPrager.hpp"
 #include "DruckerPragerExtended.hpp"
-#include "Damage.hpp"
-#include "DamageSpectral.hpp"
-#include "DamageVolDev.hpp"
 #include "ModifiedCamClay.hpp"
 #include "DuvautLionsSolid.hpp"
 
@@ -60,9 +57,6 @@ typedef PorousSolid< ElasticOrthotropic > PorousElasticOrthotropic;
 typedef PorousSolid< DelftEgg > PorousDelftEgg;
 typedef PorousSolid< DruckerPrager > PorousDruckerPrager;
 typedef PorousSolid< DruckerPragerExtended > PorousDruckerPragerExtended;
-typedef PorousSolid< Damage< ElasticIsotropic > > PorousDamageElasticIsotropic;
-typedef PorousSolid< DamageSpectral< ElasticIsotropic > > PorousDamageSpectralElasticIsotropic;
-typedef PorousSolid< DamageVolDev< ElasticIsotropic > > PorousDamageVolDevElasticIsotropic;
 typedef PorousSolid< DuvautLionsSolid< DruckerPrager > > PorousViscoDruckerPrager;
 typedef PorousSolid< DuvautLionsSolid< DruckerPragerExtended > > PorousViscoDruckerPragerExtended;
 typedef PorousSolid< DuvautLionsSolid< ModifiedCamClay > > PorousViscoModifiedCamClay;
@@ -75,9 +69,6 @@ REGISTER_CATALOG_ENTRY( ConstitutiveBase, PorousElasticOrthotropic, string const
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, PorousDelftEgg, string const &, Group * const )
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, PorousDruckerPrager, string const &, Group * const )
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, PorousDruckerPragerExtended, string const &, Group * const )
-REGISTER_CATALOG_ENTRY( ConstitutiveBase, PorousDamageElasticIsotropic, string const &, Group * const )
-REGISTER_CATALOG_ENTRY( ConstitutiveBase, PorousDamageSpectralElasticIsotropic, string const &, Group * const )
-REGISTER_CATALOG_ENTRY( ConstitutiveBase, PorousDamageVolDevElasticIsotropic, string const &, Group * const )
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, PorousModifiedCamClay, string const &, Group * const )
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, PorousViscoDruckerPrager, string const &, Group * const )
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, PorousViscoDruckerPragerExtended, string const &, Group * const )

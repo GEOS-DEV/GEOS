@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
  * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
@@ -54,7 +54,7 @@ struct StatisticsKernel
           arrayView1d< real64 const > const & temp,
           arrayView1d< real64 const > const & refPorosity,
           arrayView2d< real64 const > const & porosity,
-          arrayView2d< real64 const > const & density,
+          arrayView2d< real64 const, constitutive::singlefluid::USD_FLUID > const & density,
           real64 & minPres,
           real64 & avgPresNumerator,
           real64 & maxPres,

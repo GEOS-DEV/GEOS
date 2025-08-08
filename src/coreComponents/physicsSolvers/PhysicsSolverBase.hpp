@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
  * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
@@ -22,7 +22,9 @@
 
 #include "codingUtilities/traits.hpp"
 #include "common/DataTypes.hpp"
+#include "common/format/LogPart.hpp"
 #include "dataRepository/ExecutableGroup.hpp"
+#include "dataRepository/RestartFlags.hpp"
 #include "linearAlgebra/interfaces/InterfaceTypes.hpp"
 #include "linearAlgebra/utilities/LinearSolverResult.hpp"
 #include "linearAlgebra/DofManager.hpp"
@@ -30,7 +32,6 @@
 #include "physicsSolvers/NonlinearSolverParameters.hpp"
 #include "physicsSolvers/LinearSolverParameters.hpp"
 #include "physicsSolvers/SolverStatistics.hpp"
-#include "physicsSolvers/LogLevelsInfo.hpp"
 
 #include <limits>
 
@@ -216,19 +217,21 @@ public:
 
   /**
    * @brief function to set the next time step size
+   * @param[in] currentTime the current time
    * @param[in] currentDt the current time step size
    * @param[in] domain the domain object
    * @return the prescribed time step size
    */
-  virtual real64 setNextDt( real64 const & currentDt,
+  virtual real64 setNextDt( real64 const & currentTime,
+                            real64 const & currentDt,
                             DomainPartition & domain );
 
   /**
-   * @brief function to set the next time step size based on Newton convergence
+   * @brief function to set the next time step size based on convergence
    * @param[in] currentDt the current time step size
    * @return the prescribed time step size
    */
-  virtual real64 setNextDtBasedOnNewtonIter( real64 const & currentDt );
+  virtual real64 setNextDtBasedOnIterNumber( real64 const & currentDt );
 
   /**
    * @brief function to set the next dt based on state change
@@ -238,17 +241,6 @@ public:
    */
   virtual real64 setNextDtBasedOnStateChange( real64 const & currentDt,
                                               DomainPartition & domain );
-
-  /**
-   * @brief function to set the next dt based on state change
-   * @param [in]  currentDt the current time step size
-   * @param[in] domain the domain object
-   * @return the prescribed time step size
-   */
-  virtual real64 setNextDtBasedOnCFL( real64 const & currentDt,
-                                      DomainPartition & domain );
-
-
 
   /**
    * @brief Entry function for an explicit time integration step
@@ -690,20 +682,23 @@ public:
     /// @return string for the minDtIncreaseInterval wrapper
     static constexpr char const * minDtIncreaseIntervalString() { return "minDtIncreaseInterval"; }
 
-    /// @return string for the maxStableDt wrapper
-    static constexpr char const * maxStableDtString() { return "maxStableDt"; }
-
     /// @return string for the discretization wrapper
     static constexpr char const * discretizationString() { return "discretization"; }
 
     /// @return string for the nextDt targetRegions wrapper
     static constexpr char const * targetRegionsString() { return "targetRegions"; }
 
-    /// @return string for the meshTargets wrapper
-    static constexpr char const * meshTargetsString() { return "meshTargets"; }
-
     /// @return string for the writeLinearSystem wrapper
     static constexpr char const * writeLinearSystemString() { return "writeLinearSystem"; }
+
+    /// @return string for the usePhysicsScaling wrapper
+    static constexpr char const * usePhysicsScalingString() { return "usePhysicsScaling"; }
+
+    /// @return string for the allowNonConvergedLinearSolverSolution wrapper
+    static constexpr char const * allowNonConvergedLinearSolverSolutionString() { return "allowNonConvergedLinearSolverSolution"; }
+
+    /// @return string for the numTimestepsSinceLastDtCut wrapper
+    static constexpr char const * numTimestepsSinceLastDtCutString() { return "numTimestepsSinceLastDtCut"; }
   };
 
   /**
@@ -800,7 +795,7 @@ public:
   }
 
   /**
-   * @brief syncronize the nonlinear solver parameters.
+   * @brief synchronize the nonlinear solver parameters.
    */
   virtual void
   synchronizeNonlinearSolverParameters()
@@ -829,7 +824,7 @@ public:
     {
       string const meshBodyName = target.first.first;
       string const meshLevelName = target.first.second;
-      arrayView1d< string const > const & regionNames = target.second.toViewConst();
+      string_array const & regionNames = target.second;
       MeshBody const & meshBody = meshBodies.getGroup< MeshBody >( meshBodyName );
 
       MeshLevel const * meshLevelPtr = meshBody.getMeshLevels().getGroupPointer< MeshLevel >( meshLevelName );
@@ -855,7 +850,7 @@ public:
     {
       string const meshBodyName = target.first.first;
       string const meshLevelName = target.first.second;
-      arrayView1d< string const > const & regionNames = target.second.toViewConst();
+      string_array const & regionNames = target.second;
       MeshBody & meshBody = meshBodies.getGroup< MeshBody >( meshBodyName );
 
       MeshLevel * meshLevelPtr = meshBody.getMeshLevels().getGroupPointer< MeshLevel >( meshLevelName );
@@ -907,7 +902,7 @@ public:
    * @brief accessor for m_meshTargets
    * @return reference to m_meshTargets
    */
-  map< std::pair< string, string >, array1d< string > > const & getMeshTargets() const
+  map< std::pair< string, string >, string_array > const & getMeshTargets() const
   {
     return m_meshTargets;
   }
@@ -963,6 +958,17 @@ protected:
   static string getConstitutiveName( ParticleSubRegionBase const & subRegion ); // particle overload
 
   /**
+   * @brief Register wrapper with given name and store constitutive model name on the subregion
+   *
+   * @tparam CONSTITUTIVE the base type of the constitutive model.
+   * @param subRegion the subregion on which the constitutive model is registered.
+   * @param wrapperName the wrapper name to register.
+   * @param constitutiveType the type description of the constitutive model.
+   */
+  template< typename CONSTITUTIVE >
+  void setConstitutiveName( ElementSubRegionBase & subRegion, string const & wrapperName, string const & constitutiveType ) const;
+
+  /**
    * @brief This function sets constitutive name fields on an
    *  ElementSubRegionBase, and calls the base function it overrides.
    * @param subRegion The ElementSubRegionBase that will have constitutive
@@ -1001,16 +1007,26 @@ protected:
     return constitutiveModels.getGroup< BASETYPE >( key );
   }
 
-
+  /**
+   * @brief Get the Constitutive Model object
+   * @tparam CONSTITUTIVE_TYPE the base type of the constitutive model.
+   * @param subRegion the element subregion on which the constitutive model is registered.
+   * @return the constitutive model of type @p CONSTITUTIVE_TYPE registered on the @p subRegion.
+   */
+  template< typename CONSTITUTIVE_TYPE >
+  static CONSTITUTIVE_TYPE & getConstitutiveModel( ElementSubRegionBase & subRegion )
+  {
+    return getConstitutiveModel< CONSTITUTIVE_TYPE >( subRegion, getConstitutiveName< CONSTITUTIVE_TYPE >( subRegion ) );
+  }
 
   /// Courant–Friedrichs–Lewy factor for the timestep
   real64 m_cflFactor;
 
-  /// maximum stable time step
-  real64 m_maxStableDt;
-
   /// timestep of the next cycle
   real64 m_nextDt;
+
+  /// behavior in case of linear solver failure
+  integer m_allowNonConvergedLinearSolverSolution;
 
   /// Number of cycles since last timestep cut
   integer m_numTimestepsSinceLastDtCut;
@@ -1029,6 +1045,12 @@ protected:
 
   /// System solution vector
   ParallelVector m_solution;
+
+  /// Diagonal scaling vector D (Ahat = D * A * D, bhat = D * b, x = D * xhat)
+  ParallelVector m_scaling;
+
+  /// Flag to decide whether to apply physics-based scaling to the linear system
+  integer m_usePhysicsScaling;
 
   /// Local system matrix and rhs
   CRSMatrix< real64, globalIndex > m_localMatrix;
@@ -1062,10 +1084,10 @@ protected:
 
 private:
   /// List of names of regions the solver will be applied to
-  array1d< string > m_targetRegionNames;
+  string_array m_targetRegionNames;
 
   /// Map containing the array of target regions (value) for each MeshBody (key).
-  map< std::pair< string, string >, array1d< string > > m_meshTargets;
+  map< std::pair< string, string >, string_array > m_meshTargets;
 
   /**
    * @brief This function sets constitutive name fields on an
@@ -1092,13 +1114,13 @@ private:
    * @brief output information about the cycle to the log
    * @param cycleNumber the current cycle number
    * @param numOfSubSteps the number of substeps taken
-   * @param subStepDt the time step size for each substep
+   * @param subStepDts the time step size for each substep
    */
   void logEndOfCycleInformation( integer const cycleNumber,
                                  integer const numOfSubSteps,
-                                 std::vector< real64 > const & subStepDt ) const;
-
+                                 stdVector< real64 > const & subStepDts ) const;
 };
+
 
 template< typename CONSTITUTIVE_BASE_TYPE >
 string PhysicsSolverBase::getConstitutiveName( ElementSubRegionBase const & subRegion )
@@ -1111,6 +1133,7 @@ string PhysicsSolverBase::getConstitutiveName( ElementSubRegionBase const & subR
     GEOS_ERROR_IF( !validName.empty(), "A valid constitutive model was already found." );
     validName = model.getName();
   } );
+
   return validName;
 }
 
@@ -1128,6 +1151,19 @@ string PhysicsSolverBase::getConstitutiveName( ParticleSubRegionBase const & sub
   return validName;
 }
 
+template< typename CONSTITUTIVE >
+void PhysicsSolverBase::setConstitutiveName( ElementSubRegionBase & subRegion, string const & wrapperName, string const & constitutiveType ) const
+{
+  subRegion.registerWrapper< string >( wrapperName ).
+    setPlotLevel( dataRepository::PlotLevel::NOPLOT ).
+    setRestartFlags( dataRepository::RestartFlags::NO_WRITE ).
+    setSizedFromParent( 0 );
+
+  string & constitutiveName = subRegion.getReference< string >( wrapperName );
+  constitutiveName = getConstitutiveName< CONSTITUTIVE >( subRegion );
+  GEOS_ERROR_IF( constitutiveName.empty(), GEOS_FMT( "{}: {} constitutive model not found on subregion {}",
+                                                     getDataContext(), constitutiveType, subRegion.getName() ) );
+}
 
 } // namespace geos
 

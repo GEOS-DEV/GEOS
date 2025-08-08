@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
  * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
@@ -81,14 +81,15 @@ struct AquiferBCKernel
           ElementViewConst< arrayView1d< real64 const > > const & pres,
           ElementViewConst< arrayView1d< real64 const > > const & pres_n,
           ElementViewConst< arrayView1d< real64 const > > const & gravCoef,
-          ElementViewConst< arrayView2d< real64 const > > const & dens,
-          ElementViewConst< arrayView2d< real64 const > > const & dDens_dPres,
+          ElementViewConst< arrayView2d< real64 const, constitutive::singlefluid::USD_FLUID > > const & dens,
+          ElementViewConst< arrayView3d< real64 const, constitutive::singlefluid::USD_FLUID_DER > > const & dDens,
           real64 const & timeAtBeginningOfStep,
           real64 const & dt,
           CRSMatrixView< real64, globalIndex const > const & localMatrix,
           arrayView1d< real64 > const & localRhs )
   {
     using Order = BoundaryStencil::Order;
+    using Deriv = constitutive::singlefluid::DerivativeOffset;
 
     BoundaryStencil::IndexContainerViewConstType const & seri = stencil.getElementRegionIndices();
     BoundaryStencil::IndexContainerViewConstType const & sesri = stencil.getElementSubRegionIndices();
@@ -121,7 +122,7 @@ struct AquiferBCKernel
                                 dAquiferVolFlux_dPres,
                                 aquiferDens,
                                 dens[er][esr][ei][0],
-                                dDens_dPres[er][esr][ei][0],
+                                dDens[er][esr][ei][0][Deriv::dP],
                                 dt,
                                 localFlux,
                                 localFluxJacobian );

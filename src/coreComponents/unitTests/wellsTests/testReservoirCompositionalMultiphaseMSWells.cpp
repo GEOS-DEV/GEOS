@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
  * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
@@ -280,7 +280,7 @@ void testNumericalJacobian( CompositionalMultiphaseReservoirAndWells<> & solver,
               // after perturbing, update the pressure-dependent quantities in the reservoir
               flowSolver.forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                                        MeshLevel & mesh2,
-                                                                                       arrayView1d< string const > const & regionNames2 )
+                                                                                       string_array const & regionNames2 )
               {
                 mesh2.getElemManager().forElementSubRegions( regionNames2,
                                                              [&]( localIndex const,
@@ -313,7 +313,7 @@ void testNumericalJacobian( CompositionalMultiphaseReservoirAndWells<> & solver,
 
               flowSolver.forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                                        MeshLevel & mesh2,
-                                                                                       arrayView1d< string const > const & regionNames2 )
+                                                                                       string_array const & regionNames2 )
               {
                 mesh2.getElemManager().forElementSubRegions( regionNames2,
                                                              [&]( localIndex const,
@@ -346,7 +346,7 @@ void testNumericalJacobian( CompositionalMultiphaseReservoirAndWells<> & solver,
   // loop over the wells
   wellSolver.forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                            MeshLevel & mesh,
-                                                                           arrayView1d< string const > const & regionNames )
+                                                                           string_array const & regionNames )
   {
     mesh.getElemManager().forElementSubRegions< WellElementSubRegion >( regionNames,
                                                                         [&]( localIndex const,

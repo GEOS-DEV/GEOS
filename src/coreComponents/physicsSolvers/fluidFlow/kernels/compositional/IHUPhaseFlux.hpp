@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
  * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
@@ -42,7 +42,143 @@ using Deriv = constitutive::multifluid::DerivativeOffset;
 namespace UpwindHelpers
 {
 
-static constexpr double minTotMob = 1e-12;
+template< localIndex numComp >
+GEOS_HOST_DEVICE
+static void assignToZero( real64 & deriv_dP, real64 ( & deriv_dC )[numComp] )
+{
+  deriv_dP = 0.0;
+  for( localIndex ic = 0; ic < numComp; ++ic )
+  {
+    deriv_dC[ic] = 0.0;
+  }
+}
+
+template< localIndex numComp >
+GEOS_HOST_DEVICE
+static void assignToZero( real64 & value, real64 & deriv_dP, real64 ( & deriv_dC )[numComp] )
+{
+  value = 0.0;
+  assignToZero( deriv_dP, deriv_dC );
+}
+
+template< localIndex numComp, localIndex numFluxSupportPoints >
+GEOS_HOST_DEVICE
+static void assignToZero( real64 & value, real64 ( & deriv_dP )[numFluxSupportPoints], real64 ( & deriv_dC )[numFluxSupportPoints][numComp] )
+{
+  value = 0;
+  for( localIndex ke = 0; ke < numFluxSupportPoints; ++ke )
+  {
+    assignToZero( deriv_dP[ke], deriv_dC[ke] );
+  }
+}
+
+template< localIndex numComp >
+GEOS_HOST_DEVICE
+static void addToDerivativesScaled( real64 const ( &dDeriv_dP ), real64 const ( &dDeriv_dC )[numComp],
+                                    real64 const & factor,
+                                    real64 ( &deriv_dP ), real64 ( & deriv_dC )[numComp] )
+{
+  deriv_dP += dDeriv_dP * factor;
+  for( localIndex ic = 0; ic < numComp; ++ic )
+    deriv_dC[ic] += dDeriv_dC[ic] * factor;
+}
+
+template< localIndex numComp, localIndex numFluxSupportPoints >
+GEOS_HOST_DEVICE
+static void addToDerivativesScaled( real64 const ( &dDeriv_dP )[numFluxSupportPoints], real64 const ( &dDeriv_dC )[numFluxSupportPoints][numComp],
+                                    real64 const & factor,
+                                    real64 ( & deriv_dP )[numFluxSupportPoints], real64 ( & deriv_dC )[numFluxSupportPoints][numComp] )
+{
+  for( localIndex ke = 0; ke < numFluxSupportPoints; ++ke )
+  {
+    addToDerivativesScaled( dDeriv_dP[ke], dDeriv_dC[ke], factor, deriv_dP[ke], deriv_dC[ke] );
+  }
+}
+
+template< localIndex numComp >
+GEOS_HOST_DEVICE
+static void addToDerivatives( real64 const ( &dDeriv_dP ), real64 const ( &dDeriv_dC )[numComp],
+                              real64 ( &deriv_dP ), real64 ( & deriv_dC )[numComp] )
+{
+  addToDerivativesScaled( dDeriv_dP, dDeriv_dC, 1.0, deriv_dP, deriv_dC );
+}
+
+template< localIndex numComp, localIndex numFluxSupportPoints >
+GEOS_HOST_DEVICE
+static void addToDerivatives( real64 const ( &dDeriv_dP )[numFluxSupportPoints], real64 const ( &dDeriv_dC )[numFluxSupportPoints][numComp],
+                              real64 ( & deriv_dP )[numFluxSupportPoints], real64 ( & deriv_dC )[numFluxSupportPoints][numComp] )
+{
+  for( localIndex ke = 0; ke < numFluxSupportPoints; ++ke )
+  {
+    addToDerivativesScaled( dDeriv_dP, dDeriv_dC, 1.0, deriv_dP, deriv_dC );
+  }
+}
+
+template< localIndex numComp >
+GEOS_HOST_DEVICE
+static void addToValueAndDerivatives( real64 const & dValue, real64 const ( &dDeriv_dP ), real64 const ( &dDeriv_dC )[numComp],
+                                      real64 & value, real64 ( &deriv_dP ), real64 ( & deriv_dC )[numComp] )
+{
+  value += dValue;
+  addToDerivatives( dDeriv_dP, dDeriv_dC, deriv_dP, deriv_dC );
+}
+
+template< localIndex numComp, localIndex numFluxSupportPoints >
+GEOS_HOST_DEVICE
+static void addToValueAndDerivatives( real64 const & dValue, real64 const ( &dDeriv_dP )[numFluxSupportPoints], real64 const ( &dDeriv_dC )[numFluxSupportPoints][numComp],
+                                      real64 & value, real64 ( & deriv_dP )[numFluxSupportPoints], real64 ( & deriv_dC )[numFluxSupportPoints][numComp] )
+{
+  value += dValue;
+  for( localIndex ke = 0; ke < numFluxSupportPoints; ++ke )
+  {
+    addToDerivatives( dDeriv_dP[ke], dDeriv_dC[ke], deriv_dP[ke], deriv_dC[ke] );
+  }
+}
+
+template< localIndex numComp, localIndex numFluxSupportPoints >
+GEOS_HOST_DEVICE
+static void assignMobilityAndDerivatives( localIndex const & ip, localIndex const & upwindDir,
+                                          localIndex const (&seri)[numFluxSupportPoints],
+                                          localIndex const (&sesri)[numFluxSupportPoints],
+                                          localIndex const (&sei)[numFluxSupportPoints],
+                                          ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & phaseMob,
+                                          ElementViewConst< arrayView3d< real64 const, compflow::USD_PHASE_DC > > const & dPhaseMob,
+                                          real64 & mobility, real64 & dMobility_dP, real64 ( & dMobility_dC )[numComp] )
+{
+  localIndex const er_up = seri[upwindDir];
+  localIndex const esr_up = sesri[upwindDir];
+  localIndex const ei_up = sei[upwindDir];
+
+  if( std::fabs( phaseMob[er_up][esr_up][ei_up][ip] ) > 1e-20 )
+  {
+    mobility += phaseMob[er_up][esr_up][ei_up][ip];
+    dMobility_dP += dPhaseMob[er_up][esr_up][ei_up][ip][Deriv::dP];
+    for( localIndex ic = 0; ic < numComp; ++ic )
+    {
+      dMobility_dC[ic] += dPhaseMob[er_up][esr_up][ei_up][ip][Deriv::dC + ic];
+    }
+  }
+}
+
+template< localIndex numComp, localIndex numFluxSupportPoints >
+GEOS_HOST_DEVICE
+static void computeFractionalFlowAndDerivatives( localIndex const & k_up, real64 const & mob, real64 const & dMob_dP, real64 const ( &dMob_dC )[numComp],
+                                                 real64 const & totMob, real64 const ( &dTotMob_dP )[numFluxSupportPoints], real64 const ( &dTotMob_dC )[numFluxSupportPoints][numComp],
+                                                 real64 & fractionalFlow, real64 ( & dFractionalFlow_dP )[numFluxSupportPoints], real64 ( & dFractionalFlow_dC )[numFluxSupportPoints][numComp] )
+{
+  // guard against no flow region
+  // fractional flow too low to let the upstream phase flow
+  if( std::fabs( mob ) > 1e-20 )
+  {
+    real64 const invTotMob = 1 / totMob;
+
+    fractionalFlow = mob * invTotMob;
+
+    addToDerivativesScaled( dMob_dP, dMob_dC, invTotMob, dFractionalFlow_dP[k_up], dFractionalFlow_dC[k_up] );
+
+    addToDerivativesScaled( dTotMob_dP, dTotMob_dC, -fractionalFlow * invTotMob, dFractionalFlow_dP, dFractionalFlow_dC );
+  }
+}
 
 template< localIndex numComp, localIndex numFluxSupportPoints, class UPWIND >
 GEOS_HOST_DEVICE
@@ -54,7 +190,7 @@ upwindMobilityViscous( localIndex const numPhase,
                        localIndex const (&sei)[numFluxSupportPoints],
                        real64 const (&transmissibility)[2],
                        real64 const (&dTrans_dPres)[2],
-                       real64 const totFlux,          //in fine should be a ElemnetViewConst once seq form are in place
+                       real64 const totFlux, // in fine should be a ElemnetViewConst once seq form are in place
                        ElementViewConst< arrayView1d< real64 const > > const & pres,
                        ElementViewConst< arrayView1d< real64 const > > const & gravCoef,
                        ElementViewConst< arrayView3d< real64 const, compflow::USD_COMP_DC > > const & dCompFrac_dCompDens,
@@ -65,22 +201,12 @@ upwindMobilityViscous( localIndex const numPhase,
                        ElementViewConst< arrayView3d< real64 const, compflow::USD_PHASE_DC > > const & dPhaseVolFrac,
                        ElementViewConst< arrayView3d< real64 const, constitutive::cappres::USD_CAPPRES > > const & phaseCapPressure,
                        ElementViewConst< arrayView4d< real64 const, constitutive::cappres::USD_CAPPRES_DS > > const & dPhaseCapPressure_dPhaseVolFrac,
-                       integer const capPressureFlag,
+                       integer const hasCapPressure,
                        localIndex & upwindDir,
                        real64 & mobility,
-                       real64( &dMobility_dP),
-                       real64 ( & dMobility_dC)[numComp]
-                       )
+                       real64 (&dMobility_dP),
+                       real64 (& dMobility_dC)[numComp] )
 {
-
-  //reinit
-  mobility = 0.0;
-  dMobility_dP = 0.0;
-  for( localIndex ic = 0; ic < numComp; ++ic )
-  {
-    dMobility_dC[ic] = 0.0;
-  }
-
   UPWIND scheme;
   scheme.template getUpwindDirectionViscous< numComp, numFluxSupportPoints, UPWIND >( numPhase,
                                                                                       ip,
@@ -99,22 +225,12 @@ upwindMobilityViscous( localIndex const numPhase,
                                                                                       dPhaseVolFrac,
                                                                                       phaseCapPressure,
                                                                                       dPhaseCapPressure_dPhaseVolFrac,
-                                                                                      capPressureFlag,
+                                                                                      hasCapPressure,
                                                                                       upwindDir );
 
-  localIndex const er_up = seri[upwindDir];
-  localIndex const esr_up = sesri[upwindDir];
-  localIndex const ei_up = sei[upwindDir];
-
-  if( std::fabs( phaseMob[er_up][esr_up][ei_up][ip] ) > 1e-20 )
-  {
-    mobility = phaseMob[er_up][esr_up][ei_up][ip];
-    dMobility_dP = dPhaseMob[er_up][esr_up][ei_up][ip][Deriv::dP];
-    for( localIndex ic = 0; ic < numComp; ++ic )
-    {
-      dMobility_dC[ic] = dPhaseMob[er_up][esr_up][ei_up][ip][Deriv::dC + ic];
-    }
-  }
+  //reinit
+  assignToZero( mobility, dMobility_dP, dMobility_dC );
+  assignMobilityAndDerivatives( ip, upwindDir, seri, sesri, sei, phaseMob, dPhaseMob, mobility, dMobility_dP, dMobility_dC );
 }
 
 template< localIndex numComp, localIndex numFluxSupportPoints, class UPWIND >
@@ -139,22 +255,13 @@ upwindMobilityGravity( localIndex const numPhase,
                        ElementViewConst< arrayView3d< real64 const, compflow::USD_PHASE_DC > > const & dPhaseVolFrac,
                        ElementViewConst< arrayView3d< real64 const, constitutive::cappres::USD_CAPPRES > > const & phaseCapPressure,
                        ElementViewConst< arrayView4d< real64 const, constitutive::cappres::USD_CAPPRES_DS > > const & dPhaseCapPressure_dPhaseVolFrac,
-                       integer const capPressureFlag,
+                       integer const hasCapPressure,
+                       integer const checkPhasePresenceInGravity,
                        localIndex & upwindDir,
                        real64 & mobility,
-                       real64( &dMobility_dP),
-                       real64 ( & dMobility_dC)[numComp]
-                       )
+                       real64 ( &dMobility_dP ),
+                       real64 ( & dMobility_dC )[numComp] )
 {
-
-  //reinit
-  mobility = 0.0;
-  dMobility_dP = 0.0;
-  for( localIndex ic = 0; ic < numComp; ++ic )
-  {
-    dMobility_dC[ic] = 0.0;
-  }
-
   UPWIND scheme;
   scheme.template getUpwindDirectionGravity< numComp, numFluxSupportPoints, UPWIND >( numPhase,
                                                                                       ip,
@@ -174,22 +281,13 @@ upwindMobilityGravity( localIndex const numPhase,
                                                                                       dPhaseVolFrac,
                                                                                       phaseCapPressure,
                                                                                       dPhaseCapPressure_dPhaseVolFrac,
-                                                                                      capPressureFlag,
+                                                                                      hasCapPressure,
+                                                                                      checkPhasePresenceInGravity,
                                                                                       upwindDir );
 
-  localIndex const er_up = seri[upwindDir];
-  localIndex const esr_up = sesri[upwindDir];
-  localIndex const ei_up = sei[upwindDir];
-
-  if( std::fabs( phaseMob[er_up][esr_up][ei_up][ip] ) > 1e-20 )
-  {
-    mobility = phaseMob[er_up][esr_up][ei_up][ip];
-    dMobility_dP = dPhaseMob[er_up][esr_up][ei_up][ip][Deriv::dP];
-    for( localIndex ic = 0; ic < numComp; ++ic )
-    {
-      dMobility_dC[ic] = dPhaseMob[er_up][esr_up][ei_up][ip][Deriv::dC + ic];
-    }
-  }
+  //reinit
+  assignToZero( mobility, dMobility_dP, dMobility_dC );
+  assignMobilityAndDerivatives( ip, upwindDir, seri, sesri, sei, phaseMob, dPhaseMob, mobility, dMobility_dP, dMobility_dC );
 }
 
 template< localIndex numComp, localIndex numFluxSupportPoints, class UPWIND >
@@ -213,22 +311,12 @@ upwindMobilityCapillary( localIndex const numPhase,
                          ElementViewConst< arrayView3d< real64 const, compflow::USD_PHASE_DC > > const & dPhaseVolFrac,
                          ElementViewConst< arrayView3d< real64 const, constitutive::cappres::USD_CAPPRES > > const & phaseCapPressure,
                          ElementViewConst< arrayView4d< real64 const, constitutive::cappres::USD_CAPPRES_DS > > const & dPhaseCapPressure_dPhaseVolFrac,
-                         integer const capPressureFlag,
+                         integer const hasCapPressure,
                          localIndex & upwindDir,
                          real64 & mobility,
-                         real64( &dMobility_dP),
-                         real64 ( & dMobility_dC)[numComp]
-                         )
+                         real64 ( &dMobility_dP ),
+                         real64 ( & dMobility_dC )[numComp] )
 {
-
-  //reinit
-  mobility = 0.0;
-  dMobility_dP = 0.0;
-  for( localIndex ic = 0; ic < numComp; ++ic )
-  {
-    dMobility_dC[ic] = 0.0;
-  }
-
   UPWIND scheme;
   scheme.template getUpwindDirectionCapillary< numComp, numFluxSupportPoints, UPWIND >( numPhase,
                                                                                         ip,
@@ -247,22 +335,12 @@ upwindMobilityCapillary( localIndex const numPhase,
                                                                                         dPhaseVolFrac,
                                                                                         phaseCapPressure,
                                                                                         dPhaseCapPressure_dPhaseVolFrac,
-                                                                                        capPressureFlag,
+                                                                                        hasCapPressure,
                                                                                         upwindDir );
 
-  localIndex const er_up = seri[upwindDir];
-  localIndex const esr_up = sesri[upwindDir];
-  localIndex const ei_up = sei[upwindDir];
-
-  if( std::fabs( phaseMob[er_up][esr_up][ei_up][ip] ) > 1e-20 )
-  {
-    mobility = phaseMob[er_up][esr_up][ei_up][ip];
-    dMobility_dP = dPhaseMob[er_up][esr_up][ei_up][ip][Deriv::dP];
-    for( localIndex ic = 0; ic < numComp; ++ic )
-    {
-      dMobility_dC[ic] = dPhaseMob[er_up][esr_up][ei_up][ip][Deriv::dC + ic];
-    }
-  }
+  //reinit
+  assignToZero( mobility, dMobility_dP, dMobility_dC );
+  assignMobilityAndDerivatives( ip, upwindDir, seri, sesri, sei, phaseMob, dPhaseMob, mobility, dMobility_dP, dMobility_dC );
 }
 
 template< localIndex numComp, localIndex numFluxSupportPoints, class UPWIND >
@@ -275,7 +353,6 @@ computeFractionalFlowViscous( localIndex const numPhase,
                               localIndex const (&sei)[numFluxSupportPoints],
                               real64 const (&transmissibility)[2],
                               real64 const (&dTrans_dPres)[2],
-                              localIndex const & k_up_ppu,
                               real64 const totFlux,
                               real64 const totMob,
                               real64 const (&dTotMob_dP)[numFluxSupportPoints],
@@ -290,34 +367,11 @@ computeFractionalFlowViscous( localIndex const numPhase,
                               ElementViewConst< arrayView3d< real64 const, compflow::USD_PHASE_DC > > const & dPhaseVolFrac,
                               ElementViewConst< arrayView3d< real64 const, constitutive::cappres::USD_CAPPRES > > const & phaseCapPressure,
                               ElementViewConst< arrayView4d< real64 const, constitutive::cappres::USD_CAPPRES_DS > > const & dPhaseCapPressure_dPhaseVolFrac,
-                              integer const capPressureFlag,
-                              localIndex & k_up_main,
+                              integer const hasCapPressure,
                               real64 & fractionalFlow,
-                              real64 ( & dFractionalFlow_dP)[numFluxSupportPoints],
-                              real64 ( & dFractionalFlow_dC)[numFluxSupportPoints][numComp] )
+                              real64 (& dFractionalFlow_dP)[numFluxSupportPoints],
+                              real64 (& dFractionalFlow_dC)[numFluxSupportPoints][numComp] )
 {
-  // get var to memorized the numerator mobility properly upwinded
-  real64 mainMob{};
-  real64 dMMob_dP{};
-  real64 dMMob_dC[numComp]{};
-
-//  real64 totMob{};
-//  real64 dTotMob_dP[numFluxSupportPoints]{};
-//  real64 dTotMob_dC[numFluxSupportPoints][numComp]{};
-
-  //reinit
-  //fractional flow too low to let the upstream phase flow
-  k_up_main = -1;                       //to throw error if unmodified
-  fractionalFlow = 0;
-  for( localIndex ke = 0; ke < numFluxSupportPoints; ++ke )
-  {
-    dFractionalFlow_dP[ke] = 0;
-    for( localIndex jc = 0; jc < numComp; ++jc )
-    {
-      dFractionalFlow_dC[ke][jc] = 0;
-    }
-  }
-
   localIndex k_up;
   real64 mob{};
   real64 dMob_dP{};
@@ -341,43 +395,18 @@ computeFractionalFlowViscous( localIndex const numPhase,
                                                                   dPhaseVolFrac,
                                                                   phaseCapPressure,
                                                                   dPhaseCapPressure_dPhaseVolFrac,
-                                                                  capPressureFlag,
+                                                                  hasCapPressure,
                                                                   k_up,
                                                                   mob,
                                                                   dMob_dP,
                                                                   dMob_dC );
 
-  k_up_main = k_up;
-  mainMob = mob;
-  dMMob_dP = dMob_dP;
-  for( localIndex ic = 0; ic < numComp; ++ic )
-  {
-    dMMob_dC[ic] = dMob_dC[ic];
-  }
-
-  //guard against no flow region
-  if( std::fabs( mainMob ) > 1e-20 )
-  {
-    fractionalFlow = mainMob / LvArray::math::max( totMob, minTotMob );
-    dFractionalFlow_dP[k_up_main] = dMMob_dP / LvArray::math::max( totMob, minTotMob );
-    for( localIndex jc = 0; jc < numComp; ++jc )
-    {
-      dFractionalFlow_dC[k_up_main][jc] = dMMob_dC[jc] / totMob;
-
-    }
-
-    for( localIndex ke = 0; ke < numFluxSupportPoints; ++ke )
-    {
-      dFractionalFlow_dP[ke] -= fractionalFlow * dTotMob_dP[k_up_ppu] / LvArray::math::max( totMob, minTotMob );
-
-      for( localIndex jc = 0; jc < numComp; ++jc )
-      {
-        dFractionalFlow_dC[ke][jc] -= fractionalFlow * dTotMob_dC[k_up_ppu][jc] / LvArray::math::max( totMob, minTotMob );
-      }
-    }
-  }
+  // reinit
+  assignToZero( fractionalFlow, dFractionalFlow_dP, dFractionalFlow_dC );
+  computeFractionalFlowAndDerivatives( k_up, mob, dMob_dP, dMob_dC,
+                                       totMob, dTotMob_dP, dTotMob_dC,
+                                       fractionalFlow, dFractionalFlow_dP, dFractionalFlow_dC );
 }
-
 
 template< localIndex numComp, localIndex numFluxSupportPoints, class UPWIND >
 GEOS_HOST_DEVICE
@@ -389,7 +418,6 @@ computeFractionalFlowGravity( localIndex const numPhase,
                               localIndex const (&sei)[numFluxSupportPoints],
                               real64 const (&transmissibility)[2],
                               real64 const (&dTrans_dPres)[2],
-                              localIndex const & k_up_ppu,
                               real64 const totFlux,
                               real64 const totMob,
                               real64 const (&dTotMob_dP)[numFluxSupportPoints],
@@ -405,32 +433,12 @@ computeFractionalFlowGravity( localIndex const numPhase,
                               ElementViewConst< arrayView3d< real64 const, compflow::USD_PHASE_DC > > const & dPhaseVolFrac,
                               ElementViewConst< arrayView3d< real64 const, constitutive::cappres::USD_CAPPRES > > const & phaseCapPressure,
                               ElementViewConst< arrayView4d< real64 const, constitutive::cappres::USD_CAPPRES_DS > > const & dPhaseCapPressure_dPhaseVolFrac,
-                              integer const capPressureFlag,
-                              localIndex & k_up_main,
+                              integer const hasCapPressure,
+                              integer const checkPhasePresenceInGravity,
                               real64 & fractionalFlow,
-                              real64 ( & dFractionalFlow_dP)[numFluxSupportPoints],
-                              real64 ( & dFractionalFlow_dC)[numFluxSupportPoints][numComp]
-                              )
+                              real64 (& dFractionalFlow_dP)[numFluxSupportPoints],
+                              real64 (& dFractionalFlow_dC)[numFluxSupportPoints][numComp] )
 {
-  // get var to memorized the numerator mobility properly upwinded
-  real64 mainMob{};
-  real64 dMMob_dP{};
-  real64 dMMob_dC[numComp]{};
-
-  //reinit
-  //fractional flow too low to let the upstream phase flow
-  k_up_main = -1;                           //to throw error if unmodified
-  fractionalFlow = 0;
-  for( localIndex ke = 0; ke < numFluxSupportPoints; ++ke )
-  {
-    dFractionalFlow_dP[ke] = 0;
-    for( localIndex jc = 0; jc < numComp; ++jc )
-    {
-      dFractionalFlow_dC[ke][jc] = 0;
-    }
-  }
-
-
   localIndex k_up;
   real64 mob{};
   real64 dMob_dP{};
@@ -455,41 +463,18 @@ computeFractionalFlowGravity( localIndex const numPhase,
                                                                   dPhaseVolFrac,
                                                                   phaseCapPressure,
                                                                   dPhaseCapPressure_dPhaseVolFrac,
-                                                                  capPressureFlag,
+                                                                  hasCapPressure,
+                                                                  checkPhasePresenceInGravity,
                                                                   k_up,
                                                                   mob,
                                                                   dMob_dP,
                                                                   dMob_dC );
 
-  k_up_main = k_up;
-  mainMob = mob;
-  dMMob_dP = dMob_dP;
-  for( localIndex ic = 0; ic < numComp; ++ic )
-  {
-    dMMob_dC[ic] = dMob_dC[ic];
-  }
-
-  //guard against no flow region
-  if( std::fabs( mainMob ) > 1e-20 )
-  {
-    fractionalFlow = mainMob / LvArray::math::max( totMob, minTotMob );
-    dFractionalFlow_dP[k_up_main] = dMMob_dP / LvArray::math::max( totMob, minTotMob );
-    for( localIndex jc = 0; jc < numComp; ++jc )
-    {
-      dFractionalFlow_dC[k_up_main][jc] = dMMob_dC[jc] / totMob;
-
-    }
-
-    for( localIndex ke = 0; ke < numFluxSupportPoints; ++ke )
-    {
-      dFractionalFlow_dP[ke] -= fractionalFlow * dTotMob_dP[k_up_ppu] / LvArray::math::max( totMob, minTotMob );
-
-      for( localIndex jc = 0; jc < numComp; ++jc )
-      {
-        dFractionalFlow_dC[ke][jc] -= fractionalFlow * dTotMob_dC[k_up_ppu][jc] / LvArray::math::max( totMob, minTotMob );
-      }
-    }
-  }
+  // reinit
+  assignToZero( fractionalFlow, dFractionalFlow_dP, dFractionalFlow_dC );
+  computeFractionalFlowAndDerivatives( k_up, mob, dMob_dP, dMob_dC,
+                                       totMob, dTotMob_dP, dTotMob_dC,
+                                       fractionalFlow, dFractionalFlow_dP, dFractionalFlow_dC );
 }
 
 template< localIndex numComp, localIndex numFluxSupportPoints, class UPWIND >
@@ -502,7 +487,6 @@ computeFractionalFlowCapillary( localIndex const numPhase,
                                 localIndex const (&sei)[numFluxSupportPoints],
                                 real64 const (&transmissibility)[2],
                                 real64 const (&dTrans_dPres)[2],
-                                localIndex const & k_up_ppu,
                                 real64 const totFlux,
                                 real64 const totMob,
                                 real64 const (&dTotMob_dP)[numFluxSupportPoints],
@@ -517,31 +501,12 @@ computeFractionalFlowCapillary( localIndex const numPhase,
                                 ElementViewConst< arrayView3d< real64 const, compflow::USD_PHASE_DC > > const & dPhaseVolFrac,
                                 ElementViewConst< arrayView3d< real64 const, constitutive::cappres::USD_CAPPRES > > const & phaseCapPressure,
                                 ElementViewConst< arrayView4d< real64 const, constitutive::cappres::USD_CAPPRES_DS > > const & dPhaseCapPressure_dPhaseVolFrac,
-                                integer const capPressureFlag,
-                                localIndex & k_up_main,
+                                integer const hasCapPressure,
                                 real64 & fractionalFlow,
                                 real64 ( & dFractionalFlow_dP)[numFluxSupportPoints],
                                 real64 ( & dFractionalFlow_dC)[numFluxSupportPoints][numComp]
                                 )
 {
-  // get var to memorized the numerator mobility properly upwinded
-  real64 mainMob{};
-  real64 dMMob_dP{};
-  real64 dMMob_dC[numComp]{};
-
-  //reinit
-  //fractional flow too low to let the upstream phase flow
-  k_up_main = -1;                           //to throw error if unmodified
-  fractionalFlow = 0;
-  for( localIndex ke = 0; ke < numFluxSupportPoints; ++ke )
-  {
-    dFractionalFlow_dP[ke] = 0;
-    for( localIndex jc = 0; jc < numComp; ++jc )
-    {
-      dFractionalFlow_dC[ke][jc] = 0;
-    }
-  }
-
   localIndex k_up;
   real64 mob{};
   real64 dMob_dP{};
@@ -565,41 +530,17 @@ computeFractionalFlowCapillary( localIndex const numPhase,
                                                                     dPhaseVolFrac,
                                                                     phaseCapPressure,
                                                                     dPhaseCapPressure_dPhaseVolFrac,
-                                                                    capPressureFlag,
+                                                                    hasCapPressure,
                                                                     k_up,
                                                                     mob,
                                                                     dMob_dP,
                                                                     dMob_dC );
 
-  k_up_main = k_up;
-  mainMob = mob;
-  dMMob_dP = dMob_dP;
-  for( localIndex ic = 0; ic < numComp; ++ic )
-  {
-    dMMob_dC[ic] = dMob_dC[ic];
-  }
-
-  //guard against no flow region
-  if( std::fabs( mainMob ) > 1e-20 )
-  {
-    fractionalFlow = mainMob / LvArray::math::max( totMob, minTotMob );
-    dFractionalFlow_dP[k_up_main] = dMMob_dP / LvArray::math::max( totMob, minTotMob );
-    for( localIndex jc = 0; jc < numComp; ++jc )
-    {
-      dFractionalFlow_dC[k_up_main][jc] = dMMob_dC[jc] / LvArray::math::max( totMob, minTotMob );
-
-    }
-
-    for( localIndex ke = 0; ke < numFluxSupportPoints; ++ke )
-    {
-      dFractionalFlow_dP[ke] -= fractionalFlow * dTotMob_dP[k_up_ppu] / LvArray::math::max( totMob, minTotMob );
-
-      for( localIndex jc = 0; jc < numComp; ++jc )
-      {
-        dFractionalFlow_dC[ke][jc] -= fractionalFlow * dTotMob_dC[k_up_ppu][jc] / LvArray::math::max( totMob, minTotMob );
-      }
-    }
-  }
+  // reinit
+  assignToZero( fractionalFlow, dFractionalFlow_dP, dFractionalFlow_dC );
+  computeFractionalFlowAndDerivatives( k_up, mob, dMob_dP, dMob_dC,
+                                       totMob, dTotMob_dP, dTotMob_dC,
+                                       fractionalFlow, dFractionalFlow_dP, dFractionalFlow_dC );
 }
 
 /**
@@ -611,7 +552,6 @@ computeFractionalFlowCapillary( localIndex const numPhase,
  */
 struct computePotentialViscous
 {
-
   template< localIndex numComp, localIndex numFluxSupportPoints >
   GEOS_HOST_DEVICE
   static void compute( localIndex const GEOS_UNUSED_PARAM( numPhase ),
@@ -637,12 +577,10 @@ struct computePotentialViscous
                        GEOS_UNUSED_PARAM( dPhaseCapPressure_dPhaseVolFrac ),
                        real64 & pot,
                        real64( &GEOS_UNUSED_PARAM( dPot_dPres ))[numFluxSupportPoints],
-                       real64( &GEOS_UNUSED_PARAM( dPot_dComp ))[numFluxSupportPoints][numComp],
-                       real64( &GEOS_UNUSED_PARAM( dProp_dComp ))[numComp] )
+                       real64( &GEOS_UNUSED_PARAM( dPot_dComp ))[numFluxSupportPoints][numComp] )
   {
     pot = totFlux;
     //could be relevant for symmetry to include derivative
-
   }
 };
 
@@ -658,6 +596,7 @@ struct computePotentialGravity
   GEOS_HOST_DEVICE
   static void compute( localIndex const GEOS_UNUSED_PARAM( numPhase ),
                        localIndex const ip,
+                       integer const checkPhasePresenceInGravity,
                        localIndex const (&seri)[numFluxSupportPoints],
                        localIndex const (&sesri)[numFluxSupportPoints],
                        localIndex const (&sei)[numFluxSupportPoints],
@@ -677,71 +616,21 @@ struct computePotentialGravity
                        GEOS_UNUSED_PARAM( dPhaseCapPressure_dPhaseVolFrac ),
                        real64 & pot,
                        real64 ( & dPot_dPres )[numFluxSupportPoints],
-                       real64 (& dPot_dComp )[numFluxSupportPoints][numComp],
-                       real64 ( & dProp_dComp )[numComp] )
+                       real64 ( & dPot_dComp )[numFluxSupportPoints][numComp] )
   {
+    //init
+    assignToZero( pot, dPot_dPres, dPot_dComp );
+
     //working arrays
     real64 densMean{};
     real64 dDensMean_dPres[numFluxSupportPoints]{};
     real64 dDensMean_dComp[numFluxSupportPoints][numComp]{};
-
-    //init
-    pot = 0.0;
-    for( localIndex i = 0; i < numFluxSupportPoints; ++i )
-    {
-      dPot_dPres[i] = 0.0;
-      for( localIndex jc = 0; jc < numComp; ++jc )
-      {
-        dPot_dComp[i][jc] = 0.0;
-        dProp_dComp[jc] = 0.0;
-      }
-    }
-
-    //inner loop to get average density
-    integer denom = 0;
-    for( localIndex i = 0; i < numFluxSupportPoints; ++i )
-    {
-      localIndex const er = seri[i];
-      localIndex const esr = sesri[i];
-      localIndex const ei = sei[i];
-
-      bool const phaseExists = (phaseVolFrac[er][esr][ei][ip] > 0);
-      if( !phaseExists )
-      {
-        continue;
-      }
-
-      // density
-      real64 const density = phaseMassDens[er][esr][ei][0][ip];
-      real64 const dDens_dPres = dPhaseMassDens[er][esr][ei][0][ip][Deriv::dP];
-
-      applyChainRule( numComp,
-                      dCompFrac_dCompDens[er][esr][ei],
-                      dPhaseMassDens[er][esr][ei][0][ip],
-                      dProp_dComp,
-                      Deriv::dC );
-
-      // average density and derivatives
-      densMean += density;
-      dDensMean_dPres[i] = dDens_dPres;
-      for( localIndex jc = 0; jc < numComp; ++jc )
-      {
-        dDensMean_dComp[i][jc] = dProp_dComp[jc];
-      }
-      denom++;
-    }
-    if( denom > 1 )
-    {
-      densMean /= denom;
-      for( localIndex i = 0; i < numFluxSupportPoints; ++i )
-      {
-        dDensMean_dPres[i] /= denom;
-        for( integer jc = 0; jc < numComp; ++jc )
-        {
-          dDensMean_dComp[i][jc] /= denom;
-        }
-      }
-    }
+    isothermalCompositionalMultiphaseFVMKernels::helpers::
+      calculateMeanDensity( ip, seri, sesri, sei,
+                            checkPhasePresenceInGravity,
+                            phaseVolFrac, dCompFrac_dCompDens,
+                            phaseMassDens, dPhaseMassDens,
+                            densMean, dDensMean_dPres, dDensMean_dComp );
 
     // compute potential difference MPFA-style
     for( localIndex i = 0; i < numFluxSupportPoints; ++i )
@@ -753,19 +642,13 @@ struct computePotentialGravity
       real64 const gravD = transmissibility[i] * gravCoef[er][esr][ei];
       real64 const dGravD_dP = dTrans_dPres[i] * gravCoef[er][esr][ei];
       pot += densMean * gravD;
+      dPot_dPres[i] += densMean * dGravD_dP;
 
       // need to add contributions from both cells the mean density depends on
-      for( localIndex j = 0; j < numFluxSupportPoints; ++j )
-      {
-        dPot_dPres[j] += dDensMean_dPres[j] * gravD + densMean * dGravD_dP;
-        for( localIndex jc = 0; jc < numComp; ++jc )
-        {
-          dPot_dComp[j][jc] += dDensMean_dComp[j][jc] * gravD;
-        }
-      }
+      addToDerivativesScaled( dDensMean_dPres, dDensMean_dComp, gravD, dPot_dPres, dPot_dComp );
     }
-
   }
+
 };
 
 /*! @copydoc computePotential
@@ -798,10 +681,10 @@ struct computePotentialCapillary
                        ElementViewConst< arrayView4d< real64 const, constitutive::cappres::USD_CAPPRES_DS > > const & dPhaseCapPressure_dPhaseVolFrac,
                        real64 & pot,
                        real64 ( & dPot_dPres)[numFluxSupportPoints],
-                       real64 (& dPot_dComp)[numFluxSupportPoints][numComp],
-                       real64( &GEOS_UNUSED_PARAM( dProp_dComp ))[numComp] )
+                       real64 (& dPot_dComp)[numFluxSupportPoints][numComp] )
   {
-
+    //init
+    assignToZero( pot, dPot_dPres, dPot_dComp );
 
     for( localIndex i = 0; i < numFluxSupportPoints; ++i )
     {
@@ -809,20 +692,22 @@ struct computePotentialCapillary
       localIndex const esr = sesri[i];
       localIndex const ei = sei[i];
 
-      pot += transmissibility[i] * phaseCapPressure[er][esr][ei][0][ip];
+      real64 const capPres = phaseCapPressure[er][esr][ei][0][ip];
+
+      pot += transmissibility[i] * capPres;
+
+      dPot_dPres[i] += dTrans_dPres[i] * capPres;
+
       // need to add contributions from both cells
       for( localIndex jp = 0; jp < numPhase; ++jp )
       {
-
         real64 const dCapPressure_dS = dPhaseCapPressure_dPhaseVolFrac[er][esr][ei][0][ip][jp];
-        dPot_dPres[i] +=
-          transmissibility[i] * dCapPressure_dS * dPhaseVolFrac[er][esr][ei][jp][Deriv::dP]
-          + dTrans_dPres[i] * phaseCapPressure[er][esr][ei][0][jp];
+
+        dPot_dPres[i] += transmissibility[i] * dCapPressure_dS * dPhaseVolFrac[er][esr][ei][jp][Deriv::dP];
 
         for( localIndex jc = 0; jc < numComp; ++jc )
         {
-          dPot_dComp[i][jc] += transmissibility[i] * dCapPressure_dS *
-                               dPhaseVolFrac[er][esr][ei][jp][Deriv::dC + jc];
+          dPot_dComp[i][jc] += transmissibility[i] * dCapPressure_dS * dPhaseVolFrac[er][esr][ei][jp][Deriv::dC + jc];
         }
       }
     }
@@ -840,7 +725,6 @@ static void computePotentialFluxesGravity( localIndex const numPhase,
                                            localIndex const (&sei)[numFluxSupportPoints],
                                            real64 const (&transmissibility)[2],
                                            real64 const (&dTrans_dPres)[2],
-                                           localIndex const & k_up_ppu,
                                            real64 const totFlux,
                                            real64 const totMob,
                                            real64 const (&dTotMob_dP)[numFluxSupportPoints],
@@ -856,9 +740,8 @@ static void computePotentialFluxesGravity( localIndex const numPhase,
                                            ElementViewConst< arrayView4d< real64 const, constitutive::multifluid::USD_PHASE_DC > > const & dPhaseMassDens,
                                            ElementViewConst< arrayView3d< real64 const, constitutive::cappres::USD_CAPPRES > > const & phaseCapPressure,
                                            ElementViewConst< arrayView4d< real64 const, constitutive::cappres::USD_CAPPRES_DS > > const & dPhaseCapPressure_dPhaseVolFrac,
-                                           localIndex const capPressureFlag,
-                                           localIndex( &k_up),
-                                           localIndex (&k_up_o),
+                                           localIndex const hasCapPressure,
+                                           integer const checkPhasePresenceInGravity,
                                            real64 & phaseFlux,
                                            real64 (& dPhaseFlux_dP)[numFluxSupportPoints],
                                            real64 ( & dPhaseFlux_dC)[numFluxSupportPoints][numComp] )
@@ -871,11 +754,11 @@ static void computePotentialFluxesGravity( localIndex const numPhase,
   real64 pot{};
   real64 dPot_dP[numFluxSupportPoints]{};
   real64 dPot_dC[numFluxSupportPoints][numComp]{};
-  real64 dProp_dC[numComp]{};
 
   //
   UpwindHelpers::computePotentialGravity::compute< numComp, numFluxSupportPoints >( numPhase,
                                                                                     ip,
+                                                                                    checkPhasePresenceInGravity,
                                                                                     seri,
                                                                                     sesri,
                                                                                     sei,
@@ -892,8 +775,7 @@ static void computePotentialFluxesGravity( localIndex const numPhase,
                                                                                     dPhaseCapPressure_dPhaseVolFrac,
                                                                                     pot,
                                                                                     dPot_dP,
-                                                                                    dPot_dC,
-                                                                                    dProp_dC );
+                                                                                    dPot_dC );
 
   // and the fractional flow for gravitational part as \lambda_i^{up}/\sum_{numPhase}(\lambda_k^{up}) with up decided upon
   // the Upwind strategy
@@ -904,7 +786,6 @@ static void computePotentialFluxesGravity( localIndex const numPhase,
                                                                                         sei,
                                                                                         transmissibility,
                                                                                         dTrans_dPres,
-                                                                                        k_up_ppu,
                                                                                         totFlux,
                                                                                         totMob,
                                                                                         dTotMob_dP,
@@ -920,8 +801,8 @@ static void computePotentialFluxesGravity( localIndex const numPhase,
                                                                                         dPhaseVolFrac,
                                                                                         phaseCapPressure,
                                                                                         dPhaseCapPressure_dPhaseVolFrac,
-                                                                                        capPressureFlag,
-                                                                                        k_up,
+                                                                                        hasCapPressure,
+                                                                                        checkPhasePresenceInGravity,
                                                                                         fflow,
                                                                                         dFflow_dP,
                                                                                         dFflow_dC );
@@ -935,11 +816,11 @@ static void computePotentialFluxesGravity( localIndex const numPhase,
       real64 potOther{};
       real64 dPotOther_dP[numFluxSupportPoints]{};
       real64 dPotOther_dC[numFluxSupportPoints][numComp]{};
-      real64 dPropOther_dC[numComp]{};
 
       //Fetch pot for phase j!=i defined as \rho_j g dz/dx
       UpwindHelpers::computePotentialGravity::compute< numComp, numFluxSupportPoints >( numPhase,
                                                                                         jp,
+                                                                                        checkPhasePresenceInGravity,
                                                                                         seri,
                                                                                         sesri,
                                                                                         sei,
@@ -956,10 +837,10 @@ static void computePotentialFluxesGravity( localIndex const numPhase,
                                                                                         dPhaseCapPressure_dPhaseVolFrac,
                                                                                         potOther,
                                                                                         dPotOther_dP,
-                                                                                        dPotOther_dC,
-                                                                                        dPropOther_dC );
+                                                                                        dPotOther_dC );
 
       //Eventually get the mobility of the second phase
+      localIndex k_up_o = -1;
       real64 mobOther{};
       real64 dMobOther_dP{};
       real64 dMobOther_dC[numComp]{};
@@ -986,7 +867,8 @@ static void computePotentialFluxesGravity( localIndex const numPhase,
                                                                                      dPhaseVolFrac,
                                                                                      phaseCapPressure,
                                                                                      dPhaseCapPressure_dPhaseVolFrac,
-                                                                                     capPressureFlag,
+                                                                                     hasCapPressure,
+                                                                                     checkPhasePresenceInGravity,
                                                                                      k_up_o,
                                                                                      mobOther,
                                                                                      dMobOther_dP,
@@ -995,31 +877,16 @@ static void computePotentialFluxesGravity( localIndex const numPhase,
 
       // Assembling gravitational flux phase-wise as \phi_{i,g} = \sum_{k\nei} \lambda_k^{up,g} f_k^{up,g} (G_i - G_k)
       phaseFlux -= fflow * mobOther * (pot - potOther);
-      dPhaseFlux_dP[k_up_o] -= fflow * dMobOther_dP * (pot - potOther);
-      for( localIndex jc = 0; jc < numComp; ++jc )
-      {
-        dPhaseFlux_dC[k_up_o][jc] -= fflow * dMobOther_dC[jc] * (pot - potOther);
-      }
 
-      //mob related part of dFflow_dP is only upstream defined but totMob related is defined everywhere
-      for( localIndex ke = 0; ke < numFluxSupportPoints; ++ke )
-      {
-        dPhaseFlux_dP[ke] -= dFflow_dP[ke] * mobOther * (pot - potOther);
+      // mobOther part
+      UpwindHelpers::addToDerivativesScaled( dMobOther_dP, dMobOther_dC, -fflow * (pot - potOther), dPhaseFlux_dP[k_up_o], dPhaseFlux_dC[k_up_o] );
 
-        for( localIndex jc = 0; jc < numComp; ++jc )
-        {
-          dPhaseFlux_dC[ke][jc] -= dFflow_dC[ke][jc] * mobOther * (pot - potOther);
-        }
-      }
+      // mob related part of dFflow_dP is only upstream defined but totMob related is defined everywhere
+      UpwindHelpers::addToDerivativesScaled( dFflow_dP, dFflow_dC, -mobOther * (pot - potOther), dPhaseFlux_dP, dPhaseFlux_dC );
 
-      for( localIndex ke = 0; ke < numFluxSupportPoints; ++ke )
-      {
-        dPhaseFlux_dP[ke] -= fflow * mobOther * (dPot_dP[ke] - dPotOther_dP[ke]);
-        for( localIndex jc = 0; jc < numComp; ++jc )
-        {
-          dPhaseFlux_dC[ke][jc] -= fflow * mobOther * (dPot_dC[ke][jc] - dPotOther_dC[ke][jc]);
-        }
-      }
+      // potential difference part
+      UpwindHelpers::addToDerivativesScaled( dPot_dP, dPot_dC, -fflow * mobOther, dPhaseFlux_dP, dPhaseFlux_dC );
+      UpwindHelpers::addToDerivativesScaled( dPotOther_dP, dPotOther_dC, fflow * mobOther, dPhaseFlux_dP, dPhaseFlux_dC );
     }
   }
 
@@ -1034,7 +901,6 @@ static void computePotentialFluxesCapillary( localIndex const numPhase,
                                              localIndex const (&sei)[numFluxSupportPoints],
                                              real64 const (&transmissibility)[2],
                                              real64 const (&dTrans_dPres)[2],
-                                             localIndex const & k_up_ppu,
                                              real64 const totFlux,
                                              real64 const totMob,
                                              real64 const (&dTotMob_dP)[numFluxSupportPoints],
@@ -1049,14 +915,11 @@ static void computePotentialFluxesCapillary( localIndex const numPhase,
                                              ElementViewConst< arrayView4d< real64 const, constitutive::multifluid::USD_PHASE_DC > > const & dPhaseMassDens,
                                              ElementViewConst< arrayView3d< real64 const, constitutive::cappres::USD_CAPPRES > > const & phaseCapPressure,
                                              ElementViewConst< arrayView4d< real64 const, constitutive::cappres::USD_CAPPRES_DS > > const & dPhaseCapPressure_dPhaseVolFrac,
-                                             localIndex const capPressureFlag,
-                                             localIndex( &k_up),
-                                             localIndex (&k_up_o),
+                                             localIndex const hasCapPressure,
                                              real64 & phaseFlux,
                                              real64 (& dPhaseFlux_dP)[numFluxSupportPoints],
                                              real64 ( & dPhaseFlux_dC)[numFluxSupportPoints][numComp] )
 {
-
   real64 fflow{};
   real64 dFflow_dP[numFluxSupportPoints]{};
   real64 dFflow_dC[numFluxSupportPoints][numComp]{};
@@ -1064,27 +927,25 @@ static void computePotentialFluxesCapillary( localIndex const numPhase,
   real64 pot{};
   real64 dPot_dP[numFluxSupportPoints]{};
   real64 dPot_dC[numFluxSupportPoints][numComp]{};
-  real64 dProp_dC[numComp]{};
 
-  UpwindHelpers::computePotentialCapillary::compute< numComp, numFluxSupportPoints >( numPhase,
-                                                                                      ip,
-                                                                                      seri,
-                                                                                      sesri,
-                                                                                      sei,
-                                                                                      transmissibility,
-                                                                                      dTrans_dPres,
-                                                                                      totFlux,
-                                                                                      gravCoef,
-                                                                                      dCompFrac_dCompDens,
-                                                                                      phaseMassDens,
-                                                                                      dPhaseMassDens,
-                                                                                      dPhaseVolFrac,
-                                                                                      phaseCapPressure,
-                                                                                      dPhaseCapPressure_dPhaseVolFrac,
-                                                                                      pot,
-                                                                                      dPot_dP,
-                                                                                      dPot_dC,
-                                                                                      dProp_dC );
+  computePotentialCapillary::compute< numComp, numFluxSupportPoints >( numPhase,
+                                                                       ip,
+                                                                       seri,
+                                                                       sesri,
+                                                                       sei,
+                                                                       transmissibility,
+                                                                       dTrans_dPres,
+                                                                       totFlux,
+                                                                       gravCoef,
+                                                                       dCompFrac_dCompDens,
+                                                                       phaseMassDens,
+                                                                       dPhaseMassDens,
+                                                                       dPhaseVolFrac,
+                                                                       phaseCapPressure,
+                                                                       dPhaseCapPressure_dPhaseVolFrac,
+                                                                       pot,
+                                                                       dPot_dP,
+                                                                       dPot_dC );
 
   // and the fractional flow for gravitational part as \lambda_i^{up}/\sum_{numPhase}(\lambda_k^{up}) with up decided upon
   // the Upwind strategy
@@ -1095,7 +956,6 @@ static void computePotentialFluxesCapillary( localIndex const numPhase,
                                                                                           sei,
                                                                                           transmissibility,
                                                                                           dTrans_dPres,
-                                                                                          k_up_ppu,
                                                                                           totFlux,
                                                                                           totMob,
                                                                                           dTotMob_dP,
@@ -1110,8 +970,7 @@ static void computePotentialFluxesCapillary( localIndex const numPhase,
                                                                                           dPhaseVolFrac,
                                                                                           phaseCapPressure,
                                                                                           dPhaseCapPressure_dPhaseVolFrac,
-                                                                                          capPressureFlag,
-                                                                                          k_up,
+                                                                                          hasCapPressure,
                                                                                           fflow,
                                                                                           dFflow_dP,
                                                                                           dFflow_dC );
@@ -1121,34 +980,32 @@ static void computePotentialFluxesCapillary( localIndex const numPhase,
   {
     if( ip != jp )
     {
-
       real64 potOther{};
       real64 dPotOther_dP[numFluxSupportPoints]{};
       real64 dPotOther_dC[numFluxSupportPoints][numComp]{};
-      real64 dPropOther_dC[numComp]{};
 
       //Fetch pot for phase j!=i defined as \rho_j g dz/dx
-      UpwindHelpers::computePotentialCapillary::compute< numComp, numFluxSupportPoints >( numPhase,
-                                                                                          jp,
-                                                                                          seri,
-                                                                                          sesri,
-                                                                                          sei,
-                                                                                          transmissibility,
-                                                                                          dTrans_dPres,
-                                                                                          totFlux,
-                                                                                          gravCoef,
-                                                                                          dCompFrac_dCompDens,
-                                                                                          phaseMassDens,
-                                                                                          dPhaseMassDens,
-                                                                                          dPhaseVolFrac,
-                                                                                          phaseCapPressure,
-                                                                                          dPhaseCapPressure_dPhaseVolFrac,
-                                                                                          potOther,
-                                                                                          dPotOther_dP,
-                                                                                          dPotOther_dC,
-                                                                                          dPropOther_dC );
+      computePotentialCapillary::compute< numComp, numFluxSupportPoints >( numPhase,
+                                                                           jp,
+                                                                           seri,
+                                                                           sesri,
+                                                                           sei,
+                                                                           transmissibility,
+                                                                           dTrans_dPres,
+                                                                           totFlux,
+                                                                           gravCoef,
+                                                                           dCompFrac_dCompDens,
+                                                                           phaseMassDens,
+                                                                           dPhaseMassDens,
+                                                                           dPhaseVolFrac,
+                                                                           phaseCapPressure,
+                                                                           dPhaseCapPressure_dPhaseVolFrac,
+                                                                           potOther,
+                                                                           dPotOther_dP,
+                                                                           dPotOther_dC );
 
       //Eventually get the mobility of the second phase
+      localIndex k_up_o = -1;
       real64 mobOther{};
       real64 dMobOther_dP{};
       real64 dMobOther_dC[numComp]{};
@@ -1174,7 +1031,7 @@ static void computePotentialFluxesCapillary( localIndex const numPhase,
                                                                                        dPhaseVolFrac,
                                                                                        phaseCapPressure,
                                                                                        dPhaseCapPressure_dPhaseVolFrac,
-                                                                                       capPressureFlag,
+                                                                                       hasCapPressure,
                                                                                        k_up_o,
                                                                                        mobOther,
                                                                                        dMobOther_dP,
@@ -1183,31 +1040,16 @@ static void computePotentialFluxesCapillary( localIndex const numPhase,
 
       // Assembling gravitational flux phase-wise as \phi_{i,g} = \sum_{k\nei} \lambda_k^{up,g} f_k^{up,g} (G_i - G_k)
       phaseFlux -= fflow * mobOther * (pot - potOther);
-      dPhaseFlux_dP[k_up_o] -= fflow * dMobOther_dP * (pot - potOther);
-      for( localIndex jc = 0; jc < numComp; ++jc )
-      {
-        dPhaseFlux_dC[k_up_o][jc] -= fflow * dMobOther_dC[jc] * (pot - potOther);
-      }
 
-      //mob related part of dFflow_dP is only upstream defined but totMob related is defined everywhere
-      for( localIndex ke = 0; ke < numFluxSupportPoints; ++ke )
-      {
-        dPhaseFlux_dP[ke] -= dFflow_dP[ke] * mobOther * (pot - potOther);
+      // mobOther part
+      UpwindHelpers::addToDerivativesScaled( dMobOther_dP, dMobOther_dC, -fflow * (pot - potOther), dPhaseFlux_dP[k_up_o], dPhaseFlux_dC[k_up_o] );
 
-        for( localIndex jc = 0; jc < numComp; ++jc )
-        {
-          dPhaseFlux_dC[ke][jc] -= dFflow_dC[ke][jc] * mobOther * (pot - potOther);
-        }
-      }
+      // mob related part of dFflow_dP is only upstream defined but totMob related is defined everywhere
+      UpwindHelpers::addToDerivativesScaled( dFflow_dP, dFflow_dC, -mobOther * (pot - potOther), dPhaseFlux_dP, dPhaseFlux_dC );
 
-      for( localIndex ke = 0; ke < numFluxSupportPoints; ++ke )
-      {
-        dPhaseFlux_dP[ke] -= fflow * mobOther * (dPot_dP[ke] - dPotOther_dP[ke]);
-        for( localIndex jc = 0; jc < numComp; ++jc )
-        {
-          dPhaseFlux_dC[ke][jc] -= fflow * mobOther * (dPot_dC[ke][jc] - dPotOther_dC[ke][jc]);
-        }
-      }
+      // potential difference part
+      UpwindHelpers::addToDerivativesScaled( dPot_dP, dPot_dC, -fflow * mobOther, dPhaseFlux_dP, dPhaseFlux_dC );
+      UpwindHelpers::addToDerivativesScaled( dPotOther_dP, dPotOther_dC, fflow * mobOther, dPhaseFlux_dP, dPhaseFlux_dC );
     }
   }
 }
@@ -1261,12 +1103,11 @@ public:
                                   ElementViewConst< arrayView3d< real64 const, compflow::USD_PHASE_DC > > const & dPhaseVolFrac,
                                   ElementViewConst< arrayView3d< real64 const, constitutive::cappres::USD_CAPPRES > > const & phaseCapPressure,
                                   ElementViewConst< arrayView4d< real64 const, constitutive::cappres::USD_CAPPRES_DS > > const & dPhaseCapPressure_dPhaseVolFrac,
-                                  integer const capPressureFlag,
+                                  integer const hasCapPressure,
                                   localIndex & upwindDir
                                   )
   {
     real64 pot{};
-
     /// each derived concrete class has to define a computePotential method that is calling UpwindScheme::potential method with a specific
     /// lamda defining how to get these potentials
     UPWIND::template computePotentialViscous< numComp, numFluxSupportPoints >( numPhase,
@@ -1286,9 +1127,8 @@ public:
                                                                                dPhaseVolFrac,
                                                                                phaseCapPressure,
                                                                                dPhaseCapPressure_dPhaseVolFrac,
-                                                                               capPressureFlag,
+                                                                               hasCapPressure,
                                                                                pot );
-
     //all definition has been changed to fit pot>0 => first cell is upstream
     upwindDir = (pot > 0) ? 0 : 1;
   }
@@ -1314,7 +1154,8 @@ public:
                                   ElementViewConst< arrayView3d< real64 const, compflow::USD_PHASE_DC > > const & dPhaseVolFrac,
                                   ElementViewConst< arrayView3d< real64 const, constitutive::cappres::USD_CAPPRES > > const & phaseCapPressure,
                                   ElementViewConst< arrayView4d< real64 const, constitutive::cappres::USD_CAPPRES_DS > > const & dPhaseCapPressure_dPhaseVolFrac,
-                                  integer const capPressureFlag,
+                                  integer const hasCapPressure,
+                                  integer const checkPhasePresenceInGravity,
                                   localIndex & upwindDir
                                   )
   {
@@ -1340,7 +1181,8 @@ public:
                                                                                dPhaseVolFrac,
                                                                                phaseCapPressure,
                                                                                dPhaseCapPressure_dPhaseVolFrac,
-                                                                               capPressureFlag,
+                                                                               hasCapPressure,
+                                                                               checkPhasePresenceInGravity,
                                                                                pot );
 
     //all definition has been changed to fit pot>0 => first cell is upstream
@@ -1357,8 +1199,7 @@ public:
                                     localIndex const (&sei)[numFluxSupportPoints],
                                     real64 const (&transmissibility)[2],
                                     real64 const (&dTrans_dPres)[2],
-                                    real64 const totFlux,                   //in fine should be a ElemnetViewConst once seq form are in
-                                                                            // place
+                                    real64 const totFlux, //in fine should be a ElemnetViewConst once seq form are in place
                                     ElementViewConst< arrayView1d< real64 const > > const & pres,
                                     ElementViewConst< arrayView1d< real64 const > > const & gravCoef,
                                     ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & phaseMob,
@@ -1368,7 +1209,7 @@ public:
                                     ElementViewConst< arrayView3d< real64 const, compflow::USD_PHASE_DC > > const & dPhaseVolFrac,
                                     ElementViewConst< arrayView3d< real64 const, constitutive::cappres::USD_CAPPRES > > const & phaseCapPressure,
                                     ElementViewConst< arrayView4d< real64 const, constitutive::cappres::USD_CAPPRES_DS > > const & dPhaseCapPressure_dPhaseVolFrac,
-                                    integer const capPressureFlag,
+                                    integer const hasCapPressure,
                                     localIndex & upwindDir
                                     )
   {
@@ -1393,7 +1234,7 @@ public:
                                                                                  dPhaseVolFrac,
                                                                                  phaseCapPressure,
                                                                                  dPhaseCapPressure_dPhaseVolFrac,
-                                                                                 capPressureFlag,
+                                                                                 hasCapPressure,
                                                                                  pot );
 
     //all definition has been changed to fit pot>0 => first cell is upstream
@@ -1419,9 +1260,8 @@ public:
     real64 pot{};
     real64 pot_dP[numFluxSupportPoints]{};
     real64 pot_dC[numFluxSupportPoints][numComp]{};
-    real64 dProp_dC[numComp]{};
 
-    fn( ip, pot, pot_dP, pot_dC, dProp_dC );
+    fn( ip, pot, pot_dP, pot_dC );
 
     localIndex const k_up = 0;
     localIndex const k_dw = 1;
@@ -1442,9 +1282,8 @@ public:
         real64 potOther{};
         real64 potOther_dP[numFluxSupportPoints]{};
         real64 potOther_dC[numFluxSupportPoints][numComp]{};
-        real64 dPropOther_dC[numComp]{};
 
-        fn( jp, potOther, potOther_dP, potOther_dC, dPropOther_dC );
+        fn( jp, potOther, potOther_dP, potOther_dC );
 
         real64 const mob_up = phaseMob[er_up][esr_up][ei_up][jp];
         real64 const mob_dw = phaseMob[er_dw][esr_dw][ei_dw][jp];
@@ -1486,15 +1325,11 @@ public:
                                 ElementViewConst< arrayView3d< real64 const, compflow::USD_PHASE_DC > > const & dPhaseVolFrac,
                                 ElementViewConst< arrayView3d< real64 const, constitutive::cappres::USD_CAPPRES > > const & phaseCapPressure,
                                 ElementViewConst< arrayView4d< real64 const, constitutive::cappres::USD_CAPPRES_DS > > const & dPhaseCapPressure_dPhaseVolFrac,
-                                integer const GEOS_UNUSED_PARAM( capPressureFlag ),
-                                real64 & potential
-                                )
+                                integer const GEOS_UNUSED_PARAM( hasCapPressure ),
+                                real64 & potential )
   {
     real64 dPot_dP[numFluxSupportPoints]{};
     real64 dPot_dC[numFluxSupportPoints][numComp]{};
-    real64 dProp_dC[numComp]{};
-
-
     UpwindHelpers::computePotentialViscous::compute< numComp, numFluxSupportPoints >(
       numPhase,
       ip,
@@ -1513,8 +1348,7 @@ public:
       dPhaseCapPressure_dPhaseVolFrac,
       potential,
       dPot_dP,
-      dPot_dC,
-      dProp_dC );
+      dPot_dC );
   }
 
   template< localIndex numComp, localIndex numFluxSupportPoints >
@@ -1538,9 +1372,9 @@ public:
                                 ElementViewConst< arrayView3d< real64 const, compflow::USD_PHASE_DC > > const & dPhaseVolFrac,
                                 ElementViewConst< arrayView3d< real64 const, constitutive::cappres::USD_CAPPRES > > const & phaseCapPressure,
                                 ElementViewConst< arrayView4d< real64 const, constitutive::cappres::USD_CAPPRES_DS > > const & dPhaseCapPressure_dPhaseVolFrac,
-                                integer const GEOS_UNUSED_PARAM( capPressureFlag ),
-                                real64 & potential
-                                )
+                                integer const GEOS_UNUSED_PARAM( hasCapPressure ),
+                                integer const checkPhasePresenceInGravity,
+                                real64 & potential )
   {
 
     //Form total velocity
@@ -1552,12 +1386,12 @@ public:
                                                                        [&]( localIndex ipp,
                                                                             real64 & potential_,
                                                                             real64 (& dPotential_dP_)[numFluxSupportPoints],
-                                                                            real64 (& dPotential_dC_)[numFluxSupportPoints][numComp],
-                                                                            real64 (& dProp_dC)[numComp] ) {
+                                                                            real64 (& dPotential_dC_)[numFluxSupportPoints][numComp] ) {
 
       UpwindHelpers::computePotentialGravity::compute< numComp, numFluxSupportPoints >(
         numPhase,
         ipp,
+        checkPhasePresenceInGravity,
         seri,
         sesri,
         sei,
@@ -1574,8 +1408,7 @@ public:
         dPhaseCapPressure_dPhaseVolFrac,
         potential_,
         dPotential_dP_,
-        dPotential_dC_,
-        dProp_dC );
+        dPotential_dC_ );
 
     } );
   }
@@ -1602,7 +1435,7 @@ public:
                                   ElementViewConst< arrayView3d< real64 const, compflow::USD_PHASE_DC > > const & dPhaseVolFrac,
                                   ElementViewConst< arrayView3d< real64 const, constitutive::cappres::USD_CAPPRES > > const & phaseCapPressure,
                                   ElementViewConst< arrayView4d< real64 const, constitutive::cappres::USD_CAPPRES_DS > > const & dPhaseCapPressure_dPhaseVolFrac,
-                                  integer const GEOS_UNUSED_PARAM( capPressureFlag ),
+                                  integer const GEOS_UNUSED_PARAM( hasCapPressure ),
                                   real64 & potential )
 
   {
@@ -1616,8 +1449,8 @@ public:
                                                                        [&]( localIndex ipp,
                                                                             real64 & potential_,
                                                                             real64 (& dPotential_dP_)[numFluxSupportPoints],
-                                                                            real64 (& dPotential_dC_)[numFluxSupportPoints][numComp],
-                                                                            real64 (& dProp_dC)[numComp] ) {
+                                                                            real64 (& dPotential_dC_)[numFluxSupportPoints][numComp] )
+    {
 
       UpwindHelpers::computePotentialCapillary::compute< numComp, numFluxSupportPoints >(
         numPhase,
@@ -1637,8 +1470,7 @@ public:
         dPhaseCapPressure_dPhaseVolFrac,
         potential_,
         dPotential_dP_,
-        dPotential_dC_,
-        dProp_dC );
+        dPotential_dC_ );
     } );
   }
 
@@ -1650,6 +1482,8 @@ struct IHUPhaseFlux
 {
 
   using UPWIND_SCHEME = HybridUpwind;
+
+  static constexpr double minTotMob = 1e-12;
 
   /**
    * @brief Form the Implicit Hybrid Upwind from pressure gradient and gravitational head
@@ -1673,7 +1507,6 @@ struct IHUPhaseFlux
    * @param dPhaseMassDens derivative of phase mass density wrt pressure, temperature, comp fraction
    * @param phaseCapPressure phase capillary pressure
    * @param dPhaseCapPressure_dPhaseVolFrac derivative of phase capillary pressure wrt phase volume fraction
-   * @param k_up uptream index for this phase
    * @param potGrad potential gradient for this phase
    * @param phaseFlux phase flux
    * @param dPhaseFlux_dP derivative of phase flux wrt pressure
@@ -1685,6 +1518,7 @@ struct IHUPhaseFlux
   compute( integer const numPhase,
            integer const ip,
            integer const hasCapPressure,
+           integer const checkPhasePresenceInGravity,
            localIndex const ( &seri )[numFluxSupportPoints],
            localIndex const ( &sesri )[numFluxSupportPoints],
            localIndex const ( &sei )[numFluxSupportPoints],
@@ -1696,21 +1530,15 @@ struct IHUPhaseFlux
            ElementViewConst< arrayView3d< real64 const, compflow::USD_PHASE_DC > > const & dPhaseMob,
            ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & phaseVolFrac,
            ElementViewConst< arrayView3d< real64 const, compflow::USD_PHASE_DC > > const & dPhaseVolFrac,
-           ElementViewConst< arrayView4d< real64 const, constitutive::multifluid::USD_PHASE_COMP > > const & phaseCompFrac,
-           ElementViewConst< arrayView5d< real64 const, constitutive::multifluid::USD_PHASE_COMP_DC > > const & dPhaseCompFrac,
            ElementViewConst< arrayView3d< real64 const, compflow::USD_COMP_DC > > const & dCompFrac_dCompDens,
            ElementViewConst< arrayView3d< real64 const, constitutive::multifluid::USD_PHASE > > const & phaseMassDens,
            ElementViewConst< arrayView4d< real64 const, constitutive::multifluid::USD_PHASE_DC > > const & dPhaseMassDens,
            ElementViewConst< arrayView3d< real64 const, constitutive::cappres::USD_CAPPRES > > const & phaseCapPressure,
            ElementViewConst< arrayView4d< real64 const, constitutive::cappres::USD_CAPPRES_DS > > const & dPhaseCapPressure_dPhaseVolFrac,
-           localIndex & k_up,
            real64 & potGrad,
            real64 ( &phaseFlux ),
            real64 ( & dPhaseFlux_dP )[numFluxSupportPoints],
-           real64 ( & dPhaseFlux_dC )[numFluxSupportPoints][numComp],
-           real64 ( & compFlux )[numComp],
-           real64 ( & dCompFlux_dP )[numFluxSupportPoints][numComp],
-           real64 ( & dCompFlux_dC )[numFluxSupportPoints][numComp][numComp] )
+           real64 ( & dPhaseFlux_dC )[numFluxSupportPoints][numComp] )
   {
 
     //loop over all phases to form total velocity
@@ -1722,51 +1550,57 @@ struct IHUPhaseFlux
     real64 totMob{};
     real64 dTotMob_dP[numFluxSupportPoints]{};
     real64 dTotMob_dC[numFluxSupportPoints][numComp]{};
-    localIndex k_up_ppu = -1;
 
     //unelegant but need dummy when forming PPU total velocity
-    real64 dummy[numComp];
-    real64 dDummy_dP[numFluxSupportPoints][numComp];
-    real64 dDummy_dC[numFluxSupportPoints][numComp][numComp];
-
+    real64 dPhaseFlux_dTrans;
 
     for( integer jp = 0; jp < numPhase; ++jp )
     {
-      PPUPhaseFlux::compute( numPhase, jp, hasCapPressure,
+      PPUPhaseFlux::compute( numPhase, jp,
+                             hasCapPressure, checkPhasePresenceInGravity,
                              seri, sesri, sei,
                              trans, dTrans_dPres,
                              pres, gravCoef,
                              phaseMob, dPhaseMob,
                              phaseVolFrac, dPhaseVolFrac,
-                             phaseCompFrac, dPhaseCompFrac,
                              dCompFrac_dCompDens,
                              phaseMassDens, dPhaseMassDens,
                              phaseCapPressure, dPhaseCapPressure_dPhaseVolFrac,
-                             k_up_ppu, potGrad,
-                             phaseFlux, dPhaseFlux_dP, dPhaseFlux_dC,
-                             dummy, dDummy_dP, dDummy_dC );
+                             potGrad, phaseFlux, dPhaseFlux_dP, dPhaseFlux_dC, dPhaseFlux_dTrans );
 
-      totFlux += phaseFlux;
-
-      phaseFlux = 0.;
+      // accumulate into total flux
+      UpwindHelpers::addToValueAndDerivatives( phaseFlux, dPhaseFlux_dP, dPhaseFlux_dC,
+                                               totFlux, dTotFlux_dP, dTotFlux_dC );
+/*
+      // old wrong way:
       for( localIndex ke = 0; ke < numFluxSupportPoints; ++ke )
       {
-        dTotFlux_dP[ke] += dPhaseFlux_dP[ke];
         totMob += phaseMob[seri[ke]][sesri[ke]][sei[ke]][jp];
         dTotMob_dP[ke] += dPhaseMob[seri[ke]][sesri[ke]][sei[ke]][jp][Deriv::dP];
-        dPhaseFlux_dP[ke] = 0.;
-
         for( localIndex jc = 0; jc < numComp; ++jc )
         {
-          dTotFlux_dC[ke][jc] += dPhaseFlux_dC[ke][jc];
           dTotMob_dC[ke][jc] += dPhaseMob[seri[ke]][sesri[ke]][sei[ke]][jp][Deriv::dC + jc];
-          dPhaseFlux_dC[ke][jc] = 0.;
         }
       }
+ */
+
+      // new correct way:
+      // choose upstream cell
+      localIndex const k_up = (phaseFlux >= 0) ? 0 : 1;
+      // accumulate into total mobility
+      UpwindHelpers::assignMobilityAndDerivatives( jp, k_up, seri, sesri, sei,
+                                                   phaseMob, dPhaseMob,
+                                                   totMob, dTotMob_dP[k_up], dTotMob_dC[k_up] );
     }
 
-    //fractional flow loop with IHU
-    //maybe needed to have density out for upwinding
+    // safeguard
+    totMob = LvArray::math::max( totMob, minTotMob );
+
+    // assign to zero
+    UpwindHelpers::assignToZero( phaseFlux, dPhaseFlux_dP, dPhaseFlux_dC );
+
+    // fractional flow loop with IHU
+    // maybe needed to have density out for upwinding
 
     // choose upstream cell
     // create local work arrays
@@ -1788,7 +1622,6 @@ struct IHUPhaseFlux
                                                                   sei,
                                                                   trans,
                                                                   dTrans_dPres,
-                                                                  k_up_ppu,
                                                                   totFlux,
                                                                   totMob,
                                                                   dTotMob_dP,
@@ -1804,57 +1637,27 @@ struct IHUPhaseFlux
                                                                   phaseCapPressure,
                                                                   dPhaseCapPressure_dPhaseVolFrac,
                                                                   hasCapPressure,
-                                                                  k_up,
                                                                   fractionalFlow,
                                                                   dFractionalFlow_dP,
                                                                   dFractionalFlow_dC );
 
-
     /// Assembling the viscous flux (and derivatives) from fractional flow and total velocity as \phi_{\mu} = f_i^{up,\mu} uT
     viscousPhaseFlux = fractionalFlow * totFlux;
-    for( localIndex ke = 0; ke < numFluxSupportPoints; ++ke )
-    {
-      dViscousPhaseFlux_dP[ke] += dFractionalFlow_dP[ke] * totFlux;
 
-
-      for( localIndex jc = 0; jc < numComp; ++jc )
-      {
-        dViscousPhaseFlux_dC[ke][jc] += dFractionalFlow_dC[ke][jc] * totFlux;
-      }
-    }
+    UpwindHelpers::addToDerivativesScaled( dFractionalFlow_dP, dFractionalFlow_dC,
+                                           totFlux,
+                                           dViscousPhaseFlux_dP, dViscousPhaseFlux_dC );
 
     //NON-FIXED UT -- to be canceled out if considered fixed
-    for( localIndex ke = 0; ke < numFluxSupportPoints; ++ke )
-    {
-      dViscousPhaseFlux_dP[ke] += fractionalFlow * dTotFlux_dP[ke];
-
-
-      for( localIndex jc = 0; jc < numComp; ++jc )
-      {
-        dViscousPhaseFlux_dC[ke][jc] += fractionalFlow * dTotFlux_dC[ke][jc];
-      }
-    }
-    //distribute on phaseComponentFlux here
-    PhaseComponentFlux::compute( ip, k_up,
-                                 seri, sesri, sei,
-                                 phaseCompFrac, dPhaseCompFrac, dCompFrac_dCompDens,
-                                 viscousPhaseFlux, dViscousPhaseFlux_dP, dViscousPhaseFlux_dC,
-                                 compFlux, dCompFlux_dP, dCompFlux_dC );
+    UpwindHelpers::addToDerivativesScaled( dTotFlux_dP, dTotFlux_dC,
+                                           fractionalFlow,
+                                           dViscousPhaseFlux_dP, dViscousPhaseFlux_dC );
 
     // accumulate in the flux and its derivatives
-    phaseFlux += viscousPhaseFlux;
-    for( localIndex ke = 0; ke < numFluxSupportPoints; ++ke )
-    {
-      dPhaseFlux_dP[ke] += dViscousPhaseFlux_dP[ke];
-
-
-      for( localIndex ic = 0; ic < numComp; ++ic )
-        dPhaseFlux_dC[ke][ic] += dViscousPhaseFlux_dC[ke][ic];
-    }
+    UpwindHelpers::addToValueAndDerivatives( viscousPhaseFlux, dViscousPhaseFlux_dP, dViscousPhaseFlux_dC,
+                                             phaseFlux, dPhaseFlux_dP, dPhaseFlux_dC );
 
     /// Assembling the gravitational flux (and derivatives) from fractional flow and total velocity as \phi_{g} = f_i^{up,g} uT
-    localIndex k_up_g = -1;
-    localIndex k_up_og = -1;
 
     real64 gravitationalPhaseFlux{};
     real64 gravitationalPhaseFlux_dP[numFluxSupportPoints]{};
@@ -1869,7 +1672,6 @@ struct IHUPhaseFlux
       sei,
       trans,
       dTrans_dPres,
-      k_up_ppu,
       totFlux,
       totMob,
       dTotMob_dP,
@@ -1886,37 +1688,18 @@ struct IHUPhaseFlux
       phaseCapPressure,
       dPhaseCapPressure_dPhaseVolFrac,
       hasCapPressure,
-      k_up_g,
-      k_up_og,
+      checkPhasePresenceInGravity,
       gravitationalPhaseFlux,
       gravitationalPhaseFlux_dP,
       gravitationalPhaseFlux_dC );
 
-
-
-    //distribute on phaseComponentFlux here
-    PhaseComponentFlux::compute( ip, k_up_g,
-                                 seri, sesri, sei,
-                                 phaseCompFrac, dPhaseCompFrac, dCompFrac_dCompDens,
-                                 gravitationalPhaseFlux, gravitationalPhaseFlux_dP, gravitationalPhaseFlux_dC,
-                                 compFlux, dCompFlux_dP, dCompFlux_dC );
-
-
     //update phaseFlux from gravitational
-    phaseFlux += gravitationalPhaseFlux;
-    for( localIndex ke = 0; ke < numFluxSupportPoints; ++ke )
-    {
-      dPhaseFlux_dP[ke] += gravitationalPhaseFlux_dP[ke];
-      for( localIndex ic = 0; ic < numComp; ++ic )
-        dPhaseFlux_dC[ke][ic] += gravitationalPhaseFlux_dC[ke][ic];
-    }
-
+    UpwindHelpers::addToValueAndDerivatives( gravitationalPhaseFlux, gravitationalPhaseFlux_dP, gravitationalPhaseFlux_dC,
+                                             phaseFlux, dPhaseFlux_dP, dPhaseFlux_dC );
 
     if( hasCapPressure )
     {
       /// Assembling the capillary flux (and derivatives) from fractional flow and total velocity as \phi_{g} = f_i^{up,g} uT
-      localIndex k_up_pc = -1;
-      localIndex k_up_opc = -1;
 
       real64 capillaryPhaseFlux{};
       real64 capillaryPhaseFlux_dP[numFluxSupportPoints]{};
@@ -1931,7 +1714,6 @@ struct IHUPhaseFlux
         sei,
         trans,
         dTrans_dPres,
-        k_up_ppu,
         totFlux,
         totMob,
         dTotMob_dP,
@@ -1947,32 +1729,15 @@ struct IHUPhaseFlux
         phaseCapPressure,
         dPhaseCapPressure_dPhaseVolFrac,
         hasCapPressure,
-        k_up_pc,
-        k_up_opc,
         capillaryPhaseFlux,
         capillaryPhaseFlux_dP,
         capillaryPhaseFlux_dC );
 
-      //distribute on phaseComponentFlux here
-      PhaseComponentFlux::compute( ip, k_up_pc,
-                                   seri, sesri, sei,
-                                   phaseCompFrac, dPhaseCompFrac, dCompFrac_dCompDens,
-                                   capillaryPhaseFlux, capillaryPhaseFlux_dP, capillaryPhaseFlux_dC,
-                                   compFlux, dCompFlux_dP, dCompFlux_dC );
-
-
       //update phaseFlux from capillary
-      phaseFlux += capillaryPhaseFlux;
-      for( localIndex ke = 0; ke < numFluxSupportPoints; ++ke )
-      {
-        dPhaseFlux_dP[ke] += capillaryPhaseFlux_dP[ke];
-        for( localIndex ic = 0; ic < numComp; ++ic )
-          dPhaseFlux_dC[ke][ic] += capillaryPhaseFlux_dC[ke][ic];
-
-      }
+      UpwindHelpers::addToValueAndDerivatives( capillaryPhaseFlux, capillaryPhaseFlux_dP, capillaryPhaseFlux_dC,
+                                               phaseFlux, dPhaseFlux_dP, dPhaseFlux_dC );
 
     }//end if cappres
-
   }
 
 };

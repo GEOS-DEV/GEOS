@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
  * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
@@ -29,6 +29,7 @@
 #if !defined( GEOS_USE_HIP )
 #include "finiteElement/elementFormulations/Qk_Hexahedron_Lagrange_GaussLobatto.hpp"
 #endif
+#include "mesh/DomainPartition.hpp"
 #include "WaveSolverUtils.hpp"
 
 #if !defined( GEOS_USE_HIP )
@@ -83,6 +84,7 @@ public:
   struct viewKeyStruct : PhysicsSolverBase::viewKeyStruct
   {
     static constexpr char const * sourceCoordinatesString() { return "sourceCoordinates"; }
+    static constexpr char const * sourceValueString() { return "sourceValue"; }
 
     static constexpr char const * timeSourceFrequencyString() { return "timeSourceFrequency"; }
     static constexpr char const * timeSourceDelayString() { return "timeSourceDelay"; }
@@ -143,6 +145,58 @@ public:
   void computeTargetNodeSet( arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes,
                              localIndex const subRegionSize,
                              localIndex const numQuadraturePointsPerElem );
+
+  /**
+   * @brief Computes the minimum value of the given element field over the whole mesh.
+   * @param[in] F The type of the field whose minimum must be computed
+   * @param[in] T The data type of the field
+   * @eturn the minimum value
+   */
+  template< typename F, typename T >
+  T computeGlobalMinOfElemField( DomainPartition & domain )
+  {
+    RAJA::ReduceMin< ReducePolicy< EXEC_POLICY >, T > minF( LvArray::NumericLimits< T >::max );
+
+    forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                  MeshLevel & mesh,
+                                                                  string_array const & regionNames )
+    {
+      mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
+                                                                                            CellElementSubRegion & elementSubRegion )
+      {
+        arrayView1d< T const > const f = elementSubRegion.getField< F >();
+        forAll< EXEC_POLICY >( elementSubRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const e ) {
+          minF.min( f[e] );
+        } );
+      } );
+    } );
+    T minFVal = minF.get();
+    return MpiWrapper::min< T >( minFVal );
+  }
+
+  /**
+   * @brief Initializes the anealsticity coefficients if needed, and checks that the anealsticity values
+   * are within a valid range. Gives a warning if not.
+   * @param[in] Qs the quality factor fields used to compute the anelasticity value if not given
+   */
+  template< typename ... Qs >
+  void initializeAnelasticityCoefficients( DomainPartition & domain )
+  {
+    // compute miniumum quality factor
+    real32 minQVal = LvArray::NumericLimits< real32 >::max;
+    ( (minQVal = std::min( minQVal, computeGlobalMinOfElemField< Qs, real32 >( domain ) ) ), ... );
+    if( m_slsAnelasticityCoefficients.size( 0 ) == 1 && m_slsAnelasticityCoefficients[ 0 ] < 0 )
+    {
+      m_slsAnelasticityCoefficients[ 0 ] = 2.0 * minQVal / ( minQVal - 1.0 );
+    }
+    // test if anelasticity is too high and artifacts could appear
+    real32 ySum = 0.0;
+    for( integer l = 0; l < m_slsAnelasticityCoefficients.size( 0 ); l++ )
+    {
+      ySum += m_slsAnelasticityCoefficients[ l ];
+    }
+    GEOS_WARNING_IF( ySum > minQVal, "The anelasticity parameters are too high for the given quality factor. This could lead to solution artifacts such as zero-velocity waves." );
+  }
 
 protected:
 
@@ -218,7 +272,7 @@ protected:
    * @param baseMesh the level-0 mesh
    * @param mesh mesh of the computational domain
    */
-  virtual void precomputeSourceAndReceiverTerm( MeshLevel & baseMesh, MeshLevel & mesh, arrayView1d< string const > const & regionNames ) = 0;
+  virtual void precomputeSourceAndReceiverTerm( MeshLevel & baseMesh, MeshLevel & mesh, string_array const & regionNames ) = 0;
 
   /**
    * @brief Perform forward explicit step
@@ -226,33 +280,36 @@ protected:
    * @param dt the perscribed timestep
    * @param cycleNumber the current cycle number
    * @param domain the domain object
-   * @param computeGradient Indicates if we want to compute gradient at this step
+   * @param computeGradient Indicates if we want to compute gradient or the imaging condition at this step
    * @return return the timestep that was achieved during the step.
    */
   virtual real64 explicitStepForward( real64 const & time_n,
                                       real64 const & dt,
                                       integer const cycleNumber,
                                       DomainPartition & domain,
-                                      bool const computeGradient ) = 0;
+                                      integer const computeGradient ) = 0;
   /**
    * @brief Perform backward explicit step
    * @param time_n time at the beginning of the step
    * @param dt the perscribed timestep
    * @param cycleNumber the current cycle number
    * @param domain the domain object
-   * @param computeGradient Indicates if we want to compute gradient at this step
+   * @param computeGradient Indicates if we want to compute gradient or the imaging condition at this step
    * @return return the timestep that was achieved during the step.
    */
   virtual real64 explicitStepBackward( real64 const & time_n,
                                        real64 const & dt,
                                        integer const cycleNumber,
                                        DomainPartition & domain,
-                                       bool const computeGradient ) = 0;
+                                       integer const computeGradient ) = 0;
 
 
   virtual void registerDataOnMesh( Group & meshBodies ) override;
 
   localIndex getNumNodesPerElem();
+
+  /// Precomputed value of the source terms
+  array2d< real32 > m_sourceValue;
 
   /// Coordinates of the sources in the mesh
   array2d< real64 > m_sourceCoordinates;
@@ -312,7 +369,7 @@ protected:
   localIndex m_forward;
 
   /// Indicate if we want to save fields to restore them during backward
-  localIndex m_saveFields;
+  integer m_saveFields;
 
   // Indicate the current shot computed for naming saved temporary data
   integer m_shotIndex;
@@ -371,7 +428,7 @@ protected:
   SortedArray< localIndex > m_solverTargetNodesSet;
 
   /// Names of table functions for source wavelet (time dependency)
-  array1d< string > m_sourceWaveletTableNames;
+  string_array m_sourceWaveletTableNames;
 
   /// Flag to indicate if source wavelet table functions are used
   bool m_useSourceWaveletTables;
