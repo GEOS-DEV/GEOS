@@ -6,6 +6,9 @@ cmake_policy(SET CMP0104 OLD) # when using nvcc populate CMAKE_CUDA_ARCHITECTURE
 cmake_policy(SET CMP0074 NEW) # dont ignore <PackageName>_ROOT env vars when searching for packages via find_package()
 cmake_policy(SET CMP0066 NEW) # use CMAKE_<LANG>_FLAGS_<BUILD_TYPE> for try_compile() instead of only CMAKE_<LANG>_FLAGS
 cmake_policy(SET CMP0056 NEW) # use CMAKE_EXE_LINKER_FLAGS in try_compile() in addition to CMAKE_<LANG>_FLAGS
+if(${CMAKE_VERSION} VERSION_GREATER_EQUAL "3.27")
+  cmake_policy(SET CMP0144 NEW) # find_package uses upper-case <PACKAGENAME>_ROOT variables.
+endif()
 
 ################################
 # GEOSX
@@ -85,7 +88,6 @@ add_subdirectory( coreComponents )
 add_subdirectory( externalComponents )
 add_subdirectory( main )
 
-
 ################################
 # Add docs
 ################################
@@ -104,7 +106,7 @@ install( DIRECTORY ${PROJECT_BINARY_DIR}/include DESTINATION . )
 # Generate version information
 ################################
 include( cmake/GeosxVersion.cmake )
-message( STATUS "Configuring GEOSX version ${GEOS_VERSION_FULL}" )
+message( STATUS "Configuring GEOS version ${GEOS_VERSION_FULL}" )
 
 
 ################################
@@ -135,7 +137,7 @@ endif()
 
 blt_add_executable( NAME geosx
                     SOURCES main/main.cpp
-                    DEPENDS_ON geosx_core 
+                    DEPENDS_ON geosx_core
                                ${extraComponentsLinkList}
                                ${externalComponentsLinkList} )
 
@@ -309,7 +311,7 @@ if ( ENABLE_ATS )
 
     if (NOT Python3_EXECUTABLE)
         message( FATAL_ERROR "An appropriate version of python was not found (required for integrated testing system).  Try setting Python3_ROOT_DIR and/or Python3_EXECUTABLE in your host config." )
-    endif() 
+    endif()
 
      # Setup testing
     set( ATS_SCRIPT

@@ -1,3 +1,5 @@
+set(TOTAL_GENERATED_KERNELS 0 CACHE INTERNAL "Total number of generated kernels")
+
 set( subdirs
      math
      common
@@ -83,5 +85,6 @@ endif()
 
 if( GEOS_ENABLE_TESTS )
   add_subdirectory( unitTests )
-endif( )
+endif()
 
+message( STATUS "Total number of generated kernels: ${TOTAL_GENERATED_KERNELS}" )

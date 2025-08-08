@@ -55,7 +55,7 @@ set( solidMechanicsSolvers_headers
      contact/kernels/SolidMechanicsALMKernels.hpp
      contact/kernels/SolidMechanicsConformingContactKernelsHelper.hpp
      contact/kernels/SolidMechanicsContactFaceBubbleKernels.hpp
-     contact/kernels/SolidMechanicsLagrangeContactKernels.hpp 
+     contact/kernels/SolidMechanicsLagrangeContactKernels.hpp
      contact/LogLevelsInfo.hpp )
 
 # Specify solver sources
@@ -76,27 +76,89 @@ set( dependencyList ${parallelDeps} physicsSolversBase )
 
 geos_decorate_link_dependencies( LIST decoratedDependencies DEPENDENCIES ${dependencyList} )
 
+if (GEOS_ENABLE_SOLIDMECHANICS_ELASTIC)
+  file( READ "${CMAKE_CURRENT_LIST_DIR}/SolidMechanicsElastic_KernelSpecs.json" kernelSpecs )
+  set( kernelTemplateFileList kernels/SolidMechanicsKernels.cpp.template )
 
-file( READ "${CMAKE_CURRENT_LIST_DIR}/kernelSpecs.json" kernelSpecs )
-set( kernelTemplateFileList "" )
+  foreach( kernelTemplateFile ${kernelTemplateFileList} )
+    get_filename_component( jsonKey ${kernelTemplateFile} NAME_WE )
+    generateKernels( TEMPLATE ${kernelTemplateFile}
+                     JSON kernelSpecs
+                     KEY ${jsonKey}
+                     HEADERS headerFiles
+                     SOURCES sourceFiles )
 
-  list( APPEND kernelTemplateFileList 
-        kernels/SolidMechanicsKernels.cpp.template
-        kernels/SolidMechanicsFixedStressThermoPoromechanicsKernels.cpp.template )
+    list(APPEND solidMechanicsSolvers_headers ${headerFiles})
+    list(APPEND solidMechanicsSolvers_sources ${sourceFiles})
 
+    list(LENGTH sourceFiles NUM_KERNELS)
+    math(EXPR TOTAL_GENERATED_KERNELS "${TOTAL_GENERATED_KERNELS} + ${NUM_KERNELS}")
+  endforeach()
+endif()
 
-foreach( kernelTemplateFile ${kernelTemplateFileList} )
-  get_filename_component( jsonKey ${kernelTemplateFile} NAME_WE )
-  generateKernels( TEMPLATE ${kernelTemplateFile}
-                   JSON kernelSpecs
-                   KEY ${jsonKey}
-                   HEADERS headerFiles
-                   SOURCES sourceFiles )
+if (GEOS_ENABLE_SOLIDMECHANICS_EXTRA)
+  file( READ "${CMAKE_CURRENT_LIST_DIR}/SolidMechanicsExtra_KernelSpecs.json" kernelSpecs )
+  set( kernelTemplateFileList kernels/SolidMechanicsKernels.cpp.template )
 
-list(APPEND solidMechanicsSolvers_headers ${headerFiles})
-list(APPEND solidMechanicsSolvers_sources ${sourceFiles})
-endforeach()
+  foreach( kernelTemplateFile ${kernelTemplateFileList} )
+    get_filename_component( jsonKey ${kernelTemplateFile} NAME_WE )
+    generateKernels( TEMPLATE ${kernelTemplateFile}
+                     JSON kernelSpecs
+                     KEY ${jsonKey}
+                     HEADERS headerFiles
+                     SOURCES sourceFiles )
 
+    list(APPEND solidMechanicsSolvers_headers ${headerFiles})
+    list(APPEND solidMechanicsSolvers_sources ${sourceFiles})
+
+    list(LENGTH sourceFiles NUM_KERNELS)
+    math(EXPR TOTAL_GENERATED_KERNELS "${TOTAL_GENERATED_KERNELS} + ${NUM_KERNELS}")
+  endforeach()
+endif()
+
+# TODO: There is an error if we turn this on. Are we missing SolidMechanicsFixedStressThermoPoroElasticKernels.cpp.template?
+if (GEOS_ENABLE_SOLIDMECHANICS_THERMOPOROELASTIC)
+  file( READ "${CMAKE_CURRENT_LIST_DIR}/SolidMechanicsFixedStressThermoPoroElastic_KernelSpecs.json" kernelSpecs )
+  set( kernelTemplateFileList
+       kernels/SolidMechanicsFixedStressThermoPoromechanicsKernels.cpp.template )
+
+  foreach( kernelTemplateFile ${kernelTemplateFileList} )
+    get_filename_component( jsonKey ${kernelTemplateFile} NAME_WE )
+    generateKernels( TEMPLATE ${kernelTemplateFile}
+                     JSON kernelSpecs
+                     KEY ${jsonKey}
+                     HEADERS headerFiles
+                     SOURCES sourceFiles )
+
+    list(APPEND solidMechanicsSolvers_headers ${headerFiles})
+    list(APPEND solidMechanicsSolvers_sources ${sourceFiles})
+
+    list(LENGTH sourceFiles NUM_KERNELS)
+    math(EXPR TOTAL_GENERATED_KERNELS "${TOTAL_GENERATED_KERNELS} + ${NUM_KERNELS}")
+  endforeach()
+endif()
+
+if (GEOS_ENABLE_SOLIDMECHANICS_THERMOPOROMECHANICS)
+  file( READ "${CMAKE_CURRENT_LIST_DIR}/SolidMechanicsFixedStressThermoPoromechanics_KernelSpecs.json" kernelSpecs )
+  set( kernelTemplateFileList kernels/SolidMechanicsFixedStressThermoPoromechanicsKernels.cpp.template )
+
+  foreach( kernelTemplateFile ${kernelTemplateFileList} )
+    get_filename_component( jsonKey ${kernelTemplateFile} NAME_WE )
+    generateKernels( TEMPLATE ${kernelTemplateFile}
+                     JSON kernelSpecs
+                     KEY ${jsonKey}
+                     HEADERS headerFiles
+                     SOURCES sourceFiles )
+
+    list(APPEND solidMechanicsSolvers_headers ${headerFiles})
+    list(APPEND solidMechanicsSolvers_sources ${sourceFiles})
+
+    list(LENGTH sourceFiles NUM_KERNELS)
+    math(EXPR TOTAL_GENERATED_KERNELS "${TOTAL_GENERATED_KERNELS} + ${NUM_KERNELS}")
+  endforeach()
+endif()
+
+set(TOTAL_GENERATED_KERNELS ${TOTAL_GENERATED_KERNELS} CACHE INTERNAL "Total number of generated kernels")
 
 blt_add_library( NAME       solidMechanicsSolvers
                  SOURCES    ${solidMechanicsSolvers_sources}

@@ -25,16 +25,9 @@ set( multiPhysicsSolvers_headers
     PoromechanicsSolver.hpp
     PoromechanicsConformingFractures.hpp
     FlowProppantTransportSolver.hpp
-    HydrofractureSolver.hpp
-    HydrofractureSolverKernels.hpp
-    MultiphasePoromechanics.hpp
     OneWayCoupledFractureFlowContactMechanics.hpp
-    MultiphasePoromechanicsConformingFractures.hpp
     PhaseFieldFractureSolver.hpp
-    PhaseFieldPoromechanicsSolver.hpp
-    PoromechanicsInitialization.hpp
     PoromechanicsFields.hpp
-    PoromechanicsInitialization.hpp
     poromechanicsKernels/MultiphasePoromechanics.hpp
     poromechanicsKernels/MultiphasePoromechanics_impl.hpp
     poromechanicsKernels/MultiphasePoromechanicsConformingFractures.hpp
@@ -56,9 +49,6 @@ set( multiPhysicsSolvers_headers
     poromechanicsKernels/ThermalSinglePhasePoromechanicsEFEM_impl.hpp
     poromechanicsKernels/ThermalSinglePhasePoromechanicsConformingFractures.hpp
     poromechanicsKernels/ThermalSinglePhasePoromechanicsEmbeddedFractures.hpp
-    SinglePhasePoromechanics.hpp
-    SinglePhasePoromechanicsEmbeddedFractures.hpp
-    SinglePhasePoromechanicsConformingFractures.hpp
     SinglePhaseReservoirAndWells.hpp )
 
 # Specify solver sources
@@ -66,16 +56,8 @@ set( multiPhysicsSolvers_sources
     CompositionalMultiphaseReservoirAndWells.cpp
     CoupledReservoirAndWellsBase.cpp
     FlowProppantTransportSolver.cpp
-    HydrofractureSolver.cpp
-    MultiphasePoromechanics.cpp
     OneWayCoupledFractureFlowContactMechanics.cpp
-    MultiphasePoromechanicsConformingFractures.cpp
     PhaseFieldFractureSolver.cpp
-    PhaseFieldPoromechanicsSolver.cpp
-    PoromechanicsInitialization.cpp
-    SinglePhasePoromechanics.cpp
-    SinglePhasePoromechanicsEmbeddedFractures.cpp
-    SinglePhasePoromechanicsConformingFractures.cpp
     SinglePhaseReservoirAndWells.cpp )
 
 #include(poromechanicsKernels/PoromechanicsKernels.cmake)
@@ -84,28 +66,110 @@ set( dependencyList ${parallelDeps} fluidFlowSolvers simplePDESolvers solidMecha
 
 geos_decorate_link_dependencies( LIST decoratedDependencies DEPENDENCIES ${dependencyList} )
 
+if (GEOS_ENABLE_MULTIPHYSICS_POROMECHANICS)
+  list( APPEND multiPhysicsSolvers_headers
+        PoromechanicsInitialization.hpp
+        SinglePhasePoromechanics.hpp
+        SinglePhasePoromechanicsConformingFractures.hpp
+        MultiphasePoromechanics.hpp
+        MultiphasePoromechanicsConformingFractures.hpp
+        PhaseFieldPoromechanicsSolver.hpp
+        HydrofractureSolver.hpp
+        HydrofractureSolverKernels.hpp )
+  list( APPEND multiPhysicsSolvers_sources
+        PoromechanicsInitialization.cpp
+        SinglePhasePoromechanics.cpp
+        SinglePhasePoromechanicsConformingFractures.cpp
+        MultiphasePoromechanics.cpp
+        MultiphasePoromechanicsConformingFractures.cpp
+        PhaseFieldPoromechanicsSolver.cpp
+        HydrofractureSolver.cpp )
 
-file( READ "${CMAKE_CURRENT_LIST_DIR}/kernelSpecs.json" kernelSpecs )
-set( kernelTemplateFileList "" )
+  file( READ "${CMAKE_CURRENT_LIST_DIR}/Poromechanics_KernelSpecs.json" kernelSpecs )
+  set( kernelTemplateFileList poromechanicsKernels/PoromechanicsKernels.cpp.template )
 
-  list( APPEND kernelTemplateFileList 
-        poromechanicsKernels/PoromechanicsKernels.cpp.template
-        poromechanicsKernels/PoromechanicsEFEMKernels.cpp.template
-        poromechanicsKernels/ThermoPoromechanicsKernels.cpp.template
-        poromechanicsKernels/PoromechanicsDamageKernels.cpp.template )
+  foreach( kernelTemplateFile ${kernelTemplateFileList} )
+    get_filename_component( jsonKey ${kernelTemplateFile} NAME_WE )
+    generateKernels( TEMPLATE ${kernelTemplateFile}
+                     JSON kernelSpecs
+                     KEY ${jsonKey}
+                     HEADERS headerFiles
+                     SOURCES sourceFiles )
 
+    list(APPEND multiPhysicsSolvers_headers ${headerFiles})
+    list(APPEND multiPhysicsSolvers_sources ${sourceFiles})
 
-foreach( kernelTemplateFile ${kernelTemplateFileList} )
-  get_filename_component( jsonKey ${kernelTemplateFile} NAME_WE )
-  generateKernels( TEMPLATE ${kernelTemplateFile}
-                   JSON kernelSpecs
-                   KEY ${jsonKey}
-                   HEADERS headerFiles
-                   SOURCES sourceFiles )
+    list(LENGTH sourceFiles NUM_KERNELS)
+    math(EXPR TOTAL_GENERATED_KERNELS "${TOTAL_GENERATED_KERNELS} + ${NUM_KERNELS}")
+  endforeach()
+endif()
 
-list(APPEND multiPhysicsSolvers_headers ${headerFiles})
-list(APPEND multiPhysicsSolvers_sources ${sourceFiles})
-endforeach()
+if (GEOS_ENABLE_MULTIPHYSICS_POROMECHANICS_EFEM)
+  list( APPEND multiPhysicsSolvers_headers
+        SinglePhasePoromechanicsEmbeddedFractures.hpp )
+  list( APPEND multiPhysicsSolvers_sources
+        SinglePhasePoromechanicsEmbeddedFractures.cpp )
+
+  file( READ "${CMAKE_CURRENT_LIST_DIR}/PoromechanicsEFEM_KernelSpecs.json" kernelSpecs )
+  set( kernelTemplateFileList poromechanicsKernels/PoromechanicsEFEMKernels.cpp.template )
+
+  foreach( kernelTemplateFile ${kernelTemplateFileList} )
+    get_filename_component( jsonKey ${kernelTemplateFile} NAME_WE )
+    generateKernels( TEMPLATE ${kernelTemplateFile}
+                     JSON kernelSpecs
+                     KEY ${jsonKey}
+                     HEADERS headerFiles
+                     SOURCES sourceFiles )
+
+    list(APPEND multiPhysicsSolvers_headers ${headerFiles})
+    list(APPEND multiPhysicsSolvers_sources ${sourceFiles})
+
+    list(LENGTH sourceFiles NUM_KERNELS)
+    math(EXPR TOTAL_GENERATED_KERNELS "${TOTAL_GENERATED_KERNELS} + ${NUM_KERNELS}")
+  endforeach()
+endif()
+
+if (GEOS_ENABLE_MULTIPHYSICS_POROMECHANICS_DAMAGE)
+  file( READ "${CMAKE_CURRENT_LIST_DIR}/PoromechanicsDamage_KernelSpecs.json" kernelSpecs )
+  set( kernelTemplateFileList poromechanicsKernels/PoromechanicsDamageKernels.cpp.template )
+
+  foreach( kernelTemplateFile ${kernelTemplateFileList} )
+    get_filename_component( jsonKey ${kernelTemplateFile} NAME_WE )
+    generateKernels( TEMPLATE ${kernelTemplateFile}
+                     JSON kernelSpecs
+                     KEY ${jsonKey}
+                     HEADERS headerFiles
+                     SOURCES sourceFiles )
+
+    list(APPEND multiPhysicsSolvers_headers ${headerFiles})
+    list(APPEND multiPhysicsSolvers_sources ${sourceFiles})
+
+    list(LENGTH sourceFiles NUM_KERNELS)
+    math(EXPR TOTAL_GENERATED_KERNELS "${TOTAL_GENERATED_KERNELS} + ${NUM_KERNELS}")
+  endforeach()
+endif()
+
+if (GEOS_ENABLE_MULTIPHYSICS_THERMOPOROMECHANICS)
+  file( READ "${CMAKE_CURRENT_LIST_DIR}/ThermoPoromechanics_KernelSpecs.json" kernelSpecs )
+  set( kernelTemplateFileList poromechanicsKernels/ThermoPoromechanicsKernels.cpp.template )
+
+  foreach( kernelTemplateFile ${kernelTemplateFileList} )
+    get_filename_component( jsonKey ${kernelTemplateFile} NAME_WE )
+    generateKernels( TEMPLATE ${kernelTemplateFile}
+                     JSON kernelSpecs
+                     KEY ${jsonKey}
+                     HEADERS headerFiles
+                     SOURCES sourceFiles )
+
+    list(APPEND multiPhysicsSolvers_headers ${headerFiles})
+    list(APPEND multiPhysicsSolvers_sources ${sourceFiles})
+
+    list(LENGTH sourceFiles NUM_KERNELS)
+    math(EXPR TOTAL_GENERATED_KERNELS "${TOTAL_GENERATED_KERNELS} + ${NUM_KERNELS}")
+  endforeach()
+endif()
+
+set(TOTAL_GENERATED_KERNELS ${TOTAL_GENERATED_KERNELS} CACHE INTERNAL "Total number of generated kernels")
 
 blt_add_library( NAME       multiPhysicsSolvers
                  SOURCES    ${multiPhysicsSolvers_sources}
