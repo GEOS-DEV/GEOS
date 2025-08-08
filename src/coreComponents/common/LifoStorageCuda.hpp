@@ -2,15 +2,17 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 TotalEnergies
- * Copyright (c) 2019-     GEOSX Contributors
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 TotalEnergies
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2023-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
  */
+
 #ifndef LIFOSTORAGECUDA_HPP
 #define LIFOSTORAGECUDA_HPP
 
@@ -78,7 +80,7 @@ public:
 
     if( baseLifo::m_maxNumberOfBuffers - id > (int)m_deviceDeque.capacity() )
     {
-      LIFO_MARK_SCOPE( geosx::lifoStorage::pushAddTasks );
+      LIFO_MARK_SCOPE( geos::lifoStorage::pushAddTasks );
       // This buffer will go to host memory, and maybe on disk
       std::packaged_task< void() > task( std::bind( &LifoStorageCuda< T, INDEX_TYPE >::deviceToHost, this, baseLifo::m_bufferToHostCount++ ) );
       {
@@ -112,7 +114,7 @@ public:
 
     if( baseLifo::m_bufferToHostCount > 0 )
     {
-      LIFO_MARK_SCOPE( geosx::LifoStorageCuda::popAddTasks );
+      LIFO_MARK_SCOPE( geos::LifoStorageCuda::popAddTasks );
       // Trigger pull one buffer from host, and maybe from disk
       std::packaged_task< void() > task( std::bind( &LifoStorageCuda< T, INDEX_TYPE >::hostToDevice, this, --baseLifo::m_bufferToHostCount, id ) );
       {
@@ -132,8 +134,7 @@ public:
     if( baseLifo::m_bufferCount < baseLifo::m_maxNumberOfBuffers )
     {
       int bufferCount = baseLifo::m_bufferCount;
-      auto cuda_event = m_popFromDeviceEvents[bufferCount].try_get< camp::resources::CudaEvent >();
-      if( cuda_event ) cudaEventSynchronize( cuda_event->getCudaEvent_t() );
+      m_popFromDeviceEvents[bufferCount].wait();
     }
   }
 
@@ -149,8 +150,7 @@ public:
     GEOS_ERROR_IF( percent > 100, "Error, percentage of memory should be smaller than 100, check lifoOnDevice (should be greater than -100)" );
     size_t free, total;
     GEOS_ERROR_IF( cudaSuccess != cudaMemGetInfo( &free, &total ), "Error getting CUDA device available memory" );
-    double freeGB = ( ( double ) free ) / ( 1024.0 * 1024.0 * 1024.0 );
-    LIFO_LOG_RANK( " LIFO : available memory on device " << freeGB << " GB" );
+    LIFO_LOG_RANK( " LIFO : available memory on device " << free / ( 1024.0 * 1024.0 * 1024.0 ) << " GB" );
     return std::min( ( int )( 0.01 * percent * free / bufferSize ), maxNumberOfBuffers );
   }
 
@@ -207,9 +207,9 @@ private:
   /// ueue of data stored on device
   FixedSizeDequeWithMutexes< T, INDEX_TYPE > m_deviceDeque;
   // Events associated to ith  copies to device buffer
-  std::vector< camp::resources::Event > m_pushToDeviceEvents;
+  stdVector< camp::resources::Event > m_pushToDeviceEvents;
   // Events associated to ith  copies from device buffer
-  std::vector< camp::resources::Event > m_popFromDeviceEvents;
+  stdVector< camp::resources::Event > m_popFromDeviceEvents;
 };
 }
 #endif // LIFOSTORAGE_HPP

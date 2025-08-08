@@ -2,10 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 TotalEnergies
- * Copyright (c) 2019-     GEOSX Contributors
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 TotalEnergies
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2023-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
@@ -17,9 +18,11 @@
  */
 #include "CO2BrineFluid.hpp"
 
+#include "constitutive/fluid/multifluid/LogLevelsInfo.hpp"
 #include "constitutive/fluid/multifluid/MultiFluidFields.hpp"
 #include "constitutive/fluid/multifluid/CO2Brine/functions/PVTFunctionHelpers.hpp"
 #include "common/Units.hpp"
+#include "functions/TableFunction.hpp"
 
 namespace geos
 {
@@ -84,8 +87,6 @@ CO2BrineFluid< PHASE1, PHASE2, FLASH >::
 CO2BrineFluid( string const & name, Group * const parent ):
   MultiFluidBase( name, parent )
 {
-  enableLogLevelInput();
-
   registerWrapper( viewKeyStruct::phasePVTParaFilesString(), &m_phasePVTParaFiles ).
     setInputFlag( InputFlags::REQUIRED ).
     setRestartFlags( RestartFlags::NO_WRITE ).
@@ -101,6 +102,18 @@ CO2BrineFluid( string const & name, Group * const parent ):
     setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "Names of solubility tables for each phase" );
 
+  this->registerWrapper( viewKeyStruct::writeCSVFlagString(), &m_writeCSV ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setDescription( "When set to 1, write PVT tables into a CSV file" ).
+    setDefaultValue( 0 );
+
+  this->registerWrapper( viewKeyStruct::checkPhasePresenceString(), &m_checkPhasePresence ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setDescription( "Check phase presence when computing density and viscosity" ).
+    setDefaultValue( 0 );
+
   // if this is a thermal model, we need to make sure that the arrays will be properly displayed and saved to restart
   if( isThermal() )
   {
@@ -112,15 +125,8 @@ CO2BrineFluid( string const & name, Group * const parent ):
       setPlotLevel( PlotLevel::LEVEL_0 ).
       setRestartFlags( RestartFlags::WRITE_AND_READ );
   }
+  addLogLevel< logInfo::PVT >();
 }
-
-template< typename PHASE1, typename PHASE2, typename FLASH >
-bool CO2BrineFluid< PHASE1, PHASE2, FLASH >::isThermal() const
-{
-  return ( PHASE1::Enthalpy::catalogName() != PVTProps::NoOpPVTFunction::catalogName() &&
-           PHASE2::Enthalpy::catalogName() != PVTProps::NoOpPVTFunction::catalogName() );
-}
-
 
 template< typename PHASE1, typename PHASE2, typename FLASH >
 std::unique_ptr< ConstitutiveBase >
@@ -194,17 +200,19 @@ void CO2BrineFluid< PHASE1, PHASE2, FLASH >::checkTablesParameters( real64 const
 template< typename PHASE1, typename PHASE2, typename FLASH >
 void CO2BrineFluid< PHASE1, PHASE2, FLASH >::initializePreSubGroups()
 {
+#if defined(GEOS_DEVICE_COMPILE)
   GEOS_THROW_IF( this->getCatalogName() == CO2BrineEzrokhiThermalFluid::catalogName(),
                  GEOS_FMT( "The `{}` model is disabled for now. Please use the other thermal CO2-brine model instead: `{}`",
                            CO2BrineEzrokhiThermalFluid::catalogName(),
                            CO2BrinePhillipsThermalFluid::catalogName() ),
                  InputError );
+#endif
 }
 
 template< typename PHASE1, typename PHASE2, typename FLASH >
-void CO2BrineFluid< PHASE1, PHASE2, FLASH >::postProcessInput()
+void CO2BrineFluid< PHASE1, PHASE2, FLASH >::postInputInitialization()
 {
-  MultiFluidBase::postProcessInput();
+  MultiFluidBase::postInputInitialization();
 
   GEOS_THROW_IF_NE_MSG( numFluidPhases(), 2,
                         GEOS_FMT( "{}: invalid number of phases", getFullName() ),
@@ -233,19 +241,17 @@ void CO2BrineFluid< PHASE1, PHASE2, FLASH >::postProcessInput()
 
   string const expectedGasPhaseNames[] = { "CO2", "co2", "gas", "Gas" };
   m_p2Index = PVTFunctionHelpers::findName( m_phaseNames, expectedGasPhaseNames, viewKeyStruct::phaseNamesString() );
-
   createPVTModels();
 }
 
 template< typename PHASE1, typename PHASE2, typename FLASH >
 void CO2BrineFluid< PHASE1, PHASE2, FLASH >::createPVTModels()
 {
-
   // TODO: get rid of these external files and move into XML, this is too error prone
   // For now, to support the legacy input, we read all the input parameters at once in the arrays below, and then we create the models
-  array1d< array1d< string > > phase1InputParams;
+  stdVector< string_array > phase1InputParams;
   phase1InputParams.resize( 3 );
-  array1d< array1d< string > > phase2InputParams;
+  stdVector< string_array > phase2InputParams;
   phase2InputParams.resize( 3 );
 
   // 1) Create the viscosity, density, enthalpy models
@@ -255,7 +261,7 @@ void CO2BrineFluid< PHASE1, PHASE2, FLASH >::createPVTModels()
     string str;
     while( std::getline( is, str ) )
     {
-      array1d< string > const strs = stringutilities::tokenizeBySpaces< array1d >( str );
+      string_array const strs = stringutilities::tokenizeBySpaces< stdVector >( str );
 
       if( !strs.empty() )
       {
@@ -330,10 +336,24 @@ void CO2BrineFluid< PHASE1, PHASE2, FLASH >::createPVTModels()
                  InputError );
 
   // then, we are ready to instantiate the phase models
-  m_phase1 = std::make_unique< PHASE1 >( getName() + "_phaseModel1", phase1InputParams, m_componentNames, m_componentMolarWeight,
-                                         getLogLevel() > 0 && logger::internal::rank==0 );
-  m_phase2 = std::make_unique< PHASE2 >( getName() + "_phaseModel2", phase2InputParams, m_componentNames, m_componentMolarWeight,
-                                         getLogLevel() > 0 && logger::internal::rank==0 );
+  bool const isClone = this->isClone();
+  TableFunction::OutputOptions const pvtOutputOpts = {
+    !isClone && m_writeCSV,// writeCSV
+    !isClone && isLogLevelActive< logInfo::PVT >( this->getLogLevel()), // writeInLog
+  };
+
+
+  m_phase1 = std::make_unique< PHASE1 >( getName() + "_phaseModel1",
+                                         phase1InputParams,
+                                         m_componentNames,
+                                         m_componentMolarWeight,
+                                         pvtOutputOpts );
+  m_phase2 = std::make_unique< PHASE2 >( getName() + "_phaseModel2",
+                                         phase2InputParams,
+                                         m_componentNames,
+                                         m_componentMolarWeight,
+                                         pvtOutputOpts );
+
 
   // 2) Create the flash model
   if( !m_flashModelParaFile.empty())
@@ -342,7 +362,7 @@ void CO2BrineFluid< PHASE1, PHASE2, FLASH >::createPVTModels()
     string str;
     while( std::getline( is, str ) )
     {
-      string_array const strs = stringutilities::tokenizeBySpaces< array1d >( str );
+      string_array const strs = stringutilities::tokenizeBySpaces< stdVector >( str );
 
       if( !strs.empty() )
       {
@@ -354,12 +374,16 @@ void CO2BrineFluid< PHASE1, PHASE2, FLASH >::createPVTModels()
         {
           if( strs[1] == FLASH::catalogName() )
           {
+            TableFunction::OutputOptions const flashOutputOpts = {
+              !isClone && m_writeCSV,// writeCSV
+              !isClone && isLogLevelActive< logInfo::PVT >( this->getLogLevel()), // writeInLog
+            };
             m_flash = std::make_unique< FLASH >( getName() + '_' + FLASH::catalogName(),
                                                  strs,
                                                  m_phaseNames,
                                                  m_componentNames,
                                                  m_componentMolarWeight,
-                                                 getLogLevel() > 0 && logger::internal::rank==0 );
+                                                 flashOutputOpts );
           }
         }
         else
@@ -395,12 +419,18 @@ void CO2BrineFluid< PHASE1, PHASE2, FLASH >::createPVTModels()
     {
       strs[2] = m_solubilityTables[0];
     }
+
+    TableFunction::OutputOptions const flashOutputOpts = {
+      !isClone && m_writeCSV,// writeCSV
+      !isClone && isLogLevelActive< logInfo::PVT >( this->getLogLevel() ), // writeInLog
+    };
+
     m_flash = std::make_unique< FLASH >( getName() + '_' + FLASH::catalogName(),
                                          strs,
                                          m_phaseNames,
                                          m_componentNames,
                                          m_componentMolarWeight,
-                                         getLogLevel() > 0 && logger::internal::rank==0 );
+                                         flashOutputOpts );
   }
 
   GEOS_THROW_IF( m_flash == nullptr,
@@ -420,6 +450,7 @@ CO2BrineFluid< PHASE1, PHASE2, FLASH >::createKernelWrapper()
                         m_componentMolarWeight.toViewConst(),
                         m_useMass,
                         isThermal(),
+                        m_checkPhasePresence,
                         m_phaseFraction.toView(),
                         m_phaseDensity.toView(),
                         m_phaseMassDensity.toView(),
@@ -440,6 +471,7 @@ CO2BrineFluid< PHASE1, PHASE2, FLASH >::KernelWrapper::
                  arrayView1d< geos::real64 const > componentMolarWeight,
                  bool const useMass,
                  bool const isThermal,
+                 bool const checkPhasePresence,
                  PhaseProp::ViewType phaseFraction,
                  PhaseProp::ViewType phaseDensity,
                  PhaseProp::ViewType phaseMassDensity,
@@ -461,6 +493,7 @@ CO2BrineFluid< PHASE1, PHASE2, FLASH >::KernelWrapper::
   m_p1Index( p1Index ),
   m_p2Index( p2Index ),
   m_isThermal( isThermal ),
+  m_checkPhasePresence( checkPhasePresence ),
   m_phase1( phase1.createKernelWrapper() ),
   m_phase2( phase2.createKernelWrapper() ),
   m_flash( flash.createKernelWrapper() )

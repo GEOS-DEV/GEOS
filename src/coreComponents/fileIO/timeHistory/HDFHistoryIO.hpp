@@ -2,11 +2,12 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 TotalEnergies
- * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 TotalEnergies
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2023-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -19,6 +20,7 @@
 #include "dataRepository/HistoryDataSpec.hpp"
 #include "BufferedHistoryIO.hpp"
 #include "common/DataTypes.hpp"
+#include "common/MpiWrapper.hpp"
 
 #include <hdf5.h>
 
@@ -46,13 +48,13 @@ public:
    */
   HDFHistoryIO( string const & filename,
                 localIndex rank,
-                std::vector< localIndex > const & dims,
+                stdVector< localIndex > const & dims,
                 string const & name,
                 std::type_index typeId,
                 localIndex writeHead = 0,
                 localIndex initAlloc = 1,
                 localIndex overallocMultiple = 2,
-                MPI_Comm comm = MPI_COMM_GEOSX );
+                MPI_Comm comm = MPI_COMM_GEOS );
 
   /**
    * @brief Constructor
@@ -68,7 +70,7 @@ public:
                 localIndex writeHead = 0,
                 localIndex initAlloc = 1,
                 localIndex overallocMultiple = 2,
-                MPI_Comm comm = MPI_COMM_GEOSX ):
+                MPI_Comm comm = MPI_COMM_GEOS ):
     HDFHistoryIO( filename,
                   spec.getRank(),
                   spec.getDims(),
@@ -172,9 +174,9 @@ private:
   /// The rank of the data set
   hsize_t m_rank;
   /// The dimensions of the data set
-  std::vector< hsize_t > m_dims;
+  stdVector< hsize_t > m_dims;
   ///
-  std::vector< globalIndex > m_localIdxCounts_buffered;
+  stdVector< globalIndex > m_localIdxCounts_buffered;
   /// The name of the data set
   string m_name;
   /// The communicator across which the data set is distributed

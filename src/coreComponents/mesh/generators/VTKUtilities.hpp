@@ -2,10 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
- * Copyright (c) 2019-     GEOSX Contributors
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 TotalEnergies
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2023-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
@@ -32,9 +33,6 @@
 
 namespace geos
 {
-
-using namespace dataRepository;
-
 namespace vtk
 {
 
@@ -58,7 +56,7 @@ ENUM_STRINGS( PartitionMethod,
  * This should be an unordered_map, but some outdated standard libraries on some systems
  * do not provide std::hash specialization for enums. This is not performance critical though.
  */
-using CellMapType = std::map< ElementType, std::unordered_map< int, std::vector< vtkIdType > > >;
+using CellMapType = std::map< ElementType, std::unordered_map< int, stdVector< vtkIdType > > >;
 
 /**
  * @brief Return a VTK controller for multiprocessing.
@@ -136,15 +134,15 @@ private:
  */
 AllMeshes loadAllMeshes( Path const & filePath,
                          string const & mainBlockName,
-                         array1d< string > const & faceBlockNames );
+                         string_array const & faceBlockNames );
 
 /**
  * @brief Compute the rank neighbor candidate list.
  * @param[in] boundingBoxes the bounding boxes used by the VTK partitioner for all ranks
  * @return the list of neighboring MPI ranks, will be updated
  */
-std::vector< int >
-findNeighborRanks( std::vector< vtkBoundingBox > boundingBoxes );
+stdVector< int >
+findNeighborRanks( stdVector< vtkBoundingBox > boundingBoxes );
 
 /**
  * @brief Generate global point/cell IDs and redistribute the mesh among MPI ranks.
@@ -219,9 +217,9 @@ string buildCellBlockName( ElementType const type, int const regionId );
  * @param vtkArray The source.
  * @param wrapper The destination.
  */
-void importMaterialField( std::vector< vtkIdType > const & cellIds,
+void importMaterialField( stdVector< vtkIdType > const & cellIds,
                           vtkDataArray * vtkArray,
-                          WrapperBase & wrapper );
+                          dataRepository::WrapperBase & wrapper );
 
 /**
  * @brief Imports 1d and 2d arrays from @p vtkArray to @p wrapper, only for @p cellIds
@@ -229,9 +227,9 @@ void importMaterialField( std::vector< vtkIdType > const & cellIds,
  * @param vtkArray The source.
  * @param wrapper The destination.
  */
-void importRegularField( std::vector< vtkIdType > const & cellIds,
+void importRegularField( stdVector< vtkIdType > const & cellIds,
                          vtkDataArray * vtkArray,
-                         WrapperBase & wrapper );
+                         dataRepository::WrapperBase & wrapper );
 
 /**
  * @brief Imports 1d and 2d arrays from @p vtkArray to @p wrapper, for all the elements/cells of the provided wrapper.
@@ -239,7 +237,7 @@ void importRegularField( std::vector< vtkIdType > const & cellIds,
  * @param wrapper The destination.
  */
 void importRegularField( vtkDataArray * vtkArray,
-                         WrapperBase & wrapper );
+                         dataRepository::WrapperBase & wrapper );
 
 
 } // namespace vtk

@@ -2,10 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 TotalEnergies
- * Copyright (c) 2019-     GEOSX Contributors
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 TotalEnergies
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2023-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
@@ -20,7 +21,7 @@
 #ifndef GEOS_PHYSICSSOLVERS_FLUIDFLOW_WELLS_WELLCONTROLS_HPP
 #define GEOS_PHYSICSSOLVERS_FLUIDFLOW_WELLS_WELLCONTROLS_HPP
 
-#include "codingUtilities/EnumStrings.hpp"
+#include "common/format/EnumStrings.hpp"
 #include "dataRepository/Group.hpp"
 #include "functions/TableFunction.hpp"
 
@@ -62,7 +63,7 @@ public:
     PHASEVOLRATE, /**< The well operates at a specified phase volumetric flow rate */
     TOTALVOLRATE, /**< The well operates at a specified total volumetric flow rate */
     MASSRATE, /**<The well operates at a specified mass rate */
-    UNINITIALIZED, /**< This is the current well control before postProcessInput (needed to restart from file properly) */
+    UNINITIALIZED, /**< This is the current well control before postInputInitialization (needed to restart from file properly) */
   };
 
 
@@ -149,6 +150,18 @@ public:
   Control getControl() const { return m_currentControl; }
 
   /**
+   * @brief Set the control type for the well.
+   * @param[in] newControl type
+   */
+  void setControl( Control const & newControl )  {  m_currentControl = newControl; }
+
+  /**
+   * @brief Get the input control type for the well.
+   * @return the Control enum enforced at the well
+   */
+  Control getInputControl() const { return m_inputControl; }
+
+  /**
    * @brief Getter for the reference elevation where the BHP control is enforced
    * @return the reference elevation
    */
@@ -192,11 +205,6 @@ public:
   {
     return m_rateSign * m_targetPhaseRateTable->evaluate( &currentTime );
   }
-  /**
-   * @brief Get the target phase name
-   * @return the target phase name
-   */
-  const string & getTargetPhaseName() const { return m_targetPhaseName; }
 
   /**
    * @brief Get the target mass rate
@@ -207,6 +215,11 @@ public:
     return m_rateSign * m_targetMassRateTable->evaluate( &currentTime );
   }
 
+  /**
+   * @brief Get the target phase name
+   * @return the target phase name
+   */
+  const string & getTargetPhaseName() const { return m_targetPhaseName; }
 
   /**
    * @brief Const accessor for the composition of the injection stream
@@ -269,6 +282,13 @@ public:
    */
   real64 getInitialPressureCoefficient() const { return m_initialPressureCoefficient; }
 
+  /**
+   * @brief set next time step based on tables intervals
+   * @param[in] currentTime the current time
+   * @param[inout] nextDt the time step
+   */
+  void setNextDtFromTables( real64 const currentTime, real64 & nextDt );
+
   ///@}
 
   /**
@@ -326,7 +346,9 @@ public:
 
 protected:
 
-  virtual void postProcessInput() override;
+  virtual void postInputInitialization() override;
+
+  void setNextDtFromTable( TableFunction const * table, real64 const currentTime, real64 & nextDt );
 
 private:
 

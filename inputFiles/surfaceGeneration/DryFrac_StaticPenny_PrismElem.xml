@@ -3,7 +3,7 @@
 <Problem>
   <Solvers
     gravityVector="{ 0.0, 0.0, 0.0 }">
-    <SolidMechanicsLagrangianSSLE
+    <SolidMechanicsLagrangianFEM
       name="lagSolve"
       timeIntegrationOption="QuasiStatic"
       logLevel="1"
@@ -16,11 +16,11 @@
         newtonMaxIter="8"/>
       <LinearSolverParameters
         directParallel="0"/>
-    </SolidMechanicsLagrangianSSLE>
+    </SolidMechanicsLagrangianFEM>
 
     <SurfaceGenerator
       name="SurfaceGen"
-      rockToughness="0.5e100"
+      initialRockToughness="0.5e100"
       nodeBasedSIF="1"
       logLevel="1"
       targetRegions="{ Region2 }"
@@ -84,7 +84,7 @@
   <ElementRegions>
     <CellElementRegion
       name="Region2"
-      cellBlocks="{ cb1 }"
+      cellBlocks="{ * }"
       materialList="{ granite }"/>
 
     <SurfaceElementRegion

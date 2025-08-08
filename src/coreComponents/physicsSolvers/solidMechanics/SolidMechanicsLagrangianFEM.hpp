@@ -2,10 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 TotalEnergies
- * Copyright (c) 2019-     GEOSX Contributors
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 TotalEnergies
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2023-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
@@ -19,14 +20,13 @@
 #ifndef GEOS_PHYSICSSOLVERS_SOLIDMECHANICS_SOLIDMECHANICSLAGRANGIANFEM_HPP_
 #define GEOS_PHYSICSSOLVERS_SOLIDMECHANICS_SOLIDMECHANICSLAGRANGIANFEM_HPP_
 
-#include "codingUtilities/EnumStrings.hpp"
+#include "common/format/EnumStrings.hpp"
 #include "common/TimingMacros.hpp"
 #include "kernels/SolidMechanicsLagrangianFEMKernels.hpp"
-#include "mesh/MeshForLoopInterface.hpp"
+#include "kernels/StrainHelper.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "mesh/mpiCommunications/MPI_iCommData.hpp"
-#include "physicsSolvers/SolverBase.hpp"
-#include "physicsSolvers/fluidFlow/FlowSolverBase.hpp"
+#include "physicsSolvers/PhysicsSolverBase.hpp"
 
 #include "physicsSolvers/solidMechanics/SolidMechanicsFields.hpp"
 
@@ -38,7 +38,7 @@ namespace geos
  *
  * This class implements a finite element solution to the equations of motion.
  */
-class SolidMechanicsLagrangianFEM : public SolverBase
+class SolidMechanicsLagrangianFEM : public PhysicsSolverBase
 {
 public:
 
@@ -78,11 +78,11 @@ public:
   virtual ~SolidMechanicsLagrangianFEM() override;
 
   /**
-   * @return The string that may be used to generate a new instance from the SolverBase::CatalogInterface::CatalogType
+   * @return The string that may be used to generate a new instance from the PhysicsSolverBase::CatalogInterface::CatalogType
    */
-  static string catalogName() { return "SolidMechanics_LagrangianFEM"; }
+  static string catalogName() { return "SolidMechanicsLagrangianFEM"; }
   /**
-   * @copydoc SolverBase::getCatalogName()
+   * @copydoc PhysicsSolverBase::getCatalogName()
    */
   string getCatalogName() const override { return catalogName(); }
 
@@ -169,22 +169,20 @@ public:
   /**@}*/
 
 
-  template< typename CONSTITUTIVE_BASE,
+  template< typename TYPE_LIST,
             typename KERNEL_WRAPPER,
             typename ... PARAMS >
   real64 assemblyLaunch( MeshLevel & mesh,
                          DofManager const & dofManager,
-                         arrayView1d< string const > const & regionNames,
+                         string_array const & regionNames,
                          string const & materialNamesString,
                          CRSMatrixView< real64, globalIndex const > const & localMatrix,
                          arrayView1d< real64 > const & localRhs,
                          real64 const dt,
                          PARAMS && ... params );
 
-
-  template< typename ... PARAMS >
   real64 explicitKernelDispatch( MeshLevel & mesh,
-                                 arrayView1d< string const > const & targetRegions,
+                                 string_array const & targetRegions,
                                  string const & finiteElementName,
                                  real64 const dt,
                                  std::string const & elementListName );
@@ -228,7 +226,7 @@ public:
 
   virtual void saveSequentialIterationState( DomainPartition & domain ) override;
 
-  struct viewKeyStruct : SolverBase::viewKeyStruct
+  struct viewKeyStruct : PhysicsSolverBase::viewKeyStruct
   {
     static constexpr char const * newmarkGammaString() { return "newmarkGamma"; }
     static constexpr char const * newmarkBetaString() { return "newmarkBeta"; }
@@ -249,6 +247,9 @@ public:
     static constexpr char const * nonSendOrReceiveNodesString() { return "nonSendOrReceiveNodes";}
     static constexpr char const * targetNodesString() { return "targetNodes";}
     static constexpr char const * forceString() { return "Force";}
+
+    static constexpr char const * contactPenaltyStiffnessString() { return "contactPenaltyStiffness"; }
+
   };
 
   SortedArray< localIndex > & getElemsAttachedToSendOrReceiveNodes( ElementSubRegionBase & subRegion )
@@ -274,8 +275,17 @@ public:
     return m_rigidBodyModes;
   }
 
+  /*
+   * @brief Utility function to set the stress initialization flag
+   * @param[in] performStressInitialization true if the solver has to initialize stress, false otherwise
+   */
+  void setStressInitialization( bool const performStressInitialization )
+  {
+    m_performStressInitialization = performStressInitialization;
+  }
+
 protected:
-  virtual void postProcessInput() override;
+  virtual void postInputInitialization() override;
 
   virtual void initializePostInitialConditionsPreSubGroups() override;
 
@@ -289,17 +299,22 @@ protected:
   real64 m_maxForce = 0.0;
   integer m_maxNumResolves;
   integer m_strainTheory;
-  MPI_iCommData m_iComm;
+
+  /// Flag to indicate that the solver is running in fixed stress (sequential) mode
   bool m_isFixedStressPoromechanicsUpdate;
+  /// Flag to indicate that the solver is going to perform stress initialization
+  bool m_performStressInitialization;
 
   /// Rigid body modes
   array1d< ParallelVector > m_rigidBodyModes;
+
+  real64 m_contactPenaltyStiffness;
 
 private:
 
   string m_contactRelationName;
 
-  SolverBase * m_surfaceGenerator;
+  PhysicsSolverBase *m_surfaceGenerator;
   string m_surfaceGeneratorName;
 };
 
@@ -313,12 +328,12 @@ ENUM_STRINGS( SolidMechanicsLagrangianFEM::TimeIntegrationOption,
 //**********************************************************************************************************************
 
 
-template< typename CONSTITUTIVE_BASE,
+template< typename TYPE_LIST,
           typename KERNEL_WRAPPER,
           typename ... PARAMS >
 real64 SolidMechanicsLagrangianFEM::assemblyLaunch( MeshLevel & mesh,
                                                     DofManager const & dofManager,
-                                                    arrayView1d< string const > const & regionNames,
+                                                    string_array const & regionNames,
                                                     string const & materialNamesString,
                                                     CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                     arrayView1d< real64 > const & localRhs,
@@ -344,12 +359,11 @@ real64 SolidMechanicsLagrangianFEM::assemblyLaunch( MeshLevel & mesh,
 
   return finiteElement::
            regionBasedKernelApplication< parallelDevicePolicy< >,
-                                         CONSTITUTIVE_BASE,
-                                         CellElementSubRegion >( mesh,
-                                                                 regionNames,
-                                                                 this->getDiscretizationName(),
-                                                                 materialNamesString,
-                                                                 kernelWrapper );
+                                         TYPE_LIST >( mesh,
+                                                      regionNames,
+                                                      this->getDiscretizationName(),
+                                                      materialNamesString,
+                                                      kernelWrapper );
 
 }
 

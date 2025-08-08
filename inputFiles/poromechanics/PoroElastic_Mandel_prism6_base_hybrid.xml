@@ -22,7 +22,7 @@
     <!-- SPHINX_POROMECHANICSSOLVER_END -->
 
     <!-- SPHINX_MECHANICALSOLVER -->
-    <SolidMechanicsLagrangianSSLE
+    <SolidMechanicsLagrangianFEM
       name="lagsolve"
       timeIntegrationOption="QuasiStatic"
       logLevel="1"
@@ -80,7 +80,7 @@
 
     <BiotPorosity
       name="shalePorosity"
-      grainBulkModulus="1.0e27"
+      defaultGrainBulkModulus="1.0e27"
       defaultReferencePorosity="0.375"/>
 
     <ConstantPermeability

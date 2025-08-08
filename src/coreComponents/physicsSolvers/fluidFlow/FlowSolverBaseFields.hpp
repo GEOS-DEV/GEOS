@@ -2,10 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 TotalEnergies
- * Copyright (c) 2019-     GEOSX Contributors
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 TotalEnergies
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2023-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
@@ -88,6 +89,14 @@ DECLARE_FIELD( facePressure_n,
                NO_WRITE,
                "Face pressure at the previous converged time step" );
 
+DECLARE_FIELD( pressureGradient,
+               "pressureGradient",
+               array2d< real64 >,
+               0,
+               LEVEL_0,
+               WRITE_AND_READ,
+               "Pressure gradient" );
+
 DECLARE_FIELD( temperature,
                "temperature",
                array1d< real64 >,
@@ -159,14 +168,6 @@ DECLARE_FIELD( hydraulicAperture,
                LEVEL_0,
                WRITE_AND_READ,
                "Hydraulic aperture" );
-
-DECLARE_FIELD( minimumHydraulicAperture,
-               "minimumHydraulicAperture",
-               array1d< real64 >,
-               0,
-               LEVEL_0,
-               WRITE_AND_READ,
-               "minimum value of the hydraulic aperture" );
 
 DECLARE_FIELD( gravityCoefficient,
                "gravityCoefficient",
@@ -240,22 +241,6 @@ DECLARE_FIELD( temperatureScalingFactor,
                NO_WRITE,
                "Scaling factors for temperature" );
 
-DECLARE_FIELD( mass,
-               "mass",
-               array1d< real64 >,
-               0,
-               LEVEL_0,
-               WRITE_AND_READ,
-               "Mass" );
-
-DECLARE_FIELD( mass_n,
-               "mass_n",
-               array1d< real64 >,
-               0,
-               NOPLOT,
-               WRITE_AND_READ,
-               "Mass at the previous converged time step" );
-
 DECLARE_FIELD( energy,
                "energy",
                array1d< real64 >,
@@ -269,9 +254,16 @@ DECLARE_FIELD( energy_n,
                array1d< real64 >,
                0,
                NOPLOT,
-               WRITE_AND_READ,
+               NO_WRITE,
                "Energy at the previous converged time step" );
 
+DECLARE_FIELD( fractureCreationTime,
+               "fractureCreationTime",
+               array1d< real64 >,
+               0,
+               LEVEL_1,
+               WRITE_AND_READ,
+               "The creation time for the fracture cell." );
 }
 
 }

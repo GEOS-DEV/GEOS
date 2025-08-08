@@ -2,10 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 TotalEnergies
- * Copyright (c) 2019-     GEOSX Contributors
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 TotalEnergies
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2023-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
@@ -16,10 +17,12 @@
  * @file WellControls.cpp
  */
 
+#include "LogLevelsInfo.hpp"
 #include "WellControls.hpp"
 #include "WellConstants.hpp"
 #include "dataRepository/InputFlags.hpp"
 #include "functions/FunctionManager.hpp"
+
 
 namespace geos
 {
@@ -50,8 +53,6 @@ WellControls::WellControls( string const & name, Group * const parent )
 {
   setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
 
-  enableLogLevelInput();
-
   registerWrapper( viewKeyStruct::typeString(), &m_type ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Well type. Valid options:\n* " + EnumStrings< Type >::concat( "\n* " ) );
@@ -68,27 +69,32 @@ WellControls::WellControls( string const & name, Group * const parent )
   registerWrapper( viewKeyStruct::targetBHPString(), &m_targetBHP ).
     setDefaultValue( 0.0 ).
     setInputFlag( InputFlags::OPTIONAL ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "Target bottom-hole pressure [Pa]" );
 
   registerWrapper( viewKeyStruct::targetTotalRateString(), &m_targetTotalRate ).
     setDefaultValue( 0.0 ).
     setInputFlag( InputFlags::OPTIONAL ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "Target total volumetric rate (if useSurfaceConditions: [surface m^3/s]; else [reservoir m^3/s])" );
 
   registerWrapper( viewKeyStruct::targetPhaseRateString(), &m_targetPhaseRate ).
     setDefaultValue( 0.0 ).
     setInputFlag( InputFlags::OPTIONAL ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "Target phase volumetric rate (if useSurfaceConditions: [surface m^3/s]; else [reservoir m^3/s])" );
 
   registerWrapper( viewKeyStruct::targetMassRateString(), &m_targetMassRate ).
     setDefaultValue( 0.0 ).
     setInputFlag( InputFlags::OPTIONAL ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "Target Mass Rate rate ( [kg^3/s])" );
 
   registerWrapper( viewKeyStruct::targetPhaseNameString(), &m_targetPhaseName ).
     setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
     setDefaultValue( "" ).
     setInputFlag( InputFlags::OPTIONAL ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "Name of the target phase" );
 
   registerWrapper( viewKeyStruct::refElevString(), &m_refElevation ).
@@ -162,6 +168,8 @@ WellControls::WellControls( string const & name, Group * const parent )
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Name of the well status table when the status of the well is a time dependent function. \n"
                     "If the status function evaluates to a positive value at the current time, the well will be open otherwise the well will be shut." );
+
+  addLogLevel< logInfo::WellControl >();
 }
 
 
@@ -215,7 +223,7 @@ TableFunction * createWellTable( string const & tableName,
 
 }
 
-void WellControls::postProcessInput()
+void WellControls::postInputInitialization()
 {
   // 0) Assign the value of the current well control
   // When the simulation starts from a restart file, we don't want to use the inputControl,
@@ -339,8 +347,8 @@ void WellControls::postProcessInput()
   else if( m_targetBHP <= 0.0 && m_targetBHPTableName.empty() )
   {
     m_targetBHP = isProducer() ? WellConstants::defaultProducerBHP : WellConstants::defaultInjectorBHP;
-    GEOS_LOG_LEVEL_RANK_0( 1, "WellControls " << getDataContext() << ": Setting " << viewKeyStruct::targetBHPString() << " to default value "
-                                              << m_targetBHP << "." );
+    GEOS_LOG_LEVEL_RANK_0( logInfo::WellControl,
+                           GEOS_FMT( "WellControls {}: Setting {}  to default value {}", getDataContext(), viewKeyStruct::targetBHPString(), m_targetBHP ));
   }
 
   // 6.2) Check incoherent information
@@ -382,7 +390,7 @@ void WellControls::postProcessInput()
     m_targetBHPTable = &(functionManager.getGroup< TableFunction const >( m_targetBHPTableName ));
 
     GEOS_THROW_IF( m_targetBHPTable->getInterpolationMethod() != TableFunction::InterpolationType::Lower,
-                   "WellControls " << getDataContext() << ": The interpolation method for the time-dependent rate table "
+                   "WellControls " << getDataContext() << ": The interpolation method for the time-dependent BHP table "
                                    << m_targetBHPTable->getName() << " should be TableFunction::InterpolationType::Lower",
                    InputError );
   }
@@ -399,7 +407,7 @@ void WellControls::postProcessInput()
     m_targetTotalRateTable = &(functionManager.getGroup< TableFunction const >( m_targetTotalRateTableName ));
 
     GEOS_THROW_IF( m_targetTotalRateTable->getInterpolationMethod() != TableFunction::InterpolationType::Lower,
-                   "WellControls " << getDataContext() << ": The interpolation method for the time-dependent rate table "
+                   "WellControls " << getDataContext() << ": The interpolation method for the time-dependent total rate table "
                                    << m_targetTotalRateTable->getName() << " should be TableFunction::InterpolationType::Lower",
                    InputError );
   }
@@ -416,7 +424,7 @@ void WellControls::postProcessInput()
     m_targetPhaseRateTable = &(functionManager.getGroup< TableFunction const >( m_targetPhaseRateTableName ));
 
     GEOS_THROW_IF( m_targetPhaseRateTable->getInterpolationMethod() != TableFunction::InterpolationType::Lower,
-                   "WellControls " << getDataContext() << ": The interpolation method for the time-dependent rate table "
+                   "WellControls " << getDataContext() << ": The interpolation method for the time-dependent phase rate table "
                                    << m_targetPhaseRateTable->getName() << " should be TableFunction::InterpolationType::Lower",
                    InputError );
   }
@@ -454,8 +462,8 @@ void WellControls::postProcessInput()
     m_statusTable = &(functionManager.getGroup< TableFunction const >( m_statusTableName ));
 
     GEOS_THROW_IF( m_statusTable->getInterpolationMethod() != TableFunction::InterpolationType::Lower,
-                   "WellControls " << getDataContext() << ": The interpolation method for the time-dependent rate table "
-                                   << m_targetPhaseRateTable->getName() << " should be TableFunction::InterpolationType::Lower",
+                   "WellControls " << getDataContext() << ": The interpolation method for the time-dependent status table "
+                                   << m_statusTable->getName() << " should be TableFunction::InterpolationType::Lower",
                    InputError );
   }
 }
@@ -473,6 +481,29 @@ bool WellControls::isWellOpen( real64 const & currentTime ) const
     isOpen = false;
   }
   return isOpen;
+}
+
+void WellControls::setNextDtFromTables( real64 const currentTime, real64 & nextDt )
+{
+  setNextDtFromTable( m_targetBHPTable, currentTime, nextDt );
+  setNextDtFromTable( m_targetMassRateTable, currentTime, nextDt );
+  setNextDtFromTable( m_targetPhaseRateTable, currentTime, nextDt );
+  setNextDtFromTable( m_targetTotalRateTable, currentTime, nextDt );
+  setNextDtFromTable( m_statusTable, currentTime, nextDt );
+}
+
+void WellControls::setNextDtFromTable( TableFunction const * table, real64 const currentTime, real64 & nextDt )
+{
+  if( table )
+  {
+    // small epsilon to make sure we land on the other side of table interval and pick up the right rate
+    real64 const eps = 1e-6;
+    real64 const dtLimit = (table->getCoord( &currentTime, 0, TableFunction::InterpolationType::Upper ) - currentTime) * ( 1.0 + eps );
+    if( dtLimit > eps && dtLimit < nextDt )
+    {
+      nextDt = dtLimit;
+    }
+  }
 }
 
 } //namespace geos

@@ -4,7 +4,7 @@
 
   <Solvers
     gravityVector="{ 0.0, 0.0, 0.0 }">
-    <SolidMechanicsLagrangianSSLE
+    <SolidMechanicsLagrangianFEM
       name="lagsolve"
       timeIntegrationOption="QuasiStatic"
       discretization="FE1"
@@ -16,7 +16,7 @@
         newtonMaxIter="8"/>
       <LinearSolverParameters
         directParallel="0"/>
-    </SolidMechanicsLagrangianSSLE>
+    </SolidMechanicsLagrangianFEM>
   </Solvers>
 
   <Mesh>
@@ -28,7 +28,7 @@
   <ElementRegions>
     <CellElementRegion
         name="Domain"
-        cellBlocks="{ 0_hexahedra, 1_pentagonalPrisms, 2_hexagonalPrisms }"
+        cellBlocks="{ 0, 1, 2 }"
         materialList="{ shale }"/>
   </ElementRegions>
 

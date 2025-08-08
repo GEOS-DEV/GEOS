@@ -2,10 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 TotalEnergies
- * Copyright (c) 2019-     GEOSX Contributors
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 TotalEnergies
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2023-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
@@ -157,9 +158,9 @@ void MultiFluidBase::allocateConstitutiveData( dataRepository::Group & parent,
   resizeFields( parent.size(), numConstitutivePointsPerParentIndex );
 }
 
-void MultiFluidBase::postProcessInput()
+void MultiFluidBase::postInputInitialization()
 {
-  ConstitutiveBase::postProcessInput();
+  ConstitutiveBase::postInputInitialization();
 
   integer const numComp = numFluidComponents();
   integer const numPhase = numFluidPhases();
@@ -179,6 +180,32 @@ void MultiFluidBase::postProcessInput()
   GEOS_THROW_IF_NE_MSG( m_componentMolarWeight.size(), numComp,
                         GEOS_FMT( "{}: invalid number of values in attribute '{}'", getFullName(), viewKeyStruct::componentMolarWeightString() ),
                         InputError );
+  for( integer ic = 0; ic < numComp; ++ic )
+  {
+    GEOS_THROW_IF_LT_MSG( m_componentMolarWeight[ic], LvArray::NumericLimits< real64 >::epsilon,
+                          GEOS_FMT( "{}: zero molecular weight found for component {}", getFullName(), m_componentNames[ic] ),
+                          InputError );
+  }
+
+  // Make sure that phase names and component names are not repeated
+  std::set< std::string > uniqueNames;
+  for( integer ip = 0; ip < numPhase; ++ip )
+  {
+    std::string const lowerCaseName = stringutilities::toLower( m_phaseNames[ip] );
+    GEOS_THROW_IF ( uniqueNames.find( lowerCaseName ) != uniqueNames.end(),
+                    GEOS_FMT( "{}: phase name {} is repeated. "
+                              "Phase names should be unique.", getFullName(), m_phaseNames[ip] ), InputError );
+    uniqueNames.insert( lowerCaseName );
+  }
+  uniqueNames.clear();
+  for( integer ic = 0; ic < numComp; ++ic )
+  {
+    std::string const lowerCaseName = stringutilities::toLower( m_componentNames[ic] );
+    GEOS_THROW_IF ( uniqueNames.find( lowerCaseName ) != uniqueNames.end(),
+                    GEOS_FMT( "{}: component name {} is repeated. "
+                              "Component names should be unique.", getFullName(), m_componentNames[ic] ), InputError );
+    uniqueNames.insert( lowerCaseName );
+  }
 
   // call to correctly set member array tertiary sizes on the 'main' material object
   resizeFields( 0, 0 );

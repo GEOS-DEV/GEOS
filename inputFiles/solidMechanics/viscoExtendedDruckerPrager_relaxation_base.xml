@@ -4,7 +4,7 @@
 <!-- SPHINX_MECHANICSSOLVER -->
   <Solvers
     gravityVector="{ 0.0, 0.0, 0.0 }">
-    <SolidMechanics_LagrangianFEM
+    <SolidMechanicsLagrangianFEM
       name="mechanicsSolver"
       timeIntegrationOption="QuasiStatic"
       logLevel="1"
@@ -15,7 +15,7 @@
         newtonMaxIter="15"/>
       <LinearSolverParameters
         solverType="direct"/>
-    </SolidMechanics_LagrangianFEM>
+    </SolidMechanicsLagrangianFEM>
   </Solvers>
 <!-- SPHINX_MECHANICSSOLVER_END -->
 
@@ -38,8 +38,7 @@
   <ElementRegions>
     <CellElementRegion
       name="Domain"
-      cellBlocks="{ cb-0_0_0,  cb-1_0_0,  cb-0_1_0,  cb-1_1_0, 
-                    cb-0_0_1,  cb-1_0_1,  cb-0_1_1,  cb-1_1_1 }"
+      cellBlocks="{ * }"
       materialList="{ rock }"/>
   </ElementRegions>
 <!-- SPHINX_ELEMENTREGIONS_END -->

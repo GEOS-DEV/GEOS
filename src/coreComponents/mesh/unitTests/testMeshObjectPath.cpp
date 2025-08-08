@@ -2,10 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 TotalEnergies
- * Copyright (c) 2019-     GEOSX Contributors
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 TotalEnergies
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2023-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
@@ -128,7 +129,7 @@ TEST( testMeshObjectPath, fillPathTokens )
   TestMesh & testMesh = TestMesh::getTestMesh();
   Group const & meshBodies = testMesh.meshBodies();
 
-  map< string, std::vector< string > >
+  map< string, stdVector< string > >
   entries =
   {
     { "ElementRegions", { "*", "*", "ElementRegions", "*", "*" } },
@@ -140,7 +141,7 @@ TEST( testMeshObjectPath, fillPathTokens )
   for( auto const & entry : entries )
   {
     string const & path = entry.first;
-    std::vector< string > const & expectedPath = entry.second;
+    stdVector< string > const & expectedPath = entry.second;
     size_t const pathSize = expectedPath.size();
 
     MeshObjectPath meshObjectPath( path, meshBodies );
@@ -160,7 +161,7 @@ TEST( testMeshObjectPath, meshObjectPathConstuction )
   Group const & meshBodies = testMesh.meshBodies();
 
 
-  std::map< string, MeshObjectPath::permutationMapType > pathsAndResults =
+  map< string, MeshObjectPath::permutationMapType > pathsAndResults =
   {
     { "ElementRegions",
       { { "body0",
@@ -306,7 +307,7 @@ TEST( testMeshObjectPath, invalidMeshRegion )
 }
 
 
-void checkSubRegionNames( std::vector< string > const & names )
+void checkSubRegionNames( stdVector< string > const & names )
 {
   EXPECT_TRUE( names[0] == "subreg0" );
   EXPECT_TRUE( names[1] == "subreg1" );
@@ -336,7 +337,7 @@ void checkSubRegionNames( std::vector< string > const & names )
   EXPECT_TRUE( names[25] == "subreg1" );
 }
 
-void checkRegionNames( std::vector< string > const & names )
+void checkRegionNames( stdVector< string > const & names )
 {
   EXPECT_TRUE( names[0] == "region0" );
   EXPECT_TRUE( names[1] == "region1" );
@@ -362,7 +363,7 @@ TEST( testMeshObjectPath, forObjectsInPathFromMeshBodies )
   MeshObjectPath meshObjectPath( path, meshBodiesConst );
 
   {
-    std::vector< string > names;
+    stdVector< string > names;
     meshObjectPath.forObjectsInPath< CellElementSubRegion >( meshBodiesConst,
                                                              [&]( ElementSubRegionBase const & elemSubRegionBase )
     {
@@ -372,7 +373,7 @@ TEST( testMeshObjectPath, forObjectsInPathFromMeshBodies )
   }
 
   {
-    std::vector< string > names;
+    stdVector< string > names;
     meshObjectPath.forObjectsInPath< CellElementSubRegion >( meshBodies,
                                                              [&]( ElementSubRegionBase & elemSubRegionBase )
     {
@@ -382,7 +383,7 @@ TEST( testMeshObjectPath, forObjectsInPathFromMeshBodies )
   }
 
   {
-    std::vector< string > names;
+    stdVector< string > names;
     meshObjectPath.forObjectsInPath< CellElementRegion >( meshBodiesConst,
                                                           [&]( CellElementRegion const & elemRegionBase )
     {
@@ -402,7 +403,7 @@ void testForObjectInPathsMeshLevel( Group & meshBodies,
   MeshObjectPath meshObjectPath( path, meshBodies );
   MeshBody & meshBody = meshBodies.getGroup< MeshBody >( bodyName );
   MeshLevel & meshLevel = meshBody.getMeshLevel( levelName );
-  std::vector< string > names;
+  stdVector< string > names;
 
   meshObjectPath.forObjectsInPath< OBJECT_TYPE >( meshLevel,
                                                   [&]( OBJECT_TYPE const & object )
@@ -422,7 +423,7 @@ TEST( testMeshObjectPath, forObjectsInPath )
                                                          "*/*/ElementRegions",
                                                          "body0",
                                                          "level0",
-                                                         [&]( std::vector< string > const & names )
+                                                         [&]( stdVector< string > const & names )
   {
     EXPECT_TRUE( names[0] == "subreg0" );
     EXPECT_TRUE( names[1] == "subreg1" );
@@ -435,7 +436,7 @@ TEST( testMeshObjectPath, forObjectsInPath )
                                                 "*/*/nodeManager",
                                                 "body0",
                                                 "level0",
-                                                [&]( std::vector< string > const & names )
+                                                [&]( stdVector< string > const & names )
   {
     EXPECT_TRUE( names[0] == "nodeManager" );
   } );
@@ -444,7 +445,7 @@ TEST( testMeshObjectPath, forObjectsInPath )
                                                 "*/*/edgeManager",
                                                 "body0",
                                                 "level0",
-                                                [&]( std::vector< string > const & names )
+                                                [&]( stdVector< string > const & names )
   {
     EXPECT_TRUE( names[0] == "edgeManager" );
   } );
@@ -453,7 +454,7 @@ TEST( testMeshObjectPath, forObjectsInPath )
                                                 "*/*/faceManager",
                                                 "body0",
                                                 "level0",
-                                                [&]( std::vector< string > const & names )
+                                                [&]( stdVector< string > const & names )
   {
     EXPECT_TRUE( names[0] == "faceManager" );
   } );

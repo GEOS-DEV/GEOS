@@ -2,10 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 TotalEnergies
- * Copyright (c) 2019-     GEOSX Contributors
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 TotalEnergies
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2023-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
@@ -20,9 +21,9 @@
 #define GEOS_DATAREPOSITORY_DATACONTEXT_HPP_
 
 #include "common/DataTypes.hpp"
-#include "common/Logger.hpp"
+#include "common/logger/Logger.hpp"
 #include "xmlWrapper.hpp"
-#include "common/Format.hpp"
+#include "common/format/Format.hpp"
 
 namespace geos
 {
@@ -46,7 +47,7 @@ public:
    * @brief Construct a new DataContext object.
    * @param targetName the target object name
    */
-  DataContext( string const & targetName );
+  DataContext( string_view targetName );
 
   /**
    * @brief Destroy the DataContext object
@@ -94,12 +95,12 @@ protected:
      * @param filePath the input file path where the target is declared.
      * @param line the line in the file where the target is declared.
      */
-    ToStringInfo( string const & targetName, string const & filePath, size_t line );
+    ToStringInfo( string_view targetName, string_view filePath, size_t line );
     /**
      * @brief Construct a new ToStringInfo object from a DataContext that has no input file info.
      * @param targetName the target name.
      */
-    ToStringInfo( string const & targetName );
+    ToStringInfo( string_view targetName );
     /**
      * @return true if a location has been found to declare the target in an input file.
      */
@@ -140,6 +141,14 @@ public:
    */
   DataFileContext( xmlWrapper::xmlNode const & targetNode, xmlWrapper::xmlAttribute const & att,
                    xmlWrapper::xmlAttributePos const & attPos );
+
+  /**
+   * @brief Constructs the file context of a Group from a C++ source file.
+   * @param targetName The name of the target Group.
+   * @param file The name of the source file.
+   * @param line The line number in the source file.
+   */
+  DataFileContext( string_view targetName, string_view file, size_t line );
 
   /**
    * @return the target object name followed by the the file and line declaring it.
@@ -217,7 +226,7 @@ struct GEOS_FMT_NS::formatter< geos::dataRepository::DataContext > : GEOS_FMT_NS
    * @param ctx formatting state consisting of the formatting arguments and the output iterator
    * @return iterator to the output buffer
    */
-  auto format( geos::dataRepository::DataContext const & dataContext, format_context & ctx )
+  auto format( geos::dataRepository::DataContext const & dataContext, format_context & ctx ) const
   {
     return GEOS_FMT_NS::formatter< std::string >::format( dataContext.toString(), ctx );
   }

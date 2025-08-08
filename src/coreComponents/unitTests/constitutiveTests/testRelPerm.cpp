@@ -2,10 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 TotalEnergies
- * Copyright (c) 2019-     GEOSX Contributors
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 TotalEnergies
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2023-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
@@ -45,7 +46,7 @@ RelativePermeabilityBase & makeBrooksCoreyRelPerm( string const & name, Group & 
   phaseRelPermMaxVal.resize( 2 );
   phaseRelPermMaxVal[0] = 0.8; phaseRelPermMaxVal[1] = 0.9;
 
-  relPerm.postProcessInputRecursive();
+  relPerm.postInputInitializationRecursive();
   return relPerm;
 }
 
@@ -70,7 +71,7 @@ RelativePermeabilityBase & makeBrooksCoreyBakerRelPermTwoPhase( string const & n
   waterOilRelPermMaxVal.resize( 2 );
   waterOilRelPermMaxVal[0] = 0.8; waterOilRelPermMaxVal[1] = 0.75;
 
-  relPerm.postProcessInputRecursive();
+  relPerm.postInputInitializationRecursive();
   return relPerm;
 }
 
@@ -103,7 +104,7 @@ RelativePermeabilityBase & makeBrooksCoreyBakerRelPermThreePhase( string const &
   gasOilRelPermMaxVal.resize( 2 );
   gasOilRelPermMaxVal[0] = 0.8; gasOilRelPermMaxVal[1] = 0.95;
 
-  relPerm.postProcessInputRecursive();
+  relPerm.postInputInitializationRecursive();
   return relPerm;
 }
 
@@ -136,7 +137,7 @@ RelativePermeabilityBase & makeBrooksCoreyStone2RelPermThreePhase( string const 
   gasOilRelPermMaxVal.resize( 2 );
   gasOilRelPermMaxVal[0] = 0.8; gasOilRelPermMaxVal[1] = 0.95;
 
-  relPerm.postProcessInputRecursive();
+  relPerm.postInputInitializationRecursive();
   return relPerm;
 }
 
@@ -161,7 +162,7 @@ RelativePermeabilityBase & makeVanGenuchtenBakerRelPermTwoPhase( string const & 
   gasOilRelPermMaxVal.resize( 2 );
   gasOilRelPermMaxVal[0] = 0.5; gasOilRelPermMaxVal[1] = 0.75;
 
-  relPerm.postProcessInputRecursive();
+  relPerm.postInputInitializationRecursive();
   return relPerm;
 }
 
@@ -196,7 +197,7 @@ RelativePermeabilityBase & makeVanGenuchtenBakerRelPermThreePhase( string const 
   gasOilRelPermMaxVal.resize( 2 );
   gasOilRelPermMaxVal[0] = 0.8; gasOilRelPermMaxVal[1] = 0.75;
 
-  relPerm.postProcessInputRecursive();
+  relPerm.postInputInitializationRecursive();
   return relPerm;
 }
 
@@ -231,7 +232,7 @@ RelativePermeabilityBase & makeVanGenuchtenStone2RelPermThreePhase( string const
   gasOilRelPermMaxVal.resize( 2 );
   gasOilRelPermMaxVal[0] = 0.8; gasOilRelPermMaxVal[1] = 0.75;
 
-  relPerm.postProcessInputRecursive();
+  relPerm.postInputInitializationRecursive();
   return relPerm;
 }
 
@@ -436,11 +437,11 @@ RelativePermeabilityBase & makeTableRelPermTwoPhase( string const & name, Group 
   phaseNames.resize( 2 );
   phaseNames[0] = "water"; phaseNames[1] = "gas";
 
-  auto & waterOilTableNames = relPerm.getReference< array1d< string > >( TableRelativePermeability::viewKeyStruct::wettingNonWettingRelPermTableNamesString() );
+  auto & waterOilTableNames = relPerm.getReference< string_array >( TableRelativePermeability::viewKeyStruct::wettingNonWettingRelPermTableNamesString() );
   waterOilTableNames.resize( 2 );
   waterOilTableNames[0] = "water_swg"; waterOilTableNames[1] = "gas_swg";
 
-  relPerm.postProcessInputRecursive();
+  relPerm.postInputInitializationRecursive();
   relPerm.initialize(); // to test all the checks
   return relPerm;
 }
@@ -740,7 +741,7 @@ RelativePermeabilityBase & makeTableRelPermHysteresisTwoPhase( string const & na
 
   using keys = TableRelativePermeabilityHysteresis::viewKeyStruct;
 
-  auto & drainageWaterGasTableNames = relPerm.getReference< array1d< string > >( keys::drainageWettingNonWettingRelPermTableNamesString() );
+  auto & drainageWaterGasTableNames = relPerm.getReference< string_array >( keys::drainageWettingNonWettingRelPermTableNamesString() );
   drainageWaterGasTableNames.resize( 2 );
   drainageWaterGasTableNames[0] = "drainageWater_swg"; drainageWaterGasTableNames[1] = "drainageGas_swg";
 
@@ -750,7 +751,7 @@ RelativePermeabilityBase & makeTableRelPermHysteresisTwoPhase( string const & na
   auto & imbibitionGasTableName = relPerm.getReference< string >( keys::imbibitionNonWettingRelPermTableNameString() );
   imbibitionGasTableName = "imbibitionGas_swg";
 
-  relPerm.postProcessInputRecursive();
+  relPerm.postInputInitializationRecursive();
   relPerm.initialize(); // to test all the checks
   return relPerm;
 }
@@ -824,15 +825,15 @@ RelativePermeabilityBase & makeTableRelPermThreePhase( string const & name, Grou
   phaseNames.resize( 3 );
   phaseNames[0] = "oil"; phaseNames[1] = "water"; phaseNames[2] = "gas";
 
-  auto & waterOilTableNames = relPerm.getReference< array1d< string > >( TableRelativePermeability::viewKeyStruct::wettingIntermediateRelPermTableNamesString() );
+  auto & waterOilTableNames = relPerm.getReference< string_array >( TableRelativePermeability::viewKeyStruct::wettingIntermediateRelPermTableNamesString() );
   waterOilTableNames.resize( 2 );
   waterOilTableNames[0] = "water_swof"; waterOilTableNames[1] = "oil_swof";
 
-  auto & gasOilTableNames = relPerm.getReference< array1d< string > >( TableRelativePermeability::viewKeyStruct::nonWettingIntermediateRelPermTableNamesString() );
+  auto & gasOilTableNames = relPerm.getReference< string_array >( TableRelativePermeability::viewKeyStruct::nonWettingIntermediateRelPermTableNamesString() );
   gasOilTableNames.resize( 2 );
   gasOilTableNames[0] = "gas_sgof"; gasOilTableNames[1] = "oil_sgof";
 
-  relPerm.postProcessInputRecursive();
+  relPerm.postInputInitializationRecursive();
   relPerm.initialize(); // to test all the checks
   return relPerm;
 }

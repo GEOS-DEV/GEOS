@@ -2,10 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 TotalEnergies
- * Copyright (c) 2019-     GEOSX Contributors
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 TotalEnergies
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2023-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
@@ -22,11 +23,13 @@
 
 
 #include "mesh/MeshFields.hpp"
-#include "physicsSolvers/SolverBase.hpp"
+#include "physicsSolvers/PhysicsSolverBase.hpp"
 #include "common/LifoStorage.hpp"
+#include "functions/TableFunction.hpp"
 #if !defined( GEOS_USE_HIP )
 #include "finiteElement/elementFormulations/Qk_Hexahedron_Lagrange_GaussLobatto.hpp"
 #endif
+#include "mesh/DomainPartition.hpp"
 #include "WaveSolverUtils.hpp"
 
 #if !defined( GEOS_USE_HIP )
@@ -45,7 +48,7 @@
 namespace geos
 {
 
-class WaveSolverBase : public SolverBase
+class WaveSolverBase : public PhysicsSolverBase
 {
 public:
 
@@ -78,7 +81,7 @@ public:
                                integer const cycleNumber,
                                DomainPartition & domain ) override;
 
-  struct viewKeyStruct : SolverBase::viewKeyStruct
+  struct viewKeyStruct : PhysicsSolverBase::viewKeyStruct
   {
     static constexpr char const * sourceCoordinatesString() { return "sourceCoordinates"; }
     static constexpr char const * sourceValueString() { return "sourceValue"; }
@@ -121,6 +124,15 @@ public:
     static constexpr char const * receiverElemString() { return "receiverElem"; }
     static constexpr char const * receiverRegionString() { return "receiverRegion"; }
     static constexpr char const * freeSurfaceString() { return "FreeSurface"; }
+
+    static constexpr char const * timestepStabilityLimitString() { return "timestepStabilityLimit"; }
+    static constexpr char const * timeStepString() { return "timeStep"; }
+
+    static constexpr char const * attenuationTypeString() { return "attenuationType"; }
+    static constexpr char const * slsReferenceAngularFrequenciesString() { return "slsReferenceAngularFrequencies"; }
+    static constexpr char const * slsAnelasticityCoefficientsString() { return "slsAnelasticityCoefficients"; }
+
+    static constexpr char const * sourceWaveletTableNames() { return "sourceWaveletTableNames"; }
   };
 
   /**
@@ -134,9 +146,61 @@ public:
                              localIndex const subRegionSize,
                              localIndex const numQuadraturePointsPerElem );
 
+  /**
+   * @brief Computes the minimum value of the given element field over the whole mesh.
+   * @param[in] F The type of the field whose minimum must be computed
+   * @param[in] T The data type of the field
+   * @eturn the minimum value
+   */
+  template< typename F, typename T >
+  T computeGlobalMinOfElemField( DomainPartition & domain )
+  {
+    RAJA::ReduceMin< ReducePolicy< EXEC_POLICY >, T > minF( LvArray::NumericLimits< T >::max );
+
+    forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                  MeshLevel & mesh,
+                                                                  string_array const & regionNames )
+    {
+      mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
+                                                                                            CellElementSubRegion & elementSubRegion )
+      {
+        arrayView1d< T const > const f = elementSubRegion.getField< F >();
+        forAll< EXEC_POLICY >( elementSubRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const e ) {
+          minF.min( f[e] );
+        } );
+      } );
+    } );
+    T minFVal = minF.get();
+    return MpiWrapper::min< T >( minFVal );
+  }
+
+  /**
+   * @brief Initializes the anealsticity coefficients if needed, and checks that the anealsticity values
+   * are within a valid range. Gives a warning if not.
+   * @param[in] Qs the quality factor fields used to compute the anelasticity value if not given
+   */
+  template< typename ... Qs >
+  void initializeAnelasticityCoefficients( DomainPartition & domain )
+  {
+    // compute miniumum quality factor
+    real32 minQVal = LvArray::NumericLimits< real32 >::max;
+    ( (minQVal = std::min( minQVal, computeGlobalMinOfElemField< Qs, real32 >( domain ) ) ), ... );
+    if( m_slsAnelasticityCoefficients.size( 0 ) == 1 && m_slsAnelasticityCoefficients[ 0 ] < 0 )
+    {
+      m_slsAnelasticityCoefficients[ 0 ] = 2.0 * minQVal / ( minQVal - 1.0 );
+    }
+    // test if anelasticity is too high and artifacts could appear
+    real32 ySum = 0.0;
+    for( integer l = 0; l < m_slsAnelasticityCoefficients.size( 0 ); l++ )
+    {
+      ySum += m_slsAnelasticityCoefficients[ l ];
+    }
+    GEOS_WARNING_IF( ySum > minQVal, "The anelasticity parameters are too high for the given quality factor. This could lead to solution artifacts such as zero-velocity waves." );
+  }
+
 protected:
 
-  virtual void postProcessInput() override;
+  virtual void postInputInitialization() override;
 
   /**
    * @brief Utility function to check if a directory exists
@@ -152,6 +216,9 @@ protected:
    */
   virtual void applyFreeSurfaceBC( real64 const time, DomainPartition & domain ) = 0;
 
+  /**
+   */
+  virtual real64 computeTimeStep( real64 & dtOut ) = 0;
 
   /**
    * @brief Initialize Perfectly Matched Layer (PML) information
@@ -202,9 +269,10 @@ protected:
   /**
    * @brief Locate sources and receivers positions in the mesh elements, evaluate the basis functions at each point and save them to the
    * corresponding elements nodes.
+   * @param baseMesh the level-0 mesh
    * @param mesh mesh of the computational domain
    */
-  virtual void precomputeSourceAndReceiverTerm( MeshLevel & mesh, arrayView1d< string const > const & regionNames ) = 0;
+  virtual void precomputeSourceAndReceiverTerm( MeshLevel & baseMesh, MeshLevel & mesh, string_array const & regionNames ) = 0;
 
   /**
    * @brief Perform forward explicit step
@@ -212,39 +280,39 @@ protected:
    * @param dt the perscribed timestep
    * @param cycleNumber the current cycle number
    * @param domain the domain object
-   * @param computeGradient Indicates if we want to compute gradient at this step
+   * @param computeGradient Indicates if we want to compute gradient or the imaging condition at this step
    * @return return the timestep that was achieved during the step.
    */
   virtual real64 explicitStepForward( real64 const & time_n,
                                       real64 const & dt,
                                       integer const cycleNumber,
                                       DomainPartition & domain,
-                                      bool const computeGradient ) = 0;
+                                      integer const computeGradient ) = 0;
   /**
    * @brief Perform backward explicit step
    * @param time_n time at the beginning of the step
    * @param dt the perscribed timestep
    * @param cycleNumber the current cycle number
    * @param domain the domain object
-   * @param computeGradient Indicates if we want to compute gradient at this step
+   * @param computeGradient Indicates if we want to compute gradient or the imaging condition at this step
    * @return return the timestep that was achieved during the step.
    */
   virtual real64 explicitStepBackward( real64 const & time_n,
                                        real64 const & dt,
                                        integer const cycleNumber,
                                        DomainPartition & domain,
-                                       bool const computeGradient ) = 0;
+                                       integer const computeGradient ) = 0;
 
 
   virtual void registerDataOnMesh( Group & meshBodies ) override;
 
   localIndex getNumNodesPerElem();
 
-  /// Coordinates of the sources in the mesh
-  array2d< real64 > m_sourceCoordinates;
-
   /// Precomputed value of the source terms
   array2d< real32 > m_sourceValue;
+
+  /// Coordinates of the sources in the mesh
+  array2d< real64 > m_sourceCoordinates;
 
   /// Central frequency for the Ricker time source
   real32 m_timeSourceFrequency;
@@ -270,7 +338,7 @@ protected:
   /// Amount of seismoTrace that will be recorded for each receiver
   localIndex m_nsamplesSeismoTrace;
 
-  /// Flag to indicate which DAS type  will be modeled
+  /// Flag to indicate which DAS type will be modeled
   WaveSolverUtils::DASType m_useDAS;
 
   /// Number of points used for strain integration for dipole DAS
@@ -288,17 +356,34 @@ protected:
   /// Z component of the linear DAS direction vector
   array1d< real32 > m_linearDASVectorZ;
 
+  /// Flag to indicate which attenuation type will be modeled
+  WaveSolverUtils::AttenuationType m_attenuationType;
+
+  /// Vector containing the reference frequencies for the standard-linear-solid (SLS) anelasticity model.
+  array1d< real32 > m_slsReferenceAngularFrequencies;
+
+  /// Vector containing the anelasticity coefficients for the standard-linear-solid (SLS) anelasticity model.
+  array1d< real32 > m_slsAnelasticityCoefficients;
+
   /// Indicate if we want to compute forward ou backward
   localIndex m_forward;
 
   /// Indicate if we want to save fields to restore them during backward
-  localIndex m_saveFields;
+  integer m_saveFields;
 
   // Indicate the current shot computed for naming saved temporary data
   integer m_shotIndex;
 
   /// Flag to apply PML
   integer m_usePML;
+
+  /// Flag to precompute the time-step
+  /// usage:  the time-step is computed then the code exit and you can
+  /// copy paste the time-step inside the XML then deactivate the option
+  integer m_timestepStabilityLimit;
+
+  //Time step computed with power iteration
+  real64 m_timeStep;
 
   /// Indices of the nodes (in the right order) for each source point
   array2d< localIndex > m_sourceNodeIds;
@@ -341,6 +426,15 @@ protected:
 
   /// A set of target nodes IDs that will be handled by the current solver
   SortedArray< localIndex > m_solverTargetNodesSet;
+
+  /// Names of table functions for source wavelet (time dependency)
+  string_array m_sourceWaveletTableNames;
+
+  /// Flag to indicate if source wavelet table functions are used
+  bool m_useSourceWaveletTables;
+
+  /// Wrappers of table functions for source wavelet (time dependency)
+  array1d< TableFunction::KernelWrapper > m_sourceWaveletTableWrappers;
 
   struct parametersPML
   {

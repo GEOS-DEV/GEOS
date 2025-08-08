@@ -2,10 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 TotalEnergies
- * Copyright (c) 2019-     GEOSX Contributors
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 TotalEnergies
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2023-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
@@ -57,30 +58,6 @@ public:
     m_initialPorosity( initialPorosity ),
     m_referencePorosity ( referencePorosity )
   {}
-
-  /**
-   * @brief Helper to save porosity back to m_newPorosity array
-   *
-   * This is mostly defined for improving code readability.
-   *
-   * @param[in] k Element index.
-   * @param[in] q Quadrature point index.
-   * @param[in] porosity porosity to be saved to m_newPorosity[k][q]
-   * @param[in] dPorosity_dPressure porosity derivative w.r.t pressure to be saved to m_dPorosity_dPressure[k][q]
-   * @param[in] dPorosity_dTemperature porosity derivative w.r.t temperature to be saved to m_dPorosity_dTemperature[k][q]
-   */
-  GEOS_HOST_DEVICE
-  GEOS_FORCE_INLINE
-  void savePorosity( localIndex const k,
-                     localIndex const q,
-                     real64 const & porosity,
-                     real64 const & dPorosity_dPressure,
-                     real64 const & dPorosity_dTemperature ) const
-  {
-    m_newPorosity[k][q] = porosity;
-    m_dPorosity_dPressure[k][q] = dPorosity_dPressure;
-    m_dPorosity_dTemperature[k][q] = dPorosity_dTemperature;
-  }
 
   GEOS_HOST_DEVICE
   inline
@@ -268,7 +245,7 @@ public:
 
 
 protected:
-  virtual void postProcessInput() override;
+  virtual void postInputInitialization() override;
 
   array2d< real64 > m_newPorosity;
 

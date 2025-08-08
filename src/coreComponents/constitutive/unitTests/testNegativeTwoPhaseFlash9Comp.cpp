@@ -2,10 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 TotalEnergies
- * Copyright (c) 2019-     GEOSX Contributors
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 TotalEnergies
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2023-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
@@ -38,7 +39,7 @@ using FlashData = std::tuple<
   Feed< 2 > const           // expected vapour composition (2 selected components)
   >;
 
-template< typename EOS_TYPE >
+template< EquationOfStateType EOS_TYPE >
 class NegativeTwoPhaseFlashTest9CompFixture :  public ::testing::TestWithParam< FlashData >
 {
   static constexpr real64 relTol = 1.0e-5;
@@ -59,6 +60,10 @@ public:
   {
     auto componentProperties = this->m_fluid->createKernelWrapper();
 
+    constitutive::compositional::FlashData flashData;
+    flashData.liquidEos = EOS_TYPE;
+    flashData.vapourEos = EOS_TYPE;
+
     real64 const pressure = std::get< 0 >( data );
     real64 const temperature = std::get< 1 >( data );
     stackArray1d< real64, numComps > composition;
@@ -76,14 +81,25 @@ public:
     stackArray1d< real64, numComps > liquidComposition( numComps );
     stackArray1d< real64, numComps > vapourComposition( numComps );
     stackArray2d< real64, numComps > kValues( 1, numComps );
-    kValues.zero();
 
-    bool status = NegativeTwoPhaseFlash::compute< EOS_TYPE, EOS_TYPE >(
+    KValueInitialization::computeWilsonGasLiquidKvalue( numComps,
+                                                        pressure,
+                                                        temperature,
+                                                        componentProperties,
+                                                        kValues[0] );
+
+    auto const parameters = FlashParameters::create( std::make_unique< ModelParameters >() );
+    auto const * flashParameters = parameters->get< FlashParameters >();
+
+    bool status = NegativeTwoPhaseFlash::compute(
       numComps,
       pressure,
       temperature,
       composition.toSliceConst(),
       componentProperties,
+      flashData,
+      flashParameters->m_continuousParameters,
+      flashParameters->m_discreteParameters,
       kValues.toSlice(),
       vapourFraction,
       liquidComposition.toSlice(),
@@ -122,6 +138,10 @@ public:
 
     auto componentProperties = this->m_fluid->createKernelWrapper();
 
+    constitutive::compositional::FlashData flashData;
+    flashData.liquidEos = EOS_TYPE;
+    flashData.vapourEos = EOS_TYPE;
+
     bool const expectedStatus = std::get< 3 >( data );
     if( !expectedStatus ) return;
 
@@ -134,7 +154,15 @@ public:
     stackArray1d< real64, numComps > liquidComposition( numComps );
     stackArray1d< real64, numComps > vapourComposition( numComps );
     stackArray2d< real64, numComps > kValues( 1, numComps );
-    kValues.zero();
+
+    KValueInitialization::computeWilsonGasLiquidKvalue( numComps,
+                                                        pressure,
+                                                        temperature,
+                                                        componentProperties,
+                                                        kValues[0] );
+
+    auto const parameters = FlashParameters::create( std::make_unique< ModelParameters >() );
+    auto const * flashParameters = parameters->get< FlashParameters >();
 
     stackArray1d< real64, numDofs > vapourFractionDerivs( numDofs );
     stackArray2d< real64, numComps * numDofs > liquidCompositionDerivs( numComps, numDofs );
@@ -155,12 +183,21 @@ public:
       stackArray1d< real64, numComps > displacedLiquidComposition( numComps );
       stackArray1d< real64, numComps > displacedVapourComposition( numComps );
 
-      NegativeTwoPhaseFlash::compute< EOS_TYPE, EOS_TYPE >(
+      KValueInitialization::computeWilsonGasLiquidKvalue( numComps,
+                                                          p,
+                                                          t,
+                                                          componentProperties,
+                                                          kValues[0] );
+
+      NegativeTwoPhaseFlash::compute(
         numComps,
         p,
         t,
         zmf.toSliceConst(),
         componentProperties,
+        flashData,
+        flashParameters->m_continuousParameters,
+        flashParameters->m_discreteParameters,
         kValues.toSlice(),
         values[0],
         displacedLiquidComposition.toSlice(),
@@ -172,23 +209,27 @@ public:
       }
     };
 
-    NegativeTwoPhaseFlash::compute< EOS_TYPE, EOS_TYPE >(
+    NegativeTwoPhaseFlash::compute(
       numComps,
       pressure,
       temperature,
       composition.toSliceConst(),
       componentProperties,
+      flashData,
+      flashParameters->m_continuousParameters,
+      flashParameters->m_discreteParameters,
       kValues.toSlice(),
       vapourFraction,
       liquidComposition.toSlice(),
       vapourComposition.toSlice() );
 
-    NegativeTwoPhaseFlash::computeDerivatives< EOS_TYPE, EOS_TYPE >(
+    NegativeTwoPhaseFlash::computeDerivatives(
       numComps,
       pressure,
       temperature,
       composition.toSliceConst(),
       componentProperties,
+      flashData,
       vapourFraction,
       liquidComposition.toSliceConst(),
       vapourComposition.toSliceConst(),
@@ -239,7 +280,7 @@ private:
   static std::unique_ptr< TestFluid< numComps > > createFluid();
 };
 
-template< typename EOS_TYPE >
+template< EquationOfStateType EOS_TYPE >
 std::unique_ptr< TestFluid< numComps > > NegativeTwoPhaseFlashTest9CompFixture< EOS_TYPE >::createFluid()
 {
   std::unique_ptr< TestFluid< numComps > > fluid = TestFluid< numComps >::create( {0, 0, 0, 0, 0, 0, 0, 0, 0} );
@@ -263,25 +304,25 @@ std::unique_ptr< TestFluid< numComps > > NegativeTwoPhaseFlashTest9CompFixture< 
   return fluid;
 }
 
-using NegativeTwoPhaseFlash9CompPR = NegativeTwoPhaseFlashTest9CompFixture< CubicEOSPhaseModel< PengRobinsonEOS > >;
-using NegativeTwoPhaseFlash9CompSRK = NegativeTwoPhaseFlashTest9CompFixture< CubicEOSPhaseModel< SoaveRedlichKwongEOS > >;
+using PengRobinson = NegativeTwoPhaseFlashTest9CompFixture< EquationOfStateType::PengRobinson >;
+using SoaveRedlichKwong = NegativeTwoPhaseFlashTest9CompFixture< EquationOfStateType::SoaveRedlichKwong >;
 
-TEST_P( NegativeTwoPhaseFlash9CompPR, testNegativeFlash )
+TEST_P( PengRobinson, testNegativeFlash )
 {
   testFlash( GetParam() );
 }
 
-TEST_P( NegativeTwoPhaseFlash9CompPR, testNegativeFlashDerivatives )
+TEST_P( PengRobinson, testNegativeFlashDerivatives )
 {
   testFlashDerivatives( GetParam() );
 }
 
-TEST_P( NegativeTwoPhaseFlash9CompSRK, testNegativeFlash )
+TEST_P( SoaveRedlichKwong, testNegativeFlash )
 {
   testFlash( GetParam() );
 }
 
-TEST_P( NegativeTwoPhaseFlash9CompSRK, testNegativeFlashDerivatives )
+TEST_P( SoaveRedlichKwong, testNegativeFlashDerivatives )
 {
   testFlashDerivatives( GetParam() );
 }
@@ -293,8 +334,7 @@ TEST_P( NegativeTwoPhaseFlash9CompSRK, testNegativeFlashDerivatives )
 /* UNCRUSTIFY-OFF */
 
 INSTANTIATE_TEST_SUITE_P(
-  NegativeTwoPhaseFlash,
-  NegativeTwoPhaseFlash9CompPR,
+  NegativeTwoPhaseFlash, PengRobinson,
   ::testing::Values(
     FlashData( 1.000000e+05, 2.781500e+02, {0.000363, 0.000007, 0.003471, 0.006007, 0.018423, 0.034034, 0.042565, 0.056120, 0.839010}, 1, 0.000000, {0.000363, 0.839010}, {0.000363, 0.839010} ),
     FlashData( 1.000000e+05, 2.781500e+02, {0.009000, 0.003000, 0.534700, 0.114600, 0.087900, 0.045600, 0.020900, 0.015100, 0.169200}, 1, 0.798353, {0.000363, 0.839010}, {0.011181, 0.000020} ),
@@ -417,13 +457,12 @@ INSTANTIATE_TEST_SUITE_P(
     FlashData( 8.000000e+07, 8.731500e+02, {0.007026, 0.006161, 0.827761, 0.091046, 0.045353, 0.015026, 0.004474, 0.001898, 0.001256}, 1, 1.000000, {0.007026, 0.001256}, {0.007026, 0.001256} ),
     FlashData( 1.000000e+08, 8.731500e+02, {0.000363, 0.000007, 0.003471, 0.006007, 0.018423, 0.034034, 0.042565, 0.056120, 0.839010}, 1, 0.000000, {0.000363, 0.839010}, {0.000363, 0.839010} ),
     FlashData( 1.000000e+08, 8.731500e+02, {0.009000, 0.003000, 0.534700, 0.114600, 0.087900, 0.045600, 0.020900, 0.015100, 0.169200}, 1, 1.000000, {0.009000, 0.169200}, {0.009000, 0.169200} ),
-    FlashData( 1.000000e+08, 8.731500e+02, {0.007026, 0.006161, 0.827761, 0.091046, 0.045353, 0.015026, 0.004474, 0.001898, 0.001256}, 1, 1.000000, {0.007026, 0.001256}, {0.007026, 0.001256} )    
+    FlashData( 1.000000e+08, 8.731500e+02, {0.007026, 0.006161, 0.827761, 0.091046, 0.045353, 0.015026, 0.004474, 0.001898, 0.001256}, 1, 1.000000, {0.007026, 0.001256}, {0.007026, 0.001256} )
    )
   );
 
 INSTANTIATE_TEST_SUITE_P(
-  NegativeTwoPhaseFlash,
-  NegativeTwoPhaseFlash9CompSRK,
+  NegativeTwoPhaseFlash, SoaveRedlichKwong,
   ::testing::Values( 
     FlashData( 1.000000e+05, 2.781500e+02, {0.000363, 0.000007, 0.003471, 0.006007, 0.018423, 0.034034, 0.042565, 0.056120, 0.839010}, 1, 0.000197, {0.000361, 0.839175}, {0.010852, 0.000016} ),
     FlashData( 1.000000e+05, 2.781500e+02, {0.009000, 0.003000, 0.534700, 0.114600, 0.087900, 0.045600, 0.020900, 0.015100, 0.169200}, 1, 0.798097, {0.000372, 0.837963}, {0.011183, 0.000016} ),

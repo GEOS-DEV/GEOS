@@ -2,10 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 TotalEnergies
- * Copyright (c) 2019-     GEOSX Contributors
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 TotalEnergies
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2023-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
@@ -93,7 +94,7 @@ protected:
 template< FieldLocation LOC >
 void collectLocalDofNumbers( DomainPartition const & domain,
                              string const & dofIndexKey,
-                             std::vector< DofManager::FieldSupport > const & support,
+                             stdVector< DofManager::FieldSupport > const & support,
                              array1d< globalIndex > & dofNumbers )
 {
   for( DofManager::FieldSupport const & regions : support )
@@ -124,7 +125,7 @@ void collectLocalDofNumbers( DomainPartition const & domain,
 template<>
 void collectLocalDofNumbers< FieldLocation::Elem >( DomainPartition const & domain,
                                                     string const & dofIndexKey,
-                                                    std::vector< DofManager::FieldSupport > const & support,
+                                                    stdVector< DofManager::FieldSupport > const & support,
                                                     array1d< globalIndex > & dofNumbers )
 {
   for( DofManager::FieldSupport const & regions : support )
@@ -206,10 +207,10 @@ protected:
     string name;
     FieldLocation location;
     integer components;
-    std::vector< DofManager::FieldSupport > regions{};
+    stdVector< DofManager::FieldSupport > regions{};
   };
 
-  void test( std::vector< FieldDesc > const & fields );
+  void test( stdVector< FieldDesc > const & fields );
 };
 
 /**
@@ -220,7 +221,7 @@ protected:
  * @param numDofIndicesExpected expected global number of dof indices
  * @param regions list of support regions (empty = whole domain)
  */
-void DofManagerIndicesTest::test( std::vector< FieldDesc > const & fields )
+void DofManagerIndicesTest::test( stdVector< FieldDesc > const & fields )
 {
   for( FieldDesc const & f : fields )
   {
@@ -471,7 +472,7 @@ protected:
 
   using PatternFunc = void ( * )( DomainPartition const & mesh,
                                   string const & dofIndexKey,
-                                  std::vector< DofManager::FieldSupport > const & regions,
+                                  stdVector< DofManager::FieldSupport > const & regions,
                                   globalIndex const rankOffset,
                                   localIndex const numComp,
                                   CRSMatrix< real64 > & sparsity );
@@ -479,7 +480,7 @@ protected:
   using CoupledPatternFunc = void ( * )( DomainPartition const & mesh,
                                          string const & dofIndexKey1,
                                          string const & dofIndexKey2,
-                                         std::vector< DofManager::FieldSupport > const & regions,
+                                         stdVector< DofManager::FieldSupport > const & regions,
                                          globalIndex const rankOffset,
                                          localIndex const numComp1,
                                          localIndex const numComp2,
@@ -492,7 +493,7 @@ protected:
     DofManager::Connector connectivity;
     localIndex components;
     PatternFunc makePattern;
-    std::vector< DofManager::FieldSupport > regions = {};
+    stdVector< DofManager::FieldSupport > regions = {};
   };
 
   struct CouplingDesc
@@ -500,15 +501,15 @@ protected:
     DofManager::Connector connectivity;
     CoupledPatternFunc makeCouplingPattern;
     bool symmetric = true;
-    std::vector< DofManager::FieldSupport > regions = {};
+    stdVector< DofManager::FieldSupport > regions = {};
   };
 
-  void addFields( std::vector< FieldDesc > fields,
+  void addFields( stdVector< FieldDesc > fields,
                   std::map< std::pair< string, string >, CouplingDesc > couplings = {} )
   {
     for( FieldDesc const & f : fields )
     {
-      std::vector< DofManager::FieldSupport > const regions = getRegions( domain, f.regions );
+      stdVector< DofManager::FieldSupport > const regions = getRegions( domain, f.regions );
       dofManager.addField( f.name, f.location, f.components, regions );
       dofManager.addCoupling( f.name, f.name, f.connectivity );
     }
@@ -516,7 +517,7 @@ protected:
     {
       std::pair< string, string > const & fieldNames = entry.first;
       CouplingDesc const & c = entry.second;
-      std::vector< DofManager::FieldSupport > const regions = getRegions( domain, c.regions );
+      stdVector< DofManager::FieldSupport > const regions = getRegions( domain, c.regions );
       dofManager.addCoupling( fieldNames.first, fieldNames.second, c.connectivity, regions, c.symmetric );
     }
     dofManager.reorderByRank();
@@ -537,14 +538,14 @@ protected:
   using Base::dofManager;
   using Base::addFields;
 
-  void test( std::vector< FieldDesc > fields,
+  void test( stdVector< FieldDesc > fields,
              std::map< std::pair< string, string >, CouplingDesc > couplings = {} );
 };
 
 TYPED_TEST_SUITE_P( DofManagerSparsityTest );
 
 template< typename LAI >
-void DofManagerSparsityTest< LAI >::test( std::vector< FieldDesc > fields,
+void DofManagerSparsityTest< LAI >::test( stdVector< FieldDesc > fields,
                                           std::map< std::pair< string, string >, CouplingDesc > couplings )
 {
   addFields( fields, couplings );
@@ -554,7 +555,7 @@ void DofManagerSparsityTest< LAI >::test( std::vector< FieldDesc > fields,
   localIndex numCompTotal = 0;
   for( FieldDesc const & f : fields )
   {
-    std::vector< DofManager::FieldSupport > const regions = getRegions( domain, f.regions );
+    stdVector< DofManager::FieldSupport > const regions = getRegions( domain, f.regions );
     localIndex numLocalObj = 0;
     switch( f.location )
     {
@@ -587,7 +588,7 @@ void DofManagerSparsityTest< LAI >::test( std::vector< FieldDesc > fields,
     dofManager.setSparsityPattern( localPattern );
     CRSMatrix< real64, globalIndex > localMatrix;
     localMatrix.assimilate< parallelHostPolicy >( std::move( localPattern ) );
-    pattern.create( localMatrix.toViewConst(), dofManager.numLocalDofs(), MPI_COMM_GEOSX );
+    pattern.create( localMatrix.toViewConst(), dofManager.numLocalDofs(), MPI_COMM_GEOS );
     pattern.set( 1.0 );
   }
 
@@ -625,7 +626,7 @@ void DofManagerSparsityTest< LAI >::test( std::vector< FieldDesc > fields,
                            f2.components,
                            localPatternExpected );
   }
-  patternExpected.create( localPatternExpected.toViewConst(), dofManager.numLocalDofs(), MPI_COMM_GEOSX );
+  patternExpected.create( localPatternExpected.toViewConst(), dofManager.numLocalDofs(), MPI_COMM_GEOS );
 
   // Compare the sparsity patterns
   pattern.set( 1.0 );
@@ -823,15 +824,15 @@ REGISTER_TYPED_TEST_SUITE_P( DofManagerSparsityTest,
                              FEM_TPFA_Full,
                              FEM_TPFA_Partial );
 
-#ifdef GEOSX_USE_TRILINOS
+#ifdef GEOS_USE_TRILINOS
 INSTANTIATE_TYPED_TEST_SUITE_P( Trilinos, DofManagerSparsityTest, TrilinosInterface, );
 #endif
 
-#ifdef GEOSX_USE_HYPRE
+#ifdef GEOS_USE_HYPRE
 INSTANTIATE_TYPED_TEST_SUITE_P( Hypre, DofManagerSparsityTest, HypreInterface, );
 #endif
 
-#ifdef GEOSX_USE_PETSC
+#ifdef GEOS_USE_PETSC
 INSTANTIATE_TYPED_TEST_SUITE_P( Petsc, DofManagerSparsityTest, PetscInterface, );
 #endif
 
@@ -853,14 +854,14 @@ protected:
   using Base::dofManager;
   using Base::addFields;
 
-  void test( std::vector< FieldDesc > fields,
-             std::vector< DofManager::SubComponent > selection,
+  void test( stdVector< FieldDesc > fields,
+             stdVector< DofManager::SubComponent > selection,
              std::map< std::pair< string, string >, CouplingDesc > couplings = {} );
 };
 
 template< typename LAI >
-void DofManagerRestrictorTest< LAI >::test( std::vector< FieldDesc > fields,
-                                            std::vector< DofManager::SubComponent > selection,
+void DofManagerRestrictorTest< LAI >::test( stdVector< FieldDesc > fields,
+                                            stdVector< DofManager::SubComponent > selection,
                                             std::map< std::pair< string, string >, CouplingDesc > couplings )
 {
   addFields( fields, couplings );
@@ -872,7 +873,7 @@ void DofManagerRestrictorTest< LAI >::test( std::vector< FieldDesc > fields,
     dofManager.setSparsityPattern( localPattern );
     CRSMatrix< real64, globalIndex > localMatrix;
     localMatrix.assimilate< parallelHostPolicy >( std::move( localPattern ) );
-    A.create( localMatrix.toViewConst(), dofManager.numLocalDofs(), MPI_COMM_GEOSX );
+    A.create( localMatrix.toViewConst(), dofManager.numLocalDofs(), MPI_COMM_GEOS );
     A.set( 1.0 );
   }
 
@@ -890,7 +891,7 @@ void DofManagerRestrictorTest< LAI >::test( std::vector< FieldDesc > fields,
   A.multiplyRAP( R, P, Asub_RAP );
 
   // Filter the selected fields
-  std::vector< FieldDesc > selectedFields( selection.size() );
+  stdVector< FieldDesc > selectedFields( selection.size() );
   for( std::size_t k = 0; k < selection.size(); ++k )
   {
     selectedFields[k] = *std::find_if( fields.begin(), fields.end(),
@@ -924,7 +925,7 @@ void DofManagerRestrictorTest< LAI >::test( std::vector< FieldDesc > fields,
     dofManager.setSparsityPattern( localPattern );
     CRSMatrix< real64, globalIndex > localMatrix;
     localMatrix.assimilate< parallelHostPolicy >( std::move( localPattern ) );
-    B.create( localMatrix.toViewConst(), dofManager.numLocalDofs(), MPI_COMM_GEOSX );
+    B.create( localMatrix.toViewConst(), dofManager.numLocalDofs(), MPI_COMM_GEOS );
     B.set( 1.0 );
   }
 
@@ -1061,15 +1062,15 @@ REGISTER_TYPED_TEST_SUITE_P( DofManagerRestrictorTest,
                              MultiBlock_Second,
                              MultiBlock_Both );
 
-#ifdef GEOSX_USE_TRILINOS
+#ifdef GEOS_USE_TRILINOS
 INSTANTIATE_TYPED_TEST_SUITE_P( Trilinos, DofManagerRestrictorTest, TrilinosInterface, );
 #endif
 
-#ifdef GEOSX_USE_HYPRE
+#ifdef GEOS_USE_HYPRE
 INSTANTIATE_TYPED_TEST_SUITE_P( Hypre, DofManagerRestrictorTest, HypreInterface, );
 #endif
 
-#ifdef GEOSX_USE_PETSC
+#ifdef GEOS_USE_PETSC
 INSTANTIATE_TYPED_TEST_SUITE_P( Petsc, DofManagerRestrictorTest, PetscInterface, );
 #endif
 

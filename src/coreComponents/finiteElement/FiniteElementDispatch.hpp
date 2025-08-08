@@ -2,10 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 TotalEnergies
- * Copyright (c) 2019-     GEOSX Contributors
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 TotalEnergies
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2023-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
@@ -23,19 +24,20 @@
 #include "elementFormulations/ConformingVirtualElementOrder1.hpp"
 #include "elementFormulations/H1_Hexahedron_Lagrange1_GaussLegendre2.hpp"
 #include "elementFormulations/H1_Pyramid_Lagrange1_Gauss5.hpp"
-#include "elementFormulations/H1_Tetrahedron_Lagrange1_Gauss1.hpp"
+#include "elementFormulations/H1_Tetrahedron_Lagrange1_Gauss.hpp"
 #include "elementFormulations/H1_Wedge_Lagrange1_Gauss6.hpp"
 #if !defined( GEOS_USE_HIP )
 #include "elementFormulations/Qk_Hexahedron_Lagrange_GaussLobatto.hpp"
 #endif
 #include "elementFormulations/H1_QuadrilateralFace_Lagrange1_GaussLegendre2.hpp"
-#include "elementFormulations/H1_TriangleFace_Lagrange1_Gauss1.hpp"
+#include "elementFormulations/H1_TriangleFace_Lagrange1_Gauss.hpp"
 #include "LvArray/src/system.hpp"
 
 #define FE_1_TYPES \
   finiteElement::H1_Hexahedron_Lagrange1_GaussLegendre2, \
   finiteElement::H1_Wedge_Lagrange1_Gauss6, \
   finiteElement::H1_Tetrahedron_Lagrange1_Gauss1, \
+  finiteElement::H1_Tetrahedron_Lagrange1_Gauss14, \
   finiteElement::H1_Pyramid_Lagrange1_Gauss5
 
 #define GL_FE_TYPES \
@@ -45,7 +47,7 @@
   finiteElement::Q4_Hexahedron_Lagrange_GaussLobatto, \
   finiteElement::Q5_Hexahedron_Lagrange_GaussLobatto
 
-#if defined( GEOSX_DISPATCH_VEM )
+#if defined( GEOS_DISPATCH_VEM )
 
 #define VEM_1_TYPES \
   finiteElement::H1_Tetrahedron_VEM_Gauss1, \
@@ -86,8 +88,11 @@
 
 
 #define FE_TYPES_2D \
-  finiteElement::H1_QuadrilateralFace_Lagrange1_GaussLegendre2  \
-  finiteElement::H1_TriangleFace_Lagrange1_Gauss1
+  finiteElement::H1_QuadrilateralFace_Lagrange1_GaussLegendre2, \
+  finiteElement::H1_TriangleFace_Lagrange1_Gauss1, \
+  finiteElement::H1_TriangleFace_Lagrange1_Gauss4
+
+#define BASE_FE_TYPES_2D FE_TYPES_2D
 
 namespace geos
 {

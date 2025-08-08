@@ -2,10 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 TotalEnergies
- * Copyright (c) 2019-     GEOSX Contributors
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 TotalEnergies
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2023-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
@@ -16,6 +17,7 @@
 // Source includes
 #include "codingUtilities/UnitTestUtilities.hpp"
 #include "dataRepository/xmlWrapper.hpp"
+#include "LvArray/src/system.hpp"
 #include "mainInterface/GeosxState.hpp"
 #include "mainInterface/initialization.hpp"
 #include "mesh/MeshManager.hpp"
@@ -39,6 +41,8 @@
 #include <conduit.hpp>
 
 #include <filesystem>
+
+#include <fenv.h>
 
 
 using namespace geos;
@@ -69,7 +73,7 @@ void TestMeshImport( string const & meshFilePath, V const & validate, string con
 
   MeshManager meshManager( "mesh", &root );
   meshManager.processInputFileRecursive( xmlDocument, xmlMeshNode );
-  meshManager.postProcessInputRecursive();
+  meshManager.postInputInitializationRecursive();
   DomainPartition domain( "domain", &root );
   meshManager.generateMeshes( domain );
 
@@ -96,6 +100,9 @@ private:
 
   void SetUp() override
   {
+    // Disable floating point exceptions for the tests.
+    // clang15 on x86_64 does throws an FPE.
+    LvArray::system::disableFloatingPointExceptions( FE_ALL_EXCEPT );
     if( MpiWrapper::commRank() == 0 )
     {
       namespace fs = std::filesystem;
@@ -225,6 +232,24 @@ private:
         fracture->InsertNextCell( VTK_QUAD, numPoints, q );
       }
 
+      vtkNew< vtkIdTypeArray > cellGlobalIds;
+      cellGlobalIds->SetNumberOfComponents( 1 );
+      cellGlobalIds->SetNumberOfTuples( numQuads );
+      for( auto i = 0; i < numQuads; ++i )
+      {
+        cellGlobalIds->SetValue( i, i );
+      }
+      fracture->GetCellData()->SetGlobalIds( cellGlobalIds );
+
+      vtkNew< vtkIdTypeArray > pointGlobalIds;
+      pointGlobalIds->SetNumberOfComponents( 1 );
+      pointGlobalIds->SetNumberOfTuples( numPoints );
+      for( auto i = 0; i < numPoints; ++i )
+      {
+        pointGlobalIds->SetValue( i, i );
+      }
+      fracture->GetPointData()->SetGlobalIds( pointGlobalIds );
+
       // Do not forget the collocated_nodes fields
       vtkNew< vtkIdTypeArray > collocatedNodes;
       collocatedNodes->SetName( "collocated_nodes" );
@@ -339,7 +364,7 @@ TEST( VTKImport, cube )
     localIndex const expectedNumNodes = rankswap ? expectedNumNodesRank2 : expectedNumNodesRank1;
     auto expectedSwap = [=] ( int seq, std::initializer_list< int > par )
     {
-      std::vector< int > tmp( par );
+      stdVector< int > tmp( par );
       if( rankswap )
         return expected( seq, { tmp[1], tmp[0] } );
       else
@@ -363,12 +388,12 @@ TEST( VTKImport, cube )
       // The "2" set are all the boundary nodes (64 - 8 inside nodes = 56),
       // minus an extra node that belongs to regions -1 and 9 only.
       SortedArray< localIndex > const & nodesRegion2 = cellBlockManager.getNodeSets().at( "2" );
-      ASSERT_EQ( nodesRegion2.size(), expectedSwap( 55, { 39, 27 } ) );
+      ASSERT_EQ( nodesRegion2.size(), expectedSwap( 55, { 38, 28 } ) );
 
       // Region "9" has only one quad, on the greater `x` direction.
       // This hex will belong to MPI rank 1.
       SortedArray< localIndex > const & nodesRegion9 = cellBlockManager.getNodeSets().at( "9" );
-      ASSERT_EQ( nodesRegion9.size(), expectedSwap( 4, { 0, 4 } ) );
+      ASSERT_EQ( nodesRegion9.size(), expectedSwap( 4, { 4, 0 } ) );
 
       // FIXME How to get the CellBlock as a function of the region, without knowing the naming pattern.
       // 1 elements type on 3 regions ("-1", "3", "9") = 3 sub-groups
@@ -376,8 +401,8 @@ TEST( VTKImport, cube )
       {
         {
           { "hexahedra", expectedSwap( 1, {  1, 0 } ) },
-          { "3_hexahedra", expectedSwap( 25, { 17, 8 } ) },
-          { "9_hexahedra", expectedSwap( 1, {  0, 1 } ) }
+          { "3_hexahedra", expectedSwap( 25, { 16, 9 } ) },
+          { "9_hexahedra", expectedSwap( 1, {  1, 0 } ) }
         }
       };
       ASSERT_EQ( cellBlockManager.getCellBlocks().numSubGroups(), expectedCellBlocks.size() );
@@ -468,17 +493,17 @@ TEST( VTKImport, supportedElements )
     CellBlockABC const & prism10Block = cellBlockManager.getCellBlocks().getGroup< CellBlockABC >( geos::vtk::buildCellBlockName( ElementType::Prism10, 9 ) );
     CellBlockABC const & prism11Block = cellBlockManager.getCellBlocks().getGroup< CellBlockABC >( geos::vtk::buildCellBlockName( ElementType::Prism11, 10 ) );
 
-    std::vector< string > const elementNames{ "tetrahedra",
-                                              "pyramids",
-                                              "wedges",
-                                              "hexahedra",
-                                              "pentagonalPrisms",
-                                              "hexagonalPrisms",
-                                              "heptagonalPrisms",
-                                              "octagonalPrisms",
-                                              "nonagonalPrisms",
-                                              "decagonalPrisms",
-                                              "hendecagonalPrisms" };
+    stdVector< string > const elementNames{ "tetrahedra",
+                                            "pyramids",
+                                            "wedges",
+                                            "hexahedra",
+                                            "pentagonalPrisms",
+                                            "hexagonalPrisms",
+                                            "heptagonalPrisms",
+                                            "octagonalPrisms",
+                                            "nonagonalPrisms",
+                                            "decagonalPrisms",
+                                            "hendecagonalPrisms" };
     for( std::size_t prefix: { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 } )
     {
       for( std::size_t i = 0; i < 11; ++i )

@@ -2,10 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
- * Copyright (c) 2019-     GEOSX Contributors
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 TotalEnergies
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2023-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
@@ -40,7 +41,7 @@ redistribute( vtkPartitionedDataSet & localParts,
   diy::mpi::communicator comm( mpiComm );
   assert( static_cast< int >( localParts.GetNumberOfPartitions() ) == comm.size() );
 
-  using BlockType = std::vector< vtkSmartPointer< vtkUnstructuredGrid > >;
+  using BlockType = stdVector< vtkSmartPointer< vtkUnstructuredGrid > >;
 
   diy::Master master( comm, 1, -1,
                       [] { return static_cast< void * >( new BlockType() ); },
@@ -196,7 +197,7 @@ redistribute( vtkPartitionedDataSet & localParts,
   return result;
 }
 
-std::vector< vtkBoundingBox >
+stdVector< vtkBoundingBox >
 exchangeBoundingBoxes( vtkDataSet & dataSet, MPI_Comm mpiComm )
 {
   // The code below is modified from vtkDIYGhostUtilities::ExchangeBoundingBoxes():
@@ -253,7 +254,7 @@ exchangeBoundingBoxes( vtkDataSet & dataSet, MPI_Comm mpiComm )
   boxMap.emplace( comm.rank(), vtkBoundingBox( dataSet.GetBounds() ) );
   assert( static_cast< int >( boxMap.size() ) == comm.size() );
 
-  std::vector< vtkBoundingBox > boxes;
+  stdVector< vtkBoundingBox > boxes;
   boxes.reserve( boxMap.size() );
   for( auto const & rankBox : boxMap )
   {

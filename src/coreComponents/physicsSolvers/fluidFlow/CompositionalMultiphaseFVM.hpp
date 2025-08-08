@@ -2,10 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 TotalEnergies
- * Copyright (c) 2019-     GEOSX Contributors
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 TotalEnergies
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2023-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
@@ -72,7 +73,7 @@ public:
    */
   static string catalogName() { return "CompositionalMultiphaseFVM"; }
   /**
-   * @copydoc SolverBase::getCatalogName()
+   * @copydoc PhysicsSolverBase::getCatalogName()
    */
   string getCatalogName() const override { return catalogName(); }
 //END_SPHINX_INCLUDE_01
@@ -83,6 +84,11 @@ public:
    * These functions provide the primary interface that is required for derived classes
    */
   /**@{*/
+
+  virtual void
+  registerDataOnMesh( Group & MeshBodies ) override;
+
+  virtual void registerDataForCFL( Group & meshBodies ) override;
 
   virtual void
   setupDofs( DomainPartition const & domain,
@@ -107,6 +113,11 @@ public:
   scalingForSystemSolution( DomainPartition & domain,
                             DofManager const & dofManager,
                             arrayView1d< real64 const > const & localSolution ) override;
+
+  real64
+  scalingForSystemSolutionZFormulation( DomainPartition & domain,
+                                        DofManager const & dofManager,
+                                        arrayView1d< real64 const > const & localSolution );
 
   virtual bool
   checkSystemSolution( DomainPartition & domain,
@@ -137,6 +148,14 @@ public:
                                CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                arrayView1d< real64 > const & localRhs ) const override;
 
+  virtual void
+  assembleHydrofracFluxTerms( real64 const time_n,
+                              real64 const dt,
+                              DomainPartition const & domain,
+                              DofManager const & dofManager,
+                              CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                              arrayView1d< real64 > const & localRhs,
+                              CRSMatrixView< real64, localIndex const > const & dR_dAper ) override final;
 
   virtual void
   updatePhaseMobility( ObjectManagerBase & dataGroup ) const override;
@@ -148,6 +167,22 @@ public:
                   DomainPartition & domain,
                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
                   arrayView1d< real64 > const & localRhs ) const override;
+
+  virtual void computeCFLNumbers( DomainPartition & domain,
+                                  real64 const & dt,
+                                  real64 & maxPhaseCFL,
+                                  real64 & maxCompCFL ) override;
+
+  /**
+   * @brief function to set the next time step size
+   * @param[in] currentTime the current time
+   * @param[in] currentDt the current time step size
+   * @param[in] domain the domain object
+   * @return the prescribed time step size
+   */
+  real64 setNextDt( real64 const & currentTime,
+                    real64 const & currentDt,
+                    DomainPartition & domain ) override;
 
   struct viewKeyStruct : CompositionalMultiphaseBase::viewKeyStruct
   {
@@ -161,24 +196,18 @@ public:
     static constexpr char const * contMultiplierDBCString()       { return "contMultiplierDBC"; }
 
     // nonlinear solver parameters
-    static constexpr char const * scalingTypeString()               { return "scalingType"; }
-  };
-
-  /**
-   * @brief Solution scaling type
-   */
-  enum class ScalingType : integer
-  {
-    Global,         ///< Scale the Newton update with a unique scaling factor
-    Local            ///< Scale the Newton update locally (modifies the Newton direction)
+    static constexpr char const * scalingTypeString()             { return "scalingType"; }
+    static constexpr char const * gravityDensitySchemeString()    { return "gravityDensityScheme"; }
   };
 
 protected:
 
-  virtual void postProcessInput() override;
+  virtual void postInputInitialization() override;
 
-  virtual void
-  initializePreSubGroups() override;
+  virtual void initializePreSubGroups() override;
+
+  real64 setNextDtBasedOnCFL( real64 const & currentDt,
+                              DomainPartition & domain );
 
   struct DBCParameters
   {
@@ -199,7 +228,13 @@ protected:
   } m_dbcParams;
 
   /// Solution scaling type
-  ScalingType m_scalingType;
+  compositionalMultiphaseUtilities::ScalingType m_scalingType;
+
+  /// scheme for density treatment in gravity
+  GravityDensityScheme m_gravityDensityScheme;
+
+  /// the targeted CFL for timestep
+  real64 m_targetFlowCFL;
 
 private:
 
@@ -230,10 +265,6 @@ private:
   // no data needed here, see CompositionalMultiphaseBase
 
 };
-
-ENUM_STRINGS( CompositionalMultiphaseFVM::ScalingType,
-              "Global",
-              "Local" );
 
 } // namespace geos
 

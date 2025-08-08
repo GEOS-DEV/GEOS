@@ -1,14 +1,8 @@
-import os
-import geos_ats
-from geos_ats.test_builder import TestDeck, RestartcheckParameters, generate_geos_tests
+from geos.ats.test_builder import TestDeck, RestartcheckParameters, generate_geos_tests
 
 restartcheck_params = {}
 restartcheck_params["atol"] = 1.0E-6
 restartcheck_params["rtol"] = 1.0E-5
-
-# exclude any derivative fields from restart checks
-# example field name: dGlobalComponentFraction_dPressure
-#restartcheck_params["exclude"] = [r"d[A-Z]\w+_d[A-Z]\w+"]
 
 decks = [
     TestDeck(
@@ -82,6 +76,22 @@ decks = [
         partitions=[(1, 1, 1), (2, 2, 1)],
         restart_step=12,
         check_step=25,
+        restartcheck_params=RestartcheckParameters(**restartcheck_params)),
+    TestDeck(
+        name="isothm_mass_inj_table",
+        description=
+        "Isothermal mass injection constraint testing control switching",
+        partitions=[(1, 1, 1), (1, 2, 1)],
+        restart_step=24,
+        check_step=28,
+        restartcheck_params=RestartcheckParameters(**restartcheck_params)),
+    TestDeck(
+        name="isothm_vol_inj_table",
+        description=
+        "Isothermal vol injection constraint testing control switching, should have same results as isothm_mass_inj_table.xml",
+        partitions=[(1, 1, 1), (1, 2, 1)],
+        restart_step=24,
+        check_step=28,
         restartcheck_params=RestartcheckParameters(**restartcheck_params))
 ]
 

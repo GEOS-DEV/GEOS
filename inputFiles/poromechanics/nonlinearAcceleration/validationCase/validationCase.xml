@@ -20,7 +20,7 @@
     <!-- SPHINX_POROMECHANICSSOLVER_END -->
 
     <!-- SPHINX_MECHANICALSOLVER -->
-    <SolidMechanicsLagrangianSSLE
+    <SolidMechanicsLagrangianFEM
       name="linearElasticity"
       timeIntegrationOption="QuasiStatic"
       logLevel="1"
@@ -32,7 +32,7 @@
       <LinearSolverParameters
         solverType="direct"
         directParallel="0"/>
-    </SolidMechanicsLagrangianSSLE>      
+    </SolidMechanicsLagrangianFEM>      
     <!-- SPHINX_MECHANICALSOLVER_END -->
 
     <!-- SPHINX_SINGLEPHASEFVM -->
@@ -241,7 +241,7 @@
       permeabilityComponents="{ 9.869233e-14, 9.869233e-14, 9.869233e-15 }"/>
     <BiotPorosity
       name="rockPorosityRes"
-      grainBulkModulus="1.0e27"
+      defaultGrainBulkModulus="1.0e27"
       defaultReferencePorosity="0.25"/>
 
     <PorousElasticIsotropic
@@ -259,7 +259,7 @@
       permeabilityComponents="{ 0, 0, 0 }"/>
     <BiotPorosity
       name="rockPorosityExt"
-      grainBulkModulus="1.0e27"
+      defaultGrainBulkModulus="1.0e27"
       defaultReferencePorosity="0.25"/>
 
   </Constitutive>

@@ -2,10 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 TotalEnergies
- * Copyright (c) 2019-     GEOSX Contributors
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 TotalEnergies
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2023-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
@@ -112,7 +113,12 @@ public:
 
   localIndex numQuadraturePoints() const { return m_numQuadraturePoints; }
 
-  virtual std::vector< string > getSubRelationNames() const { return {}; }
+  /**
+   * @return true if the instance has been produced with deliverClone()
+   */
+  bool isClone()  const { return m_isClone; }
+
+  virtual stdVector< string > getSubRelationNames() const { return {}; }
 
   /**
    * @brief Helper function to register field on a constitutive model
@@ -126,6 +132,9 @@ public:
   dataRepository::Wrapper< typename FIELD_TRAIT::type > & registerField( FIELD_TRAIT const & fieldTrait,
                                                                          typename FIELD_TRAIT::type * newObject )
   {
+    if( FIELD_TRAIT::plotLevel != dataRepository::PlotLevel::NOPLOT )
+      m_userFields.emplace_back( fieldTrait.key() );
+
     return registerWrapper( fieldTrait.key(), newObject ).
              setApplyDefaultValue( fieldTrait.defaultValue() ).
              setPlotLevel( FIELD_TRAIT::plotLevel ).
@@ -159,9 +168,29 @@ public:
     return this->getWrapper< typename FIELD_TRAIT::type >( FIELD_TRAIT::key() );
   }
 
+  /**
+   * @return A const vector containing all fields
+   */
+  std::vector< std::string > const & getUserFields() const
+  {
+    return m_userFields;
+  }
+
 private:
 
+  /**
+   * @brief Set a isClone state boolean
+   * @param newState The state of the new constitutive model
+   */
+  void setIsClone( bool const newState );
+
   localIndex m_numQuadraturePoints;
+
+  /// Indicate if this constitutive model a clone
+  bool m_isClone;
+
+  // Vector containing all fields registered with `registerField()`
+  std::vector< std::string > m_userFields;
 };
 
 }
