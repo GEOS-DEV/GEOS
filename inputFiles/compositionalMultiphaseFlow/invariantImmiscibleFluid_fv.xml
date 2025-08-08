@@ -1,0 +1,197 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <Solvers
+    gravityVector="{ 0.0, 0.0, -9.81 }">
+    <CompositionalMultiphaseFVM
+      name="FlowSolver"
+      discretization="fluidTPFA"
+      formulationType="OverallComposition"
+      targetRegions="{ Domain }"
+      logLevel="3"
+      temperature="300">
+      <NonlinearSolverParameters
+        newtonTol="1.0e-8"
+        newtonMaxIter="100"/>
+      <LinearSolverParameters
+        directParallel="0"/>
+    </CompositionalMultiphaseFVM>
+  </Solvers>
+  
+  <Mesh>
+    <InternalMesh
+      name="mesh1"
+      elementTypes="{ C3D8 }"
+      xCoords="{ 0, 1 }"
+      yCoords="{ 0, 1 }"
+      zCoords="{ 0, 7 }"
+      nx="{ 1 }"
+      ny="{ 1 }"
+      nz="{ 280 }"
+      cellBlockNames="{ blocks }"/>
+  </Mesh>
+
+  <Geometry>
+      <Box
+      name="topBC"
+      xMin="{ 0.0, 0.0, 6.999}"
+      xMax="{ 1.0, 1.0, 7.001}"/>
+  </Geometry>
+
+  <Events
+    maxTime="432000">
+    <PeriodicEvent
+      name="outputs"
+      timeFrequency="8640.0"
+      target="/Outputs/vtkOutput_InvariantFluid"/>
+
+    <PeriodicEvent
+      name="solverApplications"
+      forceDt="8640.0"
+      target="/Solvers/FlowSolver"/>
+
+    <PeriodicEvent
+      name="restarts"
+      timeFrequency="432000"
+      targetExactTimestep="0"
+      target="/Outputs/restartOutput"/>
+  </Events>
+
+  <NumericalMethods>
+    <FiniteVolume>
+      <TwoPointFluxApproximation
+        name="fluidTPFA"
+        upwindingScheme="HU2PH"/>
+    </FiniteVolume>
+  </NumericalMethods>
+
+  <ElementRegions>
+    <CellElementRegion
+      name="Domain"
+      cellBlocks="{ blocks }"
+      materialList="{ fluid, rock, relperm }"/>
+  </ElementRegions>
+
+  <Constitutive>
+    <!-- InvariantImmiscibleFluid example -->
+    <InvariantImmiscibleFluid
+      name="fluid"
+      componentNames="{ CH4, H2O }"
+      phaseNames="{ gas, water }"
+      componentMolarWeight="{ 1.0, 1.0 }"
+      densities="{ 1000.0, 1000.0 }"
+      viscosities="{ 1.0e-3, 1.0e-3 }"/>
+
+    <CompressibleSolidConstantPermeability
+      name="rock"
+      solidModelName="nullSolid"
+      porosityModelName="rockPorosity"
+      permeabilityModelName="rockPerm"/>
+
+    <NullModel
+      name="nullSolid"/>
+
+    <PressurePorosity
+      name="rockPorosity"
+      defaultReferencePorosity="0.1"
+      referencePressure="0.0"
+      compressibility="0.0"/>
+
+    <ConstantPermeability
+      name="rockPerm"
+      permeabilityComponents="{ 1.0e-13, 1.0e-13, 1.0e-13 }"/>
+
+    <TableRelativePermeability
+      name="relperm"
+      phaseNames="{ gas, water }"
+      wettingNonWettingRelPermTableNames="{ waterRelPermTable,
+                                            gasRelPermTable }"/>      
+      
+  </Constitutive>
+
+  <FieldSpecifications>
+
+    <HydrostaticEquilibrium
+      name="equil"
+      objectPath="ElementRegions"      
+      datumElevation="7"
+      datumPressure="1e7"
+      initialPhaseName="water"
+      componentNames="{ CH4, H2O }"
+      componentFractionVsElevationTableNames="{ initCH4CompFracTable,
+                                                initH2OCompFracTable }"
+      temperatureVsElevationTableName="initTempTable"/> 
+
+    <FieldSpecification
+      name="Porosity"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Domain"
+      fieldName="rockPorosity_referencePorosity"
+      scale="0.1"/>
+
+    <FieldSpecification
+      name="top_pressure"
+      setNames="{ topBC }"
+      objectPath="faceManager"
+      fieldName="pressure"
+      scale="1.0e7" />
+    <FieldSpecification
+      name="top_temperature"
+      setNames="{ topBC }"
+      objectPath="faceManager"
+      fieldName="temperature"
+      scale="300.0" />      
+    <FieldSpecification
+      name="outlet_CH4"
+      setNames="{ topBC }"
+      objectPath="faceManager"
+      fieldName="globalCompFraction"
+      component="0"
+      scale="0.0" />
+    <FieldSpecification
+      name="outlet_H2O"
+      setNames="{ topBC }"
+      objectPath="faceManager"
+      fieldName="globalCompFraction"
+      component="1"
+      scale="1.0" />
+  </FieldSpecifications>
+
+
+  <Functions>
+   <TableFunction
+      name="initH2OCompFracTable"
+      coordinates="{ 0.0, 1.0, 1.0000001, 4.999999, 5.0,  50.0 }"
+      values="{ 1.0, 1.0, 0.3125, 0.3125, 1.0, 1.0 }"/>
+    <TableFunction
+      name="initCH4CompFracTable"
+      coordinates="{ 0.0, 1.0, 1.0000001, 4.999999, 5.0,  50.0 }"
+      values="{ 0.0, 0.0, 0.6875, 0.6875, 0.0, 0.0 }"/>
+    <TableFunction
+      name="initTempTable"
+      coordinates="{ 0.0, 7.0 }"
+      values="{ 300.0, 300.0 }"/>
+    <TableFunction
+      name="waterRelPermTable"
+      coordinates="{ 0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.5, 0.55, 0.6, 0.65, 0.7, 0.75, 0.8, 0.85, 0.9, 0.95, 1.0 }"
+      values="{ 0, 0.0025, 0.01, 0.0225, 0.04, 0.0625, 0.09, 0.1225, 0.16, 0.2025, 0.25, 0.3025, 0.36, 0.4225, 0.49, 0.5625, 0.64, 0.7225, 0.81, 0.9025, 1 }"/>
+    <TableFunction
+      name="gasRelPermTable"
+      coordinates="{ 0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.5, 0.55, 0.6, 0.65, 0.7, 0.75, 0.8, 0.85, 0.9, 0.95, 1.0 }"
+      values="{ 0, 0.0025, 0.01, 0.0225, 0.04, 0.0625, 0.09, 0.1225, 0.16, 0.2025, 0.25, 0.3025, 0.36, 0.4225, 0.49, 0.5625, 0.64, 0.7225, 0.81, 0.9025, 1 }"/>
+    <TableFunction
+      name="jFunctionTable"
+      coordinates="{ 0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.5, 0.55, 0.6, 0.65, 0.7, 0.75, 0.8, 0.85, 0.9, 0.95, 1.0 }"
+      values="{ 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 }"/>
+  </Functions>
+
+
+  <Outputs>
+    <VTK
+      name="vtkOutput_InvariantFluid"/>
+   <Restart
+      name="restartOutput"/>
+  </Outputs>
+
+</Problem>

@@ -3,21 +3,20 @@
 <Problem>
   <Solvers
     gravityVector="{ 0.0, 0.0, -9.81 }">
-    <CompositionalMultiphaseFVM
+    <CompositionalMultiphaseHybridFVM
       name="FlowSolver"
-      discretization="fluidTPFA"
-      formulationType="OverallComposition"
+      discretization="fluidMFD"
       targetRegions="{ Domain }"
       logLevel="3"
       temperature="300">
       <NonlinearSolverParameters
-        newtonTol="1.0e-5"
+        newtonTol="1.0e-4"
         newtonMaxIter="100"
         maxTimeStepCuts="50"
         lineSearchAction="None"/>
       <LinearSolverParameters
         directParallel="0"/>
-    </CompositionalMultiphaseFVM>
+    </CompositionalMultiphaseHybridFVM>
   </Solvers>
   
   <Mesh>
@@ -61,11 +60,12 @@
 
   <NumericalMethods>
     <FiniteVolume>
-      <TwoPointFluxApproximation
-        name="fluidTPFA"
-        upwindingScheme="HU2PH"/>
+      <HybridMimeticDiscretization
+        name="fluidMFD"
+        innerProductType="beiraoDaVeigaLipnikovManzini"/>
     </FiniteVolume>
   </NumericalMethods>
+
 
   <ElementRegions>
     <CellElementRegion
@@ -81,7 +81,7 @@
       componentNames="{ CH4, H2O }"
       phaseNames="{ gas, water }"
       componentMolarWeight="{ 1.0, 1.0 }"
-      densities="{ 550.0, 1000.0 }"
+      densities="{ 1000.0, 1000.0 }"
       viscosities="{ 1.0e-3, 1.0e-3 }"/>
 
     <CompressibleSolidConstantPermeability
