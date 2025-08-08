@@ -910,6 +910,7 @@ real64 PhysicsSolverBase::nonlinearImplicitStep( real64 const & time_n,
       // notify the solver statistics counter that this is a time step cut
       getIterationStats().updateTimeStepCut();
       getIterationStats().writeIterationStatsToTable();
+
     }
   } // end of outer loop (dt chopping strategy)
 
@@ -952,6 +953,7 @@ bool PhysicsSolverBase::solveNonlinearSystem( real64 const & time_n,
 
   for( newtonIter = 0; newtonIter < maxNewtonIter; ++newtonIter )
   {
+
     GEOS_LOG_LEVEL_RANK_0( logInfo::NonlinearSolver,
                            GEOS_FMT( "    Attempt: {:2}, ConfigurationIter: {:2}, NewtonIter: {:2}", dtAttempt, configurationLoopIter, newtonIter ));
 
