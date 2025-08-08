@@ -46,11 +46,9 @@ ConstantPermeability::ConstantPermeability( string const & name, Group * const p
 
 void ConstantPermeability::postInputInitialization()
 {
-  GEOS_ERROR_IF( m_diagonalPermeabilityTensor[0] < 0.0 && m_symmetricFullPermeabilityTensor[0] < 0.0,
-                 "Either a diagonal permeability tensor or a full tensor must be provided." );
-
-  GEOS_ERROR_IF( m_diagonalPermeabilityTensor[0] > 0.0 && m_symmetricFullPermeabilityTensor[0] > 0.0,
-                 "Only one between a diagonal permeability tensor and a full tensor permeability can be provided." );
+  GEOS_ERROR_IF( ( m_diagonalPermeabilityTensor[0] < 0.0 && m_symmetricFullPermeabilityTensor[0] < 0.0 ) ||
+                 ( m_diagonalPermeabilityTensor[0] > 0.0 && m_symmetricFullPermeabilityTensor[0] > 0.0 ),
+                 "Either a diagonal permeability tensor or a symmetric full tensor must be provided." );
 
   if( m_diagonalPermeabilityTensor[0] > 0.0 )
   {
