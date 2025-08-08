@@ -48,7 +48,6 @@
 #include "physicsSolvers/fluidFlow/kernels/compositional/SolidInternalEnergyUpdateKernel.hpp"
 #include "physicsSolvers/fluidFlow/kernels/compositional/HydrostaticPressureKernel.hpp"
 #include "physicsSolvers/fluidFlow/kernels/compositional/StatisticsKernel.hpp"
-#include "physicsSolvers/fluidFlow/kernels/compositional/zFormulation/AccumulationZFormulationKernel.hpp"
 #include "physicsSolvers/fluidFlow/kernels/compositional/zFormulation/PhaseVolumeFractionZFormulationKernel.hpp"
 
 #if defined( __INTEL_COMPILER )
@@ -1466,62 +1465,7 @@ void CompositionalMultiphaseBase::assembleLocalTerms( DomainPartition & domain,
                                                 [&]( localIndex const,
                                                      ElementSubRegionBase const & subRegion )
     {
-      string const dofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
-      string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
-      string const & solidName = subRegion.getReference< string >( viewKeyStruct::solidNamesString() );
-
-      MultiFluidBase const & fluid = getConstitutiveModel< MultiFluidBase >( subRegion, fluidName );
-      CoupledSolidBase const & solid = getConstitutiveModel< CoupledSolidBase >( subRegion, solidName );
-
-      if( m_formulationType == CompositionalMultiphaseFormulationType::OverallComposition )
-      {
-        // isothermal for now
-        isothermalCompositionalMultiphaseBaseKernels::
-          AccumulationZFormulationKernelFactory::
-          createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
-                                                     m_numPhases,
-                                                     dofManager.rankOffset(),
-                                                     kernelFlags,
-                                                     dofKey,
-                                                     subRegion,
-                                                     fluid,
-                                                     solid,
-                                                     localMatrix,
-                                                     localRhs );
-      }
-      else
-      {
-        if( m_isThermal )
-        {
-          thermalCompositionalMultiphaseBaseKernels::
-            AccumulationKernelFactory::
-            createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
-                                                       m_numPhases,
-                                                       dofManager.rankOffset(),
-                                                       kernelFlags,
-                                                       dofKey,
-                                                       subRegion,
-                                                       fluid,
-                                                       solid,
-                                                       localMatrix,
-                                                       localRhs );
-        }
-        else
-        {
-          isothermalCompositionalMultiphaseBaseKernels::
-            AccumulationKernelFactory::
-            createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
-                                                       m_numPhases,
-                                                       dofManager.rankOffset(),
-                                                       kernelFlags,
-                                                       dofKey,
-                                                       subRegion,
-                                                       fluid,
-                                                       solid,
-                                                       localMatrix,
-                                                       localRhs );
-        }
-      }
+      accumulationAssemblyLaunch( dofManager, subRegion, localMatrix, localRhs );
     } );
   } );
 }
