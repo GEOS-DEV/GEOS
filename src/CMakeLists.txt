@@ -160,6 +160,7 @@ if( ENABLE_XML_UPDATES AND ENABLE_MPI AND UNIX AND NOT ENABLE_CUDA AND NOT ENABL
 
   set(SCHEMA_DIR ${CMAKE_SOURCE_DIR}/coreComponents/schema)
   set(SCRIPT_DIR ${CMAKE_SOURCE_DIR}/../scripts)
+  set(SOURCE_DIR "${CMAKE_SOURCE_DIR}/..")
 
   add_custom_target( geosx_generate_schema
                      ALL
@@ -179,7 +180,7 @@ if( ENABLE_XML_UPDATES AND ENABLE_MPI AND UNIX AND NOT ENABLE_CUDA AND NOT ENABL
 
   add_custom_target( geosx_validate_all_xml_files
                      ALL
-                     COMMAND bash ${SCRIPT_DIR}/validateXMLFiles.bash -g ${SCHEMA_DIR}/schema.xsd ${CMAKE_SOURCE_DIR} ${CMAKE_SOURCE_DIR}/../examples ${CMAKE_SOURCE_DIR}/../inputFiles
+                     COMMAND bash ${SCRIPT_DIR}/validateXMLFiles.bash ${SCHEMA_DIR}/schema.xsd ${SOURCE_DIR}/examples ${SOURCE_DIR}/inputFiles
                      WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
                      DEPENDS geosx_generate_schema
                      COMMENT "Validating all XML files in the repository against the schema"
@@ -219,8 +220,8 @@ install( FILES ${CMAKE_BINARY_DIR}/schema.xsd
 ################################
 # Add python environment setup
 ################################
-# message(WARNING "Temporarily changing the geosPythonBranch to bugfix/sherman/fixNumpyProd")
-# set(GEOS_PYTHON_PACKAGES_BRANCH "bugfix/sherman/fixNumpyProd" CACHE STRING "" FORCE)
+#message(WARNING "Temporarily changing the geosPythonBranch to cusini/remove-relative-paths")
+#set(GEOS_PYTHON_PACKAGES_BRANCH "cusini/remove-relative-paths" CACHE STRING "" FORCE)
 
 
 if ( Python3_EXECUTABLE )

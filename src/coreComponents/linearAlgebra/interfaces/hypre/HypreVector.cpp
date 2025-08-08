@@ -102,7 +102,6 @@ void HypreVector::create( localIndex const localSize,
 
   // Set up the parallel and local vector data structures
   m_vec = hypre_ParVectorCreate( comm, globalSize, partitioning );
-  hypre_ParVectorOwnsData( m_vec ) = false;
 
   hypre_Vector * const localVector = hypre_ParVectorLocalVector( m_vec );
   hypre_VectorOwnsData( localVector ) = false;
@@ -161,11 +160,9 @@ void HypreVector::scale( real64 const scalingFactor )
 void HypreVector::reciprocal()
 {
   GEOS_LAI_ASSERT( ready() );
-  arrayView1d< real64 > values = m_values.toView();
-  forAll< hypre::execPolicy >( localSize(), [values] GEOS_HYPRE_DEVICE ( localIndex const i )
-  {
-    values[i] = 1.0 / values[i];
-  } );
+
+  GEOS_LAI_CHECK_ERROR( HYPRE_ParVectorPointwiseInverse( m_vec, &m_vec ) );
+  touch();
 }
 
 real64 HypreVector::dot( HypreVector const & vec ) const
@@ -225,22 +222,24 @@ void HypreVector::axpby( real64 const alpha,
   }
 }
 
-void HypreVector::pointwiseProduct( HypreVector const & x,
-                                    HypreVector & y ) const
+void HypreVector::pointwiseProduct( HypreVector const & x )
 {
   GEOS_LAI_ASSERT( ready() );
   GEOS_LAI_ASSERT( x.ready() );
-  GEOS_LAI_ASSERT( y.ready() );
   GEOS_LAI_ASSERT_EQ( localSize(), x.localSize() );
-  GEOS_LAI_ASSERT_EQ( localSize(), y.localSize() );
 
-  arrayView1d< real64 const > const my_values = m_values.toViewConst();
-  arrayView1d< real64 const > const x_values = x.m_values.toViewConst();
-  arrayView1d< real64 > const y_values = y.m_values.toView();
-  forAll< hypre::execPolicy >( localSize(), [y_values, my_values, x_values] GEOS_HYPRE_DEVICE ( localIndex const i )
-  {
-    y_values[i] = my_values[i] * x_values[i];
-  } );
+  GEOS_LAI_CHECK_ERROR( HYPRE_ParVectorPointwiseProduct( x.m_vec, m_vec, &m_vec ) );
+  touch();
+}
+
+void HypreVector::pointwiseDivide( HypreVector const & x )
+{
+  GEOS_LAI_ASSERT( ready() );
+  GEOS_LAI_ASSERT( x.ready() );
+  GEOS_LAI_ASSERT_EQ( localSize(), x.localSize() );
+
+  GEOS_LAI_CHECK_ERROR( HYPRE_ParVectorPointwiseDivision( x.m_vec, m_vec, &m_vec ) );
+  touch();
 }
 
 real64 HypreVector::norm1() const

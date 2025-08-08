@@ -103,7 +103,7 @@ public:
 private:
 
   /// Table with brine density tabulated as a function of (P,T,sal)
-  TableFunction const * m_waterDensityTable;
+  TableFunction const * m_waterDensityTable = nullptr;
 };
 
 template< int USD1, int USD2, int USD3 >

@@ -62,13 +62,13 @@ public:
                                       real64 const & dt,
                                       integer const cycleNumber,
                                       DomainPartition & domain,
-                                      bool const computeGradient ) override;
+                                      integer const computeGradient ) override;
 
   virtual real64 explicitStepBackward( real64 const & time_n,
                                        real64 const & dt,
                                        integer const cycleNumber,
                                        DomainPartition & domain,
-                                       bool const computeGradient ) override;
+                                       integer const computeGradient ) override;
 
 
   /**
@@ -129,7 +129,7 @@ private:
    * @param mesh mesh of the computational domain
    * @param regionNames name of the region you are currently on
    */
-  virtual void precomputeSourceAndReceiverTerm( MeshLevel & baseMesh, MeshLevel & mesh, arrayView1d< string const > const & regionNames ) override;
+  virtual void precomputeSourceAndReceiverTerm( MeshLevel & baseMesh, MeshLevel & mesh, string_array const & regionNames ) override;
 
   /**
    * @brief Apply free surface condition to the face define in the geometry box from the xml
