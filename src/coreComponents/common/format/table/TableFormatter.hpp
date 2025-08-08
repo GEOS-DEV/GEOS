@@ -34,6 +34,7 @@ class TableFormatter
 {
 
 public:
+
   /// Represent the TableData values
   using RowsCellInput = stdVector< stdVector< TableData::CellData > >;
 
@@ -50,10 +51,18 @@ public:
   /// Represent a table section (title + header or values) layout: view on the data and its layout settings.
   using CellLayoutRows = stdVector< CellLayoutRow >;
 
+  /**
+   * @return The Errors List object
+   */
+  TableErrorListing & getErrorsList() const
+  { return *m_errors; }
+
 protected:
 
   /// Layout for a table
   PreparedTableLayout const m_tableLayout;
+  /// Class used for listing all errors that may have occured during table generation
+  std::unique_ptr< geos::TableErrorListing > m_errors = std::make_unique< geos::TableErrorListing >();
 
   /**
    * @brief Construct a default Table Formatter without layout specification (to only insert data in it,
@@ -103,6 +112,12 @@ public:
   TableCSVFormatter( TableLayout const & tableLayout );
 
   /**
+   * @brief Destroy the Table CSV Formatter object
+   * We launch GEOS_WARNING if we have encountered any errors
+   */
+  ~TableCSVFormatter();
+
+  /**
    * @return The string with all tableColumnData names.
    */
   string headerToString() const;
@@ -150,6 +165,17 @@ public:
   template< typename DATASOURCE >
   void toStream( std::ostream & outputStream, DATASOURCE const & tableData ) const
   { toStreamImpl( outputStream, toString( tableData ) ); }
+
+  /**
+   * @brief Indicate if we print the encountered errors on destruction. Enabled by default.
+   * @param cond The boolean to turn on/off log errors
+   */
+  void showErrors( bool cond )
+  { m_showErrors = cond; }
+
+private:
+  /// Boolean indicating if we show errors on destruction
+  bool m_showErrors = true;
 
 };
 
@@ -231,36 +257,62 @@ private:
    * @param tableData A constant reference to the `TableData` object, which contains the actual data for the table.
    * @param headerCellsLayout A reference to a `CellLayoutRows` where the header cells will be populated.
    * @param dataCellsLayout A reference to a `CellLayoutRows` where the data cells will be populated.
+   * @param errorCellsLayout A reference to a `CellLayoutRows` where the error cells will be populated.
    * @param separatorLine A string that will be used as the table separator line
    */
   void initalizeTableGrids( PreparedTableLayout const & tableLayout,
                             TableData const & tableData,
                             CellLayoutRows & dataCellsLayout,
                             CellLayoutRows & headerCellsLayout,
+                            CellLayoutRows & errorCellsLayout,
                             size_t & tableTotalWidth ) const;
 
   /**
    * @brief Outputs the formatted table to the provided output stream.
    * @param tableLayout The layout of the table
-   * @param tableOutput A reference to an `std::ostringstream` where the formatted table will be written.
+   * @param tableOutput A reference to an `std::ostream` where the formatted table will be written.
    * @param headerCellsLayout The layout of the header rows
    * @param dataCellsLayout The layout of the data rows
+   * @param errorCellsLayout The layout of the error rows
    * @param separatorLine The string to be used as the table separator line
    */
   void outputTable( PreparedTableLayout const & tableLayout,
-                    std::ostringstream & tableOutput,
+                    std::ostream & tableOutput,
                     CellLayoutRows const & headerCellsLayout,
                     CellLayoutRows const & dataCellsLayout,
+                    CellLayoutRows & errorCellsLayout,
                     size_t tableTotalWidth ) const;
+
+  /**
+   * @brief Outputs the formatted table lines to the output stream.
+   * @param tableLayout The layout of the table
+   * @param cellsLayout A collection of rows, each containing a layout of cells to be processed and formatted.
+   * @param tableOutput A reference to an `std::ostream` where the formatted table will be written.
+   */
+  void outputLines( PreparedTableLayout const & tableLayout,
+                    CellLayoutRows const & cellsLayout,
+                    std::ostream & tableOutput ) const;
+
+  /**
+   * @brief Outputs the formatted table lines to the output stream.
+   * @param tableLayout The layout of the table
+   * @param errorCellsLayout The layout of the error rows
+   * @param tableOutput A reference to an `std::ostream` where the formatted table will be written.
+   */
+  void outputErrors( PreparedTableLayout const & tableLayout,
+                     CellLayoutRows & errorCellsLayout,
+                     std::ostream & tableOutput ) const;
 
   /**
    * @brief Populate a grid of CellLayout with the title rows.
    * @param tableLayout The layout of the table, containing information about columns, headers, and their layers.
    * @param headerCellsLayout A reference to the collection of header cells that will be updated with the
    *                          gridified layout.
+   * @param nbVisibleColumn The number of columns that are not hidden
    */
   void populateTitleCellsLayout( PreparedTableLayout const & tableLayout,
-                                 CellLayoutRows & headerCellsLayout ) const;
+                                 CellLayoutRows & headerCellsLayout,
+                                 size_t const nbVisibleColumn ) const;
 
   /**
    * @brief Populate a grid of CellLayout with all visible columns of the given table layout.
@@ -271,32 +323,41 @@ private:
    * @param tableLayout The layout of the table, containing information about columns, headers, and their layers.
    * @param headerCellsLayout A reference to the collection of header cells that will be updated with the
    *                          gridified layout.
-   * @param inputDataColumnsCount The number of input data columns count, helps verifying the number of column.
+   * @param nbVisibleColumn The number of columns that are not hidden
    */
   void populateHeaderCellsLayout( PreparedTableLayout const & tableLayout,
                                   CellLayoutRows & headerCellsLayout,
-                                  size_t inputDataColumnsCount ) const;
+                                  size_t nbVisibleColumn ) const;
   /**
    * @brief Populates the data cells layout based on input data values, as a free layout (no columns layout).
-   * @param tableLayout The layout of the table,
+   * @param tableLayout The layout of the table, containing information about columns, headers, and their layers.
+   * @param dataCellsLayout A reference to the layout for the data cells that will be populated.
+   * @param inputDataValues A 2D vector containing the actual input data values.
+   */
+  void populateDataCellsLayout( PreparedTableLayout const & tableLayout,
+                                CellLayoutRows & dataCellsLayout,
+                                RowsCellInput const & inputDataValues,
+                                size_t const nbVisibleColumn ) const;
+
+  /**
+   * @brief Populates the error cells layout based on input error values
+   * @param tableLayout The layout of the table, containing information about columns, headers, and their layers.
+   * @param errorCellsLayout A reference to the layout for the error cells that will be populated.
+   * @param tableData A constant reference to the `TableData` object, which contains the actual data for the table.
+   */
+  void populateErrorCellsLayout( PreparedTableLayout const & tableLayout,
+                                 CellLayoutRows & errorCellsLayout,
+                                 TableErrorListing const & dataErrors ) const;
+
+  /**
+   * @brief Populates the data cells layout based on input data values, taking into account the columns layout.
+   * @param tableLayout The layout of the table, containing information about columns, headers, and their layers.
    * @param dataCellsLayout A reference to the layout for the data cells that will be populated.
    * @param inputDataValues A 2D vector containing the actual input data values.
    */
   void populateDataCellsLayout( PreparedTableLayout const & tableLayout,
                                 CellLayoutRows & dataCellsLayout,
                                 RowsCellInput const & inputDataValues ) const;
-
-  /**
-   * @brief Populates the data cells layout based on input data values, taking into account the columns layout.
-   * @param tableLayout The layout of the table,
-   * @param dataCellsLayout A reference to the layout for the data cells that will be populated.
-   * @param inputDataValues A 2D vector containing the actual input data values.
-   * @param nbVisibleColumn The number of columns that are not hidden
-   */
-  void populateDataCellsLayout( PreparedTableLayout const & tableLayout,
-                                CellLayoutRows & dataCellsLayout,
-                                RowsCellInput const & inputDataValues,
-                                size_t nbVisibleColumn ) const;
 
   /**
    * @brief Expend the columns width to accomodate with the content of all cells that are not merged.
@@ -338,22 +399,9 @@ private:
    * @param cell The cell to format
    * @param idxLine The current line index used to access the specific content for the cell.
    */
-  void formatCell( std::ostringstream & tableOutput,
+  void formatCell( std::ostream & tableOutput,
                    TableLayout::CellLayout const & cell,
                    size_t idxLine ) const;
-
-  /**
-   * @brief Outputs the formatted table lines to the output stream.
-   * @param tableLayout The layout of the table
-   * @param cellsLayout A collection of rows, each containing a layout of cells to be processed and formatted.
-   * @param tableOutput The output stream
-   * @param nbLinesRow A vector containing the number of sub-lines for each row.
-   * @param sectionType The type of the section being processed (Header, Value, etc.).
-   * @param separatorLine The table separator line string
-   */
-  void outputLines( PreparedTableLayout const & tableLayout,
-                    CellLayoutRows const & cellsLayout,
-                    std::ostringstream & tableOutput ) const;
 };
 
 /**
