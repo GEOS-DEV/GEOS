@@ -2887,11 +2887,12 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
   //#######################################################################################
   if( m_enableCohesiveLaws == 1 )
   {
-    GEOS_LOG_LEVEL_BY_RANK( 1, "Compute reactions due to cohesive laws" );
-    solverProfiling( "Compute reactions due to cohesive laws" );
+
 
     if( m_referenceCohesiveZone == 1 )
     {
+      GEOS_LOG_LEVEL_BY_RANK( 1, "Initialize cohesive zones" );
+      solverProfiling( "Initialize cohesive zones" );
       projectParticleSurfaceNormalsToGrid( domain, particleManager, nodeManager, mesh );
 
       initializeCohesiveReferenceConfiguration( domain,
@@ -2902,6 +2903,8 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
       m_referenceCohesiveZone = 0;
     }
 
+    GEOS_LOG_LEVEL_BY_RANK( 1, "Compute reactions due to cohesive laws" );
+    solverProfiling( "Compute reactions due to cohesive laws" );
     enforceCohesiveLaw( particleManager,
                         nodeManager );
   }
@@ -7977,6 +7980,7 @@ void SolidMechanicsMPM::initializeCohesiveReferenceConfiguration( DomainPartitio
                                                                   MeshLevel & mesh )
 {
   real64 const smallMass = m_smallMass;
+  int const damageFieldPartitioning = m_damageFieldPartitioning;
   int const numVelocityFields = m_numVelocityFields;
   real64 hEl[3] = {0};
   LvArray::tensorOps::copy< 3 >( hEl, m_hEl );
@@ -8022,7 +8026,7 @@ void SolidMechanicsMPM::initializeCohesiveReferenceConfiguration( DomainPartitio
         {
           localIndex const mappedNode = mappedNodes[pp][g];
           localIndex nodeFlag = 0;
-          if( LvArray::tensorOps::l2Norm< 3 >( gridExplicitSurfaceNormal[mappedNode] ) > 1e-12 )
+          if( damageFieldPartitioning == 1 && LvArray::tensorOps::l2Norm< 3 >( gridExplicitSurfaceNormal[mappedNode] ) > 1e-12 )
           {
             nodeFlag = ( LvArray::tensorOps::AiBi< 3 >( gridExplicitSurfaceNormal[mappedNode], particleSurfaceNormal[p] ) < 0.0 ) ? 1 : 0; // 0 for "A" field, 1 for "B" field
           }
@@ -8873,7 +8877,7 @@ void SolidMechanicsMPM::enforceCohesiveLaw( ParticleManager & particleManager,
               }
 
               localIndex const fieldIndex = particleCohesiveFieldMapping[p][g];
-
+              
               if( m_enableCohesiveFailure == 0 || m_cohesiveGridNodeDamages[nodeIndex][fieldIndex] < 1.0 )
               {
                 particleCohesiveZoneFlag[p] = 1; // Reenable particle cohesive flag if any of the cohesive nodes are undamaged
