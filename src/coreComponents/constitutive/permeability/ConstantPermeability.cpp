@@ -44,7 +44,7 @@ ConstantPermeability::ConstantPermeability( string const & name, Group * const p
     setDescription( "xx, yy and zz, xz, yz, xy components of a symmetric permeability tensor." );
 }
 
-void ConstantPermeability::postProcessInput()
+void ConstantPermeability::postInputInitialization()
 {
   GEOS_ERROR_IF( m_diagonalPermeabilityTensor[0] < 0.0 && m_symmetricFullPermeabilityTensor[0] < 0.0,
                  "Either a diagonal permeability tensor or a full tensor must be provided." );
