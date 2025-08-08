@@ -125,6 +125,12 @@ public:
     { return m_lines; }
 
     /**
+     * @return The view on each cell line.
+     */
+    std::vector< string_view > & getLines()
+    { return m_lines; }
+
+    /**
      * @return get the height of the cell (its number of lines).
      */
     size_t getHeight() const
@@ -793,13 +799,24 @@ public:
    * @return The number of visible columns that does not contain child (useful to know the maximum number of
    *         column to show in a given row).
    */
-  size_t getLowermostColumnsCount() const
-  { return m_lowermostColumnCount; }
+  size_t getVisibleLowermostColumnCount() const
+  { return m_visibleLowermostColumnCount; }
+
+  /**
+   * @return The number columns that does not contain child (useful to know the maximum number of
+   *         column to show in a given row).
+   */
+  size_t getTotalLowermostColumnCount() const
+  { return m_totalLowermostColumnCount; }
 
 private:
 
+  // Number of column layers that a table layout has, default is 1;
   size_t m_columnLayersCount;
-  size_t m_lowermostColumnCount;
+  // Numbers of lower most column
+  size_t m_totalLowermostColumnCount;
+// Numbers of lower most column that are visible
+  size_t m_visibleLowermostColumnCount;
 
   /**
    * @brief Recursive part of column layout preparation, see constructor documentation.
@@ -808,7 +825,6 @@ private:
   void prepareLayoutRecusive( stdVector< TableLayout::Column > & columns, size_t level );
 
 };
-
 }
 
 #endif /* GEOS_COMMON_FORMAT_TABLE_TABLELAYOUT_HPP */

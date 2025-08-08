@@ -2284,7 +2284,10 @@ Information output from lower logLevels is added with the desired log level
 		<!--childDirectory => Child directory path-->
 		<xsd:attribute name="childDirectory" type="string" default="" />
 		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
-Information output from lower logLevels is added with the desired log level-->
+Information output from lower logLevels is added with the desired log level
+1
+ - Output timing information
+ - The statistics (minimal, maximal, average and sum) of memory usage of each Umpire memory pool across all ranks.-->
 		<xsd:attribute name="logLevel" type="integer" default="1" />
 		<!--writeCSV => When set to 1, write the same statistics as the 'logLevel' allows to output in a CSV file-->
 		<xsd:attribute name="writeCSV" type="integer" default="1" />
