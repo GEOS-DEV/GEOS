@@ -252,14 +252,14 @@ public:
     auto const subcycling_orig = subcycling;
     if( m_performStressInitialization )
       subcycling = 1;
-
+    std::cout << "checkSequentialConvergence" << std::endl;
     bool isConverged = Base::checkSequentialConvergence( cycleNumber, iter, time_n, dt, domain );
 
     flowSolver()->getConvergenceStats().updateSolverStep( time_n, dt, cycleNumber, iter );
-    flowSolver()->writeStatisticsToTable();
+    flowSolver()->getConvergenceStats().writeConvergenceStatsToTable();
 
     solidMechanicsSolver()->getConvergenceStats().updateSolverStep( time_n, dt, cycleNumber, iter );
-    solidMechanicsSolver()->writeStatisticsToTable();
+    solidMechanicsSolver()->getConvergenceStats().writeConvergenceStatsToTable();
 
 
     // restore original

@@ -306,7 +306,6 @@ bool PhysicsSolverBase::execute( real64 const time_n,
     // increment the cumulative number of nonlinear and linear iterations
     getIterationStats().iterateTimeStepStatistics();
     getIterationStats().writeIterationStatsToTable();
-    getIterationStats().resetSolverLinearTime(); // maybe call it directly in writeIterationStatsToTable
 
     /*
      * Let us check convergence history of previous solve:
@@ -1013,16 +1012,10 @@ bool PhysicsSolverBase::solveNonlinearSystem( real64 const & time_n,
       getConvergenceStats().updateSolverStep( time_n, stepDt, cycleNumber, newtonIter );
       getConvergenceStats().writeConvergenceStatsToTable();
     }
-
     // if the residual norm is less than the Newton tolerance we denote that we have
     // converged and break from the Newton loop immediately.
     if( residualNorm < newtonTol && newtonIter >= minNewtonIter )
     {
-      if( m_writeStatistics >= 2 )
-      {
-        getConvergenceStats().updateSolverStep( time_n, stepDt, cycleNumber, newtonIter );
-        writeStatisticsToTable();
-      }
       isNewtonConverged = true;
       break;
     }

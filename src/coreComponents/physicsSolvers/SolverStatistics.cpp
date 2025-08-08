@@ -171,6 +171,8 @@ void IterationsStatistics::writeIterationStatsToTable()
   m_logStream << m_iterationCSVFormatter->dataToString( m_iterationData );
   m_logStream.flush();
   m_iterationData.clear();
+
+  resetSolverLinearTime();
 }
 
 void IterationsStatistics::outputStatistics()
@@ -217,7 +219,7 @@ void ConvergenceStatistics::writeConvergenceStatsToTable()
   residualsNormCells.emplace_back( TableData::CellData( {CellType::Value,
                                                          GEOS_FMT( "{}", m_dt )} ));
   residualsNormCells.emplace_back( TableData::CellData( {CellType::Value,
-                                                         GEOS_FMT( "{}", m_newtonIter )} ));
+                                                         GEOS_FMT( "{}", m_iteration )} ));
 
   for( auto const & residual : m_residuals )
   {
@@ -232,7 +234,7 @@ void ConvergenceStatistics::writeConvergenceStatsToTable()
 
   if( !m_logStream.is_open() )
   {
-    string_array header = {"Cycle number", "time_n (s)", "dt (s)", "Newton iteration"};
+    string_array header = {"Cycle number", "time_n (s)", "dt (s)", "iteration"};
     for( auto const & residual : m_residuals )
     {
       header.emplace_back( residual.first );
@@ -255,7 +257,7 @@ void ConvergenceStatistics::updateSolverStep( real64 const & time_n, real64 cons
   m_time_n = time_n;
   m_dt = dt;
   m_cycleNumber = cycleNumber;
-  m_newtonIter = newtonIter;
+  m_iteration = newtonIter;
 }
 
 void ConvergenceStatistics::resetResidualsValue()

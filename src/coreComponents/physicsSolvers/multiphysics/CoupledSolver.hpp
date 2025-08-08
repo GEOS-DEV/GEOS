@@ -260,6 +260,11 @@ public:
     {
       real64 const singlePhysicsNorm = solver->calculateResidualNorm( time_n, dt, domain, dofManager, localRhs );
       norm += singlePhysicsNorm * singlePhysicsNorm;
+
+      if( m_writeStatistics >= 2 )
+      {
+        solver->getConvergenceStats().writeConvergenceStatsToTable();
+      }
     } );
 
     return sqrt( norm );
@@ -510,11 +515,10 @@ protected:
 
         forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
         {
-          if( m_writeStatistics >= 2 )
-          {
-            solver->getConvergenceStats().updateSolverStep( time_n, dt, cycleNumber, iter );
-            solver->writeStatisticsToTable();
-          }
+
+          solver->getConvergenceStats().updateSolverStep( time_n, dt, cycleNumber, iter );
+          solver->getConvergenceStats().writeConvergenceStatsToTable();
+
         } );
 
         if( isConverged )

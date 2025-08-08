@@ -668,7 +668,6 @@ real64 SolidMechanicsEmbeddedFractures::calculateFractureResidualNorm( DomainPar
                          GEOS_FMT( "        ( RFracture ) = ( {:4.2e} )", fractureResidualNorm ));
 
   getConvergenceStats().m_residuals["RFracture"] = fractureResidualNorm;
-
   return fractureResidualNorm;
 }
 
