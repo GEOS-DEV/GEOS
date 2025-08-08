@@ -48,8 +48,7 @@
     <VTK
       name="vtkOutput"
       plotFileRoot="kgd_toughness_poroelastic_benchmark"
-      plotLevel="3"
-      parallelThreads="48"/>
+      plotLevel="3"/>
 
     <TimeHistory
       name="timeHistoryOutput"
