@@ -53,7 +53,7 @@ string toBlueprintShape( ElementType const elementType )
   }
 }
 
-static std::vector< int > getBlueprintNodeOrdering( ElementType const elementType )
+static stdVector< int > getBlueprintNodeOrdering( ElementType const elementType )
 {
   // Same as VTK, but kept separate for flexibility
   switch( elementType )
@@ -92,7 +92,7 @@ void reorderElementToNodeMap( CellElementSubRegion const & subRegion, conduit::N
   localIndex const numElems = elemToNodeMap.size( 0 );
   localIndex const numNodesPerElem = elemToNodeMap.size( 1 );
 
-  std::vector< int > const vtkOrdering = getBlueprintNodeOrdering( subRegion.getElementType() );
+  stdVector< int > const vtkOrdering = getBlueprintNodeOrdering( subRegion.getElementType() );
   GEOS_ERROR_IF_NE( localIndex( vtkOrdering.size() ), numNodesPerElem );
 
   constexpr int conduitTypeID = dataRepository::conduitTypeInfo< localIndex >::id;

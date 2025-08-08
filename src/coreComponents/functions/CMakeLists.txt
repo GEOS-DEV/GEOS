@@ -25,6 +25,7 @@ set( functions_headers
      FunctionBase.hpp
      FunctionManager.hpp
      MathOperators.hpp
+     LogLevelsInfo.hpp
      TableFunction.hpp
    )
 

@@ -203,7 +203,7 @@ struct PressureRelationKernel
           localIndex const iwelemControl,
           integer const targetPhaseIndex,
           WellControls const & wellControls,
-          real64 const & timeAtEndOfStep,
+          real64 const & time,
           arrayView1d< globalIndex const > const & wellElemDofNumber,
           arrayView1d< real64 const > const & wellElemGravCoef,
           arrayView1d< localIndex const > const & nextWellElemIndex,
@@ -507,7 +507,7 @@ public:
                       WellElementSubRegion const & subRegion,
                       constitutive::MultiFluidBase const & fluid,
                       WellControls const & wellControls,
-                      real64 const timeAtEndOfStep,
+                      real64 const time,
                       real64 const dt,
                       real64 const minNormalizer )
     : Base( rankOffset,
@@ -523,10 +523,10 @@ public:
     m_iwelemControl( subRegion.getTopWellElementIndex() ),
     m_isProducer( wellControls.isProducer() ),
     m_currentControl( wellControls.getControl() ),
-    m_targetBHP( wellControls.getTargetBHP( timeAtEndOfStep ) ),
-    m_targetTotalRate( wellControls.getTargetTotalRate( timeAtEndOfStep ) ),
-    m_targetPhaseRate( wellControls.getTargetPhaseRate( timeAtEndOfStep ) ),
-    m_targetMassRate( wellControls.getTargetMassRate( timeAtEndOfStep ) ),
+    m_targetBHP( wellControls.getTargetBHP( time ) ),
+    m_targetTotalRate( wellControls.getTargetTotalRate( time ) ),
+    m_targetPhaseRate( wellControls.getTargetPhaseRate( time ) ),
+    m_targetMassRate( wellControls.getTargetMassRate( time ) ),
     m_volume( subRegion.getElementVolume() ),
     m_phaseDens_n( fluid.phaseDensity_n() ),
     m_totalDens_n( fluid.totalDensity_n() )
@@ -705,7 +705,7 @@ public:
    * @param[in] subRegion the well element subregion
    * @param[in] fluid the fluid model
    * @param[in] wellControls the controls
-   * @param[in] timeAtEndOfStep the time at the end of the step (time_n + dt)
+   * @param[in] time the time
    * @param[in] dt the time step size
    * @param[out] residualNorm the residual norm on the subRegion
    */
@@ -720,7 +720,7 @@ public:
                    WellElementSubRegion const & subRegion,
                    constitutive::MultiFluidBase const & fluid,
                    WellControls const & wellControls,
-                   real64 const timeAtEndOfStep,
+                   real64 const time,
                    real64 const dt,
                    real64 const minNormalizer,
                    real64 (& residualNorm)[1] )
@@ -729,7 +729,7 @@ public:
     arrayView1d< integer const > const ghostRank = subRegion.ghostRank();
 
     ResidualNormKernel kernel( rankOffset, localResidual, dofNumber, ghostRank,
-                               numComp, numDof, targetPhaseIndex, subRegion, fluid, wellControls, timeAtEndOfStep, dt, minNormalizer );
+                               numComp, numDof, targetPhaseIndex, subRegion, fluid, wellControls, time, dt, minNormalizer );
     ResidualNormKernel::launchLinf< POLICY >( subRegion.size(), kernel, residualNorm );
   }
 
@@ -787,53 +787,6 @@ public:
 
 };
 
-/******************************** SolutionCheckKernel ********************************/
-
-/**
- * @class SolutionCheckKernelFactory
- */
-class SolutionCheckKernelFactory
-{
-public:
-
-  /**
-   * @brief Create a new kernel and launch
-   * @tparam POLICY the policy used in the RAJA kernel
-   * @param[in] allowCompDensChopping flag to allow the component density chopping
-   * @param[in] scalingFactor the scaling factor
-   * @param[in] rankOffset the rank offset
-   * @param[in] numComp the number of components
-   * @param[in] dofKey the dof key to get dof numbers
-   * @param[in] subRegion the subRegion
-   * @param[in] localSolution the Newton update
-   */
-  template< typename POLICY >
-  static isothermalCompositionalMultiphaseBaseKernels::SolutionCheckKernel::StackVariables
-  createAndLaunch( integer const allowCompDensChopping,
-                   compositionalMultiphaseUtilities::ScalingType const scalingType,
-                   real64 const scalingFactor,
-                   arrayView1d< real64 const > const pressure,
-                   arrayView2d< real64 const, compflow::USD_COMP > const compDens,
-                   arrayView1d< real64 > pressureScalingFactor,
-                   arrayView1d< real64 > compDensScalingFactor,
-                   globalIndex const rankOffset,
-                   integer const numComp,
-                   string const dofKey,
-                   ElementSubRegionBase & subRegion,
-                   arrayView1d< real64 const > const localSolution )
-  {
-
-    isothermalCompositionalMultiphaseBaseKernels::
-      SolutionCheckKernel kernel( allowCompDensChopping, 0, scalingType, scalingFactor,
-                                  pressure, compDens, pressureScalingFactor, compDensScalingFactor, rankOffset,
-                                  numComp, dofKey, subRegion, localSolution );
-    return isothermalCompositionalMultiphaseBaseKernels::
-             SolutionCheckKernel::
-             launch< POLICY >( subRegion.size(), kernel );
-  }
-
-};
-
 /******************************** ElementBasedAssemblyKernel ********************************/
 
 /**
@@ -850,7 +803,6 @@ public:
   using ROFFSET = compositionalMultiphaseWellKernels::RowOffset;
 
   // Well jacobian column and row indicies
-  // tjb  - change NUM_DOF to IS_THERMAL
   using FLUID_PROP_COFFSET = constitutive::multifluid::DerivativeOffsetC< NUM_COMP, IS_THERMAL >;
   using WJ_COFFSET = compositionalMultiphaseWellKernels::ColOffset_WellJac< NUM_COMP, IS_THERMAL >;
   using WJ_ROFFSET = compositionalMultiphaseWellKernels::RowOffset_WellJac< NUM_COMP, IS_THERMAL >;
@@ -1038,9 +990,7 @@ public:
     {
       real64 const phaseAmount = stack.volume * phaseVolFrac[ip] * phaseDens[ip];
       real64 const phaseAmount_n = stack.volume * phaseVolFrac_n[ip] * phaseDens_n[ip];
-      //remove tjb
-      real64 const dPhaseAmount_dP = stack.volume * ( dPhaseVolFrac[ip][Deriv::dP] * phaseDens[ip]
-                                                      + phaseVolFrac[ip] * dPhaseDens[ip][Deriv::dP] );
+
       dPhaseAmount[FLUID_PROP_COFFSET::dP]=stack.volume * ( dPhaseVolFrac[ip][Deriv::dP] * phaseDens[ip]
                                                             + phaseVolFrac[ip] * dPhaseDens[ip][Deriv::dP] );
 
@@ -1056,12 +1006,6 @@ public:
                                                   + phaseDens[ip] * dPhaseVolFrac[ip][Deriv::dC+jc];
         dPhaseAmount[FLUID_PROP_COFFSET::dC+jc] *= stack.volume;
       }
-// tjb- remove when safe
-      for( integer ic = 0; ic < numComp; ic++ )
-      {
-        assert( fabs( dPhaseAmount[FLUID_PROP_COFFSET::dC+ic] -dPhaseAmount_dC[ic] ) < FLT_EPSILON );
-
-      }
       // ic - index of component whose conservation equation is assembled
       // (i.e. row number in local matrix)
       for( integer ic = 0; ic < numComp; ++ic )
@@ -1069,7 +1013,7 @@ public:
         real64 const phaseCompAmount = phaseAmount * phaseCompFrac[ip][ic];
         real64 const phaseCompAmount_n = phaseAmount_n * phaseCompFrac_n[ip][ic];
 
-        real64 const dPhaseCompAmount_dP = dPhaseAmount_dP * phaseCompFrac[ip][ic]
+        real64 const dPhaseCompAmount_dP = dPhaseAmount[FLUID_PROP_COFFSET::dP] * phaseCompFrac[ip][ic]
                                            + phaseAmount * dPhaseCompFrac[ip][ic][Deriv::dP];
 
         stack.localResidual[ic] += phaseCompAmount - phaseCompAmount_n;
@@ -1709,7 +1653,6 @@ public:
     localIndex const iwelemNext = m_nextWellElemIndex[iwelem];
     real64 const currentConnRate = m_connRate[iwelem];
     localIndex iwelemUp = -1;
-
     if( iwelemNext < 0 && !m_isProducer )  // exit connection, injector
     {
       // we still need to define iwelemUp for Jacobian assembly

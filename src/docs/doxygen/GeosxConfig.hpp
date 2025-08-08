@@ -11,8 +11,8 @@
 /// Enables floating point exceptions
 #define GEOS_USE_FPE
 
-/// Enables bounds check in LvArray classes (CMake option ARRAY_BOUNDS_CHECK)
-/* #undef GEOS_USE_ARRAY_BOUNDS_CHECK */
+/// Enables bounds check in LvArray classes (CMake option GEOS_ENABLE_BOUNDS_CHECK)
+/* #undef GEOS_USE_BOUNDS_CHECK */
 
 /// Enables use of Caliper (CMake option ENABLE_CALIPER)
 #define GEOS_USE_CALIPER

@@ -16,8 +16,6 @@
 #include "ParticleRegionBase.hpp"
 
 #include "common/TimingMacros.hpp"
-#include "constitutive/fluid/singlefluid/SingleFluidBase.hpp"
-#include "constitutive/solid/SolidBase.hpp"
 
 
 namespace geos

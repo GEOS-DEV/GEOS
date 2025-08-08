@@ -17,11 +17,11 @@
  * @file WellControls.cpp
  */
 
+#include "LogLevelsInfo.hpp"
 #include "WellControls.hpp"
 #include "WellConstants.hpp"
 #include "dataRepository/InputFlags.hpp"
 #include "functions/FunctionManager.hpp"
-#include "physicsSolvers/fluidFlow/wells/LogLevelsInfo.hpp"
 
 
 namespace geos
@@ -52,8 +52,6 @@ WellControls::WellControls( string const & name, Group * const parent )
   m_statusTable( nullptr )
 {
   setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
-
-  enableLogLevelInput();
 
   registerWrapper( viewKeyStruct::typeString(), &m_type ).
     setInputFlag( InputFlags::REQUIRED ).
@@ -170,6 +168,8 @@ WellControls::WellControls( string const & name, Group * const parent )
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Name of the well status table when the status of the well is a time dependent function. \n"
                     "If the status function evaluates to a positive value at the current time, the well will be open otherwise the well will be shut." );
+
+  addLogLevel< logInfo::WellControl >();
 }
 
 
@@ -347,8 +347,8 @@ void WellControls::postInputInitialization()
   else if( m_targetBHP <= 0.0 && m_targetBHPTableName.empty() )
   {
     m_targetBHP = isProducer() ? WellConstants::defaultProducerBHP : WellConstants::defaultInjectorBHP;
-    GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::WellControl,
-                                GEOS_FMT( "WellControls {}: Setting {}  to default value {}", getDataContext(), viewKeyStruct::targetBHPString(), m_targetBHP ));
+    GEOS_LOG_LEVEL_RANK_0( logInfo::WellControl,
+                           GEOS_FMT( "WellControls {}: Setting {}  to default value {}", getDataContext(), viewKeyStruct::targetBHPString(), m_targetBHP ));
   }
 
   // 6.2) Check incoherent information
@@ -481,6 +481,29 @@ bool WellControls::isWellOpen( real64 const & currentTime ) const
     isOpen = false;
   }
   return isOpen;
+}
+
+void WellControls::setNextDtFromTables( real64 const currentTime, real64 & nextDt )
+{
+  setNextDtFromTable( m_targetBHPTable, currentTime, nextDt );
+  setNextDtFromTable( m_targetMassRateTable, currentTime, nextDt );
+  setNextDtFromTable( m_targetPhaseRateTable, currentTime, nextDt );
+  setNextDtFromTable( m_targetTotalRateTable, currentTime, nextDt );
+  setNextDtFromTable( m_statusTable, currentTime, nextDt );
+}
+
+void WellControls::setNextDtFromTable( TableFunction const * table, real64 const currentTime, real64 & nextDt )
+{
+  if( table )
+  {
+    // small epsilon to make sure we land on the other side of table interval and pick up the right rate
+    real64 const eps = 1e-6;
+    real64 const dtLimit = (table->getCoord( &currentTime, 0, TableFunction::InterpolationType::Upper ) - currentTime) * ( 1.0 + eps );
+    if( dtLimit > eps && dtLimit < nextDt )
+    {
+      nextDt = dtLimit;
+    }
+  }
 }
 
 } //namespace geos

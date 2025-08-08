@@ -28,8 +28,8 @@
 #include "physicsSolvers/solidMechanics/contact/kernels/SolidMechanicsContactFaceBubbleKernels.hpp"
 #include "physicsSolvers/solidMechanics/contact/LogLevelsInfo.hpp"
 #include "physicsSolvers/solidMechanics/contact/ContactFields.hpp"
+#include "physicsSolvers/LogLevelsInfo.hpp"
 
-#include "constitutive/ConstitutiveManager.hpp"
 #include "constitutive/contact/FrictionSelector.hpp"
 
 namespace geos
@@ -90,6 +90,8 @@ SolidMechanicsAugmentedLagrangianContact::SolidMechanicsAugmentedLagrangianConta
   // Set the default linear solver parameters
   LinearSolverParameters & linSolParams = m_linearSolverParameters.get();
   addLogLevel< logInfo::Configuration >();
+  addLogLevel< logInfo::Convergence >();
+  addLogLevel< logInfo::Tolerance >();
 
   // Strategy: AMG with separate displacement components
   linSolParams.dofsPerNode = 3;
@@ -99,7 +101,6 @@ SolidMechanicsAugmentedLagrangianContact::SolidMechanicsAugmentedLagrangianConta
   // Strategy: static condensation of bubble dofs using MGR
   linSolParams.mgr.strategy = LinearSolverParameters::MGR::StrategyType::augmentedLagrangianContactMechanics;
   linSolParams.mgr.separateComponents = true;
-
 }
 
 SolidMechanicsAugmentedLagrangianContact::~SolidMechanicsAugmentedLagrangianContact()
@@ -107,7 +108,6 @@ SolidMechanicsAugmentedLagrangianContact::~SolidMechanicsAugmentedLagrangianCont
 
 void SolidMechanicsAugmentedLagrangianContact::registerDataOnMesh( dataRepository::Group & meshBodies )
 {
-
   ContactSolverBase::registerDataOnMesh( meshBodies );
 
   forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
@@ -133,31 +133,31 @@ void SolidMechanicsAugmentedLagrangianContact::registerDataOnMesh( dataRepositor
         reference().resizeDimension< 1 >( 3 );
 
       // Register the rotation matrix
-      subRegion.registerField< contact::rotationMatrix >( this->getName() ).
+      subRegion.registerField< contact::rotationMatrix >( getName() ).
         reference().resizeDimension< 1, 2 >( 3, 3 );
 
       // Register the penalty coefficients for the iterative procedure
-      subRegion.registerField< contact::iterativePenalty >( this->getName() ).
+      subRegion.registerField< contact::iterativePenalty >( getName() ).
         reference().resizeDimension< 1 >( 5 );
 
       subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::normalTractionToleranceString() ).
         setPlotLevel( PlotLevel::NOPLOT ).
-        setRegisteringObjects( this->getName()).
+        setRegisteringObjects( getName()).
         setDescription( "An array that holds the normal traction tolerance." );
 
       subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::normalDisplacementToleranceString() ).
         setPlotLevel( PlotLevel::NOPLOT ).
-        setRegisteringObjects( this->getName()).
+        setRegisteringObjects( getName()).
         setDescription( "An array that holds the normal displacement tolerance." );
 
       subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::slidingToleranceString() ).
         setPlotLevel( PlotLevel::NOPLOT ).
-        setRegisteringObjects( this->getName()).
+        setRegisteringObjects( getName()).
         setDescription( "An array that holds the sliding tolerance." );
 
       subRegion.registerWrapper< array2d< real64 > >( viewKeyStruct::dispJumpUpdPenaltyString() ).
         setPlotLevel( PlotLevel::NOPLOT ).
-        setRegisteringObjects( this->getName()).
+        setRegisteringObjects( getName()).
         setDescription( "An array that stores the displacement jumps used to update the penalty coefficients." ).
         reference().resizeDimension< 1 >( 3 );
 
@@ -424,12 +424,12 @@ void SolidMechanicsAugmentedLagrangianContact::assembleSystem( real64 const time
         real64 maxTraction = finiteElement::
                                interfaceBasedKernelApplication
                              < parallelDevicePolicy< >,
-                               constitutive::CoulombFriction >( mesh,
-                                                                fractureRegionName,
-                                                                faceElementList,
-                                                                subRegionFE,
-                                                                viewKeyStruct::frictionLawNameString(),
-                                                                kernelFactory );
+                               CoulombFriction >( mesh,
+                                                  fractureRegionName,
+                                                  faceElementList,
+                                                  subRegionFE,
+                                                  viewKeyStruct::frictionLawNameString(),
+                                                  kernelFactory );
 
         GEOS_UNUSED_VAR( maxTraction );
 
@@ -448,12 +448,12 @@ void SolidMechanicsAugmentedLagrangianContact::assembleSystem( real64 const time
         real64 maxTraction = finiteElement::
                                interfaceBasedKernelApplication
                              < parallelDevicePolicy< >,
-                               constitutive::CoulombFriction >( mesh,
-                                                                fractureRegionName,
-                                                                faceElementList,
-                                                                subRegionFE,
-                                                                viewKeyStruct::frictionLawNameString(),
-                                                                kernelFactory );
+                               CoulombFriction >( mesh,
+                                                  fractureRegionName,
+                                                  faceElementList,
+                                                  subRegionFE,
+                                                  viewKeyStruct::frictionLawNameString(),
+                                                  kernelFactory );
 
         GEOS_UNUSED_VAR( maxTraction );
       }
@@ -479,12 +479,12 @@ void SolidMechanicsAugmentedLagrangianContact::assembleSystem( real64 const time
         real64 maxTraction = finiteElement::
                                interfaceBasedKernelApplication
                              < parallelDevicePolicy< >,
-                               constitutive::CoulombFriction >( mesh,
-                                                                fractureRegionName,
-                                                                faceElementList,
-                                                                subRegionFE,
-                                                                viewKeyStruct::frictionLawNameString(),
-                                                                kernelFactory );
+                               CoulombFriction >( mesh,
+                                                  fractureRegionName,
+                                                  faceElementList,
+                                                  subRegionFE,
+                                                  viewKeyStruct::frictionLawNameString(),
+                                                  kernelFactory );
 
         GEOS_UNUSED_VAR( maxTraction );
 
@@ -503,12 +503,12 @@ void SolidMechanicsAugmentedLagrangianContact::assembleSystem( real64 const time
         real64 maxTraction = finiteElement::
                                interfaceBasedKernelApplication
                              < parallelDevicePolicy< >,
-                               constitutive::CoulombFriction >( mesh,
-                                                                fractureRegionName,
-                                                                faceElementList,
-                                                                subRegionFE,
-                                                                viewKeyStruct::frictionLawNameString(),
-                                                                kernelFactory );
+                               CoulombFriction >( mesh,
+                                                  fractureRegionName,
+                                                  faceElementList,
+                                                  subRegionFE,
+                                                  viewKeyStruct::frictionLawNameString(),
+                                                  kernelFactory );
 
         GEOS_UNUSED_VAR( maxTraction );
       }
@@ -545,7 +545,7 @@ void SolidMechanicsAugmentedLagrangianContact::assembleSystem( real64 const time
     real64 maxTraction = finiteElement::
                            regionBasedKernelApplication
                          < parallelDevicePolicy< >,
-                           constitutive::ElasticIsotropic,
+                           ElasticIsotropic,
                            CellElementSubRegion >( mesh,
                                                    regionNames,
                                                    getDiscretizationName(),
@@ -770,12 +770,12 @@ void SolidMechanicsAugmentedLagrangianContact::applySystemSolution( DofManager c
       real64 maxTraction = finiteElement::
                              interfaceBasedKernelApplication
                            < parallelDevicePolicy< >,
-                             constitutive::NullModel >( mesh,
-                                                        fractureRegionName,
-                                                        faceElementList,
-                                                        subRegionFE,
-                                                        "",
-                                                        kernelFactory );
+                             NullModel >( mesh,
+                                          fractureRegionName,
+                                          faceElementList,
+                                          subRegionFE,
+                                          "",
+                                          kernelFactory );
 
       GEOS_UNUSED_VAR( maxTraction );
 
@@ -962,11 +962,11 @@ bool SolidMechanicsAugmentedLagrangianContact::updateConfiguration( DomainPartit
 
   int hasConfigurationConvergedGlobally = (totCondNotConv == 0) ? true : false;
 
-  GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::Convergence,
-                              GEOS_FMT( "  ALM convergence summary:"
-                                        " converged: {:6} | stick & gn>0: {:6} | compenetration:  {:6} | stick & gt>lim:  {:6} | tau>tauLim:  {:6}\n",
-                                        globalCondConv[0], globalCondConv[1], globalCondConv[2],
-                                        globalCondConv[3], globalCondConv[4] ));
+  GEOS_LOG_LEVEL_RANK_0( logInfo::Convergence,
+                         GEOS_FMT( "  ALM convergence summary:"
+                                   " converged: {:6} | stick & gn>0: {:6} | compenetration:  {:6} | stick & gt>lim:  {:6} | tau>tauLim:  {:6}\n",
+                                   globalCondConv[0], globalCondConv[1], globalCondConv[2],
+                                   globalCondConv[3], globalCondConv[4] ));
 
   if( hasConfigurationConvergedGlobally )
   {
@@ -1149,7 +1149,7 @@ void SolidMechanicsAugmentedLagrangianContact::updateStickSlipList( DomainPartit
       this->m_faceTypesToFaceElementsStick[meshName][finiteElementName] =  stickList;
       this->m_faceTypesToFaceElementsSlip[meshName][finiteElementName]  =  slipList;
 
-      GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::Configuration, GEOS_FMT( "# stick elements: {}, # slip elements: {}", nStick, nSlip ))
+      GEOS_LOG_LEVEL_RANK_0( logInfo::Configuration, GEOS_FMT( "# stick elements: {}, # slip elements: {}", nStick, nSlip ))
     } );
   } );
 
@@ -1835,7 +1835,7 @@ void SolidMechanicsAugmentedLagrangianContact::computeTolerances( DomainPartitio
             normalTractionTolerance[kfe] = m_tolNormalTracFac * (averageConstrainedModulus / averageBoxSize0) *
                                            (normalDisplacementTolerance[kfe]);
 
-            GEOS_LOG_LEVEL( 2,
+            GEOS_LOG_LEVEL( logInfo::Tolerance,
                             GEOS_FMT( "kfe: {}, normalDisplacementTolerance: {}, slidingTolerance: {}, normalTractionTolerance: {}",
                                       kfe, normalDisplacementTolerance[kfe], slidingTolerance[kfe], normalTractionTolerance[kfe] ));
 

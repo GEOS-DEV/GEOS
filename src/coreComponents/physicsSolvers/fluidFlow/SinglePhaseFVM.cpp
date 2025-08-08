@@ -20,17 +20,17 @@
 #include "SinglePhaseFVM.hpp"
 
 #include "common/TimingMacros.hpp"
-#include "constitutive/fluid/singlefluid/SingleFluidSelector.hpp"
 #include "constitutive/permeability/PermeabilityFields.hpp"
 #include "constitutive/ConstitutivePassThru.hpp"
 #include "discretizationMethods/NumericalMethodsManager.hpp"
-#include "mainInterface/ProblemManager.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "finiteVolume/BoundaryStencil.hpp"
 #include "finiteVolume/FiniteVolumeManager.hpp"
 #include "finiteVolume/FluxApproximationBase.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
 #include "fieldSpecification/AquiferBoundaryCondition.hpp"
+#include "fieldSpecification/LogLevelsInfo.hpp"
+#include "physicsSolvers/LogLevelsInfo.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBaseFields.hpp"
 #include "physicsSolvers/fluidFlow/kernels/singlePhase/ResidualNormKernel.hpp"
@@ -54,6 +54,7 @@ namespace geos
 
 using namespace dataRepository;
 using namespace constitutive;
+using namespace fields;
 using namespace singlePhaseBaseKernels;
 using namespace singlePhaseFVMKernels;
 
@@ -61,7 +62,9 @@ template< typename BASE >
 SinglePhaseFVM< BASE >::SinglePhaseFVM( const string & name,
                                         Group * const parent ):
   BASE( name, parent )
-{}
+{
+  BASE::template addLogLevel< logInfo::Convergence >();
+}
 
 template< typename BASE >
 void SinglePhaseFVM< BASE >::initializePreSubGroups()
@@ -210,8 +213,8 @@ real64 SinglePhaseFVM< BASE >::calculateResidualNorm( real64 const & GEOS_UNUSED
     }
     residualNorm = sqrt( globalResidualNorm[0] * globalResidualNorm[0] + globalResidualNorm[1] * globalResidualNorm[1] );
 
-    GEOS_LOG_LEVEL_INFO_RANK_0_NLR( logInfo::Convergence, GEOS_FMT( "        ( R{} ) = ( {:4.2e} )        ( Renergy ) = ( {:4.2e} )",
-                                                                    FlowSolverBase::coupledSolverAttributePrefix(), globalResidualNorm[0], globalResidualNorm[1] ));
+    GEOS_LOG_LEVEL_RANK_0_NLR( logInfo::Convergence, GEOS_FMT( "        ( R{} ) = ( {:4.2e} )        ( Renergy ) = ( {:4.2e} )",
+                                                               FlowSolverBase::coupledSolverAttributePrefix(), globalResidualNorm[0], globalResidualNorm[1] ));
   }
   else
   {
@@ -225,8 +228,8 @@ real64 SinglePhaseFVM< BASE >::calculateResidualNorm( real64 const & GEOS_UNUSED
       physicsSolverBaseKernels::L2ResidualNormHelper::computeGlobalNorm( localResidualNorm[0], localResidualNormalizer[0], residualNorm );
     }
 
-    GEOS_LOG_LEVEL_INFO_RANK_0_NLR( logInfo::Convergence,
-                                    GEOS_FMT( "        ( R{} ) = ( {:4.2e} )", FlowSolverBase::coupledSolverAttributePrefix(), residualNorm ));
+    GEOS_LOG_LEVEL_RANK_0_NLR( logInfo::Convergence,
+                               GEOS_FMT( "        ( R{} ) = ( {:4.2e} )", FlowSolverBase::coupledSolverAttributePrefix(), residualNorm ));
   }
   return residualNorm;
 }
@@ -247,13 +250,13 @@ void SinglePhaseFVM< BASE >::applySystemSolution( DofManager const & dofManager,
 
     dofManager.addVectorToField( localSolution,
                                  BASE::viewKeyStruct::elemDofFieldString(),
-                                 fields::flow::pressure::key(),
+                                 flow::pressure::key(),
                                  scalingFactor,
                                  pressureMask );
 
     dofManager.addVectorToField( localSolution,
                                  BASE::viewKeyStruct::elemDofFieldString(),
-                                 fields::flow::temperature::key(),
+                                 flow::temperature::key(),
                                  scalingFactor,
                                  temperatureMask );
   }
@@ -261,7 +264,7 @@ void SinglePhaseFVM< BASE >::applySystemSolution( DofManager const & dofManager,
   {
     dofManager.addVectorToField( localSolution,
                                  BASE::viewKeyStruct::elemDofFieldString(),
-                                 fields::flow::pressure::key(),
+                                 flow::pressure::key(),
                                  scalingFactor );
   }
 
@@ -269,11 +272,11 @@ void SinglePhaseFVM< BASE >::applySystemSolution( DofManager const & dofManager,
                                                                       MeshLevel & mesh,
                                                                       string_array const & regionNames )
   {
-    std::vector< string > fields{ fields::flow::pressure::key() };
+    stdVector< string > fields{ flow::pressure::key() };
 
     if( m_isThermal )
     {
-      fields.emplace_back( fields::flow::temperature::key() );
+      fields.emplace_back( flow::temperature::key() );
     }
 
     FieldIdentifiers fieldsToBeSync;
@@ -417,16 +420,16 @@ void SinglePhaseFVM< SinglePhaseProppantBase >::assembleFluxTerms( real64 const 
                                                                      dofManager.rankOffset(),
                                                                      elemDofNumber.toNestedViewConst(),
                                                                      flowAccessors.get< fields::ghostRank >(),
-                                                                     flowAccessors.get< fields::flow::pressure >(),
-                                                                     flowAccessors.get< fields::flow::gravityCoefficient >(),
+                                                                     flowAccessors.get< flow::pressure >(),
+                                                                     flowAccessors.get< flow::gravityCoefficient >(),
                                                                      fluidAccessors.get< fields::singlefluid::density >(),
-                                                                     fluidAccessors.get< fields::singlefluid::dDensity_dPressure >(),
-                                                                     flowAccessors.get< fields::flow::mobility >(),
-                                                                     flowAccessors.get< fields::flow::dMobility_dPressure >(),
-                                                                     permAccessors.get< fields::permeability::permeability >(),
-                                                                     permAccessors.get< fields::permeability::dPerm_dPressure >(),
-                                                                     permAccessors.get< fields::permeability::dPerm_dDispJump >(),
-                                                                     permAccessors.get< fields::permeability::permeabilityMultiplier >(),
+                                                                     fluidAccessors.get< fields::singlefluid::dDensity >(),
+                                                                     flowAccessors.get< flow::mobility >(),
+                                                                     flowAccessors.get< flow::dMobility >(),
+                                                                     permAccessors.get< permeability::permeability >(),
+                                                                     permAccessors.get< permeability::dPerm_dPressure >(),
+                                                                     permAccessors.get< permeability::dPerm_dDispJump >(),
+                                                                     permAccessors.get< permeability::permeabilityMultiplier >(),
                                                                      this->gravityVector(),
                                                                      localMatrix,
                                                                      localRhs );
@@ -685,7 +688,7 @@ void SinglePhaseFVM< BASE >::applyFaceDirichletBC( real64 const time_n,
       // Take BCs defined for "pressure" field and apply values to "facePressure"
       fsManager.apply< FaceManager >( time_n + dt,
                                       mesh,
-                                      fields::flow::pressure::key(),
+                                      flow::pressure::key(),
                                       [&] ( FieldSpecificationBase const & fs,
                                             string const & setName,
                                             SortedArrayView< localIndex const > const & targetSet,
@@ -694,12 +697,14 @@ void SinglePhaseFVM< BASE >::applyFaceDirichletBC( real64 const time_n,
       {
         BoundaryStencil const & stencil = fluxApprox.getStencil< BoundaryStencil >( mesh, setName );
 
-        if( fs.getLogLevel() >= 1 && m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
+        if( m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
         {
           globalIndex const numTargetFaces = MpiWrapper::sum< globalIndex >( stencil.size() );
-          GEOS_LOG_RANK_0( GEOS_FMT( faceBcLogMessage,
-                                     this->getName(), time_n+dt, fs.getCatalogName(), fs.getName(),
-                                     setName, targetGroup.getName(), numTargetFaces ) );
+          GEOS_LOG_LEVEL_RANK_0_ON_GROUP( logInfo::FaceBoundaryCondition,
+                                          GEOS_FMT( faceBcLogMessage,
+                                                    this->getName(), time_n+dt, fs.getCatalogName(), fs.getName(),
+                                                    setName, targetGroup.getName(), numTargetFaces ),
+                                          fs );
         }
 
         if( stencil.size() == 0 )
@@ -713,13 +718,13 @@ void SinglePhaseFVM< BASE >::applyFaceDirichletBC( real64 const time_n,
                             parallelDevicePolicy<> >( targetSet,
                                                       time_n + dt,
                                                       targetGroup,
-                                                      fields::flow::facePressure::key() );
+                                                      flow::facePressure::key() );
       } );
 
       // Take BCs defined for "temperature" field and apply values to "faceTemperature"
       fsManager.apply< FaceManager >( time_n + dt,
                                       mesh,
-                                      fields::flow::temperature::key(),
+                                      flow::temperature::key(),
                                       [&] ( FieldSpecificationBase const & fs,
                                             string const & setName,
                                             SortedArrayView< localIndex const > const & targetSet,
@@ -728,12 +733,13 @@ void SinglePhaseFVM< BASE >::applyFaceDirichletBC( real64 const time_n,
       {
         BoundaryStencil const & stencil = fluxApprox.getStencil< BoundaryStencil >( mesh, setName );
 
-        if( fs.getLogLevel() >= 1 && m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
+        if( m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
         {
           globalIndex const numTargetFaces = MpiWrapper::sum< globalIndex >( stencil.size() );
-          GEOS_LOG_RANK_0( GEOS_FMT( faceBcLogMessage,
-                                     this->getName(), time_n+dt, fs.getCatalogName(), fs.getName(),
-                                     setName, targetGroup.getName(), numTargetFaces ) );
+          GEOS_LOG_LEVEL_RANK_0_ON_GROUP( logInfo::FaceBoundaryCondition, GEOS_FMT( faceBcLogMessage,
+                                                                                    this->getName(), time_n+dt, fs.getCatalogName(), fs.getName(),
+                                                                                    setName, targetGroup.getName(), numTargetFaces ),
+                                          fs );
         }
 
         if( stencil.size() == 0 )
@@ -747,7 +753,7 @@ void SinglePhaseFVM< BASE >::applyFaceDirichletBC( real64 const time_n,
                             parallelDevicePolicy<> >( targetSet,
                                                       time_n + dt,
                                                       targetGroup,
-                                                      fields::flow::faceTemperature::key() );
+                                                      flow::faceTemperature::key() );
 
       } );
 
@@ -788,7 +794,7 @@ void SinglePhaseFVM< BASE >::applyFaceDirichletBC( real64 const time_n,
       // Take BCs defined for "pressure" field and apply values to "facePressure"
       fsManager.apply< FaceManager >( time_n + dt,
                                       mesh,
-                                      fields::flow::pressure::key(),
+                                      flow::pressure::key(),
                                       [&] ( FieldSpecificationBase const & fs,
                                             string const & setName,
                                             SortedArrayView< localIndex const > const & targetSet,
@@ -797,12 +803,14 @@ void SinglePhaseFVM< BASE >::applyFaceDirichletBC( real64 const time_n,
       {
         BoundaryStencil const & stencil = fluxApprox.getStencil< BoundaryStencil >( mesh, setName );
 
-        if( fs.getLogLevel() >= 1 && m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
+        if( m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
         {
           globalIndex const numTargetFaces = MpiWrapper::sum< globalIndex >( stencil.size() );
-          GEOS_LOG_RANK_0( GEOS_FMT( faceBcLogMessage,
-                                     this->getName(), time_n+dt, fs.getCatalogName(), fs.getName(),
-                                     setName, targetGroup.getName(), numTargetFaces ) );
+          GEOS_LOG_LEVEL_RANK_0_ON_GROUP( logInfo::FaceBoundaryCondition,
+                                          GEOS_FMT( faceBcLogMessage,
+                                                    this->getName(), time_n+dt, fs.getCatalogName(), fs.getName(),
+                                                    setName, targetGroup.getName(), numTargetFaces ),
+                                          fs );
         }
 
         if( stencil.size() == 0 )
@@ -815,7 +823,7 @@ void SinglePhaseFVM< BASE >::applyFaceDirichletBC( real64 const time_n,
                             parallelDevicePolicy<> >( targetSet,
                                                       time_n + dt,
                                                       targetGroup,
-                                                      fields::flow::facePressure::key() );
+                                                      flow::facePressure::key() );
 
 
         // TODO: currently we just use model from the first cell in this stencil
@@ -914,11 +922,11 @@ void SinglePhaseFVM<>::applyAquiferBC( real64 const time,
                                                       flowAccessors.get< fields::ghostRank >(),
                                                       aquiferBCWrapper,
                                                       aquiferDens,
-                                                      flowAccessors.get< fields::flow::pressure >(),
-                                                      flowAccessors.get< fields::flow::pressure_n >(),
-                                                      flowAccessors.get< fields::flow::gravityCoefficient >(),
+                                                      flowAccessors.get< flow::pressure >(),
+                                                      flowAccessors.get< flow::pressure_n >(),
+                                                      flowAccessors.get< flow::gravityCoefficient >(),
                                                       fluidAccessors.get< fields::singlefluid::density >(),
-                                                      fluidAccessors.get< fields::singlefluid::dDensity_dPressure >(),
+                                                      fluidAccessors.get< fields::singlefluid::dDensity >(),
                                                       time,
                                                       dt,
                                                       localMatrix.toViewConstSizes(),

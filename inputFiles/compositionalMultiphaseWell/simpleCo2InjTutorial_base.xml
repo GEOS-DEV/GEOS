@@ -97,7 +97,7 @@
 
     <PressurePorosity
       name="rockPorosity"
-      defaultReferencePorosity="0.1"
+      defaultReferencePorosity="0.05"
       referencePressure="1.0e7"
       compressibility="4.5e-10"/>
 
@@ -144,7 +144,7 @@
       setNames="{ all }"
       objectPath="ElementRegions/reservoir"
       fieldName="rockPerm_permeability"
-      scale="3e-15"
+      scale="1.5e-15"
       functionName="permzFunc"/>
 
     <FieldSpecification

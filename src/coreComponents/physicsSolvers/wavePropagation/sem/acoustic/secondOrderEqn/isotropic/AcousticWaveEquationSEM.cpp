@@ -34,6 +34,7 @@
 #include "events/EventManager.hpp"
 #include "AcousticPMLSEMKernel.hpp"
 #include "physicsSolvers/wavePropagation/shared/PrecomputeSourcesAndReceiversKernel.hpp"
+#include "physicsSolvers/wavePropagation/LogLevelsInfo.hpp"
 
 namespace geos
 {
@@ -52,6 +53,7 @@ AcousticWaveEquationSEM::AcousticWaveEquationSEM( const std::string & name,
     setSizedFromParent( 0 ).
     setDescription( "Pressure value at each receiver for each timestep" );
 
+  addLogLevel< logInfo::PMLParameters >();
 }
 
 AcousticWaveEquationSEM::~AcousticWaveEquationSEM()
@@ -84,6 +86,14 @@ void AcousticWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
                                acousticfields::StiffnessVector,
                                acousticfields::AcousticFreeSurfaceNodeIndicator >( getName() );
 
+    if( m_attenuationType == WaveSolverUtils::AttenuationType::sls )
+    {
+      integer l = m_slsReferenceAngularFrequencies.size( 0 );
+      nodeManager.registerField< acousticfields::DivPsi,
+                                 acousticfields::StiffnessVectorA >( getName() );
+      nodeManager.getField< acousticfields::DivPsi >().resizeDimension< 1 >( l );
+    }
+
     /// register  PML auxiliary variables only when a PML is specified in the xml
     if( m_usePML )
     {
@@ -106,6 +116,10 @@ void AcousticWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
       subRegion.registerField< acousticfields::AcousticVelocity >( getName() );
       subRegion.registerField< acousticfields::AcousticDensity >( getName() );
       subRegion.registerField< acousticfields::PartialGradient >( getName() );
+      if( m_attenuationType == WaveSolverUtils::AttenuationType::sls )
+      {
+        subRegion.registerField< acousticfields::AcousticQualityFactor >( getName() );
+      }
       subRegion.registerField< acousticfields::PartialGradient2 >( getName() );
     } );
 
@@ -357,11 +371,15 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
                                                                              velocity,
                                                                              density,
                                                                              damping );
-
-
       } );
     } );
   } );
+
+  // check anelasticity coefficient and/or compute it if needed
+  if( m_attenuationType == WaveSolverUtils::AttenuationType::sls )
+  {
+    initializeAnelasticityCoefficients< acousticfields::AcousticQualityFactor >( domain );
+  }
 
   if( m_timestepStabilityLimit==1 )
   {
@@ -797,7 +815,7 @@ void AcousticWaveEquationSEM::initializePML()
     /// so it can be used by the PML application
     indicatorPML.zero();
 
-    GEOS_LOG_LEVEL_RANK_0( 1,
+    GEOS_LOG_LEVEL_RANK_0( logInfo::PMLParameters,
                            "PML parameters are: \n"
                            << "\t inner boundaries xMin = "<<param.xMinPML<<"\n"
                            << "\t inner boundaries xMax = "<<param.xMaxPML<<"\n"
@@ -916,7 +934,7 @@ real64 AcousticWaveEquationSEM::explicitStepForward( real64 const & time_n,
                                                      real64 const & dt,
                                                      integer cycleNumber,
                                                      DomainPartition & domain,
-                                                     bool computeGradient )
+                                                     integer computeGradient )
 {
   real64 dtCompute = explicitStepInternal( time_n, dt, cycleNumber, domain );
 
@@ -987,7 +1005,7 @@ real64 AcousticWaveEquationSEM::explicitStepBackward( real64 const & time_n,
                                                       real64 const & dt,
                                                       integer cycleNumber,
                                                       DomainPartition & domain,
-                                                      bool computeGradient )
+                                                      integer computeGradient )
 {
   real64 dtCompute = explicitStepInternal( time_n, dt, cycleNumber, domain );
   forDiscretizationOnMeshTargets( domain.getMeshBodies(),
@@ -1013,7 +1031,7 @@ real64 AcousticWaveEquationSEM::explicitStepBackward( real64 const & time_n,
     real64 const & maxTime = event.getReference< real64 >( EventManager::viewKeyStruct::maxTimeString() );
     int const maxCycle = int(round( maxTime / dt ));
 
-    if( computeGradient && cycleNumber < maxCycle )
+    if( computeGradient > 0 && cycleNumber < maxCycle )
     {
       ElementRegionManager & elemManager = mesh.getElemManager();
 
@@ -1051,7 +1069,7 @@ real64 AcousticWaveEquationSEM::explicitStepBackward( real64 const & time_n,
         arrayView1d< integer const > const elemGhostRank = elementSubRegion.ghostRank();
         GEOS_MARK_SCOPE ( updatePartialGradient );
 
-        //COMPUTE GRADIENTS with respect to K=1/rho*c2 (grad) and b=1/rho (grad2)
+        //COMPUTE GRADIENTS or imaging condition with respect to K=1/rho*c2 (grad) and b=1/rho (grad2)
         finiteElement::FiniteElementBase const &
         fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
 
@@ -1059,16 +1077,30 @@ real64 AcousticWaveEquationSEM::explicitStepBackward( real64 const & time_n,
         {
           using FE_TYPE = TYPEOFREF( finiteElement );
 
-          AcousticMatricesSEM::GradientKappaBuoyancy< FE_TYPE > kernelG( finiteElement );
-          kernelG.template computeGradient< EXEC_POLICY, ATOMIC_POLICY >( elementSubRegion.size(),
-                                                                          nodeCoords,
-                                                                          elemsToNodes,
-                                                                          elemGhostRank,
-                                                                          p_nm1,
-                                                                          p_n,
-                                                                          p_forward,
-                                                                          grad,
-                                                                          grad2 );
+          if( computeGradient == 1 )
+          {
+            AcousticMatricesSEM::GradientKappaBuoyancy< FE_TYPE > kernelG( finiteElement );
+            kernelG.template computeGradient< EXEC_POLICY, ATOMIC_POLICY >( elementSubRegion.size(),
+                                                                            nodeCoords,
+                                                                            elemsToNodes,
+                                                                            elemGhostRank,
+                                                                            p_nm1,
+                                                                            p_n,
+                                                                            p_forward,
+                                                                            grad,
+                                                                            grad2 );
+          }
+          else if( computeGradient == 2 )
+          {
+            AcousticMatricesSEM::ImagingCondition< FE_TYPE > kernelI( finiteElement );
+            kernelI.template computeImagingCondition< EXEC_POLICY, ATOMIC_POLICY >( elementSubRegion.size(),
+                                                                                    nodeCoords,
+                                                                                    elemsToNodes,
+                                                                                    elemGhostRank,
+                                                                                    p_n,
+                                                                                    p_forward,
+                                                                                    grad );
+          }
 
 
         } );
@@ -1115,6 +1147,15 @@ void AcousticWaveEquationSEM::prepareNextTimestep( MeshLevel & mesh )
 
     stiffnessVector[a] = rhs[a] = 0.0;
   } );
+  if( m_attenuationType == WaveSolverUtils::AttenuationType::sls )
+  {
+    arrayView1d< real32 > const stiffnessVectorA = nodeManager.getField< acousticfields::StiffnessVectorA >();
+    forAll< EXEC_POLICY >( solverTargetNodesSet.size(), [=] GEOS_HOST_DEVICE ( localIndex const n )
+    {
+      localIndex const a = solverTargetNodesSet[n];
+      stiffnessVectorA[a] = 0.0;
+    } );
+  }
 }
 
 void AcousticWaveEquationSEM::computeUnknowns( real64 const & time_n,
@@ -1148,6 +1189,19 @@ void AcousticWaveEquationSEM::computeUnknowns( real64 const & time_n,
                                                           "",
                                                           kernelFactory );
 
+  if( m_attenuationType == WaveSolverUtils::AttenuationType::sls )
+  {
+    auto kernelFactoryA = acousticWaveEquationSEMKernels::ExplicitAcousticAttenuativeSEMFactory( dt );
+    finiteElement::
+      regionBasedKernelApplication< EXEC_POLICY,
+                                    constitutive::NullModel,
+                                    CellElementSubRegion >( mesh,
+                                                            regionNames,
+                                                            getDiscretizationName(),
+                                                            "",
+                                                            kernelFactoryA );
+  }
+
   //Modification of cycleNember useful when minTime < 0
   EventManager const & event = getGroupByPath< EventManager >( "/Problem/Events" );
   real64 const & minTime = event.getReference< real64 >( EventManager::viewKeyStruct::minTimeString() );
@@ -1160,11 +1214,28 @@ void AcousticWaveEquationSEM::computeUnknowns( real64 const & time_n,
   real64 const dt2 = pow( dt, 2 );
 
   SortedArrayView< localIndex const > const solverTargetNodesSet = m_solverTargetNodesSet.toViewConst();
+  if( m_usePML && m_attenuationType != WaveSolverUtils::AttenuationType::none )
+  {
+    GEOS_ERROR( "Attenuation is not supported with PML boundary conditions." );
+  }
   if( !m_usePML )
   {
     GEOS_MARK_SCOPE ( updateP );
-    AcousticTimeSchemeSEM::LeapFrogWithoutPML( dt, p_np1, p_n, p_nm1, mass, stiffnessVector, damping,
-                                               rhs, freeSurfaceNodeIndicator, solverTargetNodesSet );
+    if( m_attenuationType == WaveSolverUtils::AttenuationType::sls )
+    {
+      arrayView1d< real32 > const stiffnessVectorA = nodeManager.getField< acousticfields::StiffnessVectorA >();
+      arrayView2d< real32 > const divpsi = nodeManager.getField< acousticfields::DivPsi >();
+      arrayView1d< real32 > const referenceFrequencies = m_slsReferenceAngularFrequencies.toView();
+      arrayView1d< real32 > const anelasticityCoefficients = m_slsAnelasticityCoefficients.toView();
+      AcousticTimeSchemeSEM::AttenuationLeapFrogWithoutPML( dt, p_np1, p_n, p_nm1, divpsi, mass, stiffnessVector, stiffnessVectorA,
+                                                            damping, rhs, freeSurfaceNodeIndicator, solverTargetNodesSet, referenceFrequencies,
+                                                            anelasticityCoefficients );
+    }
+    else
+    {
+      AcousticTimeSchemeSEM::LeapFrogWithoutPML( dt, p_np1, p_n, p_nm1, mass, stiffnessVector, damping,
+                                                 rhs, freeSurfaceNodeIndicator, solverTargetNodesSet );
+    }
   }
   else
   {
@@ -1248,6 +1319,11 @@ void AcousticWaveEquationSEM::synchronizeUnknowns( real64 const & time_n,
   FieldIdentifiers fieldsToBeSync;
   fieldsToBeSync.addFields( FieldLocation::Node, { acousticfields::Pressure_np1::key() } );
 
+  if( m_slsReferenceAngularFrequencies.size( 0 ) > 0 )
+  {
+    fieldsToBeSync.addFields( FieldLocation::Node, { acousticfields::DivPsi::key() } );
+  }
+
   if( m_usePML )
   {
     fieldsToBeSync.addFields( FieldLocation::Node, {
@@ -1285,7 +1361,7 @@ real64 AcousticWaveEquationSEM::explicitStepInternal( real64 const & time_n,
 
   GEOS_LOG_RANK_0_IF( dt < epsilonLoc, "Warning! Value for dt: " << dt << "s is smaller than local threshold: " << epsilonLoc );
 
-  real64 dtCompute;
+  real64 dtCompute = 0.0;
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
                                                                 string_array const & regionNames )

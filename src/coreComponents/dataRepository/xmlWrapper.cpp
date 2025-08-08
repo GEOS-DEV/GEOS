@@ -132,7 +132,7 @@ template void stringToInputVariable( Tensor< real32, 3 > & target, string const 
 template void stringToInputVariable( Tensor< real64, 3 > & target, string const & inputValue, Regex const & regex );
 template void stringToInputVariable( Tensor< real64, 6 > & target, string const & inputValue, Regex const & regex );
 
-void stringToInputVariable( std::vector< std::string > & array, string const & value, Regex const & regex )
+void stringToInputVariable( stdVector< std::string > & array, string const & value, Regex const & regex )
 {
   validateString( value, regex );
   array1d< std::string > tmp;
@@ -453,7 +453,6 @@ size_t findAttribute( string const & attName, string const & xmlBuffer, size_t c
         {
           return candidatePos;
         }
-        searchStart = candidatePos + attName.size();
       }
     }
     catch( std::regex_error const & )
