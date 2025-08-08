@@ -1,14 +1,13 @@
-# CVX .cmake for GNU compilers and generic MPI 
-# Optmization: -O3 -fno-fast-math 
+# CVX .cmake for GCC V.R.P V=9, 10, 12, 13 
 #
+# cmake with most aggresive Zen4 and avx512 optimizations but IEEE math 
+# 
 # Michael E. Thomadakis michael.thomadakis@chevron.com
-#
 
-# Get host name 
+# detect host and name the configuration file
 site_name(HOST_NAME)
 
-set(CONFIG_NAME "$ENV{CONFIG_NAME}" CACHE PATH "")
-message("## CVX CONFIG_NAME = ${CONFIG_NAME}")
+message("## CVX cmake with most aggresive Zen4 and avx512 optimizations but respecting IEEE math")
 message("## CVX CMAKE_CURRENT_LIST_DIR = ${CMAKE_CURRENT_LIST_DIR}") 
 
 # Default is ON
@@ -19,7 +18,7 @@ if(DEFINED ENV{GEOS_BUILD_SHARED_LIBS})
   set(GEOS_BUILD_SHARED_LIBS "$ENV{GEOS_BUILD_SHARED_LIBS}" CACHE BOOL "" FORCE)
 endif()
 
-# Local mtml settings 
+# # Local mtml settings 
 set(GEOSX_TPL_DIR "$ENV{GEOSX_TPL_DIR}" CACHE PATH "" FORCE)
 set(GEOS_TPL_DIR "$ENV{GEOSX_TPL_DIR}" CACHE PATH "" FORCE)
 set(GEOSX_DIR "$ENV{GEOSX_DIR}" CACHE PATH "" FORCE)
@@ -29,11 +28,9 @@ message("## GEOSX_DIR = ${GEOSX_DIR}")
 
 # set paths to C, C++, and Fortran compilers. Note that while GEOSX does not contain any Fortran code,
 # some of the third-party libraries do contain Fortran code. Thus a Fortran compiler must be specified.
+##" -Wno-error -pthread -O3 -DNDEBUG -march=znver4 -mtune=znver4 -Ofast -mfma -fno-fast-math -fstrict-aliasing -ftree-vectorize  -funroll-loops -flto $ENV{GEOS_FLAGS_CLI} "
 set(CMAKE_C_COMPILER "$ENV{GEOSX_CC}" CACHE PATH "")
-
-## -mdaz-ftz to all GNU options
-
-set(CMAKE_C_FLAGS_RELEASE " -Wno-error -pthread -O3 -fno-fast-math -mdaz-ftz -DNDEBUG " CACHE STRING "")
+set(CMAKE_C_FLAGS_RELEASE " -DNDEBUG -Wno-error -pthread -O3 -march=znver4 -mtune=znver4 -Ofast -mfma -fno-fast-math -fstrict-aliasing -ftree-vectorize  -funroll-loops  $ENV{GEOS_FLAGS_CLI} " CACHE STRING "")
 set(CMAKE_C_FLAGS_RELWITHDEBINFO "-g ${CMAKE_C_FLAGS_RELEASE}" CACHE STRING "")
 set(CMAKE_C_FLAGS_DEBUG "-O0 -g" CACHE STRING "")
 
@@ -45,26 +42,24 @@ set(CMAKE_CXX_STANDARD 17 CACHE STRING "")
 
 set(CMAKE_Fortran_COMPILER "$ENV{GEOSX_FORT}" CACHE PATH "")
 set(CMAKE_Fortran_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE}" CACHE STRING "")
-set(CMAKE_Fortran_FLAGS_RELWITHDEBINFO "-g ${CMAKE_CXX_FLAGS_RELEASE}" CACHE STRING "")
-set(CMAKE_Fortran_FLAGS_DEBUG "-O0 -g" CACHE STRING "")
 set(ENABLE_FORTRAN OFF CACHE BOOL "" FORCE)
 
-# enable MPI and set paths to compilers and executable.
-# Note that the MPI compilers are wrappers around standard serial compilers.
-# Therefore, the MPI compilers must wrap the appropriate serial compilers specified
-# in CMAKE_C_COMPILER, CMAKE_CXX_COMPILER, and CMAKE_Fortran_COMPILER.
 set(ENABLE_MPI ON CACHE BOOL "")
 set(MPI_C_COMPILER "$ENV{GEOSX_MPICC}" CACHE PATH "")
 set(MPI_CXX_COMPILER "$ENV{GEOSX_MPICXX}" CACHE PATH "")
 set(MPI_Fortran_COMPILER "$ENV{GEOSX_MPIFORT}" CACHE PATH "")
 set(MPIEXEC "$ENV{GEOSX_MPIRUN}" CACHE PATH "")
 
-# MikeT : Check if there is value to enable these 
-# set(ENABLE_GTEST_DEATH_TESTS ON CACHE BOOL "" FORCE)
+# BLAS and LAPACK libraries for AMD MI300C
+set(BLAS_LIBRARIES "/usr/lib64/libblas.so.3" CACHE STRING "")
+message("## BLAS_LIBRARIES = ${BLAS_LIBRARIES}")
 
-# disable CUDA and OpenMP
+set(LAPACK_LIBRARIES "/usr/lib64/liblapack.so.3" CACHE STRING "")
+message("## LAPACK_LIBRARIES = ${LAPACK_LIBRARIES}")
+
+# disable CUDA and enable OpenMP
 set(CUDA_ENABLED OFF CACHE BOOL "" FORCE)
-set(ENABLE_OPENMP OFF CACHE BOOL "" FORCE)
+set(ENABLE_OPENMP ON CACHE BOOL "" FORCE)
 
 set(ENABLE_SPHINX_EXECUTABLE OFF CACHE BOOL "")
 set(ENABLE_UNCRUSTIFY ON CACHE BOOL "")
@@ -108,7 +103,8 @@ message("## tpls.cmake = ${CMAKE_CURRENT_LIST_DIR}/../tpls.cmake")
 include(${CMAKE_CURRENT_LIST_DIR}/../tpls.cmake)
 message("## CMAKE_CURRENT_LIST_DIR = ${CMAKE_CURRENT_LIST_DIR}")
 
-# IN case MKL is ever used
+# set(ENABLE_WRAP_ALL_TESTS_WITH_MPIEXEC ON CACHE BOOL "")
+
 # set(ENABLE_MKL ON CACHE BOOL "")
 # set(INTEL_ROOT "$ENV{INTEL_DIR}" )
 # set(MKL_ROOT "$ENV{MKLROOT}/mkl" )
@@ -118,3 +114,6 @@ message("## CMAKE_CURRENT_LIST_DIR = ${CMAKE_CURRENT_LIST_DIR}")
 #                   ${MKL_ROOT}/lib/intel64/libmkl_core.so
 #                   ${INTEL_ROOT}/compiler/lib/intel64_lin/libiomp5.so
 #                   CACHE STRING "")
+
+# MikeT : Check if there is value to enable these 
+# set(ENABLE_GTEST_DEATH_TESTS ON CACHE BOOL "" FORCE)

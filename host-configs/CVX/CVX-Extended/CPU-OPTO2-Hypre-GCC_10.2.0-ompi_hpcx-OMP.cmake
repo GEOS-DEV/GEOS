@@ -1,1 +1,0 @@
-CPU-OPTO2-Hypre-GCC-ompi_hpcx-OMP.cmake

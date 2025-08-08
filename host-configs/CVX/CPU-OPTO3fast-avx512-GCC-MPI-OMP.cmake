@@ -1,14 +1,13 @@
-# CVX .cmake for Intel 1-API compilers and MPI 
+# CVX .cmake for GCC V.R.P V=9, 10, 12, 13 
 #
-# file: CPU-GCC_10.2.0-ompi_hpcx.cmake
+# cmake with most aggresive Zen4 and avx512 optimizations but IEEE math 
 # 
 # Michael E. Thomadakis michael.thomadakis@chevron.com
 
 # detect host and name the configuration file
 site_name(HOST_NAME)
-# set(CONFIG_NAME "CPU-OPTO1-Hypre-GCC_10.2.0-ompi_hpcx-OMP" CACHE PATH "")
-# message("## CVX CONFIG_NAME = ${CONFIG_NAME}")
 
+message("## CVX cmake with most aggresive Zen4 and avx512 optimizations but respecting IEEE math")
 message("## CVX CMAKE_CURRENT_LIST_DIR = ${CMAKE_CURRENT_LIST_DIR}") 
 
 # Default is ON
@@ -19,6 +18,7 @@ if(DEFINED ENV{GEOS_BUILD_SHARED_LIBS})
   set(GEOS_BUILD_SHARED_LIBS "$ENV{GEOS_BUILD_SHARED_LIBS}" CACHE BOOL "" FORCE)
 endif()
 
+# # Local mtml settings 
 set(GEOSX_TPL_DIR "$ENV{GEOSX_TPL_DIR}" CACHE PATH "" FORCE)
 set(GEOS_TPL_DIR "$ENV{GEOSX_TPL_DIR}" CACHE PATH "" FORCE)
 set(GEOSX_DIR "$ENV{GEOSX_DIR}" CACHE PATH "" FORCE)
@@ -28,8 +28,9 @@ message("## GEOSX_DIR = ${GEOSX_DIR}")
 
 # set paths to C, C++, and Fortran compilers. Note that while GEOSX does not contain any Fortran code,
 # some of the third-party libraries do contain Fortran code. Thus a Fortran compiler must be specified.
+##" -Wno-error -pthread -O3 -DNDEBUG -march=znver4 -mtune=znver4 -Ofast -mfma -fno-fast-math -fstrict-aliasing -ftree-vectorize  -funroll-loops -flto $ENV{GEOS_FLAGS_CLI} "
 set(CMAKE_C_COMPILER "$ENV{GEOSX_CC}" CACHE PATH "")
-set(CMAKE_C_FLAGS_RELEASE " -Wno-error -pthread -O1 -fno-fast-math -DNDEBUG " CACHE STRING "")
+set(CMAKE_C_FLAGS_RELEASE " -DNDEBUG -Wno-error -pthread -O3 -march=znver4 -mtune=znver4 -Ofast -mfma -fno-fast-math -fstrict-aliasing -ftree-vectorize  -funroll-loops  $ENV{GEOS_FLAGS_CLI} " CACHE STRING "")
 set(CMAKE_C_FLAGS_RELWITHDEBINFO "-g ${CMAKE_C_FLAGS_RELEASE}" CACHE STRING "")
 set(CMAKE_C_FLAGS_DEBUG "-O0 -g" CACHE STRING "")
 
@@ -43,79 +44,33 @@ set(CMAKE_Fortran_COMPILER "$ENV{GEOSX_FORT}" CACHE PATH "")
 set(CMAKE_Fortran_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE}" CACHE STRING "")
 set(ENABLE_FORTRAN OFF CACHE BOOL "" FORCE)
 
-# enable MPI and set paths to compilers and executable.
-# Note that the MPI compilers are wrappers around standard serial compilers.
-# Therefore, the MPI compilers must wrap the appropriate serial compilers specified
-# in CMAKE_C_COMPILER, CMAKE_CXX_COMPILER, and CMAKE_Fortran_COMPILER.
 set(ENABLE_MPI ON CACHE BOOL "")
 set(MPI_C_COMPILER "$ENV{GEOSX_MPICC}" CACHE PATH "")
 set(MPI_CXX_COMPILER "$ENV{GEOSX_MPICXX}" CACHE PATH "")
 set(MPI_Fortran_COMPILER "$ENV{GEOSX_MPIFORT}" CACHE PATH "")
 set(MPIEXEC "$ENV{GEOSX_MPIRUN}" CACHE PATH "")
 
-# # C options
-# set(CMAKE_C_COMPILER ${HOST_COMPILER_PATH}/$ENV{GEOSX_CC} CACHE PATH "")
-# set(CMAKE_C_FLAGS_RELEASE "-O3 -DNDEBUG -mcpu=power9 -mtune=power9" CACHE STRING "")
-# set(CMAKE_C_FLAGS_RELWITHDEBINFO "-g ${CMAKE_C_FLAGS_RELEASE}" CACHE STRING "")
-# set(CMAKE_C_FLAGS_DEBUG "-O0 -g" CACHE STRING "")
+# BLAS and LAPACK libraries for AMD MI300C
+set(BLAS_LIBRARIES "/usr/lib64/libblas.so.3" CACHE STRING "")
+message("## BLAS_LIBRARIES = ${BLAS_LIBRARIES}")
 
-# # C++ options
-# set(CMAKE_CXX_COMPILER ${HOST_COMPILER_PATH}/$ENV{GEOSX_CXX} CACHE PATH "")
-# set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG -mcpu=power9 -mtune=power9" CACHE STRING "")
-# set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-g ${CMAKE_CXX_FLAGS_RELEASE}" CACHE STRING "")
-# set(CMAKE_CXX_FLAGS_DEBUG "-O0 -g" CACHE STRING "")
-# set(CMAKE_CXX_STANDARD 14 CACHE STRING "")
+set(LAPACK_LIBRARIES "/usr/lib64/liblapack.so.3" CACHE STRING "")
+message("## LAPACK_LIBRARIES = ${LAPACK_LIBRARIES}")
 
-# # Fortran options
-# set(CMAKE_Fortran_COMPILER ${HOST_COMPILER_PATH}/$ENV{GEOSX_FORT} CACHE PATH "")
-# set(CMAKE_Fortran_FLAGS_RELEASE "-O3 -DNDEBUG -mcpu=power9 -mtune=power9" CACHE STRING "")
-# #set(FORTRAN_MANGLE_NO_UNDERSCORE ON CACHE BOOL "")
-
-# # OpenMP options
-# set(ENABLE_OPENMP ON CACHE BOOL "" FORCE)
-# #set(OpenMP_Fortran_FLAGS "-qsmp=omp" CACHE STRING "")
-# #set(OpenMP_Fortran_LIB_NAMES "" CACHE STRING "")
-
-# # MPI options
-# set(ENABLE_MPI ON CACHE BOOL "")
-# set(MPI_ROOT /data_local/sw/spectrum_mpi/10.03.01.00rtm5-rh7_20191114 CACHE PATH "")
-# set(MPI_C_COMPILER         ${MPI_ROOT}/bin/$ENV{GEOSX_MPICC}  CACHE PATH "")
-# set(MPI_CXX_COMPILER       ${MPI_ROOT}/bin/$ENV{GEOSX_MPICXX} CACHE PATH "")
-# set(MPI_Fortran_COMPILER   ${MPI_ROOT}/bin/mpifort CACHE PATH "")
-# set(MPIEXEC                ${MPI_ROOT}/bin/$ENV{GEOSX_MPIRUN}  CACHE STRING "")
-# set(MPIEXEC_NUMPROC_FLAG   -np CACHE STRING "")
-# set(ENABLE_WRAP_ALL_TESTS_WITH_MPIEXEC ON CACHE BOOL "")
-
-# set(ENABLE_MKL ON CACHE BOOL "")
-# set(INTEL_ROOT "$ENV{INTEL_DIR}" )
-# set(MKL_ROOT "$ENV{MKLROOT}/mkl" )
-# set(MKL_INCLUDE_DIRS ${MKL_ROOT}/include CACHE STRING "")
-# set(MKL_LIBRARIES ${MKL_ROOT}/lib/intel64/libmkl_intel_lp64.so
-#                   ${MKL_ROOT}/lib/intel64/libmkl_gnu_thread.so
-#                   ${MKL_ROOT}/lib/intel64/libmkl_core.so
-#                   ${INTEL_ROOT}/compiler/lib/intel64_lin/libiomp5.so
-#                   CACHE STRING "")
-
-# MikeT : Check if there is value to enable these 
-# set(ENABLE_GTEST_DEATH_TESTS ON CACHE BOOL "" FORCE)
-# set(ENABLE_CALIPER ON CACHE BOOL "")
-
-
-
-# disable CUDA and OpenMP
+# disable CUDA and enable OpenMP
 set(CUDA_ENABLED OFF CACHE BOOL "" FORCE)
 set(ENABLE_OPENMP ON CACHE BOOL "" FORCE)
-
-# enable PAMELA and PVTPackage
-set(ENABLE_PAMELA OFF CACHE BOOL "" FORCE)
-set(ENABLE_PVTPackage ON CACHE BOOL "" FORCE)
 
 set(ENABLE_SPHINX_EXECUTABLE OFF CACHE BOOL "")
 set(ENABLE_UNCRUSTIFY ON CACHE BOOL "")
 set(ENABLE_DOXYGEN OFF CACHE BOOL "")
 
+# enable PAMELA and PVTPackage
+set(ENABLE_PAMELA OFF CACHE BOOL "" FORCE)
+set(ENABLE_PVTPackage ON CACHE BOOL "" FORCE)
 set(ENABLE_VALGRIND OFF CACHE BOOL "")
 set(ENABLE_CALIPER ON CACHE BOOL "")
+set(ENABLE_CALIPER_HYPRE "$ENV{ENABLE_CALIPER_HYPRE}" CACHE BOOL "")
 
 # Hypre ON
 if(NOT DEFINED ENABLE_HYPRE)
@@ -144,6 +99,21 @@ set(ENABLE_DOXYGEN OFF CACHE PATH "")
 set(ENABLE_GTEST_DEATH_TESTS ON CACHE BOOL "" FORCE )
 
 # let GEOSX define some third party libraries information for you
-message("## CMAKE_CURRENT_LIST_DIR/tpls.cmake = ${CMAKE_CURRENT_LIST_DIR}/../tpls.cmake")
+message("## tpls.cmake = ${CMAKE_CURRENT_LIST_DIR}/../tpls.cmake")
 include(${CMAKE_CURRENT_LIST_DIR}/../tpls.cmake)
 message("## CMAKE_CURRENT_LIST_DIR = ${CMAKE_CURRENT_LIST_DIR}")
+
+# set(ENABLE_WRAP_ALL_TESTS_WITH_MPIEXEC ON CACHE BOOL "")
+
+# set(ENABLE_MKL ON CACHE BOOL "")
+# set(INTEL_ROOT "$ENV{INTEL_DIR}" )
+# set(MKL_ROOT "$ENV{MKLROOT}/mkl" )
+# set(MKL_INCLUDE_DIRS ${MKL_ROOT}/include CACHE STRING "")
+# set(MKL_LIBRARIES ${MKL_ROOT}/lib/intel64/libmkl_intel_lp64.so
+#                   ${MKL_ROOT}/lib/intel64/libmkl_gnu_thread.so
+#                   ${MKL_ROOT}/lib/intel64/libmkl_core.so
+#                   ${INTEL_ROOT}/compiler/lib/intel64_lin/libiomp5.so
+#                   CACHE STRING "")
+
+# MikeT : Check if there is value to enable these 
+# set(ENABLE_GTEST_DEATH_TESTS ON CACHE BOOL "" FORCE)

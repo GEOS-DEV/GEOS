@@ -1,1 +1,0 @@
-GPU-Hypre-GCC-CUDA-MPI-OMP.cmake

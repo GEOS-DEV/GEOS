@@ -1,1 +1,0 @@
-CPU-NOOPT-Hypre-GCC-ompi_hpcx-OMP.cmake

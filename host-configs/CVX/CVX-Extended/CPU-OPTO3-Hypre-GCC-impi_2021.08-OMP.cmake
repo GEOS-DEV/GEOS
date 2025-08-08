@@ -1,1 +1,0 @@
-CPU-OPTO3-Hypre-GCC-mpi-OMP.cmake
