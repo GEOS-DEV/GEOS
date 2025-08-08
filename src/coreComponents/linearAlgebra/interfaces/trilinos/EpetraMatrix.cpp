@@ -531,6 +531,12 @@ void EpetraMatrix::leftRightScale( EpetraVector const & vecLeft,
   rightScale( vecRight );
 }
 
+void EpetraMatrix::computeScalingVector( EpetraVector & scaling ) const
+{
+  GEOS_UNUSED_VAR( scaling );
+  GEOS_ERROR( "Not implemented!!!" );
+}
+
 void EpetraMatrix::transpose( EpetraMatrix & dst ) const
 {
   GEOS_LAI_ASSERT( ready() );

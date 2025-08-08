@@ -326,7 +326,7 @@ public:
    * @brief @return number of components in a given field.
    * @param fieldName name of the field
    */
-  integer numComponents( string const & fieldName = "" ) const;
+  integer numComponents( string const & fieldName ) const;
 
   /**
    * @brief @return number of dof components across all fields.
