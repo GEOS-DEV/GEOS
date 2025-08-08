@@ -327,10 +327,10 @@ void TableRelativePermeabilityHysteresis::checkExistenceAndValidateWettingRelPer
   m_phaseMinVolumeFraction[ipWetting] = drainagePhaseMinVolFraction;
 
   GEOS_LOG_LEVEL_RANK_0( logInfo::Init, GEOS_FMT( "Initializing wetting relperm curve with {(smin,krmin), (simax,krimax), (sdmax,krdmax)} : {({},{}),({},{}),({},{})}",
-                                      m_wettingCurve.m_extremumPhaseVolFraction, m_wettingCurve.m_extremumValue,
-                                      m_wettingCurve.m_criticalImbibitionPhaseVolFraction, m_wettingCurve.m_criticalImbibitionValue,
-                                      m_wettingCurve.m_criticalDrainagePhaseVolFraction, m_wettingCurve.m_criticalDrainageValue
-                                      ));
+                                                  m_wettingCurve.m_extremumPhaseVolFraction, m_wettingCurve.m_extremumValue,
+                                                  m_wettingCurve.m_criticalImbibitionPhaseVolFraction, m_wettingCurve.m_criticalImbibitionValue,
+                                                  m_wettingCurve.m_criticalDrainagePhaseVolFraction, m_wettingCurve.m_criticalDrainageValue
+                                                  ));
 }
 
 void TableRelativePermeabilityHysteresis::checkExistenceAndValidateNonWettingRelPermTables()
@@ -405,10 +405,10 @@ void TableRelativePermeabilityHysteresis::checkExistenceAndValidateNonWettingRel
   m_phaseMinVolumeFraction[ipNonWetting] = drainagePhaseMinVolFraction;
 
   GEOS_LOG_LEVEL_RANK_0( logInfo::Init, GEOS_FMT( "Initializing non-wetting relperm curve with {(sdmin,krdmin), (simin,krimin), (smax,krmax)} : {({},{}),({},{}),({},{})}",
-                                      m_wettingCurve.m_criticalDrainagePhaseVolFraction, m_wettingCurve.m_criticalDrainageValue,
-                                      m_wettingCurve.m_criticalImbibitionPhaseVolFraction, m_wettingCurve.m_criticalImbibitionValue,
-                                      m_wettingCurve.m_extremumPhaseVolFraction, m_wettingCurve.m_extremumValue
-                                      ));
+                                                  m_wettingCurve.m_criticalDrainagePhaseVolFraction, m_wettingCurve.m_criticalDrainageValue,
+                                                  m_wettingCurve.m_criticalImbibitionPhaseVolFraction, m_wettingCurve.m_criticalImbibitionValue,
+                                                  m_wettingCurve.m_extremumPhaseVolFraction, m_wettingCurve.m_extremumValue
+                                                  ));
 
 }
 
