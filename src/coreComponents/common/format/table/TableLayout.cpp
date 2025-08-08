@@ -256,7 +256,7 @@ TableLayout::DeepFirstIterator & TableLayout::DeepFirstIterator::operator++()
     while( m_currentColumn->hasChild() )
     {
       m_currentLayer++;
-      m_currentColumn = &m_currentColumn->m_subColumns[0];
+      m_currentColumn = &m_currentColumn->m_subColumns.front();
     }
   }
   else
@@ -284,7 +284,7 @@ TableLayout::DeepFirstIterator TableLayout::beginDeepFirst() const
     while( startColumn->hasChild() )
     {
       idxLayer++;
-      startColumn = &startColumn->m_subColumns[0];
+      startColumn = &startColumn->m_subColumns.front();
     }
   }
   return DeepFirstIterator( startColumn, idxLayer );
@@ -293,13 +293,14 @@ TableLayout::DeepFirstIterator TableLayout::beginDeepFirst() const
 PreparedTableLayout::PreparedTableLayout(  ):
   TableLayout(),
   m_columnLayersCount( 0 ),
-  m_lowermostColumnCount( 0 )
+  m_visibleLowermostColumnCount( 0 )
 {}
 
 PreparedTableLayout::PreparedTableLayout( TableLayout const & other ):
   TableLayout( other ),
   m_columnLayersCount( 0 ),
-  m_lowermostColumnCount( 0 )
+  m_totalLowermostColumnCount( 0 ),
+  m_visibleLowermostColumnCount( 0 )
 {
   prepareLayoutRecusive( m_tableColumns, 0 );
 
@@ -309,26 +310,21 @@ PreparedTableLayout::PreparedTableLayout( TableLayout const & other ):
 void PreparedTableLayout::prepareLayoutRecusive( stdVector< TableLayout::Column > & columns,
                                                  size_t level )
 {
-  for( size_t idxColumn = 0; idxColumn < columns.size(); ++idxColumn )
+  for( auto & column : columns )
   {
-    Column & column = columns[idxColumn];
-
-    if( column.isVisible() )
-    {
+    if( column.isVisible())
       m_columnLayersCount = std::max( m_columnLayersCount, level + 1 );
 
-      if( !column.hasChild() )
+    if( !column.hasChild() )
+    {
+      ++m_totalLowermostColumnCount;
+      if( column.isVisible() )
       {
-        ++m_lowermostColumnCount;
+        ++m_visibleLowermostColumnCount;
       }
     }
 
     column.m_header.prepareLayout( getMaxColumnWidth() );
-
-    if( idxColumn < columns.size() - 1 )
-    {
-      column.setNext( &columns[idxColumn + 1] );
-    }
 
     if( !column.m_subColumns.empty())
     {
@@ -340,6 +336,13 @@ void PreparedTableLayout::prepareLayoutRecusive( stdVector< TableLayout::Column 
 
       prepareLayoutRecusive( column.m_subColumns, level + 1 );
     }
+  }
+
+  if( !columns.empty())
+  {
+    // Link adjacent columns
+    for( size_t i = 0; i < columns.size() - 1; ++i )
+      columns[i].setNext( &columns[i + 1] );
   }
 }
 

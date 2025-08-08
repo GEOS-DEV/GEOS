@@ -179,24 +179,24 @@ void CompositionalDensityUpdate::computeCompressibilityFactor( integer const num
   if( equationOfState == EquationOfStateType::PengRobinson )
   {
     CubicEOSPhaseModel< PengRobinsonEOS >::
-    computeCompressibilityFactor( numComps,
-                                  pressure,
-                                  temperature,
-                                  composition,
-                                  componentProperties,
-                                  compressibilityFactor,
-                                  compressibilityFactorDerivs );
+    computeCompressibilityFactorAndDerivs( numComps,
+                                           pressure,
+                                           temperature,
+                                           composition,
+                                           componentProperties,
+                                           compressibilityFactor,
+                                           compressibilityFactorDerivs );
   }
   else if( equationOfState == EquationOfStateType::SoaveRedlichKwong )
   {
     CubicEOSPhaseModel< SoaveRedlichKwongEOS >::
-    computeCompressibilityFactor( numComps,
-                                  pressure,
-                                  temperature,
-                                  composition,
-                                  componentProperties,
-                                  compressibilityFactor,
-                                  compressibilityFactorDerivs );
+    computeCompressibilityFactorAndDerivs( numComps,
+                                           pressure,
+                                           temperature,
+                                           composition,
+                                           componentProperties,
+                                           compressibilityFactor,
+                                           compressibilityFactorDerivs );
   }
   else if( equationOfState == EquationOfStateType::SoreideWhitson )
   {
