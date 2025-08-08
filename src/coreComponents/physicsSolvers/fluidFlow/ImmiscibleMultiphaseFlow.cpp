@@ -1482,6 +1482,24 @@ ImmiscibleMultiphaseFlow::scalingForSystemSolution( DomainPartition & domain,
   GEOS_MARK_FUNCTION;
 
   m_currentScaling = m_scalingType;
+
+  // Check for stagnation and avoid scaling if detected
+  bool stagDetected = false;
+  real64 const stagTol = 1.0e-5;
+  if( (residualNorm - m_prevResidualNorm) < stagTol && (residualNorm - m_prevResidualNorm2) < stagTol )
+  {
+    stagDetected = true;
+  }
+  m_prevResidualNorm2 = m_prevResidualNorm;
+  m_prevResidualNorm = residualNorm;
+  if( stagDetected )
+  {
+    if ( m_scalingType == ScalingType::Local )
+    {
+      resetLocalScalingFactors( domain );
+    }
+    return 1.0;
+  }    
   
   // Trust Region Solver
   if( m_scalingFactorType == ScalingFactorType::TrustRegion || m_scalingFactorType == ScalingFactorType::TrustRegionFlux )
