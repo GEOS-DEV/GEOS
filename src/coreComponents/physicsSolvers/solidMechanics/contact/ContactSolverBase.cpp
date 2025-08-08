@@ -27,6 +27,7 @@
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
+#include "physicsSolvers/solidMechanics/contact/SolidMechanicsMortarContact.hpp"
 
 namespace geos
 {
@@ -67,10 +68,15 @@ void ContactSolverBase::registerDataOnMesh( dataRepository::Group & meshBodies )
   string const labels[3] = { "normal", "tangent1", "tangent2" };
   string const labelsTangent[2] = { "tangent1", "tangent2" };
 
-  forFractureRegionOnMeshTargets( meshBodies, [&] ( SurfaceElementRegion & fractureRegion )
+  forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
+                                                    MeshLevel & mesh,
+                                                    string_array const & )
   {
-    fractureRegion.forElementSubRegions< SurfaceElementSubRegion >( [&]( SurfaceElementSubRegion & subRegion )
+    ElementRegionManager & elemManager = mesh.getElemManager();
+
+    elemManager.forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
     {
+
       subRegion.registerField< contact::dispJump >( getName() ).
         setDimLabels( 1, labels ).
         reference().resizeDimension< 1 >( 3 );
@@ -122,10 +128,14 @@ void ContactSolverBase::setFractureRegions( dataRepository::Group const & meshBo
   } );
 
   // TODO remove once multiple regions are fully supported
-  GEOS_THROW_IF( m_fractureRegionNames.size() > 1,
-                 GEOS_FMT( "{} {}: The number of fracture regions can not be more than one",
-                           this->getCatalogName(), this->getName() ),
-                 InputError );
+  // Disable this check for mortar contact solver
+  if ( m_fractureRegionNames.size() > 1 && !dynamic_cast< SolidMechanicsMortarContact * >( this ) )
+  {
+    GEOS_THROW_IF( m_fractureRegionNames.size() > 1,
+                   GEOS_FMT( "{} {}: The number of fracture regions can not be more than one",
+                             this->getCatalogName(), this->getName() ),
+                   InputError );
+  }
 }
 
 void ContactSolverBase::computeFractureStateStatistics( MeshLevel const & mesh,
