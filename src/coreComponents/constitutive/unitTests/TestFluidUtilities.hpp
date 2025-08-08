@@ -108,24 +108,25 @@ void testNumericalDerivative( real64 const x,
         selectedDerivative = deriv;
       }
     }
-    //checkRelativeError( derivatives[i], selectedDerivative, relTolerance, absTolerance,
-    //                    GEOS_FMT( "Numerical derivative for component {}", i ) );
-    ((void)relTolerance);
-    ((void)absTolerance);
-    real64 const maxV = 1.0e-14 + LvArray::math::max( LvArray::math::abs( selectedDerivative ), LvArray::math::abs( derivatives[i] ));
-    std::cout
-      << std::setw( 2 ) << i << " "
-      << std::scientific << std::setprecision( 5 ) << std::setw( 12 ) << selectedDerivative << " "
-      << std::scientific << std::setprecision( 5 ) << std::setw( 12 ) << derivatives[i] << " | "
-      << std::scientific << std::setprecision( 5 ) << std::setw( 12 ) << leftValues[i] << " "
-      << std::scientific << std::setprecision( 5 ) << std::setw( 12 ) << centreValues[i] << " "
-      << std::scientific << std::setprecision( 5 ) << std::setw( 12 ) << rightValues[i] << " | "
-      << std::scientific << std::setprecision( 5 ) << std::setw( 12 ) << selectedDerivative - derivatives[i] << " "
-      << std::scientific << std::setprecision( 5 ) << std::setw( 12 ) << (selectedDerivative - derivatives[i])/maxV << " "
-      << "\n";
+    checkRelativeError( derivatives[i], selectedDerivative, relTolerance, absTolerance,
+                        GEOS_FMT( "Numerical derivative for component {}", i ) );
+    /*
+       ((void)relTolerance);
+       ((void)absTolerance);
+       real64 const maxV = 1.0e-14 + LvArray::math::max( LvArray::math::abs( selectedDerivative ), LvArray::math::abs( derivatives[i] ));
+       std::cout
+       << std::setw( 2 ) << i << " "
+       << std::scientific << std::setprecision( 5 ) << std::setw( 12 ) << selectedDerivative << " "
+       << std::scientific << std::setprecision( 5 ) << std::setw( 12 ) << derivatives[i] << " | "
+       << std::scientific << std::setprecision( 5 ) << std::setw( 12 ) << leftValues[i] << " "
+       << std::scientific << std::setprecision( 5 ) << std::setw( 12 ) << centreValues[i] << " "
+       << std::scientific << std::setprecision( 5 ) << std::setw( 12 ) << rightValues[i] << " | "
+       << std::scientific << std::setprecision( 5 ) << std::setw( 12 ) << selectedDerivative - derivatives[i] << " "
+       << std::scientific << std::setprecision( 5 ) << std::setw( 12 ) << (selectedDerivative - derivatives[i])/maxV << " "
+       << "\n";
+       }
+       std::cout << "----------------------------------------------------------\n";*/
   }
-  std::cout << "----------------------------------------------------------\n";
-}
 
 /**
  * @brief Tests a multi-valued function against a second derivative
@@ -142,53 +143,53 @@ void testNumericalDerivative( real64 const x,
  * @param absTolerance The absolute tolerance to use for the comparison
  * @param relTolerance The relative tolerance to use for the comparison
  */
-template< integer numValues, typename FUNCTION >
-void testNumericalSecondDerivative( real64 const x,
-                                    real64 const dx,
-                                    arraySlice1d< real64 const > const & derivatives,
-                                    FUNCTION && function,
-                                    real64 const absTolerance = absTol,
-                                    real64 const relTolerance = relTol )
-{
-  stackArray2d< real64, 5*numValues > values( 5, numValues );
-  function( x-2.0*dx, values[0] );
-  function( x-dx, values[1] );
-  function( x, values[2] );
-  function( x+dx, values[3] );
-  function( x+2.0*dx, values[4] );
-
-  real64 constexpr stencils[6][5] = {
-    {1.0, -2.0, 1.0, 0.0, 0.0},
-    {-1.0, 4.0, -5.0, 2.0, 0.0},
-    {-1.0/12.0, 16.0/12.0, -30.0/12.0, 16.0/12.0, -1.0/12.0},
-    {0.0, 1.0, -2.0, 1.0, 0.0},
-    {0.0, -1.0, 4.0, -5.0, 2.0},
-    {0.0, 0.0, 1.0, -2.0, 1.0},
-  };
-  real64 const invdx2 = 1.0 / (dx*dx);
-  for( integer i = 0; i < numValues; ++i )
+  template< integer numValues, typename FUNCTION >
+  void testNumericalSecondDerivative( real64 const x,
+                                      real64 const dx,
+                                      arraySlice1d< real64 const > const & derivatives,
+                                      FUNCTION && function,
+                                      real64 const absTolerance = absTol,
+                                      real64 const relTolerance = relTol )
   {
-    real64 minError = LvArray::NumericLimits< real64 >::max;
-    real64 selectedDerivative = 0.0;
-    for( integer si = 0; si < 6; si++ )
+    stackArray2d< real64, 5*numValues > values( 5, numValues );
+    function( x-2.0*dx, values[0] );
+    function( x-dx, values[1] );
+    function( x, values[2] );
+    function( x+dx, values[3] );
+    function( x+2.0*dx, values[4] );
+
+    real64 constexpr stencils[6][5] = {
+      {1.0, -2.0, 1.0, 0.0, 0.0},
+      {-1.0, 4.0, -5.0, 2.0, 0.0},
+      {-1.0/12.0, 16.0/12.0, -30.0/12.0, 16.0/12.0, -1.0/12.0},
+      {0.0, 1.0, -2.0, 1.0, 0.0},
+      {0.0, -1.0, 4.0, -5.0, 2.0},
+      {0.0, 0.0, 1.0, -2.0, 1.0},
+    };
+    real64 const invdx2 = 1.0 / (dx*dx);
+    for( integer i = 0; i < numValues; ++i )
     {
-      real64 deriv = 0.0;
-      for( integer ci = 0; ci < 5; ci++ )
+      real64 minError = LvArray::NumericLimits< real64 >::max;
+      real64 selectedDerivative = 0.0;
+      for( integer si = 0; si < 6; si++ )
       {
-        deriv += stencils[si][ci]*values( ci, i );
+        real64 deriv = 0.0;
+        for( integer ci = 0; ci < 5; ci++ )
+        {
+          deriv += stencils[si][ci]*values( ci, i );
+        }
+        deriv *= invdx2;
+        real64 const error = LvArray::math::abs( deriv - derivatives[i] );
+        if( error < minError )
+        {
+          minError = error;
+          selectedDerivative = deriv;
+        }
       }
-      deriv *= invdx2;
-      real64 const error = LvArray::math::abs( deriv - derivatives[i] );
-      if( error < minError )
-      {
-        minError = error;
-        selectedDerivative = deriv;
-      }
+      checkRelativeError( derivatives[i], selectedDerivative, relTolerance, absTolerance,
+                          GEOS_FMT( "Numerical derivative for component {}", i ) );
     }
-    checkRelativeError( derivatives[i], selectedDerivative, relTolerance, absTolerance,
-                        GEOS_FMT( "Numerical derivative for component {}", i ) );
   }
-}
 
 }// namespace internal
 

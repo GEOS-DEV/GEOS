@@ -126,7 +126,7 @@ TEST_P( PengRobinson, testStabilityTest )
 }
 TEST_P( SoaveRedlichKwong, testStabilityTest )
 {
-  // testStability( GetParam() );
+  testStability( GetParam() );
 }
 
 //-------------------------------------------------------------------------------
@@ -143,8 +143,8 @@ INSTANTIATE_TEST_SUITE_P(StabilityTest, PengRobinson,
     {5.0e+06, 353.15, 0.4000, false,  0.40000000 },
     {2.0e+07, 297.15, 0.4000, false,  0.40000000 },
     {2.0e+07, 353.15, 0.4000, false,  0.40000001 },
-    {5.0e+06, 297.15, 0.7860, true,   0.31984391 },
-    {5.0e+06, 297.15, 0.7870, true,   0.32331543 },
+    {5.0e+06, 297.15, 0.7860, false,  0.31984391 },
+    {5.0e+06, 297.15, 0.7870, false,  0.32331543 },
     {5.0e+06, 297.15, 0.3200, true,   0.78604645 },
     {5.0e+06, 297.15, 0.3220, true,   0.78662927 }
   })

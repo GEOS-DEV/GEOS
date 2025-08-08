@@ -49,8 +49,6 @@ bool NegativeTwoPhaseFlash::compute( integer const numComps,
                                      arraySlice1d< real64, USD2 > const & liquidComposition,
                                      arraySlice1d< real64, USD2 > const & vapourComposition )
 {
-  GEOS_MARK_SCOPE(geos::constitutive::compositional::NegativeTwoPhaseFlash::compute);
-
   constexpr integer maxNumComps = MultiFluidConstants::MAX_NUM_COMPONENTS;
   constexpr integer maxNumDofs = MultiFluidConstants::MAX_NUM_COMPONENTS + 2;
 
@@ -73,7 +71,7 @@ bool NegativeTwoPhaseFlash::compute( integer const numComps,
   // Extract flash parameters
   integer const maxIterations = discreteFlashParameters[FlashParameters::FLASH_MAX_ITERATIONS];
   real64 const flashTolerance = continuousFlashParameters[FlashParameters::FLASH_TOLERANCE];
-  real64 const flashSSITolerance = LvArray::math::max( flashTolerance, continuousFlashParameters[FlashParameters::SSI_TOLERANCE] );
+  real64 const flashSSITolerance = continuousFlashParameters[FlashParameters::SSI_TOLERANCE];
 
   // Initialise compositions to feed composition
   for( integer ic = 0; ic < numComps; ++ic )
@@ -83,27 +81,27 @@ bool NegativeTwoPhaseFlash::compute( integer const numComps,
   }
 
   bool converged = false;
-  localIndex iterationCount = 0; 
+  localIndex iterationCount = 0;
 
   // Start SSI iterations
-  for( ; ( !converged ) && (iterationCount < maxIterations); ++iterationCount )
+  for(; ( !converged ) && (iterationCount < maxIterations); ++iterationCount )
   {
     // Solve Rachford-Rice Equation
     vapourPhaseMoleFraction = RachfordRice::solve( kVapourLiquid.toSliceConst(), composition, presentComponents );
 
-     real64 const error = calculateResidual(  numComps,
-                        pressure,
-                        temperature,
-                        composition,
-                        componentProperties,
-                        flashData,
-                        kVapourLiquid.toSliceConst(),
-                        vapourPhaseMoleFraction,
-                        liquidComposition,
-                        vapourComposition,
-                       logLiquidFugacity,
-                        logVapourFugacity,
-                        residual );
+    real64 const error = calculateResidual( numComps,
+                                            pressure,
+                                            temperature,
+                                            composition,
+                                            componentProperties,
+                                            flashData,
+                                            kVapourLiquid.toSliceConst(),
+                                            vapourPhaseMoleFraction,
+                                            liquidComposition,
+                                            vapourComposition,
+                                            logLiquidFugacity,
+                                            logVapourFugacity,
+                                            residual );
 
     // Update K-values
     for( integer const ic : presentComponents )
@@ -114,54 +112,54 @@ bool NegativeTwoPhaseFlash::compute( integer const numComps,
     // Check convergence
     converged = ( error < flashTolerance );
 
-    if (error < flashSSITolerance)
+    if( error < flashSSITolerance )
     {
       break;
     }
   }
 
   // Start Newton iterations
-    StackArray< real64, 3, 2*maxNumComps * maxNumDofs > logFugacityDerivs( 2, numComps, numDofs );
-    StackArray< real64, 2, (maxNumComps+1) * (maxNumComps+1) > jacobian( numComps+1, numComps+1 );
-    arraySlice2d< real64 > const logLiquidFugacityDerivs = logFugacityDerivs[0];
-    arraySlice2d< real64 > const logVapourFugacityDerivs = logFugacityDerivs[1];
+  StackArray< real64, 3, 2*maxNumComps * maxNumDofs > logFugacityDerivs( 2, numComps, numDofs );
+  StackArray< real64, 2, (maxNumComps+1) * (maxNumComps+1) > jacobian( numComps+1, numComps+1 );
+  arraySlice2d< real64 > const logLiquidFugacityDerivs = logFugacityDerivs[0];
+  arraySlice2d< real64 > const logVapourFugacityDerivs = logFugacityDerivs[1];
 
-for( ; ( !converged ) && (iterationCount < maxIterations); ++iterationCount )
+  for(; ( !converged ) && (iterationCount < maxIterations); ++iterationCount )
   {
- real64 const error = calculateResidualAndJacobian( numComps,
-                        pressure,
-                        temperature,
-                        composition,
-                        componentProperties,
-                        flashData,
-                        kVapourLiquid.toSliceConst(),
-                        vapourPhaseMoleFraction,
-                        liquidComposition,
-                        vapourComposition,
-                       logLiquidFugacity,
-                        logVapourFugacity,
-                                            logLiquidFugacityDerivs,
-                                            logVapourFugacityDerivs,
-                                            residual,
-                                            jacobian.toSlice() );
+    real64 const error = calculateResidualAndJacobian( numComps,
+                                                       pressure,
+                                                       temperature,
+                                                       composition,
+                                                       componentProperties,
+                                                       flashData,
+                                                       kVapourLiquid.toSliceConst(),
+                                                       vapourPhaseMoleFraction,
+                                                       liquidComposition,
+                                                       vapourComposition,
+                                                       logLiquidFugacity,
+                                                       logVapourFugacity,
+                                                       logLiquidFugacityDerivs,
+                                                       logVapourFugacityDerivs,
+                                                       residual,
+                                                       jacobian.toSlice() );
 
     // Account for missing components in Jacobian
-                                            for( integer const ic : absentComponents )
-        {
-          jacobian(ic, ic) = 1.0;
-        }
+    for( integer const ic : absentComponents )
+    {
+      jacobian( ic, ic ) = 1.0;
+    }
 
-        // Solve for next step
-        solveLinearSystem( jacobian.toSlice(), residual );
-            // Update K-values
+    // Solve for next step
+    solveLinearSystem( jacobian.toSlice(), residual );
+    // Update K-values
     for( integer const ic : presentComponents )
     {
       kVapourLiquid[ic] *= exp( -residual[ic] );
-    }       
-    vapourPhaseMoleFraction -= residual[numComps];       
-        // Check convergence
-        converged = ( error < flashTolerance );
     }
+    vapourPhaseMoleFraction -= residual[numComps];
+    // Check convergence
+    converged = ( error < flashTolerance );
+  }
 
   // Test if we have converged to a null or trivial solution
   bool const testNegativeFlash = truncateCompositions( numComps,
@@ -184,19 +182,18 @@ for( ; ( !converged ) && (iterationCount < maxIterations); ++iterationCount )
 
 template< integer USD1, integer USD2, integer USD3 >
 GEOS_HOST_DEVICE
-void NegativeTwoPhaseFlash::computeDerivatives(
-  integer const numComps,
-  real64 const pressure,
-  real64 const temperature,
-  arraySlice1d< real64 const > const & composition,
-  ComponentProperties::KernelWrapper const & componentProperties,
-  FlashData const & flashData,
-  real64 const & vapourFraction,
-  arraySlice1d< real64 const, USD1 > const & liquidComposition,
-  arraySlice1d< real64 const, USD1 > const & vapourComposition,
-  arraySlice1d< real64, USD2 > const & vapourFractionDerivs,
-  arraySlice2d< real64, USD3 > const & liquidCompositionDerivs,
-  arraySlice2d< real64, USD3 > const & vapourCompositionDerivs )
+void NegativeTwoPhaseFlash::computeDerivatives( integer const numComps,
+                                                real64 const pressure,
+                                                real64 const temperature,
+                                                arraySlice1d< real64 const > const & composition,
+                                                ComponentProperties::KernelWrapper const & componentProperties,
+                                                FlashData const & flashData,
+                                                real64 const & vapourFraction,
+                                                arraySlice1d< real64 const, USD1 > const & liquidComposition,
+                                                arraySlice1d< real64 const, USD1 > const & vapourComposition,
+                                                arraySlice1d< real64, USD2 > const & vapourFractionDerivs,
+                                                arraySlice2d< real64, USD3 > const & liquidCompositionDerivs,
+                                                arraySlice2d< real64, USD3 > const & vapourCompositionDerivs )
 {
   constexpr integer maxNumComps = MultiFluidConstants::MAX_NUM_COMPONENTS;
   constexpr integer maxNumDofs = MultiFluidConstants::MAX_NUM_COMPONENTS + 2;
@@ -357,23 +354,23 @@ real64 NegativeTwoPhaseFlash::calculateResidual( integer const numComps,
 template< int USD1, int USD2, int USD3, int USD4 >
 GEOS_HOST_DEVICE
 real64 NegativeTwoPhaseFlash::calculateResidualAndJacobian( integer const numComps,
-                                                          real64 const pressure,
-                                                          real64 const temperature,
-                                                          arraySlice1d< real64 const > const & composition,
-                                                          ComponentProperties::KernelWrapper const & componentProperties,
-                                                          FlashData const & flashData,
-                                                          arraySlice1d< real64 const, USD1 > const & kValues,
-                                                          real64 const & vapourPhaseMoleFraction,
-                                                          arraySlice1d< real64, USD2 > const & liquidComposition,
-                                                          arraySlice1d< real64, USD2 > const & vapourComposition,
-                                                          arraySlice1d< real64 > const & logLiquidFugacity,
-                                                          arraySlice1d< real64 > const & logVapourFugacity,
-                                                          arraySlice2d< real64 > const & logLiquidFugacityDerivs,
-                                                          arraySlice2d< real64 > const & logVapourFugacityDerivs,
-                                                          arraySlice1d< real64, USD3 > const & residual,
-                                                          arraySlice2d< real64, USD4 > const & jacobian )
+                                                            real64 const pressure,
+                                                            real64 const temperature,
+                                                            arraySlice1d< real64 const > const & composition,
+                                                            ComponentProperties::KernelWrapper const & componentProperties,
+                                                            FlashData const & flashData,
+                                                            arraySlice1d< real64 const, USD1 > const & kValues,
+                                                            real64 const & vapourPhaseMoleFraction,
+                                                            arraySlice1d< real64, USD2 > const & liquidComposition,
+                                                            arraySlice1d< real64, USD2 > const & vapourComposition,
+                                                            arraySlice1d< real64 > const & logLiquidFugacity,
+                                                            arraySlice1d< real64 > const & logVapourFugacity,
+                                                            arraySlice2d< real64 > const & logLiquidFugacityDerivs,
+                                                            arraySlice2d< real64 > const & logVapourFugacityDerivs,
+                                                            arraySlice1d< real64, USD3 > const & residual,
+                                                            arraySlice2d< real64, USD4 > const & jacobian )
 {
-    real64 const & V = vapourPhaseMoleFraction;
+  real64 const & V = vapourPhaseMoleFraction;
 
   // Calculate phase compositions ---
   for( integer ic = 0; ic < numComps; ++ic )
@@ -525,19 +522,18 @@ real64 NegativeTwoPhaseFlash::calculateResidualAndJacobian( integer const numCom
 
 template< integer USD1, integer USD2, integer USD3 >
 GEOS_HOST_DEVICE
-void NegativeTwoPhaseFlash::computeDerivatives(
-  integer const numComps,
-  arraySlice1d< real64 const > const & totalComposition,
-  real64 const & phase1Fraction,
-  arraySlice1d< real64 const, USD1 > const & phase1Composition,
-  arraySlice1d< real64 const, USD1 > const & phase2Composition,
-  arraySlice1d< real64 const > const & phase1Fugacity,
-  arraySlice1d< real64 const > const & phase2Fugacity,
-  arraySlice2d< real64 const > const & phase1LogFugacityDerivs,
-  arraySlice2d< real64 const > const & phase2LogFugacityDerivs,
-  arraySlice1d< real64, USD2 > const & phase1FractionDerivs,
-  arraySlice2d< real64, USD3 > const & phase1CompositionDerivs,
-  arraySlice2d< real64, USD3 > const & phase2CompositionDerivs )
+void NegativeTwoPhaseFlash::computeDerivatives( integer const numComps,
+                                                arraySlice1d< real64 const > const & totalComposition,
+                                                real64 const & phase1Fraction,
+                                                arraySlice1d< real64 const, USD1 > const & phase1Composition,
+                                                arraySlice1d< real64 const, USD1 > const & phase2Composition,
+                                                arraySlice1d< real64 const > const & phase1Fugacity,
+                                                arraySlice1d< real64 const > const & phase2Fugacity,
+                                                arraySlice2d< real64 const > const & phase1LogFugacityDerivs,
+                                                arraySlice2d< real64 const > const & phase2LogFugacityDerivs,
+                                                arraySlice1d< real64, USD2 > const & phase1FractionDerivs,
+                                                arraySlice2d< real64, USD3 > const & phase1CompositionDerivs,
+                                                arraySlice2d< real64, USD3 > const & phase2CompositionDerivs )
 {
   constexpr integer maxNumDofs = MultiFluidConstants::MAX_NUM_COMPONENTS + 2;
   constexpr integer maxNumVals = MultiFluidConstants::MAX_NUM_COMPONENTS+1;
@@ -670,46 +666,6 @@ bool NegativeTwoPhaseFlash::truncateCompositions( integer const numComps,
   real64 const V = vapourPhaseMoleFraction;
   real64 const L = 1.0 - vapourPhaseMoleFraction;
   return (V < MultiFluidConstants::epsilon|| L < MultiFluidConstants::epsilon);
-}
-
-// Assume calculateFugacity is defined elsewhere.
-// This function calculates the log fugacities and their derivatives for a given phase.
-template< int USD >
-void calculateFugacity( int const numComps,
-                        double const pressure,
-                        double const temperature,
-                        ComponentProperties::KernelWrapper const & componentProperties,
-                        FlashData const & flashData,
-                        EquationOfStateType const equationOfState,
-                        std::vector< double > const & phaseComposition,
-                        std::vector< double > & logFugacity,
-                        std::vector< std::vector< double > > & logFugacityDerivatives )
-{
-  StackArray< real64, 2, 2*9 > workSpace( 2, numComps );
-  arraySlice1d< real64, USD > phaseCompositionSlice = workSpace[0];
-  arraySlice1d< real64, USD > logFugacitySlice = workSpace[1];
-  StackArray< real64, 2, 9*11 > derivatives( numComps, numComps+2 );
-  for( integer ic = 0; ic < numComps; ++ic )
-  {
-    phaseCompositionSlice[ic] = phaseComposition[ic];
-  }
-  FugacityCalculator::computeLogFugacityDerivatives( numComps,
-                                                     pressure,
-                                                     temperature,
-                                                     phaseCompositionSlice.toSliceConst(),
-                                                     componentProperties,
-                                                     equationOfState,
-                                                     flashData,
-                                                     logFugacitySlice,
-                                                     derivatives.toSlice() );
-  for( integer ic = 0; ic < numComps; ++ic )
-  {
-    logFugacity[ic] = logFugacitySlice[ic];
-    for( integer jc = 0; jc < numComps; ++jc )
-    {
-      logFugacityDerivatives[ic][jc] = derivatives( ic, 2 + jc );
-    }
-  }
 }
 
 } // namespace compositional

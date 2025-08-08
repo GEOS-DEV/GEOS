@@ -46,14 +46,11 @@ bool StabilityTest::compute( integer const numComps,
                              EquationOfStateType & incipientEquationOfState,
                              arraySlice1d< real64 > const & incipientComposition )
 {
-  GEOS_MARK_SCOPE(geos::constitutive::compositional::StabilityTest::compute);
-
-  integer constexpr maxDofs = maxNumComps + 2;
   integer const numDofs = 2 + numComps;
 
   stackArray2d< real64, 5*maxNumComps > workSpace( 5, numComps );
   stackArray2d< real64, maxNumComps *maxNumComps > jacobian( numComps, numComps );
-  stackArray2d< real64, maxNumComps *maxDofs > derivatives( numComps, numDofs );
+  stackArray2d< real64, maxNumComps *maxNumDofs > derivatives( numComps, numDofs );
   arraySlice1d< real64 > logFugacity = workSpace[0];
   arraySlice1d< real64 > logTestComposition = workSpace[1];
   arraySlice1d< real64 > testComposition = workSpace[2];
@@ -137,7 +134,7 @@ bool StabilityTest::compute( integer const numComps,
       localIndex iterationCount = 0;
 
       // Start with SSI iterations
-      for( ; ((!converged) && (iterationCount < maxIterations)); ++iterationCount )
+      for(; (!converged) && (iterationCount < maxIterations); ++iterationCount )
       {
         for( integer const ic : presentComponents )
         {
@@ -170,7 +167,7 @@ bool StabilityTest::compute( integer const numComps,
       }
 
       // Start with Newton iterations
-      for(; ((!converged) && (iterationCount < maxIterations)); ++iterationCount )
+      for(; (!converged) && (iterationCount < maxIterations); ++iterationCount )
       {
         for( integer const ic : presentComponents )
         {
@@ -192,7 +189,7 @@ bool StabilityTest::compute( integer const numComps,
                                                      jacobian.toSlice() );
         for( integer const ic : absentComponents )
         {
-          jacobian(ic, ic) = 1.0;
+          jacobian( ic, ic ) = 1.0;
         }
         solveLinearSystem( jacobian.toSlice(), residual );
         // Update to next step
@@ -204,7 +201,7 @@ bool StabilityTest::compute( integer const numComps,
         // Check stationarity
         converged = ( error < stabilityTolerance );
       }
-      
+
       allConverged = allConverged && converged;
 
       // Calculate the tangent-plane-distance (TPD) and distance to the trivial solution
@@ -247,6 +244,98 @@ bool StabilityTest::compute( integer const numComps,
 
   // The test is successful if either we have an unstable mixture or all test compositions converged to stationarity
   return unstableMixture || allConverged;
+}
+
+template< integer USD1, integer USD2 >
+GEOS_HOST_DEVICE
+void StabilityTest::computeDerivatives( integer const numComps,
+                                        real64 const pressure,
+                                        real64 const temperature,
+                                        arraySlice1d< real64 const, USD1 > const & composition,
+                                        ComponentProperties::KernelWrapper const & componentProperties,
+                                        EquationOfStateType const & sampleEquationOfState,
+                                        EquationOfStateType const & incipientEquationOfState,
+                                        FlashData const & flashData,
+                                        arraySlice1d< real64 const > const & incipientComposition,
+                                        arraySlice2d< real64, USD2 > const & incipientCompositionDerivs,
+                                        arraySlice2d< real64, USD2 > const & compositionDerivs )
+{
+  integer constexpr maxNumRows = MultiFluidConstants::MAX_NUM_COMPONENTS + 1;
+
+  integer const numDofs = 2 + numComps;
+
+  StackArray< real64, 1, maxNumComps > logFugacity( numComps );
+  auto const & logFugacityIncipientDerivs = incipientCompositionDerivs;
+  auto const & logFugacitySampleDerivs = compositionDerivs;
+
+  FugacityCalculator::computeLogFugacityDerivatives( numComps,
+                                                     pressure,
+                                                     temperature,
+                                                     composition,
+                                                     componentProperties,
+                                                     sampleEquationOfState,
+                                                     flashData,
+                                                     logFugacity.toSlice(),
+                                                     logFugacitySampleDerivs );
+  FugacityCalculator::computeLogFugacityDerivatives( numComps,
+                                                     pressure,
+                                                     temperature,
+                                                     incipientComposition,
+                                                     componentProperties,
+                                                     incipientEquationOfState,
+                                                     flashData,
+                                                     logFugacity.toSlice(),
+                                                     logFugacityIncipientDerivs );
+
+  StackArray< real64, 2, maxNumRows * maxNumRows, MatrixLayout::COL_MAJOR_PERM > A( numComps + 1, numComps + 1 );
+  StackArray< real64, 2, maxNumRows * maxNumDofs, MatrixLayout::COL_MAJOR_PERM > X( numComps + 1, numDofs );
+
+  for( integer ic = 0; ic < numComps; ++ic )
+  {
+    real64 const yi = incipientComposition[ic];
+    for( integer jc = 0; jc < numComps; ++jc )
+    {
+      real64 const df_dyj = logFugacityIncipientDerivs( ic, Deriv::dC+jc );
+      A( ic, jc ) = yi*df_dyj;
+    }
+    A( ic, ic ) += 1.0;
+    A( ic, numComps ) = yi;
+    A( numComps, ic ) = 1.0;
+  }
+  A( numComps, numComps ) = 0.0;
+
+  for( integer ic = 0; ic < numComps; ++ic )
+  {
+    real64 const yi = incipientComposition[ic];
+    for( integer const idof : {Deriv::dP, Deriv::dT} )
+    {
+      X( ic, idof ) = yi*(-logFugacityIncipientDerivs( ic, idof ) + logFugacitySampleDerivs( ic, idof ));
+    }
+    for( integer jc = 0; jc < numComps; ++jc )
+    {
+      integer const idof = Deriv::dC + jc;
+      X( ic, idof ) = yi*logFugacitySampleDerivs( ic, idof );
+    }
+    if( MultiFluidConstants::epsilon < composition[ic] )
+    {
+      X( ic, Deriv::dC+ic ) += yi/composition[ic];
+    }
+  }
+  for( integer idof = 0; idof < numDofs; ++idof )
+  {
+    X( numComps, idof ) = 0.0;
+  }
+
+  // Solve linear system
+  solveLinearSystem( A.toSlice(), X.toSlice() );
+
+  for( integer idof = 0; idof < numDofs; ++idof )
+  {
+    for( integer ic = 0; ic < numComps; ++ic )
+    {
+      incipientCompositionDerivs( ic, idof ) = X( ic, idof );
+    }
+  }
 }
 
 template< int USD1, int USD2, int USD3 >
