@@ -25,10 +25,14 @@
 
 // Source includes
 #include "common/GeosxConfig.hpp"
-#include "GeosxMacros.hpp"
+
 #include "BufferAllocator.hpp"
 #include "DataLayouts.hpp"
+#include "GeosxMacros.hpp"
+#include "Path.hpp"
+#include "StdContainerWrappers.hpp"
 #include "Tensor.hpp"
+
 #include "LvArray/src/Macros.hpp"
 #include "LvArray/src/Array.hpp"
 #include "LvArray/src/ArrayOfArrays.hpp"
@@ -39,7 +43,6 @@
 #include "LvArray/src/StackBuffer.hpp"
 #include "LvArray/src/ChaiBuffer.hpp"
 
-#include "Path.hpp"
 
 // TPL includes
 #include <camp/camp.hpp>
@@ -53,16 +56,12 @@
 //#include <cmath>
 #include <cstdint>
 #include <iostream>
-#include <map>
-#include <memory>
 #include <optional>
 #include <set>
 #include <string>
 #include <string_view>
 #include <typeindex>
 #include <typeinfo>
-#include <unordered_map>
-#include <vector>
 
 /*
  * top level geos namespace contains all code that is specific to GEOSX
@@ -110,10 +109,10 @@ using buffer_unit_type = signed char;
 
 #ifdef GEOS_USE_CHAI
 /// Type of storage for communication buffers.
-using buffer_type = std::vector< buffer_unit_type, BufferAllocator< buffer_unit_type > >;
+using buffer_type = stdVector< buffer_unit_type, BufferAllocator< buffer_unit_type > >;
 #else
 /// Type of storage for communication buffers.
-using buffer_type = std::vector< buffer_unit_type >;
+using buffer_type = stdVector< buffer_unit_type >;
 #endif
 
 ///@}
@@ -314,35 +313,6 @@ using CRSMatrixView = LvArray::CRSMatrixView< T, COL_INDEX, localIndex const, Lv
 //END_SPHINX_INCLUDE_00
 
 /**
- * @name Ordered and unordered map types.
- */
-///@{
-
-/**
- * @brief Base template for ordered and unordered maps.
- * @tparam TKEY key type
- * @tparam TVAL value type
- * @tparam SORTED a @p std::integral_constant<bool> indicating whether map is ordered
- */
-template< typename TKEY, typename TVAL, typename SORTED >
-class mapBase
-{};
-
-/// @cond DO_NOT_DOCUMENT
-template< typename TKEY, typename TVAL >
-class mapBase< TKEY, TVAL, std::integral_constant< bool, true > > : public std::map< TKEY, TVAL >
-{
-  using std::map< TKEY, TVAL >::map; // enable list initialization
-};
-
-template< typename TKEY, typename TVAL >
-class mapBase< TKEY, TVAL, std::integral_constant< bool, false > > : public std::unordered_map< TKEY, TVAL >
-{
-  using std::unordered_map< TKEY, TVAL >::unordered_map; // enable list initialization
-};
-/// @endcond
-
-/**
  * @brief Stream output operator for map types.
  * @tparam K key type
  * @tparam V value type
@@ -353,7 +323,7 @@ class mapBase< TKEY, TVAL, std::integral_constant< bool, false > > : public std:
  */
 template< typename K, typename V, typename SORTED >
 inline
-std::ostream & operator<< ( std::ostream & stream, mapBase< K, V, SORTED > const & map )
+std::ostream & operator<< ( std::ostream & stream, mapType< K, V, SORTED > const & map )
 {
   stream << "{\n";
   for( auto const & pair : map )
@@ -372,8 +342,6 @@ using map = mapBase< TKEY, TVAL, std::integral_constant< bool, true > >;
 template< typename TKEY, typename TVAL >
 using unordered_map = mapBase< TKEY, TVAL, std::integral_constant< bool, false > >;
 
-///@}
-
 /**
  * @name Aliases for commonly used array types.
  */
@@ -389,7 +357,8 @@ using real32_array = array1d< real32 >;
 using real64_array = array1d< real64 >;
 
 /// A 1-dimensional array of geos::string types.
-using string_array = array1d< string >;
+//using string_array = string_array;
+using string_array = stdVector< string >;
 
 /// A 1-dimensional array of geos::Path types
 using path_array = array1d< Path >;

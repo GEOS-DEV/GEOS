@@ -101,26 +101,20 @@ private:
 using TestTypes = ::testing::Types< int,
                                     double,
                                     R1Tensor,
-                                    std::pair< int, R1Tensor >, // This should be passed to conduit via an external
-                                                                // pointer but currently we're packing it.
+                                    std::pair< int, R1Tensor >,  // This should be passed to conduit via an external
+                                                                 // pointer but currently we're packing it.
                                     std::pair< string, double >,
                                     string,
-                                    std::vector< int >,
-                                    // std::vector< string > bufferOps currently can't pack this
+                                    stdVector< int >,
+                                    // stdVector< string > bufferOps currently can't pack this
                                     array1d< double >,
-                                    array1d< string >,
+                                    string_array,
                                     array1d< array1d< double > >,
-                                    array1d< array1d< string > >,
                                     array2d< double >,
-                                    array2d< string >,
                                     array2d< double, RAJA::PERM_JI >,
-                                    array2d< string, RAJA::PERM_JI >,
                                     array3d< double >,
-                                    array3d< string >,
                                     array3d< double, RAJA::PERM_KJI >,
-                                    array3d< string, RAJA::PERM_IKJ >,
                                     SortedArray< int >,
-                                    SortedArray< string >,
                                     map< string, int >,
                                     unordered_map< string, int >,
                                     map< long, int >,

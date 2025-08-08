@@ -413,7 +413,7 @@ void testNumericalJacobian( CompositionalMultiphaseReservoirAndWells< Compositio
                   // after perturbing, update the pressure-dependent quantities in the reservoir
                   flowSolver.forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                                            MeshLevel & mesh2,
-                                                                                           arrayView1d< string const > const & regionNames2 )
+                                                                                           string_array const & regionNames2 )
                   {
                     mesh2.getElemManager().forElementSubRegions( regionNames2,
                                                                  [&]( localIndex const,
@@ -446,7 +446,7 @@ void testNumericalJacobian( CompositionalMultiphaseReservoirAndWells< Compositio
 
                   flowSolver.forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                                            MeshLevel & mesh2,
-                                                                                           arrayView1d< string const > const & regionNames2 )
+                                                                                           string_array const & regionNames2 )
                   {
                     mesh2.getElemManager().forElementSubRegions( regionNames2,
                                                                  [&]( localIndex const,
@@ -477,7 +477,7 @@ void testNumericalJacobian( CompositionalMultiphaseReservoirAndWells< Compositio
                   // after perturbing, update the pressure-dependent quantities in the reservoir
                   flowSolver.forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                                            MeshLevel & mesh2,
-                                                                                           arrayView1d< string const > const & regionNames2 )
+                                                                                           string_array const & regionNames2 )
                   {
                     mesh2.getElemManager().forElementSubRegions( regionNames2,
                                                                  [&]( localIndex const,
@@ -515,7 +515,7 @@ void testNumericalJacobian( CompositionalMultiphaseReservoirAndWells< Compositio
   if( 1 )
     wellSolver.forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                              MeshLevel & mesh,
-                                                                             arrayView1d< string const > const & regionNames )
+                                                                             string_array const & regionNames )
     {
       mesh.getElemManager().forElementSubRegions< WellElementSubRegion >( regionNames,
                                                                           [&]( localIndex const,

@@ -150,8 +150,7 @@ public:
     GEOS_ERROR_IF( percent > 100, "Error, percentage of memory should be smaller than 100, check lifoOnDevice (should be greater than -100)" );
     size_t free, total;
     GEOS_ERROR_IF( cudaSuccess != cudaMemGetInfo( &free, &total ), "Error getting CUDA device available memory" );
-    double freeGB = ( ( double ) free ) / ( 1024.0 * 1024.0 * 1024.0 );
-    LIFO_LOG_RANK( " LIFO : available memory on device " << freeGB << " GB" );
+    LIFO_LOG_RANK( " LIFO : available memory on device " << free / ( 1024.0 * 1024.0 * 1024.0 ) << " GB" );
     return std::min( ( int )( 0.01 * percent * free / bufferSize ), maxNumberOfBuffers );
   }
 
@@ -208,9 +207,9 @@ private:
   /// ueue of data stored on device
   FixedSizeDequeWithMutexes< T, INDEX_TYPE > m_deviceDeque;
   // Events associated to ith  copies to device buffer
-  std::vector< camp::resources::Event > m_pushToDeviceEvents;
+  stdVector< camp::resources::Event > m_pushToDeviceEvents;
   // Events associated to ith  copies from device buffer
-  std::vector< camp::resources::Event > m_popFromDeviceEvents;
+  stdVector< camp::resources::Event > m_popFromDeviceEvents;
 };
 }
 #endif // LIFOSTORAGE_HPP

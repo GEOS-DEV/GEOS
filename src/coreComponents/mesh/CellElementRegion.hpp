@@ -89,8 +89,8 @@ public:
    * @note the list may be incomplete / illegible if CellElementRegionSelectorhas not been used on
    *       the instance.
    */
-  arrayView1d< string const > getCellBlockNames() const
-  { return m_cellBlockNames.toViewConst(); }
+  string_array const & getCellBlockNames() const
+  { return m_cellBlockNames; }
 
   /**
    * @brief Select a cellBlock by its name for generateMesh().

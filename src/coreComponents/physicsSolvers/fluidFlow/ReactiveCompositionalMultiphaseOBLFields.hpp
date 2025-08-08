@@ -22,6 +22,7 @@
 
 #include "common/DataLayouts.hpp"
 #include "mesh/MeshFields.hpp"
+#include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
 
 namespace geos
 {
@@ -37,14 +38,6 @@ namespace flow
 using array2dLayoutComp = array2d< real64, compflow::LAYOUT_COMP >;
 using array2dLayoutOBLOpVals = array2d< real64, compflow::LAYOUT_OBL_OPERATOR_VALUES >;
 using array3dLayoutOBLOpDers = array3d< real64, compflow::LAYOUT_OBL_OPERATOR_DERIVATIVES >;
-
-DECLARE_FIELD( globalCompFraction_n,
-               "globalCompFraction_n",
-               array2dLayoutComp,
-               0,
-               NOPLOT,
-               NO_WRITE,
-               "Global component fraction at the previous converged time step" );
 
 DECLARE_FIELD( bcGlobalCompFraction,
                "bcGlobalCompFraction",
