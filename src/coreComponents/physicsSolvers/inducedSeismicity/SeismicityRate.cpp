@@ -22,11 +22,11 @@
 #include "dataRepository/InputFlags.hpp"
 #include "mainInterface/GeosxState.hpp"
 #include "mesh/DomainPartition.hpp"
-#include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "fieldSpecification/LogLevelsInfo.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 #include "kernels/SeismicityRateKernels.hpp"
 #include "physicsSolvers/inducedSeismicity/inducedSeismicityFields.hpp"
+#include "physicsSolvers/fluidFlow/FlowSolverBase.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
 
 #include "fieldSpecification/FieldSpecificationManager.hpp"
@@ -174,7 +174,7 @@ void SeismicityRate::updateFaultTraction( ElementSubRegionBase & subRegion ) con
 
     string const & porousSolidModelName = subRegion.getReference< string >( FlowSolverBase::viewKeyStruct::solidNamesString() );
     CoupledSolidBase & porousSolid = getConstitutiveModel< CoupledSolidBase >( subRegion, porousSolidModelName );
-    constitutive::ConstitutivePassThru< CoupledSolidBase >::execute( porousSolid, [&] ( auto & castedPorousSolid )
+    ConstitutivePassThru< CoupledSolidBase >::execute( porousSolid, [&] ( auto & castedPorousSolid )
     {
       // Initialize biotCoefficient as const arrayView before passing it through the lambda cast
       arrayView1d< real64 const > const biotCoefficient = castedPorousSolid.getBiotCoefficient();
@@ -352,8 +352,8 @@ real64 SeismicityRate::updateStresses( real64 const & time_n,
 
       FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
 
-      std::vector< string > const keys = { inducedSeismicity::projectedNormalTraction::key(),
-                                           inducedSeismicity::projectedShearTraction::key() };
+      stdVector< string > const keys = { inducedSeismicity::projectedNormalTraction::key(),
+                                         inducedSeismicity::projectedShearTraction::key() };
 
       for( auto const & key : keys )
       {

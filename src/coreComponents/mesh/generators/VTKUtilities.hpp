@@ -56,7 +56,7 @@ ENUM_STRINGS( PartitionMethod,
  * This should be an unordered_map, but some outdated standard libraries on some systems
  * do not provide std::hash specialization for enums. This is not performance critical though.
  */
-using CellMapType = std::map< ElementType, std::unordered_map< int, std::vector< vtkIdType > > >;
+using CellMapType = std::map< ElementType, std::unordered_map< int, stdVector< vtkIdType > > >;
 
 /**
  * @brief Return a VTK controller for multiprocessing.
@@ -141,8 +141,8 @@ AllMeshes loadAllMeshes( Path const & filePath,
  * @param[in] boundingBoxes the bounding boxes used by the VTK partitioner for all ranks
  * @return the list of neighboring MPI ranks, will be updated
  */
-std::vector< int >
-findNeighborRanks( std::vector< vtkBoundingBox > boundingBoxes );
+stdVector< int >
+findNeighborRanks( stdVector< vtkBoundingBox > boundingBoxes );
 
 /**
  * @brief Generate global point/cell IDs and redistribute the mesh among MPI ranks.
@@ -217,7 +217,7 @@ string buildCellBlockName( ElementType const type, int const regionId );
  * @param vtkArray The source.
  * @param wrapper The destination.
  */
-void importMaterialField( std::vector< vtkIdType > const & cellIds,
+void importMaterialField( stdVector< vtkIdType > const & cellIds,
                           vtkDataArray * vtkArray,
                           dataRepository::WrapperBase & wrapper );
 
@@ -227,7 +227,7 @@ void importMaterialField( std::vector< vtkIdType > const & cellIds,
  * @param vtkArray The source.
  * @param wrapper The destination.
  */
-void importRegularField( std::vector< vtkIdType > const & cellIds,
+void importRegularField( stdVector< vtkIdType > const & cellIds,
                          vtkDataArray * vtkArray,
                          dataRepository::WrapperBase & wrapper );
 
