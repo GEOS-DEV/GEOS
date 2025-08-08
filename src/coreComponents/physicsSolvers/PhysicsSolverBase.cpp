@@ -1380,18 +1380,21 @@ real64 PhysicsSolverBase::scalingForSystemSolution( DomainPartition & GEOS_UNUSE
   real64 scalingFactor = 1.0;
 
   // Check for oscillations
-  if( m_nonlinearSolverParameters.m_oscillationScaling && detectOscillations() )
+  if( m_nonlinearSolverParameters.m_oscillationScaling )
   {
-    scalingFactor *= m_nonlinearSolverParameters.m_oscillationScalingFactor;
-    GEOS_LOG_LEVEL_RANK_0( logInfo::NonlinearSolver,
-                           GEOS_FMT( "        {}: oscillation detected, scaling factor set to {}", getName(), scalingFactor ) );
-  }
+    if( detectOscillations() )
+    {
+      scalingFactor *= m_nonlinearSolverParameters.m_oscillationScalingFactor;
+      GEOS_LOG_LEVEL_RANK_0( logInfo::NonlinearSolver,
+                             GEOS_FMT( "        {}: oscillation detected, scaling factor set to {}", getName(), scalingFactor ) );
+    }
 
-  m_solutionHistory.appendArray( localSolution.begin(), localSolution.end());
-  if( m_solutionHistory.size() > m_nonlinearSolverParameters.m_oscillationCheckDepth )
-  {
-    // remove the oldest solution from the history
-    m_solutionHistory.eraseArray( 0 );
+    m_solutionHistory.appendArray( localSolution.begin(), localSolution.end());
+    if( m_solutionHistory.size() > m_nonlinearSolverParameters.m_oscillationCheckDepth )
+    {
+      // remove the oldest solution from the history
+      m_solutionHistory.eraseArray( 0 );
+    }
   }
 
   return scalingFactor;
@@ -1513,7 +1516,7 @@ void PhysicsSolverBase::saveSequentialIterationState( DomainPartition & GEOS_UNU
 }
 
 // Detect oscillations for all dofs in the solution history
-bool PhysicsSolverBase::detectOscillations()
+bool PhysicsSolverBase::detectOscillations() const
 {
   // grab the parameters
   integer const oscillationCheckDepth = m_nonlinearSolverParameters.m_oscillationCheckDepth;
@@ -1525,45 +1528,46 @@ bool PhysicsSolverBase::detectOscillations()
 
   RAJA::ReduceSum< parallelDeviceReduce, localIndex > oscillationCount = 0;
 
+  auto const solutionHistory = m_solutionHistory.toViewConst();
   localIndex const numDofs = m_solutionHistory[0].size();
   localIndex const historySize = m_solutionHistory.size();
 
   RAJA::forall< parallelDevicePolicy<> >( RAJA::TypedRangeSegment< localIndex >( 0, numDofs ),
-                                          [&] GEOS_HOST ( localIndex const dof )
+                                          [=] GEOS_HOST_DEVICE ( localIndex const dof )
+  {
+    bool oscillationDetected = true;
+    for( localIndex i = historySize - 1; i > historySize - oscillationCheckDepth; --i )
     {
-      bool oscillationDetected = true;
-      for( localIndex i = historySize - 1; i > historySize - oscillationCheckDepth; --i )
+      real64 dxCur = solutionHistory[i][dof];
+      real64 dxPrev = solutionHistory[i-1][dof];
+
+      if( LvArray::math::abs( dxCur ) < oscillationTolerance || LvArray::math::abs( dxPrev ) < oscillationTolerance )
       {
-        real64 dxCur = m_solutionHistory[i][dof];
-        real64 dxPrev = m_solutionHistory[i-1][dof];
-
-        if( LvArray::math::abs( dxCur ) < oscillationTolerance || LvArray::math::abs( dxPrev ) < oscillationTolerance )
-        {
-          oscillationDetected = false;
-          break; // solution changes are too small
-        }
-
-        real64 maxAbs = LvArray::math::max( LvArray::math::abs( dxCur ), LvArray::math::abs( dxPrev ) );
-        if( LvArray::math::abs( dxCur + dxPrev ) / maxAbs > oscillationTolerance )
-        {
-          oscillationDetected = false;
-          break; // solution changes are not oscillating
-        }
-
-        if( dxCur * dxPrev > 0 )
-        {
-          oscillationDetected = false;
-          break; // sign is not oscillating
-        }
+        oscillationDetected = false;
+        break;   // solution changes are too small
       }
 
-      if( oscillationDetected )
+      real64 maxAbs = LvArray::math::max( LvArray::math::abs( dxCur ), LvArray::math::abs( dxPrev ) );
+      if( LvArray::math::abs( dxCur + dxPrev ) / maxAbs > oscillationTolerance )
       {
-        oscillationCount += 1;
+        oscillationDetected = false;
+        break;   // solution changes are not oscillating
       }
-    } );
 
-  real64 const f = static_cast< real64 >( MpiWrapper::sum( oscillationCount.get() ) ) / numDofs;
+      if( dxCur * dxPrev > 0 )
+      {
+        oscillationDetected = false;
+        break;   // sign is not oscillating
+      }
+    }
+
+    if( oscillationDetected )
+    {
+      oscillationCount += 1;
+    }
+  } );
+
+  real64 const f = static_cast< real64 >( MpiWrapper::sum( oscillationCount.get() ) ) / MpiWrapper::sum( numDofs );
 
   return f > oscillationFraction;
 }

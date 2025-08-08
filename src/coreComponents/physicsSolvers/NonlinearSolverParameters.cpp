@@ -230,6 +230,8 @@ void NonlinearSolverParameters::postInputInitialization()
                         getWrapperDataContext( viewKeysStruct::oscillationCheckDepthString() ) << ": can not be less than 2" );
   GEOS_ERROR_IF_LE_MSG( m_oscillationTolerance, 0.0,
                         getWrapperDataContext( viewKeysStruct::oscillationToleranceString() ) << ": should be positive" );
+  GEOS_ERROR_IF_GE_MSG( m_oscillationTolerance, 1.0,
+                        getWrapperDataContext( viewKeysStruct::oscillationToleranceString() ) << ": can not be more than 1.0" );
   GEOS_ERROR_IF_LT_MSG( m_oscillationFraction, 0.0,
                         getWrapperDataContext( viewKeysStruct::oscillationFractionString() ) << ": can not be negative" );
   GEOS_ERROR_IF_GT_MSG( m_oscillationFraction, 1.0,

@@ -1020,7 +1020,7 @@ protected:
    * @brief Detect oscillations in the solution
    * @return true if oscillations are detected, false otherwise
    */
-  bool detectOscillations();
+  bool detectOscillations() const;
 
   /// Courant–Friedrichs–Lewy factor for the timestep
   real64 m_cflFactor;
