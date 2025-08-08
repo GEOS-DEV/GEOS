@@ -20,6 +20,7 @@
 #include "NegativeTwoPhaseFlashModel.hpp"
 #include "constitutive/fluid/multifluid/compositional/parameters/CriticalVolume.hpp"
 #include "constitutive/fluid/multifluid/compositional/parameters/BrineSalinity.hpp"
+#include "constitutive/fluid/multifluid/compositional/parameters/FlashParameters.hpp"
 #include "constitutive/fluid/multifluid/compositional/parameters/PhaseType.hpp"
 
 namespace geos
@@ -63,13 +64,17 @@ NegativeTwoPhaseFlashModel::createKernelWrapper() const
 
   CriticalVolume const * criticalVolume = m_parameters.get< CriticalVolume >();
 
+  FlashParameters const * flashParameters = m_parameters.get< FlashParameters >();
+
   return KernelWrapper( m_componentProperties.getNumberOfComponents(),
                         liquidIndex,
                         vapourIndex,
                         liquidEos,
                         vapourEos,
                         salinity,
-                        criticalVolume->m_componentCriticalVolume );
+                        criticalVolume->m_componentCriticalVolume,
+                        flashParameters->m_continuousParameters,
+                        flashParameters->m_discreteParameters );
 }
 
 NegativeTwoPhaseFlashModelUpdate::NegativeTwoPhaseFlashModelUpdate(
@@ -79,11 +84,15 @@ NegativeTwoPhaseFlashModelUpdate::NegativeTwoPhaseFlashModelUpdate(
   EquationOfStateType const liquidEos,
   EquationOfStateType const vapourEos,
   real64 const salinity,
-  arrayView1d< real64 const > const componentCriticalVolume ):
+  arrayView1d< real64 const > const componentCriticalVolume,
+  arrayView1d< real64 const > const continuousFlashParameters,
+  arrayView1d< integer const > const discreteFlashParameters ):
   m_numComponents( numComponents ),
   m_liquidIndex( liquidIndex ),
   m_vapourIndex( vapourIndex ),
-  m_componentCriticalVolume( componentCriticalVolume )
+  m_componentCriticalVolume( componentCriticalVolume ),
+  m_continuousFlashParameters( continuousFlashParameters ),
+  m_discreteFlashParameters( discreteFlashParameters )
 {
   m_flashData.liquidEos = liquidEos;
   m_flashData.vapourEos = vapourEos;
@@ -93,7 +102,8 @@ NegativeTwoPhaseFlashModelUpdate::NegativeTwoPhaseFlashModelUpdate(
 std::unique_ptr< ModelParameters >
 NegativeTwoPhaseFlashModel::createParameters( std::unique_ptr< ModelParameters > parameters )
 {
-  std::unique_ptr< ModelParameters > params = EquationOfState::create( std::move( parameters ) );
+  std::unique_ptr< ModelParameters > params = FlashParameters::create( std::move( parameters ) );
+  params = EquationOfState::create( std::move( params ) );
   params = CriticalVolume::create( std::move( params ) );
   return params;
 }
