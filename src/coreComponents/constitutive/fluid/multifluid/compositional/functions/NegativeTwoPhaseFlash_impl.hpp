@@ -55,7 +55,7 @@ bool NegativeTwoPhaseFlash::compute( integer const numComps,
   integer const numDofs = numComps + 2;
 
   StackArray< real64, 2, 3*maxNumComps > workSpace( 3, numComps );
-  StackArray< real64, 1, maxNumComps+1 > residualSpace( numComps );
+  StackArray< real64, 1, maxNumComps+1 > residualSpace( numComps+1 );
   arraySlice1d< real64 > logLiquidFugacity = workSpace[0];
   arraySlice1d< real64 > logVapourFugacity = workSpace[1];
   arraySlice1d< real64 > residual = residualSpace.toSlice();
@@ -103,6 +103,18 @@ bool NegativeTwoPhaseFlash::compute( integer const numComps,
                                             logVapourFugacity,
                                             residual );
 
+std::cout
+<< std::setw(3) << iterationCount << " "
+<< "SSI"
+<< std::scientific << std::setprecision(5) << std::setw(12) << error << " "
+<< std::fixed << std::setprecision(8) << std::setw(12) << vapourPhaseMoleFraction << " "
+<< std::fixed << std::setprecision(5) << liquidComposition << " "
+<< std::fixed << std::setprecision(5) << vapourComposition << " "
+<< "\n";
+   if( error < flashSSITolerance )
+    {
+      break;
+    }
     // Update K-values
     for( integer const ic : presentComponents )
     {
@@ -112,19 +124,20 @@ bool NegativeTwoPhaseFlash::compute( integer const numComps,
     // Check convergence
     converged = ( error < flashTolerance );
 
+    // Don't switch to Newton if we are in the "negative flash" range
     if( error < flashSSITolerance )
     {
       break;
     }
   }
-
+std::cout << std::scientific << std::setprecision(8) << kVapourLiquid.toSliceConst() << "\n";
   // Start Newton iterations
   StackArray< real64, 3, 2*maxNumComps * maxNumDofs > logFugacityDerivs( 2, numComps, numDofs );
   StackArray< real64, 2, (maxNumComps+1) * (maxNumComps+1) > jacobian( numComps+1, numComps+1 );
   arraySlice2d< real64 > const logLiquidFugacityDerivs = logFugacityDerivs[0];
   arraySlice2d< real64 > const logVapourFugacityDerivs = logFugacityDerivs[1];
 
-  for(; ( !converged ) && (iterationCount < maxIterations); ++iterationCount )
+  for(iterationCount++; ( !converged ) && (iterationCount < maxIterations); ++iterationCount )
   {
     real64 const error = calculateResidualAndJacobian( numComps,
                                                        pressure,
@@ -148,7 +161,41 @@ bool NegativeTwoPhaseFlash::compute( integer const numComps,
     {
       jacobian( ic, ic ) = 1.0;
     }
-
+    /*
+std::cout << std::scientific << std::setprecision(5);
+for (integer ic = 0; ic < numComps; ++ic)
+{
+  real64 const zi = composition[ic];
+  real64 const xi = liquidComposition[ic];
+  real64 const yi = vapourComposition[ic];
+//std::cout << ic << " "
+//<< std::scientific << std::setprecision(5) << xi << " " << yi << " " << zi << "\n";
+  if (LvArray::math::min(LvArray::math::min(xi, yi), zi) < 1e-4)
+  {
+for (integer jc = 0; jc <= numComps; ++jc)
+{
+  jacobian( ic, jc ) = 0.0;
+  jacobian( jc, ic ) = 0.0;
+}
+jacobian( ic, ic ) = 1.0;
+  }
+}    */
+std::cout << "---------------------------------------------\n";
+std::cout << std::scientific << std::setprecision(5);
+for (integer ic = 0; ic <= numComps; ++ic)
+{
+  std::cout << jacobian[ic] << "\n";
+}
+std::cout << "---------------------------------------------\n";
+std::cout
+<< std::setw(3) << iterationCount << " "
+<< "NEW"
+<< std::scientific << std::setprecision(5) << std::setw(12) << error << " "
+<< std::fixed << std::setprecision(8) << std::setw(12) << vapourPhaseMoleFraction << " "
+//<< std::fixed << std::setprecision(5) << liquidComposition << " "
+//<< std::fixed << std::setprecision(5) << vapourComposition << " "
+<< std::scientific << std::setprecision(5) << residual << " "
+<< "\n";
     // Solve for next step
     solveLinearSystem( jacobian.toSlice(), residual );
     // Update K-values
@@ -159,6 +206,15 @@ bool NegativeTwoPhaseFlash::compute( integer const numComps,
     vapourPhaseMoleFraction -= residual[numComps];
     // Check convergence
     converged = ( error < flashTolerance );
+std::cout
+<< std::setw(3) << iterationCount << " "
+<< "NEW"
+<< std::scientific << std::setprecision(5) << std::setw(12) << error << " "
+<< std::fixed << std::setprecision(8) << std::setw(12) << vapourPhaseMoleFraction << " "
+//<< std::fixed << std::setprecision(5) << liquidComposition << " "
+//<< std::fixed << std::setprecision(5) << vapourComposition << " "
+<< std::scientific << std::setprecision(5) << residual << " "
+<< "\n";
   }
 
   // Test if we have converged to a null or trivial solution

@@ -167,7 +167,7 @@ bool StabilityTest::compute( integer const numComps,
       }
 
       // Start with Newton iterations
-      for(; (!converged) && (iterationCount < maxIterations); ++iterationCount )
+      for(iterationCount++; (!converged) && (iterationCount < maxIterations); ++iterationCount )
       {
         for( integer const ic : presentComponents )
         {

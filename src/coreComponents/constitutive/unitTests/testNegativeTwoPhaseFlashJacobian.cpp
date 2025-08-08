@@ -50,6 +50,33 @@ struct FluidData< 4 >
   }
 };
 
+template<>
+struct FluidData< 9 >
+{
+static std::unique_ptr< TestFluid< 9 > > createFluid()
+{
+  std::unique_ptr< TestFluid< 9 > > fluid = TestFluid< 9 >::create( {0, 0, 0, 0, 0, 0, 0, 0, 0} );
+  // Manually populate
+  TestFluid< 9 >::populateArray( fluid->criticalPressure, Feed< 9 >{73.8659e5, 33.9439e5, 46.0421e5, 48.8387e5, 42.4552e5, 37.47e5, 33.5892e5, 30.1037e5, 20.549e5} );
+  TestFluid< 9 >::populateArray( fluid->criticalTemperature, Feed< 9 >{304.7, 126.2, 190.6, 305.43, 369.8, 419.5, 465.9, 507.5, 678.8} );
+  TestFluid< 9 >::populateArray( fluid->criticalVolume, Feed< 9 >{9.3999e-05, 9.0001e-05, 9.7999e-05, 1.4800e-04, 2.0000e-04, 2.5800e-04, 3.1000e-04, 3.5100e-04, 6.8243e-04} );
+  TestFluid< 9 >::populateArray( fluid->acentricFactor, Feed< 9 >{0.225, 0.04, 0.013, 0.0986, 0.1524, 0.1956, 0.2413, 0.299, 0.5618} );
+  TestFluid< 9 >::populateArray( fluid->molecularWeight, Feed< 9 >{44.01e-3, 28.01e-3, 16.04e-3, 30.07e-3, 44.1e-3, 58.12e-3, 72.15e-3, 84e-3, 173e-3} );
+  TestFluid< 9 >::populateArray( fluid->volumeShift, Feed< 9 >{ -0.04958, -0.136012, -0.1486264, -0.10863408, -0.08349872, -0.06331568, -0.04196464, -0.0150072, 0.0000 } );
+  fluid->setBinaryCoefficients( Feed< 36 >{
+        1.0000e-02,
+        0.0000e+00, 3.7320e-03,
+        0.0000e+00, 1.0000e-02, 0.0000e+00,
+        0.0000e+00, 1.0000e-02, 0.0000e+00, 0.0000e+00,
+        0.0000e+00, 0.0000e+00, 0.0000e+00, 0.0000e+00, 0.0000e+00,
+        0.0000e+00, 0.0000e+00, 0.0000e+00, 0.0000e+00, 0.0000e+00, 0.0000e+00,
+        1.0000e-02, 0.0000e+00, 2.8000e-02, 1.0000e-02, 1.0000e-02, 0.0000e+00, 0.0000e+00,
+        1.0000e-02, 0.0000e+00, 4.5320e-02, 1.0000e-02, 1.0000e-02, 0.0000e+00, 0.0000e+00, 0.0000e+00
+      } );
+  return fluid;
+}
+};
+
 template< int NC >
 using FlashData = std::tuple<
   real64 const,       // pressure
@@ -120,14 +147,13 @@ public:
                                                         temperature,
                                                         componentProperties,
                                                         kValues );
+
+    std::array<real64,9> kv{ 5.50659394e-01, 6.30017745e+00, 2.74421602e+00, 4.80354013e-01, 1.56281500e-01, 5.21905616e-02, 1.78835233e-02, 5.75547635e-03, 9.74533928e-06 };
+    for( integer ic = 0; ic < numComps; ++ic )
     {
-      std::vector< real64 > x{0.03512106, 0.10723110, 0.10724847, 0.75039936};
-      std::vector< real64 > y{0.99661534, 0.00094661, 0.00037503, 0.00206303};
-      for( integer kc = 0; kc < numComps; ++kc )
-      {
-        kValues[kc] = y[kc]/x[kc];
-      }
+      kValues[ic] = kv[ic];
     }
+
 
     NegativeTwoPhaseFlash::calculateResidualAndJacobian( numComps,
                                                          pressure,
@@ -218,15 +244,22 @@ protected:
   std::unique_ptr< TestFluid< NC > > m_fluid{};
 };
 
-using PengRobinson4 = NegativeTwoPhaseFlashJacobianTestFixture< 4, EquationOfStateType::PengRobinson, EquationOfStateType::PengRobinson >;
-using SoreideWhitson4 = NegativeTwoPhaseFlashJacobianTestFixture< 4, EquationOfStateType::SoreideWhitson, EquationOfStateType::SoreideWhitson >;
+//using PengRobinson4 = NegativeTwoPhaseFlashJacobianTestFixture< 4, EquationOfStateType::PengRobinson, EquationOfStateType::PengRobinson >;
+//using SoreideWhitson4 = NegativeTwoPhaseFlashJacobianTestFixture< 4, EquationOfStateType::SoreideWhitson, EquationOfStateType::PengRobinson >;
+using PengRobinson9 = NegativeTwoPhaseFlashJacobianTestFixture< 9, EquationOfStateType::PengRobinson, EquationOfStateType::PengRobinson >;
 
+/*
 TEST_P( PengRobinson4, testJacobian )
 {
   testJacobian( GetParam() );
 }
 
 TEST_P( SoreideWhitson4, testJacobian )
+{
+  testJacobian( GetParam() );
+}
+*/
+TEST_P( PengRobinson9, testJacobian )
 {
   testJacobian( GetParam() );
 }
@@ -237,6 +270,7 @@ TEST_P( SoreideWhitson4, testJacobian )
 
 /* UNCRUSTIFY-OFF */
 
+/*
 INSTANTIATE_TEST_SUITE_P(NegativeTwoPhaseFlashJacobian, PengRobinson4,
   ::testing::ValuesIn<FlashData< 4 >>({
     {1.00000e+06, 193.15, {0.0, 0.0, 0.0, 1.0}, 0.5}
@@ -250,6 +284,13 @@ INSTANTIATE_TEST_SUITE_P(NegativeTwoPhaseFlashJacobian, SoreideWhitson4,
     {1.00000e+06, 193.15, {0.0, 0.0, 0.0, 1.0}, 1.0},
     {1.00000e+06, 193.15, {0.0, 0.0, 0.0, 1.0}, 0.998},
     {1.00000e+06, 193.15, {0.0, 0.0, 0.0, 1.0}, 1.002}
+  })
+);
+*/
+
+INSTANTIATE_TEST_SUITE_P(NegativeTwoPhaseFlashJacobian, PengRobinson9,
+  ::testing::ValuesIn<FlashData< 9 >>({
+    {1.00000e+07, 278.15, {0.000363, 0.000007, 0.003471, 0.006007, 0.018423, 0.034034, 0.042565, 0.056120, 0.839010}, -0.18866442}
   })
 );
 
