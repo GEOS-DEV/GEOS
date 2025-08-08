@@ -70,6 +70,10 @@ macro(set_cuda_options)
     set( CMAKE_CUDA_FLAGS_RELWITHDEBINFO "-g -lineinfo ${CMAKE_CUDA_FLAGS_RELEASE}" CACHE STRING "" )
     set( CMAKE_CUDA_FLAGS_DEBUG "-g -G -O0 -Xcompiler -O0" CACHE STRING "" )
 
+    # Increase CUDA stack size to 4KB
+    set( ENABLE_CUDA_STACK_SIZE ON CACHE BOOL "" FORCE )
+    set( CUDA_STACK_SIZE "8" CACHE STRING "CUDA stack size" FORCE )
+
 endmacro(set_cuda_options)
 
 #########################################################################
@@ -113,7 +117,3 @@ set( ENABLE_DOXYGEN OFF CACHE BOOL "" FORCE )
 
 # Disable MathPresso. Not supported in this architecture
 set( ENABLE_MATHPRESSO OFF CACHE BOOL "" FORCE )
-
-# Increase CUDA stack size to 4KB
-set( ENABLE_CUDA_STACK_SIZE ON CACHE BOOL "" FORCE )
-set( CUDA_STACK_SIZE "8" CACHE STRING "CUDA stack size" FORCE )
