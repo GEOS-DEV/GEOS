@@ -306,7 +306,6 @@ bool PhysicsSolverBase::execute( real64 const time_n,
     // increment the cumulative number of nonlinear and linear iterations
     getIterationStats().iterateTimeStepStatistics();
     getIterationStats().writeIterationStatsToTable();
-    getIterationStats().resetSolverLinearTime();
 
     /*
      * Let us check convergence history of previous solve:
@@ -1010,15 +1009,15 @@ bool PhysicsSolverBase::solveNonlinearSystem( real64 const & time_n,
       getConvergenceStats().m_residuals["R"] = residualNorm;
     }
 
+    if( m_writeStatistics >= 2 )
+    {
+      getConvergenceStats().updateSolverStep( time_n, stepDt, cycleNumber, newtonIter );
+      getConvergenceStats().writeConvergenceStatsToTable();
+    }
     // if the residual norm is less than the Newton tolerance we denote that we have
     // converged and break from the Newton loop immediately.
     if( residualNorm < newtonTol && newtonIter >= minNewtonIter )
     {
-      if( m_writeStatistics >= 2 )
-      {
-        getConvergenceStats().updateSolverStep( time_n, stepDt, cycleNumber, newtonIter );
-        writeStatisticsToTable();
-      }
       isNewtonConverged = true;
       break;
     }
@@ -1160,11 +1159,6 @@ bool PhysicsSolverBase::solveNonlinearSystem( real64 const & time_n,
     }
 
     lastResidual = residualNorm;
-    if( m_writeStatistics >= 2 )
-    {
-      getConvergenceStats().updateSolverStep( time_n, stepDt, cycleNumber, newtonIter );
-      writeStatisticsToTable();
-    }
   }
 
   return isNewtonConverged;
@@ -1190,12 +1184,6 @@ void PhysicsSolverBase::setupDofs( DomainPartition const & GEOS_UNUSED_PARAM( do
                                    DofManager & GEOS_UNUSED_PARAM( dofManager ) ) const
 {
   GEOS_ERROR( "PhysicsSolverBase::setupDofs called!. Should be overridden." );
-}
-
-void PhysicsSolverBase::writeStatisticsToTable()
-{
-  getConvergenceStats().writeConvergenceStatsToTable();
-  getIterationStats().writeIterationStatsToTable();
 }
 
 void PhysicsSolverBase::setupSystem( DomainPartition & domain,

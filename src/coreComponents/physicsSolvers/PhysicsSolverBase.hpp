@@ -373,11 +373,6 @@ public:
                      DomainPartition & domain );
 
   /**
-   * @brief Write all the statistics (iteration & convergence) stored into a CSV file
-   */
-  void writeStatisticsToTable();
-
-  /**
    * @brief Populate degree-of-freedom manager with fields relevant to this solver
    * @param domain the domain containing the mesh and fields
    * @param dofManager degree-of-freedom manager associated with the linear system

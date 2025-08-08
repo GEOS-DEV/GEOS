@@ -598,7 +598,7 @@ real64 SolidMechanicsEmbeddedFractures::calculateResidualNorm( real64 const & ti
 
 real64 SolidMechanicsEmbeddedFractures::calculateFractureResidualNorm( DomainPartition const & domain,
                                                                        DofManager const & dofManager,
-                                                                       arrayView1d< real64 const > const & localRhs ) const
+                                                                       arrayView1d< real64 const > const & localRhs )
 {
   string const jumpDofKey = dofManager.getKey( contact::dispJump::key() );
 
@@ -667,7 +667,7 @@ real64 SolidMechanicsEmbeddedFractures::calculateFractureResidualNorm( DomainPar
   GEOS_LOG_LEVEL_RANK_0( logInfo::ResidualNorm,
                          GEOS_FMT( "        ( RFracture ) = ( {:4.2e} )", fractureResidualNorm ));
 
-
+  getConvergenceStats().m_residuals["RFracture"] = fractureResidualNorm;
   return fractureResidualNorm;
 }
 
