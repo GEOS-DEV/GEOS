@@ -19,11 +19,13 @@ set( gtest_geosx_tests
      testModifiedCamClay.cpp
      testMultiFluidBlackOil.cpp
      testMultiFluidCO2Brine.cpp
+     testMultiFluidThreePhaseCompositionalMultiphase.cpp
      testMultiFluidTwoPhaseCompositionalMultiphase.cpp
      testMultiFluidDeadOil.cpp
      testMultiFluidSelector.cpp
      testNegativeTwoPhaseFlash.cpp
      testNegativeTwoPhaseFlash9Comp.cpp
+     testNegativeTwoPhaseFlashModel.cpp
      testParticleFluidEnums.cpp
      testPressureTemperatureCoordinates.cpp
      testPropertyConversions.cpp
