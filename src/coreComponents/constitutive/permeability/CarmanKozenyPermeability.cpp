@@ -47,7 +47,7 @@ CarmanKozenyPermeability::CarmanKozenyPermeability( string const & name, Group *
     setDescription( "Anisotropy factors for three permeability components." );
 
   registerWrapper( viewKeyStruct::dPerm_dPorosityString(), &m_dPerm_dPorosity ).
-  setApplyDefaultValue(0.0);
+    setApplyDefaultValue( 0.0 );
 }
 
 std::unique_ptr< ConstitutiveBase >

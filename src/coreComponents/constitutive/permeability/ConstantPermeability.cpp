@@ -30,8 +30,8 @@ namespace constitutive
 
 ConstantPermeability::ConstantPermeability( string const & name, Group * const parent ):
   PermeabilityBase( name, parent ),
-  m_diagonalPermeabilityTensor{-1.0, -1.0, -1.0},
-  m_symmetricFullPermeabilityTensor{-1.0, -1.0, -1.0, 0.0, 0.0, 0.0}
+  m_diagonalPermeabilityTensor{ -1.0, -1.0, -1.0 },
+  m_symmetricFullPermeabilityTensor{ -1.0, -1.0, -1.0, 0.0, 0.0, 0.0 }
 {
   registerWrapper( viewKeyStruct::diagonalPermeabilityTensorString(), &m_diagonalPermeabilityTensor ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -46,21 +46,21 @@ ConstantPermeability::ConstantPermeability( string const & name, Group * const p
 
 void ConstantPermeability::postProcessInput()
 {
-  GEOS_ERROR_IF( m_diagonalPermeabilityTensor[0] < 0.0 && m_symmetricFullPermeabilityTensor[0] < 0.0, 
-  "Either a diagonal permeability tensor or a full tensor must be provided.");
+  GEOS_ERROR_IF( m_diagonalPermeabilityTensor[0] < 0.0 && m_symmetricFullPermeabilityTensor[0] < 0.0,
+                 "Either a diagonal permeability tensor or a full tensor must be provided." );
 
-  GEOS_ERROR_IF( m_diagonalPermeabilityTensor[0] > 0.0 && m_symmetricFullPermeabilityTensor[0] > 0.0, 
-  "Only one between a diagonal permeability tensor and a full tensor permeability can be provided.");
+  GEOS_ERROR_IF( m_diagonalPermeabilityTensor[0] > 0.0 && m_symmetricFullPermeabilityTensor[0] > 0.0,
+                 "Only one between a diagonal permeability tensor and a full tensor permeability can be provided." );
 
-  if ( m_diagonalPermeabilityTensor[0] > 0.0 )
+  if( m_diagonalPermeabilityTensor[0] > 0.0 )
   {
     for( int i = 0; i < 3; i++ )
-    { 
-      m_symmetricFullPermeabilityTensor[i] = m_diagonalPermeabilityTensor[i]; 
+    {
+      m_symmetricFullPermeabilityTensor[i] = m_diagonalPermeabilityTensor[i];
     }
     for( int j=4; j < 6; j++ )
-    { 
-      m_symmetricFullPermeabilityTensor[j] = 0.0; 
+    {
+      m_symmetricFullPermeabilityTensor[j] = 0.0;
     }
   }
 }
@@ -83,8 +83,8 @@ void ConstantPermeability::allocateConstitutiveData( dataRepository::Group & par
   {
     for( localIndex q = 0; q < numQuad; ++q )
     {
-      for ( int c=0; c < 6; c++)
-      m_permeability[ei][q][c] =  m_symmetricFullPermeabilityTensor[c];
+      for( int c=0; c < 6; c++ )
+        m_permeability[ei][q][c] =  m_symmetricFullPermeabilityTensor[c];
     }
   }
 }
