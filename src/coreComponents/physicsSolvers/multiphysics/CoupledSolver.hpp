@@ -303,7 +303,7 @@ public:
                             DofManager const & dofManager,
                             arrayView1d< real64 const > const & localSolution ) override
   {
-    real64 scalingFactor = 1e9;
+    real64 scalingFactor = PhysicsSolverBase::scalingForSystemSolution( domain, dofManager, localSolution );
     forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
     {
       real64 const singlePhysicsScalingFactor = solver->scalingForSystemSolution( domain, dofManager, localSolution );
