@@ -653,6 +653,12 @@ void PetscMatrix::leftRightScale( PetscVector const & vecLeft,
   GEOS_LAI_CHECK_ERROR( MatDiagonalScale( m_mat, vecLeft.unwrapped(), vecRight.unwrapped() ) );
 }
 
+void PetscMatrix::computeScalingVector( PetscVector & scaling ) const
+{
+  GEOS_UNUSED_VAR( scaling );
+  GEOS_ERROR( "Not implemented!!!" );
+}
+
 void PetscMatrix::multiplyRAP( PetscMatrix const & R,
                                PetscMatrix const & P,
                                PetscMatrix & dst ) const
