@@ -169,6 +169,7 @@ set( constitutive_headers
      relativePermeability/VanGenuchtenStone2RelativePermeability.hpp
      relativePermeability/Layouts.hpp
      relativePermeability/RelativePermeabilitySelector.hpp
+     relativePermeability/LogLevelsInfo.hpp
      solid/CompressibleSolid.hpp
      solid/ProppantSolid.hpp
      solid/CoupledSolidBase.hpp
