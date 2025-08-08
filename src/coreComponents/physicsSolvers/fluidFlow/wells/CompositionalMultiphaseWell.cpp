@@ -3404,11 +3404,6 @@ CompositionalMultiphaseWell::applyWellSystemSolution( DofManager const & dofMana
                                                        mesh,
                                                        domain.getNeighbors(),
                                                        true );
-  for( integer i=0; i<subRegion.size(); i++ )
-  {
-    std::cout << " au temp i "<< i << " " << temp[i] << std::endl;
-  }
-
 
 }
 
@@ -3507,6 +3502,14 @@ void CompositionalMultiphaseWell::chopNegativeDensities( WellElementSubRegion & 
 
   forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const iwelem )
   {
+    for( integer ic = 0; ic < numComp; ++ic )
+    {
+      if( iwelem == 65 )
+      {
+        std::cout << "tjb dens " << iwelem << " " << ic << " " << wellElemCompDens[iwelem][ic] << " " << wellElemCompDens_n[iwelem][ic] << std::endl;
+      }
+    }
+
     if( wellElemGhostRank[iwelem] < 0 )
     {
       for( integer ic = 0; ic < numComp; ++ic )
@@ -3515,7 +3518,6 @@ void CompositionalMultiphaseWell::chopNegativeDensities( WellElementSubRegion & 
         // if the new density is negative, chop back to zero
         if( wellElemCompDens[iwelem][ic] < 0 )
         {
-          std::cout << " tjb chop 1 " << iwelem <<  " " << ic << " " << wellElemCompDens[iwelem][ic] << " " << wellElemCompDens_n[iwelem][ic] << std::endl;
           wellElemCompDens[iwelem][ic] = 0.0;
         }
       }
@@ -3555,8 +3557,6 @@ void CompositionalMultiphaseWell::chopNegativeDensities( DomainPartition & domai
             // if the new density is negative, chop back to zero
             if( wellElemCompDens[iwelem][ic] < 0 )
             {
-              std::cout << " tjb chop 2 " << iwelem <<  " " << ic << " " << wellElemCompDens[iwelem][ic] << " " << wellElemCompDens_n[iwelem][ic] << std::endl;
-
               wellElemCompDens[iwelem][ic] = 0.0; //wellElemCompDens_n[iwelem][ic];
             }
           }

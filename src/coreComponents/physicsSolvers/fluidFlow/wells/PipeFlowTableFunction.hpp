@@ -20,7 +20,7 @@
 #ifndef GEOS_FUNCTIONS_PIPEFLOWTABLEFUNCTION_HPP_
 #define GEOS_FUNCTIONS_PIPEFLOWTABLEFUNCTION_HPP_
 
-#include "functions/MultivariableTableFunction.hpp"
+#include "functions/MultivariableNonuniformTableFunction.hpp"
 
 #include "common/format/EnumStrings.hpp"
 #include "LvArray/src/tensorOps.hpp"
@@ -34,7 +34,7 @@ namespace geos
  * An interface class for pipeflow table function (function with multiple inputs and outputs) with uniform discretization
  */
 
-class PipeFlowTableFunction : public MultivariableTableFunction
+class PipeFlowTableFunction : public MultivariableNonuniformTableFunction
 {
 public:
 
@@ -52,6 +52,31 @@ public:
    */
   static string catalogName() { return "PipeFlowTableFunction"; }
 
+    /**
+   * @name Getters / Setters
+   */
+  ///@{
+
+    /**
+   * @brief Get type of rate array
+   * @return name of type
+   */
+  const string & getRateType() const { return m_rateType; }
+
+    /**
+   * @brief Get type of water fraction array
+   * @return name of type
+   */
+  const string & getWaterFractionType() const { return m_waterFractionType; }
+
+      /**
+   * @brief Get type of gas fraction array
+   * @return name of type
+   */
+  const string & getGasFractionType() const { return m_gasFractionType; }
+
+    ///@}
+
   /**
    * @brief Struct to serve as a container for variable strings and keys.
    * @struct viewKeyStruct
@@ -62,6 +87,7 @@ public:
     static constexpr char const *rateType() { return "rateType"; }
     /// @return String key for "rate" array
     static constexpr char const *rateArray() { return "rate"; }
+
 
     /// @return String key for "whp" array
     static constexpr char const *wellHeadPressureArray() { return "wellHeadPressure"; }
@@ -83,7 +109,7 @@ public:
   viewKeysPipeFlowTableFunction;
 
 protected:
-  //virtual void postInputInitialization() override;
+  virtual void postInputInitialization() override;
   /**
    * @brief Initialize the table function after setting table coordinates and values
    */
@@ -95,6 +121,7 @@ private:
   array1d< real64 > m_rate;
 
   /// Well head pressure
+  string m_pressureType;
   array1d< real64 > m_whp;
 
   /// Water fraction
@@ -108,6 +135,8 @@ private:
   /// bottom hole pressure
   array1d< real64 > m_bhp;
 
+  // Table function for evaluating values and derivatives
+  MultivariableNonuniformTableFunction * m_tableFunction;
 };
 
 

@@ -14,7 +14,7 @@
  */
 
 /**
- * @file MultivariableTableFunctionKernels.hpp
+ * @file MultivariableNonuniformTableFunctionKernels.hpp
  */
 
 #ifndef GEOS_FUNCTIONS_MULTIVARIABLENONUNIFORMTABLEFUNCTIONKERNELS_HPP_
@@ -23,14 +23,12 @@
 namespace geos
 {
 
-
-
 /**
- * @class MultivariableNonUniformTableFunctionStaticKernel
+ * @class MultivariableNonuniformTableFunctionStaticKernel
  *
  * A class for multivariable piecewise interpolation with static storage
  * Functions are interpolated assuming a non uniform discretized space
- *
+ * for independent variables
  * @tparam NUM_DIMS number of dimensions (inputs)
  * @tparam NUM_OPS number of interpolated functions (outputs)
  */
@@ -52,24 +50,23 @@ public:
   /**
    * @brief Construct a new Multivariable Table Function Static Kernel object
    *
-   * @param[in] axisMinimums  minimum coordinate for each axis
-   * @param[in] axisMaximums maximum coordinate for each axis
-   * @param[in] axisPoints number of discretization points between minimum and maximum for each axis
+   * @param[in] axisCoordinates  discretization points for each axis
+   * @param[in] axisPoints number of discretization points for each axis
    * @param[in] axisSteps axis interval lengths (nonuniform axis discretization)
    * @param[in] axisStepInvs inversions of axis interval lengths (nonuniform axis discretization)
    * @param[in] axisHypercubeMults  hypercube index mult factors for each axis
    * @param[in] hypercubeData table data stored per hypercube
    */
-  MultivariableNonuniformTableFunctionStaticKernel( arrayView3d< real64 const > const & axisCoordinates,
+  MultivariableNonuniformTableFunctionStaticKernel( arrayView2d< real64 const > const & axisCoordinates,
                                                     arrayView1d< integer const > const & axisPoints,
                                                     arrayView2d< real64 const > const & axisSteps,
                                                     arrayView2d< real64 const > const & axisStepInvs,
                                                     arrayView1d< globalIndex const > const & axisHypercubeMults,
                                                     arrayView1d< real64 const > const & hypercubeData ):
-    m_axisCoordinates ( m_axisCoordinates ),
+    m_axisCoordinates ( axisCoordinates ),
     m_axisPoints ( axisPoints ),
-    m_axisNonuniformSteps ( axisSteps ),
-    m_axisNonuniformStepInvs ( axisStepInvs ),
+    m_axisSteps ( axisSteps ),
+    m_axisStepInv ( axisStepInvs ),
     m_axisHypercubeMults ( axisHypercubeMults ),
     m_hypercubeData ( hypercubeData )
   {};
@@ -87,15 +84,15 @@ public:
            OUT_ARRAY && values ) const
   {
     globalIndex hypercubeIndex = 0;
-    real64 axisLows[numDims];
-    real64 axisStepInv[numDims];
-    real64 axisMults[numDims];
+    real64 axisLows[numDims] = {0.0};
+    real64 axisStepInv[numDims] = {0.0};
+    real64 axisMults[numDims] = {0.0};
 
     for( int i = 0; i < numDims; ++i )
     {
       integer const axisIndex = getAxisIntervalIndexLowMult( coordinates[i],
                                                              m_axisCoordinates[i],
-                                                             m_axisStepInvs[i],
+                                                             m_axisStepInv[i],
                                                              m_axisPoints[i],
                                                              axisLows[i], axisStepInv[i], axisMults[i] );
       hypercubeIndex += axisIndex * m_axisHypercubeMults[i];
@@ -104,7 +101,7 @@ public:
     interpolatePoint( coordinates,
                       getHypercubeData( hypercubeIndex ),
                       &axisLows[0],
-                      &m_axisStepInvs[0],
+                      &axisStepInv[0],
                       values );
   }
 
@@ -123,15 +120,15 @@ public:
            OUT_2D_ARRAY && derivatives ) const
   {
     globalIndex hypercubeIndex = 0;
-    real64 axisLows[numDims];
-    real64 axisStepInv[numDims];
-    real64 axisMults[numDims];
+    real64 axisLows[numDims] = {0.0};
+    real64 axisStepInv[numDims] = {0.0};
+    real64 axisMults[numDims] = {0.0};
 
     for( int i = 0; i < numDims; ++i )
     {
       integer const axisIndex = getAxisIntervalIndexLowMult( coordinates[i],
                                                              m_axisCoordinates[i],
-                                                             m_axisStepInvs[i],
+                                                             m_axisStepInv[i],
                                                              m_axisPoints[i],
                                                              axisLows[i], axisStepInv[i], axisMults[i] );
       hypercubeIndex += axisIndex * m_axisHypercubeMults[i];
@@ -140,7 +137,7 @@ public:
     interpolatePointWithDerivatives( coordinates,
                                      getHypercubeData( hypercubeIndex ),
                                      &axisLows[0], &axisMults[0],
-                                     &axisStepInvs[0],
+                                     &axisStepInv[0],
                                      values,
                                      derivatives );
 
@@ -179,28 +176,41 @@ protected:
   integer
   getAxisIntervalIndexLowMult( real64 const coordinate,
                                real64 const * const axisCoordinates,
-                               real64 const * const axisStepInv
+                               real64 const * const axisStepInv,
                                integer const axisPoints,
                                real64 & axisLow,
                                real64 & intervalStepInv,
                                real64 & axisMult ) const
   {
-    integer axisIntervalIndex=-1;
-    // speed this up tjb
-    for( int j=1; j<axisPoints; j++ )
+    integer axisIntervalIndex=0;
+    if( coordinate < axisCoordinates[0] )
     {
-      if( coordinate < axisCoordinates[j] )
-      {
-        axisIntervalIndex=j-1;
-        intervalStepInv = axisStepInv[j-1];
-        axisLow = axisCoordinates[j-1];
-        axisMult = (coordinate - axisCoordinates[j-1]) * axisStepInv[j-1];
-        break;
-      }
+      intervalStepInv = axisStepInv[axisIntervalIndex];
+      axisLow = axisCoordinates[axisIntervalIndex];
+      axisMult = (coordinate - axisCoordinates[axisIntervalIndex]) * axisStepInv[axisIntervalIndex];
+      printf( "Interpolation warning: axis coordinate is less than lower limit  (%lf ) with value %lf, extrapolation is applied\n", axisCoordinates[0], coordinate );
     }
-    if( axisIntervalIndex ==-1 )
+    else if( coordinate >  axisCoordinates[axisPoints-1] )
     {
-      printf( "Interpolation warning: axis coordinate is out of limits (%lf; %lf) with value %lf, extrapolation is applied\n", axisMin, axisMax, axisCoordinate );
+      axisIntervalIndex = axisPoints-2;
+      intervalStepInv = axisStepInv[axisIntervalIndex];
+      axisLow = axisCoordinates[axisIntervalIndex];
+      axisMult = (coordinate - axisCoordinates[axisIntervalIndex]) * axisStepInv[axisIntervalIndex];
+      printf( "Interpolation warning: axis coordinate is beyond upper limit ( %lf) with value %lf, extrapolation is applied\n", axisCoordinates[axisPoints-1], coordinate );
+    }
+    else
+    {
+      for( int j=1; j<axisPoints; j++ )
+      {
+        if( coordinate <= axisCoordinates[j] )
+        {
+          axisIntervalIndex=j-1;
+          intervalStepInv = axisStepInv[j-1];
+          axisLow = axisCoordinates[j-1];
+          axisMult = (coordinate - axisCoordinates[j-1]) * axisStepInv[j-1];
+          break;
+        }
+      }
     }
 
     return axisIntervalIndex;
@@ -344,11 +354,11 @@ protected:
 
   // inputs : service data derived from table discretization data
 
-  ///  Array [numDims] of axis interval lengths (axes are discretized uniformly)
+  ///  Array [numDims] of axis interval lengths v
   arrayView2d< real64 const > m_axisSteps;
 
-  ///  Array [numDims] of inversions of axis interval lengths (axes are discretized uniformly)
-  arrayView2d< real64 const > m_axisStepInvs;
+  ///  Array [numDims] of inversions of axis interval lengths v
+  arrayView2d< real64 const > m_axisStepInv;
 
   ///  Array [numDims] of hypercube index mult factors for each axis
   arrayView1d< globalIndex const > m_axisHypercubeMults;

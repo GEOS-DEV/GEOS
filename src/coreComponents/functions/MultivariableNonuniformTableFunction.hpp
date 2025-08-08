@@ -59,7 +59,7 @@ public:
    * @param[in] numDims number of table dimensions (number of inputs)
    * @param[in] numOps number of functions to interpolate (number of outputs)
    * @param[in] axisCooridnates axis coordinates for each dimension
-   * @param[in] axisPoints number of discretization points between minimum and maximum for each axis
+   * @param[in] axisPoints number of discretization points  for each axis
    */
   void setTableCoordinates( integer const numDims,
                             integer const numOps,
@@ -189,12 +189,6 @@ private:
   /// Number of vertices in each hypercube
   integer m_numVerts;
 
-  /// Array [numDims] of axis minimum values tjb remove
-  real64_array m_axisMinimums;
-
-  /// Array [numDims] of axis maximum values tjb remove
-  real64_array m_axisMaximums;
-
   /// Array [numDims,numCoordinates[dim]] axis discretization points in each dimension
   real64_array2d m_axisCoordinates;
 
@@ -223,6 +217,7 @@ private:
 
   ///  Main table data stored per hypercube: all values required for interpolation withing give hypercube are stored contiguously
   real64_array m_hypercubeData;
+
 };
 
 

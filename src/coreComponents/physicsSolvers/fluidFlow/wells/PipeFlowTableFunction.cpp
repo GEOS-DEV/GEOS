@@ -18,7 +18,7 @@
  */
 
 #include "PipeFlowTableFunction.hpp"
-
+#include "functions/FunctionManager.hpp"
 #include "common/DataTypes.hpp"
 #include <algorithm>
 
@@ -29,7 +29,8 @@ using namespace dataRepository;
 
 PipeFlowTableFunction::PipeFlowTableFunction( const string & name,
                                               Group * const parent ):
-  MultivariableTableFunction( name, parent )
+  MultivariableNonuniformTableFunction( name, parent ),
+  m_tableFunction( nullptr )
 {
 
   registerWrapper( viewKeyStruct::rateType(), &m_rateType ).
@@ -67,15 +68,84 @@ PipeFlowTableFunction::PipeFlowTableFunction( const string & name,
     setSizedFromParent( 0 ).
     setDescription( "Array of well head pressures " );
 
+
   registerWrapper( viewKeyStruct::bottomHolePressureArray(), &m_bhp ).
     setInputFlag( InputFlags::REQUIRED ).
     setSizedFromParent( 0 ).
-    setDescription( "Array of gas fractions " );
+    setDescription( "Array of bottom hole pressures representing the dependent variable for the table function.\n"
+                    "The quantities must be entered such that the rate index increases first, followed by whp, waterFraction, and finally gasFraction.\n"
+                    " For example  bhp[1]= f(rate[1],whp[1],,waterFraction[1],gasFraction[1]) , bhp[2]= f(rate[2],whp[1],waterFraction[1],gasFraction[1])" );
 
 }
 
+void PipeFlowTableFunction::postInputInitialization()
+{
+  // Validate independent table values are not decreasing
+  auto checkNotDecreasing = []( const auto & arr, const std::string & name )
+  {
+    for( auto i = 1; i < arr.size(); ++i )
+    {
+      if( arr[i] < arr[i-1] )
+      {
+        GEOS_ERROR( name << " array values must be non-decreasing, but arr[" << i << "] < arr[" << i-1 << "]" );
+      }
+    }
+  };
+
+  checkNotDecreasing( m_rate, getRateType());
+  checkNotDecreasing( m_whp, "wellHeadPressure" );
+  checkNotDecreasing( m_wfr, getWaterFractionType());
+  checkNotDecreasing( m_gfr, getGasFractionType());
+
+  initializeFunction();
+}
+
 void PipeFlowTableFunction::initializeFunction()
-{}
+{
+  return;
+  localIndex constexpr nDims = 4;
+  localIndex constexpr nOps = 1;
+
+  FunctionManager * functionManager = &FunctionManager::getInstance();
+  // Create nonuniform version of uniformly spaced table
+  m_tableFunction = &(dynamicCast< MultivariableNonuniformTableFunction & >( *functionManager->createChild( "MultivariableNonuniformTableFunction", "PipeFlowModel" ) ));
+
+  // find max number if independent vars
+  int maxVar = std::max( m_rate.size(), m_whp.size());
+  maxVar = std::max( maxVar, m_wfr.size());
+  maxVar = std::max( maxVar, m_gfr.size());
+
+  // Copy inputs into formats needed by table function
+
+  integer_array axisPoints( nDims );
+  axisPoints[0] = m_rate.size();
+  axisPoints[1] = m_whp.size();
+  axisPoints[2] = m_wfr.size();
+  axisPoints[3] = m_gfr.size();
+
+
+  array2d< real64 > axisCoordinates( nDims, maxVar );
+  for( int i=0; i< m_rate.size(); i++ )
+  {
+    axisCoordinates[0][i] = m_rate[i];
+  }
+  for( int i=0; i<m_whp.size(); i++ )
+  {
+    axisCoordinates[1][i] = m_whp[i];
+  }
+  for( int i=0; i<m_wfr.size(); i++ )
+  {
+    axisCoordinates[2][i] = m_wfr[i];
+  }
+  for( int i=0; i<m_gfr.size(); i++ )
+  {
+    axisCoordinates[3][i] = m_gfr[i];
+  }
+  m_tableFunction->setTableCoordinates(nDims,nOps,axisCoordinates,axisPoints);
+  m_tableFunction->setTableValues( m_bhp );
+  m_tableFunction->initializeFunction();
+
+}
 REGISTER_CATALOG_ENTRY( FunctionBase, PipeFlowTableFunction, string const &, Group * const )
 
 } // end of namespace geos
