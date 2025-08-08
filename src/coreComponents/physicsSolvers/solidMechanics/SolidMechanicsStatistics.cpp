@@ -21,11 +21,10 @@
 
 #include "common/MpiWrapper.hpp"
 #include "mainInterface/ProblemManager.hpp"
-#include "physicsSolvers/PhysicsSolverManager.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 #include "fileIO/Outputs/OutputBase.hpp"
 #include "mesh/DomainPartition.hpp"
-#include "physicsSolvers/solidMechanics/LogLevelsInfo.hpp"
+#include "physicsSolvers/LogLevelsInfo.hpp"
 #include "common/format/table/TableData.hpp"
 #include "common/format/table/TableFormatter.hpp"
 #include "common/format/table/TableLayout.hpp"
@@ -33,7 +32,6 @@
 namespace geos
 {
 
-using namespace constitutive;
 using namespace dataRepository;
 using namespace fields;
 
@@ -156,17 +154,22 @@ void SolidMechanicsStatistics::computeNodeStatistics( MeshLevel & mesh, real64 c
                          MpiWrapper::Reduction::Min,
                          MPI_COMM_GEOS );
 
-  TableData mechanicsData;
-  mechanicsData.addRow( "min", GEOS_FMT( "[{},{},{}]", nodeStatistics.minDisplacement[0],
-                                         nodeStatistics.minDisplacement[1], nodeStatistics.minDisplacement[2] ));
-  mechanicsData.addRow( "max", GEOS_FMT( "[{},{},{}]", nodeStatistics.maxDisplacement[0],
-                                         nodeStatistics.maxDisplacement[1], nodeStatistics.maxDisplacement[2] ));
+  if( isLogLevelActive< logInfo::Statistics >( this->getLogLevel()) && MpiWrapper::commRank() == 0 )
+  {
+    TableData mechanicsData;
+    mechanicsData.addRow( "min", GEOS_FMT( "[{},{},{}]", nodeStatistics.minDisplacement[0],
+                                           nodeStatistics.minDisplacement[1], nodeStatistics.minDisplacement[2] ));
+    mechanicsData.addRow( "max", GEOS_FMT( "[{},{},{}]", nodeStatistics.maxDisplacement[0],
+                                           nodeStatistics.maxDisplacement[1], nodeStatistics.maxDisplacement[2] ));
 
-  string const title = GEOS_FMT( "{}, (time {} s):", getName(), time );
-  TableLayout const mechanicsLayout( title, { " ", "Displacement (X, Y, Z)"} );
+    string const title = GEOS_FMT( "{}, (time {} s):", getName(), time );
+    TableLayout const mechanicsLayout( title, { " ", "Displacement (X, Y, Z)"} );
 
-  TableTextFormatter mechanicsFormatter( mechanicsLayout );
-  GEOS_LOG_RANK_0( mechanicsFormatter.toString( mechanicsData ));
+    TableTextFormatter mechanicsFormatter( mechanicsLayout );
+    GEOS_LOG_RANK_0( mechanicsFormatter.toString( mechanicsData ) );
+  }
+
+
   if( m_writeCSV > 0 && MpiWrapper::commRank() == 0 )
   {
     std::ofstream outputFile( m_outputDir + "/" + mesh.getName() + "_node_statistics" + ".csv", std::ios_base::app );

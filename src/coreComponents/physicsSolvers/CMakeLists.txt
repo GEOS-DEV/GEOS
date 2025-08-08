@@ -29,8 +29,7 @@ set( physicsSolversBase_headers
      PhysicsSolverBase.hpp
      PhysicsSolverBaseKernels.hpp
      SolverStatistics.hpp
-     FieldStatisticsBase.hpp
-     LogLevelsInfo.hpp )
+     FieldStatisticsBase.hpp )
 #
 # Specify solver sources
 #
@@ -81,6 +80,7 @@ set( physicsSolvers_headers
 #
 set( physicsSolvers_sources
      PhysicsSolverManager.cpp )
+
 
 set( dependencyList ${parallelDeps})
 if( GEOS_ENABLE_FLUIDFLOW )

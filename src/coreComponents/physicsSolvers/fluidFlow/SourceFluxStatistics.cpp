@@ -21,7 +21,6 @@
 
 #include "fieldSpecification/SourceFluxBoundaryCondition.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
-#include "LvArray/src/tensorOps.hpp"
 #include "physicsSolvers/fluidFlow/LogLevelsInfo.hpp"
 
 namespace geos
@@ -32,12 +31,6 @@ SourceFluxStatsAggregator::SourceFluxStatsAggregator( const string & name,
                                                       Group * const parent ):
   Base( name, parent )
 {
-  getWrapperBase( Group::viewKeyStruct::logLevelString() ).
-    appendDescription( GEOS_FMT( "\n- Log Level 1 outputs the sum of all {0}(s) produced rate & mass,\n"
-                                 "- Log Level 2 details values for each {0},\n"
-                                 "- Log Level 3 details values for each region.",
-                                 SourceFluxBoundaryCondition::catalogName() ) );
-
   registerWrapper( viewKeyStruct::fluxNamesString().data(), &m_fluxNames ).
     setRTTypeName( rtTypes::CustomTypes::groupNameRefArray ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -99,7 +92,7 @@ SourceFluxStatsAggregator::registerWrappedStats( Group & group,
 
     string const logMassColumn = GEOS_FMT( "Produced mass [{}]", massUnit );
     string const logRateColumn = GEOS_FMT( "Production rate [{}]", massUnit );
-    TableLayout const statsLogLayout( "", { "region", logMassColumn, logRateColumn, "Element Count" } );
+    TableLayout statsLogLayout( "", { "region", logMassColumn, logRateColumn, "Element Count" } );
 
     m_logLayout = statsLogLayout;
 

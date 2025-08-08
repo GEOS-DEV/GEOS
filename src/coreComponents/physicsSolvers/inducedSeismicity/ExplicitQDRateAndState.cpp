@@ -19,12 +19,11 @@
 
 #include "ExplicitQDRateAndState.hpp"
 
-#include "dataRepository/InputFlags.hpp"
 #include "mesh/DomainPartition.hpp"
 #include "kernels/ExplicitRateAndStateKernels.hpp"
 #include "kernels/EmbeddedRungeKuttaKernels.hpp"
 #include "rateAndStateFields.hpp"
-#include "physicsSolvers/solidMechanics/contact/ContactFields.hpp"
+#include "physicsSolvers/LogLevelsInfo.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
 
 namespace geos
@@ -43,7 +42,9 @@ ExplicitQDRateAndState::ExplicitQDRateAndState( const string & name,
   m_stepUpdateFactor( 1.0 ),
   m_controller( PIDController( { 0.6, -0.2, 0.0 },
                                1.0e-6, 1.0e-6, 0.81 )) // TODO: The control parameters should be specified in the XML input
-{}
+{
+  addLogLevel< logInfo::SolverSteps >();
+}
 
 ExplicitQDRateAndState::~ExplicitQDRateAndState()
 {
@@ -82,7 +83,7 @@ real64 ExplicitQDRateAndState::solverStep( real64 const & time_n,
 
   real64 dtAdaptive = dt;
 
-  GEOS_LOG_LEVEL_RANK_0( 1, "Begin adaptive time step" );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::SolverSteps, "Rate and State solver" );
   while( true ) // Adaptive time step loop. Performs a Runge-Kutta time stepping with error control on state and slip
   {
     real64 dtStress; GEOS_UNUSED_VAR( dtStress );
@@ -140,8 +141,8 @@ void ExplicitQDRateAndState::stepRateStateODEInitialSubstage( real64 const dt, D
     {
 
       string const & frictionLawName = subRegion.template getReference< string >( viewKeyStruct::frictionLawNameString() );
-      constitutive::ConstitutiveBase & frictionLaw = subRegion.getConstitutiveModel< constitutive::ConstitutiveBase >( frictionLawName );
-      constitutive::ConstitutivePassThru< constitutive::RateAndStateFrictionBase >::execute( frictionLaw, [&] ( auto & castedFrictionLaw )
+      ConstitutiveBase & frictionLaw = subRegion.getConstitutiveModel< ConstitutiveBase >( frictionLawName );
+      ConstitutivePassThru< RateAndStateFrictionBase >::execute( frictionLaw, [&] ( auto & castedFrictionLaw )
       {
         rateAndStateKernels::createAndlaunchODEInitialSubStage( subRegion, castedFrictionLaw, m_butcherTable, dt, m_successfulStep );
       } );
@@ -165,8 +166,8 @@ void ExplicitQDRateAndState::stepRateStateODESubstage( integer const stageIndex,
     {
 
       string const & frictionLawName = subRegion.template getReference< string >( viewKeyStruct::frictionLawNameString() );
-      constitutive::ConstitutiveBase & frictionLaw = subRegion.getConstitutiveModel< constitutive::ConstitutiveBase >( frictionLawName );
-      constitutive::ConstitutivePassThru< constitutive::RateAndStateFrictionBase >::execute( frictionLaw, [&] ( auto & castedFrictionLaw )
+      ConstitutiveBase & frictionLaw = subRegion.getConstitutiveModel< ConstitutiveBase >( frictionLawName );
+      ConstitutivePassThru< RateAndStateFrictionBase >::execute( frictionLaw, [&] ( auto & castedFrictionLaw )
       {
         rateAndStateKernels::createAndlaunchStepRateStateODESubstage( subRegion, castedFrictionLaw, m_butcherTable, stageIndex, dt );
       } );
@@ -187,8 +188,8 @@ void ExplicitQDRateAndState::stepRateStateODEAndComputeError( real64 const dt, D
     {
 
       string const & frictionLawName = subRegion.template getReference< string >( viewKeyStruct::frictionLawNameString() );
-      constitutive::ConstitutiveBase & frictionLaw = getConstitutiveModel< constitutive::ConstitutiveBase >( subRegion, frictionLawName );
-      constitutive::ConstitutivePassThru< constitutive::RateAndStateFrictionBase >::execute( frictionLaw, [&] ( auto & castedFrictionLaw )
+      ConstitutiveBase & frictionLaw = getConstitutiveModel< ConstitutiveBase >( subRegion, frictionLawName );
+      ConstitutivePassThru< RateAndStateFrictionBase >::execute( frictionLaw, [&] ( auto & castedFrictionLaw )
       {
         rateAndStateKernels::createAndlaunchStepRateStateODEAndComputeError( subRegion,
                                                                              castedFrictionLaw,
@@ -205,7 +206,7 @@ void ExplicitQDRateAndState::updateSlipVelocity( real64 const & time_n,
                                                  real64 const & dt,
                                                  DomainPartition & domain ) const
 {
-  GEOS_LOG_LEVEL_RANK_0( 1, "Rate and State solver" );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::SolverSteps, "Rate and State solver" );
   integer const maxIterNewton = m_nonlinearSolverParameters.m_maxIterNewton;
   real64 const newtonTol = m_nonlinearSolverParameters.m_newtonTol;
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
@@ -277,11 +278,13 @@ real64 ExplicitQDRateAndState::setNextDt( real64 const & currentTime,
   real64 const nextDt = m_stepUpdateFactor*currentDt;
   if( m_successfulStep )
   {
-    GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "Adaptive time step successful. The next dt will be {:.2e} s", nextDt ));
+    GEOS_LOG_LEVEL_RANK_0( logInfo::SolverSteps,
+                           GEOS_FMT( "Adaptive time step successful. The next dt will be {:.2e} s", nextDt ));
   }
   else
   {
-    GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "Adaptive time step failed. Retry step with dt {:.2e} s", nextDt ));
+    GEOS_LOG_LEVEL_RANK_0( logInfo::SolverSteps,
+                           GEOS_FMT( "Adaptive time step failed. Retry step with dt {:.2e} s", nextDt ));
   }
   return nextDt;
 }

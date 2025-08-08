@@ -28,12 +28,14 @@
 #include "dataRepository/Group.hpp"
 #include "discretizationMethods/NumericalMethodsManager.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
+#include "fieldSpecification/LogLevelsInfo.hpp"
 #include "fieldSpecification/AquiferBoundaryCondition.hpp"
 #include "finiteVolume/BoundaryStencil.hpp"
 #include "finiteVolume/FiniteVolumeManager.hpp"
 #include "finiteVolume/FluxApproximationBase.hpp"
 #include "mesh/DomainPartition.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
+#include "physicsSolvers/LogLevelsInfo.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseBaseFields.hpp"
 #include "physicsSolvers/fluidFlow/kernels/compositional/ResidualNormKernel.hpp"
@@ -66,6 +68,7 @@ namespace geos
 
 using namespace dataRepository;
 using namespace constitutive;
+using namespace fields;
 using namespace compositionalMultiphaseUtilities; // for ScalingType
 
 CompositionalMultiphaseFVM::CompositionalMultiphaseFVM( const string & name,
@@ -120,6 +123,10 @@ CompositionalMultiphaseFVM::CompositionalMultiphaseFVM( const string & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Target CFL condition `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_"
                     " when computing the next timestep." );
+
+  addLogLevel< logInfo::Convergence >();
+  addLogLevel< logInfo::Solution >();
+  addLogLevel< logInfo::TimeStep >();
 }
 
 void CompositionalMultiphaseFVM::postInputInitialization()
@@ -162,8 +169,6 @@ void CompositionalMultiphaseFVM::postInputInitialization()
 
 void CompositionalMultiphaseFVM::registerDataOnMesh( Group & meshBodies )
 {
-  using namespace fields::flow;
-
   CompositionalMultiphaseBase::registerDataOnMesh( meshBodies );
 
   if( m_targetFlowCFL > 0 )
@@ -182,10 +187,10 @@ void CompositionalMultiphaseFVM::registerDataForCFL( Group & meshBodies )
                                                 [&]( localIndex const,
                                                      ElementSubRegionBase & subRegion )
     {
-      subRegion.registerField< fields::flow::phaseOutflux >( getName()).reference().resizeDimension< 1 >( m_numPhases );
-      subRegion.registerField< fields::flow::componentOutflux >( getName()).reference().resizeDimension< 1 >( m_numComponents );
-      subRegion.registerField< fields::flow::phaseCFLNumber >( getName());
-      subRegion.registerField< fields::flow::componentCFLNumber >( getName());
+      subRegion.registerField< flow::phaseOutflux >( getName()).reference().resizeDimension< 1 >( m_numPhases );
+      subRegion.registerField< flow::componentOutflux >( getName()).reference().resizeDimension< 1 >( m_numComponents );
+      subRegion.registerField< flow::phaseCFLNumber >( getName());
+      subRegion.registerField< flow::componentCFLNumber >( getName());
     } );
   } );
 }
@@ -572,8 +577,9 @@ real64 CompositionalMultiphaseFVM::calculateResidualNorm( real64 const & GEOS_UN
     }
     residualNorm = sqrt( globalResidualNorm[0] * globalResidualNorm[0] + globalResidualNorm[1] * globalResidualNorm[1]  + globalResidualNorm[2] * globalResidualNorm[2] );
 
-    GEOS_LOG_LEVEL_INFO_RANK_0_NLR( logInfo::Convergence, GEOS_FMT( "        ( Rmass Rvol ) = ( {:4.2e} {:4.2e} )        ( Renergy ) = ( {:4.2e} )",
-                                                                    globalResidualNorm[0], globalResidualNorm[1], globalResidualNorm[2] ));
+    GEOS_LOG_LEVEL_RANK_0_NLR( logInfo::Convergence,
+                               GEOS_FMT( "        ( Rmass Rvol ) = ( {:4.2e} {:4.2e} )        ( Renergy ) = ( {:4.2e} )",
+                                         globalResidualNorm[0], globalResidualNorm[1], globalResidualNorm[2] ));
   }
   else
   {
@@ -589,8 +595,8 @@ real64 CompositionalMultiphaseFVM::calculateResidualNorm( real64 const & GEOS_UN
     }
     residualNorm = sqrt( globalResidualNorm[0] * globalResidualNorm[0] + globalResidualNorm[1] * globalResidualNorm[1] );
 
-    GEOS_LOG_LEVEL_INFO_RANK_0_NLR( logInfo::Convergence, GEOS_FMT( "        ( Rmass Rvol ) = ( {:4.2e} {:4.2e} )",
-                                                                    globalResidualNorm[0], globalResidualNorm[1] ) );
+    GEOS_LOG_LEVEL_RANK_0_NLR( logInfo::Convergence, GEOS_FMT( "        ( Rmass Rvol ) = ( {:4.2e} {:4.2e} )",
+                                                               globalResidualNorm[0], globalResidualNorm[1] ) );
   }
 
   return residualNorm;
@@ -612,9 +618,9 @@ real64 CompositionalMultiphaseFVM::scalingForSystemSolution( DomainPartition & d
     real64 scalingFactor = 1.0;
     real64 minPresScalingFactor = 1.0, minCompDensScalingFactor = 1.0, minTempScalingFactor = 1.0;
 
-    std::vector< MpiWrapper::PairType< real64, globalIndex > > regionDeltaPresMaxLoc;
-    std::vector< MpiWrapper::PairType< real64, globalIndex > > regionDeltaCompDensMaxLoc;
-    std::vector< MpiWrapper::PairType< real64, globalIndex > > regionDeltaTempMaxLoc;
+    stdVector< MpiWrapper::PairType< real64, globalIndex > > regionDeltaPresMaxLoc;
+    stdVector< MpiWrapper::PairType< real64, globalIndex > > regionDeltaCompDensMaxLoc;
+    stdVector< MpiWrapper::PairType< real64, globalIndex > > regionDeltaTempMaxLoc;
 
     forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                  MeshLevel & mesh,
@@ -625,12 +631,12 @@ real64 CompositionalMultiphaseFVM::scalingForSystemSolution( DomainPartition & d
                                                        ElementSubRegionBase & subRegion )
       {
         arrayView1d< globalIndex const > const localToGlobalMap = subRegion.localToGlobalMap();
-        arrayView1d< real64 const > const pressure = subRegion.getField< fields::flow::pressure >();
-        arrayView1d< real64 const > const temperature = subRegion.getField< fields::flow::temperature >();
-        arrayView2d< real64 const, compflow::USD_COMP > const compDens = subRegion.getField< fields::flow::globalCompDensity >();
-        arrayView1d< real64 > pressureScalingFactor = subRegion.getField< fields::flow::pressureScalingFactor >();
-        arrayView1d< real64 > temperatureScalingFactor = subRegion.getField< fields::flow::temperatureScalingFactor >();
-        arrayView1d< real64 > compDensScalingFactor = subRegion.getField< fields::flow::globalCompDensityScalingFactor >();
+        arrayView1d< real64 const > const pressure = subRegion.getField< flow::pressure >();
+        arrayView1d< real64 const > const temperature = subRegion.getField< flow::temperature >();
+        arrayView2d< real64 const, compflow::USD_COMP > const compDens = subRegion.getField< flow::globalCompDensity >();
+        arrayView1d< real64 > pressureScalingFactor = subRegion.getField< flow::pressureScalingFactor >();
+        arrayView1d< real64 > temperatureScalingFactor = subRegion.getField< flow::temperatureScalingFactor >();
+        arrayView1d< real64 > compDensScalingFactor = subRegion.getField< flow::globalCompDensityScalingFactor >();
 
         const integer temperatureOffset = m_numComponents+1;
 
@@ -703,31 +709,31 @@ real64 CompositionalMultiphaseFVM::scalingForSystemSolution( DomainPartition & d
     minCompDensScalingFactor = MpiWrapper::min( minCompDensScalingFactor );
 
     string const massUnit = m_useMass ? "kg/m3" : "mol/m3";
-    GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::Solution,
-                                GEOS_FMT( "        {}: Max pressure change = {:.3f} Pa (before scaling) at cell {}",
-                                          getName(), globalDeltaPresMax.first, globalDeltaPresMax.second ) );
+    GEOS_LOG_LEVEL_RANK_0( logInfo::Solution,
+                           GEOS_FMT( "        {}: Max pressure change = {:.3f} Pa (before scaling) at cell {}",
+                                     getName(), globalDeltaPresMax.first, globalDeltaPresMax.second ) );
 
-    GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::Solution,
-                                GEOS_FMT( "        {}: Max component density change = {:.3f} {} (before scaling) at cell {}",
-                                          getName(), globalDeltaCompDensMax.first, massUnit, globalDeltaCompDensMax.second ) );
+    GEOS_LOG_LEVEL_RANK_0( logInfo::Solution,
+                           GEOS_FMT( "        {}: Max component density change = {:.3f} {} (before scaling) at cell {}",
+                                     getName(), globalDeltaCompDensMax.first, massUnit, globalDeltaCompDensMax.second ) );
 
     if( m_isThermal )
     {
       auto globalMaxDeltaTemp = MpiWrapper::max< real64, globalIndex >( regionDeltaTempMaxLoc );
 
       minTempScalingFactor = MpiWrapper::min( minTempScalingFactor );
-      GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::Solution,
-                                  GEOS_FMT( "        {}: Max temperature change = {:.3f} K (before scaling) at cell maxRegionDeltaTempLoc {}",
-                                            getName(), globalMaxDeltaTemp.first, globalMaxDeltaTemp.second ) );
+      GEOS_LOG_LEVEL_RANK_0( logInfo::Solution,
+                             GEOS_FMT( "        {}: Max temperature change = {:.3f} K (before scaling) at cell maxRegionDeltaTempLoc {}",
+                                       getName(), globalMaxDeltaTemp.first, globalMaxDeltaTemp.second ) );
     }
 
     if( m_scalingType == ScalingType::Local )
     {
-      GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::Solution, GEOS_FMT( "        {}: Min pressure scaling factor = {}", getName(), minPresScalingFactor ) );
-      GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::Solution, GEOS_FMT( "        {}: Min component density scaling factor = {}", getName(), minCompDensScalingFactor ) );
+      GEOS_LOG_LEVEL_RANK_0( logInfo::Solution, GEOS_FMT( "        {}: Min pressure scaling factor = {}", getName(), minPresScalingFactor ) );
+      GEOS_LOG_LEVEL_RANK_0( logInfo::Solution, GEOS_FMT( "        {}: Min component density scaling factor = {}", getName(), minCompDensScalingFactor ) );
       if( m_isThermal )
       {
-        GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::Solution, GEOS_FMT( "        {}: Min temperature scaling factor = {}", getName(), minTempScalingFactor ) );
+        GEOS_LOG_LEVEL_RANK_0( logInfo::Solution, GEOS_FMT( "        {}: Min temperature scaling factor = {}", getName(), minTempScalingFactor ) );
       }
     }
 
@@ -752,12 +758,12 @@ real64 CompositionalMultiphaseFVM::scalingForSystemSolutionZFormulation( DomainP
                                                 [&]( localIndex const,
                                                      ElementSubRegionBase & subRegion )
     {
-      arrayView1d< real64 const > const pressure = subRegion.getField< fields::flow::pressure >();
-      //arrayView1d< real64 const > const temperature = subRegion.getField< fields::flow::temperature >();
-      arrayView2d< real64 const, compflow::USD_COMP > const compFrac = subRegion.getField< fields::flow::globalCompFraction >();
-      arrayView1d< real64 > pressureScalingFactor = subRegion.getField< fields::flow::pressureScalingFactor >();
-      //arrayView1d< real64 > temperatureScalingFactor = subRegion.getField< fields::flow::temperatureScalingFactor >();
-      arrayView1d< real64 > compFracScalingFactor = subRegion.getField< fields::flow::globalCompFractionScalingFactor >();
+      arrayView1d< real64 const > const pressure = subRegion.getField< flow::pressure >();
+      //arrayView1d< real64 const > const temperature = subRegion.getField< flow::temperature >();
+      arrayView2d< real64 const, compflow::USD_COMP > const compFrac = subRegion.getField< flow::globalCompFraction >();
+      arrayView1d< real64 > pressureScalingFactor = subRegion.getField< flow::pressureScalingFactor >();
+      //arrayView1d< real64 > temperatureScalingFactor = subRegion.getField< flow::temperatureScalingFactor >();
+      arrayView1d< real64 > compFracScalingFactor = subRegion.getField< flow::globalCompFractionScalingFactor >();
 
       auto const subRegionData = isothermalCompositionalMultiphaseBaseKernels::
                                    SolutionScalingZFormulationKernelFactory::
@@ -794,26 +800,27 @@ real64 CompositionalMultiphaseFVM::scalingForSystemSolutionZFormulation( DomainP
   minPresScalingFactor = MpiWrapper::min( minPresScalingFactor );
   minCompFracScalingFactor = MpiWrapper::min( minCompFracScalingFactor );
 
-  GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::Solution, GEOS_FMT( "        {}: Max pressure change = {} Pa (before scaling)",
-                                                           getName(), GEOS_FMT( "{:.{}f}", maxDeltaPres, 3 ) ) );
-  GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::Solution, GEOS_FMT( "        {}: Max component fraction change = {} (before scaling)",
-                                                           getName(), GEOS_FMT( "{:.{}f}", maxDeltaCompFrac, 3 ) ) );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::Solution, GEOS_FMT( "        {}: Max pressure change = {} Pa (before scaling)",
+                                                      getName(), GEOS_FMT( "{:.{}f}", maxDeltaPres, 3 ) ) );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::Solution, GEOS_FMT( "        {}: Max component fraction change = {} (before scaling)",
+                                                      getName(), GEOS_FMT( "{:.{}f}", maxDeltaCompFrac, 3 ) ) );
 
   if( m_isThermal )
   {
     maxDeltaTemp = MpiWrapper::max( maxDeltaTemp );
     minTempScalingFactor = MpiWrapper::min( minTempScalingFactor );
-    GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::Solution, GEOS_FMT( "        {}: Max temperature change = {} K (before scaling)",
-                                                             getName(), GEOS_FMT( "{:.{}f}", maxDeltaTemp, 3 ) ) );
+    GEOS_LOG_LEVEL_RANK_0( logInfo::Solution, GEOS_FMT( "        {}: Max temperature change = {} K (before scaling)",
+                                                        getName(), GEOS_FMT( "{:.{}f}", maxDeltaTemp, 3 ) ) );
   }
 
   if( m_scalingType == ScalingType::Local )
   {
-    GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::Solution, GEOS_FMT( "        {}: Min pressure scaling factor = {}", getName(), minPresScalingFactor ) );
-    GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::Solution, GEOS_FMT( "        {}: Min component fraction scaling factor = {}", getName(), minCompFracScalingFactor ) );
+    GEOS_LOG_LEVEL_RANK_0( logInfo::Solution, GEOS_FMT( "        {}: Min pressure scaling factor = {}", getName(), minPresScalingFactor ) );
+    GEOS_LOG_LEVEL_RANK_0( logInfo::Solution, GEOS_FMT( "        {}: Min component fraction scaling factor = {}", getName(), minCompFracScalingFactor ) );
     if( m_isThermal )
     {
-      GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::Solution, GEOS_FMT( "        {}: Min temperature scaling factor = {}", getName(), minTempScalingFactor ) );
+      GEOS_LOG_LEVEL_RANK_0( logInfo::Solution,
+                             GEOS_FMT( "        {}: Min temperature scaling factor = {}", getName(), minTempScalingFactor ) );
     }
   }
 
@@ -848,14 +855,14 @@ bool CompositionalMultiphaseFVM::checkSystemSolution( DomainPartition & domain,
                                                        ElementSubRegionBase & subRegion )
       {
         arrayView1d< real64 const > const pressure =
-          subRegion.getField< fields::flow::pressure >();
+          subRegion.getField< flow::pressure >();
         arrayView1d< real64 const > const temperature =
-          subRegion.getField< fields::flow::temperature >();
+          subRegion.getField< flow::temperature >();
         arrayView2d< real64 const, compflow::USD_COMP > const compDens =
-          subRegion.getField< fields::flow::globalCompDensity >();
-        arrayView1d< real64 > pressureScalingFactor = subRegion.getField< fields::flow::pressureScalingFactor >();
-        arrayView1d< real64 > temperatureScalingFactor = subRegion.getField< fields::flow::temperatureScalingFactor >();
-        arrayView1d< real64 > compDensScalingFactor = subRegion.getField< fields::flow::globalCompDensityScalingFactor >();
+          subRegion.getField< flow::globalCompDensity >();
+        arrayView1d< real64 > pressureScalingFactor = subRegion.getField< flow::pressureScalingFactor >();
+        arrayView1d< real64 > temperatureScalingFactor = subRegion.getField< flow::temperatureScalingFactor >();
+        arrayView1d< real64 > compDensScalingFactor = subRegion.getField< flow::globalCompDensityScalingFactor >();
         // check that pressure and component densities are non-negative
         // for thermal, check that temperature is above 273.15 K
         const integer temperatureOffset = m_numComponents+1;
@@ -914,15 +921,18 @@ bool CompositionalMultiphaseFVM::checkSystemSolution( DomainPartition & domain,
     numNegTotalDens = MpiWrapper::sum( numNegTotalDens );
 
     if( numNegPres > 0 )
-      GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::Solution, GEOS_FMT( "        {}: Number of negative pressure values: {}, minimum value: {} Pa",
-                                                               getName(), numNegPres, fmt::format( "{:.{}f}", minPres, 3 ) ) );
+      GEOS_LOG_LEVEL_RANK_0( logInfo::Solution,
+                             GEOS_FMT( "        {}: Number of negative pressure values: {}, minimum value: {} Pa",
+                                       getName(), numNegPres, fmt::format( "{:.{}f}", minPres, 3 ) ) );
     string const massUnit = m_useMass ? "kg/m3" : "mol/m3";
     if( numNegDens > 0 )
-      GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::Solution, GEOS_FMT( "        {}: Number of negative component density values: {}, minimum value: {} {}}",
-                                                               getName(), numNegDens, fmt::format( "{:.{}f}", minDens, 3 ), massUnit ) );
+      GEOS_LOG_LEVEL_RANK_0( logInfo::Solution,
+                             GEOS_FMT( "        {}: Number of negative component density values: {}, minimum value: {} {}}",
+                                       getName(), numNegDens, fmt::format( "{:.{}f}", minDens, 3 ), massUnit ) );
     if( minTotalDens > 0 )
-      GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::Solution, GEOS_FMT( "        {}: Number of negative total density values: {}, minimum value: {} {}}",
-                                                               getName(), minTotalDens, fmt::format( "{:.{}f}", minDens, 3 ), massUnit ) );
+      GEOS_LOG_LEVEL_RANK_0( logInfo::Solution,
+                             GEOS_FMT( "        {}: Number of negative total density values: {}, minimum value: {} {}}",
+                                       getName(), minTotalDens, fmt::format( "{:.{}f}", minDens, 3 ), massUnit ) );
 
     return MpiWrapper::min( localCheck );
   }
@@ -945,15 +955,15 @@ void CompositionalMultiphaseFVM::applySystemSolution( DofManager const & dofMana
   {
     dofManager.addVectorToField( localSolution,
                                  viewKeyStruct::elemDofFieldString(),
-                                 fields::flow::pressure::key(),
-                                 fields::flow::pressureScalingFactor::key(),
+                                 flow::pressure::key(),
+                                 flow::pressureScalingFactor::key(),
                                  pressureMask );
   }
   else
   {
     dofManager.addVectorToField( localSolution,
                                  viewKeyStruct::elemDofFieldString(),
-                                 fields::flow::pressure::key(),
+                                 flow::pressure::key(),
                                  scalingFactor,
                                  pressureMask );
   }
@@ -964,15 +974,15 @@ void CompositionalMultiphaseFVM::applySystemSolution( DofManager const & dofMana
     {
       dofManager.addVectorToField( localSolution,
                                    viewKeyStruct::elemDofFieldString(),
-                                   fields::flow::globalCompFraction::key(),
-                                   fields::flow::globalCompFractionScalingFactor::key(),
+                                   flow::globalCompFraction::key(),
+                                   flow::globalCompFractionScalingFactor::key(),
                                    componentMask );
     }
     else
     {
       dofManager.addVectorToField( localSolution,
                                    viewKeyStruct::elemDofFieldString(),
-                                   fields::flow::globalCompFraction::key(),
+                                   flow::globalCompFraction::key(),
                                    scalingFactor,
                                    componentMask );
     }
@@ -983,15 +993,15 @@ void CompositionalMultiphaseFVM::applySystemSolution( DofManager const & dofMana
     {
       dofManager.addVectorToField( localSolution,
                                    viewKeyStruct::elemDofFieldString(),
-                                   fields::flow::globalCompDensity::key(),
-                                   fields::flow::globalCompDensityScalingFactor::key(),
+                                   flow::globalCompDensity::key(),
+                                   flow::globalCompDensityScalingFactor::key(),
                                    componentMask );
     }
     else
     {
       dofManager.addVectorToField( localSolution,
                                    viewKeyStruct::elemDofFieldString(),
-                                   fields::flow::globalCompDensity::key(),
+                                   flow::globalCompDensity::key(),
                                    scalingFactor,
                                    componentMask );
     }
@@ -1004,15 +1014,15 @@ void CompositionalMultiphaseFVM::applySystemSolution( DofManager const & dofMana
     {
       dofManager.addVectorToField( localSolution,
                                    viewKeyStruct::elemDofFieldString(),
-                                   fields::flow::temperature::key(),
-                                   fields::flow::temperatureScalingFactor::key(),
+                                   flow::temperature::key(),
+                                   flow::temperatureScalingFactor::key(),
                                    temperatureMask );
     }
     else
     {
       dofManager.addVectorToField( localSolution,
                                    viewKeyStruct::elemDofFieldString(),
-                                   fields::flow::temperature::key(),
+                                   flow::temperature::key(),
                                    scalingFactor,
                                    temperatureMask );
     }
@@ -1033,12 +1043,12 @@ void CompositionalMultiphaseFVM::applySystemSolution( DofManager const & dofMana
                                                                MeshLevel & mesh,
                                                                string_array const & regionNames )
   {
-    std::vector< string > fields{ fields::flow::pressure::key(),
-                                  m_formulationType == CompositionalMultiphaseFormulationType::OverallComposition ?
-                                  fields::flow::globalCompFraction::key() : fields::flow::globalCompDensity::key() };
+    stdVector< string > fields{ flow::pressure::key(),
+                                m_formulationType == CompositionalMultiphaseFormulationType::OverallComposition ?
+                                flow::globalCompFraction::key() : flow::globalCompDensity::key() };
     if( m_isThermal )
     {
-      fields.emplace_back( fields::flow::temperature::key() );
+      fields.emplace_back( flow::temperature::key() );
     }
     FieldIdentifiers fieldsToBeSync;
     fieldsToBeSync.addElementFields( fields, regionNames );
@@ -1130,7 +1140,7 @@ bool CompositionalMultiphaseFVM::validateFaceDirichletBC( DomainPartition & doma
     // 1. Check pressure Dirichlet BCs
     fsManager.apply< FaceManager >( time,
                                     mesh,
-                                    fields::flow::pressure::key(),
+                                    flow::pressure::key(),
                                     [&]( FieldSpecificationBase const &,
                                          string const & setName,
                                          SortedArrayView< localIndex const > const &,
@@ -1149,7 +1159,7 @@ bool CompositionalMultiphaseFVM::validateFaceDirichletBC( DomainPartition & doma
     // 2. Check temperature Dirichlet BCs (we always require a temperature for face-based BCs)
     fsManager.apply< FaceManager >( time,
                                     mesh,
-                                    fields::flow::temperature::key(),
+                                    flow::temperature::key(),
                                     [&]( FieldSpecificationBase const &,
                                          string const & setName,
                                          SortedArrayView< localIndex const > const &,
@@ -1175,7 +1185,7 @@ bool CompositionalMultiphaseFVM::validateFaceDirichletBC( DomainPartition & doma
     // 3. Check composition BC (global component fraction)
     fsManager.apply< FaceManager >( time,
                                     mesh,
-                                    fields::flow::globalCompFraction::key(),
+                                    flow::globalCompFraction::key(),
                                     [&] ( FieldSpecificationBase const & fs,
                                           string const & setName,
                                           SortedArrayView< localIndex const > const &,
@@ -1278,18 +1288,18 @@ void CompositionalMultiphaseFVM::applyFaceDirichletBC( real64 const time_n,
 
     // Take BCs defined for "pressure" field and apply values to "facePressure"
     applyFieldValue< FaceManager >( time_n, dt, mesh, faceBcLogMessage,
-                                    fields::flow::pressure::key(), fields::flow::facePressure::key() );
+                                    flow::pressure::key(), flow::facePressure::key() );
     // Take BCs defined for "globalCompFraction" field and apply values to "faceGlobalCompFraction"
     applyFieldValue< FaceManager >( time_n, dt, mesh, faceBcLogMessage,
-                                    fields::flow::globalCompFraction::key(), fields::flow::faceGlobalCompFraction::key() );
+                                    flow::globalCompFraction::key(), flow::faceGlobalCompFraction::key() );
     // Take BCs defined for "temperature" field and apply values to "faceTemperature"
     applyFieldValue< FaceManager >( time_n, dt, mesh, faceBcLogMessage,
-                                    fields::flow::temperature::key(), fields::flow::faceTemperature::key() );
+                                    flow::temperature::key(), flow::faceTemperature::key() );
 
     // Then launch the face Dirichlet kernel
     fsManager.apply< FaceManager >( time_n + dt,
                                     mesh,
-                                    fields::flow::pressure::key(), // we have required that pressure is always present
+                                    flow::pressure::key(), // we have required that pressure is always present
                                     [&] ( FieldSpecificationBase const &,
                                           string const & setName,
                                           SortedArrayView< localIndex const > const &,
@@ -1421,12 +1431,14 @@ void CompositionalMultiphaseFVM::applyAquiferBC( real64 const time,
                                                        string const & )
     {
       BoundaryStencil const & stencil = fluxApprox.getStencil< BoundaryStencil >( mesh, setName );
-      if( bc.getLogLevel() >= 1 && m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
+      if( m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
       {
         globalIndex const numTargetFaces = MpiWrapper::sum< globalIndex >( stencil.size() );
-        GEOS_LOG_RANK_0( GEOS_FMT( faceBcLogMessage,
-                                   getName(), time+dt, bc.getCatalogName(), bc.getName(),
-                                   setName, faceManager.getName(), bc.getScale(), numTargetFaces ) );
+        GEOS_LOG_LEVEL_RANK_0_ON_GROUP( logInfo::BoundaryCondition,
+                                        GEOS_FMT( faceBcLogMessage,
+                                                  getName(), time+dt, bc.getCatalogName(), bc.getName(),
+                                                  setName, faceManager.getName(), bc.getScale(), numTargetFaces ),
+                                        bc );
       }
 
       if( stencil.size() == 0 )
@@ -1454,12 +1466,12 @@ void CompositionalMultiphaseFVM::applyAquiferBC( real64 const time,
                                                                         aquiferWaterPhaseDens,
                                                                         aquiferWaterPhaseCompFrac,
                                                                         compFlowAccessors.get( fields::ghostRank{} ),
-                                                                        compFlowAccessors.get( fields::flow::pressure{} ),
-                                                                        compFlowAccessors.get( fields::flow::pressure_n{} ),
-                                                                        compFlowAccessors.get( fields::flow::gravityCoefficient{} ),
-                                                                        compFlowAccessors.get( fields::flow::phaseVolumeFraction{} ),
-                                                                        compFlowAccessors.get( fields::flow::dPhaseVolumeFraction{} ),
-                                                                        compFlowAccessors.get( fields::flow::dGlobalCompFraction_dGlobalCompDensity{} ),
+                                                                        compFlowAccessors.get( flow::pressure{} ),
+                                                                        compFlowAccessors.get( flow::pressure_n{} ),
+                                                                        compFlowAccessors.get( flow::gravityCoefficient{} ),
+                                                                        compFlowAccessors.get( flow::phaseVolumeFraction{} ),
+                                                                        compFlowAccessors.get( flow::dPhaseVolumeFraction{} ),
+                                                                        compFlowAccessors.get( flow::dGlobalCompFraction_dGlobalCompDensity{} ),
                                                                         multiFluidAccessors.get( fields::multifluid::phaseDensity{} ),
                                                                         multiFluidAccessors.get( fields::multifluid::dPhaseDensity{} ),
                                                                         multiFluidAccessors.get( fields::multifluid::phaseCompFraction{} ),
@@ -1571,8 +1583,10 @@ real64 CompositionalMultiphaseFVM::setNextDtBasedOnCFL( const geos::real64 & cur
 
   computeCFLNumbers( domain, currentDt, maxPhaseCFL, maxCompCFL );
 
-  GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::TimeStep, GEOS_FMT( "{}: max phase CFL number = {}", getName(), maxPhaseCFL ) );
-  GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::TimeStep, GEOS_FMT( "{}: max component CFL number = {} ", getName(), maxCompCFL ) );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::TimeStep,
+                         GEOS_FMT( "{}: max phase CFL number = {}", getName(), maxPhaseCFL ) );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::TimeStep,
+                         GEOS_FMT( "{}: max component CFL number = {} ", getName(), maxCompCFL ) );
 
   return std::min( m_targetFlowCFL * currentDt / maxCompCFL,
                    m_targetFlowCFL * currentDt / maxPhaseCFL );
@@ -1596,9 +1610,9 @@ void CompositionalMultiphaseFVM::computeCFLNumbers( geos::DomainPartition & doma
                                                      ElementSubRegionBase & subRegion )
     {
       arrayView2d< real64, compflow::USD_PHASE > const & phaseOutflux =
-        subRegion.getField< fields::flow::phaseOutflux >();
+        subRegion.getField< flow::phaseOutflux >();
       arrayView2d< real64, compflow::USD_COMP > const & compOutflux =
-        subRegion.getField< fields::flow::componentOutflux >();
+        subRegion.getField< flow::componentOutflux >();
       phaseOutflux.zero();
       compOutflux.zero();
     } );
@@ -1620,11 +1634,11 @@ void CompositionalMultiphaseFVM::computeCFLNumbers( geos::DomainPartition & doma
     // TODO: find a way to compile with this modifiable accessors in CompFlowAccessors, and remove them from here
     ElementRegionManager::ElementViewAccessor< arrayView2d< real64, compflow::USD_PHASE > > const phaseOutfluxAccessor =
       mesh.getElemManager().constructViewAccessor< array2d< real64, compflow::LAYOUT_PHASE >,
-                                                   arrayView2d< real64, compflow::USD_PHASE > >( fields::flow::phaseOutflux::key() );
+                                                   arrayView2d< real64, compflow::USD_PHASE > >( flow::phaseOutflux::key() );
 
     ElementRegionManager::ElementViewAccessor< arrayView2d< real64, compflow::USD_COMP > > const compOutfluxAccessor =
       mesh.getElemManager().constructViewAccessor< array2d< real64, compflow::LAYOUT_COMP >,
-                                                   arrayView2d< real64, compflow::USD_COMP > >( fields::flow::componentOutflux::key() );
+                                                   arrayView2d< real64, compflow::USD_COMP > >( flow::componentOutflux::key() );
 
 
     fluxApprox.forAllStencils( mesh, [&] ( auto & stencil )
@@ -1638,11 +1652,11 @@ void CompositionalMultiphaseFVM::computeCFLNumbers( geos::DomainPartition & doma
                                                                       m_gravityDensityScheme == GravityDensityScheme::PhasePresence,
                                                                       dt,
                                                                       stencilWrapper,
-                                                                      compFlowAccessors.get( fields::flow::pressure{} ),
-                                                                      compFlowAccessors.get( fields::flow::gravityCoefficient{} ),
-                                                                      compFlowAccessors.get( fields::flow::phaseVolumeFraction{} ),
-                                                                      permeabilityAccessors.get( fields::permeability::permeability{} ),
-                                                                      permeabilityAccessors.get( fields::permeability::dPerm_dPressure{} ),
+                                                                      compFlowAccessors.get( flow::pressure{} ),
+                                                                      compFlowAccessors.get( flow::gravityCoefficient{} ),
+                                                                      compFlowAccessors.get( flow::phaseVolumeFraction{} ),
+                                                                      permeabilityAccessors.get( permeability::permeability{} ),
+                                                                      permeabilityAccessors.get( permeability::dPerm_dPressure{} ),
                                                                       relPermAccessors.get( fields::relperm::phaseRelPerm{} ),
                                                                       multiFluidAccessors.get( fields::multifluid::phaseViscosity{} ),
                                                                       multiFluidAccessors.get( fields::multifluid::phaseDensity{} ),
@@ -1666,32 +1680,32 @@ void CompositionalMultiphaseFVM::computeCFLNumbers( geos::DomainPartition & doma
                                                      ElementSubRegionBase & subRegion )
     {
       arrayView2d< real64 const, compflow::USD_PHASE > const & phaseOutflux =
-        subRegion.getField< fields::flow::phaseOutflux >();
+        subRegion.getField< flow::phaseOutflux >();
       arrayView2d< real64 const, compflow::USD_COMP > const & compOutflux =
-        subRegion.getField< fields::flow::componentOutflux >();
+        subRegion.getField< flow::componentOutflux >();
 
-      arrayView1d< real64 > const & phaseCFLNumber = subRegion.getField< fields::flow::phaseCFLNumber >();
-      arrayView1d< real64 > const & compCFLNumber = subRegion.getField< fields::flow::componentCFLNumber >();
+      arrayView1d< real64 > const & phaseCFLNumber = subRegion.getField< flow::phaseCFLNumber >();
+      arrayView1d< real64 > const & compCFLNumber = subRegion.getField< flow::componentCFLNumber >();
 
       arrayView1d< real64 const > const & volume = subRegion.getElementVolume();
 
       arrayView2d< real64 const, compflow::USD_COMP > const & compDens =
-        subRegion.getField< fields::flow::globalCompDensity >();
+        subRegion.getField< flow::globalCompDensity >();
       arrayView2d< real64 const, compflow::USD_COMP > const compFrac =
-        subRegion.getField< fields::flow::globalCompFraction >();
+        subRegion.getField< flow::globalCompFraction >();
       arrayView2d< real64, compflow::USD_PHASE > const phaseVolFrac =
-        subRegion.getField< fields::flow::phaseVolumeFraction >();
+        subRegion.getField< flow::phaseVolumeFraction >();
 
       Group const & constitutiveModels = subRegion.getGroup( ElementSubRegionBase::groupKeyStruct::constitutiveModelsString() );
 
       string const & fluidName = subRegion.getReference< string >( CompositionalMultiphaseBase::viewKeyStruct::fluidNamesString() );
       MultiFluidBase const & fluid = constitutiveModels.getGroup< MultiFluidBase >( fluidName );
-      arrayView3d< real64 const, multifluid::USD_PHASE > const & phaseVisc = fluid.phaseViscosity();
+      arrayView3d< real64 const, constitutive::multifluid::USD_PHASE > const & phaseVisc = fluid.phaseViscosity();
 
       string const & relpermName = subRegion.getReference< string >( CompositionalMultiphaseBase::viewKeyStruct::relPermNamesString() );
       RelativePermeabilityBase const & relperm = constitutiveModels.getGroup< RelativePermeabilityBase >( relpermName );
-      arrayView3d< real64 const, relperm::USD_RELPERM > const & phaseRelPerm = relperm.phaseRelPerm();
-      arrayView4d< real64 const, relperm::USD_RELPERM_DS > const & dPhaseRelPerm_dPhaseVolFrac = relperm.dPhaseRelPerm_dPhaseVolFraction();
+      arrayView3d< real64 const, constitutive::relperm::USD_RELPERM > const & phaseRelPerm = relperm.phaseRelPerm();
+      arrayView4d< real64 const, constitutive::relperm::USD_RELPERM_DS > const & dPhaseRelPerm_dPhaseVolFrac = relperm.dPhaseRelPerm_dPhaseVolFraction();
 
       string const & solidName = subRegion.getReference< string >( CompositionalMultiphaseBase::viewKeyStruct::solidNamesString() );
       CoupledSolidBase const & solid = constitutiveModels.getGroup< CoupledSolidBase >( solidName );
