@@ -218,7 +218,8 @@ if( GEOS_ENABLE_FLUIDFLOW_HYBRIDFVM )
         CompositionalMultiphaseHybridFVM.hpp
         kernels/HybridFVMHelperKernels.hpp
         kernels/singlePhase/SinglePhaseHybridFVMKernels.hpp
-        kernels/compositional/CompositionalMultiphaseHybridFVMKernels.hpp )
+        kernels/compositional/CompositionalMultiphaseHybridFVMKernels.hpp
+        kernels/compositional/CompositionalMultiphaseHybridFVMKernels_impl.hpp )
   list( APPEND fluidFlowSolvers_sources
         SinglePhaseHybridFVM.cpp
         CompositionalMultiphaseHybridFVM.cpp
