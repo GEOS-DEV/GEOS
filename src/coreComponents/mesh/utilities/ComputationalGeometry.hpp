@@ -475,6 +475,7 @@ bool isPointInPolygon2d( POLYGON_TYPE const & polygon, integer n, POINT_TYPE con
  * @param[in] polygon array of ploygon nodes coordinates
  * @param[in] n number of polygon nodes
  * @param[in] point coordinates of the query point
+ * @param[in] tol tolerance for coordinate comparisons
  * @return whether the point is inside
  */
 template< typename POLYGON_TYPE, typename POINT_TYPE >
@@ -492,8 +493,7 @@ bool isPointInPolygon3d( POLYGON_TYPE const & polygon, integer const n, POINT_TY
     normal[2] += (p1[0] - p0[0]) * (p2[1] - p0[1]) - (p1[1] - p0[1]) * (p2[0] - p0[0]);
   }
 
-  real64 d = -(normal[0] * p0[0] + normal[1] * p0[1] + normal[2] * p0[2]);
-  real64 dist = normal[0] * point[0] + normal[1] * point[1] + normal[2] * point[2] + d;
+  real64 const dist = normal[0] * point[0] + normal[1] * point[1] + normal[2] * point[2] -(normal[0] * p0[0] + normal[1] * p0[1] + normal[2] * p0[2]);
 
   if( std::abs( dist ) > tol )
   {
