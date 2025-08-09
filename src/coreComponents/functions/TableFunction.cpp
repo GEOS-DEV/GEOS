@@ -356,49 +356,48 @@ void TableFunction::outputTableData( OutputOptions const outputOpts ) const
     return;
 
   bool const logOutputFailed = outputOpts.writeInLog && isTableTooLargeForLog( *this );
-  if( outputOpts.writeInLog && !logOutputFailed )
-  { // log output
-    TableLayout tableLayout( getName(), {} );
-    if( outputOpts.writeCSV )
-    {
-      tableLayout.addColumn( GEOS_FMT( "- CSV Generated to:\n  {}/{}.csv", getOutputDirectory(), getName() ) );
-    }
-    TableTextFormatter textFormatter( tableLayout );
-    GEOS_LOG( textFormatter.toString( *this ));
-  }
+  string csvName =  joinPath( FunctionBase::getOutputDirectory(), getName() + ".csv" );
+
+  TableLayout logLayout( { TableLayout::Column().
+                             setName( getName() ).
+                             setHeaderAlignment( TableLayout::Alignment::center ).
+                             setValuesAlignment( TableLayout::Alignment::left ) } );
+  TableCSVFormatter csvFormatter;
 
   if( outputOpts.writeCSV || logOutputFailed )
   {
-    { // csv output
-      std::ofstream logStream( joinPath( FunctionBase::getOutputDirectory(), getName() + ".csv" ) );
-      TableCSVFormatter csvFormatter;
-      logStream << csvFormatter.toString( *this );
+    std::ofstream csvStream( csvName );
+    csvFormatter.showErrors( false );
+    csvStream << csvFormatter.toString( *this );
+  }
+
+  if( outputOpts.writeInLog || outputOpts.writeCSV )
+  {
+    TableTextFormatter logFormatter( logLayout );
+    logFormatter.getErrorsList().appendErrors( csvFormatter.getErrorsList().getErrors() );
+
+    if( outputOpts.writeInLog && !logOutputFailed )
+    {
+      GEOS_LOG( logFormatter.toString( *this ) );
     }
-
-    if( !outputOpts.writeInLog )
-    { // mini-table in log to notice user where csv has been output (if only csv output is enabled)
-      // only one column which serve as "title" (centered), next, stats & texts are designed to be left-aligned
-      TableLayout const tableLayout( { TableLayout::Column().
-                                         setName( getName() ).
-                                         setHeaderAlignment( TableLayout::Alignment::center ).
-                                         setValuesAlignment( TableLayout::Alignment::left ) } );
-      TableTextFormatter const tableLog( tableLayout );
-
-      TableData tableData;
-      tableData.addRow( getTableDescription());
+    else
+    {
+      TableData logTableData;
+      logTableData.addRow( getTableDescription());
       if( logOutputFailed )
       {
-        tableData.addSeparator();
-        tableData.addRow( " / \\ The table was too heavy for log output.\n"
-                          "/ ! \\ To visualize the table, please refer to the generated csv." );
+        logTableData.addSeparator();
+        logTableData.addRow( " / \\ The table was too heavy for log output.\n"
+                             "/ ! \\ To visualize the table, please refer to the generated csv." );
       }
-      tableData.addSeparator();
-      tableData.addRow( GEOS_FMT( "CSV Generated to:\n{}/{}.csv", getOutputDirectory(), getName() ) );
-      GEOS_LOG( tableLog.toString( tableData ) );
+      logTableData.addSeparator();
+      logTableData.addRow( GEOS_FMT( "- CSV Generated to:\n  {}/{}.csv", getOutputDirectory(), getName() ) );
+
+      GEOS_LOG( logFormatter.toString( logTableData ) );
     }
   }
-}
 
+}
 void TableFunction::initializePostSubGroups()
 {
   // Output user defined tables (not generated PVT tables)
@@ -412,6 +411,7 @@ template<>
 string TableCSVFormatter::toString< TableFunction >( TableFunction const & tableFunction ) const
 {
   ArrayOfArraysView< real64 const > const coordinates = tableFunction.getCoordinates();
+
   arrayView1d< real64 const > const values = tableFunction.getValues();
   TableLayout tableLayout;
 
@@ -432,9 +432,15 @@ string TableCSVFormatter::toString< TableFunction >( TableFunction const & table
   }
   else
   {
+    array1d< real64 > coordsX;
+    coordsX.insert( 0, coordinates[0].begin(), coordinates[0].end());
+
+    array1d< real64 > coordsY;
+    coordsY.insert( 0, coordinates[1].begin(), coordinates[1].end());
+
     TableData2D tableData2D;
     TableData2D::TableDataHolder const tableConverted =
-      tableData2D.convertTable2D( coordinates,
+      tableData2D.convertTable2D( coordsX, coordsY,
                                   tableFunction.getCoordsDescription( 0, false ),
                                   tableFunction.getCoordsDescription( 1, false ),
                                   values,
@@ -486,9 +492,14 @@ string TableTextFormatter::toString< TableFunction >( TableFunction const & tabl
     }
     else if( numDimensions == 2 )
     {
+      array1d< real64 > coordsX;
+      coordsX.insert( 0, coordinates[0].begin(), coordinates[0].end());
+      array1d< real64 > coordsY;
+      coordsY.insert( 0, coordinates[1].begin(), coordinates[1].end());
+
       TableData2D tableData2D;
       TableData2D::TableDataHolder tableConverted;
-      tableConverted = tableData2D.convertTable2D( coordinates,
+      tableConverted = tableData2D.convertTable2D( coordsX, coordsY,
                                                    tableFunction.getCoordsDescription( 1, true ),
                                                    tableFunction.getCoordsDescription( 0, true ),
                                                    values,
@@ -499,6 +510,7 @@ string TableTextFormatter::toString< TableFunction >( TableFunction const & tabl
       TableLayout const tableLayout = TableLayout( tableTitle, { parentColumn } ).
                                         setMargin( TableLayout::MarginValue::small );
       TableTextFormatter const table2DLog( tableLayout );
+      tableConverted.tableData.addSeparator();
       logOutput =  table2DLog.toString( tableConverted.tableData );
     }
   }

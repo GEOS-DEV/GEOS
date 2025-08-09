@@ -101,8 +101,8 @@ private:
 using TestTypes = ::testing::Types< int,
                                     double,
                                     R1Tensor,
-                                    std::pair< int, R1Tensor >, // This should be passed to conduit via an external
-                                                                // pointer but currently we're packing it.
+                                    std::pair< int, R1Tensor >,  // This should be passed to conduit via an external
+                                                                 // pointer but currently we're packing it.
                                     std::pair< string, double >,
                                     string,
                                     stdVector< int >,
