@@ -36,6 +36,30 @@ public:
   {
 public:
     GEOS_HOST_DEVICE
+    /**
+     * @brief Compute fluid properties for an invariant immiscible fluid model
+     *
+     * This function calculates the properties of multiple immiscible fluid phases:
+     * - Phase fractions directly from composition (1:1 mapping)
+     * - Phase densities from constant input values (adjusted for molar/mass basis)
+     * - Phase viscosities from constant input values
+     * - Phase enthalpy and internal energy (set to zero in this simple model)
+     * - Phase component fractions (identity mapping - each phase is a pure component)
+     * - Total fluid density as weighted sum of phase densities
+     *
+     *
+     * @param pressure        The pressure at which to evaluate fluid properties (unused in this model)
+     * @param temperature     The temperature at which to evaluate fluid properties (unused in this model)
+     * @param composition     Array of composition values (directly maps to phase fractions)
+     * @param phaseFraction   Output view for phase fractions and their derivatives
+     * @param phaseDensity    Output view for phase densities and their derivatives
+     * @param phaseMassDensity Output view for phase mass densities and their derivatives
+     * @param phaseViscosity  Output view for phase viscosities and their derivatives
+     * @param phaseEnthalpy   Output view for phase enthalpies and their derivatives
+     * @param phaseInternalEnergy Output view for phase internal energies and their derivatives
+     * @param phaseCompFraction Output view for phase component fractions and their derivatives
+     * @param totalDensity    Output view for total fluid density and its derivatives
+     */
     virtual void compute( real64 const pressure,
                           real64 const temperature,
                           arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & composition,

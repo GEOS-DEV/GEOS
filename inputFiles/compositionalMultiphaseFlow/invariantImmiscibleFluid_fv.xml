@@ -6,7 +6,7 @@
     <CompositionalMultiphaseFVM
       name="FlowSolver"
       discretization="fluidTPFA"
-      formulationType="OverallComposition"
+      useMass="1"
       targetRegions="{ Domain }"
       logLevel="3"
       temperature="300">
@@ -60,8 +60,7 @@
   <NumericalMethods>
     <FiniteVolume>
       <TwoPointFluxApproximation
-        name="fluidTPFA"
-        upwindingScheme="HU2PH"/>
+        name="fluidTPFA"/>
     </FiniteVolume>
   </NumericalMethods>
 
@@ -78,8 +77,8 @@
       name="fluid"
       componentNames="{ CH4, H2O }"
       phaseNames="{ gas, water }"
-      componentMolarWeight="{ 1.0, 1.0 }"
-      densities="{ 1000.0, 1000.0 }"
+      componentMolarWeight="{ 16.04e-3, 18.0153e-3 }"
+      densities="{ 550.0, 1000.0 }"
       viscosities="{ 1.0e-3, 1.0e-3 }"/>
 
     <CompressibleSolidConstantPermeability
@@ -111,24 +110,33 @@
 
   <FieldSpecifications>
 
-    <HydrostaticEquilibrium
-      name="equil"
-      objectPath="ElementRegions"      
-      datumElevation="7"
-      datumPressure="1e7"
-      initialPhaseName="water"
-      componentNames="{ CH4, H2O }"
-      componentFractionVsElevationTableNames="{ initCH4CompFracTable,
-                                                initH2OCompFracTable }"
-      temperatureVsElevationTableName="initTempTable"/> 
-
     <FieldSpecification
-      name="Porosity"
+      name="initialPressure"
       initialCondition="1"
       setNames="{ all }"
-      objectPath="ElementRegions/Domain"
-      fieldName="rockPorosity_referencePorosity"
-      scale="0.1"/>
+      objectPath="ElementRegions/Domain/blocks"
+      fieldName="pressure"
+      scale="1.0e7"/>
+
+    <FieldSpecification
+      name="initialComposition_CH4"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Domain/blocks"
+      fieldName="globalCompFraction"
+      component="0"
+      scale="1.0"
+      functionName="initCH4CompFracTable"/> 
+
+    <FieldSpecification
+      name="initialComposition_H2O"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Domain/blocks"
+      fieldName="globalCompFraction"
+      component="1"
+      scale="1.0"
+      functionName="initH2OCompFracTable"/>     
 
     <FieldSpecification
       name="top_pressure"
@@ -160,14 +168,18 @@
 
 
   <Functions>
-   <TableFunction
-      name="initH2OCompFracTable"
-      coordinates="{ 0.0, 1.0, 1.0000001, 4.999999, 5.0,  50.0 }"
-      values="{ 1.0, 1.0, 0.3125, 0.3125, 1.0, 1.0 }"/>
     <TableFunction
       name="initCH4CompFracTable"
-      coordinates="{ 0.0, 1.0, 1.0000001, 4.999999, 5.0,  50.0 }"
-      values="{ 0.0, 0.0, 0.6875, 0.6875, 0.0, 0.0 }"/>
+      inputVarNames="{ elementCenter }"
+      coordinateFiles="{ x.txt, y.txt, z.txt}"
+      voxelFile="initial_CH4.txt"
+      interpolation="nearest" />
+    <TableFunction
+      name="initH2OCompFracTable"
+      inputVarNames="{ elementCenter }"
+      coordinateFiles="{ x.txt, y.txt, z.txt}"
+      voxelFile="initial_H2O.txt"
+      interpolation="nearest" />      
     <TableFunction
       name="initTempTable"
       coordinates="{ 0.0, 7.0 }"
