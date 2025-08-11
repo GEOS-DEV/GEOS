@@ -1484,15 +1484,15 @@ ImmiscibleMultiphaseFlow::scalingForSystemSolution( DomainPartition & domain,
   m_currentScaling = m_scalingType;
 
   // Check for stagnation and avoid scaling if detected
-  bool stagDetected = false;
+  m_stagnation = false;
   real64 const stagTol = 1.0e-5;
   if( fabs(residualNorm - m_prevResidualNorm) < stagTol && fabs(residualNorm - m_prevResidualNorm2) < stagTol )
   {
-    stagDetected = true;
+    m_stagnation = true;
   }
   m_prevResidualNorm2 = m_prevResidualNorm;
   m_prevResidualNorm = residualNorm;
-  if( stagDetected )
+  if( m_stagnation )
   {
     if ( m_scalingType == ScalingType::Local )
     {
@@ -1941,11 +1941,11 @@ void ImmiscibleMultiphaseFlow::applySystemSolution( DofManager const & dofManage
   }
 
   // 3. ensure primary variables are within physical bounds
-  if ( m_allowSatChopping )
+  if ( m_allowSatChopping && !m_stagnation )
   {
     chopOutOfBoundPhaseVolFrac( domain );
   }
-  if ( m_allowPresChopping )
+  if ( m_allowPresChopping && !m_stagnation )
   {
     chopOutOfBoundPressure( domain );
   }

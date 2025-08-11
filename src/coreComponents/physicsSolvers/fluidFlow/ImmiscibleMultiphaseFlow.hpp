@@ -469,6 +469,9 @@ private:
   /// type of scaling to applying in current Newton iteration
   ScalingType m_currentScaling;
 
+  /// flag to indicate stagnation and turn off physical chopping
+  bool m_stagnation;
+
   /// previous residual norms
   real64 m_prevResidualNorm = 0.0;
   real64 m_prevResidualNorm2 = 0.0;
