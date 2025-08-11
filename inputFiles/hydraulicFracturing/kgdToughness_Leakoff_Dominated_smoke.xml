@@ -126,5 +126,11 @@
       beginTime="20.0"      
       forceDt="10.0"
       target="/Solvers/hydrofracture"/>
+
+    <PeriodicEvent
+      name="restarts"
+      cycleFrequency="10"
+      targetExactTimestep="1"
+      target="/Outputs/restartOutput"/>
   </Events>  
 </Problem>

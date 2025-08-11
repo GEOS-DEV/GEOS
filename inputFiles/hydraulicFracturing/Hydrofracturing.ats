@@ -152,6 +152,24 @@ walsh_quarter_no_chombo = {
     "check_step": 5
 }
 
+kgd_toughness_leakoff_dominated = {
+    "name": "kgdToughness_Leakoff_Dominated_smoke",
+    "description":
+    "First KGD verification case for leakoff",
+    "partitions": ((1, 1, 1), (2, 3, 1)),
+    "restart_step": 10,
+    "check_step": 16
+}
+
+kgd_toughness_storage_dominated = {
+    "name": "kgdToughness_Storage_Dominated_smoke",
+    "description":
+    "Second KGD verification case for leakoff",
+    "partitions": ((1, 1, 1), (2, 3, 1)),
+    "restart_step": 10,
+    "check_step": 16
+}
+
 decks = (kgd_viscosity_dominated, kgd_viscosity_dominated_poroelastic,
          kgd_toughness_dominated, kgd_toughness_dominated_poroelastic,
          kgd_validation, kgd_edge_based_C3D6, kgd_node_based_C3D6,
