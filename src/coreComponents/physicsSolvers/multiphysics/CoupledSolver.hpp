@@ -230,7 +230,6 @@ public:
               DomainPartition & domain ) override final
   {
     GEOS_MARK_FUNCTION;
-
     if( getNonlinearSolverParameters().couplingType() == NonlinearSolverParameters::CouplingType::FullyImplicit )
     {
       return fullyCoupledSolverStep( time_n, dt, cycleNumber, domain );
@@ -247,6 +246,21 @@ public:
 
   }
 
+
+  virtual void
+  updateConvergenceStep( real64 const & time_n, real64 const & dt,
+                         integer const cycleNumber, integer const iteration ) override
+  {
+    forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
+    {
+      solver->updateConvergenceStep( time_n, dt, cycleNumber, iteration );
+
+      if( m_writeStatistics >= 2 )
+      {
+        solver->getConvergenceStats().updateSolverStep( time_n, dt, cycleNumber, iteration );
+      }
+    } );
+  }
 
   virtual real64
   calculateResidualNorm( real64 const & time_n,
@@ -505,7 +519,6 @@ protected:
             m_numTimestepsSinceLastDtCut = 0;
           }
         } );
-
         // Check convergence of the outer loop
         isConverged = checkSequentialConvergence( cycleNumber,
                                                   iter,
