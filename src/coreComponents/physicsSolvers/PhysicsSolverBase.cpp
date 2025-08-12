@@ -523,7 +523,7 @@ real64 PhysicsSolverBase::setNextDtBasedOnIterNumber( real64 const & currentDt )
 
 real64 PhysicsSolverBase::linearImplicitStep( real64 const & time_n,
                                               real64 const & dt,
-                                              integer const cycleNumber,
+                                              integer const GEOS_UNUSED_PARAM( cycleNumber ),
                                               DomainPartition & domain )
 {
   // call setup for physics solver. Pre step allocations etc.
