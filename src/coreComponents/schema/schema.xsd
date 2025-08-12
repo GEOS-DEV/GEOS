@@ -4861,7 +4861,7 @@ Information output from lower logLevels is added with the desired log level
 * QuasiStatic
 * ImplicitDynamic
 * ExplicitDynamic-->
-		<xsd:attribute name="timeIntegrationOption" type="geos_SolidMechanicsLagrangianFEM_TimeIntegrationOption" default="ExplicitDynamic" />
+		<xsd:attribute name="timeIntegrationOption" type="geos_SolidMechanicsLagrangianFEM_TimeIntegrationOption" default="QuasiStatic" />
 		<!--tolJumpN => Factor to adjust the tolerance for normal jump-->
 		<xsd:attribute name="tolJumpN" type="real64" default="1e-07" />
 		<!--tolJumpT => Factor to adjust the tolerance for tangential jump-->
@@ -4929,7 +4929,7 @@ Information output from lower logLevels is added with the desired log level
 * QuasiStatic
 * ImplicitDynamic
 * ExplicitDynamic-->
-		<xsd:attribute name="timeIntegrationOption" type="geos_SolidMechanicsLagrangianFEM_TimeIntegrationOption" default="ExplicitDynamic" />
+		<xsd:attribute name="timeIntegrationOption" type="geos_SolidMechanicsLagrangianFEM_TimeIntegrationOption" default="QuasiStatic" />
 		<!--usePhysicsScaling => Enable physics-based scaling of the linear system. Default: true.-->
 		<xsd:attribute name="usePhysicsScaling" type="integer" default="1" />
 		<!--useStaticCondensation => Defines whether to use static condensation or not.-->
@@ -4991,7 +4991,7 @@ Information output from lower logLevels is added with the desired log level
 * QuasiStatic
 * ImplicitDynamic
 * ExplicitDynamic-->
-		<xsd:attribute name="timeIntegrationOption" type="geos_SolidMechanicsLagrangianFEM_TimeIntegrationOption" default="ExplicitDynamic" />
+		<xsd:attribute name="timeIntegrationOption" type="geos_SolidMechanicsLagrangianFEM_TimeIntegrationOption" default="QuasiStatic" />
 		<!--usePhysicsScaling => Enable physics-based scaling of the linear system. Default: true.-->
 		<xsd:attribute name="usePhysicsScaling" type="integer" default="1" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
@@ -5045,7 +5045,7 @@ Information output from lower logLevels is added with the desired log level
 * QuasiStatic
 * ImplicitDynamic
 * ExplicitDynamic-->
-		<xsd:attribute name="timeIntegrationOption" type="geos_SolidMechanicsLagrangianFEM_TimeIntegrationOption" default="ExplicitDynamic" />
+		<xsd:attribute name="timeIntegrationOption" type="geos_SolidMechanicsLagrangianFEM_TimeIntegrationOption" default="QuasiStatic" />
 		<!--usePhysicsScaling => Enable physics-based scaling of the linear system. Default: true.-->
 		<xsd:attribute name="usePhysicsScaling" type="integer" default="1" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
@@ -5103,7 +5103,7 @@ Information output from lower logLevels is added with the desired log level
 * QuasiStatic
 * ImplicitDynamic
 * ExplicitDynamic-->
-		<xsd:attribute name="timeIntegrationOption" type="geos_SolidMechanicsLagrangianFEM_TimeIntegrationOption" default="ExplicitDynamic" />
+		<xsd:attribute name="timeIntegrationOption" type="geos_SolidMechanicsLagrangianFEM_TimeIntegrationOption" default="QuasiStatic" />
 		<!--usePhysicsScaling => Enable physics-based scaling of the linear system. Default: true.-->
 		<xsd:attribute name="usePhysicsScaling" type="integer" default="1" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
