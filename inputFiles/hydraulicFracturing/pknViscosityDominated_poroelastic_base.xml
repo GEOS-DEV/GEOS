@@ -185,8 +185,7 @@
     <VTK
       name="vtkOutput"
       plotFileRoot="zeroToughness_poroelastic"
-      plotLevel="3"
-      parallelThreads="48"/>
+      plotLevel="3"/>
 
     <TimeHistory
       name="timeHistoryOutput"

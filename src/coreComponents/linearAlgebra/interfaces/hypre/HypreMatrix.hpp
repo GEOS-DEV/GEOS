@@ -21,6 +21,7 @@
 #define GEOS_LINEARALGEBRA_INTERFACES_HYPREMATRIX_HPP_
 
 #include "common/DataTypes.hpp"
+#include "linearAlgebra/DofManager.hpp"
 #include "linearAlgebra/interfaces/hypre/HypreVector.hpp"
 #include "linearAlgebra/interfaces/hypre/HypreExport.hpp"
 #include "linearAlgebra/common/LinearOperator.hpp"
@@ -268,6 +269,15 @@ public:
                             RowSumType const rowSumType ) override;
 
   virtual void rightScale( HypreVector const & vec ) override;
+
+  /**
+   * @copydoc MatrixBase<HypreMatrix>::computeScalingVector
+   */
+  virtual void computeScalingVector( HypreVector & scaling ) const override;
+
+  /**
+   * @copydoc MatrixBase<HypreMatrix>::leftRightScale
+   */
 
   virtual void leftRightScale( HypreVector const & vecLeft,
                                HypreVector const & vecRight ) override;
