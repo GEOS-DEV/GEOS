@@ -92,7 +92,7 @@ public:
       viscosities[1] = 0.005;     // Pa.s
       viscosities[2] = 0.00002;   // Pa.s
 
-//      fluid.setMassFlag( USE_MASS );
+      fluid.setMassFlag( USE_MASS );
 
       // Need to allocate data for the fluid properties since we're now using KernelWrapper
       fluid.initialize( 1, 1 );
@@ -209,17 +209,24 @@ TYPED_TEST( InvariantImmiscibleFluidTestFixture, PhaseProperties )
 
   // Test using direct property access instead of getFunctions
   auto kernelWrapper = this->getKernelWrapper();
+  bool useMassQ = this->USE_MASS;
 
   // Test phase densities
   for( integer ip = 0; ip < 3; ip++ )
   {
-    real64 expectedDensity = (ip == 0) ? 1000.0/0.018 : (ip == 1) ? 800.0/0.2 : 100.0/0.016;
-    real64 computedDensity = fluid.phaseDensity().operator()( 0, 0, ip );
-    EXPECT_NEAR( computedDensity, expectedDensity, this->absTol );
-
     real64 expectedMassDensity = (ip == 0) ? 1000.0 : (ip == 1) ? 800.0 : 100.0;
     real64 computedMassDensity = fluid.phaseMassDensity().operator()( 0, 0, ip );
     EXPECT_NEAR( computedMassDensity, expectedMassDensity, this->absTol );
+    real64 computedDensity = fluid.phaseDensity().operator()( 0, 0, ip );
+    if (useMassQ){
+      EXPECT_NEAR( computedDensity, expectedMassDensity, this->absTol );
+    }else{
+      real64 expectedDensity = (ip == 0) ? 1000.0/0.018 : (ip == 1) ? 800.0/0.2 : 100.0/0.016;
+      EXPECT_NEAR( computedDensity, expectedDensity, this->absTol );
+    }
+    
+
+
   }
 
   // Test phase viscosities
