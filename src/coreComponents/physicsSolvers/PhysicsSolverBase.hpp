@@ -478,17 +478,17 @@ public:
                        ParallelVector const & solution ) const;
 
   /**
-   * @brief Update the convergence information
+   * @brief Update the convergence information and write then into a CSV file
    * @param time the time at the beginning of the step
    * @param dt the desired timestep
    * @param cycleNumber event cycle number
    * @param iteration current iteration
    */
   virtual void
-  updateConvergenceStep( real64 const & time_n,
-                         real64 const & dt,
-                         integer const cycleNumber,
-                         integer const iteration ){}
+  updateAndWriteConvergenceStep( real64 const & time_n,
+                                 real64 const & dt,
+                                 integer const cycleNumber,
+                                 integer const iteration ){}
 
   /**
    * @brief calculate the norm of the global system residual

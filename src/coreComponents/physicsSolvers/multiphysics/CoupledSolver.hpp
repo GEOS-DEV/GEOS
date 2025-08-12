@@ -249,14 +249,14 @@ public:
 
 
   virtual void
-  updateConvergenceStep( real64 const & time_n, real64 const & dt,
-                         integer const cycleNumber, integer const iteration ) override
+  updateAndWriteConvergenceStep( real64 const & time_n, real64 const & dt,
+                                 integer const cycleNumber, integer const iteration ) override
   {
     forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
     {
       if( m_writeStatistics >= 2 )
       {
-        solver->updateConvergenceStep( time_n, dt, cycleNumber, iteration );
+        solver->updateAndWriteConvergenceStep( time_n, dt, cycleNumber, iteration );
         solver->getConvergenceStats().updateSolverStep( time_n, dt, cycleNumber, iteration );
         solver->getConvergenceStats().writeConvergenceStatsToTable();
       }
@@ -651,7 +651,7 @@ protected:
         GEOS_LOG_LEVEL_RANK_0( logInfo::ResidualNorm,
                                GEOS_FMT( "        ( R ) = ( {:4.2e} )", residualNorm ) );
         getConvergenceStats().m_residuals["R"] = residualNorm;
-        updateConvergenceStep( time_n, dt, cycleNumber, iter );
+        updateAndWriteConvergenceStep( time_n, dt, cycleNumber, iter );
 
         isConverged = ( residualNorm < params.m_newtonTol );
 
