@@ -208,7 +208,6 @@ TYPED_TEST( InvariantImmiscibleFluidTestFixture, PhaseProperties )
   auto & fluid = this->getFluid();
 
   // Test using direct property access instead of getFunctions
-  auto kernelWrapper = this->getKernelWrapper();
   bool useMassQ = this->USE_MASS;
 
   // Test phase densities
