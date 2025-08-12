@@ -252,7 +252,6 @@ TYPED_TEST( InvariantImmiscibleFluidTestFixture, WaterPhaseIndex )
 
 TYPED_TEST( InvariantImmiscibleFluidTestFixture, TotalDensityDerivative )
 {
-  auto & fluid = this->getFluid();
   auto kernelWrapper = this->getKernelWrapper();
 
   // Setup a test composition
