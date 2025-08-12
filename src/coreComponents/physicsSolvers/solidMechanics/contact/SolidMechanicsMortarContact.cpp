@@ -86,6 +86,7 @@ void SolidMechanicsMortarContact::implicitStepSetup( real64 const & time_n,
                                                                 MeshLevel & mesh,
                                                                 string_array const & )
   {
+    // naive way to assign master and slave mesh levels
     if (meshName == "meshMaster"){
       this->m_meshMaster = &mesh;
     }
@@ -94,25 +95,14 @@ void SolidMechanicsMortarContact::implicitStepSetup( real64 const & time_n,
       this->m_meshSlave = &mesh;
     }
     
-    //FaceManager const & faceManager = mesh.getFaceManager();
     ElementRegionManager const & elemManager = mesh.getElemManager();
 
-    // Get the topology of all faces in the grid
-    //ArrayOfArraysView< localIndex const > const faceToNodeMap = faceManager.nodeList().toViewConst();
-    //arrayView2d< double const > const surfaceCentroid = faceManager.faceCenter().toViewConst();
-
-    // Get mortar surface region
-    //FaceElementSubRegion const & subRegion = region.getUniqueSubRegion< FaceElementSubRegion >();
-    //arrayView2d< localIndex const > const elemsToFaces = subRegion.faceList().toViewConst();
-
-    std::cout << "Processing interface: " << meshName << std::endl;
     elemManager.forElementSubRegions< FaceElementSubRegion >([&](const FaceElementSubRegion & subRegion )
     {
-
-      // assign surface to master or slave depending on object path
+      // assign surface to master or slave depending on object path (again, naive)
       string surfacePath = subRegion.getPath();
       if (surfacePath.find("surfaceSlave") != std::string::npos){
-        GEOS_ERROR_IF(m_surfaceSlave != nullptr,"Slve surface has already been assigned.");
+        GEOS_ERROR_IF(m_surfaceSlave != nullptr,"Slave surface has already been assigned.");
         this->m_surfaceSlave = &subRegion;
       }
 
@@ -122,83 +112,12 @@ void SolidMechanicsMortarContact::implicitStepSetup( real64 const & time_n,
       }
     });
 
-
-      // loop in the subRegions (only one for now)
-      // get map from surface in surfaceRegion to face in FaceManager
-      //arrayView2d< localIndex const > const elemsToFaces = subRegion.faceList().toViewConst();
-
-      // loop over each surface in the mortar interface
-      //forAll< parallelHostPolicy >( subRegion.size(), [=] ( localIndex const ksurf )
-      //{
-        // inspect the surfaces and avalilable informations: 
-        // print node indices, coordinates, centroid
-        //localIndex const kface = elemsToFaces[ksurf][0];
-        //localIndex const numNodesPerFace = faceToNodeMap.sizeOfArray( kface );
-
-        //std::cout << "SURFACE " << ksurf << std::endl;
-        /*
-        std::cout << "Surface centroid: ";
-        for (int i = 0; i < 3; ++i) {
-          std::cout << surfaceCentroid[kface][i] << " ";
-        }
-        std::cout << "Nodes list: ";
-        for (int jn = 0; jn < numNodesPerFace; ++jn) {
-          std::cout << faceToNodeMap[kface][jn] << " ";
-        }
-        std::cout << std::endl;
-        */
-    //});
   } );
 
   
-    
-
-
   std::cout << "Processing master/slave connectivity" << std::endl;
 
-  std::unique_ptr<TreeNodeMortar> treeMaster = std::make_unique<TreeNodeMortar>();
-  std::unique_ptr<TreeNodeMortar> treeSlave = std::make_unique<TreeNodeMortar>();
-
-  // list of surfaces of master root
-  array1d<localIndex> surfRootMaster(m_surfaceMaster->size()) ;
-  array1d<localIndex> surfRootSlave(m_surfaceSlave->size()) ;
-
-  for (localIndex i=0; i < m_surfaceMaster->size(); ++i)
-  {
-    surfRootMaster(i) = i;
-  }
-
-  for (localIndex i=0; i < m_surfaceSlave->size(); ++i)
-  {
-    surfRootSlave(i) = i;
-  }
-
-  // create binary trees recursively
-  std::cout << "Populating master tree" << std::endl;
-  treeMaster->createNode(*m_meshMaster,*m_surfaceMaster,surfRootMaster);
-  std::cout << "Populating slave tree" << std::endl;
-  treeSlave->createNode(*m_meshSlave,*m_surfaceSlave,surfRootSlave);
-
-  // prepare connectivitiy map slave -> master
-  localIndex nSurfSlave = m_surfaceSlave->size();
-  m_connectivityMap.resize(nSurfSlave);
-
-  // populate connectivity map
-  contactSearch(treeSlave,treeMaster);
-
-  for (localIndex i=0; i<nSurfSlave; ++i)
-  {
-    localIndex N = m_connectivityMap.sizeOfArray(i);
-    std::cout << "SLAVE ELEMENT: " << i << std::endl;
-    std::cout << "N = " << N << " MASTER ELEMENT:"; 
-    for (localIndex j=0; j<N; ++j)
-    {  
-      std::cout << " " << m_connectivityMap[i][j];
-    }
-    std::cout << std::endl;
-    std::cout << "__________________________________________" << std::endl;
-  }
-
+  this->getConnectivityMap();
   
   //////////////////////////////////////////////////////////////////////////////////
   GEOS_ERROR("Mortar solver is not implemented yet. ");
@@ -273,13 +192,60 @@ void SolidMechanicsMortarContact::updateState( DomainPartition & domain )
   GEOS_UNUSED_VAR( domain );
 }
 
+void SolidMechanicsMortarContact::getConnectivityMap()
+{
+  // using smart pointers for the trees
+  std::unique_ptr<TreeNodeMortar> treeMaster = std::make_unique<TreeNodeMortar>();
+  std::unique_ptr<TreeNodeMortar> treeSlave = std::make_unique<TreeNodeMortar>();
+
+  // progressive list of surfaces to create tree roots
+  array1d<localIndex> surfRootMaster(m_surfaceMaster->size()) ;
+  array1d<localIndex> surfRootSlave(m_surfaceSlave->size()) ;
+
+  for (localIndex i=0; i < m_surfaceMaster->size(); ++i)
+  {
+    surfRootMaster(i) = i;
+  }
+
+  for (localIndex i=0; i < m_surfaceSlave->size(); ++i)
+  {
+    surfRootSlave(i) = i;
+  }
+
+  // create binary trees recursively
+  std::cout << "Populating master tree" << std::endl;
+  treeMaster->createNode(*m_meshMaster,*m_surfaceMaster,surfRootMaster);
+  std::cout << "Populating slave tree" << std::endl;
+  treeSlave->createNode(*m_meshSlave,*m_surfaceSlave,surfRootSlave);
+
+  // initialize connectivity map
+  localIndex nSurfSlave = m_surfaceSlave->size();
+  m_connectivityMap.resize(nSurfSlave);
+
+  // perform contact search and populate connectivity map
+  contactSearch(treeSlave,treeMaster);
+
+    for (localIndex i=0; i<nSurfSlave; ++i)
+  {
+    localIndex N = m_connectivityMap.sizeOfArray(i);
+    std::cout << "SLAVE ELEMENT: " << i << std::endl;
+    std::cout << "MASTER ELEMENT:"; 
+    for (localIndex j=0; j<N; ++j)
+    {  
+      std::cout << " " << m_connectivityMap[i][j];
+    }
+    std::cout << std::endl;
+    std::cout << "__________________________________________" << std::endl;
+  }
+}
+
 void SolidMechanicsMortarContact::contactSearch(std::unique_ptr<TreeNodeMortar> const & nodeSlave, std::unique_ptr<TreeNodeMortar> const & nodeMaster)
 {
   if (!checkIntersection(nodeSlave,nodeMaster)) return;
   
   if ((nodeSlave->isLeaf) && (nodeMaster->isLeaf))
   {
-    std::cout << "found intersection between slave " << nodeSlave->leafId << " and master " << nodeMaster->leafId << std::endl;
+    //std::cout << "found intersection between slave " << nodeSlave->leafId << " and master " << nodeMaster->leafId << std::endl;
     m_connectivityMap.emplaceBack(nodeSlave->leafId,nodeMaster->leafId);
     return;
   }
@@ -325,7 +291,6 @@ void TreeNodeMortar::createNode(MeshLevel const & mesh,
   ArrayOfArraysView< localIndex const > const & faceToNodeMap = faceManager.nodeList().toViewConst();
   arrayView2d< double const > const surfCenter = faceManager.faceCenter().toViewConst();
   localIndex nSurf = surfList.size();
-  std::cout << "NSurfaces = " << nSurf << std::endl;
   arrayView2d<double const> const coords =  nodeManager.referencePosition();
 
   double const pP[3][9] = POLYTOP_PRIMITIVES;
@@ -339,55 +304,58 @@ void TreeNodeMortar::createNode(MeshLevel const & mesh,
     for (localIndex j=0; j<nNodes; ++j)
     { 
       localIndex id = faceToNodeMap[kface][j];
-      //std::cout << coords[id][0] << " " <<  coords[id][1] << " " <<  coords[id][2] << std::endl;
+
       for (localIndex k = 0; k<9; ++k)
       {
         real64 P = coords[id][0]*pP[0][k] + 
-           coords[id][1]*pP[1][k] +
-           coords[id][2]*pP[2][k];
-       if (P < this->polytop[2*k]) this->polytop[2*k] = P;      // store minimum primitive
-       if (P > this->polytop[2*k+1]) this->polytop[2*k+1] = P;  // store maximum primitive
+                   coords[id][1]*pP[1][k] +
+                   coords[id][2]*pP[2][k];
+        // store minimum polytop primitive
+        if (P < this->polytop[2*k]) this->polytop[2*k] = P;     
+        // store maximum polytop primitive 
+        if (P > this->polytop[2*k+1]) this->polytop[2*k+1] = P; 
       }
     }
   }
 
-  // get maximum polytop direction
+  // get direction of polytop maximum size
   localIndex dir = 0;
   real64 diff = -1;
   for (localIndex k = 0; k<9; ++k)
   {
+    // add a small tolerance to avoid degenerate boxes 
     real64 d = polytop[2*k+1] - polytop[2*k] + 1e-3;
-    // expand the polytop
+
+    // expand the polytop for safety
     polytop[2*k] -= BOUNDING_BOX_EXPANSION*d; 
     polytop[2*k+1] += BOUNDING_BOX_EXPANSION*d; 
+
     if (d > diff) 
     {
       dir = k;
       diff = d;
     } 
-    std::cout << this->polytop[2*k] << " " << this->polytop[2*k+1] << std::endl;
   }
 
   if (surfList.size() == 1) // leaf node
   { 
     this -> isLeaf = true;
     this -> leafId = surfList[0];
-    std::cout << "LEAF FOUND - surface: " << leafId << std::endl;
     return;
   }
-
 
   // split the surface list into left and right child
   std::vector<real64> surfacePrimitive(nSurf);
   for (localIndex i=0; i<nSurf; ++i)
   {
-     localIndex kface = elemsToFaces[surfList[i]][0];
-     surfacePrimitive[i] = surfCenter[kface][0]*pP[0][dir] + 
+    // compute the polytopal primitives of the surface centroids
+    localIndex kface = elemsToFaces[surfList[i]][0];
+    surfacePrimitive[i] = surfCenter[kface][0]*pP[0][dir] + 
                            surfCenter[kface][1]*pP[1][dir] +
                            surfCenter[kface][2]*pP[2][dir];
   }
 
-  // get median of surface centroid primitives
+  // get median m of surface centroid primitives
   std::vector<real64> surfSort = surfacePrimitive;
   std::sort(surfSort.begin(), surfSort.end());
   real64 m = (nSurf % 2 == 1) ? surfSort[nSurf / 2] :  (surfSort[nSurf / 2 - 1] + surfSort[nSurf / 2]) / 2.0;
@@ -401,6 +369,7 @@ void TreeNodeMortar::createNode(MeshLevel const & mesh,
     (surfacePrimitive[i] <= m) ? surfLeft.emplace_back(surfList[i]) : surfRight.emplace_back(surfList[i]);
   }
 
+  /*
   for (localIndex i = 0; i < surfLeft.size(); ++i)
   {
     std::cout << "Left child" << std::endl;
@@ -412,10 +381,10 @@ void TreeNodeMortar::createNode(MeshLevel const & mesh,
     std::cout << "Right child" << std::endl;
     std::cout << surfRight[i] << std::endl;
   }
-
   std::cout << "_____________________________________________" << std::endl;
+  */
 
-  //  create child recursively
+  //  create left and right child recursively
   this->left = std::make_unique<TreeNodeMortar>();
   this->left->createNode(mesh,surf,surfLeft);
   this->right = std::make_unique<TreeNodeMortar>();

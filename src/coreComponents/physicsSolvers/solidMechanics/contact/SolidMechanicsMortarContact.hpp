@@ -105,29 +105,43 @@ public:
   void updateState( DomainPartition & domain ) override final;
 
 private:
+
+  // store pointers to relevant mesh objects of master and slave side
   MeshLevel const* m_meshSlave = nullptr;
   MeshLevel const* m_meshMaster = nullptr;
   FaceElementSubRegion const* m_surfaceMaster = nullptr;     
   FaceElementSubRegion const* m_surfaceSlave = nullptr;
 
-  ArrayOfArrays< localIndex > m_connectivityMap;  // map id of slave elements to id of connected master elements
+  // map id of slave elements to id of connected master elements
+  ArrayOfArrays< localIndex > m_connectivityMap;  
   
+  // tandem traversal contact search 
   void contactSearch(std::unique_ptr<TreeNodeMortar> const & nodeMaster,
                      std::unique_ptr<TreeNodeMortar> const & nodeSlave);
 
+  // check intersection between two bounding boxes using polytops primitives                   
   bool checkIntersection(std::unique_ptr<TreeNodeMortar> const & nodeMaster,
                          std::unique_ptr<TreeNodeMortar> const & nodeSlave);
 
+  void getConnectivityMap();
+
 };
 
+// binary tree for efficient contact search
 class TreeNodeMortar
   {
   public:
     std::unique_ptr<TreeNodeMortar> left = nullptr;
     std::unique_ptr<TreeNodeMortar> right = nullptr;
     bool isLeaf = false;
-    double polytop[18] = POLYTOP;    // array with primitives of polytopal bounding box
-    localIndex leafId;               // id of face corresponding to leaf nodes
+
+     // primitives of polytopal bounding box 
+    double polytop[18] = POLYTOP; 
+
+     // id of face corresponding to leaf nodes  
+    localIndex leafId;  
+    
+    // populate a tree node (use recursion)
     void createNode(MeshLevel const & mesh, 
                     FaceElementSubRegion const & surf, 
                     array1d<localIndex> & surfList);
