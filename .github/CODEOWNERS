@@ -15,8 +15,8 @@
 /inputFiles/compositionalMultiphaseFlow               @paveltomin @dkachuma @tjb-ltk @rasimHZ
 /inputFiles/compositionalMultiphaseWell               @CusiniM @paveltomin @tjb-ltk @dkachuma @rasimHZ
 /inputFiles/efemFractureMechanics                     @CusiniM @matteofrigo5 @Guotong-Ren
-/inputFiles/hydraulicFracturing                       @CusiniM @rrsettgast @frankfeifan @Guotong-Ren @cssherman @jhuang2601
-/inputFiles/inducedSeismicity                         @CusiniM @matteofrigo5 @castelletto1 
+/inputFiles/hydraulicFracturing                       @CusiniM @rrsettgast @frankfeifan @Guotong-Ren @cssherman @jhuang2601 @kimtaheo07
+/inputFiles/inducedSeismicity                         @CusiniM @matteofrigo5 @castelletto1 @jhuang2601
 /inputFiles/initialization                            @rrsettgast @jhuang2601 
 /inputFiles/lagrangianContactMechanics                @CusiniM @jhuang2601 @matteofrigo5 @Guotong-Ren
 /inputFiles/materialPointMethod                       @homel1 @cmcrook5 
@@ -75,7 +75,7 @@
 /src/coreComponents/physicsSolvers                    @rrsettgast @CusiniM
 /src/coreComponents/physicsSolvers/contact            @rrsettgast @CusiniM @matteofrigo5 @Guotong-Ren
 /src/coreComponents/physicsSolvers/fluidFlow          @CusiniM @paveltomin @tjb-ltk @dkachuma @rasimHZ
-/src/coreComponents/physicsSolvers/inducedSeismicity  @rrsettgast @CusiniM @matteofrigo5 @castelletto1
+/src/coreComponents/physicsSolvers/inducedSeismicity  @rrsettgast @CusiniM @matteofrigo5 @castelletto1 @jhuang2601 @kimtaheo07 @frankfeifan
 /src/coreComponents/physicsSolvers/multiphysics       @rrsettgast @CusiniM @paveltomin @castelletto1 @frankfeifan @jhuang2601 @Guotong-Ren
 /src/coreComponents/physicsSolvers/python             @cssherman @corbett5 @alexbenedicto 
 /src/coreComponents/physicsSolvers/simplePDE          @CusiniM @castelletto1 @rrsettgast  @frankfeifan
