@@ -35,7 +35,7 @@ public:
   class KernelWrapper final : public MultiFluidBase::KernelWrapper
   {
 public:
-    GEOS_HOST_DEVICE
+
     /**
      * @brief Compute fluid properties for an invariant immiscible fluid model
      *

@@ -40,18 +40,80 @@ namespace geos
 namespace testing
 {
 
-// Test helper class to access protected members of InvariantImmiscibleFluid
-class TestableInvariantImmiscibleFluid : public InvariantImmiscibleFluid
+// Base test fixture template for validation tests with configurable component/phase counts
+template< int NUM_COMPONENTS, int NUM_PHASES >
+class InvariantImmiscibleFluidValidationTestFixture : public FluidModelTest< InvariantImmiscibleFluid, NUM_COMPONENTS, NUM_PHASES >
 {
 public:
-  TestableInvariantImmiscibleFluid( string const & name, Group * parent )
-    : InvariantImmiscibleFluid( name, parent ) {}
+  using Base = FluidModelTest< InvariantImmiscibleFluid, NUM_COMPONENTS, NUM_PHASES >;
+  static constexpr real64 relTol = 1.0e-10;
+  static constexpr real64 absTol = 1.0e-10;
 
-  // Expose the protected method for testing
-  void testPostInputInitialization()
+  InvariantImmiscibleFluidValidationTestFixture()
   {
-    postInputInitialization();
+    Base::createFluid( "InvariantImmiscibleFluid", [this]( InvariantImmiscibleFluid & fluid ){
+      setupFluidConfiguration( fluid );
+
+      // Use proper public initialization instead of protected postInputInitialization
+      fluid.initialize( 1, 1 );
+      fluid.initializeState();
+    } );
   }
+
+private:
+  void setupFluidConfiguration( InvariantImmiscibleFluid & fluid )
+  {
+    // Set up component names
+    string_array & componentNames = fluid.getReference< string_array >( MultiFluidBase::viewKeyStruct::componentNamesString() );
+    componentNames.resize( NUM_COMPONENTS );
+    for( int i = 0; i < NUM_COMPONENTS; ++i )
+    {
+      componentNames[i] = "Component" + std::to_string( i );
+    }
+
+    // Set up phase names
+    string_array & phaseNames = fluid.getReference< string_array >( MultiFluidBase::viewKeyStruct::phaseNamesString() );
+    phaseNames.resize( NUM_PHASES );
+    for( int i = 0; i < NUM_PHASES; ++i )
+    {
+      phaseNames[i] = "Phase" + std::to_string( i );
+    }
+
+    // Set up component molar weights
+    array1d< real64 > & componentMolarWeight = fluid.getReference< array1d< real64 > >( MultiFluidBase::viewKeyStruct::componentMolarWeightString() );
+    componentMolarWeight.resize( NUM_COMPONENTS );
+    for( int i = 0; i < NUM_COMPONENTS; ++i )
+    {
+      componentMolarWeight[i] = 0.018 + i * 0.01; // Varying weights
+    }
+
+    // Set up constant densities (size must match numPhases)
+    array1d< real64 > & densities = fluid.getReference< array1d< real64 > >( "densities" );
+    densities.resize( NUM_PHASES );
+    for( int i = 0; i < NUM_PHASES; ++i )
+    {
+      densities[i] = 1000.0 - i * 100.0; // Decreasing densities
+    }
+
+    // Set up constant viscosities (size must match numPhases)
+    array1d< real64 > & viscosities = fluid.getReference< array1d< real64 > >( "viscosities" );
+    viscosities.resize( NUM_PHASES );
+    for( int i = 0; i < NUM_PHASES; ++i )
+    {
+      viscosities[i] = 0.001 + i * 0.001; // Increasing viscosities
+    }
+
+    fluid.setMassFlag( true ); // Use mass basis for simplicity
+  }
+
+public:
+
+  // Helper method to get the fluid
+  InvariantImmiscibleFluid & getFluid()
+  {
+    return static_cast< InvariantImmiscibleFluid & >( *Base::getFluid( InvariantImmiscibleFluid::catalogName() ) );
+  }
+
 };
 
 template< typename MODEL_TYPE >
@@ -123,8 +185,9 @@ public:
       real64 pressure = 1.0e5;    // Example pressure (Pa)
       real64 temperature = 300.0; // Example temperature (K)
 
-      // Update the fluid properties at this point
-      this->getFluid().createKernelWrapper().update( k, q, pressure, temperature, composition );
+      // Update the fluid properties at this point - explicitly convert array1d to arraySlice1d for GPU compatibility
+      arraySlice1d< real64 const > compositionSlice = composition.toSliceConst();
+      this->getFluid().createKernelWrapper().update( k, q, pressure, temperature, compositionSlice );
     } );
   }
 
@@ -217,17 +280,67 @@ TYPED_TEST_SUITE( InvariantImmiscibleFluidTestFixture, TestTypes, );
 
 TYPED_TEST( InvariantImmiscibleFluidTestFixture, PhaseProperties )
 {
-  auto & fluid = this->getFluid();
+  auto kernelWrapper = this->getKernelWrapper();
 
   bool useMassQ = this->USE_MASS;
 
-  // Test phase densities - expectations depend on mass vs molar basis
+  // Setup test composition and compute properties
+  array1d< real64 > composition( 3 );
+  composition[0] = 0.4;
+  composition[1] = 0.3;
+  composition[2] = 0.3;
+
+  // Prepare arrays for computed results
+  integer numPhases = 3;
+  integer numComponents = 3;
+  integer numDerivs = numComponents + 2; // P, T, and compositions
+
+  array1d< real64 > phaseFractionValues( numPhases );
+  array2d< real64 > phaseFractionDerivs( numPhases, numDerivs );
+  array1d< real64 > phaseDensityValues( numPhases );
+  array2d< real64 > phaseDensityDerivs( numPhases, numDerivs );
+  array1d< real64 > phaseMassDensityValues( numPhases );
+  array2d< real64 > phaseMassDensityDerivs( numPhases, numDerivs );
+  array1d< real64 > phaseViscosityValues( numPhases );
+  array2d< real64 > phaseViscosityDerivs( numPhases, numDerivs );
+  array1d< real64 > phaseEnthalpyValues( numPhases );
+  array2d< real64 > phaseEnthalpyDerivs( numPhases, numDerivs );
+  array1d< real64 > phaseInternalEnergyValues( numPhases );
+  array2d< real64 > phaseInternalEnergyDerivs( numPhases, numDerivs );
+  array2d< real64 > phaseCompFractionValues( numPhases, numComponents );
+  array3d< real64 > phaseCompFractionDerivs( numPhases, numComponents, numDerivs );
+  real64 totalDensityValue;
+  array1d< real64 > totalDensityDerivs( numDerivs );
+
+  // Create slices
+  MultiFluidBase::PhaseProp::SliceType phaseFractionSlice{phaseFractionValues, phaseFractionDerivs};
+  MultiFluidBase::PhaseProp::SliceType phaseDensitySlice{phaseDensityValues, phaseDensityDerivs};
+  MultiFluidBase::PhaseProp::SliceType phaseMassDensitySlice{phaseMassDensityValues, phaseMassDensityDerivs};
+  MultiFluidBase::PhaseProp::SliceType phaseViscositySlice{phaseViscosityValues, phaseViscosityDerivs};
+  MultiFluidBase::PhaseProp::SliceType phaseEnthalpySlice{phaseEnthalpyValues, phaseEnthalpyDerivs};
+  MultiFluidBase::PhaseProp::SliceType phaseInternalEnergySlice{phaseInternalEnergyValues, phaseInternalEnergyDerivs};
+  MultiFluidBase::PhaseComp::SliceType phaseCompFractionSlice{phaseCompFractionValues, phaseCompFractionDerivs};
+  MultiFluidBase::FluidProp::SliceType totalDensitySlice{totalDensityValue, totalDensityDerivs};
+
+  // Compute fluid properties
+  kernelWrapper.compute( 1.0e5, 300.0, composition,
+                         phaseFractionSlice,
+                         phaseDensitySlice,
+                         phaseMassDensitySlice,
+                         phaseViscositySlice,
+                         phaseEnthalpySlice,
+                         phaseInternalEnergySlice,
+                         phaseCompFractionSlice,
+                         totalDensitySlice );
+
+  // Test phase densities using computed values
   for( integer ip = 0; ip < 3; ip++ )
   {
     real64 expectedMassDensity = (ip == 0) ? 1000.0 : (ip == 1) ? 800.0 : 100.0;
-    real64 computedMassDensity = fluid.phaseMassDensity().operator()( 0, 0, ip );
+    real64 computedMassDensity = phaseMassDensityValues[ip];
     EXPECT_NEAR( computedMassDensity, expectedMassDensity, this->absTol );
-    real64 computedDensity = fluid.phaseDensity().operator()( 0, 0, ip );
+
+    real64 computedDensity = phaseDensityValues[ip];
     if( useMassQ )
     {
       EXPECT_NEAR( computedDensity, expectedMassDensity, this->absTol );
@@ -239,11 +352,11 @@ TYPED_TEST( InvariantImmiscibleFluidTestFixture, PhaseProperties )
     }
   }
 
-  // Test phase viscosities - same regardless of mass/molar basis
+  // Test phase viscosities using computed values
   for( integer ip = 0; ip < 3; ip++ )
   {
     real64 expectedViscosity = (ip == 0) ? 0.001 : (ip == 1) ? 0.005 : 0.00002;
-    EXPECT_NEAR( fluid.phaseViscosity().operator()( 0, 0, ip ), expectedViscosity, this->absTol );
+    EXPECT_NEAR( phaseViscosityValues[ip], expectedViscosity, this->absTol );
   }
 
   // Test KernelWrapper compute functionality
@@ -261,134 +374,15 @@ TYPED_TEST( InvariantImmiscibleFluidTestFixture, WaterPhaseIndex )
   EXPECT_EQ( fluid.getWaterPhaseIndex(), 0 );
 }
 
-//TYPED_TEST( InvariantImmiscibleFluidTestFixture, ComponentPhaseCountValidation )
-//{
-//  // Test that the fluid correctly validates that number of components equals number of phases
-//  
-//  // This should work fine - our fixture sets up 3 components and 3 phases
-//  auto & fluid = this->getFluid();
-//  EXPECT_EQ( fluid.numFluidComponents(), 3 );
-//  EXPECT_EQ( fluid.numFluidPhases(), 3 );
-//  
-//  // Test the basic assumption that components = phases for this model
-//  EXPECT_EQ( fluid.numFluidComponents(), fluid.numFluidPhases() );
-//  
-//  // Test case 1: More components than phases (2 components, 1 phase)
-//  {
-//    TestableInvariantImmiscibleFluid testFluid1( "testFluid1", nullptr );
-//    
-//    // Set up components
-//    string_array & componentNames = testFluid1.getReference< string_array >( MultiFluidBase::viewKeyStruct::componentNamesString() );
-//    componentNames.resize( 2 );
-//    componentNames[0] = "Component0";
-//    componentNames[1] = "Component1";
-//    
-//    // Set up phases
-//    string_array & phaseNames = testFluid1.getReference< string_array >( MultiFluidBase::viewKeyStruct::phaseNamesString() );
-//    phaseNames.resize( 1 );
-//    phaseNames[0] = "Phase0";
-//    
-//    // Set up component molar weights
-//    array1d< real64 > & componentMolarWeight = testFluid1.getReference< array1d< real64 > >( MultiFluidBase::viewKeyStruct::componentMolarWeightString() );
-//    componentMolarWeight.resize( 2 );
-//    componentMolarWeight[0] = 0.018;
-//    componentMolarWeight[1] = 0.028;
-//    
-//    // Set up densities (size must match numPhases)
-//    array1d< real64 > & densities = testFluid1.getReference< array1d< real64 > >( "densities" );
-//    densities.resize( 1 );
-//    densities[0] = 1000.0;
-//    
-//    // Set up viscosities (size must match numPhases)
-//    array1d< real64 > & viscosities = testFluid1.getReference< array1d< real64 > >( "viscosities" );
-//    viscosities.resize( 1 );
-//    viscosities[0] = 0.001;
-//    
-//    EXPECT_THROW( testFluid1.testPostInputInitialization(), InputError );
-//  }
-//  
-//  // Test case 2: More phases than components (2 components, 3 phases)
-//  {
-//    TestableInvariantImmiscibleFluid testFluid2( "testFluid2", nullptr );
-//    
-//    // Set up components
-//    string_array & componentNames = testFluid2.getReference< string_array >( MultiFluidBase::viewKeyStruct::componentNamesString() );
-//    componentNames.resize( 2 );
-//    componentNames[0] = "Component0";
-//    componentNames[1] = "Component1";
-//    
-//    // Set up phases
-//    string_array & phaseNames = testFluid2.getReference< string_array >( MultiFluidBase::viewKeyStruct::phaseNamesString() );
-//    phaseNames.resize( 3 );
-//    phaseNames[0] = "Phase0";
-//    phaseNames[1] = "Phase1";
-//    phaseNames[2] = "Phase2";
-//    
-//    // Set up component molar weights
-//    array1d< real64 > & componentMolarWeight = testFluid2.getReference< array1d< real64 > >( MultiFluidBase::viewKeyStruct::componentMolarWeightString() );
-//    componentMolarWeight.resize( 2 );
-//    componentMolarWeight[0] = 0.018;
-//    componentMolarWeight[1] = 0.028;
-//    
-//    // Set up densities (size must match numPhases)
-//    array1d< real64 > & densities = testFluid2.getReference< array1d< real64 > >( "densities" );
-//    densities.resize( 3 );
-//    densities[0] = 1000.0;
-//    densities[1] = 900.0;
-//    densities[2] = 800.0;
-//    
-//    // Set up viscosities (size must match numPhases)
-//    array1d< real64 > & viscosities = testFluid2.getReference< array1d< real64 > >( "viscosities" );
-//    viscosities.resize( 3 );
-//    viscosities[0] = 0.001;
-//    viscosities[1] = 0.002;
-//    viscosities[2] = 0.003;
-//    
-//    EXPECT_THROW( testFluid2.testPostInputInitialization(), InputError );
-//  }
-//  
-//  // Test case 3: Matching counts should not throw (3 components, 3 phases)
-//  {
-//    TestableInvariantImmiscibleFluid testFluid3( "testFluid3", nullptr );
-//    
-//    // Set up components
-//    string_array & componentNames = testFluid3.getReference< string_array >( MultiFluidBase::viewKeyStruct::componentNamesString() );
-//    componentNames.resize( 3 );
-//    componentNames[0] = "Component0";
-//    componentNames[1] = "Component1";
-//    componentNames[2] = "Component2";
-//    
-//    // Set up phases
-//    string_array & phaseNames = testFluid3.getReference< string_array >( MultiFluidBase::viewKeyStruct::phaseNamesString() );
-//    phaseNames.resize( 3 );
-//    phaseNames[0] = "Phase0";
-//    phaseNames[1] = "Phase1";
-//    phaseNames[2] = "Phase2";
-//    
-//    // Set up component molar weights
-//    array1d< real64 > & componentMolarWeight = testFluid3.getReference< array1d< real64 > >( MultiFluidBase::viewKeyStruct::componentMolarWeightString() );
-//    componentMolarWeight.resize( 3 );
-//    componentMolarWeight[0] = 0.018;
-//    componentMolarWeight[1] = 0.028;
-//    componentMolarWeight[2] = 0.016;
-//    
-//    // Set up densities (size must match numPhases)
-//    array1d< real64 > & densities = testFluid3.getReference< array1d< real64 > >( "densities" );
-//    densities.resize( 3 );
-//    densities[0] = 1000.0;
-//    densities[1] = 900.0;
-//    densities[2] = 800.0;
-//    
-//    // Set up viscosities (size must match numPhases)
-//    array1d< real64 > & viscosities = testFluid3.getReference< array1d< real64 > >( "viscosities" );
-//    viscosities.resize( 3 );
-//    viscosities[0] = 0.001;
-//    viscosities[1] = 0.002;
-//    viscosities[2] = 0.003;
-//    
-//    EXPECT_NO_THROW( testFluid3.testPostInputInitialization() );
-//  }
-//}
+TYPED_TEST( InvariantImmiscibleFluidTestFixture, ComponentPhaseCountValidation )
+{
+  auto & fluid = this->getFluid();
+  EXPECT_EQ( fluid.numFluidComponents(), 3 );
+  EXPECT_EQ( fluid.numFluidPhases(), 3 );
+
+  // Test the basic assumption that components = phases for this model
+  EXPECT_EQ( fluid.numFluidComponents(), fluid.numFluidPhases() );
+}
 
 TYPED_TEST( InvariantImmiscibleFluidTestFixture, TotalDensityDerivative )
 {
