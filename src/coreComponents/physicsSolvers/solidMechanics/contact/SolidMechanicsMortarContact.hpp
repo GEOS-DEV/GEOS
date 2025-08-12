@@ -21,10 +21,26 @@
 #ifndef GEOS_PHYSICSSOLVERS_CONTACT_SOLIDMECHANICSMORTARCONTACT_HPP_
 #define GEOS_PHYSICSSOLVERS_CONTACT_SOLIDMECHANICSMORTARCONTACT_HPP_
 
+#define POLYTOP { \
+    1e100, -1e100, 1e100, -1e100, 1e100, -1e100, 1e100, -1e100, 1e100, \
+    -1e100, 1e100, -1e100, 1e100, -1e100, 1e100, -1e100, 1e100, -1e100  \
+}
+
+#define POLYTOP_PRIMITIVES { \
+    {1, 0, 0, 1, 1, 0, 1, 1, 0}, \
+    {0, 1, 0, 1, 0, 1, -1, 0, 1}, \
+    {0, 0, 1, 0, 1, 1, 0, -1, -1} \
+}
+
+#define BOUNDING_BOX_EXPANSION 0.025
+
+
 #include "physicsSolvers/solidMechanics/contact/ContactSolverBase.hpp"
 
 namespace geos
 {
+
+class TreeNodeMortar;
 
 class SolidMechanicsMortarContact : public ContactSolverBase
 {
@@ -45,7 +61,7 @@ public:
   /**
    * @copydoc PhysicsSolverBase::getCatalogName()
    */
-  string getCatalogName() const override { return catalogName(); }
+  string getCatalogName() const override {return catalogName(); }
 
   virtual void registerDataOnMesh( dataRepository::Group & meshBodies ) override final;
 
@@ -89,9 +105,39 @@ public:
   void updateState( DomainPartition & domain ) override final;
 
 private:
+  MeshLevel const* m_meshSlave = nullptr;
+  MeshLevel const* m_meshMaster = nullptr;
+  FaceElementSubRegion const* m_surfaceMaster = nullptr;     
+  FaceElementSubRegion const* m_surfaceSlave = nullptr;
+
+  ArrayOfArrays< localIndex > m_connectivityMap;  // map id of slave elements to id of connected master elements
+  
+  void contactSearch(std::unique_ptr<TreeNodeMortar> const & nodeMaster,
+                     std::unique_ptr<TreeNodeMortar> const & nodeSlave);
+
+  bool checkIntersection(std::unique_ptr<TreeNodeMortar> const & nodeMaster,
+                         std::unique_ptr<TreeNodeMortar> const & nodeSlave);
 
 };
 
-} /* namespace geos */
+class TreeNodeMortar
+  {
+  public:
+    std::unique_ptr<TreeNodeMortar> left = nullptr;
+    std::unique_ptr<TreeNodeMortar> right = nullptr;
+    bool isLeaf = false;
+    double polytop[18] = POLYTOP;    // array with primitives of polytopal bounding box
+    localIndex leafId;               // id of face corresponding to leaf nodes
+    void createNode(MeshLevel const & mesh, 
+                    FaceElementSubRegion const & surf, 
+                    array1d<localIndex> & surfList);
+
+
+    
+  };
+
+}; /* namespace geos */
+
+
 
 #endif /* GEOS_PHYSICSSOLVERS_CONTACT_SOLIDMECHANICSMORTARCONTACT_HPP_ */

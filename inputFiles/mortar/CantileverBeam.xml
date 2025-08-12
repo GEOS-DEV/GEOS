@@ -183,7 +183,7 @@
         lineSearchMaxCuts="4"/>
       <LinearSolverParameters
         solverType="direct"
-        logLevel="1"/> 
+       logLevel="1"/> 
     </SolidMechanicsMortarContact>
 
   </Solvers>
