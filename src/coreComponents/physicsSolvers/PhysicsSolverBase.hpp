@@ -310,6 +310,7 @@ public:
    * @param time_n time at the beginning of the step
    * @param dt the prescribed timestep
    * @param cycleNumber the current cycle number
+   * @param newtonIter the current newton iteration
    * @param domain the domain object
    * @param dofManager degree-of-freedom manager associated with the linear system
    * @param localMatrix the system matrix
@@ -358,7 +359,6 @@ public:
    * @brief function to perform setup for implicit timestep
    * @param time_n the time at the beginning of the step
    * @param dt the desired timestep
-   * @param cycleNumber The current cycle
    * @param domain the domain partition
    *
    * This function should contain any step level initialization required to perform an implicit
@@ -479,16 +479,16 @@ public:
 
   /**
    * @brief Update the convergence information and write then into a CSV file
-   * @param time the time at the beginning of the step
+   * @param time_n the time at the beginning of the step
    * @param dt the desired timestep
    * @param cycleNumber event cycle number
    * @param iteration current iteration
    */
   virtual void
-  updateAndWriteConvergenceStep( real64 const & time_n,
-                                 real64 const & dt,
-                                 integer const cycleNumber,
-                                 integer const iteration ){}
+  updateAndWriteConvergenceStep( real64 const & GEOS_UNUSED_PARAM( time_n ),
+                                 real64 const & GEOS_UNUSED_PARAM( dt ),
+                                 integer const GEOS_UNUSED_PARAM( cycleNumber ),
+                                 integer const GEOS_UNUSED_PARAM( iteration ) ){}
 
   /**
    * @brief calculate the norm of the global system residual
