@@ -218,9 +218,12 @@ TYPED_TEST( InvariantImmiscibleFluidTestFixture, PhaseProperties )
     real64 computedMassDensity = fluid.phaseMassDensity().operator()( 0, 0, ip );
     EXPECT_NEAR( computedMassDensity, expectedMassDensity, this->absTol );
     real64 computedDensity = fluid.phaseDensity().operator()( 0, 0, ip );
-    if (useMassQ){
+    if( useMassQ )
+    {
       EXPECT_NEAR( computedDensity, expectedMassDensity, this->absTol );
-    }else{
+    }
+    else
+    {
       real64 expectedDensity = (ip == 0) ? 1000.0/0.018 : (ip == 1) ? 800.0/0.2 : 100.0/0.016;
       EXPECT_NEAR( computedDensity, expectedDensity, this->absTol );
     }
