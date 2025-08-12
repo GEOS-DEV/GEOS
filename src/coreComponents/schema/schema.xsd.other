@@ -492,6 +492,7 @@
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="Blueprint" type="BlueprintType" />
 			<xsd:element name="ChomboIO" type="ChomboIOType" />
+			<xsd:element name="MemoryStats" type="MemoryStatsType" />
 			<xsd:element name="Python" type="PythonType" />
 			<xsd:element name="Restart" type="RestartType" />
 			<xsd:element name="Silo" type="SiloType" />
@@ -501,6 +502,7 @@
 	</xsd:complexType>
 	<xsd:complexType name="BlueprintType" />
 	<xsd:complexType name="ChomboIOType" />
+	<xsd:complexType name="MemoryStatsType" />
 	<xsd:complexType name="PythonType" />
 	<xsd:complexType name="RestartType" />
 	<xsd:complexType name="SiloType" />

@@ -230,6 +230,7 @@ public:
               DomainPartition & domain ) override final
   {
     GEOS_MARK_FUNCTION;
+
     if( getNonlinearSolverParameters().couplingType() == NonlinearSolverParameters::CouplingType::FullyImplicit )
     {
       return fullyCoupledSolverStep( time_n, dt, cycleNumber, domain );
@@ -248,16 +249,16 @@ public:
 
 
   virtual void
-  updateConvergenceStep( real64 const & time_n, real64 const & dt,
-                         integer const cycleNumber, integer const iteration ) override
+  updateAndWriteConvergenceStep( real64 const & time_n, real64 const & dt,
+                                 integer const cycleNumber, integer const iteration ) override
   {
     forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
     {
-      solver->updateConvergenceStep( time_n, dt, cycleNumber, iteration );
-
       if( m_writeStatistics >= 2 )
       {
+        solver->updateAndWriteConvergenceStep( time_n, dt, cycleNumber, iteration );
         solver->getConvergenceStats().updateSolverStep( time_n, dt, cycleNumber, iteration );
+        solver->getConvergenceStats().writeConvergenceStatsToTable();
       }
     } );
   }
@@ -274,11 +275,6 @@ public:
     {
       real64 const singlePhysicsNorm = solver->calculateResidualNorm( time_n, dt, domain, dofManager, localRhs );
       norm += singlePhysicsNorm * singlePhysicsNorm;
-
-      if( m_writeStatistics >= 2 )
-      {
-        solver->getConvergenceStats().writeConvergenceStatsToTable();
-      }
     } );
 
     return sqrt( norm );
@@ -526,14 +522,6 @@ protected:
                                                   stepDt,
                                                   domain );
 
-        forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
-        {
-
-          solver->getConvergenceStats().updateSolverStep( time_n, dt, cycleNumber, iter );
-          solver->getConvergenceStats().writeConvergenceStatsToTable();
-
-        } );
-
         if( isConverged )
         {
           // we still want to count current iteration
@@ -663,12 +651,7 @@ protected:
         GEOS_LOG_LEVEL_RANK_0( logInfo::ResidualNorm,
                                GEOS_FMT( "        ( R ) = ( {:4.2e} )", residualNorm ) );
         getConvergenceStats().m_residuals["R"] = residualNorm;
-
-        if( m_writeStatistics >= 2 )
-        {
-          getConvergenceStats().updateSolverStep( time_n, dt, cycleNumber, iter + 1 );
-          getConvergenceStats().writeConvergenceStatsToTable();
-        }
+        updateAndWriteConvergenceStep( time_n, dt, cycleNumber, iter );
 
         isConverged = ( residualNorm < params.m_newtonTol );
 

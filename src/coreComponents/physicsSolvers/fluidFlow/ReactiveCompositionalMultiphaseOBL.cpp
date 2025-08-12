@@ -352,8 +352,6 @@ real64 ReactiveCompositionalMultiphaseOBL::calculateResidualNorm( real64 const &
 
   getConvergenceStats().m_residuals["Rflow"] = residual;
 
-
-
   return residual;
 }
 

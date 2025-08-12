@@ -184,6 +184,13 @@ public:
   { m_iterationsFilename = filename; }
 
   /**
+   * @brief Set the filename output file.
+   * @param name The filename as a string_view.
+   */
+  void setTableName( string_view name )
+  { m_tableIterationName = name; }
+
+  /**
    * @brief Output the statistics to the console in table format
    */
   void outputStatistics();
@@ -197,6 +204,8 @@ private:
   TableData m_iterationData;
   /// Format the iteration statistics for the CSV file
   std::unique_ptr< TableCSVFormatter > m_iterationCSVFormatter;
+  /// String name for the log table interation
+  string m_tableIterationName;
   /// Filename for the iteration CSV file.
   string m_iterationsFilename;
 };
@@ -268,6 +277,13 @@ public:
   void setFilename( string_view filename )
   { m_convergenceFilename = filename; }
 
+  /**
+   * @brief Set the filename output file.
+   * @param filename The filename as a string_view.
+   */
+  void setTableName( string_view name )
+  { m_tableConvergenceName = name; }
+
 private:
   /// Stream output for the convergence statistics
   std::ofstream m_logStream;
@@ -278,6 +294,8 @@ private:
   TableData m_convergenceData;
   /// Format the convergence statistics for the CSV file
   std::unique_ptr< TableCSVFormatter > m_convergenceFormatter;
+  /// String name for the log table convergence
+  string m_tableConvergenceName;
   /// Filename for the solver CSV convergence file.
   string m_convergenceFilename;
 };

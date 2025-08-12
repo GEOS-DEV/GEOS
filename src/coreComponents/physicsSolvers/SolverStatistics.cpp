@@ -182,7 +182,7 @@ void IterationsStatistics::outputStatistics()
     return;
 
   {
-    TableLayout iterationLogLayout ( GEOS_FMT( "{} iterations", getParent().getName()), {"", "Value"} );
+    TableLayout iterationLogLayout ( GEOS_FMT( "{}", m_tableIterationName ), {"Statistics", "Value"} );
 
     TableTextFormatter const statsFormatter( iterationLogLayout );
 

@@ -42,11 +42,19 @@ PhysicsSolverBase::PhysicsSolverBase( string const & name,
   m_cflFactor(),
   m_nextDt( 1e99 ),
   m_dofManager( name ),
+  m_usePhysicsScaling(),
   m_linearSolverParameters( groupKeyStruct::linearSolverParametersString(), this ),
   m_nonlinearSolverParameters( groupKeyStruct::nonlinearSolverParametersString(), this ),
   m_solverStatistics( groupKeyStruct::solverStatisticsString(), this ),
   m_systemSetupTimestamp( 0 )
 {
+  // Physics-scaling is enabled by default only with hypre builds
+#ifdef GEOS_USE_HYPRE
+  integer usePhysicsScaling = 1;
+#else
+  integer usePhysicsScaling = 0;
+#endif
+
   setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
 
   // This sets a flag to indicate that this object is going to select the time step size
@@ -92,6 +100,11 @@ PhysicsSolverBase::PhysicsSolverBase( string const & name,
     setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "Cut time step if linear solution fail without going until max nonlinear iterations." );
 
+  registerWrapper( viewKeyStruct::usePhysicsScalingString(), &m_usePhysicsScaling ).
+    setApplyDefaultValue( usePhysicsScaling ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Enable physics-based scaling of the linear system. Default: true." );
+
   registerWrapper( viewKeyStruct::numTimestepsSinceLastDtCutString(), &m_numTimestepsSinceLastDtCut ).
     setApplyDefaultValue( -1 ).
     setInputFlag( InputFlags::FALSE ).
@@ -114,16 +127,17 @@ PhysicsSolverBase::PhysicsSolverBase( string const & name,
   registerGroup( groupKeyStruct::nonlinearSolverParametersString(), &m_nonlinearSolverParameters );
   registerGroup( groupKeyStruct::solverStatisticsString(), &m_solverStatistics );
 
-  m_solverStatistics.setOutputFilesName( getName() );
-
   m_localMatrix.setName( this->getName() + "/localMatrix" );
   m_matrix.setDofManager( &m_dofManager );
 }
 
 void PhysicsSolverBase::postInputInitialization()
 {
+
+  m_solverStatistics.setOutputFilesName( getName() );
   m_solverStatistics.makeDir( m_writeStatistics >= 2 );
 
+  getIterationStats().setTableName( getName() );
   getIterationStats().setLogOutput( m_writeStatistics >= 1 );
   getIterationStats().setCSVOutput( m_writeStatistics >= 2 );
   getConvergenceStats().setCSVOutput( m_writeStatistics >= 2 );
@@ -509,7 +523,7 @@ real64 PhysicsSolverBase::setNextDtBasedOnIterNumber( real64 const & currentDt )
 
 real64 PhysicsSolverBase::linearImplicitStep( real64 const & time_n,
                                               real64 const & dt,
-                                              integer const cycleNumber,
+                                              integer const GEOS_UNUSED_PARAM( cycleNumber ),
                                               DomainPartition & domain )
 {
   // call setup for physics solver. Pre step allocations etc.
@@ -665,7 +679,7 @@ bool PhysicsSolverBase::lineSearch( real64 const & time_n,
 
     // get residual norm
     residualNorm = calculateResidualNorm( time_n, dt, domain, dofManager, rhs.values() );
-    updateConvergenceStep( time_n, dt, cycleNumber, newtonIter );
+    updateAndWriteConvergenceStep( time_n, dt, cycleNumber, newtonIter );
 
     GEOS_LOG_LEVEL_RANK_0( logInfo::LineSearch,
                            GEOS_FMT( "        ( R ) = ( {:4.2e} )", residualNorm ) );
@@ -767,8 +781,8 @@ bool PhysicsSolverBase::lineSearchWithParabolicInterpolation( real64 const & tim
     }
     // get residual norm
     residualNormT =  calculateResidualNorm( time_n, dt, domain, dofManager, rhs.values() );
-    updateConvergenceStep( time_n, dt, cycleNumber, newtonIter );
-    
+    updateAndWriteConvergenceStep( time_n, dt, cycleNumber, newtonIter );
+
     GEOS_LOG_LEVEL_RANK_0( logInfo::ResidualNorm,
                            GEOS_FMT( "        ( R ) = ( {:4.2e} )", residualNormT ) );
 
@@ -928,7 +942,6 @@ real64 PhysicsSolverBase::nonlinearImplicitStep( real64 const & time_n,
     }
     else
     {
-      cleanup( time_n, dt, 0, cycleNumber, domain );
       GEOS_ERROR( "Nonconverged solutions not allowed. Terminating..." );
     }
   }
@@ -1008,18 +1021,13 @@ bool PhysicsSolverBase::solveNonlinearSystem( real64 const & time_n,
 
       // get residual norm
       residualNorm = calculateResidualNorm( time_n, stepDt, domain, m_dofManager, m_rhs.values() );
-      updateConvergenceStep( time_n, stepDt, cycleNumber, newtonIter );
 
       GEOS_LOG_LEVEL_RANK_0( logInfo::ResidualNorm,
                              GEOS_FMT( "        ( R ) = ( {:4.2e} )", residualNorm ) );
       getConvergenceStats().m_residuals["R"] = residualNorm;
+      updateAndWriteConvergenceStep( time_n, stepDt, cycleNumber, newtonIter );
     }
 
-    if( m_writeStatistics >= 2 )
-    {
-      getConvergenceStats().updateSolverStep( time_n, stepDt, cycleNumber, newtonIter );
-      getConvergenceStats().writeConvergenceStatsToTable();
-    }
     // if the residual norm is less than the Newton tolerance we denote that we have
     // converged and break from the Newton loop immediately.
     if( residualNorm < newtonTol && newtonIter >= minNewtonIter )
@@ -1354,6 +1362,17 @@ void PhysicsSolverBase::solveLinearSystem( DofManager const & dofManager,
   LinearSolverParameters const & params = m_linearSolverParameters.get();
   matrix.setDofManager( &dofManager );
 
+  // Apply physics-based scaling to the linear system if enabled
+  if( m_usePhysicsScaling )
+  {
+    Timer timer_setup( m_timers["linear solver scaling"] );
+
+    matrix.computeScalingVector( m_scaling );
+    matrix.leftRightScale( m_scaling, m_scaling );
+    rhs.pointwiseProduct( m_scaling );
+    // Assume the solution is zeroed out, thus no need to scale it
+  }
+
   if( params.solverType == LinearSolverParameters::SolverType::direct || !m_precond )
   {
     std::unique_ptr< LinearSolverBase< LAInterface > > solver = LAInterface::createSolver( params );
@@ -1395,6 +1414,14 @@ void PhysicsSolverBase::solveLinearSystem( DofManager const & dofManager,
   else
   {
     GEOS_WARNING_IF( !m_linearSolverResult.success(), getDataContext() << ": Linear solution failed" );
+  }
+
+  // Unscale the solution vector if physics-based scaling was applied
+  if( m_usePhysicsScaling )
+  {
+    Timer timer_setup( m_timers["linear solver scaling"] );
+
+    solution.pointwiseProduct( m_scaling );
   }
 }
 
