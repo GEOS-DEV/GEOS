@@ -22,7 +22,9 @@
 
 #include "codingUtilities/traits.hpp"
 #include "common/DataTypes.hpp"
+#include "common/format/LogPart.hpp"
 #include "dataRepository/ExecutableGroup.hpp"
+#include "dataRepository/RestartFlags.hpp"
 #include "linearAlgebra/interfaces/InterfaceTypes.hpp"
 #include "linearAlgebra/utilities/LinearSolverResult.hpp"
 #include "linearAlgebra/DofManager.hpp"
@@ -682,23 +684,23 @@ public:
     /// @return string for the minDtIncreaseInterval wrapper
     static constexpr char const * minDtIncreaseIntervalString() { return "minDtIncreaseInterval"; }
 
-    /// @return string for the maxStableDt wrapper
-    static constexpr char const * maxStableDtString() { return "maxStableDt"; }
-
     /// @return string for the discretization wrapper
     static constexpr char const * discretizationString() { return "discretization"; }
 
     /// @return string for the nextDt targetRegions wrapper
     static constexpr char const * targetRegionsString() { return "targetRegions"; }
 
-    /// @return string for the meshTargets wrapper
-    static constexpr char const * meshTargetsString() { return "meshTargets"; }
-
     /// @return string for the writeLinearSystem wrapper
     static constexpr char const * writeLinearSystemString() { return "writeLinearSystem"; }
 
+    /// @return string for the usePhysicsScaling wrapper
+    static constexpr char const * usePhysicsScalingString() { return "usePhysicsScaling"; }
+
     /// @return string for the allowNonConvergedLinearSolverSolution wrapper
     static constexpr char const * allowNonConvergedLinearSolverSolutionString() { return "allowNonConvergedLinearSolverSolution"; }
+
+    /// @return string for the numTimestepsSinceLastDtCut wrapper
+    static constexpr char const * numTimestepsSinceLastDtCutString() { return "numTimestepsSinceLastDtCut"; }
   };
 
   /**
@@ -795,7 +797,7 @@ public:
   }
 
   /**
-   * @brief syncronize the nonlinear solver parameters.
+   * @brief synchronize the nonlinear solver parameters.
    */
   virtual void
   synchronizeNonlinearSolverParameters()
@@ -958,6 +960,17 @@ protected:
   static string getConstitutiveName( ParticleSubRegionBase const & subRegion ); // particle overload
 
   /**
+   * @brief Register wrapper with given name and store constitutive model name on the subregion
+   *
+   * @tparam CONSTITUTIVE the base type of the constitutive model.
+   * @param subRegion the subregion on which the constitutive model is registered.
+   * @param wrapperName the wrapper name to register.
+   * @param constitutiveType the type description of the constitutive model.
+   */
+  template< typename CONSTITUTIVE >
+  void setConstitutiveName( ElementSubRegionBase & subRegion, string const & wrapperName, string const & constitutiveType ) const;
+
+  /**
    * @brief This function sets constitutive name fields on an
    *  ElementSubRegionBase, and calls the base function it overrides.
    * @param subRegion The ElementSubRegionBase that will have constitutive
@@ -996,13 +1009,20 @@ protected:
     return constitutiveModels.getGroup< BASETYPE >( key );
   }
 
-
+  /**
+   * @brief Get the Constitutive Model object
+   * @tparam CONSTITUTIVE_TYPE the base type of the constitutive model.
+   * @param subRegion the element subregion on which the constitutive model is registered.
+   * @return the constitutive model of type @p CONSTITUTIVE_TYPE registered on the @p subRegion.
+   */
+  template< typename CONSTITUTIVE_TYPE >
+  static CONSTITUTIVE_TYPE & getConstitutiveModel( ElementSubRegionBase & subRegion )
+  {
+    return getConstitutiveModel< CONSTITUTIVE_TYPE >( subRegion, getConstitutiveName< CONSTITUTIVE_TYPE >( subRegion ) );
+  }
 
   /// Courant–Friedrichs–Lewy factor for the timestep
   real64 m_cflFactor;
-
-  /// maximum stable time step
-  real64 m_maxStableDt;
 
   /// timestep of the next cycle
   real64 m_nextDt;
@@ -1027,6 +1047,12 @@ protected:
 
   /// System solution vector
   ParallelVector m_solution;
+
+  /// Diagonal scaling vector D (Ahat = D * A * D, bhat = D * b, x = D * xhat)
+  ParallelVector m_scaling;
+
+  /// Flag to decide whether to apply physics-based scaling to the linear system
+  integer m_usePhysicsScaling;
 
   /// Local system matrix and rhs
   CRSMatrix< real64, globalIndex > m_localMatrix;
@@ -1090,13 +1116,13 @@ private:
    * @brief output information about the cycle to the log
    * @param cycleNumber the current cycle number
    * @param numOfSubSteps the number of substeps taken
-   * @param subStepDt the time step size for each substep
+   * @param subStepDts the time step size for each substep
    */
   void logEndOfCycleInformation( integer const cycleNumber,
                                  integer const numOfSubSteps,
-                                 stdVector< real64 > const & subStepDt ) const;
-
+                                 stdVector< real64 > const & subStepDts ) const;
 };
+
 
 template< typename CONSTITUTIVE_BASE_TYPE >
 string PhysicsSolverBase::getConstitutiveName( ElementSubRegionBase const & subRegion )
@@ -1109,6 +1135,7 @@ string PhysicsSolverBase::getConstitutiveName( ElementSubRegionBase const & subR
     GEOS_ERROR_IF( !validName.empty(), "A valid constitutive model was already found." );
     validName = model.getName();
   } );
+
   return validName;
 }
 
@@ -1126,6 +1153,19 @@ string PhysicsSolverBase::getConstitutiveName( ParticleSubRegionBase const & sub
   return validName;
 }
 
+template< typename CONSTITUTIVE >
+void PhysicsSolverBase::setConstitutiveName( ElementSubRegionBase & subRegion, string const & wrapperName, string const & constitutiveType ) const
+{
+  subRegion.registerWrapper< string >( wrapperName ).
+    setPlotLevel( dataRepository::PlotLevel::NOPLOT ).
+    setRestartFlags( dataRepository::RestartFlags::NO_WRITE ).
+    setSizedFromParent( 0 );
+
+  string & constitutiveName = subRegion.getReference< string >( wrapperName );
+  constitutiveName = getConstitutiveName< CONSTITUTIVE >( subRegion );
+  GEOS_ERROR_IF( constitutiveName.empty(), GEOS_FMT( "{}: {} constitutive model not found on subregion {}",
+                                                     getDataContext(), constitutiveType, subRegion.getName() ) );
+}
 
 } // namespace geos
 

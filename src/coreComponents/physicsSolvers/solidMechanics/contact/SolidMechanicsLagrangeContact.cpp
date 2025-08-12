@@ -21,21 +21,18 @@
 #include "SolidMechanicsLagrangeContact.hpp"
 
 #include "common/TimingMacros.hpp"
-#include "constitutive/ConstitutiveManager.hpp"
 #include "constitutive/contact/FrictionSelector.hpp"
 #include "constitutive/fluid/singlefluid/SingleFluidBase.hpp"
 #include "finiteVolume/FiniteVolumeManager.hpp"
 #include "finiteVolume/FluxApproximationBase.hpp"
 #include "mesh/DomainPartition.hpp"
 #include "discretizationMethods/NumericalMethodsManager.hpp"
-#include "mainInterface/ProblemManager.hpp"
 #include "mesh/SurfaceElementRegion.hpp"
 #include "mesh/mpiCommunications/NeighborCommunicator.hpp"
 #include "physicsSolvers/LogLevelsInfo.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp" // needed to register pressure(_n)
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 #include "physicsSolvers/solidMechanics/contact/ContactFields.hpp"
-#include "physicsSolvers/solidMechanics/contact/LogLevelsInfo.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
 #include "linearAlgebra/utilities/LAIHelperFunctions.hpp"
 #include "linearAlgebra/solvers/PreconditionerJacobi.hpp"
@@ -111,38 +108,38 @@ void SolidMechanicsLagrangeContact::registerDataOnMesh( Group & meshBodies )
   {
     fractureRegion.forElementSubRegions< SurfaceElementSubRegion >( [&]( SurfaceElementSubRegion & subRegion )
     {
-      subRegion.registerWrapper< array3d< real64 > >( viewKeyStruct::rotationMatrixString() ).
-        setPlotLevel( PlotLevel::NOPLOT ).
-        setRegisteringObjects( this->getName()).
-        setDescription( "An array that holds the rotation matrices on the fracture." ).
-        reference().resizeDimension< 1, 2 >( 3, 3 );
-
       subRegion.registerField< contact::deltaTraction >( getName() ).
         reference().resizeDimension< 1 >( 3 );
 
+      subRegion.registerWrapper< array3d< real64 > >( viewKeyStruct::rotationMatrixString() ).
+        setPlotLevel( PlotLevel::NOPLOT ).
+        setRegisteringObjects( getName()).
+        setDescription( "An array that holds the rotation matrices on the fracture." ).
+        reference().resizeDimension< 1, 2 >( 3, 3 );
+
       subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::normalTractionToleranceString() ).
         setPlotLevel( PlotLevel::NOPLOT ).
-        setRegisteringObjects( this->getName()).
+        setRegisteringObjects( getName()).
         setDescription( "An array that holds the normal traction tolerance." );
 
       subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::normalDisplacementToleranceString() ).
         setPlotLevel( PlotLevel::NOPLOT ).
-        setRegisteringObjects( this->getName()).
+        setRegisteringObjects( getName()).
         setDescription( "An array that holds the normal displacement tolerance." );
 
       subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::slidingToleranceString() ).
         setPlotLevel( PlotLevel::NOPLOT ).
-        setRegisteringObjects( this->getName()).
+        setRegisteringObjects( getName()).
         setDescription( "An array that holds the sliding tolerance." );
 
       // Needed just because SurfaceGenerator initialize the field "pressure" (NEEDED!!!)
       // It is used in "TwoPointFluxApproximation.cpp", called by "SurfaceGenerator.cpp"
       subRegion.registerField< flow::pressure >( getName() ).
         setPlotLevel( PlotLevel::NOPLOT ).
-        setRegisteringObjects( this->getName());
+        setRegisteringObjects( getName());
       subRegion.registerField< flow::pressure_n >( getName() ).
         setPlotLevel( PlotLevel::NOPLOT ).
-        setRegisteringObjects( this->getName());
+        setRegisteringObjects( getName());
 
       if( m_useLocalYieldAcceleration )
       {
@@ -166,7 +163,7 @@ void SolidMechanicsLagrangeContact::registerDataOnMesh( Group & meshBodies )
       faceManager.registerWrapper< array1d< real64 > >( viewKeyStruct::transMultiplierString() ).
         setApplyDefaultValue( 1.0 ).
         setPlotLevel( PlotLevel::LEVEL_0 ).
-        setRegisteringObjects( this->getName() ).
+        setRegisteringObjects( getName() ).
         setDescription( "An array that holds the permeability transmissibility multipliers" );
     } );
 
@@ -260,7 +257,7 @@ void SolidMechanicsLagrangeContact::implicitStepComplete( real64 const & time_n,
       arrayView2d< real64 > const & deltaTraction = subRegion.getField< contact::deltaTraction >();
       arrayView2d< real64 const > const & dispJump = subRegion.getField< contact::dispJump >();
       arrayView2d< real64 > const & oldDispJump = subRegion.getField< contact::oldDispJump >();
-      arrayView1d< integer const > const & fractureState = subRegion.getField< contact::fractureState >();
+      arrayView1d< integer const > const fractureState = subRegion.getField< contact::fractureState >();
       arrayView1d< integer > const & oldFractureState = subRegion.getField< contact::oldFractureState >();
 
       forAll< parallelHostPolicy >( subRegion.size(), [=] ( localIndex const kfe )
@@ -470,7 +467,7 @@ void SolidMechanicsLagrangeContact::computeTolerances( DomainPartition & domain 
 
   GEOS_LOG_LEVEL_RANK_0( logInfo::Configuration,
                          GEOS_FMT( "{}: normal displacement tolerance = [{}, {}], sliding tolerance = [{}, {}], normal traction tolerance = [{}, {}]",
-                                   this->getName(), minNormalDisplacementTolerance, maxNormalDisplacementTolerance,
+                                   getName(), minNormalDisplacementTolerance, maxNormalDisplacementTolerance,
                                    minSlidingTolerance, maxSlidingTolerance,
                                    minNormalTractionTolerance, maxNormalTractionTolerance ) );
 }
@@ -492,7 +489,7 @@ void SolidMechanicsLagrangeContact::resetStateToBeginningOfStep( DomainPartition
       arrayView2d< real64 > const & dispJump = subRegion.getField< contact::dispJump >();
       arrayView2d< real64 const > const & oldDispJump = subRegion.getField< contact::oldDispJump >();
 
-      arrayView1d< integer > const & fractureState = subRegion.getField< contact::fractureState >();
+      arrayView1d< integer > const fractureState = subRegion.getField< contact::fractureState >();
       arrayView1d< integer const > const & oldFractureState = subRegion.getField< contact::oldFractureState >();
 
       forAll< parallelHostPolicy >( subRegion.size(), [=] ( localIndex const kfe )
@@ -823,7 +820,7 @@ real64 SolidMechanicsLagrangeContact::calculateContactResidualNorm( DomainPartit
     {
       arrayView1d< globalIndex const > const & dofNumber = subRegion.getReference< array1d< globalIndex > >( dofKey );
       arrayView1d< integer const > const & ghostRank = subRegion.ghostRank();
-      arrayView1d< integer const > const & fractureState = subRegion.getField< contact::fractureState >();
+      arrayView1d< integer const > const fractureState = subRegion.getField< contact::fractureState >();
       arrayView1d< real64 const > const & area = subRegion.getElementArea();
 
       RAJA::ReduceSum< parallelHostReduce, real64 > stickSum( 0.0 );
@@ -1501,7 +1498,7 @@ void SolidMechanicsLagrangeContact::
     rotationMatrix = subRegion.getReference< array3d< real64 > >( viewKeyStruct::rotationMatrixString() );
     arrayView2d< localIndex const > const & elemsToFaces = subRegion.faceList().toViewConst();
     arrayView2d< real64 const > const & traction = subRegion.getField< contact::traction >();
-    arrayView1d< integer const > const & fractureState = subRegion.getField< contact::fractureState >();
+    arrayView1d< integer const > const fractureState = subRegion.getField< contact::fractureState >();
     arrayView2d< real64 const > const & dispJump = subRegion.getField< contact::dispJump >();
     arrayView2d< real64 const > const & previousDispJump = subRegion.getField< contact::oldDispJump >();
     arrayView1d< real64 const > const & slidingTolerance = subRegion.getReference< array1d< real64 > >( viewKeyStruct::slidingToleranceString() );
@@ -1758,8 +1755,8 @@ void SolidMechanicsLagrangeContact::assembleStabilization( MeshLevel const & mes
   arrayView2d< localIndex const > const elem2dToFaces = fractureSubRegion.faceList().toViewConst();
 
   // Get the state of fracture elements
-  arrayView1d< integer const > const & fractureState =
-    fractureSubRegion.getReference< array1d< integer > >( viewKeyStruct::fractureStateString() );
+  arrayView1d< integer const > const fractureState =
+    fractureSubRegion.getField< fields::contact::fractureState >();
 
   // Get the tractions and stabilization contribution to the local jump
   arrayView2d< real64 const > const & traction = fractureSubRegion.getField< contact::traction >();
@@ -2215,7 +2212,7 @@ bool SolidMechanicsLagrangeContact::resetConfigurationToDefault( DomainPartition
 {
   GEOS_MARK_FUNCTION;
 
-  using namespace fields::contact;
+  using namespace contact;
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
@@ -2228,7 +2225,7 @@ bool SolidMechanicsLagrangeContact::resetConfigurationToDefault( DomainPartition
     {
       if( subRegion.hasField< contact::traction >() )
       {
-        arrayView1d< integer > const & fractureState = subRegion.getField< contact::fractureState >();
+        arrayView1d< integer > const fractureState = subRegion.getField< contact::fractureState >();
         forAll< parallelHostPolicy >( subRegion.size(), [=] ( localIndex const kfe )
         {
           if( fractureState[kfe] != FractureState::Open )
@@ -2247,7 +2244,7 @@ bool SolidMechanicsLagrangeContact::updateConfiguration( DomainPartition & domai
 {
   GEOS_MARK_FUNCTION;
 
-  using namespace fields::contact;
+  using namespace contact;
 
   real64 changedArea = 0;
   real64 totalArea = 0;
@@ -2267,7 +2264,7 @@ bool SolidMechanicsLagrangeContact::updateConfiguration( DomainPartition & domai
       arrayView1d< integer const > const & ghostRank = subRegion.ghostRank();
       arrayView2d< real64 const > const & traction = subRegion.getField< contact::traction >();
       arrayView2d< real64 const > const & dispJump = subRegion.getField< contact::dispJump >();
-      arrayView1d< integer > const & fractureState = subRegion.getField< contact::fractureState >();
+      arrayView1d< integer > const & fractureState = subRegion.getField< fields::contact::fractureState >();
       arrayView1d< real64 const > const & faceArea = subRegion.getElementArea().toViewConst();
 
       arrayView1d< real64 const > const & normalTractionTolerance =

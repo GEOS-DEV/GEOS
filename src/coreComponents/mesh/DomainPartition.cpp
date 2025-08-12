@@ -377,12 +377,12 @@ void DomainPartition::outputPartitionInformation() const
                       CellType::MergeNext, CellType::MergeNext, stats[0],
                       CellType::MergeNext, CellType::MergeNext, stats[1],
                       CellType::MergeNext, CellType::MergeNext, stats[2],
-                      stats[3] );
+                      CellType::MergeNext, CellType::MergeNext, stats[3] );
   };
 
   GEOS_LOG_RANK_0( "MPI Partitioning information:" );
 
-  stdVector< TableData > partitionsData;
+  std::set< TableData > partitionsData;
   forMeshBodies( [&]( MeshBody const & meshBody )
   {
     meshBody.getMeshLevels().forSubGroupsIndex< MeshLevel >( [&]( int const level, MeshLevel const & meshLevel )
@@ -398,7 +398,6 @@ void DomainPartition::outputPartitionInformation() const
           fillStats( rankStats, RankMeshStats::Node, meshLevel.getNodeManager() );
           fillStats( rankStats, RankMeshStats::Edge, meshLevel.getEdgeManager() );
           fillStats( rankStats, RankMeshStats::Face, meshLevel.getFaceManager() );
-
           meshLevel.getElemManager().forElementSubRegions< CellElementSubRegion >(
             [&]( CellElementSubRegion const & subRegion )
           {
@@ -432,6 +431,7 @@ void DomainPartition::outputPartitionInformation() const
                                                    TableLayout::Column()
                                                      .setName( "Elems" )
                                                      .setValuesAlignment( TableLayout::Alignment::right )
+                                                     .addSubColumns( {  "Local", "Ghost", "Total" } ),
                                                   } )
                                        .setMargin( TableLayout::MarginValue::small );
           TableData tableData;
@@ -502,17 +502,10 @@ void DomainPartition::outputPartitionInformation() const
             addSummaryRow( tableData, localTotalMaxRatio, "max(local/total)" );
           }
 
-
-          partitionsData.push_back( tableData );
-          if( partitionsData.size() == 1 ||
-              !(partitionsData[0] == partitionsData.back()))
-          {
-            TableTextFormatter logPartition( layout );
-            GEOS_LOG( logPartition.toString( tableData ));
-          }
-
+          partitionsData.insert( tableData );
+          TableTextFormatter logPartition( layout );
+          GEOS_LOG( logPartition.toString( *partitionsData.rbegin() ));
         }
-
       }
     } );
   } );

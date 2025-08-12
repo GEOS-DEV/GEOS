@@ -15,9 +15,6 @@
 
 #include "ElementRegionBase.hpp"
 
-#include "common/TimingMacros.hpp"
-
-
 namespace geos
 {
 using namespace dataRepository;

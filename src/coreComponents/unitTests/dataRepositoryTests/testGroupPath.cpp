@@ -80,7 +80,7 @@ TEST( testGroupPath, testGlobalPaths )
     </Problem>
     )xml";
 
-  std::vector< string > const groupPaths{
+  stdVector< string > const groupPaths{
     "/Mesh/mesh1",
     "/domain/MeshBodies/mesh1/meshLevels/Level0/ElementRegions/elementRegionsGroup/Region2",
     "/domain/Constitutive/shale",
