@@ -42,11 +42,19 @@ PhysicsSolverBase::PhysicsSolverBase( string const & name,
   m_cflFactor(),
   m_nextDt( 1e99 ),
   m_dofManager( name ),
+  m_usePhysicsScaling(),
   m_linearSolverParameters( groupKeyStruct::linearSolverParametersString(), this ),
   m_nonlinearSolverParameters( groupKeyStruct::nonlinearSolverParametersString(), this ),
   m_solverStatistics( groupKeyStruct::solverStatisticsString(), this ),
   m_systemSetupTimestamp( 0 )
 {
+  // Physics-scaling is enabled by default only with hypre builds
+#ifdef GEOS_USE_HYPRE
+  integer usePhysicsScaling = 1;
+#else
+  integer usePhysicsScaling = 0;
+#endif
+
   setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
 
   // This sets a flag to indicate that this object is going to select the time step size
@@ -97,6 +105,11 @@ PhysicsSolverBase::PhysicsSolverBase( string const & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( 0 ).
     setDescription( "Flag indicating whether time step is chopped when update status failed" );
+
+  registerWrapper( viewKeyStruct::usePhysicsScalingString(), &m_usePhysicsScaling ).
+    setApplyDefaultValue( usePhysicsScaling ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Enable physics-based scaling of the linear system. Default: true." );
 
   registerWrapper( viewKeyStruct::numTimestepsSinceLastDtCutString(), &m_numTimestepsSinceLastDtCut ).
     setApplyDefaultValue( -1 ).
@@ -1330,6 +1343,17 @@ void PhysicsSolverBase::solveLinearSystem( DofManager const & dofManager,
   LinearSolverParameters const & params = m_linearSolverParameters.get();
   matrix.setDofManager( &dofManager );
 
+  // Apply physics-based scaling to the linear system if enabled
+  if( m_usePhysicsScaling )
+  {
+    Timer timer_setup( m_timers["linear solver scaling"] );
+
+    matrix.computeScalingVector( m_scaling );
+    matrix.leftRightScale( m_scaling, m_scaling );
+    rhs.pointwiseProduct( m_scaling );
+    // Assume the solution is zeroed out, thus no need to scale it
+  }
+
   if( params.solverType == LinearSolverParameters::SolverType::direct || !m_precond )
   {
     std::unique_ptr< LinearSolverBase< LAInterface > > solver = LAInterface::createSolver( params );
@@ -1369,6 +1393,14 @@ void PhysicsSolverBase::solveLinearSystem( DofManager const & dofManager,
   else
   {
     GEOS_WARNING_IF( !m_linearSolverResult.success(), getDataContext() << ": Linear solution failed" );
+  }
+
+  // Unscale the solution vector if physics-based scaling was applied
+  if( m_usePhysicsScaling )
+  {
+    Timer timer_setup( m_timers["linear solver scaling"] );
+
+    solution.pointwiseProduct( m_scaling );
   }
 }
 

@@ -285,6 +285,8 @@ public:
     m_performStressInitialization = performStressInitialization;
   }
 
+  TimeIntegrationOption timeIntegrationOption() const { return m_timeIntegrationOption; }
+
 protected:
   virtual void postInputInitialization() override;
 
