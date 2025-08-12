@@ -92,26 +92,24 @@ void InvariantImmiscibleFluid::update( localIndex const k,
   // Call the kernel wrapper's update method
   kernelWrapper.update( k, q, pressure, temperature, composition );
 #else
-  // For device code path, create slice views directly
-  PhaseProp::SliceType phaseFractionSlice{m_phaseFraction.value[k][q], m_phaseFraction.derivs[k][q]};
-  PhaseProp::SliceType phaseDensitySlice{m_phaseDensity.value[k][q], m_phaseDensity.derivs[k][q]};
-  PhaseProp::SliceType phaseMassDensitySlice{m_phaseMassDensity.value[k][q], m_phaseMassDensity.derivs[k][q]};
-  PhaseProp::SliceType phaseViscositySlice{m_phaseViscosity.value[k][q], m_phaseViscosity.derivs[k][q]};
-  PhaseProp::SliceType phaseEnthalpySlice{m_phaseEnthalpy.value[k][q], m_phaseEnthalpy.derivs[k][q]};
-  PhaseProp::SliceType phaseInternalEnergySlice{m_phaseInternalEnergy.value[k][q], m_phaseInternalEnergy.derivs[k][q]};
-  PhaseComp::SliceType phaseCompFractionSlice{m_phaseCompFraction.value[k][q], m_phaseCompFraction.derivs[k][q]};
-  FluidProp::SliceType totalDensitySlice{m_totalDensity.value[k][q], m_totalDensity.derivs[k][q]};
+  // For device code path, create kernel wrapper directly using member data
+  KernelWrapper kernelWrapper(
+    m_densities.toViewConst(),
+    m_viscosities.toViewConst(),
+    m_componentMolarWeight.toViewConst(),
+    m_useMass,
+    const_cast< MultiFluidBase::PhaseProp & >(m_phaseFraction).toView(),
+    const_cast< MultiFluidBase::PhaseProp & >(m_phaseDensity).toView(),
+    const_cast< MultiFluidBase::PhaseProp & >(m_phaseMassDensity).toView(),
+    const_cast< MultiFluidBase::PhaseProp & >(m_phaseViscosity).toView(),
+    const_cast< MultiFluidBase::PhaseProp & >(m_phaseEnthalpy).toView(),
+    const_cast< MultiFluidBase::PhaseProp & >(m_phaseInternalEnergy).toView(),
+    const_cast< MultiFluidBase::PhaseComp & >(m_phaseCompFraction).toView(),
+    const_cast< MultiFluidBase::FluidProp & >(m_totalDensity).toView()
+    );
 
-  // Directly call compute with slice views
-  compute( pressure, temperature, composition,
-           phaseFractionSlice,
-           phaseDensitySlice,
-           phaseMassDensitySlice,
-           phaseViscositySlice,
-           phaseEnthalpySlice,
-           phaseInternalEnergySlice,
-           phaseCompFractionSlice,
-           totalDensitySlice );
+  // Call the kernel wrapper's update method
+  kernelWrapper.update( k, q, pressure, temperature, composition );
 #endif
 }
 
