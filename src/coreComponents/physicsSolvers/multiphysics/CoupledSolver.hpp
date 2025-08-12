@@ -230,6 +230,7 @@ public:
               DomainPartition & domain ) override final
   {
     GEOS_MARK_FUNCTION;
+
     if( getNonlinearSolverParameters().couplingType() == NonlinearSolverParameters::CouplingType::FullyImplicit )
     {
       return fullyCoupledSolverStep( time_n, dt, cycleNumber, domain );
@@ -253,10 +254,9 @@ public:
   {
     forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
     {
-      solver->updateConvergenceStep( time_n, dt, cycleNumber, iteration );
-
       if( m_writeStatistics >= 2 )
       {
+        solver->updateConvergenceStep( time_n, dt, cycleNumber, iteration );
         solver->getConvergenceStats().updateSolverStep( time_n, dt, cycleNumber, iteration );
         solver->getConvergenceStats().writeConvergenceStatsToTable();
       }
@@ -522,11 +522,6 @@ protected:
                                                   stepDt,
                                                   domain );
 
-        forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
-        {
-          solver->updateConvergenceStep( time_n, dt, cycleNumber, iter );
-        } );
-
         if( isConverged )
         {
           // we still want to count current iteration
@@ -696,9 +691,7 @@ protected:
   {
     setSubSolvers();
 
-    getIterationStats().setLogOutput( m_writeStatistics >= 1 );
-    getIterationStats().setCSVOutput( m_writeStatistics >= 2 );
-    getConvergenceStats().setCSVOutput( m_writeStatistics >= 2 );
+    PhysicsSolverBase::postInputInitialization();
 
     bool const isSequential = getNonlinearSolverParameters().couplingType() == NonlinearSolverParameters::CouplingType::Sequential;
     bool const usesLineSearch = getNonlinearSolverParameters().m_lineSearchAction != NonlinearSolverParameters::LineSearchAction::None;

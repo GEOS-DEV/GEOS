@@ -209,8 +209,6 @@ public:
   postInputInitialization() override
   {
     Base::postInputInitialization();
-    Base::getIterationStats().setCSVOutput( this->m_writeStatistics >= 2 );
-    Base::getConvergenceStats().setCSVOutput( this->m_writeStatistics >= 2 );
 
     setMGRStrategy();
   }

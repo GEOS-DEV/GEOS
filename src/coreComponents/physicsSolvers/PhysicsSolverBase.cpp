@@ -114,16 +114,17 @@ PhysicsSolverBase::PhysicsSolverBase( string const & name,
   registerGroup( groupKeyStruct::nonlinearSolverParametersString(), &m_nonlinearSolverParameters );
   registerGroup( groupKeyStruct::solverStatisticsString(), &m_solverStatistics );
 
-  m_solverStatistics.setOutputFilesName( getName() );
-
   m_localMatrix.setName( this->getName() + "/localMatrix" );
   m_matrix.setDofManager( &m_dofManager );
 }
 
 void PhysicsSolverBase::postInputInitialization()
 {
+
+  m_solverStatistics.setOutputFilesName( getName() );
   m_solverStatistics.makeDir( m_writeStatistics >= 2 );
 
+  getIterationStats().setTableName( getName() );
   getIterationStats().setLogOutput( m_writeStatistics >= 1 );
   getIterationStats().setCSVOutput( m_writeStatistics >= 2 );
   getConvergenceStats().setCSVOutput( m_writeStatistics >= 2 );
@@ -928,7 +929,6 @@ real64 PhysicsSolverBase::nonlinearImplicitStep( real64 const & time_n,
     }
     else
     {
-      cleanup( time_n, dt, 0, cycleNumber, domain );
       GEOS_ERROR( "Nonconverged solutions not allowed. Terminating..." );
     }
   }
