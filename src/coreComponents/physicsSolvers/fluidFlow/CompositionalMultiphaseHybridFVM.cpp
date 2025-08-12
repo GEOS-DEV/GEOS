@@ -24,6 +24,7 @@
 #include "constitutive/fluid/multifluid/MultiFluidBase.hpp"
 #include "constitutive/relativePermeability/RelativePermeabilityBase.hpp"
 #include "fieldSpecification/AquiferBoundaryCondition.hpp"
+#include "fieldSpecification/LogLevelsInfo.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
 #include "finiteVolume/HybridMimeticDiscretization.hpp"
 #include "finiteVolume/MimeticInnerProductDispatch.hpp"
@@ -572,7 +573,104 @@ void CompositionalMultiphaseHybridFVM::applyBoundaryConditions( real64 const tim
 
   CompositionalMultiphaseBase::applyBoundaryConditions( time_n, dt, domain, dofManager, localMatrix, localRhs );
 
-  // TODO: implement face boundary conditions here
+  if( !m_keepVariablesConstantDuringInitStep )
+  {
+    applyFaceDirichletBC( time_n, dt, dofManager, domain, localMatrix, localRhs );
+  }
+}
+
+namespace
+{
+char const faceBcLogMessage[] =
+  "CompositionalMultiphaseHybridFVM {}: at time {}s, "
+  "the <{}> boundary condition '{}' is applied to the face set '{}' in '{}'. "
+  "\nThe total number of target faces (including ghost faces) is {}. "
+  "\nNote that if this number is equal to zero, the boundary condition will not be applied on this face set.";
+}
+
+void CompositionalMultiphaseHybridFVM::applyFaceDirichletBC( real64 const time_n,
+                                                             real64 const dt,
+                                                             DofManager const & dofManager,
+                                                             DomainPartition & domain,
+                                                             CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                             arrayView1d< real64 > const & localRhs )
+{
+  GEOS_MARK_FUNCTION;
+
+  FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
+
+  string const faceDofKey = dofManager.getKey( viewKeyStruct::faceDofFieldString() );
+
+  this->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                      MeshLevel & mesh,
+                                                                      string_array const & )
+  {
+    FaceManager & faceManager = mesh.getFaceManager();
+
+    arrayView1d< real64 const > const presFace =
+      faceManager.getField< flow::facePressure >();
+    arrayView1d< globalIndex const > const faceDofNumber =
+      faceManager.getReference< array1d< globalIndex > >( faceDofKey );
+    arrayView1d< integer const > const faceGhostRank = faceManager.ghostRank();
+
+    globalIndex const rankOffset = dofManager.rankOffset();
+
+    fsManager.apply< FaceManager >( time_n + dt,
+                                    mesh,
+                                    flow::pressure::key(),
+                                    [&] ( FieldSpecificationBase const & fs,
+                                          string const & setName,
+                                          SortedArrayView< localIndex const > const & targetSet,
+                                          FaceManager & targetGroup,
+                                          string const & )
+    {
+
+      // report at the first nonlinear iteration
+      if( m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
+      {
+        globalIndex const numTargetFaces = MpiWrapper::sum< globalIndex >( targetSet.size() );
+        GEOS_LOG_LEVEL_RANK_0_ON_GROUP( logInfo::FaceBoundaryCondition,
+                                        GEOS_FMT( faceBcLogMessage,
+                                                  this->getName(), time_n+dt, fs.getCatalogName(), fs.getName(),
+                                                  setName, targetGroup.getName(), numTargetFaces ),
+                                        fs );
+      }
+
+      // Using the field specification functions to apply the boundary conditions to the system
+      fs.applyFieldValue< FieldSpecificationEqual,
+                          parallelDevicePolicy<> >( targetSet,
+                                                    time_n + dt,
+                                                    targetGroup,
+                                                    flow::facePressure::key() );
+
+      forAll< parallelDevicePolicy<> >( targetSet.size(), [=] GEOS_HOST_DEVICE ( localIndex const a )
+      {
+
+        localIndex const kf = targetSet[a];
+        if( faceGhostRank[kf] >= 0 )
+        {
+          return;
+        }
+
+        // Get the dof number of this face
+        globalIndex const dofIndex = faceDofNumber[kf];
+        localIndex const localRow = dofIndex - rankOffset;
+        real64 rhsValue;
+
+        // Apply field value to the lhs and rhs
+        FieldSpecificationEqual::SpecifyFieldValue( dofIndex,
+                                                    rankOffset,
+                                                    localMatrix,
+                                                    rhsValue,
+                                                    presFace[kf],
+                                                    presFace[kf] );
+        localRhs[localRow] = rhsValue;
+      } );
+
+    } );
+
+  } );
+
 }
 
 void CompositionalMultiphaseHybridFVM::applyAquiferBC( real64 const time,
