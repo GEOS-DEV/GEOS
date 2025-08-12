@@ -25,6 +25,7 @@
 #include "constitutive/relativePermeability/RelativePermeabilityBase.hpp"
 #include "fieldSpecification/AquiferBoundaryCondition.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
+#include "fieldSpecification/LogLevelsInfo.hpp"
 #include "finiteVolume/HybridMimeticDiscretization.hpp"
 #include "finiteVolume/MimeticInnerProductDispatch.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
