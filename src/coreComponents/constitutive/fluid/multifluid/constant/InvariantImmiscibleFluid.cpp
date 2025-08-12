@@ -59,7 +59,6 @@ void InvariantImmiscibleFluid::postInputInitialization()
                         GEOS_FMT( "%s: 'Viscosities' must have %d values", getFullName(), numPhase ), InputError );
 }
 
-GEOS_HOST_DEVICE
 InvariantImmiscibleFluid::KernelWrapper InvariantImmiscibleFluid::createKernelWrapper() const
 {
   return KernelWrapper(
@@ -86,11 +85,47 @@ void InvariantImmiscibleFluid::update( localIndex const k,
                                        real64 const temperature,
                                        arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & composition ) const
 {
-  // Create a kernel wrapper for this fluid model (works on both host and device)
-  KernelWrapper kernelWrapper = createKernelWrapper();
+#ifdef GEOS_USE_DEVICE_CODE
+  // For device code, create slices directly and call compute
+  PhaseProp::SliceType phaseFractionSlice{m_phaseFraction.value[k][q], m_phaseFraction.derivs[k][q]};
+  PhaseProp::SliceType phaseDensitySlice{m_phaseDensity.value[k][q], m_phaseDensity.derivs[k][q]};
+  PhaseProp::SliceType phaseMassDensitySlice{m_phaseMassDensity.value[k][q], m_phaseMassDensity.derivs[k][q]};
+  PhaseProp::SliceType phaseViscositySlice{m_phaseViscosity.value[k][q], m_phaseViscosity.derivs[k][q]};
+  PhaseProp::SliceType phaseEnthalpySlice{m_phaseEnthalpy.value[k][q], m_phaseEnthalpy.derivs[k][q]};
+  PhaseProp::SliceType phaseInternalEnergySlice{m_phaseInternalEnergy.value[k][q], m_phaseInternalEnergy.derivs[k][q]};
+  PhaseComp::SliceType phaseCompFractionSlice{m_phaseCompFraction.value[k][q], m_phaseCompFraction.derivs[k][q]};
+  FluidProp::SliceType totalDensitySlice{m_totalDensity.value[k][q], m_totalDensity.derivs[k][q]};
 
-  // Call the kernel wrapper's update method
+  // Create a temporary kernel wrapper for device code
+  KernelWrapper kernelWrapper(
+    m_densities.toViewConst(),
+    m_viscosities.toViewConst(),
+    m_componentMolarWeight.toViewConst(),
+    m_useMass,
+    m_phaseFraction.toView(),
+    m_phaseDensity.toView(),
+    m_phaseMassDensity.toView(),
+    m_phaseViscosity.toView(),
+    m_phaseEnthalpy.toView(),
+    m_phaseInternalEnergy.toView(),
+    m_phaseCompFraction.toView(),
+    m_totalDensity.toView()
+    );
+
+  kernelWrapper.compute( pressure, temperature, composition,
+                         phaseFractionSlice,
+                         phaseDensitySlice,
+                         phaseMassDensitySlice,
+                         phaseViscositySlice,
+                         phaseEnthalpySlice,
+                         phaseInternalEnergySlice,
+                         phaseCompFractionSlice,
+                         totalDensitySlice );
+#else
+  // For host code, use the createKernelWrapper method
+  KernelWrapper kernelWrapper = createKernelWrapper();
   kernelWrapper.update( k, q, pressure, temperature, composition );
+#endif
 }
 
 void InvariantImmiscibleFluid::checkTablesParameters( real64 pressure, real64 temperature ) const
