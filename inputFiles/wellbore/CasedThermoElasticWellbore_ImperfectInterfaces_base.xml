@@ -23,7 +23,6 @@
 
     <SolidMechanicsLagrangeContact
       name="lagrangiancontact"
-      timeIntegrationOption="QuasiStatic"
       stabilizationName="contactStabilization"
       discretization="FE1"
       targetRegions="{ casing, cement, rock, Fracture }"
