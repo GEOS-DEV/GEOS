@@ -30,20 +30,21 @@ namespace testing
 {
 
 static constexpr integer numComps = 9;
+static constexpr integer targetComponent = 8;
 
-using FlashData = std::tuple<
+using StabilityData = std::tuple<
   real64 const,             // pressure
   real64 const,             // temperature
   Feed< numComps > const,   // total composition
-  real64 const              // expected tangent plane distance
+  bool const,               // expected instability status of mixture
+  real64 const              // expected mole fraction of targetComponent in incipient phase
   >;
 
 template< EquationOfStateType EOS_TYPE >
-class StabilityTestTest9CompFixture :  public ::testing::TestWithParam< FlashData >
+class StabilityTestTest9CompFixture :  public ::testing::TestWithParam< StabilityData >
 {
   static constexpr real64 relTol = 1.0e-5;
   static constexpr real64 absTol = 1.0e-7;
-  static constexpr real64 tpdTol = MultiFluidConstants::fugacityTolerance;
 public:
   StabilityTestTest9CompFixture()
     : m_fluid( createFluid() )
@@ -51,7 +52,7 @@ public:
 
   ~StabilityTestTest9CompFixture() = default;
 
-  void testStability( FlashData const & data )
+  void testStability( StabilityData const & data )
   {
     auto componentProperties = this->m_fluid->createKernelWrapper();
 
@@ -64,29 +65,49 @@ public:
     stackArray1d< real64, numComps > composition;
     TestFluid< numComps >::createArray( composition, std::get< 2 >( data ));
 
-    real64 const expectedTangentPlaneDistance = std::get< 3 >( data );
+    bool const expectedUnstableMixture = std::get< 3 >( data );
+    real64 const expectedZTarget = std::get< 4 >( data );
 
-    real64 tangentPlaneDistance = LvArray::NumericLimits< real64 >::max;
+    bool unstableMixture = false;
+    EquationOfStateType incipientEos = EOS_TYPE;
+
     stackArray1d< real64, numComps > kValues( numComps );
+    stackArray1d< real64, numComps > incipientComposition( numComps );
+
+    KValueInitialization::computeWilsonGasLiquidKvalue( numComps,
+                                                        pressure,
+                                                        temperature,
+                                                        componentProperties,
+                                                        kValues.toSlice() );
+
+    auto const parameters = FlashParameters::create( std::make_unique< ModelParameters >() );
+    auto const * flashParameters = parameters->get< FlashParameters >();
 
     bool const stabilityStatus = StabilityTest::compute( numComps,
                                                          pressure,
                                                          temperature,
                                                          composition.toSliceConst(),
                                                          componentProperties,
-                                                         EOS_TYPE,
                                                          flashData,
-                                                         tangentPlaneDistance,
-                                                         kValues.toSlice() );
+                                                         kValues.toSliceConst(),
+                                                         flashParameters->m_continuousParameters,
+                                                         flashParameters->m_discreteParameters,
+                                                         unstableMixture,
+                                                         incipientEos,
+                                                         incipientComposition.toSlice() );
 
     // Expect this to succeed
     ASSERT_EQ( stabilityStatus, true );
 
-    // Check the tanget plane distance
-    checkRelativeError( expectedTangentPlaneDistance, tangentPlaneDistance, relTol, absTol );
+    // Check the stability labe;
+    ASSERT_EQ( unstableMixture, expectedUnstableMixture );
+
+    // Check the incipient methane fraction
+    real64 const incipientZTarget = incipientComposition[targetComponent];
+    checkRelativeError( expectedZTarget, incipientZTarget, relTol, absTol );
   }
 
-  void testFlash( FlashData const & data )
+  void testFlash( StabilityData const & data )
   {
     auto componentProperties = this->m_fluid->createKernelWrapper();
 
@@ -99,24 +120,39 @@ public:
     stackArray1d< real64, numComps > composition;
     TestFluid< numComps >::createArray( composition, std::get< 2 >( data ));
 
-    real64 tangentPlaneDistance = LvArray::NumericLimits< real64 >::max;
+    bool unstableMixture = false;
+    EquationOfStateType incipientEos = EOS_TYPE;
+
+    StackArray< real64, 2, 3*numComps > phaseCompositions( 3, numComps );
+    real64 vapourFraction = -1.0;
     stackArray2d< real64, numComps > kValues( 1, numComps );
+    arraySlice1d< real64 > liquidComposition = phaseCompositions[0];
+    arraySlice1d< real64 > vapourComposition = phaseCompositions[1];
+    arraySlice1d< real64 > incipientComposition = phaseCompositions[2];
+
+    KValueInitialization::computeWilsonGasLiquidKvalue( numComps,
+                                                        pressure,
+                                                        temperature,
+                                                        componentProperties,
+                                                        kValues[0] );
+
+    auto const parameters = FlashParameters::create( std::make_unique< ModelParameters >() );
+    auto const * flashParameters = parameters->get< FlashParameters >();
 
     StabilityTest::compute( numComps,
                             pressure,
                             temperature,
                             composition.toSliceConst(),
                             componentProperties,
-                            EOS_TYPE,
                             flashData,
-                            tangentPlaneDistance,
-                            kValues[0] );
+                            kValues[0].toSliceConst(),
+                            flashParameters->m_continuousParameters,
+                            flashParameters->m_discreteParameters,
+                            unstableMixture,
+                            incipientEos,
+                            incipientComposition );
 
     // Now perform the nagative flash
-    real64 vapourFraction = -1.0;
-    stackArray1d< real64, numComps > liquidComposition( numComps );
-    stackArray1d< real64, numComps > vapourComposition( numComps );
-
     bool const status = NegativeTwoPhaseFlash::compute(
       numComps,
       pressure,
@@ -124,10 +160,12 @@ public:
       composition.toSliceConst(),
       componentProperties,
       flashData,
+      flashParameters->m_continuousParameters,
+      flashParameters->m_discreteParameters,
       kValues.toSlice(),
       vapourFraction,
-      liquidComposition.toSlice(),
-      vapourComposition.toSlice() );
+      liquidComposition,
+      vapourComposition );
 
     // Expect this to succeed
     ASSERT_EQ( status, true );
@@ -137,7 +175,7 @@ public:
     real64 const L = 1.0 - V;
 
     // Check stability vs flash
-    if( tangentPlaneDistance < -tpdTol )
+    if( unstableMixture )
     {
       // Unstable mixture: both L and V should be positive
       ASSERT_GT( V, epsilon );
@@ -207,24 +245,24 @@ TEST_P( SoaveRedlichKwong, testStabilityWithFlash )
 
 INSTANTIATE_TEST_SUITE_P(
   StabilityTest, PengRobinson,
-  ::testing::Values(
-    FlashData(1.0e+05, 2.8815e+02, {0.00900, 0.00300, 0.53470, 0.11460, 0.08790, 0.04560, 0.02090, 0.01510, 0.16920}, -1.654557e+03),
-    FlashData(1.0e+05, 2.9715e+02, {0.00900, 0.00300, 0.53470, 0.11460, 0.08790, 0.04560, 0.02090, 0.01510, 0.16920}, -8.451746e+02),
-    FlashData(1.0e+05, 3.5315e+02, {0.00900, 0.00300, 0.53470, 0.11460, 0.08790, 0.04560, 0.02090, 0.01510, 0.16920}, -2.648191e+01),
-    FlashData(1.0e+05, 3.9315e+02, {0.00900, 0.00300, 0.53470, 0.11460, 0.08790, 0.04560, 0.02090, 0.01510, 0.16920}, -3.373702e+00),
-    FlashData(1.0e+05, 5.7315e+02, {0.00900, 0.00300, 0.53470, 0.11460, 0.08790, 0.04560, 0.02090, 0.01510, 0.16920}, -2.862294e-16)
-  )
+  ::testing::ValuesIn<StabilityData>({
+    {1.0e+05, 288.15, { 0.0090, 0.0030, 0.5347, 0.1146, 0.0879, 0.0456, 0.0209, 0.0151, 0.1692 }, true,  0.99992981},
+    {1.0e+05, 297.15, { 0.0090, 0.0030, 0.5347, 0.1146, 0.0879, 0.0456, 0.0209, 0.0151, 0.1692 }, true,  0.99989343},
+    {1.0e+05, 353.15, { 0.0090, 0.0030, 0.5347, 0.1146, 0.0879, 0.0456, 0.0209, 0.0151, 0.1692 }, true,  0.99906841},
+    {1.0e+05, 393.15, { 0.0090, 0.0030, 0.5347, 0.1146, 0.0879, 0.0456, 0.0209, 0.0151, 0.1692 }, true,  0.99685491},
+    {1.0e+05, 573.15, { 0.0090, 0.0030, 0.5347, 0.1146, 0.0879, 0.0456, 0.0209, 0.0151, 0.1692 }, false, 0.16920000}
+  })
 );
 
 INSTANTIATE_TEST_SUITE_P(
   StabilityTest, SoaveRedlichKwong,
-  ::testing::Values(
-    FlashData(1.0e+05, 2.8815e+02, {0.00900, 0.00300, 0.53470, 0.11460, 0.08790, 0.04560, 0.02090, 0.01510, 0.16920}, -1.814994e+03),
-    FlashData(1.0e+05, 2.9715e+02, {0.00900, 0.00300, 0.53470, 0.11460, 0.08790, 0.04560, 0.02090, 0.01510, 0.16920}, -9.241583e+02),
-    FlashData(1.0e+05, 3.5315e+02, {0.00900, 0.00300, 0.53470, 0.11460, 0.08790, 0.04560, 0.02090, 0.01510, 0.16920}, -2.828694e+01),
-    FlashData(1.0e+05, 3.9315e+02, {0.00900, 0.00300, 0.53470, 0.11460, 0.08790, 0.04560, 0.02090, 0.01510, 0.16920}, -3.557644e+00),
-    FlashData(1.0e+05, 5.7315e+02, {0.00900, 0.00300, 0.53470, 0.11460, 0.08790, 0.04560, 0.02090, 0.01510, 0.16920}, -2.736526e-16)
-  )
+  ::testing::ValuesIn<StabilityData>({
+    {1.0e+05, 288.15, { 0.0090, 0.0030, 0.5347, 0.1146, 0.0879, 0.0456, 0.0209, 0.0151, 0.1692 }, true,  0.99994255},
+    {1.0e+05, 297.15, { 0.0090, 0.0030, 0.5347, 0.1146, 0.0879, 0.0456, 0.0209, 0.0151, 0.1692 }, true,  0.99991141},
+    {1.0e+05, 353.15, { 0.0090, 0.0030, 0.5347, 0.1146, 0.0879, 0.0456, 0.0209, 0.0151, 0.1692 }, true,  0.99916193},
+    {1.0e+05, 393.15, { 0.0090, 0.0030, 0.5347, 0.1146, 0.0879, 0.0456, 0.0209, 0.0151, 0.1692 }, true,  0.99704625},
+    {1.0e+05, 573.15, { 0.0090, 0.0030, 0.5347, 0.1146, 0.0879, 0.0456, 0.0209, 0.0151, 0.1692 }, false, 0.16920000}
+  })
 );
 
 /* UNCRUSTIFY-ON */

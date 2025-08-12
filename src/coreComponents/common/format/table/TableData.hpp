@@ -35,6 +35,25 @@ class TableData
 {
 public:
 
+  /// @cond DO_NOT_DOCUMENT
+  TableData();
+
+  TableData( TableData const & other );
+
+  TableData( TableData && other );
+
+  TableData & operator=( TableData const & other );
+
+  TableData & operator=( TableData && other );
+  ///@endcond
+
+  /**
+   * @brief Lexicographic sorting
+   * @param other The table data to compate
+   * @return true
+   */
+  bool operator<( TableData const & other ) const;
+
   /**
    * @brief Representing a data in TableData
    */
@@ -45,15 +64,17 @@ public:
     /// The cell value
     string value;
 
-    /**
-     * @brief Comparison operator for cell value
-     * @param other The cell data value to compare
-     * @return The comparison result
-     */
+    /// @cond DO_NOT_DOCUMENT
     bool operator==( CellData const & other ) const
     {
       return value == other.value;
     }
+
+    bool operator<( CellData const & other ) const
+    {
+      return value < other.value;
+    }
+    ///@endcond
   };
 
   /// Alias for table data rows with cells values
@@ -83,6 +104,12 @@ public:
    * @brief Reset data in the table
    */
   void clear();
+
+  /**
+   * @brief Remove all errors
+   */
+  void clearErrors()
+  { m_errors->clear(); }
 
   /**
    * @return The const rows of the table
@@ -117,9 +144,26 @@ public:
     return getCellsData() == comparingTable.getCellsData();
   }
 
+  /**
+   * @brief Get all error messages
+   * @return The list of error messages
+   */
+  TableErrorListing const & getErrorsList() const
+  { return *m_errors; }
+
+  /**
+   * @brief Get all error messages
+   * @return The list of error messages
+   */
+  TableErrorListing & getErrorsList()
+  { return *m_errors; }
+
 private:
-  /// vector containing all rows with cell values
+  /// @brief vector containing all rows with cell values
   DataRows m_rows;
+
+  /// @brief Store all errors that can be found during the generation of the TableData
+  std::unique_ptr< geos::TableErrorListing > m_errors;
 
 };
 
@@ -163,21 +207,23 @@ public:
    * @param values Array containing all table values contiguously
    * @param columnMajorValues Set the row/column major convention
    */
-  void collectTableValues( arraySlice1d< real64 const > dim0AxisCoordinates,
-                           arraySlice1d< real64 const > dim1AxisCoordinates,
+  void collectTableValues( arrayView1d< real64 const > dim0AxisCoordinates,
+                           arrayView1d< real64 const > dim1AxisCoordinates,
                            arrayView1d< real64 const > values,
                            bool columnMajorValues );
 
   /**
-   * @param values Vector containing all table values
-   * @param valueDescription The description of the value (typically, the value unit description)
-   * @param columnMajorValues Set the row/column major convention
-   * @param coordinates Array containing row/column axis values
+   * @brief Convert from 2D axis/values a structure the information needed to build a TableFormatter
+   * @param coordX Array containing row axis values
+   * @param coordY Array containing column axis values
    * @param rowAxisDescription The description for a row unit value
    * @param columnAxisDescription The description for a column unit value
+   * @param values Vector containing all table values
+   * @param columnMajorValues Set the row/column major convention
+   * @param valueDescription The description of the value (typically, the value unit description)
    * @return A struct containing the tableData converted and all header values ;
    */
-  TableData2D::TableDataHolder convertTable2D( ArrayOfArraysView< real64 const > const coordinates,
+  TableData2D::TableDataHolder convertTable2D( arrayView1d< real64 const > coordX, arrayView1d< real64 const > coordY,
                                                string_view rowAxisDescription,
                                                string_view columnAxisDescription,
                                                arrayView1d< real64 const > const values,
@@ -196,12 +242,23 @@ public:
   TableDataHolder buildTableData( string_view dataDescription,
                                   string_view rowFmt = "{}", string_view columnFmt = "{}" ) const;
 
+  /**
+   * @brief Clear all data stored in TableData
+   */
+  inline void clear()
+  {
+    m_data.clear();
+    m_columnValues.clear();
+    m_errors->clear();
+  }
+
 private:
   /// @brief all cell values by their [ row ][ column ]
   std::map< RowType, std::map< ColumnType, string > > m_data;
-
   /// @brief Store all column values when adding cell
   std::set< real64 > m_columnValues;
+  /// @brief Store all errors that can be found during the generation of the TableData
+  std::unique_ptr< geos::TableErrorListing > m_errors = std::make_unique< geos::TableErrorListing >();
 };
 
 /**
@@ -219,6 +276,13 @@ void TableData::addRow( Args const &... args )
     static_assert( has_formatter_v< decltype(args) > || isCellType< std::decay_t< decltype(args) > >, "Argument passed in addRow cannot be converted to string nor a CellType" );
     if constexpr (std::is_same_v< Args, CellType >) {
       cells.push_back( { args, string() } );
+    }
+    else if constexpr (std::is_floating_point_v< std::decay_t< decltype(args) > >) {
+      if( !getErrorsList().hasErrors() && (std::isnan( args ) ||  std::isinf( args )))
+      {
+        m_errors->addError( "Warning : Invalid values detected (nan/inf)." );
+      }
+      cells.push_back( {CellType::Value, GEOS_FMT( "{}", args )} );
     }
     else
     {
