@@ -57,6 +57,11 @@ void InvariantImmiscibleFluid::postInputInitialization()
                         GEOS_FMT( "%s: 'Densities' must have %d values", getFullName(), numPhase ), InputError );
   GEOS_THROW_IF_NE_MSG( m_viscosities.size(), numPhase,
                         GEOS_FMT( "%s: 'Viscosities' must have %d values", getFullName(), numPhase ), InputError );
+
+  integer numComponents = numFluidComponents();
+  // check tacit assumption of one component per phase
+  GEOS_THROW_IF_NE_MSG( numComponents, numPhase,
+                        GEOS_FMT( "%d number of components must be equato to %d number of phases", getFullName(), numPhase ), InputError );
 }
 
 InvariantImmiscibleFluid::KernelWrapper InvariantImmiscibleFluid::createKernelWrapper() const
