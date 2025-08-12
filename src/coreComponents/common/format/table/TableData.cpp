@@ -99,8 +99,8 @@ stdVector< stdVector< TableData::CellData > > & TableData::getTableDataRows()
   return m_rows;
 }
 
-void TableData2D::collectTableValues( arraySlice1d< real64 const > dim0AxisCoordinates,
-                                      arraySlice1d< real64 const > dim1AxisCoordinates,
+void TableData2D::collectTableValues( arrayView1d< real64 const > dim0AxisCoordinates,
+                                      arrayView1d< real64 const > dim1AxisCoordinates,
                                       arrayView1d< real64 const > values,
                                       bool columnMajorInputValues )
 {
