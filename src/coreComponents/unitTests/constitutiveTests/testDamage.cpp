@@ -42,7 +42,7 @@ TEST( DamageTests, testDamageSpectral )
     "      defaultShearModulus=\"8.0e4\" "
     "      lengthScale=\"0.25\" "
     "      defaultCriticalFractureEnergy=\"54.0\" "
-    "      criticalStrainEnergy=\"15.0\" "
+    "      defaultCriticalStrainEnergy=\"15.0\" "
     "   />"
     "</Constitutive>";
 
