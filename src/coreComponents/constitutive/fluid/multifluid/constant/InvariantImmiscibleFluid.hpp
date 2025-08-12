@@ -60,24 +60,25 @@ public:
      * @param phaseCompFraction Output view for phase component fractions and their derivatives
      * @param totalDensity    Output view for total fluid density and its derivatives
      */
-    virtual void compute( real64 const pressure,
-                          real64 const temperature,
-                          arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & composition,
-                          MultiFluidBase::PhaseProp::SliceType const phaseFraction,
-                          MultiFluidBase::PhaseProp::SliceType const phaseDensity,
-                          MultiFluidBase::PhaseProp::SliceType const phaseMassDensity,
-                          MultiFluidBase::PhaseProp::SliceType const phaseViscosity,
-                          MultiFluidBase::PhaseProp::SliceType const phaseEnthalpy,
-                          MultiFluidBase::PhaseProp::SliceType const phaseInternalEnergy,
-                          MultiFluidBase::PhaseComp::SliceType const phaseCompFraction,
-                          MultiFluidBase::FluidProp::SliceType const totalDensity ) const override;
+    GEOS_HOST_DEVICE
+    void compute( real64 const pressure,
+                  real64 const temperature,
+                  arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & composition,
+                  MultiFluidBase::PhaseProp::SliceType const phaseFraction,
+                  MultiFluidBase::PhaseProp::SliceType const phaseDensity,
+                  MultiFluidBase::PhaseProp::SliceType const phaseMassDensity,
+                  MultiFluidBase::PhaseProp::SliceType const phaseViscosity,
+                  MultiFluidBase::PhaseProp::SliceType const phaseEnthalpy,
+                  MultiFluidBase::PhaseProp::SliceType const phaseInternalEnergy,
+                  MultiFluidBase::PhaseComp::SliceType const phaseCompFraction,
+                  MultiFluidBase::FluidProp::SliceType const totalDensity ) const override;
 
     GEOS_HOST_DEVICE
-    virtual void update( localIndex const k,
-                         localIndex const q,
-                         real64 const pressure,
-                         real64 const temperature,
-                         arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & composition ) const override;
+    void update( localIndex const k,
+                 localIndex const q,
+                 real64 const pressure,
+                 real64 const temperature,
+                 arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & composition ) const override;
 
 private:
     friend class InvariantImmiscibleFluid;
@@ -134,13 +135,6 @@ private:
    */
   KernelWrapper createKernelWrapper() const;
 
-  GEOS_HOST_DEVICE
-  virtual void update( localIndex const k,
-                       localIndex const q,
-                       real64 const pressure,
-                       real64 const temperature,
-                       arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & composition ) const;
-
   /**
    * @brief Initialize the fluid model with specified number of cells and quadrature points
    * @param[in] numCells Number of cells/elements
@@ -158,6 +152,106 @@ private:
   array1d< real64 > m_densities;
   array1d< real64 > m_viscosities;
 };
+
+
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
+void InvariantImmiscibleFluid::KernelWrapper::compute( real64 const pressure,
+                                                       real64 const temperature,
+                                                       arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & composition,
+                                                       PhaseProp::SliceType const phaseFraction,
+                                                       PhaseProp::SliceType const phaseDensity,
+                                                       PhaseProp::SliceType const phaseMassDensity,
+                                                       PhaseProp::SliceType const phaseViscosity,
+                                                       PhaseProp::SliceType const phaseEnthalpy,
+                                                       PhaseProp::SliceType const phaseInternalEnergy,
+                                                       PhaseComp::SliceType const phaseCompFraction,
+                                                       FluidProp::SliceType const totalDensity ) const
+{
+  // Note: pressure and temperature are marked as unused as this model uses constant properties
+  GEOS_UNUSED_VAR( pressure, temperature );
+
+  using Deriv = constitutive::multifluid::DerivativeOffset;
+
+  integer nPhase = phaseDensity.value.size();
+  integer nComp = phaseCompFraction.value.size( 1 );
+
+  for( integer ip=0; ip<nPhase; ++ip )
+  {
+    // Phase fractions are equal to the composition for each phase
+    phaseFraction.value[ip] = composition[ip];
+    phaseFraction.derivs[ip][Deriv::dP] = 0.0;
+    for( integer ic = 0; ic < nComp; ++ic )
+    {
+      phaseFraction.derivs[ip][Deriv::dC+ic] = (ip == ic) ? 1.0 : 0.0;
+    }
+
+    // densities and viscosities constant
+    real64 const mult = m_useMass ? 1.0 : 1.0 / m_componentMolarWeight[ip];
+    phaseDensity.value[ip] = m_densities[ip] * mult;
+    phaseMassDensity.value[ip] = m_densities[ip];
+    phaseViscosity.value[ip] = m_viscosities[ip];
+    // derivatives
+    for( integer ic = 0; ic < nComp; ++ic )
+    {
+      phaseDensity.derivs[ip][Deriv::dC+ic] = 0.0;
+      phaseMassDensity.derivs[ip][Deriv::dC+ic] = 0.0;
+      phaseViscosity.derivs[ip][Deriv::dC+ic] = 0.0;
+    }
+
+    // zero enthalpy/internal energy
+    phaseEnthalpy.value[ip] = 0.0;
+    phaseInternalEnergy.value[ip] = 0.0;
+    for( integer d=0; d<phaseEnthalpy.derivs[ip].size( 0 ); ++d )
+    {
+      phaseEnthalpy.derivs[ip][d] = 0.0;
+      phaseInternalEnergy.derivs[ip][d] = 0.0;
+    }
+
+    // phase composition identity: each phase pure component
+    for( integer ic=0; ic<nComp; ++ic )
+    {
+      phaseCompFraction.value[ip][ic] = (ic==ip ? 1.0 : 0.0);
+      for( integer d=0; d<phaseCompFraction.derivs[ip][ic].size( 0 ); ++d )
+        phaseCompFraction.derivs[ip][ic][d] = 0.0;
+    }
+  }
+
+  // total density: sum over phases of phaseMassDensity * phaseFraction
+  computeTotalDensity( phaseFraction,
+                       phaseDensity,
+                       totalDensity );
+}
+
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
+void InvariantImmiscibleFluid::KernelWrapper::update( localIndex const k,
+                                                      localIndex const q,
+                                                      real64 const pressure,
+                                                      real64 const temperature,
+                                                      arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & composition ) const
+{
+  // Create slice views of the member variables at cell k, quadrature point q
+  PhaseProp::SliceType phaseFractionSlice{m_phaseFraction.value[k][q], m_phaseFraction.derivs[k][q]};
+  PhaseProp::SliceType phaseDensitySlice{m_phaseDensity.value[k][q], m_phaseDensity.derivs[k][q]};
+  PhaseProp::SliceType phaseMassDensitySlice{m_phaseMassDensity.value[k][q], m_phaseMassDensity.derivs[k][q]};
+  PhaseProp::SliceType phaseViscositySlice{m_phaseViscosity.value[k][q], m_phaseViscosity.derivs[k][q]};
+  PhaseProp::SliceType phaseEnthalpySlice{m_phaseEnthalpy.value[k][q], m_phaseEnthalpy.derivs[k][q]};
+  PhaseProp::SliceType phaseInternalEnergySlice{m_phaseInternalEnergy.value[k][q], m_phaseInternalEnergy.derivs[k][q]};
+  PhaseComp::SliceType phaseCompFractionSlice{m_phaseCompFraction.value[k][q], m_phaseCompFraction.derivs[k][q]};
+  FluidProp::SliceType totalDensitySlice{m_totalDensity.value[k][q], m_totalDensity.derivs[k][q]};
+
+  // call compute with slice views
+  compute( pressure, temperature, composition,
+           phaseFractionSlice,
+           phaseDensitySlice,
+           phaseMassDensitySlice,
+           phaseViscositySlice,
+           phaseEnthalpySlice,
+           phaseInternalEnergySlice,
+           phaseCompFractionSlice,
+           totalDensitySlice );
+}
 
 } // namespace constitutive
 } // namespace geos

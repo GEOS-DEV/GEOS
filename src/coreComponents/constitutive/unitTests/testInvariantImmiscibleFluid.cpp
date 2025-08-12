@@ -55,7 +55,7 @@ public:
 public:
   InvariantImmiscibleFluidTestFixture()
   {
-    Base::createFluid( "InvariantImmiscibleFluid", []( InvariantImmiscibleFluid & fluid ){
+    Base::createFluid( "InvariantImmiscibleFluid", [this]( InvariantImmiscibleFluid & fluid ){
 
       // Set up phase names
       string_array & componentNames = fluid.getReference< string_array >( MultiFluidBase::viewKeyStruct::componentNamesString() );
@@ -112,7 +112,7 @@ public:
       real64 temperature = 300.0; // Example temperature (K)
 
       // Update the fluid properties at this point
-      fluid.update( k, q, pressure, temperature, composition );
+      this->getFluid().createKernelWrapper().update( k, q, pressure, temperature, composition );
     } );
   }
 
