@@ -173,8 +173,8 @@ void InvariantImmiscibleFluid::KernelWrapper::compute( real64 const pressure,
 
   using Deriv = constitutive::multifluid::DerivativeOffset;
 
-  integer nPhase = phaseDensity.value.size();
-  integer nComp = phaseCompFraction.value.size( 1 );
+  integer const nPhase = numPhases();
+  integer const nComp = numComponents();
 
   for( integer ip=0; ip<nPhase; ++ip )
   {
