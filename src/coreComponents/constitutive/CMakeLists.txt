@@ -121,10 +121,8 @@ set( constitutive_headers
      fluid/multifluid/compositional/parameters/PressureTemperatureCoordinates.hpp
      fluid/multifluid/compositional/CompositionalMultiphaseFluid.hpp
      fluid/multifluid/compositional/CompositionalMultiphaseFluidUpdates.hpp
-     fluid/reactivefluid/ReactiveSinglePhaseFluid.hpp
      fluid/reactivefluid/ReactiveFluidFields.hpp
      fluid/reactivefluid/ReactiveFluidLayouts.hpp
-     fluid/reactivefluid/ReactiveFluidSelector.hpp
      fluid/singlefluid/CompressibleSinglePhaseFluid.hpp
      fluid/singlefluid/ParticleFluid.hpp
      fluid/singlefluid/ParticleFluidBase.hpp
@@ -274,7 +272,6 @@ set( constitutive_sources
      fluid/multifluid/compositional/parameters/PressureTemperatureCoordinates.cpp
      fluid/multifluid/compositional/CompositionalMultiphaseFluid.cpp
      fluid/multifluid/compositional/CompositionalMultiphaseFluidUpdates.cpp
-     fluid/reactivefluid/ReactiveSinglePhaseFluid.cpp
      fluid/singlefluid/CompressibleSinglePhaseFluid.cpp
      fluid/singlefluid/ParticleFluid.cpp
      fluid/singlefluid/ParticleFluidBase.cpp
@@ -354,6 +351,11 @@ if( ENABLE_PVTPackage )
 endif()
 
 if (ENABLE_HPCREACT)
+    set( constitutive_headers
+        ${constitutive_headers}
+        fluid/reactivefluid/ReactiveFluidSelector.hpp 
+        )
+
     set( constitutive_headers
         ${constitutive_headers}
         fluid/reactivefluid/ReactiveSinglePhaseFluid.hpp 
