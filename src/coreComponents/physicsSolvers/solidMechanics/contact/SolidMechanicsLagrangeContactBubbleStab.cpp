@@ -1211,7 +1211,7 @@ void SolidMechanicsLagrangeContactBubbleStab::resetStateToBeginningOfStep( Domai
   } );
 }
 
-void SolidMechanicsLagrangeContactBubbleStab::setAllVariablesToZero( DomainPartition & domain  )
+void SolidMechanicsLagrangeContactBubbleStab::setAllVariablesToZero( DomainPartition & domain  ) const
 {
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
@@ -1239,7 +1239,7 @@ void SolidMechanicsLagrangeContactBubbleStab::setAllVariablesToZero( DomainParti
     elemManager.forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
     {
       subRegion.getField< contact::traction >().zero();
-      subRegion.getField< contact::traction_n >().zero();
+      // subRegion.getField< contact::traction_n >().zero();
       subRegion.getField< contact::deltaTraction >().zero();
       subRegion.getField< contact::dispJump >().zero();
       subRegion.getField< contact::dispJump_n >().zero();

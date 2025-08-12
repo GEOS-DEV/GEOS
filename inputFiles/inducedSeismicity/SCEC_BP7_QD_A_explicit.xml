@@ -46,9 +46,9 @@
         maxTimeStepCuts="1"/>
       <LinearSolverParameters
         solverType="direct"
-        preconditionerType="mgr"
         directParallel="1"
-        logLevel="1"/>
+        logLevel="1"
+        reuseFactorization="1"/>
     </SolidMechanicsLagrangeContactBubbleStab>
     
     <SurfaceGenerator
