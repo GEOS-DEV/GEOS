@@ -2448,34 +2448,6 @@ void SolidMechanicsLagrangeContact::tryLocalYieldAcceleration( FaceElementSubReg
   }
 }
 
-/*
-   void SolidMechanicsLagrangeContact::initializeAccelerationVariables( DomainPartition & domain )
-   {
-   // calculate total number of face elements
-   localIndex total_size = 0;
-   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                                MeshLevel & mesh,
-                                                                string_array const & regionNames )
-   {
-    ElementRegionManager & elemManager = mesh.getElemManager();
-    elemManager.forElementSubRegions< FaceElementSubRegion >( regionNames, [&]( localIndex const,
-                                                                                FaceElementSubRegion & subRegion )
-    {
-      total_size += subRegion.size();
-    } );
-   } );
-
-   // allocate arrays
-   m_x0.resize( total_size );
-   m_x1.resize( total_size );
-   m_x1_tilde.resize( total_size );
-   m_x2.resize( total_size );
-   m_x2_tilde.resize( total_size );
-   m_omega0.resize( total_size );
-   m_omega1.resize( total_size );
-   }
- */
-
 bool SolidMechanicsLagrangeContact::isFractureAllInStickCondition( DomainPartition const & domain ) const
 {
   globalIndex numStick = 0, numNewSlip = 0, numSlip = 0, numOpen = 0;
