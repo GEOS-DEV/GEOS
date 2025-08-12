@@ -573,9 +573,9 @@ static void runConsistencyTest( array2d< real64, nodes::REFERENCE_POSITION_PERM 
       }
     }
     
-    for( std::ptrdiff_t i = 0; i < NF; ++i )
+    for ( std::ptrdiff_t i = 0; i < NF; ++i )
     {
-      diffNorm += LvArray::tensorOps::l2NormSquared<3>( diffMat[i] );
+      diffNorm += LvArray::tensorOps::l2NormSquared< 3 >( diffMat[i] );
     }
     diffNorm = std::sqrt( diffNorm );
     
@@ -590,261 +590,6 @@ static void runConsistencyTest( array2d< real64, nodes::REFERENCE_POSITION_PERM 
         std::cout << "[CONSISTENCY TEST FAILED] " << testName << " consistency test failed: norm(NK - TC) = " << diffNorm << std::endl;
     }
 }
-
-static inline
-void distortTopFaceNonPlanar( array2d< real64, nodes::REFERENCE_POSITION_PERM > & nodePosition,
-                              real64 eps )
-{
-  nodePosition( 1, 2 ) += eps;   // vertex 1:  z -> z + eps
-  nodePosition( 7, 2 ) += eps;   // vertex 7:  z -> z + eps
-
-  // nodePosition( 5, 2 ) -= eps;
-  // nodePosition( 3, 2 ) -= eps;
-}
-
-static inline
-void computeDistortedVolumeAndCenter( array2d < real64, nodes::REFERENCE_POSITION_PERM > const & nodePosition,
-                                      real64 ( & elemCenter )[3],
-                                      real64 & elemVolume )
-{
-    array1d< localIndex > toNodes;
-    toNodes.resize( 8 );
-    toNodes( 0 ) = 0;
-    toNodes( 1 ) = 4;
-    toNodes( 2 ) = 2;
-    toNodes( 3 ) = 6;
-    toNodes( 4 ) = 1;
-    toNodes( 5 ) = 5;
-    toNodes( 6 ) = 3;
-    toNodes( 7 ) = 7;
-    
-    computeVolumeAndCenter( nodePosition, toNodes, elemCenter, elemVolume);
-}
-
-// check if matrix A is SPD via Cholesky factorization.
-// also tracks min/max pivot values (minP: smallest pivot, maxP = largest pivot)
-// their ratio is approximately sqrt( condition number )
-static inline
-bool cholCheck( arraySlice2d< real64 const > const & A,
-                real64 & minP, real64 & maxP )
-{
-  localIndex const n = A.size(0);
-  stackArray2d< real64, 16 * 16 > R( n, n );
-    
-  for( localIndex i = 0; i < n; ++i )
-    for( localIndex j = 0; j < n; ++j )
-      R(i,j) = A(i,j);
-
-  minP = std::numeric_limits< real64 >::infinity();
-  maxP = 0.0;
-
-  for( localIndex k = 0; k < n; ++k )
-  {
-    // symmetric
-    for( localIndex j = k; j < n; ++j )
-      R(j,k) = R(k,j) = 0.5 * ( R(k,j) + R(j,k) );
-
-    real64 s = R(k,k);
-    for( localIndex m = 0; m < k; ++m )
-      s -= R(m,k) * R(m,k);
-
-    if( s <= 0.0 || !std::isfinite(s) )
-      return false;
-
-    real64 const rkk = std::sqrt(s);
-    R(k,k) = rkk;
-    minP = std::min( minP, rkk );
-    maxP = std::max( maxP, rkk );
-
-    for( localIndex j = k + 1; j < n; ++j )
-    {
-      real64 t = R(k,j);
-      for( localIndex m = 0; m < k; ++m )
-          t -= R(m,k) * R(m,j);
-        
-      R(k,j) = t / rkk;
-      R(j,k) = R(k,j);
-    }
-  }
-  return true;
-}
-
-// returns standard GEOSX node ordering for hexahedral cell
-static inline
-void getHexaNodeOrder( array1d< localIndex > & toNodes )
-{
-  toNodes.resize(8);
-  toNodes(0) = 0; toNodes(1) = 4; toNodes(2) = 2; toNodes(3) = 6;
-  toNodes(4) = 1; toNodes(5) = 5; toNodes(6) = 3; toNodes(7) = 7;
-}
-
-// B = A^T A
-static inline void mat3_ATxA( const real64 A[3][3], real64 B[3][3] )
-{
-  for( int i = 0; i < 3; ++i )
-    for( int j = 0; j < 3; ++j )
-    {
-      real64 s = 0.0;
-      for( int k = 0; k < 3; ++k )
-          s += A[k][i] * A[k][j];
-      B[i][j] = s;
-    }
-}
-
-static inline real64 mat3_det( const real64 A[3][3] )
-{
-  return A[0][0] * (A[1][1] * A[2][2] - A[1][2] * A[2][1])
-       - A[0][1] * (A[1][0] * A[2][2] - A[1][2] * A[2][0])
-       + A[0][2] * (A[1][0] * A[2][1] - A[1][1] * A[2][0]);
-}
-
-static inline bool mat3_inv( const real64 A[3][3], real64 invA[3][3] )
-{
-  real64 d = mat3_det(A);
-  if( std::abs(d) < 1e-30 ) return false;
-  real64 id = 1.0/d;
-  invA[0][0] =  (A[1][1] * A[2][2] - A[1][2] * A[2][1]) * id;
-  invA[0][1] = -(A[0][1] * A[2][2] - A[0][2] * A[2][1]) * id;
-  invA[0][2] =  (A[0][1] * A[1][2] - A[0][2] * A[1][1]) * id;
-  invA[1][0] = -(A[1][0] * A[2][2] - A[1][2] * A[2][0]) * id;
-  invA[1][1] =  (A[0][0] * A[2][2] - A[0][2] * A[2][0]) * id;
-  invA[1][2] = -(A[0][0] * A[1][2] - A[0][2] * A[1][0]) * id;
-  invA[2][0] =  (A[1][0] * A[2][1] - A[1][1] * A[2][0]) * id;
-  invA[2][1] = -(A[0][0] * A[2][1] - A[0][1] * A[2][0]) * id;
-  invA[2][2] =  (A[0][0] * A[1][1] - A[0][1] * A[1][0]) * id;
-    
-  return true;
-}
-
-// compute eigenvalues of 3 x 3 symmetric matrix by Jacobi eigenvalue algorithm
-static inline void sym3x3_eigs( real64 S[3][3], real64 evals[3] )
-{
-  for( int sweep = 0; sweep < 20; ++sweep )
-  {
-    // find the largest off-diagonal element
-    int p = 0, q = 1;
-    real64 maxa = std::abs( S[0][1] );
-    if( std::abs(S[0][2]) > maxa ){ p = 0; q = 2; maxa = std::abs(S[0][2]); }
-    if( std::abs(S[1][2]) > maxa ){ p = 1; q = 2; maxa = std::abs(S[1][2]); }
-    if( maxa < 1e-30 ) break;
-    real64 app = S[p][p], aqq = S[q][q], apq = S[p][q];
-    real64 phi = 0.5 * std::atan2( 2 * apq, (aqq - app) );
-    real64 c = std::cos(phi), s = std::sin(phi);
-
-    // apply the Jocobi rotation
-    for( int k = 0; k < 3; ++k )
-    {
-      real64 skp = S[k][p], skq = S[k][q];
-      S[k][p] = c * skp - s * skq;
-      S[k][q] = s * skp + c * skq;
-    }
-    for( int k = 0; k < 3; ++k )
-    {
-      real64 spk = S[p][k], sqk = S[q][k];
-      S[p][k] = c * spk - s * sqk;
-      S[q][k] = s * spk + c * sqk;
-    }
-  }
-  evals[0] = S[0][0];
-  evals[1] = S[1][1];
-  evals[2] = S[2][2];
-}
-
-struct AffineMetrics {
-  real64 A[3][3];   // best-fit linear
-  real64 b[3];      // translation
-  real64 detA;      // det(A)
-  real64 rms;       // RMS residual
-};
-
-static inline
-AffineMetrics fitAffineAndMeasure(
-  array2d< real64, nodes::REFERENCE_POSITION_PERM > const & X0, // base
-  array2d< real64, nodes::REFERENCE_POSITION_PERM > const & X   // distorted
-)
-{
-  array1d< localIndex > toNodes;
-  getHexaNodeOrder( toNodes );
-
-  // compute centroid
-  real64 xbar[3] = { 0, 0, 0 }, Xbar[3] = { 0, 0, 0 };
-  for( localIndex i = 0; i < toNodes.size(); ++i){
-    localIndex a = toNodes(i);
-    for( int d = 0; d < 3; ++d ){
-      Xbar[d] += X0( a, d );
-      xbar[d] += X( a, d );
-    }
-  }
-  for( int d = 0; d < 3; ++d ){
-    Xbar[d] /= toNodes.size();
-    xbar[d] /= toNodes.size();
-  }
-
-  real64 SXX[3][3]={ {0,0,0}, {0,0,0}, {0,0,0} };
-  real64 SXx[3][3]={ {0,0,0}, {0,0,0}, {0,0,0} };
-  for( localIndex i = 0; i < toNodes.size(); ++i ){
-    localIndex a = toNodes(i);
-    real64 dX[3] = { X0(a,0) - Xbar[0], X0(a,1) - Xbar[1], X0(a,2) - Xbar[2] };
-    real64 dx[3] = {  X(a,0) - xbar[0],  X(a,1) - xbar[1],  X(a,2) - xbar[2] };
-    for( int r = 0; r < 3; ++r ){
-      for( int c = 0; c < 3; ++c ){
-        SXX[r][c] += dX[r] * dX[c];
-        SXx[r][c] += dx[r] * dX[c];
-      }
-    }
-  }
-
-  real64 invSXX[3][3];
-  AffineMetrics M;
-  if( !mat3_inv(SXX, invSXX) ){
-    for( int i = 0; i < 3; ++i ){ for( int j = 0; j < 3; ++j ) M.A[i][j] = ( i==j) ; M.b[i]=0; }
-    M.detA = 1;
-    M.rms = 0;
-    return M;
-  }
-  
-  for( int i = 0; i < 3; ++i )
-    for( int j = 0; j < 3; ++j ){
-      real64 s = 0.0;
-      for( int k = 0; k < 3; ++k) s += SXx[i][k] * invSXX[k][j];
-      M.A[i][j] = s;
-    }
-    
-  for( int i = 0; i < 3; ++i ){
-    real64 s = xbar[i] - ( M.A[i][0] * Xbar[0] + M.A[i][1] * Xbar[1] + M.A[i][2] * Xbar[2] );
-    M.b[i] = s;
-  }
-
-  // sigma from eig(A^T A)
-  real64 ATA[3][3]; mat3_ATxA(M.A, ATA);
- 
-  real64 S[3][3] = { {ATA[0][0], ATA[0][1], ATA[0][2]},
-                   {ATA[1][0], ATA[1][1], ATA[1][2]},
-                   {ATA[2][0], ATA[2][1], ATA[2][2]} };
-  real64 evals[3]; sym3x3_eigs(S, evals);
- 
-  for( int i = 0; i < 3; ++i ) evals[i] = std::max<real64>( evals[i], 0.0 );
-  real64 s1 = std::sqrt( std::max(evals[0], std::max(evals[1], evals[2])) );
-  real64 s3 = std::sqrt( std::min(evals[0], std::min(evals[1], evals[2])) );
-
-  M.detA = mat3_det(M.A);
-
-  // RMS residual
-  real64 se = 0.0;
-  for( localIndex i = 0; i < toNodes.size(); ++i ){
-    localIndex a = toNodes(i);
-    real64 px[3] = {
-      M.A[0][0] * X0(a,0) + M.A[0][1] * X0(a,1) + M.A[0][2] * X0(a,2) + M.b[0],
-      M.A[1][0] * X0(a,0) + M.A[1][1] * X0(a,1) + M.A[1][2] * X0(a,2) + M.b[1],
-      M.A[2][0] * X0(a,0) + M.A[2][1] * X0(a,1) + M.A[2][2] * X0(a,2) + M.b[2]
-    };
-    real64 rx = X(a,0) - px[0], ry = X(a,1) - px[1], rz = X(a,2) - px[2];
-    se += rx * rx + ry * ry + rz * rz;
-  }
-  M.rms = std::sqrt( se / toNodes.size() );
-  return M;
-}
-
 
 TEST( testMimeticInnerProducts, TPFA_hexa )
 {
@@ -1300,108 +1045,356 @@ TEST( testMimeticInnerProducts, BdVLMtetra )
                             "BdVLM_tetra");
 }
 
-TEST( testMimeticInnerProducts, Hexa_DistortionTest )
+
+//======================== Linear Pressure Recovery Test =============================
+
+static inline void makeUnitCube( double x_start,
+                                 array2d< real64, nodes::REFERENCE_POSITION_PERM > & node,
+                                 FaceManager::NodeMapType & faceTonodes,
+                                 array1d< localIndex > & elemTofaces,
+                                 real64 (&center)[3], real64 & vol)
 {
-  localIndex constexpr NF = 6;
+  node.resize(8,3);
+  // vertices on z = 0 plane
+  node(0,0) = x_start + 0; node(0,1) = 0; node(0,2) = 0;
+  node(1,0) = x_start + 1; node(1,1) = 0; node(1,2) = 0;
+  node(2,0) = x_start + 0; node(2,1) = 1; node(2,2) = 0;
+  node(3,0) = x_start + 1; node(3,1) = 1; node(3,2) = 0;
+    
+  // vertices on z = 1 plane
+  node(4,0) = x_start + 0; node(4,1) = 0; node(4,2) = 1;
+  node(5,0) = x_start + 1; node(5,1) = 0; node(5,2) = 1;
+  node(6,0) = x_start + 0; node(6,1) = 1; node(6,2) = 1;
+  node(7,0) = x_start + 1; node(7,1) = 1; node(7,2) = 1;
 
-  array2d< real64, nodes::REFERENCE_POSITION_PERM > nodePos_base;
-  FaceManager::NodeMapType faceToNodes;
-  array1d< localIndex > elemToFaces;
-  real64 elemCenter_base[3] = { 0.0, 0.0, 0.0 };
-  real64 elemPerm[3] = { 1.0, 1.0, 1.0 };
-  real64 elemVolume_base = 0.0;
-  real64 lengthTol = 0.0;
-
-  // base hexa (undistorted)
-  stackArray2d< real64, NF * NF > dummyRef( NF, NF );
-  makeHexa(nodePos_base, faceToNodes, elemToFaces,
-           elemCenter_base, elemVolume_base, elemPerm,
-           lengthTol, InnerProductType::TPFA, dummyRef);
-
-  // characteristic length for nondimensional RMS
-  real64 Lchar = std::cbrt( std::max(elemVolume_base, 1e-30) );
-
-  // eps list
-  std::vector< real64 > epsilons = { 1e-6, 1e-3, 1e-1, 0.5, 1.0, 1.5, 2.0 };
-
-//  std::string csvPath = "cond_number.csv";
-//  std::ofstream fout(csvPath);
-//  fout << "eps,volRatio,rms_affine,TPFA,QTPFA,Simple,BdVLM\n";
-
-  for( real64 eps : epsilons )
+  faceTonodes.resize(6);
+  for( int f = 0; f < 6; ++f )
   {
-    std::cout << "\n=== eps = " << eps << " ===\n";
+      faceTonodes.resizeArray(f,4);
+  }
+  
+  // define each face by its 4 node indices (consistent ordering within the cell)
+  faceTonodes(0,0) = 0; faceTonodes(0,1) = 1; faceTonodes(0,2) = 3; faceTonodes(0,3) = 2; // z=0
+  faceTonodes(1,0) = 0; faceTonodes(1,1) = 4; faceTonodes(1,2) = 5; faceTonodes(1,3) = 1; // y=0
+  faceTonodes(2,0) = 0; faceTonodes(2,1) = 2; faceTonodes(2,2) = 6; faceTonodes(2,3) = 4; // x=0
+  faceTonodes(3,0) = 1; faceTonodes(3,1) = 5; faceTonodes(3,2) = 7; faceTonodes(3,3) = 3; // x=1
+  faceTonodes(4,0) = 6; faceTonodes(4,1) = 2; faceTonodes(4,2) = 3; faceTonodes(4,3) = 7; // y=1
+  faceTonodes(5,0) = 4; faceTonodes(5,1) = 6; faceTonodes(5,2) = 7; faceTonodes(5,3) = 5; // z=1
 
-    auto nodePos = nodePos_base;
-
-    // distort
-    distortTopFaceNonPlanar(nodePos, eps);
-
-    // update center & volume
-    real64 elemCenter[3] = { 0, 0, 0 };
-    real64 elemVolume = 0.0;
-    computeDistortedVolumeAndCenter(nodePos, elemCenter, elemVolume);
-    EXPECT_GT(elemVolume, 0.0);
-
-    AffineMetrics metrics = fitAffineAndMeasure(nodePos_base, nodePos);
-    real64 volRatio  = elemVolume / std::max(elemVolume_base, 1e-30);
-    real64 rms_affine = metrics.rms / std::max(Lchar, 1e-30);
-
-    std::cout << "volRatio = " << volRatio
-              << "  rms_affine = " << rms_affine << "\n";
-
-    array1d< real64 > transMult(NF);
-    transMult.setValues<parallelHostPolicy>(1.0);
-
-    stackArray1d< real64,3 > center(3);
-    for( int i = 0; i < 3; ++i ) center[i] = elemCenter[i];
-
-    stackArray2d< real64, NF * NF > T_tpfa(NF,NF), T_q(NF,NF), T_s(NF,NF), T_b(NF,NF);
-
-    TPFAInnerProduct::compute<NF>( nodePos.toViewConst(), transMult.toViewConst(),
-      faceToNodes.toViewConst(), elemToFaces.toSliceConst(),
-      center, elemVolume, elemPerm, lengthTol, T_tpfa.toSlice() );
-
-    QuasiTPFAInnerProduct::compute<NF>( nodePos.toViewConst(), transMult.toViewConst(),
-      faceToNodes.toViewConst(), elemToFaces.toSliceConst(),
-      center, elemVolume, elemPerm, lengthTol, T_q.toSlice() );
-
-    SimpleInnerProduct::compute<NF>( nodePos.toViewConst(), transMult.toViewConst(),
-      faceToNodes.toViewConst(), elemToFaces.toSliceConst(),
-      center, elemVolume, elemPerm, lengthTol, T_s.toSlice() );
-
-    BdVLMInnerProduct::compute<NF>( nodePos.toViewConst(), transMult.toViewConst(),
-      faceToNodes.toViewConst(), elemToFaces.toSliceConst(),
-      center, elemVolume, elemPerm, lengthTol, T_b.toSlice() );
-
-    double cond_tpfa = 0, cond_qtpfa = 0, cond_simple = 0, cond_bdvlm = 0;
-    {
-      real64 minP, maxP;
-      bool spd;
-
-      spd = cholCheck(T_tpfa.toSliceConst(), minP, maxP);
-      cond_tpfa = maxP / minP;
-      std::cout << "TPFA: SPD="<<spd<<" cond~="<<cond_tpfa<<"\n";
-
-      spd = cholCheck(T_q.toSliceConst(), minP, maxP);
-      cond_qtpfa = maxP/minP;
-      std::cout << "QTPFA: SPD="<<spd<<" cond~="<<cond_qtpfa<<"\n";
-
-      spd = cholCheck(T_s.toSliceConst(), minP, maxP);
-      cond_simple = maxP/minP;
-      std::cout << "Simple: SPD="<<spd<<" cond~="<<cond_simple<<"\n";
-
-      spd = cholCheck(T_b.toSliceConst(), minP, maxP);
-      cond_bdvlm = maxP/minP;
-      std::cout << "BdVLM: SPD="<<spd<<" cond~="<<cond_bdvlm<<"\n";
-    }
-
-//    fout << eps << "," << volRatio << ","  << rms_affine << ","
-//         << cond_tpfa << "," << cond_qtpfa << ","
-//         << cond_simple << "," << cond_bdvlm << "\n";
+  elemTofaces.resize(6);
+  for( int i = 0; i < 6; ++i)
+  {
+      elemTofaces(i) = i;
   }
 
-//  fout.close();
+  // compute cell center and volume
+  array1d< localIndex > order;
+  order.resize(8);
+  order(0) = 0;
+  order(1) = 4;
+  order(2) = 2;
+  order(3) = 6;
+  order(4) = 1;
+  order(5) = 5;
+  order(6) = 3;
+  order(7) = 7;
+    
+  real64 X[8][3]; center[0] = center[1] = center[2] = 0;
+  for( int a = 0; a < 8; ++a )
+  {
+    X[a][0] = node(order(a),0);
+    X[a][1] = node(order(a),1);
+    X[a][2] = node(order(a),2);
+    center[0] += X[a][0];
+    center[1] += X[a][1];
+    center[2] += X[a][2];
+  }
+    
+  vol = hexahedronVolume(X);
+  center[0] /= 8.0;
+  center[1] /= 8.0;
+  center[2] /= 8.0;
+}
+
+// return the x-coordinate of the face centroid
+static inline real64 faceCenter( FaceManager::NodeMapType const& faceTonode,
+                                  array2d< real64, nodes::REFERENCE_POSITION_PERM > const & node,
+                                  localIndex f )
+{
+  real64 fc[3], fn[3];
+  // compute centroid fc and normal fn of face f using node positions
+  centroid_3DPolygon(faceTonode[f], node.toViewConst(), fc, fn);
+    
+  // return x-coordinate of face centroid
+  return fc[0];
+}
+
+// find the index of the face whose centroid's x-coordinate is closest to the given reference X (xRef)
+static inline localIndex getFaceByCenter( FaceManager::NodeMapType const & faceTonode,
+                                           array2d< real64, nodes::REFERENCE_POSITION_PERM > const & node,
+                                           double xRef,
+                                           double eps = 1e-12)
+{
+  real64 fc[3], fn[3];
+    
+  // exact match within tolerance
+  for( localIndex f = 0; f < faceTonode.size(); ++f )
+  {
+    centroid_3DPolygon(faceTonode[f], node.toViewConst(), fc, fn);
+      
+    if( std::abs(fc[0] - xRef) <= eps )
+        return f;
+  }
+ 
+  // find closest match if no face within tolerance
+  localIndex best = -1;
+  double bestAbs = 1e10;
+  for( localIndex f = 0; f < faceTonode.size(); ++f )
+  {
+    centroid_3DPolygon(faceTonode[f], node.toViewConst(), fc, fn);
+    double d = std::abs(fc[0] - xRef);
+      
+    if( d < bestAbs )
+    {
+        bestAbs = d;
+        best = f;
+    }
+  }
+
+  // return index of face closest to reference X
+  return best;
+}
+
+// return the sum of all entries in row r of matrix T
+static inline real64 rowSum( arraySlice2d< real64 const > T,
+                             localIndex row)
+{
+    real64 sum = 0;
+    
+    // iterate over columns
+    for( localIndex j = 0; j < T.size(1); ++j )
+    {
+        sum += T(row,j);
+    }
+    
+    return sum;
+}
+
+template<int NF>
+static double computeLinearPressure_error( int ipKind,
+                                           bool flag = false )
+{
+  // 1) create two unit cubes and initialize geometry data
+  array2d< real64, nodes::REFERENCE_POSITION_PERM > node_L;
+  array2d< real64, nodes::REFERENCE_POSITION_PERM > node_R;
+  FaceManager::NodeMapType faceTonode_L;
+  FaceManager::NodeMapType faceTonode_R;
+  array1d< localIndex > elemToface_L;
+  array1d< localIndex > elemToface_R;
+  real64 center_L[3], center_R[3], vol_L = 0, vol_R = 0;
+    
+  makeUnitCube(0.0, node_L, faceTonode_L, elemToface_L, center_L, vol_L);
+  makeUnitCube(1.0, node_R, faceTonode_R, elemToface_R, center_R, vol_R);
+
+  // 2) identify key faces in the two-cell unit cube setup (interior x=1, Dirichlet at x=0,2)
+  // find the interior face index for left cell (at x = 1.0)
+  localIndex fL_int = getFaceByCenter(faceTonode_L, node_L, 1.0);
+  // find the interior face index for right cell (at x = 1.0)
+  localIndex fR_int = getFaceByCenter(faceTonode_R, node_R, 1.0);
+    
+  // detect if faces of the left and right cell lie on the Dirichlet boundary
+  auto isDirL = [&](localIndex f){ return std::abs( faceCenter(faceTonode_L,node_L,f) - 0.0 ) < 1e-12; };
+  auto isDirR = [&](localIndex f){ return std::abs( faceCenter(faceTonode_R,node_R,f) - 2.0 ) < 1e-12; };
+
+  // 3) compute the transmissibility matrix T (for now K=I)
+  constexpr real64 ltol = 1e-12;
+  real64 Kvec[3] = {1,1,1};
+  stackArray2d< real64, NF * NF > TL(NF,NF);
+  stackArray2d< real64, NF * NF > TR(NF,NF);
+    
+  stackArray1d< real64,3 > cLc(3);
+  stackArray1d< real64,3 > cRc(3);
+    
+  array1d< real64 > mult(NF);
+  mult.setValues< parallelHostPolicy >(1.0);
+  
+  for( int d = 0; d < 3; ++d )
+  {
+      cLc[d] = center_L[d];
+      cRc[d] = center_R[d];
+  }
+
+  // compute T by inner products (tpfa, qtpfa, simple, bdvlm)
+  if ( ipKind == InnerProductType::TPFA )
+  {
+    TPFAInnerProduct::compute< NF >( node_L.toViewConst(),
+                                     mult.toViewConst(),
+                                     faceTonode_L.toViewConst(),
+                                     elemToface_L.toSliceConst(),
+                                     cLc, vol_L, Kvec, ltol, TL.toSlice() );
+    TPFAInnerProduct::compute< NF >( node_R.toViewConst(),
+                                     mult.toViewConst(),
+                                     faceTonode_R.toViewConst(),
+                                     elemToface_R.toSliceConst(),
+                                     cRc, vol_R, Kvec, ltol, TR.toSlice() );
+  }
+  else if ( ipKind == InnerProductType::QUASI_TPFA )
+  {
+    QuasiTPFAInnerProduct::compute< NF >( node_L.toViewConst(),
+                                        mult.toViewConst(),
+                                        faceTonode_L.toViewConst(),
+                                        elemToface_L.toSliceConst(),
+                                        cLc, vol_L, Kvec, ltol, TL.toSlice() );
+    QuasiTPFAInnerProduct::compute< NF >( node_R.toViewConst(),
+                                          mult.toViewConst(),
+                                          faceTonode_R.toViewConst(),
+                                          elemToface_R.toSliceConst(),
+                                          cRc, vol_R, Kvec, ltol, TR.toSlice() );
+  }
+  else if ( ipKind == InnerProductType::SIMPLE )
+  {
+    SimpleInnerProduct::compute< NF >( node_L.toViewConst(),
+                                       mult.toViewConst(),
+                                       faceTonode_L.toViewConst(),
+                                       elemToface_L.toSliceConst(),
+                                       cLc, vol_L, Kvec, ltol, TL.toSlice() );
+    SimpleInnerProduct::compute< NF >( node_R.toViewConst(),
+                                       mult.toViewConst(),
+                                       faceTonode_R.toViewConst(),
+                                       elemToface_R.toSliceConst(),
+                                       cRc, vol_R, Kvec, ltol, TR.toSlice() );
+  }
+  else if ( ipKind == InnerProductType::BDVLM )
+  {
+    BdVLMInnerProduct::compute< NF >( node_L.toViewConst(),
+                                      mult.toViewConst(),
+                                      faceTonode_L.toViewConst(),
+                                      elemToface_L.toSliceConst(),
+                                      cLc, vol_L, Kvec, ltol, TL.toSlice() );
+    BdVLMInnerProduct::compute< NF >( node_R.toViewConst(),
+                                      mult.toViewConst(),
+                                      faceTonode_R.toViewConst(),
+                                      elemToface_R.toSliceConst(),
+                                      cRc, vol_R, Kvec, ltol, TR.toSlice() );
+  } else
+  {
+    if ( flag )
+    {
+        std::cout << "Unknown inner product type\n";
+    }
+    return std::numeric_limits<double>::infinity();
+  }
+
+  // 4) assemble 3x3 coefficients
+  auto assemble_cell = [&]( arraySlice2d< real64 const > T,
+                            FaceManager::NodeMapType const & faceTonode,
+                            array2d< real64, nodes::REFERENCE_POSITION_PERM > const & node,
+                            localIndex fInt,
+                            bool leftCell,
+                            real64 & a,
+                            real64 & alpha,
+                            real64 & r )
+  {
+    a = alpha = r = 0.0;
+      
+    for( localIndex i = 0; i < NF; ++i )
+    {
+      bool isDir = leftCell ? isDirL(i) : isDirR(i);
+        
+      if( !isDir && i != fInt )
+      {
+          continue; // exclude Neumann boundary
+      }
+        
+      a += rowSum(T,i);
+      alpha += T(i,fInt);
+        
+      for( localIndex j = 0; j < NF; ++j )
+      {
+        if( j == fInt )
+        {
+            continue;
+        }
+        bool jDir = leftCell ? isDirL(j) : isDirR(j);
+          
+        if( jDir )
+        {
+            r += T(i,j) * faceCenter(faceTonode, node, j); // p_b = x_face
+        }
+      }
+        
+    }
+  };
+
+  auto sum_from_face_row = [&]( arraySlice2d< real64 const > T,
+                                FaceManager::NodeMapType const & faceToNode,
+                                array2d< real64, nodes::REFERENCE_POSITION_PERM > const & node,
+                                localIndex fInt, bool leftCell) -> real64
+  {
+    real64 sum = 0;
+      
+    for( localIndex j = 0; j < NF; ++j )
+    {
+      bool jDir = leftCell ? isDirL(j) : isDirR(j);
+      if( jDir )
+      {
+          sum += T(fInt,j) * faceCenter(faceToNode, node, j);
+      }
+    }
+    return sum;
+  };
+
+  real64 aL, alphaL, rL, aR, alphaR, rR;
+  assemble_cell(TL.toSliceConst(), faceTonode_L, node_L, fL_int, true , aL, alphaL, rL);
+  assemble_cell(TR.toSliceConst(), faceTonode_R, node_R, fR_int, false, aR, alphaR, rR);
+
+  real64 betaL = rowSum(TL.toSliceConst(), fL_int);
+  real64 betaR = rowSum(TR.toSliceConst(), fR_int);
+  real64 gamma = TL(fL_int, fL_int) + TR(fR_int, fR_int);
+  real64 boundary_sum = sum_from_face_row(TL.toSliceConst(), faceTonode_L, node_L, fL_int, true)
+                    + sum_from_face_row(TR.toSliceConst(), faceTonode_R, node_R, fR_int, false);
+
+  // 5) solve 3x3
+  real64 A11 = aL, A22 = aR, A13 = -alphaL, A23 = -alphaR, A31 = betaL, A32 = betaR, A33 = -gamma;
+  real64 b1 = rL, b2 = rR, b3 = boundary_sum;
+
+  real64 denom = A33 - A31 * A13 / A11 - A32 * A23 / A22;
+  real64 lambdaI = ( b3 - A31 * (b1 / A11) - A32 * (b2 / A22) ) / denom;
+  real64 pL = (b1 - A13 * lambdaI) / A11;
+  real64 pR = (b2 - A23 * lambdaI) / A22;
+
+  // 6) error vs exact p(x)=x (centers 0.5, 1.5)
+  double err = std::max( std::abs(pL - 0.5), std::abs(pR - 1.5) );
+  if (flag) {
+    std::cout << "ipKind=" << ipKind << "  pL=" << pL << " pR=" << pR
+              << "  err=" << err << std::endl;
+  }
+    
+  return err;
+}
+
+TEST( MimeticIP_Linear, UnitCube_TwoCells_LinearPressure_TPFA )
+{
+  double err = computeLinearPressure_error< 6 >( InnerProductType::TPFA );
+  EXPECT_LT(err, 1e-12);
+}
+
+TEST( MimeticIP_Linear, UnitCube_TwoCells_LinearPressure_QuasiTPFA )
+{
+  double err = computeLinearPressure_error< 6 >( InnerProductType::QUASI_TPFA );
+  EXPECT_LT(err, 1e-12);
+}
+
+TEST( MimeticIP_Linear, UnitCube_TwoCells_LinearPressure_Simple )
+{
+  double err = computeLinearPressure_error< 6 >( InnerProductType::SIMPLE );
+  EXPECT_LT(err, 1e-12);
+}
+
+TEST( MimeticIP_Linear, UnitCube_TwoCells_LinearPressure_BdVLM )
+{
+  double err = computeLinearPressure_error< 6 >( InnerProductType::BDVLM );
+  EXPECT_LT(err, 1e-12);
 }
 
 int main( int argc, char * * argv )
