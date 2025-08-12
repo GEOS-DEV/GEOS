@@ -11,11 +11,11 @@ InvariantImmiscibleFluid::InvariantImmiscibleFluid( string const & name, Group *
   : MultiFluidBase( name, parent )
 {
   // Override input flags for mandatory options
-
+  
   registerWrapper( viewKeyStruct::componentNamesString(), &m_componentNames )
     .setInputFlag( dataRepository::InputFlags::REQUIRED )
     .setDescription( "List of fluid components (e.g. CH4, H2O, C5H12)" );
-
+  
   registerWrapper( viewKeyStruct::phaseNamesString(), &m_phaseNames )
     .setInputFlag( dataRepository::InputFlags::REQUIRED )
     .setDescription( "List of fluid phases (e.g. gas, water, oil)" );
@@ -59,6 +59,7 @@ void InvariantImmiscibleFluid::postInputInitialization()
                         GEOS_FMT( "%s: 'Viscosities' must have %d values", getFullName(), numPhase ), InputError );
 }
 
+GEOS_HOST_DEVICE
 InvariantImmiscibleFluid::KernelWrapper InvariantImmiscibleFluid::createKernelWrapper() const
 {
   return KernelWrapper(
@@ -85,32 +86,11 @@ void InvariantImmiscibleFluid::update( localIndex const k,
                                        real64 const temperature,
                                        arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & composition ) const
 {
-#ifndef GEOS_USE_DEVICE_CODE
-  // Create a kernel wrapper for this fluid model
+  // Create a kernel wrapper for this fluid model (works on both host and device)
   KernelWrapper kernelWrapper = createKernelWrapper();
 
   // Call the kernel wrapper's update method
   kernelWrapper.update( k, q, pressure, temperature, composition );
-#else
-  // For device code path, create kernel wrapper directly using member data
-  KernelWrapper kernelWrapper(
-    m_densities.toViewConst(),
-    m_viscosities.toViewConst(),
-    m_componentMolarWeight.toViewConst(),
-    m_useMass,
-    const_cast< MultiFluidBase::PhaseProp & >(m_phaseFraction).toView(),
-    const_cast< MultiFluidBase::PhaseProp & >(m_phaseDensity).toView(),
-    const_cast< MultiFluidBase::PhaseProp & >(m_phaseMassDensity).toView(),
-    const_cast< MultiFluidBase::PhaseProp & >(m_phaseViscosity).toView(),
-    const_cast< MultiFluidBase::PhaseProp & >(m_phaseEnthalpy).toView(),
-    const_cast< MultiFluidBase::PhaseProp & >(m_phaseInternalEnergy).toView(),
-    const_cast< MultiFluidBase::PhaseComp & >(m_phaseCompFraction).toView(),
-    const_cast< MultiFluidBase::FluidProp & >(m_totalDensity).toView()
-    );
-
-  // Call the kernel wrapper's update method
-  kernelWrapper.update( k, q, pressure, temperature, composition );
-#endif
 }
 
 void InvariantImmiscibleFluid::checkTablesParameters( real64 pressure, real64 temperature ) const
@@ -137,7 +117,7 @@ void InvariantImmiscibleFluid::KernelWrapper::compute( real64 const pressure,
   GEOS_UNUSED_VAR( pressure, temperature );
 
   using Deriv = constitutive::multifluid::DerivativeOffset;
-
+  
   integer nPhase = phaseDensity.value.size();
   integer nComp = phaseCompFraction.value.size( 1 );
 
@@ -150,7 +130,7 @@ void InvariantImmiscibleFluid::KernelWrapper::compute( real64 const pressure,
     {
       phaseFraction.derivs[ip][Deriv::dC+ic] = (ip == ic) ? 1.0 : 0.0;
     }
-
+      
     // densities and viscosities constant
     real64 const mult = m_useMass ? 1.0 : 1.0 / m_componentMolarWeight[ip];
     phaseDensity.value[ip] = m_densities[ip] * mult;
