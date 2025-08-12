@@ -705,6 +705,12 @@ protected:
                                Vector const & vecRight ) = 0;
 
   /**
+   * @brief Compute left and right scaling vectors for diagonal scaling.
+   * @param scaling Vector to be filled with scaling factors.
+   */
+  virtual void computeScalingVector( Vector & scaling ) const = 0;
+
+  /**
    * @brief Rescales selected rows of matrix using row sum reciprocal as a factor.
    * @param rowIndices global indicies of rows to scale (all must be locally owned)
    * @param rowSumType type of row sums to use as scaling factors
