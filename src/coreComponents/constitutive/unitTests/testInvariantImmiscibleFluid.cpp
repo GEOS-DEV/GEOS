@@ -14,21 +14,19 @@
  */
 
 
-/**
- * @file testInvariantImmiscibleFluid.cpp
- * @brief Unit tests for InvariantImmiscibleFluid constitutive model
- *
- * Tests a three-phase (water/oil/gas) immiscible fluid model with constant properties:
- * - Phase densities: 1000/800/100 kg/m³
- * - Phase viscosities: 0.001/0.005/0.00002 Pa·s
- * - Component molar weights: 0.018/0.2/0.016 kg/mol
- *
- * Verifies:
- * - Phase property calculations (density, viscosity)
- * - Mass vs molar basis conversions
- * - Total density derivatives
- * - KernelWrapper compute function
- */
+// File: testInvariantImmiscibleFluid.cpp
+// Unit tests for InvariantImmiscibleFluid constitutive model
+//
+// Tests a three-phase (water/oil/gas) immiscible fluid model with constant properties:
+// - Phase densities: 1000/800/100 kg/m³
+// - Phase viscosities: 0.001/0.005/0.00002 Pa·s
+// - Component molar weights: 0.018/0.2/0.016 kg/mol
+//
+// Verifies:
+// - Phase property calculations (density, viscosity)
+// - Mass vs molar basis conversions
+// - Total density derivatives
+// - KernelWrapper compute function
 
 #include "FluidModelTest.hpp"
 #include "constitutive/fluid/multifluid/constant/InvariantImmiscibleFluid.hpp"
