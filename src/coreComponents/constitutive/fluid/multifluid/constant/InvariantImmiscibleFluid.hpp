@@ -231,26 +231,16 @@ void InvariantImmiscibleFluid::KernelWrapper::update( localIndex const k,
                                                       real64 const temperature,
                                                       arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & composition ) const
 {
-  // Create slice views of the member variables at cell k, quadrature point q
-  PhaseProp::SliceType phaseFractionSlice{m_phaseFraction.value[k][q], m_phaseFraction.derivs[k][q]};
-  PhaseProp::SliceType phaseDensitySlice{m_phaseDensity.value[k][q], m_phaseDensity.derivs[k][q]};
-  PhaseProp::SliceType phaseMassDensitySlice{m_phaseMassDensity.value[k][q], m_phaseMassDensity.derivs[k][q]};
-  PhaseProp::SliceType phaseViscositySlice{m_phaseViscosity.value[k][q], m_phaseViscosity.derivs[k][q]};
-  PhaseProp::SliceType phaseEnthalpySlice{m_phaseEnthalpy.value[k][q], m_phaseEnthalpy.derivs[k][q]};
-  PhaseProp::SliceType phaseInternalEnergySlice{m_phaseInternalEnergy.value[k][q], m_phaseInternalEnergy.derivs[k][q]};
-  PhaseComp::SliceType phaseCompFractionSlice{m_phaseCompFraction.value[k][q], m_phaseCompFraction.derivs[k][q]};
-  FluidProp::SliceType totalDensitySlice{m_totalDensity.value[k][q], m_totalDensity.derivs[k][q]};
-
-  // call compute with slice views
+  // Compute with slice views at cell k, quadrature point q
   compute( pressure, temperature, composition,
-           phaseFractionSlice,
-           phaseDensitySlice,
-           phaseMassDensitySlice,
-           phaseViscositySlice,
-           phaseEnthalpySlice,
-           phaseInternalEnergySlice,
-           phaseCompFractionSlice,
-           totalDensitySlice );
+           m_phaseFraction( k, q ),
+           m_phaseDensity( k, q ),
+           m_phaseMassDensity( k, q ),
+           m_phaseViscosity( k, q ),
+           m_phaseEnthalpy( k, q ),
+           m_phaseInternalEnergy( k, q ),
+           m_phaseCompFraction( k, q ),
+           m_totalDensity( k, q ) );
 }
 
 } // namespace constitutive
