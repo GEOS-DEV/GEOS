@@ -204,7 +204,7 @@ void SolidMechanicsLagrangeContact::initializePreSubGroups()
 
   if( m_useLocalYieldAcceleration )
   {
-    GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "{}: local yield acceleration enabled", getName() ) );
+    GEOS_LOG_LEVEL_RANK_0( logInfo::NonlinearSolver, GEOS_FMT( "{}: local yield acceleration enabled", getName() ) );
   }
 
 }
