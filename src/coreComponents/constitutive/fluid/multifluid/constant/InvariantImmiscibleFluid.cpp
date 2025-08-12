@@ -11,11 +11,11 @@ InvariantImmiscibleFluid::InvariantImmiscibleFluid( string const & name, Group *
   : MultiFluidBase( name, parent )
 {
   // Override input flags for mandatory options
-  
+
   registerWrapper( viewKeyStruct::componentNamesString(), &m_componentNames )
     .setInputFlag( dataRepository::InputFlags::REQUIRED )
     .setDescription( "List of fluid components (e.g. CH4, H2O, C5H12)" );
-  
+
   registerWrapper( viewKeyStruct::phaseNamesString(), &m_phaseNames )
     .setInputFlag( dataRepository::InputFlags::REQUIRED )
     .setDescription( "List of fluid phases (e.g. gas, water, oil)" );
@@ -117,7 +117,7 @@ void InvariantImmiscibleFluid::KernelWrapper::compute( real64 const pressure,
   GEOS_UNUSED_VAR( pressure, temperature );
 
   using Deriv = constitutive::multifluid::DerivativeOffset;
-  
+
   integer nPhase = phaseDensity.value.size();
   integer nComp = phaseCompFraction.value.size( 1 );
 
@@ -130,7 +130,7 @@ void InvariantImmiscibleFluid::KernelWrapper::compute( real64 const pressure,
     {
       phaseFraction.derivs[ip][Deriv::dC+ic] = (ip == ic) ? 1.0 : 0.0;
     }
-      
+
     // densities and viscosities constant
     real64 const mult = m_useMass ? 1.0 : 1.0 / m_componentMolarWeight[ip];
     phaseDensity.value[ip] = m_densities[ip] * mult;
