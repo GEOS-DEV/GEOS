@@ -224,9 +224,6 @@ TYPED_TEST( InvariantImmiscibleFluidTestFixture, PhaseProperties )
       real64 expectedDensity = (ip == 0) ? 1000.0/0.018 : (ip == 1) ? 800.0/0.2 : 100.0/0.016;
       EXPECT_NEAR( computedDensity, expectedDensity, this->absTol );
     }
-    
-
-
   }
 
   // Test phase viscosities
