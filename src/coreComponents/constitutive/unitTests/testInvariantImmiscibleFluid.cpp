@@ -40,6 +40,7 @@ namespace geos
 namespace testing
 {
 
+using CompSlice = arraySlice1d< real64 const, compflow::USD_COMP - 1 > const;
 using PhasePropSlice = MultiFluidBase::PhaseProp::SliceType;
 using PhaseCompSlice = MultiFluidBase::PhaseComp::SliceType;
 using FluidPropSlice = MultiFluidBase::FluidProp::SliceType;
@@ -180,7 +181,7 @@ public:
       composition[0] = 0.4;
       composition[1] = 0.3;
       composition[2] = 0.3;
-      const arraySlice1d< real64 const, compflow::USD_COMP - 1 > compositionSlice = composition.toSliceConst();
+      CompSlice compositionSlice = composition.toSliceConst();
       fluid.initializeState();
 
       // Create a test point
@@ -279,7 +280,7 @@ TYPED_TEST( InvariantImmiscibleFluidTestFixture, PhaseProperties )
   auto dtotalDensity = dtotalDensityData[0][0];
 
   // Create slices for the compute call
-  const arraySlice1d< real64 const, compflow::USD_COMP - 1 > compositionSlice = composition.toSliceConst();
+  CompSlice compositionSlice = composition.toSliceConst();
   PhasePropSlice phaseFractionSlice = PhasePropSlice( phaseFraction, dPhaseFraction );
   PhasePropSlice phaseDensitySlice = PhasePropSlice( phaseDensity, dPhaseDensity );
   PhasePropSlice phaseMassDensitySlice = PhasePropSlice( phaseMassDensity, dPhaseMassDensity );
@@ -404,7 +405,7 @@ TYPED_TEST( InvariantImmiscibleFluidTestFixture, TotalDensityDerivative )
   auto dtotalDensity = dtotalDensityData[0][0];
 
   // Create slices for the compute call
-  const arraySlice1d< real64 const, compflow::USD_COMP - 1 > compositionSlice = composition.toSliceConst();
+  CompSlice compositionSlice = composition.toSliceConst();
   PhasePropSlice phaseFractionSlice = PhasePropSlice( phaseFraction, dPhaseFraction );
   PhasePropSlice phaseDensitySlice = PhasePropSlice( phaseDensity, dPhaseDensity );
   PhasePropSlice phaseMassDensitySlice = PhasePropSlice( phaseMassDensity, dPhaseMassDensity );
