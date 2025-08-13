@@ -29,7 +29,7 @@
   </Geometry>
 
   <Events
-    maxTime="10">
+    maxTime="1">
     <PeriodicEvent
       name="outputs"
       cycleFrequency="1"
@@ -46,7 +46,7 @@
 
     <PeriodicEvent
       name="solverApplications"
-      forceDt="1"
+      forceDt="0.01"
       target="/Solvers/SinglePhaseReactiveFlow"/>
   </Events>
 

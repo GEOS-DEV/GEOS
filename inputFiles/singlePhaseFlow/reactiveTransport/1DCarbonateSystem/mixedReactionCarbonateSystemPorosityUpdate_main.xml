@@ -1,7 +1,5 @@
 <?xml version="1.0" ?>
 
-<!-- NOTE: I'm using different forward rate and reverse rate for this carbonate system -->
-
 <Problem>
   <Included>
     <File name="./mixedReactionCarbonateSystemPorosityUpdate_base.xml" />

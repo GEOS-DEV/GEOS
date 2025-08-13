@@ -13,6 +13,7 @@
       <NonlinearSolverParameters
         newtonTol="1.0e-4"
         maxTimeStepCuts="8"
+        maxSubSteps="20"
         newtonMaxIter="40"
         logLevel="2"
         maxAllowedResidualNorm="1e100"/>
