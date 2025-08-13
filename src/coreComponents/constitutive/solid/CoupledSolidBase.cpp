@@ -19,17 +19,6 @@
  */
 
 #include "CoupledSolidBase.hpp"
-#include "ElasticIsotropic.hpp"
-#include "ElasticTransverseIsotropic.hpp"
-#include "ElasticOrthotropic.hpp"
-#include "DelftEgg.hpp"
-#include "DruckerPrager.hpp"
-#include "DruckerPragerExtended.hpp"
-#include "DuvautLionsSolid.hpp"
-#include "Damage.hpp"
-#include "DamageSpectral.hpp"
-#include "DamageVolDev.hpp"
-#include "ModifiedCamClay.hpp"
 
 namespace geos
 {

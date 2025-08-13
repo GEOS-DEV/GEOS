@@ -18,6 +18,7 @@ Contains high-level unit tests that depends typically depends on mainInterface c
 ProblemManager.
 #]]
 
+add_subdirectory( tableFunctionsFileTests )
 add_subdirectory( toolchain )
 add_subdirectory( testingUtilities )
 add_subdirectory( xmlTests )

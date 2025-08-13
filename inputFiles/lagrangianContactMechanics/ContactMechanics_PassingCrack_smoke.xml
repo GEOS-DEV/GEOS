@@ -12,7 +12,6 @@
       name="lagrangiancontact"
       stabilizationName="TPFAstabilization"
       logLevel="1"
-      timeIntegrationOption="QuasiStatic"
       discretization="FE1"
       targetRegions="{ Region, Fracture }">
       <NonlinearSolverParameters

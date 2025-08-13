@@ -242,12 +242,18 @@ protected:
                       real64 const beta ) = 0;
 
   /**
-   * @brief Compute the component-wise multiplication <tt>y</tt> = <tt>v * x</tt>.
-   * @param x first vector (input)
-   * @param y second vector (output)
+   * @brief Element-wise multiplication of this vector with another vector.
+   * @param x Vector to multiply with.
+   * @note This modifies the current vector in place: this[i] *= x[i]
    */
-  virtual void pointwiseProduct( Vector const & x,
-                                 Vector & y ) const = 0;
+  virtual void pointwiseProduct( Vector const & x ) = 0;
+
+  /**
+   * @brief Element-wise division of this vector by another vector.
+   * @param x Vector to divide by.
+   * @note This modifies the current vector in place: this[i] /= x[i]
+   */
+  virtual void pointwiseDivide( Vector const & x ) = 0;
 
   /**
    * @brief 1-norm of the vector.
