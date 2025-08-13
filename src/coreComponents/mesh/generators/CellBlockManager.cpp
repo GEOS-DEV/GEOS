@@ -65,9 +65,9 @@ void convertFromCellBlockPairMap( ArrayOfArraysView< CellBlockIndexPair const > 
   toBlock.resizeFromOffsets( numObjects, srcMap.toViewConst().getOffsets() );
   toCell.resizeFromOffsets( numObjects, srcMap.toViewConst().getOffsets() );
 
-  forAll< parallelHostPolicy >( numObjects, [toBlock = toBlock.toView(),
-                                             toCell = toCell.toView(),
-                                             srcMap]( localIndex const objIndex )
+  forAll< POLICY >( numObjects, [toBlock = toBlock.toView(),
+                                 toCell = toCell.toView(),
+                                 srcMap]( localIndex const objIndex )
   {
     arraySlice1d< CellBlockIndexPair const > const cells = srcMap[ objIndex ];
     for( CellBlockIndexPair const & e : cells )
