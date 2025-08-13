@@ -190,7 +190,7 @@ public:
       flowSolver()->enableJumpStabilization();
     }
 
-    this->template forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
+    this->forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
                                                                      MeshLevel & mesh,
                                                                      string_array const & regionNames )
     {
@@ -444,7 +444,7 @@ protected:
                                               array1d< real64 > & averageMeanTotalStressIncrement )
   {
     averageMeanTotalStressIncrement.resize( 0 );
-    this->template forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
+    this->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                                 MeshLevel & mesh,
                                                                                 string_array const & regionNames )
     {
@@ -470,7 +470,7 @@ protected:
                                                         array1d< real64 > & averageMeanTotalStressIncrement )
   {
     integer i = 0;
-    this->template forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
+    this->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                                 MeshLevel & mesh,
                                                                                 string_array const & regionNames )
     {
