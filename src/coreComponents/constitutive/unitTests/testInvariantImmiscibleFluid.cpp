@@ -229,40 +229,65 @@ TYPED_TEST( InvariantImmiscibleFluidTestFixture, PhaseProperties )
   composition[1] = 0.3;
   composition[2] = 0.3;
 
-  // Prepare arrays for computed results
-  integer numPhases = 3;
-  integer numComponents = 3;
-  integer numDerivs = numComponents + 2; // P, T, and compositions
+  // Constants for StackArray sizes
+  constexpr integer numPhases = 3;
+  constexpr integer numComponents = 3;
+  constexpr integer numDerivs = numComponents + 2; // P, T, and compositions
 
-  array1d< real64 > phaseFractionValues( numPhases );
-  array2d< real64 > phaseFractionDerivs( numPhases, numDerivs );
-  array1d< real64 > phaseDensityValues( numPhases );
-  array2d< real64 > phaseDensityDerivs( numPhases, numDerivs );
-  array1d< real64 > phaseMassDensityValues( numPhases );
-  array2d< real64 > phaseMassDensityDerivs( numPhases, numDerivs );
-  array1d< real64 > phaseViscosityValues( numPhases );
-  array2d< real64 > phaseViscosityDerivs( numPhases, numDerivs );
-  array1d< real64 > phaseEnthalpyValues( numPhases );
-  array2d< real64 > phaseEnthalpyDerivs( numPhases, numDerivs );
-  array1d< real64 > phaseInternalEnergyValues( numPhases );
-  array2d< real64 > phaseInternalEnergyDerivs( numPhases, numDerivs );
-  array2d< real64 > phaseCompFractionValues( numPhases, numComponents );
-  array3d< real64 > phaseCompFractionDerivs( numPhases, numComponents, numDerivs );
-  real64 totalDensityValue;
+  // Use StackArray for CUDA compatibility
+  StackArray< real64, 3, numPhases, multifluid::LAYOUT_PHASE > phaseFractionData( 1, 1, numPhases );
+  StackArray< real64, 4, numPhases * numDerivs, multifluid::LAYOUT_PHASE_DC > dPhaseFractionData( 1, 1, numPhases, numDerivs );
+
+  StackArray< real64, 3, numPhases, multifluid::LAYOUT_PHASE > phaseDensityData( 1, 1, numPhases );
+  StackArray< real64, 4, numPhases * numDerivs, multifluid::LAYOUT_PHASE_DC > dPhaseDensityData( 1, 1, numPhases, numDerivs );
+
+  StackArray< real64, 3, numPhases, multifluid::LAYOUT_PHASE > phaseMassDensityData( 1, 1, numPhases );
+  StackArray< real64, 4, numPhases * numDerivs, multifluid::LAYOUT_PHASE_DC > dPhaseMassDensityData( 1, 1, numPhases, numDerivs );
+
+  StackArray< real64, 3, numPhases, multifluid::LAYOUT_PHASE > phaseViscosityData( 1, 1, numPhases );
+  StackArray< real64, 4, numPhases * numDerivs, multifluid::LAYOUT_PHASE_DC > dPhaseViscosityData( 1, 1, numPhases, numDerivs );
+
+  StackArray< real64, 3, numPhases, multifluid::LAYOUT_PHASE > phaseEnthalpyData( 1, 1, numPhases );
+  StackArray< real64, 4, numPhases * numDerivs, multifluid::LAYOUT_PHASE_DC > dPhaseEnthalpyData( 1, 1, numPhases, numDerivs );
+
+  StackArray< real64, 3, numPhases, multifluid::LAYOUT_PHASE > phaseInternalEnergyData( 1, 1, numPhases );
+  StackArray< real64, 4, numPhases * numDerivs, multifluid::LAYOUT_PHASE_DC > dPhaseInternalEnergyData( 1, 1, numPhases, numDerivs );
+
+  StackArray< real64, 4, numPhases * numComponents, multifluid::LAYOUT_PHASE_COMP > phaseCompFractionData( 1, 1, numPhases, numComponents );
+  StackArray< real64, 5, numPhases * numComponents * numDerivs, multifluid::LAYOUT_PHASE_COMP_DC > dPhaseCompFractionData( 1, 1, numPhases, numComponents, numDerivs );
+
+  real64 totalDensityValue = 0.0;
   array1d< real64 > totalDensityDerivs( numDerivs );
 
-  // Create slices
-  PhasePropSlice phaseFractionSlice = PhasePropSlice( phaseFractionValues, phaseFractionDerivs );
-  PhasePropSlice phaseDensitySlice = PhasePropSlice( phaseDensityValues, phaseDensityDerivs );
-  PhasePropSlice phaseMassDensitySlice = PhasePropSlice( phaseMassDensityValues, phaseMassDensityDerivs );
-  PhasePropSlice phaseViscositySlice = PhasePropSlice( phaseViscosityValues, phaseViscosityDerivs );
-  PhasePropSlice phaseEnthalpySlice = PhasePropSlice( phaseEnthalpyValues, phaseEnthalpyDerivs );
-  PhasePropSlice phaseInternalEnergySlice = PhasePropSlice( phaseInternalEnergyValues, phaseInternalEnergyDerivs );
-  PhaseCompSlice phaseCompFractionSlice = PhaseCompSlice( phaseCompFractionValues, phaseCompFractionDerivs );
-  FluidPropSlice totalDensitySlice = FluidPropSlice( totalDensityValue, totalDensityDerivs );
+  // Get views from StackArray
+  auto phaseFraction = phaseFractionData[0][0];
+  auto dPhaseFraction = dPhaseFractionData[0][0];
+  auto phaseDensity = phaseDensityData[0][0];
+  auto dPhaseDensity = dPhaseDensityData[0][0];
+  auto phaseMassDensity = phaseMassDensityData[0][0];
+  auto dPhaseMassDensity = dPhaseMassDensityData[0][0];
+  auto phaseViscosity = phaseViscosityData[0][0];
+  auto dPhaseViscosity = dPhaseViscosityData[0][0];
+  auto phaseEnthalpy = phaseEnthalpyData[0][0];
+  auto dPhaseEnthalpy = dPhaseEnthalpyData[0][0];
+  auto phaseInternalEnergy = phaseInternalEnergyData[0][0];
+  auto dPhaseInternalEnergy = dPhaseInternalEnergyData[0][0];
+  auto phaseCompFraction = phaseCompFractionData[0][0];
+  auto dPhaseCompFraction = dPhaseCompFractionData[0][0];
+
+  // Create slices for the compute call
+  PhasePropSlice phaseFractionSlice = PhasePropSlice( phaseFraction, dPhaseFraction );
+  PhasePropSlice phaseDensitySlice = PhasePropSlice( phaseDensity, dPhaseDensity );
+  PhasePropSlice phaseMassDensitySlice = PhasePropSlice( phaseMassDensity, dPhaseMassDensity );
+  PhasePropSlice phaseViscositySlice = PhasePropSlice( phaseViscosity, dPhaseViscosity );
+  PhasePropSlice phaseEnthalpySlice = PhasePropSlice( phaseEnthalpy, dPhaseEnthalpy );
+  PhasePropSlice phaseInternalEnergySlice = PhasePropSlice( phaseInternalEnergy, dPhaseInternalEnergy );
+  PhaseCompSlice phaseCompFractionSlice = PhaseCompSlice( phaseCompFraction, dPhaseCompFraction );
+  FluidPropSlice totalDensitySlice = FluidPropSlice( totalDensityValue, totalDensityDerivs.toSlice() );
 
   // Compute fluid properties
-  kernelWrapper.compute( 1.0e5, 300.0, composition,
+  kernelWrapper.compute( 1.0e5, 300.0,
+                         composition.toSliceConst(),
                          phaseFractionSlice,
                          phaseDensitySlice,
                          phaseMassDensitySlice,
@@ -276,10 +301,10 @@ TYPED_TEST( InvariantImmiscibleFluidTestFixture, PhaseProperties )
   for( integer ip = 0; ip < 3; ip++ )
   {
     real64 expectedMassDensity = (ip == 0) ? 1000.0 : (ip == 1) ? 800.0 : 100.0;
-    real64 computedMassDensity = phaseMassDensityValues[ip];
+    real64 computedMassDensity = phaseMassDensity[ip];
     EXPECT_NEAR( computedMassDensity, expectedMassDensity, this->absTol );
 
-    real64 computedDensity = phaseDensityValues[ip];
+    real64 computedDensity = phaseDensity[ip];
     if( useMassQ )
     {
       EXPECT_NEAR( computedDensity, expectedMassDensity, this->absTol );
@@ -295,7 +320,7 @@ TYPED_TEST( InvariantImmiscibleFluidTestFixture, PhaseProperties )
   for( integer ip = 0; ip < 3; ip++ )
   {
     real64 expectedViscosity = (ip == 0) ? 0.001 : (ip == 1) ? 0.005 : 0.00002;
-    EXPECT_NEAR( phaseViscosityValues[ip], expectedViscosity, this->absTol );
+    EXPECT_NEAR( phaseViscosity[ip], expectedViscosity, this->absTol );
   }
 
 }
@@ -328,6 +353,7 @@ TYPED_TEST( InvariantImmiscibleFluidTestFixture, TotalDensityDerivative )
 
   // Prepare slices for results
   integer numPhases = 3;
+  integer numComponents = 3;
   integer numDerivs = 5; // 3 components + P + T
   array1d< real64 > phaseFractionValues( numPhases );
   array2d< real64 > phaseFractionDerivs( numPhases, numDerivs );
@@ -341,24 +367,25 @@ TYPED_TEST( InvariantImmiscibleFluidTestFixture, TotalDensityDerivative )
   array2d< real64 > phaseEnthalpyDerivs( numPhases, numDerivs );
   array1d< real64 > phaseInternalEnergyValues( numPhases );
   array2d< real64 > phaseInternalEnergyDerivs( numPhases, numDerivs );
-  array2d< real64 > phaseCompFractionValues( numPhases, numPhases );
-  array3d< real64 > phaseCompFractionDerivs( numPhases, numPhases, numDerivs );
+  array2d< real64 > phaseCompFractionValues( numPhases, numComponents );
+  array3d< real64 > phaseCompFractionDerivs( numPhases, numComponents, numDerivs );
   real64 totalDensityValue = 0.0;
   array1d< real64 > totalDensityDerivs( numDerivs );
 
-  // Create slices
-  PhasePropSlice phaseFractionSlice = PhasePropSlice( phaseFractionValues, phaseFractionDerivs );
-  PhasePropSlice phaseDensitySlice = PhasePropSlice( phaseDensityValues, phaseDensityDerivs );
-  PhasePropSlice phaseMassDensitySlice = PhasePropSlice( phaseMassDensityValues, phaseMassDensityDerivs );
-  PhasePropSlice phaseViscositySlice = PhasePropSlice( phaseViscosityValues, phaseViscosityDerivs );
-  PhasePropSlice phaseEnthalpySlice = PhasePropSlice( phaseEnthalpyValues, phaseEnthalpyDerivs );
-  PhasePropSlice phaseInternalEnergySlice = PhasePropSlice( phaseInternalEnergyValues, phaseInternalEnergyDerivs );
-  PhaseCompSlice phaseCompFractionSlice = PhaseCompSlice( phaseCompFractionValues, phaseCompFractionDerivs );
-  FluidPropSlice totalDensitySlice = FluidPropSlice( totalDensityValue, totalDensityDerivs );
+
+
+  PhasePropSlice phaseFractionSlice = PhasePropSlice( phaseFractionValues.toSlice(), phaseFractionDerivs.toSlice() );
+  PhasePropSlice phaseDensitySlice = PhasePropSlice( phaseDensityValues.toSlice(), phaseDensityDerivs.toSlice() );
+  PhasePropSlice phaseMassDensitySlice = PhasePropSlice( phaseMassDensityValues.toSlice(), phaseMassDensityDerivs.toSlice() );
+  PhasePropSlice phaseViscositySlice = PhasePropSlice( phaseViscosityValues.toSlice(), phaseViscosityDerivs.toSlice() );
+  PhasePropSlice phaseEnthalpySlice = PhasePropSlice( phaseEnthalpyValues.toSlice(), phaseEnthalpyDerivs.toSlice() );
+  PhasePropSlice phaseInternalEnergySlice = PhasePropSlice( phaseInternalEnergyValues.toSlice(), phaseInternalEnergyDerivs.toSlice() );
+  PhaseCompSlice phaseCompFractionSlice = PhaseCompSlice( phaseCompFractionValues.toSlice(), phaseCompFractionDerivs.toSlice() );
+  FluidPropSlice totalDensitySlice = FluidPropSlice( totalDensityValue, totalDensityDerivs.toSlice() );
 
   // Call compute
   kernelWrapper.compute( 1.0e5, 300.0,
-                         composition.toSlice(),
+                         composition.toSliceConst(),
                          phaseFractionSlice,
                          phaseDensitySlice,
                          phaseMassDensitySlice,
