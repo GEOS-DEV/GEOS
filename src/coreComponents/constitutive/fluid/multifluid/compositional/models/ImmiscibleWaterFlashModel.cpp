@@ -68,6 +68,8 @@ ImmiscibleWaterFlashModel::createKernelWrapper() const
 
   CriticalVolume const * criticalVolume = m_parameters.get< CriticalVolume >();
 
+  FlashParameters const * flashParameters = m_parameters.get< FlashParameters >();
+
   return KernelWrapper( m_componentProperties.getNumberOfComponents(),
                         liquidIndex,
                         vapourIndex,
@@ -76,7 +78,9 @@ ImmiscibleWaterFlashModel::createKernelWrapper() const
                         liquidEos,
                         vapourEos,
                         salinity,
-                        criticalVolume->m_componentCriticalVolume );
+                        criticalVolume->m_componentCriticalVolume,
+                        flashParameters->m_continuousParameters,
+                        flashParameters->m_discreteParameters );
 }
 
 ImmiscibleWaterFlashModelUpdate::ImmiscibleWaterFlashModelUpdate(
@@ -88,14 +92,18 @@ ImmiscibleWaterFlashModelUpdate::ImmiscibleWaterFlashModelUpdate(
   EquationOfStateType const liquidEos,
   EquationOfStateType const vapourEos,
   real64 const salinity,
-  arrayView1d< real64 const > const componentCriticalVolume ):
+  arrayView1d< real64 const > const componentCriticalVolume,
+  arrayView1d< real64 const > const continuousFlashParameters,
+  arrayView1d< integer const > const discreteFlashParameters ):
   m_twoPhaseModel( numComponents,
                    liquidIndex,
                    vapourIndex,
                    liquidEos,
                    vapourEos,
                    salinity,
-                   componentCriticalVolume ),
+                   componentCriticalVolume,
+                   continuousFlashParameters,
+                   discreteFlashParameters ),
   m_numComponents( numComponents ),
   m_liquidIndex( liquidIndex ),
   m_vapourIndex( vapourIndex ),
