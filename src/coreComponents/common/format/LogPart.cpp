@@ -190,14 +190,13 @@ void LogPart::begin( std::ostream & os )
   if( !m_enableOutput )
     return;
 
-
   if( !m_startDescription.m_names.empty())
   {
     formatDescriptions( m_startDescription, m_formattedStartDescription );
   }
 
   string const line = string( m_width, m_borderCharacter );
-  os << '\n' << line;
+  os << line;
   os << outputTitle( m_formattedStartDescription );
   os << line << '\n';
   os << outputDescription( m_formattedStartDescription ) << '\n';
