@@ -40,6 +40,10 @@ namespace geos
 namespace testing
 {
 
+using PhasePropSlice = MultiFluidBase::PhaseProp::SliceType;
+using PhaseCompSlice = MultiFluidBase::PhaseComp::SliceType;
+using FluidPropSlice = MultiFluidBase::FluidProp::SliceType;
+
 // Base test fixture template for validation tests with configurable component/phase counts
 template< int NUM_COMPONENTS, int NUM_PHASES >
 class InvariantImmiscibleFluidValidationTestFixture : public FluidModelTest< InvariantImmiscibleFluid, NUM_COMPONENTS, NUM_PHASES >
@@ -248,14 +252,14 @@ TYPED_TEST( InvariantImmiscibleFluidTestFixture, PhaseProperties )
   array1d< real64 > totalDensityDerivs( numDerivs );
 
   // Create slices
-  MultiFluidBase::PhaseProp::SliceType phaseFractionSlice{phaseFractionValues, phaseFractionDerivs};
-  MultiFluidBase::PhaseProp::SliceType phaseDensitySlice{phaseDensityValues, phaseDensityDerivs};
-  MultiFluidBase::PhaseProp::SliceType phaseMassDensitySlice{phaseMassDensityValues, phaseMassDensityDerivs};
-  MultiFluidBase::PhaseProp::SliceType phaseViscositySlice{phaseViscosityValues, phaseViscosityDerivs};
-  MultiFluidBase::PhaseProp::SliceType phaseEnthalpySlice{phaseEnthalpyValues, phaseEnthalpyDerivs};
-  MultiFluidBase::PhaseProp::SliceType phaseInternalEnergySlice{phaseInternalEnergyValues, phaseInternalEnergyDerivs};
-  MultiFluidBase::PhaseComp::SliceType phaseCompFractionSlice{phaseCompFractionValues, phaseCompFractionDerivs};
-  MultiFluidBase::FluidProp::SliceType totalDensitySlice{totalDensityValue, totalDensityDerivs};
+  PhasePropSlice phaseFractionSlice = PhasePropSlice( phaseFractionValues, phaseFractionDerivs );
+  PhasePropSlice phaseDensitySlice = PhasePropSlice( phaseDensityValues, phaseDensityDerivs );
+  PhasePropSlice phaseMassDensitySlice = PhasePropSlice( phaseMassDensityValues, phaseMassDensityDerivs );
+  PhasePropSlice phaseViscositySlice = PhasePropSlice( phaseViscosityValues, phaseViscosityDerivs );
+  PhasePropSlice phaseEnthalpySlice = PhasePropSlice( phaseEnthalpyValues, phaseEnthalpyDerivs );
+  PhasePropSlice phaseInternalEnergySlice = PhasePropSlice( phaseInternalEnergyValues, phaseInternalEnergyDerivs );
+  PhaseCompSlice phaseCompFractionSlice = PhaseCompSlice( phaseCompFractionValues, phaseCompFractionDerivs );
+  FluidPropSlice totalDensitySlice = FluidPropSlice( totalDensityValue, totalDensityDerivs );
 
   // Compute fluid properties
   kernelWrapper.compute( 1.0e5, 300.0, composition,
@@ -342,17 +346,19 @@ TYPED_TEST( InvariantImmiscibleFluidTestFixture, TotalDensityDerivative )
   real64 totalDensityValue = 0.0;
   array1d< real64 > totalDensityDerivs( numDerivs );
 
-  MultiFluidBase::PhaseProp::SliceType phaseFractionSlice{phaseFractionValues, phaseFractionDerivs};
-  MultiFluidBase::PhaseProp::SliceType phaseDensitySlice{phaseDensityValues, phaseDensityDerivs};
-  MultiFluidBase::PhaseProp::SliceType phaseMassDensitySlice{phaseMassDensityValues, phaseMassDensityDerivs};
-  MultiFluidBase::PhaseProp::SliceType phaseViscositySlice{phaseViscosityValues, phaseViscosityDerivs};
-  MultiFluidBase::PhaseProp::SliceType phaseEnthalpySlice{phaseEnthalpyValues, phaseEnthalpyDerivs};
-  MultiFluidBase::PhaseProp::SliceType phaseInternalEnergySlice{phaseInternalEnergyValues, phaseInternalEnergyDerivs};
-  MultiFluidBase::PhaseComp::SliceType phaseCompFractionSlice{phaseCompFractionValues, phaseCompFractionDerivs};
-  MultiFluidBase::FluidProp::SliceType totalDensitySlice{totalDensityValue, totalDensityDerivs};
+  // Create slices
+  PhasePropSlice phaseFractionSlice = PhasePropSlice( phaseFractionValues, phaseFractionDerivs );
+  PhasePropSlice phaseDensitySlice = PhasePropSlice( phaseDensityValues, phaseDensityDerivs );
+  PhasePropSlice phaseMassDensitySlice = PhasePropSlice( phaseMassDensityValues, phaseMassDensityDerivs );
+  PhasePropSlice phaseViscositySlice = PhasePropSlice( phaseViscosityValues, phaseViscosityDerivs );
+  PhasePropSlice phaseEnthalpySlice = PhasePropSlice( phaseEnthalpyValues, phaseEnthalpyDerivs );
+  PhasePropSlice phaseInternalEnergySlice = PhasePropSlice( phaseInternalEnergyValues, phaseInternalEnergyDerivs );
+  PhaseCompSlice phaseCompFractionSlice = PhaseCompSlice( phaseCompFractionValues, phaseCompFractionDerivs );
+  FluidPropSlice totalDensitySlice = FluidPropSlice( totalDensityValue, totalDensityDerivs );
 
   // Call compute
-  kernelWrapper.compute( 1.0e5, 300.0, composition,
+  kernelWrapper.compute( 1.0e5, 300.0,
+                         composition.toSlice(),
                          phaseFractionSlice,
                          phaseDensitySlice,
                          phaseMassDensitySlice,
