@@ -191,8 +191,8 @@ public:
     }
 
     this->forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
-                                                                     MeshLevel & mesh,
-                                                                     string_array const & regionNames )
+                                                            MeshLevel & mesh,
+                                                            string_array const & regionNames )
     {
       ElementRegionManager & elemManager = mesh.getElemManager();
 
