@@ -83,6 +83,7 @@ public:
     static constexpr char const * stabilityToleranceString() { return "stabilityTolerance"; }
     static constexpr char const * ssiToleranceString() { return "ssiTolerance"; }
     static constexpr char const * stabilityMaxIterationsString() { return "stabilityMaxIterations"; }
+    static constexpr char const * negativeFlashToleranceString() { return "negativeFlashTolerance"; }
   };
 
   array1d< real64 > m_continuousParameters;
