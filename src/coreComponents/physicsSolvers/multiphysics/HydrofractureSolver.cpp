@@ -25,11 +25,11 @@
 #include "physicsSolvers/multiphysics/HydrofractureSolverKernels.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsFields.hpp"
 #include "physicsSolvers/multiphysics/SinglePhasePoromechanics.hpp"
-#include "physicsSolvers/multiphysics/MultiphasePoromechanics.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
 #include "physicsSolvers/LogLevelsInfo.hpp"
 #include "mesh/MeshFields.hpp"
 #include "finiteVolume/FluxApproximationBase.hpp"
+#include "physicsSolvers/solidMechanics/contact/ContactFields.hpp"
 
 namespace geos
 {
@@ -111,6 +111,19 @@ template< typename POROMECHANICS_SOLVER >
 void HydrofractureSolver< POROMECHANICS_SOLVER >::registerDataOnMesh( dataRepository::Group & meshBodies )
 {
   Base::registerDataOnMesh( meshBodies );
+
+  forDiscretizationOnMeshTargets( meshBodies, [&]( string const,
+                                                   MeshLevel & mesh,
+                                                   string_array const & )
+  {
+    ElementRegionManager & elemManager = mesh.getElemManager();
+
+    elemManager.forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
+    {
+      subRegion.registerField< fields::contact::fractureState >( this->getName());
+      subRegion.registerField< fields::contact::oldFractureState >( this->getName());
+    } );
+  } );
 
 #ifdef GEOS_USE_SEPARATION_COEFFICIENT
   meshBodies.forSubGroups< MeshBody >( [&] ( MeshBody & meshBody )
@@ -342,6 +355,7 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::updateHydraulicApertureAndFrac
     arrayView1d< real64 > const deltaVolume = subRegion.getField< flow::deltaVolume >();
     arrayView1d< real64 const > const area = subRegion.getElementArea();
     arrayView2d< localIndex const > const elemsToFaces = subRegion.faceList().toViewConst();
+    arrayView1d< integer > const fractureState = subRegion.getField< contact::fractureState >();
 
     string const porousSolidName = subRegion.template getReference< string >( FlowSolverBase::viewKeyStruct::solidNamesString() );
     CoupledSolidBase const & porousSolid = subRegion.template getConstitutiveModel< CoupledSolidBase >( porousSolidName );
@@ -379,6 +393,7 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::updateHydraulicApertureAndFrac
                                                                       volume,
                                                                       deltaVolume,
                                                                       aperture,
+                                                                      fractureState,
                                                                       hydraulicAperture
 #ifdef GEOS_USE_SEPARATION_COEFFICIENT
                                                                       ,
@@ -948,6 +963,8 @@ assembleFluidMassResidualDerivativeWrtDisplacement( DomainPartition const & doma
       arrayView1d< real64 const > const aperture = subRegion.getElementAperture();
       arrayView1d< real64 const > const area = subRegion.getElementArea();
 
+      arrayView1d< integer const > const fractureState = subRegion.getField< fields::contact::fractureState >();
+
       arrayView2d< localIndex const > const elemsToFaces = subRegion.faceList().toViewConst();
       ArrayOfArraysView< localIndex const > const faceToNodeMap = faceManager.nodeList().toViewConst();
 
@@ -968,6 +985,7 @@ assembleFluidMassResidualDerivativeWrtDisplacement( DomainPartition const & doma
                                             faceNormal,
                                             area,
                                             aperture,
+                                            fractureState,
                                             presDofNumber,
                                             dispDofNumber,
                                             dens,
@@ -1140,9 +1158,9 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::initializeNewFractureFields( r
     arrayView2d< real64 const > faceNormal = faceManager.faceNormal();
 
     solidMechanics::arrayView2dLayoutIncrDisplacement const incrementalDisplacement =
-      nodeManager.getField< fields::solidMechanics::incrementalDisplacement >();
+      nodeManager.getField< solidMechanics::incrementalDisplacement >();
     solidMechanics::arrayView2dLayoutTotalDisplacement const totalDisplacement =
-      nodeManager.getField< fields::solidMechanics::totalDisplacement >();
+      nodeManager.getField< solidMechanics::totalDisplacement >();
 
     elemManager.forElementRegions< SurfaceElementRegion >( regionNames,
                                                            [=] ( localIndex const,
@@ -1157,13 +1175,13 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::initializeNewFractureFields( r
 
         arrayView2d< localIndex const > const faceMap = subRegion.faceList().toViewConst();
 
-        arrayView1d< real64 > const fluidPressure_n = subRegion.getField< fields::flow::pressure_n >();
-        arrayView1d< real64 > const fluidPressure = subRegion.getField< fields::flow::pressure >();
+        arrayView1d< real64 > const fluidPressure_n = subRegion.getField< flow::pressure_n >();
+        arrayView1d< real64 > const fluidPressure = subRegion.getField< flow::pressure >();
         string const & fluidName = subRegion.getReference< string >( FlowSolverBase::viewKeyStruct::fluidNamesString() );
         SingleFluidBase const & fluid = subRegion.getConstitutiveModel< SingleFluidBase >( fluidName );
         real64 const defaultDensity = fluid.defaultDensity();
-        arrayView1d< real64 > const massCreated  = subRegion.getField< fields::flow::massCreated >();
-        arrayView1d< real64 > const fractureCreationTime = subRegion.getField< fields::flow::fractureCreationTime >();
+        arrayView1d< real64 > const massCreated  = subRegion.getField< flow::massCreated >();
+        arrayView1d< real64 > const fractureCreationTime = subRegion.getField< flow::fractureCreationTime >();
 
 
         arrayView1d< real64 > const aperture = subRegion.getField< fields::elementAperture >();
@@ -1309,8 +1327,6 @@ namespace
 {
 typedef HydrofractureSolver<> SinglePhaseHydrofracture;
 REGISTER_CATALOG_ENTRY( PhysicsSolverBase, SinglePhaseHydrofracture, string const &, Group * const )
-// typedef HydrofractureSolver< MultiphasePoromechanics<> > MultiphaseHydrofracture;
-// REGISTER_CATALOG_ENTRY( PhysicsSolverBase, MultiphaseHydrofracture, string const &, Group * const )
 }
 
 } /* namespace geos */

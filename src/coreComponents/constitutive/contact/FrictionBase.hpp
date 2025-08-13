@@ -21,6 +21,7 @@
 #define GEOS_CONSTITUTIVE_CONTACT_FRICTIONBASE_HPP_
 
 #include "constitutive/ConstitutiveBase.hpp"
+#include "physicsSolvers/solidMechanics/contact/FractureState.hpp"
 
 
 namespace geos
