@@ -1047,6 +1047,8 @@ TEST( testMimeticInnerProducts, BdVLMtetra )
 
 
 //======================== Linear Pressure Recovery Test =============================
+// Three cases: without distortion (unit cube cell), with distortion: (1) planar (2) nonplanar
+enum class DistortionMode { None, Planar, NonPlanar };
 
 static inline void makeUnitCube( double x_start,
                                  array2d< real64, nodes::REFERENCE_POSITION_PERM > & node,
@@ -1116,53 +1118,39 @@ static inline void makeUnitCube( double x_start,
   center[2] /= 8.0;
 }
 
-// return the x-coordinate of the face centroid
-static inline real64 faceCenter( FaceManager::NodeMapType const& faceTonode,
-                                  array2d< real64, nodes::REFERENCE_POSITION_PERM > const & node,
-                                  localIndex f )
+// create planar case for distortion test
+static inline void makeDistortedPlanar( array2d< real64, nodes::REFERENCE_POSITION_PERM > & nodeL,
+                                        array2d< real64, nodes::REFERENCE_POSITION_PERM > & nodeR,
+                                        FaceManager::NodeMapType const & faceL,
+                                        FaceManager::NodeMapType const & faceR,
+                                        real64 eps )
 {
-  real64 fc[3], fn[3];
-  // compute centroid fc and normal fn of face f using node positions
-  centroid_3DPolygon(faceTonode[f], node.toViewConst(), fc, fn);
-    
-  // return x-coordinate of face centroid
-  return fc[0];
+  // indicate shared face
+  localIndex const fL = 3, fR = 2;
+  // L face(3) node order: {1,5,7,3}
+  int Lvert1 = faceL(fL,2), Lvert2 = faceL(fL,3);
+  // R face(2) node order: {0,2,6,4}
+  int Rvert1 = faceR(fR,1), Rvert2 = faceR(fR,2);
+
+  nodeL(Lvert1,0) += eps;  nodeR(Rvert1,0) += eps;
+  nodeL(Lvert2,0) += eps;  nodeR(Rvert2,0) += eps;
 }
 
-// find the index of the face whose centroid's x-coordinate is closest to the given reference X (xRef)
-static inline localIndex getFaceByCenter( FaceManager::NodeMapType const & faceTonode,
-                                           array2d< real64, nodes::REFERENCE_POSITION_PERM > const & node,
-                                           double xRef,
-                                           double eps = 1e-12)
+// create nonplanar case for distortion test
+static inline void makeDistortedNonplanar( array2d< real64, nodes::REFERENCE_POSITION_PERM > & nodeL,
+                                           array2d< real64, nodes::REFERENCE_POSITION_PERM > & nodeR,
+                                           FaceManager::NodeMapType const & faceL,
+                                           FaceManager::NodeMapType const & faceR,
+                                           real64 eps )
 {
-  real64 fc[3], fn[3];
+  // indicate shared face
+  localIndex const fL = 3, fR = 2;
     
-  // exact match within tolerance
-  for( localIndex f = 0; f < faceTonode.size(); ++f )
-  {
-    centroid_3DPolygon(faceTonode[f], node.toViewConst(), fc, fn);
-      
-    if( std::abs(fc[0] - xRef) <= eps )
-        return f;
-  }
- 
-  // find closest match if no face within tolerance
-  localIndex best = -1;
-  double bestAbs = 1e10;
-  for( localIndex f = 0; f < faceTonode.size(); ++f )
-  {
-    centroid_3DPolygon(faceTonode[f], node.toViewConst(), fc, fn);
-    double d = std::abs(fc[0] - xRef);
-      
-    if( d < bestAbs )
-    {
-        bestAbs = d;
-        best = f;
-    }
-  }
+  int Lvert = faceL(fL,2);
+  int Rvert = faceR(fR,2);
 
-  // return index of face closest to reference X
-  return best;
+  nodeL(Lvert,0) += eps;
+  nodeR(Rvert,0) += eps;
 }
 
 // return the sum of all entries in row r of matrix T
@@ -1170,21 +1158,75 @@ static inline real64 rowSum( arraySlice2d< real64 const > T,
                              localIndex row)
 {
     real64 sum = 0;
-    
     // iterate over columns
     for( localIndex j = 0; j < T.size(1); ++j )
     {
-        sum += T(row,j);
+      sum += T(row,j);
     }
-    
     return sum;
 }
 
+// recompute volumn and center of distorted cell
+static inline void computeDistortedVolumeAndCenter( array2d< real64, nodes::REFERENCE_POSITION_PERM > const & node,
+                                                    real64 (& center)[3], real64 & vol )
+{
+  array1d< localIndex > order;
+  order.resize( 8 );
+  order(0) = 0;
+  order(1) = 4;
+  order(2) = 2;
+  order(3) = 6;
+  order(4) = 1;
+  order(5) = 5;
+  order(6) = 3;
+  order(7) = 7;
+
+  real64 X[8][3];
+  center[0] = center[1] = center[2] = 0.0;
+  for( int a = 0; a < 8; ++a )
+  {
+    X[a][0] = node(order(a),0);
+    X[a][1] = node(order(a),1);
+    X[a][2] = node(order(a),2);
+    center[0] += X[a][0];
+    center[1] += X[a][1];
+    center[2] += X[a][2];
+  }
+  vol = hexahedronVolume( X );
+  center[0] /= 8.0; center[1] /= 8.0; center[2] /= 8.0;
+}
+
+static inline bool isBoundaryFace( FaceManager::NodeMapType const & faceTonode,
+                                   array2d< real64, nodes::REFERENCE_POSITION_PERM > const & node,
+                                   localIndex f )
+{
+  real64 fc[3], fn[3];
+  centroid_3DPolygon(faceTonode[f], node.toViewConst(), fc, fn);
+  constexpr real64 tol = 1e-12;
+    
+  return (std::abs(fc[0] - 0.0) < tol) || (std::abs(fc[0] - 2.0) < tol) ||
+         (std::abs(fc[1] - 0.0) < tol) || (std::abs(fc[1] - 1.0) < tol) ||
+         (std::abs(fc[2] - 0.0) < tol) || (std::abs(fc[2] - 1.0) < tol);
+}
+
+// calculate pressures on cell boundary (for Dirichlet boundary condition)
+static inline real64 computeBoundaryPressure( FaceManager::NodeMapType const& faceTonode,
+                                              array2d< real64, nodes::REFERENCE_POSITION_PERM > const& node,
+                                              localIndex f,
+                                              real64 alpha )
+{
+  real64 fc[3], fn[3];
+  centroid_3DPolygon(faceTonode[f], node.toViewConst(), fc, fn);
+  return fc[0] + alpha * fc[1];
+}
+
+// calculate pressure values based on the transmissbility matrix T and compare against the analytical values
 template<int NF>
 static double computeLinearPressure_error( int ipKind,
+                                           DistortionMode mode = DistortionMode::None,
+                                           real64 eps = 0.0,
                                            bool flag = false )
 {
-  // 1) create two unit cubes and initialize geometry data
   array2d< real64, nodes::REFERENCE_POSITION_PERM > node_L;
   array2d< real64, nodes::REFERENCE_POSITION_PERM > node_R;
   FaceManager::NodeMapType faceTonode_L;
@@ -1192,39 +1234,43 @@ static double computeLinearPressure_error( int ipKind,
   array1d< localIndex > elemToface_L;
   array1d< localIndex > elemToface_R;
   real64 center_L[3], center_R[3], vol_L = 0, vol_R = 0;
-    
+
   makeUnitCube(0.0, node_L, faceTonode_L, elemToface_L, center_L, vol_L);
   makeUnitCube(1.0, node_R, faceTonode_R, elemToface_R, center_R, vol_R);
 
-  // 2) identify key faces in the two-cell unit cube setup (interior x=1, Dirichlet at x=0,2)
-  // find the interior face index for left cell (at x = 1.0)
-  localIndex fL_int = getFaceByCenter(faceTonode_L, node_L, 1.0);
-  // find the interior face index for right cell (at x = 1.0)
-  localIndex fR_int = getFaceByCenter(faceTonode_R, node_R, 1.0);
-    
-  // detect if faces of the left and right cell lie on the Dirichlet boundary
-  auto isDirL = [&](localIndex f){ return std::abs( faceCenter(faceTonode_L,node_L,f) - 0.0 ) < 1e-12; };
-  auto isDirR = [&](localIndex f){ return std::abs( faceCenter(faceTonode_R,node_R,f) - 2.0 ) < 1e-12; };
-
-  // 3) compute the transmissibility matrix T (for now K=I)
-  constexpr real64 ltol = 1e-12;
-  real64 Kvec[3] = {1,1,1};
-  stackArray2d< real64, NF * NF > TL(NF,NF);
-  stackArray2d< real64, NF * NF > TR(NF,NF);
-    
-  stackArray1d< real64,3 > cLc(3);
-  stackArray1d< real64,3 > cRc(3);
-    
-  array1d< real64 > mult(NF);
-  mult.setValues< parallelHostPolicy >(1.0);
-  
-  for( int d = 0; d < 3; ++d )
-  {
-      cLc[d] = center_L[d];
-      cRc[d] = center_R[d];
+  if( mode == DistortionMode::Planar ) {
+    makeDistortedPlanar(node_L, node_R, faceTonode_L, faceTonode_R, eps);
+  }
+  else if( mode == DistortionMode::NonPlanar ) {
+    makeDistortedNonplanar(node_L, node_R, faceTonode_L, faceTonode_R, eps);
   }
 
-  // compute T by inner products (tpfa, qtpfa, simple, bdvlm)
+  computeDistortedVolumeAndCenter(node_L, center_L, vol_L);
+  computeDistortedVolumeAndCenter(node_R, center_R, vol_R);
+    
+  // indicate the shared face
+  localIndex const fL_int = 3;
+  localIndex const fR_int = 2;
+
+  real64 alpha_lin = 0.3; // pressure = x * alpha_lin * y
+  auto isDirL = [&](localIndex f){ return isBoundaryFace(faceTonode_L, node_L, f); };
+  auto isDirR = [&](localIndex f){ return isBoundaryFace(faceTonode_R, node_R, f); };
+
+  // compute the transmissibility matrix T
+  constexpr real64 ltol = 1e-12;
+  real64 Kvec[3] = {4.0, 1.0, 0.5};
+  stackArray2d< real64, NF * NF > TL(NF,NF), TR(NF,NF);
+
+  stackArray1d< real64, 3 > cLc(3), cRc(3);
+  for( int d = 0; d < 3; ++d )
+  {
+    cLc[d] = center_L[d];
+    cRc[d] = center_R[d];
+  }
+
+  array1d< real64 > mult(NF);
+  mult.setValues< parallelHostPolicy >(1.0);
+
   if ( ipKind == InnerProductType::TPFA )
   {
     TPFAInnerProduct::compute< NF >( node_L.toViewConst(),
@@ -1241,10 +1287,10 @@ static double computeLinearPressure_error( int ipKind,
   else if ( ipKind == InnerProductType::QUASI_TPFA )
   {
     QuasiTPFAInnerProduct::compute< NF >( node_L.toViewConst(),
-                                        mult.toViewConst(),
-                                        faceTonode_L.toViewConst(),
-                                        elemToface_L.toSliceConst(),
-                                        cLc, vol_L, Kvec, ltol, TL.toSlice() );
+                                          mult.toViewConst(),
+                                          faceTonode_L.toViewConst(),
+                                          elemToface_L.toSliceConst(),
+                                          cLc, vol_L, Kvec, ltol, TL.toSlice() );
     QuasiTPFAInnerProduct::compute< NF >( node_R.toViewConst(),
                                           mult.toViewConst(),
                                           faceTonode_R.toViewConst(),
@@ -1276,125 +1322,145 @@ static double computeLinearPressure_error( int ipKind,
                                       faceTonode_R.toViewConst(),
                                       elemToface_R.toSliceConst(),
                                       cRc, vol_R, Kvec, ltol, TR.toSlice() );
-  } else
+  }
+  else
   {
-    if ( flag )
-    {
-        std::cout << "Unknown inner product type\n";
-    }
+    // sanity check for inner product type
+    if ( flag ) { std::cout << "Unknown inner product type\n"; }
+      
     return std::numeric_limits<double>::infinity();
   }
 
-  // 4) assemble 3x3 coefficients
-  auto assemble_cell = [&]( arraySlice2d< real64 const > T,
-                            FaceManager::NodeMapType const & faceTonode,
-                            array2d< real64, nodes::REFERENCE_POSITION_PERM > const & node,
-                            localIndex fInt,
-                            bool leftCell,
-                            real64 & a,
-                            real64 & alpha,
-                            real64 & r )
+  // assemble linear system to compute pressure values
+  auto assembleCell = [&]( arraySlice2d< real64 const > T,
+                           FaceManager::NodeMapType const & faceTonode,
+                           array2d< real64, nodes::REFERENCE_POSITION_PERM > const & node,
+                           localIndex fInt,
+                           bool leftCell,
+                           real64 & a, real64 & alpha, real64 & r )
   {
     a = alpha = r = 0.0;
-      
     for( localIndex i = 0; i < NF; ++i )
     {
       bool isDir = leftCell ? isDirL(i) : isDirR(i);
-        
-      if( !isDir && i != fInt )
-      {
-          continue; // exclude Neumann boundary
-      }
-        
+      if( !isDir && i != fInt ) continue;
       a += rowSum(T,i);
       alpha += T(i,fInt);
         
       for( localIndex j = 0; j < NF; ++j )
       {
-        if( j == fInt )
-        {
-            continue;
-        }
+        if( j == fInt ) continue;
         bool jDir = leftCell ? isDirL(j) : isDirR(j);
-          
-        if( jDir )
-        {
-            r += T(i,j) * faceCenter(faceTonode, node, j); // p_b = x_face
-        }
+          if( jDir ) r += T(i,j) * computeBoundaryPressure(faceTonode, node, j, alpha_lin);
       }
-        
     }
   };
 
-  auto sum_from_face_row = [&]( arraySlice2d< real64 const > T,
-                                FaceManager::NodeMapType const & faceToNode,
-                                array2d< real64, nodes::REFERENCE_POSITION_PERM > const & node,
-                                localIndex fInt, bool leftCell) -> real64
+  auto sumFaceRow = [&]( arraySlice2d< real64 const > T,
+                         FaceManager::NodeMapType const & faceToNode,
+                         array2d< real64, nodes::REFERENCE_POSITION_PERM > const & node,
+                         localIndex fInt, bool leftCell) -> real64
   {
     real64 sum = 0;
-      
     for( localIndex j = 0; j < NF; ++j )
     {
       bool jDir = leftCell ? isDirL(j) : isDirR(j);
-      if( jDir )
-      {
-          sum += T(fInt,j) * faceCenter(faceToNode, node, j);
-      }
+        if( jDir ) sum += T(fInt,j) * computeBoundaryPressure(faceToNode, node, j, alpha_lin);
     }
     return sum;
   };
 
   real64 aL, alphaL, rL, aR, alphaR, rR;
-  assemble_cell(TL.toSliceConst(), faceTonode_L, node_L, fL_int, true , aL, alphaL, rL);
-  assemble_cell(TR.toSliceConst(), faceTonode_R, node_R, fR_int, false, aR, alphaR, rR);
+  assembleCell(TL.toSliceConst(), faceTonode_L, node_L, fL_int, true , aL, alphaL, rL);
+  assembleCell(TR.toSliceConst(), faceTonode_R, node_R, fR_int, false, aR, alphaR, rR);
 
   real64 betaL = rowSum(TL.toSliceConst(), fL_int);
   real64 betaR = rowSum(TR.toSliceConst(), fR_int);
   real64 gamma = TL(fL_int, fL_int) + TR(fR_int, fR_int);
-  real64 boundary_sum = sum_from_face_row(TL.toSliceConst(), faceTonode_L, node_L, fL_int, true)
-                    + sum_from_face_row(TR.toSliceConst(), faceTonode_R, node_R, fR_int, false);
+  real64 boundary_sum = sumFaceRow(TL.toSliceConst(), faceTonode_L, node_L, fL_int, true)
+                      + sumFaceRow(TR.toSliceConst(), faceTonode_R, node_R, fR_int, false);
 
-  // 5) solve 3x3
   real64 A11 = aL, A22 = aR, A13 = -alphaL, A23 = -alphaR, A31 = betaL, A32 = betaR, A33 = -gamma;
   real64 b1 = rL, b2 = rR, b3 = boundary_sum;
 
   real64 denom = A33 - A31 * A13 / A11 - A32 * A23 / A22;
   real64 lambdaI = ( b3 - A31 * (b1 / A11) - A32 * (b2 / A22) ) / denom;
-  real64 pL = (b1 - A13 * lambdaI) / A11;
-  real64 pR = (b2 - A23 * lambdaI) / A22;
+  real64 pL = ( b1 - A13 * lambdaI ) / A11;
+  real64 pR = ( b2 - A23 * lambdaI ) / A22;
 
-  // 6) error vs exact p(x)=x (centers 0.5, 1.5)
-  double err = std::max( std::abs(pL - 0.5), std::abs(pR - 1.5) );
-  if (flag) {
-    std::cout << "ipKind=" << ipKind << "  pL=" << pL << " pR=" << pR
-              << "  err=" << err << std::endl;
-  }
+  // compute analytcal pressure values
+  double pL_exact = center_L[0] + alpha_lin * center_L[1];
+  double pR_exact = center_R[0] + alpha_lin * center_R[1];
+  double err = std::max( std::abs(pL - pL_exact), std::abs(pR - pR_exact) );
     
+  if (flag) {
+    std::cout << "ipType = "<< ipKind << " mode = " << (int) mode
+              << " pL = " << pL << " pR=" << pR
+              << " exact = (" << pL_exact << "," << pR_exact << ")"
+              << " err = " << err << std::endl;
+  }
   return err;
 }
 
-TEST( MimeticIP_Linear, UnitCube_TwoCells_LinearPressure_TPFA )
+// ================= case 0: without distortion ===========================
+TEST( MimeticIP_Linear, UnitCube_LinearPressure_TPFA )
 {
   double err = computeLinearPressure_error< 6 >( InnerProductType::TPFA );
-  EXPECT_LT(err, 1e-12);
+  EXPECT_LT(err, 1e-15);
 }
 
-TEST( MimeticIP_Linear, UnitCube_TwoCells_LinearPressure_QuasiTPFA )
+TEST( MimeticIP_Linear, UnitCube_LinearPressure_QuasiTPFA )
 {
   double err = computeLinearPressure_error< 6 >( InnerProductType::QUASI_TPFA );
-  EXPECT_LT(err, 1e-12);
+  EXPECT_LT(err, 1e-15);
 }
 
-TEST( MimeticIP_Linear, UnitCube_TwoCells_LinearPressure_Simple )
+TEST( MimeticIP_Linear, UnitCube_LinearPressure_Simple )
 {
   double err = computeLinearPressure_error< 6 >( InnerProductType::SIMPLE );
-  EXPECT_LT(err, 1e-12);
+  EXPECT_LT(err, 1e-15);
 }
 
-TEST( MimeticIP_Linear, UnitCube_TwoCells_LinearPressure_BdVLM )
+TEST( MimeticIP_Linear, UnitCube_LinearPressure_BdVLM )
 {
   double err = computeLinearPressure_error< 6 >( InnerProductType::BDVLM );
-  EXPECT_LT(err, 1e-12);
+  EXPECT_LT(err, 1e-15);
+}
+
+// =================== case 1: with distortion (planar) ===========================
+TEST( MimeticIP_Linear, Distortion_Planar_LinearPressure )
+{
+  constexpr double eps = 0.2; // level of distortion is adjustable
+
+  double errTPFA  = computeLinearPressure_error< 6 >( InnerProductType::TPFA, DistortionMode::Planar, eps );
+  EXPECT_LT( errTPFA, 1e-15 );
+
+  double errQTPFA = computeLinearPressure_error< 6 >( InnerProductType::QUASI_TPFA, DistortionMode::Planar, eps );
+  EXPECT_LT( errQTPFA, 1e-15 );
+    
+  double errSIMPLE= computeLinearPressure_error< 6 >( InnerProductType::SIMPLE, DistortionMode::Planar, eps );
+  EXPECT_LT( errSIMPLE, 1e-15 );
+   
+  double errBDVLM = computeLinearPressure_error< 6 >( InnerProductType::BDVLM, DistortionMode::Planar, eps );
+  EXPECT_LT( errBDVLM, 1e-15 );
+}
+
+// =================== case 2: with distortion (nonplanar) ===========================
+TEST( MimeticIP_Linear, Distortion_NonPlanar_LinearPresssure )
+{
+  constexpr double eps = 0.2; // level of distortion is adjustable
+
+  double errTPFA  = computeLinearPressure_error<6>( InnerProductType::TPFA, DistortionMode::NonPlanar, eps );
+  EXPECT_LT( errTPFA, 1e-15 );
+    
+  double errQTPFA = computeLinearPressure_error<6>( InnerProductType::QUASI_TPFA, DistortionMode::NonPlanar, eps );
+  EXPECT_LT( errQTPFA, 1e-15 );
+
+  double errSIMPLE= computeLinearPressure_error<6>( InnerProductType::SIMPLE, DistortionMode::NonPlanar, eps );
+  EXPECT_LT( errSIMPLE, 1e-15 );
+    
+  double errBDVLM = computeLinearPressure_error<6>( InnerProductType::BDVLM, DistortionMode::NonPlanar, eps );
+  EXPECT_LT( errBDVLM, 1e-15 );
 }
 
 int main( int argc, char * * argv )
