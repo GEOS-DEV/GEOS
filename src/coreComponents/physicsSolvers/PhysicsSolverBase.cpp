@@ -28,8 +28,8 @@
 
 #if defined(GEOS_USE_PYGEOSX)
 #include "python/PySolverType.hpp"
-#endif
 
+#endif
 namespace geos
 {
 
@@ -376,6 +376,9 @@ void PhysicsSolverBase::logEndOfCycleInformation( integer const cycleNumber,
 
   logpart.addEndDescription( "- substep dts ", logMessage.str() );
   logpart.end();
+
+  if( isLogLevelActive< logInfo::SolverExecutionDetails >( getLogLevel()))
+    m_solverStatistics.outputStatistics();
 }
 
 real64 PhysicsSolverBase::setNextDt( real64 const & GEOS_UNUSED_PARAM( currentTime ),

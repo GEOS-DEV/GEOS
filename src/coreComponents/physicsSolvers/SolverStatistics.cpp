@@ -155,5 +155,7 @@ void SolverStatistics::outputStatistics() const
       logStat( "discarded linear iterations", m_numDiscardedLinearIterations );
     }
   }
+
+  GEOS_LOG_RANK_0( "" ); // blank line for readability
 }
 } // namespace geos
