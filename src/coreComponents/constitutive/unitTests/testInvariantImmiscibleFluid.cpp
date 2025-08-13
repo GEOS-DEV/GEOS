@@ -185,9 +185,8 @@ public:
       real64 pressure = 1.0e5;    // Example pressure (Pa)
       real64 temperature = 300.0; // Example temperature (K)
 
-      // Update the fluid properties at this point - explicitly convert array1d to arraySlice1d for GPU compatibility
-      arraySlice1d< real64 const > compositionSlice = composition.toSliceConst();
-      this->getFluid().createKernelWrapper().update( k, q, pressure, temperature, compositionSlice );
+      // Update the fluid properties at this point
+      this->getFluid().createKernelWrapper().update( k, q, pressure, temperature, composition.toSlice() );
     } );
   }
 
