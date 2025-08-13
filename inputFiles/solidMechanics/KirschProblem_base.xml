@@ -136,7 +136,6 @@
   <Solvers gravityVector="{0.0, 0.0, 0.0}">
     <SolidMechanicsLagrangianFEM 
       name="mechanicsSolver" 
-      timeIntegrationOption="QuasiStatic"
       logLevel="1"
       discretization="FE1"
       targetRegions="{Omega}">
