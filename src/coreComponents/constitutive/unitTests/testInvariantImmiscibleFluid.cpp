@@ -40,7 +40,7 @@ namespace geos
 namespace testing
 {
 
-using CompSlice = arraySlice1d< real64 const, compflow::USD_COMP - 1 > const;
+using CompSlice = arraySlice1d< real64 const, compflow::USD_COMP - 1 >;
 using PhasePropSlice = MultiFluidBase::PhaseProp::SliceType;
 using PhaseCompSlice = MultiFluidBase::PhaseComp::SliceType;
 using FluidPropSlice = MultiFluidBase::FluidProp::SliceType;
@@ -132,7 +132,9 @@ public:
   static constexpr real64 absTol = 1.0e-10;
 
 public:
-  InvariantImmiscibleFluidTestFixture()
+  InvariantImmiscibleFluidTestFixture() = default;
+
+  void SetUp() override
   {
     Base::createFluid( "InvariantImmiscibleFluid", [this]( InvariantImmiscibleFluid & fluid ){
 
@@ -181,7 +183,14 @@ public:
       composition[0] = 0.4;
       composition[1] = 0.3;
       composition[2] = 0.3;
-      CompSlice compositionSlice = composition.toSliceConst();
+
+      arraySlice1d< real64 const, compflow::USD_COMP - 1 > compositionS( composition );
+      StackArray< real64, 3, 3, multifluid::LAYOUT_PHASE > compositionData( 1, 1, 3 );
+      auto composition_c = compositionData[0][0];
+      composition_c[0] = 0.4;
+      composition_c[1] = 0.3;
+      composition_c[2] = 0.3;
+      arraySlice1d< real64 const, compflow::USD_COMP - 1 > compositionSlice( composition_c.toSliceConst());
       fluid.initializeState();
 
       // Create a test point
