@@ -103,6 +103,9 @@ public:
                    real64 const & coupledShearResponseY1,
                    real64 const & coupledShearResponseY2,
                    real64 const & coupledShearResponseM1,
+                   real64 const & distortionStrainHardeningC0,
+                   real64 const & inPlaneStrainHardeningC0,
+                   real64 const & coupledStrainHardeningC0,
                    real64 const & maximumPlasticStrain,
                    arrayView1d< real64 > const & thermalExpansionCoefficient,
                    arrayView3d< real64, solid::STRESS_USD > const & newStress,
@@ -149,6 +152,9 @@ public:
     m_coupledShearResponseY1( coupledShearResponseY1 ),
     m_coupledShearResponseY2( coupledShearResponseY2 ),
     m_coupledShearResponseM1( coupledShearResponseM1 ),
+    m_distortionStrainHardeningC0( distortionStrainHardeningC0 ),
+    m_inPlaneStrainHardeningC0( inPlaneStrainHardeningC0 ),
+    m_coupledStrainHardeningC0( coupledStrainHardeningC0 ),
     m_maximumPlasticStrain( maximumPlasticStrain )
   {}
 
@@ -172,6 +178,11 @@ public:
 
   // Bring in base implementations to prevent hiding warnings
   using SolidBaseUpdates::smallStrainUpdate;
+
+  GEOS_HOST_DEVICE
+  real64 smoothStep(const real64 x,
+                              const real64 xmin,
+                              const real64 xmax) const;
 
   GEOS_HOST_DEVICE
   void smallStrainUpdate( localIndex const k,
@@ -366,9 +377,39 @@ private:
   real64 const m_coupledShearResponseY2;
   real64 const m_coupledShearResponseM1;
    
+  real64 const m_distortionStrainHardeningC0;
+  real64 const m_inPlaneStrainHardeningC0;
+  real64 const m_coupledStrainHardeningC0;
+  
   real64 const m_maximumPlasticStrain;
 
 };
+
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
+real64 GraphiteUpdates::smoothStep( const real64 x,
+                                         const real64 xmin,
+                                         const real64 xmax ) const
+{
+  // Smooth blending function from 0 to 1 as
+  // x goes from xmin to xmax.
+  //
+  // will fail if xmax=xmin, so don't do that.
+
+  if(x <= xmin)
+  {
+    return 0.0;
+  }
+  else if(x >= xmax)
+  {
+    return 1.0;
+  }
+  else
+  {
+    real64 xi = (x - xmin)/(xmax - xmin);
+    return (3.0*xi*xi - 2.0*xi*xi*xi );
+  }
+}
 
 
 GEOS_HOST_DEVICE
@@ -630,7 +671,8 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
     }
 
     // strength scale factor, combining plastic softening and damage
-    real64 fac = (1.0 - m_damage[k][q])*(1.0 - m_relaxation[k][q]);
+    real64 damageMultiplier = (1.0 - m_damage[k][q]);
+    
 
     // CC: debug
     // GEOS_LOG_RANK( "Particle " << k << ": dmg: " << m_damage[k][q] << ", Fac: " << fac );
@@ -672,6 +714,7 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
     // Define 3 pressure-dependent shear strengths for different shear modes.
     real64 inPlaneShearStrength, coupledYieldStrength, totalShearStrength;
     real64 x1, x2, y1, y2, m1;
+    real64 strainHardeningMultiplier;
 
     // -------------------------------
     // "distortion" shear relating sigma normal and in-plane iso"
@@ -680,10 +723,14 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
     y1 = m_distortionShearResponseY1 * m_strengthScale[k];
     y2 = m_distortionShearResponseY2 * m_strengthScale[k];
     m1 = m_distortionShearResponseM1;
+    strainHardeningMultiplier = 1 + (m_distortionStrainHardeningC0 - 1)*smoothStep(m_relaxation[k][q], 0, 1);
 
     // damage or softening reduces cohesion and reduces slope to failed value.
-    y1 *= fac;
-    m1 = fac*m1 + (1.0 - fac)*std::max( m_damagedMaterialFrictionalSlope, (y2-y1)/(x2-x1) );
+    y1 *= damageMultiplier*strainHardeningMultiplier;
+    y2 *= strainHardeningMultiplier;
+    m1 = damageMultiplier*m1*strainHardeningMultiplier + (1. - damageMultiplier)*m_damagedMaterialFrictionalSlope;
+    m1 = std::max( m1, (y2-y1)/(x2-x1) ); // Ensure convexity
+
     if(pressure < x1)
     {
         totalShearStrength=std::max(0.0,y1-(x1-pressure)*m1);
@@ -705,10 +752,14 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
     y1 = m_coupledShearResponseY1 * m_strengthScale[k];
     y2 = m_coupledShearResponseY2 * m_strengthScale[k];
     m1 = m_coupledShearResponseM1;
+    strainHardeningMultiplier = 1 + (m_coupledStrainHardeningC0 - 1)*smoothStep(m_relaxation[k][q], 0, 1);
 
     // damage or softening reduces cohesion and reduces slope to failed value.
-    y1 *= fac;
-    m1 = fac*m1 + (1. - fac)*std::max( m_damagedMaterialFrictionalSlope, (y2-y1)/(x2-x1) );
+    y1 *= damageMultiplier*strainHardeningMultiplier;
+    y2 *= strainHardeningMultiplier;
+    m1 = damageMultiplier*m1*strainHardeningMultiplier + (1. - damageMultiplier)*m_damagedMaterialFrictionalSlope;
+    m1 = std::max( m1, (y2-y1)/(x2-x1) ); // Ensure convexity
+
     if(pressure<x1)
     {
       coupledYieldStrength=std::max(0.0,y1-(x1-pressure)*m1);
@@ -730,10 +781,14 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
     y1 = m_inPlaneShearResponseY1 * m_strengthScale[k];
     y2 = m_inPlaneShearResponseY2 * m_strengthScale[k];
     m1 = m_inPlaneShearResponseM1;
+    strainHardeningMultiplier = 1 + (m_inPlaneStrainHardeningC0 - 1)*smoothStep(m_relaxation[k][q], 0, 1);
 
     // damage or softening reduces cohesion and reduces slope to failed value.
-    y1 *= fac;
-    m1 = fac*m1 + (1. - fac)*std::max( m_damagedMaterialFrictionalSlope, (y2-y1)/(x2-x1) );
+    y1 *= damageMultiplier*strainHardeningMultiplier;
+    y2 *= strainHardeningMultiplier;
+    m1 = damageMultiplier*m1*strainHardeningMultiplier + (1. - damageMultiplier)*m_damagedMaterialFrictionalSlope;
+    m1 = std::max( m1, (y2-y1)/(x2-x1) ); // Ensure convexity
+
     if( pressure < x1 )
     {
       inPlaneShearStrength=std::max(0.0, y1  -( x1 - pressure ) * m1 );
@@ -1270,6 +1325,11 @@ public:
     
     // string/key for coupled shear response m1 
     static constexpr char const * coupledShearResponseM1String() { return "coupledShearResponseM1"; }
+
+    // string/key for strain hardening constant C0
+    static constexpr char const * distortionStrainHardeningC0() { return "distortionStrainHardeningC0"; }
+    static constexpr char const * inPlaneStrainHardeningC0() { return "inPlaneStrainHardeningC0"; }
+    static constexpr char const * coupledStrainHardeningC0() { return "coupledStrainHardeningC0"; }
     
     // string/key for maximum plastic strain
     static constexpr char const * maximumPlasticStrainString() { return "maximumPlasticStrain"; }
@@ -1323,6 +1383,9 @@ public:
                             m_coupledShearResponseY1,
                             m_coupledShearResponseY2,
                             m_coupledShearResponseM1,
+                            m_distortionStrainHardeningC0,
+                            m_inPlaneStrainHardeningC0,
+                            m_coupledStrainHardeningC0,
                             m_maximumPlasticStrain,
                             m_thermalExpansionCoefficient,
                             m_newStress,
@@ -1605,6 +1668,11 @@ protected:
   real64 m_coupledShearResponseY1;
   real64 m_coupledShearResponseY2;
   real64 m_coupledShearResponseM1;
+
+
+  real64 m_distortionStrainHardeningC0;
+  real64 m_inPlaneStrainHardeningC0;
+  real64 m_coupledStrainHardeningC0;
   
   real64 m_maximumPlasticStrain;
 };
