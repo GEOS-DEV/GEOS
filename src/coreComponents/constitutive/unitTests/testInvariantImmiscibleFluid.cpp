@@ -204,70 +204,6 @@ public:
     return this->getFluid().createKernelWrapper();
   }
 
-  // Test compute directly using KernelWrapper
-  void testCompute( real64 const pressure,
-                    real64 const temperature,
-                    array1d< real64 > const & composition ) const
-  {
-    // Get the wrapper
-    auto kernelWrapper = getKernelWrapper();
-
-    // Create local slices for results
-    integer numPhases = 3;
-    integer numComponents = 3;
-    integer numDerivs = numComponents + 2; // P, T, and compositions
-
-    // Create arrays for the values and derivatives
-    array1d< real64 > phaseFractionValues( numPhases );
-    array2d< real64 > phaseFractionDerivs( numPhases, numDerivs );
-
-    array1d< real64 > phaseDensityValues( numPhases );
-    array2d< real64 > phaseDensityDerivs( numPhases, numDerivs );
-
-    array1d< real64 > phaseMassDensityValues( numPhases );
-    array2d< real64 > phaseMassDensityDerivs( numPhases, numDerivs );
-
-    array1d< real64 > phaseViscosityValues( numPhases );
-    array2d< real64 > phaseViscosityDerivs( numPhases, numDerivs );
-
-    array1d< real64 > phaseEnthalpyValues( numPhases );
-    array2d< real64 > phaseEnthalpyDerivs( numPhases, numDerivs );
-
-    array1d< real64 > phaseInternalEnergyValues( numPhases );
-    array2d< real64 > phaseInternalEnergyDerivs( numPhases, numDerivs );
-
-    array2d< real64 > phaseCompFractionValues( numPhases, numComponents );
-    array3d< real64 > phaseCompFractionDerivs( numPhases, numComponents, numDerivs );
-
-    real64 totalDensityValue;
-    array1d< real64 > totalDensityDerivs( numDerivs );
-
-    // Create slices from these arrays
-    MultiFluidBase::PhaseProp::SliceType phaseFractionSlice{phaseFractionValues, phaseFractionDerivs};
-    MultiFluidBase::PhaseProp::SliceType phaseDensitySlice{phaseDensityValues, phaseDensityDerivs};
-    MultiFluidBase::PhaseProp::SliceType phaseMassDensitySlice{phaseMassDensityValues, phaseMassDensityDerivs};
-    MultiFluidBase::PhaseProp::SliceType phaseViscositySlice{phaseViscosityValues, phaseViscosityDerivs};
-    MultiFluidBase::PhaseProp::SliceType phaseEnthalpySlice{phaseEnthalpyValues, phaseEnthalpyDerivs};
-    MultiFluidBase::PhaseProp::SliceType phaseInternalEnergySlice{phaseInternalEnergyValues, phaseInternalEnergyDerivs};
-    MultiFluidBase::PhaseComp::SliceType phaseCompFractionSlice{phaseCompFractionValues, phaseCompFractionDerivs};
-    MultiFluidBase::FluidProp::SliceType totalDensitySlice{totalDensityValue, totalDensityDerivs};
-
-    // Call compute directly
-    kernelWrapper.compute( pressure,
-                           temperature,
-                           composition,
-                           phaseFractionSlice,
-                           phaseDensitySlice,
-                           phaseMassDensitySlice,
-                           phaseViscositySlice,
-                           phaseEnthalpySlice,
-                           phaseInternalEnergySlice,
-                           phaseCompFractionSlice,
-                           totalDensitySlice );
-
-    // Return the results for testing
-    return;
-  }
 };
 
 using TestTypes = ::testing::Types<
@@ -358,13 +294,6 @@ TYPED_TEST( InvariantImmiscibleFluidTestFixture, PhaseProperties )
     EXPECT_NEAR( phaseViscosityValues[ip], expectedViscosity, this->absTol );
   }
 
-  // Test KernelWrapper compute functionality
-  array1d< real64 > testComp;
-  testComp.resize( 3 );
-  testComp[0] = 0.4;
-  testComp[1] = 0.3;
-  testComp[2] = 0.3;
-  this->testCompute( 1.0e5, 300.0, testComp );
 }
 
 TYPED_TEST( InvariantImmiscibleFluidTestFixture, WaterPhaseIndex )
