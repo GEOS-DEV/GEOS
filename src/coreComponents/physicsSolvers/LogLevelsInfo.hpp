@@ -43,12 +43,6 @@ struct BoundaryConditions
   static constexpr std::string_view getDescription() { return "Boundary conditions information (incl. source flux)"; }
 };
 
-struct Configuration
-{
-  static constexpr int getMinLogLevel() { return 2; }
-  static constexpr std::string_view getDescription() { return "Solver runtime settings"; }
-};
-
 struct Convergence
 {
   static constexpr int getMinLogLevel() { return 1; }
