@@ -177,12 +177,11 @@ public:
       fluid.initialize( 1, 1 );
 
       // Initialize the fluid by computing properties with a test composition
-      array1d< real64 > composition;
-      composition.resize( 3 );
+      stackArray1d< real64, 3 > composition( 3 );
       composition[0] = 0.4;
       composition[1] = 0.3;
       composition[2] = 0.3;
-      CompSlice compositionSlice = CompSlice( composition );
+      CompSlice compositionSlice = CompSlice( composition.toSliceConst() );
       fluid.initializeState();
 
       // Create a test point
@@ -231,7 +230,7 @@ TYPED_TEST( InvariantImmiscibleFluidTestFixture, PhaseProperties )
   constexpr integer numDerivs = numComponents + 2; // P, T, and compositions
 
   // Setup a test composition
-  array1d< real64 > composition( 3 );
+  stackArray1d< real64, numComponents > composition( 3 );
   composition[0] = 0.4;
   composition[1] = 0.3;
   composition[2] = 0.3;
@@ -263,7 +262,6 @@ TYPED_TEST( InvariantImmiscibleFluidTestFixture, PhaseProperties )
 
   // Get views from StackArray
 
-//  auto composition = compositionData[0][0];
   auto phaseFraction = phaseFractionData[0][0];
   auto dPhaseFraction = dPhaseFractionData[0][0];
   auto phaseDensity = phaseDensityData[0][0];
@@ -283,7 +281,7 @@ TYPED_TEST( InvariantImmiscibleFluidTestFixture, PhaseProperties )
 
   // Create slices for the compute call
 
-  CompSlice compositionSlice = CompSlice( composition );
+  CompSlice compositionSlice = CompSlice( composition.toSliceConst());
   PhasePropSlice phaseFractionSlice = PhasePropSlice( phaseFraction, dPhaseFraction );
   PhasePropSlice phaseDensitySlice = PhasePropSlice( phaseDensity, dPhaseDensity );
   PhasePropSlice phaseMassDensitySlice = PhasePropSlice( phaseMassDensity, dPhaseMassDensity );
@@ -353,16 +351,16 @@ TYPED_TEST( InvariantImmiscibleFluidTestFixture, TotalDensityDerivative )
 {
   auto kernelWrapper = this->getKernelWrapper();
 
-  // Setup a test composition
-  array1d< real64 > composition( 3 );
-  composition[0] = 0.4;
-  composition[1] = 0.3;
-  composition[2] = 0.3;
-
   // Constants for StackArray sizes
   constexpr integer numPhases = 3;
   constexpr integer numComponents = 3;
   constexpr integer numDerivs = numComponents + 2; // P, T, and compositions
+
+  // Setup a test composition
+  stackArray1d< real64, numComponents > composition( 3 );
+  composition[0] = 0.4;
+  composition[1] = 0.3;
+  composition[2] = 0.3;
 
   // Use StackArray for CUDA compatibility
   StackArray< real64, 3, numPhases, multifluid::LAYOUT_PHASE > phaseFractionData( 1, 1, numPhases );
@@ -408,7 +406,7 @@ TYPED_TEST( InvariantImmiscibleFluidTestFixture, TotalDensityDerivative )
   auto dtotalDensity = dtotalDensityData[0][0];
 
   // Create slices for the compute call
-  CompSlice compositionSlice = CompSlice( composition );
+  CompSlice compositionSlice = CompSlice( composition.toSliceConst() );
   PhasePropSlice phaseFractionSlice = PhasePropSlice( phaseFraction, dPhaseFraction );
   PhasePropSlice phaseDensitySlice = PhasePropSlice( phaseDensity, dPhaseDensity );
   PhasePropSlice phaseMassDensitySlice = PhasePropSlice( phaseMassDensity, dPhaseMassDensity );
