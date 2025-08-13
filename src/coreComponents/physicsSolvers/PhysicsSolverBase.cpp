@@ -1464,7 +1464,8 @@ void PhysicsSolverBase::cleanup( real64 const GEOS_UNUSED_PARAM( time_n ),
                                  real64 const GEOS_UNUSED_PARAM( eventProgress ),
                                  DomainPartition & GEOS_UNUSED_PARAM( domain ) )
 {
-  m_solverStatistics.outputStatistics();
+  if( !isLogLevelActive< logInfo::SolverExecutionDetails >( getLogLevel() ) )
+    m_solverStatistics.outputStatistics();
 
   for( auto & timer : m_timers )
   {
