@@ -72,19 +72,14 @@ struct DerivativeOffsetC< NC, 0 >
 
   #if defined( GEOS_USE_DEVICE )
 
-/// Constitutive model phase property array layout
-using LAYOUT_PHASE = RAJA::PERM_JKI;
-/// Constitutive model phase property compositional derivative array layout
-using LAYOUT_PHASE_DC = RAJA::PERM_JKLI;
-
-/// Constitutive model phase composition array layout
-using LAYOUT_PHASE_COMP = RAJA::PERM_JKLI;
-/// Constitutive model phase composition compositional derivative array layout
-using LAYOUT_PHASE_COMP_DC = RAJA::PERM_JKLMI;
+/// Constitutive model species variable array array layout
+using LAYOUT_SPECIES = RAJA::PERM_JKI;
+/// Constitutive model species derivative of species variable array layout
+using LAYOUT_SPECIES_DC = RAJA::PERM_JKLI;
 
 /// Constitutive model fluid property array layout
 using LAYOUT_FLUID = RAJA::PERM_JI;
-/// Constitutive model fluid property compositional derivative array layout
+/// Constitutive model fluid property species derivative array layout
 using LAYOUT_FLUID_DC = RAJA::PERM_JKI;
 
   #else
