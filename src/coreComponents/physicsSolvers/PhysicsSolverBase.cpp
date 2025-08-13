@@ -28,8 +28,8 @@
 
 #if defined(GEOS_USE_PYGEOSX)
 #include "python/PySolverType.hpp"
-
 #endif
+
 namespace geos
 {
 
@@ -1464,7 +1464,7 @@ void PhysicsSolverBase::cleanup( real64 const GEOS_UNUSED_PARAM( time_n ),
                                  real64 const GEOS_UNUSED_PARAM( eventProgress ),
                                  DomainPartition & GEOS_UNUSED_PARAM( domain ) )
 {
-  if( !isLogLevelActive< logInfo::SolverExecutionDetails >( getLogLevel() ) )
+  if( !isLogLevelActive< logInfo::SolverExecutionDetails >( getLogLevel() ) ) // to avoid double-printing
     m_solverStatistics.outputStatistics();
 
   for( auto & timer : m_timers )
