@@ -445,8 +445,8 @@ protected:
   {
     averageMeanTotalStressIncrement.resize( 0 );
     this->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
-                                                                                MeshLevel & mesh,
-                                                                                string_array const & regionNames )
+                                                                       MeshLevel & mesh,
+                                                                       string_array const & regionNames )
     {
       mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                             auto & subRegion )
