@@ -181,7 +181,7 @@ public:
       composition[0] = 0.4;
       composition[1] = 0.3;
       composition[2] = 0.3;
-      CompSlice compositionSlice = CompSlice( composition.toSliceConst() );
+//      CompSlice compositionSlice = CompSlice( composition.toSliceConst() );
       fluid.initializeState();
 
       // Create a test point
@@ -191,7 +191,7 @@ public:
       real64 temperature = 300.0; // Example temperature (K)
 
       // Update the fluid properties at this point
-      this->getFluid().createKernelWrapper().update( k, q, pressure, temperature, compositionSlice );
+      this->getFluid().createKernelWrapper().update( k, q, pressure, temperature, composition.toSliceConst() );
     } );
   }
 
@@ -281,7 +281,7 @@ TYPED_TEST( InvariantImmiscibleFluidTestFixture, PhaseProperties )
 
   // Create slices for the compute call
 
-  CompSlice compositionSlice = CompSlice( composition.toSliceConst());
+//  CompSlice compositionSlice = CompSlice( composition.toSliceConst());
   PhasePropSlice phaseFractionSlice = PhasePropSlice( phaseFraction, dPhaseFraction );
   PhasePropSlice phaseDensitySlice = PhasePropSlice( phaseDensity, dPhaseDensity );
   PhasePropSlice phaseMassDensitySlice = PhasePropSlice( phaseMassDensity, dPhaseMassDensity );
@@ -293,7 +293,7 @@ TYPED_TEST( InvariantImmiscibleFluidTestFixture, PhaseProperties )
 
   // Compute fluid properties
   kernelWrapper.compute( 1.0e5, 300.0,
-                         compositionSlice,
+                         composition.toSliceConst(),
                          phaseFractionSlice,
                          phaseDensitySlice,
                          phaseMassDensitySlice,
@@ -406,7 +406,7 @@ TYPED_TEST( InvariantImmiscibleFluidTestFixture, TotalDensityDerivative )
   auto dtotalDensity = dtotalDensityData[0][0];
 
   // Create slices for the compute call
-  CompSlice compositionSlice = CompSlice( composition.toSliceConst() );
+//  CompSlice compositionSlice = CompSlice( composition.toSliceConst() );
   PhasePropSlice phaseFractionSlice = PhasePropSlice( phaseFraction, dPhaseFraction );
   PhasePropSlice phaseDensitySlice = PhasePropSlice( phaseDensity, dPhaseDensity );
   PhasePropSlice phaseMassDensitySlice = PhasePropSlice( phaseMassDensity, dPhaseMassDensity );
@@ -418,7 +418,7 @@ TYPED_TEST( InvariantImmiscibleFluidTestFixture, TotalDensityDerivative )
 
   // Call compute
   kernelWrapper.compute( 1.0e5, 300.0,
-                         compositionSlice,
+                         composition.toSliceConst(),
                          phaseFractionSlice,
                          phaseDensitySlice,
                          phaseMassDensitySlice,
