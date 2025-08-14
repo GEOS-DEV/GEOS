@@ -589,7 +589,7 @@ void EpetraMatrix::computeScalingVector( EpetraVector & scaling ) const
   scaling.create( numLocalRows(), comm() );
   Epetra_Vector & vec = scaling.unwrapped();
   real64 * const values = vec.Values();
-  forAll< parallelHostPolicy >( vec.MyLength(), [=, &mat, &weights, &dofLabels]( int const localRow )
+  forAll< parallelHostPolicy >( vec.MyLength(), [=, &weights, &dofLabels]( int const localRow )
   {
     values[localRow] = weights[dofLabels[localRow]];
   } );
