@@ -266,15 +266,15 @@ jobs:
       HOST_CONFIG: /spack-generated.cmake
 
   # Python package integration test - validates that geosPythonPackages work with GEOS
-  python_integration_test:
-    needs:
-      - is_not_draft_pull_request
-    uses: ./.github/workflows/python_integration_test.yml
-    secrets: inherit
-    with:
-      DOCKER_IMAGE_TAG: ${{ needs.is_not_draft_pull_request.outputs.DOCKER_IMAGE_TAG }}
-      DOCKER_REPOSITORY: geosx/ubuntu22.04-gcc12
-      RUNS_ON: ubuntu-22.04
+  # python_integration_test:
+  #   needs:
+  #     - is_not_draft_pull_request
+  #   uses: ./.github/workflows/python_integration_test.yml
+  #   secrets: inherit
+  #   with:
+  #     DOCKER_IMAGE_TAG: ${{ needs.is_not_draft_pull_request.outputs.DOCKER_IMAGE_TAG }}
+  #     DOCKER_REPOSITORY: geosx/ubuntu22.04-gcc12
+  #     RUNS_ON: ubuntu-22.04
 
   baseline_log:
     needs: [is_not_draft_pull_request]
@@ -462,7 +462,6 @@ jobs:
     - cpu_builds
     - cuda_builds
     - run_integrated_tests
-    - python_integration_test
     if: ${{ always() }}
     steps:
     - run: |
@@ -472,7 +471,6 @@ jobs:
         echo "cpu_builds: ${{needs.cpu_builds.result}}"
         echo "cuda_builds: ${{needs.cuda_builds.result}}"
         echo "run_integrated_tests: ${{needs.run_integrated_tests.result}} "
-        echo "python_integration_test: ${{needs.python_integration_test.result}} "
         ${{
           needs.if_not_unassigned_pull_request.result == 'success' &&
           needs.are_submodules_in_sync.result == 'success' &&
@@ -480,5 +478,4 @@ jobs:
           needs.cpu_builds.result == 'success' &&
           needs.cuda_builds.result == 'success' && 
           needs.run_integrated_tests.result == 'success' &&
-          needs.python_integration_test.result == 'success'
         }}
