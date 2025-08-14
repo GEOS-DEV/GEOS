@@ -255,6 +255,8 @@ public:
   virtual void leftRightScale( PetscVector const & vecLeft,
                                PetscVector const & vecRight ) override;
 
+  virtual void computeScalingVector( PetscVector & scaling ) const override;
+
   virtual void rescaleRows( arrayView1d< globalIndex const > const & rowIndices,
                             RowSumType const rowSumType ) override;
 

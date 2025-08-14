@@ -27,7 +27,6 @@
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "mesh/mpiCommunications/MPI_iCommData.hpp"
 #include "physicsSolvers/PhysicsSolverBase.hpp"
-#include "physicsSolvers/fluidFlow/FlowSolverBase.hpp"
 
 #include "physicsSolvers/solidMechanics/SolidMechanicsFields.hpp"
 
@@ -182,8 +181,6 @@ public:
                          real64 const dt,
                          PARAMS && ... params );
 
-
-  template< typename ... PARAMS >
   real64 explicitKernelDispatch( MeshLevel & mesh,
                                  string_array const & targetRegions,
                                  string const & finiteElementName,
@@ -286,6 +283,8 @@ public:
   {
     m_performStressInitialization = performStressInitialization;
   }
+
+  TimeIntegrationOption timeIntegrationOption() const { return m_timeIntegrationOption; }
 
 protected:
   virtual void postInputInitialization() override;

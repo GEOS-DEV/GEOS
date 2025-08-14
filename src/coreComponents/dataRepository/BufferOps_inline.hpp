@@ -710,7 +710,7 @@ localIndex Unpack( buffer_unit_type const * & buffer,
   return sizeOfUnpackedChars;
 }
 
-#ifdef GEOS_USE_ARRAY_BOUNDS_CHECK
+#ifdef GEOS_USE_BOUNDS_CHECK
 
 template< bool DO_PACKING, typename T, typename INDEX_TYPE >
 typename std::enable_if< !std::is_trivial< T >::value, localIndex >::type
@@ -809,7 +809,7 @@ Unpack( buffer_unit_type const * & buffer,
   return sizeOfUnpackedChars;
 }
 
-#endif /* GEOS_USE_ARRAY_BOUNDS_CHECK */
+#endif /* GEOS_USE_BOUNDS_CHECK */
 
 template< bool DO_PACKING, int USD >
 localIndex Pack( buffer_unit_type * & buffer,

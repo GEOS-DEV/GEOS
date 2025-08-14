@@ -28,13 +28,13 @@ struct TokenizeTest
   string const delims;
   bool const treatConsecutiveDelimAsOne;
   bool const preTrimStr;
-  std::vector< string > const expected;
+  stdVector< string > const expected;
 
   TokenizeTest( string const & strToTest_,
                 string const & delims_,
                 bool treatConsecutiveDelimAsOne_,
                 bool preTrimStr_,
-                std::vector< string > const & expected_ ):
+                stdVector< string > const & expected_ ):
     strToTest( strToTest_ ),
     delims( delims_ ),
     treatConsecutiveDelimAsOne( treatConsecutiveDelimAsOne_ ),
@@ -55,10 +55,10 @@ struct TokenizeTest
 struct TokenizeBySpacesTest
 {
   string const strToTest;
-  std::vector< string > const expected;
+  stdVector< string > const expected;
 
   TokenizeBySpacesTest( string const & strToTest_,
-                        std::vector< string > const & expected_ ):
+                        stdVector< string > const & expected_ ):
     strToTest( strToTest_ ),
     expected( expected_ )
   {}
@@ -75,7 +75,7 @@ TEST( testStringUtilities, tokenize )
 
   // Path tokenizing test
   {
-    map< string, std::pair< std::vector< string >, std::vector< string > > > const
+    map< string, std::pair< stdVector< string >, stdVector< string > > > const
     entries =
     {
       { "//entry0//entry1//entry2", { { "", "entry0", "entry1", "entry2" },
@@ -87,11 +87,11 @@ TEST( testStringUtilities, tokenize )
     for( auto const & entry : entries )
     {
       string const & key = entry.first;
-      std::vector< string > const & values0 = entry.second.first;
-      std::vector< string > const & values1 = entry.second.second;
+      stdVector< string > const & values0 = entry.second.first;
+      stdVector< string > const & values1 = entry.second.second;
 
-      std::vector< string > tokens0 = stringutilities::tokenize( key, "/", true );
-      std::vector< string > tokens1 = stringutilities::tokenize( key, "/", false );
+      stdVector< string > tokens0 = stringutilities::tokenize( key, "/", true );
+      stdVector< string > tokens1 = stringutilities::tokenize( key, "/", false );
 
 
       EXPECT_TRUE( tokens0==values0 );
@@ -101,7 +101,7 @@ TEST( testStringUtilities, tokenize )
 
   // Various strings tokenizing test
   {
-    std::vector< TokenizeTest > const tokenizeTests = {
+    stdVector< TokenizeTest > const tokenizeTests = {
       TokenizeTest( string( "a|b" ), "|", false, false, { "a", "b" } ),
       TokenizeTest( string( "a|b" ), "|", true, false, { "a", "b" } ),
       TokenizeTest( string( "a|b" ), "|", false, true, { "a", "b" } ),
@@ -170,10 +170,10 @@ TEST( testStringUtilities, tokenize )
 
     for( TokenizeTest test : tokenizeTests )
     {
-      std::vector< string > const r = stringutilities::tokenize( test.strToTest,
-                                                                 test.delims,
-                                                                 test.treatConsecutiveDelimAsOne,
-                                                                 test.preTrimStr );
+      stdVector< string > const r = stringutilities::tokenize( test.strToTest,
+                                                               test.delims,
+                                                               test.treatConsecutiveDelimAsOne,
+                                                               test.preTrimStr );
 
       if( r != test.expected )
       {
@@ -187,7 +187,7 @@ TEST( testStringUtilities, tokenize )
 
   // Spaces tokenizing test
   {
-    std::vector< TokenizeBySpacesTest > const tokenizeBSTests = {
+    stdVector< TokenizeBySpacesTest > const tokenizeBSTests = {
       TokenizeBySpacesTest( string( "a b" ), { "a", "b" } ),
       TokenizeBySpacesTest( string( " a b " ), { "a", "b" } ),
       TokenizeBySpacesTest( string( "  a  b  " ), { "a", "b" } ),
@@ -200,7 +200,7 @@ TEST( testStringUtilities, tokenize )
 
     for( TokenizeBySpacesTest test : tokenizeBSTests )
     {
-      std::vector< string > const r = stringutilities::tokenizeBySpaces( test.strToTest );
+      stdVector< string > const r = stringutilities::tokenizeBySpaces( test.strToTest );
 
       if( r != test.expected )
       {
