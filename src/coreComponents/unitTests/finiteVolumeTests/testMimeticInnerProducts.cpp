@@ -528,8 +528,6 @@ void makeTetra( array2d< real64, nodes::REFERENCE_POSITION_PERM > & nodePosition
 template< localIndex NF, typename ARRAY_VIEW_T >
 static void runConsistencyTest( array2d< real64, nodes::REFERENCE_POSITION_PERM > const & nodePosition,
                                 FaceManager::NodeMapType const & faceToNodes,
-                                array1d< localIndex > const & elemToFaces,
-                                real64 const elemCenter[3],
                                 real64 const elemPerm[3],
                                 ARRAY_VIEW_T const & transMatrix,
                                 std::string const & testName )
@@ -637,8 +635,6 @@ TEST( testMimeticInnerProducts, TPFA_hexa )
 
   runConsistencyTest< NF >( nodePosition,
                             faceToNodes,
-                            elemToFaces,
-                            elemCenter,
                             elemPerm,
                             transMatrix.toViewConst(),
                             "TPFA_hexa" );
@@ -695,8 +691,6 @@ TEST( testMimeticInnerProducts, QTPFA_hexa )
 
   runConsistencyTest< NF >( nodePosition,
                             faceToNodes,
-                            elemToFaces,
-                            elemCenter,
                             elemPerm,
                             transMatrix.toViewConst(),
                             "QTPFA_hexa" );
@@ -753,8 +747,6 @@ TEST( testMimeticInnerProducts, Simple_hexa )
 
   runConsistencyTest< NF >( nodePosition,
                             faceToNodes,
-                            elemToFaces,
-                            elemCenter,
                             elemPerm,
                             transMatrix.toViewConst(),
                             "Simple_hexa" );
@@ -811,8 +803,6 @@ TEST( testMimeticInnerProducts, BdVLM_hexa )
 
   runConsistencyTest< NF >( nodePosition,
                             faceToNodes,
-                            elemToFaces,
-                            elemCenter,
                             elemPerm,
                             transMatrix.toViewConst(),
                             "BdVLM_hexa" );
@@ -866,8 +856,6 @@ TEST( testMimeticInnerProducts, TPFA_tetra )
 
   runConsistencyTest< NF >( nodePosition,
                             faceToNodes,
-                            elemToFaces,
-                            elemCenter,
                             elemPerm,
                             transMatrix.toViewConst(),
                             "TPFA_tetra" );
@@ -921,8 +909,6 @@ TEST( testMimeticInnerProducts, QTPFA_tetra )
 
   runConsistencyTest< NF >( nodePosition,
                             faceToNodes,
-                            elemToFaces,
-                            elemCenter,
                             elemPerm,
                             transMatrix.toViewConst(),
                             "QTPFA_tetra" );
@@ -975,8 +961,6 @@ TEST( testMimeticInnerProducts, Simple_tetra )
 
   runConsistencyTest< NF >( nodePosition,
                             faceToNodes,
-                            elemToFaces,
-                            elemCenter,
                             elemPerm,
                             transMatrix.toViewConst(),
                             "Simple_tetra" );
@@ -1029,8 +1013,6 @@ TEST( testMimeticInnerProducts, BdVLMtetra )
 
   runConsistencyTest< NF >( nodePosition,
                             faceToNodes,
-                            elemToFaces,
-                            elemCenter,
                             elemPerm,
                             transMatrix.toViewConst(),
                             "BdVLM_tetra" );
