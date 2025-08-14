@@ -535,66 +535,66 @@ static void runConsistencyTest( array2d< real64, nodes::REFERENCE_POSITION_PERM 
                                 ARRAY_VIEW_T const & transMatrix,
                                 std::string const & testName )
 {
-    real64 N[NF][3], C[NF][3], TC[NF][3], K[3][3];
-    real64 faceCenter[3], faceNormal[3];
+  real64 N[NF][3], C[NF][3], TC[NF][3], K[3][3];
+  real64 faceCenter[3], faceNormal[3];
 
-    // full tensor K
-    real64 perm[3] = { elemPerm[0], elemPerm[1], elemPerm[2] };
-    MimeticInnerProductHelpers::makeFullTensor( perm, K );
+  // full tensor K
+  real64 perm[3] = { elemPerm[0], elemPerm[1], elemPerm[2] };
+  MimeticInnerProductHelpers::makeFullTensor( perm, K );
 
-    // compute face normals
-    for ( localIndex iface = 0; iface < NF; ++iface )
+  // compute face normals
+  for( localIndex iface = 0; iface < NF; ++iface )
+  {
+    computationalGeometry::centroid_3DPolygon(
+      faceToNodes[iface], nodePosition.toViewConst(),
+      faceCenter, faceNormal );
+
+    for( int d = 0; d < 3; ++d )
     {
-        computationalGeometry::centroid_3DPolygon(
-            faceToNodes[iface], nodePosition.toViewConst(),
-            faceCenter, faceNormal );
+      N[iface][d] = faceNormal[d];
+    }
+  }
 
-        for ( int d = 0; d < 3; ++d )
-        {
-            N[iface][d] = faceNormal[d];
-        }
-    }
+  // C = N * K
+  LvArray::tensorOps::Rij_eq_AikBkj< NF, 3, 3 >( C, N, K );
 
-    // C = N * K
-    LvArray::tensorOps::Rij_eq_AikBkj< NF, 3, 3 >( C, N, K );
+  // TC = T * C
+  LvArray::tensorOps::Rij_eq_AikBkj< NF, 3, NF >( TC, transMatrix, C );
 
-    // TC = T * C
-    LvArray::tensorOps::Rij_eq_AikBkj< NF, 3, NF >( TC, transMatrix, C );
+  // define diffMat and measure its norm
+  real64 diffMat[NF][3];
+  real64 diffNorm = 0.0;
 
-    // define diffMat and measure its norm
-    real64 diffMat[NF][3];
-    real64 diffNorm = 0.0;
-    
-    for ( localIndex i = 0; i < NF; ++i )
+  for( localIndex i = 0; i < NF; ++i )
+  {
+    for( localIndex j = 0; j < 3; ++j )
     {
-      for ( localIndex j = 0; j < 3; ++j )
-      {
-        diffMat[i][j] = C[i][j] - TC[i][j];
-      }
+      diffMat[i][j] = C[i][j] - TC[i][j];
     }
-    
-    for ( std::ptrdiff_t i = 0; i < NF; ++i )
-    {
-      diffNorm += LvArray::tensorOps::l2NormSquared< 3 >( diffMat[i] );
-    }
-    diffNorm = std::sqrt( diffNorm );
-    
-    EXPECT_LT( diffNorm, 1e-10 ) << testName << ": norm(NK - TC) = " << diffNorm;
-    
-    if ( diffNorm < 1e-10 )
-    {
-        std::cout << "[CONSISTENCY TEST PASSED] " << testName << " consistency test passed" <<  std::endl;
-    }
-    else
-    {
-        std::cout << "[CONSISTENCY TEST FAILED] " << testName << " consistency test failed: norm(NK - TC) = " << diffNorm << std::endl;
-    }
+  }
+
+  for( std::ptrdiff_t i = 0; i < NF; ++i )
+  {
+    diffNorm += LvArray::tensorOps::l2NormSquared< 3 >( diffMat[i] );
+  }
+  diffNorm = std::sqrt( diffNorm );
+
+  EXPECT_LT( diffNorm, 1e-10 ) << testName << ": norm(NK - TC) = " << diffNorm;
+
+  if( diffNorm < 1e-10 )
+  {
+    std::cout << "[CONSISTENCY TEST PASSED] " << testName << " consistency test passed" <<  std::endl;
+  }
+  else
+  {
+    std::cout << "[CONSISTENCY TEST FAILED] " << testName << " consistency test failed: norm(NK - TC) = " << diffNorm << std::endl;
+  }
 }
 
 TEST( testMimeticInnerProducts, TPFA_hexa )
 {
   localIndex constexpr NF = 6;
-    
+
   array2d< real64, nodes::REFERENCE_POSITION_PERM > nodePosition;
   FaceManager::NodeMapType faceToNodes;
   array1d< localIndex > elemToFaces;
@@ -623,7 +623,7 @@ TEST( testMimeticInnerProducts, TPFA_hexa )
   center[1] = elemCenter[1];
   center[2] = elemCenter[2];
   real64 const perm[ 3 ] = { elemPerm[0], elemPerm[1], elemPerm[2] };
-    
+
   TPFAInnerProduct::compute< NF >( nodePosition.toViewConst(),
                                    transMultiplier.toViewConst(),
                                    faceToNodes.toViewConst(),
@@ -635,7 +635,7 @@ TEST( testMimeticInnerProducts, TPFA_hexa )
                                    transMatrix.toSlice() );
 
   compareTransmissibilityMatrices( transMatrix, transMatrixRef );
-    
+
   runConsistencyTest< NF >( nodePosition,
                             faceToNodes,
                             elemToFaces,
@@ -643,7 +643,7 @@ TEST( testMimeticInnerProducts, TPFA_hexa )
                             elemPerm,
                             elemVolume,
                             transMatrix.toViewConst(),
-                            "TPFA_hexa");
+                            "TPFA_hexa" );
 }
 
 
@@ -702,7 +702,7 @@ TEST( testMimeticInnerProducts, QTPFA_hexa )
                             elemPerm,
                             elemVolume,
                             transMatrix.toViewConst(),
-                            "QTPFA_hexa");
+                            "QTPFA_hexa" );
 }
 
 TEST( testMimeticInnerProducts, Simple_hexa )
@@ -753,7 +753,7 @@ TEST( testMimeticInnerProducts, Simple_hexa )
                                      transMatrix.toSlice() );
 
   compareTransmissibilityMatrices( transMatrix, transMatrixRef );
-    
+
   runConsistencyTest< NF >( nodePosition,
                             faceToNodes,
                             elemToFaces,
@@ -761,7 +761,7 @@ TEST( testMimeticInnerProducts, Simple_hexa )
                             elemPerm,
                             elemVolume,
                             transMatrix.toViewConst(),
-                            "Simple_hexa");
+                            "Simple_hexa" );
 }
 
 TEST( testMimeticInnerProducts, BdVLM_hexa )
@@ -812,7 +812,7 @@ TEST( testMimeticInnerProducts, BdVLM_hexa )
                                     transMatrix.toSlice() );
 
   compareTransmissibilityMatrices( transMatrix, transMatrixRef );
-    
+
   runConsistencyTest< NF >( nodePosition,
                             faceToNodes,
                             elemToFaces,
@@ -820,7 +820,7 @@ TEST( testMimeticInnerProducts, BdVLM_hexa )
                             elemPerm,
                             elemVolume,
                             transMatrix.toViewConst(),
-                            "BdVLM_hexa");
+                            "BdVLM_hexa" );
 }
 
 
@@ -868,7 +868,7 @@ TEST( testMimeticInnerProducts, TPFA_tetra )
                                    transMatrix.toSlice() );
 
   compareTransmissibilityMatrices( transMatrix, transMatrixRef );
-    
+
   runConsistencyTest< NF >( nodePosition,
                             faceToNodes,
                             elemToFaces,
@@ -876,7 +876,7 @@ TEST( testMimeticInnerProducts, TPFA_tetra )
                             elemPerm,
                             elemVolume,
                             transMatrix.toViewConst(),
-                            "TPFA_tetra");
+                            "TPFA_tetra" );
 }
 
 
@@ -924,7 +924,7 @@ TEST( testMimeticInnerProducts, QTPFA_tetra )
                                         transMatrix.toSlice() );
 
   compareTransmissibilityMatrices( transMatrix, transMatrixRef );
-    
+
   runConsistencyTest< NF >( nodePosition,
                             faceToNodes,
                             elemToFaces,
@@ -932,7 +932,7 @@ TEST( testMimeticInnerProducts, QTPFA_tetra )
                             elemPerm,
                             elemVolume,
                             transMatrix.toViewConst(),
-                            "QTPFA_tetra");
+                            "QTPFA_tetra" );
 }
 
 TEST( testMimeticInnerProducts, Simple_tetra )
@@ -979,7 +979,7 @@ TEST( testMimeticInnerProducts, Simple_tetra )
                                      transMatrix.toSlice() );
 
   compareTransmissibilityMatrices( transMatrix, transMatrixRef );
-    
+
   runConsistencyTest< NF >( nodePosition,
                             faceToNodes,
                             elemToFaces,
@@ -987,7 +987,7 @@ TEST( testMimeticInnerProducts, Simple_tetra )
                             elemPerm,
                             elemVolume,
                             transMatrix.toViewConst(),
-                            "Simple_tetra");
+                            "Simple_tetra" );
 }
 
 TEST( testMimeticInnerProducts, BdVLMtetra )
@@ -1034,7 +1034,7 @@ TEST( testMimeticInnerProducts, BdVLMtetra )
                                     transMatrix.toSlice() );
 
   compareTransmissibilityMatrices( transMatrix, transMatrixRef );
-    
+
   runConsistencyTest< NF >( nodePosition,
                             faceToNodes,
                             elemToFaces,
@@ -1042,7 +1042,7 @@ TEST( testMimeticInnerProducts, BdVLMtetra )
                             elemPerm,
                             elemVolume,
                             transMatrix.toViewConst(),
-                            "BdVLM_tetra");
+                            "BdVLM_tetra" );
 }
 
 
@@ -1054,65 +1054,65 @@ static inline void makeUnitCube( double x_start,
                                  array2d< real64, nodes::REFERENCE_POSITION_PERM > & node,
                                  FaceManager::NodeMapType & faceTonodes,
                                  array1d< localIndex > & elemTofaces,
-                                 real64 (&center)[3], real64 & vol)
+                                 real64 (& center)[3], real64 & vol )
 {
-  node.resize(8,3);
+  node.resize( 8, 3 );
   // vertices on z = 0 plane
-  node(0,0) = x_start + 0; node(0,1) = 0; node(0,2) = 0;
-  node(1,0) = x_start + 1; node(1,1) = 0; node(1,2) = 0;
-  node(2,0) = x_start + 0; node(2,1) = 1; node(2,2) = 0;
-  node(3,0) = x_start + 1; node(3,1) = 1; node(3,2) = 0;
-    
-  // vertices on z = 1 plane
-  node(4,0) = x_start + 0; node(4,1) = 0; node(4,2) = 1;
-  node(5,0) = x_start + 1; node(5,1) = 0; node(5,2) = 1;
-  node(6,0) = x_start + 0; node(6,1) = 1; node(6,2) = 1;
-  node(7,0) = x_start + 1; node(7,1) = 1; node(7,2) = 1;
+  node( 0, 0 ) = x_start + 0; node( 0, 1 ) = 0; node( 0, 2 ) = 0;
+  node( 1, 0 ) = x_start + 1; node( 1, 1 ) = 0; node( 1, 2 ) = 0;
+  node( 2, 0 ) = x_start + 0; node( 2, 1 ) = 1; node( 2, 2 ) = 0;
+  node( 3, 0 ) = x_start + 1; node( 3, 1 ) = 1; node( 3, 2 ) = 0;
 
-  faceTonodes.resize(6);
+  // vertices on z = 1 plane
+  node( 4, 0 ) = x_start + 0; node( 4, 1 ) = 0; node( 4, 2 ) = 1;
+  node( 5, 0 ) = x_start + 1; node( 5, 1 ) = 0; node( 5, 2 ) = 1;
+  node( 6, 0 ) = x_start + 0; node( 6, 1 ) = 1; node( 6, 2 ) = 1;
+  node( 7, 0 ) = x_start + 1; node( 7, 1 ) = 1; node( 7, 2 ) = 1;
+
+  faceTonodes.resize( 6 );
   for( int f = 0; f < 6; ++f )
   {
-      faceTonodes.resizeArray(f,4);
+    faceTonodes.resizeArray( f, 4 );
   }
-  
-  // define each face by its 4 node indices (consistent ordering within the cell)
-  faceTonodes(0,0) = 0; faceTonodes(0,1) = 1; faceTonodes(0,2) = 3; faceTonodes(0,3) = 2; // z=0
-  faceTonodes(1,0) = 0; faceTonodes(1,1) = 4; faceTonodes(1,2) = 5; faceTonodes(1,3) = 1; // y=0
-  faceTonodes(2,0) = 0; faceTonodes(2,1) = 2; faceTonodes(2,2) = 6; faceTonodes(2,3) = 4; // x=0
-  faceTonodes(3,0) = 1; faceTonodes(3,1) = 5; faceTonodes(3,2) = 7; faceTonodes(3,3) = 3; // x=1
-  faceTonodes(4,0) = 6; faceTonodes(4,1) = 2; faceTonodes(4,2) = 3; faceTonodes(4,3) = 7; // y=1
-  faceTonodes(5,0) = 4; faceTonodes(5,1) = 6; faceTonodes(5,2) = 7; faceTonodes(5,3) = 5; // z=1
 
-  elemTofaces.resize(6);
-  for( int i = 0; i < 6; ++i)
+  // define each face by its 4 node indices (consistent ordering within the cell)
+  faceTonodes( 0, 0 ) = 0; faceTonodes( 0, 1 ) = 1; faceTonodes( 0, 2 ) = 3; faceTonodes( 0, 3 ) = 2; // z=0
+  faceTonodes( 1, 0 ) = 0; faceTonodes( 1, 1 ) = 4; faceTonodes( 1, 2 ) = 5; faceTonodes( 1, 3 ) = 1; // y=0
+  faceTonodes( 2, 0 ) = 0; faceTonodes( 2, 1 ) = 2; faceTonodes( 2, 2 ) = 6; faceTonodes( 2, 3 ) = 4; // x=0
+  faceTonodes( 3, 0 ) = 1; faceTonodes( 3, 1 ) = 5; faceTonodes( 3, 2 ) = 7; faceTonodes( 3, 3 ) = 3; // x=1
+  faceTonodes( 4, 0 ) = 6; faceTonodes( 4, 1 ) = 2; faceTonodes( 4, 2 ) = 3; faceTonodes( 4, 3 ) = 7; // y=1
+  faceTonodes( 5, 0 ) = 4; faceTonodes( 5, 1 ) = 6; faceTonodes( 5, 2 ) = 7; faceTonodes( 5, 3 ) = 5; // z=1
+
+  elemTofaces.resize( 6 );
+  for( int i = 0; i < 6; ++i )
   {
-      elemTofaces(i) = i;
+    elemTofaces( i ) = i;
   }
 
   // compute cell center and volume
   array1d< localIndex > order;
-  order.resize(8);
-  order(0) = 0;
-  order(1) = 4;
-  order(2) = 2;
-  order(3) = 6;
-  order(4) = 1;
-  order(5) = 5;
-  order(6) = 3;
-  order(7) = 7;
-    
+  order.resize( 8 );
+  order( 0 ) = 0;
+  order( 1 ) = 4;
+  order( 2 ) = 2;
+  order( 3 ) = 6;
+  order( 4 ) = 1;
+  order( 5 ) = 5;
+  order( 6 ) = 3;
+  order( 7 ) = 7;
+
   real64 X[8][3]; center[0] = center[1] = center[2] = 0;
   for( int a = 0; a < 8; ++a )
   {
-    X[a][0] = node(order(a),0);
-    X[a][1] = node(order(a),1);
-    X[a][2] = node(order(a),2);
+    X[a][0] = node( order( a ), 0 );
+    X[a][1] = node( order( a ), 1 );
+    X[a][2] = node( order( a ), 2 );
     center[0] += X[a][0];
     center[1] += X[a][1];
     center[2] += X[a][2];
   }
-    
-  vol = hexahedronVolume(X);
+
+  vol = hexahedronVolume( X );
   center[0] /= 8.0;
   center[1] /= 8.0;
   center[2] /= 8.0;
@@ -1128,12 +1128,12 @@ static inline void makeDistortedPlanar( array2d< real64, nodes::REFERENCE_POSITI
   // indicate shared face
   localIndex const fL = 3, fR = 2;
   // L face(3) node order: {1,5,7,3}
-  int Lvert1 = faceL(fL,2), Lvert2 = faceL(fL,3);
+  int Lvert1 = faceL( fL, 2 ), Lvert2 = faceL( fL, 3 );
   // R face(2) node order: {0,2,6,4}
-  int Rvert1 = faceR(fR,1), Rvert2 = faceR(fR,2);
+  int Rvert1 = faceR( fR, 1 ), Rvert2 = faceR( fR, 2 );
 
-  nodeL(Lvert1,0) += eps;  nodeR(Rvert1,0) += eps;
-  nodeL(Lvert2,0) += eps;  nodeR(Rvert2,0) += eps;
+  nodeL( Lvert1, 0 ) += eps;  nodeR( Rvert1, 0 ) += eps;
+  nodeL( Lvert2, 0 ) += eps;  nodeR( Rvert2, 0 ) += eps;
 }
 
 // create nonplanar case for distortion test
@@ -1145,25 +1145,25 @@ static inline void makeDistortedNonplanar( array2d< real64, nodes::REFERENCE_POS
 {
   // indicate shared face
   localIndex const fL = 3, fR = 2;
-    
-  int Lvert = faceL(fL,2);
-  int Rvert = faceR(fR,2);
 
-  nodeL(Lvert,0) += eps;
-  nodeR(Rvert,0) -= eps;
+  int Lvert = faceL( fL, 2 );
+  int Rvert = faceR( fR, 2 );
+
+  nodeL( Lvert, 0 ) += eps;
+  nodeR( Rvert, 0 ) -= eps;
 }
 
 // return the sum of all entries in row r of matrix T
 static inline real64 rowSum( arraySlice2d< real64 const > T,
-                             localIndex row)
+                             localIndex row )
 {
-    real64 sum = 0;
-    // iterate over columns
-    for( localIndex j = 0; j < T.size(1); ++j )
-    {
-      sum += T(row,j);
-    }
-    return sum;
+  real64 sum = 0;
+  // iterate over columns
+  for( localIndex j = 0; j < T.size( 1 ); ++j )
+  {
+    sum += T( row, j );
+  }
+  return sum;
 }
 
 // recompute volumn and center of distorted cell
@@ -1172,22 +1172,22 @@ static inline void computeDistortedVolumeAndCenter( array2d< real64, nodes::REFE
 {
   array1d< localIndex > order;
   order.resize( 8 );
-  order(0) = 0;
-  order(1) = 4;
-  order(2) = 2;
-  order(3) = 6;
-  order(4) = 1;
-  order(5) = 5;
-  order(6) = 3;
-  order(7) = 7;
+  order( 0 ) = 0;
+  order( 1 ) = 4;
+  order( 2 ) = 2;
+  order( 3 ) = 6;
+  order( 4 ) = 1;
+  order( 5 ) = 5;
+  order( 6 ) = 3;
+  order( 7 ) = 7;
 
   real64 X[8][3];
   center[0] = center[1] = center[2] = 0.0;
   for( int a = 0; a < 8; ++a )
   {
-    X[a][0] = node(order(a),0);
-    X[a][1] = node(order(a),1);
-    X[a][2] = node(order(a),2);
+    X[a][0] = node( order( a ), 0 );
+    X[a][1] = node( order( a ), 1 );
+    X[a][2] = node( order( a ), 2 );
     center[0] += X[a][0];
     center[1] += X[a][1];
     center[2] += X[a][2];
@@ -1201,27 +1201,27 @@ static inline bool isBoundaryFace( FaceManager::NodeMapType const & faceTonode,
                                    localIndex f )
 {
   real64 fc[3], fn[3];
-  centroid_3DPolygon(faceTonode[f], node.toViewConst(), fc, fn);
+  centroid_3DPolygon( faceTonode[f], node.toViewConst(), fc, fn );
   constexpr real64 tol = 1e-12;
-    
-  return (std::abs(fc[0] - 0.0) < tol) || (std::abs(fc[0] - 2.0) < tol) ||
-         (std::abs(fc[1] - 0.0) < tol) || (std::abs(fc[1] - 1.0) < tol) ||
-         (std::abs(fc[2] - 0.0) < tol) || (std::abs(fc[2] - 1.0) < tol);
+
+  return (std::abs( fc[0] - 0.0 ) < tol) || (std::abs( fc[0] - 2.0 ) < tol) ||
+         (std::abs( fc[1] - 0.0 ) < tol) || (std::abs( fc[1] - 1.0 ) < tol) ||
+         (std::abs( fc[2] - 0.0 ) < tol) || (std::abs( fc[2] - 1.0 ) < tol);
 }
 
 // calculate pressures on cell boundary (for Dirichlet boundary condition)
-static inline real64 computeBoundaryPressure( FaceManager::NodeMapType const& faceTonode,
-                                              array2d< real64, nodes::REFERENCE_POSITION_PERM > const& node,
+static inline real64 computeBoundaryPressure( FaceManager::NodeMapType const & faceTonode,
+                                              array2d< real64, nodes::REFERENCE_POSITION_PERM > const & node,
                                               localIndex f,
                                               real64 alpha )
 {
   real64 fc[3], fn[3];
-  centroid_3DPolygon(faceTonode[f], node.toViewConst(), fc, fn);
+  centroid_3DPolygon( faceTonode[f], node.toViewConst(), fc, fn );
   return fc[0] + alpha * fc[1];
 }
 
 // calculate pressure values based on the transmissbility matrix T and compare against the analytical values
-template<int NF>
+template< int NF >
 static double computeLinearPressure_error( int ipKind,
                                            DistortionMode mode = DistortionMode::None,
                                            real64 eps = 0.0,
@@ -1235,43 +1235,45 @@ static double computeLinearPressure_error( int ipKind,
   array1d< localIndex > elemToface_R;
   real64 center_L[3], center_R[3], vol_L = 0, vol_R = 0;
 
-  makeUnitCube(0.0, node_L, faceTonode_L, elemToface_L, center_L, vol_L);
-  makeUnitCube(1.0, node_R, faceTonode_R, elemToface_R, center_R, vol_R);
+  makeUnitCube( 0.0, node_L, faceTonode_L, elemToface_L, center_L, vol_L );
+  makeUnitCube( 1.0, node_R, faceTonode_R, elemToface_R, center_R, vol_R );
 
-  if( mode == DistortionMode::Planar ) {
-    makeDistortedPlanar(node_L, node_R, faceTonode_L, faceTonode_R, eps);
+  if( mode == DistortionMode::Planar )
+  {
+    makeDistortedPlanar( node_L, node_R, faceTonode_L, faceTonode_R, eps );
   }
-  else if( mode == DistortionMode::NonPlanar ) {
-    makeDistortedNonplanar(node_L, node_R, faceTonode_L, faceTonode_R, eps);
+  else if( mode == DistortionMode::NonPlanar )
+  {
+    makeDistortedNonplanar( node_L, node_R, faceTonode_L, faceTonode_R, eps );
   }
 
-  computeDistortedVolumeAndCenter(node_L, center_L, vol_L);
-  computeDistortedVolumeAndCenter(node_R, center_R, vol_R);
-    
+  computeDistortedVolumeAndCenter( node_L, center_L, vol_L );
+  computeDistortedVolumeAndCenter( node_R, center_R, vol_R );
+
   // indicate the shared face
   localIndex const fL_int = 3;
   localIndex const fR_int = 2;
 
   real64 alpha_lin = 0.3; // pressure = x * alpha_lin * y
-  auto isDirL = [&](localIndex f){ return isBoundaryFace(faceTonode_L, node_L, f); };
-  auto isDirR = [&](localIndex f){ return isBoundaryFace(faceTonode_R, node_R, f); };
+  auto isDirL = [&]( localIndex f ){ return isBoundaryFace( faceTonode_L, node_L, f ); };
+  auto isDirR = [&]( localIndex f ){ return isBoundaryFace( faceTonode_R, node_R, f ); };
 
   // compute the transmissibility matrix T
   constexpr real64 ltol = 1e-12;
   real64 Kvec[3] = {4.0, 1.0, 0.5};
-  stackArray2d< real64, NF * NF > TL(NF,NF), TR(NF,NF);
+  stackArray2d< real64, NF * NF > TL( NF, NF ), TR( NF, NF );
 
-  stackArray1d< real64, 3 > cLc(3), cRc(3);
+  stackArray1d< real64, 3 > cLc( 3 ), cRc( 3 );
   for( int d = 0; d < 3; ++d )
   {
     cLc[d] = center_L[d];
     cRc[d] = center_R[d];
   }
 
-  array1d< real64 > mult(NF);
-  mult.setValues< parallelHostPolicy >(1.0);
+  array1d< real64 > mult( NF );
+  mult.setValues< parallelHostPolicy >( 1.0 );
 
-  if ( ipKind == InnerProductType::TPFA )
+  if( ipKind == InnerProductType::TPFA )
   {
     TPFAInnerProduct::compute< NF >( node_L.toViewConst(),
                                      mult.toViewConst(),
@@ -1284,7 +1286,7 @@ static double computeLinearPressure_error( int ipKind,
                                      elemToface_R.toSliceConst(),
                                      cRc, vol_R, Kvec, ltol, TR.toSlice() );
   }
-  else if ( ipKind == InnerProductType::QUASI_TPFA )
+  else if( ipKind == InnerProductType::QUASI_TPFA )
   {
     QuasiTPFAInnerProduct::compute< NF >( node_L.toViewConst(),
                                           mult.toViewConst(),
@@ -1297,7 +1299,7 @@ static double computeLinearPressure_error( int ipKind,
                                           elemToface_R.toSliceConst(),
                                           cRc, vol_R, Kvec, ltol, TR.toSlice() );
   }
-  else if ( ipKind == InnerProductType::SIMPLE )
+  else if( ipKind == InnerProductType::SIMPLE )
   {
     SimpleInnerProduct::compute< NF >( node_L.toViewConst(),
                                        mult.toViewConst(),
@@ -1310,7 +1312,7 @@ static double computeLinearPressure_error( int ipKind,
                                        elemToface_R.toSliceConst(),
                                        cRc, vol_R, Kvec, ltol, TR.toSlice() );
   }
-  else if ( ipKind == InnerProductType::BDVLM )
+  else if( ipKind == InnerProductType::BDVLM )
   {
     BdVLMInnerProduct::compute< NF >( node_L.toViewConst(),
                                       mult.toViewConst(),
@@ -1326,9 +1328,12 @@ static double computeLinearPressure_error( int ipKind,
   else
   {
     // sanity check for inner product type
-    if ( flag ) { std::cout << "Unknown inner product type\n"; }
-      
-    return std::numeric_limits<double>::infinity();
+    if( flag )
+    {
+      std::cout << "Unknown inner product type\n";
+    }
+
+    return std::numeric_limits< double >::infinity();
   }
 
   // assemble linear system to compute pressure values
@@ -1342,16 +1347,19 @@ static double computeLinearPressure_error( int ipKind,
     a = alpha = r = 0.0;
     for( localIndex i = 0; i < NF; ++i )
     {
-      bool isDir = leftCell ? isDirL(i) : isDirR(i);
-      if( !isDir && i != fInt ) continue;
-      a += rowSum(T,i);
-      alpha += T(i,fInt);
-        
+      bool isDir = leftCell ? isDirL( i ) : isDirR( i );
+      if( !isDir && i != fInt )
+        continue;
+      a += rowSum( T, i );
+      alpha += T( i, fInt );
+
       for( localIndex j = 0; j < NF; ++j )
       {
-        if( j == fInt ) continue;
-        bool jDir = leftCell ? isDirL(j) : isDirR(j);
-          if( jDir ) r += T(i,j) * computeBoundaryPressure(faceTonode, node, j, alpha_lin);
+        if( j == fInt )
+          continue;
+        bool jDir = leftCell ? isDirL( j ) : isDirR( j );
+        if( jDir )
+          r += T( i, j ) * computeBoundaryPressure( faceTonode, node, j, alpha_lin );
       }
     }
   };
@@ -1359,26 +1367,27 @@ static double computeLinearPressure_error( int ipKind,
   auto sumFaceRow = [&]( arraySlice2d< real64 const > T,
                          FaceManager::NodeMapType const & faceToNode,
                          array2d< real64, nodes::REFERENCE_POSITION_PERM > const & node,
-                         localIndex fInt, bool leftCell) -> real64
+                         localIndex fInt, bool leftCell ) -> real64
   {
     real64 sum = 0;
     for( localIndex j = 0; j < NF; ++j )
     {
-      bool jDir = leftCell ? isDirL(j) : isDirR(j);
-        if( jDir ) sum += T(fInt,j) * computeBoundaryPressure(faceToNode, node, j, alpha_lin);
+      bool jDir = leftCell ? isDirL( j ) : isDirR( j );
+      if( jDir )
+        sum += T( fInt, j ) * computeBoundaryPressure( faceToNode, node, j, alpha_lin );
     }
     return sum;
   };
 
   real64 aL, alphaL, rL, aR, alphaR, rR;
-  assembleCell(TL.toSliceConst(), faceTonode_L, node_L, fL_int, true , aL, alphaL, rL);
-  assembleCell(TR.toSliceConst(), faceTonode_R, node_R, fR_int, false, aR, alphaR, rR);
+  assembleCell( TL.toSliceConst(), faceTonode_L, node_L, fL_int, true, aL, alphaL, rL );
+  assembleCell( TR.toSliceConst(), faceTonode_R, node_R, fR_int, false, aR, alphaR, rR );
 
-  real64 betaL = rowSum(TL.toSliceConst(), fL_int);
-  real64 betaR = rowSum(TR.toSliceConst(), fR_int);
-  real64 gamma = TL(fL_int, fL_int) + TR(fR_int, fR_int);
-  real64 boundary_sum = sumFaceRow(TL.toSliceConst(), faceTonode_L, node_L, fL_int, true)
-                      + sumFaceRow(TR.toSliceConst(), faceTonode_R, node_R, fR_int, false);
+  real64 betaL = rowSum( TL.toSliceConst(), fL_int );
+  real64 betaR = rowSum( TR.toSliceConst(), fR_int );
+  real64 gamma = TL( fL_int, fL_int ) + TR( fR_int, fR_int );
+  real64 boundary_sum = sumFaceRow( TL.toSliceConst(), faceTonode_L, node_L, fL_int, true )
+                        + sumFaceRow( TR.toSliceConst(), faceTonode_R, node_R, fR_int, false );
 
   real64 A11 = aL, A22 = aR, A13 = -alphaL, A23 = -alphaR, A31 = betaL, A32 = betaR, A33 = -gamma;
   real64 b1 = rL, b2 = rR, b3 = boundary_sum;
@@ -1391,9 +1400,10 @@ static double computeLinearPressure_error( int ipKind,
   // compute analytcal pressure values
   double pL_exact = center_L[0] + alpha_lin * center_L[1];
   double pR_exact = center_R[0] + alpha_lin * center_R[1];
-  double err = std::max( std::abs(pL - pL_exact), std::abs(pR - pR_exact) );
-    
-  if (flag) {
+  double err = std::max( std::abs( pL - pL_exact ), std::abs( pR - pR_exact ) );
+
+  if( flag )
+  {
     std::cout << "ipType = "<< ipKind << " mode = " << (int) mode
               << " pL = " << pL << " pR=" << pR
               << " exact = (" << pL_exact << "," << pR_exact << ")"
@@ -1406,88 +1416,94 @@ static double computeLinearPressure_error( int ipKind,
 TEST( MimeticIP_Linear, UnitCube_LinearPressure_TPFA )
 {
   double err = computeLinearPressure_error< 6 >( InnerProductType::TPFA );
-  EXPECT_LT(err, 1e-15);
+  EXPECT_LT( err, 1e-15 );
 }
 
 TEST( MimeticIP_Linear, UnitCube_LinearPressure_QuasiTPFA )
 {
   double err = computeLinearPressure_error< 6 >( InnerProductType::QUASI_TPFA );
-  EXPECT_LT(err, 1e-15);
+  EXPECT_LT( err, 1e-15 );
 }
 
 TEST( MimeticIP_Linear, UnitCube_LinearPressure_Simple )
 {
   double err = computeLinearPressure_error< 6 >( InnerProductType::SIMPLE );
-  EXPECT_LT(err, 1e-15);
+  EXPECT_LT( err, 1e-15 );
 }
 
 TEST( MimeticIP_Linear, UnitCube_LinearPressure_BdVLM )
 {
   double err = computeLinearPressure_error< 6 >( InnerProductType::BDVLM );
-  EXPECT_LT(err, 1e-15);
+  EXPECT_LT( err, 1e-15 );
 }
 
 // =================== case 1: with distortion (planar) ===========================
 TEST( MimeticIP_Linear, Distortion_Planar_LinearPressure )
 {
-    int neps = 3;
-    std::vector< double > eps_values(3);
-    eps_values[0] = 0.0; // no distortion
-    eps_values[1] = 0.2; // moderate distortion
-    eps_values[2] = 0.9; // severe distortion
-    
-    // all mimetic schemes are consistent
-    for (int i = 0; i < neps ; ++i) {
-        double eps = eps_values[i];
-        
-        double errQTPFA = computeLinearPressure_error< 6 >( InnerProductType::QUASI_TPFA, DistortionMode::Planar, eps );
-        EXPECT_LT( errQTPFA, 1e-15 );
-        
-        double errSIMPLE= computeLinearPressure_error< 6 >( InnerProductType::SIMPLE, DistortionMode::Planar, eps );
-        EXPECT_LT( errSIMPLE, 1e-15 );
-        
-        double errBDVLM = computeLinearPressure_error< 6 >( InnerProductType::BDVLM, DistortionMode::Planar, eps );
-        EXPECT_LT( errBDVLM, 1e-15 );
+  int neps = 3;
+  std::vector< double > eps_values( 3 );
+  eps_values[0] = 0.0;   // no distortion
+  eps_values[1] = 0.2;   // moderate distortion
+  eps_values[2] = 0.9;   // severe distortion
+
+  // all mimetic schemes are consistent
+  for( int i = 0; i < neps; ++i )
+  {
+    double eps = eps_values[i];
+
+    double errQTPFA = computeLinearPressure_error< 6 >( InnerProductType::QUASI_TPFA, DistortionMode::Planar, eps );
+    EXPECT_LT( errQTPFA, 1e-15 );
+
+    double errSIMPLE= computeLinearPressure_error< 6 >( InnerProductType::SIMPLE, DistortionMode::Planar, eps );
+    EXPECT_LT( errSIMPLE, 1e-15 );
+
+    double errBDVLM = computeLinearPressure_error< 6 >( InnerProductType::BDVLM, DistortionMode::Planar, eps );
+    EXPECT_LT( errBDVLM, 1e-15 );
+  }
+
+  for( int i = 0; i < neps; ++i )
+  {
+    double eps = eps_values[i];
+
+    double errTPFA  = computeLinearPressure_error< 6 >( InnerProductType::TPFA, DistortionMode::Planar, eps );
+
+    if( i == 0 )
+    {
+      EXPECT_LT( errTPFA, 1e-15 );       // test TPFA is consistent with K-orthogonal grids
     }
-    
-    for (int i = 0; i < neps ; ++i) {
-        double eps = eps_values[i];
-        
-        double errTPFA  = computeLinearPressure_error< 6 >( InnerProductType::TPFA, DistortionMode::Planar, eps );
-        
-        if ( i == 0) {
-            EXPECT_LT( errTPFA, 1e-15 ); // test TPFA is consistent with K-orthogonal grids
-        } else {
-            EXPECT_GT( errTPFA, 1e-15 ); // test TPFA is inconsistent with non K-orthogonal grids
-        }
-        
+    else
+    {
+      EXPECT_GT( errTPFA, 1e-15 );       // test TPFA is inconsistent with non K-orthogonal grids
     }
+
+  }
 }
 
 // =================== case 2: with distortion (nonplanar) ===========================
 TEST( MimeticIP_Linear, Distortion_NonPlanar_LinearPresssure )
 {
-    int neps = 2;
-    std::vector< double > eps_values(2);
-    eps_values[0] = 0.2; // moderate distortion
-    eps_values[1] = 0.9; // severe distortion
-    
-    // all schemes are inconsistent with nonplanar case
-    for (int i = 0; i < neps ; ++i) {
-        double eps = eps_values[i];
-        
-        double errTPFA  = computeLinearPressure_error< 6 >( InnerProductType::TPFA, DistortionMode::NonPlanar, eps );
-        EXPECT_GT( errTPFA, 1e-15 );
-        
-        double errQTPFA = computeLinearPressure_error< 6 >( InnerProductType::QUASI_TPFA, DistortionMode::NonPlanar, eps );
-        EXPECT_GT( errQTPFA, 1e-15 );
-        
-        double errSIMPLE= computeLinearPressure_error< 6 >( InnerProductType::SIMPLE, DistortionMode::NonPlanar, eps );
-        EXPECT_GT( errSIMPLE, 1e-15 );
-        
-        double errBDVLM = computeLinearPressure_error< 6 >( InnerProductType::BDVLM, DistortionMode::NonPlanar, eps );
-        EXPECT_GT( errBDVLM, 1e-15 );
-    }
+  int neps = 2;
+  std::vector< double > eps_values( 2 );
+  eps_values[0] = 0.2;   // moderate distortion
+  eps_values[1] = 0.9;   // severe distortion
+
+  // all schemes are inconsistent with nonplanar case
+  for( int i = 0; i < neps; ++i )
+  {
+    double eps = eps_values[i];
+
+    double errTPFA  = computeLinearPressure_error< 6 >( InnerProductType::TPFA, DistortionMode::NonPlanar, eps );
+    EXPECT_GT( errTPFA, 1e-15 );
+
+    double errQTPFA = computeLinearPressure_error< 6 >( InnerProductType::QUASI_TPFA, DistortionMode::NonPlanar, eps );
+    EXPECT_GT( errQTPFA, 1e-15 );
+
+    double errSIMPLE= computeLinearPressure_error< 6 >( InnerProductType::SIMPLE, DistortionMode::NonPlanar, eps );
+    EXPECT_GT( errSIMPLE, 1e-15 );
+
+    double errBDVLM = computeLinearPressure_error< 6 >( InnerProductType::BDVLM, DistortionMode::NonPlanar, eps );
+    EXPECT_GT( errBDVLM, 1e-15 );
+  }
 }
 
 int main( int argc, char * * argv )
