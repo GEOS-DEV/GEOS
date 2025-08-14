@@ -521,29 +521,33 @@ private:
 
   virtual void setConstitutiveNames( ElementSubRegionBase & subRegion ) const override;
 
-  template<typename ... GROUPTYPES >
-  void calculateLimitingConstraint( real64 const & time_n,
-                                    real64 const & stepDt,
-                                    integer const cycleNumber,
-                                    integer const coupledIterationNumber,
-                                    DomainPartition & domain,
-                                    MeshLevel & mesh,
-                                    ElementRegionManager & elemManager,
-                                    WellElementSubRegion & subRegion,
-                                    DofManager const & dofManager );
+  template< typename ... GROUPTYPES >
+  void selectLimitingConstraint( real64 const & time_n, integer const coupledIterationNumber, WellElementSubRegion & subRegion );
 
-                                  
+  template< typename ... GROUPTYPES >
+  void solveConstraint( real64 const & time_n,
+                        real64 const & stepDt,
+                        integer const cycleNumber,
+                        integer const coupledIterationNumber,
+                        DomainPartition & domain,
+                        MeshLevel & mesh,
+                        ElementRegionManager & elemManager,
+                        WellElementSubRegion & subRegion,
+                        DofManager const & dofManager );
+
+
   template<>
-  void calculateLimitingConstraint<MinimumWHPConstraint>( real64 const & time_n,
-                                    real64 const & stepDt,
-                                    integer const cycleNumber,
-                                    integer const coupledIterationNumber,
-                                    DomainPartition & domain,
-                                    MeshLevel & mesh,
-                                    ElementRegionManager & elemManager,
-                                    WellElementSubRegion & subRegion,
-                                    DofManager const & dofManager );
- 
+  void solveConstraint< MinimumWHPConstraint >( real64 const & time_n,
+                                                real64 const & stepDt,
+                                                integer const cycleNumber,
+                                                integer const coupledIterationNumber,
+                                                DomainPartition & domain,
+                                                MeshLevel & mesh,
+                                                ElementRegionManager & elemManager,
+                                                WellElementSubRegion & subRegion,
+                                                DofManager const & dofManager );
+
+
   /// flag indicating whether mass or molar formulation should be used
   integer m_useMass;
 

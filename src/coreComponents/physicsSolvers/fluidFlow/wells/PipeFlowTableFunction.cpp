@@ -102,7 +102,6 @@ void PipeFlowTableFunction::postInputInitialization()
 
 void PipeFlowTableFunction::initializeFunction()
 {
-  return;
   localIndex constexpr nDims = 4;
   localIndex constexpr nOps = 1;
 
@@ -141,7 +140,7 @@ void PipeFlowTableFunction::initializeFunction()
   {
     axisCoordinates[3][i] = m_gfr[i];
   }
-  m_tableFunction->setTableCoordinates(nDims,nOps,axisCoordinates,axisPoints);
+  m_tableFunction->setTableCoordinates( nDims, nOps, axisCoordinates, axisPoints );
   m_tableFunction->setTableValues( m_bhp );
   m_tableFunction->initializeFunction();
 

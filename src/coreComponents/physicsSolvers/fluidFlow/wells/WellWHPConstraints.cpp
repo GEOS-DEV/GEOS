@@ -84,9 +84,7 @@ MinimumWHPConstraint::~MinimumWHPConstraint()
 
 void MinimumWHPConstraint::postInputInitialization()
 {
-
   WHPConstraint::postInputInitialization();
-
 }
 
 bool MinimumWHPConstraint::checkViolation( WellConstraintBase const & currentConstraint, real64 const & currentTime ) const
@@ -94,11 +92,15 @@ bool MinimumWHPConstraint::checkViolation( WellConstraintBase const & currentCon
   return currentConstraint.bottomHolePressure() < getConstraintValue( currentTime );
 }
 
+void MinimumWHPConstraint::calculateWHP( real64 const & bhp, array1d< real64 > const & phaseRates )
+{
+  GEOS_UNUSED_VAR( bhp );
+  GEOS_UNUSED_VAR( phaseRates );
+}
 MaximumWHPConstraint::MaximumWHPConstraint( string const & name, Group * const parent )
   : WHPConstraint( name, parent )
 {
   setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
-
 }
 
 
@@ -109,7 +111,6 @@ void MaximumWHPConstraint::postInputInitialization()
 {
   // Validate value and table options
   WHPConstraint::postInputInitialization();
-
 }
 bool MaximumWHPConstraint::checkViolation( WellConstraintBase const & currentConstraint, real64 const & currentTime ) const
 {

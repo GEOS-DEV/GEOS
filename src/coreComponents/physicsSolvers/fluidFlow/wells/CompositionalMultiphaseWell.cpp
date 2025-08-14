@@ -4131,68 +4131,23 @@ void CompositionalMultiphaseWell::printRates( real64 const & time_n,
 }
 
 
+template< typename ... GROUPTYPES >
+void CompositionalMultiphaseWell::selectLimitingConstraint( real64 const & time_n,
 
-//template< typename GROUPTYPE = WellConstraintBase, typename GROUPTYPES = MinimumWHPConstraint >
-template<>
-void CompositionalMultiphaseWell::calculateLimitingConstraint<MinimumWHPConstraint>( real64 const & time_n,
-                                                               real64 const & dt,
-                                                               integer const cycleNumber,
-                                                               integer const coupledIterationNumber,
-                                                               DomainPartition & domain,
-                                                               MeshLevel & mesh,
-                                                               ElementRegionManager & elemManager,
-                                                               WellElementSubRegion & subRegion,
-                                                               DofManager const & dofManager )
+                                                            integer const coupledIterationNumber,
+
+                                                            WellElementSubRegion & subRegion )
 {
 
   WellControls & wellControls = getWellControls( subRegion );
-  //MinimumWHPConstraint * minWHPConstraint = &(wellControls.getGroup< MinimumWHPConstraint >(MinimumWHPConstraint::getConstraintKey));
+
   bool useEstimator =   coupledIterationNumber <  wellControls.estimateSolution();
   if( useEstimator )
   {
 
-    wellControls.forSubGroups<WellConstraintBase, MinimumWHPConstraint>( [&]( auto & constraint )
-    {
-      std::cout << "Use estimator " <<  useEstimator << " Evaluating constraint " << constraint.getName() << std::endl;
-
-      wellControls.setControl( static_cast< WellControls::Control >(constraint.getControl()) );     // tjb old
-      wellControls.setCurrentConstraint( &constraint );
-      // If a well is opened and then timestep is cut resulting in the well being shut, if the well is opened
-// the well initialization code requires control type to by synced
-      integer owner = -1;
-// Only subregion owner evaluates well control and control changes need to be broadcast to all ranks
-      if( subRegion.isLocallyOwned() )
-      {
-        owner = MpiWrapper::commRank( MPI_COMM_GEOS );
-      }
-      owner = MpiWrapper::max( owner );
-      WellControls::Control wellControl = wellControls.getControl();
-      MpiWrapper::broadcast( wellControl, owner );
-      wellControls.setControl( wellControl );
-      solveNonlinearSystem( time_n,
-                            dt,
-                            cycleNumber,
-                            domain,
-                            mesh,
-                            elemManager,
-                            subRegion,
-                            dofManager );
-
-      // Store computed well quantities for this constraint
-      constraint.setBHP ( wellControls.getReference< real64 >( CompositionalMultiphaseWell::viewKeyStruct::currentBHPString() ));
-      constraint.setPhaseVolumeRates ( wellControls.getReference< array1d< real64 > >(
-                                         CompositionalMultiphaseWell::viewKeyStruct::currentPhaseVolRateString() ) );
-      constraint.setTotalVolumeRate ( wellControls.getReference< real64 >(
-                                        CompositionalMultiphaseWell::viewKeyStruct::currentTotalVolRateString() ));
-      constraint.setMassRate( wellControls.getReference< real64 >( CompositionalMultiphaseWell::viewKeyStruct::currentMassRateString() ));
-
-      std::cout << constraint.getName() << " " << constraint.bottomHolePressure() << " " << constraint.phaseVolumeRates() << " " << constraint.totalVolumeRate() << " " << constraint.massRate() <<
-        std::endl;
-    } );
-
     // find limiting constraint
     WellConstraintBase * limitingConstraint = nullptr;
-    wellControls.forSubGroups< WellConstraintBase,MinimumWHPConstraint >( [&]( auto & constraint )
+    wellControls.forSubGroups< WellConstraintBase, GROUPTYPES... >( [&]( auto & constraint )
     {
       std::cout << "Use estimator " <<  useEstimator << " valuating constraint " << constraint.getName() << std::endl;
       if( limitingConstraint != nullptr )
@@ -4215,7 +4170,7 @@ void CompositionalMultiphaseWell::calculateLimitingConstraint<MinimumWHPConstrai
 
     // Get current constraint
     WellConstraintBase * limitingConstraint = nullptr;
-    wellControls.forSubGroups<WellConstraintBase, MinimumWHPConstraint >( [&]( auto & constraint )
+    wellControls.forSubGroups< WellConstraintBase, GROUPTYPES... >( [&]( auto & constraint )
     {
       if( constraint.getName() == wellControls.getCurrentConstraint()->getName())
       {
@@ -4244,21 +4199,78 @@ void CompositionalMultiphaseWell::calculateLimitingConstraint<MinimumWHPConstrai
       }
     } );
 
-
   }
 }
 
+template<>
+void CompositionalMultiphaseWell::solveConstraint< MinimumWHPConstraint >( real64 const & time_n,
+                                                                           real64 const & dt,
+                                                                           integer const cycleNumber,
+                                                                           integer const coupledIterationNumber,
+                                                                           DomainPartition & domain,
+                                                                           MeshLevel & mesh,
+                                                                           ElementRegionManager & elemManager,
+                                                                           WellElementSubRegion & subRegion,
+                                                                           DofManager const & dofManager )
+{
+
+  WellControls & wellControls = getWellControls( subRegion );
+  //MinimumWHPConstraint * minWHPConstraint = &(wellControls.getGroup< MinimumWHPConstraint >(MinimumWHPConstraint::getConstraintKey));
+  bool useEstimator =   coupledIterationNumber <  wellControls.estimateSolution();
+  if( useEstimator )
+  {
+
+    wellControls.forSubGroups< WellConstraintBase, MinimumWHPConstraint >( [&]( auto & constraint )
+    {
+      std::cout << "Use estimator " <<  useEstimator << " Evaluating constraint " << constraint.getName() << std::endl;
+
+      wellControls.setControl( static_cast< WellControls::Control >(constraint.getControl()) );     // tjb old
+      wellControls.setCurrentConstraint( &constraint );
+      // If a well is opened and then timestep is cut resulting in the well being shut, if the well is opened
+// the well initialization code requires control type to by synced
+      integer owner = -1;
+// Only subregion owner evaluates well control and control changes need to be broadcast to all ranks
+      if( subRegion.isLocallyOwned() )
+      {
+        owner = MpiWrapper::commRank( MPI_COMM_GEOS );
+      }
+      owner = MpiWrapper::max( owner );
+      WellControls::Control wellControl = wellControls.getControl();
+      MpiWrapper::broadcast( wellControl, owner );
+      wellControls.setControl( wellControl );
+      solveNonlinearSystem( time_n,
+                            dt,
+                            cycleNumber,
+                            domain,
+                            mesh,
+                            elemManager,
+                            subRegion,
+                            dofManager );
+
+      // Store computed well quantities for this constraint
+      constraint.setBHP ( wellControls.getReference< real64 >( CompositionalMultiphaseWell::viewKeyStruct::currentBHPString() ));
+      constraint.setPhaseVolumeRates ( wellControls.getReference< array1d< real64 > >(
+                                         CompositionalMultiphaseWell::viewKeyStruct::currentPhaseVolRateString() ) );
+      constraint.setTotalVolumeRate ( wellControls.getReference< real64 >(
+                                        CompositionalMultiphaseWell::viewKeyStruct::currentTotalVolRateString() ));
+      constraint.setMassRate( wellControls.getReference< real64 >( CompositionalMultiphaseWell::viewKeyStruct::currentMassRateString() ));
+
+      std::cout << constraint.getName() << " " << constraint.bottomHolePressure() << " " << constraint.phaseVolumeRates() << " " << constraint.totalVolumeRate() << " " << constraint.massRate() <<
+        std::endl;
+    } );
+  }
+}
 
 template< typename ... GROUPTYPES >
-void CompositionalMultiphaseWell::calculateLimitingConstraint( real64 const & time_n,
-                                                               real64 const & dt,
-                                                               integer const cycleNumber,
-                                                               integer const coupledIterationNumber,
-                                                               DomainPartition & domain,
-                                                               MeshLevel & mesh,
-                                                               ElementRegionManager & elemManager,
-                                                               WellElementSubRegion & subRegion,
-                                                               DofManager const & dofManager )
+void CompositionalMultiphaseWell::solveConstraint( real64 const & time_n,
+                                                   real64 const & dt,
+                                                   integer const cycleNumber,
+                                                   integer const coupledIterationNumber,
+                                                   DomainPartition & domain,
+                                                   MeshLevel & mesh,
+                                                   ElementRegionManager & elemManager,
+                                                   WellElementSubRegion & subRegion,
+                                                   DofManager const & dofManager )
 {
 
   WellControls & wellControls = getWellControls( subRegion );
@@ -4305,64 +4317,9 @@ void CompositionalMultiphaseWell::calculateLimitingConstraint( real64 const & ti
         std::endl;
     } );
 
-    // find limiting constraint
-    WellConstraintBase * limitingConstraint = nullptr;
-    wellControls.forSubGroups< WellConstraintBase, GROUPTYPES... >( [&]( auto & constraint )
-    {
-      std::cout << "Use estimator " <<  useEstimator << " valuating constraint " << constraint.getName() << std::endl;
-      if( limitingConstraint != nullptr )
-        std::cout << " against constraint " << limitingConstraint->getName() << std::endl;
-
-      if( limitingConstraint == nullptr || constraint.checkViolation( *limitingConstraint, time_n ))
-      {
-        limitingConstraint = &constraint;
-
-        std::cout << "New limiting constraint " << constraint.getName() << std::endl;
-
-        wellControls.setControl( static_cast< WellControls::Control >(limitingConstraint->getControl()) );   // tjb old
-        wellControls.setCurrentConstraint( limitingConstraint );
-      }
-    } );
-
   }
-  else
-  {
 
-    // Get current constraint
-    WellConstraintBase * limitingConstraint = nullptr;
-    wellControls.forSubGroups< WellConstraintBase, GROUPTYPES... >( [&]( auto & constraint )
-    {
-      if( constraint.getName() == wellControls.getCurrentConstraint()->getName())
-      {
-        limitingConstraint = &constraint;
-        // this may not be needed
-        constraint.setBHP ( wellControls.getReference< real64 >( CompositionalMultiphaseWell::viewKeyStruct::currentBHPString() ));
-        constraint.setPhaseVolumeRates ( wellControls.getReference< array1d< real64 > >(
-                                           CompositionalMultiphaseWell::viewKeyStruct::currentPhaseVolRateString() ) );
-        constraint.setTotalVolumeRate ( wellControls.getReference< real64 >(
-                                          CompositionalMultiphaseWell::viewKeyStruct::currentTotalVolRateString() ));
-        constraint.setMassRate( wellControls.getReference< real64 >( CompositionalMultiphaseWell::viewKeyStruct::currentMassRateString() ));
-      }
-    } );
-    // Check current aggainst other constraints
-
-    wellControls.forSubGroups< WellConstraintBase, GROUPTYPES... >( [&]( auto & constraint )
-    {
-      if( limitingConstraint->getName() != constraint.getName())
-      {
-        std::cout << "Use estimator " <<  useEstimator << "  Evaluating constraint " << constraint.getName() <<  " against constraint " << limitingConstraint->getName() << std::endl;
-        if( constraint.checkViolation( *limitingConstraint, time_n ) )
-        {
-          wellControls.setControl( static_cast< WellControls::Control >(constraint.getControl()) );   // tjb old
-          wellControls.setCurrentConstraint( &constraint );
-        }
-      }
-    } );
-
-
-  }
 }
-
 
 bool CompositionalMultiphaseWell::evaluateProductionConstraints( real64 const & time_n,
                                                                  real64 const & dt,
@@ -4376,27 +4333,31 @@ bool CompositionalMultiphaseWell::evaluateProductionConstraints( real64 const & 
 {
   WellControls & wellControls = getWellControls( subRegion );
 
- 
-    this->template calculateLimitingConstraint< MinimumWHPConstraint >( time_n,
-                                                                                                      dt,
-                                                                                                      cycleNumber,
-                                                                                                      coupledIterationNumber,
-                                                                                                      domain,
-                                                                                                      mesh,
-                                                                                                      elemManager,
-                                                                                                      subRegion,
-                                                                                                      dofManager );
- 
-  this->template calculateLimitingConstraint< MinimumWHPConstraint, MinimumBHPConstraint, PhaseProductionConstraint,
-                                              MassProductionConstraint, VolumeProductionConstraint >( time_n,
-                                                                                                      dt,
-                                                                                                      cycleNumber,
-                                                                                                      coupledIterationNumber,
-                                                                                                      domain,
-                                                                                                      mesh,
-                                                                                                      elemManager,
-                                                                                                      subRegion,
-                                                                                                      dofManager );
+  this->template solveConstraint< MinimumWHPConstraint >( time_n,
+                                                          dt,
+                                                          cycleNumber,
+                                                          coupledIterationNumber,
+                                                          domain,
+                                                          mesh,
+                                                          elemManager,
+                                                          subRegion,
+                                                          dofManager );
+
+  this->template solveConstraint< MinimumBHPConstraint, PhaseProductionConstraint,
+                                  MassProductionConstraint, VolumeProductionConstraint >( time_n,
+                                                                                          dt,
+                                                                                          cycleNumber,
+                                                                                          coupledIterationNumber,
+                                                                                          domain,
+                                                                                          mesh,
+                                                                                          elemManager,
+                                                                                          subRegion,
+                                                                                          dofManager );
+
+  this->template selectLimitingConstraint< MinimumWHPConstraint, MinimumBHPConstraint, PhaseProductionConstraint,
+                                           MassProductionConstraint, VolumeProductionConstraint >( time_n,
+                                                                                                   coupledIterationNumber,
+                                                                                                   subRegion );
   // this should be done in calculateLImitingConstraint
   //  wellControls.setControl( static_cast< WellControls::Control >(limitingConstraint->getControl()) );     // old
   // wellControls.setCurrentConstraint( limitingConstraint );     // new
@@ -4441,16 +4402,21 @@ CompositionalMultiphaseWell::
 {
   WellControls & wellControls = getWellControls( subRegion );
 
-  this->template calculateLimitingConstraint< MaximumBHPConstraint, PhaseInjectionConstraint,
-                                              MassInjectionConstraint, VolumeInjectionConstraint >( time_n,
-                                                                                                    dt,
-                                                                                                    cycleNumber,
-                                                                                                    coupledIterationNumber,
-                                                                                                    domain,
-                                                                                                    mesh,
-                                                                                                    elemManager,
-                                                                                                    subRegion,
-                                                                                                    dofManager );
+  this->template solveConstraint< MaximumBHPConstraint, PhaseInjectionConstraint,
+                                  MassInjectionConstraint, VolumeInjectionConstraint >( time_n,
+                                                                                        dt,
+                                                                                        cycleNumber,
+                                                                                        coupledIterationNumber,
+                                                                                        domain,
+                                                                                        mesh,
+                                                                                        elemManager,
+                                                                                        subRegion,
+                                                                                        dofManager );
+
+  this->template selectLimitingConstraint< MaximumBHPConstraint, PhaseInjectionConstraint,
+                                           MassInjectionConstraint, VolumeInjectionConstraint >( time_n,
+                                                                                                 coupledIterationNumber,
+                                                                                                 subRegion );
 
   // this should be done in calculateLimitingCosntraint
   //wellControls.setControl( static_cast< WellControls::Control >(limitingConstraint->getControl()) );     // old
@@ -4482,5 +4448,7 @@ CompositionalMultiphaseWell::
 
   return true;
 }
+
+
 REGISTER_CATALOG_ENTRY( PhysicsSolverBase, CompositionalMultiphaseWell, string const &, Group * const )
 }   // namespace geos

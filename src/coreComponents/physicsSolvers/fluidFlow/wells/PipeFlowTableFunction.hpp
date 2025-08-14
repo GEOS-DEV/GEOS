@@ -52,30 +52,30 @@ public:
    */
   static string catalogName() { return "PipeFlowTableFunction"; }
 
-    /**
+  /**
    * @name Getters / Setters
    */
   ///@{
 
-    /**
+  /**
    * @brief Get type of rate array
    * @return name of type
    */
   const string & getRateType() const { return m_rateType; }
 
-    /**
+  /**
    * @brief Get type of water fraction array
    * @return name of type
    */
   const string & getWaterFractionType() const { return m_waterFractionType; }
 
-      /**
+  /**
    * @brief Get type of gas fraction array
    * @return name of type
    */
   const string & getGasFractionType() const { return m_gasFractionType; }
 
-    ///@}
+  ///@}
 
   /**
    * @brief Struct to serve as a container for variable strings and keys.

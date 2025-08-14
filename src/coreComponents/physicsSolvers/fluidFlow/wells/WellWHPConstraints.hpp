@@ -134,9 +134,17 @@ public:
   real64 getReferenceGravityCoef() const { return m_refGravCoef; }
 
   /**
+   * @brief Getter for the flow table name
+   * @return the name of the flow table
+   */
+  std::string  getFlowTableName() const { return m_flowTableName; }
+
+  /**
    * @brief Setter for the reference gravity
    */
   void setReferenceGravityCoef( real64 const & refGravCoef ) { m_refGravCoef = refGravCoef; }
+
+
 
 protected:
 
@@ -234,6 +242,10 @@ public:
   viewKeysWellWHPConstraint;
 
   virtual bool checkViolation( WellConstraintBase const & currentConstraint, real64 const & currentTime ) const override;
+
+
+  void calculateWHP( real64 const & bhp, array1d< real64 > const & phaseRates );
+
 
 protected:
 
