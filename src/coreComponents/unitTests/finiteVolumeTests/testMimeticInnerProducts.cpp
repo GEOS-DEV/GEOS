@@ -1150,7 +1150,7 @@ static inline void makeDistortedNonplanar( array2d< real64, nodes::REFERENCE_POS
   int Rvert = faceR(fR,2);
 
   nodeL(Lvert,0) += eps;
-  nodeR(Rvert,0) += eps;
+  nodeR(Rvert,0) -= eps;
 }
 
 // return the sum of all entries in row r of matrix T
@@ -1430,37 +1430,64 @@ TEST( MimeticIP_Linear, UnitCube_LinearPressure_BdVLM )
 // =================== case 1: with distortion (planar) ===========================
 TEST( MimeticIP_Linear, Distortion_Planar_LinearPressure )
 {
-  constexpr double eps = 0.2; // level of distortion is adjustable
-
-  double errTPFA  = computeLinearPressure_error< 6 >( InnerProductType::TPFA, DistortionMode::Planar, eps );
-  EXPECT_LT( errTPFA, 1e-15 );
-
-  double errQTPFA = computeLinearPressure_error< 6 >( InnerProductType::QUASI_TPFA, DistortionMode::Planar, eps );
-  EXPECT_LT( errQTPFA, 1e-15 );
+    int neps = 3;
+    std::vector< double > eps_values(3);
+    eps_values[0] = 0.0; // no distortion
+    eps_values[1] = 0.2; // moderate distortion
+    eps_values[2] = 0.9; // severe distortion
     
-  double errSIMPLE= computeLinearPressure_error< 6 >( InnerProductType::SIMPLE, DistortionMode::Planar, eps );
-  EXPECT_LT( errSIMPLE, 1e-15 );
-   
-  double errBDVLM = computeLinearPressure_error< 6 >( InnerProductType::BDVLM, DistortionMode::Planar, eps );
-  EXPECT_LT( errBDVLM, 1e-15 );
+    // all mimetic schemes are consistent
+    for (int i = 0; i < neps ; ++i) {
+        double eps = eps_values[i];
+        
+        double errQTPFA = computeLinearPressure_error< 6 >( InnerProductType::QUASI_TPFA, DistortionMode::Planar, eps );
+        EXPECT_LT( errQTPFA, 1e-15 );
+        
+        double errSIMPLE= computeLinearPressure_error< 6 >( InnerProductType::SIMPLE, DistortionMode::Planar, eps );
+        EXPECT_LT( errSIMPLE, 1e-15 );
+        
+        double errBDVLM = computeLinearPressure_error< 6 >( InnerProductType::BDVLM, DistortionMode::Planar, eps );
+        EXPECT_LT( errBDVLM, 1e-15 );
+    }
+    
+    for (int i = 0; i < neps ; ++i) {
+        double eps = eps_values[i];
+        
+        double errTPFA  = computeLinearPressure_error< 6 >( InnerProductType::TPFA, DistortionMode::Planar, eps );
+        
+        if ( i == 0) {
+            EXPECT_LT( errTPFA, 1e-15 ); // test TPFA is consistent with K-orthogonal grids
+        } else {
+            EXPECT_GT( errTPFA, 1e-15 ); // test TPFA is inconsistent with non K-orthogonal grids
+        }
+        
+    }
 }
 
 // =================== case 2: with distortion (nonplanar) ===========================
 TEST( MimeticIP_Linear, Distortion_NonPlanar_LinearPresssure )
 {
-  constexpr double eps = 0.2; // level of distortion is adjustable
-
-  double errTPFA  = computeLinearPressure_error<6>( InnerProductType::TPFA, DistortionMode::NonPlanar, eps );
-  EXPECT_LT( errTPFA, 1e-15 );
+    int neps = 2;
+    std::vector< double > eps_values(2);
+    eps_values[0] = 0.2; // moderate distortion
+    eps_values[1] = 0.9; // severe distortion
     
-  double errQTPFA = computeLinearPressure_error<6>( InnerProductType::QUASI_TPFA, DistortionMode::NonPlanar, eps );
-  EXPECT_LT( errQTPFA, 1e-15 );
-
-  double errSIMPLE= computeLinearPressure_error<6>( InnerProductType::SIMPLE, DistortionMode::NonPlanar, eps );
-  EXPECT_LT( errSIMPLE, 1e-15 );
-    
-  double errBDVLM = computeLinearPressure_error<6>( InnerProductType::BDVLM, DistortionMode::NonPlanar, eps );
-  EXPECT_LT( errBDVLM, 1e-15 );
+    // all schemes are inconsistent with nonplanar case
+    for (int i = 0; i < neps ; ++i) {
+        double eps = eps_values[i];
+        
+        double errTPFA  = computeLinearPressure_error< 6 >( InnerProductType::TPFA, DistortionMode::NonPlanar, eps );
+        EXPECT_GT( errTPFA, 1e-15 );
+        
+        double errQTPFA = computeLinearPressure_error< 6 >( InnerProductType::QUASI_TPFA, DistortionMode::NonPlanar, eps );
+        EXPECT_GT( errQTPFA, 1e-15 );
+        
+        double errSIMPLE= computeLinearPressure_error< 6 >( InnerProductType::SIMPLE, DistortionMode::NonPlanar, eps );
+        EXPECT_GT( errSIMPLE, 1e-15 );
+        
+        double errBDVLM = computeLinearPressure_error< 6 >( InnerProductType::BDVLM, DistortionMode::NonPlanar, eps );
+        EXPECT_GT( errBDVLM, 1e-15 );
+    }
 }
 
 int main( int argc, char * * argv )
