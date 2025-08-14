@@ -179,18 +179,12 @@ public:
       fluid.initialize( 1, 1 );
 
       // Initialize the fluid by computing properties with a test composition
-      stackArray1d< real64, 3 > composition( 3 );
+      StackArray< real64, 2, 3, compflow::LAYOUT_COMP > compositionData( 1, 3 );
+      auto composition = compositionData[0];
       composition[0] = 0.4;
       composition[1] = 0.3;
       composition[2] = 0.3;
-
-      arraySlice1d< real64 const, compflow::USD_COMP - 1 > compositionS( composition );
-      StackArray< real64, 2, 3, compflow::LAYOUT_COMP > compositionData( 1, 3 );
-      auto composition_c = compositionData[0];
-      composition_c[0] = 0.4;
-      composition_c[1] = 0.3;
-      composition_c[2] = 0.3;
-      arraySlice1d< real64 const, compflow::USD_COMP - 1 > compositionSlice( composition_c.toSliceConst());
+      CompSlice compositionSlice = composition.toSliceConst();
       fluid.initializeState();
 
       // Create a test point
@@ -239,7 +233,8 @@ TYPED_TEST( InvariantImmiscibleFluidTestFixture, PhaseProperties )
   constexpr integer numDerivs = numComponents + 2; // P, T, and compositions
 
   // Setup a test composition
-  stackArray1d< real64, numComponents > composition( 3 );
+  StackArray< real64, 2, numComponents, compflow::LAYOUT_COMP > compositionData( 1, numComponents );
+  auto composition = compositionData[0];
   composition[0] = 0.4;
   composition[1] = 0.3;
   composition[2] = 0.3;
@@ -365,7 +360,8 @@ TYPED_TEST( InvariantImmiscibleFluidTestFixture, TotalDensityDerivative )
   constexpr integer numDerivs = numComponents + 2; // P, T, and compositions
 
   // Setup a test composition
-  stackArray1d< real64, numComponents > composition( 3 );
+  StackArray< real64, 2, numComponents, compflow::LAYOUT_COMP > compositionData( 1, numComponents );
+  auto composition = compositionData[0];
   composition[0] = 0.4;
   composition[1] = 0.3;
   composition[2] = 0.3;
