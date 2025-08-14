@@ -589,7 +589,6 @@ void DofManagerSparsityTest< LAI >::test( stdVector< FieldDesc > fields,
     CRSMatrix< real64, globalIndex > localMatrix;
     localMatrix.assimilate< parallelHostPolicy >( std::move( localPattern ) );
     pattern.create( localMatrix.toViewConst(), dofManager.numLocalDofs(), MPI_COMM_GEOS );
-    pattern.set( 1.0 );
   }
 
   CRSMatrix< real64, globalIndex > localPatternExpected( numLocalDof,
@@ -599,7 +598,6 @@ void DofManagerSparsityTest< LAI >::test( stdVector< FieldDesc > fields,
 
   for( FieldDesc const & f : fields )
   {
-    GEOS_LOG_RANK( "rankOffset = "<<dofManager.rankOffset() );
     f.makePattern( domain,
                    dofManager.getKey( f.name ),
                    getRegions( domain, f.regions ),
@@ -644,7 +642,8 @@ TYPED_TEST_P( DofManagerSparsityTest, TPFA_Full )
     { "pressure",
       FieldLocation::Elem,
       DofManager::Connector::Face,
-      2, makeSparsityTPFA }
+      2, makeSparsityTPFA,
+      { {"mesh", "Level0", {} } } }
   } );
 }
 
@@ -674,7 +673,8 @@ TYPED_TEST_P( DofManagerSparsityTest, FEM_Full )
     { "displacement",
       FieldLocation::Node,
       DofManager::Connector::Elem,
-      3, makeSparsityFEM }
+      3, makeSparsityFEM,
+      { {"mesh", "Level0", {} } } }
   } );
 }
 
@@ -704,7 +704,8 @@ TYPED_TEST_P( DofManagerSparsityTest, Mass_Full )
     { "mass",
       FieldLocation::Elem,
       DofManager::Connector::None,
-      2, makeSparsityMass }
+      2, makeSparsityMass,
+      { {"mesh", "Level0", {} } } }
   } );
 }
 
@@ -734,7 +735,8 @@ TYPED_TEST_P( DofManagerSparsityTest, Flux_Full )
     { "flux",
       FieldLocation::Face,
       DofManager::Connector::Elem,
-      2, makeSparsityFlux }
+      2, makeSparsityFlux,
+      { {"mesh", "Level0", {} } } }
   } );
 }
 
@@ -764,18 +766,21 @@ TYPED_TEST_P( DofManagerSparsityTest, FEM_TPFA_Full )
     { "displacement",
       FieldLocation::Node,
       DofManager::Connector::Elem,
-      3, makeSparsityFEM },
+      3, makeSparsityFEM,
+      { {"mesh", "Level0", {} } } },
     { "pressure",
       FieldLocation::Elem,
       DofManager::Connector::Face,
-      2, makeSparsityTPFA }
+      2, makeSparsityTPFA,
+      { {"mesh", "Level0", {} } } }
   },
   {
     {
       { "displacement", "pressure" },
       { DofManager::Connector::Elem,
         makeSparsityFEM_FVM,
-        true }
+        true,
+        { {"mesh", "Level0", {} } } }
     }
   } );
 }
