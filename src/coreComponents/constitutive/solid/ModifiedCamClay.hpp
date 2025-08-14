@@ -97,7 +97,7 @@ public:
   using DiscretizationOps = SolidModelDiscretizationOpsFullyAnisotropic;
 
   // Bring in base implementations to prevent hiding warnings
-  //using ElasticIsotropicPressureDependentUpdates::smallStrainUpdate;
+  using ElasticIsotropicPressureDependentUpdates::smallStrainUpdate;
 
   GEOS_HOST_DEVICE
   void evaluateYield( real64 const p,
