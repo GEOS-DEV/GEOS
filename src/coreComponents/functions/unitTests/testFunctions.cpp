@@ -865,6 +865,10 @@ real64 operator3 ( real64 const x, real64 const y ) { GEOS_UNUSED_VAR( y ); retu
 real64 dOperator3_dx ( real64 const x, real64 const y ) { GEOS_UNUSED_VAR( x, y ); return 2; }
 real64 dOperator3_dy ( real64 const x, real64 const y ) { GEOS_UNUSED_VAR( x, y ); return 0; }
 
+real64 operator1a ( real64 const x, real64 const y ) { return x + y; }
+real64 dOperator1a_dx ( real64 const x, real64 const y ) { GEOS_UNUSED_VAR( x, y ); return 1; }
+real64 dOperator1a_dy ( real64 const x, real64 const y ) { GEOS_UNUSED_VAR( x ); return 1; }
+
 TEST( FunctionTests, 2DMultivariableTable )
 {
   FunctionManager * functionManager = &FunctionManager::getInstance();
@@ -927,8 +931,6 @@ TEST( FunctionTests, 2DMultivariableTable )
   table_nuif.setTableValues( values );
   table_nuif.initializeFunction();
 
-
-
   // Setup testing coordinates, expected values
   array1d< real64 > testCoordinates( nTest * nDims );
   testCoordinates[0] = 1.2334;
@@ -953,7 +955,103 @@ TEST( FunctionTests, 2DMultivariableTable )
     testExpectedDerivatives[i * nOps * nDims + 5] = dOperator3_dy( testCoordinates[i * nDims], testCoordinates[i * nDims + 1] );
   }
 
+  testMutivariableFunction< nDims, nOps >( table_g, testCoordinates, testExpectedValues, testExpectedDerivatives, 1e-2, 2e-2 );
+  testNonuniformMultivariableFunction< nDims, nOps >( table_nuif, testCoordinates, testExpectedValues, testExpectedDerivatives, 1e-2, 2e-2 );
+}
 
+TEST( FunctionTests, 2DMultivariableNonuniformTable )
+{
+  FunctionManager * functionManager = &FunctionManager::getInstance();
+  // 1D table
+  localIndex constexpr nDims = 2;
+  localIndex constexpr nOps = 1;
+  localIndex const nTest = 4;
+
+  // Setup table
+  array1d< real64 > axisMins( nDims );
+  array1d< real64 > axisMaxs( nDims );
+  integer_array axisPoints( nDims );
+
+
+  axisMins[0] = 1;
+  axisMins[1] = 0;
+  axisMaxs[0] = 2;
+  axisMaxs[1] = 1;
+  axisPoints[0] = 5;
+  axisPoints[1] = 5;
+
+  array1d< real64 > axisSteps( nDims );
+  for( auto i = 0; i < nDims; i++ )
+    axisSteps[i] = (axisMaxs[i] - axisMins[i]) /  (axisPoints[i]-1);
+
+  array1d< real64 > values( axisPoints[0] * axisPoints[1] * nOps );
+
+  for( auto i = 0; i < axisPoints[0]; i++ )
+    for( auto j = 0; j < axisPoints[1]; j++ )
+    {
+      auto x = axisMins[0] + i * axisSteps[0];
+      auto y = axisMins[1] + j * axisSteps[1];
+      values[( i*axisPoints[1] + j ) * nOps] = operator1a( x, y );
+    }
+
+  MultivariableTableFunction & table_g = dynamicCast< MultivariableTableFunction & >( *functionManager->createChild( "MultivariableTableFunction", "table_f" ) );
+  table_g.setTableCoordinates( nDims, nOps, axisMins, axisMaxs, axisPoints );
+  table_g.setTableValues( values );
+  table_g.initializeFunction();
+
+  // Create nonuniform version of uniformly spaced table
+  MultivariableNonuniformTableFunction & table_nuif = dynamicCast< MultivariableNonuniformTableFunction & >( *functionManager->createChild( "MultivariableNonuniformTableFunction", "table_nuif" ) );
+
+  integer maxDims = *std::max_element( axisPoints.begin(), axisPoints.end());
+
+  array2d< real64 > axisCoordinates( nDims, 2*maxDims );
+
+  for( integer d=0; d<nDims; d++ )
+  {
+
+    axisCoordinates[d][0] = axisMins[d];
+    for( integer j=1; j<axisPoints[d]-2; j++ )
+    {
+      real64 dx =  1/(j+1.0)*(axisMaxs[d] - axisMins[d]) / (  axisPoints[d] - 1);
+      axisCoordinates[d][j] = axisMins[d] + j*dx;
+    }
+    for( integer j=axisPoints[d]-2; j<axisPoints[d]-1; j++ )
+    {
+      real64 dx =  1/(j+2.0)*(axisMaxs[d] - axisMins[d]) / (  axisPoints[d] - 1);
+      axisCoordinates[d][j] = axisMins[d] + j*dx;
+    }
+    axisCoordinates[d][axisPoints[d]-1] = axisMins[d] + (axisPoints[d]-2)* (axisMaxs[d] - axisMins[d]) / (  axisPoints[d] - 1);
+  }
+  for( auto i = 0; i < axisPoints[0]; i++ )
+    for( auto j = 0; j < axisPoints[1]; j++ )
+    {
+      auto x = axisCoordinates[0][i];
+      auto y = axisCoordinates[1][j];
+      values[( i * axisPoints[1] + j ) * nOps] = operator1a( x, y );
+    }
+  table_nuif.setTableCoordinates( nDims, nOps, axisCoordinates, axisPoints );
+  table_nuif.setTableValues( values );
+  table_nuif.initializeFunction();
+
+  // Setup testing coordinates, expected values
+  array1d< real64 > testCoordinates( nTest * nDims );
+  testCoordinates[0] = 1.2334;
+  testCoordinates[1] = 0.1232;
+  testCoordinates[2] = 1.7342;
+  testCoordinates[3] = 0.2454;
+  testCoordinates[4] = 2.0;
+  testCoordinates[5] = 0.7745;
+  testCoordinates[6] = 1.0;
+  testCoordinates[7] = 0.0;
+
+  array1d< real64 > testExpectedValues( nTest * nOps );
+  array1d< real64 > testExpectedDerivatives( nTest * nOps * nDims );
+  for( auto i = 0; i < nTest; i++ )
+  {
+    testExpectedValues[i * nOps] = operator1a( testCoordinates[i * nDims], testCoordinates[i * nDims + 1] );
+    testExpectedDerivatives[i * nOps * nDims] = dOperator1a_dx( testCoordinates[i * nDims], testCoordinates[i * nDims + 1] );
+    testExpectedDerivatives[i * nOps * nDims + 1] = dOperator1a_dy( testCoordinates[i * nDims], testCoordinates[i * nDims + 1] );
+  }
   testMutivariableFunction< nDims, nOps >( table_g, testCoordinates, testExpectedValues, testExpectedDerivatives, 1e-2, 2e-2 );
   testNonuniformMultivariableFunction< nDims, nOps >( table_nuif, testCoordinates, testExpectedValues, testExpectedDerivatives, 1e-2, 2e-2 );
 }
