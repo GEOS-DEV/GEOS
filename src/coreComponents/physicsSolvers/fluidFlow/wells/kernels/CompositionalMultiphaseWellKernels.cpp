@@ -19,16 +19,17 @@
 
 #include "CompositionalMultiphaseWellKernels.hpp"
 
-#include "physicsSolvers/fluidFlow/CompositionalMultiphaseUtilities.hpp"
+//#include "physicsSolvers/fluidFlow/CompositionalMultiphaseUtilities.hpp"
 // TODO: move keys to WellControls
 #include "physicsSolvers/fluidFlow/wells/CompositionalMultiphaseWell.hpp"
 
 namespace geos
 {
 
-using namespace constitutive;
 namespace compositionalMultiphaseWellKernels
 {
+
+using namespace constitutive;
 
 /******************************** ControlEquationHelper ********************************/
 

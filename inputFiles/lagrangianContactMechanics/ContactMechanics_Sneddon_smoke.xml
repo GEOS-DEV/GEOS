@@ -11,7 +11,6 @@
   <!-- SPHINX_SNEDDON_SOLVER -->
     <SolidMechanicsLagrangeContact
       name="lagrangiancontact"
-      timeIntegrationOption="QuasiStatic"
       stabilizationName="TPFAstabilization"
       logLevel="1"
       discretization="FE1"

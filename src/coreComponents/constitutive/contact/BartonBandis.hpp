@@ -22,6 +22,7 @@
 
 #include "constitutive/contact/HydraulicApertureBase.hpp"
 #include "functions/TableFunction.hpp"
+#include "physicsSolvers/solidMechanics/contact/FractureState.hpp"
 
 namespace geos
 {
@@ -68,6 +69,7 @@ public:
   GEOS_HOST_DEVICE
   real64 computeHydraulicAperture( real64 const aperture,
                                    real64 const normalTraction,
+                                   integer const fractureState,
                                    real64 & dHydraulicAperture_aperture,
                                    real64 & dHydraulicAperture_dNormalStress ) const;
 
@@ -102,6 +104,10 @@ public:
    */
   virtual ~BartonBandis() override;
 
+  static string catalogName() { return "BartonBandis"; }
+
+  virtual string getCatalogName() const override { return catalogName(); }
+
 
   /// Type of kernel wrapper for in-kernel update
   using KernelWrapper = BartonBandisUpdates;
@@ -111,6 +117,10 @@ public:
    * @return the wrapper
    */
   KernelWrapper createKernelWrapper() const;
+
+protected:
+
+  virtual void postInputInitialization() override;
 
 private:
 
@@ -127,12 +137,17 @@ GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
 real64 BartonBandisUpdates::computeHydraulicAperture( real64 const aperture,
                                                       real64 const normalTraction,
+                                                      integer const fractureState,
                                                       real64 & dHydraulicAperture_aperture,
-                                                      real64 & dHydraulicAperture_dNormalStress ) const
+                                                      real64 & dHydraulicAperture_dNormalTraction ) const
 {
-  real64 const hydraulicAperture = ( aperture >= 0.0 ) ? (aperture + m_aperture0) : m_aperture0 / ( 1 + 9*normalTraction/m_referenceNormalStress );
-  dHydraulicAperture_dNormalStress = ( aperture >= 0.0 ) ? 0.0 : -hydraulicAperture / ( 1 + 9*normalTraction/m_referenceNormalStress ) * 9/m_referenceNormalStress;
-  dHydraulicAperture_aperture = ( aperture >= 0.0 ) ? 1.0 : 0.0;
+  using namespace fields::contact;
+
+  // Note: compressive
+  real64 const hydraulicAperture = ( fractureState == FractureState::Open ) ? (aperture + m_aperture0) : m_aperture0 / ( 1.0 - 9.0 * normalTraction /m_referenceNormalStress );
+  dHydraulicAperture_dNormalTraction =
+    ( fractureState == FractureState::Open ) ? 0.0 : hydraulicAperture / ( 1.0 - 9.0 * normalTraction /m_referenceNormalStress ) * 9.0/m_referenceNormalStress;
+  dHydraulicAperture_aperture = ( fractureState == FractureState::Open ) ? 1.0 : 0.0;
 
   return hydraulicAperture; ///It would be nice to change this to return a tuple.
 }
