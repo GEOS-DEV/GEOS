@@ -115,7 +115,7 @@ public:
     /// String key for the well reference elevation (for WHP control)
     static constexpr char const * refElevString() { return "referenceElevation"; }
     /// string key for constraint values entered table name
-    static constexpr char const * whpTableNameString() { return "whpTableName"; }
+    static constexpr char const * flowTableNameString() { return "flowTableName"; }
   }
   viewKeysWellWHPConstraint;
 
@@ -148,8 +148,8 @@ protected:
   /// Gravity coefficient of the reference elevation
   real64 m_refGravCoef;
 
-  /// WHP table name
-  string m_whpTableName;
+  /// Flow table name
+  string m_flowTableName;
 
 };
 

@@ -47,7 +47,7 @@ WHPConstraint::WHPConstraint( string const & name, Group * const parent )
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Reference elevation where WHP control is enforced [m]" );
 
-  registerWrapper( viewKeyStruct::whpTableNameString(), &m_whpTableName ).
+  registerWrapper( viewKeyStruct::flowTableNameString(), &m_flowTableName ).
     setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Name of the well WHP TABLE. \n" );
@@ -75,7 +75,7 @@ MinimumWHPConstraint::MinimumWHPConstraint( string const & name, Group * const p
     setDefaultValue( 0.0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setRestartFlags( RestartFlags::WRITE_AND_READ ).
-    setDescription( "Minimun bottom-hole production pressure [Pa]" );
+    setDescription( "Minimun well head pressure [Pa]" );
 }
 
 

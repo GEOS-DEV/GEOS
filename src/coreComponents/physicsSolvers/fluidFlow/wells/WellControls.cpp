@@ -201,7 +201,17 @@ Group * WellControls::createChild( string const & childKey, string const & child
   //               CatalogInterface::unknownTypeError( childKey, getDataContext(), childTypes ) );
 
   Group * constraint = nullptr;
-  if( childKey == viewKeyStruct::minimumBHPConstraintString() )
+  if( childKey == viewKeyStruct::minimumWHPConstraintString() )
+  {
+    MinimumWHPConstraint & whpConstraint = registerGroup< MinimumWHPConstraint >( childName );
+    constraint = &whpConstraint;
+  }
+  else if( childKey == viewKeyStruct::maximumWHPConstraintString() )
+  {
+    MaximumWHPConstraint & whpConstraint = registerGroup< MaximumWHPConstraint >( childName );
+    constraint = &whpConstraint;
+  }
+  else if( childKey == viewKeyStruct::minimumBHPConstraintString() )
   {
     MinimumBHPConstraint & bhpConstraint = registerGroup< MinimumBHPConstraint >( childName );
     constraint = &bhpConstraint;
