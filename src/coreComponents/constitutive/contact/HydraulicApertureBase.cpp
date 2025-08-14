@@ -39,11 +39,6 @@ HydraulicApertureBase::HydraulicApertureBase( string const & name,
     setDescription( "Reference hydraulic aperture. It is the aperture at zero normal stress." );
 }
 
-HydraulicApertureBase::~HydraulicApertureBase()
-{}
-
-
-
 } /* namespace constitutive */
 
 } /* namespace geos */

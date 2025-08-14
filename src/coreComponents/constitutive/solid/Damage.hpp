@@ -422,15 +422,11 @@ public:
   using KernelWrapper = DamageUpdates< typename BASE::KernelWrapper >;
 
   Damage( string const & name, dataRepository::Group * const parent );
-  virtual ~Damage() override = default;
 
-  static string catalogName() { return string( "Damage" ) + BASE::m_catalogNameString; }
+  static string catalogName() { return string( "Damage" ) + BASE::catalogName(); }
   virtual string getCatalogName() const override { return catalogName(); }
 
   virtual void postInputInitialization() override;
-
-  virtual void allocateConstitutiveData( dataRepository::Group & parent,
-                                         localIndex const numConstitutivePointsPerParentIndex ) override;
 
   virtual void saveConvergedState() const override;
   /// *** The interface to get member variables
@@ -497,6 +493,8 @@ public:
 
 
 protected:
+
+  virtual void resizeFields( localIndex const size, localIndex const numPts ) override;
 
   /// The new damage value on all quadrature points
   array2d< real64 > m_newDamage;

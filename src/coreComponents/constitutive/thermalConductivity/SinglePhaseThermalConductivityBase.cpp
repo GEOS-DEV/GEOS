@@ -43,14 +43,11 @@ void SinglePhaseThermalConductivityBase::postInputInitialization()
   m_dEffectiveConductivity_dT.resize( 0, 0, 3 );
 }
 
-void SinglePhaseThermalConductivityBase::allocateConstitutiveData( dataRepository::Group & parent,
-                                                                   localIndex const numConstitutivePointsPerParentIndex )
+void SinglePhaseThermalConductivityBase::resizeFields( localIndex const size, localIndex const GEOS_UNUSED_PARAM( numPts ) )
 {
   // NOTE: enforcing 1 quadrature point
-  m_effectiveConductivity.resize( 0, 1, 3 );
-  m_dEffectiveConductivity_dT.resize( 0, 1, 3 );
-
-  ConstitutiveBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
+  m_effectiveConductivity.resize( size, 1, 3 );
+  m_dEffectiveConductivity_dT.resize( size, 1, 3 );
 }
 
 } // namespace constitutive

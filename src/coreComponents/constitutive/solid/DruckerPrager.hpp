@@ -23,7 +23,7 @@
 #include "ElasticIsotropic.hpp"
 #include "InvariantDecompositions.hpp"
 #include "PropertyConversions.hpp"
-#include "SolidModelDiscretizationOpsFullyAnisotroipic.hpp"
+#include "SolidModelDiscretizationOpsFullyAnisotropic.hpp"
 #include "LvArray/src/tensorOps.hpp"
 
 namespace geos
@@ -91,7 +91,7 @@ public:
   DruckerPragerUpdates & operator=( DruckerPragerUpdates && ) =  delete;
 
   /// Use the uncompressed version of the stiffness bilinear form
-  using DiscretizationOps = SolidModelDiscretizationOpsFullyAnisotroipic; // TODO: typo in anistropic (fix in DiscOps PR)
+  using DiscretizationOps = SolidModelDiscretizationOpsFullyAnisotropic;
 
   // Bring in base implementations to prevent hiding warnings
   using ElasticIsotropicUpdates::smallStrainUpdate;
@@ -360,15 +360,6 @@ public:
    */
   DruckerPrager( string const & name, Group * const parent );
 
-  /**
-   * Default Destructor
-   */
-  virtual ~DruckerPrager() override;
-
-
-  virtual void allocateConstitutiveData( dataRepository::Group & parent,
-                                         localIndex const numConstitutivePointsPerParentIndex ) override;
-
   virtual void saveConvergedState() const override;
 
   /**
@@ -376,13 +367,10 @@ public:
    */
   ///@{
 
-  /// string name to use for this class in the catalog
-  static constexpr auto m_catalogNameString = "DruckerPrager";
-
   /**
    * @return A string that is used to register/lookup this class in the registry
    */
-  static string catalogName() { return m_catalogNameString; }
+  static string catalogName() { return "DruckerPrager"; }
 
   virtual string getCatalogName() const override { return catalogName(); }
 
@@ -466,7 +454,10 @@ public:
 
 
 protected:
+
   virtual void postInputInitialization() override;
+
+  virtual void resizeFields( localIndex const size, localIndex const numPts ) override;
 
   /// Material parameter: The default value of yield surface slope
   real64 m_defaultFrictionAngle;

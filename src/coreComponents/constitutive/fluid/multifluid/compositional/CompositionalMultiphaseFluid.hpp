@@ -84,9 +84,6 @@ public:
     GEOS_UNUSED_VAR( pressure, temperature );
   }
 
-  virtual void allocateConstitutiveData( dataRepository::Group & parent,
-                                         localIndex const numConstitutivePointsPerParentIndex ) override;
-
   virtual integer getWaterPhaseIndex() const override final;
 
   struct viewKeyStruct : MultiFluidBase::viewKeyStruct

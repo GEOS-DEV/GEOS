@@ -82,8 +82,6 @@ SlurryFluidBase::SlurryFluidBase( string const & name, Group * const parent ):
   registerField( fields::slurryfluid::dViscosity_dComponentConcentration{}, &m_dViscosity_dCompConc );
 }
 
-SlurryFluidBase::~SlurryFluidBase() = default;
-
 void SlurryFluidBase::postInputInitialization()
 {
   SingleFluidBase::postInputInitialization();
@@ -106,36 +104,32 @@ localIndex SlurryFluidBase::numFluidComponents() const
   return LvArray::integerConversion< localIndex >( m_componentNames.size());
 }
 
-void SlurryFluidBase::allocateConstitutiveData( Group & parent,
-                                                localIndex const numConstitutivePointsPerParentIndex )
+void SlurryFluidBase::resizeFields( localIndex const size, localIndex const numPts )
 {
+  SingleFluidBase::resizeFields( size, numPts );
+
   localIndex const NC = numFluidComponents();
   m_numDOF = 2 + NC;  // pressure,proppantconc, NC compconc
 
-  SingleFluidBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
-
-  this->resize( parent.size() );
-
-
   // These are also sized in m_dDenisty in base class , only dP and dT are populated
   // Future dev should incorporate concentration derivatives in dDensity
-  m_dDensity_dProppantConc.resize( parent.size(), numConstitutivePointsPerParentIndex );
-  m_dDensity_dCompConc.resize( parent.size(), numConstitutivePointsPerParentIndex, NC );
+  m_dDensity_dProppantConc.resize( size, numPts );
+  m_dDensity_dCompConc.resize( size, numPts, NC );
 
-  m_componentDensity.resize( parent.size(), numConstitutivePointsPerParentIndex, NC );
-  m_dCompDens_dPres.resize( parent.size(), numConstitutivePointsPerParentIndex, NC );
-  m_dCompDens_dCompConc.resize( parent.size(), numConstitutivePointsPerParentIndex, NC, NC );
+  m_componentDensity.resize( size, numPts, NC );
+  m_dCompDens_dPres.resize( size, numPts, NC );
+  m_dCompDens_dCompConc.resize( size, numPts, NC, NC );
 
-  m_fluidDensity.value.resize( parent.size(), numConstitutivePointsPerParentIndex );
-  m_dFluidDens_dPres.resize( parent.size(), numConstitutivePointsPerParentIndex );
-  m_dFluidDens_dCompConc.resize( parent.size(), numConstitutivePointsPerParentIndex, NC );
+  m_fluidDensity.value.resize( size, numPts );
+  m_dFluidDens_dPres.resize( size, numPts );
+  m_dFluidDens_dCompConc.resize( size, numPts, NC );
 
-  m_fluidViscosity.resize( parent.size(), numConstitutivePointsPerParentIndex );
-  m_dFluidVisc_dPres.resize( parent.size(), numConstitutivePointsPerParentIndex );
-  m_dFluidVisc_dCompConc.resize( parent.size(), numConstitutivePointsPerParentIndex, NC );
+  m_fluidViscosity.resize( size, numPts );
+  m_dFluidVisc_dPres.resize( size, numPts );
+  m_dFluidVisc_dCompConc.resize( size, numPts, NC );
 
-  m_dViscosity_dProppantConc.resize( parent.size(), numConstitutivePointsPerParentIndex );
-  m_dViscosity_dCompConc.resize( parent.size(), numConstitutivePointsPerParentIndex, NC );
+  m_dViscosity_dProppantConc.resize( size, numPts );
+  m_dViscosity_dCompConc.resize( size, numPts, NC );
 
 }
 

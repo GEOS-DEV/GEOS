@@ -45,8 +45,6 @@ PoreVolumeCompressibleSolid::PoreVolumeCompressibleSolid( string const & name, G
   registerWrapper( viewKeyStruct::dPVMult_dPresString(), &m_dPVMult_dPressure );
 }
 
-PoreVolumeCompressibleSolid::~PoreVolumeCompressibleSolid() = default;
-
 std::unique_ptr< ConstitutiveBase >
 PoreVolumeCompressibleSolid::deliverClone( string const & name,
                                            Group * const parent ) const
@@ -61,15 +59,10 @@ PoreVolumeCompressibleSolid::deliverClone( string const & name,
   return clone;
 }
 
-void PoreVolumeCompressibleSolid::allocateConstitutiveData( dataRepository::Group & parent,
-                                                            localIndex const numConstitutivePointsPerParentIndex )
+void PoreVolumeCompressibleSolid::resizeFields( localIndex const size, localIndex const numPts )
 {
-  ConstitutiveBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
-
-  this->resize( parent.size() );
-
-  m_poreVolumeMultiplier.resize( parent.size(), numConstitutivePointsPerParentIndex );
-  m_dPVMult_dPressure.resize( parent.size(), numConstitutivePointsPerParentIndex );
+  m_poreVolumeMultiplier.resize( size, numPts );
+  m_dPVMult_dPressure.resize( size, numPts );
   m_poreVolumeMultiplier.setValues< serialPolicy >( 1.0 );
 }
 

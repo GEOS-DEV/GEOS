@@ -56,7 +56,6 @@ CoupledSolidBase::CoupledSolidBase( string const & name, Group * const parent ):
     setDescription( "Name of the solid internal energy model." );
 }
 
-CoupledSolidBase::~CoupledSolidBase() = default;
+} /* namespace constitutive */
 
-}
 } /* namespace geos */

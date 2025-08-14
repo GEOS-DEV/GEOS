@@ -562,11 +562,6 @@ public:
   SolidBase( string const & name,
              Group * const parent );
 
-  /**
-   * Destructor
-   */
-  virtual ~SolidBase() override;
-
   /// Keys for data in this class
   struct viewKeyStruct : public ConstitutiveBase::viewKeyStruct
   {
@@ -584,14 +579,6 @@ public:
                                                                                                                    // coefficient
                                                                                                                    // key
   };
-
-  /**
-   * @brief Allocate constitutive arrays
-   * @param parent Object's parent group (element subregion)
-   * @param numConstitutivePointsPerParentIndex Number of quadrature points per element
-   */
-  virtual void allocateConstitutiveData( dataRepository::Group & parent,
-                                         localIndex const numConstitutivePointsPerParentIndex ) override;
 
   /// Save state data in preparation for next timestep
   virtual void saveConvergedState() const override;
@@ -697,6 +684,8 @@ protected:
 
   /// Post-process XML input
   virtual void postInputInitialization() override;
+
+  virtual void resizeFields( localIndex const size, localIndex const numPts ) override;
 
   /// The current stress at a quadrature point (i.e. at timestep n, global newton iteration k)
   array3d< real64, solid::STRESS_PERMUTATION > m_newStress;

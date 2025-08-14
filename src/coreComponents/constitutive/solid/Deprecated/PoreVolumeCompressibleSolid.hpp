@@ -35,14 +35,8 @@ class PoreVolumeCompressibleSolid : public ConstitutiveBase
 public:
   PoreVolumeCompressibleSolid( string const & name, Group * const parent );
 
-  virtual ~PoreVolumeCompressibleSolid() override;
-
   std::unique_ptr< ConstitutiveBase > deliverClone( string const & name,
                                                     Group * const parent ) const override;
-
-  virtual void allocateConstitutiveData( dataRepository::Group & parent,
-                                         localIndex const numConstitutivePointsPerParentIndex ) override;
-
 
   static string catalogName() { return "PoreVolumeCompressibleSolid"; }
 
@@ -62,7 +56,10 @@ public:
   };
 
 protected:
+
   virtual void postInputInitialization() override;
+
+  virtual void resizeFields( localIndex const size, localIndex const numPts ) override;
 
 private:
 

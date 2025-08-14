@@ -104,9 +104,6 @@ public:
   CapillaryPressureBase( string const & name,
                          dataRepository::Group * const parent );
 
-  virtual void allocateConstitutiveData( dataRepository::Group & parent,
-                                         localIndex const numConstitutivePointsPerParentIndex ) override;
-
   /**
    * @brief Initialize the capillary pressure state (needed when capillary pressure depends on porosity and permeability)
    * @param[in] initialPorosity the initial porosity field after reservoir initialization
@@ -164,13 +161,6 @@ public:
 private:
 
   /**
-   * @brief Function called internally to resize member arrays
-   * @param size primary dimension (e.g. number of cells)
-   * @param numPts secondary dimension (e.g. number of gauss points per cell)
-   */
-  void resizeFields( localIndex const size, localIndex const numPts );
-
-  /**
    * @brief Called internally to set array dim labels.
    */
   void setLabels();
@@ -178,6 +168,13 @@ private:
 protected:
 
   virtual void postInputInitialization() override;
+
+  /**
+   * @brief Function called internally to resize member arrays
+   * @param size primary dimension (e.g. number of cells)
+   * @param numPts secondary dimension (e.g. number of gauss points per cell)
+   */
+  virtual void resizeFields( localIndex const size, localIndex const numPts ) override;
 
   // phase names read from input
   string_array m_phaseNames;

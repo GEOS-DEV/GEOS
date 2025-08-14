@@ -69,13 +69,6 @@ TwoPhaseImmiscibleFluid::TwoPhaseImmiscibleFluid( string const & name, Group * c
 }
 
 
-std::unique_ptr< ConstitutiveBase >
-TwoPhaseImmiscibleFluid::deliverClone( string const & name, Group * const parent ) const
-{
-  return ConstitutiveBase::deliverClone( name, parent );
-}
-
-
 void TwoPhaseImmiscibleFluid::resizeFields( localIndex const size, localIndex const numPts )
 {
   // Assume sole dependency on pressure, i.e. one derivative
@@ -86,14 +79,6 @@ void TwoPhaseImmiscibleFluid::resizeFields( localIndex const size, localIndex co
 
   m_phaseViscosity.value.resize( size, numPts, 2 );
   m_phaseViscosity.derivs.resize( size, numPts, 2, 1 );
-}
-
-
-void TwoPhaseImmiscibleFluid::allocateConstitutiveData( dataRepository::Group & parent,
-                                                        localIndex const numConstitutivePointsPerParentIndex )
-{
-  ConstitutiveBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
-  resizeFields( parent.size(), numConstitutivePointsPerParentIndex );
 }
 
 

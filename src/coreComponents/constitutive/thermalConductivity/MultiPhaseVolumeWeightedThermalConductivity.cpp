@@ -46,22 +46,14 @@ MultiPhaseVolumeWeightedThermalConductivity::MultiPhaseVolumeWeightedThermalCond
   registerField( fields::thermalconductivity::rockThermalConductivity{}, &m_rockThermalConductivity );
 }
 
-std::unique_ptr< ConstitutiveBase >
-MultiPhaseVolumeWeightedThermalConductivity::deliverClone( string const & name,
-                                                           Group * const parent ) const
+void MultiPhaseVolumeWeightedThermalConductivity::resizeFields( localIndex const size, localIndex const numPts )
 {
-  return MultiPhaseThermalConductivityBase::deliverClone( name, parent );
-}
+  MultiPhaseThermalConductivityBase::resizeFields( size, numPts );
 
-void MultiPhaseVolumeWeightedThermalConductivity::allocateConstitutiveData( dataRepository::Group & parent,
-                                                                            localIndex const numConstitutivePointsPerParentIndex )
-{
   // NOTE: enforcing 1 quadrature point
-  m_rockThermalConductivity.resize( 0, 1, 3 );
+  m_rockThermalConductivity.resize( size, 1, 3 );
 
-  MultiPhaseThermalConductivityBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
-
-  for( localIndex ei = 0; ei < parent.size(); ++ei )
+  for( localIndex ei = 0; ei < size; ++ei )
   {
     for( localIndex q = 0; q < 1; ++q )
     {

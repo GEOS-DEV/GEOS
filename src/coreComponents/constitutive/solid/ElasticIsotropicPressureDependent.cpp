@@ -74,10 +74,6 @@ ElasticIsotropicPressureDependent::ElasticIsotropicPressureDependent( string con
 }
 
 
-ElasticIsotropicPressureDependent::~ElasticIsotropicPressureDependent()
-{}
-
-
 void ElasticIsotropicPressureDependent::postInputInitialization()
 {
   // check what constants the user actually input, and do conversions as needed

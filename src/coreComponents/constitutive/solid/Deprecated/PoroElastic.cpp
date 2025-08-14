@@ -70,10 +70,6 @@ PoroElastic< BASE >::PoroElastic( string const & name, Group * const parent ):
 }
 
 template< typename BASE >
-PoroElastic< BASE >::~PoroElastic()
-{}
-
-template< typename BASE >
 void PoroElastic< BASE >::postInputInitialization()
 {
   BASE::postInputInitialization();
@@ -93,12 +89,12 @@ PoroElastic< BASE >::deliverClone( string const & name,
 }
 
 template< typename BASE >
-void PoroElastic< BASE >::allocateConstitutiveData( dataRepository::Group & parent,
-                                                    localIndex const numConstitutivePointsPerParentIndex )
+void PoroElastic< BASE >::resizeFields( localIndex const size, localIndex const numPts )
 {
-  m_poreVolumeMultiplier.resize( 0, numConstitutivePointsPerParentIndex );
-  m_dPVMult_dPressure.resize( 0, numConstitutivePointsPerParentIndex );
-  BASE::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
+  BASE::resizeFields( size, numPts );
+
+  m_poreVolumeMultiplier.resize( size, numPts );
+  m_dPVMult_dPressure.resize( size, numPts );
 }
 
 template< typename BASE >

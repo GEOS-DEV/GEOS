@@ -108,12 +108,6 @@ public:
 
   ParallelPlatesPermeability( string const & name, Group * const parent );
 
-  std::unique_ptr< ConstitutiveBase > deliverClone( string const & name,
-                                                    Group * const parent ) const override;
-
-  virtual void allocateConstitutiveData( dataRepository::Group & parent,
-                                         localIndex const numConstitutivePointsPerParentIndex ) override;
-
   static string catalogName() { return "ParallelPlatesPermeability"; }
 
   virtual string getCatalogName() const override { return catalogName(); }
@@ -139,7 +133,11 @@ public:
   struct viewKeyStruct : public PermeabilityBase::viewKeyStruct
   {
     static constexpr char const * transversalPermeabilityString() { return "transversalPermeability"; }
-  } viewKeys;
+  };
+
+protected:
+
+  virtual void resizeFields( localIndex const size, localIndex const numPts ) override;
 
 private:
 

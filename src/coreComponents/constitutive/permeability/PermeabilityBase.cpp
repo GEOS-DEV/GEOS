@@ -38,13 +38,6 @@ PermeabilityBase::PermeabilityBase( string const & name, Group * const parent ):
   registerField( fields::permeability::dPerm_dPressure{}, &m_dPerm_dPressure );
 }
 
-std::unique_ptr< ConstitutiveBase >
-PermeabilityBase::deliverClone( string const & name,
-                                Group * const parent ) const
-{
-  return ConstitutiveBase::deliverClone( name, parent );
-}
-
 void PermeabilityBase::scaleHorizontalPermeability( arrayView1d< real64 const > scalingFactors ) const
 {
   localIndex const numElems = m_permeability.size( 0 );
@@ -59,14 +52,11 @@ void PermeabilityBase::scaleHorizontalPermeability( arrayView1d< real64 const > 
   }
 }
 
-void PermeabilityBase::allocateConstitutiveData( dataRepository::Group & parent,
-                                                 localIndex const numConstitutivePointsPerParentIndex )
+void PermeabilityBase::resizeFields( localIndex const size, localIndex const GEOS_UNUSED_PARAM( numPts ) )
 {
   // NOTE: enforcing 1 quadrature point
-  m_permeability.resize( 0, 1, 3 );
-  m_dPerm_dPressure.resize( 0, 1, 3 );
-
-  ConstitutiveBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
+  m_permeability.resize( size, 1, 3 );
+  m_dPerm_dPressure.resize( size, 1, 3 );
 }
 
 }

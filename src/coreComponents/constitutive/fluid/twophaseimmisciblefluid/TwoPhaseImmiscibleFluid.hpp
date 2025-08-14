@@ -42,13 +42,6 @@ public:
   TwoPhaseImmiscibleFluid( string const & name,
                            Group * const parent );
 
-  virtual std::unique_ptr< ConstitutiveBase >
-  deliverClone( string const & name,
-                Group * const parent ) const override;
-
-  virtual void allocateConstitutiveData( dataRepository::Group & parent,
-                                         localIndex const numConstitutivePointsPerParentIndex ) override;
-
   /**
    * @name Static Factory Catalog members and functions
    */
@@ -215,7 +208,7 @@ protected:
   array3d< real64, multifluid::LAYOUT_PHASE > m_phaseDensity_n;
 
 
-  virtual void resizeFields( localIndex const size, localIndex const numPts );
+  virtual void resizeFields( localIndex const size, localIndex const numPts ) override;
 
   virtual void postInputInitialization() override;
 

@@ -70,17 +70,12 @@ CeramicDamage::CeramicDamage( string const & name, Group * const parent ):
 }
 
 
-CeramicDamage::~CeramicDamage()
-{}
-
-
-void CeramicDamage::allocateConstitutiveData( dataRepository::Group & parent,
-                                              localIndex const numConstitutivePointsPerParentIndex )
+void CeramicDamage::resizeFields( localIndex const size, localIndex const numPts )
 {
-  ElasticIsotropic::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
+  ElasticIsotropic::resizeFields( size, numPts );
 
-  m_damage.resize( 0, numConstitutivePointsPerParentIndex );
-  m_jacobian.resize( 0, numConstitutivePointsPerParentIndex );
+  m_damage.resize( size, numPts );
+  m_jacobian.resize( size, numPts );
 }
 
 
@@ -92,12 +87,6 @@ void CeramicDamage::postInputInitialization()
   GEOS_THROW_IF( m_compressiveStrength < m_tensileStrength, "Compressive strength must be greater than tensile strength.", InputError );
   GEOS_THROW_IF( m_maximumStrength < m_compressiveStrength, "Maximum theoretical strength must be greater than compressive strength.", InputError );
   GEOS_THROW_IF( m_crackSpeed < 0.0, "Crack speed must be a positive number.", InputError );
-}
-
-
-void CeramicDamage::saveConvergedState() const
-{
-  SolidBase::saveConvergedState();
 }
 
 

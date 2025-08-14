@@ -52,9 +52,6 @@ CoulombFriction::CoulombFriction( string const & name, Group * const parent ):
     setDescription( "Elastic Slip" );
 }
 
-CoulombFriction::~CoulombFriction()
-{}
-
 void CoulombFriction::postInputInitialization()
 {
   GEOS_THROW_IF( m_frictionCoefficient < 0.0,
@@ -63,14 +60,12 @@ void CoulombFriction::postInputInitialization()
 
 }
 
-void CoulombFriction::allocateConstitutiveData( Group & parent,
-                                                localIndex const numConstitutivePointsPerParentIndex )
+void CoulombFriction::resizeFields( localIndex const size, localIndex const numPts )
 {
+  FrictionBase::resizeFields( size, numPts );
+
   m_elasticSlip.resize( 0, 2 );
-
-  FrictionBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 }
-
 
 CoulombFrictionUpdates CoulombFriction::createKernelUpdates() const
 {

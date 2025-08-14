@@ -231,11 +231,6 @@ public:
 
   virtual void saveConvergedState() const override;
 
-  // *** ConstitutiveBase interface
-
-  virtual void allocateConstitutiveData( dataRepository::Group & parent,
-                                         localIndex const numConstitutivePointsPerParentIndex ) override;
-
   // *** SingleFluid-specific interface
 
   arrayView2d< real64 const, constitutive::singlefluid::USD_FLUID > density() const { return m_density.value; }
@@ -288,6 +283,8 @@ public:
 protected:
 
   virtual void postInputInitialization() override;
+
+  virtual void resizeFields( localIndex const size, localIndex const numPts ) override;
 
   // Degrees of freedom in fluid characterization
   integer m_numDOF;

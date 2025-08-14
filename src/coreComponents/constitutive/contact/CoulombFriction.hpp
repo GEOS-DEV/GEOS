@@ -164,19 +164,11 @@ public:
    */
   CoulombFriction( string const & name, Group * const parent );
 
-  /**
-   * Default Destructor
-   */
-  virtual ~CoulombFriction() override;
-
   static string catalogName() { return "Coulomb"; }
 
   virtual string getCatalogName() const override { return catalogName(); }
 
   ///@}
-
-  virtual void allocateConstitutiveData( dataRepository::Group & parent,
-                                         localIndex const numConstitutivePointsPerParentIndex ) override final;
 
   /// Type of kernel wrapper for in-kernel update
   using KernelWrapper = CoulombFrictionUpdates;
@@ -187,27 +179,9 @@ public:
    */
   KernelWrapper createKernelUpdates() const;
 
-protected:
-
-  virtual void postInputInitialization() override;
-
-private:
-
-  /// The shear stiffness
-  real64 m_shearStiffness;
-
-  /// The cohesion for each upper level dimension (i.e. cell) of *this
-  real64 m_cohesion;
-
-  /// The friction coefficient for each upper level dimension (i.e. cell) of *this
-  real64 m_frictionCoefficient;
-
-  /// Elastic slip
-  array2d< real64 > m_elasticSlip;
-
-/**
- * @struct Set of "char const *" and keys for data specified in this class.
- */
+  /**
+   * @struct Set of "char const *" and keys for data specified in this class.
+   */
   struct viewKeyStruct : public FrictionBase::viewKeyStruct
   {
     /// string/key for shear stiffness
@@ -222,6 +196,31 @@ private:
     /// string/key for the elastic slip
     static constexpr char const * elasticSlipString() { return "elasticSlip"; }
   };
+
+protected:
+
+  virtual void postInputInitialization() override;
+
+  /**
+   * @brief Function called internally to resize member arrays
+   * @param size primary dimension (e.g. number of cells)
+   * @param numPts secondary dimension (e.g. number of gauss points per cell)
+   */
+  virtual void resizeFields( localIndex const size, localIndex const numPts ) override;
+
+private:
+
+  /// The shear stiffness
+  real64 m_shearStiffness;
+
+  /// The cohesion for each upper level dimension (i.e. cell) of *this
+  real64 m_cohesion;
+
+  /// The friction coefficient for each upper level dimension (i.e. cell) of *this
+  real64 m_frictionCoefficient;
+
+  /// Elastic slip
+  array2d< real64 > m_elasticSlip;
 
 };
 

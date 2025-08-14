@@ -50,24 +50,11 @@ HydraulicApertureTable::HydraulicApertureTable( string const & name,
     setDescription( "Name of the aperture table" );
 }
 
-HydraulicApertureTable::~HydraulicApertureTable()
-{}
-
-
-
 void HydraulicApertureTable::postInputInitialization()
 {
 
   GEOS_THROW_IF( m_apertureTableName.empty(),
                  getFullName() << ": the aperture table name " << m_apertureTableName << " is empty", InputError );
-
-}
-
-
-void HydraulicApertureTable::allocateConstitutiveData( Group & parent,
-                                                       localIndex const numConstitutivePointsPerParentIndex )
-{
-  ConstitutiveBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 
   FunctionManager & functionManager = FunctionManager::getInstance();
 
@@ -115,7 +102,6 @@ void HydraulicApertureTable::allocateConstitutiveData( Group & parent,
 
   m_apertureTable = &apertureTable;
 }
-
 
 void HydraulicApertureTable::validateApertureTable( TableFunction const & apertureTable ) const
 {

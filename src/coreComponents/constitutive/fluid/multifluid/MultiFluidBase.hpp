@@ -38,9 +38,6 @@ public:
   MultiFluidBase( string const & name,
                   Group * const parent );
 
-  virtual void allocateConstitutiveData( dataRepository::Group & parent,
-                                         localIndex const numConstitutivePointsPerParentIndex ) override;
-
   // *** MultiFluid-specific interface
 
   /**
@@ -664,12 +661,12 @@ protected:
    * @param size primary dimension (e.g. number of cells)
    * @param numPts secondary dimension (e.g. number of gauss points per cell)
    */
-  virtual void resizeFields( localIndex const size, localIndex const numPts );
+  virtual void resizeFields( localIndex const size, localIndex const numPts ) override;
 
   virtual void postInputInitialization() override;
 
   // flag indicating whether input/output component fractions are treated as mass fractions
-  int m_useMass;
+  integer m_useMass;
 
   /// Enable an error when checkTableParameters() is called and the input pressure or temperature of the PVT tables is out of range
   integer m_checkPVTTablesRanges;

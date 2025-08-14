@@ -44,14 +44,13 @@ ConstantPermeability::deliverClone( string const & name,
   return PermeabilityBase::deliverClone( name, parent );
 }
 
-void ConstantPermeability::allocateConstitutiveData( dataRepository::Group & parent,
-                                                     localIndex const numConstitutivePointsPerParentIndex )
+void ConstantPermeability::resizeFields( localIndex const size, localIndex const numPts )
 {
-  PermeabilityBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
+  PermeabilityBase::resizeFields( size, numPts );
 
   integer const numQuad = 1; // NOTE: enforcing 1 quadrature point
 
-  for( localIndex ei = 0; ei < parent.size(); ++ei )
+  for( localIndex ei = 0; ei < size; ++ei )
   {
     for( localIndex q = 0; q < numQuad; ++q )
     {

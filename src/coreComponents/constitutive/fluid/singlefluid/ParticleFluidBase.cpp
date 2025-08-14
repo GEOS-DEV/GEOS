@@ -53,20 +53,9 @@ ParticleFluidBase::ParticleFluidBase( string const & name, Group * const parent 
   registerField( fields::particlefluid::proppantPackPermeability{}, &m_proppantPackPermeability );
 }
 
-ParticleFluidBase::~ParticleFluidBase() = default;
-
-void ParticleFluidBase::postInputInitialization()
+void ParticleFluidBase::resizeFields( localIndex const size, localIndex const GEOS_UNUSED_PARAM( numPts ) )
 {
-  ConstitutiveBase::postInputInitialization();
-}
-
-void ParticleFluidBase::allocateConstitutiveData( Group & parent,
-                                                  localIndex const numConstitutivePointsPerParentIndex )
-{
-  ConstitutiveBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
-
-  this->resize( parent.size() );
-  m_dSettlingFactor_dComponentConcentration.resize( parent.size(), MAX_NUM_COMPONENTS );
+  m_dSettlingFactor_dComponentConcentration.resize( size, MAX_NUM_COMPONENTS );
 }
 
 } //namespace constitutive

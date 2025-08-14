@@ -48,21 +48,13 @@ WillisRichardsPermeability::WillisRichardsPermeability( string const & name, Gro
   registerField( fields::permeability::dPerm_dTraction{}, &m_dPerm_dTraction );
 }
 
-std::unique_ptr< ConstitutiveBase >
-WillisRichardsPermeability::deliverClone( string const & name,
-                                          Group * const parent ) const
+void WillisRichardsPermeability::resizeFields( localIndex const size, localIndex const numPts )
 {
-  return ConstitutiveBase::deliverClone( name, parent );
-}
+  PermeabilityBase::resizeFields( size, numPts );
 
-void WillisRichardsPermeability::allocateConstitutiveData( dataRepository::Group & parent,
-                                                           localIndex const numConstitutivePointsPerParentIndex )
-{
-// NOTE: enforcing 1 quadrature point
-  m_dPerm_dDispJump.resize( 0, 1, 3, 3 );
-  m_dPerm_dTraction.resize( 0, 1, 3, 3 );
-
-  PermeabilityBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
+  // NOTE: enforcing 1 quadrature point
+  m_dPerm_dDispJump.resize( size, 1, 3, 3 );
+  m_dPerm_dTraction.resize( size, 1, 3, 3 );
 }
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, WillisRichardsPermeability, string const &, Group * const )

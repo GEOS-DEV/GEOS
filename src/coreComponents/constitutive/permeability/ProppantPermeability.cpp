@@ -54,13 +54,6 @@ ProppantPermeability::ProppantPermeability( string const & name, Group * const p
 
 }
 
-std::unique_ptr< ConstitutiveBase >
-ProppantPermeability::deliverClone( string const & name,
-                                    Group * const parent ) const
-{
-  return ConstitutiveBase::deliverClone( name, parent );
-}
-
 void ProppantPermeability::postInputInitialization()
 {
   real64 const oneMinusMaxConcentration = ( 1.0 - m_maxProppantConcentration );
@@ -69,13 +62,13 @@ void ProppantPermeability::postInputInitialization()
                                 / ( m_maxProppantConcentration * m_maxProppantConcentration );
 }
 
-void ProppantPermeability::allocateConstitutiveData( dataRepository::Group & parent,
-                                                     localIndex const numConstitutivePointsPerParentIndex )
+void ProppantPermeability::resizeFields( localIndex const size, localIndex const numPts )
 {
+  PermeabilityBase::resizeFields( size, numPts );
+
   // NOTE: enforcing 1 quadrature point
   m_dPerm_dDispJump.resize( 0, 1, 3, 3 );
   m_permeabilityMultiplier.resize( 0, 1, 3 );
-  PermeabilityBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 }
 
 

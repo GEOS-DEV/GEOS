@@ -43,25 +43,17 @@ ParallelPlatesPermeability::ParallelPlatesPermeability( string const & name, Gro
   registerField( fields::permeability::dPerm_dDispJump{}, &m_dPerm_dDispJump );
 }
 
-std::unique_ptr< ConstitutiveBase >
-ParallelPlatesPermeability::deliverClone( string const & name,
-                                          Group * const parent ) const
+void ParallelPlatesPermeability::resizeFields( localIndex const size, localIndex const numPts )
 {
-  return PermeabilityBase::deliverClone( name, parent );
-}
+  PermeabilityBase::resizeFields( size, numPts );
 
-void ParallelPlatesPermeability::allocateConstitutiveData( dataRepository::Group & parent,
-                                                           localIndex const numConstitutivePointsPerParentIndex )
-{
   // NOTE: enforcing 1 quadrature point
-  m_dPerm_dDispJump.resize( 0, 1, 3, 3 );
+  m_dPerm_dDispJump.resize( size, 1, 3, 3 );
 
   if( m_transversalPermeability > -1 )
   {
     m_updateTransversalComponent = false;
   }
-
-  PermeabilityBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 }
 
 void ParallelPlatesPermeability::initializeState() const

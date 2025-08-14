@@ -41,13 +41,10 @@ void DispersionBase::postInputInitialization()
   m_dispersivity.resize( 0, 0, 3 );
 }
 
-void DispersionBase::allocateConstitutiveData( dataRepository::Group & parent,
-                                               localIndex const numConstitutivePointsPerParentIndex )
+void DispersionBase::resizeFields( localIndex const GEOS_UNUSED_PARAM( size ), localIndex const GEOS_UNUSED_PARAM( numPts ) )
 {
   // NOTE: enforcing 1 quadrature point
   m_dispersivity.resize( 0, 1, 3 );
-
-  ConstitutiveBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 }
 
 } // namespace constitutive

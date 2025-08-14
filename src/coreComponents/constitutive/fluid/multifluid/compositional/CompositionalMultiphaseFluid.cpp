@@ -100,10 +100,11 @@ string CompositionalMultiphaseFluid< FLASH, PHASE1, PHASE2, PHASE3 >::catalogNam
 }
 
 template< typename FLASH, typename PHASE1, typename PHASE2, typename PHASE3 >
-void CompositionalMultiphaseFluid< FLASH, PHASE1, PHASE2, PHASE3 >::allocateConstitutiveData( dataRepository::Group & parent,
-                                                                                              localIndex const numConstitutivePointsPerParentIndex )
+void CompositionalMultiphaseFluid< FLASH, PHASE1, PHASE2, PHASE3 >::resizeFields( localIndex const size, localIndex const numPts )
 {
-  MultiFluidBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
+  MultiFluidBase::resizeFields( size, numPts );
+
+  m_kValues.resize( size, numPts, numFluidPhases()-1, numFluidComponents() );
 
   // Zero k-Values to force initialisation with Wilson k-Values
   m_kValues.zero();
@@ -197,14 +198,6 @@ void CompositionalMultiphaseFluid< FLASH, PHASE1, PHASE2, PHASE3 >::initializePo
 
   // Create the fluid models
   createModels();
-}
-
-template< typename FLASH, typename PHASE1, typename PHASE2, typename PHASE3 >
-void CompositionalMultiphaseFluid< FLASH, PHASE1, PHASE2, PHASE3 >::resizeFields( localIndex const size, localIndex const numPts )
-{
-  MultiFluidBase::resizeFields( size, numPts );
-
-  m_kValues.resize( size, numPts, numFluidPhases()-1, numFluidComponents() );
 }
 
 template< typename FLASH, typename PHASE1, typename PHASE2, typename PHASE3 >

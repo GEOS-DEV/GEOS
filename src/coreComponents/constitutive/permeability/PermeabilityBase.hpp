@@ -109,12 +109,6 @@ public:
 
   PermeabilityBase( string const & name, Group * const parent );
 
-  std::unique_ptr< ConstitutiveBase > deliverClone( string const & name,
-                                                    Group * const parent ) const override;
-
-  virtual void allocateConstitutiveData( dataRepository::Group & parent,
-                                         localIndex const numConstitutivePointsPerParentIndex ) override;
-
   /**
    * @brief Const/non-mutable accessor for permeability.
    * @return Accessor
@@ -140,6 +134,8 @@ public:
   {}
 
 protected:
+
+  virtual void resizeFields( localIndex const size, localIndex const numPts );
 
   /// Vector of absolute permeability
   array3d< real64 > m_permeability;

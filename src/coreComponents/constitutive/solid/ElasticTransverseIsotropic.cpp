@@ -110,9 +110,6 @@ ElasticTransverseIsotropic::ElasticTransverseIsotropic( string const & name, Gro
     setDescription( "Elastic Stiffness Field C66" );
 }
 
-ElasticTransverseIsotropic::~ElasticTransverseIsotropic()
-{}
-
 void ElasticTransverseIsotropic::postInputInitialization()
 {
   SolidBase::postInputInitialization();

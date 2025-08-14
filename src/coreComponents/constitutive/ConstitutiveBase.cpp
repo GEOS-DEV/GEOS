@@ -47,6 +47,8 @@ void ConstitutiveBase::allocateConstitutiveData( dataRepository::Group & parent,
 {
   m_numQuadraturePoints = numConstitutivePointsPerParentIndex;
 
+  resizeFields( parent.size(), numConstitutivePointsPerParentIndex );
+
   for( auto & group : this->getSubGroups() )
   {
     for( auto & wrapper : group.second->wrappers() )

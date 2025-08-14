@@ -117,13 +117,6 @@ void RelativePermeabilityBase::saveConvergedState( ) const
   m_phaseRelPerm_n.setValues< parallelDevicePolicy<> >( m_phaseRelPerm.toViewConst() );
 }
 
-void RelativePermeabilityBase::allocateConstitutiveData( dataRepository::Group & parent,
-                                                         localIndex const numConstitutivePointsPerParentIndex )
-{
-  ConstitutiveBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
-  resizeFields( parent.size(), numConstitutivePointsPerParentIndex );
-}
-
 /// for use in RelpermDriver to browse the drainage curves
 /// by setting the MaxHistoricalNonWettingSat to Snwmin and MinWettingSat to Sw
 std::tuple< integer, integer > RelativePermeabilityBase::wettingAndNonWettingPhaseIndices() const

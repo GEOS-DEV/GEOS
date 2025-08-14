@@ -56,16 +56,13 @@ PorosityBase::PorosityBase( string const & name, Group * const parent ):
   registerField( fields::porosity::referencePorosity{}, &m_referencePorosity );
 }
 
-void PorosityBase::allocateConstitutiveData( dataRepository::Group & parent,
-                                             localIndex const numConstitutivePointsPerParentIndex )
+void PorosityBase::resizeFields( localIndex const size, localIndex const numPts )
 {
-  m_newPorosity.resize( 0, numConstitutivePointsPerParentIndex );
-  m_porosity_n.resize( 0, numConstitutivePointsPerParentIndex );
-  m_dPorosity_dPressure.resize( 0, numConstitutivePointsPerParentIndex );
-  m_dPorosity_dTemperature.resize( 0, numConstitutivePointsPerParentIndex );
-  m_initialPorosity.resize( 0, numConstitutivePointsPerParentIndex );
-
-  ConstitutiveBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
+  m_newPorosity.resize( size, numPts );
+  m_porosity_n.resize( size, numPts );
+  m_dPorosity_dPressure.resize( size, numPts );
+  m_dPorosity_dTemperature.resize( size, numPts );
+  m_initialPorosity.resize( size, numPts );
 }
 
 void PorosityBase::postInputInitialization()

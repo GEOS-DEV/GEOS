@@ -365,8 +365,10 @@ void ElasticIsotropicPressureDependentUpdates::smallStrainUpdate( localIndex con
 
   // Calculate trial mean and deviatoric stress
 
+  std::cout << "Cr = " << Cr << ", eps_v_elastic = " << eps_v_elastic << " eps_v0 = " << eps_v0 << std::endl;
   P = p0 * std::exp( -1./Cr* (eps_v_elastic-eps_v0));
   Q = 3. * mu * eps_s_elastic;
+  std::cout << "P = " << P << ", Q = " << Q << std::endl;
 
   twoInvariant::stressRecomposition( P,
                                      Q,
@@ -452,8 +454,10 @@ void ElasticIsotropicPressureDependentUpdates::smallStrainUpdate( localIndex con
 
   // Calculate mean and deviatoric stress
 
+  std::cout << "Cr = " << Cr << ", eps_v_elastic = " << eps_v_elastic << " eps_v0 = " << eps_v0 << std::endl;
   P = p0 * std::exp( -1./Cr* (eps_v_elastic-eps_v0));
   Q = 3. * mu * eps_s_elastic;
+  std::cout << "P = " << P << ", Q = " << Q << std::endl;
 
   twoInvariant::stressRecomposition( P,
                                      Q,
@@ -499,23 +503,15 @@ public:
   ElasticIsotropicPressureDependent( string const & name, Group * const parent );
 
   /**
-   * Default Destructor
-   */
-  virtual ~ElasticIsotropicPressureDependent() override;
-
-  /**
    * @name Static Factory Catalog members and functions
    */
   ///@{
-
-  /// string name to use for this class in the catalog
-  static constexpr auto m_catalogNameString = "ElasticIsotropicPressureDependent";
 
   /**
    * @brief Static catalog string
    * @return A string that is used to register/lookup this class in the registry
    */
-  static std::string catalogName() { return m_catalogNameString; }
+  static std::string catalogName() { return "ElasticIsotropicPressureDependent"; }
 
   /**
    * @brief Get catalog name

@@ -75,14 +75,6 @@ class ProppantPorosity : public PorosityBase
 public:
   ProppantPorosity( string const & name, Group * const parent );
 
-  virtual ~ProppantPorosity() override;
-
-  std::unique_ptr< ConstitutiveBase > deliverClone( string const & name,
-                                                    Group * const parent ) const override;
-
-  virtual void allocateConstitutiveData( dataRepository::Group & parent,
-                                         localIndex const numConstitutivePointsPerParentIndex ) override;
-
   static string catalogName() { return "ProppantPorosity"; }
 
   virtual string getCatalogName() const override { return catalogName(); }

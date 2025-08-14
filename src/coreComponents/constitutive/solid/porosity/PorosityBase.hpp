@@ -111,13 +111,10 @@ class PorosityBase : public ConstitutiveBase
 public:
   PorosityBase( string const & name, Group * const parent );
 
-  virtual void allocateConstitutiveData( dataRepository::Group & parent,
-                                         localIndex const numConstitutivePointsPerParentIndex ) override;
-
   struct viewKeyStruct : public ConstitutiveBase::viewKeyStruct
   {
     static constexpr char const * defaultReferencePorosityString() { return "defaultReferencePorosity"; }
-  } viewKeys;
+  };
 
   /**
    * @brief Number of elements storing solid data
@@ -246,6 +243,8 @@ public:
 
 protected:
   virtual void postInputInitialization() override;
+
+  virtual void resizeFields( localIndex const size, localIndex const numPts ) override;
 
   array2d< real64 > m_newPorosity;
 

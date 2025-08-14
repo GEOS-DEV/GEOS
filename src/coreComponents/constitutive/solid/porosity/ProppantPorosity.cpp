@@ -37,21 +37,6 @@ ProppantPorosity::ProppantPorosity( string const & name, Group * const parent ):
     setDescription( "Maximum proppant concentration " );
 }
 
-ProppantPorosity::~ProppantPorosity() = default;
-
-std::unique_ptr< ConstitutiveBase >
-ProppantPorosity::deliverClone( string const & name,
-                                Group * const parent ) const
-{
-  return ConstitutiveBase::deliverClone( name, parent );
-}
-
-void ProppantPorosity::allocateConstitutiveData( dataRepository::Group & parent,
-                                                 localIndex const numConstitutivePointsPerParentIndex )
-{
-  PorosityBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
-}
-
 void ProppantPorosity::postInputInitialization()
 {
   getField< fields::porosity::referencePorosity >().

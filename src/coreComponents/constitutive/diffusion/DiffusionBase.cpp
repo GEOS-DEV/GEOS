@@ -67,17 +67,14 @@ void DiffusionBase::postInputInitialization()
   m_phaseDiffusivityMultiplier.resize( 0, 0, 3 );
 }
 
-void DiffusionBase::allocateConstitutiveData( dataRepository::Group & parent,
-                                              localIndex const numConstitutivePointsPerParentIndex )
+void DiffusionBase::resizeFields( localIndex const size, localIndex const GEOS_UNUSED_PARAM( numPts ) )
 {
   // NOTE: enforcing 1 quadrature point
-  m_diffusivity.resize( 0, 1, 3 );
-  m_dDiffusivity_dTemperature.resize( 0, 1, 3 );
-  m_phaseDiffusivityMultiplier.resize( 0, 1, 3 );
+  m_diffusivity.resize( size, 1, 3 );
+  m_dDiffusivity_dTemperature.resize( size, 1, 3 );
+  m_phaseDiffusivityMultiplier.resize( size, 1, 3 );
 
-  ConstitutiveBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
-
-  for( localIndex ei = 0; ei < parent.size(); ++ei )
+  for( localIndex ei = 0; ei < size; ++ei )
   {
     // NOTE: enforcing 1 quadrature point
     for( localIndex q = 0; q < 1; ++q )
@@ -88,7 +85,6 @@ void DiffusionBase::allocateConstitutiveData( dataRepository::Group & parent,
       }
     }
   }
-
 }
 
 } // namespace constitutive

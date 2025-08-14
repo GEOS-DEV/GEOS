@@ -176,21 +176,22 @@ void Damage< BASE >::postInputInitialization()
 }
 
 template< typename BASE >
-void Damage< BASE >::allocateConstitutiveData( dataRepository::Group & parent,
-                                               localIndex const numConstitutivePointsPerParentIndex )
+void Damage< BASE >::resizeFields( localIndex const size,
+                                   localIndex const numPts )
 {
-  m_newDamage.resize( 0, numConstitutivePointsPerParentIndex );
-  m_oldDamage.resize( 0, numConstitutivePointsPerParentIndex );
-  m_damageGrad.resize( 0, numConstitutivePointsPerParentIndex, 3 );
-  m_strainEnergyDensity.resize( 0, numConstitutivePointsPerParentIndex );
-  m_volStrain.resize( 0, numConstitutivePointsPerParentIndex );
-  m_extDrivingForce.resize( 0, numConstitutivePointsPerParentIndex );
-  m_biotCoefficient.resize( parent.size() );
-  m_criticalFractureEnergy.resize( parent.size() );
-  m_tensileStrength.resize( parent.size() );
-  m_compressStrength.resize( parent.size() );
-  m_deltaCoefficient.resize( parent.size() );
-  BASE::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
+  BASE::resizeFields( size, numPts );
+
+  m_newDamage.resize( size, numPts );
+  m_oldDamage.resize( size, numPts );
+  m_damageGrad.resize( size, numPts, 3 );
+  m_strainEnergyDensity.resize( size, numPts );
+  m_volStrain.resize( size, numPts );
+  m_extDrivingForce.resize( size, numPts );
+  m_biotCoefficient.resize( size );
+  m_criticalFractureEnergy.resize( size );
+  m_tensileStrength.resize( size );
+  m_compressStrength.resize( size );
+  m_deltaCoefficient.resize( size );
 }
 
 template< typename BASE >

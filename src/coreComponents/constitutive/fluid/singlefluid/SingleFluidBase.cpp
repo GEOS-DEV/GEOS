@@ -83,33 +83,26 @@ void SingleFluidBase::saveConvergedState() const
   } );
 }
 
-//START_SPHINX_INCLUDE_00
-void SingleFluidBase::allocateConstitutiveData( Group & parent,
-                                                localIndex const numConstitutivePointsPerParentIndex )
+void SingleFluidBase::resizeFields( localIndex const size, localIndex const numPts )
 {
-  ConstitutiveBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
-
-  resize( parent.size() );
-
   // density
-  m_density.value.resize( parent.size(), numConstitutivePointsPerParentIndex );
-  m_density.derivs.resize( parent.size(), numConstitutivePointsPerParentIndex, m_numDOF );
-  m_density_n.resize( parent.size(), numConstitutivePointsPerParentIndex );
+  m_density.value.resize( size, numPts );
+  m_density.derivs.resize( size, numPts, m_numDOF );
+  m_density_n.resize( size, numPts );
 
   // viscosity
-  m_viscosity.value.resize( parent.size(), numConstitutivePointsPerParentIndex );
-  m_viscosity.derivs.resize( parent.size(), numConstitutivePointsPerParentIndex, m_numDOF );
+  m_viscosity.value.resize( size, numPts );
+  m_viscosity.derivs.resize( size, numPts, m_numDOF );
 
   // internal energy
-  m_internalEnergy.value.resize( parent.size(), numConstitutivePointsPerParentIndex );
-  m_internalEnergy.derivs.resize( parent.size(), numConstitutivePointsPerParentIndex, m_numDOF );
-  m_internalEnergy_n.resize( parent.size(), numConstitutivePointsPerParentIndex );
+  m_internalEnergy.value.resize( size, numPts );
+  m_internalEnergy.derivs.resize( size, numPts, m_numDOF );
+  m_internalEnergy_n.resize( size, numPts );
 
   // enthalpy
-  m_enthalpy.value.resize( parent.size(), numConstitutivePointsPerParentIndex );
-  m_enthalpy.derivs.resize( parent.size(), numConstitutivePointsPerParentIndex, m_numDOF );
+  m_enthalpy.value.resize( size, numPts );
+  m_enthalpy.derivs.resize( size, numPts, m_numDOF );
 }
-//END_SPHINX_INCLUDE_00
 
 } //namespace constitutive
 

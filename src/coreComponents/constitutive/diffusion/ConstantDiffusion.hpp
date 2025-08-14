@@ -66,12 +66,6 @@ public:
    */
   ConstantDiffusion( string const & name, Group * const parent );
 
-  std::unique_ptr< ConstitutiveBase > deliverClone( string const & name,
-                                                    Group * const parent ) const override;
-
-  virtual void allocateConstitutiveData( dataRepository::Group & parent,
-                                         localIndex const numConstitutivePointsPerParentIndex ) override;
-
   static string catalogName() { return "ConstantDiffusion"; }
 
   virtual string getCatalogName() const override { return catalogName(); }
@@ -97,6 +91,13 @@ public:
 protected:
 
   virtual void postInputInitialization() override;
+
+  /**
+   * @brief Function called internally to resize member arrays
+   * @param size primary dimension (e.g. number of cells)
+   * @param numPts secondary dimension (e.g. number of gauss points per cell)
+   */
+  virtual void resizeFields( localIndex const size, localIndex const numPts ) override;
 
 private:
 

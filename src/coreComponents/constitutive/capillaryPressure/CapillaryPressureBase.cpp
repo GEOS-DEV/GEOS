@@ -103,13 +103,6 @@ void CapillaryPressureBase::setLabels()
     setDimLabels( 2, m_phaseNames );
 }
 
-void CapillaryPressureBase::allocateConstitutiveData( dataRepository::Group & parent,
-                                                      localIndex const numConstitutivePointsPerParentIndex )
-{
-  resizeFields( parent.size(), numConstitutivePointsPerParentIndex );
-  ConstitutiveBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
-}
-
 } // namespace constitutive
 
 } // namespace geos

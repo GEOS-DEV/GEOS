@@ -106,14 +106,11 @@ public:
    */
   PoroElastic( string const & name, dataRepository::Group * const parent );
 
-  /// Destructor
-  virtual ~PoroElastic() override;
-
   /**
    * @brief Catalog name
    * @return Static catalog string
    */
-  static string catalogName() { return string( "Poro" ) + BASE::m_catalogNameString; }
+  static string catalogName() { return string( "Poro" ) + BASE::catalogName(); }
 
   /**
    * @brief Get catalog name
@@ -133,14 +130,6 @@ public:
   std::unique_ptr< ConstitutiveBase >
   deliverClone( string const & name,
                 dataRepository::Group * const parent ) const override;
-
-  /**
-   * @brief Allocate constitutive arrays
-   * @param parent Object's parent group (an element region)
-   * @param numConstitutivePointsPerParentIndex (number of quadrature points per element)
-   */
-  virtual void allocateConstitutiveData( dataRepository::Group & parent,
-                                         localIndex const numConstitutivePointsPerParentIndex ) override;
 
   /**
    * @brief Perform pore volume updates point-wise
@@ -183,6 +172,9 @@ public:
 
 
 protected:
+
+  virtual void resizeFields( localIndex const size, localIndex const numPts ) override;
+
   /// scalar compressibility parameter
   real64 m_compressibility;
 

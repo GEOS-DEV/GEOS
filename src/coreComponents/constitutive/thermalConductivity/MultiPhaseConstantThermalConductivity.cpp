@@ -36,21 +36,15 @@ MultiPhaseConstantThermalConductivity::MultiPhaseConstantThermalConductivity( st
     setDescription( "xx, yy, and zz components of a diagonal thermal conductivity tensor [J/(s.m.K)]" );
 }
 
-std::unique_ptr< ConstitutiveBase >
-MultiPhaseConstantThermalConductivity::deliverClone( string const & name,
-                                                     Group * const parent ) const
+void MultiPhaseConstantThermalConductivity::resizeFields( localIndex const size, localIndex const numPts )
 {
-  return MultiPhaseThermalConductivityBase::deliverClone( name, parent );
-}
+  MultiPhaseThermalConductivityBase::resizeFields( size, numPts );
 
-void MultiPhaseConstantThermalConductivity::allocateConstitutiveData( dataRepository::Group & parent,
-                                                                      localIndex const numConstitutivePointsPerParentIndex )
-{
-  MultiPhaseThermalConductivityBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
+  // NOTE: enforcing 1 quadrature point
+  m_effectiveConductivity.resize( size, 1, 3 );
 
-  for( localIndex ei = 0; ei < parent.size(); ++ei )
+  for( localIndex ei = 0; ei < size; ++ei )
   {
-    // NOTE: enforcing 1 quadrature point
     for( localIndex q = 0; q < 1; ++q )
     {
       m_effectiveConductivity[ei][q][0] = m_thermalConductivityComponents[0];

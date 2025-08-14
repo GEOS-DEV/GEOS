@@ -71,12 +71,11 @@ BiotPorosity::BiotPorosity( string const & name, Group * const parent ):
     setDescription( "Solid shear modulus" );
 }
 
-void BiotPorosity::allocateConstitutiveData( dataRepository::Group & parent,
-                                             localIndex const numConstitutivePointsPerParentIndex )
+void BiotPorosity::resizeFields( localIndex const size, localIndex const numPts )
 {
-  PorosityBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
+  PorosityBase::resizeFields( size, numPts );
 
-  m_meanTotalStressIncrement_k.resize( 0, numConstitutivePointsPerParentIndex );
+  m_meanTotalStressIncrement_k.resize( size, numPts );
 }
 
 void BiotPorosity::postInputInitialization()

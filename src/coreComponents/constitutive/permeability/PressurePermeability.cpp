@@ -60,13 +60,6 @@ PressurePermeability::PressurePermeability( string const & name, Group * const p
     setDescription( "Type of the pressure dependence model. " );
 }
 
-std::unique_ptr< ConstitutiveBase >
-PressurePermeability::deliverClone( string const & name,
-                                    Group * const parent ) const
-{
-  return PermeabilityBase::deliverClone( name, parent );
-}
-
 void PressurePermeability::postInputInitialization()
 {
   for( localIndex i=0; i < 3; i++ )
@@ -76,16 +69,19 @@ void PressurePermeability::postInputInitialization()
   }
 }
 
-void PressurePermeability::allocateConstitutiveData( dataRepository::Group & parent,
-                                                     localIndex const numConstitutivePointsPerParentIndex )
+void PressurePermeability::resizeFields( localIndex const size, localIndex const numPts )
 {
+  PermeabilityBase::resizeFields( size, numPts );
+
   m_referencePermeability.resize( 0, 1, 3 );
+}
 
-  PermeabilityBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
+void PressurePermeability::initializeState() const
+{
+  localIndex const numE = m_permeability.size( 0 );
+  integer constexpr numQuad = 1; // NOTE: enforcing 1 quadrature point
 
-  integer const numQuad = 1; // NOTE: enforcing 1 quadrature point
-
-  for( localIndex ei = 0; ei < parent.size(); ++ei )
+  for( localIndex ei = 0; ei < numE; ++ei )
   {
     for( localIndex q = 0; q < numQuad; ++q )
     {
@@ -94,12 +90,6 @@ void PressurePermeability::allocateConstitutiveData( dataRepository::Group & par
       m_referencePermeability[ei][q][2] =  m_referencePermeabilityComponents[2];
     }
   }
-}
-
-void PressurePermeability::initializeState() const
-{
-  localIndex const numE = m_permeability.size( 0 );
-  integer constexpr numQuad = 1; // NOTE: enforcing 1 quadrature point
 
   auto permView = m_permeability.toView();
   real64 const permComponents[3] = { m_referencePermeabilityComponents[0],
@@ -115,7 +105,7 @@ void PressurePermeability::initializeState() const
         // The default value is -1 so if it still -1 it needs to be set to something physical
         if( permView[ei][q][dim] < 0 )
         {
-          permView[ei][q][dim] =  permComponents[dim];
+          permView[ei][q][dim] = permComponents[dim];
         }
       }
     }

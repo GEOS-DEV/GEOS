@@ -115,12 +115,6 @@ public:
 
   ProppantPermeability( string const & name, Group * const parent );
 
-  std::unique_ptr< ConstitutiveBase > deliverClone( string const & name,
-                                                    Group * const parent ) const override;
-
-  virtual void allocateConstitutiveData( dataRepository::Group & parent,
-                                         localIndex const numConstitutivePointsPerParentIndex ) override;
-
   static string catalogName() { return "ProppantPermeability"; }
 
   virtual string getCatalogName() const override { return catalogName(); }
@@ -154,6 +148,8 @@ public:
 protected:
 
   virtual void postInputInitialization() override;
+
+  virtual void resizeFields( localIndex const size, localIndex const numPts ) override;
 
 private:
 

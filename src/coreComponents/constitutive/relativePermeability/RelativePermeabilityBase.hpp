@@ -150,9 +150,6 @@ public:
 
   RelativePermeabilityBase( string const & name, dataRepository::Group * const parent );
 
-  virtual void allocateConstitutiveData( dataRepository::Group & parent,
-                                         localIndex const numConstitutivePointsPerParentIndex ) override;
-
   integer numFluidPhases() const { return LvArray::integerConversion< integer >( m_phaseNames.size() ); }
 
   string_array const & phaseNames() const { return m_phaseNames; }
@@ -199,7 +196,7 @@ protected:
    * @param size primary dimension (e.g. number of cells)
    * @param numPts secondary dimension (e.g. number of gauss points per cell)
    */
-  virtual void resizeFields( localIndex const size, localIndex const numPts );
+  virtual void resizeFields( localIndex const size, localIndex const numPts ) override;
 
   virtual void postInputInitialization() override;
 

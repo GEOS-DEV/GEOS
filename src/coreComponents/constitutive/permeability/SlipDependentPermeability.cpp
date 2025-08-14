@@ -47,20 +47,12 @@ SlipDependentPermeability::SlipDependentPermeability( string const & name, Group
   registerField( fields::permeability::dPerm_dDispJump{}, &m_dPerm_dDispJump );
 }
 
-std::unique_ptr< ConstitutiveBase >
-SlipDependentPermeability::deliverClone( string const & name,
-                                         Group * const parent ) const
+void SlipDependentPermeability::resizeFields( localIndex const size, localIndex const numPts )
 {
-  return ConstitutiveBase::deliverClone( name, parent );
-}
+  PermeabilityBase::resizeFields( size, numPts );
 
-void SlipDependentPermeability::allocateConstitutiveData( dataRepository::Group & parent,
-                                                          localIndex const numConstitutivePointsPerParentIndex )
-{
-// NOTE: enforcing 1 quadrature point
+  // NOTE: enforcing 1 quadrature point
   m_dPerm_dDispJump.resize( 0, 1, 3, 3 );
-
-  PermeabilityBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 }
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, SlipDependentPermeability, string const &, Group * const )

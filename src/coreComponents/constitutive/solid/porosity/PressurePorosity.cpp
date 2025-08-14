@@ -41,18 +41,6 @@ PressurePorosity::PressurePorosity( string const & name, Group * const parent ):
     setDescription( "Solid compressibility" );
 }
 
-void PressurePorosity::allocateConstitutiveData( dataRepository::Group & parent,
-                                                 localIndex const numConstitutivePointsPerParentIndex )
-{
-  PorosityBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
-}
-
-void PressurePorosity::postInputInitialization()
-{
-  PorosityBase::postInputInitialization();
-  // TODO valdate input
-}
-
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, PressurePorosity, string const &, Group * const )
 }
 } /* namespace geos */

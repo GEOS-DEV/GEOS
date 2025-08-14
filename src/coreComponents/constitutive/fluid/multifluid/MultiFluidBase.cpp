@@ -151,13 +151,6 @@ void MultiFluidBase::setLabels()
     setDimLabels( 3, m_componentNames );
 }
 
-void MultiFluidBase::allocateConstitutiveData( dataRepository::Group & parent,
-                                               localIndex const numConstitutivePointsPerParentIndex )
-{
-  ConstitutiveBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
-  resizeFields( parent.size(), numConstitutivePointsPerParentIndex );
-}
-
 void MultiFluidBase::postInputInitialization()
 {
   ConstitutiveBase::postInputInitialization();

@@ -61,9 +61,6 @@ ElasticIsotropic::ElasticIsotropic( string const & name, Group * const parent ):
     setDescription( "Elastic Shear Modulus Field" );
 }
 
-ElasticIsotropic::~ElasticIsotropic()
-{}
-
 void ElasticIsotropic::postInputInitialization()
 {
   // check what constants the user actually input, and do conversions as needed

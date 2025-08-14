@@ -173,9 +173,6 @@ ElasticOrthotropic::ElasticOrthotropic( string const & name, Group * const paren
     setDescription( "Elastic Stiffness Field C66" );
 }
 
-ElasticOrthotropic::~ElasticOrthotropic()
-{}
-
 void ElasticOrthotropic::postInputInitialization()
 {
   SolidBase::postInputInitialization();

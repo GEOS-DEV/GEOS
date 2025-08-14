@@ -51,7 +51,7 @@ public:
   /**
    * @brief default destructor
    */
-  virtual ~HydraulicApertureBase() override;
+  virtual ~HydraulicApertureBase() override = default;
 
 protected:
 

@@ -99,12 +99,6 @@ public:
 
   WillisRichardsPermeability( string const & name, Group * const parent );
 
-  std::unique_ptr< ConstitutiveBase > deliverClone( string const & name,
-                                                    Group * const parent ) const override;
-
-  virtual void allocateConstitutiveData( dataRepository::Group & parent,
-                                         localIndex const numConstitutivePointsPerParentIndex ) override;
-
   static string catalogName() { return "WillisRichardsPermeability"; }
 
   virtual string getCatalogName() const override { return catalogName(); }
@@ -126,6 +120,10 @@ public:
                           m_dilationCoefficient,
                           m_refClosureStress );
   }
+
+protected:
+
+  virtual void resizeFields( localIndex const size, localIndex const numPts ) override;
 
 private:
 

@@ -67,14 +67,11 @@ SolidInternalEnergy::SolidInternalEnergy( string const & name, Group * const par
     setDescription( "Internal energy at the reference temperature [J/kg]" );
 }
 
-void SolidInternalEnergy::allocateConstitutiveData( Group & parent,
-                                                    localIndex const numConstitutivePointsPerParentIndex )
+void SolidInternalEnergy::resizeFields( localIndex const size, localIndex const GEOS_UNUSED_PARAM( numPts ) )
 {
-  m_internalEnergy.resize( 0, 1 );
-  m_dInternalEnergy_dTemperature.resize( 0, 1 );
-  m_internalEnergy_n.resize( 0, 1 );
-
-  ConstitutiveBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
+  m_internalEnergy.resize( size, 1 );
+  m_dInternalEnergy_dTemperature.resize( size, 1 );
+  m_internalEnergy_n.resize( size, 1 );
 }
 
 void SolidInternalEnergy::saveConvergedState() const

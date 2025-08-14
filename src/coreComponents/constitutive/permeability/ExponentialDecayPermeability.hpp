@@ -94,12 +94,6 @@ public:
 
   ExponentialDecayPermeability( string const & name, Group * const parent );
 
-  std::unique_ptr< ConstitutiveBase > deliverClone( string const & name,
-                                                    Group * const parent ) const override;
-
-  virtual void allocateConstitutiveData( dataRepository::Group & parent,
-                                         localIndex const numConstitutivePointsPerParentIndex ) override;
-
   static string catalogName() { return "ExponentialDecayPermeability"; }
 
   virtual string getCatalogName() const override { return catalogName(); }
@@ -120,6 +114,10 @@ public:
                           m_empiricalConstant,
                           m_initialPermeability );
   }
+
+
+protected:
+  virtual void resizeFields( localIndex const size, localIndex const numPts ) override;
 
 private:
 

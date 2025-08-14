@@ -88,9 +88,6 @@ public:
   std::unique_ptr< ConstitutiveBase > deliverClone( string const & name,
                                                     Group * const parent ) const override;
 
-  virtual void allocateConstitutiveData( dataRepository::Group & parent,
-                                         localIndex const numConstitutivePointsPerParentIndex ) override;
-
   static string catalogName() { return "CarmanKozenyPermeability"; }
 
   virtual string getCatalogName() const override { return catalogName(); }
@@ -120,6 +117,10 @@ public:
     static constexpr char const * sphericityString() { return "sphericity"; }
     static constexpr char const * anisotropyString() { return "anisotropy"; }
   } viewKeys;
+
+protected:
+
+  virtual void resizeFields( localIndex const size, localIndex const numPts ) override;
 
 private:
 

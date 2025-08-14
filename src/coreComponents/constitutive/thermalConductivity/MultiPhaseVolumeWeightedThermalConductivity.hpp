@@ -122,12 +122,6 @@ public:
    */
   MultiPhaseVolumeWeightedThermalConductivity( string const & name, Group * const parent );
 
-  std::unique_ptr< ConstitutiveBase > deliverClone( string const & name,
-                                                    Group * const parent ) const override;
-
-  virtual void allocateConstitutiveData( dataRepository::Group & parent,
-                                         localIndex const numConstitutivePointsPerParentIndex ) override;
-
   virtual void initializeRockFluidState( arrayView2d< real64 const > const & initialPorosity,
                                          arrayView2d< real64 const, compflow::USD_PHASE > const & initialPhaseVolumeFraction ) const override;
 
@@ -162,6 +156,8 @@ public:
 protected:
 
   virtual void postInputInitialization() override;
+
+  virtual void resizeFields( localIndex const size, localIndex const numPts ) override;
 
 private:
 
