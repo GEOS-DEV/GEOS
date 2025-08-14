@@ -531,7 +531,6 @@ static void runConsistencyTest( array2d< real64, nodes::REFERENCE_POSITION_PERM 
                                 array1d< localIndex > const & elemToFaces,
                                 real64 const elemCenter[3],
                                 real64 const elemPerm[3],
-                                real64 elemVolume,
                                 ARRAY_VIEW_T const & transMatrix,
                                 std::string const & testName )
 {
@@ -641,7 +640,6 @@ TEST( testMimeticInnerProducts, TPFA_hexa )
                             elemToFaces,
                             elemCenter,
                             elemPerm,
-                            elemVolume,
                             transMatrix.toViewConst(),
                             "TPFA_hexa" );
 }
@@ -700,7 +698,6 @@ TEST( testMimeticInnerProducts, QTPFA_hexa )
                             elemToFaces,
                             elemCenter,
                             elemPerm,
-                            elemVolume,
                             transMatrix.toViewConst(),
                             "QTPFA_hexa" );
 }
@@ -759,7 +756,6 @@ TEST( testMimeticInnerProducts, Simple_hexa )
                             elemToFaces,
                             elemCenter,
                             elemPerm,
-                            elemVolume,
                             transMatrix.toViewConst(),
                             "Simple_hexa" );
 }
@@ -818,7 +814,6 @@ TEST( testMimeticInnerProducts, BdVLM_hexa )
                             elemToFaces,
                             elemCenter,
                             elemPerm,
-                            elemVolume,
                             transMatrix.toViewConst(),
                             "BdVLM_hexa" );
 }
@@ -874,7 +869,6 @@ TEST( testMimeticInnerProducts, TPFA_tetra )
                             elemToFaces,
                             elemCenter,
                             elemPerm,
-                            elemVolume,
                             transMatrix.toViewConst(),
                             "TPFA_tetra" );
 }
@@ -930,7 +924,6 @@ TEST( testMimeticInnerProducts, QTPFA_tetra )
                             elemToFaces,
                             elemCenter,
                             elemPerm,
-                            elemVolume,
                             transMatrix.toViewConst(),
                             "QTPFA_tetra" );
 }
@@ -985,7 +978,6 @@ TEST( testMimeticInnerProducts, Simple_tetra )
                             elemToFaces,
                             elemCenter,
                             elemPerm,
-                            elemVolume,
                             transMatrix.toViewConst(),
                             "Simple_tetra" );
 }
@@ -1040,7 +1032,6 @@ TEST( testMimeticInnerProducts, BdVLMtetra )
                             elemToFaces,
                             elemCenter,
                             elemPerm,
-                            elemVolume,
                             transMatrix.toViewConst(),
                             "BdVLM_tetra" );
 }
@@ -1150,7 +1141,7 @@ static inline void makeDistortedNonplanar( array2d< real64, nodes::REFERENCE_POS
   int Rvert = faceR( fR, 2 );
 
   nodeL( Lvert, 0 ) += eps;
-  nodeR( Rvert, 0 ) -= eps;
+  nodeR( Rvert, 0 ) -= eps / 2;
 }
 
 // return the sum of all entries in row r of matrix T
