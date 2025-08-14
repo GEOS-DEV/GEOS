@@ -185,8 +185,8 @@ public:
       composition[2] = 0.3;
 
       arraySlice1d< real64 const, compflow::USD_COMP - 1 > compositionS( composition );
-      StackArray< real64, 3, 3, multifluid::LAYOUT_PHASE > compositionData( 1, 1, 3 );
-      auto composition_c = compositionData[0][0];
+      StackArray< real64, 2, 3, compflow::LAYOUT_COMP > compositionData( 1, 3 );
+      auto composition_c = compositionData[0];
       composition_c[0] = 0.4;
       composition_c[1] = 0.3;
       composition_c[2] = 0.3;
