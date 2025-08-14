@@ -867,7 +867,7 @@ real64 dOperator3_dy ( real64 const x, real64 const y ) { GEOS_UNUSED_VAR( x, y 
 
 real64 operator1a ( real64 const x, real64 const y ) { return x + y; }
 real64 dOperator1a_dx ( real64 const x, real64 const y ) { GEOS_UNUSED_VAR( x, y ); return 1; }
-real64 dOperator1a_dy ( real64 const x, real64 const y ) { GEOS_UNUSED_VAR( x ); return 1; }
+real64 dOperator1a_dy ( real64 const x, real64 const y ) { GEOS_UNUSED_VAR( x, y ); return 1; }
 
 TEST( FunctionTests, 2DMultivariableTable )
 {
