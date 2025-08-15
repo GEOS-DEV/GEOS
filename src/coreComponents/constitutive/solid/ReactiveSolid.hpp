@@ -58,7 +58,7 @@ public:
   void updateStateFromPressureAndReactions( localIndex const k,
                                             localIndex const q,
                                             real64 const & pressure,
-                                            arraySlice1d< real64 const, reactivefluid::USD_SPECIES - 2 > const & kineticReactionMolarIncrements ) const
+                                            arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & kineticReactionMolarIncrements ) const
   {
     m_porosityUpdate.updateFromReactions( k, q, kineticReactionMolarIncrements );
     real64 const porosity = m_porosityUpdate.getPorosity( k, q );
@@ -68,8 +68,8 @@ public:
   GEOS_HOST_DEVICE
   void updateSurfaceArea( localIndex const k,
                           localIndex const q,
-                          arraySlice1d< real64 const, reactivefluid::USD_SPECIES - 2 > const & initialSurfaceArea,
-                          arraySlice1d< real64, reactivefluid::USD_SPECIES - 2 > const & surfaceArea ) const
+                          arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & initialSurfaceArea,
+                          arraySlice1d< real64, compflow::USD_COMP - 1 > const & surfaceArea ) const
   {
     real64 const porosity = m_porosityUpdate.getPorosity( k, q );
     real64 const initialPorosity = m_porosityUpdate.getInitialPorosity( k, q );

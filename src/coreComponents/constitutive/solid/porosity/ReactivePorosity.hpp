@@ -60,7 +60,7 @@ public:
   {}
 
   GEOS_HOST_DEVICE
-  void computePorosity( arraySlice1d< real64 const, reactivefluid::USD_SPECIES - 2 > const & kineticReactionMolarIncrements,
+  void computePorosity( arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & kineticReactionMolarIncrements,
                         arraySlice1d< real64, reactivefluid::USD_SPECIES - 2 > const & volumeFractions,
                         arraySlice1d< real64 const, reactivefluid::USD_SPECIES - 2 > const & volumeFractions_n,
                         real64 & porosity,
@@ -95,7 +95,7 @@ public:
   GEOS_HOST_DEVICE
   void updateFromReactions( localIndex const k,
                             localIndex const q,
-                            arraySlice1d< real64 const, reactivefluid::USD_SPECIES - 2 > const & kineticReactionMolarIncrements ) const
+                            arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & kineticReactionMolarIncrements ) const
   {
     computePorosity( kineticReactionMolarIncrements,
                      m_volumeFractions[k][q],

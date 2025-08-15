@@ -153,35 +153,39 @@ public:
      */
     GEOS_HOST_DEVICE
     localIndex numElems() const { return m_secondarySpeciesConcentration.size( 0 ); }
-
+    
+    GEOS_HOST_DEVICE
     void updateEquilibriumReaction( localIndex const k,
                                     real64 const pressure,
                                     real64 const temperature,
-                                    arraySlice1d< real64, reactivefluid::USD_SPECIES - 2 > const & logPrimarySpeciesConcentration ) const;
-
+                                    arraySlice1d< real64, compflow::USD_COMP - 1 > const & logPrimarySpeciesConcentration ) const;
+    
+    GEOS_HOST_DEVICE
     void enforceEquilibrium( real64 const pressure,
                              real64 const temperature,
                              arraySlice1d< real64 const, reactivefluid::USD_SPECIES - 2 > const & primarySpeciesTotalConcentration,
-                             arraySlice1d< real64, reactivefluid::USD_SPECIES - 2 > const & primarySpeciesConcentration,
-                             arraySlice1d< real64, reactivefluid::USD_SPECIES - 2 > const & secondarySpeciesConcentration ) const;
-
+                             arraySlice1d< real64, compflow::USD_COMP - 1 > const & primarySpeciesConcentration,
+                             arraySlice1d< real64 > const & secondarySpeciesConcentration ) const;
+    
+    GEOS_HOST_DEVICE                        
     void updateMixedReactionSystem( localIndex const k,
                                     real64 const pressure,
                                     real64 const temperature,
-                                    arraySlice1d< real64 const, reactivefluid::USD_SPECIES - 2 > const & logPrimarySpeciesConcentration,
-                                    arraySlice1d< real64 const, reactivefluid::USD_SPECIES - 2 > const & surfaceArea ) const;
+                                    arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & logPrimarySpeciesConcentration,
+                                    arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & surfaceArea ) const;
 
+    GEOS_HOST_DEVICE                               
     void computeAggregateConcentrationsAndRates( real64 const pressure,
                                                  real64 const temperature,
-                                                 arraySlice1d< real64 const, reactivefluid::USD_SPECIES - 2 > const & logPrimarySpeciesConcentration,
-                                                 arraySlice1d< real64 const, reactivefluid::USD_SPECIES - 2 > const & surfaceArea,
-                                                 arraySlice1d< real64, reactivefluid::USD_SPECIES - 2 > const & logSecondarySpeciesConcentration,
+                                                 arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & logPrimarySpeciesConcentration,
+                                                 arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & surfaceArea,
+                                                 arraySlice1d< real64 > const & logSecondarySpeciesConcentration,
                                                  arraySlice1d< real64, reactivefluid::USD_SPECIES - 2 > const & primarySpeciesAggregateConcentration,
                                                  arraySlice1d< real64, reactivefluid::USD_SPECIES - 2 > const & primarySpeciesMobileAggregateConcentration,
                                                  arraySlice2d< real64, reactivefluid::USD_SPECIES_DC - 2 > const & dPrimarySpeciesAggregateConcentration_dLogPrimarySpeciesConcentrations,
                                                  arraySlice2d< real64, reactivefluid::USD_SPECIES_DC - 2 > const & dPrimarySpeciesMobileAggregateConcentration_dLogPrimarySpeciesConcentrations,
                                                  arraySlice1d< real64, reactivefluid::USD_SPECIES - 2 > const & reactionRates,
-                                                 arraySlice2d< real64, reactivefluid::USD_SPECIES_DC - 2 > const & dReactionRates_dLogPrimarySpeciesConcentrations,
+                                                 arraySlice2d< real64 > const & dReactionRates_dLogPrimarySpeciesConcentrations,
                                                  arraySlice1d< real64, reactivefluid::USD_SPECIES - 2 > const & aggregateSpeciesRates,
                                                  arraySlice2d< real64, reactivefluid::USD_SPECIES_DC - 2 > const & dAggregateSpeciesRates_dLogPrimarySpeciesConcentrations ) const;
 
@@ -325,6 +329,7 @@ using ReactiveThermalCompressibleSinglePhaseFluid = ReactiveSinglePhaseFluid< Th
 
 template< typename BASE >
 template< typename REACTION_PARAMS_TYPE >
+GEOS_HOST_DEVICE
 inline void
 ReactiveSinglePhaseFluid< BASE >::ReactionKernelWrapper< REACTION_PARAMS_TYPE >::
 updateEquilibriumReaction( localIndex const k,
@@ -347,19 +352,30 @@ updateEquilibriumReaction( localIndex const k,
 
 template< typename BASE >
 template< typename REACTION_PARAMS_TYPE >
+GEOS_HOST_DEVICE
 inline void
 ReactiveSinglePhaseFluid< BASE >::ReactionKernelWrapper< REACTION_PARAMS_TYPE >::
 enforceEquilibrium( real64 const pressure,
                     real64 const temperature,
                     arraySlice1d< real64 const, reactivefluid::USD_SPECIES - 2 > const & targetPrimarySpeciesAggregateConcentration,
-                    arraySlice1d< real64, reactivefluid::USD_SPECIES - 2 > const & logPrimarySpeciesConcentration,
-                    arraySlice1d< real64, reactivefluid::USD_SPECIES - 2 > const & logSecondarySpeciesConcentration ) const
+                    arraySlice1d< real64, compflow::USD_COMP - 1 > const & logPrimarySpeciesConcentration,
+                    arraySlice1d< real64 > const & logSecondarySpeciesConcentration ) const
 {
   GEOS_UNUSED_VAR( pressure );
 
-  arraySlice1d< real64 const, reactivefluid::USD_SPECIES - 2 > const & logPrimarySpeciesConcentration0 = logPrimarySpeciesConcentration;
+  integer const numPrimarySpecies = m_numPrimarySpecies;
+  
+  stackArray1d< real64, MAX_NUM_SPECIES > logPrimarySpeciesConcentration0( numPrimarySpecies );
+  stackArray1d< real64, MAX_NUM_SPECIES > targetPrimarySpeciesAggregateConc( numPrimarySpecies );
+
+  for( integer i=0; i < numPrimarySpecies; ++i )
+  {
+    targetPrimarySpeciesAggregateConc[i] = targetPrimarySpeciesAggregateConcentration[i];
+    logPrimarySpeciesConcentration0[i] =  logPrimarySpeciesConcentration[i];
+  }
+  
   // 1. We enforce equilibrium
-  EquilibriumReactionsType::enforceEquilibrium_Aggregate( temperature, m_params, targetPrimarySpeciesAggregateConcentration, logPrimarySpeciesConcentration0, logPrimarySpeciesConcentration );
+  EquilibriumReactionsType::enforceEquilibrium_Aggregate( temperature, m_params, targetPrimarySpeciesAggregateConc, logPrimarySpeciesConcentration0, logPrimarySpeciesConcentration );
 
   // 2. We calculate the secondary species concentration
   hpcReact::massActions::calculateLogSecondarySpeciesConcentration< real64,
@@ -369,13 +385,14 @@ enforceEquilibrium( real64 const pressure,
 
 template< typename BASE >
 template< typename REACTION_PARAMS_TYPE >
+GEOS_HOST_DEVICE
 inline void
 ReactiveSinglePhaseFluid< BASE >::ReactionKernelWrapper< REACTION_PARAMS_TYPE >::
 updateMixedReactionSystem( localIndex const k,
                            real64 const pressure,
                            real64 const temperature,
-                           arraySlice1d< real64 const, reactivefluid::USD_SPECIES - 2 > const & logPrimarySpeciesConcentration,
-                           arraySlice1d< real64 const, reactivefluid::USD_SPECIES - 2 > const & surfaceArea ) const
+                           arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & logPrimarySpeciesConcentration,
+                           arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & surfaceArea ) const
 {
   integer const numPrimarySpecies = m_numPrimarySpecies;
   integer const numSecondarySpecies = m_numSecondarySpecies;
@@ -406,19 +423,20 @@ updateMixedReactionSystem( localIndex const k,
 
 template< typename BASE >
 template< typename REACTION_PARAMS_TYPE >
+GEOS_HOST_DEVICE
 inline void
 ReactiveSinglePhaseFluid< BASE >::ReactionKernelWrapper< REACTION_PARAMS_TYPE >::
 computeAggregateConcentrationsAndRates( real64 const pressure,
                                         real64 const temperature,
-                                        arraySlice1d< real64 const, reactivefluid::USD_SPECIES - 2 > const & logPrimarySpeciesConcentration,
-                                        arraySlice1d< real64 const, reactivefluid::USD_SPECIES - 2 > const & surfaceArea,
-                                        arraySlice1d< real64, reactivefluid::USD_SPECIES - 2 > const & logSecondarySpeciesConcentration,
+                                        arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & logPrimarySpeciesConcentration,
+                                        arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & surfaceArea,
+                                        arraySlice1d< real64 > const & logSecondarySpeciesConcentration,
                                         arraySlice1d< real64, reactivefluid::USD_SPECIES - 2 > const & primarySpeciesAggregateConcentration,
                                         arraySlice1d< real64, reactivefluid::USD_SPECIES - 2 > const & primarySpeciesMobileAggregateConcentration,
                                         arraySlice2d< real64, reactivefluid::USD_SPECIES_DC - 2 > const & dPrimarySpeciesAggregateConcentration_dLogPrimarySpeciesConcentrations,
                                         arraySlice2d< real64, reactivefluid::USD_SPECIES_DC - 2 > const & dPrimarySpeciesMobileAggregateConcentration_dLogPrimarySpeciesConcentrations,
                                         arraySlice1d< real64, reactivefluid::USD_SPECIES - 2 > const & reactionRates,
-                                        arraySlice2d< real64, reactivefluid::USD_SPECIES_DC - 2 > const & dReactionRates_dLogPrimarySpeciesConcentrations,
+                                        arraySlice2d< real64 > const & dReactionRates_dLogPrimarySpeciesConcentrations,
                                         arraySlice1d< real64, reactivefluid::USD_SPECIES - 2 > const & aggregateSpeciesRates,
                                         arraySlice2d< real64, reactivefluid::USD_SPECIES_DC - 2 > const & dAggregateSpeciesRates_dLogPrimarySpeciesConcentrations ) const
 {

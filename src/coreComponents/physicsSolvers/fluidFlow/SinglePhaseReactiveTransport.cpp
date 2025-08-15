@@ -47,6 +47,40 @@ namespace geos
 using namespace dataRepository;
 using namespace constitutive;
 
+template< typename POROUSWRAPPER_TYPE >
+void updatePorosityAndPermeabilityFromPressureAndReactions( POROUSWRAPPER_TYPE porousWrapper,
+                                                            ElementSubRegionBase & subRegion,
+                                                            arrayView1d< real64 const > const & pressure,
+                                                            arrayView2d< real64 const, compflow::USD_COMP > const & kineticReactionMolarIncrements )
+{
+  forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_DEVICE ( localIndex const k )
+  {
+    for( localIndex q = 0; q < porousWrapper.numGauss(); ++q )
+    {
+      porousWrapper.updateStateFromPressureAndReactions( k, q,
+                                                         pressure[k],
+                                                         kineticReactionMolarIncrements[k] );
+    }
+  } );
+}
+
+template< typename POROUSWRAPPER_TYPE >
+void updateSurfaceAreaFromReactions( POROUSWRAPPER_TYPE porousWrapper,
+                                     ElementSubRegionBase & subRegion,
+                                     arrayView2d< real64 const, compflow::USD_COMP > const & initialSurfaceArea,
+                                     arrayView2d< real64, compflow::USD_COMP > const & surfaceArea )
+{
+  forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_DEVICE ( localIndex const k )
+  {
+    for( localIndex q = 0; q < porousWrapper.numGauss(); ++q )
+    {
+      porousWrapper.updateSurfaceArea( k, q,
+                                       initialSurfaceArea[k],
+                                       surfaceArea[k] );
+    }
+  } );
+}
+
 SinglePhaseReactiveTransport::SinglePhaseReactiveTransport( const string & name,
                                                             Group * const parent ):
   SinglePhaseBase( name, parent ),
@@ -631,15 +665,7 @@ void SinglePhaseReactiveTransport::updatePorosityAndPermeability( CellElementSub
     constitutive::ConstitutivePassThru< ReactiveSolidBase >::execute( porousSolid, [=, &subRegion] ( auto & castedPorousSolid )
     {
       typename TYPEOFREF( castedPorousSolid ) ::KernelWrapper porousWrapper = castedPorousSolid.createKernelUpdates();
-      forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_DEVICE ( localIndex const k )
-      {
-        for( localIndex q = 0; q < porousWrapper.numGauss(); ++q )
-        {
-          porousWrapper.updateStateFromPressureAndReactions( k, q,
-                                                             pressure[k],
-                                                             kineticReactionMolarIncrements[k] );
-        }
-      } );
+      updatePorosityAndPermeabilityFromPressureAndReactions( porousWrapper, subRegion, pressure, kineticReactionMolarIncrements );
     } );
   }
   else
@@ -696,15 +722,7 @@ void SinglePhaseReactiveTransport::updateSurfaceArea( ElementSubRegionBase & sub
     constitutive::ConstitutivePassThru< ReactiveSolidBase >::execute( porousSolid, [=, &subRegion] ( auto & castedPorousSolid )
     {
       typename TYPEOFREF( castedPorousSolid ) ::KernelWrapper porousWrapper = castedPorousSolid.createKernelUpdates();
-      forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_DEVICE ( localIndex const k )
-      {
-        for( localIndex q = 0; q < porousWrapper.numGauss(); ++q )
-        {
-          porousWrapper.updateSurfaceArea( k, q,
-                                           initialSurfaceArea[k],
-                                           surfaceArea[k] );
-        }
-      } );
+      updateSurfaceAreaFromReactions( porousWrapper, subRegion, initialSurfaceArea, surfaceArea );
     } );
   }
   else
