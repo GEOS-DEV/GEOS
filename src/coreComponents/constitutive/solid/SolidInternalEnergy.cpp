@@ -67,7 +67,7 @@ SolidInternalEnergy::SolidInternalEnergy( string const & name, Group * const par
     setDescription( "Internal energy at the reference temperature [J/kg]" );
 }
 
-void SolidInternalEnergy::resizeFields( localIndex const size, localIndex const GEOS_UNUSED_PARAM( numPts ) )
+void SolidInternalEnergy::resizeFields( localIndex const GEOS_UNUSED_PARAM( size ), localIndex const GEOS_UNUSED_PARAM( numPts ) )
 {
   // 0 to resize and assign default value later
   m_internalEnergy.resize( 0, 1 );

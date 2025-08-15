@@ -76,7 +76,7 @@ void SolidBase::postInputInitialization()
 }
 
 
-void SolidBase::resizeFields( localIndex const size, localIndex const numPts )
+void SolidBase::resizeFields( localIndex const GEOS_UNUSED_PARAM( size ), localIndex const numPts )
 {
   // 0 to resize and assign default value later
   m_density.resize( 0, numPts );

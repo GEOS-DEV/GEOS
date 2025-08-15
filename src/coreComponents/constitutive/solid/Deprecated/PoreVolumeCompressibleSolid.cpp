@@ -59,7 +59,7 @@ PoreVolumeCompressibleSolid::deliverClone( string const & name,
   return clone;
 }
 
-void PoreVolumeCompressibleSolid::resizeFields( localIndex const size, localIndex const numPts )
+void PoreVolumeCompressibleSolid::resizeFields( localIndex const GEOS_UNUSED_PARAM( size ), localIndex const numPts )
 {
   // 0 to resize and assign default value later
   m_poreVolumeMultiplier.resize( 0, numPts );
