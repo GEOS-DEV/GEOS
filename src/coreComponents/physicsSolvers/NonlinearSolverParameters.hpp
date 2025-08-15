@@ -370,7 +370,7 @@ public:
   integer m_oscillationCheckDepth;
 
   /// Tolerance for oscillation detection
-  real64 m_oscillationTolerance = 0.01;
+  real64 m_oscillationTolerance;
 
   /// Fraction of dofs oscillating to declare oscillation
   real64 m_oscillationFraction = 0.1;
