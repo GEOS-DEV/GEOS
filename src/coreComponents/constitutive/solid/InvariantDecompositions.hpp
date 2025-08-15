@@ -68,9 +68,6 @@ void strainDecomposition( real64 const ( &strain )[6],
 {
   volStrain = strain[0] + strain[1] + strain[2];
 
-  std::cout << "volStrain = " << volStrain << " strain[0] = " << strain[0]
-  // Debug print statement removed.
-
   for( localIndex i=0; i<3; ++i )
   {
     deviator[i] = strain[i] - volStrain/3.;
@@ -172,17 +169,10 @@ void strainRecomposition( real64 const & volStrain,
 {
   real64 const tmp = sqrt( 1.5 )*devStrain;
 
-  std::cout << "tmp = " << tmp << " volStrain = " << volStrain
-            << " devStrain = " << devStrain << std::endl;
-
   for( localIndex i=0; i<3; ++i )
   {
     strain[i]   = volStrain/3. + tmp * deviator[i];
     strain[i+3] = 2 * tmp * deviator[i+3]; // engineering strain
-    std::cout << "strain[" << i << "] = " << strain[i]
-              << " strain[" << i+3 << "] = " << strain[i+3] << std::endl;
-    std::cout << "deviator[" << i << "] = " << deviator[i]
-              << " deviator[" << i+3 << "] = " << deviator[i+3] << std::endl;
   }
 
   return;
