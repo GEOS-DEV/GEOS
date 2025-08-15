@@ -373,7 +373,7 @@ public:
   real64 m_oscillationTolerance;
 
   /// Fraction of dofs oscillating to declare oscillation
-  real64 m_oscillationFraction = 0.1;
+  real64 m_oscillationFraction;
 };
 
 ENUM_STRINGS( NonlinearSolverParameters::LineSearchAction,
