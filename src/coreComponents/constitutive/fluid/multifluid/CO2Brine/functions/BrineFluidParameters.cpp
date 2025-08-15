@@ -155,7 +155,7 @@ void BrineFluidParameters::postInputInitialization( MultiFluidBase * fluid )
   // Salinity must not be negative
   GEOS_THROW_IF_LT_MSG( m_salinity, 0.0,
                         GEOS_FMT( "{}: invalid salinity {}. "
-                                  "Value must not be negative", fullName, viewKeyStruct::waterCompressibilityString() ),
+                                  "Value must not be negative", fullName, viewKeyStruct::salinityString() ),
                         InputError );
 
   // Flash tolerance must be positive
@@ -214,14 +214,7 @@ void BrineFluidParameters::postInputInitialization( MultiFluidBase * fluid )
         m_ezrokhiDensityCoefficients.emplace_back( 0.0 );
       }
     }
-    if( m_ezrokhiDensityCoefficients.empty())
-    {
-      for( integer ic = 0; ic < 3; ic++ )
-      {
-        m_ezrokhiViscosityCoefficients.emplace_back( 0.0 );
-      }
-    }
-    GEOS_THROW_IF_NE_MSG( m_ezrokhiViscosityCoefficients.size(), 3,
+    GEOS_THROW_IF_NE_MSG( m_ezrokhiDensityCoefficients.size(), 3,
                           GEOS_FMT( "{}: invalid number of Ezrokhi density coefficients provided in {}. "
                                     "Exactly 3 values must be provided.", fullName, viewKeyStruct::ezrokhiDensityCoefficientsString() ),
                           InputError );
@@ -229,7 +222,7 @@ void BrineFluidParameters::postInputInitialization( MultiFluidBase * fluid )
 
   if constexpr ( EZROKHI_VISCOSITY )
   {
-    if( m_ezrokhiDensityCoefficients.empty())
+    if( m_ezrokhiViscosityCoefficients.empty())
     {
       for( integer ic = 0; ic < 3; ic++ )
       {

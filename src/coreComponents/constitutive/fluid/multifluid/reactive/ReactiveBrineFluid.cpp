@@ -72,8 +72,11 @@ ReactiveBrineFluid( string const & name, Group * const parent ):
     setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "When set to 1, write PVT tables into a CSV file" );
 
-  // Attach the fluid properties
-  m_brineFluidParameters.registerOnFluid< false, false, false >( this );
+  registerWrapper( viewKeyStruct::salinityString(), &m_salinity ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setDescription( "The salinity of brine" ).
+    setDefaultValue( m_salinity );
 
   // if this is a thermal model, we need to make sure that the arrays will be properly displayed and saved to restart
   if( isThermal() )
@@ -128,8 +131,11 @@ void ReactiveBrineFluid< PHASE > ::postInputInitialization()
                         GEOS_FMT( "{}: invalid number of phases", getFullName() ),
                         InputError );
 
-  // Validate the brine fluid properties
-  m_brineFluidParameters.postInputInitialization< false, false, false >( this );
+  // Salinity must not be negative
+  GEOS_THROW_IF_LT_MSG( m_salinity, 0.0,
+                        GEOS_FMT( "{}: invalid salinity {}. "
+                                  "Value must not be negative", getFullName(), viewKeyStruct::salinityString() ),
+                        InputError );
 
   createPVTModels();
 }
@@ -143,9 +149,12 @@ void ReactiveBrineFluid< PHASE >::createPVTModels()
     !isClone && isLogLevelActive< logInfo::PVT >( this->getLogLevel() ), // writeInLog
   };
 
+  BrineFluidParameters parameters;
+  parameters.m_salinity = m_salinity;
+
   // then, we are ready to instantiate the phase models
   m_phase = std::make_unique< PHASE >( getName() + "_phaseModel1",
-                                       m_brineFluidParameters,
+                                       parameters,
                                        m_componentNames,
                                        m_componentMolarWeight,
                                        pvtOutputOpts );

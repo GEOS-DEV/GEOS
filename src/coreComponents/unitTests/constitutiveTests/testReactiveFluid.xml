@@ -39,8 +39,7 @@
       name="reactiveFluid"
       phaseNames="{ water }"
       componentNames="{ H+, HCO3-, Ca+2, SO4-2, Cl-, Mg+2, Na+1 }"
-      componentMolarWeight="{ 18e-3, 18e-3, 18e-3, 18e-3, 18e-3, 18e-3, 18e-3}"
-      phasePVTParaFiles="{ testPVT_data/reactiveBrinePVT.txt }"/>
+      componentMolarWeight="{ 18e-3, 18e-3, 18e-3, 18e-3, 18e-3, 18e-3, 18e-3}" />
   </Constitutive>
 
   <Functions>

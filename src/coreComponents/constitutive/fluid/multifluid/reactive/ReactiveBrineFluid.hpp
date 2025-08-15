@@ -157,6 +157,7 @@ private:
   struct viewKeyStruct : ReactiveMultiFluid::viewKeyStruct
   {
     static constexpr char const * writeCSVFlagString() { return "writeCSV"; }
+    static constexpr char const * salinityString() { return "salinity"; }
   };
 
 protected:
@@ -170,8 +171,8 @@ private:
    */
   void createPVTModels();
 
-  /// All brine model properties
-  PVTProps::BrineFluidParameters m_brineFluidParameters{};
+  /// Salinity
+  real64 m_salinity{0.0};
 
   /// Output csv file containing informations about PVT
   integer m_writeCSV;
