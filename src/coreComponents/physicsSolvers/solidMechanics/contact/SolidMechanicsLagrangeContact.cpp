@@ -2280,7 +2280,7 @@ bool SolidMechanicsLagrangeContact::updateConfiguration( DomainPartition & domai
         using FrictionType = TYPEOFREF( castedFrictionLaw );
         typename FrictionType::KernelWrapper frictionWrapper = castedFrictionLaw.createKernelUpdates();
 
-        forAll< parallelHostPolicy >( subRegion.size(), [=, &fractureState] ( localIndex const kfe )
+        forAll< parallelHostPolicy >( subRegion.size(), [=, &subRegion] ( localIndex const kfe )
         {
           if( ghostRank[kfe] < 0 )
           {
