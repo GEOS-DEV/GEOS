@@ -86,7 +86,6 @@ set( mesh_headers
      generators/InternalWellboreGenerator.hpp
      generators/MeshComponentBase.hpp
      generators/MeshGeneratorBase.hpp
-     generators/ParMETISInterface.hpp
      generators/ParticleMeshGenerator.hpp
      generators/PartitionDescriptor.hpp
      generators/PrismUtilities.hpp
@@ -165,7 +164,6 @@ set( mesh_sources
      generators/InternalWellboreGenerator.cpp
      generators/MeshComponentBase.cpp
      generators/MeshGeneratorBase.cpp
-     generators/ParMETISInterface.cpp
      generators/ParticleMeshGenerator.cpp
      generators/Region.cpp
      generators/WellGeneratorBase.cpp
@@ -186,7 +184,8 @@ set( mesh_sources
      simpleGeometricObjects/ThickPlane.cpp
      utilities/ComputationalGeometry.cpp )
 
-set( dependencyList ${parallelDeps} schema constitutive finiteElement parmetis metis )
+set( dependencyList ${parallelDeps} schema constitutive finiteElement )
+set( tplDependencyList "" )
 
 if( ENABLE_VTK )
     message(STATUS "Adding VTK readers")
@@ -208,16 +207,22 @@ if( ENABLE_VTK )
          generators/VTKWellGenerator.cpp
          generators/VTKUtilities.cpp
          )
-    list( APPEND dependencyList VTK::IOLegacy VTK::FiltersParallelDIY2 )
+    list( APPEND tplDependencyList VTK::IOLegacy VTK::FiltersParallelDIY2 )
     if( ENABLE_MPI )
-      list( APPEND dependencyList VTK::IOParallelXML VTK::ParallelMPI )
+      list( APPEND tplDependencyList VTK::IOParallelXML VTK::ParallelMPI )
     endif()
+endif()
+
+if( ENABLE_PARMETIS )
+    set( mesh_headers ${mesh_headers} generators/ParMETISInterface.hpp )
+    set( mesh_sources ${mesh_sources} generators/ParMETISInterface.cpp )
+    list( APPEND tplDependencyList parmetis metis )
 endif()
 
 if( ENABLE_SCOTCH )
     set( mesh_headers ${mesh_headers} generators/PTScotchInterface.hpp )
     set( mesh_sources ${mesh_sources} generators/PTScotchInterface.cpp )
-    list( APPEND dependencyList ptscotch )
+    list( APPEND tplDependencyList SCOTCH::ptscotch SCOTCH::scotcherr )
 endif()
 
 geos_decorate_link_dependencies( LIST decoratedDependencies
@@ -226,7 +231,7 @@ geos_decorate_link_dependencies( LIST decoratedDependencies
 blt_add_library( NAME       mesh
                  SOURCES    ${mesh_sources}
                  HEADERS    ${mesh_headers}
-                 DEPENDS_ON ${decoratedDependencies}
+                 DEPENDS_ON ${decoratedDependencies} ${tplDependencyList}
                  OBJECT     ${GEOS_BUILD_OBJ_LIBS}
                  SHARED     ${GEOS_BUILD_SHARED_LIBS}
                )
