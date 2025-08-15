@@ -150,9 +150,7 @@ public:
                                m_extremumValue ),
                      InputError );
 
-      m_isWetting =  ((m_criticalDrainagePhaseVolFraction > m_extremumPhaseVolFraction) ?
-                      PhaseWettability::WETTING :
-                      PhaseWettability::NONWETTING) == PhaseWettability::WETTING;
+      isWetting = m_criticalDrainagePhaseVolFraction > m_extremumPhaseVolFraction;
     }
 
     /**
