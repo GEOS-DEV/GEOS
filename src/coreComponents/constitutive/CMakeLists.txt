@@ -315,7 +315,6 @@ set( constitutive_sources
      relativePermeability/TableRelativePermeability.cpp
      relativePermeability/TableRelativePermeabilityHelpers.cpp
      relativePermeability/TableRelativePermeabilityHysteresis.cpp
-     relativePermeability/VanGenuchtenBakerRelativePermeability.cpp
      relativePermeability/VanGenuchtenStone2RelativePermeability.cpp
      solid/CompressibleSolid.cpp
      solid/CoupledSolidBase.cpp
