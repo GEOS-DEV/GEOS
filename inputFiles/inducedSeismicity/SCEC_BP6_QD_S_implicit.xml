@@ -22,7 +22,7 @@
         newtonMaxIter="20"
         maxNumConfigurationAttempts="1"
         lineSearchMaxCuts="2"
-        maxTimeStepCuts="1"/>
+        maxTimeStepCuts="5"/>
      </ImplicitQuasiDynamicEQ>
 
     <OneWayCoupledFractureFlowContactMechanics
@@ -37,13 +37,12 @@
 	      couplingType="Sequential"  
         lineSearchAction="None"
 	      subcycling="0"
-        maxTimeStepCuts="1"
+        maxTimeStepCuts="5"
         lineSearchMaxCuts="0"/>
     </OneWayCoupledFractureFlowContactMechanics> 
 
     <SolidMechanicsLagrangeContactBubbleStab
       name="contactSolver"
-      timeIntegrationOption="QuasiStatic"
       logLevel="2"
       writeLinearSystem="0"
       discretization="FE1"
@@ -55,7 +54,7 @@
         maxNumConfigurationAttempts="1"
         lineSearchAction="Require"
         lineSearchMaxCuts="2"
-        maxTimeStepCuts="1"/>
+        maxTimeStepCuts="5"/>
       <LinearSolverParameters
         solverType="gmres"
         preconditionerType="mgr"
