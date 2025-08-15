@@ -437,7 +437,7 @@ bool isPointInsidePolyhedron( arrayView2d< real64 const, nodes::REFERENCE_POSITI
  * @brief Check if a point is inside a polygon (2D version)
  * @tparam POLYGON_TYPE type of @p polygon
  * @tparam POINT_TYPE type of @p point
- * @param[in] polygon array of ploygon nodes coordinates
+ * @param[in] polygon array of polygon nodes coordinates
  * @param[in] n number of polygon nodes
  * @param[in] point coordinates of the query point
  * @param[in] tol tolerance for coordinate comparisons
