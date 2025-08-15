@@ -66,16 +66,14 @@ ReactiveBrineFluid< PHASE > ::
 ReactiveBrineFluid( string const & name, Group * const parent ):
   ReactiveMultiFluid( name, parent )
 {
-  registerWrapper( viewKeyStruct::phasePVTParaFilesString(), &m_phasePVTParaFiles ).
-    setInputFlag( InputFlags::REQUIRED ).
-    setRestartFlags( RestartFlags::NO_WRITE ).
-    setDescription( "Names of the files defining the parameters of the viscosity and density models" );
-
-  this->registerWrapper( viewKeyStruct::writeCSVFlagString(), &m_writeCSV ).
+  registerWrapper( viewKeyStruct::writeCSVFlagString(), &m_writeCSV ).
     setApplyDefaultValue( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "When set to 1, write PVT tables into a CSV file" );
+
+  // Attach the fluid properties
+  m_brineFluidParameters.registerOnFluid< false, false, false >( this );
 
   // if this is a thermal model, we need to make sure that the arrays will be properly displayed and saved to restart
   if( isThermal() )
@@ -93,11 +91,10 @@ ReactiveBrineFluid( string const & name, Group * const parent ):
 }
 
 template< typename PHASE >
-bool ReactiveBrineFluid< PHASE > ::isThermal() const
+bool ReactiveBrineFluid< PHASE >::isThermal() const
 {
-  return ( PHASE::Enthalpy::catalogName() != PVTProps::NoOpPVTFunction::catalogName() );
+  return isThermalType();
 }
-
 
 template< typename PHASE >
 std::unique_ptr< ConstitutiveBase >
@@ -130,79 +127,16 @@ void ReactiveBrineFluid< PHASE > ::postInputInitialization()
   GEOS_THROW_IF_NE_MSG( numFluidPhases(), 1,
                         GEOS_FMT( "{}: invalid number of phases", getFullName() ),
                         InputError );
-  GEOS_THROW_IF_NE_MSG( m_phasePVTParaFiles.size(), 1,
-                        GEOS_FMT( "{}: invalid number of values in attribute '{}'", getFullName() ),
-                        InputError );
+
+  // Validate the brine fluid properties
+  m_brineFluidParameters.postInputInitialization< false, false, false >( this );
 
   createPVTModels();
 }
 
 template< typename PHASE >
-void ReactiveBrineFluid< PHASE > ::createPVTModels()
+void ReactiveBrineFluid< PHASE >::createPVTModels()
 {
-  // TODO: get rid of these external files and move into XML, this is too error prone
-  // For now, to support the legacy input, we read all the input parameters at once in the arrays below, and then we create the models
-  stdVector< string_array > phase1InputParams;
-  phase1InputParams.resize( 3 );
-
-  // 1) Create the viscosity, density, enthalpy models
-  for( string const & filename : m_phasePVTParaFiles )
-  {
-    std::ifstream is( filename );
-    string str;
-    while( std::getline( is, str ) )
-    {
-      string_array const strs = stringutilities::tokenizeBySpaces< stdVector >( str );
-
-      if( !strs.empty() )
-      {
-        GEOS_THROW_IF( strs.size() < 2,
-                       GEOS_FMT( "{}: missing PVT model in line '{}'", getFullName(), str ),
-                       InputError );
-
-        if( strs[0] == "DensityFun" )
-        {
-          if( strs[1] == PHASE::Density::catalogName() )
-          {
-            phase1InputParams[PHASE::InputParamOrder::DENSITY] = strs;
-          }
-        }
-        else if( strs[0] == "ViscosityFun" )
-        {
-          if( strs[1] == PHASE::Viscosity::catalogName() )
-          {
-            phase1InputParams[PHASE::InputParamOrder::VISCOSITY] = strs;
-          }
-        }
-        else if( strs[0] == "EnthalpyFun" )
-        {
-          if( strs[1] == PHASE::Enthalpy::catalogName() )
-          {
-            phase1InputParams[PHASE::InputParamOrder::ENTHALPY] = strs;
-          }
-        }
-        else
-        {
-          GEOS_THROW( GEOS_FMT( "{}: invalid PVT function type '{}'", getFullName(), strs[0] ), InputError );
-        }
-      }
-    }
-    is.close();
-  }
-
-  // at this point, we have read the file and we check the consistency of non-thermal models
-  GEOS_THROW_IF( phase1InputParams[PHASE::InputParamOrder::DENSITY].empty(),
-                 GEOS_FMT( "{}: PVT model {} not found in input files", getFullName(), PHASE::Density::catalogName() ),
-                 InputError );
-  GEOS_THROW_IF( phase1InputParams[PHASE::InputParamOrder::VISCOSITY].empty(),
-                 GEOS_FMT( "{}: PVT model {} not found in input files", getFullName(), PHASE::Viscosity::catalogName() ),
-                 InputError );
-  // we also detect any inconsistency arising in the enthalpy models
-  GEOS_THROW_IF( phase1InputParams[PHASE::InputParamOrder::ENTHALPY].empty() &&
-                 ( PHASE::Enthalpy::catalogName() != PVTProps::NoOpPVTFunction::catalogName() ),
-                 GEOS_FMT( "{}: PVT model {} not found in input files", getFullName(), PHASE::Enthalpy::catalogName() ),
-                 InputError );
-
   bool const isClone = this->isClone();
   TableFunction::OutputOptions const pvtOutputOpts = {
     !isClone && m_writeCSV,// writeCSV
@@ -210,7 +144,10 @@ void ReactiveBrineFluid< PHASE > ::createPVTModels()
   };
 
   // then, we are ready to instantiate the phase models
-  m_phase = std::make_unique< PHASE >( getName() + "_phaseModel1", phase1InputParams, m_componentNames, m_componentMolarWeight,
+  m_phase = std::make_unique< PHASE >( getName() + "_phaseModel1",
+                                       m_brineFluidParameters,
+                                       m_componentNames,
+                                       m_componentMolarWeight,
                                        pvtOutputOpts );
 }
 
@@ -231,9 +168,7 @@ void ReactiveBrineFluid< PHASE >::checkTablesParameters( real64 const pressure,
     m_phase->enthalpy.checkTablesParameters( pressure, temperatureInCelsius );
   } catch( SimulationError const & ex )
   {
-    string const errorMsg = GEOS_FMT( "Table input error (in table from {}).\n",
-                                      stringutilities::join( m_phasePVTParaFiles ) );
-    throw SimulationError( ex, errorMsg );
+    throw ex;
   }
 }
 

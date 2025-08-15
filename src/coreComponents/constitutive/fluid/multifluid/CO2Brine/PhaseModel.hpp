@@ -21,6 +21,7 @@
 #define GEOS_CONSTITUTIVE_FLUID_MULTIFLUID_CO2BRINE_PHASEMODEL_HPP_
 
 #include "functions/TableFunction.hpp"
+#include "constitutive/fluid/multifluid/CO2Brine/functions/BrineFluidParameters.hpp"
 
 namespace geos
 {
@@ -59,22 +60,22 @@ struct PhaseModel
    * @param[in] pvtOutputOpts A structure containing generated table output options
    */
   PhaseModel( string const & phaseModelName,
-              stdVector< string_array > const & inputParams,
+              PVTProps::BrineFluidParameters const & brineFluidParameters,
               string_array const & componentNames,
               array1d< real64 > const & componentMolarWeight,
               TableFunction::OutputOptions const pvtOutputOpts )
     : density( phaseModelName + "_" + Density::catalogName(),
-               inputParams[InputParamOrder::DENSITY],
+               brineFluidParameters,
                componentNames,
                componentMolarWeight,
                pvtOutputOpts ),
     viscosity( phaseModelName + "_" + Viscosity::catalogName(),
-               inputParams[InputParamOrder::VISCOSITY],
+               brineFluidParameters,
                componentNames,
                componentMolarWeight,
                pvtOutputOpts ),
     enthalpy( phaseModelName + "_" + Enthalpy::catalogName(),
-              inputParams[InputParamOrder::ENTHALPY],
+              brineFluidParameters,
               componentNames,
               componentMolarWeight,
               pvtOutputOpts )

@@ -34,7 +34,7 @@ namespace PVTProps
 
 
 WaterDensity::WaterDensity( string const & name,
-                            string_array const & inputParams,
+                            BrineFluidParameters const & brineFluidParameters,
                             string_array const & componentNames,
                             array1d< real64 > const & componentMolarWeight,
                             TableFunction::OutputOptions const pvtOutputOpts ):
@@ -42,7 +42,7 @@ WaterDensity::WaterDensity( string const & name,
                    componentNames,
                    componentMolarWeight )
 {
-  GEOS_UNUSED_VAR( inputParams );
+  GEOS_UNUSED_VAR( brineFluidParameters );
   m_waterDensityTable = PureWaterProperties::makeSaturationDensityTable( m_functionName, FunctionManager::getInstance() );
 
   m_waterDensityTable->outputTableData( pvtOutputOpts );

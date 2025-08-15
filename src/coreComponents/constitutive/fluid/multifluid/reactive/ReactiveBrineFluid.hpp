@@ -57,6 +57,11 @@ public:
 
   static string catalogName();
 
+  static constexpr bool isThermalType()
+  {
+    return !( std::is_same_v< typename PHASE::Enthalpy, PVTProps::NoOpPVTFunction > );
+  }
+
   virtual string getCatalogName() const override { return catalogName(); }
 
   virtual bool isThermal() const override final;
@@ -151,7 +156,6 @@ private:
 
   struct viewKeyStruct : ReactiveMultiFluid::viewKeyStruct
   {
-    static constexpr char const * phasePVTParaFilesString() { return "phasePVTParaFiles"; }
     static constexpr char const * writeCSVFlagString() { return "writeCSV"; }
   };
 
@@ -166,8 +170,8 @@ private:
    */
   void createPVTModels();
 
-  /// Names of the files defining the viscosity and density models
-  path_array m_phasePVTParaFiles;
+  /// All brine model properties
+  PVTProps::BrineFluidParameters m_brineFluidParameters{};
 
   /// Output csv file containing informations about PVT
   integer m_writeCSV;

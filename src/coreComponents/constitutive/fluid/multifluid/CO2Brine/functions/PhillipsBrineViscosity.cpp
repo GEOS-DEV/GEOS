@@ -34,7 +34,7 @@ namespace PVTProps
 {
 
 PhillipsBrineViscosity::PhillipsBrineViscosity( string const & name,
-                                                string_array const & inputPara,
+                                                BrineFluidParameters const & brineFluidParameters,
                                                 string_array const & componentNames,
                                                 array1d< real64 > const & componentMolarWeight,
                                                 TableFunction::OutputOptions const pvtOutputOpts ):
@@ -43,27 +43,13 @@ PhillipsBrineViscosity::PhillipsBrineViscosity( string const & name,
                    componentMolarWeight )
 {
   m_waterViscosityTable = PureWaterProperties::makeSaturationViscosityTable( m_functionName, FunctionManager::getInstance() );
-  makeCoefficients( inputPara );
+  makeCoefficients( brineFluidParameters.m_salinity );
 
   m_waterViscosityTable->outputTableData( pvtOutputOpts );
 }
 
-void PhillipsBrineViscosity::makeCoefficients( string_array const & inputPara )
+void PhillipsBrineViscosity::makeCoefficients( real64 const salinity )
 {
-  GEOS_THROW_IF_LT_MSG( inputPara.size(), 3,
-                        GEOS_FMT( "{}: insufficient number of model parameters", m_functionName ),
-                        InputError );
-
-  real64 m;
-  try
-  {
-    m = stod( inputPara[2] );
-  }
-  catch( std::invalid_argument const & e )
-  {
-    GEOS_THROW( GEOS_FMT( "{}: invalid model parameter value '{}'", m_functionName, e.what() ), InputError );
-  }
-
   // these coefficients come from Phillips et al. (1981), equation (1), pages 5-6
   constexpr real64 a = 0.0816;
   constexpr real64 b = 0.0122;
@@ -73,6 +59,7 @@ void PhillipsBrineViscosity::makeCoefficients( string_array const & inputPara )
 
   // precompute the model coefficients
   // (excluding water viscosity, which will multiply them in the compute function)
+  real64 const & m = salinity;
   m_coef0 = (1.0 + a * m + b * m * m + c * m * m * m);
   m_coef1 =  d * (1.0 - exp( k * m ));
 }
