@@ -61,7 +61,7 @@ public:
 
       // Use proper public initialization instead of protected postInputInitialization
       fluid.initialize( 1, 1 );
-      fluid.initializeState();
+      fluid.saveConvergedState();
     } );
   }
 
@@ -185,7 +185,7 @@ public:
       composition[1] = 0.3;
       composition[2] = 0.3;
       CompSlice compositionSlice = composition.toSliceConst();
-      fluid.initializeState();
+      fluid.saveConvergedState();
 
       // Create a test point
       localIndex k = 0;
