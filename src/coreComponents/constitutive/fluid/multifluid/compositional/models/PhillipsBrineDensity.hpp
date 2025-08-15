@@ -171,7 +171,7 @@ void PhillipsBrineDensityUpdate::compute(
   arraySlice1d< real64, USD2 > const & dMassDensity,
   bool useMass ) const
 {
-  GEOS_ERROR_IF( useMass, "useMass no supported in PhillipsBrineDensityUpdate::compute" );
+  GEOS_ERROR_IF( useMass, "useMass not supported in PhillipsBrineDensityUpdate::compute" );
 
   using Deriv = constitutive::multifluid::DerivativeOffset;
 
