@@ -37,6 +37,11 @@ class PTTableCoordinates;
 /// A structure to contain the properties required to create a brine fluid model
 struct BrineFluidParameters
 {
+  // Temperature limits for the correlation used (in C)
+  static real64 constexpr minimumTemperature = 10.0;
+  static real64 constexpr maximumTemperature = 200.0;
+
+  // Solubility models
   enum class SolubilityModel : integer
   {
     DuanSun,
@@ -110,6 +115,7 @@ struct BrineFluidParameters
    * @brief Populate the coordinate table with pressure and temperature
    * @param[in] fluidProperties the user provided properties
    * @param[out] tableCoords the (p,T) coordinates of the table
+   * @note This will output temperatures in C
    */
   static void initializePropertyTable( BrineFluidParameters const & fluidParameters,
                                        PTTableCoordinates & tableCoords );

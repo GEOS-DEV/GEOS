@@ -188,6 +188,23 @@ void BrineFluidParameters::postInputInitialization( MultiFluidBase * fluid )
                            "Values must be strictly increasing.", fullName, viewKeyStruct::temperatureCoordinatesString() ),
                  InputError );
 
+  real64 const minTemp = m_temperatureCoordinates[0];
+  real64 const maxTemp = m_temperatureCoordinates[m_temperatureCoordinates.size()-1];
+  real64 const minTempInK = units::convertCToK( minimumTemperature );
+  real64 const maxTempInK = units::convertCToK( maximumTemperature );
+  GEOS_THROW_IF_LT_MSG( minTemp, minTempInK,
+                        GEOS_FMT( "{}: Minimum temperature must be at least {}K ({} in C). "
+                                  "The lowest value provided in {} is {}K", fullName,
+                                  minTempInK, minimumTemperature,
+                                  viewKeyStruct::temperatureCoordinatesString(), minTemp ),
+                        InputError );
+  GEOS_THROW_IF_GT_MSG( maxTemp, maxTempInK,
+                        GEOS_FMT( "{}: Maximum temperature must be at most {}K ({} in C). "
+                                  "The highest value provided in {} is {}K", fullName,
+                                  maxTempInK, minimumTemperature,
+                                  viewKeyStruct::temperatureCoordinatesString(), maxTemp ),
+                        InputError );
+
   if constexpr ( EZROKHI_DENSITY )
   {
     if( m_ezrokhiDensityCoefficients.empty())
@@ -256,14 +273,14 @@ void BrineFluidParameters::initializePropertyTable( BrineFluidParameters const &
     real64 const endTemperature = fluidParameters.m_temperatureCoordinates[n-1];
     for( real64 temperature = startTemperature; temperature <= endTemperature; temperature += dT )
     {
-      tableCoords.appendPressure( temperature );
+      tableCoords.appendTemperature( units::convertKToC( temperature ) );
     }
   }
   else
   {
     for( real64 const temperature : fluidParameters.m_temperatureCoordinates )
     {
-      tableCoords.appendTemperature( temperature );
+      tableCoords.appendTemperature( units::convertKToC( temperature ) );
     }
   }
 }
