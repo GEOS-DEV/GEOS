@@ -20,8 +20,10 @@
       logLevel="0"
       componentNames="{ co2, water }"
       componentMolarWeight="{ 44e-3, 18e-3 }"
-      phasePVTParaFiles="{ pvtgas_thermal.txt, pvtliquid_thermal.txt }"
-      flashModelParaFile="co2flash_thermal.txt" />
+      pressureCoordinates="{1e5, 5.e7}"
+      pressureInterval="1e6"
+      temperatureCoordinates="{283.15, 353.5}"
+      temperatureInterval="2.5" />
   </Constitutive>
 
   <Functions>
