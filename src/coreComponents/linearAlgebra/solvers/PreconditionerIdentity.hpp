@@ -13,10 +13,13 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#ifndef GEOS_LINEARALGEBRA_SOLVERS_PRECONDITIONERIDENTITY_HPP_
-#define GEOS_LINEARALGEBRA_SOLVERS_PRECONDITIONERIDENTITY_HPP_
+/**
+ * @file PreconditionerIdentity.hpp
+ */
 
-#include "linearAlgebra/common/LinearOperator.hpp"
+#ifndef GEOS_LINEARALGEBRA_SOLVERS_PRECONDITIONERNULL_HPP_
+#define GEOS_LINEARALGEBRA_SOLVERS_PRECONDITIONERNULL_HPP_
+
 #include "linearAlgebra/common/PreconditionerBase.hpp"
 
 namespace geos
@@ -40,8 +43,6 @@ public:
   /// Alias for matrix type
   using Matrix = typename Base::Matrix;
 
-  virtual ~PreconditionerIdentity() = default;
-
   /**
    * @brief Apply operator to a vector.
    *
@@ -57,6 +58,6 @@ public:
   }
 };
 
-}
+} // namespace geos
 
 #endif //GEOS_LINEARALGEBRA_SOLVERS_PRECONDITIONERIDENTITY_HPP_
