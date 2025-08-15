@@ -281,19 +281,17 @@ protected:
     {
       localIndex const n0 = e2n( k, 0 );
       LvArray::tensorOps::copy< 3 >( elementCenters[k], X[n0] );
+
       std::set< std::array< real64, 3 > > uniqueNodes;
-      {
-        std::array< real64, 3 > const node = {X( n0, 0 ), X( n0, 1 ), X( n0, 2 )};
-        uniqueNodes.insert( node );
-      }
+      uniqueNodes.insert( {X( n0, 0 ), X( n0, 1 ), X( n0, 2 )} );
+
       localIndex const numNodes = this->numNodesPerElement( k );
       for( localIndex a = 1; a < numNodes; ++a )
       {
         localIndex const nA = e2n( k, a );
-        std::array< real64, 3 > const node = {X[nA][0], X[nA][1], X[nA][2]};
-        if( uniqueNodes.find( node ) == uniqueNodes.end())
+        auto [it, inserted] = uniqueNodes.insert( {X[nA][0], X[nA][1], X[nA][2]} );
+        if( inserted )
         {
-          uniqueNodes.insert( node );
           LvArray::tensorOps::add< 3 >( elementCenters[k], X[nA] );
         }
       }
