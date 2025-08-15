@@ -2513,7 +2513,7 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="targetRegions" type="groupNameRef_array" use="required" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
 		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
-		<!--writeStatistics => When set to 1, output interations information to a csv
+		<!--writeStatistics => When set to 1, output iterations information to a csv
 When set to 2 output convergence information to a csv-->
 		<xsd:attribute name="writeStatistics" type="integer" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
