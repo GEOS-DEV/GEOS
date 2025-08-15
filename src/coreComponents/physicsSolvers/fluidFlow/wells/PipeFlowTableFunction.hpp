@@ -61,6 +61,12 @@ public:
    * @brief Get type of rate array
    * @return name of type
    */
+  const string & getTableName() const { return m_tableName; }
+
+  /**
+   * @brief Get type of rate array
+   * @return name of type
+   */
   const string & getRateType() const { return m_rateType; }
 
   /**
@@ -108,6 +114,9 @@ public:
   /// ViewKey struct for the Perforation class
   viewKeysPipeFlowTableFunction;
 
+
+  void calculateWHP( real64 const & bhp, array1d< real64 > const & phaseRates, real64 & whp, integer & solveStat ) const;
+
 protected:
   virtual void postInputInitialization() override;
   /**
@@ -115,6 +124,9 @@ protected:
    */
   virtual void initializeFunction() override;
 private:
+
+  /// Name of the flow table
+  string m_tableName;
 
   /// Rate
   string m_rateType;

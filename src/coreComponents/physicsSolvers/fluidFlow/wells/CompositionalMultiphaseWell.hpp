@@ -524,7 +524,7 @@ private:
   template< typename ... GROUPTYPES >
   void selectLimitingConstraint( real64 const & time_n, integer const coupledIterationNumber, WellElementSubRegion & subRegion );
 
-  template< typename ... GROUPTYPES >
+  template< typename GROUPTYPE, typename ... GROUPTYPES >
   void solveConstraint( real64 const & time_n,
                         real64 const & stepDt,
                         integer const cycleNumber,

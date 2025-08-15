@@ -227,7 +227,7 @@ void MultivariableNonuniformTableFunction::initializeFunction()
   GEOS_THROW_IF_NE_MSG( globalIndex( numTablePoints ) * m_numOps, m_pointData.size(), catalogName() << " " << getDataContext() <<
                         ": table values array is expected to have length of " + std::to_string( globalIndex( numTablePoints ) * m_numOps ), InputError );
 
-  // lets limit the hypercube storage size with 16 Gb
+  // lets limit the h ypercube storage size with 16 Gb
   real64 hypercubeStorageMemoryLimitGB = 16;
 
   GEOS_THROW_IF_GT_MSG( numTableHypercubes * m_numVerts * m_numOps, hypercubeStorageMemoryLimitGB * 1024 * 1024 * 1024 / 8,

@@ -244,8 +244,6 @@ public:
   virtual bool checkViolation( WellConstraintBase const & currentConstraint, real64 const & currentTime ) const override;
 
 
-  void calculateWHP( real64 const & bhp, array1d< real64 > const & phaseRates );
-
 
 protected:
 

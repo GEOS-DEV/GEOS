@@ -19,6 +19,7 @@
 
 #include "PipeFlowTableFunction.hpp"
 #include "functions/FunctionManager.hpp"
+#include "functions/MultivariableNonuniformTableFunctionKernels.hpp"
 #include "common/DataTypes.hpp"
 #include <algorithm>
 
@@ -32,6 +33,10 @@ PipeFlowTableFunction::PipeFlowTableFunction( const string & name,
   MultivariableNonuniformTableFunction( name, parent ),
   m_tableFunction( nullptr )
 {
+  registerWrapper( viewKeyStruct::rateType(), &m_tableName ).
+    setInputFlag( InputFlags::REQUIRED ).
+    setSizedFromParent( 0 ).
+    setDescription( "Flow table name. Table is associated with a Min/MaxWHPConstraint with the constraints flowTableName field" );
 
   registerWrapper( viewKeyStruct::rateType(), &m_rateType ).
     setInputFlag( InputFlags::REQUIRED ).
@@ -107,7 +112,7 @@ void PipeFlowTableFunction::initializeFunction()
 
   FunctionManager * functionManager = &FunctionManager::getInstance();
   // Create nonuniform version of uniformly spaced table
-  m_tableFunction = &(dynamicCast< MultivariableNonuniformTableFunction & >( *functionManager->createChild( "MultivariableNonuniformTableFunction", "PipeFlowModel" ) ));
+  m_tableFunction = &(dynamicCast< MultivariableNonuniformTableFunction & >( *functionManager->createChild( MultivariableNonuniformTableFunction::catalogName(), getTableName()  ) ));
 
   // find max number if independent vars
   int maxVar = std::max( m_rate.size(), m_whp.size());
@@ -145,6 +150,56 @@ void PipeFlowTableFunction::initializeFunction()
   m_tableFunction->initializeFunction();
 
 }
+
+void PipeFlowTableFunction::calculateWHP( real64 const & bhp, array1d< real64 > const & phaseRates, real64 & whp, integer & solveStat ) const
+{
+
+  MultivariableNonuniformTableFunctionStaticKernel< 4, 1 > kernel( m_tableFunction->getAxisCoordinates(),
+                                                                   m_tableFunction->getAxisPoints(),
+                                                                   m_tableFunction->getAxisSteps(),
+                                                                   m_tableFunction->getAxisStepInvs(),
+                                                                   m_tableFunction->getAxisHypercubeMults(),
+                                                                   m_tableFunction->getHypercubeData()
+                                                                   );
+
+  solveStat = 0;  // Assume success
+  // liq(oil)=0 vap = 1 wat = 2
+  //real64 totalVolumeRate = 0.0;
+  //for( int i = 0; i < phaseRates.size(); ++i )
+  //{
+  //  totalVolumeRate += phaseRates[i];
+//  }
+  std::cout << bhp << " " << phaseRates << " " << whp << std::endl;
+  integer m_sign=-1;
+  real64 wct = 0; // phaseRates[2]/totalVolumeRate*m_sign;
+  real64 gor = phaseRates[1]/phaseRates[0];
+  real64 liq = (phaseRates[0] /* + phaseRates[1]*/)*m_sign;  // liquid rate
+  array1d< real64 > table_coords( 4 );
+  table_coords[0]=liq;  // liquid rate
+  table_coords[1]=whp; // well head pressure
+  table_coords[2]=wct; // water cut
+  table_coords[3]=gor; // gas oil ratio
+  std::cout << "PipeFlowTableFunction::calculateWHP input bhp = " << bhp << " liq = " << liq << " whp " << whp << " wct = " << wct << " gor = " << gor << std::endl;
+
+  array1d< real64 > table_bhp( 1 );
+  array2d< real64 > derivs( 1, 4 );
+  kernel.compute( table_coords, table_bhp, derivs );
+  std::cout << " residual bhp = " <<  table_bhp[0] - bhp << std::endl;
+  integer const maxIters=20;
+  real64 const tol = 1e-6;
+  integer iter = 0;
+  while( iter < maxIters && std::abs( table_bhp[0] - bhp ) > tol )
+  {
+    // update whp
+    table_coords[1] -= ( table_bhp[0] - bhp ) / derivs[0][1];
+    kernel.compute( table_coords, table_bhp, derivs );
+    std::cout << " PipeFlowTableFunction::calculateWHP iter = " << iter << " whp = " << table_coords[1] << " residual = " << table_bhp[0] - bhp << std::endl;
+
+    ++iter;
+  }
+
+}
+
 REGISTER_CATALOG_ENTRY( FunctionBase, PipeFlowTableFunction, string const &, Group * const )
 
 } // end of namespace geos
