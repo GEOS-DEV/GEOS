@@ -59,9 +59,10 @@ public:
      * @param phaseInternalEnergy Output view for phase internal energies and their derivatives
      * @param phaseCompFraction Output view for phase component fractions and their derivatives
      * @param totalDensity    Output view for total fluid density and its derivatives
+     * @return true if the computation was successful, false otherwise
      */
     GEOS_HOST_DEVICE
-    void compute( real64 const pressure,
+    bool compute( real64 const pressure,
                   real64 const temperature,
                   arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & composition,
                   MultiFluidBase::PhaseProp::SliceType const phaseFraction,
@@ -74,7 +75,7 @@ public:
                   MultiFluidBase::FluidProp::SliceType const totalDensity ) const override;
 
     GEOS_HOST_DEVICE
-    void update( localIndex const k,
+    bool update( localIndex const k,
                  localIndex const q,
                  real64 const pressure,
                  real64 const temperature,
@@ -156,7 +157,7 @@ private:
 
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
-void InvariantImmiscibleFluid::KernelWrapper::compute( real64 const pressure,
+bool InvariantImmiscibleFluid::KernelWrapper::compute( real64 const pressure,
                                                        real64 const temperature,
                                                        arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & composition,
                                                        PhaseProp::SliceType const phaseFraction,
@@ -221,26 +222,28 @@ void InvariantImmiscibleFluid::KernelWrapper::compute( real64 const pressure,
   computeTotalDensity( phaseFraction,
                        phaseDensity,
                        totalDensity );
+
+  return true;
 }
 
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
-void InvariantImmiscibleFluid::KernelWrapper::update( localIndex const k,
+bool InvariantImmiscibleFluid::KernelWrapper::update( localIndex const k,
                                                       localIndex const q,
                                                       real64 const pressure,
                                                       real64 const temperature,
                                                       arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & composition ) const
 {
   // Compute with slice views at cell k, quadrature point q
-  compute( pressure, temperature, composition,
-           m_phaseFraction( k, q ),
-           m_phaseDensity( k, q ),
-           m_phaseMassDensity( k, q ),
-           m_phaseViscosity( k, q ),
-           m_phaseEnthalpy( k, q ),
-           m_phaseInternalEnergy( k, q ),
-           m_phaseCompFraction( k, q ),
-           m_totalDensity( k, q ) );
+  return compute( pressure, temperature, composition,
+                  m_phaseFraction( k, q ),
+                  m_phaseDensity( k, q ),
+                  m_phaseMassDensity( k, q ),
+                  m_phaseViscosity( k, q ),
+                  m_phaseEnthalpy( k, q ),
+                  m_phaseInternalEnergy( k, q ),
+                  m_phaseCompFraction( k, q ),
+                  m_totalDensity( k, q ) );
 }
 
 } // namespace constitutive
