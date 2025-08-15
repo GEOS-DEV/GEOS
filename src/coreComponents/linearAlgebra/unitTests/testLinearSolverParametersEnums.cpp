@@ -34,6 +34,7 @@ TEST( LinearSolverParametersEnums, SolverType )
   ASSERT_EQ( "gmres", toString( EnumType::gmres ) );
   ASSERT_EQ( "fgmres", toString( EnumType::fgmres ) );
   ASSERT_EQ( "bicgstab", toString( EnumType::bicgstab ) );
+  ASSERT_EQ( "richardson", toString( EnumType::richardson ) );
   ASSERT_EQ( "preconditioner", toString( EnumType::preconditioner ) );
 }
 
@@ -51,7 +52,7 @@ TEST( LinearSolverParametersEnums, PreconditionerType )
   ASSERT_EQ( "chebyshev", toString( EnumType::chebyshev ) );
   ASSERT_EQ( "iluk", toString( EnumType::iluk ) );
   ASSERT_EQ( "ilut", toString( EnumType::ilut ) );
-  ASSERT_EQ( "icc", toString( EnumType::ic ) ); // Notice the discrepancy here
+  ASSERT_EQ( "ick", toString( EnumType::ick ) ); // Notice the discrepancy here
   ASSERT_EQ( "ict", toString( EnumType::ict ) );
   ASSERT_EQ( "amg", toString( EnumType::amg ) );
   ASSERT_EQ( "mgr", toString( EnumType::mgr ) );
@@ -135,9 +136,9 @@ TEST( LinearSolverParametersEnums, AMGSmootherType )
   ASSERT_EQ( "sgs", toString( EnumType::sgs ) );
   ASSERT_EQ( "l1sgs", toString( EnumType::l1sgs ) );
   ASSERT_EQ( "chebyshev", toString( EnumType::chebyshev ) );
-  ASSERT_EQ( "ilu0", toString( EnumType::ilu0 ) );
+  ASSERT_EQ( "iluk", toString( EnumType::iluk ) );
   ASSERT_EQ( "ilut", toString( EnumType::ilut ) );
-  ASSERT_EQ( "ic0", toString( EnumType::ic0 ) );
+  ASSERT_EQ( "ick", toString( EnumType::ick ) );
   ASSERT_EQ( "ict", toString( EnumType::ict ) );
 }
 
