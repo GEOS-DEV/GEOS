@@ -291,7 +291,9 @@ protected:
         std::array< real64, 3 > const node = {X[e2n( k, a )][0], X[e2n( k, a )][1], X[e2n( k, a )][2]};
         if( uniqueNodes.find( node ) == uniqueNodes.end())
         {
-          uniqueNodes.insert( node );
+        auto [it, inserted] = uniqueNodes.insert( node );
+        if( inserted )
+        {
         localIndex nodeIndex = e2n( k, a );
         std::array< real64, 3 > const node = {X[nodeIndex][0], X[nodeIndex][1], X[nodeIndex][2]};
         if( uniqueNodes.find( node ) == uniqueNodes.end())
