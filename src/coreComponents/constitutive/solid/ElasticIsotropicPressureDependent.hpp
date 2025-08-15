@@ -355,7 +355,6 @@ void ElasticIsotropicPressureDependentUpdates::smallStrainUpdate( localIndex con
   for( localIndex i=0; i<6; ++i )
   {
     strainElasticTotal[i] = oldStrainElastic[i] + strainIncrement[i];
-    std::cout << "strainElasticTotal[" << i << "] = " << strainElasticTotal[i] << " oldStrainElastic[i] = "
   }
   // two-invariant decomposition of trial elastic strain
 
@@ -366,7 +365,6 @@ void ElasticIsotropicPressureDependentUpdates::smallStrainUpdate( localIndex con
 
   // Calculate trial mean and deviatoric stress
 
-  std::cout << "Cr = " << Cr << ", eps_v_elastic = " << eps_v_elastic << " eps_v0 = " << eps_v0 << std::endl;
   P = p0 * std::exp( -1./Cr* (eps_v_elastic-eps_v0));
   Q = 3. * mu * eps_s_elastic;
   P = p0 * std::exp( -1./Cr* (eps_v_elastic-eps_v0));
@@ -456,7 +454,6 @@ void ElasticIsotropicPressureDependentUpdates::smallStrainUpdate( localIndex con
 
   // Calculate mean and deviatoric stress
 
-  std::cout << "Cr = " << Cr << ", eps_v_elastic = " << eps_v_elastic << " eps_v0 = " << eps_v0 << std::endl;
   P = p0 * std::exp( -1./Cr* (eps_v_elastic-eps_v0));
   Q = 3. * mu * eps_s_elastic;
   P = p0 * std::exp( -1./Cr* (eps_v_elastic-eps_v0));
