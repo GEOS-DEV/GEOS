@@ -20,7 +20,6 @@
   
   <SolidMechanicsLagrangianFEM
     name="solidMechSolver"
-    timeIntegrationOption="QuasiStatic"
     logLevel="1"
     discretization="FE1"
     targetRegions="{ Domain }"/>

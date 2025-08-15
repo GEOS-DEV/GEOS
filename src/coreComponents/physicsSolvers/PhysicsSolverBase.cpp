@@ -42,19 +42,12 @@ PhysicsSolverBase::PhysicsSolverBase( string const & name,
   m_cflFactor(),
   m_nextDt( 1e99 ),
   m_dofManager( name ),
-  m_usePhysicsScaling(),
+  m_usePhysicsScaling( 1 ),
   m_linearSolverParameters( groupKeyStruct::linearSolverParametersString(), this ),
   m_nonlinearSolverParameters( groupKeyStruct::nonlinearSolverParametersString(), this ),
   m_solverStatistics( groupKeyStruct::solverStatisticsString(), this ),
   m_systemSetupTimestamp( 0 )
 {
-  // Physics-scaling is enabled by default only with hypre builds
-#ifdef GEOS_USE_HYPRE
-  integer usePhysicsScaling = 1;
-#else
-  integer usePhysicsScaling = 0;
-#endif
-
   setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
 
   // This sets a flag to indicate that this object is going to select the time step size
@@ -101,7 +94,7 @@ PhysicsSolverBase::PhysicsSolverBase( string const & name,
     setDescription( "Cut time step if linear solution fail without going until max nonlinear iterations." );
 
   registerWrapper( viewKeyStruct::usePhysicsScalingString(), &m_usePhysicsScaling ).
-    setApplyDefaultValue( usePhysicsScaling ).
+    setApplyDefaultValue( 1 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Enable physics-based scaling of the linear system. Default: true." );
 
@@ -502,7 +495,7 @@ real64 PhysicsSolverBase::setNextDtBasedOnIterNumber( real64 const & currentDt )
 
 real64 PhysicsSolverBase::linearImplicitStep( real64 const & time_n,
                                               real64 const & dt,
-                                              integer const GEOS_UNUSED_PARAM( cycleNumber ),
+                                              integer const cycleNumber,
                                               DomainPartition & domain )
 {
   // call setup for physics solver. Pre step allocations etc.
@@ -548,12 +541,6 @@ real64 PhysicsSolverBase::linearImplicitStep( real64 const & time_n,
   {
     Timer timer( m_timers["linear solver total"] );
 
-    // TODO: Trilinos currently requires this, re-evaluate after moving to Tpetra-based solvers
-    if( m_precond )
-    {
-      m_precond->clear();
-    }
-
     {
       Timer timer_create( m_timers["linear solver create"] );
 
@@ -562,7 +549,7 @@ real64 PhysicsSolverBase::linearImplicitStep( real64 const & time_n,
     }
 
     // Output the linear system matrix/rhs for debugging purposes
-    debugOutputSystem( 0.0, 0, 0, m_matrix, m_rhs );
+    debugOutputSystem( time_n, cycleNumber, 0, m_matrix, m_rhs );
 
     // Solve the linear system
     solveLinearSystem( m_dofManager, m_matrix, m_rhs, m_solution );
@@ -944,7 +931,8 @@ bool PhysicsSolverBase::solveNonlinearSystem( real64 const & time_n,
   {
 
     GEOS_LOG_LEVEL_RANK_0( logInfo::NonlinearSolver,
-                           GEOS_FMT( "    Attempt: {:2}, ConfigurationIter: {:2}, NewtonIter: {:2}", dtAttempt, configurationLoopIter, newtonIter ));
+                           GEOS_FMT( "  Attempt: {:2}, ConfigurationIter: {:2}, NewtonIter: {:2}",
+                                     dtAttempt, configurationLoopIter, newtonIter ));
 
     {
       Timer timer( m_timers["assemble"] );
@@ -1080,12 +1068,6 @@ bool PhysicsSolverBase::solveNonlinearSystem( real64 const & time_n,
         krylovParams.relTolerance = newtonIter > 0 ? eisenstatWalker( residualNorm, lastResidual, krylovParams ) : krylovParams.weakestTol;
       }
 
-      // TODO: Trilinos currently requires this, re-evaluate after moving to Tpetra-based solvers
-      if( m_precond )
-      {
-        m_precond->clear();
-      }
-
       {
         Timer timer_setup( m_timers["linear solver create"] );
 
@@ -1108,7 +1090,9 @@ bool PhysicsSolverBase::solveNonlinearSystem( real64 const & time_n,
 
       // Do not allow non converged linear solver - cut time step
       if( !m_allowNonConvergedLinearSolverSolution && m_linearSolverResult.status == LinearSolverResult::Status::NotConverged )
+      {
         return false;
+      }
     }
 
     {
@@ -1201,7 +1185,17 @@ void PhysicsSolverBase::setSystemSetupTimestamp( Timestamp timestamp )
 
   std::ostringstream oss;
   m_dofManager.printFieldInfo( oss );
-  GEOS_LOG_LEVEL( logInfo::Fields, oss.str())
+  GEOS_LOG_LEVEL( logInfo::Fields, oss.str());
+}
+
+std::unique_ptr< PreconditionerBase< LAInterface > >
+PhysicsSolverBase::createPreconditioner( DomainPartition & GEOS_UNUSED_PARAM( domain ) ) const
+{
+  // By default, do not create a preconditioner, one will be created internally inside LA backend
+  return {};
+
+  // TODO: refactor interfaces to always create preconditioner externally and pass to backends
+  // return LAInterface::createPreconditioner( m_linearSolverParameters.get() );
 }
 
 void PhysicsSolverBase::assembleSystem( real64 const GEOS_UNUSED_PARAM( time ),
@@ -1250,16 +1244,15 @@ void debugOutputLAObject( T const & obj,
 {
   if( toScreen )
   {
-    string const frame( screenName.size() + 1, '=' );
-    GEOS_LOG_RANK_0( frame << "\n" << screenName << ":\n" << frame );
+    GEOS_LOG_RANK_0( GEOS_FMT( "{2:=>{1}}\n{0}:\n{2:=>{1}}", screenName, screenName.size() + 1, "" ) );
     GEOS_LOG( obj );
   }
 
   if( toFile )
   {
     string const filename = GEOS_FMT( "{}_{:06}_{:02}.mtx", filePrefix.c_str(), cycleNumber, nonlinearIteration );
-    obj.write( filename, LAIOutputFormat::NATIVE_ASCII );
-    GEOS_LOG_RANK_0( screenName << " written to " << filename );
+    obj.write( filename, LAIOutputFormat::MATRIX_MARKET );
+    GEOS_LOG_RANK_0( GEOS_FMT( "{} written to {}", screenName, filename ) );
   }
 }
 
@@ -1376,7 +1369,7 @@ void PhysicsSolverBase::solveLinearSystem( DofManager const & dofManager,
   }
 
   GEOS_LOG_LEVEL_RANK_0( logInfo::LinearSolver,
-                         GEOS_FMT( "        Last LinSolve(iter,res) = ( {:3}, {:4.2e} )",
+                         GEOS_FMT( "        Linear solve: ( iter, res ) = ( {:3}, {:4.2e} )",
                                    m_linearSolverResult.numIterations,
                                    m_linearSolverResult.residualReduction ));
 
