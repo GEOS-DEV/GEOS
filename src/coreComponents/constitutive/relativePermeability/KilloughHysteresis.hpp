@@ -150,7 +150,23 @@ public:
                                m_extremumValue ),
                      InputError );
 
-      isWetting = m_criticalDrainagePhaseVolFraction > m_extremumPhaseVolFraction;
+      GEOS_THROW_IF(  (m_criticalImbibitionPhaseVolFraction - m_criticalDrainagePhaseVolFraction) > 0,
+                      GEOS_FMT( "{}: For wetting-phase hysteresis, the imbibition end-point saturation Smxi( {} ) must be smaller "
+                                "than the drainage saturation end-point Smxd( {} ).\n Crossing relative permeability curves.\n",
+                                catalogName(),
+                                m_criticalImbibitionPhaseVolFraction,
+                                m_criticalDrainagePhaseVolFraction ),
+                      InputError );
+
+      GEOS_THROW_IF( (m_criticalDrainagePhaseVolFraction - m_criticalImbibitionPhaseVolFraction) > 0,
+                     GEOS_FMT( "{}: For non-wetting phase hysteresis, the drainage trapped saturation Scrd ( ={} ) must be smaller than the imbibition saturation Scri ( ={} ).\n"
+                               "Crossing relative permeability curves.\n",
+                               catalogName(),
+                               m_criticalDrainagePhaseVolFraction,
+                               m_criticalImbibitionPhaseVolFraction ),
+                     InputError );
+
+      m_isWetting = m_criticalDrainagePhaseVolFraction > m_extremumPhaseVolFraction;
     }
 
     /**
@@ -232,13 +248,6 @@ KilloughHysteresis::computeLandCoefficient( KilloughHysteresis::HysteresisCurve 
     real64 const Smxi = hystereticCurve.m_criticalImbibitionPhaseVolFraction;
     real64 const Swc = Scrd;
 
-    GEOS_ERROR_IF(  (Smxi - Smxd) > 0,
-                    GEOS_FMT( "{}: For wetting-phase hysteresis, the imbibition end-point saturation Smxi( {} ) must be smaller "
-                              "than the drainage saturation end-point Smxd( {} ).\n Crossing relative permeability curves.\n",
-                              catalogName(),
-                              Smxi,
-                              Smxd ));
-
     landCoefficient = ( Smxd - Swc ) / LvArray::math::max( KilloughHysteresis::minScriMinusScrd, ( Smxd - Smxi ) ) - 1.0;
   }
   else
@@ -247,13 +256,6 @@ KilloughHysteresis::computeLandCoefficient( KilloughHysteresis::HysteresisCurve 
     real64 const Smx =  hystereticCurve.m_extremumPhaseVolFraction;
     real64 const Scrd = hystereticCurve.m_criticalDrainagePhaseVolFraction;
     real64 const Scri = hystereticCurve.m_criticalImbibitionPhaseVolFraction;
-
-    GEOS_ERROR_IF( (Scrd - Scri) > 0,
-                   GEOS_FMT( "{}: For non-wetting phase hysteresis, the drainage trapped saturation Scrd ( ={} ) must be smaller than the imbibition saturation Scri ( ={} ).\n"
-                             "Crossing relative permeability curves.\n",
-                             catalogName(),
-                             Scrd,
-                             Scri ));
 
     landCoefficient = ( Smx - Scrd ) / LvArray::math::max( KilloughHysteresis::minScriMinusScrd, ( Scri - Scrd ) ) - 1.0;
   }
