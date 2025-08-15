@@ -292,7 +292,12 @@ protected:
         if( uniqueNodes.find( node ) == uniqueNodes.end())
         {
           uniqueNodes.insert( node );
-          LvArray::tensorOps::add< 3 >( elementCenters[k], X[e2n( k, a )] );
+        localIndex nodeIndex = e2n( k, a );
+        std::array< real64, 3 > const node = {X[nodeIndex][0], X[nodeIndex][1], X[nodeIndex][2]};
+        if( uniqueNodes.find( node ) == uniqueNodes.end())
+        {
+          uniqueNodes.insert( node );
+          LvArray::tensorOps::add< 3 >( elementCenters[k], X[nodeIndex] );
         }
       }
 
