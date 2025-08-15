@@ -1237,7 +1237,7 @@ void CompositionalMultiphaseWell::assembleAccumulationTerms( real64 const & time
               real64 const unity = 1.0;
               for( integer i=0; i < m_numDofPerWellElement; i++ )
               {
-                globalIndex const rindex =  localRow+i;
+                globalIndex const rindex = localRow+i;
                 globalIndex const cindex =dofIndex + i;
                 localMatrix.template addToRow< serialAtomic >( rindex,
                                                                &cindex,
