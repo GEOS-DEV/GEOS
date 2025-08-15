@@ -45,7 +45,13 @@ void KilloughHysteresis::postProcessInput( real64 const & jerauldParam_a,
                  InputError );
 
   GEOS_THROW_IF( killoughCurvatureParamRelPerm < 0,
-                 GEOS_FMT( "{}: the paramater {} must be postitive",
+                 GEOS_FMT( "{}: the parameter {} must be positive",
+                           catalogName(),
+                           viewKeyStruct::jerauldParameterBString() ),
+                 InputError );
+
+  GEOS_THROW_IF( killoughCurvatureParamRelPerm < 0,
+                 GEOS_FMT( "{}: the parameter {} must be positive",
                            catalogName(),
                            viewKeyStruct::killoughCurvatureParameterString() ),
                  InputError );
