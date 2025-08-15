@@ -109,7 +109,7 @@ geos::HypreInterface::createPreconditioner( LinearSolverParameters params )
 
 std::unique_ptr< PreconditionerBase< HypreInterface > >
 geos::HypreInterface::createPreconditioner( LinearSolverParameters params,
-                                            array1d< HypreVector > const & nearNullKernel )
+                                            arrayView1d< HypreVector const > nearNullKernel )
 {
   return std::make_unique< HyprePreconditioner >( std::move( params ), nearNullKernel );
 }
