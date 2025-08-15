@@ -128,6 +128,8 @@ protected:
 
   virtual void postInputInitialization() override;
 
+  virtual void resizeFields( localIndex const size, localIndex const numPts ) override;
+
   /**
    * @brief Validate the values provided in the aperture table
    * @param[in] apertureTable the effective aperture vs aperture table
