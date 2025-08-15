@@ -518,7 +518,7 @@ bool isPointInPolygon3d( POLYGON_TYPE const & polygon, integer const n, POINT_TY
   {
     projectedPolygon[i][0] = polygon[i][1];
     projectedPolygon[i][1] = polygon[i][2];
-  }
+  // Projection logic is now only inside the conditional blocks below
   if( dominantIndex == 0 )  // X is dominant, project onto YZ plane
   {
     for( int i = 0; i < n; i++ )
