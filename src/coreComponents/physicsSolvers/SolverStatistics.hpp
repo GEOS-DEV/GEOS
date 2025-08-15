@@ -311,7 +311,7 @@ public:
    * @brief Constructor for SolverStatistics Objects.
    * @param[in] name the name of this instantiation of SolverStatistics in the repository
    * @param[in] parent the parent group of this instantiation of SolverStatistics
-   * @noteCurrently we register only the iteration statistics as the convergence value will be lost during the solving
+   * @note Currently we register only the iteration statistics as the convergence value will be lost during the solving
    */
   SolverStatistics( string const & name,
                     dataRepository::Group * const parent );
