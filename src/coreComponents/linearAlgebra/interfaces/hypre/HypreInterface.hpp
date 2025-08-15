@@ -70,7 +70,7 @@ struct HypreInterface
    */
   static std::unique_ptr< PreconditionerBase< HypreInterface > >
   createPreconditioner( LinearSolverParameters params,
-                        array1d< HypreVector > const & nearNullKernel );
+                        arrayView1d< HypreVector const > nearNullKernel );
 
   /// Alias for HypreMatrix
   using ParallelMatrix = HypreMatrix;
