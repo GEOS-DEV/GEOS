@@ -23,7 +23,6 @@
 #include "constitutive/permeability/PermeabilityFields.hpp"
 #include "constitutive/ConstitutivePassThru.hpp"
 #include "discretizationMethods/NumericalMethodsManager.hpp"
-#include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "finiteVolume/BoundaryStencil.hpp"
 #include "finiteVolume/FiniteVolumeManager.hpp"
 #include "finiteVolume/FluxApproximationBase.hpp"
@@ -110,6 +109,25 @@ void SinglePhaseFVM< BASE >::setupSystem( DomainPartition & domain,
                      solution,
                      setSparsity );
 
+  if( !m_precond && m_linearSolverParameters.get().solverType != LinearSolverParameters::SolverType::direct )
+  {
+    m_precond = createPreconditioner( domain );
+  }
+}
+
+template< typename BASE >
+std::unique_ptr< PreconditionerBase< LAInterface > >
+SinglePhaseFVM< BASE >::createPreconditioner( DomainPartition & domain ) const
+{
+  LinearSolverParameters const & linParams = m_linearSolverParameters.get();
+  GEOS_UNUSED_VAR( domain );
+  switch( linParams.preconditionerType )
+  {
+    default:
+    {
+      return PhysicsSolverBase::createPreconditioner( domain );
+    }
+  }
 }
 
 template< typename BASE >
