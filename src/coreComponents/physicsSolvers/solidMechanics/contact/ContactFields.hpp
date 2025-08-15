@@ -194,7 +194,7 @@ DECLARE_FIELD( targetIncrementalJump,
                WRITE_AND_READ,
                "It's the target incremental jump in a timestep (e.g., slip coming from RS)." );
 
-/// Configuration loop acceeleration
+/// Configuration loop acceleration
 
 DECLARE_FIELD( yield0,
                "yield0",
