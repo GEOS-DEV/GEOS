@@ -351,7 +351,6 @@ protected:
   char const * plugTopDown  =
     R"(
     <InternalWell name="well_producer1"
-    name="well_producer1"
     wellRegionName="wellRegion1"
     wellControlsName="wellControls1"
   logLevel="1"
