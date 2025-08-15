@@ -62,9 +62,10 @@ void DiffusionBase::postInputInitialization()
                            getFullName(), viewKeyStruct::phaseNamesString(), viewKeyStruct::defaultPhaseDiffusivityMultiplierString() ),
                  InputError );
 
-  //m_diffusivity.resize( 0, 0, 3 );
-  //m_dDiffusivity_dTemperature.resize( 0, 0, 3 );
-  //m_phaseDiffusivityMultiplier.resize( 0, 0, 3 );
+  // TODO figure out why this is really needed
+  m_diffusivity.resize( 0, 0, 3 );
+  m_dDiffusivity_dTemperature.resize( 0, 0, 3 );
+  m_phaseDiffusivityMultiplier.resize( 0, 0, 3 );
 }
 
 void DiffusionBase::resizeFields( localIndex const size, localIndex const GEOS_UNUSED_PARAM( numPts ) )

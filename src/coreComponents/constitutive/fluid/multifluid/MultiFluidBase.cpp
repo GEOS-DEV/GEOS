@@ -201,16 +201,10 @@ void MultiFluidBase::postInputInitialization()
   }
 
   // call to correctly set member array tertiary sizes on the 'main' material object
-  //resizeFields( 0, 0 );
+  resizeFields( 0, 0 );  // TODO figure out why this is really needed
 
   // set labels on array wrappers for plottable fields
   setLabels();
-}
-
-void MultiFluidBase::initializeState() const
-{
-  // initialize the "old" variables
-  saveConvergedState();
 }
 
 void MultiFluidBase::saveConvergedState() const

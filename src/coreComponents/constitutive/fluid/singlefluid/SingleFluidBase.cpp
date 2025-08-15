@@ -52,14 +52,9 @@ void SingleFluidBase::postInputInitialization()
 {
   ConstitutiveBase::postInputInitialization();
 
-  // for fracture elements, set the default value
+  // for fracture elements, set the default value - TODO check why this is needed
   getField< fields::singlefluid::density_n >().
     setDefaultValue( defaultDensity() );
-}
-
-void SingleFluidBase::initializeState() const
-{
-  saveConvergedState();
 }
 
 void SingleFluidBase::saveConvergedState() const

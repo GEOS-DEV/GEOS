@@ -63,10 +63,13 @@ void HydraulicApertureTable::postInputInitialization()
 }
 
 void HydraulicApertureTable::resizeFields( localIndex const GEOS_UNUSED_PARAM( size ), localIndex const GEOS_UNUSED_PARAM( numPts ) )
-{                 
+{
+
+  // TODO this should not be here
+
   FunctionManager & functionManager = FunctionManager::getInstance();
   TableFunction & apertureTable = functionManager.getGroup< TableFunction >( m_apertureTableName );
-  
+
   validateApertureTable( apertureTable );
 
   ArrayOfArraysView< real64 > coords = apertureTable.getCoordinates();

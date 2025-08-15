@@ -118,8 +118,6 @@ public:
 
 protected:
 
-  virtual void postInputInitialization() override;
-
   /**
    * @brief Function called internally to resize member arrays
    * @param size primary dimension (e.g. number of cells)

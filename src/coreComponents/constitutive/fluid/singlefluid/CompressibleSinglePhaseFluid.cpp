@@ -83,13 +83,8 @@ void CompressibleSinglePhaseFluid::resizeFields( localIndex const size, localInd
 {
   SingleFluidBase::resizeFields( size, numPts );
 
-  // TODO : reconsider the necessity of this
-
-  getField< fields::singlefluid::density >().setApplyDefaultValue( m_defaultDensity );
-  getField< fields::singlefluid::viscosity >().setApplyDefaultValue( m_defaultViscosity );
-
-  m_density.value.setValues< serialPolicy >( m_referenceDensity );
-  m_viscosity.value.setValues< serialPolicy >( m_referenceViscosity );
+  getField< fields::singlefluid::density >().setApplyDefaultValue( m_referenceDensity );
+  getField< fields::singlefluid::viscosity >().setApplyDefaultValue( m_referenceViscosity );
 }
 
 void CompressibleSinglePhaseFluid::postInputInitialization()

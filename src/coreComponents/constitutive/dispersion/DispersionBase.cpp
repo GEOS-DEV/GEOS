@@ -34,13 +34,6 @@ DispersionBase::DispersionBase( string const & name, Group * const parent )
   registerField( fields::dispersion::dispersivity{}, &m_dispersivity );
 }
 
-void DispersionBase::postInputInitialization()
-{
-  ConstitutiveBase::postInputInitialization();
-
-  //m_dispersivity.resize( 0, 0, 3 );
-}
-
 void DispersionBase::resizeFields( localIndex const size, localIndex const GEOS_UNUSED_PARAM( numPts ) )
 {
   // NOTE: enforcing 1 quadrature point

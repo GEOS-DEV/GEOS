@@ -66,9 +66,6 @@ void ThermalCompressibleSinglePhaseFluid::resizeFields( localIndex const size, l
 {
   CompressibleSinglePhaseFluid::resizeFields( size, numPts );
 
-  m_internalEnergy.value.resize( size, numPts );
-  m_internalEnergy.derivs.resize( size, numPts, m_numDOF );
-
   m_internalEnergy.value.setValues< serialPolicy >( m_referenceInternalEnergy );
 }
 

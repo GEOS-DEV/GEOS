@@ -224,11 +224,6 @@ public:
    */
   SingleFluidBase( string const & name, Group * const parent );
 
-  /**
-   * @brief Initialize the model
-   */
-  void initializeState() const;
-
   virtual void saveConvergedState() const override;
 
   // *** SingleFluid-specific interface

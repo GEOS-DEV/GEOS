@@ -189,12 +189,6 @@ public:
   { return m_phaseInternalEnergy.derivs; }
 
   /**
-   * @brief Initialize the model
-   * @param[in] phaseVolFraction an array containing the initial phase volume fractions
-   */
-  virtual void initializeState() const;
-
-  /**
    * @brief Save the phase densities, component fractions, enthalpies and internal energies (for accumulation)
    */
   virtual void saveConvergedState() const override;
