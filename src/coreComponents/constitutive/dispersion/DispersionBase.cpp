@@ -38,13 +38,13 @@ void DispersionBase::postInputInitialization()
 {
   ConstitutiveBase::postInputInitialization();
 
-  m_dispersivity.resize( 0, 0, 3 );
+  //m_dispersivity.resize( 0, 0, 3 );
 }
 
-void DispersionBase::resizeFields( localIndex const GEOS_UNUSED_PARAM( size ), localIndex const GEOS_UNUSED_PARAM( numPts ) )
+void DispersionBase::resizeFields( localIndex const size, localIndex const GEOS_UNUSED_PARAM( numPts ) )
 {
   // NOTE: enforcing 1 quadrature point
-  m_dispersivity.resize( 0, 1, 3 );
+  m_dispersivity.resize( size, 1, 3 );
 }
 
 } // namespace constitutive

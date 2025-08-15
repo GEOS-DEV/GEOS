@@ -48,6 +48,8 @@ void ConstantPermeability::resizeFields( localIndex const size, localIndex const
 {
   PermeabilityBase::resizeFields( size, numPts );
 
+  // TODO move into initializeState?
+
   integer const numQuad = 1; // NOTE: enforcing 1 quadrature point
 
   for( localIndex ei = 0; ei < size; ++ei )

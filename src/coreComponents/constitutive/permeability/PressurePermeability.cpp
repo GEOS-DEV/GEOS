@@ -73,7 +73,7 @@ void PressurePermeability::resizeFields( localIndex const size, localIndex const
 {
   PermeabilityBase::resizeFields( size, numPts );
 
-  m_referencePermeability.resize( 0, 1, 3 );
+  m_referencePermeability.resize( 0, 1, 3 ); // 0 to resize and assign default value later
 }
 
 void PressurePermeability::initializeState() const

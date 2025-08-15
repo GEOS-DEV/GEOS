@@ -40,9 +40,7 @@ void MultiPhaseConstantThermalConductivity::resizeFields( localIndex const size,
 {
   MultiPhaseThermalConductivityBase::resizeFields( size, numPts );
 
-  // NOTE: enforcing 1 quadrature point
-  m_effectiveConductivity.resize( size, 1, 3 );
-
+  // TODO move into initializeState?
   for( localIndex ei = 0; ei < size; ++ei )
   {
     for( localIndex q = 0; q < 1; ++q )

@@ -40,7 +40,7 @@ void ConstantDiffusion::resizeFields( localIndex const size, localIndex const nu
 {
   DiffusionBase::resizeFields( size, numPts );
 
-  for( localIndex ei = 0; ei < size; ++ei )
+  for( localIndex ei = 0; ei < size; ++ei ) // TODO move into initializeState?
   {
     // NOTE: enforcing 1 quadrature point
     for( localIndex q = 0; q < 1; ++q )

@@ -181,17 +181,18 @@ void Damage< BASE >::resizeFields( localIndex const size,
 {
   BASE::resizeFields( size, numPts );
 
-  m_newDamage.resize( size, numPts );
-  m_oldDamage.resize( size, numPts );
-  m_damageGrad.resize( size, numPts, 3 );
-  m_strainEnergyDensity.resize( size, numPts );
-  m_volStrain.resize( size, numPts );
-  m_extDrivingForce.resize( size, numPts );
-  m_biotCoefficient.resize( size );
-  m_criticalFractureEnergy.resize( size );
-  m_tensileStrength.resize( size );
-  m_compressStrength.resize( size );
-  m_deltaCoefficient.resize( size );
+  // 0 to resize and assign default value later
+  m_newDamage.resize( 0, numPts );
+  m_oldDamage.resize( 0, numPts );
+  m_damageGrad.resize( 0, numPts, 3 );
+  m_strainEnergyDensity.resize( 0, numPts );
+  m_volStrain.resize( 0, numPts );
+  m_extDrivingForce.resize( 0, numPts );
+  m_biotCoefficient.resize( 0 );
+  m_criticalFractureEnergy.resize( 0 );
+  m_tensileStrength.resize( 0 );
+  m_compressStrength.resize( 0 );
+  m_deltaCoefficient.resize( 0 );
 }
 
 template< typename BASE >

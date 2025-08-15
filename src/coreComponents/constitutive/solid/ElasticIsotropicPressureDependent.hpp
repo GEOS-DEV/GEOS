@@ -355,6 +355,8 @@ void ElasticIsotropicPressureDependentUpdates::smallStrainUpdate( localIndex con
   for( localIndex i=0; i<6; ++i )
   {
     strainElasticTotal[i] = oldStrainElastic[i] + strainIncrement[i];
+    std::cout << "strainElasticTotal[" << i << "] = " << strainElasticTotal[i] << " oldStrainElastic[i] = "
+              << oldStrainElastic[i] << " strainIncrement[i] = " << strainIncrement[i] << std::endl;
   }
   // two-invariant decomposition of trial elastic strain
 

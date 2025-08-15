@@ -74,8 +74,9 @@ void CeramicDamage::resizeFields( localIndex const size, localIndex const numPts
 {
   ElasticIsotropic::resizeFields( size, numPts );
 
-  m_damage.resize( size, numPts );
-  m_jacobian.resize( size, numPts );
+  // 0 to resize and assign default value later
+  m_damage.resize( 0, numPts );
+  m_jacobian.resize( 0, numPts );
 }
 
 

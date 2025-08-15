@@ -93,8 +93,9 @@ void PoroElastic< BASE >::resizeFields( localIndex const size, localIndex const 
 {
   BASE::resizeFields( size, numPts );
 
-  m_poreVolumeMultiplier.resize( size, numPts );
-  m_dPVMult_dPressure.resize( size, numPts );
+  // 0 to resize and assign default value later
+  m_poreVolumeMultiplier.resize( 0, numPts );
+  m_dPVMult_dPressure.resize( 0, numPts );
 }
 
 template< typename BASE >

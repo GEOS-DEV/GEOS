@@ -39,8 +39,8 @@ void SinglePhaseThermalConductivityBase::postInputInitialization()
 {
   ConstitutiveBase::postInputInitialization();
 
-  m_effectiveConductivity.resize( 0, 0, 3 );
-  m_dEffectiveConductivity_dT.resize( 0, 0, 3 );
+  //m_effectiveConductivity.resize( 0, 0, 3 );
+  //m_dEffectiveConductivity_dT.resize( 0, 0, 3 );
 }
 
 void SinglePhaseThermalConductivityBase::resizeFields( localIndex const size, localIndex const GEOS_UNUSED_PARAM( numPts ) )

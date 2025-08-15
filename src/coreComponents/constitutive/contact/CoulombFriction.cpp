@@ -64,7 +64,7 @@ void CoulombFriction::resizeFields( localIndex const size, localIndex const numP
 {
   FrictionBase::resizeFields( size, numPts );
 
-  m_elasticSlip.resize( 0, 2 );
+  m_elasticSlip.resize( 0, 2 ); // 0 to resize and assign default value later
 }
 
 CoulombFrictionUpdates CoulombFriction::createKernelUpdates() const

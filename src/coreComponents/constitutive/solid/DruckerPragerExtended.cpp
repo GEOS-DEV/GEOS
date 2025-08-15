@@ -104,8 +104,9 @@ void DruckerPragerExtended::resizeFields( localIndex const size, localIndex cons
 {
   ElasticIsotropic::resizeFields( size, numPts );
 
-  m_newState.resize( size, numPts );
-  m_oldState.resize( size, numPts );
+  // 0 to resize and assign default value later
+  m_newState.resize( 0, numPts );
+  m_oldState.resize( 0, numPts );
 }
 
 

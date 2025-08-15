@@ -99,8 +99,9 @@ void DelftEgg::resizeFields( localIndex const size, localIndex const numPts )
 {
   ElasticIsotropic::resizeFields( size, numPts );
 
-  m_newPreConsolidationPressure.resize( size, numPts );
-  m_oldPreConsolidationPressure.resize( size, numPts );
+  // 0 to resize and assign default value later
+  m_newPreConsolidationPressure.resize( 0, numPts );
+  m_oldPreConsolidationPressure.resize( 0, numPts );
 }
 
 

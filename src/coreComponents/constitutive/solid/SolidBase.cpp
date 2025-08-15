@@ -78,9 +78,10 @@ void SolidBase::postInputInitialization()
 
 void SolidBase::resizeFields( localIndex const size, localIndex const numPts )
 {
-  m_density.resize( size, numPts );
-  m_newStress.resize( size, numPts, 6 );
-  m_oldStress.resize( size, numPts, 6 );
+  // 0 to resize and assign default value later
+  m_density.resize( 0, numPts );
+  m_newStress.resize( 0, numPts, 6 );
+  m_oldStress.resize( 0, numPts, 6 );
 }
 
 

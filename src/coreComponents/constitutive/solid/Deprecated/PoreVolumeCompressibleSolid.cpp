@@ -61,9 +61,9 @@ PoreVolumeCompressibleSolid::deliverClone( string const & name,
 
 void PoreVolumeCompressibleSolid::resizeFields( localIndex const size, localIndex const numPts )
 {
-  m_poreVolumeMultiplier.resize( size, numPts );
-  m_dPVMult_dPressure.resize( size, numPts );
-  m_poreVolumeMultiplier.setValues< serialPolicy >( 1.0 );
+  // 0 to resize and assign default value later
+  m_poreVolumeMultiplier.resize( 0, numPts );
+  m_dPVMult_dPressure.resize( 0, numPts );
 }
 
 void PoreVolumeCompressibleSolid::postInputInitialization()

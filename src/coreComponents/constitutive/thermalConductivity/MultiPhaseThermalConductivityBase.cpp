@@ -53,8 +53,8 @@ void MultiPhaseThermalConductivityBase::postInputInitialization()
                         GEOS_FMT( "{}: invalid number of phases", getFullName() ),
                         InputError );
 
-  m_effectiveConductivity.resize( 0, 0, 3 );
-  m_dEffectiveConductivity_dPhaseVolFrac.resize( 0, 0, 3, numPhases );
+  //m_effectiveConductivity.resize( 0, 0, 3 );
+  //m_dEffectiveConductivity_dPhaseVolFrac.resize( 0, 0, 3, numPhases );
 }
 
 void MultiPhaseThermalConductivityBase::resizeFields( localIndex const size, localIndex const GEOS_UNUSED_PARAM( numPts ) )

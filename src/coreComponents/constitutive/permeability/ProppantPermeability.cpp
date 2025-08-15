@@ -67,8 +67,8 @@ void ProppantPermeability::resizeFields( localIndex const size, localIndex const
   PermeabilityBase::resizeFields( size, numPts );
 
   // NOTE: enforcing 1 quadrature point
-  m_dPerm_dDispJump.resize( 0, 1, 3, 3 );
-  m_permeabilityMultiplier.resize( 0, 1, 3 );
+  m_dPerm_dDispJump.resize( size, 1, 3, 3 );
+  m_permeabilityMultiplier.resize( size, 1, 3 );
 }
 
 

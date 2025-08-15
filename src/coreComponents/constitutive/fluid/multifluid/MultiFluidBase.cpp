@@ -201,7 +201,7 @@ void MultiFluidBase::postInputInitialization()
   }
 
   // call to correctly set member array tertiary sizes on the 'main' material object
-  resizeFields( 0, 0 );
+  //resizeFields( 0, 0 );
 
   // set labels on array wrappers for plottable fields
   setLabels();

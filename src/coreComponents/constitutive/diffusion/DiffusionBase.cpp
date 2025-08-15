@@ -62,9 +62,9 @@ void DiffusionBase::postInputInitialization()
                            getFullName(), viewKeyStruct::phaseNamesString(), viewKeyStruct::defaultPhaseDiffusivityMultiplierString() ),
                  InputError );
 
-  m_diffusivity.resize( 0, 0, 3 );
-  m_dDiffusivity_dTemperature.resize( 0, 0, 3 );
-  m_phaseDiffusivityMultiplier.resize( 0, 0, 3 );
+  //m_diffusivity.resize( 0, 0, 3 );
+  //m_dDiffusivity_dTemperature.resize( 0, 0, 3 );
+  //m_phaseDiffusivityMultiplier.resize( 0, 0, 3 );
 }
 
 void DiffusionBase::resizeFields( localIndex const size, localIndex const GEOS_UNUSED_PARAM( numPts ) )
@@ -74,7 +74,7 @@ void DiffusionBase::resizeFields( localIndex const size, localIndex const GEOS_U
   m_dDiffusivity_dTemperature.resize( size, 1, 3 );
   m_phaseDiffusivityMultiplier.resize( size, 1, 3 );
 
-  for( localIndex ei = 0; ei < size; ++ei )
+  for( localIndex ei = 0; ei < size; ++ei ) // TODO move into initializeState?
   {
     // NOTE: enforcing 1 quadrature point
     for( localIndex q = 0; q < 1; ++q )
