@@ -69,7 +69,7 @@ void strainDecomposition( real64 const ( &strain )[6],
   volStrain = strain[0] + strain[1] + strain[2];
 
   std::cout << "volStrain = " << volStrain << " strain[0] = " << strain[0]
-            << " strain[1] = " << strain[1] << " strain[2] = " << strain[2] << std::endl;
+  // Debug print statement removed.
 
   for( localIndex i=0; i<3; ++i )
   {
