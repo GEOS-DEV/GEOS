@@ -367,7 +367,6 @@ void ElasticIsotropicPressureDependentUpdates::smallStrainUpdate( localIndex con
 
   P = p0 * std::exp( -1./Cr* (eps_v_elastic-eps_v0));
   Q = 3. * mu * eps_s_elastic;
-  P = p0 * std::exp( -1./Cr* (eps_v_elastic-eps_v0));
 
   twoInvariant::stressRecomposition( P,
                                      Q,
@@ -455,7 +454,6 @@ void ElasticIsotropicPressureDependentUpdates::smallStrainUpdate( localIndex con
 
   P = p0 * std::exp( -1./Cr* (eps_v_elastic-eps_v0));
   Q = 3. * mu * eps_s_elastic;
-  P = p0 * std::exp( -1./Cr* (eps_v_elastic-eps_v0));
 
   twoInvariant::stressRecomposition( P,
                                      Q,
