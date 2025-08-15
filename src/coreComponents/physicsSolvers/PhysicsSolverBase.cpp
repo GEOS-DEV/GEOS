@@ -1331,7 +1331,7 @@ void PhysicsSolverBase::solveLinearSystem( DofManager const & dofManager,
 
   LinearSolverParameters const & params = m_linearSolverParameters.get();
   const bool isDirectSolver = (params.solverType == LinearSolverParameters::SolverType::direct);
-  const bool isSetupNeeded = (isDirectSolver && params.direct.reuseFactorization) ? false : true;
+  const bool isSetupNeeded = !(isDirectSolver && params.direct.reuseFactorization);
 
   matrix.setDofManager( &dofManager );
 
