@@ -228,7 +228,7 @@ public:
   /// The time at the beginning of the step
   real64 m_time_n = 0.0;
 
-  /// The desired timestepe
+  /// The desired timestep
   real64 m_dt = 0.0;
 
   /// Current cycle number
