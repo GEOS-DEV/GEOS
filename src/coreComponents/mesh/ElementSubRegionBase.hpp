@@ -279,20 +279,22 @@ protected:
 
     forAll< parallelHostPolicy >( size(), [=]( localIndex const k )
     {
-      LvArray::tensorOps::copy< 3 >( elementCenters[k], X[e2n( k, 0 )] );
+      localIndex const n0 = e2n( k, 0 );
+      LvArray::tensorOps::copy< 3 >( elementCenters[k], X[n0] );
       std::set< std::array< real64, 3 > > uniqueNodes;
       {
-        std::array< real64, 3 > const node = {X( e2n( k, 0 ), 0 ), X( e2n( k, 0 ), 1 ), X( e2n( k, 0 ), 2 )};
+        std::array< real64, 3 > const node = {X( n0, 0 ), X( n0, 1 ), X( n0, 2 )};
         uniqueNodes.insert( node );
       }
       localIndex const numNodes = this->numNodesPerElement( k );
       for( localIndex a = 1; a < numNodes; ++a )
       {
-        std::array< real64, 3 > const node = {X[e2n( k, a )][0], X[e2n( k, a )][1], X[e2n( k, a )][2]};
+        localIndex const nA = e2n( k, a );
+        std::array< real64, 3 > const node = {X[nA][0], X[nA][1], X[nA][2]};
         if( uniqueNodes.find( node ) == uniqueNodes.end())
         {
           uniqueNodes.insert( node );
-          LvArray::tensorOps::add< 3 >( elementCenters[k], X[e2n( k, a )] );
+          LvArray::tensorOps::add< 3 >( elementCenters[k], X[nA] );
         }
       }
 
