@@ -437,7 +437,7 @@ bool isPointInsidePolyhedron( arrayView2d< real64 const, nodes::REFERENCE_POSITI
  * @brief Check if a point is inside a polygon (2D version)
  * @tparam POLYGON_TYPE type of @p polygon
  * @tparam POINT_TYPE type of @p point
- * @param[in] polygon array of ploygon nodes coordinates
+ * @param[in] polygon array of polygon nodes coordinates
  * @param[in] n number of polygon nodes
  * @param[in] point coordinates of the query point
  * @param[in] tol tolerance for coordinate comparisons
@@ -472,7 +472,7 @@ bool isPointInPolygon2d( POLYGON_TYPE const & polygon, integer n, POINT_TYPE con
  * @brief Check if a point is inside a polygon (3D version)
  * @tparam POLYGON_TYPE type of @p polygon
  * @tparam POINT_TYPE type of @p point
- * @param[in] polygon array of ploygon nodes coordinates
+ * @param[in] polygon array of polygon nodes coordinates
  * @param[in] n number of polygon nodes
  * @param[in] point coordinates of the query point
  * @param[in] tol tolerance for coordinate comparisons
@@ -512,13 +512,6 @@ bool isPointInPolygon3d( POLYGON_TYPE const & polygon, integer const n, POINT_TY
   }
 
   // Project the polygon and the point onto a 2D plane
-  POLYGON_TYPE projectedPolygon( n );
-  POINT_TYPE projectedPoint;
-  for( integer i = 0; i < n; i++ )
-  {
-    projectedPolygon[i][0] = polygon[i][1];
-    projectedPolygon[i][1] = polygon[i][2];
-  }
   if( dominantIndex == 0 )  // X is dominant, project onto YZ plane
   {
     for( int i = 0; i < n; i++ )

@@ -289,7 +289,7 @@ protected:
       for( localIndex a = 1; a < numNodes; ++a )
       {
         localIndex const nA = e2n( k, a );
-        auto [it, inserted] = uniqueNodes.insert( {X[nA][0], X[nA][1], X[nA][2]} );
+        auto const [it, inserted] = uniqueNodes.insert( {X[nA][0], X[nA][1], X[nA][2]} );
         if( inserted )
         {
           LvArray::tensorOps::add< 3 >( elementCenters[k], X[nA] );
