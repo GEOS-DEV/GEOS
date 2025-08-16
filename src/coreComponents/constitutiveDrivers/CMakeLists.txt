@@ -34,6 +34,7 @@ set( constitutiveDrivers_headers
 #
 set( constitutiveDrivers_sources
      fluid/multiFluid/PVTDriver.cpp
+     fluid/multiFluid/constant/PVTDriverRunTestInvariantImmiscibleFluid.cpp
      fluid/multiFluid/blackOil/PVTDriverRunTestDeadOilFluid.cpp
      fluid/multiFluid/CO2Brine/PVTDriverRunTestCO2BrinePhillipsFluid.cpp
      fluid/multiFluid/CO2Brine/PVTDriverRunTestCO2BrinePhillipsThermalFluid.cpp

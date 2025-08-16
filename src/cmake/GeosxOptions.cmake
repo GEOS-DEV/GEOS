@@ -99,6 +99,8 @@ else()
   option( ENABLE_OPENMP "Enables OpenMP compiler support" ON )
 endif()
 
+option( ENABLE_CUDA_STACK_SIZE "Allows the CUDA stack size limit to be adjusted" OFF )
+
 ### BUILD & BLT SETUP ###
 
 option( GEOS_INSTALL_SCHEMA "Enables schema generation and installation" ON )
