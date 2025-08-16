@@ -188,11 +188,6 @@ void Damage< BASE >::resizeFields( localIndex const size,
   m_strainEnergyDensity.resize( 0, numPts );
   m_volStrain.resize( 0, numPts );
   m_extDrivingForce.resize( 0, numPts );
-  m_biotCoefficient.resize( 0 );
-  m_criticalFractureEnergy.resize( 0 );
-  m_tensileStrength.resize( 0 );
-  m_compressStrength.resize( 0 );
-  m_deltaCoefficient.resize( 0 );
 }
 
 template< typename BASE >
