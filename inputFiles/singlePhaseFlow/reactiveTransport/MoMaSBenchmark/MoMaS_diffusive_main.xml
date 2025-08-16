@@ -3,6 +3,7 @@
 <Problem>
   <Included>
     <File name="./MoMaS_base.xml" />
+    <File name="./MoMaS_diffusive_base.xml" />
     <File name="./MoMaS_initialAggregate.xml" />
     <File name="./MoMaS_logConc.xml" />
     <File name="./MoMaS_initialLogConc.xml" />
@@ -15,7 +16,7 @@
       xCoords="{-0.01, 0, 1, 1.1, 2.1, 2.11 }"
       yCoords="{ 0, 1 }"
       zCoords="{ 0, 1 }"
-      nx="{ 1, 100, 10, 100, 1 }"
+      nx="{ 1, 100, 40, 100, 1 }"
       ny="{ 1 }"
       nz="{ 1 }"
       cellBlockNames="{ cb-0_0_0, cb-1_0_0, cb-2_0_0, cb-3_0_0, cb-4_0_0 }"/>

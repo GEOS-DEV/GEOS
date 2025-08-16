@@ -13,12 +13,12 @@
       <NonlinearSolverParameters
         newtonTol="1.0e-4"
         maxTimeStepCuts="8"
-        maxSubSteps="20"
+        maxSubSteps="40"
         newtonMaxIter="40"
         logLevel="2"
         maxAllowedResidualNorm="1e100"/>
       <LinearSolverParameters
-        directParallel="0"/>
+        directParallel="1"/>
     </SinglePhaseReactiveTransport>
   </Solvers>
 
@@ -28,79 +28,6 @@
         name="singlePhaseTPFA"/>
     </FiniteVolume>
   </NumericalMethods>
-
-  <ElementRegions>
-    <!-- <CellElementRegion
-      name="Region1"
-      cellBlocks="{ * }"
-      materialList="{ water, rock, diffusion }"/> -->
-    <CellElementRegion
-      name="Source"
-      cellBlocks="{ cb-0_0_0 }"
-      materialList="{ water, rock_a }"/>
-
-    <CellElementRegion
-      name="MediumA"
-      cellBlocks="{ cb-1_0_0, cb-3_0_0, cb-4_0_0 }"
-      materialList="{ water, rock_a }"/>
-
-    <CellElementRegion
-      name="MediumB"
-      cellBlocks="{ cb-2_0_0 }"
-      materialList="{ water, rock_b }"/>
-  </ElementRegions>
-
-  <Constitutive>
-    <ReactiveCompressibleSinglePhaseFluid
-      name="water"
-      defaultDensity="1000"
-      defaultViscosity="0.001"
-      referencePressure="0.0"
-      compressibility="0.0"
-      viscosibility="0.0"
-      chemicalSystemType="momas"/>
-
-    <CompressibleSolidConstantPermeability
-      name="rock_a"
-      solidModelName="nullSolid"
-      porosityModelName="rockPorosityA"
-      permeabilityModelName="rockPermA"/>
-
-    <NullModel
-      name="nullSolid"/>
-
-    <PressurePorosity
-      name="rockPorosityA"
-      defaultReferencePorosity="0.25"
-      referencePressure="0.0"
-      compressibility="0.0"/>
-
-    <ConstantPermeability
-      name="rockPermA"
-      permeabilityComponents="{ 1e-9, 1e-9, 1e-9 }"/>
-
-    <CompressibleSolidConstantPermeability
-      name="rock_b"
-      solidModelName="nullSolid"
-      porosityModelName="rockPorosityB"
-      permeabilityModelName="rockPermB"/>
-
-    <PressurePorosity
-      name="rockPorosityB"
-      defaultReferencePorosity="0.5"
-      referencePressure="0.0"
-      compressibility="0.0"/>
-
-    <ConstantPermeability
-      name="rockPermB"
-      permeabilityComponents="{ 1e-12, 1e-12, 1e-12 }"/>
-
-    <!-- <ConstantDiffusion
-      name="diffusion"
-      phaseNames="{ water }"
-      defaultPhaseDiffusivityMultipliers="{ 1 }"
-      diffusivityComponents="{ 1e-2, 1e-2, 1e-2 }"/> -->
-  </Constitutive>
 
   <FieldSpecifications>
     <FieldSpecification

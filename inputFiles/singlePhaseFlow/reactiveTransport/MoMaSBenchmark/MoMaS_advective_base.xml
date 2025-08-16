@@ -1,0 +1,78 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <ElementRegions>
+    <CellElementRegion
+      name="Source"
+      cellBlocks="{ cb-0_0_0 }"
+      materialList="{ water, rock_a, diffusion_a }"/>
+
+    <CellElementRegion
+      name="MediumA"
+      cellBlocks="{ cb-1_0_0, cb-3_0_0, cb-4_0_0 }"
+      materialList="{ water, rock_a, diffusion_a }"/>
+
+    <CellElementRegion
+      name="MediumB"
+      cellBlocks="{ cb-2_0_0 }"
+      materialList="{ water, rock_b, diffusion_b }"/>
+  </ElementRegions>
+
+  <Constitutive>
+    <ReactiveCompressibleSinglePhaseFluid
+      name="water"
+      defaultDensity="1000"
+      defaultViscosity="0.001"
+      referencePressure="0.0"
+      compressibility="0.0"
+      viscosibility="0.0"
+      chemicalSystemType="momas"/>
+
+    <CompressibleSolidConstantPermeability
+      name="rock_a"
+      solidModelName="nullSolid"
+      porosityModelName="rockPorosityA"
+      permeabilityModelName="rockPermA"/>
+
+    <NullModel
+      name="nullSolid"/>
+
+    <PressurePorosity
+      name="rockPorosityA"
+      defaultReferencePorosity="0.25"
+      referencePressure="0.0"
+      compressibility="0.0"/>
+
+    <ConstantPermeability
+      name="rockPermA"
+      permeabilityComponents="{ 1e-9, 1e-9, 1e-9 }"/>
+
+    <CompressibleSolidConstantPermeability
+      name="rock_b"
+      solidModelName="nullSolid"
+      porosityModelName="rockPorosityB"
+      permeabilityModelName="rockPermB"/>
+
+    <PressurePorosity
+      name="rockPorosityB"
+      defaultReferencePorosity="0.5"
+      referencePressure="0.0"
+      compressibility="0.0"/>
+
+    <ConstantPermeability
+      name="rockPermB"
+      permeabilityComponents="{ 1e-12, 1e-12, 1e-12 }"/>
+
+    <ConstantDiffusion
+      name="diffusion_a"
+      phaseNames="{ water }"
+      defaultPhaseDiffusivityMultipliers="{ 1 }"
+      diffusivityComponents="{ 5.5e-5, 5.5e-5, 5.5e-5 }"/>
+
+    <ConstantDiffusion
+      name="diffusion_b"
+      phaseNames="{ water }"
+      defaultPhaseDiffusivityMultipliers="{ 1 }"
+      diffusivityComponents="{ 3.3e-4, 3.3e-4, 3.3e-4 }"/>
+  </Constitutive>
+</Problem>
