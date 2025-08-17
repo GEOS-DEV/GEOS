@@ -10,7 +10,7 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#include "gtest/gtest.h"
+#include <gtest/gtest.h>
 #include "mainInterface/initialization.hpp"
 #include "mainInterface/ProblemManager.hpp"
 #include "mainInterface/GeosxState.hpp"
