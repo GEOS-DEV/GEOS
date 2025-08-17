@@ -1,0 +1,50 @@
+<?xml version="1.0" ?>
+
+<Problem>
+
+  <Included>
+    <File name="./incompressible_consistentcy_base.xml"/>
+  </Included>
+
+  <NumericalMethods>
+    <FiniteVolume>
+      <HybridMimeticDiscretization
+        name="singlePhaseMFD"
+        innerProductType="quasiTPFA"/>
+    </FiniteVolume>
+  </NumericalMethods>
+
+ <Solvers>
+    <SinglePhaseHybridFVM
+      name="SinglePhaseFlow"
+      logLevel="1"
+      discretization="singlePhaseMFD"
+      targetRegions="{ Domain }">
+      <NonlinearSolverParameters
+        newtonTol="1.0e-5"
+        newtonMaxIter="8"/>
+      <LinearSolverParameters
+        directParallel="0"/>
+    </SinglePhaseHybridFVM>
+  </Solvers>
+
+  <Events
+    minTime="0.0"  
+    maxTime="86400">
+    <PeriodicEvent
+      name="outputs"
+      timeFrequency="86400"
+      target="/Outputs/vtkConsistencyQuasiTPFA"/>
+    <PeriodicEvent
+      name="solverApplications"
+      endTime="86400"
+      maxEventDt="86400"
+      target="/Solvers/SinglePhaseFlow"/>
+  </Events>
+
+  <Outputs>
+    <VTK
+      name="vtkConsistencyQuasiTPFA"/>
+  </Outputs>
+  
+</Problem>
