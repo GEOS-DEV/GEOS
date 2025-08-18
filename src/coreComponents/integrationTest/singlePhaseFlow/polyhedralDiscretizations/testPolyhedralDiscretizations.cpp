@@ -140,7 +140,7 @@ std::string generateXmlInputTPFA( std::string const & meshFile )
   return oss.str();
 }
 
-// Verifies that the standard TPFA solver produces consisten pressure fields
+// Verifies that the standard TPFA solver produces consistent pressure fields
 // on k-orthogonal meshes. L2 error is checked against the analytical linear pressure field.
 class TPFAIntegrationTest : public ::testing::TestWithParam< const char * >
 {
