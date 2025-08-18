@@ -146,10 +146,6 @@ char const * xmlInputTPFA =
       minTime="0.0"
       maxTime="86400">
       <PeriodicEvent
-        name="outputs"
-        timeFrequency="86400"
-        target="/Outputs/vtkConsistencyTPFA"/>
-      <PeriodicEvent
         name="solverApplications"
         endTime="86400"
         maxEventDt="86400"
@@ -279,10 +275,6 @@ char const * xmlInputMFD =
       minTime="0.0"
       maxTime="86400">
       <PeriodicEvent
-        name="outputs"
-        timeFrequency="86400"
-        target="/Outputs/vtkConsistencyTPFA"/>
-      <PeriodicEvent
         name="solverApplications"
         endTime="86400"
         maxEventDt="86400"
@@ -335,9 +327,9 @@ TEST_F( TPFAIntegrationTest, PressureFieldL2Error )
 
   // Run the simulation to compute the numerical pressure
   solver.setupSystem( domain, solver.getDofManager(), solver.getLocalMatrix(), solver.getSystemRhs(), solver.getSystemSolution() );
-  solver.implicitStepSetup( 0.0, 1.0e6, domain );
-  solver.solverStep( 0.0, 1.0e6, 0, domain );
-  solver.implicitStepComplete( 0.0, 1.0e6, domain );
+  solver.implicitStepSetup( 0.0, 86400, domain );
+  solver.solverStep( 0.0, 86400, 0, domain );
+  solver.implicitStepComplete( 0.0, 86400, domain );
 
   // Access the mesh and subregion
   MeshLevel & mesh = domain.getMeshBody( 0 ).getBaseDiscretization();
@@ -377,9 +369,9 @@ TEST_F( MFDIntegrationTest, PressureFieldL2Error )
 
   // Run the simulation to compute the numerical pressure
   solver.setupSystem( domain, solver.getDofManager(), solver.getLocalMatrix(), solver.getSystemRhs(), solver.getSystemSolution() );
-  solver.implicitStepSetup( 0.0, 1.0e6, domain );
-  solver.solverStep( 0.0, 1.0e6, 0, domain );
-  solver.implicitStepComplete( 0.0, 1.0e6, domain );
+  solver.implicitStepSetup( 0.0, 86400, domain );
+  solver.solverStep( 0.0, 86400, 0, domain );
+  solver.implicitStepComplete( 0.0, 86400, domain );
 
   // Access the mesh and subregion
   MeshLevel & mesh = domain.getMeshBody( 0 ).getBaseDiscretization();
