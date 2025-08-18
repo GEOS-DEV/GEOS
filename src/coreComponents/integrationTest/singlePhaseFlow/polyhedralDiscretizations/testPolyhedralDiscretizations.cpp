@@ -17,6 +17,7 @@
 #include "mainInterface/ProblemManager.hpp"
 #include "mainInterface/GeosxState.hpp"
 #include "mesh/DomainPartition.hpp"
+#include "physicsSolvers/PhysicsSolverManager.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseFVM.hpp"
 
 using namespace geos;
@@ -179,7 +180,32 @@ protected:
 TEST_F(TPFAIntegrationTest, PressureFieldL2Error) {
   ProblemManager & problemManager = state.getProblemManager();
   DomainPartition & domain = problemManager.getDomainPartition();
-  // Add test logic here to validate the pressure field or other properties
+  auto solver = &state.getProblemManager().getPhysicsSolverManager().getGroup< SinglePhaseFVM >( "SinglePhaseFlow" );
+  
+  // Access the mesh and subregion
+  MeshLevel & mesh = domain.getMeshBody(0).getBaseDiscretization();
+  CellElementSubRegion & subRegion = mesh.getElemManager().getRegion(0).getSubRegion<CellElementSubRegion>(0);
+
+//  // Retrieve pressure field and cell centers
+//  arrayView1d<real64 const> pressure = subRegion.getField<real64>("pressure");
+//  arrayView2d<real64 const> centers = subRegion.getElementCenter();
+//  arrayView1d<real64 const> volumes = subRegion.getElementVolume();
+//
+//  // Compute exact pressure and L2 error
+//  real64 l2Error = 0.0;
+//  real64 totalVolume = 0.0;
+//  for( localIndex i = 0; i < subRegion.size(); ++i ) {
+//    real64 x = centers[i][0];
+//    real64 pExact = (2.0e7) * (1.0 - x) + (1.0e7) * x;
+//    real64 volume = volumes[i];
+//    l2Error += std::pow(pressure[i] - pExact, 2) * volume;
+//    totalVolume += volume;
+//  }
+//
+//  l2Error = std::sqrt(l2Error / totalVolume);
+//
+//  // Assert that the L2 error is within machine precision
+//  EXPECT_NEAR(l2Error, 0.0, std::numeric_limits<real64>::epsilon());
 }
 
 int main(int argc, char **argv) {
