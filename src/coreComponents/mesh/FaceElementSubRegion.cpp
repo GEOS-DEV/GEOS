@@ -38,16 +38,12 @@ FaceElementSubRegion::FaceElementSubRegion( string const & name,
 {
   m_elementType = ElementType::Hexahedron;
 
-  registerWrapper( viewKeyStruct::dNdXString(), &m_dNdX ).setSizedFromParent( 1 ).reference().resizeDimension< 3 >( 3 );
-
-  registerWrapper( viewKeyStruct::detJString(), &m_detJ ).setSizedFromParent( 1 ).reference();
-
   registerWrapper( viewKeyStruct::faceListString(), &m_toFacesRelation ).
     setApplyDefaultValue( -1 ).
     setDescription( "Map to the faces attached to each FaceElement." ).
     reference().resize( 0, 2 );
 
-  registerWrapper( viewKeyStruct::edgesTofractureConnectorsEdgesString(), &m_edgesTo2dFaces ).
+  registerWrapper( viewKeyStruct::edgesToFractureConnectorsEdgesString(), &m_edgesTo2dFaces ).
     setPlotLevel( PlotLevel::NOPLOT ).
     setDescription( "A map of edge local indices to the fracture connector local indices." ).
     setSizedFromParent( 0 );

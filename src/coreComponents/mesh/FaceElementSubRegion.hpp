@@ -196,12 +196,8 @@ public:
    */
   struct viewKeyStruct : SurfaceElementSubRegion::viewKeyStruct
   {
-    /// @return String key for the derivatives of the shape functions with respect to the reference configuration
-    static constexpr char const * dNdXString() { return "dNdX"; }
-    /// @return String key for the derivative of the jacobian.
-    static constexpr char const * detJString() { return "detJ"; }
     /// @return String key to the map of edge local indices to the fracture connector local indices.
-    static constexpr char const * edgesTofractureConnectorsEdgesString() { return "edgesToFractureConnectors"; }
+    static constexpr char const * edgesToFractureConnectorsEdgesString() { return "edgesToFractureConnectors"; }
     /// @return String key to the map of fracture connector local indices to edge local indices.
     static constexpr char const * fractureConnectorEdgesToEdgesString() { return "fractureConnectorsToEdges"; }
     /// @return String key to the map of fracture connector local indices face element local indices.
