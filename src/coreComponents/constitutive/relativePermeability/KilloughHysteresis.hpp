@@ -206,7 +206,7 @@ public:
   /**
    * @brief Function computing the trapped critical phase volume fraction
    * @param[in] hystereticCurve the hysteresis curve to be used and dispatched on
-   * @param[in] Shy the max historical phase volume fraction
+   * @param[in] Shy the min historical phase volume fraction
    * @param[in] landCoefficient Land trapping parameter
    * @param[in] jerauldParam_a jerauld expononent
    * @param[in] jerauldParam_b jerauld expononent
