@@ -31,13 +31,18 @@ char const * xmlInput =
   <Problem>
 
   <Mesh>
-      <VTKMesh
-        name="mesh"
-        logLevel="5"  
-        partitionRefinement="0"
-        useGlobalIds="0"
-        file="polyhedral_extruded.vtk"/>
-    </Mesh>
+    <InternalMesh
+      name="mesh"
+      elementTypes="{ C3D8 }"
+      xCoords="{ 0, 1}"
+      yCoords="{ 0, 1}"
+      zCoords="{ 0, 1}"
+      nx="{ 20  }"
+      ny="{ 20  }"
+      nz="{ 20 }"
+      cellBlockNames="{ blocks}">
+  </InternalMesh>
+</Mesh>
 
     <Geometry>
         <Box
