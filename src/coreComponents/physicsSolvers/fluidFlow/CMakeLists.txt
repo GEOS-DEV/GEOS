@@ -121,6 +121,7 @@ set( fluidFlowSolvers_headers
      wells/WellVolumeRateConstraints.hpp
      wells/WellMassRateConstraints.hpp
      wells/WellPhaseRateConstraints.hpp
+     wells/WellLiquidRateConstraints.hpp
      wells/WellSolverBase.hpp
      wells/WellSolverBaseFields.hpp
      wells/LogLevelsInfo.hpp
@@ -164,6 +165,7 @@ set( fluidFlowSolvers_sources
      wells/WellVolumeRateConstraints.cpp
      wells/WellMassRateConstraints.cpp
      wells/WellPhaseRateConstraints.cpp
+     wells/WellLiquidRateConstraints.cpp
      wells/WellSolverBase.cpp 
      wells/PipeFlowTableFunction.cpp
      proppantTransport/ProppantTransport.cpp

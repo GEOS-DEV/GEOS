@@ -174,7 +174,8 @@ enum class ConstraintTypeId : integer
   PHASEVOLRATE,   /**< The well operates at a specified phase volumetric flow rate */
   TOTALVOLRATE,   /**< The well operates at a specified total volumetric flow rate */
   MASSRATE,   /**<The well operates at a specified mass rate */
-  WHP,  /**< The well operates at a specified wellhead   pressure (BHP) */
+  WHP,  /**< The well operates at a specified wellhead   pressure (WHP) */
+  LIQUIDRATE,  /**< The well operates at a specified liquid rate */
   UNINITIALIZED,   /**< This is the current well control before postInputInitialization (needed to restart from file properly) */
 };
 
@@ -247,6 +248,7 @@ public:
 
   ///@}
 
+
   /**
    * @name Getters / Setters
    */
@@ -261,6 +263,29 @@ public:
    */
   virtual std::string getConstraintKey( ) const = 0;
 
+  /**
+   * @brief Defines whether the constraint should be evaluated or not
+   * @brief Some workflows require the well model to define a constraint
+   * @brief of similar type to user defined constraints. For example,
+   * @brief rate constraints to evaluated WHP constraints.
+   * @return true if the constraint is active, false otherwise
+   */
+  bool isConstraintActive( ) { return m_isConstraintActive; }
+
+  /**
+   * @brief Sets constraint active status
+   * @param[in] constraintActive true if the constraint is active, false otherwise
+   */
+  bool setConstraintActive( bool const & constraintActive ) { return m_isConstraintActive=constraintActive; }
+
+  /**
+   * @brief Sets constraint value
+   * @param[in] constraint value
+   */
+  void setConstraintValue( real64 const & constraintValue ) 
+  {
+    m_constraintValue = constraintValue;
+  }
 
   /**
    * @brief Get the target bottom hole pressure value.
@@ -268,6 +293,11 @@ public:
    */
   real64 getConstraintValue( real64 const & currentTime ) const
   {
+    if( m_constraintScheduleTableName.empty() )
+    {
+      return m_rateSign*m_constraintValue;
+    }
+
     return m_rateSign*m_constraintScheduleTable->evaluate( &currentTime );
   }
 
@@ -289,7 +319,8 @@ public:
   /// ViewKey struct for the WellControls class
   viewKeysWellConstraint;
 
-  //
+  // Quantities computed from well constraint solve with this boundary condition
+  // This needs to be somewhere else tjb
   void setBHP( real64 bhp ){ m_BHP=bhp;};
   void setPhaseVolumeRates( array1d< real64 > const & phaseVolumeRates ) { m_phaseVolumeRates = phaseVolumeRates; };
   void setTotalVolumeRate( real64 totalVolumeRate ){ m_totalVolumeRate = totalVolumeRate; };
@@ -312,6 +343,12 @@ public:
    * @return mass rate
    */
   real64 totalVolumeRate() const { return m_totalVolumeRate; }
+
+  /**
+   * @brief Getter for the liquid rate
+   * @return liquid rate
+   */
+  real64 liquidRate() const { return m_liquidRate; }
 
   /**
    * @brief Getter for the mass rate
@@ -339,6 +376,11 @@ protected:
 
 protected:
 
+  /// Constraint status
+  bool m_isConstraintActive;
+
+  /// Flag to indicate whether a schedule table should be generated for constraint value;
+  bool m_useScheduleTable;
 
   /// Constraint value
   real64 m_constraintValue;
@@ -358,6 +400,9 @@ protected:
 
   // phase rates
   array1d< real64 >  m_phaseVolumeRates;
+
+  // liquid rate
+  real64 m_liquidRate;
 
   // total volume rate
   real64 m_totalVolumeRate;

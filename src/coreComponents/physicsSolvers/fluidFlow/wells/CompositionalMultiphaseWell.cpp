@@ -1056,6 +1056,12 @@ void CompositionalMultiphaseWell::initializePostInitialConditionsPreSubGroups()
       fluidSeparatorPtr->resize( 1 );
       wellControls.setFluidSeparator( std::move( fluidSeparatorPtr ));
 
+      // setup internal constraints if needed
+      wellControls.forSubGroups< MinimumWHPConstraint >( [&]( auto & constraint )
+      {
+        wellControls.createChild( WellControls::viewKeyStruct::liquidProductionConstraintString(), constraint.getName()+"LiquidProduction" );
+      } );
+
     } );
   } );
 }

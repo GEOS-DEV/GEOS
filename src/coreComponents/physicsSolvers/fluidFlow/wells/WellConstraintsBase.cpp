@@ -32,6 +32,8 @@ using namespace dataRepository;
 namespace
 {
 
+
+#if 0  
 /// Utility function to create a one-value table internally when not provided by the user
 TableFunction * createConstraintScheduleTable( string const & tableName,
                                                real64 const & constantValue )
@@ -49,13 +51,15 @@ TableFunction * createConstraintScheduleTable( string const & tableName,
   table->setInterpolationMethod( TableFunction::InterpolationType::Lower );
   return table;
 }
-
+#endif
 
 
 }
 
 WellConstraintBase::WellConstraintBase( string const & name, Group * const parent )
   : Group( name, parent ),
+  m_isConstraintActive( true ),
+  m_useScheduleTable( false ),
   m_constraintValue( 0 ),
   m_constraintScheduleTable( nullptr ),
   m_rateSign( 1.0 ) // Default to positive rate sign for injection, set to -1.0 for production wells
@@ -90,12 +94,7 @@ void WellConstraintBase::postInputInitialization()
                  InputError );
 
   //  Create time-dependent constraint table
-  if( m_constraintScheduleTableName.empty() )
-  {
-    m_constraintScheduleTableName = getName()+"_ConstantValue_table";
-    m_constraintScheduleTable = createConstraintScheduleTable( m_constraintScheduleTableName, m_constraintValue );
-  }
-  else
+  if( !m_constraintScheduleTableName.empty() )
   {
     FunctionManager & functionManager = FunctionManager::getInstance();
     m_constraintScheduleTable = &(functionManager.getGroup< TableFunction const >( m_constraintScheduleTableName ));
@@ -105,7 +104,6 @@ void WellConstraintBase::postInputInitialization()
                                       << m_constraintScheduleTable->getName() << " should be TableFunction::InterpolationType::Lower",
                    InputError );
   }
-
 
 
   GEOS_THROW_IF  ((m_constraintValue <= 0.0 && m_constraintScheduleTableName.empty()),

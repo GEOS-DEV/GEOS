@@ -197,7 +197,7 @@ void PipeFlowTableFunction::calculateWHP( real64 const & bhp, array1d< real64 > 
 
     ++iter;
   }
-
+  whp = table_coords[1];
 }
 
 REGISTER_CATALOG_ENTRY( FunctionBase, PipeFlowTableFunction, string const &, Group * const )

@@ -423,10 +423,18 @@ public:
     static constexpr char const * massProductionConstraintString() { return "massProductionConstraint"; }
     /// string key for the maximum mass rate for a injector
     static constexpr char const * massInjectionConstraintString() { return "massInjectionConstraint"; }
+    /// string key for the liquid rate for a producer
+    static constexpr char const * liquidProductionConstraintString() { return "liquidProductionConstraint"; }
   }
   /// ViewKey struct for the WellControls class
   viewKeysWellControls;
 
+  /**
+   * @brief Create a constraint
+   * @tparam ConstraintType the type of constraint to create
+   * @param[in] constraintName name to assign to the constraint
+   */
+  template< typename ConstraintType > void createConstraint ( string const & constraintName );
 protected:
 
   virtual void postInputInitialization() override;

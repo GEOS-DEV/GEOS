@@ -25,6 +25,7 @@
 #include "physicsSolvers/fluidFlow/wells/WellVolumeRateConstraints.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellPhaseRateConstraints.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellMassRateConstraints.hpp"
+#include "physicsSolvers/fluidFlow/wells/WellLiquidRateConstraints.hpp"
 
 #include "WellConstants.hpp"
 #include "dataRepository/InputFlags.hpp"
@@ -250,6 +251,11 @@ Group * WellControls::createChild( string const & childKey, string const & child
   {
     MassInjectionConstraint & massConstraint = registerGroup< MassInjectionConstraint >( childName );
     constraint = &massConstraint;
+  }
+  else if( childKey == viewKeyStruct::liquidProductionConstraintString() )
+  {
+    LiquidProductionConstraint & liquidConstraint = registerGroup< LiquidProductionConstraint >( childName );
+    constraint = &liquidConstraint;
   }
   return constraint;
 }
