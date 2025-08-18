@@ -60,6 +60,7 @@ set( constitutive_headers
      fluid/multifluid/MultiFluidConstants.hpp
      fluid/multifluid/MultiFluidUtils.hpp
      fluid/multifluid/MultiFluidFields.hpp
+     fluid/multifluid/constant/InvariantImmiscibleFluid.hpp     
      fluid/multifluid/blackOil/BlackOilFluidBase.hpp
      fluid/multifluid/blackOil/BlackOilFluid.hpp
      fluid/multifluid/blackOil/DeadOilFluid.hpp
@@ -242,6 +243,7 @@ set( constitutive_sources
      dispersion/DispersionBase.cpp
      dispersion/LinearIsotropicDispersion.cpp
      fluid/multifluid/MultiFluidBase.cpp
+     fluid/multifluid/constant/InvariantImmiscibleFluid.cpp
      fluid/multifluid/blackOil/BlackOilFluidBase.cpp
      fluid/multifluid/blackOil/BlackOilFluid.cpp
      fluid/multifluid/blackOil/DeadOilFluid.cpp
