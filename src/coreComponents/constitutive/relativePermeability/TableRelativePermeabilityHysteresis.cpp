@@ -405,9 +405,9 @@ void TableRelativePermeabilityHysteresis::checkExistenceAndValidateNonWettingRel
   m_phaseMinVolumeFraction[ipNonWetting] = drainagePhaseMinVolFraction;
 
   GEOS_LOG_LEVEL_RANK_0( logInfo::Init, GEOS_FMT( "Initializing non-wetting relperm curve with {(sdmin,krdmin), (simin,krimin), (smax,krmax)} : {({},{}),({},{}),({},{})}",
-                                                  m_wettingCurve.m_criticalDrainagePhaseVolFraction, m_wettingCurve.m_criticalDrainageValue,
-                                                  m_wettingCurve.m_criticalImbibitionPhaseVolFraction, m_wettingCurve.m_criticalImbibitionValue,
-                                                  m_wettingCurve.m_extremumPhaseVolFraction, m_wettingCurve.m_extremumValue
+                                                  m_nonWettingCurve.m_criticalDrainagePhaseVolFraction, m_nonWettingCurve.m_criticalDrainageValue,
+                                                  m_nonWettingCurve.m_criticalImbibitionPhaseVolFraction, m_nonWettingCurve.m_criticalImbibitionValue,
+                                                  m_nonWettingCurve.m_extremumPhaseVolFraction, m_nonWettingCurve.m_extremumValue
                                                   ));
 
 }
