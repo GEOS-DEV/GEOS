@@ -19,13 +19,13 @@
 #include "mesh/NodeManager.hpp"
 #include "mesh/FaceManager.hpp"
 #include "mesh/CellElementSubRegion.hpp"
-#include "finiteVolume/SinglePhaseFVM.hpp"
+#include "physicsSolvers/fluidFlow/SinglePhaseFVM.hpp"
 #include "finiteVolume/TwoPointFluxApproximation.hpp"
-#include "constitutive/CompressibleSinglePhaseFluid.hpp"
-#include "constitutive/CompressibleSolidConstantPermeability.hpp"
+#include "constitutive/fluid/singlefluid/CompressibleSinglePhaseFluid.hpp"
+//#include "constitutive/CompressibleSolidConstantPermeability.hpp"
 #include "constitutive/NullModel.hpp"
-#include "constitutive/PressurePorosity.hpp"
-#include "constitutive/ConstantPermeability.hpp"
+#include "constitutive/solid/porosity/PressurePorosity.hpp"
+#include "constitutive/permeability/ConstantPermeability.hpp"
 
 using namespace geos;
 
