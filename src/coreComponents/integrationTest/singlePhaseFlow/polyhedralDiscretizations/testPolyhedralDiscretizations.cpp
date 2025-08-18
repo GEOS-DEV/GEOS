@@ -180,16 +180,27 @@ protected:
 TEST_F(TPFAIntegrationTest, PressureFieldL2Error) {
   ProblemManager & problemManager = state.getProblemManager();
   DomainPartition & domain = problemManager.getDomainPartition();
-  auto solver = &state.getProblemManager().getPhysicsSolverManager().getGroup< SinglePhaseFVM >( "SinglePhaseFlow" );
-  
+
+  // Retrieve the solver using the PhysicsSolverManager
+  SinglePhaseFVM< SinglePhaseBase > & solver = dynamic_cast< SinglePhaseFVM< SinglePhaseBase > & >( problemManager.getPhysicsSolverManager().getGroup< SinglePhaseFVM< SinglePhaseBase > >( "SinglePhaseFlow" ) );
+//  SinglePhaseFVM< SinglePhaseBase > & flowSolver = dynamicCast< SinglePhaseFVM< SinglePhaseBase > & >( *solver.reservoirSolver() );
+
+  // Run the simulation to compute the numerical pressure
+  solver.setupSystem( domain, solver.getDofManager(), solver.getLocalMatrix(), solver.getSystemRhs(), solver.getSystemSolution() );
+  solver.implicitStepSetup( 0.0, 1.0, domain );
+  solver.solverStep( 0.0, 1.0, 0, domain );
+  solver.implicitStepComplete( 0.0, 1.0, domain );
+
   // Access the mesh and subregion
   MeshLevel & mesh = domain.getMeshBody(0).getBaseDiscretization();
   CellElementSubRegion & subRegion = mesh.getElemManager().getRegion(0).getSubRegion<CellElementSubRegion>(0);
 
 //  // Retrieve pressure field and cell centers
+  arrayView2d<real64 const> centers = subRegion.getElementCenter();
+  arrayView1d<real64 const> volumes = subRegion.getElementVolume();
 //  arrayView1d<real64 const> pressure = subRegion.getField<real64>("pressure");
-//  arrayView2d<real64 const> centers = subRegion.getElementCenter();
-//  arrayView1d<real64 const> volumes = subRegion.getElementVolume();
+
+  int aka = 0;
 //
 //  // Compute exact pressure and L2 error
 //  real64 l2Error = 0.0;
