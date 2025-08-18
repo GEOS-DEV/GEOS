@@ -208,7 +208,7 @@ TEST_P( TPFAIntegrationTest, PressureFieldL2Error )
   l2Error = std::sqrt( l2Error / totalVolume );
 
   std::string meshFile = GetParam();
-  if( meshFile.compare( "polyhedral_voronoi_regular.vtk" ) == 0 )
+  if( meshFile == "polyhedral_voronoi_regular.vtk" )
   {
     // Assert that the L2 error is within machine precision
     EXPECT_NEAR( l2Error, 0.0, PRESSURE_L2_TOLERANCE );
