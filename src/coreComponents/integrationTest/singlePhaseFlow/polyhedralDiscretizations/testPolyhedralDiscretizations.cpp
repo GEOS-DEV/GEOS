@@ -21,11 +21,45 @@
 #include "physicsSolvers/fluidFlow/SinglePhaseFVM.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseHybridFVM.hpp"
 
+
+
+// This file implements integration tests for polyhedral discretizations of single-phase flow.
+//
+// Test summary:
+// 1. Parameterized TPFA integration tests
+// 2. Parameterized MFD integration tests with various inner products
+// 3. Cross-check test ensuring that MFD with innerProductType="TPFA" reproduces
+//    the same pressure field as the TPFA solver
+//
+// Tested Meshes:
+// - polyhedral_voronoi_complex.vtk
+// - polyhedral_voronoi_lattice.vtk
+// - polyhedral_voronoi_regular.vtk
+//
+// Inner Products for MFD:
+// - TPFA
+// - QuasiTPFA
+// - QuasiRT
+// - Simple
+// - BdVLM
+//
+// L2 error comparisons are performed to ensure:
+// - TPFA produces machine-precision correct solutions on regular meshes
+// - MFD reproduces machine-precision correct solutions on star-shaped meshes
+// - MFD reproduces TPFA results when innerProductType="TPFA"
+
 using namespace geos;
 using namespace geos::dataRepository;
 using namespace geos::testing;
 
 CommandLineOptions g_commandLineOptions;
+
+// Numerical tolerances
+static constexpr real64 PRESSURE_L2_TOLERANCE = 1.0e-10;
+static constexpr real64 to_MPA = 1.0e-6;
+
+// Maximum time step for events / solver steps (in seconds)
+static constexpr real64 MAX_TIME_STEP = 86400.0; // 1 day
 
 static constexpr auto TPFA      = "TPFA";
 static constexpr auto QuasiTPFA = "quasiTPFA";
@@ -45,7 +79,8 @@ std::string generateXmlInputTPFA( std::string const & meshFile )
         logLevel="5"  
         partitionRefinement="0"
         useGlobalIds="0"
-        file=")xml" << meshFile << R"xml("/>
+        file=")xml" << meshFile <<
+    R"xml("/>
     </Mesh>
 
     <Geometry>
@@ -105,7 +140,9 @@ std::string generateXmlInputTPFA( std::string const & meshFile )
   return oss.str();
 }
 
-class TPFAIntegrationTest : public ::testing::TestWithParam<const char *>
+// Verifies that the standard TPFA solver produces consisten pressure fields
+// on k-orthogonal meshes. L2 error is checked against the analytical linear pressure field.
+class TPFAIntegrationTest : public ::testing::TestWithParam< const char * >
 {
 public:
   TPFAIntegrationTest()
@@ -128,8 +165,8 @@ INSTANTIATE_TEST_SUITE_P(
     "polyhedral_voronoi_complex.vtk",
     "polyhedral_voronoi_lattice.vtk",
     "polyhedral_voronoi_regular.vtk"
-  )
-);
+    )
+  );
 
 TEST_P( TPFAIntegrationTest, PressureFieldL2Error )
 {
@@ -142,9 +179,9 @@ TEST_P( TPFAIntegrationTest, PressureFieldL2Error )
 
   // Run the simulation to compute the numerical pressure
   solver.setupSystem( domain, solver.getDofManager(), solver.getLocalMatrix(), solver.getSystemRhs(), solver.getSystemSolution() );
-  solver.implicitStepSetup( 0.0, 86400, domain );
-  solver.solverStep( 0.0, 86400, 0, domain );
-  solver.implicitStepComplete( 0.0, 86400, domain );
+  solver.implicitStepSetup( 0.0, MAX_TIME_STEP, domain );
+  solver.solverStep( 0.0, MAX_TIME_STEP, 0, domain );
+  solver.implicitStepComplete( 0.0, MAX_TIME_STEP, domain );
 
   // Access the mesh and subregion
   MeshLevel & mesh = domain.getMeshBody( 0 ).getBaseDiscretization();
@@ -162,22 +199,24 @@ TEST_P( TPFAIntegrationTest, PressureFieldL2Error )
   {
     real64 x = centers[i][0];
     real64 volume = volumes[i];
-    real64 pNumeric = p_h[i] * 1.0e-6; // Convert pressure to MPa
+    real64 pNumeric = p_h[i] * to_MPA; // Convert pressure to MPa
     real64 pExact = 20.0 * (1.0 - x) + 10.0 * x;
     l2Error += (pNumeric - pExact) * (pNumeric - pExact) * volume;
     totalVolume += volume;
   }
 
   l2Error = std::sqrt( l2Error / totalVolume );
-  
+
   std::string meshFile = GetParam();
-  if (meshFile.compare("polyhedral_voronoi_regular.vtk") == 0)
+  if( meshFile.compare( "polyhedral_voronoi_regular.vtk" ) == 0 )
   {
     // Assert that the L2 error is within machine precision
-    EXPECT_NEAR( l2Error, 0.0, 1.0e-10 );
-  }else{
+    EXPECT_NEAR( l2Error, 0.0, PRESSURE_L2_TOLERANCE );
+  }
+  else
+  {
     // Assert that the L2 error is not exact
-    EXPECT_GT( l2Error, 1.0e-10 );
+    EXPECT_GT( l2Error, PRESSURE_L2_TOLERANCE );
   }
 
 }
@@ -195,7 +234,8 @@ std::string generateXmlInputMFD( std::string const & innerProductType,
       logLevel="5"  
       partitionRefinement="0"
       useGlobalIds="0"
-      file=")xml" << meshFile << R"xml("/>
+      file=")xml" << meshFile <<
+    R"xml("/>
   </Mesh>
 
   <Geometry>
@@ -240,7 +280,8 @@ std::string generateXmlInputMFD( std::string const & innerProductType,
       <HybridMimeticDiscretization
         name="singlePhaseMFD"
         innerProductType=")xml"
-    << innerProductType << R"xml("/>
+      << innerProductType <<
+    R"xml("/>
     </FiniteVolume>
   </NumericalMethods>
 
@@ -264,9 +305,10 @@ std::string generateXmlInputMFD( std::string const & innerProductType,
   return oss.str();
 }
 
-using MFDParams = std::tuple<const char *, const char *>;
-
-class MFDIntegrationTest : public ::testing::TestWithParam<MFDParams>
+// Verifies MFD solver for various inner product types produces exact
+// pressure fields for all test meshes. L2 error is compared with exact solution.
+using MFDParams = std::tuple< const char *, const char * >;
+class MFDIntegrationTest : public ::testing::TestWithParam< MFDParams >
 {
 public:
   MFDIntegrationTest()
@@ -276,7 +318,7 @@ protected:
   void SetUp() override
   {
     auto [innerProduct, meshFile] = GetParam();
-    std::string xmlInput = generateXmlInputMFD(innerProduct, meshFile);
+    std::string xmlInput = generateXmlInputMFD( innerProduct, meshFile );
     setupProblemFromXML( state.getProblemManager(), xmlInput.c_str() );
   }
 
@@ -288,14 +330,14 @@ INSTANTIATE_TEST_SUITE_P(
   InnerProductAndMeshes,
   MFDIntegrationTest,
   ::testing::Combine(
-    ::testing::Values(TPFA, QuasiTPFA, QuasiRT, Simple, BdVLM),
+    ::testing::Values( TPFA, QuasiTPFA, QuasiRT, Simple, BdVLM ),
     ::testing::Values(
       "polyhedral_voronoi_complex.vtk",
       "polyhedral_voronoi_lattice.vtk",
       "polyhedral_voronoi_regular.vtk"
+      )
     )
-  )
-);
+  );
 
 
 TEST_P( MFDIntegrationTest, PressureFieldL2Error )
@@ -308,9 +350,9 @@ TEST_P( MFDIntegrationTest, PressureFieldL2Error )
 
   // Run the simulation to compute the numerical pressure
   solver.setupSystem( domain, solver.getDofManager(), solver.getLocalMatrix(), solver.getSystemRhs(), solver.getSystemSolution() );
-  solver.implicitStepSetup( 0.0, 86400, domain );
-  solver.solverStep( 0.0, 86400, 0, domain );
-  solver.implicitStepComplete( 0.0, 86400, domain );
+  solver.implicitStepSetup( 0.0, MAX_TIME_STEP, domain );
+  solver.solverStep( 0.0, MAX_TIME_STEP, 0, domain );
+  solver.implicitStepComplete( 0.0, MAX_TIME_STEP, domain );
 
   // Access the mesh and subregion
   MeshLevel & mesh = domain.getMeshBody( 0 ).getBaseDiscretization();
@@ -328,7 +370,7 @@ TEST_P( MFDIntegrationTest, PressureFieldL2Error )
   {
     real64 x = centers[i][0];
     real64 volume = volumes[i];
-    real64 pNumeric = p_h[i] * 1.0e-6; // Convert pressure to MPa
+    real64 pNumeric = p_h[i] * to_MPA; // Convert pressure to MPa
     real64 pExact = 20.0 * (1.0 - x) + 10.0 * x;
     l2Error += (pNumeric - pExact) * (pNumeric - pExact) * volume;
     totalVolume += volume;
@@ -337,20 +379,22 @@ TEST_P( MFDIntegrationTest, PressureFieldL2Error )
   l2Error = std::sqrt( l2Error / totalVolume );
 
   auto [innerProduct, meshFile] = GetParam();
-  if (innerProduct == TPFA and std::string(meshFile).compare("polyhedral_voronoi_regular.vtk") != 0)
+  if( innerProduct == TPFA and std::string( meshFile ).compare( "polyhedral_voronoi_regular.vtk" ) != 0 )
   {
     // Assert that the L2 error is not exact
-    EXPECT_GT(l2Error, 1.0e-10 );
-  }else{
+    EXPECT_GT( l2Error, PRESSURE_L2_TOLERANCE );
+  }
+  else
+  {
     // Assert that the L2 error is within machine precision
-    EXPECT_NEAR( l2Error, 0.0, 1.0e-10 );
+    EXPECT_NEAR( l2Error, 0.0, PRESSURE_L2_TOLERANCE );
   }
 }
 
-// cross-check test. Ensure that MFD with innerProductType="TPFA" produces exactly the same pressure field as the TPFA solver
-
-// Parameterized test fixture: just stores mesh file name
-class TPFAvsMFDTPFATest : public ::testing::TestWithParam<const char *>
+// Ensures that MFD with innerProductType="TPFA" reproduces exactly the
+// same pressure field as the standard TPFA solver for each mesh.
+// This test guarantees solver consistency between TPFA and MFD formulations.
+class TPFAvsMFDTPFATest : public ::testing::TestWithParam< const char * >
 {
 protected:
   TPFAvsMFDTPFATest() = default;
@@ -364,44 +408,44 @@ INSTANTIATE_TEST_SUITE_P(
     "polyhedral_voronoi_complex.vtk",
     "polyhedral_voronoi_lattice.vtk",
     "polyhedral_voronoi_regular.vtk"
-  )
-);
+    )
+  );
 
-TEST_P(TPFAvsMFDTPFATest, PressureFieldComparison)
+TEST_P( TPFAvsMFDTPFATest, PressureFieldComparison )
 {
-  const char* meshFile = GetParam();
+  const char * meshFile = GetParam();
 
-  arrayView1d< real64> p_tpfa;
-  arrayView1d< real64> p_mfd;
+  arrayView1d< real64 > p_tpfa;
+  arrayView1d< real64 > p_mfd;
   geos::localIndex n_data_tpfa = 0;
   geos::localIndex n_data_mfd = 0;
 
   // --- Run TPFA solver ---
   {
-    GeosxState tpfaState(std::make_unique<CommandLineOptions>(g_commandLineOptions));
+    GeosxState tpfaState( std::make_unique< CommandLineOptions >( g_commandLineOptions ));
 
-    std::string xmlTPFA = generateXmlInputTPFA(meshFile);
-    setupProblemFromXML(tpfaState.getProblemManager(), xmlTPFA.c_str());
+    std::string xmlTPFA = generateXmlInputTPFA( meshFile );
+    setupProblemFromXML( tpfaState.getProblemManager(), xmlTPFA.c_str());
 
     ProblemManager & pmTPFA = tpfaState.getProblemManager();
     DomainPartition & domainTPFA = pmTPFA.getDomainPartition();
 
     auto & solverTPFA =
       dynamic_cast< SinglePhaseFVM< SinglePhaseBase > & >(
-        pmTPFA.getPhysicsSolverManager().getGroup< SinglePhaseFVM< SinglePhaseBase > >("SinglePhaseFlow"));
+        pmTPFA.getPhysicsSolverManager().getGroup< SinglePhaseFVM< SinglePhaseBase > >( "SinglePhaseFlow" ));
 
-    solverTPFA.setupSystem(domainTPFA, solverTPFA.getDofManager(),
-                           solverTPFA.getLocalMatrix(), solverTPFA.getSystemRhs(),
-                           solverTPFA.getSystemSolution());
-    solverTPFA.implicitStepSetup(0.0, 86400, domainTPFA);
-    solverTPFA.solverStep(0.0, 86400, 0, domainTPFA);
-    solverTPFA.implicitStepComplete(0.0, 86400, domainTPFA);
+    solverTPFA.setupSystem( domainTPFA, solverTPFA.getDofManager(),
+                            solverTPFA.getLocalMatrix(), solverTPFA.getSystemRhs(),
+                            solverTPFA.getSystemSolution());
+    solverTPFA.implicitStepSetup( 0.0, MAX_TIME_STEP, domainTPFA );
+    solverTPFA.solverStep( 0.0, MAX_TIME_STEP, 0, domainTPFA );
+    solverTPFA.implicitStepComplete( 0.0, MAX_TIME_STEP, domainTPFA );
 
-    MeshLevel & meshTPFA = domainTPFA.getMeshBody(0).getBaseDiscretization();
+    MeshLevel & meshTPFA = domainTPFA.getMeshBody( 0 ).getBaseDiscretization();
     CellElementSubRegion & subRegionTPFA =
-      meshTPFA.getElemManager().getRegion(0).getSubRegion< CellElementSubRegion >(0);
+      meshTPFA.getElemManager().getRegion( 0 ).getSubRegion< CellElementSubRegion >( 0 );
 
-    p_tpfa = std::move(subRegionTPFA.getField< fields::flow::pressure >());
+    p_tpfa = std::move( subRegionTPFA.getField< fields::flow::pressure >());
     n_data_tpfa = subRegionTPFA.size();
 
     // tpfaState destroyed here — CommunicationTools cleaned up
@@ -409,49 +453,45 @@ TEST_P(TPFAvsMFDTPFATest, PressureFieldComparison)
 
   // --- Run MFD solver with innerProductType=TPFA ---
   {
-    GeosxState mfdState(std::make_unique<CommandLineOptions>(g_commandLineOptions));
+    GeosxState mfdState( std::make_unique< CommandLineOptions >( g_commandLineOptions ));
 
-    std::string xmlMFD = generateXmlInputMFD(TPFA, meshFile);
-    setupProblemFromXML(mfdState.getProblemManager(), xmlMFD.c_str());
+    std::string xmlMFD = generateXmlInputMFD( TPFA, meshFile );
+    setupProblemFromXML( mfdState.getProblemManager(), xmlMFD.c_str());
 
     ProblemManager & pmMFD = mfdState.getProblemManager();
     DomainPartition & domainMFD = pmMFD.getDomainPartition();
 
     auto & solverMFD =
       dynamic_cast< SinglePhaseHybridFVM & >(
-        pmMFD.getPhysicsSolverManager().getGroup< SinglePhaseHybridFVM >("SinglePhaseFlow"));
+        pmMFD.getPhysicsSolverManager().getGroup< SinglePhaseHybridFVM >( "SinglePhaseFlow" ));
 
-    solverMFD.setupSystem(domainMFD, solverMFD.getDofManager(),
-                          solverMFD.getLocalMatrix(), solverMFD.getSystemRhs(),
-                          solverMFD.getSystemSolution());
-    solverMFD.implicitStepSetup(0.0, 86400, domainMFD);
-    solverMFD.solverStep(0.0, 86400, 0, domainMFD);
-    solverMFD.implicitStepComplete(0.0, 86400, domainMFD);
+    solverMFD.setupSystem( domainMFD, solverMFD.getDofManager(),
+                           solverMFD.getLocalMatrix(), solverMFD.getSystemRhs(),
+                           solverMFD.getSystemSolution());
+    solverMFD.implicitStepSetup( 0.0, MAX_TIME_STEP, domainMFD );
+    solverMFD.solverStep( 0.0, MAX_TIME_STEP, 0, domainMFD );
+    solverMFD.implicitStepComplete( 0.0, MAX_TIME_STEP, domainMFD );
 
-    MeshLevel & meshMFD = domainMFD.getMeshBody(0).getBaseDiscretization();
+    MeshLevel & meshMFD = domainMFD.getMeshBody( 0 ).getBaseDiscretization();
     CellElementSubRegion & subRegionMFD =
-      meshMFD.getElemManager().getRegion(0).getSubRegion< CellElementSubRegion >(0);
+      meshMFD.getElemManager().getRegion( 0 ).getSubRegion< CellElementSubRegion >( 0 );
 
-    p_mfd = std::move(subRegionMFD.getField< fields::flow::pressure >());
+    p_mfd = std::move( subRegionMFD.getField< fields::flow::pressure >());
     n_data_mfd = subRegionMFD.size();
 
     // mfdState destroyed here
   }
 
   // --- Compare cellwise pressures ---
-  ASSERT_EQ(n_data_tpfa, n_data_mfd);
-  for (localIndex i = 0; i < n_data_tpfa; ++i)
+  ASSERT_EQ( n_data_tpfa, n_data_mfd );
+  for( localIndex i = 0; i < n_data_tpfa; ++i )
   {
     real64 p_num_tpfa = p_tpfa[i];
     real64 p_num_mfd  = p_mfd[i];
-    real64 p_diff     = (p_num_tpfa - p_num_mfd) * 1.0e-6; // Convert pressure to MPa
-    EXPECT_NEAR(p_diff, 0.0, 1.0e-10) << "Mismatch at cell " << i;
+    real64 p_diff     = (p_num_tpfa - p_num_mfd) * to_MPA; // Convert pressure to MPa
+    EXPECT_NEAR( p_diff, 0.0, PRESSURE_L2_TOLERANCE ) << "Mismatch at cell " << i;
   }
 }
-
-
-
-
 
 
 
