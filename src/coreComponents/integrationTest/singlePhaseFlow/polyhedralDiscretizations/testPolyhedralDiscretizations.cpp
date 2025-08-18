@@ -349,24 +349,14 @@ TEST_P( MFDIntegrationTest, PressureFieldL2Error )
 
 // cross-check test. Ensure that MFD with innerProductType="TPFA" produces exactly the same pressure field as the TPFA solver
 
+// Parameterized test fixture: just stores mesh file name
 class TPFAvsMFDTPFATest : public ::testing::TestWithParam<const char *>
 {
-public:
-  TPFAvsMFDTPFATest()
-    : tpfaState( std::make_unique< CommandLineOptions >( g_commandLineOptions ) ),
-      mfdState( std::make_unique< CommandLineOptions >( g_commandLineOptions ) ) {}
-
 protected:
-  void SetUp() override
-  {
-    meshFile = GetParam();
-  }
-
-  std::string meshFile;
-  GeosxState tpfaState;
-  GeosxState mfdState;
+  TPFAvsMFDTPFATest() = default;
 };
 
+// Instantiate parameterized test for all mesh files
 INSTANTIATE_TEST_SUITE_P(
   MeshFiles,
   TPFAvsMFDTPFATest,
@@ -377,80 +367,90 @@ INSTANTIATE_TEST_SUITE_P(
   )
 );
 
-
-TEST_P( TPFAvsMFDTPFATest, PressureFieldComparison )
+TEST_P(TPFAvsMFDTPFATest, PressureFieldComparison)
 {
+  const char* meshFile = GetParam();
+
   arrayView1d< real64> p_tpfa;
   arrayView1d< real64> p_mfd;
   geos::localIndex n_data_tpfa = 0;
   geos::localIndex n_data_mfd = 0;
 
-  const char* meshFile = GetParam();
-
   // --- Run TPFA solver ---
   {
-    GeosxState tpfaState( std::make_unique< CommandLineOptions >( g_commandLineOptions ) );
-    std::string xmlTPFA = generateXmlInputTPFA( meshFile );
-    setupProblemFromXML( tpfaState.getProblemManager(), xmlTPFA.c_str() );
+    GeosxState tpfaState(std::make_unique<CommandLineOptions>(g_commandLineOptions));
+
+    std::string xmlTPFA = generateXmlInputTPFA(meshFile);
+    setupProblemFromXML(tpfaState.getProblemManager(), xmlTPFA.c_str());
 
     ProblemManager & pmTPFA = tpfaState.getProblemManager();
     DomainPartition & domainTPFA = pmTPFA.getDomainPartition();
 
     auto & solverTPFA =
       dynamic_cast< SinglePhaseFVM< SinglePhaseBase > & >(
-        pmTPFA.getPhysicsSolverManager().getGroup< SinglePhaseFVM< SinglePhaseBase > >( "SinglePhaseFlow" ) );
+        pmTPFA.getPhysicsSolverManager().getGroup< SinglePhaseFVM< SinglePhaseBase > >("SinglePhaseFlow"));
 
-    solverTPFA.setupSystem( domainTPFA, solverTPFA.getDofManager(),
-                            solverTPFA.getLocalMatrix(), solverTPFA.getSystemRhs(), solverTPFA.getSystemSolution() );
-    solverTPFA.implicitStepSetup( 0.0, 86400, domainTPFA );
-    solverTPFA.solverStep( 0.0, 86400, 0, domainTPFA );
-    solverTPFA.implicitStepComplete( 0.0, 86400, domainTPFA );
+    solverTPFA.setupSystem(domainTPFA, solverTPFA.getDofManager(),
+                           solverTPFA.getLocalMatrix(), solverTPFA.getSystemRhs(),
+                           solverTPFA.getSystemSolution());
+    solverTPFA.implicitStepSetup(0.0, 86400, domainTPFA);
+    solverTPFA.solverStep(0.0, 86400, 0, domainTPFA);
+    solverTPFA.implicitStepComplete(0.0, 86400, domainTPFA);
 
-    MeshLevel & meshTPFA = domainTPFA.getMeshBody( 0 ).getBaseDiscretization();
+    MeshLevel & meshTPFA = domainTPFA.getMeshBody(0).getBaseDiscretization();
     CellElementSubRegion & subRegionTPFA =
-      meshTPFA.getElemManager().getRegion( 0 ).getSubRegion< CellElementSubRegion >( 0 );
+      meshTPFA.getElemManager().getRegion(0).getSubRegion< CellElementSubRegion >(0);
 
     p_tpfa = std::move(subRegionTPFA.getField< fields::flow::pressure >());
     n_data_tpfa = subRegionTPFA.size();
-  } // <--- tpfaState destroyed here, CommunicationTools cleaned up
+
+    // tpfaState destroyed here — CommunicationTools cleaned up
+  }
 
   // --- Run MFD solver with innerProductType=TPFA ---
   {
-    GeosxState mfdState( std::make_unique< CommandLineOptions >( g_commandLineOptions ) );
-    std::string xmlMFD = generateXmlInputMFD( TPFA, meshFile );
-    setupProblemFromXML( mfdState.getProblemManager(), xmlMFD.c_str() );
+    GeosxState mfdState(std::make_unique<CommandLineOptions>(g_commandLineOptions));
+
+    std::string xmlMFD = generateXmlInputMFD(TPFA, meshFile);
+    setupProblemFromXML(mfdState.getProblemManager(), xmlMFD.c_str());
 
     ProblemManager & pmMFD = mfdState.getProblemManager();
     DomainPartition & domainMFD = pmMFD.getDomainPartition();
 
     auto & solverMFD =
       dynamic_cast< SinglePhaseHybridFVM & >(
-        pmMFD.getPhysicsSolverManager().getGroup< SinglePhaseHybridFVM >( "SinglePhaseFlow" ) );
+        pmMFD.getPhysicsSolverManager().getGroup< SinglePhaseHybridFVM >("SinglePhaseFlow"));
 
-    solverMFD.setupSystem( domainMFD, solverMFD.getDofManager(),
-                           solverMFD.getLocalMatrix(), solverMFD.getSystemRhs(), solverMFD.getSystemSolution() );
-    solverMFD.implicitStepSetup( 0.0, 86400, domainMFD );
-    solverMFD.solverStep( 0.0, 86400, 0, domainMFD );
-    solverMFD.implicitStepComplete( 0.0, 86400, domainMFD );
+    solverMFD.setupSystem(domainMFD, solverMFD.getDofManager(),
+                          solverMFD.getLocalMatrix(), solverMFD.getSystemRhs(),
+                          solverMFD.getSystemSolution());
+    solverMFD.implicitStepSetup(0.0, 86400, domainMFD);
+    solverMFD.solverStep(0.0, 86400, 0, domainMFD);
+    solverMFD.implicitStepComplete(0.0, 86400, domainMFD);
 
-    MeshLevel & meshMFD = domainMFD.getMeshBody( 0 ).getBaseDiscretization();
+    MeshLevel & meshMFD = domainMFD.getMeshBody(0).getBaseDiscretization();
     CellElementSubRegion & subRegionMFD =
-      meshMFD.getElemManager().getRegion( 0 ).getSubRegion< CellElementSubRegion >( 0 );
+      meshMFD.getElemManager().getRegion(0).getSubRegion< CellElementSubRegion >(0);
 
     p_mfd = std::move(subRegionMFD.getField< fields::flow::pressure >());
     n_data_mfd = subRegionMFD.size();
+
+    // mfdState destroyed here
   }
 
   // --- Compare cellwise pressures ---
-  ASSERT_EQ( n_data_tpfa, n_data_mfd );
-  for( localIndex i = 0; i < n_data_tpfa; ++i )
+  ASSERT_EQ(n_data_tpfa, n_data_mfd);
+  for (localIndex i = 0; i < n_data_tpfa; ++i)
   {
     real64 p_num_tpfa = p_tpfa[i];
     real64 p_num_mfd  = p_mfd[i];
     real64 p_diff     = (p_num_tpfa - p_num_mfd) * 1.0e-6; // Convert pressure to MPa
-    EXPECT_NEAR( p_diff, 0.0, 1.0e-10 ) << "Mismatch at cell " << i;
+    EXPECT_NEAR(p_diff, 0.0, 1.0e-10) << "Mismatch at cell " << i;
   }
 }
+
+
+
 
 
 
