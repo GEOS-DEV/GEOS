@@ -130,11 +130,6 @@ std::string generateXmlInputTPFA( std::string const & meshFile )
       </SinglePhaseFVM>
     </Solvers>
 
-    <Events minTime="0.0" maxTime="86400">
-      <PeriodicEvent name="solverApplications"
-        endTime="86400" maxEventDt="86400"
-        target="/Solvers/SinglePhaseFlow"/>
-    </Events>
   </Problem>
   )xml";
   return oss.str();
@@ -298,12 +293,6 @@ std::string generateXmlInputMFD( std::string const & innerProductType,
     </SinglePhaseHybridFVM>
   </Solvers>
 
-  <Events minTime="0.0" maxTime="86400">
-    <PeriodicEvent name="solverApplications"
-      endTime="86400" maxEventDt="86400"
-      target="/Solvers/SinglePhaseFlow"/>
-  </Events>
-
   </Problem>
   )xml";
 
@@ -426,8 +415,8 @@ TEST_P( TPFAvsMFDTPFATest, PressureFieldComparison )
   // Use the CMAKE-defined TEST_BINARY_DIR variable
   std::string testBinaryDir = TEST_BINARY_DIR;
 
-  arrayView1d< real64 > p_tpfa;
-  arrayView1d< real64 > p_mfd;
+  std::vector< real64 > p_tpfa;
+  std::vector< real64 > p_mfd;
   geos::localIndex n_data_tpfa = 0;
   geos::localIndex n_data_mfd = 0;
 
@@ -456,7 +445,8 @@ TEST_P( TPFAvsMFDTPFATest, PressureFieldComparison )
     CellElementSubRegion & subRegionTPFA =
       meshTPFA.getElemManager().getRegion( 0 ).getSubRegion< CellElementSubRegion >( 0 );
 
-    p_tpfa = std::move( subRegionTPFA.getField< fields::flow::pressure >());
+    p_tpfa = std::vector< real64 >( subRegionTPFA.getField< fields::flow::pressure >().begin(),
+                                    subRegionTPFA.getField< fields::flow::pressure >().end());
     n_data_tpfa = subRegionTPFA.size();
 
     // tpfaState destroyed here — CommunicationTools cleaned up
@@ -487,7 +477,8 @@ TEST_P( TPFAvsMFDTPFATest, PressureFieldComparison )
     CellElementSubRegion & subRegionMFD =
       meshMFD.getElemManager().getRegion( 0 ).getSubRegion< CellElementSubRegion >( 0 );
 
-    p_mfd = std::move( subRegionMFD.getField< fields::flow::pressure >());
+    p_mfd = std::vector< real64 >( subRegionMFD.getField< fields::flow::pressure >().begin(),
+                                   subRegionMFD.getField< fields::flow::pressure >().end());
     n_data_mfd = subRegionMFD.size();
 
     // mfdState destroyed here
