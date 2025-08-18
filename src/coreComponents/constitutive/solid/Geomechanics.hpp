@@ -1260,7 +1260,7 @@ int GeomechanicsUpdates::computeStep( real64 const ( & D )[6],               // 
     std::cout << "E = " << (equilibriumPorosityOffset) << std::endl;
 
     //real64 phi_e = std::max(1.e-10 , A * exp( -std::pow(p/B ,equilibriumPorosityPressureExponent) ) + equilibriumPorosityOffset  + (std::max(temperature - m_referenceTemperature, 0.0) * (-0.0003)) );    
-		real64 phi_e = std::max(1.e-10 , A * exp( -std::pow(p/B ,equilibriumPorosityPressureExponent) ) + equilibriumPorosityOffset  + (-3.e-6 * std::pow(std::max(temperature - m_referenceTemperature, 0.0), 2.)) + (0.0014 * std::max(temperature - m_referenceTemperature, 0.0)));    
+		real64 phi_e = std::max(1.e-10 , A * exp( -std::pow(p/B ,equilibriumPorosityPressureExponent) ) + equilibriumPorosityOffset  + (-3.e-6 * std::pow(std::max(temperature - m_referenceTemperature, 0.0), 2.)) - (0.0002 * std::max(temperature - m_referenceTemperature, 0.0)));    
     std::cout << "phi_e = " << (phi_e) << std::endl;
 
     // uncomment for debugging:
