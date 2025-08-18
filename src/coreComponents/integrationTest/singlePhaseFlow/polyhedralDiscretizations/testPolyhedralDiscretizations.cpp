@@ -292,13 +292,15 @@ char const * xmlInputMFD =
   </Problem>
   )xml";
 
-class TPFAIntegrationTest : public ::testing::Test {
+class TPFAIntegrationTest : public ::testing::Test
+{
 
 public:
-  TPFAIntegrationTest() : state( std::make_unique< CommandLineOptions >( g_commandLineOptions ) ) {}
+  TPFAIntegrationTest(): state( std::make_unique< CommandLineOptions >( g_commandLineOptions ) ) {}
 
 protected:
-  void SetUp() override {
+  void SetUp() override
+  {
     // Setup problem from XML input
     setupProblemFromXML( state.getProblemManager(), xmlInputTPFA );
   }
@@ -306,13 +308,15 @@ protected:
   GeosxState state;
 };
 
-class MFDIntegrationTest : public ::testing::Test {
+class MFDIntegrationTest : public ::testing::Test
+{
 
 public:
-  MFDIntegrationTest() : state( std::make_unique< CommandLineOptions >( g_commandLineOptions ) ) {}
+  MFDIntegrationTest(): state( std::make_unique< CommandLineOptions >( g_commandLineOptions ) ) {}
 
 protected:
-  void SetUp() override {
+  void SetUp() override
+  {
     // Setup problem from XML input
     setupProblemFromXML( state.getProblemManager(), xmlInputMFD );
   }
@@ -320,12 +324,14 @@ protected:
   GeosxState state;
 };
 
-TEST_F(TPFAIntegrationTest, PressureFieldL2Error) {
+TEST_F( TPFAIntegrationTest, PressureFieldL2Error )
+{
   ProblemManager & problemManager = state.getProblemManager();
   DomainPartition & domain = problemManager.getDomainPartition();
 
   // Retrieve the solver using the PhysicsSolverManager
-  SinglePhaseFVM< SinglePhaseBase > & solver = dynamic_cast< SinglePhaseFVM< SinglePhaseBase > & >( problemManager.getPhysicsSolverManager().getGroup< SinglePhaseFVM< SinglePhaseBase > >( "SinglePhaseFlow" ) );
+  SinglePhaseFVM< SinglePhaseBase > & solver =
+    dynamic_cast< SinglePhaseFVM< SinglePhaseBase > & >( problemManager.getPhysicsSolverManager().getGroup< SinglePhaseFVM< SinglePhaseBase > >( "SinglePhaseFlow" ) );
 
   // Run the simulation to compute the numerical pressure
   solver.setupSystem( domain, solver.getDofManager(), solver.getLocalMatrix(), solver.getSystemRhs(), solver.getSystemSolution() );
@@ -334,33 +340,35 @@ TEST_F(TPFAIntegrationTest, PressureFieldL2Error) {
   solver.implicitStepComplete( 0.0, 1.0e6, domain );
 
   // Access the mesh and subregion
-  MeshLevel & mesh = domain.getMeshBody(0).getBaseDiscretization();
-  CellElementSubRegion & subRegion = mesh.getElemManager().getRegion(0).getSubRegion<CellElementSubRegion>(0);
+  MeshLevel & mesh = domain.getMeshBody( 0 ).getBaseDiscretization();
+  CellElementSubRegion & subRegion = mesh.getElemManager().getRegion( 0 ).getSubRegion< CellElementSubRegion >( 0 );
 
   // Retrieve pressure field and cell centers
-  arrayView2d<real64 const> centers = subRegion.getElementCenter();
-  arrayView1d<real64 const> volumes = subRegion.getElementVolume();
+  arrayView2d< real64 const > centers = subRegion.getElementCenter();
+  arrayView1d< real64 const > volumes = subRegion.getElementVolume();
   arrayView1d< real64 const > const p_h = subRegion.getField< fields::flow::pressure >();
 
   // Compute exact pressure and L2 error
   real64 l2Error = 0.0;
   real64 totalVolume = 0.0;
-  for( localIndex i = 0; i < subRegion.size(); ++i ) {
+  for( localIndex i = 0; i < subRegion.size(); ++i )
+  {
     real64 x = centers[i][0];
     real64 volume = volumes[i];
-    real64 pNumeric = p_h[i];
-    real64 pExact = (2.0e7) * (1.0 - x) + (1.0e7) * x;
+    real64 pNumeric = p_h[i] * 1.0e-6; // Convert pressure to MPa
+    real64 pExact = 20.0 * (1.0 - x) + 10.0 * x;
     l2Error += (pNumeric - pExact) * (pNumeric - pExact) * volume;
     totalVolume += volume;
   }
 
-  l2Error = std::sqrt(l2Error / totalVolume);
+  l2Error = std::sqrt( l2Error / totalVolume );
 
   // Assert that the L2 error is within machine precision
-  EXPECT_NEAR(l2Error, 0.0, 1.0e-5);
+  EXPECT_NEAR( l2Error, 0.0, 1.0e-10 );
 }
 
-TEST_F(MFDIntegrationTest, PressureFieldL2Error) {
+TEST_F( MFDIntegrationTest, PressureFieldL2Error )
+{
   ProblemManager & problemManager = state.getProblemManager();
   DomainPartition & domain = problemManager.getDomainPartition();
 
@@ -374,35 +382,37 @@ TEST_F(MFDIntegrationTest, PressureFieldL2Error) {
   solver.implicitStepComplete( 0.0, 1.0e6, domain );
 
   // Access the mesh and subregion
-  MeshLevel & mesh = domain.getMeshBody(0).getBaseDiscretization();
-  CellElementSubRegion & subRegion = mesh.getElemManager().getRegion(0).getSubRegion<CellElementSubRegion>(0);
+  MeshLevel & mesh = domain.getMeshBody( 0 ).getBaseDiscretization();
+  CellElementSubRegion & subRegion = mesh.getElemManager().getRegion( 0 ).getSubRegion< CellElementSubRegion >( 0 );
 
   // Retrieve pressure field and cell centers
-  arrayView2d<real64 const> centers = subRegion.getElementCenter();
-  arrayView1d<real64 const> volumes = subRegion.getElementVolume();
+  arrayView2d< real64 const > centers = subRegion.getElementCenter();
+  arrayView1d< real64 const > volumes = subRegion.getElementVolume();
   arrayView1d< real64 const > const p_h = subRegion.getField< fields::flow::pressure >();
 
   // Compute exact pressure and L2 error
   real64 l2Error = 0.0;
   real64 totalVolume = 0.0;
-  for( localIndex i = 0; i < subRegion.size(); ++i ) {
+  for( localIndex i = 0; i < subRegion.size(); ++i )
+  {
     real64 x = centers[i][0];
     real64 volume = volumes[i];
-    real64 pNumeric = p_h[i];
-    real64 pExact = (2.0e7) * (1.0 - x) + (1.0e7) * x;
+    real64 pNumeric = p_h[i] * 1.0e-6; // Convert pressure to MPa
+    real64 pExact = 20.0 * (1.0 - x) + 10.0 * x;
     l2Error += (pNumeric - pExact) * (pNumeric - pExact) * volume;
     totalVolume += volume;
   }
 
-  l2Error = std::sqrt(l2Error / totalVolume);
+  l2Error = std::sqrt( l2Error / totalVolume );
 
   // Assert that the L2 error is within machine precision
-  EXPECT_NEAR(l2Error, 0.0, 1.0e-5);
+  EXPECT_NEAR( l2Error, 0.0, 1.0e-10 );
 }
 
-int main(int argc, char **argv) {
-  ::testing::InitGoogleTest(&argc, argv);
-  g_commandLineOptions = *geos::basicSetup(argc, argv);
+int main( int argc, char * *argv )
+{
+  ::testing::InitGoogleTest( &argc, argv );
+  g_commandLineOptions = *geos::basicSetup( argc, argv );
   int result = RUN_ALL_TESTS();
   geos::basicCleanup();
   return result;
