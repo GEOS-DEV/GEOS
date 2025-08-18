@@ -34,146 +34,104 @@ static constexpr auto Simple    = "simple";
 static constexpr auto BdVLM     = "beiraoDaVeigaLipnikovManzini";
 
 
-// Define the XML input for the test
-char const * xmlInputTPFA =
-  R"xml(
+std::string generateXmlInputTPFA( std::string const & meshFile )
+{
+  std::ostringstream oss;
+  oss << R"xml(
   <Problem>
-
-  <Mesh>
-    <VTKMesh
-      name="mesh"
-      logLevel="5"  
-      partitionRefinement="0"
-      useGlobalIds="0"
-      file="polyhedral_voronoi_regular.vtk"/>
-  </Mesh>
+    <Mesh>
+      <VTKMesh
+        name="mesh"
+        logLevel="5"  
+        partitionRefinement="0"
+        useGlobalIds="0"
+        file=")xml" << meshFile << R"xml("/>
+    </Mesh>
 
     <Geometry>
-        <Box
-        name="westBC"
-        xMin="{ -0.001, 0.0, 0.0}"
-        xMax="{ +0.001, 1.0, 1.0}"/>
-        <Box
-        name="eastBC"
-        xMin="{ +0.999, 0.0, 0.0}"
-        xMax="{ +1.001, 1.0, 1.0}"/>
+      <Box name="westBC" xMin="{ -0.001, 0.0, 0.0}" xMax="{ +0.001, 1.0, 1.0}"/>
+      <Box name="eastBC" xMin="{ +0.999, 0.0, 0.0}" xMax="{ +1.001, 1.0, 1.0}"/>
     </Geometry>
 
     <ElementRegions>
-      <CellElementRegion
-        name="Domain"
-        cellBlocks="{ * }"
-        materialList="{rock, fluid }"/>
+      <CellElementRegion name="Domain" cellBlocks="{ * }" materialList="{rock, fluid }"/>
     </ElementRegions>
 
     <Solvers gravityVector="{ 0.0, 0.0, 0.0}"> </Solvers>
 
     <Constitutive>
-
-      <CompressibleSinglePhaseFluid
-        name="fluid"
-        defaultDensity="1000"
-        defaultViscosity="0.001"
-        referencePressure="0.0"
-        compressibility="0.0"
-        viscosibility="0.0"/>
-
-      <CompressibleSolidConstantPermeability
-        name="rock"
-        solidModelName="nullSolid"
-        porosityModelName="rockPorosity"
-        permeabilityModelName="rockPerm"/>
-
-      <NullModel
-        name="nullSolid"/>
-
-      <PressurePorosity
-        name="rockPorosity"
-        defaultReferencePorosity="0.1"
-        referencePressure="0.0"
-        compressibility="0.0"/>
-
-      <ConstantPermeability
-        name="rockPerm"
+      <CompressibleSinglePhaseFluid name="fluid"
+        defaultDensity="1000" defaultViscosity="0.001"
+        referencePressure="0.0" compressibility="0.0" viscosibility="0.0"/>
+      <CompressibleSolidConstantPermeability name="rock"
+        solidModelName="nullSolid" porosityModelName="rockPorosity" permeabilityModelName="rockPerm"/>
+      <NullModel name="nullSolid"/>
+      <PressurePorosity name="rockPorosity"
+        defaultReferencePorosity="0.1" referencePressure="0.0" compressibility="0.0"/>
+      <ConstantPermeability name="rockPerm"
         permeabilityComponents="{ 1.0e-13, 1.0e-13, 1.0e-13 }"/>
-
     </Constitutive>
 
     <FieldSpecifications>
-
-      <FieldSpecification
-        name="initialPressure"
-        initialCondition="1"
-        setNames="{ all }"
-        objectPath="ElementRegions/Domain"
-        fieldName="pressure"
-        scale="1.0e7"/>    
-      <FieldSpecification
-        name="west_pressure"
-        setNames="{ westBC }"
-        objectPath="faceManager"
-        fieldName="pressure"
-        scale="2.0e7" />
-      <FieldSpecification
-        name="east_pressure"
-        setNames="{ eastBC }"
-        objectPath="faceManager"
-        fieldName="pressure"
-        scale="1.0e7" />      
-
+      <FieldSpecification name="initialPressure" initialCondition="1"
+        setNames="{ all }" objectPath="ElementRegions/Domain" fieldName="pressure" scale="1.0e7"/>    
+      <FieldSpecification name="west_pressure"
+        setNames="{ westBC }" objectPath="faceManager" fieldName="pressure" scale="2.0e7"/>
+      <FieldSpecification name="east_pressure"
+        setNames="{ eastBC }" objectPath="faceManager" fieldName="pressure" scale="1.0e7"/>      
     </FieldSpecifications>
 
     <NumericalMethods>
       <FiniteVolume>
-        <TwoPointFluxApproximation
-          name="singlePhaseTPFA"/>
+        <TwoPointFluxApproximation name="singlePhaseTPFA"/>
       </FiniteVolume>
     </NumericalMethods>
 
     <Solvers>
-      <SinglePhaseFVM
-        name="SinglePhaseFlow"
-        logLevel="1"
-        discretization="singlePhaseTPFA"
-        targetRegions="{ Domain }">
-        <NonlinearSolverParameters
-          newtonTol="1.0e-5"
-          newtonMaxIter="2"/>
-        <LinearSolverParameters
-          directParallel="0"/>
+      <SinglePhaseFVM name="SinglePhaseFlow" logLevel="1"
+        discretization="singlePhaseTPFA" targetRegions="{ Domain }">
+        <NonlinearSolverParameters newtonTol="1.0e-5" newtonMaxIter="2"/>
+        <LinearSolverParameters directParallel="0"/>
       </SinglePhaseFVM>
     </Solvers>
 
-    <Events
-      minTime="0.0"
-      maxTime="86400">
-      <PeriodicEvent
-        name="solverApplications"
-        endTime="86400"
-        maxEventDt="86400"
+    <Events minTime="0.0" maxTime="86400">
+      <PeriodicEvent name="solverApplications"
+        endTime="86400" maxEventDt="86400"
         target="/Solvers/SinglePhaseFlow"/>
     </Events>
-
   </Problem>
   )xml";
+  return oss.str();
+}
 
-class TPFAIntegrationTest : public ::testing::Test
+class TPFAIntegrationTest : public ::testing::TestWithParam<const char *>
 {
-
 public:
-  TPFAIntegrationTest(): state( std::make_unique< CommandLineOptions >( g_commandLineOptions ) ) {}
+  TPFAIntegrationTest()
+    : state( std::make_unique< CommandLineOptions >( g_commandLineOptions ) ) {}
 
 protected:
   void SetUp() override
   {
-    // Setup problem from XML input
-    setupProblemFromXML( state.getProblemManager(), xmlInputTPFA );
+    std::string xmlInput = generateXmlInputTPFA( GetParam() );
+    setupProblemFromXML( state.getProblemManager(), xmlInput.c_str() );
   }
 
   GeosxState state;
 };
 
-TEST_F( TPFAIntegrationTest, PressureFieldL2Error )
+INSTANTIATE_TEST_SUITE_P(
+  MeshFiles,
+  TPFAIntegrationTest,
+  ::testing::Values(
+    "polyhedral_voronoi_complex.vtk",
+    "polyhedral_voronoi_lattice.vtk",
+    "polyhedral_voronoi_regular.vtk"
+  )
+);
+
+TEST_P( TPFAIntegrationTest, PressureFieldL2Error )
 {
   ProblemManager & problemManager = state.getProblemManager();
   DomainPartition & domain = problemManager.getDomainPartition();
@@ -211,12 +169,21 @@ TEST_F( TPFAIntegrationTest, PressureFieldL2Error )
   }
 
   l2Error = std::sqrt( l2Error / totalVolume );
+  
+  std::string meshFile = GetParam();
+  if (meshFile.compare("polyhedral_voronoi_regular.vtk") == 0)
+  {
+    // Assert that the L2 error is within machine precision
+    EXPECT_NEAR( l2Error, 0.0, 1.0e-10 );
+  }else{
+    // Assert that the L2 error is not exact
+    EXPECT_GT( l2Error, 1.0e-10 );
+  }
 
-  // Assert that the L2 error is within machine precision
-  EXPECT_NEAR( l2Error, 0.0, 1.0e-10 );
 }
 
-std::string generateXmlInputMFD( std::string const & innerProductType )
+std::string generateXmlInputMFD( std::string const & innerProductType,
+                                 std::string const & meshFile )
 {
   std::ostringstream oss;
   oss << R"xml(
@@ -228,78 +195,44 @@ std::string generateXmlInputMFD( std::string const & innerProductType )
       logLevel="5"  
       partitionRefinement="0"
       useGlobalIds="0"
-      file="polyhedral_voronoi_regular.vtk"/>
+      file=")xml" << meshFile << R"xml("/>
   </Mesh>
 
   <Geometry>
-    <Box
-      name="westBC"
-      xMin="{ -0.001, 0.0, 0.0}"
-      xMax="{ +0.001, 1.0, 1.0}"/>
-    <Box
-      name="eastBC"
-      xMin="{ +0.999, 0.0, 0.0}"
-      xMax="{ +1.001, 1.0, 1.0}"/>
+    <Box name="westBC" xMin="{ -0.001, 0.0, 0.0}" xMax="{ +0.001, 1.0, 1.0}"/>
+    <Box name="eastBC" xMin="{ +0.999, 0.0, 0.0}" xMax="{ +1.001, 1.0, 1.0}"/>
   </Geometry>
 
   <ElementRegions>
-    <CellElementRegion
-      name="Domain"
-      cellBlocks="{ * }"
-      materialList="{rock, fluid }"/>
+    <CellElementRegion name="Domain" cellBlocks="{ * }" materialList="{rock, fluid }"/>
   </ElementRegions>
 
   <Solvers gravityVector="{ 0.0, 0.0, 0.0}"> </Solvers>
 
   <Constitutive>
-    <CompressibleSinglePhaseFluid
-      name="fluid"
-      defaultDensity="1000"
-      defaultViscosity="0.001"
-      referencePressure="0.0"
-      compressibility="0.0"
-      viscosibility="0.0"/>
+    <CompressibleSinglePhaseFluid name="fluid"
+      defaultDensity="1000" defaultViscosity="0.001"
+      referencePressure="0.0" compressibility="0.0" viscosibility="0.0"/>
 
-    <CompressibleSolidConstantPermeability
-      name="rock"
-      solidModelName="nullSolid"
-      porosityModelName="rockPorosity"
-      permeabilityModelName="rockPerm"/>
+    <CompressibleSolidConstantPermeability name="rock"
+      solidModelName="nullSolid" porosityModelName="rockPorosity" permeabilityModelName="rockPerm"/>
 
-    <NullModel
-      name="nullSolid"/>
+    <NullModel name="nullSolid"/>
 
-    <PressurePorosity
-      name="rockPorosity"
-      defaultReferencePorosity="0.1"
-      referencePressure="0.0"
-      compressibility="0.0"/>
+    <PressurePorosity name="rockPorosity"
+      defaultReferencePorosity="0.1" referencePressure="0.0" compressibility="0.0"/>
 
-    <ConstantPermeability
-      name="rockPerm"
+    <ConstantPermeability name="rockPerm"
       permeabilityComponents="{ 1.0e-13, 1.0e-13, 1.0e-13 }"/>
   </Constitutive>
 
   <FieldSpecifications>
-    <FieldSpecification
-      name="initialPressure"
-      initialCondition="1"
-      setNames="{ all }"
-      objectPath="ElementRegions/Domain"
-      fieldName="pressure"
-      scale="1.0e7"/>    
-    <FieldSpecification
-      name="west_pressure"
-      setNames="{ westBC }"
-      objectPath="faceManager"
-      fieldName="pressure"
-      scale="2.0e7" />
-    <FieldSpecification
-      name="east_pressure"
-      setNames="{ eastBC }"
-      objectPath="faceManager"
-      fieldName="pressure"
-      scale="1.0e7" />      
+    <FieldSpecification name="initialPressure" initialCondition="1"
+      setNames="{ all }" objectPath="ElementRegions/Domain" fieldName="pressure" scale="1.0e7"/>    
+    <FieldSpecification name="west_pressure"
+      setNames="{ westBC }" objectPath="faceManager" fieldName="pressure" scale="2.0e7"/>
+    <FieldSpecification name="east_pressure"
+      setNames="{ eastBC }" objectPath="faceManager" fieldName="pressure" scale="1.0e7"/>      
   </FieldSpecifications>
 
   <NumericalMethods>
@@ -307,31 +240,21 @@ std::string generateXmlInputMFD( std::string const & innerProductType )
       <HybridMimeticDiscretization
         name="singlePhaseMFD"
         innerProductType=")xml"
-      << innerProductType << R"xml("/>
+    << innerProductType << R"xml("/>
     </FiniteVolume>
   </NumericalMethods>
 
   <Solvers>
-    <SinglePhaseHybridFVM
-      name="SinglePhaseFlow"
-      logLevel="1"
-      discretization="singlePhaseMFD"
-      targetRegions="{ Domain }">
-      <NonlinearSolverParameters
-        newtonTol="1.0e-5"
-        newtonMaxIter="8"/>
-      <LinearSolverParameters
-        directParallel="0"/>
+    <SinglePhaseHybridFVM name="SinglePhaseFlow" logLevel="1"
+      discretization="singlePhaseMFD" targetRegions="{ Domain }">
+      <NonlinearSolverParameters newtonTol="1.0e-5" newtonMaxIter="8"/>
+      <LinearSolverParameters directParallel="0"/>
     </SinglePhaseHybridFVM>
   </Solvers>
 
-  <Events
-    minTime="0.0"
-    maxTime="86400">
-    <PeriodicEvent
-      name="solverApplications"
-      endTime="86400"
-      maxEventDt="86400"
+  <Events minTime="0.0" maxTime="86400">
+    <PeriodicEvent name="solverApplications"
+      endTime="86400" maxEventDt="86400"
       target="/Solvers/SinglePhaseFlow"/>
   </Events>
 
@@ -341,28 +264,39 @@ std::string generateXmlInputMFD( std::string const & innerProductType )
   return oss.str();
 }
 
+using MFDParams = std::tuple<const char *, const char *>;
 
-class MFDIntegrationTest : public ::testing::TestWithParam<const char *>
+class MFDIntegrationTest : public ::testing::TestWithParam<MFDParams>
 {
 public:
-  MFDIntegrationTest() : state( std::make_unique< CommandLineOptions >( g_commandLineOptions ) ) {}
+  MFDIntegrationTest()
+    : state( std::make_unique< CommandLineOptions >( g_commandLineOptions ) ) {}
 
 protected:
   void SetUp() override
   {
-    std::string xmlInput = generateXmlInputMFD( GetParam() );
+    auto [innerProduct, meshFile] = GetParam();
+    std::string xmlInput = generateXmlInputMFD(innerProduct, meshFile);
     setupProblemFromXML( state.getProblemManager(), xmlInput.c_str() );
   }
 
   GeosxState state;
 };
 
-// Instantiate test suite with all inner product types
+
 INSTANTIATE_TEST_SUITE_P(
-  InnerProductTypes,
+  InnerProductAndMeshes,
   MFDIntegrationTest,
-  ::testing::Values( TPFA, QuasiTPFA, QuasiRT, Simple, BdVLM )
+  ::testing::Combine(
+    ::testing::Values(TPFA, QuasiTPFA, QuasiRT, Simple, BdVLM),
+    ::testing::Values(
+      "polyhedral_voronoi_complex.vtk",
+      "polyhedral_voronoi_lattice.vtk",
+      "polyhedral_voronoi_regular.vtk"
+    )
+  )
 );
+
 
 TEST_P( MFDIntegrationTest, PressureFieldL2Error )
 {
@@ -402,77 +336,123 @@ TEST_P( MFDIntegrationTest, PressureFieldL2Error )
 
   l2Error = std::sqrt( l2Error / totalVolume );
 
-  // Assert that the L2 error is within machine precision
-  EXPECT_NEAR( l2Error, 0.0, 1.0e-10 );
+  auto [innerProduct, meshFile] = GetParam();
+  if (innerProduct == TPFA and std::string(meshFile).compare("polyhedral_voronoi_regular.vtk") != 0)
+  {
+    // Assert that the L2 error is not exact
+    EXPECT_GT(l2Error, 1.0e-10 );
+  }else{
+    // Assert that the L2 error is within machine precision
+    EXPECT_NEAR( l2Error, 0.0, 1.0e-10 );
+  }
 }
 
 // cross-check test. Ensure that MFD with innerProductType="TPFA" produces exactly the same pressure field as the TPFA solver
-TEST( TPFAvsMFDTPFA, PressureFieldComparison )
+
+class TPFAvsMFDTPFATest : public ::testing::TestWithParam<const char *>
+{
+public:
+  TPFAvsMFDTPFATest()
+    : tpfaState( std::make_unique< CommandLineOptions >( g_commandLineOptions ) ),
+      mfdState( std::make_unique< CommandLineOptions >( g_commandLineOptions ) ) {}
+
+protected:
+  void SetUp() override
+  {
+    meshFile = GetParam();
+  }
+
+  std::string meshFile;
+  GeosxState tpfaState;
+  GeosxState mfdState;
+};
+
+INSTANTIATE_TEST_SUITE_P(
+  MeshFiles,
+  TPFAvsMFDTPFATest,
+  ::testing::Values(
+    "polyhedral_voronoi_complex.vtk",
+    "polyhedral_voronoi_lattice.vtk",
+    "polyhedral_voronoi_regular.vtk"
+  )
+);
+
+
+TEST_P( TPFAvsMFDTPFATest, PressureFieldComparison )
 {
   arrayView1d< real64> p_tpfa;
   arrayView1d< real64> p_mfd;
-  
   geos::localIndex n_data_tpfa = 0;
   geos::localIndex n_data_mfd = 0;
-  
-    // --- Run TPFA solver ---
+
+  const char* meshFile = GetParam();
+
+  // --- Run TPFA solver ---
   {
     GeosxState tpfaState( std::make_unique< CommandLineOptions >( g_commandLineOptions ) );
-    setupProblemFromXML( tpfaState.getProblemManager(), xmlInputTPFA );
+    std::string xmlTPFA = generateXmlInputTPFA( meshFile );
+    setupProblemFromXML( tpfaState.getProblemManager(), xmlTPFA.c_str() );
+
     ProblemManager & pmTPFA = tpfaState.getProblemManager();
     DomainPartition & domainTPFA = pmTPFA.getDomainPartition();
-    
+
     auto & solverTPFA =
-    dynamic_cast< SinglePhaseFVM< SinglePhaseBase > & >(
-                                                        pmTPFA.getPhysicsSolverManager().getGroup< SinglePhaseFVM< SinglePhaseBase > >( "SinglePhaseFlow" ) );
-    
+      dynamic_cast< SinglePhaseFVM< SinglePhaseBase > & >(
+        pmTPFA.getPhysicsSolverManager().getGroup< SinglePhaseFVM< SinglePhaseBase > >( "SinglePhaseFlow" ) );
+
     solverTPFA.setupSystem( domainTPFA, solverTPFA.getDofManager(),
-                           solverTPFA.getLocalMatrix(), solverTPFA.getSystemRhs(), solverTPFA.getSystemSolution() );
+                            solverTPFA.getLocalMatrix(), solverTPFA.getSystemRhs(), solverTPFA.getSystemSolution() );
     solverTPFA.implicitStepSetup( 0.0, 86400, domainTPFA );
     solverTPFA.solverStep( 0.0, 86400, 0, domainTPFA );
     solverTPFA.implicitStepComplete( 0.0, 86400, domainTPFA );
-    
+
     MeshLevel & meshTPFA = domainTPFA.getMeshBody( 0 ).getBaseDiscretization();
     CellElementSubRegion & subRegionTPFA =
-    meshTPFA.getElemManager().getRegion( 0 ).getSubRegion< CellElementSubRegion >( 0 );
+      meshTPFA.getElemManager().getRegion( 0 ).getSubRegion< CellElementSubRegion >( 0 );
+
     p_tpfa = std::move(subRegionTPFA.getField< fields::flow::pressure >());
     n_data_tpfa = subRegionTPFA.size();
-  }
-  
+  } // <--- tpfaState destroyed here, CommunicationTools cleaned up
+
   // --- Run MFD solver with innerProductType=TPFA ---
   {
     GeosxState mfdState( std::make_unique< CommandLineOptions >( g_commandLineOptions ) );
-    std::string xmlMFD = generateXmlInputMFD( TPFA );
+    std::string xmlMFD = generateXmlInputMFD( TPFA, meshFile );
     setupProblemFromXML( mfdState.getProblemManager(), xmlMFD.c_str() );
+
     ProblemManager & pmMFD = mfdState.getProblemManager();
     DomainPartition & domainMFD = pmMFD.getDomainPartition();
-    
+
     auto & solverMFD =
-    dynamic_cast< SinglePhaseHybridFVM & >(
-                                           pmMFD.getPhysicsSolverManager().getGroup< SinglePhaseHybridFVM >( "SinglePhaseFlow" ) );
-    
+      dynamic_cast< SinglePhaseHybridFVM & >(
+        pmMFD.getPhysicsSolverManager().getGroup< SinglePhaseHybridFVM >( "SinglePhaseFlow" ) );
+
     solverMFD.setupSystem( domainMFD, solverMFD.getDofManager(),
-                          solverMFD.getLocalMatrix(), solverMFD.getSystemRhs(), solverMFD.getSystemSolution() );
+                           solverMFD.getLocalMatrix(), solverMFD.getSystemRhs(), solverMFD.getSystemSolution() );
     solverMFD.implicitStepSetup( 0.0, 86400, domainMFD );
     solverMFD.solverStep( 0.0, 86400, 0, domainMFD );
     solverMFD.implicitStepComplete( 0.0, 86400, domainMFD );
-    
+
     MeshLevel & meshMFD = domainMFD.getMeshBody( 0 ).getBaseDiscretization();
     CellElementSubRegion & subRegionMFD =
-    meshMFD.getElemManager().getRegion( 0 ).getSubRegion< CellElementSubRegion >( 0 );
+      meshMFD.getElemManager().getRegion( 0 ).getSubRegion< CellElementSubRegion >( 0 );
+
     p_mfd = std::move(subRegionMFD.getField< fields::flow::pressure >());
     n_data_mfd = subRegionMFD.size();
   }
+
   // --- Compare cellwise pressures ---
-  ASSERT_EQ( n_data_tpfa, n_data_mfd);
+  ASSERT_EQ( n_data_tpfa, n_data_mfd );
   for( localIndex i = 0; i < n_data_tpfa; ++i )
   {
     real64 p_num_tpfa = p_tpfa[i];
-    real64 p_num_mfd = p_mfd[i];
-    real64 p_diff = (p_num_tpfa - p_num_mfd) * 1.0e-6; // Convert pressure to MPa
+    real64 p_num_mfd  = p_mfd[i];
+    real64 p_diff     = (p_num_tpfa - p_num_mfd) * 1.0e-6; // Convert pressure to MPa
     EXPECT_NEAR( p_diff, 0.0, 1.0e-10 ) << "Mismatch at cell " << i;
   }
 }
+
+
 
 
 int main( int argc, char * *argv )
