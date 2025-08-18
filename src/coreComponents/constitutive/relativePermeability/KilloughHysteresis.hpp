@@ -150,23 +150,29 @@ public:
                                m_extremumValue ),
                      InputError );
 
-      GEOS_THROW_IF(  (m_criticalImbibitionPhaseVolFraction - m_criticalDrainagePhaseVolFraction) > 0,
-                      GEOS_FMT( "{}: For wetting-phase hysteresis, the imbibition end-point saturation Smxi( {} ) must be smaller "
-                                "than the drainage saturation end-point Smxd( {} ).\n Crossing relative permeability curves.\n",
-                                catalogName(),
-                                m_criticalImbibitionPhaseVolFraction,
-                                m_criticalDrainagePhaseVolFraction ),
-                      InputError );
-
-      GEOS_THROW_IF( (m_criticalDrainagePhaseVolFraction - m_criticalImbibitionPhaseVolFraction) > 0,
-                     GEOS_FMT( "{}: For non-wetting phase hysteresis, the drainage trapped saturation Scrd ( ={} ) must be smaller than the imbibition saturation Scri ( ={} ).\n"
-                               "Crossing relative permeability curves.\n",
-                               catalogName(),
-                               m_criticalDrainagePhaseVolFraction,
-                               m_criticalImbibitionPhaseVolFraction ),
-                     InputError );
-
       m_isWetting = m_criticalDrainagePhaseVolFraction > m_extremumPhaseVolFraction;
+
+      if( m_isWetting )
+      {
+        GEOS_THROW_IF(  (m_criticalImbibitionPhaseVolFraction - m_criticalDrainagePhaseVolFraction) > 0,
+                        GEOS_FMT( "{}: For wetting-phase hysteresis, the imbibition end-point saturation Smxi( {} ) must be smaller "
+                                  "than the drainage saturation end-point Smxd( {} ).\n Crossing relative permeability curves.\n",
+                                  catalogName(),
+                                  m_criticalImbibitionPhaseVolFraction,
+                                  m_criticalDrainagePhaseVolFraction ),
+                        InputError );
+      }
+      else
+      {
+        GEOS_THROW_IF( (m_criticalDrainagePhaseVolFraction - m_criticalImbibitionPhaseVolFraction) > 0,
+                       GEOS_FMT( "{}: For non-wetting phase hysteresis, the drainage trapped saturation Scrd ( ={} ) must be smaller than the imbibition saturation Scri ( ={} ).\n"
+                                 "Crossing relative permeability curves.\n",
+                                 catalogName(),
+                                 m_criticalDrainagePhaseVolFraction,
+                                 m_criticalImbibitionPhaseVolFraction ),
+                       InputError );
+      }
+
     }
 
     /**
