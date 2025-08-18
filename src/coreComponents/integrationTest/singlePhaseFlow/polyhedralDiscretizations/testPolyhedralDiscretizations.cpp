@@ -419,11 +419,12 @@ TEST_P( MFDIntegrationTest, PressureFieldL2Error )
 // cross-check test. Ensure that MFD with innerProductType="TPFA" produces exactly the same pressure field as the TPFA solver
 TEST( TPFAvsMFDTPFA, PressureFieldComparison )
 {
-  arrayView1d< real64 const > p_tpfa;
-  arrayView1d< real64 const > p_mfd;
+  arrayView1d< real64> p_tpfa;
+  arrayView1d< real64> p_mfd;
   
   geos::localIndex n_data_tpfa = 0;
   geos::localIndex n_data_mfd = 0;
+  
     // --- Run TPFA solver ---
   {
     GeosxState tpfaState( std::make_unique< CommandLineOptions >( g_commandLineOptions ) );
@@ -444,7 +445,7 @@ TEST( TPFAvsMFDTPFA, PressureFieldComparison )
     MeshLevel & meshTPFA = domainTPFA.getMeshBody( 0 ).getBaseDiscretization();
     CellElementSubRegion & subRegionTPFA =
     meshTPFA.getElemManager().getRegion( 0 ).getSubRegion< CellElementSubRegion >( 0 );
-    p_tpfa = subRegionTPFA.getField< fields::flow::pressure >();
+    p_tpfa = std::move(subRegionTPFA.getField< fields::flow::pressure >());
     n_data_tpfa = subRegionTPFA.size();
   }
   
@@ -469,7 +470,7 @@ TEST( TPFAvsMFDTPFA, PressureFieldComparison )
     MeshLevel & meshMFD = domainMFD.getMeshBody( 0 ).getBaseDiscretization();
     CellElementSubRegion & subRegionMFD =
     meshMFD.getElemManager().getRegion( 0 ).getSubRegion< CellElementSubRegion >( 0 );
-    p_mfd = subRegionMFD.getField< fields::flow::pressure >();
+    p_mfd = std::move(subRegionMFD.getField< fields::flow::pressure >());
     n_data_mfd = subRegionMFD.size();
   }
   // --- Compare cellwise pressures ---
@@ -478,7 +479,8 @@ TEST( TPFAvsMFDTPFA, PressureFieldComparison )
   {
     real64 p_num_tpfa = p_tpfa[i];
     real64 p_num_mfd = p_mfd[i];
-    EXPECT_NEAR( p_num_tpfa, p_num_mfd, 1.0e-10 ) << "Mismatch at cell " << i;
+    real64 p_diff = (p_num_tpfa - p_num_mfd) * 1.0e-6; // Convert pressure to MPa
+    EXPECT_NEAR( p_diff, 0.0, 1.0e-10 ) << "Mismatch at cell " << i;
   }
 }
 
