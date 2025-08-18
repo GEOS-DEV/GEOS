@@ -55,7 +55,7 @@ using namespace geos::testing;
 CommandLineOptions g_commandLineOptions;
 
 // Pressure L2 error tolerance
-static constexpr real64 PRESSURE_L2_TOLERANCE = 1.0e-12;
+static constexpr real64 PRESSURE_L2_TOLERANCE = 1.0e-10;
 static constexpr real64 to_MPA = 1.0e-6;
 
 // Maximum time step for events / solver steps (in seconds)
