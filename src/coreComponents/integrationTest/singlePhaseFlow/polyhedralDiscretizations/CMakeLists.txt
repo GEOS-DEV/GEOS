@@ -19,7 +19,12 @@ foreach(test ${polyhedral_tests})
                         OUTPUT_DIR ${TEST_OUTPUT_DIRECTORY}
                         DEPENDS_ON ${decoratedDependencies} ${tplDependencyList} )
     geos_add_test( NAME ${test_name} COMMAND ${test_name} )
-    
+
+    set_tests_properties(${test_name} PROPERTIES ENVIRONMENT "TEST_BINARY_DIR=$<TARGET_FILE_DIR:${test_name}>")
+
+    # Add TEST_BINARY_DIR as a compile definition
+    target_compile_definitions(${test_name} PRIVATE TEST_BINARY_DIR=\"$<TARGET_FILE_DIR:${test_name}>\")
+
     # --- Copy mesh file to test binary dir ---
     add_custom_command(
         TARGET ${test_name} POST_BUILD

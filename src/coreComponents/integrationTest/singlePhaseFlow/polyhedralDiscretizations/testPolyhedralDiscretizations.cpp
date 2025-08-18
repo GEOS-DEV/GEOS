@@ -151,11 +151,16 @@ public:
 protected:
   void SetUp() override
   {
-    std::string xmlInput = generateXmlInputTPFA( GetParam() );
-    setupProblemFromXML( state.getProblemManager(), xmlInput.c_str() );
+    // Use the CMAKE-defined TEST_BINARY_DIR variable
+    testBinaryDir = TEST_BINARY_DIR;
+
+    std::string meshFile = testBinaryDir + "/" + GetParam();
+    std::string xmlInput = generateXmlInputTPFA( meshFile );
+    setupProblemFromXML( state.getProblemManager(), xmlInput.c_str());
   }
 
   GeosxState state;
+  std::string testBinaryDir;
 };
 
 INSTANTIATE_TEST_SUITE_P(
@@ -208,7 +213,8 @@ TEST_P( TPFAIntegrationTest, PressureFieldL2Error )
   l2Error = std::sqrt( l2Error / totalVolume );
 
   std::string meshFile = GetParam();
-  if( meshFile.compare( "polyhedral_voronoi_regular.vtk" ) == 0 )
+//  if( meshFile.compare( "polyhedral_voronoi_regular.vtk" ) == 0 )
+  if( meshFile == "polyhedral_voronoi_regular.vtk" )
   {
     // Assert that the L2 error is within machine precision
     EXPECT_NEAR( l2Error, 0.0, PRESSURE_L2_TOLERANCE );
@@ -317,12 +323,16 @@ public:
 protected:
   void SetUp() override
   {
+    // Use the CMAKE-defined TEST_BINARY_DIR variable
+    testBinaryDir = TEST_BINARY_DIR;
+
     auto [innerProduct, meshFile] = GetParam();
-    std::string xmlInput = generateXmlInputMFD( innerProduct, meshFile );
+    std::string xmlInput = generateXmlInputMFD( innerProduct, testBinaryDir + "/" + meshFile );
     setupProblemFromXML( state.getProblemManager(), xmlInput.c_str() );
   }
 
   GeosxState state;
+  std::string testBinaryDir;
 };
 
 
@@ -414,6 +424,8 @@ INSTANTIATE_TEST_SUITE_P(
 TEST_P( TPFAvsMFDTPFATest, PressureFieldComparison )
 {
   const char * meshFile = GetParam();
+  // Use the CMAKE-defined TEST_BINARY_DIR variable
+  std::string testBinaryDir = TEST_BINARY_DIR;
 
   arrayView1d< real64 > p_tpfa;
   arrayView1d< real64 > p_mfd;
@@ -424,7 +436,7 @@ TEST_P( TPFAvsMFDTPFATest, PressureFieldComparison )
   {
     GeosxState tpfaState( std::make_unique< CommandLineOptions >( g_commandLineOptions ));
 
-    std::string xmlTPFA = generateXmlInputTPFA( meshFile );
+    std::string xmlTPFA = generateXmlInputTPFA( testBinaryDir + "/" + meshFile );
     setupProblemFromXML( tpfaState.getProblemManager(), xmlTPFA.c_str());
 
     ProblemManager & pmTPFA = tpfaState.getProblemManager();
@@ -455,7 +467,7 @@ TEST_P( TPFAvsMFDTPFATest, PressureFieldComparison )
   {
     GeosxState mfdState( std::make_unique< CommandLineOptions >( g_commandLineOptions ));
 
-    std::string xmlMFD = generateXmlInputMFD( TPFA, meshFile );
+    std::string xmlMFD = generateXmlInputMFD( TPFA, testBinaryDir + "/" + meshFile );
     setupProblemFromXML( mfdState.getProblemManager(), xmlMFD.c_str());
 
     ProblemManager & pmMFD = mfdState.getProblemManager();
