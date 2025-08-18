@@ -379,7 +379,7 @@ TEST_P( MFDIntegrationTest, PressureFieldL2Error )
   l2Error = std::sqrt( l2Error / totalVolume );
 
   auto [innerProduct, meshFile] = GetParam();
-  if( innerProduct == TPFA and std::string( meshFile ).compare( "polyhedral_voronoi_regular.vtk" ) != 0 )
+  if( innerProduct == TPFA and std::string( meshFile ) != "polyhedral_voronoi_regular.vtk" )
   {
     // Assert that the L2 error is not exact
     EXPECT_GT( l2Error, PRESSURE_L2_TOLERANCE );
