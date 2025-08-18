@@ -221,6 +221,8 @@ public:
       auto displacedPhaseComponentFraction = displacedPhaseComponentFractionData[0][0];
       auto displacedPhaseComponentFractionDerivs = displacedPhaseComponentFractionDerivsData[0][0];
 
+      LvArray::forValuesInSlice( kValues.toSlice(), []( real64 & v ){ v = 0.0; } );
+
       flashKernelWrapper.compute( componentProperties,
                                   p,
                                   t,
