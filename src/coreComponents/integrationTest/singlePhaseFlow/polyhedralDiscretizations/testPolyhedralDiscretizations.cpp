@@ -27,6 +27,13 @@ using namespace geos::testing;
 
 CommandLineOptions g_commandLineOptions;
 
+static constexpr auto TPFA      = "TPFA";
+static constexpr auto QuasiTPFA = "quasiTPFA";
+static constexpr auto QuasiRT   = "quasiRT";
+static constexpr auto Simple    = "simple";
+static constexpr auto BdVLM     = "beiraoDaVeigaLipnikovManzini";
+
+
 // Define the XML input for the test
 char const * xmlInputTPFA =
   R"xml(
@@ -39,7 +46,7 @@ char const * xmlInputTPFA =
       xCoords="{ 0, 1}"
       yCoords="{ 0, 1}"
       zCoords="{ 0, 1}"
-      nx="{ 100  }"
+      nx="{ 25  }"
       ny="{ 1  }"
       nz="{ 1 }"
       cellBlockNames="{ blocks}">
@@ -155,135 +162,6 @@ char const * xmlInputTPFA =
   </Problem>
   )xml";
 
-// Define the XML input for the test
-char const * xmlInputMFD =
-  R"xml(
-  <Problem>
-
-  <Mesh>
-    <InternalMesh
-      name="mesh"
-      elementTypes="{ C3D8 }"
-      xCoords="{ 0, 1}"
-      yCoords="{ 0, 1}"
-      zCoords="{ 0, 1}"
-      nx="{ 100  }"
-      ny="{ 1  }"
-      nz="{ 1 }"
-      cellBlockNames="{ blocks}">
-  </InternalMesh>
-</Mesh>
-
-    <Geometry>
-        <Box
-        name="westBC"
-        xMin="{ -0.001, 0.0, 0.0}"
-        xMax="{ +0.001, 1.0, 1.0}"/>
-        <Box
-        name="eastBC"
-        xMin="{ +0.999, 0.0, 0.0}"
-        xMax="{ +1.001, 1.0, 1.0}"/>
-    </Geometry>
-
-    <ElementRegions>
-      <CellElementRegion
-        name="Domain"
-        cellBlocks="{ * }"
-        materialList="{rock, fluid }"/>
-    </ElementRegions>
-
-    <Solvers gravityVector="{ 0.0, 0.0, 0.0}"> </Solvers>
-
-    <Constitutive>
-
-      <CompressibleSinglePhaseFluid
-        name="fluid"
-        defaultDensity="1000"
-        defaultViscosity="0.001"
-        referencePressure="0.0"
-        compressibility="0.0"
-        viscosibility="0.0"/>
-
-      <CompressibleSolidConstantPermeability
-        name="rock"
-        solidModelName="nullSolid"
-        porosityModelName="rockPorosity"
-        permeabilityModelName="rockPerm"/>
-
-      <NullModel
-        name="nullSolid"/>
-
-      <PressurePorosity
-        name="rockPorosity"
-        defaultReferencePorosity="0.1"
-        referencePressure="0.0"
-        compressibility="0.0"/>
-
-      <ConstantPermeability
-        name="rockPerm"
-        permeabilityComponents="{ 1.0e-13, 1.0e-13, 1.0e-13 }"/>
-
-    </Constitutive>
-
-    <FieldSpecifications>
-
-      <FieldSpecification
-        name="initialPressure"
-        initialCondition="1"
-        setNames="{ all }"
-        objectPath="ElementRegions/Domain"
-        fieldName="pressure"
-        scale="1.0e7"/>    
-      <FieldSpecification
-        name="west_pressure"
-        setNames="{ westBC }"
-        objectPath="faceManager"
-        fieldName="pressure"
-        scale="2.0e7" />
-      <FieldSpecification
-        name="east_pressure"
-        setNames="{ eastBC }"
-        objectPath="faceManager"
-        fieldName="pressure"
-        scale="1.0e7" />      
-
-    </FieldSpecifications>
-
-  <NumericalMethods>
-    <FiniteVolume>
-      <HybridMimeticDiscretization
-        name="singlePhaseMFD"
-        innerProductType="quasiTPFA"/>
-    </FiniteVolume>
-  </NumericalMethods>
-
-  <Solvers>
-     <SinglePhaseHybridFVM
-       name="SinglePhaseFlow"
-       logLevel="1"
-       discretization="singlePhaseMFD"
-       targetRegions="{ Domain }">
-       <NonlinearSolverParameters
-         newtonTol="1.0e-5"
-         newtonMaxIter="8"/>
-       <LinearSolverParameters
-         directParallel="0"/>
-     </SinglePhaseHybridFVM>
-   </Solvers>
-
-    <Events
-      minTime="0.0"
-      maxTime="86400">
-      <PeriodicEvent
-        name="solverApplications"
-        endTime="86400"
-        maxEventDt="86400"
-        target="/Solvers/SinglePhaseFlow"/>
-    </Events>
-
-  </Problem>
-  )xml";
-
 class TPFAIntegrationTest : public ::testing::Test
 {
 
@@ -295,22 +173,6 @@ protected:
   {
     // Setup problem from XML input
     setupProblemFromXML( state.getProblemManager(), xmlInputTPFA );
-  }
-
-  GeosxState state;
-};
-
-class MFDIntegrationTest : public ::testing::Test
-{
-
-public:
-  MFDIntegrationTest(): state( std::make_unique< CommandLineOptions >( g_commandLineOptions ) ) {}
-
-protected:
-  void SetUp() override
-  {
-    // Setup problem from XML input
-    setupProblemFromXML( state.getProblemManager(), xmlInputMFD );
   }
 
   GeosxState state;
@@ -359,7 +221,160 @@ TEST_F( TPFAIntegrationTest, PressureFieldL2Error )
   EXPECT_NEAR( l2Error, 0.0, 1.0e-10 );
 }
 
-TEST_F( MFDIntegrationTest, PressureFieldL2Error )
+std::string generateXmlInputMFD( std::string const & innerProductType )
+{
+  std::ostringstream oss;
+  oss << R"xml(
+  <Problem>
+
+  <Mesh>
+    <InternalMesh
+      name="mesh"
+      elementTypes="{ C3D8 }"
+      xCoords="{ 0, 1}"
+      yCoords="{ 0, 1}"
+      zCoords="{ 0, 1}"
+      nx="{ 25  }"
+      ny="{ 1  }"
+      nz="{ 1 }"
+      cellBlockNames="{ blocks}">
+    </InternalMesh>
+  </Mesh>
+
+  <Geometry>
+    <Box
+      name="westBC"
+      xMin="{ -0.001, 0.0, 0.0}"
+      xMax="{ +0.001, 1.0, 1.0}"/>
+    <Box
+      name="eastBC"
+      xMin="{ +0.999, 0.0, 0.0}"
+      xMax="{ +1.001, 1.0, 1.0}"/>
+  </Geometry>
+
+  <ElementRegions>
+    <CellElementRegion
+      name="Domain"
+      cellBlocks="{ * }"
+      materialList="{rock, fluid }"/>
+  </ElementRegions>
+
+  <Solvers gravityVector="{ 0.0, 0.0, 0.0}"> </Solvers>
+
+  <Constitutive>
+    <CompressibleSinglePhaseFluid
+      name="fluid"
+      defaultDensity="1000"
+      defaultViscosity="0.001"
+      referencePressure="0.0"
+      compressibility="0.0"
+      viscosibility="0.0"/>
+
+    <CompressibleSolidConstantPermeability
+      name="rock"
+      solidModelName="nullSolid"
+      porosityModelName="rockPorosity"
+      permeabilityModelName="rockPerm"/>
+
+    <NullModel
+      name="nullSolid"/>
+
+    <PressurePorosity
+      name="rockPorosity"
+      defaultReferencePorosity="0.1"
+      referencePressure="0.0"
+      compressibility="0.0"/>
+
+    <ConstantPermeability
+      name="rockPerm"
+      permeabilityComponents="{ 1.0e-13, 1.0e-13, 1.0e-13 }"/>
+  </Constitutive>
+
+  <FieldSpecifications>
+    <FieldSpecification
+      name="initialPressure"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Domain"
+      fieldName="pressure"
+      scale="1.0e7"/>    
+    <FieldSpecification
+      name="west_pressure"
+      setNames="{ westBC }"
+      objectPath="faceManager"
+      fieldName="pressure"
+      scale="2.0e7" />
+    <FieldSpecification
+      name="east_pressure"
+      setNames="{ eastBC }"
+      objectPath="faceManager"
+      fieldName="pressure"
+      scale="1.0e7" />      
+  </FieldSpecifications>
+
+  <NumericalMethods>
+    <FiniteVolume>
+      <HybridMimeticDiscretization
+        name="singlePhaseMFD"
+        innerProductType=")xml"
+      << innerProductType << R"xml("/>
+    </FiniteVolume>
+  </NumericalMethods>
+
+  <Solvers>
+    <SinglePhaseHybridFVM
+      name="SinglePhaseFlow"
+      logLevel="1"
+      discretization="singlePhaseMFD"
+      targetRegions="{ Domain }">
+      <NonlinearSolverParameters
+        newtonTol="1.0e-5"
+        newtonMaxIter="8"/>
+      <LinearSolverParameters
+        directParallel="0"/>
+    </SinglePhaseHybridFVM>
+  </Solvers>
+
+  <Events
+    minTime="0.0"
+    maxTime="86400">
+    <PeriodicEvent
+      name="solverApplications"
+      endTime="86400"
+      maxEventDt="86400"
+      target="/Solvers/SinglePhaseFlow"/>
+  </Events>
+
+  </Problem>
+  )xml";
+
+  return oss.str();
+}
+
+
+class MFDIntegrationTest : public ::testing::TestWithParam<const char *>
+{
+public:
+  MFDIntegrationTest() : state( std::make_unique< CommandLineOptions >( g_commandLineOptions ) ) {}
+
+protected:
+  void SetUp() override
+  {
+    std::string xmlInput = generateXmlInputMFD( GetParam() );
+    setupProblemFromXML( state.getProblemManager(), xmlInput.c_str() );
+  }
+
+  GeosxState state;
+};
+
+// Instantiate test suite with all inner product types
+INSTANTIATE_TEST_SUITE_P(
+  InnerProductTypes,
+  MFDIntegrationTest,
+  ::testing::Values( TPFA, QuasiTPFA, QuasiRT, Simple, BdVLM )
+);
+
+TEST_P( MFDIntegrationTest, PressureFieldL2Error )
 {
   ProblemManager & problemManager = state.getProblemManager();
   DomainPartition & domain = problemManager.getDomainPartition();
