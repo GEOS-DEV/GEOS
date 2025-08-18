@@ -572,8 +572,8 @@ void StrainHardeningPolymerUpdates::smallStrainUpdateHelper( localIndex const k,
     real64 shearSofteningMagnitude = m_shearSofteningMagnitude + m_shearSofteningMagnitudeB / (1. + std::exp(m_shearSofteningMagnitudeC * (temperature - m_shearSofteningMagnitudeD)));
 
 
-    real64 shearSofteningShapeParameter1 = m_shearSofteningShapeParameter1[k]; // should be 0.1
-    real64 shearSofteningShapeParameter2 = m_shearSofteningShapeParameter2[k]; // should be 1.0
+    real64 shearSofteningShapeParameter1 = m_shearSofteningShapeParameter1; // should be 0.1
+    real64 shearSofteningShapeParameter2 = m_shearSofteningShapeParameter2; // should be 1.0
 
 
 
@@ -787,6 +787,35 @@ public:
    */
   struct viewKeyStruct : public SolidBase::viewKeyStruct
   {
+
+    /// string/key for bulk modulus
+    static constexpr char const * bulkModulusString() { return "bulkModulus"; }
+    
+    /// string/key for bulk modulus
+    static constexpr char const * bulkModulusBString() { return "bulkModulusB"; }
+
+    /// string/key for bulk modulus
+    static constexpr char const * bulkModulusCString() { return "bulkModulusC"; }
+
+    /// string/key for bulk modulus
+    static constexpr char const * bulkModulusDString() { return "bulkModulusD"; }
+
+
+
+    /// string/key for shear modulus
+    static constexpr char const * shearModulusString() { return "shearModulus"; }
+    
+    /// string/key for shear modulus
+    static constexpr char const * shearModulusBString() { return "shearModulusB"; }
+
+    /// string/key for shear modulus
+    static constexpr char const * shearModulusCString() { return "shearModulusC"; }
+
+    /// string/key for shear modulus
+    static constexpr char const * shearModulusDString() { return "shearModulusD"; }
+
+
+
     // string/key for element/particle deformation gradient value
     static constexpr char const * deformationGradientString() { return "deformationGradient"; }
 
@@ -799,41 +828,46 @@ public:
     /// string/key for quadrature point jacobian value
     static constexpr char const * jacobianString() { return "jacobian"; }
 
+
     /// string/key for yield strength
     static constexpr char const * yieldStrengthString() { return "yieldStrength"; }
     /// string/key for yield strength
 
-    static constexpr char const * yieldStrengthStringB() { return "yieldStrengthB"; }
+    static constexpr char const * yieldStrengthBString() { return "yieldStrengthB"; }
     /// string/key for yield strength
 
-    static constexpr char const * yieldStrengthStringC() { return "yieldStrengthC"; }
+    static constexpr char const * yieldStrengthCString() { return "yieldStrengthC"; }
     /// string/key for yield strength
 
-    static constexpr char const * yieldStrengthStringD() { return "yieldStrengthD"; }
+    static constexpr char const * yieldStrengthDString() { return "yieldStrengthD"; }
+
+
 
     /// string/key for strain hardening slope
     static constexpr char const * strainHardeningSlopeString() { return "strainHardeningSlope"; }
 
     /// string/key for strain hardening slope
-    static constexpr char const * strainHardeningSlopeStringB() { return "strainHardeningSlopeB"; }
+    static constexpr char const * strainHardeningSlopeBString() { return "strainHardeningSlopeB"; }
 
     /// string/key for strain hardening slope
-    static constexpr char const * strainHardeningSlopeStringC() { return "strainHardeningSlopeC"; }
+    static constexpr char const * strainHardeningSlopeCString() { return "strainHardeningSlopeC"; }
 
     /// string/key for strain hardening slope
-    static constexpr char const * strainHardeningSlopeStringD() { return "strainHardeningSlopeD"; }
+    static constexpr char const * strainHardeningSlopeDString() { return "strainHardeningSlopeD"; }
+
 
     /// string/key for shear softening magnitude
     static constexpr char const * shearSofteningMagnitudeString() { return "shearSofteningMagnitude"; }
 
     /// string/key for shear softening magnitude
-    static constexpr char const * shearSofteningMagnitudeStringB() { return "shearSofteningMagnitudeB"; }
+    static constexpr char const * shearSofteningMagnitudeBString() { return "shearSofteningMagnitudeB"; }
 
     /// string/key for shear softening magnitude
-    static constexpr char const * shearSofteningMagnitudeStringC() { return "shearSofteningMagnitudeC"; }
+    static constexpr char const * shearSofteningMagnitudeCString() { return "shearSofteningMagnitudeC"; }
 
     /// string/key for shear softening magnitude
-    static constexpr char const * shearSofteningMagnitudeStringD() { return "shearSofteningMagnitudeD"; }
+    static constexpr char const * shearSofteningMagnitudeDString() { return "shearSofteningMagnitudeD"; }
+
 
     /// string/key for shear softening shape parameter 1
     static constexpr char const * shearSofteningShapeParameter1String() { return "shearSofteningShapeParameter1"; }
@@ -852,13 +886,13 @@ public:
     static constexpr char const * maximumStretchString() { return "maximumStretch"; }
 
     /// string/key for maximum stretch
-    static constexpr char const * maximumStretchStringB() { return "maximumStretchB"; }
+    static constexpr char const * maximumStretchBString() { return "maximumStretchB"; }
 
     /// string/key for maximum stretch
-    static constexpr char const * maximumStretchStringC() { return "maximumStretchC"; }
+    static constexpr char const * maximumStretchCString() { return "maximumStretchC"; }
 
     /// string/key for maximum stretch
-    static constexpr char const * maximumStretchStringD() { return "maximumStretchD"; }
+    static constexpr char const * maximumStretchDString() { return "maximumStretchD"; }
 
     /// string/key for default yield strength
     static constexpr char const * defaultYieldStrengthString() { return "defaultYieldStrength"; }

@@ -38,7 +38,7 @@ StrainHardeningPolymer::StrainHardeningPolymer( string const & name, Group * con
   m_shearModulusB(),
   m_shearModulusC(),
   m_shearModulusD(),
-  m_yieldStrengthA(),
+  m_yieldStrength(),
   m_yieldStrengthB(),
   m_yieldStrengthC(),
   m_yieldStrengthD(),
@@ -234,7 +234,7 @@ void StrainHardeningPolymer::postInputInitialization()
 
   // CC: need checks for strain hardening and softening inputs
   GEOS_THROW_IF( m_strainHardeningSlope < 0.0, "Strain hardening slope must be a positive number.", InputError ); // CC: Check that these are the rules for inputs
-  GEOS_THROW_IF( m_shearSofteningMagnitudeA < 0.0, "Shear softening magnitude must be a positive number.", InputError );
+  GEOS_THROW_IF( m_shearSofteningMagnitude < 0.0, "Shear softening magnitude must be a positive number.", InputError );
   GEOS_THROW_IF( m_shearSofteningShapeParameter1 < 0.0, "Shear softening shape paraemter 1 must be a positive number.", InputError );
   GEOS_THROW_IF( m_shearSofteningShapeParameter2 < 0.0, "Shear softening shape paraemter 2 must be a positive number.", InputError );
   GEOS_THROW_IF( m_defaultYieldStrength < 0.0, "Yield strength must be a positive number.", InputError );
