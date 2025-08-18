@@ -416,6 +416,73 @@ TEST_P( MFDIntegrationTest, PressureFieldL2Error )
   EXPECT_NEAR( l2Error, 0.0, 1.0e-10 );
 }
 
+// cross-check test. Ensure that MFD with innerProductType="TPFA" produces exactly the same pressure field as the TPFA solver
+TEST( TPFAvsMFDTPFA, PressureFieldComparison )
+{
+  arrayView1d< real64 const > p_tpfa;
+  arrayView1d< real64 const > p_mfd;
+  
+  geos::localIndex n_data_tpfa = 0;
+  geos::localIndex n_data_mfd = 0;
+    // --- Run TPFA solver ---
+  {
+    GeosxState tpfaState( std::make_unique< CommandLineOptions >( g_commandLineOptions ) );
+    setupProblemFromXML( tpfaState.getProblemManager(), xmlInputTPFA );
+    ProblemManager & pmTPFA = tpfaState.getProblemManager();
+    DomainPartition & domainTPFA = pmTPFA.getDomainPartition();
+    
+    auto & solverTPFA =
+    dynamic_cast< SinglePhaseFVM< SinglePhaseBase > & >(
+                                                        pmTPFA.getPhysicsSolverManager().getGroup< SinglePhaseFVM< SinglePhaseBase > >( "SinglePhaseFlow" ) );
+    
+    solverTPFA.setupSystem( domainTPFA, solverTPFA.getDofManager(),
+                           solverTPFA.getLocalMatrix(), solverTPFA.getSystemRhs(), solverTPFA.getSystemSolution() );
+    solverTPFA.implicitStepSetup( 0.0, 86400, domainTPFA );
+    solverTPFA.solverStep( 0.0, 86400, 0, domainTPFA );
+    solverTPFA.implicitStepComplete( 0.0, 86400, domainTPFA );
+    
+    MeshLevel & meshTPFA = domainTPFA.getMeshBody( 0 ).getBaseDiscretization();
+    CellElementSubRegion & subRegionTPFA =
+    meshTPFA.getElemManager().getRegion( 0 ).getSubRegion< CellElementSubRegion >( 0 );
+    p_tpfa = subRegionTPFA.getField< fields::flow::pressure >();
+    n_data_tpfa = subRegionTPFA.size();
+  }
+  
+  // --- Run MFD solver with innerProductType=TPFA ---
+  {
+    GeosxState mfdState( std::make_unique< CommandLineOptions >( g_commandLineOptions ) );
+    std::string xmlMFD = generateXmlInputMFD( TPFA );
+    setupProblemFromXML( mfdState.getProblemManager(), xmlMFD.c_str() );
+    ProblemManager & pmMFD = mfdState.getProblemManager();
+    DomainPartition & domainMFD = pmMFD.getDomainPartition();
+    
+    auto & solverMFD =
+    dynamic_cast< SinglePhaseHybridFVM & >(
+                                           pmMFD.getPhysicsSolverManager().getGroup< SinglePhaseHybridFVM >( "SinglePhaseFlow" ) );
+    
+    solverMFD.setupSystem( domainMFD, solverMFD.getDofManager(),
+                          solverMFD.getLocalMatrix(), solverMFD.getSystemRhs(), solverMFD.getSystemSolution() );
+    solverMFD.implicitStepSetup( 0.0, 86400, domainMFD );
+    solverMFD.solverStep( 0.0, 86400, 0, domainMFD );
+    solverMFD.implicitStepComplete( 0.0, 86400, domainMFD );
+    
+    MeshLevel & meshMFD = domainMFD.getMeshBody( 0 ).getBaseDiscretization();
+    CellElementSubRegion & subRegionMFD =
+    meshMFD.getElemManager().getRegion( 0 ).getSubRegion< CellElementSubRegion >( 0 );
+    p_mfd = subRegionMFD.getField< fields::flow::pressure >();
+    n_data_mfd = subRegionMFD.size();
+  }
+  // --- Compare cellwise pressures ---
+  ASSERT_EQ( n_data_tpfa, n_data_mfd);
+  for( localIndex i = 0; i < n_data_tpfa; ++i )
+  {
+    real64 p_num_tpfa = p_tpfa[i];
+    real64 p_num_mfd = p_mfd[i];
+    EXPECT_NEAR( p_num_tpfa, p_num_mfd, 1.0e-10 ) << "Mismatch at cell " << i;
+  }
+}
+
+
 int main( int argc, char * *argv )
 {
   ::testing::InitGoogleTest( &argc, argv );
