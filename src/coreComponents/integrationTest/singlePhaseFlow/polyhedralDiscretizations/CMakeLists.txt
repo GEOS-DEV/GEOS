@@ -19,6 +19,26 @@ foreach(test ${polyhedral_tests})
                         OUTPUT_DIR ${TEST_OUTPUT_DIRECTORY}
                         DEPENDS_ON ${decoratedDependencies} ${tplDependencyList} )
     geos_add_test( NAME ${test_name} COMMAND ${test_name} )
+    
+    # --- Copy mesh file to test binary dir ---
+    add_custom_command(
+        TARGET ${test_name} POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                ${CMAKE_CURRENT_SOURCE_DIR}/polyhedral_voronoi_regular.vtk
+                $<TARGET_FILE_DIR:${test_name}>
+    )
+    add_custom_command(
+        TARGET ${test_name} POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                ${CMAKE_CURRENT_SOURCE_DIR}/polyhedral_voronoi_lattice.vtk
+                $<TARGET_FILE_DIR:${test_name}>
+    )
+    add_custom_command(
+        TARGET ${test_name} POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                ${CMAKE_CURRENT_SOURCE_DIR}/polyhedral_voronoi_complex.vtk
+                $<TARGET_FILE_DIR:${test_name}>
+    )
 endforeach()
 
 # For CUDA support

@@ -40,18 +40,13 @@ char const * xmlInputTPFA =
   <Problem>
 
   <Mesh>
-    <InternalMesh
+    <VTKMesh
       name="mesh"
-      elementTypes="{ C3D8 }"
-      xCoords="{ 0, 1}"
-      yCoords="{ 0, 1}"
-      zCoords="{ 0, 1}"
-      nx="{ 25  }"
-      ny="{ 1  }"
-      nz="{ 1 }"
-      cellBlockNames="{ blocks}">
-  </InternalMesh>
-</Mesh>
+      logLevel="5"  
+      partitionRefinement="0"
+      useGlobalIds="0"
+      file="polyhedral_voronoi_regular.vtk"/>
+  </Mesh>
 
     <Geometry>
         <Box
@@ -228,17 +223,12 @@ std::string generateXmlInputMFD( std::string const & innerProductType )
   <Problem>
 
   <Mesh>
-    <InternalMesh
+    <VTKMesh
       name="mesh"
-      elementTypes="{ C3D8 }"
-      xCoords="{ 0, 1}"
-      yCoords="{ 0, 1}"
-      zCoords="{ 0, 1}"
-      nx="{ 25  }"
-      ny="{ 1  }"
-      nz="{ 1 }"
-      cellBlockNames="{ blocks}">
-    </InternalMesh>
+      logLevel="5"  
+      partitionRefinement="0"
+      useGlobalIds="0"
+      file="polyhedral_voronoi_regular.vtk"/>
   </Mesh>
 
   <Geometry>
