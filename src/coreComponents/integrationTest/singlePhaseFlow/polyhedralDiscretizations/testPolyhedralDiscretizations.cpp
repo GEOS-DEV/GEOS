@@ -38,9 +38,9 @@ char const * xmlInput =
       xCoords="{ 0, 1}"
       yCoords="{ 0, 1}"
       zCoords="{ 0, 1}"
-      nx="{ 20  }"
-      ny="{ 20  }"
-      nz="{ 20 }"
+      nx="{ 10  }"
+      ny="{ 1  }"
+      nz="{ 1 }"
       cellBlockNames="{ blocks}">
   </InternalMesh>
 </Mesh>
@@ -198,25 +198,25 @@ TEST_F(TPFAIntegrationTest, PressureFieldL2Error) {
 //  // Retrieve pressure field and cell centers
   arrayView2d<real64 const> centers = subRegion.getElementCenter();
   arrayView1d<real64 const> volumes = subRegion.getElementVolume();
-//  arrayView1d<real64 const> pressure = subRegion.getField<real64>("pressure");
+//  arrayView1d<real64 const> pressure = subRegion.getField<real64>( sgetName() );
+  arrayView1d< real64 const > const p_h = subRegion.getField< fields::flow::pressure >();
 
-  int aka = 0;
-//
-//  // Compute exact pressure and L2 error
-//  real64 l2Error = 0.0;
-//  real64 totalVolume = 0.0;
-//  for( localIndex i = 0; i < subRegion.size(); ++i ) {
-//    real64 x = centers[i][0];
-//    real64 pExact = (2.0e7) * (1.0 - x) + (1.0e7) * x;
-//    real64 volume = volumes[i];
-//    l2Error += std::pow(pressure[i] - pExact, 2) * volume;
-//    totalVolume += volume;
-//  }
-//
-//  l2Error = std::sqrt(l2Error / totalVolume);
-//
-//  // Assert that the L2 error is within machine precision
-//  EXPECT_NEAR(l2Error, 0.0, std::numeric_limits<real64>::epsilon());
+  // Compute exact pressure and L2 error
+  real64 l2Error = 0.0;
+  real64 totalVolume = 0.0;
+  for( localIndex i = 0; i < subRegion.size(); ++i ) {
+    real64 x = centers[i][0];
+    real64 volume = volumes[i];
+    real64 pNumeric = p_h[i];
+    real64 pExact = (2.0e7) * (1.0 - x) + (1.0e7) * x;
+    l2Error += std::pow(pNumeric - pExact, 2) * volume;
+    totalVolume += volume;
+  }
+
+  l2Error = std::sqrt(l2Error / totalVolume);
+
+  // Assert that the L2 error is within machine precision
+  EXPECT_NEAR(l2Error, 0.0, 1.0e-15);
 }
 
 int main(int argc, char **argv) {
