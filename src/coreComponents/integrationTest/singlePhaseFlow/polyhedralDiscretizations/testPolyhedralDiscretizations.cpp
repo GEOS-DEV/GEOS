@@ -140,7 +140,7 @@ std::string generateXmlInputTPFA( std::string const & meshFile )
   return oss.str();
 }
 
-// Verifies that the standard TPFA solver produces consisten pressure fields
+// Verifies that the standard TPFA solver produces consistent pressure fields
 // on k-orthogonal meshes. L2 error is checked against the analytical linear pressure field.
 class TPFAIntegrationTest : public ::testing::TestWithParam< const char * >
 {
@@ -213,7 +213,6 @@ TEST_P( TPFAIntegrationTest, PressureFieldL2Error )
   l2Error = std::sqrt( l2Error / totalVolume );
 
   std::string meshFile = GetParam();
-//  if( meshFile.compare( "polyhedral_voronoi_regular.vtk" ) == 0 )
   if( meshFile == "polyhedral_voronoi_regular.vtk" )
   {
     // Assert that the L2 error is within machine precision
@@ -389,7 +388,7 @@ TEST_P( MFDIntegrationTest, PressureFieldL2Error )
   l2Error = std::sqrt( l2Error / totalVolume );
 
   auto [innerProduct, meshFile] = GetParam();
-  if( innerProduct == TPFA and std::string( meshFile ).compare( "polyhedral_voronoi_regular.vtk" ) != 0 )
+  if( innerProduct == TPFA and std::string( meshFile ) != "polyhedral_voronoi_regular.vtk" )
   {
     // Assert that the L2 error is not exact
     EXPECT_GT( l2Error, PRESSURE_L2_TOLERANCE );
