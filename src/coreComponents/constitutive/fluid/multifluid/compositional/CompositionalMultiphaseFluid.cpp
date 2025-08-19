@@ -97,6 +97,13 @@ integer CompositionalMultiphaseFluid< FLASH, PHASE1, PHASE2, PHASE3 >::getWaterP
 }
 
 template< typename FLASH, typename PHASE1, typename PHASE2, typename PHASE3 >
+integer CompositionalMultiphaseFluid< FLASH, PHASE1, PHASE2, PHASE3 >::getPhaseIndex( const std::string & phaseName ) const
+{
+  integer const phaseIndex = findPhaseIndex( phaseName );
+  return m_phaseOrder.size() > phaseIndex ? m_phaseOrder[phaseIndex] : -1;
+}
+
+template< typename FLASH, typename PHASE1, typename PHASE2, typename PHASE3 >
 string CompositionalMultiphaseFluid< FLASH, PHASE1, PHASE2, PHASE3 >::catalogName()
 {
   return GEOS_FMT( "Compositional{}Fluid{}",

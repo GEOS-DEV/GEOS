@@ -133,6 +133,7 @@ private:
 
   virtual integer getWaterPhaseIndex() const override final;
 
+  virtual integer getPhaseIndex( const std::string & phaseName ) const override final;
   /**
    * @brief Names of the submodels for input
    */

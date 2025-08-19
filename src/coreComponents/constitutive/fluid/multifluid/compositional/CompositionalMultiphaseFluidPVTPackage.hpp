@@ -59,6 +59,8 @@ public:
 
   virtual integer getWaterPhaseIndex() const override final;
 
+  virtual integer getPhaseIndex( const std::string & phaseName ) const override final;
+
   struct viewKeyStruct : MultiFluidBase::viewKeyStruct
   {
     static constexpr char const * equationsOfStateString() { return "equationsOfState"; }
