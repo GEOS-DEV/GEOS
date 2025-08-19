@@ -6,6 +6,10 @@ This file is designed to track changes to the integrated test baselines.
 Any developer who updates the baseline ID in the .integrated_tests.yaml file is expected to create an entry in this file with the pull request number, date, and their justification for rebaselining.
 These notes should be in reverse-chronological order, and use the following time format: (YYYY-MM-DD).
 
+PR #2427 (2025-08-19) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr2207-12962-f0dbaad.tar.gz>
+=====================
+Factoring hysteresis model out of `TableRelativePermeabilityHysteresis`.
+
 PR #2427 (2025-08-09) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr2427-12699-941dbff.tar.gz>
 =====================
 Change default value of amgNumFunctions from 1 to 3 for solid mechanics solvers. Change in mesh partitioning of PoroElastic_hybridHexPrism_co2 cases due to Scotch version update.
