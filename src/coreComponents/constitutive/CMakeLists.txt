@@ -221,6 +221,7 @@ set( constitutive_headers
      thermalConductivity/SinglePhaseThermalConductivitySelector.hpp
      thermalConductivity/ThermalConductivityFields.hpp
      electroChemistry/ElectroChemistryBase.hpp
+     electroChemistry/ButlerVolmerReaction.hpp
    )
 #
 # Specify all sources
@@ -355,6 +356,7 @@ set( constitutive_sources
      thermalConductivity/SinglePhaseThermalConductivity.cpp
      thermalConductivity/SinglePhaseThermalConductivityBase.cpp
      electroChemistry/ElectroChemistryBase.cpp
+     electroChemistry/ButlerVolmerReaction.cpp
    )
 
 set( dependencyList ${parallelDeps} functions denseLinearAlgebra )

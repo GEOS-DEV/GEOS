@@ -56,6 +56,7 @@
 #include "contact/CoulombFriction.hpp"
 #include "contact/RateAndStateFriction.hpp"
 #include "electroChemistry/ElectroChemistryBase.hpp"
+#include "electroChemistry/ButlerVolmerReaction.hpp"
 
 
 namespace geos
@@ -551,6 +552,21 @@ struct ConstitutivePassThru<ElectroChemistryBase>
   {
     ConstitutivePassThruHandler<ElectroChemistryBase>::execute(constitutiveRelation,
                                                                std::forward<LAMBDA>(lambda));
+  }
+};
+
+/**
+ * @brief Material model for interface Butler-Volmer kinetics
+ */
+template<>
+struct ConstitutivePassThru<ButlerVolmerInterface>
+{
+  template< typename LAMBDA >
+  static
+  void execute( ConstitutiveBase & constitutiveRelation, LAMBDA && lambda )
+  {
+    ConstitutivePassThruHandler<ButlerVolmerInterface>::execute(constitutiveRelation,
+                                                                std::forward<LAMBDA>(lambda));
   }
 };
 

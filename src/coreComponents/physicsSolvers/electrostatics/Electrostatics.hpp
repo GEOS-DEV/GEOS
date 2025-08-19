@@ -121,6 +121,7 @@ public:
     static constexpr char const* timeIntegrationOption() { return "timeIntegrationOption"; }
     static constexpr char const* fieldVarName() { return "fieldName"; }
     static constexpr char const* electroMaterialNamesString() {return "electroMaterialNames";}
+    static constexpr char const* reactiveMaterialNamesString() {return "reactiveMaterialNames";}
     static constexpr char const* surfaceGeneratorNameString() {return "surfaceGeneratorName";}
   };
 

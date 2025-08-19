@@ -21,6 +21,7 @@
 #include "ElectrostaticsKernels.hpp"
 
 #include "constitutive/electroChemistry/ElectroChemistryBase.hpp"
+#include "constitutive/electroChemistry/ButlerVolmerReaction.hpp"
 
 #include "fieldSpecification/FieldSpecificationManager.hpp"
 #include "fieldSpecification/TractionBoundaryCondition.hpp"
@@ -90,7 +91,20 @@ void Electrostatics::registerDataOnMesh(Group& meshBodies)
           electroMaterialName = PhysicsSolverBase::getConstitutiveName<ElectroChemistryBase>(subRegion);
           GEOS_ERROR_IF( electroMaterialName.empty(), GEOS_FMT("{}: ElectroChemistryBase model not found on subregion {}",
                                                                getDataContext(), subRegion.getName()));
-        });  
+        });
+
+      elemManager.forElementSubRegions< FaceElementSubRegion >(regionNames,
+        [&]( localIndex const, FaceElementSubRegion& subRegion) {
+          subRegion.registerWrapper<string>(viewKeyStruct::reactiveMaterialNamesString()).
+            setPlotLevel(PlotLevel::NOPLOT).
+            setRestartFlags(RestartFlags::NO_WRITE).
+            setSizedFromParent(0);
+
+          string& reactiveMaterialName = subRegion.getReference<string>(viewKeyStruct::reactiveMaterialNamesString());
+          reactiveMaterialName = PhysicsSolverBase::getConstitutiveName<ButlerVolmerInterface>(subRegion);
+          GEOS_ERROR_IF( reactiveMaterialName.empty(), GEOS_FMT("{}: ButlerVolmerInterface model not found on subregion {}",
+                                                                getDataContext(), subRegion.getName()));
+        });
     });
 }
 
@@ -137,7 +151,7 @@ void Electrostatics::setupDofs(DomainPartition const& GEOS_UNUSED_PARAM(domain),
 void Electrostatics::setupSystem(DomainPartition& domain, DofManager& dofManager,
                                  CRSMatrix< real64, globalIndex >& localMatrix,
                                  ParallelVector& rhs, ParallelVector& solution,
-                                 bool const setSparsity)
+                                 bool const GEOS_UNUSED_PARAM(setSparsity))
 {
   GEOS_LOG("Electrostatics::setupSystem");
 
@@ -288,13 +302,17 @@ void Electrostatics::applyButlerVolmerCurrent(DofManager const& dofManager, Doma
       constexpr localIndex maxDofPerElem = maxNodesPerFace * 2;
 
       elemManager.forElementSubRegions<FaceElementSubRegion>([&](FaceElementSubRegion& subRegion) {
-        // Hard-coded for debugging
-        real64 const k_rxn = 1.0;
+        string const & constitutiveName = subRegion.getReference<string>(viewKeyStruct::reactiveMaterialNamesString());
+        constitutive::ConstitutiveBase& constitutiveModel = subRegion.getConstitutiveModel( constitutiveName );
+        constitutive::ButlerVolmerInterface& castedConstitutiveModel = dynamic_cast<constitutive::ButlerVolmerInterface&>(constitutiveModel);
+        constitutive::ButlerVolmerInterface::KernelWrapper const m_constitutiveUpdate(castedConstitutiveModel.createKernelUpdates());
 
         arrayView1d<real64> const area = subRegion.getElementArea();
         arrayView2d<localIndex const> const elemsToFaces = subRegion.faceList().toViewConst();
 
         forAll<parallelDevicePolicy<>>(subRegion.size(), [=](localIndex const kfe) {
+          real64 const k_rxn = m_constitutiveUpdate.getReactCoeff(kfe);
+
           localIndex const kf0 = elemsToFaces[kfe][0], kf1 = elemsToFaces[kfe][1];
 
           localIndex const numNodesPerFace = facesToNodes.sizeOfArray(kf0);
@@ -324,17 +342,11 @@ void Electrostatics::applyButlerVolmerCurrent(DofManager const& dofManager, Doma
             dRdPhi(numNodesPerFace + a, a) -= k_rxn * Ja;
           }
 
-          // // debuggging with std::cout
-          // std::cout << "rowDofs are" << std::endl;
-          // for (auto i = 0; i < numNodesPerFace * 2; ++i)
-          //   std::cout << rowDof[i] << " ";
-          // std::cout << std::endl;
           for (localIndex idof = 0; idof < numNodesPerFace * 2; ++idof)
           {
             localIndex const localRow = LvArray::integerConversion<localIndex>(rowDof[idof] - rankOffset);
             if (localRow >= 0 && localRow < localMatrix.numRows())
             {
-              std::cout << "For dof #" << rowDof[idof] - rankOffset << std::endl;
               localMatrix.addToRowBinarySearchUnsorted<parallelDeviceAtomic>(
                 localRow, rowDof.data(), dRdPhi[idof].dataIfContiguous(), numNodesPerFace*2);
               RAJA::atomicAdd<parallelDeviceAtomic>(&localRhs[localRow], nodeRHS[idof]);
