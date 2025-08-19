@@ -60,12 +60,12 @@ TwoPhaseImmiscibleFluid::TwoPhaseImmiscibleFluid( string const & name, Group * c
     setDescription( "List of viscosity TableFuncion names from the Function block. \n"
                     "The user must provide one TableFunction per phase, respecting the order provided in \"phaseNames\"." );
 
-  registerField( fields::twophaseimmisciblefluid::phaseDensity{}, &m_phaseDensity.value );
-  registerField( fields::twophaseimmisciblefluid::dPhaseDensity{}, &m_phaseDensity.derivs );
-  registerField( fields::twophaseimmisciblefluid::phaseDensity_n{}, &m_phaseDensity_n );
+  registerField< fields::twophaseimmisciblefluid::phaseDensity >( &m_phaseDensity.value );
+  registerField< fields::twophaseimmisciblefluid::dPhaseDensity >( &m_phaseDensity.derivs );
+  registerField< fields::twophaseimmisciblefluid::phaseDensity_n >( &m_phaseDensity_n );
 
-  registerField( fields::twophaseimmisciblefluid::phaseViscosity{}, &m_phaseViscosity.value );
-  registerField( fields::twophaseimmisciblefluid::dPhaseViscosity{}, &m_phaseViscosity.derivs );
+  registerField< fields::twophaseimmisciblefluid::phaseViscosity >( &m_phaseViscosity.value );
+  registerField< fields::twophaseimmisciblefluid::dPhaseViscosity >( &m_phaseViscosity.derivs );
 }
 
 

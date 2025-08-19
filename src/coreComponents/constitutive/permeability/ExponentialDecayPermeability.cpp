@@ -40,8 +40,8 @@ ExponentialDecayPermeability::ExponentialDecayPermeability( string const & name,
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( " initial permeability of the fracture." );
 
-  registerField( fields::permeability::dPerm_dTraction{}, &m_dPerm_dTraction );
-  registerField( fields::permeability::dPerm_dDispJump{}, &m_dPerm_dDispJump );
+  registerField< fields::permeability::dPerm_dTraction >( &m_dPerm_dTraction );
+  registerField< fields::permeability::dPerm_dDispJump >( &m_dPerm_dDispJump );
 }
 
 void ExponentialDecayPermeability::resizeFields( localIndex const size, localIndex const numPts )

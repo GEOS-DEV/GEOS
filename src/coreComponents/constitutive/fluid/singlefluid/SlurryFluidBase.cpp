@@ -62,24 +62,24 @@ SlurryFluidBase::SlurryFluidBase( string const & name, Group * const parent ):
     setDescription( "Flow consistency index" );
 
   // these would be in dDensity
-  registerField( fields::slurryfluid::dDensity_dProppantConcentration{}, &m_dDensity_dProppantConc );
-  registerField( fields::slurryfluid::dDensity_dComponentConcentration{}, &m_dDensity_dCompConc );
+  registerField< fields::slurryfluid::dDensity_dProppantConcentration >( &m_dDensity_dProppantConc );
+  registerField< fields::slurryfluid::dDensity_dComponentConcentration >( &m_dDensity_dCompConc );
 
 
-  registerField( fields::slurryfluid::fluidDensity{}, &m_fluidDensity.value );
-  registerField( fields::slurryfluid::dFluidDensity_dPressure{}, &m_dFluidDens_dPres );
-  registerField( fields::slurryfluid::dFluidDensity_dComponentConcentration{}, &m_dFluidDens_dCompConc );
+  registerField< fields::slurryfluid::fluidDensity >( &m_fluidDensity.value );
+  registerField< fields::slurryfluid::dFluidDensity_dPressure >( &m_dFluidDens_dPres );
+  registerField< fields::slurryfluid::dFluidDensity_dComponentConcentration >( &m_dFluidDens_dCompConc );
 
-  registerField( fields::slurryfluid::fluidViscosity{}, &m_fluidViscosity );
-  registerField( fields::slurryfluid::dFluidViscosity_dPressure{}, &m_dFluidVisc_dPres );
-  registerField( fields::slurryfluid::dFluidViscosity_dComponentConcentration{}, &m_dFluidVisc_dCompConc );
+  registerField< fields::slurryfluid::fluidViscosity >( &m_fluidViscosity );
+  registerField< fields::slurryfluid::dFluidViscosity_dPressure >( &m_dFluidVisc_dPres );
+  registerField< fields::slurryfluid::dFluidViscosity_dComponentConcentration >( &m_dFluidVisc_dCompConc );
 
-  registerField( fields::slurryfluid::componentDensity{}, &m_componentDensity );
-  registerField( fields::slurryfluid::dComponentDensity_dPressure{}, &m_dCompDens_dPres );
-  registerField( fields::slurryfluid::dComponentDensity_dComponentConcentration{}, &m_dCompDens_dCompConc );
+  registerField< fields::slurryfluid::componentDensity >( &m_componentDensity );
+  registerField< fields::slurryfluid::dComponentDensity_dPressure >( &m_dCompDens_dPres );
+  registerField< fields::slurryfluid::dComponentDensity_dComponentConcentration >( &m_dCompDens_dCompConc );
 
-  registerField( fields::slurryfluid::dViscosity_dProppantConcentration{}, &m_dViscosity_dProppantConc );
-  registerField( fields::slurryfluid::dViscosity_dComponentConcentration{}, &m_dViscosity_dCompConc );
+  registerField< fields::slurryfluid::dViscosity_dProppantConcentration >( &m_dViscosity_dProppantConc );
+  registerField< fields::slurryfluid::dViscosity_dComponentConcentration >( &m_dViscosity_dCompConc );
 }
 
 void SlurryFluidBase::postInputInitialization()

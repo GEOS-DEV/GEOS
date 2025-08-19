@@ -590,14 +590,13 @@ public:
    * @return A reference to the newly registered/created Wrapper
    */
   template< typename FIELD_TRAIT >
-  dataRepository::Wrapper< typename FIELD_TRAIT::type > & registerField( FIELD_TRAIT const & fieldTrait,
-                                                                         typename FIELD_TRAIT::type * newObject )
+  dataRepository::Wrapper< typename FIELD_TRAIT::type > & registerField( typename FIELD_TRAIT::type * newObject )
   {
 
     m_registeredField.insert( FIELD_TRAIT::key());
 
-    return registerWrapper( fieldTrait.key(), newObject ).
-             setApplyDefaultValue( fieldTrait.defaultValue() ).
+    return registerWrapper( FIELD_TRAIT::key(), newObject ).
+             setApplyDefaultValue( FIELD_TRAIT::defaultValue() ).
              setPlotLevel( FIELD_TRAIT::plotLevel ).
              setRestartFlags( FIELD_TRAIT::restartFlag ).
              setDescription( FIELD_TRAIT::description );

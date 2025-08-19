@@ -31,7 +31,7 @@ namespace constitutive
 DispersionBase::DispersionBase( string const & name, Group * const parent )
   : ConstitutiveBase( name, parent )
 {
-  registerField( fields::dispersion::dispersivity{}, &m_dispersivity );
+  registerField< fields::dispersion::dispersivity >( &m_dispersivity );
 }
 
 void DispersionBase::resizeFields( localIndex const size, localIndex const GEOS_UNUSED_PARAM( numPts ) )

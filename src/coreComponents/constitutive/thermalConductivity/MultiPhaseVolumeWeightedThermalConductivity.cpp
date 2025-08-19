@@ -43,7 +43,7 @@ MultiPhaseVolumeWeightedThermalConductivity::MultiPhaseVolumeWeightedThermalCond
     setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "Phase thermal conductivity [W/(m.K)]" );
 
-  registerField( fields::thermalconductivity::rockThermalConductivity{}, &m_rockThermalConductivity );
+  registerField< fields::thermalconductivity::rockThermalConductivity >( &m_rockThermalConductivity );
 }
 
 void MultiPhaseVolumeWeightedThermalConductivity::resizeFields( localIndex const size, localIndex const numPts )

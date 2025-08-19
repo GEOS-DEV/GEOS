@@ -34,8 +34,8 @@ PermeabilityBase::PermeabilityBase( string const & name, Group * const parent ):
   m_permeability(),
   m_dPerm_dPressure()
 {
-  registerField( fields::permeability::permeability{}, &m_permeability );
-  registerField( fields::permeability::dPerm_dPressure{}, &m_dPerm_dPressure );
+  registerField< fields::permeability::permeability >( &m_permeability );
+  registerField< fields::permeability::dPerm_dPressure >( &m_dPerm_dPressure );
 }
 
 void PermeabilityBase::scaleHorizontalPermeability( arrayView1d< real64 const > scalingFactors ) const

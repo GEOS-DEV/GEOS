@@ -33,19 +33,19 @@ SingleFluidBase::SingleFluidBase( string const & name, Group * const parent )
   : ConstitutiveBase( name, parent ),
   m_numDOF( 1 )
 {
-  registerField( fields::singlefluid::density{}, &m_density.value );
-  registerField( fields::singlefluid::dDensity{}, &m_density.derivs );
-  registerField( fields::singlefluid::density_n{}, &m_density_n );
+  registerField< fields::singlefluid::density >( &m_density.value );
+  registerField< fields::singlefluid::dDensity >( &m_density.derivs );
+  registerField< fields::singlefluid::density_n >( &m_density_n );
 
-  registerField( fields::singlefluid::viscosity{}, &m_viscosity.value );
-  registerField( fields::singlefluid::dViscosity{}, &m_viscosity.derivs );
+  registerField< fields::singlefluid::viscosity >( &m_viscosity.value );
+  registerField< fields::singlefluid::dViscosity >( &m_viscosity.derivs );
 
-  registerField( fields::singlefluid::internalEnergy{}, &m_internalEnergy.value );
-  registerField( fields::singlefluid::dInternalEnergy{}, &m_internalEnergy.derivs );
-  registerField( fields::singlefluid::internalEnergy_n{}, &m_internalEnergy_n );
+  registerField< fields::singlefluid::internalEnergy >( &m_internalEnergy.value );
+  registerField< fields::singlefluid::dInternalEnergy >( &m_internalEnergy.derivs );
+  registerField< fields::singlefluid::internalEnergy_n >( &m_internalEnergy_n );
 
-  registerField( fields::singlefluid::enthalpy{}, &m_enthalpy.value );
-  registerField( fields::singlefluid::dEnthalpy{}, &m_enthalpy.derivs );
+  registerField< fields::singlefluid::enthalpy >( &m_enthalpy.value );
+  registerField< fields::singlefluid::dEnthalpy >( &m_enthalpy.derivs );
 }
 
 void SingleFluidBase::postInputInitialization()

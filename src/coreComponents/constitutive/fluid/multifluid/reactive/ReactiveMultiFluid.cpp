@@ -37,10 +37,10 @@ ReactiveMultiFluid::
   m_numSecondarySpecies = 11;
   m_numKineticReactions = 2;
 
-  registerField( fields::reactivefluid::primarySpeciesConcentration{}, &m_primarySpeciesConcentration );
-  registerField( fields::reactivefluid::secondarySpeciesConcentration{}, &m_secondarySpeciesConcentration );
-  registerField( fields::reactivefluid::primarySpeciesTotalConcentration{}, &m_primarySpeciesTotalConcentration );
-  registerField( fields::reactivefluid::kineticReactionRates{}, &m_kineticReactionRates );
+  registerField< fields::reactivefluid::primarySpeciesConcentration >( &m_primarySpeciesConcentration );
+  registerField< fields::reactivefluid::secondarySpeciesConcentration >( &m_secondarySpeciesConcentration );
+  registerField< fields::reactivefluid::primarySpeciesTotalConcentration >( &m_primarySpeciesTotalConcentration );
+  registerField< fields::reactivefluid::kineticReactionRates >( &m_kineticReactionRates );
 }
 
 bool ReactiveMultiFluid::isThermal() const

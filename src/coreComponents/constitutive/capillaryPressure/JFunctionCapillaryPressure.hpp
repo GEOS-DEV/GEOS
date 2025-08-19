@@ -109,7 +109,6 @@ private:
     static constexpr char const * porosityExponentString() { return "porosityExponent"; }
     static constexpr char const * permeabilityExponentString() { return "permeabilityExponent"; }
     static constexpr char const * permeabilityDirectionString() { return "permeabilityDirection"; }
-    static constexpr char const * jFunctionWrappersString() { return "jFunctionWrappers"; }
   };
 
   /**

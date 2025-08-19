@@ -40,9 +40,9 @@ DiffusionBase::DiffusionBase( string const & name, Group * const parent )
     setApplyDefaultValue( 1.0 ).
     setDescription( "List of phase diffusivity multipliers" );
 
-  registerField( fields::diffusion::diffusivity{}, &m_diffusivity );
-  registerField( fields::diffusion::dDiffusivity_dTemperature{}, &m_dDiffusivity_dTemperature );
-  registerField( fields::diffusion::phaseDiffusivityMultiplier{}, &m_phaseDiffusivityMultiplier );
+  registerField< fields::diffusion::diffusivity >( &m_diffusivity );
+  registerField< fields::diffusion::dDiffusivity_dTemperature >( &m_dDiffusivity_dTemperature );
+  registerField< fields::diffusion::phaseDiffusivityMultiplier >( &m_phaseDiffusivityMultiplier );
 }
 
 void DiffusionBase::postInputInitialization()

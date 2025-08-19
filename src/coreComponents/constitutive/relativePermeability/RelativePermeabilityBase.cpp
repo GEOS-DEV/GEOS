@@ -42,12 +42,12 @@ RelativePermeabilityBase::RelativePermeabilityBase( string const & name, Group *
   registerWrapper( viewKeyStruct::phaseOrderString(), &m_phaseOrder ).
     setSizedFromParent( 0 );
 
-  registerField( fields::relperm::phaseRelPerm{}, &m_phaseRelPerm );
-  registerField( fields::relperm::dPhaseRelPerm_dPhaseVolFraction{}, &m_dPhaseRelPerm_dPhaseVolFrac );
+  registerField< fields::relperm::phaseRelPerm >( &m_phaseRelPerm );
+  registerField< fields::relperm::dPhaseRelPerm_dPhaseVolFraction >( &m_dPhaseRelPerm_dPhaseVolFrac );
 
-  registerField( fields::relperm::phaseTrappedVolFraction{}, &m_phaseTrappedVolFrac );
+  registerField< fields::relperm::phaseTrappedVolFraction >( &m_phaseTrappedVolFrac );
 
-  registerField( fields::relperm::phaseRelPerm_n{}, &m_phaseRelPerm_n );
+  registerField< fields::relperm::phaseRelPerm_n >( &m_phaseRelPerm_n );
 
 }
 

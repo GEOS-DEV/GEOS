@@ -53,41 +53,40 @@ MultiFluidBase::MultiFluidBase( string const & name, Group * const parent )
   registerWrapper( viewKeyStruct::useMassString(), &m_useMass ).
     setRestartFlags( RestartFlags::NO_WRITE );
 
-  registerField( fields::multifluid::phaseFraction{}, &m_phaseFraction.value );
-  registerField( fields::multifluid::dPhaseFraction{}, &m_phaseFraction.derivs );
-
-  registerField( fields::multifluid::phaseDensity{}, &m_phaseDensity.value );
-  registerField( fields::multifluid::phaseDensity_n{}, &m_phaseDensity_n );
-  registerField( fields::multifluid::dPhaseDensity{}, &m_phaseDensity.derivs );
-
-  registerField( fields::multifluid::phaseMassDensity{}, &m_phaseMassDensity.value );
-  registerField( fields::multifluid::dPhaseMassDensity{}, &m_phaseMassDensity.derivs );
-
-  registerField( fields::multifluid::phaseViscosity{}, &m_phaseViscosity.value );
-  registerField( fields::multifluid::dPhaseViscosity{}, &m_phaseViscosity.derivs );
-
-  registerField( fields::multifluid::phaseEnthalpy{}, &m_phaseEnthalpy.value );
-  registerField( fields::multifluid::phaseEnthalpy_n{}, &m_phaseEnthalpy_n );
-  registerField( fields::multifluid::dPhaseEnthalpy{}, &m_phaseEnthalpy.derivs );
-
-  registerField( fields::multifluid::phaseInternalEnergy{}, &m_phaseInternalEnergy.value );
-  registerField( fields::multifluid::phaseInternalEnergy_n{}, &m_phaseInternalEnergy_n );
-  registerField( fields::multifluid::dPhaseInternalEnergy{}, &m_phaseInternalEnergy.derivs );
-
-  registerField( fields::multifluid::phaseCompFraction{}, &m_phaseCompFraction.value );
-  registerField( fields::multifluid::phaseCompFraction_n{}, &m_phaseCompFraction_n );
-  registerField( fields::multifluid::dPhaseCompFraction{}, &m_phaseCompFraction.derivs );
-
-  registerField( fields::multifluid::totalDensity{}, &m_totalDensity.value );
-  registerField( fields::multifluid::totalDensity_n{}, &m_totalDensity_n );
-  registerField( fields::multifluid::dTotalDensity{}, &m_totalDensity.derivs );
-
-
   registerWrapper( viewKeyStruct::checkPVTTablesRangesString(), &m_checkPVTTablesRanges ).
     setInputFlag( InputFlags::OPTIONAL ).
     setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "Enable (1) or disable (0) an error when the input pressure or temperature of the PVT tables is out of range." ).
     setDefaultValue( 1 );
+
+  registerField< fields::multifluid::phaseFraction >( &m_phaseFraction.value );
+  registerField< fields::multifluid::dPhaseFraction >( &m_phaseFraction.derivs );
+
+  registerField< fields::multifluid::phaseDensity >( &m_phaseDensity.value );
+  registerField< fields::multifluid::phaseDensity_n >( &m_phaseDensity_n );
+  registerField< fields::multifluid::dPhaseDensity >( &m_phaseDensity.derivs );
+
+  registerField< fields::multifluid::phaseMassDensity >( &m_phaseMassDensity.value );
+  registerField< fields::multifluid::dPhaseMassDensity >( &m_phaseMassDensity.derivs );
+
+  registerField< fields::multifluid::phaseViscosity >( &m_phaseViscosity.value );
+  registerField< fields::multifluid::dPhaseViscosity >( &m_phaseViscosity.derivs );
+
+  registerField< fields::multifluid::phaseEnthalpy >( &m_phaseEnthalpy.value );
+  registerField< fields::multifluid::phaseEnthalpy_n >( &m_phaseEnthalpy_n );
+  registerField< fields::multifluid::dPhaseEnthalpy >( &m_phaseEnthalpy.derivs );
+
+  registerField< fields::multifluid::phaseInternalEnergy >( &m_phaseInternalEnergy.value );
+  registerField< fields::multifluid::phaseInternalEnergy_n >( &m_phaseInternalEnergy_n );
+  registerField< fields::multifluid::dPhaseInternalEnergy >( &m_phaseInternalEnergy.derivs );
+
+  registerField< fields::multifluid::phaseCompFraction >( &m_phaseCompFraction.value );
+  registerField< fields::multifluid::phaseCompFraction_n >( &m_phaseCompFraction_n );
+  registerField< fields::multifluid::dPhaseCompFraction >( &m_phaseCompFraction.derivs );
+
+  registerField< fields::multifluid::totalDensity >( &m_totalDensity.value );
+  registerField< fields::multifluid::totalDensity_n >( &m_totalDensity_n );
+  registerField< fields::multifluid::dTotalDensity >( &m_totalDensity.derivs );
 }
 
 void MultiFluidBase::resizeFields( localIndex const size, localIndex const numPts )

@@ -65,7 +65,7 @@ CompositionalMultiphaseFluid( string const & name, Group * const parent )
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Table of binary interaction coefficients" );
 
-  registerField( fields::multifluid::kValues{}, &m_kValues );
+  registerField< fields::multifluid::kValues >( &m_kValues );
 
   // Link parameters specific to each model
   m_parameters->registerParameters( this );

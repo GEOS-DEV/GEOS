@@ -40,7 +40,7 @@ ParallelPlatesPermeability::ParallelPlatesPermeability( string const & name, Gro
     setSizedFromParent( 0 ).
     setDescription( "Default value of the permeability normal to the surface. If not specified the permeability is updated using the cubic law. " );
 
-  registerField( fields::permeability::dPerm_dDispJump{}, &m_dPerm_dDispJump );
+  registerField< fields::permeability::dPerm_dDispJump >( &m_dPerm_dDispJump );
 }
 
 void ParallelPlatesPermeability::resizeFields( localIndex const size, localIndex const numPts )

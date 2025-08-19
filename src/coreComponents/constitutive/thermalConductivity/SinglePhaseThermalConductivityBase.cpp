@@ -31,8 +31,8 @@ namespace constitutive
 SinglePhaseThermalConductivityBase::SinglePhaseThermalConductivityBase( string const & name, Group * const parent )
   : ConstitutiveBase( name, parent )
 {
-  registerField( fields::thermalconductivity::effectiveConductivity{}, &m_effectiveConductivity );
-  registerField( fields::thermalconductivity::dEffectiveConductivity_dT{}, &m_dEffectiveConductivity_dT );
+  registerField< fields::thermalconductivity::effectiveConductivity >( &m_effectiveConductivity );
+  registerField< fields::thermalconductivity::dEffectiveConductivity_dT >( &m_dEffectiveConductivity_dT );
 }
 
 void SinglePhaseThermalConductivityBase::postInputInitialization()
