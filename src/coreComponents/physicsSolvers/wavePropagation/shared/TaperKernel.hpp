@@ -128,7 +128,8 @@ struct TaperKernel
 
      if( dist<sizeT )
      {
-       taperCoeff[a] = LvArray::math::exp((((3*1500)/(2*sizeT))*log( r )*pow((sizeT-dist)/sizeT, 2 ))*dt );
+       //taperCoeff[a] = LvArray::math::exp((((3*1500)/(2*sizeT))*log( r )*pow((sizeT-dist)/sizeT, 2 ))*dt );
+       taperCoeff[a] = LvArray::math::exp((((3*1500)/(2*sizeT))*r*pow((sizeT-dist)/sizeT, 2 ))*dt );
      }
      else
      {
