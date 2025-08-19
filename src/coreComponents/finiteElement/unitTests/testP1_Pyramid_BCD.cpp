@@ -145,7 +145,7 @@ void testKernelDriver()
 
     }
     real64 const fracz = 1.0 / (1-coords[i][2]);
-    real64 const fracz2 = 1.0/ pow( 1.0 - coords[i][2], 2 );
+    real64 const fracz2 = -1.0/ pow( 1.0 - coords[i][2], 2 );
     gradPhi1test[i][0] = 0.25*(-1-coords[i][1]*fracz);
     gradPhi2test[i][0] = 0.25*(-1+coords[i][1]*fracz);
     gradPhi3test[i][0] = 0.25*(1-coords[i][1]*fracz);
@@ -170,11 +170,7 @@ void testKernelDriver()
   real64 gradNtest[numNodes][3];
   for (localIndex i = 0; i < numNodes; ++i )
   { 
-    printf("iVaut=%d\n",i);
-    printf("coords[%d] = (%f, %f, %f)\n", i, coords[i][0], coords[i][1], coords[i][2]);
     Pk_Pyramid_BCD<1>::calcGradN( coords[i],gradNtest );
-    printf("gradNtest[%d] = (%f, %f, %f)\n", i, gradNtest[i][0], gradNtest[i][1], gradNtest[i][2]);
-    printf("gradPhi1test[%d] = (%f, %f, %f)\n", i, gradPhi1test[i][0], gradPhi1test[i][1], gradPhi1test[i][2]);
     EXPECT_FLOAT_EQ( gradNtest[0][0], gradPhi1test[i][0] );
     EXPECT_FLOAT_EQ( gradNtest[1][0], gradPhi2test[i][0] );
     EXPECT_FLOAT_EQ( gradNtest[2][0], gradPhi3test[i][0] );

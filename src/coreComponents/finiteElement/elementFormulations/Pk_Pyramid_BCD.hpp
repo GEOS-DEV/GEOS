@@ -451,10 +451,7 @@ static constexpr real64 EvaluateJacobiPolynomialDerivative(localIndex const n, r
 
     real64 f = pow(1.0 - z, m);
     // Gradient en x
-    printf("dP_i = %f, P_j = %f, f = %f, P_k = %f\n", dP_i, P_j, f, P_k);
     gradPsiX[0] = (1.0 / (1.0 - z)) * dP_i * P_j * f * P_k;
-
-    printf("gradPsiX[0] = %f\n", gradPsiX[0]);
 
     // Gradient en y
     gradPsiX[1] = (1.0 / (1.0 - z)) * dP_j * P_i * f * P_k;
