@@ -156,7 +156,10 @@ public:
    */
   struct viewKeyStruct : public ElementSubRegionBase::viewKeyStruct
   {
-    /// @return String key to embSurfMap
+    /// @return String key for the derivatives of the shape functions with respect to the reference configuration
+    static constexpr char const * dNdXString() { return "dNdX"; }
+    /// @return String key for the derivative of the jacobian.
+    static constexpr char const * detJString() { return "detJ"; }    /// @return String key to embSurfMap
     static constexpr char const * toEmbSurfString() { return "ToEmbeddedSurfaces"; }
     /// @return String key to fracturedCells
     static constexpr char const * fracturedCellsString() { return "fracturedCells"; }
