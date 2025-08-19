@@ -46,11 +46,11 @@ struct TaperKernel
   template< typename EXEC_POLICY >
   static void
  computeTaperCoeff( localIndex const size,
-                    arrayView2d< wsCoordType const, nodes::REFERENCE_POSITION_USD > const nodeCoords,
+                    arrayView2d< wsCoordType const, nodes::REFERENCE_POSITION_USD > const ,
                     real32 const sizeT,
-                    real32 const dt,
-                    real32 const vMin,
-                    real32 const r,
+                    real32 const ,
+                    real32 const ,
+                    real32 const ,
                     arrayView1d< real32 > const taperCoeff )
   // computeTaperCoeff( localIndex const,
   //                    arrayView2d< wsCoordType const, nodes::REFERENCE_POSITION_USD > const ,
