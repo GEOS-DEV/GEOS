@@ -158,7 +158,6 @@ struct TaperKernel
     {
       //vector[a] = vector[a]*taperCoeff[a];
       vector[a] *= taperCoeff[a];
-      printf("taper[%i]=%f\n",a, taperCoeff[a]);
       //vector[a] = 1.0;
     } );
 
