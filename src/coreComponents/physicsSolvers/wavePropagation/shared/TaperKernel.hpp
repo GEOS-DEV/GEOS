@@ -45,20 +45,20 @@ struct TaperKernel
    */
   template< typename EXEC_POLICY >
   static void
- // computeTaperCoeff( localIndex const size,
- //                    arrayView2d< wsCoordType const, nodes::REFERENCE_POSITION_USD > const nodeCoords,
- //                    real32 const sizeT,
- //                    real32 const dt,
- //                    real32 const vMin,
- //                    real32 const r,
- //                    arrayView1d< real32 > const taperCoeff )
-  computeTaperCoeff( localIndex const,
-                     arrayView2d< wsCoordType const, nodes::REFERENCE_POSITION_USD > const ,
-                     real32 const ,
-                     real32 const ,
-                     real32 const ,
-                     real32 const ,
-                     arrayView1d< real32 > const )
+ computeTaperCoeff( localIndex const size,
+                    arrayView2d< wsCoordType const, nodes::REFERENCE_POSITION_USD > const nodeCoords,
+                    real32 const sizeT,
+                    real32 const dt,
+                    real32 const vMin,
+                    real32 const r,
+                    arrayView1d< real32 > const taperCoeff )
+  // computeTaperCoeff( localIndex const,
+  //                    arrayView2d< wsCoordType const, nodes::REFERENCE_POSITION_USD > const ,
+  //                    real32 const ,
+  //                    real32 const ,
+  //                    real32 const ,
+  //                    real32 const ,
+  //                    arrayView1d< real32 > const )
   {
 
     ///Seek the global maximum and minimum of the domain
@@ -121,21 +121,21 @@ struct TaperKernel
 //
 //    } );
 //
-//    forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const a )
-//    {
-//
-//      real32 dist = taperCoeff[a];
-//
-//      if( dist<sizeT )
-//      {
-//        taperCoeff[a] = LvArray::math::exp((((3*vMin)/(2*sizeT))*log( r )*pow((sizeT-dist)/sizeT, 2 ))*dt );
-//      }
-//      else
-//      {
-//        taperCoeff[a] = 1.0;
-//      }
-//
-//    } );
+   forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const a )
+   {
+
+     real32 dist = 30;//taperCoeff[a];
+
+     if( dist<sizeT )
+     {
+       taperCoeff[a] = 2.0;//LvArray::math::exp((((3*vMin)/(2*sizeT))*log( r )*pow((sizeT-dist)/sizeT, 2 ))*dt );
+     }
+     else
+     {
+       taperCoeff[a] = 1.0;
+     }
+
+   } );
 
   }
 
