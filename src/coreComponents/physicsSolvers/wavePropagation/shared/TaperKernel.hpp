@@ -150,9 +150,9 @@ struct TaperKernel
    */
   template< typename EXEC_POLICY >
   static void
-  multiplyByTaperCoeff( localIndex const size,
-                        arrayView1d< real32 const > const taperCoeff,
-                        arrayView1d< real32 > const vector )
+//  multiplyByTaperCoeff( localIndex const size,
+//                        arrayView1d< real32 const > const taperCoeff,
+//                        arrayView1d< real32 > const vector )
   multiplyByTaperCoeff( localIndex const ,
                         arrayView1d< real32 const > const ,
                         arrayView1d< real32 > const )
