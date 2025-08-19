@@ -53,16 +53,17 @@ public:
    * @param[in] damage The ArrayView holding the damage for each quadrature point.
    * @param[in] jacobian The ArrayView holding the jacobian for each quadrature point.
    * @param[in] bulkModulus The ArrayView holding the bulk modulus data for each element.   ( k  in mathematica notebook)
-   * @param[in] bulkModulusA The ArrayView holding the bulk modulus data for each element.   ( k  in mathematica notebook)
-   * @param[in] bulkModulusB The ArrayView holding the bulk modulus data for each element.   ( k  in mathematica notebook)
-   * @param[in] bulkModulusC The ArrayView holding the bulk modulus data for each element.   ( k  in mathematica notebook)
-   * @param[in] bulkModulusD The ArrayView holding the bulk modulus data for each element.   ( k  in mathematica notebook)
+   * @param[in] bulkModulusA Parameter to update modulus with temperature
+   * @param[in] bulkModulusB Parameter to update modulus with temperature
+   * @param[in] bulkModulusC Parameter to update modulus with temperature
+   * @param[in] bulkModulusD Parameter to update modulus with temperature
    * @param[in] shearModulus The ArrayView holding the shear modulus data for each element. ( g  in mathematica notebook)
-   * @param[in] shearModulusA The ArrayView holding the shear modulus data for each element. ( g  in mathematica notebook)
-   * @param[in] shearModulusB The ArrayView holding the shear modulus data for each element. ( g  in mathematica notebook)
-   * @param[in] shearModulusC The ArrayView holding the shear modulus data for each element. ( g  in mathematica notebook)
-   * @param[in] shearModulusD The ArrayView holding the shear modulus data for each element. ( g  in mathematica notebook)
-   * @param[in] yieldStrength The ArrayView holding the current yield strength.    ( sigmay0  in mathematica notebook??)
+   * @param[in] shearModulusA Parameter to update modulus with temperature
+   * @param[in] shearModulusB Parameter to update modulus with temperature
+   * @param[in] shearModulusC Parameter to update modulus with temperature
+   * @param[in] shearModulusD Parameter to update modulus with temperature
+   * @param[in] yieldStrength The arrayview holding original yieldstrength value
+   * @param[in] yieldStrengthA The ArrayView holding the current yield strength.    ( sigmay0  in mathematica notebook??)
    * @param[in] yieldStrengthB The ArrayView holding the current yield strength.    ( sigmay0  in mathematica notebook??)
    * @param[in] yieldStrengthC The ArrayView holding the current yield strength.    ( sigmay0  in mathematica notebook??)
    * @param[in] yieldStrengthD The ArrayView holding the current yield strength.    ( sigmay0  in mathematica notebook??)
@@ -91,20 +92,21 @@ public:
                                  arrayView3d< real64 > const & plasticStrain,
                                  arrayView2d< real64 > const & damage,
                                  arrayView2d< real64 > const & jacobian,
-                                 arrayView1d< real64 const > const & bulkModulus,
-                                 arrayView1d< real64 > const & bulkModulusA,
-                                 arrayView1d< real64 > const & bulkModulusB,
-                                 arrayView1d< real64 > const & bulkModulusC,
-                                 arrayView1d< real64 > const & bulkModulusD,
-                                 arrayView1d< real64 const > const & shearModulus,
-                                 arrayView1d< real64 > const & shearModulusA,
-                                 arrayView1d< real64 > const & shearModulusB,
-                                 arrayView1d< real64 > const & shearModulusC,
-                                 arrayView1d< real64 > const & shearModulusD,
+                                 arrayView1d< real64 > const & bulkModulus,
+                                 real64 const & bulkModulusA,
+                                 real64 const & bulkModulusB,
+                                 real64 const & bulkModulusC,
+                                 real64 const & bulkModulusD,
+                                 arrayView1d< real64 > const & shearModulus,
+                                 real64 const & shearModulusA,
+                                 real64 const & shearModulusB,
+                                 real64 const & shearModulusC,
+                                 real64 const & shearModulusD,
                                  arrayView1d< real64 > const & yieldStrength,
-                                 arrayView1d< real64 > const & yieldStrengthB,
-                                 arrayView1d< real64 > const & yieldStrengthC,
-                                 arrayView1d< real64 > const & yieldStrengthD,
+                                 real64 const & yieldStrengthA,
+                                 real64 const & yieldStrengthB,
+                                 real64 const & yieldStrengthC,
+                                 real64 const & yieldStrengthD,
                                  real64 const & strainHardeningSlope,
                                  real64 const & strainHardeningSlopeB,
                                  real64 const & strainHardeningSlopeC,
@@ -140,15 +142,18 @@ public:
     m_plasticStrain( plasticStrain ),
     m_damage( damage ),
     m_jacobian( jacobian ),
+    m_bulkModulus( bulkModulus ),
     m_bulkModulusA( bulkModulusA ),
     m_bulkModulusB( bulkModulusB ),
     m_bulkModulusC( bulkModulusC ),
     m_bulkModulusD( bulkModulusD ),
+    m_shearModulus( shearModulus ),
     m_shearModulusA( shearModulusA ),
     m_shearModulusB( shearModulusB ),
     m_shearModulusC( shearModulusC ),
     m_shearModulusD( shearModulusD ),
     m_yieldStrength( yieldStrength ),
+    m_yieldStrengthA( yieldStrengthA ),
     m_yieldStrengthB( yieldStrengthB ),
     m_yieldStrengthC( yieldStrengthC ),
     m_yieldStrengthD( yieldStrengthD ),
@@ -261,44 +266,55 @@ private:
   /// A reference to the ArrayView holding the damage for each quadrature point.
   arrayView2d< real64 > const m_damage;
 
+
   /// A reference to the ArrayView holding the jacobian for each quadrature point.
   arrayView2d< real64 > const m_jacobian;
 
-  /// A reference to the ArrayView holding the yield strength for each element/particle
-  arrayView1d< real64 const > const m_bulkModulusA;
+
+  /// A reference to the ArrayView holding the damage for each quadrature point.
+  arrayView1d< real64 > const m_bulkModulus;
 
   /// A reference to the ArrayView holding the yield strength for each element/particle
-  arrayView1d< real64 const > const m_bulkModulusB;
+  real64 const m_bulkModulusA;
 
   /// A reference to the ArrayView holding the yield strength for each element/particle
-  arrayView1d< real64 const > const m_bulkModulusC;
+  real64 const m_bulkModulusB;
 
   /// A reference to the ArrayView holding the yield strength for each element/particle
-  arrayView1d< real64 const > const m_bulkModulusD;
+  real64 const m_bulkModulusC;
 
   /// A reference to the ArrayView holding the yield strength for each element/particle
-  arrayView1d< real64 const > const m_shearModulusA;
+  real64 const m_bulkModulusD;
+
+  /// A reference to the ArrayView holding the damage for each quadrature point.
+  arrayView1d< real64 > const m_shearModulus;
 
   /// A reference to the ArrayView holding the yield strength for each element/particle
-  arrayView1d< real64 const > const m_shearModulusB;
+  real64 const m_shearModulusA;
 
   /// A reference to the ArrayView holding the yield strength for each element/particle
-  arrayView1d< real64 const > const m_shearModulusC;
+  real64 const m_shearModulusB;
 
   /// A reference to the ArrayView holding the yield strength for each element/particle
-  arrayView1d< real64 const > const m_shearModulusD;
+  real64 const m_shearModulusC;
 
   /// A reference to the ArrayView holding the yield strength for each element/particle
+  real64 const m_shearModulusD;
+
+  /// State varialbe: ythe yield strength
   arrayView1d< real64 > const m_yieldStrength;
 
   /// A reference to the ArrayView holding the yield strength for each element/particle
-  arrayView1d< real64 > const m_yieldStrengthB;
+  real64 const m_yieldStrengthA;
 
   /// A reference to the ArrayView holding the yield strength for each element/particle
-  arrayView1d< real64 > const m_yieldStrengthC;
+  real64 const m_yieldStrengthB;
 
   /// A reference to the ArrayView holding the yield strength for each element/particle
-  arrayView1d< real64 > const m_yieldStrengthD;
+  real64 const m_yieldStrengthC;
+
+  /// A reference to the ArrayView holding the yield strength for each element/particle
+  real64 const m_yieldStrengthD;
 
   /// The strain hardening slope
   real64 const m_strainHardeningSlope;
@@ -537,13 +553,11 @@ void StrainHardeningPolymerUpdates::smallStrainUpdateHelper( localIndex const k,
     real64 temperature = m_temperature[k];
 
 
-    std::cout << " ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ " << std::endl;
-    std::cout << "temperature = " << temperature << std::endl;
-    std::cout << "initialTemperature = " << m_initialTemperature << std::endl;
 
 
-    real64 maximumStretch = m_maximumStretch + m_maximumStretchB / (1. + std::exp(m_maximumStretchC * (temperature - m_maximumStretchD)));
-    std::cout << "maximumStretch = " << maximumStretch << std::endl;
+    //MM Aug 2025 ~~~~~~~~~`
+    real64 maximumStretch = m_maximumStretch + (m_maximumStretchB / (1. + std::exp(m_maximumStretchC * (temperature - m_maximumStretchD))));
+    //MM Aug 2025 ~~~~~~~~~`
 
 
     for( localIndex i = 0; i < 3; ++i )
@@ -565,22 +579,53 @@ void StrainHardeningPolymerUpdates::smallStrainUpdateHelper( localIndex const k,
 
     //real64 yieldStrength = m_yieldStrength[k];
     //real64 oldYieldStrength = yieldStrength;
+    //GEOS_UNUSED_VAR( m_yieldStrength[k] );
     real64 unrotatedTempPlasticStrain[6] = { 0 };
     real64 plasticStrainIncrement[6] = { 0 };
 
+    std::cout << " ~~~~~~~~~~~~~ temperature ~~~~~~~~~~~~~~~~ " << temperature << std::endl;
+    //MM Aug 2025 ~~~~~~~~~`
+
+
+    m_bulkModulus[k]  =  m_bulkModulusA + m_bulkModulusB / ( 1.0 + std::exp( m_bulkModulusC * ( temperature - m_bulkModulusD ) ) );
+    std::cout << "m_bulkModulusNew[k] = " << m_bulkModulus[k] << std::endl;
+    std::cout << "m_bulkModulusA = " << m_bulkModulusA << std::endl;
+    std::cout << "m_bulkModulusB = " << m_bulkModulusB << std::endl;
+    std::cout << "m_bulkModulusC = " << m_bulkModulusC << std::endl;
+    std::cout << "m_bulkModulusD = " << m_bulkModulusD << std::endl;
+
+    m_shearModulus[k] = m_shearModulusA + m_shearModulusB / ( 1.0 + std::exp( m_shearModulusC * ( temperature - m_shearModulusD ) ) );
+    std::cout << "m_shearModulusNew[k] = " << m_shearModulus[k] << std::endl;
+    std::cout << "m_shearModulusA = " << m_shearModulusA << std::endl;
+    std::cout << "m_shearModulusB = " << m_shearModulusB << std::endl;
+    std::cout << "m_shearModulusC = " << m_shearModulusC << std::endl;
+    std::cout << "m_shearModulusD = " << m_shearModulusD << std::endl;
 
 
 
+    real64 yieldStrength =  m_yieldStrengthA + (m_yieldStrengthB / (1. + std::exp(m_yieldStrengthC * (temperature - m_yieldStrengthD))));
 
-    real64 yieldStrength = m_yieldStrength[k] + m_yieldStrengthB[k] / (1. + std::exp(m_yieldStrengthC[k] * (temperature - m_yieldStrengthD[k])));
-    real64 oldYieldStrength = yieldStrength;
-    real64 strainHardeningSlope = m_strainHardeningSlope + m_strainHardeningSlopeB / (1. + std::exp(m_strainHardeningSlopeC * (temperature + m_strainHardeningSlopeD)));
-    real64 shearSofteningMagnitude = m_shearSofteningMagnitude + m_shearSofteningMagnitudeB / (1. + std::exp(m_shearSofteningMagnitudeC * (temperature - m_shearSofteningMagnitudeD)));
+    std::cout << "k = " << k << std::endl;
+    std::cout << "m_yieldStrengthA = " << m_yieldStrengthA << std::endl;
+    std::cout << "m_yieldStrengthB = " << m_yieldStrengthB << std::endl;
+    std::cout << "m_yieldStrengthC = " << m_yieldStrengthC << std::endl;
+    std::cout << "m_yieldStrengthD = " << m_yieldStrengthD << std::endl;
 
 
     std::cout << "yieldStrength = " << yieldStrength << std::endl;
+    real64 oldYieldStrength = yieldStrength;
+    real64 strainHardeningSlope = m_strainHardeningSlope + (m_strainHardeningSlopeB / (1. + std::exp(m_strainHardeningSlopeC * (temperature - m_strainHardeningSlopeD))));
+    real64 shearSofteningMagnitude = m_shearSofteningMagnitude + (m_shearSofteningMagnitudeB / (1. + std::exp(m_shearSofteningMagnitudeC * (temperature - m_shearSofteningMagnitudeD))));
+    
+
+    std::cout << "initialTemperature = " << m_initialTemperature << std::endl;
+    std::cout << "maximumStretch = " << maximumStretch << std::endl;
+    std::cout << "yieldStrength = " << yieldStrength << std::endl;
     std::cout << "strainHardeningSlope = " << strainHardeningSlope << std::endl;
     std::cout << "shearSofteningMagnitude = " << shearSofteningMagnitude << std::endl;
+
+    //MM Aug 2025 ~~~~~~~~~`
+
 
     for(int iter=0; iter < maxEvals; ++iter)
     {
@@ -604,8 +649,15 @@ void StrainHardeningPolymerUpdates::smallStrainUpdateHelper( localIndex const k,
 
       // Compute change in yield strength
       real64 plasticSoftening = shearSofteningMagnitude * std::exp( std::max( -1.0 * gamma_by_r1_to_r2, -16.0 ) );
+      std::cout << "plasticstoftening = " << plasticSoftening << std::endl;
+
       real64 stretchHardening = strainHardeningSlope * ( maximumStretch * maximumStretch - 1.0 / maximumStretch );
-      yieldStrength = yieldStrength + plasticSoftening + stretchHardening; // CC: debugging disabling change in yield strength
+      std::cout << "stretchHardening = " << stretchHardening << std::endl;
+
+      yieldStrength = m_yieldStrength[k] + plasticSoftening + stretchHardening; // CC: debugging disabling change in yield strength
+      std::cout << "yieldStrength as f(plastic softening and stretch hardening) = " << yieldStrength << std::endl;
+
+
 
       // // CC: need to add this later
       // real64 thermalStrengthReduction = 1.0;
@@ -668,9 +720,10 @@ void StrainHardeningPolymerUpdates::smallStrainUpdateHelper( localIndex const k,
         return;
       }
     }
-
     GEOS_ERROR("Plastic strain of StrainHardeningPolymer model did not converge within max evals.");
 }
+
+
 
 
 GEOS_HOST_DEVICE
@@ -704,29 +757,22 @@ void StrainHardeningPolymerUpdates::computePlasticStrainIncrement ( localIndex c
   stressIncrementIsostatic[2] = trialP;
 
 
-  GEOS_UNUSED_VAR( m_bulkModulusA );
-  GEOS_UNUSED_VAR( m_bulkModulusB );
-  GEOS_UNUSED_VAR( m_bulkModulusC );
-  GEOS_UNUSED_VAR( m_bulkModulusD );
+  //GEOS_UNUSED_VAR( m_bulkModulusA );
+  //GEOS_UNUSED_VAR( m_bulkModulusB );
+  //GEOS_UNUSED_VAR( m_bulkModulusC );
+  //GEOS_UNUSED_VAR( m_bulkModulusD );
 
   GEOS_UNUSED_VAR( temperature );
 
-  GEOS_UNUSED_VAR( m_shearModulusA );
-  GEOS_UNUSED_VAR( m_shearModulusB );
-  GEOS_UNUSED_VAR( m_shearModulusC );
-  GEOS_UNUSED_VAR( m_shearModulusD );
+  //GEOS_UNUSED_VAR( m_shearModulusA );
+  //GEOS_UNUSED_VAR( m_shearModulusB );
+  //GEOS_UNUSED_VAR( m_shearModulusC );
+  //GEOS_UNUSED_VAR( m_shearModulusD );
 
   // ~~~~~~~~~~~~~~~~~~~~~~~~~~~ want to incorporate the following  variables into the bulk and shear moduli ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // Temperature-updated moduli (A–D are array views → index [k])
-  //real64 shearModulusNew =
-  //    m_shearModulus[k]
-  //  + m_shearModulusB[k] / ( 1.0 + std::exp( m_shearModulusC[k] * ( temperature - m_shearModulusD[k] ) ) );
-//
-  //real64 bulkModulusNew  =
-  //    m_bulkModulus[k]
-  //  + m_bulkModulusB[k] / ( 1.0 + std::exp( m_bulkModulusC[k] * ( temperature - m_bulkModulusD[k] ) ) );
 
-
+    
 
 
   // For damage or softening it there may be cases where bulk or shear are approx 0, 
@@ -850,8 +896,11 @@ public:
     static constexpr char const * jacobianString() { return "jacobian"; }
 
 
-    /// string/key for yield strength
+
     static constexpr char const * yieldStrengthString() { return "yieldStrength"; }
+    /// string/key for yield strength
+
+    static constexpr char const * yieldStrengthAString() { return "yieldStrengthA"; }
     /// string/key for yield strength
 
     static constexpr char const * yieldStrengthBString() { return "yieldStrengthB"; }
@@ -940,6 +989,7 @@ public:
                                           m_shearModulusC,
                                           m_shearModulusD,
                                           m_yieldStrength,
+                                          m_yieldStrengthA,
                                           m_yieldStrengthB,
                                           m_yieldStrengthC,
                                           m_yieldStrengthD,
@@ -993,6 +1043,7 @@ public:
                           m_shearModulusC,
                           m_shearModulusD,
                           m_yieldStrength,
+                          m_yieldStrengthA,
                           m_yieldStrengthB,
                           m_yieldStrengthC,
                           m_yieldStrengthD,
@@ -1035,23 +1086,33 @@ protected:
   /// State variable: The jacobian of the deformation gradient for each quadrature point
   array2d< real64 > m_jacobian;
 
+
+  /// State variable: The bulk modulus
+  array1d< real64 > m_bulkModulus;
+
+
   /// The bulk modulus for each element/particle
-  array1d< real64 > m_bulkModulusA;
-  array1d< real64 > m_bulkModulusB;
-  array1d< real64 > m_bulkModulusC;
-  array1d< real64 > m_bulkModulusD;
+  real64 m_bulkModulusA;
+  real64 m_bulkModulusB;
+  real64 m_bulkModulusC;
+  real64 m_bulkModulusD;
+
+
+  /// State variable: The shear modulus
+  array1d< real64 > m_shearModulus;
 
   /// The shear modulus for each element/particle
-  array1d< real64 > m_shearModulusA;
-  array1d< real64 > m_shearModulusB;
-  array1d< real64 > m_shearModulusC;
-  array1d< real64 > m_shearModulusD;
+  real64 m_shearModulusA;
+  real64 m_shearModulusB;
+  real64 m_shearModulusC;
+  real64 m_shearModulusD;
 
   /// State variable: The yield strength 
   array1d< real64 > m_yieldStrength;
-  array1d< real64 > m_yieldStrengthB;
-  array1d< real64 > m_yieldStrengthC;
-  array1d< real64 > m_yieldStrengthD;
+  real64 m_yieldStrengthA;
+  real64 m_yieldStrengthB;
+  real64 m_yieldStrengthC;
+  real64 m_yieldStrengthD;
 
   /// Material parameter: The value of strain hardening slope
   real64 m_strainHardeningSlope;

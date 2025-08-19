@@ -39,6 +39,7 @@ StrainHardeningPolymer::StrainHardeningPolymer( string const & name, Group * con
   m_shearModulusC(0.0),
   m_shearModulusD(0.0),
   m_yieldStrength(0.0),
+  m_yieldStrengthA(0.0),
   m_yieldStrengthB(0.0),
   m_yieldStrengthC(0.0),
   m_yieldStrengthD(0.0),
@@ -95,6 +96,11 @@ StrainHardeningPolymer::StrainHardeningPolymer( string const & name, Group * con
 
 
   registerWrapper( viewKeyStruct::yieldStrengthString(), &m_yieldStrength ).
+    setApplyDefaultValue( -1.0 ).
+    setPlotLevel( PlotLevel::NOPLOT ).
+    setDescription( "Array of element/particle ield strength values " );
+
+  registerWrapper( viewKeyStruct::yieldStrengthAString(), &m_yieldStrengthA ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "yield strength  parameterA" );
 
@@ -209,25 +215,6 @@ StrainHardeningPolymer::StrainHardeningPolymer( string const & name, Group * con
     setPlotLevel( PlotLevel::NOPLOT ).
     setDescription( "Array of quadrature point jacobian values" );
 
-  registerWrapper( viewKeyStruct::yieldStrengthString(), &m_yieldStrength ).
-    setApplyDefaultValue( -1.0 ).
-    setPlotLevel( PlotLevel::NOPLOT ).
-    setDescription( "Array of element/particle yield strength values" );
-
-  registerWrapper( viewKeyStruct::yieldStrengthBString(), &m_yieldStrengthB ).
-    setApplyDefaultValue( -1.0 ).
-    setPlotLevel( PlotLevel::NOPLOT ).
-    setDescription( "Array of element/particle yield strength values" );
-
-  registerWrapper( viewKeyStruct::yieldStrengthCString(), &m_yieldStrengthC ).
-    setApplyDefaultValue( -1.0 ).
-    setPlotLevel( PlotLevel::NOPLOT ).
-    setDescription( "Array of element/particle yield strength values" );
-
-  registerWrapper( viewKeyStruct::yieldStrengthDString(), &m_yieldStrengthD ).
-    setApplyDefaultValue( -1.0 ).
-    setPlotLevel( PlotLevel::NOPLOT ).
-    setDescription( "Array of element/particle yield strength values" );
 }
 
 
