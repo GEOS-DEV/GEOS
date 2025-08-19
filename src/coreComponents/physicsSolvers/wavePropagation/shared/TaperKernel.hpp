@@ -156,7 +156,7 @@ struct TaperKernel
   {
     forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const a )
     {
-      vector[a] *= taperCoeff[a];
+      vector[a] = vector[a]*taperCoeff[a];
       printf("taper[%i]=%f\n",a, taperCoeff[a]);
       //vector[a] = 1.0;
     } );
