@@ -78,7 +78,7 @@ namespace geos
 using size_t      = std::size_t;
 
 /// Signed integer type.
-using integer     = std::int32_t;
+using integer     = int;
 
 /// Local index type (for indexing objects within an MPI partition).
 using localIndex  = GEOS_LOCALINDEX_TYPE;
@@ -98,15 +98,6 @@ using real32 = float;
 using real64 = double;
 
 ///@}
-
-
-#if defined( GEOS_USE_BOUNDS_CHECK )
-
-#else
-
-#endif
-
-
 
 /**
  * @name Binary buffer data types.
@@ -310,45 +301,16 @@ template< typename COL_INDEX, typename INDEX_TYPE=localIndex >
 using SparsityPatternView = LvArray::SparsityPatternView< COL_INDEX, INDEX_TYPE const, LvArray::ChaiBuffer >;
 
 /// Alias for CRS Matrix class.
-template< typename T, typename COL_INDEX=globalIndex >
-using CRSMatrix = LvArray::CRSMatrix< T, COL_INDEX, localIndex, LvArray::ChaiBuffer >;
+template< typename T, typename COL_INDEX=globalIndex, typename INDEX_TYPE=localIndex >
+using CRSMatrix = LvArray::CRSMatrix< T, COL_INDEX, INDEX_TYPE, LvArray::ChaiBuffer >;
 
 /// Alias for CRS Matrix View.
-template< typename T, typename COL_INDEX=globalIndex >
-using CRSMatrixView = LvArray::CRSMatrixView< T, COL_INDEX, localIndex const, LvArray::ChaiBuffer >;
+template< typename T, typename COL_INDEX=globalIndex, typename INDEX_TYPE=localIndex >
+using CRSMatrixView = LvArray::CRSMatrixView< T, COL_INDEX, INDEX_TYPE const, LvArray::ChaiBuffer >;
 
 ///@}
 
 //END_SPHINX_INCLUDE_00
-
-/**
- * @name Ordered and unordered map types.
- */
-///@{
-
-/**
- * @brief Base template for ordered and unordered maps.
- * @tparam TKEY key type
- * @tparam TVAL value type
- * @tparam SORTED a @p std::integral_constant<bool> indicating whether map is ordered
- */
-template< typename TKEY, typename TVAL, typename SORTED >
-class mapBase
-{};
-
-/// @cond DO_NOT_DOCUMENT
-template< typename TKEY, typename TVAL >
-class mapBase< TKEY, TVAL, std::integral_constant< bool, true > > : public std::map< TKEY, TVAL >
-{
-  using std::map< TKEY, TVAL >::map; // enable list initialization
-};
-
-template< typename TKEY, typename TVAL >
-class mapBase< TKEY, TVAL, std::integral_constant< bool, false > > : public std::unordered_map< TKEY, TVAL >
-{
-  using std::unordered_map< TKEY, TVAL >::unordered_map; // enable list initialization
-};
-/// @endcond
 
 /**
  * @brief Stream output operator for map types.
@@ -361,7 +323,7 @@ class mapBase< TKEY, TVAL, std::integral_constant< bool, false > > : public std:
  */
 template< typename K, typename V, typename SORTED >
 inline
-std::ostream & operator<< ( std::ostream & stream, mapBase< K, V, SORTED > const & map )
+std::ostream & operator<< ( std::ostream & stream, mapType< K, V, SORTED > const & map )
 {
   stream << "{\n";
   for( auto const & pair : map )
@@ -379,8 +341,6 @@ using map = mapBase< TKEY, TVAL, std::integral_constant< bool, true > >;
 /// Unordered map type.
 template< typename TKEY, typename TVAL >
 using unordered_map = mapBase< TKEY, TVAL, std::integral_constant< bool, false > >;
-
-///@}
 
 /**
  * @name Aliases for commonly used array types.
