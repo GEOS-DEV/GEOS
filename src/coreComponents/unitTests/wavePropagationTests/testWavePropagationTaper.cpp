@@ -54,7 +54,7 @@ char const * xmlInput =
         timestepStabilityLimit="1"
         useTaper="1"
         thicknessTaper="50.0"
-        reflectivityCoeff="0.00001"
+        reflectivityCoeff="-5.0"
         cflFactor="0.95"
         dtSeismoTrace="0.1"/>
     </Solvers>
