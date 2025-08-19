@@ -48,7 +48,6 @@
     <!-- SPHINX_SolidMechanicsSolver -->
     <SolidMechanicsLagrangianFEM
       name="lagsolve"
-      timeIntegrationOption="QuasiStatic"
       discretization="FE1"
       logLevel="0"
       targetRegions="{ Omega }"

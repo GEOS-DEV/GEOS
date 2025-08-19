@@ -142,6 +142,20 @@ void finalizeMPI()
   MpiWrapper::finalize();
 }
 
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+void setupCUDA()
+{
+#if defined( GEOS_USE_CUDA ) && defined( GEOS_CUDA_STACK_SIZE )
+  size_t const stackSize = (GEOS_CUDA_STACK_SIZE) * 1024;
+  if( 0 < stackSize )
+  {
+    cudaError_t status = cudaDeviceSetLimit( cudaLimitStackSize, stackSize );
+    GEOS_ERROR_IF( status != cudaSuccess,
+                   "Failed to set CUDA stack size. Error " << status << ": " << cudaGetErrorString( status ) );
+  }
+#endif
+}
+
 #if defined( GEOS_USE_CALIPER )
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -250,6 +264,7 @@ void finalizeCaliper()
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void setupEnvironment( int argc, char * argv[] )
 {
+  setupCUDA();
   setupMPI( argc, argv );
   setupLogger();
   setupLvArray();
