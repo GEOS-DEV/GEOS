@@ -48,7 +48,7 @@ struct TaperKernel
  computeTaperCoeff( localIndex const size,
                     arrayView2d< wsCoordType const, nodes::REFERENCE_POSITION_USD > const ,
                     real32 const sizeT,
-                    real32 const ,
+                    real32 const dt,
                     real32 const ,
                     real32 const ,
                     arrayView1d< real32 > const taperCoeff )
