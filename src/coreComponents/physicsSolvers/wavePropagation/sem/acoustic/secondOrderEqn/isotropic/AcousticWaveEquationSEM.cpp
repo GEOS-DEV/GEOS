@@ -66,7 +66,6 @@ void AcousticWaveEquationSEM::initializePreSubGroups()
 {
 
   WaveSolverBase::initializePreSubGroups();
-  printf("initpresubgroups\n");
 }
 
 
@@ -132,9 +131,7 @@ void AcousticWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
 
 void AcousticWaveEquationSEM::postInputInitialization()
 {
-  printf("postinitbefore\n");
   WaveSolverBase::postInputInitialization();
-  printf("postinitafter\n");
 
   m_pressureNp1AtReceivers.resize( m_nsamplesSeismoTrace, m_receiverCoordinates.size( 0 ) + 1 );
 }
@@ -316,7 +313,6 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
   GEOS_MARK_FUNCTION;
   {
     GEOS_MARK_SCOPE( WaveSolverBase::initializePostInitialConditionsPreSubGroups );
-  printf("beforewavesolverbaseinsideinitializePostInitialConditionsPreSubGroups\n");
     WaveSolverBase::initializePostInitialConditionsPreSubGroups();
   }
   if( m_usePML )
@@ -324,14 +320,9 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
     AcousticWaveEquationSEM::initializePML();
   }
 
-  printf("initinsideinitializePostInitialConditionsPreSubGroups\n");
   DomainPartition & domain = getGroupByPath< DomainPartition >( "/Problem/domain" );
 
-  printf("beforefreesurfaceinsideinitializePostInitialConditionsPreSubGroups\n");
   applyFreeSurfaceBC( 0.0, domain );
-
-
-  printf("beforeloopinsideinitializePostInitialConditionsPreSubGroups\n");
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
@@ -381,7 +372,6 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
       arrayView1d< real32 > grad2 = elementSubRegion.getField< acousticfields::PartialGradient2 >();
       grad2.zero();
 
-  printf("beforeloopinsideinitializePostInitialConditionsPreSubGroupsdispatch\n");
       finiteElement::FiniteElementDispatchHandler< SEM_FE_TYPES >::dispatch3D( fe, [&] ( auto const finiteElement )
       {
         using FE_TYPE = TYPEOFREF( finiteElement );
@@ -407,7 +397,6 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
       } );
     } );
     // Here we compute the timeStep only one time (beginning of the simulation).
-  printf("beforeloopinsideinitializePostInitialConditionsPreSubtimestep\n");
     if( m_timestepStabilityLimit==1 )
     {
       real64 dtOut = 0.0;
@@ -437,13 +426,10 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
       m_timeStep=dtOut*m_cflFactor;
     }
 
-    printf("beforeuse\n");
     if( m_useTaper==1 )
     {
       real32 vMin;
-      printf("getforegetmin\n");
       vMin = getGlobalMinWavespeed( mesh, regionNames );
-      printf("aftergetmin\n");
 
       arrayView1d< real32 > const taperCoeff = nodeManager.getField< fields::taperCoeff >();
       TaperKernel::computeTaperCoeff< EXEC_POLICY >( nodeManager.size(), nodeCoords, m_thicknessTaper, m_timeStep, vMin, m_reflectivityCoeff,
