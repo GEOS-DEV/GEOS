@@ -105,13 +105,21 @@ public:
       setDescription( "Constant multiplier of stabilization strength" );
   }
 
-  virtual void initializePostInitialConditionsPreSubGroups() override
+  virtual void postInputInitialization() override
   {
-    Base::initializePostInitialConditionsPreSubGroups();
+    Base::postInputInitialization();
 
     GEOS_THROW_IF( this->m_isThermal && !this->flowSolver()->isThermal(),
                    GEOS_FMT( "{} {}: The attribute `{}` of the flow solver must be thermal since the poromechanics solver is thermal",
                              this->getCatalogName(), this->getName(), this->flowSolver()->getName() ),
+                   InputError );
+
+    GEOS_THROW_IF( this->solidMechanicsSolver()->timeIntegrationOption() != SolidMechanicsLagrangianFEM::TimeIntegrationOption::QuasiStatic,
+                   GEOS_FMT( "{} {}: The attribute `{}` of solid mechanics solver `{}` must be `{}`",
+                             this->getCatalogName(), this->getName(),
+                             SolidMechanicsLagrangianFEM::viewKeyStruct::timeIntegrationOptionString(),
+                             this->solidMechanicsSolver()->getName(),
+                             EnumStrings< SolidMechanicsLagrangianFEM::TimeIntegrationOption >::toString( SolidMechanicsLagrangianFEM::TimeIntegrationOption::QuasiStatic ) ),
                    InputError );
   }
 
@@ -182,9 +190,9 @@ public:
       flowSolver()->enableJumpStabilization();
     }
 
-    this->template forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
-                                                                     MeshLevel & mesh,
-                                                                     string_array const & regionNames )
+    this->forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
+                                                            MeshLevel & mesh,
+                                                            string_array const & regionNames )
     {
       ElementRegionManager & elemManager = mesh.getElemManager();
 
@@ -436,9 +444,9 @@ protected:
                                               array1d< real64 > & averageMeanTotalStressIncrement )
   {
     averageMeanTotalStressIncrement.resize( 0 );
-    this->template forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
-                                                                                MeshLevel & mesh,
-                                                                                string_array const & regionNames )
+    this->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                                                       MeshLevel & mesh,
+                                                                       string_array const & regionNames )
     {
       mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                             auto & subRegion )
@@ -462,9 +470,9 @@ protected:
                                                         array1d< real64 > & averageMeanTotalStressIncrement )
   {
     integer i = 0;
-    this->template forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
-                                                                                MeshLevel & mesh,
-                                                                                string_array const & regionNames )
+    this->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                                                       MeshLevel & mesh,
+                                                                       string_array const & regionNames )
     {
       mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                             auto & subRegion )
