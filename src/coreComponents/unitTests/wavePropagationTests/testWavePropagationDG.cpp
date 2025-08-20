@@ -173,7 +173,7 @@ TEST_F( AcousticWaveEquationDGTest, SeismoTrace )
 
   // retrieve seismo
   arrayView2d< real32 > const pReceivers = propagator->getReference< array2d< real32 > >(
-  AcousticWaveEquationDG::viewKeyStruct::pressureNp1AtReceiversString() ).toView();
+    AcousticWaveEquationDG::viewKeyStruct::pressureNp1AtReceiversString() ).toView();
 
   // move it to CPU, if needed
   pReceivers.move( hostMemorySpace, false );
