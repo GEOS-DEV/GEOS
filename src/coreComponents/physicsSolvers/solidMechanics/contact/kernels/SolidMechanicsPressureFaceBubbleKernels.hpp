@@ -20,7 +20,7 @@
 #ifndef GEOS_PHYSICSSOLVERS_CONTACT_KERNELS_SOLIDMECHANICSPRESSUREFACEBUBBLEKERNELS_HPP_
 #define GEOS_PHYSICSSOLVERS_CONTACT_KERNELS_SOLIDMECHANICSPRESSUREFACEBUBBLEKERNELS_HPP_
 
-#include "physicsSolvers/solidMechanics/kernels/ImplicitSmallStrainQuasiStatic.hpp"
+#include "finiteElement/kernelInterface/ImplicitKernelBase.hpp"
 #include "SolidMechanicsConformingContactKernelsHelper.hpp"
 
 namespace geos
@@ -30,7 +30,7 @@ namespace solidMechanicsConformingContactKernels
 {
 
 /**
- * @brief Implements kernels for computing the pressure contribuiton 
+ * @brief Implements kernels for computing the pressure contribuiton
  *        given by the bubble face functions to the balance of momentum equation.
  * @copydoc geos::finiteElement::ImplicitKernelBase
  *
@@ -39,15 +39,20 @@ template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
           typename FE_TYPE >
 class PressureFaceBubbleKernels :
-  public solidMechanicsLagrangianFEMKernels::ImplicitSmallStrainQuasiStatic< SUBREGION_TYPE,
-                                                                             CONSTITUTIVE_TYPE,
-                                                                             FE_TYPE >
+  public finiteElement::ImplicitKernelBase< SUBREGION_TYPE,
+                                            CONSTITUTIVE_TYPE,
+                                            FE_TYPE,
+                                            3,
+                                            3 >
 {
 public:
+
   /// Alias for the base class;
-  using Base = solidMechanicsLagrangianFEMKernels::ImplicitSmallStrainQuasiStatic< SUBREGION_TYPE,
-                                                                                   CONSTITUTIVE_TYPE,
-                                                                                   FE_TYPE >;
+  using Base = finiteElement::ImplicitKernelBase< SUBREGION_TYPE,
+                                                  CONSTITUTIVE_TYPE,
+                                                  FE_TYPE,
+                                                  3,
+                                                  3 >;
 
   /// Number of nodes per element, which is equal to the
   /// numTestSupportPointPerElem and numTrialSupportPointPerElem by definition.
@@ -59,7 +64,6 @@ public:
   /// Compile time value for the number of quadrature points per element.
   static constexpr int numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
 
-  using Base::m_X;
   using Base::m_elemsToNodes;
   using Base::m_finiteElementSpace;
   using Base::m_constitutiveUpdate;
@@ -67,6 +71,7 @@ public:
   using Base::m_dofRankOffset;
   using Base::m_matrix;
   using Base::m_rhs;
+  using Base::m_dt;
 
   /**
    * @brief Constructor
@@ -84,8 +89,7 @@ public:
                              globalIndex const rankOffset,
                              CRSMatrixView< real64, globalIndex const > const inputMatrix,
                              arrayView1d< real64 > const inputRhs,
-                             real64 const inputDt,
-                             real64 const (&inputGravityVector)[3] ):
+                             real64 const inputDt ):
     Base( nodeManager,
           edgeManager,
           faceManager,
@@ -97,12 +101,15 @@ public:
           rankOffset,
           inputMatrix,
           inputRhs,
-          inputDt,
-          inputGravityVector ),
+          inputDt ),
+    m_X( nodeManager.referencePosition()),
+    m_incrementalDisp( nodeManager.getField< fields::solidMechanics::incrementalDisplacement >() ),
     m_bDofNumber( bDofNumber ),
     m_bubbleElems( elementSubRegion.bubbleElementsList() ),
     m_elemsToFaces( elementSubRegion.faceElementsList() ),
-    m_pressure( elementSubRegion.template getField< fields::flow::pressure >() )
+    m_pressure( elementSubRegion.template getField< fields::flow::pressure >().toViewConst() ),
+    m_pressure_n( elementSubRegion.template getField< fields::flow::pressure_n >().toViewConst() ),
+    m_incrementalBubbleDisp( faceManager.getField< fields::contact::incrementalBubbleDisplacement >().toViewConst() )
   {}
 
   //***************************************************************************
@@ -113,6 +120,9 @@ public:
   struct StackVariables
   {
 public:
+
+    /// The number of displacement dofs per element.
+    static constexpr int numUdofs = numNodesPerElem * 3;
 
     /// The number of jump dofs per element.
     static constexpr int numBubbleUdofs = numFacesPerElem * 3;
@@ -128,7 +138,9 @@ public:
       bEqnRowIndices{},
       localRb{},
       X{ {} },
-      pLocal{}
+      pLocal{},
+      uIncrLocal{},
+      bIncrLocal{}
     {}
 
     /// C-array storage for the element local row degrees of freedom.
@@ -140,8 +152,14 @@ public:
     /// local nodal coordinates
     real64 X[ numNodesPerElem ][ 3 ];
 
-    /// local pressure 
+    /// local pressure
     real64 pLocal[numPdofs];
+
+    /// local incremental displacement
+    real64 uIncrLocal[numUdofs];
+
+    /// incremental bubble displacement
+    real64 bIncrLocal[3];
 
   };
 
@@ -201,6 +219,7 @@ public:
       for( int i=0; i<3; ++i )
       {
         stack.X[ a ][ i ] = m_X[ localNodeIndex ][ i ];
+        stack.uIncrLocal[ a*3 + i ] = m_incrementalDisp[ localNodeIndex ][i];
       }
     }
 
@@ -210,9 +229,10 @@ public:
     {
       // need to grab the index.
       stack.bEqnRowIndices[i] = m_bDofNumber[localFaceIndex] + i - m_dofRankOffset;
+      stack.bIncrLocal[ i ] = m_incrementalBubbleDisp[ localFaceIndex ][i];
     }
 
-    stack.pLocal[0] = m_pressure(k);
+    stack.pLocal[0] = m_pressure( k );
 
   }
 
@@ -224,10 +244,11 @@ public:
                               StackVariables & stack ) const
   {
 
-    GEOS_UNUSED_VAR( kk );
-    //localIndex k = m_bubbleElems[kk];
-   
+    localIndex k = m_bubbleElems[kk];
+
     constexpr int nBubbleUdof = numFacesPerElem*3;
+
+    constexpr int nUdof = numNodesPerElem*3;
 
     real64 dBubbleNdX[ numFacesPerElem ][ 3 ];
     // Next line is needed because I only inserted a placeholder for calcGradFaceBubbleN in some finite elements
@@ -235,38 +256,55 @@ public:
 
     real64 detJ = m_finiteElementSpace.calcGradFaceBubbleN( q, stack.X, dBubbleNdX );
 
-    //real64 const biotCoefficient = m_constitutiveUpdate.getBiotCoefficient( k );
-    real64 const biotCoefficient = 1.0;
+    real64 dNdX[ numNodesPerElem ][ 3 ];
+    detJ = m_finiteElementSpace.calcGradN( q, stack.X, dNdX );
+
+    real64 biotCoefficient;
+    m_constitutiveUpdate.getBiotCoefficient( k, biotCoefficient );
 
     real64 strainBubbleMatrix[6][nBubbleUdof];
     solidMechanicsConformingContactKernelsHelper::assembleStrainOperator< 6, nBubbleUdof, numFacesPerElem >( strainBubbleMatrix, dBubbleNdX );
 
+    real64 strainMatrix[6][nUdof];
+    solidMechanicsConformingContactKernelsHelper::assembleStrainOperator< 6, nUdof, numNodesPerElem >( strainMatrix, dNdX );
+
     real64 biotPressure[6] = {0};
-    LvArray::tensorOps::symAddIdentity< 3 >( biotPressure, -biotCoefficient * stack.pLocal[0]);
-
-    //printf( "biotPressure = %e, %e, %e, %e, %e, %e\n", 
-    //         biotPressure[0], biotPressure[1], biotPressure[2],
-    //         biotPressure[3], biotPressure[4], biotPressure[5] );
-
-    //for (int j = 0; j < nBubbleUdof; ++j)
-    //{
-    //  for (int i = 0; i < 6; ++i)
-    //  {
-    //    printf( "strainBubbleMatrix[%d][%d] = %e\n", j, i, strainBubbleMatrix[i][j] );
-    //  }
-    //}
+    LvArray::tensorOps::symAddIdentity< 3 >( biotPressure, -biotCoefficient * stack.pLocal[0] );
 
     // transp(Bb)(Identity biot pressure)
     real64 Rb_gauss[nBubbleUdof];
     LvArray::tensorOps::Ri_eq_AjiBj< nBubbleUdof, 6 >( Rb_gauss, strainBubbleMatrix, biotPressure );
     LvArray::tensorOps::scaledAdd< nBubbleUdof >( stack.localRb, Rb_gauss, -detJ );
 
-    //printf( "detJ = %e\n", detJ );
+    real64 localStrainBubbleMatrix[6][3];
+    localIndex const parentFaceIndex = m_elemsToFaces[kk][1];
+    for( localIndex i = 0; i < 6; ++i )
+    {
+      for( localIndex j = 0; j < 3; ++j )
+      {
+        localStrainBubbleMatrix[i][j] = strainBubbleMatrix[i][parentFaceIndex*3+j];
+      }
+    }
+    real64 strainIncBubble[6] = {0};
+    real64 strainInc[6] = {0};
 
-    //for ( int i = 0; i < nBubbleUdof; ++i )
-    //{
-    //  printf( "stack.localRb[%d] = %e\n", i, stack.localRb[i] );
-    //}
+    LvArray::tensorOps::Ri_eq_AijBj< 6, 3 >( strainIncBubble, localStrainBubbleMatrix, stack.bIncrLocal );
+    LvArray::tensorOps::Ri_eq_AijBj< 6, nUdof >( strainInc, strainMatrix, stack.uIncrLocal );
+
+    LvArray::tensorOps::add< 6 >( strainInc, strainIncBubble );
+
+    real64 totalStress[6] = {0};
+    typename CONSTITUTIVE_TYPE::KernelWrapper::DiscretizationOps stiffness;
+
+    m_constitutiveUpdate.smallStrainUpdatePoromechanicsFixedStress( k, q,
+                                                                    m_dt,
+                                                                    m_pressure[k],
+                                                                    m_pressure_n[k],
+                                                                    0.0,
+                                                                    0.0,
+                                                                    strainInc,
+                                                                    totalStress,
+                                                                    stiffness );
 
   }
 
@@ -292,9 +330,6 @@ public:
 
       if( dof < 0 || dof >= m_matrix.numRows() ) continue;
 
-      //printf( "idof = %d, localRu[%d] = %e, pressure = %e\n", 
-      //         dof, i, localRb[i], stack.pLocal[0] );   
-
       RAJA::atomicAdd< parallelDeviceAtomic >( &m_rhs[dof], localRb[i] );
 
     }
@@ -303,6 +338,12 @@ public:
   }
 
 protected:
+
+  /// The array containing the nodal position array.
+  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const m_X;
+
+  /// The rank-global incremental displacement array.
+  arrayView2d< real64 const, nodes::INCR_DISPLACEMENT_USD > const m_incrementalDisp;
 
   /// The global degree of freedom number of bubble
   arrayView1d< globalIndex const > const m_bDofNumber;
@@ -318,6 +359,12 @@ protected:
   /// The array containing the pressure of each element.
   arrayView1d< real64 const > const m_pressure;
 
+  /// The array containing the pressure at the previous time step of each element.
+  arrayView1d< real64 const > const m_pressure_n;
+
+  /// The incremental bubble displacement field.
+  arrayView2d< real64 const > const m_incrementalBubbleDisp;
+
 };
 
 /// The factory used to construct a QuasiStatic kernel.
@@ -327,8 +374,7 @@ using PressureFaceBubbleFactory = finiteElement::KernelFactory< PressureFaceBubb
                                                                 globalIndex const,
                                                                 CRSMatrixView< real64, globalIndex const > const,
                                                                 arrayView1d< real64 > const,
-                                                                real64 const,
-                                                                real64 const (&) [3] >;
+                                                                real64 const >;
 
 } // namespace SolidMechanicsPressureFaceBubbleKernels
 

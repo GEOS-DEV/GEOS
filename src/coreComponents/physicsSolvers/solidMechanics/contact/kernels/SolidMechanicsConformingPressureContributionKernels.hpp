@@ -109,16 +109,16 @@ public:
   struct StackVariables : public Base::StackVariables
   {
 
-  public:
+public:
 
     GEOS_HOST_DEVICE
     StackVariables():
       Base::StackVariables(),
-      dispEqnRowIndices{},
-      bEqnRowIndices{},
-      unitNormal{},
-      localRu{},
-      localRb{}
+                                       dispEqnRowIndices{},
+                                       bEqnRowIndices{},
+                                       unitNormal{},
+                                       localRu{},
+                                       localRb{}
     {}
 
     /// C-array storage for the element local row degrees of freedom.
@@ -160,7 +160,7 @@ public:
   void setup( localIndex const k,
               StackVariables & stack ) const
   {
-    
+
     constexpr int shift = numNodesPerElem * 3;
 
     int permutation[numNodesPerElem];
@@ -205,7 +205,7 @@ public:
 
     // transp(Atb)*unitNormal
     LvArray::tensorOps::Ri_eq_AjiBj< numBdofs, 3 >( stack.localRb, stack.localAtb, stack.unitNormal );
-     
+
     // Compute the local residuals
     LvArray::tensorOps::scale< numUdofs >( stack.localRu, m_pressure[k] );
 
@@ -228,13 +228,13 @@ public:
 
       if( dof < 0 || dof >= m_matrix.numRows() ) continue;
 
-      //printf( "idof = %d, localRb[%d] = %e, pressure = %e\n", 
-      //         dof, i, stack.localRb[i], m_pressure[k] );   
+      //printf( "idof = %d, localRb[%d] = %e, pressure = %e\n",
+      //         dof, i, stack.localRb[i], m_pressure[k] );
 
       RAJA::atomicAdd< parallelDeviceAtomic >( &m_rhs[dof], stack.localRb[i] );
     }
 
-    return 0.0; 
+    return 0.0;
   }
 
 protected:
@@ -243,15 +243,15 @@ protected:
 
 };
 
-using AssemblePressureContributionFactory = 
-        finiteElement::InterfaceKernelFactory< AssemblePressureContribution,
-                                               arrayView1d< globalIndex const > const,
-                                               arrayView1d< globalIndex const > const,
-                                               globalIndex const,
-                                               CRSMatrixView< real64, globalIndex const > const,
-                                               arrayView1d< real64 > const,
-                                               real64 const,
-                                               arrayView1d< localIndex const > const >;
+using AssemblePressureContributionFactory =
+  finiteElement::InterfaceKernelFactory< AssemblePressureContribution,
+                                         arrayView1d< globalIndex const > const,
+                                         arrayView1d< globalIndex const > const,
+                                         globalIndex const,
+                                         CRSMatrixView< real64, globalIndex const > const,
+                                         arrayView1d< real64 > const,
+                                         real64 const,
+                                         arrayView1d< localIndex const > const >;
 
 } // namespace SolidMechanicsConformingContactKernels
 

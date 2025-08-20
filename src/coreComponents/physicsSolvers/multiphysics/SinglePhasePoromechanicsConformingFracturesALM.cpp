@@ -74,7 +74,7 @@ void SinglePhasePoromechanicsConformingFracturesALM< FLOW_SOLVER >::setupSystem(
   //dofManager.reorderByRank();
 
   ///// 2. Add coupling terms not added by the DofManager.
-  ////     (Aupf) Add the coupling with the nodal displacements of the neighbors  
+  ////     (Aupf) Add the coupling with the nodal displacements of the neighbors
   ////     due to armonic averaging of the transmissibility
   //localIndex const numLocalRows = dofManager.numLocalDofs();
 
@@ -122,11 +122,11 @@ void SinglePhasePoromechanicsConformingFracturesALM< FLOW_SOLVER >::setupSystem(
 
 template< typename FLOW_SOLVER >
 void SinglePhasePoromechanicsConformingFracturesALM< FLOW_SOLVER >::assembleSystem( real64 const time_n,
-                                                                                 real64 const dt,
-                                                                                 DomainPartition & domain,
-                                                                                 DofManager const & dofManager,
-                                                                                 CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                                                                 arrayView1d< real64 > const & localRhs )
+                                                                                    real64 const dt,
+                                                                                    DomainPartition & domain,
+                                                                                    DofManager const & dofManager,
+                                                                                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                                                    arrayView1d< real64 > const & localRhs )
 {
 
   GEOS_MARK_FUNCTION;
@@ -135,7 +135,7 @@ void SinglePhasePoromechanicsConformingFracturesALM< FLOW_SOLVER >::assembleSyst
 
   //this->solidMechanicsSolver()->synchronizeFractureState( domain );
 
-  //// Assembly elements-based terms 
+  //// Assembly elements-based terms
   //assembleElementBasedContributions( time_n,
   //                                   dt,
   //                                   domain,
@@ -170,7 +170,7 @@ void SinglePhasePoromechanicsConformingFracturesALM< FLOW_SOLVER >::assembleElem
                                                                                                        arrayView1d< real64 > const & localRhs )
 {
   GEOS_MARK_FUNCTION;
-  
+
   GEOS_UNUSED_VAR( time_n, dt, domain, dofManager, localMatrix, localRhs );
 
   /// 3. assemble Force Residual w.r.t. pressure and Flow mass residual w.r.t. displacement
@@ -194,11 +194,11 @@ void SinglePhasePoromechanicsConformingFracturesALM< FLOW_SOLVER >::assembleElem
 
 template< typename FLOW_SOLVER >
 void SinglePhasePoromechanicsConformingFracturesALM< FLOW_SOLVER >::assembleCouplingTerms( real64 const time_n,
-                                                                                        real64 const dt,
-                                                                                        DomainPartition const & domain,
-                                                                                        DofManager const & dofManager,
-                                                                                        CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                                                                        arrayView1d< real64 > const & localRhs )
+                                                                                           real64 const dt,
+                                                                                           DomainPartition const & domain,
+                                                                                           DofManager const & dofManager,
+                                                                                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                                                           arrayView1d< real64 > const & localRhs )
 {
   GEOS_MARK_FUNCTION;
   GEOS_UNUSED_VAR( domain, dofManager, localMatrix, localRhs );
@@ -232,7 +232,8 @@ setUpDflux_dApertureMatrix( DomainPartition & domain,
   //                                                                    MeshLevel const & mesh,
   //                                                                    arrayView1d< string const > const & regionNames )
   //{
-  //  std::unique_ptr< CRSMatrix< real64, localIndex > > & derivativeFluxResidual_dAperture = this->getRefDerivativeFluxResidual_dAperture();
+  //  std::unique_ptr< CRSMatrix< real64, localIndex > > & derivativeFluxResidual_dAperture =
+  // this->getRefDerivativeFluxResidual_dAperture();
 
   //  {
   //    localIndex numRows = 0;
@@ -292,9 +293,9 @@ addTransmissibilityCouplingNNZ( DomainPartition const & domain,
 
   GEOS_UNUSED_VAR( domain, dofManager, rowLengths );
 
-  //this->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &, 
+  //this->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
   //                                                                    MeshLevel const & mesh,
-  //                                                                    arrayView1d< string const > const & ) 
+  //                                                                    arrayView1d< string const > const & )
   //{
   //  ElementRegionManager const & elemManager = mesh.getElemManager();
 
@@ -372,7 +373,7 @@ addTransmissibilityCouplingPattern( DomainPartition const & domain,
   //  dispDofNumber = nodeManager.getReference< globalIndex_array >( dispDofKey );
   //  ArrayOfArraysView< localIndex const > const & faceToNodeMap = faceManager.nodeList().toViewConst();
 
-    // Get the finite volume method used to compute the stabilization
+  // Get the finite volume method used to compute the stabilization
   //  NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
   //  FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
   //  FluxApproximationBase const & fvDiscretization = fvManager.getFluxApproximation( this->flowSolver()->getDiscretizationName() );
@@ -430,7 +431,8 @@ addTransmissibilityCouplingPattern( DomainPartition const & domain,
   //              {
   //                for( localIndex i = 0; i < 3; ++i )
   //                {
-  //                  globalIndex const colIndex = dispDofNumber[faceToNodeMap( faceIndex, a )] + LvArray::integerConversion< globalIndex >( i );
+  //                  globalIndex const colIndex = dispDofNumber[faceToNodeMap( faceIndex, a )] + LvArray::integerConversion< globalIndex >(
+  // i );
   //                  pattern.insertNonZero( rowIndex, colIndex );
   //                }
   //              }
@@ -475,27 +477,27 @@ assembleForceResidualDerivativeWrtPressure( string const & meshName,
   //                                                      arrayView1d< localIndex const > const & faceElementList )
   //{
 
-    //GEOS_UNUSED_VAR( subRegionFE, faceElementList, regionNames, localMatrix, localRhs, fractureRegionName );
+  //GEOS_UNUSED_VAR( subRegionFE, faceElementList, regionNames, localMatrix, localRhs, fractureRegionName );
 
-    //solidMechanicsConformingContactKernels::DispJumpUpdateFactory kernelFactory( dispDofNumber,
-    //                                                                             bubbleDofNumber,
-    //                                                                             dofManager.rankOffset(),
-    //                                                                             voidMatrix.toViewConstSizes(),
-    //                                                                             voidRhs.toView(),
-    //                                                                             dt,
-    //                                                                             faceElementList );
+  //solidMechanicsConformingContactKernels::DispJumpUpdateFactory kernelFactory( dispDofNumber,
+  //                                                                             bubbleDofNumber,
+  //                                                                             dofManager.rankOffset(),
+  //                                                                             voidMatrix.toViewConstSizes(),
+  //                                                                             voidRhs.toView(),
+  //                                                                             dt,
+  //                                                                             faceElementList );
 
-    //real64 maxTraction = finiteElement::
-    //                       interfaceBasedKernelApplication
-    //                     < parallelDevicePolicy< >,
-    //                       constitutive::NullModel >( mesh,
-    //                                                  fractureRegionName,
-    //                                                  faceElementList,
-    //                                                  subRegionFE,
-    //                                                  "",
-    //                                                  kernelFactory );
+  //real64 maxTraction = finiteElement::
+  //                       interfaceBasedKernelApplication
+  //                     < parallelDevicePolicy< >,
+  //                       constitutive::NullModel >( mesh,
+  //                                                  fractureRegionName,
+  //                                                  faceElementList,
+  //                                                  subRegionFE,
+  //                                                  "",
+  //                                                  kernelFactory );
 
-    //GEOS_UNUSED_VAR( maxTraction );
+  //GEOS_UNUSED_VAR( maxTraction );
 
   //} );
 

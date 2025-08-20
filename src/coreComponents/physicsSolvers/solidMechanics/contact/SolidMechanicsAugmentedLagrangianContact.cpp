@@ -680,14 +680,14 @@ void SolidMechanicsAugmentedLagrangianContact::assembleForceResidualPressureCont
                                                           arrayView1d< localIndex const > const & faceElementList )
     {
 
-      solidMechanicsConformingContactKernels::AssemblePressureContributionFactory 
-          kernelFactory( dispDofNumber,
-                         bubbleDofNumber,
-                         dofManager.rankOffset(),
-                         localMatrix,
-                         localRhs,
-                         dt,
-                         faceElementList );
+      solidMechanicsConformingContactKernels::AssemblePressureContributionFactory
+      kernelFactory( dispDofNumber,
+                     bubbleDofNumber,
+                     dofManager.rankOffset(),
+                     localMatrix,
+                     localRhs,
+                     dt,
+                     faceElementList );
 
       real64 maxTraction = finiteElement::
                              interfaceBasedKernelApplication
@@ -703,27 +703,52 @@ void SolidMechanicsAugmentedLagrangianContact::assembleForceResidualPressureCont
 
     } );
 
+    set< string > poromechanicsRegions;
+    set< string > mechanicsRegions;
+    ElementRegionManager const & elementRegionManager = mesh.getElemManager();
+    elementRegionManager.forElementSubRegions< CellElementSubRegion >( regionNames,
+                                                                       [&]
+                                                                         ( localIndex const regionIndex, auto & elementSubRegion )
+    {
+      if( elementSubRegion.template hasWrapper< string >( FlowSolverBase::viewKeyStruct::solidNamesString() ) )
+      {
+        poromechanicsRegions.insert( regionNames[regionIndex] );
+      }
+      else
+      {
+        mechanicsRegions.insert( regionNames[regionIndex] );
+      }
+    } );
 
-    //GEOS_UNUSED_VAR( regionNames );
-    real64 const gravityVectorData[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( gravityVector() );
+    string_array poromechanicsRegionNames;
+    poromechanicsRegionNames.reserve( poromechanicsRegions.size());
+    for( auto const & region : poromechanicsRegions )
+    {
+      poromechanicsRegionNames.emplace_back( region );
+    }
+    string_array mechanicsRegionNames;
+    mechanicsRegionNames.reserve( mechanicsRegions.size());
+    for( auto const & region : mechanicsRegions )
+    {
+      mechanicsRegionNames.emplace_back( region );
+    }
 
     solidMechanicsConformingContactKernels::PressureFaceBubbleFactory kernelFactory( dispDofNumber,
                                                                                      bubbleDofNumber,
                                                                                      dofManager.rankOffset(),
                                                                                      localMatrix,
                                                                                      localRhs,
-                                                                                     dt,
-                                                                                     gravityVectorData );
+                                                                                     dt );
 
     real64 maxTraction = finiteElement::regionBasedKernelApplication
-                                          < parallelDevicePolicy< >,
-                                          constitutive::ElasticIsotropic,
-                                          CellElementSubRegion >( mesh,
-                                                                  regionNames,
-                                                                  getDiscretizationName(),
-                                                                  SolidMechanicsLagrangianFEM::viewKeyStruct::solidMaterialNamesString(),
-                                                                  //FlowSolverBase::viewKeyStruct::solidNamesString(),
-                                                                  kernelFactory );
+                         < parallelDevicePolicy< >,
+                           constitutive::PorousSolid< ElasticIsotropic >,
+                           CellElementSubRegion >( mesh,
+                                                   poromechanicsRegionNames,
+                                                   getDiscretizationName(),
+                                                   FlowSolverBase::viewKeyStruct::solidNamesString(),
+                                                   kernelFactory );
+
     GEOS_UNUSED_VAR( maxTraction );
   } );
 
@@ -2006,9 +2031,9 @@ void SolidMechanicsAugmentedLagrangianContact::computeTolerances( DomainPartitio
             normalTractionTolerance[kfe] = m_tolNormalTracFac * (averageConstrainedModulus / averageBoxSize0) *
                                            (normalDisplacementTolerance[kfe]);
 
-            GEOS_LOG_LEVEL( logInfo::Tolerance,
-                            GEOS_FMT( "kfe: {}, normalDisplacementTolerance: {}, slidingTolerance: {}, normalTractionTolerance: {}",
-                                      kfe, normalDisplacementTolerance[kfe], slidingTolerance[kfe], normalTractionTolerance[kfe] ));
+            //GEOS_LOG_LEVEL( logInfo::Tolerance,
+            //                GEOS_FMT( "kfe: {}, normalDisplacementTolerance: {}, slidingTolerance: {}, normalTractionTolerance: {}",
+            //                          kfe, normalDisplacementTolerance[kfe], slidingTolerance[kfe], normalTractionTolerance[kfe] ));
 
             iterativePenalty[kfe][0] = m_iterPenaltyNFac*averageConstrainedModulus/(averageBoxSize0);
             iterativePenalty[kfe][1] = m_iterPenaltyTFac*averageConstrainedModulus/(averageBoxSize0);
