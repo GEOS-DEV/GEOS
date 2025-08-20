@@ -38,29 +38,70 @@ namespace constitutive
 namespace compositional
 {
 
+/**
+ * @struct StabilityTest
+ * @brief Performs stability analysis for a reservoir fluid.
+ *
+ * This class implements a stability test to determine if a single-phase fluid mixture is thermodynamically
+ * stable or if it will split into multiple phases. The algorithm follows the tangent-plane-distance (TPD)
+ * method, as described in the reference by Michelsen (1982).
+ *
+ * The method involves finding a trial composition ($y_i$) that minimizes the tangent-plane-distance ($TPD$)
+ * at a given pressure and temperature. The TPD for a trial phase with composition $y$ relative to a sample
+ * phase with composition $z$ is given by:
+ * $$ TPD(y) = \sum_{i=1}^{nc} y_i \left[ \ln(y_i) - \ln(z_i) + \ln(\phi}_i(y)) - \ln(\phi_i(z)) \right] $$
+ * where $nc$ is the number of components, $z_i$ and $y_i$ are the mole fractions of component $i$ in
+ * the sample and trial phases, respectively, and $\phi_i$ and $\hat{\phi}_i$ are the fugacity coefficients
+ * of component $i$ in the sample and trial phases, respectively.
+ *
+ * The stability analysis is performed by solving for the stationary points of the TPD function. The solution
+ * is found by a combination of successive substitution iterations (SSI) and Newton-Raphson iterations.
+ * SSI is used initially to provide a good starting point for the faster, but more sensitive, Newton-Raphson
+ * method. The mixture is considered unstable if the minimum TPD is less than zero, indicating that a more
+ * stable phase exists.
+ *
+ * Reference: Michelsen, M.L. (1982). The Isothermal Flash Problem. Part I. Stability.
+ *            Fluid Phase Equilibria, 9(1), 1–19. https://doi.org/10.1016/0378-3812(82)85001-2
+ */
 struct StabilityTest
 {
 private:
   static constexpr integer maxNumComps = MultiFluidConstants::MAX_NUM_COMPONENTS;
+  static constexpr integer maxNumDofs = MultiFluidConstants::MAX_NUM_COMPONENTS + 2;
   using Deriv = constitutive::multifluid::DerivativeOffset;
+
 public:
   /**
-   * @brief Perform a two-phase stability test
-   * @param[in] numComps number of components
-   * @param[in] pressure pressure
-   * @param[in] temperature temperature
-   * @param[in] composition composition of the mixture
-   * @param[in] componentProperties The compositional component properties
-   * @param[in] flashData The parameters required for the flash
-   * @param[in] kValues the k-values to use to create test samples
-   * @param[in] continuousFlashParameters List of continuous (float) parameters for flash
-   * @param[in] discreteFlashParameters List of discrete (integer) parameters for flash
-   * @param[out] unstableMixture The stability test result indicating if the mixture is unstable
-   * @param[out] incipientEquationOfState The equation of state of the incipient phase
-   * @param[out] incipientComposition The composition of the incipient phase. This will be
-   *             set to the incipient phase composition at the stationary point that is furthest
-   *             from the trivial solution.
-   * @return a flag indicating that the stability test is successful i.e. mixture is unstable or all test points converged
+   * @brief Perform a two-phase stability test using the Tangent Plane Distance (TPD) method.
+   *
+   * The stability analysis is performed by solving for the stationary points of the TPD function. The solution
+   * is found by a combination of successive substitution iterations (SSI) and Newton-Raphson iterations.
+   * SSI is used initially to provide a good starting point for the faster, but more sensitive, Newton-Raphson
+   * method. The mixture is considered unstable if the minimum TPD is less than zero, indicating that a more
+   * stable phase exists.
+   *
+   * This implementation supports asymmetric equations of state, where the EOS used for the
+   * incipient phase may differ from that of the original mixture. This is handled by testing
+   * both configurations independently.
+   *
+   * @tparam USD1 Unit Stride Dimension for the composition array.
+   * @tparam USD2 Unit Stride Dimension for the K-values array.
+   *
+   * @param[in] numComps Number of components in the mixture.
+   * @param[in] pressure Pressure of the system [Pa].
+   * @param[in] temperature Temperature of the system [K].
+   * @param[in] composition Mole fractions of each component in the mixture (must be normalized).
+   * @param[in] componentProperties Thermodynamic properties of each component.
+   * @param[in] flashData Flash calculation context, including EOS types for liquid and vapor phases.
+   * @param[in] kValues Initial equilibrium ratios (K-values) used to generate trial compositions.
+   * @param[in] continuousFlashParameters Continuous parameters (e.g., tolerances, thresholds) for the flash calculation.
+   * @param[in] discreteFlashParameters Discrete parameters (e.g., max iterations) for the flash calculation.
+   * @param[out] unstableMixture Flag indicating whether the mixture is unstable.
+   * @param[out] incipientEquationOfState EOS type of the incipient phase (liquid or vapor).
+   * @param[out] incipientComposition Composition of the incipient phase at the stationary point furthest from the trivial solution.
+   *
+   * @return True if the mixture is unstable or all trial compositions converge to stationary points; false otherwise.
+   *
    */
   template< integer USD1, integer USD2 >
   GEOS_HOST_DEVICE
@@ -75,173 +116,34 @@ public:
                        arraySlice1d< integer const > const & discreteFlashParameters,
                        bool & unstableMixture,
                        EquationOfStateType & incipientEquationOfState,
-                       arraySlice1d< real64 > const & incipientComposition )
-  {
-    stackArray2d< real64, 4*maxNumComps > workSpace( 4, numComps );
-    arraySlice1d< real64 > logFugacity = workSpace[0];
-    arraySlice1d< real64 > normalizedComposition = workSpace[1];
-    arraySlice1d< real64 > logTrialComposition = workSpace[2];
-    arraySlice1d< real64 > hyperplane = workSpace[3]; // h-parameter
-    stackArray1d< integer, maxNumComps > availableComponents( numComps );
-
-    //integer const presentCount =
-    calculatePresentComponents( numComps, composition, availableComponents );
-    auto const presentComponents = availableComponents.toSliceConst();
-
-    LvArray::forValuesInSlice( workSpace.toSlice(), setZero );
-
-    // Extract flash parameters
-    integer const maxIterations = discreteFlashParameters[FlashParameters::STABILITY_MAX_ITERATIONS];
-    real64 const stabilityThreshold = continuousFlashParameters[FlashParameters::STABILITY_THRESHOLD];
-    real64 const stabilityTolerance = continuousFlashParameters[FlashParameters::STABILITY_TOLERANCE];
-
-    integer const numConfigSteps = flashData.liquidEos == flashData.vapourEos ? 1 : 2;
-
-    // Initialise by assuming a stable mixture
-    unstableMixture = false;
-
-    // Flag to indicate all trial compositions converged
-    bool allConverged = true;
-
-    // Measure of distance to trivial solution
-    real64 maxDistanceToTrivialSolution = 0.0;
-
-    for( integer configStep = 0; configStep < numConfigSteps; ++configStep )
-    {
-      EquationOfStateType const sampleEos = (configStep == 0) ? flashData.liquidEos : flashData.vapourEos;
-      EquationOfStateType const incipientEos = (configStep == 0) ? flashData.vapourEos : flashData.liquidEos;
-
-      // Calculate the hyperplane parameter
-      // h_i = log( z_i ) + log( phi_i )
-      FugacityCalculator::computeLogFugacity( numComps,
-                                              pressure,
-                                              temperature,
-                                              composition,
-                                              componentProperties,
-                                              sampleEos,
-                                              flashData,
-                                              logFugacity );
-      for( integer const ic : presentComponents )
-      {
-        hyperplane[ic] = LvArray::math::log( composition[ic] ) + logFugacity[ic];
-      }
-
-      for( real64 const alpha : { 1.0, -1.0, 0.0 } )
-      {
-        // Initialise next sample
-        if( LvArray::math::abs( alpha ) < MultiFluidConstants::epsilon )
-        {
-          for( integer const ic : presentComponents )
-          {
-            logTrialComposition[ic] = 0.0;
-            normalizedComposition[ic] = 1.0;
-          }
-        }
-        else
-        {
-          for( integer const ic : presentComponents )
-          {
-            logTrialComposition[ic] = LvArray::math::log( composition[ic] ) + alpha*LvArray::math::log( kValues[ic] );
-            normalizedComposition[ic] = LvArray::math::exp( logTrialComposition[ic] );
-          }
-        }
-
-        // Start iterations for this sample
-        bool converged = false;
-
-        for( localIndex iterationCount = 0; iterationCount < maxIterations; ++iterationCount )
-        {
-          // Normalise the composition and calculate the fugacity
-          normalizeComposition( numComps, normalizedComposition );
-          FugacityCalculator::computeLogFugacity( numComps,
-                                                  pressure,
-                                                  temperature,
-                                                  normalizedComposition.toSliceConst(),
-                                                  componentProperties,
-                                                  incipientEos,
-                                                  flashData,
-                                                  logFugacity );
-
-          // Calculate the stationarity condition
-          real64 error = 0.0;
-          for( integer const ic : presentComponents )
-          {
-            real64 const dG = logTrialComposition[ic] + logFugacity[ic] - hyperplane[ic];
-            error += (dG*dG);
-          }
-          error = LvArray::math::sqrt( error );
-
-          // Check stationarity
-          if( error < stabilityTolerance )
-          {
-            converged = true;
-            break;
-          }
-
-          // Update to next step
-          for( integer const ic : presentComponents )
-          {
-            logTrialComposition[ic] = hyperplane[ic] - logFugacity[ic];
-            normalizedComposition[ic] = LvArray::math::exp( logTrialComposition[ic] );
-          }
-        }
-        allConverged = allConverged && converged;
-
-        // Calculate the tangent-plane-distance (TPD) and distance to the trivial solution
-        real64 tpd = 1.0;
-        real64 distance = 0.0;
-        for( integer const ic : presentComponents )
-        {
-          real64 const dZ = normalizedComposition[ic] - composition[ic];
-          real64 const dG = logTrialComposition[ic] + logFugacity[ic] - hyperplane[ic];
-          tpd += normalizedComposition[ic] * (dG - 1.0);
-          distance += (dZ*dZ);
-        }
-
-        if( maxDistanceToTrivialSolution < distance )
-        {
-          maxDistanceToTrivialSolution = distance;
-          incipientEquationOfState = incipientEos;
-          for( integer ic = 0; ic < numComps; ++ic )
-          {
-            incipientComposition[ic] = normalizedComposition[ic];
-          }
-        }
-        // The mixture is unstable if either the TPD is negative or if the TPD is zero but the incipient composition
-        // is different from the sample composition
-        // stabilityThreshold is negative (default -1e-8)
-        if( tpd < stabilityThreshold )
-        {
-          unstableMixture = true;
-        }
-        else if((tpd < -stabilityThreshold) && (-stabilityThreshold < distance))
-        {
-          unstableMixture = true;
-        }
-        if( unstableMixture )
-        {
-          return true;
-        }
-      }
-    }
-
-    // The test is successful if either we have an unstable mixture or all test compositions converged to stationarity
-    return unstableMixture || allConverged;
-  }
+                       arraySlice1d< real64 > const & incipientComposition );
 
   /**
-   * @brief Compute derivatives of the incipient phase composition
-   * @param[in] numComps number of components
-   * @param[in] pressure pressure
-   * @param[in] temperature temperature
-   * @param[in] composition composition of the mixture
-   * @param[in] componentProperties The compositional component properties
-   * @param[in] sampleEquationOfState The equation of state for the sample
-   * @param[in] sampleEquationOfState The equation of state for the incipient phase
-   * @param[in] flashData The parameters required for the flash
-   * @param[in] incipientComposition The composition of the incipient phase
-   * @param[out] incipientCompositionDerivs Derivatives of the composition of the incipient phase
-   * @param[out] compositionDerivs Workspace
+   * @brief Compute derivatives of the incipient phase composition with respect to pressure, temperature, and overall composition.
+   *
+   * @details This method calculates the sensitivity of the incipient phase composition resulting from a phase stability test.
+   * It computes the partial derivatives of the incipient composition with respect to pressure, temperature, and each component
+   * of the overall mixture composition.
+   *
+   * The implementation solves a linear system derived from the stationarity condition of the Tangent Plane Distance (TPD)
+   * function. It uses fugacity derivatives from both the sample and incipient phases, and enforces the constraint that the
+   * incipient composition must sum to unity.
+   *
+   * @tparam USD1 Unit Stride Dimension for the composition array.
+   * @tparam USD2 Unit Stride Dimension for the derivative arrays.
+   *
+   * @param[in] numComps Number of components in the mixture.
+   * @param[in] pressure Pressure of the system [Pa].
+   * @param[in] temperature Temperature of the system [K].
+   * @param[in] composition Mole fractions of each component in the original mixture.
+   * @param[in] componentProperties Thermodynamic properties of each component.
+   * @param[in] sampleEquationOfState EOS used for the original mixture.
+   * @param[in] incipientEquationOfState EOS used for the incipient phase.
+   * @param[in] flashData Flash calculation context and EOS configuration.
+   * @param[in] incipientComposition Composition of the incipient phase.
+   * @param[out] incipientCompositionDerivs Derivatives of the incipient composition with respect to pressure, temperature, and composition.
+   * @param[out] compositionDerivs Workspace for storing derivatives of the sample composition.
+   *
    */
   template< integer USD1, integer USD2 >
   GEOS_HOST_DEVICE
@@ -255,86 +157,101 @@ public:
                                   FlashData const & flashData,
                                   arraySlice1d< real64 const > const & incipientComposition,
                                   arraySlice2d< real64, USD2 > const & incipientCompositionDerivs,
-                                  arraySlice2d< real64, USD2 > const & compositionDerivs )
-  {
-    integer constexpr maxNumRows = MultiFluidConstants::MAX_NUM_COMPONENTS + 1;
-    integer constexpr maxDofs = MultiFluidConstants::MAX_NUM_COMPONENTS + 2;
+                                  arraySlice2d< real64, USD2 > const & compositionDerivs );
 
-    integer const numDofs = 2 + numComps;
+  /**
+   * @brief Calculates the residual vector and Tangent Plane Distance (TPD) for a trial composition.
+   *
+   * @details This method evaluates the deviation of a trial composition from stationarity
+   * in the context of phase stability analysis. It computes the residual vector used in
+   * iterative solvers (SSI/Newton) and the tangent plane distance (TPD) which indicates
+   * whether the trial composition has lower Gibbs energy than the original mixture.
+   *
+   * The trial composition is provided in logarithmic form and exponentiated internally.
+   * Missing components (not present in presentComponents) are ignored in the residual
+   * and TPD calculation. The composition is normalized after exponentiation.
+   *
+   * @tparam USD1 Unit Stride Dimension for logTestComposition array.
+   * @tparam USD2 Unit Stride Dimension for testComposition array.
+   * @tparam USD3 Unit Stride Dimension for residual array.
+   *
+   * @param[in] numComps Number of components in the mixture.
+   * @param[in] presentComponents Indices of components present in the mixture.
+   * @param[in] pressure System pressure [Pa].
+   * @param[in] temperature System temperature [K].
+   * @param[in] componentProperties Thermodynamic properties of each component.
+   * @param[in] equationOfState Equation of state used for fugacity calculations.
+   * @param[in] flashData Flash calculation context.
+   * @param[in] logTestComposition Logarithm of trial composition.
+   * @param[out] tangentPlaneDistance Computed tangent plane distance (TPD).
+   * @param[out] testComposition Trial composition (exponentiated and normalized).
+   * @param[out] testLogFugacity Log fugacity coefficients of the trial composition.
+   * @param[out] residual Residual vector for iterative solver.
+   *
+   * @return Error norm of the residual vector.
+   *
+   */
+  template< int USD1, int USD2, int USD3 >
+  GEOS_HOST_DEVICE
+  static real64 calculateResidual( integer const numComps,
+                                   arraySlice1d< integer const > const & presentComponents,
+                                   real64 const pressure,
+                                   real64 const temperature,
+                                   ComponentProperties::KernelWrapper const & componentProperties,
+                                   EquationOfStateType const equationOfState,
+                                   FlashData const & flashData,
+                                   arraySlice1d< real64 const, USD1 > const & logTestComposition,
+                                   real64 & tangentPlaneDistance,
+                                   arraySlice1d< real64, USD2 > const & testComposition,
+                                   arraySlice1d< real64 > const & testLogFugacity,
+                                   arraySlice1d< real64, USD3 > const & residual );
 
-    StackArray< real64, 1, maxNumComps > logFugacity( numComps );
-    auto const & logFugacityIncipientDerivs = incipientCompositionDerivs;
-    auto const & logFugacitySampleDerivs = compositionDerivs;
-
-    FugacityCalculator::computeLogFugacityDerivatives( numComps,
-                                                       pressure,
-                                                       temperature,
-                                                       composition,
-                                                       componentProperties,
-                                                       sampleEquationOfState,
-                                                       flashData,
-                                                       logFugacity.toSlice(),
-                                                       logFugacitySampleDerivs );
-    FugacityCalculator::computeLogFugacityDerivatives( numComps,
-                                                       pressure,
-                                                       temperature,
-                                                       incipientComposition,
-                                                       componentProperties,
-                                                       incipientEquationOfState,
-                                                       flashData,
-                                                       logFugacity.toSlice(),
-                                                       logFugacityIncipientDerivs );
-
-    StackArray< real64, 2, maxNumRows * maxNumRows, MatrixLayout::COL_MAJOR_PERM > A( numComps + 1, numComps + 1 );
-    StackArray< real64, 2, maxNumRows * maxDofs, MatrixLayout::COL_MAJOR_PERM > X( numComps + 1, numDofs );
-
-    for( integer ic = 0; ic < numComps; ++ic )
-    {
-      real64 const yi = incipientComposition[ic];
-      for( integer jc = 0; jc < numComps; ++jc )
-      {
-        real64 const df_dyj = logFugacityIncipientDerivs( ic, Deriv::dC+jc );
-        A( ic, jc ) = yi*df_dyj;
-      }
-      A( ic, ic ) += 1.0;
-      A( ic, numComps ) = yi;
-      A( numComps, ic ) = 1.0;
-    }
-    A( numComps, numComps ) = 0.0;
-
-    for( integer ic = 0; ic < numComps; ++ic )
-    {
-      real64 const yi = incipientComposition[ic];
-      for( integer const idof : {Deriv::dP, Deriv::dT} )
-      {
-        X( ic, idof ) = yi*(-logFugacityIncipientDerivs( ic, idof ) + logFugacitySampleDerivs( ic, idof ));
-      }
-      for( integer jc = 0; jc < numComps; ++jc )
-      {
-        integer const idof = Deriv::dC + jc;
-        X( ic, idof ) = yi*logFugacitySampleDerivs( ic, idof );
-      }
-      if( MultiFluidConstants::epsilon < composition[ic] )
-      {
-        X( ic, Deriv::dC+ic ) += yi/composition[ic];
-      }
-    }
-    for( integer idof = 0; idof < numDofs; ++idof )
-    {
-      X( numComps, idof ) = 0.0;
-    }
-
-    // Solve linear system
-    solveLinearSystem( A.toSlice(), X.toSlice() );
-
-    for( integer idof = 0; idof < numDofs; ++idof )
-    {
-      for( integer ic = 0; ic < numComps; ++ic )
-      {
-        incipientCompositionDerivs( ic, idof ) = X( ic, idof );
-      }
-    }
-  }
+  /**
+   * @brief Calculates the residual vector and Jacobian matrix for a trial composition in phase stability analysis.
+   *
+   * @details This method evaluates the stationarity of a trial composition using the Tangent Plane Distance (TPD) criterion.
+   * It computes the residual vector and the Jacobian matrix required for Newton-Raphson iterations.
+   * The fugacity and its derivatives are calculated using the specified equation of state.
+   * Missing components (not present in the trial composition) are ignored in the residual and Jacobian calculations.
+   *
+   * @tparam USD1 Unit Stride Dimension for logTestComposition array.
+   * @tparam USD2 Unit Stride Dimension for testComposition array.
+   * @tparam USD3 Unit Stride Dimension for residual array.
+   * @tparam USD4 Unit Stride Dimension for jacobian array.
+   *
+   * @param[in] numComps Number of components in the mixture.
+   * @param[in] presentComponents Indices of components present in the trial composition.
+   * @param[in] pressure Pressure of the system [Pa].
+   * @param[in] temperature Temperature of the system [K].
+   * @param[in] componentProperties Thermodynamic properties of each component.
+   * @param[in] equationOfState Equation of state used for fugacity calculations.
+   * @param[in] flashData Flash calculation context and parameters.
+   * @param[in] logTestComposition Logarithm of the trial composition.
+   * @param[out] tangentPlaneDistance Computed TPD value for the trial composition.
+   * @param[out] testComposition Normalized trial composition.
+   * @param[out] testFugacity Log fugacity coefficients of the trial composition.
+   * @param[out] logTestFugacityDerivs Derivatives of log fugacity with respect to composition.
+   * @param[out] residual Residual vector used in Newton-Raphson iterations.
+   * @param[out] jacobian Jacobian matrix of the residual vector.
+   *
+   * @return Error norm of the residual vector.
+   */
+  template< int USD1, int USD2, int USD3, int USD4 >
+  GEOS_HOST_DEVICE
+  static real64 calculateResidualAndJacobian( integer const numComps,
+                                              arraySlice1d< integer const > const & presentComponents,
+                                              real64 const pressure,
+                                              real64 const temperature,
+                                              ComponentProperties::KernelWrapper const & componentProperties,
+                                              EquationOfStateType const equationOfState,
+                                              FlashData const & flashData,
+                                              arraySlice1d< real64 const, USD1 > const & logTestComposition,
+                                              real64 & tangentPlaneDistance,
+                                              arraySlice1d< real64, USD2 > const & testComposition,
+                                              arraySlice1d< real64 > const & testFugacity,
+                                              arraySlice2d< real64 > const & logTestFugacityDerivs,
+                                              arraySlice1d< real64, USD3 > const & residual,
+                                              arraySlice2d< real64, USD4 > const & jacobian );
 };
 
 } // namespace compositional
@@ -342,5 +259,8 @@ public:
 } // namespace constitutive
 
 } // namespace geos
+
+// Include the implementation
+#include "StabilityTest_impl.hpp"
 
 #endif //GEOS_CONSTITUTIVE_FLUID_MULTIFLUID_COMPOSITIONAL_FUNCTIONS_STABILITYTEST_HPP_

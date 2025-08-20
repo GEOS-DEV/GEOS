@@ -6010,6 +6010,8 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="flashTolerance" type="real64" default="1e-08" />
 		<!--phaseNames => List of fluid phases-->
 		<xsd:attribute name="phaseNames" type="groupNameRef_array" use="required" />
+		<!--ssiTolerance => The tolerance to use to switch from SSI iterations to Newton iterations-->
+		<xsd:attribute name="ssiTolerance" type="real64" default="0.001" />
 		<!--stabilityMaxIterations => The maximum number of successive substitution iterations used during the stability test. A zero or negative value skips the stability test-->
 		<xsd:attribute name="stabilityMaxIterations" type="integer" default="300" />
 		<!--stabilityThreshold => The value of the tangent plane distance below which a mixture is determined to be unstable-->
@@ -6072,6 +6074,8 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="flashTolerance" type="real64" default="1e-08" />
 		<!--phaseNames => List of fluid phases-->
 		<xsd:attribute name="phaseNames" type="groupNameRef_array" use="required" />
+		<!--ssiTolerance => The tolerance to use to switch from SSI iterations to Newton iterations-->
+		<xsd:attribute name="ssiTolerance" type="real64" default="0.001" />
 		<!--stabilityMaxIterations => The maximum number of successive substitution iterations used during the stability test. A zero or negative value skips the stability test-->
 		<xsd:attribute name="stabilityMaxIterations" type="integer" default="300" />
 		<!--stabilityThreshold => The value of the tangent plane distance below which a mixture is determined to be unstable-->
@@ -6111,6 +6115,8 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="flashTolerance" type="real64" default="1e-08" />
 		<!--phaseNames => List of fluid phases-->
 		<xsd:attribute name="phaseNames" type="groupNameRef_array" use="required" />
+		<!--ssiTolerance => The tolerance to use to switch from SSI iterations to Newton iterations-->
+		<xsd:attribute name="ssiTolerance" type="real64" default="0.001" />
 		<!--stabilityMaxIterations => The maximum number of successive substitution iterations used during the stability test. A zero or negative value skips the stability test-->
 		<xsd:attribute name="stabilityMaxIterations" type="integer" default="300" />
 		<!--stabilityThreshold => The value of the tangent plane distance below which a mixture is determined to be unstable-->
@@ -6161,6 +6167,8 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="salinity" type="real64" default="0" />
 		<!--saltMolarWeight => The molar weight for the salt component-->
 		<xsd:attribute name="saltMolarWeight" type="real64" default="0.05844" />
+		<!--ssiTolerance => The tolerance to use to switch from SSI iterations to Newton iterations-->
+		<xsd:attribute name="ssiTolerance" type="real64" default="0.001" />
 		<!--stabilityMaxIterations => The maximum number of successive substitution iterations used during the stability test. A zero or negative value skips the stability test-->
 		<xsd:attribute name="stabilityMaxIterations" type="integer" default="300" />
 		<!--stabilityThreshold => The value of the tangent plane distance below which a mixture is determined to be unstable-->

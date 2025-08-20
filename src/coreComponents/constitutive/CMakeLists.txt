@@ -99,6 +99,7 @@ set( constitutive_headers
      fluid/multifluid/compositional/functions/SoreideWhitsonEOSPhaseModel_impl.hpp
      fluid/multifluid/compositional/functions/SoreideWhitsonEOSPhaseModel.hpp
      fluid/multifluid/compositional/functions/StabilityTest.hpp
+     fluid/multifluid/compositional/functions/StabilityTest_impl.hpp
      fluid/multifluid/compositional/functions/Utilities.hpp
      fluid/multifluid/compositional/models/CompositionalDensity.hpp
      fluid/multifluid/compositional/models/ConstantViscosity.hpp

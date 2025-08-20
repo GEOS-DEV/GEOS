@@ -113,6 +113,34 @@ static integer calculatePresentComponents( integer const numComps,
 }
 
 /**
+ * @brief Calculate which components are absent.
+ * @details Creates a list of indices whose components have zero mole fraction.
+ * @param[in] numComps number of components
+ * @param[in] composition the composition of the fluid
+ * @param[out] absentComponents the list of absent components
+ * @return the number of absent components
+ */
+template< integer USD, typename ARRAY >
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
+static integer calculateAbsentComponents( integer const numComps,
+                                          arraySlice1d< real64 const, USD > const & composition,
+                                          ARRAY & absentComponents )
+{
+  // Check for machine-zero feed values
+  integer absentCount = 0;
+  for( integer ic = 0; ic < numComps; ++ic )
+  {
+    if( composition[ic] < MultiFluidConstants::minForSpeciesPresence )
+    {
+      absentComponents[absentCount++] = ic;
+    }
+  }
+  absentComponents.resize( absentCount );
+  return absentCount;
+}
+
+/**
  * @brief Determines whether a given composition represents a pure or nearly pure mixture.
  *
  * This function checks the mole fractions in a composition array to determine if the mixture
@@ -172,6 +200,27 @@ static bool solveLinearSystem( arraySlice2d< real64, USD > const & A,
   return false;
 #else
   BlasLapackLA::solveLinearSystem( A, X );
+  return true;
+#endif
+}
+
+/**
+ * @brief Solve the lineat system for the derivatives of the flash
+ * @param[in/out] A the coefficient matrix. Destroyed after call
+ * @param[in/out] X the rhs and solution
+ * @return @c true if the problem is well solved @c false otherwise
+ */
+template< int USD1, int USD2 >
+GEOS_HOST_DEVICE
+static bool solveLinearSystem( arraySlice2d< real64, USD1 > const & A,
+                               arraySlice1d< real64, USD2 > const & x )
+{
+#if defined(GEOS_DEVICE_COMPILE)
+  GEOS_UNUSED_VAR( A );
+  GEOS_UNUSED_VAR( x );
+  return false;
+#else
+  BlasLapackLA::solveLinearSystem( A, x );
   return true;
 #endif
 }

@@ -39,7 +39,8 @@ FlashParameters::FlashParameters( std::unique_ptr< ModelParameters > parameters 
   m_continuousParameters[STABILITY_THRESHOLD] = -1.0e-8;
   m_continuousParameters[STABILITY_TOLERANCE] = 1.0e-8;
   m_continuousParameters[FLASH_TOLERANCE] = 1.0e-8;
-  m_continuousParameters[NEGATIVE_FLASH_TOLERANCE] = -1.0e-1;
+  m_continuousParameters[NEGATIVE_FLASH_TOLERANCE] = 1.0e-5;
+  m_continuousParameters[SSI_TOLERANCE] = 1.0e-3;
 
   m_discreteParameters[STABILITY_MAX_ITERATIONS] = 300;
   m_discreteParameters[FLASH_MAX_ITERATIONS] = 300;
@@ -81,6 +82,17 @@ void FlashParameters::registerParametersImpl( MultiFluidBase * fluid )
     setInputFlag( dataRepository::InputFlags::OPTIONAL ).
     setDefaultValue( m_continuousParameters[FLASH_TOLERANCE] ).
     setDescription( "The tolerance to use to determine convergece of the flash" );
+
+  fluid->registerWrapper( viewKeyStruct::ssiToleranceString(), &m_continuousParameters[SSI_TOLERANCE] ).
+    setInputFlag( dataRepository::InputFlags::OPTIONAL ).
+    setDefaultValue( m_continuousParameters[SSI_TOLERANCE] ).
+    setDescription( "The tolerance to use to switch from SSI iterations to Newton iterations" );
+
+  fluid->registerWrapper( viewKeyStruct::negativeFlashToleranceString(), &m_continuousParameters[NEGATIVE_FLASH_TOLERANCE] ).
+    setInputFlag( dataRepository::InputFlags::OPTIONAL ).
+    setDefaultValue( m_continuousParameters[NEGATIVE_FLASH_TOLERANCE] ).
+    setDescription( "The tolerance within the physical region [0,1] which the phase fraction must be in "
+                    "order to allow a switch from SSI iterations to Newton iterations" );
 }
 
 void FlashParameters::postInputInitializationImpl( MultiFluidBase const * fluid,
@@ -118,6 +130,10 @@ void FlashParameters::postInputInitializationImpl( MultiFluidBase const * fluid,
   // Flash tolerance should be positive
   real64 const flashTolerance = m_continuousParameters[FLASH_TOLERANCE];
   checkLowerBound( flashTolerance, epsilon, viewKeyStruct::flashToleranceString() );
+
+  // SSI tolerance should be positive
+  real64 const ssiTolerance = m_continuousParameters[SSI_TOLERANCE];
+  checkLowerBound( ssiTolerance, epsilon, viewKeyStruct::ssiToleranceString() );
 
   // Max number of flash iterations should be at least 1
   integer const flashMaxIterations = m_discreteParameters[FLASH_MAX_ITERATIONS];
