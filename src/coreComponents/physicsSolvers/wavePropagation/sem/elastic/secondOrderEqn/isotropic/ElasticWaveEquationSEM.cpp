@@ -512,7 +512,7 @@ void ElasticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
       vMin = getGlobalMinWavespeed( mesh, regionNames );
 
       arrayView1d< real32 > const taperCoeff = nodeManager.getField< fields::taperCoeff >();
-      TaperKernel::computeTaperCoeff< EXEC_POLICY >( nodeManager.size(), nodeCoords, m_thicknessTaper, m_timeStep, vMin, m_reflectivityCoeff,
+      TaperKernel::computeTaperCoeff< EXEC_POLICY >( nodeManager.size(), nodeCoords, m_thicknessTaper, m_timeStep, vMin, m_logReflectivityCoeff,
                                                      taperCoeff );
     }
 
@@ -696,7 +696,7 @@ real64 ElasticWaveEquationSEM::computeTimeStep( real64 & dtOut )
     forAll< parallelHostPolicy >( sizeNode, [ux_n, uy_n, uz_n] ( localIndex const ){} );
 
   } );
-  return 0;
+  return m_timeStep * m_cflFactor;
 }
 
 void ElasticWaveEquationSEM::applyFreeSurfaceBC( real64 const time, DomainPartition & domain )

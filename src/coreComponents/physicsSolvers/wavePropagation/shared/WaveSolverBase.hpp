@@ -122,7 +122,7 @@ public:
     static constexpr char const * parametersPMLString() { return "parametersPML"; }
 
     static constexpr char const * useTaperString() {return "useTaper";}
-    static constexpr char const * reflectivityCoeffString() {return "reflectivityCoeff";}
+    static constexpr char const * logReflectivityCoeffString() {return "logReflectivityCoeff";}
     static constexpr char const * thicknessTaperString() {return "thicknessTaper";}
 
     static constexpr char const * receiverElemString() { return "receiverElem"; }
@@ -442,7 +442,8 @@ protected:
   /// Thickness of the Taper region, used to compute the damping profile
   real32 m_thicknessTaper;
 
-  real32 m_reflectivityCoeff;
+  // Log of the reflectivity coefficient
+  real32 m_logReflectivityCoeff;
 
   /// Names of table functions for source wavelet (time dependency)
   string_array m_sourceWaveletTableNames;
@@ -490,7 +491,7 @@ DECLARE_FIELD( taperCoeff,
                "taperCoeff",
                array1d< real32 >,
                1.0,
-               LEVEL_0,
+               NOPLOT,
                WRITE_AND_READ,
                "Array continaing the coefficients for the taper" );
 

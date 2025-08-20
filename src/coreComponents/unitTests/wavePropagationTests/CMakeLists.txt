@@ -2,7 +2,7 @@
 set( gtest_geosx_tests
      testWavePropagation.cpp
      testWavePropagationTaper.cpp
-     #testWavePropagationQ2.cpp
+     testWavePropagationQ2.cpp
      testWavePropagationElasticFirstOrder.cpp
      testWavePropagationDAS.cpp
      testWavePropagationElasticVTI.cpp

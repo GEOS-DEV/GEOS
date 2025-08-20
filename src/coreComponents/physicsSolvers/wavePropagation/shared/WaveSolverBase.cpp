@@ -219,10 +219,10 @@ WaveSolverBase::WaveSolverBase( const std::string & name,
     setApplyDefaultValue( 0 ).
     setDescription( "Flag to apply taper" );
 
-  registerWrapper( viewKeyStruct::reflectivityCoeffString(), &m_reflectivityCoeff ).
+  registerWrapper( viewKeyStruct::logReflectivityCoeffString(), &m_logReflectivityCoeff ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( 0.001 ).
-    setDescription( "Reflectivity coeff for taper" );
+    setDescription( "Log of reflectivity coeff for taper" );
 
   registerWrapper( viewKeyStruct::thicknessTaperString(), &m_thicknessTaper ).
     setInputFlag( InputFlags::OPTIONAL ).

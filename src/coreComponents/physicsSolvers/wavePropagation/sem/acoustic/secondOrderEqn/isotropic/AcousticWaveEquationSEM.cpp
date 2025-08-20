@@ -432,7 +432,7 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
       vMin = getGlobalMinWavespeed( mesh, regionNames );
 
       arrayView1d< real32 > const taperCoeff = nodeManager.getField< fields::taperCoeff >();
-      TaperKernel::computeTaperCoeff< EXEC_POLICY >( nodeManager.size(), nodeCoords, m_thicknessTaper, m_timeStep, vMin, m_reflectivityCoeff,
+      TaperKernel::computeTaperCoeff< EXEC_POLICY >( nodeManager.size(), nodeCoords, m_thicknessTaper, m_timeStep, vMin, m_logReflectivityCoeff,
                                                      taperCoeff );
     }
   } );
@@ -564,10 +564,10 @@ real64 AcousticWaveEquationSEM::computeTimeStep( real64 & dtOut )
 
     stiffnessVector.zero();
     p.zero();
-    //Lien to ensure that the using array stays on GPU (useful when we cal this routine several times)
+    //Loop to ensure that the using array stays on GPU (useful when we call this routine several times)
     forAll< parallelHostPolicy >( sizeNode, [p] ( localIndex const ){} );
   } );
-  return 0;
+  return m_timeStep * m_cflFactor;
 }
 
 
