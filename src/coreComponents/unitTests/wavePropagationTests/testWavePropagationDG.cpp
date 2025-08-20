@@ -45,7 +45,7 @@ char const * xmlInput =
         name="acousticSolverDG"
         discretization="FE1"
         targetRegions="{ Region }"
-        sourceCoordinates="{ { 50, 50, 50 } }"
+        sourceCoordinates="{ { 53, 53, 53 } }"
         timeSourceFrequency="2"
         receiverCoordinates="{ { 0.1, 0.1, 0.1 }, { 0.1, 0.1, 99.9 }, { 0.1, 99.9, 0.1 }, { 0.1, 99.9, 99.9 },
                                 { 99.9, 0.1, 0.1 }, { 99.9, 0.1, 99.9 }, { 99.9, 99.9, 0.1 }, { 99.9, 99.9, 99.9 },
@@ -71,7 +71,7 @@ char const * xmlInput =
       maxTime="1">
       <PeriodicEvent
         name="solverApplications"
-        forceDt="0.1"
+        forceDt="0.01"
         targetExactStartStop="0"
         targetExactTimestep="0"
         target="/Solvers/acousticSolver"/>
@@ -144,7 +144,7 @@ protected:
   }
 
   static real64 constexpr time = 0.0;
-  static real64 constexpr dt = 1e-1;
+  static real64 constexpr dt = 1e-3;
   static real64 constexpr eps = std::numeric_limits< real64 >::epsilon();
 
   GeosxState state;
@@ -168,58 +168,37 @@ TEST_F( AcousticWaveEquationDGTest, SeismoTrace )
     propagator->explicitStepForward( time_n, dt, i, domain, 0 );
     time_n += dt;
   }
-  // // cleanup (triggers calculation of the remaining seismograms data points)
-  // propagator->cleanup( 1.0, 10, 0, 0, domain );
+  // cleanup (triggers calculation of the remaining seismograms data points)
+  propagator->cleanup( 1.0, 10, 0, 0, domain );
 
-  // // retrieve seismo
-  // arrayView2d< real32 > const pReceivers = propagator->getReference< array2d< real32 > >(
-  // AcousticWaveEquationDG::viewKeyStruct::pressureNp1AtReceiversString() ).toView();
+  // retrieve seismo
+  arrayView2d< real32 > const pReceivers = propagator->getReference< array2d< real32 > >(
+  AcousticWaveEquationDG::viewKeyStruct::pressureNp1AtReceiversString() ).toView();
 
-  // // move it to CPU, if needed
-  // pReceivers.move( hostMemorySpace, false );
+  // move it to CPU, if needed
+  pReceivers.move( hostMemorySpace, false );
 
-  // // check number of seismos and trace length
-  // ASSERT_EQ( pReceivers.size( 1 ), 10 );
-  // ASSERT_EQ( pReceivers.size( 0 ), 11 );
+  // check number of seismos and trace length
+  ASSERT_EQ( pReceivers.size( 1 ), 10 );
+  ASSERT_EQ( pReceivers.size( 0 ), 11 );
 
-  // // check seismo content. The pressure values cannot be directly checked as the problem is too small.
-  // // Since the basis is linear, check that the seismograms are nonzero (for t>0) and the seismogram at the center is equal
-  // // to the average of the others.
-  // for( int i = 0; i < 11; i++ )
-  // {
-  //   if( i > 0 )
-  //   {
-  //     ASSERT_TRUE( std::abs( pReceivers[i][8] ) > 0 );
-  //   }
-  //   double avg = 0;
-  //   for( int r=0; r<8; r++ )
-  //   {
-  //     avg += pReceivers[i][r];
-  //   }
-  //   avg /= 8.0;
-  //   ASSERT_TRUE( std::abs( pReceivers[i][8] - avg ) < 0.00001 );
-  // }
-  // // run adjoint solver
-  // for( int i = 0; i < 10; i++ )
-  // {
-  //   propagator->explicitStepBackward( time_n, dt, i, domain, 0 );
-  //   time_n += dt;
-  // }
-  // // check again the seismo content.
-  // for( int i = 0; i < 11; i++ )
-  // {
-  //   if( i > 0 )
-  //   {
-  //     ASSERT_TRUE( std::abs( pReceivers[i][8] ) > 0 );
-  //   }
-  //   double avg = 0;
-  //   for( int r=0; r<8; r++ )
-  //   {
-  //     avg += pReceivers[i][r];
-  //   }
-  //   avg /= 8.0;
-  //   ASSERT_TRUE( std::abs( pReceivers[i][8] - avg ) < 0.00001 );
-  // }
+  // check seismo content. The pressure values cannot be directly checked as the problem is too small.
+  // Since the basis is linear, check that the seismograms are nonzero (for t>0) and the seismogram at the center is equal
+  // to the average of the others.
+  for( int i = 0; i < 11; i++ )
+  {
+    if( i > 0 )
+    {
+      ASSERT_TRUE( std::abs( pReceivers[i][8] ) > 0 );
+    }
+    double avg = 0;
+    for( int r=0; r<8; r++ )
+    {
+      avg += pReceivers[i][r];
+    }
+    avg /= 8.0;
+    ASSERT_TRUE( std::abs( pReceivers[i][8] - avg ) < 0.001 );
+  }
 }
 
 int main( int argc, char * * argv )
