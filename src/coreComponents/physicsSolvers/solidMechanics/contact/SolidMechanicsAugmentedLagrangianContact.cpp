@@ -20,6 +20,8 @@
 #include "mesh/DomainPartition.hpp"
 #include "SolidMechanicsAugmentedLagrangianContact.hpp"
 
+#include "physicsSolvers/fluidFlow/FlowSolverBase.hpp"
+
 #include "physicsSolvers/solidMechanics/contact/kernels/SolidMechanicsConformingContactKernelsBase.hpp"
 #include "physicsSolvers/solidMechanics/contact/kernels/SolidMechanicsALMKernels.hpp"
 #include "physicsSolvers/solidMechanics/contact/kernels/SolidMechanicsALMKernelsBase.hpp"
@@ -400,65 +402,13 @@ void SolidMechanicsAugmentedLagrangianContact::assembleSystem( real64 const time
   //parallel_matrix.create( localMatrix.toViewConst(), dofManager.numLocalDofs(), MPI_COMM_GEOS );
   //parallel_matrix.write("mech.mtx");
 
-
-  //forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-  //                                                              MeshLevel & mesh,
-  //                                                              string_array const & )
-  //{
-  //  ElementRegionManager & elemManager = mesh.getElemManager();
-  //  SurfaceElementRegion & region = elemManager.getRegion< SurfaceElementRegion >( getUniqueFractureRegionName() );
-  //  FaceElementSubRegion & subRegion = region.getUniqueSubRegion< FaceElementSubRegion >();
-  //  arrayView2d< real64 > const dispJump  = subRegion.getField< contact::dispJump >();
-  //  arrayView2d< real64 > const deltaDispJump  = subRegion.getField< contact::deltaDispJump >();
-  //  arrayView2d< real64 > const traction  = subRegion.getField< contact::traction >();
-  //  forAll< parallelDevicePolicy<> >( subRegion.size(),
-  //                                    [ = ]
-  //                                    GEOS_HOST_DEVICE ( localIndex const kfe )
-  //  {
-  //    std::cout << "delataDispJump[" << kfe << "] = [";
-  //    for( localIndex i = 0; i < 3; ++i )
-  //    {
-  //      std::cout << deltaDispJump[kfe][i] << ", ";
-  //    }
-  //    std::cout << "]" << std::endl;
-  //    std::cout << "dispJump[" << kfe << "] = [";
-  //    for( localIndex i = 0; i < 3; ++i )
-  //    {
-  //      std::cout << dispJump[kfe][i] << ", ";
-  //    }
-  //    std::cout << "]" << std::endl;
-  //    std::cout << "traction[" << kfe << "] = [";
-  //    for( localIndex i = 0; i < 3; ++i )
-  //    {
-  //      std::cout << traction[kfe][i] << ", ";
-  //    }
-  //    std::cout << "]" << std::endl;
-  //  } );
-  //} );
-
   assembleContact( time, dt, domain, dofManager, localMatrix, localRhs );
-
-  //for (int i = 0; i < localRhs.size(); ++i)
-  //{
-  //  printf( "localRhs[%d] = %e\n", i, localRhs[i] );
-  //}
 
   // for sequential: add (fixed) pressure force contribution into residual (no derivatives)
   if( m_isFixedStressPoromechanicsUpdate || m_performStressInitialization )
   {
     assembleForceResidualPressureContribution( domain, dt, dofManager, localMatrix, localRhs );
-    //forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
-    //                                                             MeshLevel const & mesh,
-    //                                                             string_array const & regionNames )
-    //{
-    //  assembleForceResidualPressureContribution( mesh, regionNames, dofManager, localMatrix, localRhs );
-    //} );
   }
-
-  //for (int i = 0; i < localRhs.size(); ++i)
-  //{
-  //  printf( "localRhs[%d] = %e\n", i, localRhs[i] );
-  //}
 
 }
 

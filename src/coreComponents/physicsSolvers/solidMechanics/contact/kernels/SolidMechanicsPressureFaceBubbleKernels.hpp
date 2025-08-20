@@ -300,8 +300,7 @@ public:
                                                                     m_dt,
                                                                     m_pressure[k],
                                                                     m_pressure_n[k],
-                                                                    0.0,
-                                                                    0.0,
+                                                                    0.0, 0.0, 0.0,
                                                                     strainInc,
                                                                     totalStress,
                                                                     stiffness );
