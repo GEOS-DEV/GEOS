@@ -51,7 +51,7 @@ DECLARE_FIELD( phaseDiffusivityMultiplier,
                "phaseDiffusivityMultiplier",
                array3d< real64 >,
                0,
-               NOPLOT,
+               LEVEL_0,
                WRITE_AND_READ,
                "Phase multipliers for the diffusivity coefficients" );
 

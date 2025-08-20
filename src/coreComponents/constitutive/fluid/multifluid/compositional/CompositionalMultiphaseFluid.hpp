@@ -30,6 +30,8 @@
 #include "constitutive/fluid/multifluid/compositional/models/NegativeTwoPhaseFlashModel.hpp"
 #include "constitutive/fluid/multifluid/compositional/models/NullModel.hpp"
 #include "constitutive/fluid/multifluid/compositional/models/PhaseModel.hpp"
+#include "constitutive/fluid/multifluid/compositional/models/PhillipsBrineDensity.hpp"
+#include "constitutive/fluid/multifluid/compositional/models/PhillipsBrineViscosity.hpp"
 #include "constitutive/fluid/multifluid/compositional/parameters/ModelParameters.hpp"
 
 namespace geos
@@ -113,18 +115,11 @@ protected:
 
   virtual void resizeFields( localIndex const size, localIndex const numPts ) override;
 
-  enum PhaseType : integer
-  {
-    LIQUID = 0,
-    VAPOUR = 1,
-    AQUEOUS = 2,
-  };
-
 private:
   // Create the fluid models
   void createModels();
 
-  integer findPhaseIndex( string names ) const;
+  array1d< integer > getPhaseTypes() const;
 
   static std::unique_ptr< compositional::ModelParameters > createModelParameters();
 
@@ -132,7 +127,8 @@ private:
   std::unique_ptr< FLASH > m_flash{};
 
   // Phase ordering
-  array1d< integer > m_phaseOrder;
+  array1d< integer > m_phaseOrder{};
+  array1d< integer > m_phaseType{};
 
   // Phase models
   std::unique_ptr< PHASE1 > m_phase1{};
@@ -156,6 +152,10 @@ using CompositionalTwoPhaseConstantViscosity = CompositionalMultiphaseFluid<
 using CompositionalTwoPhaseLohrenzBrayClarkViscosity = CompositionalMultiphaseFluid<
   compositional::NegativeTwoPhaseFlashModel,
   compositional::PhaseModel< compositional::CompositionalDensity, compositional::LohrenzBrayClarkViscosity, compositional::NullModel >,
+  compositional::PhaseModel< compositional::CompositionalDensity, compositional::LohrenzBrayClarkViscosity, compositional::NullModel > >;
+using CompositionalTwoPhasePhillipsBrine = CompositionalMultiphaseFluid<
+  compositional::NegativeTwoPhaseFlashModel,
+  compositional::PhaseModel< compositional::PhillipsBrineDensity, compositional::PhillipsBrineViscosity, compositional::NullModel >,
   compositional::PhaseModel< compositional::CompositionalDensity, compositional::LohrenzBrayClarkViscosity, compositional::NullModel > >;
 using CompositionalThreePhaseLohrenzBrayClarkViscosity = CompositionalMultiphaseFluid<
   compositional::ImmiscibleWaterFlashModel,

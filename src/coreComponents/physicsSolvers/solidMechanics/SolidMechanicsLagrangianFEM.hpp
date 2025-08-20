@@ -27,7 +27,6 @@
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "mesh/mpiCommunications/MPI_iCommData.hpp"
 #include "physicsSolvers/PhysicsSolverBase.hpp"
-#include "physicsSolvers/fluidFlow/FlowSolverBase.hpp"
 
 #include "physicsSolvers/solidMechanics/SolidMechanicsFields.hpp"
 
@@ -65,18 +64,6 @@ public:
    */
   SolidMechanicsLagrangianFEM( const string & name,
                                Group * const parent );
-
-
-  SolidMechanicsLagrangianFEM( SolidMechanicsLagrangianFEM const & ) = delete;
-  SolidMechanicsLagrangianFEM( SolidMechanicsLagrangianFEM && ) = default;
-
-  SolidMechanicsLagrangianFEM & operator=( SolidMechanicsLagrangianFEM const & ) = delete;
-  SolidMechanicsLagrangianFEM & operator=( SolidMechanicsLagrangianFEM && ) = delete;
-
-  /**
-   * destructor
-   */
-  virtual ~SolidMechanicsLagrangianFEM() override;
 
   /**
    * @return The string that may be used to generate a new instance from the PhysicsSolverBase::CatalogInterface::CatalogType
@@ -125,6 +112,9 @@ public:
                ParallelVector & rhs,
                ParallelVector & solution,
                bool const setSparsity = false ) override;
+
+  virtual std::unique_ptr< PreconditionerBase< LAInterface > >
+  createPreconditioner( DomainPartition & domain ) const override;
 
   virtual void
   assembleSystem( real64 const time,
@@ -182,8 +172,6 @@ public:
                          real64 const dt,
                          PARAMS && ... params );
 
-
-  template< typename ... PARAMS >
   real64 explicitKernelDispatch( MeshLevel & mesh,
                                  string_array const & targetRegions,
                                  string const & finiteElementName,
@@ -268,13 +256,11 @@ public:
   real64 & getMaxForce() { return m_maxForce; }
   real64 const & getMaxForce() const { return m_maxForce; }
 
-  arrayView1d< ParallelVector > const & getRigidBodyModes() const
-  {
-    return m_rigidBodyModes;
-  }
+  void computeRigidBodyModes( DomainPartition & domain ) const;
 
-  array1d< ParallelVector > & getRigidBodyModes()
+  arrayView1d< ParallelVector > const & getRigidBodyModes( DomainPartition & domain ) const
   {
+    computeRigidBodyModes( domain );
     return m_rigidBodyModes;
   }
 
@@ -286,6 +272,8 @@ public:
   {
     m_performStressInitialization = performStressInitialization;
   }
+
+  TimeIntegrationOption timeIntegrationOption() const { return m_timeIntegrationOption; }
 
 protected:
   virtual void postInputInitialization() override;
@@ -308,8 +296,8 @@ protected:
   /// Flag to indicate that the solver is going to perform stress initialization
   bool m_performStressInitialization;
 
-  /// Rigid body modes
-  array1d< ParallelVector > m_rigidBodyModes;
+  /// Rigid body modes; TODO remove mutable hack
+  mutable array1d< ParallelVector > m_rigidBodyModes;
 
   real64 m_contactPenaltyStiffness;
 

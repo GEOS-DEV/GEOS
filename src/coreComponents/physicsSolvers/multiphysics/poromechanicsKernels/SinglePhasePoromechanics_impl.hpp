@@ -23,8 +23,6 @@
 #include "constitutive/fluid/singlefluid/SingleFluidBase.hpp"
 #include "finiteElement/BilinearFormUtilities.hpp"
 #include "finiteElement/LinearFormUtilities.hpp"
-#include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
-#include "physicsSolvers/fluidFlow/SinglePhaseBaseFields.hpp"
 #include "physicsSolvers/multiphysics/poromechanicsKernels/SinglePhasePoromechanics.hpp"
 
 namespace geos
@@ -96,7 +94,7 @@ smallStrainUpdate( localIndex const k,
                                                        m_dt,
                                                        m_pressure[k],
                                                        m_pressure_n[k],
-                                                       stack.temperature,
+                                                       stack.deltaTemperature,
                                                        stack.deltaTemperatureFromLastStep,
                                                        stack.strainIncrement,
                                                        stack.totalStress,
