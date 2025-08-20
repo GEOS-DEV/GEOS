@@ -7,7 +7,7 @@
       flowSolverName="compositionalMultiphaseFlow"
       wellSolverName="compositionalMultiphaseWell"
       logLevel="1"
-      targetRegions="{ Region1, wellRegion1 }">
+      targetRegions="{ Region1, wellRegion1, wellRegion2 }">
       <NonlinearSolverParameters
         newtonTol="1.0e-8"
         lineSearchAction="None"
@@ -27,36 +27,48 @@
       name="compositionalMultiphaseWell"
       logLevel="1"
       writeCSV="1"
-      writeSegDebug="1"
-      writeLinearSystem="2"
+      writeSegDebug="0"
       useNewCode="1"
-      targetRegions="{ wellRegion1}">
+      targetRegions="{ wellRegion1, wellRegion2 }">
       <WellControls
-        estimateWellSolution="1"
+        estimateWellSolution="0"
         name="wellControls1"
         type="producer"
         control="phaseVolRate"
+        useSurfaceConditions="0"
         referenceElevation="2"
         targetBHP="3e6"
         targetPhaseRate="2e-6"
         targetPhaseName="oil">
-        <MinimumWHPConstraint
-         name="minWHP"
-         referenceElevation="2"
-         flowTableName="Type1Pipe"
-         targetWHP="30e6"/>
         <MinimumBHPConstraint
          name="minBHP"
          referenceElevation="2"
          targetBHP="3e6"/>
         <LiquidProductionConstraint
-         name="maxLiq"
-         phaseNames="{oil}"
-         liquidRate="2e-6"/>
-        <PhaseProductionConstraint
          name="maxOil"
-         phaseName="oil"
+         phaseNamse="{oil}"
          phaseRate="2e-6"/>
+        </WellControls>
+      <WellControls
+        estimateWellSolution="0"
+        name="wellControls2"
+        type="injector"
+        control="totalVolRate"
+        referenceElevation="2"
+        targetBHP="1e7"
+        targetTotalRate="28e-7"
+        useSurfaceConditions="0"
+        injectionTemperature="297.15"
+        injectionStream="{ 0.1, 0.1, 0.1, 0.7 }">
+        <MaximumBHPConstraint
+         name="maxBHP"
+         referenceElevation="2"
+         targetBHP="1e7"/>
+        <VolumeInjectionConstraint
+         name="maxVol"
+         volumeRate="28e-7"
+         injectionTemperature="297.15"
+         injectionStream="{ 0.1, 0.1, 0.1, 0.7 }"/>
         </WellControls>
 
     </CompositionalMultiphaseWell>
@@ -88,6 +100,19 @@
           distanceFromHead="1.45"/>
       </InternalWell>
 
+      <InternalWell
+        name="well_injector1"
+        wellRegionName="wellRegion2"
+        wellControlsName="wellControls2"
+        polylineNodeCoords="{ { 0.5, 0, 2 },
+                              { 0.5, 0, 0.5 } }"
+        polylineSegmentConn="{ { 0, 1 } }"
+        radius="0.1"
+        numElementsPerSegment="3">
+        <Perforation
+          name="injector1_perf1"
+          distanceFromHead="1.45"/>
+      </InternalWell>
     </InternalMesh>
   </Mesh>
 
@@ -156,6 +181,9 @@
       name="wellRegion1"
       materialList="{ fluid1 }"/>
 
+    <WellElementRegion
+      name="wellRegion2"
+      materialList="{ fluid1 }"/>
   </ElementRegions>
 
   <Constitutive>
@@ -264,8 +292,4 @@
     <Restart
       name="restartOutput"/>
   </Outputs>
-  <Included>
-    <File name="include/ft1.xml"/>
-  </Included>
-
 </Problem>

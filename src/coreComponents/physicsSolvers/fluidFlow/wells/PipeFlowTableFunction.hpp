@@ -70,6 +70,18 @@ public:
   const string & getRateType() const { return m_rateType; }
 
   /**
+   * @brief Get phases associated with rate type
+   * @return array of phases
+   */
+  const string_array & getRatePhases() const { return m_ratePhases; }
+
+    /**
+   * @brief Get rates table coordinates
+   * @return array of phases
+   */
+  const array1d< real64 > & getRates() const { return m_rate; }
+
+  /**
    * @brief Get type of water fraction array
    * @return name of type
    */
@@ -130,7 +142,9 @@ private:
 
   /// Rate
   string m_rateType;
+  string_array m_ratePhases;
   array1d< real64 > m_rate;
+
 
   /// Well head pressure
   string m_pressureType;

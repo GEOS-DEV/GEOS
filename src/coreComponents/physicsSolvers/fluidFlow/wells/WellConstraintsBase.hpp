@@ -282,7 +282,7 @@ public:
    * @brief Sets constraint value
    * @param[in] constraint value
    */
-  void setConstraintValue( real64 const & constraintValue ) 
+  void setConstraintValue( real64 const & constraintValue )
   {
     m_constraintValue = constraintValue;
   }
@@ -356,6 +356,7 @@ public:
    */
   real64 massRate() const { return m_massRate; }
 
+  // endof This needs to be somewhere else tjb
   /**
    * @brief Check if this constraint is violated
    * @return true if limiting constraint, false otherwise

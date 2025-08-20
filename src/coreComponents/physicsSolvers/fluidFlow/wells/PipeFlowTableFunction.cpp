@@ -102,6 +102,24 @@ void PipeFlowTableFunction::postInputInitialization()
   checkNotDecreasing( m_wfr, getWaterFractionType());
   checkNotDecreasing( m_gfr, getGasFractionType());
 
+  // fluid model phase naming convention associated with rate type
+  if( m_rateType == "LIQ" )
+  {
+    m_ratePhases.resize( 2 );
+    m_ratePhases[0] = "oil";
+    m_ratePhases[1] = "wat";
+  }
+  else if( m_rateType == "OIL" )
+  {
+    m_ratePhases.resize( 1 );
+    m_ratePhases[0] = "oil";
+  }
+  else if( m_rateType == "GAS" )
+  {
+    m_ratePhases.resize( 1 );
+    m_ratePhases[0] = "gas";
+  }
+
   initializeFunction();
 }
 

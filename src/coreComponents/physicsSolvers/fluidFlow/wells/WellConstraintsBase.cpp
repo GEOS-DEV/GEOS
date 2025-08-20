@@ -33,7 +33,7 @@ namespace
 {
 
 
-#if 0  
+#if 0
 /// Utility function to create a one-value table internally when not provided by the user
 TableFunction * createConstraintScheduleTable( string const & tableName,
                                                real64 const & constantValue )

@@ -34,7 +34,18 @@ LiquidConstraint::LiquidConstraint( string const & name, Group * const parent )
   : WellConstraintBase( name, parent )
 {
   setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
+  registerWrapper( viewKeyStruct::liquidRateString(), &m_constraintValue ).
+    setDefaultValue( 0.0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
+    setDescription( "Phase rate,  (if useSurfaceConditions: [surface m^3/s]; else [reservoir m^3/s]) " );
 
+  registerWrapper( viewKeyStruct::phaseNamesString(), &m_phaseNames ).
+    setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
+    setDefaultValue( "" ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
+    setDescription( "Name of the target phase" );
 }
 
 LiquidConstraint::~LiquidConstraint()

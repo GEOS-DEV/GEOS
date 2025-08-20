@@ -91,6 +91,23 @@ public:
    * @name Getters / Setters
    */
   ///@{
+  /**
+   * @brief Get the target phase name
+   * @return the target phase name
+   */
+  const string_array & getPhaseNames() const { return m_phaseNames; }
+
+  /**
+   * @brief Set phases associated with liquid constraint
+   * @param array of phase names
+   */
+  void setPhaseNames( const string_array & phaseNames )  { m_phaseNames=phaseNames; }
+
+  /**
+   * @brief Get the phase indices
+   * @return array of phase indices
+   */
+  const array1d< integer > & getPhaseIndices() const { return m_phaseIndices; }
 
   ///@}
   /**
@@ -99,8 +116,10 @@ public:
    */
   struct viewKeyStruct
   {
-    /// String key for the volume rate
+    /// String key for the liquid rate
     static constexpr char const * liquidRateString() { return "liquidRate"; }
+    /// String key for the phases names
+    static constexpr char const * phaseNamesString() { return "phaseNames"; }
   };
 
   // Temp interface - tjb
@@ -112,10 +131,13 @@ protected:
   virtual void postInputInitialization() override;
 
 protected:
-  array1d< integer > m_phaseIndices; ///< Indices of the phases defining the fluid
+
+  /// Name of the targeted phase
+  string_array m_phaseNames;
+  ///Indices of the phases defining the fluid
+  array1d< integer > m_phaseIndices;
 
 };
-
 
 /**
  * @class LiquidProductionConstraint
@@ -202,16 +224,16 @@ protected:
 template< typename T >
 void LiquidProductionConstraint::validateLiquidType( T const & fluidModel )
 {
-  GEOS_UNUSED_VAR( fluidModel );
-#if 0
-  // Find target Liquid index for Liquid rate constraint
-  m_LiquidIndex = getLiquidIndex( fluidModel, getReference< string >( LiquidConstraint::viewKeyStruct::LiquidNameString()));
-
-  GEOS_THROW_IF( m_LiquidIndex == -1,
-                 "LiquidProductionConstraint " << getReference< string >( LiquidConstraint::viewKeyStruct::LiquidNameString())   <<
-                 ": Invalid Liquid type for simulation fluid model",
-                 InputError );
-#endif
+  m_phaseIndices.resize( m_phaseNames.size());
+  for( size_t ip =0; ip<m_phaseNames.size(); ip++ )
+  {
+    integer phaseIndex = fluidModel.getPhaseIndex( m_phaseNames[ip] );
+    GEOS_THROW_IF( phaseIndex == -1,
+                   "LiquidProductionConstraint " << getReference< string >( LiquidConstraint::viewKeyStruct::liquidRateString())   <<
+                   ": Invalid Liquid type for simulation fluid model " << m_phaseNames[ip],
+                   InputError );
+    m_phaseIndices[ip]=phaseIndex;
+  }
 }
 
 
