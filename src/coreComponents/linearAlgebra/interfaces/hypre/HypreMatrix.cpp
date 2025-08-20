@@ -1034,6 +1034,29 @@ void HypreMatrix::getRowLengths( arrayView1d< localIndex > const & lengths ) con
   } );
 }
 
+// void HypreMatrix::getRowCopy( globalIndex const globalRowIndex,
+//                               arraySlice1d< globalIndex > const & colIndices,
+//                               arraySlice1d< real64 > const & values ) const
+// {
+//   GEOS_LAI_ASSERT( ready() );
+//   GEOS_LAI_ASSERT_GE( globalRowIndex, ilower() );
+//   GEOS_LAI_ASSERT_GT( iupper(), globalRowIndex );
+
+//   HYPRE_BigInt row = LvArray::integerConversion< HYPRE_BigInt >( globalRowIndex );
+//   HYPRE_Int numEntries = LvArray::integerConversion< HYPRE_Int >( rowLength( globalRowIndex ) );
+
+//   GEOS_LAI_ASSERT_GE( colIndices.size(), numEntries );
+//   GEOS_LAI_ASSERT_GE( values.size(), numEntries );
+
+//   // XXX: this is only correct on host! We should deprecate row-wise functions.
+//   GEOS_LAI_CHECK_ERROR( hypre_IJMatrixGetValuesParCSR( m_ij_mat,
+//                                                        -1,
+//                                                        &numEntries,
+//                                                        &row,
+//                                                        hypre::toHypreBigInt( colIndices ),
+//                                                        values ) );
+// }
+
 void HypreMatrix::getRowCopy( globalIndex const globalRowIndex,
                               arraySlice1d< globalIndex > const & colIndices,
                               arraySlice1d< real64 > const & values ) const
@@ -1053,8 +1076,10 @@ void HypreMatrix::getRowCopy( globalIndex const globalRowIndex,
                                                        -1,
                                                        &numEntries,
                                                        &row,
+                                                       nullptr,
                                                        hypre::toHypreBigInt( colIndices ),
-                                                       values ) );
+                                                       values,
+                                                       0 ) );
 }
 
 void HypreMatrix::extractDiagonal( HypreVector & dst ) const

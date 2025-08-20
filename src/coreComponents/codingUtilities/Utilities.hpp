@@ -58,6 +58,20 @@ bool isZero( T const val, T const tol = LvArray::NumericLimits< T >::epsilon )
   return -tol <= val && val <= tol;
 }
 
+/**
+ * @brief Test if a real value is not (almost) zero.
+ * @tparam T type of real value
+ * @param val the value to test
+ * @param tol absolute tolerance for comparison
+ * @return @p true if @p val is outside @p tol of zero
+ */
+template< typename T >
+GEOS_FORCE_INLINE GEOS_HOST_DEVICE constexpr
+bool isNotZero( T const val, T const tol = LvArray::NumericLimits< T >::epsilon )
+{
+  return tol <= val || val <= -tol;
+}
+
 template< typename T >
 GEOS_FORCE_INLINE GEOS_HOST_DEVICE constexpr
 bool isOdd( T x )
