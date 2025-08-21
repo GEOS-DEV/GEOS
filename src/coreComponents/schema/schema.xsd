@@ -2569,12 +2569,12 @@ Information output from lower logLevels is added with the desired log level
 2
  - The summary of declared fields and coupling-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
-		<!--logReflectivityCoeff => Log of reflectivity coeff for taper-->
-		<xsd:attribute name="logReflectivityCoeff" type="real32" default="0.001" />
 		<!--outputSeismoTrace => Flag that indicates if we write the seismo trace in a file .txt, 0 no output, 1 otherwise-->
 		<xsd:attribute name="outputSeismoTrace" type="integer" default="0" />
 		<!--receiverCoordinates => Coordinates (x,y,z) of the receivers-->
 		<xsd:attribute name="receiverCoordinates" type="real64_array2d" default="{{0}}" />
+		<!--reflectivityCoeff => Reflectivity coeff for taper-->
+		<xsd:attribute name="reflectivityCoeff" type="real32" default="0.001" />
 		<!--rickerOrder => Flag that indicates the order of the Ricker to be used o, 1 or 2. Order 2 by default-->
 		<xsd:attribute name="rickerOrder" type="integer" default="2" />
 		<!--saveFields => Set to 1 to save fields during forward and restore them during backward. If set to 1, the gradient is computed, and if set to 2, the imaging condition is computed.-->
@@ -2664,12 +2664,12 @@ Information output from lower logLevels is added with the desired log level
 2
  - The summary of declared fields and coupling-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
-		<!--logReflectivityCoeff => Log of reflectivity coeff for taper-->
-		<xsd:attribute name="logReflectivityCoeff" type="real32" default="0.001" />
 		<!--outputSeismoTrace => Flag that indicates if we write the seismo trace in a file .txt, 0 no output, 1 otherwise-->
 		<xsd:attribute name="outputSeismoTrace" type="integer" default="0" />
 		<!--receiverCoordinates => Coordinates (x,y,z) of the receivers-->
 		<xsd:attribute name="receiverCoordinates" type="real64_array2d" default="{{0}}" />
+		<!--reflectivityCoeff => Reflectivity coeff for taper-->
+		<xsd:attribute name="reflectivityCoeff" type="real32" default="0.001" />
 		<!--rickerOrder => Flag that indicates the order of the Ricker to be used o, 1 or 2. Order 2 by default-->
 		<xsd:attribute name="rickerOrder" type="integer" default="2" />
 		<!--saveFields => Set to 1 to save fields during forward and restore them during backward. If set to 1, the gradient is computed, and if set to 2, the imaging condition is computed.-->
@@ -2748,12 +2748,12 @@ Information output from lower logLevels is added with the desired log level
 2
  - The summary of declared fields and coupling-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
-		<!--logReflectivityCoeff => Log of reflectivity coeff for taper-->
-		<xsd:attribute name="logReflectivityCoeff" type="real32" default="0.001" />
 		<!--outputSeismoTrace => Flag that indicates if we write the seismo trace in a file .txt, 0 no output, 1 otherwise-->
 		<xsd:attribute name="outputSeismoTrace" type="integer" default="0" />
 		<!--receiverCoordinates => Coordinates (x,y,z) of the receivers-->
 		<xsd:attribute name="receiverCoordinates" type="real64_array2d" default="{{0}}" />
+		<!--reflectivityCoeff => Reflectivity coeff for taper-->
+		<xsd:attribute name="reflectivityCoeff" type="real32" default="0.001" />
 		<!--rickerOrder => Flag that indicates the order of the Ricker to be used o, 1 or 2. Order 2 by default-->
 		<xsd:attribute name="rickerOrder" type="integer" default="2" />
 		<!--saveFields => Set to 1 to save fields during forward and restore them during backward. If set to 1, the gradient is computed, and if set to 2, the imaging condition is computed.-->
@@ -3263,12 +3263,12 @@ Information output from lower logLevels is added with the desired log level
 2
  - The summary of declared fields and coupling-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
-		<!--logReflectivityCoeff => Log of reflectivity coeff for taper-->
-		<xsd:attribute name="logReflectivityCoeff" type="real32" default="0.001" />
 		<!--outputSeismoTrace => Flag that indicates if we write the seismo trace in a file .txt, 0 no output, 1 otherwise-->
 		<xsd:attribute name="outputSeismoTrace" type="integer" default="0" />
 		<!--receiverCoordinates => Coordinates (x,y,z) of the receivers-->
 		<xsd:attribute name="receiverCoordinates" type="real64_array2d" default="{{0}}" />
+		<!--reflectivityCoeff => Reflectivity coeff for taper-->
+		<xsd:attribute name="reflectivityCoeff" type="real32" default="0.001" />
 		<!--rickerOrder => Flag that indicates the order of the Ricker to be used o, 1 or 2. Order 2 by default-->
 		<xsd:attribute name="rickerOrder" type="integer" default="2" />
 		<!--saveFields => Set to 1 to save fields during forward and restore them during backward. If set to 1, the gradient is computed, and if set to 2, the imaging condition is computed.-->
@@ -3347,12 +3347,12 @@ Information output from lower logLevels is added with the desired log level
 2
  - The summary of declared fields and coupling-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
-		<!--logReflectivityCoeff => Log of reflectivity coeff for taper-->
-		<xsd:attribute name="logReflectivityCoeff" type="real32" default="0.001" />
 		<!--outputSeismoTrace => Flag that indicates if we write the seismo trace in a file .txt, 0 no output, 1 otherwise-->
 		<xsd:attribute name="outputSeismoTrace" type="integer" default="0" />
 		<!--receiverCoordinates => Coordinates (x,y,z) of the receivers-->
 		<xsd:attribute name="receiverCoordinates" type="real64_array2d" default="{{0}}" />
+		<!--reflectivityCoeff => Reflectivity coeff for taper-->
+		<xsd:attribute name="reflectivityCoeff" type="real32" default="0.001" />
 		<!--rickerOrder => Flag that indicates the order of the Ricker to be used o, 1 or 2. Order 2 by default-->
 		<xsd:attribute name="rickerOrder" type="integer" default="2" />
 		<!--saveFields => Set to 1 to save fields during forward and restore them during backward. If set to 1, the gradient is computed, and if set to 2, the imaging condition is computed.-->
@@ -7486,8 +7486,6 @@ The expected format is "{ waterMax, oilMax }", in that order-->
 		<!--cellBlocks => List of the desired cell-blocks qualifiers to contain in this CellElementRegion. Qualifiers can be either cell-block names, region attribute values, or fnmatch pattern.The form of loaded cell-block names is of "regionAttribute_elementType", so "1_tetrahedra"  contains the tetrahedric elements for which the regionAttribute is 1.
 The element types are: tetrahedra, pyramids, wedges, hexahedra, pentagonalPrisms, hexagonalPrisms, heptagonalPrisms, octagonalPrisms, nonagonalPrisms, decagonalPrisms, hendecagonalPrisms, polyhedra.-->
 		<xsd:attribute name="cellBlocks" type="groupNameRef_array" use="required" />
-		<!--coarseningRatio => (no description available)-->
-		<xsd:attribute name="coarseningRatio" type="real64" default="0" />
 		<!--materialList => List of materials present in this region-->
 		<xsd:attribute name="materialList" type="groupNameRef_array" use="required" />
 		<!--meshBody => Mesh body that contains this region-->
