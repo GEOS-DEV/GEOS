@@ -150,6 +150,9 @@ public:
 
   virtual string getCatalogName() const override { return catalogName(); }
 
+  virtual void allocateConstitutiveData( dataRepository::Group & parent,
+                                         localIndex const numConstitutivePointsPerParentIndex ) override;
+
   /// Type of kernel wrapper for in-kernel update (TODO: support multiple EAT, not just linear)
   using KernelWrapper = CompressibleSinglePhaseUpdate< ExponentApproximationType::Linear, ExponentApproximationType::Linear >;
 
@@ -178,8 +181,6 @@ public:
 protected:
 
   virtual void postInputInitialization() override;
-
-  virtual void resizeFields( localIndex const size, localIndex const numPts ) override;
 
   /// default density value
   real64 m_defaultDensity;

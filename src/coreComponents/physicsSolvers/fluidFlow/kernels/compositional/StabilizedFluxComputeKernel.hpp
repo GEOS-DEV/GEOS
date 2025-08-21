@@ -56,23 +56,12 @@ public:
 
   using AbstractBase = isothermalCompositionalMultiphaseFVMKernels::FluxComputeKernelBase;
   using DofNumberAccessor = AbstractBase::DofNumberAccessor;
-  using CompFlowAccessors = AbstractBase::CompFlowAccessors;
-  using MultiFluidAccessors = AbstractBase::MultiFluidAccessors;
-  using CapPressureAccessors = AbstractBase::CapPressureAccessors;
-  using PermeabilityAccessors = AbstractBase::PermeabilityAccessors;
-
-  using StabCompFlowAccessors =
-    StencilAccessors< fields::flow::macroElementIndex,
-                      fields::flow::elementStabConstant,
-                      fields::flow::pressure_n >;
-
-  using StabMultiFluidAccessors =
-    StencilMaterialAccessors< constitutive::MultiFluidBase,
-                              fields::multifluid::phaseDensity_n,
-                              fields::multifluid::phaseCompFraction_n >;
-
-  using RelPermAccessors =
-    StencilMaterialAccessors< constitutive::RelativePermeabilityBase, fields::relperm::phaseRelPerm_n >;
+  using FieldAccessors = AbstractBase::FieldAccessors< fields::flow::macroElementIndex,
+                                                       fields::flow::elementStabConstant,
+                                                       fields::flow::pressure_n,
+                                                       fields::multifluid::phaseDensity_n,
+                                                       fields::multifluid::phaseCompFraction_n,
+                                                       fields::relperm::phaseRelPerm_n >;
 
   using AbstractBase::m_dt;
   using AbstractBase::m_numPhases;
@@ -122,13 +111,7 @@ public:
                      globalIndex const rankOffset,
                      STENCILWRAPPER const & stencilWrapper,
                      DofNumberAccessor const & dofNumberAccessor,
-                     CompFlowAccessors const & compFlowAccessors,
-                     StabCompFlowAccessors const & stabCompFlowAccessors,
-                     MultiFluidAccessors const & multiFluidAccessors,
-                     StabMultiFluidAccessors const & stabMultiFluidAccessors,
-                     CapPressureAccessors const & capPressureAccessors,
-                     PermeabilityAccessors const & permeabilityAccessors,
-                     RelPermAccessors const & relPermAccessors,
+                     FieldAccessors const & fieldAccessors,
                      real64 const & dt,
                      CRSMatrixView< real64, globalIndex const > const & localMatrix,
                      arrayView1d< real64 > const & localRhs,
@@ -137,20 +120,17 @@ public:
             rankOffset,
             stencilWrapper,
             dofNumberAccessor,
-            compFlowAccessors,
-            multiFluidAccessors,
-            capPressureAccessors,
-            permeabilityAccessors,
+            fieldAccessors,
             dt,
             localMatrix,
             localRhs,
             kernelFlags ),
-    m_pres_n( stabCompFlowAccessors.get( fields::flow::pressure_n {} ) ),
-    m_phaseDens_n( stabMultiFluidAccessors.get( fields::multifluid::phaseDensity_n {} ) ),
-    m_phaseCompFrac_n( stabMultiFluidAccessors.get( fields::multifluid::phaseCompFraction_n {} ) ),
-    m_phaseRelPerm_n( relPermAccessors.get( fields::relperm::phaseRelPerm_n {} ) ),
-    m_macroElementIndex( stabCompFlowAccessors.get( fields::flow::macroElementIndex {} ) ),
-    m_elementStabConstant( stabCompFlowAccessors.get( fields::flow::elementStabConstant {} ) )
+    m_pres_n( fieldAccessors.get( fields::flow::pressure_n {} ) ),
+    m_phaseDens_n( fieldAccessors.get( fields::multifluid::phaseDensity_n {} ) ),
+    m_phaseCompFrac_n( fieldAccessors.get( fields::multifluid::phaseCompFraction_n {} ) ),
+    m_phaseRelPerm_n( fieldAccessors.get( fields::relperm::phaseRelPerm_n {} ) ),
+    m_macroElementIndex( fieldAccessors.get( fields::flow::macroElementIndex {} ) ),
+    m_elementStabConstant( fieldAccessors.get( fields::flow::elementStabConstant {} ) )
   {}
 
   struct StackVariables : public Base::StackVariables
@@ -347,18 +327,10 @@ public:
       dofNumberAccessor.setName( solverName + "/accessors/" + dofKey );
 
       using KERNEL_TYPE = FluxComputeKernel< NUM_COMP, NUM_DOF, STENCILWRAPPER >;
-      typename KERNEL_TYPE::CompFlowAccessors compFlowAccessors( elemManager, solverName );
-      typename KERNEL_TYPE::MultiFluidAccessors multiFluidAccessors( elemManager, solverName );
-      typename KERNEL_TYPE::StabCompFlowAccessors stabCompFlowAccessors( elemManager, solverName );
-      typename KERNEL_TYPE::StabMultiFluidAccessors stabMultiFluidAccessors( elemManager, solverName );
-      typename KERNEL_TYPE::CapPressureAccessors capPressureAccessors( elemManager, solverName );
-      typename KERNEL_TYPE::PermeabilityAccessors permeabilityAccessors( elemManager, solverName );
-      typename KERNEL_TYPE::RelPermAccessors relPermAccessors( elemManager, solverName );
+      typename KERNEL_TYPE::FieldAccessors fieldAccessors( elemManager, solverName );
 
       KERNEL_TYPE kernel( numPhases, rankOffset, stencilWrapper, dofNumberAccessor,
-                          compFlowAccessors, stabCompFlowAccessors, multiFluidAccessors, stabMultiFluidAccessors,
-                          capPressureAccessors, permeabilityAccessors, relPermAccessors,
-                          dt, localMatrix, localRhs, kernelFlags );
+                          fieldAccessors, dt, localMatrix, localRhs, kernelFlags );
       KERNEL_TYPE::template launch< POLICY >( stencilWrapper.size(), kernel );
     } );
   }

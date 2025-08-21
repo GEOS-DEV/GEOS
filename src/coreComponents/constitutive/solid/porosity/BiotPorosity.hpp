@@ -237,6 +237,9 @@ public:
 
   virtual string getCatalogName() const override { return catalogName(); }
 
+  virtual void allocateConstitutiveData( Group & parent,
+                                         localIndex const numConstitutivePointsPerParentIndex ) override;
+
   struct viewKeyStruct : public PorosityBase::viewKeyStruct
   {
     static constexpr char const *defaultGrainBulkModulusString() { return "defaultGrainBulkModulus"; }
@@ -310,8 +313,6 @@ public:
 
 protected:
   virtual void postInputInitialization() override;
-
-  virtual void resizeFields( localIndex const size, localIndex const numPts ) override;
 
   /// Default thermal expansion coefficients (read from XML)
   real64 m_defaultThermalExpansionCoefficient;

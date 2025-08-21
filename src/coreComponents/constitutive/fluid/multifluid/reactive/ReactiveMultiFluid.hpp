@@ -47,6 +47,9 @@ public:
   deliverClone( string const & name,
                 Group * const parent ) const override;
 
+  virtual void allocateConstitutiveData( dataRepository::Group & parent,
+                                         localIndex const numConstitutivePointsPerParentIndex ) override;
+
   virtual bool isThermal() const override;
 
   arrayView2d< real64 const, compflow::USD_COMP > primarySpeciesConcentration() const
@@ -175,8 +178,6 @@ protected:
   virtual void postInputInitialization() override;
 
   void createChemicalReactions();
-
-  virtual void resizeFields( localIndex const size, localIndex const numPts ) override;
 
   /// Reaction related terms
   integer m_numPrimarySpecies;

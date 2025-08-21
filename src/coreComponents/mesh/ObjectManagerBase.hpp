@@ -603,6 +603,27 @@ public:
   }
 
   /**
+   * @brief Helper function to register fields
+   * @tparam FIELD_TRAIT the type of field
+   * @param[in] fieldTrait the struct corresponding to the field being registered
+   * @param[in] newObject a pointer to the object that is being registered
+   * @return A reference to the newly registered/created Wrapper
+   */
+  template< typename FIELD_TRAIT >
+  dataRepository::Wrapper< typename FIELD_TRAIT::type > & registerField( string const & nameOfRegisteringObject, typename FIELD_TRAIT::type * newObject )
+  {
+
+    m_registeredField.insert( FIELD_TRAIT::key());
+
+    return registerWrapper( FIELD_TRAIT::key(), newObject ).
+             setApplyDefaultValue( FIELD_TRAIT::defaultValue() ).
+             setPlotLevel( FIELD_TRAIT::plotLevel ).
+             setRestartFlags( FIELD_TRAIT::restartFlag ).
+             setDescription( FIELD_TRAIT::description ).
+             setRegisteringObjects( nameOfRegisteringObject );
+  }
+
+  /**
    * @brief Register a collection of fields with this ObjectManagerBase using a
    *   dataRepository::Wrapper.
    * @tparam FIELD_TRAIT0 The first of the trait structs that holds the

@@ -470,6 +470,9 @@ public:
    */
   DelftEgg( string const & name, Group * const parent );
 
+  virtual void allocateConstitutiveData( Group & parent,
+                                         localIndex const numConstitutivePointsPerParentIndex ) override;
+
   virtual void saveConvergedState() const override;
 
   /**
@@ -574,8 +577,6 @@ public:
 protected:
 
   virtual void postInputInitialization() override;
-
-  virtual void resizeFields( localIndex const size, localIndex const numPts ) override;
 
   /// Material parameter: The default value of the recompression index
   real64 m_defaultRecompressionIndex;

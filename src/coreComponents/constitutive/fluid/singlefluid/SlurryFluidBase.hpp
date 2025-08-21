@@ -256,6 +256,9 @@ public:
 
   static constexpr localIndex MAX_NUM_COMPONENTS = 3;
 
+  virtual void allocateConstitutiveData( Group & parent,
+                                         localIndex const numConstitutivePointsPerParentIndex );
+
   localIndex numFluidComponents() const;
 
   arrayView1d< real64 > kIndex() const { return m_Ks; }
@@ -318,8 +321,6 @@ public:
 protected:
 
   virtual void postInputInitialization() override;
-
-  virtual void resizeFields( localIndex const size, localIndex const numPts ) override;
 
   string_array m_componentNames;
 

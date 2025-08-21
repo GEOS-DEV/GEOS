@@ -20,6 +20,7 @@
 #include "ProppantPermeability.hpp"
 
 #include "constitutive/permeability/PermeabilityFields.hpp"
+#include "mesh/ElementSubRegionBase.hpp"
 
 namespace geos
 {
@@ -48,10 +49,6 @@ ProppantPermeability::ProppantPermeability( string const & name, Group * const p
     setDescription( "Proppant diameter." );
 
   registerWrapper( viewKeyStruct::proppantPackPermeabilityString(), &m_proppantPackPermeability );
-
-  registerField< fields::permeability::dPerm_dDispJump >( &m_dPerm_dDispJump );
-  registerField< fields::permeability::permeabilityMultiplier >( &m_permeabilityMultiplier );
-
 }
 
 void ProppantPermeability::postInputInitialization()
@@ -62,13 +59,18 @@ void ProppantPermeability::postInputInitialization()
                                 / ( m_maxProppantConcentration * m_maxProppantConcentration );
 }
 
-void ProppantPermeability::resizeFields( localIndex const size, localIndex const numPts )
+void ProppantPermeability::allocateConstitutiveData( Group & parent,
+                                                     localIndex const numConstitutivePointsPerParentIndex )
 {
-  PermeabilityBase::resizeFields( size, numPts );
+  PermeabilityBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
+
+  auto subRegion = dynamic_cast< ElementSubRegionBase * >( &parent );
 
   // NOTE: enforcing 1 quadrature point
-  m_dPerm_dDispJump.resize( size, 1, 3, 3 );
-  m_permeabilityMultiplier.resize( size, 1, 3 );
+  subRegion->registerField< fields::permeability::dPerm_dDispJump >( getName(), &m_dPerm_dDispJump ).
+    reference().resizeDimension< 1, 2, 3 >( 1, 3, 3 );
+  subRegion->registerField< fields::permeability::permeabilityMultiplier >( getName(), &m_permeabilityMultiplier ).
+    reference().resizeDimension< 1, 2 >( 1, 3 );
 }
 
 

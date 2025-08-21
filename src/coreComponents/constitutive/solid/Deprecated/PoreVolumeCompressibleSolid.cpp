@@ -18,6 +18,7 @@
  */
 
 #include "PoreVolumeCompressibleSolid.hpp"
+#include "mesh/ElementSubRegionBase.hpp"
 
 namespace geos
 {
@@ -38,11 +39,6 @@ PoreVolumeCompressibleSolid::PoreVolumeCompressibleSolid( string const & name, G
   registerWrapper( viewKeyStruct::referencePressureString(), &m_referencePressure ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Reference pressure for fluid compressibility" );
-
-  registerWrapper( viewKeyStruct::poreVolumeMultiplierString(), &m_poreVolumeMultiplier ).
-    setDefaultValue( 1.0 );
-
-  registerWrapper( viewKeyStruct::dPVMult_dPresString(), &m_dPVMult_dPressure );
 }
 
 std::unique_ptr< ConstitutiveBase >
@@ -59,11 +55,21 @@ PoreVolumeCompressibleSolid::deliverClone( string const & name,
   return clone;
 }
 
-void PoreVolumeCompressibleSolid::resizeFields( localIndex const GEOS_UNUSED_PARAM( size ), localIndex const numPts )
+void PoreVolumeCompressibleSolid::allocateConstitutiveData( Group & parent,
+                                                            localIndex const numConstitutivePointsPerParentIndex )
 {
-  // 0 to resize and assign default value later
-  m_poreVolumeMultiplier.resize( 0, numPts );
-  m_dPVMult_dPressure.resize( 0, numPts );
+  ConstitutiveBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
+
+  auto subregion = dynamic_cast< ElementSubRegionBase * >( &parent ); // TODO remove
+
+  // TODO use registerField
+
+  registerWrapper( viewKeyStruct::poreVolumeMultiplierString(), &m_poreVolumeMultiplier ).
+    setDefaultValue( 1.0 ).
+    reference().resizeDimension< 1 >( numConstitutivePointsPerParentIndex );
+
+  registerWrapper( viewKeyStruct::dPVMult_dPresString(), &m_dPVMult_dPressure ).
+    reference().resizeDimension< 1 >( numConstitutivePointsPerParentIndex );
 }
 
 void PoreVolumeCompressibleSolid::postInputInitialization()

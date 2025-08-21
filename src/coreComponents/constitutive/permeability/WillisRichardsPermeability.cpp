@@ -19,6 +19,7 @@
 
 #include "WillisRichardsPermeability.hpp"
 #include "constitutive/permeability/PermeabilityFields.hpp"
+#include "mesh/ElementSubRegionBase.hpp"
 
 namespace geos
 {
@@ -43,18 +44,20 @@ WillisRichardsPermeability::WillisRichardsPermeability( string const & name, Gro
   registerWrapper( viewKeyStruct::refClosureStressString(), &m_refClosureStress ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Effective normal stress causes 90% reduction in aperture." );
-
-  registerField< fields::permeability::dPerm_dDispJump >( &m_dPerm_dDispJump );
-  registerField< fields::permeability::dPerm_dTraction >( &m_dPerm_dTraction );
 }
 
-void WillisRichardsPermeability::resizeFields( localIndex const size, localIndex const numPts )
+void WillisRichardsPermeability::allocateConstitutiveData( Group & parent,
+                                                           localIndex const numConstitutivePointsPerParentIndex )
 {
-  PermeabilityBase::resizeFields( size, numPts );
+  PermeabilityBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
+
+  auto subregion = dynamic_cast< ElementSubRegionBase * >( &parent ); // TODO remove
 
   // NOTE: enforcing 1 quadrature point
-  m_dPerm_dDispJump.resize( size, 1, 3, 3 );
-  m_dPerm_dTraction.resize( size, 1, 3, 3 );
+  subregion->registerField< fields::permeability::dPerm_dDispJump >( getName(), &m_dPerm_dDispJump ).
+    reference().resizeDimension< 1, 2, 3 >( 1, 3, 3 );
+  subregion->registerField< fields::permeability::dPerm_dTraction >( getName(), &m_dPerm_dTraction ).
+    reference().resizeDimension< 1, 2, 3 >( 1, 3, 3 );
 }
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, WillisRichardsPermeability, string const &, Group * const )

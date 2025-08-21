@@ -364,8 +364,7 @@ void CompositionalMultiphaseHybridFVM::assembleFluxTerms( real64 const dt,
     // tolerance for transmissibility calculation
     real64 const lengthTolerance = m_lengthTolerance;
 
-    FluxKernel::CompFlowAccessors compFlowAccessors( mesh.getElemManager(), getName() );
-    FluxKernel::MultiFluidAccessors multiFluidAccessors( mesh.getElemManager(), getName() );
+    FluxKernel::FieldAccessors fieldAccessors( mesh.getElemManager(), getName() );
 
     mesh.getElemManager().forElementSubRegionsComplete< CellElementSubRegion >( regionNames,
                                                                                 [&]( localIndex const,
@@ -398,15 +397,15 @@ void CompositionalMultiphaseHybridFVM::assembleFluxTerms( real64 const dt,
                                          faceGravCoef,
                                          mimFaceGravCoef,
                                          transMultiplier,
-                                         compFlowAccessors.get( flow::phaseMobility{} ),
-                                         compFlowAccessors.get( flow::dPhaseMobility{} ),
-                                         compFlowAccessors.get( flow::dGlobalCompFraction_dGlobalCompDensity{} ),
-                                         multiFluidAccessors.get( fields::multifluid::phaseDensity{} ),
-                                         multiFluidAccessors.get( fields::multifluid::dPhaseDensity{} ),
-                                         multiFluidAccessors.get( fields::multifluid::phaseMassDensity{} ),
-                                         multiFluidAccessors.get( fields::multifluid::dPhaseMassDensity{} ),
-                                         multiFluidAccessors.get( fields::multifluid::phaseCompFraction{} ),
-                                         multiFluidAccessors.get( fields::multifluid::dPhaseCompFraction{} ),
+                                         fieldAccessors.get( flow::phaseMobility{} ),
+                                         fieldAccessors.get( flow::dPhaseMobility{} ),
+                                         fieldAccessors.get( flow::dGlobalCompFraction_dGlobalCompDensity{} ),
+                                         fieldAccessors.get( fields::multifluid::phaseDensity{} ),
+                                         fieldAccessors.get( fields::multifluid::dPhaseDensity{} ),
+                                         fieldAccessors.get( fields::multifluid::phaseMassDensity{} ),
+                                         fieldAccessors.get( fields::multifluid::dPhaseMassDensity{} ),
+                                         fieldAccessors.get( fields::multifluid::phaseCompFraction{} ),
+                                         fieldAccessors.get( fields::multifluid::dPhaseCompFraction{} ),
                                          elemDofNumber.toNestedViewConst(),
                                          dofManager.rankOffset(),
                                          lengthTolerance,

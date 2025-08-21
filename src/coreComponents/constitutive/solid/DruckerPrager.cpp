@@ -18,6 +18,7 @@
  */
 
 #include "DruckerPrager.hpp"
+#include "mesh/ElementSubRegionBase.hpp"
 
 namespace geos
 {
@@ -72,25 +73,27 @@ DruckerPrager::DruckerPrager( string const & name, Group * const parent ):
   registerWrapper( viewKeyStruct::hardeningString(), &m_hardening ).
     setApplyDefaultValue( -1 ).
     setDescription( "Hardening rate" );
-
-  registerWrapper( viewKeyStruct::newCohesionString(), &m_newCohesion ).
-    setApplyDefaultValue( -1 ).
-    setPlotLevel( dataRepository::PlotLevel::LEVEL_3 ).
-    setDescription( "New cohesion state" );
-
-  registerWrapper( viewKeyStruct::oldCohesionString(), &m_oldCohesion ).
-    setApplyDefaultValue( -1 ).
-    setDescription( "Old cohesion state" );
 }
 
 
-void DruckerPrager::resizeFields( localIndex const size, localIndex const numPts )
+void DruckerPrager::allocateConstitutiveData( Group & parent,
+                                              localIndex const numConstitutivePointsPerParentIndex )
 {
-  ElasticIsotropic::resizeFields( size, numPts );
+  ElasticIsotropic::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 
-  // 0 to resize and assign default value later
-  m_newCohesion.resize( 0, numPts );
-  m_oldCohesion.resize( 0, numPts );
+  auto subregion = dynamic_cast< ElementSubRegionBase * >( &parent ); // TODO remove
+
+  // TODO use registerField
+  subregion->registerWrapper( viewKeyStruct::newCohesionString(), &m_newCohesion ).
+    setApplyDefaultValue( -1 ).
+    setPlotLevel( dataRepository::PlotLevel::LEVEL_3 ).
+    setDescription( "New cohesion state" ).
+    reference().resizeDimension< 1 >( numConstitutivePointsPerParentIndex );
+
+  subregion->registerWrapper( viewKeyStruct::oldCohesionString(), &m_oldCohesion ).
+    setApplyDefaultValue( -1 ).
+    setDescription( "Old cohesion state" ).
+    reference().resizeDimension< 1 >( numConstitutivePointsPerParentIndex );
 }
 
 

@@ -19,6 +19,7 @@
 
 #include "SinglePhaseThermalConductivityBase.hpp"
 #include "ThermalConductivityFields.hpp"
+#include "mesh/ElementSubRegionBase.hpp"
 
 namespace geos
 {
@@ -30,25 +31,20 @@ namespace constitutive
 
 SinglePhaseThermalConductivityBase::SinglePhaseThermalConductivityBase( string const & name, Group * const parent )
   : ConstitutiveBase( name, parent )
-{
-  registerField< fields::thermalconductivity::effectiveConductivity >( &m_effectiveConductivity );
-  registerField< fields::thermalconductivity::dEffectiveConductivity_dT >( &m_dEffectiveConductivity_dT );
-}
+{}
 
-void SinglePhaseThermalConductivityBase::postInputInitialization()
+void SinglePhaseThermalConductivityBase::allocateConstitutiveData( Group & parent,
+                                                                   localIndex const numConstitutivePointsPerParentIndex )
 {
-  ConstitutiveBase::postInputInitialization();
+  ConstitutiveBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 
-  // TODO figure out why this is really needed
-  m_effectiveConductivity.resize( 0, 0, 3 );
-  m_dEffectiveConductivity_dT.resize( 0, 0, 3 );
-}
+  auto subregion = dynamic_cast< ElementSubRegionBase * >( &parent ); // TODO remove
 
-void SinglePhaseThermalConductivityBase::resizeFields( localIndex const size, localIndex const GEOS_UNUSED_PARAM( numPts ) )
-{
   // NOTE: enforcing 1 quadrature point
-  m_effectiveConductivity.resize( size, 1, 3 );
-  m_dEffectiveConductivity_dT.resize( size, 1, 3 );
+  subregion->registerField< fields::thermalconductivity::effectiveConductivity >( getName(), &m_effectiveConductivity ).
+    reference().resizeDimension< 1, 2 >( 1, 3 );
+  subregion->registerField< fields::thermalconductivity::dEffectiveConductivity_dT >( getName(), &m_dEffectiveConductivity_dT ).
+    reference().resizeDimension< 1, 2 >( 1, 3 );
 }
 
 } // namespace constitutive

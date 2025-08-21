@@ -18,6 +18,7 @@
  */
 
 #include "CeramicDamage.hpp"
+#include "mesh/ElementSubRegionBase.hpp"
 
 namespace geos
 {
@@ -51,32 +52,33 @@ CeramicDamage::CeramicDamage( string const & name, Group * const parent ):
   registerWrapper( viewKeyStruct::crackSpeedString(), &m_crackSpeed ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Crack speed" );
+}
 
-  // register fields
-  registerWrapper( viewKeyStruct::damageString(), &m_damage ).
+
+void CeramicDamage::allocateConstitutiveData( Group & parent,
+                                              localIndex const numConstitutivePointsPerParentIndex )
+{
+  ElasticIsotropic::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
+
+  auto subregion = dynamic_cast< ElementSubRegionBase * >( &parent ); // TODO remove
+
+  // TODO use registerField
+  subregion->registerWrapper( viewKeyStruct::damageString(), &m_damage ).
     setApplyDefaultValue( 0.0 ).
     setPlotLevel( PlotLevel::LEVEL_0 ).
-    setDescription( "Array of quadrature point damage values" );
+    setDescription( "Array of quadrature point damage values" ).
+    reference().resizeDimension< 1 >( numConstitutivePointsPerParentIndex );
 
   registerWrapper( viewKeyStruct::jacobianString(), &m_jacobian ).
     setApplyDefaultValue( 1.0 ).
     setPlotLevel( PlotLevel::NOPLOT ).
-    setDescription( "Array of quadrature point jacobian values" );
+    setDescription( "Array of quadrature point jacobian values" ).
+    reference().resizeDimension< 1 >( numConstitutivePointsPerParentIndex );
 
   registerWrapper( viewKeyStruct::lengthScaleString(), &m_lengthScale ).
     setApplyDefaultValue( DBL_MIN ).
     setPlotLevel( PlotLevel::NOPLOT ).
     setDescription( "Array of quadrature point damage values" );
-}
-
-
-void CeramicDamage::resizeFields( localIndex const size, localIndex const numPts )
-{
-  ElasticIsotropic::resizeFields( size, numPts );
-
-  // 0 to resize and assign default value later
-  m_damage.resize( 0, numPts );
-  m_jacobian.resize( 0, numPts );
 }
 
 

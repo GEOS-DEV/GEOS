@@ -20,6 +20,7 @@
 #include "MultiPhaseThermalConductivityBase.hpp"
 #include "ThermalConductivityFields.hpp"
 #include "MultiPhaseThermalConductivityFields.hpp"
+#include "mesh/ElementSubRegionBase.hpp"
 
 namespace geos
 {
@@ -36,9 +37,6 @@ MultiPhaseThermalConductivityBase::MultiPhaseThermalConductivityBase( string con
     setRTTypeName( rtTypes::CustomTypes::groupNameRefArray ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "List of fluid phases" );
-
-  registerField< fields::thermalconductivity::effectiveConductivity >( &m_effectiveConductivity );
-  registerField< fields::thermalconductivity::dEffectiveConductivity_dPhaseVolFraction >( &m_dEffectiveConductivity_dPhaseVolFrac );
 }
 
 void MultiPhaseThermalConductivityBase::postInputInitialization()
@@ -52,18 +50,22 @@ void MultiPhaseThermalConductivityBase::postInputInitialization()
   GEOS_THROW_IF_GT_MSG( numPhases, MAX_NUM_PHASES,
                         GEOS_FMT( "{}: invalid number of phases", getFullName() ),
                         InputError );
-
-  // TODO figure out why this is really needed
-  m_effectiveConductivity.resize( 0, 0, 3 );
-  m_dEffectiveConductivity_dPhaseVolFrac.resize( 0, 0, 3, numPhases );
 }
 
-void MultiPhaseThermalConductivityBase::resizeFields( localIndex const size, localIndex const GEOS_UNUSED_PARAM( numPts ) )
+void MultiPhaseThermalConductivityBase::allocateConstitutiveData( Group & parent,
+                                                                  localIndex const numConstitutivePointsPerParentIndex )
 {
-  // NOTE: enforcing 1 quadrature point
+  ConstitutiveBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
+
   integer const numPhases = numFluidPhases();
-  m_effectiveConductivity.resize( size, 1, 3 );
-  m_dEffectiveConductivity_dPhaseVolFrac.resize( size, 1, 3, numPhases );
+
+  auto subregion = dynamic_cast< ElementSubRegionBase * >( &parent ); // TODO remove
+
+  // NOTE: enforcing 1 quadrature point
+  subregion->registerField< fields::thermalconductivity::effectiveConductivity >( &m_effectiveConductivity ).
+    reference().resizeDimension< 1, 2 >( 1, numPhases );
+  subregion->registerField< fields::thermalconductivity::dEffectiveConductivity_dPhaseVolFraction >( &m_dEffectiveConductivity_dPhaseVolFrac ).
+    reference().resizeDimension< 1, 2, 3 >( 1, numPhases, numPhases );
 }
 
 } // namespace constitutive

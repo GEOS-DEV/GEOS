@@ -19,6 +19,7 @@
 
 #include "constitutive/solid/porosity/PorosityBase.hpp"
 #include "constitutive/solid/porosity/PorosityFields.hpp"
+#include "mesh/ElementSubRegionBase.hpp"
 
 namespace geos
 {
@@ -42,33 +43,38 @@ PorosityBase::PorosityBase( string const & name, Group * const parent ):
   registerWrapper( viewKeyStruct::defaultReferencePorosityString(), &m_defaultReferencePorosity ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Default value of the reference porosity" );
-
-  registerField< fields::porosity::porosity >( &m_newPorosity );
-
-  registerField< fields::porosity::porosity_n >( &m_porosity_n );
-
-  registerField< fields::porosity::dPorosity_dPressure >( &m_dPorosity_dPressure );
-
-  registerField< fields::porosity::dPorosity_dTemperature >( &m_dPorosity_dTemperature );
-
-  registerField< fields::porosity::initialPorosity >( &m_initialPorosity );
-
-  registerField< fields::porosity::referencePorosity >( &m_referencePorosity );
 }
 
-void PorosityBase::resizeFields( localIndex const GEOS_UNUSED_PARAM( size ), localIndex const numPts )
+void PorosityBase::allocateConstitutiveData( Group & parent,
+                                             localIndex const numConstitutivePointsPerParentIndex )
 {
-  m_newPorosity.resize( 0, numPts );
-  m_porosity_n.resize( 0, numPts );
-  m_dPorosity_dPressure.resize( 0, numPts );
-  m_dPorosity_dTemperature.resize( 0, numPts );
-  m_initialPorosity.resize( 0, numPts );
+  ConstitutiveBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
+
+  auto subregion = dynamic_cast< ElementSubRegionBase * >( &parent ); // TODO remove
+
+  subregion->registerField< fields::porosity::porosity >( &m_newPorosity ).
+    reference().resizeDimension< 1 >( numConstitutivePointsPerParentIndex );
+
+  subregion->registerField< fields::porosity::porosity_n >( &m_porosity_n ).
+    reference().resizeDimension< 1 >( numConstitutivePointsPerParentIndex );
+
+  subregion->registerField< fields::porosity::dPorosity_dPressure >( &m_dPorosity_dPressure ).
+    reference().resizeDimension< 1 >( numConstitutivePointsPerParentIndex );
+
+  subregion->registerField< fields::porosity::dPorosity_dTemperature >( &m_dPorosity_dTemperature ).
+    reference().resizeDimension< 1 >( numConstitutivePointsPerParentIndex );
+
+  subregion->registerField< fields::porosity::initialPorosity >( &m_initialPorosity ).
+    reference().resizeDimension< 1 >( numConstitutivePointsPerParentIndex );
+
+  subregion->registerField< fields::porosity::referencePorosity >( &m_referencePorosity ).
+    setApplyDefaultValue( m_defaultReferencePorosity );
 }
 
 void PorosityBase::postInputInitialization()
 {
-  getField< fields::porosity::referencePorosity >().
-    setApplyDefaultValue( m_defaultReferencePorosity );
+//  getField< fields::porosity::referencePorosity >().
+//    setApplyDefaultValue( m_defaultReferencePorosity );
 }
 
 void PorosityBase::scaleReferencePorosity( arrayView1d< real64 const > scalingFactors ) const

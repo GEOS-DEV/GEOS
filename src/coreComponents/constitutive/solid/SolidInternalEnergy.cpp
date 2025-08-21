@@ -18,6 +18,7 @@
  */
 
 #include "SolidInternalEnergy.hpp"
+#include "mesh/ElementSubRegionBase.hpp"
 
 namespace geos
 {
@@ -36,19 +37,6 @@ SolidInternalEnergy::SolidInternalEnergy( string const & name, Group * const par
   m_referenceTemperature(),
   m_referenceInternalEnergy()
 {
-  registerWrapper( viewKeyStruct::internalEnergyString(), &m_internalEnergy ).
-    setPlotLevel( PlotLevel::LEVEL_0 ).
-    setApplyDefaultValue( 0.0 ).
-    setDescription( "Internal energy of the solid per unit volume [J/m^3]" );
-
-  registerWrapper( viewKeyStruct::oldInternalEnergyString(), &m_internalEnergy_n ).
-    setApplyDefaultValue( 0.0 ).
-    setDescription( "Internal energy of the solid per unit volume at the previous time-step [J/m^3]" );
-
-  registerWrapper( viewKeyStruct::dInternalEnergy_dTemperatureString(), &m_dInternalEnergy_dTemperature ).
-    setApplyDefaultValue( 0.0 ).
-    setDescription( "Derivative of the solid internal energy w.r.t. temperature [J/(m^3.K)]" );
-
   registerWrapper( viewKeyStruct::referenceVolumetricHeatCapacityString(), &m_referenceVolumetricHeatCapacity ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Reference solid volumetric heat capacity [J/(kg.K)]" );
@@ -67,12 +55,31 @@ SolidInternalEnergy::SolidInternalEnergy( string const & name, Group * const par
     setDescription( "Internal energy at the reference temperature [J/kg]" );
 }
 
-void SolidInternalEnergy::resizeFields( localIndex const GEOS_UNUSED_PARAM( size ), localIndex const GEOS_UNUSED_PARAM( numPts ) )
+void SolidInternalEnergy::allocateConstitutiveData( Group & parent,
+                                                    localIndex const numConstitutivePointsPerParentIndex )
 {
-  // 0 to resize and assign default value later
-  m_internalEnergy.resize( 0, 1 );
-  m_dInternalEnergy_dTemperature.resize( 0, 1 );
-  m_internalEnergy_n.resize( 0, 1 );
+  ConstitutiveBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
+
+  auto subregion = dynamic_cast< ElementSubRegionBase * >(&parent); // TODO remove
+
+  // TODO use registerField
+  // TODO no need for 2d array with 1 gauss point
+
+  subregion->registerWrapper( viewKeyStruct::internalEnergyString(), &m_internalEnergy ).
+    setPlotLevel( PlotLevel::LEVEL_0 ).
+    setApplyDefaultValue( 0.0 ).
+    setDescription( "Internal energy of the solid per unit volume [J/m^3]" ).
+    reference().resizeDimension< 1 >( 1 );
+
+  subregion->registerWrapper( viewKeyStruct::oldInternalEnergyString(), &m_internalEnergy_n ).
+    setApplyDefaultValue( 0.0 ).
+    setDescription( "Internal energy of the solid per unit volume at the previous time-step [J/m^3]" ).
+    reference().resizeDimension< 1 >( 1 );
+
+  subregion->registerWrapper( viewKeyStruct::dInternalEnergy_dTemperatureString(), &m_dInternalEnergy_dTemperature ).
+    setApplyDefaultValue( 0.0 ).
+    setDescription( "Derivative of the solid internal energy w.r.t. temperature [J/(m^3.K)]" ).
+    reference().resizeDimension< 1 >( 1 );
 }
 
 void SolidInternalEnergy::saveConvergedState() const

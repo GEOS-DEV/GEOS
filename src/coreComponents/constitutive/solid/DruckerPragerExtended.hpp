@@ -386,6 +386,9 @@ public:
    */
   DruckerPragerExtended( string const & name, Group * const parent );
 
+  virtual void allocateConstitutiveData( Group & parent,
+                                         localIndex const numConstitutivePointsPerParentIndex );
+
   virtual void saveConvergedState() const override;
 
   /**
@@ -495,8 +498,6 @@ public:
 protected:
 
   virtual void postInputInitialization() override;
-
-  virtual void resizeFields( localIndex const size, localIndex const numPts ) override;
 
   /// Material parameter: The default value of the initial yield surface slope
   real64 m_defaultInitialFrictionAngle;

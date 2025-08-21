@@ -18,6 +18,7 @@
  */
 
 #include "CarmanKozenyPermeability.hpp"
+#include "mesh/ElementSubRegionBase.hpp"
 
 namespace geos
 {
@@ -44,8 +45,6 @@ CarmanKozenyPermeability::CarmanKozenyPermeability( string const & name, Group *
     setInputFlag( InputFlags::OPTIONAL ).
     setDefaultValue( m_anisotropy ).
     setDescription( "Anisotropy factors for three permeability components." );
-
-  registerWrapper( viewKeyStruct::dPerm_dPorosityString(), &m_dPerm_dPorosity );
 }
 
 std::unique_ptr< ConstitutiveBase >
@@ -55,12 +54,16 @@ CarmanKozenyPermeability::deliverClone( string const & name,
   return PermeabilityBase::deliverClone( name, parent );
 }
 
-void CarmanKozenyPermeability::resizeFields( localIndex const size, localIndex const numPts )
+void CarmanKozenyPermeability::allocateConstitutiveData( Group & parent,
+                                                         localIndex const numConstitutivePointsPerParentIndex )
 {
-  PermeabilityBase::resizeFields( size, numPts );
+  PermeabilityBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
+
+  auto subregion = dynamic_cast< ElementSubRegionBase * >(&parent); // TODO remove
 
   // NOTE: enforcing 1 quadrature point
-  m_dPerm_dPorosity.resize( size, 1, 3 );
+  subregion->registerWrapper( viewKeyStruct::dPerm_dPorosityString(), &m_dPerm_dPorosity ).
+    reference().resizeDimension< 1, 2 >( 1, 3 );
 }
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, CarmanKozenyPermeability, string const &, Group * const )

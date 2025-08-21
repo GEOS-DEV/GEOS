@@ -58,15 +58,6 @@ PoroElastic< BASE >::PoroElastic( string const & name, Group * const parent ):
     setApplyDefaultValue( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "ReferencePressure" );
-
-
-  this->registerWrapper( viewKeyStruct::poreVolumeMultiplierString(), &m_poreVolumeMultiplier ).
-    setApplyDefaultValue( 1.0 ).
-    setDescription( "" );
-
-  this->registerWrapper( viewKeyStruct::dPVMult_dPresString(), &m_dPVMult_dPressure ).
-    setApplyDefaultValue( -1 ).
-    setDescription( "" );
 }
 
 template< typename BASE >
@@ -89,13 +80,24 @@ PoroElastic< BASE >::deliverClone( string const & name,
 }
 
 template< typename BASE >
-void PoroElastic< BASE >::resizeFields( localIndex const size, localIndex const numPts )
+void PoroElastic< BASE >::allocateConstitutiveData( Group & parent,
+                                                    localIndex const numConstitutivePointsPerParentIndex )
 {
-  BASE::resizeFields( size, numPts );
+  BASE::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 
-  // 0 to resize and assign default value later
-  m_poreVolumeMultiplier.resize( 0, numPts );
-  m_dPVMult_dPressure.resize( 0, numPts );
+  auto subregion = dynamic_cast< ElementSubRegionBase * >( &parent ); // TODO remove
+
+  // TODO use registerField
+
+  subregion->registerWrapper( viewKeyStruct::poreVolumeMultiplierString(), &m_poreVolumeMultiplier ).
+    setApplyDefaultValue( 1.0 ).
+    setDescription( "" ).
+    reference().resizeDimension< 1 >( numConstitutivePointsPerParentIndex );
+
+  subregion->registerWrapper( viewKeyStruct::dPVMult_dPresString(), &m_dPVMult_dPressure ).
+    setApplyDefaultValue( -1 ).
+    setDescription( "" ).
+    reference().resizeDimension< 1 >( numConstitutivePointsPerParentIndex );
 }
 
 template< typename BASE >

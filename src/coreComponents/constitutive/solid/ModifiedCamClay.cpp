@@ -18,6 +18,7 @@
  */
 
 #include "ModifiedCamClay.hpp"
+#include "mesh/ElementSubRegionBase.hpp"
 
 namespace geos
 {
@@ -51,35 +52,36 @@ ModifiedCamClay::ModifiedCamClay( string const & name, Group * const parent ):
     setApplyDefaultValue( -1.5 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Initial preconsolidation pressure" );
-
-  // register fields
-
-  registerWrapper( viewKeyStruct::virginCompressionIndexString(), &m_virginCompressionIndex ).
-    setApplyDefaultValue( -1 ).
-    setDescription( "Virgin compression index" );
-
-  registerWrapper( viewKeyStruct::cslSlopeString(), &m_cslSlope ).
-    setApplyDefaultValue( -1 ).
-    setDescription( "Slope of the critical state line" );
-
-  registerWrapper( viewKeyStruct::newPreConsolidationPressureString(), &m_newPreConsolidationPressure ).
-    setApplyDefaultValue( -1 ).
-    setPlotLevel( dataRepository::PlotLevel::LEVEL_3 ).
-    setDescription( "New preconsolidation pressure" );
-
-  registerWrapper( viewKeyStruct::oldPreConsolidationPressureString(), &m_oldPreConsolidationPressure ).
-    setApplyDefaultValue( -1 ).
-    setDescription( "Old preconsolidation pressure" );
 }
 
 
-void ModifiedCamClay::resizeFields( localIndex const size, localIndex const numPts )
+void ModifiedCamClay::allocateConstitutiveData( Group & parent,
+                                                localIndex const numConstitutivePointsPerParentIndex )
 {
-  ElasticIsotropicPressureDependent::resizeFields( size, numPts );
+  ElasticIsotropicPressureDependent::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 
-  // 0 to resize and assign default value later
-  m_newPreConsolidationPressure.resize( 0, numPts );
-  m_oldPreConsolidationPressure.resize( 0, numPts );
+  auto subregion = dynamic_cast< ElementSubRegionBase * >( &parent ); // TODO remove
+
+  // TODO use registerField
+
+  subregion->registerWrapper( viewKeyStruct::virginCompressionIndexString(), &m_virginCompressionIndex ).
+    setApplyDefaultValue( -1 ).
+    setDescription( "Virgin compression index" );
+
+  subregion->registerWrapper( viewKeyStruct::cslSlopeString(), &m_cslSlope ).
+    setApplyDefaultValue( -1 ).
+    setDescription( "Slope of the critical state line" );
+
+  subregion->registerWrapper( viewKeyStruct::newPreConsolidationPressureString(), &m_newPreConsolidationPressure ).
+    setApplyDefaultValue( -1 ).
+    setPlotLevel( dataRepository::PlotLevel::LEVEL_3 ).
+    setDescription( "New preconsolidation pressure" ).
+    reference().resizeDimension< 1 >( numConstitutivePointsPerParentIndex );
+
+  subregion->registerWrapper( viewKeyStruct::oldPreConsolidationPressureString(), &m_oldPreConsolidationPressure ).
+    setApplyDefaultValue( -1 ).
+    setDescription( "Old preconsolidation pressure" ).
+    reference().resizeDimension< 1 >( numConstitutivePointsPerParentIndex );
 }
 
 void ModifiedCamClay::postInputInitialization()

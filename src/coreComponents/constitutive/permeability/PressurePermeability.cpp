@@ -18,6 +18,7 @@
  */
 
 #include "PressurePermeability.hpp"
+#include "mesh/ElementSubRegionBase.hpp"
 
 namespace geos
 {
@@ -44,11 +45,6 @@ PressurePermeability::PressurePermeability( string const & name, Group * const p
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Reference pressure for the pressure permeability model" );
 
-  registerWrapper( viewKeyStruct::referencePermeabilityString(), &m_referencePermeability ).
-    setApplyDefaultValue( 0.0 ).
-    setPlotLevel( PlotLevel::LEVEL_0 ).
-    setDescription( "Reference permeability field" );
-
   registerWrapper( viewKeyStruct::maxPermeabilityString(), &m_maxPermeability ).
     setApplyDefaultValue( 1.0 ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -69,11 +65,19 @@ void PressurePermeability::postInputInitialization()
   }
 }
 
-void PressurePermeability::resizeFields( localIndex const size, localIndex const numPts )
+void PressurePermeability::allocateConstitutiveData( Group & parent,
+                                                     localIndex const numConstitutivePointsPerParentIndex )
 {
-  PermeabilityBase::resizeFields( size, numPts );
+  PermeabilityBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 
-  m_referencePermeability.resize( 0, 1, 3 ); // 0 to resize and assign default value later
+  auto subregion = dynamic_cast< ElementSubRegionBase * >( &parent ); // TODO remove
+
+  // TODO use registerField
+  subregion->registerWrapper( viewKeyStruct::referencePermeabilityString(), &m_referencePermeability ).
+    setApplyDefaultValue( 0.0 ).
+    setPlotLevel( PlotLevel::LEVEL_0 ).
+    setDescription( "Reference permeability field" ).
+    reference().resizeDimension< 1, 2 >( 1, 3 );
 }
 
 void PressurePermeability::initializeState() const

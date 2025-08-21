@@ -20,6 +20,7 @@
 #include "SlurryFluidBase.hpp"
 
 #include "SlurryFluidFields.hpp"
+#include "mesh/ElementSubRegionBase.hpp"
 
 namespace geos
 {
@@ -60,26 +61,6 @@ SlurryFluidBase::SlurryFluidBase( string const & name, Group * const parent ):
   registerWrapper( viewKeyStruct::flowConsistencyIndexString(), &m_Ks ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Flow consistency index" );
-
-  // these would be in dDensity
-  registerField< fields::slurryfluid::dDensity_dProppantConcentration >( &m_dDensity_dProppantConc );
-  registerField< fields::slurryfluid::dDensity_dComponentConcentration >( &m_dDensity_dCompConc );
-
-
-  registerField< fields::slurryfluid::fluidDensity >( &m_fluidDensity.value );
-  registerField< fields::slurryfluid::dFluidDensity_dPressure >( &m_dFluidDens_dPres );
-  registerField< fields::slurryfluid::dFluidDensity_dComponentConcentration >( &m_dFluidDens_dCompConc );
-
-  registerField< fields::slurryfluid::fluidViscosity >( &m_fluidViscosity );
-  registerField< fields::slurryfluid::dFluidViscosity_dPressure >( &m_dFluidVisc_dPres );
-  registerField< fields::slurryfluid::dFluidViscosity_dComponentConcentration >( &m_dFluidVisc_dCompConc );
-
-  registerField< fields::slurryfluid::componentDensity >( &m_componentDensity );
-  registerField< fields::slurryfluid::dComponentDensity_dPressure >( &m_dCompDens_dPres );
-  registerField< fields::slurryfluid::dComponentDensity_dComponentConcentration >( &m_dCompDens_dCompConc );
-
-  registerField< fields::slurryfluid::dViscosity_dProppantConcentration >( &m_dViscosity_dProppantConc );
-  registerField< fields::slurryfluid::dViscosity_dComponentConcentration >( &m_dViscosity_dCompConc );
 }
 
 void SlurryFluidBase::postInputInitialization()
@@ -104,33 +85,50 @@ localIndex SlurryFluidBase::numFluidComponents() const
   return LvArray::integerConversion< localIndex >( m_componentNames.size());
 }
 
-void SlurryFluidBase::resizeFields( localIndex const size, localIndex const numPts )
+void SlurryFluidBase::allocateConstitutiveData( Group & parent,
+                                                localIndex const numConstitutivePointsPerParentIndex )
 {
-  SingleFluidBase::resizeFields( size, numPts );
+  SingleFluidBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 
   localIndex const NC = numFluidComponents();
   m_numDOF = 2 + NC;  // pressure,proppantconc, NC compconc
 
-  // These are also sized in m_dDenisty in base class , only dP and dT are populated
-  // Future dev should incorporate concentration derivatives in dDensity
-  m_dDensity_dProppantConc.resize( size, numPts );
-  m_dDensity_dCompConc.resize( size, numPts, NC );
+  auto subregion = dynamic_cast< ElementSubRegionBase * >( &parent );
 
-  m_componentDensity.resize( size, numPts, NC );
-  m_dCompDens_dPres.resize( size, numPts, NC );
-  m_dCompDens_dCompConc.resize( size, numPts, NC, NC );
+  // TODO: derivatives should be in dDensity
+  // which is sized in base class, but only dP and dT are populated
+  // future dev should incorporate concentration derivatives in dDensity
 
-  m_fluidDensity.value.resize( size, numPts );
-  m_dFluidDens_dPres.resize( size, numPts );
-  m_dFluidDens_dCompConc.resize( size, numPts, NC );
+  subregion->registerField< fields::slurryfluid::dDensity_dProppantConcentration >( getName(), &m_dDensity_dProppantConc ).
+    reference().resizeDimension< 1 >( numConstitutivePointsPerParentIndex );
+  subregion->registerField< fields::slurryfluid::dDensity_dComponentConcentration >( getName(), &m_dDensity_dCompConc ).
+    reference().resizeDimension< 1, 2 >( numConstitutivePointsPerParentIndex, NC );
 
-  m_fluidViscosity.resize( size, numPts );
-  m_dFluidVisc_dPres.resize( size, numPts );
-  m_dFluidVisc_dCompConc.resize( size, numPts, NC );
+  subregion->registerField< fields::slurryfluid::fluidDensity >( getName(), &m_fluidDensity.value ).
+    reference().resizeDimension< 1 >( numConstitutivePointsPerParentIndex );
+  subregion->registerField< fields::slurryfluid::dFluidDensity_dPressure >( getName(), &m_dFluidDens_dPres ).
+    reference().resizeDimension< 1 >( numConstitutivePointsPerParentIndex );
+  subregion->registerField< fields::slurryfluid::dFluidDensity_dComponentConcentration >( getName(), &m_dFluidDens_dCompConc ).
+    reference().resizeDimension< 1, 2 >( numConstitutivePointsPerParentIndex, NC );
 
-  m_dViscosity_dProppantConc.resize( size, numPts );
-  m_dViscosity_dCompConc.resize( size, numPts, NC );
+  subregion->registerField< fields::slurryfluid::fluidViscosity >( getName(), &m_fluidViscosity ).
+    reference().resizeDimension< 1 >( numConstitutivePointsPerParentIndex );
+  subregion->registerField< fields::slurryfluid::dFluidViscosity_dPressure >( getName(), &m_dFluidVisc_dPres ).
+    reference().resizeDimension< 1 >( numConstitutivePointsPerParentIndex );
+  subregion->registerField< fields::slurryfluid::dFluidViscosity_dComponentConcentration >( getName(), &m_dFluidVisc_dCompConc ).
+    reference().resizeDimension< 1, 2 >( numConstitutivePointsPerParentIndex, NC );
 
+  subregion->registerField< fields::slurryfluid::componentDensity >( getName(), &m_componentDensity ).
+    reference().resizeDimension< 1, 2 >( numConstitutivePointsPerParentIndex, NC );
+  subregion->registerField< fields::slurryfluid::dComponentDensity_dPressure >( getName(), &m_dCompDens_dPres ).
+    reference().resizeDimension< 1, 2 >( numConstitutivePointsPerParentIndex, NC );
+  subregion->registerField< fields::slurryfluid::dComponentDensity_dComponentConcentration >( getName(), &m_dCompDens_dCompConc ).
+    reference().resizeDimension< 1, 2, 3 >( numConstitutivePointsPerParentIndex, NC, NC );
+
+  subregion->registerField< fields::slurryfluid::dViscosity_dProppantConcentration >( getName(), &m_dViscosity_dProppantConc ).
+    reference().resizeDimension< 1 >( numConstitutivePointsPerParentIndex );
+  subregion->registerField< fields::slurryfluid::dViscosity_dComponentConcentration >( getName(), &m_dViscosity_dCompConc ).
+    reference().resizeDimension< 1, 2 >( numConstitutivePointsPerParentIndex, NC );
 }
 
 

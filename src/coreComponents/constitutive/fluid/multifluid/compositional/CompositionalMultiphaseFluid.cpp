@@ -24,6 +24,7 @@
 #include "constitutive/fluid/multifluid/compositional/parameters/PhaseType.hpp"
 #include "codingUtilities/Utilities.hpp"
 #include "common/format/StringUtilities.hpp"
+#include "mesh/ElementSubRegionBase.hpp"
 
 namespace geos
 {
@@ -65,8 +66,6 @@ CompositionalMultiphaseFluid( string const & name, Group * const parent )
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Table of binary interaction coefficients" );
 
-  registerField< fields::multifluid::kValues >( &m_kValues );
-
   // Link parameters specific to each model
   m_parameters->registerParameters( this );
 
@@ -100,14 +99,18 @@ string CompositionalMultiphaseFluid< FLASH, PHASE1, PHASE2, PHASE3 >::catalogNam
 }
 
 template< typename FLASH, typename PHASE1, typename PHASE2, typename PHASE3 >
-void CompositionalMultiphaseFluid< FLASH, PHASE1, PHASE2, PHASE3 >::resizeFields( localIndex const size, localIndex const numPts )
+void CompositionalMultiphaseFluid< FLASH, PHASE1, PHASE2, PHASE3 >::allocateConstitutiveData( dataRepository::Group & parent,
+                                                                                              localIndex const numConstitutivePointsPerParentIndex )
 {
-  MultiFluidBase::resizeFields( size, numPts );
+  MultiFluidBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 
-  m_kValues.resize( size, numPts, numFluidPhases()-1, numFluidComponents() );
+  ElementSubRegionBase * subregion = dynamic_cast< ElementSubRegionBase * >(&parent); // TODO remove
+
+  subregion->registerField< fields::multifluid::kValues >( &m_kValues ).
+    reference().resizeDimension< 1, 2, 3 >( numConstitutivePointsPerParentIndex, numFluidPhases()-1, numFluidComponents() );
 
   // Zero k-Values to force initialisation with Wilson k-Values
-  m_kValues.zero();
+  m_kValues.zero(); // TODO check
 }
 
 template< typename FLASH, typename PHASE1, typename PHASE2, typename PHASE3 >

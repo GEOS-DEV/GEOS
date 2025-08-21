@@ -22,6 +22,7 @@
 #include "TwoPhaseImmiscibleFluidFields.hpp"
 
 #include "functions/FunctionManager.hpp"
+#include "mesh/ElementSubRegionBase.hpp"
 
 
 namespace geos
@@ -59,26 +60,29 @@ TwoPhaseImmiscibleFluid::TwoPhaseImmiscibleFluid( string const & name, Group * c
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "List of viscosity TableFuncion names from the Function block. \n"
                     "The user must provide one TableFunction per phase, respecting the order provided in \"phaseNames\"." );
-
-  registerField< fields::twophaseimmisciblefluid::phaseDensity >( &m_phaseDensity.value );
-  registerField< fields::twophaseimmisciblefluid::dPhaseDensity >( &m_phaseDensity.derivs );
-  registerField< fields::twophaseimmisciblefluid::phaseDensity_n >( &m_phaseDensity_n );
-
-  registerField< fields::twophaseimmisciblefluid::phaseViscosity >( &m_phaseViscosity.value );
-  registerField< fields::twophaseimmisciblefluid::dPhaseViscosity >( &m_phaseViscosity.derivs );
 }
 
 
-void TwoPhaseImmiscibleFluid::resizeFields( localIndex const size, localIndex const numPts )
+void TwoPhaseImmiscibleFluid::allocateConstitutiveData( Group & parent,
+                                                        localIndex const numConstitutivePointsPerParentIndex )
 {
+  ConstitutiveBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
+
+  auto subregion = dynamic_cast< ElementSubRegionBase * >(&parent); // TODO remove
+
   // Assume sole dependency on pressure, i.e. one derivative
-  m_phaseDensity.value.resize( size, numPts, 2 );
-  m_phaseDensity.derivs.resize( size, numPts, 2, 1 );
 
-  m_phaseDensity_n.resize( size, numPts, 2 );
+  subregion->registerField< fields::twophaseimmisciblefluid::phaseDensity >( getName(), &m_phaseDensity.value ).
+    reference().resizeDimension< 1, 2 >( numConstitutivePointsPerParentIndex, 2 );
+  subregion->registerField< fields::twophaseimmisciblefluid::dPhaseDensity >( getName(), &m_phaseDensity.derivs ).
+    reference().resizeDimension< 1, 2, 3 >( numConstitutivePointsPerParentIndex, 2, 1 );
+  subregion->registerField< fields::twophaseimmisciblefluid::phaseDensity_n >( getName(), &m_phaseDensity_n ).
+    reference().resizeDimension< 1, 2 >( numConstitutivePointsPerParentIndex, 2 );
 
-  m_phaseViscosity.value.resize( size, numPts, 2 );
-  m_phaseViscosity.derivs.resize( size, numPts, 2, 1 );
+  subregion->registerField< fields::twophaseimmisciblefluid::phaseViscosity >( getName(), &m_phaseViscosity.value ).
+    reference().resizeDimension< 1, 2 >( numConstitutivePointsPerParentIndex, 2 );
+  subregion->registerField< fields::twophaseimmisciblefluid::dPhaseViscosity >( getName(), &m_phaseViscosity.derivs ).
+    reference().resizeDimension< 1, 2, 3 >( numConstitutivePointsPerParentIndex, 2, 1 );
 }
 
 

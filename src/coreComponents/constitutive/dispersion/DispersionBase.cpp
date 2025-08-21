@@ -19,6 +19,7 @@
 
 #include "constitutive/dispersion/DispersionBase.hpp"
 #include "constitutive/dispersion/DispersionFields.hpp"
+#include "mesh/ElementSubRegionBase.hpp"
 
 namespace geos
 {
@@ -30,14 +31,18 @@ namespace constitutive
 
 DispersionBase::DispersionBase( string const & name, Group * const parent )
   : ConstitutiveBase( name, parent )
-{
-  registerField< fields::dispersion::dispersivity >( &m_dispersivity );
-}
+{}
 
-void DispersionBase::resizeFields( localIndex const size, localIndex const GEOS_UNUSED_PARAM( numPts ) )
+void DispersionBase::allocateConstitutiveData( dataRepository::Group & parent,
+                                               localIndex const numConstitutivePointsPerParentIndex )
 {
+  ConstitutiveBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
+
+  auto subdomain = dynamic_cast< ElementSubRegionBase * >(&parent); // TODO remove
+
   // NOTE: enforcing 1 quadrature point
-  m_dispersivity.resize( size, 1, 3 );
+  subdomain->registerField< fields::dispersion::dispersivity >( getName(), &m_dispersivity ).
+    reference().resizeDimension< 1, 2 >( 1, 3 );
 }
 
 } // namespace constitutive

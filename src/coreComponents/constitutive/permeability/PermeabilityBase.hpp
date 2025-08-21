@@ -109,6 +109,9 @@ public:
 
   PermeabilityBase( string const & name, Group * const parent );
 
+  virtual void allocateConstitutiveData( Group & parent,
+                                         localIndex const numConstitutivePointsPerParentIndex ) override;
+
   /**
    * @brief Const/non-mutable accessor for permeability.
    * @return Accessor
@@ -134,9 +137,6 @@ public:
   {}
 
 protected:
-
-  virtual void resizeFields( localIndex const size, localIndex const numPts );
-
   /// Vector of absolute permeability
   array3d< real64 > m_permeability;
 

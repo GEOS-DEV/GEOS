@@ -22,6 +22,7 @@
 #include "constitutive/relativePermeability/RelativePermeabilityFields.hpp"
 #include "constitutive/relativePermeability/TableRelativePermeabilityHelpers.hpp"
 #include "functions/FunctionManager.hpp"
+#include "mesh/ElementSubRegionBase.hpp"
 
 namespace geos
 {
@@ -136,9 +137,6 @@ TableRelativePermeabilityHysteresis::TableRelativePermeabilityHysteresis( std::s
   registerWrapper( viewKeyStruct::phaseHasHysteresisString(), &m_phaseHasHysteresis ).
     setInputFlag( InputFlags::FALSE ). // will be deduced from tables
     setSizedFromParent( 0 );
-
-  registerField< fields::relperm::phaseMaxHistoricalVolFraction >( &m_phaseMaxHistoricalVolFraction );
-  registerField< fields::relperm::phaseMinHistoricalVolFraction >( &m_phaseMinHistoricalVolFraction );
 
   registerWrapper( viewKeyStruct::drainageRelPermKernelWrappersString(), &m_drainageRelPermKernelWrappers ).
     setSizedFromParent( 0 ).
@@ -618,14 +616,19 @@ TableRelativePermeabilityHysteresis::createKernelWrapper()
                         m_dPhaseRelPerm_dPhaseVolFrac );
 }
 
-void TableRelativePermeabilityHysteresis::resizeFields( localIndex const size, localIndex const numPts )
+void TableRelativePermeabilityHysteresis::allocateConstitutiveData( Group & parent,
+                                                                    localIndex const numConstitutivePointsPerParentIndex )
 {
-  RelativePermeabilityBase::resizeFields( size, numPts );
+  RelativePermeabilityBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 
   integer const numPhases = numFluidPhases();
 
-  m_phaseMaxHistoricalVolFraction.resize( size, numPhases );
-  m_phaseMinHistoricalVolFraction.resize( size, numPhases );
+  auto subregion = dynamic_cast< ElementSubRegionBase * >( &parent ); // TODO remove
+
+  subregion->registerField< fields::relperm::phaseMaxHistoricalVolFraction >( &m_phaseMaxHistoricalVolFraction ).
+    reference().resizeDimension< 1 >( numPhases );
+  subregion->registerField< fields::relperm::phaseMinHistoricalVolFraction >( &m_phaseMinHistoricalVolFraction ).
+    reference().resizeDimension< 1 >( numPhases );
   m_phaseMaxHistoricalVolFraction.setValues< parallelDevicePolicy<> >( 0.0 );
   m_phaseMinHistoricalVolFraction.setValues< parallelDevicePolicy<> >( 1.0 );
 }

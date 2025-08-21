@@ -19,6 +19,7 @@
 
 #include "SlipDependentPermeability.hpp"
 #include "constitutive/permeability/PermeabilityFields.hpp"
+#include "mesh/ElementSubRegionBase.hpp"
 
 namespace geos
 {
@@ -43,16 +44,18 @@ SlipDependentPermeability::SlipDependentPermeability( string const & name, Group
   registerWrapper( viewKeyStruct::initialPermeabilityString(), &m_initialPermeability ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( " initial permeability of the fracture." );
-
-  registerField< fields::permeability::dPerm_dDispJump >( &m_dPerm_dDispJump );
 }
 
-void SlipDependentPermeability::resizeFields( localIndex const size, localIndex const numPts )
+void SlipDependentPermeability::allocateConstitutiveData( Group & parent,
+                                                          localIndex const numConstitutivePointsPerParentIndex )
 {
-  PermeabilityBase::resizeFields( size, numPts );
+  PermeabilityBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
+
+  auto subregion = dynamic_cast< ElementSubRegionBase * >( &parent ); // TODO remove
 
   // NOTE: enforcing 1 quadrature point
-  m_dPerm_dDispJump.resize( size, 1, 3, 3 );
+  subregion->registerField< fields::permeability::dPerm_dDispJump >( &m_dPerm_dDispJump ).
+    reference().resizeDimension< 1, 2, 3 >( 1, 3, 3 );
 }
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, SlipDependentPermeability, string const &, Group * const )

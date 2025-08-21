@@ -18,6 +18,7 @@
  */
 
 #include "CoulombFriction.hpp"
+#include "mesh/ElementSubRegionBase.hpp"
 
 namespace geos
 {
@@ -46,10 +47,6 @@ CoulombFriction::CoulombFriction( string const & name, Group * const parent ):
     setApplyDefaultValue( -1 ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Friction coefficient" );
-
-  registerWrapper( viewKeyStruct::elasticSlipString(), &m_elasticSlip ).
-    setApplyDefaultValue( 0.0 ).
-    setDescription( "Elastic Slip" );
 }
 
 void CoulombFriction::postInputInitialization()
@@ -60,11 +57,18 @@ void CoulombFriction::postInputInitialization()
 
 }
 
-void CoulombFriction::resizeFields( localIndex const size, localIndex const numPts )
+void CoulombFriction::allocateConstitutiveData( dataRepository::Group & parent,
+                                                localIndex const numConstitutivePointsPerParentIndex )
 {
-  FrictionBase::resizeFields( size, numPts );
+  FrictionBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 
-  m_elasticSlip.resize( 0, 2 ); // 0 to resize and assign default value later
+  auto subregion = dynamic_cast< ElementSubRegionBase * >(&parent); // TODO remove
+
+  // TODO use registerField
+  subregion->registerWrapper( viewKeyStruct::elasticSlipString(), &m_elasticSlip ).
+    setApplyDefaultValue( 0.0 ).
+    setDescription( "Elastic Slip" ).
+    reference().resizeDimension< 1 >( 2 );
 }
 
 CoulombFrictionUpdates CoulombFriction::createKernelUpdates() const

@@ -436,6 +436,9 @@ public:
 
   ///@}
 
+  virtual void allocateConstitutiveData( Group & parent,
+                                         localIndex const numConstitutivePointsPerParentIndex ) override;
+
   /**
    * Keys for data specified in this class.
    */
@@ -514,8 +517,6 @@ public:
 protected:
 
   virtual void postInputInitialization() override;
-
-  virtual void resizeFields( localIndex const size, localIndex const numPts ) override;
 
   /// State variable: The damage values for each quadrature point
   array2d< real64 > m_damage;

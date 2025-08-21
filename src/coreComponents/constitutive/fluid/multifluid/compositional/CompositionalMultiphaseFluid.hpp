@@ -73,6 +73,9 @@ public:
 
   virtual string getCatalogName() const override { return catalogName(); }
 
+  virtual void allocateConstitutiveData( dataRepository::Group & parent,
+                                         localIndex const numConstitutivePointsPerParentIndex ) override;
+
   static constexpr bool isThermalType(){ return false; }
 
   // TODO: This method should be implemented if an incorrect extrapolation of the pressure and temperature is encountered in the kernel
@@ -109,8 +112,6 @@ protected:
   virtual void postInputInitialization() override;
 
   virtual void initializePostSubGroups() override;
-
-  virtual void resizeFields( localIndex const size, localIndex const numPts ) override;
 
 private:
   // Create the fluid models

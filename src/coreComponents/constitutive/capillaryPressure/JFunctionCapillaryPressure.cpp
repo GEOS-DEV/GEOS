@@ -23,6 +23,7 @@
 #include "constitutive/capillaryPressure/TableCapillaryPressureHelpers.hpp"
 #include "functions/FunctionManager.hpp"
 #include "common/Units.hpp"
+#include "mesh/ElementSubRegionBase.hpp"
 
 namespace geos
 {
@@ -114,8 +115,6 @@ JFunctionCapillaryPressure::JFunctionCapillaryPressure( std::string const & name
                     toString( PermeabilityDirection::X ) + " - only use the permeability in the x direction,\n" +
                     toString( PermeabilityDirection::Y ) + " - only use the permeability in the y direction,\n" +
                     toString( PermeabilityDirection::Z ) + " - only use the permeability in the z direction." );
-
-  registerField< fields::cappres::jFuncMultiplier >( &m_jFuncMultiplier );
 }
 
 void JFunctionCapillaryPressure::postInputInitialization()
@@ -336,11 +335,15 @@ JFunctionCapillaryPressure::createKernelWrapper()
                         m_dPhaseCapPressure_dPhaseVolFrac );
 }
 
-void JFunctionCapillaryPressure::resizeFields( localIndex const size, localIndex const numPts )
+void JFunctionCapillaryPressure::allocateConstitutiveData( dataRepository::Group & parent,
+                                                           localIndex const numConstitutivePointsPerParentIndex )
 {
-  CapillaryPressureBase::resizeFields( size, numPts );
+  CapillaryPressureBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 
-  m_jFuncMultiplier.resize( size, numFluidPhases()-1 );
+  auto subregion = dynamic_cast< ElementSubRegionBase * >(&parent); // TODO remove
+
+  subregion->registerField< fields::cappres::jFuncMultiplier >( getName(), &m_jFuncMultiplier ).
+    reference().resizeDimension< 1 >( numFluidPhases()-1 );
 }
 
 

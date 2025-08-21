@@ -153,9 +153,10 @@ public:
 
   static constexpr localIndex MAX_NUM_COMPONENTS = 4;
 
-protected:
+  virtual void allocateConstitutiveData( dataRepository::Group & parent,
+                                         localIndex const numConstitutivePointsPerParentIndex ) override;
 
-  virtual void resizeFields( localIndex const size, localIndex const numPts ) override;
+protected:
 
   array1d< real64 > m_settlingFactor;
   array1d< real64 > m_dSettlingFactor_dPressure;

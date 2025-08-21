@@ -54,16 +54,12 @@ public:
 
   using AbstractBase = isothermalCompositionalMultiphaseFVMKernels::FluxComputeKernelBase;
   using DofNumberAccessor = AbstractBase::DofNumberAccessor;
-  using CompFlowAccessors = AbstractBase::CompFlowAccessors;
-  using MultiFluidAccessors = AbstractBase::MultiFluidAccessors;
   using AbstractBase::m_dt;
   using AbstractBase::m_dPhaseCompFrac;
   using AbstractBase::m_dPhaseVolFrac;
 
   using Base = typename isothermalCompositionalMultiphaseFVMKernels::DiffusionDispersionFluxComputeKernel< NUM_COMP, NUM_DOF, STENCILWRAPPER >;
-  using DiffusionAccessors = typename Base::DiffusionAccessors;
-  using DispersionAccessors = typename Base::DispersionAccessors;
-  using PorosityAccessors = typename Base::PorosityAccessors;
+  using FieldAccessors = typename Base::FieldAccessors;
   using Base::numFluxSupportPoints;
   using Base::numEqn;
   using Base::numComp;
@@ -80,11 +76,7 @@ public:
    * @param[in] rankOffset the offset of my MPI rank
    * @param[in] stencilWrapper reference to the stencil wrapper
    * @param[in] dofNumberAccessor
-   * @param[in] compFlowAccessors
-   * @param[in] multiFluidAccessors
-   * @param[in] diffusionAccessors
-   * @param[in] dispersionAccessors
-   * @param[in] porosityAccessors
+   * @param[in] fieldAccessors
    * @param[in] dt time step size
    * @param[inout] localMatrix the local CRS matrix
    * @param[inout] localRhs the local right-hand side vector
@@ -94,11 +86,7 @@ public:
                                         globalIndex const rankOffset,
                                         STENCILWRAPPER const & stencilWrapper,
                                         DofNumberAccessor const & dofNumberAccessor,
-                                        CompFlowAccessors const & compFlowAccessors,
-                                        MultiFluidAccessors const & multiFluidAccessors,
-                                        DiffusionAccessors const & diffusionAccessors,
-                                        DispersionAccessors const & dispersionAccessors,
-                                        PorosityAccessors const & porosityAccessors,
+                                        FieldAccessors const & fieldAccessors,
                                         real64 const dt,
                                         CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                         arrayView1d< real64 > const & localRhs,
@@ -107,11 +95,7 @@ public:
             rankOffset,
             stencilWrapper,
             dofNumberAccessor,
-            compFlowAccessors,
-            multiFluidAccessors,
-            diffusionAccessors,
-            dispersionAccessors,
-            porosityAccessors,
+            fieldAccessors,
             dt,
             localMatrix,
             localRhs,
@@ -321,15 +305,10 @@ public:
       dofNumberAccessor.setName( solverName + "/accessors/" + dofKey );
 
       using kernelType = DiffusionDispersionFluxComputeKernel< NUM_COMP, NUM_DOF, STENCILWRAPPER >;
-      typename kernelType::CompFlowAccessors compFlowAccessors( elemManager, solverName );
-      typename kernelType::MultiFluidAccessors multiFluidAccessors( elemManager, solverName );
-      typename kernelType::DiffusionAccessors diffusionAccessors( elemManager, solverName );
-      typename kernelType::DispersionAccessors dispersionAccessors( elemManager, solverName );
-      typename kernelType::PorosityAccessors porosityAccessors( elemManager, solverName );
+      typename kernelType::FieldAccessors fieldAccessors( elemManager, solverName );
 
       kernelType kernel( numPhases, rankOffset, stencilWrapper,
-                         dofNumberAccessor, compFlowAccessors, multiFluidAccessors,
-                         diffusionAccessors, dispersionAccessors, porosityAccessors,
+                         dofNumberAccessor, fieldAccessors,
                          dt, localMatrix, localRhs, kernelFlags );
       kernelType::template launch< POLICY >( stencilWrapper.size(),
                                              kernelFlags.isSet( isothermalCompositionalMultiphaseFVMKernels::KernelFlags::Diffusion ),

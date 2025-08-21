@@ -20,6 +20,7 @@
 #include "BiotPorosity.hpp"
 #include "PorosityFields.hpp"
 #include "constitutive/solid/SolidBase.hpp"
+#include "mesh/ElementSubRegionBase.hpp"
 
 namespace geos
 {
@@ -55,23 +56,25 @@ BiotPorosity::BiotPorosity( string const & name, Group * const parent ):
   registerWrapper( viewKeyStruct::solidShearModulusString(), &m_shearModulus ). // TODO field?
     setApplyDefaultValue( 1e-6 ).
     setDescription( "Solid shear modulus" );
-
-  registerField< fields::porosity::biotCoefficient >( &m_biotCoefficient );
-
-  registerField< fields::porosity::grainBulkModulus >( &m_grainBulkModulus );
-
-  registerField< fields::porosity::thermalExpansionCoefficient >( &m_thermalExpansionCoefficient );
-
-  registerField< fields::porosity::meanTotalStressIncrement_k >( &m_meanTotalStressIncrement_k );
-
-  registerField< fields::porosity::averageMeanTotalStressIncrement_k >( &m_averageMeanTotalStressIncrement_k );
 }
 
-void BiotPorosity::resizeFields( localIndex const size, localIndex const numPts )
+void BiotPorosity::allocateConstitutiveData( Group & parent,
+                                             localIndex const numConstitutivePointsPerParentIndex )
 {
-  PorosityBase::resizeFields( size, numPts );
+  PorosityBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 
-  m_meanTotalStressIncrement_k.resize( size, numPts );
+  auto subregion = dynamic_cast< ElementSubRegionBase * >( &parent ); // TODO remove
+
+  subregion->registerField< fields::porosity::biotCoefficient >( &m_biotCoefficient );
+
+  subregion->registerField< fields::porosity::grainBulkModulus >( &m_grainBulkModulus );
+
+  subregion->registerField< fields::porosity::thermalExpansionCoefficient >( &m_thermalExpansionCoefficient );
+
+  subregion->registerField< fields::porosity::meanTotalStressIncrement_k >( &m_meanTotalStressIncrement_k ).
+    reference().resizeDimension< 1 >( numConstitutivePointsPerParentIndex );
+
+  subregion->registerField< fields::porosity::averageMeanTotalStressIncrement_k >( &m_averageMeanTotalStressIncrement_k );
 }
 
 void BiotPorosity::postInputInitialization()

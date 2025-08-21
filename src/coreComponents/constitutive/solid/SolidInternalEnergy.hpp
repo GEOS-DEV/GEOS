@@ -99,6 +99,9 @@ public:
 
   virtual string getCatalogName() const override { return catalogName(); }
 
+  virtual void allocateConstitutiveData( Group & parent,
+                                         localIndex const numConstitutivePointsPerParentIndex ) override;
+
   struct viewKeyStruct : public ConstitutiveBase::viewKeyStruct
   {
     static constexpr char const * internalEnergyString() { return "internalEnergy"; }
@@ -147,10 +150,6 @@ public:
 
   /// Save state data in preparation for next timestep
   virtual void saveConvergedState() const override;
-
-protected:
-
-  virtual void resizeFields( localIndex const size, localIndex const numPts ) override;
 
 private:
 

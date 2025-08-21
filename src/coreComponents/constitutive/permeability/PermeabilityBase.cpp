@@ -19,6 +19,7 @@
 
 #include "constitutive/permeability/PermeabilityBase.hpp"
 #include "constitutive/permeability/PermeabilityFields.hpp"
+#include "mesh/ElementSubRegionBase.hpp"
 
 namespace geos
 {
@@ -33,10 +34,7 @@ PermeabilityBase::PermeabilityBase( string const & name, Group * const parent ):
   ConstitutiveBase( name, parent ),
   m_permeability(),
   m_dPerm_dPressure()
-{
-  registerField< fields::permeability::permeability >( &m_permeability );
-  registerField< fields::permeability::dPerm_dPressure >( &m_dPerm_dPressure );
-}
+{}
 
 void PermeabilityBase::scaleHorizontalPermeability( arrayView1d< real64 const > scalingFactors ) const
 {
@@ -52,11 +50,18 @@ void PermeabilityBase::scaleHorizontalPermeability( arrayView1d< real64 const > 
   }
 }
 
-void PermeabilityBase::resizeFields( localIndex const size, localIndex const GEOS_UNUSED_PARAM( numPts ) )
+void PermeabilityBase::allocateConstitutiveData( Group & parent,
+                                                 localIndex const numConstitutivePointsPerParentIndex )
 {
+  ConstitutiveBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
+
+  auto subregion = dynamic_cast< ElementSubRegionBase * >( &parent ); // TODO remove
+
   // NOTE: enforcing 1 quadrature point
-  m_permeability.resize( size, 1, 3 );
-  m_dPerm_dPressure.resize( size, 1, 3 );
+  subregion->registerField< fields::permeability::permeability >( &m_permeability ).
+    reference().resizeDimension< 1, 2 >( 1, 3 );
+  subregion->registerField< fields::permeability::dPerm_dPressure >( &m_dPerm_dPressure ).
+    reference().resizeDimension< 1, 2 >( 1, 3 );
 }
 
 }

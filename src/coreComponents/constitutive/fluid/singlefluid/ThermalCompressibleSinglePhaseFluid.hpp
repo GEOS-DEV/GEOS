@@ -199,6 +199,9 @@ public:
 
   virtual string getCatalogName() const override { return catalogName(); }
 
+  virtual void allocateConstitutiveData( Group & parent,
+                                         localIndex const numConstitutivePointsPerParentIndex ) override;
+
   using CompressibleSinglePhaseFluid::m_densityModelType;
 
   /// Type of kernel wrapper for in-kernel update (TODO: support multiple EAT, not just linear)
@@ -222,8 +225,6 @@ public:
 protected:
 
   virtual void postInputInitialization() override;
-
-  virtual void resizeFields( localIndex const size, localIndex const numPts ) override;
 
 private:
 

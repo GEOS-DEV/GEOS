@@ -18,6 +18,7 @@
  */
 
 #include "DruckerPragerExtended.hpp"
+#include "mesh/ElementSubRegionBase.hpp"
 
 namespace geos
 {
@@ -88,25 +89,27 @@ DruckerPragerExtended::DruckerPragerExtended( string const & name, Group * const
   registerWrapper( viewKeyStruct::hardeningString(), &m_hardening ).
     setApplyDefaultValue( -1 ).
     setDescription( "Hardening parameter" );
-
-  registerWrapper( viewKeyStruct::newStateString(), &m_newState ).
-    setApplyDefaultValue( 0.0 ).
-    setPlotLevel( dataRepository::PlotLevel::LEVEL_3 ).
-    setDescription( "New equivalent plastic shear strain" );
-
-  registerWrapper( viewKeyStruct::oldStateString(), &m_oldState ).
-    setApplyDefaultValue( 0.0 ).
-    setDescription( "Old equivalent plastic shear strain" );
 }
 
 
-void DruckerPragerExtended::resizeFields( localIndex const size, localIndex const numPts )
+void DruckerPragerExtended::allocateConstitutiveData( Group & parent,
+                                                      localIndex const numConstitutivePointsPerParentIndex )
 {
-  ElasticIsotropic::resizeFields( size, numPts );
+  ElasticIsotropic::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 
-  // 0 to resize and assign default value later
-  m_newState.resize( 0, numPts );
-  m_oldState.resize( 0, numPts );
+  auto subregion = dynamic_cast< ElementSubRegionBase * >( &parent ); // TODO remove
+
+  // TODO use registerField
+  subregion->registerWrapper( viewKeyStruct::newStateString(), &m_newState ).
+    setApplyDefaultValue( 0.0 ).
+    setPlotLevel( dataRepository::PlotLevel::LEVEL_3 ).
+    setDescription( "New equivalent plastic shear strain" ).
+    reference().resizeDimension< 1 >( numConstitutivePointsPerParentIndex );
+
+  subregion->registerWrapper( viewKeyStruct::oldStateString(), &m_oldState ).
+    setApplyDefaultValue( 0.0 ).
+    setDescription( "Old equivalent plastic shear strain" ).
+    reference().resizeDimension< 1 >( numConstitutivePointsPerParentIndex );
 }
 
 

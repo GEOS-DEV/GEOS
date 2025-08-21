@@ -19,6 +19,7 @@
 
 #include "constitutive/diffusion/DiffusionBase.hpp"
 #include "constitutive/diffusion/DiffusionFields.hpp"
+#include "mesh/ElementSubRegionBase.hpp"
 
 namespace geos
 {
@@ -39,10 +40,6 @@ DiffusionBase::DiffusionBase( string const & name, Group * const parent )
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( 1.0 ).
     setDescription( "List of phase diffusivity multipliers" );
-
-  registerField< fields::diffusion::diffusivity >( &m_diffusivity );
-  registerField< fields::diffusion::dDiffusivity_dTemperature >( &m_dDiffusivity_dTemperature );
-  registerField< fields::diffusion::phaseDiffusivityMultiplier >( &m_phaseDiffusivityMultiplier );
 }
 
 void DiffusionBase::postInputInitialization()
@@ -68,14 +65,22 @@ void DiffusionBase::postInputInitialization()
   m_phaseDiffusivityMultiplier.resize( 0, 0, 3 );
 }
 
-void DiffusionBase::resizeFields( localIndex const size, localIndex const GEOS_UNUSED_PARAM( numPts ) )
+void DiffusionBase::allocateConstitutiveData( dataRepository::Group & parent,
+                                              localIndex const numConstitutivePointsPerParentIndex )
 {
-  // NOTE: enforcing 1 quadrature point
-  m_diffusivity.resize( size, 1, 3 );
-  m_dDiffusivity_dTemperature.resize( size, 1, 3 );
-  m_phaseDiffusivityMultiplier.resize( size, 1, 3 );
+  ConstitutiveBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 
-  for( localIndex ei = 0; ei < size; ++ei ) // TODO move into initializeState?
+  auto subregion = dynamic_cast< ElementSubRegionBase * >(&parent); // TODO remove
+
+  // NOTE: enforcing 1 quadrature point
+  subregion->registerField< fields::diffusion::diffusivity >( getName(), &m_diffusivity ).
+    reference().resizeDimension< 1, 2 >( 1, 3 );
+  subregion->registerField< fields::diffusion::dDiffusivity_dTemperature >( getName(), &m_dDiffusivity_dTemperature ).
+    reference().resizeDimension< 1, 2 >( 1, 3 );
+  subregion->registerField< fields::diffusion::phaseDiffusivityMultiplier >( getName(), &m_phaseDiffusivityMultiplier ).
+    reference().resizeDimension< 1, 2 >( 1, numFluidPhases());
+
+  for( localIndex ei = 0; ei < parent.size(); ++ei ) // TODO move into initializeState?
   {
     // NOTE: enforcing 1 quadrature point
     for( localIndex q = 0; q < 1; ++q )

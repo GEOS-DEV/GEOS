@@ -45,8 +45,8 @@ CapillaryPressureBase::CapillaryPressureBase( string const & name,
   registerWrapper( viewKeyStruct::phaseOrderString(), &m_phaseOrder ).
     setSizedFromParent( 0 );
 
-  registerField< fields::cappres::phaseCapPressure >( &m_phaseCapPressure );
-  registerField< fields::cappres::dPhaseCapPressure_dPhaseVolFraction >( &m_dPhaseCapPressure_dPhaseVolFrac );
+  //registerField< fields::cappres::phaseCapPressure >( &m_phaseCapPressure );
+  //registerField< fields::cappres::dPhaseCapPressure_dPhaseVolFraction >( &m_dPhaseCapPressure_dPhaseVolFrac );
 }
 
 void CapillaryPressureBase::postInputInitialization()
@@ -80,34 +80,22 @@ void CapillaryPressureBase::postInputInitialization()
     m_phaseTypes[ip] = toPhaseType( m_phaseNames[ip] );
     m_phaseOrder[m_phaseTypes[ip]] = ip;
   }
-
-  // call to correctly set member array tertiary sizes on the 'main' material object
-  resizeFields( 0, 0 );  // TODO figure out why this is really needed
-
-  // set labels on array wrappers for plottable fields
-  setLabels();
 }
 
-//void CapillaryPressureBase::allocateConstitutiveData( ElementSubRegionBase & parent,
-//                                                  localIndex const numConstitutivePointsPerParentIndex )
-//{
-//  parent.registerField<fields::cappres::phaseCapPressure>( getName(), &m_phaseCapPressure );
-//  parent.registerField<fields::cappres::dPhaseCapPressure_dPhaseVolFraction>( getName(), &m_dPhaseCapPressure_dPhaseVolFrac );
-//}
-
-void CapillaryPressureBase::resizeFields( localIndex const size,
-                                          localIndex const numPts )
+void CapillaryPressureBase::allocateConstitutiveData( Group & parent,
+                                                      localIndex const numConstitutivePointsPerParentIndex )
 {
+  ConstitutiveBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
+
+  auto subregion = dynamic_cast< ElementSubRegionBase * >(&parent); // TODO remove
+
   integer const NP = numFluidPhases();
 
-  m_phaseCapPressure.resize( size, numPts, NP );
-  m_dPhaseCapPressure_dPhaseVolFrac.resize( size, numPts, NP, NP );
-}
-
-void CapillaryPressureBase::setLabels()
-{
-  getField< fields::cappres::phaseCapPressure >().
-    setDimLabels( 2, m_phaseNames );
+  subregion->registerField< fields::cappres::phaseCapPressure >( getName(), &m_phaseCapPressure ).
+    setDimLabels( 2, m_phaseNames ).
+    reference().resizeDimension< 1, 2 >( numConstitutivePointsPerParentIndex, NP );
+  subregion->registerField< fields::cappres::dPhaseCapPressure_dPhaseVolFraction >( getName(), &m_dPhaseCapPressure_dPhaseVolFrac ).
+    reference().resizeDimension< 1, 2, 3 >( numConstitutivePointsPerParentIndex, NP, NP );
 }
 
 } // namespace constitutive

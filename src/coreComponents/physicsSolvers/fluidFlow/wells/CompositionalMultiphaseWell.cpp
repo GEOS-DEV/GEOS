@@ -977,10 +977,7 @@ void CompositionalMultiphaseWell::initializeWells( DomainPartition & domain, rea
   {
 
     ElementRegionManager & elemManager = mesh.getElemManager();
-    compositionalMultiphaseWellKernels::PresTempCompFracInitializationKernel::CompFlowAccessors
-    resCompFlowAccessors( mesh.getElemManager(), flowSolver.getName() );
-    compositionalMultiphaseWellKernels::PresTempCompFracInitializationKernel::MultiFluidAccessors
-    resMultiFluidAccessors( mesh.getElemManager(), flowSolver.getName() );
+    compositionalMultiphaseWellKernels::PresTempCompFracInitializationKernel::FieldAccessors fieldAccessors( mesh.getElemManager(), flowSolver.getName() );
 
     elemManager.forElementSubRegions< WellElementSubRegion >( regionNames,
                                                               [&]( localIndex const,
@@ -1023,11 +1020,11 @@ void CompositionalMultiphaseWell::initializeWells( DomainPartition & domain, rea
                   perforationData.getNumPerforationsGlobal(),
                   wellControls,
                   0.0, // initialization done at t = 0
-                  resCompFlowAccessors.get( flow::pressure{} ),
-                  resCompFlowAccessors.get( flow::temperature{} ),
-                  resCompFlowAccessors.get( flow::globalCompDensity{} ),
-                  resCompFlowAccessors.get( flow::phaseVolumeFraction{} ),
-                  resMultiFluidAccessors.get( fields::multifluid::phaseMassDensity{} ),
+                  fieldAccessors.get( flow::pressure{} ),
+                  fieldAccessors.get( flow::temperature{} ),
+                  fieldAccessors.get( flow::globalCompDensity{} ),
+                  fieldAccessors.get( flow::phaseVolumeFraction{} ),
+                  fieldAccessors.get( fields::multifluid::phaseMassDensity{} ),
                   resElementRegion,
                   resElementSubRegion,
                   resElementIndex,

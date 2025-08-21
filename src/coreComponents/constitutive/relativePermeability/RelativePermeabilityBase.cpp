@@ -19,6 +19,7 @@
 
 #include "RelativePermeabilityBase.hpp"
 #include "RelativePermeabilityFields.hpp"
+#include "mesh/ElementSubRegionBase.hpp"
 
 namespace geos
 {
@@ -41,14 +42,6 @@ RelativePermeabilityBase::RelativePermeabilityBase( string const & name, Group *
 
   registerWrapper( viewKeyStruct::phaseOrderString(), &m_phaseOrder ).
     setSizedFromParent( 0 );
-
-  registerField< fields::relperm::phaseRelPerm >( &m_phaseRelPerm );
-  registerField< fields::relperm::dPhaseRelPerm_dPhaseVolFraction >( &m_dPhaseRelPerm_dPhaseVolFrac );
-
-  registerField< fields::relperm::phaseTrappedVolFraction >( &m_phaseTrappedVolFrac );
-
-  registerField< fields::relperm::phaseRelPerm_n >( &m_phaseRelPerm_n );
-
 }
 
 void RelativePermeabilityBase::postInputInitialization()
@@ -82,34 +75,31 @@ void RelativePermeabilityBase::postInputInitialization()
     m_phaseTypes[ip] = toPhaseType( m_phaseNames[ip] );
     m_phaseOrder[m_phaseTypes[ip]] = ip;
   }
-
-  // call to correctly set member array tertiary sizes on the 'main' material object
-  resizeFields( 0, 0 );  // TODO figure out why this is really needed
-
-  // set labels on array wrappers for plottable fields
-  setLabels();
 }
 
-void RelativePermeabilityBase::resizeFields( localIndex const size, localIndex const numPts )
+void RelativePermeabilityBase::allocateConstitutiveData( Group & parent,
+                                                         localIndex const numConstitutivePointsPerParentIndex )
 {
+  ConstitutiveBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
+
   integer const numPhases = numFluidPhases();
 
-  m_phaseRelPerm.resize( size, numPts, numPhases );
-  m_phaseRelPerm_n.resize( size, numPts, numPhases );
-  m_dPhaseRelPerm_dPhaseVolFrac.resize( size, numPts, numPhases, numPhases );
-  //phase trapped for stats
-  m_phaseTrappedVolFrac.resize( size, numPts, numPhases );
-  m_phaseTrappedVolFrac.zero();
-}
+  ElementSubRegionBase * subregion = dynamic_cast< ElementSubRegionBase * >( &parent ); // TODO remove
 
-void RelativePermeabilityBase::setLabels()
-{
-  getField< fields::relperm::phaseRelPerm >().
-    setDimLabels( 2, m_phaseNames );
-  getField< fields::relperm::phaseRelPerm_n >().
-    setDimLabels( 2, m_phaseNames );
-  getField< fields::relperm::phaseTrappedVolFraction >().
-    setDimLabels( 2, m_phaseNames );
+  subregion->registerField< fields::relperm::phaseRelPerm >( getName(), &m_phaseRelPerm ).
+    setDimLabels( 2, m_phaseNames ).
+    reference().resizeDimension< 1, 2 >( numConstitutivePointsPerParentIndex, numPhases );
+  subregion->registerField< fields::relperm::phaseRelPerm_n >( getName(), &m_phaseRelPerm_n ).
+    setDimLabels( 2, m_phaseNames ).
+    reference().resizeDimension< 1, 2 >( numConstitutivePointsPerParentIndex, numPhases );
+  subregion->registerField< fields::relperm::dPhaseRelPerm_dPhaseVolFraction >( getName(), &m_dPhaseRelPerm_dPhaseVolFrac ).
+    reference().resizeDimension< 1, 2, 3 >( numConstitutivePointsPerParentIndex, numPhases, numPhases );
+
+  //phase trapped for stats
+  subregion->registerField< fields::relperm::phaseTrappedVolFraction >( getName(), &m_phaseTrappedVolFrac ).
+    setDimLabels( 2, m_phaseNames ).
+    reference().resizeDimension< 1, 2 >( numConstitutivePointsPerParentIndex, numPhases );
+  m_phaseTrappedVolFrac.zero();
 }
 
 void RelativePermeabilityBase::saveConvergedState( ) const

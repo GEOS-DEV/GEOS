@@ -61,7 +61,8 @@ public:
 
   ///@}
 
-
+  virtual void allocateConstitutiveData( Group & parent,
+                                         localIndex const numConstitutivePointsPerParentIndex ) override;
 
   /**
    * @brief Getter for the fluid phase names
@@ -206,9 +207,6 @@ protected:
 
   /// Backup data
   array3d< real64, multifluid::LAYOUT_PHASE > m_phaseDensity_n;
-
-
-  virtual void resizeFields( localIndex const size, localIndex const numPts ) override;
 
   virtual void postInputInitialization() override;
 

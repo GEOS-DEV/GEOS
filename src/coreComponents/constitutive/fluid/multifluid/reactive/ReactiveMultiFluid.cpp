@@ -18,7 +18,7 @@
  */
 #include "ReactiveMultiFluid.hpp"
 #include "ReactiveMultiFluidFields.hpp"
-
+#include "mesh/ElementSubRegionBase.hpp"
 
 namespace geos
 {
@@ -36,11 +36,6 @@ ReactiveMultiFluid::
   m_numPrimarySpecies = 7;
   m_numSecondarySpecies = 11;
   m_numKineticReactions = 2;
-
-  registerField< fields::reactivefluid::primarySpeciesConcentration >( &m_primarySpeciesConcentration );
-  registerField< fields::reactivefluid::secondarySpeciesConcentration >( &m_secondarySpeciesConcentration );
-  registerField< fields::reactivefluid::primarySpeciesTotalConcentration >( &m_primarySpeciesTotalConcentration );
-  registerField< fields::reactivefluid::kineticReactionRates >( &m_kineticReactionRates );
 }
 
 bool ReactiveMultiFluid::isThermal() const
@@ -71,18 +66,25 @@ void ReactiveMultiFluid::postInputInitialization()
   createChemicalReactions();
 }
 
-void ReactiveMultiFluid::resizeFields( localIndex const size, localIndex const numPts )
+void ReactiveMultiFluid::allocateConstitutiveData( dataRepository::Group & parent,
+                                                   localIndex const numConstitutivePointsPerParentIndex )
 {
-  MultiFluidBase::resizeFields( size, numPts );
+  MultiFluidBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
+
+  auto subregion = dynamic_cast< ElementSubRegionBase * >(&parent); // TODO remove
 
   integer const numPrimarySpecies = this->numPrimarySpecies();
   integer const numSecondarySpecies = this->numSecondarySpecies();
   integer const numKineticReactions = this->numKineticReactions();
 
-  m_primarySpeciesConcentration.resize( size, numPrimarySpecies );
-  m_secondarySpeciesConcentration.resize( size, numSecondarySpecies );
-  m_primarySpeciesTotalConcentration.resize( size, numPrimarySpecies );
-  m_kineticReactionRates.resize( size, numKineticReactions );
+  subregion->registerField< fields::reactivefluid::primarySpeciesConcentration >( getName(), &m_primarySpeciesConcentration ).
+    reference().resizeDimension< 1 >( numPrimarySpecies );
+  subregion->registerField< fields::reactivefluid::secondarySpeciesConcentration >( getName(), &m_secondarySpeciesConcentration ).
+    reference().resizeDimension< 1 >( numSecondarySpecies );
+  subregion->registerField< fields::reactivefluid::primarySpeciesTotalConcentration >( getName(), &m_primarySpeciesTotalConcentration ).
+    reference().resizeDimension< 1 >( numPrimarySpecies );
+  subregion->registerField< fields::reactivefluid::kineticReactionRates >( getName(), &m_kineticReactionRates ).
+    reference().resizeDimension< 1 >( numKineticReactions );
 }
 
 void ReactiveMultiFluid::createChemicalReactions()

@@ -112,6 +112,9 @@ public:
 
   virtual string getCatalogName() const override { return catalogName(); }
 
+  virtual void allocateConstitutiveData( Group & parent,
+                                         localIndex const numConstitutivePointsPerParentIndex ) override;
+
   virtual void initializeState() const override final;
 
   /// Type of kernel wrapper for in-kernel update
@@ -137,7 +140,7 @@ public:
 
 protected:
 
-  virtual void resizeFields( localIndex const size, localIndex const numPts ) override;
+  virtual void postInputInitialization() override;
 
 private:
 

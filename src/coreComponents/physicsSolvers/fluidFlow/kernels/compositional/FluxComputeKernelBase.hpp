@@ -29,6 +29,11 @@
 #include "constitutive/fluid/multifluid/MultiFluidFields.hpp"
 #include "constitutive/permeability/PermeabilityBase.hpp"
 #include "constitutive/permeability/PermeabilityFields.hpp"
+#include "constitutive/solid/porosity/PorosityFields.hpp"
+#include "constitutive/thermalConductivity/ThermalConductivityFields.hpp"
+#include "constitutive/relativePermeability/RelativePermeabilityFields.hpp"
+#include "constitutive/diffusion/DiffusionFields.hpp"
+#include "constitutive/dispersion/DispersionFields.hpp"
 #include "mesh/ElementRegionManager.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseBaseFields.hpp"
@@ -82,55 +87,66 @@ public:
 
   using DofNumberAccessor = ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > >;
 
-  using CompFlowAccessors =
-    StencilAccessors< fields::ghostRank,
-                      fields::flow::gravityCoefficient,
-                      fields::flow::pressure,
-                      fields::flow::dGlobalCompFraction_dGlobalCompDensity,
-                      fields::flow::phaseVolumeFraction,
-                      fields::flow::dPhaseVolumeFraction,
-                      fields::flow::phaseMobility,
-                      fields::flow::dPhaseMobility >;
-  using MultiFluidAccessors =
-    StencilMaterialAccessors< constitutive::MultiFluidBase,
-                              fields::multifluid::phaseDensity,
-                              fields::multifluid::dPhaseDensity,
-                              fields::multifluid::phaseMassDensity,
-                              fields::multifluid::dPhaseMassDensity,
-                              fields::multifluid::phaseCompFraction,
-                              fields::multifluid::dPhaseCompFraction >;
-
-  using CapPressureAccessors =
-    StencilMaterialAccessors< constitutive::CapillaryPressureBase,
-                              fields::cappres::phaseCapPressure,
-                              fields::cappres::dPhaseCapPressure_dPhaseVolFraction >;
-
-  using PermeabilityAccessors =
-    StencilMaterialAccessors< constitutive::PermeabilityBase,
-                              fields::permeability::permeability,
-                              fields::permeability::dPerm_dPressure >;
+  template< typename ... Extra >
+  using FieldAccessors = StencilAccessors<
+    // common required fields
+    fields::ghostRank,
+    fields::flow::gravityCoefficient,
+    fields::flow::pressure,
+    fields::flow::dGlobalCompFraction_dGlobalCompDensity,
+    fields::flow::phaseVolumeFraction,
+    fields::flow::dPhaseVolumeFraction,
+    fields::flow::phaseMobility,
+    fields::flow::dPhaseMobility,
+    fields::cappres::phaseCapPressure,
+    fields::cappres::dPhaseCapPressure_dPhaseVolFraction,
+    fields::multifluid::phaseDensity,
+    fields::multifluid::dPhaseDensity,
+    fields::multifluid::phaseMassDensity,
+    fields::multifluid::dPhaseMassDensity,
+    fields::multifluid::phaseCompFraction,
+    fields::multifluid::dPhaseCompFraction,
+    fields::permeability::permeability,
+    fields::permeability::dPerm_dPressure,
+    Extra... // child can add more
+    >;
 
   /**
    * @brief Constructor for the kernel interface
    * @param[in] numPhases the number of fluid phases
    * @param[in] rankOffset the offset of my MPI rank
    * @param[in] dofNumberAccessor accessor for the dof numbers
-   * @param[in] compFlowAccessors accessor for wrappers registered by the solver
-   * @param[in] multiFluidAccessors accessor for wrappers registered by the multifluid model
+   * @param[in] fieldAccessors accessor for registered field data wrappers
    * @param[in] dt time step size
    * @param[inout] localMatrix the local CRS matrix
    * @param[inout] localRhs the local right-hand side vector
    * @param[in] kernelFlags flags packed all together
    */
+  template< typename FieldAccessorsT >
   FluxComputeKernelBase( integer const numPhases,
                          globalIndex const rankOffset,
                          DofNumberAccessor const & dofNumberAccessor,
-                         CompFlowAccessors const & compFlowAccessors,
-                         MultiFluidAccessors const & multiFluidAccessors,
+                         FieldAccessorsT const & fieldAccessors,
                          real64 const dt,
                          CRSMatrixView< real64, globalIndex const > const & localMatrix,
                          arrayView1d< real64 > const & localRhs,
-                         BitFlags< KernelFlags > kernelFlags );
+                         BitFlags< KernelFlags > kernelFlags )
+    : m_numPhases( numPhases ),
+    m_rankOffset( rankOffset ),
+    m_dt( dt ),
+    m_dofNumber( dofNumberAccessor.toNestedViewConst() ),
+    m_ghostRank( fieldAccessors.get( fields::ghostRank {} ) ),
+    m_gravCoef( fieldAccessors.get( fields::flow::gravityCoefficient {} ) ),
+    m_pres( fieldAccessors.get( fields::flow::pressure {} ) ),
+    m_phaseVolFrac( fieldAccessors.get( fields::flow::phaseVolumeFraction {} ) ),
+    m_dPhaseVolFrac( fieldAccessors.get( fields::flow::dPhaseVolumeFraction {} ) ),
+    m_dCompFrac_dCompDens( fieldAccessors.get( fields::flow::dGlobalCompFraction_dGlobalCompDensity {} ) ),
+    m_phaseCompFrac( fieldAccessors.get( fields::multifluid::phaseCompFraction {} ) ),
+    m_dPhaseCompFrac( fieldAccessors.get( fields::multifluid::dPhaseCompFraction {} ) ),
+    m_localMatrix( localMatrix ),
+    m_localRhs( localRhs ),
+    m_kernelFlags( kernelFlags )
+  {}
 
 protected:
 

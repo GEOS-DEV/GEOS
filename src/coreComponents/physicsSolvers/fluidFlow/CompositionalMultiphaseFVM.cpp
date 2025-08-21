@@ -1416,9 +1416,7 @@ void CompositionalMultiphaseFVM::applyAquiferBC( real64 const time,
     elemDofNumber.setName( getName() + "/accessors/" + elemDofKey );
 
     isothermalCompositionalMultiphaseFVMKernels::
-      AquiferBCKernel::CompFlowAccessors compFlowAccessors( mesh.getElemManager(), getName() );
-    isothermalCompositionalMultiphaseFVMKernels::
-      AquiferBCKernel::MultiFluidAccessors multiFluidAccessors( mesh.getElemManager(), getName() );
+      AquiferBCKernel::FieldAccessors fieldAccessors( mesh.getElemManager(), getName() );
 
     fsManager.apply< FaceManager,
                      AquiferBoundaryCondition >( time + dt,
@@ -1465,17 +1463,17 @@ void CompositionalMultiphaseFVM::applyAquiferBC( real64 const time,
                                                                         aquiferBCWrapper,
                                                                         aquiferWaterPhaseDens,
                                                                         aquiferWaterPhaseCompFrac,
-                                                                        compFlowAccessors.get( fields::ghostRank{} ),
-                                                                        compFlowAccessors.get( flow::pressure{} ),
-                                                                        compFlowAccessors.get( flow::pressure_n{} ),
-                                                                        compFlowAccessors.get( flow::gravityCoefficient{} ),
-                                                                        compFlowAccessors.get( flow::phaseVolumeFraction{} ),
-                                                                        compFlowAccessors.get( flow::dPhaseVolumeFraction{} ),
-                                                                        compFlowAccessors.get( flow::dGlobalCompFraction_dGlobalCompDensity{} ),
-                                                                        multiFluidAccessors.get( fields::multifluid::phaseDensity{} ),
-                                                                        multiFluidAccessors.get( fields::multifluid::dPhaseDensity{} ),
-                                                                        multiFluidAccessors.get( fields::multifluid::phaseCompFraction{} ),
-                                                                        multiFluidAccessors.get( fields::multifluid::dPhaseCompFraction{} ),
+                                                                        fieldAccessors.get( fields::ghostRank{} ),
+                                                                        fieldAccessors.get( flow::pressure{} ),
+                                                                        fieldAccessors.get( flow::pressure_n{} ),
+                                                                        fieldAccessors.get( flow::gravityCoefficient{} ),
+                                                                        fieldAccessors.get( flow::phaseVolumeFraction{} ),
+                                                                        fieldAccessors.get( flow::dPhaseVolumeFraction{} ),
+                                                                        fieldAccessors.get( flow::dGlobalCompFraction_dGlobalCompDensity{} ),
+                                                                        fieldAccessors.get( fields::multifluid::phaseDensity{} ),
+                                                                        fieldAccessors.get( fields::multifluid::dPhaseDensity{} ),
+                                                                        fieldAccessors.get( fields::multifluid::phaseCompFraction{} ),
+                                                                        fieldAccessors.get( fields::multifluid::dPhaseCompFraction{} ),
                                                                         time,
                                                                         dt,
                                                                         localMatrix.toViewConstSizes(),
@@ -1623,15 +1621,9 @@ void CompositionalMultiphaseFVM::computeCFLNumbers( geos::DomainPartition & doma
     FluxApproximationBase & fluxApprox = fvManager.getFluxApproximation( getDiscretizationName() );
 
     isothermalCompositionalMultiphaseFVMKernels::
-      CFLFluxKernel::CompFlowAccessors compFlowAccessors( mesh.getElemManager(), getName() );
-    isothermalCompositionalMultiphaseFVMKernels::
-      CFLFluxKernel::MultiFluidAccessors multiFluidAccessors( mesh.getElemManager(), getName() );
-    isothermalCompositionalMultiphaseFVMKernels::
-      CFLFluxKernel::PermeabilityAccessors permeabilityAccessors( mesh.getElemManager(), getName() );
-    isothermalCompositionalMultiphaseFVMKernels::
-      CFLFluxKernel::RelPermAccessors relPermAccessors( mesh.getElemManager(), getName() );
+      CFLFluxKernel::FieldAccessors fieldAccessors( mesh.getElemManager(), getName() );
 
-    // TODO: find a way to compile with this modifiable accessors in CompFlowAccessors, and remove them from here
+    // TODO: find a way to compile with this modifiable accessors in FieldAccessors, and remove them from here
     ElementRegionManager::ElementViewAccessor< arrayView2d< real64, compflow::USD_PHASE > > const phaseOutfluxAccessor =
       mesh.getElemManager().constructViewAccessor< array2d< real64, compflow::LAYOUT_PHASE >,
                                                    arrayView2d< real64, compflow::USD_PHASE > >( flow::phaseOutflux::key() );
@@ -1652,16 +1644,16 @@ void CompositionalMultiphaseFVM::computeCFLNumbers( geos::DomainPartition & doma
                                                                       m_gravityDensityScheme == GravityDensityScheme::PhasePresence,
                                                                       dt,
                                                                       stencilWrapper,
-                                                                      compFlowAccessors.get( flow::pressure{} ),
-                                                                      compFlowAccessors.get( flow::gravityCoefficient{} ),
-                                                                      compFlowAccessors.get( flow::phaseVolumeFraction{} ),
-                                                                      permeabilityAccessors.get( permeability::permeability{} ),
-                                                                      permeabilityAccessors.get( permeability::dPerm_dPressure{} ),
-                                                                      relPermAccessors.get( fields::relperm::phaseRelPerm{} ),
-                                                                      multiFluidAccessors.get( fields::multifluid::phaseViscosity{} ),
-                                                                      multiFluidAccessors.get( fields::multifluid::phaseDensity{} ),
-                                                                      multiFluidAccessors.get( fields::multifluid::phaseMassDensity{} ),
-                                                                      multiFluidAccessors.get( fields::multifluid::phaseCompFraction{} ),
+                                                                      fieldAccessors.get( flow::pressure{} ),
+                                                                      fieldAccessors.get( flow::gravityCoefficient{} ),
+                                                                      fieldAccessors.get( flow::phaseVolumeFraction{} ),
+                                                                      fieldAccessors.get( permeability::permeability{} ),
+                                                                      fieldAccessors.get( permeability::dPerm_dPressure{} ),
+                                                                      fieldAccessors.get( fields::relperm::phaseRelPerm{} ),
+                                                                      fieldAccessors.get( fields::multifluid::phaseViscosity{} ),
+                                                                      fieldAccessors.get( fields::multifluid::phaseDensity{} ),
+                                                                      fieldAccessors.get( fields::multifluid::phaseMassDensity{} ),
+                                                                      fieldAccessors.get( fields::multifluid::phaseCompFraction{} ),
                                                                       phaseOutfluxAccessor.toNestedView(),
                                                                       compOutfluxAccessor.toNestedView() );
     } );

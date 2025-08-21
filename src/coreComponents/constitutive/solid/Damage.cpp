@@ -18,6 +18,7 @@
  */
 
 #include "Damage.hpp"
+#include "mesh/ElementSubRegionBase.hpp"
 
 namespace geos
 {
@@ -49,36 +50,6 @@ Damage< BASE >::Damage( string const & name, Group * const parent ):
   m_compressStrength(),
   m_deltaCoefficient()
 {
-  this->registerWrapper( viewKeyStruct::newDamageString(), &m_newDamage ).
-    setApplyDefaultValue( 0.0 ).
-    setPlotLevel( PlotLevel::LEVEL_0 ).
-    setDescription( "Material New Damage Variable" );
-
-  this->registerWrapper( viewKeyStruct::oldDamageString(), &m_oldDamage ).
-    setApplyDefaultValue( 0.0 ).
-    setPlotLevel( PlotLevel::LEVEL_0 ).
-    setDescription( "Material Old Damage Variable" );
-
-  this->registerWrapper( viewKeyStruct::damageGradString(), &m_damageGrad ).
-    setApplyDefaultValue( 0.0 ).
-    setPlotLevel( PlotLevel::LEVEL_0 ).
-    setDescription( "Material Damage Gradient" );
-
-  this->registerWrapper( viewKeyStruct::strainEnergyDensityString(), &m_strainEnergyDensity ).
-    setApplyDefaultValue( 0.0 ).
-    setPlotLevel( PlotLevel::LEVEL_0 ).
-    setDescription( "Strain Energy Density" );
-
-  this->registerWrapper( viewKeyStruct::volumetricStrainString(), &m_volStrain ).
-    setApplyDefaultValue( 0.0 ).
-    setPlotLevel( PlotLevel::LEVEL_0 ).
-    setDescription( "Volumetric strain" );
-
-  this->registerWrapper( viewKeyStruct::extDrivingForceString(), &m_extDrivingForce ).
-    setApplyDefaultValue( 0.0 ).
-    setPlotLevel( PlotLevel::LEVEL_0 ).
-    setDescription( "External Driving Force" );
-
   this->registerWrapper( viewKeyStruct::lengthScaleString(), &m_lengthScale ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Length scale l in the phase-field equation" );
@@ -176,18 +147,50 @@ void Damage< BASE >::postInputInitialization()
 }
 
 template< typename BASE >
-void Damage< BASE >::resizeFields( localIndex const size,
-                                   localIndex const numPts )
+void Damage< BASE >::allocateConstitutiveData( Group & parent,
+                                               localIndex const numConstitutivePointsPerParentIndex )
 {
-  BASE::resizeFields( size, numPts );
+  BASE::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 
-  // 0 to resize and assign default value later
-  m_newDamage.resize( 0, numPts );
-  m_oldDamage.resize( 0, numPts );
-  m_damageGrad.resize( 0, numPts, 3 );
-  m_strainEnergyDensity.resize( 0, numPts );
-  m_volStrain.resize( 0, numPts );
-  m_extDrivingForce.resize( 0, numPts );
+  auto subregion = dynamic_cast< ElementSubRegionBase * >( &parent ); // TODO remove
+
+  // TODO use registerField
+
+  subregion->registerWrapper( viewKeyStruct::newDamageString(), &m_newDamage ).
+    setApplyDefaultValue( 0.0 ).
+    setPlotLevel( PlotLevel::LEVEL_0 ).
+    setDescription( "Material New Damage Variable" ).
+    reference().template resizeDimension< 1 >( numConstitutivePointsPerParentIndex );
+
+  subregion->registerWrapper( viewKeyStruct::oldDamageString(), &m_oldDamage ).
+    setApplyDefaultValue( 0.0 ).
+    setPlotLevel( PlotLevel::LEVEL_0 ).
+    setDescription( "Material Old Damage Variable" ).
+    reference().template resizeDimension< 1 >( numConstitutivePointsPerParentIndex );
+
+  subregion->registerWrapper( viewKeyStruct::damageGradString(), &m_damageGrad ).
+    setApplyDefaultValue( 0.0 ).
+    setPlotLevel( PlotLevel::LEVEL_0 ).
+    setDescription( "Material Damage Gradient" ).
+    reference().template resizeDimension< 1, 2 >( numConstitutivePointsPerParentIndex, 3 );
+
+  subregion->registerWrapper( viewKeyStruct::strainEnergyDensityString(), &m_strainEnergyDensity ).
+    setApplyDefaultValue( 0.0 ).
+    setPlotLevel( PlotLevel::LEVEL_0 ).
+    setDescription( "Strain Energy Density" ).
+    reference().template resizeDimension< 1 >( numConstitutivePointsPerParentIndex );
+
+  subregion->registerWrapper( viewKeyStruct::volumetricStrainString(), &m_volStrain ).
+    setApplyDefaultValue( 0.0 ).
+    setPlotLevel( PlotLevel::LEVEL_0 ).
+    setDescription( "Volumetric strain" ).
+    reference().template resizeDimension< 1 >( numConstitutivePointsPerParentIndex );
+
+  subregion->registerWrapper( viewKeyStruct::extDrivingForceString(), &m_extDrivingForce ).
+    setApplyDefaultValue( 0.0 ).
+    setPlotLevel( PlotLevel::LEVEL_0 ).
+    setDescription( "External Driving Force" ).
+    reference().template resizeDimension< 1 >( numConstitutivePointsPerParentIndex );
 }
 
 template< typename BASE >

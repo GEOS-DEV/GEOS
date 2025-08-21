@@ -21,6 +21,7 @@
 
 #include "ThermalConductivityFields.hpp"
 #include "MultiPhaseThermalConductivityFields.hpp"
+#include "mesh/ElementSubRegionBase.hpp"
 
 namespace geos
 {
@@ -37,21 +38,25 @@ MultiPhaseVolumeWeightedThermalConductivity::MultiPhaseVolumeWeightedThermalCond
     setInputFlag( InputFlags::REQUIRED ).
     setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "xx, yy, and zz components of a diagonal rock thermal conductivity tensor [W/(m.K)]" );
+}
 
-  registerWrapper( viewKeyStruct::phaseThermalConductivityString(), &m_phaseThermalConductivity ).
+void MultiPhaseVolumeWeightedThermalConductivity::allocateConstitutiveData( Group & parent,
+                                                                            localIndex const numConstitutivePointsPerParentIndex )
+{
+  MultiPhaseThermalConductivityBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
+
+  auto subregion = dynamic_cast< ElementSubRegionBase * >( &parent ); // TODO remove
+
+  // TODO use registerField
+  subregion->registerWrapper( viewKeyStruct::phaseThermalConductivityString(), &m_phaseThermalConductivity ).
     setInputFlag( InputFlags::REQUIRED ).
     setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "Phase thermal conductivity [W/(m.K)]" );
 
-  registerField< fields::thermalconductivity::rockThermalConductivity >( &m_rockThermalConductivity );
-}
-
-void MultiPhaseVolumeWeightedThermalConductivity::resizeFields( localIndex const size, localIndex const numPts )
-{
-  MultiPhaseThermalConductivityBase::resizeFields( size, numPts );
+  subregion->registerField< fields::thermalconductivity::rockThermalConductivity >( getName(), &m_rockThermalConductivity );
 
   // TODO move into initializeState?
-  for( localIndex ei = 0; ei < size; ++ei )
+  for( localIndex ei = 0; ei < parent.size(); ++ei )
   {
     for( localIndex q = 0; q < 1; ++q )
     {

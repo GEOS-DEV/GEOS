@@ -80,6 +80,9 @@ public:
   virtual string getCatalogName() const override
   { return catalogName(); }
 
+  virtual void allocateConstitutiveData( Group & parent,
+                                         localIndex const numConstitutivePointsPerParentIndex ) override;
+
   /// Type of kernel wrapper for in-kernel update
   class KernelWrapper final : public RelativePermeabilityBaseUpdate
   {
@@ -451,9 +454,6 @@ private:
   virtual void postInputInitialization() override;
 
   virtual void initializePreSubGroups() override;
-
-  virtual void resizeFields( localIndex const size,
-                             localIndex const numPts ) override;
 
   /**
    * @brief Create all the table kernel wrappers needed for the simulation (for all the phases present)

@@ -118,6 +118,9 @@ public:
    */
   virtual string getCatalogName() const override { return catalogName(); }
 
+  virtual void allocateConstitutiveData( Group & parent,
+                                         localIndex const numConstitutivePointsPerParentIndex ) override;
+
   /// Post-process XML input
   virtual void postInputInitialization() override;
 
@@ -172,9 +175,6 @@ public:
 
 
 protected:
-
-  virtual void resizeFields( localIndex const size, localIndex const numPts ) override;
-
   /// scalar compressibility parameter
   real64 m_compressibility;
 

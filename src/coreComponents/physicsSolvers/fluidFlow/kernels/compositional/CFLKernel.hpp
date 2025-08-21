@@ -61,28 +61,19 @@ struct CFLFluxKernel
   template< typename VIEWTYPE >
   using ElementView = ElementRegionManager::ElementView< VIEWTYPE >;
 
-  using CompFlowAccessors =
+  using FieldAccessors =
     StencilAccessors< fields::flow::pressure,
                       fields::flow::gravityCoefficient,
                       fields::flow::phaseVolumeFraction,
                       fields::flow::phaseOutflux,
-                      fields::flow::componentOutflux >;
-
-  using MultiFluidAccessors =
-    StencilMaterialAccessors< constitutive::MultiFluidBase,
-                              fields::multifluid::phaseViscosity,
-                              fields::multifluid::phaseDensity,
-                              fields::multifluid::phaseMassDensity,
-                              fields::multifluid::phaseCompFraction >;
-
-  using PermeabilityAccessors =
-    StencilMaterialAccessors< constitutive::PermeabilityBase,
-                              fields::permeability::permeability,
-                              fields::permeability::dPerm_dPressure >;
-
-
-  using RelPermAccessors =
-    StencilMaterialAccessors< constitutive::RelativePermeabilityBase, fields::relperm::phaseRelPerm >;
+                      fields::flow::componentOutflux,
+                      fields::multifluid::phaseViscosity,
+                      fields::multifluid::phaseDensity,
+                      fields::multifluid::phaseMassDensity,
+                      fields::multifluid::phaseCompFraction,
+                      fields::permeability::permeability,
+                      fields::permeability::dPerm_dPressure,
+                      fields::relperm::phaseRelPerm >;
 
   template< integer NC >
   GEOS_HOST_DEVICE inline static void

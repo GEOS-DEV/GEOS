@@ -18,6 +18,7 @@
  */
 
 #include "DelftEgg.hpp"
+#include "mesh/ElementSubRegionBase.hpp"
 
 namespace geos
 {
@@ -83,25 +84,26 @@ DelftEgg::DelftEgg( string const & name, Group * const parent ):
   registerWrapper( viewKeyStruct::shapeParameterString(), &m_shapeParameter ).
     setApplyDefaultValue( -1 ).
     setDescription( "Shape parameter for the yield surface" );
-
-  registerWrapper( viewKeyStruct::newPreConsolidationPressureString(), &m_newPreConsolidationPressure ).
-    setApplyDefaultValue( -1 ).
-    setPlotLevel( dataRepository::PlotLevel::LEVEL_3 ).
-    setDescription( "New preconsolidation pressure" );
-
-  registerWrapper( viewKeyStruct::oldPreConsolidationPressureString(), &m_oldPreConsolidationPressure ).
-    setApplyDefaultValue( -1 ).
-    setDescription( "Old preconsolidation pressure" );
 }
 
 
-void DelftEgg::resizeFields( localIndex const size, localIndex const numPts )
+void DelftEgg::allocateConstitutiveData( Group & parent,
+                                         localIndex const numConstitutivePointsPerParentIndex )
 {
-  ElasticIsotropic::resizeFields( size, numPts );
+  ElasticIsotropic::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 
-  // 0 to resize and assign default value later
-  m_newPreConsolidationPressure.resize( 0, numPts );
-  m_oldPreConsolidationPressure.resize( 0, numPts );
+  auto subregion = dynamic_cast< ElementSubRegionBase * >( &parent ); // TODO remove
+
+  subregion->registerWrapper( viewKeyStruct::newPreConsolidationPressureString(), &m_newPreConsolidationPressure ).
+    setApplyDefaultValue( -1 ).
+    setPlotLevel( dataRepository::PlotLevel::LEVEL_3 ).
+    setDescription( "New preconsolidation pressure" ).
+    reference().resizeDimension< 1 >( numConstitutivePointsPerParentIndex );
+
+  subregion->registerWrapper( viewKeyStruct::oldPreConsolidationPressureString(), &m_oldPreConsolidationPressure ).
+    setApplyDefaultValue( -1 ).
+    setDescription( "Old preconsolidation pressure" ).
+    reference().resizeDimension< 1 >( numConstitutivePointsPerParentIndex );
 }
 
 

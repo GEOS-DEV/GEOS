@@ -56,21 +56,18 @@ struct AquiferBCKernel
   template< typename VIEWTYPE >
   using ElementViewConst = ElementRegionManager::ElementViewConst< VIEWTYPE >;
 
-  using CompFlowAccessors =
+  using FieldAccessors =
     StencilAccessors< fields::ghostRank,
                       fields::flow::pressure,
                       fields::flow::pressure_n,
                       fields::flow::gravityCoefficient,
                       fields::flow::phaseVolumeFraction,
                       fields::flow::dPhaseVolumeFraction,
-                      fields::flow::dGlobalCompFraction_dGlobalCompDensity >;
-
-  using MultiFluidAccessors =
-    StencilMaterialAccessors< constitutive::MultiFluidBase,
-                              fields::multifluid::phaseDensity,
-                              fields::multifluid::dPhaseDensity,
-                              fields::multifluid::phaseCompFraction,
-                              fields::multifluid::dPhaseCompFraction >;
+                      fields::flow::dGlobalCompFraction_dGlobalCompDensity,
+                      fields::multifluid::phaseDensity,
+                      fields::multifluid::dPhaseDensity,
+                      fields::multifluid::phaseCompFraction,
+                      fields::multifluid::dPhaseCompFraction >;
 
   template< integer NC >
   GEOS_HOST_DEVICE

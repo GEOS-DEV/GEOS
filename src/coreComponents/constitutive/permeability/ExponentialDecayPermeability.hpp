@@ -98,6 +98,9 @@ public:
 
   virtual string getCatalogName() const override { return catalogName(); }
 
+  virtual void allocateConstitutiveData( Group & parent,
+                                         localIndex const numConstitutivePointsPerParentIndex ) override;
+
   /// Type of kernel wrapper for in-kernel update
   using KernelWrapper = ExponentialDecayPermeabilityUpdate;
 
@@ -114,10 +117,6 @@ public:
                           m_empiricalConstant,
                           m_initialPermeability );
   }
-
-
-protected:
-  virtual void resizeFields( localIndex const size, localIndex const numPts ) override;
 
 private:
 

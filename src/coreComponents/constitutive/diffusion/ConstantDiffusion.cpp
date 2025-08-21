@@ -36,11 +36,12 @@ ConstantDiffusion::ConstantDiffusion( string const & name, Group * const parent 
     setDescription( "xx, yy, and zz components of a diffusivity tensor [m^2/s]" );
 }
 
-void ConstantDiffusion::resizeFields( localIndex const size, localIndex const numPts )
+void ConstantDiffusion::allocateConstitutiveData( dataRepository::Group & parent,
+                                                  localIndex const numConstitutivePointsPerParentIndex )
 {
-  DiffusionBase::resizeFields( size, numPts );
+  DiffusionBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 
-  for( localIndex ei = 0; ei < size; ++ei ) // TODO move into initializeState?
+  for( localIndex ei = 0; ei < parent.size(); ++ei ) // TODO move into initializeState?
   {
     // NOTE: enforcing 1 quadrature point
     for( localIndex q = 0; q < 1; ++q )

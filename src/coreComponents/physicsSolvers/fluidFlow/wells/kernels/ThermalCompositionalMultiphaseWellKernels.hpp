@@ -701,14 +701,12 @@ public:
 
   /**
    * @brief Constructor for the kernel interface
-   * @param[in] rankOffset the offset of my MPI rank
-   * @param[in] stencilWrapper reference to the stencil wrapper
-   * @param[in] dofNumberAccessor
-   * @param[in] compFlowAccessors
-   * @param[in] multiFluidAccessors
-   * @param[in] capPressureAccessors
-   * @param[in] permeabilityAccessors
    * @param[in] dt time step size
+   * @param[in] rankOffset the offset of my MPI rank
+   * @param[in] wellDofKey
+   * @param[in] wellControls
+   * @param[in] subRegion
+   * @param[in] fluid
    * @param[inout] localMatrix the local CRS matrix
    * @param[inout] localRhs the local right-hand side vector
    * @param[in] kernelFlags flags packed together

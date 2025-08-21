@@ -20,6 +20,7 @@
 #include "ParallelPlatesPermeability.hpp"
 
 #include "constitutive/permeability/PermeabilityFields.hpp"
+#include "mesh/ElementSubRegionBase.hpp"
 
 namespace geos
 {
@@ -39,16 +40,23 @@ ParallelPlatesPermeability::ParallelPlatesPermeability( string const & name, Gro
     setInputFlag( InputFlags::OPTIONAL ).
     setSizedFromParent( 0 ).
     setDescription( "Default value of the permeability normal to the surface. If not specified the permeability is updated using the cubic law. " );
-
-  registerField< fields::permeability::dPerm_dDispJump >( &m_dPerm_dDispJump );
 }
 
-void ParallelPlatesPermeability::resizeFields( localIndex const size, localIndex const numPts )
+void ParallelPlatesPermeability::allocateConstitutiveData( Group & parent,
+                                                           localIndex const numConstitutivePointsPerParentIndex )
 {
-  PermeabilityBase::resizeFields( size, numPts );
+  PermeabilityBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
+
+  auto subregion = dynamic_cast< ElementSubRegionBase * >( &parent ); // TODO remove
 
   // NOTE: enforcing 1 quadrature point
-  m_dPerm_dDispJump.resize( size, 1, 3, 3 );
+  subregion->registerField< fields::permeability::dPerm_dDispJump >( getName(), &m_dPerm_dDispJump ).
+    reference().resizeDimension< 1, 2, 3 >( 1, 3, 3 );
+}
+
+void ParallelPlatesPermeability::postInputInitialization()
+{
+  PermeabilityBase::postInputInitialization();
 
   if( m_transversalPermeability > -1 )
   {
