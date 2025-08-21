@@ -241,7 +241,7 @@ TEST( ErrorHandling, testYamlFileOutputFormat )
                                          << "-----------------------\n";
     }
 
-    // removeFile();
+    removeFile();
   }
 }
 
