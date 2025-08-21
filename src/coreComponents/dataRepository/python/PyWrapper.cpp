@@ -19,7 +19,7 @@
 
 // Source includes
 #include "PyWrapper.hpp"
-
+#include "dataRepository/Wrapper.hpp"
 
 #define VERIFY_NON_NULL_SELF( self ) \
   PYTHON_ERROR_IF( self == nullptr, PyExc_RuntimeError, "Passed a nullptr as self.", nullptr )
@@ -31,16 +31,6 @@ namespace geos
 {
 namespace python
 {
-
-struct PyWrapper
-{
-  PyObject_HEAD
-
-  static constexpr char const * docString =
-    "A Python interface to geos::dataRepository::WrapperBase.";
-
-  dataRepository::WrapperBase * wrapper;
-};
 
 /**
  *
@@ -100,10 +90,83 @@ static PyObject * PyWrapper_value( PyWrapper * const self, PyObject * const args
   return ret;
 }
 
+
+template< typename T >
+bool trySetValue( dataRepository::WrapperBase * base, T const & value )
+{
+  auto * wrapper = dynamic_cast< dataRepository::Wrapper< T > * >( base );
+  if( wrapper )
+  {
+    wrapper->reference() = value;
+    return true;
+  }
+  return false;
+}
+
+
+PyObject * PyWrapper_setValue( PyWrapper * const self, PyObject * const args )
+{
+  VERIFY_NON_NULL_SELF( self );
+  VERIFY_INITIALIZED( self );
+
+  PyObject * pyValue = nullptr;
+  if( !PyArg_ParseTuple( args, "O", &pyValue ) )
+  {
+    return nullptr;
+  }
+
+  try
+  {
+    bool success = false;
+
+    if( PyUnicode_Check( pyValue ) )
+    {
+      const char * strVal = PyUnicode_AsUTF8( pyValue );
+      success = trySetValue( self->wrapper, std::string( strVal ) );
+      if( !success )
+        PyErr_SetString( PyExc_TypeError, "Wrapper is not a std::string." );
+    }
+    else if( PyFloat_Check( pyValue ) )
+    {
+      double val = PyFloat_AsDouble( pyValue );
+      success = trySetValue( self->wrapper, val );
+      if( !success )
+        PyErr_SetString( PyExc_TypeError, "Wrapper is not a double." );
+    }
+    else if( PyLong_Check( pyValue ) )
+    {
+      long val = PyLong_AsLong( pyValue );
+      success = trySetValue( self->wrapper, static_cast< int >( val ) ) ||
+                trySetValue( self->wrapper, val );
+      if( !success )
+        PyErr_SetString( PyExc_TypeError, "Wrapper is not an int or long." );
+    }
+    else
+    {
+      PyErr_SetString( PyExc_TypeError, "Unsupported Python type for assignment." );
+      return nullptr;
+    }
+
+    if( !success )
+    {
+      return nullptr;
+    }
+
+    Py_RETURN_NONE;
+  }
+  catch( std::exception const & e )
+  {
+    PyErr_SetString( PyExc_RuntimeError, e.what() );
+    return nullptr;
+  }
+}
+
+
 BEGIN_ALLOW_DESIGNATED_INITIALIZERS
 
 static PyMethodDef PyWrapperMethods[] = {
   { "value", (PyCFunction) PyWrapper_value, METH_VARARGS, PyWrapper_valueDocString },
+  { "set_value", (PyCFunction) PyWrapper_setValue, METH_VARARGS, "Set the value of a scalar wrapper (string, int, float)." },
   { nullptr, nullptr, 0, nullptr } // Sentinel
 };
 
