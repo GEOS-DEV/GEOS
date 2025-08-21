@@ -67,6 +67,7 @@ public:
 
   using TAG = wellTags::SubRegionTag;
 
+  template< typename ... Extra >
   using FieldAccessors =
     StencilAccessors< fields::flow::pressure,
                       fields::flow::phaseVolumeFraction,
@@ -80,10 +81,7 @@ public:
                       fields::multifluid::dPhaseCompFraction,
                       fields::relperm::phaseRelPerm,
                       fields::relperm::dPhaseRelPerm_dPhaseVolFraction,
-                      //thermal
-                      fields::flow::temperature,
-                      fields::multifluid::phaseEnthalpy,
-                      fields::multifluid::dPhaseEnthalpy >;
+                      Extra... >; // child can add more
 
   /**
    * @brief The type for element-based non-constitutive data parameters.
@@ -95,9 +93,10 @@ public:
   template< typename VIEWTYPE >
   using ElementViewConst = ElementRegionManager::ElementViewConst< VIEWTYPE >;
 
+  template< typename FieldAccessorT >
   PerforationFluxKernel ( PerforationData * const perforationData,
                           ElementSubRegionBase const & subRegion,
-                          FieldAccessors const & fieldAccessors,
+                          FieldAccessorT const & fieldAccessors,
                           bool const disableReservoirToWellFlow ):
     m_resPres( fieldAccessors.get( fields::flow::pressure {} )),
     m_resPhaseVolFrac( fieldAccessors.get( fields::flow::phaseVolumeFraction {} )),
@@ -555,7 +554,7 @@ public:
       integer constexpr IS_THERMAL = 0;
 
       using kernelType = PerforationFluxKernel< NUM_COMP, NUM_PHASE, IS_THERMAL >;
-      typename kernelType::FieldAccessors fieldAccessors( elemManager, flowSolverName );
+      typename kernelType::FieldAccessors<> fieldAccessors( elemManager, flowSolverName );
 
       kernelType kernel( perforationData, subRegion, fieldAccessors, disableReservoirToWellFlow );
       kernelType::template launch< POLICY >( perforationData->size(), kernel );
@@ -578,13 +577,14 @@ class PerforationFluxKernel : public isothermalPerforationFluxKernels::Perforati
 public:
 
   using Base = isothermalPerforationFluxKernels::PerforationFluxKernel< NC, NP, IS_THERMAL >;
-  //using AbstractBase::m_dPhaseVolFrac;
+  using FieldAccessors = typename Base::FieldAccessors<
+    fields::flow::temperature,
+    fields::multifluid::phaseEnthalpy,
+    fields::multifluid::dPhaseEnthalpy >;
   using Base::m_resPhaseCompFrac;
   using Base::m_dResCompFrac_dCompDens;
   using Base::m_dWellElemCompFrac_dCompDens;
-  //using AbstractBase::m_dPhaseCompFrac;
-  //using AbstractBase::m_dCompFrac_dCompDens;
-  /// Compile time value for the number of components
+
   static constexpr integer numComp = NC;
 
   /// Compile time value for the number of phases
@@ -594,7 +594,6 @@ public:
   static constexpr integer isThermal = IS_THERMAL;
 
   using TAG =  typename Base::TAG;
-  using FieldAccessors = typename Base::FieldAccessors;
 
   /**
    * @brief The type for element-based non-constitutive data parameters.

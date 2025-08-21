@@ -45,11 +45,11 @@ public:
 
   using SinglePhaseFVMAbstractBase = singlePhaseFVMKernels::FluxComputeKernelBase;
   using DofNumberAccessor = SinglePhaseFVMAbstractBase::DofNumberAccessor;
-  using SinglePhaseFlowAccessors = SinglePhaseFVMAbstractBase::SinglePhaseFlowAccessors;
-  using SinglePhaseFluidAccessors = SinglePhaseFVMAbstractBase::SinglePhaseFluidAccessors;
-  using PermeabilityAccessors = SinglePhaseFVMAbstractBase::PermeabilityAccessors;
-  using FracturePermeabilityAccessors = StencilMaterialAccessors< constitutive::PermeabilityBase,
-                                                                  fields::permeability::dPerm_dDispJump >;
+  using FieldAccessors = SinglePhaseFVMAbstractBase::FieldAccessors< fields::permeability::dPerm_dDispJump,
+                                                                     fields::flow::temperature,
+                                                                     fields::singlefluid::enthalpy,
+                                                                     fields::singlefluid::dEnthalpy,
+                                                                     fields::thermalconductivity::effectiveConductivity >;
   using SinglePhaseFVMAbstractBase::m_dt;
   using SinglePhaseFVMAbstractBase::m_rankOffset;
   using SinglePhaseFVMAbstractBase::m_dofNumber;
@@ -73,30 +73,10 @@ public:
 
   using Base = singlePhasePoromechanicsConformingFracturesKernels::ConnectorBasedAssemblyKernel< NUM_EQN, NUM_DOF >;
 
-  using ThermalSinglePhaseFlowAccessors =
-    StencilAccessors< fields::flow::temperature >;
-
-  using ThermalSinglePhaseFluidAccessors =
-    StencilMaterialAccessors< constitutive::SingleFluidBase,
-                              fields::singlefluid::enthalpy,
-                              fields::singlefluid::dEnthalpy >;
-
-  using ThermalConductivityAccessors =
-    StencilMaterialAccessors< constitutive::SinglePhaseThermalConductivityBase,
-                              fields::thermalconductivity::effectiveConductivity >;
-
-
-
   ConnectorBasedAssemblyKernel( globalIndex const rankOffset,
                                 SurfaceElementStencilWrapper const & stencilWrapper,
                                 DofNumberAccessor const & flowDofNumberAccessor,
-                                SinglePhaseFlowAccessors const & singlePhaseFlowAccessors,
-                                ThermalSinglePhaseFlowAccessors const & thermalSinglePhaseFlowAccessors,
-                                SinglePhaseFluidAccessors const & singlePhaseFluidAccessors,
-                                ThermalSinglePhaseFluidAccessors const & thermalSinglePhaseFluidAccessors,
-                                PermeabilityAccessors const & permeabilityAccessors,
-                                FracturePermeabilityAccessors const & edfmPermeabilityAccessors,
-                                ThermalConductivityAccessors const & thermalConductivityAccessors,
+                                FieldAccessors const & fieldAccessors,
                                 real64 const & dt,
                                 CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                 arrayView1d< real64 > const & localRhs,
@@ -104,18 +84,15 @@ public:
     : Base( rankOffset,
             stencilWrapper,
             flowDofNumberAccessor,
-            singlePhaseFlowAccessors,
-            singlePhaseFluidAccessors,
-            permeabilityAccessors,
-            edfmPermeabilityAccessors,
+            fieldAccessors,
             dt,
             localMatrix,
             localRhs,
             dR_dAper ),
-    m_temp( thermalSinglePhaseFlowAccessors.get( fields::flow::temperature {} ) ),
-    m_enthalpy( thermalSinglePhaseFluidAccessors.get( fields::singlefluid::enthalpy {} ) ),
-    m_dEnthalpy( thermalSinglePhaseFluidAccessors.get( fields::singlefluid::dEnthalpy {} ) ),
-    m_thermalConductivity( thermalConductivityAccessors.get( fields::thermalconductivity::effectiveConductivity {} ) )
+    m_temp( fieldAccessors.get( fields::flow::temperature {} ) ),
+    m_enthalpy( fieldAccessors.get( fields::singlefluid::enthalpy {} ) ),
+    m_dEnthalpy( fieldAccessors.get( fields::singlefluid::dEnthalpy {} ) ),
+    m_thermalConductivity( fieldAccessors.get( fields::thermalconductivity::effectiveConductivity {} ) )
   {}
 
 
@@ -362,20 +339,10 @@ public:
     flowDofNumberAccessor.setName( solverName + "/accessors/" + flowDofKey );
 
     using kernelType = ConnectorBasedAssemblyKernel< NUM_EQN, NUM_DOF >;
-    typename kernelType::SinglePhaseFlowAccessors flowAccessors( elemManager, solverName );
-    typename kernelType::ThermalSinglePhaseFlowAccessors thermalFlowAccessors( elemManager, solverName );
-
-    typename kernelType::SinglePhaseFluidAccessors fluidAccessors( elemManager, solverName );
-    typename kernelType::ThermalSinglePhaseFluidAccessors thermalFluidAccessors( elemManager, solverName );
-
-    typename kernelType::PermeabilityAccessors permAccessors( elemManager, solverName );
-    typename kernelType::FracturePermeabilityAccessors edfmPermAccessors( elemManager, solverName );
-    typename kernelType::ThermalConductivityAccessors thermalConductivityAccessors( elemManager, solverName );
+    typename kernelType::FieldAccessors fieldAccessors( elemManager, solverName );
 
     kernelType kernel( rankOffset, stencilWrapper,
-                       flowDofNumberAccessor,
-                       flowAccessors, thermalFlowAccessors, fluidAccessors, thermalFluidAccessors,
-                       permAccessors, edfmPermAccessors, thermalConductivityAccessors,
+                       flowDofNumberAccessor, fieldAccessors,
                        dt, localMatrix, localRhs, dR_dAper );
 
     kernelType::template launch< POLICY >( stencilWrapper.size(), kernel );

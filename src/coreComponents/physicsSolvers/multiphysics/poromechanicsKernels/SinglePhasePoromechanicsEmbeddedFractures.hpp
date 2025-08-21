@@ -46,11 +46,7 @@ public:
 
   using AbstractBase = singlePhaseFVMKernels::FluxComputeKernelBase;
   using DofNumberAccessor = AbstractBase::DofNumberAccessor;
-  using SinglePhaseFlowAccessors = AbstractBase::SinglePhaseFlowAccessors;
-  using SinglePhaseFluidAccessors = AbstractBase::SinglePhaseFluidAccessors;
-  using PermeabilityAccessors = AbstractBase::PermeabilityAccessors;
-  using FracturePermeabilityAccessors = StencilMaterialAccessors< constitutive::PermeabilityBase,
-                                                                  fields::permeability::dPerm_dDispJump >;
+  using FieldAccessors = AbstractBase::FieldAccessors< fields::permeability::dPerm_dDispJump >;
   using AbstractBase::m_dt;
   using AbstractBase::m_rankOffset;
   using AbstractBase::m_dofNumber;
@@ -76,29 +72,24 @@ public:
   using Base::m_ghostRank;
 
 
-
+  template< typename FieldAccessorsT >
   ConnectorBasedAssemblyKernel( globalIndex const rankOffset,
                                 SurfaceElementStencilWrapper const & stencilWrapper,
                                 DofNumberAccessor const & flowDofNumberAccessor,
                                 DofNumberAccessor const & dispJumpDofNumberAccessor,
-                                SinglePhaseFlowAccessors const & singlePhaseFlowAccessors,
-                                SinglePhaseFluidAccessors const & singlePhaseFluidAccessors,
-                                PermeabilityAccessors const & permeabilityAccessors,
-                                FracturePermeabilityAccessors const & edfmPermeabilityAccessors,
+                                FieldAccessorsT const & fieldAccessors,
                                 real64 const & dt,
                                 CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                 arrayView1d< real64 > const & localRhs )
     : Base( rankOffset,
             stencilWrapper,
             flowDofNumberAccessor,
-            singlePhaseFlowAccessors,
-            singlePhaseFluidAccessors,
-            permeabilityAccessors,
+            fieldAccessors,
             dt,
             localMatrix,
             localRhs ),
     m_dispJumpDofNumber( dispJumpDofNumberAccessor.toNestedViewConst() ),
-    m_dPerm_dDispJump( edfmPermeabilityAccessors.get( fields::permeability::dPerm_dDispJump {} ) )
+    m_dPerm_dDispJump( fieldAccessors.get( fields::permeability::dPerm_dDispJump {} ) )
   {}
 
 
@@ -283,15 +274,10 @@ public:
     dispJumpDofNumberAccessor.setName( solverName + "/accessors/" + dispJumpDofKey );
 
     using kernelType = ConnectorBasedAssemblyKernel< NUM_EQN, NUM_DOF >;
-    typename kernelType::SinglePhaseFlowAccessors flowAccessors( elemManager, solverName );
-    typename kernelType::SinglePhaseFluidAccessors fluidAccessors( elemManager, solverName );
-    typename kernelType::PermeabilityAccessors permAccessors( elemManager, solverName );
-    typename kernelType::FracturePermeabilityAccessors edfmPermAccessors( elemManager, solverName );
-
+    typename kernelType::FieldAccessors fieldAccessors( elemManager, solverName );
 
     kernelType kernel( rankOffset, stencilWrapper,
-                       pressureDofNumberAccessor, dispJumpDofNumberAccessor,
-                       flowAccessors, fluidAccessors, permAccessors, edfmPermAccessors,
+                       pressureDofNumberAccessor, dispJumpDofNumberAccessor, fieldAccessors,
                        dt, localMatrix, localRhs );
 
     kernelType::template launch< POLICY >( stencilWrapper.size(), kernel );

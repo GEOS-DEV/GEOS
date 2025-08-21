@@ -57,9 +57,11 @@ public:
 
   using AbstractBase = singlePhaseFVMKernels::FluxComputeKernelBase;
   using DofNumberAccessor = AbstractBase::DofNumberAccessor;
-  using PermeabilityAccessors = AbstractBase::PermeabilityAccessors;
-  using SinglePhaseFlowAccessors = AbstractBase::SinglePhaseFlowAccessors;
-  using SinglePhaseFluidAccessors = AbstractBase::SinglePhaseFluidAccessors;
+  using FieldAccessors = AbstractBase::FieldAccessors< fields::flow::temperature,
+                                                       fields::singlefluid::enthalpy,
+                                                       fields::singlefluid::dEnthalpy,
+                                                       fields::thermalconductivity::effectiveConductivity,
+                                                       fields::thermalconductivity::dEffectiveConductivity_dT >;
 
   using AbstractBase::m_dt;
   using AbstractBase::m_rankOffset;
@@ -86,19 +88,6 @@ public:
   using Base::m_facePres;
   using Base::m_faceGravCoef;
 
-  using ThermalSinglePhaseFlowAccessors =
-    StencilAccessors< fields::flow::temperature >;
-
-  using ThermalSinglePhaseFluidAccessors =
-    StencilMaterialAccessors< constitutive::SingleFluidBase,
-                              fields::singlefluid::enthalpy,
-                              fields::singlefluid::dEnthalpy >;
-
-  using ThermalConductivityAccessors =
-    StencilMaterialAccessors< constitutive::SinglePhaseThermalConductivityBase,
-                              fields::thermalconductivity::effectiveConductivity,
-                              fields::thermalconductivity::dEffectiveConductivity_dT >;
-
   /**
    * @brief Constructor for the kernel interface
    * @param[in] rankOffset the offset of the MPI rank
@@ -106,12 +95,7 @@ public:
    * @param[in] stencilWrapper reference to the stencil wrapper
    * @param[in] fluidWrapper reference to the fluid wrapper
    * @param[in] dofNumberAccessor the degree of freedom number accessor
-   * @param[in] singlePhaseFlowAccessors the single phase flow accessor
-   * @param[in] thermalSinglePhaseFlowAccessors the thermal single phase flow accessor
-   * @param[in] singlePhaseFluidAccessors the single phase fluid accessor
-   * @param[in] thermalSinglePhaseFluidAccessors the thermal single phase fluid accessor
-   * @param[in] permeabilityAccessors the permeability accessor
-   * @param[in] thermalConductivityAccessors the thermal conductivity accessor
+   * @param[in] fieldAccessors the fields accessor
    * @param[in] dt the time step size
    * @param[inout] localMatrix the local CRS matrix
    * @param[inout] localRhs the local right-hand side vector
@@ -121,33 +105,25 @@ public:
                               BoundaryStencilWrapper const & stencilWrapper,
                               FLUIDWRAPPER const & fluidWrapper,
                               DofNumberAccessor const & dofNumberAccessor,
-                              SinglePhaseFlowAccessors const & singlePhaseFlowAccessors,
-                              ThermalSinglePhaseFlowAccessors const & thermalSinglePhaseFlowAccessors,
-                              SinglePhaseFluidAccessors const & singlePhaseFluidAccessors,
-                              ThermalSinglePhaseFluidAccessors const & thermalSinglePhaseFluidAccessors,
-                              PermeabilityAccessors const & permeabilityAccessors,
-                              ThermalConductivityAccessors const & thermalConductivityAccessors,
+                              FieldAccessors const & fieldAccessors,
                               real64 const & dt,
                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
                               arrayView1d< real64 > const & localRhs )
-
     : Base( rankOffset,
             faceManager,
             stencilWrapper,
             fluidWrapper,
             dofNumberAccessor,
-            singlePhaseFlowAccessors,
-            singlePhaseFluidAccessors,
-            permeabilityAccessors,
+            fieldAccessors,
             dt,
             localMatrix,
             localRhs ),
-    m_temp( thermalSinglePhaseFlowAccessors.get( fields::flow::temperature {} ) ),
+    m_temp( fieldAccessors.get( fields::flow::temperature {} ) ),
     m_faceTemp( faceManager.getField< fields::flow::faceTemperature >() ),
-    m_enthalpy( thermalSinglePhaseFluidAccessors.get( fields::singlefluid::enthalpy {} ) ),
-    m_dEnthalpy( thermalSinglePhaseFluidAccessors.get( fields::singlefluid::dEnthalpy {} ) ),
-    m_thermalConductivity( thermalConductivityAccessors.get( fields::thermalconductivity::effectiveConductivity {} ) ),
-    m_dThermalCond_dT( thermalConductivityAccessors.get( fields::thermalconductivity::dEffectiveConductivity_dT {} ) )
+    m_enthalpy( fieldAccessors.get( fields::singlefluid::enthalpy {} ) ),
+    m_dEnthalpy( fieldAccessors.get( fields::singlefluid::dEnthalpy {} ) ),
+    m_thermalConductivity( fieldAccessors.get( fields::thermalconductivity::effectiveConductivity {} ) ),
+    m_dThermalCond_dT( fieldAccessors.get( fields::thermalconductivity::dEffectiveConductivity_dT {} ) )
   {}
 
 
@@ -342,31 +318,20 @@ public:
       integer constexpr NUM_DOF = 2;
       integer constexpr NUM_EQN = 2;
 
-      using kernelType = DirichletFluxComputeKernel< NUM_EQN, NUM_DOF, typename FluidType::KernelWrapper >;
-
       ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > dofNumberAccessor =
         elemManager.constructArrayViewAccessor< globalIndex, 1 >( dofKey );
 
       dofNumberAccessor.setName( solverName + "/accessors/" + dofKey );
 
-      typename kernelType::SinglePhaseFlowAccessors singlePhaseFlowAccessors( elemManager, solverName );
-      typename kernelType::ThermalSinglePhaseFlowAccessors thermalSinglePhaseFlowAccessors( elemManager, solverName );
-      typename kernelType::SinglePhaseFluidAccessors singlePhaseFluidAccessors( elemManager, solverName );
-      typename kernelType::ThermalSinglePhaseFluidAccessors thermalSinglePhaseFluidAccessors( elemManager, solverName );
-      typename kernelType::PermeabilityAccessors permeabilityAccessors( elemManager, solverName );
-      typename kernelType::ThermalConductivityAccessors thermalConductivityAccessors( elemManager, solverName );
+      using kernelType = DirichletFluxComputeKernel< NUM_EQN, NUM_DOF, typename FluidType::KernelWrapper >;
+      typename kernelType::FieldAccessors fieldAccessors( elemManager, solverName );
 
       kernelType kernel( rankOffset,
                          faceManager,
                          stencilWrapper,
                          fluidWrapper,
                          dofNumberAccessor,
-                         singlePhaseFlowAccessors,
-                         thermalSinglePhaseFlowAccessors,
-                         singlePhaseFluidAccessors,
-                         thermalSinglePhaseFluidAccessors,
-                         permeabilityAccessors,
-                         thermalConductivityAccessors,
+                         fieldAccessors,
                          dt,
                          localMatrix,
                          localRhs );

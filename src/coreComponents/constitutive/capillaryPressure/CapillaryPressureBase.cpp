@@ -44,9 +44,6 @@ CapillaryPressureBase::CapillaryPressureBase( string const & name,
 
   registerWrapper( viewKeyStruct::phaseOrderString(), &m_phaseOrder ).
     setSizedFromParent( 0 );
-
-  //registerField< fields::cappres::phaseCapPressure >( &m_phaseCapPressure );
-  //registerField< fields::cappres::dPhaseCapPressure_dPhaseVolFraction >( &m_dPhaseCapPressure_dPhaseVolFrac );
 }
 
 void CapillaryPressureBase::postInputInitialization()

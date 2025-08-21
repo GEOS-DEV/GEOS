@@ -55,32 +55,29 @@ public:
   /// Maximum number of points in the stencil
   static constexpr localIndex maxStencilSize = STENCILWRAPPER::maxStencilSize;
 
+  using FieldAccessors = FieldAccessors<>;
+
   /**
    * @brief Constructor for the kernel interface
    * @param[in] rankOffset the offset of my MPI rank
    * @param[in] stencilWrapper reference to the stencil wrapper
    * @param[in] dofNumberAccessor
-   * @param[in] singlePhaseFlowAccessors
-   * @param[in] singlePhaseFluidAccessors
-   * @param[in] permeabilityAccessors
+   * @param[in] fieldAccessors
    * @param[in] dt time step size
    * @param[inout] localMatrix the local CRS matrix
    * @param[inout] localRhs the local right-hand side vector
    */
+  template< typename FieldAccessorsT >
   FluxComputeKernel( globalIndex const rankOffset,
                      STENCILWRAPPER const & stencilWrapper,
                      DofNumberAccessor const & dofNumberAccessor,
-                     SinglePhaseFlowAccessors const & singlePhaseFlowAccessors,
-                     SinglePhaseFluidAccessors const & singlePhaseFluidAccessors,
-                     PermeabilityAccessors const & permeabilityAccessors,
+                     FieldAccessorsT const & fieldAccessors,
                      real64 const & dt,
                      CRSMatrixView< real64, globalIndex const > const & localMatrix,
                      arrayView1d< real64 > const & localRhs )
     : FluxComputeKernelBase( rankOffset,
                              dofNumberAccessor,
-                             singlePhaseFlowAccessors,
-                             singlePhaseFluidAccessors,
-                             permeabilityAccessors,
+                             fieldAccessors,
                              dt,
                              localMatrix,
                              localRhs ),
@@ -365,13 +362,10 @@ public:
     dofNumberAccessor.setName( solverName + "/accessors/" + dofKey );
 
     using kernelType = FluxComputeKernel< NUM_EQN, NUM_DOF, STENCILWRAPPER >;
-    typename kernelType::SinglePhaseFlowAccessors flowAccessors( elemManager, solverName );
-    typename kernelType::SinglePhaseFluidAccessors fluidAccessors( elemManager, solverName );
-    typename kernelType::PermeabilityAccessors permAccessors( elemManager, solverName );
+    typename kernelType::FieldAccessors fieldAccessors( elemManager, solverName );
 
     kernelType kernel( rankOffset, stencilWrapper, dofNumberAccessor,
-                       flowAccessors, fluidAccessors, permAccessors,
-                       dt, localMatrix, localRhs );
+                       fieldAccessors, dt, localMatrix, localRhs );
     kernelType::template launch< POLICY >( stencilWrapper.size(), kernel );
   }
 };

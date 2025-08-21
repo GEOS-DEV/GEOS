@@ -421,8 +421,7 @@ void SinglePhaseWell::initializeWells( DomainPartition & domain, real64 const & 
       {
         // TODO: change the way we access the flowSolver here
         SinglePhaseBase const & flowSolver = getParent().getGroup< SinglePhaseBase >( getFlowSolverName() );
-        PresTempInitializationKernel::SinglePhaseFlowAccessors resSinglePhaseFlowAccessors( meshLevel.getElemManager(), flowSolver.getName() );
-        PresTempInitializationKernel::SingleFluidAccessors resSingleFluidAccessors( meshLevel.getElemManager(), flowSolver.getName() );
+        PresTempInitializationKernel::FieldAccessors resfieldAccessors( meshLevel.getElemManager(), flowSolver.getName() );
 
         // 1) Loop over all perforations to compute an average density
         // 2) Initialize the reference pressure
@@ -434,9 +433,9 @@ void SinglePhaseWell::initializeWells( DomainPartition & domain, real64 const & 
                   perforationData.getNumPerforationsGlobal(),
                   wellControls,
                   0.0, // initialization done at t = 0
-                  resSinglePhaseFlowAccessors.get( flow::pressure{} ),
-                  resSinglePhaseFlowAccessors.get( flow::temperature{} ),
-                  resSingleFluidAccessors.get( fields::singlefluid::density{} ),
+                  resfieldAccessors.get( flow::pressure{} ),
+                  resfieldAccessors.get( flow::temperature{} ),
+                  resfieldAccessors.get( fields::singlefluid::density{} ),
                   resElementRegion,
                   resElementSubRegion,
                   resElementIndex,
@@ -792,8 +791,6 @@ void SinglePhaseWell::computePerforationRates( real64 const & time_n,
 
     // TODO: change the way we access the flowSolver here
     SinglePhaseBase const & flowSolver = getParent().getGroup< SinglePhaseBase >( getFlowSolverName() );
-    PerforationKernel::SinglePhaseFlowAccessors resSinglePhaseFlowAccessors( mesh.getElemManager(), flowSolver.getName() );
-    PerforationKernel::SingleFluidAccessors resSingleFluidAccessors( mesh.getElemManager(), flowSolver.getName() );
     ElementRegionManager & elemManager = mesh.getElemManager();
     elemManager.forElementSubRegions< WellElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                 WellElementSubRegion & subRegion )

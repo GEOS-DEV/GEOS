@@ -211,15 +211,12 @@ struct PerforationKernel
 
   using TAG = singlePhaseWellKernels::SubRegionTag;
 
-  using SinglePhaseFlowAccessors =
-    StencilAccessors< fields::flow::pressure >;
-
-  using SingleFluidAccessors =
-    StencilMaterialAccessors< constitutive::SingleFluidBase,
-                              fields::singlefluid::density,
-                              fields::singlefluid::dDensity,
-                              fields::singlefluid::viscosity,
-                              fields::singlefluid::dViscosity >;
+  using FieldAccessors =
+    StencilAccessors< fields::flow::pressure,
+                      fields::singlefluid::density,
+                      fields::singlefluid::dDensity,
+                      fields::singlefluid::viscosity,
+                      fields::singlefluid::dViscosity >;
 
   /**
    * @brief The type for element-based non-constitutive data parameters.
@@ -492,13 +489,10 @@ public:
 struct PresTempInitializationKernel
 {
 
-  using SinglePhaseFlowAccessors =
+  using FieldAccessors =
     StencilAccessors< fields::flow::pressure,
-                      fields::flow::temperature >;
-
-  using SingleFluidAccessors =
-    StencilMaterialAccessors< constitutive::SingleFluidBase,
-                              fields::singlefluid::density >;
+                      fields::flow::temperature,
+                      fields::singlefluid::density >;
 
   /**
    * @brief The type for element-based non-constitutive data parameters.

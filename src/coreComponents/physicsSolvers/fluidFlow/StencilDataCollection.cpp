@@ -149,8 +149,7 @@ public:
   template< typename VIEWTYPE >
   using ElementViewConst = ElementRegionManager::ElementViewConst< VIEWTYPE >;
 
-  using PermeabilityAccessors = StencilMaterialAccessors< PermeabilityBase,
-                                                          permeability::permeability >;
+  using FieldAccessors = StencilAccessors< permeability::permeability >;
 
 
   /**
@@ -205,7 +204,7 @@ StencilDataCollection::gatherConnectionData( STENCILWRAPPER_T const & stencilWra
 
   // allocate a large enough buffer to store all connection data
   array1d< KernelConnectionData > kernelData{ stencilWrapper.size() };
-  typename Kernel::PermeabilityAccessors accessor( elemManager, m_solver->getName() );
+  typename Kernel::FieldAccessors accessor( elemManager, m_solver->getName() );
 
   Kernel::launch< parallelDevicePolicy<> >( kernelData.toView(), stencilWrapper,
                                             accessor.get< permeability::permeability >() );

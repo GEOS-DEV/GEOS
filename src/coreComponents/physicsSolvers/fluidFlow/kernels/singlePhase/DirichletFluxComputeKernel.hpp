@@ -51,9 +51,7 @@ public:
   using Deriv = constitutive::singlefluid::DerivativeOffset;
   using AbstractBase = singlePhaseFVMKernels::FluxComputeKernelBase;
   using DofNumberAccessor = AbstractBase::DofNumberAccessor;
-  using PermeabilityAccessors = AbstractBase::PermeabilityAccessors;
-  using SinglePhaseFlowAccessors = AbstractBase::SinglePhaseFlowAccessors;
-  using SinglePhaseFluidAccessors = AbstractBase::SinglePhaseFluidAccessors;
+  using FieldAccessors = AbstractBase::FieldAccessors<>;
   using AbstractBase::m_dt;
   using AbstractBase::m_rankOffset;
   using AbstractBase::m_dofNumber;
@@ -85,30 +83,25 @@ public:
    * @param[in] stencilWrapper reference to the stencil wrapper
    * @param[in] fluidWrapper reference to the fluid wrapper
    * @param[in] dofNumberAccessor
-   * @param[in] singlePhaseFlowAccessors
-   * @param[in] singlePhaseFluidAccessors
-   * @param[in] permeabilityAccessors
+   * @param[in] fieldAccessors
    * @param[in] dt time step size
    * @param[inout] localMatrix the local CRS matrix
    * @param[inout] localRhs the local right-hand side vector
    */
+  template< typename FieldAccessorsT >
   DirichletFluxComputeKernel( globalIndex const rankOffset,
                               FaceManager const & faceManager,
                               BoundaryStencilWrapper const & stencilWrapper,
                               FLUIDWRAPPER const & fluidWrapper,
                               DofNumberAccessor const & dofNumberAccessor,
-                              SinglePhaseFlowAccessors const & singlePhaseFlowAccessors,
-                              SinglePhaseFluidAccessors const & singlePhaseFluidAccessors,
-                              PermeabilityAccessors const & permeabilityAccessors,
+                              FieldAccessorsT const & fieldAccessors,
                               real64 const & dt,
                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
                               arrayView1d< real64 > const & localRhs )
     : Base( rankOffset,
             stencilWrapper,
             dofNumberAccessor,
-            singlePhaseFlowAccessors,
-            singlePhaseFluidAccessors,
-            permeabilityAccessors,
+            fieldAccessors,
             dt,
             localMatrix,
             localRhs ),
@@ -333,18 +326,14 @@ public:
 
       dofNumberAccessor.setName( solverName + "/accessors/" + dofKey );
 
-      typename kernelType::SinglePhaseFlowAccessors singlePhaseFlowAccessors( elemManager, solverName );
-      typename kernelType::SinglePhaseFluidAccessors singlePhaseFluidAccessors( elemManager, solverName );
-      typename kernelType::PermeabilityAccessors permeabilityAccessors( elemManager, solverName );
+      typename kernelType::FieldAccessors fieldAccessors( elemManager, solverName );
 
       kernelType kernel( rankOffset,
                          faceManager,
                          stencilWrapper,
                          fluidWrapper,
                          dofNumberAccessor,
-                         singlePhaseFlowAccessors,
-                         singlePhaseFluidAccessors,
-                         permeabilityAccessors,
+                         fieldAccessors,
                          dt,
                          localMatrix,
                          localRhs );

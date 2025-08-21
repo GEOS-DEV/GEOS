@@ -46,18 +46,10 @@ public:
 
   using AbstractBase = singlePhaseFVMKernels::FluxComputeKernelBase;
   using DofNumberAccessor = AbstractBase::DofNumberAccessor;
-  using SinglePhaseFlowAccessors = AbstractBase::SinglePhaseFlowAccessors;
-  using SinglePhaseFluidAccessors = AbstractBase::SinglePhaseFluidAccessors;
-  using PermeabilityAccessors = AbstractBase::PermeabilityAccessors;
-
-  using StabSinglePhaseFlowAccessors =
-    StencilAccessors< fields::flow::macroElementIndex,
-                      fields::flow::elementStabConstant,
-                      fields::flow::pressure_n >;
-
-  using StabSinglePhaseFluidAccessors =
-    StencilMaterialAccessors< constitutive::SingleFluidBase,
-                              fields::singlefluid::density_n >;
+  using FieldAccessors = AbstractBase::FieldAccessors< fields::flow::macroElementIndex,
+                                                       fields::flow::elementStabConstant,
+                                                       fields::flow::pressure_n,
+                                                       fields::singlefluid::density_n >;
 
   using AbstractBase::m_dt;
   using AbstractBase::m_rankOffset;
@@ -82,11 +74,7 @@ public:
    * @param[in] rankOffset the offset of my MPI rank
    * @param[in] stencilWrapper reference to the stencil wrapper
    * @param[in] dofNumberAccessor accessor for the dofs numbers
-   * @param[in] singlePhaseFlowAccessor accessor for wrappers registered by the solver
-   * @param[in] stabSinglePhaseFlowAccessor accessor for wrappers registered by the solver needed for stabilization
-   * @param[in] singlePhaseFluidAccessor accessor for wrappers registered by the single fluid model
-   * @param[in] stabSinglePhaseFluidAccessor accessor for wrappers registered by the single fluid model needed for stabilization
-   * @param[in] permeabilityAccessors accessor for wrappers registered by the permeability model
+   * @param[in] FieldAccessor accessor for fields data wrappers
    * @param[in] dt time step size
    * @param[inout] localMatrix the local CRS matrix
    * @param[inout] localRhs the local right-hand side vector
@@ -94,27 +82,21 @@ public:
   FluxComputeKernel( globalIndex const rankOffset,
                      STENCILWRAPPER const & stencilWrapper,
                      DofNumberAccessor const & dofNumberAccessor,
-                     SinglePhaseFlowAccessors const & singlePhaseFlowAccessors,
-                     StabSinglePhaseFlowAccessors const & stabSinglePhaseFlowAccessors,
-                     SinglePhaseFluidAccessors const & singlePhaseFluidAccessors,
-                     StabSinglePhaseFluidAccessors const & stabSinglePhaseFluidAccessors,
-                     PermeabilityAccessors const & permeabilityAccessors,
+                     FieldAccessors const & fieldAccessors,
                      real64 const & dt,
                      CRSMatrixView< real64, globalIndex const > const & localMatrix,
                      arrayView1d< real64 > const & localRhs )
     : Base( rankOffset,
             stencilWrapper,
             dofNumberAccessor,
-            singlePhaseFlowAccessors,
-            singlePhaseFluidAccessors,
-            permeabilityAccessors,
+            fieldAccessors,
             dt,
             localMatrix,
             localRhs ),
-    m_pres_n( stabSinglePhaseFlowAccessors.get( fields::flow::pressure_n {} ) ),
-    m_dens_n( stabSinglePhaseFluidAccessors.get( fields::singlefluid::density_n {} ) ),
-    m_macroElementIndex( stabSinglePhaseFlowAccessors.get( fields::flow::macroElementIndex {} ) ),
-    m_elementStabConstant( stabSinglePhaseFlowAccessors.get( fields::flow::elementStabConstant {} ) )
+    m_pres_n( fieldAccessors.get( fields::flow::pressure_n {} ) ),
+    m_dens_n( fieldAccessors.get( fields::singlefluid::density_n {} ) ),
+    m_macroElementIndex( fieldAccessors.get( fields::flow::macroElementIndex {} ) ),
+    m_elementStabConstant( fieldAccessors.get( fields::flow::elementStabConstant {} ) )
   {}
 
   struct StackVariables : public Base::StackVariables
@@ -286,15 +268,9 @@ public:
     dofNumberAccessor.setName( solverName + "/accessors/" + dofKey );
 
     using KERNEL_TYPE = FluxComputeKernel< NUM_EQN, NUM_DOF, STENCILWRAPPER >;
-    typename KERNEL_TYPE::SinglePhaseFlowAccessors singlePhaseFlowAccessors( elemManager, solverName );
-    typename KERNEL_TYPE::SinglePhaseFluidAccessors singlePhaseFluidAccessors( elemManager, solverName );
-    typename KERNEL_TYPE::StabSinglePhaseFlowAccessors stabSinglePhaseFlowAccessors( elemManager, solverName );
-    typename KERNEL_TYPE::StabSinglePhaseFluidAccessors stabSinglePhaseFluidAccessors( elemManager, solverName );
-    typename KERNEL_TYPE::PermeabilityAccessors permeabilityAccessors( elemManager, solverName );
+    typename KERNEL_TYPE::FieldAccessors fieldAccessors( elemManager, solverName );
 
-    KERNEL_TYPE kernel( rankOffset, stencilWrapper, dofNumberAccessor,
-                        singlePhaseFlowAccessors, stabSinglePhaseFlowAccessors, singlePhaseFluidAccessors, stabSinglePhaseFluidAccessors,
-                        permeabilityAccessors,
+    KERNEL_TYPE kernel( rankOffset, stencilWrapper, dofNumberAccessor, fieldAccessors,
                         dt, localMatrix, localRhs );
     KERNEL_TYPE::template launch< POLICY >( stencilWrapper.size(), kernel );
   }

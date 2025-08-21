@@ -175,56 +175,43 @@ struct AccumulationKernel
 
 struct FluxKernel
 {
-  using FlowAccessors =
+  using FieldAccessors =
     StencilAccessors< fields::ghostRank,
                       fields::elementAperture,
                       fields::flow::pressure,
                       fields::flow::gravityCoefficient,
                       fields::proppant::proppantConcentration,
-                      fields::proppant::isProppantMobile >;
-
-  using CellBasedFluxFlowAccessors =
-    StencilAccessors< fields::flow::pressure,
+                      fields::proppant::isProppantMobile,
+                      fields::flow::pressure,
                       fields::flow::gravityCoefficient,
-                      fields::elementAperture >;
-
-  using ParticleFluidAccessors =
-    StencilMaterialAccessors< constitutive::ParticleFluidBase,
-                              fields::particlefluid::settlingFactor,
-                              fields::particlefluid::dSettlingFactor_dPressure,
-                              fields::particlefluid::dSettlingFactor_dProppantConcentration,
-                              fields::particlefluid::dSettlingFactor_dComponentConcentration,
-                              fields::particlefluid::collisionFactor,
-                              fields::particlefluid::dCollisionFactor_dProppantConcentration >;
-
-  using SlurryFluidAccessors =
-    StencilMaterialAccessors< constitutive::SlurryFluidBase,
-                              fields::singlefluid::density,
-                              fields::singlefluid::dDensity,
-                              fields::slurryfluid::dDensity_dProppantConcentration,
-                              fields::slurryfluid::dDensity_dComponentConcentration,
-                              fields::singlefluid::viscosity,
-                              fields::singlefluid::dViscosity,
-                              fields::slurryfluid::dViscosity_dProppantConcentration,
-                              fields::slurryfluid::dViscosity_dComponentConcentration,
-                              fields::slurryfluid::componentDensity,
-                              fields::slurryfluid::dComponentDensity_dPressure,
-                              fields::slurryfluid::dComponentDensity_dComponentConcentration,
-                              fields::slurryfluid::fluidDensity,
-                              fields::slurryfluid::dFluidDensity_dPressure,
-                              fields::slurryfluid::dFluidDensity_dComponentConcentration >;
-
-  using CellBasedFluxSlurryFluidAccessors =
-    StencilMaterialAccessors< constitutive::SlurryFluidBase,
-                              fields::singlefluid::density,
-                              fields::singlefluid::viscosity >;
-
-  using PermeabilityAccessors =
-    StencilMaterialAccessors< constitutive::PermeabilityBase,
-                              fields::permeability::permeability,
-                              fields::permeability::permeabilityMultiplier >;
+                      fields::elementAperture,
+                      fields::particlefluid::settlingFactor,
+                      fields::particlefluid::dSettlingFactor_dPressure,
+                      fields::particlefluid::dSettlingFactor_dProppantConcentration,
+                      fields::particlefluid::dSettlingFactor_dComponentConcentration,
+                      fields::particlefluid::collisionFactor,
+                      fields::particlefluid::dCollisionFactor_dProppantConcentration,
+                      fields::singlefluid::density,
+                      fields::singlefluid::dDensity,
+                      fields::slurryfluid::dDensity_dProppantConcentration,
+                      fields::slurryfluid::dDensity_dComponentConcentration,
+                      fields::singlefluid::viscosity,
+                      fields::singlefluid::dViscosity,
+                      fields::slurryfluid::dViscosity_dProppantConcentration,
+                      fields::slurryfluid::dViscosity_dComponentConcentration,
+                      fields::slurryfluid::componentDensity,
+                      fields::slurryfluid::dComponentDensity_dPressure,
+                      fields::slurryfluid::dComponentDensity_dComponentConcentration,
+                      fields::slurryfluid::fluidDensity,
+                      fields::slurryfluid::dFluidDensity_dPressure,
+                      fields::slurryfluid::dFluidDensity_dComponentConcentration,
+                      fields::singlefluid::density,
+                      fields::singlefluid::viscosity,
+                      fields::permeability::permeability,
+                      fields::permeability::permeabilityMultiplier >;
 
   using DerivOffset = constitutive::singlefluid::DerivativeOffsetC< 0 >;
+
   /**
    * @brief The type for element-based non-constitutive data parameters.
    * Consists entirely of ArrayView's.
@@ -352,29 +339,21 @@ struct FluxKernel
 struct ProppantPackVolumeKernel
 {
 
-  using FlowAccessors =
+  using FieldAccessors =
     StencilAccessors< fields::ghostRank,
                       fields::elementAperture,
                       fields::elementVolume,
                       fields::proppant::cellBasedFlux,
                       fields::proppant::isProppantMobile,
-                      fields::proppant::isProppantBoundary >;
-
-  using ParticleFluidAccessors =
-    StencilMaterialAccessors< constitutive::ParticleFluidBase, fields::particlefluid::settlingFactor >;
-
-  using SlurryFluidAccessors =
-    StencilMaterialAccessors< constitutive::SlurryFluidBase,
-                              fields::singlefluid::density,
-                              fields::slurryfluid::fluidDensity,
-                              fields::slurryfluid::fluidViscosity >;
+                      fields::proppant::isProppantBoundary,
+                      fields::particlefluid::settlingFactor,
+                      fields::singlefluid::density,
+                      fields::slurryfluid::fluidDensity,
+                      fields::slurryfluid::fluidViscosity >;
 
 
   template< typename VIEWTYPE >
   using ElementView = ElementRegionManager::ElementView< VIEWTYPE >;
-
-  template< typename VIEWTYPE >
-  using ElementViewConst = ElementRegionManager::ElementViewConst< VIEWTYPE >;
 
   static void
   launchProppantPackVolumeCalculation( SurfaceElementStencil const & stencil,

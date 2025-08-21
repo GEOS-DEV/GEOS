@@ -590,10 +590,7 @@ void ProppantTransport::assembleFluxTerms( real64 const dt,
     ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > dofNumberAccessor =
       elemManager.constructViewAccessor< array1d< globalIndex >, arrayView1d< globalIndex const > >( dofKey );
 
-    typename FluxKernel::FlowAccessors flowAccessors( elemManager, getName() );
-    typename FluxKernel::ParticleFluidAccessors particleFluidAccessors( elemManager, getName() );
-    typename FluxKernel::SlurryFluidAccessors slurryFluidAccessors( elemManager, getName() );
-    typename FluxKernel::PermeabilityAccessors permAccessors( elemManager, getName() );
+    typename FluxKernel::FieldAccessors fieldAccessors( elemManager, getName() );
 
     fluxApprox.forStencils< SurfaceElementStencil >( mesh, [&]( auto const & stencil )
     {
@@ -607,34 +604,34 @@ void ProppantTransport::assembleFluxTerms( real64 const dt,
                           m_updateProppantPacking,
                           downVector,
                           dofNumberAccessor.toNestedViewConst(),
-                          flowAccessors.get< fields::ghostRank >(),
-                          flowAccessors.get< flow::pressure >(),
-                          flowAccessors.get< proppant::proppantConcentration >(),
-                          slurryFluidAccessors.get< slurryfluid::componentDensity >(),
-                          slurryFluidAccessors.get< slurryfluid::dComponentDensity_dPressure >(),
-                          slurryFluidAccessors.get< slurryfluid::dComponentDensity_dComponentConcentration >(),
-                          flowAccessors.get< flow::gravityCoefficient >(),
-                          slurryFluidAccessors.get< fields::singlefluid::density >(),
-                          slurryFluidAccessors.get< fields::singlefluid::dDensity >(),
-                          slurryFluidAccessors.get< slurryfluid::dDensity_dProppantConcentration >(),
-                          slurryFluidAccessors.get< slurryfluid::dDensity_dComponentConcentration >(),
-                          slurryFluidAccessors.get< fields::singlefluid::viscosity >(),
-                          slurryFluidAccessors.get< fields::singlefluid::dViscosity >(),
-                          slurryFluidAccessors.get< slurryfluid::dViscosity_dProppantConcentration >(),
-                          slurryFluidAccessors.get< slurryfluid::dViscosity_dComponentConcentration >(),
-                          slurryFluidAccessors.get< slurryfluid::fluidDensity >(),
-                          slurryFluidAccessors.get< slurryfluid::dFluidDensity_dPressure >(),
-                          slurryFluidAccessors.get< slurryfluid::dFluidDensity_dComponentConcentration >(),
-                          particleFluidAccessors.get< particlefluid::settlingFactor >(),
-                          particleFluidAccessors.get< particlefluid::dSettlingFactor_dPressure >(),
-                          particleFluidAccessors.get< particlefluid::dSettlingFactor_dProppantConcentration >(),
-                          particleFluidAccessors.get< particlefluid::dSettlingFactor_dComponentConcentration >(),
-                          particleFluidAccessors.get< particlefluid::collisionFactor >(),
-                          particleFluidAccessors.get< particlefluid::dCollisionFactor_dProppantConcentration >(),
-                          flowAccessors.get< proppant::isProppantMobile >(),
-                          permAccessors.get< permeability::permeability >(),
-                          permAccessors.get< permeability::permeabilityMultiplier >(),
-                          flowAccessors.get< elementAperture >(),
+                          fieldAccessors.get< fields::ghostRank >(),
+                          fieldAccessors.get< flow::pressure >(),
+                          fieldAccessors.get< proppant::proppantConcentration >(),
+                          fieldAccessors.get< slurryfluid::componentDensity >(),
+                          fieldAccessors.get< slurryfluid::dComponentDensity_dPressure >(),
+                          fieldAccessors.get< slurryfluid::dComponentDensity_dComponentConcentration >(),
+                          fieldAccessors.get< flow::gravityCoefficient >(),
+                          fieldAccessors.get< fields::singlefluid::density >(),
+                          fieldAccessors.get< fields::singlefluid::dDensity >(),
+                          fieldAccessors.get< slurryfluid::dDensity_dProppantConcentration >(),
+                          fieldAccessors.get< slurryfluid::dDensity_dComponentConcentration >(),
+                          fieldAccessors.get< fields::singlefluid::viscosity >(),
+                          fieldAccessors.get< fields::singlefluid::dViscosity >(),
+                          fieldAccessors.get< slurryfluid::dViscosity_dProppantConcentration >(),
+                          fieldAccessors.get< slurryfluid::dViscosity_dComponentConcentration >(),
+                          fieldAccessors.get< slurryfluid::fluidDensity >(),
+                          fieldAccessors.get< slurryfluid::dFluidDensity_dPressure >(),
+                          fieldAccessors.get< slurryfluid::dFluidDensity_dComponentConcentration >(),
+                          fieldAccessors.get< particlefluid::settlingFactor >(),
+                          fieldAccessors.get< particlefluid::dSettlingFactor_dPressure >(),
+                          fieldAccessors.get< particlefluid::dSettlingFactor_dProppantConcentration >(),
+                          fieldAccessors.get< particlefluid::dSettlingFactor_dComponentConcentration >(),
+                          fieldAccessors.get< particlefluid::collisionFactor >(),
+                          fieldAccessors.get< particlefluid::dCollisionFactor_dProppantConcentration >(),
+                          fieldAccessors.get< proppant::isProppantMobile >(),
+                          fieldAccessors.get< permeability::permeability >(),
+                          fieldAccessors.get< permeability::permeabilityMultiplier >(),
+                          fieldAccessors.get< elementAperture >(),
                           localMatrix,
                           localRhs );
     } );
@@ -970,9 +967,7 @@ void ProppantTransport::updateCellBasedFlux( real64 const GEOS_UNUSED_PARAM( tim
     ElementRegionManager::ElementViewAccessor< arrayView2d< real64 > > const & cellBasedFluxAccessor =
       elemManager.constructViewAccessor< array2d< real64 >, arrayView2d< real64 > >( proppant::cellBasedFlux::key() );
 
-    typename FluxKernel::CellBasedFluxFlowAccessors flowAccessors( elemManager, getName() );
-    typename FluxKernel::CellBasedFluxSlurryFluidAccessors slurryFluidAccessors( elemManager, getName() );
-    typename FluxKernel::PermeabilityAccessors permAccessors( elemManager, getName() );
+    typename FluxKernel::FieldAccessors fieldAccessors( elemManager, getName() );
 
     fluxApprox.forStencils< SurfaceElementStencil >( mesh, [&]( auto const & stencil )
     {
@@ -980,13 +975,13 @@ void ProppantTransport::updateCellBasedFlux( real64 const GEOS_UNUSED_PARAM( tim
 
       FluxKernel::launchCellBasedFluxCalculation( stencilWrapper,
                                                   downVector,
-                                                  flowAccessors.get< flow::pressure >(),
-                                                  flowAccessors.get< flow::gravityCoefficient >(),
-                                                  slurryFluidAccessors.get< fields::singlefluid::density >(),
-                                                  slurryFluidAccessors.get< fields::singlefluid::viscosity >(),
-                                                  permAccessors.get< permeability::permeability >(),
-                                                  permAccessors.get< permeability::permeabilityMultiplier >(),
-                                                  flowAccessors.get< elementAperture >(),
+                                                  fieldAccessors.get< flow::pressure >(),
+                                                  fieldAccessors.get< flow::gravityCoefficient >(),
+                                                  fieldAccessors.get< fields::singlefluid::density >(),
+                                                  fieldAccessors.get< fields::singlefluid::viscosity >(),
+                                                  fieldAccessors.get< permeability::permeability >(),
+                                                  fieldAccessors.get< permeability::permeabilityMultiplier >(),
+                                                  fieldAccessors.get< elementAperture >(),
                                                   cellBasedFluxAccessor.toNestedView() );
     } );
 
@@ -1031,9 +1026,7 @@ void ProppantTransport::updateProppantPackVolume( real64 const GEOS_UNUSED_PARAM
     ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > const
     aperture = elemManager.constructArrayViewAccessor< real64, 1 >( elementAperture::key() );
 
-    typename ProppantPackVolumeKernel::FlowAccessors flowAccessors( elemManager, getName() );
-    typename ProppantPackVolumeKernel::SlurryFluidAccessors slurryFluidAccessors( elemManager, getName() );
-    typename ProppantPackVolumeKernel::ParticleFluidAccessors particleFluidAccessors( elemManager, getName() );
+    typename ProppantPackVolumeKernel::FieldAccessors fieldAccessors( elemManager, getName() );
 
     fluxApprox.forStencils< SurfaceElementStencil >( mesh, [&]( auto const & stencil )
     {
@@ -1045,15 +1038,15 @@ void ProppantTransport::updateProppantPackVolume( real64 const GEOS_UNUSED_PARAM
                                                                      downVector,
                                                                      m_criticalShieldsNumber,
                                                                      m_frictionCoefficient,
-                                                                     particleFluidAccessors.get< particlefluid::settlingFactor >(),
-                                                                     slurryFluidAccessors.get< fields::singlefluid::density >(),
-                                                                     slurryFluidAccessors.get< fields::slurryfluid::fluidDensity >(),
-                                                                     flowAccessors.get< proppant::isProppantMobile >(),
-                                                                     flowAccessors.get< proppant::isProppantBoundary >(),
-                                                                     flowAccessors.get< fields::elementAperture >(),
-                                                                     flowAccessors.get< fields::elementVolume >(),
-                                                                     flowAccessors.get< fields::ghostRank >(),
-                                                                     flowAccessors.get< proppant::cellBasedFlux >(),
+                                                                     fieldAccessors.get< particlefluid::settlingFactor >(),
+                                                                     fieldAccessors.get< fields::singlefluid::density >(),
+                                                                     fieldAccessors.get< fields::slurryfluid::fluidDensity >(),
+                                                                     fieldAccessors.get< proppant::isProppantMobile >(),
+                                                                     fieldAccessors.get< proppant::isProppantBoundary >(),
+                                                                     fieldAccessors.get< fields::elementAperture >(),
+                                                                     fieldAccessors.get< fields::elementVolume >(),
+                                                                     fieldAccessors.get< fields::ghostRank >(),
+                                                                     fieldAccessors.get< proppant::cellBasedFlux >(),
                                                                      proppantConc.toNestedView(),
                                                                      proppantPackVolFrac.toNestedView(),
                                                                      proppantExcessPackVolume.toNestedView(),
@@ -1084,7 +1077,7 @@ void ProppantTransport::updateProppantPackVolume( real64 const GEOS_UNUSED_PARAM
       ProppantPackVolumeKernel::launchProppantPackVolumeUpdate( stencil,
                                                                 downVector,
                                                                 m_maxProppantConcentration,
-                                                                flowAccessors.get< proppant::isProppantMobile >(),
+                                                                fieldAccessors.get< proppant::isProppantMobile >(),
                                                                 proppantExcessPackVolume.toNestedViewConst(),
                                                                 proppantConc.toNestedView(),
                                                                 proppantPackVolFrac.toNestedView() );

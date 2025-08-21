@@ -161,13 +161,6 @@ public:
     static constexpr char const * phaseOrderString() { return "phaseOrder"; }
   };
 
-private:
-
-  /**
-   * @brief Called internally to set array dim labels.
-   */
-  //void setLabels();
-
 protected:
 
   virtual void postInputInitialization() override;

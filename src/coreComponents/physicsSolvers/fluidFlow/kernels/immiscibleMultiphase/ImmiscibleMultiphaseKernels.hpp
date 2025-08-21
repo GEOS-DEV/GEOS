@@ -72,28 +72,19 @@ public:
 
   using DofNumberAccessor = ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > >;
 
-  using ImmiscibleMultiphaseFlowAccessors =
+  using FieldAccessors =
     StencilAccessors< fields::ghostRank,
                       fields::flow::pressure,
                       fields::flow::gravityCoefficient,
                       fields::immiscibleMultiphaseFlow::phaseVolumeFraction,
                       fields::immiscibleMultiphaseFlow::phaseMobility,
-                      fields::immiscibleMultiphaseFlow::dPhaseMobility >;
-
-  using MultiphaseFluidAccessors =
-    StencilMaterialAccessors< constitutive::TwoPhaseImmiscibleFluid,
-                              fields::twophaseimmisciblefluid::phaseDensity,
-                              fields::twophaseimmisciblefluid::dPhaseDensity >;
-
-  using CapPressureAccessors =
-    StencilMaterialAccessors< CapillaryPressureBase,
-                              fields::cappres::phaseCapPressure,
-                              fields::cappres::dPhaseCapPressure_dPhaseVolFraction >;
-
-  using PermeabilityAccessors =
-    StencilMaterialAccessors< PermeabilityBase,
-                              fields::permeability::permeability,
-                              fields::permeability::dPerm_dPressure >;
+                      fields::immiscibleMultiphaseFlow::dPhaseMobility,
+                      fields::twophaseimmisciblefluid::phaseDensity,
+                      fields::twophaseimmisciblefluid::dPhaseDensity,
+                      fields::cappres::phaseCapPressure,
+                      fields::cappres::dPhaseCapPressure_dPhaseVolFraction,
+                      fields::permeability::permeability,
+                      fields::permeability::dPerm_dPressure >;
 
   using Deriv = immiscibleFlow::DerivativeOffset;
 
@@ -102,10 +93,7 @@ public:
    * @param[in] numPhases the number of fluid phases
    * @param[in] rankOffset the offset of my MPI rank
    * @param[in] dofNumberAccessor accessor for the dof numbers
-   * @param[in] multiPhaseFlowAccessors accessor for wrappers registered by the solver
-   * @param[in] fluidAccessors accessor for wrappers registered by the fluid model
-   * @param[in] capPressureAccessors accessor for wrappers registered by the capillary pressure model
-   * @param[in] permeabilityAccessors accessor for wrappers registered by the permeability model
+   * @param[in] fieldAccessors accessor for field datat wrappers
    * @param[in] dt time step size
    * @param[inout] localMatrix the local CRS matrix
    * @param[inout] localRhs the local right-hand side vector
@@ -115,10 +103,7 @@ public:
   FluxComputeKernelBase( integer const numPhases,
                          globalIndex const rankOffset,
                          DofNumberAccessor const & dofNumberAccessor,
-                         ImmiscibleMultiphaseFlowAccessors const & multiPhaseFlowAccessors,
-                         MultiphaseFluidAccessors const & fluidAccessors,
-                         CapPressureAccessors const & capPressureAccessors,
-                         PermeabilityAccessors const & permeabilityAccessors,
+                         FieldAccessors const & fieldAccessors,
                          real64 const & dt,
                          CRSMatrixView< real64, globalIndex const > const & localMatrix,
                          arrayView1d< real64 > const & localRhs,
@@ -129,18 +114,18 @@ public:
     m_rankOffset( rankOffset ),
     m_dt( dt ),
     m_dofNumber( dofNumberAccessor.toNestedViewConst() ),
-    m_permeability( permeabilityAccessors.get( fields::permeability::permeability {} ) ),
-    m_dPerm_dPres( permeabilityAccessors.get( fields::permeability::dPerm_dPressure {} ) ),
-    m_ghostRank( multiPhaseFlowAccessors.get( fields::ghostRank {} ) ),
-    m_gravCoef( multiPhaseFlowAccessors.get( fields::flow::gravityCoefficient {} ) ),
-    m_pres( multiPhaseFlowAccessors.get( fields::flow::pressure {} ) ),
-    m_phaseVolFrac( multiPhaseFlowAccessors.get( fields::immiscibleMultiphaseFlow::phaseVolumeFraction {} ) ),
-    m_mob( multiPhaseFlowAccessors.get( fields::immiscibleMultiphaseFlow::phaseMobility {} ) ),
-    m_dMob( multiPhaseFlowAccessors.get( fields::immiscibleMultiphaseFlow::dPhaseMobility {} ) ),
-    m_dens( fluidAccessors.get( fields::twophaseimmisciblefluid::phaseDensity {} ) ),
-    m_dDens_dPres( fluidAccessors.get( fields::twophaseimmisciblefluid::dPhaseDensity {} ) ),
-    m_phaseCapPressure( capPressureAccessors.get( fields::cappres::phaseCapPressure {} ) ),
-    m_dPhaseCapPressure_dPhaseVolFrac( capPressureAccessors.get( fields::cappres::dPhaseCapPressure_dPhaseVolFraction {} ) ),
+    m_permeability( fieldAccessors.get( fields::permeability::permeability {} ) ),
+    m_dPerm_dPres( fieldAccessors.get( fields::permeability::dPerm_dPressure {} ) ),
+    m_ghostRank( fieldAccessors.get( fields::ghostRank {} ) ),
+    m_gravCoef( fieldAccessors.get( fields::flow::gravityCoefficient {} ) ),
+    m_pres( fieldAccessors.get( fields::flow::pressure {} ) ),
+    m_phaseVolFrac( fieldAccessors.get( fields::immiscibleMultiphaseFlow::phaseVolumeFraction {} ) ),
+    m_mob( fieldAccessors.get( fields::immiscibleMultiphaseFlow::phaseMobility {} ) ),
+    m_dMob( fieldAccessors.get( fields::immiscibleMultiphaseFlow::dPhaseMobility {} ) ),
+    m_dens( fieldAccessors.get( fields::twophaseimmisciblefluid::phaseDensity {} ) ),
+    m_dDens_dPres( fieldAccessors.get( fields::twophaseimmisciblefluid::dPhaseDensity {} ) ),
+    m_phaseCapPressure( fieldAccessors.get( fields::cappres::phaseCapPressure {} ) ),
+    m_dPhaseCapPressure_dPhaseVolFrac( fieldAccessors.get( fields::cappres::dPhaseCapPressure_dPhaseVolFraction {} ) ),
     m_localMatrix( localMatrix ),
     m_localRhs( localRhs ),
     m_hasCapPressure ( hasCapPressure ),
@@ -234,10 +219,7 @@ public:
    * @param[in] rankOffset the offset of my MPI rank
    * @param[in] stencilWrapper reference to the stencil wrapper
    * @param[in] dofNumberAccessor
-   * @param[in] multiPhaseFlowAccessors
-   * @param[in] fluidAccessors
-   * @param[in] capPressureAccessors
-   * @param[in] permeabilityAccessors
+   * @param[in] fieldAccessors
    * @param[in] dt time step size
    * @param[inout] localMatrix the local CRS matrix
    * @param[inout] localRhs the local right-hand side vector
@@ -248,10 +230,7 @@ public:
                      globalIndex const rankOffset,
                      STENCILWRAPPER const & stencilWrapper,
                      DofNumberAccessor const & dofNumberAccessor,
-                     ImmiscibleMultiphaseFlowAccessors const & multiPhaseFlowAccessors,
-                     MultiphaseFluidAccessors const & fluidAccessors,
-                     CapPressureAccessors const & capPressureAccessors,
-                     PermeabilityAccessors const & permeabilityAccessors,
+                     FieldAccessors const & fieldAccessors,
                      real64 const & dt,
                      CRSMatrixView< real64, globalIndex const > const & localMatrix,
                      arrayView1d< real64 > const & localRhs,
@@ -261,10 +240,7 @@ public:
     : FluxComputeKernelBase( numPhases,
                              rankOffset,
                              dofNumberAccessor,
-                             multiPhaseFlowAccessors,
-                             fluidAccessors,
-                             capPressureAccessors,
-                             permeabilityAccessors,
+                             fieldAccessors,
                              dt,
                              localMatrix,
                              localRhs,
@@ -777,15 +753,10 @@ public:
     dofNumberAccessor.setName( solverName + "/accessors/" + dofKey );
 
     using kernelType = FluxComputeKernel< NUM_EQN, NUM_DOF, STENCILWRAPPER >;
-    typename kernelType::ImmiscibleMultiphaseFlowAccessors flowAccessors( elemManager, solverName );
-    typename kernelType::MultiphaseFluidAccessors fluidAccessors( elemManager, solverName );
-    typename kernelType::CapPressureAccessors capPressureAccessors( elemManager, solverName );
-    typename kernelType::PermeabilityAccessors permAccessors( elemManager, solverName );
+    typename kernelType::FieldAccessors fieldAccessors( elemManager, solverName );
 
-    kernelType kernel( numPhases, rankOffset, stencilWrapper, dofNumberAccessor,
-                       flowAccessors, fluidAccessors, capPressureAccessors, permAccessors,
-                       dt, localMatrix, localRhs, hasCapPressure, useTotalMassEquation,
-                       checkPhasePresenceInGravity );
+    kernelType kernel( numPhases, rankOffset, stencilWrapper, dofNumberAccessor, fieldAccessors,
+                       dt, localMatrix, localRhs, hasCapPressure, useTotalMassEquation, checkPhasePresenceInGravity );
     kernelType::template launch< POLICY >( stencilWrapper.size(), kernel );
   }
 };
@@ -1116,8 +1087,6 @@ template< integer NUM_PHASE >
 class PhaseMobilityKernel
 {
 public:
-
-  //using Base = MultiphaseFluidAccessors::PropertyKernelBase< NUM_COMP >;
 
   /// Compile time value for the number of phases
   static constexpr integer numPhase = NUM_PHASE;

@@ -54,9 +54,11 @@ public:
 
   using AbstractBase = singlePhaseFVMKernels::FluxComputeKernelBase;
   using DofNumberAccessor = AbstractBase::DofNumberAccessor;
-  using SinglePhaseFlowAccessors = AbstractBase::SinglePhaseFlowAccessors;
-  using SinglePhaseFluidAccessors = AbstractBase::SinglePhaseFluidAccessors;
-  using PermeabilityAccessors = AbstractBase::PermeabilityAccessors;
+  using FieldAccessors = AbstractBase::FieldAccessors< fields::flow::temperature,
+                                                       fields::singlefluid::enthalpy,
+                                                       fields::singlefluid::dEnthalpy,
+                                                       fields::thermalconductivity::effectiveConductivity,
+                                                       fields::thermalconductivity::dEffectiveConductivity_dT >;
 
   using AbstractBase::m_dt;
   using AbstractBase::m_rankOffset;
@@ -78,31 +80,12 @@ public:
   using Base::m_sesri;
   using Base::m_sei;
 
-  using ThermalSinglePhaseFlowAccessors =
-    StencilAccessors< fields::flow::temperature >;
-
-  using ThermalSinglePhaseFluidAccessors =
-    StencilMaterialAccessors< constitutive::SingleFluidBase,
-                              fields::singlefluid::enthalpy,
-                              fields::singlefluid::dEnthalpy >;
-
-  using ThermalConductivityAccessors =
-    StencilMaterialAccessors< constitutive::SinglePhaseThermalConductivityBase,
-                              fields::thermalconductivity::effectiveConductivity,
-                              fields::thermalconductivity::dEffectiveConductivity_dT >;
-
-
   /**
    * @brief Constructor for the kernel interface
    * @param[in] rankOffset the offset of my MPI rank
    * @param[in] stencilWrapper reference to the stencil wrapper
    * @param[in] dofNumberAccessor accessor for the dofs numbers
-   * @param[in] singlePhaseFlowAccessors accessor for wrappers registered by the solver
-   * @param[in] thermalSinglePhaseFlowAccessors accessor for *thermal* wrappers registered by the solver
-   * @param[in] singlePhaseFluidAccessors accessor for wrappers registered by the single fluid model
-   * @param[in] thermalSinglePhaseFluidAccessors accessor for *thermal* wrappers registered by the single fluid model
-   * @param[in] permeabilityAccessors accessor for wrappers registered by the permeability model
-   * @param[in] thermalConductivityAccessors accessor for wrappers registered by the thermal conductivity model
+   * @param[in] fieldAccessors accessor for field data wrappers
    * @param[in] dt time step size
    * @param[inout] localMatrix the local CRS matrix
    * @param[inout] localRhs the local right-hand side vector
@@ -110,29 +93,22 @@ public:
   FluxComputeKernel( globalIndex const rankOffset,
                      STENCILWRAPPER const & stencilWrapper,
                      DofNumberAccessor const & dofNumberAccessor,
-                     SinglePhaseFlowAccessors const & singlePhaseFlowAccessors,
-                     ThermalSinglePhaseFlowAccessors const & thermalSinglePhaseFlowAccessors,
-                     SinglePhaseFluidAccessors const & singlePhaseFluidAccessors,
-                     ThermalSinglePhaseFluidAccessors const & thermalSinglePhaseFluidAccessors,
-                     PermeabilityAccessors const & permeabilityAccessors,
-                     ThermalConductivityAccessors const & thermalConductivityAccessors,
+                     FieldAccessors const & fieldAccessors,
                      real64 const & dt,
                      CRSMatrixView< real64, globalIndex const > const & localMatrix,
                      arrayView1d< real64 > const & localRhs )
     : Base( rankOffset,
             stencilWrapper,
             dofNumberAccessor,
-            singlePhaseFlowAccessors,
-            singlePhaseFluidAccessors,
-            permeabilityAccessors,
+            fieldAccessors,
             dt,
             localMatrix,
             localRhs ),
-    m_temp( thermalSinglePhaseFlowAccessors.get( fields::flow::temperature {} ) ),
-    m_enthalpy( thermalSinglePhaseFluidAccessors.get( fields::singlefluid::enthalpy {} ) ),
-    m_dEnthalpy( thermalSinglePhaseFluidAccessors.get( fields::singlefluid::dEnthalpy {} ) ),
-    m_thermalConductivity( thermalConductivityAccessors.get( fields::thermalconductivity::effectiveConductivity {} ) ),
-    m_dThermalCond_dT( thermalConductivityAccessors.get( fields::thermalconductivity::dEffectiveConductivity_dT {} ) )
+    m_temp( fieldAccessors.get( fields::flow::temperature {} ) ),
+    m_enthalpy( fieldAccessors.get( fields::singlefluid::enthalpy {} ) ),
+    m_dEnthalpy( fieldAccessors.get( fields::singlefluid::dEnthalpy {} ) ),
+    m_thermalConductivity( fieldAccessors.get( fields::thermalconductivity::effectiveConductivity {} ) ),
+    m_dThermalCond_dT( fieldAccessors.get( fields::thermalconductivity::dEffectiveConductivity_dT {} ) )
   {}
 
   struct StackVariables : public Base::StackVariables
@@ -458,16 +434,9 @@ public:
     dofNumberAccessor.setName( solverName + "/accessors/" + dofKey );
 
     using KernelType = FluxComputeKernel< NUM_EQN, NUM_DOF, STENCILWRAPPER >;
-    typename KernelType::SinglePhaseFlowAccessors flowAccessors( elemManager, solverName );
-    typename KernelType::ThermalSinglePhaseFlowAccessors thermalFlowAccessors( elemManager, solverName );
-    typename KernelType::SinglePhaseFluidAccessors fluidAccessors( elemManager, solverName );
-    typename KernelType::ThermalSinglePhaseFluidAccessors thermalFluidAccessors( elemManager, solverName );
-    typename KernelType::PermeabilityAccessors permAccessors( elemManager, solverName );
-    typename KernelType::ThermalConductivityAccessors thermalConductivityAccessors( elemManager, solverName );
+    typename KernelType::FieldAccessors fieldAccessors( elemManager, solverName );
 
-    KernelType kernel( rankOffset, stencilWrapper, dofNumberAccessor,
-                       flowAccessors, thermalFlowAccessors, fluidAccessors, thermalFluidAccessors,
-                       permAccessors, thermalConductivityAccessors,
+    KernelType kernel( rankOffset, stencilWrapper, dofNumberAccessor, fieldAccessors,
                        dt, localMatrix, localRhs );
     KernelType::template launch< POLICY >( stencilWrapper.size(), kernel );
   }
