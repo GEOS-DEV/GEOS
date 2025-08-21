@@ -32,8 +32,6 @@ static constexpr std::string_view g_level2Start = "    - ";
 static constexpr std::string_view g_level2Next =  "      ";
 static constexpr std::string_view g_level3Start = "      - ";
 static constexpr std::string_view g_level3Next =  "        ";
-static constexpr std::string_view g_callStackMessage =
-  "Callstack could not be retrieved. The format does not match the expected one.";
 
 ErrorLogger g_errorLogger{};
 
@@ -141,7 +139,7 @@ ErrorLogger::ErrorMsg & ErrorLogger::ErrorMsg::addCallStackInfo( std::string_vie
 
   if( !m_isValidStackTrace )
   {
-    m_sourceCallStack.push_back( std::string( g_callStackMessage ) );
+    m_sourceCallStack.push_back( str );
   }
 
   return *this;
