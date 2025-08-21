@@ -104,9 +104,6 @@ public:
   CapillaryPressureBase( string const & name,
                          dataRepository::Group * const parent );
 
-//  virtual void allocateConstitutiveData( dataRepository::Group & parent,
-//                                         localIndex const numConstitutivePointsPerParentIndex ) override;
-
   /**
    * @brief Initialize the capillary pressure state (needed when capillary pressure depends on porosity and permeability)
    * @param[in] initialPorosity the initial porosity field after reservoir initialization

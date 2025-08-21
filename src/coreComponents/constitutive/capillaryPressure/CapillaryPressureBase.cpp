@@ -88,13 +88,6 @@ void CapillaryPressureBase::postInputInitialization()
   setLabels();
 }
 
-//void CapillaryPressureBase::allocateConstitutiveData( ElementSubRegionBase & parent,
-//                                                  localIndex const numConstitutivePointsPerParentIndex )
-//{
-//  parent.registerField<fields::cappres::phaseCapPressure>( getName(), &m_phaseCapPressure );
-//  parent.registerField<fields::cappres::dPhaseCapPressure_dPhaseVolFraction>( getName(), &m_dPhaseCapPressure_dPhaseVolFrac );
-//}
-
 void CapillaryPressureBase::resizeFields( localIndex const size,
                                           localIndex const numPts )
 {
