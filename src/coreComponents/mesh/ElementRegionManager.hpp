@@ -105,20 +105,6 @@ public:
   using ConstitutiveRelationAccessor = array1d< array1d< array1d< CONSTITUTIVE_TYPE * > > >;
 
   /**
-   * @brief The function is to return the name of the ElementRegionManager in the object catalog
-   * @return string that contains the catalog name used to register/lookup this class in  the object catalog
-   */
-  static string catalogName()
-  { return "ZoneManager"; }
-
-  /**
-   * @brief Virtual access to catalogName()
-   * @return string that contains the catalog name used to register/lookup this class in the object catalog
-   */
-  virtual string getCatalogName() const override final
-  { return catalogName(); }
-
-  /**
    * @brief Constructor.
    * @param [in] name the name of this ObjectManager
    * @param [in] parent the parent Group
