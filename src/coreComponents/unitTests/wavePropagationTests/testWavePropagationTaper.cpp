@@ -35,7 +35,7 @@ using namespace geos::testing;
 
 CommandLineOptions g_commandLineOptions;
 
-// This unit test checks the interpolation done to extract seismic traces from a wavefield.
+// This unit test checks the interpolation done to extract seismic traces from a wavefield when we are using a Taper.
 // It computes a seismogram at a receiver co-located with the source and compares it to the surrounding receivers.
 char const * xmlInput =
   R"xml(

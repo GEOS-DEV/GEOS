@@ -692,7 +692,7 @@ real64 ElasticWaveEquationSEM::computeTimeStep( real64 & dtOut )
     ux_n.zero();
     uy_n.zero();
     uz_n.zero();
-    //Lien to ensure that the using array stays on GPU (useful when we cal this routine several times)
+    // Loop to ensure that the array stays on GPU (useful when we call this routine several times)
     forAll< parallelHostPolicy >( sizeNode, [ux_n, uy_n, uz_n] ( localIndex const ){} );
 
   } );

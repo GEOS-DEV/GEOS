@@ -564,7 +564,7 @@ real64 AcousticWaveEquationSEM::computeTimeStep( real64 & dtOut )
 
     stiffnessVector.zero();
     p.zero();
-    //Loop to ensure that the using array stays on GPU (useful when we call this routine several times)
+    // Loop to ensure that the array stays on GPU (useful when we call this routine several times)
     forAll< parallelHostPolicy >( sizeNode, [p] ( localIndex const ){} );
   } );
   return m_timeStep * m_cflFactor;
