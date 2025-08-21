@@ -122,7 +122,7 @@ public:
 
     // if( !m_precond && m_linearSolverParameters.get().solverType != LinearSolverParameters::SolverType::direct )
     // {
-    //   createPreconditioner( domain );
+    //   m_precond = createPreconditioner( domain );
     // }
   }
 
