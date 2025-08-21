@@ -878,7 +878,4 @@ void ElementRegionManager::outputObjectConnectivity() const
   }
 }
 
-
-
-REGISTER_CATALOG_ENTRY( ObjectManagerBase, ElementRegionManager, string const &, Group * const )
 }
