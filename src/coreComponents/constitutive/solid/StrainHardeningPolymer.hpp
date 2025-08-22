@@ -241,7 +241,7 @@ public:
   GEOS_HOST_DEVICE
   void computePlasticStrainIncrement ( localIndex const k,
                                        localIndex const q,
-                                       real64 const timeIncrement,
+                                       const real64 timeIncrement,
                                        real64 const temperature,
                                        real64 const ( &strainIncrement )[6],
                                        real64 const ( &stressIncrement )[6],
