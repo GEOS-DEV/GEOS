@@ -37,7 +37,9 @@ set( fileIO_headers
      timeHistory/BufferedHistoryIO.hpp
      timeHistory/PackCollection.hpp
      timeHistory/HDFHistoryIO.hpp
-     timeHistory/HistoryCollection.hpp )
+     timeHistory/HistoryCollection.hpp 
+     timeHistory/ScatterDataProvider.hpp
+     timeHistory/ScatterDataHistoryCollection.hpp )
 
 #
 # Specify all sources
@@ -54,7 +56,8 @@ set( fileIO_sources
      timeHistory/HDFFile.cpp
      timeHistory/HistoryCollectionBase.cpp
      timeHistory/PackCollection.cpp
-     timeHistory/HDFHistoryIO.cpp )
+     timeHistory/HDFHistoryIO.cpp 
+     timeHistory/ScatterDataHistoryCollection.cpp )
 
 set( dependencyList ${parallelDeps} events mesh HDF5::HDF5 )
 if( ENABLE_PYGEOSX )
