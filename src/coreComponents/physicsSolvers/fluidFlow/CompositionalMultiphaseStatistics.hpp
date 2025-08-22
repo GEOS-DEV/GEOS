@@ -160,6 +160,43 @@ private:
     constexpr static char const * relpermThresholdString() { return "relpermThreshold";}
   };
 
+  struct RegionStatistics
+  {
+    /// average region pressure
+    real64 averagePressure;
+    /// minimum region pressure
+    real64 minPressure;
+    /// maximum region pressure
+    real64 maxPressure;
+
+    /// minimum region delta pressure
+    real64 minDeltaPressure;
+    /// maximum region delta pressure
+    real64 maxDeltaPressure;
+
+    /// average region temperature
+    real64 averageTemperature;
+    /// minimum region temperature
+    real64 minTemperature;
+    /// maximum region temperature
+    real64 maxTemperature;
+
+    /// total region pore volume
+    real64 totalPoreVolume;
+    /// total region uncompacted pore volume
+    real64 totalUncompactedPoreVolume;
+    /// phase region phase pore volume
+    array1d< real64 > phasePoreVolume;
+
+    /// region phase mass (trapped and non-trapped, immobile and mobile)
+    array1d< real64 > phaseMass;
+    /// trapped region phase mass
+    array1d< real64 > trappedPhaseMass;
+    /// immobile region phase mass
+    array1d< real64 > immobilePhaseMass;
+    /// region component mass
+    array2d< real64 > componentMass;
+  };
 
   /**
    * @brief Compute some statistics on the reservoir (average field pressure, etc)
