@@ -328,7 +328,7 @@ struct ConstitutivePassThru< PorousSolidBase >
                                  PorousSolid< ElasticIsotropic, ConstantPermeability >,
                                  PorousSolid< ElasticTransverseIsotropic, ConstantPermeability >,
                                  PorousSolid< ElasticIsotropicPressureDependent, ConstantPermeability >,
-                                 PorousSolid< ElasticOrthotropic, ConstantPermeability >
+                                 PorousSolid< ElasticOrthotropic, ConstantPermeability >,
                                  PorousSolid< DruckerPragerExtended, CarmanKozenyPermeability >,
                                  PorousSolid< ModifiedCamClay, CarmanKozenyPermeability >,
                                  PorousSolid< DelftEgg, CarmanKozenyPermeability >,
