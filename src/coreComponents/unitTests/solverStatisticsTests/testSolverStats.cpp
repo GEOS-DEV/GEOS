@@ -18,6 +18,7 @@
 #include "mainInterface/GeosxState.hpp"
 #include "codingUtilities/Parsing.hpp"
 #include "physicsSolvers/PhysicsSolverBase.hpp"
+
 #include "physicsSolvers/SolverStatistics.hpp"
 #include <filesystem>
 
@@ -25,10 +26,9 @@
 
 using namespace geos;
 
-static const string basicXml =
+static const string solverLogOutput =
   R"xml(
     <?xml version="1.0" ?>
-
     <Problem xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:noNamespaceSchemaLocation="../../src/coreComponents/schema/schema.xsd">
     <Solvers
@@ -45,116 +45,31 @@ static const string basicXml =
             directParallel="0"/>
         </SinglePhaseFVM>
     </Solvers>
+    )xml";
 
-    <Mesh>
-        <InternalMesh
-        name="mesh1"
-        elementTypes="{ C3D8 }"
-        xCoords="{ 0, 5, 10 }"
-        yCoords="{ 0, 5, 10 }"
-        zCoords="{ 0, 2.5, 5, 7.5, 10 }"
-        nx="{ 5, 5 }"
-        ny="{ 5, 5 }"
-        nz="{ 3, 3, 3, 3 }"
-        cellBlockNames="{ cb-0_0_0, cb-1_0_0, cb-0_1_0, cb-1_1_0,
-                            cb-0_0_1, cb-1_0_1, cb-0_1_1, cb-1_1_1,
-                            cb-0_0_2, cb-1_0_2, cb-0_1_2, cb-1_1_2,
-                            cb-0_0_3, cb-1_0_3, cb-0_1_3, cb-1_1_3 }"/>
-    </Mesh>
-
-    <Geometry>
-        <Box
-        name="source"
-        xMin="{ 7.99, -0.01, 9.99 }"
-        xMax="{ 10.01, 2.01, 10.01 }"/>
-
-        
-    </Geometry>
-
-    <Events
-        maxTime="1e5">
-
-        <PeriodicEvent
-        name="solverApplications"
-        forceDt="5e3"
-        target="/Solvers/SinglePhaseFlow"/>
-        
-    </Events>
-
-    <ElementRegions>
-        <CellElementRegion
-        name="Channel"
-        cellBlocks="{ cb-1_0_0, cb-0_0_0, cb-0_0_1, cb-0_1_1, cb-0_1_2, cb-1_1_2, cb-1_1_3, cb-1_0_3 }"
-        materialList="{ water, rock }"/>
-
-        <CellElementRegion
-        name="Barrier"
-        cellBlocks="{ cb-0_1_0, cb-1_1_0, cb-1_1_1, cb-1_0_1, cb-1_0_2, cb-0_0_2, cb-0_0_3, cb-0_1_3 }"
-        materialList="{ }"/>
-    </ElementRegions>
-
-    <NumericalMethods>
-        <FiniteVolume>
-        <TwoPointFluxApproximation
-            name="singlePhaseTPFA"/>
-        </FiniteVolume>
-    </NumericalMethods>
-
-    <Constitutive>
-        <CompressibleSinglePhaseFluid
-        name="water"
-        defaultDensity="1000"
-        defaultViscosity="0.001"
-        referencePressure="0.0"
-        compressibility="5e-10"
-        viscosibility="0.0"/>
-
-        <CompressibleSolidCarmanKozenyPermeability
-        name="rock"
-        solidModelName="nullSolid"
-        porosityModelName="rockPorosity"
-        permeabilityModelName="channelPerm"/>
-
-        <NullModel
-        name="nullSolid"/>
-
-        <PressurePorosity
-        name="rockPorosity"
-        defaultReferencePorosity="0.1"
-        referencePressure="0.0"
-        compressibility="1.0e-9"/>
-
-        <CarmanKozenyPermeability
-        name="channelPerm"
-        particleDiameter="5e-6"
-        sphericity="0.9"/>
-
-    </Constitutive>
-
-    </Problem>
-)xml";
-
-static const string basicXmlCSV =
+static const string solverCSVOutput =
   R"xml(
     <?xml version="1.0" ?>
-
     <Problem xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:noNamespaceSchemaLocation="../../src/coreComponents/schema/schema.xsd">
-    <Solvers
-        gravityVector="{ 0.0, 0.0, -9.81 }">
-        <SinglePhaseFVM
-        name="SinglePhaseFlow"
-        discretization="singlePhaseTPFA"
-        targetRegions="{ Channel }"
-        writeStatistics="2" >
-        <NonlinearSolverParameters
-            newtonTol="1.0e-6"
-            newtonMaxIter="8"/>
-        <LinearSolverParameters
-            directParallel="0"/>
-        </SinglePhaseFVM>
-    </Solvers>
+        <Solvers
+            gravityVector="{ 0.0, 0.0, -9.81 }">
+            <SinglePhaseFVM
+            name="SinglePhaseFlow"
+            discretization="singlePhaseTPFA"
+            targetRegions="{ Channel }"
+            writeStatistics="2" >
+            <NonlinearSolverParameters
+                newtonTol="1.0e-6"
+                newtonMaxIter="8"/>
+            <LinearSolverParameters
+                directParallel="0"/>
+            </SinglePhaseFVM>
+        </Solvers>
+    )xml";
 
+static const string pattern =
+  R"xml(
     <Mesh>
         <InternalMesh
         name="mesh1"
@@ -250,7 +165,9 @@ TEST( testSolverStats, testLog )
   // setup
   GeosxState state( std::make_unique< CommandLineOptions >( g_commandLineOptions ) );
   ProblemManager & problem = state.getProblemManager();
-  problem.parseInputString( basicXml );
+  std::ostringstream xmlInput;
+  xmlInput << solverLogOutput << pattern;
+  problem.parseInputString( xmlInput.str() );
   problem.problemSetup();
   problem.applyInitialConditions();
   problem.runSimulation();
@@ -277,27 +194,75 @@ bool compareWithTolerance( const std::string & valueStr, double expected, double
 
 TEST( testSolverStats, testOutputFiles )
 {
-  // setup
   GeosxState state( std::make_unique< CommandLineOptions >( g_commandLineOptions ) );
   ProblemManager & problem = state.getProblemManager();
-  problem.parseInputString( basicXmlCSV );
+  std::ostringstream xmlInput;
+  xmlInput << solverCSVOutput << pattern;
+  problem.parseInputString( xmlInput.str() );
   problem.problemSetup();
   problem.applyInitialConditions();
   problem.runSimulation();
 
+  PhysicsSolverBase & solver = problem.getGroupByPath< PhysicsSolverBase >( string( "/Solvers/SinglePhaseFlow" ) );
+  SolverStatistics & solverStat = solver.getSolverStatistics();
+
   auto loadCsvLines = []( string const & filename, std::vector< string > & lines ) {
+
+    if( !std::filesystem::exists( filename ))
+    {
+      GEOS_ERROR( "Error: File '" << filename << "' does not exist!" );
+      GEOS_ERROR( "Current directory: " << std::filesystem::current_path());
+      return false;
+    }
+
     std::ifstream is( filename );
-    EXPECT_TRUE( is.good());
-    string line;
+
+    if( !is.is_open())
+    {
+      GEOS_ERROR( "Error: Cannot open file '" << filename << "'" );
+
+      if( is.fail())
+      {
+        GEOS_ERROR( "Reason: Opening failed (permissions or file doesn't exist)" );
+      }
+      if( is.bad())
+      {
+        GEOS_ERROR( "Reason: Serious stream error" );
+      }
+
+      auto perms = std::filesystem::status( filename ).permissions();
+      if((perms & std::filesystem::perms::owner_read) == std::filesystem::perms::none )
+      {
+        GEOS_ERROR( "File does not have read permissions" );
+      }
+
+      return false;
+    }
+
+    std::string line;
+    size_t lineCount = 0;
+
     while( std::getline( is, line ))
     {
       lines.emplace_back( line );
+      lineCount++;
     }
+
+    if( lineCount == 0 )
+    {
+      GEOS_WARNING( "Warning: File appears to be empty" );
+    }
+    else
+    {
+      GEOS_WARNING( "Number of lines read: " );
+    }
+
     is.close();
+    return true;
   };
 
   std::vector< string > csvLines;
-  loadCsvLines( "convergence/SinglePhaseFlow_iterations.csv", csvLines );
+  loadCsvLines( solverStat.m_iterationsStats.getFilename(), csvLines );
 
   std::string expectedIteration = "20,0,0,20,20,0,0,0,0.00392298,0.00192568";
   std::istringstream sIterations( expectedIteration );
@@ -326,18 +291,19 @@ TEST( testSolverStats, testOutputFiles )
   EXPECT_EQ( actualIterationValues[2], expectedIterationValues[2] );
   EXPECT_EQ( actualIterationValues[3], expectedIterationValues[3] );
   EXPECT_EQ( actualIterationValues[4], expectedIterationValues[4] );
+  EXPECT_EQ( actualIterationValues[5], expectedIterationValues[5] );
   EXPECT_EQ( actualIterationValues[6], expectedIterationValues[6] );
   EXPECT_EQ( actualIterationValues[7], expectedIterationValues[7] );
   EXPECT_TRUE( compareWithTolerance( actualIterationValues[8], 0.00392298, 1e-2 ));
   EXPECT_TRUE( compareWithTolerance( actualIterationValues[9], 0.00192568, 1e-2 ));
 
   std::vector< string > csvLines2;
-  loadCsvLines( "convergence/SinglePhaseFlow_convergence.csv", csvLines2 );
+  loadCsvLines( solverStat.m_convergenceStats.getFilename(), csvLines2 );
 
-  EXPECT_EQ( csvLines2[0], "Cycle number,time_n (s),dt (s),R,Rflow" );
+  EXPECT_EQ( csvLines2[0], "Cycle number,time_n (s),dt (s),iteration,R,Rflow" );
 
-  ASSERT_TRUE( std::remove( "convergence/SinglePhaseFlow_iterations.csv" ) == 0 );
-  ASSERT_TRUE( std::remove( "convergence/SinglePhaseFlow_convergence.csv" ) == 0 );
+  ASSERT_TRUE( std::remove( solverStat.m_iterationsStats.getFilename().c_str() ) == 0 );
+  ASSERT_TRUE( std::remove( solverStat.m_convergenceStats.getFilename().c_str() ) == 0 );
 }
 
 int main( int argc, char * * argv )
