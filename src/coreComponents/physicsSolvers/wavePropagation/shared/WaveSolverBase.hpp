@@ -109,6 +109,10 @@ public:
     static constexpr char const * usePMLString() { return "usePML"; }
     static constexpr char const * parametersPMLString() { return "parametersPML"; }
 
+    static constexpr char const * useTaperString() {return "useTaper";}
+    static constexpr char const * reflectivityCoeffString() {return "reflectivityCoeff";}
+    static constexpr char const * thicknessTaperString() {return "thicknessTaper";}
+
     static constexpr char const * receiverElemString() { return "receiverElem"; }
     static constexpr char const * receiverRegionString() { return "receiverRegion"; }
     static constexpr char const * freeSurfaceString() { return "FreeSurface"; }
@@ -291,6 +295,11 @@ protected:
                                        DomainPartition & domain,
                                        integer const computeGradient ) = 0;
 
+  /**
+   * @brief Method to get the maximum wavespeed on a mesh (usually the P-wavespeed)
+   */
+  virtual real32 getGlobalMinWavespeed( MeshLevel & mesh, string_array const & regionNames ) = 0;
+
 
   virtual void registerDataOnMesh( Group & meshBodies ) override;
 
@@ -365,6 +374,9 @@ protected:
   /// Flag to apply PML
   integer m_usePML;
 
+  ///Flag to use a taper
+  integer m_useTaper;
+
   /// Flag to precompute the time-step
   /// usage:  the time-step is computed then the code exit and you can
   /// copy paste the time-step inside the XML then deactivate the option
@@ -415,6 +427,12 @@ protected:
   /// A set of target nodes IDs that will be handled by the current solver
   SortedArray< localIndex > m_solverTargetNodesSet;
 
+  /// Thickness of the Taper region, used to compute the damping profile
+  real32 m_thicknessTaper;
+
+  // Reflectivity coefficient
+  real32 m_reflectivityCoeff;
+
   /// Names of table functions for source wavelet (time dependency)
   string_array m_sourceWaveletTableNames;
 
@@ -444,6 +462,7 @@ protected:
     R1Tensor32 waveSpeedMaxXYZPML;
   };
 
+
 };
 
 namespace fields
@@ -456,6 +475,14 @@ DECLARE_FIELD( referencePosition32,
                NOPLOT,
                WRITE_AND_READ,
                "Copy of the referencePosition from NodeManager in 32 bits integer" );
+DECLARE_FIELD( taperCoeff,
+               "taperCoeff",
+               array1d< real32 >,
+               1.0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Array continaing the coefficients for the taper" );
+
 }
 } /* namespace geos */
 

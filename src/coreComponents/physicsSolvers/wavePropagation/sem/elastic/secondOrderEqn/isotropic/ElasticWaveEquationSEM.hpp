@@ -160,6 +160,17 @@ public:
 
   void prepareNextTimestep( MeshLevel & mesh );
 
+  /**
+   * @brief Get the minimum wavespeed on a mesh (S-wavespeed in the elastic case)
+   */
+  virtual real32 getGlobalMinWavespeed( MeshLevel & mesh, string_array const & regionNames ) override;
+
+  /**
+   * @brief Computes the minimum attenuation quality factor over all the mesh. This is useful for computing anelasticity coefficients, which
+   * are usually global parameters
+   */
+  real32 computeGlobalMinQFactor();
+
 protected:
 
   virtual void postInputInitialization() override final;
