@@ -58,12 +58,14 @@ void MultiPhaseThermalConductivityBase::postInputInitialization()
   m_dEffectiveConductivity_dPhaseVolFrac.resize( 0, 0, 3, numPhases );
 }
 
-void MultiPhaseThermalConductivityBase::resizeFields( localIndex const size, localIndex const GEOS_UNUSED_PARAM( numPts ) )
+void MultiPhaseThermalConductivityBase::allocateConstitutiveData( dataRepository::Group & parent, localIndex const numPts )
 {
   // NOTE: enforcing 1 quadrature point
   integer const numPhases = numFluidPhases();
-  m_effectiveConductivity.resize( size, 1, 3 );
-  m_dEffectiveConductivity_dPhaseVolFrac.resize( size, 1, 3, numPhases );
+  m_effectiveConductivity.resize( 0, 1, 3 );
+  m_dEffectiveConductivity_dPhaseVolFrac.resize( 0, 1, 3, numPhases );
+
+  ConstitutiveBase::allocateConstitutiveData( parent, numPts );
 }
 
 } // namespace constitutive

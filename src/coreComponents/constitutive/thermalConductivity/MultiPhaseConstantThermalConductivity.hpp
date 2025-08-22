@@ -73,6 +73,8 @@ public:
 
   virtual string getCatalogName() const override { return catalogName(); }
 
+  virtual void allocateConstitutiveData( dataRepository::Group & parent, localIndex const numPts ) override;
+
   /// Type of kernel wrapper for in-kernel update
   using KernelWrapper = MultiPhaseConstantThermalConductivityUpdate;
 
@@ -94,8 +96,6 @@ public:
 protected:
 
   virtual void postInputInitialization() override;
-
-  virtual void resizeFields( localIndex const size, localIndex const numPts ) override;
 
 private:
 

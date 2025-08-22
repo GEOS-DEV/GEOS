@@ -92,6 +92,9 @@ public:
 
   virtual string getCatalogName() const override { return catalogName(); }
 
+  virtual void allocateConstitutiveData( Group & parent,
+                                         localIndex const numPts ) override;
+
   /// Type of kernel wrapper for in-kernel update
   using KernelWrapper = CarmanKozenyPermeabilityUpdate;
 
@@ -116,11 +119,7 @@ public:
     static constexpr char const * particleDiameterString() { return "particleDiameter"; }
     static constexpr char const * sphericityString() { return "sphericity"; }
     static constexpr char const * anisotropyString() { return "anisotropy"; }
-  } viewKeys;
-
-protected:
-
-  virtual void resizeFields( localIndex const size, localIndex const numPts ) override;
+  };
 
 private:
 

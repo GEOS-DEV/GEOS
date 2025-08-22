@@ -56,13 +56,15 @@ PorosityBase::PorosityBase( string const & name, Group * const parent ):
   registerField< fields::porosity::referencePorosity >( &m_referencePorosity );
 }
 
-void PorosityBase::resizeFields( localIndex const GEOS_UNUSED_PARAM( size ), localIndex const numPts )
+void PorosityBase::allocateConstitutiveData( Group & parent, localIndex const numPts )
 {
   m_newPorosity.resize( 0, numPts );
   m_porosity_n.resize( 0, numPts );
   m_dPorosity_dPressure.resize( 0, numPts );
   m_dPorosity_dTemperature.resize( 0, numPts );
   m_initialPorosity.resize( 0, numPts );
+
+  ConstitutiveBase::allocateConstitutiveData( parent, numPts );
 }
 
 void PorosityBase::postInputInitialization()

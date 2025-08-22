@@ -46,12 +46,12 @@ MultiPhaseVolumeWeightedThermalConductivity::MultiPhaseVolumeWeightedThermalCond
   registerField< fields::thermalconductivity::rockThermalConductivity >( &m_rockThermalConductivity );
 }
 
-void MultiPhaseVolumeWeightedThermalConductivity::resizeFields( localIndex const size, localIndex const numPts )
+void MultiPhaseVolumeWeightedThermalConductivity::allocateConstitutiveData( dataRepository::Group & parent, localIndex const numPts )
 {
-  MultiPhaseThermalConductivityBase::resizeFields( size, numPts );
+  MultiPhaseThermalConductivityBase::allocateConstitutiveData( parent, numPts );
 
   // TODO move into initializeState?
-  for( localIndex ei = 0; ei < size; ++ei )
+  for( localIndex ei = 0; ei < parent.size(); ++ei )
   {
     for( localIndex q = 0; q < 1; ++q )
     {

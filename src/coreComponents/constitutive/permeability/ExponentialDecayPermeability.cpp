@@ -44,13 +44,14 @@ ExponentialDecayPermeability::ExponentialDecayPermeability( string const & name,
   registerField< fields::permeability::dPerm_dDispJump >( &m_dPerm_dDispJump );
 }
 
-void ExponentialDecayPermeability::resizeFields( localIndex const size, localIndex const numPts )
+void ExponentialDecayPermeability::allocateConstitutiveData( Group & parent,
+                                                             localIndex const numPts )
 {
-  PermeabilityBase::resizeFields( size, numPts );
-
   // NOTE: enforcing 1 quadrature point
-  m_dPerm_dTraction.resize( size, 1, 3, 3 );
-  m_dPerm_dDispJump.resize( size, 1, 3, 3 );
+  m_dPerm_dTraction.resize( 0, 1, 3, 3 );
+  m_dPerm_dDispJump.resize( 0, 1, 3, 3 );
+
+  PermeabilityBase::allocateConstitutiveData( parent, numPts );
 }
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, ExponentialDecayPermeability, string const &, Group * const )

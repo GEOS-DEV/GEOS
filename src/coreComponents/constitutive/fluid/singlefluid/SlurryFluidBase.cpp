@@ -104,33 +104,33 @@ localIndex SlurryFluidBase::numFluidComponents() const
   return LvArray::integerConversion< localIndex >( m_componentNames.size());
 }
 
-void SlurryFluidBase::resizeFields( localIndex const size, localIndex const numPts )
+void SlurryFluidBase::allocateConstitutiveData( Group & parent,
+                                                localIndex const numPts )
 {
-  SingleFluidBase::resizeFields( size, numPts );
-
   localIndex const NC = numFluidComponents();
   m_numDOF = 2 + NC;  // pressure,proppantconc, NC compconc
 
   // These are also sized in m_dDenisty in base class , only dP and dT are populated
   // Future dev should incorporate concentration derivatives in dDensity
-  m_dDensity_dProppantConc.resize( size, numPts );
-  m_dDensity_dCompConc.resize( size, numPts, NC );
+  m_dDensity_dProppantConc.resize( 0, numPts );
+  m_dDensity_dCompConc.resize( 0, numPts, NC );
 
-  m_componentDensity.resize( size, numPts, NC );
-  m_dCompDens_dPres.resize( size, numPts, NC );
-  m_dCompDens_dCompConc.resize( size, numPts, NC, NC );
+  m_componentDensity.resize( 0, numPts, NC );
+  m_dCompDens_dPres.resize( 0, numPts, NC );
+  m_dCompDens_dCompConc.resize( 0, numPts, NC, NC );
 
-  m_fluidDensity.value.resize( size, numPts );
-  m_dFluidDens_dPres.resize( size, numPts );
-  m_dFluidDens_dCompConc.resize( size, numPts, NC );
+  m_fluidDensity.value.resize( 0, numPts );
+  m_dFluidDens_dPres.resize( 0, numPts );
+  m_dFluidDens_dCompConc.resize( 0, numPts, NC );
 
-  m_fluidViscosity.resize( size, numPts );
-  m_dFluidVisc_dPres.resize( size, numPts );
-  m_dFluidVisc_dCompConc.resize( size, numPts, NC );
+  m_fluidViscosity.resize( 0, numPts );
+  m_dFluidVisc_dPres.resize( 0, numPts );
+  m_dFluidVisc_dCompConc.resize( 0, numPts, NC );
 
-  m_dViscosity_dProppantConc.resize( size, numPts );
-  m_dViscosity_dCompConc.resize( size, numPts, NC );
+  m_dViscosity_dProppantConc.resize( 0, numPts );
+  m_dViscosity_dCompConc.resize( 0, numPts, NC );
 
+  SingleFluidBase::allocateConstitutiveData( parent, numPts );
 }
 
 

@@ -562,15 +562,17 @@ TableRelativePermeabilityHysteresis::createKernelWrapper()
                         m_dPhaseRelPerm_dPhaseVolFrac );
 }
 
-void TableRelativePermeabilityHysteresis::resizeFields( localIndex const size, localIndex const numPts )
+void TableRelativePermeabilityHysteresis::allocateConstitutiveData( Group & parent,
+                                                                    localIndex const numPts )
 {
-  RelativePermeabilityBase::resizeFields( size, numPts );
-
   integer const numPhases = numFluidPhases();
 
   m_phaseMinVolumeFraction.resize( numPhases );
-  m_phaseMaxHistoricalVolFraction.resize( size, numPhases );
-  m_phaseMinHistoricalVolFraction.resize( size, numPhases );
+  m_phaseMaxHistoricalVolFraction.resize( 0, numPhases );
+  m_phaseMinHistoricalVolFraction.resize( 0, numPhases );
+
+  RelativePermeabilityBase::allocateConstitutiveData( parent, numPts );
+
   m_phaseMaxHistoricalVolFraction.setValues< parallelDevicePolicy<> >( 0.0 );
   m_phaseMinHistoricalVolFraction.setValues< parallelDevicePolicy<> >( 1.0 );
 }

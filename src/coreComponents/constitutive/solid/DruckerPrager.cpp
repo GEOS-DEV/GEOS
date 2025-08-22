@@ -84,13 +84,12 @@ DruckerPrager::DruckerPrager( string const & name, Group * const parent ):
 }
 
 
-void DruckerPrager::resizeFields( localIndex const size, localIndex const numPts )
+void DruckerPrager::allocateConstitutiveData( Group & parent, localIndex const numPts )
 {
-  ElasticIsotropic::resizeFields( size, numPts );
-
-  // 0 to resize and assign default value later
   m_newCohesion.resize( 0, numPts );
   m_oldCohesion.resize( 0, numPts );
+
+  ElasticIsotropic::allocateConstitutiveData( parent, numPts );
 }
 
 

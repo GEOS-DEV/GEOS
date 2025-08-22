@@ -254,6 +254,9 @@ public:
 
   SlurryFluidBase( string const & name, Group * const parent );
 
+  virtual void allocateConstitutiveData( Group & parent,
+                                         localIndex const numPts );
+
   static constexpr localIndex MAX_NUM_COMPONENTS = 3;
 
   localIndex numFluidComponents() const;
@@ -318,8 +321,6 @@ public:
 protected:
 
   virtual void postInputInitialization() override;
-
-  virtual void resizeFields( localIndex const size, localIndex const numPts ) override;
 
   string_array m_componentNames;
 

@@ -69,16 +69,19 @@ TwoPhaseImmiscibleFluid::TwoPhaseImmiscibleFluid( string const & name, Group * c
 }
 
 
-void TwoPhaseImmiscibleFluid::resizeFields( localIndex const size, localIndex const numPts )
+void TwoPhaseImmiscibleFluid::allocateConstitutiveData( Group & parent,
+                                                        localIndex const numPts )
 {
   // Assume sole dependency on pressure, i.e. one derivative
-  m_phaseDensity.value.resize( size, numPts, 2 );
-  m_phaseDensity.derivs.resize( size, numPts, 2, 1 );
+  m_phaseDensity.value.resize( 0, numPts, 2 );
+  m_phaseDensity.derivs.resize( 0, numPts, 2, 1 );
 
-  m_phaseDensity_n.resize( size, numPts, 2 );
+  m_phaseDensity_n.resize( 0, numPts, 2 );
 
-  m_phaseViscosity.value.resize( size, numPts, 2 );
-  m_phaseViscosity.derivs.resize( size, numPts, 2, 1 );
+  m_phaseViscosity.value.resize( 0, numPts, 2 );
+  m_phaseViscosity.derivs.resize( 0, numPts, 2, 1 );
+
+  ConstitutiveBase::allocateConstitutiveData( parent, numPts );
 }
 
 

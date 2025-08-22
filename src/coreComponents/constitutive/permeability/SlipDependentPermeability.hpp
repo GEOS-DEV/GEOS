@@ -96,6 +96,9 @@ public:
 
   virtual string getCatalogName() const override { return catalogName(); }
 
+  virtual void allocateConstitutiveData( Group & parent,
+                                         localIndex const numPts ) override;
+
   /// Type of kernel wrapper for in-kernel update
   using KernelWrapper = SlipDependentPermeabilityUpdate;
 
@@ -112,10 +115,6 @@ public:
                           m_maxPermMultiplier,
                           m_initialPermeability );
   }
-
-protected:
-
-  virtual void resizeFields( localIndex const size, localIndex const numPts ) override;
 
 private:
 

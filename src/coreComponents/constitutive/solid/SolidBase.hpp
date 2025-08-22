@@ -562,6 +562,8 @@ public:
   SolidBase( string const & name,
              Group * const parent );
 
+  virtual void allocateConstitutiveData( Group & parent, localIndex const numPts ) override;
+
   /// Keys for data in this class
   struct viewKeyStruct : public ConstitutiveBase::viewKeyStruct
   {
@@ -684,8 +686,6 @@ protected:
 
   /// Post-process XML input
   virtual void postInputInitialization() override;
-
-  virtual void resizeFields( localIndex const size, localIndex const numPts ) override;
 
   /// The current stress at a quadrature point (i.e. at timestep n, global newton iteration k)
   array3d< real64, solid::STRESS_PERMUTATION > m_newStress;

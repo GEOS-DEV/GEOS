@@ -81,20 +81,19 @@ void CapillaryPressureBase::postInputInitialization()
     m_phaseOrder[m_phaseTypes[ip]] = ip;
   }
 
-  // call to correctly set member array tertiary sizes on the 'main' material object
-  resizeFields( 0, 0 );  // TODO figure out why this is really needed
-
   // set labels on array wrappers for plottable fields
   setLabels();
 }
 
-void CapillaryPressureBase::resizeFields( localIndex const size,
-                                          localIndex const numPts )
+void CapillaryPressureBase::allocateConstitutiveData( dataRepository::Group & parent,
+                                                      localIndex const numConstitutivePointsPerParentIndex )
 {
   integer const NP = numFluidPhases();
 
-  m_phaseCapPressure.resize( size, numPts, NP );
-  m_dPhaseCapPressure_dPhaseVolFrac.resize( size, numPts, NP, NP );
+  m_phaseCapPressure.resize( 0, numConstitutivePointsPerParentIndex, NP );
+  m_dPhaseCapPressure_dPhaseVolFrac.resize( 0, numConstitutivePointsPerParentIndex, NP, NP );
+
+  ConstitutiveBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 }
 
 void CapillaryPressureBase::setLabels()

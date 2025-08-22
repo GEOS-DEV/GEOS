@@ -176,18 +176,16 @@ void Damage< BASE >::postInputInitialization()
 }
 
 template< typename BASE >
-void Damage< BASE >::resizeFields( localIndex const size,
-                                   localIndex const numPts )
+void Damage< BASE >::allocateConstitutiveData( Group & parent, localIndex const numPts )
 {
-  BASE::resizeFields( size, numPts );
-
-  // 0 to resize and assign default value later
   m_newDamage.resize( 0, numPts );
   m_oldDamage.resize( 0, numPts );
   m_damageGrad.resize( 0, numPts, 3 );
   m_strainEnergyDensity.resize( 0, numPts );
   m_volStrain.resize( 0, numPts );
   m_extDrivingForce.resize( 0, numPts );
+
+  BASE::allocateConstitutiveData( parent, numPts );
 }
 
 template< typename BASE >

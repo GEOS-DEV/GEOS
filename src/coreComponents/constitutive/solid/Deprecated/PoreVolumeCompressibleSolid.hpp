@@ -42,6 +42,8 @@ public:
 
   virtual string getCatalogName() const override { return catalogName(); }
 
+  virtual void allocateConstitutiveData( Group & parent, localIndex const numPts ) override;
+
   virtual void stateUpdatePointPressure( real64 const & pres,
                                          localIndex const k,
                                          localIndex const q ) override final;
@@ -58,8 +60,6 @@ public:
 protected:
 
   virtual void postInputInitialization() override;
-
-  virtual void resizeFields( localIndex const size, localIndex const numPts ) override;
 
 private:
 

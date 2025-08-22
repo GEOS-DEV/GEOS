@@ -96,6 +96,8 @@ public:
    */
   SinglePhaseThermalConductivityBase( string const & name, dataRepository::Group * const parent );
 
+  virtual void allocateConstitutiveData( dataRepository::Group & parent, localIndex const numPts );
+
   /**
    * @brief Initialize the thermal conductivity state (needed when thermal conductivity depends on porosity and phase volume fraction)
    * @param[in] initialPorosity the initial porosity field after reservoir initialization
@@ -146,8 +148,6 @@ public:
 protected:
 
   virtual void postInputInitialization() override;
-
-  virtual void resizeFields( localIndex const size, localIndex const numPts ) override;
 
   /// cell-wise effective conductivities in the subregion
   array3d< real64 > m_effectiveConductivity;

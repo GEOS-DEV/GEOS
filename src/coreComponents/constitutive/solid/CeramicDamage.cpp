@@ -70,13 +70,12 @@ CeramicDamage::CeramicDamage( string const & name, Group * const parent ):
 }
 
 
-void CeramicDamage::resizeFields( localIndex const size, localIndex const numPts )
+void CeramicDamage::allocateConstitutiveData( Group & parent, localIndex const numPts )
 {
-  ElasticIsotropic::resizeFields( size, numPts );
-
-  // 0 to resize and assign default value later
   m_damage.resize( 0, numPts );
   m_jacobian.resize( 0, numPts );
+
+  ElasticIsotropic::allocateConstitutiveData( parent, numPts );
 }
 
 

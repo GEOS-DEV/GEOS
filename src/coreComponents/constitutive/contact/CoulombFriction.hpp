@@ -170,6 +170,9 @@ public:
 
   ///@}
 
+  virtual void allocateConstitutiveData( dataRepository::Group & parent,
+                                         localIndex const numConstitutivePointsPerParentIndex ) override final;
+
   /// Type of kernel wrapper for in-kernel update
   using KernelWrapper = CoulombFrictionUpdates;
 
@@ -200,13 +203,6 @@ public:
 protected:
 
   virtual void postInputInitialization() override;
-
-  /**
-   * @brief Function called internally to resize member arrays
-   * @param size primary dimension (e.g. number of cells)
-   * @param numPts secondary dimension (e.g. number of gauss points per cell)
-   */
-  virtual void resizeFields( localIndex const size, localIndex const numPts ) override;
 
 private:
 

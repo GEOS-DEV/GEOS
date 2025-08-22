@@ -89,40 +89,43 @@ MultiFluidBase::MultiFluidBase( string const & name, Group * const parent )
   registerField< fields::multifluid::dTotalDensity >( &m_totalDensity.derivs );
 }
 
-void MultiFluidBase::resizeFields( localIndex const size, localIndex const numPts )
+void MultiFluidBase::allocateConstitutiveData( dataRepository::Group & parent,
+                                               localIndex const numConstitutivePointsPerParentIndex )
 {
   integer const numPhase = numFluidPhases();
   integer const numComp = numFluidComponents();
   integer const numDof = numComp + 2;
 
-  m_phaseFraction.value.resize( size, numPts, numPhase );
-  m_phaseFraction.derivs.resize( size, numPts, numPhase, numDof );
+  m_phaseFraction.value.resize( 0, numConstitutivePointsPerParentIndex, numPhase );
+  m_phaseFraction.derivs.resize( 0, numConstitutivePointsPerParentIndex, numPhase, numDof );
 
-  m_phaseDensity.value.resize( size, numPts, numPhase );
-  m_phaseDensity_n.resize( size, numPts, numPhase );
-  m_phaseDensity.derivs.resize( size, numPts, numPhase, numDof );
+  m_phaseDensity.value.resize( 0, numConstitutivePointsPerParentIndex, numPhase );
+  m_phaseDensity_n.resize( 0, numConstitutivePointsPerParentIndex, numPhase );
+  m_phaseDensity.derivs.resize( 0, numConstitutivePointsPerParentIndex, numPhase, numDof );
 
-  m_phaseMassDensity.value.resize( size, numPts, numPhase );
-  m_phaseMassDensity.derivs.resize( size, numPts, numPhase, numDof );
+  m_phaseMassDensity.value.resize( 0, numConstitutivePointsPerParentIndex, numPhase );
+  m_phaseMassDensity.derivs.resize( 0, numConstitutivePointsPerParentIndex, numPhase, numDof );
 
-  m_phaseViscosity.value.resize( size, numPts, numPhase );
-  m_phaseViscosity.derivs.resize( size, numPts, numPhase, numDof );
+  m_phaseViscosity.value.resize( 0, numConstitutivePointsPerParentIndex, numPhase );
+  m_phaseViscosity.derivs.resize( 0, numConstitutivePointsPerParentIndex, numPhase, numDof );
 
-  m_phaseEnthalpy.value.resize( size, numPts, numPhase );
-  m_phaseEnthalpy_n.resize( size, numPts, numPhase );
-  m_phaseEnthalpy.derivs.resize( size, numPts, numPhase, numDof );
+  m_phaseEnthalpy.value.resize( 0, numConstitutivePointsPerParentIndex, numPhase );
+  m_phaseEnthalpy_n.resize( 0, numConstitutivePointsPerParentIndex, numPhase );
+  m_phaseEnthalpy.derivs.resize( 0, numConstitutivePointsPerParentIndex, numPhase, numDof );
 
-  m_phaseInternalEnergy.value.resize( size, numPts, numPhase );
-  m_phaseInternalEnergy_n.resize( size, numPts, numPhase );
-  m_phaseInternalEnergy.derivs.resize( size, numPts, numPhase, numDof );
+  m_phaseInternalEnergy.value.resize( 0, numConstitutivePointsPerParentIndex, numPhase );
+  m_phaseInternalEnergy_n.resize( 0, numConstitutivePointsPerParentIndex, numPhase );
+  m_phaseInternalEnergy.derivs.resize( 0, numConstitutivePointsPerParentIndex, numPhase, numDof );
 
-  m_phaseCompFraction.value.resize( size, numPts, numPhase, numComp );
-  m_phaseCompFraction_n.resize( size, numPts, numPhase, numComp );
-  m_phaseCompFraction.derivs.resize( size, numPts, numPhase, numComp, numDof );
+  m_phaseCompFraction.value.resize( 0, numConstitutivePointsPerParentIndex, numPhase, numComp );
+  m_phaseCompFraction_n.resize( 0, numConstitutivePointsPerParentIndex, numPhase, numComp );
+  m_phaseCompFraction.derivs.resize( 0, numConstitutivePointsPerParentIndex, numPhase, numComp, numDof );
 
-  m_totalDensity.value.resize( size, numPts );
-  m_totalDensity_n.resize( size, numPts );
-  m_totalDensity.derivs.resize( size, numPts, numDof );
+  m_totalDensity.value.resize( 0, numConstitutivePointsPerParentIndex );
+  m_totalDensity_n.resize( 0, numConstitutivePointsPerParentIndex );
+  m_totalDensity.derivs.resize( 0, numConstitutivePointsPerParentIndex, numDof );
+
+  ConstitutiveBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 }
 
 void MultiFluidBase::setLabels()
@@ -198,9 +201,6 @@ void MultiFluidBase::postInputInitialization()
                               "Component names should be unique.", getFullName(), m_componentNames[ic] ), InputError );
     uniqueNames.insert( lowerCaseName );
   }
-
-  // call to correctly set member array tertiary sizes on the 'main' material object
-  resizeFields( 0, 0 );  // TODO figure out why this is really needed
 
   // set labels on array wrappers for plottable fields
   setLabels();

@@ -34,10 +34,13 @@ DispersionBase::DispersionBase( string const & name, Group * const parent )
   registerField< fields::dispersion::dispersivity >( &m_dispersivity );
 }
 
-void DispersionBase::resizeFields( localIndex const size, localIndex const GEOS_UNUSED_PARAM( numPts ) )
+void DispersionBase::allocateConstitutiveData( dataRepository::Group & parent,
+                                               localIndex const numConstitutivePointsPerParentIndex )
 {
   // NOTE: enforcing 1 quadrature point
-  m_dispersivity.resize( size, 1, 3 );
+  m_dispersivity.resize( 0, 1, 3 );
+
+  ConstitutiveBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 }
 
 } // namespace constitutive

@@ -60,11 +60,12 @@ void CoulombFriction::postInputInitialization()
 
 }
 
-void CoulombFriction::resizeFields( localIndex const size, localIndex const numPts )
+void CoulombFriction::allocateConstitutiveData( dataRepository::Group & parent,
+                                                localIndex const numConstitutivePointsPerParentIndex )
 {
-  FrictionBase::resizeFields( size, numPts );
+  m_elasticSlip.resize( 0, 2 );
 
-  m_elasticSlip.resize( 0, 2 ); // 0 to resize and assign default value later
+  FrictionBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 }
 
 CoulombFrictionUpdates CoulombFriction::createKernelUpdates() const

@@ -79,9 +79,10 @@ CompressibleSinglePhaseFluid::CompressibleSinglePhaseFluid( string const & name,
 
 }
 
-void CompressibleSinglePhaseFluid::resizeFields( localIndex const size, localIndex const numPts )
+void CompressibleSinglePhaseFluid::allocateConstitutiveData( Group & parent,
+                                                             localIndex const numConstitutivePointsPerParentIndex )
 {
-  SingleFluidBase::resizeFields( size, numPts );
+  SingleFluidBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 
   getField< fields::singlefluid::density >().setApplyDefaultValue( m_referenceDensity );
   getField< fields::singlefluid::viscosity >().setApplyDefaultValue( m_referenceViscosity );

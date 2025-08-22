@@ -151,11 +151,12 @@ public:
 
   ParticleFluidBase( string const & name, Group * const parent );
 
+  virtual void allocateConstitutiveData( Group & parent,
+                                         localIndex const numConstitutivePointsPerParentIndex ) override;
+
   static constexpr localIndex MAX_NUM_COMPONENTS = 4;
 
 protected:
-
-  virtual void resizeFields( localIndex const size, localIndex const numPts ) override;
 
   array1d< real64 > m_settlingFactor;
   array1d< real64 > m_dSettlingFactor_dPressure;

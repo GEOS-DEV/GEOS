@@ -103,6 +103,9 @@ public:
 
   virtual string getCatalogName() const override { return catalogName(); }
 
+  virtual void allocateConstitutiveData( Group & parent,
+                                         localIndex const numPts ) override;
+
   /// Type of kernel wrapper for in-kernel update
   using KernelWrapper = WillisRichardsPermeabilityUpdate;
 
@@ -120,10 +123,6 @@ public:
                           m_dilationCoefficient,
                           m_refClosureStress );
   }
-
-protected:
-
-  virtual void resizeFields( localIndex const size, localIndex const numPts ) override;
 
 private:
 

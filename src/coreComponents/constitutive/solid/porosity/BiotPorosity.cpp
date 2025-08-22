@@ -67,11 +67,11 @@ BiotPorosity::BiotPorosity( string const & name, Group * const parent ):
   registerField< fields::porosity::averageMeanTotalStressIncrement_k >( &m_averageMeanTotalStressIncrement_k );
 }
 
-void BiotPorosity::resizeFields( localIndex const size, localIndex const numPts )
+void BiotPorosity::allocateConstitutiveData( dataRepository::Group & parent, localIndex const numPts )
 {
-  PorosityBase::resizeFields( size, numPts );
+  m_meanTotalStressIncrement_k.resize( 0, numPts );
 
-  m_meanTotalStressIncrement_k.resize( size, numPts );
+  PorosityBase::allocateConstitutiveData( parent, numPts );
 }
 
 void BiotPorosity::postInputInitialization()

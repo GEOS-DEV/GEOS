@@ -62,13 +62,14 @@ void ProppantPermeability::postInputInitialization()
                                 / ( m_maxProppantConcentration * m_maxProppantConcentration );
 }
 
-void ProppantPermeability::resizeFields( localIndex const size, localIndex const numPts )
+void ProppantPermeability::allocateConstitutiveData( Group & parent,
+                                                     localIndex const numPts )
 {
-  PermeabilityBase::resizeFields( size, numPts );
-
   // NOTE: enforcing 1 quadrature point
-  m_dPerm_dDispJump.resize( size, 1, 3, 3 );
-  m_permeabilityMultiplier.resize( size, 1, 3 );
+  m_dPerm_dDispJump.resize( 0, 1, 3, 3 );
+  m_permeabilityMultiplier.resize( 0, 1, 3 );
+
+  PermeabilityBase::allocateConstitutiveData( parent, numPts );
 }
 
 

@@ -55,12 +55,13 @@ CarmanKozenyPermeability::deliverClone( string const & name,
   return PermeabilityBase::deliverClone( name, parent );
 }
 
-void CarmanKozenyPermeability::resizeFields( localIndex const size, localIndex const numPts )
+void CarmanKozenyPermeability::allocateConstitutiveData( Group & parent,
+                                                         localIndex const numPts )
 {
-  PermeabilityBase::resizeFields( size, numPts );
-
   // NOTE: enforcing 1 quadrature point
-  m_dPerm_dPorosity.resize( size, 1, 3 );
+  m_dPerm_dPorosity.resize( 0, 1, 3 );
+
+  PermeabilityBase::allocateConstitutiveData( parent, numPts );
 }
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, CarmanKozenyPermeability, string const &, Group * const )

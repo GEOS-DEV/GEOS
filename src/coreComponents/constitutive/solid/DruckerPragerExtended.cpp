@@ -100,13 +100,12 @@ DruckerPragerExtended::DruckerPragerExtended( string const & name, Group * const
 }
 
 
-void DruckerPragerExtended::resizeFields( localIndex const size, localIndex const numPts )
+void DruckerPragerExtended::allocateConstitutiveData( Group & parent, localIndex const numPts )
 {
-  ElasticIsotropic::resizeFields( size, numPts );
-
-  // 0 to resize and assign default value later
   m_newState.resize( 0, numPts );
   m_oldState.resize( 0, numPts );
+
+  ElasticIsotropic::allocateConstitutiveData( parent, numPts );
 }
 
 

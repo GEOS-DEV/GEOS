@@ -95,13 +95,12 @@ DelftEgg::DelftEgg( string const & name, Group * const parent ):
 }
 
 
-void DelftEgg::resizeFields( localIndex const size, localIndex const numPts )
+void DelftEgg::allocateConstitutiveData( Group & parent, localIndex const numPts )
 {
-  ElasticIsotropic::resizeFields( size, numPts );
-
-  // 0 to resize and assign default value later
   m_newPreConsolidationPressure.resize( 0, numPts );
   m_oldPreConsolidationPressure.resize( 0, numPts );
+
+  ElasticIsotropic::allocateConstitutiveData( parent, numPts );
 }
 
 

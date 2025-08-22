@@ -224,6 +224,9 @@ public:
    */
   SingleFluidBase( string const & name, Group * const parent );
 
+  virtual void allocateConstitutiveData( Group & parent,
+                                         localIndex const numConstitutivePointsPerParentIndex ) override;
+
   virtual void saveConvergedState() const override;
 
   // *** SingleFluid-specific interface
@@ -278,8 +281,6 @@ public:
 protected:
 
   virtual void postInputInitialization() override;
-
-  virtual void resizeFields( localIndex const size, localIndex const numPts ) override;
 
   // Degrees of freedom in fluid characterization
   integer m_numDOF;

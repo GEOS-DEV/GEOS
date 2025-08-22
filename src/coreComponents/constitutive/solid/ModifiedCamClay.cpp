@@ -73,13 +73,12 @@ ModifiedCamClay::ModifiedCamClay( string const & name, Group * const parent ):
 }
 
 
-void ModifiedCamClay::resizeFields( localIndex const size, localIndex const numPts )
+void ModifiedCamClay::allocateConstitutiveData( Group & parent, localIndex const numPts )
 {
-  ElasticIsotropicPressureDependent::resizeFields( size, numPts );
-
-  // 0 to resize and assign default value later
   m_newPreConsolidationPressure.resize( 0, numPts );
   m_oldPreConsolidationPressure.resize( 0, numPts );
+
+  ElasticIsotropicPressureDependent::allocateConstitutiveData( parent, numPts );
 }
 
 void ModifiedCamClay::postInputInitialization()

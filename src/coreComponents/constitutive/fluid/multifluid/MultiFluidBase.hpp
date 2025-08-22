@@ -38,6 +38,9 @@ public:
   MultiFluidBase( string const & name,
                   Group * const parent );
 
+  virtual void allocateConstitutiveData( dataRepository::Group & parent,
+                                         localIndex const numConstitutivePointsPerParentIndex );
+
   // *** MultiFluid-specific interface
 
   /**
@@ -641,21 +644,12 @@ private:
 
 private:
 
-
-
   /**
    * @brief Called internally to set array dim labels.
    */
   void setLabels();
 
 protected:
-
-  /**
-   * @brief Function called internally to resize member arrays
-   * @param size primary dimension (e.g. number of cells)
-   * @param numPts secondary dimension (e.g. number of gauss points per cell)
-   */
-  virtual void resizeFields( localIndex const size, localIndex const numPts ) override;
 
   virtual void postInputInitialization() override;
 

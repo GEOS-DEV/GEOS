@@ -62,8 +62,10 @@ void HydraulicApertureTable::postInputInitialization()
                  InputError );
 }
 
-void HydraulicApertureTable::resizeFields( localIndex const GEOS_UNUSED_PARAM( size ), localIndex const GEOS_UNUSED_PARAM( numPts ) )
+void HydraulicApertureTable::allocateConstitutiveData( dataRepository::Group & parent,
+                                                       localIndex const numConstitutivePointsPerParentIndex )
 {
+  HydraulicApertureBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 
   // TODO this should not be here
 

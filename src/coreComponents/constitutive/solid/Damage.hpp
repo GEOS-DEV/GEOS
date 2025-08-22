@@ -426,6 +426,8 @@ public:
   static string catalogName() { return string( "Damage" ) + BASE::catalogName(); }
   virtual string getCatalogName() const override { return catalogName(); }
 
+  virtual void allocateConstitutiveData( dataRepository::Group & parent, localIndex const numPts ) override;
+
   virtual void postInputInitialization() override;
 
   virtual void saveConvergedState() const override;
@@ -493,8 +495,6 @@ public:
 
 
 protected:
-
-  virtual void resizeFields( localIndex const size, localIndex const numPts ) override;
 
   /// The new damage value on all quadrature points
   array2d< real64 > m_newDamage;

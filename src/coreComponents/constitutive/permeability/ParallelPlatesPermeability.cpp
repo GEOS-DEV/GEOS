@@ -43,13 +43,17 @@ ParallelPlatesPermeability::ParallelPlatesPermeability( string const & name, Gro
   registerField< fields::permeability::dPerm_dDispJump >( &m_dPerm_dDispJump );
 }
 
-void ParallelPlatesPermeability::resizeFields( localIndex const size, localIndex const numPts )
+void ParallelPlatesPermeability::allocateConstitutiveData( Group & parent,
+                                                           localIndex const numPts )
 {
-  PermeabilityBase::resizeFields( size, numPts );
-
   // NOTE: enforcing 1 quadrature point
-  m_dPerm_dDispJump.resize( size, 1, 3, 3 );
+  m_dPerm_dDispJump.resize( 0, 1, 3, 3 );
 
+  PermeabilityBase::allocateConstitutiveData( parent, numPts );
+}
+
+void ParallelPlatesPermeability::postInputInitialization()
+{
   if( m_transversalPermeability > -1 )
   {
     m_updateTransversalComponent = false;
