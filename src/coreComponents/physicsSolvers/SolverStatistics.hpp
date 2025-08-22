@@ -216,6 +216,7 @@ public:
   { m_logStream.close(); }
 
 private:
+  /// A boolean indicating whether the CSV file is open or not
   bool m_isCSVOpen = false;
   /// Stream output for the iteration statistics
   std::ofstream m_logStream;
@@ -324,6 +325,7 @@ public:
   { m_logStream.close(); }
 
 private:
+  /// A boolean indicating whether the CSV file is open or not
   bool m_isCSVOpen = false;
   /// Stream output for the convergence statistics
   std::ofstream m_logStream;

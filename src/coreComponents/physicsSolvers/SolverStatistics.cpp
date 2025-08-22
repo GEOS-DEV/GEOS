@@ -166,7 +166,7 @@ void IterationsStatistics::writeIterationStatsToTable()
     m_logStream.open( m_iterationsFilename );
     m_iterationCSVFormatter.reset( new TableCSVFormatter( *m_iterationCSVLayout ));
     m_logStream << m_iterationCSVFormatter->headerToString( );
-    m_isCSVOpen= true;
+    m_isCSVOpen = true;
   }
 
   m_logStream << m_iterationCSVFormatter->dataToString( m_iterationData );
@@ -232,7 +232,7 @@ void ConvergenceStatistics::writeConvergenceStatsToTable()
 
   m_convergenceData.addRow( residualsNormCells );
 
-  if( !m_logStream.is_open() )
+  if( !m_isCSVOpen )
   {
     string_array header = {"Cycle number", "time_n (s)", "dt (s)", "iteration"};
     for( auto const & residual : m_residuals )
@@ -244,6 +244,7 @@ void ConvergenceStatistics::writeConvergenceStatsToTable()
     m_logStream.open( m_convergenceFilename );
     m_convergenceFormatter.reset( new TableCSVFormatter( *m_convergenceLayout ));
     m_logStream << m_convergenceFormatter->headerToString( );
+    m_isCSVOpen = true;
   }
 
   m_logStream << m_convergenceFormatter->dataToString( m_convergenceData );
