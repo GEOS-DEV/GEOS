@@ -556,7 +556,7 @@ template< typename T, typename SET >
 localIndex
 UnpackSet( buffer_unit_type const * & buffer,
            SET & var,
-        MPI_Op op )
+           MPI_Op op )
 {
   var.clear();
   localIndex set_length;
@@ -595,14 +595,15 @@ Unpack( buffer_unit_type const * & buffer,
 template< typename T >
 typename std::enable_if< is_packable< T >, localIndex >::type
 Unpack( buffer_unit_type const * & buffer,
-        std::vector< T > & var )
+        std::vector< T > & var;
+        MPI_Op op )
 {
   size_t length;
-  localIndex sizeOfUnpackedChars = Unpack( buffer, length );
+  localIndex sizeOfUnpackedChars = Unpack( buffer, length, MPI_REPLACE );
   var.resize( length );
   for( T & val : var )
   {
-    sizeOfUnpackedChars += Unpack( buffer, val );
+    sizeOfUnpackedChars += Unpack( buffer, val, op );
   }
   return sizeOfUnpackedChars;
 }
@@ -834,16 +835,17 @@ template< typename T, typename T_indices >
 localIndex
 UnpackByIndex( buffer_unit_type const * & buffer,
                std::vector< T > & var,
-               T_indices const & indices )
+               T_indices const & indices,
+               MPI_Op op )
 {
   localIndex sizeOfUnpackedChars = 0;
   localIndex numUnpackedIndices;
-  sizeOfUnpackedChars += Unpack( buffer, numUnpackedIndices );
+  sizeOfUnpackedChars += Unpack( buffer, numUnpackedIndices, MPI_REPLACE );
   GEOS_ERROR_IF( numUnpackedIndices != indices.size(), "number of unpacked indices does not equal expected number" );
 
   for( localIndex a = 0; a < indices.size(); ++a )
   {
-    sizeOfUnpackedChars += Unpack( buffer, var[ indices[ a ] ] );
+    sizeOfUnpackedChars += Unpack( buffer, var[ indices[ a ] ], op );
   }
   return sizeOfUnpackedChars;
 }
@@ -1098,7 +1100,8 @@ localIndex Unpack( buffer_unit_type const * & buffer,
                    SortedArray< localIndex > & var,
                    SortedArray< globalIndex > & unmappedGlobalIndices,
                    mapBase< globalIndex, localIndex, SORTED > const & globalToLocalMap,
-                   bool const clearExistingSet )
+                   bool const clearExistingSet,
+                   MPI_Op op )
 {
   if( clearExistingSet )
   {

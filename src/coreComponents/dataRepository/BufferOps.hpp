@@ -419,20 +419,22 @@ Unpack( buffer_unit_type const * & buffer,
 template< typename T, typename SET >
 localIndex
 UnpackSet( buffer_unit_type const * & buffer,
-           SET & var );
+           SET & var,
+           MPI_Op op );
 
 template< typename T >
 localIndex
 Unpack( buffer_unit_type const * & buffer,
-        SortedArray< T > & var )
-{ return UnpackSet< T >( buffer, var ); }
+        SortedArray< T > & var,
+        MPI_Op op )
+{ return UnpackSet< T >( buffer, var, op ); }
 
 template< typename T >
 localIndex
 Unpack( buffer_unit_type const * & buffer,
         set< T > & var,
         MPI_Op op )
-{ return UnpackSet< T >( buffer, var ); }
+{ return UnpackSet< T >( buffer, var, op ); }
 
 
 //------------------------------------------------------------------------------
@@ -542,7 +544,8 @@ template< typename T, typename T_indices >
 localIndex
 UnpackByIndex( buffer_unit_type const * & buffer,
                std::vector< T > & var,
-               T_indices const & indices );
+               T_indices const & indices,
+               MPI_Op op );
 
 //------------------------------------------------------------------------------
 template< typename T, int NDIM, int USD, typename T_indices >
