@@ -139,6 +139,28 @@ void AcousticWaveEquationDG::postInputInitialization()
 
 }
 
+real32 AcousticWaveEquationDG::getGlobalMinWavespeed( MeshLevel & mesh, string_array const & regionNames )
+{                                                                               
+                                                                                
+  real32 localMinWavespeed = 1e8;                                               
+                                                                                
+  mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
+                                                                                        CellElementSubRegion & elementSubRegion )
+  {                                                                             
+    arrayView1d< real32 const > const velocity = elementSubRegion.getField< acousticfieldsdg::AcousticVelocity >();
+    real32 subRegionMinWavespeed = *std::min_element( velocity.begin(), velocity.end());
+    if( localMinWavespeed > subRegionMinWavespeed )                             
+    {                                                                           
+      localMinWavespeed = subRegionMinWavespeed;                                
+    }                                                                           
+  } );                                                                          
+                                                                                
+  real32 const globalMinWavespeed = MpiWrapper::min( localMinWavespeed );       
+                                                                                
+  return globalMinWavespeed;                                                    
+}
+
+
 void AcousticWaveEquationDG::precomputeSourceAndReceiverTerm( MeshLevel & baseMesh, MeshLevel & mesh,
                                                               string_array const & regionNames )
 {
