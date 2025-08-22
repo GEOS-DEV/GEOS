@@ -52,7 +52,7 @@ template< typename SOLID_TYPE,
           typename PERM_TYPE >
 void PorousSolid< SOLID_TYPE, PERM_TYPE >::initializeState() const
 {
-  CoupledSolid< SOLID_TYPE, BiotPorosity, PERM_TYPE >::initializeState();
+  this->CoupledSolid< SOLID_TYPE, BiotPorosity, PERM_TYPE >::initializeState();
 }
 
 // Register all PorousSolid model types.

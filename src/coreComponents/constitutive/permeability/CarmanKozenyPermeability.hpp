@@ -121,6 +121,12 @@ public:
     static constexpr char const * anisotropyString() { return "anisotropy"; }
   } viewKeys;
 
+  virtual void initializeState() const override final;
+
+protected:
+
+  virtual void postInputInitialization() override;
+
 private:
 
   /// dPermeability_dPorosity
