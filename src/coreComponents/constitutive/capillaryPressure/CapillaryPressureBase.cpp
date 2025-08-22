@@ -19,7 +19,6 @@
 
 #include "CapillaryPressureBase.hpp"
 #include "CapillaryPressureFields.hpp"
-#include "mesh/ElementSubRegionBase.hpp"
 
 namespace geos
 {
