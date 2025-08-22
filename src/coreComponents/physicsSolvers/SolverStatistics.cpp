@@ -161,11 +161,12 @@ void IterationsStatistics::writeIterationStatsToTable()
                           m_setupTime,
                           m_solveTime );
 
-  if( !m_logStream.is_open() )
+  if( !m_isCSVOpen )
   {
     m_logStream.open( m_iterationsFilename );
     m_iterationCSVFormatter.reset( new TableCSVFormatter( *m_iterationCSVLayout ));
     m_logStream << m_iterationCSVFormatter->headerToString( );
+    m_isCSVOpen= true;
   }
 
   m_logStream << m_iterationCSVFormatter->dataToString( m_iterationData );
@@ -209,7 +210,6 @@ void ConvergenceStatistics::writeConvergenceStatsToTable()
 {
   if( !m_csvOutput )
     return;
-
   stdVector< TableData::CellData > residualsNormCells;
 
   residualsNormCells.emplace_back( TableData::CellData( {CellType::Value,

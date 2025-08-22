@@ -257,8 +257,6 @@ public:
       if( m_writeStatistics >= 2 )
       {
         solver->updateAndWriteConvergenceStep( time_n, dt, cycleNumber, iteration );
-        solver->getConvergenceStats().updateSolverStep( time_n, dt, cycleNumber, iteration );
-        solver->getConvergenceStats().writeConvergenceStatsToTable();
       }
     } );
   }

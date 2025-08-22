@@ -183,6 +183,20 @@ public:
   void setFilename( string_view filename )
   { m_iterationsFilename = filename; }
 
+
+  /**
+   * @return  A const iteration filename
+   */
+  string const & getFilename() const
+  { return m_iterationsFilename;  }
+
+  /**
+   * @brief  A string reference to an iteration filename
+   */
+  string & getFilename()
+  { return m_iterationsFilename;  }
+
+
   /**
    * @brief Set the filename output file.
    * @param name The filename as a string_view.
@@ -195,7 +209,14 @@ public:
    */
   void outputStatistics();
 
+  /**
+   * @brief Close the stream output file
+   */
+  void closeFile()
+  { m_logStream.close(); }
+
 private:
+  bool m_isCSVOpen = false;
   /// Stream output for the iteration statistics
   std::ofstream m_logStream;
   /// Table Layout contenaning header for both CSV and log
@@ -284,7 +305,26 @@ public:
   void setTableName( string_view name )
   { m_tableConvergenceName = name; }
 
+  /**
+   * @return  A const convergence filename
+   */
+  string const & getFilename() const
+  { return m_convergenceFilename;  }
+
+  /**
+   * @brief  A string reference to a convergence filename
+   */
+  string & getFilename()
+  { return m_convergenceFilename;  }
+
+  /**
+   * @brief Close the stream output file
+   */
+  void closeFile()
+  { m_logStream.close(); }
+
 private:
+  bool m_isCSVOpen = false;
   /// Stream output for the convergence statistics
   std::ofstream m_logStream;
   /// Contain the layout for both the CSV and log output.
