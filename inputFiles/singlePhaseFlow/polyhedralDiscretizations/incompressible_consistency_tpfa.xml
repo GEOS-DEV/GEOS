@@ -3,7 +3,7 @@
 <Problem>
 
   <Included>
-    <File name="./incompressible_consistentcy_base.xml"/>
+    <File name="incompressible_consistency_base.xml"/>
   </Included>
 
   <NumericalMethods>
