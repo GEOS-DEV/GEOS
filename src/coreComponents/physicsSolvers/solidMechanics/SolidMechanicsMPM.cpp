@@ -347,6 +347,7 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
   m_polymerCZGr( 0.0 ),
   m_polymerCZMaxStretch( 0.0 ),
   m_needsNeighborList( 0 ),
+  m_needsNodalNeighborList( 0 ),
   m_neighborRadius( -1.0 ),
   m_binSizeMultiplier( 1 ),
   m_maxNumNeighbors( 0 ),
@@ -520,7 +521,7 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
 
   registerWrapper( "nextParticleDataWriteTime", &m_nextParticleDataWriteTime ).
     setInputFlag( InputFlags::FALSE ).
-    setApplyDefaultValue( 0.0 ).
+    setApplyDefaultValue( m_nextParticleDataWriteTime ).
     setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "Next time to write particle data" );
 
@@ -854,19 +855,25 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
 
   registerWrapper( "needsNeighborList", &m_needsNeighborList ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setApplyDefaultValue( 0 ).
+    setApplyDefaultValue( m_needsNeighborList ).
     setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "Flag for whether to construct neighbor list" );
 
+  registerWrapper( "needsNodalNeighborList", &m_needsNodalNeighborList ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( m_needsNodalNeighborList ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setDescription( "Flag for whether to construct nodal neighbor list" );
+
   registerWrapper( "neighborRadius", &m_neighborRadius ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setApplyDefaultValue( -1.0 ).
+    setApplyDefaultValue( m_neighborRadius ).
     setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "Neighbor radius for SPH-type calculations" );
 
   registerWrapper( "binSizeMultiplier", &m_binSizeMultiplier ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setApplyDefaultValue( 1 ).
+    setApplyDefaultValue( m_binSizeMultiplier ).
     setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "Multiplier for setting bin size, used to speed up particle neighbor sorting" );
 
@@ -908,7 +915,7 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
 
   registerWrapper( "maxParticleVelocity", &m_maxParticleVelocity ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDefaultValue( 1e6 ).
+    setDefaultValue( m_maxParticleVelocity ).
     setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "Velocity above which particles are deleted" );
 
@@ -1237,14 +1244,14 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
     setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "Stores the global face reactions for stress control between timesteps" );
 
-  registerWrapper( "numElements", &m_nEl).
+  registerWrapper( "numElements", &m_nEl ).
     setInputFlag( InputFlags::FALSE).
     setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "number of elements along partition directions" );
 
-  registerWrapper( "implicitContinuumFluidPressure", &m_implicitContinuumFluidPressure).
+  registerWrapper( "implicitContinuumFluidPressure", &m_implicitContinuumFluidPressure ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setApplyDefaultValue( 0.0 ).
+    setApplyDefaultValue( m_implicitContinuumFluidPressure ).
     setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "Pressure of implicit continuum fluid" );
 
@@ -2265,12 +2272,12 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
   // GEOS_LOG_RANK_0( "Initialized files");
 
   // Resize grid arrays according to number of velocity fields
-  int maxLocalGroupNumber = 0; // Maximum contact group number on this partition.
-  int maxGlobalGroupNumber; // Maximum contact group number on global domain.
+  localIndex maxLocalGroupNumber = 0; // Maximum contact group number on this partition.
+  localIndex maxGlobalGroupNumber; // Maximum contact group number on global domain.
   particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
   {
-    arrayView1d< int > const particleGroup = subRegion.getParticleGroup();
-    for( int p=0; p<subRegion.size(); ++p )
+    arrayView1d< localIndex > const particleGroup = subRegion.getParticleGroup();
+    for( localIndex p=0; p<subRegion.size(); ++p )
     {
       if( particleGroup[p] > maxLocalGroupNumber )
       {
@@ -2955,6 +2962,17 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
 
 
   //#######################################################################################
+  GEOS_LOG_LEVEL_BY_RANK( 1, "Create nodal neighborlist" );
+  solverProfiling( "Create nodal neighborlist" );
+  if( m_needsNodalNeighborList == 1 )
+  {
+    generateNodalNeighborList( particleManager,
+                               nodeManager );
+  }
+  //#######################################################################################
+
+
+  //#######################################################################################
   GEOS_LOG_LEVEL_BY_RANK( 1, "Compute particle body forces" );
   solverProfiling( "Compute particle body forces" );
   computeBodyForce( particleManager);
@@ -3428,7 +3446,7 @@ void SolidMechanicsMPM::triggerEvents( const real64 dt,
         m_boreholeRadius = boreholePressureEvent.getBoreholeRadius();
         real64 startPressure = boreholePressureEvent.getStartPressure();
         real64 endPressure = boreholePressureEvent.getEndPressure();
-        int interpolationType = boreholePressureEvent.getInterpType();
+        SolidMechanicsMPM::InterpolationOption interpolationType = static_cast< InterpolationOption >( boreholePressureEvent.getInterpType() ); // Interpolation type should be available in events
 
         // Set boreholePressure to interpolated value.  The default is 0, but at the end of the event
         // it won't be reset.
@@ -4410,7 +4428,7 @@ void SolidMechanicsMPM::computeGridSurfaceNormals( ParticleManager & particleMan
       localIndex const p = activeParticleIndices[pp];
 
       // On-the-fly shape function computation
-      int mappedNodes[64];
+      localIndex mappedNodes[64];
       real64 shapeFunctionValues[64];
       real64 shapeFunctionGradientValues[64][3];
       mapNodesAndComputeShapeFunctions( ijkMap,
@@ -4429,7 +4447,7 @@ void SolidMechanicsMPM::computeGridSurfaceNormals( ParticleManager & particleMan
       {
         localIndex const mappedNode = mappedNodes[g];
 
-        int const fieldIndex = partitionField( numContactGroups,
+        localIndex const fieldIndex = partitionField( numContactGroups,
                                                damageFieldPartitioning,
                                                particleGroup[p],
                                                particleDamageGradient[p],
@@ -4502,7 +4520,7 @@ void SolidMechanicsMPM::computeGridSurfacePositions( ParticleManager & particleM
       if( LvArray::tensorOps::l2Norm< 3 >( particleSurfaceNormal[p] ) > 1e-12 )
       {
         // On-the-fly shape function computation
-        int mappedNodes[64];
+        localIndex mappedNodes[64];
         real64 shapeFunctionValues[64];
         real64 shapeFunctionGradientValues[64][3];
         mapNodesAndComputeShapeFunctions( ijkMap,
@@ -4522,7 +4540,7 @@ void SolidMechanicsMPM::computeGridSurfacePositions( ParticleManager & particleM
           localIndex const mappedNode = mappedNodes[g];
           real64 const shapeFunctionValue = shapeFunctionValues[g];
 
-          int const fieldIndex = partitionField( numContactGroups,
+          localIndex const fieldIndex = partitionField( numContactGroups,
                                                  damageFieldPartitioning,
                                                  particleGroup[p],
                                                  particleDamageGradient[p],
@@ -4784,7 +4802,7 @@ void SolidMechanicsMPM::computeGridSurfaceNormalWeights( ParticleManager & parti
       {
         localIndex const mappedNode = mappedNodes[pp][g];
 
-        int const fieldIndex = partitionField( numContactGroups,
+        localIndex const fieldIndex = partitionField( numContactGroups,
                                                damageFieldPartitioning,
                                                particleGroup[p],
                                                particleDamageGradient[p],
@@ -5563,6 +5581,153 @@ void SolidMechanicsMPM::setConstitutiveNamesCallSuper( ParticleSubRegionBase & s
   solidMaterialName = PhysicsSolverBase::getConstitutiveName< ContinuumBase >( subRegion );
   GEOS_ERROR_IF( solidMaterialName.empty(), GEOS_FMT( "ContinuumBase model not found on subregion {}", subRegion.getName() ) );
 }
+
+// Eventually the bin sorting subroutine from computeNeighborList should be broken out into it's own function
+// void SolidMechanicsMPM::particleBinSort()
+// {
+//   // Expand bin limits by neighbor radius to account for the buffer zone of ghost particles outside the patch limits
+//   real64 const neighborRadius = m_neighborRadius;
+//   real64 const neighborRadiusSquared = neighborRadius * neighborRadius;
+//   real64 xmin = m_xLocalMinNoGhost[0] - neighborRadius,
+//          xmax = m_xLocalMaxNoGhost[0] + neighborRadius,
+//          ymin = m_xLocalMinNoGhost[1] - neighborRadius,
+//          ymax = m_xLocalMaxNoGhost[1] + neighborRadius,
+//          zmin = m_xLocalMinNoGhost[2] - neighborRadius,
+//          zmax = m_xLocalMaxNoGhost[2] + neighborRadius;
+  
+//   // Initialize bin sort
+//   real64 binWidth = m_binSizeMultiplier * neighborRadius;
+//   int nxbins = LvArray::math::ceil( ( xmax - xmin ) / binWidth ),
+//       nybins = LvArray::math::ceil( ( ymax - ymin ) / binWidth ),
+//       nzbins = m_planeStrain ? 1 : LvArray::math::ceil( ( zmax - zmin ) / binWidth );
+//   int nbins = nxbins * nybins * nzbins;
+//   real64 dx = ( xmax - xmin ) / nxbins,
+//          dy = ( ymax - ymin ) / nybins,
+//          dz = ( zmax - zmin ) / nzbins;
+
+//   localIndex totalNumberOfParticles = particleManager.getNumberOfParticles();
+//   localIndex totalNumberOfBins = nbins * m_numberOfSubRegions;
+
+//   // Initializes array with totalNumberOfBins inner arrays and default sizes 0 (first dimension is the bins, second are particles indices per bin)
+//   ArrayOfArrays< localIndex > bins(totalNumberOfBins, 0); 
+  
+//   // Precompute number of particles in each bin and resize the bins arrayOfArrays
+
+//   // ParticleSubRegions are not access in gpu kernels so we must make copies of all relevant fields
+//   // such as the particle centers for neighbor checking
+//   array2d< real64 > allParticleCenters(totalNumberOfParticles, 3);
+
+//   // TODO: We create a view here, but we may want to have views with different access restrictions (e.g. const) separately in each step
+//   arrayView2d< real64 > const allParticleCentersView = allParticleCenters.toView();
+  
+//   array1d< localIndex > subRegionSizes(m_numberOfSubRegions);
+//   array1d< localIndex > regionIndicesOfSubRegions(m_numberOfSubRegions);
+//   array1d< localIndex > subRegionIndicesInRegions(m_numberOfSubRegions);
+
+//   // solverProfiling( "Count bin sizes..." );
+//   // GEOS_LOG_LEVEL_BY_RANK(2, "Count bin sizes..." );
+
+//   arrayView1d< localIndex > const subRegionSizesView = subRegionSizes.toView();
+//   arrayView1d< localIndex > const regionIndicesOfSubRegionsView = regionIndicesOfSubRegions.toView();
+//   arrayView1d< localIndex > const subRegionIndicesInRegionsView = subRegionIndicesInRegions.toView();
+//   localIndex particleIndexOffset = 0;
+//   localIndex subRegionIndex = 0;
+//   particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
+//   {
+//     // arrayView1d< int const > const particleRank = subRegion.getParticleRank();
+
+//     RAJA::MultiReduceSum< serialMultiReduce, localIndex > binSizeReduction( nbins, 0 );
+   
+//     arrayView2d< real64 const > const particlePosition = subRegion.getParticleCenter();
+
+//     // GEOS_LOG_RANK("binSizeReductionView.size(): " << binSizeReductionView.size() << ", nbins: " << nbins << ", xmin: {"<< xmin << ", " << ymin << ", " << zmin << "}"  << ", xmax: {"<< xmax << ", " << ymax << ", " << zmax << "}");
+//     // GEOS_LOG_RANK("nbins: " << nbins << ", xmin: {"<< xmin << ", " << ymin << ", " << zmin << "}"  << ", xmax: {"<< xmax << ", " << ymax << ", " << zmax << "}");
+    
+//     // SortedArrayView< localIndex const > const activeParticleIndices = subRegion.activeParticleIndices();
+//     // SortedArrayView< localIndex const > const inactiveParticleIndices = subRegion.inactiveParticleIndices();
+
+//     // When compiling on ruby running with sequential reduction policy, race condition in bin size counting causes memory issue
+//     // Fix add export OMP_NUM_THREADS=1 before srun, need to check compilation variables to ensure GEOS_USE_OPENMP is disabled on ruby
+//     // forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const p )
+//     forAll< serialPolicy >( subRegion.size(), [=] GEOS_HOST ( localIndex const p )
+//     {
+//       // Particle bin ijk indices
+//       localIndex i = LvArray::math::floor( ( particlePosition[p][0] - xmin ) / dx );
+//       localIndex j = LvArray::math::floor( ( particlePosition[p][1] - ymin ) / dy );
+//       localIndex k = LvArray::math::floor( ( particlePosition[p][2] - zmin ) / dz );
+//       localIndex binIndex = i + j * nxbins + k * nxbins * nybins;
+      
+//       binSizeReduction[binIndex] += 1;
+//       // if( binIndex > nbins ) 
+//       // {
+//       //   GEOS_LOG_LEVEL_BY_RANK(2, "binIndex: " << binIndex << ", i,j,k: " << i << ", " << j << ", " <<  k <<  ", nbins: " << nbins << ", p: " << p << ", pos: {" << particlePosition[p][0] << ", "  << particlePosition[p][1] << ", " << particlePosition[p][2] << "}" << ", pRank: " << particleRank[p] << ", active: " << activeParticleIndices.contains(p) << ", inactive:" << inactiveParticleIndices.contains(p) );
+//       // }
+
+//       // Copy particle data for neighbor search later
+//       LvArray::tensorOps::copy< 3 >( allParticleCentersView[particleIndexOffset + p], particlePosition[p] );
+//     } );
+//     particleIndexOffset += subRegion.size();
+
+//     // Not sure this would be worth doing in parallel (also resizing is not done on device)
+//     for( int b = 0; b < nbins; ++b )
+//     {
+//       bins.resizeArray( subRegionIndex * nbins + b,
+//                         binSizeReduction[b].get() );
+//     }
+    
+//     ParticleRegion & region = dynamicCast< ParticleRegion & >( subRegion.getParent().getParent() );
+ 
+//     regionIndicesOfSubRegionsView[subRegionIndex] = region.getIndexInParent();
+//     subRegionIndicesInRegionsView[subRegionIndex] = subRegion.getIndexInParent();
+//     subRegionSizesView[subRegionIndex] = subRegion.size();
+//     ++subRegionIndex;
+
+//     allParticleCentersView.move( LvArray::MemorySpace::host ); // Must move the particle center data back from device explicitly
+//   } );
+
+//   // Populate bins with particle data
+
+//   // Stored the current count of particles per bin during population
+//   array1d< localIndex > binCount(totalNumberOfBins);
+
+//   // Initialize bin count to zero
+//   for( localIndex b = 0; b < totalNumberOfBins; ++b )
+//   {
+//     binCount[b] = 0;
+//   }
+
+//   ArrayOfArraysView< localIndex > binsView = bins.toView();
+
+//   solverProfiling( "Populate bins..." );
+//   GEOS_LOG_LEVEL_BY_RANK(2, "Populate bins..." );
+
+//   subRegionIndex = 0;
+//   particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
+//   {
+//     arrayView1d< localIndex > const binCountView = binCount.toView();
+
+//     arrayView2d< real64 const > const particlePosition = subRegion.getParticleCenter();
+//     // Running this in parallel threading over particles would result in race condition during particle index assignment to bins
+//     // We could introduce atomics, but it's unclear whether there would be any substantial performance improvement, should still test
+//     // Alternatively we could thread over bins, but it may be faster to just compute in serial since each bin would have to check all particles in subregion
+//     forAll< serialPolicy >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const p )
+//     {
+//       // Particle bin ijk indices
+//       localIndex i = LvArray::math::floor( ( particlePosition[p][0] - xmin ) / dx );
+//       localIndex j = LvArray::math::floor( ( particlePosition[p][1] - ymin ) / dy );
+//       localIndex k = LvArray::math::floor( ( particlePosition[p][2] - zmin ) / dz );
+//       localIndex binIndex = nbins * subRegionIndex + i + j * nxbins + k * nxbins * nybins;
+      
+//       binsView[binIndex][binCountView[binIndex]] = p;
+//       ++binCountView[binIndex];
+//     } );
+
+//     binsView.move( LvArray::MemorySpace::host );
+//     binCountView.move( LvArray::MemorySpace::host );
+
+//     ++subRegionIndex;
+//   } );
+// }
 
 real64 SolidMechanicsMPM::computeNeighborList( ParticleManager & particleManager )
 {
@@ -7776,8 +7941,7 @@ void SolidMechanicsMPM::initializeGridFields( NodeManager & nodeManager )
 
   arrayView2d< real64 > const gridBoreholeStress = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridBoreholeStressString() );
 
-  localIndex const numNodes = nodeManager.size();
-  forAll< parallelDevicePolicy<> >( numNodes, [=] GEOS_HOST_DEVICE ( localIndex const g )
+  forAll< parallelDevicePolicy<> >( nodeManager.size(), [=] GEOS_HOST_DEVICE ( localIndex const g )
   {
     gridCohesiveNode[g] = 0;
     gridSurfaceMass[g] = 0.0;
@@ -8359,7 +8523,7 @@ void SolidMechanicsMPM::initializeCohesiveReferenceConfiguration( DomainPartitio
             }
           }
 
-          int const fieldIndex = particleCohesiveFieldMapping[p][g];
+          localIndex const fieldIndex = particleCohesiveFieldMapping[p][g];
 
           if( particleCohesiveZoneFlag[p] == 1 )
           {
@@ -8582,7 +8746,7 @@ bool SolidMechanicsMPM::interiorToParticleProjectedArea( ParticleManager & parti
         // Check if particle maps to current field
         // TODO this should check the particleCohesiveFieldMapping
         int const nodeFlag = 0; // ( damageFieldPartitioning == 1 && LvArray::tensorOps::AiBi< 3 >( gridDamageGradient[mappedNode], particleDamageGradient[p] ) < 0.0 ) ? 1 : 0; // 0 undamaged or "A" field, 1 for "B" field
-        int const fieldIndex = nodeFlag * m_numContactGroups + particleGroup[p]; // This ranges from 0 to nMatFields-1
+        localIndex const fieldIndex = nodeFlag * m_numContactGroups + particleGroup[p]; // This ranges from 0 to nMatFields-1
 
         if( gridFieldIndex == fieldIndex )
         {
@@ -9151,7 +9315,7 @@ void SolidMechanicsMPM::enforceCohesiveLaw( ParticleManager & particleManager,
 
       if( particleCohesiveZoneFlag[p] == 1 )
       {
-        for( int g = 0; g < 8 * numberOfVerticesPerParticle; ++g )
+        for( localIndex g = 0; g < 8 * numberOfVerticesPerParticle; ++g )
         {
           globalIndex const mappedNode = particleReferenceMappedNodes[p][g];
 
@@ -9162,7 +9326,7 @@ void SolidMechanicsMPM::enforceCohesiveLaw( ParticleManager & particleManager,
 
             // CC: TODO must be a better way to find index in temp arrays
             localIndex nodeIndex = 0;
-            for( int n = 0; n < numCohesiveNodes; ++n )
+            for( localIndex n = 0; n < numCohesiveNodes; ++n )
             {
               if( m_cohesiveNodeGlobalIndices[n] == mappedNode )
               {
@@ -9171,7 +9335,7 @@ void SolidMechanicsMPM::enforceCohesiveLaw( ParticleManager & particleManager,
               }
             }
 
-            int const fieldIndex = particleCohesiveFieldMapping[p][g];
+            localIndex const fieldIndex = particleCohesiveFieldMapping[p][g];
 
             // TODO: if a particle cohesive zone flags are turned off because they become fully damaged and no undamaged particles are still mapping to a cohesive grid node,
             // Should that node be marke as fully damaged?
@@ -9179,7 +9343,7 @@ void SolidMechanicsMPM::enforceCohesiveLaw( ParticleManager & particleManager,
             {
               if( m_enableCohesiveFailure == 0 || m_cohesiveGridNodeDamages[nodeIndex][fieldIndex] < 1.0 )
               {
-                for( int i=0; i < m_numDims; ++i )
+                for( localIndex i = 0; i < m_numDims; ++i )
                 {
                   particleCohesiveForce[p][i] += tempGridCohesiveTraction[nodeIndex][fieldIndex][i] * particleMass[p] * shapeFunctionValue / tempGridMassGlobal[nodeIndex][fieldIndex];
                 }
@@ -9203,9 +9367,9 @@ void SolidMechanicsMPM::enforceCohesiveLaw( ParticleManager & particleManager,
   } );
 }
 
-void SolidMechanicsMPM::computeCohesiveTraction( int g,
-                                                 int A,
-                                                 int B,
+void SolidMechanicsMPM::computeCohesiveTraction( localIndex g,
+                                                 localIndex A,
+                                                 localIndex B,
                                                  real64 mA,
                                                  real64 mB,
                                                  arraySlice1d< real64 const > const dA,
@@ -9227,7 +9391,7 @@ void SolidMechanicsMPM::computeCohesiveTraction( int g,
   real64 nAB[3];
 
   // Mass-weighted average of the field normals
-  for( int i=0; i<3; ++i )
+  for( localIndex i = 0; i < 3; ++i )
   {
     nAB[i] = nA[i] * mA - nB[i] * mB;
   }
@@ -9238,7 +9402,7 @@ void SolidMechanicsMPM::computeCohesiveTraction( int g,
     nAB[2] = 0.0;
   }
 
-  real64 norm = LvArray::tensorOps::l2Norm< 3 >( nAB ); //sqrt( nAB[0] * nAB[0] + nAB[1] * nAB[1] + nAB[2] * nAB[2] );
+  real64 norm = LvArray::tensorOps::l2Norm< 3 >( nAB );
 
   // If normal magnitude is zero for any reason just skip (e.g. no traction from cohesive law)
   if ( norm < 1e-20 )
@@ -9374,7 +9538,7 @@ void SolidMechanicsMPM::computeCohesiveTraction( int g,
     m_cohesiveGridNodeDamages[g][B] = 0.0;
   }
 
-  for( int i = 0; i < m_numDims; ++i )
+  for( localIndex i = 0; i < m_numDims; ++i )
   {
     tA[i] += normalForce * -nAB[i] * (1.0 - m_cohesiveGridNodeDamages[g][A]);
     tB[i] += normalForce * nAB[i] * (1.0 - m_cohesiveGridNodeDamages[g][B]);
@@ -9386,7 +9550,7 @@ void SolidMechanicsMPM::computeCohesiveTraction( int g,
     LvArray::tensorOps::copy< 3 >( tAB, tangentialInterfaceDisplacement );
     LvArray::tensorOps::scale< 3 >( tAB, 1 / totalTangentialDisplacement );
 
-    for( int i = 0; i < m_numDims; ++i)
+    for( localIndex i = 0; i < m_numDims; ++i)
     {
       tA[i] += shearForce * tAB[i] * (1.0 - m_cohesiveGridNodeDamages[g][A]);
       tB[i] += shearForce * -tAB[i] * (1.0 - m_cohesiveGridNodeDamages[g][B]);
@@ -9520,15 +9684,15 @@ void SolidMechanicsMPM::particleToGrid( real64 const time_n,
 
   // On-the-fly shape function computations
   int const hasContact = m_hasContact;
-  int const numDims = m_numDims;
-  int const numContactGroups = m_numContactGroups;
+  localIndex const numDims = m_numDims;
+  localIndex const numContactGroups = m_numContactGroups;
   int const damageFieldPartitioning = m_damageFieldPartitioning;
   int const useArtificialViscosity = m_useArtificialViscosity;
   int const computeXProfile = m_computeXProfile == 1 && ( ( m_nextXProfileWriteTime <= time_n ) || ( cycleNumber == 0 ) );
   int const explicitSurfaceNormalInfluence = m_explicitSurfaceNormalInfluence;
   int const enableSurfaceTension = m_enableSurfaceTension;
 
-  int voigtMap[3][3] = { {0, 5, 4}, {5, 1, 3}, {4, 3, 2} };
+  localIndex voigtMap[3][3] = { {0, 5, 4}, {5, 1, 3}, {4, 3, 2} };
   real64 hEl[3] = { 0.0 };
   LvArray::tensorOps::copy< 3 >( hEl, m_hEl );
   real64 xLocalMin[3] = { 0.0 };
@@ -9594,7 +9758,7 @@ void SolidMechanicsMPM::particleToGrid( real64 const time_n,
     }
 
     // Get views to mapping arrays
-    int const numberOfVerticesPerParticle = subRegion.numberOfVerticesPerParticle();
+    localIndex const numberOfVerticesPerParticle = subRegion.numberOfVerticesPerParticle();
 
     // Map to grid
     SortedArrayView< localIndex const > const activeParticleIndices = subRegion.activeParticleIndices();
@@ -9615,7 +9779,7 @@ void SolidMechanicsMPM::particleToGrid( real64 const time_n,
 
       // On-the-fly shape function computation
       #ifdef GEOS_USE_DEVICE
-        int mappedNodes[64];
+        localIndex mappedNodes[64];
         real64 shapeFunctionValues[64];
         real64 shapeFunctionGradientValues[64][3];
         mapNodesAndComputeShapeFunctions( ijkMap,
@@ -9630,7 +9794,7 @@ void SolidMechanicsMPM::particleToGrid( real64 const time_n,
                                           shapeFunctionGradientValues);          
       #endif
 
-      for( int g = 0; g < 8 * numberOfVerticesPerParticle; ++g )
+      for( localIndex g = 0; g < 8 * numberOfVerticesPerParticle; ++g )
       {
         real64 particleContributionToGrid;
 
@@ -9646,7 +9810,7 @@ void SolidMechanicsMPM::particleToGrid( real64 const time_n,
           LvArray::tensorOps::copy< 3 >( shapeFunctionGradientValue, shapeFunctionGradientValues[pp][g] );
         #endif
 
-        int const fieldIndex = partitionField( numContactGroups,
+        localIndex const fieldIndex = partitionField( numContactGroups,
                                                damageFieldPartitioning,
                                                particleGroup[p],
                                                particleDamageGradient[p],
@@ -9657,7 +9821,7 @@ void SolidMechanicsMPM::particleToGrid( real64 const time_n,
 
         if( computeXProfile == 1 )
         {
-          for( int i = 0 ; i < 3 ; ++i )
+          for( localIndex i = 0 ; i < 3 ; ++i )
           { // map the volume-weighted normal stress to nodes for profile output.
             particleContributionToGrid = shapeFunctionValue * particleStress[p][i] * particleVolume[p];
             RAJA::atomicAdd( parallelDeviceAtomic{}, &gridNormalStress[mappedNode][fieldIndex][i], particleContributionToGrid );
@@ -9699,7 +9863,7 @@ void SolidMechanicsMPM::particleToGrid( real64 const time_n,
           surfacePositionAlongNormal = LvArray::tensorOps::AiBi< 3 >( surfacePositionRelativeToNode, particleSurfaceNormal[p] );
         }
 
-        for( int i=0; i < numDims; ++i )
+        for( localIndex i=0; i < numDims; ++i )
         {
           if( hasContact == 1 )
           {
@@ -9741,9 +9905,9 @@ void SolidMechanicsMPM::particleToGrid( real64 const time_n,
           // MH: This will modify the stress if there is a non-zero borehole pressure set by the boreholePressure
           // event.  This change is applied if the radius in the x-y plane, centered at origin, defining the extent of the borehole
           // pressure BC, should be bigger than the borehole but not near outer domain boundary.
-          for( int k = 0; k < numDims; ++k )
+          for( localIndex k = 0; k < numDims; ++k )
           {
-            int voigt = voigtMap[k][i];
+            localIndex voigt = voigtMap[k][i];
             particleContributionToGrid = particleStress[p][voigt] - gridBoreholeStress[mappedNode][voigt];
             if( useArtificialViscosity == 1 )
             {
@@ -9769,12 +9933,12 @@ void SolidMechanicsMPM::particleToGrid_noAtomics( real64 const time_n,
   GEOS_MARK_FUNCTION;
 
   // On-the-fly shape function computations
-  int const numDims = m_numDims;
-  int const numContactGroups = m_numContactGroups;
+  localIndex const numDims = m_numDims;
+  localIndex const numContactGroups = m_numContactGroups;
   int const damageFieldPartitioning = m_damageFieldPartitioning;
   int const useArtificialViscosity = m_useArtificialViscosity;
   int const computeXProfile = m_computeXProfile == 1 && ( ( m_nextXProfileWriteTime <= time_n ) || ( cycleNumber == 0 ) );
-  int voigtMap[3][3] = { {0, 5, 4}, {5, 1, 3}, {4, 3, 2} };
+  localIndex voigtMap[3][3] = { {0, 5, 4}, {5, 1, 3}, {4, 3, 2} };
   real64 hEl[3] = { 0.0 };
   LvArray::tensorOps::copy< 3 >( hEl, m_hEl );
   real64 xLocalMin[3] = { 0.0 };
@@ -9825,7 +9989,7 @@ void SolidMechanicsMPM::particleToGrid_noAtomics( real64 const time_n,
     arrayView1d< int const > const particleCohesiveZoneFlag = subRegion.getField< fields::mpm::particleCohesiveZoneFlag >();
 
     // Get views to mapping arrays
-    int const numberOfVerticesPerParticle = subRegion.numberOfVerticesPerParticle();
+    localIndex const numberOfVerticesPerParticle = subRegion.numberOfVerticesPerParticle();
 
     // Map to grid
     SortedArrayView< localIndex const > const activeParticleIndices = subRegion.activeParticleIndices();
@@ -9836,7 +10000,7 @@ void SolidMechanicsMPM::particleToGrid_noAtomics( real64 const time_n,
       localIndex const p = activeParticleIndices[pp];
 
       // On-the-fly shape function computation
-      int mappedNodes[64];
+      localIndex mappedNodes[64];
       real64 shapeFunctionValues[64];
       real64 shapeFunctionGradientValues[64][3];
       mapNodesAndComputeShapeFunctions( ijkMap,
@@ -9850,12 +10014,12 @@ void SolidMechanicsMPM::particleToGrid_noAtomics( real64 const time_n,
                                         shapeFunctionValues,
                                         shapeFunctionGradientValues);
 
-      for( int g = 0; g < 8 * numberOfVerticesPerParticle; ++g )
+      for( localIndex g = 0; g < 8 * numberOfVerticesPerParticle; ++g )
       {
         localIndex const mappedNode = mappedNodes[g];
         real64 const shapeFunctionValue = shapeFunctionValues[g];
 
-        int const fieldIndex = partitionField( numContactGroups,
+        localIndex const fieldIndex = partitionField( numContactGroups,
                                                damageFieldPartitioning,
                                                particleGroup[p],
                                                particleDamageGradient[p],
@@ -9865,7 +10029,7 @@ void SolidMechanicsMPM::particleToGrid_noAtomics( real64 const time_n,
 
         if( computeXProfile == 1 )
         {
-          for( int i = 0 ; i < 3 ; ++i )
+          for( localIndex i = 0 ; i < 3 ; ++i )
           { // map the volume-weighted normal stress to nodes for profile output.
             gridNormalStress[mappedNode][fieldIndex][i] += shapeFunctionValue * particleStress[p][i] * particleVolume[p];
           }
@@ -9882,7 +10046,7 @@ void SolidMechanicsMPM::particleToGrid_noAtomics( real64 const time_n,
 
         gridMaxDamage[mappedNode][fieldIndex] = LvArray::math::max( gridMaxDamage[mappedNode][fieldIndex], particleSurfaceFlag[p] == 1 || particleSurfaceFlag[p] == 2 || particleSurfaceFlag[p] == 3 || particleSurfaceFlag[p] == 4 ? 1.0 : particleDamage[p] );
 
-        for( int i=0; i < numDims; ++i )
+        for( localIndex i = 0; i < numDims; ++i )
         {
           gridMomentum[mappedNode][fieldIndex][i] += particleMass[p] * particleVelocity[p][i] * shapeFunctionValues[g];
 
@@ -9895,9 +10059,9 @@ void SolidMechanicsMPM::particleToGrid_noAtomics( real64 const time_n,
           // MH: This will modify the stress if there is a non-zero borehole pressure set by the boreholePressure
           // event.  This change is applied if the radius in the x-y plane, centered at origin, defining the extent of the borehole
           // pressure BC, should be bigger than the borehole but not near outer domain boundary.
-          for( int k=0; k < numDims; ++k )
+          for( localIndex k=0; k < numDims; ++k )
           {
-            int voigt = voigtMap[k][i];
+            localIndex voigt = voigtMap[k][i];
             gridInternalForce[mappedNode][fieldIndex][i] += -( ( particleStress[p][voigt] - gridBoreholeStress[mappedNode][voigt] ) - particleArtificialViscosity[p] * useArtificialViscosity * (k == i) ) * shapeFunctionGradientValues[g][k] * particleVolume[p];
           }
         }
@@ -9917,12 +10081,12 @@ void SolidMechanicsMPM::particleToGrid_randomMix( real64 const time_n,
   GEOS_MARK_FUNCTION;
 
   // On-the-fly shape function computations
-  int const numDims = m_numDims;
-  int const numContactGroups = m_numContactGroups;
+  localIndex const numDims = m_numDims;
+  localIndex const numContactGroups = m_numContactGroups;
   int const damageFieldPartitioning = m_damageFieldPartitioning;
   int const useArtificialViscosity = m_useArtificialViscosity;
   int const computeXProfile = m_computeXProfile == 1 && ( ( m_nextXProfileWriteTime <= time_n ) || ( cycleNumber == 0 ) );
-  int voigtMap[3][3] = { {0, 5, 4}, {5, 1, 3}, {4, 3, 2} };
+  localIndex voigtMap[3][3] = { {0, 5, 4}, {5, 1, 3}, {4, 3, 2} };
   real64 hEl[3] = { 0.0 };
   LvArray::tensorOps::copy< 3 >( hEl, m_hEl );
   real64 xLocalMin[3] = { 0.0 };
@@ -9973,7 +10137,7 @@ void SolidMechanicsMPM::particleToGrid_randomMix( real64 const time_n,
     arrayView1d< int const > const particleCohesiveZoneFlag = subRegion.getField< fields::mpm::particleCohesiveZoneFlag >();
 
     // Get views to mapping arrays
-    int const numberOfVerticesPerParticle = subRegion.numberOfVerticesPerParticle();
+    localIndex const numberOfVerticesPerParticle = subRegion.numberOfVerticesPerParticle();
 
     // Map to grid
     SortedArrayView< localIndex const > const activeParticleIndices = subRegion.activeParticleIndices();
@@ -9996,7 +10160,7 @@ void SolidMechanicsMPM::particleToGrid_randomMix( real64 const time_n,
       localIndex const p = randomized[pp];
 
       // On-the-fly shape function computation
-      int mappedNodes[64];
+      localIndex mappedNodes[64];
       real64 shapeFunctionValues[64];
       real64 shapeFunctionGradientValues[64][3];
       mapNodesAndComputeShapeFunctions( ijkMap,
@@ -10010,14 +10174,14 @@ void SolidMechanicsMPM::particleToGrid_randomMix( real64 const time_n,
                                         shapeFunctionValues,
                                         shapeFunctionGradientValues);
 
-      for( int g = 0; g < 8 * numberOfVerticesPerParticle; ++g )
+      for( localIndex g = 0; g < 8 * numberOfVerticesPerParticle; ++g )
       {
         real64 particleContributionToGrid;
 
         localIndex const mappedNode = mappedNodes[g];
         real64 const shapeFunctionValue = shapeFunctionValues[g];
 
-        int const fieldIndex = partitionField( numContactGroups,
+        localIndex const fieldIndex = partitionField( numContactGroups,
                                                damageFieldPartitioning,
                                                particleGroup[p],
                                                particleDamageGradient[p],
@@ -10068,9 +10232,9 @@ void SolidMechanicsMPM::particleToGrid_randomMix( real64 const time_n,
           // MH: This will modify the stress if there is a non-zero borehole pressure set by the boreholePressure
           // event.  This change is applied if the radius in the x-y plane, centered at origin, defining the extent of the borehole
           // pressure BC, should be bigger than the borehole but not near outer domain boundary.
-          for( int k=0; k < numDims; ++k )
+          for( localIndex k=0; k < numDims; ++k )
           {
-            int voigt = voigtMap[k][i];
+            localIndex voigt = voigtMap[k][i];
             particleContributionToGrid = -( ( particleStress[p][voigt] - gridBoreholeStress[mappedNode][voigt] ) - particleArtificialViscosity[p] * useArtificialViscosity * (k == i) ) * shapeFunctionGradientValues[g][k] * particleVolume[p];
             RAJA::atomicAdd( parallelDeviceAtomic{}, &gridInternalForce[mappedNode][fieldIndex][i], particleContributionToGrid );
           }
@@ -10091,12 +10255,12 @@ void SolidMechanicsMPM::particleToGrid_minimalAtomics( real64 const time_n,
   GEOS_MARK_FUNCTION;
 
   // On-the-fly shape function computations
-  int const numDims = m_numDims;
-  int const numContactGroups = m_numContactGroups;
+  localIndex const numDims = m_numDims;
+  localIndex const numContactGroups = m_numContactGroups;
   int const damageFieldPartitioning = m_damageFieldPartitioning;
   int const useArtificialViscosity = m_useArtificialViscosity;
   int const computeXProfile = m_computeXProfile == 1 && ( ( m_nextXProfileWriteTime <= time_n ) || ( cycleNumber == 0 ) );
-  int voigtMap[3][3] = { {0, 5, 4}, {5, 1, 3}, {4, 3, 2} };
+  localIndex voigtMap[3][3] = { {0, 5, 4}, {5, 1, 3}, {4, 3, 2} };
   real64 hEl[3] = { 0.0 };
   LvArray::tensorOps::copy< 3 >( hEl, m_hEl );
   real64 xLocalMin[3] = { 0.0 };
@@ -10147,7 +10311,7 @@ void SolidMechanicsMPM::particleToGrid_minimalAtomics( real64 const time_n,
     arrayView1d< int const > const particleCohesiveZoneFlag = subRegion.getField< fields::mpm::particleCohesiveZoneFlag >();
 
     // Get views to mapping arrays
-    int const numberOfVerticesPerParticle = subRegion.numberOfVerticesPerParticle();
+    localIndex const numberOfVerticesPerParticle = subRegion.numberOfVerticesPerParticle();
 
     // Map to grid
     SortedArrayView< localIndex const > const activeParticleIndices = subRegion.activeParticleIndices();
@@ -10210,7 +10374,7 @@ void SolidMechanicsMPM::particleToGrid_minimalAtomics( real64 const time_n,
       localIndex sortedMappedNodes[64];
       // LvArray::tensorOps::copy< 64 >( sortedMappedNodes, mappedNodes );
       localIndex sortedIndices[64] = { 0 };
-      for(localIndex i = 0; i < 64; ++i)
+      for( localIndex i = 0; i < 64; ++i ) // Not general for all particle types
       {
         sortedMappedNodes[i] = mappedNodes[i];
         sortedIndices[i] = i;
@@ -10246,7 +10410,7 @@ void SolidMechanicsMPM::particleToGrid_minimalAtomics( real64 const time_n,
 
       // printf("Computed field index\n");
 
-      for( int g = 0; g < 8 * numberOfVerticesPerParticle; ++g )
+      for( localIndex g = 0; g < 8 * numberOfVerticesPerParticle; ++g )
       {
 
         real64 const shapeFunctionValue = sortedShapeFunctionValues[g];
@@ -10269,7 +10433,7 @@ void SolidMechanicsMPM::particleToGrid_minimalAtomics( real64 const time_n,
         gridDamageContribution += particleMass[p] * ( particleSurfaceFlag[p] == 1 || particleSurfaceFlag[p] == 2 || particleSurfaceFlag[p] == 3 || particleSurfaceFlag[p] == 4 ? 1.0 : particleDamage[p] ) * shapeFunctionValue;
         gridMaxDamageContribution = fmax(gridMaxDamageContribution, particleSurfaceFlag[p] == 1 || particleSurfaceFlag[p] == 2 || particleSurfaceFlag[p] == 3 || particleSurfaceFlag[p] == 4 ? 1.0 : particleDamage[p]);
 
-        for( int i=0; i < numDims; ++i )
+        for( localIndex i = 0; i < numDims; ++i )
         {
           gridMomentumContribution[i] += particleMass[p] * particleVelocity[p][i] * shapeFunctionValue;
           gridExternalForceContribution[i] += ( particleBodyForce[p][i] * particleMass[p] + particleSurfaceTraction[p][i] + particleCohesiveForce[p][i] ) * shapeFunctionValue;
@@ -10279,9 +10443,9 @@ void SolidMechanicsMPM::particleToGrid_minimalAtomics( real64 const time_n,
           // MH: This will modify the stress if there is a non-zero borehole pressure set by the boreholePressure
           // event.  This change is applied if the radius in the x-y plane, centered at origin, defining the extent of the borehole
           // pressure BC, should be bigger than the borehole but not near outer domain boundary.
-          for( int k=0; k < numDims; ++k )
+          for( localIndex k = 0; k < numDims; ++k )
           {
-            int voigt = voigtMap[k][i];
+            localIndex voigt = voigtMap[k][i];
             gridInternalForceContribution[voigt] += -( ( particleStress[p][voigt] - gridBoreholeStress[mappedNode][voigt] ) - particleArtificialViscosity[p] * useArtificialViscosity * (k == i) ) * shapeFunctionGradientValue[k] * particleVolume[p];
           }
         }
@@ -10295,7 +10459,7 @@ void SolidMechanicsMPM::particleToGrid_minimalAtomics( real64 const time_n,
           RAJA::atomicAdd( parallelDeviceAtomic{}, &gridDamage[mappedNode][fieldIndex], gridDamageContribution );
           RAJA::atomicMax( parallelDeviceAtomic{}, &gridMaxDamage[mappedNode][fieldIndex], gridMaxDamageContribution );
 
-          for( int i = 0; i < numDims; ++i )
+          for( localIndex i = 0; i < numDims; ++i )
           {
             RAJA::atomicAdd( parallelDeviceAtomic{}, &gridNormalStress[mappedNode][fieldIndex][i], gridNormalStressContribution[i] );
             RAJA::atomicAdd( parallelDeviceAtomic{}, &gridMomentum[mappedNode][fieldIndex][i], gridMomentumContribution[i] );
@@ -10304,7 +10468,7 @@ void SolidMechanicsMPM::particleToGrid_minimalAtomics( real64 const time_n,
             RAJA::atomicAdd( parallelDeviceAtomic{}, &gridCenterOfMass[mappedNode][fieldIndex][i], gridCenterOfMassContribution[i] );
           }
 
-          for( int i = 0; i < 6; ++i)
+          for( localIndex i = 0; i < 6; ++i)
           {
             RAJA::atomicAdd( parallelDeviceAtomic{}, &gridInternalForce[mappedNode][fieldIndex][i], gridInternalForceContribution[i] );
           }
@@ -10357,13 +10521,13 @@ void SolidMechanicsMPM::particleToGrid_reduction( real64 const time_n,
   // GEOS_MARK_FUNCTION;
 
   // // On-the-fly shape function computations
-  // int const numDims = m_numDims;
-  // int const numContactGroups = m_numContactGroups;
-  // int const numVelocityFields = m_numVelocityFields;
+  // localIndex const numDims = m_numDims;
+  // localIndex const numContactGroups = m_numContactGroups;
+  // localIndex const numVelocityFields = m_numVelocityFields;
   // int const damageFieldPartitioning = m_damageFieldPartitioning;
   // int const useArtificialViscosity = m_useArtificialViscosity;
   // int const computeXProfile = m_computeXProfile == 1 && ( ( m_nextXProfileWriteTime <= time_n ) || ( cycleNumber == 0 ) );
-  // int voigtMap[3][3] = { {0, 5, 4}, {5, 1, 3}, {4, 3, 2} };
+  // localIndex voigtMap[3][3] = { {0, 5, 4}, {5, 1, 3}, {4, 3, 2} };
   // real64 hEl[3] = { 0.0 };
   // LvArray::tensorOps::copy< 3 >( hEl, m_hEl );
   // real64 xLocalMin[3] = { 0.0 };
@@ -10456,7 +10620,7 @@ void SolidMechanicsMPM::particleToGrid_reduction( real64 const time_n,
   //     localIndex const p = activeParticleIndices[pp];
 
   //     // On-the-fly shape function computation
-  //     int mappedNodes[64];
+  //     localIndex mappedNodes[64];
   //     real64 shapeFunctionValues[64];
   //     real64 shapeFunctionGradientValues[64][3];
   //     mapNodesAndComputeShapeFunctions( ijkMap,
@@ -10474,7 +10638,7 @@ void SolidMechanicsMPM::particleToGrid_reduction( real64 const time_n,
   //     {
   //       localIndex const mappedNode = mappedNodes[g];
   //       real64 const shapeFunctionValue = shapeFunctionValues[g];
-  //       int const fieldIndex = partitionField( numContactGroups,
+  //       localIndex const fieldIndex = partitionField( numContactGroups,
   //                                              damageFieldPartitioning,
   //                                              particleGroup[p],
   //                                              particleDamageGradient[p],
@@ -10488,7 +10652,7 @@ void SolidMechanicsMPM::particleToGrid_reduction( real64 const time_n,
 
   //       if( computeXProfile == 1 )
   //       {
-  //         for( int i = 0 ; i < 3 ; ++i )
+  //         for( localIndex i = 0 ; i < 3 ; ++i )
   //         { // map the volume-weighted normal stress to nodes for profile output.
   //           vectorIndex = ( numNodes * 3 ) * fieldIndex + numNodes * i + mappedNode;
   //           gridNormalStressReduction[vectorIndex] += shapeFunctionValue * particleStress[p][i] * particleVolume[p];
@@ -10502,7 +10666,7 @@ void SolidMechanicsMPM::particleToGrid_reduction( real64 const time_n,
   //       gridDamageReduction[scalarIndex] += particleMass[p] * ( particleSurfaceFlag[p] == 1 || particleSurfaceFlag[p] == 2 || particleSurfaceFlag[p] == 3 || particleSurfaceFlag[p] == 4 ? 1.0 : particleDamage[p] ) * shapeFunctionValue;
   //       gridMaxDamageReduction[scalarIndex].max( particleSurfaceFlag[p] == 1 || particleSurfaceFlag[p] == 2 || particleSurfaceFlag[p] == 3 || particleSurfaceFlag[p] == 4 ? 1.0 : particleDamage[p] ); // needs to be a max check
 
-  //       for( int i=0; i < numDims; ++i )
+  //       for( localIndex i=0; i < numDims; ++i )
   //       {
   //         vectorIndex = ( numNodes * 3 ) * fieldIndex + numNodes * i + mappedNode;
   //         gridMomentumReduction[vectorIndex] += particleMass[p] * particleVelocity[p][i] * shapeFunctionValue;
@@ -10537,7 +10701,7 @@ void SolidMechanicsMPM::particleToGrid_reduction( real64 const time_n,
   //       gridCohesiveFieldFlag[nodeIndex][fieldIndex] = gridCohesiveFieldFlagReduction[scalarIndex].get();
 
   //       localIndex vectorIndex;
-  //       for(int i = 0; i < numDims; ++i)
+  //       for(localIndex i = 0; i < numDims; ++i)
   //       {
   //         vectorIndex = ( numNodes * 3 ) * fieldIndex + numNodes * i + nodeIndex;
   //         gridMomentum[nodeIndex][fieldIndex][i] = gridMomentumReduction[vectorIndex].get();
@@ -10548,7 +10712,7 @@ void SolidMechanicsMPM::particleToGrid_reduction( real64 const time_n,
   //       }
 
   //       // Voigt notation
-  //       for(int i = 0; i < 6; ++i)
+  //       for(localIndex i = 0; i < 6; ++i)
   //       {
   //         vectorIndex = ( numNodes * 6 ) * fieldIndex + numNodes * i + nodeIndex;
   //         gridInternalForce[nodeIndex][fieldIndex][i] = gridInternalForceReduction[vectorIndex].get();
@@ -10616,12 +10780,12 @@ void SolidMechanicsMPM::particleToGrid_colors( real64 const time_n,
   GEOS_UNUSED_VAR( nodeManager );
 
   // On-the-fly shape function computations
-  int const numDims = m_numDims;
-  int const numContactGroups = m_numContactGroups;
+  localIndex const numDims = m_numDims;
+  localIndex const numContactGroups = m_numContactGroups;
   int const damageFieldPartitioning = m_damageFieldPartitioning;
   int const useArtificialViscosity = m_useArtificialViscosity;
   int const computeXProfile = m_computeXProfile == 1 && ( ( m_nextXProfileWriteTime <= time_n ) || ( cycleNumber == 0 ) );
-  int voigtMap[3][3] = { {0, 5, 4}, {5, 1, 3}, {4, 3, 2} };
+  localIndex voigtMap[3][3] = { {0, 5, 4}, {5, 1, 3}, {4, 3, 2} };
   real64 hEl[3] = { 0.0 };
   LvArray::tensorOps::copy< 3 >( hEl, m_hEl );
   real64 xLocalMin[3] = { 0.0 };
@@ -10683,7 +10847,7 @@ void SolidMechanicsMPM::particleToGrid_colors( real64 const time_n,
       localIndex const p = activeParticleIndices[pp];
 
       // On-the-fly shape function computation
-      int mappedNodes[64];
+      localIndex mappedNodes[64];
       real64 shapeFunctionValues[64];
       real64 shapeFunctionGradientValues[64][3];
       mapNodesAndComputeShapeFunctions( ijkMap,
@@ -10697,12 +10861,12 @@ void SolidMechanicsMPM::particleToGrid_colors( real64 const time_n,
                                         shapeFunctionValues,
                                         shapeFunctionGradientValues);
 
-      for( int g = 0; g < 8 * numberOfVerticesPerParticle; ++g )
+      for( localIndex g = 0; g < 8 * numberOfVerticesPerParticle; ++g )
       {
         localIndex const mappedNode = mappedNodes[g];
         real64 const shapeFunctionValue = shapeFunctionValues[g];
 
-        int const fieldIndex = partitionField( numContactGroups,
+        localIndex const fieldIndex = partitionField( numContactGroups,
                                                damageFieldPartitioning,
                                                particleGroup[p],
                                                particleDamageGradient[p],
@@ -10712,7 +10876,7 @@ void SolidMechanicsMPM::particleToGrid_colors( real64 const time_n,
 
         if( computeXProfile == 1 )
         {
-          for( int i = 0 ; i < 3 ; ++i )
+          for( localIndex i = 0 ; i < 3 ; ++i )
           { // map the volume-weighted normal stress to nodes for profile output.
             gridNormalStress[mappedNode][fieldIndex][i] += shapeFunctionValue * particleStress[p][i] * particleVolume[p];
           }
@@ -10729,7 +10893,7 @@ void SolidMechanicsMPM::particleToGrid_colors( real64 const time_n,
 
         gridMaxDamage[mappedNode][fieldIndex] = LvArray::math::max( gridMaxDamage[mappedNode][fieldIndex], particleSurfaceFlag[p] == 1 || particleSurfaceFlag[p] == 2 || particleSurfaceFlag[p] == 3 || particleSurfaceFlag[p] == 4 ? 1.0 : particleDamage[p] );
 
-        for( int i=0; i < numDims; ++i )
+        for( localIndex i=0; i < numDims; ++i )
         {
           gridMomentum[mappedNode][fieldIndex][i] += particleMass[p] * particleVelocity[p][i] * shapeFunctionValues[g];
 
@@ -10742,9 +10906,9 @@ void SolidMechanicsMPM::particleToGrid_colors( real64 const time_n,
           // MH: This will modify the stress if there is a non-zero borehole pressure set by the boreholePressure
           // event.  This change is applied if the radius in the x-y plane, centered at origin, defining the extent of the borehole
           // pressure BC, should be bigger than the borehole but not near outer domain boundary.
-          for( int k=0; k < numDims; ++k )
+          for( localIndex k = 0; k < numDims; ++k )
           {
-            int voigt = voigtMap[k][i];
+            localIndex voigt = voigtMap[k][i];
             gridInternalForce[mappedNode][fieldIndex][i] += -( ( particleStress[p][voigt] - gridBoreholeStress[mappedNode][voigt] ) - particleArtificialViscosity[p] * useArtificialViscosity * (k == i) ) * shapeFunctionGradientValues[g][k] * particleVolume[p];
           }
         }
@@ -10821,7 +10985,8 @@ void SolidMechanicsMPM::gridTrialUpdate( real64 dt,
                                          NodeManager & nodeManager )
 {
   GEOS_MARK_FUNCTION;
-  int const numDims = m_numDims;
+
+  localIndex const numDims = m_numDims;
   real64 const smallMass = m_smallMass;
   localIndex numVelocityFields = m_numVelocityFields;
 
@@ -10851,7 +11016,7 @@ void SolidMechanicsMPM::gridTrialUpdate( real64 dt,
       if( gridMass[g][fieldIndex] > smallMass ) // small mass threshold
       {
         gridDamage[g][fieldIndex] /= gridMass[g][fieldIndex];
-        for( int i=0; i < numDims; ++i )
+        for( localIndex i=0; i < numDims; ++i )
         {
           real64 totalForce = gridInternalForce[g][fieldIndex][i] + gridExternalForce[g][fieldIndex][i];
           gridAcceleration[g][fieldIndex][i] = totalForce / gridMass[g][fieldIndex];
@@ -10865,7 +11030,7 @@ void SolidMechanicsMPM::gridTrialUpdate( real64 dt,
       else
       {
         gridDamage[g][fieldIndex] = 0.0;
-        for( int i=0; i<numDims; ++i )
+        for( localIndex i = 0; i < numDims; ++i )
         {
           gridAcceleration[g][fieldIndex][i] = 0.0;
           gridDVelocity[g][fieldIndex][i] = 0.0;
@@ -10875,13 +11040,8 @@ void SolidMechanicsMPM::gridTrialUpdate( real64 dt,
           gridCenterOfMass[g][fieldIndex][i] = 0.0;
         }
       }
-      // for(int i =0; i < numDims; ++i)
-      // {
-      //   internalForce[i] += gridInternalForce[g][fieldIndex][i];
-      // }
     }
   } );
-  // GEOS_LOG_RANK_0("Field: " << fieldIndex << ", force: {"<< internalForce[0].get() << ", " << internalForce[1].get() << ", " << internalForce[2].get() << "}");
 }
 
 void SolidMechanicsMPM::enforceContact( real64 dt,
@@ -10902,7 +11062,6 @@ void SolidMechanicsMPM::enforceContact( real64 dt,
   arrayView3d< real64 > const & gridAcceleration = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridAccelerationString() );
   arrayView3d< real64 > const & gridContactForce = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridContactForceString() );
   arrayView3d< real64 > const & gridCenterOfMass = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridCenterOfMassString() );
-
   arrayView3d< real64 > const & gridSurfaceNormal = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridSurfaceNormalString() );
 
   // Now computed in particleToGrid mapping
@@ -10944,15 +11103,15 @@ void SolidMechanicsMPM::enforceContact( real64 dt,
 
   // Update grid momenta and velocities based on contact forces
   real64 const smallMass = m_smallMass;
-  int const numDims = m_numDims;
-  int const numVelocityFields = m_numVelocityFields;
+  localIndex const numDims = m_numDims;
+  localIndex const numVelocityFields = m_numVelocityFields;
   forAll< serialPolicy >( nodeManager.size(), [=] GEOS_HOST_DEVICE ( localIndex const g )
   {
     for( localIndex fieldIndex=0; fieldIndex < numVelocityFields; ++fieldIndex )
     {
       if( gridMass[g][fieldIndex] > smallMass ) // small mass threshold
       {
-        for( int i=0; i < numDims; ++i )
+        for( localIndex i=0; i < numDims; ++i )
         {
           real64 contactForce = gridContactForce[g][fieldIndex][i];
           gridAcceleration[g][fieldIndex][i] += contactForce / gridMass[g][fieldIndex];
@@ -10965,19 +11124,162 @@ void SolidMechanicsMPM::enforceContact( real64 dt,
   } );
 }
 
-// void SolidMechanicsMPM::logisticRegressionContact( ParticleManager & particleManager,
-//                                                    NodeManager & nodeManager )
-// {
-//   // Flag all nodes with mass in two or more velocity fields
+void SolidMechanicsMPM::logisticRegressionContact( ParticleManager & particleManager,
+                                                   NodeManager & nodeManager )
+{
+  GEOS_MARK_FUNCTION;
 
+  real64 const smallMass = m_smallMass;
+  localIndex const numContactGroups = m_numContactGroups;
+  localIndex const numVelocityFields = m_numVelocityFields;
+  int const damageFieldPartitioning = m_damageFieldPartitioning;
 
-//   // First construct a list of list of node-particle connectivity where each index in list is a list of particle ids in support of the node
- 
-  
-//   // Iteratre over each node and all velocity field pairings on that node to compute the normal and offset of mutual surface
+  arrayView2d< real64 const > const & gridMass = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridMassString() );
+  arrayView2d< real64 const > const & gridDamageGradient = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridDamageGradientString() );
 
+  ParticleManager::ParticleViewAccessor< arrayView1d< localIndex const > > particleGroupAccessor = particleManager.constructArrayViewAccessor< localIndex, 1 >( "particleGroup" );
+  ParticleManager::ParticleViewAccessor< arrayView2d< real64 const > > particlePositionAccessor = particleManager.constructArrayViewAccessor< real64, 2 >( "particleCenter" );
+  ParticleManager::ParticleViewAccessor< arrayView2d< real64 const > > particleSurfaceNormalAccessor = particleManager.constructArrayViewAccessor< real64, 2 >( "particleSurfaceNormal" );
+  ParticleManager::ParticleViewAccessor< arrayView2d< real64 const > > particleDamageGradientAccessor = particleManager.constructArrayViewAccessor< real64, 2 >( "particleDamageGradient" );
 
-// }
+  ParticleManager::ParticleViewConst< arrayView1d< localIndex const > > particleGroupView =  particleGroupAccessor.toNestedViewConst();
+  ParticleManager::ParticleViewConst< arrayView2d< real64 const > > particlePositionView =  particlePositionAccessor.toNestedViewConst();
+  ParticleManager::ParticleViewConst< arrayView2d< real64 const > > particleSurfaceNormalView =  particleSurfaceNormalAccessor.toNestedViewConst();
+  ParticleManager::ParticleViewConst< arrayView2d< real64 const > > particleDamageGradientView =  particleDamageGradientAccessor.toNestedViewConst();
+
+  arrayView1d< localIndex const > const numNeighborsAll = m_nodalNeighborList.m_numParticles.toViewConst();
+  ArrayOfArraysView< localIndex const > const neighborRegions = m_nodalNeighborList.m_toParticleRegion.toViewConst();
+  ArrayOfArraysView< localIndex const > const neighborSubRegions = m_nodalNeighborList.m_toParticleSubRegion.toViewConst();
+  ArrayOfArraysView< localIndex const > const neighborIndices = m_nodalNeighborList.m_toParticleIndex.toViewConst();
+
+  // Diagonal penalty matrix from paper
+  real64 const lambda = 1e-7 * ( m_hEl[0] + m_hEl[1] + m_hEl[2] ) / 3;
+  real64 const w_p = 1; // Particle weight, was 1 in paper
+
+  // Iterate over nodes check if they have nonnegligible mass in more than one velocity field
+  // If so we need to determine which particle is nearest the node and use their neighbor list to perform logistic regression
+  localIndex const numNodes = nodeManager.size(); 
+  forAll< parallelDevicePolicy<> >( numNodes, [=] GEOS_HOST_DEVICE ( localIndex const g )
+  {
+     for( localIndex a=0; a < numVelocityFields-1; ++a )
+     {
+        if( gridMass[g][a] < smallMass )
+        {
+          continue;
+        }
+        
+        for( localIndex b=a+1; b < numVelocityFields; ++b )
+        {
+          if( gridMass[g][b] < smallMass )
+          {
+            continue;
+          }
+
+          localIndex numNeighboringParticles = numNeighborsAll[g];
+
+          real64 phi[4] = { 0.0 }; // Initial guess for normal and offset phi={n_1, n_2, n_2, offset}
+
+          // Guess normal and offset of contact plane first (simple to use a weighting on the grid mapped normals from both fields and zero offset)
+          localIndex const maxIters = 100; // Maximum number of iterations for logistic regression
+          for(localIndex iter=0; iter < maxIters; ++iter)
+          {
+            real64 dphi[4] = { 0.0 }; // Increment in normal and offset
+            real64 mat[4][4] = { { 0.0 } }; // J^T*W*J+Lambda
+            for( localIndex i=0; i < 4; ++i )
+            {
+              for( localIndex j=0; j < 4; ++j )
+              {
+                mat[i][j] += lambda * ( i == j && i < 3 );
+                for( localIndex n=0; n < numNeighboringParticles; ++n )
+                {
+                  localIndex const regionIndex = neighborRegions[g][n];
+                  localIndex const subRegionIndex = neighborSubRegions[g][n];
+                  localIndex const particleIndex = neighborIndices[g][n];
+
+                  localIndex const fieldIndex = partitionField( numContactGroups,
+                                                                damageFieldPartitioning,
+                                                                particleGroupView[regionIndex][subRegionIndex][particleIndex],
+                                                                particleDamageGradientView[regionIndex][subRegionIndex][particleIndex],
+                                                                particleSurfaceNormalView[regionIndex][subRegionIndex][particleIndex],
+                                                                gridDamageGradient[g] );
+                  if( fieldIndex != a && fieldIndex != b )
+                  {
+                    continue;
+                  }
+
+                  real64 x_p[4] = { 1.0 };
+                  x_p[0] = particlePositionView[regionIndex][subRegionIndex][particleIndex][0];
+                  x_p[1] = particlePositionView[regionIndex][subRegionIndex][particleIndex][1];
+                  x_p[2] = particlePositionView[regionIndex][subRegionIndex][particleIndex][2];
+
+                  real64 exp_x_phi = LvArray::math::exp(-LvArray::tensorOps::AiBi< 4 >( x_p, phi ));  
+                  mat[i][j] += ( 2 * exp_x_phi / LvArray::math::pow( 1.0 +  exp_x_phi, 2 ) ) * w_p * x_p[i] * x_p[j];
+                }
+              }
+            }
+
+            real64 matInv[4][4] = { { 0.0 } };
+            LvArray::tensorOps::invert< 4 >( matInv, mat );
+
+            real64 vec[4] = { 0.0 }; // J^T*W*(c-f(\phi^k))-Lambda*phi^k
+            for( localIndex i = 0; i < 4; ++i )
+            {
+              vec[i] = -lambda * ( i < 3 ) * phi[i];
+              for( localIndex n=0; n < numNeighboringParticles; ++n )
+              {
+                localIndex const regionIndex = neighborRegions[g][n];
+                localIndex const subRegionIndex = neighborSubRegions[g][n];
+                localIndex const particleIndex = neighborIndices[g][n];
+
+                localIndex const fieldIndex = partitionField( numContactGroups,
+                                                              damageFieldPartitioning,
+                                                              particleGroupView[regionIndex][subRegionIndex][particleIndex],
+                                                              particleDamageGradientView[regionIndex][subRegionIndex][particleIndex],
+                                                              particleSurfaceNormalView[regionIndex][subRegionIndex][particleIndex],
+                                                              gridDamageGradient[g] );
+
+                if( fieldIndex != a && fieldIndex != b )
+                {
+                  continue;
+                }
+
+                real64 x_p[4] = { 1.0 };
+                x_p[0] = particlePositionView[regionIndex][subRegionIndex][particleIndex][0];
+                x_p[1] = particlePositionView[regionIndex][subRegionIndex][particleIndex][1];
+                x_p[2] = particlePositionView[regionIndex][subRegionIndex][particleIndex][2];
+                real64 c_p = ( fieldIndex == a ) - ( fieldIndex == b ); 
+
+                real64 exp_x_phi = LvArray::math::exp(-LvArray::tensorOps::AiBi< 4 >( x_p, phi ));  
+                vec[i] += ( 2 * exp_x_phi / LvArray::math::pow( 1.0 +  exp_x_phi, 2 ) ) * w_p * ( c_p - 2 / ( 1 + exp_x_phi ) - 1.0 ) * x_p[i];
+              }
+            }
+
+            // Compute increment in phi
+            LvArray::tensorOps::Ri_eq_AijBj< 4, 4 >( dphi, matInv, vec );
+
+            real64 n_old[3] = { 0.0 };
+            n_old[0] = phi[0];
+            n_old[1] = phi[1];
+            n_old[2] = phi[2];
+
+            LvArray::tensorOps::add< 4 >( phi, dphi );
+            real64 n_new[3] = { 0.0 };
+            n_new[0] = phi[0];
+            n_new[1] = phi[1];
+            n_new[2] = phi[2];
+
+            // Check convergence
+            real64 const epsilon = 1e-6; // Convergence criteria
+            if( LvArray::math::abs( 1.0 - LvArray::tensorOps::AiBi< 3 >( n_new, n_old ) ) < epsilon )
+            {
+              // Need to do contact calculations
+              break;
+            }
+          } 
+        }
+     } 
+  } );
+}
 
 void SolidMechanicsMPM::interpolateTable( real64 x,
                                           real64 dx,
@@ -10994,7 +11296,7 @@ void SolidMechanicsMPM::interpolateTable( real64 x,
   // If we preceed table use first row
   if( xNext <= table[0][0] )
   {
-    for( int i = 0; i < numDims; ++i )
+    for( localIndex i = 0; i < numDims; ++i )
     {
       output[i] = table[0][i + 1];
     }
@@ -11004,7 +11306,7 @@ void SolidMechanicsMPM::interpolateTable( real64 x,
   // If we exceed table use last row
   if( xNext >= table[numRows - 1][0] )
   {
-    for( int i = 0; i < numDims; ++i )
+    for( localIndex i = 0; i < numDims; ++i )
     {
       output[i] = table[numRows - 1][i + 1];
     }
@@ -11024,7 +11326,7 @@ void SolidMechanicsMPM::interpolateTable( real64 x,
   real64 timePast = xNext - table[tableInterval][0]; // Time elapsed since switching intervals in F table
   real64 timeFrac = timePast / timeInterval;
 
-  for( int i = 0; i < numDims; ++i )
+  for( localIndex i = 0; i < numDims; ++i )
   {
       switch( interpolationType )
       {
@@ -11049,17 +11351,18 @@ void SolidMechanicsMPM::interpolateTable( real64 x,
 }
 
 void SolidMechanicsMPM::interpolateValueInRange( real64 const & x,
-                                          real64 const & xmin,
-                                          real64 const & xmax,
-                                          real64 const & ymin,
-                                          real64 const & ymax,
-                                          real64 & output,
-                                          int interpolationType )
+                                                 real64 const & xmin,
+                                                 real64 const & xmax,
+                                                 real64 const & ymin,
+                                                 real64 const & ymax,
+                                                 real64 & output,
+                                                 SolidMechanicsMPM::InterpolationOption interpolationType )
 { // Stripped down version of the table interpolation to be used when interpolating a 1D function
   // in a fixed and well-defined range (xmin<x<xmax).
   // Perhaps this should construct a table and call the tableInterpolation so we don't need to
   // keep both consistent if other inteprolation types are created.
   GEOS_MARK_FUNCTION;
+
   if( ( x < xmin ) || ( xmax <= xmin ) )
   {
    output = ymin;
@@ -11074,15 +11377,15 @@ void SolidMechanicsMPM::interpolateValueInRange( real64 const & x,
   real64 timeFrac = (x-xmin)/(xmax-xmin);
       switch( interpolationType )
       {
-        case 1:
+        case SolidMechanicsMPM::InterpolationOption::Linear:
           // default linear interpolation
           output = ymin * ( 1.0 - timeFrac ) + ymax * timeFrac;
           break;
-        case 2:
+        case SolidMechanicsMPM::InterpolationOption::Cosine:
           // smooth-step interpolation with cosine, zero endpoint velocity
           output = ymin - 0.5 * ( ymax - ymin ) * ( cos( 3.141592653589793 * timeFrac ) - 1.0 );
           break;
-        case 3:
+        case SolidMechanicsMPM::InterpolationOption::Smoothstep:
           // smooth-step interpolation with 5th order polynomial, zero endpoint velocity and acceleration
           output = ymin + ( ymax - ymin ) * ( 10.0 * pow( timeFrac, 3 ) - 15.0 * pow( timeFrac, 4 ) + 6.0 * pow( timeFrac, 5 ) );
           break;
@@ -11104,7 +11407,7 @@ void SolidMechanicsMPM::interpolateFTable( real64 dt, real64 time_n )
                     Fii_new,
                     m_fTableInterpType );
 
-  for( int i = 0; i < m_numDims; ++i )
+  for( localIndex i = 0; i < m_numDims; ++i )
   {
     if( m_stressControl[i] != 1 )
     {
@@ -11219,7 +11522,7 @@ void SolidMechanicsMPM::performFLIPUpdate( real64 dt,
       // Initialize velocity gradient for this particle
       // if( m_directionalOverlapCorrection == 0 )
       // {
-      for( int i = 0; i < 3; ++i )
+      for( localIndex i = 0; i < 3; ++i )
       {
         for( int j = 0; j < 3; ++j )
         {
@@ -11229,7 +11532,7 @@ void SolidMechanicsMPM::performFLIPUpdate( real64 dt,
       // }
 
       // On-the-fly grid shape function computations
-      int mappedNodes[64];
+      localIndex mappedNodes[64];
       real64 shapeFunctionValues[64];
       real64 shapeFunctionGradientValues[64][3];
       mapNodesAndComputeShapeFunctions( ijkMap,
@@ -11248,14 +11551,14 @@ void SolidMechanicsMPM::performFLIPUpdate( real64 dt,
         // localIndex const mappedNode = mappedNodes[pp][g];
         localIndex const mappedNode = mappedNodes[g];
 
-        int const fieldIndex = partitionField( numContactGroups,
+        localIndex const fieldIndex = partitionField( numContactGroups,
                                                damageFieldPartitioning,
                                                particleGroup[p],
                                                particleDamageGradient[p],
                                                particleSurfaceNormal[p],
                                                gridDamageGradient[mappedNode] );
 
-        for( int i=0; i<numDims; ++i )
+        for( localIndex i=0; i<numDims; ++i )
         {
           // // Full step update
           // // particlePosition[p][i] += gridVelocity[mappedNode][fieldIndex][i] * shapeFunctionValues[pp][g] * dt;
@@ -11391,14 +11694,14 @@ void SolidMechanicsMPM::performPICUpdate(  real64 dt,
           LvArray::tensorOps::copy< 3 >( shapeFunctionGradientValue, shapeFunctionGradientValues[pp][g] );
         #endif
 
-        int const fieldIndex = partitionField( numContactGroups,
+        localIndex const fieldIndex = partitionField( numContactGroups,
                                                damageFieldPartitioning,
                                                particleGroup[p],
                                                particleDamageGradient[p],
                                                particleSurfaceNormal[p],
                                                gridDamageGradient[mappedNode] );
 
-        for( int i = 0; i < numDims; ++i )
+        for( localIndex i = 0; i < numDims; ++i )
         {
           // particlePosition[p][i] += ( gridVelocity[mappedNode][fieldIndex][i] - 0.5 * gridAcceleration[mappedNode][fieldIndex][i] * dt ) * shapeFunctionValue[g] * dt; // CC: position update doesn't seem consistent with old GEOS for FLIP and PIC, need to double check
           // particleVelocity[p][i] += gridVelocity[mappedNode][fieldIndex][i] * shapeFunctionValue[g];
@@ -11462,7 +11765,7 @@ void SolidMechanicsMPM::performXPICUpdate( real64 dt,
   {
     for( int cg = 0; cg < numVelocityFields; ++cg)
     {
-      for( int i = 0; i < numDims; ++i)
+      for( localIndex i = 0; i < numDims; ++i)
       {
         vStar[n][cg][i] = 0.0;
         vMinus[n][cg][i] = gridVelocity[n][cg][i] - gridAcceleration[n][cg][i] * dt;
@@ -11481,7 +11784,7 @@ void SolidMechanicsMPM::performXPICUpdate( real64 dt,
     {
       for( int cg = 0; cg < numVelocityFields; ++cg)
       {
-        for( int i = 0; i < numDims; ++i)
+        for( localIndex i = 0; i < numDims; ++i)
         {
           gridVPlus[n][cg][i] = 0.0;
         }
@@ -11519,7 +11822,7 @@ void SolidMechanicsMPM::performXPICUpdate( real64 dt,
         localIndex const p = activeParticleIndices[pp];
 
         // On-the-fly shape function computation
-        int mappedNodes[64];
+        localIndex mappedNodes[64];
         real64 shapeFunctionValues[64];
         real64 shapeFunctionGradientValues[64][3];
         mapNodesAndComputeShapeFunctions( ijkMap,
@@ -11537,8 +11840,8 @@ void SolidMechanicsMPM::performXPICUpdate( real64 dt,
         {
           localIndex const mappedNodeI = mappedNodes[gi];
           // int const nodeFlagI = ( damageFieldPartitioning == 1 && LvArray::tensorOps::AiBi< 3 >( gridDamageGradient[mappedNodeI], particleDamageGradient[p] ) < 0.0 ) ? 1 : 0;
-          // int const fieldIndexI = nodeFlagI * numContactGroups + particleGroup[p]; // This ranges from 0 to nMatFields-1
-          int const fieldIndexI = partitionField( numContactGroups,
+          // localIndex const fieldIndexI = nodeFlagI * numContactGroups + particleGroup[p]; // This ranges from 0 to nMatFields-1
+          localIndex const fieldIndexI = partitionField( numContactGroups,
                                                   damageFieldPartitioning,
                                                   particleGroup[p],
                                                   particleDamageGradient[p],
@@ -11552,15 +11855,15 @@ void SolidMechanicsMPM::performXPICUpdate( real64 dt,
             {
               localIndex const mappedNodeJ = mappedNodes[gj];
               // int const nodeFlagJ = ( damageFieldPartitioning == 1 && LvArray::tensorOps::AiBi< 3 >( gridDamageGradient[mappedNodeJ], particleDamageGradient[p] ) < 0.0 ) ? 1 : 0;
-              // int const fieldIndexJ = nodeFlagJ * numContactGroups + particleGroup[p]; // This ranges from 0 to nMatFields-1
-              int const fieldIndexJ = partitionField( numContactGroups,
+              // localIndex const fieldIndexJ = nodeFlagJ * numContactGroups + particleGroup[p]; // This ranges from 0 to nMatFields-1
+              localIndex const fieldIndexJ = partitionField( numContactGroups,
                                                       damageFieldPartitioning,
                                                       particleGroup[p],
                                                       particleDamageGradient[p],
                                                       particleSurfaceNormal[p],
                                                       gridDamageGradient[mappedNodeJ] );
 
-              for (int i = 0; i < numDims; ++i)
+              for (localIndex i = 0; i < numDims; ++i)
               {
                 gridVPlus[mappedNodeI][fieldIndexI][i] += ( ( updateOrder - r + 1.0 ) / r ) *
                                                           ( particleMass[p] * shapeFunctionValues[gi] * shapeFunctionValues[gj] / gridMass[mappedNodeI][fieldIndexI] ) *
@@ -11582,7 +11885,7 @@ void SolidMechanicsMPM::performXPICUpdate( real64 dt,
     {
       for( int cg=0; cg < numVelocityFields; ++cg)
       {
-        for( int i = 0; i < numDims; ++i)
+        for( localIndex i = 0; i < numDims; ++i)
         {
           vStar[n][cg][i] += LvArray::math::pow(-1.0, r) * ( gridVPlus[n][cg][i] ); // + ( updateOrder - 1.0 ) / updateOrder * gridDVPlus[n][cg][i] );
           vMinus[n][cg][i] = gridVPlus[n][cg][i];
@@ -11596,7 +11899,7 @@ void SolidMechanicsMPM::performXPICUpdate( real64 dt,
     {
       for( int cg=0; cg < numVelocityFields; ++cg)
       {
-        for( int i = 0; i < numDims; ++i)
+        for( localIndex i = 0; i < numDims; ++i)
         {
           gridDVPlus[n][cg][i] = 0.0;
         }
@@ -11629,7 +11932,7 @@ void SolidMechanicsMPM::performXPICUpdate( real64 dt,
         localIndex const p = activeParticleIndices[pp];
 
         // On-the-fly shape function computation
-        int mappedNodes[64];
+        localIndex mappedNodes[64];
         real64 shapeFunctionValues[64];
         real64 shapeFunctionGradientValues[64][3];
         mapNodesAndComputeShapeFunctions( ijkMap,
@@ -11646,7 +11949,7 @@ void SolidMechanicsMPM::performXPICUpdate( real64 dt,
         for( int gi = 0; gi < 8 * numberOfVerticesPerParticle; ++gi )
         {
           localIndex const mappedNodeI = mappedNodes[gi];
-          int const fieldIndexI = partitionField( numContactGroups,
+          localIndex const fieldIndexI = partitionField( numContactGroups,
                                                   damageFieldPartitioning,
                                                   particleGroup[p],
                                                   particleDamageGradient[p],
@@ -11658,7 +11961,7 @@ void SolidMechanicsMPM::performXPICUpdate( real64 dt,
             for(int gj = 0; gj < 8 * numberOfVerticesPerParticle; ++gj )
             {
               localIndex const mappedNodeJ = mappedNodes[gj];
-              int const fieldIndexJ = partitionField( numContactGroups,
+              localIndex const fieldIndexJ = partitionField( numContactGroups,
                                                       damageFieldPartitioning,
                                                       particleGroup[p],
                                                       particleDamageGradient[p],
@@ -11666,7 +11969,7 @@ void SolidMechanicsMPM::performXPICUpdate( real64 dt,
                                                       gridDamageGradient[mappedNodeJ] );
 
 
-              for (int i = 0; i < numDims; ++i)
+              for (localIndex i = 0; i < numDims; ++i)
               {
                 gridDVPlus[mappedNodeI][fieldIndexI][i] += ( ( updateOrder - r ) / r ) *
                                                         ( particleMass[p] * shapeFunctionValues[gi] * shapeFunctionValues[gj] / gridMass[mappedNodeI][fieldIndexI] ) *
@@ -11683,7 +11986,7 @@ void SolidMechanicsMPM::performXPICUpdate( real64 dt,
     {
       for( int cg=0; cg < numVelocityFields; cg++)
       {
-        for( int i = 0; i < numDims; ++i)
+        for( localIndex i = 0; i < numDims; ++i)
         {
           dVMinus[n][cg][i] = gridDVPlus[n][cg][i];
         }
@@ -11719,7 +12022,7 @@ void SolidMechanicsMPM::performXPICUpdate( real64 dt,
       localIndex const p = activeParticleIndices[pp];
 
       // Zero velocity gradient
-      for( int i=0; i < numDims; ++i )
+      for( localIndex i=0; i < numDims; ++i )
       {
         particlePosition[p][i] -= particleVelocity[p][i] * dt / 2.0;
         particleVelocity[p][i] = 0.0;
@@ -11733,14 +12036,14 @@ void SolidMechanicsMPM::performXPICUpdate( real64 dt,
       {
         localIndex const mappedNode = mappedNodes[pp][g];
 
-        int const fieldIndex = partitionField( numContactGroups,
+        localIndex const fieldIndex = partitionField( numContactGroups,
                                                damageFieldPartitioning,
                                                particleGroup[p],
                                                particleDamageGradient[p],
                                                particleSurfaceNormal[p],
                                                gridDamageGradient[mappedNode] );
 
-        for( int i=0; i<numDims; ++i )
+        for( localIndex i=0; i<numDims; ++i )
         {
           real64 m = updateOrder;
           real64 S = shapeFunctionValues[pp][g];
@@ -11805,7 +12108,7 @@ void SolidMechanicsMPM::performFMPMUpdate(  real64 dt,
   {
     for( int cg=0; cg < numVelocityFields; cg++)
     {
-      for( int i = 0; i < numDims; ++i)
+      for( localIndex i = 0; i < numDims; ++i)
       {
         vStar[n][cg][i] = updateOrder * gridVelocity[n][cg][i];
         vMinus[n][cg][i] = vStar[n][cg][i];
@@ -11821,7 +12124,7 @@ void SolidMechanicsMPM::performFMPMUpdate(  real64 dt,
     {
       for( int cg=0; cg < numVelocityFields; cg++)
       {
-        for( int i = 0; i < numDims; ++i)
+        for( localIndex i = 0; i < numDims; ++i)
         {
           gridVPlus[n][cg][i] = 0.0;
         }
@@ -11852,7 +12155,7 @@ void SolidMechanicsMPM::performFMPMUpdate(  real64 dt,
         localIndex const p = activeParticleIndices[pp];
 
         // On-the-fly shape function computation
-        int mappedNodes[64];
+        localIndex mappedNodes[64];
         real64 shapeFunctionValues[64];
         real64 shapeFunctionGradientValues[64][3];
         mapNodesAndComputeShapeFunctions( ijkMap,
@@ -11869,7 +12172,7 @@ void SolidMechanicsMPM::performFMPMUpdate(  real64 dt,
         for( int gi = 0; gi < 8 * numberOfVerticesPerParticle; ++gi )
         {
           localIndex const mappedNodeI = mappedNodes[gi];
-          int const fieldIndexI = partitionField( numContactGroups,
+          localIndex const fieldIndexI = partitionField( numContactGroups,
                                                   damageFieldPartitioning,
                                                   particleGroup[p],
                                                   particleDamageGradient[p],
@@ -11883,14 +12186,14 @@ void SolidMechanicsMPM::performFMPMUpdate(  real64 dt,
             for(int gj = 0; gj < 8 * numberOfVerticesPerParticle; ++gj )
             {
               localIndex const mappedNodeJ = mappedNodes[gj];
-              int const fieldIndexJ = partitionField( numContactGroups,
+              localIndex const fieldIndexJ = partitionField( numContactGroups,
                                                       damageFieldPartitioning,
                                                       particleGroup[p],
                                                       particleDamageGradient[p],
                                                       particleSurfaceNormal[p],
                                                       gridDamageGradient[mappedNodeJ] );
 
-              for (int i = 0; i < numDims; ++i)
+              for (localIndex i = 0; i < numDims; ++i)
               {
                 gridVPlus[mappedNodeI][fieldIndexI][i] += Splus * shapeFunctionValues[gj] * vMinus[mappedNodeJ][fieldIndexJ][i];;
               }
@@ -11909,7 +12212,7 @@ void SolidMechanicsMPM::performFMPMUpdate(  real64 dt,
     {
       for( int cg=0; cg < numVelocityFields; cg++)
       {
-        for( int i = 0; i < numDims; ++i)
+        for( localIndex i = 0; i < numDims; ++i)
         {
           vStar[n][cg][i] += orderCoefficient * gridVPlus[n][cg][i];
           vMinus[n][cg][i] = gridVPlus[n][cg][i];
@@ -11941,7 +12244,7 @@ void SolidMechanicsMPM::performFMPMUpdate(  real64 dt,
       localIndex const p = activeParticleIndices[pp];
 
       // On-the-fly shape function computation
-      int mappedNodes[64];
+      localIndex mappedNodes[64];
       real64 shapeFunctionValues[64];
       real64 shapeFunctionGradientValues[64][3];
       mapNodesAndComputeShapeFunctions( ijkMap,
@@ -11955,7 +12258,7 @@ void SolidMechanicsMPM::performFMPMUpdate(  real64 dt,
                                         shapeFunctionValues,
                                         shapeFunctionGradientValues );
 
-      for(int i = 0; i < numDims; ++i)
+      for(localIndex i = 0; i < numDims; ++i)
       {
         particlePosition[p][i] += 0.5 * dt * particleVelocity[p][i];
         particleVelocity[p][i] = 0.0;
@@ -11969,14 +12272,14 @@ void SolidMechanicsMPM::performFMPMUpdate(  real64 dt,
       for( int g = 0; g < 8 * numberOfVerticesPerParticle; ++g )
       {
         localIndex const mappedNode = mappedNodes[g];
-        int const fieldIndex = partitionField( numContactGroups,
+        localIndex const fieldIndex = partitionField( numContactGroups,
                                                damageFieldPartitioning,
                                                particleGroup[p],
                                                particleDamageGradient[p],
                                                particleSurfaceNormal[p],
                                                gridDamageGradient[mappedNode] );
 
-        for( int i=0; i < numDims; ++i )
+        for( localIndex i=0; i < numDims; ++i )
         {
           particlePosition[p][i] += 0.5 * dt * shapeFunctionValues[g] * vStar[mappedNode][fieldIndex][i];
           particleVelocity[p][i] += shapeFunctionValues[g] * vStar[mappedNode][fieldIndex][i];
@@ -12251,6 +12554,9 @@ void SolidMechanicsMPM::computeSurfaceFlags( ParticleManager & particleManager )
 {
   GEOS_MARK_FUNCTION;
 
+  localIndex const numDims = m_numDims;
+  real64 const neighborRadius = m_neighborRadius;
+
   // Get accessors for volume, position
   ParticleManager::ParticleViewAccessor< arrayView1d< real64 const > > particleVolumeAccessor = particleManager.constructArrayViewAccessor< real64, 1 >( "particleVolume" );
   ParticleManager::ParticleViewAccessor< arrayView2d< real64 const > > particlePositionAccessor = particleManager.constructArrayViewAccessor< real64, 2 >( "particleCenter" );
@@ -12293,31 +12599,31 @@ void SolidMechanicsMPM::computeSurfaceFlags( ParticleManager & particleManager )
         localIndex subRegionIndex = subRegionIndices[neighborIndex];
         localIndex particleIndex = particleIndices[neighborIndex];
         real64 rSquared = 0.0;
-        for( int i=0; i<m_numDims; ++i )
+        for( localIndex i = 0; i < numDims; ++i )
         {
           real64 relativePositionComponent = particlePositionView[regionIndex][subRegionIndex][particleIndex][i] - particlePosition[p][i];
           rSquared += relativePositionComponent * relativePositionComponent;
         }
         real64 kernelVal = kernel( LvArray::math::sqrt( rSquared ));
         totalVolume += kernelVal * particleVolumeView[regionIndex][subRegionIndex][particleIndex];
-        for( int i=0; i<m_numDims; ++i )
+        for( localIndex i = 0; i < numDims; ++i )
         {
           centroid[i] += kernelVal * particleVolumeView[regionIndex][subRegionIndex][particleIndex] * particlePositionView[regionIndex][subRegionIndex][particleIndex][i];
         }
       }
       real64 positionDifference[3] = { 0.0 };
-      for( int i=0; i<m_numDims; ++i )
+      for( localIndex i = 0; i< numDims; ++i )
       {
         centroid[i] /= totalVolume;
         positionDifference[i] = centroid[i] - particlePosition[p][i];
       }
       real64 deltaSquared = 0.0;
-      for( int i=0; i<m_numDims; ++i )
+      for( localIndex i = 0; i < numDims; ++i )
       {
         deltaSquared += positionDifference[i] * positionDifference[i];
       }
       // 0.08 was hand-picked based on testing done in Mathematica. Works in 2D and 3D!
-      if( particleSurfaceFlag[p] != 1 && deltaSquared >= 0.08 * 0.08 * m_neighborRadius * m_neighborRadius )
+      if( particleSurfaceFlag[p] != 1 && deltaSquared >= 0.08 * 0.08 * neighborRadius * neighborRadius )
       {
         particleSurfaceFlag[p] = 1;
       }
@@ -12375,7 +12681,7 @@ void SolidMechanicsMPM::computeSurfaceNormals( ParticleManager & particleManager
         {
           localIndex const mappedNode = mappedNodes[pp][g];
 
-          int const fieldIndex = partitionField( numContactGroups,
+          localIndex const fieldIndex = partitionField( numContactGroups,
                                                 damageFieldPartitioning,
                                                 particleGroup[p],
                                                 particleDamageGradient[p],
@@ -13279,7 +13585,6 @@ void SolidMechanicsMPM::correctGhostParticleCentersAcrossPeriodicBoundaries( Par
   particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
   {
     arrayView2d< real64 > const particlePosition = subRegion.getParticleCenter();
-    // arrayView1d< int const > const particleRank = subRegion.getParticleRank(); 
     
     SortedArrayView< localIndex const > const inactiveParticleIndices = subRegion.inactiveParticleIndices();
     forAll< serialPolicy >( inactiveParticleIndices.size(), [=] GEOS_HOST_DEVICE ( localIndex const pp )
@@ -13297,17 +13602,9 @@ void SolidMechanicsMPM::correctGhostParticleCentersAcrossPeriodicBoundaries( Par
             sign *= -1.0;
           }
 
-          // if( particleRank[p] == 147 && p == 3556 )
-          // {
-            // GEOS_LOG_LEVEL_BY_RANK(2, "(ghost before) p: " << p << ", i: " << i << ", pos[i]: " << particlePosition[p][i] << ", xGlobalMin[i]: " << xMin[i] << ", xGlobalMax[i]: " << xMax[i] << ", xLocalMin[i]: " << xLocalMin[i] << ", xLocalMax[i]: " << xLocalMax[i] << ", imageMin: " << xMin[i] + sign * hEl[i] << ", xLocalMinWithGhost[i]: " << xLocalMinWithGhost[i] << ", xLocalMaxWithGhost[i]: " << xLocalMaxWithGhost[i]);
-          // }
           // particlePosition[p][i] = Mod(particlePosition[p][i]-xGlobalMin[i], xGlobalMax[i]-xGlobalMin[i])+xGlobalMin[i];
           // particlePosition[p][i] = Mod(particlePosition[p][i] - xMin[i] - sign * hEl[i] * LvArray::math::ceil(m_neighborRadius/hEl[i]), xExtent[i]) + xMin[i] + sign * hEl[i] * LvArray::math::ceil(m_neighborRadius/hEl[i]);
           particlePosition[p][i] = Mod(particlePosition[p][i] - xMin[i] - sign * neighborRadius, xExtent[i]) + xMin[i] + sign * neighborRadius;
-          // if( particleRank[p] == 147 && p == 3556 )
-          // {
-            // GEOS_LOG_LEVEL_BY_RANK(2, "(ghost after) p: " << p << ", i: " << i << ", pos[i]: " << particlePosition[p][i]);
-          // }
         }
       }
     });
@@ -13456,6 +13753,122 @@ void SolidMechanicsMPM::populateMappingArrays( ParticleManager & particleManager
     ++subRegionIndex;
   } );
 }
+
+void SolidMechanicsMPM::generateNodalNeighborList( ParticleManager & particleManager,
+                                                   NodeManager & nodeManager )
+{
+  // WARNING!!! This will most likely have a race condition running on GPU
+  // TODO: Fix it in the future!
+  // int const damageFieldPartitioning = m_damageFieldPartitioning;
+  // localIndex const numContactGroups = m_numContactGroups;
+  // localIndex const numVelocityFields = m_numVelocityFields;
+  localIndex const numNodes = nodeManager.size();
+
+  // arrayView2d< real64 const > const gridDamageGradient = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridDamageGradientString() );
+
+  // localIndex numBins = numNodes * numVelocityFields;  
+  localIndex numBins = numNodes;
+  
+  array1d< localIndex > nodeFieldCount( numBins );
+  for( localIndex b = 0; b < numBins; ++b )
+  {
+    nodeFieldCount[b] = 0;
+  }
+  arrayView1d< localIndex > const nodeFieldCountView = nodeFieldCount;
+
+  // Count number of particles mapped to each node-field pair
+  localIndex subRegionIndex = 0;
+  particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
+  {
+    localIndex const numberOfVerticesPerParticle = subRegion.numberOfVerticesPerParticle(); 
+    arrayView2d< localIndex const > const mappedNodes = m_mappedNodes[subRegionIndex];
+
+    // arrayView1d< localIndex const > const particleGroup = subRegion.getParticleGroup();
+    // arrayView2d< real64 const > const particleSurfaceNormal = subRegion.getParticleSurfaceNormal();
+    // arrayView2d< real64 const > const particleDamageGradient = subRegion.getField< fields::mpm::particleDamageGradient >();
+
+    localIndex const numParticlesInSubRegion = subRegion.size(); // Should include ghosted particles
+    forAll< serialPolicy >( numParticlesInSubRegion, [=] GEOS_HOST ( localIndex const p )
+    {
+      for( int g = 0; g < 8 * numberOfVerticesPerParticle; ++g )
+      {
+        localIndex nodeIndex = mappedNodes[p][g];
+        // localIndex fieldIndex = partitionField( numContactGroups,
+        //                                         damageFieldPartitioning,
+        //                                         particleGroup[p],
+        //                                         particleDamageGradient[p],
+        //                                         particleSurfaceNormal[p],
+        //                                         gridDamageGradient[nodeIndex] ); // Use dfg here
+        // localIndex const binIndex = numNodes * fieldIndex + nodeIndex;
+        // ++nodeFieldCountView[binIndex];
+        ++nodeFieldCountView[nodeIndex];
+      }
+    });
+    ++subRegionIndex;
+  });
+
+  m_nodalNeighborList.freeOnDevice(); // just being careful
+  m_nodalNeighborList.resizeFromCapacities( nodeFieldCount );
+
+  arrayView1d< localIndex > const numNeighborsAll = m_nodalNeighborList.m_numParticles.toView();
+  ArrayOfArraysView< localIndex > const neighborRegions = m_nodalNeighborList.m_toParticleRegion.toView();
+  ArrayOfArraysView< localIndex > const neighborSubRegions = m_nodalNeighborList.m_toParticleSubRegion.toView();
+  ArrayOfArraysView< localIndex > const neighborIndices = m_nodalNeighborList.m_toParticleIndex.toView();
+
+  // Initialize bin count
+  array1d< localIndex > binCounts;
+  for( localIndex b = 0; b < numBins; ++b )
+  {
+    binCounts[b] = 0;
+  }
+  arrayView1d< localIndex > const binCountsView = binCounts;
+
+  // Populate node particle data into many particle relation (aka nodal particle neighborlist )
+  particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
+  {
+    localIndex const numberOfVerticesPerParticle = subRegion.numberOfVerticesPerParticle(); 
+    arrayView2d< localIndex const > const mappedNodes = m_mappedNodes[subRegionIndex];
+
+    // arrayView1d< localIndex const > const particleGroup = subRegion.getParticleGroup();
+    // arrayView2d< real64 const > const particleSurfaceNormal = subRegion.getParticleSurfaceNormal();
+    // arrayView2d< real64 const > const particleDamageGradient = subRegion.getField< fields::mpm::particleDamageGradient >();
+
+    ParticleRegion & region = dynamicCast< ParticleRegion & >( subRegion.getParent().getParent() );
+    localIndex regionIndexOfSubRegion = region.getIndexInParent();
+    localIndex subRegionIndexInRegion = subRegion.getIndexInParent();
+
+    localIndex const numParticlesInSubRegion = subRegion.size(); // Should include ghosted particles
+    forAll< serialPolicy >( numParticlesInSubRegion, [=] GEOS_HOST ( localIndex const p )
+    {
+      for( int g = 0; g < 8 * numberOfVerticesPerParticle; ++g )
+      {
+        localIndex nodeIndex = mappedNodes[p][g];
+        // localIndex fieldIndex = partitionField( numContactGroups,
+        //                                         damageFieldPartitioning,
+        //                                         particleGroup[p],
+        //                                         particleDamageGradient[p],
+        //                                         particleSurfaceNormal[p],
+        //                                         gridDamageGradient[nodeIndex] ); // Use dfg here
+        // localIndex const binIndex = numNodes * fieldIndex + nodeIndex;
+    
+        // loclaIndex const binCount = binCountsView[binIndex];
+
+        // ++numNeighborsAll[binIndex];
+        // neighborRegions[binIndex][binCount] = regionIndexOfSubRegion;
+        // neighborSubRegions[binIndex][binCount] = subRegionIndexInRegion;
+        // neighborIndices[binIndex][binCount] = p;
+        // ++binCountsView[binIndex]; // Will need RAJA atomics
+        localIndex const binCount = binCountsView[nodeIndex];
+
+        ++numNeighborsAll[nodeIndex];
+        neighborRegions[nodeIndex][binCount] = regionIndexOfSubRegion;
+        neighborSubRegions[nodeIndex][binCount] = subRegionIndexInRegion;
+        neighborIndices[nodeIndex][binCount] = p;
+        ++binCountsView[nodeIndex]; // Will need RAJA atomics
+      }
+    });
+  });
+} 
 
 void SolidMechanicsMPM::computeSinglePointShapeFunctions( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const gridPosition,
                                                           arraySlice1d< real64 const > const particlePosition,
@@ -14079,7 +14492,7 @@ void SolidMechanicsMPM::computeInternalEnergyAndTemperature( const real64 dt,
         real64 energyIncrement = 0.0;
 
         // 1st half-step internal energy update
-        int voigtMap[3][3] = { {0, 5, 4}, {5, 1, 3}, {4, 3, 2} }; // CC: Class member for voigtMap?
+        localIndex voigtMap[3][3] = { {0, 5, 4}, {5, 1, 3}, {4, 3, 2} };
         for( int i = 0 ; i < numDims ; ++i )
         {
           for( int j = 0 ; j < numDims ; ++j )

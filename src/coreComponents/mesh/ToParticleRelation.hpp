@@ -97,7 +97,7 @@ public:
       m_toParticleSubRegion.template resizeFromCapacities< serialPolicy >( counts.size(), counts.data() );
       m_toParticleIndex.template resizeFromCapacities< serialPolicy >( counts.size(), counts.data() );
       m_numParticles.resizeDefault( m_toParticleRegion.size(), 0 );
-      for(int i = 0; i < counts.size(); i++)
+      for(localIndex i = 0; i < counts.size(); ++i)
       {
         m_numParticles[i] = counts[i];
         m_toParticleRegion.resizeArray(i, counts[i]);
@@ -110,7 +110,6 @@ public:
       GEOS_ERROR( "Cannot resize array2d from capacities." );
     }
   }
-
 
   void resize( localIndex count, localIndex defaultArraySize = 0 )
   {

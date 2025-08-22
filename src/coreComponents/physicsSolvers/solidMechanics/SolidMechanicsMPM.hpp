@@ -495,6 +495,9 @@ public:
 
   real64 computeNeighborList( ParticleManager & particleManager );
 
+  void generateNodalNeighborList( ParticleManager & particleManager,
+                                  NodeManager & nodeManager );
+
   void optimizeBinSort( ParticleManager & particleManager );
 
   void particleColorSort( ParticleManager & particleManager );
@@ -663,9 +666,9 @@ public:
                                          arraySlice2d< real64 const > const rVectors,
                                          real64 distanceToSurface );
 
-  void computeCohesiveTraction( int g,
-                                int a,
-                                int b, 
+  void computeCohesiveTraction( localIndex g,
+                                localIndex a,
+                                localIndex b, 
                                 real64 mA,
                                 real64 mB,
                                 arraySlice1d< real64 const > const dA,
@@ -739,6 +742,9 @@ public:
                       //  MeshLevel & mesh
                       );
 
+void logisticRegressionContact( ParticleManager & particleManager,
+                                NodeManager & nodeManager );
+
 void interpolateTable( real64 x, 
                        real64 dx,
                        array2d< real64 > table,
@@ -751,7 +757,7 @@ void interpolateValueInRange( real64 const & x,
                               real64 const & ymin,
                               real64 const & ymax,
                               real64 & output,
-                              int interpolationType );
+                              SolidMechanicsMPM::InterpolationOption interpolationType );
 
   void interpolateFTable( real64 dt, real64 time_n );
 
@@ -1034,6 +1040,8 @@ protected:
   array3d< real64 > m_referenceCohesiveGridNodeSurfaceNormals;
 
   int m_needsNeighborList;
+  int m_needsNodalNeighborList;
+  OrderedVariableToManyParticleRelation m_nodalNeighborList;
   real64 m_neighborRadius;
   int m_binSizeMultiplier;
   int m_maxNumNeighbors;
