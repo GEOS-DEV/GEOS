@@ -52,10 +52,6 @@ void MultiPhaseThermalConductivityBase::postInputInitialization()
   GEOS_THROW_IF_GT_MSG( numPhases, MAX_NUM_PHASES,
                         GEOS_FMT( "{}: invalid number of phases", getFullName() ),
                         InputError );
-
-  // TODO figure out why this is really needed
-  m_effectiveConductivity.resize( 0, 0, 3 );
-  m_dEffectiveConductivity_dPhaseVolFrac.resize( 0, 0, 3, numPhases );
 }
 
 void MultiPhaseThermalConductivityBase::allocateConstitutiveData( dataRepository::Group & parent, localIndex const numPts )

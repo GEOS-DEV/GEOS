@@ -48,11 +48,11 @@ BiotPorosity::BiotPorosity( string const & name, Group * const parent ):
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Flag enabling uniaxial approximation in fixed stress update" );
 
-  registerWrapper( viewKeyStruct::solidBulkModulusString(), &m_bulkModulus ). // TODO field?
+  registerWrapper( viewKeyStruct::solidBulkModulusString(), &m_bulkModulus ).
     setApplyDefaultValue( 1e-6 ).
     setDescription( "Solid bulk modulus" );
 
-  registerWrapper( viewKeyStruct::solidShearModulusString(), &m_shearModulus ). // TODO field?
+  registerWrapper( viewKeyStruct::solidShearModulusString(), &m_shearModulus ).
     setApplyDefaultValue( 1e-6 ).
     setDescription( "Solid shear modulus" );
 

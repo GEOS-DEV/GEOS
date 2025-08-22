@@ -147,8 +147,6 @@ public:
 
 protected:
 
-  virtual void postInputInitialization() override;
-
   /// cell-wise effective conductivities in the subregion
   array3d< real64 > m_effectiveConductivity;
 

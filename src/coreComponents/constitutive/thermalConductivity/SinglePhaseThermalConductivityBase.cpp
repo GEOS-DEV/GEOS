@@ -35,15 +35,6 @@ SinglePhaseThermalConductivityBase::SinglePhaseThermalConductivityBase( string c
   registerField< fields::thermalconductivity::dEffectiveConductivity_dT >( &m_dEffectiveConductivity_dT );
 }
 
-void SinglePhaseThermalConductivityBase::postInputInitialization()
-{
-  ConstitutiveBase::postInputInitialization();
-
-  // TODO figure out why this is really needed
-  m_effectiveConductivity.resize( 0, 0, 3 );
-  m_dEffectiveConductivity_dT.resize( 0, 0, 3 );
-}
-
 void SinglePhaseThermalConductivityBase::allocateConstitutiveData( Group & parent, localIndex const numPts )
 {
   // NOTE: enforcing 1 quadrature point

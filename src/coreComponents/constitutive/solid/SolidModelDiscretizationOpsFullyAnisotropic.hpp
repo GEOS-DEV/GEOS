@@ -28,8 +28,7 @@ namespace constitutive
 {
 
 
-struct SolidModelDiscretizationOpsFullyAnisotropic : public SolidModelDiscretizationOps // TODO: spelling error,
-                                                                                        // convert to "General" anyway
+struct SolidModelDiscretizationOpsFullyAnisotropic : public SolidModelDiscretizationOps
 {
   template< int NUM_SUPPORT_POINTS,
             typename BASIS_GRADIENT >
