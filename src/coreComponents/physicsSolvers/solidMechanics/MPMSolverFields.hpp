@@ -79,10 +79,26 @@ DECLARE_FIELD( particleHeatCapacity,
                0.0,
                LEVEL_1,
                WRITE_AND_READ,
-               "An array that stores particle temperature." );
+               "An array that stores particle temperature (do we mean heat capacity?)." );
+
+DECLARE_FIELD( particleInitialTemperature,
+               "particleInitialTemperature",
+               array1d< real64 >,
+               0.0,
+               LEVEL_1,
+               WRITE_AND_READ,
+               "An array that stores particle initial temperature (is this the same as the initialDomaintemperature?)." );
 
 DECLARE_FIELD( particleReferenceTemperature,
                "particleReferenceTemperature",
+               array1d< real64 >,
+               0.0,
+               LEVEL_1,
+               WRITE_AND_READ,
+               "An array that stores particle reference temperature." );
+
+DECLARE_FIELD( particleTemperature,
+               "particleTemperature",
                array1d< real64 >,
                0.0,
                LEVEL_1,
@@ -129,6 +145,14 @@ DECLARE_FIELD( particleCrackTipDistance,
                WRITE_AND_READ,
                "An array that stores particle Crack Tip Distance." );
 
+DECLARE_FIELD( particleInitialVolume,
+               "particleInitialVolume",
+               array1d< real64 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "ParticleInitialVolume" );
+
 DECLARE_FIELD( particleReferenceVolume,
                "particleReferenceVolume",
                array1d< real64 >,
@@ -136,6 +160,14 @@ DECLARE_FIELD( particleReferenceVolume,
                NOPLOT,
                WRITE_AND_READ,
                "ParticleReferenceVolume" );
+
+DECLARE_FIELD( particleInitialRVectors,
+               "particleInitialRVectors",
+               array3d< real64 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "ParticleInitialRVectors" );
 
 DECLARE_FIELD( particleReferencePorosity,
                "particleReferencePorosity",

@@ -705,6 +705,56 @@ public:
     return out.toViewConst();
   }
 
+
+ /**
+   * @brief Const/non-mutable accessor for thermal expansion coefficient
+   * @return Accessor
+   */
+  arrayView1d< real64 const > const getThermalExpansionCoefficient() const
+  {
+    return m_thermalExpansionCoefficient;
+  }
+
+
+
+
+
+///protected:
+///
+///  /// Post-process XML input
+///  virtual void postProcessInput() override;
+///
+///  /// The current stress at a quadrature point (i.e. at timestep n, global newton iteration k)
+///  array3d< real64, solid::STRESS_PERMUTATION > m_newStress;
+///
+///  /// The previous stress at a quadrature point (i.e. at timestep (n-1))
+///  array3d< real64, solid::STRESS_PERMUTATION > m_oldStress;
+///
+///  /// The material density at a quadrature point.
+///  array2d< real64 > m_density;
+///
+///  /// The default density for new allocations.
+///  real64 m_defaultDensity = 0;
+///
+///  /// The thermal expansion coefficient for each upper level dimension (i.e. cell) of *this
+///  array1d< real64 > m_thermalExpansionCoefficient;
+///
+///  /// The default value of the thermal expansion coefficient for any new allocations.
+///  real64 m_defaultThermalExpansionCoefficient = 0;
+///
+///  /// Flag to disable inelasticity (plasticity, damage, etc.)
+///  bool m_disableInelasticity = false;
+///
+///  /// band-aid fix...going to have to remove this after we clean up
+///  /// initialization for constitutive models.
+///  bool m_postProcessed = false;
+
+
+
+
+
+
+
 protected:
 
   /// Post-process XML input

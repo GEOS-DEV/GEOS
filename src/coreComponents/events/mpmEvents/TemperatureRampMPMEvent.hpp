@@ -60,6 +60,7 @@ public:
 
 protected:
   virtual void postInputInitialization() override final;
+  //virtual void postProcessInput() override final;
 
   // Event variables
   real64 m_startTemperature;
