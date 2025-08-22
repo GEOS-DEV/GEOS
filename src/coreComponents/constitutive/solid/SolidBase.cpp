@@ -19,6 +19,7 @@
  */
 
 #include "SolidBase.hpp"
+#include "SolidFields.hpp"
 #include "mesh/ElementSubRegionBase.hpp"
 
 namespace geos
@@ -48,11 +49,8 @@ SolidBase::SolidBase( string const & name, Group * const parent ):
 
 void SolidBase::postInputInitialization()
 {
-  this->getWrapper< array2d< real64 > >( viewKeyStruct::densityString() ).
-    setApplyDefaultValue( m_defaultDensity );
-
-  this->getWrapper< array1d< real64 > >( viewKeyStruct::thermalExpansionCoefficientString() ).
-    setApplyDefaultValue( m_defaultThermalExpansionCoefficient );
+  m_density.setValues< parallelDevicePolicy<> >( m_defaultDensity );
+  m_thermalExpansionCoefficient.setValues< parallelDevicePolicy<> >( m_defaultThermalExpansionCoefficient );
 }
 
 
@@ -86,9 +84,7 @@ void SolidBase::allocateConstitutiveData( Group & parent,
     setDescription( "Material Density" ).
     reference().resizeDimension< 1 >( numConstitutivePointsPerParentIndex );
 
-  subregion->registerWrapper( viewKeyStruct::thermalExpansionCoefficientString(), &m_thermalExpansionCoefficient ).
-    setApplyDefaultValue( -1.0 ). // will be overwritten
-    setDescription( "Linear Thermal Expansion Coefficient Field" );
+  subregion->registerField< fields::solid::thermalExpansionCoefficient >( getName(), &m_thermalExpansionCoefficient );
 }
 
 

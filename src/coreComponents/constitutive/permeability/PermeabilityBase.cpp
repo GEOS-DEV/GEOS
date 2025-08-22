@@ -58,9 +58,9 @@ void PermeabilityBase::allocateConstitutiveData( Group & parent,
   auto subregion = dynamic_cast< ElementSubRegionBase * >( &parent ); // TODO remove
 
   // NOTE: enforcing 1 quadrature point
-  subregion->registerField< fields::permeability::permeability >( &m_permeability ).
+  subregion->registerField< fields::permeability::permeability >( getName(), &m_permeability ).
     reference().resizeDimension< 1, 2 >( 1, 3 );
-  subregion->registerField< fields::permeability::dPerm_dPressure >( &m_dPerm_dPressure ).
+  subregion->registerField< fields::permeability::dPerm_dPressure >( getName(), &m_dPerm_dPressure ).
     reference().resizeDimension< 1, 2 >( 1, 3 );
 }
 

@@ -592,6 +592,8 @@ public:
   template< typename FIELD_TRAIT >
   dataRepository::Wrapper< typename FIELD_TRAIT::type > & registerField( typename FIELD_TRAIT::type * newObject )
   {
+    GEOS_ERROR_IF( m_registeredField.find( FIELD_TRAIT::key()) != m_registeredField.end(),
+                   "Field " << FIELD_TRAIT::key() << " has already been registered." );
 
     m_registeredField.insert( FIELD_TRAIT::key());
 
@@ -612,7 +614,6 @@ public:
   template< typename FIELD_TRAIT >
   dataRepository::Wrapper< typename FIELD_TRAIT::type > & registerField( string const & nameOfRegisteringObject, typename FIELD_TRAIT::type * newObject )
   {
-
     m_registeredField.insert( FIELD_TRAIT::key());
 
     return registerWrapper( FIELD_TRAIT::key(), newObject ).

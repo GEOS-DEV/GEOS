@@ -81,12 +81,8 @@ void BiotPorosity::postInputInitialization()
 {
   PorosityBase::postInputInitialization();
 
-  getWrapper< array1d< real64 > >( fields::porosity::thermalExpansionCoefficient::key() ).
-    setApplyDefaultValue( m_defaultThermalExpansionCoefficient );
-
-  // set results as array default values
-  getWrapper< array1d< real64 > >( fields::porosity::grainBulkModulus::key() ).
-    setApplyDefaultValue( m_defaultGrainBulkModulus );
+  m_thermalExpansionCoefficient.setValues< parallelDevicePolicy<> >( m_defaultThermalExpansionCoefficient );
+  m_grainBulkModulus.setValues< parallelDevicePolicy<> >( m_defaultGrainBulkModulus );
 }
 
 void BiotPorosity::initializeState() const
