@@ -74,7 +74,7 @@ char const * xmlInput =
         forceDt="0.01"
         targetExactStartStop="0"
         targetExactTimestep="0"
-        target="/Solvers/acousticSolver"/>
+        target="/Solvers/acousticSolverDG"/>
       <PeriodicEvent
         name="waveFieldNp1Collection"
         timeFrequency="0.1"

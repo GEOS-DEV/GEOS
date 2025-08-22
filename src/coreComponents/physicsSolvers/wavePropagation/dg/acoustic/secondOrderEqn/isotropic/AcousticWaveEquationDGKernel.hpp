@@ -13,7 +13,7 @@
  */
 
 /**
- * @file AcousticFirstOrderWaveEquationSEMKernel.hpp
+ * @file AcousticWaveEquationDGKernel.hpp
  */
 
 #ifndef GEOS_PHYSICSSOLVERS_WAVEPROPAGATION_ACOUSTICWAVEEQUATIONDGKERNEL_HPP_

@@ -100,7 +100,7 @@ DECLARE_FIELD( ElementToOppositePermutation,
                "Map from elements to the permutation of the neighboring element, opposite to each vertex." );
 
 DECLARE_FIELD( CharacteristicSize,
-               "charactersticSize",
+               "characteristicSize",
                array1d< real32 >,
                0,
                NOPLOT,
@@ -115,13 +115,6 @@ DECLARE_FIELD( MassPlusDampingInvIndex,
                WRITE_AND_READ,
                "Index in the list of the pre-computed mass+damping inverses, or -1 if not a boundary element" );
 
-//DECLARE_FIELD( AcousticFreeSurfaceNodeIndicator,
-//               "acousticFreeSurfaceNodeIndicator",
-//               array1d< localIndex >,
-//               0,
-//               NOPLOT,
-//               WRITE_AND_READ,
-//               "Free surface indicator, 1 if a node is on free surface 0 otherwise." );
 
 }
 
