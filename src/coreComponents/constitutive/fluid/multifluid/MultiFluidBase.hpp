@@ -39,7 +39,7 @@ public:
                   Group * const parent );
 
   virtual void allocateConstitutiveData( dataRepository::Group & parent,
-                                         localIndex const numPts );
+                                         localIndex const numPts ) override;
 
   // *** MultiFluid-specific interface
 

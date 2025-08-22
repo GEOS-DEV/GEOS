@@ -91,7 +91,7 @@ public:
   struct viewKeyStruct : public MultiPhaseThermalConductivityBase::viewKeyStruct
   {
     static constexpr char const * thermalConductivityComponentsString() { return "thermalConductivityComponents"; }
-  } viewKeys;
+  };
 
 protected:
 

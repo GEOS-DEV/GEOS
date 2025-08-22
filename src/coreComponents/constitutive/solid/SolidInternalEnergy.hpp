@@ -110,7 +110,7 @@ public:
     static constexpr char const * dVolumetricHeatCapacity_dTemperatureString() { return "dVolumetricHeatCapacity_dTemperature"; }
     static constexpr char const * referenceTemperatureString() { return "referenceTemperature"; }
     static constexpr char const * referenceInternalEnergyString() { return "referenceInternalEnergy"; }
-  } viewKeys;
+  };
 
   using KernelWrapper = SolidInternalEnergyUpdates;
 

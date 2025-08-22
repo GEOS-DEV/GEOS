@@ -89,7 +89,7 @@ public:
   struct viewKeyStruct : public DiffusionBase::viewKeyStruct
   {
     static constexpr char const * diffusivityComponentsString() { return "diffusivityComponents"; }
-  } viewKeys;
+  };
 
 protected:
 

@@ -153,7 +153,7 @@ public:
   {
     static constexpr char const * rockThermalConductivityComponentsString() { return "rockThermalConductivityComponents"; }
     static constexpr char const * phaseThermalConductivityString() { return "phaseThermalConductivity"; }
-  } viewKeys;
+  };
 
 protected:
 

@@ -176,7 +176,7 @@ public:
     static constexpr char const * referencePermeabilityString() { return "referencePermeability"; }
     static constexpr char const * maxPermeabilityString() { return "maxPermeability"; }
     static constexpr char const * pressureModelTypeString() { return "pressureModelType"; }
-  } viewKeys;
+  };
 
   virtual void initializeState() const override final;
 

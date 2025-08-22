@@ -75,7 +75,7 @@ public:
   struct viewKeyStruct : public PermeabilityBase::viewKeyStruct
   {
     static constexpr char const * permeabilityComponentsString() { return "permeabilityComponents"; }
-  } viewKeys;
+  };
 
   virtual void initializeState() const override final;
 

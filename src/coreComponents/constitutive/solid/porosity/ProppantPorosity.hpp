@@ -82,7 +82,7 @@ public:
   struct viewKeyStruct : public PorosityBase::viewKeyStruct
   {
     static constexpr char const * maxProppantConcentrationString() { return "maxProppantConcentration"; }
-  } viewKeys;
+  };
 
   using KernelWrapper = ProppantPorosityUpdates;
 

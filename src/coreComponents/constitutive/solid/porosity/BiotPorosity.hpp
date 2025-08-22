@@ -256,7 +256,7 @@ public:
     static constexpr char const *useUniaxialFixedStressString() { return "useUniaxialFixedStress"; }
 
     static constexpr char const *defaultBiotCoefficientString() { return "defaultBiotCoefficient"; }
-  } viewKeys;
+  };
 
   virtual void initializeState() const override final;
 
