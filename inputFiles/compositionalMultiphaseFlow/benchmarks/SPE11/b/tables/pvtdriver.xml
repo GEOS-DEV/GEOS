@@ -1,0 +1,70 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <Tasks>
+    <PVTDriver
+      name="testBrine"
+      fluid="fluid"
+      output="geos_pvt_353.txt"
+      feedComposition="{ 0.0, 1.0 }"
+      pressureControl="pressureFunction"
+      temperatureControl="temperatureFunction"
+      steps="100"
+      logLevel="1"/>
+  </Tasks>
+
+  <Constitutive>
+    <CO2BrinePhillipsThermalFluid
+      name="fluid"
+      phaseNames="{ gas, water }"
+      logLevel="0"
+      componentNames="{ co2, water }"
+      componentMolarWeight="{ 44e-3, 18e-3 }"
+      phasePVTParaFiles="{ pvtgas_thermal.txt, pvtliquid_thermal.txt }"
+      flashModelParaFile="co2flash_thermal.txt" />
+  </Constitutive>
+
+  <Functions>
+    <TableFunction
+      name="pressureFunction"
+      inputVarNames="{ time }"
+      coordinates="{ 0.0, 1.0 }"
+      values="{ 20e6, 30e6 }"/>
+
+    <TableFunction
+      name="temperatureFunction"
+      inputVarNames="{ time }"
+      coordinates="{ 0.0, 1.0 }"
+      values="{ 353, 353 }"/>
+  </Functions>
+
+  <!-- Mesh is not used, but GEOSX throws an error without one.  Will resolve soon-->
+  <Mesh>
+    <InternalMesh
+      name="mesh1"
+      elementTypes="{ C3D8 }"
+      xCoords="{ 0, 1 }"
+      yCoords="{ 0, 1 }"
+      zCoords="{ 0, 1 }"
+      nx="{ 1 }"
+      ny="{ 1 }"
+      nz="{ 1 }"
+      cellBlockNames="{ cellBlock01 }"/>
+  </Mesh>
+
+  <ElementRegions>
+    <CellElementRegion
+      name="dummy"
+      cellBlocks="{ * }"
+      materialList="{ dummy }"/>
+  </ElementRegions>
+
+  <Events
+    maxTime="1">
+
+    <SoloEvent
+      name="eventD"
+      target="/Tasks/testBrine"/>
+  </Events>
+
+</Problem>

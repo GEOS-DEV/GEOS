@@ -22,6 +22,7 @@ set( wavePropagationSolvers_headers
      shared/WaveSolverBase.hpp
      shared/WaveSolverUtils.hpp
      shared/PrecomputeSourcesAndReceiversKernel.hpp
+     shared/TaperKernel.hpp
      sem/acoustic/shared/AcousticFields.hpp
      sem/acoustic/secondOrderEqn/isotropic/AcousticWaveEquationSEM.hpp
      sem/acoustic/secondOrderEqn/isotropic/AcousticWaveEquationSEMKernel.hpp

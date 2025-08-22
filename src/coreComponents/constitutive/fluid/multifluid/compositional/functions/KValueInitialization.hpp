@@ -21,6 +21,7 @@
 #define GEOS_CONSTITUTIVE_FLUID_MULTIFLUID_COMPOSITIONAL_FUNCTIONS_KVALUEINITIALIZATION_HPP_
 
 #include "common/DataTypes.hpp"
+#include "constitutive/fluid/multifluid/MultiFluidConstants.hpp"
 #include "constitutive/fluid/multifluid/compositional/parameters/ComponentProperties.hpp"
 #include "constitutive/fluid/multifluid/compositional/parameters/ComponentType.hpp"
 
@@ -71,7 +72,7 @@ public:
    * @param[in] pressure pressure
    * @param[in] temperature temperature
    * @param[in] componentProperties The compositional component properties
-   * @param[in] presentComponents The list of present components (with non-zero mole fraction)
+   * @param[in] composition The composition of the fluid
    * @param[out] kValues the calculated k-values
    **/
   template< integer USD >
@@ -81,14 +82,14 @@ public:
                                real64 const pressure,
                                real64 const temperature,
                                ComponentProperties::KernelWrapper const & componentProperties,
-                               arraySlice1d< integer const > const & presentComponents,
+                               arraySlice1d< real64 const > const & composition,
                                arraySlice1d< real64, USD > const & kValues )
   {
     integer waterIndex = -1;
     auto const & componentType = componentProperties.m_componentType;
-    for( integer const ic : presentComponents )
+    for( integer ic = 0; ic < numComps; ++ic )
     {
-      if( isComponentType( componentType[ic], ComponentType::Water ))
+      if( MultiFluidConstants::epsilon < composition[ic] && isComponentType( componentType[ic], ComponentType::Water ))
       {
         waterIndex = ic;
         break;
@@ -129,7 +130,6 @@ public:
   {
     return exp( -4844.168051 / temperature + 12.93022442 ) * 1.0e5 / pressure;
   }
-
 };
 
 } // namespace compositional
