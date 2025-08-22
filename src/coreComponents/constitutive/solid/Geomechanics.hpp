@@ -78,7 +78,7 @@ public:
    * @param[in] t2RateDependence The value for the rate dependence parameter 2
    * @param[in] fractureEnergyReleaseRate The value for the fracture energy release rate
    * @param[in] fractureSofteningExponent controls shape of softening with damage
-   * @param[in] fractureStress The root J2 value for the fracture stress 
+   * @param[in] fractureStress The root J2 value for the fracture stress
    * @param[in] initialTemperature initial temperature
    * @param[in] Q activation energy
    * @param[in] brittleDuctileTransition The root J2 value for the fracture stress 
@@ -1144,7 +1144,7 @@ int GeomechanicsUpdates::computeStep( real64 const ( & D )[6],               // 
     creepRateTemperatureMultiplier = 1.0;
     std::cout << "Warning: creepRateTemperatureMultiplier overflow, set to 1.0" << std::endl;
     }
-		
+
     real64 c0 = m_creepC0;
 		real64 c1 = m_creepC1;
     real64 c2 = m_creepC2;
@@ -1279,11 +1279,8 @@ int GeomechanicsUpdates::computeStep( real64 const ( & D )[6],               // 
         std::cout << " dphidt = " << dphidt << " dphi = " << dphidt * dt << std::endl;
         real64 dphidt2 = -1.0 * 1.0 * 1.0 * 1e-12 * 0.01;  // Just a small negative constant
         std::cout << "Forced dphidt = " << dphidt2 << std::endl;
-
-    if ( (phi_p - phi_e > 1.e-10) && (p > 1.e-12) && (C > 1.e-16) && ( evp + m_p3 > 1.e-10 ) )
- 		  {  // creep compaction
- 			  real64 dphidt = -1.0*creepRateTemperatureMultiplier*std::pow(p,compactionRatePressureExponent)*C*( phi_p - phi_e );  // creep compaction rate:
- 			  real64 phi_c = std::max( phi_e, phi_p + dphidt*dt ); // unloaded porosity after creep, don't let it go below equilibrium level
+ 			  
+        real64 phi_c = std::max( phi_e, phi_p + dphidt*dt ); // unloaded porosity after creep, don't let it go below equilibrium level
  			  real64 evp_c = log( (phi_i - 1. ) / ( phi_c - 1. ) ); // vol. strain after creep.
  			  evp_c = std::max( evp_c, - m_p3 ); // don't let porosity go negative.
         real64 devp = evp_c - evp;  // creep vol. strain increment
@@ -1325,7 +1322,7 @@ int GeomechanicsUpdates::computeStep( real64 const ( & D )[6],               // 
         buckling );
 
         // uncomment for debugging:
-        //std::cout<<"Creep compaction: dphidt = "<<dphidt<<", phi_c = "<<phi_c<<", evp_c = "<<evp_c<<", devp = "<<devp<<", p_c = "<<p_c<<", X_c = "<<X_old<<std::endl;
+        std::cout<<"Creep compaction: dphidt = "<<dphidt<<", phi_c = "<<phi_c<<", evp_c = "<<evp_c<<", devp = "<<devp<<", p_c = "<<p_c<<", X_c = "<<X_old<<std::endl;
  		  }
 
 
@@ -1417,6 +1414,7 @@ int GeomechanicsUpdates::computeStep( real64 const ( & D )[6],               // 
 
     stepFlag  = 0;
     return stepFlag;
+    
 
   // (8) Failed step, Send ParticleDelete Flag to Host Code, Store Inputs to particle data:
   // CC: TODO pass model particle delete flag
@@ -1432,6 +1430,7 @@ int GeomechanicsUpdates::computeStep( real64 const ( & D )[6],               // 
     stepFlag  = 1;
 
     return stepFlag;
+
 }
 
 GEOS_HOST_DEVICE
@@ -1480,7 +1479,7 @@ void GeomechanicsUpdates::computeElasticProperties( real64 & bulk,
     bulk  = m_b0 + m_b1;  // Bulk Modulus
 
     shear = m_g0;  // Default behavior is constant shear modulus   
-    if( isNotZero( m_g1 ) ) // Poisson ratio control.
+    if(isNotZero( m_g1 )) // Poisson ratio control.
     {
       real64 nu = m_g1 + m_g2; // high-pressure limit.
 
@@ -1533,7 +1532,7 @@ void GeomechanicsUpdates::computeElasticProperties( real64 const ( &stress )[6],
 
     // In  compression, or with fluid effects if the strain is more compressive
     // than the zero fluid pressure volumetric strain:
-	if ( evp <= ev0 && isNotZero( Kf ) )
+	if ( evp <= ev0 && isNotZero( Kf ))
     {   // ..........................................................Undrained
 		// Compute the porosity from the strain using Homel's simplified model, and
 		// then use this in the Biot-Gassmann formula to compute the bulk modulus.
@@ -1576,7 +1575,7 @@ void GeomechanicsUpdates::computeElasticProperties( real64 const ( &stress )[6],
   
   shear = m_g0;  // Default behavior is constant shear modulus
   
-  if( isNotZero( m_g1 ) ) // Poisson ratio control.
+  if(isNotZero( m_g1 )) // Poisson ratio control.
   {
     real64 nu = m_g1;
     if ( I1 < -1.e-12 ) // in compression scale the poisson ratio
@@ -1793,7 +1792,7 @@ real64 GeomechanicsUpdates::computeBD(const real64 & a1,
     real64 x_1 = m_p0;
     real64 tolerance = 1.e-6;
 
-    real64 x = 0.0;
+    real64 x;
     real64 check_val;
 
     while (std::abs(x_0 - x_1) > tolerance) {
@@ -2170,7 +2169,7 @@ int GeomechanicsUpdates::computeSubstep( real64 const ( & D )[6],         // str
 
 	// If there is no porosity (p3=0) and no fluid effects (Kf=0) then the nonhardening
 	// return will be the solution
-	if ( isZero( m_p3 ) && isZero( Kf ) ){
+	if ( isZero(m_p3) && isZero( Kf ) ){
         Zeta_new = Zeta_old,
 		X_new = X_old;
 
@@ -2533,7 +2532,7 @@ int GeomechanicsUpdates::nonHardeningReturn( const real64 & I1_trial,           
   
   real64 peakI1_h = m_peakI1+hardening*m_C3;
   real64 peakI1_hd = (nonlinearCoher)*peakI1_h + ( damageV2 )*0;
-
+  
   // It may be better to use an interior point at the center of the yield surface, rather than at zeta, in particular
   // when PEAKI1=0.  Picking the midpoint between PEAKI1 and X would be problematic when the user has specified
   // some no porosity condition (e.g. p0=-1e99)
@@ -2673,7 +2672,7 @@ int GeomechanicsUpdates::nonHardeningReturn( const real64 & I1_trial,           
   rJ2_new = r_to_rJ2*r_0;
 
   LvArray::tensorOps::copy< 6 >( S_new, S_trial );
-  if ( isNotZero( rJ2_trial ) )
+  if ( isNotZero( rJ2_trial ))
   {
 	  // S_new = S_trial; //S_trial*rJ2_new/rJ2_trial;
 	  // S_new *= rJ2_new/rJ2_trial;
@@ -2974,7 +2973,7 @@ real64 GeomechanicsUpdates::computedZetadevp( real64 const & fluid_pressure_init
   // plastic strain (evp).
   real64 dZetadevp = 0.0;           // Evolution rate of isotropic backstress
 
-  if (evp <= ev0 && isNotZero( Kf ) ) { // .................................... Fluid effects are active
+  if (evp <= ev0 && isNotZero( Kf )) { // .................................... Fluid effects are active
     real64 pfi = fluid_pressure_initial; // initial fluid pressure
 
     // This is an expensive calculation, but fasterexp() seemed to cause errors.
@@ -3083,7 +3082,7 @@ void GeomechanicsUpdates::computeLimitParameters( real64 & a1,
   // FUNCTIONS OF HARDENING and DAMAGE 
   real64   fSlope_h = (m_fSlope*(1+hardening*m_C2a/m_g0));
   real64   fSlope_hd = (nonlinearCoher)*fSlope_h + ( damageV2 )*m_fSlopeFailed;
-
+  
   real64 peakI1_h = m_peakI1+hardening*m_C3 ;
   real64 peakI1_hd = (nonlinearCoher)*peakI1_h + ( damageV2 )*0;
 
@@ -3101,22 +3100,22 @@ void GeomechanicsUpdates::computeLimitParameters( real64 & a1,
 
 
 
- 
-  if (fSlope_hd > 0.0 && peakI1_hd >= 0.0 && isZero( m_stren ) && isZero( ySlope_hd) )
+
+  if (fSlope_hd > 0.0 && peakI1_hd >= 0.0 && isZero( m_stren ) && isZero( ySlope_hd ))
   {// ----------------------------------------------Linear Drucker-Prager
     a1 = peakI1_hd * fSlope_hd;
     a2 = 0.0;
     a3 = 0.0;
     a4 = fSlope_hd;
   }
-  else if (isZero(fSlope_hd ) && isZero(peakI1_hd) && stren_hd > 0.0 && isZero( ySlope_hd ))
+  else if (isZero(fSlope_hd) && isZero( peakI1_hd ) && stren_hd > 0.0 && isZero( ySlope_hd ))
   { // ------------------------------------------------------- Von Mises
     a1 = stren_hd*nonlinearCoher;
     a2 = 0.0;
     a3 = 0.0;
     a4 = 0.0;
   }
-  else if ( fSlope_hd > 0.0 && isZero( ySlope_hd ) && stren_hd > 0.0 && isZero( peakI1_hd ) )
+  else if (fSlope_hd > 0.0 && isZero( ySlope_hd  ) && stren_hd > 0.0 && isZero( peakI1_hd ))
   { // ------------------------------------------------------- 0 PEAKI1 to vonMises
     a1 = stren_hd;
     a2 = fSlope_hd / stren_hd;
@@ -3137,7 +3136,7 @@ void GeomechanicsUpdates::computeLimitParameters( real64 & a1,
   {
 	  //std::cout<<"bad limit surface parameters. hardening: " << hardening << "FSLOPEH: "<< fSlope_h << " YSLOPEH: " << ySlope_h << "STRENh: " << stren_h << "PEAKI1H: "<< peakI1_h << std::endl;
 	  //std::cout<<"bad limit surface parameters. hardening: " << hardening << "FSLOPEDH: "<< fSlope_hd << " YSLOPEHD: " << ySlope_hd << "STRENhd: " << stren_hd << "PEAKI1HD: "<< peakI1_hd << std::endl;  
-  }
+}
 
   //std::cout<<"m_peakI1 = "<<m_peakI1<<", m_stren = "<<m_stren<<", m_ySlope = "<<m_ySlope<<", m_fSlope = "<<m_fSlope<<std::endl;
   //std::cout<<"peakI1_h = "<<peakI1_h<<", stren_h = "<<stren_h<<", ySlope_h = "<<ySlope_h<<", fSlope_h = "<<fSlope_h<<std::endl;
@@ -3279,7 +3278,6 @@ public:
 
     /// string/key for fracture softening shape parameter
     static constexpr char const * fractureSofteningExponentString() { return "fractureSofteningExponent"; }
-   
 
     /// string/key for fracture stress
     static constexpr char const * fractureStressString() { return "fractureStress"; }

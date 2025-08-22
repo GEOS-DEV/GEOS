@@ -548,7 +548,7 @@ void StrainHardeningPolymerUpdates::smallStrainUpdateHelper( localIndex const k,
     LvArray::tensorOps::symEigenvectors< 3 >( stretch, eigenVectors, U );
 
     // Find the largest eigenvalues
-    real64 maximumStretch = 0.0;
+    //real64 maximumStretch = 0.0;
 
     GEOS_UNUSED_VAR( m_initialTemperature );
     real64 temperature = m_temperature[k];
