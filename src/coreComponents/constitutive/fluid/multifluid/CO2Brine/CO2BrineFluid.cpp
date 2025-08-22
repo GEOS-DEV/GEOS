@@ -341,8 +341,8 @@ void CO2BrineFluid< PHASE1, PHASE2, FLASH >::createPVTModels()
   // then, we are ready to instantiate the phase models
   bool const isClone = this->isClone();
   TableFunction::OutputOptions const outputOpts = {
-    !isClone && m_writeCSV,
-    !isClone && m_writeInLog
+    !isClone && m_writeCSV,  // writeCSV
+    !isClone && m_writeInLog // writeInLog
   };
 
   m_phase1 = std::make_unique< PHASE1 >( getName() + "_phaseModel1",
