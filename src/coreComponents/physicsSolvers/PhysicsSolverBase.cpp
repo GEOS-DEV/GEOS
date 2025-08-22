@@ -1331,6 +1331,13 @@ void PhysicsSolverBase::debugOutputSolution( real64 const & time,
                        m_writeLinearSystem >= 2 );
 }
 
+void PhysicsSolverBase::updateAndWriteConvergenceStep( real64 const & time_n, real64 const & dt,
+                                                       integer const cycleNumber, integer const iteration )
+{
+  getConvergenceStats().updateSolverStep( time_n, dt, cycleNumber, iteration );
+  getConvergenceStats().writeConvergenceStatsToTable();
+}
+
 real64
 PhysicsSolverBase::calculateResidualNorm( real64 const & GEOS_UNUSED_PARAM( time ),
                                           real64 const & GEOS_UNUSED_PARAM( dt ),
@@ -1487,6 +1494,8 @@ void PhysicsSolverBase::cleanup( real64 const GEOS_UNUSED_PARAM( time_n ),
                                  DomainPartition & GEOS_UNUSED_PARAM( domain ) )
 {
   getIterationStats().outputStatistics();
+  getIterationStats().closeFile();
+  getConvergenceStats().closeFile();
 
   for( auto & timer : m_timers )
   {

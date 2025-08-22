@@ -493,10 +493,10 @@ public:
    * @param iteration current iteration
    */
   virtual void
-  updateAndWriteConvergenceStep( real64 const & GEOS_UNUSED_PARAM( time_n ),
-                                 real64 const & GEOS_UNUSED_PARAM( dt ),
-                                 integer const GEOS_UNUSED_PARAM( cycleNumber ),
-                                 integer const GEOS_UNUSED_PARAM( iteration ) ){}
+  updateAndWriteConvergenceStep( real64 const & time_n,
+                                 real64 const & dt,
+                                 integer const cycleNumber,
+                                 integer const iteration );
 
   /**
    * @brief calculate the norm of the global system residual
