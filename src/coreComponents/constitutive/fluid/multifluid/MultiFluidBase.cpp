@@ -89,43 +89,42 @@ MultiFluidBase::MultiFluidBase( string const & name, Group * const parent )
   registerField< fields::multifluid::dTotalDensity >( &m_totalDensity.derivs );
 }
 
-void MultiFluidBase::allocateConstitutiveData( dataRepository::Group & parent,
-                                               localIndex const numConstitutivePointsPerParentIndex )
+void MultiFluidBase::allocateConstitutiveData( Group & parent, localIndex const numPts )
 {
   integer const numPhase = numFluidPhases();
   integer const numComp = numFluidComponents();
   integer const numDof = numComp + 2;
 
-  m_phaseFraction.value.resize( 0, numConstitutivePointsPerParentIndex, numPhase );
-  m_phaseFraction.derivs.resize( 0, numConstitutivePointsPerParentIndex, numPhase, numDof );
+  m_phaseFraction.value.resize( 0, numPts, numPhase );
+  m_phaseFraction.derivs.resize( 0, numPts, numPhase, numDof );
 
-  m_phaseDensity.value.resize( 0, numConstitutivePointsPerParentIndex, numPhase );
-  m_phaseDensity_n.resize( 0, numConstitutivePointsPerParentIndex, numPhase );
-  m_phaseDensity.derivs.resize( 0, numConstitutivePointsPerParentIndex, numPhase, numDof );
+  m_phaseDensity.value.resize( 0, numPts, numPhase );
+  m_phaseDensity_n.resize( 0, numPts, numPhase );
+  m_phaseDensity.derivs.resize( 0, numPts, numPhase, numDof );
 
-  m_phaseMassDensity.value.resize( 0, numConstitutivePointsPerParentIndex, numPhase );
-  m_phaseMassDensity.derivs.resize( 0, numConstitutivePointsPerParentIndex, numPhase, numDof );
+  m_phaseMassDensity.value.resize( 0, numPts, numPhase );
+  m_phaseMassDensity.derivs.resize( 0, numPts, numPhase, numDof );
 
-  m_phaseViscosity.value.resize( 0, numConstitutivePointsPerParentIndex, numPhase );
-  m_phaseViscosity.derivs.resize( 0, numConstitutivePointsPerParentIndex, numPhase, numDof );
+  m_phaseViscosity.value.resize( 0, numPts, numPhase );
+  m_phaseViscosity.derivs.resize( 0, numPts, numPhase, numDof );
 
-  m_phaseEnthalpy.value.resize( 0, numConstitutivePointsPerParentIndex, numPhase );
-  m_phaseEnthalpy_n.resize( 0, numConstitutivePointsPerParentIndex, numPhase );
-  m_phaseEnthalpy.derivs.resize( 0, numConstitutivePointsPerParentIndex, numPhase, numDof );
+  m_phaseEnthalpy.value.resize( 0, numPts, numPhase );
+  m_phaseEnthalpy_n.resize( 0, numPts, numPhase );
+  m_phaseEnthalpy.derivs.resize( 0, numPts, numPhase, numDof );
 
-  m_phaseInternalEnergy.value.resize( 0, numConstitutivePointsPerParentIndex, numPhase );
-  m_phaseInternalEnergy_n.resize( 0, numConstitutivePointsPerParentIndex, numPhase );
-  m_phaseInternalEnergy.derivs.resize( 0, numConstitutivePointsPerParentIndex, numPhase, numDof );
+  m_phaseInternalEnergy.value.resize( 0, numPts, numPhase );
+  m_phaseInternalEnergy_n.resize( 0, numPts, numPhase );
+  m_phaseInternalEnergy.derivs.resize( 0, numPts, numPhase, numDof );
 
-  m_phaseCompFraction.value.resize( 0, numConstitutivePointsPerParentIndex, numPhase, numComp );
-  m_phaseCompFraction_n.resize( 0, numConstitutivePointsPerParentIndex, numPhase, numComp );
-  m_phaseCompFraction.derivs.resize( 0, numConstitutivePointsPerParentIndex, numPhase, numComp, numDof );
+  m_phaseCompFraction.value.resize( 0, numPts, numPhase, numComp );
+  m_phaseCompFraction_n.resize( 0, numPts, numPhase, numComp );
+  m_phaseCompFraction.derivs.resize( 0, numPts, numPhase, numComp, numDof );
 
-  m_totalDensity.value.resize( 0, numConstitutivePointsPerParentIndex );
-  m_totalDensity_n.resize( 0, numConstitutivePointsPerParentIndex );
-  m_totalDensity.derivs.resize( 0, numConstitutivePointsPerParentIndex, numDof );
+  m_totalDensity.value.resize( 0, numPts );
+  m_totalDensity_n.resize( 0, numPts );
+  m_totalDensity.derivs.resize( 0, numPts, numDof );
 
-  ConstitutiveBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
+  ConstitutiveBase::allocateConstitutiveData( parent, numPts );
 }
 
 void MultiFluidBase::setLabels()

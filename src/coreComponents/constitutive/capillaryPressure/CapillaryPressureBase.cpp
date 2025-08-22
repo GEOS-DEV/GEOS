@@ -85,15 +85,14 @@ void CapillaryPressureBase::postInputInitialization()
   setLabels();
 }
 
-void CapillaryPressureBase::allocateConstitutiveData( dataRepository::Group & parent,
-                                                      localIndex const numConstitutivePointsPerParentIndex )
+void CapillaryPressureBase::allocateConstitutiveData( Group & parent, localIndex const numPts )
 {
   integer const NP = numFluidPhases();
 
-  m_phaseCapPressure.resize( 0, numConstitutivePointsPerParentIndex, NP );
-  m_dPhaseCapPressure_dPhaseVolFrac.resize( 0, numConstitutivePointsPerParentIndex, NP, NP );
+  m_phaseCapPressure.resize( 0, numPts, NP );
+  m_dPhaseCapPressure_dPhaseVolFrac.resize( 0, numPts, NP, NP );
 
-  ConstitutiveBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
+  ConstitutiveBase::allocateConstitutiveData( parent, numPts );
 }
 
 void CapillaryPressureBase::setLabels()

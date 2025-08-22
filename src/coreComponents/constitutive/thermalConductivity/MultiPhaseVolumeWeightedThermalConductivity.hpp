@@ -120,7 +120,7 @@ public:
    * @param[in] name the name of the class
    * @param[in] parent pointer to the parent Group
    */
-  MultiPhaseVolumeWeightedThermalConductivity( string const & name, Group * const parent );
+  MultiPhaseVolumeWeightedThermalConductivity( string const & name, dataRepository::Group * const parent );
 
   virtual void allocateConstitutiveData( dataRepository::Group & parent, localIndex const numPts ) override;
 

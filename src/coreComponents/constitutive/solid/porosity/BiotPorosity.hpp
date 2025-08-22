@@ -231,7 +231,7 @@ protected:
 class BiotPorosity : public PorosityBase
 {
 public:
-  BiotPorosity( string const & name, Group * const parent );
+  BiotPorosity( string const & name, dataRepository::Group * const parent );
 
   static string catalogName() { return "BiotPorosity"; }
 

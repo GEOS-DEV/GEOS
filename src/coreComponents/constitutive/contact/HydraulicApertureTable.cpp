@@ -63,9 +63,9 @@ void HydraulicApertureTable::postInputInitialization()
 }
 
 void HydraulicApertureTable::allocateConstitutiveData( dataRepository::Group & parent,
-                                                       localIndex const numConstitutivePointsPerParentIndex )
+                                                       localIndex const numPts )
 {
-  HydraulicApertureBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
+  HydraulicApertureBase::allocateConstitutiveData( parent, numPts );
 
   // TODO this should not be here
 

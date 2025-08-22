@@ -39,7 +39,7 @@ public:
                   Group * const parent );
 
   virtual void allocateConstitutiveData( dataRepository::Group & parent,
-                                         localIndex const numConstitutivePointsPerParentIndex );
+                                         localIndex const numPts );
 
   // *** MultiFluid-specific interface
 

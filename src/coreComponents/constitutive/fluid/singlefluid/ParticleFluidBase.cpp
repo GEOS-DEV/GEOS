@@ -53,12 +53,11 @@ ParticleFluidBase::ParticleFluidBase( string const & name, Group * const parent 
   registerField< fields::particlefluid::proppantPackPermeability >( &m_proppantPackPermeability );
 }
 
-void ParticleFluidBase::allocateConstitutiveData( Group & parent,
-                                                  localIndex const numConstitutivePointsPerParentIndex )
+void ParticleFluidBase::allocateConstitutiveData( Group & parent, localIndex const numPts )
 {
   m_dSettlingFactor_dComponentConcentration.resize( 0, MAX_NUM_COMPONENTS );
 
-  ConstitutiveBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
+  ConstitutiveBase::allocateConstitutiveData( parent, numPts );
 }
 
 } //namespace constitutive

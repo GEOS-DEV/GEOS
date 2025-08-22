@@ -100,12 +100,11 @@ string CompositionalMultiphaseFluid< FLASH, PHASE1, PHASE2, PHASE3 >::catalogNam
 }
 
 template< typename FLASH, typename PHASE1, typename PHASE2, typename PHASE3 >
-void CompositionalMultiphaseFluid< FLASH, PHASE1, PHASE2, PHASE3 >::allocateConstitutiveData( Group & parent,
-                                                                                              localIndex const numConstitutivePointsPerParentIndex )
+void CompositionalMultiphaseFluid< FLASH, PHASE1, PHASE2, PHASE3 >::allocateConstitutiveData( Group & parent, localIndex const numPts )
 {
-  m_kValues.resize( 0, numConstitutivePointsPerParentIndex, numFluidPhases()-1, numFluidComponents() );
+  m_kValues.resize( 0, numPts, numFluidPhases()-1, numFluidComponents() );
 
-  MultiFluidBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
+  MultiFluidBase::allocateConstitutiveData( parent, numPts );
 
   // Zero k-Values to force initialisation with Wilson k-Values
   m_kValues.zero();

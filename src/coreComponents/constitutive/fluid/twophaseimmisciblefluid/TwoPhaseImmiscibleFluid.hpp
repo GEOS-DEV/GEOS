@@ -40,7 +40,7 @@ class TwoPhaseImmiscibleFluid : public ConstitutiveBase
 public:
 
   TwoPhaseImmiscibleFluid( string const & name,
-                           Group * const parent );
+                           dataRepository::Group * const parent );
 
   /**
    * @name Static Factory Catalog members and functions
@@ -61,7 +61,7 @@ public:
 
   ///@}
 
-  virtual void allocateConstitutiveData( Group & parent,
+  virtual void allocateConstitutiveData( dataRepository::Group & parent,
                                          localIndex const numPts );
 
   /**

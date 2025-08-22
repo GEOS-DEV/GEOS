@@ -68,15 +68,14 @@ void DiffusionBase::postInputInitialization()
   m_phaseDiffusivityMultiplier.resize( 0, 0, 3 );
 }
 
-void DiffusionBase::allocateConstitutiveData( dataRepository::Group & parent,
-                                              localIndex const numConstitutivePointsPerParentIndex )
+void DiffusionBase::allocateConstitutiveData( Group & parent, localIndex const numPts )
 {
   // NOTE: enforcing 1 quadrature point
   m_diffusivity.resize( 0, 1, 3 );
   m_dDiffusivity_dTemperature.resize( 0, 1, 3 );
   m_phaseDiffusivityMultiplier.resize( 0, 1, 3 );
 
-  ConstitutiveBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
+  ConstitutiveBase::allocateConstitutiveData( parent, numPts );
 
   for( localIndex ei = 0; ei < parent.size(); ++ei ) // TODO move into initializeState?
   {

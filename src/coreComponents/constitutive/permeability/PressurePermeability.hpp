@@ -141,13 +141,13 @@ class PressurePermeability : public PermeabilityBase
 {
 public:
 
-  PressurePermeability( string const & name, Group * const parent );
+  PressurePermeability( string const & name, dataRepository::Group * const parent );
 
   static string catalogName() { return "PressurePermeability"; }
 
   virtual string getCatalogName() const override { return catalogName(); }
 
-  virtual void allocateConstitutiveData( Group & parent,
+  virtual void allocateConstitutiveData( dataRepository::Group & parent,
                                          localIndex const numPts ) override;
 
   /// Type of kernel wrapper for in-kernel update

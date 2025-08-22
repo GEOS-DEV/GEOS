@@ -64,14 +64,14 @@ public:
    * @param[in] name the name of the class
    * @param[in] parent pointer to the parent Group
    */
-  ConstantDiffusion( string const & name, Group * const parent );
+  ConstantDiffusion( string const & name, dataRepository::Group * const parent );
 
   static string catalogName() { return "ConstantDiffusion"; }
 
   virtual string getCatalogName() const override { return catalogName(); }
 
-  virtual void allocateConstitutiveData( Group & parent,
-                                         localIndex const numConstitutivePointsPerParentIndex ) override final;
+  virtual void allocateConstitutiveData( dataRepository::Group & parent,
+                                         localIndex const numPts ) override final;
 
   /// Type of kernel wrapper for in-kernel update
   using KernelWrapper = ConstantDiffusionUpdate;

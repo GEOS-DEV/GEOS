@@ -288,15 +288,15 @@ class ProppantSlurryFluid : public SlurryFluidBase
 {
 public:
 
-  ProppantSlurryFluid( string const & name, Group * const parent );
+  ProppantSlurryFluid( string const & name, dataRepository::Group * const parent );
 
   // *** ConstitutiveBase interface
   static string catalogName() { return "ProppantSlurryFluid"; }
 
   virtual string getCatalogName() const override { return catalogName(); }
 
-  virtual void allocateConstitutiveData( Group & parent,
-                                         localIndex const numConstitutivePointsPerParentIndex ) override;
+  virtual void allocateConstitutiveData( dataRepository::Group & parent,
+                                         localIndex const numPts ) override;
 
   using KernelWrapper = ProppantSlurryFluidUpdate;
 

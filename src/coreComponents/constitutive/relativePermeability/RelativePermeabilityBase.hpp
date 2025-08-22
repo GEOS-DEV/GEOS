@@ -150,7 +150,7 @@ public:
 
   RelativePermeabilityBase( string const & name, dataRepository::Group * const parent );
 
-  virtual void allocateConstitutiveData( Group & parent,
+  virtual void allocateConstitutiveData( dataRepository::Group & parent,
                                          localIndex const numPts ) override;
 
   integer numFluidPhases() const { return LvArray::integerConversion< integer >( m_phaseNames.size() ); }

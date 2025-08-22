@@ -336,12 +336,11 @@ JFunctionCapillaryPressure::createKernelWrapper()
                         m_dPhaseCapPressure_dPhaseVolFrac );
 }
 
-void JFunctionCapillaryPressure::allocateConstitutiveData( dataRepository::Group & parent,
-                                                           localIndex const numConstitutivePointsPerParentIndex )
+void JFunctionCapillaryPressure::allocateConstitutiveData( Group & parent, localIndex const numPts )
 {
   m_jFuncMultiplier.resize( 0, numFluidPhases()-1 );
 
-  CapillaryPressureBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
+  CapillaryPressureBase::allocateConstitutiveData( parent, numPts );
 }
 
 

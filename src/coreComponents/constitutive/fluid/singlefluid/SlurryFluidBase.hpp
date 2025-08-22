@@ -252,9 +252,9 @@ class SlurryFluidBase : public SingleFluidBase
 public:
   using SingleFluidProp = SingleFluidVar< real64, 2, constitutive::singlefluid::LAYOUT_FLUID, constitutive::singlefluid::LAYOUT_FLUID_DER >;
 
-  SlurryFluidBase( string const & name, Group * const parent );
+  SlurryFluidBase( string const & name, dataRepository::Group * const parent );
 
-  virtual void allocateConstitutiveData( Group & parent,
+  virtual void allocateConstitutiveData( dataRepository::Group & parent,
                                          localIndex const numPts );
 
   static constexpr localIndex MAX_NUM_COMPONENTS = 3;

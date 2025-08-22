@@ -562,7 +562,7 @@ public:
   SolidBase( string const & name,
              Group * const parent );
 
-  virtual void allocateConstitutiveData( Group & parent, localIndex const numPts ) override;
+  virtual void allocateConstitutiveData( dataRepository::Group & parent, localIndex const numPts ) override;
 
   /// Keys for data in this class
   struct viewKeyStruct : public ConstitutiveBase::viewKeyStruct

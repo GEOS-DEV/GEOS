@@ -67,7 +67,7 @@ public:
    * @param[in] name the name of the class
    * @param[in] parent pointer to the parent Group
    */
-  MultiPhaseConstantThermalConductivity( string const & name, Group * const parent );
+  MultiPhaseConstantThermalConductivity( string const & name, dataRepository::Group * const parent );
 
   static string catalogName() { return "MultiPhaseConstantThermalConductivity"; }
 

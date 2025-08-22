@@ -93,13 +93,13 @@ class SolidInternalEnergy : public ConstitutiveBase
 {
 public:
 
-  SolidInternalEnergy( string const & name, Group * const parent );
+  SolidInternalEnergy( string const & name, dataRepository::Group * const parent );
 
   static string catalogName() { return "SolidInternalEnergy"; }
 
   virtual string getCatalogName() const override { return catalogName(); }
 
-  virtual void allocateConstitutiveData( Group & parent, localIndex const numPts ) override;
+  virtual void allocateConstitutiveData( dataRepository::Group & parent, localIndex const numPts ) override;
 
   struct viewKeyStruct : public ConstitutiveBase::viewKeyStruct
   {

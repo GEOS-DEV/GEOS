@@ -62,10 +62,9 @@ ProppantSlurryFluid::ProppantSlurryFluid( string const & name, Group * const par
 
 }
 
-void ProppantSlurryFluid::allocateConstitutiveData( Group & parent,
-                                                    localIndex const numConstitutivePointsPerParentIndex )
+void ProppantSlurryFluid::allocateConstitutiveData( Group & parent, localIndex const numPts )
 {
-  SlurryFluidBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
+  SlurryFluidBase::allocateConstitutiveData( parent, numPts );
 
   m_density.value.setValues< serialPolicy >( m_referenceDensity );
   m_viscosity.value.setValues< serialPolicy >( m_referenceViscosity );

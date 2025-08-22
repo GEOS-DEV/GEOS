@@ -72,7 +72,7 @@ void ReactiveMultiFluid::postInputInitialization()
 }
 
 void ReactiveMultiFluid::allocateConstitutiveData( Group & parent,
-                                                   localIndex const numConstitutivePointsPerParentIndex )
+                                                   localIndex const numPts )
 {
   integer const numPrimarySpecies = this->numPrimarySpecies();
   integer const numSecondarySpecies = this->numSecondarySpecies();
@@ -83,7 +83,7 @@ void ReactiveMultiFluid::allocateConstitutiveData( Group & parent,
   m_primarySpeciesTotalConcentration.resize( 0, numPrimarySpecies );
   m_kineticReactionRates.resize( 0, numKineticReactions );
 
-  MultiFluidBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
+  MultiFluidBase::allocateConstitutiveData( parent, numPts );
 }
 
 void ReactiveMultiFluid::createChemicalReactions()

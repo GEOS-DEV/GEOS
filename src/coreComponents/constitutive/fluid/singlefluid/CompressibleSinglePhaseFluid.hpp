@@ -144,14 +144,14 @@ class CompressibleSinglePhaseFluid : public SingleFluidBase
 {
 public:
   using DerivOffset = singlefluid::DerivativeOffset;
-  CompressibleSinglePhaseFluid( string const & name, Group * const parent );
+  CompressibleSinglePhaseFluid( string const & name, dataRepository::Group * const parent );
 
   static string catalogName() { return "CompressibleSinglePhaseFluid"; }
 
   virtual string getCatalogName() const override { return catalogName(); }
 
-  virtual void allocateConstitutiveData( Group & parent,
-                                         localIndex const numConstitutivePointsPerParentIndex ) override;
+  virtual void allocateConstitutiveData( dataRepository::Group & parent,
+                                         localIndex const numPts ) override;
 
   /// Type of kernel wrapper for in-kernel update (TODO: support multiple EAT, not just linear)
   using KernelWrapper = CompressibleSinglePhaseUpdate< ExponentApproximationType::Linear, ExponentApproximationType::Linear >;
