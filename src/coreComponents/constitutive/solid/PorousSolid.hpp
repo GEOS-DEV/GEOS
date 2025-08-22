@@ -24,7 +24,6 @@
 #include "constitutive/solid/CoupledSolid.hpp"
 #include "constitutive/solid/porosity/BiotPorosity.hpp"
 #include "constitutive/solid/SolidBase.hpp"
-#include "constitutive/permeability/ConstantPermeability.hpp"
 
 namespace geos
 {
@@ -37,8 +36,9 @@ namespace constitutive
  *
  * @tparam SOLID_TYPE type of the porosity model
  */
-template< typename SOLID_TYPE >
-class PorousSolidUpdates : public CoupledSolidUpdates< SOLID_TYPE, BiotPorosity, ConstantPermeability >
+template< typename SOLID_TYPE,
+          typename PERM_TYPE >
+class PorousSolidUpdates : public CoupledSolidUpdates< SOLID_TYPE, BiotPorosity, PERM_TYPE >
 {
 public:
 
@@ -49,8 +49,8 @@ public:
    */
   PorousSolidUpdates( SOLID_TYPE const & solidModel,
                       BiotPorosity const & porosityModel,
-                      ConstantPermeability const & permModel ):
-    CoupledSolidUpdates< SOLID_TYPE, BiotPorosity, ConstantPermeability >( solidModel, porosityModel, permModel )
+                      PERM_TYPE const & permModel ):
+    CoupledSolidUpdates< SOLID_TYPE, BiotPorosity, PERM_TYPE >( solidModel, porosityModel, permModel )
   {}
 
   GEOS_HOST_DEVICE
@@ -216,9 +216,9 @@ public:
 
 private:
 
-  using CoupledSolidUpdates< SOLID_TYPE, BiotPorosity, ConstantPermeability >::m_solidUpdate;
-  using CoupledSolidUpdates< SOLID_TYPE, BiotPorosity, ConstantPermeability >::m_porosityUpdate;
-  using CoupledSolidUpdates< SOLID_TYPE, BiotPorosity, ConstantPermeability >::m_permUpdate;
+  using CoupledSolidUpdates< SOLID_TYPE, BiotPorosity, PERM_TYPE >::m_solidUpdate;
+  using CoupledSolidUpdates< SOLID_TYPE, BiotPorosity, PERM_TYPE >::m_porosityUpdate;
+  using CoupledSolidUpdates< SOLID_TYPE, BiotPorosity, PERM_TYPE >::m_permUpdate;
 
 
   GEOS_HOST_DEVICE
@@ -329,13 +329,14 @@ class PorousSolidBase
  *
  * @tparam SOLID_TYPE type of solid model
  */
-template< typename SOLID_TYPE >
-class PorousSolid : public CoupledSolid< SOLID_TYPE, BiotPorosity, ConstantPermeability >
+template< typename SOLID_TYPE,
+          typename PERM_TYPE >
+class PorousSolid : public CoupledSolid< SOLID_TYPE, BiotPorosity, PERM_TYPE >
 {
 public:
 
   /// Alias for ElasticIsotropicUpdates
-  using KernelWrapper = PorousSolidUpdates< SOLID_TYPE >;
+  using KernelWrapper = PorousSolidUpdates< SOLID_TYPE, PERM_TYPE >;
 
   /**
    * @brief Constructor
@@ -414,9 +415,9 @@ public:
 
 
 private:
-  using CoupledSolid< SOLID_TYPE, BiotPorosity, ConstantPermeability >::getSolidModel;
-  using CoupledSolid< SOLID_TYPE, BiotPorosity, ConstantPermeability >::getPorosityModel;
-  using CoupledSolid< SOLID_TYPE, BiotPorosity, ConstantPermeability >::getPermModel;
+  using CoupledSolid< SOLID_TYPE, BiotPorosity, PERM_TYPE >::getSolidModel;
+  using CoupledSolid< SOLID_TYPE, BiotPorosity, PERM_TYPE >::getPorosityModel;
+  using CoupledSolid< SOLID_TYPE, BiotPorosity, PERM_TYPE >::getPermModel;
 };
 
 
