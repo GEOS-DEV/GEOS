@@ -80,6 +80,11 @@ public:
                                        DomainPartition & domain,
                                        integer const computeGradient ) override;
 
+  /**
+   * @brief Get the minimum wavespeed on a mesh
+   */
+  virtual real32 getGlobalMinWavespeed( MeshLevel & mesh, string_array const & regionNames ) override;
+
   /**@}*/
 
   /**
