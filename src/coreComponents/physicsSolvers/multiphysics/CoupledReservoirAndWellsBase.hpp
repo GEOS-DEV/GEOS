@@ -335,7 +335,7 @@ private:
   {
     this->template forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                                  MeshLevel & meshLevel,
-                                                                                 arrayView1d< string const > const & regionNames )
+                                                                                 string_array const & regionNames )
     {
       ElementRegionManager & elemManager = meshLevel.getElemManager();
 

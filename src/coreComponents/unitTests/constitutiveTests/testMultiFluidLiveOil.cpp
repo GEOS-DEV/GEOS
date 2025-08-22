@@ -96,10 +96,10 @@ BlackOilFluid * MultiFluidLiveOilTest::makeLiveOilFluid( string const & name, Gr
   BlackOilFluid & fluid = parent->registerGroup< BlackOilFluid >( name );
 
   string_array & phaseNames = fluid.getReference< string_array >( MultiFluidBase::viewKeyStruct::phaseNamesString() );
-  fill< 3 >( phaseNames, {"oil", "gas", "water"} );
+  phaseNames = {"oil", "gas", "water"};
 
   string_array & compNames = fluid.getReference< string_array >( MultiFluidBase::viewKeyStruct::componentNamesString() );
-  fill< 3 >( compNames, {"oil", "gas", "water"} );
+  compNames = {"oil", "gas", "water"};
 
   array1d< real64 > & molarWgt = fluid.getReference< array1d< real64 > >( MultiFluidBase::viewKeyStruct::componentMolarWeightString() );
   fill< 3 >( molarWgt, {114e-3, 16e-3, 18e-3} );

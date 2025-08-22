@@ -355,7 +355,7 @@ void Group::initializationOrder( string_array & order )
 
 void Group::initialize_postMeshGeneration()
 {
-  array1d< string > initOrder;
+  string_array initOrder;
   initializationOrder( initOrder );
 
   for( auto const & groupName : initOrder )
@@ -369,7 +369,7 @@ void Group::initialize()
 {
   initializePreSubGroups();
 
-  array1d< string > initOrder;
+  string_array initOrder;
   initializationOrder( initOrder );
 
   for( auto const & groupName : initOrder )
@@ -385,7 +385,7 @@ void Group::initializePostInitialConditions()
 {
   initializePostInitialConditionsPreSubGroups();
 
-  array1d< string > initOrder;
+  string_array initOrder;
   initializationOrder( initOrder );
 
   for( auto const & groupName : initOrder )
@@ -398,7 +398,7 @@ void Group::initializePostInitialConditions()
 
 template< bool DO_PACKING >
 localIndex Group::packImpl( buffer_unit_type * & buffer,
-                            array1d< string > const & wrapperNames,
+                            string_array const & wrapperNames,
                             arrayView1d< localIndex const > const & packList,
                             integer const recursive,
                             parallelDeviceEvents & events ) const
@@ -457,7 +457,7 @@ localIndex Group::packImpl( buffer_unit_type * & buffer,
   return packedSize;
 }
 
-localIndex Group::packSize( array1d< string > const & wrapperNames,
+localIndex Group::packSize( string_array const & wrapperNames,
                             arrayView1d< localIndex const > const & packList,
                             integer const recursive,
                             parallelDeviceEvents & events ) const
@@ -472,13 +472,13 @@ localIndex Group::packSize( arrayView1d< localIndex const > const & packList,
                             parallelDeviceEvents & events ) const
 {
   std::vector< string > const tmp = mapKeys( m_wrappers );
-  array1d< string > wrapperNames;
-  wrapperNames.insert( 0, tmp.begin(), tmp.end() );
-  return this->packSize( wrapperNames, packList, recursive, events );
+  string_array wrapperNames;
+  wrapperNames.insert( wrapperNames.begin(), tmp.begin(), tmp.end() );
+  return this->packSize( wrapperNames, packList, recursive, onDevice, events );
 }
 
 
-localIndex Group::packSize( array1d< string > const & wrapperNames,
+localIndex Group::packSize( string_array const & wrapperNames,
                             integer const recursive,
                             parallelDeviceEvents & events ) const
 {
@@ -488,7 +488,7 @@ localIndex Group::packSize( array1d< string > const & wrapperNames,
 
 
 localIndex Group::pack( buffer_unit_type * & buffer,
-                        array1d< string > const & wrapperNames,
+                        string_array const & wrapperNames,
                         arrayView1d< localIndex const > const & packList,
                         integer const recursive,
                         parallelDeviceEvents & events ) const
@@ -503,14 +503,14 @@ localIndex Group::pack( buffer_unit_type * & buffer,
                         parallelDeviceEvents & events ) const
 {
   std::vector< string > const tmp = mapKeys( m_wrappers );
-  array1d< string > wrapperNames;
-  wrapperNames.insert( 0, tmp.begin(), tmp.end() );
-  return this->pack( buffer, wrapperNames, packList, recursive, events );
+  string_array wrapperNames;
+  wrapperNames.insert( wrapperNames.begin(), tmp.begin(), tmp.end() );
+  return this->pack( buffer, wrapperNames, packList, recursive, onDevice, events );
 }
 
 
 localIndex Group::pack( buffer_unit_type * & buffer,
-                        array1d< string > const & wrapperNames,
+                        string_array const & wrapperNames,
                         integer const recursive,
                         parallelDeviceEvents & events ) const
 {

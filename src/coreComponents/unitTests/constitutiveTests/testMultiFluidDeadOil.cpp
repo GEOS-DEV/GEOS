@@ -110,10 +110,10 @@ template< bool FROM_TABLE >
 void MultiFluidDeadOilTest< FROM_TABLE >::fillPhysicalProperties( DeadOilFluid & fluid )
 {
   string_array & phaseNames = fluid.getReference< string_array >( MultiFluidBase::viewKeyStruct::phaseNamesString() );
-  fill< 3 >( phaseNames, {"oil", "water", "gas"} );
+  phaseNames = {"oil", "water", "gas"};
 
   string_array & compNames = fluid.getReference< string_array >( MultiFluidBase::viewKeyStruct::componentNamesString() );
-  fill< 3 >( compNames, {"oil", "water", "gas"} );
+  compNames = {"oil", "water", "gas"};
 
   array1d< real64 > & molarWgt = fluid.getReference< array1d< real64 > >( MultiFluidBase::viewKeyStruct::componentMolarWeightString() );
   fill< 3 >( molarWgt, {114e-3, 18e-3, 16e-3} );
@@ -186,10 +186,10 @@ DeadOilFluid * MultiFluidDeadOilTest< true >::makeDeadOilFluid( string const & n
   fillPhysicalProperties( fluid );
 
   string_array & FVFTableNames = fluid.getReference< string_array >( DeadOilFluid::viewKeyStruct::formationVolumeFactorTableNamesString() );
-  fill< 2 >( FVFTableNames, {"PVDG_Bg", "PVDO_Bo"} );
+  FVFTableNames =  {"PVDG_Bg", "PVDO_Bo"};
 
   string_array & viscosityTableNames = fluid.getReference< string_array >( DeadOilFluid::viewKeyStruct::viscosityTableNamesString() );
-  fill< 2 >( viscosityTableNames, {"PVDG_visc", "PVDO_visc"} );
+  viscosityTableNames = {"PVDG_visc", "PVDO_visc"};
 
   real64 & waterRefPressure = fluid.getReference< real64 >( DeadOilFluid::viewKeyStruct::waterRefPressureString() );
   waterRefPressure = 30600000.1;

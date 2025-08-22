@@ -82,7 +82,7 @@ protected:
   {
     GEOS_UNUSED_VAR( componentProperties );
 
-    integer const numPhase = fluid->numFluidPhases();
+    size_t const numPhase = fluid->numFluidPhases();
 
     GEOS_THROW_IF_NE_MSG( m_equationsOfStateNames.size(), numPhase,
                           GEOS_FMT( "{}: invalid number of values in attribute '{}'", fluid->getFullName(),

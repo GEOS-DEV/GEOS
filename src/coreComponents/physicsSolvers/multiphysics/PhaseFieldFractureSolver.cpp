@@ -25,7 +25,6 @@
 #include "finiteElement/Kinematics.h"
 #include "finiteElement/FiniteElementDispatch.hpp"
 #include "mesh/DomainPartition.hpp"
-#include "mesh/MeshForLoopInterface.hpp"
 #include "mesh/utilities/ComputationalGeometry.hpp"
 
 namespace geos
@@ -60,7 +59,7 @@ void PhaseFieldFractureSolver::mapSolutionBetweenSolvers( DomainPartition & doma
   {
     forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                   MeshLevel & mesh,
-                                                                  arrayView1d< string const > const & regionNames )
+                                                                  string_array const & regionNames )
     {
       NodeManager & nodeManager = mesh.getNodeManager();
 

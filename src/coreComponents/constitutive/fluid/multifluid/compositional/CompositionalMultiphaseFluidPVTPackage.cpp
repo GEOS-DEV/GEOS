@@ -98,14 +98,14 @@ void CompositionalMultiphaseFluidPVTPackage::postInputInitialization()
   integer const NC = numFluidComponents();
   integer const NP = numFluidPhases();
 
-  auto const checkInputSize = [&]( auto const & array, integer const expected, string const & attribute )
+  auto const checkInputSize = [&]( auto const & array, auto const expected, string const & attribute )
   {
     GEOS_THROW_IF_NE_MSG( array.size(), expected,
                           GEOS_FMT( "{}: invalid number of values in attribute '{}'", getFullName(), attribute ),
                           InputError );
 
   };
-  checkInputSize( m_equationsOfState, NP, viewKeyStruct::equationsOfStateString() );
+  checkInputSize( m_equationsOfState, LvArray::integerConversion< size_t >( NP ), viewKeyStruct::equationsOfStateString() );
   checkInputSize( m_componentCriticalPressure, NC, viewKeyStruct::componentCriticalPressureString() );
   checkInputSize( m_componentCriticalTemperature, NC, viewKeyStruct::componentCriticalTemperatureString() );
   checkInputSize( m_componentAcentricFactor, NC, viewKeyStruct::componentAcentricFactorString() );

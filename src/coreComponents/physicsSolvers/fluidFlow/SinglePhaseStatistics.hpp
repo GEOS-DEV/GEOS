@@ -145,7 +145,7 @@ private:
    */
   void computeRegionStatistics( real64 const time,
                                 MeshLevel & mesh,
-                                arrayView1d< string const > const & regionNames );
+                                string_array const & regionNames ) const;
 
 
   void registerDataOnMesh( Group & meshBodies ) override;

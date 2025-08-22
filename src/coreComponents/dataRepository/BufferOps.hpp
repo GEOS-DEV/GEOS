@@ -73,12 +73,23 @@ template< typename T >
 constexpr bool is_host_packable_array_v< ArrayOfArrays< T > > = internal::is_host_packable_helper< T >::value;
 
 
+
+template< typename >
+constexpr bool is_packable_vector = false;
+
+template< typename T >
+constexpr bool is_packable_vector< std::vector< T > > = is_packable_helper< T >::value;
+
+
 /// Whether an object is an lvarray sortedarray which contains packable objects
 template< typename >
 constexpr bool is_host_packable_set_v = false;
 
 template< typename T >
 constexpr bool is_host_packable_set_v< SortedArray< T > > = internal::is_host_packable_helper< T >::value;
+
+template< typename T >
+constexpr bool is_packable_set< set< T > > = is_packable_helper< T >::value;
 
 
 /// Whether an object is a map for which the keys and values are packable objects
@@ -96,6 +107,7 @@ template< typename T >
 struct is_host_packable_helper
 {
   static constexpr bool value = is_host_packable_object_v< T > ||
+                                is_packable_vector< T > ||
                                 is_host_packable_array_v< T > ||
                                 is_host_packable_map_v< T > ||
                                 is_host_packable_set_v< T >;
@@ -110,7 +122,7 @@ constexpr bool is_host_packable_v = internal::is_host_packable_helper< T >::valu
 
 /// Whether the object can be indexed to pack subsets of the object
 template< typename T >
-constexpr bool is_host_packable_by_index_v = is_host_packable_array_v< T >;
+constexpr bool is_host_packable_by_index_v = is_host_packable_array_v< T > || is_packable_vector< T >;
 
 
 /// Whether the object is a map for which the keys are directly packable and the values can be packed by index
@@ -153,12 +165,23 @@ template< bool DO_PACKING, typename T >
 localIndex
 PackData( buffer_unit_type * & buffer,
           SortedArray< T > const & var );
-
 //------------------------------------------------------------------------------
+template< bool DO_PACKING, typename T, typename SET >
+localIndex
+PackSet( buffer_unit_type * & buffer,
+         SET const & var );
+
 template< bool DO_PACKING, typename T >
 localIndex
 Pack( buffer_unit_type * & buffer,
-      SortedArray< T > const & var );
+      SortedArray< T > const & var )
+{ return PackSet< DO_PACKING, T >( buffer, var ); }
+
+template< bool DO_PACKING, typename T >
+localIndex
+Pack( buffer_unit_type * & buffer,
+      set< T > const & var )
+{ return PackSet< DO_PACKING, T >( buffer, var ); }
 
 //------------------------------------------------------------------------------
 template< bool DO_PACKING, typename T >
@@ -189,6 +212,11 @@ template< bool DO_PACKING, typename T >
 localIndex
 PackData( buffer_unit_type * & buffer,
           ArrayOfArrays< T > const & var );
+
+template< bool DO_PACKING, typename T >
+localIndex
+Pack( buffer_unit_type * & buffer,
+      std::vector< T > const & var );
 
 //------------------------------------------------------------------------------
 template< bool DO_PACKING, typename T >
@@ -313,13 +341,7 @@ PackArray( buffer_unit_type * & buffer,
 // PackByIndex(buffer,var,indices)
 //------------------------------------------------------------------------------
 template< bool DO_PACKING, typename T, int NDIM, int USD, typename T_indices >
-typename std::enable_if< is_host_packable_v< T >, localIndex >::type
-PackDataByIndex( buffer_unit_type * & buffer,
-                 ArrayView< T, NDIM, USD > const & var,
-                 const T_indices & indices );
-
-template< bool DO_PACKING, typename T, int NDIM, int USD, typename T_indices >
-typename std::enable_if< is_host_packable_v< T >, localIndex >::type
+typename std::enable_if< is_packable< T >, localIndex >::type
 PackByIndex( buffer_unit_type * & buffer,
              ArrayView< T, NDIM, USD > const & var,
              const T_indices & indices );
@@ -394,11 +416,24 @@ Unpack( buffer_unit_type const * & buffer,
         MPI_Op op );
 
 //------------------------------------------------------------------------------
+template< typename T, typename SET >
+localIndex
+UnpackSet( buffer_unit_type const * & buffer,
+           SET & var );
+
 template< typename T >
 localIndex
 Unpack( buffer_unit_type const * & buffer,
-        SortedArray< T > & var,
-        MPI_Op op );
+        SortedArray< T > & var )
+{ return UnpackSet< T >( buffer, var ); }
+
+template< typename T >
+localIndex
+Unpack( buffer_unit_type const * & buffer,
+        set< T > & var,
+        MPI_Op op )
+{ return UnpackSet< T >( buffer, var ); }
+
 
 //------------------------------------------------------------------------------
 template< typename T, int NDIM, typename PERMUTATION >
@@ -406,6 +441,13 @@ typename std::enable_if< is_host_packable_v< T >, localIndex >::type
 Unpack( buffer_unit_type const * & buffer,
         Array< T, NDIM, PERMUTATION > & var,
         MPI_Op op );
+
+template< typename T >
+typename std::enable_if< is_packable< T >, localIndex >::type
+Unpack( buffer_unit_type const * & buffer,
+        std::vector< T > & var,
+        MPI_Op op);
+
 
 //------------------------------------------------------------------------------
 template< typename T >
@@ -495,6 +537,13 @@ UnpackArray( buffer_unit_type const * & buffer,
 
 //------------------------------------------------------------------------------
 // UnpackByIndex(buffer,var,indices)
+//------------------------------------------------------------------------------
+template< typename T, typename T_indices >
+localIndex
+UnpackByIndex( buffer_unit_type const * & buffer,
+               std::vector< T > & var,
+               T_indices const & indices );
+
 //------------------------------------------------------------------------------
 template< typename T, int NDIM, int USD, typename T_indices >
 localIndex

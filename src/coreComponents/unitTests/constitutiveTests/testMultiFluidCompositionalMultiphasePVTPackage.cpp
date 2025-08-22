@@ -124,7 +124,7 @@ struct Fluid< 4 >
   static void fillProperties( Group & fluid )
   {
     string_array & componentNames = fluid.getReference< string_array >( MultiFluidBase::viewKeyStruct::componentNamesString() );
-    fill< 4 >( componentNames, {"N2", "C10", "C20", "H20"} );
+    componentNames = {"N2", "C10", "C20", "H20"};
 
     array1d< real64 > & molarWeight = fluid.getReference< array1d< real64 > >( MultiFluidBase::viewKeyStruct::componentMolarWeightString() );
     fill< 4 >( molarWeight, {28e-3, 134e-3, 275e-3, 18e-3} );
@@ -153,11 +153,11 @@ makeFluid( string const & name, Group * parent )
   CompositionalMultiphaseFluidPVTPackage & fluid = parent->registerGroup< CompositionalMultiphaseFluidPVTPackage >( name );
 
   string_array & phaseNames = fluid.getReference< string_array >( string( MultiFluidBase::viewKeyStruct::phaseNamesString()) );
-  fill< 2 >( phaseNames, {"oil", "gas"} );
+  phaseNames = {"oil", "gas"};
 
   string const eosName = EnumStrings< EOS_TYPE >::toString( EOS );
   string_array & equationOfState = fluid.getReference< string_array >( CompositionalMultiphaseFluidPVTPackage::viewKeyStruct::equationsOfStateString() );
-  fill< 2 >( equationOfState, {eosName, eosName} );
+  equationOfState = {eosName, eosName};
 
   Fluid< NUM_COMP >::fillProperties( fluid );
 

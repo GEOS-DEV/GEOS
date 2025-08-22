@@ -169,10 +169,10 @@ MultiFluidCO2BrineTest< BRINE, FLASH, THERMAL >::makeCO2BrineFluid( string const
   Group & fluid = co2BrineFluid;
 
   auto & phaseNames = fluid.getReference< string_array >( MultiFluidBase::viewKeyStruct::phaseNamesString() );
-  fill< 2 >( phaseNames, {"gas", "liquid"} );
+  phaseNames = {"gas", "liquid"};
 
   auto & compNames = fluid.getReference< string_array >( MultiFluidBase::viewKeyStruct::componentNamesString() );
-  fill< 2 >( compNames, {"co2", "water"} );
+  compNames = {"co2", "water"};
 
   auto & molarWeight = fluid.getReference< array1d< real64 > >( MultiFluidBase::viewKeyStruct::componentMolarWeightString() );
   fill< 2 >( molarWeight, {44e-3, 18e-3} );
