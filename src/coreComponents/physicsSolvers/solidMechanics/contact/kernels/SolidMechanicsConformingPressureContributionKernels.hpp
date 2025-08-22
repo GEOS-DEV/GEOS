@@ -217,8 +217,6 @@ public:
 
       if( dof < 0 || dof >= m_matrix.numRows() ) continue;
 
-      //printf( "idof = %d, localRu[%d] = %e\n", dof, i, stack.localRu[i] );
-
       RAJA::atomicAdd< parallelDeviceAtomic >( &m_rhs[dof], stack.localRu[i] );
     }
 
@@ -227,9 +225,6 @@ public:
       localIndex const dof = LvArray::integerConversion< localIndex >( stack.bEqnRowIndices[ i ] );
 
       if( dof < 0 || dof >= m_matrix.numRows() ) continue;
-
-      //printf( "idof = %d, localRb[%d] = %e, pressure = %e\n",
-      //         dof, i, stack.localRb[i], m_pressure[k] );
 
       RAJA::atomicAdd< parallelDeviceAtomic >( &m_rhs[dof], stack.localRb[i] );
     }

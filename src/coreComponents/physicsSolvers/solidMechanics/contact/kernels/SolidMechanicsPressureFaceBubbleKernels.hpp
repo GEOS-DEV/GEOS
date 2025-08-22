@@ -30,7 +30,7 @@ namespace solidMechanicsConformingContactKernels
 {
 
 /**
- * @brief Implements kernels for computing the pressure contribuiton
+ * @brief Implements kernels for computing the pressure contribution
  *        given by the bubble face functions to the balance of momentum equation.
  * @copydoc geos::finiteElement::ImplicitKernelBase
  *
@@ -252,7 +252,7 @@ public:
 
     real64 dBubbleNdX[ numFacesPerElem ][ 3 ];
     // Next line is needed because I only inserted a placeholder for calcGradFaceBubbleN in some finite elements
-    LvArray::tensorOps::fill< numFacesPerElem, 3 >( dBubbleNdX, 0 );  //make 0
+    LvArray::tensorOps::fill< numFacesPerElem, 3 >( dBubbleNdX, 0 );
 
     real64 detJ = m_finiteElementSpace.calcGradFaceBubbleN( q, stack.X, dBubbleNdX );
 

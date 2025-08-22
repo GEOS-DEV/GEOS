@@ -465,14 +465,10 @@ inline void CoulombFrictionUpdates::updateTraction( arraySlice1d< real64 const >
     LvArray::tensorOps::scale< 3 >( dNormTTdgT, 1. / std::pow( tractionTrialNorm, 2 ) );
 
     real64 dTdgT[ 3 ];
-    //dTdgT[ 0 ] = (tractionTrialNorm * tractionTrialNorm - dNormTTdgT[0]);
-    //dTdgT[ 1 ] = (tractionTrialNorm * tractionTrialNorm - dNormTTdgT[1]);
     dTdgT[ 0 ] = (1.0 - dNormTTdgT[0]);
     dTdgT[ 1 ] = (1.0 - dNormTTdgT[1]);
     dTdgT[ 2 ] = -dNormTTdgT[2];
 
-    //LvArray::tensorOps::scale< 3 >( dNormTTdgT, 1. / std::pow( tractionTrialNorm, 2 ) );
-    //LvArray::tensorOps::scale< 3 >( dTdgT, 1. / std::pow( tractionTrialNorm, 3 )  );
     LvArray::tensorOps::scale< 3 >( dTdgT, 1. / tractionTrialNorm );
 
     // Compute dTdDispJump
