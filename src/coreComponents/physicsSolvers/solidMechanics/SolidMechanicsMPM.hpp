@@ -25,7 +25,6 @@
 #include "common/TimingMacros.hpp"
 #include "kernels/SolidMechanicsLagrangianFEMKernels.hpp"
 #include "kernels/ExplicitMPM.hpp"
-#include "mesh/MeshForLoopInterface.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "mesh/mpiCommunications/MPI_iCommData.hpp"
 #include "physicsSolvers/PhysicsSolverBase.hpp"
@@ -256,7 +255,7 @@ public:
 
   template< typename ... PARAMS >
   real64 explicitKernelDispatch( MeshLevel & mesh,
-                                 arrayView1d< string const > const & targetRegions,
+                                 string_array const & targetRegions,
                                  string const & finiteElementName,
                                  real64 const dt,
                                  std::string const & elementListName );
@@ -399,7 +398,7 @@ public:
                    NodeManager & nodeManager,
                    real64 const dt );
 
-  void syncGridFields( std::vector< std::string > const & fieldNames,
+  void syncGridFields( stdVector< std::string > const & fieldNames,
                        DomainPartition & domain,
                        NodeManager & nodeManager,
                        MeshLevel & mesh,
@@ -921,18 +920,18 @@ protected:
 
   virtual void setConstitutiveNamesCallSuper( ParticleSubRegionBase & subRegion ) const override;
 
-  std::vector< array2d< localIndex > > m_mappedNodes; // mappedNodes[subregion index][particle index][node index]. dims = {# of subregions,
-                                                      // # of particles, # of nodes a particle on the subregion maps to}
-  std::vector< array2d< real64 > > m_shapeFunctionValues; // mappedNodes[subregion][particle][nodal shape function value]. dims = {# of
-                                                          // subregions, # of particles, # of nodes a particle on the subregion maps to}
-  std::vector< array3d< real64 > > m_shapeFunctionGradientValues; // mappedNodes[subregion][particle][nodal shape function gradient
-                                                                  // value][direction]. dims = {# of subregions, # of particles, # of nodes
-                                                                  // a particle on the subregion maps to, 3}
+  stdVector< array2d< localIndex > > m_mappedNodes; // mappedNodes[subregion index][particle index][node index]. dims = {# of subregions,
+                                                    // # of particles, # of nodes a particle on the subregion maps to}
+  stdVector< array2d< real64 > > m_shapeFunctionValues; // mappedNodes[subregion][particle][nodal shape function value]. dims = {# of
+                                                        // subregions, # of particles, # of nodes a particle on the subregion maps to}
+  stdVector< array3d< real64 > > m_shapeFunctionGradientValues; // mappedNodes[subregion][particle][nodal shape function gradient
+                                                                // value][direction]. dims = {# of subregions, # of particles, # of nodes
+                                                                // a particle on the subregion maps to, 3}
 
   int m_solverProfiling;
   int m_logStartCycle;
-  std::vector< real64 > m_profilingTimes;
-  std::vector< std::string > m_profilingLabels;
+  stdVector< real64 > m_profilingTimes;
+  stdVector< std::string > m_profilingLabels;
 
   array1d< string > m_plottableFields;
   SortedArray< string > m_plottableFieldsSorted;

@@ -15,11 +15,11 @@
 
 /**
  * @file LogLevelsInfo.hpp
- * This file contains log level informations for flow solvers
+ * This file contains common log level informations for the surface generation
  */
 
-#ifndef GEOS_PHYSICSSOLVERS_SOLIDMECHANICS_LOGLEVELSINFO_HPP
-#define GEOS_PHYSICSSOLVERS_SOLIDMECHANICS_LOGLEVELSINFO_HPP
+#ifndef GEOS_PHYSICSSOLVERS_SOLIDMECHANICS_LOGLEVELSINFO_HPP_
+#define GEOS_PHYSICSSOLVERS_SOLIDMECHANICS_LOGLEVELSINFO_HPP_
 
 #include "common/DataTypes.hpp"
 
@@ -29,17 +29,10 @@ namespace geos
 namespace logInfo
 {
 
-/**
- * @name Wells LogLevels info structures. They must comply with the `is_log_level_info` trait.
- */
-///@{
-
-/// @cond DO_NOT_DOCUMENT
-
-struct Statistics
+struct MPMSubroutines
 {
-  static constexpr int getMinLogLevel() { return 1; }
-  static constexpr std::string_view getDescription() { return "Print statistics"; }
+  static constexpr int getMinLogLevel() { return 2; }
+  static constexpr std::string_view getDescription() { return "Material point method subroutines"; }
 };
 
 /// @endcond
@@ -49,4 +42,4 @@ struct Statistics
 
 }
 
-#endif // GEOS_PHYSICSSOLVERS_SOLIDMECHANICS_LOGLEVELSINFO_HPP
+#endif // GEOS_PHYSICSSOLVERS_SOLDIMECHANICS_LOGLEVELSINFO_HPP

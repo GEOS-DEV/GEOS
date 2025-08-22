@@ -19,16 +19,17 @@
 
 #include "CompositionalMultiphaseWellKernels.hpp"
 
-#include "physicsSolvers/fluidFlow/CompositionalMultiphaseUtilities.hpp"
+//#include "physicsSolvers/fluidFlow/CompositionalMultiphaseUtilities.hpp"
 // TODO: move keys to WellControls
 #include "physicsSolvers/fluidFlow/wells/CompositionalMultiphaseWell.hpp"
 
 namespace geos
 {
 
-using namespace constitutive;
 namespace compositionalMultiphaseWellKernels
 {
+
+using namespace constitutive;
 
 /******************************** ControlEquationHelper ********************************/
 
@@ -197,7 +198,7 @@ ControlEquationHelper::
       dControlEqn[COFFSET_WJ::dC+ic] = dCurrentPhaseVolRate[targetPhaseIndex][COFFSET_WJ::dC+ic];
     }
     if constexpr ( IS_THERMAL )
-      dControlEqn[COFFSET_WJ::dT] = dCurrentBHP[Deriv::dT];
+      dControlEqn[COFFSET_WJ::dT] = dCurrentPhaseVolRate[targetPhaseIndex][COFFSET_WJ::dT];
   }
   // Total volumetric rate control
   else if( currentControl == WellControls::Control::TOTALVOLRATE )
@@ -289,8 +290,8 @@ PressureRelationKernel::
   }
   if constexpr ( IS_THERMAL )
   {
-    localPresRelJacobian[TAG::NEXT *(NC+1+IS_THERMAL)+NC+1]    =  0.5 * dTotalMassDensNext[Deriv::dT];
-    localPresRelJacobian[TAG::CURRENT *(NC+1+IS_THERMAL)+NC+1] = 0.5 * dTotalMassDens[Deriv::dT];
+    localPresRelJacobian[TAG::NEXT *(NC+1+IS_THERMAL)+NC+1]    =  -0.5 * dTotalMassDensNext[Deriv::dT]* gravD;
+    localPresRelJacobian[TAG::CURRENT *(NC+1+IS_THERMAL)+NC+1] = -0.5 * dTotalMassDens[Deriv::dT]* gravD;
   }
 }
 
@@ -303,7 +304,7 @@ PressureRelationKernel::
           localIndex const iwelemControl,
           integer const targetPhaseIndex,
           WellControls const & wellControls,
-          real64 const & timeAtEndOfStep,
+          real64 const & time,
           arrayView1d< globalIndex const > const & wellElemDofNumber,
           arrayView1d< real64 const > const & wellElemGravCoef,
           arrayView1d< localIndex const > const & nextWellElemIndex,
@@ -319,10 +320,10 @@ PressureRelationKernel::
   bool const isProducer = wellControls.isProducer();
   WellControls::Control const currentControl = wellControls.getControl();
   WellControls::Control const inputControl = wellControls.getInputControl();
-  real64 const targetBHP = wellControls.getTargetBHP( timeAtEndOfStep );
-  real64 const targetTotalRate = wellControls.getTargetTotalRate( timeAtEndOfStep );
-  real64 const targetPhaseRate = wellControls.getTargetPhaseRate( timeAtEndOfStep );
-  real64 const targetMassRate = wellControls.getTargetMassRate( timeAtEndOfStep );
+  real64 const targetBHP = wellControls.getTargetBHP( time );
+  real64 const targetTotalRate = wellControls.getTargetTotalRate( time );
+  real64 const targetPhaseRate = wellControls.getTargetPhaseRate( time );
+  real64 const targetMassRate = wellControls.getTargetMassRate( time );
 
   // dynamic well control data
   real64 const & currentBHP =
@@ -451,7 +452,7 @@ PressureRelationKernel::
                               localIndex const iwelemControl, \
                               integer const targetPhaseIndex, \
                               WellControls const & wellControls, \
-                              real64 const & timeAtEndOfStep, \
+                              real64 const & time, \
                               arrayView1d< globalIndex const > const & wellElemDofNumber, \
                               arrayView1d< real64 const > const & wellElemGravCoef, \
                               arrayView1d< localIndex const > const & nextWellElemIndex, \
@@ -632,6 +633,7 @@ PresTempCompFracInitializationKernel::
   RAJA::ReduceMax< parallelDeviceReduce, integer > foundNegativePres( 0 );
   RAJA::ReduceMax< parallelDeviceReduce, integer > foundInconsistentCompFrac( 0 );
 
+  auto const avgCompFracView = avgCompFrac.toViewConst();
 
   forAll< parallelDevicePolicy<> >( subRegionSize, [=] GEOS_HOST_DEVICE ( localIndex const iwelem )
   {
@@ -641,7 +643,7 @@ PresTempCompFracInitializationKernel::
     real64 sumCompFracForCheck = 0.0;
     for( integer ic = 0; ic < numComps; ++ic )
     {
-      wellElemCompFrac[iwelem][ic] = avgCompFrac[ic];
+      wellElemCompFrac[iwelem][ic] = avgCompFracView[ic];
       sumCompFracForCheck += wellElemCompFrac[iwelem][ic];
     }
 
@@ -700,16 +702,16 @@ RateInitializationKernel::
   launch( localIndex const subRegionSize,
           integer const targetPhaseIndex,
           WellControls const & wellControls,
-          real64 const & currentTime,
+          real64 const & time,
           arrayView3d< real64 const, multifluid::USD_PHASE > const & phaseDens,
           arrayView2d< real64 const, multifluid::USD_FLUID > const & totalDens,
           arrayView1d< real64 > const & connRate )
 {
   WellControls::Control const control = wellControls.getControl();
   bool const isProducer = wellControls.isProducer();
-  real64 const targetTotalRate = wellControls.getTargetTotalRate( currentTime );
-  real64 const targetPhaseRate = wellControls.getTargetPhaseRate( currentTime );
-  real64 const targetMassRate = wellControls.getTargetMassRate( currentTime );
+  real64 const targetTotalRate = wellControls.getTargetTotalRate( time );
+  real64 const targetPhaseRate = wellControls.getTargetPhaseRate( time );
+  real64 const targetMassRate = wellControls.getTargetMassRate( time );
 
   // Estimate the connection rates
   forAll< parallelDevicePolicy<> >( subRegionSize, [=] GEOS_HOST_DEVICE ( localIndex const iwelem )

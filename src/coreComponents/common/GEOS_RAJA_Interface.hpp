@@ -152,7 +152,7 @@ RAJA_INLINE parallelDeviceEvent forAll( RESOURCE && GEOS_UNUSED_PARAM( stream ),
 
 #endif
 
-using parallelDeviceEvents = std::vector< parallelDeviceEvent >;
+using parallelDeviceEvents = stdVector< parallelDeviceEvent >;
 
 namespace internalRajaInterface
 {

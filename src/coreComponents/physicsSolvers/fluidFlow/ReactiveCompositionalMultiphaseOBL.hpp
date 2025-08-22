@@ -99,7 +99,7 @@ public:
    * @brief Getter for the fluid component names
    * @return an array storing the component names
    */
-  arrayView1d< string const > componentNames() const { return m_componentNames; }
+  string_array const & componentNames() const { return m_componentNames; }
 
   virtual void registerDataOnMesh( Group & meshBodies ) override;
 //END_SPHINX_INCLUDE_01
@@ -320,10 +320,10 @@ private:
   integer m_numComponents;
 
   /// list of component names
-  array1d< string > m_componentNames;
+  string_array m_componentNames;
 
   /// list of phase names names
-  array1d< string > m_phaseNames;
+  string_array m_phaseNames;
 
   /// the number of OBL operators
   integer m_numOBLOperators;
@@ -332,7 +332,7 @@ private:
   Path m_OBLOperatorsTableFile;
 
   /// OBL operators table function tabulated vs all primary variables
-  MultivariableTableFunction const * m_OBLOperatorsTable;
+  MultivariableTableFunction const * m_OBLOperatorsTable = nullptr;
 
   /// flag indicating whether energy balance will be enabled or not
   integer m_enableEnergyBalance;

@@ -44,6 +44,8 @@ set( linearAlgebra_headers
      solvers/PreconditionerBlockJacobi.hpp
      solvers/PreconditionerIdentity.hpp
      solvers/PreconditionerJacobi.hpp
+     solvers/PreconditionerNull.hpp
+     solvers/RichardsonSolver.hpp
      solvers/SeparateComponentPreconditioner.hpp
      utilities/Arnoldi.hpp
      utilities/BlockOperator.hpp
@@ -70,6 +72,7 @@ set( linearAlgebra_sources
      solvers/CgSolver.cpp
      solvers/GmresSolver.cpp
      solvers/KrylovSolver.cpp
+     solvers/RichardsonSolver.cpp
      solvers/SeparateComponentPreconditioner.cpp
      utilities/ReverseCutHillMcKeeOrdering.cpp )
 
@@ -127,7 +130,10 @@ if( ENABLE_HYPRE )
           interfaces/hypre/mgrStrategies/CompositionalMultiphaseReservoirHybridFVM.hpp
           interfaces/hypre/mgrStrategies/HybridSinglePhasePoromechanics.hpp
           interfaces/hypre/mgrStrategies/Hydrofracture.hpp
+          interfaces/hypre/mgrStrategies/ImmiscibleMultiphaseFVM.hpp
           interfaces/hypre/mgrStrategies/LagrangianContactMechanics.hpp
+          interfaces/hypre/mgrStrategies/AugmentedLagrangianContactMechanics.hpp
+          interfaces/hypre/mgrStrategies/LagrangianContactMechanicsBubbleStabilization.hpp
           interfaces/hypre/mgrStrategies/MultiphasePoromechanics.hpp
           interfaces/hypre/mgrStrategies/SinglePhasePoromechanicsEmbeddedFractures.hpp
           interfaces/hypre/mgrStrategies/SinglePhasePoromechanicsConformingFractures.hpp

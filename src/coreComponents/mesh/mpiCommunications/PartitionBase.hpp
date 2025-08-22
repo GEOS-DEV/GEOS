@@ -110,7 +110,7 @@ protected:
   /**
    * @brief Array of neighbor communicators.
    */
-  std::vector< NeighborCommunicator > m_neighbors;
+  stdVector< NeighborCommunicator > m_neighbors;
 
   /// Size of the group associated with the MPI communicator
   int m_size;

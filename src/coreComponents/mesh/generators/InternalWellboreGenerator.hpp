@@ -52,10 +52,10 @@ public:
 
 protected:
 
-  void reduceNumNodesForPeriodicBoundary( array1d< int > const & partition,
+  void reduceNumNodesForPeriodicBoundary( SpatialPartition & partition,
                                           integer ( &numNodes )[3] ) override final;
 
-  void setNodeGlobalIndicesOnPeriodicBoundary( array1d< int > const & partition,
+  void setNodeGlobalIndicesOnPeriodicBoundary( SpatialPartition & partition,
                                                int ( & index )[3] ) override final;
 
   void setConnectivityForPeriodicBoundaries( int ( & globalIJK )[3],

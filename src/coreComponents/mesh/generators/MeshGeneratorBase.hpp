@@ -81,8 +81,7 @@ public:
    * @param parent The parent group of the CellBlockManager.
    * @param[in] partition The reference to spatial partition
    */
-  void generateMesh( Group & parent, array1d< int > const & partition );
-  // void generateMesh( Group & parent, SpatialPartition & partition ); // develop branch
+  void generateMesh( Group & parent, SpatialPartition & partition );
 
   /**
    * @brief Describe which kind of block must be considered.
@@ -149,7 +148,7 @@ private:
    * @param[inout] cellBlockManager the CellBlockManager that will receive the meshing information
    * @param[in] partition The (x, y , y) MPI split (in case we need it)
    */
-  virtual void fillCellBlockManager( CellBlockManager & cellBlockManager, array1d< int > const & partition ) = 0;
+  virtual void fillCellBlockManager( CellBlockManager & cellBlockManager, SpatialPartition & partition  ) = 0;
 
   void attachWellInfo( CellBlockManager & cellBlockManager );
 

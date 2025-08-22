@@ -15,7 +15,8 @@
 
 #include "MeshGeneratorBase.hpp"
 #include "mesh/generators/CellBlockManager.hpp"
-// #include "mesh/generators/ParticleBlockManager.hpp" // developer branch
+#include "mesh/LogLevelsInfo.hpp"
+#include "mesh/particleGenerators/ParticleBlockManager.hpp"
 #include "mesh/generators/MeshComponentBase.hpp"
 namespace geos
 {
@@ -50,33 +51,11 @@ MeshGeneratorBase::CatalogInterface::CatalogType & MeshGeneratorBase::getCatalog
   return catalog;
 }
 
-void MeshGeneratorBase::generateMesh( Group & parent, array1d< int > const & partition )
+void MeshGeneratorBase::generateMesh( Group & parent, SpatialPartition & partition )
 {
   CellBlockManager & cellBlockManager = parent.registerGroup< CellBlockManager >( keys::cellManager );
   fillCellBlockManager( cellBlockManager, partition );
   this->attachWellInfo( cellBlockManager );
-
-// void MeshGeneratorBase::generateMesh( Group & parent, SpatialPartition & partition )
-// {
-//   MeshBody & meshBody = dynamic_cast< MeshBody & >( parent );
-//   if( meshBody.hasParticles() )
-//   {
-//     ParticleBlockManager & particleBlockManager = parent.registerGroup< ParticleBlockManager >( keys::particleManager );
-
-//     MeshLevel & meshLevel0 = meshBody.getBaseDiscretization();
-//     ParticleManager & particleManager = meshLevel0.getParticleManager();
-
-//     fillParticleBlockManager( particleBlockManager, particleManager, partition );
-//   }
-//   else
-//   {
-//     CellBlockManager & cellBlockManager = parent.registerGroup< CellBlockManager >( keys::cellManager );
-
-//     fillCellBlockManager( cellBlockManager, partition );
-
-//     this->attachWellInfo( cellBlockManager );
-//   }
-// >>>>>>> develop
 }
 
 void MeshGeneratorBase::attachWellInfo( CellBlockManager & cellBlockManager )
@@ -97,6 +76,7 @@ void MeshGeneratorBase::attachWellInfo( CellBlockManager & cellBlockManager )
     lb.setPerfCoords( wellGen.getPerfCoords() );
     lb.setPerfTransmissibility( wellGen.getPerfTransmissibility() );
     lb.setPerfSkinFactor( wellGen.getPerfSkinFactor() );
+    lb.setPerfTargetRegion( wellGen.getPerfTargetRegion() );
     lb.setPerfElemIndex( wellGen.getPerfElemIndex() );
     lb.setWellControlsName( wellGen.getWellControlsName() );
     lb.setWellGeneratorName( wellGen.getName() );

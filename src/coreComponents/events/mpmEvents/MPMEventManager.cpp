@@ -34,8 +34,9 @@ MPMEventManager::MPMEventManager( string const & name,
 {
   setInputFlags( InputFlags::REQUIRED );
 
-  // This enables logLevel filtering
-  enableLogLevelInput();
+  // // This enables logLevel filtering
+  // Seems to be deprecated now
+  // enableLogLevelInput();
 }
 
 

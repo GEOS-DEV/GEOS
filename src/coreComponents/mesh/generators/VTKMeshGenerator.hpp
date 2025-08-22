@@ -89,9 +89,8 @@ public:
    * of 1, 2 or 3, three node sets named "1", "2" and "3" will be instantiated by this method
    */
 
-  void fillCellBlockManager( CellBlockManager & cellBlockManager, array1d< int > const & partition ) override;
-  // virtual void fillCellBlockManager( CellBlockManager & cellBlockManager, SpatialPartition & partition ) override; // develop branch
-
+  void fillCellBlockManager( CellBlockManager & cellBlockManager, SpatialPartition & partition ) override;
+  
   void importFieldOnArray( Block block,
                            string const & blockName,
                            string const & meshFieldName,
@@ -148,7 +147,7 @@ private:
   string m_mainBlockName;
 
   /// Name of the face blocks to be imported (for multi-block files).
-  array1d< string > m_faceBlockNames;
+  string_array m_faceBlockNames;
 
   /// Maps the face block name to its vtk mesh instance.
   std::map< string, vtkSmartPointer< vtkDataSet > > m_faceBlockMeshes;

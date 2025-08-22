@@ -79,7 +79,7 @@ public:
    * @param partition The partitioning object
    * @param numNodes The number of nodes in each coordinate direction.
    */
-  virtual void reduceNumNodesForPeriodicBoundary( array1d< int > const & partition,
+  virtual void reduceNumNodesForPeriodicBoundary( SpatialPartition & partition,
                                                   integer (& numNodes) [3] )
   {
     GEOS_UNUSED_VAR( partition, numNodes );
@@ -91,7 +91,7 @@ public:
    * @param index The indices to be evaluated for periodic indexing merging.
    */
   virtual void
-  setNodeGlobalIndicesOnPeriodicBoundary( array1d< int > const & partition,
+  setNodeGlobalIndicesOnPeriodicBoundary( SpatialPartition & partition,
                                           int (& index)[3] )
   {
     GEOS_UNUSED_VAR( partition, index );
@@ -192,7 +192,7 @@ protected:
 private:
 
   /// String array of region names
-  array1d< string > m_regionNames;
+  string_array m_regionNames;
 
   /// Ndim x nBlock spatialized array of first element index in the cellBlock
   array1d< integer > m_firstElemIndexForBlock[3];
@@ -204,7 +204,7 @@ private:
   globalIndex m_numElemsTotal[3];
 
   /// String array listing the element type present
-  array1d< string > m_elementType;
+  string_array m_elementType;
 
   /// Array of number of element per box
   array1d< integer > m_numElePerBox;
@@ -263,7 +263,7 @@ private:
   /// Skew center for skew mesh generation
   real64 m_skewCenter[3] = { 0, 0, 0 };
 
-  virtual void fillCellBlockManager( CellBlockManager & cellBlockManager, array1d< int > const & partition ) override;
+  virtual void fillCellBlockManager( CellBlockManager & cellBlockManager, SpatialPartition & partition ) override;
 
   /**
    * @brief Convert ndim node spatialized index to node global index.

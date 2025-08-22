@@ -23,7 +23,6 @@
 #include <array>
 #include <map>
 
-constexpr int nsdof = 3;
 namespace geos
 {
 
@@ -201,6 +200,10 @@ public:
     m_periodic = periodic;
   }
 
+  void setPeriodic( int index, int periodic) {
+    m_periodic[index] = periodic;
+  }
+
   array1d< int > const & getPeriodic() const {
     return m_periodic;
   }
@@ -226,19 +229,19 @@ public:
    */
   void sendCoordinateListToNeighbors( arrayView1d< R1Tensor > const & particleCoordinatesSendingToNeighbors,
                                       MPI_iCommData & commData,
-                                      std::vector< array1d< R1Tensor > > & particleCoordinatesReceivedFromNeighbors
+                                      stdVector< array1d< R1Tensor > > & particleCoordinatesReceivedFromNeighbors
                                       );
 
   template< typename indexType >
-  void sendListOfIndicesToNeighbors( std::vector< array1d< indexType > > & listSendingToEachNeighbor,
+  void sendListOfIndicesToNeighbors( stdVector< array1d< indexType > > & listSendingToEachNeighbor,
                                      MPI_iCommData & commData,
-                                     std::vector< array1d< indexType > > & listReceivedFromEachNeighbor );
+                                     stdVector< array1d< indexType > > & listReceivedFromEachNeighbor );
 
   void sendParticlesToNeighbor( ParticleSubRegionBase & subRegion,
-                                std::vector< int > const & newParticleStartingIndices,
-                                std::vector< int > const & numberOfIncomingParticles,
+                                stdVector< int > const & newParticleStartingIndices,
+                                stdVector< int > const & numberOfIncomingParticles,
                                 MPI_iCommData & commData,
-                                std::vector< array1d< localIndex > > const & particleLocalIndicesToSendToEachNeighbor );
+                                stdVector< array1d< localIndex > > const & particleLocalIndicesToSendToEachNeighbor );
 
   /**
    * @brief Get the metis neighbors indices, const version. @see DomainPartition#m_metisNeighborList
@@ -253,7 +256,7 @@ public:
    * @brief Sets the list of metis neighbor list.
    * @param metisNeighborList A reference to the Metis neighbor list.
    */
-  void setMetisNeighborList( std::set< int > const & metisNeighborList )
+  void setMetisNeighborList( stdVector< int > const & metisNeighborList )
   {
     m_metisNeighborList.clear();
     m_metisNeighborList.insert( metisNeighborList.cbegin(), metisNeighborList.cend() );
@@ -291,6 +294,9 @@ public:
     m_max[1] = bb[4];
     m_max[2] = bb[5];
   }
+
+  // dimensions into which the simulation is executed
+  static constexpr int m_nsdof = 3;
 
 private:
 

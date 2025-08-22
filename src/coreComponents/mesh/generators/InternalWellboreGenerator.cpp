@@ -272,9 +272,9 @@ void InternalWellboreGenerator::postInputInitialization()
                    GEOS_FMT( "{} must be strictly larger than 0",
                              viewKeyStruct::cartesianOuterBoundaryString() ) );
 
-    GEOS_ERROR_IF( m_cartesianOuterBoundary >= m_vertices[0].size()-1,
+    GEOS_ERROR_IF( m_cartesianOuterBoundary >= m_vertices[0].size(),
                    GEOS_FMT( "{} must be strictly smaller than the number of radial blocks (equal to {} here)",
-                             viewKeyStruct::cartesianOuterBoundaryString(), m_vertices[0].size()-1 ) );
+                             viewKeyStruct::cartesianOuterBoundaryString(), m_vertices[0].size() ) );
 
     // step 2: check that the cartesian inner radius is valid
     bool const isCartesianMappingInnerRadiusSpecified = m_cartesianMappingInnerRadius < 1e98;
@@ -302,24 +302,23 @@ void InternalWellboreGenerator::postInputInitialization()
   InternalMeshGenerator::postInputInitialization();
 }
 
-void InternalWellboreGenerator::reduceNumNodesForPeriodicBoundary( array1d< int> const & partition,
+void InternalWellboreGenerator::reduceNumNodesForPeriodicBoundary( SpatialPartition & partition,
                                                                    integer ( & numNodesInDir )[3] )
 {
-  if( m_isFullAnnulus )
+   if( m_isFullAnnulus )
   {
-    if( partition[1] == 1 )
+    if( partition.getPartitions()[1] == 1 )
     {
       numNodesInDir[1] -= 1;
     }
-    else if( partition[1] > 1 )
+    else if( partition.getPartitions()[1] > 1 )
     {
-      m_partition.setPeriodic( 1, 1 );
+      partition.setPeriodic(1, 1);
     }
   }
-
 }
 
-void InternalWellboreGenerator::setNodeGlobalIndicesOnPeriodicBoundary( array1d< int > const & partition,
+void InternalWellboreGenerator::setNodeGlobalIndicesOnPeriodicBoundary( SpatialPartition & partition,
                                                                         int ( & globalIJK )[3] )
 {
   GEOS_UNUSED_VAR(partition);

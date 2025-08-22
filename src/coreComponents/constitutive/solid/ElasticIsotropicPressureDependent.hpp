@@ -224,7 +224,10 @@ void ElasticIsotropicPressureDependentUpdates::getElasticStrain( localIndex cons
                                      Q,
                                      deviator );
 
-  elasticStrainVol = std::log( P/p0 ) * Cr * (-1.0) + eps_v0;
+  if( isZero( P )) // to avoid log(0)
+    P = p0;
+
+  elasticStrainVol = LvArray::math::log( P/p0 ) * Cr * (-1.0) + eps_v0;
   elasticStrainDev = Q/3./mu;
 
   twoInvariant::strainRecomposition( elasticStrainVol,
@@ -257,6 +260,9 @@ void ElasticIsotropicPressureDependentUpdates::getElasticStrainInc( localIndex c
                                      Q,
                                      deviator );
 
+  if( isZero( P )) // to avoid log(0)
+    P = p0;
+
   real64 elasticStrainVol = LvArray::math::log( P/p0 ) * Cr * (-1.0) + eps_v0;
   real64 elasticStrainDev = Q/3./mu;
 
@@ -273,6 +279,9 @@ void ElasticIsotropicPressureDependentUpdates::getElasticStrainInc( localIndex c
                                      P,
                                      Q,
                                      deviator );
+
+  if( isZero( P )) // to avoid log(0)
+    P = p0;
 
   elasticStrainVol = LvArray::math::log( P/p0 ) * Cr * (-1.0) + eps_v0;
   elasticStrainDev = Q/3./mu;
@@ -334,7 +343,10 @@ void ElasticIsotropicPressureDependentUpdates::smallStrainUpdate( localIndex con
   // Recover elastic strains from the previous step, based on stress from the previous step
   // [Note: in order to minimize data transfer, we are not storing and passing elastic strains]
 
-  oldElasticStrainVol = std::log( oldP/p0 ) * Cr * (-1.0) + eps_v0;
+  if( isZero( oldP )) // to avoid log(0)
+    oldP = p0;
+
+  oldElasticStrainVol = LvArray::math::log( oldP/p0 ) * Cr * (-1.0) + eps_v0;
   oldElasticStrainDev = oldQ/3./mu;
 
   // Now recover the old strain tensor from the strain invariants.
@@ -403,7 +415,7 @@ void ElasticIsotropicPressureDependentUpdates::smallStrainUpdate( localIndex con
   real64 eps_v_elastic;
   real64 oldElasticStrainVol;
   real64 oldElasticStrainDev;
-  real64 bulkModulus = -p0/Cr;
+  real64 bulkModulus;
 
   for( localIndex i=0; i<6; ++i )
   {
@@ -418,7 +430,10 @@ void ElasticIsotropicPressureDependentUpdates::smallStrainUpdate( localIndex con
   // Recover elastic strains from the previous step, based on stress from the previous step
   // [Note: in order to minimize data transfer, we are not storing and passing elastic strains]
 
-  oldElasticStrainVol = std::log( oldP/p0 ) * Cr * (-1.0) + eps_v0;
+  if( isZero( oldP )) // to avoid log(0)
+    oldP = p0;
+
+  oldElasticStrainVol = LvArray::math::log( oldP/p0 ) * Cr * (-1.0) + eps_v0;
   oldElasticStrainDev = oldQ/3./mu;
 
   // Now recover the old strain tensor from the strain invariants.

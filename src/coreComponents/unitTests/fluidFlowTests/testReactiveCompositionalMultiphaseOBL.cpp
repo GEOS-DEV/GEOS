@@ -197,7 +197,7 @@ void testOperatorsNumericalDerivatives( ReactiveCompositionalMultiphaseOBL & sol
   localIndex const NC = solver.numFluidComponents();
   localIndex const NOPS = solver.numOBLOperators();
 
-  array1d< string > const operators( NOPS );
+  string_array operators( NOPS );
 
   // update component Fraction and check derivatives
   for( localIndex op = 0; op < NOPS; ++op )
@@ -208,7 +208,7 @@ void testOperatorsNumericalDerivatives( ReactiveCompositionalMultiphaseOBL & sol
   solver.forDiscretizationOnMeshTargets( domain.getMeshBodies(),
                                          [&]( string const,
                                               MeshLevel & mesh,
-                                              arrayView1d< string const > const & regionNames )
+                                              string_array const & regionNames )
   {
     ElementRegionManager & elementRegionManager = mesh.getElemManager();
     elementRegionManager.forElementSubRegions( regionNames,
@@ -217,7 +217,7 @@ void testOperatorsNumericalDerivatives( ReactiveCompositionalMultiphaseOBL & sol
     {
       SCOPED_TRACE( subRegion.getParent().getParent().getName() + "/" + subRegion.getName() );
 
-      arrayView1d< string const > const & components = solver.componentNames();
+      string_array const & components = solver.componentNames();
 
       arrayView1d< real64 > const & pres =
         subRegion.getField< fields::flow::pressure >();
@@ -350,7 +350,7 @@ void testNumericalJacobian( ReactiveCompositionalMultiphaseOBL & solver,
   solver.forDiscretizationOnMeshTargets ( domain.getMeshBodies(),
                                           [&]( string const,
                                                MeshLevel & mesh,
-                                               arrayView1d< string const > const & regionNames )
+                                               string_array const & regionNames )
   {
     ElementRegionManager & elementRegionManager = mesh.getElemManager();
     elementRegionManager.forElementSubRegions( regionNames,
@@ -391,7 +391,7 @@ void testNumericalJacobian( ReactiveCompositionalMultiphaseOBL & solver,
           solver.forDiscretizationOnMeshTargets( domain.getMeshBodies(),
                                                  [&]( string const,
                                                       MeshLevel & mesh2,
-                                                      arrayView1d< string const > const & regionNames2 )
+                                                      string_array const & regionNames2 )
           {
             ElementRegionManager & elementRegionManager2 = mesh2.getElemManager();
             elementRegionManager2.forElementSubRegions( regionNames2,
@@ -427,7 +427,7 @@ void testNumericalJacobian( ReactiveCompositionalMultiphaseOBL & solver,
           solver.forDiscretizationOnMeshTargets( domain.getMeshBodies(),
                                                  [&]( string const,
                                                       MeshLevel & mesh2,
-                                                      arrayView1d< string const > const & regionNames2 )
+                                                      string_array const & regionNames2 )
           {
             ElementRegionManager & elementRegionManager2 = mesh2.getElemManager();
             elementRegionManager2.forElementSubRegions( regionNames2,
