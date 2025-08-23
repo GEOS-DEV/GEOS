@@ -62,7 +62,7 @@ public:
   ///@}
 
   virtual void allocateConstitutiveData( dataRepository::Group & parent,
-                                         localIndex const numPts );
+                                         localIndex const numPts ) override;
 
   /**
    * @brief Getter for the fluid phase names
