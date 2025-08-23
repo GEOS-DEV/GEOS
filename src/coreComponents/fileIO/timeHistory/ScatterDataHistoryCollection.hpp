@@ -53,6 +53,11 @@ public:
   ScatterDataHistoryCollection( ScatterDataHistoryCollection && ) = default;
   ScatterDataHistoryCollection & operator=( ScatterDataHistoryCollection && ) = delete;
 
+  /**
+   * @brief Collect data from the scatter data provider
+   * @param domain The domain partition containing the data
+   */
+  virtual void collect( DomainPartition const & domain );
 
   /**
    * @brief Get the catalog name for factory registration
@@ -106,11 +111,6 @@ protected:
    */
   virtual void updateSetsIndices( DomainPartition const & domain ) override;
 
-  /**
-   * @brief Collect data from the scatter data provider
-   * @param domain The domain partition containing the data
-   */
-  virtual void collect( DomainPartition const & domain );
 
   /**
    * @brief Collect data from a specific collection index into a buffer

@@ -1,7 +1,8 @@
 # Specify list of tests
 set( geosx_fileio_tests
      testHDFFile.cpp
-     testMemoryStats.cpp )
+     testMemoryStats.cpp
+     testScatterDataHistoryCollection.cpp )
 
 set( tplDependencyList ${parallelDeps} gtest )
 
