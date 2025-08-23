@@ -39,7 +39,11 @@ class ScatterDataHistoryCollection : public HistoryCollectionBase
 {
 public:
 
-  /// Constructor
+  /**
+   * @brief Constructor for ScatterDataHistoryCollection
+   * @param name The name of the collection
+   * @param parent The parent group in the data repository
+   */
   ScatterDataHistoryCollection( string const & name, Group * const parent );
 
   /// Destructor
@@ -49,9 +53,6 @@ public:
   ScatterDataHistoryCollection( ScatterDataHistoryCollection const & ) = delete;
   ScatterDataHistoryCollection & operator=( ScatterDataHistoryCollection const & ) = delete;
 
-  /// Movable: default move constructor, deleted move assignment operator
-  ScatterDataHistoryCollection( ScatterDataHistoryCollection && ) = default;
-  ScatterDataHistoryCollection & operator=( ScatterDataHistoryCollection && ) = delete;
 
   /**
    * @brief Collect data from the scatter data provider

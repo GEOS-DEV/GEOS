@@ -2,6 +2,7 @@
 set( geosx_fileio_tests
      testHDFFile.cpp
      testMemoryStats.cpp
+     testScatterDataProvider.cpp
      testScatterDataHistoryCollection.cpp )
 
 set( tplDependencyList ${parallelDeps} gtest )
