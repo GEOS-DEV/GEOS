@@ -39,7 +39,11 @@ class ScatterDataHistoryCollection : public HistoryCollectionBase
 {
 public:
 
-  /// Constructor
+  /**
+   * @brief Constructor for ScatterDataHistoryCollection
+   * @param name The name of the collection
+   * @param parent The parent group in the data repository
+   */
   ScatterDataHistoryCollection( string const & name, Group * const parent );
 
   /// Destructor
