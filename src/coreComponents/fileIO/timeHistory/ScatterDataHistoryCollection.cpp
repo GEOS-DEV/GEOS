@@ -100,13 +100,15 @@ void ScatterDataHistoryCollection::collect( DomainPartition const & domain )
     GEOS_THROW( "Scatter data provider not initialized", std::runtime_error );
   }
 
-  // Get the current scatter data values
-  array1d< real64 > const & scatterData = m_scatterDataProvider->getScatterData();
-  localIndex const numPoints = m_scatterDataProvider->getNumScatterPoints();
-
-  GEOS_THROW_IF( scatterData.size() != numPoints,
-                 GEOS_FMT( "Scatter data size ({}) does not match number of points ({})", scatterData.size(), numPoints ),
-                 std::runtime_error );
+  // For each collection, populate the output buffer using the provider
+  for( localIndex collectionIdx = 0; collectionIdx < m_collectionCount; ++collectionIdx )
+  {
+    // Get the metadata to determine the buffer size needed
+    HistoryMetadata hmd = this->getMetaData( domain, collectionIdx );
+    // Get the output buffer for this collection using the buffer provider callback
+    buffer_unit_type * buffer = m_bufferProviders[collectionIdx]( hmd.size( 0 ));
+    collect( domain, collectionIdx, buffer );
+  }
 }
 
 void ScatterDataHistoryCollection::collect( DomainPartition const & domain,
@@ -127,10 +129,8 @@ void ScatterDataHistoryCollection::collect( DomainPartition const & domain,
   if( collectionIdx == 0 )
   {
     array1d< real64 > const & scatterData = m_scatterDataProvider->getScatterData();
-
     // Copy data to buffer
     std::memcpy( buffer, scatterData.data(), numPoints * sizeof( real64 ) );
-    buffer += numPoints * sizeof( real64 );
   }
   // Subsequent indices are coordinates if requested
   else if( m_includeCoordinates )
@@ -147,7 +147,6 @@ void ScatterDataHistoryCollection::collect( DomainPartition const & domain,
       {
         coordData[i] = coordinates[i][coordIdx];
       }
-      buffer += numPoints * sizeof( real64 );
     }
   }
 }
