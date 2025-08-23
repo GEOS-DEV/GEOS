@@ -23,6 +23,7 @@
 
 #include "finiteElement/FiniteElementDiscretization.hpp"
 #include "mesh/DomainPartition.hpp"
+#include "common/MpiWrapper.hpp"
 
 
 namespace geos
@@ -324,6 +325,36 @@ real64 GravityFE::explicitStepAdjoint( real64 const & time_n,
   } );   // Loop mesh
 
   return dt;
+}
+
+localIndex GravityFE::getNumScatterPoints() const
+{
+  // For gravity applications: Only rank 0 should provide scatter data
+  // since all ranks compute the same gravity values at the same stations
+  if( MpiWrapper::commRank( MPI_COMM_GEOS ) != 0 )
+  {
+    return 0;
+  }
+  
+  return m_stationCoordinates.size(0);  // Return number of rows (stations)
+}
+
+array1d< real64 > const & GravityFE::getScatterData() const
+{
+ GEOS_ASSERT( m_gzAtStations.size() == m_stationCoordinates.size(0) );
+ return m_gzAtStations;
+}
+
+array2d< real64 > const & GravityFE::getScatterCoordinates() const
+{
+  return m_stationCoordinates;
+}
+
+string_array const & GravityFE::getScatterMetadata() const
+{
+  // Just return empty metadata for now
+  static string_array empty;
+  return empty;
 }
 
 

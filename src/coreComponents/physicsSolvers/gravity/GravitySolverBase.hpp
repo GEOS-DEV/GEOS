@@ -119,6 +119,9 @@ protected:
 
   /// Gz component recorded at stations
   array1d< real64 > m_gzAtStations;
+
+  /// Station metadata (names/identifiers)
+  mutable string_array m_stationMetadata;
 };
 
 } // namespace geos

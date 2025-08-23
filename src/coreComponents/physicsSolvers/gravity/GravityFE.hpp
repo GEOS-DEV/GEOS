@@ -23,15 +23,14 @@
 
 #include "GravitySolverBase.hpp"
 #include "mesh/MeshFields.hpp"
-
+#include "fileIO/timeHistory/ScatterDataProvider.hpp"
 
 namespace geos
 {
 
 constexpr real64 GRAVITATIONAL_CONSTANT = 6.67430e-11; // in m³·kg⁻¹·s⁻²
 
-
-class GravityFE : public GravitySolverBase
+class GravityFE : public GravitySolverBase, public ScatterDataProvider
 {
 public:
 
@@ -81,6 +80,11 @@ public:
                               DomainPartition & domain ) override;
   /**@}*/
 
+  // ScatterDataProvider interface
+  virtual localIndex getNumScatterPoints() const override;
+  virtual array1d< real64 > const & getScatterData() const override;
+  virtual array2d< real64 > const & getScatterCoordinates() const override;
+  virtual string_array const & getScatterMetadata() const override;
 
 protected:
 
@@ -129,4 +133,4 @@ DECLARE_FIELD( Adjoint,
 
 } /* namespace geos */
 
-#endif /* GEOS_PHYSICSSOLVERS_GRAVITY_GRAVITYFE_HPP_ */
+#endif // GEOS_PHYSICSSOLVERS_GRAVITY_GRAVITYFE_HPP_
