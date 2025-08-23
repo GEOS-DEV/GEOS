@@ -49,9 +49,6 @@ public:
   ScatterDataHistoryCollection( ScatterDataHistoryCollection const & ) = delete;
   ScatterDataHistoryCollection & operator=( ScatterDataHistoryCollection const & ) = delete;
 
-  /// Movable: default move constructor, deleted move assignment operator
-  ScatterDataHistoryCollection( ScatterDataHistoryCollection && ) = default;
-  ScatterDataHistoryCollection & operator=( ScatterDataHistoryCollection && ) = delete;
 
   /**
    * @brief Collect data from the scatter data provider
