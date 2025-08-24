@@ -97,14 +97,14 @@ class WillisRichardsPermeability : public PermeabilityBase
 {
 public:
 
-  WillisRichardsPermeability( string const & name, Group * const parent );
+  WillisRichardsPermeability( string const & name, dataRepository::Group * const parent );
 
   static string catalogName() { return "WillisRichardsPermeability"; }
 
   virtual string getCatalogName() const override { return catalogName(); }
 
-  void virtual allocateConstitutiveData( Group & parent,
-                                         localIndex const numConstitutivePointsPerParentIndex ) override;
+  virtual void allocateConstitutiveData( dataRepository::Group & parent,
+                                         localIndex const numPts ) override;
 
   /// Type of kernel wrapper for in-kernel update
   using KernelWrapper = WillisRichardsPermeabilityUpdate;

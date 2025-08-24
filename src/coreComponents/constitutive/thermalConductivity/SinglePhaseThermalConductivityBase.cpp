@@ -34,10 +34,8 @@ SinglePhaseThermalConductivityBase::SinglePhaseThermalConductivityBase( string c
 {}
 
 void SinglePhaseThermalConductivityBase::allocateConstitutiveData( Group & parent,
-                                                                   localIndex const numConstitutivePointsPerParentIndex )
+                                                                   localIndex const numPts )
 {
-  ConstitutiveBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
-
   auto subregion = dynamic_cast< ElementSubRegionBase * >( &parent ); // TODO remove
 
   // NOTE: enforcing 1 quadrature point
@@ -45,6 +43,8 @@ void SinglePhaseThermalConductivityBase::allocateConstitutiveData( Group & paren
     reference().resizeDimension< 1, 2 >( 1, 3 );
   subregion->registerField< fields::thermalconductivity::dEffectiveConductivity_dT >( getName(), &m_dEffectiveConductivity_dT ).
     reference().resizeDimension< 1, 2 >( 1, 3 );
+
+  ConstitutiveBase::allocateConstitutiveData( parent, numPts );
 }
 
 } // namespace constitutive

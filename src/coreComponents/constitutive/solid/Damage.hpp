@@ -426,8 +426,7 @@ public:
   static string catalogName() { return string( "Damage" ) + BASE::catalogName(); }
   virtual string getCatalogName() const override { return catalogName(); }
 
-  virtual void allocateConstitutiveData( dataRepository::Group & parent,
-                                         localIndex const numConstitutivePointsPerParentIndex ) override;
+  virtual void allocateConstitutiveData( dataRepository::Group & parent, localIndex const numPts ) override;
 
   virtual void postInputInitialization() override;
 

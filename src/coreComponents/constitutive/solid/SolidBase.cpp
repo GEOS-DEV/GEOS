@@ -55,10 +55,8 @@ void SolidBase::postInputInitialization()
 
 
 void SolidBase::allocateConstitutiveData( Group & parent,
-                                          localIndex const numConstitutivePointsPerParentIndex )
+                                          localIndex const numPts )
 {
-  ConstitutiveBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
-
   string const voightLabels[6] = { "XX", "YY", "ZZ", "YZ", "XZ", "XY" };
 
   auto subregion = dynamic_cast< ElementSubRegionBase * >( &parent ); // TODO remove
@@ -70,21 +68,23 @@ void SolidBase::allocateConstitutiveData( Group & parent,
     setApplyDefaultValue( 0 ). // default to zero initial stress
     setDescription( "Current Material Stress" ).
     setDimLabels( 2, voightLabels ).
-    reference().resizeDimension< 1, 2 >( numConstitutivePointsPerParentIndex, 6 );
+    reference().resizeDimension< 1, 2 >( numPts, 6 );
 
   subregion->registerWrapper( viewKeyStruct::oldStressString(), &m_oldStress ).
     setApplyDefaultValue( 0 ). // default to zero initial stress
     setDescription( "Previous Material Stress" ).
     setDimLabels( 2, voightLabels ).
-    reference().resizeDimension< 1, 2 >( numConstitutivePointsPerParentIndex, 6 );
+    reference().resizeDimension< 1, 2 >( numPts, 6 );
 
   subregion->registerWrapper( viewKeyStruct::densityString(), &m_density ).
     setPlotLevel( PlotLevel::LEVEL_0 ).
     setApplyDefaultValue( -1 ). // will be overwritten
     setDescription( "Material Density" ).
-    reference().resizeDimension< 1 >( numConstitutivePointsPerParentIndex );
+    reference().resizeDimension< 1 >( numPts );
 
   subregion->registerField< fields::solid::thermalExpansionCoefficient >( getName(), &m_thermalExpansionCoefficient );
+
+  ConstitutiveBase::allocateConstitutiveData( parent, numPts );
 }
 
 

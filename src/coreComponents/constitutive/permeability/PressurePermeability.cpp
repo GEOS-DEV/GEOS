@@ -60,16 +60,14 @@ void PressurePermeability::postInputInitialization()
 {
   for( localIndex i=0; i < 3; i++ )
   {
-    GEOS_ERROR_IF( fabs( m_pressureDependenceConstants[i] ) < 1e-15 && m_presModelType == PressureModelType::Hyperbolic,
+    GEOS_ERROR_IF( std::abs( m_pressureDependenceConstants[i] ) < 1e-15 && m_presModelType == PressureModelType::Hyperbolic,
                    getDataContext() << ": the pressure dependent constant at component " << i << " is too close to zero, which is not allowed for the hyperbolic model." );
   }
 }
 
 void PressurePermeability::allocateConstitutiveData( Group & parent,
-                                                     localIndex const numConstitutivePointsPerParentIndex )
+                                                     localIndex const numPts )
 {
-  PermeabilityBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
-
   auto subregion = dynamic_cast< ElementSubRegionBase * >( &parent ); // TODO remove
 
   // TODO use registerField
@@ -78,6 +76,8 @@ void PressurePermeability::allocateConstitutiveData( Group & parent,
     setPlotLevel( PlotLevel::LEVEL_0 ).
     setDescription( "Reference permeability field" ).
     reference().resizeDimension< 1, 2 >( 1, 3 );
+
+  PermeabilityBase::allocateConstitutiveData( parent, numPts );
 }
 
 void PressurePermeability::initializeState() const

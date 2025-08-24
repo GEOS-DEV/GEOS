@@ -56,10 +56,8 @@ ModifiedCamClay::ModifiedCamClay( string const & name, Group * const parent ):
 
 
 void ModifiedCamClay::allocateConstitutiveData( Group & parent,
-                                                localIndex const numConstitutivePointsPerParentIndex )
+                                                localIndex const numPts )
 {
-  ElasticIsotropicPressureDependent::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
-
   auto subregion = dynamic_cast< ElementSubRegionBase * >( &parent ); // TODO remove
 
   // TODO use registerField
@@ -76,12 +74,14 @@ void ModifiedCamClay::allocateConstitutiveData( Group & parent,
     setApplyDefaultValue( -1 ).
     setPlotLevel( dataRepository::PlotLevel::LEVEL_3 ).
     setDescription( "New preconsolidation pressure" ).
-    reference().resizeDimension< 1 >( numConstitutivePointsPerParentIndex );
+    reference().resizeDimension< 1 >( numPts );
 
   subregion->registerWrapper( viewKeyStruct::oldPreConsolidationPressureString(), &m_oldPreConsolidationPressure ).
     setApplyDefaultValue( -1 ).
     setDescription( "Old preconsolidation pressure" ).
-    reference().resizeDimension< 1 >( numConstitutivePointsPerParentIndex );
+    reference().resizeDimension< 1 >( numPts );
+
+  ElasticIsotropicPressureDependent::allocateConstitutiveData( parent, numPts );
 }
 
 void ModifiedCamClay::postInputInitialization()

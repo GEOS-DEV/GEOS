@@ -90,14 +90,14 @@ class SlipDependentPermeability : public PermeabilityBase
 {
 public:
 
-  SlipDependentPermeability( string const & name, Group * const parent );
+  SlipDependentPermeability( string const & name, dataRepository::Group * const parent );
 
   static string catalogName() { return "SlipDependentPermeability"; }
 
   virtual string getCatalogName() const override { return catalogName(); }
 
-  virtual void allocateConstitutiveData( Group & parent,
-                                         localIndex const numConstitutivePointsPerParentIndex ) override;
+  virtual void allocateConstitutiveData( dataRepository::Group & parent,
+                                         localIndex const numPts ) override;
 
   /// Type of kernel wrapper for in-kernel update
   using KernelWrapper = SlipDependentPermeabilityUpdate;

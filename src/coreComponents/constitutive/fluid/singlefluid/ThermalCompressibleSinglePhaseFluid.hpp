@@ -193,14 +193,14 @@ class ThermalCompressibleSinglePhaseFluid : public CompressibleSinglePhaseFluid
 {
 public:
 
-  ThermalCompressibleSinglePhaseFluid( string const & name, Group * const parent );
+  ThermalCompressibleSinglePhaseFluid( string const & name, dataRepository::Group * const parent );
 
   static string catalogName() { return "ThermalCompressibleSinglePhaseFluid"; }
 
   virtual string getCatalogName() const override { return catalogName(); }
 
-  virtual void allocateConstitutiveData( Group & parent,
-                                         localIndex const numConstitutivePointsPerParentIndex ) override;
+  virtual void allocateConstitutiveData( dataRepository::Group & parent,
+                                         localIndex const numPts ) override;
 
   using CompressibleSinglePhaseFluid::m_densityModelType;
 

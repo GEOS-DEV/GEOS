@@ -60,10 +60,8 @@ void ProppantPermeability::postInputInitialization()
 }
 
 void ProppantPermeability::allocateConstitutiveData( Group & parent,
-                                                     localIndex const numConstitutivePointsPerParentIndex )
+                                                     localIndex const numPts )
 {
-  PermeabilityBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
-
   auto subRegion = dynamic_cast< ElementSubRegionBase * >( &parent );
 
   // NOTE: enforcing 1 quadrature point
@@ -71,6 +69,8 @@ void ProppantPermeability::allocateConstitutiveData( Group & parent,
     reference().resizeDimension< 1, 2, 3 >( 1, 3, 3 );
   subRegion->registerField< fields::permeability::permeabilityMultiplier >( getName(), &m_permeabilityMultiplier ).
     reference().resizeDimension< 1, 2 >( 1, 3 );
+
+  PermeabilityBase::allocateConstitutiveData( parent, numPts );
 }
 
 

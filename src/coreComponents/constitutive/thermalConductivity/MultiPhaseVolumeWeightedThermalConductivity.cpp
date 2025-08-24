@@ -41,10 +41,8 @@ MultiPhaseVolumeWeightedThermalConductivity::MultiPhaseVolumeWeightedThermalCond
 }
 
 void MultiPhaseVolumeWeightedThermalConductivity::allocateConstitutiveData( Group & parent,
-                                                                            localIndex const numConstitutivePointsPerParentIndex )
+                                                                            localIndex const numPts )
 {
-  MultiPhaseThermalConductivityBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
-
   auto subregion = dynamic_cast< ElementSubRegionBase * >( &parent ); // TODO remove
 
   // TODO use registerField
@@ -54,6 +52,8 @@ void MultiPhaseVolumeWeightedThermalConductivity::allocateConstitutiveData( Grou
     setDescription( "Phase thermal conductivity [W/(m.K)]" );
 
   subregion->registerField< fields::thermalconductivity::rockThermalConductivity >( getName(), &m_rockThermalConductivity );
+
+  MultiPhaseThermalConductivityBase::allocateConstitutiveData( parent, numPts );
 
   // TODO move into initializeState?
   for( localIndex ei = 0; ei < parent.size(); ++ei )

@@ -93,10 +93,8 @@ DruckerPragerExtended::DruckerPragerExtended( string const & name, Group * const
 
 
 void DruckerPragerExtended::allocateConstitutiveData( Group & parent,
-                                                      localIndex const numConstitutivePointsPerParentIndex )
+                                                      localIndex const numPts )
 {
-  ElasticIsotropic::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
-
   auto subregion = dynamic_cast< ElementSubRegionBase * >( &parent ); // TODO remove
 
   // TODO use registerField
@@ -104,12 +102,14 @@ void DruckerPragerExtended::allocateConstitutiveData( Group & parent,
     setApplyDefaultValue( 0.0 ).
     setPlotLevel( dataRepository::PlotLevel::LEVEL_3 ).
     setDescription( "New equivalent plastic shear strain" ).
-    reference().resizeDimension< 1 >( numConstitutivePointsPerParentIndex );
+    reference().resizeDimension< 1 >( numPts );
 
   subregion->registerWrapper( viewKeyStruct::oldStateString(), &m_oldState ).
     setApplyDefaultValue( 0.0 ).
     setDescription( "Old equivalent plastic shear strain" ).
-    reference().resizeDimension< 1 >( numConstitutivePointsPerParentIndex );
+    reference().resizeDimension< 1 >( numPts );
+
+  ElasticIsotropic::allocateConstitutiveData( parent, numPts );
 }
 
 

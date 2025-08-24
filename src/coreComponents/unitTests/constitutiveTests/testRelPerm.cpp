@@ -751,6 +751,7 @@ RelativePermeabilityBase & makeTableRelPermHysteresisTwoPhase( string const & na
   auto & imbibitionGasTableName = relPerm.getReference< string >( keys::imbibitionNonWettingRelPermTableNameString() );
   imbibitionGasTableName = "imbibitionGas_swg";
 
+  relPerm.allocateConstitutiveData( parent, 1 );
   relPerm.postInputInitializationRecursive();
   relPerm.initialize(); // to test all the checks
   return relPerm;
@@ -1078,7 +1079,6 @@ TEST_F( RelPermTest, numericalDerivatives_TableRelPermHysteresisTwoPhase )
   initSat[0][0] = 0.6;
   initSat[0][1] = 0.4;
 
-  m_model->allocateConstitutiveData( m_parent, 1 );
   m_model->saveConvergedPhaseVolFractionState( initSat.toViewConst() );
 
   // move the historical phase vol fraction back to the CPU since the test is performed on the CPU

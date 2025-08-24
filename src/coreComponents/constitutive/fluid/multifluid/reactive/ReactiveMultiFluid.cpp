@@ -67,10 +67,8 @@ void ReactiveMultiFluid::postInputInitialization()
 }
 
 void ReactiveMultiFluid::allocateConstitutiveData( dataRepository::Group & parent,
-                                                   localIndex const numConstitutivePointsPerParentIndex )
+                                                   localIndex const numPts )
 {
-  MultiFluidBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
-
   auto subregion = dynamic_cast< ElementSubRegionBase * >(&parent); // TODO remove
 
   integer const numPrimarySpecies = this->numPrimarySpecies();
@@ -85,6 +83,8 @@ void ReactiveMultiFluid::allocateConstitutiveData( dataRepository::Group & paren
     reference().resizeDimension< 1 >( numPrimarySpecies );
   subregion->registerField< fields::reactivefluid::kineticReactionRates >( getName(), &m_kineticReactionRates ).
     reference().resizeDimension< 1 >( numKineticReactions );
+
+  MultiFluidBase::allocateConstitutiveData( parent, numPts );
 }
 
 void ReactiveMultiFluid::createChemicalReactions()

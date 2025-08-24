@@ -61,11 +61,8 @@ MultiFluidBase::MultiFluidBase( string const & name, Group * const parent )
     setDefaultValue( 1 );
 }
 
-void MultiFluidBase::allocateConstitutiveData( dataRepository::Group & parent,
-                                               localIndex const numConstitutivePointsPerParentIndex )
+void MultiFluidBase::allocateConstitutiveData( Group & parent, localIndex const numPts )
 {
-  ConstitutiveBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
-
   ElementSubRegionBase * subregion = dynamic_cast< ElementSubRegionBase * >(&parent); // TODO remove
 
   integer const numPhase = numFluidPhases();
@@ -74,60 +71,62 @@ void MultiFluidBase::allocateConstitutiveData( dataRepository::Group & parent,
 
   subregion->registerField< fields::multifluid::phaseFraction >( &m_phaseFraction.value ).
     setDimLabels( 2, m_phaseNames ).
-    reference().resizeDimension< 1, 2 >( numConstitutivePointsPerParentIndex, numPhase );
+    reference().resizeDimension< 1, 2 >( numPts, numPhase );
   subregion->registerField< fields::multifluid::dPhaseFraction >( &m_phaseFraction.derivs ).
-    reference().resizeDimension< 1, 2, 3 >( numConstitutivePointsPerParentIndex, numPhase, numDof );
+    reference().resizeDimension< 1, 2, 3 >( numPts, numPhase, numDof );
 
   subregion->registerField< fields::multifluid::phaseDensity >( &m_phaseDensity.value ).
     setDimLabels( 2, m_phaseNames ).
-    reference().resizeDimension< 1, 2 >( numConstitutivePointsPerParentIndex, numPhase );
+    reference().resizeDimension< 1, 2 >( numPts, numPhase );
   subregion->registerField< fields::multifluid::phaseDensity_n >( &m_phaseDensity_n ).
-    reference().resizeDimension< 1, 2 >( numConstitutivePointsPerParentIndex, numPhase );
+    reference().resizeDimension< 1, 2 >( numPts, numPhase );
   subregion->registerField< fields::multifluid::dPhaseDensity >( &m_phaseDensity.derivs ).
-    reference().resizeDimension< 1, 2, 3 >( numConstitutivePointsPerParentIndex, numPhase, numDof );
+    reference().resizeDimension< 1, 2, 3 >( numPts, numPhase, numDof );
 
   subregion->registerField< fields::multifluid::phaseMassDensity >( &m_phaseMassDensity.value ).
     setDimLabels( 2, m_phaseNames ).
-    reference().resizeDimension< 1, 2 >( numConstitutivePointsPerParentIndex, numPhase );
+    reference().resizeDimension< 1, 2 >( numPts, numPhase );
   subregion->registerField< fields::multifluid::dPhaseMassDensity >( &m_phaseMassDensity.derivs ).
-    reference().resizeDimension< 1, 2, 3 >( numConstitutivePointsPerParentIndex, numPhase, numDof );
+    reference().resizeDimension< 1, 2, 3 >( numPts, numPhase, numDof );
 
   subregion->registerField< fields::multifluid::phaseViscosity >( &m_phaseViscosity.value ).
     setDimLabels( 2, m_phaseNames ).
-    reference().resizeDimension< 1, 2 >( numConstitutivePointsPerParentIndex, numPhase );
+    reference().resizeDimension< 1, 2 >( numPts, numPhase );
   subregion->registerField< fields::multifluid::dPhaseViscosity >( &m_phaseViscosity.derivs ).
-    reference().resizeDimension< 1, 2, 3 >( numConstitutivePointsPerParentIndex, numPhase, numDof );
+    reference().resizeDimension< 1, 2, 3 >( numPts, numPhase, numDof );
 
   subregion->registerField< fields::multifluid::phaseEnthalpy >( &m_phaseEnthalpy.value ).
     setDimLabels( 2, m_phaseNames ).
-    reference().resizeDimension< 1, 2 >( numConstitutivePointsPerParentIndex, numPhase );
+    reference().resizeDimension< 1, 2 >( numPts, numPhase );
   subregion->registerField< fields::multifluid::phaseEnthalpy_n >( &m_phaseEnthalpy_n ).
-    reference().resizeDimension< 1, 2 >( numConstitutivePointsPerParentIndex, numPhase );
+    reference().resizeDimension< 1, 2 >( numPts, numPhase );
   subregion->registerField< fields::multifluid::dPhaseEnthalpy >( &m_phaseEnthalpy.derivs ).
-    reference().resizeDimension< 1, 2, 3 >( numConstitutivePointsPerParentIndex, numPhase, numDof );
+    reference().resizeDimension< 1, 2, 3 >( numPts, numPhase, numDof );
 
   subregion->registerField< fields::multifluid::phaseInternalEnergy >( &m_phaseInternalEnergy.value ).
     setDimLabels( 2, m_phaseNames ).
-    reference().resizeDimension< 1, 2 >( numConstitutivePointsPerParentIndex, numPhase );
+    reference().resizeDimension< 1, 2 >( numPts, numPhase );
   subregion->registerField< fields::multifluid::phaseInternalEnergy_n >( &m_phaseInternalEnergy_n ).
-    reference().resizeDimension< 1, 2 >( numConstitutivePointsPerParentIndex, numPhase );
+    reference().resizeDimension< 1, 2 >( numPts, numPhase );
   subregion->registerField< fields::multifluid::dPhaseInternalEnergy >( &m_phaseInternalEnergy.derivs ).
-    reference().resizeDimension< 1, 2, 3 >( numConstitutivePointsPerParentIndex, numPhase, numDof );
+    reference().resizeDimension< 1, 2, 3 >( numPts, numPhase, numDof );
 
   subregion->registerField< fields::multifluid::phaseCompFraction >( &m_phaseCompFraction.value ).
     setDimLabels( 2, m_phaseNames ).
-    reference().resizeDimension< 1, 2, 3 >( numConstitutivePointsPerParentIndex, numPhase, numComp );
+    reference().resizeDimension< 1, 2, 3 >( numPts, numPhase, numComp );
   subregion->registerField< fields::multifluid::phaseCompFraction_n >( &m_phaseCompFraction_n ).
-    reference().resizeDimension< 1, 2, 3 >( numConstitutivePointsPerParentIndex, numPhase, numComp );
+    reference().resizeDimension< 1, 2, 3 >( numPts, numPhase, numComp );
   subregion->registerField< fields::multifluid::dPhaseCompFraction >( &m_phaseCompFraction.derivs ).
-    reference().resizeDimension< 1, 2, 3, 4 >( numConstitutivePointsPerParentIndex, numPhase, numComp, numDof );
+    reference().resizeDimension< 1, 2, 3, 4 >( numPts, numPhase, numComp, numDof );
 
   subregion->registerField< fields::multifluid::totalDensity >( &m_totalDensity.value ).
-    reference().resizeDimension< 1 >( numConstitutivePointsPerParentIndex );
+    reference().resizeDimension< 1 >( numPts );
   subregion->registerField< fields::multifluid::totalDensity_n >( &m_totalDensity_n ).
-    reference().resizeDimension< 1 >( numConstitutivePointsPerParentIndex );
+    reference().resizeDimension< 1 >( numPts );
   subregion->registerField< fields::multifluid::dTotalDensity >( &m_totalDensity.derivs ).
-    reference().resizeDimension< 1, 2 >( numConstitutivePointsPerParentIndex, numDof );
+    reference().resizeDimension< 1, 2 >( numPts, numDof );
+
+  ConstitutiveBase::allocateConstitutiveData( parent, numPts );
 }
 
 void MultiFluidBase::postInputInitialization()

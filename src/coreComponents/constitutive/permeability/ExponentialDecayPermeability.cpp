@@ -46,10 +46,8 @@ ExponentialDecayPermeability::ExponentialDecayPermeability( string const & name,
 }
 
 void ExponentialDecayPermeability::allocateConstitutiveData( Group & parent,
-                                                             localIndex const numConstitutivePointsPerParentIndex )
+                                                             localIndex const numPts )
 {
-  PermeabilityBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
-
   auto subregion = dynamic_cast< ElementSubRegionBase * >(&parent); // TODO remove
 
   // NOTE: enforcing 1 quadrature point
@@ -57,6 +55,8 @@ void ExponentialDecayPermeability::allocateConstitutiveData( Group & parent,
     reference().resizeDimension< 1, 2, 3 >( 1, 3, 3 );
   subregion->registerField< fields::permeability::dPerm_dDispJump >( getName(), &m_dPerm_dDispJump ).
     reference().resizeDimension< 1, 2, 3 >( 1, 3, 3 );
+
+  PermeabilityBase::allocateConstitutiveData( parent, numPts );
 }
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, ExponentialDecayPermeability, string const &, Group * const )

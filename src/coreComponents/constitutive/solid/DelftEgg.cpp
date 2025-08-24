@@ -88,22 +88,22 @@ DelftEgg::DelftEgg( string const & name, Group * const parent ):
 
 
 void DelftEgg::allocateConstitutiveData( Group & parent,
-                                         localIndex const numConstitutivePointsPerParentIndex )
+                                         localIndex const numPts )
 {
-  ElasticIsotropic::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
-
   auto subregion = dynamic_cast< ElementSubRegionBase * >( &parent ); // TODO remove
 
   subregion->registerWrapper( viewKeyStruct::newPreConsolidationPressureString(), &m_newPreConsolidationPressure ).
     setApplyDefaultValue( -1 ).
     setPlotLevel( dataRepository::PlotLevel::LEVEL_3 ).
     setDescription( "New preconsolidation pressure" ).
-    reference().resizeDimension< 1 >( numConstitutivePointsPerParentIndex );
+    reference().resizeDimension< 1 >( numPts );
 
   subregion->registerWrapper( viewKeyStruct::oldPreConsolidationPressureString(), &m_oldPreConsolidationPressure ).
     setApplyDefaultValue( -1 ).
     setDescription( "Old preconsolidation pressure" ).
-    reference().resizeDimension< 1 >( numConstitutivePointsPerParentIndex );
+    reference().resizeDimension< 1 >( numPts );
+
+  ElasticIsotropic::allocateConstitutiveData( parent, numPts );
 }
 
 

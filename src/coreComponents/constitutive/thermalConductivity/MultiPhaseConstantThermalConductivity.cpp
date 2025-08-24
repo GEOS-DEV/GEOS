@@ -37,9 +37,9 @@ MultiPhaseConstantThermalConductivity::MultiPhaseConstantThermalConductivity( st
 }
 
 void MultiPhaseConstantThermalConductivity::allocateConstitutiveData( Group & parent,
-                                                                      localIndex const numConstitutivePointsPerParentIndex )
+                                                                      localIndex const numPts )
 {
-  MultiPhaseThermalConductivityBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
+  MultiPhaseThermalConductivityBase::allocateConstitutiveData( parent, numPts );
 
   // TODO move into initializeState?
   for( localIndex ei = 0; ei < parent.size(); ++ei )

@@ -63,18 +63,18 @@ public:
   using exec_policy = parallelDevicePolicy<>;
 
 public:
-  CompositionalMultiphaseFluid( string const & name, Group * const parent );
+  CompositionalMultiphaseFluid( string const & name, dataRepository::Group * const parent );
 
   virtual std::unique_ptr< ConstitutiveBase >
   deliverClone( string const & name,
-                Group * const parent ) const override;
+                dataRepository::Group * const parent ) const override;
 
   static string catalogName();
 
   virtual string getCatalogName() const override { return catalogName(); }
 
   virtual void allocateConstitutiveData( dataRepository::Group & parent,
-                                         localIndex const numConstitutivePointsPerParentIndex ) override;
+                                         localIndex const numPts ) override;
 
   static constexpr bool isThermalType(){ return false; }
 

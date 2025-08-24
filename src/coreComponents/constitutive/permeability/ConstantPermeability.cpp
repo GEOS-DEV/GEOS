@@ -45,9 +45,9 @@ ConstantPermeability::deliverClone( string const & name,
 }
 
 void ConstantPermeability::allocateConstitutiveData( Group & parent,
-                                                     localIndex const numConstitutivePointsPerParentIndex )
+                                                     localIndex const numPts )
 {
-  PermeabilityBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
+  PermeabilityBase::allocateConstitutiveData( parent, numPts );
 
   // TODO move into initializeState?
 

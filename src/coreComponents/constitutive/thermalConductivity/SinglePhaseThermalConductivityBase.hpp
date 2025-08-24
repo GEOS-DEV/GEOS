@@ -96,8 +96,7 @@ public:
    */
   SinglePhaseThermalConductivityBase( string const & name, dataRepository::Group * const parent );
 
-  virtual void allocateConstitutiveData( Group & parent,
-                                         localIndex const numConstitutivePointsPerParentIndex ) override;
+  virtual void allocateConstitutiveData( dataRepository::Group & parent, localIndex const numPts ) override;
 
   /**
    * @brief Initialize the thermal conductivity state (needed when thermal conductivity depends on porosity and phase volume fraction)

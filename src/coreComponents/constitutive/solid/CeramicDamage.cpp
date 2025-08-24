@@ -56,10 +56,8 @@ CeramicDamage::CeramicDamage( string const & name, Group * const parent ):
 
 
 void CeramicDamage::allocateConstitutiveData( Group & parent,
-                                              localIndex const numConstitutivePointsPerParentIndex )
+                                              localIndex const numPts )
 {
-  ElasticIsotropic::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
-
   auto subregion = dynamic_cast< ElementSubRegionBase * >( &parent ); // TODO remove
 
   // TODO use registerField
@@ -67,18 +65,20 @@ void CeramicDamage::allocateConstitutiveData( Group & parent,
     setApplyDefaultValue( 0.0 ).
     setPlotLevel( PlotLevel::LEVEL_0 ).
     setDescription( "Array of quadrature point damage values" ).
-    reference().resizeDimension< 1 >( numConstitutivePointsPerParentIndex );
+    reference().resizeDimension< 1 >( numPts );
 
   registerWrapper( viewKeyStruct::jacobianString(), &m_jacobian ).
     setApplyDefaultValue( 1.0 ).
     setPlotLevel( PlotLevel::NOPLOT ).
     setDescription( "Array of quadrature point jacobian values" ).
-    reference().resizeDimension< 1 >( numConstitutivePointsPerParentIndex );
+    reference().resizeDimension< 1 >( numPts );
 
   registerWrapper( viewKeyStruct::lengthScaleString(), &m_lengthScale ).
     setApplyDefaultValue( DBL_MIN ).
     setPlotLevel( PlotLevel::NOPLOT ).
     setDescription( "Array of quadrature point damage values" );
+
+  ElasticIsotropic::allocateConstitutiveData( parent, numPts );
 }
 
 

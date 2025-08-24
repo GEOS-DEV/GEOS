@@ -55,15 +55,15 @@ CarmanKozenyPermeability::deliverClone( string const & name,
 }
 
 void CarmanKozenyPermeability::allocateConstitutiveData( Group & parent,
-                                                         localIndex const numConstitutivePointsPerParentIndex )
+                                                         localIndex const numPts )
 {
-  PermeabilityBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
-
   auto subregion = dynamic_cast< ElementSubRegionBase * >(&parent); // TODO remove
 
   // NOTE: enforcing 1 quadrature point
   subregion->registerWrapper( viewKeyStruct::dPerm_dPorosityString(), &m_dPerm_dPorosity ).
     reference().resizeDimension< 1, 2 >( 1, 3 );
+
+  PermeabilityBase::allocateConstitutiveData( parent, numPts );
 }
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, CarmanKozenyPermeability, string const &, Group * const )

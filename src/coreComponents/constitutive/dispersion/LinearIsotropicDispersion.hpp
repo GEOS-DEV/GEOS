@@ -105,7 +105,7 @@ public:
   struct viewKeyStruct : public DispersionBase::viewKeyStruct
   {
     static constexpr char const * longitudinalDispersivityString() { return "longitudinalDispersivity"; }
-  } viewKeys;
+  };
 
 protected:
 

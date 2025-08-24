@@ -336,14 +336,14 @@ JFunctionCapillaryPressure::createKernelWrapper()
 }
 
 void JFunctionCapillaryPressure::allocateConstitutiveData( dataRepository::Group & parent,
-                                                           localIndex const numConstitutivePointsPerParentIndex )
+                                                           localIndex const numPts )
 {
-  CapillaryPressureBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
-
   auto subregion = dynamic_cast< ElementSubRegionBase * >(&parent); // TODO remove
 
   subregion->registerField< fields::cappres::jFuncMultiplier >( getName(), &m_jFuncMultiplier ).
     reference().resizeDimension< 1 >( numFluidPhases()-1 );
+
+  CapillaryPressureBase::allocateConstitutiveData( parent, numPts );
 }
 
 

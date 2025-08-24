@@ -562,6 +562,8 @@ public:
   SolidBase( string const & name,
              Group * const parent );
 
+  virtual void allocateConstitutiveData( dataRepository::Group & parent, localIndex const numPts ) override;
+
   /// Keys for data in this class
   struct viewKeyStruct : public ConstitutiveBase::viewKeyStruct
   {
@@ -577,9 +579,6 @@ public:
                                                                                                                    // coefficient
                                                                                                                    // key
   };
-
-  virtual void allocateConstitutiveData( Group & parent,
-                                         localIndex const numConstitutivePointsPerParentIndex ) override;
 
   /// Save state data in preparation for next timestep
   virtual void saveConvergedState() const override;

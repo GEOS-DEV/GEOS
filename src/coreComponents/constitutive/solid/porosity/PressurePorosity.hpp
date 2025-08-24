@@ -104,7 +104,7 @@ public:
   {
     static constexpr char const * referencePressureString() { return "referencePressure"; }
     static constexpr char const * compressibilityString() { return "compressibility"; }
-  } viewKeys;
+  };
 
   using KernelWrapper = PressurePorosityUpdates;
 

@@ -80,9 +80,9 @@ CompressibleSinglePhaseFluid::CompressibleSinglePhaseFluid( string const & name,
 }
 
 void CompressibleSinglePhaseFluid::allocateConstitutiveData( dataRepository::Group & parent,
-                                                             localIndex const numConstitutivePointsPerParentIndex )
+                                                             localIndex const numPts )
 {
-  SingleFluidBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
+  SingleFluidBase::allocateConstitutiveData( parent, numPts );
 
   // TODO check
   getField< fields::singlefluid::density >().setApplyDefaultValue( m_referenceDensity );

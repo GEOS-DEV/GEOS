@@ -100,14 +100,14 @@ string CompositionalMultiphaseFluid< FLASH, PHASE1, PHASE2, PHASE3 >::catalogNam
 
 template< typename FLASH, typename PHASE1, typename PHASE2, typename PHASE3 >
 void CompositionalMultiphaseFluid< FLASH, PHASE1, PHASE2, PHASE3 >::allocateConstitutiveData( dataRepository::Group & parent,
-                                                                                              localIndex const numConstitutivePointsPerParentIndex )
+                                                                                              localIndex const numPts )
 {
-  MultiFluidBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
-
   ElementSubRegionBase * subregion = dynamic_cast< ElementSubRegionBase * >(&parent); // TODO remove
 
   subregion->registerField< fields::multifluid::kValues >( &m_kValues ).
-    reference().resizeDimension< 1, 2, 3 >( numConstitutivePointsPerParentIndex, numFluidPhases()-1, numFluidComponents() );
+    reference().resizeDimension< 1, 2, 3 >( numPts, numFluidPhases()-1, numFluidComponents() );
+
+  MultiFluidBase::allocateConstitutiveData( parent, numPts );
 
   // Zero k-Values to force initialisation with Wilson k-Values
   m_kValues.zero(); // TODO check

@@ -231,14 +231,13 @@ protected:
 class BiotPorosity : public PorosityBase
 {
 public:
-  BiotPorosity( string const & name, Group * const parent );
+  BiotPorosity( string const & name, dataRepository::Group * const parent );
 
   static string catalogName() { return "BiotPorosity"; }
 
   virtual string getCatalogName() const override { return catalogName(); }
 
-  virtual void allocateConstitutiveData( Group & parent,
-                                         localIndex const numConstitutivePointsPerParentIndex ) override;
+  virtual void allocateConstitutiveData( dataRepository::Group & parent, localIndex const numPts ) override;
 
   struct viewKeyStruct : public PorosityBase::viewKeyStruct
   {
@@ -257,7 +256,7 @@ public:
     static constexpr char const *useUniaxialFixedStressString() { return "useUniaxialFixedStress"; }
 
     static constexpr char const *defaultBiotCoefficientString() { return "defaultBiotCoefficient"; }
-  } viewKeys;
+  };
 
   virtual void initializeState() const override final;
 

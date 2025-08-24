@@ -80,19 +80,19 @@ void CapillaryPressureBase::postInputInitialization()
 }
 
 void CapillaryPressureBase::allocateConstitutiveData( Group & parent,
-                                                      localIndex const numConstitutivePointsPerParentIndex )
+                                                      localIndex const numPts )
 {
-  ConstitutiveBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
-
   auto subregion = dynamic_cast< ElementSubRegionBase * >(&parent); // TODO remove
 
   integer const NP = numFluidPhases();
 
   subregion->registerField< fields::cappres::phaseCapPressure >( getName(), &m_phaseCapPressure ).
     setDimLabels( 2, m_phaseNames ).
-    reference().resizeDimension< 1, 2 >( numConstitutivePointsPerParentIndex, NP );
+    reference().resizeDimension< 1, 2 >( numPts, NP );
   subregion->registerField< fields::cappres::dPhaseCapPressure_dPhaseVolFraction >( getName(), &m_dPhaseCapPressure_dPhaseVolFrac ).
-    reference().resizeDimension< 1, 2, 3 >( numConstitutivePointsPerParentIndex, NP, NP );
+    reference().resizeDimension< 1, 2, 3 >( numPts, NP, NP );
+
+  ConstitutiveBase::allocateConstitutiveData( parent, numPts );
 }
 
 } // namespace constitutive

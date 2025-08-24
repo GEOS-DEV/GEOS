@@ -562,13 +562,11 @@ TableRelativePermeabilityHysteresis::createKernelWrapper()
 }
 
 void TableRelativePermeabilityHysteresis::allocateConstitutiveData( Group & parent,
-                                                                    localIndex const numConstitutivePointsPerParentIndex )
+                                                                    localIndex const numPts )
 {
-  RelativePermeabilityBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
+  auto subregion = dynamic_cast< ElementSubRegionBase * >( &parent ); // TODO remove
 
   integer const numPhases = numFluidPhases();
-
-  auto subregion = dynamic_cast< ElementSubRegionBase * >( &parent ); // TODO remove
 
   subregion->registerField< fields::relperm::phaseMaxHistoricalVolFraction >( &m_phaseMaxHistoricalVolFraction ).
     reference().resizeDimension< 1 >( numPhases );
@@ -576,6 +574,8 @@ void TableRelativePermeabilityHysteresis::allocateConstitutiveData( Group & pare
     reference().resizeDimension< 1 >( numPhases );
   m_phaseMaxHistoricalVolFraction.setValues< parallelDevicePolicy<> >( 0.0 );
   m_phaseMinHistoricalVolFraction.setValues< parallelDevicePolicy<> >( 1.0 );
+
+  RelativePermeabilityBase::allocateConstitutiveData( parent, numPts );
 }
 
 void TableRelativePermeabilityHysteresis::saveConvergedPhaseVolFractionState( arrayView2d< real64 const, compflow::USD_PHASE > const & phaseVolFraction ) const

@@ -56,10 +56,8 @@ SolidInternalEnergy::SolidInternalEnergy( string const & name, Group * const par
 }
 
 void SolidInternalEnergy::allocateConstitutiveData( Group & parent,
-                                                    localIndex const numConstitutivePointsPerParentIndex )
+                                                    localIndex const numPts )
 {
-  ConstitutiveBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
-
   auto subregion = dynamic_cast< ElementSubRegionBase * >(&parent); // TODO remove
 
   // TODO use registerField
@@ -80,6 +78,8 @@ void SolidInternalEnergy::allocateConstitutiveData( Group & parent,
     setApplyDefaultValue( 0.0 ).
     setDescription( "Derivative of the solid internal energy w.r.t. temperature [J/(m^3.K)]" ).
     reference().resizeDimension< 1 >( 1 );
+
+  ConstitutiveBase::allocateConstitutiveData( parent, numPts );
 }
 
 void SolidInternalEnergy::saveConvergedState() const

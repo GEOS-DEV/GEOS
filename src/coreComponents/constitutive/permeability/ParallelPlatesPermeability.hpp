@@ -106,14 +106,14 @@ class ParallelPlatesPermeability : public PermeabilityBase
 {
 public:
 
-  ParallelPlatesPermeability( string const & name, Group * const parent );
+  ParallelPlatesPermeability( string const & name, dataRepository::Group * const parent );
 
   static string catalogName() { return "ParallelPlatesPermeability"; }
 
   virtual string getCatalogName() const override { return catalogName(); }
 
-  virtual void allocateConstitutiveData( Group & parent,
-                                         localIndex const numConstitutivePointsPerParentIndex ) override;
+  virtual void allocateConstitutiveData( dataRepository::Group & parent,
+                                         localIndex const numPts ) override;
 
   virtual void initializeState() const override final;
 

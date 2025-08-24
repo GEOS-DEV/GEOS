@@ -51,10 +51,8 @@ void PermeabilityBase::scaleHorizontalPermeability( arrayView1d< real64 const > 
 }
 
 void PermeabilityBase::allocateConstitutiveData( Group & parent,
-                                                 localIndex const numConstitutivePointsPerParentIndex )
+                                                 localIndex const numPts )
 {
-  ConstitutiveBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
-
   auto subregion = dynamic_cast< ElementSubRegionBase * >( &parent ); // TODO remove
 
   // NOTE: enforcing 1 quadrature point
@@ -62,6 +60,8 @@ void PermeabilityBase::allocateConstitutiveData( Group & parent,
     reference().resizeDimension< 1, 2 >( 1, 3 );
   subregion->registerField< fields::permeability::dPerm_dPressure >( getName(), &m_dPerm_dPressure ).
     reference().resizeDimension< 1, 2 >( 1, 3 );
+
+  ConstitutiveBase::allocateConstitutiveData( parent, numPts );
 }
 
 }

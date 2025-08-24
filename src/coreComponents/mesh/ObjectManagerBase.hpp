@@ -585,7 +585,6 @@ public:
   /**
    * @brief Helper function to register fields
    * @tparam FIELD_TRAIT the type of field
-   * @param[in] fieldTrait the struct corresponding to the field being registered
    * @param[in] newObject a pointer to the object that is being registered
    * @return A reference to the newly registered/created Wrapper
    */

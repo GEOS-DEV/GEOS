@@ -58,18 +58,10 @@ void DiffusionBase::postInputInitialization()
                  GEOS_FMT( "{}: the arrays in `{}` and `{}` must have the same size",
                            getFullName(), viewKeyStruct::phaseNamesString(), viewKeyStruct::defaultPhaseDiffusivityMultiplierString() ),
                  InputError );
-
-  // TODO figure out why this is really needed
-  m_diffusivity.resize( 0, 0, 3 );
-  m_dDiffusivity_dTemperature.resize( 0, 0, 3 );
-  m_phaseDiffusivityMultiplier.resize( 0, 0, 3 );
 }
 
-void DiffusionBase::allocateConstitutiveData( dataRepository::Group & parent,
-                                              localIndex const numConstitutivePointsPerParentIndex )
+void DiffusionBase::allocateConstitutiveData( Group & parent, localIndex const numPts )
 {
-  ConstitutiveBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
-
   auto subregion = dynamic_cast< ElementSubRegionBase * >(&parent); // TODO remove
 
   // NOTE: enforcing 1 quadrature point
@@ -79,6 +71,8 @@ void DiffusionBase::allocateConstitutiveData( dataRepository::Group & parent,
     reference().resizeDimension< 1, 2 >( 1, 3 );
   subregion->registerField< fields::diffusion::phaseDiffusivityMultiplier >( getName(), &m_phaseDiffusivityMultiplier ).
     reference().resizeDimension< 1, 2 >( 1, numFluidPhases());
+
+  ConstitutiveBase::allocateConstitutiveData( parent, numPts );
 
   for( localIndex ei = 0; ei < parent.size(); ++ei ) // TODO move into initializeState?
   {

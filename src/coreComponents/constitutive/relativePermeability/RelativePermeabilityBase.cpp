@@ -78,28 +78,28 @@ void RelativePermeabilityBase::postInputInitialization()
 }
 
 void RelativePermeabilityBase::allocateConstitutiveData( Group & parent,
-                                                         localIndex const numConstitutivePointsPerParentIndex )
+                                                         localIndex const numPts )
 {
-  ConstitutiveBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
+  ElementSubRegionBase * subregion = dynamic_cast< ElementSubRegionBase * >( &parent ); // TODO remove
 
   integer const numPhases = numFluidPhases();
 
-  ElementSubRegionBase * subregion = dynamic_cast< ElementSubRegionBase * >( &parent ); // TODO remove
-
   subregion->registerField< fields::relperm::phaseRelPerm >( getName(), &m_phaseRelPerm ).
     setDimLabels( 2, m_phaseNames ).
-    reference().resizeDimension< 1, 2 >( numConstitutivePointsPerParentIndex, numPhases );
+    reference().resizeDimension< 1, 2 >( numPts, numPhases );
   subregion->registerField< fields::relperm::phaseRelPerm_n >( getName(), &m_phaseRelPerm_n ).
     setDimLabels( 2, m_phaseNames ).
-    reference().resizeDimension< 1, 2 >( numConstitutivePointsPerParentIndex, numPhases );
+    reference().resizeDimension< 1, 2 >( numPts, numPhases );
   subregion->registerField< fields::relperm::dPhaseRelPerm_dPhaseVolFraction >( getName(), &m_dPhaseRelPerm_dPhaseVolFrac ).
-    reference().resizeDimension< 1, 2, 3 >( numConstitutivePointsPerParentIndex, numPhases, numPhases );
+    reference().resizeDimension< 1, 2, 3 >( numPts, numPhases, numPhases );
 
   //phase trapped for stats
   subregion->registerField< fields::relperm::phaseTrappedVolFraction >( getName(), &m_phaseTrappedVolFrac ).
     setDimLabels( 2, m_phaseNames ).
-    reference().resizeDimension< 1, 2 >( numConstitutivePointsPerParentIndex, numPhases );
+    reference().resizeDimension< 1, 2 >( numPts, numPhases );
   m_phaseTrappedVolFrac.zero();
+
+  ConstitutiveBase::allocateConstitutiveData( parent, numPts );
 }
 
 void RelativePermeabilityBase::saveConvergedState( ) const

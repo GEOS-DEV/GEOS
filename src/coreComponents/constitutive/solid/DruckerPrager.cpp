@@ -77,10 +77,8 @@ DruckerPrager::DruckerPrager( string const & name, Group * const parent ):
 
 
 void DruckerPrager::allocateConstitutiveData( Group & parent,
-                                              localIndex const numConstitutivePointsPerParentIndex )
+                                              localIndex const numPts )
 {
-  ElasticIsotropic::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
-
   auto subregion = dynamic_cast< ElementSubRegionBase * >( &parent ); // TODO remove
 
   // TODO use registerField
@@ -88,12 +86,14 @@ void DruckerPrager::allocateConstitutiveData( Group & parent,
     setApplyDefaultValue( -1 ).
     setPlotLevel( dataRepository::PlotLevel::LEVEL_3 ).
     setDescription( "New cohesion state" ).
-    reference().resizeDimension< 1 >( numConstitutivePointsPerParentIndex );
+    reference().resizeDimension< 1 >( numPts );
 
   subregion->registerWrapper( viewKeyStruct::oldCohesionString(), &m_oldCohesion ).
     setApplyDefaultValue( -1 ).
     setDescription( "Old cohesion state" ).
-    reference().resizeDimension< 1 >( numConstitutivePointsPerParentIndex );
+    reference().resizeDimension< 1 >( numPts );
+
+  ElasticIsotropic::allocateConstitutiveData( parent, numPts );
 }
 
 

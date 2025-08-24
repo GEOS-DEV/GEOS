@@ -99,14 +99,14 @@ public:
   /**
    * @brief Allocate constitutive data and make views to data on parent objects
    * @param[in] parent reference to the group that holds the constitutive relation
-   * @param[in] numConstitutivePointsPerParentIndex number of quadrature points
+   * @param[in] numPts number of quadrature points
    *
    * This function does 2 things:
-   *   1) Allocate data according to the size of parent and numConstitutivePointsPerParentIndex
+   *   1) Allocate data according to the size of parent and numPts
    *   2) Create wrappers to the constitutive data in the parent for easier access
    */
   virtual void allocateConstitutiveData( dataRepository::Group & parent,
-                                         localIndex const numConstitutivePointsPerParentIndex );
+                                         localIndex const numPts );
 
   struct viewKeyStruct
   {};
@@ -173,19 +173,6 @@ public:
   std::vector< std::string > const & getUserFields() const
   {
     return m_userFields;
-  }
-
-protected:
-
-  /**
-   * @brief Function called internally to resize member arrays
-   * @param size primary dimension (e.g. number of cells)
-   * @param numPts secondary dimension (e.g. number of gauss points per cell)
-   */
-  virtual void resizeFields( localIndex const GEOS_UNUSED_PARAM( size ),
-                             localIndex const GEOS_UNUSED_PARAM( numPts ) )
-  {
-    // Nothing to do
   }
 
 private:

@@ -113,14 +113,14 @@ class ProppantPermeability : public PermeabilityBase
 {
 public:
 
-  ProppantPermeability( string const & name, Group * const parent );
+  ProppantPermeability( string const & name, dataRepository::Group * const parent );
 
   static string catalogName() { return "ProppantPermeability"; }
 
   virtual string getCatalogName() const override { return catalogName(); }
 
-  virtual void allocateConstitutiveData( Group & parent,
-                                         localIndex const numConstitutivePointsPerParentIndex ) override;
+  virtual void allocateConstitutiveData( dataRepository::Group & parent,
+                                         localIndex const numPts ) override;
 
   /// Type of kernel wrapper for in-kernel update
   using KernelWrapper = ProppantPermeabilityUpdate;

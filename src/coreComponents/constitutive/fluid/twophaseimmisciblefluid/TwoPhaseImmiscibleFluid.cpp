@@ -64,25 +64,25 @@ TwoPhaseImmiscibleFluid::TwoPhaseImmiscibleFluid( string const & name, Group * c
 
 
 void TwoPhaseImmiscibleFluid::allocateConstitutiveData( Group & parent,
-                                                        localIndex const numConstitutivePointsPerParentIndex )
+                                                        localIndex const numPts )
 {
-  ConstitutiveBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
-
   auto subregion = dynamic_cast< ElementSubRegionBase * >(&parent); // TODO remove
 
   // Assume sole dependency on pressure, i.e. one derivative
 
   subregion->registerField< fields::twophaseimmisciblefluid::phaseDensity >( getName(), &m_phaseDensity.value ).
-    reference().resizeDimension< 1, 2 >( numConstitutivePointsPerParentIndex, 2 );
+    reference().resizeDimension< 1, 2 >( numPts, 2 );
   subregion->registerField< fields::twophaseimmisciblefluid::dPhaseDensity >( getName(), &m_phaseDensity.derivs ).
-    reference().resizeDimension< 1, 2, 3 >( numConstitutivePointsPerParentIndex, 2, 1 );
+    reference().resizeDimension< 1, 2, 3 >( numPts, 2, 1 );
   subregion->registerField< fields::twophaseimmisciblefluid::phaseDensity_n >( getName(), &m_phaseDensity_n ).
-    reference().resizeDimension< 1, 2 >( numConstitutivePointsPerParentIndex, 2 );
+    reference().resizeDimension< 1, 2 >( numPts, 2 );
 
   subregion->registerField< fields::twophaseimmisciblefluid::phaseViscosity >( getName(), &m_phaseViscosity.value ).
-    reference().resizeDimension< 1, 2 >( numConstitutivePointsPerParentIndex, 2 );
+    reference().resizeDimension< 1, 2 >( numPts, 2 );
   subregion->registerField< fields::twophaseimmisciblefluid::dPhaseViscosity >( getName(), &m_phaseViscosity.derivs ).
-    reference().resizeDimension< 1, 2, 3 >( numConstitutivePointsPerParentIndex, 2, 1 );
+    reference().resizeDimension< 1, 2, 3 >( numPts, 2, 1 );
+
+  ConstitutiveBase::allocateConstitutiveData( parent, numPts );
 }
 
 

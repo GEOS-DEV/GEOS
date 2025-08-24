@@ -94,7 +94,7 @@ public:
     static constexpr char const * defaultThermalConductivityComponentsString() { return "defaultThermalConductivityComponents"; }
     static constexpr char const * thermalConductivityGradientComponentsString() { return "thermalConductivityGradientComponents"; }
     static constexpr char const * referenceTemperatureString() { return "referenceTemperature"; }
-  } viewKeys;
+  };
 
 protected:
 

@@ -384,10 +384,9 @@ public:
    * @param[in] name name of the instance in the catalog
    * @param[in] parent the group which contains this instance
    */
-  DruckerPragerExtended( string const & name, Group * const parent );
+  DruckerPragerExtended( string const & name, dataRepository::Group * const parent );
 
-  virtual void allocateConstitutiveData( Group & parent,
-                                         localIndex const numConstitutivePointsPerParentIndex );
+  virtual void allocateConstitutiveData( dataRepository::Group & parent, localIndex const numPts ) override;
 
   virtual void saveConvergedState() const override;
 

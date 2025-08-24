@@ -45,10 +45,8 @@ ParticleFluidBase::ParticleFluidBase( string const & name, Group * const parent 
 }
 
 void ParticleFluidBase::allocateConstitutiveData( dataRepository::Group & parent,
-                                                  localIndex const numConstitutivePointsPerParentIndex )
+                                                  localIndex const numPts )
 {
-  ConstitutiveBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
-
   auto subregion = dynamic_cast< ElementSubRegionBase * >(&parent); // TODO remove
 
   subregion->registerField< fields::particlefluid::settlingFactor >( getName(), &m_settlingFactor );
@@ -61,6 +59,8 @@ void ParticleFluidBase::allocateConstitutiveData( dataRepository::Group & parent
   subregion->registerField< fields::particlefluid::dCollisionFactor_dProppantConcentration >( getName(), &m_dCollisionFactor_dProppantConcentration );
 
   subregion->registerField< fields::particlefluid::proppantPackPermeability >( getName(), &m_proppantPackPermeability );
+
+  ConstitutiveBase::allocateConstitutiveData( parent, numPts );
 }
 
 } //namespace constitutive

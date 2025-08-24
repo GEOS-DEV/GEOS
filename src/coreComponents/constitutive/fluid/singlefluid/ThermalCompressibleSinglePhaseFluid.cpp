@@ -63,9 +63,9 @@ ThermalCompressibleSinglePhaseFluid::ThermalCompressibleSinglePhaseFluid( string
 }
 
 void ThermalCompressibleSinglePhaseFluid::allocateConstitutiveData( Group & parent,
-                                                                    localIndex const numConstitutivePointsPerParentIndex )
+                                                                    localIndex const numPts )
 {
-  CompressibleSinglePhaseFluid::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
+  CompressibleSinglePhaseFluid::allocateConstitutiveData( parent, numPts );
 
   m_internalEnergy.value.setValues< serialPolicy >( m_referenceInternalEnergy );
 }

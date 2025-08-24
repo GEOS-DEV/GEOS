@@ -66,40 +66,41 @@ void SingleFluidBase::saveConvergedState() const
 }
 
 void SingleFluidBase::allocateConstitutiveData( dataRepository::Group & parent,
-                                                localIndex const numConstitutivePointsPerParentIndex )
+                                                localIndex const numPts )
 {
-  ConstitutiveBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
-
   auto subRegion = dynamic_cast< ElementSubRegionBase * >( &parent );
 
   // density
   subRegion->registerField< fields::singlefluid::density >( &m_density.value ).
-    reference().resizeDimension< 1 >( numConstitutivePointsPerParentIndex );
+    reference().resizeDimension< 1 >( numPts );
   subRegion->registerField< fields::singlefluid::dDensity >( &m_density.derivs ).
-    reference().resizeDimension< 1, 2 >( numConstitutivePointsPerParentIndex, m_numDOF );
+    reference().resizeDimension< 1, 2 >( numPts, m_numDOF );
   subRegion->registerField< fields::singlefluid::density_n >( &m_density_n ).
-    reference().resizeDimension< 1 >( numConstitutivePointsPerParentIndex );
+    reference().resizeDimension< 1 >( numPts );
 
   // viscosity
   subRegion->registerField< fields::singlefluid::viscosity >( &m_viscosity.value ).
-    reference().resizeDimension< 1 >( numConstitutivePointsPerParentIndex );
+    reference().resizeDimension< 1 >( numPts );
   subRegion->registerField< fields::singlefluid::dViscosity >( &m_viscosity.derivs ).
-    reference().resizeDimension< 1, 2 >( numConstitutivePointsPerParentIndex, m_numDOF );
+    reference().resizeDimension< 1, 2 >( numPts, m_numDOF );
 
   // internal energy
   subRegion->registerField< fields::singlefluid::internalEnergy >( &m_internalEnergy.value ).
-    reference().resizeDimension< 1 >( numConstitutivePointsPerParentIndex );
+    reference().resizeDimension< 1 >( numPts );
   subRegion->registerField< fields::singlefluid::dInternalEnergy >( &m_internalEnergy.derivs ).
-    reference().resizeDimension< 1, 2 >( numConstitutivePointsPerParentIndex, m_numDOF );
+    reference().resizeDimension< 1, 2 >( numPts, m_numDOF );
   subRegion->registerField< fields::singlefluid::internalEnergy_n >( &m_internalEnergy_n ).
-    reference().resizeDimension< 1 >( numConstitutivePointsPerParentIndex );
+    reference().resizeDimension< 1 >( numPts );
 
   // enthalpy
   subRegion->registerField< fields::singlefluid::enthalpy >( &m_enthalpy.value ).
-    reference().resizeDimension< 1 >( numConstitutivePointsPerParentIndex );
+    reference().resizeDimension< 1 >( numPts );
   subRegion->registerField< fields::singlefluid::dEnthalpy >( &m_enthalpy.derivs ).
-    reference().resizeDimension< 1, 2 >( numConstitutivePointsPerParentIndex, m_numDOF );
+    reference().resizeDimension< 1, 2 >( numPts, m_numDOF );
+
+  ConstitutiveBase::allocateConstitutiveData( parent, numPts );
 }
+//END_SPHINX_INCLUDE_00
 
 } //namespace constitutive
 

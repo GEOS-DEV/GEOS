@@ -56,20 +56,20 @@ PoreVolumeCompressibleSolid::deliverClone( string const & name,
 }
 
 void PoreVolumeCompressibleSolid::allocateConstitutiveData( Group & parent,
-                                                            localIndex const numConstitutivePointsPerParentIndex )
+                                                            localIndex const numPts )
 {
-  ConstitutiveBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
-
   auto subregion = dynamic_cast< ElementSubRegionBase * >( &parent ); // TODO remove
 
   // TODO use registerField
 
   registerWrapper( viewKeyStruct::poreVolumeMultiplierString(), &m_poreVolumeMultiplier ).
     setDefaultValue( 1.0 ).
-    reference().resizeDimension< 1 >( numConstitutivePointsPerParentIndex );
+    reference().resizeDimension< 1 >( numPts );
 
   registerWrapper( viewKeyStruct::dPVMult_dPresString(), &m_dPVMult_dPressure ).
-    reference().resizeDimension< 1 >( numConstitutivePointsPerParentIndex );
+    reference().resizeDimension< 1 >( numPts );
+
+  ConstitutiveBase::allocateConstitutiveData( parent, numPts );
 }
 
 void PoreVolumeCompressibleSolid::postInputInitialization()

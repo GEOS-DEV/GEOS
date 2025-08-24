@@ -53,9 +53,9 @@ void MultiPhaseThermalConductivityBase::postInputInitialization()
 }
 
 void MultiPhaseThermalConductivityBase::allocateConstitutiveData( Group & parent,
-                                                                  localIndex const numConstitutivePointsPerParentIndex )
+                                                                  localIndex const numPts )
 {
-  ConstitutiveBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
+  ConstitutiveBase::allocateConstitutiveData( parent, numPts );
 
   integer const numPhases = numFluidPhases();
 

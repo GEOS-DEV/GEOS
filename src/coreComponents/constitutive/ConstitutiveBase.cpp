@@ -42,12 +42,9 @@ ConstitutiveBase::CatalogInterface::CatalogType & ConstitutiveBase::getCatalog()
   return catalog;
 }
 
-void ConstitutiveBase::allocateConstitutiveData( dataRepository::Group & parent,
-                                                 localIndex const numConstitutivePointsPerParentIndex )
+void ConstitutiveBase::allocateConstitutiveData( Group & parent, localIndex const numPts )
 {
-  m_numQuadraturePoints = numConstitutivePointsPerParentIndex;
-
-  resizeFields( parent.size(), numConstitutivePointsPerParentIndex );
+  m_numQuadraturePoints = numPts;
 
   for( auto & group : this->getSubGroups() )
   {

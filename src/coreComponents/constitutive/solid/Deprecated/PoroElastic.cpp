@@ -81,10 +81,8 @@ PoroElastic< BASE >::deliverClone( string const & name,
 
 template< typename BASE >
 void PoroElastic< BASE >::allocateConstitutiveData( Group & parent,
-                                                    localIndex const numConstitutivePointsPerParentIndex )
+                                                    localIndex const numPts )
 {
-  BASE::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
-
   auto subregion = dynamic_cast< ElementSubRegionBase * >( &parent ); // TODO remove
 
   // TODO use registerField
@@ -92,12 +90,14 @@ void PoroElastic< BASE >::allocateConstitutiveData( Group & parent,
   subregion->registerWrapper( viewKeyStruct::poreVolumeMultiplierString(), &m_poreVolumeMultiplier ).
     setApplyDefaultValue( 1.0 ).
     setDescription( "" ).
-    reference().resizeDimension< 1 >( numConstitutivePointsPerParentIndex );
+    reference().resizeDimension< 1 >( numPts );
 
   subregion->registerWrapper( viewKeyStruct::dPVMult_dPresString(), &m_dPVMult_dPressure ).
     setApplyDefaultValue( -1 ).
     setDescription( "" ).
-    reference().resizeDimension< 1 >( numConstitutivePointsPerParentIndex );
+    reference().resizeDimension< 1 >( numPts );
+
+  BASE::allocateConstitutiveData( parent, numPts );
 }
 
 template< typename BASE >

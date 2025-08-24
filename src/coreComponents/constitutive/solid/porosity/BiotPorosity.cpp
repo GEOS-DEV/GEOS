@@ -49,20 +49,18 @@ BiotPorosity::BiotPorosity( string const & name, Group * const parent ):
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Flag enabling uniaxial approximation in fixed stress update" );
 
-  registerWrapper( viewKeyStruct::solidBulkModulusString(), &m_bulkModulus ). // TODO field?
+  registerWrapper( viewKeyStruct::solidBulkModulusString(), &m_bulkModulus ).
     setApplyDefaultValue( 1e-6 ).
     setDescription( "Solid bulk modulus" );
 
-  registerWrapper( viewKeyStruct::solidShearModulusString(), &m_shearModulus ). // TODO field?
+  registerWrapper( viewKeyStruct::solidShearModulusString(), &m_shearModulus ).
     setApplyDefaultValue( 1e-6 ).
     setDescription( "Solid shear modulus" );
 }
 
 void BiotPorosity::allocateConstitutiveData( Group & parent,
-                                             localIndex const numConstitutivePointsPerParentIndex )
+                                             localIndex const numPts )
 {
-  PorosityBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
-
   auto subregion = dynamic_cast< ElementSubRegionBase * >( &parent ); // TODO remove
 
   subregion->registerField< fields::porosity::biotCoefficient >( &m_biotCoefficient );
@@ -72,9 +70,11 @@ void BiotPorosity::allocateConstitutiveData( Group & parent,
   subregion->registerField< fields::porosity::thermalExpansionCoefficient >( &m_thermalExpansionCoefficient );
 
   subregion->registerField< fields::porosity::meanTotalStressIncrement_k >( &m_meanTotalStressIncrement_k ).
-    reference().resizeDimension< 1 >( numConstitutivePointsPerParentIndex );
+    reference().resizeDimension< 1 >( numPts );
 
   subregion->registerField< fields::porosity::averageMeanTotalStressIncrement_k >( &m_averageMeanTotalStressIncrement_k );
+
+  PorosityBase::allocateConstitutiveData( parent, numPts );
 }
 
 void BiotPorosity::postInputInitialization()

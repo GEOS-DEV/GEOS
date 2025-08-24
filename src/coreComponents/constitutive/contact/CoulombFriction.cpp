@@ -58,10 +58,8 @@ void CoulombFriction::postInputInitialization()
 }
 
 void CoulombFriction::allocateConstitutiveData( dataRepository::Group & parent,
-                                                localIndex const numConstitutivePointsPerParentIndex )
+                                                localIndex const numPts )
 {
-  FrictionBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
-
   auto subregion = dynamic_cast< ElementSubRegionBase * >(&parent); // TODO remove
 
   // TODO use registerField
@@ -69,6 +67,8 @@ void CoulombFriction::allocateConstitutiveData( dataRepository::Group & parent,
     setApplyDefaultValue( 0.0 ).
     setDescription( "Elastic Slip" ).
     reference().resizeDimension< 1 >( 2 );
+
+  FrictionBase::allocateConstitutiveData( parent, numPts );
 }
 
 CoulombFrictionUpdates CoulombFriction::createKernelUpdates() const

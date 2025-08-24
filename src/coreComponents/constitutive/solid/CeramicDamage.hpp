@@ -420,7 +420,7 @@ public:
    * @param[in] name name of the instance in the catalog
    * @param[in] parent the group which contains this instance
    */
-  CeramicDamage( string const & name, Group * const parent );
+  CeramicDamage( string const & name, dataRepository::Group * const parent );
 
   /**
    * @name Static Factory Catalog members and functions
@@ -436,8 +436,7 @@ public:
 
   ///@}
 
-  virtual void allocateConstitutiveData( Group & parent,
-                                         localIndex const numConstitutivePointsPerParentIndex ) override;
+  virtual void allocateConstitutiveData( dataRepository::Group & parent, localIndex const numPts ) override;
 
   /**
    * Keys for data specified in this class.

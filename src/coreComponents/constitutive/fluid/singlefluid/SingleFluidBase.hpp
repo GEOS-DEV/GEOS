@@ -222,10 +222,10 @@ public:
    * @param name name of the group
    * @param parent pointer to parent group
    */
-  SingleFluidBase( string const & name, Group * const parent );
+  SingleFluidBase( string const & name, dataRepository::Group * const parent );
 
   virtual void allocateConstitutiveData( dataRepository::Group & parent,
-                                         localIndex const numConstitutivePointsPerParentIndex ) override;
+                                         localIndex const numPts ) override;
 
   virtual void saveConvergedState() const override;
 
