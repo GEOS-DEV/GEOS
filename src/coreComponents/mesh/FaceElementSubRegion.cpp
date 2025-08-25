@@ -47,7 +47,7 @@ FaceElementSubRegion::FaceElementSubRegion( string const & name,
     setDescription( "Map to the faces attached to each FaceElement." ).
     reference().resize( 0, 2 );
 
-  registerWrapper( viewKeyStruct::edgesTofractureConnectorsEdgesString(), &m_edgesTo2dFaces ).
+  registerWrapper( viewKeyStruct::edgesToFractureConnectorsEdgesString(), &m_edgesTo2dFaces ).
     setPlotLevel( PlotLevel::NOPLOT ).
     setDescription( "A map of edge local indices to the fracture connector local indices." ).
     setSizedFromParent( 0 );

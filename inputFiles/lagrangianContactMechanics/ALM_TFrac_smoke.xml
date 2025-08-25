@@ -9,7 +9,6 @@
     gravityVector="{0.0, 0.0, 0.0}">
     <SolidMechanicsAugmentedLagrangianContact
       name="AugmentedLagrangian"
-      timeIntegrationOption="QuasiStatic"
       logLevel="2"
       discretization="FE1"
       targetRegions="{ Region, Fracture }">
