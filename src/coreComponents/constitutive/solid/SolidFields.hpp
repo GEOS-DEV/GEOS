@@ -50,12 +50,12 @@ DECLARE_FIELD( oldStress,
                NO_WRITE,
                "Previous material stress" );
 
-DECLARE_FIELD( density,
-               "density",
+DECLARE_FIELD( solidDensity,
+               "solidDensity",
                array2d< real64 >,
                0,
-               LEVEL_0,
-               WRITE_AND_READ,
+               NOPLOT,
+               NO_WRITE,
                "Material density" );
 
 DECLARE_FIELD( bulkModulus,
@@ -119,7 +119,7 @@ DECLARE_FIELD( jacobian,
                array2d< real64 >,
                1.0,
                NOPLOT,
-               WRITE_AND_READ,
+               NO_WRITE,
                "Jacobian of the deformation" );
 
 DECLARE_FIELD( lengthScale,
@@ -310,16 +310,16 @@ DECLARE_FIELD( state,
                "state",
                array2d< real64 >,
                0,
-               NOPLOT,
-               NO_WRITE,
+               LEVEL_0,
+               WRITE_AND_READ,
                "Material state" );
 
 DECLARE_FIELD( oldState,
                "oldState",
                array2d< real64 >,
                0,
-               LEVEL_0,
-               WRITE_AND_READ,
+               NOPLOT,
+               NO_WRITE,
                "Old material state" );
 
 // TODO merge in one

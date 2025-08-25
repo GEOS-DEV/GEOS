@@ -50,7 +50,7 @@ SolidBase::SolidBase( string const & name, Group * const parent ):
   registerField< fields::solid::oldStress >( &m_oldStress ).
     setDimLabels( 2, voightLabels );
 
-  registerField< fields::solid::density >( &m_density );
+  registerField< fields::solid::solidDensity >( &m_density );
 
   registerField< fields::solid::thermalExpansionCoefficient >( &m_thermalExpansionCoefficient );
 }
@@ -58,7 +58,7 @@ SolidBase::SolidBase( string const & name, Group * const parent ):
 
 void SolidBase::postInputInitialization()
 {
-  getWrapper< array2d< real64 > >( fields::solid::density::key() ).
+  getWrapper< array2d< real64 > >( fields::solid::solidDensity::key() ).
     setApplyDefaultValue( m_defaultDensity );
 
   getWrapper< array1d< real64 > >( fields::solid::thermalExpansionCoefficient::key() ).
