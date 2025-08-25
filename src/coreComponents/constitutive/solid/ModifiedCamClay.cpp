@@ -26,14 +26,7 @@ namespace constitutive
 {
 
 ModifiedCamClay::ModifiedCamClay( string const & name, Group * const parent ):
-  ElasticIsotropicPressureDependent( name, parent ),
-  m_defaultVirginCompressionIndex(),
-  m_defaultCslSlope(),
-  m_defaultPreConsolidationPressure(),
-  m_virginCompressionIndex(),
-  m_cslSlope(),
-  m_newPreConsolidationPressure(),
-  m_oldPreConsolidationPressure()
+  ElasticIsotropicPressureDependent( name, parent )
 {
   // register default values
 

@@ -26,9 +26,7 @@ namespace constitutive
 {
 
 PerfectlyPlastic::PerfectlyPlastic( string const & name, Group * const parent ):
-  ElasticIsotropic( name, parent ),
-  m_defaultYieldStress(),
-  m_yieldStress()
+  ElasticIsotropic( name, parent )
 {
   // register default values
   registerWrapper( viewKeyStruct::defaultYieldStressString(), &m_defaultYieldStress ).

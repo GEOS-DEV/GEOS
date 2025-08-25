@@ -26,19 +26,7 @@ namespace constitutive
 {
 
 DruckerPragerExtended::DruckerPragerExtended( string const & name, Group * const parent ):
-  ElasticIsotropic( name, parent ),
-  m_defaultInitialFrictionAngle(),
-  m_defaultResidualFrictionAngle(),
-  m_defaultDilationRatio(),
-  m_defaultCohesion(),
-  m_defaultHardening(),
-  m_initialFriction(),
-  m_residualFriction(),
-  m_dilationRatio(),
-  m_pressureIntercept(),
-  m_hardening(),
-  m_newState(),
-  m_oldState()
+  ElasticIsotropic( name, parent )
 {
   // register default values
 

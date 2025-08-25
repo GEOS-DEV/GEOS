@@ -26,25 +26,7 @@ namespace constitutive
 {
 
 ElasticOrthotropic::ElasticOrthotropic( string const & name, Group * const parent ):
-  SolidBase( name, parent ),
-  m_defaultE1(),
-  m_defaultE2(),
-  m_defaultE3(),
-  m_defaultNu12(),
-  m_defaultNu13(),
-  m_defaultNu23(),
-  m_defaultG12(),
-  m_defaultG13(),
-  m_defaultG23(),
-  m_c11(),
-  m_c12(),
-  m_c13(),
-  m_c22(),
-  m_c23(),
-  m_c33(),
-  m_c44(),
-  m_c55(),
-  m_c66()
+  SolidBase( name, parent )
 {
   registerWrapper( viewKeyStruct::defaultE1String(), &m_defaultE1 ).
     setApplyDefaultValue( -1 ).

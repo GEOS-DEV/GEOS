@@ -28,26 +28,7 @@ namespace constitutive
 
 template< typename BASE >
 Damage< BASE >::Damage( string const & name, Group * const parent ):
-  BASE( name, parent ),
-  m_newDamage(),
-  m_oldDamage(),
-  m_damageGrad(),
-  m_strainEnergyDensity(),
-  m_volStrain(),
-  m_extDrivingForce(),
-  m_lengthScale(),
-  m_defaultCriticalFractureEnergy(),
-  m_criticalStrainEnergy(),
-  m_degradationLowerLimit( 0.0 ),
-  m_extDrivingForceFlag( 0 ),
-  m_defaultTensileStrength(),
-  m_defaultCompressStrength(),
-  m_defaultDeltaCoefficient(),
-  m_biotCoefficient(),
-  m_criticalFractureEnergy(),
-  m_tensileStrength(),
-  m_compressStrength(),
-  m_deltaCoefficient()
+  BASE( name, parent )
 {
   this->registerWrapper( viewKeyStruct::newDamageString(), &m_newDamage ).
     setApplyDefaultValue( 0.0 ).

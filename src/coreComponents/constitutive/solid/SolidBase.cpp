@@ -28,11 +28,7 @@ namespace constitutive
 {
 
 SolidBase::SolidBase( string const & name, Group * const parent ):
-  ConstitutiveBase( name, parent ),
-  m_newStress( 0, 0, 6 ),
-  m_oldStress( 0, 0, 6 ),
-  m_density(),
-  m_thermalExpansionCoefficient()
+  ConstitutiveBase( name, parent )
 {
   string const voightLabels[6] = { "XX", "YY", "ZZ", "YZ", "XZ", "XY" };
 

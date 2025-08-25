@@ -26,11 +26,7 @@ namespace constitutive
 {
 
 ElasticIsotropic::ElasticIsotropic( string const & name, Group * const parent ):
-  SolidBase( name, parent ),
-  m_defaultBulkModulus(),
-  m_defaultShearModulus(),
-  m_bulkModulus(),
-  m_shearModulus()
+  SolidBase( name, parent )
 {
   registerWrapper( viewKeyStruct::defaultBulkModulusString(), &m_defaultBulkModulus ).
     setApplyDefaultValue( -1 ).

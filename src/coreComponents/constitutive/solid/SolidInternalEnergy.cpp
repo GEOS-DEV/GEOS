@@ -28,13 +28,7 @@ namespace constitutive
 {
 
 SolidInternalEnergy::SolidInternalEnergy( string const & name, Group * const parent ):
-  ConstitutiveBase( name, parent ),
-  m_internalEnergy(),
-  m_dInternalEnergy_dTemperature(),
-  m_referenceVolumetricHeatCapacity(),
-  m_dVolumetricHeatCapacity_dTemperature(),
-  m_referenceTemperature(),
-  m_referenceInternalEnergy()
+  ConstitutiveBase( name, parent )
 {
   registerWrapper( viewKeyStruct::internalEnergyString(), &m_internalEnergy ).
     setPlotLevel( PlotLevel::LEVEL_0 ).

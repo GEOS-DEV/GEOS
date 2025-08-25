@@ -28,9 +28,7 @@ namespace constitutive
 {
 
 PressurePorosity::PressurePorosity( string const & name, Group * const parent ):
-  PorosityBase( name, parent ),
-  m_referencePressure(),
-  m_compressibility()
+  PorosityBase( name, parent )
 {
   registerWrapper( viewKeyStruct::referencePressureString(), &m_referencePressure ).
     setInputFlag( InputFlags::REQUIRED ).

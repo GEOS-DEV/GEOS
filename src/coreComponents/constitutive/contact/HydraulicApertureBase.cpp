@@ -29,8 +29,7 @@ namespace constitutive
 
 HydraulicApertureBase::HydraulicApertureBase( string const & name,
                                               Group * const parent ):
-  ConstitutiveBase( name, parent ),
-  m_aperture0( 0.0 )
+  ConstitutiveBase( name, parent )
 {
   /// TODO: must become a required parameter.
   registerWrapper( viewKeyStruct::apertureZeroString(), &m_aperture0 ).

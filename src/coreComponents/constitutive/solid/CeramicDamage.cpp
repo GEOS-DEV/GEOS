@@ -26,14 +26,7 @@ namespace constitutive
 {
 
 CeramicDamage::CeramicDamage( string const & name, Group * const parent ):
-  ElasticIsotropic( name, parent ),
-  m_damage(),
-  m_jacobian(),
-  m_lengthScale(),
-  m_tensileStrength(),
-  m_compressiveStrength(),
-  m_maximumStrength(),
-  m_crackSpeed()
+  ElasticIsotropic( name, parent )
 {
   // register default values
   registerWrapper( viewKeyStruct::tensileStrengthString(), &m_tensileStrength ).

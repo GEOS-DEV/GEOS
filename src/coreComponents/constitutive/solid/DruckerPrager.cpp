@@ -26,16 +26,7 @@ namespace constitutive
 {
 
 DruckerPrager::DruckerPrager( string const & name, Group * const parent ):
-  ElasticIsotropic( name, parent ),
-  m_defaultFrictionAngle(),
-  m_defaultDilationAngle(),
-  m_defaultCohesion(),
-  m_defaultHardening(),
-  m_friction(),
-  m_dilation(),
-  m_hardening(),
-  m_newCohesion(),
-  m_oldCohesion()
+  ElasticIsotropic( name, parent )
 {
   // register default values
 

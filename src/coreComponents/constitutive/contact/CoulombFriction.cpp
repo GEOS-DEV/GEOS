@@ -28,10 +28,7 @@ namespace constitutive
 {
 
 CoulombFriction::CoulombFriction( string const & name, Group * const parent ):
-  FrictionBase( name, parent ),
-  m_cohesion(),
-  m_frictionCoefficient(),
-  m_elasticSlip()
+  FrictionBase( name, parent )
 {
   registerWrapper( viewKeyStruct::shearStiffnessString(), &m_shearStiffness ).
     setInputFlag( InputFlags::OPTIONAL ).
