@@ -486,7 +486,7 @@
 		<!--fractureStencil => (no description available)-->
 		<xsd:attribute name="fractureStencil" type="geos_SurfaceElementStencil" />
 		<!--targetRegions => List of regions to build the stencil for-->
-		<xsd:attribute name="targetRegions" type="geos_mapBase_lt_string_cm_-geos_internal_StdVectorWrapper_lt_string_cm_-std_allocator_lt_string-_gt__cm_-true_gt__cm_-std_integral_constant_lt_bool_cm_-true_gt_-_gt_" />
+		<xsd:attribute name="targetRegions" type="geos_mapBase_lt_string_cm_-geos_internal_StdVectorWrapper_lt_string_cm_-std_allocator_lt_string-_gt__cm_-false_gt__cm_-std_integral_constant_lt_bool_cm_-true_gt_-_gt_" />
 	</xsd:complexType>
 	<xsd:complexType name="OutputsType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -1441,12 +1441,13 @@
 			<xsd:element name="MeshBodies" type="MeshBodiesType" />
 		</xsd:choice>
 		<!--Neighbors => (no description available)-->
-		<xsd:attribute name="Neighbors" type="geos_internal_StdVectorWrapper_lt_geos_NeighborCommunicator_cm_-std_allocator_lt_geos_NeighborCommunicator_gt__cm_-true_gt_" />
+		<xsd:attribute name="Neighbors" type="geos_internal_StdVectorWrapper_lt_geos_NeighborCommunicator_cm_-std_allocator_lt_geos_NeighborCommunicator_gt__cm_-false_gt_" />
 		<!--partitionManager => (no description available)-->
 		<xsd:attribute name="partitionManager" type="geos_PartitionBase" />
 	</xsd:complexType>
 	<xsd:complexType name="ConstitutiveType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="BartonBandis" type="BartonBandisType" />
 			<xsd:element name="BiotPorosity" type="BiotPorosityType" />
 			<xsd:element name="BlackOilFluid" type="BlackOilFluidType" />
 			<xsd:element name="BrooksCoreyBakerRelativePermeability" type="BrooksCoreyBakerRelativePermeabilityType" />
@@ -1539,6 +1540,7 @@
 			<xsd:element name="WillisRichardsPermeability" type="WillisRichardsPermeabilityType" />
 		</xsd:choice>
 	</xsd:complexType>
+	<xsd:complexType name="BartonBandisType" />
 	<xsd:complexType name="BiotPorosityType">
 		<!--averageMeanTotalStressIncrement_k => Mean total stress increment averaged over quadrature points at the previous sequential iteration-->
 		<xsd:attribute name="averageMeanTotalStressIncrement_k" type="real64_array" />
