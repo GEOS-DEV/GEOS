@@ -105,8 +105,7 @@ real64 GravityFE::explicitStepModeling( real64 const & time_n,
                                         DomainPartition & domain )
 {
   GEOS_MARK_FUNCTION;
-
-  int const rank = MpiWrapper::commRank( MPI_COMM_GEOS );
+  GEOS_UNUSED_VAR( time_n, cycleNumber );
 
   array1d< real64 > localGzAtStations( m_stationCoordinates.size( 0 ) );
   localGzAtStations.setValues< parallelHostPolicy >( 0. );
@@ -224,12 +223,6 @@ real64 GravityFE::explicitStepModeling( real64 const & time_n,
     }
   }
 
-  // Dump result to disk...
-  if( (rank==0) &&  ( this->m_outputGz == 1 ))
-  {
-    GravitySolverBase::saveGz( time_n, cycleNumber, this->m_outputGzBasename, gzAtStations );
-  }
-
   return dt;
 }
 
@@ -335,14 +328,14 @@ localIndex GravityFE::getNumScatterPoints() const
   {
     return 0;
   }
-  
-  return m_stationCoordinates.size(0);  // Return number of rows (stations)
+
+  return m_stationCoordinates.size( 0 );  // Return number of rows (stations)
 }
 
 array1d< real64 > const & GravityFE::getScatterData() const
 {
- GEOS_ASSERT( m_gzAtStations.size() == m_stationCoordinates.size(0) );
- return m_gzAtStations;
+  GEOS_ASSERT( m_gzAtStations.size() == m_stationCoordinates.size( 0 ) );
+  return m_gzAtStations;
 }
 
 array2d< real64 > const & GravityFE::getScatterCoordinates() const

@@ -52,6 +52,8 @@ double analyticPrismGz( const std::array< double, 3 > & station,
                         double density_contrast )
 {
   const double x = station[0];
+
+
   const double y = station[1];
   const double z = station[2];
 
@@ -129,8 +131,7 @@ protected:
         << "<Problem>\n"
         << "  <Solvers>\n"
         << "    <GravityFE name=\"gravity\" discretization=\"FE1\" targetRegions=\"{ region }\"\n"
-        << "      mode=\"modeling\" stationCoordinates=\"" << coords.str() << "\"\n"
-        << "      outputGz=\"1\" outputGzBasename=\"test_gravity\"/>\n"
+        << "      mode=\"modeling\" stationCoordinates=\"" << coords.str() <<"\"/>\n"
         << "  </Solvers>\n"
         << "  <Mesh>\n"
         << "    <InternalMesh name=\"mesh1\" elementTypes=\"{ C3D8 }\"\n"

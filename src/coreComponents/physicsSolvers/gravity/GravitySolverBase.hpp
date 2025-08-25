@@ -102,17 +102,8 @@ protected:
                                       integer const cycleNumber,
                                       DomainPartition & domain ) = 0;
 
-  void saveGz( real64 const & time_n,
-               integer const cycleNumber,
-               string const basename,
-               arrayView1d< real64 > const & gzAtStations );
-
   /// Coordinates of the gravimeter stations
   array2d< real64 > m_stationCoordinates;
-
-  /// Dump vertical component Gz to disk
-  localIndex m_outputGz;
-  string m_outputGzBasename;
 
   /// Residue observed at station (only for adjoint computation)
   array1d< real64 > m_residue;
