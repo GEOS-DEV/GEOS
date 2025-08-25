@@ -32,11 +32,7 @@ namespace constitutive
 
 
 ProppantPermeability::ProppantPermeability( string const & name, Group * const parent ):
-  PermeabilityBase( name, parent ),
-  m_permeabilityMultiplier(),
-  m_proppantDiameter(),
-  m_maxProppantConcentration(),
-  m_proppantPackPermeability()
+  PermeabilityBase( name, parent )
 {
   registerWrapper( viewKeyStruct::maxProppantConcentrationString(), &m_maxProppantConcentration ).
     setInputFlag( InputFlags::REQUIRED ).

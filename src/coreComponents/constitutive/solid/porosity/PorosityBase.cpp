@@ -31,14 +31,7 @@ namespace constitutive
 
 
 PorosityBase::PorosityBase( string const & name, Group * const parent ):
-  ConstitutiveBase( name, parent ),
-  m_newPorosity(),
-  m_porosity_n(),
-  m_dPorosity_dPressure(),
-  m_dPorosity_dTemperature(),
-  m_initialPorosity(),
-  m_referencePorosity(),
-  m_defaultReferencePorosity()
+  ConstitutiveBase( name, parent )
 {
   registerWrapper( viewKeyStruct::defaultReferencePorosityString(), &m_defaultReferencePorosity ).
     setInputFlag( InputFlags::REQUIRED ).

@@ -202,7 +202,6 @@
     <!-- Injection pressure: ~100 bar -->
     <FieldSpecification
       name="sourceTermPressure"
-      logLevel="1"
       objectPath="faceManager"
       fieldName="pressure"
       scale="1e7"
@@ -241,7 +240,6 @@
     <!-- Production pressure: ~50 bar, -->
     <FieldSpecification
       name="sinkTermPressure"
-      logLevel="1"
       objectPath="faceManager"
       fieldName="pressure"
       scale="5e6"

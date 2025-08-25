@@ -30,9 +30,7 @@ namespace constitutive
 {
 
 CompressibleSinglePhaseFluid::CompressibleSinglePhaseFluid( string const & name, Group * const parent ):
-  SingleFluidBase( name, parent ),
-  m_densityModelType( ExponentApproximationType::Linear ),
-  m_viscosityModelType( ExponentApproximationType::Linear )
+  SingleFluidBase( name, parent )
 {
   registerWrapper( viewKeyStruct::defaultDensityString(), &m_defaultDensity ).
     setInputFlag( InputFlags::REQUIRED ).
@@ -68,12 +66,12 @@ CompressibleSinglePhaseFluid::CompressibleSinglePhaseFluid( string const & name,
     setDescription( "Reference fluid viscosity" );
 
   registerWrapper( viewKeyStruct::densityModelTypeString(), &m_densityModelType ).
-    setApplyDefaultValue( m_densityModelType ).
+    setApplyDefaultValue( ExponentApproximationType::Linear ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Type of density model. Valid options:\n* " + EnumStrings< ExponentApproximationType >::concat( "\n* " ) );
 
   registerWrapper( viewKeyStruct::viscosityModelTypeString(), &m_viscosityModelType ).
-    setApplyDefaultValue( m_viscosityModelType ).
+    setApplyDefaultValue( ExponentApproximationType::Linear ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Type of viscosity model. Valid options:\n* " + EnumStrings< ExponentApproximationType >::concat( "\n* " ) );
 

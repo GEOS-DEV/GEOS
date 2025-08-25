@@ -30,8 +30,7 @@ namespace constitutive
 
 
 CarmanKozenyPermeability::CarmanKozenyPermeability( string const & name, Group * const parent ):
-  PermeabilityBase( name, parent ),
-  m_anisotropy{ 1.0, 1.0, 1.0 }
+  PermeabilityBase( name, parent )
 {
   registerWrapper( viewKeyStruct::particleDiameterString(), &m_particleDiameter ).
     setInputFlag( InputFlags::REQUIRED ).
@@ -43,7 +42,7 @@ CarmanKozenyPermeability::CarmanKozenyPermeability( string const & name, Group *
 
   registerWrapper( viewKeyStruct::anisotropyString(), &m_anisotropy ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDefaultValue( m_anisotropy ).
+    setApplyDefaultValue( { 1.0, 1.0, 1.0 } ).
     setDescription( "Anisotropy factors for three permeability components." );
 }
 

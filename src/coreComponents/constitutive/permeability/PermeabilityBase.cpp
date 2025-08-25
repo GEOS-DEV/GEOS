@@ -31,9 +31,7 @@ namespace constitutive
 
 
 PermeabilityBase::PermeabilityBase( string const & name, Group * const parent ):
-  ConstitutiveBase( name, parent ),
-  m_permeability(),
-  m_dPerm_dPressure()
+  ConstitutiveBase( name, parent )
 {}
 
 void PermeabilityBase::scaleHorizontalPermeability( arrayView1d< real64 const > scalingFactors ) const
