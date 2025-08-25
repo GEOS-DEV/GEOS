@@ -149,7 +149,7 @@ public:
   }
 
   GEOS_HOST_DEVICE
-  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
   static constexpr void generatePointsCoordinates( real64 (& coords)[numNodes][3] )
   {
     // Generate the coordinates of the support points based on the order
@@ -164,10 +164,6 @@ public:
     else if constexpr (ORDER == 2)
     {
       //TODO
-    }
-    else
-    {
-      GEOS_ERROR( "Unsupported order for Pk_Pyramid_BCD" );
     }
 
   }
@@ -888,8 +884,8 @@ public:
     constexpr real64 GLeQuadraturePoints[3] = { -0.7745966692, 0.0, 0.7745966692 };
     constexpr real64 GLeQuadratureWeights[3] = { 0.5555555556, 0.8888888889, 0.5555555556 };
     // Gauss-Jacobi points and weights for the quadrature
-    constexpr real64 GJQuadraturePoints[3] = { 0.07299, 0.34700, 0.70500 };
-    constexpr real64 GJQuadratureWeights[3] = { 0.15714, 0.14625, 0.02995 };
+    constexpr  real64 GJQuadraturePoints[3] = { 0.07299, 0.34700, 0.70500 };
+    constexpr  real64 GJQuadratureWeights[3] = { 0.15714, 0.14625, 0.02995 };
 
 
 
