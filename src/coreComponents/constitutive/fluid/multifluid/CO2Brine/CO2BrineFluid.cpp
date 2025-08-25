@@ -215,8 +215,6 @@ void CO2BrineFluid< PHASE1, PHASE2, FLASH >::postInputInitialization()
 {
   MultiFluidBase::postInputInitialization();
 
-  m_writeInLog = isLogLevelActive< logInfo::TableLogOutput >( this->getLogLevel() );
-
   GEOS_THROW_IF_NE_MSG( numFluidPhases(), 2,
                         GEOS_FMT( "{}: invalid number of phases", getFullName() ),
                         InputError );
@@ -341,8 +339,8 @@ void CO2BrineFluid< PHASE1, PHASE2, FLASH >::createPVTModels()
   // then, we are ready to instantiate the phase models
   bool const isClone = this->isClone();
   TableFunction::OutputOptions const outputOpts = {
-    !isClone && m_writeCSV,  // writeCSV
-    !isClone && m_writeInLog // writeInLog
+    !isClone && m_writeCSV, // writeCSV
+    !isClone && isLogLevelActive< logInfo::TableLogOutput >( this->getLogLevel()) // writeInLog
   };
 
   m_phase1 = std::make_unique< PHASE1 >( getName() + "_phaseModel1",

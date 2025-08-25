@@ -210,9 +210,6 @@ private:
   /// Output csv file containing informations about PVT
   integer m_writeCSV;
 
-  /// Write PVT tables in log
-  bool m_writeInLog;
-
   ///
   integer m_checkPhasePresence;
 

@@ -127,8 +127,6 @@ void ReactiveBrineFluid< PHASE > ::postInputInitialization()
 {
   ReactiveMultiFluid::postInputInitialization();
 
-  m_writeInLog = isLogLevelActive< logInfo::TableLogOutput >( this->getLogLevel() );
-
   GEOS_THROW_IF_NE_MSG( numFluidPhases(), 1,
                         GEOS_FMT( "{}: invalid number of phases", getFullName() ),
                         InputError );
@@ -207,8 +205,8 @@ void ReactiveBrineFluid< PHASE > ::createPVTModels()
 
   bool const isClone = this->isClone();
   TableFunction::OutputOptions const pvtOutputOpts = {
-    !isClone && m_writeCSV,  // writeCSV
-    !isClone && m_writeInLog // writeInLog
+    !isClone && m_writeCSV, // writeCSV
+    !isClone && isLogLevelActive< logInfo::TableLogOutput >( this->getLogLevel()) // writeInLog
   };
 
   // then, we are ready to instantiate the phase models
