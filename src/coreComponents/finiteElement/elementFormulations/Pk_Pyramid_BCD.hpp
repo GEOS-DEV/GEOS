@@ -117,8 +117,7 @@ public:
 
 
 
-
-    /**
+  /**
    * @brief Get the number of modal points.
    * @param stack Object that holds stack variables.
    * @return The number of modal points.
@@ -132,7 +131,7 @@ public:
   }
 
 
-    /**
+  /**
    * @brief The linear index associated to the given one-dimensional indices in the three directions
    * @param qa The index in the first direction
    * @param qb The index in the second direction
@@ -145,9 +144,10 @@ public:
   {
     localIndex index = 0;
 
-    for (int l = 0; l < qc; ++l) {
-        int n = order + 1 - l;
-        index += n * n;
+    for( int l = 0; l < qc; ++l )
+    {
+      int n = order + 1 - l;
+      index += n * n;
     }
     int n_k = order + 1 - qc;
     index += qa + qb * n_k;
@@ -157,7 +157,7 @@ public:
 
   GEOS_HOST_DEVICE
   GEOS_HOST_DEVICE
-  static constexpr void generatePointsCoordinates(real64 (&coords)[numNodes][3])
+  static constexpr void generatePointsCoordinates( real64 (& coords)[numNodes][3] )
   {
     // Generate the coordinates of the support points based on the order
     if constexpr (ORDER == 1)
@@ -184,20 +184,20 @@ public:
    * @brief Generate the indexes for the modal shape functions
    * @param func The function to call with the generated indexes
    */
-  template < typename FUNC >
+  template< typename FUNC >
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
-  static constexpr void generateIndexes(FUNC && func)
+  static constexpr void generateIndexes( FUNC && func )
   {
 
-    for (localIndex i = 0; i <= ORDER; ++i)
+    for( localIndex i = 0; i <= ORDER; ++i )
     {
-      for (localIndex j = 0; j <= ORDER; ++j)
+      for( localIndex j = 0; j <= ORDER; ++j )
       {
-        localIndex maxIj = LvArray::math::max(i, j);
-        for (localIndex k = 0; k <= ORDER - maxIj; ++k)
+        localIndex maxIj = LvArray::math::max( i, j );
+        for( localIndex k = 0; k <= ORDER - maxIj; ++k )
         {
-          func(i, j, k);
+          func( i, j, k );
         }
       }
 
@@ -303,16 +303,16 @@ public:
    */
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
-  static constexpr real64 EvaluateJacobiPolynomial(localIndex const n, real64 const alpha, real64 const beta, real64 const x)
+  static constexpr real64 EvaluateJacobiPolynomial( localIndex const n, real64 const alpha, real64 const beta, real64 const x )
   {
 
-    if (n == 0)
+    if( n == 0 )
     {
-        real64 val = 1.0;
-        return val;
+      real64 val = 1.0;
+      return val;
     }
 
-    if (n == 1)
+    if( n == 1 )
     {
       real64 val = 0.5 * (alpha - beta + (alpha + beta + 2) * x);
       return val;
@@ -324,22 +324,22 @@ public:
     real64 P_current = 0.0;
 
     // Recurrence relation to compute the Jacobi polynomial
-    for (int k = 2; k < n+1; ++k)
+    for( int k = 2; k < n+1; ++k )
     {
-        real64 a_k = 2 * k * (k + alpha + beta) * (2 * k + alpha + beta - 2);
-        real64 b_k = (2 * k + alpha + beta - 1) * (alpha * alpha - beta * beta);
-        real64 c_k = (2 * k + alpha + beta - 1) * (2 * k + alpha + beta) * (2 * k + alpha + beta - 2);
-        real64 d_k = 2 * (k + alpha - 1) * (k + beta - 1) * (2 * k + alpha + beta);
+      real64 a_k = 2 * k * (k + alpha + beta) * (2 * k + alpha + beta - 2);
+      real64 b_k = (2 * k + alpha + beta - 1) * (alpha * alpha - beta * beta);
+      real64 c_k = (2 * k + alpha + beta - 1) * (2 * k + alpha + beta) * (2 * k + alpha + beta - 2);
+      real64 d_k = 2 * (k + alpha - 1) * (k + beta - 1) * (2 * k + alpha + beta);
 
-        P_current = ((b_k + c_k * x) * P_prev1 - d_k * P_prev2) / a_k;
+      P_current = ((b_k + c_k * x) * P_prev1 - d_k * P_prev2) / a_k;
 
-        // Mise à jour pour l'itération suivante
-        P_prev2 = P_prev1;
-        P_prev1 = P_current;
+      // Mise à jour pour l'itération suivante
+      P_prev2 = P_prev1;
+      P_prev1 = P_current;
     }
 
     return P_current;
-}
+  }
 /**
  * @brief Evaluate the derivative of the Jacobi polynomial at a point x.
  * @param n The degree of the polynomial.
@@ -350,23 +350,24 @@ public:
  */
 
 
-GEOS_HOST_DEVICE
-GEOS_FORCE_INLINE
-static constexpr real64 EvaluateJacobiPolynomialDerivative(localIndex const n, real64 const alpha, real64 const beta, real64 const x)
-{
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
+  static constexpr real64 EvaluateJacobiPolynomialDerivative( localIndex const n, real64 const alpha, real64 const beta, real64 const x )
+  {
 
 
     // Particular case for n = 0
-    if (n == 0) {
-        return 0.0;
+    if( n == 0 )
+    {
+      return 0.0;
     }
 
     // dP_n^{(alpha,beta)}(x)/dx = (n+alpha+beta+1)/2 * P_{n-1}^{(alpha+1,beta+1)}(x)
     real64 coeff = 0.5 * (n + alpha + beta + 1.0);
-    real64 jacobi_nm1 = EvaluateJacobiPolynomial(n-1, alpha+1.0, beta+1.0, x);
+    real64 jacobi_nm1 = EvaluateJacobiPolynomial( n-1, alpha+1.0, beta+1.0, x );
 
     return coeff * jacobi_nm1;
-}
+  }
 
   /**
    * @brief Calculate modal base functions values for a modal point (i,j,k) at a
@@ -377,7 +378,7 @@ static constexpr real64 EvaluateJacobiPolynomialDerivative(localIndex const n, r
    */
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
-  static constexpr real64 calcModal(localIndex const i, localIndex const j, localIndex const k, real64 const (&X)[3])
+  static constexpr real64 calcModal( localIndex const i, localIndex const j, localIndex const k, real64 const (&X)[3] )
   {
 
     real64 const x = X[0];
@@ -385,53 +386,18 @@ static constexpr real64 EvaluateJacobiPolynomialDerivative(localIndex const n, r
     real64 const z = X[2];
 
     real64 const epsilon = 1e-10; // Small value to avoid compairing floating point numbers directly
-    if (LvArray::math::abs(z-1.0) < epsilon)
+    if( LvArray::math::abs( z-1.0 ) < epsilon )
     {
-      if (i == 0 && j == 0)
+      if( i == 0 && j == 0 )
       {
         return (k+2)*(k+1)/2.0;
       }
-
       else
       {
         return 0.0;
       }
     }
-    else if (z > 1.0 || z < 0.0)
-    {
-      GEOS_ERROR( "Invalid z coordinate for pyramid shape function calculation." );
-    }
-
-      real64 xi = x / (1.0 - z);
-      real64 eta = y / (1.0 - z);
-      real64 chi = 2.0 * z - 1.0;
-      localIndex max_ij = LvArray::math::max(i, j);
-      real64 P_i = EvaluateJacobiPolynomial(i, 0.0, 0.0, xi);
-      real64 P_j = EvaluateJacobiPolynomial(j, 0.0, 0.0, eta);
-      real64 P_k = EvaluateJacobiPolynomial(k, 2.0 * max_ij+2.0, 0.0, chi);
-
-      return P_i * P_j * std::pow(1.0 - z, max_ij) * P_k;
-
-  }
-
-  GEOS_HOST_DEVICE
-  GEOS_FORCE_INLINE
-  static constexpr void calcGradModal( int i, int j, int k, real64 const (&X)[3],
-                                          real64 (& gradPsiX)[3] )
-  {
-    real64 x = X[0];
-    real64 y = X[1];
-    real64 z = X[2];
-
-    real64 const epsilon = 1e-10; // Small value to avoid compairing floating point numbers directly
-    if (LvArray::math::abs(z-1.0) < epsilon)
-    {
-      gradPsiX[0] = 0.0;
-      gradPsiX[1] = 0.0;
-      gradPsiX[2] = 0.0;
-      return;
-    }
-    else if (z > 1.0 || z < 0.0)
+    else if( z > 1.0 || z < 0.0 )
     {
       GEOS_ERROR( "Invalid z coordinate for pyramid shape function calculation." );
     }
@@ -439,15 +405,49 @@ static constexpr real64 EvaluateJacobiPolynomialDerivative(localIndex const n, r
     real64 xi = x / (1.0 - z);
     real64 eta = y / (1.0 - z);
     real64 chi = 2.0 * z - 1.0;
-    localIndex m = LvArray::math::max(i, j);
-    real64 P_i   = EvaluateJacobiPolynomial(i, 0.0, 0.0, xi);
-    real64 P_j   = EvaluateJacobiPolynomial(j, 0.0, 0.0, eta);
-    real64 P_k   = EvaluateJacobiPolynomial(k, 2.0 * m + 2.0, 0.0, chi);
-    real64 dP_i  = EvaluateJacobiPolynomialDerivative(i, 0.0, 0.0, xi);
-    real64 dP_j  = EvaluateJacobiPolynomialDerivative(j, 0.0, 0.0, eta);
-    real64 dP_k  = EvaluateJacobiPolynomialDerivative(k, 2.0 * m + 2.0, 0.0, chi);
+    localIndex max_ij = LvArray::math::max( i, j );
+    real64 P_i = EvaluateJacobiPolynomial( i, 0.0, 0.0, xi );
+    real64 P_j = EvaluateJacobiPolynomial( j, 0.0, 0.0, eta );
+    real64 P_k = EvaluateJacobiPolynomial( k, 2.0 * max_ij+2.0, 0.0, chi );
 
-    real64 f = pow(1.0 - z, m);
+    return P_i * P_j * std::pow( 1.0 - z, max_ij ) * P_k;
+
+  }
+
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
+  static constexpr void calcGradModal( int i, int j, int k, real64 const (&X)[3],
+                                       real64 (& gradPsiX)[3] )
+  {
+    real64 x = X[0];
+    real64 y = X[1];
+    real64 z = X[2];
+
+    real64 const epsilon = 1e-10; // Small value to avoid compairing floating point numbers directly
+    if( LvArray::math::abs( z-1.0 ) < epsilon )
+    {
+      gradPsiX[0] = 0.0;
+      gradPsiX[1] = 0.0;
+      gradPsiX[2] = 0.0;
+      return;
+    }
+    else if( z > 1.0 || z < 0.0 )
+    {
+      GEOS_ERROR( "Invalid z coordinate for pyramid shape function calculation." );
+    }
+
+    real64 xi = x / (1.0 - z);
+    real64 eta = y / (1.0 - z);
+    real64 chi = 2.0 * z - 1.0;
+    localIndex m = LvArray::math::max( i, j );
+    real64 P_i   = EvaluateJacobiPolynomial( i, 0.0, 0.0, xi );
+    real64 P_j   = EvaluateJacobiPolynomial( j, 0.0, 0.0, eta );
+    real64 P_k   = EvaluateJacobiPolynomial( k, 2.0 * m + 2.0, 0.0, chi );
+    real64 dP_i  = EvaluateJacobiPolynomialDerivative( i, 0.0, 0.0, xi );
+    real64 dP_j  = EvaluateJacobiPolynomialDerivative( j, 0.0, 0.0, eta );
+    real64 dP_k  = EvaluateJacobiPolynomialDerivative( k, 2.0 * m + 2.0, 0.0, chi );
+
+    real64 f = pow( 1.0 - z, m );
     // Gradient en x
     gradPsiX[0] = (1.0 / (1.0 - z)) * dP_i * P_j * f * P_k;
 
@@ -455,15 +455,15 @@ static constexpr real64 EvaluateJacobiPolynomialDerivative(localIndex const n, r
     gradPsiX[1] = (1.0 / (1.0 - z)) * dP_j * P_i * f * P_k;
 
     // Gradient en z
-    real64 dxi_dz  = x / std::pow(1.0 - z, 2);
-    real64 deta_dz = y / std::pow(1.0 - z, 2);
+    real64 dxi_dz  = x / std::pow( 1.0 - z, 2 );
+    real64 deta_dz = y / std::pow( 1.0 - z, 2 );
     real64 dchi_dz = 2.0;
-    real64 df_dz   = -m * std::pow(1.0 - z, m - 1);
+    real64 df_dz   = -m * std::pow( 1.0 - z, m - 1 );
     gradPsiX[2] =
-        dP_i * dxi_dz * P_j * f * P_k +
-        P_i * dP_j * deta_dz * f * P_k +
-        P_i * P_j * df_dz * P_k +
-        P_i * P_j * f * dP_k * dchi_dz;
+      dP_i * dxi_dz * P_j * f * P_k +
+      P_i * dP_j * deta_dz * f * P_k +
+      P_i * P_j * df_dz * P_k +
+      P_i * P_j * f * dP_k * dchi_dz;
 
 
   }
@@ -509,78 +509,78 @@ static constexpr real64 EvaluateJacobiPolynomialDerivative(localIndex const n, r
 
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
-  static constexpr void computeVanderMondeMatrix( array2d<real64> & VDM )
+  static constexpr void computeVanderMondeMatrix( array2d< real64 > & VDM )
   {
-    VDM.resize(numNodes, numNodes);
+    VDM.resize( numNodes, numNodes );
     real64 PsiX[numNodes] = {};
     real64 coords[numNodes][3] = {};
 
-    generatePointsCoordinates(coords);
+    generatePointsCoordinates( coords );
 
-    for (int j = 0; j < numNodes; ++j)
+    for( int j = 0; j < numNodes; ++j )
     {
       localIndex count = 0;
-        generateIndexes([&](localIndex const p, localIndex const r, localIndex const s)
-        {
-          PsiX[count]=calcModal(p, r, s, coords[j]);
-          VDM[count][j] = PsiX[count];
-          ++count;
-        } );
-   //   }
+      generateIndexes( [&]( localIndex const p, localIndex const r, localIndex const s )
+      {
+        PsiX[count]=calcModal( p, r, s, coords[j] );
+        VDM[count][j] = PsiX[count];
+        ++count;
+      } );
+      //   }
     }
   }
 
   /// Other possible version
-    /**
+  /**
    * @brief Evaluate shape functions of a linear pyramid (5-node) at a quadrature point.
    * @param[in] q A quadrature point index.
    * @param[out] N Array to store shape function values (array of size numNodes)
    */
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
-  static constexpr void calcN( localIndex q, real64 (&N)[numNodes])
+  static constexpr void calcN( localIndex q, real64 (& N)[numNodes] )
   {
 
-     array2d<real64> VDM;
-     VDM.resize(numModes, numNodes);
-     real64 PsiX[numNodes] = {0.0};
-     real64 coords[numNodes][3] = {{0.0}};
+    array2d< real64 > VDM;
+    VDM.resize( numModes, numNodes );
+    real64 PsiX[numNodes] = {0.0};
+    real64 coords[numNodes][3] = {{0.0}};
 
-     generatePointsCoordinates(coords);
+    generatePointsCoordinates( coords );
 
-  //   for (int j = 0; j < numNodes; ++j)
-  //   {
-  //     localIndex count = 0;
-  //    // for (int i = 0; i < numModes; ++i)
-  //    // {
-  //       //auto [p, q, r] = MODES[i];
-  //       generateIndexes([&](localIndex const p, localIndex const r, localIndex const s)
-  //       {
+    //   for (int j = 0; j < numNodes; ++j)
+    //   {
+    //     localIndex count = 0;
+    //    // for (int i = 0; i < numModes; ++i)
+    //    // {
+    //       //auto [p, q, r] = MODES[i];
+    //       generateIndexes([&](localIndex const p, localIndex const r, localIndex const s)
+    //       {
 
-  //         PsiX[count]=calcModal(p, r, s, coords[j]);
-  //         VDM[count][j] = PsiX[count];
-  //         ++count;
-  //       } );
-  //  //   }
-  //   }
+    //         PsiX[count]=calcModal(p, r, s, coords[j]);
+    //         VDM[count][j] = PsiX[count];
+    //         ++count;
+    //       } );
+    //  //   }
+    //   }
 
-    computeVanderMondeMatrix(VDM);
-    array2d<real64> VDM_inv;
-    VDM_inv.resize(numNodes, numNodes);
+    computeVanderMondeMatrix( VDM );
+    array2d< real64 > VDM_inv;
+    VDM_inv.resize( numNodes, numNodes );
     // Inversion of VanDerMonde matrix
     BlasLapackLA::matrixInverse( VDM, VDM_inv );
 
 
-     localIndex count = 0;
-      generateIndexes([&](localIndex const p, localIndex const r, localIndex const s)
-      {
-        PsiX[count] = calcModal(p, r, s, coords[q]);
-        ++count;
-      });
+    localIndex count = 0;
+    generateIndexes( [&]( localIndex const p, localIndex const r, localIndex const s )
+    {
+      PsiX[count] = calcModal( p, r, s, coords[q] );
+      ++count;
+    } );
 
 
 
-   // }
+    // }
 
     //real64 VDM_inv[numNodes][numNodes] = {{0}};
     // array2d<real64> VDM_inv;
@@ -588,57 +588,56 @@ static constexpr real64 EvaluateJacobiPolynomialDerivative(localIndex const n, r
     // Inversion of VanDerMonde matrix
     // BlasLapackLA::matrixInverse( VDM, VDM_inv );
 
-    for (int i = 0; i < numNodes; ++i)
+    for( int i = 0; i < numNodes; ++i )
     {
-     N[i] = 0.0;
-     for (int j = 0; j < numNodes; ++j)
-     {
-       N[i] += VDM_inv[i][j] * PsiX[j];
-     }
+      N[i] = 0.0;
+      for( int j = 0; j < numNodes; ++j )
+      {
+        N[i] += VDM_inv[i][j] * PsiX[j];
+      }
     }
 
   }
   /**
-  * @brief Evaluate shape functions of a linear pyramid (5-node) at a quadrature point.
-  * @param[in] X Coordinates in reference pyramid (array of size 3)
-  * @param[out] N Array to store shape function values (array of size numNodes)
-  */
+   * @brief Evaluate shape functions of a linear pyramid (5-node) at a quadrature point.
+   * @param[in] X Coordinates in reference pyramid (array of size 3)
+   * @param[out] N Array to store shape function values (array of size numNodes)
+   */
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
-  static constexpr void calcN( real64 const (&X)[3], real64 (&N)[numNodes])
+  static constexpr void calcN( real64 const (&X)[3], real64 (& N)[numNodes] )
   {
 
-    array2d<real64> VDM;
-    VDM.resize(numModes, numNodes);
+    array2d< real64 > VDM;
+    VDM.resize( numModes, numNodes );
     real64 PsiX[numNodes] = {};
-    real64 coords[numNodes][3] = {};
 
     //generatePointsCoordinates(coords);
 
-    computeVanderMondeMatrix(VDM);
+    computeVanderMondeMatrix( VDM );
 
     //for (int i = 0; i < numNodes; ++i)
     //{
-     // localIndex count = 0;
-     localIndex count = 0;
-      generateIndexes([&](localIndex const p, localIndex const r, localIndex const s)
-      {
-        PsiX[count] = calcModal(p, r, s, X);
-        ++count;
-      });
+    // localIndex count = 0;
+    localIndex count = 0;
+    generateIndexes( [&]( localIndex const p, localIndex const r, localIndex const s )
+    {
+      PsiX[count] = calcModal( p, r, s, X );
+      ++count;
+    } );
 
-   // }
+    // }
 
     //real64 VDM_inv[numNodes][numNodes] = {{0}};
-    array2d<real64> VDM_inv;
-    VDM_inv.resize(numNodes, numNodes);
+    array2d< real64 > VDM_inv;
+    VDM_inv.resize( numNodes, numNodes );
     // Inversion of VanDerMonde matrix
     BlasLapackLA::matrixInverse( VDM, VDM_inv );
 
-    for (int i = 0; i < numNodes; ++i)
+    for( int i = 0; i < numNodes; ++i )
     {
       N[i] = 0.0;
-      for (int j = 0; j < numNodes; ++j)
+      for( int j = 0; j < numNodes; ++j )
       {
         N[i] += VDM_inv[i][j] * PsiX[j];
       }
@@ -646,49 +645,49 @@ static constexpr real64 EvaluateJacobiPolynomialDerivative(localIndex const n, r
 
   }
 
-    /**
+  /**
    * @brief Evaluate shape functions of a linear pyramid (5-node) at a quadrature point.
    * @param[in] q A quadrature point index.
    * @param[out] gradN Array to store shape function derivatives (array of size numNodes x 3)
    */
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
-  static constexpr void calcGradN( localIndex q, real64 (&gradN)[numNodes][3])
+  static constexpr void calcGradN( localIndex q, real64 (& gradN)[numNodes][3] )
   {
 
-    array2d<real64> VDM;
-    VDM.resize(numModes, numNodes);
+    array2d< real64 > VDM;
+    VDM.resize( numModes, numNodes );
     real64 gradModal[numNodes][3] = {{}};
     real64 coords[numNodes][3] = {};
 
-    generatePointsCoordinates(coords);
-    computeVanderMondeMatrix(VDM);
-    array2d<real64> VDM_inv;
-    VDM_inv.resize(numNodes, numNodes);
+    generatePointsCoordinates( coords );
+    computeVanderMondeMatrix( VDM );
+    array2d< real64 > VDM_inv;
+    VDM_inv.resize( numNodes, numNodes );
     // Inversion of VanDerMonde matrix
     BlasLapackLA::matrixInverse( VDM, VDM_inv );
 
-   
+
 
     localIndex count = 0;
-    generateIndexes([&](localIndex const p, localIndex const r, localIndex const s)
+    generateIndexes( [&]( localIndex const p, localIndex const r, localIndex const s )
     {
-      calcGradModal(p, r, s, coords[q],gradModal[count]);
+      calcGradModal( p, r, s, coords[q], gradModal[count] );
       ++count;
-    });
+    } );
 
 
-    for (int i = 0; i < numNodes; ++i)
+    for( int i = 0; i < numNodes; ++i )
     {
       gradN[i][0] = 0.0;
       gradN[i][1] = 0.0;
       gradN[i][2] = 0.0;
-     for (int j = 0; j < numNodes; ++j)
-     {
+      for( int j = 0; j < numNodes; ++j )
+      {
         gradN[i][0] += VDM_inv[i][j] * gradModal[j][0];
         gradN[i][1] += VDM_inv[i][j] * gradModal[j][1];
         gradN[i][2] += VDM_inv[i][j] * gradModal[j][2];
-     }
+      }
     }
 
   }
@@ -700,37 +699,37 @@ static constexpr real64 EvaluateJacobiPolynomialDerivative(localIndex const n, r
    */
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
-  static constexpr void calcGradN( real64 const (&X)[3], real64 (&gradN)[numNodes][3])
+  static constexpr void calcGradN( real64 const (&X)[3], real64 (& gradN)[numNodes][3] )
   {
 
-    array2d<real64> VDM;
-    VDM.resize(numModes, numNodes);
+    array2d< real64 > VDM;
+    VDM.resize( numModes, numNodes );
     real64 gradModal[numNodes][3] = {{}};
-    computeVanderMondeMatrix(VDM);
-    array2d<real64> VDM_inv;
-    VDM_inv.resize(numNodes, numNodes);
+    computeVanderMondeMatrix( VDM );
+    array2d< real64 > VDM_inv;
+    VDM_inv.resize( numNodes, numNodes );
     // Inversion of VanDerMonde matrix
     BlasLapackLA::matrixInverse( VDM, VDM_inv );
 
     localIndex count = 0;
-    generateIndexes([&](localIndex const p, localIndex const r, localIndex const s)
+    generateIndexes( [&]( localIndex const p, localIndex const r, localIndex const s )
     {
-      calcGradModal(p, r, s, X,gradModal[count]);
+      calcGradModal( p, r, s, X, gradModal[count] );
       ++count;
-    });
+    } );
 
 
-    for (int i = 0; i < numNodes; ++i)
+    for( int i = 0; i < numNodes; ++i )
     {
       gradN[i][0] = 0.0;
       gradN[i][1] = 0.0;
       gradN[i][2] = 0.0;
-     for (int j = 0; j < numNodes; ++j)
-     {
+      for( int j = 0; j < numNodes; ++j )
+      {
         gradN[i][0] += VDM_inv[i][j] * gradModal[j][0];
         gradN[i][1] += VDM_inv[i][j] * gradModal[j][1];
         gradN[i][2] += VDM_inv[i][j] * gradModal[j][2];
-     }
+      }
     }
 
   }
@@ -827,7 +826,7 @@ static constexpr real64 EvaluateJacobiPolynomialDerivative(localIndex const n, r
 
 //   }
 
-     /**
+  /**
    * @brief Evaluate shape functions derivatives of a linear pyramid (5-node) at point X.
    * @param[in] X Coordinates in reference pyramid (array of size 3)
    * @param[out] gradN Array to store shape function derivative values (array of size (numNodes = 5) * 3)
@@ -888,52 +887,52 @@ static constexpr real64 EvaluateJacobiPolynomialDerivative(localIndex const n, r
   template< typename FUNC >
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
-  static void computeMassTerm(FUNC && func )
+  static void computeMassTerm( FUNC && func )
   {
-      //real64 QL[3] = {-0.7745966692,0.0,0.7745966692};
-      //real64 WL[3] = {0.5555555556,0.8888888889,0.5555555556};
-      //real64 QJ[3] = {0.07299,0.34700,0.70500};
-      //real64 WJ[3] = {0.15714,0.14625,0.02995};
+    //real64 QL[3] = {-0.7745966692,0.0,0.7745966692};
+    //real64 WL[3] = {0.5555555556,0.8888888889,0.5555555556};
+    //real64 QJ[3] = {0.07299,0.34700,0.70500};
+    //real64 WJ[3] = {0.15714,0.14625,0.02995};
 
-      //real64 Mij = 0;
+    //real64 Mij = 0;
 
-      real64 N[numNodes] = {0.0}; // Initialize the shape function values array
+    real64 N[numNodes] = {0.0};   // Initialize the shape function values array
 
-      for(localIndex a = 0; a < numNodes; ++a)
+    for( localIndex a = 0; a < numNodes; ++a )
+    {
+      for( localIndex b = 0; b < numNodes; ++b )
       {
-        for(localIndex b = 0; b < numNodes; ++b)
+        real64 val = 0.0;   // Initialize the value to accumulate
+        for( int i = 0; i < 3; ++i )
         {
-          real64 val = 0.0; // Initialize the value to accumulate
-          for(int i = 0; i < 3; ++i)
+          for( int j = 0; j < 3; ++j )
           {
-            for(int j = 0; j < 3; ++j)
+            for( int k = 0; k < 3; ++k )
             {
-              for(int k = 0; k < 3; ++k)
-              {
-                //real64 xi =  QL[i];
-                //real64 eta = QL[j];
-                //real64 chi = QJ[k];
+              //real64 xi =  QL[i];
+              //real64 eta = QL[j];
+              //real64 chi = QJ[k];
 
-                real64 xi = GLeQuadraturePoints[i];
-                real64 eta = GLeQuadraturePoints[j];
-                real64 chi = GJQuadraturePoints[k];
+              real64 xi = GLeQuadraturePoints[i];
+              real64 eta = GLeQuadraturePoints[j];
+              real64 chi = GJQuadraturePoints[k];
 
-                real64 weight = GLeQuadratureWeights[i] * GLeQuadratureWeights[j] * GJQuadratureWeights[k];
-                //real64 weight = WL[i] * WL[j] * WJ[k];
-                real64 x_i = (1-chi)*xi;
-                real64 y_j = (1-chi)*eta;
-                real64 z_k = chi;
-                real64 X[3] = {x_i, y_j, z_k};
+              real64 weight = GLeQuadratureWeights[i] * GLeQuadratureWeights[j] * GJQuadratureWeights[k];
+              //real64 weight = WL[i] * WL[j] * WJ[k];
+              real64 x_i = (1-chi)*xi;
+              real64 y_j = (1-chi)*eta;
+              real64 z_k = chi;
+              real64 X[3] = {x_i, y_j, z_k};
 
-                calcN(X,N);
-                val += weight * N[a] * N[b] ;
+              calcN( X, N );
+              val += weight * N[a] * N[b];
 
-              }
             }
           }
-          func(a, b, val); // Call the function with the computed value
         }
+        func( a, b, val ); // Call the function with the computed value
       }
+    }
   }
 
 //     /**
@@ -1093,7 +1092,8 @@ static constexpr real64 EvaluateJacobiPolynomialDerivative(localIndex const n, r
 //    */
 //   GEOS_HOST_DEVICE
 //   GEOS_FORCE_INLINE
-//   static constexpr real64 correctionFactorDerivative( int const i1, int const j1, int const k1, int const l1, int const i2, int const j2, int const k2, int const l2, int const dim )
+//   static constexpr real64 correctionFactorDerivative( int const i1, int const j1, int const k1, int const l1, int const i2, int const j2,
+// int const k2, int const l2, int const dim )
 //   {
 //     return (i1+j1+k1+l1+dim)* (i2==0 ? 1 : i2) * (j2==0 ? 1 : j2)* (k2==0 ? 1 : k2)* (l2==0 ? 1 : l2);
 //   }
@@ -1344,7 +1344,8 @@ static constexpr real64 EvaluateJacobiPolynomialDerivative(localIndex const n, r
 //   GEOS_FORCE_INLINE
 //   static
 //   void
-//   computeReferenceDampingMatrix( real64 (& d)[numNodes][numNodes], bool const face1Damped, bool const face2Damped, bool const face3Damped, bool const face4Damped )
+//   computeReferenceDampingMatrix( real64 (& d)[numNodes][numNodes], bool const face1Damped, bool const face2Damped, bool const
+// face3Damped, bool const face4Damped )
 //   {
 
 //     for( int c1 = 0; c1 < numNodes; c1++ )
@@ -1473,11 +1474,14 @@ static constexpr real64 EvaluateJacobiPolynomialDerivative(localIndex const n, r
 //     for( int j = 0; j < 3; j++ )
 //     {
 //       dLambdadX[1][j] =
-//         ( ( X[ 2 ][ (j+1)%3 ] - X[ 0 ][ (j+1)%3 ]) * ( X[ 3 ][ (j+2)%3 ] - X[ 0 ][ (j+2)%3 ] ) - ( X[ 3 ][ (j+1)%3 ] - X[ 0 ][ (j+1)%3 ]) * ( X[ 2 ][ (j+2)%3 ] - X[ 0 ][ (j+2)%3 ] ) ) / detJ;
+//         ( ( X[ 2 ][ (j+1)%3 ] - X[ 0 ][ (j+1)%3 ]) * ( X[ 3 ][ (j+2)%3 ] - X[ 0 ][ (j+2)%3 ] ) - ( X[ 3 ][ (j+1)%3 ] - X[ 0 ][ (j+1)%3 ])
+// * ( X[ 2 ][ (j+2)%3 ] - X[ 0 ][ (j+2)%3 ] ) ) / detJ;
 //       dLambdadX[2][j] =
-//         ( ( X[ 3 ][ (j+1)%3 ] - X[ 0 ][ (j+1)%3 ]) * ( X[ 1 ][ (j+2)%3 ] - X[ 0 ][ (j+2)%3 ] ) - ( X[ 1 ][ (j+1)%3 ] - X[ 0 ][ (j+1)%3 ]) * ( X[ 3 ][ (j+2)%3 ] - X[ 0 ][ (j+2)%3 ] ) ) / detJ;
+//         ( ( X[ 3 ][ (j+1)%3 ] - X[ 0 ][ (j+1)%3 ]) * ( X[ 1 ][ (j+2)%3 ] - X[ 0 ][ (j+2)%3 ] ) - ( X[ 1 ][ (j+1)%3 ] - X[ 0 ][ (j+1)%3 ])
+// * ( X[ 3 ][ (j+2)%3 ] - X[ 0 ][ (j+2)%3 ] ) ) / detJ;
 //       dLambdadX[3][j] =
-//         ( ( X[ 1 ][ (j+1)%3 ] - X[ 0 ][ (j+1)%3 ]) * ( X[ 2 ][ (j+2)%3 ] - X[ 0 ][ (j+2)%3 ] ) - ( X[ 2 ][ (j+1)%3 ] - X[ 0 ][ (j+1)%3 ]) * ( X[ 1 ][ (j+2)%3 ] - X[ 0 ][ (j+2)%3 ] ) ) / detJ;
+//         ( ( X[ 1 ][ (j+1)%3 ] - X[ 0 ][ (j+1)%3 ]) * ( X[ 2 ][ (j+2)%3 ] - X[ 0 ][ (j+2)%3 ] ) - ( X[ 2 ][ (j+1)%3 ] - X[ 0 ][ (j+1)%3 ])
+// * ( X[ 1 ][ (j+2)%3 ] - X[ 0 ][ (j+2)%3 ] ) ) / detJ;
 //       dLambdadX[0][j] = -dLambdadX[1][j] - dLambdadX[2][j] - dLambdadX[3][j];
 //     }
 //     basisLoop( [&func, &dLambdadX, &detJ] ( auto const cc1, auto const ci1, auto const cj1, auto const ck1, auto const cl1 )
@@ -1518,7 +1522,8 @@ static constexpr real64 EvaluateJacobiPolynomialDerivative(localIndex const n, r
 //                           ii2 >= 0 && ij2 >= 0 && ik2 >= 0 && il2 >= 0)
 //             {
 //               constexpr real64 val = computeSuperpositionIntegral( ii1, ij1, ik1, il1, ii2, ij2, ik2, il2 ) * factor1 * factor2;
-//               func( c1, c2, val * detJ * ( dLambdadX[d1][0]*dLambdadX[d2][0] + dLambdadX[d1][1]*dLambdadX[d2][1] + dLambdadX[d1][2]*dLambdadX[d2][2] ) );
+//               func( c1, c2, val * detJ * ( dLambdadX[d1][0]*dLambdadX[d2][0] + dLambdadX[d1][1]*dLambdadX[d2][1] +
+// dLambdadX[d1][2]*dLambdadX[d2][2] ) );
 //             }
 //           } );
 //         } );
@@ -1571,7 +1576,8 @@ static constexpr real64 EvaluateJacobiPolynomialDerivative(localIndex const n, r
 //   {
 //     real64 detJf[4] = { faceJacobianDeterminant( 0, X ), faceJacobianDeterminant( 1, X ),
 //                         faceJacobianDeterminant( 2, X ), faceJacobianDeterminant( 3, X ) };
-//     conditionalBasisLoop< 0, 1 >( [&funcP, &funcF, &detJf]  ( auto const cf1, auto const cd, auto const cc1, auto const ci1, auto const cj1, auto const ck1 )
+//     conditionalBasisLoop< 0, 1 >( [&funcP, &funcF, &detJf]  ( auto const cf1, auto const cd, auto const cc1, auto const ci1, auto const
+// cj1, auto const ck1 )
 //     {
 //       constexpr int f1 = cf1;
 //       constexpr int d1 = cd;
@@ -1581,7 +1587,8 @@ static constexpr real64 EvaluateJacobiPolynomialDerivative(localIndex const n, r
 //       constexpr int k1 = ck1;
 //       // Not used in some combinations, but needed for constexpr
 //       GEOS_UNUSED_VAR( c1, i1, j1, k1 );
-//       conditionalBasisLoop< 0 >( [&funcP, &funcF, &detJf]  ( auto const cf2, auto const, auto const cc2, auto const ci2, auto const cj2, auto const ck2 )
+//       conditionalBasisLoop< 0 >( [&funcP, &funcF, &detJf]  ( auto const cf2, auto const, auto const cc2, auto const ci2, auto const cj2,
+// auto const ck2 )
 //       {
 //         constexpr int f2 = cf2;
 //         constexpr int c2 = cc2;
@@ -1633,7 +1640,7 @@ static constexpr real64 EvaluateJacobiPolynomialDerivative(localIndex const n, r
 //     } );
 //   }
 
- };
+};
 
 // /**
 //  *  Pyramidal element with Bergot-Cohen-Durufle basis functions of order 1.
