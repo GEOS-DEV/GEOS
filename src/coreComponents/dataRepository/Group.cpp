@@ -71,6 +71,8 @@ WrapperBase & Group::registerWrapper( std::unique_ptr< WrapperBase > wrapper )
 {
   // Extract `wrapperName` first to prevent from UB call order in the `insert` call.
   string const wrapperName = wrapper->getName();
+  GEOS_ERROR_IF( hasWrapper( wrapperName ),
+                 "Wrapper " << wrapperName << " already exists in Group " << getDataContext() << '.' );
   return *m_wrappers.insert( wrapperName, wrapper.release(), true );
 }
 
