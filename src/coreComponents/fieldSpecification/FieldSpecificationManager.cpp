@@ -223,7 +223,7 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
                                        fmt::join( missingSetNames, ", " ),
                                        FieldSpecificationBase::viewKeyStruct::objectPathString(), fs.getObjectPath() );
 
-      setNamesError.append( stringutilities::join( allPresentSets, ", " ));
+      GEOS_FMT( "Available set(s) are: {}", setNamesError.append( stringutilities::join( allPresentSets, ", " )));
 
       GEOS_THROW( setNamesError, InputError );
     }
@@ -237,7 +237,6 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
                                     "\nIf the simulation does not involve the SurfaceGenerator, check the content of the set `{}` in `{}`. \n",
                                     fs.getDataContext(), mapEntry.first, fs.getObjectPath() ) );
     }
-
     if( isFieldNameFound == 0 )
     {
       std::ostringstream errorMessageBuilder;
