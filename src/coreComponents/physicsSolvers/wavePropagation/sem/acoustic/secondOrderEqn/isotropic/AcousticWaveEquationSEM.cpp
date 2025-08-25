@@ -33,6 +33,7 @@
 #include "physicsSolvers/wavePropagation/sem/acoustic/shared/AcousticMatricesSEMKernel.hpp"
 #include "events/EventManager.hpp"
 #include "AcousticPMLSEMKernel.hpp"
+#include "physicsSolvers/wavePropagation/shared/TaperKernel.hpp"
 #include "physicsSolvers/wavePropagation/shared/PrecomputeSourcesAndReceiversKernel.hpp"
 #include "physicsSolvers/wavePropagation/LogLevelsInfo.hpp"
 
@@ -63,6 +64,7 @@ AcousticWaveEquationSEM::~AcousticWaveEquationSEM()
 
 void AcousticWaveEquationSEM::initializePreSubGroups()
 {
+
   WaveSolverBase::initializePreSubGroups();
 }
 
@@ -134,9 +136,32 @@ void AcousticWaveEquationSEM::postInputInitialization()
   m_pressureNp1AtReceivers.resize( m_nsamplesSeismoTrace, m_receiverCoordinates.size( 0 ) + 1 );
 }
 
+real32 AcousticWaveEquationSEM::getGlobalMinWavespeed( MeshLevel & mesh, string_array const & regionNames )
+{
+
+  real32 localMinWavespeed = 1e8;
+
+  mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
+                                                                                        CellElementSubRegion & elementSubRegion )
+  {
+    arrayView1d< real32 const > const velocity = elementSubRegion.getField< acousticfields::AcousticVelocity >();
+    real32 subRegionMinWavespeed = *std::min_element( velocity.begin(), velocity.end());
+    if( localMinWavespeed > subRegionMinWavespeed )
+    {
+      localMinWavespeed = subRegionMinWavespeed;
+    }
+  } );
+
+  real32 const globalMinWavespeed = MpiWrapper::min( localMinWavespeed );
+
+  return globalMinWavespeed;
+
+}
+
 void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & baseMesh, MeshLevel & mesh,
                                                                string_array const & regionNames )
 {
+
   GEOS_MARK_FUNCTION;
 
   arrayView1d< globalIndex const > const nodeLocalToGlobalMap = baseMesh.getNodeManager().localToGlobalMap().toViewConst();
@@ -299,8 +324,6 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
 
   applyFreeSurfaceBC( 0.0, domain );
 
-
-
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
                                                                 string_array const & regionNames )
@@ -373,20 +396,51 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
                                                                              damping );
       } );
     } );
+    // Here we compute the timeStep only one time (beginning of the simulation).
+    if( m_timestepStabilityLimit==1 )
+    {
+      real64 dtOut = 0.0;
+      computeTimeStep( dtOut );
+      m_timestepStabilityLimit = -1;
+      m_timeStep=dtOut*m_cflFactor;
+    }
+    //We use the timeStep defined inside the xml
+    else if( m_timestepStabilityLimit==0 )
+    {
+      EventManager const & event = getGroupByPath< EventManager >( "/Problem/Events" );
+      for( localIndex numSubEvent = 0; numSubEvent < event.numSubGroups(); ++numSubEvent )
+      {
+        EventBase const * subEvent = static_cast< EventBase const * >( event.getSubGroups()[numSubEvent] );
+        if( subEvent->getEventName() == "/Solvers/" + getName() )
+        {
+          m_timeStep = subEvent->getReference< real64 >( EventBase::viewKeyStruct::forceDtString() );
+        }
+      }
+
+    }
+    //We compute the timeStep even several times if needed (used mainly with PyGeos)
+    else if( m_timestepStabilityLimit==2 )
+    {
+      real64 dtOut = 0.0;
+      computeTimeStep( dtOut );
+      m_timeStep=dtOut*m_cflFactor;
+    }
+
+    if( m_useTaper==1 )
+    {
+      real32 vMin;
+      vMin = getGlobalMinWavespeed( mesh, regionNames );
+
+      arrayView1d< real32 > const taperCoeff = nodeManager.getField< fields::taperCoeff >();
+      TaperKernel::computeTaperCoeff< EXEC_POLICY >( nodeManager.size(), nodeCoords, m_thicknessTaper, m_timeStep, vMin, m_reflectivityCoeff,
+                                                     taperCoeff );
+    }
   } );
 
   // check anelasticity coefficient and/or compute it if needed
   if( m_attenuationType == WaveSolverUtils::AttenuationType::sls )
   {
     initializeAnelasticityCoefficients< acousticfields::AcousticQualityFactor >( domain );
-  }
-
-  if( m_timestepStabilityLimit==1 )
-  {
-    real64 dtOut = 0.0;
-    computeTimeStep( dtOut );
-    m_timestepStabilityLimit = 0;
-    m_timeStep=dtOut;
   }
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const & meshBodyName,
@@ -510,6 +564,8 @@ real64 AcousticWaveEquationSEM::computeTimeStep( real64 & dtOut )
 
     stiffnessVector.zero();
     p.zero();
+    // Loop to ensure that the array stays on GPU (useful when we call this routine several times)
+    forAll< parallelHostPolicy >( sizeNode, [p] ( localIndex const ){} );
   } );
   return m_timeStep * m_cflFactor;
 }
@@ -1174,6 +1230,8 @@ void AcousticWaveEquationSEM::computeUnknowns( real64 const & time_n,
   arrayView1d< real32 > const p_n = nodeManager.getField< acousticfields::Pressure_n >();
   arrayView1d< real32 > const p_np1 = nodeManager.getField< acousticfields::Pressure_np1 >();
 
+  arrayView1d< real32 > const taperCoeff = nodeManager.getField< fields::taperCoeff >();
+
   arrayView1d< localIndex const > const freeSurfaceNodeIndicator = nodeManager.getField< acousticfields::AcousticFreeSurfaceNodeIndicator >();
   arrayView1d< real32 > const stiffnessVector = nodeManager.getField< acousticfields::StiffnessVector >();
   arrayView1d< real32 > const rhs = nodeManager.getField< acousticfields::ForcingRHS >();
@@ -1221,6 +1279,7 @@ void AcousticWaveEquationSEM::computeUnknowns( real64 const & time_n,
   if( !m_usePML )
   {
     GEOS_MARK_SCOPE ( updateP );
+
     if( m_attenuationType == WaveSolverUtils::AttenuationType::sls )
     {
       arrayView1d< real32 > const stiffnessVectorA = nodeManager.getField< acousticfields::StiffnessVectorA >();
@@ -1235,6 +1294,12 @@ void AcousticWaveEquationSEM::computeUnknowns( real64 const & time_n,
     {
       AcousticTimeSchemeSEM::LeapFrogWithoutPML( dt, p_np1, p_n, p_nm1, mass, stiffnessVector, damping,
                                                  rhs, freeSurfaceNodeIndicator, solverTargetNodesSet );
+    }
+
+    if( m_useTaper==1 )
+    {
+      TaperKernel::multiplyByTaperCoeff< EXEC_POLICY >( nodeManager.size(), taperCoeff, p_np1 );
+      TaperKernel::multiplyByTaperCoeff< EXEC_POLICY >( nodeManager.size(), taperCoeff, p_n );
     }
   }
   else

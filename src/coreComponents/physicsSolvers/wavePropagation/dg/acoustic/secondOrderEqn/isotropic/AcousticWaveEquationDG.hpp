@@ -2,11 +2,10 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 TotalEnergies
- * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2023-2024 Chevron
- * Copyright (c) 2019-     GEOS/GEOSX Contributors
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 TotalEnergies
+ * Copyright (c) 2019-     GEOS Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
@@ -15,47 +14,43 @@
 
 
 /**
- * @file AcousticWaveEquationSEM.hpp
+ * @file AcousticWaveEquationDG.hpp
  */
 
-#ifndef GEOS_PHYSICSSOLVERS_WAVEPROPAGATION_ACOUSTICWAVEEQUATIONSEM_HPP_
-#define GEOS_PHYSICSSOLVERS_WAVEPROPAGATION_ACOUSTICWAVEEQUATIONSEM_HPP_
+#ifndef GEOS_PHYSICSSOLVERS_WAVEPROPAGATION_ACOUSTICWAVEEQUATIONDG_HPP_
+#define GEOS_PHYSICSSOLVERS_WAVEPROPAGATION_ACOUSTICWAVEEQUATIONDG_HPP_
 
-#include "physicsSolvers/wavePropagation/shared/WaveSolverBase.hpp"
 #include "mesh/MeshFields.hpp"
 #include "physicsSolvers/PhysicsSolverBase.hpp"
-#include "physicsSolvers/wavePropagation/sem/acoustic/shared/AcousticFields.hpp"
-#include "physicsSolvers/wavePropagation/shared/WaveSolverTypeDefSEM.hpp"
+#include "physicsSolvers/wavePropagation/shared/WaveSolverBase.hpp"
+#include "physicsSolvers/wavePropagation/dg/acoustic/shared/AcousticFieldsDG.hpp"
+#include "physicsSolvers/wavePropagation/shared/WaveSolverTypeDefDG.hpp"
 
 namespace geos
 {
 
-class AcousticWaveEquationSEM : public WaveSolverBase
+class AcousticWaveEquationDG : public WaveSolverBase
 {
 public:
 
-  using EXEC_POLICY = parallelDevicePolicy<  >;
+  using EXEC_POLICY = parallelDevicePolicy< 32 >;
   using ATOMIC_POLICY = AtomicPolicy< EXEC_POLICY >;
 
-  AcousticWaveEquationSEM( const std::string & name,
-                           Group * const parent );
+  AcousticWaveEquationDG( const std::string & name,
+                          Group * const parent );
 
-  virtual ~AcousticWaveEquationSEM() override;
+  virtual ~AcousticWaveEquationDG() override;
 
-  AcousticWaveEquationSEM() = delete;
-  AcousticWaveEquationSEM( AcousticWaveEquationSEM const & ) = delete;
-  AcousticWaveEquationSEM( AcousticWaveEquationSEM && ) = default;
+  AcousticWaveEquationDG() = delete;
+  AcousticWaveEquationDG( AcousticWaveEquationDG const & ) = delete;
+  AcousticWaveEquationDG( AcousticWaveEquationDG && ) = default;
 
-  AcousticWaveEquationSEM & operator=( AcousticWaveEquationSEM const & ) = delete;
-  AcousticWaveEquationSEM & operator=( AcousticWaveEquationSEM && ) = delete;
+  AcousticWaveEquationDG & operator=( AcousticWaveEquationDG const & ) = delete;
+  AcousticWaveEquationDG & operator=( AcousticWaveEquationDG && ) = delete;
 
-  /// String used to form the solverName used to register solvers in CoupledSolver
-  static string coupledSolverAttributePrefix() { return "acoustic"; }
 
-  static string catalogName() { return "AcousticSEM"; }
-  /**
-   * @copydoc PhysicsSolverBase::getCatalogName()
-   */
+  static string catalogName() { return "AcousticDG"; }
+
   string getCatalogName() const override { return catalogName(); }
 
   virtual void initializePreSubGroups() override;
@@ -81,19 +76,14 @@ public:
                                        DomainPartition & domain,
                                        integer const computeGradient ) override;
 
-  /**
-   * @brief Get the minimum wavespeed on a mesh
-   */
-  virtual real32 getGlobalMinWavespeed( MeshLevel & mesh, string_array const & regionNames ) override;
+
 
   /**@}*/
 
   /**
-   * @brief Multiply the precomputed term by the Ricker and add to the right-hand side
-   * @param cycleNumber the cycle number/step number of evaluation of the source
-   * @param rhs the right hand side vector to be computed
+   * @brief Get the minimum wavespeed on a mesh
    */
-  virtual void addSourceToRightHandSide( integer const cycleNumber, arrayView1d< real32 > const rhs );
+  virtual real32 getGlobalMinWavespeed( MeshLevel & mesh, string_array const & regionNames ) override;
 
 
   /**
@@ -105,8 +95,6 @@ public:
    */
   virtual real64 computeTimeStep( real64 & dtOut ) override;
 
-
-
   /**
    * @brief Overridden from ExecutableGroup. Used to write last seismogram if needed.
    */
@@ -115,6 +103,10 @@ public:
   struct viewKeyStruct : WaveSolverBase::viewKeyStruct
   {
     static constexpr char const * pressureNp1AtReceiversString() { return "pressureNp1AtReceivers"; }
+
+    static constexpr char const * sourceElemString() { return "sourceElem"; }
+    static constexpr char const * sourceRegionString() { return "sourceRegion"; }
+    static constexpr char const * receiverElemString() { return "receiverElem"; }
 
   } waveEquationViewKeys;
 
@@ -134,7 +126,6 @@ public:
 
   void computeUnknowns( real64 const & time_n,
                         real64 const & dt,
-                        integer const cycleNumber,
                         DomainPartition & domain,
                         MeshLevel & mesh,
                         string_array const & regionNames );
@@ -147,10 +138,13 @@ public:
 
   void prepareNextTimestep( MeshLevel & mesh );
 
+  void updatePressure( localIndex const size, localIndex const numNodesPerElem, arrayView2d< real32 > const p_nm1, arrayView2d< real32 > const p_n, arrayView2d< real32 >  p_np1 );
+
 protected:
 
   virtual void postInputInitialization() override final;
 
+  //Nothing to do inside ? (no global mass or damping)
   virtual void initializePostInitialConditionsPreSubGroups() override final;
 
 private:
@@ -158,7 +152,6 @@ private:
   /**
    * @brief Locate sources and receivers position in the mesh elements, evaluate the basis functions at each point and save them to the
    * corresponding elements nodes.
-   * @param baseMesh the level-0 mesh
    * @param mesh mesh of the computational domain
    */
   virtual void precomputeSourceAndReceiverTerm( MeshLevel & baseMesh, MeshLevel & mesh, string_array const & regionNames ) override;
@@ -180,8 +173,20 @@ private:
   /// Pressure_np1 at the receiver location for each time step for each receiver
   array2d< real32 > m_pressureNp1AtReceivers;
 
+  /// Array containing the elements which contain a source
+  array1d< localIndex > m_sourceElem;
+
+  /// Array containing the elements which contain the region which the source belongs
+  array1d< localIndex > m_sourceRegion;
+
+  /// Inverse of the mass matrix in the reference element for each subregion
+  ArrayOfArrays< array2d< real64 > > m_referenceInvMassMatrix;
+
+  /// Inverse of the mass plus damping matrix in the reference element for each boundary element
+  ArrayOfArrays< array3d< real64 > > m_boundaryInvMassPlusDamping;
+
 };
 
 } /* namespace geos */
 
-#endif /* GEOS_PHYSICSSOLVERS_WAVEPROPAGATION_ACOUSTICWAVEEQUATIONSEM_HPP_ */
+#endif /* GEOS_PHYSICSSOLVERS_WAVEPROPAGATION_ACOUSTICWAVEEQUATIONDG_HPP_ */
