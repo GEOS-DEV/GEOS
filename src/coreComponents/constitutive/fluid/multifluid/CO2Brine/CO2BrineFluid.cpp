@@ -106,13 +106,13 @@ CO2BrineFluid( string const & name, Group * const parent ):
     setInputFlag( InputFlags::OPTIONAL ).
     setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "When set to 1, write PVT tables into a CSV file" ).
-    setDefaultValue( 0 );
+    setApplyDefaultValue( 0 );
 
   this->registerWrapper( viewKeyStruct::checkPhasePresenceString(), &m_checkPhasePresence ).
     setInputFlag( InputFlags::OPTIONAL ).
     setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "Check phase presence when computing density and viscosity" ).
-    setDefaultValue( 0 );
+    setApplyDefaultValue( 0 );
 
   // if this is a thermal model, we need to make sure that the arrays will be properly displayed and saved to restart
   if( isThermal() )

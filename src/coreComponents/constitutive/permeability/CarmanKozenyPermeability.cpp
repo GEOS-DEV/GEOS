@@ -41,7 +41,7 @@ CarmanKozenyPermeability::CarmanKozenyPermeability( string const & name, Group *
 
   registerWrapper( viewKeyStruct::anisotropyString(), &m_anisotropy ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDefaultValue( { 1.0, 1.0, 1.0 } ).
+    setApplyDefaultValue( { 1.0, 1.0, 1.0 } ).
     setDescription( "Anisotropy factors for three permeability components." );
 
   registerWrapper( viewKeyStruct::dPerm_dPorosityString(), &m_dPerm_dPorosity );

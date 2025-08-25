@@ -50,13 +50,13 @@ MultiFluidBase::MultiFluidBase( string const & name, Group * const parent )
 
   registerWrapper( viewKeyStruct::useMassString(), &m_useMass ).
     setRestartFlags( RestartFlags::NO_WRITE ).
-    setDefaultValue( 0 );
+    setApplyDefaultValue( 0 );
 
   registerWrapper( viewKeyStruct::checkPVTTablesRangesString(), &m_checkPVTTablesRanges ).
     setInputFlag( InputFlags::OPTIONAL ).
     setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "Enable (1) or disable (0) an error when the input pressure or temperature of the PVT tables is out of range." ).
-    setDefaultValue( 1 );
+    setApplyDefaultValue( 1 );
 
   registerField< fields::multifluid::phaseFraction >( &m_phaseFraction.value );
   registerField< fields::multifluid::dPhaseFraction >( &m_phaseFraction.derivs );
