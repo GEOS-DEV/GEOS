@@ -1469,8 +1469,9 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium( DomainPartition
 
         forAll< parallelDevicePolicy<> >( targetSet.size(), [targetSet,
                                                              elemCenter,
-                                                             ip_water,
                                                              ip_gas,
+                                                             ip_oil,
+                                                             ip_water,
                                                             //  ip_pres,
                                                              pres,
                                                              minPressure,
@@ -1497,10 +1498,15 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium( DomainPartition
           localIndex const k = targetSet[i];
           real64 const elevation = elemCenter[k][2];
 
-          integer ip_pres = ip_gas;
-          if ( elevation < phaseContacts[0] )
+          integer ip_pres = -1;
+          if ( numPhases == 2 && ip_gas >= 0 && ip_water >= 0 )
           {
-            ip_pres = ip_water;
+            ip_pres = ( elevation < phaseContacts[0] ) ? ip_water : ip_gas;
+          }
+          else if ( numPhases == 3 && ip_gas >= 0 && ip_oil >= 0 && ip_water >= 0 )
+          {
+            ip_pres = ( elevation <= phaseContacts[1] ) ? ip_water :
+                      ( elevation > phaseContacts[1] && elevation <= phaseContacts[0] ) ? ip_oil : ip_gas;
           }
           pres[k] = phasePressureTableWrappers[ip_pres].compute( &elevation );
           if (k == 0)
@@ -1512,8 +1518,18 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium( DomainPartition
           minPressure.min( pres[k] );
           temp[k] = tempTableWrapper.compute( &elevation );
 
-          // targetPhaseCapPressure[k][0][ip_gas] = phasePressureTableWrappers[ip_gas].compute( &elevation ) - phasePressureTableWrappers[ip_water].compute( &elevation );
-          targetPhaseCapPressure[k][0][ip_water] = phasePressureTableWrappers[ip_gas].compute( &elevation ) - phasePressureTableWrappers[ip_water].compute( &elevation );
+          if ( numPhases == 2 && ip_gas >= 0 && ip_water >= 0 )
+          {
+            targetPhaseCapPressure[k][0][ip_water] = phasePressureTableWrappers[ip_gas].compute( &elevation ) 
+              - phasePressureTableWrappers[ip_water].compute( &elevation );
+          }
+          else if ( numPhases == 3 && ip_gas >= 0 && ip_oil >= 0 && ip_water >= 0 )
+          {
+            targetPhaseCapPressure[k][0][ip_gas] = - phasePressureTableWrappers[ip_gas].compute( &elevation ) 
+              + phasePressureTableWrappers[ip_oil].compute( &elevation );
+            targetPhaseCapPressure[k][0][ip_water] = phasePressureTableWrappers[ip_oil].compute( &elevation ) 
+              - phasePressureTableWrappers[ip_water].compute( &elevation );
+          }
           success[k] = capPressureWrapper.compute( targetPhaseCapPressure[k][0],
                                                    jFuncMultiplier[k],
                                                    targetPhaseVolumeFraction[k] );
