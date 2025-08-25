@@ -84,6 +84,7 @@ ConstitutiveManager::hangConstitutiveRelation( string const & constitutiveRelati
 
   std::unique_ptr< ConstitutiveBase > material = constitutiveRelation.deliverClone( constitutiveRelationInstanceName, parent );
 
+  std::cout << "material->allocateConstitutiveData" << std::endl;
   material->allocateConstitutiveData( *parent,
                                       numConstitutivePointsPerParentIndex );
   GEOS_LOG_RANK_0( GEOS_FMT( "  {}/{} allocated",

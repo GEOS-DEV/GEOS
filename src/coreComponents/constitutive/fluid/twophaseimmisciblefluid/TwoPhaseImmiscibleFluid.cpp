@@ -92,6 +92,7 @@ void TwoPhaseImmiscibleFluid::resizeFields( localIndex const size, localIndex co
 void TwoPhaseImmiscibleFluid::allocateConstitutiveData( dataRepository::Group & parent,
                                                         localIndex const numConstitutivePointsPerParentIndex )
 {
+  std::cout << getName() << " TwoPhaseImmiscibleFluid::allocateConstitutiveData " << parent.getName() << " " << numConstitutivePointsPerParentIndex << std::endl;
   ConstitutiveBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
   resizeFields( parent.size(), numConstitutivePointsPerParentIndex );
 }
