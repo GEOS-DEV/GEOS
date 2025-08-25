@@ -775,6 +775,10 @@
 					<xsd:selector xpath="HydraulicApertureTable" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
+				<xsd:unique name="domainConstitutiveInvariantImmiscibleFluidUniqueName">
+					<xsd:selector xpath="InvariantImmiscibleFluid" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
 				<xsd:unique name="domainConstitutiveJFunctionCapillaryPressureUniqueName">
 					<xsd:selector xpath="JFunctionCapillaryPressure" />
 					<xsd:field xpath="@name" />
@@ -5645,6 +5649,7 @@ Information output from lower logLevels is added with the desired log level
 			<xsd:element name="ExtendedDruckerPrager" type="ExtendedDruckerPragerType" />
 			<xsd:element name="FrictionlessContact" type="FrictionlessContactType" />
 			<xsd:element name="HydraulicApertureTable" type="HydraulicApertureTableType" />
+			<xsd:element name="InvariantImmiscibleFluid" type="InvariantImmiscibleFluidType" />
 			<xsd:element name="JFunctionCapillaryPressure" type="JFunctionCapillaryPressureType" />
 			<xsd:element name="LinearIsotropicDispersion" type="LinearIsotropicDispersionType" />
 			<xsd:element name="ModifiedCamClay" type="ModifiedCamClayType" />
@@ -6667,6 +6672,22 @@ For instance, if "oil" is before "gas" in "phaseNames", the table order should b
 		<xsd:attribute name="apertureTolerance" type="real64" default="1e-09" />
 		<!--referenceAperture => Reference hydraulic aperture. It is the aperture at zero normal stress.-->
 		<xsd:attribute name="referenceAperture" type="real64" default="1e-06" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="groupName" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="InvariantImmiscibleFluidType">
+		<!--checkPVTTablesRanges => Enable (1) or disable (0) an error when the input pressure or temperature of the PVT tables is out of range.-->
+		<xsd:attribute name="checkPVTTablesRanges" type="integer" default="1" />
+		<!--componentMolarWeight => Molar weights of components-->
+		<xsd:attribute name="componentMolarWeight" type="real64_array" use="required" />
+		<!--componentNames => List of fluid components (e.g. CH4, H2O, C5H12)-->
+		<xsd:attribute name="componentNames" type="string_array" use="required" />
+		<!--densities => Constant phase densities-->
+		<xsd:attribute name="densities" type="real64_array" use="required" />
+		<!--phaseNames => List of fluid phases (e.g. gas, water, oil)-->
+		<xsd:attribute name="phaseNames" type="groupNameRef_array" use="required" />
+		<!--viscosities => Constant phase viscosities-->
+		<xsd:attribute name="viscosities" type="real64_array" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
