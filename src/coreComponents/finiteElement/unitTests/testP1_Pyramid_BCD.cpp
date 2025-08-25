@@ -53,7 +53,7 @@ void testKernelDriver()
     for( localIndex q=0; q<numQuadraturePoints; ++q )
     {
       real64 N[numNodes] = {0};
-      Pk_Pyramid_BCD<1>::calcN(q, N );
+      Pk_Pyramid_BCD< 1 >::calcN( q, N );
       for( localIndex a=0; a<numNodes; ++a )
       {
         if( fabs( N[a] )<1e-9 )
@@ -84,9 +84,9 @@ void testKernelDriver()
 
   //Test on mass matrix
   array2d< real64 > MtestArray( numNodes, numNodes );
-  Pk_Pyramid_BCD<1>::computeMassTerm([&] (const localIndex i, const localIndex j, const real64 Mij)
-  { 
-     MtestArray[i][j] = Mij; // Initialize the mass term
+  Pk_Pyramid_BCD< 1 >::computeMassTerm( [&] ( const localIndex i, const localIndex j, const real64 Mij )
+  {
+    MtestArray[i][j] = Mij;  // Initialize the mass term
   } );
 
   //OUtput the mass matrix
@@ -97,18 +97,18 @@ void testKernelDriver()
     {
       sum+= MtestArray[i][j];
     }
-  } 
+  }
 
 
   //Coords of the support points
   real64 coords[numNodes][3] = { { -1.0, 1.0, 0.0 },
-                                 { -1.0, -1.0, 0.0 },
-                                 { 1.0, -1.0, 0.0 },
-                                 { 1.0, 1.0, 0.0 },
-                                 { 0.0, 0.0, 1.0 } };
+    { -1.0, -1.0, 0.0 },
+    { 1.0, -1.0, 0.0 },
+    { 1.0, 1.0, 0.0 },
+    { 0.0, 0.0, 1.0 } };
 
   //Derivatives of the five shape functions in P1.
-  
+
   array2d< real64 > gradPhi1testArray( numNodes, 3 );
   arrayView2d< real64 > const & gradPhi1test = gradPhi1testArray;
   array2d< real64 > gradPhi2testArray( numNodes, 3 );
@@ -121,10 +121,10 @@ void testKernelDriver()
   arrayView2d< real64 > const & gradPhi5test = gradPhi5testArray;
 
   real64 const epsilon = 1e-10; // Small value to avoid compairing floating point numbers directly
-  for ( localIndex i = 0; i < numNodes; ++i )
+  for( localIndex i = 0; i < numNodes; ++i )
   {
-    
-    if (LvArray::math::abs(coords[i][2]-1.0) < epsilon)
+
+    if( LvArray::math::abs( coords[i][2]-1.0 ) < epsilon )
     {
       gradPhi1test[i][0] = 0.0;
       gradPhi2test[i][0] = 0.0;
@@ -168,9 +168,9 @@ void testKernelDriver()
   }
 
   real64 gradNtest[numNodes][3];
-  for (localIndex i = 0; i < numNodes; ++i )
-  { 
-    Pk_Pyramid_BCD<1>::calcGradN( coords[i],gradNtest );
+  for( localIndex i = 0; i < numNodes; ++i )
+  {
+    Pk_Pyramid_BCD< 1 >::calcGradN( coords[i], gradNtest );
     EXPECT_FLOAT_EQ( gradNtest[0][0], gradPhi1test[i][0] );
     EXPECT_FLOAT_EQ( gradNtest[1][0], gradPhi2test[i][0] );
     EXPECT_FLOAT_EQ( gradNtest[2][0], gradPhi3test[i][0] );
@@ -191,7 +191,7 @@ void testKernelDriver()
   }
 
 
-  
+
   //array2d< real64 > xCoordsData( numNodes, 3 );
   //arrayView2d< real64 > const & xCoords = xCoordsData;
   //xCoords[0][0]=-1.0;
