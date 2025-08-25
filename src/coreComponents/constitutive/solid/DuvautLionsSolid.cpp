@@ -33,10 +33,8 @@ namespace constitutive
 
 template< typename BASE >
 DuvautLionsSolid< BASE >::DuvautLionsSolid( string const & name, Group * const parent ):
-  BASE( name, parent ),
-  m_relaxationTime()
+  BASE( name, parent )
 {
-
   this->registerWrapper( viewKeyStruct::relaxationTimeString(), &m_relaxationTime ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Relaxation time" );

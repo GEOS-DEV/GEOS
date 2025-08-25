@@ -19,6 +19,7 @@
  */
 
 #include "SolidBase.hpp"
+#include "SolidFields.hpp"
 
 namespace geos
 {
@@ -28,29 +29,8 @@ namespace constitutive
 {
 
 SolidBase::SolidBase( string const & name, Group * const parent ):
-  ConstitutiveBase( name, parent ),
-  m_newStress( 0, 0, 6 ),
-  m_oldStress( 0, 0, 6 ),
-  m_density(),
-  m_thermalExpansionCoefficient()
+  ConstitutiveBase( name, parent )
 {
-  string const voightLabels[6] = { "XX", "YY", "ZZ", "YZ", "XZ", "XY" };
-
-  registerWrapper( viewKeyStruct::stressString(), &m_newStress ).
-    setPlotLevel( PlotLevel::LEVEL_0 ).
-    setApplyDefaultValue( 0 ). // default to zero initial stress
-    setDescription( "Current Material Stress" ).
-    setDimLabels( 2, voightLabels );
-
-  registerWrapper( viewKeyStruct::oldStressString(), &m_oldStress ).
-    setApplyDefaultValue( 0 ). // default to zero initial stress
-    setDescription( "Previous Material Stress" );
-
-  registerWrapper( viewKeyStruct::densityString(), &m_density ).
-    setPlotLevel( PlotLevel::LEVEL_0 ).
-    setApplyDefaultValue( -1 ). // will be overwritten
-    setDescription( "Material Density" );
-
   registerWrapper( viewKeyStruct::defaultDensityString(), &m_defaultDensity ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Default Material Density" );
@@ -60,18 +40,28 @@ SolidBase::SolidBase( string const & name, Group * const parent ):
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Default Linear Thermal Expansion Coefficient of the Solid Rock Frame" );
 
-  registerWrapper( viewKeyStruct::thermalExpansionCoefficientString(), &m_thermalExpansionCoefficient ).
-    setApplyDefaultValue( -1.0 ). // will be overwritten
-    setDescription( "Linear Thermal Expansion Coefficient Field" );
+  // register fields
+
+  string const voightLabels[6] = { "XX", "YY", "ZZ", "YZ", "XZ", "XY" };
+
+  registerField< fields::solid::stress >( &m_newStress ).
+    setDimLabels( 2, voightLabels );
+
+  registerField< fields::solid::oldStress >( &m_oldStress ).
+    setDimLabels( 2, voightLabels );
+
+  registerField< fields::solid::density >( &m_density );
+
+  registerField< fields::solid::thermalExpansionCoefficient >( &m_thermalExpansionCoefficient );
 }
 
 
 void SolidBase::postInputInitialization()
 {
-  this->getWrapper< array2d< real64 > >( viewKeyStruct::densityString() ).
+  getWrapper< array2d< real64 > >( fields::solid::density::key() ).
     setApplyDefaultValue( m_defaultDensity );
 
-  this->getWrapper< array1d< real64 > >( viewKeyStruct::thermalExpansionCoefficientString() ).
+  getWrapper< array1d< real64 > >( fields::solid::thermalExpansionCoefficient::key() ).
     setApplyDefaultValue( m_defaultThermalExpansionCoefficient );
 }
 

@@ -202,10 +202,10 @@ set( constitutive_headers
      solid/SolidModelDiscretizationOpsTransverseIsotropic.hpp
      solid/SolidModelDiscretizationOpsOrthotropic.hpp
      solid/CeramicDamage.hpp
+     solid/SolidFields.hpp
      solid/porosity/PorosityFields.hpp
      solid/porosity/BiotPorosity.hpp
      solid/porosity/PorosityBase.hpp
-     solid/porosity/PorosityFields.hpp
      solid/porosity/PressurePorosity.hpp
      solid/porosity/ProppantPorosity.hpp
      thermalConductivity/MultiPhaseConstantThermalConductivity.hpp
