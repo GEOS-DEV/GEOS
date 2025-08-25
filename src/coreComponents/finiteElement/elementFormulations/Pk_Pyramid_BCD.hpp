@@ -386,11 +386,7 @@ public:
         return 0.0;
       }
     }
-    else if( z > 1.0 || z < 0.0 )
-    {
-      GEOS_ERROR( "Invalid z coordinate for pyramid shape function calculation." );
-    }
-
+   
     real64 xi = x / (1.0 - z);
     real64 eta = y / (1.0 - z);
     real64 chi = 2.0 * z - 1.0;
@@ -420,10 +416,7 @@ public:
       gradPsiX[2] = 0.0;
       return;
     }
-    else if( z > 1.0 || z < 0.0 )
-    {
-      GEOS_ERROR( "Invalid z coordinate for pyramid shape function calculation." );
-    }
+  
 
     real64 xi = x / (1.0 - z);
     real64 eta = y / (1.0 - z);
