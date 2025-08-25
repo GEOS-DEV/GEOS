@@ -188,9 +188,9 @@ public:
   /**
    * @brief Add a cell to the table. If necessary, create automatically the containing column & row.
    * @tparam T The value passed to addCell (can be any type).
-   * @param value CellData value to be added.
    * @param rowValue The value of the row containing the cell.
    * @param columnValue The value of the column containing the cell.
+   * @param value CellData value to be added.
    */
   template< typename T >
   void addCell( RowType rowValue, ColumnType columnValue, T const & value );
