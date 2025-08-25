@@ -22,9 +22,9 @@
 #include "dataRepository/InputFlags.hpp"
 #include "mainInterface/GeosxState.hpp"
 #include "mesh/DomainPartition.hpp"
-#include "fieldSpecification/LogLevelsInfo.hpp"
-#include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 #include "kernels/SeismicityRateKernels.hpp"
+#include "physicsSolvers/LogLevelsInfo.hpp"
+#include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 #include "physicsSolvers/inducedSeismicity/inducedSeismicityFields.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBase.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
@@ -367,7 +367,7 @@ real64 SeismicityRate::updateStresses( real64 const & time_n,
                                                       string const & )
         {
           globalIndex const numTargetElems = MpiWrapper::sum< globalIndex >( lset.size() );
-          GEOS_LOG_LEVEL_RANK_0_ON_GROUP( logInfo::FaceBoundaryCondition,
+          GEOS_LOG_LEVEL_RANK_0_ON_GROUP( logInfo::BoundaryConditions,
                                           GEOS_FMT( bcLogMessage,
                                                     this->getName(), time_n+dt, FieldSpecificationBase::catalogName(),
                                                     fs.getName(), setName, subRegion.getName(), fs.getScale(), numTargetElems ),

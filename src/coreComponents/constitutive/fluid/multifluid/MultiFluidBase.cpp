@@ -30,9 +30,7 @@ namespace constitutive
 {
 
 MultiFluidBase::MultiFluidBase( string const & name, Group * const parent )
-  : ConstitutiveBase( name, parent ),
-  m_useMass( false ),
-  m_checkPVTTablesRanges( 1 )
+  : ConstitutiveBase( name, parent )
 {
   // We make base inputs optional here, since derived classes may want to predefine/hardcode
   // components/phases. Models that do need these inputs should change input flags accordingly.
@@ -51,7 +49,8 @@ MultiFluidBase::MultiFluidBase( string const & name, Group * const parent )
     setDescription( "List of fluid phases" );
 
   registerWrapper( viewKeyStruct::useMassString(), &m_useMass ).
-    setRestartFlags( RestartFlags::NO_WRITE );
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setDefaultValue( 0 );
 
   registerWrapper( viewKeyStruct::checkPVTTablesRangesString(), &m_checkPVTTablesRanges ).
     setInputFlag( InputFlags::OPTIONAL ).

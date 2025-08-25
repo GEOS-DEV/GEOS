@@ -54,6 +54,8 @@ void ParallelPlatesPermeability::allocateConstitutiveData( Group & parent,
 
 void ParallelPlatesPermeability::postInputInitialization()
 {
+  PermeabilityBase::postInputInitialization();
+
   if( m_transversalPermeability > -1 )
   {
     m_updateTransversalComponent = false;

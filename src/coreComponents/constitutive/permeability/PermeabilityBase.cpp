@@ -30,9 +30,7 @@ namespace constitutive
 
 
 PermeabilityBase::PermeabilityBase( string const & name, Group * const parent ):
-  ConstitutiveBase( name, parent ),
-  m_permeability(),
-  m_dPerm_dPressure()
+  ConstitutiveBase( name, parent )
 {
   registerField< fields::permeability::permeability >( &m_permeability );
   registerField< fields::permeability::dPerm_dPressure >( &m_dPerm_dPressure );

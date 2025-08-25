@@ -29,8 +29,7 @@ namespace constitutive
 {
 
 ProppantPorosity::ProppantPorosity( string const & name, Group * const parent ):
-  PorosityBase( name, parent ),
-  m_maxProppantConcentration()
+  PorosityBase( name, parent )
 {
   registerWrapper( viewKeyStruct::maxProppantConcentrationString(), &m_maxProppantConcentration ).
     setInputFlag( InputFlags::REQUIRED ).

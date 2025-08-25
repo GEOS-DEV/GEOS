@@ -30,8 +30,7 @@ namespace constitutive
 {
 
 ThermalCompressibleSinglePhaseFluid::ThermalCompressibleSinglePhaseFluid( string const & name, Group * const parent ):
-  CompressibleSinglePhaseFluid( name, parent ),
-  m_internalEnergyModelType( ExponentApproximationType::Linear )
+  CompressibleSinglePhaseFluid( name, parent )
 {
   m_densityModelType = ExponentApproximationType::Full;
   m_numDOF=2;
@@ -56,7 +55,7 @@ ThermalCompressibleSinglePhaseFluid::ThermalCompressibleSinglePhaseFluid( string
     setDescription( "Reference fluid internal energy" );
 
   registerWrapper( viewKeyStruct::internalEnergyModelTypeString(), &m_internalEnergyModelType ).
-    setApplyDefaultValue( m_internalEnergyModelType ).
+    setApplyDefaultValue( ExponentApproximationType::Linear ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Type of internal energy model. Valid options:\n* " + EnumStrings< ExponentApproximationType >::concat( "\n* " ) );
 

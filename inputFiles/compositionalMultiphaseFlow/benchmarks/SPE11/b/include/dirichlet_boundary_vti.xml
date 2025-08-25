@@ -7,15 +7,13 @@
       objectPath="ElementRegions"
       fieldName="temperature"
       scale="313.15"
-      setNames="{ top }"
-      logLevel="0" />
+      setNames="{ top }" />
     <FieldSpecification
       name="bottomTemperature"
       objectPath="ElementRegions"
       fieldName="temperature"
       scale="343.15"
-      setNames="{ bottom }"
-      logLevel="0" />
+      setNames="{ bottom }" />
 </FieldSpecifications>
 
 </Problem>
