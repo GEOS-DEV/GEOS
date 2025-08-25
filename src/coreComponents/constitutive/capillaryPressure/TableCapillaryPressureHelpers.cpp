@@ -132,6 +132,21 @@ void TableCapillaryPressureHelpers::populateMinPhaseVolumeFraction(
   minPhaseVolumeFraction[ipOil] = LvArray::math::min( 1.0 - maxWettingSaturation, 1 - maxNonWettingSaturation );
 }
 
+void
+TableCapillaryPressureHelpers::validateCapillaryPressureTable( geos::TableFunction const & capPresTable,
+                                                               geos::string const & fullConstitutiveName,
+                                                               bool const capPresMustBeIncreasing,
+                                                               geos::real64 & phaseMax, geos::real64 & phaseMin )
+{
+
+  TableCapillaryPressureHelpers::validateCapillaryPressureTable( capPresTable, fullConstitutiveName, capPresMustBeIncreasing );
+  ArrayOfArraysView< real64 const > coords = capPresTable.getCoordinates();
+  arraySlice1d< real64 const > phaseVolFrac = coords[0];
+  phaseMin = phaseVolFrac[0];
+  phaseMax = phaseVolFrac[phaseVolFrac.size()-1];
+}
+
+
 } // namespace constitutive
 
 } // namespace geos

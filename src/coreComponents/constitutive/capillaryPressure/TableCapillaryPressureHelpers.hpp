@@ -42,6 +42,13 @@ struct TableCapillaryPressureHelpers
                                        string const & fullConstitutiveName,
                                        bool const capPresMustBeIncreasing );
 
+  static
+  void validateCapillaryPressureTable( TableFunction const & capPresTable,
+                                       string const & fullConstitutiveName,
+                                       bool const capPresMustBeIncreasing,
+                                       real64 & phaseMax,
+                                       real64 & phaseMin );
+
   /**
    * @brief Populates the minimum phase volume fraction for each phase from the ends of the provided tables
    * @param[in] phaseOrder The ordering of the phases
