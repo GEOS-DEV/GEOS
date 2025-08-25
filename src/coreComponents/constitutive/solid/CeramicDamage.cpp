@@ -18,6 +18,7 @@
  */
 
 #include "CeramicDamage.hpp"
+#include "SolidFields.hpp"
 #include "mesh/ElementSubRegionBase.hpp"
 
 namespace geos
@@ -27,14 +28,7 @@ namespace constitutive
 {
 
 CeramicDamage::CeramicDamage( string const & name, Group * const parent ):
-  ElasticIsotropic( name, parent ),
-  m_damage(),
-  m_jacobian(),
-  m_lengthScale(),
-  m_tensileStrength(),
-  m_compressiveStrength(),
-  m_maximumStrength(),
-  m_crackSpeed()
+  ElasticIsotropic( name, parent )
 {
   // register default values
   registerWrapper( viewKeyStruct::tensileStrengthString(), &m_tensileStrength ).
@@ -60,23 +54,13 @@ void CeramicDamage::allocateConstitutiveData( Group & parent,
 {
   auto subregion = dynamic_cast< ElementSubRegionBase * >( &parent ); // TODO remove
 
-  // TODO use registerField
-  subregion->registerWrapper( viewKeyStruct::damageString(), &m_damage ).
-    setApplyDefaultValue( 0.0 ).
-    setPlotLevel( PlotLevel::LEVEL_0 ).
-    setDescription( "Array of quadrature point damage values" ).
+  subregion->registerField< fields::solid::damage >( &m_damage ).
     reference().resizeDimension< 1 >( numPts );
 
-  registerWrapper( viewKeyStruct::jacobianString(), &m_jacobian ).
-    setApplyDefaultValue( 1.0 ).
-    setPlotLevel( PlotLevel::NOPLOT ).
-    setDescription( "Array of quadrature point jacobian values" ).
+  subregion->registerField< fields::solid::jacobian >( &m_jacobian ).
     reference().resizeDimension< 1 >( numPts );
 
-  registerWrapper( viewKeyStruct::lengthScaleString(), &m_lengthScale ).
-    setApplyDefaultValue( DBL_MIN ).
-    setPlotLevel( PlotLevel::NOPLOT ).
-    setDescription( "Array of quadrature point damage values" );
+  subregion->registerField< fields::solid::lengthScale >( &m_lengthScale );
 
   ElasticIsotropic::allocateConstitutiveData( parent, numPts );
 }

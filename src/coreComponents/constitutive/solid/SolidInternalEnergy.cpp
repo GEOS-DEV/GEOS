@@ -18,6 +18,7 @@
  */
 
 #include "SolidInternalEnergy.hpp"
+#include "SolidFields.hpp"
 #include "mesh/ElementSubRegionBase.hpp"
 
 namespace geos
@@ -29,13 +30,7 @@ namespace constitutive
 {
 
 SolidInternalEnergy::SolidInternalEnergy( string const & name, Group * const parent ):
-  ConstitutiveBase( name, parent ),
-  m_internalEnergy(),
-  m_dInternalEnergy_dTemperature(),
-  m_referenceVolumetricHeatCapacity(),
-  m_dVolumetricHeatCapacity_dTemperature(),
-  m_referenceTemperature(),
-  m_referenceInternalEnergy()
+  ConstitutiveBase( name, parent )
 {
   registerWrapper( viewKeyStruct::referenceVolumetricHeatCapacityString(), &m_referenceVolumetricHeatCapacity ).
     setInputFlag( InputFlags::REQUIRED ).
@@ -53,6 +48,14 @@ SolidInternalEnergy::SolidInternalEnergy( string const & name, Group * const par
   registerWrapper( viewKeyStruct::referenceInternalEnergyString(), &m_referenceInternalEnergy ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Internal energy at the reference temperature [J/kg]" );
+
+  // register fields
+
+  registerField< fields::solid::internalEnergy >( &m_internalEnergy );
+
+  registerField< fields::solid::oldInternalEnergy >( &m_internalEnergy_n );
+
+  registerField< fields::solid::dInternalEnergy_dTemperature >( &m_dInternalEnergy_dTemperature );
 }
 
 void SolidInternalEnergy::allocateConstitutiveData( Group & parent,

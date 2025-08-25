@@ -18,6 +18,7 @@
  */
 
 #include "DruckerPrager.hpp"
+#include "SolidFields.hpp"
 #include "mesh/ElementSubRegionBase.hpp"
 
 namespace geos
@@ -27,16 +28,7 @@ namespace constitutive
 {
 
 DruckerPrager::DruckerPrager( string const & name, Group * const parent ):
-  ElasticIsotropic( name, parent ),
-  m_defaultFrictionAngle(),
-  m_defaultDilationAngle(),
-  m_defaultCohesion(),
-  m_defaultHardening(),
-  m_friction(),
-  m_dilation(),
-  m_hardening(),
-  m_newCohesion(),
-  m_oldCohesion()
+  ElasticIsotropic( name, parent )
 {
   // register default values
 
@@ -59,20 +51,6 @@ DruckerPrager::DruckerPrager( string const & name, Group * const parent ):
     setApplyDefaultValue( 0.0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Initial cohesion" );
-
-  // register fields
-
-  registerWrapper( viewKeyStruct::frictionString(), &m_friction ).
-    setApplyDefaultValue( -1 ).
-    setDescription( "Yield surface slope" );
-
-  registerWrapper( viewKeyStruct::dilationString(), &m_dilation ).
-    setApplyDefaultValue( -1 ).
-    setDescription( "Plastic potential slope" );
-
-  registerWrapper( viewKeyStruct::hardeningString(), &m_hardening ).
-    setApplyDefaultValue( -1 ).
-    setDescription( "Hardening rate" );
 }
 
 
@@ -81,16 +59,16 @@ void DruckerPrager::allocateConstitutiveData( Group & parent,
 {
   auto subregion = dynamic_cast< ElementSubRegionBase * >( &parent ); // TODO remove
 
-  // TODO use registerField
-  subregion->registerWrapper( viewKeyStruct::newCohesionString(), &m_newCohesion ).
-    setApplyDefaultValue( -1 ).
-    setPlotLevel( dataRepository::PlotLevel::LEVEL_3 ).
-    setDescription( "New cohesion state" ).
+  subregion->registerField< fields::solid::friction >( &m_friction );
+
+  subregion->registerField< fields::solid::dilation >( &m_dilation );
+
+  subregion->registerField< fields::solid::hardening >( &m_hardening );
+
+  subregion->registerField< fields::solid::cohesion >( &m_newCohesion ).
     reference().resizeDimension< 1 >( numPts );
 
-  subregion->registerWrapper( viewKeyStruct::oldCohesionString(), &m_oldCohesion ).
-    setApplyDefaultValue( -1 ).
-    setDescription( "Old cohesion state" ).
+  subregion->registerField< fields::solid::oldCohesion >( &m_oldCohesion ).
     reference().resizeDimension< 1 >( numPts );
 
   ElasticIsotropic::allocateConstitutiveData( parent, numPts );
@@ -123,19 +101,19 @@ void DruckerPrager::postInputInitialization()
 
   // set results as array default values
 
-  getWrapper< array2d< real64 > >( viewKeyStruct::oldCohesionString() ).
+  getWrapper< array2d< real64 > >( fields::solid::oldCohesion::key() ).
     setApplyDefaultValue( C );
 
-  getWrapper< array2d< real64 > >( viewKeyStruct::newCohesionString() ).
+  getWrapper< array2d< real64 > >( fields::solid::cohesion::key() ).
     setApplyDefaultValue( C );
 
-  getWrapper< array1d< real64 > >( viewKeyStruct::dilationString() ).
+  getWrapper< array1d< real64 > >( fields::solid::dilation::key() ).
     setApplyDefaultValue( D );
 
-  getWrapper< array1d< real64 > >( viewKeyStruct::frictionString() ).
+  getWrapper< array1d< real64 > >( fields::solid::friction::key() ).
     setApplyDefaultValue( F );
 
-  getWrapper< array1d< real64 > >( viewKeyStruct::hardeningString() ).
+  getWrapper< array1d< real64 > >( fields::solid::hardening::key() ).
     setApplyDefaultValue( m_defaultHardening );
 }
 

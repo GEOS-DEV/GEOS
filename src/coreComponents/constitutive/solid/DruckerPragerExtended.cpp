@@ -18,6 +18,7 @@
  */
 
 #include "DruckerPragerExtended.hpp"
+#include "SolidFields.hpp"
 #include "mesh/ElementSubRegionBase.hpp"
 
 namespace geos
@@ -27,19 +28,7 @@ namespace constitutive
 {
 
 DruckerPragerExtended::DruckerPragerExtended( string const & name, Group * const parent ):
-  ElasticIsotropic( name, parent ),
-  m_defaultInitialFrictionAngle(),
-  m_defaultResidualFrictionAngle(),
-  m_defaultDilationRatio(),
-  m_defaultCohesion(),
-  m_defaultHardening(),
-  m_initialFriction(),
-  m_residualFriction(),
-  m_dilationRatio(),
-  m_pressureIntercept(),
-  m_hardening(),
-  m_newState(),
-  m_oldState()
+  ElasticIsotropic( name, parent )
 {
   // register default values
 
@@ -67,28 +56,6 @@ DruckerPragerExtended::DruckerPragerExtended( string const & name, Group * const
     setApplyDefaultValue( 0.0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Initial cohesion" );
-
-  // register fields
-
-  registerWrapper( viewKeyStruct::initialFrictionString(), &m_initialFriction ).
-    setApplyDefaultValue( -1 ).
-    setDescription( "Initial yield surface slope" );
-
-  registerWrapper( viewKeyStruct::residualFrictionString(), &m_residualFriction ).
-    setApplyDefaultValue( -1 ).
-    setDescription( "Residual yield surface slope" );
-
-  registerWrapper( viewKeyStruct::dilationRatioString(), &m_dilationRatio ).
-    setApplyDefaultValue( -1 ).
-    setDescription( "Plastic potential slope ratio" );
-
-  registerWrapper( viewKeyStruct::pressureInterceptString(), &m_pressureIntercept ).
-    setApplyDefaultValue( -1 ).
-    setDescription( "Pressure point at cone vertex" );
-
-  registerWrapper( viewKeyStruct::hardeningString(), &m_hardening ).
-    setApplyDefaultValue( -1 ).
-    setDescription( "Hardening parameter" );
 }
 
 
@@ -97,16 +64,22 @@ void DruckerPragerExtended::allocateConstitutiveData( Group & parent,
 {
   auto subregion = dynamic_cast< ElementSubRegionBase * >( &parent ); // TODO remove
 
-  // TODO use registerField
-  subregion->registerWrapper( viewKeyStruct::newStateString(), &m_newState ).
-    setApplyDefaultValue( 0.0 ).
-    setPlotLevel( dataRepository::PlotLevel::LEVEL_3 ).
-    setDescription( "New equivalent plastic shear strain" ).
+  // register fields
+
+  subregion->registerField< fields::solid::initialFriction >( &m_initialFriction );
+
+  subregion->registerField< fields::solid::residualFriction >( &m_residualFriction );
+
+  subregion->registerField< fields::solid::dilation >( &m_dilationRatio );
+
+  subregion->registerField< fields::solid::pressureIntercept >( &m_pressureIntercept );
+
+  subregion->registerField< fields::solid::hardening >( &m_hardening );
+
+  subregion->registerField< fields::solid::state >( &m_newState ).
     reference().resizeDimension< 1 >( numPts );
 
-  subregion->registerWrapper( viewKeyStruct::oldStateString(), &m_oldState ).
-    setApplyDefaultValue( 0.0 ).
-    setDescription( "Old equivalent plastic shear strain" ).
+  subregion->registerField< fields::solid::oldState >( &m_oldState ).
     reference().resizeDimension< 1 >( numPts );
 
   ElasticIsotropic::allocateConstitutiveData( parent, numPts );
@@ -143,19 +116,19 @@ void DruckerPragerExtended::postInputInitialization()
 
   // set results as array default values
 
-  getWrapper< array1d< real64 > >( viewKeyStruct::initialFrictionString() ).
+  getWrapper< array1d< real64 > >( fields::solid::initialFriction::key()).
     setApplyDefaultValue( F_i );
 
-  getWrapper< array1d< real64 > >( viewKeyStruct::residualFrictionString() ).
+  getWrapper< array1d< real64 > >( fields::solid::residualFriction::key() ).
     setApplyDefaultValue( F_r );
 
-  getWrapper< array1d< real64 > >( viewKeyStruct::pressureInterceptString() ).
+  getWrapper< array1d< real64 > >( fields::solid::pressureIntercept::key() ).
     setApplyDefaultValue( P );
 
-  getWrapper< array1d< real64 > >( viewKeyStruct::dilationRatioString() ).
+  getWrapper< array1d< real64 > >( fields::solid::dilation::key() ).
     setApplyDefaultValue( m_defaultDilationRatio );
 
-  getWrapper< array1d< real64 > >( viewKeyStruct::hardeningString() ).
+  getWrapper< array1d< real64 > >( fields::solid::hardening::key() ).
     setApplyDefaultValue( m_defaultHardening );
 }
 

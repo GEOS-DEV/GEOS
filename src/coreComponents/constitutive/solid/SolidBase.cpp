@@ -30,11 +30,7 @@ namespace constitutive
 {
 
 SolidBase::SolidBase( string const & name, Group * const parent ):
-  ConstitutiveBase( name, parent ),
-  m_newStress( 0, 0, 6 ),
-  m_oldStress( 0, 0, 6 ),
-  m_density(),
-  m_thermalExpansionCoefficient()
+  ConstitutiveBase( name, parent )
 {
   registerWrapper( viewKeyStruct::defaultDensityString(), &m_defaultDensity ).
     setInputFlag( InputFlags::REQUIRED ).
@@ -49,38 +45,33 @@ SolidBase::SolidBase( string const & name, Group * const parent ):
 
 void SolidBase::postInputInitialization()
 {
-  m_density.setValues< parallelDevicePolicy<> >( m_defaultDensity );
-  m_thermalExpansionCoefficient.setValues< parallelDevicePolicy<> >( m_defaultThermalExpansionCoefficient );
+  getWrapper< array2d< real64 > >( fields::solid::solidDensity::key() ).
+    setApplyDefaultValue( m_defaultDensity );
+
+  getWrapper< array1d< real64 > >( fields::solid::thermalExpansionCoefficient::key() ).
+    setApplyDefaultValue( m_defaultThermalExpansionCoefficient );
 }
 
 
 void SolidBase::allocateConstitutiveData( Group & parent,
                                           localIndex const numPts )
 {
-  string const voightLabels[6] = { "XX", "YY", "ZZ", "YZ", "XZ", "XY" };
-
   auto subregion = dynamic_cast< ElementSubRegionBase * >( &parent ); // TODO remove
 
-  // TODO use registerField
+  string const voightLabels[6] = { "XX", "YY", "ZZ", "YZ", "XZ", "XY" };
 
-  subregion->registerWrapper( viewKeyStruct::stressString(), &m_newStress ).
-    setPlotLevel( PlotLevel::LEVEL_0 ).
-    setApplyDefaultValue( 0 ). // default to zero initial stress
-    setDescription( "Current Material Stress" ).
+  subregion->registerField< fields::solid::stress >( getName(), &m_newStress ).
     setDimLabels( 2, voightLabels ).
     reference().resizeDimension< 1, 2 >( numPts, 6 );
 
-  subregion->registerWrapper( viewKeyStruct::oldStressString(), &m_oldStress ).
-    setApplyDefaultValue( 0 ). // default to zero initial stress
-    setDescription( "Previous Material Stress" ).
+  subregion->registerField< fields::solid::oldStress >( getName(), &m_oldStress ).
     setDimLabels( 2, voightLabels ).
     reference().resizeDimension< 1, 2 >( numPts, 6 );
 
-  subregion->registerWrapper( viewKeyStruct::densityString(), &m_density ).
-    setPlotLevel( PlotLevel::LEVEL_0 ).
-    setApplyDefaultValue( -1 ). // will be overwritten
-    setDescription( "Material Density" ).
+  subregion->registerField< fields::solid::solidDensity >( getName(), &m_density ).
     reference().resizeDimension< 1 >( numPts );
+
+  subregion->registerField< fields::solid::thermalExpansionCoefficient >( getName(), &m_thermalExpansionCoefficient );
 
   subregion->registerField< fields::solid::thermalExpansionCoefficient >( getName(), &m_thermalExpansionCoefficient );
 

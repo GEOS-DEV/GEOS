@@ -459,18 +459,10 @@ public:
 
   struct viewKeyStruct : public BASE::viewKeyStruct
   {
-    static constexpr char const * newDamageString() { return "newDamage"; }
-    static constexpr char const * oldDamageString() { return "oldDamage"; }
-    static constexpr char const * damageGradString() { return "damageGrad"; }
-    static constexpr char const * strainEnergyDensityString() { return "strainEnergyDensity"; }
-    static constexpr char const * volumetricStrainString() { return "volumetricStrain"; }
-    static constexpr char const * extDrivingForceString() { return "extDrivingForce"; }
     /// string/key for regularization length
     static constexpr char const * lengthScaleString() { return "lengthScale"; }
     /// string/key for default Gc
     static constexpr char const * defaultCriticalFractureEnergyString() { return "defaultCriticalFractureEnergy"; }
-    /// string/key for Gc
-    static constexpr char const * criticalFractureEnergyString() { return "criticalFractureEnergy"; }
     /// string/key for sigma_c
     static constexpr char const * criticalStrainEnergyString() { return "criticalStrainEnergy"; }
     /// string/key for degradation lower limit
@@ -479,18 +471,10 @@ public:
     static constexpr char const * extDrivingForceFlagString() { return "extDrivingForceFlag"; }
     /// string/key for the default tensile strength
     static constexpr char const * defaultTensileStrengthString() { return "defaultTensileStrength"; }
-    /// string/key for the uniaxial tensile strength
-    static constexpr char const * tensileStrengthString() { return "tensileStrength"; }
     /// string/key for the default compressive strength
     static constexpr char const * defaultCompressStrengthString() { return "defaultCompressiveStrength"; }
-    /// string/key for the uniaxial compressive strength
-    static constexpr char const * compressStrengthString() { return "compressiveStrength"; }
     /// string/key for the default delta coefficient in computing the external driving force
     static constexpr char const * defaultDeltaCoefficientString() { return "defaultDeltaCoefficient"; }
-    /// string/key for a delta coefficient in computing the external driving force
-    static constexpr char const * deltaCoefficientString() { return "deltaCoefficient"; }
-    /// string/key for the Biot coefficient
-    static constexpr char const * biotCoefficientString() { return "biotCoefficient"; }
   };
 
 

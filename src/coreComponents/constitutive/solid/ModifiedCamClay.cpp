@@ -18,6 +18,7 @@
  */
 
 #include "ModifiedCamClay.hpp"
+#include "SolidFields.hpp"
 #include "mesh/ElementSubRegionBase.hpp"
 
 namespace geos
@@ -27,14 +28,7 @@ namespace constitutive
 {
 
 ModifiedCamClay::ModifiedCamClay( string const & name, Group * const parent ):
-  ElasticIsotropicPressureDependent( name, parent ),
-  m_defaultVirginCompressionIndex(),
-  m_defaultCslSlope(),
-  m_defaultPreConsolidationPressure(),
-  m_virginCompressionIndex(),
-  m_cslSlope(),
-  m_newPreConsolidationPressure(),
-  m_oldPreConsolidationPressure()
+  ElasticIsotropicPressureDependent( name, parent )
 {
   // register default values
 
@@ -60,25 +54,14 @@ void ModifiedCamClay::allocateConstitutiveData( Group & parent,
 {
   auto subregion = dynamic_cast< ElementSubRegionBase * >( &parent ); // TODO remove
 
-  // TODO use registerField
+  subregion->registerField< fields::solid::virginCompressionIndex >( &m_virginCompressionIndex );
 
-  subregion->registerWrapper( viewKeyStruct::virginCompressionIndexString(), &m_virginCompressionIndex ).
-    setApplyDefaultValue( -1 ).
-    setDescription( "Virgin compression index" );
+  subregion->registerField< fields::solid::cslSlope >( &m_cslSlope );
 
-  subregion->registerWrapper( viewKeyStruct::cslSlopeString(), &m_cslSlope ).
-    setApplyDefaultValue( -1 ).
-    setDescription( "Slope of the critical state line" );
-
-  subregion->registerWrapper( viewKeyStruct::newPreConsolidationPressureString(), &m_newPreConsolidationPressure ).
-    setApplyDefaultValue( -1 ).
-    setPlotLevel( dataRepository::PlotLevel::LEVEL_3 ).
-    setDescription( "New preconsolidation pressure" ).
+  subregion->registerField< fields::solid::preConsolidationPressure >( &m_newPreConsolidationPressure ).
     reference().resizeDimension< 1 >( numPts );
 
-  subregion->registerWrapper( viewKeyStruct::oldPreConsolidationPressureString(), &m_oldPreConsolidationPressure ).
-    setApplyDefaultValue( -1 ).
-    setDescription( "Old preconsolidation pressure" ).
+  subregion->registerField< fields::solid::oldPreConsolidationPressure >( &m_oldPreConsolidationPressure ).
     reference().resizeDimension< 1 >( numPts );
 
   ElasticIsotropicPressureDependent::allocateConstitutiveData( parent, numPts );
@@ -97,16 +80,16 @@ void ModifiedCamClay::postInputInitialization()
 
   // set results as array default values
 
-  getWrapper< array2d< real64 > >( viewKeyStruct::oldPreConsolidationPressureString() ).
+  getWrapper< array2d< real64 > >( fields::solid::oldPreConsolidationPressure::key() ).
     setApplyDefaultValue( m_defaultPreConsolidationPressure );
 
-  getWrapper< array2d< real64 > >( viewKeyStruct::newPreConsolidationPressureString() ).
+  getWrapper< array2d< real64 > >( fields::solid::preConsolidationPressure::key() ).
     setApplyDefaultValue( m_defaultPreConsolidationPressure );
 
-  getWrapper< array1d< real64 > >( viewKeyStruct::virginCompressionIndexString() ).
+  getWrapper< array1d< real64 > >( fields::solid::virginCompressionIndex::key() ).
     setApplyDefaultValue( m_defaultVirginCompressionIndex );
 
-  getWrapper< array1d< real64 > >( viewKeyStruct::cslSlopeString() ).
+  getWrapper< array1d< real64 > >( fields::solid::cslSlope::key() ).
     setApplyDefaultValue( m_defaultCslSlope );
 
 }
