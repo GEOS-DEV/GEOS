@@ -24,6 +24,7 @@
 #include "constitutive/solid/CoupledSolid.hpp"
 #include "constitutive/solid/porosity/BiotPorosity.hpp"
 #include "constitutive/solid/SolidBase.hpp"
+#include "constitutive/permeability/ConstantPermeability.hpp"
 
 namespace geos
 {
@@ -352,7 +353,17 @@ public:
    * @brief Catalog name
    * @return Static catalog string
    */
-  static string catalogName() { return string( "Porous" ) + SOLID_TYPE::catalogName(); }
+  static string catalogName()
+  {
+    if constexpr ( std::is_same_v< PERM_TYPE, ConstantPermeability > )   // default case
+    {
+      return string( "Porous" ) + SOLID_TYPE::catalogName();
+    }
+    else   // special cases
+    {
+      return string( "Porous" ) + SOLID_TYPE::catalogName() + PERM_TYPE::catalogName();
+    }
+  }
 
   /**
    * @brief Get catalog name
