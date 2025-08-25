@@ -27,7 +27,7 @@
     <PeriodicEvent
       name="outputs"
       timeFrequency="10.0"
-      target="/Outputs/siloOutput"/>
+      target="/Outputs/vtkOutput"/>
 
     <PeriodicEvent
       name="solverApplication0"
@@ -50,39 +50,16 @@
       target="/Solvers/PoroelasticitySolver"/>
 
     <PeriodicEvent
-      name="timeHistoryCollection"
-      timeFrequency="10.0"
-      target="/Tasks/pressureCollection"/>
-
-    <PeriodicEvent
-      name="timeHistoryOutput"
-      timeFrequency="10.0"
-      targetExactTimestep="0"
-      target="/Outputs/timeHistoryOutput"/>
-
-    <PeriodicEvent
       name="restarts"
       cycleFrequency="50"
       target="/Outputs/restartOutput"/>
   </Events>
 
   <Outputs>
-    <Silo
-      name="siloOutput"/>
-
-    <TimeHistory
-      name="timeHistoryOutput"
-      sources="{ /Tasks/pressureCollection }"
-      filename="pressure_history"/>
+    <VTK
+      name="vtkOutput"/>
 
     <Restart
       name="restartOutput"/>
   </Outputs>
-
-  <Tasks>
-    <PackCollection
-      name="pressureCollection"
-      objectPath="ElementRegions/Domain/cb1"
-      fieldName="pressure"/>
-  </Tasks>
 </Problem>

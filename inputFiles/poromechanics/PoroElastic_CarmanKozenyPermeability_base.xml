@@ -53,7 +53,7 @@
 
   <!-- SPHINX_POROELASTIC_CONSTITUTIVE -->
   <Constitutive>
-    <PorousElasticIsotropic
+    <PorousElasticIsotropicCarmanKozenyPermeability
       name="porousRock"
       solidModelName="skeleton"
       porosityModelName="skeletonPorosity"
