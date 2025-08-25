@@ -13,8 +13,6 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#include "RelpermDriver.hpp"
-
 #include "common/MpiWrapper.hpp"
 #include "functions/FunctionManager.hpp"
 #include "functions/TableFunction.hpp"
@@ -22,6 +20,8 @@
 #include "constitutiveDrivers/fluid/multiFluid/LogLevelsInfo.hpp"
 #include "constitutive/relativePermeability/RelativePermeabilityBase.hpp"
 #include "constitutive/relativePermeability/RelativePermeabilitySelector.hpp"
+
+#include "RelpermDriver.hpp"
 
 namespace geos
 {
@@ -91,10 +91,10 @@ void RelpermDriver::outputResults()
 
 void RelpermDriver::postInputInitialization()
 {
-  constitutive::ConstitutiveManager
-  & constitutiveManager = this->getGroupByPath< constitutive::ConstitutiveManager >( "/Problem/domain/Constitutive" );
-  constitutive::RelativePermeabilityBase
-  & baseRelperm = constitutiveManager.getGroup< constitutive::RelativePermeabilityBase >( m_relpermName );
+  ConstitutiveManager
+  & constitutiveManager = this->getGroupByPath< ConstitutiveManager >( "/Problem/domain/Constitutive" );
+  RelativePermeabilityBase
+  & baseRelperm = constitutiveManager.getGroup< RelativePermeabilityBase >( m_relpermName );
 
   m_numPhases = baseRelperm.numFluidPhases();
 
@@ -114,10 +114,10 @@ bool RelpermDriver::execute( const geos::real64 GEOS_UNUSED_PARAM( time_n ),
   GEOS_THROW_IF( MpiWrapper::commRank() > 0, "RelpermDriver should only be run in serial", std::runtime_error );
 
 
-  constitutive::ConstitutiveManager
-  & constitutiveManager = this->getGroupByPath< constitutive::ConstitutiveManager >( "/Problem/domain/Constitutive" );
-  constitutive::RelativePermeabilityBase
-  & baseRelperm = constitutiveManager.getGroup< constitutive::RelativePermeabilityBase >( m_relpermName );
+  ConstitutiveManager
+  & constitutiveManager = this->getGroupByPath< ConstitutiveManager >( "/Problem/domain/Constitutive" );
+  RelativePermeabilityBase
+  & baseRelperm = constitutiveManager.getGroup< RelativePermeabilityBase >( m_relpermName );
 
   GEOS_LOG_LEVEL_RANK_0( logInfo::Initialisation, "Launching Relperm Driver" );
   GEOS_LOG_LEVEL_RANK_0( logInfo::Initialisation, "  Relperm .................. " << m_relpermName );
@@ -164,12 +164,12 @@ bool RelpermDriver::execute( const geos::real64 GEOS_UNUSED_PARAM( time_n ),
 template< typename RELPERM_TYPE >
 void RelpermDriver::resizeTables()
 {
-  constitutive::ConstitutiveManager
-  & constitutiveManager = this->getGroupByPath< constitutive::ConstitutiveManager >( "/Problem/domain/Constitutive" );
-  constitutive::RelativePermeabilityBase
-  & baseRelperm = constitutiveManager.getGroup< constitutive::RelativePermeabilityBase >( m_relpermName );
+  ConstitutiveManager
+  & constitutiveManager = this->getGroupByPath< ConstitutiveManager >( "/Problem/domain/Constitutive" );
+  RelativePermeabilityBase
+  & baseRelperm = constitutiveManager.getGroup< RelativePermeabilityBase >( m_relpermName );
 
-  using PT = constitutive::RelativePermeabilityBase::PhaseType;
+  using PT = RelativePermeabilityBase::PhaseType;
   integer const ipWater = baseRelperm.getPhaseOrder()[PT::WATER];
   integer const ipOil = baseRelperm.getPhaseOrder()[PT::OIL];
   integer const ipGas = baseRelperm.getPhaseOrder()[PT::GAS];
@@ -177,20 +177,20 @@ void RelpermDriver::resizeTables()
   real64 minSw = 0., minSnw = 0.;
   if( baseRelperm.numFluidPhases() > 2 )
   {
-    minSw = baseRelperm.getPhaseMinVolumeFraction()[ipWater];
-    minSnw = baseRelperm.getPhaseMinVolumeFraction()[ipGas];
+    minSw = baseRelperm.getWettingPhaseMinVolumeFraction();
+    minSnw = baseRelperm.getNonWettingMinVolumeFraction();
   }
   else
   {
     if( ipWater < 0 )// a.k.a o/g
     {
       minSw = 0;
-      minSnw = baseRelperm.getPhaseMinVolumeFraction()[ipGas];
+      minSnw = baseRelperm.getNonWettingMinVolumeFraction();
     }
     else if( ipGas < 0 || ipOil < 0 )// a.k.a w/o or w/g
     {
       minSnw = 0;
-      minSw = baseRelperm.getPhaseMinVolumeFraction()[ipWater];
+      minSw = baseRelperm.getWettingPhaseMinVolumeFraction();
     }
   }
 
@@ -245,7 +245,7 @@ void RelpermDriver::resizeTables()
 
 
 template< typename RELPERM_TYPE >
-std::enable_if_t< std::is_same< constitutive::TableRelativePermeabilityHysteresis, RELPERM_TYPE >::value, void >
+std::enable_if_t< std::is_same< TableRelativePermeabilityHysteresis, RELPERM_TYPE >::value, void >
 RelpermDriver::resizeTable()
 {
   if( m_numPhases > 2 )
@@ -260,7 +260,7 @@ RelpermDriver::resizeTable()
 }
 
 template< typename RELPERM_TYPE >
-std::enable_if_t< !std::is_same< constitutive::TableRelativePermeabilityHysteresis, RELPERM_TYPE >::value, void >
+std::enable_if_t< !std::is_same< TableRelativePermeabilityHysteresis, RELPERM_TYPE >::value, void >
 RelpermDriver::resizeTable()
 {
   if( m_numPhases > 2 )

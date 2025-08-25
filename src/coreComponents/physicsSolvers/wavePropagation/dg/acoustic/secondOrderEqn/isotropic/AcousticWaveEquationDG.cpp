@@ -139,6 +139,27 @@ void AcousticWaveEquationDG::postInputInitialization()
 
 }
 
+real32 AcousticWaveEquationDG::getGlobalMinWavespeed( MeshLevel & mesh, string_array const & regionNames )
+{
+
+  real32 localMinWavespeed = 1e8;
+
+  mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
+                                                                                        CellElementSubRegion & elementSubRegion )
+  {
+    arrayView1d< real32 const > const velocity = elementSubRegion.getField< acousticfieldsdg::AcousticVelocity >();
+    real32 subRegionMinWavespeed = *std::min_element( velocity.begin(), velocity.end());
+    if( localMinWavespeed > subRegionMinWavespeed )
+    {
+      localMinWavespeed = subRegionMinWavespeed;
+    }
+  } );
+
+  real32 const globalMinWavespeed = MpiWrapper::min( localMinWavespeed );
+
+  return globalMinWavespeed;
+}
+
 void AcousticWaveEquationDG::precomputeSourceAndReceiverTerm( MeshLevel & baseMesh, MeshLevel & mesh,
                                                               string_array const & regionNames )
 {
@@ -448,7 +469,7 @@ real64 AcousticWaveEquationDG::explicitStepBackward( real64 const & time_n,
                                                      DomainPartition & domain,
                                                      integer GEOS_UNUSED_PARAM( computeGradient ) )
 {
-  GEOS_ERROR( "Backward propagation for the first-order wave propagator not yet implemented" );
+  GEOS_ERROR( "Backward propagation for the second-order DG wave propagator not yet implemented" );
   real64 dtOut = explicitStepInternal( time_n, dt, cycleNumber, domain );
   return dtOut;
 }
@@ -654,12 +675,12 @@ void AcousticWaveEquationDG::cleanup( real64 const time_n, integer const, intege
 
 void AcousticWaveEquationDG::initializePML()
 {
-  GEOS_ERROR( "PML for the first order acoustic wave propagator not yet implemented" );
+  GEOS_ERROR( "PML for the second-order DG acoustic wave propagator not yet implemented" );
 }
 
 void AcousticWaveEquationDG::applyPML( real64 const, DomainPartition & )
 {
-  GEOS_ERROR( "PML for the first order acoustic wave propagator not yet implemented" );
+  GEOS_ERROR( "PML for the second-order DG acoustic wave propagator not yet implemented" );
 }
 
 REGISTER_CATALOG_ENTRY( PhysicsSolverBase, AcousticWaveEquationDG, string const &, dataRepository::Group * const )

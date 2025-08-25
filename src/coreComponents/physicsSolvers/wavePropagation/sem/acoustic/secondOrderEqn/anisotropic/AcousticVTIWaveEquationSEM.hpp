@@ -69,6 +69,11 @@ public:
                                        DomainPartition & GEOS_UNUSED_PARAM( domain ),
                                        integer const GEOS_UNUSED_PARAM( computeGradient ) ) override;
 
+  /**
+   * @brief Get the minimum wavespeed on a mesh
+   */
+  virtual real32 getGlobalMinWavespeed( MeshLevel & mesh, string_array const & regionNames ) override;
+
   /**@}*/
 
   /**

@@ -647,16 +647,23 @@ public:
     ( func( std::integral_constant< int, Is >{} ), ... );
   }
 
-  template<int N, typename FUNC>
-GEOS_HOST_DEVICE
-static constexpr void loop(FUNC const& func)
-{
-  if constexpr (N > 0)
+  /**
+   * @brief Helper function for static for loop
+   * @tparam N the number of iterations
+   * @tparam FUNC the callback function
+   * @param func the callback function to call for each index
+   * This function recursively calls itself until N reaches 0, at which point it stops.
+   */
+  template< int N, typename FUNC >
+  GEOS_HOST_DEVICE
+  static constexpr void loop( FUNC const & func )
   {
-    loop<N - 1>(func);
-    func(std::integral_constant<int, N - 1>{});
+    if constexpr (N > 0)
+    {
+      loop< N - 1 >( func );
+      func( std::integral_constant< int, N - 1 >{} );
+    }
   }
-}
 
 
   /**
@@ -696,7 +703,7 @@ static constexpr void loop(FUNC const& func)
           {
             constexpr int k = decltype(kkc)::value;
             constexpr int k1 = ORDER - k;
-            if constexpr ( k1 <= ORDER - i1 - j1 )
+            if constexpr ( k1 <= (ORDER - i1 - j1) )
             {
               constexpr int l1 = ORDER - i1 - j1 - k1;
               constexpr int c1 = dofIndex< i1, j1, k1 >();
@@ -715,73 +722,242 @@ static constexpr void loop(FUNC const& func)
   /**
    * @brief Helper function for loop over tet basis functions that have one index in a given set of indices.
    *   If multiple indices are in the given list, the callback is called multiple times.
+   *   This herlper is useful to avoid too much fold operations.
+   * @tparam c1 the dof index in the element
+   * @tparam i1 the index with respect to the first vertex
+   * @tparam j1 the index with respect to the second vertex
+   * @tparam k1 the index with respect to the third vertex
+   * @tparam l1 the index with respect to the fourth vertex
+   * @tparam F the callback function type
+   * @tparam Is the set of indices to check against
+   * @param func the callback function to call for each matching index
+   */
+  template< int c1, int i1, int j1, int k1, int l1, typename F, int... Is >
+  GEOS_HOST_DEVICE
+  static constexpr void call_matching_cases( F && func, std::integer_sequence< int, Is... > )
+  {
+
+    auto check_i1 = [&]( auto I ) {
+      if constexpr (i1 == decltype(I)::value) {
+        func( std::integral_constant< int, 0 >{},
+              std::integral_constant< int, i1 >{},
+              std::integral_constant< int, c1 >{},
+              std::integral_constant< int, j1 >{},
+              std::integral_constant< int, k1 >{},
+              std::integral_constant< int, l1 >{} );
+      }
+    };
+    (check_i1( std::integral_constant< int, Is >{} ), ...);
+
+    auto check_j1 = [&]( auto I ) {
+      if constexpr (j1 == decltype(I)::value) {
+        func( std::integral_constant< int, 1 >{},
+              std::integral_constant< int, j1 >{},
+              std::integral_constant< int, c1 >{},
+              std::integral_constant< int, i1 >{},
+              std::integral_constant< int, k1 >{},
+              std::integral_constant< int, l1 >{} );
+      }
+    };
+    (check_j1( std::integral_constant< int, Is >{} ), ...);
+
+    auto check_k1 = [&]( auto I ) {
+      if constexpr (k1 == decltype(I)::value) {
+        func( std::integral_constant< int, 2 >{},
+              std::integral_constant< int, k1 >{},
+              std::integral_constant< int, c1 >{},
+              std::integral_constant< int, i1 >{},
+              std::integral_constant< int, j1 >{},
+              std::integral_constant< int, l1 >{} );
+      }
+    };
+    (check_k1( std::integral_constant< int, Is >{} ), ...);
+
+    auto check_l1 = [&]( auto I ) {
+      if constexpr (l1 == decltype(I)::value) {
+        func( std::integral_constant< int, 3 >{},
+              std::integral_constant< int, l1 >{},
+              std::integral_constant< int, c1 >{},
+              std::integral_constant< int, i1 >{},
+              std::integral_constant< int, j1 >{},
+              std::integral_constant< int, k1 >{} );
+      }
+    };
+    (check_l1( std::integral_constant< int, Is >{} ), ...);
+  }
+
+
+  /**
+   * @brief Helper function for loop over tet basis functions that have one index in a given set of indices.
+   *   If multiple indices are in the given list, the callback is called multiple times.
    * @tparam FUNC the callback function
    * @tparam Is the setindices
    * @param func the callback function to call for each index
    */
-template <int... Is, typename FUNC>
-GEOS_HOST_DEVICE
-static constexpr void conditionalBasisLoop(FUNC const& func)
-{
-  loop<ORDER + 1>([&](auto const i) {
-    constexpr int iVal = decltype(i)::value;
-    constexpr int i1 = ORDER - iVal;
+  template< int... Is, typename FUNC >
+  GEOS_HOST_DEVICE
+  static constexpr void conditionalBasisLoop( FUNC const & func )
+  {
+    loop< ORDER + 1 >( [&]( auto const i ) {
+      using i_t = decltype(i);
+      constexpr int iVal = i_t::value;
+      constexpr int i1 = ORDER - iVal;
 
-    loop<ORDER + 1>([&](auto const j) {
-      constexpr int jVal = decltype(j)::value;
-      constexpr int j1 = ORDER - jVal;
+      loop< ORDER + 1 >( [&]( auto const j ) {
+        using j_t = decltype(j);
+        constexpr int jVal = j_t::value;
+        constexpr int j1 = ORDER - jVal;
 
-      if constexpr (j1 <= i1) {
-        loop<ORDER + 1>([&](auto const k) {
-          constexpr int kVal = decltype(k)::value;
-          constexpr int k1 = ORDER - kVal;
+        constexpr bool valid_j1_i1 = (j1 <= iVal);
+        if constexpr (valid_j1_i1) {
 
-          if constexpr (k1 <= (ORDER - i1 - j1)) {
-            constexpr int l1 = ORDER - i1 - j1 - k1;
-            constexpr int c1 = dofIndex<
-              std::integral_constant<int, i1>{},
-              std::integral_constant<int, j1>{},
-              std::integral_constant<int, k1>{}
-            >();
+          loop< ORDER + 1 >( [&]( auto const k ) {
+            using k_t = decltype(k);
+            constexpr int kVal = k_t::value;
+            constexpr int k1 = ORDER - kVal;
 
-            (void)(((std::integral_constant<int, i1>{} == Is) &&
-              (void(func(std::integral_constant<int, 0>{},
-                         std::integral_constant<int, i1>{},
-                         std::integral_constant<int, c1>{},
-                         std::integral_constant<int, j1>{},
-                         std::integral_constant<int, k1>{},
-                         std::integral_constant<int, l1>{})), 1)) || ...);
+            constexpr bool valid_k1 = (k1 <= (ORDER - i1 - j1));
+            if constexpr (valid_k1) {
+              constexpr int l1 = ORDER - i1 - j1 - k1;
+              constexpr int c1 = dofIndex< i1, j1, k1 >();
 
-            (void)(((std::integral_constant<int, j1>{} == Is) &&
-              (void(func(std::integral_constant<int, 1>{},
-                         std::integral_constant<int, j1>{},
-                         std::integral_constant<int, c1>{},
-                         std::integral_constant<int, i1>{},
-                         std::integral_constant<int, k1>{},
-                         std::integral_constant<int, l1>{})), 1)) || ...);
+              call_matching_cases< c1, i1, j1, k1, l1 >( func, std::integer_sequence< int, Is... >{} );
 
-            (void)(((std::integral_constant<int, k1>{} == Is) &&
-              (void(func(std::integral_constant<int, 2>{},
-                         std::integral_constant<int, k1>{},
-                         std::integral_constant<int, c1>{},
-                         std::integral_constant<int, i1>{},
-                         std::integral_constant<int, j1>{},
-                         std::integral_constant<int, l1>{})), 1)) || ...);
+              // Pour chaque Is...
+              // (void)(((i1 == Is) &&
+              //   (void(func(std::integral_constant<int, 0>{},
+              //              std::integral_constant<int, i1>{},
+              //              std::integral_constant<int, c1>{},
+              //              std::integral_constant<int, j1>{},
+              //              std::integral_constant<int, k1>{},
+              //              std::integral_constant<int, l1>{})), 1)) || ...);
 
-            (void)(((std::integral_constant<int, l1>{} == Is) &&
-              (void(func(std::integral_constant<int, 3>{},
-                         std::integral_constant<int, l1>{},
-                         std::integral_constant<int, c1>{},
-                         std::integral_constant<int, i1>{},
-                         std::integral_constant<int, j1>{},
-                         std::integral_constant<int, k1>{})), 1)) || ...);
-          }
-        });
-      }
-    });
-  });
-}
+              // (void)(((j1 == Is) &&
+              //   (void(func(std::integral_constant<int, 1>{},
+              //              std::integral_constant<int, j1>{},
+              //              std::integral_constant<int, c1>{},
+              //              std::integral_constant<int, i1>{},
+              //              std::integral_constant<int, k1>{},
+              //              std::integral_constant<int, l1>{})), 1)) || ...);
 
+              // (void)(((k1==Is) &&
+              //   (void(func(std::integral_constant<int, 2>{},
+              //              std::integral_constant<int, k1>{},
+              //              std::integral_constant<int, c1>{},
+              //              std::integral_constant<int, i1>{},
+              //              std::integral_constant<int, j1>{},
+              //              std::integral_constant<int, l1>{})), 1)) || ...);
+
+              // (void)(((l1 ==Is) &&
+              //   (void(func(std::integral_constant<int, 3>{},
+              //              std::integral_constant<int, l1>{},
+              //              std::integral_constant<int, c1>{},
+              //              std::integral_constant<int, i1>{},
+              //              std::integral_constant<int, j1>{},
+              //              std::integral_constant<int, k1>{})), 1)) || ...);
+
+
+
+              //             (void)(((i1 ==Is) &&
+              //   (void(func(
+              //              HDInt<0>{},
+              //              HDInt<i1>{},
+              //              HDInt<c1>{},
+              //               HDInt<j1>{},
+              //               HDInt<k1>{},
+              //               HDInt<l1>{})), 1)) || ...);
+
+              // (void)(((j1==Is) &&
+              //   (void(func(HDInt<1>{},
+              //              HDInt<j1>{},
+              //              HDInt<c1>{},
+              //              HDInt<i1>{},
+              //              HDInt<k1>{},
+              //              HDInt<l1>{})), 1)) || ...);
+
+              // (void)(((k1==Is) &&
+              //   (void(func(
+              //              HDInt<2>{},
+              //              HDInt<k1>{},
+              //              HDInt<c1>{},
+              //              HDInt<i1>{},
+              //              HDInt<j1>{},
+              //              HDInt<l1>{})), 1)) || ...);
+
+              // (void)(((l1==Is) &&
+              //   (void(func(
+              //              HDInt<3>{},
+              //              HDInt<l1>{},
+              //              HDInt<c1>{},
+              //              HDInt<i1>{},
+              //              HDInt<j1>{},
+              //              HDInt<k1>{})), 1)) || ...);
+              // i1 matching
+              //  callIfMatch<i1, Is...>([&] {
+              //   func(HDInt<0>{}, HDInt<i1>{}, HDInt<c1>{}, HDInt<j1>{}, HDInt<k1>{}, HDInt<l1>{});
+              // });
+
+              // callIfMatch<j1, Is...>([&] {
+              //   func(HDInt<1>{}, HDInt<j1>{}, HDInt<c1>{}, HDInt<i1>{}, HDInt<k1>{}, HDInt<l1>{});
+              // });
+
+              // callIfMatch<k1, Is...>([&] {
+              //   func(HDInt<2>{}, HDInt<k1>{}, HDInt<c1>{}, HDInt<i1>{}, HDInt<j1>{}, HDInt<l1>{});
+              // });
+
+              // callIfMatch<l1, Is...>([&] {
+              //   func(HDInt<3>{}, HDInt<l1>{}, HDInt<c1>{}, HDInt<i1>{}, HDInt<j1>{}, HDInt<k1>{});
+              // });
+              //  callIfMatch<i1, Is...>([&] {
+              //     constexpr auto h0  = HDInt<0>{};
+              //     constexpr auto hi1 = HDInt<i1>{};
+              //     constexpr auto hc1 = HDInt<c1>{};
+              //     constexpr auto hj1 = HDInt<j1>{};
+              //     constexpr auto hk1 = HDInt<k1>{};
+              //     constexpr auto hl1 = HDInt<l1>{};
+
+              //     func(h0, hi1, hc1, hj1, hk1, hl1);
+              //   });
+
+              //   callIfMatch<j1, Is...>([&] {
+              //     constexpr auto h1  = HDInt<1>{};
+              //     constexpr auto hj1 = HDInt<j1>{};
+              //     constexpr auto hc1 = HDInt<c1>{};
+              //     constexpr auto hi1 = HDInt<i1>{};
+              //     constexpr auto hk1 = HDInt<k1>{};
+              //     constexpr auto hl1 = HDInt<l1>{};
+
+              //     func(h1, hj1, hc1, hi1, hk1, hl1);
+              //   });
+
+              //   callIfMatch<k1, Is...>([&] {
+              //     constexpr auto h2  = HDInt<2>{};
+              //     constexpr auto hk1 = HDInt<k1>{};
+              //     constexpr auto hc1 = HDInt<c1>{};
+              //     constexpr auto hi1 = HDInt<i1>{};
+              //     constexpr auto hj1 = HDInt<j1>{};
+              //     constexpr auto hl1 = HDInt<l1>{};
+
+              //     func(h2, hk1, hc1, hi1, hj1, hl1);
+              //   });
+
+              //   callIfMatch<l1, Is...>([&] {
+              //     constexpr auto h3  = HDInt<3>{};
+              //     constexpr auto hl1 = HDInt<l1>{};
+              //     constexpr auto hc1 = HDInt<c1>{};
+              //     constexpr auto hi1 = HDInt<i1>{};
+              //     constexpr auto hj1 = HDInt<j1>{};
+              //     constexpr auto hk1 = HDInt<k1>{};
+
+              //     func(h3, hl1, hc1, hi1, hj1, hk1);
+              //   });
+
+            }
+          } );
+        }
+      } );
+    } );
+  }
   /**
    * @brief Helper function for loop over barycentric coordinates of a face.
    * @tparam FUNC the callback function
@@ -817,7 +993,7 @@ static constexpr void conditionalBasisLoop(FUNC const& func)
       constexpr int l1 = decltype(ll1)::value;
       // Needed for compilers that do not support constexpr lambdas
       GEOS_UNUSED_VAR( c1, i1, j1, k1, l1 );
-      basisLoop( [ &m ] (  auto const cc2, auto const ii2, auto const jj2, auto const kk2, auto const ll2 )
+      basisLoop( [ &m ] ( auto const cc2, auto const ii2, auto const jj2, auto const kk2, auto const ll2 )
       {
         constexpr int c2 = decltype(cc2)::value;
         constexpr int i2 = decltype(ii2)::value;
@@ -891,23 +1067,25 @@ static constexpr void conditionalBasisLoop(FUNC const& func)
                    FUNC && func )
   {
     real64 detJ = LvArray::math::abs( jacobianDeterminant( X ));
-    basisLoop( [&func, &detJ] ( auto const cc1, auto const ii1, auto const jj1, auto const kk1, auto const ll1 )
+    basisLoop( [&func, &detJ] ( auto cc1, auto ii1, auto jj1, auto kk1, auto ll1 )
     {
-      constexpr int c1 = cc1;
-      constexpr int i1 = ii1;
-      constexpr int j1 = jj1;
-      constexpr int k1 = kk1;
-      constexpr int l1 = ll1;
-      //Needed for compilors that do not support constexpr lambdas
+      constexpr int c1 = decltype(cc1)::value;
+      constexpr int i1 = decltype(ii1)::value;
+      constexpr int j1 = decltype(jj1)::value;
+      constexpr int k1 = decltype(kk1)::value;
+      constexpr int l1 = decltype(ll1)::value;
       GEOS_UNUSED_VAR( c1, i1, j1, k1, l1 );
-      basisLoop( [&func, &detJ] ( auto const c2, auto const ii2, auto const jj2, auto const kk2, auto const ll2 )
+
+      basisLoop( [&func, &detJ, i1, j1, k1, l1] ( auto c2, auto ii2, auto jj2, auto kk2, auto ll2 )
       {
+        constexpr int c2v = decltype(c2)::value;
         constexpr int i2 = decltype(ii2)::value;
         constexpr int j2 = decltype(jj2)::value;
         constexpr int k2 = decltype(kk2)::value;
-        constexpr int l2 = decltype(ll2)::value; 
+        constexpr int l2 = decltype(ll2)::value;
+
         constexpr real64 val = computeSuperpositionIntegral( i1, j1, k1, l1, i2, j2, k2, l2 );
-        func( c1, c2, val * detJ );
+        func( c1, c2v, val * detJ );
       } );
     } );
   }
@@ -990,27 +1168,28 @@ static constexpr void conditionalBasisLoop(FUNC const& func)
     basisLoop( [&func, &dLambdadX, &detJ] ( auto const cc1, auto const ci1, auto const cj1, auto const ck1, auto const cl1 )
     {
 
-      constexpr int c1 = cc1;
-      constexpr int i1 = ci1;
-      constexpr int j1 = cj1;
-      constexpr int k1 = ck1;
-      constexpr int l1 = cl1;
+      constexpr int c1 = decltype(cc1)::value;
+      constexpr int i1 = decltype(ci1)::value;
+      constexpr int j1 = decltype(cj1)::value;
+      constexpr int k1 = decltype(ck1)::value;
+      constexpr int l1 = decltype(cl1)::value;
       //Not used in some combinations, but needed for constexpr
       GEOS_UNUSED_VAR( c1, i1, j1, k1, l1 );
       basisLoop( [&func, &dLambdadX, &detJ] ( auto const cc2, auto const ci2, auto const cj2, auto const ck2, auto const cl2 )
       {
-        constexpr int c2 = cc2;
-        constexpr int i2 = ci2;
-        constexpr int j2 = cj2;
-        constexpr int k2 = ck2;
-        constexpr int l2 = cl2;
+        constexpr int c2 = decltype(cc2)::value;
+        constexpr int i2 = decltype(ci2)::value;
+        constexpr int j2 = decltype(cj2)::value;
+        constexpr int k2 = decltype(ck2)::value;
+        constexpr int l2 = decltype(cl2)::value;
         //Not used in some combinations, but needed for constexpr
         GEOS_UNUSED_VAR( c2, i2, j2, k2, l2 );
         barycentricCoordinateLoop( [&func, &dLambdadX, &detJ] ( auto const cd1 )
         {
-          constexpr int d1 = cd1;
-          barycentricCoordinateLoop( [&func, &dLambdadX, &detJ]  ( auto const d2 )
+          constexpr int d1 = decltype(cd1)::value;
+          barycentricCoordinateLoop( [&func, &dLambdadX, &detJ]  ( auto const cd2 )
           {
+            constexpr int d2 = decltype(cd2)::value;
             constexpr int ii1 = i1 + ( d1 == 0 ) * ( -1 );
             constexpr int ij1 = j1 + ( d1 == 1 ) * ( -1 );
             constexpr int ik1 = k1 + ( d1 == 2 ) * ( -1 );
@@ -1032,6 +1211,7 @@ static constexpr void conditionalBasisLoop(FUNC const& func)
       } );
     } );
   }
+
 
   /**
    * Compute th length of the edge between two vertices i1 and i2
@@ -1094,7 +1274,7 @@ static constexpr void conditionalBasisLoop(FUNC const& func)
         constexpr int j2 = decltype(cj2)::value;
         constexpr int k2 = decltype(ck2)::value;
         // Not used in some combinations, but needed for constexpr
-        GEOS_UNUSED_VAR( c2, i2, j2, k2 );
+        GEOS_UNUSED_VAR( c2, i2, j2, k2, f2 );
 
         // The second function is nonzero on the face indexed by f2, so we integrate on this face.
         if constexpr (  std::decay_t< decltype(cf1) >::value == std::decay_t< decltype(cf2) >::value)
@@ -1120,7 +1300,7 @@ static constexpr void conditionalBasisLoop(FUNC const& func)
           {
             faceBarycentricCoordinateLoop( [ &funcF, &detJf ] ( auto const cl )
             {
-              constexpr int l = cl;
+              constexpr int l = decltype(cl)::value;
               constexpr int ii1 = i1 + ( l == 0 ) * ( -1 );
               constexpr int ij1 = j1 + ( l == 1 ) * ( -1 );
               constexpr int ik1 = k1 + ( l == 2 ) * ( -1 );
