@@ -278,6 +278,7 @@ public:
    * @param time_n time at the beginning of the step
    * @param dt the perscribed timestep
    * @param cycleNumber the current cycle number
+   * @param newtonIter the current newton iteration
    * @param domain the domain object
    * @param dofManager degree-of-freedom manager associated with the linear system
    * @param localMatrix the system matrix
