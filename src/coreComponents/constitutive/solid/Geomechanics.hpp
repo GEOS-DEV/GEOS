@@ -1792,7 +1792,7 @@ real64 GeomechanicsUpdates::computeBD(const real64 & a1,
     real64 x_1 = m_p0;
     real64 tolerance = 1.e-6;
 
-    real64 x;
+    real64 x = 0.0;
     real64 check_val;
 
     while (std::abs(x_0 - x_1) > tolerance) {
@@ -2076,10 +2076,10 @@ int GeomechanicsUpdates::computeSubstep( real64 const ( & D )[6],         // str
 		}
    }
 
-  real64 a1,
-         a2,
-         a3,
-         a4;
+  real64 a1 = 0.0;
+  real64 a2 = 0.0;
+  real64 a3 = 0.0;
+  real64 a4 = 0.0;
   computeLimitParameters( a1,
                           a2,
                           a3,
@@ -2585,10 +2585,10 @@ int GeomechanicsUpdates::nonHardeningReturn( const real64 & I1_trial,           
   // Compute the a1,a2,a3,a4 parameters from FSLOPE,YSLOPE,STREN and PEAKI1,
   // which are perturbed by variability according to coher.  These are then
   // passed down to the computeYieldFunction, to avoid the expense of computing a3
-  real64 a1,
-         a2,
-         a3,
-         a4;
+  real64 a1 = 0.0;
+  real64 a2 = 0.0;
+  real64 a3 = 0.0;
+  real64 a4 = 0.0;
   computeLimitParameters( a1,
                           a2,
                           a3,

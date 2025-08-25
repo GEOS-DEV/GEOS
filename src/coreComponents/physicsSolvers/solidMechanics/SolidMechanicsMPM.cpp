@@ -3605,7 +3605,6 @@ void SolidMechanicsMPM::performMaterialSwap( ParticleManager & particleManager,
     ContinuumBase & sourceConstitutiveModel = getConstitutiveModel< ContinuumBase >( sourceSubRegion, sourceSolidMaterialName );
     arrayView3d< real64 const > const sourceOldStress = sourceConstitutiveModel.getReference< array3d< real64 > >( constitutive::ContinuumBase::viewKeyStruct::oldStressString() );
 
-    string const & destinationSolidMaterialName = destinationSubRegion.template getReference< string >( viewKeyStruct::solidMaterialNamesString() );
     ContinuumBase & destinationConstitutiveModel = getConstitutiveModel< ContinuumBase >( destinationSubRegion, destinationSolidMaterialName );
     real64 const destinationDefaultConstitutiveDensity = destinationConstitutiveModel.getReference< real64 >( constitutive::ContinuumBase::viewKeyStruct::defaultDensityString() );
     arrayView3d< real64 > const destinationOldStress = destinationConstitutiveModel.getReference< array3d< real64 > >( constitutive::ContinuumBase::viewKeyStruct::oldStressString() );
