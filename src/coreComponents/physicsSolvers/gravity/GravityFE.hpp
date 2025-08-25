@@ -47,7 +47,7 @@ public:
 
 
   GravityFE( GravityFE const & ) = delete;
-  GravityFE( GravityFE && ) = default;
+  GravityFE( GravityFE && ) = delete;
 
   GravityFE & operator=( GravityFE const & ) = delete;
   GravityFE & operator=( GravityFE && ) = delete;
