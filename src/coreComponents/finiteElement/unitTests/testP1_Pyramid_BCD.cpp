@@ -84,9 +84,10 @@ void testKernelDriver()
 
   //Test on mass matrix
   array2d< real64 > MtestArray( numNodes, numNodes );
+  arrayView2d< real64 > const & Mtest = MtestArray;
   Pk_Pyramid_BCD< 1 >::computeMassTerm( [&] GEOS_HOST_DEVICE( const localIndex i, const localIndex j, const real64 Mij )
   {
-    MtestArray[i][j] = Mij;  // Initialize the mass term
+    Mtest[i][j] = Mij;  // Initialize the mass term
   } );
 
   //OUtput the mass matrix
@@ -95,7 +96,7 @@ void testKernelDriver()
   {
     for( localIndex j=0; j<numNodes; ++j )
     {
-      sum+= MtestArray[i][j];
+      sum+= Mtest[i][j];
     }
   }
 
