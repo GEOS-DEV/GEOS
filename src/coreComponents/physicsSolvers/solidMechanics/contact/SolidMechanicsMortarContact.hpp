@@ -63,10 +63,13 @@ public:
    */
   string getCatalogName() const override {return catalogName(); }
 
+  using FaceTypeMap = std::map< string, std::map< string, array1d< localIndex > > >;
+
   virtual void registerDataOnMesh( dataRepository::Group & meshBodies ) override final;
 
-  virtual void setupDofs( DomainPartition const & domain,
-                          DofManager & dofManager ) const override;
+  void setupDofs( DomainPartition const & domain,
+                          DofManager & dofManager,
+                          string const & meshSlaveName ) const;
 
   virtual void setupSystem( DomainPartition & domain,
                             DofManager & dofManager,
@@ -104,16 +107,40 @@ public:
 
   void updateState( DomainPartition & domain ) override final;
 
+
+  FaceTypeMap createFaceTypeList( MeshLevel const & mesh, 
+                                  FaceElementSubRegion const & surface,
+                                  string name);
+
+  // bubbles only on the slave side
+  void createBubbleCellList( MeshLevel & meshSlave,
+                             FaceElementSubRegion const & surfRegion) const;
+
+ 
+
+  
+
 private:
 
   // store pointers to relevant mesh objects of master and slave side
-  MeshLevel const* m_meshSlave = nullptr;
-  MeshLevel const* m_meshMaster = nullptr;
+  MeshLevel * m_meshSlave = nullptr;
+  MeshLevel * m_meshMaster = nullptr;
   FaceElementSubRegion const* m_surfaceMaster = nullptr;     
   FaceElementSubRegion const* m_surfaceSlave = nullptr;
 
   // map id of slave elements to id of connected master elements
   ArrayOfArrays< localIndex > m_connectivityMap;  
+
+  void addCouplingNumNonzeros( DofManager & dofManager,
+                               arrayView1d< localIndex > const & rowLengths ) const;
+
+ 
+  void addCouplingSparsityPattern( DofManager const & dofManager,
+                                   SparsityPatternView< globalIndex > const & pattern ) const;
+
+  /// Finite element type to face element index map
+  FaceTypeMap m_faceTypesToFaceElementsMaster;
+  FaceTypeMap m_faceTypesToFaceElementsSlave;
   
   // tandem traversal contact search 
   void contactSearch(std::unique_ptr<TreeNodeMortar> const & nodeMaster,

@@ -30,6 +30,7 @@
 #include "elementFormulations/Qk_Hexahedron_Lagrange_GaussLobatto.hpp"
 #endif
 #include "elementFormulations/H1_QuadrilateralFace_Lagrange1_GaussLegendre2.hpp"
+#include "elementFormulations/H1_QuadrilateralFace_Lagrange1_GaussLegendre6.hpp"
 #include "elementFormulations/H1_TriangleFace_Lagrange1_Gauss.hpp"
 #include "LvArray/src/system.hpp"
 

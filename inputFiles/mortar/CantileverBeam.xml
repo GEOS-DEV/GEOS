@@ -192,7 +192,8 @@
     <FiniteElements>
       <FiniteElementSpace
         name="FE1"
-        order="1"/>
+        order="1"
+        useHighOrderQuadratureRule = "1"/>
     </FiniteElements>
   </NumericalMethods>
 
@@ -203,9 +204,9 @@
       xCoords="{ 0, 8 }"
       yCoords="{ 0, 1 }"
       zCoords="{ 0, 1 }"
-      nx="{ 32 }"
-      ny="{ 4 }"
-      nz="{ 4 }"
+      nx="{ 4 }"
+      ny="{ 2 }"
+      nz="{ 2 }"
       cellBlockNames="{ cb1 }"/>
 
     <InternalMesh
@@ -214,9 +215,9 @@
       xCoords="{ 8, 16 }"
       yCoords="{ 0, 1 }"
       zCoords="{ 0, 1 }"
-      nx="{ 48 }"
-      ny="{ 6 }"
-      nz="{ 6 }"
+      nx="{ 4 }"
+      ny="{ 3 }"
+      nz="{ 3 }"
       cellBlockNames="{ cb2 }"/>
 
   </Mesh>

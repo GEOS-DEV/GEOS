@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<VTKFile type="vtkMultiBlockDataSet" version="1.0">
+	<vtkMultiBlockDataSet>
+		<Block name="CubeHex">
+			<Block name="Level0">
+				<Block name="CellElementRegion">
+					<Block name="Region">
+						<DataSet name="rank_0" file="000000/CubeHex/Level0/Region/rank_0.vtu" />
+					</Block>
+				</Block>
+				<Block name="SurfaceElementRegion">
+					<Block name="Fracture">
+						<DataSet name="rank_0" file="000000/CubeHex/Level0/Fracture/rank_0.vtu" />
+					</Block>
+				</Block>
+			</Block>
+		</Block>
+	</vtkMultiBlockDataSet>
+</VTKFile>
