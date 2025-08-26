@@ -39,7 +39,7 @@ struct TableLogOutput
   static constexpr std::string_view getDescription()
   {
     return "Output PVT table to log\n"
-           "If \"writeCSV=0\" and if the table is too large for the log, a csv file will still be generated";
+           "Even if `writeCSV =\"0\"`, if the table is too large for the log, a csv file will still be generated.";
   };
 
 /// @cond DO_NOT_DOCUMENT
