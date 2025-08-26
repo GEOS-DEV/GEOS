@@ -79,9 +79,8 @@ public:
                                  real64 const & shearSofteningShapeParameter1,
                                  real64 const & shearSofteningShapeParameter2,
                                  real64 const & maximumStretch,
-                                 // arrayView2d< real64 > const & thermalSoftening,
-                                 arrayView1d< real64 const > const & bulkModulus,
-                                 arrayView1d< real64 const > const & shearModulus,
+                                 arrayView1d< real64 > const & bulkModulus,
+                                 arrayView1d< real64 > const & shearModulus,
                                  arrayView1d< real64 const > const & thermalExpansionCoefficient,
                                  arrayView3d< real64, solid::STRESS_USD > const & newStress,
                                  arrayView3d< real64, solid::STRESS_USD > const & oldStress,
@@ -344,17 +343,17 @@ void StrainHardeningPolymerUpdates::smallStrainUpdate_StressOnly( localIndex con
   // using current definitions of m_bulkModulus[k] and m_shearModulus[k]
 
   // Here we would update the m_bulkModulus[k] and m_shearModulus[k] with temperature dependent values:
-  // real64 m_bulkModulusA = 1.0,
-  //        m_bulkModulusB = 1.0,
-  //        m_bulkModulusT0 = 300;
+  // These will be input paramters:
+  real64 m_bulkModulusA = 1.0,
+         m_bulkModulusB = 1.0,
+         m_bulkModulusT0 = 300;
         
-  // real64 m_shearModulusA = 1.0,
-  //        m_shearModulusB = 1.0,
-  //        m_shearModulusT0 = 300;
+  real64 m_shearModulusA = 1.0,
+         m_shearModulusB = 1.0,
+         m_shearModulusT0 = 300;
 
-  // real64 bulkModulusTemperatureScale = thermalSoftening(m_temperature[k], m_bulkModulusT0, m_bulkModulusA, m_bulkModulusB );
-  // m_bulkModulus[k] = m_defaultBulkModulus * bulkModulusTemperatureScale;      // This will actually be some function:   m_bulkModulus[k] = m_defaultBulkModulus + A*f(m_temperature[k]), etc.
-  // m_shearModulus[k] = m_defaultShearModulus *  thermalSoftening(m_temperature[k], m_shearModulusT0, m_shearModulusA, m_shearModulusB ); // This will actually be some function of m_temperature[k]
+  m_bulkModulus[k] = m_defaultBulkModulus * StrainHardeningPolymerUpdates::thermalSoftening(m_temperature[k], m_bulkModulusT0, m_bulkModulusA, m_bulkModulusB );      // This will actually be some function:   m_bulkModulus[k] = m_defaultBulkModulus + A*f(m_temperature[k]), etc.
+  m_shearModulus[k] = m_defaultShearModulus *  StrainHardeningPolymerUpdates::thermalSoftening(m_temperature[k], m_shearModulusT0, m_shearModulusA, m_shearModulusB ); // This will actually be some function of m_temperature[k]
 
   ElasticIsotropicUpdates::smallStrainUpdate_StressOnly( k, 
                                                          q, 

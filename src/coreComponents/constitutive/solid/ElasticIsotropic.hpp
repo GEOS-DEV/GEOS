@@ -50,8 +50,8 @@ public:
    * @param[in] oldStress    The ArrayView holding the old stress data for each quadrature point.
    * @param[in] disableInelasticity Flag to disable plasticity for inelastic models
    */
-  ElasticIsotropicUpdates( arrayView1d< real64 const > const & bulkModulus,
-                           arrayView1d< real64 const > const & shearModulus,
+  ElasticIsotropicUpdates( arrayView1d< real64 > const & bulkModulus,
+                           arrayView1d< real64 > const & shearModulus,
                            arrayView1d< real64 const > const & thermalExpansionCoefficient,
                            arrayView3d< real64, solid::STRESS_USD > const & newStress,
                            arrayView3d< real64, solid::STRESS_USD > const & oldStress,
@@ -157,6 +157,13 @@ public:
     return m_bulkModulus[k];
   }
 
+  // GEOS_HOST_DEVICE
+  // virtual void setBulkModulus(localIndex const k, 
+  //                             real64 const & value ) const
+  // {
+  //   m_bulkModulus[k] = value;
+  // }
+
   GEOS_HOST_DEVICE
   virtual real64 getShearModulus( localIndex const k ) const override final
   {
@@ -186,10 +193,10 @@ public:
 protected:
 
   /// A reference to the ArrayView holding the bulk modulus for each element.
-  arrayView1d< real64 const > const m_bulkModulus;
+  arrayView1d< real64 > const m_bulkModulus;
 
   /// A reference to the ArrayView holding the shear modulus for each element.
-  arrayView1d< real64 const > const m_shearModulus;
+  arrayView1d< real64 > const m_shearModulus;
 
 };
 
@@ -562,11 +569,20 @@ public:
   arrayView1d< real64 const > const shearModulus() const { return m_shearModulus; }
 
   GEOS_HOST_DEVICE
+
+
+
   virtual arrayView1d< real64 const > getBulkModulus() const override final
   {
     return m_bulkModulus;
   }
-  
+
+  // virtual void setBulkModulus(localIndex const k, 
+  //                             real64 const & value ) const
+  // {
+  //   m_bulkModulus[k] = value;
+  // }
+
   GEOS_HOST_DEVICE
   virtual arrayView1d< real64 const > getShearModulus() const override final
   {
