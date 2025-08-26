@@ -36,8 +36,11 @@ namespace logInfo
 struct PVT
 {
   static constexpr int getMinLogLevel() { return 1; }
-  static constexpr std::string_view getDescription() { return "Output PVT table"; }
-};
+  static constexpr std::string_view getDescription()
+  {
+    return "Output PVT table\n"
+           "If \"writeCSV=0\" and if the table is too large for the log, a csv file will still be generated";
+  };
 
 /// @cond DO_NOT_DOCUMENT
 /// @endcond
