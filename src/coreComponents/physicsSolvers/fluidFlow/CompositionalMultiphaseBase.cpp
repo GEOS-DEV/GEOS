@@ -1189,6 +1189,8 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium( DomainPartition
       real64 const maxElevation = LvArray::math::max( globalMaxElevation[equilIndex], datumElevation );
       real64 const elevationIncrement = LvArray::math::min( fs.getElevationIncrement(), maxElevation - minElevation );
 
+      std::cout << "minElevation, maxElevation = " << minElevation << ", " << maxElevation << std::endl;
+
       // localIndex const customPoints = phaseContacts.size() + 1; // custom points are the datum and phase contacts
       // localIndex const numPointsInTable = ( elevationIncrement > 0 ) ? std::ceil( (maxElevation - minElevation) / elevationIncrement ) + 1 + customPoints : 1;
 
@@ -1550,8 +1552,8 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium( DomainPartition
             }
             unCorrCompFractions[k][ic] = compFracTableWrappersViewConst[ic].compute( &elevation );
           }
-          // if ( k == 0 )
-          // {
+          if ( k == 0 )
+          {
             std::cout << "k = " << k << ", elevation = " << elevation << ", success = " << success[k] << ", target pc = "
             << targetPhaseCapPressure[k][0] << ", solved sat = " << targetPhaseVolumeFraction[k] << "unCorrComp = " << unCorrCompFractions[k] << 
             ", corrComp = " << compFrac[k] << std::endl;
@@ -1559,104 +1561,104 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium( DomainPartition
                       << ", water_dens = " << phaseDensTableWrappers[1].compute( &elevation ) 
                       << ", p_gas = " << phasePressureTableWrappers[ip_gas].compute( &elevation )
                       << ", p_water = " << phasePressureTableWrappers[ip_water].compute( &elevation ) << std::endl;
-          // }
-
-        } );
-      } );
-
-
-      constitutiveUpdatePassThru( fluid, [&] ( auto & castedFluid )
-      {
-        using FluidType = TYPEOFREF( castedFluid );
-        typename FluidType::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
-
-        forAll< parallelDevicePolicy<> >( targetSet.size(), [targetSet,
-                                                             elemCenter,
-                                                             pres,
-                                                             temp,
-                                                             fluidWrapper,
-                                                             numPhases,
-                                                             numComps,
-                                                             compFrac,
-                                                             phaseDensTableWrappers,
-                                                             phaseCompFracTableWrappers,
-                                                             compFracTableWrappersViewConst] GEOS_HOST_DEVICE ( localIndex const i )
-        {
-          localIndex const k = targetSet[i];
-          real64 const elevation = elemCenter[k][2];
-
-          // Flash at uncorrected composition
-          array2d< real64, compflow::LAYOUT_COMP > unCorrCompFrac( 1, numComps );
-          array3d< real64, constitutive::multifluid::LAYOUT_PHASE > unCorrPhaseFrac( 1, 1, numPhases );
-          array3d< real64, constitutive::multifluid::LAYOUT_PHASE > unCorrPhaseDens( 1, 1, numPhases );
-          array3d< real64, constitutive::multifluid::LAYOUT_PHASE > unCorrPhaseMassDens( 1, 1, numPhases );
-          array3d< real64, constitutive::multifluid::LAYOUT_PHASE > unCorrPhaseVisc( 1, 1, numPhases );
-          array3d< real64, constitutive::multifluid::LAYOUT_PHASE > unCorrPhaseEnthalpy( 1, 1, numPhases );
-          array3d< real64, constitutive::multifluid::LAYOUT_PHASE > unCorrInternalEnergy( 1, 1, numPhases );
-          array4d< real64, constitutive::multifluid::LAYOUT_PHASE_COMP > unCorrPhaseCompFrac( 1, 1, numPhases, numComps );
-          real64 unCorrTotalDens = 0.0;
-          for ( localIndex ic = 0; ic < numComps; ++ic )
-          {
-            unCorrCompFrac[0][ic] = compFracTableWrappersViewConst[ic].compute( &elevation );
           }
-          constitutive::MultiFluidBase::KernelWrapper::computeValues( fluidWrapper,
-                                                                      pres[k],
-                                                                      temp[k],
-                                                                      unCorrCompFrac[0],
-                                                                      unCorrPhaseFrac[0][0],
-                                                                      unCorrPhaseDens[0][0],
-                                                                      unCorrPhaseMassDens[0][0],
-                                                                      unCorrPhaseVisc[0][0],
-                                                                      unCorrPhaseEnthalpy[0][0],
-                                                                      unCorrInternalEnergy[0][0],
-                                                                      unCorrPhaseCompFrac[0][0],
-                                                                      unCorrTotalDens );
-
-
-          // Reflash at corrected composition and ensure phase densities and compositions are unchanged
-          // array2d< real64, compflow::LAYOUT_COMP > tmpCompFrac( 1, numComps );
-          array3d< real64, constitutive::multifluid::LAYOUT_PHASE > tmpPhaseFrac( 1, 1, numPhases );
-          array3d< real64, constitutive::multifluid::LAYOUT_PHASE > tmpPhaseDens( 1, 1, numPhases );
-          array3d< real64, constitutive::multifluid::LAYOUT_PHASE > tmpPhaseMassDens( 1, 1, numPhases );
-          array3d< real64, constitutive::multifluid::LAYOUT_PHASE > tmpPhaseVisc( 1, 1, numPhases );
-          array3d< real64, constitutive::multifluid::LAYOUT_PHASE > tmpPhaseEnthalpy( 1, 1, numPhases );
-          array3d< real64, constitutive::multifluid::LAYOUT_PHASE > tmpPhaseInternalEnergy( 1, 1, numPhases );
-          array4d< real64, constitutive::multifluid::LAYOUT_PHASE_COMP > tmpPhaseCompFrac( 1, 1, numPhases, numComps );
-          real64 tmpTotalDens = 0.0;
-          constitutive::MultiFluidBase::KernelWrapper::computeValues( fluidWrapper,
-                                                                      pres[k],
-                                                                      temp[k],
-                                                                      compFrac[k],
-                                                                      tmpPhaseFrac[0][0],
-                                                                      tmpPhaseDens[0][0],
-                                                                      tmpPhaseMassDens[0][0],
-                                                                      tmpPhaseVisc[0][0],
-                                                                      tmpPhaseEnthalpy[0][0],
-                                                                      tmpPhaseInternalEnergy[0][0],
-                                                                      tmpPhaseCompFrac[0][0],
-                                                                      tmpTotalDens );
-          // if ( k == 0 )
-          // {
-            real64 const recomputedSw = ( tmpPhaseFrac[0][0][1] / tmpPhaseDens[0][0][1] ) / 
-              ( tmpPhaseFrac[0][0][0] / tmpPhaseDens[0][0][0] + tmpPhaseFrac[0][0][1] / tmpPhaseDens[0][0][1] );
-            std::cout << "Phase fraction = " << tmpPhaseFrac[0][0] << std::endl;
-            std::cout << "Before CompCorr: dens_gas = " << phaseDensTableWrappers[0].compute(&elevation)
-                      << ", water_dens = " << phaseDensTableWrappers[1].compute(&elevation)
-                      << ", phase zs = {" << phaseCompFracTableWrappers[0][0].compute(&elevation)
-                      << " " << phaseCompFracTableWrappers[0][1].compute(&elevation) << ", "
-                      << phaseCompFracTableWrappers[1][0].compute(&elevation) << " "
-                      << phaseCompFracTableWrappers[1][1].compute(&elevation) << "}" << std::endl;
-            std::cout << "Phase fraction = " << unCorrPhaseFrac[0][0] << std::endl;
-            std::cout << "After CompCorr: dens_gas = " << tmpPhaseDens[0][0][0] 
-                      << ", water_dens = " << tmpPhaseDens[0][0][1]
-                      << ", phase zs = " << tmpPhaseCompFrac[0][0] 
-                      << ", recomputed Sw = " << recomputedSw << std::endl;
-
-          // }
 
         } );
-
       } );
+
+
+      // constitutiveUpdatePassThru( fluid, [&] ( auto & castedFluid )
+      // {
+      //   using FluidType = TYPEOFREF( castedFluid );
+      //   typename FluidType::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
+
+      //   forAll< parallelDevicePolicy<> >( targetSet.size(), [targetSet,
+      //                                                        elemCenter,
+      //                                                        pres,
+      //                                                        temp,
+      //                                                        fluidWrapper,
+      //                                                        numPhases,
+      //                                                        numComps,
+      //                                                        compFrac,
+      //                                                        phaseDensTableWrappers,
+      //                                                        phaseCompFracTableWrappers,
+      //                                                        compFracTableWrappersViewConst] GEOS_HOST_DEVICE ( localIndex const i )
+      //   {
+      //     localIndex const k = targetSet[i];
+      //     real64 const elevation = elemCenter[k][2];
+
+      //     // Flash at uncorrected composition
+      //     array2d< real64, compflow::LAYOUT_COMP > unCorrCompFrac( 1, numComps );
+      //     array3d< real64, constitutive::multifluid::LAYOUT_PHASE > unCorrPhaseFrac( 1, 1, numPhases );
+      //     array3d< real64, constitutive::multifluid::LAYOUT_PHASE > unCorrPhaseDens( 1, 1, numPhases );
+      //     array3d< real64, constitutive::multifluid::LAYOUT_PHASE > unCorrPhaseMassDens( 1, 1, numPhases );
+      //     array3d< real64, constitutive::multifluid::LAYOUT_PHASE > unCorrPhaseVisc( 1, 1, numPhases );
+      //     array3d< real64, constitutive::multifluid::LAYOUT_PHASE > unCorrPhaseEnthalpy( 1, 1, numPhases );
+      //     array3d< real64, constitutive::multifluid::LAYOUT_PHASE > unCorrInternalEnergy( 1, 1, numPhases );
+      //     array4d< real64, constitutive::multifluid::LAYOUT_PHASE_COMP > unCorrPhaseCompFrac( 1, 1, numPhases, numComps );
+      //     real64 unCorrTotalDens = 0.0;
+      //     for ( localIndex ic = 0; ic < numComps; ++ic )
+      //     {
+      //       unCorrCompFrac[0][ic] = compFracTableWrappersViewConst[ic].compute( &elevation );
+      //     }
+      //     constitutive::MultiFluidBase::KernelWrapper::computeValues( fluidWrapper,
+      //                                                                 pres[k],
+      //                                                                 temp[k],
+      //                                                                 unCorrCompFrac[0],
+      //                                                                 unCorrPhaseFrac[0][0],
+      //                                                                 unCorrPhaseDens[0][0],
+      //                                                                 unCorrPhaseMassDens[0][0],
+      //                                                                 unCorrPhaseVisc[0][0],
+      //                                                                 unCorrPhaseEnthalpy[0][0],
+      //                                                                 unCorrInternalEnergy[0][0],
+      //                                                                 unCorrPhaseCompFrac[0][0],
+      //                                                                 unCorrTotalDens );
+
+
+      //     // Reflash at corrected composition and ensure phase densities and compositions are unchanged
+      //     // array2d< real64, compflow::LAYOUT_COMP > tmpCompFrac( 1, numComps );
+      //     array3d< real64, constitutive::multifluid::LAYOUT_PHASE > tmpPhaseFrac( 1, 1, numPhases );
+      //     array3d< real64, constitutive::multifluid::LAYOUT_PHASE > tmpPhaseDens( 1, 1, numPhases );
+      //     array3d< real64, constitutive::multifluid::LAYOUT_PHASE > tmpPhaseMassDens( 1, 1, numPhases );
+      //     array3d< real64, constitutive::multifluid::LAYOUT_PHASE > tmpPhaseVisc( 1, 1, numPhases );
+      //     array3d< real64, constitutive::multifluid::LAYOUT_PHASE > tmpPhaseEnthalpy( 1, 1, numPhases );
+      //     array3d< real64, constitutive::multifluid::LAYOUT_PHASE > tmpPhaseInternalEnergy( 1, 1, numPhases );
+      //     array4d< real64, constitutive::multifluid::LAYOUT_PHASE_COMP > tmpPhaseCompFrac( 1, 1, numPhases, numComps );
+      //     real64 tmpTotalDens = 0.0;
+      //     constitutive::MultiFluidBase::KernelWrapper::computeValues( fluidWrapper,
+      //                                                                 pres[k],
+      //                                                                 temp[k],
+      //                                                                 compFrac[k],
+      //                                                                 tmpPhaseFrac[0][0],
+      //                                                                 tmpPhaseDens[0][0],
+      //                                                                 tmpPhaseMassDens[0][0],
+      //                                                                 tmpPhaseVisc[0][0],
+      //                                                                 tmpPhaseEnthalpy[0][0],
+      //                                                                 tmpPhaseInternalEnergy[0][0],
+      //                                                                 tmpPhaseCompFrac[0][0],
+      //                                                                 tmpTotalDens );
+      //     // if ( k == 0 )
+      //     // {
+      //       real64 const recomputedSw = ( tmpPhaseFrac[0][0][1] / tmpPhaseDens[0][0][1] ) / 
+      //         ( tmpPhaseFrac[0][0][0] / tmpPhaseDens[0][0][0] + tmpPhaseFrac[0][0][1] / tmpPhaseDens[0][0][1] );
+      //       std::cout << "Phase fraction = " << tmpPhaseFrac[0][0] << std::endl;
+      //       std::cout << "Before CompCorr: dens_gas = " << phaseDensTableWrappers[0].compute(&elevation)
+      //                 << ", water_dens = " << phaseDensTableWrappers[1].compute(&elevation)
+      //                 << ", phase zs = {" << phaseCompFracTableWrappers[0][0].compute(&elevation)
+      //                 << " " << phaseCompFracTableWrappers[0][1].compute(&elevation) << ", "
+      //                 << phaseCompFracTableWrappers[1][0].compute(&elevation) << " "
+      //                 << phaseCompFracTableWrappers[1][1].compute(&elevation) << "}" << std::endl;
+      //       std::cout << "Phase fraction = " << unCorrPhaseFrac[0][0] << std::endl;
+      //       std::cout << "After CompCorr: dens_gas = " << tmpPhaseDens[0][0][0] 
+      //                 << ", water_dens = " << tmpPhaseDens[0][0][1]
+      //                 << ", phase zs = " << tmpPhaseCompFrac[0][0] 
+      //                 << ", recomputed Sw = " << recomputedSw << std::endl;
+
+      //     // }
+
+      //   } );
+
+      // } );
 
       // Step 3.5: create hydrostatic pressure table
 
