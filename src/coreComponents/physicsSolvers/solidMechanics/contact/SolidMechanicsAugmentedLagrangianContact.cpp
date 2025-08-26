@@ -89,9 +89,6 @@ SolidMechanicsAugmentedLagrangianContact::SolidMechanicsAugmentedLagrangianConta
 
   // Set the default linear solver parameters
   LinearSolverParameters & linSolParams = m_linearSolverParameters.get();
-  addLogLevel< logInfo::Configuration >();
-  addLogLevel< logInfo::Convergence >();
-  addLogLevel< logInfo::Tolerance >();
 
   // Strategy: AMG with separate displacement components
   linSolParams.dofsPerNode = 3;
@@ -1151,7 +1148,7 @@ void SolidMechanicsAugmentedLagrangianContact::updateStickSlipList( DomainPartit
       this->m_faceTypesToFaceElementsStick[meshName][finiteElementName] =  stickList;
       this->m_faceTypesToFaceElementsSlip[meshName][finiteElementName]  =  slipList;
 
-      GEOS_LOG_LEVEL_RANK_0( logInfo::Configuration, GEOS_FMT( "# stick elements: {}, # slip elements: {}", nStick, nSlip ))
+      GEOS_LOG_LEVEL_RANK_0( logInfo::ConfigurationStatistics, GEOS_FMT( "# stick elements: {}, # slip elements: {}", nStick, nSlip ))
     } );
   } );
 
@@ -1837,7 +1834,7 @@ void SolidMechanicsAugmentedLagrangianContact::computeTolerances( DomainPartitio
             normalTractionTolerance[kfe] = m_tolNormalTracFac * (averageConstrainedModulus / averageBoxSize0) *
                                            (normalDisplacementTolerance[kfe]);
 
-            GEOS_LOG_LEVEL( logInfo::Tolerance,
+            GEOS_LOG_LEVEL( logInfo::ContactTolerance,
                             GEOS_FMT( "kfe: {}, normalDisplacementTolerance: {}, slidingTolerance: {}, normalTractionTolerance: {}",
                                       kfe, normalDisplacementTolerance[kfe], slidingTolerance[kfe], normalTractionTolerance[kfe] ));
 

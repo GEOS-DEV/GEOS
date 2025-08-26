@@ -24,7 +24,6 @@
 #include "math/interpolation/Interpolation.hpp"
 #include "common/Timer.hpp"
 #include "common/Units.hpp"
-#include "dataRepository/LogLevelsInfo.hpp"
 
 #if defined(GEOS_USE_PYGEOSX)
 #include "python/PySolverType.hpp"
@@ -109,10 +108,11 @@ PhysicsSolverBase::PhysicsSolverBase( string const & name,
     setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "When set to 1, output iterations information to a csv\nWhen set to 2 output convergence information to a csv" );
 
+  addLogLevel< logInfo::Convergence >();
   addLogLevel< logInfo::Fields >();
   addLogLevel< logInfo::LinearSolver >();
+  addLogLevel< logInfo::ResidualNorm >();
   addLogLevel< logInfo::Solution >();
-  addLogLevel< logInfo::Convergence >();
   addLogLevel< logInfo::TimeStep >();
   addLogLevel< logInfo::Timers >();
 
