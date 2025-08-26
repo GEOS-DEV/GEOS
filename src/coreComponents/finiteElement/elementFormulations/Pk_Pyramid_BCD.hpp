@@ -148,6 +148,11 @@ public:
     return index;
   }
 
+
+  /**
+   * @brief Generate the coordinates of the support points
+   * @param coords The array to fill with the coordinates of the support points
+   */
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
   static constexpr void generatePointsCoordinates( real64 (& coords)[numNodes][3] )
@@ -329,6 +334,7 @@ public:
 
     return P_current;
   }
+
 /**
  * @brief Evaluate the derivative of the Jacobi polynomial at a point x.
  * @param n The degree of the polynomial.
@@ -337,14 +343,10 @@ public:
  * @param x The point at which to evaluate the derivative.
  * @return The value of the derivative of the Jacobi polynomial at point x.
  */
-
-
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
   static constexpr real64 EvaluateJacobiPolynomialDerivative( localIndex const n, real64 const alpha, real64 const beta, real64 const x )
   {
-
-
     // Particular case for n = 0
     if( n == 0 )
     {
@@ -363,7 +365,7 @@ public:
    *   point X.
    * @param[in] i,j,k Indexes of a modal point.
    * @param[in] X Coordinates in reference pyramid (array of size 3)
-   * @param[out] PsiX A real to pass back the modal function value
+   * @return the modal function value
    */
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
@@ -399,6 +401,13 @@ public:
 
   }
 
+    /**
+   * @brief Calculate modal base functions derivative values for a modal point (i,j,k) at a
+   *  point X.
+   * @param[in] i,j,k Indexes of a modal point.
+   * @param[in] X Coordinates in reference pyramid (array of size 3)
+   * @param[out] GradPsiX A real to pass back the modal function derivative values
+   */
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
   static constexpr void calcGradModal( int i, int j, int k, real64 const (&X)[3],
@@ -488,7 +497,10 @@ public:
 
   // }
 
-
+  /**
+   * @brief Compute the inverse of the VanDerMonde matrix
+   * @return The inverse of the VanDerMonde matrix
+   */
   GEOS_FORCE_INLINE
   static array2d<real64> computeVanderMondeMatrixInverse( )
   {
@@ -588,6 +600,7 @@ public:
   /**
    * @brief Evaluate shape functions of a linear pyramid (5-node) at a quadrature point.
    * @param[in] X Coordinates in reference pyramid (array of size 3)
+   * @param[in] VDM_inv The inverse of the VanDerMonde matrix
    * @param[out] N Array to store shape function values (array of size numNodes)
    */
   GEOS_HOST_DEVICE
@@ -635,6 +648,7 @@ public:
   /**
    * @brief Evaluate shape functions of a linear pyramid (5-node) at a quadrature point.
    * @param[in] q A quadrature point index.
+   * @param[in] VDM_inv The inverse of the VanDerMonde matrix
    * @param[out] gradN Array to store shape function derivatives (array of size numNodes x 3)
    */
   GEOS_HOST_DEVICE
@@ -681,7 +695,8 @@ public:
 
   /**
    * @brief Evaluate shape functions of a linear pyramid (5-node) at a given point.
-   * @param[in] q A quadrature point index.
+   * @param[in] X Coordinates in reference pyramid (array of size 3)
+   * @param[in] VDM_inv The inverse of the VanDerMonde matrix
    * @param[out] N Array to store shape function values (array of size numNodes)
    */
   GEOS_HOST_DEVICE
@@ -867,9 +882,10 @@ public:
 
   /**
    * @brief Computes the mass term Mij in the mass matrix
-   * @param[in] i,j Coordinates of the mass term in the mass matrix
-   * @param[in] N Array containing the shape function values at the quadrature points
-   * @param[out] Mij real to store the value of the mass term
+   * @param[in] VDM_inv The inverse of the VanDerMonde matrix
+   * @param[in] func A callable object (e.g., a lambda function) that takes three parameters (localIndex a, localIndex b, real64 val)
+   *   where 'a' and 'b' are the indices of the mass term in the mass matrix, and 'val' is the computed value of the mass term.
+   *   The function should have the signature: void func(localIndex a, localIndex b, real64 val)
    */
   template< typename FUNC >
   GEOS_HOST_DEVICE
@@ -967,44 +983,63 @@ public:
 
 
 
-//   /**
-//    * @brief Computes the stifness term Kij in the stifness matrix
-//    * @param[in] i,j Coordinates of the stifness term in the stifness matrix
-//    * @param[in] gradN Array containing the shape function derivative values at the quadrature points
-//    * @param[out] Kij real to store the value of the stifness term
-//    */
-//   GEOS_HOST_DEVICE
-//   GEOS_FORCE_INLINE
-//   static void computeStifnessTerm(int const i, int const j, real64 const (&gradN)[numNodes][3], real64 & Kij)
-//   {
-//       real64 QL[3] = {-0.7745966692,0.0,0.7745966692};
-//       real64 WL[3] = {0.5555555556,0.8888888889,0.5555555556};
-//       real64 QJ[3] = {0.07299,0.34700,0.70500};
-//       real64 WJ[3] = {0.15714,0.14625,0.02995};
+  /**
+   * @brief Computes the stifness term Kij in the mass matrix
+   * @param[in] VDM_inv The inverse of the VanDerMonde matrix
+   * @param[in] func A callable object (e.g., a lambda function) that takes three parameters (localIndex a, localIndex b, real64 val)
+   *   where 'a' and 'b' are the indices of the mass term in the stifness matrix, and 'val' is the computed value of the mass term.
+   *   The function should have the signature: void func(localIndex a, localIndex b, real64 val)
+   */
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
+  static void computeStifnessTerm(arrayView2d< real64 const > VDM_inv, FUNC && func)
+  {
+    // Gauss-Legendre points and weights for the quadrature
+    constexpr real64 GLeQuadraturePoints[3] = { -0.7745966692, 0.0, 0.7745966692 };
+    constexpr real64 GLeQuadratureWeights[3] = { 0.5555555556, 0.8888888889, 0.5555555556 };
+    // Gauss-Jacobi points and weights for the quadrature
+    constexpr  real64 GJQuadraturePoints[3] = { 0.07299, 0.34700, 0.70500 };
+    constexpr  real64 GJQuadratureWeights[3] = { 0.15714, 0.14625, 0.02995 };
 
-//       real64 Kij = 0;
 
-//       for(int i = 0; i < 3; ++i) {
-//           for(int j = 0; j < 3; ++j) {
-//               for(int k = 0; k < 3; ++k) {
-//                   real64 xi = QL[i];
-//                   real64 eta = QL[j];
-//                   real64 chi = QJ[k];
 
-//                   real64 weight = WL[i] * WL[j] * WJ[k];
+    real64 gradN[numNodes][3] = {{0.0}};   // Initialize the derivative of the shape function values array
 
-//                   real64 x_i = (1-chi)*xi;
-//                   real64 y_j = (1-chi)*eta;
-//                   real64 z_k = chi;
+    for( localIndex a = 0; a < numNodes; ++a )
+    {
+      for( localIndex b = 0; b < numNodes; ++b )
+      {
+        real64 val = 0.0;   // Initialize the value to accumulate
+        for( int i = 0; i < 3; ++i )
+        {
+          for( int j = 0; j < 3; ++j )
+          {
+            for( int k = 0; k < 3; ++k )
+            {
+              real64 xi = GLeQuadraturePoints[i];
+              real64 eta = GLeQuadraturePoints[j];
+              real64 chi = GJQuadraturePoints[k];
 
-//                   real64 X[3] = {x_i, y_j, z_k};
-//                   calcGradN(X, gradN);
+              real64 weight = GLeQuadratureWeights[i] * GLeQuadratureWeights[j] * GJQuadratureWeights[k];
+              //real64 weight = WL[i] * WL[j] * WJ[k];
+              real64 x_i = (1-chi)*xi;
+              real64 y_j = (1-chi)*eta;
+              real64 z_k = chi;
+              real64 X[3] = {x_i, y_j, z_k};
 
-//                   Kij+= weight * gradN[a] * gradN[b] ; // PDT SCALAIRE A CODER
-//               }
-//           }
-//       }
-//   }
+              calcgradN( X, gradN, VDM_inv );
+              real64 dot = gradN[a][0] * gradN[b][0] 
+                        + gradN[a][1] * gradN[b][1] 
+                        + gradN[a][2] * gradN[b][2];
+              val += weight * dot;
+            }
+          }
+        }
+        func( a, b, val ); // Call the function with the computed value
+      }
+    }
+  }
+
 
 //   GEOS_HOST_DEVICE
 //   GEOS_FORCE_INLINE
