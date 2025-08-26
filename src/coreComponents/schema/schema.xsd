@@ -779,6 +779,10 @@
 					<xsd:selector xpath="HydraulicApertureTable" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
+				<xsd:unique name="domainConstitutiveInvariantImmiscibleFluidUniqueName">
+					<xsd:selector xpath="InvariantImmiscibleFluid" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
 				<xsd:unique name="domainConstitutiveJFunctionCapillaryPressureUniqueName">
 					<xsd:selector xpath="JFunctionCapillaryPressure" />
 					<xsd:field xpath="@name" />
@@ -1188,11 +1192,11 @@ Information output from lower logLevels is added with the desired log level
 		</xsd:choice>
 	</xsd:complexType>
 	<xsd:complexType name="AquiferType">
-		<!--allowAllPhasesIntoAquifer => Flag to allow all phases to flow into the aquifer.
-This flag only matters for the configuration in which flow is from reservoir to aquifer.
-    - If the flag is equal to 1, then all phases, including non-aqueous phases, are allowed to flow into the aquifer.
-     - If the flag is equal to 0, then only the water phase is allowed to flow into the aquifer.
-If you are in a configuration in which flow is from reservoir to aquifer and you expect non-aqueous phases to saturate the reservoir cells next to the aquifer, set this flag to 1.
+		<!--allowAllPhasesIntoAquifer => Flag to allow all phases to flow into the aquifer. 
+This flag only matters for the configuration in which flow is from reservoir to aquifer. 
+    - If the flag is equal to 1, then all phases, including non-aqueous phases, are allowed to flow into the aquifer. 
+     - If the flag is equal to 0, then only the water phase is allowed to flow into the aquifer. 
+If you are in a configuration in which flow is from reservoir to aquifer and you expect non-aqueous phases to saturate the reservoir cells next to the aquifer, set this flag to 1. 
 This keyword is ignored for single-phase flow simulations-->
 		<xsd:attribute name="allowAllPhasesIntoAquifer" type="integer" default="0" />
 		<!--aquiferAngle => Angle subtended by the aquifer boundary from the center of the reservoir [degress]-->
@@ -2150,14 +2154,14 @@ Information output from lower logLevels is added with the desired log level
 * FullyImplicit
 * Sequential-->
 		<xsd:attribute name="couplingType" type="geos_NonlinearSolverParameters_CouplingType" default="FullyImplicit" />
-		<!--lineSearchAction => How the line search is to be used. Options are:
+		<!--lineSearchAction => How the line search is to be used. Options are: 
  * None    - Do not use line search.
 * Attempt - Use line search. Allow exit from line search without achieving smaller residual than starting residual.
 * Require - Use line search. If smaller residual than starting resdual is not achieved, cut time-step.-->
 		<xsd:attribute name="lineSearchAction" type="geos_NonlinearSolverParameters_LineSearchAction" default="Attempt" />
 		<!--lineSearchCutFactor => Line search cut factor. For instance, a value of 0.5 will result in the effective application of the last solution by a factor of (0.5, 0.25, 0.125, ...)-->
 		<xsd:attribute name="lineSearchCutFactor" type="real64" default="0.5" />
-		<!--lineSearchInterpolationType => Strategy to cut the solution update during the line search. Options are:
+		<!--lineSearchInterpolationType => Strategy to cut the solution update during the line search. Options are: 
  * Linear
 * Parabolic-->
 		<xsd:attribute name="lineSearchInterpolationType" type="geos_NonlinearSolverParameters_LineSearchInterpolationType" default="Linear" />
@@ -2569,6 +2573,8 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="outputSeismoTrace" type="integer" default="0" />
 		<!--receiverCoordinates => Coordinates (x,y,z) of the receivers-->
 		<xsd:attribute name="receiverCoordinates" type="real64_array2d" default="{{0}}" />
+		<!--reflectivityCoeff => Reflectivity coeff for taper-->
+		<xsd:attribute name="reflectivityCoeff" type="real32" default="0.001" />
 		<!--rickerOrder => Flag that indicates the order of the Ricker to be used o, 1 or 2. Order 2 by default-->
 		<xsd:attribute name="rickerOrder" type="integer" default="2" />
 		<!--saveFields => Set to 1 to save fields during forward and restore them during backward. If set to 1, the gradient is computed, and if set to 2, the imaging condition is computed.-->
@@ -2585,16 +2591,20 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="sourceWaveletTableNames" type="string_array" default="{}" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="groupNameRef_array" use="required" />
+		<!--thicknessTaper => Size for the taper layer -->
+		<xsd:attribute name="thicknessTaper" type="real32" default="0" />
 		<!--timeSourceDelay => Source time delay (1 / f0 by default)-->
 		<xsd:attribute name="timeSourceDelay" type="real32" default="-1" />
 		<!--timeSourceFrequency => Central frequency for the time source-->
 		<xsd:attribute name="timeSourceFrequency" type="real32" default="0" />
-		<!--timestepStabilityLimit => Set to 1 to apply a stability limit to the simulation timestep. The timestep used is that given by the CFL condition times the cflFactor parameter.-->
+		<!--timestepStabilityLimit => Flag that indicates how to deal with timeStep: if it is set to 0 (default value) we do not compute the timeStep and use the one defined inside the xml, 1 means that we use a routine to compute the timeStep but only one time (even with Pygeos), 2 means that we compute the timeStep each time-->
 		<xsd:attribute name="timestepStabilityLimit" type="integer" default="0" />
 		<!--useDAS => Flag to indicate if DAS data will be modeled, and which DAS type to use: "none" to deactivate DAS, "strainIntegration" for strain integration, "dipole" for displacement difference-->
 		<xsd:attribute name="useDAS" type="geos_WaveSolverUtils_DASType" default="none" />
 		<!--usePhysicsScaling => Enable physics-based scaling of the linear system. Default: true.-->
 		<xsd:attribute name="usePhysicsScaling" type="integer" default="1" />
+		<!--useTaper => Flag to apply taper-->
+		<xsd:attribute name="useTaper" type="integer" default="0" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
 		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
@@ -2731,16 +2741,6 @@ Information output from lower logLevels is added with the desired log level
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
-	<xsd:simpleType name="geos_WaveSolverUtils_AttenuationType">
-		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*[\[\]`$].*|none|sls" />
-		</xsd:restriction>
-	</xsd:simpleType>
-	<xsd:simpleType name="geos_WaveSolverUtils_DASType">
-		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*[\[\]`$].*|none|dipole|strainIntegration" />
-		</xsd:restriction>
-	</xsd:simpleType>
 	<xsd:complexType name="AcousticSEMType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
@@ -3192,8 +3192,8 @@ Information output from lower logLevels is added with the desired log level
 		<!--stabilizationRegionNames => Regions where stabilization is applied.-->
 		<xsd:attribute name="stabilizationRegionNames" type="groupNameRef_array" default="{}" />
 		<!--stabilizationType => StabilizationType. Options are:
-None- Add no stabilization to mass equation
-Global- Add jump stabilization to all faces
+None- Add no stabilization to mass equation 
+Global- Add jump stabilization to all faces 
 Local- Add jump stabilization on interior of macro elements-->
 		<xsd:attribute name="stabilizationType" type="geos_stabilization_StabilizationType" default="None" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
@@ -3277,12 +3277,12 @@ Information output from lower logLevels is added with the desired log level
 * massRate
 * uninitialized-->
 		<xsd:attribute name="control" type="geos_WellControls_Control" use="required" />
-		<!--enableCrossflow => Flag to enable crossflow. Currently only supported for injectors:
- - If the flag is set to 1, both reservoir-to-well flow and well-to-reservoir flow are allowed at the perforations.
+		<!--enableCrossflow => Flag to enable crossflow. Currently only supported for injectors: 
+ - If the flag is set to 1, both reservoir-to-well flow and well-to-reservoir flow are allowed at the perforations. 
  - If the flag is set to 0, we only allow well-to-reservoir flow at the perforations.-->
 		<xsd:attribute name="enableCrossflow" type="integer" default="1" />
-		<!--initialPressureCoefficient => Tuning coefficient for the initial well pressure of rate-controlled wells:
- - Injector pressure at reference depth initialized as: (1+initialPressureCoefficient)*reservoirPressureAtClosestPerforation + density*g*( zRef - zPerf )
+		<!--initialPressureCoefficient => Tuning coefficient for the initial well pressure of rate-controlled wells: 
+ - Injector pressure at reference depth initialized as: (1+initialPressureCoefficient)*reservoirPressureAtClosestPerforation + density*g*( zRef - zPerf ) 
  - Producer pressure at reference depth initialized as: (1-initialPressureCoefficient)*reservoirPressureAtClosestPerforation + density*g*( zRef - zPerf ) -->
 		<xsd:attribute name="initialPressureCoefficient" type="real64" default="0.1" />
 		<!--injectionStream => Global component densities of the injection stream [moles/m^3 or kg/m^3]-->
@@ -3296,7 +3296,7 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--referenceElevation => Reference elevation where BHP control is enforced [m]-->
 		<xsd:attribute name="referenceElevation" type="real64" use="required" />
-		<!--statusTableName => Name of the well status table when the status of the well is a time dependent function.
+		<!--statusTableName => Name of the well status table when the status of the well is a time dependent function. 
 If the status function evaluates to a positive value at the current time, the well will be open otherwise the well will be shut.-->
 		<xsd:attribute name="statusTableName" type="groupNameRef" default="" />
 		<!--surfacePressure => Surface pressure used to compute volumetric rates when surface conditions are used [Pa]-->
@@ -3714,8 +3714,8 @@ Information output from lower logLevels is added with the desired log level
 		<!--stabilizationRegionNames => Regions where stabilization is applied.-->
 		<xsd:attribute name="stabilizationRegionNames" type="groupNameRef_array" default="{}" />
 		<!--stabilizationType => StabilizationType. Options are:
-None- Add no stabilization to mass equation
-Global- Add jump stabilization to all faces
+None- Add no stabilization to mass equation 
+Global- Add jump stabilization to all faces 
 Local- Add jump stabilization on interior of macro elements-->
 		<xsd:attribute name="stabilizationType" type="geos_stabilization_StabilizationType" default="None" />
 		<!--surfaceGeneratorName => Name of the surface generator to use in the hydrofracture solver-->
@@ -3948,8 +3948,8 @@ Information output from lower logLevels is added with the desired log level
 		<!--stabilizationRegionNames => Regions where stabilization is applied.-->
 		<xsd:attribute name="stabilizationRegionNames" type="groupNameRef_array" default="{}" />
 		<!--stabilizationType => StabilizationType. Options are:
-None- Add no stabilization to mass equation
-Global- Add jump stabilization to all faces
+None- Add no stabilization to mass equation 
+Global- Add jump stabilization to all faces 
 Local- Add jump stabilization on interior of macro elements-->
 		<xsd:attribute name="stabilizationType" type="geos_stabilization_StabilizationType" default="None" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
@@ -3996,8 +3996,8 @@ Information output from lower logLevels is added with the desired log level
 		<!--stabilizationRegionNames => Regions where stabilization is applied.-->
 		<xsd:attribute name="stabilizationRegionNames" type="groupNameRef_array" default="{}" />
 		<!--stabilizationType => StabilizationType. Options are:
-None- Add no stabilization to mass equation
-Global- Add jump stabilization to all faces
+None- Add no stabilization to mass equation 
+Global- Add jump stabilization to all faces 
 Local- Add jump stabilization on interior of macro elements-->
 		<xsd:attribute name="stabilizationType" type="geos_stabilization_StabilizationType" default="None" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
@@ -4510,8 +4510,8 @@ Information output from lower logLevels is added with the desired log level
 		<!--stabilizationRegionNames => Regions where stabilization is applied.-->
 		<xsd:attribute name="stabilizationRegionNames" type="groupNameRef_array" default="{}" />
 		<!--stabilizationType => StabilizationType. Options are:
-None- Add no stabilization to mass equation
-Global- Add jump stabilization to all faces
+None- Add no stabilization to mass equation 
+Global- Add jump stabilization to all faces 
 Local- Add jump stabilization on interior of macro elements-->
 		<xsd:attribute name="stabilizationType" type="geos_stabilization_StabilizationType" default="None" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
@@ -4560,8 +4560,8 @@ Information output from lower logLevels is added with the desired log level
 		<!--stabilizationRegionNames => Regions where stabilization is applied.-->
 		<xsd:attribute name="stabilizationRegionNames" type="groupNameRef_array" default="{}" />
 		<!--stabilizationType => StabilizationType. Options are:
-None- Add no stabilization to mass equation
-Global- Add jump stabilization to all faces
+None- Add no stabilization to mass equation 
+Global- Add jump stabilization to all faces 
 Local- Add jump stabilization on interior of macro elements-->
 		<xsd:attribute name="stabilizationType" type="geos_stabilization_StabilizationType" default="None" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
@@ -4647,8 +4647,8 @@ Information output from lower logLevels is added with the desired log level
 		<!--stabilizationRegionNames => Regions where stabilization is applied.-->
 		<xsd:attribute name="stabilizationRegionNames" type="groupNameRef_array" default="{}" />
 		<!--stabilizationType => StabilizationType. Options are:
-None- Add no stabilization to mass equation
-Global- Add jump stabilization to all faces
+None- Add no stabilization to mass equation 
+Global- Add jump stabilization to all faces 
 Local- Add jump stabilization on interior of macro elements-->
 		<xsd:attribute name="stabilizationType" type="geos_stabilization_StabilizationType" default="None" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
@@ -4821,8 +4821,8 @@ Information output from lower logLevels is added with the desired log level
 		<!--stabilizationRegionNames => Regions where stabilization is applied.-->
 		<xsd:attribute name="stabilizationRegionNames" type="groupNameRef_array" default="{}" />
 		<!--stabilizationType => StabilizationType. Options are:
-None- Add no stabilization to mass equation
-Global- Add jump stabilization to all faces
+None- Add no stabilization to mass equation 
+Global- Add jump stabilization to all faces 
 Local- Add jump stabilization on interior of macro elements-->
 		<xsd:attribute name="stabilizationType" type="geos_stabilization_StabilizationType" default="None" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
@@ -4871,8 +4871,8 @@ Information output from lower logLevels is added with the desired log level
 		<!--stabilizationRegionNames => Regions where stabilization is applied.-->
 		<xsd:attribute name="stabilizationRegionNames" type="groupNameRef_array" default="{}" />
 		<!--stabilizationType => StabilizationType. Options are:
-None- Add no stabilization to mass equation
-Global- Add jump stabilization to all faces
+None- Add no stabilization to mass equation 
+Global- Add jump stabilization to all faces 
 Local- Add jump stabilization on interior of macro elements-->
 		<xsd:attribute name="stabilizationType" type="geos_stabilization_StabilizationType" default="None" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
@@ -4973,7 +4973,7 @@ Information output from lower logLevels is added with the desired log level
 		<!--stiffnessDamping => Value of stiffness based damping coefficient. -->
 		<xsd:attribute name="stiffnessDamping" type="real64" default="0" />
 		<!--strainTheory => Indicates whether or not to use `Infinitesimal Strain Theory <https://en.wikipedia.org/wiki/Infinitesimal_strain_theory>`_, or `Finite Strain Theory <https://en.wikipedia.org/wiki/Finite_strain_theory>`_. Valid Inputs are:
- 0 - Infinitesimal Strain
+ 0 - Infinitesimal Strain 
  1 - Finite Strain-->
 		<xsd:attribute name="strainTheory" type="integer" default="0" />
 		<!--symmetric => Flag to neglect the non-symmetric contribution in the tangential matrix-->
@@ -5043,7 +5043,7 @@ Information output from lower logLevels is added with the desired log level
 		<!--stiffnessDamping => Value of stiffness based damping coefficient. -->
 		<xsd:attribute name="stiffnessDamping" type="real64" default="0" />
 		<!--strainTheory => Indicates whether or not to use `Infinitesimal Strain Theory <https://en.wikipedia.org/wiki/Infinitesimal_strain_theory>`_, or `Finite Strain Theory <https://en.wikipedia.org/wiki/Finite_strain_theory>`_. Valid Inputs are:
- 0 - Infinitesimal Strain
+ 0 - Infinitesimal Strain 
  1 - Finite Strain-->
 		<xsd:attribute name="strainTheory" type="integer" default="0" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
@@ -5105,7 +5105,7 @@ Information output from lower logLevels is added with the desired log level
 		<!--stiffnessDamping => Value of stiffness based damping coefficient. -->
 		<xsd:attribute name="stiffnessDamping" type="real64" default="0" />
 		<!--strainTheory => Indicates whether or not to use `Infinitesimal Strain Theory <https://en.wikipedia.org/wiki/Infinitesimal_strain_theory>`_, or `Finite Strain Theory <https://en.wikipedia.org/wiki/Finite_strain_theory>`_. Valid Inputs are:
- 0 - Infinitesimal Strain
+ 0 - Infinitesimal Strain 
  1 - Finite Strain-->
 		<xsd:attribute name="strainTheory" type="integer" default="0" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
@@ -5159,7 +5159,7 @@ Information output from lower logLevels is added with the desired log level
 		<!--stiffnessDamping => Value of stiffness based damping coefficient. -->
 		<xsd:attribute name="stiffnessDamping" type="real64" default="0" />
 		<!--strainTheory => Indicates whether or not to use `Infinitesimal Strain Theory <https://en.wikipedia.org/wiki/Infinitesimal_strain_theory>`_, or `Finite Strain Theory <https://en.wikipedia.org/wiki/Finite_strain_theory>`_. Valid Inputs are:
- 0 - Infinitesimal Strain
+ 0 - Infinitesimal Strain 
  1 - Finite Strain-->
 		<xsd:attribute name="strainTheory" type="integer" default="0" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
@@ -5215,7 +5215,7 @@ Information output from lower logLevels is added with the desired log level
 		<!--stiffnessDamping => Value of stiffness based damping coefficient. -->
 		<xsd:attribute name="stiffnessDamping" type="real64" default="0" />
 		<!--strainTheory => Indicates whether or not to use `Infinitesimal Strain Theory <https://en.wikipedia.org/wiki/Infinitesimal_strain_theory>`_, or `Finite Strain Theory <https://en.wikipedia.org/wiki/Finite_strain_theory>`_. Valid Inputs are:
- 0 - Infinitesimal Strain
+ 0 - Infinitesimal Strain 
  1 - Finite Strain-->
 		<xsd:attribute name="strainTheory" type="integer" default="0" />
 		<!--surfaceGeneratorName => Name of the surface generator to use-->
@@ -5768,6 +5768,7 @@ Information output from lower logLevels is added with the desired log level
 			<xsd:element name="ExtendedDruckerPrager" type="ExtendedDruckerPragerType" />
 			<xsd:element name="FrictionlessContact" type="FrictionlessContactType" />
 			<xsd:element name="HydraulicApertureTable" type="HydraulicApertureTableType" />
+			<xsd:element name="InvariantImmiscibleFluid" type="InvariantImmiscibleFluidType" />
 			<xsd:element name="JFunctionCapillaryPressure" type="JFunctionCapillaryPressureType" />
 			<xsd:element name="LinearIsotropicDispersion" type="LinearIsotropicDispersionType" />
 			<xsd:element name="ModifiedCamClay" type="ModifiedCamClayType" />
@@ -5844,12 +5845,12 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="componentMolarWeight" type="real64_array" use="required" />
 		<!--componentNames => List of component names-->
 		<xsd:attribute name="componentNames" type="string_array" default="{}" />
-		<!--hydrocarbonFormationVolFactorTableNames => List of formation volume factor TableFunction names from the Functions block.
-The user must provide one TableFunction per hydrocarbon phase, in the order provided in "phaseNames".
+		<!--hydrocarbonFormationVolFactorTableNames => List of formation volume factor TableFunction names from the Functions block. 
+The user must provide one TableFunction per hydrocarbon phase, in the order provided in "phaseNames". 
 For instance, if "oil" is before "gas" in "phaseNames", the table order should be: oilTableName, gasTableName-->
 		<xsd:attribute name="hydrocarbonFormationVolFactorTableNames" type="groupNameRef_array" default="{}" />
-		<!--hydrocarbonViscosityTableNames => List of viscosity TableFunction names from the Functions block.
-The user must provide one TableFunction per hydrocarbon phase, in the order provided in "phaseNames".
+		<!--hydrocarbonViscosityTableNames => List of viscosity TableFunction names from the Functions block. 
+The user must provide one TableFunction per hydrocarbon phase, in the order provided in "phaseNames". 
 For instance, if "oil" is before "gas" in "phaseNames", the table order should be: oilTableName, gasTableName-->
 		<xsd:attribute name="hydrocarbonViscosityTableNames" type="groupNameRef_array" default="{}" />
 		<!--phaseNames => List of fluid phases-->
@@ -6564,12 +6565,12 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="componentMolarWeight" type="real64_array" use="required" />
 		<!--componentNames => List of component names-->
 		<xsd:attribute name="componentNames" type="string_array" default="{}" />
-		<!--hydrocarbonFormationVolFactorTableNames => List of formation volume factor TableFunction names from the Functions block.
-The user must provide one TableFunction per hydrocarbon phase, in the order provided in "phaseNames".
+		<!--hydrocarbonFormationVolFactorTableNames => List of formation volume factor TableFunction names from the Functions block. 
+The user must provide one TableFunction per hydrocarbon phase, in the order provided in "phaseNames". 
 For instance, if "oil" is before "gas" in "phaseNames", the table order should be: oilTableName, gasTableName-->
 		<xsd:attribute name="hydrocarbonFormationVolFactorTableNames" type="groupNameRef_array" default="{}" />
-		<!--hydrocarbonViscosityTableNames => List of viscosity TableFunction names from the Functions block.
-The user must provide one TableFunction per hydrocarbon phase, in the order provided in "phaseNames".
+		<!--hydrocarbonViscosityTableNames => List of viscosity TableFunction names from the Functions block. 
+The user must provide one TableFunction per hydrocarbon phase, in the order provided in "phaseNames". 
 For instance, if "oil" is before "gas" in "phaseNames", the table order should be: oilTableName, gasTableName-->
 		<xsd:attribute name="hydrocarbonViscosityTableNames" type="groupNameRef_array" default="{}" />
 		<!--phaseNames => List of fluid phases-->
@@ -6790,6 +6791,22 @@ For instance, if "oil" is before "gas" in "phaseNames", the table order should b
 		<xsd:attribute name="apertureTolerance" type="real64" default="1e-09" />
 		<!--referenceAperture => Reference hydraulic aperture. It is the aperture at zero normal stress.-->
 		<xsd:attribute name="referenceAperture" type="real64" default="1e-06" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="groupName" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="InvariantImmiscibleFluidType">
+		<!--checkPVTTablesRanges => Enable (1) or disable (0) an error when the input pressure or temperature of the PVT tables is out of range.-->
+		<xsd:attribute name="checkPVTTablesRanges" type="integer" default="1" />
+		<!--componentMolarWeight => Molar weights of components-->
+		<xsd:attribute name="componentMolarWeight" type="real64_array" use="required" />
+		<!--componentNames => List of fluid components (e.g. CH4, H2O, C5H12)-->
+		<xsd:attribute name="componentNames" type="string_array" use="required" />
+		<!--densities => Constant phase densities-->
+		<xsd:attribute name="densities" type="real64_array" use="required" />
+		<!--phaseNames => List of fluid phases (e.g. gas, water, oil)-->
+		<xsd:attribute name="phaseNames" type="groupNameRef_array" use="required" />
+		<!--viscosities => Constant phase viscosities-->
+		<xsd:attribute name="viscosities" type="real64_array" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -7322,7 +7339,7 @@ If you want to do a two-phase simulation, please use instead wettingNonWettingRe
 		<xsd:attribute name="nonWettingIntermediateRelPermTableNames" type="groupNameRef_array" default="{}" />
 		<!--phaseNames => List of fluid phases-->
 		<xsd:attribute name="phaseNames" type="groupNameRef_array" use="required" />
-		<!--threePhaseInterpolator => Type of Three phase interpolator.Valid options
+		<!--threePhaseInterpolator => Type of Three phase interpolator.Valid options 
 * BAKER
 * STONEII-->
 		<xsd:attribute name="threePhaseInterpolator" type="geos_constitutive_ThreePhaseInterpolator" default="BAKER" />
@@ -7374,7 +7391,7 @@ To neglect hysteresis on this phase, just use the same table name for the draina
 		<xsd:attribute name="killoughCurvatureParameter" type="real64" default="1" />
 		<!--phaseNames => List of fluid phases-->
 		<xsd:attribute name="phaseNames" type="groupNameRef_array" use="required" />
-		<!--threePhaseInterpolator => Type of Three phase interpolator.Valid options
+		<!--threePhaseInterpolator => Type of Three phase interpolator.Valid options 
 * BAKER
 * STONEII-->
 		<xsd:attribute name="threePhaseInterpolator" type="geos_constitutive_ThreePhaseInterpolator" default="BAKER" />
@@ -7423,14 +7440,14 @@ To neglect hysteresis on this phase, just use the same table name for the draina
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="TwoPhaseImmiscibleFluidType">
-		<!--densityTableNames => List of density TableFuncion names from the Function block.
+		<!--densityTableNames => List of density TableFuncion names from the Function block. 
 The user must provide one TableFunction per phase, respecting the order provided in "phaseNames".-->
 		<xsd:attribute name="densityTableNames" type="groupNameRef_array" default="{}" />
 		<!--phaseNames => List of fluid phases-->
 		<xsd:attribute name="phaseNames" type="groupNameRef_array" use="required" />
 		<!--tableFiles => List of filenames with input PVT tables (one per phase)-->
 		<xsd:attribute name="tableFiles" type="path_array" default="{}" />
-		<!--viscosityTableNames => List of viscosity TableFuncion names from the Function block.
+		<!--viscosityTableNames => List of viscosity TableFuncion names from the Function block. 
 The user must provide one TableFunction per phase, respecting the order provided in "phaseNames".-->
 		<xsd:attribute name="viscosityTableNames" type="groupNameRef_array" default="{}" />
 		<!--name => A name is required for any non-unique nodes-->
@@ -7590,8 +7607,6 @@ The expected format is "{ waterMax, oilMax }", in that order-->
 		<!--cellBlocks => List of the desired cell-blocks qualifiers to contain in this CellElementRegion. Qualifiers can be either cell-block names, region attribute values, or fnmatch pattern.The form of loaded cell-block names is of "regionAttribute_elementType", so "1_tetrahedra"  contains the tetrahedric elements for which the regionAttribute is 1.
 The element types are: tetrahedra, pyramids, wedges, hexahedra, pentagonalPrisms, hexagonalPrisms, heptagonalPrisms, octagonalPrisms, nonagonalPrisms, decagonalPrisms, hendecagonalPrisms, polyhedra.-->
 		<xsd:attribute name="cellBlocks" type="groupNameRef_array" use="required" />
-		<!--coarseningRatio => (no description available)-->
-		<xsd:attribute name="coarseningRatio" type="real64" default="0" />
 		<!--materialList => List of materials present in this region-->
 		<xsd:attribute name="materialList" type="groupNameRef_array" use="required" />
 		<!--meshBody => Mesh body that contains this region-->
