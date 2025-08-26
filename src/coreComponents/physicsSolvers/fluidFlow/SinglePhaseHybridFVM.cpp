@@ -364,14 +364,14 @@ void SinglePhaseHybridFVM::applyFaceDirichletBC( real64 const time_n,
     arrayView1d< real64 const > const presFace =
       faceManager.getField< flow::facePressure >();
     arrayView1d< real64 const > const presFaceBC =
-    faceManager.getField< flow::bcPressure >();
+      faceManager.getField< flow::bcPressure >();
     arrayView1d< globalIndex const > const faceDofNumber =
       faceManager.getReference< array1d< globalIndex > >( faceDofKey );
     arrayView1d< integer const > const faceGhostRank = faceManager.ghostRank();
 
     globalIndex const rankOffset = dofManager.rankOffset();
 
-    // take BCs defined for "pressure" field and apply values to "facePressure_n"
+    // take BCs defined for "pressure" field and apply values to "bcPressure"
     // this is done this way for consistency with the standard TPFA scheme, which works in the same fashion
     fsManager.apply< FaceManager >( time_n + dt,
                                     mesh,
