@@ -33,9 +33,25 @@ StrainHardeningPolymer::StrainHardeningPolymer( string const & name, Group * con
   m_jacobian(),
   m_yieldStrength(),
   m_defaultBulkModulus(),
+  m_bulkModulusA(),
+  m_bulkModulusB(),
+  m_bulkModulusT0(),
   m_defaultShearModulus(),
+  m_shearModulusA(),
+  m_shearModulusB(),
+  m_shearModulusT0(),
+  m_defaultYieldStrength(),
+  m_yieldStrengthA(),
+  m_yieldStrengthB(),
+  m_yieldStrengthT0(),
   m_strainHardeningSlope(),
+  m_strainHardeningSlopeA(),
+  m_strainHardeningSlopeB(),
+  m_strainHardeningSlopeT0(),
   m_shearSofteningMagnitude(),
+  m_shearSofteningMagnitudeA(),
+  m_shearSofteningMagnitudeB(),
+  m_shearSofteningMagnitudeT0(),
   m_shearSofteningShapeParameter1(),
   m_shearSofteningShapeParameter2(),
   m_maximumStretch()
@@ -46,9 +62,39 @@ StrainHardeningPolymer::StrainHardeningPolymer( string const & name, Group * con
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Strain hardening slope" );
 
+  registerWrapper( viewKeyStruct::strainHardeningSlopeAString(), &m_strainHardeningSlopeA ).
+    setApplyDefaultValue( 0.0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Strain hardening slope A" );
+
+  registerWrapper( viewKeyStruct::strainHardeningSlopeBString(), &m_strainHardeningSlopeB ).
+    setApplyDefaultValue( 0.0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Strain hardening slope B" );
+
+  registerWrapper( viewKeyStruct::strainHardeningSlopeT0String(), &m_strainHardeningSlopeT0 ).
+    setApplyDefaultValue( 300.0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Strain hardening slope T0" );
+
   registerWrapper( viewKeyStruct::shearSofteningMagnitudeString(), &m_shearSofteningMagnitude ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Shear softening magnitude" );
+
+  registerWrapper( viewKeyStruct::shearSofteningMagnitudeAString(), &m_shearSofteningMagnitudeA ).
+    setApplyDefaultValue( 0.0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Shear softening magnitude A" );
+
+  registerWrapper( viewKeyStruct::shearSofteningMagnitudeBString(), &m_shearSofteningMagnitudeB ).
+    setApplyDefaultValue( 0.0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Shear softening magnitude B" );
+
+  registerWrapper( viewKeyStruct::shearSofteningMagnitudeT0String(), &m_shearSofteningMagnitudeT0 ).
+    setApplyDefaultValue( 300 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Shear softening magnitude T0" );
 
   registerWrapper( viewKeyStruct::shearSofteningShapeParameter1String(), &m_shearSofteningShapeParameter1 ).
     setInputFlag( InputFlags::REQUIRED ).
@@ -63,13 +109,58 @@ StrainHardeningPolymer::StrainHardeningPolymer( string const & name, Group * con
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Default yield strength" );
 
+  registerWrapper( viewKeyStruct::yieldStrengthAString(), &m_yieldStrengthA ).
+    setApplyDefaultValue( 0.0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Yield strength A" );
+
+  registerWrapper( viewKeyStruct::yieldStrengthBString(), &m_yieldStrengthB ).
+    setApplyDefaultValue( 0.0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Yield strength B" );
+
+  registerWrapper( viewKeyStruct::yieldStrengthT0String(), &m_yieldStrengthT0 ).
+    setApplyDefaultValue( 300 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Yield strength T0" );
+
   registerWrapper( viewKeyStruct::defaultBulkModulusString(), &m_defaultBulkModulus ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Temperature independent bulk modulus" );
 
+  registerWrapper( viewKeyStruct::bulkModulusAString(), &m_bulkModulusA ).
+    setApplyDefaultValue( 0.0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Temperature dependent bulk modulus A parameter" );
+
+   registerWrapper( viewKeyStruct::bulkModulusBString(), &m_bulkModulusB ).
+    setApplyDefaultValue( 0.0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Temperature dependent bulk modulus B parameter" );
+
+  registerWrapper( viewKeyStruct::bulkModulusT0String(), &m_bulkModulusT0 ).
+    setApplyDefaultValue( 300.0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Temperature dependent bulk modulus T0 parameter" );
+
   registerWrapper( viewKeyStruct::defaultShearModulusString(), &m_defaultShearModulus ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Temperature independent shear modulus" );
+
+  registerWrapper( viewKeyStruct::shearModulusAString(), &m_shearModulusA ).
+    setApplyDefaultValue( 0.0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Temperature dependent shear modulus A parameter" );
+
+  registerWrapper( viewKeyStruct::shearModulusBString(), &m_shearModulusB ).
+    setApplyDefaultValue( 0.0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Temperature dependent shear modulus B parameter" );
+
+  registerWrapper( viewKeyStruct::shearModulusT0String(), &m_shearModulusT0 ).
+    setApplyDefaultValue( 300.0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Temperature dependent shear modulus T0 parameter" );
 
   registerWrapper( viewKeyStruct::maximumStretchString(), &m_maximumStretch ).
     setApplyDefaultValue( DBL_MAX ).
@@ -139,6 +230,7 @@ void StrainHardeningPolymer::postInputInitialization()
   GEOS_THROW_IF( m_defaultYieldStrength < 0.0, "Yield strength must be a positive number.", InputError );
   GEOS_THROW_IF( m_maximumStretch <= 1.0, "Max stretch must be greater than 1", InputError );
 
+  // We are using defeault yield strength to be the temperature-independent value, that will be modified by thermal softening.
   this->getWrapper< array1d< real64 > >( viewKeyStruct::yieldStrengthString() ).setApplyDefaultValue( m_defaultYieldStrength );
 }
 

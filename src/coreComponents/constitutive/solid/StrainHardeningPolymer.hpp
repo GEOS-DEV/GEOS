@@ -73,9 +73,25 @@ public:
                                  arrayView2d< real64 > const & jacobian,
                                  arrayView1d< real64 > const & yieldStrength,
                                  real64 const & defaultBulkModulus,
+                                 real64 const & bulkModulusA,
+                                 real64 const & bulkModulusB,
+                                 real64 const & bulkModulusT0,
                                  real64 const & defaultShearModulus,
+                                 real64 const & shearModulusA,
+                                 real64 const & shearModulusB,
+                                 real64 const & shearModulusT0,
+                                 real64 const & defaultYieldStrength,
+                                 real64 const & yieldStrengthA,
+                                 real64 const & yieldStrengthB,
+                                 real64 const & yieldStrengthT0,
                                  real64 const & strainHardeningSlope,
+                                 real64 const & strainHardeningSlopeA,
+                                 real64 const & strainHardeningSlopeB,
+                                 real64 const & strainHardeningSlopeT0,
                                  real64 const & shearSofteningMagnitude,
+                                 real64 const & shearSofteningMagnitudeA,
+                                 real64 const & shearSofteningMagnitudeB,
+                                 real64 const & shearSofteningMagnitudeT0,
                                  real64 const & shearSofteningShapeParameter1,
                                  real64 const & shearSofteningShapeParameter2,
                                  real64 const & maximumStretch,
@@ -102,9 +118,25 @@ public:
     m_jacobian( jacobian ),
     m_yieldStrength( yieldStrength ),
     m_defaultBulkModulus( defaultBulkModulus ),
+    m_bulkModulusA( bulkModulusA ),
+    m_bulkModulusB( bulkModulusB ),
+    m_bulkModulusT0( bulkModulusT0 ),
     m_defaultShearModulus( defaultShearModulus ),
+    m_shearModulusA( shearModulusA ),
+    m_shearModulusB( shearModulusB ),
+    m_shearModulusT0( shearModulusT0 ),
+    m_defaultYieldStrength(defaultYieldStrength ),
+    m_yieldStrengthA(yieldStrengthA ),
+    m_yieldStrengthB(yieldStrengthB ),
+    m_yieldStrengthT0(yieldStrengthT0 ),
     m_strainHardeningSlope( strainHardeningSlope ),
+    m_strainHardeningSlopeA( strainHardeningSlopeA ),
+    m_strainHardeningSlopeB( strainHardeningSlopeB ),
+    m_strainHardeningSlopeT0( strainHardeningSlopeT0 ),
     m_shearSofteningMagnitude( shearSofteningMagnitude ),
+    m_shearSofteningMagnitudeA( shearSofteningMagnitudeA ),
+    m_shearSofteningMagnitudeB( shearSofteningMagnitudeB ),
+    m_shearSofteningMagnitudeT0( shearSofteningMagnitudeT0 ),
     m_shearSofteningShapeParameter1( shearSofteningShapeParameter1 ),
     m_shearSofteningShapeParameter2( shearSofteningShapeParameter2 ),
     m_maximumStretch( maximumStretch )
@@ -217,15 +249,33 @@ private:
 
   /// The temperature-independent bulk modulus value
   real64 const m_defaultBulkModulus;
+  real64 const m_bulkModulusA;
+  real64 const m_bulkModulusB;
+  real64 const m_bulkModulusT0;
 
   /// The temperature-independent shear modulus value
   real64 const m_defaultShearModulus;
+  real64 const m_shearModulusA;
+  real64 const m_shearModulusB;
+  real64 const m_shearModulusT0;
+
+  // Yield strength before softening/hardening
+  real64 const m_defaultYieldStrength;
+  real64 const m_yieldStrengthA;
+  real64 const m_yieldStrengthB;
+  real64 const m_yieldStrengthT0;
 
   /// The strain hardening slope
   real64 const m_strainHardeningSlope;
+  real64 const m_strainHardeningSlopeA;
+  real64 const m_strainHardeningSlopeB;
+  real64 const m_strainHardeningSlopeT0;
 
   /// The shear softening magnitude
   real64 m_shearSofteningMagnitude;
+  real64 m_shearSofteningMagnitudeA;
+  real64 m_shearSofteningMagnitudeB;
+  real64 m_shearSofteningMagnitudeT0;
 
   /// The shear softening shape parameter 1
   real64 m_shearSofteningShapeParameter1;
@@ -344,13 +394,13 @@ void StrainHardeningPolymerUpdates::smallStrainUpdate_StressOnly( localIndex con
 
   // Here we would update the m_bulkModulus[k] and m_shearModulus[k] with temperature dependent values:
   // These will be input paramters:
-  real64 m_bulkModulusA = 1.0,
-         m_bulkModulusB = 1.0,
-         m_bulkModulusT0 = 300;
+  // real64 m_bulkModulusA = 1.0,
+  //        m_bulkModulusB = 1.0,
+  //        m_bulkModulusT0 = 300;
         
-  real64 m_shearModulusA = 1.0,
-         m_shearModulusB = 1.0,
-         m_shearModulusT0 = 300;
+  // real64 m_shearModulusA = 1.0,
+  //        m_shearModulusB = 1.0,
+  //        m_shearModulusT0 = 300;
 
   m_bulkModulus[k] = m_defaultBulkModulus * StrainHardeningPolymerUpdates::thermalSoftening(m_temperature[k], m_bulkModulusT0, m_bulkModulusA, m_bulkModulusB );      // This will actually be some function:   m_bulkModulus[k] = m_defaultBulkModulus + A*f(m_temperature[k]), etc.
   m_shearModulus[k] = m_defaultShearModulus *  StrainHardeningPolymerUpdates::thermalSoftening(m_temperature[k], m_shearModulusT0, m_shearModulusA, m_shearModulusB ); // This will actually be some function of m_temperature[k]
@@ -391,8 +441,6 @@ void StrainHardeningPolymerUpdates::smallStrainUpdateHelper( localIndex const k,
                                                              real64 const ( & strainIncrement )[6],
                                                              real64 ( & stress )[6] ) const // this is the trial stress, and will be overwritten.
 {
-  // real64 yieldStrength = m_yieldStrength[k];
-
   // Store trial stress for computing the plastic strain increment.  
   real64 trialStress[6] = { 0 };
   LvArray::tensorOps::copy< 6 >( trialStress, stress);
@@ -451,10 +499,29 @@ void StrainHardeningPolymerUpdates::smallStrainUpdateHelper( localIndex const k,
     real64 tol = 1e-10; // CC: need to experiment with these for the best options
     int maxEvals = 100; // Same cas above
 
-    real64 yieldStrength = m_yieldStrength[k];
-    real64 oldYieldStrength = yieldStrength;
+
+    // In initialization, yieldStrength is set to defaultYieldStrenght, but we will generally want it to be modified by temp
+    //
+
+      // Here we would update the m_bulkModulus[k] and m_shearModulus[k] with temperature dependent values:
+  // These will be input paramters:
+  
+
+
+
+
+    real64 oldYieldStrength = m_yieldStrength[k];
+
+    // Compute change in yield strength: yieldStrength = m_initialYield + plasticSoftening + stretchHardening;
+    // Where each of the 3 terms on the right hace parameters modified by temperature with 3 parameters.
+    real64 yield0 = m_defaultYieldStrength * StrainHardeningPolymerUpdates::thermalSoftening(m_temperature[k], m_yieldStrengthT0, m_yieldStrengthA, m_yieldStrengthB ); 
+    real64 strainHardeningSlope = m_strainHardeningSlope * StrainHardeningPolymerUpdates::thermalSoftening(m_temperature[k], m_strainHardeningSlopeT0, m_strainHardeningSlopeA, m_strainHardeningSlopeB ); 
+    real64 shearSofteningMagnitude = m_shearSofteningMagnitude * StrainHardeningPolymerUpdates::thermalSoftening(m_temperature[k], m_shearSofteningMagnitudeT0, m_shearSofteningMagnitudeA, m_shearSofteningMagnitudeB );     
+    
     real64 unrotatedTempPlasticStrain[6] = { 0 };
     real64 plasticStrainIncrement[6] = { 0 };
+    
+    // Fixed-point iteration to find plastic strain and consistent return to updated yield surface
     for(int iter=0; iter < maxEvals; ++iter)
     {
       LvArray::tensorOps::copy< 6 >(unrotatedTempPlasticStrain, unrotatedOldPlasticStrain);
@@ -472,26 +539,22 @@ void StrainHardeningPolymerUpdates::smallStrainUpdateHelper( localIndex const k,
       // Put in a check to prevent roundoff error.
       real64 gamma_by_r1_to_r2 = std::pow( gamma_p / m_shearSofteningShapeParameter1, m_shearSofteningShapeParameter2 );
 
-      // Compute change in yield strength
-      real64 plasticSoftening = m_shearSofteningMagnitude * std::exp( std::max( -1.0 * gamma_by_r1_to_r2, -16.0 ) );
-      real64 stretchHardening = m_strainHardeningSlope * ( maximumStretch * maximumStretch - 1.0 / maximumStretch );
-      yieldStrength = m_yieldStrength[k] + plasticSoftening + stretchHardening; // CC: debugging disabling change in yield strength
+      // Shear Softening:
+      real64 plasticSoftening = shearSofteningMagnitude * std::exp( std::max( -1.0 * gamma_by_r1_to_r2, -16.0 ) );
 
-      // // CC: need to add this later
-      // real64 thermalStrengthReduction = 1.0;
-      // if(m_thermalSoftening)
-      // {
-      //   thermalStrengthReduction = computeThermalStrengthReduction();
-      // }
-      // m_yieldStrength[k] *= thermalStrengthReduction;
+      // Stretch hardening
+      real64 stretchHardening = strainHardeningSlope * ( maximumStretch * maximumStretch - 1.0 / maximumStretch );
+
+      // Flow stress after temp, hardening, and softening modifications
+      m_yieldStrength[k] = yield0 + plasticSoftening + stretchHardening; // CC: debugging disabling change in yield strength
 
       // check yield function
-      if( trialQ > yieldStrength || iter > 0 ){
+      if( trialQ > m_yieldStrength[k] || iter > 0 ){
 
         // re-construct stress = P*eye + sqrt(2/3)*Q*nhat
         real64 stressTemp[6] = {0};
         twoInvariant::stressRecomposition( trialP,
-                                           yieldStrength,
+                                           m_yieldStrength[k],
                                            deviator,
                                            stressTemp );
 
@@ -512,7 +575,7 @@ void StrainHardeningPolymerUpdates::smallStrainUpdateHelper( localIndex const k,
         LvArray::tensorOps::copy< 6 >(unrotatedNewPlasticStrain, unrotatedOldPlasticStrain);
         LvArray::tensorOps::add< 6 >(unrotatedNewPlasticStrain, plasticStrainIncrement);
 
-        if(abs(yieldStrength - oldYieldStrength) < tol)
+        if(abs(m_yieldStrength[k] - oldYieldStrength) < tol)
         {
           unrotatedNewPlasticStrain[3] *= 0.5;
           unrotatedNewPlasticStrain[4] *= 0.5;
@@ -529,7 +592,7 @@ void StrainHardeningPolymerUpdates::smallStrainUpdateHelper( localIndex const k,
         }
         else
         {
-          oldYieldStrength = yieldStrength;
+          oldYieldStrength = m_yieldStrength[k];
         }
       } 
       else 
@@ -664,9 +727,15 @@ public:
 
     /// string/key for strain hardening slope
     static constexpr char const * strainHardeningSlopeString() { return "strainHardeningSlope"; }
+    static constexpr char const * strainHardeningSlopeAString() { return "strainHardeningSlopeA"; }
+    static constexpr char const * strainHardeningSlopeBString() { return "strainHardeningSlopeB"; }
+    static constexpr char const * strainHardeningSlopeT0String() { return "strainHardeningSlopeT0"; }
 
     /// string/key for shear softening magnitude
     static constexpr char const * shearSofteningMagnitudeString() { return "shearSofteningMagnitude"; }
+    static constexpr char const * shearSofteningMagnitudeAString() { return "shearSofteningMagnitudeA"; }
+    static constexpr char const * shearSofteningMagnitudeBString() { return "shearSofteningMagnitudeB"; }
+    static constexpr char const * shearSofteningMagnitudeT0String() { return "shearSofteningMagnitudeT0"; }
 
     /// string/key for shear softening shape parameter 1
     static constexpr char const * shearSofteningShapeParameter1String() { return "shearSofteningShapeParameter1"; }
@@ -674,15 +743,24 @@ public:
     /// string/key for shear softening shape parameter 2
     static constexpr char const * shearSofteningShapeParameter2String() { return "shearSofteningShapeParameter2"; }
 
-    /// string/key for default yield strength
-    static constexpr char const * defaultYieldStrengthString() { return "defaultYieldStrength"; }
-
     /// string/key for default bulk modulus (temp independent value)
     static constexpr char const * defaultBulkModulusString() { return "defaultBulkModulus"; }
+    static constexpr char const * bulkModulusAString() { return "bulkModulusA"; }
+    static constexpr char const * bulkModulusBString() { return "bulkModulusB"; }
+    static constexpr char const * bulkModulusT0String() { return "bulkModulusT0"; }
 
     /// string/key for default shear modulus (temp independent value)
     static constexpr char const * defaultShearModulusString() { return "defaultShearModulus"; }
+    static constexpr char const * shearModulusAString() { return "shearModulusA"; }
+    static constexpr char const * shearModulusBString() { return "shearModulusB"; }
+    static constexpr char const * shearModulusT0String() { return "shearModulusT0"; }
 
+    /// string/key for default yield strength
+    static constexpr char const * defaultYieldStrengthString() { return "defaultYieldStrength"; }
+    static constexpr char const * yieldStrengthAString() { return "yieldStrengthA"; }
+    static constexpr char const * yieldStrengthBString() { return "yieldStrengthB"; }
+    static constexpr char const * yieldStrengthT0String() { return "yieldStrengthT0"; }    
+    
     /// string/key for maximum stretch
     static constexpr char const * maximumStretchString() { return "maximumStretch"; }
   };
@@ -700,9 +778,25 @@ public:
                                           m_jacobian,
                                           m_yieldStrength,
                                           m_defaultBulkModulus,
+                                          m_bulkModulusA,
+                                          m_bulkModulusB,
+                                          m_bulkModulusT0,
                                           m_defaultShearModulus,
+                                          m_shearModulusA,
+                                          m_shearModulusB,
+                                          m_shearModulusT0,
+                                          m_defaultYieldStrength,
+                                          m_yieldStrengthA,
+                                          m_yieldStrengthB,
+                                          m_yieldStrengthT0,
                                           m_strainHardeningSlope,
+                                          m_strainHardeningSlopeA,
+                                          m_strainHardeningSlopeB,
+                                          m_strainHardeningSlopeT0,
                                           m_shearSofteningMagnitude,
+                                          m_shearSofteningMagnitudeA,
+                                          m_shearSofteningMagnitudeB,
+                                          m_shearSofteningMagnitudeT0,
                                           m_shearSofteningShapeParameter1,
                                           m_shearSofteningShapeParameter2,
                                           m_maximumStretch,
@@ -716,6 +810,8 @@ public:
                                           m_disableInelasticity );
   }
 
+
+  
   /**
    * @brief Construct an update kernel for a derived type.
    * @tparam UPDATE_KERNEL The type of update kernel from the derived type.
@@ -733,8 +829,18 @@ public:
                           m_temperature,
                           m_jacobian,
                           m_yieldStrength,
+                          m_defaultYieldStrength,
+                          m_yieldStrengthA,
+                          m_yieldStrengthB,
+                          m_yieldStrengthT0,
                           m_strainHardeningSlope,
+                          m_strainHardeningSlopeA,
+                          m_strainHardeningSlopeB,
+                          m_strainHardeningSlopeT0,
                           m_shearSofteningMagnitude,
+                          m_shearSofteningMagnitudeA,
+                          m_shearSofteningMagnitudeB,
+                          m_shearSofteningMagnitudeT0,
                           m_shearSofteningShapeParameter1,
                           m_shearSofteningShapeParameter2,
                           m_maximumStretch,
@@ -778,24 +884,39 @@ protected:
 
   /// The default value of the first Lame constant for any new allocations.
   real64 m_defaultBulkModulus;
+  real64 m_bulkModulusA;
+  real64 m_bulkModulusB;
+  real64 m_bulkModulusT0;
 
   /// The default value of the second Lame constant for any new allocations.
   real64 m_defaultShearModulus;
+  real64 m_shearModulusA;
+  real64 m_shearModulusB;
+  real64 m_shearModulusT0;
+
+  /// Material parameter: The value of default yield strength
+  real64 m_defaultYieldStrength;
+  real64 m_yieldStrengthA;
+  real64 m_yieldStrengthB;
+  real64 m_yieldStrengthT0;
 
   /// Material parameter: The value of strain hardening slope
   real64 m_strainHardeningSlope;
+  real64 m_strainHardeningSlopeA;
+  real64 m_strainHardeningSlopeB;
+  real64 m_strainHardeningSlopeT0;
 
   /// Material parameter: The value of shear softening magnitude
   real64 m_shearSofteningMagnitude;
+  real64 m_shearSofteningMagnitudeA;
+  real64 m_shearSofteningMagnitudeB;
+  real64 m_shearSofteningMagnitudeT0;
 
   /// Material parameter: The value of shear softening shape parameter 1
   real64 m_shearSofteningShapeParameter1;
 
   /// Material parameter: The value of shear softening shape parameter 2
   real64 m_shearSofteningShapeParameter2;
-
-  /// Material parameter: The value of default yield strength
-  real64 m_defaultYieldStrength;
 
   /// Material parameter: The value of maximum theoretical strength
   real64 m_maximumStretch;
