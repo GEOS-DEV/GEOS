@@ -25,9 +25,6 @@ foreach(test ${testSources})
                         OUTPUT_DIR ${TEST_OUTPUT_DIRECTORY}
                         DEPENDS_ON ${dependencyList} )
 
-    target_link_libraries(${test_name} PRIVATE 
-        -Wl,--whole-archive linearAlgebra -Wl,--no-whole-archive)
-
     geos_add_test( NAME ${test_name}
                    COMMAND ${test_name} )
 
