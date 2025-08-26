@@ -238,6 +238,13 @@ public:
                                   string_view rowFmt = "{}", string_view columnFmt = "{}" ) const;
 
   /**
+   * @brief Get all error messages
+   * @return The list of error messages
+   */
+  TableErrorListing & getErrorsList()
+  { return *m_errors; }
+
+  /**
    * @brief Clear all data stored in TableData
    */
   inline void clear()
