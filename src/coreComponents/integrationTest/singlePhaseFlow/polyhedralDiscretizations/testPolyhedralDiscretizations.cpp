@@ -75,8 +75,7 @@ std::string generateXmlInputTPFA( std::string const & meshFile )
   <Problem>
     <Mesh>
       <VTKMesh
-        name="mesh"
-        logLevel="5"  
+        name="mesh"  
         partitionRefinement="0"
         useGlobalIds="0"
         file=")xml" << meshFile <<
@@ -270,9 +269,9 @@ std::string generateXmlInputMFD( std::string const & innerProductType,
     <FieldSpecification name="initialPressure" initialCondition="1"
       setNames="{ all }" objectPath="ElementRegions/Domain" fieldName="pressure" scale="1.0e7"/>    
     <FieldSpecification name="west_pressure"
-      setNames="{ westBC }" objectPath="faceManager" fieldName="pressure" scale="2.0e7"/>
+      setNames="{ westBC }" objectPath="faceManager" fieldName="bcPressure" scale="2.0e7"/>
     <FieldSpecification name="east_pressure"
-      setNames="{ eastBC }" objectPath="faceManager" fieldName="pressure" scale="1.0e7"/>      
+      setNames="{ eastBC }" objectPath="faceManager" fieldName="bcPressure" scale="1.0e7"/>      
   </FieldSpecifications>
 
   <NumericalMethods>
@@ -288,7 +287,7 @@ std::string generateXmlInputMFD( std::string const & innerProductType,
   <Solvers>
     <SinglePhaseHybridFVM name="SinglePhaseFlow" logLevel="1"
       discretization="singlePhaseMFD" targetRegions="{ Domain }">
-      <NonlinearSolverParameters newtonTol="1.0e-5" newtonMaxIter="8"/>
+      <NonlinearSolverParameters newtonTol="1.0e-5" newtonMaxIter="2"/>
       <LinearSolverParameters directParallel="0"/>
     </SinglePhaseHybridFVM>
   </Solvers>

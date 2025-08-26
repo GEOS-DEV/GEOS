@@ -83,6 +83,11 @@ void SinglePhaseHybridFVM::registerDataOnMesh( Group & meshBodies )
       // primary variables: face pressures at the previous converged time step
       faceManager.registerField< flow::facePressure_n >( getName() );
     }
+    // 3) Register the bc face data
+    {
+      // primary variables: face pressures at the previous converged time step
+      faceManager.registerField< flow::bcPressure >( getName() );
+    }
   } );
 }
 
@@ -358,17 +363,19 @@ void SinglePhaseHybridFVM::applyFaceDirichletBC( real64 const time_n,
 
     arrayView1d< real64 const > const presFace =
       faceManager.getField< flow::facePressure >();
+    arrayView1d< real64 const > const presFaceBC =
+    faceManager.getField< flow::bcPressure >();
     arrayView1d< globalIndex const > const faceDofNumber =
       faceManager.getReference< array1d< globalIndex > >( faceDofKey );
     arrayView1d< integer const > const faceGhostRank = faceManager.ghostRank();
 
     globalIndex const rankOffset = dofManager.rankOffset();
 
-    // take BCs defined for "pressure" field and apply values to "facePressure"
+    // take BCs defined for "pressure" field and apply values to "facePressure_n"
     // this is done this way for consistency with the standard TPFA scheme, which works in the same fashion
     fsManager.apply< FaceManager >( time_n + dt,
                                     mesh,
-                                    flow::pressure::key(),
+                                    flow::bcPressure::key(),
                                     [&] ( FieldSpecificationBase const & fs,
                                           string const & setName,
                                           SortedArrayView< localIndex const > const & targetSet,
@@ -394,7 +401,7 @@ void SinglePhaseHybridFVM::applyFaceDirichletBC( real64 const time_n,
                           parallelDevicePolicy<> >( targetSet,
                                                     time_n + dt,
                                                     targetGroup,
-                                                    flow::facePressure::key() );
+                                                    flow::bcPressure::key() );
 
       // 2. second, modify the residual/jacobian matrix as needed to impose the boundary conditions
       forAll< parallelDevicePolicy<> >( targetSet.size(), [=] GEOS_HOST_DEVICE ( localIndex const a )
@@ -416,7 +423,7 @@ void SinglePhaseHybridFVM::applyFaceDirichletBC( real64 const time_n,
                                                     rankOffset,
                                                     localMatrix,
                                                     rhsValue,
-                                                    presFace[kf],
+                                                    presFaceBC[kf],
                                                     presFace[kf] );
         localRhs[localRow] = rhsValue;
       } );
