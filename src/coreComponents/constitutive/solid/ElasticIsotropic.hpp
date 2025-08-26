@@ -298,7 +298,7 @@ inline
 void ElasticIsotropicUpdates::smallStrainUpdate_StressOnly( localIndex const k,
                                                             localIndex const q,
                                                             real64 const & timeIncrement,
-                                                            real64 const ( &strainIncrement )[6],
+                                                            real64 const ( & strainIncrement )[6],
                                                             real64 ( & stress )[6] ) const
 {
   GEOS_UNUSED_VAR( timeIncrement );
