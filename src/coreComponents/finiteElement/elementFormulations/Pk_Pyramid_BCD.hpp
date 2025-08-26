@@ -489,10 +489,10 @@ public:
   // }
 
 
-  GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
-  static constexpr void computeVanderMondeMatrix( array2d< real64 > & VDM )
+  static array2d<real64> computeVanderMondeMatrixInverse( )
   {
+    array2d< real64 > VDM;
     VDM.resize( numNodes, numNodes );
     real64 PsiX[numNodes] = {};
     real64 coords[numNodes][3] = {};
@@ -510,6 +510,11 @@ public:
       } );
       //   }
     }
+    array2d< real64 > VDM_inv;
+    VDM_inv.resize( numNodes, numNodes );
+    // Inversion of VanDerMonde matrix
+    BlasLapackLA::matrixInverse( VDM, VDM_inv );
+    return VDM_inv;
   }
 
   /// Other possible version
@@ -520,11 +525,11 @@ public:
    */
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
-  static constexpr void calcN( localIndex q, real64 (& N)[numNodes] )
+  static constexpr void calcN( localIndex q, real64 (& N)[numNodes], arrayView2d< real64 const > VDM_inv )
   {
 
-    array2d< real64 > VDM;
-    VDM.resize( numModes, numNodes );
+    // array2d< real64 > VDM;
+    // VDM.resize( numModes, numNodes );
     real64 PsiX[numNodes] = {0.0};
     real64 coords[numNodes][3] = {{0.0}};
 
@@ -546,11 +551,11 @@ public:
     //  //   }
     //   }
 
-    computeVanderMondeMatrix( VDM );
-    array2d< real64 > VDM_inv;
-    VDM_inv.resize( numNodes, numNodes );
-    // Inversion of VanDerMonde matrix
-    BlasLapackLA::matrixInverse( VDM, VDM_inv );
+    // computeVanderMondeMatrix( VDM );
+    // array2d< real64 > VDM_inv;
+    // VDM_inv.resize( numNodes, numNodes );
+    // // Inversion of VanDerMonde matrix
+    // BlasLapackLA::matrixInverse( VDM, VDM_inv );
 
 
     localIndex count = 0;
@@ -587,16 +592,16 @@ public:
    */
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
-  static constexpr void calcN( real64 const (&X)[3], real64 (& N)[numNodes] )
+  static constexpr void calcN( real64 const (&X)[3], real64 (& N)[numNodes], arrayView2d< real64 const > VDM_inv )
   {
 
-    array2d< real64 > VDM;
-    VDM.resize( numModes, numNodes );
+    // array2d< real64 > VDM;
+    // VDM.resize( numModes, numNodes );
     real64 PsiX[numNodes] = {};
 
     //generatePointsCoordinates(coords);
 
-    computeVanderMondeMatrix( VDM );
+    //computeVanderMondeMatrix( VDM );
 
     //for (int i = 0; i < numNodes; ++i)
     //{
@@ -611,10 +616,10 @@ public:
     // }
 
     //real64 VDM_inv[numNodes][numNodes] = {{0}};
-    array2d< real64 > VDM_inv;
-    VDM_inv.resize( numNodes, numNodes );
+    // array2d< real64 > VDM_inv;
+    // VDM_inv.resize( numNodes, numNodes );
     // Inversion of VanDerMonde matrix
-    BlasLapackLA::matrixInverse( VDM, VDM_inv );
+    // BlasLapackLA::matrixInverse( VDM, VDM_inv );
 
     for( int i = 0; i < numNodes; ++i )
     {
@@ -634,20 +639,20 @@ public:
    */
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
-  static constexpr void calcGradN( localIndex q, real64 (& gradN)[numNodes][3] )
+  static constexpr void calcGradN( localIndex q, real64 (& gradN)[numNodes][3], arrayView2d< real64 const > VDM_inv )
   {
 
-    array2d< real64 > VDM;
-    VDM.resize( numModes, numNodes );
+    // array2d< real64 > VDM;
+    // VDM.resize( numModes, numNodes );
     real64 gradModal[numNodes][3] = {{}};
     real64 coords[numNodes][3] = {};
 
     generatePointsCoordinates( coords );
-    computeVanderMondeMatrix( VDM );
-    array2d< real64 > VDM_inv;
-    VDM_inv.resize( numNodes, numNodes );
-    // Inversion of VanDerMonde matrix
-    BlasLapackLA::matrixInverse( VDM, VDM_inv );
+    // computeVanderMondeMatrix( VDM );
+    // array2d< real64 > VDM_inv;
+    // VDM_inv.resize( numNodes, numNodes );
+    // // Inversion of VanDerMonde matrix
+    // BlasLapackLA::matrixInverse( VDM, VDM_inv );
 
 
 
@@ -681,17 +686,17 @@ public:
    */
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
-  static constexpr void calcGradN( real64 const (&X)[3], real64 (& gradN)[numNodes][3] )
+  static constexpr void calcGradN( real64 const (&X)[3], real64 (& gradN)[numNodes][3], arrayView2d< real64 const > VDM_inv )
   {
 
-    array2d< real64 > VDM;
-    VDM.resize( numModes, numNodes );
+    // array2d< real64 > VDM;
+    // VDM.resize( numModes, numNodes );
     real64 gradModal[numNodes][3] = {{}};
-    computeVanderMondeMatrix( VDM );
-    array2d< real64 > VDM_inv;
-    VDM_inv.resize( numNodes, numNodes );
-    // Inversion of VanDerMonde matrix
-    BlasLapackLA::matrixInverse( VDM, VDM_inv );
+    // computeVanderMondeMatrix( VDM );
+    // array2d< real64 > VDM_inv;
+    // VDM_inv.resize( numNodes, numNodes );
+    // // Inversion of VanDerMonde matrix
+    // BlasLapackLA::matrixInverse( VDM, VDM_inv );
 
     localIndex count = 0;
     generateIndexes( [&]( localIndex const p, localIndex const r, localIndex const s )
@@ -869,7 +874,7 @@ public:
   template< typename FUNC >
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
-  static constexpr void computeMassTerm( FUNC && func )
+  static constexpr void computeMassTerm(arrayView2d< real64 const > VDM_inv, FUNC && func )
   {
 
     //real64 Mij = 0;
@@ -910,7 +915,7 @@ public:
               real64 z_k = chi;
               real64 X[3] = {x_i, y_j, z_k};
 
-              calcN( X, N );
+              calcN( X, N, VDM_inv );
               val += weight * N[a] * N[b];
 
             }
