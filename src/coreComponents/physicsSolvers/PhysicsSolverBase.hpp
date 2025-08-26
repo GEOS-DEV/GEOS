@@ -394,8 +394,6 @@ public:
    * @note While the function is virtual, the base class implementation should be
    *       sufficient for most single-physics solvers.
    */
-
-
   virtual void
   setupSystem( DomainPartition & domain,
                DofManager & dofManager,
@@ -1110,7 +1108,7 @@ protected:
   integer m_writeLinearSystem;
 
   /// When set to 1 output to log iterations information
-  /// When set to 2 additionnaly output csv files containing iterations information
+  /// When set to 2 additionnaly output csv files containing iterations & convergence information
   integer m_writeStatistics;
 
   /// Linear solver parameters

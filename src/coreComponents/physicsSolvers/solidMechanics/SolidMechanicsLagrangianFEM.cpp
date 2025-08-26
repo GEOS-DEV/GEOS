@@ -34,7 +34,6 @@
 #include "fieldSpecification/TractionBoundaryCondition.hpp"
 #include "finiteElement/FiniteElementDiscretizationManager.hpp"
 #include "finiteElement/FiniteElementDiscretization.hpp"
-#include "physicsSolvers/LogLevelsInfo.hpp"
 #include "finiteElement/FiniteElementDiscretizationManager.hpp"
 #include "finiteElement/Kinematics.h"
 #include "linearAlgebra/utilities/LAIHelperFunctions.hpp"
@@ -45,6 +44,7 @@
 #include "mesh/mpiCommunications/NeighborCommunicator.hpp"
 #include "fileIO/Outputs/ChomboIO.hpp"
 
+#include "physicsSolvers/LogLevelsInfo.hpp"
 #include "physicsSolvers/solidMechanics/kernels/SolidMechanicsKernelsDispatchTypeList.hpp"
 #include "physicsSolvers/solidMechanics/kernels/SolidMechanicsFixedStressThermoPoromechanicsKernelsDispatchTypeList.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBase.hpp"
