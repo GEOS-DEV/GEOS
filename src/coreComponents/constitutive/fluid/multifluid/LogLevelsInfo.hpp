@@ -33,12 +33,12 @@ namespace logInfo
  */
 ///@{
 
-struct PVT
+struct TableLogOutput
 {
   static constexpr int getMinLogLevel() { return 1; }
   static constexpr std::string_view getDescription()
   {
-    return "Output PVT table\n"
+    return "Output PVT table to log\n"
            "If \"writeCSV=0\" and if the table is too large for the log, a csv file will still be generated";
   };
 
