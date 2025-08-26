@@ -30,8 +30,6 @@ StrainHardeningPolymer::StrainHardeningPolymer( string const & name, Group * con
   m_plasticStrain(),
   m_damage(),
   m_jacobian(),
-  m_bulkModulusA(),
-  m_bulkModulusB(),
   m_yieldStrength(),
   m_strainHardeningSlope(),
   m_shearSofteningMagnitude(),
@@ -43,11 +41,11 @@ StrainHardeningPolymer::StrainHardeningPolymer( string const & name, Group * con
 
 
   // register default values
-  registerWrapper( viewKeyStruct::bulkModulusAString(), &m_bulkModulusA ).
+  registerWrapper( viewKeyStruct::defaultBulkModulus(), &m_defaultBulkModulus ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Strain hardening slope" );
 
-  registerWrapper( viewKeyStruct::bulkModulusBString(), &m_bulkModulusB ).
+  registerWrapper( viewKeyStruct::defaultShearModulus(), &m_defaultShearModulus ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Shear softening magnitude" );
 
@@ -145,5 +143,7 @@ void StrainHardeningPolymer::saveConvergedState() const
 
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, StrainHardeningPolymer, std::string const &, Group * const )
+
+
 }
 } /* namespace geos */

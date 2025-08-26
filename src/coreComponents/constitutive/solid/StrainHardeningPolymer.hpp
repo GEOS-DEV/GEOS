@@ -60,8 +60,6 @@ public:
    * @param[in] maximumStretch The maximum stretch
    * @param[in] thermalSoftening not currently implemented (CC: TODO)
    * @param[in] bulkModulus The ArrayView holding the bulk modulus data for each element.
-   * @param[in] bulkModulusA Parameter to update modulus with temperature
-   * @param[in] bulkModulusB Parameter to update modulus with temperature
    * @param[in] shearModulus The ArrayView holding the shear modulus data for each element.
    * @param[in] thermalExpansionCoefficient The ArrayView holding the thermal expansion coefficient data for each element.
    * @param[in] newStress The ArrayView holding the new stress data for each quadrature point.
@@ -78,9 +76,7 @@ public:
                                  real64 const & shearSofteningShapeParameter2,
                                  real64 const & maximumStretch,
                                  // arrayView2d< real64 > const & thermalSoftening,
-                                 arrayView1d< real64 > const & bulkModulus,
-                                 real64 const & bulkModulusA,
-                                 real64 const & bulkModulusB,
+                                 arrayView1d< real64 const > const & bulkModulus,
                                  arrayView1d< real64 const > const & shearModulus,
                                  arrayView1d< real64 const > const & thermalExpansionCoefficient,
                                  arrayView3d< real64, solid::STRESS_USD > const & newStress,
@@ -100,8 +96,6 @@ public:
     m_plasticStrain( plasticStrain ),
     m_damage( damage ),
     m_jacobian( jacobian ),
-    m_bulkModulusA( bulkModulusA ),
-    m_bulkModulusB( bulkModulusB ),
     m_yieldStrength( yieldStrength ),
     m_strainHardeningSlope( strainHardeningSlope ),
     m_shearSofteningMagnitude( shearSofteningMagnitude ),
@@ -189,6 +183,23 @@ public:
     ElasticIsotropicUpdates::saveConvergedState( k, q );
   }
 
+  GEOS_HOST_DEVICE
+  void thermalSoftening ( real64 & temperature,
+                          real64 & bulkModulusA,
+                          real64 & bulkModulusB,
+                          real64 & temperature_0;
+
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
+  virtual void saveConvergedState( localIndex const k,
+                                   localIndex const q ) const override final
+  {
+    ElasticIsotropicUpdates::saveConvergedState( k, q );
+  }
+
+
+
+
 private:
   /// A reference to the ArrayView holding the deformation gradient for each element/particle.
   arrayView3d< real64 > const m_deformationGradient;
@@ -202,14 +213,14 @@ private:
   /// A reference to the ArrayView holding the jacobian for each quadrature point.
   arrayView2d< real64 > const m_jacobian;
 
-  /// A reference to the ArrayView holding the bulk modulus for each element/particle
-  real64 const m_bulkModulusA;
-
-  /// A reference to the ArrayView holding the bulk modulus for each element/particle
-  real64 const m_bulkModulusB;
-
   /// A reference to the ArrayView holding the yield strength for each element/particle
   arrayView1d< real64 > const m_yieldStrength;
+
+  /// A reference to the ArrayView holding the jacobian for each quadrature point.
+  real64 m_defaultBukModulus;
+
+  /// A reference to the ArrayView holding the jacobian for each quadrature point.
+  real64 m_defaultShearModulus;
 
   /// The strain hardening slope
   real64 const m_strainHardeningSlope;
@@ -329,12 +340,23 @@ void StrainHardeningPolymerUpdates::smallStrainUpdate_StressOnly( localIndex con
                                                                   real64 const ( & strainIncrement )[6],
                                                                   real64 ( & stress )[6] ) const
 {
+
+
+ m_bulkModulus[k]= m_defaultbulkModulus * thermalSoftening(m_temperature[k] , bulkModulusA, bulkModulusB, temperature_0);
+
   // elastic predictor (assume strainIncrement is all elastic)
   ElasticIsotropicUpdates::smallStrainUpdate_StressOnly( k, 
                                                          q, 
                                                          timeIncrement,
                                                          strainIncrement, 
                                                          stress );
+
+  real64 bulkModulusA,
+         bulkModulusB,
+         temperature_0;
+
+
+ 
   m_jacobian[k][q] *= exp( strainIncrement[0] + strainIncrement[1] + strainIncrement[2] );
 
   if( m_disableInelasticity )
@@ -450,13 +472,6 @@ void StrainHardeningPolymerUpdates::smallStrainUpdateHelper( localIndex const k,
       // Compute change in yield strength
       real64 plasticSoftening = m_shearSofteningMagnitude * std::exp( std::max( -1.0 * gamma_by_r1_to_r2, -16.0 ) );
       real64 stretchHardening = m_strainHardeningSlope * ( maximumStretch * maximumStretch - 1.0 / maximumStretch );
-
-      //GEOS_UNUSED_VAR( m_bulkModulusA );
-      //GEOS_UNUSED_VAR( m_bulkModulusB );
-      m_bulkModulus[k]  =  m_bulkModulusA + m_bulkModulusB;
-      std::cout << "m_bulkModulus[k] = " << m_bulkModulus[k] << std::endl;
-      std::cout << "m_bulkModulusA = " << m_bulkModulusA << std::endl;
-      std::cout << "m_bulkModulusB = " << m_bulkModulusB << std::endl;
 
       yieldStrength = m_yieldStrength[k] + plasticSoftening + stretchHardening; // CC: debugging disabling change in yield strength
 
@@ -768,6 +783,24 @@ protected:
   /// Material parameter: The value of maximum theoretical strength
   real64 m_maximumStretch;
 };
+
+
+
+
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
+void StrainHardeningPolymerUpdates::thermalSoftening( real64 & temperature,
+		                                              real64 & bulkModulusA,
+		                                              real64 & bulkModulusB,
+		                                              real64 & temperature_0
+) const 
+{ // Value of I1 at strength=0 (Perturbed by variability)
+
+real64 thermalSofteningVal = 1 + m_bulkModulusA (m_bulkModulusB / (temperature - temperature_0))
+
+}
+
+
 
 } /* namespace constitutive */
 
