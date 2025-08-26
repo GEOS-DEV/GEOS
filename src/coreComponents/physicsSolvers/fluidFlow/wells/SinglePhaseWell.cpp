@@ -967,7 +967,7 @@ bool SinglePhaseWell::checkSystemSolution( DomainPartition & domain,
 
   string const wellDofKey = dofManager.getKey( wellElementDofName() );
   ElementsReporterBuffer rankNegPressureIds{ isLogLevelActive< logInfo::WellValidity >( getLogLevel() ),
-                                             isLogLevelActive< logInfo::WellValidityDetails >( getLogLevel() ) ? 16 : 0 };
+                                             isLogLevelActive< logInfo::SoutionDetails >( getLogLevel() ) ? 16 : 0 };
   real64 minNegPres = 0.0;
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,

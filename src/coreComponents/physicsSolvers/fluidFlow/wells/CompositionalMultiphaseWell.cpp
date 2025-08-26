@@ -1506,9 +1506,9 @@ CompositionalMultiphaseWell::checkSystemSolution( DomainPartition & domain,
   real64 minPres = 0.0, minDens = 0.0, minTotalDens = 0.0;
   integer numNegTotalDens = 0;
   ElementsReporterBuffer rankNegPressureIds{ isLogLevelActive< logInfo::WellValidity >( getLogLevel() ),
-                                             isLogLevelActive< logInfo::WellValidityDetails >( getLogLevel() ) ? 16 : 0 };
+                                             isLogLevelActive< logInfo::SoutionDetails >( getLogLevel() ) ? 16 : 0 };
   ElementsReporterBuffer rankNegDensityIds{ isLogLevelActive< logInfo::WellValidity >( getLogLevel() ),
-                                            isLogLevelActive< logInfo::WellValidityDetails >( this->getLogLevel() ) ? 16 : 0 };
+                                            isLogLevelActive< logInfo::SoutionDetails >( this->getLogLevel() ) ? 16 : 0 };
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel & mesh,

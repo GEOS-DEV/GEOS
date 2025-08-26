@@ -75,7 +75,7 @@ void TableTextMpiOutput::toStream< TableData >( std::ostream & tableOutput,
 
   if( status.m_isMasterRank )
   {
-    outputTableBottom( tableOutput, m_tableLayout,errorCellsLayout,
+    outputTableFooter( tableOutput, m_tableLayout,errorCellsLayout,
                        status.m_sepLine, status.m_hasContent );
     tableOutput.flush();
   }

@@ -303,7 +303,7 @@ protected:
    * @param separatorLine A string that will be used as the table separator line
    * @param hasData Indicates whether there is data in the table TableData.
    */
-  void outputTableBottom( std::ostream & tableOutput,
+  void outputTableFooter( std::ostream & tableOutput,
                           PreparedTableLayout const & tableLayout,
                           CellLayoutRows & errorCellsLayout,
                           string_view separatorLine,

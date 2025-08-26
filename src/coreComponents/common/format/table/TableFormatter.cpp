@@ -240,7 +240,7 @@ string TableTextFormatter::toString< TableData >( TableData const & tableData ) 
   string const sepLine = string( tableTotalWidth, m_horizontalLine );
   outputTableHeader( tableOutput, m_tableLayout, headerCellsLayout, sepLine );
   outputTableData( tableOutput, m_tableLayout, dataCellsLayout );
-  outputTableBottom( tableOutput, m_tableLayout, errorCellsLayout, sepLine, !dataCellsLayout.empty() );
+  outputTableFooter( tableOutput, m_tableLayout, errorCellsLayout, sepLine, !dataCellsLayout.empty() );
 
   return tableOutput.str();
 }
@@ -731,7 +731,7 @@ void TableTextFormatter::outputTableData( std::ostream & tableOutput,
   }
 }
 
-void TableTextFormatter::outputTableBottom( std::ostream & tableOutput,
+void TableTextFormatter::outputTableFooter( std::ostream & tableOutput,
                                             PreparedTableLayout const & tableLayout,
                                             CellLayoutRows & errorCellsLayout,
                                             string_view sepLine,
