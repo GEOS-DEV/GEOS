@@ -355,12 +355,15 @@ void ProblemManager::setSchemaDeviations( xmlWrapper::xmlNode schemaRoot,
   IncludedList.setInputFlags( InputFlags::OPTIONAL );
 
   Group & includedFile = IncludedList.registerGroup< Group >( xmlWrapper::includedFileTag );
-  includedFile.setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
-  // the name of includedFile is actually a Path.
-  includedFile.registerWrapper< string >( "name" ).
-    setInputFlag( InputFlags::REQUIRED ).
-    setRTTypeName( rtTypes::getTypeName( typeid( Path ) ) ).
-    setDescription( "The relative file path." );
+  if( documentationType == 0 )
+  {
+    includedFile.setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
+    // the name of includedFile is actually a Path.
+    includedFile.registerWrapper< string >( "name" ).
+      setInputFlag( InputFlags::REQUIRED ).
+      setRTTypeName( rtTypes::getTypeName( typeid( Path ) ) ).
+      setDescription( "The relative file path." );
+  }
 
   schemaUtilities::SchemaConstruction( IncludedList, schemaRoot, targetChoiceNode, documentationType );
 
@@ -368,10 +371,13 @@ void ProblemManager::setSchemaDeviations( xmlWrapper::xmlNode schemaRoot,
   parameterList.setInputFlags( InputFlags::OPTIONAL );
 
   Group & parameter = parameterList.registerGroup< Group >( "Parameter" );
-  parameter.setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
-  parameter.registerWrapper< string >( "value" ).
-    setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "Input parameter definition for the preprocessor" );
+  if( documentationType == 0 )
+  {
+    parameter.setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
+    parameter.registerWrapper< string >( "value" ).
+      setInputFlag( InputFlags::REQUIRED ).
+      setDescription( "Input parameter definition for the preprocessor" );
+  }
 
   schemaUtilities::SchemaConstruction( parameterList, schemaRoot, targetChoiceNode, documentationType );
 
@@ -384,37 +390,40 @@ void ProblemManager::setSchemaDeviations( xmlWrapper::xmlNode schemaRoot,
     machine.setInputFlags( InputFlags::OPTIONAL );
 
     Group & run = machine.registerGroup< Group >( "Run" );
-    run.setInputFlags( InputFlags::OPTIONAL );
+    if( documentationType == 0 )
+    {
+      run.setInputFlags( InputFlags::OPTIONAL );
 
-    run.registerWrapper< string >( "name" ).setInputFlag( InputFlags::REQUIRED ).
-      setDescription( "The name of this benchmark." );
+      run.registerWrapper< string >( "name" ).setInputFlag( InputFlags::REQUIRED ).
+        setDescription( "The name of this benchmark." );
 
-    run.registerWrapper< int >( "timeLimit" ).setInputFlag( InputFlags::OPTIONAL ).
-      setDescription( "The time limit of the benchmark." );
+      run.registerWrapper< int >( "timeLimit" ).setInputFlag( InputFlags::OPTIONAL ).
+        setDescription( "The time limit of the benchmark." );
 
-    run.registerWrapper< string >( "args" ).setInputFlag( InputFlags::OPTIONAL ).
-      setDescription( "Any extra command line arguments to pass to GEOSX." );
+      run.registerWrapper< string >( "args" ).setInputFlag( InputFlags::OPTIONAL ).
+        setDescription( "Any extra command line arguments to pass to GEOSX." );
 
-    run.registerWrapper< string >( "autoPartition" ).setInputFlag( InputFlags::OPTIONAL ).
-      setDescription( "May be 'Off' or 'On', if 'On' partitioning arguments are created automatically. Default is Off." );
+      run.registerWrapper< string >( "autoPartition" ).setInputFlag( InputFlags::OPTIONAL ).
+        setDescription( "May be 'Off' or 'On', if 'On' partitioning arguments are created automatically. Default is Off." );
 
-    run.registerWrapper< string >( "scaling" ).setInputFlag( InputFlags::OPTIONAL ).
-      setDescription( "Whether to run a scaling, and which type of scaling to run." );
+      run.registerWrapper< string >( "scaling" ).setInputFlag( InputFlags::OPTIONAL ).
+        setDescription( "Whether to run a scaling, and which type of scaling to run." );
 
-    run.registerWrapper< int >( "nodes" ).setInputFlag( InputFlags::OPTIONAL ).
-      setDescription( "The number of nodes needed to run the base benchmark, default is 1." );
+      run.registerWrapper< int >( "nodes" ).setInputFlag( InputFlags::OPTIONAL ).
+        setDescription( "The number of nodes needed to run the base benchmark, default is 1." );
 
-    run.registerWrapper< int >( "tasksPerNode" ).setInputFlag( InputFlags::REQUIRED ).
-      setDescription( "The number of tasks per node to run the benchmark with." );
+      run.registerWrapper< int >( "tasksPerNode" ).setInputFlag( InputFlags::REQUIRED ).
+        setDescription( "The number of tasks per node to run the benchmark with." );
 
-    run.registerWrapper< int >( "threadsPerTask" ).setInputFlag( InputFlags::OPTIONAL ).
-      setDescription( "The number of threads per task to run the benchmark with." );
+      run.registerWrapper< int >( "threadsPerTask" ).setInputFlag( InputFlags::OPTIONAL ).
+        setDescription( "The number of threads per task to run the benchmark with." );
 
-    run.registerWrapper< array1d< int > >( "meshSizes" ).setInputFlag( InputFlags::OPTIONAL ).
-      setDescription( "The target number of elements in the internal mesh (per-process for weak scaling, globally for strong scaling) default doesn't modify the internalMesh." );
+      run.registerWrapper< array1d< int > >( "meshSizes" ).setInputFlag( InputFlags::OPTIONAL ).
+        setDescription( "The target number of elements in the internal mesh (per-process for weak scaling, globally for strong scaling) default doesn't modify the internalMesh." );
 
-    run.registerWrapper< array1d< int > >( "scaleList" ).setInputFlag( InputFlags::OPTIONAL ).
-      setDescription( "The scales at which to run the problem ( scale * nodes * tasksPerNode )." );
+      run.registerWrapper< array1d< int > >( "scaleList" ).setInputFlag( InputFlags::OPTIONAL ).
+        setDescription( "The scales at which to run the problem ( scale * nodes * tasksPerNode )." );
+    }
   }
 
   schemaUtilities::SchemaConstruction( benchmarks, schemaRoot, targetChoiceNode, documentationType );

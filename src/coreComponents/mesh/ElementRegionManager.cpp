@@ -264,7 +264,10 @@ void ElementRegionManager::buildSets( NodeManager const & nodeManager )
     {
       arrayView1d< bool const > const nodeInCurSet = nodeInSet[setName];
 
-      SortedArray< localIndex > & targetSet = elementSets.registerWrapper< SortedArray< localIndex > >( setName ).reference();
+      SortedArray< localIndex > & targetSet = elementSets.hasWrapper( setName ) ?
+                                              elementSets.getReference< SortedArray< localIndex > >( setName ) :
+                                              elementSets.registerWrapper< SortedArray< localIndex > >( setName ).reference();
+
       for( localIndex k = 0; k < subRegion.size(); ++k )
       {
         localIndex const numNodes = subRegion.numNodesPerElement( k );

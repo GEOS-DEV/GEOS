@@ -106,6 +106,7 @@ void CapillaryPressureBase::setLabels()
 void CapillaryPressureBase::allocateConstitutiveData( dataRepository::Group & parent,
                                                       localIndex const numConstitutivePointsPerParentIndex )
 {
+  std::cout << getName() << "  allocateConstitutiveData" << std::endl;
   resizeFields( parent.size(), numConstitutivePointsPerParentIndex );
   ConstitutiveBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 }

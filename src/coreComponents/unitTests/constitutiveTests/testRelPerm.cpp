@@ -849,6 +849,7 @@ public:
     arrayView4d< real64 const, USD_RELPERM_DS > dPhaseRelPerm_dPhaseVolFraction;
     testNumericalDerivatives( m_parent,
                               *m_model,
+                              *m_modelCopy,
                               sat,
                               eps,
                               tol,
@@ -1078,8 +1079,8 @@ TEST_F( RelPermTest, numericalDerivatives_TableRelPermHysteresisTwoPhase )
   initSat[0][0] = 0.6;
   initSat[0][1] = 0.4;
 
-  m_model->allocateConstitutiveData( m_parent, 1 );
   m_model->saveConvergedPhaseVolFractionState( initSat.toViewConst() );
+  m_modelCopy->saveConvergedPhaseVolFractionState( initSat.toViewConst() );
 
   // move the historical phase vol fraction back to the CPU since the test is performed on the CPU
   auto & phaseMinHistoricalVolFraction =

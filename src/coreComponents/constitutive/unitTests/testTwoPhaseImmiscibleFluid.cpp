@@ -85,8 +85,6 @@ public:
 
     // Number of execution points actual value plus left and right pertubations for each variable
     integer constexpr size = 2*actualDof + 1;
-    m_parent.resize( size );
-    fluid->allocateConstitutiveData( m_parent, 1 );
 
     array1d< real64 > pressureArray( size );
     array1d< real64 > deltaArray( size );
@@ -233,6 +231,13 @@ using TwoPhaseImmiscibleFluidTestFromTables = TwoPhaseImmiscibleFluidTest< true 
 TEST_F( TwoPhaseImmiscibleFluidTestFromTables, testNumericalDerivative_initFromTables )
 {
   auto * fluid = getFluid( this->getFluidName() );
+
+  // Number of execution points actual value plus left and right pertubations for each variable
+  integer constexpr actualDof = 1;   // Pressure only
+  integer constexpr size = 2*actualDof + 1;
+  m_parent.resize( size );
+  fluid->allocateConstitutiveData( m_parent, 1 );
+
   real64 const eps = std::sqrt( std::numeric_limits< real64 >::epsilon());
   real64 constexpr relTol = 1.0e-8;
   real64 constexpr absTol = 1.0e-8;
@@ -246,6 +251,13 @@ TEST_F( TwoPhaseImmiscibleFluidTestFromTables, testNumericalDerivative_initFromT
 TEST_F( TwoPhaseImmiscibleFluidTestFromFiles, testNumericalDerivative_initFromFiles )
 {
   auto * fluid = getFluid( this->getFluidName() );
+
+  // Number of execution points actual value plus left and right pertubations for each variable
+  integer constexpr actualDof = 1;   // Pressure only
+  integer constexpr size = 2*actualDof + 1;
+  m_parent.resize( size );
+  fluid->allocateConstitutiveData( m_parent, 1 );
+
   real64 const eps = std::sqrt( std::numeric_limits< real64 >::epsilon());
   real64 constexpr relTol = 1.0e-8;
   real64 constexpr absTol = 1.0e-8;

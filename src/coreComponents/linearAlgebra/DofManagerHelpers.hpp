@@ -634,11 +634,14 @@ struct ArrayHelper
           REGIONS_CONTAINER const & GEOS_UNUSED_PARAM( regions ) )
   {
     ObjectManagerBase & baseManager = getObjectManager< LOC >( mesh );
-    baseManager.registerWrapper< ArrayType >( key ).
-      setApplyDefaultValue( -1 ).
-      setPlotLevel( dataRepository::PlotLevel::LEVEL_1 ).
-      setRestartFlags( dataRepository::RestartFlags::NO_WRITE ).
-      setDescription( description );
+    if( !baseManager.hasWrapper( key ) )
+    {
+      baseManager.registerWrapper< ArrayType >( key ).
+        setApplyDefaultValue( -1 ).
+        setPlotLevel( dataRepository::PlotLevel::LEVEL_1 ).
+        setRestartFlags( dataRepository::RestartFlags::NO_WRITE ).
+        setDescription( description );
+    }
   }
 
   static Accessor get( add_const_if_t< MeshLevel, std::is_const< T >::value > & mesh, string const & key )
@@ -687,11 +690,14 @@ struct ArrayHelper< T, FieldLocation::Elem >
     mesh.getElemManager().template forElementSubRegions< SUBREGIONTYPES... >( regions,
                                                                               [&]( localIndex const, ElementSubRegionBase & subRegion )
     {
-      subRegion.registerWrapper< ArrayType >( key ).
-        setApplyDefaultValue( -1 ).
-        setPlotLevel( dataRepository::PlotLevel::LEVEL_1 ).
-        setRestartFlags( dataRepository::RestartFlags::NO_WRITE ).
-        setDescription( description );
+      if( !subRegion.hasWrapper( key ) )
+      {
+        subRegion.registerWrapper< ArrayType >( key ).
+          setApplyDefaultValue( -1 ).
+          setPlotLevel( dataRepository::PlotLevel::LEVEL_1 ).
+          setRestartFlags( dataRepository::RestartFlags::NO_WRITE ).
+          setDescription( description );
+      }
     } );
   }
 

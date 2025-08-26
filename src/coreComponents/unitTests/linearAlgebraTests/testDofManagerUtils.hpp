@@ -50,8 +50,7 @@ void setupProblemFromXML( ProblemManager * const problemManager, char const * co
   int mpiSize = MpiWrapper::commSize( MPI_COMM_GEOS );
   dataRepository::Group & commandLine =
     problemManager->getGroup< dataRepository::Group >( problemManager->groupKeys.commandLine );
-  commandLine.registerWrapper< integer >( problemManager->viewKeys.xPartitionsOverride.key() ).
-    setApplyDefaultValue( mpiSize );
+  commandLine.getReference< integer >( problemManager->viewKeys.xPartitionsOverride.key() ) =  mpiSize;
 
   xmlWrapper::xmlNode xmlProblemNode = xmlDocument.getChild( dataRepository::keys::ProblemManager );
   problemManager->processInputFileRecursive( xmlDocument, xmlProblemNode );
