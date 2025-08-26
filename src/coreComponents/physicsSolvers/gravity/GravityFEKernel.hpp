@@ -39,7 +39,7 @@ struct ForwardVolumeIntegralKernel
   {}
 
   /**
-   * @brief Launches the precomputation of the DensityVolumeIntegral matrix.
+   * @brief Launches the precomputation of the VolumeIntegral matrix.
    * @tparam EXEC_POLICY the execution policy
    * @tparam ATOMIC_POLICY the atomic policy
    * @param[in] size Number of elements in the subregion

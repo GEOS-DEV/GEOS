@@ -21,12 +21,15 @@
 #define GEOS_PHYSICSSOLVERS_GRAVITY_GRAVITYSOLVERBASE_HPP_
 
 #include "physicsSolvers/PhysicsSolverBase.hpp"
+#include "fileIO/timeHistory/ScatterDataProvider.hpp"
 
 
 namespace geos
 {
+constexpr real64 GRAVITATIONAL_CONSTANT = 6.67430e-11; // in m³·kg⁻¹·s⁻²
 
-class GravitySolverBase : public PhysicsSolverBase
+
+class GravitySolverBase : public PhysicsSolverBase, public ScatterDataProvider
 {
 public:
 
@@ -68,14 +71,18 @@ public:
   {
     static constexpr char const * modeString() { return "mode"; }
     static constexpr char const * stationCoordinatesString() { return "stationCoordinates"; }
-    static constexpr char const * outputGzString() { return "outputGz"; }
-    static constexpr char const * outputGzBasenameString() { return "outputGzBasename"; }
     static constexpr char const * residueString() { return "residue"; }
     static constexpr char const * gzAtStationsString() { return "gzAtStations"; }
   };
 
   void reinit() override final;
 
+
+  // ScatterDataProvider interface
+  virtual localIndex getNumScatterPoints() const override;
+  virtual array1d< real64 > const & getScatterData() const override;
+  virtual array2d< real64 > const & getScatterCoordinates() const override;
+  virtual string_array const & getScatterMetadata() const override;
 
 protected:
 

@@ -59,6 +59,9 @@ void GravityFE::initializePreSubGroups()
   GEOS_THROW_IF( feDiscretization == nullptr,
                  getName() << ": FE discretization not found: " << m_discretizationName,
                  InputError );
+  GEOS_THROW_IF( feDiscretization->getOrder() >1,
+                 getName() << ": FE discretization order should be 1, but we get: " << feDiscretization->getOrder(),
+                 InputError );
 }
 
 
@@ -69,8 +72,6 @@ void GravityFE::registerDataOnMesh( Group & meshBodies )
                                                     string_array const & )
   {
     NodeManager & nodeManager = mesh.getNodeManager();
-
-
     nodeManager.registerField< fields::VolumeIntegral >( this->getName() );
 
     ElementRegionManager & elemManager = mesh.getElemManager();
@@ -109,6 +110,7 @@ real64 GravityFE::explicitStepModeling( real64 const & time_n,
 
   array1d< real64 > localGzAtStations( m_stationCoordinates.size( 0 ) );
   localGzAtStations.setValues< parallelHostPolicy >( 0. );
+  auto localGzAtStationsView = localGzAtStations.toView();
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(),
                                   [&] ( string const &,
@@ -190,14 +192,12 @@ real64 GravityFE::explicitStepModeling( real64 const & time_n,
         gz += GRAVITATIONAL_CONSTANT * volumeIntegral[a] * dz / r3;
       } );
 
-      localGzAtStations[iStation]=gz.get();
+      localGzAtStationsView[iStation]=gz.get();
     } // Loop station
   } );   // Loop mesh
 
 
   // Brute force reduce...
-  // Actually using "allReduce" here, since the wrapper for "Reduce" only works on scalars, and not arrays.
-  // In place: Source==Destination.
   MpiWrapper::allReduce( localGzAtStations, localGzAtStations, MpiWrapper::Reduction::Sum, MPI_COMM_GEOS );
 
   arrayView1d< real64 > gzAtStations = m_gzAtStations.toView();
@@ -320,37 +320,7 @@ real64 GravityFE::explicitStepAdjoint( real64 const & time_n,
   return dt;
 }
 
-localIndex GravityFE::getNumScatterPoints() const
-{
-  // For gravity applications: Only rank 0 should provide scatter data
-  // since all ranks compute the same gravity values at the same stations
-  if( MpiWrapper::commRank( MPI_COMM_GEOS ) != 0 )
-  {
-    return 0;
-  }
-
-  return m_stationCoordinates.size( 0 );  // Return number of rows (stations)
-}
-
-array1d< real64 > const & GravityFE::getScatterData() const
-{
-  GEOS_ASSERT( m_gzAtStations.size() == m_stationCoordinates.size( 0 ) );
-  return m_gzAtStations;
-}
-
-array2d< real64 > const & GravityFE::getScatterCoordinates() const
-{
-  return m_stationCoordinates;
-}
-
-string_array const & GravityFE::getScatterMetadata() const
-{
-  // Just return empty metadata for now
-  static string_array empty;
-  return empty;
-}
-
 
 REGISTER_CATALOG_ENTRY( PhysicsSolverBase, GravityFE, string const &, dataRepository::Group * const )
 
-} /* namespace geos */
+} // namespace geos

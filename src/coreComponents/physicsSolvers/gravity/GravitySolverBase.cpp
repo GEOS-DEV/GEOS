@@ -169,4 +169,34 @@ real64 GravitySolverBase::explicitStep( real64 const & time_n,
   }
 }
 
+localIndex GravitySolverBase::getNumScatterPoints() const
+{
+  // For gravity applications: Only rank 0 should provide scatter data
+  // since all ranks compute the same gravity values at the same stations
+  if( MpiWrapper::commRank( MPI_COMM_GEOS ) != 0 )
+  {
+    return 0;
+  }
+
+  return m_stationCoordinates.size( 0 );  // Return number of rows (stations)
+}
+
+array1d< real64 > const & GravitySolverBase::getScatterData() const
+{
+  GEOS_ASSERT( m_gzAtStations.size() == m_stationCoordinates.size( 0 ) );
+  return m_gzAtStations;
+}
+
+array2d< real64 > const & GravitySolverBase::getScatterCoordinates() const
+{
+  return m_stationCoordinates;
+}
+
+string_array const & GravitySolverBase::getScatterMetadata() const
+{
+  // Just return empty metadata for now
+  static string_array empty;
+  return empty;
+}
+
 } // namespace geos
