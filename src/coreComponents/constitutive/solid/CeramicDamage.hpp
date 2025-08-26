@@ -89,6 +89,7 @@ public:
                         real64 const & fractureToughness,
                         int const & enableEnergyFailureCriterion,
                         real64 const & fractureEnergyReleaseRate,
+                        arrayView1d< real64 > const & crackTipStressConcentration,
                         arrayView1d< real64 > const & accumulatedModeIWork,
                         arrayView1d< real64 > const & accumulatedModeIIWork,
                         arrayView1d< real64 > const & distanceToCrackTip,                         
@@ -127,6 +128,7 @@ public:
     m_fractureToughness( fractureToughness ),
     m_enableEnergyFailureCriterion( enableEnergyFailureCriterion ),
     m_fractureEnergyReleaseRate( fractureEnergyReleaseRate ),
+    m_crackTipStressConcentration( crackTipStressConcentration),
     m_accumulatedModeIWork( accumulatedModeIWork ),
     m_accumulatedModeIIWork( accumulatedModeIIWork ),
     m_distanceToCrackTip( distanceToCrackTip ),
@@ -327,6 +329,9 @@ private:
 
   ///Material parameter: The fracture energy release rate
   real64 const m_fractureEnergyReleaseRate;
+
+  ///State variable: Lets us plot the stress concentration, not actually needed by the algorithm.
+  arrayView1d< real64 > const m_crackTipStressConcentration;
 
   ///State variable: The accumulated work for Mode I fracture for each quadrature point
   arrayView1d< real64 > const m_accumulatedModeIWork;
@@ -547,12 +552,16 @@ void CeramicDamageUpdates::smallStrainUpdateHelper( localIndex const k,
   }
 
   // If the particle is a crack-tip particle, the distanceToCrackTip will be greater than 0, and we compute the
-  // stress concentration.
-  real64 crackTipStressConcentration = 1.0;
+  // stress concentration.  We don't actually need to store this as a state variable, it is sufficient to store
+  // the distanceToCrackTip, but we've added this field to allow plotting of the stress concentration.  TODO:
+  // switch this back later to reduce memory footprint of the model.  
+  // real64 crackTipStressConcentration = 1.0;
+  m_crackTipStressConcentration[k] = 1.0;
   if( ( m_enableCrackTipStressConcentration == 1 ) and ( m_distanceToCrackTip[k] > 0 ) )
   {
     real64 fractureProcessZoneRadius = std::max(1.e-12, m_fractureToughness * m_fractureToughness /( 6.283185307179586 * std::max(1.e-12,nominalIntactStrength * nominalIntactStrength) ) );
-    crackTipStressConcentration = std::min( 1.0, sqrt( m_distanceToCrackTip[k] / fractureProcessZoneRadius ) );
+    //crackTipStressConcentration = std::min( 1.0, sqrt( m_distanceToCrackTip[k] / fractureProcessZoneRadius ) );
+    m_crackTipStressConcentration[k] = std::min( 1.0, sqrt( m_distanceToCrackTip[k] / fractureProcessZoneRadius ) );
   }
 
   // Evaluate the yield criterion:
@@ -560,7 +569,7 @@ void CeramicDamageUpdates::smallStrainUpdateHelper( localIndex const k,
   // test pressure against vertex pressure:
   if( trialPressure >= pmin ) 
   { // strength at trial pressure and current damage.
-    real64 strength = CeramicDamageUpdates::getStrength( m_damage[k][q], crackTipStressConcentration, trialPressure, trialJ2, trialJ3, mu, Yc, Yt0, Ycmax );
+    real64 strength = CeramicDamageUpdates::getStrength( m_damage[k][q], m_crackTipStressConcentration[k], trialPressure, trialJ2, trialJ3, mu, Yc, Yt0, Ycmax );
     // check for yield in shear.
     if( trialVonMises > strength )
     {
@@ -604,7 +613,7 @@ void CeramicDamageUpdates::smallStrainUpdateHelper( localIndex const k,
       real64 nominalFullyDamagedStrength;
       if( trialPressure > 0.0 ) 
       {
-        nominalFullyDamagedStrength = CeramicDamageUpdates::getStrength( 1.0, crackTipStressConcentration, trialPressure, trialJ2, trialJ3, mu, Yc, Yt0, Ycmax ); 
+        nominalFullyDamagedStrength = CeramicDamageUpdates::getStrength( 1.0, m_crackTipStressConcentration[k], trialPressure, trialJ2, trialJ3, mu, Yc, Yt0, Ycmax ); 
       }
       else
       {
@@ -623,7 +632,7 @@ void CeramicDamageUpdates::smallStrainUpdateHelper( localIndex const k,
         for( int i = 0; i < 16; ++i )
         { // Use fixed-point iteration to find damage consistent with dissipation for the current step.
           CeramicDamageUpdates::plasticReturn(m_damage[k][q],  // damage
-                                              crackTipStressConcentration,
+                                              m_crackTipStressConcentration[k],
                                               trialPressure,   // trial pressure
                                               trialJ2,         // trial J2 invariant of stress
                                               trialJ3,         // trial J3 invariant of stress
@@ -660,7 +669,7 @@ void CeramicDamageUpdates::smallStrainUpdateHelper( localIndex const k,
           m_damage[k][q] = 0.5*( damageIn + damageOut );
 
           CeramicDamageUpdates::plasticReturn(m_damage[k][q],  // damage
-                                              crackTipStressConcentration,
+                                              m_crackTipStressConcentration[k],
                                               trialPressure,   // trial pressure
                                               trialJ2,         // trial J2 invariant of stress
                                               trialJ3,         // trial J3 invariant of stress
@@ -716,7 +725,7 @@ void CeramicDamageUpdates::smallStrainUpdateHelper( localIndex const k,
       }
 
       CeramicDamageUpdates::plasticReturn(m_damage[k][q],  // damage
-                                              crackTipStressConcentration,
+                                              m_crackTipStressConcentration[k],
                                               trialPressure,   // trial pressure
                                               trialJ2,         // trial J2 invariant of stress
                                               trialJ3,         // trial J3 invariant of stress
@@ -1148,13 +1157,16 @@ public:
     static constexpr char const * enableCrackTipStressConcentrationString() { return "enableCrackTipStressConcentration"; }
 
     /// string/key for The fracture toughness used to compute fracture process zone radius.
-    static constexpr char const * fractureToughnessString() { return "fractureToughnessate"; }
+    static constexpr char const * fractureToughnessString() { return "fractureToughness"; }
 
     /// string/key for energy criterion flag
     static constexpr char const * enableEnergyFailureCriterionString() { return "enableEnergyFailureCriterion"; }
 
     /// string/key for fracture energy release rate mode I
     static constexpr char const * fractureEnergyReleaseRateString() { return "fractureEnergyReleaseRate"; }
+
+    /// string/key for crackTipStressConcentration plotting variable
+    static constexpr char const * crackTipStressConcentrationString() { return "crackTipStressConcentration"; }
 
     /// string/key for accumulated mode I work
     static constexpr char const * accumulatedModeIWorkString() { return "accumulatedModeIWork"; }
@@ -1193,6 +1205,7 @@ public:
                                  m_fractureToughness,                                 
                                  m_enableEnergyFailureCriterion,
                                  m_fractureEnergyReleaseRate,
+                                 m_crackTipStressConcentration,
                                  m_accumulatedModeIWork,
                                  m_accumulatedModeIIWork,
                                  m_distanceToCrackTip,
@@ -1236,6 +1249,7 @@ public:
                           m_fractureToughness,
                           m_enableEnergyFailureCriterion,
                           m_fractureEnergyReleaseRate,
+                          m_crackTipStressConcentration,
                           m_accumulatedModeIWork,
                           m_accumulatedModeIIWork,
                           m_distanceToCrackTip,
@@ -1307,6 +1321,9 @@ protected:
 
   ///Material parameter: The fracture energy release rate
   real64 m_fractureEnergyReleaseRate;
+
+  ///State variable: The accumulated work for stress concentration plottting variable.
+  array1d< real64 > m_crackTipStressConcentration;
 
   ///State variable: The accumulated work for Mode I fracture for each quadrature point
   array1d< real64 > m_accumulatedModeIWork;

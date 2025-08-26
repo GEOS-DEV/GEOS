@@ -317,12 +317,18 @@ void StrainHardeningPolymerUpdates::smallStrainUpdate_StressOnly( localIndex con
                                                                   real64 const ( & strainIncrement )[6],
                                                                   real64 ( & stress )[6] ) const
 {
-  // elastic predictor (assume strainIncrement is all elastic)
+  // elastic predictor "trialStress" (assume strainIncrement is all elastic)
+  // using current definitions of m_bulkModulus[k] and m_shearModulus[k]
+
+  // Here we would update the m_bulkModulus[k] and m_shearModulus[k] with temperature dependent values:
+  m_bulkModulus[k] = m_defaultBulkModulus + 1.2345;   // This will actually be some function:   m_bulkModulus[k] = m_defaultBulkModulus + A*f(m_temperature[k]), etc.
+  m_shearModulus[k] = m_defaultShearModulus + 1.2345;   // This will actually be some function of m_temperature[k]
+
   ElasticIsotropicUpdates::smallStrainUpdate_StressOnly( k, 
                                                          q, 
                                                          timeIncrement,
                                                          strainIncrement, 
-                                                         stress );
+                                                         stress );  // "stress" is overwritten to be trial stress
   m_jacobian[k][q] *= exp( strainIncrement[0] + strainIncrement[1] + strainIncrement[2] );
 
   if( m_disableInelasticity )
@@ -337,7 +343,7 @@ void StrainHardeningPolymerUpdates::smallStrainUpdate_StressOnly( localIndex con
                                                           beginningRotation,
                                                           endRotation,
                                                           strainIncrement, 
-                                                          stress );
+                                                          stress ); // This will update "stress" from trialStress to end-of-step stress
 
   // save new stress and return
   saveStress( k, q, stress );
@@ -352,19 +358,19 @@ void StrainHardeningPolymerUpdates::smallStrainUpdateHelper( localIndex const k,
                                                              real64 const ( & beginningRotation )[3][3],
                                                              real64 const ( & endRotation )[3][3],
                                                              real64 const ( & strainIncrement )[6],
-                                                             real64 ( & stress )[6] ) const
+                                                             real64 ( & stress )[6] ) const // this is the trial stress, and will be overwritten.
 {
   // real64 yieldStrength = m_yieldStrength[k];
 
-  // Store old stress for plastic strain increment
-  real64 oldStress[6] = { 0 };
-  LvArray::tensorOps::copy< 6 >( oldStress, stress);
+  // Store trial stress for computing the plastic strain increment.  
+  real64 trialStress[6] = { 0 };
+  LvArray::tensorOps::copy< 6 >( trialStress, stress);
 
   // decompose into mean (P) and von Mises (Q) stress invariants
   real64 trialP;
   real64 trialQ;
   real64 deviator[6] = { 0 };
-  twoInvariant::stressDecomposition( oldStress,
+  twoInvariant::stressDecomposition( trialStress,
                                      trialP,
                                      trialQ,
                                      deviator );
@@ -461,7 +467,7 @@ void StrainHardeningPolymerUpdates::smallStrainUpdateHelper( localIndex const k,
         // Increment plastic strain
         real64 stressIncrement[6] = {0};
         LvArray::tensorOps::copy< 6 >(stressIncrement, stressTemp);
-        LvArray::tensorOps::subtract< 6 >(stressIncrement, oldStress);
+        LvArray::tensorOps::subtract< 6 >(stressIncrement, trialStress);
 
         // increment plastic strain
         computePlasticStrainIncrement( k,

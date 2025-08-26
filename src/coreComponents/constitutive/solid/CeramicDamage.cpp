@@ -41,6 +41,7 @@ CeramicDamage::CeramicDamage( string const & name, Group * const parent ):
   m_thirdInvariantDependence(),
   m_velocityGradient(),
   m_plasticStrain(),
+  m_crackTipStressConcentration(),
   m_accumulatedModeIWork(),
   m_accumulatedModeIIWork(),
   m_distanceToCrackTip(),
@@ -60,7 +61,9 @@ CeramicDamage::CeramicDamage( string const & name, Group * const parent ):
     setDescription( "Maximum theoretical strength" );
 
   registerWrapper( viewKeyStruct::crackSpeedString(), &m_crackSpeed ).
-    setInputFlag( InputFlags::REQUIRED ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( 1.e16 ).
+    setPlotLevel( PlotLevel::NOPLOT).
     setDescription( "Crack speed" );
 
   // register fields
@@ -140,22 +143,28 @@ CeramicDamage::CeramicDamage( string const & name, Group * const parent ):
     setPlotLevel( PlotLevel::NOPLOT ).
     setDescription( "Fracture energy release rate" );
 
+  registerWrapper( viewKeyStruct::crackTipStressConcentrationString(), &m_crackTipStressConcentration).
+    setInputFlag( InputFlags::FALSE ).
+    setApplyDefaultValue( 0.0 ).
+    setPlotLevel( PlotLevel::LEVEL_0).    
+    setDescription( "Crack tip stress concentration" );
+
   registerWrapper( viewKeyStruct::accumulatedModeIWorkString(), &m_accumulatedModeIWork).
     setInputFlag( InputFlags::FALSE ).
     setApplyDefaultValue( 0.0 ).
-    setPlotLevel( PlotLevel::NOPLOT).    
+    setPlotLevel( PlotLevel::LEVEL_0).    
     setDescription( "Accumulated mode I work" );
   
   registerWrapper( viewKeyStruct::accumulatedModeIIWorkString(), &m_accumulatedModeIIWork).
     setInputFlag( InputFlags::FALSE ).
     setApplyDefaultValue( 0.0 ).
-    setPlotLevel( PlotLevel::NOPLOT).    
+    setPlotLevel( PlotLevel::LEVEL_0).    
     setDescription( "Accumulated mode II work" );
   
   registerWrapper( viewKeyStruct::distanceToCrackTipString(), &m_distanceToCrackTip ).
     setInputFlag( InputFlags::FALSE ).
     setApplyDefaultValue( 0.0 ).
-    setPlotLevel( PlotLevel::NOPLOT).
+    setPlotLevel( PlotLevel::LEVEL_0).
     setDescription( "Distance to crack tip" );
 
   registerWrapper( viewKeyStruct::surfaceFlagString(), &m_surfaceFlag).
@@ -182,6 +191,7 @@ void CeramicDamage::allocateConstitutiveData( dataRepository::Group & parent,
   m_jacobian.resize( 0, numConstitutivePointsPerParentIndex );
   m_velocityGradient.resize( 0, 3, 3 );
   m_plasticStrain.resize( 0, numConstitutivePointsPerParentIndex, 6 );
+  m_crackTipStressConcentration.resize( 0 );
   m_accumulatedModeIWork.resize( 0 );
   m_accumulatedModeIIWork.resize( 0 );
   m_distanceToCrackTip.resize( 0 );
