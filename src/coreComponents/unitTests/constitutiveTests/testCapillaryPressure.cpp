@@ -448,8 +448,7 @@ public:
   {
     arrayView3d< real64 const, USD_CAPPRES > phaseCapPressure;
     arrayView4d< real64 const, USD_CAPPRES_DS > dPhaseCapPressure_dPhaseVolFraction;
-    testNumericalDerivatives( m_parent,
-                              *m_model,
+    testNumericalDerivatives( *m_model,
                               *m_modelCopy,
                               sat,
                               eps,

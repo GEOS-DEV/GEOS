@@ -847,8 +847,7 @@ public:
   {
     arrayView3d< real64 const, USD_RELPERM > phaseRelPerm;
     arrayView4d< real64 const, USD_RELPERM_DS > dPhaseRelPerm_dPhaseVolFraction;
-    testNumericalDerivatives( m_parent,
-                              *m_model,
+    testNumericalDerivatives( *m_model,
                               *m_modelCopy,
                               sat,
                               eps,

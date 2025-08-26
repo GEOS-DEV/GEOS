@@ -66,8 +66,7 @@ void initializeTable( string const & tableName,
 }
 
 template< typename MODEL, typename VAR, typename D_VAR_D_SAT >
-void testNumericalDerivatives( dataRepository::Group & parent,
-                               MODEL & model,
+void testNumericalDerivatives( MODEL & model,
                                MODEL & modelCopy,
                                arraySlice1d< real64 const > const saturationInput,
                                real64 const perturbParameter,
