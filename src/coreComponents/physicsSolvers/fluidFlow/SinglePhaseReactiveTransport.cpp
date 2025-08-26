@@ -30,7 +30,6 @@
 #include "constitutive/solid/CoupledSolidBase.hpp"
 #include "constitutive/solid/ReactiveSolid.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
-#include "fieldSpecification/LogLevelsInfo.hpp"
 #include "fieldSpecification/SourceFluxBoundaryCondition.hpp"
 #include "physicsSolvers/fluidFlow/SourceFluxStatistics.hpp"
 #include "physicsSolvers/fluidFlow/kernels/singlePhase/reactive/KernelLaunchSelectors.hpp"
@@ -106,6 +105,8 @@ SinglePhaseReactiveTransport::SinglePhaseReactiveTransport( const string & name,
     setApplyDefaultValue( { } ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Array to store the indices of immobile species. Default is {}, which indicates no immobile species." );
+
+  addLogLevel< logInfo::BoundaryConditions >();
 }
 
 // TODO: we need to update the class of ReactiveSingleFluid to be consistent with the chemistry module!!!
@@ -926,7 +927,7 @@ void SinglePhaseReactiveTransport::applySourceFluxBC( real64 const time_n,
       if( m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
       {
         globalIndex const numTargetElems = MpiWrapper::sum< globalIndex >( targetSet.size() );
-        GEOS_LOG_LEVEL_RANK_0_ON_GROUP( logInfo::BoundaryCondition,
+        GEOS_LOG_LEVEL_RANK_0_ON_GROUP( logInfo::BoundaryConditions,
                                         GEOS_FMT( bcLogMessage,
                                                   getName(), time_n+dt, fs.getCatalogName(), fs.getName(),
                                                   setName, subRegion.getName(), fs.getScale(), numTargetElems ),
@@ -939,9 +940,9 @@ void SinglePhaseReactiveTransport::applySourceFluxBC( real64 const time_n,
       }
       if( !subRegion.hasWrapper( dofKey ) )
       {
-        GEOS_LOG_LEVEL_BY_RANK_ON_GROUP( logInfo::SourceFluxFailure,
-                                         GEOS_FMT( "{}: trying to apply SourceFlux, but its targetSet named '{}' intersects with non-simulated region named '{}'.",
-                                                   getDataContext(), setName, subRegion.getName() ),
+        GEOS_LOG_LEVEL_BY_RANK_ON_GROUP( logInfo::BoundaryConditions,
+                                         GEOS_FMT( "{}: trying to apply {}, but its targetSet named '{}' intersects with non-simulated region named '{}'.",
+                                                   getDataContext(), SourceFluxBoundaryCondition::catalogName(), setName, subRegion.getName() ),
                                          fs );
         return;
       }
