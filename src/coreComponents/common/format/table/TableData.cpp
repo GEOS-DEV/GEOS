@@ -117,7 +117,7 @@ void TableData2D::collectTableValues( arrayView1d< real64 const > dim0AxisCoordi
   {
     m_errors->addError( GEOS_FMT( "Warning: Too much data for the number of columns & rows:\n"
                                   "  - Expected {} values ({} columns x {} rows),\n  - Found {} values."
-                                  " Data may be missaligned",
+                                  " Data may be misaligned",
                                   nRow * nCol, nCol, nRow, values.size() ) );
   }
 
