@@ -62,15 +62,29 @@ WellSolverBase::WellSolverBase( string const & name,
     setApplyDefaultValue( 0 ).
     setInputFlag( dataRepository::InputFlags::OPTIONAL ).
     setDescription( "Choose time step to honor rates/bhp tables time intervals" );
+
+  addLogLevel< logInfo::WellControl >();
 }
 
-Group *WellSolverBase::createChild( string const & childKey, string const & childName )
+Group * WellSolverBase::createChild( string const & childKey, string const & childName )
 {
-  const auto childTypes = { keys::wellControls };
-  GEOS_ERROR_CTX_IF( childKey != keys::wellControls,
-                     CatalogInterface::unknownTypeError( childKey, getDataContext(), childTypes ),
+  static std::set< string > const childTypes = {
+    keys::wellControls,
+    PhysicsSolverBase::groupKeyStruct::linearSolverParametersString(),
+    PhysicsSolverBase::groupKeyStruct::nonlinearSolverParametersString(),
+  };
+  GEOS_ERROR_CTX_IF( childTypes.count( childKey ) == 0,
+                     CatalogInterface::unknownTypeError( childKey, getDataContext(), childTypes ) ,
                      getDataContext() );
-  return &registerGroup< WellControls >( childName );
+  if( childKey == keys::wellControls )
+  {
+    return &registerGroup< WellControls >( childName );
+  }
+  else
+  {
+    PhysicsSolverBase::createChild( childKey, childName );
+    return nullptr;
+  }
 }
 
 void WellSolverBase::expandObjectCatalogs()

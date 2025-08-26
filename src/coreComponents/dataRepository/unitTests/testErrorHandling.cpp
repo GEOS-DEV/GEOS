@@ -67,6 +67,9 @@ std::string readFile( std::optional< size_t > startLine = std::nullopt,
   return buffer.str();
 }
 
+// separated file bits, which allow us to ignore the absolute path of the workspace ("file:" attribute).
+// note: "line:" attribute of "sourceLocation:" need to be manually updated if test code changes (to
+//       verify they are correctly reported)
 static constexpr std::array< std::string_view, 5 > expectedFileBits = {
   R"(errors: 
 
@@ -77,7 +80,7 @@ static constexpr std::array< std::string_view, 5 > expectedFileBits = {
     sourceLocation:
       file: )",
   R"(src/coreComponents/dataRepository/unitTests/testErrorHandling.cpp
-      line: 194
+      line: 204
     sourceCallStack:
       - frame0:  void testing::internal::HandleExceptionsInMethodIfSupported<testing::Test, void>(testing::Test*, void (testing::Test::*)(), char const*) 
       - frame1:  testing::Test::Run() 
@@ -96,7 +99,7 @@ static constexpr std::array< std::string_view, 5 > expectedFileBits = {
     sourceLocation:
       file: )",
   R"(src/coreComponents/dataRepository/unitTests/testErrorHandling.cpp
-      line: 196
+      line: 206
     sourceCallStack:
       - frame0:  void testing::internal::HandleExceptionsInMethodIfSupported<testing::Test, void>(testing::Test*, void (testing::Test::*)(), char const*) 
       - frame1:  testing::Test::Run() 
@@ -118,11 +121,11 @@ static constexpr std::array< std::string_view, 5 > expectedFileBits = {
         inputLine: 23
       - priority: 0
         inputFile: /path/to/file.xml
-        inputLine: 12
+        inputLine: 32
     sourceLocation:
       file: )",
   R"(src/coreComponents/dataRepository/unitTests/testErrorHandling.cpp
-      line: 197
+      line: 207
     sourceCallStack:
       - frame0:  void testing::internal::HandleExceptionsInMethodIfSupported<testing::Test, void>(testing::Test*, void (testing::Test::*)(), char const*) 
       - frame1:  testing::Test::Run() 
@@ -142,17 +145,17 @@ static constexpr std::array< std::string_view, 5 > expectedFileBits = {
     contexts:
       - priority: 2
         inputFile: /path/to/file.xml
-        inputLine: 23
-      - priority: 0
+        inputLine: 64
+      - priority: 1
         inputFile: /path/to/file.xml
         inputLine: 23
       - priority: 0
         inputFile: /path/to/file.xml
-        inputLine: 12
+        inputLine: 32
     sourceLocation:
       file: )",
   R"(src/coreComponents/dataRepository/unitTests/testErrorHandling.cpp
-      line: 203
+      line: 215
     sourceCallStack:
       - frame0:  void testing::internal::HandleExceptionsInMethodIfSupported<testing::Test, void>(testing::Test*, void (testing::Test::*)(), char const*) 
       - frame1:  testing::Test::Run() 
@@ -175,69 +178,86 @@ static constexpr std::string_view exceptionFormat =
         inputLine: 23
 )";
 
-TEST( ErrorHandling, testYaml )
+double testMinPrecision = 1e-6;
+double testMaxPrecision = 1e-3;
+int testValue = 5;
+
+TEST( ErrorHandling, testYamlFileOutputFormat )
 {
-  g_errorLogger.setOutputFilename( filename );
-  g_errorLogger.enableFileOutput( true );
-  double minPrecision = 1e-6;
-  double maxPrecision = 1e-3;
-  int x = 5;
+  { // building the error yaml test case file
+    // Local overriding of global 'g_errorLogger' (to contain test macros effects to local scope)
+    ErrorLogger g_errorLogger;
 
-  DataFileContext const context = DataFileContext( "Base Test Class", "/path/to/file.xml", 23 );
-  DataFileContext const additionalContext = DataFileContext( "Additional Test Class", "/path/to/file.xml", 12 );
+    g_errorLogger.enableFileOutput( true );
+    g_errorLogger.setOutputFilename( filename );
 
-  if( g_errorLogger.isOutputFileEnabled() )
-  {
-    g_errorLogger.createFile();
-  }
+    DataFileContext const context = DataFileContext( "Base Test Class", "/path/to/file.xml", 23 );
+    DataFileContext const additionalContext = DataFileContext( "Additional Test Class", "/path/to/file.xml", 32 );
+    DataFileContext const importantAdditionalContext = DataFileContext( "Additional Test Class", "/path/to/file.xml", 64 );
 
-  GEOS_WARNING( "Conflicting pressure boundary conditions" );
+    if( g_errorLogger.isOutputFileEnabled() )
+    {
+      g_errorLogger.createFile();
+    }
 
-  GEOS_WARNING_IF( x == 5, "Pressure value is too small." );
-  GEOS_WARNING_CTX_IF( x == 5,
-                       GEOS_FMT( "{}: option should be between {} and {}. A value of {} will be used.",
-                                 context.toString(), minPrecision, maxPrecision, minPrecision ),
-                       context, additionalContext );
-  try
-  {
-    GEOS_THROW_CTX_IF( x == 5,
-                       "Group " << context.toString() << " has no wrapper named" << std::endl,
-                       std::domain_error,
-                       context, additionalContext );
-  }
-  catch( std::domain_error const & ex )
-  {
-    string const errorMsg = "Table input error.\n";
-    g_errorLogger.currentErrorMsg()
-      .addToMsg( errorMsg )
-      .addContextInfo( context.getContextInfo().setPriority( 2 ) );
-  }
+    // Warning tests
+    GEOS_WARNING( "Conflicting pressure boundary conditions" );
 
-  if( g_errorLogger.isOutputFileEnabled() )
-  {
+    GEOS_WARNING_IF( testValue == 5, "Pressure value is too small." );
+    GEOS_WARNING_CTX_IF( testValue == 5,
+                         GEOS_FMT( "{}: option should be between {} and {}. A value of {} will be used.",
+                                   context.toString(), testMinPrecision, testMaxPrecision, testMinPrecision ),
+                         context, additionalContext );
+
+    // Stacked exception test (contexts must appear sorted by priority)
+    try
+    {
+      GEOS_THROW_CTX_IF( testValue == 5,
+                         "Group " << context.toString() << " has no wrapper named" << std::endl,
+                         std::domain_error,
+                         context.getContextInfo().setPriority( 1 ) );
+    }
+    catch( std::domain_error const & ex )
+    {
+      string const errorMsg = "Table input error.\n";
+      g_errorLogger.currentErrorMsg()
+        .addToMsg( errorMsg )
+        .addContextInfo( additionalContext.getContextInfo() )
+        .addContextInfo( importantAdditionalContext.getContextInfo().setPriority( 2 ) );
+    }
     g_errorLogger.flushErrorMsg( g_errorLogger.currentErrorMsg() );
   }
 
-  std::string fileContent = readFile();
 
-  for( size_t i = 0; i < expectedFileBits.size(); ++i )
-  {
-    auto it = fileContent.find( expectedFileBits[i] );
-    EXPECT_NE( it, std::string::npos ) << "Expected bit not found: " << expectedFileBits[i];
+  { // read back yaml file and check its formatting
+    std::string fileContent = readFile();
+
+    for( size_t i = 0; i < expectedFileBits.size(); ++i )
+    {
+      auto it = fileContent.find( expectedFileBits[i] );
+      EXPECT_NE( it, std::string::npos ) << "Expected bit not found (no." << i << "):\n"
+                                         << "-----------------------\n"
+                                         << expectedFileBits[i] << '\n'
+                                         << "-----------------------\n";
+    }
+
+    removeFile();
   }
+}
 
-  std::string additionalExceptionInformation = readFile( 65, 72 );
-  EXPECT_EQ( additionalExceptionInformation, exceptionFormat );
+TEST( ErrorHandling, testErrorBehaviour )
+{
+  // Local overriding of global 'g_errorLogger' (to contain test macros effects to local scope)
+  ErrorLogger g_errorLogger;
 
-  EXPECT_EXIT( GEOS_ERROR_CTX_IF( x == 5,
+  DataFileContext const context = DataFileContext( "Base Test Class", "/path/to/file.xml", 23 );
+
+  EXPECT_EXIT( GEOS_ERROR_CTX_IF( testValue == 5,
                                   GEOS_FMT( "{}: option should be between {} and {}. A value of {} will be used.PID  {}",
-                                            context.toString(), minPrecision, maxPrecision, minPrecision, getpid() ),
-                                  context, additionalContext ),
+                                            context.toString(), testMinPrecision, testMaxPrecision, testMinPrecision, getpid() ),
+                                  context ),
                ::testing::ExitedWithCode( 1 ),
                ".*" );
-
-  g_errorLogger = ErrorLogger{};
-  removeFile();
 }
 
 int main( int ac, char * av[] )

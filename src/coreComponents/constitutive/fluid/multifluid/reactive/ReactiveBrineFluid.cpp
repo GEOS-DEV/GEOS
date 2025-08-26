@@ -89,7 +89,7 @@ ReactiveBrineFluid( string const & name, Group * const parent ):
       setRestartFlags( RestartFlags::WRITE_AND_READ );
   }
 
-  addLogLevel< logInfo::PVT >();
+  addLogLevel< logInfo::TableLogOutput >();
 }
 
 template< typename PHASE >
@@ -205,8 +205,8 @@ void ReactiveBrineFluid< PHASE > ::createPVTModels()
 
   bool const isClone = this->isClone();
   TableFunction::OutputOptions const pvtOutputOpts = {
-    !isClone && m_writeCSV,// writeCSV
-    !isClone && isLogLevelActive< logInfo::PVT >( this->getLogLevel() ), // writeInLog
+    !isClone && m_writeCSV, // writeCSV
+    !isClone && isLogLevelActive< logInfo::TableLogOutput >( this->getLogLevel()) // writeInLog
   };
 
   // then, we are ready to instantiate the phase models

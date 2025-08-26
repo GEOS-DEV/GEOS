@@ -37,8 +37,6 @@ static constexpr std::string_view g_level2Start = "    - ";
 static constexpr std::string_view g_level2Next =  "      ";
 static constexpr std::string_view g_level3Start = "      - ";
 static constexpr std::string_view g_level3Next =  "        ";
-static constexpr std::string_view g_callStackMessage =
-  "Callstack could not be retrieved. The format does not match the expected one.";
 
 ErrorLogger g_errorLogger{};
 
@@ -181,7 +179,7 @@ ErrorLogger::ErrorMsg & ErrorLogger::ErrorMsg::addCallStackInfo( std::string_vie
 
   if( !m_isValidStackTrace )
   {
-    m_sourceCallStack.push_back( std::string( g_callStackMessage ) );
+    m_sourceCallStack.push_back( str );
   }
 
   return *this;
@@ -223,19 +221,22 @@ void ErrorLogger::streamMultilineYamlAttribute( std::string_view msg, std::ofstr
 void ErrorLogger::flushErrorMsg( ErrorLogger::ErrorMsg & errorMsg )
 {
   std::ofstream yamlFile( std::string( m_filename ), std::ios::app );
-  if( yamlFile.is_open() && g_errorLogger.isOutputFileEnabled() )
+  if( yamlFile.is_open() && isOutputFileEnabled() )
   {
     // General errors info (type, rank on which the error occured)
-    yamlFile << g_level1Start << "type: " << g_errorLogger.toString( errorMsg.m_type ) << "\n";
+    yamlFile << g_level1Start << "type: " << ErrorLogger::toString( errorMsg.m_type ) << "\n";
     yamlFile << g_level1Next << "rank: ";
     for( auto const & info: errorMsg.m_ranksInfo )
     {
       yamlFile << info;
     }
     yamlFile << "\n";
+
     // Error message
     yamlFile << g_level1Next << "message: >-\n";
     streamMultilineYamlAttribute( errorMsg.m_msg, yamlFile, g_level2Next );
+
+    // context information
     if( !errorMsg.m_contextsInfo.empty() )
     {
       // Sort contextual information by decreasing priority
@@ -254,6 +255,7 @@ void ErrorLogger::flushErrorMsg( ErrorLogger::ErrorMsg & errorMsg )
         }
       }
     }
+
     // Location of the error in the code
     if( !errorMsg.m_file.empty() )
     {
@@ -275,6 +277,7 @@ void ErrorLogger::flushErrorMsg( ErrorLogger::ErrorMsg & errorMsg )
         yamlFile << g_level3Start << "frame" << i << ": " << errorMsg.m_sourceCallStack[i] << "\n";
       }
     }
+
     yamlFile << "\n";
     yamlFile.flush();
     errorMsg = ErrorMsg();

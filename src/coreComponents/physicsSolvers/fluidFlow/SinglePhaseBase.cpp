@@ -28,7 +28,6 @@
 #include "constitutive/solid/SolidInternalEnergy.hpp"
 #include "constitutive/thermalConductivity/SinglePhaseThermalConductivitySelector.hpp"
 #include "fieldSpecification/AquiferBoundaryCondition.hpp"
-#include "fieldSpecification/LogLevelsInfo.hpp"
 #include "fieldSpecification/EquilibriumInitialCondition.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
 #include "fieldSpecification/SourceFluxBoundaryCondition.hpp"
@@ -73,8 +72,7 @@ SinglePhaseBase::SinglePhaseBase( const string & name,
                                  "For the energy balance equation, the mass flux is multiplied by the enthalpy in the cell from which the fluid is being produced.",
                                  viewKeyStruct::isThermalString() ) );
 
-  addLogLevel< logInfo::Solution >();
-  addLogLevel< logInfo::SourceFluxFailure >();
+  addLogLevel< logInfo::BoundaryConditions >();
 }
 
 
@@ -987,9 +985,9 @@ void SinglePhaseBase::applySourceFluxBC( real64 const time_n,
       }
       if( !subRegion.hasWrapper( dofKey ) )
       {
-        GEOS_LOG_LEVEL_BY_RANK_ON_GROUP( logInfo::SourceFluxFailure,
-                                         GEOS_FMT( "{}: trying to apply SourceFlux, but its targetSet named '{}' intersects with non-simulated region named '{}'.",
-                                                   getDataContext(), setName, subRegion.getName() ),
+        GEOS_LOG_LEVEL_BY_RANK_ON_GROUP( logInfo::BoundaryConditions,
+                                         GEOS_FMT( "{}: trying to apply {}, but its targetSet named '{}' intersects with non-simulated region named '{}'.",
+                                                   getDataContext(), SourceFluxBoundaryCondition::catalogName(), setName, subRegion.getName() ),
                                          fs );
         return;
       }

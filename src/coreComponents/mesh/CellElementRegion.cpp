@@ -42,10 +42,6 @@ CellElementRegion::CellElementRegion( string const & name, Group * const parent 
                               " contains the tetrahedric elements for which the regionAttribute is 1.\n"
                               "The element types are: {}.",
                               catalogName(), stringutilities::join( elementNames, ", " ) ) );
-
-  registerWrapper( viewKeyStruct::coarseningRatioString(), &m_coarseningRatio ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setApplyDefaultValue( 0.0 );
 }
 
 CellElementRegion::~CellElementRegion()

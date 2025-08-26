@@ -1,5 +1,7 @@
 # Specify list of tests
-set( geosx_fileio_tests testHDFFile.cpp )
+set( geosx_fileio_tests
+     testHDFFile.cpp
+     testMemoryStats.cpp )
 
 set( tplDependencyList ${parallelDeps} gtest )
 

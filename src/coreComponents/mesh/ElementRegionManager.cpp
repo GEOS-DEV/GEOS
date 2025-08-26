@@ -64,8 +64,7 @@ void ElementRegionManager::setMaxGlobalIndex()
   {
     m_localMaxGlobalIndex = std::max( m_localMaxGlobalIndex, subRegion.maxGlobalIndex() );
   } );
-
-  m_maxGlobalIndex = MpiWrapper::max( m_localMaxGlobalIndex, MPI_COMM_GEOS );
+  ObjectManagerBase::setMaxGlobalIndex();
 }
 
 auto const & getUserAvailableKeys()
@@ -781,13 +780,13 @@ ElementRegionManager::getCellBlockToSubRegionMap( CellBlockManagerABC const & ce
     GEOS_UNUSED_VAR( region ); // unused if geos_error_if is nulld
     localIndex const blockIndex = cellBlocks.getIndex( subRegion.getName() );
     GEOS_ERROR_CTX_IF( blockIndex == Group::subGroupMap::KeyIndex::invalid_index,
-                        GEOS_FMT( "{}, subregion {}: Cell block not found at index {}.",
-                                  region.getDataContext().toString(), subRegion.getName(), blockIndex ),
-                        region.getDataContext() );
+                       GEOS_FMT( "{}, subregion {}: Cell block not found at index {}.",
+                                 region.getDataContext().toString(), subRegion.getName(), blockIndex ),
+                       region.getDataContext() );
     GEOS_ERROR_CTX_IF( blockMap( blockIndex, 1 ) != -1,
-                        GEOS_FMT( "{}, subregion {}: Cell block at index {} is mapped to more than one subregion.",
-                                  region.getDataContext().toString(), subRegion.getName(), blockIndex ),
-                        region.getDataContext() );
+                       GEOS_FMT( "{}, subregion {}: Cell block at index {} is mapped to more than one subregion.",
+                                 region.getDataContext().toString(), subRegion.getName(), blockIndex ),
+                       region.getDataContext() );
 
     blockMap( blockIndex, 0 ) = er;
     blockMap( blockIndex, 1 ) = esr;

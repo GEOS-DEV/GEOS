@@ -28,7 +28,6 @@
 #include "dataRepository/Group.hpp"
 #include "discretizationMethods/NumericalMethodsManager.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
-#include "fieldSpecification/LogLevelsInfo.hpp"
 #include "fieldSpecification/AquiferBoundaryCondition.hpp"
 #include "finiteVolume/BoundaryStencil.hpp"
 #include "finiteVolume/FiniteVolumeManager.hpp"
@@ -123,10 +122,6 @@ CompositionalMultiphaseFVM::CompositionalMultiphaseFVM( const string & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Target CFL condition `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_"
                     " when computing the next timestep." );
-
-  addLogLevel< logInfo::Convergence >();
-  addLogLevel< logInfo::Solution >();
-  addLogLevel< logInfo::TimeStep >();
 }
 
 void CompositionalMultiphaseFVM::postInputInitialization()
@@ -210,9 +205,10 @@ void CompositionalMultiphaseFVM::initializePreSubGroups()
   FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
   FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( m_discretizationName );
   GEOS_ERROR_CTX_IF( fluxApprox.upwindingParams().upwindingScheme == UpwindingScheme::HU2PH && m_numPhases != 2,
-                 GEOS_FMT( "{}: upwinding scheme {} only supports 2-phase flow", getDataContext(),
-                           EnumStrings< UpwindingScheme >::toString( UpwindingScheme::HU2PH )),
-                 getDataContext() );
+                     GEOS_FMT( "{}: upwinding scheme {} only supports 2-phase flow",
+                               getDataContext(),
+                               EnumStrings< UpwindingScheme >::toString( UpwindingScheme::HU2PH )),
+                     getDataContext() );
 }
 
 void CompositionalMultiphaseFVM::setupDofs( DomainPartition const & domain,
@@ -1437,7 +1433,7 @@ void CompositionalMultiphaseFVM::applyAquiferBC( real64 const time,
       if( m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
       {
         globalIndex const numTargetFaces = MpiWrapper::sum< globalIndex >( stencil.size() );
-        GEOS_LOG_LEVEL_RANK_0_ON_GROUP( logInfo::BoundaryCondition,
+        GEOS_LOG_LEVEL_RANK_0_ON_GROUP( logInfo::BoundaryConditions,
                                         GEOS_FMT( faceBcLogMessage,
                                                   getName(), time+dt, bc.getCatalogName(), bc.getName(),
                                                   setName, faceManager.getName(), bc.getScale(), numTargetFaces ),

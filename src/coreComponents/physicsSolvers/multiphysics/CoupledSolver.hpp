@@ -57,9 +57,7 @@ public:
     this->getWrapper< string >( PhysicsSolverBase::viewKeyStruct::discretizationString() ).
       setInputFlag( dataRepository::InputFlags::FALSE );
 
-    addLogLevel< logInfo::Convergence >();
     addLogLevel< logInfo::Coupling >();
-    addLogLevel< logInfo::TimeStep >();
   }
 
   /// deleted copy constructor
@@ -89,10 +87,10 @@ public:
       auto const & solverType = LvArray::system::demangleType< SolverType >();
       solver = this->getParent().template getGroupPointer< SolverType >( solverName );
       GEOS_THROW_CTX_IF( solver == nullptr,
-                     GEOS_FMT( "{}: Could not find solver '{}' of type {}",
-                               getDataContext(),
-                               solverName, solverType ),
-                     InputError, getDataContext() );
+                         GEOS_FMT( "{}: Could not find solver '{}' of type {}",
+                                   getDataContext(),
+                                   solverName, solverType ),
+                         InputError, getDataContext() );
       GEOS_LOG_LEVEL_RANK_0( logInfo::Coupling,
                              GEOS_FMT( "{}: found {} solver named {}",
                                        getName(), solver->getCatalogName(), solverName ) );
@@ -676,13 +674,13 @@ protected:
     bool const isSequential = getNonlinearSolverParameters().couplingType() == NonlinearSolverParameters::CouplingType::Sequential;
     bool const usesLineSearch = getNonlinearSolverParameters().m_lineSearchAction != NonlinearSolverParameters::LineSearchAction::None;
     GEOS_THROW_CTX_IF( isSequential && usesLineSearch,
-                   GEOS_FMT( "{}: line search is not supported by the coupled solver when {} is set to `{}`. Please set {} to `{}` to remove this error",
-                             getNonlinearSolverParameters().getWrapperDataContext( NonlinearSolverParameters::viewKeysStruct::couplingTypeString() ),
-                             NonlinearSolverParameters::viewKeysStruct::couplingTypeString(),
-                             EnumStrings< NonlinearSolverParameters::CouplingType >::toString( NonlinearSolverParameters::CouplingType::Sequential ),
-                             NonlinearSolverParameters::viewKeysStruct::lineSearchActionString(),
-                             EnumStrings< NonlinearSolverParameters::LineSearchAction >::toString( NonlinearSolverParameters::LineSearchAction::None ) ),
-                   InputError, getNonlinearSolverParameters().getWrapperDataContext( NonlinearSolverParameters::viewKeysStruct::couplingTypeString() ) );
+                       GEOS_FMT( "{}: line search is not supported by the coupled solver when {} is set to `{}`. Please set {} to `{}` to remove this error",
+                                 getNonlinearSolverParameters().getWrapperDataContext( NonlinearSolverParameters::viewKeysStruct::couplingTypeString() ),
+                                 NonlinearSolverParameters::viewKeysStruct::couplingTypeString(),
+                                 EnumStrings< NonlinearSolverParameters::CouplingType >::toString( NonlinearSolverParameters::CouplingType::Sequential ),
+                                 NonlinearSolverParameters::viewKeysStruct::lineSearchActionString(),
+                                 EnumStrings< NonlinearSolverParameters::LineSearchAction >::toString( NonlinearSolverParameters::LineSearchAction::None ) ),
+                       InputError, getNonlinearSolverParameters().getWrapperDataContext( NonlinearSolverParameters::viewKeysStruct::couplingTypeString() ) );
 
     if( !isSequential )
     {

@@ -104,7 +104,7 @@ EventBase::EventBase( const string & name,
   registerWrapper( viewKeyStruct::isTargetExecutingString(), &m_targetExecFlag ).
     setDescription( "Index of the current subevent" );
 
-  addLogLevel< logInfo::SubEventExecution >();
+  addLogLevel< logInfo::EventExecution >();
 }
 
 
@@ -247,7 +247,7 @@ bool EventBase::execute( real64 const time_n,
     EventBase * subEvent = static_cast< EventBase * >( this->getSubGroups()[m_currentSubEvent] );
 
     // Print debug information for logLevel >= 1
-    GEOS_LOG_LEVEL_RANK_0( logInfo::SubEventExecution,
+    GEOS_LOG_LEVEL_RANK_0( logInfo::EventExecution,
                            "          SubEvent: " << m_currentSubEvent << " (" << subEvent->getName() << "), dt_request=" << subEvent->getCurrentEventDtRequest() << ", forecast=" <<
                            subEvent->getForecast() );
 

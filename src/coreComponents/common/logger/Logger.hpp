@@ -149,7 +149,7 @@
       __oss << "***** ERROR\n"; \
       __oss << "***** LOCATION: " LOCATION "\n"; \
       __oss << "***** Controlling expression (should be false): " STRINGIZE( EXP ) "\n"; \
-      __oss << message << "\n"; \
+      __oss << "***** Rank " << ::geos::logger::internal::rankString << ": " << message << "\n"; \
       std::string stackHistory = LvArray::system::stackTrace( true ); \
       __oss << stackHistory; \
       std::cout << __oss.str() << std::endl; \
@@ -171,7 +171,7 @@
  * @brief Conditionally raise a hard error and terminate the program.
  * @param EXP an expression that will be evaluated as a predicate
  * @param MSG a message to log (any expression that can be stream inserted)
- * @param ... One or more DataContext (current error context information) 
+ * @param ... One or more DataContext (current error context information)
  */
 #define GEOS_ERROR_CTX_IF( EXP, MSG, ... ) \
   do \
@@ -185,7 +185,7 @@
       __oss << "***** ERROR\n"; \
       __oss << "***** LOCATION: " LOCATION "\n"; \
       __oss << "***** Controlling expression (should be false): " STRINGIZE( EXP ) "\n"; \
-      __oss << message << "\n"; \
+      __oss << "***** Rank " << ::geos::logger::internal::rankString << ": " << message << "\n"; \
       std::string stackHistory = LvArray::system::stackTrace( true ); \
       __oss << stackHistory; \
       std::cout << __oss.str() << std::endl; \
@@ -239,7 +239,7 @@
       __oss << "\n"; \
       __oss << "***** LOCATION: " LOCATION "\n"; \
       __oss << "***** Controlling expression (should be false): " STRINGIZE( EXP ) "\n"; \
-      __oss << message << "\n"; \
+      __oss << "***** Rank " << ::geos::logger::internal::rankString << ": " << message << "\n"; \
       std::string stackHistory = LvArray::system::stackTrace( true ); \
       __oss << stackHistory; \
       if( g_errorLogger.isOutputFileEnabled() ) \
@@ -260,7 +260,7 @@
  * @param EXP an expression that will be evaluated as a predicate
  * @param MSG a message to log (any expression that can be stream inserted)
  * @param TYPE the type of exception to throw
- * @param ... One or more DataContext (current error context information) 
+ * @param ... One or more DataContext (current error context information)
  */
 #define GEOS_THROW_CTX_IF( EXP, MSG, EXCEPTIONTYPE, ... ) \
   do \
@@ -274,7 +274,7 @@
       __oss << "\n"; \
       __oss << "***** LOCATION: " LOCATION "\n"; \
       __oss << "***** Controlling expression (should be false): " STRINGIZE( EXP ) "\n"; \
-      __oss << message << "\n"; \
+      __oss << "***** Rank " << ::geos::logger::internal::rankString << ": " << message << "\n"; \
       std::string stackHistory = LvArray::system::stackTrace( true ); \
       __oss << stackHistory; \
       if( g_errorLogger.isOutputFileEnabled() ) \
@@ -342,7 +342,7 @@
  * @brief Conditionally report a warning
  * @param EXP an expression that will be evaluated as a predicate
  * @param MSG a message to log (any expression that can be stream inserted)
- * @param ... One or more DataContext (current error context information) 
+ * @param ... One or more DataContext (current error context information)
  */
 #define GEOS_WARNING_CTX_IF( EXP, MSG, ... ) \
   do \
@@ -408,10 +408,10 @@
  */
 #define GEOS_ERROR_IF_OP_MSG( lhs, OP, NOP, rhs, msg ) \
   GEOS_ERROR_IF_IMPL( lhs OP rhs, \
-                    msg << "\n" << \
-                    "Expected " << #lhs << " " << #NOP << " " << #rhs << "\n" << \
-                    "  " << #lhs << " = " << lhs << "\n" << \
-                    "  " << #rhs << " = " << rhs << "\n" )
+                      msg << "\n" << \
+                      "Expected " << #lhs << " " << #NOP << " " << #rhs << "\n" << \
+                      "  " << #lhs << " = " << lhs << "\n" << \
+                      "  " << #rhs << " = " << rhs << "\n" )
 
 /**
  * @brief Raise a hard error if two values are equal.
@@ -419,7 +419,7 @@
  * @param rhs expression to be evaluated and used as right-hand side in comparison
  * @param msg a message to log (any expression that can be stream inserted)
  */
-#define LOG_GEOS_ERROR_IF_EQ_MSG( lhs, rhs, msg ) GEOS_ERROR_IF_OP_MSG( lhs, ==, !=, rhs, msg )
+#define GEOS_LOG_ERROR_IF_EQ_MSG( lhs, rhs, msg ) GEOS_ERROR_IF_OP_MSG( lhs, ==, !=, rhs, msg )
 
 /**
  * @brief Raise a hard error if two values are equal.
@@ -427,7 +427,7 @@
  * @param rhs expression to be evaluated and used as right-hand side in comparison
  * @param msg a message to log (any expression that can be stream inserted)
  */
-#define GEOS_ERROR_IF_EQ_MSG( lhs, rhs, msg ) LOG_GEOS_ERROR_IF_EQ_MSG( lhs, rhs, "***** Rank " << ::geos::logger::internal::rankString << ": " << msg )
+#define GEOS_ERROR_IF_EQ_MSG( lhs, rhs, msg ) GEOS_LOG_ERROR_IF_EQ_MSG( lhs, rhs, "***** Rank " << ::geos::logger::internal::rankString << ": " << msg )
 
 /**
  * @brief Throw an exception if @p lhs @p OP @p rhs.
@@ -440,10 +440,10 @@
  */
 #define GEOS_THROW_IF_OP_MSG( lhs, OP, NOP, rhs, msg, TYPE ) \
   GEOS_THROW_IF_IMPL( lhs OP rhs, \
-                    msg << "\n" << \
-                    "Expected " << #lhs << " " << #NOP << " " << #rhs << "\n" << \
-                    "  " << #lhs << " = " << lhs << "\n" << \
-                    "  " << #rhs << " = " << rhs << "\n", TYPE )
+                      msg << "\n" << \
+                      "Expected " << #lhs << " " << #NOP << " " << #rhs << "\n" << \
+                      "  " << #lhs << " = " << lhs << "\n" << \
+                      "  " << #rhs << " = " << rhs << "\n", TYPE )
 
 /**
  * @brief Throw an exception if two values are equal.
@@ -452,7 +452,7 @@
  * @param msg a message to log (any expression that can be stream inserted)
  * @param TYPE the type of exception to throw
  */
-#define LOG_GEOS_THROW_IF_EQ_MSG( lhs, rhs, msg, TYPE ) GEOS_THROW_IF_OP_MSG( lhs, ==, !=, rhs, msg, TYPE )
+#define GEOS_LOG_THROW_IF_EQ_MSG( lhs, rhs, msg, TYPE ) GEOS_THROW_IF_OP_MSG( lhs, ==, !=, rhs, msg, TYPE )
 
 /**
  * @brief Raise a hard error if two values are equal.
@@ -461,7 +461,7 @@
  * @param msg a message to log (any expression that can be stream inserted)
  * @param TYPE the type of exception to throw
  */
-#define GEOS_THROW_IF_EQ_MSG( lhs, rhs, msg, TYPE ) LOG_GEOS_THROW_IF_EQ_MSG( lhs, rhs, "***** Rank " << ::geos::logger::internal::rankString << ": " << msg, TYPE )
+#define GEOS_THROW_IF_EQ_MSG( lhs, rhs, msg, TYPE ) GEOS_LOG_THROW_IF_EQ_MSG( lhs, rhs, "***** Rank " << ::geos::logger::internal::rankString << ": " << msg, TYPE )
 
 /**
  * @brief Raise a hard error if two values are equal.
@@ -484,7 +484,7 @@
  * @param rhs expression to be evaluated and used as right-hand side in comparison
  * @param msg a message to log (any expression that can be stream inserted)
  */
-#define LOG_GEOS_ERROR_IF_NE_MSG( lhs, rhs, msg ) GEOS_ERROR_IF_OP_MSG( lhs, !=, ==, rhs, msg )
+#define GEOS_LOG_ERROR_IF_NE_MSG( lhs, rhs, msg ) GEOS_ERROR_IF_OP_MSG( lhs, !=, ==, rhs, msg )
 
 /**
  * @brief Raise a hard error if two values are not equal.
@@ -492,7 +492,7 @@
  * @param rhs expression to be evaluated and used as right-hand side in comparison
  * @param msg a message to log (any expression that can be stream inserted)
  */
-#define GEOS_ERROR_IF_NE_MSG( lhs, rhs, msg ) LOG_GEOS_ERROR_IF_NE_MSG( lhs, rhs, "***** Rank " << ::geos::logger::internal::rankString << ": " << msg )
+#define GEOS_ERROR_IF_NE_MSG( lhs, rhs, msg ) GEOS_LOG_ERROR_IF_NE_MSG( lhs, rhs, "***** Rank " << ::geos::logger::internal::rankString << ": " << msg )
 
 /**
  * @brief Throw an exception if two values are not equal.
@@ -501,7 +501,7 @@
  * @param msg a message to log (any expression that can be stream inserted)
  * @param TYPE the type of exception to throw
  */
-#define LOG_GEOS_THROW_IF_NE_MSG( lhs, rhs, msg, TYPE ) GEOS_THROW_IF_OP_MSG( lhs, !=, ==, rhs, msg, TYPE )
+#define GEOS_LOG_THROW_IF_NE_MSG( lhs, rhs, msg, TYPE ) GEOS_THROW_IF_OP_MSG( lhs, !=, ==, rhs, msg, TYPE )
 
 /**
  * @brief Throw an exception if two values are not equal.
@@ -510,7 +510,7 @@
  * @param msg a message to log (any expression that can be stream inserted)
  * @param TYPE the type of exception to throw
  */
-#define GEOS_THROW_IF_NE_MSG( lhs, rhs, msg, TYPE ) LOG_GEOS_THROW_IF_NE_MSG( lhs, rhs, "***** Rank " << ::geos::logger::internal::rankString << ": " << msg, TYPE )
+#define GEOS_THROW_IF_NE_MSG( lhs, rhs, msg, TYPE ) GEOS_LOG_THROW_IF_NE_MSG( lhs, rhs, "***** Rank " << ::geos::logger::internal::rankString << ": " << msg, TYPE )
 
 /**
  * @brief Raise a hard error if two values are not equal.
@@ -533,7 +533,7 @@
  * @param rhs expression to be evaluated and used as right-hand side in comparison
  * @param msg a message to log (any expression that can be stream inserted)
  */
-#define LOG_GEOS_ERROR_IF_GT_MSG( lhs, rhs, msg ) GEOS_ERROR_IF_OP_MSG( lhs, >, <=, rhs, msg )
+#define GEOS_LOG_ERROR_IF_GT_MSG( lhs, rhs, msg ) GEOS_ERROR_IF_OP_MSG( lhs, >, <=, rhs, msg )
 
 /**
  * @brief Raise a hard error if one value compares greater than the other.
@@ -541,7 +541,7 @@
  * @param rhs expression to be evaluated and used as right-hand side in comparison
  * @param msg a message to log (any expression that can be stream inserted)
  */
-#define GEOS_ERROR_IF_GT_MSG( lhs, rhs, msg ) LOG_GEOS_ERROR_IF_GT_MSG( lhs, rhs, "***** Rank " << ::geos::logger::internal::rankString << ": " << msg )
+#define GEOS_ERROR_IF_GT_MSG( lhs, rhs, msg ) GEOS_LOG_ERROR_IF_GT_MSG( lhs, rhs, "***** Rank " << ::geos::logger::internal::rankString << ": " << msg )
 
 /**
  * @brief Throw an exception if one value compares greater than the other.
@@ -550,7 +550,7 @@
  * @param msg a message to log (any expression that can be stream inserted)
  * @param TYPE the type of exception to throw
  */
-#define LOG_GEOS_THROW_IF_GT_MSG( lhs, rhs, msg, TYPE ) GEOS_THROW_IF_OP_MSG( lhs, >, <=, rhs, msg, TYPE )
+#define GEOS_LOG_THROW_IF_GT_MSG( lhs, rhs, msg, TYPE ) GEOS_THROW_IF_OP_MSG( lhs, >, <=, rhs, msg, TYPE )
 
 /**
  * @brief Throw an exception if one value compares greater than the other.
@@ -559,7 +559,7 @@
  * @param msg a message to log (any expression that can be stream inserted)
  * @param TYPE the type of exception to throw
  */
-#define GEOS_THROW_IF_GT_MSG( lhs, rhs, msg, TYPE ) LOG_GEOS_THROW_IF_GT_MSG( lhs, rhs, "***** Rank " << ::geos::logger::internal::rankString << ": " << msg, TYPE )
+#define GEOS_THROW_IF_GT_MSG( lhs, rhs, msg, TYPE ) GEOS_LOG_THROW_IF_GT_MSG( lhs, rhs, "***** Rank " << ::geos::logger::internal::rankString << ": " << msg, TYPE )
 
 /**
  * @brief Raise a hard error if one value compares greater than the other.
@@ -582,7 +582,7 @@
  * @param rhs expression to be evaluated and used as right-hand side in comparison
  * @param msg a message to log (any expression that can be stream inserted)
  */
-#define LOG_GEOS_ERROR_IF_GE_MSG( lhs, rhs, msg ) GEOS_ERROR_IF_OP_MSG( lhs, >=, <, rhs, msg )
+#define GEOS_LOG_ERROR_IF_GE_MSG( lhs, rhs, msg ) GEOS_ERROR_IF_OP_MSG( lhs, >=, <, rhs, msg )
 
 
 /**
@@ -591,7 +591,7 @@
  * @param rhs expression to be evaluated and used as right-hand side in comparison
  * @param msg a message to log (any expression that can be stream inserted)
  */
-#define GEOS_ERROR_IF_GE_MSG( lhs, rhs, msg ) LOG_GEOS_ERROR_IF_GE_MSG( lhs, rhs, "***** Rank " << ::geos::logger::internal::rankString << ": " << msg )
+#define GEOS_ERROR_IF_GE_MSG( lhs, rhs, msg ) GEOS_LOG_ERROR_IF_GE_MSG( lhs, rhs, "***** Rank " << ::geos::logger::internal::rankString << ": " << msg )
 
 /**
  * @brief Throw an exception if one value compares greater than or equal to the other.
@@ -600,7 +600,7 @@
  * @param msg a message to log (any expression that can be stream inserted)
  * @param TYPE the type of exception to throw
  */
-#define LOG_GEOS_THROW_IF_GE_MSG( lhs, rhs, msg, TYPE ) GEOS_THROW_IF_OP_MSG( lhs, >=, <, rhs, msg, TYPE )
+#define GEOS_LOG_THROW_IF_GE_MSG( lhs, rhs, msg, TYPE ) GEOS_THROW_IF_OP_MSG( lhs, >=, <, rhs, msg, TYPE )
 
 /**
  * @brief Throw an exception if one value compares greater than or equal to the other.
@@ -609,7 +609,7 @@
  * @param msg a message to log (any expression that can be stream inserted)
  * @param TYPE the type of exception to throw
  */
-#define GEOS_THROW_IF_GE_MSG( lhs, rhs, msg, TYPE ) LOG_GEOS_THROW_IF_GE_MSG( lhs, rhs, "***** Rank " << ::geos::logger::internal::rankString << ": " << msg, TYPE )
+#define GEOS_THROW_IF_GE_MSG( lhs, rhs, msg, TYPE ) GEOS_LOG_THROW_IF_GE_MSG( lhs, rhs, "***** Rank " << ::geos::logger::internal::rankString << ": " << msg, TYPE )
 
 /**
  * @brief Raise a hard error if one value compares greater than or equal to the other.
@@ -632,7 +632,7 @@
  * @param rhs expression to be evaluated and used as right-hand side in comparison
  * @param msg a message to log (any expression that can be stream inserted)
  */
-#define LOG_GEOS_ERROR_IF_LT_MSG( lhs, rhs, msg ) GEOS_ERROR_IF_OP_MSG( lhs, <, >=, rhs, msg )
+#define GEOS_LOG_ERROR_IF_LT_MSG( lhs, rhs, msg ) GEOS_ERROR_IF_OP_MSG( lhs, <, >=, rhs, msg )
 
 /**
  * @brief Raise a hard error if one value compares less than the other.
@@ -640,7 +640,7 @@
  * @param rhs expression to be evaluated and used as right-hand side in comparison
  * @param msg a message to log (any expression that can be stream inserted)
  */
-#define GEOS_ERROR_IF_LT_MSG( lhs, rhs, msg ) LOG_GEOS_ERROR_IF_LT_MSG( lhs, rhs, "***** Rank " << ::geos::logger::internal::rankString << ": " << msg )
+#define GEOS_ERROR_IF_LT_MSG( lhs, rhs, msg ) GEOS_LOG_ERROR_IF_LT_MSG( lhs, rhs, "***** Rank " << ::geos::logger::internal::rankString << ": " << msg )
 
 /**
  * @brief Throw an exception if one value compares less than the other.
@@ -649,7 +649,7 @@
  * @param msg a message to log (any expression that can be stream inserted)
  * @param TYPE the type of exception to throw
  */
-#define LOG_GEOS_THROW_IF_LT_MSG( lhs, rhs, msg, TYPE ) GEOS_THROW_IF_OP_MSG( lhs, <, >=, rhs, msg, TYPE )
+#define GEOS_LOG_THROW_IF_LT_MSG( lhs, rhs, msg, TYPE ) GEOS_THROW_IF_OP_MSG( lhs, <, >=, rhs, msg, TYPE )
 
 /**
  * @brief Throw an exception if one value compares less than the other.
@@ -658,7 +658,7 @@
  * @param msg a message to log (any expression that can be stream inserted)
  * @param TYPE the type of exception to throw
  */
-#define GEOS_THROW_IF_LT_MSG( lhs, rhs, msg, TYPE ) LOG_GEOS_THROW_IF_LT_MSG( lhs, rhs, "***** Rank " << ::geos::logger::internal::rankString << ": " << msg, TYPE )
+#define GEOS_THROW_IF_LT_MSG( lhs, rhs, msg, TYPE ) GEOS_LOG_THROW_IF_LT_MSG( lhs, rhs, "***** Rank " << ::geos::logger::internal::rankString << ": " << msg, TYPE )
 
 /**
  * @brief Raise a hard error if one value compares less than the other.
@@ -681,7 +681,7 @@
  * @param rhs expression to be evaluated and used as right-hand side in comparison
  * @param msg a message to log (any expression that can be stream inserted)
  */
-#define LOG_GEOS_ERROR_IF_LE_MSG( lhs, rhs, msg ) GEOS_ERROR_IF_OP_MSG( lhs, <=, >, rhs, msg )
+#define GEOS_LOG_ERROR_IF_LE_MSG( lhs, rhs, msg ) GEOS_ERROR_IF_OP_MSG( lhs, <=, >, rhs, msg )
 
 /**
  * @brief Raise a hard error if one value compares less than or equal to the other.
@@ -689,7 +689,7 @@
  * @param rhs expression to be evaluated and used as right-hand side in comparison
  * @param msg a message to log (any expression that can be stream inserted)
  */
-#define GEOS_ERROR_IF_LE_MSG( lhs, rhs, msg ) LOG_GEOS_ERROR_IF_LE_MSG( lhs, rhs, "***** Rank " << ::geos::logger::internal::rankString << ": " << msg )
+#define GEOS_ERROR_IF_LE_MSG( lhs, rhs, msg ) GEOS_LOG_ERROR_IF_LE_MSG( lhs, rhs, "***** Rank " << ::geos::logger::internal::rankString << ": " << msg )
 
 /**
  * @brief Throw an exception if one value compares less than or equal to the other.
@@ -698,7 +698,7 @@
  * @param msg a message to log (any expression that can be stream inserted)
  * @param TYPE the type of exception to throw
  */
-#define LOG_GEOS_THROW_IF_LE_MSG( lhs, rhs, msg, TYPE ) GEOS_THROW_IF_OP_MSG( lhs, <=, >, rhs, msg, TYPE )
+#define GEOS_LOG_THROW_IF_LE_MSG( lhs, rhs, msg, TYPE ) GEOS_THROW_IF_OP_MSG( lhs, <=, >, rhs, msg, TYPE )
 
 /**
  * @brief Throw an exception if one value compares less than or equal to the other.
@@ -707,7 +707,7 @@
  * @param msg a message to log (any expression that can be stream inserted)
  * @param TYPE the type of exception to throw
  */
-#define GEOS_THROW_IF_LE_MSG( lhs, rhs, msg, TYPE ) LOG_GEOS_THROW_IF_LE_MSG( lhs, rhs, "***** Rank " << ::geos::logger::internal::rankString << ": " << msg, TYPE )
+#define GEOS_THROW_IF_LE_MSG( lhs, rhs, msg, TYPE ) GEOS_LOG_THROW_IF_LE_MSG( lhs, rhs, "***** Rank " << ::geos::logger::internal::rankString << ": " << msg, TYPE )
 
 /**
  * @brief Raise a hard error if one value compares less than or equal to the other.
