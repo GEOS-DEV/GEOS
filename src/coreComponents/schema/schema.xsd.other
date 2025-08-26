@@ -451,7 +451,12 @@
 		</xsd:choice>
 	</xsd:complexType>
 	<xsd:complexType name="FiniteElementSpaceType" />
-	<xsd:complexType name="LinearSolverParametersType" />
+	<xsd:complexType name="LinearSolverParametersType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="Block" type="BlockType" maxOccurs="1" />
+		</xsd:choice>
+	</xsd:complexType>
+	<xsd:complexType name="BlockType" />
 	<xsd:complexType name="NonlinearSolverParametersType">
 		<!--newtonNumberOfIterations => Number of Newton's iterations.-->
 		<xsd:attribute name="newtonNumberOfIterations" type="integer" />
@@ -486,12 +491,13 @@
 		<!--fractureStencil => (no description available)-->
 		<xsd:attribute name="fractureStencil" type="geos_SurfaceElementStencil" />
 		<!--targetRegions => List of regions to build the stencil for-->
-		<xsd:attribute name="targetRegions" type="geos_mapBase_lt_string_cm_-std_vector_lt_string_cm_-std_allocator_lt_string-_gt_-_gt__cm_-std_integral_constant_lt_bool_cm_-true_gt_-_gt_" />
+		<xsd:attribute name="targetRegions" type="geos_mapBase_lt_string_cm_-geos_internal_StdVectorWrapper_lt_string_cm_-std_allocator_lt_string-_gt__cm_-false_gt__cm_-std_integral_constant_lt_bool_cm_-true_gt_-_gt_" />
 	</xsd:complexType>
 	<xsd:complexType name="OutputsType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="Blueprint" type="BlueprintType" />
 			<xsd:element name="ChomboIO" type="ChomboIOType" />
+			<xsd:element name="MemoryStats" type="MemoryStatsType" />
 			<xsd:element name="Python" type="PythonType" />
 			<xsd:element name="Restart" type="RestartType" />
 			<xsd:element name="Silo" type="SiloType" />
@@ -501,6 +507,7 @@
 	</xsd:complexType>
 	<xsd:complexType name="BlueprintType" />
 	<xsd:complexType name="ChomboIOType" />
+	<xsd:complexType name="MemoryStatsType" />
 	<xsd:complexType name="PythonType" />
 	<xsd:complexType name="RestartType" />
 	<xsd:complexType name="SiloType" />
@@ -517,6 +524,7 @@
 	<xsd:complexType name="ParameterType" />
 	<xsd:complexType name="SolversType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="AcousticDG" type="AcousticDGType" />
 			<xsd:element name="AcousticElasticSEM" type="AcousticElasticSEMType" />
 			<xsd:element name="AcousticFirstOrderSEM" type="AcousticFirstOrderSEMType" />
 			<xsd:element name="AcousticSEM" type="AcousticSEMType" />
@@ -568,14 +576,50 @@
 			<xsd:element name="SurfaceGenerator" type="SurfaceGeneratorType" />
 		</xsd:choice>
 	</xsd:complexType>
-	<xsd:complexType name="AcousticElasticSEMType">
+	<xsd:complexType name="AcousticDGType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
 			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
 			<xsd:element name="SolverStatistics" type="SolverStatisticsType" />
 		</xsd:choice>
+		<!--indexSeismoTrace => Count for output pressure at receivers-->
+		<xsd:attribute name="indexSeismoTrace" type="integer" />
+		<!--linearDASVectorX => X component of the linear DAS direction vector-->
+		<xsd:attribute name="linearDASVectorX" type="real32_array" />
+		<!--linearDASVectorY => Y component of the linear DAS direction vector-->
+		<xsd:attribute name="linearDASVectorY" type="real32_array" />
+		<!--linearDASVectorZ => Z component of the linear DAS direction vector-->
+		<xsd:attribute name="linearDASVectorZ" type="real32_array" />
 		<!--numTimestepsSinceLastDtCut => (no description available)-->
 		<xsd:attribute name="numTimestepsSinceLastDtCut" type="integer" />
+		<!--pressureNp1AtReceivers => Pressure value at each receiver for each timestep-->
+		<xsd:attribute name="pressureNp1AtReceivers" type="real32_array2d" />
+		<!--receiverConstants => Constant part of the receiver for the nodes listed in m_receiverNodeIds-->
+		<xsd:attribute name="receiverConstants" type="real64_array2d" />
+		<!--receiverElem => Element containing the receivers-->
+		<xsd:attribute name="receiverElem" type="integer_array" />
+		<!--receiverIsLocal => Flag that indicates whether the receiver is local to this MPI rank-->
+		<xsd:attribute name="receiverIsLocal" type="integer_array" />
+		<!--receiverNodeIds => Indices of the nodes (in the right order) for each receiver point-->
+		<xsd:attribute name="receiverNodeIds" type="integer_array2d" />
+		<!--receiverRegion => Region containing the receivers-->
+		<xsd:attribute name="receiverRegion" type="integer_array" />
+		<!--sourceConstants => Constant part of the source for the nodes listed in m_sourceNodeIds-->
+		<xsd:attribute name="sourceConstants" type="real64_array2d" />
+		<!--sourceElem => Element containing the sources-->
+		<xsd:attribute name="sourceElem" type="integer_array" />
+		<!--sourceIsAccessible => Flag that indicates whether the source is local to this MPI rank-->
+		<xsd:attribute name="sourceIsAccessible" type="integer_array" />
+		<!--sourceNodeIds => Indices of the nodes (in the right order) for each source point-->
+		<xsd:attribute name="sourceNodeIds" type="integer_array2d" />
+		<!--sourceRegion => Region containing the sources-->
+		<xsd:attribute name="sourceRegion" type="integer_array" />
+		<!--sourceValue => Array which contains the value of the Ricker wavelets at each time-steps-->
+		<xsd:attribute name="sourceValue" type="real32_array2d" />
+		<!--timeStep => TimeStep computed with the power iteration method (if we don't want to compute it, it is initialized with the XML value-->
+		<xsd:attribute name="timeStep" type="real64" />
+		<!--usePML => Flag to apply PML-->
+		<xsd:attribute name="usePML" type="integer" />
 	</xsd:complexType>
 	<xsd:complexType name="SolverStatisticsType">
 		<!--numDiscardedLinearIterations => Cumulative number of discarded linear iterations-->
@@ -594,6 +638,15 @@
 		<xsd:attribute name="numTimeStepCuts" type="integer" />
 		<!--numTimeSteps => Number of time steps-->
 		<xsd:attribute name="numTimeSteps" type="integer" />
+	</xsd:complexType>
+	<xsd:complexType name="AcousticElasticSEMType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
+			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
+			<xsd:element name="SolverStatistics" type="SolverStatisticsType" />
+		</xsd:choice>
+		<!--numTimestepsSinceLastDtCut => (no description available)-->
+		<xsd:attribute name="numTimestepsSinceLastDtCut" type="integer" />
 	</xsd:complexType>
 	<xsd:complexType name="AcousticFirstOrderSEMType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -1441,7 +1494,7 @@
 			<xsd:element name="MeshBodies" type="MeshBodiesType" />
 		</xsd:choice>
 		<!--Neighbors => (no description available)-->
-		<xsd:attribute name="Neighbors" type="std_vector_lt_geos_NeighborCommunicator_cm_-std_allocator_lt_geos_NeighborCommunicator_gt_-_gt_" />
+		<xsd:attribute name="Neighbors" type="geos_internal_StdVectorWrapper_lt_geos_NeighborCommunicator_cm_-std_allocator_lt_geos_NeighborCommunicator_gt__cm_-false_gt_" />
 		<!--partitionManager => (no description available)-->
 		<xsd:attribute name="partitionManager" type="geos_PartitionBase" />
 	</xsd:complexType>

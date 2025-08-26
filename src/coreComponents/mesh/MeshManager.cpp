@@ -36,6 +36,8 @@ MeshManager::MeshManager( string const & name,
   Group( name, parent )
 {
   setInputFlags( InputFlags::REQUIRED );
+
+  addLogLevel< logInfo::ImportFields >();
 }
 
 MeshManager::~MeshManager()

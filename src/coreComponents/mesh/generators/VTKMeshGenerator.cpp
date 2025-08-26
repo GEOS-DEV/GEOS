@@ -85,11 +85,11 @@ VTKMeshGenerator::VTKMeshGenerator( string const & name,
                     " If set to a negative value, the GlobalId arrays in the input mesh are not used, and generated global Ids are automatically generated."
                     " If set to a positive value, the GlobalId arrays in the input mesh are used and required, and the simulation aborts if they are not available" );
 
-  addLogLevel< logInfo::VTKSteps >();
-
   registerWrapper( viewKeyStruct::dataSourceString(), &m_dataSourceName ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Name of the VTK data source" );
+
+  addLogLevel< logInfo::VTKSteps >();
 }
 
 void VTKMeshGenerator::postInputInitialization()

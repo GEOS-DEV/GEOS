@@ -21,7 +21,6 @@
 
 #include "MultiphasePoromechanics.hpp"
 
-#include "dataRepository/LogLevelsInfo.hpp"
 #include "constitutive/fluid/multifluid/MultiFluidBase.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseHybridFVM.hpp"
 #include "physicsSolvers/multiphysics/poromechanicsKernels/MultiphasePoromechanics.hpp"
@@ -48,9 +47,7 @@ template< typename FLOW_SOLVER, typename MECHANICS_SOLVER >
 MultiphasePoromechanics< FLOW_SOLVER, MECHANICS_SOLVER >::MultiphasePoromechanics( const string & name,
                                                                                    Group * const parent )
   : Base( name, parent )
-{
-  Base::template addLogLevel< logInfo::LinearSolverConfiguration >();
-}
+{ }
 
 template< typename FLOW_SOLVER, typename MECHANICS_SOLVER >
 void MultiphasePoromechanics< FLOW_SOLVER, MECHANICS_SOLVER >::postInputInitialization()
@@ -313,9 +310,9 @@ void MultiphasePoromechanics<>::setMGRStrategy()
       linearSolverParameters.mgr.strategy = LinearSolverParameters::MGR::StrategyType::multiphasePoromechanics;
     }
   }
-  GEOS_LOG_LEVEL_RANK_0( logInfo::LinearSolverConfiguration
-                         , GEOS_FMT( "{}: MGR strategy set to {}", getName(),
-                                     EnumStrings< LinearSolverParameters::MGR::StrategyType >::toString( linearSolverParameters.mgr.strategy )));
+  GEOS_LOG_LEVEL_RANK_0( logInfo::LinearSolver,
+                         GEOS_FMT( "{}: MGR strategy set to {}", getName(),
+                                   EnumStrings< LinearSolverParameters::MGR::StrategyType >::toString( linearSolverParameters.mgr.strategy )));
 }
 
 template<>
@@ -340,7 +337,7 @@ void MultiphasePoromechanics< CompositionalMultiphaseReservoirAndWells<>, SolidM
   {
     linearSolverParameters.mgr.strategy = LinearSolverParameters::MGR::StrategyType::multiphasePoromechanicsReservoirFVM;
   }
-  GEOS_LOG_LEVEL_RANK_0( logInfo::LinearSolverConfiguration,
+  GEOS_LOG_LEVEL_RANK_0( logInfo::LinearSolver,
                          GEOS_FMT( "{}: MGR strategy set to {}", getName(),
                                    EnumStrings< LinearSolverParameters::MGR::StrategyType >::toString( linearSolverParameters.mgr.strategy )));
 }

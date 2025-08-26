@@ -57,9 +57,7 @@ public:
     this->getWrapper< string >( PhysicsSolverBase::viewKeyStruct::discretizationString() ).
       setInputFlag( dataRepository::InputFlags::FALSE );
 
-    addLogLevel< logInfo::Convergence >();
     addLogLevel< logInfo::Coupling >();
-    addLogLevel< logInfo::TimeStep >();
   }
 
   /// deleted copy constructor

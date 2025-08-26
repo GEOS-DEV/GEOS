@@ -72,8 +72,7 @@ WellGeneratorBase::WellGeneratorBase( string const & name, Group * const parent 
     setSizedFromParent( 0 ).
     setDescription( "Name of the set of constraints associated with this well" );
 
-  addLogLevel< logInfo::InternalWell >();
-  addLogLevel< logInfo::PerforationTable >();
+  addLogLevel< logInfo::GenerateWell >();
 }
 
 Group * WellGeneratorBase::createChild( string const & childKey, string const & childName )
@@ -136,17 +135,11 @@ void WellGeneratorBase::generateWellGeometry( )
   // make sure that the perforation locations are valid
   checkPerforationLocationsValidity();
 
-  if( isLogLevelActive< logInfo::PerforationTable >( this->getLogLevel() ) && MpiWrapper::commRank() == 0 )
+  if( isLogLevelActive< logInfo::GenerateWell >( this->getLogLevel() ) && MpiWrapper::commRank() == 0 )
   {
     logInternalWell();
-  }
-
-  if( isLogLevelActive< logInfo::InternalWell >( this->getLogLevel()) && MpiWrapper::commRank() == 0 )
-  {
     logPerforationTable();
   }
-
-
 }
 
 void WellGeneratorBase::postInputInitialization()
