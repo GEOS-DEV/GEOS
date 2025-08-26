@@ -8,7 +8,6 @@
       targetRegions="{ Domain, Fracture }"
       initialDt="10"
       discretization="FE1"
-      timeIntegrationOption="QuasiStatic"
       logLevel="1"
       contactPenaltyStiffness="1.0e12">
       <NonlinearSolverParameters

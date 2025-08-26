@@ -187,17 +187,20 @@ void EpetraVector::axpby( real64 const alpha,
   touch();
 }
 
-void EpetraVector::pointwiseProduct( EpetraVector const & x,
-                                     EpetraVector & y ) const
+void EpetraVector::pointwiseProduct( EpetraVector const & x )
 {
   GEOS_LAI_ASSERT( ready() );
   GEOS_LAI_ASSERT( x.ready() );
-  GEOS_LAI_ASSERT( y.ready() );
-  GEOS_LAI_ASSERT_EQ( globalSize(), x.globalSize() );
-  GEOS_LAI_ASSERT_EQ( globalSize(), y.globalSize() );
+  GEOS_LAI_ASSERT_EQ( localSize(), x.localSize() );
 
-  GEOS_LAI_CHECK_ERROR( ( y.unwrapped() ).Multiply( 1.0, unwrapped(), x.unwrapped(), 0.0 ) );
-  y.touch();
+  GEOS_LAI_CHECK_ERROR( ( unwrapped() ).Multiply( 1.0, unwrapped(), x.unwrapped(), 0.0 ) );
+  touch();
+}
+
+void EpetraVector::pointwiseDivide( EpetraVector const & x )
+{
+  GEOS_UNUSED_VAR( x );
+  GEOS_ERROR( "Not implemented!!!" );
 }
 
 real64 EpetraVector::norm1() const

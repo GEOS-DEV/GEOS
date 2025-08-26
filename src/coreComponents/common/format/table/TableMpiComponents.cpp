@@ -52,6 +52,7 @@ void TableTextMpiOutput::toStream< TableData >( std::ostream & tableOutput,
 
   CellLayoutRows headerCellsLayout;
   CellLayoutRows dataCellsLayout;
+  CellLayoutRows errorCellsLayout;
   size_t tableTotalWidth = 0;
 
   {
@@ -59,7 +60,7 @@ void TableTextMpiOutput::toStream< TableData >( std::ostream & tableOutput,
       stretchColumnsByRanks( columnsWidth, status );
     };
     initalizeTableGrids( m_tableLayout, tableData,
-                         headerCellsLayout, dataCellsLayout,
+                         headerCellsLayout, dataCellsLayout, errorCellsLayout,
                          tableTotalWidth, columnWidthModifier );
     status.m_sepLine = string( tableTotalWidth, m_horizontalLine );
   }
@@ -74,7 +75,8 @@ void TableTextMpiOutput::toStream< TableData >( std::ostream & tableOutput,
 
   if( status.m_isMasterRank )
   {
-    outputTableBottom( tableOutput, m_tableLayout, status.m_sepLine, status.m_hasContent );
+    outputTableBottom( tableOutput, m_tableLayout,errorCellsLayout,
+                       status.m_sepLine, status.m_hasContent );
     tableOutput.flush();
   }
 }
