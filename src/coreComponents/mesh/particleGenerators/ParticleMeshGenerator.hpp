@@ -132,13 +132,13 @@ private:
   // Path m_headerFilePath;
 
   /// String array of particle block names associated with the particle mesh
-  array1d< string > m_blockNames;
+  string_array m_blockNames;
 
   /// String array of particle material names associated with the particle mesh
-  array1d< string > m_materialNames;
+  string_array m_materialNames;
 
   /// String array listing the particle types present
-  array1d< string > m_particleTypes;
+  string_array m_particleTypes;
 };
 
 ENUM_STRINGS( ParticleMeshGenerator::ParticleColumnHeaders,

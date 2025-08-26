@@ -5919,9 +5919,9 @@ real64 SolidMechanicsMPM::computeNeighborList( ParticleManager & particleManager
       kmax = LvArray::math::min( kmax, nzbins-1 );
 
       neighborCountsView[pp] = 0; //Think this might have been a bug leading to seg fault when a index was greated than size of neighborCountsView (e.g. active particle indices size)
-      localIndex particleIndexOffset = 0;
+      localIndex particleIndexOffset2 = 0;
       // Loop all over subRegions
-      for( localIndex subRegionIndex = 0; subRegionIndex < m_numberOfSubRegions; ++subRegionIndex)
+      for( localIndex subRegionIndex2 = 0; subRegionIndex2 < m_numberOfSubRegions; ++subRegionIndex2)
       {
         // Loop over bins
         for( localIndex iBin=imin; iBin<=imax; ++iBin )
@@ -5930,13 +5930,13 @@ real64 SolidMechanicsMPM::computeNeighborList( ParticleManager & particleManager
           {
             for( localIndex kBin=kmin; kBin<=kmax; ++kBin )
             {
-              localIndex binIndex = subRegionIndex * nbins + iBin + jBin * nxbins + kBin * nxbins * nybins;
+              localIndex binIndex = subRegionIndex2 * nbins + iBin + jBin * nxbins + kBin * nxbins * nybins;
 
               for( localIndex bb = 0; bb < binsView.sizeOfArray( binIndex ); ++bb )
               {
                 localIndex b = binsView[binIndex][bb];
                 real64 xBA[3] = { 0.0 };
-                LvArray::tensorOps::copy< 3 >(xBA, allParticleCentersView[particleIndexOffset + b]);
+                LvArray::tensorOps::copy< 3 >(xBA, allParticleCentersView[particleIndexOffset2 + b]);
                 LvArray::tensorOps::subtract< 3 >(xBA, xA[a]);
                 if( LvArray::tensorOps::l2NormSquared< 3 >(xBA) <= neighborRadiusSquared )
                 {
@@ -5947,7 +5947,7 @@ real64 SolidMechanicsMPM::computeNeighborList( ParticleManager & particleManager
             }
           }
         }
-        particleIndexOffset += subRegionSizesView[subRegionIndex];
+        particleIndexOffset2 += subRegionSizesView[subRegionIndex2];
       }
     } );
 
@@ -5997,8 +5997,8 @@ real64 SolidMechanicsMPM::computeNeighborList( ParticleManager & particleManager
 
       // Inner subregion loop
       localIndex neighborCount = 0;
-      localIndex particleIndexOffset = 0;
-      for( localIndex subRegionIndex = 0; subRegionIndex < m_numberOfSubRegions; ++subRegionIndex )
+      localIndex particleIndexOffset3 = 0;
+      for( localIndex subRegionIndex2 = 0; subRegionIndex2 < m_numberOfSubRegions; ++subRegionIndex2 )
       {
         // Loop over bins
         for( localIndex iBin=imin; iBin<=imax; ++iBin )
@@ -6007,21 +6007,21 @@ real64 SolidMechanicsMPM::computeNeighborList( ParticleManager & particleManager
           {
             for( localIndex kBin=kmin; kBin<=kmax; ++kBin )
             {
-              localIndex binIndex = subRegionIndex * nbins + iBin + jBin * nxbins + kBin * nxbins * nybins;
+              localIndex binIndex = subRegionIndex2 * nbins + iBin + jBin * nxbins + kBin * nxbins * nybins;
               
               for( localIndex bb = 0; bb < binsView.sizeOfArray( binIndex ); ++bb )
               {
                 localIndex b = binsView[binIndex][bb];
                 real64 xBA[3] = { 0.0 };
-                LvArray::tensorOps::copy< 3 >( xBA, allParticleCentersView[particleIndexOffset + b] );
+                LvArray::tensorOps::copy< 3 >( xBA, allParticleCentersView[particleIndexOffset3 + b] );
                 LvArray::tensorOps::subtract< 3 >( xBA, xA[a] );
                 if( LvArray::tensorOps::l2NormSquared< 3 >(xBA) <= neighborRadiusSquared )
                 {
-                  neighborRegions[pp][neighborCount] = regionIndicesOfSubRegionsView[subRegionIndex];
-                  neighborSubRegions[pp][neighborCount] = subRegionIndicesInRegionsView[subRegionIndex];
+                  neighborRegions[pp][neighborCount] = regionIndicesOfSubRegionsView[subRegionIndex2];
+                  neighborSubRegions[pp][neighborCount] = subRegionIndicesInRegionsView[subRegionIndex2];
                   neighborIndices[pp][neighborCount] = b;
-                  // neighborRegions[a][neighborCount] = regionIndicesOfSubRegionsView[subRegionIndex];
-                  // neighborSubRegions[a][neighborCount] = subRegionIndicesInRegionsView[subRegionIndex];
+                  // neighborRegions[a][neighborCount] = regionIndicesOfSubRegionsView[subRegionIndex2];
+                  // neighborSubRegions[a][neighborCount] = subRegionIndicesInRegionsView[subRegionIndex2];
                   // neighborIndices[a][neighborCount] = b;
                   ++neighborCount;
                 }
@@ -6029,7 +6029,7 @@ real64 SolidMechanicsMPM::computeNeighborList( ParticleManager & particleManager
             }
           }
         }
-        particleIndexOffset += subRegionSizesView[subRegionIndex];
+        particleIndexOffset3 += subRegionSizesView[subRegionIndex2];
       }
     } );
     
@@ -9831,7 +9831,7 @@ void SolidMechanicsMPM::particleToGrid( real64 const time_n,
         particleContributionToGrid = particleSurfaceFlag[p] == 1 || particleSurfaceFlag[p] == 2 || particleSurfaceFlag[p] == 3 || particleSurfaceFlag[p] == 4 ? 1.0 : particleDamage[p];
         RAJA::atomicMax( parallelDeviceAtomic{}, &gridMaxDamage[mappedNode][fieldIndex], particleContributionToGrid );
 
-        bool hasSurfaceNormal = LvArray::tensorOps::l2Norm< 3 >( particleSurfaceNormal[p] ); // Change this to l2norm squared for computational efficiency
+        bool hasSurfaceNormal = LvArray::tensorOps::l2Norm< 3 >( particleSurfaceNormal[p] ) > 1e-16; // Change this to l2norm squared for computational efficiency
         real64 surfacePositionAlongNormal = 0.0;
         if( hasContact == 1 && hasSurfaceNormal )
         {

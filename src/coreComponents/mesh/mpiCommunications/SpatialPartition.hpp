@@ -140,8 +140,6 @@ public:
   void setSizes( real64 const ( &min )[ 3 ],
                  real64 const ( &max )[ 3 ] );
 
-  void initializeNeighbors();
-
   void updateSizes( arrayView1d< real64 > const domainL,
                     real64 const dt );
 

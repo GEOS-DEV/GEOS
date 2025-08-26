@@ -323,7 +323,7 @@ private:
         int startingIndex = 0;
         int endingIndex = 0;
         int block = 0;
-        for( block=0; block<m_nElems[i].size(); ++block )
+        for( block=0; block < m_nElems[i].size(); ++block )
         {
           startingIndex = endingIndex;
           endingIndex = startingIndex + m_nElems[i][block];

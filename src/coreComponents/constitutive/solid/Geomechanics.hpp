@@ -21,6 +21,8 @@
 #ifndef GEOS_CONSTITUTIVE_SOLID_GEOMECHANICS_HPP_
 #define GEOS_CONSTITUTIVE_SOLID_GEOMECHANICS_HPP_
 
+#define FLOAT_TOLERANCE 1e-16
+
 #include "SolidBase.hpp"
 #include "InvariantDecompositions.hpp"
 #include "PropertyConversions.hpp"
@@ -1085,6 +1087,8 @@ void GeomechanicsUpdates::computeElasticProperties( real64 const ( &stress )[6],
 	bulk = m_b0;
 	shear = m_g0;
 
+#define TOLERANCE_FLOAT 1e-16
+
 	// To be thermodynamically consistent, the shear modulus in an isotropic model
 	// must be constant, but the bulk modulus can depend on pressure.  However, this
 	// leads to a Poisson's ratio that approaches 0.5 at high pressures, which is
@@ -1104,7 +1108,8 @@ void GeomechanicsUpdates::computeElasticProperties( real64 const ( &stress )[6],
         {
 			real64 expb2byI1 = LvArray::math::exp( m_b2 / I1 );
 			bulk = bulk + m_b1 * expb2byI1;
-			if(m_g1 != 0.0 && m_g2 != 0.0){
+			if( LvArray::math::abs(m_g1) > FLOAT_TOLERANCE && 
+          LvArray::math::abs(m_g2) > FLOAT_TOLERANCE ){
 				real64 nu = m_g1 + m_g2 * expb2byI1;
 				shear = 1.5 * bulk * ( 1.0 - 2.0 * nu ) / ( 1.0 + nu );
 			}
@@ -1120,8 +1125,9 @@ void GeomechanicsUpdates::computeElasticProperties( real64 const ( &stress )[6],
 
     // In  compression, or with fluid effects if the strain is more compressive
     // than the zero fluid pressure volumetric strain:
-	if ( evp <= ev0 && Kf != 0.0 )
-    {   // ..........................................................Undrained
+	if ( evp <= ev0 && 
+       LvArray::math::abs(Kf) > FLOAT_TOLERANCE )
+  {   // ..........................................................Undrained
 		// Compute the porosity from the strain using Homel's simplified model, and
 		// then use this in the Biot-Gassmann formula to compute the bulk modulus.
 
@@ -1343,7 +1349,7 @@ real64 GeomechanicsUpdates::computeX( const real64 & evp,
       X = m_p0 * LvArray::math::pow( 1.0 + evp, 1.0 / ( m_p0 * m_p1 * m_p3 ) );
     }
 
-    if( Kf !=0.0 && evp <= ev0 ) { // ------------------------------------------- Fluid Effects
+    if( LvArray::math::abs(Kf) > FLOAT_TOLERANCE && evp <= ev0 ) { // ------------------------------------------- Fluid Effects
       // First we evaluate the elastic volumetric strain to yield from the
       // empirical crush curve (Xfit) and bulk modulus (Kfit) formula for
       // the drained material.  Xfit was computed as X above.
@@ -1573,13 +1579,15 @@ int GeomechanicsUpdates::computeSubstep( real64 const ( & D )[6],         // str
                                      S_0,
                                      d_ep_0 );
 
-	if (returnFlag!=0){
+	if ( returnFlag !=0 )
+  {
 		goto failedSubstep;
 	}
 
 	// If there is no porosity (p3=0) and no fluid effects (Kf=0) then the nonhardening
 	// return will be the solution
-	if ( (m_p3 == 0.0)&&(Kf==0.0) ){
+	if ( ( LvArray::math::abs(m_p3) < FLOAT_TOLERANCE ) && ( LvArray::math::abs(Kf) < FLOAT_TOLERANCE ) )
+  {
         Zeta_new = Zeta_old,
 		X_new = X_old;
 
@@ -2028,7 +2036,7 @@ int GeomechanicsUpdates::nonHardeningReturn( const real64 & I1_trial,           
   rJ2_new = r_to_rJ2*r_0;
 
   LvArray::tensorOps::copy< 6 >( S_new, S_trial );
-  if ( rJ2_trial != 0.0 )
+  if ( LvArray::math::abs(rJ2_trial) > FLOAT_TOLERANCE )
   {
 	  // S_new = S_trial; //S_trial*rJ2_new/rJ2_trial;
 	  // S_new *= rJ2_new/rJ2_trial;
@@ -2284,7 +2292,8 @@ real64 GeomechanicsUpdates::computedZetadevp( real64 const & fluid_pressure_init
   // plastic strain (evp).
   real64 dZetadevp = 0.0;           // Evolution rate of isotropic backstress
 
-  if (evp <= ev0 && Kf != 0.0) { // .................................... Fluid effects are active
+  if ( evp <= ev0 &&
+       LvArray::math::abs(Kf) > FLOAT_TOLERANCE ) { // .................................... Fluid effects are active
     real64 pfi = fluid_pressure_initial; // initial fluid pressure
 
     // This is an expensive calculation, but fasterexp() seemed to cause errors.
@@ -2316,35 +2325,47 @@ void GeomechanicsUpdates::computeLimitParameters( real64 & a1,
  	real64 peakT1_h;
   if (m_fSlope > 0.0)
   {
-     peakT1_h = m_peakT1 + hardening/m_fSlope;
+     peakT1_h = m_peakT1 + hardening / m_fSlope;
   } 
   else
   {
     peakT1_h = m_peakT1;
   }
 
-  if (m_fSlope > 0.0 && m_peakT1 >= 0.0 && m_stren == 0.0 && m_ySlope == 0.0)
+  if ( m_fSlope > 0.0 && 
+       m_peakT1 >= 0.0 && 
+       LvArray::math::abs(m_stren) < FLOAT_TOLERANCE && 
+       LvArray::math::abs(m_ySlope) < FLOAT_TOLERANCE )
   {// ----------------------------------------------Linear Drucker-Prager
     a1 = m_peakT1 * m_fSlope;
     a2 = 0.0;
     a3 = 0.0;
     a4 = m_fSlope;
   }
-  else if (m_fSlope == 0.0 && m_peakT1 == 0.0 && m_stren > 0.0 && m_ySlope == 0.0)
+  else if ( LvArray::math::abs(m_fSlope) < FLOAT_TOLERANCE &&
+            LvArray::math::abs(m_peakT1) < FLOAT_TOLERANCE &&
+            m_stren > 0.0 &&
+            LvArray::math::abs(m_ySlope) < FLOAT_TOLERANCE )
   { // ------------------------------------------------------- Von Mises
     a1 = stren_h;
     a2 = 0.0;
     a3 = 0.0;
     a4 = 0.0;
   }
-  else if (m_fSlope > 0.0 && m_ySlope  == 0.0 && m_stren > 0.0 && m_peakT1 == 0.0)
+  else if ( m_fSlope > 0.0 &&
+            LvArray::math::abs(m_ySlope) < FLOAT_TOLERANCE &&
+            m_stren > 0.0 &&
+            LvArray::math::abs(m_peakT1) < FLOAT_TOLERANCE )
   { // ------------------------------------------------------- 0 PEAKI1 to vonMises
     a1 = stren_h;
     a2 = m_fSlope / stren_h;
     a3 = stren_h;
     a4 = 0.0;
   }
-  else if (m_fSlope > m_ySlope && m_ySlope > 0.0 && m_stren > m_ySlope*m_peakT1 && m_peakT1 >= 0.0)
+  else if ( m_fSlope > m_ySlope &&
+            m_ySlope > 0.0 &&
+            m_stren > m_ySlope * m_peakT1 &&
+            m_peakT1 >= 0.0 )
   { // ------------------------------------------------------- Nonlinear Drucker-Prager
     a1 = stren_h;
     a2 = (m_fSlope-m_ySlope )/(stren_h-m_ySlope *peakT1_h);

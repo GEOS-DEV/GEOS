@@ -574,6 +574,7 @@ void InternalMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockMa
     m_max[1] = m_vertices[1].back();
     m_max[2] = m_vertices[2].back();
 
+    partition.setPeriodic( m_periodic );
     partition.setSizes( m_min, m_max );
   }
 
@@ -586,7 +587,7 @@ void InternalMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockMa
 
 //  bool isRadialWithOneThetaPartition = false;
 
-  // This should probably handled elsewhere:
+  // This should probably be handled elsewhere:
   int aa = 0;
   for( auto & cellBlockName : m_regionNames )
   {
@@ -611,8 +612,7 @@ void InternalMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockMa
     {
       m_numElemsTotal[dim] += m_nElems[dim][block];
     }
-    array1d< int > const parts = partition.getPartitions();
-    // array1d< int > const & parts = partition.getPartitions(); // develop branch
+    array1d< int > const & parts = partition.getPartitions();
     GEOS_ERROR_IF( parts[dim] > m_numElemsTotal[dim], "Number of partitions in a direction should not exceed the number of elements in that direction" );
 
     elemCenterCoords[dim].resize( m_numElemsTotal[dim] );
@@ -634,12 +634,9 @@ void InternalMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockMa
 
   for( int dim = 0; dim < m_dim; ++dim )
   {
-    //    firstElemIndexInPartition[i] = -1;
-    //    lastElemIndexInPartition[i] = -2;
     for( int k = 0; k < m_numElemsTotal[dim]; ++k )
     {
       if( partition.isCoordInPartition( elemCenterCoords[dim][k], dim ) )
-      // if( partition.isCoordInPartition( elemCenterCoords[dim][k], dim ) ) // develop branch
       {
         firstElemIndexInPartition[dim] = k;
         break;
@@ -651,7 +648,6 @@ void InternalMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockMa
       for( int k = firstElemIndexInPartition[dim]; k < m_numElemsTotal[dim]; ++k )
       {
         if( partition.isCoordInPartition( elemCenterCoords[dim][k], dim ) )
-        // if( partition.isCoordInPartition( elemCenterCoords[dim][k], dim ) ) // develop branch
         {
           lastElemIndexInPartition[dim] = k;
         }
@@ -738,14 +734,13 @@ void InternalMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockMa
     }
   }
 
-  localIndex numNodes = 1;
   integer numNodesInDir[3] = { 1, 1, 1 };
   for( int dim = 0; dim < m_dim; ++dim )
   {
     numNodesInDir[dim] = lastElemIndexInPartition[dim] - firstElemIndexInPartition[dim] + 2;
   }
   reduceNumNodesForPeriodicBoundary( partition, numNodesInDir );
-  numNodes = numNodesInDir[0] * numNodesInDir[1] * numNodesInDir[2];
+  localIndex numNodes = numNodesInDir[0] * numNodesInDir[1] * numNodesInDir[2];
 
   cellBlockManager.setNumNodes( numNodes );
 

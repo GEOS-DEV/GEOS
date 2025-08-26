@@ -110,7 +110,7 @@ SpatialPartition::SpatialPartition( string const & name,
 
   registerWrapper( viewKeyStruct::periodicString(), &m_periodic ).
     setApplyDefaultValue( 0 ).
-    setInputFlag( InputFlags::OPTIONAL ).
+    setInputFlag( InputFlags::FALSE ).
     setDescription( "periodic flag for each direction of mesh" );
 
   registerWrapper( viewKeyStruct::contactGhostMinString() , &m_contactGhostMin ).
@@ -283,21 +283,7 @@ void SpatialPartition::addNeighbors( const unsigned int idim,
 
 void SpatialPartition::setSizes( real64 const ( &min )[ 3 ],
                                 real64 const ( &max )[ 3 ] )
-{
-  // global values
-  LvArray::tensorOps::copy< 3 >( m_gridMin, min );
-  LvArray::tensorOps::copy< 3 >( m_gridMax, max );
-  LvArray::tensorOps::copy< 3 >( m_gridSize, max );
-  LvArray::tensorOps::subtract< 3 >( m_gridSize, min );
-
-  // block values
-  LvArray::tensorOps::copy< 3 >( m_blockSize, m_gridSize );
-
-  initializeNeighbors();
-}
-
-void SpatialPartition::initializeNeighbors()
-{
+{  
   {
     //get size of problem and decomposition
     m_size = MpiWrapper::commSize( MPI_COMM_GEOS );
@@ -335,57 +321,57 @@ void SpatialPartition::initializeNeighbors()
     MpiWrapper::commFree( cartcomm );
   }
 
-  // // global values
-  // LvArray::tensorOps::copy< 3 >( m_gridMin, min );
-  // LvArray::tensorOps::copy< 3 >( m_gridMax, max );
-  // LvArray::tensorOps::copy< 3 >( m_gridSize, max );
-  // LvArray::tensorOps::subtract< 3 >( m_gridSize, min );
+  // global values
+  LvArray::tensorOps::copy< 3 >( m_gridMin, min );
+  LvArray::tensorOps::copy< 3 >( m_gridMax, max );
+  LvArray::tensorOps::copy< 3 >( m_gridSize, max );
+  LvArray::tensorOps::subtract< 3 >( m_gridSize, min );
 
-  // // block values
-  // LvArray::tensorOps::copy< 3 >( m_blockSize, m_gridSize );
+  // block values
+  LvArray::tensorOps::copy< 3 >( m_blockSize, m_gridSize );
 
-  // LvArray::tensorOps::copy< 3 >( m_min, min );
-  // for( int i = 0; i < m_nsdof; ++i )
-  // {
-  //   const int nloc = m_partitions( i ) - 1;
-  //   const localIndex nlocl = static_cast< localIndex >(nloc);
-  //   if( m_partitionLocations[i].empty() )
-  //   {
-  //     // the default "even" spacing
-  //     m_blockSize[ i ] /= m_partitions( i );
-  //     m_min[ i ] += m_coords( i ) * m_blockSize[ i ];
-  //     m_max[ i ] = min[ i ] + (m_coords( i ) + 1) * m_blockSize[ i ];
+  LvArray::tensorOps::copy< 3 >( m_min, min );
+  for( int i = 0; i < m_nsdof; ++i )
+  {
+    const int nloc = m_partitions( i ) - 1;
+    const localIndex nlocl = static_cast< localIndex >(nloc);
+    if( m_partitionLocations[i].empty() )
+    {
+      // the default "even" spacing
+      m_blockSize[ i ] /= m_partitions( i );
+      m_min[ i ] += m_coords( i ) * m_blockSize[ i ];
+      m_max[ i ] = min[ i ] + (m_coords( i ) + 1) * m_blockSize[ i ];
 
-  //     m_partitionLocations[i].resize( nlocl );
-  //     for( localIndex j = 0; j < m_partitionLocations[ i ].size(); ++j )
-  //     {
-  //       m_partitionLocations[ i ][ j ] = (j+1) * m_blockSize[ i ];
-  //     }
-  //   }
-  //   else if( nlocl == m_partitionLocations[i].size() )
-  //   {
-  //     const int parIndex = m_coords[i];
-  //     if( parIndex == 0 )
-  //     {
-  //       m_min[i] = min[i];
-  //       m_max[i] = m_partitionLocations[i][parIndex];
-  //     }
-  //     else if( parIndex == nloc )
-  //     {
-  //       m_min[i] = m_partitionLocations[i][parIndex-1];
-  //       m_max[i] = max[i];
-  //     }
-  //     else
-  //     {
-  //       m_min[i] = m_partitionLocations[i][parIndex-1];
-  //       m_max[i] = m_partitionLocations[i][parIndex];
-  //     }
-  //   }
-  //   else
-  //   {
-  //     GEOS_ERROR( "SpatialPartition::setSizes(): number of partition locations does not equal number of partitions - 1\n" );
-  //   }
-  // }
+      m_partitionLocations[i].resize( nlocl );
+      for( localIndex j = 0; j < m_partitionLocations[ i ].size(); ++j )
+      {
+        m_partitionLocations[ i ][ j ] = (j+1) * m_blockSize[ i ];
+      }
+    }
+    else if( nlocl == m_partitionLocations[i].size() )
+    {
+      const int parIndex = m_coords[i];
+      if( parIndex == 0 )
+      {
+        m_min[i] = min[i];
+        m_max[i] = m_partitionLocations[i][parIndex];
+      }
+      else if( parIndex == nloc )
+      {
+        m_min[i] = m_partitionLocations[i][parIndex-1];
+        m_max[i] = max[i];
+      }
+      else
+      {
+        m_min[i] = m_partitionLocations[i][parIndex-1];
+        m_max[i] = m_partitionLocations[i][parIndex];
+      }
+    }
+    else
+    {
+      GEOS_ERROR( "SpatialPartition::setSizes(): number of partition locations does not equal number of partitions - 1\n" );
+    }
+  }
 }
 
 void SpatialPartition::updateSizes( arrayView1d< real64 > const domainL,
@@ -396,7 +382,7 @@ void SpatialPartition::updateSizes( arrayView1d< real64 > const domainL,
     real64 ratio = 1.0 + domainL[i] * dt;
     m_min[i] *= ratio;
     m_max[i] *= ratio;
-    //m_PartitionLocations[i] *= ratio; ?
+    //m_partitionLocations[i] *= ratio; ?
     m_blockSize[i] *= ratio;
     m_gridSize[i] *= ratio;
     m_gridMin[i] *= ratio;

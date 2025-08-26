@@ -86,8 +86,6 @@ void DomainPartition::setupBaseLevelMeshGlobalInfo()
   GEOS_MARK_FUNCTION;
 
 #if defined(GEOS_USE_MPI)
-  // PartitionBase & partition1 = getReference< PartitionBase >( groupKeys.partitionManager ); //keys::partitionManager );
-  // SpatialPartition & partition = dynamic_cast< SpatialPartition & >(partition1);
   SpatialPartition & partition = dynamic_cast< SpatialPartition & >( getGroup( groupKeys.partitionManager ) );
 
   const std::set< int > metisNeighborList = partition.getMetisNeighborList();
@@ -287,7 +285,6 @@ void DomainPartition::addNeighbors( const unsigned int idim,
                                     MPI_Comm & cartcomm,
                                     int * ncoords )
 {  
-  // PartitionBase & partition1 = getReference< PartitionBase >( keys::partitionManager );
   SpatialPartition & partition = dynamic_cast< SpatialPartition & >( getGroup( groupKeys.partitionManager ) ); // partition1);
 
   if( idim == partition.m_nsdof )
