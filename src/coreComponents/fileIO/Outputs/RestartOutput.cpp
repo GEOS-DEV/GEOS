@@ -24,14 +24,6 @@ namespace geos
 
 using namespace dataRepository;
 
-namespace logInfo
-{
-struct RestartOutputTimer : public OutputTimerBase
-{
-  std::string_view getDescription() const override { return "Restart output timing"; }
-};
-}
-
 RestartOutput::RestartOutput( string const & name,
                               Group * const parent ):
   OutputBase( name, parent )
@@ -55,17 +47,11 @@ bool RestartOutput::execute( real64 const GEOS_UNUSED_PARAM( time_n ),
     Group & rootGroup = this->getGroupByPath( "/Problem" );
     string const fileName = GEOS_FMT( "{}_restart_{:09}", getFileNameRoot(), cycleNumber );
     rootGroup.prepareToWrite();
-    writeTree( joinPath( OutputBase::getOutputDirectory(), fileName ), *(rootGroup.getConduitNode().parent()) );
+    writeTree( joinPath( getOutputDirectory(), fileName ), *(rootGroup.getConduitNode().parent()) );
     rootGroup.finishWriting();
   }
 
   return false;
-}
-
-logInfo::OutputTimerBase const & RestartOutput::getTimerCategory() const
-{
-  static logInfo::RestartOutputTimer timer;
-  return timer;
 }
 
 REGISTER_CATALOG_ENTRY( OutputBase, RestartOutput, string const &, Group * const )
