@@ -53,7 +53,7 @@ void testKernelDriver()
     for( localIndex q=0; q<numQuadraturePoints; ++q )
     {
       real64 N[numNodes] = {0};
-      Pk_Pyramid_BCD< 1 >::calcN( q, N, VDM_inv_view );
+      Pk_Pyramid_BCD< 1 >::calcN( q, VDM_inv_view, N );
       for( localIndex a=0; a<numNodes; ++a )
       {
         if( fabs( N[a] )<1e-9 )
@@ -172,7 +172,7 @@ void testKernelDriver()
   real64 gradNtest[numNodes][3];
   for( localIndex i = 0; i < numNodes; ++i )
   {
-    Pk_Pyramid_BCD< 1 >::calcGradN( coords[i], gradNtest, VDM_inv_view );
+    Pk_Pyramid_BCD< 1 >::calcGradN( coords[i], VDM_inv_view, gradNtest );
     EXPECT_FLOAT_EQ( gradNtest[0][0], gradPhi1test[i][0] );
     EXPECT_FLOAT_EQ( gradNtest[1][0], gradPhi2test[i][0] );
     EXPECT_FLOAT_EQ( gradNtest[2][0], gradPhi3test[i][0] );

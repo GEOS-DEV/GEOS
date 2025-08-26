@@ -224,6 +224,7 @@ public:
   /**
    * @brief Calculate the determinant of the jacobian on the face opposite to the given vertex
    * @param[in] face The index of the vertex opposite to the desired face
+   * @param[in] X The coordinates of the pyramid
    * @return the (absolute value of the) determinant of the Jacobian on the face
    */
   GEOS_HOST_DEVICE
@@ -386,7 +387,7 @@ public:
    *  point X.
    * @param[in] i,j,k Indexes of a modal point.
    * @param[in] X Coordinates in reference pyramid (array of size 3)
-   * @param[out] GradPsiX A real to pass back the modal function derivative values
+   * @param[out] gradPsiX A real to pass back the modal function derivative values
    */
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
@@ -474,11 +475,12 @@ public:
   /**
    * @brief Evaluate shape functions of a linear pyramid (5-node) at a quadrature point.
    * @param[in] q A quadrature point index.
+   * @param[in] VDM_inv The inverse of the VanDerMonde matrix
    * @param[out] N Array to store shape function values (array of size numNodes)
    */
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
-  static constexpr void calcN( localIndex q, real64 (& N)[numNodes], arrayView2d< real64 const > VDM_inv )
+  static constexpr void calcN( localIndex q, arrayView2d< real64 const > VDM_inv, real64 (& N)[numNodes] )
   {
 
     real64 PsiX[numNodes] = {0.0};
@@ -515,7 +517,7 @@ public:
    */
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
-  static constexpr void calcN( real64 const (&X)[3], real64 (& N)[numNodes], arrayView2d< real64 const > VDM_inv )
+  static constexpr void calcN( real64 const (&X)[3], arrayView2d< real64 const > VDM_inv, real64 (& N)[numNodes] )
   {
 
     real64 PsiX[numNodes] = {};
@@ -548,7 +550,7 @@ public:
    */
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
-  static constexpr void calcGradN( localIndex q, real64 (& gradN)[numNodes][3], arrayView2d< real64 const > VDM_inv )
+  static constexpr void calcGradN( localIndex q, arrayView2d< real64 const > VDM_inv, real64 (& gradN)[numNodes][3] )
   {
 
     real64 gradModal[numNodes][3] = {{}};
@@ -586,11 +588,11 @@ public:
    * @brief Evaluate shape functions of a linear pyramid (5-node) at a given point.
    * @param[in] X Coordinates in reference pyramid (array of size 3)
    * @param[in] VDM_inv The inverse of the VanDerMonde matrix
-   * @param[out] N Array to store shape function values (array of size numNodes)
+   * @param[out] gradN Array to store shape function values (array of size numNodes)
    */
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
-  static constexpr void calcGradN( real64 const (&X)[3], real64 (& gradN)[numNodes][3], arrayView2d< real64 const > VDM_inv )
+  static constexpr void calcGradN( real64 const (&X)[3], arrayView2d< real64 const > VDM_inv, real64 (& gradN)[numNodes][3] )
   {
 
     real64 gradModal[numNodes][3] = {{}};
@@ -664,7 +666,7 @@ public:
               real64 z_k = chi;
               real64 X[3] = {x_i, y_j, z_k};
 
-              calcN( X, N, VDM_inv );
+              calcN( X, VDM_inv, N );
 
               val += weight * N[a] * N[b];
 
@@ -720,7 +722,7 @@ public:
               real64 z_k = chi;
               real64 X[3] = {x_i, y_j, z_k};
 
-              calcGradN( X, gradN, VDM_inv );
+              calcGradN( X, VDM_inv, gradN );
               real64 dot = gradN[a][0] * gradN[b][0]
                            + gradN[a][1] * gradN[b][1]
                            + gradN[a][2] * gradN[b][2];
