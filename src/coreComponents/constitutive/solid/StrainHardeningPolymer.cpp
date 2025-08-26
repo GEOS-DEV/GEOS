@@ -29,8 +29,11 @@ StrainHardeningPolymer::StrainHardeningPolymer( string const & name, Group * con
   m_deformationGradient(),
   m_plasticStrain(),
   m_damage(),
+  m_temperature(),
   m_jacobian(),
   m_yieldStrength(),
+  m_defaultBulkModulus(),
+  m_defaultShearModulus(),
   m_strainHardeningSlope(),
   m_shearSofteningMagnitude(),
   m_shearSofteningShapeParameter1(),
@@ -38,6 +41,7 @@ StrainHardeningPolymer::StrainHardeningPolymer( string const & name, Group * con
   m_maximumStretch()
 {
   // register default values
+   
   registerWrapper( viewKeyStruct::strainHardeningSlopeString(), &m_strainHardeningSlope ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Strain hardening slope" );
@@ -58,6 +62,14 @@ StrainHardeningPolymer::StrainHardeningPolymer( string const & name, Group * con
     setApplyDefaultValue( DBL_MAX ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Default yield strength" );
+
+  registerWrapper( viewKeyStruct::defaultBulkModulusString(), &m_defaultBulkModulus ).
+    setInputFlag( InputFlags::REQUIRED ).
+    setDescription( "Temperature independent bulk modulus" );
+
+  registerWrapper( viewKeyStruct::defaultShearModulusString(), &m_defaultShearModulus ).
+    setInputFlag( InputFlags::REQUIRED ).
+    setDescription( "Temperature independent shear modulus" );
 
   registerWrapper( viewKeyStruct::maximumStretchString(), &m_maximumStretch ).
     setApplyDefaultValue( DBL_MAX ).
@@ -80,6 +92,11 @@ StrainHardeningPolymer::StrainHardeningPolymer( string const & name, Group * con
     setApplyDefaultValue( 0.0 ).
     setPlotLevel( PlotLevel::LEVEL_0 ).
     setDescription( "Array of quadrature point damage values" );
+
+  registerWrapper( viewKeyStruct::temperatureString(), &m_temperature ).
+    setApplyDefaultValue( 300.0 ).
+    setPlotLevel( PlotLevel::LEVEL_0 ).
+    setDescription( "Array of quadrature point temperature values" );
 
   registerWrapper( viewKeyStruct::jacobianString(), &m_jacobian ).
     setApplyDefaultValue( 1.0 ).
