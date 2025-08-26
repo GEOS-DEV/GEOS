@@ -11,7 +11,7 @@ set(testSources
     testQ3_Hexahedron_Lagrange_GaussLobatto.cpp
     testQ5_Hexahedron_Lagrange_GaussLobatto.cpp )
 
-set( dependencyList gtest linearAlgebra finiteElement ${parallelDeps} )
+set( dependencyList gtest finiteElement ${parallelDeps} )
 
 if( ENABLE_CUDA AND ENABLE_CUDA_NVTOOLSEXT )
   list( APPEND dependencyList CUDA::nvToolsExt )
@@ -24,6 +24,9 @@ foreach(test ${testSources})
                         SOURCES ${test}
                         OUTPUT_DIR ${TEST_OUTPUT_DIRECTORY}
                         DEPENDS_ON ${dependencyList} )
+
+    target_link_libraries(${test_name} PRIVATE 
+        -Wl,--whole-archive linearAlgebra -Wl,--no-whole-archive)
 
     geos_add_test( NAME ${test_name}
                    COMMAND ${test_name} )
