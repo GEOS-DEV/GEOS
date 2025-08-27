@@ -691,6 +691,10 @@
 					<xsd:selector xpath="BrooksCoreyStone2RelativePermeability" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
+				<xsd:unique name="domainConstitutiveButlerVolmerInterfaceUniqueName">
+					<xsd:selector xpath="ButlerVolmerInterface" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
 				<xsd:unique name="domainConstitutiveCO2BrineEzrokhiFluidUniqueName">
 					<xsd:selector xpath="CO2BrineEzrokhiFluid" />
 					<xsd:field xpath="@name" />
@@ -7063,6 +7067,7 @@ Information output from lower logLevels is added with the desired log level
 			<xsd:element name="BrooksCoreyCapillaryPressure" type="BrooksCoreyCapillaryPressureType" />
 			<xsd:element name="BrooksCoreyRelativePermeability" type="BrooksCoreyRelativePermeabilityType" />
 			<xsd:element name="BrooksCoreyStone2RelativePermeability" type="BrooksCoreyStone2RelativePermeabilityType" />
+			<xsd:element name="ButlerVolmerInterface" type="ButlerVolmerInterfaceType" />
 			<xsd:element name="CO2BrineEzrokhiFluid" type="CO2BrineEzrokhiFluidType" />
 			<xsd:element name="CO2BrineEzrokhiThermalFluid" type="CO2BrineEzrokhiThermalFluidType" />
 			<xsd:element name="CO2BrinePhillipsFluid" type="CO2BrinePhillipsFluidType" />
@@ -7281,6 +7286,12 @@ The expected format is "{ waterExp, oilExp }", in that order-->
 		<!--waterOilRelPermMaxValue => Maximum rel perm value for the pair (water phase, oil phase) at residual gas saturation
 The expected format is "{ waterMax, oilMax }", in that order-->
 		<xsd:attribute name="waterOilRelPermMaxValue" type="real64_array" default="{0}" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="groupName" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="ButlerVolmerInterfaceType">
+		<!--defaultReactivityCoefficient => Default BV Reactivity Coefficient-->
+		<xsd:attribute name="defaultReactivityCoefficient" type="real64" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
