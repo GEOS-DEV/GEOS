@@ -965,9 +965,32 @@ void GraphiteUpdates::computeTransverselyIsotropicTrialStress(const real64 timeI
 	real64 h4 = Ep/( 1 + nup );
 	real64 h5 = 2*Gzp;
 
-  real64 stressIncrementDense[3][3] = { { 0 } };
+
+  // MM make alphaDense  here
+  double alphaDense[3][3];
+  for (int i = 0; i < 3; ++i)
+  {
+      for (int j = 0; j < 3; ++j)
+      {
+          double delta = (i == j) ? 1.0 : 0.0;
+          alphaDense[i][j] = (alphaL - alphaT) * materialDirection[i] * materialDirection[j] + delta * alphaT;
+      }
+  }
+
+
+  //real64 stressIncrementDense[3][3] = { { 0 } };
   int voigtMap[3][3] = { {0, 5, 4}, {5, 1, 3}, {4, 3, 2} };
-	for(int i=0; i<3; i++)
+	double alphaVoigt[6];
+  // Voigt notation mapping for symmetric tensors
+  alphaVoigt[0] = alphaDense[0][0];
+  alphaVoigt[1] = alphaDense[1][1];
+  alphaVoigt[2] = alphaDense[2][2];
+  alphaVoigt[3] = alphaDense[1][2]; // or alphaDense[2][1]
+  alphaVoigt[4] = alphaDense[0][2]; // or alphaDense[2][0]
+  alphaVoigt[5] = alphaDense[0][1]; // or alphaDense[1][0]
+
+
+  for(int i=0; i<3; i++)
 	{
 		for(int j=0; j<3; j++)
 		{
@@ -975,12 +998,18 @@ void GraphiteUpdates::computeTransverselyIsotropicTrialStress(const real64 timeI
 			{
 				for(int w=0; w<3; w++)
 				{
+
+
+
+
 					// newStress[voigtMap[i][j]] 
           stressIncrementDense[i][j] += ( h1*transverselyIsotropicB1(materialDirection,i,j,p,w) +
                                           h2*transverselyIsotropicB2(materialDirection,i,j,p,w) +
                                           h3*transverselyIsotropicB3(materialDirection,i,j,p,w) +
                                           h4*transverselyIsotropicB4(materialDirection,i,j,p,w) +
-                                          h5*transverselyIsotropicB5(materialDirection,i,j,p,w))*D[voigtMap[p][w]]*timeIncrement;
+//                                        h5*transverselyIsotropicB5(materialDirection,i,j,p,w))*D[voigtMap[p][w]]*timeIncrement;
+//                                        still need to find temp rate 
+                                          h5*transverselyIsotropicB5(materialDirection,i,j,p,w))*alphaVoigt[voigtMap[p][w]]*timeIncrement;
 				}
 			}
 		}

@@ -183,11 +183,15 @@ public:
     ElasticIsotropicUpdates::saveConvergedState( k, q );
   }
 
+
+
+
+
   GEOS_HOST_DEVICE
   void thermalSoftening ( real64 & temperature,
                           real64 & bulkModulusA,
                           real64 & bulkModulusB,
-                          real64 & temperature_0;
+                          real64 & temperature_0);
 
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
@@ -340,10 +344,13 @@ void StrainHardeningPolymerUpdates::smallStrainUpdate_StressOnly( localIndex con
                                                                   real64 const ( & strainIncrement )[6],
                                                                   real64 ( & stress )[6] ) const
 {
+ 
+  real64 bulkModulusA,
+         bulkModulusB,
+         temperature_0;
 
-
- m_bulkModulus[k]= m_defaultbulkModulus * thermalSoftening(m_temperature[k] , bulkModulusA, bulkModulusB, temperature_0);
-
+  thermalSofteningVal = thermalSoftening(m_temperature[k] , bulkModulusA, bulkModulusB, temperature_0);
+  m_bulkModulus[k]= m_defaultbulkModulus * (1 + thermalSofteningVal)
   // elastic predictor (assume strainIncrement is all elastic)
   ElasticIsotropicUpdates::smallStrainUpdate_StressOnly( k, 
                                                          q, 
@@ -790,14 +797,13 @@ protected:
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
 void StrainHardeningPolymerUpdates::thermalSoftening( real64 & temperature,
-		                                              real64 & bulkModulusA,
-		                                              real64 & bulkModulusB,
+		                                              real64 & A,
+		                                              real64 & B,
 		                                              real64 & temperature_0
 ) const 
 { // Value of I1 at strength=0 (Perturbed by variability)
 
-real64 thermalSofteningVal = 1 + m_bulkModulusA (m_bulkModulusB / (temperature - temperature_0))
-
+real64 thermalSofteningVal = A /(exp(B * (temperature - temperature_0))));
 }
 
 
