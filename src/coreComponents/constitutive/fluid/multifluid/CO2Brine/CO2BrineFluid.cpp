@@ -88,8 +88,8 @@ CO2BrineFluid( string const & name, Group * const parent ):
   MultiFluidBase( name, parent )
 {
   registerWrapper( viewKeyStruct::phasePVTParaFilesString(), &m_phasePVTParaFiles ).
-    setInputFlag( InputFlags::REQUIRED )
-  setRestartFlags( RestartFlags::NO_WRITE ).
+    setInputFlag( InputFlags::REQUIRED ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "Names of the files defining the parameters of the viscosity and density models" );
 
   registerWrapper( viewKeyStruct::flashModelParaFileString(), &m_flashModelParaFile ).
