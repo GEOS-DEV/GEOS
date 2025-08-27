@@ -90,7 +90,9 @@ void ProppantTransport::postInputInitialization()
 
 void ProppantTransport::registerDataOnMesh( Group & meshBodies )
 {
-  FlowSolverBase::registerDataOnMesh( meshBodies );
+  // do not call parent registerDataOnMesh, assuming SinglePhaseProppantFVM already called it
+  // call the very base class instead to perform basic operations (e.g. setConstitutiveNames)
+  PhysicsSolverBase::registerDataOnMesh( meshBodies );
 
   forDiscretizationOnMeshTargets( meshBodies, [&]( string const &,
                                                    MeshLevel & mesh,
