@@ -69,7 +69,6 @@ Group::CatalogInterface::CatalogType & Group::getCatalog()
 
 WrapperBase & Group::registerWrapper( std::unique_ptr< WrapperBase > wrapper )
 {
-  std::cout << "Registering wrapper: " << wrapper->getName() << " on " << getName() << std::endl;
   // Extract `wrapperName` first to prevent from UB call order in the `insert` call.
   string const wrapperName = wrapper->getName();
   GEOS_ERROR_IF( hasWrapper( wrapperName ),

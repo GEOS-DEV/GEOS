@@ -45,20 +45,15 @@ ConstitutiveBase::CatalogInterface::CatalogType & ConstitutiveBase::getCatalog()
 void ConstitutiveBase::allocateConstitutiveData( dataRepository::Group & parent,
                                                  localIndex const numConstitutivePointsPerParentIndex )
 {
-  std::cout << getName() << " allocateConstitutiveData " << parent.getName() << " " << numConstitutivePointsPerParentIndex << std::endl;
-
   m_numQuadraturePoints = numConstitutivePointsPerParentIndex;
 
   for( auto & group : this->getSubGroups() )
   {
-    std::cout << "group = " << group.first << std::endl;
     for( auto & wrapper : group.second->wrappers() )
     {
-      std::cout << "wrapper = " << wrapper.first << " " << wrapper.second->sizedFromParent() << std::endl;
       if( wrapper.second->sizedFromParent() )
       {
         string const wrapperName = makeFieldName( this->getName(), wrapper.first );
-        std::cout << "Registering wrapper: " << wrapperName << " on " << parent.getName() << std::endl;
         parent.registerWrapper( wrapper.second->clone( wrapperName, parent ) ).
           setRestartFlags( RestartFlags::NO_WRITE );
       }
@@ -67,7 +62,6 @@ void ConstitutiveBase::allocateConstitutiveData( dataRepository::Group & parent,
 
   for( auto & wrapper : this->wrappers() )
   {
-    std::cout << "wrapper = " << wrapper.first << " " << wrapper.second->sizedFromParent() << std::endl;
     if( wrapper.second->sizedFromParent() )
     {
       string const wrapperName = makeFieldName( this->getName(), wrapper.first );

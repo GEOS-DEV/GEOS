@@ -69,7 +69,6 @@ testValuesAgainstPreviousImplementation( FluidModel * fluid,
 {
   integer constexpr size = 1;
   m_parent.resize( size );
-  std::cout << "testValuesAgainstPreviousImplementation fluid->allocateConstitutiveData" << std::endl;
   fluid->allocateConstitutiveData( m_parent, 1 );
 
   string_array const & phaseNames = fluid->phaseNames();
