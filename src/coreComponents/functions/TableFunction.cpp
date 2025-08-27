@@ -68,7 +68,8 @@ TableFunction::TableFunction( const string & name,
     setApplyDefaultValue( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setRestartFlags( RestartFlags::NO_WRITE ).
-    setDescription( "When set to 1, write the table into a CSV file" );
+    setDescription( "If the table is requested to be output in the log, and it is too large,"
+                    "a CSV file will be generated even if `writeCSV` is set to 0." );
 
   addLogLevel< logInfo::TableLogOutput >();
 }
