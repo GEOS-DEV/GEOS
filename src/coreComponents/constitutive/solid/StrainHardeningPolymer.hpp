@@ -916,10 +916,10 @@ protected:
   virtual void postInputInitialization() override;
 
   /// State variable: The bulkModulus values for each quadrature point
-  array1d< real64 > m_bulkModulus;
+  // array1d< real64 > m_bulkModulus;
 
   /// State variable: The shear Modulus values for each quadrature point
-  array1d< real64 > m_shearModulus;
+  // array1d< real64 > m_shearModulus;
 
   /// State variable: The deformation gradient values for each element/particle.
   array3d< real64 > m_deformationGradient;
