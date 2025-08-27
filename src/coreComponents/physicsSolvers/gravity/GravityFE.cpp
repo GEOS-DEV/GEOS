@@ -174,7 +174,9 @@ real64 GravityFE::explicitStepModeling( real64 const & time_n,
 
     // Hardcode lowest order... i.e. take advantage that mesh vertices and quadrature nodes are collocated.
     // Warning: this code will fail for higher order.
-    auto const & nodePosition = nodeManager.referencePosition();
+    arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const nodePosition =
+      nodeManager.referencePosition().toViewConst();
+
 
     for( localIndex iStation=0; iStation<m_stationCoordinates.size( 0 ); ++iStation )
     {
@@ -246,7 +248,8 @@ real64 GravityFE::explicitStepAdjoint( real64 const & time_n,
     ElementRegionManager & elemManager = mesh.getElemManager();
     NodeManager const & nodeManager = mesh.getNodeManager();
 
-    auto const & nodePosition = nodeManager.referencePosition();
+    arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const nodePosition =
+      nodeManager.referencePosition().toViewConst();
 
     elemManager.forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                 CellElementSubRegion & elementSubRegion )
