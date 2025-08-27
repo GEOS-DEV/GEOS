@@ -43,7 +43,7 @@ public:
   virtual ~GravitySolverBase() override;
 
   GravitySolverBase( GravitySolverBase const & ) = delete;
-  GravitySolverBase( GravitySolverBase && ) = default;
+  GravitySolverBase( GravitySolverBase && ) = delete;
 
   GravitySolverBase & operator=( GravitySolverBase const & ) = delete;
   GravitySolverBase & operator=( GravitySolverBase && ) = delete;
