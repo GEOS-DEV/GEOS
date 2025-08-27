@@ -216,8 +216,7 @@
       component="0"
       functionName="totalRateTable1"
       scale="1"
-      setNames="{ thermalSource1 }"
-      logLevel="0" />
+      setNames="{ thermalSource1 }" />
 
     <FieldSpecification
       beginTime="7.8840000001e8"
@@ -233,8 +232,7 @@
       component="0"
       functionName="totalRateTable2"
       scale="1"
-      setNames="{ thermalSource2 }"
-      logLevel="0" />
+      setNames="{ thermalSource2 }" />
   </FieldSpecifications>
   <!-- SPHINX_SOURCES_END -->
 
