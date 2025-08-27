@@ -767,7 +767,7 @@ bool PhysicsSolverBase::lineSearchWithParabolicInterpolation( real64 const & tim
                              GEOS_FMT( "        Line search @ {:0.3f}:      ", cumulativeScale ) );
     }
     // get residual norm
-    residualNormT =  calculateResidualNorm( time_n, dt, domain, dofManager, rhs.values() );
+    residualNormT = calculateResidualNorm( time_n, dt, domain, dofManager, rhs.values() );
     updateAndWriteConvergenceStep( time_n, dt, cycleNumber, newtonIter );
 
     GEOS_LOG_LEVEL_RANK_0( logInfo::ResidualNorm,
@@ -867,7 +867,6 @@ real64 PhysicsSolverBase::nonlinearImplicitStep( real64 const & time_n,
 
         if( isConfigurationLoopConverged )
         {
-
           break; // get out of configuration loop coz everything converged.
         }
         else
@@ -915,7 +914,6 @@ real64 PhysicsSolverBase::nonlinearImplicitStep( real64 const & time_n,
       // notify the solver statistics counter that this is a time step cut
       getIterationStats().updateTimeStepCut();
       getIterationStats().writeIterationStatsToTable();
-
     }
   } // end of outer loop (dt chopping strategy)
 
@@ -1086,7 +1084,6 @@ bool PhysicsSolverBase::solveNonlinearSystem( real64 const & time_n,
           // if line search failed, then break out of the main Newton loop. Timestep will be cut.
           GEOS_LOG_LEVEL_RANK_0( logInfo::LineSearch,
                                  "        Line search failed to produce reduced residual. Exiting Newton Loop." );
-
           break;
         }
       }
