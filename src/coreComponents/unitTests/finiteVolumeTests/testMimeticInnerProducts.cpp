@@ -1139,7 +1139,7 @@ static inline real64 rowSum( arraySlice2d< real64 const > T,
   return sum;
 }
 
-// recompute volumn and center of distorted cell
+// recompute volume and center of distorted cell
 static inline void computeDistortedVolumeAndCenter( array2d< real64, nodes::REFERENCE_POSITION_PERM > const & node,
                                                     real64 (& center)[3], real64 & vol )
 {
@@ -1370,10 +1370,10 @@ static double computeLinearPressure_error( int ipKind,
   real64 pL = ( b1 - A13 * lambdaI ) / A11;
   real64 pR = ( b2 - A23 * lambdaI ) / A22;
 
-  // compute analytcal pressure values
+  // compute analytical pressure values
   double pL_exact = center_L[0] + alpha_lin * center_L[1];
   double pR_exact = center_R[0] + alpha_lin * center_R[1];
-  double err = std::max( std::abs( pL - pL_exact ), std::abs( pR - pR_exact ) );
+  double err = std::max( std::abs( pL - pL_exact ) / std::abs( pL_exact ), std::abs( pR - pR_exact ) / std::abs( pR_exact ) );
 
   if( flag )
   {
@@ -1453,7 +1453,7 @@ TEST( MimeticIP_Linear, Distortion_Planar_LinearPressure )
 }
 
 // =================== case 2: with distortion (nonplanar) ===========================
-TEST( MimeticIP_Linear, Distortion_NonPlanar_LinearPresssure )
+TEST( MimeticIP_Linear, Distortion_NonPlanar_LinearPressure )
 {
   int neps = 2;
   std::vector< double > eps_values( 2 );
