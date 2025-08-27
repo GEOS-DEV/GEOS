@@ -34,11 +34,12 @@ m_krxn()
 {
   registerWrapper(viewKeyStruct::defaultReactivityCoefficientString(), &m_defaultKrxn).
     setApplyDefaultValue(1.0).
-    setInputFlag(InputFlags::OPTIONAL).
+    setInputFlag(InputFlags::REQUIRED).
     setDescription("Default BV Reactivity Coefficient");
 
   registerWrapper(viewKeyStruct::reactivityCoefficientString(), &m_krxn).
     setApplyDefaultValue(-1.0). // will be overwritten
+    setPlotLevel(PlotLevel::LEVEL_0).
     setDescription("Reactivity Coefficient Field");
 }
 

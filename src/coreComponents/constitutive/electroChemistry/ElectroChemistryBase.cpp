@@ -34,11 +34,12 @@ m_conductivity()
 {
   registerWrapper(viewKeyStruct::defaultConductivityString(), &m_defaultConductivity).
     setApplyDefaultValue(1.0).
-    setInputFlag(InputFlags::OPTIONAL).
+    setInputFlag(InputFlags::REQUIRED).
     setDescription("Default Electro Conductivity");
 
   registerWrapper(viewKeyStruct::conductivityString(), &m_conductivity).
     setApplyDefaultValue(-1.0). // will be overwritten
+    setPlotLevel(PlotLevel::LEVEL_0).
     setDescription("Electro Conductivity Field");
 }
 

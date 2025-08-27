@@ -120,6 +120,14 @@ real64 Electrostatics::solverStep(real64 const& time_n, real64 const& dt,
   // }
 
   // setupSystem(domain, m_dofManager, m_localMatrix, m_rhs, m_solution, false);
+  if (cycleNumber == 0) {
+    FieldSpecificationManager& fieldSpecificationManager = FieldSpecificationManager::getInstance();
+    forDiscretizationOnMeshTargets(domain.getMeshBodies(),
+      [&](string const&, MeshLevel& mesh, string_array const&) {
+        fieldSpecificationManager.applyInitialConditions(mesh);
+      });
+  }
+
   implicitStepSetup(time_n, dt, domain);
 
   dtReturn = linearImplicitStep(time_n, dt, cycleNumber, domain);
