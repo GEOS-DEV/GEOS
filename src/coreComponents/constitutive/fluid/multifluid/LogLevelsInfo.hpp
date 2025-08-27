@@ -38,7 +38,7 @@ struct TableLogOutput
   static constexpr int getMinLogLevel() { return 1; }
   static constexpr std::string_view getDescription()
   {
-    return "Output PVT table to log\n"
+    return "Output PVT tables to log.\n"
            "Even if `writeCSV =\"0\"`, if the table is too large for the log, a csv file will still be generated.";
   };
 
