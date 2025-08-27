@@ -381,7 +381,8 @@ real64 GravityFE_CompositionalMultiphaseFVM::explicitStepAdjoint( real64 const &
 }
 
 
-
+#ifdef GEOS_GRAVITY_WITH_FLUIDFLOW
 REGISTER_CATALOG_ENTRY( PhysicsSolverBase, GravityFE_CompositionalMultiphaseFVM, string const &, dataRepository::Group * const )
+#endif
 
 } // namespace geos

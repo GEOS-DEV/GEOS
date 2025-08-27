@@ -20,16 +20,26 @@ Contains:
 set( gravitySolvers_headers
      GravitySolverBase.hpp
      GravityFE.hpp
-     GravityFE_CompositionalMultiphaseFVM.hpp
      GravityFEKernel.hpp )
 
 # Specify solver sources
 set( gravitySolvers_sources
      GravitySolverBase.cpp
-     GravityFE_CompositionalMultiphaseFVM.cpp
      GravityFE.cpp )
 
-set( dependencyList ${parallelDeps} physicsSolversBase fluidFlowSolvers)
+set( dependencyList ${parallelDeps} physicsSolversBase )
+
+# Conditionally add compositional multiphase support if fluid flow is enabled
+if( GEOS_ENABLE_FLUIDFLOW AND TARGET fluidFlowSolvers )
+  list( APPEND gravitySolvers_headers GravityFE_CompositionalMultiphaseFVM.hpp )
+  list( APPEND gravitySolvers_sources GravityFE_CompositionalMultiphaseFVM.cpp )
+  list( APPEND dependencyList fluidFlowSolvers )
+  
+  # Define a preprocessor macro so the code knows fluid flow is available
+  add_definitions( -DGEOS_GRAVITY_WITH_FLUIDFLOW )
+endif()
+
+
 geos_decorate_link_dependencies( LIST decoratedDependencies DEPENDENCIES ${dependencyList} )
 
 blt_add_library( NAME       gravitySolvers
