@@ -64,14 +64,12 @@ public:
 
   /**
    * @brief Constructor for the kernel interface
-   * @param[in] rankOffset the offset of my MPI rank
-   * @param[in] stencilWrapper reference to the stencil wrapper
-   * @param[in] dofNumberAccessor
-   * @param[in] compFlowAccessors
-   * @param[in] multiFluidAccessors
-   * @param[in] capPressureAccessors
-   * @param[in] permeabilityAccessors
    * @param[in] dt time step size
+   * @param[in] rankOffset the offset of my MPI rank
+   * @param[in] wellDofKey
+   * @param[in] resDofNumber
+   * @param[in] subRegion
+   * @param[in] perforationData
    * @param[inout] localMatrix the local CRS matrix
    * @param[inout] localRhs the local right-hand side vector
    * @param[in] kernelFlags flags packed together
@@ -306,23 +304,20 @@ public:
 
   /**
    * @brief Constructor for the kernel interface   // tjb clean up
-   * @param[in] rankOffset the offset of my MPI rank
-   * @param[in] stencilWrapper reference to the stencil wrapper
-   * @param[in] dofNumberAccessor
-   * @param[in] compFlowAccessors
-   * @param[in] multiFluidAccessors
-   * @param[in] capPressureAccessors
-   * @param[in] permeabilityAccessors
+   * @param[in] isProducer flag to indicate if the well is a producer
    * @param[in] dt time step size
+   * @param[in] rankOffset the offset of my MPI rank
+   * @param[in] wellDofKey
+   * @param[in] resDofNumber
+   * @param[in] subRegion
+   * @param[in] perforationData
    * @param[inout] localMatrix the local CRS matrix
    * @param[inout] localRhs the local right-hand side vector
    */
   ThermalSinglePhaseFluxKernel( integer const isProducer,
                                 real64 const dt,
-
                                 globalIndex const rankOffset,
                                 string const wellDofKey,
-
                                 ElementRegionManager::ElementViewConst< arrayView1d< globalIndex const > > const resDofNumber,
                                 WellElementSubRegion const & subRegion,
                                 PerforationData const * const perforationData,

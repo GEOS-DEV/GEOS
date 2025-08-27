@@ -68,10 +68,7 @@ public:
 
   using AbstractBase = isothermalCompositionalMultiphaseFVMKernels::FluxComputeKernelBase;
   using DofNumberAccessor = AbstractBase::DofNumberAccessor;
-  using CompFlowAccessors = AbstractBase::CompFlowAccessors;
-  using MultiFluidAccessors = AbstractBase::MultiFluidAccessors;
-  using CapPressureAccessors = AbstractBase::CapPressureAccessors;
-  using PermeabilityAccessors = AbstractBase::PermeabilityAccessors;
+  using FieldAccessors = AbstractBase::FieldAccessors<>;
 
   using AbstractBase::m_dt;
   using AbstractBase::m_numPhases;
@@ -110,25 +107,20 @@ public:
    * @param[in] stencilWrapper reference to the stencil wrapper
    * @param[in] fluidWrapper reference to the fluid wrapper
    * @param[in] dofNumberAccessor
-   * @param[in] compFlowAccessors
-   * @param[in] multiFluidAccessors
-   * @param[in] capPressureAccessors
-   * @param[in] permeabilityAccessors
+   * @param[in] fieldAccessors
    * @param[in] dt time step size
    * @param[inout] localMatrix the local CRS matrix
    * @param[inout] localRhs the local right-hand side vector
    * @param[in] kernelFlags flags packed together
    */
+  template< typename FieldAccessorsT >
   DirichletFluxComputeKernel( integer const numPhases,
                               globalIndex const rankOffset,
                               FaceManager const & faceManager,
                               BoundaryStencilWrapper const & stencilWrapper,
                               FLUIDWRAPPER const & fluidWrapper,
                               DofNumberAccessor const & dofNumberAccessor,
-                              CompFlowAccessors const & compFlowAccessors,
-                              MultiFluidAccessors const & multiFluidAccessors,
-                              CapPressureAccessors const & capPressureAccessors,
-                              PermeabilityAccessors const & permeabilityAccessors,
+                              FieldAccessorsT const & fieldAccessors,
                               real64 const dt,
                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
                               arrayView1d< real64 > const & localRhs,
@@ -137,10 +129,7 @@ public:
             rankOffset,
             stencilWrapper,
             dofNumberAccessor,
-            compFlowAccessors,
-            multiFluidAccessors,
-            capPressureAccessors,
-            permeabilityAccessors,
+            fieldAccessors,
             dt,
             localMatrix,
             localRhs,
@@ -533,14 +522,10 @@ public:
       dofNumberAccessor.setName( solverName + "/accessors/" + dofKey );
 
       using kernelType = DirichletFluxComputeKernel< NUM_COMP, NUM_DOF, typename FluidType::KernelWrapper >;
-      typename kernelType::CompFlowAccessors compFlowAccessors( elemManager, solverName );
-      typename kernelType::MultiFluidAccessors multiFluidAccessors( elemManager, solverName );
-      typename kernelType::CapPressureAccessors capPressureAccessors( elemManager, solverName );
-      typename kernelType::PermeabilityAccessors permeabilityAccessors( elemManager, solverName );
+      typename kernelType::FieldAccessors fieldAccessors( elemManager, solverName );
 
       kernelType kernel( numPhases, rankOffset, faceManager, stencilWrapper, fluidWrapper,
-                         dofNumberAccessor, compFlowAccessors, multiFluidAccessors, capPressureAccessors, permeabilityAccessors,
-                         dt, localMatrix, localRhs, kernelFlags );
+                         dofNumberAccessor, fieldAccessors, dt, localMatrix, localRhs, kernelFlags );
       kernelType::template launch< POLICY >( stencilWrapper.size(), kernel );
     } );
   }

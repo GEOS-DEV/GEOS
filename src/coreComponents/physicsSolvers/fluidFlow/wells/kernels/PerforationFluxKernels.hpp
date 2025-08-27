@@ -67,26 +67,21 @@ public:
 
   using TAG = wellTags::SubRegionTag;
 
-  using CompFlowAccessors =
+  template< typename ... Extra >
+  using FieldAccessors =
     StencilAccessors< fields::flow::pressure,
                       fields::flow::phaseVolumeFraction,
                       fields::flow::dPhaseVolumeFraction,
-                      fields::flow::dGlobalCompFraction_dGlobalCompDensity >;
-
-  using MultiFluidAccessors =
-    StencilMaterialAccessors< constitutive::MultiFluidBase,
-                              fields::multifluid::phaseDensity,
-                              fields::multifluid::dPhaseDensity,
-                              fields::multifluid::phaseViscosity,
-                              fields::multifluid::dPhaseViscosity,
-                              fields::multifluid::phaseCompFraction,
-                              fields::multifluid::dPhaseCompFraction >;
-
-  using RelPermAccessors =
-    StencilMaterialAccessors< constitutive::RelativePermeabilityBase,
-                              fields::relperm::phaseRelPerm,
-                              fields::relperm::dPhaseRelPerm_dPhaseVolFraction >;
-
+                      fields::flow::dGlobalCompFraction_dGlobalCompDensity,
+                      fields::multifluid::phaseDensity,
+                      fields::multifluid::dPhaseDensity,
+                      fields::multifluid::phaseViscosity,
+                      fields::multifluid::dPhaseViscosity,
+                      fields::multifluid::phaseCompFraction,
+                      fields::multifluid::dPhaseCompFraction,
+                      fields::relperm::phaseRelPerm,
+                      fields::relperm::dPhaseRelPerm_dPhaseVolFraction,
+                      Extra... >; // child can add more
 
   /**
    * @brief The type for element-based non-constitutive data parameters.
@@ -98,24 +93,23 @@ public:
   template< typename VIEWTYPE >
   using ElementViewConst = ElementRegionManager::ElementViewConst< VIEWTYPE >;
 
+  template< typename FieldAccessorT >
   PerforationFluxKernel ( PerforationData * const perforationData,
                           ElementSubRegionBase const & subRegion,
-                          CompFlowAccessors const & compFlowAccessors,
-                          MultiFluidAccessors const & multiFluidAccessors,
-                          RelPermAccessors const & relPermAccessors,
+                          FieldAccessorT const & fieldAccessors,
                           bool const disableReservoirToWellFlow ):
-    m_resPres( compFlowAccessors.get( fields::flow::pressure {} )),
-    m_resPhaseVolFrac( compFlowAccessors.get( fields::flow::phaseVolumeFraction {} )),
-    m_dResPhaseVolFrac( compFlowAccessors.get( fields::flow::dPhaseVolumeFraction {} )),
-    m_dResCompFrac_dCompDens( compFlowAccessors.get( fields::flow::dGlobalCompFraction_dGlobalCompDensity {} )),
-    m_resPhaseDens( multiFluidAccessors.get( fields::multifluid::phaseDensity {} )),
-    m_dResPhaseDens( multiFluidAccessors.get( fields::multifluid::dPhaseDensity {} )),
-    m_resPhaseVisc( multiFluidAccessors.get( fields::multifluid::phaseViscosity {} )),
-    m_dResPhaseVisc( multiFluidAccessors.get( fields::multifluid::dPhaseViscosity {} )),
-    m_resPhaseCompFrac( multiFluidAccessors.get( fields::multifluid::phaseCompFraction {} )),
-    m_dResPhaseCompFrac( multiFluidAccessors.get( fields::multifluid::dPhaseCompFraction {} )),
-    m_resPhaseRelPerm( relPermAccessors.get( fields::relperm::phaseRelPerm {} )),
-    m_dResPhaseRelPerm_dPhaseVolFrac( relPermAccessors.get( fields::relperm::dPhaseRelPerm_dPhaseVolFraction {} )),
+    m_resPres( fieldAccessors.get( fields::flow::pressure {} )),
+    m_resPhaseVolFrac( fieldAccessors.get( fields::flow::phaseVolumeFraction {} )),
+    m_dResPhaseVolFrac( fieldAccessors.get( fields::flow::dPhaseVolumeFraction {} )),
+    m_dResCompFrac_dCompDens( fieldAccessors.get( fields::flow::dGlobalCompFraction_dGlobalCompDensity {} )),
+    m_resPhaseDens( fieldAccessors.get( fields::multifluid::phaseDensity {} )),
+    m_dResPhaseDens( fieldAccessors.get( fields::multifluid::dPhaseDensity {} )),
+    m_resPhaseVisc( fieldAccessors.get( fields::multifluid::phaseViscosity {} )),
+    m_dResPhaseVisc( fieldAccessors.get( fields::multifluid::dPhaseViscosity {} )),
+    m_resPhaseCompFrac( fieldAccessors.get( fields::multifluid::phaseCompFraction {} )),
+    m_dResPhaseCompFrac( fieldAccessors.get( fields::multifluid::dPhaseCompFraction {} )),
+    m_resPhaseRelPerm( fieldAccessors.get( fields::relperm::phaseRelPerm {} )),
+    m_dResPhaseRelPerm_dPhaseVolFrac( fieldAccessors.get( fields::relperm::dPhaseRelPerm_dPhaseVolFraction {} )),
     m_wellElemGravCoef( subRegion.getField< fields::well::gravityCoefficient >()),
     m_wellElemPres( subRegion.getField< fields::well::pressure >()),
     m_wellElemCompDens( subRegion.getField< fields::well::globalCompDensity >()),
@@ -560,11 +554,9 @@ public:
       integer constexpr IS_THERMAL = 0;
 
       using kernelType = PerforationFluxKernel< NUM_COMP, NUM_PHASE, IS_THERMAL >;
-      typename kernelType::CompFlowAccessors compFlowAccessors( elemManager, flowSolverName );
-      typename kernelType::MultiFluidAccessors multiFluidAccessors( elemManager, flowSolverName );
-      typename kernelType::RelPermAccessors relPermAccessors( elemManager, flowSolverName );
+      typename kernelType::FieldAccessors<> fieldAccessors( elemManager, flowSolverName );
 
-      kernelType kernel( perforationData, subRegion, compFlowAccessors, multiFluidAccessors, relPermAccessors, disableReservoirToWellFlow );
+      kernelType kernel( perforationData, subRegion, fieldAccessors, disableReservoirToWellFlow );
       kernelType::template launch< POLICY >( perforationData->size(), kernel );
     } );
   }
@@ -585,13 +577,14 @@ class PerforationFluxKernel : public isothermalPerforationFluxKernels::Perforati
 public:
 
   using Base = isothermalPerforationFluxKernels::PerforationFluxKernel< NC, NP, IS_THERMAL >;
-  //using AbstractBase::m_dPhaseVolFrac;
+  using FieldAccessors = typename Base::FieldAccessors<
+    fields::flow::temperature,
+    fields::multifluid::phaseEnthalpy,
+    fields::multifluid::dPhaseEnthalpy >;
   using Base::m_resPhaseCompFrac;
   using Base::m_dResCompFrac_dCompDens;
   using Base::m_dWellElemCompFrac_dCompDens;
-  //using AbstractBase::m_dPhaseCompFrac;
-  //using AbstractBase::m_dCompFrac_dCompDens;
-  /// Compile time value for the number of components
+
   static constexpr integer numComp = NC;
 
   /// Compile time value for the number of phases
@@ -601,22 +594,6 @@ public:
   static constexpr integer isThermal = IS_THERMAL;
 
   using TAG =  typename Base::TAG;
-  using CompFlowAccessors = typename Base::CompFlowAccessors;
-  using MultiFluidAccessors = typename Base::MultiFluidAccessors;
-  using RelPermAccessors = typename Base::RelPermAccessors;
-
-
-  using ThermalCompFlowAccessors =
-    StencilAccessors< fields::flow::temperature >;
-
-  using ThermalMultiFluidAccessors =
-    StencilMaterialAccessors< MultiFluidBase,
-                              fields::multifluid::phaseEnthalpy,
-                              fields::multifluid::dPhaseEnthalpy >;
-
-  //using ThermalConductivityAccessors =
-  //  StencilMaterialAccessors< MultiPhaseThermalConductivityBase,
-  //                            fields::thermalconductivity::effectiveConductivity >;
 
   /**
    * @brief The type for element-based non-constitutive data parameters.
@@ -631,17 +608,11 @@ public:
   PerforationFluxKernel ( PerforationData * const perforationData,
                           ElementSubRegionBase const & subRegion,
                           MultiFluidBase const & fluid,
-                          CompFlowAccessors const & compFlowAccessors,
-                          MultiFluidAccessors const & multiFluidAccessors,
-                          RelPermAccessors const & relPermAccessors,
-                          bool const disableReservoirToWellFlow,
-                          ThermalCompFlowAccessors const & thermalCompFlowAccessors,
-                          ThermalMultiFluidAccessors const & thermalMultiFluidAccessors )
+                          FieldAccessors const & fieldAccessors,
+                          bool const disableReservoirToWellFlow )
     : Base( perforationData,
             subRegion,
-            compFlowAccessors,
-            multiFluidAccessors,
-            relPermAccessors,
+            fieldAccessors,
             disableReservoirToWellFlow ),
     m_wellElemPhaseFrac( fluid.phaseFraction() ),
     m_dPhaseFrac( fluid.dPhaseFraction() ),
@@ -649,9 +620,9 @@ public:
     m_dWellElemPhaseEnthalpy( fluid.dPhaseEnthalpy()),
     m_energyPerfFlux( perforationData->getField< fields::well::energyPerforationFlux >()),
     m_dEnergyPerfFlux( perforationData->getField< fields::well::dEnergyPerforationFlux >()),
-    m_temp( thermalCompFlowAccessors.get( fields::flow::temperature {} ) ),
-    m_resPhaseEnthalpy( thermalMultiFluidAccessors.get( fields::multifluid::phaseEnthalpy {} ) ),
-    m_dResPhaseEnthalpy( thermalMultiFluidAccessors.get( fields::multifluid::dPhaseEnthalpy {} ) )
+    m_temp( fieldAccessors.get( fields::flow::temperature {} ) ),
+    m_resPhaseEnthalpy( fieldAccessors.get( fields::multifluid::phaseEnthalpy {} ) ),
+    m_dResPhaseEnthalpy( fieldAccessors.get( fields::multifluid::dPhaseEnthalpy {} ) )
 
   {}
 
@@ -842,16 +813,9 @@ public:
       integer constexpr IS_THERMAL = 1;
 
       using kernelType = PerforationFluxKernel< NUM_COMP, NUM_PHASE, IS_THERMAL >;
-      typename kernelType::CompFlowAccessors compFlowAccessors( elemManager, flowSolverName );
-      typename kernelType::MultiFluidAccessors multiFluidAccessors( elemManager, flowSolverName );
-      typename kernelType::RelPermAccessors relPermAccessors( elemManager, flowSolverName );
-      typename kernelType::ThermalCompFlowAccessors thermalCompFlowAccessors( elemManager, flowSolverName );
-      typename kernelType::ThermalMultiFluidAccessors thermalMultiFluidAccessors( elemManager, flowSolverName );
+      typename kernelType::FieldAccessors fieldAccessors( elemManager, flowSolverName );
 
-      kernelType kernel( perforationData, subRegion, fluid, compFlowAccessors, multiFluidAccessors,
-                         relPermAccessors, disableReservoirToWellFlow,
-                         thermalCompFlowAccessors,
-                         thermalMultiFluidAccessors );
+      kernelType kernel( perforationData, subRegion, fluid, fieldAccessors, disableReservoirToWellFlow );
       kernelType::template launch< POLICY >( perforationData->size(), kernel );
     } );
   }

@@ -426,25 +426,23 @@ void SinglePhaseFVM< SinglePhaseProppantBase >::assembleFluxTerms( real64 const 
     {
       typename TYPEOFREF( stencil ) ::KernelWrapper stencilWrapper = stencil.createKernelWrapper();
 
-      typename FluxComputeKernelBase::SinglePhaseFlowAccessors flowAccessors( elemManager, getName() );
-      typename FluxComputeKernelBase::SlurryFluidAccessors fluidAccessors( elemManager, getName() );
-      typename FluxComputeKernelBase::ProppantPermeabilityAccessors permAccessors( elemManager, getName() );
+      typename FluxComputeKernelBase::FieldAccessors<> fieldAccessors( elemManager, getName() );
 
       singlePhaseProppantFluxKernels::FaceElementFluxKernel::launch( stencilWrapper,
                                                                      dt,
                                                                      dofManager.rankOffset(),
                                                                      elemDofNumber.toNestedViewConst(),
-                                                                     flowAccessors.get< fields::ghostRank >(),
-                                                                     flowAccessors.get< flow::pressure >(),
-                                                                     flowAccessors.get< flow::gravityCoefficient >(),
-                                                                     fluidAccessors.get< fields::singlefluid::density >(),
-                                                                     fluidAccessors.get< fields::singlefluid::dDensity >(),
-                                                                     flowAccessors.get< flow::mobility >(),
-                                                                     flowAccessors.get< flow::dMobility >(),
-                                                                     permAccessors.get< permeability::permeability >(),
-                                                                     permAccessors.get< permeability::dPerm_dPressure >(),
-                                                                     permAccessors.get< permeability::dPerm_dDispJump >(),
-                                                                     permAccessors.get< permeability::permeabilityMultiplier >(),
+                                                                     fieldAccessors.get< fields::ghostRank >(),
+                                                                     fieldAccessors.get< flow::pressure >(),
+                                                                     fieldAccessors.get< flow::gravityCoefficient >(),
+                                                                     fieldAccessors.get< fields::singlefluid::density >(),
+                                                                     fieldAccessors.get< fields::singlefluid::dDensity >(),
+                                                                     fieldAccessors.get< flow::mobility >(),
+                                                                     fieldAccessors.get< flow::dMobility >(),
+                                                                     fieldAccessors.get< permeability::permeability >(),
+                                                                     fieldAccessors.get< permeability::dPerm_dPressure >(),
+                                                                     fieldAccessors.get< permeability::dPerm_dDispJump >(),
+                                                                     fieldAccessors.get< permeability::permeabilityMultiplier >(),
                                                                      this->gravityVector(),
                                                                      localMatrix,
                                                                      localRhs );
@@ -909,8 +907,7 @@ void SinglePhaseFVM<>::applyAquiferBC( real64 const time,
       elemManager.constructArrayViewAccessor< globalIndex, 1 >( elemDofKey );
     elemDofNumber.setName( this->getName() + "/accessors/" + elemDofKey );
 
-    typename FluxComputeKernelBase::SinglePhaseFlowAccessors flowAccessors( elemManager, this->getName() );
-    typename FluxComputeKernelBase::SinglePhaseFluidAccessors fluidAccessors( elemManager, this->getName() );
+    typename FluxComputeKernelBase::FieldAccessors<> fieldAccessors( elemManager, this->getName() );
 
     fsManager.apply< FaceManager,
                      AquiferBoundaryCondition >( time + dt,
@@ -934,14 +931,14 @@ void SinglePhaseFVM<>::applyAquiferBC( real64 const time,
       singlePhaseFVMKernels::AquiferBCKernel::launch( stencil,
                                                       dofManager.rankOffset(),
                                                       elemDofNumber.toNestedViewConst(),
-                                                      flowAccessors.get< fields::ghostRank >(),
+                                                      fieldAccessors.get< fields::ghostRank >(),
                                                       aquiferBCWrapper,
                                                       aquiferDens,
-                                                      flowAccessors.get< flow::pressure >(),
-                                                      flowAccessors.get< flow::pressure_n >(),
-                                                      flowAccessors.get< flow::gravityCoefficient >(),
-                                                      fluidAccessors.get< fields::singlefluid::density >(),
-                                                      fluidAccessors.get< fields::singlefluid::dDensity >(),
+                                                      fieldAccessors.get< flow::pressure >(),
+                                                      fieldAccessors.get< flow::pressure_n >(),
+                                                      fieldAccessors.get< flow::gravityCoefficient >(),
+                                                      fieldAccessors.get< fields::singlefluid::density >(),
+                                                      fieldAccessors.get< fields::singlefluid::dDensity >(),
                                                       time,
                                                       dt,
                                                       localMatrix.toViewConstSizes(),

@@ -64,16 +64,14 @@ public:
   static constexpr integer isThermal = IS_THERMAL;
 
   using TAG = wellTags::SubRegionTag;
-  using SinglePhaseFlowAccessors =
-    StencilAccessors< fields::flow::pressure >;
-
-  using SingleFluidAccessors =
-    StencilMaterialAccessors< constitutive::SingleFluidBase,
-                              fields::singlefluid::density,
-                              fields::singlefluid::dDensity,
-                              fields::singlefluid::viscosity,
-                              fields::singlefluid::dViscosity >;
-
+  template< typename ... Extra >
+  using FieldAccessors =
+    StencilAccessors< fields::flow::pressure,
+                      fields::singlefluid::density,
+                      fields::singlefluid::dDensity,
+                      fields::singlefluid::viscosity,
+                      fields::singlefluid::dViscosity,
+                      Extra... >; // child can add more
 
   /**
    * @brief The type for element-based non-constitutive data parameters.
@@ -85,17 +83,16 @@ public:
   template< typename VIEWTYPE >
   using ElementViewConst = ElementRegionManager::ElementViewConst< VIEWTYPE >;
 
+  template< typename FieldAccessorT >
   PerforationFluxKernel ( PerforationData * const perforationData,
                           ElementSubRegionBase const & subRegion,
                           constitutive::SingleFluidBase const & fluid,
-                          SinglePhaseFlowAccessors const & singlePhaseFlowAccessors,
-                          SingleFluidAccessors const & singleFluidAccessors
-                          ):
-    m_resPres( singlePhaseFlowAccessors.get( fields::flow::pressure {} )),
-    m_resDens( singleFluidAccessors.get( fields::singlefluid::density {} )),
-    m_dResDens( singleFluidAccessors.get( fields::singlefluid::dDensity {} )),
-    m_resVisc( singleFluidAccessors.get( fields::singlefluid::viscosity {} )),
-    m_dResVisc( singleFluidAccessors.get( fields::singlefluid::dViscosity {} )),
+                          FieldAccessorT const & fieldAccessors ):
+    m_resPres( fieldAccessors.get( fields::flow::pressure {} )),
+    m_resDens( fieldAccessors.get( fields::singlefluid::density {} )),
+    m_dResDens( fieldAccessors.get( fields::singlefluid::dDensity {} )),
+    m_resVisc( fieldAccessors.get( fields::singlefluid::viscosity {} )),
+    m_dResVisc( fieldAccessors.get( fields::singlefluid::dViscosity {} )),
     m_wellElemGravCoef( subRegion.getField< fields::well::gravityCoefficient >()),
     m_wellElemPres( subRegion.getField< fields::well::pressure >()),
     m_wellElemDens( fluid.density()),
@@ -316,9 +313,8 @@ public:
   {
     integer constexpr IS_THERMAL = 0;
     using kernelType = PerforationFluxKernel< IS_THERMAL >;
-    typename kernelType::SinglePhaseFlowAccessors singlePhaseFlowAccessors( elemManager, flowSolverName );
-    typename kernelType::SingleFluidAccessors singleFluidAccessors( elemManager, flowSolverName );
-    kernelType kernel( perforationData, subRegion, fluid, singlePhaseFlowAccessors, singleFluidAccessors );
+    typename kernelType::FieldAccessors<> fieldAccessors( elemManager, flowSolverName );
+    kernelType kernel( perforationData, subRegion, fluid, fieldAccessors );
     kernelType::template launch< POLICY >( perforationData->size(), kernel );
   }
 };
@@ -338,22 +334,15 @@ class PerforationFluxKernel : public geos::isothermalSinglePhasePerforationFluxK
 public:
 
   using Base = geos::isothermalSinglePhasePerforationFluxKernels::PerforationFluxKernel< IS_THERMAL >;
-  using SinglePhaseFlowAccessors = typename Base::SinglePhaseFlowAccessors;
-  using SingleFluidAccessors = typename Base::SingleFluidAccessors;
+  using FieldAccessors = typename Base::FieldAccessors<
+    fields::flow::temperature,
+    fields::singlefluid::enthalpy,
+    fields::singlefluid::dEnthalpy >;
 
   /// Compile time value for thermal option
   static constexpr integer isThermal = IS_THERMAL;
 
   using TAG =  typename Base::TAG;
-
-  using ThermalSinglePhaseFlowAccessors =
-    StencilAccessors< fields::flow::temperature >;
-
-  using ThermalSingleFluidAccessors =
-    StencilMaterialAccessors< SingleFluidBase,
-                              fields::singlefluid::enthalpy,
-                              fields::singlefluid::dEnthalpy >;
-
 
   /**
    * @brief The type for element-based non-constitutive data parameters.
@@ -368,22 +357,18 @@ public:
   PerforationFluxKernel ( PerforationData * const perforationData,
                           ElementSubRegionBase const & subRegion,
                           SingleFluidBase const & fluid,
-                          SinglePhaseFlowAccessors const & singlePhaseFlowAccessors,
-                          SingleFluidAccessors const & singleFluidAccessors,
-                          ThermalSinglePhaseFlowAccessors const & thermalSinglePhaseFlowAccessors,
-                          ThermalSingleFluidAccessors const & thermalSingleFluidAccessors )
+                          FieldAccessors const & fieldAccessors )
     : Base( perforationData,
             subRegion,
             fluid,
-            singlePhaseFlowAccessors,
-            singleFluidAccessors ),
+            fieldAccessors ),
     m_wellElemEnthalpy( fluid.enthalpy()),
     m_dWellElemEnthalpy( fluid.dEnthalpy()),
     m_energyPerfFlux( perforationData->getField< fields::well::energyPerforationFlux >()),
     m_dEnergyPerfFlux( perforationData->getField< fields::well::dEnergyPerforationFlux >()),
-    m_temp( thermalSinglePhaseFlowAccessors.get( fields::flow::temperature {} ) ),
-    m_resEnthalpy( thermalSingleFluidAccessors.get( fields::singlefluid::enthalpy {} ) ),
-    m_dResEnthalpy( thermalSingleFluidAccessors.get( fields::singlefluid::dEnthalpy {} ) )
+    m_temp( fieldAccessors.get( fields::flow::temperature {} ) ),
+    m_resEnthalpy( fieldAccessors.get( fields::singlefluid::enthalpy {} ) ),
+    m_dResEnthalpy( fieldAccessors.get( fields::singlefluid::dEnthalpy {} ) )
 
   {}
 
@@ -512,11 +497,8 @@ public:
   {
     integer constexpr IS_THERMAL = 1;
     using kernelType = PerforationFluxKernel< IS_THERMAL >;
-    typename kernelType::SinglePhaseFlowAccessors singlePhaseFlowAccessors( elemManager, flowSolverName );
-    typename kernelType::SingleFluidAccessors singleFluidAccessors( elemManager, flowSolverName );
-    typename kernelType::ThermalSinglePhaseFlowAccessors thermalSinglePhaseFlowAccessors( elemManager, flowSolverName );
-    typename kernelType::ThermalSingleFluidAccessors thermalSingleFluidAccessors( elemManager, flowSolverName );
-    kernelType kernel( perforationData, subRegion, fluid, singlePhaseFlowAccessors, singleFluidAccessors, thermalSinglePhaseFlowAccessors, thermalSingleFluidAccessors );
+    typename kernelType::FieldAccessors fieldAccessors( elemManager, flowSolverName );
+    kernelType kernel( perforationData, subRegion, fluid, fieldAccessors );
     kernelType::template launch< POLICY >( perforationData->size(), kernel );
   }
 };

@@ -633,26 +633,22 @@ public:
 
   using DofNumberAccessor = ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > >;
 
-  using CompFlowAccessors =
+  using FieldAccessors =
     StencilAccessors< fields::ghostRank,
                       fields::flow::gravityCoefficient,
                       fields::flow::pressure,
                       fields::flow::referencePorosity,
                       fields::flow::rockThermalConductivity,
                       fields::flow::OBLOperatorValues,
-                      fields::flow::OBLOperatorDerivatives >;
-
-  using PermeabilityAccessors =
-    StencilMaterialAccessors< constitutive::PermeabilityBase,
-                              fields::permeability::permeability,
-                              fields::permeability::dPerm_dPressure >;
+                      fields::flow::OBLOperatorDerivatives,
+                      fields::permeability::permeability,
+                      fields::permeability::dPerm_dPressure >;
 
   /**
    * @brief Constructor for the kernel interface
    * @param[in] rankOffset the offset of my MPI rank
    * @param[in] dofNumberAccessor accessor for data associated with degrees of freedom
-   * @param[in] compFlowAccessors accessors for data associated with compositional flow
-   * @param[in] permeabilityAccessors accessors for data associated with permeability
+   * @param[in] fieldAccessors accessors for data
    * @param[in] dt time step size
    * @param[in] transMultExp exponent of transmissibility multiplier
    * @param[inout] localMatrix the local CRS matrix
@@ -660,8 +656,7 @@ public:
    */
   FluxComputeKernelBase( globalIndex const rankOffset,
                          DofNumberAccessor const & dofNumberAccessor,
-                         CompFlowAccessors const & compFlowAccessors,
-                         PermeabilityAccessors const & permeabilityAccessors,
+                         FieldAccessors const & fieldAccessors,
                          real64 const & dt,
                          real64 const & transMultExp,
                          CRSMatrixView< real64, globalIndex const > const & localMatrix,
@@ -670,15 +665,15 @@ public:
     m_dt( dt * secondsToDaysMult ),
     m_transMultExp ( transMultExp ),
     m_dofNumber( dofNumberAccessor.toNestedViewConst() ),
-    m_permeability( permeabilityAccessors.get( fields::permeability::permeability {} ) ),
-    m_dPerm_dPres( permeabilityAccessors.get( fields::permeability::dPerm_dPressure {} ) ),
-    m_referencePorosity( compFlowAccessors.get( fields::flow::referencePorosity {} ) ),
-    m_rockThermalConductivity( compFlowAccessors.get( fields::flow::rockThermalConductivity {} ) ),
-    m_ghostRank( compFlowAccessors.get( fields::ghostRank {} ) ),
-    m_gravCoef( compFlowAccessors.get( fields::flow::gravityCoefficient {} ) ),
-    m_pres( compFlowAccessors.get( fields::flow::pressure {} ) ),
-    m_OBLOperatorValues ( compFlowAccessors.get( fields::flow::OBLOperatorValues {} ) ),
-    m_OBLOperatorDerivatives ( compFlowAccessors.get( fields::flow::OBLOperatorDerivatives {} ) ),
+    m_permeability( fieldAccessors.get( fields::permeability::permeability {} ) ),
+    m_dPerm_dPres( fieldAccessors.get( fields::permeability::dPerm_dPressure {} ) ),
+    m_referencePorosity( fieldAccessors.get( fields::flow::referencePorosity {} ) ),
+    m_rockThermalConductivity( fieldAccessors.get( fields::flow::rockThermalConductivity {} ) ),
+    m_ghostRank( fieldAccessors.get( fields::ghostRank {} ) ),
+    m_gravCoef( fieldAccessors.get( fields::flow::gravityCoefficient {} ) ),
+    m_pres( fieldAccessors.get( fields::flow::pressure {} ) ),
+    m_OBLOperatorValues ( fieldAccessors.get( fields::flow::OBLOperatorValues {} ) ),
+    m_OBLOperatorDerivatives ( fieldAccessors.get( fields::flow::OBLOperatorDerivatives {} ) ),
     m_localMatrix( localMatrix ),
     m_localRhs( localRhs )
   {}
@@ -785,8 +780,7 @@ public:
    * @param[in] rankOffset the offset of my MPI rank
    * @param[in] stencilWrapper reference to the stencil wrapper
    * @param[in] dofNumberAccessor accessor for data associated with degrees of freedom
-   * @param[in] compFlowAccessors accessors for data associated with compositional flow
-   * @param[in] permeabilityAccessors accessors for data associated with permeability
+   * @param[in] fieldAccessors accessors for field data
    * @param[in] dt time step size
    * @param[in] transMultExp exponent of transmissibility multiplier
    * @param[inout] localMatrix the local CRS matrix
@@ -795,16 +789,14 @@ public:
   FluxComputeKernel( globalIndex const rankOffset,
                      STENCILWRAPPER const & stencilWrapper,
                      DofNumberAccessor const & dofNumberAccessor,
-                     CompFlowAccessors const & compFlowAccessors,
-                     PermeabilityAccessors const & permeabilityAccessors,
+                     FieldAccessors const & fieldAccessors,
                      real64 const & dt,
                      real64 const & transMultExp,
                      CRSMatrixView< real64, globalIndex const > const & localMatrix,
                      arrayView1d< real64 > const & localRhs )
     : FluxComputeKernelBase( rankOffset,
                              dofNumberAccessor,
-                             compFlowAccessors,
-                             permeabilityAccessors,
+                             fieldAccessors,
                              dt,
                              transMultExp,
                              localMatrix,
@@ -1219,10 +1211,9 @@ public:
       dofNumberAccessor.setName( solverName + "/accessors/" + dofKey );
 
       using KERNEL_TYPE = FluxComputeKernel< NUM_PHASES, NUM_COMPS, ENABLE_ENERGY, STENCILWRAPPER >;
-      typename KERNEL_TYPE::CompFlowAccessors compFlowAccessors( elemManager, solverName );
-      typename KERNEL_TYPE::PermeabilityAccessors permeabilityAccessors( elemManager, solverName );
+      typename KERNEL_TYPE::FieldAccessors fieldAccessors( elemManager, solverName );
 
-      KERNEL_TYPE kernel( rankOffset, stencilWrapper, dofNumberAccessor, compFlowAccessors, permeabilityAccessors,
+      KERNEL_TYPE kernel( rankOffset, stencilWrapper, dofNumberAccessor, fieldAccessors,
                           dt, transMultExp, localMatrix, localRhs );
       KERNEL_TYPE::template launch< POLICY >( stencilWrapper.size(), kernel );
     } );

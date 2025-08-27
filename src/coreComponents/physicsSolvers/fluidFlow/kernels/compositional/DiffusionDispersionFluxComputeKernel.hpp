@@ -79,19 +79,11 @@ public:
   using AbstractBase::m_dPhaseVolFrac;
   using AbstractBase::m_kernelFlags;
 
-  using DiffusionAccessors =
-    StencilMaterialAccessors< constitutive::DiffusionBase,
-                              fields::diffusion::diffusivity,
-                              fields::diffusion::dDiffusivity_dTemperature,
-                              fields::diffusion::phaseDiffusivityMultiplier >;
-
-  using DispersionAccessors =
-    StencilMaterialAccessors< constitutive::DispersionBase,
-                              fields::dispersion::dispersivity >;
-
-  using PorosityAccessors =
-    StencilMaterialAccessors< constitutive::PorosityBase,
-                              fields::porosity::referencePorosity >;
+  using FieldAccessors = AbstractBase::FieldAccessors< fields::diffusion::diffusivity,
+                                                       fields::diffusion::dDiffusivity_dTemperature,
+                                                       fields::diffusion::phaseDiffusivityMultiplier,
+                                                       fields::dispersion::dispersivity,
+                                                       fields::porosity::referencePorosity >;
 
   /**
    * @brief Constructor for the kernel interface
@@ -99,11 +91,7 @@ public:
    * @param[in] rankOffset the offset of my MPI rank
    * @param[in] stencilWrapper reference to the stencil wrapper
    * @param[in] dofNumberAccessor
-   * @param[in] compFlowAccessors
-   * @param[in] multiFluidAccessors
-   * @param[in] diffusionAccessors
-   * @param[in] dispersionAccessors
-   * @param[in] porosityAccessors
+   * @param[in] fieldAccessors
    * @param[in] dt time step size
    * @param[inout] localMatrix the local CRS matrix
    * @param[inout] localRhs the local right-hand side vector
@@ -113,11 +101,7 @@ public:
                                         globalIndex const rankOffset,
                                         STENCILWRAPPER const & stencilWrapper,
                                         DofNumberAccessor const & dofNumberAccessor,
-                                        CompFlowAccessors const & compFlowAccessors,
-                                        MultiFluidAccessors const & multiFluidAccessors,
-                                        DiffusionAccessors const & diffusionAccessors,
-                                        DispersionAccessors const & dispersionAccessors,
-                                        PorosityAccessors const & porosityAccessors,
+                                        FieldAccessors const & fieldAccessors,
                                         real64 const dt,
                                         CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                         arrayView1d< real64 > const & localRhs,
@@ -125,20 +109,19 @@ public:
     : FluxComputeKernelBase( numPhases,
                              rankOffset,
                              dofNumberAccessor,
-                             compFlowAccessors,
-                             multiFluidAccessors,
+                             fieldAccessors,
                              dt,
                              localMatrix,
                              localRhs,
                              kernelFlags ),
-    m_phaseVolFrac( compFlowAccessors.get( fields::flow::phaseVolumeFraction {} ) ),
-    m_phaseDens( multiFluidAccessors.get( fields::multifluid::phaseDensity {} ) ),
-    m_dPhaseDens( multiFluidAccessors.get( fields::multifluid::dPhaseDensity {} ) ),
-    m_diffusivity( diffusionAccessors.get( fields::diffusion::diffusivity {} ) ),
-    m_dDiffusivity_dTemp( diffusionAccessors.get( fields::diffusion::dDiffusivity_dTemperature {} ) ),
-    m_phaseDiffusivityMultiplier( diffusionAccessors.get( fields::diffusion::phaseDiffusivityMultiplier {} ) ),
-    m_dispersivity( dispersionAccessors.get( fields::dispersion::dispersivity {} ) ),
-    m_referencePorosity( porosityAccessors.get( fields::porosity::referencePorosity {} ) ),
+    m_phaseVolFrac( fieldAccessors.get( fields::flow::phaseVolumeFraction {} ) ),
+    m_phaseDens( fieldAccessors.get( fields::multifluid::phaseDensity {} ) ),
+    m_dPhaseDens( fieldAccessors.get( fields::multifluid::dPhaseDensity {} ) ),
+    m_diffusivity( fieldAccessors.get( fields::diffusion::diffusivity {} ) ),
+    m_dDiffusivity_dTemp( fieldAccessors.get( fields::diffusion::dDiffusivity_dTemperature {} ) ),
+    m_phaseDiffusivityMultiplier( fieldAccessors.get( fields::diffusion::phaseDiffusivityMultiplier {} ) ),
+    m_dispersivity( fieldAccessors.get( fields::dispersion::dispersivity {} ) ),
+    m_referencePorosity( fieldAccessors.get( fields::porosity::referencePorosity {} ) ),
     m_stencilWrapper( stencilWrapper ),
     m_seri( stencilWrapper.getElementRegionIndices() ),
     m_sesri( stencilWrapper.getElementSubRegionIndices() ),
@@ -743,15 +726,10 @@ public:
       dofNumberAccessor.setName( solverName + "/accessors/" + dofKey );
 
       using kernelType = DiffusionDispersionFluxComputeKernel< NUM_COMP, NUM_DOF, STENCILWRAPPER >;
-      typename kernelType::CompFlowAccessors compFlowAccessors( elemManager, solverName );
-      typename kernelType::MultiFluidAccessors multiFluidAccessors( elemManager, solverName );
-      typename kernelType::DiffusionAccessors diffusionAccessors( elemManager, solverName );
-      typename kernelType::DispersionAccessors dispersionAccessors( elemManager, solverName );
-      typename kernelType::PorosityAccessors porosityAccessors( elemManager, solverName );
+      typename kernelType::FieldAccessors fieldAccessors( elemManager, solverName );
 
       kernelType kernel( numPhases, rankOffset, stencilWrapper,
-                         dofNumberAccessor, compFlowAccessors, multiFluidAccessors,
-                         diffusionAccessors, dispersionAccessors, porosityAccessors,
+                         dofNumberAccessor, fieldAccessors,
                          dt, localMatrix, localRhs, kernelFlags );
       kernelType::template launch< POLICY >( stencilWrapper.size(),
                                              kernelFlags.isSet( KernelFlags::Diffusion ),

@@ -45,12 +45,7 @@ public:
 
   using AbstractBase = isothermalCompositionalMultiphaseFVMKernels::FluxComputeKernelBase;
   using DofNumberAccessor = AbstractBase::DofNumberAccessor;
-  using CompFlowAccessors = AbstractBase::CompFlowAccessors;
-  using MultiFluidAccessors = AbstractBase::MultiFluidAccessors;
-  using CapPressureAccessors = AbstractBase::CapPressureAccessors;
-  using PermeabilityAccessors = AbstractBase::PermeabilityAccessors;
-  using FracturePermeabilityAccessors = StencilMaterialAccessors< constitutive::PermeabilityBase,
-                                                                  fields::permeability::dPerm_dDispJump >;
+  using FieldAccessors = AbstractBase::FieldAccessors< fields::permeability::dPerm_dDispJump >;
 
   using AbstractBase::m_dt;
   using AbstractBase::m_dofNumber;
@@ -90,11 +85,7 @@ public:
                      globalIndex const rankOffset,
                      SurfaceElementStencilWrapper const & stencilWrapper,
                      DofNumberAccessor const & dofNumberAccessor,
-                     CompFlowAccessors const & compFlowAccessors,
-                     MultiFluidAccessors const & multiFluidAccessors,
-                     CapPressureAccessors const & capPressureAccessors,
-                     PermeabilityAccessors const & permeabilityAccessors,
-                     FracturePermeabilityAccessors const & fracturePermeabilityAccessors,
+                     FieldAccessors const & fieldAccessors,
                      real64 const dt,
                      CRSMatrixView< real64, globalIndex const > const & localMatrix,
                      arrayView1d< real64 > const & localRhs,
@@ -104,16 +95,13 @@ public:
             rankOffset,
             stencilWrapper,
             dofNumberAccessor,
-            compFlowAccessors,
-            multiFluidAccessors,
-            capPressureAccessors,
-            permeabilityAccessors,
+            fieldAccessors,
             dt,
             localMatrix,
             localRhs,
             kernelFlags ),
     m_dR_dAper( dR_dAper ),
-    m_dPerm_dDispJump( fracturePermeabilityAccessors.get( fields::permeability::dPerm_dDispJump {} ) )
+    m_dPerm_dDispJump( fieldAccessors.get( fields::permeability::dPerm_dDispJump {} ) )
   {}
 
 
@@ -390,15 +378,10 @@ public:
       dofNumberAccessor.setName( solverName + "/accessors/" + dofKey );
 
       using kernelType = FluxComputeKernel< NUM_COMP, NUM_DOF >;
-      typename kernelType::CompFlowAccessors compFlowAccessors( elemManager, solverName );
-      typename kernelType::MultiFluidAccessors multiFluidAccessors( elemManager, solverName );
-      typename kernelType::CapPressureAccessors capPressureAccessors( elemManager, solverName );
-      typename kernelType::PermeabilityAccessors permeabilityAccessors( elemManager, solverName );
-      typename kernelType::FracturePermeabilityAccessors fracPermAccessors( elemManager, solverName );
+      typename kernelType::FieldAccessors fieldAccessors( elemManager, solverName );
 
       kernelType kernel( numPhases, rankOffset, stencilWrapper, dofNumberAccessor,
-                         compFlowAccessors, multiFluidAccessors, capPressureAccessors, permeabilityAccessors, fracPermAccessors,
-                         dt, localMatrix, localRhs, kernelFlags, dR_dAper );
+                         fieldAccessors, dt, localMatrix, localRhs, kernelFlags, dR_dAper );
 
       kernelType::template launch< POLICY >( stencilWrapper.size(), kernel );
     } );

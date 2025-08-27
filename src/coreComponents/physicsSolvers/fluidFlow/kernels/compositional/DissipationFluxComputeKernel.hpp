@@ -60,10 +60,10 @@ public:
 
   using AbstractBase = isothermalCompositionalMultiphaseFVMKernels::FluxComputeKernelBase;
   using DofNumberAccessor = AbstractBase::DofNumberAccessor;
-  using CompFlowAccessors = AbstractBase::CompFlowAccessors;
-  using MultiFluidAccessors = AbstractBase::MultiFluidAccessors;
-  using CapPressureAccessors = AbstractBase::CapPressureAccessors;
-  using PermeabilityAccessors = AbstractBase::PermeabilityAccessors;
+  using FieldAccessors = AbstractBase::FieldAccessors< fields::flow::pressure_n,
+                                                       fields::porosity::porosity_n,
+                                                       fields::elementVolume,
+                                                       fields::flow::globalCompFraction >;
 
   using AbstractBase::m_dt;
   using AbstractBase::m_gravCoef;
@@ -76,15 +76,6 @@ public:
   using Base::numFluxSupportPoints;
   using Base::m_permeability;
   using Base::m_dPerm_dPres;
-
-  using DissCompFlowAccessors =
-    StencilAccessors< fields::flow::pressure_n,
-                      fields::flow::globalCompDensity,
-                      fields::flow::globalCompFraction,
-                      fields::elementVolume >;
-
-  using PorosityAccessors =
-    StencilMaterialAccessors< constitutive::PorosityBase, fields::porosity::porosity_n >;
 
   using Deriv = constitutive::multifluid::DerivativeOffset;
 
@@ -115,12 +106,7 @@ public:
                      globalIndex const rankOffset,
                      STENCILWRAPPER const & stencilWrapper,
                      DofNumberAccessor const & dofNumberAccessor,
-                     CompFlowAccessors const & compFlowAccessors,
-                     DissCompFlowAccessors const & dissCompFlowAccessors,
-                     MultiFluidAccessors const & multiFluidAccessors,
-                     CapPressureAccessors const & capPressureAccessors,
-                     PermeabilityAccessors const & permeabilityAccessors,
-                     PorosityAccessors const & porosityAccessors,
+                     FieldAccessors const & fieldAccessors,
                      real64 const & dt,
                      CRSMatrixView< real64, globalIndex const > const & localMatrix,
                      arrayView1d< real64 > const & localRhs,
@@ -135,18 +121,15 @@ public:
             rankOffset,
             stencilWrapper,
             dofNumberAccessor,
-            compFlowAccessors,
-            multiFluidAccessors,
-            capPressureAccessors,
-            permeabilityAccessors,
+            fieldAccessors,
             dt,
             localMatrix,
             localRhs,
             kernelFlags ),
-    m_pres_n( dissCompFlowAccessors.get( fields::flow::pressure_n {} ) ),
-    m_porosity_n( porosityAccessors.get( fields::porosity::porosity_n {} ) ),
-    m_volume( dissCompFlowAccessors.get( fields::elementVolume {} ) ),
-    m_compFrac( dissCompFlowAccessors.get( fields::flow::globalCompFraction {} ) ),
+    m_pres_n( fieldAccessors.get( fields::flow::pressure_n {} ) ),
+    m_porosity_n( fieldAccessors.get( fields::porosity::porosity_n {} ) ),
+    m_volume( fieldAccessors.get( fields::elementVolume {} ) ),
+    m_compFrac( fieldAccessors.get( fields::flow::globalCompFraction {} ) ),
     m_omegaDBC( omega ),
     m_miscibleDBC( miscible )
   {
@@ -374,15 +357,9 @@ public:
       dofNumberAccessor.setName( solverName + "/accessors/" + dofKey );
 
       using KERNEL_TYPE = FluxComputeKernel< NUM_COMP, NUM_DOF, STENCILWRAPPER >;
-      typename KERNEL_TYPE::CompFlowAccessors compFlowAccessors( elemManager, solverName );
-      typename KERNEL_TYPE::MultiFluidAccessors multiFluidAccessors( elemManager, solverName );
-      typename KERNEL_TYPE::CapPressureAccessors capPressureAccessors( elemManager, solverName );
-      typename KERNEL_TYPE::PermeabilityAccessors permeabilityAccessors( elemManager, solverName );
-      typename KERNEL_TYPE::PorosityAccessors porosityAccessors( elemManager, solverName );
-      typename KERNEL_TYPE::DissCompFlowAccessors dissCompFlowAccessors( elemManager, solverName );
+      typename KERNEL_TYPE::FieldAccessors fieldAccessors( elemManager, solverName );
 
-      KERNEL_TYPE kernel( numPhases, rankOffset, stencilWrapper, dofNumberAccessor, compFlowAccessors, dissCompFlowAccessors,
-                          multiFluidAccessors, capPressureAccessors, permeabilityAccessors, porosityAccessors,
+      KERNEL_TYPE kernel( numPhases, rankOffset, stencilWrapper, dofNumberAccessor, fieldAccessors,
                           dt, localMatrix, localRhs, kernelFlags, omega, curNewton, continuation, miscible, kappamin, contMultiplier );
       KERNEL_TYPE::template launch< POLICY >( stencilWrapper.size(), kernel );
     } );

@@ -30,6 +30,7 @@
 #include "mesh/DomainPartition.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellControls.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellSolverBase.hpp"
+#include "physicsSolvers/fluidFlow/StencilAccessors.hpp"
 
 namespace geos
 {
@@ -101,7 +102,10 @@ public:
                                  dataRepository::Group * const parent )
     : Base( name, parent ),
     m_isWellTransmissibilityComputed( false )
-  {}
+  {
+    this->template getWrapper< string >( Base::viewKeyStruct::discretizationString() ).
+      setInputFlag( dataRepository::InputFlags::FALSE );
+  }
 
   /**
    * @brief default destructor
@@ -340,15 +344,13 @@ private:
 
       ElementRegionManager::ElementViewAccessor< arrayView2d< real64 > > const elemCenter =
         elemManager.constructViewAccessor< array2d< real64 >, arrayView2d< real64 > >( ElementSubRegionBase::viewKeyStruct::elementCenterString() );
+      ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const > > const permeability =
+        elemManager.constructArrayViewAccessor< real64, 3 >( fields::permeability::permeability::key() );
 
       // loop over the wells
       elemManager.forElementSubRegions< WellElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                   WellElementSubRegion & subRegion )
       {
-        array1d< array1d< arrayView3d< real64 const > > > const permeability =
-          elemManager.constructMaterialFieldAccessor< constitutive::PermeabilityBase,
-                                                      fields::permeability::permeability >();
-
         PerforationData & perforationData = *subRegion.getPerforationData();
         WellControls const & wellControls = wellSolver()->getWellControls( subRegion );
 

@@ -62,69 +62,58 @@ public:
 
   using DofNumberAccessor = ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > >;
 
-  using SingleFluidProp = constitutive::SingleFluidVar< real64, 2, constitutive::singlefluid::LAYOUT_FLUID, constitutive::singlefluid::LAYOUT_FLUID_DER >;
+  //using SingleFluidProp = constitutive::SingleFluidVar< real64, 2, constitutive::singlefluid::LAYOUT_FLUID,
+  // constitutive::singlefluid::LAYOUT_FLUID_DER >;
 
-  using SinglePhaseFlowAccessors =
+  template< typename ... Extra >
+  using FieldAccessors =
     StencilAccessors< fields::ghostRank,
                       fields::flow::pressure,
                       fields::flow::pressure_n,
                       fields::flow::gravityCoefficient,
                       fields::flow::mobility,
-                      fields::flow::dMobility >;
-
-  using SinglePhaseFluidAccessors =
-    StencilMaterialAccessors< constitutive::SingleFluidBase,
-                              fields::singlefluid::density,
-                              fields::singlefluid::dDensity >;
-
-  using SlurryFluidAccessors =
-    StencilMaterialAccessors< constitutive::SlurryFluidBase,
-                              fields::singlefluid::density,
-                              fields::singlefluid::dDensity >;
-
-  using PermeabilityAccessors =
-    StencilMaterialAccessors< constitutive::PermeabilityBase,
-                              fields::permeability::permeability,
-                              fields::permeability::dPerm_dPressure >;
-
-  using ProppantPermeabilityAccessors =
-    StencilMaterialAccessors< constitutive::PermeabilityBase,
-                              fields::permeability::permeability,
-                              fields::permeability::dPerm_dPressure,
-                              fields::permeability::dPerm_dDispJump,
-                              fields::permeability::permeabilityMultiplier >;
+                      fields::flow::dMobility,
+                      fields::singlefluid::density,
+                      fields::singlefluid::dDensity,
+                      fields::singlefluid::density,
+                      fields::singlefluid::dDensity,
+                      fields::permeability::permeability,
+                      fields::permeability::dPerm_dPressure,
+                      fields::permeability::permeability,
+                      fields::permeability::dPerm_dPressure,
+                      fields::permeability::dPerm_dDispJump,
+                      fields::permeability::permeabilityMultiplier,
+                      Extra... // child can add more
+                      >;
 
   /**
    * @brief Constructor for the kernel interface
    * @param[in] rankOffset the offset of my MPI rank
    * @param[in] dofNumberAccessor accessor for the dof numbers
-   * @param[in] singleFlowAccessors accessor for wrappers registered by the solver
-   * @param[in] singlePhaseFluidAccessors accessor for wrappers registered by the singlefluid model
-   * @param[in] permeabilityAccessors accessor for wrappers registered by the permeability model
+   * @param[in] fieldAccessors accessor for field data wrappers
    * @param[in] dt time step size
    * @param[inout] localMatrix the local CRS matrix
    * @param[inout] localRhs the local right-hand side vector
    */
+  template< typename FieldAccessorsT >
   FluxComputeKernelBase( globalIndex const rankOffset,
                          DofNumberAccessor const & dofNumberAccessor,
-                         SinglePhaseFlowAccessors const & singlePhaseFlowAccessors,
-                         SinglePhaseFluidAccessors const & singlePhaseFluidAccessors,
-                         PermeabilityAccessors const & permeabilityAccessors,
+                         FieldAccessorsT const & fieldAccessors,
                          real64 const & dt,
                          CRSMatrixView< real64, globalIndex const > const & localMatrix,
                          arrayView1d< real64 > const & localRhs )
     : m_rankOffset( rankOffset ),
     m_dt( dt ),
     m_dofNumber( dofNumberAccessor.toNestedViewConst() ),
-    m_permeability( permeabilityAccessors.get( fields::permeability::permeability {} ) ),
-    m_dPerm_dPres( permeabilityAccessors.get( fields::permeability::dPerm_dPressure {} ) ),
-    m_ghostRank( singlePhaseFlowAccessors.get( fields::ghostRank {} ) ),
-    m_gravCoef( singlePhaseFlowAccessors.get( fields::flow::gravityCoefficient {} ) ),
-    m_pres( singlePhaseFlowAccessors.get( fields::flow::pressure {} ) ),
-    m_mob( singlePhaseFlowAccessors.get( fields::flow::mobility {} ) ),
-    m_dMob( singlePhaseFlowAccessors.get( fields::flow::dMobility {} ) ),
-    m_dens( singlePhaseFluidAccessors.get( fields::singlefluid::density {} ) ),
-    m_dDens( singlePhaseFluidAccessors.get( fields::singlefluid::dDensity {} ) ),
+    m_permeability( fieldAccessors.get( fields::permeability::permeability {} ) ),
+    m_dPerm_dPres( fieldAccessors.get( fields::permeability::dPerm_dPressure {} ) ),
+    m_ghostRank( fieldAccessors.get( fields::ghostRank {} ) ),
+    m_gravCoef( fieldAccessors.get( fields::flow::gravityCoefficient {} ) ),
+    m_pres( fieldAccessors.get( fields::flow::pressure {} ) ),
+    m_mob( fieldAccessors.get( fields::flow::mobility {} ) ),
+    m_dMob( fieldAccessors.get( fields::flow::dMobility {} ) ),
+    m_dens( fieldAccessors.get( fields::singlefluid::density {} ) ),
+    m_dDens( fieldAccessors.get( fields::singlefluid::dDensity {} ) ),
     m_localMatrix( localMatrix ),
     m_localRhs( localRhs )
   {}

@@ -42,7 +42,7 @@ public:
    * @param name actual field name
    * @return prefixed field name that is used to access data
    */
-  inline static string makeFieldName( string const & prefix, string const & name ) { return prefix + "_" + name; }
+  inline static string makeFieldName( string const & prefix, string const & name ) { return /*prefix + "_" +*/ name; }
 
 
   ConstitutiveBase( string const & name,

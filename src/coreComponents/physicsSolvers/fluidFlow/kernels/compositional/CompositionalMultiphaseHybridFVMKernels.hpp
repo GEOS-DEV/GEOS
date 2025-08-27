@@ -559,20 +559,16 @@ struct FluxKernel
   template< typename VIEWTYPE >
   using ElementViewConst = ElementRegionManager::ElementViewConst< VIEWTYPE >;
 
-  using CompFlowAccessors =
+  using FieldAccessors =
     StencilAccessors< fields::flow::phaseMobility,
                       fields::flow::dPhaseMobility,
-                      fields::flow::dGlobalCompFraction_dGlobalCompDensity >;
-
-  using MultiFluidAccessors =
-    StencilMaterialAccessors< constitutive::MultiFluidBase,
-                              fields::multifluid::phaseDensity,
-                              fields::multifluid::dPhaseDensity,
-                              fields::multifluid::phaseMassDensity,
-                              fields::multifluid::dPhaseMassDensity,
-                              fields::multifluid::phaseCompFraction,
-                              fields::multifluid::dPhaseCompFraction >;
-
+                      fields::flow::dGlobalCompFraction_dGlobalCompDensity,
+                      fields::multifluid::phaseDensity,
+                      fields::multifluid::dPhaseDensity,
+                      fields::multifluid::phaseMassDensity,
+                      fields::multifluid::dPhaseMassDensity,
+                      fields::multifluid::phaseCompFraction,
+                      fields::multifluid::dPhaseCompFraction >;
 
   /**
    * @brief In a given subRegion, assemble the mass conservation equations and the contribution of the elements of this subRegion  to the
@@ -862,15 +858,10 @@ public:
   template< typename VIEWTYPE >
   using ElementViewConst = ElementRegionManager::ElementViewConst< VIEWTYPE >;
 
-  using CompFlowAccessors =
-    StencilAccessors< fields::elementVolume >;
-
-  using MultiFluidAccessors =
-    StencilMaterialAccessors< constitutive::MultiFluidBase,
-                              fields::multifluid::totalDensity_n >;
-  using PorosityAccessors =
-    StencilMaterialAccessors< constitutive::PorosityBase,
-                              fields::porosity::porosity_n >;
+  using FieldAccessors =
+    StencilAccessors< fields::elementVolume,
+                      fields::multifluid::totalDensity_n,
+                      fields::porosity::porosity_n >;
 
   ResidualNormKernel( globalIndex const rankOffset,
                       arrayView1d< real64 const > const & localResidual,
@@ -878,9 +869,7 @@ public:
                       arrayView1d< localIndex const > const & ghostRank,
                       SortedArrayView< localIndex const > const & regionFilter,
                       FaceManager const & faceManager,
-                      CompFlowAccessors const & compFlowAccessors,
-                      MultiFluidAccessors const & multiFluidAccessors,
-                      PorosityAccessors const & porosityAccessors,
+                      FieldAccessors const & fieldAccessors,
                       real64 const dt,
                       real64 const minNormalizer )
     : Base( rankOffset,
@@ -893,9 +882,9 @@ public:
     m_elemRegionList( faceManager.elementRegionList() ),
     m_elemSubRegionList( faceManager.elementSubRegionList() ),
     m_elemList( faceManager.elementList() ),
-    m_volume( compFlowAccessors.get( fields::elementVolume {} ) ),
-    m_porosity_n( porosityAccessors.get( fields::porosity::porosity_n {} ) ),
-    m_totalDens_n( multiFluidAccessors.get( fields::multifluid::totalDensity_n {} ) )
+    m_volume( fieldAccessors.get( fields::elementVolume {} ) ),
+    m_porosity_n( fieldAccessors.get( fields::porosity::porosity_n {} ) ),
+    m_totalDens_n( fieldAccessors.get( fields::multifluid::totalDensity_n {} ) )
   {}
 
   GEOS_HOST_DEVICE
@@ -1020,12 +1009,10 @@ public:
     arrayView1d< integer const > const ghostRank = faceManager.ghostRank();
 
     using kernelType = ResidualNormKernel;
-    typename kernelType::CompFlowAccessors flowAccessors( elemManager, solverName );
-    typename kernelType::MultiFluidAccessors fluidAccessors( elemManager, solverName );
-    typename kernelType::PorosityAccessors poroAccessors( elemManager, solverName );
+    typename kernelType::FieldAccessors fieldAccessors( elemManager, solverName );
 
     ResidualNormKernel kernel( rankOffset, localResidual, dofNumber, ghostRank,
-                               regionFilter, faceManager, flowAccessors, fluidAccessors, poroAccessors, dt, minNormalizer );
+                               regionFilter, faceManager, fieldAccessors, dt, minNormalizer );
     if( normType == physicsSolverBaseKernels::NormType::Linf )
     {
       ResidualNormKernel::launchLinf< POLICY >( faceManager.size(), kernel, residualNorm );

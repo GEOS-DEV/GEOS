@@ -769,15 +769,10 @@ public:
   template< typename VIEWTYPE >
   using ElementViewConst = ElementRegionManager::ElementViewConst< VIEWTYPE >;
 
-  using SinglePhaseFlowAccessors =
-    StencilAccessors< fields::elementVolume >;
-
-  using SinglePhaseFluidAccessors =
-    StencilMaterialAccessors< constitutive::SingleFluidBase,
-                              fields::singlefluid::density_n >;
-  using PorosityAccessors =
-    StencilMaterialAccessors< constitutive::PorosityBase,
-                              fields::porosity::porosity_n >;
+  using FieldAccessors =
+    StencilAccessors< fields::elementVolume,
+                      fields::singlefluid::density_n,
+                      fields::porosity::porosity_n >;
 
 
   ResidualNormKernel( globalIndex const rankOffset,
@@ -786,9 +781,7 @@ public:
                       arrayView1d< localIndex const > const & ghostRank,
                       SortedArrayView< localIndex const > const & regionFilter,
                       FaceManager const & faceManager,
-                      SinglePhaseFlowAccessors const & singlePhaseFlowAccessors,
-                      SinglePhaseFluidAccessors const & singlePhaseFluidAccessors,
-                      PorosityAccessors const & porosityAccessors,
+                      FieldAccessors const & fieldAccessors,
                       real64 const & defaultViscosity,
                       real64 const dt,
                       real64 const minNormalizer )
@@ -803,9 +796,9 @@ public:
     m_elemRegionList( faceManager.elementRegionList() ),
     m_elemSubRegionList( faceManager.elementSubRegionList() ),
     m_elemList( faceManager.elementList() ),
-    m_volume( singlePhaseFlowAccessors.get( fields::elementVolume {} ) ),
-    m_porosity_n( porosityAccessors.get( fields::porosity::porosity_n {} ) ),
-    m_density_n( singlePhaseFluidAccessors.get( fields::singlefluid::density_n {} ) )
+    m_volume( fieldAccessors.get( fields::elementVolume {} ) ),
+    m_porosity_n( fieldAccessors.get( fields::porosity::porosity_n {} ) ),
+    m_density_n( fieldAccessors.get( fields::singlefluid::density_n {} ) )
   {}
 
   GEOS_HOST_DEVICE
@@ -938,12 +931,10 @@ public:
     arrayView1d< integer const > const ghostRank = faceManager.ghostRank();
 
     using kernelType = ResidualNormKernel;
-    typename kernelType::SinglePhaseFlowAccessors flowAccessors( elemManager, solverName );
-    typename kernelType::SinglePhaseFluidAccessors fluidAccessors( elemManager, solverName );
-    typename kernelType::PorosityAccessors poroAccessors( elemManager, solverName );
+    typename kernelType::FieldAccessors fieldAccessors( elemManager, solverName );
 
     ResidualNormKernel kernel( rankOffset, localResidual, dofNumber, ghostRank,
-                               regionFilter, faceManager, flowAccessors, fluidAccessors, poroAccessors, defaultViscosity, dt, minNormalizer );
+                               regionFilter, faceManager, fieldAccessors, defaultViscosity, dt, minNormalizer );
     if( normType == physicsSolverBaseKernels::NormType::Linf )
     {
       ResidualNormKernel::launchLinf< POLICY >( faceManager.size(), kernel, residualNorm );

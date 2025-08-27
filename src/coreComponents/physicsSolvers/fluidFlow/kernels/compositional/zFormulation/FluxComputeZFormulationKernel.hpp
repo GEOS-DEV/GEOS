@@ -76,16 +76,15 @@ public:
   /// Number of flux support points (hard-coded for TFPA)
   static constexpr integer numFluxSupportPoints = 2;
 
+  using FieldAccessors = FieldAccessors<>;
+
   /**
    * @brief Constructor for the kernel interface
    * @param[in] numPhases the number of fluid phases
    * @param[in] rankOffset the offset of my MPI rank
    * @param[in] stencilWrapper reference to the stencil wrapper
    * @param[in] dofNumberAccessor
-   * @param[in] compFlowAccessors
-   * @param[in] multiFluidAccessors
-   * @param[in] capPressureAccessors
-   * @param[in] permeabilityAccessors
+   * @param[in] fieldAccessors
    * @param[in] dt time step size
    * @param[inout] localMatrix the local CRS matrix
    * @param[inout] localRhs the local right-hand side vector
@@ -95,10 +94,7 @@ public:
                                  globalIndex const rankOffset,
                                  STENCILWRAPPER const & stencilWrapper,
                                  DofNumberAccessor const & dofNumberAccessor,
-                                 CompFlowAccessors const & compFlowAccessors,
-                                 MultiFluidAccessors const & multiFluidAccessors,
-                                 CapPressureAccessors const & capPressureAccessors,
-                                 PermeabilityAccessors const & permeabilityAccessors,
+                                 FieldAccessors const & fieldAccessors,
                                  real64 const dt,
                                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                  arrayView1d< real64 > const & localRhs,
@@ -106,20 +102,19 @@ public:
     : FluxComputeKernelBase( numPhases,
                              rankOffset,
                              dofNumberAccessor,
-                             compFlowAccessors,
-                             multiFluidAccessors,
+                             fieldAccessors,
                              dt,
                              localMatrix,
                              localRhs,
                              kernelFlags ),
-    m_permeability( permeabilityAccessors.get( fields::permeability::permeability {} ) ),
-    m_dPerm_dPres( permeabilityAccessors.get( fields::permeability::dPerm_dPressure {} ) ),
-    m_phaseMob( compFlowAccessors.get( fields::flow::phaseMobility {} ) ),
-    m_dPhaseMob( compFlowAccessors.get( fields::flow::dPhaseMobility {} ) ),
-    m_phaseMassDens( multiFluidAccessors.get( fields::multifluid::phaseMassDensity {} ) ),
-    m_dPhaseMassDens( multiFluidAccessors.get( fields::multifluid::dPhaseMassDensity {} ) ),
-    m_phaseCapPressure( capPressureAccessors.get( fields::cappres::phaseCapPressure {} ) ),
-    m_dPhaseCapPressure_dPhaseVolFrac( capPressureAccessors.get( fields::cappres::dPhaseCapPressure_dPhaseVolFraction {} ) ),
+    m_permeability( fieldAccessors.get( fields::permeability::permeability {} ) ),
+    m_dPerm_dPres( fieldAccessors.get( fields::permeability::dPerm_dPressure {} ) ),
+    m_phaseMob( fieldAccessors.get( fields::flow::phaseMobility {} ) ),
+    m_dPhaseMob( fieldAccessors.get( fields::flow::dPhaseMobility {} ) ),
+    m_phaseMassDens( fieldAccessors.get( fields::multifluid::phaseMassDensity {} ) ),
+    m_dPhaseMassDens( fieldAccessors.get( fields::multifluid::dPhaseMassDensity {} ) ),
+    m_phaseCapPressure( fieldAccessors.get( fields::cappres::phaseCapPressure {} ) ),
+    m_dPhaseCapPressure_dPhaseVolFrac( fieldAccessors.get( fields::cappres::dPhaseCapPressure_dPhaseVolFraction {} ) ),
     m_stencilWrapper( stencilWrapper ),
     m_seri( stencilWrapper.getElementRegionIndices() ),
     m_sesri( stencilWrapper.getElementSubRegionIndices() ),
@@ -487,14 +482,10 @@ public:
       dofNumberAccessor.setName( solverName + "/accessors/" + dofKey );
 
       using kernelType = FluxComputeZFormulationKernel< NUM_COMP, NUM_DOF, STENCILWRAPPER >;
-      typename kernelType::CompFlowAccessors compFlowAccessors( elemManager, solverName );
-      typename kernelType::MultiFluidAccessors multiFluidAccessors( elemManager, solverName );
-      typename kernelType::CapPressureAccessors capPressureAccessors( elemManager, solverName );
-      typename kernelType::PermeabilityAccessors permeabilityAccessors( elemManager, solverName );
+      typename kernelType::FieldAccessors fieldAccessors( elemManager, solverName );
 
       kernelType kernel( numPhases, rankOffset, stencilWrapper, dofNumberAccessor,
-                         compFlowAccessors, multiFluidAccessors, capPressureAccessors, permeabilityAccessors,
-                         dt, localMatrix, localRhs, kernelFlags );
+                         fieldAccessors, dt, localMatrix, localRhs, kernelFlags );
       kernelType::template launch< POLICY >( stencilWrapper.size(), kernel );
     } );
   }
