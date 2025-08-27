@@ -29,8 +29,7 @@ set( gravitySolvers_sources
      GravityFE_CompositionalMultiphaseFVM.cpp
      GravityFE.cpp )
 
-set( dependencyList ${parallelDeps} physicsSolversBase )
-
+set( dependencyList ${parallelDeps} physicsSolversBase fluidFlowSolvers)
 geos_decorate_link_dependencies( LIST decoratedDependencies DEPENDENCIES ${dependencyList} )
 
 blt_add_library( NAME       gravitySolvers

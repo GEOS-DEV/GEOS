@@ -94,7 +94,7 @@ void GravityFE_CompositionalMultiphaseFVM::initializePreSubGroups()
                  InputError );
   GEOS_THROW_IF( feDiscretization->getOrder() >1,
                  getName() << ": FE discretization order should be 1, but we get: " << feDiscretization->getOrder(),
-                 InputError );                 
+                 InputError );
 }
 
 
@@ -192,7 +192,7 @@ real64 GravityFE_CompositionalMultiphaseFVM::explicitStepModeling( real64 const 
       {
         GEOS_LOG_RANK_0( "GravityFE_CompositionalMultiphaseFVM: Use referencePorosity" );
         arrayView1d< real64 const > const reservoirPorosity = solid.getReferencePorosity().toViewConst();
-        
+
         forAll< EXEC_POLICY >( elementSubRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const i )
         {
           porosity[i] = reservoirPorosity[i];
@@ -202,7 +202,7 @@ real64 GravityFE_CompositionalMultiphaseFVM::explicitStepModeling( real64 const 
       {
         GEOS_LOG_RANK_0( "GravityFE_CompositionalMultiphaseFVM: Use Porosity" );
         arrayView2d< real64 const > const reservoirPorosity = solid.getPorosity().toViewConst();
-        
+
         forAll< EXEC_POLICY >( elementSubRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const i )
         {
           porosity[i] = reservoirPorosity[i][0];
@@ -211,7 +211,7 @@ real64 GravityFE_CompositionalMultiphaseFVM::explicitStepModeling( real64 const 
       else
       {
         GEOS_LOG_RANK_0( "GravityFE_CompositionalMultiphaseFVM: Set Porosity to 1" );
-        
+
         forAll< EXEC_POLICY >( elementSubRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const i )
         {
           porosity[i] = 1.0;
@@ -221,12 +221,13 @@ real64 GravityFE_CompositionalMultiphaseFVM::explicitStepModeling( real64 const 
       // Retrieve rock density.
       arrayView1d< real64 > const rockDensity = elementSubRegion.getReference< array1d< real64 > >( fields::RockDensity::key()).toView();
       rockDensity.setValues< parallelHostPolicy >( 0. );
-      
+
       if( this->m_useRockDensity == 1 )
       {
         string const & solidModelName = elementSubRegion.getReference< string >( SolidMechanicsLagrangianFEM::viewKeyStruct::solidMaterialNamesString());
-        arrayView2d< real64 const > const reservoirRockDensity = elementSubRegion.getConstitutiveModel( solidModelName ).getReference< array2d< real64 > >( SolidBase::viewKeyStruct::densityString() ).toViewConst();
-        
+        arrayView2d< real64 const > const reservoirRockDensity =
+          elementSubRegion.getConstitutiveModel( solidModelName ).getReference< array2d< real64 > >( SolidBase::viewKeyStruct::densityString() ).toViewConst();
+
         forAll< EXEC_POLICY >( elementSubRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const i )
         {
           rockDensity[i] = reservoirRockDensity[i][0];
@@ -235,12 +236,12 @@ real64 GravityFE_CompositionalMultiphaseFVM::explicitStepModeling( real64 const 
 
       // Build medium density.
       arrayView1d< real64 > const density = elementSubRegion.getReference< array1d< real64 > >( fields::MediumDensity::key()).toView();
-      
+
       // Make input arrays const for density calculation
       arrayView1d< real64 const > const porosityConst = porosity.toViewConst();
       arrayView1d< real64 const > const fluidDensityConst = fluidDensity.toViewConst();
       arrayView1d< real64 const > const rockDensityConst = rockDensity.toViewConst();
-      
+
       forAll< EXEC_POLICY >( elementSubRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const i )
       {
         density[i] = porosityConst[i] * fluidDensityConst[i] + (1.0 - porosityConst[i]) * rockDensityConst[i];
@@ -254,12 +255,12 @@ real64 GravityFE_CompositionalMultiphaseFVM::explicitStepModeling( real64 const 
         fluidDensityConst.move( LvArray::MemorySpace::host, true );
         rockDensityConst.move( LvArray::MemorySpace::host, true );
         porosityConst.move( LvArray::MemorySpace::host, true );
-        
+
         for( localIndex i = 0; i < elementSubRegion.size(); ++i )
         {
-          GEOS_LOG( "GravityFE_CompositionalMultiphaseFVM: Cell[" << i << "], density= " << density[i] 
-                   << ", fluidDensity= " << fluidDensityConst[i] << ", rockDensity= " << rockDensityConst[i] 
-                   << ", porosity= " << porosityConst[i] );
+          GEOS_LOG( "GravityFE_CompositionalMultiphaseFVM: Cell[" << i << "], density= " << density[i]
+                                                                  << ", fluidDensity= " << fluidDensityConst[i] << ", rockDensity= " << rockDensityConst[i]
+                                                                  << ", porosity= " << porosityConst[i] );
         }
       }
 

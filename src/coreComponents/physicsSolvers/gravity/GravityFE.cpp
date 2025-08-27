@@ -175,7 +175,7 @@ real64 GravityFE::explicitStepModeling( real64 const & time_n,
     // Step #2: Compute contribution to all stations.
     // Make volumeIntegral const
     arrayView1d< real64 const > const volumeIntegralConst = volumeIntegral.toViewConst();
-  
+
     // Hardcode lowest order... i.e. take advantage that mesh vertices and quadrature nodes are collocated.
     // Warning: this code will fail for higher order.
     arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const nodePosition =
@@ -313,14 +313,14 @@ real64 GravityFE::explicitStepAdjoint( real64 const & time_n,
       forAll< EXEC_POLICY >( elementSubRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const k )
       {
         adjoint[k] = 0.0; // Initialize once
-        
+
         for( localIndex iStation = 0; iStation < numStations; ++iStation )
         {
           const real64 cx = station( iStation, 0 );
           const real64 cy = station( iStation, 1 );
           const real64 cz = station( iStation, 2 );
           const real64 res = residue[iStation];
-          
+
           for( localIndex iLoc = 0; iLoc < numSupportPoints; ++iLoc )
           {
             const localIndex a = elemsToNodes( k, iLoc );
@@ -333,7 +333,7 @@ real64 GravityFE::explicitStepAdjoint( real64 const & time_n,
             {
               inv_r3 = 1.0 / ( r2 * std::sqrt( r2 ) );
             }
-            
+
             adjoint[k] += GRAVITATIONAL_CONSTANT_LOCAL * volumeIntegral2dConst( k, iLoc ) * res * dz * inv_r3;
           }
         }

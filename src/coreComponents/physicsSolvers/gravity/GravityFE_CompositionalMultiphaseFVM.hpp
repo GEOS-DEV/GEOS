@@ -36,7 +36,7 @@ public:
 
   GravityFE_CompositionalMultiphaseFVM() = delete;
   GravityFE_CompositionalMultiphaseFVM( const std::string & name,
-                                         Group * const parent );
+                                        Group * const parent );
   virtual ~GravityFE_CompositionalMultiphaseFVM() override;
 
   GravityFE_CompositionalMultiphaseFVM( GravityFE_CompositionalMultiphaseFVM const & ) = delete;
@@ -147,4 +147,4 @@ DECLARE_FIELD( VolumeIntegral,
 
 } // namespace geos
 
-#endif // GEOS_PHYSICSSOLVERS_GRAVITY_GRAVITYFE_COMPOSITIONALMULTUPHASEFVM_HPP_ 
+#endif // GEOS_PHYSICSSOLVERS_GRAVITY_GRAVITYFE_COMPOSITIONALMULTUPHASEFVM_HPP_
