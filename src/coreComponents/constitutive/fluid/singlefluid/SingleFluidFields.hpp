@@ -36,28 +36,28 @@ using array2dLayoutFluid = array2d< real64, constitutive::singlefluid::LAYOUT_FL
 using array3dLayoutFluid_der = array3d< real64, constitutive::singlefluid::LAYOUT_FLUID_DER >;
 
 DECLARE_FIELD( density,
-               "density",
+               "fluidDensity",
                array2dLayoutFluid,
                0,
                LEVEL_0,
                WRITE_AND_READ,
-               "Density" );
+               "Fluid density" );
 
 DECLARE_FIELD( dDensity,
-               "dDensity",
+               "dFluidDensity",
                array3dLayoutFluid_der,
                0,
                LEVEL_0,
                WRITE_AND_READ,
-               "dDensity" );
+               "Fluid density derivatives" );
 
 DECLARE_FIELD( density_n,
-               "density_n",
+               "fluidDensity_n",
                array2dLayoutFluid,
                0,
                NOPLOT,
                WRITE_AND_READ,
-               "Density at the previous converged time step" );
+               "Fluid density at the previous converged time step" );
 
 DECLARE_FIELD( viscosity,
                "viscosity",
@@ -76,23 +76,23 @@ DECLARE_FIELD( dViscosity,
                "dViscosity" );
 
 DECLARE_FIELD( internalEnergy,
-               "internalEnergy",
+               "fluidInternalEnergy",
                array2dLayoutFluid,
                0,
                LEVEL_0,
                WRITE_AND_READ,
-               "InternalEnergy" );
+               "Fluid internal energy" );
 
 DECLARE_FIELD( dInternalEnergy,
-               "dInternalEnergy",
+               "dFluidInternalEnergy",
                array3dLayoutFluid_der,
                0,
                LEVEL_0,
                WRITE_AND_READ,
-               "dInternalEnergy" );
+               "Fluid internal energy derivatives" );
 
 DECLARE_FIELD( internalEnergy_n,
-               "internalEnergy_n",
+               "fluidInternalEnergy_n",
                array2dLayoutFluid,
                0,
                NOPLOT,

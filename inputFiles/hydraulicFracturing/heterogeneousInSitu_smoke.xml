@@ -265,19 +265,11 @@
       setNames="{ fracturable_a }"/>
 
     <FieldSpecification
-      name="waterDensity"
-      fieldName="water_density"
-      initialCondition="1"
-      objectPath="ElementRegions"
-      scale="1000"
-      setNames="{ perf_a }"/>
-
-    <FieldSpecification
       name="bulk_modulus"
       initialCondition="1"
       setNames="{ all }"
       objectPath="ElementRegions/Domain"
-      fieldName="rock_bulkModulus"
+      fieldName="bulkModulus"
       functionName="bulk_modulus"
       scale="1.0"/>
 
@@ -286,7 +278,7 @@
       initialCondition="1"
       setNames="{ all }"
       objectPath="ElementRegions/Domain"
-      fieldName="rock_shearModulus"
+      fieldName="shearModulus"
       functionName="shear_modulus"
       scale="1.0"/>
 
@@ -295,7 +287,7 @@
       initialCondition="1"
       setNames="{ all }"
       objectPath="ElementRegions/Domain"
-      fieldName="rock_stress"
+      fieldName="stress"
       component="0"
       functionName="sigma_xx"
       scale="1.0"/>
@@ -305,7 +297,7 @@
       initialCondition="1"
       setNames="{ all }"
       objectPath="ElementRegions/Domain"
-      fieldName="rock_stress"
+      fieldName="stress"
       component="1"
       functionName="sigma_yy"
       scale="1.0"/>
@@ -315,7 +307,7 @@
       initialCondition="1"
       setNames="{ all }"
       objectPath="ElementRegions/Domain"
-      fieldName="rock_stress"
+      fieldName="stress"
       component="2"
       functionName="sigma_zz"
       scale="1.0"/>

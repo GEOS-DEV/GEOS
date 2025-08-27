@@ -104,9 +104,9 @@ public:
 
   struct viewKeyStruct : public ConstitutiveBase::viewKeyStruct
   {
-    static constexpr char const * internalEnergyString() { return "internalEnergy"; }
-    static constexpr char const * oldInternalEnergyString() { return "internalEnergy_n"; }
-    static constexpr char const * dInternalEnergy_dTemperatureString() { return "dInternalEnergy_dTemperature"; }
+    static constexpr char const * internalEnergyString() { return "solidInternalEnergy"; }
+    static constexpr char const * oldInternalEnergyString() { return "solidInternalEnergy_n"; }
+    static constexpr char const * dInternalEnergy_dTemperatureString() { return "dSolidInternalEnergy_dTemperature"; }
     static constexpr char const * referenceVolumetricHeatCapacityString() { return "referenceVolumetricHeatCapacity"; }
     static constexpr char const * dVolumetricHeatCapacity_dTemperatureString() { return "dVolumetricHeatCapacity_dTemperature"; }
     static constexpr char const * referenceTemperatureString() { return "referenceTemperature"; }

@@ -99,8 +99,8 @@ void ExternalMeshGeneratorBase::postInputInitialization()
     return mapping;
   };
 
-  MeshGeneratorBase::m_volumicFields = buildMapping( m_volumicFieldsToImport, m_volumicFieldsInGEOS );
-  MeshGeneratorBase::m_surfacicFields = buildMapping( m_surfacicFieldsToImport, m_surfacicFieldsInGEOS );
+  m_volumicFields = buildMapping( m_volumicFieldsToImport, m_volumicFieldsInGEOS );
+  m_surfacicFields = buildMapping( m_surfacicFieldsToImport, m_surfacicFieldsInGEOS );
 }
 
 } // namespace geos

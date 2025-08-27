@@ -79,14 +79,6 @@
   <!-- SPHINX_BC -->
   <FieldSpecifications>
     <FieldSpecification
-      name="waterDensity"
-      initialCondition="1"
-      setNames="{ fracture }"
-      objectPath="ElementRegions"
-      fieldName="water_density"
-      scale="1000"/>
-
-    <FieldSpecification
       name="separableFace"
       initialCondition="1"
       setNames="{ core }"
