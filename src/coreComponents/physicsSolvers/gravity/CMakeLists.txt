@@ -20,11 +20,13 @@ Contains:
 set( gravitySolvers_headers
      GravitySolverBase.hpp
      GravityFE.hpp
+     GravityFE_CompositionalMultiphaseFVM.hpp
      GravityFEKernel.hpp )
 
 # Specify solver sources
 set( gravitySolvers_sources
      GravitySolverBase.cpp
+     GravityFE_CompositionalMultiphaseFVM.cpp
      GravityFE.cpp )
 
 set( dependencyList ${parallelDeps} physicsSolversBase )
