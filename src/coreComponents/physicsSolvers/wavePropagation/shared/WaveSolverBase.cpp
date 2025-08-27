@@ -276,21 +276,26 @@ void WaveSolverBase::registerDataOnMesh( Group & meshBodies )
   {
     NodeManager & nodeManager = mesh.getNodeManager();
 
-    nodeManager.registerField< fields::referencePosition32 >( this->getName() );
-    arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X = nodeManager.referencePosition().toViewConst();
-
-    nodeManager.getField< fields::referencePosition32 >().resizeDimension< 1 >( X.size( 1 ) );
-    arrayView2d< wsCoordType, nodes::REFERENCE_POSITION_USD > const nodeCoords32 = nodeManager.getField< fields::referencePosition32 >();
-    for( int i = 0; i < X.size( 0 ); i++ )
+    if( !nodeManager.hasField< fields::referencePosition32 >() )
     {
-      for( int j = 0; j < X.size( 1 ); j++ )
+      nodeManager.registerField< fields::referencePosition32 >( getName() );
+      arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X = nodeManager.referencePosition().toViewConst();
+
+      nodeManager.getField< fields::referencePosition32 >().resizeDimension< 1 >( X.size( 1 ) );
+      arrayView2d< wsCoordType, nodes::REFERENCE_POSITION_USD > const nodeCoords32 = nodeManager.getField< fields::referencePosition32 >();
+      for( int i = 0; i < X.size( 0 ); i++ )
       {
-        nodeCoords32[i][j] = X[i][j];
+        for( int j = 0; j < X.size( 1 ); j++ )
+        {
+          nodeCoords32[i][j] = X[i][j];
+        }
       }
     }
 
-
-    nodeManager.registerField< fields::taperCoeff >( this->getName());
+    if( !nodeManager.hasField< fields::taperCoeff >() )
+    {
+      nodeManager.registerField< fields::taperCoeff >( getName());
+    }
 
   } );
 }
