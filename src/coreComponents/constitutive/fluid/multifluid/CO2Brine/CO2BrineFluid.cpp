@@ -105,8 +105,8 @@ CO2BrineFluid( string const & name, Group * const parent ):
   this->registerWrapper( viewKeyStruct::writeCSVFlagString(), &m_writeCSV ).
     setInputFlag( InputFlags::OPTIONAL ).
     setRestartFlags( RestartFlags::NO_WRITE ).
-    setDescription( "If the table is requested to be output in the log, and it is too large,"
-                    " a CSV file will be generated even if `writeCSV` is set to 0." ).
+    setDescription( "When set to 1, write PVT tables into a CSV file.\n "
+                    "if the table is requested to be output in the log, and it is too large, a CSV file will be generated even if `writeCSV` is set to 0." ).
     setDefaultValue( 0 );
 
   this->registerWrapper( viewKeyStruct::checkPhasePresenceString(), &m_checkPhasePresence ).
