@@ -32,11 +32,11 @@ StrainHardeningPolymer::StrainHardeningPolymer( string const & name, Group * con
   m_temperature(),
   m_jacobian(),
   m_yieldStrength(),
-  m_defaultBulkModulus(),
+  //m_defaultBulkModulus(),
   m_bulkModulusA(),
   m_bulkModulusB(),
   m_bulkModulusT0(),
-  m_defaultShearModulus(),
+  //m_defaultShearModulus(),
   m_shearModulusA(),
   m_shearModulusB(),
   m_shearModulusT0(),
@@ -124,9 +124,9 @@ StrainHardeningPolymer::StrainHardeningPolymer( string const & name, Group * con
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Yield strength T0" );
 
-  registerWrapper( viewKeyStruct::defaultBulkModulusString(), &m_defaultBulkModulus ).
-    setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "Temperature independent bulk modulus" );
+  // registerWrapper( viewKeyStruct::defaultBulkModulusString(), &m_defaultBulkModulus ).
+  //   setInputFlag( InputFlags::REQUIRED ).
+  //   setDescription( "Temperature independent bulk modulus" );
 
   registerWrapper( viewKeyStruct::bulkModulusAString(), &m_bulkModulusA ).
     setApplyDefaultValue( 0.0 ).
@@ -143,9 +143,9 @@ StrainHardeningPolymer::StrainHardeningPolymer( string const & name, Group * con
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Temperature dependent bulk modulus T0 parameter" );
 
-  registerWrapper( viewKeyStruct::defaultShearModulusString(), &m_defaultShearModulus ).
-    setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "Temperature independent shear modulus" );
+  // registerWrapper( viewKeyStruct::defaultShearModulusString(), &m_defaultShearModulus ).
+  //   setInputFlag( InputFlags::REQUIRED ).
+  //   setDescription( "Temperature independent shear modulus" );
 
   registerWrapper( viewKeyStruct::shearModulusAString(), &m_shearModulusA ).
     setApplyDefaultValue( 0.0 ).

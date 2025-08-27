@@ -161,7 +161,11 @@ public:
     m_shearSofteningShapeParameter1( shearSofteningShapeParameter1 ),
     m_shearSofteningShapeParameter2( shearSofteningShapeParameter2 ),
     m_maximumStretch( maximumStretch )
-  {}
+  {
+    std::cout<<"[ m_defaultBulkModulus, defaultBulkModulus, bulkModulus ] "<<m_defaultBulkModulus<<", "<<defaultBulkModulus<<", "<<bulkModulus<<std::endl;
+
+
+  }
 
   /// Default copy constructor
   StrainHardeningPolymerUpdates( StrainHardeningPolymerUpdates const & ) = default;
@@ -789,13 +793,13 @@ public:
     static constexpr char const * shearSofteningShapeParameter2String() { return "shearSofteningShapeParameter2"; }
 
     /// string/key for default bulk modulus (temp independent value)
-    static constexpr char const * defaultBulkModulusString() { return "defaultBulkModulus"; }
+    //static constexpr char const * defaultBulkModulusString() { return "defaultBulkModulus"; }
     static constexpr char const * bulkModulusAString() { return "bulkModulusA"; }
     static constexpr char const * bulkModulusBString() { return "bulkModulusB"; }
     static constexpr char const * bulkModulusT0String() { return "bulkModulusT0"; }
 
     /// string/key for default shear modulus (temp independent value)
-    static constexpr char const * defaultShearModulusString() { return "defaultShearModulus"; }
+    //static constexpr char const * defaultShearModulusString() { return "defaultShearModulus"; }
     static constexpr char const * shearModulusAString() { return "shearModulusA"; }
     static constexpr char const * shearModulusBString() { return "shearModulusB"; }
     static constexpr char const * shearModulusT0String() { return "shearModulusT0"; }
@@ -936,13 +940,13 @@ protected:
   array1d< real64 > m_yieldStrength;
 
   /// The default value of the first Lame constant for any new allocations.
-  real64 m_defaultBulkModulus;
+  //real64 m_defaultBulkModulus;
   real64 m_bulkModulusA;
   real64 m_bulkModulusB;
   real64 m_bulkModulusT0;
 
   /// The default value of the second Lame constant for any new allocations.
-  real64 m_defaultShearModulus;
+  //real64 m_defaultShearModulus;
   real64 m_shearModulusA;
   real64 m_shearModulusB;
   real64 m_shearModulusT0;
