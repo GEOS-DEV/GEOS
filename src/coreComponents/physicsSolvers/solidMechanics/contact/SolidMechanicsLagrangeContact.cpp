@@ -124,16 +124,6 @@ void SolidMechanicsLagrangeContact::registerDataOnMesh( Group & meshBodies )
         setPlotLevel( PlotLevel::NOPLOT ).
         setRegisteringObjects( getName()).
         setDescription( "An array that holds the sliding tolerance." );
-
-      // Needed just because SurfaceGenerator initialize the field "pressure" (NEEDED!!!)
-      // It is used in "TwoPointFluxApproximation.cpp", called by "SurfaceGenerator.cpp"
-      subRegion.registerField< flow::pressure >( getName() ).
-        setPlotLevel( PlotLevel::NOPLOT ).
-        setRegisteringObjects( getName());
-      subRegion.registerField< flow::pressure_n >( getName() ).
-        setPlotLevel( PlotLevel::NOPLOT ).
-        setRegisteringObjects( getName());
-
     } );
 
     forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
