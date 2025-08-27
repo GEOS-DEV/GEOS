@@ -162,8 +162,6 @@ public:
     m_shearSofteningShapeParameter2( shearSofteningShapeParameter2 ),
     m_maximumStretch( maximumStretch )
   {
-    std::cout<<"[ m_defaultBulkModulus, defaultBulkModulus, bulkModulus ] "<<m_defaultBulkModulus<<", "<<defaultBulkModulus<<", "<<bulkModulus<<std::endl;
-
 
   }
 
@@ -417,22 +415,11 @@ void StrainHardeningPolymerUpdates::smallStrainUpdate_StressOnly( localIndex con
   // elastic predictor "trialStress" (assume strainIncrement is all elastic)
   // using current definitions of m_bulkModulus[k] and m_shearModulus[k]
 
-  std::cout<<"[temperature[k], m_bulkModulus[k], m_defaultBulkModulus, m_bulkModulusT0, m_bulkModulusA, m_bulkModulusB] = "<<m_temperature[k]<<", "<<m_bulkModulus[k]<<", "<<m_defaultBulkModulus<<", "<<m_bulkModulusT0<<", "<<m_bulkModulusA<<", "<<m_bulkModulusB<<std::endl;
-  std::cout<<"[temperature[k], m_defaultShearModulus, m_shearModulusT0, m_shearModulusA, m_shearModulusB] = "<<m_temperature[k]<<", "<<m_defaultShearModulus<<", "<<m_shearModulusT0<<", "<<m_shearModulusA<<", "<<m_shearModulusB<<std::endl;
-  
   real64 scale = StrainHardeningPolymerUpdates::thermalSoftening(m_temperature[k], m_bulkModulusT0, m_bulkModulusA, m_bulkModulusB );      // This will actually be some function:   m_bulkModulus[k] = m_defaultBulkModulus + A*f(m_temperature[k]), etc.
-  std::cout<<"scale = "<<scale<<std::endl;
-
   m_bulkModulus[k] = m_defaultBulkModulus * scale;
   
   scale = StrainHardeningPolymerUpdates::thermalSoftening(m_temperature[k], m_shearModulusT0, m_shearModulusA, m_shearModulusB);      // This will actually be some function:   m_bulkModulus[k] = m_defaultBulkModulus + A*f(m_temperature[k]), etc.
-  std::cout<<"scale = "<<scale<<std::endl;
   m_shearModulus[k] = m_defaultShearModulus *  scale; // This will actually be some function of m_temperature[k]
-
-  std::cout<<"[ m_bulkModulus[k], m_shearModulus[k] ] = "<<m_bulkModulus[k]<<", "<<m_shearModulus[k]<<std::endl;
-  
-
-
 
   ElasticIsotropicUpdates::smallStrainUpdate_StressOnly( k, 
                                                          q, 
@@ -914,6 +901,9 @@ public:
 
 protected:
   virtual void postInputInitialization() override;
+  // These are variables that aren't in the parent elasticIsotropic class, or that we wish
+  // to over-write.  The m_bulkModulus array and m_defaultBulkModulus parameterm etc. should not
+  // be here, since they are defined in the parent class.
 
   /// State variable: The bulkModulus values for each quadrature point
   // array1d< real64 > m_bulkModulus;
