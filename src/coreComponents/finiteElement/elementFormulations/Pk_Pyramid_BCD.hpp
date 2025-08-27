@@ -36,6 +36,7 @@ namespace finiteElement
  * This class is the basis class for the pyramid finite element cells with
  * shape functions defined using the Bergot-Cohen-Durufle method.
  * All the degree-specific versions (P1, P2, P3, ...) are defined at the end of this file.
+ * For now only P1 is implemented, P2 and higher will be implemented later.
  */
 template< int ORDER >
 class Pk_Pyramid_BCD final : public FiniteElementBase
