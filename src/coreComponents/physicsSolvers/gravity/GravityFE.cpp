@@ -119,10 +119,10 @@ real64 GravityFE::explicitStepModeling( real64 const & time_n,
   {
     // Step 1: Precompute volumeIntegral once and for all.
     NodeManager & nodeManager = mesh.getNodeManager();
-    arrayView1d< integer const > const & nodeGhostRank = nodeManager.ghostRank();
+    auto const nodeGhostRank = nodeManager.ghostRank().toViewConst();
 
     // VolumeIntegral matrix to be computed in this function.
-    arrayView1d< real64 > const volumeIntegral = nodeManager.getField< fields::VolumeIntegral >();
+    auto volumeIntegral = nodeManager.getField< fields::VolumeIntegral >().toView();
     volumeIntegral.setValues< parallelHostPolicy >( 0. );
 
     // Loop over all sub-regions in regions of type "CellElements".
@@ -194,8 +194,12 @@ real64 GravityFE::explicitStepModeling( real64 const & time_n,
         const real64 dy = nodePosition( a, 1 ) - cy;
         const real64 dz = nodePosition( a, 2 ) - cz;
         const real64 r2 = dx*dx + dy*dy + dz*dz;
-        const real64 r3 = std::sqrt( r2 ) * r2;
-        gz += GRAVITATIONAL_CONSTANT * volumeIntegral[a] * dz / r3;
+        real64 inv_r3 = 0.0;
+        if( r2 > 0.0 )
+        {
+          inv_r3 = 1.0 / ( std::sqrt( r2 ) * r2 );
+        }
+        gz += GRAVITATIONAL_CONSTANT * volumeIntegral[a] * dz * inv_r3;
       } );
 
       localGzAtStationsView[iStation]=gz.get();
@@ -264,8 +268,8 @@ real64 GravityFE::explicitStepAdjoint( real64 const & time_n,
 
 
       arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes = elementSubRegion.nodeList();
-      arrayView2d< real64 > volumeIntegral2d = elementSubRegion.getReference< array2d< real64 > >( fields::VolumeIntegral2d::key());
-      arrayView1d< real64 > adjoint = elementSubRegion.getReference< array1d< real64 > >( fields::Adjoint::key());
+      arrayView2d< real64 > volumeIntegral2d = elementSubRegion.getReference< array2d< real64 > >( fields::VolumeIntegral2d::key()).toView();
+      arrayView1d< real64 > adjoint = elementSubRegion.getReference< array1d< real64 > >( fields::Adjoint::key()).toView();
 
       volumeIntegral2d.setValues< parallelHostPolicy >( 0.0 );
       adjoint.zero();
@@ -311,8 +315,13 @@ real64 GravityFE::explicitStepAdjoint( real64 const & time_n,
             const real64 dy = nodePosition( a, 1 ) - cy;
             const real64 dz = nodePosition( a, 2 ) - cz;
             const real64 r2 = dx*dx + dy*dy + dz*dz;
-            const real64 r3 = std::sqrt( r2 ) * r2;
-            adjoint[k] += GRAVITATIONAL_CONSTANT * volumeIntegral2d( k, iLoc ) * res * dz / r3;
+            real64 inv_r3 = 0.0;
+            if( r2 > 0.0 )
+            {
+              inv_r3 = 1.0 / ( std::sqrt( r2 ) * r2 );
+            }
+
+            adjoint[k] += GRAVITATIONAL_CONSTANT * volumeIntegral2d( k, iLoc ) * res * dz * inv_r3;
           }
         } );  // Loop elem
       }   //Loop station
