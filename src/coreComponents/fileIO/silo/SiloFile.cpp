@@ -1246,7 +1246,7 @@ void SiloFile::writeElementRegionSilo( ElementRegionBase const & elemRegion,
           using ArrayType = camp::first< decltype( tupleOfTypes ) >;
           Wrapper< ArrayType > const & sourceWrapper = Wrapper< ArrayType >::cast( wrapper );
           Wrapper< ArrayType > & newWrapper = fakeGroup.hasWrapper( fieldName ) ?
-                                              fakeGroup.getReference< Wrapper< ArrayType > >( fieldName ) :
+                                              fakeGroup.getWrapper< ArrayType >( fieldName ) :
                                               fakeGroup.registerWrapper< ArrayType >( fieldName );
 
           newWrapper.setPlotLevel( PlotLevel::LEVEL_0 );
