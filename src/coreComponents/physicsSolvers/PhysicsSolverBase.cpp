@@ -131,7 +131,6 @@ void PhysicsSolverBase::generateMeshTargetsFromTargetRegions( Group const & mesh
 {
   for( auto const & target : m_targetRegionNames )
   {
-
     stdVector< string > targetTokens = stringutilities::tokenize( target, "/" );
 
     if( targetTokens.size()==1 ) // no MeshBody or MeshLevel specified
@@ -142,10 +141,8 @@ void PhysicsSolverBase::generateMeshTargetsFromTargetRegions( Group const & mesh
       MeshBody const & meshBody = meshBodies.getGroup< MeshBody >( 0 );
       string const meshBodyName = meshBody.getName();
 
-      string const meshLevelName = m_discretizationName;
-
       string const regionName = target;
-      auto const key = std::make_pair( meshBodyName, meshLevelName );
+      auto const key = std::make_pair( meshBodyName, m_discretizationName );
       m_meshTargets[key].emplace_back( regionName );
     }
     else if( targetTokens.size()==2 )
@@ -155,12 +152,8 @@ void PhysicsSolverBase::generateMeshTargetsFromTargetRegions( Group const & mesh
                      getWrapperDataContext( viewKeyStruct::targetRegionsString() ) << ": MeshBody (" <<
                      meshBodyName << ") is specified in targetRegions, but does not exist." );
 
-      string const meshLevelName = m_discretizationName;
-
       string const regionName = targetTokens[1];
-
-
-      auto const key = std::make_pair( meshBodyName, meshLevelName );
+      auto const key = std::make_pair( meshBodyName, m_discretizationName );
       m_meshTargets[key].emplace_back( regionName );
     }
     else

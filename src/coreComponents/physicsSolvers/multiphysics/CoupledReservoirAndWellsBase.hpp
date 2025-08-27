@@ -101,10 +101,7 @@ public:
                                  dataRepository::Group * const parent )
     : Base( name, parent ),
     m_isWellTransmissibilityComputed( false )
-  {
-    this->template getWrapper< string >( Base::viewKeyStruct::discretizationString() ).
-      setInputFlag( dataRepository::InputFlags::FALSE );
-  }
+  {}
 
   /**
    * @brief default destructor

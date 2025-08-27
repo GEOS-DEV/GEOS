@@ -152,6 +152,10 @@ TEST_F( MultiFluidBlackOilTestMass, numericalDerivatives )
 {
   BlackOilFluid * fluid = this->getFluid( this->getFluidName() );
 
+  integer constexpr size = 2*numDof + 1;
+  m_parent.resize( size );
+  fluid->allocateConstitutiveData( m_parent, 1 );
+
   real64 constexpr eps = 1.0e-6;
 
   for( auto const & data : getTestData< MultiFluidBlackOilTestMass >())
@@ -163,6 +167,10 @@ TEST_F( MultiFluidBlackOilTestMass, numericalDerivatives )
 TEST_F( MultiFluidBlackOilTestMolar, numericalDerivatives )
 {
   BlackOilFluid * fluid = this->getFluid( this->getFluidName() );
+
+  integer constexpr size = 2*numDof + 1;
+  m_parent.resize( size );
+  fluid->allocateConstitutiveData( m_parent, 1 );
 
   real64 constexpr eps = 1.0e-6;
 

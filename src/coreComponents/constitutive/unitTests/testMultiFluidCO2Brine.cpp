@@ -101,6 +101,8 @@ class MultiFluidCO2BrineTestFixture : public FluidModelTest< typename FluidType<
 public:
   using CO2BrineFluid = typename FluidType< BRINE, THERMAL >::type;
   using Base = FluidModelTest< CO2BrineFluid, 2, 2 >;
+  using Base::m_parent;
+  using Base::numDof;
 
 public:
   MultiFluidCO2BrineTestFixture()
@@ -126,6 +128,10 @@ public:
   {
     CO2BrineFluid * fluid = this->getFluid( this->getFluidName() );
 
+    // Number of execution points actual value plus left and right pertubations for each variable
+    integer constexpr size = 2*numDof + 1;
+    m_parent.resize( size );
+    fluid->allocateConstitutiveData( m_parent, 1 );
     fluid->setMassFlag( useMass );
 
     real64 constexpr eps = 1.0e-6;

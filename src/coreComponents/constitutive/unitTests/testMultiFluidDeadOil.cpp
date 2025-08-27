@@ -227,6 +227,11 @@ TYPED_TEST( MultiFluidDeadOilTestFixture, numericalDerivatives )
 {
   DeadOilFluid * fluid = this->getFluid( this->getFluidName() );
 
+  // Number of execution points actual value plus left and right perturbations for each variable
+  integer constexpr size = 2*TestFixture::Base::numDof + 1;
+  TestFixture::Base::m_parent.resize( size );
+  fluid->allocateConstitutiveData( TestFixture::Base::m_parent, 1 );
+
   for( real64 const pressure : { 1.24e7, 3.21e7, 5.01e7 } )
   {
     typename TestFixture::Base::TestPoint const data ( pressure, 297.15, { 0.1, 0.3, 0.6 } );

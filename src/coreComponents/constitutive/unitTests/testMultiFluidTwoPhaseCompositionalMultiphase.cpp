@@ -60,6 +60,8 @@ public:
   static constexpr VISCOSITY_TYPE ViscosityModel = std::tuple_element_t< 1, TEST_TYPE >::value;
   using CompositionalMultiphaseFluid = typename Viscosity< ViscosityModel >::FluidType;
   using Base = FluidModelTest< CompositionalMultiphaseFluid, std::tuple_element_t< 2, TEST_TYPE >::value >;
+  using Base::m_parent;
+  using Base::numDof;
   static constexpr real64 relTol = 1.0e-4;
   static constexpr real64 absTol = 1.0e-3;
 
@@ -77,6 +79,10 @@ public:
   {
     CompositionalMultiphaseFluid * fluid = this->getFluid( this->getFluidName() );
 
+    // Number of execution points actual value plus left and right pertubations for each variable
+    integer constexpr size = 2*numDof + 1;
+    m_parent.resize( size );
+    fluid->allocateConstitutiveData( m_parent, 1 );
     fluid->setMassFlag( useMass );
 
     array2d< real64 > samples;

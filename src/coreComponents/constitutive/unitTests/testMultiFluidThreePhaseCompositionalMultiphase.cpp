@@ -40,6 +40,8 @@ class MultiFluidCompositionalMultiphaseTestFixture : public FluidModelTest< Comp
 public:
   static constexpr EquationOfStateType EquationOfState = std::tuple_element_t< 0, TEST_TYPE >::value;
   using Base = FluidModelTest< CompositionalThreePhaseLohrenzBrayClarkViscosity, std::tuple_element_t< 1, TEST_TYPE >::value, 3 >;
+  using Base::m_parent;
+  using Base::numDof;
   static constexpr real64 relTol = 1.0e-4;
   static constexpr real64 absTol = 1.0e-3;
 
@@ -57,6 +59,9 @@ public:
   {
     CompositionalThreePhaseLohrenzBrayClarkViscosity * fluid = this->getFluid( this->getFluidName() );
 
+    integer constexpr size = 2*numDof + 1;
+    m_parent.resize( size );
+    fluid->allocateConstitutiveData( m_parent, 1 );
     fluid->setMassFlag( useMass );
 
     array2d< real64 > samples;

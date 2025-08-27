@@ -66,8 +66,7 @@ void setupProblemFromXML( ProblemManager & problemManager, char const * const xm
   dataRepository::Group & commandLine =
     problemManager.getGroup< dataRepository::Group >( problemManager.groupKeys.commandLine );
 
-  commandLine.registerWrapper< integer >( problemManager.viewKeys.xPartitionsOverride.key() ).
-    setApplyDefaultValue( mpiSize );
+  commandLine.getReference< integer >( problemManager.viewKeys.xPartitionsOverride.key() ) = mpiSize;
 
   xmlWrapper::xmlNode xmlProblemNode = xmlDocument.getChild( dataRepository::keys::ProblemManager );
   problemManager.processInputFileRecursive( xmlDocument, xmlProblemNode );

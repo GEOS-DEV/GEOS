@@ -448,20 +448,20 @@ public:
   {
     arrayView3d< real64 const, USD_CAPPRES > phaseCapPressure;
     arrayView4d< real64 const, USD_CAPPRES_DS > dPhaseCapPressure_dPhaseVolFraction;
-    testNumericalDerivatives( m_parent,
-                              *m_model,
+    testNumericalDerivatives( *m_model,
+                              *m_modelCopy,
                               sat,
                               eps,
                               tol,
                               "phaseCapPressure",
-                              [&phaseCapPressure] ( CapillaryPressureBase & relPerm )
+                              [&phaseCapPressure] ( CapillaryPressureBase & capPres )
     {
-      phaseCapPressure = relPerm.phaseCapPressure();
+      phaseCapPressure = capPres.phaseCapPressure();
       return phaseCapPressure[ 0 ][ 0 ];
     },
-                              [&dPhaseCapPressure_dPhaseVolFraction] ( CapillaryPressureBase & relPerm )
+                              [&dPhaseCapPressure_dPhaseVolFraction] ( CapillaryPressureBase & capPres )
     {
-      dPhaseCapPressure_dPhaseVolFraction = relPerm.dPhaseCapPressure_dPhaseVolFraction();
+      dPhaseCapPressure_dPhaseVolFraction = capPres.dPhaseCapPressure_dPhaseVolFraction();
       return dPhaseCapPressure_dPhaseVolFraction[ 0 ][ 0 ];
     }
                               );
@@ -626,10 +626,6 @@ TEST_F( CapillaryPressureTest, numericalDerivatives_jFunctionCapPressureTwoPhase
 {
   initialize( makeJFunctionCapPressureTwoPhase( "capPressure", m_parent ) );
 
-  // here, we have to apply a special treatment to this test
-  // to make sure that the J-function multiplier is initialized using initializeRockState
-  // this requires calling allocateConstitutiveData in advance (it will be called again later, in the "test" function)
-
   // setup some values for porosity and permeability
   array2d< real64 > porosity;
   porosity.resize( 1, 1 );
@@ -641,8 +637,8 @@ TEST_F( CapillaryPressureTest, numericalDerivatives_jFunctionCapPressureTwoPhase
   permeability[0][0][2] = 0.2324191e-15;
 
   // initialize the J-function multiplier (done on GPU if GPU is available)
-  m_model->allocateConstitutiveData( m_parent, 1 );
   m_model->initializeRockState( porosity.toViewConst(), permeability.toViewConst() );
+  m_modelCopy->initializeRockState( porosity.toViewConst(), permeability.toViewConst() );
 
   // move the multiplier back to the CPU since the test is performed on the CPU
   auto & jFuncMultiplier =
@@ -672,10 +668,6 @@ TEST_F( CapillaryPressureTest, numericalDerivatives_jFunctionCapPressureThreePha
 {
   initialize( makeJFunctionCapPressureThreePhase( "capPressure", m_parent ) );
 
-  // here, we have to apply a special treatment to this test
-  // to make sure that the J-function multiplier is initialized using initializeRockState
-  // this requires calling allocateConstitutiveData in advance (it will be called again later, in the "test" function)
-
   // setup some values for porosity and permeability
   array2d< real64 > porosity;
   porosity.resize( 1, 1 );
@@ -687,8 +679,8 @@ TEST_F( CapillaryPressureTest, numericalDerivatives_jFunctionCapPressureThreePha
   permeability[0][0][2] = 0.2324191e-15;
 
   // initialize the J-function multiplier (done on the GPU if GPU is available)
-  m_model->allocateConstitutiveData( m_parent, 1 );
   m_model->initializeRockState( porosity.toViewConst(), permeability.toViewConst() );
+  m_modelCopy->initializeRockState( porosity.toViewConst(), permeability.toViewConst() );
 
   // move the multiplier back to the CPU since the test is performed on the CPU
   auto & jFuncMultiplier =

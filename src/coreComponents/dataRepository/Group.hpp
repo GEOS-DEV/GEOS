@@ -1669,6 +1669,8 @@ template< typename T, typename TBASE >
 Wrapper< TBASE > & Group::registerWrapper( string const & name,
                                            ViewKey::index_type * const rkey )
 {
+  GEOS_ERROR_IF( hasWrapper( name ),
+                 "Wrapper `" << name << "` already exists in Group `" << getName() << "`." );
   std::unique_ptr< TBASE > newObj = std::make_unique< T >();
   m_wrappers.insert( name,
                      new Wrapper< TBASE >( name, *this, std::move( newObj ) ),
@@ -1704,6 +1706,8 @@ Wrapper< T > & Group::registerWrapper( string const & name,
                                        std::unique_ptr< T > newObject )
 {
   static_assert( !std::is_base_of< WrapperBase, T >::value, "This function should not be used for `WrapperBase`. Use the dedicated `registerWrapper` instead." );
+  GEOS_ERROR_IF( hasWrapper( name ),
+                 "Wrapper `" << name << "` already exists in Group `" << getName() << "`." );
   m_wrappers.insert( name,
                      new Wrapper< T >( name, *this, std::move( newObject ) ),
                      true );
@@ -1721,6 +1725,8 @@ Wrapper< T > & Group::registerWrapper( string const & name,
                                        T * newObject )
 {
   static_assert( !std::is_base_of< WrapperBase, T >::value, "This function should not be used for `WrapperBase`. Use the dedicated `registerWrapper` instead." );
+  GEOS_ERROR_IF( hasWrapper( name ),
+                 "Wrapper `" << name << "` already exists in Group `" << getName() << "`." );
   m_wrappers.insert( name,
                      new Wrapper< T >( name, *this, newObject ),
                      true );

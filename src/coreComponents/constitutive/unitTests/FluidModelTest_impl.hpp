@@ -231,9 +231,6 @@ void FluidModelTest< FLUID_TYPE, NUM_COMP, NUM_PHASE >::testNumericalDerivatives
 
   // Number of execution points actual value plus left and right pertubations for each variable
   integer constexpr size = 2*numDof + 1;
-  m_parent.resize( size );
-  std::cout << "testNumericalDerivatives fluid->allocateConstitutiveData" << std::endl;
-  fluid->allocateConstitutiveData( m_parent, 1 );
 
   bool const isThermal = fluid->isThermal();
 

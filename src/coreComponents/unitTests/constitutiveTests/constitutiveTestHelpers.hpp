@@ -66,8 +66,8 @@ void initializeTable( string const & tableName,
 }
 
 template< typename MODEL, typename VAR, typename D_VAR_D_SAT >
-void testNumericalDerivatives( dataRepository::Group & parent,
-                               MODEL & model,
+void testNumericalDerivatives( MODEL & model,
+                               MODEL & modelCopy,
                                arraySlice1d< real64 const > const saturationInput,
                                real64 const perturbParameter,
                                real64 const relTol,
@@ -85,13 +85,6 @@ void testNumericalDerivatives( dataRepository::Group & parent,
     saturationValues[0][i] = saturationInput[i];
   }
   arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const saturation = saturationValues[0];
-
-  // create a clone of the rel perm to run updates on
-  std::unique_ptr< constitutive::ConstitutiveBase > modelCopyPtr = model.deliverClone( "fluidCopy", &parent );
-  MODEL & modelCopy = dynamicCast< MODEL & >( *modelCopyPtr );
-
-  model.allocateConstitutiveData( model.getParent(), 1 );
-  modelCopy.allocateConstitutiveData( model.getParent(), 1 );
 
   // auto to avoid having to spell out unknown layout permutations
   auto const var = varAccessor( model );
@@ -151,12 +144,19 @@ public:
     m_model = &model;
     m_parent.initialize();
     m_parent.initializePostInitialConditions();
+    m_model->allocateConstitutiveData( m_parent, 1 );
+
+    // create a clone to run updates on
+    m_modelCopy = dynamicCast< BASE * >( m_model->deliverClone( m_model->getName() + "Copy", &m_parent ).release());
+    m_modelCopy->allocateConstitutiveData( m_parent, 1 );
   }
 
 protected:
   conduit::Node m_node;
   dataRepository::Group m_parent;
   BASE * m_model;
+  BASE * m_modelCopy;
+
 };
 
 } // namespace testing

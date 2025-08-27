@@ -287,9 +287,9 @@ CommandLineOptions g_commandLineOptions;
 TEST( testTableFunctionsOutput, testOutputFiles )
 {
 
-  std::filesystem::path f1{"fluid_phaseModel1_PhillipsBrineDensity_table.csv"};
-  std::filesystem::path f2{"fluid_phaseModel2_SpanWagnerCO2Density_table.csv"};
-  std::filesystem::path f3{"fluid_phaseModel2_FenghourCO2Viscosity_table.csv"};
+  std::filesystem::path f1{ "fluid_phaseModel1_PhillipsBrineDensity_table.csv" };
+  std::filesystem::path f2{ "fluid_phaseModel2_SpanWagnerCO2Density_table.csv" };
+  std::filesystem::path f3{ "fluid_phaseModel2_FenghourCO2Viscosity_table.csv" };
   std::filesystem::path f4{ "fluid_CO2Solubility_co2Dissolution_table.csv" };
   std::filesystem::path f5{ "fluid_phaseModel1_PhillipsBrineViscosity_table.csv" };
   // setup
