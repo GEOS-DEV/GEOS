@@ -23,6 +23,9 @@
 #include "physicsSolvers/multiphysics/poromechanicsKernels/PoromechanicsBase.hpp"
 #include "physicsSolvers/multiphysics/PoromechanicsFields.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseBaseFields.hpp"
+#include "constitutive/solid/CoupledSolidBase.hpp"
+#include "constitutive/fluid/multifluid/MultiFluidBase.hpp"
+#include "constitutive/fluid/multifluid/Layouts.hpp"
 #include "codingUtilities/Utilities.hpp"
 
 namespace geos

@@ -21,9 +21,7 @@
 
 #include "common/TimingMacros.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
-#include "constitutive/ConstitutiveManager.hpp"
 #include "constitutive/contact/FrictionSelector.hpp"
-#include "constitutive/solid/ElasticIsotropic.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
 #include "finiteElement/elementFormulations/FiniteElementBase.hpp"
 #include "linearAlgebra/utilities/LAIHelperFunctions.hpp"
@@ -37,6 +35,8 @@
 #include "physicsSolvers/solidMechanics/contact/kernels/SolidMechanicsEFEMStaticCondensationKernels.hpp"
 #include "physicsSolvers/solidMechanics/contact/kernels/SolidMechanicsEFEMJumpUpdateKernels.hpp"
 #include "physicsSolvers/solidMechanics/contact/ContactFields.hpp"
+
+#include "physicsSolvers/solidMechanics/kernels/SolidMechanicsKernelsDispatchTypeList.hpp"
 
 namespace geos
 {
@@ -57,8 +57,6 @@ SolidMechanicsEmbeddedFractures::SolidMechanicsEmbeddedFractures( const string &
   getWrapperBase( viewKeyStruct::contactPenaltyStiffnessString() ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Value of the penetration penalty stiffness. Units of Pressure/length" );
-
-  addLogLevel< logInfo::LinearSolverConfiguration >();
 }
 
 SolidMechanicsEmbeddedFractures::~SolidMechanicsEmbeddedFractures()
@@ -95,8 +93,8 @@ void SolidMechanicsEmbeddedFractures::setMGRStrategy()
   linearSolverParameters.dofsPerNode = 3;
 
   linearSolverParameters.mgr.strategy = LinearSolverParameters::MGR::StrategyType::solidMechanicsEmbeddedFractures;
-  GEOS_LOG_LEVEL_RANK_0( logInfo::LinearSolverConfiguration, GEOS_FMT( "{}: MGR strategy set to {}", getName(),
-                                                                       EnumStrings< LinearSolverParameters::MGR::StrategyType >::toString( linearSolverParameters.mgr.strategy )));
+  GEOS_LOG_LEVEL_RANK_0( logInfo::LinearSolver, GEOS_FMT( "{}: MGR strategy set to {}", getName(),
+                                                          EnumStrings< LinearSolverParameters::MGR::StrategyType >::toString( linearSolverParameters.mgr.strategy )));
 }
 
 void SolidMechanicsEmbeddedFractures::registerDataOnMesh( dataRepository::Group & meshBodies )
@@ -115,7 +113,7 @@ void SolidMechanicsEmbeddedFractures::registerDataOnMesh( dataRepository::Group 
 
 void SolidMechanicsEmbeddedFractures::initializePostInitialConditionsPreSubGroups()
 {
-  SolidMechanicsLagrangianFEM::initializePostInitialConditionsPreSubGroups();
+  ContactSolverBase::initializePostInitialConditionsPreSubGroups();
   updateState( this->getGroupByPath< DomainPartition >( "/Problem/domain" ) );
 }
 
@@ -174,7 +172,7 @@ void SolidMechanicsEmbeddedFractures::implicitStepComplete( real64 const & time_
     string const & frictionLawName = subRegion.template getReference< string >( viewKeyStruct::frictionLawNameString() );
     FrictionBase const & frictionLaw = getConstitutiveModel< FrictionBase >( subRegion, frictionLawName );
     arrayView2d< real64 const > const & traction = subRegion.getField< contact::traction >();
-    arrayView1d< integer > const & fractureState = subRegion.getField< contact::fractureState >();
+    arrayView1d< integer > const fractureState = subRegion.getField< contact::fractureState >();
     constitutiveUpdatePassThru( frictionLaw, [&] ( auto & castedFrictionLaw )
     {
       using FrictionType = TYPEOFREF( castedFrictionLaw );
@@ -348,12 +346,11 @@ void SolidMechanicsEmbeddedFractures::assembleSystem( real64 const time,
       real64 maxTraction = finiteElement::
                              regionBasedKernelApplication
                            < parallelDevicePolicy< >,
-                             constitutive::ElasticIsotropic,
-                             CellElementSubRegion >( mesh,
-                                                     regionNames,
-                                                     getDiscretizationName(),
-                                                     SolidMechanicsLagrangianFEM::viewKeyStruct::solidMaterialNamesString(),
-                                                     kernelFactory );
+                             SolidMechanicsKernelsDispatchTypeList >( mesh,
+                                                                      regionNames,
+                                                                      getDiscretizationName(),
+                                                                      SolidMechanicsLagrangianFEM::viewKeyStruct::solidMaterialNamesString(),
+                                                                      kernelFactory );
 
       GEOS_UNUSED_VAR( maxTraction );
 
@@ -370,12 +367,11 @@ void SolidMechanicsEmbeddedFractures::assembleSystem( real64 const time,
       real64 maxTraction = finiteElement::
                              regionBasedKernelApplication
                            < parallelDevicePolicy< >,
-                             constitutive::SolidBase,
-                             CellElementSubRegion >( mesh,
-                                                     regionNames,
-                                                     getDiscretizationName(),
-                                                     SolidMechanicsLagrangianFEM::viewKeyStruct::solidMaterialNamesString(),
-                                                     kernelFactory );
+                             SolidMechanicsKernelsDispatchTypeList >( mesh,
+                                                                      regionNames,
+                                                                      getDiscretizationName(),
+                                                                      SolidMechanicsLagrangianFEM::viewKeyStruct::solidMaterialNamesString(),
+                                                                      kernelFactory );
 
       GEOS_UNUSED_VAR( maxTraction );
 
@@ -748,12 +744,11 @@ void SolidMechanicsEmbeddedFractures::updateJump( DofManager const & dofManager,
     real64 maxTraction = finiteElement::
                            regionBasedKernelApplication
                          < parallelDevicePolicy< >,
-                           constitutive::SolidBase,
-                           CellElementSubRegion >( mesh,
-                                                   regionNames,
-                                                   getDiscretizationName(),
-                                                   SolidMechanicsLagrangianFEM::viewKeyStruct::solidMaterialNamesString(),
-                                                   kernelFactory );
+                           SolidMechanicsKernelsDispatchTypeList >( mesh,
+                                                                    regionNames,
+                                                                    getDiscretizationName(),
+                                                                    SolidMechanicsLagrangianFEM::viewKeyStruct::solidMaterialNamesString(),
+                                                                    kernelFactory );
 
     GEOS_UNUSED_VAR( maxTraction );
   } );
@@ -778,7 +773,7 @@ void SolidMechanicsEmbeddedFractures::updateState( DomainPartition & domain )
 
       arrayView3d< real64 > const & dFractureTraction_dJump = subRegion.getField< contact::dTraction_dJump >();
 
-      arrayView1d< integer const > const & fractureState = subRegion.getField< contact::fractureState >();
+      arrayView1d< integer const > const fractureState = subRegion.getField< contact::fractureState >();
 
       arrayView1d< real64 > const & slip = subRegion.getField< contact::slip >();
 
@@ -813,7 +808,7 @@ bool SolidMechanicsEmbeddedFractures::updateConfiguration( DomainPartition & dom
       arrayView1d< integer const > const & ghostRank = subRegion.ghostRank();
       arrayView2d< real64 const > const & dispJump = subRegion.getField< contact::dispJump >();
       arrayView2d< real64 const > const & traction = subRegion.getField< contact::traction >();
-      arrayView1d< integer > const & fractureState = subRegion.getField< contact::fractureState >();
+      arrayView1d< integer > const fractureState = subRegion.getField< contact::fractureState >();
 
       string const & frictionLawName = subRegion.template getReference< string >( viewKeyStruct::frictionLawNameString() );
       FrictionBase const & frictionLaw = getConstitutiveModel< FrictionBase >( subRegion, frictionLawName );

@@ -57,9 +57,7 @@ public:
     this->getWrapper< string >( PhysicsSolverBase::viewKeyStruct::discretizationString() ).
       setInputFlag( dataRepository::InputFlags::FALSE );
 
-    addLogLevel< logInfo::Convergence >();
     addLogLevel< logInfo::Coupling >();
-    addLogLevel< logInfo::TimeStep >();
   }
 
   /// deleted copy constructor
@@ -498,6 +496,7 @@ protected:
           {
             iter = 0; // restart outer loop
             stepDt = solverDt; // sync time step
+            m_numTimestepsSinceLastDtCut = 0;
           }
         } );
 
@@ -534,6 +533,7 @@ protected:
       {
         // cut timestep, go back to beginning of step and restart the Newton loop
         stepDt *= dtCutFactor;
+        m_numTimestepsSinceLastDtCut = 0;
         GEOS_LOG_LEVEL_RANK_0( logInfo::TimeStep, GEOS_FMT( "New dt = {}", stepDt ) );
 
         // notify the solver statistics counter that this is a time step cut

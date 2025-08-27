@@ -25,6 +25,7 @@
 #include "mesh/MeshFields.hpp"
 #include "physicsSolvers/PhysicsSolverBase.hpp"
 #include "physicsSolvers/wavePropagation/sem/elastic/shared/ElasticFields.hpp"
+#include "physicsSolvers/wavePropagation/shared/WaveSolverTypeDefSEM.hpp"
 
 namespace geos
 {
@@ -72,13 +73,13 @@ public:
                                       real64 const & dt,
                                       integer const cycleNumber,
                                       DomainPartition & domain,
-                                      bool const computeGradient ) override;
+                                      integer const computeGradient ) override;
 
   virtual real64 explicitStepBackward( real64 const & time_n,
                                        real64 const & dt,
                                        integer const cycleNumber,
                                        DomainPartition & domain,
-                                       bool const computeGradient ) override;
+                                       integer const computeGradient ) override;
   /**@}*/
 
   /**
@@ -127,6 +128,8 @@ public:
 
     static constexpr char const * useVtiString() { return "useVTI"; }
 
+    static constexpr char const * useTtiString() { return "useTTI"; }
+
   } waveEquationViewKeys;
 
 
@@ -156,6 +159,11 @@ public:
                             string_array const & regionNames );
 
   void prepareNextTimestep( MeshLevel & mesh );
+
+  /**
+   * @brief Get the minimum wavespeed on a mesh (S-wavespeed in the elastic case)
+   */
+  virtual real32 getGlobalMinWavespeed( MeshLevel & mesh, string_array const & regionNames ) override;
 
   /**
    * @brief Computes the minimum attenuation quality factor over all the mesh. This is useful for computing anelasticity coefficients, which
@@ -228,6 +236,12 @@ private:
 
   /// Flag to appliy VTI anisotropy
   integer m_useVTI;
+
+  /// Flag to appliy TTI anisotropy
+  integer m_useTTI;
+
+  real64 m_rotationMatrix[ 3 ][ 3 ]{};
+
 
 };
 

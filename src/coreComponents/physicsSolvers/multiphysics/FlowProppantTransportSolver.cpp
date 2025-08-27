@@ -28,14 +28,11 @@ namespace geos
 {
 
 using namespace dataRepository;
-using namespace constitutive;
 
 FlowProppantTransportSolver::FlowProppantTransportSolver( const string & name,
                                                           Group * const parent ):
   Base( name, parent )
-{
-  addLogLevel< logInfo::Convergence >();
-}
+{ }
 
 void FlowProppantTransportSolver::preStepUpdate( real64 const & time_n,
                                                  real64 const & dt,

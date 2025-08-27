@@ -394,7 +394,7 @@ public:
   /**
    * @return An array containing all sub groups keys
    */
-  std::vector< string > getSubGroupsNames() const;
+  stdVector< string > getSubGroupsNames() const;
 
   /**
    * @brief Check whether a sub-group exists.
@@ -1177,7 +1177,7 @@ public:
   /**
    * @return An array containing all wrappers keys
    */
-  std::vector< string > getWrappersNames() const;
+  stdVector< string > getWrappersNames() const;
 
   ///@}
 
@@ -1498,8 +1498,13 @@ public:
    */
   void setLogLevel( integer const logLevel ) { m_logLevel = logLevel; }
 
-  /// @return The verbosity level
+  /**
+   * @return The verbosity level of the Group instance.
+   * @warning For logging activation, *Please use `isLogLevelActive< logInfo::yourInfo >( getLogLevel() )`*
+   * to be sure to document to the user what the Group is able to output.
+   */
   integer getLogLevel() const { return m_logLevel; }
+
   ///@}
 
   /**

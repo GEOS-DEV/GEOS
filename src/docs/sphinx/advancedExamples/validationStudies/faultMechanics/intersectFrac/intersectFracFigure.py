@@ -175,7 +175,7 @@ def main():
     cmap = plt.get_cmap("tab10")
 
     ax[0, 0].plot(r1 - length2, tn_literature, color=cmap(-1), label='Phan et al.(2003)', lw=lw)
-    ax[0, 0].plot(xlist, tnlist, 'o', alpha=0.6, color=cmap(2), mec='k', label='GEOSX Results', markersize=msize)
+    ax[0, 0].plot(xlist, tnlist, 'o', alpha=0.6, color=cmap(2), mec='k', label='GEOS Results', markersize=msize)
     ax[0, 0].grid()
     ax[0, 0].set_xlabel('Horizontal Frac Length [m]', size=fsize, weight="bold")
     ax[0, 0].set_ylabel('Normal Traction [MPa]', size=fsize, weight="bold")
@@ -184,7 +184,7 @@ def main():
     ax[0, 0].yaxis.set_tick_params(labelsize=fsize)
 
     ax[0, 1].plot(r2 - length2, gt_literature, color=cmap(-1), label='Phan et al.(2003)', lw=lw)
-    ax[0, 1].plot(xlist, gtlist, 'o', alpha=0.6, color=cmap(2), mec='k', label='GEOSX Results', markersize=msize)
+    ax[0, 1].plot(xlist, gtlist, 'o', alpha=0.6, color=cmap(2), mec='k', label='GEOS Results', markersize=msize)
     ax[0, 1].grid()
     ax[0, 1].set_xlabel('Horizontal Frac Length [m]', size=fsize, weight="bold")
     ax[0, 1].set_ylabel('Slip [mm]', size=fsize, weight="bold")
@@ -200,9 +200,8 @@ def main():
                   alpha=0.6,
                   color=cmap(2),
                   mec='k',
-                  label='GEOSX Results',
+                  label='GEOS Results',
                   markersize=msize)
-    ax[1, 0].plot(x_analytical, aperture_analytical * 1.0e3, '--', color=cmap(1), label='Sneddon Solution', lw=lw)
     ax[1, 0].grid()
     ax[1, 0].set_xlabel('Vertical Frac Length [m]', size=fsize, weight="bold")
     ax[1, 0].set_ylabel('Aperture [mm]', size=fsize, weight="bold")
