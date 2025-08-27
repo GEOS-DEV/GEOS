@@ -88,8 +88,8 @@ CO2BrineFluid( string const & name, Group * const parent ):
   MultiFluidBase( name, parent )
 {
   registerWrapper( viewKeyStruct::phasePVTParaFilesString(), &m_phasePVTParaFiles ).
-    setInputFlag( InputFlags::REQUIRED ).
-    setRestartFlags( RestartFlags::NO_WRITE ).
+    setInputFlag( InputFlags::REQUIRED )
+  setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "Names of the files defining the parameters of the viscosity and density models" );
 
   registerWrapper( viewKeyStruct::flashModelParaFileString(), &m_flashModelParaFile ).
@@ -105,7 +105,8 @@ CO2BrineFluid( string const & name, Group * const parent ):
   this->registerWrapper( viewKeyStruct::writeCSVFlagString(), &m_writeCSV ).
     setInputFlag( InputFlags::OPTIONAL ).
     setRestartFlags( RestartFlags::NO_WRITE ).
-    setDescription( "When set to 1, write PVT tables into a CSV file" ).
+    setDescription( "When set to 1, write PVT tables into a CSV file.\n "
+                    "Even if m_writeCSV is set to 0, if the table is too large a CSV file will be generated" ).
     setDefaultValue( 0 );
 
   this->registerWrapper( viewKeyStruct::checkPhasePresenceString(), &m_checkPhasePresence ).
