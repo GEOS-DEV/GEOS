@@ -1,0 +1,54 @@
+<?xml version="1.0" ?>
+
+<Problem>
+
+  <Mesh>
+      <VTKMesh name="mesh"
+                file="./LiSEDefect2D_butterfly.vtu" 
+                regionAttribute="COPPER-DEFECT-SE"
+                nodesetNames="{ xneg, xpos, yneg, ypos, zneg, zpos, CUSEInterface, LISEInterface }"/>
+  </Mesh>
+
+  <Included>
+    <File name="./LiSEdefect_Electrostatics_base.xml"/>
+  </Included>
+
+  <Solvers>
+    <Electrostatics
+      name="halfcell"
+      discretization="FE1"
+      timeIntegrationOption="QuasiStatic"
+      fieldName="potential"
+      targetRegions="{Region1, Region2, Region3, SEIRegion }">
+      <LinearSolverParameters
+        directParallel="0"/>
+    </Electrostatics>
+
+    <SurfaceGenerator
+      name="SurfaceGen"
+      fractureRegion="SEIRegion"
+      targetRegions="{ Region1, Region2, Region3}"
+      initialRockToughness="1.0e10"
+      mpiCommOrder="1"/>
+
+  </Solvers>
+
+  <NumericalMethods>
+    <FiniteElements>
+      <FiniteElementSpace
+        name="FE1"
+        order="1"/>
+    </FiniteElements>
+  </NumericalMethods>
+  
+  <FieldSpecifications>
+    <FieldSpecification
+      name="LiReactivityCoef"
+      initialCondition="1"
+      setNames="{ LISEInterface }"
+      objectPath="ElementRegions/SEIRegion"
+      fieldName="metalSE_reactivityCoefficient"
+      scale="1.0E-4"/>
+  </FieldSpecifications>
+
+</Problem>
