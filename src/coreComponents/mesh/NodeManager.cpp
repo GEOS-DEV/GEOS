@@ -100,7 +100,9 @@ void NodeManager::buildGeometricSets( GeometricObjectManager const & geometries 
   geometries.forSubGroups< SimpleGeometricObjectBase >( [&]( SimpleGeometricObjectBase const & object )
   {
     string const & name = object.getName();
-    SortedArray< localIndex > & targetSet = m_sets.registerWrapper< SortedArray< localIndex > >( name ).reference();
+    SortedArray< localIndex > & targetSet = m_sets.hasWrapper( name ) ?
+                                            m_sets.getReference< SortedArray< localIndex > >( name ) :
+                                            m_sets.registerWrapper< SortedArray< localIndex > >( name ).reference();
     for( localIndex a = 0; a < numNodes; ++a )
     {
       real64 nodeCoord[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( X[a] );
