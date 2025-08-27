@@ -6,7 +6,7 @@
     <File name="./MoMaS_diffusive_base.xml" />
     <File name="./MoMaS_initialAggregate.xml" />
     <File name="./MoMaS_logConc.xml" />
-    <File name="./MoMaS_initialLogConc.xml" />
+    <File name="./MoMaS_initialPrimaryConc.xml" />
   </Included>
 
   <Mesh>
@@ -72,7 +72,7 @@
 
     <PeriodicEvent
       name="solverApplications"
-      forceDt="0.01"
+      maxEventDt="0.01"
       target="/Solvers/SinglePhaseReactiveFlow"/>
   </Events>
 

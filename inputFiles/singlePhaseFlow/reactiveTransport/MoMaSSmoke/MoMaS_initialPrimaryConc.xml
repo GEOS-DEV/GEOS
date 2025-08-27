@@ -2,96 +2,97 @@
 
 <Problem>
   <FieldSpecifications>
-  <!-- AGGREGATE CONCENTRATIONS AT MEDIUM A-->
+  <!-- INITIAL PRIMARY CONCENTRATIONS -->
     <FieldSpecification
-      name="initialAggregate_T1_mediumA"
-      initialCondition="1"
+      name="initialPrimary_X1_mediuma"
       setNames="{ all }"
+      initialCondition="1"
       objectPath="ElementRegions/MediumA"
-      fieldName="water_primarySpeciesAggregateConcentration"
+      fieldName="water_initialPrimarySpeciesConcentration"
       component="0"
       scale="1e-3"/>
 
     <FieldSpecification
-      name="initialAggregate_T2_mediumA"
-      initialCondition="1"
+      name="initialPrimary_X2_mediuma"
       setNames="{ all }"
+      initialCondition="1"
       objectPath="ElementRegions/MediumA"
-      fieldName="water_primarySpeciesAggregateConcentration"
+      fieldName="water_initialPrimarySpeciesConcentration"
       component="1"
-      scale="-2.0"/>
+      scale="0.02"/>
 
     <FieldSpecification
-      name="initialAggregate_T3_mediumA"
-      initialCondition="1"
+      name="initialPrimary_X3_mediuma"
       setNames="{ all }"
+      initialCondition="1"
       objectPath="ElementRegions/MediumA"
-      fieldName="water_primarySpeciesAggregateConcentration"
+      fieldName="water_initialPrimarySpeciesConcentration"
       component="2"
-      scale="1e-3"/>
+      scale="1e-8"/>
 
     <FieldSpecification
-      name="initialAggregate_T4_mediumA"
-      initialCondition="1"
+      name="initialPrimary_X4_mediuma"
       setNames="{ all }"
+      initialCondition="1"
       objectPath="ElementRegions/MediumA"
-      fieldName="water_primarySpeciesAggregateConcentration"
+      fieldName="water_initialPrimarySpeciesConcentration"
       component="3"
       scale="2.0"/>
 
     <FieldSpecification
-      name="initialAggregate_TS_mediumA"
-      initialCondition="1"
+      name="initialPrimary_S_mediuma"
       setNames="{ all }"
+      initialCondition="1"
       objectPath="ElementRegions/MediumA"
-      fieldName="water_primarySpeciesAggregateConcentration"
+      fieldName="water_initialPrimarySpeciesConcentration"
       component="4"
       scale="1.0"/>
 
-    <!-- AGGREGATE CONCENTRATIONS AT SOURCE-->
+  <!-- INITIAL PRIMARY CONCENTRATIONS AT SOURCE-->
     <FieldSpecification
-      name="initialAggregate_T1_source"
+      name="initialPrimary_X1_source"
       initialCondition="1"
       setNames="{ all }"
       objectPath="ElementRegions/Source"
-      fieldName="water_primarySpeciesAggregateConcentration"
+      fieldName="water_initialPrimarySpeciesConcentration"
       component="0"
       scale="0.3"/>
 
     <FieldSpecification
-      name="initialAggregate_T2_source"
+      name="initialPrimary_X2_source"
       initialCondition="1"
       setNames="{ all }"
       objectPath="ElementRegions/Source"
-      fieldName="water_primarySpeciesAggregateConcentration"
+      fieldName="water_initialPrimarySpeciesConcentration"
       component="1"
       scale="0.3"/>
 
     <FieldSpecification
-      name="initialAggregate_T3_source"
+      name="initialPrimary_X3_source"
       initialCondition="1"
       setNames="{ all }"
       objectPath="ElementRegions/Source"
-      fieldName="water_primarySpeciesAggregateConcentration"
+      fieldName="water_initialPrimarySpeciesConcentration"
       component="2"
       scale="0.3"/>
 
     <FieldSpecification
-      name="initialAggregate_T4_source"
+      name="initialPrimary_X4_source"
       initialCondition="1"
       setNames="{ all }"
       objectPath="ElementRegions/Source"
-      fieldName="water_primarySpeciesAggregateConcentration"
+      fieldName="water_initialPrimarySpeciesConcentration"
       component="3"
       scale="1e-20"/>
 
     <FieldSpecification
-      name="initialAggregate_TS_source"
+      name="initialPrimary_S_source"
       initialCondition="1"
       setNames="{ all }"
       objectPath="ElementRegions/Source"
-      fieldName="water_primarySpeciesAggregateConcentration"
+      fieldName="water_initialPrimarySpeciesConcentration"
       component="4"
       scale="1e-20"/>
+
   </FieldSpecifications>
 </Problem>

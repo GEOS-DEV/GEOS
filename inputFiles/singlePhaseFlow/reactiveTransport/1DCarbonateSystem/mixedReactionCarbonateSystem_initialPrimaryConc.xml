@@ -4,130 +4,130 @@
   <FieldSpecifications>
   <!-- AGGREGATE CONCENTRATIONS -->
     <FieldSpecification
-      name="initialLog_H_all"
+      name="initialPrimary_H_all"
       initialCondition="1"
       setNames="{ all }"
       objectPath="ElementRegions/Region1/block1"
-      fieldName="logPrimarySpeciesConcentration"
+      fieldName="water_initialPrimarySpeciesConcentration"
       component="0"
-      scale="-15.6575112436"/>
+      scale="1.585e-7"/>
 
     <FieldSpecification
-      name="initialLog_HCO3_all"
+      name="initialPrimary_HCO3_all"
       initialCondition="1"
       setNames="{ all }"
       objectPath="ElementRegions/Region1/block1"
-      fieldName="logPrimarySpeciesConcentration"
+      fieldName="water_initialPrimarySpeciesConcentration"
       component="1"
-      scale="-4.7923434935"/>
+      scale="8.293e-3"/>
 
     <FieldSpecification
-      name="initialLog_Ca_all"
+      name="initialPrimary_Ca_all"
       initialCondition="1"
       setNames="{ all }"
       objectPath="ElementRegions/Region1/block1"
-      fieldName="logPrimarySpeciesConcentration"
+      fieldName="water_initialPrimarySpeciesConcentration"
       component="2"
-      scale="-6.1325673881"/>
+      scale="2.171e-3"/>
 
     <FieldSpecification
-      name="initialLog_SO4_all"
+      name="initialPrimary_SO4_all"
       initialCondition="1"
       setNames="{ all }"
       objectPath="ElementRegions/Region1/block1"
-      fieldName="logPrimarySpeciesConcentration"
+      fieldName="water_initialPrimarySpeciesConcentration"
       component="3"
-      scale="-13.3050850142"/>
+      scale="1.666e-6"/>
 
     <FieldSpecification
-      name="initialLog_Cl_all"
+      name="initialPrimary_Cl_all"
       initialCondition="1"
       setNames="{ all }"
       objectPath="ElementRegions/Region1/block1"
-      fieldName="logPrimarySpeciesConcentration"
+      fieldName="water_initialPrimarySpeciesConcentration"
       component="4"
-      scale="-10.475834033"/>
+      scale="2.821e-5"/>
 
     <FieldSpecification
-      name="initialLog_Mg_all"
+      name="initialPrimary_Mg_all"
       initialCondition="1"
       setNames="{ all }"
       objectPath="ElementRegions/Region1/block1"
-      fieldName="logPrimarySpeciesConcentration"
+      fieldName="water_initialPrimarySpeciesConcentration"
       component="5"
-      scale="-6.4346315224"/>
+      scale="1.605e-3"/>
     
     <FieldSpecification
-      name="initialLog_Na_all"
+      name="initialPrimary_Na_all"
       initialCondition="1"
       setNames="{ all }"
       objectPath="ElementRegions/Region1/block1"
-      fieldName="logPrimarySpeciesConcentration"
+      fieldName="water_initialPrimarySpeciesConcentration"
       component="6"
-      scale="-7.1540395227"/>
+      scale="7.817e-4"/>
 
     <!-- AGGREGATE CONCENTRATIONS AT SOURCE -->
     <FieldSpecification
-      name="initialLog_H_source"
+      name="initialPrimary_H_source"
       initialCondition="1"
       setNames="{ source }"
       objectPath="ElementRegions/Region1/block1"
-      fieldName="logPrimarySpeciesConcentration"
+      fieldName="water_initialPrimarySpeciesConcentration"
       component="0"
-      scale="-15.6575112436"/>
+      scale="1.585e-7"/>
 
     <FieldSpecification
-      name="initialLog_HCO3_source"
+      name="initialPrimary_HCO3_source"
       initialCondition="1"
       setNames="{ source }"
       objectPath="ElementRegions/Region1/block1"
-      fieldName="logPrimarySpeciesConcentration"
+      fieldName="water_initialPrimarySpeciesConcentration"
       component="1"
-      scale="-2.6149697781"/>
+      scale="7.317e-2"/>
 
     <FieldSpecification
-      name="initialLog_Ca_source"
+      name="initialPrimary_Ca_source"
       initialCondition="1"
       setNames="{ source }"
       objectPath="ElementRegions/Region1/block1"
-      fieldName="logPrimarySpeciesConcentration"
+      fieldName="water_initialPrimarySpeciesConcentration"
       component="2"
-      scale="-4.1884354856"/>
+      scale="1.517e-2"/>
 
     <FieldSpecification
-      name="initialLog_SO4_source"
+      name="initialPrimary_SO4_source"
       initialCondition="1"
       setNames="{ source }"
       objectPath="ElementRegions/Region1/block1"
-      fieldName="logPrimarySpeciesConcentration"
+      fieldName="water_initialPrimarySpeciesConcentration"
       component="3"
-      scale="-13.3050850142"/>
+      scale="1.666e-6"/>
 
     <FieldSpecification
-      name="initialLog_Cl_source"
+      name="initialPrimary_Cl_source"
       initialCondition="1"
       setNames="{ source }"
       objectPath="ElementRegions/Region1/block1"
-      fieldName="logPrimarySpeciesConcentration"
+      fieldName="water_initialPrimarySpeciesConcentration"
       component="4"
-      scale="-10.475834033"/>
+      scale="2.821e-5"/>
 
     <FieldSpecification
-      name="initialLog_Mg_source"
+      name="initialPrimary_Mg_source"
       initialCondition="1"
       setNames="{ source }"
       objectPath="ElementRegions/Region1/block1"
-      fieldName="logPrimarySpeciesConcentration"
+      fieldName="water_initialPrimarySpeciesConcentration"
       component="5"
-      scale="-6.4346315224"/>
+      scale="1.605e-3"/>
     
     <FieldSpecification
-      name="initialLog_Na_source"
+      name="initialPrimary_Na_source"
       initialCondition="1"
       setNames="{ source }"
       objectPath="ElementRegions/Region1/block1"
-      fieldName="logPrimarySpeciesConcentration"
+      fieldName="water_initialPrimarySpeciesConcentration"
       component="6"
-      scale="-7.1540395227"/>
+      scale="7.817e-4"/>
   </FieldSpecifications>
 </Problem>

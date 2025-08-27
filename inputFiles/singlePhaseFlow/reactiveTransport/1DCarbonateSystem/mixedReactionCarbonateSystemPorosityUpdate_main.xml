@@ -4,7 +4,7 @@
   <Included>
     <File name="./mixedReactionCarbonateSystemPorosityUpdate_base.xml" />
     <File name="./mixedReactionCarbonateSystem_initialAggregate.xml" />
-    <File name="./mixedReactionCarbonateSystem_initialLogConc.xml" />
+    <File name="./mixedReactionCarbonateSystem_initialPrimaryConc.xml" />
     <File name="./mixedReactionCarbonateSystem_logConc.xml" />
   </Included>
 

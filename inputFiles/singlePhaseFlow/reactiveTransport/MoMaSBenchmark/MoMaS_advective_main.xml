@@ -6,7 +6,7 @@
     <File name="./MoMaS_advective_base.xml" />
     <File name="./MoMaS_initialAggregate.xml" />
     <File name="./MoMaS_logConc.xml" />
-    <File name="./MoMaS_initialLogConc.xml" />
+    <File name="./MoMaS_initialPrimaryConc.xml" />
   </Included>
 
   <Mesh>

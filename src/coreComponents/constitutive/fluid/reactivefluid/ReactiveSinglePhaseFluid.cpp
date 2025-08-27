@@ -42,7 +42,8 @@ ReactiveSinglePhaseFluid( string const & name, Group * const parent ):
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Chemical System type. Available options are: "
                     "``" + EnumStrings< ChemicalSystemType >::concat( "|" ) + "``" );
-
+  
+  this->registerField( fields::reactivefluid::initialPrimarySpeciesConcentration{}, &m_initialPrimarySpeciesConcentration );
   this->registerField( fields::reactivefluid::secondarySpeciesConcentration{}, &m_secondarySpeciesConcentration );
   this->registerField( fields::reactivefluid::primarySpeciesAggregateConcentration{}, &m_primarySpeciesAggregateConcentration );
   this->registerField( fields::reactivefluid::primarySpeciesAggregateConcentration_n{}, &m_primarySpeciesAggregateConcentration_n );
@@ -118,6 +119,7 @@ void ReactiveSinglePhaseFluid< BASE >::resizeFields( localIndex const size, loca
   integer const numSecondarySpecies = this->numSecondarySpecies();
   integer const numKineticReactions = this->numKineticReactions();
 
+  m_initialPrimarySpeciesConcentration.resize( size, numPts, numPrimarySpecies );
   m_secondarySpeciesConcentration.resize( size, numPts, numSecondarySpecies );
   m_primarySpeciesAggregateConcentration.resize( size, numPts, numPrimarySpecies );
   m_primarySpeciesAggregateConcentration_n.resize( size, numPts, numPrimarySpecies );

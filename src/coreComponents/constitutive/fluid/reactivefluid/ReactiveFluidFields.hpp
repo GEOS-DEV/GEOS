@@ -35,13 +35,13 @@ namespace reactivefluid
 using array3dLayoutSpecies = array3d< real64, constitutive::reactivefluid::LAYOUT_SPECIES >;
 using array4dLayoutSpecies_dC = array4d< real64, constitutive::reactivefluid::LAYOUT_SPECIES_DC >;
 
-DECLARE_FIELD( primarySpeciesConcentration,
-               "primarySpeciesConcentration",
+DECLARE_FIELD( initialPrimarySpeciesConcentration,
+               "initialPrimarySpeciesConcentration",
                array3dLayoutSpecies,
                1e-16,
                LEVEL_0,
                WRITE_AND_READ,
-               "primarySpeciesConcentration" );
+               "initialPrimarySpeciesConcentration" );
 
 DECLARE_FIELD( primarySpeciesAggregateConcentration,
                "primarySpeciesAggregateConcentration",

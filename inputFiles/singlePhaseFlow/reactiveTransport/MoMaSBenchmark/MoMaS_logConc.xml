@@ -17,7 +17,7 @@
       objectPath="ElementRegions/Source"
       fieldName="logPrimarySpeciesConcentration"
       component="1"
-      scale="-1.4206052082"/>
+      scale="-1.4203896610"/>
 
     <FieldSpecification
       name="log_X3_source"
@@ -25,7 +25,7 @@
       objectPath="ElementRegions/Source"
       fieldName="logPrimarySpeciesConcentration"
       component="2"
-      scale="-1.4204810515"/>
+      scale="-1.4203896610"/>
 
     <FieldSpecification
       name="log_X4_source"
@@ -33,7 +33,7 @@
       objectPath="ElementRegions/Source"
       fieldName="logPrimarySpeciesConcentration"
       component="3"
-      scale="-82.1595397322"/>
+      scale="-116.6994524874"/>
 
     <FieldSpecification
       name="log_S_source"
@@ -41,6 +41,6 @@
       objectPath="ElementRegions/Source"
       fieldName="logPrimarySpeciesConcentration"
       component="4"
-      scale="-19.6464329266"/>
+      scale="-54.1859471371"/>
   </FieldSpecifications>
 </Problem>

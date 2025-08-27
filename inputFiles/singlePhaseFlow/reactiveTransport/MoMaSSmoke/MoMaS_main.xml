@@ -5,7 +5,7 @@
     <File name="./MoMaS_base.xml" />
     <File name="./MoMaS_initialAggregate.xml" />
     <File name="./MoMaS_logConc.xml" />
-    <File name="./MoMaS_initialLogConc.xml" />
+    <File name="./MoMaS_initialPrimaryConc.xml" />
   </Included>
 
   <Mesh>
@@ -34,15 +34,6 @@
       name="outputs"
       cycleFrequency="1"
       target="/Outputs/vtkOutput"/>
-
-    <!-- <PeriodicEvent
-      name="logPrimarySpeciesMediumAHistoryCollection"
-      cycleFrequency="1"
-      target="/Tasks/logPrimarySpeciesMediumACollection"/>
-    <PeriodicEvent
-      name="logPrimarySpeciesMediumATimeHistoryOutput"
-      cycleFrequency="1"
-      target="/Outputs/logPrimarySpeciesMediumAHistoryOutput"/> -->
 
     <PeriodicEvent
       name="solverApplications"

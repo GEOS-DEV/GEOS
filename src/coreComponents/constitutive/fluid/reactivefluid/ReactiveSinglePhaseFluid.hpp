@@ -123,6 +123,7 @@ public:
                            arrayView3d< real64, reactivefluid::USD_SPECIES > const & primarySpeciesMobileAggregateConcentration,
                            arrayView4d< real64, reactivefluid::USD_SPECIES_DC > const & dPrimarySpeciesAggregateConcentration_dLogPrimarySpeciesConcentrations,
                            arrayView4d< real64, reactivefluid::USD_SPECIES_DC > const & dPrimarySpeciesMobileAggregateConcentration_dLogPrimarySpeciesConcentrations,
+                           arrayView3d< real64 const, reactivefluid::USD_SPECIES > const & initialPrimarySpeciesConcentration,
                            arrayView3d< real64, reactivefluid::USD_SPECIES > const & secondarySpeciesConcentration,
                            arrayView3d< real64, reactivefluid::USD_SPECIES > const & kineticReactionRates,
                            arrayView3d< real64, reactivefluid::USD_SPECIES > const & aggregateSpeciesRates,
@@ -138,6 +139,7 @@ public:
       m_primarySpeciesMobileAggregateConcentration( primarySpeciesMobileAggregateConcentration ),
       m_dPrimarySpeciesAggregateConcentration_dLogPrimarySpeciesConcentrations( dPrimarySpeciesAggregateConcentration_dLogPrimarySpeciesConcentrations ),
       m_dPrimarySpeciesMobileAggregateConcentration_dLogPrimarySpeciesConcentrations( dPrimarySpeciesMobileAggregateConcentration_dLogPrimarySpeciesConcentrations ),
+      m_initialPrimarySpeciesConcentration( initialPrimarySpeciesConcentration ),
       m_secondarySpeciesConcentration( secondarySpeciesConcentration ),
       m_kineticReactionRates( kineticReactionRates ),
       m_aggregateSpeciesRates( aggregateSpeciesRates ),
@@ -163,9 +165,10 @@ public:
     GEOS_HOST_DEVICE
     void enforceEquilibrium( real64 const pressure,
                              real64 const temperature,
-                             arraySlice1d< real64 const, reactivefluid::USD_SPECIES - 2 > const & primarySpeciesTotalConcentration,
-                             arraySlice1d< real64, compflow::USD_COMP - 1 > const & primarySpeciesConcentration,
-                             arraySlice1d< real64 > const & secondarySpeciesConcentration ) const;
+                             arraySlice1d< real64 const, reactivefluid::USD_SPECIES - 2 > const & targetPrimarySpeciesAggregateConcentration,
+                             arraySlice1d< real64 const, reactivefluid::USD_SPECIES - 2 > const & initialPrimarySpeciesConcentration,
+                             arraySlice1d< real64, compflow::USD_COMP - 1 > const & logPrimarySpeciesConcentration,
+                             arraySlice1d< real64 > const & logSecondarySpeciesConcentration ) const;
     
     GEOS_HOST_DEVICE                        
     void updateMixedReactionSystem( localIndex const k,
@@ -205,6 +208,8 @@ protected:
 
     arrayView4d< real64, reactivefluid::USD_SPECIES_DC >  m_dPrimarySpeciesMobileAggregateConcentration_dLogPrimarySpeciesConcentrations;
 
+    arrayView3d< real64 const, reactivefluid::USD_SPECIES > const m_initialPrimarySpeciesConcentration;
+
     arrayView3d< real64, reactivefluid::USD_SPECIES >  m_secondarySpeciesConcentration;
 
     arrayView3d< real64, reactivefluid::USD_SPECIES >  m_kineticReactionRates;
@@ -233,6 +238,7 @@ protected:
                                                               m_primarySpeciesMobileAggregateConcentration,
                                                               m_dPrimarySpeciesAggregateConcentration_dLogPrimarySpeciesConcentrations,
                                                               m_dPrimarySpeciesMobileAggregateConcentration_dLogPrimarySpeciesConcentrations,
+                                                              m_initialPrimarySpeciesConcentration,
                                                               m_secondarySpeciesConcentration,
                                                               m_kineticReactionRates,
                                                               m_aggregateSpeciesRates,
@@ -247,6 +253,7 @@ protected:
                                                              m_primarySpeciesMobileAggregateConcentration,
                                                              m_dPrimarySpeciesAggregateConcentration_dLogPrimarySpeciesConcentrations,
                                                              m_dPrimarySpeciesMobileAggregateConcentration_dLogPrimarySpeciesConcentrations,
+                                                             m_initialPrimarySpeciesConcentration,
                                                              m_secondarySpeciesConcentration,
                                                              m_kineticReactionRates,
                                                              m_aggregateSpeciesRates,
@@ -260,6 +267,7 @@ protected:
                                                                            m_primarySpeciesMobileAggregateConcentration,
                                                                            m_dPrimarySpeciesAggregateConcentration_dLogPrimarySpeciesConcentrations,
                                                                            m_dPrimarySpeciesMobileAggregateConcentration_dLogPrimarySpeciesConcentrations,
+                                                                           m_initialPrimarySpeciesConcentration,
                                                                            m_secondarySpeciesConcentration,
                                                                            m_kineticReactionRates,
                                                                            m_aggregateSpeciesRates,
@@ -273,6 +281,7 @@ protected:
                                                           m_primarySpeciesMobileAggregateConcentration,
                                                           m_dPrimarySpeciesAggregateConcentration_dLogPrimarySpeciesConcentrations,
                                                           m_dPrimarySpeciesMobileAggregateConcentration_dLogPrimarySpeciesConcentrations,
+                                                          m_initialPrimarySpeciesConcentration,
                                                           m_secondarySpeciesConcentration,
                                                           m_kineticReactionRates,
                                                           m_aggregateSpeciesRates,
@@ -300,6 +309,8 @@ protected:
   integer m_numSecondarySpecies;
 
   integer m_numKineticReactions; 
+
+  array3d< real64, constitutive::reactivefluid::LAYOUT_SPECIES >  m_initialPrimarySpeciesConcentration;
 
   array3d< real64, constitutive::reactivefluid::LAYOUT_SPECIES >  m_secondarySpeciesConcentration;
 
@@ -341,7 +352,7 @@ updateEquilibriumReaction( localIndex const k,
 
   stackArray1d< real64, MAX_NUM_SPECIES > logSecondarySpeciesConcentration( numSecondarySpecies );
 
-  enforceEquilibrium( pressure, temperature, m_primarySpeciesAggregateConcentration[k][0], logPrimarySpeciesConcentration, logSecondarySpeciesConcentration.toSlice() );
+  enforceEquilibrium( pressure, temperature, m_primarySpeciesAggregateConcentration[k][0], m_initialPrimarySpeciesConcentration[k][0], logPrimarySpeciesConcentration, logSecondarySpeciesConcentration.toSlice() );
 
   for( integer i=0; i < numSecondarySpecies; ++i )
   {
@@ -358,6 +369,7 @@ ReactiveSinglePhaseFluid< BASE >::ReactionKernelWrapper< REACTION_PARAMS_TYPE >:
 enforceEquilibrium( real64 const pressure,
                     real64 const temperature,
                     arraySlice1d< real64 const, reactivefluid::USD_SPECIES - 2 > const & targetPrimarySpeciesAggregateConcentration,
+                    arraySlice1d< real64 const, reactivefluid::USD_SPECIES - 2 > const & initialPrimarySpeciesConcentration,
                     arraySlice1d< real64, compflow::USD_COMP - 1 > const & logPrimarySpeciesConcentration,
                     arraySlice1d< real64 > const & logSecondarySpeciesConcentration ) const
 {
@@ -371,7 +383,7 @@ enforceEquilibrium( real64 const pressure,
   for( integer i=0; i < numPrimarySpecies; ++i )
   {
     targetPrimarySpeciesAggregateConc[i] = targetPrimarySpeciesAggregateConcentration[i];
-    logPrimarySpeciesConcentration0[i] =  logPrimarySpeciesConcentration[i];
+    logPrimarySpeciesConcentration0[i] = LvArray::math::log( initialPrimarySpeciesConcentration[i] );
   }
   
   // 1. We enforce equilibrium
