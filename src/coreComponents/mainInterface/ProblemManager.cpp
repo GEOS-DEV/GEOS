@@ -976,39 +976,42 @@ map< std::tuple< string, string, string, string >, localIndex > ProblemManager::
             {
               elemRegion.forElementSubRegions< CellElementSubRegion >( [&]( auto & subRegion )
               {
-                std::unique_ptr< finiteElement::FiniteElementBase > newFE = feDiscretization->factory( subRegion.getElementType() );
-
-                finiteElement::FiniteElementBase &
-                fe = subRegion.template registerWrapper< finiteElement::FiniteElementBase >( discretizationName, std::move( newFE ) ).
-                       setRestartFlags( RestartFlags::NO_WRITE ).reference();
-                subRegion.excludeWrappersFromPacking( { discretizationName } );
-
-                finiteElement::FiniteElementDispatchHandler< ALL_FE_TYPES >::dispatch3D( fe,
-                                                                                         [&] ( auto & finiteElement )
+                if( !subRegion.template hasWrapper( discretizationName )) // not yet registered
                 {
-                  using FE_TYPE = std::remove_const_t< TYPEOFREF( finiteElement ) >;
-                  using SUBREGION_TYPE = TYPEOFREF( subRegion );
+                  std::unique_ptr< finiteElement::FiniteElementBase > newFE = feDiscretization->factory( subRegion.getElementType() );
 
-                  typename FE_TYPE::template MeshData< SUBREGION_TYPE > meshData;
-                  finiteElement::FiniteElementBase::initialize< FE_TYPE, SUBREGION_TYPE >( nodeManager,
-                                                                                           edgeManager,
-                                                                                           faceManager,
-                                                                                           subRegion,
-                                                                                           meshData );
+                  finiteElement::FiniteElementBase &
+                  fe = subRegion.template registerWrapper< finiteElement::FiniteElementBase >( discretizationName, std::move( newFE ) ).
+                         setRestartFlags( RestartFlags::NO_WRITE ).reference();
+                  subRegion.excludeWrappersFromPacking( { discretizationName } );
 
-                  localIndex const numQuadraturePoints = FE_TYPE::numQuadraturePoints;
+                  finiteElement::FiniteElementDispatchHandler< ALL_FE_TYPES >::dispatch3D( fe,
+                                                                                           [&] ( auto & finiteElement )
+                  {
+                    using FE_TYPE = std::remove_const_t< TYPEOFREF( finiteElement ) >;
+                    using SUBREGION_TYPE = TYPEOFREF( subRegion );
 
-//#if ! defined( CALC_FEM_SHAPE_IN_KERNEL )
-                  feDiscretization->calculateShapeFunctionGradients< SUBREGION_TYPE, FE_TYPE >( X, &subRegion, meshData, finiteElement );
-//#endif
+                    typename FE_TYPE::template MeshData< SUBREGION_TYPE > meshData;
+                    finiteElement::FiniteElementBase::initialize< FE_TYPE, SUBREGION_TYPE >( nodeManager,
+                                                                                             edgeManager,
+                                                                                             faceManager,
+                                                                                             subRegion,
+                                                                                             meshData );
 
-                  localIndex & numQuadraturePointsInList = regionQuadrature[ std::make_tuple( meshBodyName,
-                                                                                              meshLevel.getName(),
-                                                                                              regionName,
-                                                                                              subRegion.getName() ) ];
+                    localIndex const numQuadraturePoints = FE_TYPE::numQuadraturePoints;
 
-                  numQuadraturePointsInList = std::max( numQuadraturePointsInList, numQuadraturePoints );
-                } );
+                    //#if ! defined( CALC_FEM_SHAPE_IN_KERNEL )
+                    feDiscretization->calculateShapeFunctionGradients< SUBREGION_TYPE, FE_TYPE >( X, &subRegion, meshData, finiteElement );
+                    //#endif
+
+                    localIndex & numQuadraturePointsInList = regionQuadrature[ std::make_tuple( meshBodyName,
+                                                                                                meshLevel.getName(),
+                                                                                                regionName,
+                                                                                                subRegion.getName() ) ];
+
+                    numQuadraturePointsInList = std::max( numQuadraturePointsInList, numQuadraturePoints );
+                  } );
+                }
               } );
 
               // For now SurfaceElementSubRegion do not have a FE type associated with them. They don't need one for now and
