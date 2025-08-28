@@ -93,7 +93,6 @@ IterationsStatistics::IterationsStatistics( string const & name, Group * const p
 
 void IterationsStatistics::resetCurrentTimeStepStatistics()
 {
-  // the time step begins, we reset the individual-timestep counters
   m_currentNumConfigIterations = 0;
   m_currentNumNonlinearIterations = 0;
   m_currentNumLinearIterations = 0;
@@ -101,13 +100,11 @@ void IterationsStatistics::resetCurrentTimeStepStatistics()
 
 void IterationsStatistics::incrementConfigIteration()
 {
-  // we have just performed a configuration iteration, so we increment the individual-timestep counter for configuration iterations
   m_currentNumConfigIterations++;
 }
 
 void IterationsStatistics::updateNonlinearIteration( integer const numLinearIterations )
 {
-  // we have just performed a Newton iteration, so we increment the individual-timestep counters
   m_currentNumNonlinearIterations++;
   m_currentNumLinearIterations += numLinearIterations;
 }
@@ -126,7 +123,6 @@ void IterationsStatistics::resetSolverLinearTime()
 
 void IterationsStatistics::iterateTimeStepStatistics()
 {
-  // the timestep has converged, so we increment the cumulative counters for successful timesteps
   m_numSuccessfulConfigIterations += m_currentNumConfigIterations;
   m_numSuccessfulNonlinearIterations += m_currentNumNonlinearIterations;
   m_numSuccessfulLinearIterations += m_currentNumLinearIterations;
@@ -135,7 +131,6 @@ void IterationsStatistics::iterateTimeStepStatistics()
 
 void IterationsStatistics::updateTimeStepCut()
 {
-  // we have just cut the time step, so we increment the cumulative counters for discarded timesteps
   m_numDiscardedConfigIterations += m_currentNumConfigIterations;
   m_numDiscardedNonlinearIterations += m_currentNumNonlinearIterations;
   m_numDiscardedLinearIterations += m_currentNumLinearIterations;

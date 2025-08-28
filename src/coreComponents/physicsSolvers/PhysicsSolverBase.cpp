@@ -310,7 +310,6 @@ bool PhysicsSolverBase::execute( real64 const time_n,
     numOfSubSteps++;
     subStepDts[subStep] = dtAccepted;
 
-    // increment the cumulative number of nonlinear and linear iterations
     getIterationStats().iterateTimeStepStatistics();
     getIterationStats().writeIterationStatsToTable();
 
@@ -569,17 +568,13 @@ real64 PhysicsSolverBase::linearImplicitStep( real64 const & time_n,
       m_matrix.create( m_localMatrix.toViewConst(), m_dofManager.numLocalDofs(), MPI_COMM_GEOS );
     }
 
-    // Output the linear system matrix/rhs for debugging purposes
     debugOutputSystem( time_n, cycleNumber, 0, m_matrix, m_rhs );
 
-    // Solve the linear system
     solveLinearSystem( m_dofManager, m_matrix, m_rhs, m_solution );
   }
 
-  // Increment the solver statistics for reporting purposes
   getIterationStats().updateNonlinearIteration( m_linearSolverResult.numIterations );
 
-  // Output the linear system solution for debugging purposes
   debugOutputSolution( 0.0, 0, 0, m_solution );
 
   {

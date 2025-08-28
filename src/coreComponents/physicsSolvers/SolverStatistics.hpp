@@ -88,17 +88,17 @@ public:
 
 
   /**
-   * @brief Initialize the counters used for an individual time step
+   * @brief Reset the counters used for an individual time step
    */
   void resetCurrentTimeStepStatistics();
 
   /**
-   * @brief Tell the solverStatistics that we are doing a configuration iteration
+   * @brief Tell the solverStatistics that we have done a configuration iteration
    */
   void incrementConfigIteration();
 
   /**
-   * @brief Tell the solverStatistics that we are doing a nonlinear iteration
+   * @brief Tell the solverStatistics that we have done a newton iteration
    * @param[in] numLinearIterations the number of linear iterations done by the linear solver
    * @detail This function is well suited for Newton's method, or for single-physics solvers in sequential schemes
    */
@@ -117,12 +117,13 @@ public:
   void resetSolverLinearTime();
 
   /**
-   * @brief Tell the solverStatistics that there is a time step cut
+   * @brief Tell the solverStatistics that we cut the time step and we increment the cumulative counters for discarded timesteps
    */
   void updateTimeStepCut();
 
   /**
-   * @brief Save the statistics for the individual time step and increment the cumulative stats
+   * @brief Increment the cumulative number of nonlinear and linear iterations
+   * This fonction must be set after a solver step and thus we increment the cumulative counters for successful timesteps
    */
   void iterateTimeStepStatistics();
 
