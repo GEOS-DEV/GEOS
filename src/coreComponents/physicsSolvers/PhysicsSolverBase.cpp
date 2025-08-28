@@ -131,9 +131,9 @@ void PhysicsSolverBase::postInputInitialization()
   m_solverStatistics.makeDir( m_writeStatisticsCSV >= 2 );
 
   getIterationStats().setTableName( getName() );
-  getIterationStats().setLogOutput( m_writeStatisticsCSV >= 1 );
-  getIterationStats().setCSVOutput( m_writeStatisticsCSV >= 2 );
-  getConvergenceStats().setCSVOutput( m_writeStatisticsCSV >= 2 );
+  getIterationStats().setLogOutputState( m_writeStatisticsCSV >= 1 );
+  getIterationStats().setCSVOutputState( m_writeStatisticsCSV >= 2 );
+  getConvergenceStats().setCSVOutputState( m_writeStatisticsCSV >= 2 );
 }
 
 PhysicsSolverBase::~PhysicsSolverBase() = default;

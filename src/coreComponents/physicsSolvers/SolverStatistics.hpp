@@ -76,14 +76,14 @@ public:
    * @brief Set the csv state output
    * @param state The csv state
    */
-  void setCSVOutput( bool state )
+  void setCSVOutputState( bool state )
   { m_csvOutputEnabled = state; }
 
   /**
    * @brief Set the log state output
    * @param state The log state
    */
-  void setLogOutput( bool state )
+  void setLogOutputState( bool state )
   { m_logOutput = state; }
 
 
@@ -252,7 +252,7 @@ public:
    * @brief Set the csv state output
    * @param state csv state
    */
-  void setCSVOutput( bool state )
+  void setCSVOutputState( bool state )
   { m_csvOutputEnabled = state; }
 
   /**
