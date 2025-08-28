@@ -174,7 +174,7 @@ void IterationsStatistics::writeIterationStatsToTable()
 void IterationsStatistics::outputStatistics()
 {
   // no statistics to output when no time steps have been recorded
-  if( m_numTimeSteps == 0 ||!m_logOutput )
+  if( m_numTimeSteps == 0 || !m_logOutput )
     return;
 
   {

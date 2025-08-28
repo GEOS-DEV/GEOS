@@ -236,6 +236,7 @@ TEST( testSolverStats, testOutputFiles )
 
   PhysicsSolverBase & solver = problem.getGroupByPath< PhysicsSolverBase >( string( "/Solvers/SinglePhaseFlow" ) );
   ConvergenceTest & convergenceStat = static_cast< ConvergenceTest & >(solver.getConvergenceStats());
+  IterationTest & iterationStat = static_cast< IterationTest & >(solver.getIterationStats());
 
   auto loadCsvLines = []( string const & filename, std::vector< string > & lines ) {
 
@@ -293,23 +294,7 @@ TEST( testSolverStats, testOutputFiles )
   };
 
   std::vector< string > csvLines;
-  loadCsvLines( convergenceStat.getFilename(), csvLines );
-
-  std::string expectedIteration = "20,0,0,20,20,0,0,0,0.00392298,0.00192568";
-  std::istringstream sIterations( expectedIteration );
-  std::string iterationValue;
-  std::vector< std::string > expectedIterationValues;
-
-  while( std::getline( sIterations, iterationValue, ',' ))
-    expectedIterationValues.push_back( iterationValue );
-
-
-  std::istringstream sActual( csvLines[20] );
-  std::vector< std::string > actualIterationValues;
-  while( std::getline( sActual, iterationValue, ',' ))
-  {
-    actualIterationValues.push_back( iterationValue );
-  }
+  loadCsvLines( iterationStat.getFilename(), csvLines );
 
   EXPECT_EQ( csvLines[0],
              "Number of time steps,Number of time step cuts,"
@@ -317,7 +302,7 @@ TEST( testSolverStats, testOutputFiles )
              "Discarded configuration,Discarded nonlinear,Discarded linear,"
              "Setup time,Solve time" );
 
-  convergenceStat.AssertConvergenceValuesEquals( actualIterationValues, expectedIterationValues );
+  iterationStat.AssertIterationValuesEquals();
 
   std::vector< string > csvLines2;
   loadCsvLines( convergenceStat.getFilename(), csvLines2 );
