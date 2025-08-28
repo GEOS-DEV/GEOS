@@ -723,7 +723,7 @@ public:
     static constexpr char const * allowNonConvergedLinearSolverSolutionString() { return "allowNonConvergedLinearSolverSolution"; }
 
     /// @return string for the writeStatistics wrapper
-    static constexpr char const * writeStatisticsString() { return "writeStatistics"; }
+    static constexpr char const * writeStatisticsCSVString() { return "writeStatistics"; }
 
     /// @return string for the numTimestepsSinceLastDtCut wrapper
     static constexpr char const * numTimestepsSinceLastDtCutString() { return "numTimestepsSinceLastDtCut"; }
@@ -1109,7 +1109,7 @@ protected:
 
   /// When set to 1 output to log iterations information
   /// When set to 2 additionnaly output csv files containing iterations & convergence information
-  integer m_writeStatistics;
+  integer m_writeStatisticsCSV;
 
   /// Linear solver parameters
   LinearSolverParametersInput m_linearSolverParameters;

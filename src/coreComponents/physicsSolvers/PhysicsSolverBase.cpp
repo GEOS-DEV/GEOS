@@ -102,7 +102,7 @@ PhysicsSolverBase::PhysicsSolverBase( string const & name,
     setInputFlag( InputFlags::FALSE ).
     setRestartFlags( RestartFlags::WRITE_AND_READ );
 
-  registerWrapper( viewKeyStruct::writeStatisticsString(), &m_writeStatistics ).
+  registerWrapper( viewKeyStruct::writeStatisticsCSVString(), &m_writeStatisticsCSV ).
     setApplyDefaultValue( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setRestartFlags( RestartFlags::NO_WRITE ).
@@ -128,12 +128,12 @@ void PhysicsSolverBase::postInputInitialization()
 {
 
   m_solverStatistics.setOutputFilesName( getName() );
-  m_solverStatistics.makeDir( m_writeStatistics >= 2 );
+  m_solverStatistics.makeDir( m_writeStatisticsCSV >= 2 );
 
   getIterationStats().setTableName( getName() );
-  getIterationStats().setLogOutput( m_writeStatistics >= 1 );
-  getIterationStats().setCSVOutput( m_writeStatistics >= 2 );
-  getConvergenceStats().setCSVOutput( m_writeStatistics >= 2 );
+  getIterationStats().setLogOutput( m_writeStatisticsCSV >= 1 );
+  getIterationStats().setCSVOutput( m_writeStatisticsCSV >= 2 );
+  getConvergenceStats().setCSVOutput( m_writeStatisticsCSV >= 2 );
 }
 
 PhysicsSolverBase::~PhysicsSolverBase() = default;
