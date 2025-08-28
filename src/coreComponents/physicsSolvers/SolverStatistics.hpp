@@ -77,7 +77,7 @@ public:
    * @param state The csv state
    */
   void setCSVOutput( bool state )
-  { m_csvOutput = state; }
+  { m_csvOutputEnabled = state; }
 
   /**
    * @brief Set the log state output
@@ -173,12 +173,6 @@ public:
 
 protected:
 
-  /// State of log output. True when writeStatistics is set to 1
-  bool m_logOutput = false;
-
-  /// State of csv output. True when writeStatistics is set to 2
-  bool m_csvOutput = false;
-
   /// Number of time steps
   integer m_numTimeSteps = 0;
 
@@ -219,8 +213,12 @@ protected:
   real64 m_solveTime = 0.0;
 
 private:
+  /// State of log output. True when writeStatistics is set to 1
+  bool m_logOutput = false;
+  /// State of csv output. True when writeStatistics is set to 2
+  bool m_csvOutputEnabled = false;
   /// A boolean indicating whether the CSV file is open or not
-  bool m_isCSVOpen = false;
+  bool m_csvOutputOpened  = false;
   /// Stream output for the iteration statistics
   std::ofstream m_logStream;
   /// Table Layout contenaning header for both CSV and log
@@ -248,14 +246,14 @@ public:
   ConvergenceStatistics();
 
   /// State of csv output. True when writeSolver is set to 2
-  bool m_csvOutput = false;
+  bool m_csvOutputEnabled = false;
 
   /**
    * @brief Set the csv state output
    * @param state csv state
    */
   void setCSVOutput( bool state )
-  { m_csvOutput = state; }
+  { m_csvOutputEnabled = state; }
 
   /**
    * @brief Write all the convergence statistics into the ouput stream
@@ -281,7 +279,7 @@ public:
   void resetResidualsValue();
 
   void setResidualValue( string const & key, real64 const value )
-  {if( m_isCSVOpen ) m_residuals[key] = value; }
+  {if( m_csvOutputOpened ) m_residuals[key] = value; }
 
   /**
    * @brief Set the filename output file.
@@ -316,7 +314,6 @@ public:
   { m_logStream.close(); }
 
 private:
-
   /// The time at the beginning of the step
   real64 m_time_n = 0.0;
 
@@ -333,7 +330,7 @@ private:
   std::map< string, real64 > m_residuals;
 
   /// A boolean indicating whether the CSV file is open or not
-  bool m_isCSVOpen = false;
+  bool m_csvOutputOpened  = false;
   /// Stream output for the convergence statistics
   std::ofstream m_logStream;
   /// Contain the layout for both the CSV and log output.
