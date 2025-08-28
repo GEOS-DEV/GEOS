@@ -36,7 +36,7 @@ ElasticIsotropic::ElasticIsotropic( string const & name, Group * const parent ):
     setApplyDefaultValue( -1 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Default Bulk Modulus Parameter" );
-
+  
   registerWrapper( viewKeyStruct::defaultShearModulusString(), &m_defaultShearModulus ).
     setApplyDefaultValue( -1 ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -152,6 +152,7 @@ void ElasticIsotropic::postInputInitialization()
 
   this->getWrapper< array2d< real64 > >( viewKeyStruct::wavespeedString() ).
     setApplyDefaultValue( sqrt( ( m_defaultBulkModulus + (4.0/3.0) * m_defaultShearModulus ) / m_defaultDensity ) );
+
 }
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, ElasticIsotropic, string const &, Group * const )

@@ -89,12 +89,13 @@ public:
                         real64 const & fractureToughness,
                         int const & enableEnergyFailureCriterion,
                         real64 const & fractureEnergyReleaseRate,
+                        arrayView1d< real64 > const & crackTipStressConcentration,
                         arrayView1d< real64 > const & accumulatedModeIWork,
                         arrayView1d< real64 > const & accumulatedModeIIWork,
                         arrayView1d< real64 > const & distanceToCrackTip,                         
                         arrayView1d< int > const & surfaceFlag,
-                        arrayView1d< real64 const > const & bulkModulus,
-                        arrayView1d< real64 const > const & shearModulus,
+                        arrayView1d< real64 > const & bulkModulus,
+                        arrayView1d< real64 > const & shearModulus,
                         arrayView1d< real64 const > const & thermalExpansionCoefficient,
                         arrayView3d< real64, solid::STRESS_USD > const & newStress,
                         arrayView3d< real64, solid::STRESS_USD > const & oldStress,
@@ -127,6 +128,7 @@ public:
     m_fractureToughness( fractureToughness ),
     m_enableEnergyFailureCriterion( enableEnergyFailureCriterion ),
     m_fractureEnergyReleaseRate( fractureEnergyReleaseRate ),
+    m_crackTipStressConcentration( crackTipStressConcentration),
     m_accumulatedModeIWork( accumulatedModeIWork ),
     m_accumulatedModeIIWork( accumulatedModeIIWork ),
     m_distanceToCrackTip( distanceToCrackTip ),
@@ -328,6 +330,9 @@ private:
   ///Material parameter: The fracture energy release rate
   real64 const m_fractureEnergyReleaseRate;
 
+  ///State variable: Lets us plot the stress concentration, not actually needed by the algorithm.
+  arrayView1d< real64 > const m_crackTipStressConcentration;
+
   ///State variable: The accumulated work for Mode I fracture for each quadrature point
   arrayView1d< real64 > const m_accumulatedModeIWork;
 
@@ -503,7 +508,7 @@ void CeramicDamageUpdates::smallStrainUpdateHelper( localIndex const k,
   // Tensile cutoff pressure (negative value in tension) is scaled by damage. 
   // so we also scale the bulk modulus in tension so unloading from a damaged vertex
   // smoothly appraoches p=0 as J=1
-  real64 bulk = isNotZero( m_bulkModulus[k] ) ? m_jacobian[k][q] <= 1.0 : ( 1.0 - m_damage[k][q] )*m_bulkModulus[k];
+  real64 bulk = (m_jacobian[k][q] <= 1.0) ? m_bulkModulus[k] : ( 1.0 - m_damage[k][q] )*m_bulkModulus[k];
   real64 trialPressure = -bulk * log( m_jacobian[k][q] );
 
   // The tensile strength is Yt = (1/Gamma)*Yt0, where Gamma is the third-invariant dependence function
@@ -547,12 +552,16 @@ void CeramicDamageUpdates::smallStrainUpdateHelper( localIndex const k,
   }
 
   // If the particle is a crack-tip particle, the distanceToCrackTip will be greater than 0, and we compute the
-  // stress concentration.
-  real64 crackTipStressConcentration = 1.0;
+  // stress concentration.  We don't actually need to store this as a state variable, it is sufficient to store
+  // the distanceToCrackTip, but we've added this field to allow plotting of the stress concentration.  TODO:
+  // switch this back later to reduce memory footprint of the model.  
+  // real64 crackTipStressConcentration = 1.0;
+  m_crackTipStressConcentration[k] = 1.0;
   if( ( m_enableCrackTipStressConcentration == 1 ) and ( m_distanceToCrackTip[k] > 0 ) )
   {
     real64 fractureProcessZoneRadius = std::max(1.e-12, m_fractureToughness * m_fractureToughness /( 6.283185307179586 * std::max(1.e-12,nominalIntactStrength * nominalIntactStrength) ) );
-    crackTipStressConcentration = std::min( 1.0, sqrt( m_distanceToCrackTip[k] / fractureProcessZoneRadius ) );
+    //crackTipStressConcentration = std::min( 1.0, sqrt( m_distanceToCrackTip[k] / fractureProcessZoneRadius ) );
+    m_crackTipStressConcentration[k] = std::min( 1.0, sqrt( m_distanceToCrackTip[k] / fractureProcessZoneRadius ) );
   }
 
   // Evaluate the yield criterion:
@@ -560,7 +569,7 @@ void CeramicDamageUpdates::smallStrainUpdateHelper( localIndex const k,
   // test pressure against vertex pressure:
   if( trialPressure >= pmin ) 
   { // strength at trial pressure and current damage.
-    real64 strength = CeramicDamageUpdates::getStrength( m_damage[k][q], crackTipStressConcentration, trialPressure, trialJ2, trialJ3, mu, Yc, Yt0, Ycmax );
+    real64 strength = CeramicDamageUpdates::getStrength( m_damage[k][q], m_crackTipStressConcentration[k], trialPressure, trialJ2, trialJ3, mu, Yc, Yt0, Ycmax );
     // check for yield in shear.
     if( trialVonMises > strength )
     {
@@ -571,7 +580,6 @@ void CeramicDamageUpdates::smallStrainUpdateHelper( localIndex const k,
   {
     yielding = true;
   }
-
   
   if( yielding == false )
   { // ELASTIC
@@ -585,22 +593,27 @@ void CeramicDamageUpdates::smallStrainUpdateHelper( localIndex const k,
     }
   }
   else
-  { // PLASTIC
+  { // PLASTIC 
     real64 oldAccumulatedModeIWork = m_accumulatedModeIWork[k];  // beginning-of-step stress work
     real64 elasticStrainEnergy = 0.0; // elastic strain energy computed from end-of-step stress.
     
     if( m_enableEnergyFailureCriterion )   
-    { // Adjust damage so that the total dissiaption associated with setting damage = 1 is consistent
+    { // Adjust damage so that the total dissipation associated with setting damage = 1 is consistent
       // with the regularized fracture energy release rate.  If the element size is too large, there
       // will be too much elastic strain energy at the failure stress, so instead we partially damage
       // the material and activate a surface flag.  This will only be effective if used with
       // field-gradient partitioning, so the surface flag creates a fracture surface.
       // 
       // Compute the nominal fully-damaged yield stress for crack-tip correction and regularization.
+      //
+      // We treat the stress concentration as a strength modifier, so the energy regularization should
+      // behave consistently, meaning the strain to failure will be greater for a crack-tip particle.
+
+
       real64 nominalFullyDamagedStrength;
       if( trialPressure > 0.0 ) 
       {
-        nominalFullyDamagedStrength = CeramicDamageUpdates::getStrength( 1.0, crackTipStressConcentration, trialPressure, trialJ2, trialJ3, mu, Yc, Yt0, Ycmax );
+        nominalFullyDamagedStrength = CeramicDamageUpdates::getStrength( 1.0, m_crackTipStressConcentration[k], trialPressure, trialJ2, trialJ3, mu, Yc, Yt0, Ycmax ); 
       }
       else
       {
@@ -611,12 +624,15 @@ void CeramicDamageUpdates::smallStrainUpdateHelper( localIndex const k,
       // i.e. the energy that would be dissipated if damage were set equal to 1, without unloading.
       real64 nominalElasticStrainEnergy = 0.5*trialPressure*trialPressure/bulk + pow(nominalIntactStrength - nominalFullyDamagedStrength,2) / (6.*m_shearModulus[k]);
 
+
+
+
       if ( nominalElasticStrainEnergy < m_fractureEnergyReleaseRate / m_lengthScale[k] )
       { // Increment damage to ramp down stress until energy criteria is met.   
         for( int i = 0; i < 16; ++i )
         { // Use fixed-point iteration to find damage consistent with dissipation for the current step.
           CeramicDamageUpdates::plasticReturn(m_damage[k][q],  // damage
-                                              crackTipStressConcentration,
+                                              m_crackTipStressConcentration[k],
                                               trialPressure,   // trial pressure
                                               trialJ2,         // trial J2 invariant of stress
                                               trialJ3,         // trial J3 invariant of stress
@@ -653,7 +669,7 @@ void CeramicDamageUpdates::smallStrainUpdateHelper( localIndex const k,
           m_damage[k][q] = 0.5*( damageIn + damageOut );
 
           CeramicDamageUpdates::plasticReturn(m_damage[k][q],  // damage
-                                              crackTipStressConcentration,
+                                              m_crackTipStressConcentration[k],
                                               trialPressure,   // trial pressure
                                               trialJ2,         // trial J2 invariant of stress
                                               trialJ3,         // trial J3 invariant of stress
@@ -709,7 +725,7 @@ void CeramicDamageUpdates::smallStrainUpdateHelper( localIndex const k,
       }
 
       CeramicDamageUpdates::plasticReturn(m_damage[k][q],  // damage
-                                              crackTipStressConcentration,
+                                              m_crackTipStressConcentration[k],
                                               trialPressure,   // trial pressure
                                               trialJ2,         // trial J2 invariant of stress
                                               trialJ3,         // trial J3 invariant of stress
@@ -824,8 +840,8 @@ void CeramicDamageUpdates::plasticReturn( const real64 damage,        // damage
     stress[5] = 0.0;
   }
   else
-  {        
-    // We may be in this loop if the shear stress exceed strength/crackTipStressConcentration,  
+  {          
+    // We may be in this loop if the shear stress exceed strength/crackTipStressConcentration,
     // but the continuum stress isn't above the continuum strength.
 
     // Strength at current value of damage and trial pressure
@@ -1141,13 +1157,16 @@ public:
     static constexpr char const * enableCrackTipStressConcentrationString() { return "enableCrackTipStressConcentration"; }
 
     /// string/key for The fracture toughness used to compute fracture process zone radius.
-    static constexpr char const * fractureToughnessString() { return "fractureToughnessate"; }
+    static constexpr char const * fractureToughnessString() { return "fractureToughness"; }
 
     /// string/key for energy criterion flag
     static constexpr char const * enableEnergyFailureCriterionString() { return "enableEnergyFailureCriterion"; }
 
     /// string/key for fracture energy release rate mode I
     static constexpr char const * fractureEnergyReleaseRateString() { return "fractureEnergyReleaseRate"; }
+
+    /// string/key for crackTipStressConcentration plotting variable
+    static constexpr char const * crackTipStressConcentrationString() { return "crackTipStressConcentration"; }
 
     /// string/key for accumulated mode I work
     static constexpr char const * accumulatedModeIWorkString() { return "accumulatedModeIWork"; }
@@ -1186,6 +1205,7 @@ public:
                                  m_fractureToughness,                                 
                                  m_enableEnergyFailureCriterion,
                                  m_fractureEnergyReleaseRate,
+                                 m_crackTipStressConcentration,
                                  m_accumulatedModeIWork,
                                  m_accumulatedModeIIWork,
                                  m_distanceToCrackTip,
@@ -1229,6 +1249,7 @@ public:
                           m_fractureToughness,
                           m_enableEnergyFailureCriterion,
                           m_fractureEnergyReleaseRate,
+                          m_crackTipStressConcentration,
                           m_accumulatedModeIWork,
                           m_accumulatedModeIIWork,
                           m_distanceToCrackTip,
@@ -1300,6 +1321,9 @@ protected:
 
   ///Material parameter: The fracture energy release rate
   real64 m_fractureEnergyReleaseRate;
+
+  ///State variable: The accumulated work for stress concentration plottting variable.
+  array1d< real64 > m_crackTipStressConcentration;
 
   ///State variable: The accumulated work for Mode I fracture for each quadrature point
   array1d< real64 > m_accumulatedModeIWork;

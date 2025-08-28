@@ -59,6 +59,8 @@ public:
    * @param[in] velocityGradient The ArrayView holding the velocity gradient for each element/particle.
    * @param[in] plasticStrain The ArrayView holding the plastic strain for each quadrature point.
    * @param[in] relaxation The ArrayView holding the relaxation for each quadrature point.
+   * @param[in] alphaL Thermal expansion logitudinal to crystal symmetry axis
+   * @param[in] alphaT Thermal expansion transverse to crystal symmetry axis
    * @param[in] damage The ArrayView holding the damage for each quardrature point.
    * @param[in] jacobian The ArrayView holding the jacobian for each quardrature point.
    * @param[in] materialDirection The ArrayView holding the material direction for each element/particle.
@@ -84,6 +86,8 @@ public:
                    arrayView3d< real64 > const & velocityGradient,
                    arrayView3d< real64 > const & plasticStrain,
                    arrayView2d< real64 > const & relaxation,
+                   real64 const & alphaL,
+                   real64 const & alphaT,
                    arrayView2d< real64 > const & damage,
                    arrayView2d< real64 > const & jacobian,
                    arrayView1d< real64 > const & lengthScale,
@@ -133,6 +137,8 @@ public:
     m_velocityGradient( velocityGradient ),
     m_plasticStrain( plasticStrain ),
     m_relaxation( relaxation ),
+    m_alphaL( alphaL ),
+    m_alphaT( alphaT ),
     m_damage( damage ),
     m_jacobian( jacobian ),
     m_lengthScale( lengthScale ),
@@ -339,6 +345,12 @@ private:
 
   /// A reference to the ArrayView holding the damage for each quadrature point.
   arrayView2d< real64 > const m_relaxation;
+
+  // thermal expansion in direction lateral to crystal symmetry
+  real64 const m_alphaL;
+
+  // thermal expansion in direction transverse to crystal symmetry
+  real64 const m_alphaT;
 
   /// A reference to the ArrayView holding the damage for each quadrature point.
   arrayView2d< real64 > const m_damage;
@@ -966,6 +978,9 @@ void GraphiteUpdates::computeTransverselyIsotropicTrialStress(const real64 timeI
 	real64 h5 = 2*Gzp;
 
 
+
+
+
   // MM make alphaDense  here
   double alphaDense[3][3];
   for (int i = 0; i < 3; ++i)
@@ -973,21 +988,22 @@ void GraphiteUpdates::computeTransverselyIsotropicTrialStress(const real64 timeI
       for (int j = 0; j < 3; ++j)
       {
           double delta = (i == j) ? 1.0 : 0.0;
-          alphaDense[i][j] = (alphaL - alphaT) * materialDirection[i] * materialDirection[j] + delta * alphaT;
+          alphaDense[i][j] = (m_alphaL - m_alphaT) * materialDirection[i] * materialDirection[j] + delta * m_alphaT;
       }
   }
 
 
-  //real64 stressIncrementDense[3][3] = { { 0 } };
+  real64 stressIncrementDense[3][3] = { { 0 } };
   int voigtMap[3][3] = { {0, 5, 4}, {5, 1, 3}, {4, 3, 2} };
 	double alphaVoigt[6];
   // Voigt notation mapping for symmetric tensors
+
   alphaVoigt[0] = alphaDense[0][0];
   alphaVoigt[1] = alphaDense[1][1];
   alphaVoigt[2] = alphaDense[2][2];
-  alphaVoigt[3] = alphaDense[1][2]; // or alphaDense[2][1]
-  alphaVoigt[4] = alphaDense[0][2]; // or alphaDense[2][0]
-  alphaVoigt[5] = alphaDense[0][1]; // or alphaDense[1][0]
+  alphaVoigt[3] = alphaDense[1][2]; 
+  alphaVoigt[4] = alphaDense[0][2]; 
+  alphaVoigt[5] = alphaDense[0][1]; 
 
 
   for(int i=0; i<3; i++)
@@ -1007,9 +1023,9 @@ void GraphiteUpdates::computeTransverselyIsotropicTrialStress(const real64 timeI
                                           h2*transverselyIsotropicB2(materialDirection,i,j,p,w) +
                                           h3*transverselyIsotropicB3(materialDirection,i,j,p,w) +
                                           h4*transverselyIsotropicB4(materialDirection,i,j,p,w) +
-//                                        h5*transverselyIsotropicB5(materialDirection,i,j,p,w))*D[voigtMap[p][w]]*timeIncrement;
+//                                          h5*transverselyIsotropicB5(materialDirection,i,j,p,w))*D[voigtMap[p][w]]*timeIncrement;
 //                                        still need to find temp rate 
-                                          h5*transverselyIsotropicB5(materialDirection,i,j,p,w))*alphaVoigt[voigtMap[p][w]]*timeIncrement;
+                                          h5 * transverselyIsotropicB5(materialDirection, i, j, p, w)) * (D[voigtMap[p][w]] - alphaVoigt[voigtMap[p][w]] * 1) * timeIncrement;
 				}
 			}
 		}
@@ -1298,6 +1314,12 @@ public:
     /// string/key for quadrature point relaxation value
     static constexpr char const * relaxationString() { return "relaxation"; }
 
+    /// constant for thermal expansion lateral to symmetry axis
+    static constexpr char const * alphaLString() { return "alphaL"; }
+
+    /// constant for thermal expansion transverse to symmetry axis
+    static constexpr char const * alphaTString() { return "alphaT"; }
+
     /// string/key for quadrature point damage value
     static constexpr char const * damageString() { return "damage"; }
 
@@ -1393,6 +1415,8 @@ public:
                             m_velocityGradient,
                             m_plasticStrain,
                             m_relaxation,
+                            m_alphaL,
+                            m_alphaT,
                             m_damage,
                             m_jacobian,
                             m_lengthScale,
@@ -1449,6 +1473,8 @@ public:
                           m_velocityGradient,
                           m_plasticStrain,
                           m_relaxation,
+                          m_alphaL,
+                          m_alphaT,
                           m_damage,
                           m_jacobian,
                           m_lengthScale,
@@ -1660,6 +1686,12 @@ protected:
 
   /// State variable: The relaxation values for each quadrature point
   array2d< real64 > m_relaxation;
+
+  /// Material parameter: lateral thermal expansion coefficient
+  real64 m_alphaL;
+
+  /// Material parameter: transverse thermal expansion coefficient
+  real64 m_alphaT;
 
   /// State variable: The damage values for each quadrature point
   array2d< real64 > m_damage;
