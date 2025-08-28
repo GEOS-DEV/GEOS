@@ -99,6 +99,7 @@ void testNumericalDerivatives( MODEL & model,
   } );
 
   // update saturation and check derivatives
+  auto dVar_dS = testing::invertLayout( dVar_dSat, NP, NP );
 
   array2d< real64, compflow::LAYOUT_PHASE > satNew( 1, NP );
   for( integer jp = 0; jp < NP; ++jp )
@@ -118,7 +119,7 @@ void testNumericalDerivatives( MODEL & model,
 
     checkDerivative( varCopy.toSliceConst(),
                      var.toSliceConst(),
-                     dVar_dSat[jp].toSliceConst(),
+                     dVar_dS[jp].toSliceConst(),
                      dS,
                      relTol,
                      varName,
