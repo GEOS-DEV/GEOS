@@ -577,7 +577,7 @@ class PerforationFluxKernel : public isothermalPerforationFluxKernels::Perforati
 public:
 
   using Base = isothermalPerforationFluxKernels::PerforationFluxKernel< NC, NP, IS_THERMAL >;
-  using FieldAccessors = typename Base::FieldAccessors<
+  using FieldAccessors = typename Base::template FieldAccessors<
     fields::flow::temperature,
     fields::multifluid::phaseEnthalpy,
     fields::multifluid::dPhaseEnthalpy >;
