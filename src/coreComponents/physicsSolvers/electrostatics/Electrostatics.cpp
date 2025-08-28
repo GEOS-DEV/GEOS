@@ -340,14 +340,15 @@ void Electrostatics::applyButlerVolmerCurrent(DofManager const& dofManager, Doma
             rowDof[a] = nodeDofNumber[node0];
             rowDof[numNodesPerFace + a] = nodeDofNumber[node1];
 
-            nodeRHS[a] += k_rxn * Ja * phi_jump;
-            nodeRHS[numNodesPerFace + a] -= k_rxn * Ja * phi_jump;
+            // The factor 2.0 comes from linearizing BV with Taylor expansion
+            nodeRHS[a] += 2.0 * k_rxn * Ja * phi_jump / thermodynamicPotential;
+            nodeRHS[numNodesPerFace + a] -= 2.0 * k_rxn * Ja * phi_jump / thermodynamicPotential;
 
             // initial implementation with mass lumping
-            dRdPhi(a, a) += k_rxn * Ja;
-            dRdPhi(a, numNodesPerFace + a) -= k_rxn * Ja;
-            dRdPhi(numNodesPerFace + a, numNodesPerFace + a) += k_rxn * Ja;
-            dRdPhi(numNodesPerFace + a, a) -= k_rxn * Ja;
+            dRdPhi(a, a) += 2.0 * k_rxn * Ja / thermodynamicPotential;
+            dRdPhi(a, numNodesPerFace + a) -= 2.0 * k_rxn * Ja / thermodynamicPotential;
+            dRdPhi(numNodesPerFace + a, numNodesPerFace + a) += 2.0 * k_rxn * Ja / thermodynamicPotential;
+            dRdPhi(numNodesPerFace + a, a) -= 2.0 * k_rxn * Ja / thermodynamicPotential;
           }
 
           for (localIndex idof = 0; idof < numNodesPerFace * 2; ++idof)
