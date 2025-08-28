@@ -284,9 +284,6 @@ public:
   using WJ_COFFSET = singlePhaseWellKernels::ColOffset_WellJac< IS_THERMAL >;
   using WJ_ROFFSET = singlePhaseWellKernels::RowOffset_WellJac< IS_THERMAL >;
 
-  //using ROFFSET = singlePhaseWellKernels::RowOffset;
-  //using COFFSET = singlePhaseWellKernels::ColOffset;
-
   using CP_Deriv = constitutive::singlefluid::DerivativeOffsetC< IS_THERMAL >;
 
   using TAG = singlePhaseWellKernels::SubRegionTag;
