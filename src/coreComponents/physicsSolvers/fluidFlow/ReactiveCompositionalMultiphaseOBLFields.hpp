@@ -48,7 +48,7 @@ DECLARE_FIELD( bcGlobalCompFraction,
                "Boundary condition global component fraction" );
 
 DECLARE_FIELD( referencePorosity,
-               "referencePorosity",
+               "referencePorosityOBL",
                array1d< real64 >,
                0,
                NOPLOT,

@@ -160,7 +160,7 @@ char const *xmlInput =
       initialCondition="1"
       setNames="{ all }"
       objectPath="ElementRegions/Domain/block1"
-      fieldName="rockPorosity_referencePorosity"
+      fieldName="referencePorosity"
 	    scale="1.0"/>
 
     <FieldSpecification
