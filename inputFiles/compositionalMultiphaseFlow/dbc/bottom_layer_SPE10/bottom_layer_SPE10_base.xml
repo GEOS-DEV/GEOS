@@ -88,7 +88,7 @@
       initialCondition="1"
       setNames="{ all }"
       objectPath="ElementRegions/region/cellBlock"
-      fieldName="\referencePorosity"
+      fieldName="referencePorosity"
       functionName="poroFunc"
       scale="1.0"/>
 
