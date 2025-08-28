@@ -12,8 +12,8 @@
       initialDt="1e2"
       targetRegions="{ reservoir, wellRegion }">
       <NonlinearSolverParameters
-        newtonTol="1.0e-5"
-        newtonMaxIter="40"/>
+        newtonTol="1.0e-3"
+        newtonMaxIter="12"/>
       <LinearSolverParameters
         directParallel="0"/>
     </CompositionalMultiphaseReservoir>
