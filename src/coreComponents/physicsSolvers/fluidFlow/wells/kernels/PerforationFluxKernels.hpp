@@ -554,7 +554,7 @@ public:
       integer constexpr IS_THERMAL = 0;
 
       using kernelType = PerforationFluxKernel< NUM_COMP, NUM_PHASE, IS_THERMAL >;
-      typename kernelType::FieldAccessors<> fieldAccessors( elemManager, flowSolverName );
+      typename kernelType::template FieldAccessors<> fieldAccessors( elemManager, flowSolverName );
 
       kernelType kernel( perforationData, subRegion, fieldAccessors, disableReservoirToWellFlow );
       kernelType::template launch< POLICY >( perforationData->size(), kernel );
