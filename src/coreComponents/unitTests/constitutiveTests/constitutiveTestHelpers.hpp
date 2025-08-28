@@ -88,18 +88,17 @@ void testNumericalDerivatives( MODEL & model,
 
   // auto to avoid having to spell out unknown layout permutations
   auto const var = varAccessor( model );
-  auto const dPhaseRelPerm_dSat = dVar_dSat_accessor( model );
+  auto const dVar_dSat = dVar_dSat_accessor( model );
   auto const varCopy = varAccessor( modelCopy );
 
   // set the fluid state to current
   constitutive::constitutiveUpdatePassThru( model, [&] ( auto & castedModel )
   {
-    typename TYPEOFREF( castedModel ) ::KernelWrapper relPermWrapper = castedModel.createKernelWrapper();
-    relPermWrapper.update( 0, 0, saturation );
+    typename TYPEOFREF( castedModel ) ::KernelWrapper modelWrapper = castedModel.createKernelWrapper();
+    modelWrapper.update( 0, 0, saturation );
   } );
 
   // update saturation and check derivatives
-  auto dPhaseRelPerm_dS = testing::invertLayout( dPhaseRelPerm_dSat, NP, NP );
 
   array2d< real64, compflow::LAYOUT_PHASE > satNew( 1, NP );
   for( integer jp = 0; jp < NP; ++jp )
@@ -111,15 +110,15 @@ void testNumericalDerivatives( MODEL & model,
     }
     satNew[0][jp] += dS;
 
-    constitutive::constitutiveUpdatePassThru( modelCopy, [&] ( auto & castedRelPerm )
+    constitutive::constitutiveUpdatePassThru( modelCopy, [&] ( auto & castedModel )
     {
-      typename TYPEOFREF( castedRelPerm ) ::KernelWrapper relPermWrapper = castedRelPerm.createKernelWrapper();
-      relPermWrapper.update( 0, 0, satNew[0] );
+      typename TYPEOFREF( castedModel ) ::KernelWrapper modelWrapper = castedModel.createKernelWrapper();
+      modelWrapper.update( 0, 0, satNew[0] );
     } );
 
     checkDerivative( varCopy.toSliceConst(),
                      var.toSliceConst(),
-                     dPhaseRelPerm_dS[jp].toSliceConst(),
+                     dVar_dSat[jp].toSliceConst(),
                      dS,
                      relTol,
                      varName,
@@ -134,9 +133,11 @@ class ConstitutiveTestBase : public ::testing::Test
 public:
   ConstitutiveTestBase():
     m_node(),
-    m_parent( "parent", m_node )
+    m_parent( "parent", m_node ),
+    m_parentCopy( "parentCopy", m_node )
   {
     m_parent.resize( 1 );
+    m_parentCopy.resize( 1 );
   }
 
   void initialize( BASE & model )
@@ -147,13 +148,14 @@ public:
     m_model->allocateConstitutiveData( m_parent, 1 );
 
     // create a clone to run updates on
-    m_modelCopy = dynamicCast< BASE * >( m_model->deliverClone( m_model->getName() + "Copy", &m_parent ).release());
-    m_modelCopy->allocateConstitutiveData( m_parent, 1 );
+    m_modelCopy = dynamicCast< BASE * >( m_model->deliverClone( m_model->getName() + "Copy", &m_parentCopy ).release() );
+    m_modelCopy->allocateConstitutiveData( m_parentCopy, 1 );
   }
 
 protected:
   conduit::Node m_node;
   dataRepository::Group m_parent;
+  dataRepository::Group m_parentCopy;
   BASE * m_model;
   BASE * m_modelCopy;
 
