@@ -334,7 +334,7 @@ class PerforationFluxKernel : public geos::isothermalSinglePhasePerforationFluxK
 public:
 
   using Base = geos::isothermalSinglePhasePerforationFluxKernels::PerforationFluxKernel< IS_THERMAL >;
-  using FieldAccessors = typename Base::FieldAccessors<
+  using FieldAccessors = typename Base::template FieldAccessors<
     fields::flow::temperature,
     fields::singlefluid::enthalpy,
     fields::singlefluid::dEnthalpy >;
