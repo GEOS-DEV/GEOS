@@ -21,6 +21,7 @@
 #define GEOS_FINITEELEMENT_ELEMENTFORMULATIONS_PKPYRAMIDBCD_HPP_
 
 #include "FiniteElementBase.hpp"
+#include "denseLinearAlgebra/denseLASolvers.hpp"
 #include "denseLinearAlgebra/interfaces/blaslapack/BlasLapackLA.hpp"
 #include <utility>
 
@@ -446,13 +447,13 @@ public:
   }
 
   /**
-   * @brief Compute the inverse of the VanDerMonde matrix
-   * @return The inverse of the VanDerMonde matrix
+   * @brief Compute the Vandermonde matrix.
+   * @param[out] VDM The Vandermonde matrix to fill (size numNodes x numNodes)
    */
+  GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
-  static array2d< real64 > computeVanderMondeMatrixInverse( )
+  static void computeVanderMondeMatrix( array2d< real64 > & VDM )
   {
-    array2d< real64 > VDM;
     VDM.resize( numNodes, numNodes );
     real64 PsiX[numNodes] = {};
     real64 coords[numNodes][3] = {};
@@ -468,24 +469,17 @@ public:
         VDM[count][j] = PsiX[count];
         ++count;
       } );
-      //   }
     }
-    array2d< real64 > VDM_inv;
-    VDM_inv.resize( numNodes, numNodes );
-    // Inversion of VanDerMonde matrix
-    BlasLapackLA::matrixInverse( VDM, VDM_inv );
-    return VDM_inv;
   }
 
   /**
    * @brief Evaluate shape functions of a linear pyramid (5-node) at a quadrature point.
    * @param[in] q A quadrature point index.
-   * @param[in] VDM_inv The inverse of the VanDerMonde matrix
    * @param[out] N Array to store shape function values (array of size numNodes)
    */
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
-  static constexpr void calcN( localIndex q, arrayView2d< real64 const > VDM_inv, real64 (& N)[numNodes] )
+  static constexpr void calcN( localIndex q, real64 (& N)[numNodes] )
   {
 
     real64 PsiX[numNodes] = {0.0};
@@ -494,6 +488,31 @@ public:
     //Generate the coordinates of the support points
     generatePointsCoordinates( coords );
 
+
+    array2d< real64 > VDM;
+    VDM.resize( numNodes, numNodes );
+    computeVanderMondeMatrix( VDM );
+
+    //Compute the inverse of the VanDerMonde matrix using solve from denseLASolvers and identity matrix
+    array2d< real64 > I;
+    I.resize( numNodes, numNodes );
+    array2d< real64 > VDM_inv;
+    VDM_inv.resize( numNodes, numNodes );
+    for( int i = 0; i < numNodes; ++i )
+    {
+      for( int j = 0; j < numNodes; ++j )
+      {
+        if( i == j )
+        {
+          I[i][j] = 1.0;
+        }
+        else
+        {
+          I[i][j] = 0.0;
+        }
+      }
+    }
+    denseLinearAlgebra::solve< numNodes, numNodes >( VDM, I, VDM_inv );
 
     localIndex count = 0;
     //Compute the modal functions at the quadrature point
@@ -517,12 +536,11 @@ public:
   /**
    * @brief Evaluate shape functions of a linear pyramid (5-node) at a quadrature point.
    * @param[in] X Coordinates in reference pyramid (array of size 3)
-   * @param[in] VDM_inv The inverse of the VanDerMonde matrix
    * @param[out] N Array to store shape function values (array of size numNodes)
    */
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
-  static constexpr void calcN( real64 const (&X)[3], arrayView2d< real64 const > VDM_inv, real64 (& N)[numNodes] )
+  static constexpr void calcN( real64 const (&X)[3], real64 (& N)[numNodes] )
   {
 
     real64 PsiX[numNodes] = {};
@@ -534,6 +552,23 @@ public:
       PsiX[count] = calcModal( p, r, s, X );
       ++count;
     } );
+
+    array2d< real64 > VDM;
+    VDM.resize( numNodes, numNodes );
+    computeVanderMondeMatrix( VDM );
+
+    //Compute the inverse of the VanDerMonde matrix using solve from denseLASolvers and identity matrix
+    array2d< real64 > I;
+    I.resize( numNodes, numNodes );
+    I.zero();
+    array2d< real64 > VDM_inv;
+    VDM_inv.resize( numNodes, numNodes );
+    for( int i = 0; i < numNodes; ++i )
+    {
+      I[i][i] = 1.0;
+    }
+
+    denseLinearAlgebra::solve< numNodes, numNodes >( VDM, I, VDM_inv );
 
     //Compute the nodal functions at the given points
     for( int i = 0; i < numNodes; ++i )
@@ -550,12 +585,11 @@ public:
   /**
    * @brief Evaluate shape functions of a linear pyramid (5-node) at a quadrature point.
    * @param[in] q A quadrature point index.
-   * @param[in] VDM_inv The inverse of the VanDerMonde matrix
    * @param[out] gradN Array to store shape function derivatives (array of size numNodes x 3)
    */
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
-  static constexpr void calcGradN( localIndex q, arrayView2d< real64 const > VDM_inv, real64 (& gradN)[numNodes][3] )
+  static constexpr void calcGradN( localIndex q, real64 (& gradN)[numNodes][3] )
   {
 
     real64 gradModal[numNodes][3] = {{}};
@@ -572,6 +606,22 @@ public:
       ++count;
     } );
 
+    array2d< real64 > VDM;
+    VDM.resize( numNodes, numNodes );
+    computeVanderMondeMatrix( VDM );
+
+    //Compute the inverse of the VanDerMonde matrix using solve from denseLASolvers and identity matrix
+    array2d< real64 > I;
+    I.resize( numNodes, numNodes );
+    I.zero();
+    array2d< real64 > VDM_inv;
+    VDM_inv.resize( numNodes, numNodes );
+    for( int i = 0; i < numNodes; ++i )
+    {
+      I[i][i] = 1.0;
+    }
+
+    denseLinearAlgebra::solve< numNodes, numNodes >( VDM, I, VDM_inv );
 
     //Compute the nodal functions derivatives at the quadrature point
     for( int i = 0; i < numNodes; ++i )
@@ -592,12 +642,11 @@ public:
   /**
    * @brief Evaluate shape functions of a linear pyramid (5-node) at a given point.
    * @param[in] X Coordinates in reference pyramid (array of size 3)
-   * @param[in] VDM_inv The inverse of the VanDerMonde matrix
    * @param[out] gradN Array to store shape function values (array of size numNodes)
    */
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
-  static constexpr void calcGradN( real64 const (&X)[3], arrayView2d< real64 const > VDM_inv, real64 (& gradN)[numNodes][3] )
+  static constexpr void calcGradN( real64 const (&X)[3], real64 (& gradN)[numNodes][3] )
   {
 
     real64 gradModal[numNodes][3] = {{}};
@@ -609,6 +658,24 @@ public:
       calcGradModal( p, r, s, X, gradModal[count] );
       ++count;
     } );
+
+    array2d< real64 > VDM;
+    VDM.resize( numNodes, numNodes );
+    computeVanderMondeMatrix( VDM );
+
+    //Compute the inverse of the VanDerMonde matrix using solve from denseLASolvers and identity matrix
+    array2d< real64 > I;
+    I.resize( numNodes, numNodes );
+    I.zero();
+    array2d< real64 > VDM_inv;
+    VDM_inv.resize( numNodes, numNodes );
+    for( int i = 0; i < numNodes; ++i )
+    {
+      I[i][i] = 1.0;
+    }
+
+    denseLinearAlgebra::solve< numNodes, numNodes >( VDM, I, VDM_inv );
+
 
     //Compute the nodal functions derivatives at the given points
     for( int i = 0; i < numNodes; ++i )
@@ -628,7 +695,6 @@ public:
 
   /**
    * @brief Computes the mass term Mij in the mass matrix
-   * @param[in] VDM_inv The inverse of the VanDerMonde matrix
    * @param[in] func A callable object (e.g., a lambda function) that takes three parameters (localIndex a, localIndex b, real64 val)
    *   where 'a' and 'b' are the indices of the mass term in the mass matrix, and 'val' is the computed value of the mass term.
    *   The function should have the signature: void func(localIndex a, localIndex b, real64 val)
@@ -636,7 +702,7 @@ public:
   template< typename FUNC >
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
-  static constexpr void computeMassTerm( arrayView2d< real64 const > VDM_inv, FUNC && func )
+  static constexpr void computeMassTerm( FUNC && func )
   {
 
     // Gauss-Legendre points and weights for the quadrature
@@ -671,7 +737,7 @@ public:
               real64 z_k = chi;
               real64 X[3] = {x_i, y_j, z_k};
 
-              calcN( X, VDM_inv, N );
+              calcN( X, N );
 
               val += weight * N[a] * N[b];
 
@@ -685,7 +751,6 @@ public:
 
   /**
    * @brief Computes the stifness term Kij in the mass matrix
-   * @param[in] VDM_inv The inverse of the VanDerMonde matrix
    * @param[in] func A callable object (e.g., a lambda function) that takes three parameters (localIndex a, localIndex b, real64 val)
    *   where 'a' and 'b' are the indices of the mass term in the stifness matrix, and 'val' is the computed value of the mass term.
    *   The function should have the signature: void func(localIndex a, localIndex b, real64 val)
@@ -693,7 +758,7 @@ public:
   template< typename FUNC >
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
-  static void computeStiffnessTerm( arrayView2d< real64 const > VDM_inv, FUNC && func )
+  static void computeStiffnessTerm( FUNC && func )
   {
     // Gauss-Legendre points and weights for the quadrature
     constexpr real64 GLeQuadraturePoints[3] = { -0.7745966692, 0.0, 0.7745966692 };
@@ -727,7 +792,7 @@ public:
               real64 z_k = chi;
               real64 X[3] = {x_i, y_j, z_k};
 
-              calcGradN( X, VDM_inv, gradN );
+              calcGradN( X, gradN );
               real64 dot = gradN[a][0] * gradN[b][0]
                            + gradN[a][1] * gradN[b][1]
                            + gradN[a][2] * gradN[b][2];

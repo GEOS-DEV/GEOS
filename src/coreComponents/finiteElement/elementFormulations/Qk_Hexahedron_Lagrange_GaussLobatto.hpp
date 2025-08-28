@@ -640,6 +640,22 @@ public:
                                     real64 const (&X)[8][3],
                                     FUNC && func );
 
+
+/**
+ * @brief computes the non-zero contributions of the d.o.f. indexed by q to the
+ * stiffness matrix R, i.e., the superposition matrix of a first derivatives of shapes fucntion and a shape function. 
+ * This function is a 2d function used for DG fluxes on faces.
+ * @param q The quadrature point index
+ * @param X Array containing the coordinates of the support points.
+ * @param func Callback function accepting three parameters: i, j and R_ij
+ */
+template< typename FUNC >
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
+static void computeStiffnessTerm2d( localIndex const q,
+                                    real64 const (&X)[4][3],
+                                    FUNC && func );
+
   /**
    * @brief computes the matrix B in the case of quasi-stiffness (e.g. for pseudo-acoustic case), defined as J^{-T}A_xy J^{-1}/det(J), where
    * J is the Jacobian matrix, and A_xy is a zero matrix except on A_xy(1,1) = 1 and A_xy(2,2) = 1.
@@ -726,6 +742,22 @@ public:
                           int const qc,
                           real64 const (&B)[6],
                           FUNC && func );
+  /**
+   * @brief Computes the "Grad(Phi)*B*Phi" coefficient of the stiffness term. The matrix B must be provided and Phi denotes a basis
+   * function.This function is a 2d function used for DG fluxes on faces.
+   * @param qa The 1d quadrature point index in xi0 direction (0,1)
+   * @param qb The 1d quadrature point index in xi1 direction (0,1)
+   * @param B Array of the B matrix, in Voigt notation
+   * @param func Callback function accepting three parameters: i, j and R_ij
+   */
+  template< typename FUNC >
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
+  static void
+  computeGradPhiBPhi( int const qa,
+                    int const qb,
+                    real64 const (&B)[3],
+                    FUNC && func );
 
   /**
    * @brief computes the non-zero contributions of the d.o.f. indexd by q to the
@@ -1369,6 +1401,36 @@ GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
 void
 Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
+computeGradPhiBPhi( int const qa,
+                    int const qb,
+                    real64 const (&B)[3],
+                    FUNC && func )
+{
+  const real64 w = GL_BASIS::weight( qa )*GL_BASIS::weight( qb );
+  for( int i=0; i<num1dNodes; i++ )
+  {
+    const int ib = GL_BASIS::TensorProduct2D::linearIndex( i, qb );
+    const int ab = GL_BASIS::TensorProduct2D::linearIndex( qa, qb);
+    const int ai = GL_BASIS::TensorProduct2D::linearIndex( qa, i );
+    const real64 gia = basisGradientAt( i, qa );
+    const real64 gib = basisGradientAt( i, qb );
+    const real64 w0 = w*B[0]*gia;
+    func( ib, ab, w0 );
+    const real64 w1 = w*B[1]*gia;
+    func( ib, ab, w1 );
+    const real64 w2  = w*B[1]*gib;
+    func( ai, ab, w2 );
+    const real64 w3 = w*B[2]*gib;
+    func( ai, ab, w3 );
+  }
+}
+
+template< typename GL_BASIS >
+template< typename FUNC >
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
+void
+Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
 computeStiffnessxyTerm( localIndex const q,
                         real64 const (&X)[8][3],
                         FUNC && func )
@@ -1416,6 +1478,31 @@ computeStiffnessTerm( localIndex const q,
   computeBMatrix( qa, qb, qc, X, J, B );
   computeGradPhiBGradPhi( qa, qb, qc, B, func );
 }
+
+template< typename GL_BASIS >
+template< typename FUNC >
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
+void
+Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
+computeStiffnessTerm2d( localIndex const q,
+                        real64 const (&X)[4][3],
+                        FUNC && func )
+{
+  int qa, qb;
+  GL_BASIS::TensorProduct2D::multiIndex( q, qa, qb );
+  real64 B[3] = {0};
+  real64 J[3][2] = {{0}};
+  jacobianTransformation2d( qa, qb, X, J );
+  // compute J^T.J, using Voigt notation for B
+  B[0] = J[0][0]*J[0][0]+J[1][0]*J[1][0]+J[2][0]*J[2][0];
+  B[1] = J[0][1]*J[0][1]+J[1][1]*J[1][1]+J[2][1]*J[2][1];
+  B[2] = J[0][0]*J[0][1]+J[1][0]*J[1][1]+J[2][0]*J[2][1];
+
+  computeGradPhiBPhi( qa, qb, B, func );
+}
+
+
 
 template< typename GL_BASIS >
 template< typename FUNC >
