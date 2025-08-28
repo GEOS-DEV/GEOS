@@ -136,7 +136,7 @@
        initialCondition="1"
        setNames="{ all }"
        objectPath="ElementRegions/Region1"
-       fieldName="shale_criticalFractureEnergy"
+       fieldName="criticalFractureEnergy"
        scale="54.0"/>
        
     <FieldSpecification

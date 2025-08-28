@@ -180,15 +180,15 @@
     <PackCollection
       name="stressCollection_casing"
       objectPath="ElementRegions/casing/casing"
-      fieldName="casing_stress"/>
+      fieldName="stress"/>
     <PackCollection
       name="stressCollection_cement"
       objectPath="ElementRegions/cement/cement"
-      fieldName="cement_stress"/>
+      fieldName="stress"/>
     <PackCollection
       name="stressCollection_rock"
       objectPath="ElementRegions/rock/rock"
-      fieldName="rock_stress"/>
+      fieldName="stress"/>
 
     <PackCollection
       name="displacementCollection"

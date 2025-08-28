@@ -277,7 +277,7 @@
       initialCondition="1"
       setNames="{ all }"
       objectPath="ElementRegions/Fracture"
-      fieldName="fracturePorosity_porosity"
+      fieldName="porosity"
       scale="1.00"/>
 
     <FieldSpecification
@@ -285,7 +285,7 @@
       initialCondition="1"
       setNames="{ all }"
       objectPath="ElementRegions/Sideburden"
-      fieldName="rockPermeability_permeability"
+      fieldName="permeability"
       scale="1.00e-14"/>
 
     <FieldSpecification
@@ -293,7 +293,7 @@
       initialCondition="1"
       setNames="{ all }"
       objectPath="ElementRegions/Overburden"
-      fieldName="rockPermeability_permeability"
+      fieldName="permeability"
       scale="1.00e-14"/>
       
     <FieldSpecification
@@ -301,7 +301,7 @@
       initialCondition="1"
       setNames="{ all }"
       objectPath="ElementRegions/Underburden"
-      fieldName="rockPermeability_permeability"
+      fieldName="permeability"
       scale="1.00e-14"/>
 
     <FieldSpecification

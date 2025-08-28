@@ -245,7 +245,7 @@
       initialCondition="1"
       setNames="{ all }"
       objectPath="ElementRegions/casing/casing"
-      fieldName="casingSolid_stress"
+      fieldName="stress"
       component="0"
       scale="0.0"/>
     <FieldSpecification
@@ -253,7 +253,7 @@
       initialCondition="1"
       setNames="{ all }"
       objectPath="ElementRegions/casing/casing"
-      fieldName="casingSolid_stress"
+      fieldName="stress"
       component="1"
       scale="0.0"/>
     <FieldSpecification
@@ -261,7 +261,7 @@
       initialCondition="1"
       setNames="{ all }"
       objectPath="ElementRegions/casing/casing"
-      fieldName="casingSolid_stress"
+      fieldName="stress"
       component="2"
       scale="0.0"/>
     <!-- SPHINX_StressCasingInitEnd -->
@@ -271,7 +271,7 @@
       initialCondition="1"
       setNames="{ all }"
       objectPath="ElementRegions/cement/cement"
-      fieldName="cementSolid_stress"
+      fieldName="stress"
       component="0"
       scale="0.0"/>
     <FieldSpecification
@@ -279,7 +279,7 @@
       initialCondition="1"
       setNames="{ all }"
       objectPath="ElementRegions/cement/cement"
-      fieldName="cementSolid_stress"
+      fieldName="stress"
       component="1"
       scale="0.0"/>
     <FieldSpecification
@@ -287,7 +287,7 @@
       initialCondition="1"
       setNames="{ all }"
       objectPath="ElementRegions/cement/cement"
-      fieldName="cementSolid_stress"
+      fieldName="stress"
       component="2"
       scale="0.0"/>
 
@@ -296,7 +296,7 @@
       initialCondition="1"
       setNames="{ all }"
       objectPath="ElementRegions/rock/rock"
-      fieldName="rockSolid_stress"
+      fieldName="stress"
       component="0"
       scale="0.0"/>
     <FieldSpecification
@@ -304,7 +304,7 @@
       initialCondition="1"
       setNames="{ all }"
       objectPath="ElementRegions/rock/rock"
-      fieldName="rockSolid_stress"
+      fieldName="stress"
       component="1"
       scale="0.0"/>
     <FieldSpecification
@@ -312,7 +312,7 @@
       initialCondition="1"
       setNames="{ all }"
       objectPath="ElementRegions/rock/rock"
-      fieldName="rockSolid_stress"
+      fieldName="stress"
       component="2"
       scale="0.0"/>
 
@@ -395,15 +395,15 @@
     <PackCollection
       name="stressCollection_casing"
       objectPath="ElementRegions/casing/casing"
-      fieldName="casingSolid_stress"/>
+      fieldName="stress"/>
     <PackCollection
       name="stressCollection_cement"
       objectPath="ElementRegions/cement/cement"
-      fieldName="cementSolid_stress"/>
+      fieldName="stress"/>
     <PackCollection
       name="stressCollection_rock"
       objectPath="ElementRegions/rock/rock"
-      fieldName="rockSolid_stress"/>
+      fieldName="stress"/>
     <!-- SPHINX_SolidStressCollectionEnd -->
 
     <!-- SPHINX_DisplacementCollection -->

@@ -70,7 +70,7 @@
        initialCondition="1"
        setNames="{ all }"
        objectPath="ElementRegions/Region1"
-       fieldName="rock_criticalFractureEnergy"
+       fieldName="criticalFractureEnergy"
        scale="4e-3"/>
 
     <FieldSpecification
@@ -78,7 +78,7 @@
       initialCondition="1"
       setNames="{ all }"
       objectPath="ElementRegions/Region1"
-      fieldName="rock_tensileStrength"
+      fieldName="tensileStrength"
       scale="5.0"/>
 
     <FieldSpecification
@@ -86,7 +86,7 @@
       initialCondition="1"
       setNames="{ all }"
       objectPath="ElementRegions/Region1"
-      fieldName="rock_compressiveStrength"
+      fieldName="compressiveStrength"
       scale="40"/>
 
     <FieldSpecification
@@ -94,7 +94,7 @@
       initialCondition="1"
       setNames="{ all }"
       objectPath="ElementRegions/Region1"
-      fieldName="rock_deltaCoefficient"
+      fieldName="deltaCoefficient"
       scale="0.0"/>
 
     <Traction

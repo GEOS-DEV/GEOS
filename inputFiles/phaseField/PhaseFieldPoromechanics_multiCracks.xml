@@ -169,7 +169,7 @@
        initialCondition="1"
        setNames="{ all }"
        objectPath="ElementRegions/Region1"
-       fieldName="graniteSolid_criticalFractureEnergy"
+       fieldName="criticalFractureEnergy"
        scale="12e-3"/>
        
     <FieldSpecification 

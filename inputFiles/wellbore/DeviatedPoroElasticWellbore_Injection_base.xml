@@ -88,7 +88,7 @@
       initialCondition="1"
       setNames="{all}"
       objectPath="ElementRegions/Omega/cb1"
-      fieldName="rockPorosity_porosity"
+      fieldName="porosity"
       scale="0.3"/>
 
     <FieldSpecification

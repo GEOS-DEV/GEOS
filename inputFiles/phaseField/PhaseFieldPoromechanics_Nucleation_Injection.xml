@@ -114,7 +114,7 @@
        initialCondition="1"
        setNames="{ all }"
        objectPath="ElementRegions/Region1"
-       fieldName="rockSolid_criticalFractureEnergy"
+       fieldName="criticalFractureEnergy"
        scale="4e-3"/>
 
     <FieldSpecification
@@ -122,7 +122,7 @@
       initialCondition="1"
       setNames="{ all }"
       objectPath="ElementRegions/Region1"
-      fieldName="rockSolid_tensileStrength"
+      fieldName="tensileStrength"
       scale="5.5"/>
 
     <FieldSpecification
@@ -130,7 +130,7 @@
       initialCondition="1"
       setNames="{ all }"
       objectPath="ElementRegions/Region1"
-      fieldName="rockSolid_compressiveStrength"
+      fieldName="compressiveStrength"
       scale="40.0"/>
 
     <FieldSpecification
@@ -138,7 +138,7 @@
       initialCondition="1"
       setNames="{ all }"
       objectPath="ElementRegions/Region1"
-      fieldName="rockSolid_deltaCoefficient"
+      fieldName="deltaCoefficient"
       scale="3.31"/>
 
     <FieldSpecification 

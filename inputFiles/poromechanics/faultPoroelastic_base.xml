@@ -82,7 +82,7 @@
       initialCondition="1"
       setNames="{all}"
       objectPath="ElementRegions/Domain"
-      fieldName="rock_stress"
+      fieldName="stress"
       component="0"
       scale="-28.499545e6"
     />
@@ -92,7 +92,7 @@
       initialCondition="1"
       setNames="{all}"
       objectPath="ElementRegions/Domain"
-      fieldName="rock_stress"
+      fieldName="stress"
       component="1"
       scale="-38.499545e6"
     />
@@ -102,7 +102,7 @@
       initialCondition="1"
       setNames="{all}"
       objectPath="ElementRegions/Domain"
-      fieldName="rock_stress"
+      fieldName="stress"
       component="2"
       scale="-28.499545e6"
     />

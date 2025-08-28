@@ -139,7 +139,7 @@
       initialCondition="1"
       setNames="{ all }"
       objectPath="ElementRegions"
-      fieldName="skeleton_stress"
+      fieldName="stress"
       component="0"
       functionName="sigma_x"
       scale="1.0"/>
@@ -148,7 +148,7 @@
       initialCondition="1"
       setNames="{ all }"
       objectPath="ElementRegions"
-      fieldName="skeleton_stress"
+      fieldName="stress"
       component="1"
       functionName="sigma_y"
       scale="1.0"/>
@@ -157,7 +157,7 @@
       initialCondition="1"
       setNames="{ all }"
       objectPath="ElementRegions"
-      fieldName="skeleton_stress"
+      fieldName="stress"
       component="2"
       functionName="sigma_z"
       scale="1.0"/>

@@ -131,7 +131,7 @@
     <!-- SPHINX_USER_TABLES -->
     <FieldSpecification 
       component="0" 
-      fieldName="rockSolid_stress" 
+      fieldName="stress" 
       functionName="sigma_xx"
       initialCondition="1" 
       name="init_sigma_xx" 
@@ -141,7 +141,7 @@
 
     <FieldSpecification
       component="1" 
-      fieldName="rockSolid_stress" 
+      fieldName="stress" 
       functionName="sigma_yy"
       initialCondition="1" 
       name="init_sigma_yy" 
@@ -151,7 +151,7 @@
 
     <FieldSpecification 
       component="2" 
-      fieldName="rockSolid_stress" 
+      fieldName="stress" 
       functionName="sigma_zz"
       initialCondition="1" 
       name="init_sigma_zz" 

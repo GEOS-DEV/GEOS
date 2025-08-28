@@ -131,7 +131,7 @@
       initialCondition="1"
       setNames="{ source }"
       objectPath="ElementRegions"
-      fieldName="shale_stress"
+      fieldName="stress"
       component="0"
       scale="-1.0e6"/>
 
@@ -140,7 +140,7 @@
       initialCondition="1"
       setNames="{ source }"
       objectPath="ElementRegions"
-      fieldName="shale_stress"
+      fieldName="stress"
       component="2"
       scale="-1.0e6"/>
 
@@ -149,7 +149,7 @@
       initialCondition="1"
       setNames="{ source }"
       objectPath="ElementRegions"
-      fieldName="shale_stress"
+      fieldName="stress"
       component="5"
       scale="-1.0e6"/>
 

@@ -145,7 +145,7 @@
       initialCondition="1"
       setNames="{ all }"
       objectPath="ElementRegions"
-      fieldName="shaleSolid_stress"
+      fieldName="stress"
       component="0"
       scale="4934.86"/>
     <FieldSpecification
@@ -153,7 +153,7 @@
       initialCondition="1"
       setNames="{ all }"
       objectPath="ElementRegions"
-      fieldName="shaleSolid_stress"
+      fieldName="stress"
       component="1"
       scale="4934.86"/>
     <FieldSpecification
@@ -161,7 +161,7 @@
       initialCondition="1"
       setNames="{ all }"
       objectPath="ElementRegions"
-      fieldName="shaleSolid_stress"
+      fieldName="stress"
       component="2"
       scale="4934.86"/>
     

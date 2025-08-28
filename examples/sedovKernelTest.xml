@@ -88,13 +88,6 @@
   </Constitutive>
 
   <FieldSpecifications>
-    <!-- FieldSpecification name="source"  
-               initialCondition="1"  
-               setNames="{source}"
-               objectPath="ElementRegions"
-               fieldName="shale_MeanStress"
-               component="-1"
-               scale="-1.0e6"/-->
     <FieldSpecification
       name="xconstraint"
       objectPath="nodeManager"

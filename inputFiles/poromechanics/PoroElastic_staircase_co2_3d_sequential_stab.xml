@@ -91,7 +91,7 @@
   <Outputs>
     <VTK
       name="vtkOutput_seq"
-      fieldNames="{ initialPressure, skeletonChannel_density }"/>
+      fieldNames="{ initialPressure, solidDensity }"/>
     <Restart
       name="restartOutput"/>
   </Outputs>

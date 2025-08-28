@@ -166,7 +166,7 @@
       initialCondition="1"
       setNames="{ all }"
       objectPath="ElementRegions/rock/rock"
-      fieldName="rockSolid_stress"
+      fieldName="stress"
       component="0"
       scale="0"/>
     <FieldSpecification
@@ -174,7 +174,7 @@
       initialCondition="1"
       setNames="{ all }"
       objectPath="ElementRegions/rock/rock"
-      fieldName="rockSolid_stress"
+      fieldName="stress"
       component="1"
       scale="0"/>
     <FieldSpecification
@@ -182,7 +182,7 @@
       initialCondition="1"
       setNames="{ all }"
       objectPath="ElementRegions/rock/rock"
-      fieldName="rockSolid_stress"
+      fieldName="stress"
       component="2"
       scale="0"/>
     <!-- SPHINX_StressInitEnd -->
@@ -266,7 +266,7 @@
     <PackCollection
       name="stressCollection_rock"
       objectPath="ElementRegions/rock/rock"
-      fieldName="rockSolid_stress"/>
+      fieldName="stress"/>
     <!-- SPHINX_SolidStressCollectionEnd -->
 
     <!-- SPHINX_DisplacementCollection -->

@@ -42,7 +42,7 @@
       initialCondition="1"
       setNames="{ all }"
       objectPath="ElementRegions/Omega/cb1"
-      fieldName="rock_stress"
+      fieldName="stress"
       component="0"
       scale="-11.25e6"/>
 
@@ -51,7 +51,7 @@
       initialCondition="1"
       setNames="{ all }"
       objectPath="ElementRegions/Omega/cb1"
-      fieldName="rock_stress"
+      fieldName="stress"
       component="1"
       scale="-11.25e6"/>
 
@@ -60,7 +60,7 @@
       initialCondition="1"
       setNames="{ all }"
       objectPath="ElementRegions/Omega/cb1"
-      fieldName="rock_stress"
+      fieldName="stress"
       component="2"
       scale="-15.0e6"/>
 
@@ -105,7 +105,7 @@
     <PackCollection
       name="stressCollection_rock"
       objectPath="ElementRegions/Omega/cb1"
-      fieldName="rock_stress"/>
+      fieldName="stress"/>
     <!-- SPHINX_StressCollectionEnd -->
 
     <!-- SPHINX_DisplacementCollection -->

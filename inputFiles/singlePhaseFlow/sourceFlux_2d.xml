@@ -133,7 +133,7 @@
       initialCondition="1"
       setNames="{ all }"
       objectPath="ElementRegions/Region1/block1"
-      fieldName="rockPorosity_referencePorosity"
+      fieldName="referencePorosity"
       scale="0.05"/>
 
     <FieldSpecification
@@ -150,7 +150,7 @@
       initialCondition="1"
       setNames="{ wall1, wall2 }"
       objectPath="ElementRegions/Region1/block1"
-      fieldName="rockPerm_permeability"
+      fieldName="permeability"
       scale="2.0e-22"/>
 
     <FieldSpecification
@@ -159,7 +159,7 @@
       initialCondition="1"
       setNames="{ wall1, wall2 }"
       objectPath="ElementRegions/Region1/block1"
-      fieldName="rockPerm_permeability"
+      fieldName="permeability"
       scale="2.0e-22"/>
 
     <FieldSpecification
@@ -168,7 +168,7 @@
       initialCondition="1"
       setNames="{ wall1, wall2 }"
       objectPath="ElementRegions/Region1/block1"
-      fieldName="rockPerm_permeability"
+      fieldName="permeability"
       scale="2.0e-22"/>
 
     <SourceFlux

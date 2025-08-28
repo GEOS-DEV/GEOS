@@ -123,7 +123,7 @@
       component="0"
       setNames="{ all }"
       objectPath="ElementRegions/reservoir"
-      fieldName="rockPerm_permeability"
+      fieldName="permeability"
       scale="1e-15"
       functionName="permxFunc"/>
 
@@ -133,7 +133,7 @@
       component="1"
       setNames="{ all }"
       objectPath="ElementRegions/reservoir"
-      fieldName="rockPerm_permeability"
+      fieldName="permeability"
       scale="1e-15"
       functionName="permyFunc"/>
 
@@ -143,7 +143,7 @@
       component="2"
       setNames="{ all }"
       objectPath="ElementRegions/reservoir"
-      fieldName="rockPerm_permeability"
+      fieldName="permeability"
       scale="1.5e-15"
       functionName="permzFunc"/>
 

@@ -377,7 +377,7 @@
       initialCondition="1"
       setNames="{ all }"
       objectPath="ElementRegions/reservoir/cb-1_1_1"
-      fieldName="skeletonRes_stress"
+      fieldName="stress"
       component="0"
       scale="0.0"/>
     <FieldSpecification
@@ -385,7 +385,7 @@
       initialCondition="1"
       setNames="{ all }"
       objectPath="ElementRegions/extendedRegion"
-      fieldName="skeletonExt_stress"
+      fieldName="stress"
       component="0"
       scale="0.0"/>
     <FieldSpecification
@@ -393,7 +393,7 @@
       initialCondition="1"
       setNames="{ all }"
       objectPath="ElementRegions/reservoir/cb-1_1_1"
-      fieldName="skeletonRes_stress"
+      fieldName="stress"
       component="1"
       scale="0.0"/>
     <FieldSpecification
@@ -401,7 +401,7 @@
       initialCondition="1"
       setNames="{ all }"
       objectPath="ElementRegions/extendedRegion"
-      fieldName="skeletonExt_stress"
+      fieldName="stress"
       component="1"
       scale="0.0"/>
     <FieldSpecification
@@ -409,7 +409,7 @@
       initialCondition="1"
       setNames="{ all }"
       objectPath="ElementRegions/reservoir/cb-1_1_1"
-      fieldName="skeletonRes_stress"
+      fieldName="stress"
       component="2"
       scale="0.0"/>
     <FieldSpecification
@@ -417,7 +417,7 @@
       initialCondition="1"
       setNames="{ all }"
       objectPath="ElementRegions/extendedRegion"
-      fieldName="skeletonExt_stress"
+      fieldName="stress"
       component="2"
       scale="0.0"/>
 

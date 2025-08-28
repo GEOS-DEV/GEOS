@@ -92,7 +92,7 @@
       initialCondition="1"
       setNames="{all}"
       objectPath="ElementRegions/Omega/cb1"
-      fieldName="rockPorosity_porosity"
+      fieldName="porosity"
       scale="0.3"/>
 
     <!-- SPHINX_InsituConditions -->
@@ -109,7 +109,7 @@
       initialCondition="1"
       setNames="{all}"
       objectPath="ElementRegions/Omega/cb1"
-      fieldName="rock_stress"
+      fieldName="stress"
       component="0"
       scale="-21.9e6"/>
 
@@ -118,7 +118,7 @@
       initialCondition="1"
       setNames="{all}"
       objectPath="ElementRegions/Omega/cb1"
-      fieldName="rock_stress"
+      fieldName="stress"
       component="1"
       scale="-12.9e6"/>
 
@@ -127,7 +127,7 @@
       initialCondition="1"
       setNames="{all}"
       objectPath="ElementRegions/Omega/cb1"
-      fieldName="rock_stress"
+      fieldName="stress"
       component="2"
       scale="-17.9e6"/>
 

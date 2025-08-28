@@ -67,7 +67,7 @@
       initialCondition="1"
       setNames="{ all }"
       objectPath="ElementRegions/Fault"
-      fieldName="fracturePorosity_porosity"
+      fieldName="porosity"
       scale="1.00"/>
 
     <FieldSpecification
@@ -106,7 +106,7 @@
       initialCondition="1"
       setNames="{ all }"
       objectPath="ElementRegions/Region"
-      fieldName="rock_stress"
+      fieldName="stress"
       component="0"
       functionName="sigma_xx"
       scale="1.0"/>
@@ -116,7 +116,7 @@
       initialCondition="1"
       setNames="{ all }"
       objectPath="ElementRegions/Region"
-      fieldName="rock_stress"
+      fieldName="stress"
       component="1"
       functionName="sigma_yy"
       scale="1.0"/>
@@ -126,7 +126,7 @@
       initialCondition="1"
       setNames="{ all }"
       objectPath="ElementRegions/Region"
-      fieldName="rock_stress"
+      fieldName="stress"
       component="2"
       functionName="sigma_zz"
       scale="1.0"/>

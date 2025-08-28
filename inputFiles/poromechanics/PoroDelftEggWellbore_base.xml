@@ -63,7 +63,7 @@
     initialCondition="1"
     setNames="{all}"
     objectPath="ElementRegions/Omega/cb1"
-    fieldName="rock_stress"
+    fieldName="stress"
     component="0"
     scale="-9.0e6"
   />
@@ -73,7 +73,7 @@
     initialCondition="1"
     setNames="{all}"
     objectPath="ElementRegions/Omega/cb1"
-    fieldName="rock_stress"
+    fieldName="stress"
     component="1"
     scale="-11.0e6"
   />
@@ -83,7 +83,7 @@
     initialCondition="1"
     setNames="{all}"
     objectPath="ElementRegions/Omega/cb1"
-    fieldName="rock_stress"
+    fieldName="stress"
     component="2"
     scale="-12.0e6"
   />

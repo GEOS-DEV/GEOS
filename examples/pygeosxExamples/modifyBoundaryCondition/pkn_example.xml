@@ -211,7 +211,7 @@
       initialCondition="1"
       setNames="{ perf }"
       objectPath="ElementRegions"
-      fieldName="water_density"
+      fieldName="fluidDensity"
       scale="1000"/>
 
     <FieldSpecification

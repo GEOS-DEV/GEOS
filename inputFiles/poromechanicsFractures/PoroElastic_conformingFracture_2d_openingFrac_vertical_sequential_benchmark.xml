@@ -77,7 +77,7 @@
       initialCondition="1"
       setNames="{ all }"
       objectPath="ElementRegions/Fracture"
-      fieldName="fracturePorosity_porosity"
+      fieldName="porosity"
       scale="1.00"/>
 
     <FieldSpecification
@@ -93,7 +93,7 @@
       initialCondition="1"
       setNames="{ all }"
       objectPath="ElementRegions/Domain"
-      fieldName="rock_stress"
+      fieldName="stress"
       component="0"
       scale="-1.0e5"/>
 

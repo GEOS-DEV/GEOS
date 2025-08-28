@@ -84,7 +84,7 @@
       initialCondition="1"
       setNames="{ all }"
       objectPath="ElementRegions/Region"
-      fieldName="rock_stress"
+      fieldName="stress"
       component="1"
       scale="-4.25e6"/>
 

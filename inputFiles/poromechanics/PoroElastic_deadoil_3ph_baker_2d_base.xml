@@ -141,7 +141,7 @@
       initialCondition="1"
       setNames="{ all }"
       objectPath="ElementRegions"
-      fieldName="skeleton_stress"
+      fieldName="stress"
       component="0"
       scale="7.5e6"/>
     <FieldSpecification
@@ -149,7 +149,7 @@
       initialCondition="1"
       setNames="{ all }"
       objectPath="ElementRegions"
-      fieldName="skeleton_stress"
+      fieldName="stress"
       component="1"
       scale="7.5e6"/>
     <FieldSpecification
@@ -157,7 +157,7 @@
       initialCondition="1"
       setNames="{ all }"
       objectPath="ElementRegions"
-      fieldName="skeleton_stress"
+      fieldName="stress"
       component="2"
       scale="7.5e6"/>
     
@@ -297,12 +297,12 @@
 
     <Silo
       name="siloOutput"
-      fieldNames="{ totalDisplacement, pressure, skeleton_stress, deltaPressure }"/>
+      fieldNames="{ totalDisplacement, pressure, stress, deltaPressure }"/>
 
     <VTK
       name="vtkOutput"
       onlyPlotSpecifiedFieldNames="1"
-      fieldNames="{ totalDisplacement, pressure, skeleton_stress, skeleton_density }"/>
+      fieldNames="{ totalDisplacement, pressure, stress, density }"/>
 
     <Restart
       name="restartOutput"/>

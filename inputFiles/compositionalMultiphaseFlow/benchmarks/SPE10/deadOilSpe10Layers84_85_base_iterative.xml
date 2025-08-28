@@ -123,7 +123,7 @@
       initialCondition="1"
       setNames="{ all }"
       objectPath="ElementRegions/reservoir/block"
-      fieldName="rockPerm_permeability"
+      fieldName="permeability"
       functionName="permxFunc"
       scale="9.869233e-16"/>
     <FieldSpecification
@@ -132,7 +132,7 @@
       initialCondition="1"
       setNames="{ all }"
       objectPath="ElementRegions/reservoir/block"
-      fieldName="rockPerm_permeability"
+      fieldName="permeability"
       functionName="permyFunc"
       scale="9.869233e-16"/>
     <FieldSpecification
@@ -141,7 +141,7 @@
       initialCondition="1"
       setNames="{ all }"
       objectPath="ElementRegions/reservoir/block"
-      fieldName="rockPerm_permeability"
+      fieldName="permeability"
       functionName="permzFunc"
       scale="9.869233e-16"/>
 
@@ -150,7 +150,7 @@
       initialCondition="1"
       setNames="{ all }"
       objectPath="ElementRegions/reservoir/block"
-      fieldName="rockPorosity_referencePorosity"
+      fieldName="referencePorosity"
       functionName="poroFunc"
       scale="1.0"/>
 

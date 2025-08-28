@@ -234,7 +234,7 @@
     <Outputs>
       <VTK 
         name="Synthetic" 
-        fieldNames="{initialPressure, initialTemperature, reservoirRock_density, reservoirRock_bulkModulus, reservoirRock_shearModulus, reservoirPerm_permeability, reservoirPorosity_referencePorosity, reservoirPorosity_biotCoefficient, reservoirPorosity_grainBulkModulus, reservoirRock_thermalExpansionCoefficient, burdensRock_density, burdensRock_bulkModulus, burdensRock_shearModulus, burdensPerm_permeability, burdensPorosity_referencePorosity, burdensPorosity_biotCoefficient, burdensPorosity_grainBulkModulus, burdensRock_thermalExpansionCoefficient}" 
+        fieldNames="{initialPressure, initialTemperature, solidDensity, bulkModulus, shearModulus, permeability, referencePorosity, biotCoefficient, grainBulkModulus, solidThermalExpansionCoefficient}" 
         plotLevel="3"/>
 
       <Restart

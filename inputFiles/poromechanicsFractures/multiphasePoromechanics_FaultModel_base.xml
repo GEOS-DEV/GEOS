@@ -72,7 +72,7 @@
       initialCondition="1"
       setNames="{ all }"
       objectPath="ElementRegions/Fault"
-      fieldName="fracturePorosity_porosity"
+      fieldName="porosity"
       scale="1.00"/>
 
     <FieldSpecification

@@ -7,7 +7,7 @@
       component="0"
       setNames="{ all }"
       objectPath="ElementRegions/reservoir1"
-      fieldName="rockPerm_permeability"
+      fieldName="permeability"
       scale="1e-16" />
     <FieldSpecification
       name="permy1"
@@ -15,7 +15,7 @@
       component="1"
       setNames="{ all }"
       objectPath="ElementRegions/reservoir1"
-      fieldName="rockPerm_permeability"
+      fieldName="permeability"
       scale="1e-16" />
     <FieldSpecification
       name="permz1"
@@ -23,7 +23,7 @@
       component="2"
       setNames="{ all }"
       objectPath="ElementRegions/reservoir1"
-      fieldName="rockPerm_permeability"
+      fieldName="permeability"
       scale="1e-17" />
 
     <FieldSpecification
@@ -32,7 +32,7 @@
       component="0"
       setNames="{ all }"
       objectPath="ElementRegions/reservoir2"
-      fieldName="rockPerm_permeability"
+      fieldName="permeability"
       scale="1e-13" />
     <FieldSpecification
       name="permy2"
@@ -40,7 +40,7 @@
       component="1"
       setNames="{ all }"
       objectPath="ElementRegions/reservoir2"
-      fieldName="rockPerm_permeability"
+      fieldName="permeability"
       scale="1e-13" />
     <FieldSpecification
       name="permz2"
@@ -48,7 +48,7 @@
       component="2"
       setNames="{ all }"
       objectPath="ElementRegions/reservoir2"
-      fieldName="rockPerm_permeability"
+      fieldName="permeability"
       scale="1e-14" />
     
     <FieldSpecification
@@ -57,7 +57,7 @@
       component="0"
       setNames="{ all }"
       objectPath="ElementRegions/reservoir3"
-      fieldName="rockPerm_permeability"
+      fieldName="permeability"
       scale="2e-13" />
     <FieldSpecification
       name="permy3"
@@ -65,7 +65,7 @@
       component="1"
       setNames="{ all }"
       objectPath="ElementRegions/reservoir3"
-      fieldName="rockPerm_permeability"
+      fieldName="permeability"
       scale="2e-13" />
     <FieldSpecification
       name="permz3"
@@ -73,7 +73,7 @@
       component="2"
       setNames="{ all }"
       objectPath="ElementRegions/reservoir3"
-      fieldName="rockPerm_permeability"
+      fieldName="permeability"
       scale="2e-14" />
     
     <FieldSpecification
@@ -82,7 +82,7 @@
       component="0"
       setNames="{ all }"
       objectPath="ElementRegions/reservoir4"
-      fieldName="rockPerm_permeability"
+      fieldName="permeability"
       scale="5e-13" />
     <FieldSpecification
       name="permy4"
@@ -90,7 +90,7 @@
       component="1"
       setNames="{ all }"
       objectPath="ElementRegions/reservoir4"
-      fieldName="rockPerm_permeability"
+      fieldName="permeability"
       scale="5e-13" />
     <FieldSpecification
       name="permz4"
@@ -98,7 +98,7 @@
       component="2"
       setNames="{ all }"
       objectPath="ElementRegions/reservoir4"
-      fieldName="rockPerm_permeability"
+      fieldName="permeability"
       scale="5e-14" />
 
     <FieldSpecification
@@ -107,7 +107,7 @@
       component="0"
       setNames="{ all }"
       objectPath="ElementRegions/reservoir5"
-      fieldName="rockPerm_permeability"
+      fieldName="permeability"
       scale="1e-12" />
     <FieldSpecification
       name="permy5"
@@ -115,7 +115,7 @@
       component="1"
       setNames="{ all }"
       objectPath="ElementRegions/reservoir5"
-      fieldName="rockPerm_permeability"
+      fieldName="permeability"
       scale="1e-12" />
     <FieldSpecification
       name="permz5"
@@ -123,7 +123,7 @@
       component="2"
       setNames="{ all }"
       objectPath="ElementRegions/reservoir5"
-      fieldName="rockPerm_permeability"
+      fieldName="permeability"
       scale="1e-13" />
 
     <FieldSpecification
@@ -132,7 +132,7 @@
       component="0"
       setNames="{ all }"
       objectPath="ElementRegions/reservoir6"
-      fieldName="rockPerm_permeability"
+      fieldName="permeability"
       scale="2e-12" />
     <FieldSpecification
       name="permy6"
@@ -140,7 +140,7 @@
       component="1"
       setNames="{ all }"
       objectPath="ElementRegions/reservoir6"
-      fieldName="rockPerm_permeability"
+      fieldName="permeability"
       scale="2e-12" />
     <FieldSpecification
       name="permz6"
@@ -148,7 +148,7 @@
       component="2"
       setNames="{ all }"
       objectPath="ElementRegions/reservoir6"
-      fieldName="rockPerm_permeability"
+      fieldName="permeability"
       scale="2e-13" />
 
     <FieldSpecification
@@ -157,7 +157,7 @@
       component="0"
       setNames="{ all }"
       objectPath="ElementRegions/reservoir7"
-      fieldName="rockPerm_permeability"
+      fieldName="permeability"
       scale="1e-22" />
     <FieldSpecification
       name="permy7"
@@ -165,7 +165,7 @@
       component="1"
       setNames="{ all }"
       objectPath="ElementRegions/reservoir7"
-      fieldName="rockPerm_permeability"
+      fieldName="permeability"
       scale="1e-22" />
     <FieldSpecification
       name="permz7"
@@ -173,7 +173,7 @@
       component="2"
       setNames="{ all }"
       objectPath="ElementRegions/reservoir7"
-      fieldName="rockPerm_permeability"
+      fieldName="permeability"
       scale="1e-22" />
 
     <FieldSpecification
@@ -182,7 +182,7 @@
       component="0"
       setNames="{ all }"
       objectPath="ElementRegions/reservoir1"
-      fieldName="rockPorosity_referencePorosity"
+      fieldName="referencePorosity"
       scale=".1" />
     <FieldSpecification
       name="poro2"
@@ -190,7 +190,7 @@
       component="0"
       setNames="{ all }"
       objectPath="ElementRegions/reservoir2"
-      fieldName="rockPorosity_referencePorosity"
+      fieldName="referencePorosity"
       scale=".2" />
     <FieldSpecification
       name="poro3"
@@ -198,7 +198,7 @@
       component="0"
       setNames="{ all }"
       objectPath="ElementRegions/reservoir3"
-      fieldName="rockPorosity_referencePorosity"
+      fieldName="referencePorosity"
       scale=".2" />
     <FieldSpecification
       name="poro4"
@@ -206,7 +206,7 @@
       component="0"
       setNames="{ all }"
       objectPath="ElementRegions/reservoir4"
-      fieldName="rockPorosity_referencePorosity"
+      fieldName="referencePorosity"
       scale=".2" />
     <FieldSpecification
       name="poro5"
@@ -214,7 +214,7 @@
       component="0"
       setNames="{ all }"
       objectPath="ElementRegions/reservoir5"
-      fieldName="rockPorosity_referencePorosity"
+      fieldName="referencePorosity"
       scale=".25" />
     <FieldSpecification
       name="poro6"
@@ -222,7 +222,7 @@
       component="0"
       setNames="{ all }"
       objectPath="ElementRegions/reservoir6"
-      fieldName="rockPorosity_referencePorosity"
+      fieldName="referencePorosity"
       scale=".35" />
     <FieldSpecification
       name="poro7"
@@ -230,7 +230,7 @@
       component="0"
       setNames="{ all }"
       objectPath="ElementRegions/reservoir7"
-      fieldName="rockPorosity_referencePorosity"
+      fieldName="referencePorosity"
       scale=".05" />
 
     <!-- SPHINX_THC_FIELD -->
@@ -240,7 +240,7 @@
       component="0"
       setNames="{ all }"
       objectPath="ElementRegions/reservoir1"
-      fieldName="thermalCond_rockThermalConductivity"
+      fieldName="rockThermalConductivity"
       scale="1.9" />
     <FieldSpecification
       name="condy1"
@@ -248,7 +248,7 @@
       component="1"
       setNames="{ all }"
       objectPath="ElementRegions/reservoir1"
-      fieldName="thermalCond_rockThermalConductivity"
+      fieldName="rockThermalConductivity"
       scale="1.9" />
    <!-- SPHINX_THC_FIELD_END -->
 
@@ -258,7 +258,7 @@
       component="2"
       setNames="{ all }"
       objectPath="ElementRegions/reservoir1"
-      fieldName="thermalCond_rockThermalConductivity"
+      fieldName="rockThermalConductivity"
       scale="1.9" />
     <FieldSpecification
       name="condx2"
@@ -266,7 +266,7 @@
       component="0"
       setNames="{ all }"
       objectPath="ElementRegions/reservoir2"
-      fieldName="thermalCond_rockThermalConductivity"
+      fieldName="rockThermalConductivity"
       scale="1.25" />
     <FieldSpecification
       name="condy2"
@@ -274,7 +274,7 @@
       component="1"
       setNames="{ all }"
       objectPath="ElementRegions/reservoir2"
-      fieldName="thermalCond_rockThermalConductivity"
+      fieldName="rockThermalConductivity"
       scale="1.25" />
     <FieldSpecification
       name="condz2"
@@ -282,7 +282,7 @@
       component="2"
       setNames="{ all }"
       objectPath="ElementRegions/reservoir2"
-      fieldName="thermalCond_rockThermalConductivity"
+      fieldName="rockThermalConductivity"
       scale="1.25" />
     <FieldSpecification
       name="condx3"
@@ -290,7 +290,7 @@
       component="0"
       setNames="{ all }"
       objectPath="ElementRegions/reservoir3"
-      fieldName="thermalCond_rockThermalConductivity"
+      fieldName="rockThermalConductivity"
       scale="1.25" />
     <FieldSpecification
       name="condy3"
@@ -298,7 +298,7 @@
       component="1"
       setNames="{ all }"
       objectPath="ElementRegions/reservoir3"
-      fieldName="thermalCond_rockThermalConductivity"
+      fieldName="rockThermalConductivity"
       scale="1.25" />
     <FieldSpecification
       name="condz3"
@@ -306,7 +306,7 @@
       component="2"
       setNames="{ all }"
       objectPath="ElementRegions/reservoir3"
-      fieldName="thermalCond_rockThermalConductivity"
+      fieldName="rockThermalConductivity"
       scale="1.25" />
     <FieldSpecification
       name="condx4"
@@ -314,7 +314,7 @@
       component="0"
       setNames="{ all }"
       objectPath="ElementRegions/reservoir4"
-      fieldName="thermalCond_rockThermalConductivity"
+      fieldName="rockThermalConductivity"
       scale="1.25" />
     <FieldSpecification
       name="condy4"
@@ -322,7 +322,7 @@
       component="1"
       setNames="{ all }"
       objectPath="ElementRegions/reservoir4"
-      fieldName="thermalCond_rockThermalConductivity"
+      fieldName="rockThermalConductivity"
       scale="1.25" />
     <FieldSpecification
       name="condz4"
@@ -330,7 +330,7 @@
       component="2"
       setNames="{ all }"
       objectPath="ElementRegions/reservoir4"
-      fieldName="thermalCond_rockThermalConductivity"
+      fieldName="rockThermalConductivity"
       scale="1.25" />
     <FieldSpecification
       name="condx5"
@@ -338,7 +338,7 @@
       component="0"
       setNames="{ all }"
       objectPath="ElementRegions/reservoir5"
-      fieldName="thermalCond_rockThermalConductivity"
+      fieldName="rockThermalConductivity"
       scale="0.92" />
     <FieldSpecification
       name="condy5"
@@ -346,7 +346,7 @@
       component="1"
       setNames="{ all }"
       objectPath="ElementRegions/reservoir5"
-      fieldName="thermalCond_rockThermalConductivity"
+      fieldName="rockThermalConductivity"
       scale="0.92" />
     <FieldSpecification
       name="condz5"
@@ -354,7 +354,7 @@
       component="2"
       setNames="{ all }"
       objectPath="ElementRegions/reservoir5"
-      fieldName="thermalCond_rockThermalConductivity"
+      fieldName="rockThermalConductivity"
       scale="0.92" />
     <FieldSpecification
       name="condx6"
@@ -362,7 +362,7 @@
       component="0"
       setNames="{ all }"
       objectPath="ElementRegions/reservoir6"
-      fieldName="thermalCond_rockThermalConductivity"
+      fieldName="rockThermalConductivity"
       scale="0.26" />
     <FieldSpecification
       name="condy6"
@@ -370,7 +370,7 @@
       component="1"
       setNames="{ all }"
       objectPath="ElementRegions/reservoir6"
-      fieldName="thermalCond_rockThermalConductivity"
+      fieldName="rockThermalConductivity"
       scale="0.26" />
     <FieldSpecification
       name="condz6"
@@ -378,7 +378,7 @@
       component="2"
       setNames="{ all }"
       objectPath="ElementRegions/reservoir6"
-      fieldName="thermalCond_rockThermalConductivity"
+      fieldName="rockThermalConductivity"
       scale="0.26" />
     <FieldSpecification
       name="condx7"
@@ -386,7 +386,7 @@
       component="0"
       setNames="{ all }"
       objectPath="ElementRegions/reservoir7"
-      fieldName="thermalCond_rockThermalConductivity"
+      fieldName="rockThermalConductivity"
       scale="2" />
     <FieldSpecification
       name="condy7"
@@ -394,7 +394,7 @@
       component="1"
       setNames="{ all }"
       objectPath="ElementRegions/reservoir7"
-      fieldName="thermalCond_rockThermalConductivity"
+      fieldName="rockThermalConductivity"
       scale="2" />
     <FieldSpecification
       name="condz7"
@@ -402,7 +402,7 @@
       component="2"
       setNames="{ all }"
       objectPath="ElementRegions/reservoir7"
-      fieldName="thermalCond_rockThermalConductivity"
+      fieldName="rockThermalConductivity"
       scale="2" />
 
  <!-- SPHINX_BUFFER_FIELDS -->

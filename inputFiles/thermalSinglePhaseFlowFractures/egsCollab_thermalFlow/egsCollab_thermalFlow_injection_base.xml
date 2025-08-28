@@ -65,7 +65,7 @@
        initialCondition="1"
        setNames="{ all }"
        objectPath="ElementRegions/matrix"
-       fieldName="rockPorosity_referencePorosity"
+       fieldName="referencePorosity"
        scale="0.01"/>
 
      <FieldSpecification
@@ -73,7 +73,7 @@
        initialCondition="1"
        setNames="{ all }"
        objectPath="ElementRegions/fracture"
-       fieldName="fracturePorosity_referencePorosity"
+       fieldName="referencePorosity"
        scale="1.0"/>   
 
     <FieldSpecification

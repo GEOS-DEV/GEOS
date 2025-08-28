@@ -139,7 +139,7 @@
       initialCondition="0"
       setNames="{ all }"
       objectPath="ElementRegions/Fracture"
-      fieldName="fracturePorosity_porosity"
+      fieldName="porosity"
       scale="1.00"/>
 
     <FieldSpecification
@@ -220,7 +220,7 @@
     <PackCollection
       name="fracPermeabilityCollection"
       objectPath="ElementRegions/Fracture/embeddedSurfaceSubRegion"
-      fieldName="fracturePerm_permeability"/>  
+      fieldName="permeability"/>  
 
     <PackCollection
       name="pressureCollection"

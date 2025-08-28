@@ -104,7 +104,7 @@
       initialCondition="1"
       setNames="{ all }"
       objectPath="ElementRegions/Domain/cb1"
-      fieldName="rockSolid_stress"
+      fieldName="stress"
       component="0"
       scale="0.0"/>
     <FieldSpecification
@@ -112,7 +112,7 @@
       initialCondition="1"
       setNames="{ all }"
       objectPath="ElementRegions/Domain/cb1"
-      fieldName="rockSolid_stress"
+      fieldName="stress"
       component="1"
       scale="0.0"/>
     <FieldSpecification
@@ -120,7 +120,7 @@
       initialCondition="1"
       setNames="{ all }"
       objectPath="ElementRegions/Domain/cb1"
-      fieldName="rockSolid_stress"
+      fieldName="stress"
       component="2"
       scale="0.0"/>
     <!-- SPHINX_IC_END -->            
