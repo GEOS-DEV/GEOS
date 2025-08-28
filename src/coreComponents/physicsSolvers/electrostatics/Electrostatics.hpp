@@ -131,6 +131,11 @@ protected:
   string m_fieldName;
   TimeIntegrationOption m_timeIntegrationOption;
 
+  static constexpr double F = 96485.33212;   // C/mol, Faraday's constant
+  static constexpr double T = 298.15;        // K, Temperature
+  static constexpr double R = 8.314462618;   // J/mol/K, ideal gas constant
+  real64 thermodynamicPotential = R * T / F; // Volt
+
 private:
   PhysicsSolverBase *m_surfaceGenerator;
   string m_surfaceGeneratorName;
