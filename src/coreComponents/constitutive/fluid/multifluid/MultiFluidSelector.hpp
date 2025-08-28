@@ -20,6 +20,7 @@
 #define GEOS_CONSTITUTIVE_FLUID_MULTIFLUIDSELECTOR_HPP_
 
 #include "constitutive/ConstitutivePassThruHandler.hpp"
+#include "constitutive/fluid/multifluid/constant/InvariantImmiscibleFluid.hpp"
 #include "constitutive/fluid/multifluid/blackOil/DeadOilFluid.hpp"
 #include "constitutive/fluid/multifluid/blackOil/BlackOilFluid.hpp"
 #include "constitutive/fluid/multifluid/CO2Brine/CO2BrineFluid.hpp"
@@ -40,7 +41,8 @@ template< typename LAMBDA >
 void constitutiveUpdatePassThru( constitutive::MultiFluidBase const & fluid,
                                  LAMBDA && lambda )
 {
-  ConstitutivePassThruHandler< DeadOilFluid,
+  ConstitutivePassThruHandler< InvariantImmiscibleFluid,
+                               DeadOilFluid,
                                BlackOilFluid,
 #ifdef GEOS_USE_PVTPackage
                                CompositionalMultiphaseFluidPVTPackage,
@@ -64,7 +66,8 @@ template< typename LAMBDA >
 void constitutiveUpdatePassThru( constitutive::MultiFluidBase & fluid,
                                  LAMBDA && lambda )
 {
-  ConstitutivePassThruHandler< DeadOilFluid,
+  ConstitutivePassThruHandler< InvariantImmiscibleFluid,
+                               DeadOilFluid,
                                BlackOilFluid,
 #ifdef GEOS_USE_PVTPackage
                                CompositionalMultiphaseFluidPVTPackage,

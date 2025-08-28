@@ -72,6 +72,7 @@ set( fluidFlowSolvers_headers
      kernels/compositional/CapillaryPressureUpdateKernel.hpp
      kernels/compositional/CFLKernel.hpp
      kernels/compositional/CompositionalMultiphaseHybridFVMKernels.hpp
+     kernels/compositional/CompositionalMultiphaseHybridFVMKernels_impl.hpp
      kernels/compositional/DiffusionDispersionFluxComputeKernel.hpp
      kernels/compositional/DirichletFluxComputeKernel.hpp
      kernels/compositional/DissipationFluxComputeKernel.hpp
@@ -144,7 +145,6 @@ set( fluidFlowSolvers_sources
      kernels/compositional/AquiferBCKernel.cpp
      kernels/compositional/CFLKernel.cpp
      kernels/compositional/FluxComputeKernelBase.cpp
-     kernels/compositional/CompositionalMultiphaseHybridFVMKernels.cpp
      wells/CompositionalMultiphaseWell.cpp
      wells/kernels/CompositionalMultiphaseWellKernels.cpp
      wells/SinglePhaseWell.cpp

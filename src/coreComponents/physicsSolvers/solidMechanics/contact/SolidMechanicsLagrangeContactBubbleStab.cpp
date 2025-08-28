@@ -28,7 +28,6 @@
 #include "physicsSolvers/solidMechanics/contact/LogLevelsInfo.hpp"
 #include "physicsSolvers/LogLevelsInfo.hpp"
 
-#include "constitutive/ConstitutiveManager.hpp"
 #include "constitutive/contact/FrictionSelector.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
 
@@ -366,7 +365,7 @@ void SolidMechanicsLagrangeContactBubbleStab::assembleStabilization( real64 cons
     real64 maxTraction = finiteElement::
                            regionBasedKernelApplication
                          < parallelDevicePolicy< >,
-                           constitutive::ElasticIsotropic,
+                           ElasticIsotropic,
                            CellElementSubRegion >( mesh,
                                                    regionNames,
                                                    getDiscretizationName(),
@@ -417,12 +416,12 @@ void SolidMechanicsLagrangeContactBubbleStab::assembleContact( real64 const dt,
       real64 maxTraction = finiteElement::
                              interfaceBasedKernelApplication
                            < parallelDevicePolicy< >,
-                             constitutive::FrictionBase >( mesh,
-                                                           fractureRegionName,
-                                                           faceElementList,
-                                                           subRegionFE,
-                                                           viewKeyStruct::frictionLawNameString(),
-                                                           kernelFactory );
+                             FrictionBase >( mesh,
+                                             fractureRegionName,
+                                             faceElementList,
+                                             subRegionFE,
+                                             viewKeyStruct::frictionLawNameString(),
+                                             kernelFactory );
 
       GEOS_UNUSED_VAR( maxTraction );
     } );
@@ -588,12 +587,12 @@ void SolidMechanicsLagrangeContactBubbleStab::applySystemSolution( DofManager co
       real64 maxTraction = finiteElement::
                              interfaceBasedKernelApplication
                            < parallelDevicePolicy< >,
-                             constitutive::NullModel >( mesh,
-                                                        fractureRegionName,
-                                                        faceElementList,
-                                                        subRegionFE,
-                                                        "",
-                                                        kernelFactory );
+                             NullModel >( mesh,
+                                          fractureRegionName,
+                                          faceElementList,
+                                          subRegionFE,
+                                          "",
+                                          kernelFactory );
 
       GEOS_UNUSED_VAR( maxTraction );
 
@@ -966,7 +965,7 @@ void SolidMechanicsLagrangeContactBubbleStab::updateStickSlipList( DomainPartiti
       this->m_faceTypesToFaceElementsStick[meshName][finiteElementName] =  stickList;
       this->m_faceTypesToFaceElementsSlip[meshName][finiteElementName]  =  slipList;
 
-      GEOS_LOG_LEVEL_RANK_0( logInfo::Configuration, GEOS_FMT( "# stick elements: {}, # slip elements: {}", nStick, nSlip ))
+      GEOS_LOG_LEVEL_RANK_0( logInfo::ConfigurationStatistics, GEOS_FMT( "# stick elements: {}, # slip elements: {}", nStick, nSlip ))
     } );
   } );
 

@@ -44,6 +44,9 @@ ContactSolverBase::ContactSolverBase( const string & name,
 
   this->getWrapper< string >( viewKeyStruct::surfaceGeneratorNameString() ).
     setInputFlag( dataRepository::InputFlags::FALSE );
+
+  addLogLevel< logInfo::ConfigurationStatistics >();
+  addLogLevel< logInfo::ContactTolerance >();
 }
 
 void ContactSolverBase::postInputInitialization()
@@ -64,15 +67,13 @@ void ContactSolverBase::registerDataOnMesh( dataRepository::Group & meshBodies )
 
   setFractureRegions( meshBodies );
 
+  string const labels[3] = { "normal", "tangent1", "tangent2" };
+  string const labelsTangent[2] = { "tangent1", "tangent2" };
+
   forFractureRegionOnMeshTargets( meshBodies, [&] ( SurfaceElementRegion & fractureRegion )
   {
-    string const labels[3] = { "normal", "tangent1", "tangent2" };
-    string const labelsTangent[2] = { "tangent1", "tangent2" };
-
     fractureRegion.forElementSubRegions< SurfaceElementSubRegion >( [&]( SurfaceElementSubRegion & subRegion )
     {
-      setConstitutiveNamesCallSuper( subRegion );
-
       subRegion.registerField< contact::dispJump >( getName() ).
         setDimLabels( 1, labels ).
         reference().resizeDimension< 1 >( 3 );
@@ -136,7 +137,7 @@ void ContactSolverBase::computeFractureStateStatistics( MeshLevel const & mesh,
                                                         globalIndex & numSlip,
                                                         globalIndex & numOpen ) const
 {
-  using namespace fields::contact;
+  using namespace contact;
 
   ElementRegionManager const & elemManager = mesh.getElemManager();
 
@@ -145,7 +146,7 @@ void ContactSolverBase::computeFractureStateStatistics( MeshLevel const & mesh,
   elemManager.forElementSubRegions< SurfaceElementSubRegion >( [&]( SurfaceElementSubRegion const & subRegion )
   {
     arrayView1d< integer const > const & ghostRank = subRegion.ghostRank();
-    arrayView1d< integer const > const & fractureState = subRegion.getField< contact::fractureState >();
+    arrayView1d< integer const > const fractureState = subRegion.getField< contact::fractureState >();
 
     RAJA::ReduceSum< parallelHostReduce, localIndex > stickCount( 0 ), newSlipCount( 0 ), slipCount( 0 ), openCount( 0 );
     forAll< parallelHostPolicy >( subRegion.size(), [=] ( localIndex const kfe )

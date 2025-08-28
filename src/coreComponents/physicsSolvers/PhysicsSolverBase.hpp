@@ -399,6 +399,14 @@ public:
                bool const setSparsity = true );
 
   /**
+   * @brief Create a preconditioner for this solver's linear system.
+   * @param domain the domain containing the mesh and fields
+   * @return the newly created preconditioner object
+   */
+  virtual std::unique_ptr< PreconditionerBase< LAInterface > >
+  createPreconditioner( DomainPartition & domain ) const;
+
+  /**
    * @brief function to assemble the linear system matrix and rhs
    * @param time the time at the beginning of the step
    * @param dt the desired timestep
@@ -691,8 +699,14 @@ public:
     /// @return string for the writeLinearSystem wrapper
     static constexpr char const * writeLinearSystemString() { return "writeLinearSystem"; }
 
+    /// @return string for the usePhysicsScaling wrapper
+    static constexpr char const * usePhysicsScalingString() { return "usePhysicsScaling"; }
+
     /// @return string for the allowNonConvergedLinearSolverSolution wrapper
     static constexpr char const * allowNonConvergedLinearSolverSolutionString() { return "allowNonConvergedLinearSolverSolution"; }
+
+    /// @return string for the numTimestepsSinceLastDtCut wrapper
+    static constexpr char const * numTimestepsSinceLastDtCutString() { return "numTimestepsSinceLastDtCut"; }
   };
 
   /**
@@ -952,6 +966,17 @@ protected:
   static string getConstitutiveName( ParticleSubRegionBase const & subRegion ); // particle overload
 
   /**
+   * @brief Register wrapper with given name and store constitutive model name on the subregion
+   *
+   * @tparam CONSTITUTIVE the base type of the constitutive model.
+   * @param subRegion the subregion on which the constitutive model is registered.
+   * @param wrapperName the wrapper name to register.
+   * @param constitutiveType the type description of the constitutive model.
+   */
+  template< typename CONSTITUTIVE >
+  void setConstitutiveName( ElementSubRegionBase & subRegion, string const & wrapperName, string const & constitutiveType ) const;
+
+  /**
    * @brief This function sets constitutive name fields on an
    *  ElementSubRegionBase, and calls the base function it overrides.
    * @param subRegion The ElementSubRegionBase that will have constitutive
@@ -991,14 +1016,16 @@ protected:
   }
 
   /**
-   * @brief Set the Constitutive Name object
-   * @tparam CONSTITUTIVE_TYPE the type of the constitutive model.
-   * @param subRegion the element subregion on which the constitutive model is registered
-   * @param wrapperName the name of the wrapper to set
-   * @param constitutiveType the constitutive model name for error message output
+   * @brief Get the Constitutive Model object
+   * @tparam CONSTITUTIVE_TYPE the base type of the constitutive model.
+   * @param subRegion the element subregion on which the constitutive model is registered.
+   * @return the constitutive model of type @p CONSTITUTIVE_TYPE registered on the @p subRegion.
    */
-  template< typename CONSTITUTIVE >
-  void setConstitutiveName( ElementSubRegionBase & subRegion, string const & wrapperName, string const & constitutiveType ) const;
+  template< typename CONSTITUTIVE_TYPE >
+  static CONSTITUTIVE_TYPE & getConstitutiveModel( ElementSubRegionBase & subRegion )
+  {
+    return getConstitutiveModel< CONSTITUTIVE_TYPE >( subRegion, getConstitutiveName< CONSTITUTIVE_TYPE >( subRegion ) );
+  }
 
   /// Courant–Friedrichs–Lewy factor for the timestep
   real64 m_cflFactor;
@@ -1026,6 +1053,12 @@ protected:
 
   /// System solution vector
   ParallelVector m_solution;
+
+  /// Diagonal scaling vector D (Ahat = D * A * D, bhat = D * b, x = D * xhat)
+  ParallelVector m_scaling;
+
+  /// Flag to decide whether to apply physics-based scaling to the linear system
+  integer m_usePhysicsScaling;
 
   /// Local system matrix and rhs
   CRSMatrix< real64, globalIndex > m_localMatrix;
@@ -1093,7 +1126,7 @@ private:
    */
   void logEndOfCycleInformation( integer const cycleNumber,
                                  integer const numOfSubSteps,
-                                 std::vector< real64 > const & subStepDts ) const;
+                                 stdVector< real64 > const & subStepDts ) const;
 };
 
 
@@ -1108,6 +1141,7 @@ string PhysicsSolverBase::getConstitutiveName( ElementSubRegionBase const & subR
     GEOS_ERROR_IF( !validName.empty(), "A valid constitutive model was already found." );
     validName = model.getName();
   } );
+
   return validName;
 }
 
