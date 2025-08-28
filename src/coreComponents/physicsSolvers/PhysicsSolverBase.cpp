@@ -1010,7 +1010,7 @@ bool PhysicsSolverBase::solveNonlinearSystem( real64 const & time_n,
 
       GEOS_LOG_LEVEL_RANK_0( logInfo::ResidualNorm,
                              GEOS_FMT( "        ( R ) = ( {:4.2e} )", residualNorm ) );
-      getConvergenceStats().m_residuals["R"] = residualNorm;
+      getConvergenceStats().setResidualValue( "R", residualNorm );
       updateAndWriteConvergenceStep( time_n, stepDt, cycleNumber, newtonIter );
     }
 

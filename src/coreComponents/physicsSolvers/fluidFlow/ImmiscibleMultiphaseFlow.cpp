@@ -1124,7 +1124,7 @@ real64 ImmiscibleMultiphaseFlow::calculateResidualNorm( real64 const & GEOS_UNUS
   GEOS_LOG_LEVEL_RANK_0_NLR( logInfo::ResidualNorm, GEOS_FMT( "        ( R{} ) = ( {:4.2e} )",
                                                               coupledSolverAttributePrefix(), residualNorm ))
 
-  getConvergenceStats().m_residuals[GEOS_FMT( "R{}", coupledSolverAttributePrefix())] = residualNorm;
+  getConvergenceStats().setResidualValue( GEOS_FMT( "R{}", coupledSolverAttributePrefix()), residualNorm );
 
   return residualNorm;
 }

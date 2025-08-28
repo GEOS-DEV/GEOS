@@ -46,51 +46,6 @@ public:
   IterationsStatistics( string const & name,
                         dataRepository::Group * const parent );
 
-  /// State of log output. True when writeStatistics is set to 1
-  bool m_logOutput = false;
-
-  /// State of csv output. True when writeStatistics is set to 2
-  bool m_csvOutput = false;
-
-  /// Number of time steps
-  integer m_numTimeSteps = 0;
-
-  /// Number of time step cuts
-  integer m_numTimeStepCuts = 0;
-
-  /// Number of configuration iterations in the current time step (utility variable constantly overwritten)
-  integer m_currentNumConfigIterations = 0;
-
-  /// Number of nonlinear iterations in the current time step (utility variable constantly overwritten)
-  integer m_currentNumNonlinearIterations = 0;
-
-  /// Number of linear iterations in the current time step (utility variable constantly overwritten)
-  integer m_currentNumLinearIterations = 0;
-
-  /// Cumulative number of successful configuration iterations
-  integer m_numSuccessfulConfigIterations = 0;
-
-  /// Cumulative number of successful nonlinear iterations
-  integer m_numSuccessfulNonlinearIterations = 0;
-
-  /// Cumulative number of successful linear iterations
-  integer m_numSuccessfulLinearIterations = 0;
-
-  /// Cumulative number of discarded configuration iterations
-  integer m_numDiscardedConfigIterations  = 0;
-
-  /// Cumulative number of discarded nonlinear iterations
-  integer m_numDiscardedNonlinearIterations = 0;
-
-  /// Cumulative number of discarded linear iterations
-  integer m_numDiscardedLinearIterations = 0;
-
-  /// Linear solver setup
-  real64 m_setupTime = 0.0;
-
-  /// Linear solver solve
-  real64 m_solveTime = 0.0;
-
   /**
    * @brief Struct to serve as a container for variable strings and keys.
    * @struct viewKeyStruct
@@ -215,13 +170,60 @@ public:
   void closeFile()
   { m_logStream.close(); }
 
+protected:
+
+  /// State of log output. True when writeStatistics is set to 1
+  bool m_logOutput = false;
+
+  /// State of csv output. True when writeStatistics is set to 2
+  bool m_csvOutput = false;
+
+  /// Number of time steps
+  integer m_numTimeSteps = 0;
+
+  /// Number of time step cuts
+  integer m_numTimeStepCuts = 0;
+
+  /// Number of configuration iterations in the current time step (utility variable constantly overwritten)
+  integer m_currentNumConfigIterations = 0;
+
+  /// Number of nonlinear iterations in the current time step (utility variable constantly overwritten)
+  integer m_currentNumNonlinearIterations = 0;
+
+  /// Number of linear iterations in the current time step (utility variable constantly overwritten)
+  integer m_currentNumLinearIterations = 0;
+
+  /// Cumulative number of successful configuration iterations
+  integer m_numSuccessfulConfigIterations = 0;
+
+  /// Cumulative number of successful nonlinear iterations
+  integer m_numSuccessfulNonlinearIterations = 0;
+
+  /// Cumulative number of successful linear iterations
+  integer m_numSuccessfulLinearIterations = 0;
+
+  /// Cumulative number of discarded configuration iterations
+  integer m_numDiscardedConfigIterations  = 0;
+
+  /// Cumulative number of discarded nonlinear iterations
+  integer m_numDiscardedNonlinearIterations = 0;
+
+  /// Cumulative number of discarded linear iterations
+  integer m_numDiscardedLinearIterations = 0;
+
+  /// Linear solver setup
+  real64 m_setupTime = 0.0;
+
+  /// Linear solver solve
+  real64 m_solveTime = 0.0;
+
 private:
   /// A boolean indicating whether the CSV file is open or not
   bool m_isCSVOpen = false;
   /// Stream output for the iteration statistics
   std::ofstream m_logStream;
   /// Table Layout contenaning header for both CSV and log
-  std::unique_ptr< TableLayout > m_iterationCSVLayout;
+  TableLayout m_iterationCSVLayout;
   /// Contain the iteration data for both CSV and log output
   TableData m_iterationData;
   /// Format the iteration statistics for the CSV file
@@ -246,21 +248,6 @@ public:
 
   /// State of csv output. True when writeSolver is set to 2
   bool m_csvOutput = false;
-
-  /// The time at the beginning of the step
-  real64 m_time_n = 0.0;
-
-  /// The desired timestep
-  real64 m_dt = 0.0;
-
-  /// Current cycle number
-  integer m_cycleNumber = 0;
-
-  /// Current newton iteration
-  integer m_iteration = 0;
-
-  /// Residuals with their names
-  std::map< string, real64 > m_residuals;
 
   /**
    * @brief Set the csv state output
@@ -291,6 +278,9 @@ public:
    * Call by SolidMechanicsStateReset.
    */
   void resetResidualsValue();
+
+  void setResidualValue( string const & key, real64 const value )
+  {if( m_isCSVOpen ) m_residuals[key] = value; }
 
   /**
    * @brief Set the filename output file.
@@ -325,13 +315,29 @@ public:
   { m_logStream.close(); }
 
 private:
+
+  /// The time at the beginning of the step
+  real64 m_time_n = 0.0;
+
+  /// The desired timestep
+  real64 m_dt = 0.0;
+
+  /// Current cycle number
+  integer m_cycleNumber = 0;
+
+  /// Current newton iteration
+  integer m_iteration = 0;
+
+  /// Residuals with their names
+  std::map< string, real64 > m_residuals;
+
   /// A boolean indicating whether the CSV file is open or not
   bool m_isCSVOpen = false;
   /// Stream output for the convergence statistics
   std::ofstream m_logStream;
   /// Contain the layout for both the CSV and log output.
   /// For a solver, output all residuals residuals name available
-  std::unique_ptr< TableLayout > m_convergenceLayout;
+  TableLayout m_convergenceLayout;
   /// Contain the convergence data for both CSV and log output
   TableData m_convergenceData;
   /// Format the convergence statistics for the CSV file

@@ -26,6 +26,50 @@
 
 using namespace geos;
 
+bool compareWithTolerance( const std::string & valueStr, double expected, double tolerance )
+{
+  double value = std::stod( valueStr );
+  return std::fabs( value - expected ) <= tolerance;
+}
+
+class IterationTest : public IterationsStatistics
+{
+
+public:
+  void AssertIterationValuesEquals()
+  {
+    EXPECT_EQ( m_numTimeSteps, 20 );
+    EXPECT_EQ( m_numTimeStepCuts, 0 );
+    EXPECT_EQ( m_numSuccessfulConfigIterations, 0 );
+    EXPECT_EQ( m_numSuccessfulNonlinearIterations, 20 );
+    EXPECT_EQ( m_numSuccessfulLinearIterations, 20 );
+    EXPECT_EQ( m_numDiscardedConfigIterations, 0 );
+    EXPECT_EQ( m_numDiscardedNonlinearIterations, 0 );
+    EXPECT_EQ( m_numDiscardedLinearIterations, 0 );
+  }
+};
+
+class ConvergenceTest : public ConvergenceStatistics
+{
+
+public:
+
+  void AssertConvergenceValuesEquals( std::vector< std::string > const & actualValues,
+                                      std::vector< std::string > const & expectedValues )
+  {
+    EXPECT_EQ( actualValues[0], expectedValues[0] );
+    EXPECT_EQ( actualValues[1], expectedValues[1] );
+    EXPECT_EQ( actualValues[2], expectedValues[2] );
+    EXPECT_EQ( actualValues[3], expectedValues[3] );
+    EXPECT_EQ( actualValues[4], expectedValues[4] );
+    EXPECT_EQ( actualValues[5], expectedValues[5] );
+    EXPECT_EQ( actualValues[6], expectedValues[6] );
+    EXPECT_EQ( actualValues[7], expectedValues[7] );
+    EXPECT_TRUE( compareWithTolerance( actualValues[8], 0.00392298, 1e-2 ));
+    EXPECT_TRUE( compareWithTolerance( actualValues[9], 0.00192568, 1e-2 ));
+  }
+};
+
 static const string solverLogOutput =
   R"xml(
     <?xml version="1.0" ?>
@@ -172,25 +216,12 @@ TEST( testSolverStats, testLog )
   problem.applyInitialConditions();
   problem.runSimulation();
 
-  PhysicsSolverBase const & solver = problem.getGroupByPath< PhysicsSolverBase >( string( "/Solvers/SinglePhaseFlow" ) );
-  SolverStatistics const & solverStat = solver.getSolverStatistics();
+  PhysicsSolverBase & solver = problem.getGroupByPath< PhysicsSolverBase >( string( "/Solvers/SinglePhaseFlow" ) );
+  IterationTest & solverStat = static_cast< IterationTest & >(solver.getIterationStats());
 
-  EXPECT_EQ( solverStat.m_iterationsStats.m_numTimeSteps, 20 );
-  EXPECT_EQ( solverStat.m_iterationsStats.m_numTimeStepCuts, 0 );
-  EXPECT_EQ( solverStat.m_iterationsStats.m_numSuccessfulConfigIterations, 0 );
-  EXPECT_EQ( solverStat.m_iterationsStats.m_numSuccessfulNonlinearIterations, 20 );
-  EXPECT_EQ( solverStat.m_iterationsStats.m_numSuccessfulLinearIterations, 20 );
-  EXPECT_EQ( solverStat.m_iterationsStats.m_numDiscardedConfigIterations, 0 );
-  EXPECT_EQ( solverStat.m_iterationsStats.m_numDiscardedNonlinearIterations, 0 );
-  EXPECT_EQ( solverStat.m_iterationsStats.m_numDiscardedLinearIterations, 0 );
+  solverStat.AssertIterationValuesEquals();
+
 }
-
-bool compareWithTolerance( const std::string & valueStr, double expected, double tolerance )
-{
-  double value = std::stod( valueStr );
-  return std::fabs( value - expected ) <= tolerance;
-}
-
 
 TEST( testSolverStats, testOutputFiles )
 {
@@ -204,7 +235,7 @@ TEST( testSolverStats, testOutputFiles )
   problem.runSimulation();
 
   PhysicsSolverBase & solver = problem.getGroupByPath< PhysicsSolverBase >( string( "/Solvers/SinglePhaseFlow" ) );
-  SolverStatistics & solverStat = solver.getSolverStatistics();
+  ConvergenceTest & convergenceStat = static_cast< ConvergenceTest & >(solver.getConvergenceStats());
 
   auto loadCsvLines = []( string const & filename, std::vector< string > & lines ) {
 
@@ -262,7 +293,7 @@ TEST( testSolverStats, testOutputFiles )
   };
 
   std::vector< string > csvLines;
-  loadCsvLines( solverStat.m_iterationsStats.getFilename(), csvLines );
+  loadCsvLines( convergenceStat.getFilename(), csvLines );
 
   std::string expectedIteration = "20,0,0,20,20,0,0,0,0.00392298,0.00192568";
   std::istringstream sIterations( expectedIteration );
@@ -286,24 +317,14 @@ TEST( testSolverStats, testOutputFiles )
              "Discarded configuration,Discarded nonlinear,Discarded linear,"
              "Setup time,Solve time" );
 
-  EXPECT_EQ( actualIterationValues[0], expectedIterationValues[0] );
-  EXPECT_EQ( actualIterationValues[1], expectedIterationValues[1] );
-  EXPECT_EQ( actualIterationValues[2], expectedIterationValues[2] );
-  EXPECT_EQ( actualIterationValues[3], expectedIterationValues[3] );
-  EXPECT_EQ( actualIterationValues[4], expectedIterationValues[4] );
-  EXPECT_EQ( actualIterationValues[5], expectedIterationValues[5] );
-  EXPECT_EQ( actualIterationValues[6], expectedIterationValues[6] );
-  EXPECT_EQ( actualIterationValues[7], expectedIterationValues[7] );
-  EXPECT_TRUE( compareWithTolerance( actualIterationValues[8], 0.00392298, 1e-2 ));
-  EXPECT_TRUE( compareWithTolerance( actualIterationValues[9], 0.00192568, 1e-2 ));
+  convergenceStat.AssertConvergenceValuesEquals( actualIterationValues, expectedIterationValues );
 
   std::vector< string > csvLines2;
-  loadCsvLines( solverStat.m_convergenceStats.getFilename(), csvLines2 );
+  loadCsvLines( convergenceStat.getFilename(), csvLines2 );
 
   EXPECT_EQ( csvLines2[0], "Cycle number,time_n (s),dt (s),iteration,R,Rflow" );
 
-  ASSERT_TRUE( std::remove( solverStat.m_iterationsStats.getFilename().c_str() ) == 0 );
-  ASSERT_TRUE( std::remove( solverStat.m_convergenceStats.getFilename().c_str() ) == 0 );
+  ASSERT_TRUE( std::remove( convergenceStat.getFilename().c_str() ) == 0 );
 }
 
 int main( int argc, char * * argv )

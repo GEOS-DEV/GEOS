@@ -83,12 +83,12 @@ IterationsStatistics::IterationsStatistics( string const & name, Group * const p
                    &m_numDiscardedLinearIterations ).
     setApplyDefaultValue( 0 ).
     setDescription( "Cumulative number of discarded linear iterations" );
-  m_iterationCSVLayout = std::make_unique< TableLayout >();
-  m_iterationCSVLayout->setTitle( GEOS_FMT( "{} iterations", getParent().getName()));
-  m_iterationCSVLayout->addColumns( { "Number of time steps", "Number of time step cuts",
-                                      "Successful configuration", "Successful nonlinear", "Successful linear",
-                                      "Discarded configuration", "Discarded nonlinear", "Discarded linear",
-                                      "Setup time", "Solve time"} );
+
+  m_iterationCSVLayout.setTitle( GEOS_FMT( "{} iterations", getParent().getName()));
+  m_iterationCSVLayout.addColumns( { "Number of time steps", "Number of time step cuts",
+                                     "Successful configuration", "Successful nonlinear", "Successful linear",
+                                     "Discarded configuration", "Discarded nonlinear", "Discarded linear",
+                                     "Setup time", "Solve time"} );
 }
 
 void IterationsStatistics::resetCurrentTimeStepStatistics()
@@ -164,7 +164,7 @@ void IterationsStatistics::writeIterationStatsToTable()
   if( !m_isCSVOpen )
   {
     m_logStream.open( m_iterationsFilename );
-    m_iterationCSVFormatter.reset( new TableCSVFormatter( *m_iterationCSVLayout ));
+    m_iterationCSVFormatter = std::make_unique< TableCSVFormatter >( m_iterationCSVLayout );
     m_logStream << m_iterationCSVFormatter->headerToString( );
     m_isCSVOpen = true;
   }
@@ -201,10 +201,9 @@ void IterationsStatistics::outputStatistics()
   }
 }
 
-ConvergenceStatistics::ConvergenceStatistics()
-{
-  m_convergenceLayout = std::make_unique< TableLayout >();
-}
+ConvergenceStatistics::ConvergenceStatistics():
+  m_convergenceLayout()
+{}
 
 void ConvergenceStatistics::writeConvergenceStatsToTable()
 {
@@ -239,10 +238,10 @@ void ConvergenceStatistics::writeConvergenceStatsToTable()
     {
       header.emplace_back( residual.first );
     }
-    m_convergenceLayout->addColumns( header );
+    m_convergenceLayout.addColumns( header );
 
     m_logStream.open( m_convergenceFilename );
-    m_convergenceFormatter.reset( new TableCSVFormatter( *m_convergenceLayout ));
+    m_convergenceFormatter = std::make_unique< TableCSVFormatter >( m_convergenceLayout );
     m_logStream << m_convergenceFormatter->headerToString( );
     m_isCSVOpen = true;
   }

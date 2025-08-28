@@ -869,10 +869,10 @@ real64 SolidMechanicsLagrangeContact::calculateContactResidualNorm( DomainPartit
 
   real64 totalResidualNorm = sqrt( stickResidual * stickResidual + slipResidual * slipResidual + openResidual * openResidual );
 
-  getConvergenceStats().m_residuals["Rstick"] = stickResidual;
-  getConvergenceStats().m_residuals["Rslip"] = slipResidual;
-  getConvergenceStats().m_residuals["Ropen"] = openResidual;
-  getConvergenceStats().m_residuals["RContact"] = totalResidualNorm;
+  getConvergenceStats().setResidualValue( "Rstick", stickResidual );
+  getConvergenceStats().setResidualValue( "Rslip", slipResidual );
+  getConvergenceStats().setResidualValue( "Ropen", openResidual );
+  getConvergenceStats().setResidualValue( "RContact", totalResidualNorm );
 
 
   return totalResidualNorm;

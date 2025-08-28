@@ -1290,7 +1290,7 @@ SolidMechanicsLagrangianFEM::
 
   GEOS_LOG_LEVEL_RANK_0( logInfo::ResidualNorm,
                          GEOS_FMT( "        ( R{} ) = ( {:4.2e} )", coupledSolverAttributePrefix(), totalResidualNorm ));
-  getConvergenceStats().m_residuals[GEOS_FMT( "R{}", coupledSolverAttributePrefix())] = totalResidualNorm;
+  getConvergenceStats().setResidualValue( GEOS_FMT( "R{}", coupledSolverAttributePrefix()), totalResidualNorm );
 
   return totalResidualNorm;
 }

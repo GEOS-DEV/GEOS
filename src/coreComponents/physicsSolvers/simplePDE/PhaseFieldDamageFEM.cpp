@@ -570,7 +570,7 @@ PhaseFieldDamageFEM::calculateResidualNorm( real64 const & GEOS_UNUSED_PARAM( ti
                          GEOS_FMT( "        ( R{} ) = ( {:4.2e} )", coupledSolverAttributePrefix(), residual ))
 
 
-  getConvergenceStats().m_residuals[GEOS_FMT( "R{}", coupledSolverAttributePrefix())] = residual;
+  getConvergenceStats().setResidualValue( GEOS_FMT( "R{}", coupledSolverAttributePrefix()), residual );
 
   return residual;
 }
