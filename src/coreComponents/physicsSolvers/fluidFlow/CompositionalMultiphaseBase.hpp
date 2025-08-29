@@ -21,12 +21,17 @@
 #define GEOS_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONALMULTIPHASEBASE_HPP_
 
 #include "physicsSolvers/fluidFlow/FlowSolverBase.hpp"
+#include "common/DataLayouts.hpp"
+#include "constitutive/fluid/multifluid/Layouts.hpp"
+#include "constitutive/relativePermeability/Layouts.hpp"
+#include "constitutive/capillaryPressure/Layouts.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
 #include "constitutive/fluid/multifluid/MultiFluidBase.hpp"
 #include "constitutive/solid/CoupledSolidBase.hpp"
 #include "physicsSolvers/fluidFlow/kernels/compositional/AccumulationKernel.hpp"
 #include "physicsSolvers/fluidFlow/kernels/compositional/ThermalAccumulationKernel.hpp"
 #include "physicsSolvers/fluidFlow/kernels/compositional/zFormulation/AccumulationZFormulationKernel.hpp"
+
 
 namespace geos
 {
