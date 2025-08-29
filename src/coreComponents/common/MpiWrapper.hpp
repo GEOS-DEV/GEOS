@@ -876,7 +876,7 @@ struct MpiTypeImpl< bool * >
   static MPI_Datatype get()
   {
     // Return the appropriate MPI_Datatype for bool*
-    return MPI_C_BOOL;
+    return MPI_BYTE;
   }
 };
 
