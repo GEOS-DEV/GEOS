@@ -255,12 +255,4 @@ void ConvergenceStatistics::updateSolverStep( real64 const & time_n, real64 cons
   m_iteration = newtonIter;
 }
 
-void ConvergenceStatistics::resetResidualsValue()
-{
-  for( auto & residual : m_residuals )
-  {
-    residual.second = 0.0;
-  }
-}
-
 } // namespace geos

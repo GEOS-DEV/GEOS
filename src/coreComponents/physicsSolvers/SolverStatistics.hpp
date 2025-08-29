@@ -118,6 +118,7 @@ public:
 
   /**
    * @brief Tell the solverStatistics that we cut the time step and we increment the cumulative counters for discarded timesteps
+   *        Assume that we restart computing the last timestep cut we are computing (it did not converge).
    */
   void updateTimeStepCut();
 
@@ -169,7 +170,7 @@ public:
    * @brief Close the stream output file
    */
   void closeFile()
-  { m_logStream.close(); }
+  {  if( m_csvOutputOpened ) { m_logStream.close(); m_csvOutputOpened = false; } }
 
 protected:
 
@@ -272,14 +273,8 @@ public:
                          integer const cycleNumber,
                          integer const newtonIter );
 
-  /**
-   * @brief Reset the solid residuals value.
-   * Call by SolidMechanicsStateReset.
-   */
-  void resetResidualsValue();
-
   void setResidualValue( string const & key, real64 const value )
-  {if( m_csvOutputEnabled ) m_residuals[key] = value; }
+  { if( m_csvOutputEnabled ) m_residuals[key] = value; }
 
   /**
    * @brief Set the filename output file.
@@ -311,7 +306,7 @@ public:
    * @brief Close the stream output file
    */
   void closeFile()
-  { m_logStream.close(); }
+  {  if( m_csvOutputOpened ) { m_logStream.close(); m_csvOutputOpened = false; } }
 
 private:
   /// The time at the beginning of the step
