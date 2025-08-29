@@ -41,6 +41,7 @@ Graphite::Graphite( string const & name, Group * const parent ):
   m_alphaT(),
   m_damage(),
   m_temperature(),
+  m_temperatureRate(),
   m_jacobian(),
   m_lengthScale(),
   m_strengthScale(),
@@ -217,6 +218,11 @@ Graphite::Graphite( string const & name, Group * const parent ):
     setApplyDefaultValue( 300.0 ).
     setPlotLevel( PlotLevel::LEVEL_0 ).
     setDescription( "Array of quadrature point temperature values" );
+
+  registerWrapper( viewKeyStruct::temperatureRateString(), &m_temperatureRate ).
+    setApplyDefaultValue( 0.0 ).
+    setPlotLevel( PlotLevel::LEVEL_0 ).
+    setDescription( "Array of quadrature point temperatureRate values" );
 
 registerWrapper( viewKeyStruct::jacobianString(), &m_jacobian ).
     setApplyDefaultValue( 1.0 ).

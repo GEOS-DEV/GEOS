@@ -105,6 +105,31 @@ DECLARE_FIELD( particleTemperature,
                WRITE_AND_READ,
                "An array that stores particle reference temperature." );
 
+DECLARE_FIELD( particleInitialTemperatureRate,
+               "particleInitialTemperatureRate",
+               array1d< real64 >,
+               0.0,
+               LEVEL_1,
+               WRITE_AND_READ,
+               "An array that stores particle initial temperature rate (is this the same as the initialDomaintemperature?)." );
+
+DECLARE_FIELD( particleReferenceTemperatureRate,
+               "particleReferenceTemperatureRate",
+               array1d< real64 >,
+               0.0,
+               LEVEL_1,
+               WRITE_AND_READ,
+               "An array that stores particle reference temperature rate." );
+
+DECLARE_FIELD( particleTemperatureRate,
+               "particleTemperatureRate",
+               array1d< real64 >,
+               0.0,
+               LEVEL_1,
+               WRITE_AND_READ,
+               "An array that stores particle reference temperatureRate." );
+
+
 DECLARE_FIELD( particleInternalEnergy,
                "particleInternalEnergy",
                array1d< real64 >,

@@ -142,6 +142,8 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
   m_domainStress(),
   m_domainTemperature(),
   m_setDomainTemperature(),
+  m_domainTemperatureRate(),
+  m_setDomainTemperatureRate(),
   m_stressControlLastError(),
   m_stressControlITerm(),
   m_boxAverageHistory( 0 ),
@@ -477,6 +479,17 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "Flag that activates domain temperature interpolation from table." );
+
+  registerWrapper( "domainTemperatureRate", &m_domainTemperatureRate ).
+    setInputFlag( InputFlags::FALSE ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
+    setDescription( "Stores current target domain temperature rate as driven by temp table or other event" );
+
+  registerWrapper( "setDomainTemperatureRate", &m_setDomainTemperatureRate ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setDescription( "Flag that activates domain temperature rateinterpolation from table." );
+
 
   registerWrapper( "stressControlLastError", &m_stressControlLastError ).
     setInputFlag( InputFlags::FALSE ).
@@ -1384,6 +1397,7 @@ void SolidMechanicsMPM::registerDataOnMesh( Group & meshBodies )
         subRegion.registerField< particleHeatCapacity >( getName() );
         subRegion.registerField< particleReferencePorosity >( getName() );
         subRegion.registerField< particleReferenceTemperature >( getName() );
+        //subRegion.registerField< particleReferenceTemperatureRate >( getName() );
         subRegion.registerField< particleInternalEnergy >( getName() );
         subRegion.registerField< particleKineticEnergy >( getName() );
         subRegion.registerField< particleArtificialViscosity >( getName() );
@@ -1939,6 +1953,7 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
     arrayView2d< real64 const > const particlePosition = subRegion.getParticleCenter();
     arrayView1d< real64 const > const particlePorosity = subRegion.getParticlePorosity();
     arrayView1d< real64 const > const particleTemperature = subRegion.getParticleTemperature();  
+    arrayView1d< real64 const > const particleTemperatureRate = subRegion.getParticleTemperatureRate(); 
     arrayView3d< real64 const > const particleRVectors = subRegion.getParticleRVectors();
     arrayView2d< real64 const > const particleMaterialDirection = subRegion.getParticleMaterialDirection();
     arrayView2d< real64 const > const particleSurfaceNormal = subRegion.getParticleSurfaceNormal();
@@ -1951,6 +1966,8 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
     arrayView1d< real64 > const particleReferenceVolume = subRegion.getField< fields::mpm::particleReferenceVolume >();
     arrayView1d< real64 > const particleReferencePorosity = subRegion.getField< fields::mpm::particleReferencePorosity >();
     arrayView1d< real64 > const particleReferenceTemperature = subRegion.getField< fields::mpm::particleReferenceTemperature >();
+    arrayView1d< real64 > const particleReferenceTemperatureRate = subRegion.getField< fields::mpm::particleReferenceTemperatureRate >();
+
 
     // Are these fields automatically set on initiailization?
     arrayView1d< int > const particleDomainScaledFlag = subRegion.getField< fields::mpm::particleDomainScaledFlag >();
@@ -1995,7 +2012,7 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
       particleReferenceVolume[p] = particleVolume[p];
       particleReferencePorosity[p] = particlePorosity[p];
       particleReferenceTemperature[p] = particleTemperature[p];
-
+      particleReferenceTemperatureRate[p] = particleTemperatureRate[p];
       // Should already be initialized by default value from DECLARE_FIELD
       particleDeleteFlag[p] = 0;
       particleCrystalHealFlag[p] = 0;
@@ -3496,10 +3513,12 @@ void SolidMechanicsMPM::triggerEvents( const real64 dt,
         {        
           SortedArrayView< localIndex const > const activeParticleIndices = subRegion.activeParticleIndices();
           arrayView1d< real64 > particleTemperature = subRegion.getParticleTemperature();
+          arrayView1d< real64 > particleTemperatureRate = subRegion.getParticleTemperatureRate();
           forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST_DEVICE ( localIndex const pp )
           {
             localIndex const p = activeParticleIndices[pp];
             particleTemperature[p] = m_domainTemperature; 
+            particleTemperatureRate[p] = m_domainTemperatureRate;
           } );
 
         });
@@ -6048,6 +6067,17 @@ void SolidMechanicsMPM::updateConstitutiveModelDependencies( ParticleManager & p
       {
         localIndex const p = activeParticleIndices[pp];
         constitutiveTemperature[p] = particleTemperature[p];
+      } );
+    }
+
+    if(  constitutiveModel.hasWrapper( "temperatureRate" ) )
+    {
+      arrayView1d< real64 const > const particleTemperatureRate = subRegion.getParticleTemperatureRate();
+      arrayView1d< real64 > const constitutiveTemperatureRate = constitutiveModel.getReference< array1d< real64 > >( "temperatureRate" );
+      forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST_DEVICE ( localIndex const pp )
+      {
+        localIndex const p = activeParticleIndices[pp];
+        constitutiveTemperatureRate[p] = particleTemperatureRate[p];
       } );
     }
 
@@ -9001,8 +9031,9 @@ void SolidMechanicsMPM::interpolateTemperatureTable( real64 dt,
                     m_temperatureTableInterpType );
   
   m_domainTemperature = temperature[0];
+  m_domainTemperatureRate = temperature_rate[0];
 
-  std::cout<<"time: "<<time_n<<", temperature = "<<temperature<<", m_domainTemperature = "<<m_domainTemperature<<std::endl;
+  std::cout<<"time: "<<time_n<<", temperature = "<<temperature<<", m_domainTemperature = "<<m_domainTemperature<<", temperature rate= "<<temperature_rate<<", m_domainTemperatureRate = "<<m_domainTemperatureRate<<std::endl;
 
 }
 
@@ -9757,6 +9788,20 @@ void SolidMechanicsMPM::updateSolverDependencies( ParticleManager & particleMana
       } );
     }
     
+
+
+    if(  constitutiveModel.hasWrapper( "temperatureRate" ) )
+    {
+      arrayView1d< real64 > const particleTemperatureRate = subRegion.getParticleTemperatureRate();
+      arrayView1d< real64 const > const constitutiveTemperatureRate = constitutiveModel.getReference< array1d< real64 > >( "temperatureRate" );
+
+
+      forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST_DEVICE ( localIndex const pp )
+      {
+        localIndex const p = activeParticleIndices[pp];
+        particleTemperatureRate[p] = constitutiveTemperatureRate[p]; 
+      } );
+    }
     // crack tip distance shouldn't be changed in the constitutive model.
     // if(  constitutiveModel.hasWrapper( "crackTipDistance" ) )
     // {
@@ -11451,6 +11496,7 @@ void SolidMechanicsMPM::computeInternalEnergyAndTemperature( const real64 dt,
       arrayView3d< real64 const > const particleVelocityGradient = subRegion.getField< fields::mpm::particleVelocityGradient >();
       
       arrayView1d< real64 > const particleTemperature = subRegion.getParticleTemperature();
+      arrayView1d< real64 > const particleTemperatureRate = subRegion.getParticleTemperatureRate();
       arrayView1d< real64 > const particleInternalEnergy = subRegion.getField< fields::mpm::particleInternalEnergy >();
 
       SortedArrayView< localIndex const > const activeParticleIndices = subRegion.activeParticleIndices();
