@@ -185,7 +185,6 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
     } );
 
     // Step 3: MPI synchronization
-
     isFieldNameFound = MpiWrapper::max( isFieldNameFound );
 
     for( std::pair< string const, localIndex > & mapEntry : isTargetSetEmpty )
@@ -218,14 +217,14 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
         missingSetNames.emplace_back( mapEntry.first );
       }
 
-      string setNamesError = GEOS_FMT( "\n{}: there are no set(s) named `{}` under the {} `{}`.\n",
+      std::ostringstream errorMessageBuilder;
+      errorMessageBuilder << GEOS_FMT( "\n{}: there are no set(s) named `{}` under the {} `{}`.\n",
                                        fs.getWrapperDataContext( FieldSpecificationBase::viewKeyStruct::objectPathString() ),
                                        fmt::join( missingSetNames, ", " ),
                                        FieldSpecificationBase::viewKeyStruct::objectPathString(), fs.getObjectPath() );
+      errorMessageBuilder << GEOS_FMT( "Available set(s) are: {}", stringutilities::join( allPresentSets, ", " ));
 
-      GEOS_FMT( "Available set(s) are: {}", setNamesError.append( stringutilities::join( allPresentSets, ", " )));
-
-      GEOS_THROW( setNamesError, InputError );
+      GEOS_THROW( errorMessageBuilder.str(), InputError );
     }
 
     // if a target set is empty, we issue a warning
