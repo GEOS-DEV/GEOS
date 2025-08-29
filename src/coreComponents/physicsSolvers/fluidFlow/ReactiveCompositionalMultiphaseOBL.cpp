@@ -23,7 +23,6 @@
 #include "dataRepository/Group.hpp"
 #include "discretizationMethods/NumericalMethodsManager.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
-#include "fieldSpecification/LogLevelsInfo.hpp"
 #include "fieldSpecification/SourceFluxBoundaryCondition.hpp"
 #include "fieldSpecification/EquilibriumInitialCondition.hpp"
 #include "physicsSolvers/fluidFlow/SourceFluxStatistics.hpp"
@@ -122,8 +121,6 @@ ReactiveCompositionalMultiphaseOBL::ReactiveCompositionalMultiphaseOBL( const st
     setDescription( "List of fluid phases" );
 
   m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::reactiveCompositionalMultiphaseOBL;
-
-  addLogLevel< logInfo::Convergence >();
 }
 
 void ReactiveCompositionalMultiphaseOBL::initializePreSubGroups()
@@ -821,7 +818,7 @@ void ReactiveCompositionalMultiphaseOBL::applySourceFluxBC( real64 const time,
       if( m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
       {
         globalIndex const numTargetElems = MpiWrapper::sum< globalIndex >( targetSet.size() );
-        GEOS_LOG_LEVEL_RANK_0_ON_GROUP( logInfo::BoundaryCondition,
+        GEOS_LOG_LEVEL_RANK_0_ON_GROUP( logInfo::BoundaryConditions,
                                         GEOS_FMT( bcLogMessage,
                                                   getName(), time+dt, fs.getCatalogName(), fs.getName(),
                                                   setName, subRegion.getName(), fs.getScale(), numTargetElems ),
@@ -1092,7 +1089,7 @@ void ReactiveCompositionalMultiphaseOBL::applyDirichletBC( real64 const time,
       if( m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
       {
         globalIndex const numTargetElems = MpiWrapper::sum< globalIndex >( targetSet.size() );
-        GEOS_LOG_LEVEL_RANK_0_ON_GROUP( logInfo::BoundaryCondition,
+        GEOS_LOG_LEVEL_RANK_0_ON_GROUP( logInfo::BoundaryConditions,
                                         GEOS_FMT( bcLogMessage,
                                                   getName(), time+dt, fs.getCatalogName(), fs.getName(),
                                                   setName, subRegion.getName(), fs.getScale(), numTargetElems ),
@@ -1134,7 +1131,7 @@ void ReactiveCompositionalMultiphaseOBL::applyDirichletBC( real64 const time,
       if( m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
       {
         globalIndex const numTargetElems = MpiWrapper::sum< globalIndex >( targetSet.size() );
-        GEOS_LOG_LEVEL_RANK_0_ON_GROUP( logInfo::BoundaryCondition,
+        GEOS_LOG_LEVEL_RANK_0_ON_GROUP( logInfo::BoundaryConditions,
                                         GEOS_FMT( bcLogMessage,
                                                   getName(), time+dt, fs.getCatalogName(), fs.getName(),
                                                   setName, subRegion.getName(), fs.getScale(), numTargetElems ),
