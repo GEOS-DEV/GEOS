@@ -59,10 +59,10 @@ struct HydrostaticPressureKernel
   static ReturnType
   computeHydrostaticPressure( integer const & numComps,
                               integer const & numPhases,
-                              integer const & ip_gas,
-                              integer const & ip_oil,
-                              integer const & ip_water,
-                              integer const & ip_pp,
+                              integer const & ipGas,
+                              integer const & ipOil,
+                              integer const & ipWater,
+                              integer const & ipPP,
                               arrayView1d< real64 const > const & phaseContacts,
                               arrayView1d< real64 const > const & phaseMinVolumeFraction,
                               integer const maxNumEquilIterations,
@@ -115,16 +115,16 @@ struct HydrostaticPressureKernel
 
     // Step 3: determine which phase pressure to use as the flash pressure
     // integer const ip_pres = primaryPressure( numPhases,
-    //                                          ip_gas,
-    //                                          ip_oil,
-    //                                          ip_water,
+    //                                          ipGas,
+    //                                          ipOil,
+    //                                          ipWater,
     //                                          newElevation,
     //                                          phaseContacts );
 
     // Step 3: compute the mass density at this elevation using the guess, and update pressure
 
     constitutive::MultiFluidBase::KernelWrapper::computeValues( fluidWrapper,
-                                                                pres0[ip_pp], // flash pressure
+                                                                pres0[ipPP], // flash pressure
                                                                 temp,
                                                                 uncorrCompFrac[0],
                                                                 phaseFrac[0][0],
@@ -140,10 +140,10 @@ struct HydrostaticPressureKernel
     StackArray< real64, 2, constitutive::MultiFluidBase::MAX_NUM_COMPONENTS, compflow::LAYOUT_COMP > compFrac( 1, numComps );
     ReturnType phaseCorr = phaseCorrection( numComps,
                                             numPhases,
-                                            ip_gas,
-                                            ip_water,
+                                            ipGas,
+                                            ipWater,
                                             phaseMinVolumeFraction,
-                                            pres0[ip_pp],
+                                            pres0[ipPP],
                                             temp,
                                             uncorrCompFrac[0],
                                             phaseFrac[0][0],
@@ -199,7 +199,7 @@ struct HydrostaticPressureKernel
 
       // compute the mass density at this elevation using the previous pressure, and compute the new pressure
       constitutive::MultiFluidBase::KernelWrapper::computeValues( fluidWrapper,
-                                                                  pres0[ip_pp], // flash pressure
+                                                                  pres0[ipPP], // flash pressure
                                                                   temp,
                                                                   compFrac[0],
                                                                   phaseFrac[0][0],
@@ -226,13 +226,13 @@ struct HydrostaticPressureKernel
 
     if( equilHasConverged )
     {
-      if ( index == 0 )
-      {
-        std::cout << "At index = " << index << ", newPres[0] = " << newPres[0] << ", newPres[1] = " 
+      // if ( index == 0 )
+      // {
+        std::cout << "At index = " << index << ", ipPP = " << ipPP << ", newPres[0] = " << newPres[0] << ", newPres[1] = " 
                   << newPres[1] << " at elevation = " << newElevation << ", eqIters = " << iters 
-                  << ", ip_oil = " << ip_oil << ", compFrac[0] = " << compFrac[0] 
+                  << ", ipOil = " << ipOil << ", compFrac[0] = " << compFrac[0] 
                   << ", phaseContacts = " << phaseContacts << std::endl;
-      }
+      // }
     }
     for( integer ip = 0; ip < numPhases; ++ip )
     {
@@ -264,10 +264,10 @@ struct HydrostaticPressureKernel
                                                   localIndex const & endElevationIndex,
                                                   integer const & numComps,
                                                   integer const & numPhases,
-                                                  integer const & ip_gas,
-                                                  integer const & ip_oil,
-                                                  integer const & ip_water,
-                                                  integer const & ip_pp,
+                                                  integer const & ipGas,
+                                                  integer const & ipOil,
+                                                  integer const & ipWater,
+                                                  integer const & ipPP,
                                                   arrayView1d< real64 const > const & phaseContacts,
                                                   arrayView1d< real64 const > const & phaseMinVolumeFraction,
                                                   integer const & maxNumEquilIterations,
@@ -294,10 +294,10 @@ struct HydrostaticPressureKernel
       ReturnType const iReturnVal =
         computeHydrostaticPressure( numComps,
                                     numPhases,
-                                    ip_gas,
-                                    ip_oil,
-                                    ip_water,
-                                    ip_pp,
+                                    ipGas,
+                                    ipOil,
+                                    ipWater,
+                                    ipPP,
                                     phaseContacts,
                                     phaseMinVolumeFraction,
                                     maxNumEquilIterations,
@@ -333,17 +333,15 @@ struct HydrostaticPressureKernel
 
   template< typename FLUID_WRAPPER >
   static ReturnType
-  marchBetweenTwoElevations( localIndex const & size,
-                             real64 const & startElevation,
+  marchBetweenTwoElevations( real64 const & startElevation,
                              real64 const & endElevation,
                              integer const & numComps,
                              integer const & numPhases,
-                             integer const & ip_gas,
-                             integer const & ip_oil,
-                             integer const & ip_water,
-                             integer const & ip_pp,
-                             integer const & ip_cp,
-                             integer const & ip_op,
+                             integer const & ipGas,
+                             integer const & ipOil,
+                             integer const & ipWater,
+                             integer const & ipPP,
+                             integer const & ipCP,
                              arrayView1d< real64 const > const & phaseContacts,
                              arrayView1d< real64 const > const & phaseMinVolumeFraction,
                              integer const maxNumEquilIterations,
@@ -358,7 +356,6 @@ struct HydrostaticPressureKernel
                              arrayView3d< real64, constitutive::multifluid::USD_PHASE > const & phaseDens,
                              arrayView4d< real64, constitutive::multifluid::USD_PHASE_COMP > const & phaseCompFrac )
   {
-    std::cout << "In marchBetweenTwoElevations, ip_op = " << ip_op << std::endl;
     // Find index of the closest element in elevationValues to the start elevation
     localIndex const iStart = LvArray::sortedArrayManipulation::find( elevationValues[0].begin(),
                                                                       elevationValues[0].size(),
@@ -373,10 +370,10 @@ struct HydrostaticPressureKernel
                                                       iEnd,
                                                       numComps,
                                                       numPhases,
-                                                      ip_gas,
-                                                      ip_oil,
-                                                      ip_water,
-                                                      ip_pp,
+                                                      ipGas,
+                                                      ipOil,
+                                                      ipWater,
+                                                      ipPP,
                                                       phaseContacts,
                                                       phaseMinVolumeFraction,
                                                       maxNumEquilIterations,
@@ -399,10 +396,10 @@ struct HydrostaticPressureKernel
     returnVal =
       computeHydrostaticPressure( numComps,
                                   numPhases,
-                                  ip_gas,
-                                  ip_oil,
-                                  ip_water,
-                                  ip_pp,
+                                  ipGas,
+                                  ipOil,
+                                  ipWater,
+                                  ipPP,
                                   phaseContacts,
                                   phaseMinVolumeFraction,
                                   maxNumEquilIterations,
@@ -421,9 +418,9 @@ struct HydrostaticPressureKernel
                                   endPhaseCompFrac[0],
                                   iEnd );
     // Compute relative error defined as the relative difference between the phase pressures at end elevation                              
-    real64 err = LvArray::math::abs( endPressure[0][ip_cp] - endPressure[0][ip_pp] ) / endPressure[0][ip_pp];
-    std::cout << "march iter = 1: err = " << err << ", p[ip_pp] = " << endPressure[0][ip_pp] 
-              << ", p[ip_cp] = " << endPressure[0][ip_cp] << std::endl;
+    real64 err = LvArray::math::abs( endPressure[0][ipCP] - endPressure[0][ipPP] ) / endPressure[0][ipPP];
+    std::cout << "march iter = 1: err = " << err << ", p[ipPP] = " << endPressure[0][ipPP] 
+              << ", p[ipCP] = " << endPressure[0][ipCP] << std::endl;
     int maxMarchIterations = 10;
 
     // Marching Loop
@@ -431,21 +428,21 @@ struct HydrostaticPressureKernel
     {
       if ( err < 1e-5 ) // maybe use equilTolerance here as well and modify err from relative to absolute
       {
-        std::cout << "March converged, march iter = " << marchIter << ": p[ip_pp] = " 
-        << endPressure[0][ip_pp] << ", p[ip_cp] = " << endPressure[0][ip_cp] << std::endl;
+        std::cout << "March converged, march iter = " << marchIter << ": p[ipPP] = " 
+        << endPressure[0][ipPP] << ", p[ipCP] = " << endPressure[0][ipCP] << std::endl;
         break;
       }
       // equate the phase pressure at the end elevation
-      endPressure[0][ip_cp] = endPressure[0][ip_pp];
-      real64 const iStartPrimaryPressure = pressureValues[iStart][0][ip_pp]; // saves the known phase pressure at iStart
+      endPressure[0][ipCP] = endPressure[0][ipPP];
+      real64 const iStartPrimaryPressure = pressureValues[iStart][0][ipPP]; // saves the known phase pressure at iStart
       // Estimate the unknown phase (contact) pressure and density at iStart using the updated pressures
       returnVal =
         computeHydrostaticPressure( numComps,
                                     numPhases,
-                                    ip_gas,
-                                    ip_oil,
-                                    ip_water,
-                                    ip_pp,
+                                    ipGas,
+                                    ipOil,
+                                    ipWater,
+                                    ipPP,
                                     phaseContacts,
                                     phaseMinVolumeFraction,
                                     maxNumEquilIterations,
@@ -463,17 +460,17 @@ struct HydrostaticPressureKernel
                                     phaseDens[iStart][0],
                                     phaseCompFrac[iStart][0],
                                     iStart );
-      pressureValues[iStart][0][ip_pp] = iStartPrimaryPressure;
+      pressureValues[iStart][0][ipPP] = iStartPrimaryPressure;
       // March from iStart to iEnd
       returnVal = 
       computeHydrostaticPressureAtMultipleElevations( iStart,
                                                       iEnd,
                                                       numComps,
                                                       numPhases,
-                                                      ip_gas,
-                                                      ip_oil,
-                                                      ip_water,
-                                                      ip_pp,
+                                                      ipGas,
+                                                      ipOil,
+                                                      ipWater,
+                                                      ipPP,
                                                       phaseContacts,
                                                       phaseMinVolumeFraction,
                                                       maxNumEquilIterations,
@@ -491,10 +488,10 @@ struct HydrostaticPressureKernel
       returnVal =
         computeHydrostaticPressure( numComps,
                                     numPhases,
-                                    ip_gas,
-                                    ip_oil,
-                                    ip_water,
-                                    ip_pp,
+                                    ipGas,
+                                    ipOil,
+                                    ipWater,
+                                    ipPP,
                                     phaseContacts,
                                     phaseMinVolumeFraction,
                                     maxNumEquilIterations,
@@ -512,310 +509,80 @@ struct HydrostaticPressureKernel
                                     endPhaseDens[0],
                                     endPhaseCompFrac[0],
                                     iEnd );
-      err = LvArray::math::abs( endPressure[0][ip_cp] - endPressure[0][ip_pp] ) / endPressure[0][ip_pp];
-      std::cout << "march iter = 1: err = " << err << ", p[ip_pp] = " << endPressure[0][ip_pp] 
-                << ", p[ip_cp] = " << endPressure[0][ip_cp] << std::endl;
+      err = LvArray::math::abs( endPressure[0][ipCP] - endPressure[0][ipPP] ) / endPressure[0][ipPP];
+      std::cout << "march iter = 1: err = " << err << ", p[ipPP] = " << endPressure[0][ipPP] 
+                << ", p[ipCP] = " << endPressure[0][ipCP] << std::endl;
     }
 
-    // Compute reference condition for points above iEnd if they exist in case where iEnd is above iStart
-    if ( iEnd + 1 < size && iEnd > iStart )
-    {
-      returnVal =
-        computeHydrostaticPressure( numComps,
-                                    numPhases,
-                                    ip_gas,
-                                    ip_oil,
-                                    ip_water,
-                                    ip_pp,
-                                    phaseContacts,
-                                    phaseMinVolumeFraction,
-                                    maxNumEquilIterations,
-                                    equilTolerance,
-                                    gravVector,
-                                    fluidWrapper,
-                                    compFracTableWrappers,
-                                    tempTableWrapper,
-                                    endElevation,
-                                    endPressure[0],
-                                    endPhaseMassDens[0],
-                                    elevationValues[0][iEnd + 1],
-                                    pressureValues[iEnd + 1][0],
-                                    phaseMassDens[iEnd + 1],
-                                    phaseDens[iEnd + 1][0],
-                                    phaseCompFrac[iEnd + 1][0],
-                                    iEnd+1 );
-    }
-    // Compute reference condition for points below iEnd if they exist in case where iEnd is below iStart
-    else if ( iEnd + 1 > 0 && iEnd < iStart )
-    {
-      returnVal =
-        computeHydrostaticPressure( numComps,
-                                    numPhases,
-                                    ip_gas,
-                                    ip_oil,
-                                    ip_water,
-                                    ip_pp,
-                                    phaseContacts,
-                                    phaseMinVolumeFraction,
-                                    maxNumEquilIterations,
-                                    equilTolerance,
-                                    gravVector,
-                                    fluidWrapper,
-                                    compFracTableWrappers,
-                                    tempTableWrapper,
-                                    endElevation,
-                                    endPressure[0],
-                                    endPhaseMassDens[0],
-                                    elevationValues[0][iEnd - 1],
-                                    pressureValues[iEnd - 1][0],
-                                    phaseMassDens[iEnd - 1],
-                                    phaseDens[iEnd - 1][0],
-                                    phaseCompFrac[iEnd - 1][0],
-                                    iEnd-1 );
-    }
+    // // Compute reference condition for points above iEnd if they exist in case where iEnd is above iStart
+    // if ( iEnd + 1 < size && iEnd > iStart )
+    // {
+    //   returnVal =
+    //     computeHydrostaticPressure( numComps,
+    //                                 numPhases,
+    //                                 ipGas,
+    //                                 ipOil,
+    //                                 ipWater,
+    //                                 ipPP,
+    //                                 phaseContacts,
+    //                                 phaseMinVolumeFraction,
+    //                                 maxNumEquilIterations,
+    //                                 equilTolerance,
+    //                                 gravVector,
+    //                                 fluidWrapper,
+    //                                 compFracTableWrappers,
+    //                                 tempTableWrapper,
+    //                                 endElevation,
+    //                                 endPressure[0],
+    //                                 endPhaseMassDens[0],
+    //                                 elevationValues[0][iEnd + 1],
+    //                                 pressureValues[iEnd + 1][0],
+    //                                 phaseMassDens[iEnd + 1],
+    //                                 phaseDens[iEnd + 1][0],
+    //                                 phaseCompFrac[iEnd + 1][0],
+    //                                 iEnd+1 );
+    // }
+    // // Compute reference condition for points below iEnd if they exist in case where iEnd is below iStart
+    // else if ( iEnd + 1 > 0 && iEnd < iStart )
+    // {
+    //   returnVal =
+    //     computeHydrostaticPressure( numComps,
+    //                                 numPhases,
+    //                                 ipGas,
+    //                                 ipOil,
+    //                                 ipWater,
+    //                                 ipPP,
+    //                                 phaseContacts,
+    //                                 phaseMinVolumeFraction,
+    //                                 maxNumEquilIterations,
+    //                                 equilTolerance,
+    //                                 gravVector,
+    //                                 fluidWrapper,
+    //                                 compFracTableWrappers,
+    //                                 tempTableWrapper,
+    //                                 endElevation,
+    //                                 endPressure[0],
+    //                                 endPhaseMassDens[0],
+    //                                 elevationValues[0][iEnd - 1],
+    //                                 pressureValues[iEnd - 1][0],
+    //                                 phaseMassDens[iEnd - 1],
+    //                                 phaseDens[iEnd - 1][0],
+    //                                 phaseCompFrac[iEnd - 1][0],
+    //                                 iEnd-1 );
+    // }
 
     return returnVal;
   }
-
-  // template< typename FLUID_WRAPPER >
-  // static ReturnType
-  // marchBetweenContactAndDatum( localIndex const & size,
-  //                              real64 const & contactElevation,
-  //                              localIndex const & iDatum,
-  //                              localIndex const & iContact,
-  //                              integer const & numComps,
-  //                              integer const & numPhases,
-  //                              integer const & ip_gas,
-  //                              integer const & ip_oil,
-  //                              integer const & ip_water,
-  //                              arrayView1d< real64 const > const & phaseContacts,
-  //                              arrayView1d< real64 const > const & phaseMinVolumeFraction,
-  //                              integer const maxNumEquilIterations,
-  //                              real64 const & equilTolerance,
-  //                              real64 const (&gravVector)[ 3 ],
-  //                              FLUID_WRAPPER fluidWrapper,
-  //                              arrayView1d< TableFunction::KernelWrapper const > compFracTableWrappers,
-  //                              TableFunction::KernelWrapper tempTableWrapper,
-  //                              arrayView1d< arrayView1d< real64 > const > elevationValues,
-  //                             //  arrayView2d< real64 > const pressureValues,
-  //                              arrayView3d< real64, constitutive::multifluid::USD_PHASE > const & pressureValues,
-  //                              arrayView2d< real64 > const & phaseMassDens,
-  //                              arrayView3d< real64, constitutive::multifluid::USD_PHASE > const & phaseDens,
-  //                              arrayView4d< real64, constitutive::multifluid::USD_PHASE_COMP > const & phaseCompFrac )
-  // {
-  //   // March from iDatum to iContact
-  //   ReturnType returnVal = 
-  //     computeHydrostaticPressureAtMultipleElevations( iDatum,
-  //                                                     iContact,
-  //                                                     numComps,
-  //                                                     numPhases,
-  //                                                     ip_gas,
-  //                                                     ip_oil,
-  //                                                     ip_water,
-  //                                                     phaseContacts,
-  //                                                     phaseMinVolumeFraction,
-  //                                                     maxNumEquilIterations,
-  //                                                     equilTolerance,
-  //                                                     gravVector,
-  //                                                     fluidWrapper,
-  //                                                     compFracTableWrappers,
-  //                                                     tempTableWrapper,
-  //                                                     elevationValues,
-  //                                                     pressureValues,
-  //                                                     phaseMassDens,
-  //                                                     phaseDens,
-  //                                                     phaseCompFrac );
-  //   // Compute phase presssures and densities at the contact using iContact as the reference
-  //   array2d< real64 > contactPressure( 1, numPhases );
-  //   array2d< real64 > contactPhaseMassDens( 1, numPhases );
-  //   array2d< real64 > contactPhaseDens( 1, numPhases );
-  //   array3d< real64 > contactPhaseCompFrac( 1, numPhases, numComps );
-  //   returnVal =
-  //     computeHydrostaticPressure( numComps,
-  //                                 numPhases,
-  //                                 ip_gas,
-  //                                 ip_oil,
-  //                                 ip_water,
-  //                                 phaseContacts,
-  //                                 phaseMinVolumeFraction,
-  //                                 maxNumEquilIterations,
-  //                                 equilTolerance,
-  //                                 gravVector,
-  //                                 fluidWrapper,
-  //                                 compFracTableWrappers,
-  //                                 tempTableWrapper,
-  //                                 elevationValues[0][iContact],
-  //                                 pressureValues[iContact][0],
-  //                                 phaseMassDens[iContact],
-  //                                 contactElevation,
-  //                                 contactPressure[0],
-  //                                 contactPhaseMassDens[0],
-  //                                 contactPhaseDens[0],
-  //                                 contactPhaseCompFrac[0],
-  //                                 iContact );
-  //   // Compute relative error defined as the relative difference between the phase pressures at the contact                              
-  //   real64 err = LvArray::math::abs( contactPressure[0][0] - contactPressure[0][1] ) / contactPressure[0][1];
-  //   std::cout << "march iter = 1: err = " << err << ", gasPres = " << contactPressure[0][0] << ", liqPres = " << contactPressure[0][1] << std::endl;
-  //   int maxMarchIterations = 10;
-
-  //   // Marching Loop
-  //   for ( int marchIter = 1; marchIter < maxMarchIterations; ++marchIter )
-  //   {
-  //     if ( err < 1e-5 ) // maybe use equilTolerance here as well and modify err from relative to absolute
-  //     {
-  //       std::cout << "March converged, march iter = " << marchIter << ": gasPres = " 
-  //       << contactPressure[0][0] << ", liqPres = " << contactPressure[0][1] << std::endl;
-  //       break;
-  //     }
-  //     // equate the phase pressure at the contact
-  //     contactPressure[0][0] = contactPressure[0][1];
-  //     // array2d< real64 > tmpRefPressure( 1, numPhases );
-  //     // array2d< real64 > tmpRefPhaseMassDens( 1, numPhases );
-  //     // array3d< real64 > tmpRefPhaseCompFrac( 1, numPhases, numComps );
-  //     real64 const saveRefPhasePressure = pressureValues[iDatum][0][1]; // saves the known phase pressure at iDatum
-  //     // Estimate the unknown phase pressure and density at iDatum using the updated contact phase pressures
-  //     returnVal =
-  //       computeHydrostaticPressure( numComps,
-  //                                   numPhases,
-  //                                   ip_gas,
-  //                                   ip_oil,
-  //                                   ip_water,
-  //                                   phaseContacts,
-  //                                   phaseMinVolumeFraction,
-  //                                   maxNumEquilIterations,
-  //                                   equilTolerance,
-  //                                   gravVector,
-  //                                   fluidWrapper,
-  //                                   compFracTableWrappers,
-  //                                   tempTableWrapper,
-  //                                   contactElevation,
-  //                                   contactPressure[0],
-  //                                   contactPhaseMassDens[0],
-  //                                   elevationValues[0][iDatum],
-  //                                   pressureValues[iDatum][0],
-  //                                   phaseMassDens[iDatum],
-  //                                   phaseDens[iDatum][0],
-  //                                   phaseCompFrac[iDatum][0],
-  //                                   iDatum );
-  //     pressureValues[iDatum][0][1] = saveRefPhasePressure;
-  //     // March from iDatum to iContact 
-  //     returnVal = 
-  //     computeHydrostaticPressureAtMultipleElevations( iDatum,
-  //                                                     iContact,
-  //                                                     numComps,
-  //                                                     numPhases,
-  //                                                     ip_gas,
-  //                                                     ip_oil,
-  //                                                     ip_water,
-  //                                                     phaseContacts,
-  //                                                     phaseMinVolumeFraction,
-  //                                                     maxNumEquilIterations,
-  //                                                     equilTolerance,
-  //                                                     gravVector,
-  //                                                     fluidWrapper,
-  //                                                     compFracTableWrappers,
-  //                                                     tempTableWrapper,
-  //                                                     elevationValues,
-  //                                                     pressureValues,
-  //                                                     phaseMassDens,
-  //                                                     phaseDens,
-  //                                                     phaseCompFrac );
-  //   // Compute phase presssures and densities at the contact using iContact as the reference
-  //   returnVal =
-  //     computeHydrostaticPressure( numComps,
-  //                                 numPhases,
-  //                                 ip_gas,
-  //                                 ip_oil,
-  //                                 ip_water,
-  //                                 phaseContacts,
-  //                                 phaseMinVolumeFraction,
-  //                                 maxNumEquilIterations,
-  //                                 equilTolerance,
-  //                                 gravVector,
-  //                                 fluidWrapper,
-  //                                 compFracTableWrappers,
-  //                                 tempTableWrapper,
-  //                                 elevationValues[0][iContact],
-  //                                 pressureValues[iContact][0],
-  //                                 phaseMassDens[iContact],
-  //                                 contactElevation,
-  //                                 contactPressure[0],
-  //                                 contactPhaseMassDens[0],
-  //                                 contactPhaseDens[0],
-  //                                 contactPhaseCompFrac[0],
-  //                                 iContact );
-  //   err = LvArray::math::abs( contactPressure[0][0] - contactPressure[0][1] ) / contactPressure[0][1];
-  //   std::cout << "march iter = " << marchIter << ": err = " << err << ", gasPres = " << contactPressure[0][0] << ", liqPres = " << contactPressure[0][1] << std::endl;
-
-  //   }
-
-  //   // Compute reference condition for points above iContact if they exist in case where iContact is above iDatum
-  //   if ( iContact + 1 < size && iContact > iDatum )
-  //   {
-  //     returnVal =
-  //       computeHydrostaticPressure( numComps,
-  //                                   numPhases,
-  //                                   ip_gas,
-  //                                   ip_oil,
-  //                                   ip_water,
-  //                                   phaseContacts,
-  //                                   phaseMinVolumeFraction,
-  //                                   maxNumEquilIterations,
-  //                                   equilTolerance,
-  //                                   gravVector,
-  //                                   fluidWrapper,
-  //                                   compFracTableWrappers,
-  //                                   tempTableWrapper,
-  //                                   contactElevation,
-  //                                   contactPressure[0],
-  //                                   contactPhaseMassDens[0],
-  //                                   elevationValues[0][iContact + 1],
-  //                                   pressureValues[iContact + 1][0],
-  //                                   phaseMassDens[iContact + 1],
-  //                                   phaseDens[iContact + 1][0],
-  //                                   phaseCompFrac[iContact + 1][0],
-  //                                   iContact+1 );
-  //   }
-  //   // Compute reference condition for points below iContact if they exist in case where iContact is below iDatum
-  //   else if ( iContact + 1 > 0 && iContact < iDatum )
-  //   {
-  //     returnVal =
-  //       computeHydrostaticPressure( numComps,
-  //                                   numPhases,
-  //                                   ip_gas,
-  //                                   ip_oil,
-  //                                   ip_water,
-  //                                   phaseContacts,
-  //                                   phaseMinVolumeFraction,
-  //                                   maxNumEquilIterations,
-  //                                   equilTolerance,
-  //                                   gravVector,
-  //                                   fluidWrapper,
-  //                                   compFracTableWrappers,
-  //                                   tempTableWrapper,
-  //                                   contactElevation,
-  //                                   contactPressure[0],
-  //                                   contactPhaseMassDens[0],
-  //                                   elevationValues[0][iContact - 1],
-  //                                   pressureValues[iContact - 1][0],
-  //                                   phaseMassDens[iContact - 1],
-  //                                   phaseDens[iContact - 1][0],
-  //                                   phaseCompFrac[iContact - 1][0],
-  //                                   iContact-1 );
-  //   }
-
-  //   return returnVal;
-  // }
-
 
   template< typename FLUID_WRAPPER >
   static ReturnType
   launch( localIndex const & size,
           integer const & numComps,
           integer const & numPhases,
-          integer const & ip_gas,
-          integer const & ip_oil,
-          integer const & ip_water,
+          integer const & ipGas,
+          integer const & ipOil,
+          integer const & ipWater,
+          integer const & ipInit,
           integer const & maxNumEquilIterations,
           arrayView1d< real64 const > const & phaseContacts,
           arrayView1d< real64 const > const & phaseMinVolumeFraction,
@@ -836,7 +603,30 @@ struct HydrostaticPressureKernel
   {
     ReturnType returnVal = ReturnType::SUCCESS;
 
-    std::cout << "ip_gas = " << ip_gas << ", ip_oil = " << ip_oil << ", ip_water = " << ip_water << std::endl;
+    // Contacts classified as "close" and "far"
+    int numContacts = phaseContacts.size();
+    // Find the index of the contact that is close to the datum
+    integer iContactClose = 0;
+    integer iContactFar = -1;
+    if ( numContacts > 1 )
+    {
+      // Assumes phaseContacts is of size 2
+      if ( LvArray::math::abs( phaseContacts[0] - datumElevation ) <= 
+           LvArray::math::abs( phaseContacts[1] - datumElevation ) )
+      {
+        iContactClose = 0;
+        iContactFar = 1;
+      }
+      else
+      {
+        iContactClose = 1;
+        iContactFar = 0;
+      }
+    }
+    std::cout << "phaseContacts = " << phaseContacts << ", numContacts, iContactClose, iContactFar = " 
+              << numContacts << ", " << iContactClose << ", " << iContactFar << std::endl;
+
+    std::cout << "ipGas = " << ipGas << ", ipOil = " << ipOil << ", ipWater = " << ipWater << std::endl;
 
     // Temporarily set all phase pressures at datum to input datum pressure.
     array3d< real64, constitutive::multifluid::LAYOUT_PHASE > datumPresInput( 1, 1, numPhases );
@@ -858,8 +648,8 @@ struct HydrostaticPressureKernel
     array3d< real64, constitutive::multifluid::LAYOUT_PHASE > datumPhaseMassDens( 1, 1, numPhases );
     computeDatumPhaseMassDens( numComps,
                                numPhases,
-                               ip_gas,
-                               ip_water,
+                               ipGas,
+                               ipWater,
                                phaseMinVolumeFraction,
                                datumElevation,
                                datumPres,
@@ -891,22 +681,30 @@ struct HydrostaticPressureKernel
       datumPhaseMassDensTmp[ip] = datumPhaseMassDens[0][0][ip];
     }
 
-    integer ip_pp = primaryPressure( numPhases,
-                                     ip_gas,
-                                     ip_oil,
-                                     ip_water,
-                                     datumElevation,
-                                     phaseContacts );
-    integer ip_cp = -1;
-    integer ip_op = -1;
+    // evaluate primary phase and contact phase for march from datum to elevation[0][iDatum]
+    integer ipPP;
+    integer ipCP;
+    evaluatePressureIndices( numPhases,
+                             ipGas,
+                             ipOil,
+                             ipWater,
+                             ipInit,
+                             elevationValues[0][iDatum], // start elevation
+                             elevationValues[0][iDatum], // end elevation
+                             elevationValues[0][size-1], // top elevation
+                             elevationValues[0][0], // bottom elevation
+                             phaseContacts,
+                             ipPP,
+                             ipCP );
+    std::cout << "For march from datum to elevation[0][iDatum]: ipPP = " << ipPP << ", ipCP = " << ipCP << std::endl;
 
     ReturnType const iDatumReturnVal =
       computeHydrostaticPressure( numComps,
                                   numPhases,
-                                  ip_gas,
-                                  ip_oil,
-                                  ip_water,
-                                  ip_pp,
+                                  ipGas,
+                                  ipOil,
+                                  ipWater,
+                                  ipPP,
                                   phaseContacts,
                                   phaseMinVolumeFraction,
                                   maxNumEquilIterations,
@@ -933,30 +731,6 @@ struct HydrostaticPressureKernel
       returnVal = ReturnType::DETECTED_MULTIPHASE_FLOW;
     }
 
-    // Contacts classified as "close" and "far"
-    int numContacts = phaseContacts.size();
-    // Find the index of the contact that is close to the datum
-    integer iContactClose = 0;
-    integer iContactFar = -1;
-    if ( numContacts > 1 )
-    {
-      // Assumes phaseContacts is of size 2
-      if ( LvArray::math::abs( phaseContacts[0] - datumElevation ) <= 
-           LvArray::math::abs( phaseContacts[1] - datumElevation ) )
-      {
-        iContactClose = 0;
-        iContactFar = 1;
-      }
-      else
-      {
-        iContactClose = 1;
-        iContactFar = 0;
-      }
-    }
-    std::cout << "phaseContacts = " << phaseContacts << ", numContacts, iContactClose, iContactFar = " 
-              << numContacts << ", " << iContactClose << ", " << iContactFar << std::endl;
-
-
     integer iContactCloseIndex = iDatum;
     integer iContactTop = iDatum;
     integer iContactBottom = iDatum;
@@ -968,32 +742,33 @@ struct HydrostaticPressureKernel
                                                                    elevationValues[0].size(),
                                                                    phaseContacts[iContactClose] );
       std::cout << "March from datum to closest phase contact: " << std::endl;
-      std::cout << "Nearest index to the close contact = " << iContactCloseIndex << std::endl;
+      std::cout << "Nearest index to the close contact = " << iContactCloseIndex 
+                << ", elev[iClose] = " << elevationValues[0][iContactCloseIndex] << std::endl;
 
       evaluatePressureIndices( numPhases,
-                               ip_gas,
-                               ip_oil,
-                               ip_water,
-                               datumElevation,
+                               ipGas,
+                               ipOil,
+                               ipWater,
+                               ipInit,
+                               elevationValues[0][iDatum],
                                phaseContacts[iContactClose],
+                               elevationValues[0][size-1], // top elevation
+                               elevationValues[0][0], // bottom elevation
                                phaseContacts,
-                               ip_pp,
-                               ip_cp,
-                               ip_op );
-      std::cout << "ip_pp = " << ip_pp << ", ip_cp = " << ip_cp << ", ip_op = " << ip_op << std::endl;
+                               ipPP,
+                               ipCP );
+      std::cout << "For march from elevation[0][iDatum] to closest phase contact: ipPP = " << ipPP << ", ipCP = " << ipCP << std::endl;
 
       // Step: for each elevation between gwc and datum
-      returnVal = marchBetweenTwoElevations( size,
-                                             datumElevation,
+      returnVal = marchBetweenTwoElevations( datumElevation,
                                              phaseContacts[iContactClose],
                                              numComps,
                                              numPhases,
-                                             ip_gas,
-                                             ip_oil,
-                                             ip_water,
-                                             ip_pp,
-                                             ip_cp,
-                                             ip_op,
+                                             ipGas,
+                                             ipOil,
+                                             ipWater,
+                                             ipPP,
+                                             ipCP,
                                              phaseContacts,
                                              phaseMinVolumeFraction,
                                              maxNumEquilIterations,
@@ -1018,32 +793,33 @@ struct HydrostaticPressureKernel
                                                                  elevationValues[0].size(),
                                                                  phaseContacts[iContactFar] );
       std::cout << "March from the closest contact to the farthest contact: " << std::endl;
-      std::cout << "Nearest index to the far contact = " << iContactFarIndex << std::endl;
+      std::cout << "Nearest index to the far contact = " << iContactFarIndex 
+                << ", elev[iFar] = " << elevationValues[0][iContactFarIndex] << std::endl;
 
       evaluatePressureIndices( numPhases,
-                               ip_gas,
-                               ip_oil,
-                               ip_water,
+                               ipGas,
+                               ipOil,
+                               ipWater,
+                               ipInit,
                                phaseContacts[iContactClose],
                                phaseContacts[iContactFar],
+                               elevationValues[0][size-1], // top elevation
+                               elevationValues[0][0], // bottom elevation
                                phaseContacts,
-                               ip_pp,
-                               ip_cp,
-                               ip_op );
-      std::cout << "ip_pp = " << ip_pp << ", ip_cp = " << ip_cp << ", ip_op = " << ip_op << std::endl;
+                               ipPP,
+                               ipCP );
+      std::cout << "ipPP = " << ipPP << ", ipCP = " << ipCP << std::endl;
 
       // Step: for each elevation between gwc and datum
-      returnVal = marchBetweenTwoElevations( size,
-                                             phaseContacts[iContactClose],
+      returnVal = marchBetweenTwoElevations( phaseContacts[iContactClose],
                                              phaseContacts[iContactFar],
                                              numComps,
                                              numPhases,
-                                             ip_gas,
-                                             ip_oil,
-                                             ip_water,
-                                             ip_pp,
-                                             ip_cp,
-                                             ip_op,
+                                             ipGas,
+                                             ipOil,
+                                             ipWater,
+                                             ipPP,
+                                             ipCP,
                                              phaseContacts,
                                              phaseMinVolumeFraction,
                                              maxNumEquilIterations,
@@ -1078,24 +854,31 @@ struct HydrostaticPressureKernel
 
     // Step 4: for each elevation above the max( top of in-between region, datumElevation ) 
     // Assumes phaseContacts = [ goc, owc ] and goc >= owc
-    // localIndex iForUpperElevations = ( iDatum >= iContactTop ) ? iDatum : iContactTop + 1;
-    localIndex iForUpperElevations = iContactTop;
-    integer ip_pp_above = primaryPressure( numPhases,
-                                           ip_gas,
-                                           ip_oil,
-                                           ip_water,
-                                          //  ( datumElevation > elevationValues[0][iContactTop] ) ? datumElevation + 1e-2 : elevationValues[0][iContactTop] + 1e-2,
-                                           elevationValues[0][iForUpperElevations],
-                                           phaseContacts );
-    std::cout << "ip_pp_above = " << ip_pp_above << ", iContactTop = " << iContactTop << ", elevationValues[0][iContactTop] = " << elevationValues[0][iContactTop] << std::endl;
-    returnVal = computeHydrostaticPressureAtMultipleElevations( iForUpperElevations,
+    // update ipPP for march from top contact to top elevation
+    evaluatePressureIndices( numPhases,
+                             ipGas,
+                             ipOil,
+                             ipWater,
+                             ipInit,
+                             elevationValues[0][iContactTop], // start elevation
+                             elevationValues[0][size-1], // end elevation
+                             elevationValues[0][size-1], // top elevation
+                             elevationValues[0][0], // bottom elevation
+                             phaseContacts,
+                             ipPP,
+                             ipCP );
+    std::cout << "ipPP_above = " << ipPP << ", iContactTop = " << iContactTop 
+              << ", elevationValues[0][iContactTop] = " << elevationValues[0][iContactTop] 
+              << ", elevationValues[0][size-1] = " << elevationValues[0][size-1]
+              << ", elevationValues[0][0] = " << elevationValues[0][0] << std::endl;
+    returnVal = computeHydrostaticPressureAtMultipleElevations( iContactTop,
                                                                 size - 1,
                                                                 numComps,
                                                                 numPhases,
-                                                                ip_gas,
-                                                                ip_oil,
-                                                                ip_water,
-                                                                ip_pp_above,
+                                                                ipGas,
+                                                                ipOil,
+                                                                ipWater,
+                                                                ipPP,
                                                                 phaseContacts,
                                                                 phaseMinVolumeFraction,
                                                                 maxNumEquilIterations,
@@ -1111,24 +894,31 @@ struct HydrostaticPressureKernel
                                                                 phaseCompFrac );
 
     // Step 5: for each elevation below the in-between region
-    // localIndex iForLowerElevations = ( iDatum <= iContactBottom ) ? iDatum : iContactBottom - 1;
-    localIndex iForLowerElevations = iContactBottom;
-    integer ip_pp_below = primaryPressure( numPhases,
-                                           ip_gas,
-                                           ip_oil,
-                                           ip_water,
-                                          //  ( datumElevation < elevationValues[0][iContactBottom] ) ? datumElevation - 1.0 : elevationValues[0][iContactBottom] - 1.0,
-                                          elevationValues[0][iForLowerElevations],
-                                           phaseContacts );
-    std::cout << "ip_pp_below = " << ip_pp_below << std::endl;
-    returnVal = computeHydrostaticPressureAtMultipleElevations( iForLowerElevations,
+    evaluatePressureIndices( numPhases,
+                             ipGas,
+                             ipOil,
+                             ipWater,
+                             ipInit,
+                             elevationValues[0][iContactBottom], // start elevation
+                             elevationValues[0][0], // end elevation
+                             elevationValues[0][size-1], // top elevation
+                             elevationValues[0][0], // bottom elevation
+                             phaseContacts,
+                             ipPP,
+                             ipCP );
+
+    std::cout << "ipPP_below = " << ipPP << ", iContactBottom = " << iContactBottom 
+              << ", elevationValues[0][iContactBottom] = " << elevationValues[0][iContactBottom] 
+              << ", elevationValues[0][size-1] = " << elevationValues[0][size-1]
+              << ", elevationValues[0][0] = " << elevationValues[0][0] << std::endl;
+    returnVal = computeHydrostaticPressureAtMultipleElevations( iContactBottom,
                                                                 0,
                                                                 numComps,
                                                                 numPhases,
-                                                                ip_gas,
-                                                                ip_oil,
-                                                                ip_water,
-                                                                ip_pp_below,
+                                                                ipGas,
+                                                                ipOil,
+                                                                ipWater,
+                                                                ipPP,
                                                                 phaseContacts,
                                                                 phaseMinVolumeFraction,
                                                                 maxNumEquilIterations,
@@ -1174,9 +964,9 @@ struct HydrostaticPressureKernel
   // static ReturnType
   // compute( integer const numComps,
   //          integer const numPhases,
-  //          integer const & ip_gas,
-  //          integer const & ip_oil,
-  //          integer const & ip_water,
+  //          integer const & ipGas,
+  //          integer const & ipOil,
+  //          integer const & ipWater,
   //          integer const maxNumEquilIterations,
   //          real64 const & equilTolerance,
   //          real64 const (&gravVector)[ 3 ],
@@ -1196,26 +986,26 @@ struct HydrostaticPressureKernel
   // {
   //   integer ip_pres = -1;
   //   // Choose the primary phase
-  //   if ( ip_gas >= 0 && ip_oil >= 0 && ip_water >= 0 )
+  //   if ( ipGas >= 0 && ipOil >= 0 && ipWater >= 0 )
   //   {
   //     // Three phase case ( assume phaseContacts[0] = goc, phaseContacts[1] = owc )    
-  //     ip_pres = ( elevation <= phaseContacts[1] ) ? ip_water :
-  //               ( elevation <= phaseContacts[0] ) ? ip_oil : ip_gas;
+  //     ip_pres = ( elevation <= phaseContacts[1] ) ? ipWater :
+  //               ( elevation <= phaseContacts[0] ) ? ipOil : ipGas;
   //   }
-  //   else if ( ip_oil >= 0 && ip_water >= 0 )
+  //   else if ( ipOil >= 0 && ipWater >= 0 )
   //   {
   //     // phases = oil + water ( assume phaseContacts[0] = owc )
-  //     ip_pres = ( elevation <= phaseContacts[0] ) ? ip_water : ip_oil;
+  //     ip_pres = ( elevation <= phaseContacts[0] ) ? ipWater : ipOil;
   //   }
-  //   else if ( ip_gas >= 0 && ip_water >= 0 )
+  //   else if ( ipGas >= 0 && ipWater >= 0 )
   //   {
   //     // phases = gas + water ( assume phaseContacts[0] = gwc )
-  //     ip_pres = ( elevation <= phaseContacts[0] ) ? ip_water : ip_gas;
+  //     ip_pres = ( elevation <= phaseContacts[0] ) ? ipWater : ipGas;
   //   }
-  //   else if ( ip_gas >= 0 && ip_oil >= 0 )
+  //   else if ( ipGas >= 0 && ipOil >= 0 )
   //   {
   //     // phases = gas + oil ( assume phaseContacts[0] = goc )
-  //     ip_pres = ( elevation <= phaseContacts[0] ) ? ip_oil : ip_gas;
+  //     ip_pres = ( elevation <= phaseContacts[0] ) ? ipOil : ipGas;
   //   }
   //   else
   //   {
@@ -1236,8 +1026,8 @@ struct HydrostaticPressureKernel
   static ReturnType
   phaseCorrection( integer const & numComps,
                    integer const & numPhases,
-                   integer const & ip_gas,
-                   integer const & ip_water,
+                   integer const & ipGas,
+                   integer const & ipWater,
                    arrayView1d< real64 const > const & phaseMinVolumeFraction,
                    real64 const & pres,
                    real64 const & temp,
@@ -1252,29 +1042,31 @@ struct HydrostaticPressureKernel
     integer ip_phase = -1;
     integer ip_otherPhase = -1;
     bool phaseCorrectionNeeded = false;
-    if ( ip_gas >= 0 && LvArray::math::abs( phaseFrac[ip_gas] ) < MIN_FOR_PHASE_PRESENCE
-                     && LvArray::math::abs( phaseMinVolumeFraction[ip_gas] ) > MIN_FOR_PHASE_PRESENCE )
+    if ( ipGas >= 0 && LvArray::math::abs( phaseFrac[ipGas] ) < MIN_FOR_PHASE_PRESENCE
+                     && LvArray::math::abs( phaseMinVolumeFraction[ipGas] ) > MIN_FOR_PHASE_PRESENCE )
     {
       addedCompFrac[0][0] = 1.0; // hard-coded (assumes co2 is at index 0)
-      ip_phase = ip_gas;
-      ip_otherPhase = ip_water;
+      ip_phase = ipGas;
+      ip_otherPhase = ipWater;
       phaseCorrectionNeeded = true;
+      std::cout << "Phase corr by adding gas: phaseFrac before corr phase frac = " << phaseFrac << std::endl;
     }
-    // if ( ip_oil >= 0 && LvArray::math::abs( phaseFrac[ip_oil] ) < MIN_FOR_PHASE_PRESENCE
-    //                       && LvArray::math::abs( phaseMinVolumeFraction[ip_oil] ) > MIN_FOR_PHASE_PRESENCE )
+    // if ( ipOil >= 0 && LvArray::math::abs( phaseFrac[ipOil] ) < MIN_FOR_PHASE_PRESENCE
+    //                       && LvArray::math::abs( phaseMinVolumeFraction[ipOil] ) > MIN_FOR_PHASE_PRESENCE )
     // {
     //   addedCompFrac[0][0] = 1.0; // hard-coded (assumes some hydrocarbon is at index 0)
-    //   ip_phase = ip_oil;
+    //   ip_phase = ipOil;
     //   phaseCorrectionNeeded = true;
     // }
 
-    if ( ip_water >= 0 && LvArray::math::abs( phaseFrac[ip_water] ) < MIN_FOR_PHASE_PRESENCE
-                     && LvArray::math::abs( phaseMinVolumeFraction[ip_water] ) > MIN_FOR_PHASE_PRESENCE )
+    if ( ipWater >= 0 && LvArray::math::abs( phaseFrac[ipWater] ) < MIN_FOR_PHASE_PRESENCE
+                     && LvArray::math::abs( phaseMinVolumeFraction[ipWater] ) > MIN_FOR_PHASE_PRESENCE )
     {
       addedCompFrac[0][1] = 1.0; // hard-coded (assumes water is at index 1)
-      ip_phase = ip_water;
-      ip_otherPhase = ip_gas;
+      ip_phase = ipWater;
+      ip_otherPhase = ipGas;
       phaseCorrectionNeeded = true;
+      std::cout << "Phase corr by adding water: phaseFrac before corr phase frac = " << phaseFrac << std::endl;
     }
 
     if ( phaseCorrectionNeeded )
@@ -1296,7 +1088,7 @@ struct HydrostaticPressureKernel
       {
         compFrac[ic] = uncorrCompFrac[ic];
       }
-      // std::cout << "Phase correction not needed: phaseFrac = " << phaseFrac << std::endl;
+      std::cout << "Phase correction not needed: phaseFrac = " << phaseFrac << std::endl;
       return ReturnType::PHASE_CORRECTION_NOT_NEEDED;
     }
 
@@ -1411,152 +1203,314 @@ struct HydrostaticPressureKernel
   }
 
   static integer primaryPressure( integer const & numPhases,
-                                  integer const & ip_gas,
-                                  integer const & ip_oil,
-                                  integer const & ip_water,
+                                  integer const & ipGas,
+                                  integer const & ipOil,
+                                  integer const & ipWater,
                                   real64 const & elevation,
                                   arrayView1d< real64 const > const & phaseContacts )
   {
-    integer ip_pp = -1;
+    integer ipPP = -1;
     // Choose the primary phase
     if ( numPhases == 1 )
     {
-      ip_pp = ( ip_gas >= 0 ) ? ip_gas :
-                ( ip_oil >= 0 ) ? ip_oil :
-                ( ip_water >= 0 ) ? ip_water : 0;
+      ipPP = ( ipGas >= 0 ) ? ipGas :
+                ( ipOil >= 0 ) ? ipOil :
+                ( ipWater >= 0 ) ? ipWater : 0;
     }
-    else if ( ip_gas >= 0 && ip_oil >= 0 && ip_water >= 0 )
+    else if ( ipGas >= 0 && ipOil >= 0 && ipWater >= 0 )
     {
       // Three phase case ( assume phaseContacts[0] = goc, phaseContacts[1] = owc )    
-      ip_pp = ( elevation <= phaseContacts[1] ) ? ip_water :
-                ( elevation <= phaseContacts[0] ) ? ip_oil : ip_gas;
-      // std::cout << "elevation = " << elevation << ", ip_pp = " << ip_pp << std::endl;
+      ipPP = ( elevation <= phaseContacts[1] ) ? ipWater :
+                ( elevation <= phaseContacts[0] ) ? ipOil : ipGas;
+      // std::cout << "elevation = " << elevation << ", ipPP = " << ipPP << std::endl;
     }
-    else if ( ip_oil >= 0 && ip_water >= 0 )
+    else if ( ipOil >= 0 && ipWater >= 0 )
     {
       // phases = oil + water ( assume phaseContacts[0] = owc )
-      ip_pp = ( elevation <= phaseContacts[0] ) ? ip_water : ip_oil;
+      ipPP = ( elevation <= phaseContacts[0] ) ? ipWater : ipOil;
     }
-    else if ( ip_gas >= 0 && ip_water >= 0 )
+    else if ( ipGas >= 0 && ipWater >= 0 )
     {
       // phases = gas + water ( assume phaseContacts[0] = gwc )
-      ip_pp = ( elevation <= phaseContacts[0] ) ? ip_water : ip_gas;
+      ipPP = ( elevation <= phaseContacts[0] ) ? ipWater : ipGas;
+      std::cout << "elevation = " << elevation << ", phaseContacts[0] = " << phaseContacts[0]
+                << ", ipPP = " << ipPP << std::endl;
     }
-    else if ( ip_gas >= 0 && ip_oil >= 0 )
+    else if ( ipGas >= 0 && ipOil >= 0 )
     {
       // phases = gas + oil ( assume phaseContacts[0] = goc )
-      ip_pp = ( elevation <= phaseContacts[0] ) ? ip_oil : ip_gas;
+      ipPP = ( elevation <= phaseContacts[0] ) ? ipOil : ipGas;
     }
-    // TODO: deal with the case if ip_pp is still -1
-    return ip_pp;
+    // TODO: deal with the case if ipPP is still -1
+    return ipPP;
   }
 
   static void evaluatePressureIndices( integer const & numPhases,
-                                       integer const & ip_gas,
-                                       integer const & ip_oil,
-                                       integer const & ip_water,
+                                       integer const & ipGas,
+                                       integer const & ipOil,
+                                       integer const & ipWater,
+                                       integer const & ipInit,
                                        real64 const & startElevation,
                                        real64 const & endElevation,
+                                       real64 const & topElevation,
+                                       real64 const & bottomElevation,
                                        arrayView1d< real64 const > const & phaseContacts,
-                                       integer & ip_pp,
-                                       integer & ip_cp,
-                                       integer & ip_op )
+                                       integer & ipPP,
+                                       integer & ipCP )
   {
-    ip_pp = -1;
-    ip_cp = -1;
-    ip_op = -1;
-    if ( numPhases > 1 )
+    ipPP = -1;
+    ipCP = -1;
+    if ( ipInit != -1 )
     {
-      if ( ip_gas >= 0 && ip_oil >= 0 && ip_water >= 0 )
+      ipPP = ipInit;
+    }
+    else if ( numPhases > 1 )
+    {
+      if ( ipGas >= 0 && ipOil >= 0 && ipWater >= 0 )
       {
+        // three phases are present
         real64 const goc = phaseContacts[0];
         real64 const owc = phaseContacts[1];
-        if ( startElevation < owc && LvArray::math::abs( endElevation - owc ) < 1e-12 )
+
+        if ( isWaterPrimaryPhase( startElevation,
+                                  endElevation,
+                                  owc,
+                                  bottomElevation ) )
         {
-          // we are below owc and will march towards it
-          ip_pp = ip_water;
-          ip_cp = ip_oil;
-          ip_op = ip_gas;
+          ipPP = ipWater;
+          ipCP = ipOil;
         }
-        else if ( startElevation > owc && LvArray::math::abs( endElevation - owc ) < 1e-12 )
+        else if ( isOilPrimaryPhaseAndWaterContactPhaseForThreePhases( startElevation,
+                                                                       endElevation,
+                                                                       owc ) )
         {
-          // we are above owc and will march towards it
-          ip_pp = ip_oil;
-          ip_cp = ip_water;
-          ip_op = ip_gas;
+          ipPP = ipOil;
+          ipCP = ipWater;
         }
-        else if ( startElevation < goc && LvArray::math::abs( endElevation - goc ) < 1e-12 )
+        else if ( isOilPrimaryPhaseAndGasContactPhaseForThreePhases( startElevation,
+                                                                     endElevation,
+                                                                     goc ) )
         {
-          // we are between owc and goc and will march towards goc
-          ip_pp = ip_oil;
-          ip_cp = ip_gas;
-          ip_op = ip_water;
+          ipPP = ipOil;
+          ipCP = ipGas;
         }
-        else if ( startElevation > goc && LvArray::math::abs( endElevation - goc ) < 1e-12 )
+        else if ( isGasPrimaryPhase( startElevation,
+                                     endElevation,
+                                     goc,
+                                     topElevation ) )
         {
-          // we are above owc and intend to march towards it
-          ip_pp = ip_gas;
-          ip_cp = ip_oil;
-          ip_op = ip_water;
+          ipPP = ipGas;
+          ipCP = ipOil;
         }
       }
-      else if ( ip_oil >= 0 && ip_water >= 0 )
+      else if ( ipOil >= 0 && ipWater >= 0 )
       {
+        // oil and water phases are present
         real64 const owc = phaseContacts[0];
-        if ( startElevation < owc )
+        if ( isWaterPrimaryPhase( startElevation,
+                                  endElevation,
+                                  owc,
+                                  bottomElevation ) )
         {
-          // we below below the owc and intend to march towards it
-          ip_pp = ip_water;
-          ip_cp = ip_oil;
+          ipPP = ipWater;
+          ipCP = ipOil;
         }
-        else
+        else if ( isOilPrimaryPhaseAndWaterContactPhaseForTwoPhases( startElevation,
+                                                                     endElevation,
+                                                                     owc,
+                                                                     topElevation ) )
         {
-          // we below aobve the owc and intend to march towards it
-          ip_pp = ip_oil;
-          ip_cp = ip_water; 
+          ipPP = ipOil;
+          ipCP = ipWater;
         }
       }
-      else if ( ip_gas >= 0 && ip_water >= 0 )
+      else if ( ipGas >= 0 && ipWater >= 0 )
       {
+        // gas and water phases are present
         real64 const gwc = phaseContacts[0];
-        if ( startElevation < gwc )
+        ipPP = ipWater;
+        ipCP = ipGas;
+        // if ( isWaterPrimaryPhase( startElevation,
+        //                           endElevation,
+        //                           gwc,
+        //                           bottomElevation ) )
+        // {
+        //   ipPP = ipWater;
+        //   ipCP = ipGas;
+        // }
+        if ( isGasPrimaryPhase( startElevation,
+                                endElevation,
+                                gwc,
+                                topElevation ) )
         {
-          // we below below the gwc and intend to march towards it
-          ip_pp = ip_water;
-          ip_cp = ip_gas;
-        }
-        else
-        {
-          // we below above the gwc and intend to march towards it
-          ip_pp = ip_gas;
-          ip_cp = ip_water; 
+          ipPP = ipGas;
+          ipCP = ipWater;
         }
       }
-      else if ( ip_gas >= 0 && ip_oil >= 0 )
+      else if ( ipGas >= 0 && ipOil >= 0 )
       {
+        // gas and oil phases are present
         real64 const goc = phaseContacts[0];
-        if ( startElevation < goc )
+        if ( isOilPrimaryPhaseAndGasContactPhaseForTwoPhases( startElevation,
+                                                              endElevation,
+                                                              goc,
+                                                              bottomElevation ) )
         {
-          // we below below the goc and intend to march towards it
-          ip_pp = ip_oil;
-          ip_cp = ip_gas;
+          ipPP = ipOil;
+          ipCP = ipGas;
         }
-        else
+        else if ( isGasPrimaryPhase( startElevation,
+                                     endElevation,
+                                     goc,
+                                     topElevation ) )
         {
-          // we below above the goc and intend to march towards it
-          ip_pp = ip_gas;
-          ip_cp = ip_oil; 
+          ipPP = ipGas;
+          ipCP = ipOil;
         }
       }
     }
+  }
+
+  static bool isWaterPrimaryPhase( real64 const & startElevation,
+                                   real64 const & endElevation,
+                                   real64 const & contact,
+                                   real64 const & bottomElevation )
+  {
+    bool isWaterPP = false;
+    if ( startElevation < contact )
+    {
+      if ( LvArray::math::abs( endElevation - bottomElevation ) < 1e-12 
+           || LvArray::math::abs( endElevation - contact ) < 1e-12 )
+      {
+        // we are below the contact (owc or gwc) and we either march to it or to the bottom elevation
+        isWaterPP = true;
+      }
+    }
+    else
+    {
+      if ( LvArray::math::abs( endElevation - bottomElevation ) < 1e-12 )
+      {
+        // we are above the contact (owc or gwc) and we march to the bottom elevation
+        isWaterPP = true;
+      }
+    }
+    return isWaterPP;
+  }
+
+  static bool isOilPrimaryPhaseAndWaterContactPhaseForThreePhases( real64 const & startElevation,
+                                                                   real64 const & endElevation,
+                                                                   real64 const & owc )
+  {
+    bool isOilPP = false;
+    if ( startElevation > owc
+         && LvArray::math::abs( endElevation - owc ) < 1e-12 )
+    {
+      // we are above owc and we will march to it
+      isOilPP = true;
+    }
+
+    return isOilPP;
+  }
+
+  static bool isOilPrimaryPhaseAndGasContactPhaseForThreePhases( real64 const & startElevation,
+                                                                 real64 const & endElevation,
+                                                                 real64 const & goc )
+  {
+    bool isOilPP = false;
+    if ( startElevation < goc
+         && LvArray::math::abs( endElevation - goc ) < 1e-12 )
+    {
+      // wa are below goc and we will march to it
+      isOilPP = true;
+    }
+
+    return isOilPP;
+  }
+
+  static bool isGasPrimaryPhase( real64 const & startElevation,
+                                 real64 const & endElevation,
+                                 real64 const & contact,
+                                 real64 const & topElevation )
+  {
+    bool isGasPP = false;
+    if ( startElevation > contact )
+    {
+      if ( LvArray::math::abs( endElevation - topElevation ) < 1e-12 
+           || LvArray::math::abs( endElevation - contact ) < 1e-12 )
+      {
+        // we are above the contact (goc or gwc) and we will either march to it or to the top elevation
+        isGasPP = true;
+      }
+    }
+    else
+    {
+      if ( LvArray::math::abs( endElevation - topElevation ) < 1e-12 )
+      {
+        // we are above the contact (goc or gwc) and we will march to the top elevation
+        isGasPP = true;
+      }
+    }
+    return isGasPP;
+  }
+
+  static bool isOilPrimaryPhaseAndWaterContactPhaseForTwoPhases( real64 const & startElevation,
+                                                                 real64 const & endElevation,
+                                                                 real64 const & owc,
+                                                                 real64 const & topElevation )
+  {
+    bool isOilPP = false;
+    if ( startElevation > owc )
+    {
+      if ( LvArray::math::abs( endElevation - topElevation ) < 1e-12 
+           || LvArray::math::abs( endElevation - owc ) < 1e-12 )
+      {
+        // we are above owc and we will either march to it or to the top elevation
+        isOilPP = true;
+      }
+    }
+    else
+    {
+      if ( LvArray::math::abs( endElevation - topElevation ) < 1e-12 )
+      {
+        // we are below owc and we will march to the top elevation
+        isOilPP = true;
+      }
+    }
+    return isOilPP;
+  }
+
+  static bool isOilPrimaryPhaseAndGasContactPhaseForTwoPhases( real64 const & startElevation,
+                                                               real64 const & endElevation,
+                                                               real64 const & goc,
+                                                               real64 const & bottomElevation )
+  {
+    bool isOilPP = false;
+    if ( startElevation < goc )
+    {
+      if ( LvArray::math::abs( endElevation - bottomElevation ) < 1e-12 
+           || LvArray::math::abs( endElevation - goc ) < 1e-12 )
+      {
+        // we are below goc and we will either march to it or to the bottom elevation
+        isOilPP = true;
+      }
+    }
+    else
+    {
+      if ( LvArray::math::abs( endElevation - bottomElevation ) < 1e-12 )
+      {
+        // we are above goc and we will march to the bottom elevation
+        isOilPP = true;
+      }
+    }
+    return isOilPP;
   }
 
   template< typename FLUID_WRAPPER >
   static void
   computeDatumPhaseMassDens( integer const & numComps,
                              integer const & numPhases,
-                             integer const & ip_gas,
-                             integer const & ip_water,
+                             integer const & ipGas,
+                             integer const & ipWater,
                              arrayView1d< real64 const > const & phaseMinVolumeFraction,
                              real64 const & datumElevation,
                              real64 const & datumPres,
@@ -1593,8 +1547,8 @@ struct HydrostaticPressureKernel
                                                                 datumTotalDens );
     ReturnType datumPhaseCorr = phaseCorrection( numComps,
                                                  numPhases,
-                                                 ip_gas,
-                                                 ip_water,
+                                                 ipGas,
+                                                 ipWater,
                                                  phaseMinVolumeFraction,
                                                  datumPres,
                                                  datumTemp,
@@ -1618,9 +1572,9 @@ struct HydrostaticPressureKernel
                                                                 datumTotalDens );
     std::cout << "Datum flash results at p = " << datumPres << ", T = " << datumTemp
     << ", datum overall compositions:" << datumCompFrac[0] << std::endl;
-    std::cout << "phase dens = " << datumPhaseDens[0][0] << ", phase mass dens = " <<
-    datumPhaseMassDens[0][0] << ", Phase composition = " << datumPhaseCompFrac[0][0]
-    << std::endl;                                     
+    std::cout << "phase frac = " << datumPhaseFrac[0][0] << "phase dens = " 
+    << datumPhaseDens[0][0] << ", phase mass dens = " << datumPhaseMassDens[0][0] 
+    << ", Phase composition = " << datumPhaseCompFrac[0][0] << std::endl;                                     
   }
 
 };

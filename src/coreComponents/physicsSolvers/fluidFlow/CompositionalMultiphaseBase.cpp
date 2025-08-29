@@ -1257,12 +1257,12 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium( DomainPartition
 
       // Note: for now, we assume that the reservoir is in a single-phase state at initialization
       string_array const & phaseNames = fluid.phaseNames();
-      // auto const itPhaseNames = std::find( std::begin( phaseNames ), std::end( phaseNames ), initPhaseName );
-      // GEOS_THROW_IF( itPhaseNames == std::end( phaseNames ),
-      //                getCatalogName() << " " << getDataContext() << ": phase name " <<
-      //                initPhaseName << " not found in the phases of " << fluid.getDataContext(),
-      //                InputError );
-      // integer const ipInit = std::distance( std::begin( phaseNames ), itPhaseNames );
+      auto const itPhaseNames = std::find( std::begin( phaseNames ), std::end( phaseNames ), initPhaseName );
+      GEOS_THROW_IF( itPhaseNames == std::end( phaseNames ),
+                     getCatalogName() << " " << getDataContext() << ": phase name " <<
+                     initPhaseName << " not found in the phases of " << fluid.getDataContext(),
+                     InputError );
+      integer const ipInit = ( numPhases == 1 ) ? std::distance( std::begin( phaseNames ), itPhaseNames ) : -1;
 
       // Step 3.4: compute the hydrostatic pressure values
     // if( m_hasCapPressure )
@@ -1290,9 +1290,9 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium( DomainPartition
         std::cout << "phaseOrder[" << i << "] = " << phaseOrder[i] << std::endl;
       }
 
-      integer const ip_gas = phaseOrder[CapillaryPressureBase::PhaseType::GAS];
-      integer const ip_water = phaseOrder[CapillaryPressureBase::PhaseType::WATER];
-      integer const ip_oil = phaseOrder[CapillaryPressureBase::PhaseType::OIL];
+      integer const ipGas = phaseOrder[CapillaryPressureBase::PhaseType::GAS];
+      integer const ipWater = phaseOrder[CapillaryPressureBase::PhaseType::WATER];
+      integer const ipOil = phaseOrder[CapillaryPressureBase::PhaseType::OIL];
 
       arrayView1d< real64 const > const phaseMinVolumeFraction = capPressure.phaseMinVolumeFraction();
       for ( localIndex i = 0; i < phaseMinVolumeFraction.size(); ++i )
@@ -1312,9 +1312,10 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium( DomainPartition
             HydrostaticPressureKernel::launch( numPointsInTable,
                                                numComps,
                                                numPhases,
-                                               ip_gas,
-                                               ip_oil,
-                                               ip_water,
+                                               ipGas,
+                                               ipOil,
+                                               ipWater,
+                                               ipInit,
                                                maxNumEquilIterations,
                                                phaseContacts,
                                                phaseMinVolumeFraction,
@@ -1350,18 +1351,18 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium( DomainPartition
 
 
       // array1d< real64 > oilPressureValues( numPointsInTable );
-      // if ( ip_oil >= 0 )
+      // if ( ipOil >= 0 )
       // {
       //   for (localIndex i = 0; i < numPointsInTable; ++i)
       //   {
-      //     oilPressureValues[i] = pressureValues[i][ip_oil];
+      //     oilPressureValues[i] = pressureValues[i][ipOil];
       //   }
       // }
       // else
       // {
       //   for (localIndex i = 0; i < numPointsInTable; ++i)
       //   {
-      //     oilPressureValues[i] = pressureValues[i][ip_water]; // water phase pressure as reference pressure
+      //     oilPressureValues[i] = pressureValues[i][ipWater]; // water phase pressure as reference pressure
       //   }
       // }
 
@@ -1445,8 +1446,8 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium( DomainPartition
       RAJA::ReduceMin< parallelDeviceReduce, real64 > minPressure( LvArray::NumericLimits< real64 >::max );
 
       // primary phase pressure index
-      // integer ip_pres = ip_oil >= 0 ? ip_oil : ip_gas;
-      // ip_pres = ip_pres >= 0 ? ip_pres : ip_water; // add code below to throw error if ip_pres = -1
+      // integer ip_pres = ipOil >= 0 ? ipOil : ipGas;
+      // ip_pres = ip_pres >= 0 ? ip_pres : ipWater; // add code below to throw error if ip_pres = -1
       // std::cout << "ip_pres = " << ip_pres << std::endl;
 
       constitutiveUpdatePassThru( capPressure, [&] ( auto & castCapPressure )
@@ -1466,9 +1467,9 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium( DomainPartition
 
         forAll< parallelDevicePolicy<> >( targetSet.size(), [targetSet,
                                                              elemCenter,
-                                                             ip_gas,
-                                                             ip_oil,
-                                                             ip_water,
+                                                             ipGas,
+                                                             ipOil,
+                                                             ipWater,
                                                             //  ip_pres,
                                                              pres,
                                                              minPressure,
@@ -1496,14 +1497,14 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium( DomainPartition
           real64 const elevation = elemCenter[k][2];
 
           integer ip_pres = -1;
-          if ( numPhases == 2 && ip_gas >= 0 && ip_water >= 0 )
+          if ( numPhases == 2 && ipGas >= 0 && ipWater >= 0 )
           {
-            ip_pres = ( elevation < phaseContacts[0] ) ? ip_water : ip_gas;
+            ip_pres = ( elevation < phaseContacts[0] ) ? ipWater : ipGas;
           }
-          else if ( numPhases == 3 && ip_gas >= 0 && ip_oil >= 0 && ip_water >= 0 )
+          else if ( numPhases == 3 && ipGas >= 0 && ipOil >= 0 && ipWater >= 0 )
           {
-            ip_pres = ( elevation <= phaseContacts[1] ) ? ip_water :
-                      ( elevation > phaseContacts[1] && elevation <= phaseContacts[0] ) ? ip_oil : ip_gas;
+            ip_pres = ( elevation <= phaseContacts[1] ) ? ipWater :
+                      ( elevation > phaseContacts[1] && elevation <= phaseContacts[0] ) ? ipOil : ipGas;
           }
           pres[k] = phasePressureTableWrappers[ip_pres].compute( &elevation );
           if (k == 0)
@@ -1515,17 +1516,17 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium( DomainPartition
           minPressure.min( pres[k] );
           temp[k] = tempTableWrapper.compute( &elevation );
 
-          if ( numPhases == 2 && ip_gas >= 0 && ip_water >= 0 )
+          if ( numPhases == 2 && ipGas >= 0 && ipWater >= 0 )
           {
-            targetPhaseCapPressure[k][0][ip_water] = phasePressureTableWrappers[ip_gas].compute( &elevation ) 
-              - phasePressureTableWrappers[ip_water].compute( &elevation );
+            targetPhaseCapPressure[k][0][ipWater] = phasePressureTableWrappers[ipGas].compute( &elevation ) 
+              - phasePressureTableWrappers[ipWater].compute( &elevation );
           }
-          else if ( numPhases == 3 && ip_gas >= 0 && ip_oil >= 0 && ip_water >= 0 )
+          else if ( numPhases == 3 && ipGas >= 0 && ipOil >= 0 && ipWater >= 0 )
           {
-            targetPhaseCapPressure[k][0][ip_gas] = - phasePressureTableWrappers[ip_gas].compute( &elevation ) 
-              + phasePressureTableWrappers[ip_oil].compute( &elevation );
-            targetPhaseCapPressure[k][0][ip_water] = phasePressureTableWrappers[ip_oil].compute( &elevation ) 
-              - phasePressureTableWrappers[ip_water].compute( &elevation );
+            targetPhaseCapPressure[k][0][ipGas] = - phasePressureTableWrappers[ipGas].compute( &elevation ) 
+              + phasePressureTableWrappers[ipOil].compute( &elevation );
+            targetPhaseCapPressure[k][0][ipWater] = phasePressureTableWrappers[ipOil].compute( &elevation ) 
+              - phasePressureTableWrappers[ipWater].compute( &elevation );
           }
           success[k] = capPressureWrapper.compute( targetPhaseCapPressure[k][0],
                                                    jFuncMultiplier[k],
@@ -1557,10 +1558,10 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium( DomainPartition
             std::cout << "k = " << k << ", elevation = " << elevation << ", success = " << success[k] << ", target pc = "
             << targetPhaseCapPressure[k][0] << ", solved sat = " << targetPhaseVolumeFraction[k] << "unCorrComp = " << unCorrCompFractions[k] << 
             ", corrComp = " << compFrac[k] << std::endl;
-            std::cout << "gas_dens = " << phaseDensTableWrappers[0].compute( &elevation )
-                      << ", water_dens = " << phaseDensTableWrappers[1].compute( &elevation ) 
-                      << ", p_gas = " << phasePressureTableWrappers[ip_gas].compute( &elevation )
-                      << ", p_water = " << phasePressureTableWrappers[ip_water].compute( &elevation ) << std::endl;
+            std::cout << "gas_dens = " << phaseDensTableWrappers[ipGas].compute( &elevation )
+                      << ", water_dens = " << phaseDensTableWrappers[ipWater].compute( &elevation ) 
+                      << ", p_gas = " << phasePressureTableWrappers[ipGas].compute( &elevation )
+                      << ", p_water = " << phasePressureTableWrappers[ipWater].compute( &elevation ) << std::endl;
           }
 
         } );
@@ -1662,7 +1663,7 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium( DomainPartition
 
       // Step 3.5: create hydrostatic pressure table
 
-      // string const tableName = fs.getName() + "_" + subRegion.getName() + "_" + phaseNames[ip_water] + "_table";
+      // string const tableName = fs.getName() + "_" + subRegion.getName() + "_" + phaseNames[ipWater] + "_table";
       // TableFunction * const presTable = dynamicCast< TableFunction * >( functionManager.createChild( TableFunction::catalogName(), tableName ) );
       // presTable->setTableCoordinates( elevationValues, { units::Distance } );
       // presTable->setTableValues( oilPressureValues, units::Pressure );
