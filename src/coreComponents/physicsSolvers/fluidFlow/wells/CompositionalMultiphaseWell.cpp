@@ -1614,9 +1614,6 @@ void CompositionalMultiphaseWell::computePerforationRates( real64 const & time_n
       WellControls const & wellControls = getWellControls( subRegion );
       if( wellControls.isWellOpen( time_n ) && !m_keepVariablesConstantDuringInitStep )
       {
-
-        bool const disableReservoirToWellFlow = wellControls.isInjector() and !wellControls.isCrossflowEnabled();
-
         string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
         MultiFluidBase const & fluid = getConstitutiveModel< MultiFluidBase >( subRegion, fluidName );
         bool const isThermal = fluid.isThermal();
@@ -1632,7 +1629,8 @@ void CompositionalMultiphaseWell::computePerforationRates( real64 const & time_n
                                                        subRegion,
                                                        fluid,
                                                        elemManager,
-                                                       disableReservoirToWellFlow );
+                                                       wellControls.isInjector(),
+                                                       wellControls.isCrossflowEnabled() );
         }
         else
         {
@@ -1644,7 +1642,8 @@ void CompositionalMultiphaseWell::computePerforationRates( real64 const & time_n
                                                        perforationData,
                                                        subRegion,
                                                        elemManager,
-                                                       disableReservoirToWellFlow );
+                                                       wellControls.isInjector(),
+                                                       wellControls.isCrossflowEnabled() );
         }
       }
       else
