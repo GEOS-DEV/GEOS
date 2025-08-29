@@ -517,11 +517,11 @@ void TwoPointFluxApproximation::addFractureMatrixConnectionsDFM( MeshLevel & mes
           real64 const stencilWeights[2]{ ht, 2. * faceArea[faceIndex] / aperture_h };
 
           faceToCellStencil.add( 2,
-                                stencilCellsRegionIndex,
-                                stencilCellsSubRegionIndex,
-                                stencilCellsIndex,
-                                stencilWeights,
-                                connectorIndex );
+                                 stencilCellsRegionIndex,
+                                 stencilCellsSubRegionIndex,
+                                 stencilCellsIndex,
+                                 stencilWeights,
+                                 connectorIndex );
 
           faceToCellStencil.addVectors( transMultiplier[faceIndex], faceNormalVector, cellToFaceVec );
         }

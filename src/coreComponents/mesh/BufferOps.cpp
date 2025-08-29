@@ -307,12 +307,12 @@ localIndex Unpack( buffer_unit_type const * & buffer,
     sizeOfUnpackedChars += bufferOps::Unpack( buffer, numSubIndicesUnpacked );
     GEOS_ERROR_IF( numSubIndicesUnpacked != var.m_toElementRegion.size( 1 ), "" );
 
-    stdVector<localIndex> recvElemRegionIndices(numSubIndicesUnpacked);
-    stdVector<localIndex> recvElemSubRegionIndices(numSubIndicesUnpacked);
-    stdVector<globalIndex> globalElementIndices(numSubIndicesUnpacked);
-    stdVector<localIndex> recvElemIndices(numSubIndicesUnpacked);
-    stdVector<localIndex> existingGlobalIndices(numSubIndicesUnpacked);
-    stdVector<int> mapEntryProcessed(numSubIndicesUnpacked);
+    stdVector< localIndex > recvElemRegionIndices( numSubIndicesUnpacked );
+    stdVector< localIndex > recvElemSubRegionIndices( numSubIndicesUnpacked );
+    stdVector< globalIndex > globalElementIndices( numSubIndicesUnpacked );
+    stdVector< localIndex > recvElemIndices( numSubIndicesUnpacked );
+    stdVector< localIndex > existingGlobalIndices( numSubIndicesUnpacked );
+    stdVector< int > mapEntryProcessed( numSubIndicesUnpacked );
 
     // read in all the received indices
     for( localIndex b=0; b<numSubIndicesUnpacked; ++b )
@@ -328,9 +328,9 @@ localIndex Unpack( buffer_unit_type const * & buffer,
         ElementRegionBase const & elemRegion = elementRegionManager->getRegion( recvElemRegionIndices[b] );
         ElementSubRegionBase const & elemSubRegion = elemRegion.getSubRegion( recvElemSubRegionIndices[b] );
         recvElemIndices[b] = softMapLookup( elemSubRegion.globalToLocalMap(),
-                                          globalElementIndices[b],
-                                          localIndex( -1 ) );
-        
+                                            globalElementIndices[b],
+                                            localIndex( -1 ) );
+
         //arrayView1d< globalIndex const > const & localToGlobalMap = elemSubRegion.localToGlobalMap();
       }
       else
@@ -369,8 +369,8 @@ localIndex Unpack( buffer_unit_type const * & buffer,
             localIndex & elemRegionIndex = var.m_toElementRegion[index][c];
             localIndex & elemSubRegionIndex = var.m_toElementSubRegion[index][c];
             localIndex & elemIndex = var.m_toElementIndex[index][c];
-            
-            // if the received "b" indices match the existing "c" indices, 
+
+            // if the received "b" indices match the existing "c" indices,
             // do nothing and break out of "c" loop
             if( ( elemRegionIndex==recvElemRegionIndex &&
                   elemSubRegionIndex==recvElemSubRegionIndex &&
