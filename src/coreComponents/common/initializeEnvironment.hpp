@@ -134,6 +134,11 @@ void setupMPI( int argc, char * argv[] );
  */
 void finalizeMPI();
 
+/**
+ * @brief Setup CUDA
+ * @details Will set up CUDA environment values if required
+ */
+void setupCUDA();
 
 /**
  * @brief Setup/init the environment.
