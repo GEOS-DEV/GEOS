@@ -87,8 +87,8 @@ void Box::postInputInitialization()
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
   domain.forMeshBodies( [&]( MeshBody const & meshBody )
   {
-    m_eps = std::min( m_eps, 5 * std::numeric_limits<real64>::epsilon() * meshBody.getGlobalLengthScale() );
-  });
+    m_eps = std::min( m_eps, 5 * std::numeric_limits< real64 >::epsilon() * meshBody.getGlobalLengthScale() );
+  } );
 
 }
 
