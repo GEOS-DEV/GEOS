@@ -596,12 +596,6 @@ void interpolateTable( real64 x,
                        arrayView1d< real64 > outputRate,
                        SolidMechanicsMPM::InterpolationOption interpolationType );
 
-void interpolateTempTable( real64 x, 
-                       real64 dx,
-                       arrayView2d< real64 const > const table,
-                       arrayView1d< real64 > const output,
-                       SolidMechanicsMPM::InterpolationOption interpolationType );
-
 void interpolateValueInRange( real64 const & x, 
                               real64 const & xmin,
                               real64 const & xmax,
@@ -677,9 +671,6 @@ void interpolateValueInRange( real64 const & x,
   void computeRVectors( ParticleManager & particleManager );
 
   void cpdiDomainScaling( ParticleManager & particleManager );
-
-  void applyThermalDeformations( real64 const dt,
-                                 ParticleManager & particleManager );
 
   void subdivideParticles( ParticleManager & particleManager );
 
@@ -920,7 +911,6 @@ protected:
   int m_shockHeating;
   int m_computeInternalEnergyAndTemperature;
   int m_useArtificialViscosity;
-  int m_useThermalDeformations;
   real64 m_artificialViscosityQ0;
   real64 m_artificialViscosityQ1;
 
@@ -984,9 +974,6 @@ protected:
   real64 m_xProfileVx0;
 
   real64 m_implicitContinuumFluidPressure; // Borehole collapse
-  real64 m_initialTemperature;
-  real64 m_temperature;
-  InterpolationOption m_interpType;
 
 private:
   struct BinKey
