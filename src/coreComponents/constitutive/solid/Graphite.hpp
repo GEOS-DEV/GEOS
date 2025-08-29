@@ -62,6 +62,7 @@ public:
    * @param[in] alphaL Thermal expansion logitudinal to crystal symmetry axis
    * @param[in] alphaT Thermal expansion transverse to crystal symmetry axis
    * @param[in] damage The ArrayView holding the damage for each quardrature point.
+   * @param[in] temperature The ArrayView holding the temperature for each element/particle.
    * @param[in] jacobian The ArrayView holding the jacobian for each quardrature point.
    * @param[in] materialDirection The ArrayView holding the material direction for each element/particle.
    * @param[in] lengthScale The ArrayView holding the length scale for each element.
@@ -89,6 +90,7 @@ public:
                    real64 const & alphaL,
                    real64 const & alphaT,
                    arrayView2d< real64 > const & damage,
+                   arrayView1d< real64 > const & temperature,
                    arrayView2d< real64 > const & jacobian,
                    arrayView1d< real64 > const & lengthScale,
                    arrayView1d< real64 > const & strengthScale,
@@ -140,6 +142,7 @@ public:
     m_alphaL( alphaL ),
     m_alphaT( alphaT ),
     m_damage( damage ),
+    m_temperature( temperature ),
     m_jacobian( jacobian ),
     m_lengthScale( lengthScale ),
     m_strengthScale( strengthScale ),
@@ -231,7 +234,8 @@ public:
                                 real64 ( &stress )[6] ) const;
 
   GEOS_HOST_DEVICE
-  void computeTransverselyIsotropicTrialStress( const real64 timeIncrement,      
+  void computeTransverselyIsotropicTrialStress( localIndex const k,
+                                                const real64 timeIncrement,      
                                                 const real64 Ez,                 
                                                 const real64 Ep,                 
                                                 const real64 nuzp,               
@@ -354,6 +358,9 @@ private:
 
   /// A reference to the ArrayView holding the damage for each quadrature point.
   arrayView2d< real64 > const m_damage;
+
+  /// A reference to the ArrayView holding the temperature for each quadrature point.
+  arrayView1d< real64 > const m_temperature;
 
   /// A reference to the ArrayView holding the jacobian for each quadrature point.
   arrayView2d< real64 > const m_jacobian;
@@ -606,7 +613,8 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
     // real64 nup = Ep / c66 - 1; //4 * ( c11 * c33 - c66 * c33 - c13 * c13 ) / ( c11 * c33 - c13 * c13 ) - 1;
 
     // Hypoelastic trial stress update.
-    computeTransverselyIsotropicTrialStress( timeIncrement,      // time step
+    computeTransverselyIsotropicTrialStress( k,
+                                             timeIncrement,      // time step
                                              Ez,                 // Elastic modulus preferred direction
                                              Ep,                 // Elastic modulus transverse plane
                                              nuzp,               // Poisson ratio coupled
@@ -958,7 +966,8 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
 
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
-void GraphiteUpdates::computeTransverselyIsotropicTrialStress(const real64 timeIncrement,      // time step
+void GraphiteUpdates::computeTransverselyIsotropicTrialStress(localIndex const k,
+                                                              const real64 timeIncrement,      // time step
                                                               const real64 Ez,                 // Elastic modulus preferred direction
                                                               const real64 Ep,                 // Elastic modulus transverse plane
                                                               const real64 nuzp,               // Poisson ratio coupled
@@ -978,8 +987,9 @@ void GraphiteUpdates::computeTransverselyIsotropicTrialStress(const real64 timeI
 	real64 h5 = 2*Gzp;
 
 
-
-
+  real64 DT = m_temperature[k] - m_temperature[k-1];
+  // I think really we will do h5*B5 * D * alphavoight * (DT/dt) * dt
+  // but dt cancels out, so we just need: h5*B5 * D * alphavoight * DT
 
   // MM make alphaDense  here
   double alphaDense[3][3];
@@ -989,6 +999,7 @@ void GraphiteUpdates::computeTransverselyIsotropicTrialStress(const real64 timeI
       {
           double delta = (i == j) ? 1.0 : 0.0;
           alphaDense[i][j] = (m_alphaL - m_alphaT) * materialDirection[i] * materialDirection[j] + delta * m_alphaT;
+          std::cout<<"alphaL:   " << m_alphaL << "alphaT:   " << m_alphaT <<std::endl;
       }
   }
 
@@ -1025,7 +1036,7 @@ void GraphiteUpdates::computeTransverselyIsotropicTrialStress(const real64 timeI
                                           h4*transverselyIsotropicB4(materialDirection,i,j,p,w) +
 //                                          h5*transverselyIsotropicB5(materialDirection,i,j,p,w))*D[voigtMap[p][w]]*timeIncrement;
 //                                        still need to find temp rate 
-                                          h5 * transverselyIsotropicB5(materialDirection, i, j, p, w)) * (D[voigtMap[p][w]] - alphaVoigt[voigtMap[p][w]] * 1) * timeIncrement;
+                                          h5 * transverselyIsotropicB5(materialDirection, i, j, p, w)) * (D[voigtMap[p][w]] - alphaVoigt[voigtMap[p][w]] * 1) * DT;
 				}
 			}
 		}
@@ -1323,6 +1334,9 @@ public:
     /// string/key for quadrature point damage value
     static constexpr char const * damageString() { return "damage"; }
 
+    /// string/key for quadrature point temperature value
+    static constexpr char const * temperatureString() { return "temperature"; }
+
     /// string/key for quadrature point jacobian value
     static constexpr char const * jacobianString() { return "jacobian"; }
 
@@ -1418,6 +1432,7 @@ public:
                             m_alphaL,
                             m_alphaT,
                             m_damage,
+                            m_temperature,
                             m_jacobian,
                             m_lengthScale,
                             m_strengthScale,
@@ -1476,6 +1491,7 @@ public:
                           m_alphaL,
                           m_alphaT,
                           m_damage,
+                          m_temperature,
                           m_jacobian,
                           m_lengthScale,
                           m_strengthScale,
@@ -1695,6 +1711,9 @@ protected:
 
   /// State variable: The damage values for each quadrature point
   array2d< real64 > m_damage;
+
+  /// State variable: The temperature values for each element/particle
+  array1d< real64 > m_temperature;
 
   /// State variable: The jacobian of the deformation
   array2d< real64 > m_jacobian;

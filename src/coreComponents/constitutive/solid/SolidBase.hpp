@@ -143,7 +143,7 @@ public:
    * We define a variety of interfaces for constitutive models using different
    * strain theories.  Derived classes only need to implement the subset of interfaces
    * most relevant to them.
-   *
+   *rate
    * This group of interfaces returns stress and stiffness simultaneously, and
    * are most useful for implicit finite element formulations.
    */

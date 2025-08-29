@@ -40,6 +40,7 @@ Graphite::Graphite( string const & name, Group * const parent ):
   m_alphaL(),
   m_alphaT(),
   m_damage(),
+  m_temperature(),
   m_jacobian(),
   m_lengthScale(),
   m_strengthScale(),
@@ -200,19 +201,22 @@ Graphite::Graphite( string const & name, Group * const parent ):
     setDescription( "Relaxation" );
 
   registerWrapper( viewKeyStruct::alphaLString(), &m_alphaL ).
-    setApplyDefaultValue( 0.0 ).
-    setPlotLevel( PlotLevel::LEVEL_0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "constant for thermal expansion lateral to symmetry axis" );
 
   registerWrapper( viewKeyStruct::alphaTString(), &m_alphaT ).
-    setApplyDefaultValue( 0.0 ).
-    setPlotLevel( PlotLevel::LEVEL_0 ).
-    setDescription( "constant for thermal expansion transverse to symmetry axis" );
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "constant for thermal expansion lateral to symmetry axis" );
 
   registerWrapper( viewKeyStruct::damageString(), &m_damage ).
     setApplyDefaultValue( 0.0 ).
     setPlotLevel( PlotLevel::LEVEL_0 ).
     setDescription( "Array of quadrature point damage values" );
+
+  registerWrapper( viewKeyStruct::temperatureString(), &m_temperature ).
+    setApplyDefaultValue( 300.0 ).
+    setPlotLevel( PlotLevel::LEVEL_0 ).
+    setDescription( "Array of quadrature point temperature values" );
 
 registerWrapper( viewKeyStruct::jacobianString(), &m_jacobian ).
     setApplyDefaultValue( 1.0 ).
