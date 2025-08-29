@@ -215,7 +215,7 @@ GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
 void
 CompositionalMultiphaseFluidUpdates< FLASH, PHASE1, PHASE2, PHASE3 >::compute(
-  real64 const pressure,
+  real64 const pres,
   real64 const temperature,
   arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & composition,
   MultiFluidBase::PhaseProp::SliceType const phaseFraction,
@@ -234,6 +234,8 @@ CompositionalMultiphaseFluidUpdates< FLASH, PHASE1, PHASE2, PHASE3 >::compute(
   integer const numComp = numComponents();
   integer const numPhase = numPhases();
   integer const numDof = numComp + 2;
+
+  real64 const pressure = LvArray::math::max(pres, 0.95e5);
 
   // 1. Convert input mass fractions to mole fractions and keep derivatives
 

@@ -187,77 +187,73 @@ KValueFlashModelUpdate< NUM_PHASE >::compute( ComponentProperties::KernelWrapper
     real64 vapourFraction = RachfordRice::solve( kValues[0].toSliceConst(), compFraction, m_presentComponents.toSliceConst() );
 
     // Test for single phase
+    phaseFraction.value[m_vapourIndex] = vapourFraction;
+
+    // Calculate derivatives implicitly from the Rachford-Rice equation
+    real64 denominator = 0.0;
+    real64 pressureNumerator = 0.0;
+    real64 temperatureNumerator = 0.0;
+    for( integer ic = 0; ic < m_numComponents; ++ic )
+    {
+      real64 const k = kValues( 0, ic ) - 1.0;
+      real64 const r = 1.0 / ( 1.0 + vapourFraction*k );
+      pressureNumerator += compFraction[ic] * dK( Deriv::dP, 0, ic ) * r * r;
+      temperatureNumerator += compFraction[ic] * dK( Deriv::dT, 0, ic ) * r * r;
+      denominator += compFraction[ic] * k * k * r * r;
+      phaseFraction.derivs( m_vapourIndex, Deriv::dC + ic ) = k * r;
+    }
+    GEOS_ERROR_IF( denominator < MultiFluidConstants::epsilon,
+                   "Failed to calculate derivatives for the Rachford-Rice equation." );
+    real64 const invDenominator = 1.0 / denominator;
+    phaseFraction.derivs( m_vapourIndex, Deriv::dP ) = pressureNumerator * invDenominator;
+    phaseFraction.derivs( m_vapourIndex, Deriv::dT ) = temperatureNumerator * invDenominator;
+    for( integer ic = 0; ic < m_numComponents; ++ic )
+    {
+      phaseFraction.derivs( m_vapourIndex, Deriv::dC + ic ) *= invDenominator;
+    }
+
+    // Calculate phase compositions
+    for( integer ic = 0; ic < m_numComponents; ++ic )
+    {
+      real64 const k = kValues( 0, ic ) - 1.0;
+      real64 const r = 1.0 / ( 1.0 + vapourFraction*k );
+      real64 const xi = compFraction[ic] * r;
+      real64 const yi = xi * kValues( 0, ic );
+      phaseCompFraction.value( m_liquidIndex, ic ) = xi;
+      phaseCompFraction.value( m_vapourIndex, ic ) = yi;
+
+      for( integer const idof : {Deriv::dP, Deriv::dT} )
+      {
+        real64 const dV = phaseFraction.derivs( m_vapourIndex, idof );
+        real64 const dKi = dK( idof, 0, ic );
+        real64 const dxi = r*(-vapourFraction*xi*dKi + (xi-yi)*dV);
+        phaseCompFraction.derivs( m_liquidIndex, ic, idof ) = dxi;
+        phaseCompFraction.derivs( m_vapourIndex, ic, idof ) = xi*dKi + dxi*kValues( 0, ic );
+      }
+      for( integer jc = 0; jc < m_numComponents; ++jc )
+      {
+        integer const idof = Deriv::dC + jc;
+
+        real64 const dV = phaseFraction.derivs( m_vapourIndex, idof );
+        real64 const dz = (jc == ic) ? 1.0 : 0.0;
+        real64 const dxi = r*(dz + (xi-yi)*dV);
+        phaseCompFraction.derivs( m_liquidIndex, ic, idof ) = dxi;
+        phaseCompFraction.derivs( m_vapourIndex, ic, idof ) = dxi*kValues( 0, ic );
+      }
+    }
+
     if( vapourFraction < MultiFluidConstants::epsilon || 1.0-vapourFraction < MultiFluidConstants::epsilon )
     {
       vapourFraction = LvArray::math::min( LvArray::math::max( vapourFraction, 0.0 ), 1.0 );
       phaseFraction.value[m_vapourIndex] = vapourFraction;
-
       LvArray::forValuesInSlice( phaseFraction.derivs[m_vapourIndex], setZero );
-      LvArray::forValuesInSlice( phaseCompFraction.derivs[m_liquidIndex], setZero );
-      LvArray::forValuesInSlice( phaseCompFraction.derivs[m_vapourIndex], setZero );
+      
+      integer const singlePhaseIndex = vapourFraction < MultiFluidConstants::epsilon ? m_liquidIndex : m_vapourIndex;
+      LvArray::forValuesInSlice( phaseCompFraction.derivs[singlePhaseIndex], setZero );
       for( integer ic = 0; ic < m_numComponents; ++ic )
       {
-        phaseCompFraction.value( m_vapourIndex, ic ) = compFraction[ic];
-        phaseCompFraction.value( m_liquidIndex, ic ) = compFraction[ic];
-        phaseCompFraction.derivs( m_vapourIndex, ic, Deriv::dC + ic ) = 1.0;
-        phaseCompFraction.derivs( m_liquidIndex, ic, Deriv::dC + ic ) = 1.0;
-      }
-    }
-    else
-    {
-      phaseFraction.value[m_vapourIndex] = vapourFraction;
-
-      // Calculate derivatives implicitly from the Rachford-Rice equation
-      real64 denominator = 0.0;
-      real64 pressureNumerator = 0.0;
-      real64 temperatureNumerator = 0.0;
-      for( integer ic = 0; ic < m_numComponents; ++ic )
-      {
-        real64 const k = kValues( 0, ic ) - 1.0;
-        real64 const r = 1.0 / ( 1.0 + vapourFraction*k );
-        pressureNumerator += compFraction[ic] * dK( Deriv::dP, 0, ic ) * r * r;
-        temperatureNumerator += compFraction[ic] * dK( Deriv::dT, 0, ic ) * r * r;
-        denominator += compFraction[ic] * k * k * r * r;
-        phaseFraction.derivs( m_vapourIndex, Deriv::dC + ic ) = k * r;
-      }
-      GEOS_ERROR_IF( denominator < MultiFluidConstants::epsilon,
-                     "Failed to calculate derivatives for the Rachford-Rice equation." );
-      real64 const invDenominator = 1.0 / denominator;
-      phaseFraction.derivs( m_vapourIndex, Deriv::dP ) = pressureNumerator * invDenominator;
-      phaseFraction.derivs( m_vapourIndex, Deriv::dT ) = temperatureNumerator * invDenominator;
-      for( integer ic = 0; ic < m_numComponents; ++ic )
-      {
-        phaseFraction.derivs( m_vapourIndex, Deriv::dC + ic ) *= invDenominator;
-      }
-
-      // Calculate phase compositions
-      for( integer ic = 0; ic < m_numComponents; ++ic )
-      {
-        real64 const k = kValues( 0, ic ) - 1.0;
-        real64 const r = 1.0 / ( 1.0 + vapourFraction*k );
-        real64 const xi = compFraction[ic] * r;
-        real64 const yi = xi * kValues( 0, ic );
-        phaseCompFraction.value( m_liquidIndex, ic ) = xi;
-        phaseCompFraction.value( m_vapourIndex, ic ) = yi;
-
-        for( integer const idof : {Deriv::dP, Deriv::dT} )
-        {
-          real64 const dV = phaseFraction.derivs( m_vapourIndex, idof );
-          real64 const dKi = dK( idof, 0, ic );
-          real64 const dxi = r*(-vapourFraction*xi*dKi + (xi-yi)*dV);
-          phaseCompFraction.derivs( m_liquidIndex, ic, idof ) = dxi;
-          phaseCompFraction.derivs( m_vapourIndex, ic, idof ) = xi*dKi + dxi*kValues( 0, ic );
-        }
-        for( integer jc = 0; jc < m_numComponents; ++jc )
-        {
-          integer const idof = Deriv::dC + jc;
-
-          real64 const dV = phaseFraction.derivs( m_vapourIndex, idof );
-          real64 const dz = (jc == ic) ? 1.0 : 0.0;
-          real64 const dxi = r*(dz + (xi-yi)*dV);
-          phaseCompFraction.derivs( m_liquidIndex, ic, idof ) = dxi;
-          phaseCompFraction.derivs( m_vapourIndex, ic, idof ) = dxi*kValues( 0, ic );
-        }
+        phaseCompFraction.value( singlePhaseIndex, ic ) = compFraction[ic];
+        phaseCompFraction.derivs( singlePhaseIndex, ic, Deriv::dC + ic ) = 1.0;
       }
     }
 
