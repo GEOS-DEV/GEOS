@@ -23,6 +23,7 @@
 
 #include "Box.hpp"
 #include "LvArray/src/genericTensorOps.hpp"
+#include "mesh/DomainPartition.hpp"
 
 namespace geos
 {
@@ -55,11 +56,6 @@ Box::Box( const string & name, Group * const parent ):
   registerWrapper( viewKeyStruct::sinStrikeString(), &m_sinStrike );
 }
 
-Box::~Box()
-{}
-
-
-
 void Box::postInputInitialization()
 {
   LvArray::tensorOps::copy< 3 >( m_boxCenter, m_min );
@@ -86,6 +82,14 @@ void Box::postInputInitialization()
     m_cosStrike = std::cos( m_strikeAngle / 180 *M_PI );
     m_sinStrike = std::sin( m_strikeAngle / 180 *M_PI );
   }
+
+  // determine m_eps
+  DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
+  domain.forMeshBodies( [&]( MeshBody const & meshBody )
+  {
+    m_eps = std::min( m_eps, 5 * std::numeric_limits<real64>::epsilon() * meshBody.getGlobalLengthScale() );
+  });
+
 }
 
 bool Box::isCoordInObject( real64 const ( &coord ) [3] ) const
@@ -103,7 +107,7 @@ bool Box::isCoordInObject( real64 const ( &coord ) [3] ) const
   }
   for( int i = 0; i < 3; ++i )
   {
-    if( coord0[i] < m_min[i] || coord0[i] > m_max[i] )
+    if( coord0[i] < m_min[i] - m_eps || coord0[i] > m_max[i] + m_eps )
     {
       return false;
     }
