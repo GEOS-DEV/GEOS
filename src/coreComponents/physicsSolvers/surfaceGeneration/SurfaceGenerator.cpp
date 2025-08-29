@@ -465,12 +465,14 @@ real64 SurfaceGenerator::solverStep( real64 const & time_n,
                                                                 string_array const & )
   {
     SpatialPartition & partition = dynamicCast< SpatialPartition & >( domain.getReference< PartitionBase >( dataRepository::keys::partitionManager ) );
+    int const tileColor=partition.getColor();
+    int const numTileColors=partition.numColor();
 
     rval = separationDriver( domain,
                              meshLevel,
                              domain.getNeighbors(),
-                             partition.getColor(),
-                             partition.numColor(),
+                             tileColor,
+                             numTileColors,
                              0,
                              time_n + dt );
 
