@@ -751,8 +751,8 @@ TEST( testTable, table2DMismatchingCoordValues )
                "|  Temperature = 7  |            12  |            13  |            14  |            15  |\n"
                "|---------------------------------------------------------------------------------------|\n"
                "|  Warning: Too much data for the number of columns & rows:                             |\n"
-               "|    - Expected Data may be missaligned values (16 columns x 4 rows),                   |\n"
-               "|    - Found 4 values                                                                   |\n"
+               "|    - Expected 16 values (4 columns x 4 rows),                                         |\n"
+               "|    - Found 25 values. Data may be misaligned                                          |\n"
                "-----------------------------------------------------------------------------------------\n" );
 
     EXPECT_EQ( csvFormatted,
