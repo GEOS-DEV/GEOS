@@ -42,7 +42,7 @@ typedef int MPI_Datatype;
 #define MPI_CHAR           ((MPI_Datatype)0x4c000101)
 #define MPI_SIGNED_CHAR    ((MPI_Datatype)0x4c000118)
 #define MPI_UNSIGNED_CHAR  ((MPI_Datatype)0x4c000102)
-#define MPI_BYTE ((MPI_Datatype)0x4c00010d)
+#define MPI_BYTE           ((MPI_Datatype)0x4c00010d)
 #define MPI_C_BOOL         ((MPI_Datatype)0x4c00013f)
 #define MPI_WCHAR          ((MPI_Datatype)0x4c00040e)
 #define MPI_SHORT          ((MPI_Datatype)0x4c000203)

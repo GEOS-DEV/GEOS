@@ -486,7 +486,6 @@ void TwoPointFluxApproximation::addFractureMatrixConnectionsDFM( MeshLevel & mes
           localIndex const esr = elemSubRegionList[kfe][ke];
           localIndex const ei  = elemList[kfe][ke];
 
-
           // remove cell-to-cell connections from cell stencil and add in new connections
           if( !regionIndices.contains( er ) )
           {
