@@ -140,7 +140,7 @@ void TwoPointFluxApproximation::computeCellStencil( MeshLevel & mesh ) const
 
   forAll< serialPolicy >( faceManager.size(), [=, &stencil]( localIndex const kf )
   {
-    // Filter out boundary faces 
+    // Filter out faces that are not surrounded by matrix cells on this rank
     // This means that if either element associated with a face is not present, it is excluded from the stencil.
     // Similarly if an element is not present in the faceElement, it is excluded from the faceToMatrix stencil.
     if( elemList[kf][0] < 0 || elemList[kf][1] < 0 || isZero( transMultiplier[kf] ) )

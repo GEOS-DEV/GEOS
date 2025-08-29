@@ -369,7 +369,6 @@ localIndex Unpack( buffer_unit_type const * & buffer,
             localIndex & elemRegionIndex = var.m_toElementRegion[index][c];
             localIndex & elemSubRegionIndex = var.m_toElementSubRegion[index][c];
             localIndex & elemIndex = var.m_toElementIndex[index][c];
-            //globalIndex & globalElemIndex = localToGlobalMap[elemIndex];
             
             // if the received "b" indices match the existing "c" indices, 
             // do nothing and break out of "c" loop
@@ -394,9 +393,6 @@ localIndex Unpack( buffer_unit_type const * & buffer,
         }
       }
     } // "b" loop
-
-//        mapEntryProcessed = true;
-//      GEOS_ERROR_IF( !mapEntryProcessed, "Unpacked entry was not used." );
   } // "a" loop
 
   return sizeOfUnpackedChars;
