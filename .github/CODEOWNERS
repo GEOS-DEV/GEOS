@@ -28,6 +28,7 @@
 /inputFiles/poromechanicsFractures                                @paveltomin @CusiniM @castelletto1 @jhuang2601 @Guotong-Ren @matteofrigo5
 /inputFiles/proppant                                  @rrsettgast @paveltomin           @jhuang2601 
 /inputFiles/relpermDriver                             @dkachuma   @paveltomin           @jafranc
+/inputFiles/relpermDriver                                                     @paveltomin            @dkachuma @jafranc
 /inputFiles/simplePDE                                 @rrsettgast @paveltomin           @castelletto1 
 /inputFiles/singlePhaseFlow                                       @paveltomin @CusiniM @castelletto1 @jhuang2601 @rasimHZ @dkachuma
 /inputFiles/singlePhaseFlowFractures                              @paveltomin @CusiniM @castelletto1 @jhuang2601 @rasimHZ @dkachuma
