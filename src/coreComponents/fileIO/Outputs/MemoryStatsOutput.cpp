@@ -28,20 +28,6 @@ namespace geos
 
 using namespace dataRepository;
 
-namespace logInfo
-{
-struct MemoryStatsOutputTimer : public OutputTimerBase
-{
-  std::string_view getDescription() const override { return "MemoryStats output timing"; }
-};
-}
-
-logInfo::OutputTimerBase const & MemoryStatsOutput::getTimerCategory() const
-{
-  static logInfo::MemoryStatsOutputTimer timer;
-  return timer;
-}
-
 MemoryStatsOutput::MemoryStatsOutput( string const & name,
                                       Group * const parent ):
   OutputBase( name, parent ),

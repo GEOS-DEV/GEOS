@@ -40,19 +40,7 @@ namespace logInfo
 struct ImportFields
 {
   static constexpr int getMinLogLevel() { return 1; }
-  static constexpr std::string_view getDescription() { return "Information on imported fields"; }
-};
-
-struct MeshState
-{
-  static constexpr int getMinLogLevel() { return 2; }
-  static constexpr std::string_view getDescription() { return "Well phase volume fraction change information"; }
-};
-
-struct Statistics
-{
-  static constexpr int getMinLogLevel() { return 2; }
-  static constexpr std::string_view getDescription() { return "well statistics information"; }
+  static constexpr std::string_view getDescription() { return "Information on fields import"; }
 };
 
 struct PartitionCommunication
@@ -64,7 +52,7 @@ struct PartitionCommunication
 struct VTKSteps
 {
   static constexpr int getMinLogLevel() { return 2; }
-  static constexpr std::string_view getDescription() { return "Display VTK mesh generator steps"; }
+  static constexpr std::string_view getDescription() { return "VTK mesh generator steps"; }
 };
 
 

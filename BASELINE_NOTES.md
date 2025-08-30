@@ -6,9 +6,22 @@ This file is designed to track changes to the integrated test baselines.
 Any developer who updates the baseline ID in the .integrated_tests.yaml file is expected to create an entry in this file with the pull request number, date, and their justification for rebaselining.
 These notes should be in reverse-chronological order, and use the following time format: (YYYY-MM-DD).
 
+PR #3627 (2025-08-29) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3672-13218-b729958.tar.gz>
+=====================
+Some fields were not being syncronized as part of the parallel topology change. This PR syncs them and produces a new baseline as a result.
+
+
+PR #3755 (2025-08-25) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3755-13107-9203370.tar.gz>
+=====================
+LogInfo cleanup.
+
+PR #3783 (2025-08-25) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3783-13079-916d2a0.tar.gz>
+=====================
+Update bug in single phase flash handling.
+
 PR #3224 (2025-08-22) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3224-13023-0334b63.tar.gz>
 =====================
-Add Taper boundary conditions inside second-order wave solvers
+Add Taper boundary conditions inside second-order wave solvers.
 
 PR #3781 (2025-08-20) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3781-12988-f27ea4b.tar.gz>
 =====================

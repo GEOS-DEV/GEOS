@@ -48,7 +48,10 @@ set( wavePropagationSolvers_headers
      sem/acoustoelastic/secondOrderEqn/isotropic/AcoustoElasticFields.hpp
      sem/acoustoelastic/secondOrderEqn/isotropic/AcoustoElasticTimeSchemeSEMKernel.hpp
      sem/acoustoelastic/secondOrderEqn/isotropic/AcousticElasticWaveEquationSEM.hpp
-     sem/acoustoelastic/secondOrderEqn/isotropic/AcousticElasticWaveEquationSEMKernel.hpp )
+     sem/acoustoelastic/secondOrderEqn/isotropic/AcousticElasticWaveEquationSEMKernel.hpp
+     dg/acoustic/shared/AcousticFieldsDG.hpp
+     dg/acoustic/secondOrderEqn/isotropic/AcousticWaveEquationDG.hpp 
+     dg/acoustic/secondOrderEqn/isotropic/AcousticWaveEquationDGKernel.hpp)
 
 # Specify solver sources
 set( wavePropagationSolvers_sources
@@ -58,7 +61,8 @@ set( wavePropagationSolvers_sources
      sem/elastic/firstOrderEqn/isotropic/ElasticFirstOrderWaveEquationSEM.cpp
      sem/acoustic/firstOrderEqn/isotropic/AcousticFirstOrderWaveEquationSEM.cpp
      sem/acoustic/secondOrderEqn/anisotropic/AcousticVTIWaveEquationSEM.cpp
-     sem/acoustoelastic/secondOrderEqn/isotropic/AcousticElasticWaveEquationSEM.cpp )
+     sem/acoustoelastic/secondOrderEqn/isotropic/AcousticElasticWaveEquationSEM.cpp
+     dg/acoustic/secondOrderEqn/isotropic/AcousticWaveEquationDG.cpp )
 
 set( dependencyList ${parallelDeps} physicsSolversBase )
 
