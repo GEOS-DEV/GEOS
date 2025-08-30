@@ -555,7 +555,7 @@ void StrainHardeningPolymerUpdates::smallStrainUpdateHelper( localIndex const k,
     real64 strainHardeningSlope = m_strainHardeningSlope * StrainHardeningPolymerUpdates::thermalSoftening(m_temperature[k], m_strainHardeningSlopeT0, m_strainHardeningSlopeA, m_strainHardeningSlopeB ); 
     real64 shearSofteningMagnitude = m_shearSofteningMagnitude * StrainHardeningPolymerUpdates::thermalSoftening(m_temperature[k], m_shearSofteningMagnitudeT0, m_shearSofteningMagnitudeA, m_shearSofteningMagnitudeB );     
     
-      std::cout<<"termperature "<<m_temperature[k]<<"      bulkModulus "<<m_bulkModulus[k]    <<  "      shearModulus "<<m_shearModulus[k] <<".     yieldy0 "<<yield0   <<".       strainHardeningSlope "<<strainHardeningSlope  <<"         shearSofteningMagnitude "<<shearSofteningMagnitude <<"              maximumStretch: "<< maximumStretch <<std::endl;
+      std::cout<<"temperature "<<m_temperature[k]<<"      bulkModulus "<<m_bulkModulus[k]    <<  "      shearModulus "<<m_shearModulus[k] <<".     yieldy0 "<<yield0   <<".       strainHardeningSlope "<<strainHardeningSlope  <<"         shearSofteningMagnitude "<<shearSofteningMagnitude <<"              maximumStretch: "<< maximumStretch <<std::endl;
 
 
     real64 unrotatedTempPlasticStrain[6] = { 0 };

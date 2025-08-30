@@ -1017,6 +1017,7 @@ void GraphiteUpdates::computeTransverselyIsotropicTrialStress(const real64 timeI
   alphaVoigt[5] = alphaDense[0][1]; 
 
   std::cout<<"temperature rate:   " << m_temperatureRate << std::endl;
+
   for(int i=0; i<3; i++)
 	{
 		for(int j=0; j<3; j++)

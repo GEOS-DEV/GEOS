@@ -1397,7 +1397,7 @@ void SolidMechanicsMPM::registerDataOnMesh( Group & meshBodies )
         subRegion.registerField< particleHeatCapacity >( getName() );
         subRegion.registerField< particleReferencePorosity >( getName() );
         subRegion.registerField< particleReferenceTemperature >( getName() );
-        //subRegion.registerField< particleReferenceTemperatureRate >( getName() );
+        subRegion.registerField< particleReferenceTemperatureRate >( getName() );
         subRegion.registerField< particleInternalEnergy >( getName() );
         subRegion.registerField< particleKineticEnergy >( getName() );
         subRegion.registerField< particleArtificialViscosity >( getName() );

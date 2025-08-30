@@ -197,6 +197,9 @@ void ParticleMeshGenerator::fillParticleBlockManager( ParticleBlockManager & par
         case ParticleColumnHeaders::Temperature:
           defaultValue = 300.0;
           break;
+        case ParticleColumnHeaders::TemperatureRate:
+          defaultValue = 0.0;
+          break;
         case ParticleColumnHeaders::ParticleType:
           defaultValue = 2.0;
           break;
@@ -265,6 +268,7 @@ void ParticleMeshGenerator::fillParticleBlockManager( ParticleBlockManager & par
     array1d< real64 > particleDamage( npInBlock );
     array1d< real64 > particlePorosity( npInBlock );
     array1d< real64 > particleTemperature( npInBlock );
+    array1d< real64 > particleTemperatureRate( npInBlock );
     array1d< real64 > particleVolume( npInBlock );
     array1d< real64 > particleStrengthScale( npInBlock );
     array3d< real64 > particleRVectors( npInBlock, 3, 3 ); // TODO: Flatten the r-vector array into a 1x9 for each particle
@@ -304,6 +308,9 @@ void ParticleMeshGenerator::fillParticleBlockManager( ParticleBlockManager & par
 
       // Temperature
       particleTemperature[i] = particleData[b][i][static_cast< int >( ParticleColumnHeaders::Temperature )];
+      
+      // Temperature Rate
+      particleTemperatureRate[i] = particleData[b][i][static_cast< int >( ParticleColumnHeaders::TemperatureRate )];
 
       // strengthScale
       particleStrengthScale[i] = particleData[b][i][static_cast< int >( ParticleColumnHeaders::StrengthScale )];
@@ -400,6 +407,7 @@ void ParticleMeshGenerator::fillParticleBlockManager( ParticleBlockManager & par
     particleBlock.setParticleDamage( particleDamage );
     particleBlock.setParticlePorosity( particlePorosity );
     particleBlock.setParticleTemperature( particleTemperature );
+    particleBlock.setParticleTemperatureRate( particleTemperatureRate );
     particleBlock.setParticleStrengthScale( particleStrengthScale );
     particleBlock.setParticleVolume( particleVolume );
     particleBlock.setParticleRVectors( particleRVectors );
