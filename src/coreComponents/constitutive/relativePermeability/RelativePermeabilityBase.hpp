@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
  * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
@@ -155,7 +155,7 @@ public:
 
   integer numFluidPhases() const { return LvArray::integerConversion< integer >( m_phaseNames.size() ); }
 
-  arrayView1d< string const > phaseNames() const { return m_phaseNames; }
+  string_array const & phaseNames() const { return m_phaseNames; }
 
   arrayView3d< real64 const, constitutive::relperm::USD_RELPERM > phaseTrappedVolFraction() const { return m_phaseTrappedVolFrac; }
 

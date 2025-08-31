@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
  * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
@@ -857,8 +857,8 @@ public:
    */
   template< typename FIELD_TRAIT >
   ElementViewAccessor< traits::ViewTypeConst< typename FIELD_TRAIT::type > >
-  constructMaterialFieldAccessor( arrayView1d< string const > const & regionNames,
-                                  arrayView1d< string const > const & materialNames,
+  constructMaterialFieldAccessor( string_array const & regionNames,
+                                  string_array const & materialNames,
                                   bool const allowMissingViews = false ) const;
 
   /**
@@ -889,7 +889,7 @@ public:
   template< typename VIEWTYPE, typename LHS=VIEWTYPE >
   ElementViewAccessor< LHS >
   constructMaterialViewAccessor( string const & viewName,
-                                 arrayView1d< string const > const & regionNames,
+                                 string_array const & regionNames,
                                  string const & materialKeyName,
                                  bool const allowMissingViews = false ) const;
 
@@ -907,7 +907,7 @@ public:
   template< typename VIEWTYPE, typename LHS=VIEWTYPE >
   ElementViewAccessor< LHS >
   constructMaterialViewAccessor( string const & viewName,
-                                 arrayView1d< string const > const & regionNames,
+                                 string_array const & regionNames,
                                  string const & materialKeyName,
                                  bool const allowMissingViews = false );
 
@@ -925,7 +925,7 @@ public:
   template< typename T, int NDIM, typename PERM = defaultLayout< NDIM > >
   ElementViewAccessor< ArrayView< T const, NDIM, getUSD< PERM > > >
   constructMaterialArrayViewAccessor( string const & viewName,
-                                      arrayView1d< string const > const & regionNames,
+                                      string_array const & regionNames,
                                       string const & materialKeyName,
                                       bool const allowMissingViews = false ) const;
 
@@ -1090,6 +1090,34 @@ public:
                         ElementReferenceAccessor< localIndex_array > & packList,
                         bool const overwriteMap );
 
+
+  /**
+   * @brief Get the buffer size needed to pack element-to-node and element-to-face maps.
+   * @param packList list of indices to pack
+   * @return the size of data packed.
+   */
+  int packFaceElementToFaceSize( ElementViewAccessor< arrayView1d< localIndex > > const & packList ) const;
+
+  /**
+   * @brief Pack element-to-node and element-to-face maps.
+   * @param buffer pointer to the buffer to be packed
+   * @param packList list of indices to pack
+   * @return the size of data packed.
+   */
+  int packFaceElementToFace( buffer_unit_type * & buffer,
+                             ElementViewAccessor< arrayView1d< localIndex > > const & packList ) const;
+
+  /**
+   * @brief Unpack element-to-node and element-to-face maps.
+   * @param buffer pointer to the buffer to be unpacked
+   * @param packList list of indices to pack
+   * @param overwriteMap flag to indicate whether to overwrite the local map
+   * @return the size of data packed.
+   */
+  int unpackFaceElementToFace( buffer_unit_type const * & buffer,
+                               ElementReferenceAccessor< localIndex_array > & packList,
+                               bool const overwriteMap );
+
   /**
    * @brief Get the buffer size needed to pack the set of fractured elements and the map toEmbSurfaces.
    * @param packList list of indices to pack
@@ -1120,6 +1148,12 @@ public:
   int unpackFracturedElements( buffer_unit_type const * & buffer,
                                ElementReferenceAccessor< localIndex_array > & packList,
                                string const fractureRegionName );
+
+  /**
+   * @brief Function to output connectivity in order to assist debugging issues
+   *        with object connectivity.
+   */
+  virtual void outputObjectConnectivity() const override final;
 
 
 private:
@@ -1154,6 +1188,12 @@ private:
   int
   packUpDownMapsImpl( buffer_unit_type * & buffer,
                       T const & packList ) const;
+
+  template< bool DO_PACKING, typename T >
+  int
+  packFaceElementToFaceImpl( buffer_unit_type * & buffer,
+                             T const & packList ) const;
+
   /**
    * @brief Unpack element-to-node and element-to-face maps.
    * @param buffer pointer to the buffer to be unpacked
@@ -1409,7 +1449,7 @@ ElementRegionManager::
 template< typename VIEWTYPE, typename LHS >
 ElementRegionManager::ElementViewAccessor< LHS >
 ElementRegionManager::constructMaterialViewAccessor( string const & viewName,
-                                                     arrayView1d< string const > const & regionNames,
+                                                     string_array const & regionNames,
                                                      string const & materialKeyName,
                                                      bool const allowMissingViews ) const
 {
@@ -1425,7 +1465,7 @@ ElementRegionManager::constructMaterialViewAccessor( string const & viewName,
   subGroupMap const & regionMap = getRegions();
 
   // Loop only over regions named and populate according to given material names
-  for( localIndex k = 0; k < regionNames.size(); ++k )
+  for( size_t k = 0; k < regionNames.size(); ++k )
   {
     localIndex const er = regionMap.getIndex( regionNames[k] );
     if( er >=0 )
@@ -1460,7 +1500,7 @@ ElementRegionManager::constructMaterialViewAccessor( string const & viewName,
 template< typename VIEWTYPE, typename LHS >
 ElementRegionManager::ElementViewAccessor< LHS >
 ElementRegionManager::constructMaterialViewAccessor( string const & viewName,
-                                                     arrayView1d< string const > const & regionNames,
+                                                     string_array const & regionNames,
                                                      string const & materialKeyName,
                                                      bool const allowMissingViews )
 {
@@ -1476,7 +1516,7 @@ ElementRegionManager::constructMaterialViewAccessor( string const & viewName,
   subGroupMap const & regionMap = getRegions();
 
   // Loop only over regions named and populate according to given material names
-  for( localIndex k = 0; k < regionNames.size(); ++k )
+  for( size_t k = 0; k < regionNames.size(); ++k )
   {
     localIndex const er = regionMap.getIndex( regionNames[k] );
     if( er >=0 )
@@ -1507,8 +1547,8 @@ ElementRegionManager::constructMaterialViewAccessor( string const & viewName,
 
 template< typename FIELD_TRAIT >
 ElementRegionManager::ElementViewAccessor< traits::ViewTypeConst< typename FIELD_TRAIT::type > >
-ElementRegionManager::constructMaterialFieldAccessor( arrayView1d< string const > const & regionNames,
-                                                      arrayView1d< string const > const & materialNames,
+ElementRegionManager::constructMaterialFieldAccessor( string_array const & regionNames,
+                                                      string_array const & materialNames,
                                                       bool const allowMissingViews ) const
 {
   return constructMaterialViewAccessor< typename FIELD_TRAIT::type,
@@ -1532,7 +1572,7 @@ template< typename T, int NDIM, typename PERM >
 ElementRegionManager::ElementViewAccessor< ArrayView< T const, NDIM, getUSD< PERM > > >
 ElementRegionManager::
   constructMaterialArrayViewAccessor( string const & viewName,
-                                      arrayView1d< string const > const & regionNames,
+                                      string_array const & regionNames,
                                       string const & materialKeyName,
                                       bool const allowMissingViews ) const
 {

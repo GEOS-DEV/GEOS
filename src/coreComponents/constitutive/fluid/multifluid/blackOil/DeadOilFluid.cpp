@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
  * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
@@ -95,7 +95,7 @@ void DeadOilFluid::readInputDataFromTableFunctions()
     errorIfPositiveValue( m_waterParams.compressibility, viewKeyStruct::waterCompressibilityString() );
   }
 
-  integer const numExpectedTables = (ipGas >= 0) ? 2 : 1;
+  size_t const numExpectedTables = (ipGas >= 0) ? 2 : 1;
   GEOS_THROW_IF_NE_MSG( m_formationVolFactorTableNames.size(), numExpectedTables,
                         GEOS_FMT( "{}: one formation volume factor table must be provided for each hydrocarbon phase", getFullName() ),
                         InputError );

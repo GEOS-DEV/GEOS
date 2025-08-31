@@ -670,7 +670,7 @@ if(DEFINED HYPRE_DIR AND ENABLE_HYPRE)
         find_package( rocsolver REQUIRED )
         find_package( rocsparse REQUIRED )
         find_package( rocrand REQUIRED )
-        append( APPEND HYPRE_DEPENDS roc::rocblas roc::rocsparse roc::rocsolver roc::rocrand )
+        list( APPEND HYPRE_DEPENDS roc::rocblas roc::rocsparse roc::rocsolver roc::rocrand )
     endif( )
 
     find_and_import( NAME hypre
@@ -726,7 +726,13 @@ endif()
 if(DEFINED TRILINOS_DIR AND ENABLE_TRILINOS)
     message(STATUS "TRILINOS_DIR = ${TRILINOS_DIR}")
 
-    include(${TRILINOS_DIR}/lib64/cmake/Trilinos/TrilinosConfig.cmake)
+    if(EXISTS "${TRILINOS_DIR}/lib64/cmake/Trilinos/TrilinosConfig.cmake")
+      include(${TRILINOS_DIR}/lib64/cmake/Trilinos/TrilinosConfig.cmake)
+    endif()
+
+    if(EXISTS "${TRILINOS_DIR}/lib/cmake/Trilinos/TrilinosConfig.cmake")
+      include(${TRILINOS_DIR}/lib/cmake/Trilinos/TrilinosConfig.cmake)
+    endif()
 
     list(REMOVE_ITEM Trilinos_LIBRARIES "gtest")
     list(REMOVE_DUPLICATES Trilinos_LIBRARIES)

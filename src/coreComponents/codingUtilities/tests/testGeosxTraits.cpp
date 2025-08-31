@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
  * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
@@ -78,7 +78,6 @@ TEST( testGeosxTraits, HasAlias_value_type )
 {
   static_assert( HasAlias_value_type< array1d< double > >, "Should be true." );
   static_assert( HasAlias_value_type< array5d< array1d< R1Tensor > > >, "Should be true." );
-  static_assert( HasAlias_value_type< SortedArray< string > >, "Should be true." );
   static_assert( HasAlias_value_type< std::vector< int > >, "Should be true." );
   static_assert( HasAlias_value_type< std::map< string, string > >, "Should be true." );
 
@@ -108,7 +107,6 @@ TEST( testGeosxTraits, HasMemberFunction_data )
   static_assert( HasMemberFunction_data< array1d< double > >, "Should be true." );
   static_assert( HasMemberFunction_data< array5d< array1d< R1Tensor > > >, "Should be true." );
   static_assert( HasMemberFunction_data< std::vector< int > >, "Should be true." );
-  static_assert( HasMemberFunction_data< SortedArray< string > >, "Should be true." );
 
   static_assert( !HasMemberFunction_data< std::map< string, string > >, "Should be false." );
   static_assert( !HasMemberFunction_data< int >, "Should be false." );
@@ -119,7 +117,6 @@ TEST( testGeosxTraits, HasMemberFunction_size )
 {
   static_assert( HasMemberFunction_size< array1d< double > >, "Should be true." );
   static_assert( HasMemberFunction_size< array5d< array1d< R1Tensor > > >, "Should be true." );
-  static_assert( HasMemberFunction_size< SortedArray< string > >, "Should be true." );
   static_assert( HasMemberFunction_size< std::vector< int > >, "Should be true." );
   static_assert( HasMemberFunction_size< std::map< string, string > >, "Should be true." );
 
@@ -135,7 +132,6 @@ TEST( testGeosxTraits, HasMemberFunction_resize )
   static_assert( HasMemberFunction_resize< ArrayOfArrays< int > >, "Should be true." );
   static_assert( HasMemberFunction_resize< ArrayOfSets< int > >, "Should be true." );
 
-  static_assert( !HasMemberFunction_resize< SortedArray< string > >, "Should be false." );
   static_assert( !HasMemberFunction_resize< std::map< string, string > >, "Should be false." );
   static_assert( !HasMemberFunction_resize< int >, "Should be false." );
   static_assert( !HasMemberFunction_resize< double >, "Should be false." );

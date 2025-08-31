@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
  * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
@@ -196,7 +196,7 @@ public:
    * @param[in] meshBodyName name of the meshBody
    * @return a list of the target regions on the meshBody
    */
-  array1d< string > & targetRegions( string const & meshBodyName ) { return m_targetRegions[meshBodyName]; }
+  string_array & targetRegions( string const & meshBodyName ) { return m_targetRegions[meshBodyName]; }
 
   /**
    * @brief set the name of the field.
@@ -285,13 +285,13 @@ protected:
 
 
   /// name of the primary solution field
-  array1d< string > m_fieldNames;
+  string_array m_fieldNames;
 
   /// name of the coefficient field
   string m_coeffName;
 
   /// names of target regions to build the stencil for
-  map< string, array1d< string > > m_targetRegions;
+  map< string, string_array > m_targetRegions;
 
   /// relative tolerance
   real64 m_areaRelTol;

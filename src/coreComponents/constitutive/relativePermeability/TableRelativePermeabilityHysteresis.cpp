@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
  * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
@@ -37,66 +37,56 @@ TableRelativePermeabilityHysteresis::TableRelativePermeabilityHysteresis( std::s
                                                                           Group * const parent )
   : RelativePermeabilityBase( name, parent )
 {
+
   // drainage table names
 
-  registerWrapper( viewKeyStruct::drainageWettingNonWettingRelPermTableNamesString(),
-                   &m_drainageWettingNonWettingRelPermTableNames ).
+  registerWrapper( viewKeyStruct::drainageWettingNonWettingRelPermTableNamesString(), &m_drainageWettingNonWettingRelPermTableNames ).
     setRTTypeName( rtTypes::CustomTypes::groupNameRefArray ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription(
-    "List of drainage relative permeability tables for the pair (wetting phase, non-wetting phase)\n"
-    "The expected format is \"{ wettingPhaseRelPermTableName, nonWettingPhaseRelPermTableName }\", in that order\n"
-    "Note that this input is only used for two-phase flow.\n"
-    "If you want to do a three-phase simulation, please use instead " +
-    string( viewKeyStruct::drainageWettingIntermediateRelPermTableNamesString() ) +
-    " and " +
-    string( viewKeyStruct::drainageNonWettingIntermediateRelPermTableNamesString() ) +
-    " to specify the table names" );
+    setDescription( "List of drainage relative permeability tables for the pair (wetting phase, non-wetting phase)\n"
+                    "The expected format is \"{ wettingPhaseRelPermTableName, nonWettingPhaseRelPermTableName }\", in that order\n"
+                    "Note that this input is only used for two-phase flow.\n"
+                    "If you want to do a three-phase simulation, please use instead " +
+                    string( viewKeyStruct::drainageWettingIntermediateRelPermTableNamesString() ) +
+                    " and " +
+                    string( viewKeyStruct::drainageNonWettingIntermediateRelPermTableNamesString() ) +
+                    " to specify the table names" );
 
-  registerWrapper( viewKeyStruct::drainageWettingIntermediateRelPermTableNamesString(),
-                   &m_drainageWettingIntermediateRelPermTableNames ).
+  registerWrapper( viewKeyStruct::drainageWettingIntermediateRelPermTableNamesString(), &m_drainageWettingIntermediateRelPermTableNames ).
     setRTTypeName( rtTypes::CustomTypes::groupNameRefArray ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription(
-    "List of drainage relative permeability tables for the pair (wetting phase, intermediate phase)\n"
-    "The expected format is \"{ wettingPhaseRelPermTableName, intermediatePhaseRelPermTableName }\", in that order\n"
-    "Note that this input is only used for three-phase flow.\n"
-    "If you want to do a two-phase simulation, please use instead " +
-    string( viewKeyStruct::drainageWettingNonWettingRelPermTableNamesString() ) +
-    " to specify the table names" );
+    setDescription( "List of drainage relative permeability tables for the pair (wetting phase, intermediate phase)\n"
+                    "The expected format is \"{ wettingPhaseRelPermTableName, intermediatePhaseRelPermTableName }\", in that order\n"
+                    "Note that this input is only used for three-phase flow.\n"
+                    "If you want to do a two-phase simulation, please use instead " +
+                    string( viewKeyStruct::drainageWettingNonWettingRelPermTableNamesString() ) +
+                    " to specify the table names" );
 
-  registerWrapper( viewKeyStruct::drainageNonWettingIntermediateRelPermTableNamesString(),
-                   &m_drainageNonWettingIntermediateRelPermTableNames ).
+  registerWrapper( viewKeyStruct::drainageNonWettingIntermediateRelPermTableNamesString(), &m_drainageNonWettingIntermediateRelPermTableNames ).
     setRTTypeName( rtTypes::CustomTypes::groupNameRefArray ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription(
-    "List of drainage relative permeability tables for the pair (non-wetting phase, intermediate phase)\n"
-    "The expected format is \"{ nonWettingPhaseRelPermTableName, intermediatePhaseRelPermTableName }\", in that order\n"
-    "Note that this input is only used for three-phase flow.\n"
-    "If you want to do a two-phase simulation, please use instead " +
-    string( viewKeyStruct::drainageWettingNonWettingRelPermTableNamesString() ) +
-    " to specify the table names" );
+    setDescription( "List of drainage relative permeability tables for the pair (non-wetting phase, intermediate phase)\n"
+                    "The expected format is \"{ nonWettingPhaseRelPermTableName, intermediatePhaseRelPermTableName }\", in that order\n"
+                    "Note that this input is only used for three-phase flow.\n"
+                    "If you want to do a two-phase simulation, please use instead " +
+                    string( viewKeyStruct::drainageWettingNonWettingRelPermTableNamesString() ) +
+                    " to specify the table names" );
 
   // imbibition table names
 
   registerWrapper( viewKeyStruct::imbibitionWettingRelPermTableNameString(), &m_imbibitionWettingRelPermTableName ).
     setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
-    setInputFlag(
-    InputFlags::OPTIONAL ).
-    setApplyDefaultValue(
-    "" ).
-    setDescription(
-    "Imbibition relative permeability table name for the wetting phase.\n"
-    "To neglect hysteresis on this phase, just use the same table name for the drainage and imbibition curves" );
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( "" ).
+    setDescription( "Imbibition relative permeability table name for the wetting phase.\n"
+                    "To neglect hysteresis on this phase, just use the same table name for the drainage and imbibition curves" );
 
-  registerWrapper( viewKeyStruct::imbibitionNonWettingRelPermTableNameString(),
-                   &m_imbibitionNonWettingRelPermTableName ).
+  registerWrapper( viewKeyStruct::imbibitionNonWettingRelPermTableNameString(), &m_imbibitionNonWettingRelPermTableName ).
     setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( "" ).
-    setDescription(
-    "Imbibition relative permeability table name for the non-wetting phase.\n"
-    "To neglect hysteresis on this phase, just use the same table name for the drainage and imbibition curves" );
+    setDescription( "Imbibition relative permeability table name for the non-wetting phase.\n"
+                    "To neglect hysteresis on this phase, just use the same table name for the drainage and imbibition curves" );
 
   // hysteresis input parameters
   registerWrapper( viewKeyStruct::phaseHasHysteresisString(), &m_phaseHasHysteresis ).
@@ -503,7 +493,7 @@ void TableRelativePermeabilityHysteresis::createAllTableKernelWrappers()
 
   if( numPhases == 2 )
   {
-    for( integer ip = 0; ip < m_drainageWettingNonWettingRelPermTableNames.size(); ++ip )
+    for( size_t ip = 0; ip < m_drainageWettingNonWettingRelPermTableNames.size(); ++ip )
     {
       TableFunction const & drainageRelPermTable = functionManager.getGroup< TableFunction >( m_drainageWettingNonWettingRelPermTableNames[ip] );
       m_drainageRelPermKernelWrappers.emplace_back( drainageRelPermTable.createKernelWrapper() );
@@ -522,12 +512,12 @@ void TableRelativePermeabilityHysteresis::createAllTableKernelWrappers()
   }
   else if( numPhases == 3 )
   {
-    for( integer ip = 0; ip < m_drainageWettingIntermediateRelPermTableNames.size(); ++ip )
+    for( size_t ip = 0; ip < m_drainageWettingIntermediateRelPermTableNames.size(); ++ip )
     {
       TableFunction const & drainageRelPermTable = functionManager.getGroup< TableFunction >( m_drainageWettingIntermediateRelPermTableNames[ip] );
       m_drainageRelPermKernelWrappers.emplace_back( drainageRelPermTable.createKernelWrapper() );
     }
-    for( integer ip = 0; ip < m_drainageNonWettingIntermediateRelPermTableNames.size(); ++ip )
+    for( size_t ip = 0; ip < m_drainageNonWettingIntermediateRelPermTableNames.size(); ++ip )
     {
       TableFunction const & drainageRelPermTable = functionManager.getGroup< TableFunction >( m_drainageNonWettingIntermediateRelPermTableNames[ip] );
       m_drainageRelPermKernelWrappers.emplace_back( drainageRelPermTable.createKernelWrapper() );
@@ -545,14 +535,6 @@ void TableRelativePermeabilityHysteresis::createAllTableKernelWrappers()
   }
 
 }
-//
-//void TableRelativePermeabilityHysteresis::createKilloughKernelWrapper()
-//{
-//
-//  m_KilloughKernel = m_KilloughModel.createKernelWrapper( m_landParam,
-//                                                          m_phaseTrappedVolFrac );
-//
-//}
 
 TableRelativePermeabilityHysteresis::KernelWrapper
 TableRelativePermeabilityHysteresis::createKernelWrapper()
@@ -560,8 +542,6 @@ TableRelativePermeabilityHysteresis::createKernelWrapper()
 
   // we want to make sure that the wrappers are always up-to-date, so we recreate them everytime
   createAllTableKernelWrappers();
-
-//  createKilloughKernelWrapper();
 
   // then we create the actual TableRelativePermeabilityHysteresis::KernelWrapper
   return KernelWrapper( m_drainageRelPermKernelWrappers,
@@ -656,6 +636,7 @@ TableRelativePermeabilityHysteresis::KernelWrapper::
   m_waterOilRelPermMaxValue( waterOilRelPermMaxValue ),
   m_threePhaseInterpolator( threePhaseInterpolator )
 {}
+
 
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, TableRelativePermeabilityHysteresis, std::string const &, Group * const )

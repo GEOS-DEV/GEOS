@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
  * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
@@ -169,10 +169,10 @@ MultiFluidCO2BrineTest< BRINE, FLASH, THERMAL >::makeCO2BrineFluid( string const
   Group & fluid = co2BrineFluid;
 
   auto & phaseNames = fluid.getReference< string_array >( MultiFluidBase::viewKeyStruct::phaseNamesString() );
-  fill< 2 >( phaseNames, {"gas", "liquid"} );
+  phaseNames = {"gas", "liquid"};
 
   auto & compNames = fluid.getReference< string_array >( MultiFluidBase::viewKeyStruct::componentNamesString() );
-  fill< 2 >( compNames, {"co2", "water"} );
+  compNames = {"co2", "water"};
 
   auto & molarWeight = fluid.getReference< array1d< real64 > >( MultiFluidBase::viewKeyStruct::componentMolarWeightString() );
   fill< 2 >( molarWeight, {44e-3, 18e-3} );

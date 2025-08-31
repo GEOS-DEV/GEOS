@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
  * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
@@ -67,17 +67,10 @@ WellSolverBase::WellSolverBase( string const & name,
 
 Group *WellSolverBase::createChild( string const & childKey, string const & childName )
 {
-  Group *rval = nullptr;
-
-  if( childKey == keys::wellControls )
-  {
-    rval = &registerGroup< WellControls >( childName );
-  }
-  else
-  {
-    PhysicsSolverBase::createChild( childKey, childName );
-  }
-  return rval;
+  const auto childTypes = { keys::wellControls };
+  GEOS_ERROR_IF( childKey != keys::wellControls,
+                 PhysicsSolverBase::CatalogInterface::unknownTypeError( childKey, getDataContext(), childTypes ) );
+  return &registerGroup< WellControls >( childName );
 }
 
 void WellSolverBase::expandObjectCatalogs()
@@ -115,7 +108,7 @@ void WellSolverBase::registerDataOnMesh( Group & meshBodies )
   // loop over the wells
   forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
                                                     MeshLevel & meshLevel,
-                                                    arrayView1d< string const > const & regionNames )
+                                                    string_array const & regionNames )
   {
 
     ElementRegionManager & elementRegionManager = meshLevel.getElemManager();
@@ -150,7 +143,7 @@ void WellSolverBase::initializePostSubGroups()
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
-                                                                arrayView1d< string const > const & regionNames )
+                                                                string_array const & regionNames )
   {
     ElementRegionManager & elemManager = mesh.getElemManager();
     elemManager.forElementSubRegions< WellElementSubRegion >( regionNames,
@@ -174,12 +167,12 @@ void WellSolverBase::setConstitutiveNamesCallSuper( ElementSubRegionBase & subRe
 void WellSolverBase::setupDofs( DomainPartition const & domain,
                                 DofManager & dofManager ) const
 {
-  map< std::pair< string, string >, array1d< string > > meshTargets;
+  map< std::pair< string, string >, string_array > meshTargets;
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const & meshBodyName,
                                                                MeshLevel const & meshLevel,
-                                                               arrayView1d< string const > const & regionNames )
+                                                               string_array const & regionNames )
   {
-    array1d< string > regions;
+    string_array regions;
     ElementRegionManager const & elementRegionManager = meshLevel.getElemManager();
     elementRegionManager.forElementRegions< WellElementRegion >( regionNames,
                                                                  [&]( localIndex const,
@@ -216,7 +209,7 @@ void WellSolverBase::updateState( DomainPartition & domain )
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel & mesh,
-                                                               arrayView1d< string const > const & regionNames )
+                                                               string_array const & regionNames )
   {
     mesh.getElemManager().forElementSubRegions< WellElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                           WellElementSubRegion & subRegion )
@@ -256,7 +249,7 @@ void WellSolverBase::initializePostInitialConditionsPreSubGroups()
   // make sure that nextWellElementIndex is up-to-date (will be used in well initialization and assembly)
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel & mesh,
-                                                               arrayView1d< string const > const & regionNames )
+                                                               string_array const & regionNames )
   {
     mesh.getElemManager().forElementSubRegions< WellElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                           WellElementSubRegion & subRegion )
@@ -272,7 +265,7 @@ void WellSolverBase::precomputeData( DomainPartition & domain )
   R1Tensor const gravVector = gravityVector();
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel & mesh,
-                                                               arrayView1d< string const > const & regionNames )
+                                                               string_array const & regionNames )
   {
     mesh.getElemManager().forElementSubRegions< WellElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                           WellElementSubRegion & subRegion )

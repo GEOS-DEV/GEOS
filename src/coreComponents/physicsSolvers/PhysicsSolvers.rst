@@ -13,7 +13,7 @@ physics solvers to be included in the simulation.
 
    solidMechanics/docs/SolidMechanics
 
-   contact/docs/ContactMechanics
+   solidMechanics/contact/docs/ContactMechanics
 
    fluidFlow/docs/SinglePhaseFlow
 

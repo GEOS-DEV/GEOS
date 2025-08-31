@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
  * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
@@ -81,7 +81,7 @@ bool SolidMechanicsStateReset::execute( real64 const time_n,
 {
   m_solidSolver->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                                MeshLevel & mesh,
-                                                                               arrayView1d< string const > const & regionNames )
+                                                                               string_array const & regionNames )
   {
     // Option 1: zero out velocity, incremental displacement, and displacement
     if( m_resetDisplacements )
@@ -98,6 +98,16 @@ bool SolidMechanicsStateReset::execute( real64 const time_n,
       }
       nodeManager.getField< solidMechanics::totalDisplacement >().zero();
       nodeManager.getField< solidMechanics::incrementalDisplacement >().zero();
+
+      ElementRegionManager & elemManager = mesh.getElemManager();
+      elemManager.forElementSubRegions< CellElementSubRegion >( regionNames,
+                                                                [&]( localIndex const,
+                                                                     ElementSubRegionBase & subRegion )
+      {
+        subRegion.getField< solidMechanics::strain >().zero();
+        subRegion.getField< solidMechanics::plasticStrain >().zero();
+      } );
+
     }
 
     // Option 2: enable / disable inelastic behavior
