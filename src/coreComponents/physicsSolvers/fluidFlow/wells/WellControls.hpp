@@ -357,7 +357,7 @@ public:
     static constexpr char const * injectionTemperatureString() { return "injectionTemperature"; }
     /// String key for checking the rates at surface conditions
     static constexpr char const * useSurfaceConditionsString() { return "useSurfaceConditions"; }
-    /// String key for checking the rates at surface conditions
+    /// String key for reference reservoir region
     static constexpr char const * referenceReservoirRegionString() { return "referenceReservoirRegion"; }
     /// String key for the surface pressure
     static constexpr char const * surfacePressureString() { return "surfacePressure"; }
