@@ -48,7 +48,7 @@ WellElementSubRegion::WellElementSubRegion( string const & name, Group * const p
 
   registerGroup( groupKeyStruct::perforationDataString(), &m_perforationData );
 
-  registerWrapper( viewKeyStruct::wellLocalElementGlobaleIndexString(), &m_globalWellElementIndex );
+  registerWrapper( viewKeyStruct::wellLocalElementGlobalIndexString(), &m_globalWellElementIndex );
   registerWrapper( viewKeyStruct::wellLocalElementStatusString(), &m_wellLocalElementStatus );
 
 
