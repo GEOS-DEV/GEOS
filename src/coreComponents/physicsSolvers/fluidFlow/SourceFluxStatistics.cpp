@@ -173,14 +173,13 @@ void SourceFluxStatsAggregator::gatherStatsForLog( bool logLevelActive,
   }
 }
 
-void SourceFluxStatsAggregator::outputStatsToLog( bool logLevelActive, string_view,
+void SourceFluxStatsAggregator::outputStatsToLog( bool logLevelActive, string_view fluxName,
                                                   TableData const & tableMeshData )
 {
   if( logLevelActive && logger::internal::rank == 0 )
   {
-    string const title = GEOS_FMT( "{}, flux statistics for: {}", 
-                                   getName(), 
-                                   stringutilities::join( m_fluxNames, ", " ) );
+    string const title = GEOS_FMT( "{}, flux statistics for {}",
+                                   getName(), fluxName );
     string const multilineTitle = wrapTextToMaxLength( title, 80 );
     m_logLayout.setTitle( multilineTitle );
     TableTextFormatter const tableStatFormatter( m_logLayout );
@@ -267,7 +266,7 @@ bool SourceFluxStatsAggregator::execute( real64 const GEOS_UNUSED_PARAM( time_n 
                        viewKeyStruct::allRegionWrapperString(), tableMeshData, meshLevelStats );
     gatherStatsForCSV( csvData, meshLevelStats );
 
-    outputStatsToLog( fluxMeshesStats, meshLevelStats.getFluxName(), tableMeshData );
+    outputStatsToLog( fluxMeshesStats, stringutilities::join( m_fluxNames, ", " ), tableMeshData );
     outputStatsToCSV( m_allRegionWrapperFluxFilename, csvData );
   } );
   return false;
