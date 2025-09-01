@@ -466,8 +466,6 @@ private:
   localIndex packUpDownMapsImpl( buffer_unit_type * & buffer,
                                  arrayView1d< localIndex const > const & packList ) const;
 
-
-
   /// Map of unmapped global indices in the element-to-node map
   map< localIndex, array1d< globalIndex > > m_unmappedGlobalIndicesInNodelist;
 
@@ -477,10 +475,10 @@ private:
   /// Element-to-node relation is one to one relation.
   NodeMapType m_toNodesRelation;
 
-  /// Global indices (sized by local  indices  (used in solvers)
+  /// Global indices (sized by local indices (used in solvers)
   array1d< globalIndex > m_globalWellElementIndex;
 
-  /// Global indices of elemens (all elements)
+  /// Global indices of elements (all elements)
   array1d< globalIndex > m_globalElementIndex;
 
   /// Local indices of the next well element (used in solvers)

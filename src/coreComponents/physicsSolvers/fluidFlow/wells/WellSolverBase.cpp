@@ -239,7 +239,7 @@ void WellSolverBase::setPerforationStatus( real64 const & time_n, DomainPartitio
       array1d< integer > segStatus( numLocalElements );
 
       // Local perforations
-      for( integer j =0; j < perforationData.size(); j++ )
+      for( integer j = 0; j < perforationData.size(); j++ )
       {
         localIndex const iwelem = perfWellElemIndex[j];
         if( elemGhostRank[iwelem] < 0 )

@@ -142,21 +142,17 @@ void PerforationData::computeWellTransmissibility( MeshLevel const & mesh,
     // then skip the computation of the well transmissibility carried out below
     if( m_wellTransmissibility[iperf] >= 0 )
     {
-      WellElementRegion const & wellRegion = dynamicCast< WellElementRegion const & >( wellElemSubRegion.getParent().getParent() );
-      GEOS_UNUSED_VAR( wellRegion ); // unused if geos_error_if is nulld
-      bool close_perf = isZero( m_wellTransmissibility[iperf] );
+      bool const close_perf = isZero( m_wellTransmissibility[iperf] );
       if( close_perf )
       {
         m_localPerfStatus[iperf] = PerforationStatus::CLOSED;
+        WellElementRegion const & wellRegion = dynamicCast< WellElementRegion const & >( wellElemSubRegion.getParent().getParent() );
+        GEOS_LOG_RANK( "\n \nWarning! Perforation " << wellRegion.getWellGeneratorName() <<
+                       " is defined with a zero transmissibility.\n" <<
+                       "The simulation is going to proceed with this zero transmissibility,\n" <<
+                       "but a better strategy to shut down a perforation is to remove the " <<
+                       "<Perforation> block from the XML\n \n" );
       }
-
-      GEOS_LOG_RANK_IF( close_perf,
-                        "\n \nWarning! Perforation " << wellRegion.getWellGeneratorName() <<
-                        " is defined with a zero transmissibility.\n" <<
-                        "The simulation is going to proceed with this zero transmissibility,\n" <<
-                        "but a better strategy to shut down a perforation is to remove the " <<
-                        "<Perforation> block from the XML\n \n" );
-      continue;
     }
 
     // get the indices of the reservoir element

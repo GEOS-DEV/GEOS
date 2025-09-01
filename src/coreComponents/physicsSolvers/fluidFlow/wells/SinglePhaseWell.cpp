@@ -798,7 +798,7 @@ void SinglePhaseWell::computePerforationRates( real64 const & time_n,
       // get the well data
       PerforationData * const perforationData = subRegion.getPerforationData();
       WellControls const & wellControls = getWellControls( subRegion );
-      if( wellControls.isWellOpen( ) && !m_keepVariablesConstantDuringInitStep )
+      if( wellControls.isWellOpen() && !m_keepVariablesConstantDuringInitStep )
       {
 
         string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
@@ -1203,7 +1203,7 @@ void SinglePhaseWell::printRates( real64 const & time_n,
         outputFile << time_n;
       }
 
-      if( !wellControls.isWellOpen( ) )
+      if( !wellControls.isWellOpen() )
       {
         GEOS_LOG( GEOS_FMT( "{}: well is shut", wellControlsName ) );
         if( outputFile.is_open())

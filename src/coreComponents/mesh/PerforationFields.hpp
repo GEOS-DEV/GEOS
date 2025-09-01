@@ -96,7 +96,7 @@ DECLARE_FIELD( perforationStatus,
                0,
                NOPLOT,
                WRITE_AND_READ,
-               "Table of time vs perforation open/close status " );
+               "Table of time vs perforation open/close status" );
 
 DECLARE_FIELD( location,
                "location",

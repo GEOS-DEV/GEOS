@@ -82,14 +82,14 @@ void Perforation::postInputInitialization()
 
   if( m_perfStatusTableName.empty() )
   {
-    // No table function provide, defaults name to perforation name
-    m_perfStatusTableName=getParent().getName()+"_"+getName();
+    // No table function provided, defaults name to perforation name
+    m_perfStatusTableName = getParent().getName()+"_"+getName();
   }
   else
   {
-    // Table name provide as input , check that it exists
+    // Table name provided as input, check that it exists
     GEOS_THROW_IF( !functionManager.hasGroup< TableFunction >( m_perfStatusTableName ),
-                   GEOS_FMT( "{}: Perforation status table function missing  : {}",
+                   GEOS_FMT( "{}: missing perforation status table `{}`",
                              getDataContext(), m_perfStatusTableName ),
                    InputError );
   }
@@ -103,7 +103,6 @@ void Perforation::postInputInitialization()
     timeCoord.resize( 1 );
     array1d< real64 > values;
 
-
     if( m_perfStatusTable.size( 0 ) == 0 )
     {
       // No table supplied set all perfs to open
@@ -116,13 +115,13 @@ void Perforation::postInputInitialization()
       // User supplied table in Perforation section
 
       GEOS_THROW_IF( m_perfStatusTable[0].size() != m_perfStatusTable[1].size(),
-                     GEOS_FMT( "{}: Perforation status table missing time or status.", getDataContext() ),
+                     GEOS_FMT( "{}: Perforation status table `{}` missing time or status.", m_perfStatusTableName, getDataContext() ),
                      InputError );
 
       for( std::ptrdiff_t i=0; i<m_perfStatusTable[0].size(); i++ )
       {
         timeCoord[0].emplace_back( m_perfStatusTable[0][i] );
-        GEOS_THROW_IF( ( !isZero( m_perfStatusTable[1][i] )  && !isZero( 1-m_perfStatusTable[1][i] ) ),
+        GEOS_THROW_IF( ( !isZero( m_perfStatusTable[1][i] ) && !isZero( 1 - m_perfStatusTable[1][i] ) ),
                        GEOS_FMT( "{}: Perforation status value must be 0 or 1.", getDataContext() ),
                        InputError );
         values.emplace_back( m_perfStatusTable[1][i] );

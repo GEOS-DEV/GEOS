@@ -967,9 +967,9 @@ void CompositionalMultiphaseWell::initializeWells( DomainPartition & domain, rea
   CompositionalMultiphaseBase const & flowSolver = getParent().getGroup< CompositionalMultiphaseBase >( getFlowSolverName() );
 
   // loop over the wells
-  forDiscretizationOnMeshTargets ( domain.getMeshBodies(), [&] ( string const &,
-                                                                 MeshLevel & mesh,
-                                                                 string_array const & regionNames )
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                MeshLevel & mesh,
+                                                                string_array const & regionNames )
   {
 
     ElementRegionManager & elemManager = mesh.getElemManager();
@@ -1004,7 +1004,6 @@ void CompositionalMultiphaseWell::initializeWells( DomainPartition & domain, rea
         arrayView1d< localIndex const > const resElementRegion = perforationData.getField< perforation::reservoirElementRegion >();
         arrayView1d< localIndex const > const resElementSubRegion = perforationData.getField< perforation::reservoirElementSubRegion >();
         arrayView1d< localIndex const > const resElementIndex = perforationData.getField< perforation::reservoirElementIndex >();
-
 
         arrayView1d< real64 const > const & perfGravCoef = perforationData.getField< fields::well::gravityCoefficient >();
         arrayView1d< integer const > const & perfStatus = perforationData.getField< fields::perforation::perforationStatus >();
@@ -1173,8 +1172,8 @@ void CompositionalMultiphaseWell::assembleAccumulationTerms( real64 const & time
     {
       string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString());
       MultiFluidBase const & fluid = getConstitutiveModel< MultiFluidBase >( subRegion, fluidName );
-      int const numPhases = fluid.numFluidPhases();
-      int const numComponents = fluid.numFluidComponents();
+      integer const numPhases = fluid.numFluidPhases();
+      integer const numComponents = fluid.numFluidComponents();
       WellControls const & wellControls = getWellControls( subRegion );
       if( wellControls.getWellStatus() == WellControls::Status::OPEN && !m_keepVariablesConstantDuringInitStep )
       {
@@ -1213,8 +1212,8 @@ void CompositionalMultiphaseWell::assembleAccumulationTerms( real64 const & time
         arrayView1d< globalIndex const > const & wellElemDofNumber =
           subRegion.getReference< array1d< globalIndex > >( wellDofKey );
         arrayView1d< integer const > const wellElemGhostRank = subRegion.ghostRank();
-        arrayView1d< integer const > const elemStatus =subRegion.getLocalWellElementStatus();
-        arrayView1d< real64 > const mixConnRate =  subRegion.getField< fields::well::mixtureConnectionRate >();
+        arrayView1d< integer const > const elemStatus = subRegion.getLocalWellElementStatus();
+        arrayView1d< real64 > const mixConnRate = subRegion.getField< fields::well::mixtureConnectionRate >();
         localIndex rank_offset = dofManager.rankOffset();
         forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const ei )
         {
@@ -1269,11 +1268,8 @@ void CompositionalMultiphaseWell::assembleAccumulationTerms( real64 const & time
           }
         } );
       }
-    } );
-  }
-                                  );
-
-
+    } ); // forElementSubRegions
+  } ); // forDiscretizationOnMeshTargets
 }
 
 
@@ -1637,9 +1633,9 @@ void CompositionalMultiphaseWell::computePerforationRates( real64 const & time_n
   GEOS_MARK_FUNCTION;
   GEOS_UNUSED_VAR( time_n );
 
-  forDiscretizationOnMeshTargets ( domain.getMeshBodies(), [&] ( string const &,
-                                                                 MeshLevel & mesh,
-                                                                 string_array const & regionNames )
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                MeshLevel & mesh,
+                                                                string_array const & regionNames )
   {
 
     // TODO: change the way we access the flowSolver here
@@ -2101,7 +2097,7 @@ void CompositionalMultiphaseWell::printRates( real64 const & time_n,
       // control data
       WellControls const & wellControls = getWellControls( subRegion );
 
-      std::vector< double > compRate( numComp, 0.0 );
+      stdVector< double > compRate( numComp, 0.0 );
       if( m_writeCSV > 0 && wellControls.isWellOpen( ) )
       {
         arrayView2d< real64 > const compPerfRate = subRegion.getPerforationData()->getField< fields::well::compPerforationRate >();

@@ -472,12 +472,12 @@ void WellControls::postInputInitialization()
 
 void WellControls::setWellStatus( real64 const & currentTime, WellControls::Status status )
 {
-  m_wellStatus =  status;
+  m_wellStatus = status;
   if( m_wellStatus == WellControls::Status::OPEN )
   {
 
     if( isZero( getTargetTotalRate( currentTime ) ) && isZero( getTargetPhaseRate( currentTime ) )
-        && isZero( getTargetMassRate( currentTime ) ))
+        && isZero( getTargetMassRate( currentTime ) ) )
     {
       m_wellStatus =  WellControls::Status::CLOSED;
     }

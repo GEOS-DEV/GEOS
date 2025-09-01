@@ -532,7 +532,7 @@ PresTempCompFracInitializationKernel::
   {
     if( perfStatus[iperf] )
     {
-      numOpenPerfs+=1;
+      numOpenPerfs += 1;
       // get the reservoir (sub)region and element indices
       localIndex const er = resElementRegion[iperf];
       localIndex const esr = resElementSubRegion[iperf];

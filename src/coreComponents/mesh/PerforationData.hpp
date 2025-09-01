@@ -220,7 +220,7 @@ public:
    * @brief Get perforation name
    * @return array of names
    */
-  string_array & getPerfName()  { return m_perfName; }
+  string_array & getPerfName() { return m_perfName; }
 
   /**
    * @brief Get perforation name
@@ -232,7 +232,7 @@ public:
    * @brief Get perforation status table name
    * @return array of names
    */
-  string_array & getPerfStatusTableName()  { return m_perfStatusTableName; }
+  string_array & getPerfStatusTableName() { return m_perfStatusTableName; }
 
   /**
    * @brief Get perforation status table name
@@ -244,7 +244,7 @@ public:
    * @brief Get perforation's status
    * @return status array
    */
-  arrayView1d< localIndex const >   getLocalPerfStatus() const { return m_localPerfStatus; }
+  arrayView1d< localIndex const > getLocalPerfStatus() const { return m_localPerfStatus; }
 
 
   /**
