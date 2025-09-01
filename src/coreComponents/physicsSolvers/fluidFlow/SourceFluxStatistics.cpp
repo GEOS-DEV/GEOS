@@ -173,12 +173,14 @@ void SourceFluxStatsAggregator::gatherStatsForLog( bool logLevelActive,
   }
 }
 
-void SourceFluxStatsAggregator::outputStatsToLog( bool logLevelActive, string_view elementSetName,
+void SourceFluxStatsAggregator::outputStatsToLog( bool logLevelActive, string_view,
                                                   TableData const & tableMeshData )
 {
   if( logLevelActive && logger::internal::rank == 0 )
   {
-    m_logLayout.setTitle( GEOS_FMT( "Source flux statistics in {}", elementSetName ));
+    m_logLayout.setTitle( GEOS_FMT( "{}, flux statistics for: {}", 
+                          getName(), 
+                          stringutilities::join( m_fluxNames, ", " ) ) );
     TableTextFormatter const tableStatFormatter( m_logLayout );
     GEOS_LOG_RANK( tableStatFormatter.toString( tableMeshData ) );
   }
