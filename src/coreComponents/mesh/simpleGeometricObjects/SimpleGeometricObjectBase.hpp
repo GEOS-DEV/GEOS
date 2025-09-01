@@ -94,7 +94,7 @@ protected:
   virtual void postInputInitialization() override;
 
   /// Tolerance for coordinate checks
-  real64 m_epsilon=0.0;
+  real64 m_epsilon = 0.0;
 
 };
 
