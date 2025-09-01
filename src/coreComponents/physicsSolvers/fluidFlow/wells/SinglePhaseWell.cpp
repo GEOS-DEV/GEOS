@@ -66,11 +66,6 @@ SinglePhaseWell::SinglePhaseWell( const string & name,
     setApplyDefaultValue( 1 ). // negative pressure is allowed by default
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Flag indicating if negative pressure is allowed" );
-
-  addLogLevel< logInfo::ResidualNorm >();
-  addLogLevel< logInfo::BoundaryConditions >();
-  addLogLevel< logInfo::SystemSolution >();
-  addLogLevel< logInfo::WellControl >();
 }
 
 void SinglePhaseWell::registerDataOnMesh( Group & meshBodies )
@@ -261,7 +256,7 @@ void SinglePhaseWell::updateBHPForConstraint( WellElementSubRegion & subRegion )
     } );
   } );
 
-  GEOS_LOG_LEVEL_BY_RANK( logInfo::BoundaryConditions,
+  GEOS_LOG_LEVEL_BY_RANK( logInfo::WellControl,
                           GEOS_FMT( "{}: The BHP (at the specified reference elevation) = {} Pa",
                                     wellControlsName, currentBHP ) );
 
@@ -298,7 +293,7 @@ void SinglePhaseWell::updateVolRateForConstraint( WellElementSubRegion & subRegi
 
   WellControls & wellControls = getWellControls( subRegion );
   string const wellControlsName = wellControls.getName();
-  bool const logSurfaceCondition = isLogLevelActive< logInfo::BoundaryConditions >( wellControls.getLogLevel());
+  bool const logSurfaceCondition = isLogLevelActive< logInfo::WellControl >( wellControls.getLogLevel());
   integer const useSurfaceConditions = wellControls.useSurfaceConditions();
   real64 flashPressure;
   if( useSurfaceConditions )
@@ -990,16 +985,16 @@ SinglePhaseWell::calculateResidualNorm( real64 const & time_n,
     globalResidualNorm[1] = MpiWrapper::max( localResidualNorm[1] );
     resNorm= std::sqrt( globalResidualNorm[0] * globalResidualNorm[0] + globalResidualNorm[1] * globalResidualNorm[1] );
 
-    GEOS_LOG_LEVEL_RANK_0( logInfo::ResidualNorm, GEOS_FMT( "        ( R{} ) = ( {:4.2e} )        ( Renergy ) = ( {:4.2e} )",
-                                                            coupledSolverAttributePrefix(), globalResidualNorm[0], globalResidualNorm[1] ));
+    GEOS_LOG_LEVEL_RANK_0_NLR( logInfo::ResidualNorm, GEOS_FMT( "        ( R{} ) = ( {:4.2e} )        ( Renergy ) = ( {:4.2e} )",
+                                                                coupledSolverAttributePrefix(), globalResidualNorm[0], globalResidualNorm[1] ));
 
   }
   else
   {
-    resNorm= MpiWrapper::max( resNorm );
+    resNorm = MpiWrapper::max( resNorm );
 
-    GEOS_LOG_LEVEL_RANK_0( logInfo::ResidualNorm, GEOS_FMT( "        ( R{} ) = ( {:4.2e} )",
-                                                            coupledSolverAttributePrefix(), resNorm ));
+    GEOS_LOG_LEVEL_RANK_0_NLR( logInfo::ResidualNorm, GEOS_FMT( "        ( R{} ) = ( {:4.2e} )",
+                                                                coupledSolverAttributePrefix(), resNorm ));
   }
 
   return resNorm;
@@ -1051,7 +1046,7 @@ bool SinglePhaseWell::checkSystemSolution( DomainPartition & domain,
 
   if( numNegativePressures > 0 )
   {
-    GEOS_LOG_LEVEL_RANK_0( logInfo::SystemSolution,
+    GEOS_LOG_LEVEL_RANK_0( logInfo::Solution,
                            GEOS_FMT( "        {}: Number of negative pressure values: {}, minimum value: {} Pa",
                                      getName(), numNegativePressures, fmt::format( "{:.{}f}", minPressure, 3 ) ) );
   }
