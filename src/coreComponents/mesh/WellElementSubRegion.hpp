@@ -334,7 +334,7 @@ public:
     /// ViewKey for the well radius
     dataRepository::ViewKey radius             = { radiusString() };
     /// ViewKey for the global element index
-    dataRepository::ViewKey wellLocalEwellLocalElementGlobaleIndex = { wellLocalElementGlobaleIndexString() };
+    dataRepository::ViewKey wellLocalElementGlobalIndex = { wellLocalElementGlobalIndexString() };
     /// ViewKey for the well element status
     dataRepository::ViewKey wellLocalElementStatus   = { wellLocalElementStatusString() };
   }
