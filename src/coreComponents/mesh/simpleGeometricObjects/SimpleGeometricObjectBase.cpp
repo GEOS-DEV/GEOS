@@ -18,6 +18,7 @@
  */
 
 #include "SimpleGeometricObjectBase.hpp"
+#include "mesh/DomainPartition.hpp"
 
 namespace geos
 {
@@ -30,14 +31,20 @@ SimpleGeometricObjectBase::SimpleGeometricObjectBase( string const & name,
 }
 
 
-SimpleGeometricObjectBase::~SimpleGeometricObjectBase()
-{}
-
-
 SimpleGeometricObjectBase::CatalogInterface::CatalogType & SimpleGeometricObjectBase::getCatalog()
 {
   static SimpleGeometricObjectBase::CatalogInterface::CatalogType catalog;
   return catalog;
+}
+
+void SimpleGeometricObjectBase::postInputInitialization()
+{
+  // determine m_epsilon
+  DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
+  domain.forMeshBodies( [&]( MeshBody const & meshBody )
+  {
+    m_epsilon = std::min( m_epsilon, 5 * std::numeric_limits< real64 >::epsilon() * meshBody.getGlobalLengthScale() );
+  } );
 }
 
 } /// namespace geos

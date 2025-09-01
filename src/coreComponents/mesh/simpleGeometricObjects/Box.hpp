@@ -79,8 +79,6 @@ private:
   real64 m_cosStrike=0.0;
   /// Sine of the strike angle of the box
   real64 m_sinStrike=0.0;
-  /// Tolerance for coordinate checks
-  real64 m_eps=0.0;
 
   /// @cond DO_NOT_DOCUMENT
 

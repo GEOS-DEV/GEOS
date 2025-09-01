@@ -23,7 +23,6 @@
 
 #include "Box.hpp"
 #include "LvArray/src/genericTensorOps.hpp"
-#include "mesh/DomainPartition.hpp"
 
 namespace geos
 {
@@ -58,6 +57,8 @@ Box::Box( const string & name, Group * const parent ):
 
 void Box::postInputInitialization()
 {
+  SimpleGeometricObjectBase::postInputInitialization();
+
   LvArray::tensorOps::copy< 3 >( m_boxCenter, m_min );
   LvArray::tensorOps::add< 3 >( m_boxCenter, m_max );
   LvArray::tensorOps::scale< 3 >( m_boxCenter, 0.5 );
@@ -82,14 +83,6 @@ void Box::postInputInitialization()
     m_cosStrike = std::cos( m_strikeAngle / 180 *M_PI );
     m_sinStrike = std::sin( m_strikeAngle / 180 *M_PI );
   }
-
-  // determine m_eps
-  DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
-  domain.forMeshBodies( [&]( MeshBody const & meshBody )
-  {
-    m_eps = std::min( m_eps, 5 * std::numeric_limits< real64 >::epsilon() * meshBody.getGlobalLengthScale() );
-  } );
-
 }
 
 bool Box::isCoordInObject( real64 const ( &coord ) [3] ) const
