@@ -13,8 +13,6 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#include "RelpermDriver.hpp"
-
 #include "common/MpiWrapper.hpp"
 #include "functions/FunctionManager.hpp"
 #include "functions/TableFunction.hpp"
@@ -22,6 +20,8 @@
 #include "constitutiveDrivers/fluid/multiFluid/LogLevelsInfo.hpp"
 #include "constitutive/relativePermeability/RelativePermeabilityBase.hpp"
 #include "constitutive/relativePermeability/RelativePermeabilitySelector.hpp"
+
+#include "RelpermDriver.hpp"
 
 namespace geos
 {
@@ -53,8 +53,7 @@ RelpermDriver::RelpermDriver( const geos::string & name,
     setApplyDefaultValue( "none" ).
     setDescription( "Baseline file" );
 
-  addLogLevel< logInfo::Initialisation >();
-  addLogLevel< logInfo::Results >();
+  addLogLevel< logInfo::LogOutput >();
 }
 
 
@@ -119,13 +118,13 @@ bool RelpermDriver::execute( const geos::real64 GEOS_UNUSED_PARAM( time_n ),
   RelativePermeabilityBase
   & baseRelperm = constitutiveManager.getGroup< RelativePermeabilityBase >( m_relpermName );
 
-  GEOS_LOG_LEVEL_RANK_0( logInfo::Initialisation, "Launching Relperm Driver" );
-  GEOS_LOG_LEVEL_RANK_0( logInfo::Initialisation, "  Relperm .................. " << m_relpermName );
-  GEOS_LOG_LEVEL_RANK_0( logInfo::Initialisation, "  Type ................... " << baseRelperm.getCatalogName() );
-  GEOS_LOG_LEVEL_RANK_0( logInfo::Initialisation, "  No. of Phases .......... " << m_numPhases );
-  GEOS_LOG_LEVEL_RANK_0( logInfo::Initialisation, "  Steps .................. " << m_numSteps );
-  GEOS_LOG_LEVEL_RANK_0( logInfo::Initialisation, "  Output ................. " << m_outputFile );
-  GEOS_LOG_LEVEL_RANK_0( logInfo::Initialisation, "  Baseline ............... " << m_baselineFile );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::LogOutput, "Launching Relperm Driver" );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::LogOutput, "  Relperm .................. " << m_relpermName );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::LogOutput, "  Type ................... " << baseRelperm.getCatalogName() );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::LogOutput, "  No. of Phases .......... " << m_numPhases );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::LogOutput, "  Steps .................. " << m_numSteps );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::LogOutput, "  Output ................. " << m_outputFile );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::LogOutput, "  Baseline ............... " << m_baselineFile );
 
   // create a dummy discretization with one quadrature point for
   // storing constitutive data
@@ -177,20 +176,20 @@ void RelpermDriver::resizeTables()
   real64 minSw = 0., minSnw = 0.;
   if( baseRelperm.numFluidPhases() > 2 )
   {
-    minSw = baseRelperm.getPhaseMinVolumeFraction()[ipWater];
-    minSnw = baseRelperm.getPhaseMinVolumeFraction()[ipGas];
+    minSw = baseRelperm.getWettingPhaseMinVolumeFraction();
+    minSnw = baseRelperm.getNonWettingMinVolumeFraction();
   }
   else
   {
     if( ipWater < 0 )// a.k.a o/g
     {
       minSw = 0;
-      minSnw = baseRelperm.getPhaseMinVolumeFraction()[ipGas];
+      minSnw = baseRelperm.getNonWettingMinVolumeFraction();
     }
     else if( ipGas < 0 || ipOil < 0 )// a.k.a w/o or w/g
     {
       minSnw = 0;
-      minSw = baseRelperm.getPhaseMinVolumeFraction()[ipWater];
+      minSw = baseRelperm.getWettingPhaseMinVolumeFraction();
     }
   }
 
@@ -322,7 +321,7 @@ void RelpermDriver::compareWithBaseline()
 
   // success
 
-  GEOS_LOG_LEVEL_RANK_0( logInfo::Results, "  Comparison ............. Internal results consistent with baseline." );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::LogOutput, "  Comparison ............. Internal results consistent with baseline." );
 
   file.close();
 }
