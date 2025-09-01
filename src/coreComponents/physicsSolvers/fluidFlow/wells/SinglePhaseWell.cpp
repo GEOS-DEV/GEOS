@@ -146,7 +146,7 @@ void SinglePhaseWell::validateWellConstraints( real64 const & time_n,
   WellControls & wellControls = getWellControls( subRegion );
   if( !wellControls.useSurfaceConditions() )
   {
-    bool useSeg = wellControls.referenceReservoirRegion()=="";
+    bool useSeg = wellControls.referenceReservoirRegion().empty();
     GEOS_WARNING_IF( useSeg,
                      "WellControls referenceReservoirRegion not set and well constraint fluid property calculations will use top segement pressure and temp " );
     if( useSeg )
