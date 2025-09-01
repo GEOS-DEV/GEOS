@@ -40,7 +40,7 @@
 namespace geos
 {
 
-namespace isothermalCompositionalMultiphaseFVMKernels
+namespace kernels::fluidFlow::compositional::fvm::isothermal
 {
 
 /**
@@ -272,7 +272,7 @@ public:
 
           localIndex k_up = -1;
 
-          isothermalCompositionalMultiphaseFVMKernelUtilities::PPUPhaseFluxZFormulation::compute< numComp, numFluxSupportPoints >
+          PPUPhaseFluxZFormulation::compute< numComp, numFluxSupportPoints >
             ( m_numPhases,
             ip,
             m_kernelFlags.isSet( KernelFlags::CapPressure ),
@@ -469,7 +469,7 @@ public:
                    integer const numPhases,
                    globalIndex const rankOffset,
                    string const & dofKey,
-                   BitFlags< KernelFlags > kernelFlags,
+                   BitFlags< kernels::fluidFlow::compositional::fvm::KernelFlags > kernelFlags,
                    string const & solverName,
                    ElementRegionManager const & elemManager,
                    STENCILWRAPPER const & stencilWrapper,
@@ -477,7 +477,7 @@ public:
                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
                    arrayView1d< real64 > const & localRhs )
   {
-    isothermalCompositionalMultiphaseBaseKernels::internal::kernelLaunchSelectorCompSwitch( numComps, [&]( auto NC )
+    kernels::fluidFlow::compositional::internal::kernelLaunchSelectorCompSwitch( numComps, [&]( auto NC )
     {
       integer constexpr NUM_COMP = NC();
       integer constexpr NUM_DOF = NC() + 1;
@@ -500,7 +500,7 @@ public:
   }
 };
 
-} // namespace isothermalCompositionalMultiphaseFVMKernels
+} // namespace kernels::fluidFlow::compositional::fvm::isothermal
 
 } // namespace geos
 

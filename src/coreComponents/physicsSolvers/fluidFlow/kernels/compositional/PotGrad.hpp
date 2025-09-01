@@ -30,16 +30,16 @@
 namespace geos
 {
 
-namespace isothermalCompositionalMultiphaseFVMKernelUtilities
+namespace kernels::fluidFlow::compositional::fvm
 {
-
-template< typename VIEWTYPE >
-using ElementViewConst = ElementRegionManager::ElementViewConst< VIEWTYPE >;
-
-using Deriv = constitutive::multifluid::DerivativeOffset;
 
 struct PotGrad
 {
+  template< typename VIEWTYPE >
+  using ElementViewConst = ElementRegionManager::ElementViewConst< VIEWTYPE >;
+
+  using Deriv = constitutive::multifluid::DerivativeOffset;
+
   template< integer numComp, integer numFluxSupportPoints >
   GEOS_HOST_DEVICE
   static void
@@ -90,12 +90,11 @@ struct PotGrad
     real64 densMean = 0.0;
     real64 dDensMean_dP[numFluxSupportPoints]{};
     real64 dDensMean_dC[numFluxSupportPoints][numComp]{};
-    isothermalCompositionalMultiphaseFVMKernels::helpers::
-      calculateMeanDensity( ip, seri, sesri, sei,
-                            checkPhasePresenceInGravity,
-                            phaseVolFrac, dCompFrac_dCompDens,
-                            phaseMassDens, dPhaseMassDens,
-                            densMean, dDensMean_dP, dDensMean_dC );
+    helpers::calculateMeanDensity( ip, seri, sesri, sei,
+                                   checkPhasePresenceInGravity,
+                                   phaseVolFrac, dCompFrac_dCompDens,
+                                   phaseMassDens, dPhaseMassDens,
+                                   densMean, dDensMean_dP, dDensMean_dC );
 
     /// compute the TPFA potential difference
     for( integer i = 0; i < numFluxSupportPoints; i++ )
@@ -166,7 +165,7 @@ struct PotGrad
 
 };
 
-} // namespace isothermalCompositionalMultiPhaseFVMKernelUtilities
+} // namespace kernels::fluidFlow::compositional::fvm
 
 } // namespace geos
 

@@ -25,9 +25,8 @@
 namespace geos
 {
 
-namespace hybridFVMKernels
+namespace kernels::fluidFlow::hybridFVM
 {
-
 
 /******************************** CellConnectivity ********************************/
 
@@ -84,8 +83,7 @@ struct CellConnectivity
 
 };
 
-
-} // namespace hybridFVMUpwindingKernels
+} // namespace kernels::fluidFlow::hybridFVM
 
 } // namespace geos
 

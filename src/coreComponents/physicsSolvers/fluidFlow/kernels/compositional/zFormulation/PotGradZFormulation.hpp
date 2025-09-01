@@ -30,16 +30,16 @@
 namespace geos
 {
 
-namespace isothermalCompositionalMultiphaseFVMKernelUtilities
+namespace kernels::fluidFlow::compositional::fvm::isothermal
 {
-
-template< typename VIEWTYPE >
-using ElementViewConst = ElementRegionManager::ElementViewConst< VIEWTYPE >;
-
-using Deriv = constitutive::multifluid::DerivativeOffset;
 
 struct PotGradZFormulation
 {
+  template< typename VIEWTYPE >
+  using ElementViewConst = ElementRegionManager::ElementViewConst< VIEWTYPE >;
+
+  using Deriv = constitutive::multifluid::DerivativeOffset;
+
   template< integer numComp, integer numFluxSupportPoints >
   GEOS_HOST_DEVICE
   static void
@@ -209,7 +209,7 @@ struct PotGradZFormulation
 
 };
 
-} // namespace isothermalCompositionalMultiPhaseFVMKernelUtilities
+} // namespace kernels::fluidFlow::compositional::fvm::isothermal
 
 } // namespace geos
 

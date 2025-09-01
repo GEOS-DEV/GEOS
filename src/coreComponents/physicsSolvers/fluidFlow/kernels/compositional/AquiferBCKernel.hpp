@@ -36,7 +36,7 @@
 namespace geos
 {
 
-namespace isothermalCompositionalMultiphaseFVMKernels
+namespace kernels::fluidFlow::compositional::fvm
 {
 
 /******************************** AquiferBCKernel ********************************/
@@ -124,7 +124,7 @@ struct AquiferBCKernel
 
 };
 
-} // namespace isothermalCompositionalMultiphaseFVMKernels
+} // namespace kernels::fluidFlow::compositional::fvm
 
 } // namespace geos
 

@@ -27,7 +27,7 @@
 namespace geos
 {
 
-namespace singlePhaseFluxKernelsHelper
+namespace kernels::fluidFlow::singlePhase::fvm
 {
 
 /**
@@ -286,7 +286,7 @@ void computeConductiveFlux( localIndex const ( &seri )[2],
   }
 }
 
-} // namespace singlePhaseFluxKernelsHelper
+} // namespace kernels::fluidFlow::singlePhase::fvm
 
 } // namespace geos
 

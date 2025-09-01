@@ -25,7 +25,7 @@
 namespace geos
 {
 
-namespace thermalCompositionalMultiphaseFVMKernels
+namespace kernels::fluidFlow::compositional::fvm::thermal
 {
 
 /******************************** DiffusionDispersionFluxComputeKernel ********************************/
@@ -39,7 +39,7 @@ namespace thermalCompositionalMultiphaseFVMKernels
  */
 template< integer NUM_COMP, integer NUM_DOF, typename STENCILWRAPPER >
 class DiffusionDispersionFluxComputeKernel :
-  public isothermalCompositionalMultiphaseFVMKernels::DiffusionDispersionFluxComputeKernel< NUM_COMP, NUM_DOF, STENCILWRAPPER >
+  public kernels::fluidFlow::compositional::fvm::isothermal::DiffusionDispersionFluxComputeKernel< NUM_COMP, NUM_DOF, STENCILWRAPPER >
 {
 public:
 
@@ -52,7 +52,7 @@ public:
   template< typename VIEWTYPE >
   using ElementViewConst = ElementRegionManager::ElementViewConst< VIEWTYPE >;
 
-  using AbstractBase = isothermalCompositionalMultiphaseFVMKernels::FluxComputeKernelBase;
+  using AbstractBase = kernels::fluidFlow::compositional::fvm::FluxComputeKernelBase;
   using DofNumberAccessor = AbstractBase::DofNumberAccessor;
   using CompFlowAccessors = AbstractBase::CompFlowAccessors;
   using MultiFluidAccessors = AbstractBase::MultiFluidAccessors;
@@ -60,7 +60,8 @@ public:
   using AbstractBase::m_dPhaseCompFrac;
   using AbstractBase::m_dPhaseVolFrac;
 
-  using Base = typename isothermalCompositionalMultiphaseFVMKernels::DiffusionDispersionFluxComputeKernel< NUM_COMP, NUM_DOF, STENCILWRAPPER >;
+  using Base =
+    typename kernels::fluidFlow::compositional::fvm::isothermal::DiffusionDispersionFluxComputeKernel< NUM_COMP, NUM_DOF, STENCILWRAPPER >;
   using DiffusionAccessors = typename Base::DiffusionAccessors;
   using DispersionAccessors = typename Base::DispersionAccessors;
   using PorosityAccessors = typename Base::PorosityAccessors;
@@ -73,6 +74,8 @@ public:
   using Base::m_phaseDens;
   using Base::m_dPhaseDens;
   using Base::m_phaseDiffusivityMultiplier;
+
+  using KernelFlags = kernels::fluidFlow::compositional::fvm::KernelFlags;
 
   /**
    * @brief Constructor for the kernel interface
@@ -102,7 +105,7 @@ public:
                                         real64 const dt,
                                         CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                         arrayView1d< real64 > const & localRhs,
-                                        BitFlags< isothermalCompositionalMultiphaseFVMKernels::KernelFlags > kernelFlags )
+                                        BitFlags< KernelFlags > kernelFlags )
     : Base( numPhases,
             rankOffset,
             stencilWrapper,
@@ -302,7 +305,7 @@ public:
                    integer const numPhases,
                    globalIndex const rankOffset,
                    string const & dofKey,
-                   BitFlags< isothermalCompositionalMultiphaseFVMKernels::KernelFlags > kernelFlags,
+                   BitFlags< kernels::fluidFlow::compositional::fvm::KernelFlags > kernelFlags,
                    string const & solverName,
                    ElementRegionManager const & elemManager,
                    STENCILWRAPPER const & stencilWrapper,
@@ -310,8 +313,8 @@ public:
                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
                    arrayView1d< real64 > const & localRhs )
   {
-    isothermalCompositionalMultiphaseBaseKernels::
-      internal::kernelLaunchSelectorCompSwitch( numComps, [&]( auto NC )
+    kernels::fluidFlow::compositional::internal::
+      kernelLaunchSelectorCompSwitch( numComps, [&]( auto NC )
     {
       integer constexpr NUM_COMP = NC();
       integer constexpr NUM_DOF = NC() + 2;
@@ -332,14 +335,14 @@ public:
                          diffusionAccessors, dispersionAccessors, porosityAccessors,
                          dt, localMatrix, localRhs, kernelFlags );
       kernelType::template launch< POLICY >( stencilWrapper.size(),
-                                             kernelFlags.isSet( isothermalCompositionalMultiphaseFVMKernels::KernelFlags::Diffusion ),
-                                             kernelFlags.isSet( isothermalCompositionalMultiphaseFVMKernels::KernelFlags::Dispersion ),
+                                             kernelFlags.isSet( KernelFlags::Diffusion ),
+                                             kernelFlags.isSet( KernelFlags::Dispersion ),
                                              kernel );
     } );
   }
 };
 
-} // namespace thermalCompositionalMultiphaseFVMKernels
+} // namespace kernels::fluidFlow::compositional::fvm::thermal
 
 } // namespace geos
 

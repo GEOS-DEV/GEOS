@@ -25,7 +25,7 @@
 namespace geos
 {
 
-namespace thermalCompositionalMultiphaseFVMKernels
+namespace kernels::fluidFlow::compositional::thermal
 {
 
 /******************************** PhaseMobilityKernel ********************************/
@@ -37,11 +37,12 @@ namespace thermalCompositionalMultiphaseFVMKernels
  * @brief Define the interface for the property kernel in charge of computing the phase mobilities
  */
 template< integer NUM_COMP, integer NUM_PHASE >
-class PhaseMobilityKernel : public isothermalCompositionalMultiphaseFVMKernels::PhaseMobilityKernel< NUM_COMP, NUM_PHASE >
+class PhaseMobilityKernel :
+  public kernels::fluidFlow::compositional::isothermal::PhaseMobilityKernel< NUM_COMP, NUM_PHASE >
 {
 public:
 
-  using Base = isothermalCompositionalMultiphaseFVMKernels::PhaseMobilityKernel< NUM_COMP, NUM_PHASE >;
+  using Base = kernels::fluidFlow::compositional::isothermal::PhaseMobilityKernel< NUM_COMP, NUM_PHASE >;
   using Base::numPhase;
   using Base::m_dPhaseVolFrac;
   using Base::m_dPhaseMob;
@@ -123,10 +124,11 @@ public:
                    constitutive::MultiFluidBase const & fluid,
                    constitutive::RelativePermeabilityBase const & relperm )
   {
+    using namespace kernels::fluidFlow::compositional::internal;
+
     if( numPhase == 2 )
     {
-      isothermalCompositionalMultiphaseBaseKernels::
-        internal::kernelLaunchSelectorCompSwitch( numComp, [&] ( auto NC )
+      kernelLaunchSelectorCompSwitch( numComp, [&] ( auto NC )
       {
         integer constexpr NUM_COMP = NC();
         PhaseMobilityKernel< NUM_COMP, 2 > kernel( subRegion, fluid, relperm );
@@ -135,8 +137,7 @@ public:
     }
     else if( numPhase == 3 )
     {
-      isothermalCompositionalMultiphaseBaseKernels::
-        internal::kernelLaunchSelectorCompSwitch( numComp, [&] ( auto NC )
+      kernelLaunchSelectorCompSwitch( numComp, [&] ( auto NC )
       {
         integer constexpr NUM_COMP = NC();
         PhaseMobilityKernel< NUM_COMP, 3 > kernel( subRegion, fluid, relperm );
@@ -146,7 +147,7 @@ public:
   }
 };
 
-} // namespace thermalCompositionalMultiphaseFVMKernels
+} // namespace kernels::fluidFlow::compositional::thermal
 
 } // namespace geos
 

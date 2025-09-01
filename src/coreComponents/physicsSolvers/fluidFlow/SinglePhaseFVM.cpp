@@ -53,12 +53,10 @@ namespace geos
 using namespace dataRepository;
 using namespace constitutive;
 using namespace fields;
-using namespace singlePhaseBaseKernels;
-using namespace singlePhaseFVMKernels;
 
 template< typename BASE >
 SinglePhaseFVM< BASE >::SinglePhaseFVM( const string & name,
-                                        Group * const parent ):
+                                        dataRepository::Group * const parent ):
   BASE( name, parent )
 { }
 
@@ -139,6 +137,8 @@ real64 SinglePhaseFVM< BASE >::calculateResidualNorm( real64 const & GEOS_UNUSED
 {
   GEOS_MARK_FUNCTION;
 
+  using namespace kernels::fluidFlow::singlePhase;
+
   integer constexpr numNorm = 2; // mass balance and energy balance
   array1d< real64 > localResidualNorm;
   array1d< real64 > localResidualNormalizer;
@@ -165,8 +165,7 @@ real64 SinglePhaseFVM< BASE >::calculateResidualNorm( real64 const & GEOS_UNUSED
 
       if( m_isThermal )
       {
-        singlePhaseBaseKernels::
-          ResidualNormKernelFactory::
+        ResidualNormKernelFactory::
           createAndLaunch< parallelDevicePolicy<> >( normType,
                                                      rankOffset,
                                                      dofKey,
@@ -180,8 +179,7 @@ real64 SinglePhaseFVM< BASE >::calculateResidualNorm( real64 const & GEOS_UNUSED
       {
         real64 subRegionFlowResidualNorm[1]{};
         real64 subRegionFlowResidualNormalizer[1]{};
-        singlePhaseBaseKernels::
-          ResidualNormKernelFactory::
+        ResidualNormKernelFactory::
           createAndLaunch< parallelDevicePolicy<> >( normType,
                                                      rankOffset,
                                                      dofKey,
@@ -311,6 +309,8 @@ void SinglePhaseFVM<>::assembleFluxTerms( real64 const dt,
 {
   GEOS_MARK_FUNCTION;
 
+  using namespace kernels::fluidFlow::singlePhase::fvm;
+
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
   FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
   FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( m_discretizationName );
@@ -328,27 +328,25 @@ void SinglePhaseFVM<>::assembleFluxTerms( real64 const dt,
 
       if( m_isThermal )
       {
-        thermalSinglePhaseFVMKernels::
-          FluxComputeKernelFactory::createAndLaunch< parallelDevicePolicy<> >( dofManager.rankOffset(),
-                                                                               dofKey,
-                                                                               getName(),
-                                                                               mesh.getElemManager(),
-                                                                               stencilWrapper,
-                                                                               dt,
-                                                                               localMatrix.toViewConstSizes(),
-                                                                               localRhs.toView() );
+        thermal::FluxComputeKernelFactory::createAndLaunch< parallelDevicePolicy<> >( dofManager.rankOffset(),
+                                                                                      dofKey,
+                                                                                      getName(),
+                                                                                      mesh.getElemManager(),
+                                                                                      stencilWrapper,
+                                                                                      dt,
+                                                                                      localMatrix.toViewConstSizes(),
+                                                                                      localRhs.toView() );
       }
       else
       {
-        singlePhaseFVMKernels::
-          FluxComputeKernelFactory::createAndLaunch< parallelDevicePolicy<> >( dofManager.rankOffset(),
-                                                                               dofKey,
-                                                                               getName(),
-                                                                               mesh.getElemManager(),
-                                                                               stencilWrapper,
-                                                                               dt,
-                                                                               localMatrix.toViewConstSizes(),
-                                                                               localRhs.toView() );
+        isothermal::FluxComputeKernelFactory::createAndLaunch< parallelDevicePolicy<> >( dofManager.rankOffset(),
+                                                                                         dofKey,
+                                                                                         getName(),
+                                                                                         mesh.getElemManager(),
+                                                                                         stencilWrapper,
+                                                                                         dt,
+                                                                                         localMatrix.toViewConstSizes(),
+                                                                                         localRhs.toView() );
       }
 
 
@@ -382,14 +380,15 @@ void SinglePhaseFVM< SinglePhaseBase >::assembleStabilizedFluxTerms( real64 cons
       typename TYPEOFREF( stencil ) ::KernelWrapper stencilWrapper = stencil.createKernelWrapper();
 
       // No thermal support yet
-      stabilizedSinglePhaseFVMKernels::FluxComputeKernelFactory::createAndLaunch< parallelDevicePolicy<> >( dofManager.rankOffset(),
-                                                                                                            dofKey,
-                                                                                                            getName(),
-                                                                                                            mesh.getElemManager(),
-                                                                                                            stencilWrapper,
-                                                                                                            dt,
-                                                                                                            localMatrix.toViewConstSizes(),
-                                                                                                            localRhs.toView() );
+      kernels::fluidFlow::singlePhase::fvm::stabilization::
+        FluxComputeKernelFactory::createAndLaunch< parallelDevicePolicy<> >( dofManager.rankOffset(),
+                                                                             dofKey,
+                                                                             getName(),
+                                                                             mesh.getElemManager(),
+                                                                             stencilWrapper,
+                                                                             dt,
+                                                                             localMatrix.toViewConstSizes(),
+                                                                             localRhs.toView() );
 
     } );
   } );
@@ -406,6 +405,8 @@ void SinglePhaseFVM< SinglePhaseProppantBase >::assembleFluxTerms( real64 const 
                                                                    arrayView1d< real64 > const & localRhs )
 {
   GEOS_MARK_FUNCTION;
+
+  using namespace kernels::fluidFlow::singlePhase::fvm;
 
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
   FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
@@ -430,24 +431,25 @@ void SinglePhaseFVM< SinglePhaseProppantBase >::assembleFluxTerms( real64 const 
       typename FluxComputeKernelBase::SlurryFluidAccessors fluidAccessors( elemManager, getName() );
       typename FluxComputeKernelBase::ProppantPermeabilityAccessors permAccessors( elemManager, getName() );
 
-      singlePhaseProppantFluxKernels::FaceElementFluxKernel::launch( stencilWrapper,
-                                                                     dt,
-                                                                     dofManager.rankOffset(),
-                                                                     elemDofNumber.toNestedViewConst(),
-                                                                     flowAccessors.get< fields::ghostRank >(),
-                                                                     flowAccessors.get< flow::pressure >(),
-                                                                     flowAccessors.get< flow::gravityCoefficient >(),
-                                                                     fluidAccessors.get< fields::singlefluid::density >(),
-                                                                     fluidAccessors.get< fields::singlefluid::dDensity >(),
-                                                                     flowAccessors.get< flow::mobility >(),
-                                                                     flowAccessors.get< flow::dMobility >(),
-                                                                     permAccessors.get< permeability::permeability >(),
-                                                                     permAccessors.get< permeability::dPerm_dPressure >(),
-                                                                     permAccessors.get< permeability::dPerm_dDispJump >(),
-                                                                     permAccessors.get< permeability::permeabilityMultiplier >(),
-                                                                     this->gravityVector(),
-                                                                     localMatrix,
-                                                                     localRhs );
+      kernels::fluidFlow::singlePhase::proppant::
+        FaceElementFluxKernel::launch( stencilWrapper,
+                                       dt,
+                                       dofManager.rankOffset(),
+                                       elemDofNumber.toNestedViewConst(),
+                                       flowAccessors.get< fields::ghostRank >(),
+                                       flowAccessors.get< flow::pressure >(),
+                                       flowAccessors.get< flow::gravityCoefficient >(),
+                                       fluidAccessors.get< fields::singlefluid::density >(),
+                                       fluidAccessors.get< fields::singlefluid::dDensity >(),
+                                       flowAccessors.get< flow::mobility >(),
+                                       flowAccessors.get< flow::dMobility >(),
+                                       permAccessors.get< permeability::permeability >(),
+                                       permAccessors.get< permeability::dPerm_dPressure >(),
+                                       permAccessors.get< permeability::dPerm_dDispJump >(),
+                                       permAccessors.get< permeability::permeabilityMultiplier >(),
+                                       this->gravityVector(),
+                                       localMatrix,
+                                       localRhs );
     } );
   } );
 }
@@ -474,6 +476,8 @@ void SinglePhaseFVM< BASE >::assembleEDFMFluxTerms( real64 const GEOS_UNUSED_PAR
 {
   GEOS_MARK_FUNCTION;
 
+  using namespace kernels::fluidFlow::singlePhase::fvm;
+
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
   FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
   FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( m_discretizationName );
@@ -490,27 +494,25 @@ void SinglePhaseFVM< BASE >::assembleEDFMFluxTerms( real64 const GEOS_UNUSED_PAR
 
       if( m_isThermal )
       {
-        thermalSinglePhaseFVMKernels::
-          FluxComputeKernelFactory::createAndLaunch< parallelDevicePolicy<> >( dofManager.rankOffset(),
-                                                                               dofKey,
-                                                                               this->getName(),
-                                                                               mesh.getElemManager(),
-                                                                               stencilWrapper,
-                                                                               dt,
-                                                                               localMatrix.toViewConstSizes(),
-                                                                               localRhs.toView() );
+        thermal::FluxComputeKernelFactory::createAndLaunch< parallelDevicePolicy<> >( dofManager.rankOffset(),
+                                                                                      dofKey,
+                                                                                      this->getName(),
+                                                                                      mesh.getElemManager(),
+                                                                                      stencilWrapper,
+                                                                                      dt,
+                                                                                      localMatrix.toViewConstSizes(),
+                                                                                      localRhs.toView() );
       }
       else
       {
-        singlePhaseFVMKernels::
-          FluxComputeKernelFactory::createAndLaunch< parallelDevicePolicy<> >( dofManager.rankOffset(),
-                                                                               dofKey,
-                                                                               this->getName(),
-                                                                               mesh.getElemManager(),
-                                                                               stencilWrapper,
-                                                                               dt,
-                                                                               localMatrix.toViewConstSizes(),
-                                                                               localRhs.toView() );
+        isothermal::FluxComputeKernelFactory::createAndLaunch< parallelDevicePolicy<> >( dofManager.rankOffset(),
+                                                                                         dofKey,
+                                                                                         this->getName(),
+                                                                                         mesh.getElemManager(),
+                                                                                         stencilWrapper,
+                                                                                         dt,
+                                                                                         localMatrix.toViewConstSizes(),
+                                                                                         localRhs.toView() );
       }
     } );
 
@@ -562,6 +564,8 @@ void SinglePhaseFVM< BASE >::assembleHydrofracFluxTerms( real64 const GEOS_UNUSE
 {
   GEOS_MARK_FUNCTION;
 
+  using namespace kernels::fluidFlow::singlePhase::fvm;
+
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
   FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
   FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( m_discretizationName );
@@ -579,27 +583,25 @@ void SinglePhaseFVM< BASE >::assembleHydrofracFluxTerms( real64 const GEOS_UNUSE
 
       if( m_isThermal )
       {
-        thermalSinglePhaseFVMKernels::
-          FluxComputeKernelFactory::createAndLaunch< parallelDevicePolicy<> >( dofManager.rankOffset(),
-                                                                               dofKey,
-                                                                               this->getName(),
-                                                                               mesh.getElemManager(),
-                                                                               stencilWrapper,
-                                                                               dt,
-                                                                               localMatrix.toViewConstSizes(),
-                                                                               localRhs.toView() );
+        thermal::FluxComputeKernelFactory::createAndLaunch< parallelDevicePolicy<> >( dofManager.rankOffset(),
+                                                                                      dofKey,
+                                                                                      this->getName(),
+                                                                                      mesh.getElemManager(),
+                                                                                      stencilWrapper,
+                                                                                      dt,
+                                                                                      localMatrix.toViewConstSizes(),
+                                                                                      localRhs.toView() );
       }
       else
       {
-        singlePhaseFVMKernels::
-          FluxComputeKernelFactory::createAndLaunch< parallelDevicePolicy<> >( dofManager.rankOffset(),
-                                                                               dofKey,
-                                                                               this->getName(),
-                                                                               mesh.getElemManager(),
-                                                                               stencilWrapper,
-                                                                               dt,
-                                                                               localMatrix.toViewConstSizes(),
-                                                                               localRhs.toView() );
+        isothermal::FluxComputeKernelFactory::createAndLaunch< parallelDevicePolicy<> >( dofManager.rankOffset(),
+                                                                                         dofKey,
+                                                                                         this->getName(),
+                                                                                         mesh.getElemManager(),
+                                                                                         stencilWrapper,
+                                                                                         dt,
+                                                                                         localMatrix.toViewConstSizes(),
+                                                                                         localRhs.toView() );
       }
     } );
 
@@ -680,6 +682,8 @@ void SinglePhaseFVM< BASE >::applyFaceDirichletBC( real64 const time_n,
                                                    arrayView1d< real64 > const & localRhs )
 {
   GEOS_MARK_FUNCTION;
+
+  using namespace kernels::fluidFlow::singlePhase::fvm;
 
   FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
 
@@ -790,8 +794,7 @@ void SinglePhaseFVM< BASE >::applyFaceDirichletBC( real64 const time_n,
         string const & fluidName = subRegion.getReference< string >( BASE::viewKeyStruct::fluidNamesString() );
         SingleFluidBase & fluidBase = subRegion.getConstitutiveModel< SingleFluidBase >( fluidName );
 
-        thermalSinglePhaseFVMKernels::
-          DirichletFluxComputeKernelFactory::
+        thermal::DirichletFluxComputeKernelFactory::
           createAndLaunch< parallelDevicePolicy<> >( dofManager.rankOffset(),
                                                      dofKey,
                                                      this->getName(),
@@ -853,8 +856,7 @@ void SinglePhaseFVM< BASE >::applyFaceDirichletBC( real64 const time_n,
 
         BoundaryStencilWrapper const stencilWrapper = stencil.createKernelWrapper();
 
-        singlePhaseFVMKernels::
-          DirichletFluxComputeKernelFactory::
+        isothermal::DirichletFluxComputeKernelFactory::
           createAndLaunch< parallelDevicePolicy<> >( dofManager.rankOffset(),
                                                      dofKey,
                                                      this->getName(),
@@ -891,6 +893,8 @@ void SinglePhaseFVM<>::applyAquiferBC( real64 const time,
                                        arrayView1d< real64 > const & localRhs ) const
 {
   GEOS_MARK_FUNCTION;
+
+  using namespace kernels::fluidFlow::singlePhase::fvm;
 
   FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
 
@@ -931,21 +935,21 @@ void SinglePhaseFVM<>::applyAquiferBC( real64 const time,
       AquiferBoundaryCondition::KernelWrapper aquiferBCWrapper = bc.createKernelWrapper();
       real64 const & aquiferDens = bc.getWaterPhaseDensity();
 
-      singlePhaseFVMKernels::AquiferBCKernel::launch( stencil,
-                                                      dofManager.rankOffset(),
-                                                      elemDofNumber.toNestedViewConst(),
-                                                      flowAccessors.get< fields::ghostRank >(),
-                                                      aquiferBCWrapper,
-                                                      aquiferDens,
-                                                      flowAccessors.get< flow::pressure >(),
-                                                      flowAccessors.get< flow::pressure_n >(),
-                                                      flowAccessors.get< flow::gravityCoefficient >(),
-                                                      fluidAccessors.get< fields::singlefluid::density >(),
-                                                      fluidAccessors.get< fields::singlefluid::dDensity >(),
-                                                      time,
-                                                      dt,
-                                                      localMatrix.toViewConstSizes(),
-                                                      localRhs.toView() );
+      AquiferBCKernel::launch( stencil,
+                               dofManager.rankOffset(),
+                               elemDofNumber.toNestedViewConst(),
+                               flowAccessors.get< fields::ghostRank >(),
+                               aquiferBCWrapper,
+                               aquiferDens,
+                               flowAccessors.get< flow::pressure >(),
+                               flowAccessors.get< flow::pressure_n >(),
+                               flowAccessors.get< flow::gravityCoefficient >(),
+                               fluidAccessors.get< fields::singlefluid::density >(),
+                               fluidAccessors.get< fields::singlefluid::dDensity >(),
+                               time,
+                               dt,
+                               localMatrix.toViewConstSizes(),
+                               localRhs.toView() );
 
     } );
   } );

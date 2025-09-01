@@ -3,7 +3,7 @@
 
 namespace geos
 {
-namespace compositionalMultiphaseHybridFVMKernels
+namespace kernels::fluidFlow::compositional::hybridFVM
 {
   constexpr int NC = @NCOMPS@;
   constexpr int NP = @NPHASES@;

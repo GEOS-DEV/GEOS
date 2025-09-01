@@ -28,7 +28,7 @@
 namespace geos
 {
 
-namespace singlePhaseProppantFluxKernels
+namespace kernels::fluidFlow::singlePhase::proppant
 {
 
 /******************************** FaceElementFluxKernel ********************************/
@@ -113,8 +113,7 @@ struct FaceElementFluxKernel
            arraySlice2d< real64 > const & dFlux_dAperture );
 };
 
-
-} // namespace singlePhaseProppantFluxKernels
+} // namespace kernels::fluidFlow::singlePhase::proppant
 
 } // namespace geos
 

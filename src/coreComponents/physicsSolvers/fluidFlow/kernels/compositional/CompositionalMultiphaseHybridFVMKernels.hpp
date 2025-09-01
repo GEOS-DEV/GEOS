@@ -40,7 +40,7 @@
 namespace geos
 {
 
-namespace compositionalMultiphaseHybridFVMKernels
+namespace kernels::fluidFlow::compositional::hybridFVM
 {
 
 // struct to specify local and neighbor derivatives
@@ -654,11 +654,11 @@ struct FluxKernel
  * @brief Define the interface for the property kernel in charge of computing the phase mobilities
  */
 template< integer NUM_COMP, integer NUM_PHASE >
-class PhaseMobilityKernel : public isothermalCompositionalMultiphaseBaseKernels::PropertyKernelBase< NUM_COMP >
+class PhaseMobilityKernel : public kernels::fluidFlow::compositional::PropertyKernelBase< NUM_COMP >
 {
 public:
 
-  using Base = isothermalCompositionalMultiphaseBaseKernels::PropertyKernelBase< NUM_COMP >;
+  using Base = kernels::fluidFlow::compositional::PropertyKernelBase< NUM_COMP >;
   using Base::numComp;
 
   /// Compile time value for the number of phases
@@ -816,9 +816,11 @@ public:
                    constitutive::MultiFluidBase const & fluid,
                    constitutive::RelativePermeabilityBase const & relperm )
   {
+    using namespace kernels::fluidFlow::compositional::internal;
+
     if( numPhase == 2 )
     {
-      isothermalCompositionalMultiphaseBaseKernels::internal::kernelLaunchSelectorCompSwitch( numComp, [&] ( auto NC )
+      kernelLaunchSelectorCompSwitch( numComp, [&] ( auto NC )
       {
         integer constexpr NUM_COMP = NC();
         PhaseMobilityKernel< NUM_COMP, 2 > kernel( subRegion, fluid, relperm );
@@ -827,7 +829,7 @@ public:
     }
     else if( numPhase == 3 )
     {
-      isothermalCompositionalMultiphaseBaseKernels::internal::kernelLaunchSelectorCompSwitch( numComp, [&] ( auto NC )
+      kernelLaunchSelectorCompSwitch( numComp, [&] ( auto NC )
       {
         integer constexpr NUM_COMP = NC();
         PhaseMobilityKernel< NUM_COMP, 3 > kernel( subRegion, fluid, relperm );
@@ -1223,7 +1225,7 @@ void kernelLaunchSelector( integer numFacesInElem, integer numComps, integer num
   }
 }
 
-} // namespace compositionalMultiphaseHybridFVMKernels
+} // namespace kernels::fluidFlow::compositional::hybridFVM
 
 } // namespace geos
 

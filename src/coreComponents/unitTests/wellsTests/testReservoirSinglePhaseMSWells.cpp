@@ -37,6 +37,7 @@ using namespace geos;
 using namespace geos::dataRepository;
 using namespace geos::constitutive;
 using namespace geos::testing;
+using namespace geos::kernels::wells::singlePhase;
 
 CommandLineOptions g_commandLineOptions;
 
@@ -287,7 +288,7 @@ void testNumericalJacobian( SinglePhaseReservoirAndWells<> & solver,
           //      this is computing J_RW and J_WW
           fillNumericalJacobian( residual.toViewConst(),
                                  residualOrig.toViewConst(),
-                                 wellElemDofNumber[iwelem] + singlePhaseWellKernels::ColOffset::DPRES,
+                                 wellElemDofNumber[iwelem] + ColOffset::DPRES,
                                  dP,
                                  jacobianFD.toViewConstSizes() );
         }
@@ -315,7 +316,7 @@ void testNumericalJacobian( SinglePhaseReservoirAndWells<> & solver,
           //      this is computing J_RW and J_WW
           fillNumericalJacobian( residual.toViewConst(),
                                  residualOrig.toViewConst(),
-                                 wellElemDofNumber[iwelem] + singlePhaseWellKernels::ColOffset::DRATE,
+                                 wellElemDofNumber[iwelem] + ColOffset::DRATE,
                                  dRate,
                                  jacobianFD.toViewConstSizes() );
         }

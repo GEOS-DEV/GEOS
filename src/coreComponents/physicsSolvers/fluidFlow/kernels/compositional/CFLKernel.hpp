@@ -38,7 +38,7 @@
 namespace geos
 {
 
-namespace isothermalCompositionalMultiphaseFVMKernels
+namespace kernels::fluidFlow::compositional::fvm
 {
 
 /******************************** CFLFluxKernel ********************************/
@@ -188,7 +188,7 @@ struct CFLKernel
 
 };
 
-} // namespace isothermalCompositionalMultiphaseFVMKernels
+} // namespace kernels::fluidFlow::compositional::fvm
 
 } // namespace geos
 

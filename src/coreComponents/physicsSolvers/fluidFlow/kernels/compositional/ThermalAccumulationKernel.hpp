@@ -25,7 +25,7 @@
 namespace geos
 {
 
-namespace thermalCompositionalMultiphaseBaseKernels
+namespace kernels::fluidFlow::compositional::thermal
 {
 
 /******************************** AccumulationKernel ********************************/
@@ -37,11 +37,12 @@ namespace thermalCompositionalMultiphaseBaseKernels
  * @brief Define the interface for the assembly kernel in charge of thermal accumulation and volume balance
  */
 template< localIndex NUM_COMP, localIndex NUM_DOF >
-class AccumulationKernel : public isothermalCompositionalMultiphaseBaseKernels::AccumulationKernel< NUM_COMP, NUM_DOF >
+class AccumulationKernel :
+  public kernels::fluidFlow::compositional::isothermal::AccumulationKernel< NUM_COMP, NUM_DOF >
 {
 public:
 
-  using Base = isothermalCompositionalMultiphaseBaseKernels::AccumulationKernel< NUM_COMP, NUM_DOF >;
+  using Base = kernels::fluidFlow::compositional::isothermal::AccumulationKernel< NUM_COMP, NUM_DOF >;
   using Base::numComp;
   using Base::numDof;
   using Base::numEqn;
@@ -62,6 +63,8 @@ public:
   using Base::m_localMatrix;
   using Base::m_localRhs;
 
+  using KernelFlags = kernels::fluidFlow::compositional::KernelFlags;
+
   /**
    * @brief Constructor
    * @param[in] numPhases the number of fluid phases
@@ -81,7 +84,7 @@ public:
                       constitutive::CoupledSolidBase const & solid,
                       CRSMatrixView< real64, globalIndex const > const & localMatrix,
                       arrayView1d< real64 > const & localRhs,
-                      BitFlags< isothermalCompositionalMultiphaseBaseKernels::KernelFlags > const kernelFlags )
+                      BitFlags< KernelFlags > const kernelFlags )
     : Base( numPhases, rankOffset, dofKey, subRegion, fluid, solid, localMatrix, localRhs, kernelFlags ),
     m_dPoro_dTemp( solid.getDporosity_dTemperature() ),
     m_phaseInternalEnergy( fluid.phaseInternalEnergy() ),
@@ -311,7 +314,7 @@ public:
   createAndLaunch( localIndex const numComps,
                    localIndex const numPhases,
                    globalIndex const rankOffset,
-                   BitFlags< isothermalCompositionalMultiphaseBaseKernels::KernelFlags > kernelFlags,
+                   BitFlags< kernels::fluidFlow::compositional::KernelFlags > kernelFlags,
                    string const dofKey,
                    ElementSubRegionBase const & subRegion,
                    constitutive::MultiFluidBase const & fluid,
@@ -319,8 +322,8 @@ public:
                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
                    arrayView1d< real64 > const & localRhs )
   {
-    isothermalCompositionalMultiphaseBaseKernels::
-      internal::kernelLaunchSelectorCompSwitch( numComps, [&] ( auto NC )
+    kernels::fluidFlow::compositional::internal::
+      kernelLaunchSelectorCompSwitch( numComps, [&] ( auto NC )
     {
       localIndex constexpr NUM_COMP = NC();
       localIndex constexpr NUM_DOF = NC()+2;
@@ -333,7 +336,7 @@ public:
 
 };
 
-} // namespace thermalCompositionalMultiphaseBaseKernels
+} // namespace kernels::fluidFlow::compositional::thermal
 
 } // namespace geos
 

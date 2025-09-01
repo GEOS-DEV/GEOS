@@ -25,6 +25,7 @@
 #include "common/GEOS_RAJA_Interface.hpp"
 #include "constitutive/fluid/multifluid/Layouts.hpp"
 #include "physicsSolvers/fluidFlow/wells/kernels/CompositionalMultiphaseWellKernels.hpp"
+#include "physicsSolvers/fluidFlow/kernels/compositional/FluxComputeKernelBase.hpp"
 #include "physicsSolvers/fluidFlow/wells/CompositionalMultiphaseWellFields.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellTags.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellFields.hpp"
@@ -51,17 +52,15 @@ public:
   static constexpr integer resNumDOF  = NC+1+IS_THERMAL;
 
   // Well jacobian column and row indicies
-  using WJ_COFFSET = compositionalMultiphaseWellKernels::ColOffset_WellJac< NC, IS_THERMAL >;
-  using WJ_ROFFSET = compositionalMultiphaseWellKernels::RowOffset_WellJac< NC, IS_THERMAL >;
+  using WJ_COFFSET = kernels::wells::compositional::ColOffset_WellJac< NC, IS_THERMAL >;
+  using WJ_ROFFSET = kernels::wells::compositional::RowOffset_WellJac< NC, IS_THERMAL >;
 
-  using ROFFSET = compositionalMultiphaseWellKernels::RowOffset;
-  using COFFSET = compositionalMultiphaseWellKernels::ColOffset;
+  using ROFFSET = kernels::wells::compositional::RowOffset;
+  using COFFSET = kernels::wells::compositional::ColOffset;
 
   using CP_Deriv = multifluid::DerivativeOffsetC< NC, IS_THERMAL >;
 
-  using TAG = compositionalMultiphaseWellKernels::SubRegionTag;
-
-
+  using TAG = kernels::wells::compositional::SubRegionTag;
 
   /// Compute time value for the number of degrees of freedom
   static constexpr integer numDof = WJ_COFFSET::nDer;
@@ -90,12 +89,11 @@ public:
                                                ElementRegionManager::ElementViewConst< arrayView1d< globalIndex const > > const resDofNumber,
                                                PerforationData const * const perforationData,
                                                MultiFluidBase const & fluid,
-
                                                arrayView1d< real64 > const & localRhs,
                                                CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                bool const & detectCrossflow,
                                                integer & numCrossFlowPerforations,
-                                               BitFlags< isothermalCompositionalMultiphaseBaseKernels::KernelFlags > kernelFlags )
+                                               BitFlags< kernels::fluidFlow::compositional::KernelFlags > kernelFlags )
     :
     m_dt( dt ),
     m_numPhases ( fluid.numFluidPhases()),
@@ -112,7 +110,7 @@ public:
     m_localMatrix( localMatrix ),
     m_detectCrossflow( detectCrossflow ),
     m_numCrossFlowPerforations( numCrossFlowPerforations ),
-    m_useTotalMassEquation ( kernelFlags.isSet( isothermalCompositionalMultiphaseBaseKernels::KernelFlags::TotalMassEquation ) )
+    m_useTotalMassEquation ( kernelFlags.isSet( kernels::fluidFlow::compositional::KernelFlags::TotalMassEquation ) )
   { }
 
 
@@ -306,14 +304,14 @@ public:
                    ElementRegionManager::ElementViewConst< arrayView1d< globalIndex const > > const resDofNumber,
                    PerforationData const * const perforationData,
                    MultiFluidBase const & fluid,
-                   BitFlags< isothermalCompositionalMultiphaseBaseKernels::KernelFlags > kernelFlags,
+                   BitFlags< kernels::fluidFlow::compositional::KernelFlags > kernelFlags,
                    bool const & detectCrossflow,
                    integer & numCrossFlowPerforations,
                    arrayView1d< real64 > const & localRhs,
                    CRSMatrixView< real64, globalIndex const > const & localMatrix
                    )
   {
-    isothermalCompositionalMultiphaseBaseKernels::internal::kernelLaunchSelectorCompSwitch( numComps, [&]( auto NC )
+    kernels::fluidFlow::compositional::internal::kernelLaunchSelectorCompSwitch( numComps, [&]( auto NC )
     {
       integer constexpr NUM_COMP = NC();
 
@@ -342,15 +340,15 @@ public:
   static constexpr integer resNumDOF  = NC+1+IS_THERMAL;
 
   // Well jacobian column and row indicies
-  using WJ_COFFSET = compositionalMultiphaseWellKernels::ColOffset_WellJac< NC, IS_THERMAL >;
-  using WJ_ROFFSET = compositionalMultiphaseWellKernels::RowOffset_WellJac< NC, IS_THERMAL >;
+  using WJ_COFFSET = kernels::wells::compositional::ColOffset_WellJac< NC, IS_THERMAL >;
+  using WJ_ROFFSET = kernels::wells::compositional::RowOffset_WellJac< NC, IS_THERMAL >;
 
-  using ROFFSET = compositionalMultiphaseWellKernels::RowOffset;
-  using COFFSET = compositionalMultiphaseWellKernels::ColOffset;
+  using ROFFSET = kernels::wells::compositional::RowOffset;
+  using COFFSET = kernels::wells::compositional::ColOffset;
 
   using CP_Deriv = multifluid::DerivativeOffsetC< NC, IS_THERMAL >;
 
-  using TAG = compositionalMultiphaseWellKernels::SubRegionTag;
+  using TAG = kernels::wells::compositional::SubRegionTag;
 
   using Base::m_dt;
   using Base::m_localRhs;
@@ -391,7 +389,7 @@ public:
                                             CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                             bool const & detectCrossflow,
                                             integer & numCrossFlowPerforations,
-                                            BitFlags< isothermalCompositionalMultiphaseBaseKernels::KernelFlags > kernelFlags )
+                                            BitFlags< kernels::fluidFlow::compositional::KernelFlags > kernelFlags )
     : Base( dt,
             rankOffset,
             wellDofKey,
@@ -550,14 +548,14 @@ public:
                    ElementRegionManager::ElementViewConst< arrayView1d< globalIndex const > > const resDofNumber,
                    PerforationData const * const perforationData,
                    MultiFluidBase const & fluid,
-                   BitFlags< isothermalCompositionalMultiphaseBaseKernels::KernelFlags > kernelFlags,
+                   BitFlags< kernels::fluidFlow::compositional::KernelFlags > kernelFlags,
                    bool const & detectCrossflow,
                    integer & numCrossFlowPerforations,
                    arrayView1d< real64 > const & localRhs,
                    CRSMatrixView< real64, globalIndex const > const & localMatrix
                    )
   {
-    isothermalCompositionalMultiphaseBaseKernels::internal::kernelLaunchSelectorCompSwitch( numComps, [&]( auto NC )
+    kernels::fluidFlow::compositional::internal::kernelLaunchSelectorCompSwitch( numComps, [&]( auto NC )
     {
       integer constexpr NUM_COMP = NC();
 

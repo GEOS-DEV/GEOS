@@ -35,10 +35,11 @@
 namespace geos
 {
 
-namespace isothermalCompositionalMultiphaseBaseKernels
+namespace kernels::fluidFlow::compositional
 {
 
 static constexpr real64 minDensForDivision = 1e-10;
+static constexpr real64 minCompFracForDivision = 0;
 
 enum class KernelFlags
 {
@@ -52,6 +53,9 @@ enum class KernelFlags
   // Flag7 = 1 << 6, // 64
   // Flag8 = 1 << 7  //128
 };
+
+namespace isothermal
+{
 
 /******************************** AccumulationKernel ********************************/
 
@@ -476,7 +480,7 @@ public:
   createAndLaunch( integer const numComps,
                    integer const numPhases,
                    globalIndex const rankOffset,
-                   BitFlags< KernelFlags > kernelFlags,
+                   BitFlags< kernels::fluidFlow::compositional::KernelFlags > kernelFlags,
                    string const dofKey,
                    ElementSubRegionBase const & subRegion,
                    constitutive::MultiFluidBase const & fluid,
@@ -497,7 +501,9 @@ public:
 
 };
 
-} // namespace isothermalCompositionalMultiphaseBaseKernels
+} // namespace isothermal
+
+} // namespace kernels::fluidFlow::compositional
 
 } // namespace geos
 

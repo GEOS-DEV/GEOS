@@ -25,7 +25,7 @@
 namespace geos
 {
 
-namespace singlePhaseProppantBaseKernels
+namespace kernels::fluidFlow::singlePhase::proppant
 {
 
 /******************************** FluidUpdateKernel ********************************/
@@ -57,7 +57,7 @@ struct FluidUpdateKernel
   }
 };
 
-} // namespace singlePhaseProppantBaseKernels
+} // namespace kernels::fluidFlow::singlePhase::proppant
 
 } //namespace geos
 

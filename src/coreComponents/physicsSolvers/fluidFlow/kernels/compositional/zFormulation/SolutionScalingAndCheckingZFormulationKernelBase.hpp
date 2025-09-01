@@ -28,7 +28,7 @@
 namespace geos
 {
 
-namespace isothermalCompositionalMultiphaseBaseKernels
+namespace kernels::fluidFlow::compositional
 {
 
 /**
@@ -174,7 +174,7 @@ protected:
 
 };
 
-} // namespace isothermalCompositionalMultiphaseBaseKernels
+} // namespace kernels::fluidFlow::compositional
 
 } // namespace geos
 

@@ -25,7 +25,7 @@
 namespace geos
 {
 
-namespace thermalCompositionalMultiphaseBaseKernels
+namespace kernels::fluidFlow::compositional::thermal
 {
 
 /******************************** SolutionScalingKernel ********************************/
@@ -34,11 +34,11 @@ namespace thermalCompositionalMultiphaseBaseKernels
  * @class SolutionScalingKernel
  * @brief Define the kernel for scaling the Newton update
  */
-class SolutionScalingKernel : public isothermalCompositionalMultiphaseBaseKernels::SolutionScalingKernel
+class SolutionScalingKernel : public kernels::fluidFlow::compositional::isothermal::SolutionScalingKernel
 {
 public:
 
-  using Base = isothermalCompositionalMultiphaseBaseKernels::SolutionScalingKernel;
+  using Base = kernels::fluidFlow::compositional::isothermal::SolutionScalingKernel;
   using Base::m_numComp;
   using Base::m_localSolution;
 
@@ -118,7 +118,7 @@ public:
   void computeScalingFactor( localIndex const ei,
                              StackVariables & stack ) const
   {
-    real64 constexpr eps = isothermalCompositionalMultiphaseBaseKernels::minDensForDivision;
+    real64 constexpr eps = kernels::fluidFlow::compositional::minDensForDivision;
     Base::computeScalingFactor( ei, stack, [&] ()
     {
       // compute the change in temperature
@@ -212,13 +212,12 @@ public:
                                   rankOffset, numComp, dofKey, subRegion, localSolution,
                                   pressure, temperature, compDens, pressureScalingFactor,
                                   compDensScalingFactor, temperatureScalingFactor, temperatureOffset );
-    return thermalCompositionalMultiphaseBaseKernels::
-             SolutionScalingKernel::launch< POLICY >( subRegion.size(), kernel );
+    return SolutionScalingKernel::launch< POLICY >( subRegion.size(), kernel );
   }
 
 };
 
-} // namespace thermalCompositionalMultiphaseBaseKernels
+} // namespace kernels::fluidFlow::compositional::thermal
 
 } // namespace geos
 

@@ -26,7 +26,7 @@
 namespace geos
 {
 
-namespace singlePhaseBaseKernels
+namespace kernels::fluidFlow::singlePhase
 {
 
 /******************************** SolutionScalingKernel ********************************/
@@ -68,7 +68,7 @@ struct SolutionScalingKernel
 
 };
 
-} // namespace singlePhaseBaseKernels
+} // namespace kernels::fluidFlow::singlePhase
 
 } // namespace geos
 

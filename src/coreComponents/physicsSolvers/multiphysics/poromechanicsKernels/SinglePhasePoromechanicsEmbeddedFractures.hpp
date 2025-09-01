@@ -31,7 +31,8 @@ namespace singlePhasePoromechanicsEmbeddedFracturesKernels
 {
 
 template< integer NUM_EQN, integer NUM_DOF >
-class ConnectorBasedAssemblyKernel : public singlePhaseFVMKernels::FluxComputeKernel< NUM_EQN, NUM_DOF, SurfaceElementStencilWrapper >
+class ConnectorBasedAssemblyKernel :
+  public ::geos::kernels::fluidFlow::singlePhase::fvm::isothermal::FluxComputeKernel< NUM_EQN, NUM_DOF, SurfaceElementStencilWrapper >
 {
 public:
 
@@ -44,7 +45,7 @@ public:
   template< typename VIEWTYPE >
   using ElementViewConst = ElementRegionManager::ElementViewConst< VIEWTYPE >;
 
-  using AbstractBase = singlePhaseFVMKernels::FluxComputeKernelBase;
+  using AbstractBase = ::geos::kernels::fluidFlow::singlePhase::fvm::FluxComputeKernelBase;
   using DofNumberAccessor = AbstractBase::DofNumberAccessor;
   using SinglePhaseFlowAccessors = AbstractBase::SinglePhaseFlowAccessors;
   using SinglePhaseFluidAccessors = AbstractBase::SinglePhaseFluidAccessors;
@@ -63,7 +64,7 @@ public:
   using AbstractBase::m_dens;
   using AbstractBase::m_dDens;
 
-  using Base = singlePhaseFVMKernels::FluxComputeKernel< NUM_EQN, NUM_DOF, SurfaceElementStencilWrapper >;
+  using Base = ::geos::kernels::fluidFlow::singlePhase::fvm::isothermal::FluxComputeKernel< NUM_EQN, NUM_DOF, SurfaceElementStencilWrapper >;
   using Base::numDof;
   using Base::numEqn;
   using Base::maxNumElems;
@@ -181,21 +182,23 @@ public:
     real64 mobility = 0.0;
     real64 potGrad = 0.0;
 
-    singlePhaseFluxKernelsHelper::computeSinglePhaseFlux( regionIndex, subRegionIndex, elementIndex,
-                                                          trans,
-                                                          dTrans,
-                                                          m_pres,
-                                                          m_gravCoef,
-                                                          m_dens,
-                                                          m_dDens,
-                                                          m_mob,
-                                                          m_dMob,
-                                                          alpha,
-                                                          mobility,
-                                                          potGrad,
-                                                          fluxVal,
-                                                          dFlux_dP,
-                                                          dFlux_dTrans );
+    kernels::fluidFlow::singlePhase::fvm::computeSinglePhaseFlux( regionIndex,
+                                                                  subRegionIndex,
+                                                                  elementIndex,
+                                                                  trans,
+                                                                  dTrans,
+                                                                  m_pres,
+                                                                  m_gravCoef,
+                                                                  m_dens,
+                                                                  m_dDens,
+                                                                  m_mob,
+                                                                  m_dMob,
+                                                                  alpha,
+                                                                  mobility,
+                                                                  potGrad,
+                                                                  fluxVal,
+                                                                  dFlux_dP,
+                                                                  dFlux_dTrans );
 
 
 

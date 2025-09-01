@@ -38,7 +38,7 @@
 namespace geos
 {
 
-namespace isothermalCompositionalMultiphaseFVMKernels
+namespace kernels::fluidFlow::compositional::fvm::isothermal
 {
 
 /******************************** DirichletFluxComputeKernel ********************************/
@@ -66,7 +66,7 @@ public:
   template< typename VIEWTYPE >
   using ElementViewConst = ElementRegionManager::ElementViewConst< VIEWTYPE >;
 
-  using AbstractBase = isothermalCompositionalMultiphaseFVMKernels::FluxComputeKernelBase;
+  using AbstractBase = kernels::fluidFlow::compositional::fvm::FluxComputeKernelBase;
   using DofNumberAccessor = AbstractBase::DofNumberAccessor;
   using CompFlowAccessors = AbstractBase::CompFlowAccessors;
   using MultiFluidAccessors = AbstractBase::MultiFluidAccessors;
@@ -87,7 +87,7 @@ public:
   using AbstractBase::m_localRhs;
   using AbstractBase::m_kernelFlags;
 
-  using Base = isothermalCompositionalMultiphaseFVMKernels::FluxComputeKernel< NUM_COMP, NUM_DOF, BoundaryStencilWrapper >;
+  using Base = FluxComputeKernel< NUM_COMP, NUM_DOF, BoundaryStencilWrapper >;
   using Base::numComp;
   using Base::numDof;
   using Base::numEqn;
@@ -509,7 +509,7 @@ public:
   createAndLaunch( integer const numComps,
                    integer const numPhases,
                    globalIndex const rankOffset,
-                   BitFlags< KernelFlags > kernelFlags,
+                   BitFlags< kernels::fluidFlow::compositional::fvm::KernelFlags > kernelFlags,
                    string const & dofKey,
                    string const & solverName,
                    FaceManager const & faceManager,
@@ -546,7 +546,7 @@ public:
   }
 };
 
-} // namespace isothermalCompositionalMultiphaseFVMKernels
+} // namespace kernels::fluidFlow::compositional::fvm::isothermal
 
 } // namespace geos
 

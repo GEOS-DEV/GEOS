@@ -28,7 +28,7 @@
 namespace geos
 {
 
-namespace proppantTransportKernels
+namespace kernels::fluidFlow::singlePhase::proppant
 {
 
 GEOS_HOST_DEVICE
@@ -1310,6 +1310,6 @@ void ProppantPackVolumeKernel::
   } );
 }
 
-} // namespace proppantTransportKernels
+} // namespace kernels::fluidFlow::singlePhase::proppant
 
 } // namespace geos

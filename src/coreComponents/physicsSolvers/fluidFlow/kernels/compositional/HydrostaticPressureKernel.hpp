@@ -29,7 +29,7 @@
 namespace geos
 {
 
-namespace isothermalCompositionalMultiphaseBaseKernels
+namespace kernels::fluidFlow::compositional
 {
 
 /******************************** HydrostaticPressureKernel ********************************/
@@ -348,7 +348,7 @@ struct HydrostaticPressureKernel
 
 };
 
-} // namespace isothermalCompositionalMultiphaseBaseKernels
+} // namespace kernels::fluidFlow::compositional
 
 } // namespace geos
 

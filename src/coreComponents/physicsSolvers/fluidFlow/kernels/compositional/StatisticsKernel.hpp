@@ -29,7 +29,7 @@
 namespace geos
 {
 
-namespace isothermalCompositionalMultiphaseBaseKernels
+namespace kernels::fluidFlow::compositional
 {
 
 /******************************** StatisticsKernel ********************************/
@@ -186,7 +186,7 @@ struct StatisticsKernel
   }
 };
 
-} // namespace isothermalCompositionalMultiphaseBaseKernels
+} // namespace kernels::fluidFlow::compositional
 
 } // namespace geos
 

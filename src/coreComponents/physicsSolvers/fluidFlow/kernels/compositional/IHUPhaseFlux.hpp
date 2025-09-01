@@ -30,17 +30,17 @@
 namespace geos
 {
 
-namespace isothermalCompositionalMultiphaseFVMKernelUtilities
+namespace kernels::fluidFlow::compositional::fvm
+{
+
+/************************* HELPERS ******************/
+namespace UpwindHelpers
 {
 
 template< typename VIEWTYPE >
 using ElementViewConst = ElementRegionManager::ElementViewConst< VIEWTYPE >;
 
 using Deriv = constitutive::multifluid::DerivativeOffset;
-
-/************************* HELPERS ******************/
-namespace UpwindHelpers
-{
 
 template< localIndex numComp >
 GEOS_HOST_DEVICE
@@ -625,12 +625,11 @@ struct computePotentialGravity
     real64 densMean{};
     real64 dDensMean_dPres[numFluxSupportPoints]{};
     real64 dDensMean_dComp[numFluxSupportPoints][numComp]{};
-    isothermalCompositionalMultiphaseFVMKernels::helpers::
-      calculateMeanDensity( ip, seri, sesri, sei,
-                            checkPhasePresenceInGravity,
-                            phaseVolFrac, dCompFrac_dCompDens,
-                            phaseMassDens, dPhaseMassDens,
-                            densMean, dDensMean_dPres, dDensMean_dComp );
+    helpers::calculateMeanDensity( ip, seri, sesri, sei,
+                                   checkPhasePresenceInGravity,
+                                   phaseVolFrac, dCompFrac_dCompDens,
+                                   phaseMassDens, dPhaseMassDens,
+                                   densMean, dDensMean_dPres, dDensMean_dComp );
 
     // compute potential difference MPFA-style
     for( localIndex i = 0; i < numFluxSupportPoints; ++i )
@@ -1064,6 +1063,10 @@ static void computePotentialFluxesCapillary( localIndex const numPhase,
  */
 class UpwindScheme
 {
+  template< typename VIEWTYPE >
+  using ElementViewConst = ElementRegionManager::ElementViewConst< VIEWTYPE >;
+
+  using Deriv = constitutive::multifluid::DerivativeOffset;
 
 public:
 
@@ -1480,6 +1483,10 @@ public:
 
 struct IHUPhaseFlux
 {
+  template< typename VIEWTYPE >
+  using ElementViewConst = ElementRegionManager::ElementViewConst< VIEWTYPE >;
+
+  using Deriv = constitutive::multifluid::DerivativeOffset;
 
   using UPWIND_SCHEME = HybridUpwind;
 
@@ -1742,7 +1749,7 @@ struct IHUPhaseFlux
 
 };
 
-} // namespace isothermalCompositionalMultiPhaseFVMKernelUtilities
+} // namespace kernels::fluidFlow::compositional::fvm
 
 } // namespace geos
 

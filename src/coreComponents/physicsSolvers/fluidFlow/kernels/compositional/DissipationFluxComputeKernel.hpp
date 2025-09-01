@@ -28,7 +28,7 @@
 namespace geos
 {
 
-namespace dissipationCompositionalMultiphaseFVMKernels
+namespace kernels::fluidFlow::compositional::fvm::isothermal::dissipation
 {
 
 static constexpr integer newtonContinuationCutoffIteration = 5;
@@ -45,7 +45,8 @@ static constexpr real64 multiplierDirectionalCoef = 1000;
  * @brief Define the interface for the assembly kernel in charge of flux terms
  */
 template< integer NUM_COMP, integer NUM_DOF, typename STENCILWRAPPER >
-class FluxComputeKernel : public isothermalCompositionalMultiphaseFVMKernels::FluxComputeKernel< NUM_COMP, NUM_DOF, STENCILWRAPPER >
+class FluxComputeKernel :
+  public kernels::fluidFlow::compositional::fvm::isothermal::FluxComputeKernel< NUM_COMP, NUM_DOF, STENCILWRAPPER >
 {
 public:
 
@@ -58,7 +59,7 @@ public:
   template< typename VIEWTYPE >
   using ElementViewConst = ElementRegionManager::ElementViewConst< VIEWTYPE >;
 
-  using AbstractBase = isothermalCompositionalMultiphaseFVMKernels::FluxComputeKernelBase;
+  using AbstractBase = kernels::fluidFlow::compositional::fvm::FluxComputeKernelBase;
   using DofNumberAccessor = AbstractBase::DofNumberAccessor;
   using CompFlowAccessors = AbstractBase::CompFlowAccessors;
   using MultiFluidAccessors = AbstractBase::MultiFluidAccessors;
@@ -69,13 +70,15 @@ public:
   using AbstractBase::m_gravCoef;
   using AbstractBase::m_dCompFrac_dCompDens;
 
-  using Base = isothermalCompositionalMultiphaseFVMKernels::FluxComputeKernel< NUM_COMP, NUM_DOF, STENCILWRAPPER >;
+  using Base = kernels::fluidFlow::compositional::fvm::isothermal::FluxComputeKernel< NUM_COMP, NUM_DOF, STENCILWRAPPER >;
   using Base::numComp;
   using Base::numDof;
   using Base::numEqn;
   using Base::numFluxSupportPoints;
   using Base::m_permeability;
   using Base::m_dPerm_dPres;
+
+  using KernelFlags = kernels::fluidFlow::compositional::fvm::KernelFlags;
 
   using DissCompFlowAccessors =
     StencilAccessors< fields::flow::pressure_n,
@@ -124,7 +127,7 @@ public:
                      real64 const & dt,
                      CRSMatrixView< real64, globalIndex const > const & localMatrix,
                      arrayView1d< real64 > const & localRhs,
-                     BitFlags< isothermalCompositionalMultiphaseFVMKernels::KernelFlags > kernelFlags,
+                     BitFlags< kernels::fluidFlow::compositional::fvm::KernelFlags > kernelFlags,
                      real64 const omega,
                      integer const curNewton,
                      integer const continuation,
@@ -349,7 +352,7 @@ public:
                    integer const numPhases,
                    globalIndex const rankOffset,
                    string const & dofKey,
-                   BitFlags< isothermalCompositionalMultiphaseFVMKernels::KernelFlags > kernelFlags,
+                   BitFlags< kernels::fluidFlow::compositional::fvm::KernelFlags > kernelFlags,
                    string const & solverName,
                    ElementRegionManager const & elemManager,
                    STENCILWRAPPER const & stencilWrapper,
@@ -363,8 +366,8 @@ public:
                    real64 const kappamin,
                    real64 const contMultiplier )
   {
-    isothermalCompositionalMultiphaseBaseKernels::
-      internal::kernelLaunchSelectorCompSwitch( numComps, [&]( auto NC )
+    kernels::fluidFlow::compositional::internal::
+      kernelLaunchSelectorCompSwitch( numComps, [&]( auto NC )
     {
       integer constexpr NUM_COMP = NC();
       integer constexpr NUM_DOF = NC() + 1;
@@ -389,7 +392,7 @@ public:
   }
 };
 
-} // namespace DissipationCompositionalMultiphaseFVMKernels
+} // namespace kernels::fluidFlow::compositional::fvm::isothermal:dissipation
 
 } // namespace geos
 

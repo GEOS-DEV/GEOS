@@ -43,8 +43,7 @@
 namespace geos
 {
 
-
-namespace compositionalMultiphaseWellKernels
+namespace kernels::wells::compositional
 {
 
 static constexpr real64 minDensForDivision = 1e-10;
@@ -126,8 +125,8 @@ struct RowOffset_WellJac< NC, 1 >
 /******************************** ControlEquationHelper ********************************/
 struct ControlEquationHelper
 {
-  using ROFFSET = compositionalMultiphaseWellKernels::RowOffset;
-  using COFFSET = compositionalMultiphaseWellKernels::ColOffset;
+  using ROFFSET = kernels::wells::compositional::RowOffset;
+  using COFFSET = kernels::wells::compositional::ColOffset;
 
   GEOS_HOST_DEVICE
   inline
@@ -176,9 +175,9 @@ struct ControlEquationHelper
 struct PressureRelationKernel
 {
   using Deriv = constitutive::multifluid::DerivativeOffset;
-  using TAG = compositionalMultiphaseWellKernels::ElemTag;
-  using ROFFSET = compositionalMultiphaseWellKernels::RowOffset;
-  using COFFSET = compositionalMultiphaseWellKernels::ColOffset;
+  using TAG = kernels::wells::compositional::ElemTag;
+  using ROFFSET = kernels::wells::compositional::RowOffset;
+  using COFFSET = kernels::wells::compositional::ColOffset;
 
   template< integer NC, integer IS_THERMAL >
   GEOS_HOST_DEVICE
@@ -221,8 +220,8 @@ struct PressureRelationKernel
 struct VolumeBalanceKernel
 {
 
-  using ROFFSET = compositionalMultiphaseWellKernels::RowOffset;
-  using COFFSET = compositionalMultiphaseWellKernels::ColOffset;
+  using ROFFSET = kernels::wells::compositional::RowOffset;
+  using COFFSET = kernels::wells::compositional::ColOffset;
 
   template< integer NC >
   GEOS_HOST_DEVICE
@@ -340,11 +339,11 @@ struct RateInitializationKernel
  * @brief Define the interface for the property kernel in charge of computing the total mass density
  */
 template< integer NUM_COMP, integer NUM_PHASE >
-class TotalMassDensityKernel : public isothermalCompositionalMultiphaseBaseKernels::PropertyKernelBase< NUM_COMP >
+class TotalMassDensityKernel : public kernels::fluidFlow::compositional::PropertyKernelBase< NUM_COMP >
 {
 public:
 
-  using Base = isothermalCompositionalMultiphaseBaseKernels::PropertyKernelBase< NUM_COMP >;
+  using Base = kernels::fluidFlow::compositional::PropertyKernelBase< NUM_COMP >;
   using Base::numComp;
 
   /// Compile time value for the number of phases
@@ -460,9 +459,11 @@ public:
                    ObjectManagerBase & subRegion,
                    constitutive::MultiFluidBase const & fluid )
   {
+    using namespace kernels::fluidFlow::compositional::internal;
+
     if( numPhase == 2 )
     {
-      isothermalCompositionalMultiphaseBaseKernels::internal::kernelLaunchSelectorCompSwitch( numComp, [&] ( auto NC )
+      kernelLaunchSelectorCompSwitch( numComp, [&] ( auto NC )
       {
         integer constexpr NUM_COMP = NC();
         TotalMassDensityKernel< NUM_COMP, 2 > kernel( subRegion, fluid );
@@ -471,7 +472,7 @@ public:
     }
     else if( numPhase == 3 )
     {
-      isothermalCompositionalMultiphaseBaseKernels::internal::kernelLaunchSelectorCompSwitch( numComp, [&] ( auto NC )
+      kernelLaunchSelectorCompSwitch( numComp, [&] ( auto NC )
       {
         integer constexpr NUM_COMP = NC();
         TotalMassDensityKernel< NUM_COMP, 3 > kernel( subRegion, fluid );
@@ -536,7 +537,7 @@ public:
   virtual void computeLinf( localIndex const iwelem,
                             LinfStackVariables & stack ) const override
   {
-    using ROFFSET = compositionalMultiphaseWellKernels::RowOffset;
+    using ROFFSET = kernels::wells::compositional::RowOffset;
 
     real64 normalizer = 0.0;
     for( integer idof = 0; idof < m_numDof; ++idof )
@@ -758,7 +759,7 @@ public:
    * @param[in] localSolution the Newton update
    */
   template< typename POLICY >
-  static isothermalCompositionalMultiphaseBaseKernels::SolutionScalingKernel::StackVariables
+  static kernels::fluidFlow::compositional::isothermal::SolutionScalingKernel::StackVariables
   createAndLaunch( real64 const maxRelativePresChange,
                    real64 const maxAbsolutePresChange,
                    real64 const maxCompFracChange,
@@ -777,10 +778,10 @@ public:
       subRegion.getField< fields::well::pressureScalingFactor >();
     arrayView1d< real64 > compDensScalingFactor =
       subRegion.getField< fields::well::globalCompDensityScalingFactor >();
-    isothermalCompositionalMultiphaseBaseKernels::
+    kernels::fluidFlow::compositional::isothermal::
       SolutionScalingKernel kernel( maxRelativePresChange, maxAbsolutePresChange, maxCompFracChange, maxRelativeCompDensChange, rankOffset,
                                     numComp, dofKey, subRegion, localSolution, pressure, compDens, pressureScalingFactor, compDensScalingFactor );
-    return isothermalCompositionalMultiphaseBaseKernels::
+    return kernels::fluidFlow::compositional::isothermal::
              SolutionScalingKernel::
              launch< POLICY >( subRegion.size(), kernel );
   }
@@ -799,13 +800,13 @@ template< integer NUM_COMP, integer IS_THERMAL >
 class ElementBasedAssemblyKernel
 {
 public:
-  using COFFSET = compositionalMultiphaseWellKernels::ColOffset;
-  using ROFFSET = compositionalMultiphaseWellKernels::RowOffset;
+  using COFFSET = kernels::wells::compositional::ColOffset;
+  using ROFFSET = kernels::wells::compositional::RowOffset;
 
   // Well jacobian column and row indicies
   using FLUID_PROP_COFFSET = constitutive::multifluid::DerivativeOffsetC< NUM_COMP, IS_THERMAL >;
-  using WJ_COFFSET = compositionalMultiphaseWellKernels::ColOffset_WellJac< NUM_COMP, IS_THERMAL >;
-  using WJ_ROFFSET = compositionalMultiphaseWellKernels::RowOffset_WellJac< NUM_COMP, IS_THERMAL >;
+  using WJ_COFFSET = kernels::wells::compositional::ColOffset_WellJac< NUM_COMP, IS_THERMAL >;
+  using WJ_ROFFSET = kernels::wells::compositional::RowOffset_WellJac< NUM_COMP, IS_THERMAL >;
   /// Compile time value for the number of components
   static constexpr integer numComp = NUM_COMP;
 
@@ -835,7 +836,7 @@ public:
                               constitutive::MultiFluidBase const & fluid,
                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
                               arrayView1d< real64 > const & localRhs,
-                              BitFlags< isothermalCompositionalMultiphaseBaseKernels::KernelFlags > const kernelFlags )
+                              BitFlags< kernels::fluidFlow::compositional::KernelFlags > const kernelFlags )
     : m_numPhases( numPhases ),
     m_isProducer( isProducer ),
     m_rankOffset( rankOffset ),
@@ -1140,7 +1141,7 @@ public:
       }
     }
 
-    if( m_kernelFlags.isSet( isothermalCompositionalMultiphaseBaseKernels::KernelFlags::TotalMassEquation ) )
+    if( m_kernelFlags.isSet( kernels::fluidFlow::compositional::KernelFlags::TotalMassEquation ) )
     {
       // apply equation/variable change transformation to the component mass balance equations
       real64 work[numComp + 1 + IS_THERMAL]{};
@@ -1249,7 +1250,7 @@ protected:
   /// View on the local RHS
   arrayView1d< real64 > const m_localRhs;
 
-  BitFlags< isothermalCompositionalMultiphaseBaseKernels::KernelFlags > const m_kernelFlags;
+  BitFlags< kernels::fluidFlow::compositional::KernelFlags > const m_kernelFlags;
 };
 
 
@@ -1277,7 +1278,7 @@ public:
                    localIndex const numPhases,
                    integer const isProducer,
                    globalIndex const rankOffset,
-                   BitFlags< isothermalCompositionalMultiphaseBaseKernels::KernelFlags > kernelFlags,
+                   BitFlags< kernels::fluidFlow::compositional::KernelFlags > kernelFlags,
                    string const dofKey,
                    WellElementSubRegion const & subRegion,
                    constitutive::MultiFluidBase const & fluid,
@@ -1310,13 +1311,13 @@ class FaceBasedAssemblyKernel
 {
 public:
 
-  using COFFSET = compositionalMultiphaseWellKernels::ColOffset;
-  using ROFFSET = compositionalMultiphaseWellKernels::RowOffset;
-  using TAG = compositionalMultiphaseWellKernels::ElemTag;
+  using COFFSET = kernels::wells::compositional::ColOffset;
+  using ROFFSET = kernels::wells::compositional::RowOffset;
+  using TAG = kernels::wells::compositional::ElemTag;
 
   using FLUID_PROP_COFFSET = constitutive::multifluid::DerivativeOffsetC< NC, IS_THERMAL >;
-  using WJ_COFFSET = compositionalMultiphaseWellKernels::ColOffset_WellJac< NC, IS_THERMAL >;
-  using WJ_ROFFSET = compositionalMultiphaseWellKernels::RowOffset_WellJac< NC, IS_THERMAL >;
+  using WJ_COFFSET = kernels::wells::compositional::ColOffset_WellJac< NC, IS_THERMAL >;
+  using WJ_ROFFSET = kernels::wells::compositional::RowOffset_WellJac< NC, IS_THERMAL >;
 
   using CP_Deriv = constitutive::multifluid::DerivativeOffsetC< NC, IS_THERMAL >;
   /// Compile time value for the number of components
@@ -1351,7 +1352,7 @@ public:
                            WellElementSubRegion const & subRegion,
                            CRSMatrixView< real64, globalIndex const > const & localMatrix,
                            arrayView1d< real64 > const & localRhs,
-                           BitFlags< isothermalCompositionalMultiphaseBaseKernels::KernelFlags > kernelFlags )
+                           BitFlags< kernels::fluidFlow::compositional::KernelFlags > kernelFlags )
     :
     m_dt( dt ),
     m_rankOffset( rankOffset ),
@@ -1362,7 +1363,7 @@ public:
     m_dWellElemCompFrac_dCompDens ( subRegion.getField< fields::well::dGlobalCompFraction_dGlobalCompDensity >() ),
     m_localMatrix( localMatrix ),
     m_localRhs ( localRhs ),
-    m_useTotalMassEquation ( kernelFlags.isSet( isothermalCompositionalMultiphaseBaseKernels::KernelFlags::TotalMassEquation ) ),
+    m_useTotalMassEquation ( kernelFlags.isSet( kernels::fluidFlow::compositional::KernelFlags::TotalMassEquation ) ),
     m_isProducer ( wellControls.isProducer() ),
     m_injection ( wellControls.getInjectionStream() )
   {}
@@ -1829,14 +1830,14 @@ public:
   createAndLaunch( integer const numComps,
                    real64 const dt,
                    globalIndex const rankOffset,
-                   BitFlags< isothermalCompositionalMultiphaseBaseKernels::KernelFlags > kernelFlags,
+                   BitFlags< kernels::fluidFlow::compositional::KernelFlags > kernelFlags,
                    string const dofKey,
                    WellControls const & wellControls,
                    WellElementSubRegion const & subRegion,
                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
                    arrayView1d< real64 > const & localRhs )
   {
-    isothermalCompositionalMultiphaseBaseKernels::internal::kernelLaunchSelectorCompSwitch( numComps, [&]( auto NC )
+    kernels::fluidFlow::compositional::internal::kernelLaunchSelectorCompSwitch( numComps, [&]( auto NC )
     {
       integer constexpr NUM_COMP = NC();
 
@@ -1846,7 +1847,8 @@ public:
     } );
   }
 };
-} // end namespace compositionalMultiphaseWellKernels
+
+} // end namespace kernels::wells::compositional
 
 } // end namespace geos
 

@@ -45,12 +45,15 @@
 namespace geos
 {
 
-struct NoOpStuct
+namespace kernels::wells::singlePhase
 {
-  NoOpStuct(){}
-};
 
-namespace isothermalSinglePhasePerforationFluxKernels
+//struct NoOpStruct
+//{
+//  NoOpStruct(){}
+//};
+
+namespace isothermal
 {
 
 /******************************** PerforationFluxKernel ********************************/
@@ -323,21 +326,22 @@ public:
   }
 };
 
-} // end namespace isothermalPerforationFluxKernels
+} // end namespace isothermal
 
-namespace thermalSinglePhasePerforationFluxKernels
+namespace thermal
 {
 
-using namespace constitutive;
+//using namespace constitutive;
 
 /******************************** PerforationFluxKernel ********************************/
 
 template< integer IS_THERMAL >
-class PerforationFluxKernel : public geos::isothermalSinglePhasePerforationFluxKernels::PerforationFluxKernel< IS_THERMAL >
+class PerforationFluxKernel :
+  public kernels::wells::singlePhase::isothermal::PerforationFluxKernel< IS_THERMAL >
 {
 public:
 
-  using Base = geos::isothermalSinglePhasePerforationFluxKernels::PerforationFluxKernel< IS_THERMAL >;
+  using Base = kernels::wells::singlePhase::isothermal::PerforationFluxKernel< IS_THERMAL >;
   using SinglePhaseFlowAccessors = typename Base::SinglePhaseFlowAccessors;
   using SingleFluidAccessors = typename Base::SingleFluidAccessors;
 
@@ -350,7 +354,7 @@ public:
     StencilAccessors< fields::flow::temperature >;
 
   using ThermalSingleFluidAccessors =
-    StencilMaterialAccessors< SingleFluidBase,
+    StencilMaterialAccessors< constitutive::SingleFluidBase,
                               fields::singlefluid::enthalpy,
                               fields::singlefluid::dEnthalpy >;
 
@@ -367,7 +371,7 @@ public:
 
   PerforationFluxKernel ( PerforationData * const perforationData,
                           ElementSubRegionBase const & subRegion,
-                          SingleFluidBase const & fluid,
+                          constitutive::SingleFluidBase const & fluid,
                           SinglePhaseFlowAccessors const & singlePhaseFlowAccessors,
                           SingleFluidAccessors const & singleFluidAccessors,
                           ThermalSinglePhaseFlowAccessors const & thermalSinglePhaseFlowAccessors,
@@ -507,7 +511,7 @@ public:
   createAndLaunch( string const flowSolverName,
                    PerforationData * const perforationData,
                    ElementSubRegionBase const & subRegion,
-                   SingleFluidBase const & fluid,
+                   constitutive::SingleFluidBase const & fluid,
                    ElementRegionManager & elemManager )
   {
     integer constexpr IS_THERMAL = 1;
@@ -521,7 +525,9 @@ public:
   }
 };
 
-}   // end namespace thermalPerforationFluxKernels
+} // end namespace thermal
+
+} // end namespace kernels::wells::compositional
 
 } // end namespace geos
 

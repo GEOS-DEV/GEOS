@@ -29,34 +29,34 @@
 namespace geos
 {
 
-namespace isothermalCompositionalMultiphaseFVMKernelUtilities
+namespace kernels::fluidFlow::compositional::fvm::isothermal
 {
-
-template< typename VIEWTYPE >
-using ElementViewConst = ElementRegionManager::ElementViewConst< VIEWTYPE >;
-
-using Deriv = constitutive::multifluid::DerivativeOffset;
 
 struct PhaseComponentFluxZFormulation
 {
-  /**
-   * @brief Compute the component flux for a given phase
-   * @tparam numComp number of components
-   * @tparam numFluxSupportPoints number of flux support points
-   * @param ip phase index
-   * @param k_up uptream index for this phase
-   * @param seri arraySlice of the stencil-implied element region index
-   * @param sesri arraySlice of the stencil-implied element subregion index
-   * @param sei arraySlice of the stencil-implied element index
-   * @param phaseCompFrac phase component fraction
-   * @param dPhaseCompFrac derivative of phase component fraction wrt pressure, temperature, component fraction
-   * @param phaseFlux phase flux
-   * @param dPhaseFlux_dP derivative of phase flux wrt pressure
-   * @param dPhaseFlux_dC derivative of phase flux wrt comp density
-   * @param compFlux component flux
-   * @param dCompFlux_dP derivative of phase flux wrt pressure
-   * @param dCompFlux_dC derivative of phase flux wrt comp density
-   */
+  template< typename VIEWTYPE >
+  using ElementViewConst = ElementRegionManager::ElementViewConst< VIEWTYPE >;
+
+  using Deriv = constitutive::multifluid::DerivativeOffset;
+
+/**
+ * @brief Compute the component flux for a given phase
+ * @tparam numComp number of components
+ * @tparam numFluxSupportPoints number of flux support points
+ * @param ip phase index
+ * @param k_up uptream index for this phase
+ * @param seri arraySlice of the stencil-implied element region index
+ * @param sesri arraySlice of the stencil-implied element subregion index
+ * @param sei arraySlice of the stencil-implied element index
+ * @param phaseCompFrac phase component fraction
+ * @param dPhaseCompFrac derivative of phase component fraction wrt pressure, temperature, component fraction
+ * @param phaseFlux phase flux
+ * @param dPhaseFlux_dP derivative of phase flux wrt pressure
+ * @param dPhaseFlux_dC derivative of phase flux wrt comp density
+ * @param compFlux component flux
+ * @param dCompFlux_dP derivative of phase flux wrt pressure
+ * @param dCompFlux_dC derivative of phase flux wrt comp density
+ */
   template< localIndex numComp, localIndex numFluxSupportPoints >
   GEOS_HOST_DEVICE
   static void
@@ -112,7 +112,7 @@ struct PhaseComponentFluxZFormulation
   }
 };
 
-} // namespace isothermalCompositionalMultiPhaseFVMKernelUtilities
+} // namespace kernels::fluidFlow::compositional::fvm::isothermal
 
 } // namespace geos
 

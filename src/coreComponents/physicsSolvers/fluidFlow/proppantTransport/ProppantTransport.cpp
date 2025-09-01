@@ -48,7 +48,7 @@ namespace geos
 using namespace dataRepository;
 using namespace constitutive;
 using namespace fields;
-using namespace proppantTransportKernels;
+using namespace kernels::fluidFlow::singlePhase::proppant;
 
 ProppantTransport::ProppantTransport( const string & name,
                                       Group * const parent ):
@@ -825,8 +825,7 @@ ProppantTransport::calculateResidualNorm( real64 const & GEOS_UNUSED_PARAM( time
 
       // step 1: compute the norm in the subRegion
 
-      proppantTransportKernels::
-        ResidualNormKernelFactory::
+      ResidualNormKernelFactory::
         createAndLaunch< parallelDevicePolicy<> >( normType,
                                                    m_numDofPerCell,
                                                    rankOffset,

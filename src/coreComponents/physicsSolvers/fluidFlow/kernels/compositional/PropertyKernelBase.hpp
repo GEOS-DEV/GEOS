@@ -26,7 +26,7 @@
 namespace geos
 {
 
-namespace isothermalCompositionalMultiphaseBaseKernels
+namespace kernels::fluidFlow::compositional
 {
 
 /******************************** PropertyKernelBase ********************************/
@@ -83,7 +83,7 @@ public:
 
 };
 
-} // namespace isothermalCompositionalMultiphaseBaseKernels
+} // namespace kernels::fluidFlow::compositional
 
 } // namespace geos
 

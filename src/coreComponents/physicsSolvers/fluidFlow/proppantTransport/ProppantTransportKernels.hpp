@@ -38,7 +38,7 @@
 namespace geos
 {
 
-namespace proppantTransportKernels
+namespace kernels::fluidFlow::singlePhase::proppant
 {
 /******************************** FluidUpdateKernel ********************************/
 
@@ -569,9 +569,7 @@ public:
 
 };
 
-
-
-} // namespace proppantTransportKernels
+} // namespace kernels::
 
 } // namespace geos
 

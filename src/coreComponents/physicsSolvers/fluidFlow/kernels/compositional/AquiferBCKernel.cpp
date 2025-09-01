@@ -24,7 +24,7 @@
 namespace geos
 {
 
-namespace isothermalCompositionalMultiphaseFVMKernels
+namespace kernels::fluidFlow::compositional::fvm
 {
 
 using namespace constitutive;
@@ -264,6 +264,6 @@ INST_AquiferBCKernel( 5 );
 
 #undef INST_AquiferBCKernel
 
-} // namespace isothermalCompositionalMultiphaseFVMKernels
+} // namespace kernels::fluidFlow::compositional::fvm
 
 } // namespace geos

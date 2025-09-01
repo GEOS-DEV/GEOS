@@ -30,7 +30,7 @@
 namespace geos
 {
 
-namespace compositionalMultiphaseHybridFVMKernels
+namespace kernels::fluidFlow::compositional::hybridFVM
 {
 
 using namespace constitutive;
@@ -680,14 +680,14 @@ AssemblerKernelHelper::
     // 1) Find if there is a neighbor, and if there is, grab the indices of the neighbor element
 
     localIndex neighborIds[ 3 ] = { localIds[0], localIds[1], localIds[2] };
-    hybridFVMKernels::CellConnectivity::isNeighborFound( localIds,
-                                                         ifaceLoc,
-                                                         elemRegionList,
-                                                         elemSubRegionList,
-                                                         elemList,
-                                                         regionFilter,
-                                                         elemToFaces,
-                                                         neighborIds );
+    kernels::fluidFlow::hybridFVM::CellConnectivity::isNeighborFound( localIds,
+                                                                      ifaceLoc,
+                                                                      elemRegionList,
+                                                                      elemSubRegionList,
+                                                                      elemList,
+                                                                      regionFilter,
+                                                                      elemToFaces,
+                                                                      neighborIds );
     localIndex const neighborDofNumber = elemDofNumber[neighborIds[0]][neighborIds[1]][neighborIds[2]];
 
     // 2) *************** Assemble viscous terms ******************
@@ -1254,40 +1254,40 @@ FluxKernel::
                                                           transMatrixGrav );
 
     // perform flux assembly in this element
-    compositionalMultiphaseHybridFVMKernels::AssemblerKernel::compute< NF, NC, NP >( er, esr, ei,
-                                                                                     regionFilter,
-                                                                                     elemRegionList,
-                                                                                     elemSubRegionList,
-                                                                                     elemList,
-                                                                                     faceDofNumber,
-                                                                                     faceGhostRank,
-                                                                                     facePres,
-                                                                                     faceGravCoef,
-                                                                                     mimFaceGravCoef,
-                                                                                     elemToFaces[ei],
-                                                                                     elemPres[ei],
-                                                                                     elemGravCoef[ei],
-                                                                                     useTotalMassEquation,
-                                                                                     phaseDens,
-                                                                                     dPhaseDens,
-                                                                                     phaseMassDens,
-                                                                                     dPhaseMassDens,
-                                                                                     phaseMob,
-                                                                                     dPhaseMob,
-                                                                                     dCompFrac_dCompDens,
-                                                                                     phaseCompFrac,
-                                                                                     dPhaseCompFrac,
-                                                                                     elemDofNumber,
-                                                                                     elemGhostRank[ei],
-                                                                                     rankOffset,
-                                                                                     dt,
-                                                                                     transMatrix,
-                                                                                     transMatrixGrav,
-                                                                                     localMatrix,
-                                                                                     localRhs );
+    kernels::fluidFlow::compositional::hybridFVM::AssemblerKernel::compute< NF, NC, NP >( er, esr, ei,
+                                                                                          regionFilter,
+                                                                                          elemRegionList,
+                                                                                          elemSubRegionList,
+                                                                                          elemList,
+                                                                                          faceDofNumber,
+                                                                                          faceGhostRank,
+                                                                                          facePres,
+                                                                                          faceGravCoef,
+                                                                                          mimFaceGravCoef,
+                                                                                          elemToFaces[ei],
+                                                                                          elemPres[ei],
+                                                                                          elemGravCoef[ei],
+                                                                                          useTotalMassEquation,
+                                                                                          phaseDens,
+                                                                                          dPhaseDens,
+                                                                                          phaseMassDens,
+                                                                                          dPhaseMassDens,
+                                                                                          phaseMob,
+                                                                                          dPhaseMob,
+                                                                                          dCompFrac_dCompDens,
+                                                                                          phaseCompFrac,
+                                                                                          dPhaseCompFrac,
+                                                                                          elemDofNumber,
+                                                                                          elemGhostRank[ei],
+                                                                                          rankOffset,
+                                                                                          dt,
+                                                                                          transMatrix,
+                                                                                          transMatrixGrav,
+                                                                                          localMatrix,
+                                                                                          localRhs );
   } );
 }
 
-} // namespace compositionalMultiphaseHybridFVMKernels
+} // namespace kernels::fluidFlow::compositional::hybridFVM
 
 } // namespace geos

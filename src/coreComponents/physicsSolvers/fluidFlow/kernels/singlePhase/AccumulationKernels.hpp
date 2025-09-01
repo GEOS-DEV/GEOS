@@ -33,7 +33,7 @@
 namespace geos
 {
 
-namespace singlePhaseBaseKernels
+namespace kernels::fluidFlow::singlePhase::isothermal
 {
 
 /******************************** AccumulationKernel ********************************/
@@ -327,7 +327,7 @@ public:
 
 };
 
-} // namespace singlePhaseBaseKernels
+} // namespace kernels::fluidFlow::singlePhase::isothermal
 
 } // namespace geos
 

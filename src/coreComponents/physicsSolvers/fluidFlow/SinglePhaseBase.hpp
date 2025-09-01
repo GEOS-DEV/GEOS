@@ -395,12 +395,13 @@ void SinglePhaseBase::accumulationAssemblyLaunch( DofManager const & dofManager,
                                                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                   arrayView1d< real64 > const & localRhs )
 {
+  using namespace kernels::fluidFlow::singlePhase;
+
   string const dofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
 
   if( m_isThermal )
   {
-    thermalSinglePhaseBaseKernels::
-      AccumulationKernelFactory::
+    thermal::AccumulationKernelFactory::
       createAndLaunch< parallelDevicePolicy<> >( dofManager.rankOffset(),
                                                  dofKey,
                                                  subRegion,
@@ -409,8 +410,7 @@ void SinglePhaseBase::accumulationAssemblyLaunch( DofManager const & dofManager,
   }
   else
   {
-    singlePhaseBaseKernels::
-      AccumulationKernelFactory::
+    isothermal::AccumulationKernelFactory::
       createAndLaunch< parallelDevicePolicy<> >( dofManager.rankOffset(),
                                                  dofKey,
                                                  subRegion,

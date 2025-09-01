@@ -25,7 +25,7 @@
 namespace geos
 {
 
-namespace isothermalCompositionalMultiphaseBaseKernels
+namespace kernels::fluidFlow::compositional::isothermal
 {
 
 /******************************** PhaseVolumeFractionZFormulationKernel ********************************/
@@ -222,7 +222,7 @@ public:
   }
 };
 
-} // namespace isothermalCompositionalMultiphaseBaseKernels
+} // namespace kernels::fluidFlow::compositional::isothermal
 
 } // namespace geos
 

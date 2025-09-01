@@ -613,7 +613,7 @@ void CompositionalMultiphaseBase::accumulationAssemblyLaunch( DofManager const &
 
   string const dofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
 
-  using namespace isothermalCompositionalMultiphaseBaseKernels;
+  using namespace kernels::fluidFlow::compositional;
 
   BitFlags< KernelFlags > kernelFlags;
   if( m_useTotalMassEquation )
@@ -624,8 +624,7 @@ void CompositionalMultiphaseBase::accumulationAssemblyLaunch( DofManager const &
   if( m_formulationType == CompositionalMultiphaseFormulationType::OverallComposition )
   {
     // isothermal for now
-    isothermalCompositionalMultiphaseBaseKernels::
-      AccumulationZFormulationKernelFactory::
+    isothermal::AccumulationZFormulationKernelFactory::
       createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
                                                  m_numPhases,
                                                  dofManager.rankOffset(),
@@ -641,8 +640,7 @@ void CompositionalMultiphaseBase::accumulationAssemblyLaunch( DofManager const &
   {
     if( m_isThermal )
     {
-      thermalCompositionalMultiphaseBaseKernels::
-        AccumulationKernelFactory::
+      thermal::AccumulationKernelFactory::
         createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
                                                    m_numPhases,
                                                    dofManager.rankOffset(),
@@ -656,8 +654,7 @@ void CompositionalMultiphaseBase::accumulationAssemblyLaunch( DofManager const &
     }
     else
     {
-      isothermalCompositionalMultiphaseBaseKernels::
-        AccumulationKernelFactory::
+      isothermal::AccumulationKernelFactory::
         createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
                                                    m_numPhases,
                                                    dofManager.rankOffset(),

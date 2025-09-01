@@ -31,44 +31,44 @@
 namespace geos
 {
 
-namespace isothermalCompositionalMultiphaseFVMKernelUtilities
+namespace kernels::fluidFlow::compositional::fvm
 {
-
-template< typename VIEWTYPE >
-using ElementViewConst = ElementRegionManager::ElementViewConst< VIEWTYPE >;
-
-using Deriv = constitutive::multifluid::DerivativeOffset;
 
 struct PPUPhaseFlux
 {
-  /**
-   * @brief Form the PhasePotentialUpwind from pressure gradient and gravitational head
-   * @tparam numComp number of components
-   * @tparam numFluxSupportPoints number of flux support points
-   * @param numPhase number of phases
-   * @param ip phase index
-   * @param hasCapPressure flag indicating if there is capillary pressure
-   * @param seri arraySlice of the stencil-implied element region index
-   * @param sesri arraySlice of the stencil-implied element subregion index
-   * @param sei arraySlice of the stencil-implied element index
-   * @param trans transmissibility at the connection
-   * @param dTrans_dPres derivative of transmissibility wrt pressure
-   * @param pres pressure
-   * @param gravCoef gravitational coefficient
-   * @param phaseMob phase mobility
-   * @param dPhaseMob derivative of phase mobility wrt pressure, temperature, comp density
-   * @param dPhaseVolFrac derivative of phase volume fraction wrt pressure, temperature, comp density
-   * @param dCompFrac_dCompDens derivative of component fraction wrt component density
-   * @param phaseMassDens phase mass density
-   * @param dPhaseMassDens derivative of phase mass density wrt pressure, temperature, comp fraction
-   * @param phaseCapPressure phase capillary pressure
-   * @param dPhaseCapPressure_dPhaseVolFrac derivative of phase capillary pressure wrt phase volume fraction
-   * @param potGrad potential gradient for this phase
-   * @param phaseFlux phase flux
-   * @param dPhaseFlux_dP derivative of phase flux wrt pressure
-   * @param dPhaseFlux_dC derivative of phase flux wrt comp density
-   * @param dPhaseFlux_dTrans derivative of phase flux wrt transmissibility
-   */
+  template< typename VIEWTYPE >
+  using ElementViewConst = ElementRegionManager::ElementViewConst< VIEWTYPE >;
+
+  using Deriv = constitutive::multifluid::DerivativeOffset;
+
+/**
+ * @brief Form the PhasePotentialUpwind from pressure gradient and gravitational head
+ * @tparam numComp number of components
+ * @tparam numFluxSupportPoints number of flux support points
+ * @param numPhase number of phases
+ * @param ip phase index
+ * @param hasCapPressure flag indicating if there is capillary pressure
+ * @param seri arraySlice of the stencil-implied element region index
+ * @param sesri arraySlice of the stencil-implied element subregion index
+ * @param sei arraySlice of the stencil-implied element index
+ * @param trans transmissibility at the connection
+ * @param dTrans_dPres derivative of transmissibility wrt pressure
+ * @param pres pressure
+ * @param gravCoef gravitational coefficient
+ * @param phaseMob phase mobility
+ * @param dPhaseMob derivative of phase mobility wrt pressure, temperature, comp density
+ * @param dPhaseVolFrac derivative of phase volume fraction wrt pressure, temperature, comp density
+ * @param dCompFrac_dCompDens derivative of component fraction wrt component density
+ * @param phaseMassDens phase mass density
+ * @param dPhaseMassDens derivative of phase mass density wrt pressure, temperature, comp fraction
+ * @param phaseCapPressure phase capillary pressure
+ * @param dPhaseCapPressure_dPhaseVolFrac derivative of phase capillary pressure wrt phase volume fraction
+ * @param potGrad potential gradient for this phase
+ * @param phaseFlux phase flux
+ * @param dPhaseFlux_dP derivative of phase flux wrt pressure
+ * @param dPhaseFlux_dC derivative of phase flux wrt comp density
+ * @param dPhaseFlux_dTrans derivative of phase flux wrt transmissibility
+ */
   template< integer numComp, integer numFluxSupportPoints >
   GEOS_HOST_DEVICE
   static void
@@ -158,7 +158,7 @@ struct PPUPhaseFlux
   }
 };
 
-} // namespace isothermalCompositionalMultiPhaseFVMKernelUtilities
+} // namespace kernels::fluidFlow::compositional::fvm
 
 } // namespace geos
 

@@ -37,6 +37,7 @@ using namespace geos;
 using namespace geos::dataRepository;
 using namespace geos::constitutive;
 using namespace geos::testing;
+using namespace geos::kernels::wells::singlePhase;
 
 CommandLineOptions g_commandLineOptions;
 
@@ -412,7 +413,7 @@ void testNumericalJacobian( SinglePhaseReservoirAndWells<> & solver,
           //      this is computing J_RW and J_WW
           fillNumericalJacobian( residual.toViewConst(),
                                  residualOrig.toViewConst(),
-                                 wellElemDofNumber[iwelem] + singlePhaseWellKernels::ColOffset_WellJac< 1 >::dP,
+                                 wellElemDofNumber[iwelem] + ColOffset_WellJac< 1 >::dP,
                                  dP,
                                  jacobianFD.toViewConstSizes() );
         }
@@ -440,13 +441,13 @@ void testNumericalJacobian( SinglePhaseReservoirAndWells<> & solver,
         //      this is computing J_RW and J_WW
         fillNumericalJacobian( residual.toViewConst(),
                                residualOrig.toViewConst(),
-                               wellElemDofNumber[iwelem] + singlePhaseWellKernels::ColOffset_WellJac< 1 >::dT,
+                               wellElemDofNumber[iwelem] + ColOffset_WellJac< 1 >::dT,
                                dT,
                                jacobianFD.toViewConstSizes() );
 
         if( diag_check && !wellControls.isProducer() && iwelem == 0 )
         {
-          localIndex rowIndex = wellElemDofNumber[iwelem] + singlePhaseWellKernels::ColOffset_WellJac< 1 >::dT;
+          localIndex rowIndex = wellElemDofNumber[iwelem] + ColOffset_WellJac< 1 >::dT;
           setNumericalJacobianValue( rowIndex, rowIndex, 1.0, jacobianFD.toViewConstSizes() );
         }
       }
@@ -472,7 +473,7 @@ void testNumericalJacobian( SinglePhaseReservoirAndWells<> & solver,
           //      this is computing J_RW and J_WW
           fillNumericalJacobian( residual.toViewConst(),
                                  residualOrig.toViewConst(),
-                                 wellElemDofNumber[iwelem] + singlePhaseWellKernels::ColOffset_WellJac< 1 >::dQ,
+                                 wellElemDofNumber[iwelem] + ColOffset_WellJac< 1 >::dQ,
                                  dRate,
                                  jacobianFD.toViewConstSizes() );
         }

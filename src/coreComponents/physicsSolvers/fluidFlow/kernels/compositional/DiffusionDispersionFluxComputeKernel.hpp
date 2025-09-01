@@ -37,7 +37,7 @@
 namespace geos
 {
 
-namespace isothermalCompositionalMultiphaseFVMKernels
+namespace kernels::fluidFlow::compositional::fvm::isothermal
 {
 
 /******************************** DiffusionDispersionFluxComputeKernel ********************************/
@@ -75,9 +75,8 @@ public:
   /// Number of flux support points (hard-coded for TFPA)
   static constexpr integer numFluxSupportPoints = 2;
 
-  using AbstractBase = isothermalCompositionalMultiphaseFVMKernels::FluxComputeKernelBase;
-  using AbstractBase::m_dPhaseVolFrac;
-  using AbstractBase::m_kernelFlags;
+  using FluxComputeKernelBase::m_dPhaseVolFrac;
+  using FluxComputeKernelBase::m_kernelFlags;
 
   using DiffusionAccessors =
     StencilMaterialAccessors< constitutive::DiffusionBase,
@@ -725,7 +724,7 @@ public:
                    integer const numPhases,
                    globalIndex const rankOffset,
                    string const & dofKey,
-                   BitFlags< KernelFlags > kernelFlags,
+                   BitFlags< kernels::fluidFlow::compositional::fvm::KernelFlags > kernelFlags,
                    string const & solverName,
                    ElementRegionManager const & elemManager,
                    STENCILWRAPPER const & stencilWrapper,
@@ -733,7 +732,7 @@ public:
                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
                    arrayView1d< real64 > const & localRhs )
   {
-    isothermalCompositionalMultiphaseBaseKernels::internal::kernelLaunchSelectorCompSwitch( numComps, [&]( auto NC )
+    kernels::fluidFlow::compositional::internal::kernelLaunchSelectorCompSwitch( numComps, [&]( auto NC )
     {
       integer constexpr NUM_COMP = NC();
       integer constexpr NUM_DOF = NC() + 1;
@@ -761,7 +760,7 @@ public:
   }
 };
 
-} // namespace isothermalCompositionalMultiphaseFVMKernels
+} // namespace kernels::fluidFlow::compositional::fvm::isothermal
 
 } // namespace geos
 

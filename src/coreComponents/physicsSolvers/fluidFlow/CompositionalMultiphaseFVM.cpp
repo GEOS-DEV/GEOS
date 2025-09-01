@@ -243,7 +243,7 @@ void CompositionalMultiphaseFVM::assembleFluxTerms( real64 const dt,
 {
   GEOS_MARK_FUNCTION;
 
-  using namespace isothermalCompositionalMultiphaseFVMKernels;
+  using namespace kernels::fluidFlow::compositional::fvm;
 
   BitFlags< KernelFlags > kernelFlags;
   if( m_hasCapPressure )
@@ -267,7 +267,7 @@ void CompositionalMultiphaseFVM::assembleFluxTerms( real64 const dt,
 
     auto const & upwindingParams = fluxApprox.upwindingParams();
     if( upwindingParams.upwindingScheme == UpwindingScheme::C1PPU &&
-        isothermalCompositionalMultiphaseFVMKernelUtilities::epsC1PPU > 0 )
+        C1PPUPhaseFlux::epsC1PPU > 0 )
       kernelFlags.set( KernelFlags::C1PPU );
     else if( upwindingParams.upwindingScheme == UpwindingScheme::IHU )
       kernelFlags.set( KernelFlags::IHU );
@@ -283,8 +283,7 @@ void CompositionalMultiphaseFVM::assembleFluxTerms( real64 const dt,
       if( m_formulationType == CompositionalMultiphaseFormulationType::OverallComposition )
       {
         // isothermal only for now
-        isothermalCompositionalMultiphaseFVMKernels::
-          FluxComputeZFormulationKernelFactory::
+        isothermal::FluxComputeZFormulationKernelFactory::
           createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
                                                      m_numPhases,
                                                      dofManager.rankOffset(),
@@ -301,8 +300,7 @@ void CompositionalMultiphaseFVM::assembleFluxTerms( real64 const dt,
       {
         if( m_isThermal )
         {
-          thermalCompositionalMultiphaseFVMKernels::
-            FluxComputeKernelFactory::
+          thermal::FluxComputeKernelFactory::
             createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
                                                        m_numPhases,
                                                        dofManager.rankOffset(),
@@ -319,8 +317,7 @@ void CompositionalMultiphaseFVM::assembleFluxTerms( real64 const dt,
         {
           if( m_dbcParams.useDBC )
           {
-            dissipationCompositionalMultiphaseFVMKernels::
-              FluxComputeKernelFactory::
+            isothermal::dissipation::FluxComputeKernelFactory::
               createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
                                                          m_numPhases,
                                                          dofManager.rankOffset(),
@@ -341,8 +338,7 @@ void CompositionalMultiphaseFVM::assembleFluxTerms( real64 const dt,
           }
           else
           {
-            isothermalCompositionalMultiphaseFVMKernels::
-              FluxComputeKernelFactory::
+            isothermal::FluxComputeKernelFactory::
               createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
                                                          m_numPhases,
                                                          dofManager.rankOffset(),
@@ -361,11 +357,9 @@ void CompositionalMultiphaseFVM::assembleFluxTerms( real64 const dt,
 
         if( m_hasDiffusion || m_hasDispersion )
         {
-
           if( m_isThermal )
           {
-            thermalCompositionalMultiphaseFVMKernels::
-              DiffusionDispersionFluxComputeKernelFactory::
+            thermal::DiffusionDispersionFluxComputeKernelFactory::
               createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
                                                          m_numPhases,
                                                          dofManager.rankOffset(),
@@ -380,8 +374,7 @@ void CompositionalMultiphaseFVM::assembleFluxTerms( real64 const dt,
           }
           else
           {
-            isothermalCompositionalMultiphaseFVMKernels::
-              DiffusionDispersionFluxComputeKernelFactory::
+            isothermal::DiffusionDispersionFluxComputeKernelFactory::
               createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
                                                          m_numPhases,
                                                          dofManager.rankOffset(),
@@ -409,7 +402,7 @@ void CompositionalMultiphaseFVM::assembleStabilizedFluxTerms( real64 const dt,
 {
   GEOS_MARK_FUNCTION;
 
-  using namespace isothermalCompositionalMultiphaseFVMKernels;
+  using namespace kernels::fluidFlow::compositional::fvm;
 
   BitFlags< KernelFlags > kernelFlags;
   if( m_hasCapPressure )
@@ -436,8 +429,7 @@ void CompositionalMultiphaseFVM::assembleStabilizedFluxTerms( real64 const dt,
 
       // Thermal implementation not supported yet
 
-      stabilizedCompositionalMultiphaseFVMKernels::
-        FluxComputeKernelFactory::
+      stabilization::FluxComputeKernelFactory::
         createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
                                                    m_numPhases,
                                                    dofManager.rankOffset(),
@@ -461,6 +453,8 @@ real64 CompositionalMultiphaseFVM::calculateResidualNorm( real64 const & GEOS_UN
                                                           arrayView1d< real64 const > const & localRhs )
 {
   GEOS_MARK_FUNCTION;
+
+  using namespace kernels::fluidFlow::compositional;
 
   integer constexpr numNorm = 3; // mass/volume balance and energy balance
   array1d< real64 > localResidualNorm;
@@ -497,8 +491,7 @@ real64 CompositionalMultiphaseFVM::calculateResidualNorm( real64 const & GEOS_UN
         string const & solidInternalEnergyName = subRegion.getReference< string >( viewKeyStruct::solidInternalEnergyNamesString() );
         SolidInternalEnergy const & solidInternalEnergy = getConstitutiveModel< SolidInternalEnergy >( subRegion, solidInternalEnergyName );
 
-        thermalCompositionalMultiphaseBaseKernels::
-          ResidualNormKernelFactory::
+        thermal::ResidualNormKernelFactory::
           createAndLaunch< parallelDevicePolicy<> >( normType,
                                                      numFluidComponents(),
                                                      numFluidPhases(),
@@ -517,8 +510,7 @@ real64 CompositionalMultiphaseFVM::calculateResidualNorm( real64 const & GEOS_UN
       {
         real64 subRegionFlowResidualNorm[2]{};
         real64 subRegionFlowResidualNormalizer[2]{};
-        isothermalCompositionalMultiphaseBaseKernels::
-          ResidualNormKernelFactory::
+        isothermal::ResidualNormKernelFactory::
           createAndLaunch< parallelDevicePolicy<> >( normType,
                                                      numFluidComponents(),
                                                      rankOffset,
@@ -603,6 +595,8 @@ real64 CompositionalMultiphaseFVM::scalingForSystemSolution( DomainPartition & d
 {
   GEOS_MARK_FUNCTION;
 
+  using namespace kernels::fluidFlow::compositional;
+
   if( m_formulationType == CompositionalMultiphaseFormulationType::OverallComposition )
   {
     return scalingForSystemSolutionZFormulation( domain, dofManager, localSolution );
@@ -636,8 +630,7 @@ real64 CompositionalMultiphaseFVM::scalingForSystemSolution( DomainPartition & d
         const integer temperatureOffset = m_numComponents+1;
 
         auto const subRegionData = m_isThermal ?
-                                   thermalCompositionalMultiphaseBaseKernels::
-                                     SolutionScalingKernelFactory::
+                                   thermal::SolutionScalingKernelFactory::
                                      createAndLaunch< parallelDevicePolicy<> >( m_maxRelativePresChange,
                                                                                 m_maxAbsolutePresChange,
                                                                                 m_maxRelativeTempChange,
@@ -655,8 +648,7 @@ real64 CompositionalMultiphaseFVM::scalingForSystemSolution( DomainPartition & d
                                                                                 subRegion,
                                                                                 localSolution,
                                                                                 temperatureOffset ):
-                                   isothermalCompositionalMultiphaseBaseKernels::
-                                     SolutionScalingKernelFactory::
+                                   isothermal::SolutionScalingKernelFactory::
                                      createAndLaunch< parallelDevicePolicy<> >( m_maxRelativePresChange,
                                                                                 m_maxAbsolutePresChange,
                                                                                 m_maxCompFracChange,
@@ -760,7 +752,7 @@ real64 CompositionalMultiphaseFVM::scalingForSystemSolutionZFormulation( DomainP
       //arrayView1d< real64 > temperatureScalingFactor = subRegion.getField< flow::temperatureScalingFactor >();
       arrayView1d< real64 > compFracScalingFactor = subRegion.getField< flow::globalCompFractionScalingFactor >();
 
-      auto const subRegionData = isothermalCompositionalMultiphaseBaseKernels::
+      auto const subRegionData = kernels::fluidFlow::compositional::isothermal::
                                    SolutionScalingZFormulationKernelFactory::
                                    createAndLaunch< parallelDevicePolicy<> >( m_maxRelativePresChange,
                                                                               m_maxAbsolutePresChange,
@@ -829,6 +821,8 @@ bool CompositionalMultiphaseFVM::checkSystemSolution( DomainPartition & domain,
 {
   GEOS_MARK_FUNCTION;
 
+  using namespace kernels::fluidFlow::compositional;
+
   if( m_formulationType == CompositionalMultiphaseFormulationType::OverallComposition )
   {
     // TO DO: Implement the solution check for Z Formulation
@@ -863,8 +857,7 @@ bool CompositionalMultiphaseFVM::checkSystemSolution( DomainPartition & domain,
         const integer temperatureOffset = m_numComponents+1;
         auto const subRegionData =
           m_isThermal
-    ? thermalCompositionalMultiphaseBaseKernels::
-            SolutionCheckKernelFactory::
+    ? thermal::SolutionCheckKernelFactory::
             createAndLaunch< parallelDevicePolicy<> >( m_allowCompDensChopping,
                                                        m_allowNegativePressure,
                                                        m_scalingType,
@@ -881,8 +874,7 @@ bool CompositionalMultiphaseFVM::checkSystemSolution( DomainPartition & domain,
                                                        subRegion,
                                                        localSolution,
                                                        temperatureOffset )
-    : isothermalCompositionalMultiphaseBaseKernels::
-            SolutionCheckKernelFactory::
+    : isothermal::SolutionCheckKernelFactory::
             createAndLaunch< parallelDevicePolicy<> >( m_allowCompDensChopping,
                                                        m_allowNegativePressure,
                                                        m_scalingType,
@@ -1056,6 +1048,8 @@ void CompositionalMultiphaseFVM::updatePhaseMobility( ObjectManagerBase & dataGr
 {
   GEOS_MARK_FUNCTION;
 
+  using namespace kernels::fluidFlow::compositional;
+
   // note that the phase mobility computed here also includes phase density
   string const & fluidName = dataGroup.getReference< string >( viewKeyStruct::fluidNamesString() );
   MultiFluidBase const & fluid = getConstitutiveModel< MultiFluidBase >( dataGroup, fluidName );
@@ -1066,8 +1060,7 @@ void CompositionalMultiphaseFVM::updatePhaseMobility( ObjectManagerBase & dataGr
   if( m_formulationType == CompositionalMultiphaseFormulationType::OverallComposition )
   {
     // For now: isothermal only
-    isothermalCompositionalMultiphaseFVMKernels::
-      PhaseMobilityZFormulationKernelFactory::
+    isothermal::PhaseMobilityZFormulationKernelFactory::
       createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
                                                  m_numPhases,
                                                  dataGroup,
@@ -1078,8 +1071,7 @@ void CompositionalMultiphaseFVM::updatePhaseMobility( ObjectManagerBase & dataGr
   {
     if( m_isThermal )
     {
-      thermalCompositionalMultiphaseFVMKernels::
-        PhaseMobilityKernelFactory::
+      thermal::PhaseMobilityKernelFactory::
         createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
                                                    m_numPhases,
                                                    dataGroup,
@@ -1088,8 +1080,7 @@ void CompositionalMultiphaseFVM::updatePhaseMobility( ObjectManagerBase & dataGr
     }
     else
     {
-      isothermalCompositionalMultiphaseFVMKernels::
-        PhaseMobilityKernelFactory::
+      isothermal::PhaseMobilityKernelFactory::
         createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
                                                    m_numPhases,
                                                    dataGroup,
@@ -1254,14 +1245,14 @@ void CompositionalMultiphaseFVM::applyFaceDirichletBC( real64 const time_n,
 {
   GEOS_MARK_FUNCTION;
 
+  using namespace kernels::fluidFlow::compositional::fvm;
+
   // Only validate BC at the beginning of Newton loop
   if( m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
   {
     bool const bcConsistent = validateFaceDirichletBC( domain, time_n + dt );
     GEOS_ERROR_IF( !bcConsistent, GEOS_FMT( "{}: inconsistent boundary conditions", getDataContext() ) );
   }
-
-  using namespace isothermalCompositionalMultiphaseFVMKernels;
 
   // for now, we neglect capillary pressure in the kernel
   BitFlags< KernelFlags > kernelFlags;
@@ -1324,8 +1315,7 @@ void CompositionalMultiphaseFVM::applyFaceDirichletBC( real64 const time_n,
 
       if( m_formulationType == CompositionalMultiphaseFormulationType::OverallComposition )
       {
-        isothermalCompositionalMultiphaseFVMKernels::
-          DirichletFluxComputeZFormulationKernelFactory::
+        isothermal::DirichletFluxComputeZFormulationKernelFactory::
           createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
                                                      m_numPhases,
                                                      dofManager.rankOffset(),
@@ -1346,8 +1336,7 @@ void CompositionalMultiphaseFVM::applyFaceDirichletBC( real64 const time_n,
         if( m_isThermal )
         {
           //todo (jafranc) extend upwindScheme name if satisfied in isothermalCase
-          thermalCompositionalMultiphaseFVMKernels::
-            DirichletFluxComputeKernelFactory::
+          thermal::DirichletFluxComputeKernelFactory::
             createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
                                                        m_numPhases,
                                                        dofManager.rankOffset(),
@@ -1364,8 +1353,7 @@ void CompositionalMultiphaseFVM::applyFaceDirichletBC( real64 const time_n,
         }
         else
         {
-          isothermalCompositionalMultiphaseFVMKernels::
-            DirichletFluxComputeKernelFactory::
+          isothermal::DirichletFluxComputeKernelFactory::
             createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
                                                        m_numPhases,
                                                        dofManager.rankOffset(),
@@ -1395,6 +1383,8 @@ void CompositionalMultiphaseFVM::applyAquiferBC( real64 const time,
 {
   GEOS_MARK_FUNCTION;
 
+  using namespace kernels::fluidFlow::compositional;
+
   FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
@@ -1410,10 +1400,8 @@ void CompositionalMultiphaseFVM::applyAquiferBC( real64 const time,
       mesh.getElemManager().constructArrayViewAccessor< globalIndex, 1 >( elemDofKey );
     elemDofNumber.setName( getName() + "/accessors/" + elemDofKey );
 
-    isothermalCompositionalMultiphaseFVMKernels::
-      AquiferBCKernel::CompFlowAccessors compFlowAccessors( mesh.getElemManager(), getName() );
-    isothermalCompositionalMultiphaseFVMKernels::
-      AquiferBCKernel::MultiFluidAccessors multiFluidAccessors( mesh.getElemManager(), getName() );
+    fvm::AquiferBCKernel::CompFlowAccessors compFlowAccessors( mesh.getElemManager(), getName() );
+    fvm::AquiferBCKernel::MultiFluidAccessors multiFluidAccessors( mesh.getElemManager(), getName() );
 
     fsManager.apply< FaceManager,
                      AquiferBoundaryCondition >( time + dt,
@@ -1448,33 +1436,32 @@ void CompositionalMultiphaseFVM::applyAquiferBC( real64 const time,
       arrayView1d< real64 const > const & aquiferWaterPhaseCompFrac = bc.getWaterPhaseComponentFraction();
 
       // While this kernel is waiting for a factory class, pass all the accessors here
-      isothermalCompositionalMultiphaseBaseKernels::KernelLaunchSelector1
-      < isothermalCompositionalMultiphaseFVMKernels::AquiferBCKernel >( m_numComponents,
-                                                                        m_numPhases,
-                                                                        waterPhaseIndex,
-                                                                        allowAllPhasesIntoAquifer,
-                                                                        m_useTotalMassEquation,
-                                                                        stencil,
-                                                                        dofManager.rankOffset(),
-                                                                        elemDofNumber.toNestedViewConst(),
-                                                                        aquiferBCWrapper,
-                                                                        aquiferWaterPhaseDens,
-                                                                        aquiferWaterPhaseCompFrac,
-                                                                        compFlowAccessors.get( fields::ghostRank{} ),
-                                                                        compFlowAccessors.get( flow::pressure{} ),
-                                                                        compFlowAccessors.get( flow::pressure_n{} ),
-                                                                        compFlowAccessors.get( flow::gravityCoefficient{} ),
-                                                                        compFlowAccessors.get( flow::phaseVolumeFraction{} ),
-                                                                        compFlowAccessors.get( flow::dPhaseVolumeFraction{} ),
-                                                                        compFlowAccessors.get( flow::dGlobalCompFraction_dGlobalCompDensity{} ),
-                                                                        multiFluidAccessors.get( fields::multifluid::phaseDensity{} ),
-                                                                        multiFluidAccessors.get( fields::multifluid::dPhaseDensity{} ),
-                                                                        multiFluidAccessors.get( fields::multifluid::phaseCompFraction{} ),
-                                                                        multiFluidAccessors.get( fields::multifluid::dPhaseCompFraction{} ),
-                                                                        time,
-                                                                        dt,
-                                                                        localMatrix.toViewConstSizes(),
-                                                                        localRhs.toView() );
+      KernelLaunchSelector1< fvm::AquiferBCKernel >( m_numComponents,
+                                                     m_numPhases,
+                                                     waterPhaseIndex,
+                                                     allowAllPhasesIntoAquifer,
+                                                     m_useTotalMassEquation,
+                                                     stencil,
+                                                     dofManager.rankOffset(),
+                                                     elemDofNumber.toNestedViewConst(),
+                                                     aquiferBCWrapper,
+                                                     aquiferWaterPhaseDens,
+                                                     aquiferWaterPhaseCompFrac,
+                                                     compFlowAccessors.get( fields::ghostRank{} ),
+                                                     compFlowAccessors.get( flow::pressure{} ),
+                                                     compFlowAccessors.get( flow::pressure_n{} ),
+                                                     compFlowAccessors.get( flow::gravityCoefficient{} ),
+                                                     compFlowAccessors.get( flow::phaseVolumeFraction{} ),
+                                                     compFlowAccessors.get( flow::dPhaseVolumeFraction{} ),
+                                                     compFlowAccessors.get( flow::dGlobalCompFraction_dGlobalCompDensity{} ),
+                                                     multiFluidAccessors.get( fields::multifluid::phaseDensity{} ),
+                                                     multiFluidAccessors.get( fields::multifluid::dPhaseDensity{} ),
+                                                     multiFluidAccessors.get( fields::multifluid::phaseCompFraction{} ),
+                                                     multiFluidAccessors.get( fields::multifluid::dPhaseCompFraction{} ),
+                                                     time,
+                                                     dt,
+                                                     localMatrix.toViewConstSizes(),
+                                                     localRhs.toView() );
     } );
   } );
 
@@ -1496,7 +1483,7 @@ void CompositionalMultiphaseFVM::assembleHydrofracFluxTerms( real64 const GEOS_U
 
   string const & elemDofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
 
-  using namespace isothermalCompositionalMultiphaseFVMKernels;
+  using namespace kernels::fluidFlow::compositional::fvm;
 
   BitFlags< KernelFlags > kernelFlags;
   if( m_hasCapPressure )
@@ -1525,8 +1512,7 @@ void CompositionalMultiphaseFVM::assembleHydrofracFluxTerms( real64 const GEOS_U
     {
       typename TYPEOFREF( stencil ) ::KernelWrapper stencilWrapper = stencil.createKernelWrapper();
 
-      isothermalCompositionalMultiphaseFVMKernels::
-        FluxComputeKernelFactory::
+      isothermal::FluxComputeKernelFactory::
         createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
                                                    m_numPhases,
                                                    dofManager.rankOffset(),
@@ -1592,6 +1578,8 @@ void CompositionalMultiphaseFVM::computeCFLNumbers( geos::DomainPartition & doma
 {
   GEOS_MARK_FUNCTION;
 
+  using namespace kernels::fluidFlow::compositional;
+
   integer const numPhases = numFluidPhases();
   integer const numComps = numFluidComponents();
 
@@ -1617,14 +1605,10 @@ void CompositionalMultiphaseFVM::computeCFLNumbers( geos::DomainPartition & doma
     FiniteVolumeManager & fvManager = numericalMethodManager.getFiniteVolumeManager();
     FluxApproximationBase & fluxApprox = fvManager.getFluxApproximation( getDiscretizationName() );
 
-    isothermalCompositionalMultiphaseFVMKernels::
-      CFLFluxKernel::CompFlowAccessors compFlowAccessors( mesh.getElemManager(), getName() );
-    isothermalCompositionalMultiphaseFVMKernels::
-      CFLFluxKernel::MultiFluidAccessors multiFluidAccessors( mesh.getElemManager(), getName() );
-    isothermalCompositionalMultiphaseFVMKernels::
-      CFLFluxKernel::PermeabilityAccessors permeabilityAccessors( mesh.getElemManager(), getName() );
-    isothermalCompositionalMultiphaseFVMKernels::
-      CFLFluxKernel::RelPermAccessors relPermAccessors( mesh.getElemManager(), getName() );
+    fvm::CFLFluxKernel::CompFlowAccessors compFlowAccessors( mesh.getElemManager(), getName() );
+    fvm::CFLFluxKernel::MultiFluidAccessors multiFluidAccessors( mesh.getElemManager(), getName() );
+    fvm::CFLFluxKernel::PermeabilityAccessors permeabilityAccessors( mesh.getElemManager(), getName() );
+    fvm::CFLFluxKernel::RelPermAccessors relPermAccessors( mesh.getElemManager(), getName() );
 
     // TODO: find a way to compile with this modifiable accessors in CompFlowAccessors, and remove them from here
     ElementRegionManager::ElementViewAccessor< arrayView2d< real64, compflow::USD_PHASE > > const phaseOutfluxAccessor =
@@ -1641,24 +1625,23 @@ void CompositionalMultiphaseFVM::computeCFLNumbers( geos::DomainPartition & doma
       typename TYPEOFREF( stencil ) ::KernelWrapper stencilWrapper = stencil.createKernelWrapper();
 
       // While this kernel is waiting for a factory class, pass all the accessors here
-      isothermalCompositionalMultiphaseBaseKernels::KernelLaunchSelector1
-      < isothermalCompositionalMultiphaseFVMKernels::CFLFluxKernel >( numComps,
-                                                                      numPhases,
-                                                                      m_gravityDensityScheme == GravityDensityScheme::PhasePresence,
-                                                                      dt,
-                                                                      stencilWrapper,
-                                                                      compFlowAccessors.get( flow::pressure{} ),
-                                                                      compFlowAccessors.get( flow::gravityCoefficient{} ),
-                                                                      compFlowAccessors.get( flow::phaseVolumeFraction{} ),
-                                                                      permeabilityAccessors.get( permeability::permeability{} ),
-                                                                      permeabilityAccessors.get( permeability::dPerm_dPressure{} ),
-                                                                      relPermAccessors.get( fields::relperm::phaseRelPerm{} ),
-                                                                      multiFluidAccessors.get( fields::multifluid::phaseViscosity{} ),
-                                                                      multiFluidAccessors.get( fields::multifluid::phaseDensity{} ),
-                                                                      multiFluidAccessors.get( fields::multifluid::phaseMassDensity{} ),
-                                                                      multiFluidAccessors.get( fields::multifluid::phaseCompFraction{} ),
-                                                                      phaseOutfluxAccessor.toNestedView(),
-                                                                      compOutfluxAccessor.toNestedView() );
+      KernelLaunchSelector1< fvm::CFLFluxKernel >( numComps,
+                                                   numPhases,
+                                                   m_gravityDensityScheme == GravityDensityScheme::PhasePresence,
+                                                   dt,
+                                                   stencilWrapper,
+                                                   compFlowAccessors.get( flow::pressure{} ),
+                                                   compFlowAccessors.get( flow::gravityCoefficient{} ),
+                                                   compFlowAccessors.get( flow::phaseVolumeFraction{} ),
+                                                   permeabilityAccessors.get( permeability::permeability{} ),
+                                                   permeabilityAccessors.get( permeability::dPerm_dPressure{} ),
+                                                   relPermAccessors.get( fields::relperm::phaseRelPerm{} ),
+                                                   multiFluidAccessors.get( fields::multifluid::phaseViscosity{} ),
+                                                   multiFluidAccessors.get( fields::multifluid::phaseDensity{} ),
+                                                   multiFluidAccessors.get( fields::multifluid::phaseMassDensity{} ),
+                                                   multiFluidAccessors.get( fields::multifluid::phaseCompFraction{} ),
+                                                   phaseOutfluxAccessor.toNestedView(),
+                                                   compOutfluxAccessor.toNestedView() );
     } );
   } );
 
@@ -1709,23 +1692,22 @@ void CompositionalMultiphaseFVM::computeCFLNumbers( geos::DomainPartition & doma
       real64 subRegionMaxPhaseCFLNumber = 0.0;
       real64 subRegionMaxCompCFLNumber = 0.0;
 
-      isothermalCompositionalMultiphaseBaseKernels::KernelLaunchSelector2
-      < isothermalCompositionalMultiphaseFVMKernels::CFLKernel >( numComps, numPhases,
-                                                                  subRegion.size(),
-                                                                  volume,
-                                                                  porosity,
-                                                                  compDens,
-                                                                  compFrac,
-                                                                  phaseVolFrac,
-                                                                  phaseRelPerm,
-                                                                  dPhaseRelPerm_dPhaseVolFrac,
-                                                                  phaseVisc,
-                                                                  phaseOutflux,
-                                                                  compOutflux,
-                                                                  phaseCFLNumber,
-                                                                  compCFLNumber,
-                                                                  subRegionMaxPhaseCFLNumber,
-                                                                  subRegionMaxCompCFLNumber );
+      KernelLaunchSelector2< fvm::CFLKernel >( numComps, numPhases,
+                                               subRegion.size(),
+                                               volume,
+                                               porosity,
+                                               compDens,
+                                               compFrac,
+                                               phaseVolFrac,
+                                               phaseRelPerm,
+                                               dPhaseRelPerm_dPhaseVolFrac,
+                                               phaseVisc,
+                                               phaseOutflux,
+                                               compOutflux,
+                                               phaseCFLNumber,
+                                               compCFLNumber,
+                                               subRegionMaxPhaseCFLNumber,
+                                               subRegionMaxCompCFLNumber );
 
       localMaxPhaseCFLNumber = LvArray::math::max( localMaxPhaseCFLNumber, subRegionMaxPhaseCFLNumber );
       localMaxCompCFLNumber = LvArray::math::max( localMaxCompCFLNumber, subRegionMaxCompCFLNumber );

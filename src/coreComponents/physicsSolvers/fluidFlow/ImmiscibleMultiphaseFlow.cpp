@@ -49,7 +49,7 @@ namespace geos
 using namespace dataRepository;
 using namespace constitutive;
 using namespace fields::immiscibleMultiphaseFlow;
-using namespace immiscibleMultiphaseKernels;
+using namespace kernels::fluidFlow::immiscible;
 
 
 ImmiscibleMultiphaseFlow::ImmiscibleMultiphaseFlow( const string & name,
@@ -241,7 +241,7 @@ void ImmiscibleMultiphaseFlow::updateRelPermModel( ObjectManagerBase & dataGroup
   {
     typename TYPEOFREF( castedRelPerm ) ::KernelWrapper relPermWrapper = castedRelPerm.createKernelWrapper();
 
-    isothermalCompositionalMultiphaseBaseKernels::
+    kernels::fluidFlow::compositional::
       RelativePermeabilityUpdateKernel::
       launch< parallelDevicePolicy<> >( dataGroup.size(),
                                         relPermWrapper,
@@ -265,7 +265,7 @@ void ImmiscibleMultiphaseFlow::updateCapPressureModel( ObjectManagerBase & dataG
     {
       typename TYPEOFREF( castedCapPres ) ::KernelWrapper capPresWrapper = castedCapPres.createKernelWrapper();
 
-      isothermalCompositionalMultiphaseBaseKernels::
+      kernels::fluidFlow::compositional::
         CapillaryPressureUpdateKernel::
         launch< parallelDevicePolicy<> >( dataGroup.size(),
                                           capPresWrapper,
@@ -330,7 +330,7 @@ void ImmiscibleMultiphaseFlow::updatePhaseMobility( ObjectManagerBase & dataGrou
   string const & relpermName = dataGroup.getReference< string >( viewKeyStruct::relPermNamesString() );
   RelativePermeabilityBase const & relperm = getConstitutiveModel< RelativePermeabilityBase >( dataGroup, relpermName );
 
-  immiscibleMultiphaseKernels::
+  kernels::fluidFlow::immiscible::
     PhaseMobilityKernelFactory::
     createAndLaunch< parallelDevicePolicy<> >( m_numPhases,
                                                dataGroup,
@@ -565,7 +565,7 @@ void ImmiscibleMultiphaseFlow::assembleAccumulationTerm( DomainPartition & domai
       TwoPhaseImmiscibleFluid const & fluid = getConstitutiveModel< TwoPhaseImmiscibleFluid >( subRegion, fluidName );
       CoupledSolidBase const & solid = getConstitutiveModel< CoupledSolidBase >( subRegion, solidName );
 
-      immiscibleMultiphaseKernels::
+      kernels::fluidFlow::immiscible::
         AccumulationKernelFactory::
         createAndLaunch< parallelDevicePolicy<> >( m_numPhases,
                                                    dofManager.rankOffset(),
@@ -602,7 +602,7 @@ void ImmiscibleMultiphaseFlow::assembleFluxTerms( real64 const dt,
     fluxApprox.forAllStencils( mesh, [&]( auto & stencil )
     {
       typename TYPEOFREF( stencil ) ::KernelWrapper stencilWrapper = stencil.createKernelWrapper();
-      immiscibleMultiphaseKernels::
+      kernels::fluidFlow::immiscible::
         FluxComputeKernelFactory::createAndLaunch< parallelDevicePolicy<> >( m_numPhases,
                                                                              dofManager.rankOffset(),
                                                                              dofKey,
@@ -1082,7 +1082,7 @@ real64 ImmiscibleMultiphaseFlow::calculateResidualNorm( real64 const & GEOS_UNUS
       real64 subRegionFlowResidualNorm[1]{};
       real64 subRegionFlowResidualNormalizer[1]{};
 
-      immiscibleMultiphaseKernels::
+      kernels::fluidFlow::immiscible::
         ResidualNormKernelFactory::createAndLaunch< parallelDevicePolicy<> >( normType,
                                                                               2,
                                                                               rankOffset,

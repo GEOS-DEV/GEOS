@@ -27,7 +27,7 @@
 namespace geos
 {
 
-namespace flowSolverBaseKernels
+namespace kernels::fluidFlow
 {
 
 /// Threshold for the min pore volume (below, a warning is issued)
@@ -103,7 +103,7 @@ struct MinPoreVolumeMaxPorosityKernel
   }
 };
 
-} // namespace flowSolverBaseKernels
+} // namespace kernels::fluidFlow
 
 } // namespace geos
 

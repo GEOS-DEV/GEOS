@@ -27,7 +27,7 @@
 namespace geos
 {
 
-namespace singlePhaseBaseKernels
+namespace kernels::fluidFlow::singlePhase
 {
 
 /******************************** HydrostaticPressureKernel ********************************/
@@ -206,7 +206,7 @@ struct HydrostaticPressureKernel
   }
 };
 
-} // namespace singlePhaseBaseKernels
+} // namespace kernels::fluidFlow::singlePhase
 
 } // namespace geos
 

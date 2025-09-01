@@ -75,8 +75,8 @@ CompositionalMultiphaseBase::CompositionalMultiphaseBase( const string & name,
   m_allowCompDensChopping( 1 ),
   m_useTotalMassEquation( 1 ),
   m_useSimpleAccumulation( 1 ),
-  m_minCompDens( isothermalCompositionalMultiphaseBaseKernels::minDensForDivision ),
-  m_minCompFrac( isothermalCompositionalMultiphaseBaseKernels::minCompFracForDivision )
+  m_minCompDens( kernels::fluidFlow::compositional::minDensForDivision ),
+  m_minCompFrac( kernels::fluidFlow::compositional::minCompFracForDivision )
 {
 //START_SPHINX_INCLUDE_00
   this->registerWrapper( viewKeyStruct::inputTemperatureString(), &m_inputTemperature ).
@@ -169,13 +169,13 @@ CompositionalMultiphaseBase::CompositionalMultiphaseBase( const string & name,
   this->registerWrapper( viewKeyStruct::minCompDensString(), &m_minCompDens ).
     setSizedFromParent( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setApplyDefaultValue( isothermalCompositionalMultiphaseBaseKernels::minDensForDivision ).
+    setApplyDefaultValue( kernels::fluidFlow::compositional::minDensForDivision ).
     setDescription( "Minimum allowed global component density" );
 
   this->registerWrapper( viewKeyStruct::minCompFracString(), &m_minCompFrac ).
     setSizedFromParent( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setApplyDefaultValue( isothermalCompositionalMultiphaseBaseKernels::minCompFracForDivision ).
+    setApplyDefaultValue( kernels::fluidFlow::compositional::minCompFracForDivision ).
     setDescription( "Minimum allowed global component fraction" );
 
   this->registerWrapper( viewKeyStruct::maxSequentialCompDensChangeString(), &m_maxSequentialCompDensChange ).
@@ -652,7 +652,7 @@ void CompositionalMultiphaseBase::updateGlobalComponentFraction( ObjectManagerBa
 {
   GEOS_MARK_FUNCTION;
 
-  isothermalCompositionalMultiphaseBaseKernels::
+  kernels::fluidFlow::compositional::
     GlobalComponentFractionKernelFactory::
     createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
                                                dataGroup );
@@ -663,14 +663,15 @@ real64 CompositionalMultiphaseBase::updatePhaseVolumeFraction( ObjectManagerBase
 {
   GEOS_MARK_FUNCTION;
 
+  using namespace kernels::fluidFlow::compositional;
+
   string const & fluidName = dataGroup.getReference< string >( viewKeyStruct::fluidNamesString() );
   MultiFluidBase const & fluid = getConstitutiveModel< MultiFluidBase >( dataGroup, fluidName );
 
   if( m_formulationType == CompositionalMultiphaseFormulationType::OverallComposition )
   {
     // isothermal for now
-    return isothermalCompositionalMultiphaseBaseKernels::
-             PhaseVolumeFractionZFormulationKernelFactory::
+    return isothermal::PhaseVolumeFractionZFormulationKernelFactory::
              createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
                                                         m_numPhases,
                                                         dataGroup,
@@ -680,8 +681,7 @@ real64 CompositionalMultiphaseBase::updatePhaseVolumeFraction( ObjectManagerBase
   {
     if( m_isThermal )
     {
-      return thermalCompositionalMultiphaseBaseKernels::
-               PhaseVolumeFractionKernelFactory::
+      return thermal::PhaseVolumeFractionKernelFactory::
                createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
                                                           m_numPhases,
                                                           dataGroup,
@@ -689,8 +689,7 @@ real64 CompositionalMultiphaseBase::updatePhaseVolumeFraction( ObjectManagerBase
     }
     else
     {
-      return isothermalCompositionalMultiphaseBaseKernels::
-               PhaseVolumeFractionKernelFactory::
+      return isothermal::PhaseVolumeFractionKernelFactory::
                createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
                                                           m_numPhases,
                                                           dataGroup,
@@ -717,7 +716,7 @@ void CompositionalMultiphaseBase::updateFluidModel( ObjectManagerBase & dataGrou
     using ExecPolicy = typename FluidType::exec_policy;
     typename FluidType::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
 
-    thermalCompositionalMultiphaseBaseKernels::
+    kernels::fluidFlow::compositional::
       FluidUpdateKernel::
       launch< ExecPolicy >( dataGroup.size(),
                             fluidWrapper,
@@ -741,7 +740,7 @@ void CompositionalMultiphaseBase::updateRelPermModel( ObjectManagerBase & dataGr
   {
     typename TYPEOFREF( castedRelPerm ) ::KernelWrapper relPermWrapper = castedRelPerm.createKernelWrapper();
 
-    isothermalCompositionalMultiphaseBaseKernels::
+    kernels::fluidFlow::compositional::
       RelativePermeabilityUpdateKernel::
       launch< parallelDevicePolicy<> >( dataGroup.size(),
                                         relPermWrapper,
@@ -765,7 +764,7 @@ void CompositionalMultiphaseBase::updateCapPressureModel( ObjectManagerBase & da
     {
       typename TYPEOFREF( castedCapPres ) ::KernelWrapper capPresWrapper = castedCapPres.createKernelWrapper();
 
-      isothermalCompositionalMultiphaseBaseKernels::
+      kernels::fluidFlow::compositional::
         CapillaryPressureUpdateKernel::
         launch< parallelDevicePolicy<> >( dataGroup.size(),
                                           capPresWrapper,
@@ -857,7 +856,7 @@ void CompositionalMultiphaseBase::updateSolidInternalEnergyModel( ObjectManagerB
 
   // TODO: this should go somewhere, handle the case of flow in fracture, etc
 
-  thermalCompositionalMultiphaseBaseKernels::
+  kernels::fluidFlow::compositional::thermal::
     SolidInternalEnergyUpdateKernel::
     launch< parallelDevicePolicy<> >( dataGroup.size(),
                                       solidInternalEnergyWrapper,
@@ -1082,6 +1081,8 @@ void CompositionalMultiphaseBase::initializeThermalState( MeshLevel & mesh, stri
 
 void CompositionalMultiphaseBase::computeHydrostaticEquilibrium( DomainPartition & domain )
 {
+  using namespace kernels::fluidFlow::compositional;
+
   FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
   FunctionManager & functionManager = FunctionManager::getInstance();
 
@@ -1250,34 +1251,32 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium( DomainPartition
         typename FluidType::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
 
         // note: inside this kernel, serialPolicy is used, and elevation/pressure values don't go to the GPU
-        isothermalCompositionalMultiphaseBaseKernels::
-          HydrostaticPressureKernel::ReturnType const returnValue =
-          isothermalCompositionalMultiphaseBaseKernels::
-            HydrostaticPressureKernel::launch( numPointsInTable,
-                                               numComps,
-                                               numPhases,
-                                               ipInit,
-                                               maxNumEquilIterations,
-                                               equilTolerance,
-                                               gravVector,
-                                               minElevation,
-                                               elevationIncrement,
-                                               datumElevation,
-                                               datumPressure,
-                                               fluidWrapper,
-                                               compFracTableWrappers.toViewConst(),
-                                               tempTableWrapper,
-                                               elevationValues.toNestedView(),
-                                               pressureValues.toView() );
+        auto const returnValue =
+          HydrostaticPressureKernel::launch( numPointsInTable,
+                                             numComps,
+                                             numPhases,
+                                             ipInit,
+                                             maxNumEquilIterations,
+                                             equilTolerance,
+                                             gravVector,
+                                             minElevation,
+                                             elevationIncrement,
+                                             datumElevation,
+                                             datumPressure,
+                                             fluidWrapper,
+                                             compFracTableWrappers.toViewConst(),
+                                             tempTableWrapper,
+                                             elevationValues.toNestedView(),
+                                             pressureValues.toView() );
 
-        GEOS_THROW_IF( returnValue ==  isothermalCompositionalMultiphaseBaseKernels::HydrostaticPressureKernel::ReturnType::FAILED_TO_CONVERGE,
+        GEOS_THROW_IF( returnValue == HydrostaticPressureKernel::ReturnType::FAILED_TO_CONVERGE,
                        getCatalogName() << " " << getDataContext() <<
                        ": hydrostatic pressure initialization failed to converge in region " << region.getName() << "! \n" <<
                        "Try to loosen the equilibration tolerance, or increase the number of equilibration iterations. \n" <<
                        "If nothing works, something may be wrong in the fluid model, see <Constitutive> ",
                        std::runtime_error );
 
-        GEOS_LOG_RANK_0_IF( returnValue == isothermalCompositionalMultiphaseBaseKernels::HydrostaticPressureKernel::ReturnType::DETECTED_MULTIPHASE_FLOW,
+        GEOS_LOG_RANK_0_IF( returnValue == HydrostaticPressureKernel::ReturnType::DETECTED_MULTIPHASE_FLOW,
                             getCatalogName() << " " << getDataContext() <<
                             ": currently, GEOS assumes that there is only one mobile phase when computing the hydrostatic pressure. \n" <<
                             "We detected multiple phases using the provided datum pressure, temperature, and component fractions. \n" <<
@@ -1450,7 +1449,7 @@ void CompositionalMultiphaseBase::assembleLocalTerms( DomainPartition & domain,
 {
   GEOS_MARK_FUNCTION;
 
-  using namespace isothermalCompositionalMultiphaseBaseKernels;
+  using namespace kernels::fluidFlow::compositional;
 
   BitFlags< KernelFlags > kernelFlags;
   if( m_useTotalMassEquation )
@@ -1903,7 +1902,7 @@ void CompositionalMultiphaseBase::applyDirichletBC( real64 const time_n,
         using ExecPolicy = typename FluidType::exec_policy;
         typename FluidType::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
 
-        thermalCompositionalMultiphaseBaseKernels::
+        kernels::fluidFlow::compositional::
           FluidUpdateKernel::
           launch< ExecPolicy >( targetSet,
                                 fluidWrapper,
@@ -2175,7 +2174,7 @@ void CompositionalMultiphaseBase::chopNegativeCompFractions( DomainPartition & d
 {
   GEOS_MARK_FUNCTION;
 
-  using namespace isothermalCompositionalMultiphaseBaseKernels;
+  using namespace kernels::fluidFlow::compositional;
 
   integer const numComp = m_numComponents;
   real64 const minCompFrac = m_minCompFrac;
@@ -2547,7 +2546,8 @@ void CompositionalMultiphaseBase::implicitStepComplete( real64 const & time,
       arrayView1d< real64 const > const pres = subRegion.getField< flow::pressure >();
       arrayView1d< real64 const > const initPres = subRegion.getField< flow::initialPressure >();
       arrayView1d< real64 > const deltaPres = subRegion.getField< flow::deltaPressure >();
-      isothermalCompositionalMultiphaseBaseKernels::StatisticsKernel::
+      kernels::fluidFlow::compositional::
+        StatisticsKernel::
         saveDeltaPressure< parallelDevicePolicy<> >( subRegion.size(), pres, initPres, deltaPres );
 
       // Step 2: save the converged fluid state

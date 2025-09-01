@@ -25,7 +25,7 @@
 namespace geos
 {
 
-namespace thermalCompositionalMultiphaseBaseKernels
+namespace kernels::fluidFlow::compositional::thermal
 {
 
 /******************************** PhaseVolumeFractionKernel ********************************/
@@ -37,11 +37,12 @@ namespace thermalCompositionalMultiphaseBaseKernels
  * @brief Define the interface for the property kernel in charge of computing the phase volume fractions
  */
 template< integer NUM_COMP, integer NUM_PHASE >
-class PhaseVolumeFractionKernel : public isothermalCompositionalMultiphaseBaseKernels::PhaseVolumeFractionKernel< NUM_COMP, NUM_PHASE >
+class PhaseVolumeFractionKernel :
+  public kernels::fluidFlow::compositional::isothermal::PhaseVolumeFractionKernel< NUM_COMP, NUM_PHASE >
 {
 public:
 
-  using Base = isothermalCompositionalMultiphaseBaseKernels::PhaseVolumeFractionKernel< NUM_COMP, NUM_PHASE >;
+  using Base = kernels::fluidFlow::compositional::isothermal::PhaseVolumeFractionKernel< NUM_COMP, NUM_PHASE >;
   using Base::m_dPhaseDens;
   using Base::m_dPhaseFrac;
   using Base::m_dPhaseVolFrac;
@@ -107,11 +108,12 @@ public:
                    ObjectManagerBase & subRegion,
                    constitutive::MultiFluidBase const & fluid )
   {
+    using namespace kernels::fluidFlow::compositional::internal;
+
     real64 maxDeltaPhaseVolFrac = 0.0;
     if( numPhase == 2 )
     {
-      isothermalCompositionalMultiphaseBaseKernels::
-        internal::kernelLaunchSelectorCompSwitch( numComp, [&] ( auto NC )
+      kernelLaunchSelectorCompSwitch( numComp, [&] ( auto NC )
       {
         integer constexpr NUM_COMP = NC();
         PhaseVolumeFractionKernel< NUM_COMP, 2 > kernel( subRegion, fluid );
@@ -120,8 +122,7 @@ public:
     }
     else if( numPhase == 3 )
     {
-      isothermalCompositionalMultiphaseBaseKernels::
-        internal::kernelLaunchSelectorCompSwitch( numComp, [&] ( auto NC )
+      kernelLaunchSelectorCompSwitch( numComp, [&] ( auto NC )
       {
         integer constexpr NUM_COMP = NC();
         PhaseVolumeFractionKernel< NUM_COMP, 3 > kernel( subRegion, fluid );
@@ -132,7 +133,7 @@ public:
   }
 };
 
-} // namespace thermalCompositionalMultiphaseBaseKernels
+} // namespace kernels::fluidFlow::compositional::thermal
 
 } // namespace geos
 

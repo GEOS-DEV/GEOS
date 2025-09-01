@@ -29,7 +29,7 @@
 namespace geos
 {
 
-namespace thermalCompositionalMultiphaseFVMKernels
+namespace kernels::fluidFlow::compositional::fvm::thermal
 {
 
 /******************************** DirichletFluxComputeKernel ********************************/
@@ -42,9 +42,8 @@ namespace thermalCompositionalMultiphaseFVMKernels
  * @brief Define the interface for the assembly kernel in charge of Dirichlet face flux terms
  */
 template< integer NUM_COMP, integer NUM_DOF, typename FLUIDWRAPPER >
-class DirichletFluxComputeKernel : public isothermalCompositionalMultiphaseFVMKernels::DirichletFluxComputeKernel< NUM_COMP,
-                                                                                                                   NUM_DOF,
-                                                                                                                   FLUIDWRAPPER >
+class DirichletFluxComputeKernel :
+  public kernels::fluidFlow::compositional::fvm::isothermal::DirichletFluxComputeKernel< NUM_COMP, NUM_DOF, FLUIDWRAPPER >
 {
 public:
 
@@ -57,7 +56,7 @@ public:
   template< typename VIEWTYPE >
   using ElementViewConst = ElementRegionManager::ElementViewConst< VIEWTYPE >;
 
-  using AbstractBase = isothermalCompositionalMultiphaseFVMKernels::FluxComputeKernelBase;
+  using AbstractBase = kernels::fluidFlow::compositional::fvm::FluxComputeKernelBase;
   using DofNumberAccessor = AbstractBase::DofNumberAccessor;
   using CompFlowAccessors = AbstractBase::CompFlowAccessors;
   using MultiFluidAccessors = AbstractBase::MultiFluidAccessors;
@@ -73,7 +72,8 @@ public:
   using AbstractBase::m_dPhaseCompFrac;
   using AbstractBase::m_dCompFrac_dCompDens;
 
-  using Base = isothermalCompositionalMultiphaseFVMKernels::DirichletFluxComputeKernel< NUM_COMP, NUM_DOF, FLUIDWRAPPER >;
+  using Base =
+    kernels::fluidFlow::compositional::fvm::isothermal::DirichletFluxComputeKernel< NUM_COMP, NUM_DOF, FLUIDWRAPPER >;
   using Base::numComp;
   using Base::numDof;
   using Base::numEqn;
@@ -87,6 +87,7 @@ public:
   using Base::m_faceTemp;
   using Base::m_faceGravCoef;
 
+  using KernelFlags = kernels::fluidFlow::compositional::fvm::KernelFlags;
 
   using ThermalCompFlowAccessors =
     StencilAccessors< fields::flow::temperature >;
@@ -137,7 +138,7 @@ public:
                               real64 const dt,
                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
                               arrayView1d< real64 > const & localRhs,
-                              BitFlags< isothermalCompositionalMultiphaseFVMKernels::KernelFlags > kernelFlags )
+                              BitFlags< KernelFlags > kernelFlags )
     : Base( numPhases,
             rankOffset,
             faceManager,
@@ -430,7 +431,7 @@ public:
   createAndLaunch( integer const numComps,
                    integer const numPhases,
                    globalIndex const rankOffset,
-                   BitFlags< isothermalCompositionalMultiphaseFVMKernels::KernelFlags > kernelFlags,
+                   BitFlags< kernels::fluidFlow::compositional::fvm::KernelFlags > kernelFlags,
                    string const & dofKey,
                    string const & solverName,
                    FaceManager const & faceManager,
@@ -471,7 +472,7 @@ public:
   }
 };
 
-} // namespace thermalCompositionalMultiphaseFVMKernels
+} // namespace kernels::fluidFlow::compositional::fvm::thermal
 
 } // namespace geos
 

@@ -39,7 +39,7 @@
 namespace geos
 {
 
-namespace reactiveCompositionalMultiphaseOBLKernels
+namespace kernels::fluidFlow::obl
 {
 
 static constexpr real64 minValueForDivision = 1e-10;
@@ -1372,7 +1372,7 @@ struct SolutionCheckKernel
 };
 
 
-} // namespace ReactiveCompositionalMultiphaseOBLKernels
+} // namespace kernels::fluidFlow::obl
 
 } // namespace geos
 

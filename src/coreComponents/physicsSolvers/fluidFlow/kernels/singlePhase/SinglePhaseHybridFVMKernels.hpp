@@ -43,7 +43,8 @@
 
 namespace geos
 {
-namespace singlePhaseHybridFVMKernels
+
+namespace kernels::fluidFlow::singlePhase::hybridFVM
 {
 
 /******************************** AssemblerKernelHelper ********************************/
@@ -432,7 +433,7 @@ public:
       localIndex local[3] = { m_er, m_esr, ei };
       localIndex neighbor[3] = { m_er, m_esr, ei };
       bool const isNeighborFound =
-        hybridFVMKernels::CellConnectivity::
+        kernels::fluidFlow::hybridFVM::CellConnectivity::
           isNeighborFound( local,
                            iFaceLoc,
                            m_elemRegionList,
@@ -956,7 +957,7 @@ public:
 
 };
 
-} // namespace singlePhaseHybridFVMKernels
+} // namespace kernels::fluidFlow::singlePhase::hybridFVM
 
 } // namespace geos
 

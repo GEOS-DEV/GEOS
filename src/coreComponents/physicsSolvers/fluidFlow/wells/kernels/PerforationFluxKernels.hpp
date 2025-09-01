@@ -42,12 +42,15 @@
 namespace geos
 {
 
-struct NoOpStuct
+namespace kernels::wells::compositional
 {
-  NoOpStuct(){}
-};
 
-namespace isothermalPerforationFluxKernels
+//struct NoOpStruct
+//{
+//  NoOpStruct(){}
+//};
+
+namespace isothermal
 {
 
 /******************************** PerforationFluxKernel ********************************/
@@ -570,27 +573,25 @@ public:
   }
 };
 
-} // end namespace isothermalPerforationFluxKernels
+} // end namespace isothermal
 
-namespace thermalPerforationFluxKernels
+namespace thermal
 {
 
-using namespace constitutive;
+//using namespace constitutive;
 
 /******************************** PerforationFluxKernel ********************************/
 
 template< integer NC, integer NP, integer IS_THERMAL >
-class PerforationFluxKernel : public isothermalPerforationFluxKernels::PerforationFluxKernel< NC, NP, IS_THERMAL >
+class PerforationFluxKernel : public kernels::wells::compositional::isothermal::PerforationFluxKernel< NC, NP, IS_THERMAL >
 {
 public:
 
-  using Base = isothermalPerforationFluxKernels::PerforationFluxKernel< NC, NP, IS_THERMAL >;
-  //using AbstractBase::m_dPhaseVolFrac;
+  using Base = kernels::wells::compositional::isothermal::PerforationFluxKernel< NC, NP, IS_THERMAL >;
   using Base::m_resPhaseCompFrac;
   using Base::m_dResCompFrac_dCompDens;
   using Base::m_dWellElemCompFrac_dCompDens;
-  //using AbstractBase::m_dPhaseCompFrac;
-  //using AbstractBase::m_dCompFrac_dCompDens;
+
   /// Compile time value for the number of components
   static constexpr integer numComp = NC;
 
@@ -613,10 +614,6 @@ public:
     StencilMaterialAccessors< MultiFluidBase,
                               fields::multifluid::phaseEnthalpy,
                               fields::multifluid::dPhaseEnthalpy >;
-
-  //using ThermalConductivityAccessors =
-  //  StencilMaterialAccessors< MultiPhaseThermalConductivityBase,
-  //                            fields::thermalconductivity::effectiveConductivity >;
 
   /**
    * @brief The type for element-based non-constitutive data parameters.
@@ -857,7 +854,9 @@ public:
   }
 };
 
-}   // end namespace thermalPerforationFluxKernels
+} // end namespace thermal
+
+} // end namespace kernels::wells::PerforationFluxKernels
 
 } // end namespace geos
 

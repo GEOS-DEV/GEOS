@@ -43,7 +43,7 @@ namespace geos
 using namespace dataRepository;
 using namespace constitutive;
 using namespace fields;
-using namespace singlePhaseHybridFVMKernels;
+using namespace kernels::fluidFlow::singlePhase::hybridFVM;
 using namespace mimeticInnerProduct;
 
 SinglePhaseHybridFVM::SinglePhaseHybridFVM( const string & name,
@@ -257,7 +257,7 @@ void SinglePhaseHybridFVM::assembleFluxTerms( real64 const dt,
       string const & permName = subRegion.getReference< string >( viewKeyStruct::permeabilityNamesString() );
       PermeabilityBase const & permeability = getConstitutiveModel< PermeabilityBase >( subRegion, permName );
 
-      singlePhaseHybridFVMKernels::
+      kernels::fluidFlow::singlePhase::hybridFVM::
         ElementBasedAssemblyKernelFactory::
         createAndLaunch< parallelDevicePolicy<> >( dofManager.rankOffset(),
                                                    er,
@@ -491,7 +491,7 @@ real64 SinglePhaseHybridFVM::calculateResidualNorm( real64 const & GEOS_UNUSED_P
 
       // step 1.1: compute the norm in the subRegion
 
-      singlePhaseBaseKernels::
+      kernels::fluidFlow::singlePhase::
         ResidualNormKernelFactory::
         createAndLaunch< parallelDevicePolicy<> >( normType,
                                                    rankOffset,
@@ -528,7 +528,7 @@ real64 SinglePhaseHybridFVM::calculateResidualNorm( real64 const & GEOS_UNUSED_P
 
     // step 2.1: compute the norm for the local faces
 
-    singlePhaseHybridFVMKernels::
+    kernels::fluidFlow::singlePhase::hybridFVM::
       ResidualNormKernelFactory::
       createAndLaunch< parallelDevicePolicy<> >( normType,
                                                  rankOffset,
@@ -648,8 +648,9 @@ void SinglePhaseHybridFVM::updatePressureGradient( DomainPartition & domain )
     mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                           auto & subRegion )
     {
-      singlePhaseHybridFVMKernels::AveragePressureGradientKernelFactory::createAndLaunch< parallelHostPolicy >( subRegion,
-                                                                                                                faceManager );
+      kernels::fluidFlow::singlePhase::hybridFVM::
+        AveragePressureGradientKernelFactory::createAndLaunch< parallelHostPolicy >( subRegion,
+                                                                                     faceManager );
     } );
   } );
 }

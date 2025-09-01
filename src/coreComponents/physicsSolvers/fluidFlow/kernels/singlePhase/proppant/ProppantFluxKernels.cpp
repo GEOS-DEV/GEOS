@@ -24,10 +24,10 @@
 namespace geos
 {
 
-namespace singlePhaseProppantFluxKernels
+namespace kernels::fluidFlow::singlePhase::proppant
 {
 
-using namespace singlePhaseFluxKernelsHelper;
+using namespace kernels::fluidFlow::singlePhase::fvm;
 
 
 void FaceElementFluxKernel::
@@ -181,21 +181,23 @@ FaceElementFluxKernel::compute( localIndex const numFluxElems,
       localIndex const subRegionIndex[2] = {sesri[k[0]], sesri[k[1]]};
       localIndex const elementIndex[2]   = {sei[k[0]], sei[k[1]]};
 
-      computeSinglePhaseFlux( regionIndex, subRegionIndex, elementIndex,
-                              trans,
-                              dTrans,
-                              pres,
-                              gravCoef,
-                              dens,
-                              dDens,
-                              mob,
-                              dMob,
-                              alpha,
-                              mobility,
-                              potGrad,
-                              fluxVal,
-                              dFlux_dP,
-                              dFlux_dTrans );
+      kernels::fluidFlow::singlePhase::fvm::computeSinglePhaseFlux( regionIndex,
+                                                                    subRegionIndex,
+                                                                    elementIndex,
+                                                                    trans,
+                                                                    dTrans,
+                                                                    pres,
+                                                                    gravCoef,
+                                                                    dens,
+                                                                    dDens,
+                                                                    mob,
+                                                                    dMob,
+                                                                    alpha,
+                                                                    mobility,
+                                                                    potGrad,
+                                                                    fluxVal,
+                                                                    dFlux_dP,
+                                                                    dFlux_dTrans );
 
       // populate local flux vector and derivatives
       flux[k[0]] += dt * fluxVal;
@@ -221,6 +223,6 @@ FaceElementFluxKernel::compute( localIndex const numFluxElems,
 }
 
 
-}// namespace singlePhaseProppantFluxKernels
+} // namespace kernels::fluidFlow::singlePhase::proppant
 
 } // namespace geos

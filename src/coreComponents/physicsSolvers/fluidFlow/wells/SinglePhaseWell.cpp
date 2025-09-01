@@ -50,7 +50,7 @@ namespace geos
 using namespace dataRepository;
 using namespace constitutive;
 using namespace fields;
-using namespace singlePhaseWellKernels;
+using namespace kernels::wells::singlePhase;
 
 SinglePhaseWell::SinglePhaseWell( const string & name,
                                   Group * const parent ):
@@ -275,7 +275,7 @@ void SinglePhaseWell::updateVolRateForConstraint( WellElementSubRegion & subRegi
     geos::internal::kernelLaunchSelectorThermalSwitch( isThermal(), [&] ( auto ISTHERMAL )
     {
       integer constexpr IS_THERMAL = ISTHERMAL();
-      using COFFSET_WJ = singlePhaseWellKernels::ColOffset_WellJac< IS_THERMAL >;
+      using COFFSET_WJ = kernels::wells::singlePhase::ColOffset_WellJac< IS_THERMAL >;
       // bring everything back to host, capture the scalars by reference
       forAll< serialPolicy >( 1, [fluidWrapper,
                                   pres,
@@ -349,7 +349,7 @@ void SinglePhaseWell::updateFluidModel( WellElementSubRegion & subRegion ) const
   constitutiveUpdatePassThru( fluid, [&]( auto & castedFluid )
   {
     typename TYPEOFREF( castedFluid ) ::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
-    singlePhaseBaseKernels::FluidUpdateKernel::launch( fluidWrapper, pres, temp );
+    kernels::fluidFlow::singlePhase::FluidUpdateKernel::launch( fluidWrapper, pres, temp );
   } );
 }
 
@@ -594,8 +594,7 @@ void SinglePhaseWell::assembleFluxTerms( real64 const & time_n,
       {
         string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
         SingleFluidBase const & fluid = subRegion.getConstitutiveModel< SingleFluidBase >( fluidName );
-        thermalSinglePhaseWellKernels::
-          FaceBasedAssemblyKernelFactory::
+        thermal::FaceBasedAssemblyKernelFactory::
           createAndLaunch< parallelDevicePolicy<> >( dt,
                                                      dofManager.rankOffset(),
                                                      wellDofKey,
@@ -607,8 +606,7 @@ void SinglePhaseWell::assembleFluxTerms( real64 const & time_n,
       }
       else
       {
-        singlePhaseWellKernels::
-          FaceBasedAssemblyKernelFactory::
+        FaceBasedAssemblyKernelFactory::
           createAndLaunch< parallelDevicePolicy<> >( dt,
                                                      dofManager.rankOffset(),
                                                      wellDofKey,
@@ -718,6 +716,9 @@ void SinglePhaseWell::assembleAccumulationTerms( real64 const & time_n,
   GEOS_MARK_FUNCTION;
   GEOS_UNUSED_VAR( time_n );
   GEOS_UNUSED_VAR( dt );
+
+  using namespace kernels::wells::singlePhase;
+
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel const & mesh,
                                                                 string_array const & regionNames )
@@ -739,7 +740,7 @@ void SinglePhaseWell::assembleAccumulationTerms( real64 const & time_n,
 
       if( isThermal() )
       {
-        thermalSinglePhaseWellKernels::
+        thermal::
           ElementBasedAssemblyKernelFactory::
           createAndLaunch< parallelDevicePolicy<> >( wellControls.isProducer(),
                                                      dofManager.rankOffset(),
@@ -751,8 +752,7 @@ void SinglePhaseWell::assembleAccumulationTerms( real64 const & time_n,
       }
       else
       {
-        singlePhaseWellKernels::
-          ElementBasedAssemblyKernelFactory::
+        ElementBasedAssemblyKernelFactory::
           createAndLaunch< parallelDevicePolicy<> >( dofManager.rankOffset(),
                                                      wellElemDofKey,
                                                      subRegion,
@@ -780,6 +780,9 @@ void SinglePhaseWell::computePerforationRates( real64 const & time_n,
   GEOS_MARK_FUNCTION;
   GEOS_UNUSED_VAR( time_n );
   GEOS_UNUSED_VAR( dt );
+
+  using namespace kernels::wells::singlePhase;
+
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
                                                                 string_array const & regionNames )
@@ -805,8 +808,7 @@ void SinglePhaseWell::computePerforationRates( real64 const & time_n,
 
         if( isThermal() )
         {
-          thermalSinglePhasePerforationFluxKernels::
-            PerforationFluxKernelFactory::
+          thermal::PerforationFluxKernelFactory::
             createAndLaunch< parallelDevicePolicy<> >( flowSolver.getName(),
                                                        perforationData,
                                                        subRegion,
@@ -815,8 +817,7 @@ void SinglePhaseWell::computePerforationRates( real64 const & time_n,
         }
         else
         {
-          isothermalSinglePhasePerforationFluxKernels::
-            PerforationFluxKernelFactory::
+          isothermal::PerforationFluxKernelFactory::
             createAndLaunch< parallelDevicePolicy<> >( flowSolver.getName(),
                                                        perforationData,
                                                        subRegion,
@@ -883,7 +884,7 @@ SinglePhaseWell::calculateResidualNorm( real64 const & time_n,
       if( isThermal() )
       {
         real64 subRegionResidualNorm[2]{};
-        thermalSinglePhaseWellKernels::ResidualNormKernelFactory::
+        thermal::ResidualNormKernelFactory::
           createAndLaunch< parallelDevicePolicy<> >( rankOffset,
                                                      wellDofKey,
                                                      localRhs,
@@ -986,7 +987,7 @@ bool SinglePhaseWell::checkSystemSolution( DomainPartition & domain,
         subRegion.getField< well::pressure >();
 
       auto const statistics =
-        singlePhaseBaseKernels::SolutionCheckKernel::
+        kernels::fluidFlow::singlePhase::SolutionCheckKernel::
           launch< parallelDevicePolicy<> >( localSolution, rankOffset, dofNumber, ghostRank, pres, scalingFactor );
 
       numNegativePressures += statistics.first;

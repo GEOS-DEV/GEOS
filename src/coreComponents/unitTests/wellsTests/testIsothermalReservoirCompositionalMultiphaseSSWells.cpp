@@ -34,6 +34,7 @@ using namespace geos;
 using namespace geos::dataRepository;
 using namespace geos::constitutive;
 using namespace geos::testing;
+using namespace geos::kernels::wells::compositional;
 
 CommandLineOptions g_commandLineOptions;
 void writeTableToFile( string const & filename, char const * str )
@@ -541,7 +542,7 @@ void testNumericalJacobian( CompositionalMultiphaseReservoirAndWells< Compositio
 
           fillNumericalJacobian( residual.toViewConst(),
                                  residualOrig.toViewConst(),
-                                 wellElemDofNumber[iwelem] + compositionalMultiphaseWellKernels::ColOffset::DPRES,
+                                 wellElemDofNumber[iwelem] + ColOffset::DPRES,
                                  dP,
                                  jacobianFD.toViewConstSizes() );
         }
@@ -562,7 +563,7 @@ void testNumericalJacobian( CompositionalMultiphaseReservoirAndWells< Compositio
 
           fillNumericalJacobian( residual.toViewConst(),
                                  residualOrig.toViewConst(),
-                                 wellElemDofNumber[iwelem] + compositionalMultiphaseWellKernels::ColOffset::DCOMP + jc,
+                                 wellElemDofNumber[iwelem] + ColOffset::DCOMP + jc,
                                  dRho,
                                  jacobianFD.toViewConstSizes() );
         }
@@ -584,7 +585,7 @@ void testNumericalJacobian( CompositionalMultiphaseReservoirAndWells< Compositio
 
           fillNumericalJacobian( residual.toViewConst(),
                                  residualOrig.toViewConst(),
-                                 wellElemDofNumber[iwelem] + compositionalMultiphaseWellKernels::ColOffset::DCOMP + NC+1,
+                                 wellElemDofNumber[iwelem] + ColOffset::DCOMP + NC+1,
                                  dT,
                                  jacobianFD.toViewConstSizes() );
         }
@@ -610,7 +611,7 @@ void testNumericalJacobian( CompositionalMultiphaseReservoirAndWells< Compositio
 
             fillNumericalJacobian( residual.toViewConst(),
                                    residualOrig.toViewConst(),
-                                   wellElemDofNumber[iwelem] + compositionalMultiphaseWellKernels::ColOffset::DCOMP + NC,
+                                   wellElemDofNumber[iwelem] + ColOffset::DCOMP + NC,
                                    dRate,
                                    jacobianFD.toViewConstSizes() );
           }

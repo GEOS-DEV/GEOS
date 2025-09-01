@@ -54,7 +54,7 @@ namespace geos
 using namespace dataRepository;
 using namespace constitutive;
 using namespace fields;
-using namespace singlePhaseBaseKernels;
+using namespace kernels::fluidFlow::singlePhase;
 
 SinglePhaseBase::SinglePhaseBase( const string & name,
                                   Group * const parent ):
@@ -215,7 +215,7 @@ void SinglePhaseBase::updateFluidModel( ObjectManagerBase & dataGroup ) const
   constitutiveUpdatePassThru( fluid, [&]( auto & castedFluid )
   {
     typename TYPEOFREF( castedFluid ) ::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
-    singlePhaseBaseKernels::FluidUpdateKernel::launch( fluidWrapper, pres, temp );
+    kernels::fluidFlow::singlePhase::FluidUpdateKernel::launch( fluidWrapper, pres, temp );
   } );
 }
 
@@ -334,7 +334,8 @@ void SinglePhaseBase::updateSolidInternalEnergyModel( ObjectManagerBase & dataGr
 
   SolidInternalEnergy::KernelWrapper solidInternalEnergyWrapper = solidInternalEnergy.createKernelUpdates();
 
-  thermalSinglePhaseBaseKernels::SolidInternalEnergyUpdateKernel::launch< parallelDevicePolicy<> >( dataGroup.size(), solidInternalEnergyWrapper, temperature );
+  kernels::fluidFlow::singlePhase::thermal::
+    SolidInternalEnergyUpdateKernel::launch< parallelDevicePolicy<> >( dataGroup.size(), solidInternalEnergyWrapper, temperature );
 }
 
 void SinglePhaseBase::updateThermalConductivity( ElementSubRegionBase & subRegion ) const
@@ -370,13 +371,13 @@ void SinglePhaseBase::updateMobility( ObjectManagerBase & dataGroup ) const
   geos::internal::kernelLaunchSelectorThermalSwitch( m_isThermal, [&] ( auto ISTHERMAL )
   {
     integer constexpr NUMDOF = ISTHERMAL() + 1;
-    singlePhaseBaseKernels::MobilityKernel::compute_value_and_derivatives< parallelDevicePolicy<>, NUMDOF >( dataGroup.size(),
-                                                                                                             fluid.density(),
-                                                                                                             fluid.dDensity(),
-                                                                                                             fluid.viscosity(),
-                                                                                                             fluid.dViscosity(),
-                                                                                                             mob,
-                                                                                                             dMobility );
+    kernels::fluidFlow::singlePhase::MobilityKernel::compute_value_and_derivatives< parallelDevicePolicy<>, NUMDOF >( dataGroup.size(),
+                                                                                                                      fluid.density(),
+                                                                                                                      fluid.dDensity(),
+                                                                                                                      fluid.viscosity(),
+                                                                                                                      fluid.dViscosity(),
+                                                                                                                      mob,
+                                                                                                                      dMobility );
   } );
 
 }
@@ -685,7 +686,7 @@ void SinglePhaseBase::implicitStepComplete( real64 const & time,
       arrayView1d< real64 const > const pres = subRegion.getField< flow::pressure >();
       arrayView1d< real64 const > const initPres = subRegion.getField< flow::initialPressure >();
       arrayView1d< real64 > const deltaPres = subRegion.getField< flow::deltaPressure >();
-      singlePhaseBaseKernels::StatisticsKernel::
+      kernels::fluidFlow::singlePhase::StatisticsKernel::
         saveDeltaPressure( subRegion.size(), pres, initPres, deltaPres );
 
       applyDeltaVolume( subRegion );
@@ -1258,7 +1259,7 @@ real64 SinglePhaseBase::scalingForSystemSolution( DomainPartition & domain,
       arrayView1d< integer const > const ghostRank = subRegion.ghostRank();
 
       auto const subRegionData =
-        singlePhaseBaseKernels::SolutionScalingKernel::
+        kernels::fluidFlow::singlePhase::SolutionScalingKernel::
           launch< parallelDevicePolicy<> >( localSolution, rankOffset, dofNumber, ghostRank, m_maxAbsolutePresChange );
 
       scalingFactor = std::min( scalingFactor, subRegionData.first );
@@ -1300,7 +1301,7 @@ bool SinglePhaseBase::checkSystemSolution( DomainPartition & domain,
       arrayView1d< real64 const > const pres = subRegion.getField< flow::pressure >();
 
       auto const statistics =
-        singlePhaseBaseKernels::SolutionCheckKernel::
+        kernels::fluidFlow::singlePhase::SolutionCheckKernel::
           launch< parallelDevicePolicy<> >( localSolution, rankOffset, dofNumber, ghostRank, pres, scalingFactor );
 
       numNegativePressures += statistics.first;

@@ -38,7 +38,7 @@
 namespace geos
 {
 
-namespace singlePhaseFVMKernels
+namespace kernels::fluidFlow::singlePhase::fvm
 {
 
 /******************************** FluxComputeKernelBase ********************************/
@@ -169,7 +169,7 @@ protected:
   arrayView1d< real64 > const m_localRhs;
 };
 
-} // namespace singlePhaseFVMKernels
+} // namespace kernels::fluidFlow::singlePhase::fvm
 
 } // namespace geos
 

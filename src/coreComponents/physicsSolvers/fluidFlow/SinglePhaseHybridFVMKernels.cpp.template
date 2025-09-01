@@ -9,7 +9,7 @@ using ElementBasedAssemblyKernelPolicy = @ElementBasedAssemblyKernelPolicy@;
 
 namespace geos
 {
-namespace singlePhaseHybridFVMKernels
+namespace kernels::fluidFlow::singlePhase::hybridFVM
 {
   @EXTERN@ template class @NAME@ < @NFACES@, @IP@ >;
   @EXTERN@ template void @NAME@ < @NFACES@, @IP@ >::launch< @NAME@Policy,

@@ -28,7 +28,7 @@
 namespace geos
 {
 
-namespace singlePhaseFVMKernels
+namespace kernels::fluidFlow::singlePhase::fvm
 {
 
 /******************************** AquiferBCKernel ********************************/
@@ -146,7 +146,7 @@ struct AquiferBCKernel
 
 };
 
-} // namespace singlePhaseFVMKernels
+} // namespace kernels::fluidFlow::singlePhase::fvm
 
 } // namespace geos
 

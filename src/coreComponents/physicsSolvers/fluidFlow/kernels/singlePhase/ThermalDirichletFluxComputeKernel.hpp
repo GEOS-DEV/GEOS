@@ -29,7 +29,7 @@
 namespace geos
 {
 
-namespace thermalSinglePhaseFVMKernels
+namespace kernels::fluidFlow::singlePhase::fvm::thermal
 {
 
 /******************************** DirichletFluxComputeKernel ********************************/
@@ -40,7 +40,8 @@ namespace thermalSinglePhaseFVMKernels
  * @brief Define the interface for the assembly kernel in charge of Dirichlet face flux terms
  */
 template< integer NUM_EQN, integer NUM_DOF, typename FLUIDWRAPPER >
-class DirichletFluxComputeKernel : public singlePhaseFVMKernels::DirichletFluxComputeKernel< NUM_EQN, NUM_DOF, FLUIDWRAPPER >
+class DirichletFluxComputeKernel :
+  public kernels::fluidFlow::singlePhase::fvm::isothermal::DirichletFluxComputeKernel< NUM_EQN, NUM_DOF, FLUIDWRAPPER >
 {
 public:
 
@@ -55,7 +56,7 @@ public:
   template< typename VIEWTYPE >
   using ElementViewConst = ElementRegionManager::ElementViewConst< VIEWTYPE >;
 
-  using AbstractBase = singlePhaseFVMKernels::FluxComputeKernelBase;
+  using AbstractBase = kernels::fluidFlow::singlePhase::fvm::FluxComputeKernelBase;
   using DofNumberAccessor = AbstractBase::DofNumberAccessor;
   using PermeabilityAccessors = AbstractBase::PermeabilityAccessors;
   using SinglePhaseFlowAccessors = AbstractBase::SinglePhaseFlowAccessors;
@@ -76,7 +77,7 @@ public:
   using AbstractBase::m_localMatrix;
   using AbstractBase::m_localRhs;
 
-  using Base = singlePhaseFVMKernels::DirichletFluxComputeKernel< NUM_EQN, NUM_DOF, FLUIDWRAPPER >;
+  using Base = kernels::fluidFlow::singlePhase::fvm::isothermal::DirichletFluxComputeKernel< NUM_EQN, NUM_DOF, FLUIDWRAPPER >;
   using Base::numDof;
   using Base::numEqn;
   using Base::m_stencilWrapper;
@@ -377,7 +378,7 @@ public:
 
 };
 
-} // namespace thermalSinglePhaseFVMKernels
+} // namespace kernels::fluidFlow::singlePhase::fvm::thermal
 
 } // namespace geos
 

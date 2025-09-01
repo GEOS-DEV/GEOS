@@ -29,7 +29,7 @@
 namespace geos
 {
 
-namespace isothermalCompositionalMultiphaseBaseKernels
+namespace kernels::fluidFlow::compositional
 {
 
 /******************************** Kernel launch machinery ********************************/
@@ -151,7 +151,7 @@ void KernelLaunchSelector_NC_NP_THERM( integer const numComp, integer const numP
   }
 }
 
-} // namespace isothermalCompositionalMultiphaseBaseKernels
+} // namespace kernels::fluidFlow::compositional
 
 } // namespace geos
 

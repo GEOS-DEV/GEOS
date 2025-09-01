@@ -410,7 +410,7 @@ void FlowSolverBase::validatePoreVolumes( DomainPartition const & domain ) const
       localIndex numElemsBelowPoreVolumeThresholdInSubRegion = 0;
       localIndex numElemsAbovePorosityThresholdInSubRegion = 0;
 
-      flowSolverBaseKernels::MinPoreVolumeMaxPorosityKernel::
+      kernels::fluidFlow::MinPoreVolumeMaxPorosityKernel::
         computeMinPoreVolumeMaxPorosity( subRegion.size(),
                                          ghostRank,
                                          porosity,
@@ -443,7 +443,7 @@ void FlowSolverBase::validatePoreVolumes( DomainPartition const & domain ) const
                       GEOS_FMT( "\nWarning! The mesh contains {} elements with a pore volume below {} m^3."
                                 "\nThe minimum pore volume is {} m^3."
                                 "\nOur recommendation is to check the validity of mesh and/or increase the porosity in these elements.\n",
-                                numElemsBelowPoreVolumeThreshold, flowSolverBaseKernels::poreVolumeThreshold, minPoreVolume ) );
+                                numElemsBelowPoreVolumeThreshold, kernels::fluidFlow::poreVolumeThreshold, minPoreVolume ) );
   GEOS_LOG_RANK_0_IF( numElemsAbovePorosityThreshold > 0,
                       GEOS_FMT( "\nWarning! The mesh contains {} elements with a porosity above 1."
                                 "\nThe maximum porosity is {}.\n",
@@ -903,7 +903,7 @@ void FlowSolverBase::prepareStencilWeights( DomainPartition & domain ) const
 
       STENCILWRAPPER_TYPE stencilWrapper = stencil.createKernelWrapper();
 
-      flowSolverBaseKernels::stencilWeightsUpdateKernel< STENCILWRAPPER_TYPE >::prepareStencilWeights( stencilWrapper, hydraulicAperture.toNestedViewConst() );
+      kernels::fluidFlow::stencilWeightsUpdateKernel< STENCILWRAPPER_TYPE >::prepareStencilWeights( stencilWrapper, hydraulicAperture.toNestedViewConst() );
     } );
   } );
 }
@@ -926,7 +926,7 @@ void FlowSolverBase::updateStencilWeights( DomainPartition & domain ) const
 
       STENCILWRAPPER_TYPE stencilWrapper = stencil.createKernelWrapper();
 
-      flowSolverBaseKernels::stencilWeightsUpdateKernel< STENCILWRAPPER_TYPE >::updateStencilWeights( stencilWrapper, hydraulicAperture.toNestedViewConst() );
+      kernels::fluidFlow::stencilWeightsUpdateKernel< STENCILWRAPPER_TYPE >::updateStencilWeights( stencilWrapper, hydraulicAperture.toNestedViewConst() );
     } );
   } );
 }

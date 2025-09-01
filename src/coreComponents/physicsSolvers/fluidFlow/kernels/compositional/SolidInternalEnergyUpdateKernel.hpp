@@ -26,7 +26,7 @@
 namespace geos
 {
 
-namespace thermalCompositionalMultiphaseBaseKernels
+namespace kernels::fluidFlow::compositional::thermal
 {
 
 /******************************** SolidInternalEnergyUpdateKernel ********************************/
@@ -47,7 +47,7 @@ struct SolidInternalEnergyUpdateKernel
   }
 };
 
-} // namespace thermalCompositionalMultiphaseBaseKernels
+} // namespace kernels::fluidFlow::compositional::thermal
 
 } // namespace geos
 

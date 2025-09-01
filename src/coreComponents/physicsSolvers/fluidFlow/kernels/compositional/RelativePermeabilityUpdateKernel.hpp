@@ -26,7 +26,7 @@
 namespace geos
 {
 
-namespace isothermalCompositionalMultiphaseBaseKernels
+namespace kernels::fluidFlow::compositional
 {
 
 /******************************** RelativePermeabilityUpdateKernel ********************************/
@@ -65,7 +65,7 @@ struct RelativePermeabilityUpdateKernel
   }
 };
 
-} // namespace isothermalCompositionalMultiphaseBaseKernels
+} // namespace kernels::fluidFlow::compositional
 
 } // namespace geos
 

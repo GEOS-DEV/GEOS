@@ -24,7 +24,7 @@
 namespace geos
 {
 
-namespace immiscibleMultiphaseKernels
+namespace kernels::fluidFlow::immiscible
 {
 
 /******************************** Kernel launch machinery ********************************/
@@ -45,7 +45,7 @@ void kernelLaunchSelectorPhaseSwitch( T value, LAMBDA && lambda )
 
 }
 
-} // namespace immiscibleMultiphaseKernels
+} // namespace kernels::fluidFlow::immiscible
 
 } // namespace geos
 

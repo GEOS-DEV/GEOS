@@ -25,7 +25,7 @@
 namespace geos
 {
 
-namespace thermalSinglePhaseBaseKernels
+namespace kernels::fluidFlow::singlePhase::thermal
 {
 
 /******************************** AccumulationKernel ********************************/
@@ -35,12 +35,13 @@ namespace thermalSinglePhaseBaseKernels
  * @brief Define the interface for the assembly kernel in charge of accumulation
  */
 template< typename SUBREGION_TYPE, integer NUM_DOF >
-class AccumulationKernel : public singlePhaseBaseKernels::AccumulationKernel< SUBREGION_TYPE, NUM_DOF >
+class AccumulationKernel :
+  public kernels::fluidFlow::singlePhase::isothermal::AccumulationKernel< SUBREGION_TYPE, NUM_DOF >
 {
 
 public:
 
-  using Base = singlePhaseBaseKernels::AccumulationKernel< SUBREGION_TYPE, NUM_DOF >;
+  using Base = kernels::fluidFlow::singlePhase::isothermal::AccumulationKernel< SUBREGION_TYPE, NUM_DOF >;
   using Base::numDof;
   using Base::numEqn;
   using Base::m_rankOffset;
@@ -231,7 +232,7 @@ public:
 
 };
 
-} // namespace thermalSinglePhaseBaseKernels
+} // namespace kernels::fluidFlow::singlePhase::thermal
 
 } // namespace geos
 

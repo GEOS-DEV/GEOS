@@ -26,7 +26,7 @@
 namespace geos
 {
 
-namespace isothermalCompositionalMultiphaseBaseKernels
+namespace kernels::fluidFlow::compositional
 {
 
 /******************************** CapillaryPressureUpdateKernel ********************************/
@@ -65,7 +65,7 @@ struct CapillaryPressureUpdateKernel
   }
 };
 
-} // namespace isothermalCompositionalMultiphaseBaseKernels
+} // namespace kernels::fluidFlow::compositional
 
 } // namespace geos
 

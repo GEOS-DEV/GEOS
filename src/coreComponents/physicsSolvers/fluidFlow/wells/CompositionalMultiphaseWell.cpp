@@ -537,7 +537,7 @@ void CompositionalMultiphaseWell::updateGlobalComponentFraction( WellElementSubR
 {
   GEOS_MARK_FUNCTION;
 
-  isothermalCompositionalMultiphaseBaseKernels::
+  kernels::fluidFlow::compositional::
     GlobalComponentFractionKernelFactory::
     createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
                                                subRegion );
@@ -688,7 +688,7 @@ void CompositionalMultiphaseWell::updateVolRatesForConstraint( WellElementSubReg
     {
       integer constexpr NUM_COMP = NC();
       integer constexpr IS_THERMAL = ISTHERMAL();
-      using COFFSET_WJ = compositionalMultiphaseWellKernels::ColOffset_WellJac< NUM_COMP, IS_THERMAL >;
+      using COFFSET_WJ = kernels::wells::compositional::ColOffset_WellJac< NUM_COMP, IS_THERMAL >;
       // bring everything back to host, capture the scalars by reference
       forAll< serialPolicy >( 1, [&numComp,
                                   &numPhase,
@@ -850,7 +850,7 @@ void CompositionalMultiphaseWell::updateFluidModel( WellElementSubRegion & subRe
     using FluidType = TYPEOFREF( castedFluid );
     using ExecPolicy = typename FluidType::exec_policy;
     typename FluidType::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
-    thermalCompositionalMultiphaseBaseKernels::
+    kernels::fluidFlow::compositional::
       FluidUpdateKernel::
       launch< ExecPolicy >( subRegion.size(),
                             fluidWrapper,
@@ -870,13 +870,13 @@ real64 CompositionalMultiphaseWell::updatePhaseVolumeFraction( WellElementSubReg
 
   real64 maxDeltaPhaseVolFrac  =
     m_isThermal ?
-    thermalCompositionalMultiphaseBaseKernels::
+    kernels::fluidFlow::compositional::thermal::
       PhaseVolumeFractionKernelFactory::
       createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
                                                  m_numPhases,
                                                  subRegion,
                                                  fluid )
-:    isothermalCompositionalMultiphaseBaseKernels::
+:    kernels::fluidFlow::compositional::isothermal::
       PhaseVolumeFractionKernelFactory::
       createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
                                                  m_numPhases,
@@ -890,18 +890,18 @@ void CompositionalMultiphaseWell::updateTotalMassDensity( WellElementSubRegion &
 {
   GEOS_MARK_FUNCTION;
 
+  using namespace kernels::wells::compositional;
+
   string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
   MultiFluidBase & fluid = subRegion.getConstitutiveModel< MultiFluidBase >( fluidName );
   fluid.isThermal() ?
-  thermalCompositionalMultiphaseWellKernels::
-    TotalMassDensityKernelFactory::
+  thermal::TotalMassDensityKernelFactory::
     createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
                                                m_numPhases,
                                                subRegion,
                                                fluid )
   :
-  compositionalMultiphaseWellKernels::
-    TotalMassDensityKernelFactory::
+  TotalMassDensityKernelFactory::
     createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
                                                m_numPhases,
                                                subRegion,
@@ -969,9 +969,9 @@ void CompositionalMultiphaseWell::initializeWells( DomainPartition & domain, rea
   {
 
     ElementRegionManager & elemManager = mesh.getElemManager();
-    compositionalMultiphaseWellKernels::PresTempCompFracInitializationKernel::CompFlowAccessors
+    kernels::wells::compositional::PresTempCompFracInitializationKernel::CompFlowAccessors
     resCompFlowAccessors( mesh.getElemManager(), flowSolver.getName() );
-    compositionalMultiphaseWellKernels::PresTempCompFracInitializationKernel::MultiFluidAccessors
+    kernels::wells::compositional::PresTempCompFracInitializationKernel::MultiFluidAccessors
     resMultiFluidAccessors( mesh.getElemManager(), flowSolver.getName() );
 
     elemManager.forElementSubRegions< WellElementSubRegion >( regionNames,
@@ -1006,7 +1006,7 @@ void CompositionalMultiphaseWell::initializeWells( DomainPartition & domain, rea
         // 1) Loop over all perforations to compute an average mixture density and component fraction
         // 2) Initialize the reference pressure
         // 3) Estimate the pressures in the well elements using the average density
-        compositionalMultiphaseWellKernels::
+        kernels::wells::compositional::
           PresTempCompFracInitializationKernel::
           launch( perforationData.size(),
                   subRegion.size(),
@@ -1040,7 +1040,7 @@ void CompositionalMultiphaseWell::initializeWells( DomainPartition & domain, rea
         {
           typename TYPEOFREF( castedFluid ) ::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
 
-          thermalCompositionalMultiphaseBaseKernels::
+          kernels::fluidFlow::compositional::
             FluidUpdateKernel::
             launch< serialPolicy >( subRegion.size(),
                                     fluidWrapper,
@@ -1049,7 +1049,7 @@ void CompositionalMultiphaseWell::initializeWells( DomainPartition & domain, rea
                                     wellElemCompFrac );
         } );
 
-        compositionalMultiphaseWellKernels::
+        kernels::wells::compositional::
           CompDensInitializationKernel::launch( subRegion.size(),
                                                 numComp,
                                                 wellElemCompFrac,
@@ -1061,7 +1061,7 @@ void CompositionalMultiphaseWell::initializeWells( DomainPartition & domain, rea
 
         // 6) Estimate the well rates
         // TODO: initialize rates using perforation rates
-        compositionalMultiphaseWellKernels::
+        kernels::wells::compositional::
           RateInitializationKernel::
           launch( subRegion.size(),
                   m_targetPhaseIndex,
@@ -1085,9 +1085,12 @@ void CompositionalMultiphaseWell::assembleFluxTerms( real64 const & time,
 {
   GEOS_MARK_FUNCTION;
 
-  BitFlags< isothermalCompositionalMultiphaseBaseKernels::KernelFlags > kernelFlags;
+  using namespace kernels::wells::compositional;
+
+  using kernels::fluidFlow::compositional::KernelFlags;
+  BitFlags< KernelFlags > kernelFlags;
   if( m_useTotalMassEquation )
-    kernelFlags.set( isothermalCompositionalMultiphaseBaseKernels::KernelFlags::TotalMassEquation );
+    kernelFlags.set( KernelFlags::TotalMassEquation );
 
   string const wellDofKey = dofManager.getKey( wellElementDofName());
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
@@ -1107,8 +1110,7 @@ void CompositionalMultiphaseWell::assembleFluxTerms( real64 const & time,
 
         if( isThermal() )
         {
-          thermalCompositionalMultiphaseWellKernels::
-            FaceBasedAssemblyKernelFactory::
+          thermal::FaceBasedAssemblyKernelFactory::
             createAndLaunch< parallelDevicePolicy<> >( numComponents,
                                                        dt,
                                                        dofManager.rankOffset(),
@@ -1122,8 +1124,7 @@ void CompositionalMultiphaseWell::assembleFluxTerms( real64 const & time,
         }
         else
         {
-          compositionalMultiphaseWellKernels::
-            FaceBasedAssemblyKernelFactory::
+          FaceBasedAssemblyKernelFactory::
             createAndLaunch< parallelDevicePolicy<> >( numComponents,
                                                        dt,
                                                        dofManager.rankOffset(),
@@ -1151,9 +1152,12 @@ void CompositionalMultiphaseWell::assembleAccumulationTerms( real64 const & time
   GEOS_UNUSED_VAR( time );
   GEOS_UNUSED_VAR( dt );
 
-  BitFlags< isothermalCompositionalMultiphaseBaseKernels::KernelFlags > kernelFlags;
+  using namespace kernels::wells::compositional;
+
+  using kernels::fluidFlow::compositional::KernelFlags;
+  BitFlags< KernelFlags > kernelFlags;
   if( m_useTotalMassEquation )
-    kernelFlags.set( isothermalCompositionalMultiphaseBaseKernels::KernelFlags::TotalMassEquation );
+    kernelFlags.set( KernelFlags::TotalMassEquation );
 
   string const wellDofKey = dofManager.getKey( wellElementDofName() );
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
@@ -1173,9 +1177,7 @@ void CompositionalMultiphaseWell::assembleAccumulationTerms( real64 const & time
       {
         if( isThermal() )
         {
-
-          thermalCompositionalMultiphaseWellKernels::
-            ElementBasedAssemblyKernelFactory::
+          thermal::ElementBasedAssemblyKernelFactory::
             createAndLaunch< parallelDevicePolicy<> >( numComponents,
                                                        numPhases,
                                                        wellControls.isProducer(),
@@ -1189,8 +1191,7 @@ void CompositionalMultiphaseWell::assembleAccumulationTerms( real64 const & time
         }
         else
         {
-          compositionalMultiphaseWellKernels::
-            ElementBasedAssemblyKernelFactory::
+          ElementBasedAssemblyKernelFactory::
             createAndLaunch< parallelDevicePolicy<> >( numComponents,
                                                        numPhases,
                                                        wellControls.isProducer(),
@@ -1248,6 +1249,8 @@ CompositionalMultiphaseWell::calculateResidualNorm( real64 const & time_n,
 {
   GEOS_MARK_FUNCTION;
 
+  using namespace kernels::wells::compositional;
+
   integer numNorm = 1; // mass balance
   array1d< real64 > localResidualNorm;
   array1d< real64 > localResidualNormalizer;
@@ -1288,7 +1291,7 @@ CompositionalMultiphaseWell::calculateResidualNorm( real64 const & time_n,
       {
         real64 subRegionResidualNorm[2]{};
 
-        thermalCompositionalMultiphaseWellKernels::ResidualNormKernelFactory::
+        thermal::ResidualNormKernelFactory::
           createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
                                                      m_targetPhaseIndex,
                                                      rankOffset,
@@ -1315,7 +1318,7 @@ CompositionalMultiphaseWell::calculateResidualNorm( real64 const & time_n,
       else
       {
         real64 subRegionResidualNorm[1]{};
-        compositionalMultiphaseWellKernels::ResidualNormKernelFactory::
+        ResidualNormKernelFactory::
           createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
                                                      numDofPerWellElement(),
                                                      m_targetPhaseIndex,
@@ -1372,6 +1375,8 @@ CompositionalMultiphaseWell::scalingForSystemSolution( DomainPartition & domain,
 {
   GEOS_MARK_FUNCTION;
 
+  using namespace kernels::fluidFlow::compositional;
+
   string const wellDofKey = dofManager.getKey( wellElementDofName() );
 
   real64 scalingFactor = 1.0;
@@ -1395,8 +1400,7 @@ CompositionalMultiphaseWell::scalingForSystemSolution( DomainPartition & domain,
       const integer temperatureOffset = m_numComponents+2;
       auto const subRegionData =
         m_isThermal
-  ? thermalCompositionalMultiphaseBaseKernels::
-          SolutionScalingKernelFactory::
+  ? thermal::SolutionScalingKernelFactory::
           createAndLaunch< parallelDevicePolicy<> >( m_maxRelativePresChange,
                                                      m_maxAbsolutePresChange,
                                                      m_maxRelativeTempChange,
@@ -1414,8 +1418,7 @@ CompositionalMultiphaseWell::scalingForSystemSolution( DomainPartition & domain,
                                                      subRegion,
                                                      localSolution,
                                                      temperatureOffset )
-  : isothermalCompositionalMultiphaseBaseKernels::
-          SolutionScalingKernelFactory::
+  : isothermal::SolutionScalingKernelFactory::
           createAndLaunch< parallelDevicePolicy<> >( m_maxRelativePresChange,
                                                      m_maxAbsolutePresChange,
                                                      m_maxCompFracChange,
@@ -1492,6 +1495,8 @@ CompositionalMultiphaseWell::checkSystemSolution( DomainPartition & domain,
 {
   GEOS_MARK_FUNCTION;
 
+  using namespace kernels::fluidFlow::compositional;
+
   string const wellDofKey = dofManager.getKey( wellElementDofName() );
   integer localCheck = 1;
   real64 minPres = 0.0, minDens = 0.0, minTotalDens = 0.0;
@@ -1523,8 +1528,7 @@ CompositionalMultiphaseWell::checkSystemSolution( DomainPartition & domain,
       const integer temperatureOffset = m_numComponents+2;
       auto const subRegionData =
         m_isThermal
-  ? thermalCompositionalMultiphaseBaseKernels::
-          SolutionCheckKernelFactory::
+  ? thermal::SolutionCheckKernelFactory::
           createAndLaunch< parallelDevicePolicy<> >( m_allowCompDensChopping,
                                                      m_allowNegativePressure,
                                                      m_scalingType,
@@ -1541,8 +1545,7 @@ CompositionalMultiphaseWell::checkSystemSolution( DomainPartition & domain,
                                                      subRegion,
                                                      localSolution,
                                                      temperatureOffset )
-  : isothermalCompositionalMultiphaseBaseKernels::
-          SolutionCheckKernelFactory::
+  : isothermal::SolutionCheckKernelFactory::
           createAndLaunch< parallelDevicePolicy<> >( m_allowCompDensChopping,
                                                      m_allowNegativePressure,
                                                      m_scalingType,
@@ -1598,6 +1601,8 @@ void CompositionalMultiphaseWell::computePerforationRates( real64 const & time_n
 {
   GEOS_MARK_FUNCTION;
 
+  using namespace kernels::wells::compositional;
+
   forDiscretizationOnMeshTargets ( domain.getMeshBodies(), [&] ( string const &,
                                                                  MeshLevel & mesh,
                                                                  string_array const & regionNames )
@@ -1623,7 +1628,7 @@ void CompositionalMultiphaseWell::computePerforationRates( real64 const & time_n
 
         if( isThermal )
         {
-          thermalPerforationFluxKernels::
+          thermal::
             PerforationFluxKernelFactory::
             createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
                                                        m_numPhases,
@@ -1636,7 +1641,7 @@ void CompositionalMultiphaseWell::computePerforationRates( real64 const & time_n
         }
         else
         {
-          isothermalPerforationFluxKernels::
+          isothermal::
             PerforationFluxKernelFactory::
             createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
                                                        m_numPhases,
@@ -1881,8 +1886,8 @@ void CompositionalMultiphaseWell::assemblePressureRelations( real64 const & time
           subRegion.getField< well::dTotalMassDensity >();
 
         bool controlHasSwitched = false;
-        isothermalCompositionalMultiphaseBaseKernels::
-          KernelLaunchSelectorCompTherm< compositionalMultiphaseWellKernels::PressureRelationKernel >
+        kernels::fluidFlow::compositional::KernelLaunchSelectorCompTherm
+        < kernels::wells::compositional::PressureRelationKernel >
           ( numFluidComponents(),
           isThermal,
           subRegion.size(),

@@ -45,8 +45,8 @@ namespace geos
 using namespace dataRepository;
 using namespace constitutive;
 using namespace fields;
-using namespace isothermalCompositionalMultiphaseBaseKernels;
-using namespace compositionalMultiphaseHybridFVMKernels;
+using namespace kernels::fluidFlow::compositional;
+using namespace kernels::fluidFlow::compositional::hybridFVM;
 using namespace mimeticInnerProduct;
 
 CompositionalMultiphaseHybridFVM::CompositionalMultiphaseHybridFVM( const std::string & name,
@@ -205,7 +205,7 @@ void CompositionalMultiphaseHybridFVM::precomputeData( MeshLevel & mesh, string_
     // scheme
     // This one-sided gravity term is currently always treated with TPFA, as in MRST.
     // In the future, I will change that (here and in the FluxKernel) to have a consistent inner product for the gravity term as well
-    compositionalMultiphaseHybridFVMKernels::
+    kernels::fluidFlow::compositional::hybridFVM::
       simpleKernelLaunchSelector< PrecomputeKernel,
                                   mimeticInnerProduct::TPFAInnerProduct >( subRegion.numFacesPerElement(),
                                                                            subRegion.size(),
@@ -436,6 +436,8 @@ real64 CompositionalMultiphaseHybridFVM::scalingForSystemSolution( DomainPartiti
 {
   GEOS_MARK_FUNCTION;
 
+  using namespace kernels::fluidFlow::compositional;
+
   string const dofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
 
   real64 scalingFactor = 1.0;
@@ -452,8 +454,7 @@ real64 CompositionalMultiphaseHybridFVM::scalingForSystemSolution( DomainPartiti
       arrayView1d< real64 > pressureScalingFactor = subRegion.getField< flow::pressureScalingFactor >();
       arrayView1d< real64 > compDensScalingFactor = subRegion.getField< flow::globalCompDensityScalingFactor >();
       auto const subRegionData =
-        isothermalCompositionalMultiphaseBaseKernels::
-          SolutionScalingKernelFactory::
+        isothermal::SolutionScalingKernelFactory::
           createAndLaunch< parallelDevicePolicy<> >( m_maxRelativePresChange,
                                                      m_maxAbsolutePresChange,
                                                      m_maxCompFracChange,
@@ -490,7 +491,7 @@ real64 CompositionalMultiphaseHybridFVM::scalingForSystemSolution( DomainPartiti
       {
         real64 const facePres = facePressure[iface];
         real64 const absPresChange = LvArray::math::abs( localSolution[faceDofNumber[iface] - rankOffset] );
-        if( facePres > isothermalCompositionalMultiphaseBaseKernels::minDensForDivision )
+        if( facePres > minDensForDivision )
         {
           real64 const relativePresChange = absPresChange / facePres;
           if( relativePresChange > maxRelativePresChange )
@@ -516,6 +517,8 @@ bool CompositionalMultiphaseHybridFVM::checkSystemSolution( DomainPartition & do
 {
   GEOS_MARK_FUNCTION;
 
+  using namespace kernels::fluidFlow::compositional::isothermal;
+
   string const elemDofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
   integer localCheck = 1;
 
@@ -536,8 +539,7 @@ bool CompositionalMultiphaseHybridFVM::checkSystemSolution( DomainPartition & do
       arrayView1d< real64 > compDensScalingFactor = subRegion.getField< flow::globalCompDensityScalingFactor >();
       // check that pressure and component densities are non-negative
       auto const subRegionData =
-        isothermalCompositionalMultiphaseBaseKernels::
-          SolutionCheckKernelFactory::
+        SolutionCheckKernelFactory::
           createAndLaunch< parallelDevicePolicy<> >( m_allowCompDensChopping,
                                                      m_allowNegativePressure,
                                                      compositionalMultiphaseUtilities::ScalingType::Global,
@@ -641,8 +643,7 @@ real64 CompositionalMultiphaseHybridFVM::calculateResidualNorm( real64 const & G
 
       // step 1.1: compute the norm in the subRegion
 
-      isothermalCompositionalMultiphaseBaseKernels::
-        ResidualNormKernelFactory::
+      kernels::fluidFlow::compositional::isothermal::ResidualNormKernelFactory::
         createAndLaunch< parallelDevicePolicy<> >( normType,
                                                    numFluidComponents(),
                                                    rankOffset,
@@ -682,7 +683,7 @@ real64 CompositionalMultiphaseHybridFVM::calculateResidualNorm( real64 const & G
 
     // step 2.1: compute the norm for the local faces
 
-    compositionalMultiphaseHybridFVMKernels::
+    kernels::fluidFlow::compositional::hybridFVM::
       ResidualNormKernelFactory::
       createAndLaunch< parallelDevicePolicy<> >( normType,
                                                  rankOffset,
@@ -823,7 +824,7 @@ void CompositionalMultiphaseHybridFVM::updatePhaseMobility( ObjectManagerBase & 
     getConstitutiveModel< RelativePermeabilityBase >( dataGroup,
                                                       dataGroup.getReference< string >( viewKeyStruct::relPermNamesString() ) );
 
-  compositionalMultiphaseHybridFVMKernels::
+  kernels::fluidFlow::compositional::hybridFVM::
     PhaseMobilityKernelFactory::
     createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
                                                m_numPhases,

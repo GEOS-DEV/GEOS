@@ -35,10 +35,8 @@
 namespace geos
 {
 
-namespace isothermalCompositionalMultiphaseBaseKernels
+namespace kernels::fluidFlow::compositional::isothermal
 {
-
-static constexpr real64 minCompFracForDivision = 0;
 
 /******************************** AccumulationKernel ********************************/
 
@@ -381,7 +379,7 @@ public:
   createAndLaunch( integer const numComps,
                    integer const numPhases,
                    globalIndex const rankOffset,
-                   BitFlags< KernelFlags > kernelFlags,
+                   BitFlags< kernels::fluidFlow::compositional::KernelFlags > kernelFlags,
                    string const dofKey,
                    ElementSubRegionBase const & subRegion,
                    constitutive::MultiFluidBase const & fluid,
@@ -402,7 +400,7 @@ public:
 
 };
 
-} // namespace isothermalCompositionalMultiphaseBaseKernels
+} // namespace kernels::fluidFlow::compositional::isothermal
 
 } // namespace geos
 

@@ -46,10 +46,11 @@
 
 namespace geos
 {
-namespace immiscibleMultiphaseKernels
-{
-using namespace constitutive;
 
+namespace kernels::fluidFlow::immiscible
+{
+
+//using namespace constitutive;
 
 /******************************** FluxComputeKernelBase ********************************/
 
@@ -86,12 +87,12 @@ public:
                               fields::twophaseimmisciblefluid::dPhaseDensity >;
 
   using CapPressureAccessors =
-    StencilMaterialAccessors< CapillaryPressureBase,
+    StencilMaterialAccessors< constitutive::CapillaryPressureBase,
                               fields::cappres::phaseCapPressure,
                               fields::cappres::dPhaseCapPressure_dPhaseVolFraction >;
 
   using PermeabilityAccessors =
-    StencilMaterialAccessors< PermeabilityBase,
+    StencilMaterialAccessors< constitutive::PermeabilityBase,
                               fields::permeability::permeability,
                               fields::permeability::dPerm_dPressure >;
 
@@ -184,8 +185,8 @@ protected:
   ElementViewConst< arrayView4d< real64 const, constitutive::multifluid::USD_PHASE_DC > > const m_dDens_dPres;
 
   /// Views on capillary pressure
-  ElementViewConst< arrayView3d< real64 const, cappres::USD_CAPPRES > > const m_phaseCapPressure;
-  ElementViewConst< arrayView4d< real64 const, cappres::USD_CAPPRES_DS > > const m_dPhaseCapPressure_dPhaseVolFrac;
+  ElementViewConst< arrayView3d< real64 const, constitutive::cappres::USD_CAPPRES > > const m_phaseCapPressure;
+  ElementViewConst< arrayView4d< real64 const, constitutive::cappres::USD_CAPPRES_DS > > const m_dPhaseCapPressure_dPhaseVolFrac;
 
   // Residual and jacobian
 
@@ -1086,7 +1087,7 @@ public:
                    arrayView1d< real64 > const & localRhs )
   {
 
-    geos::immiscibleMultiphaseKernels::kernelLaunchSelectorPhaseSwitch( numPhases, [&] ( auto NP )
+    kernels::fluidFlow::immiscible::kernelLaunchSelectorPhaseSwitch( numPhases, [&] ( auto NP )
     {
       integer constexpr NUM_EQN = NP();
       integer constexpr NUM_DOF = NP();
@@ -1129,8 +1130,8 @@ public:
    * @param[in] relperm the relperm model
    */
   PhaseMobilityKernel( ObjectManagerBase & subRegion,
-                       TwoPhaseImmiscibleFluid const & fluid,
-                       RelativePermeabilityBase const & relperm )
+                       constitutive::TwoPhaseImmiscibleFluid const & fluid,
+                       constitutive::RelativePermeabilityBase const & relperm )
     :
     m_phaseDens( fluid.phaseDensity() ),
     m_dPhaseDens( fluid.dPhaseDensity() ),
@@ -1223,8 +1224,8 @@ protected:
   //arrayView2d< real64 const, immiscibleFlow::USD_PHASE > m_dPhaseVisc;
 
   /// Views on the phase relative permeabilities
-  arrayView3d< real64 const, relperm::USD_RELPERM > m_phaseRelPerm;
-  arrayView4d< real64 const, relperm::USD_RELPERM_DS > m_dPhaseRelPerm_dPhaseVolFrac;
+  arrayView3d< real64 const, constitutive::relperm::USD_RELPERM > m_phaseRelPerm;
+  arrayView4d< real64 const, constitutive::relperm::USD_RELPERM_DS > m_dPhaseRelPerm_dPhaseVolFrac;
 
   // outputs
 
@@ -1251,8 +1252,8 @@ public:
   static void
   createAndLaunch( integer const numPhase,
                    ObjectManagerBase & subRegion,
-                   TwoPhaseImmiscibleFluid const & fluid,
-                   RelativePermeabilityBase const & relperm )
+                   constitutive::TwoPhaseImmiscibleFluid const & fluid,
+                   constitutive::RelativePermeabilityBase const & relperm )
   {
     if( numPhase == 2 )
     {
@@ -1429,10 +1430,7 @@ public:
 
 };
 
-
-
-} // namespace immiscible multiphasekernels
-
+} // namespace kernels::fluidFlow::immiscible
 
 } // namespace geos
 

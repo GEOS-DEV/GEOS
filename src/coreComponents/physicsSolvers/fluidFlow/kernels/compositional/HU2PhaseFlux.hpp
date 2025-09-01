@@ -30,18 +30,17 @@
 namespace geos
 {
 
-namespace isothermalCompositionalMultiphaseFVMKernelUtilities
+namespace kernels::fluidFlow::compositional::fvm
 {
-
-template< typename VIEWTYPE >
-using ElementViewConst = ElementRegionManager::ElementViewConst< VIEWTYPE >;
-
-using Deriv = constitutive::multifluid::DerivativeOffset;
 
 /*** HU 2 phase simplified version ***/
 
 struct HU2PhaseFlux
 {
+  template< typename VIEWTYPE >
+  using ElementViewConst = ElementRegionManager::ElementViewConst< VIEWTYPE >;
+
+  using Deriv = constitutive::multifluid::DerivativeOffset;
 
   static constexpr double minTotMob = 1e-12;
 
@@ -507,12 +506,11 @@ protected:
     real64 densMean{};
     real64 dDensMean_dP[numFluxSupportPoints]{};
     real64 dDensMean_dC[numFluxSupportPoints][numComp]{};
-    isothermalCompositionalMultiphaseFVMKernels::helpers::
-      calculateMeanDensity( ip, seri, sesri, sei,
-                            checkPhasePresenceInGravity,
-                            phaseVolFrac, dCompFrac_dCompDens,
-                            phaseMassDens, dPhaseMassDens,
-                            densMean, dDensMean_dP, dDensMean_dC );
+    helpers::calculateMeanDensity( ip, seri, sesri, sei,
+                                   checkPhasePresenceInGravity,
+                                   phaseVolFrac, dCompFrac_dCompDens,
+                                   phaseMassDens, dPhaseMassDens,
+                                   densMean, dDensMean_dP, dDensMean_dC );
 
     // compute potential difference MPFA-style
     for( localIndex i = 0; i < numFluxSupportPoints; ++i )
@@ -659,7 +657,7 @@ protected:
 
 };
 
-} // namespace isothermalCompositionalMultiPhaseFVMKernelUtilities
+} // namespace kernels::fluidFlow::compositional::fvm
 
 } // namespace geos
 
