@@ -315,7 +315,13 @@ public:
 
   /**
    * @brief Set the reservoir average temperature when m_useSurfaceConditions == 0
-   * @param[in] val value for tempeature
+   * @return the temperature
+   */
+  const real64 & getRegionAverageTemperature() const { return m_regionAverageTemperature; }
+
+  /**
+   * @brief Set the reservoir average temperature when m_useSurfaceConditions == 0
+   * @param[in] val value for temperature
    */
   void setRegionAverageTemperature( real64 regionAverageTemperature ) { m_regionAverageTemperature=regionAverageTemperature; }
 
