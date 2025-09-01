@@ -22,7 +22,6 @@
 #include "constitutive/ConstitutivePassThru.hpp"
 #include "constitutive/fluid/singlefluid/SingleFluidBase.hpp"
 #include "fieldSpecification/AquiferBoundaryCondition.hpp"
-#include "fieldSpecification/LogLevelsInfo.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
 #include "discretizationMethods/NumericalMethodsManager.hpp"
 #include "finiteVolume/FiniteVolumeManager.hpp"
@@ -56,8 +55,6 @@ SinglePhaseHybridFVM::SinglePhaseHybridFVM( const string & name,
   // one cell-centered dof per cell
   m_numDofPerCell = 1;
   m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::singlePhaseHybridFVM;
-
-  addLogLevel< logInfo::ResidualNorm >();
 }
 
 
@@ -383,7 +380,7 @@ void SinglePhaseHybridFVM::applyFaceDirichletBC( real64 const time_n,
       if( m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
       {
         globalIndex const numTargetFaces = MpiWrapper::sum< globalIndex >( targetSet.size() );
-        GEOS_LOG_LEVEL_RANK_0_ON_GROUP( logInfo::FaceBoundaryCondition,
+        GEOS_LOG_LEVEL_RANK_0_ON_GROUP( logInfo::BoundaryConditions,
                                         GEOS_FMT( faceBcLogMessage,
                                                   this->getName(), time_n+dt, fs.getCatalogName(), fs.getName(),
                                                   setName, targetGroup.getName(), numTargetFaces ),
@@ -575,7 +572,7 @@ real64 SinglePhaseHybridFVM::calculateResidualNorm( real64 const & GEOS_UNUSED_P
     physicsSolverBaseKernels::L2ResidualNormHelper::computeGlobalNorm( localResidualNorm, localResidualNormalizer, residualNorm );
   }
 
-  GEOS_LOG_LEVEL_RANK_0( logInfo::ResidualNorm, GEOS_FMT( "        ( R{} ) = ( {:4.2e} )", coupledSolverAttributePrefix(), residualNorm ));
+  GEOS_LOG_LEVEL_RANK_0_NLR( logInfo::ResidualNorm, GEOS_FMT( "        ( R{} ) = ( {:4.2e} )", coupledSolverAttributePrefix(), residualNorm ));
 
   return residualNorm;
 }

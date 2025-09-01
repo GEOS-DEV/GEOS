@@ -43,14 +43,11 @@ SinglePhaseReservoirAndWells< RESERVOIR_SOLVER >::
 SinglePhaseReservoirAndWells( const string & name,
                               Group * const parent )
   : Base( name, parent )
-{
-  Base::template addLogLevel< logInfo::LinearSolverConfiguration >();
-}
+{ }
 
 template< typename RESERVOIR_SOLVER >
 SinglePhaseReservoirAndWells< RESERVOIR_SOLVER >::
-~SinglePhaseReservoirAndWells()
-{}
+~SinglePhaseReservoirAndWells() = default;
 
 template<>
 SinglePhaseBase *
@@ -89,7 +86,7 @@ setMGRStrategy()
   {
     linearSolverParameters.mgr.strategy = LinearSolverParameters::MGR::StrategyType::singlePhaseReservoirFVM;
   }
-  GEOS_LOG_LEVEL_RANK_0( logInfo::LinearSolverConfiguration,
+  GEOS_LOG_LEVEL_RANK_0( logInfo::LinearSolver,
                          GEOS_FMT( "{}: MGR strategy set to {}", getName(),
                                    EnumStrings< LinearSolverParameters::MGR::StrategyType >::toString( linearSolverParameters.mgr.strategy )));
 }
@@ -116,7 +113,7 @@ setMGRStrategy()
   {
     linearSolverParameters.mgr.strategy = LinearSolverParameters::MGR::StrategyType::singlePhasePoromechanicsReservoirFVM;
   }
-  GEOS_LOG_LEVEL_RANK_0( logInfo::LinearSolverConfiguration,
+  GEOS_LOG_LEVEL_RANK_0( logInfo::LinearSolver,
                          GEOS_FMT( "{}: MGR strategy set to {}", this->getName(),
                                    EnumStrings< LinearSolverParameters::MGR::StrategyType >::toString( linearSolverParameters.mgr.strategy )));
 }

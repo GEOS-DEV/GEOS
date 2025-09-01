@@ -5,7 +5,6 @@
     gravityVector="{ 0.0, 0.0, 0.0 }">
     <SolidMechanicsLagrangianFEM
       name="lagSolve"
-      timeIntegrationOption="QuasiStatic"
       discretization="FE1"
       targetRegions="{ Region2 }"
       >
@@ -26,11 +25,12 @@
   </Solvers>
 
   <Mesh>
-    <!--VTKMesh
+    <VTKMesh
       name="cube8"
-      file="cube_8.vtu"/-->
+      file="cube_8.vtu"
+      partitionRefinement="0"/>
 
-    <InternalMesh
+    <!-- <InternalMesh
       name="mesh1"
       elementTypes="{ C3D8 }"
       xCoords="{ -1, 1 }"
@@ -39,7 +39,7 @@
       nx="{ 2 }"
       ny="{ 2 }"
       nz="{ 2 }"
-      cellBlockNames="{ 3_hexahedra }"/>
+      cellBlockNames="{ 3_hexahedra }"/> -->
   </Mesh>
 
   <Geometry>

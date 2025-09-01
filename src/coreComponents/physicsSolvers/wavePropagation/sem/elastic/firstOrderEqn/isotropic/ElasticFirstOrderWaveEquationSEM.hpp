@@ -24,7 +24,7 @@
 #include "mesh/MeshFields.hpp"
 #include "physicsSolvers/wavePropagation/sem/elastic/shared/ElasticFields.hpp"
 #include "physicsSolvers/wavePropagation/shared/WaveSolverBase.hpp"
-
+#include "physicsSolvers/wavePropagation/shared/WaveSolverTypeDefSEM.hpp"
 
 namespace geos
 {
@@ -69,6 +69,11 @@ public:
                                        integer const cycleNumber,
                                        DomainPartition & domain,
                                        integer const computeGradient ) override;
+
+  /**
+   * @brief Get the minimum wavespeed on a mesh (S-wavespeed in the elastic case)
+   */
+  virtual real32 getGlobalMinWavespeed( MeshLevel & mesh, string_array const & regionNames ) override;
 
 
   /**

@@ -65,6 +65,9 @@ public:
                ParallelVector & solution,
                bool const setSparsity = true ) override final;
 
+  virtual std::unique_ptr< PreconditionerBase< LAInterface > >
+  createPreconditioner( DomainPartition & domain ) const override;
+
   virtual void
   implicitStepSetup( real64 const & time_n,
                      real64 const & dt,
@@ -186,8 +189,6 @@ private:
   real64 m_stabilitzationScalingCoefficient = 1.0;
 
   static const localIndex m_maxFaceNodes; // Maximum number of nodes on a contact face
-
-  void createPreconditioner( DomainPartition const & domain );
 
   void computeFaceDisplacementJump( DomainPartition & domain );
 
