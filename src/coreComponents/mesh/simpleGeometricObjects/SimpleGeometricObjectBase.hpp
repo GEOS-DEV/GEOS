@@ -45,24 +45,12 @@ class SimpleGeometricObjectBase : public dataRepository::Group
 public:
 
   /**
-   * @name Constructor / Destructor
-   */
-  ///@{
-
-  /**
    * @brief Constructor.
    * @param name name of the object in the data hierarchy.
    * @param parent pointer to the parent group in the data hierarchy.
    */
   explicit SimpleGeometricObjectBase( string const & name,
                                       Group * const parent );
-
-  /**
-   * @brief Default destructor.
-   */
-  virtual ~SimpleGeometricObjectBase();
-
-  ///@}
 
   /**
    * @name Static Factory Catalog Functions
