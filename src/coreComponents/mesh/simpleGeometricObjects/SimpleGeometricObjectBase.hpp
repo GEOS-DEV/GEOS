@@ -82,12 +82,13 @@ public:
    */
   virtual bool isCoordInObject( real64 const ( &coord ) [3] ) const = 0;
 
-  /// Keys appearing in XML
+  /// @cond DO_NOT_DOCUMENT
   struct viewKeyStruct
   {
     /// Key for the epsilon parameter
     static constexpr char const * epsilonString() { return "epsilon"; }
   };
+  /// @endcond
 
 protected:
 
