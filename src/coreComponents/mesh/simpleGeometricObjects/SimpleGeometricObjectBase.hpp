@@ -94,6 +94,11 @@ public:
    */
   virtual bool isCoordInObject( real64 const ( &coord ) [3] ) const = 0;
 
+  struct viewKeyStruct
+  {
+    static constexpr char const * epsilonString() { return "epsilon"; }
+  };
+
 protected:
 
   virtual void postInputInitialization() override;

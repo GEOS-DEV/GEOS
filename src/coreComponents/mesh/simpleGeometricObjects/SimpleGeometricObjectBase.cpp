@@ -18,6 +18,7 @@
  */
 
 #include "SimpleGeometricObjectBase.hpp"
+#include "dataRepository/InputFlags.hpp"
 #include "mesh/DomainPartition.hpp"
 
 namespace geos
@@ -28,8 +29,11 @@ SimpleGeometricObjectBase::SimpleGeometricObjectBase( string const & name,
   Group( name, parent )
 {
   setInputFlags( dataRepository::InputFlags::OPTIONAL_NONUNIQUE );
-}
 
+  registerWrapper( viewKeyStruct::epsilonString(), &m_epsilon ).
+    setInputFlag( dataRepository::InputFlags::OPTIONAL ).
+    setDescription( "Tolerance for coordinate checks" );
+}
 
 SimpleGeometricObjectBase::CatalogInterface::CatalogType & SimpleGeometricObjectBase::getCatalog()
 {
