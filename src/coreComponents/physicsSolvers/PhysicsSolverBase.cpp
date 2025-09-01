@@ -24,7 +24,6 @@
 #include "math/interpolation/Interpolation.hpp"
 #include "common/Timer.hpp"
 #include "common/Units.hpp"
-#include "dataRepository/LogLevelsInfo.hpp"
 
 #if defined(GEOS_USE_PYGEOSX)
 #include "python/PySolverType.hpp"
@@ -103,10 +102,11 @@ PhysicsSolverBase::PhysicsSolverBase( string const & name,
     setInputFlag( InputFlags::FALSE ).
     setRestartFlags( RestartFlags::WRITE_AND_READ );
 
+  addLogLevel< logInfo::Convergence >();
   addLogLevel< logInfo::Fields >();
   addLogLevel< logInfo::LinearSolver >();
+  addLogLevel< logInfo::ResidualNorm >();
   addLogLevel< logInfo::Solution >();
-  addLogLevel< logInfo::Convergence >();
   addLogLevel< logInfo::TimeStep >();
   addLogLevel< logInfo::Timers >();
 
