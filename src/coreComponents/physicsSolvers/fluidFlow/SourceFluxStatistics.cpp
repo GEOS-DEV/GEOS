@@ -178,9 +178,11 @@ void SourceFluxStatsAggregator::outputStatsToLog( bool logLevelActive, string_vi
 {
   if( logLevelActive && logger::internal::rank == 0 )
   {
-    m_logLayout.setTitle( GEOS_FMT( "{}, flux statistics for: {}", 
-                          getName(), 
-                          stringutilities::join( m_fluxNames, ", " ) ) );
+    string const title = GEOS_FMT( "{}, flux statistics for: {}", 
+                                   getName(), 
+                                   stringutilities::join( m_fluxNames, ", " ) );
+    string const multilineTitle = wrapTextToMaxLength( title, 80 );
+    m_logLayout.setTitle( multilineTitle );
     TableTextFormatter const tableStatFormatter( m_logLayout );
     GEOS_LOG_RANK( tableStatFormatter.toString( tableMeshData ) );
   }
