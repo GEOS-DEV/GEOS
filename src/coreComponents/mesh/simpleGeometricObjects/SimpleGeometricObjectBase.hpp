@@ -94,8 +94,10 @@ public:
    */
   virtual bool isCoordInObject( real64 const ( &coord ) [3] ) const = 0;
 
+  /// Keys appearing in XML
   struct viewKeyStruct
   {
+    /// Key for the epsilon parameter
     static constexpr char const * epsilonString() { return "epsilon"; }
   };
 
