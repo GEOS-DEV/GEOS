@@ -315,7 +315,7 @@ public:
     /// @return String key for the well radius
     static constexpr char const * radiusString() { return "radius"; }
     /// @return String key for the well element status
-    static constexpr char const * wellLocalElementGlobaleIndexString() { return "wellLocalElementGlobaleIndex"; }
+    static constexpr char const * wellLocalElementGlobalIndexString() { return "wellLocalElementGlobalIndex"; }
     /// @return String key for the well element status
     static constexpr char const * wellLocalElementStatusString() { return "wellLocalElementStatus"; }
 
