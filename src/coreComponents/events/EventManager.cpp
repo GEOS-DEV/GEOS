@@ -186,8 +186,8 @@ bool EventManager::run( DomainPartition & domain )
 
       // Print debug information for logLevel >= 1
       GEOS_LOG_LEVEL_RANK_0_ON_GROUP( logInfo::EventExecution,
-                                      GEOS_FMT( "Event {}: {}, dt_request={}, forecast={}", 
-                                                m_currentSubEvent, subEvent->getName(),
+                                      GEOS_FMT( "Event {} (no.{}): dt_request={}, forecast={}",
+                                                subEvent->getName(), m_currentSubEvent,
                                                 subEvent->getCurrentEventDtRequest(), subEvent->getForecast() ),
                                       ( *subEvent ) );
 
