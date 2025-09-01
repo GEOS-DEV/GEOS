@@ -24,19 +24,21 @@
 #include "elementFormulations/ConformingVirtualElementOrder1.hpp"
 #include "elementFormulations/H1_Hexahedron_Lagrange1_GaussLegendre2.hpp"
 #include "elementFormulations/H1_Pyramid_Lagrange1_Gauss5.hpp"
-#include "elementFormulations/H1_Tetrahedron_Lagrange1_Gauss1.hpp"
+#include "elementFormulations/H1_Tetrahedron_Lagrange1_Gauss.hpp"
 #include "elementFormulations/H1_Wedge_Lagrange1_Gauss6.hpp"
 #if !defined( GEOS_USE_HIP )
 #include "elementFormulations/Qk_Hexahedron_Lagrange_GaussLobatto.hpp"
 #endif
 #include "elementFormulations/H1_QuadrilateralFace_Lagrange1_GaussLegendre2.hpp"
-#include "elementFormulations/H1_TriangleFace_Lagrange1_Gauss1.hpp"
+#include "elementFormulations/H1_TriangleFace_Lagrange1_Gauss.hpp"
+#include "elementFormulations/BB_Tetrahedron.hpp"
 #include "LvArray/src/system.hpp"
 
 #define FE_1_TYPES \
   finiteElement::H1_Hexahedron_Lagrange1_GaussLegendre2, \
   finiteElement::H1_Wedge_Lagrange1_Gauss6, \
   finiteElement::H1_Tetrahedron_Lagrange1_Gauss1, \
+  finiteElement::H1_Tetrahedron_Lagrange1_Gauss14, \
   finiteElement::H1_Pyramid_Lagrange1_Gauss5
 
 #define GL_FE_TYPES \
@@ -45,6 +47,11 @@
   finiteElement::Q3_Hexahedron_Lagrange_GaussLobatto, \
   finiteElement::Q4_Hexahedron_Lagrange_GaussLobatto, \
   finiteElement::Q5_Hexahedron_Lagrange_GaussLobatto
+
+#define BB_FE_TYPES \
+  finiteElement::BB1_Tetrahedron, \
+  finiteElement::BB2_Tetrahedron, \
+  finiteElement::BB3_Tetrahedron
 
 #if defined( GEOS_DISPATCH_VEM )
 
@@ -79,16 +86,17 @@
 
 #if !defined( GEOS_USE_HIP )
 // can only compile GL_FE_TYPES when not using cce+rocm
-#define ALL_FE_TYPES BASE_FE_TYPES, GL_FE_TYPES
+#define ALL_FE_TYPES BASE_FE_TYPES, GL_FE_TYPES, BB_FE_TYPES
 #else
-#define ALL_FE_TYPES BASE_FE_TYPES
+#define ALL_FE_TYPES BASE_FE_TYPES, BB_FE_TYPES
 #endif
 
 
 
 #define FE_TYPES_2D \
   finiteElement::H1_QuadrilateralFace_Lagrange1_GaussLegendre2, \
-  finiteElement::H1_TriangleFace_Lagrange1_Gauss1
+  finiteElement::H1_TriangleFace_Lagrange1_Gauss1, \
+  finiteElement::H1_TriangleFace_Lagrange1_Gauss4
 
 #define BASE_FE_TYPES_2D FE_TYPES_2D
 

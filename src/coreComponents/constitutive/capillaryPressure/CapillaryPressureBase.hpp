@@ -22,7 +22,7 @@
 
 #include "common/DataLayouts.hpp"
 #include "constitutive/ConstitutiveBase.hpp"
-#include "constitutive/capillaryPressure/layouts.hpp"
+#include "constitutive/capillaryPressure/Layouts.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
 
 namespace geos
@@ -140,7 +140,7 @@ public:
    * @brief Getter for the phase names
    * @return an array of phase names
    */
-  arrayView1d< string const > phaseNames() const { return m_phaseNames; }
+  string_array const & phaseNames() const { return m_phaseNames; }
 
   /*
    * @brief Getter for the cell-wise phase capillary pressures

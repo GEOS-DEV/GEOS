@@ -23,9 +23,8 @@
         directParallel="0"/>
     </Hydrofracture>
 
-    <SolidMechanicsLagrangianSSLE
+    <SolidMechanicsLagrangianFEM
       name="lagsolve"
-      timeIntegrationOption="QuasiStatic"
       discretization="FE1"
       targetRegions="{ Domain, Fracture }"
       contactRelationName="fractureContact"
@@ -39,7 +38,7 @@
     <SurfaceGenerator
       name="SurfaceGen"
       targetRegions="{ Domain }"
-      rockToughness="0.707e7"
+      initialRockToughness="0.707e7"
       nodeBasedSIF="1"
       mpiCommOrder="1"/>
   </Solvers>

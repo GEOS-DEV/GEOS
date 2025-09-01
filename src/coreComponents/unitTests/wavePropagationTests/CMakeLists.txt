@@ -1,11 +1,16 @@
 # Specify list of tests
 set( gtest_geosx_tests
      testWavePropagation.cpp
+     testWavePropagationDG.cpp
+     testWavePropagationTaper.cpp
      testWavePropagationQ2.cpp
      testWavePropagationElasticFirstOrder.cpp
      testWavePropagationDAS.cpp
      testWavePropagationElasticVTI.cpp
-     testWavePropagationAttenuation.cpp
+     testWavePropagationElasticTTI.cpp
+     testWavePropagationAttenuationElastic.cpp
+     testWavePropagationAttenuationAcoustic.cpp
+     testWavePropagationAttenuationAcousticVTI.cpp
      testWavePropagationAcousticFirstOrder.cpp
      testWavePropagationAdjoint1.cpp
    )

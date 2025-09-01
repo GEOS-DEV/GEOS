@@ -117,7 +117,7 @@ void ElasticFirstOrderWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
 
   forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
                                                     MeshLevel & mesh,
-                                                    arrayView1d< string const > const & )
+                                                    string_array const & )
 
   {
     NodeManager & nodeManager = mesh.getNodeManager();
@@ -202,8 +202,29 @@ void ElasticFirstOrderWaveEquationSEM::postInputInitialization()
   m_sigmayzNp1AtReceivers.resize( m_nsamplesSeismoTrace, numReceiversGlobal + 1 );
 }
 
+real32 ElasticFirstOrderWaveEquationSEM::getGlobalMinWavespeed( MeshLevel & mesh, string_array const & regionNames )
+{
 
-void ElasticFirstOrderWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & baseMesh, MeshLevel & mesh, arrayView1d< string const > const & regionNames )
+  real32 localMinWavespeed = 1e8;
+
+  mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
+                                                                                        CellElementSubRegion & elementSubRegion )
+  {
+    arrayView1d< real32 const > const velocity = elementSubRegion.getField< elasticfields::ElasticVelocityVs >();
+    real32 subRegionMinWavespeed = *std::min_element( velocity.begin(), velocity.end());
+    if( localMinWavespeed > subRegionMinWavespeed )
+    {
+      localMinWavespeed = subRegionMinWavespeed;
+    }
+  } );
+
+  real32 const globalMinWavespeed = MpiWrapper::min( localMinWavespeed );
+
+  return globalMinWavespeed;
+
+}
+
+void ElasticFirstOrderWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & baseMesh, MeshLevel & mesh, string_array const & regionNames )
 {
   GEOS_MARK_FUNCTION;
 
@@ -311,7 +332,7 @@ void ElasticFirstOrderWaveEquationSEM::initializePostInitialConditionsPreSubGrou
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const & meshBodyName,
                                                                 MeshLevel & mesh,
-                                                                arrayView1d< string const > const & regionNames )
+                                                                string_array const & regionNames )
   {
     MeshLevel & baseMesh = domain.getMeshBodies().getGroup< MeshBody >( meshBodyName ).getBaseDiscretization();
     precomputeSourceAndReceiverTerm( baseMesh, mesh, regionNames );
@@ -463,7 +484,7 @@ real64 ElasticFirstOrderWaveEquationSEM::explicitStepForward( real64 const & tim
                                                               real64 const & dt,
                                                               integer cycleNumber,
                                                               DomainPartition & domain,
-                                                              bool GEOS_UNUSED_PARAM( computeGradient ) )
+                                                              integer GEOS_UNUSED_PARAM( computeGradient ) )
 {
   real64 dtOut = explicitStepInternal( time_n, dt, cycleNumber, domain );
   return dtOut;
@@ -475,7 +496,7 @@ real64 ElasticFirstOrderWaveEquationSEM::explicitStepBackward( real64 const & ti
                                                                real64 const & dt,
                                                                integer cycleNumber,
                                                                DomainPartition & domain,
-                                                               bool GEOS_UNUSED_PARAM( computeGradient ) )
+                                                               integer GEOS_UNUSED_PARAM( computeGradient ) )
 {
   GEOS_ERROR( getDataContext() << ": Backward propagation for the first order elastic wave propagator not yet implemented" );
   real64 dtOut = explicitStepInternal( time_n, dt, cycleNumber, domain );
@@ -501,7 +522,7 @@ real64 ElasticFirstOrderWaveEquationSEM::explicitStepInternal( real64 const & ti
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
-                                                                arrayView1d< string const > const & regionNames )
+                                                                string_array const & regionNames )
 
   {
 
@@ -661,7 +682,7 @@ void ElasticFirstOrderWaveEquationSEM::cleanup( real64 const time_n,
   // compute the remaining seismic traces, if needed
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
-                                                                arrayView1d< string const > const & regionNames )
+                                                                string_array const & regionNames )
   {
     NodeManager & nodeManager = mesh.getNodeManager();
 

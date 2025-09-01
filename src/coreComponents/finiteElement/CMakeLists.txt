@@ -32,8 +32,8 @@ set( finiteElement_headers
      elementFormulations/H1_Hexahedron_Lagrange1_GaussLegendre2.hpp
      elementFormulations/H1_Pyramid_Lagrange1_Gauss5.hpp
      elementFormulations/H1_QuadrilateralFace_Lagrange1_GaussLegendre2.hpp
-     elementFormulations/H1_Tetrahedron_Lagrange1_Gauss1.hpp
-     elementFormulations/H1_TriangleFace_Lagrange1_Gauss1.hpp
+     elementFormulations/H1_Tetrahedron_Lagrange1_Gauss.hpp
+     elementFormulations/H1_TriangleFace_Lagrange1_Gauss.hpp
      elementFormulations/H1_Wedge_Lagrange1_Gauss6.hpp
      elementFormulations/ConformingVirtualElementOrder1.hpp
      elementFormulations/ConformingVirtualElementOrder1_impl.hpp
@@ -41,6 +41,7 @@ set( finiteElement_headers
      elementFormulations/LagrangeBasis2.hpp
      elementFormulations/LagrangeBasis3GL.hpp
      elementFormulations/LagrangeBasis5GL.hpp
+     elementFormulations/BB_Tetrahedron.hpp
      kernelInterface/InterfaceKernelBase.hpp
      kernelInterface/ImplicitKernelBase.hpp
      kernelInterface/KernelBase.hpp

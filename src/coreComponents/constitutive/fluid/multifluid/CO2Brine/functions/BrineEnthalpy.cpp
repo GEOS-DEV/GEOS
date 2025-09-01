@@ -206,8 +206,8 @@ BrineEnthalpy::BrineEnthalpy( string const & name,
   m_CO2EnthalpyTable = makeCO2EnthalpyTable( inputParams, m_functionName, FunctionManager::getInstance() );
   m_brineEnthalpyTable = makeBrineEnthalpyTable( inputParams, m_functionName, FunctionManager::getInstance() );
 
-  m_CO2EnthalpyTable->outputPVTTableData( pvtOutputOpts );
-  m_brineEnthalpyTable->outputPVTTableData( pvtOutputOpts );
+  m_CO2EnthalpyTable->outputTableData( pvtOutputOpts );
+  m_brineEnthalpyTable->outputTableData( pvtOutputOpts );
 }
 
 

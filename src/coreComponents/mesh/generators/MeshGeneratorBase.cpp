@@ -15,6 +15,7 @@
 
 #include "MeshGeneratorBase.hpp"
 #include "mesh/generators/CellBlockManager.hpp"
+#include "mesh/LogLevelsInfo.hpp"
 #include "mesh/generators/ParticleBlockManager.hpp"
 #include "mesh/generators/MeshComponentBase.hpp"
 namespace geos
@@ -30,8 +31,9 @@ MeshGeneratorBase::MeshGeneratorBase( string const & name, Group * const parent 
 Group * MeshGeneratorBase::createChild( string const & childKey, string const & childName )
 {
   GEOS_LOG_RANK_0( GEOS_FMT( "{}: adding {} {}", getName(), childKey, childName ) );
-  std::unique_ptr< MeshComponentBase > comp = MeshComponentBase::CatalogInterface::factory( childKey, childName, this );
-  return &this->registerGroup< MeshComponentBase >( childName, std::move( comp ) );
+  std::unique_ptr< MeshComponentBase > meshComp =
+    MeshComponentBase::CatalogInterface::factory( childKey, getDataContext(), childName, this );
+  return &this->registerGroup< MeshComponentBase >( childName, std::move( meshComp ) );
 }
 
 void MeshGeneratorBase::expandObjectCatalogs()
@@ -89,6 +91,7 @@ void MeshGeneratorBase::attachWellInfo( CellBlockManager & cellBlockManager )
     lb.setPerfCoords( wellGen.getPerfCoords() );
     lb.setPerfTransmissibility( wellGen.getPerfTransmissibility() );
     lb.setPerfSkinFactor( wellGen.getPerfSkinFactor() );
+    lb.setPerfTargetRegion( wellGen.getPerfTargetRegion() );
     lb.setPerfElemIndex( wellGen.getPerfElemIndex() );
     lb.setWellControlsName( wellGen.getWellControlsName() );
     lb.setWellGeneratorName( wellGen.getName() );

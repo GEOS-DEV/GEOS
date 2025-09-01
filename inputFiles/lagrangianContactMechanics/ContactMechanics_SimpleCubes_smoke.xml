@@ -13,7 +13,6 @@
       stabilizationName="TPFAstabilization"
       discretization="FE1"
       targetRegions="{ Region, Fracture }"
-      timeIntegrationOption="QuasiStatic"
       logLevel="1">
       <NonlinearSolverParameters
         newtonTol="1.0e-8"
