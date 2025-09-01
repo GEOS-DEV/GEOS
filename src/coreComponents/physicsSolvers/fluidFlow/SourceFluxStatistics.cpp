@@ -276,7 +276,7 @@ bool SourceFluxStatsAggregator::execute( real64 const GEOS_UNUSED_PARAM( time_n 
 
 void SourceFluxStatsAggregator::StatData::allocate( integer phaseCount )
 {
-  if( m_producedMass.size() != phaseCount )
+  if( m_producedMass.size() < phaseCount )
   {
     m_producedMass.resize( phaseCount );
     m_productionRate.resize( phaseCount );
@@ -378,7 +378,7 @@ void SourceFluxStatsAggregator::WrappedStats::finalizePeriod()
 }
 void SourceFluxStatsAggregator::WrappedStats::PeriodStats::allocate( integer phaseCount )
 {
-  if( m_timeStepMass.size() != phaseCount )
+  if( m_timeStepMass.size() < phaseCount )
   {
     m_timeStepMass.resize( phaseCount );
     m_periodPendingMass.resize( phaseCount );
