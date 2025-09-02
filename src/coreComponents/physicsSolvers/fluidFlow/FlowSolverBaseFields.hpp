@@ -207,198 +207,63 @@ DECLARE_FIELD( bcTemperature,
                0,
                NOPLOT,
                WRITE_AND_READ,
-               "Temperature boundary condition" );
+               "Boundary condition temperature" );
 
-// ========================================
-// New Flux and Phase Property Fields
-// ========================================
-
-// Total flux fields
-DECLARE_FIELD( totalMassFlux,
-               "totalMassFlux",
+DECLARE_FIELD( elementStabConstant,
+               "elementStabConstant",
                array1d< real64 >,
                0,
-               LEVEL_0,
+               LEVEL_1,
                WRITE_AND_READ,
-               "Total mass flux across all phases" );
+               "Stabilization constant for pressure jump stabilization" );
 
-DECLARE_FIELD( totalCapillaryFlux,
-               "totalCapillaryFlux",
+DECLARE_FIELD( transMultiplier,
+               "permeabilityTransMultiplier",
                array1d< real64 >,
-               0,
+               1,
                LEVEL_0,
                WRITE_AND_READ,
-               "Total capillary flux across all phases" );
+               "Permeability transmissibility multipliers" );
 
-// Phase-specific flux fields
-DECLARE_FIELD( phaseMassicFlux,
-               "phaseMassicFlux",
-               array2d< real64 >,
-               0,
-               LEVEL_0,
-               WRITE_AND_READ,
-               "Massic flux for each phase" );
-
-DECLARE_FIELD( phaseCapillaryFlux,
-               "phaseCapillaryFlux",
-               array2d< real64 >,
-               0,
-               LEVEL_0,
-               WRITE_AND_READ,
-               "Capillary flux for each phase" );
-
-DECLARE_FIELD( phaseBuoyancyFlux,
-               "phaseBuoyancyFlux",
-               array2d< real64 >,
-               0,
-               LEVEL_0,
-               WRITE_AND_READ,
-               "Buoyancy flux for each phase" );
-
-// Fractional flow and mobility fields
-DECLARE_FIELD( fractionalFlow,
-               "fractionalFlow",
-               array2d< real64 >,
-               0,
-               LEVEL_0,
-               WRITE_AND_READ,
-               "Fractional flow for each phase" );
-
-DECLARE_FIELD( totalMobility,
-               "totalMobility",
+DECLARE_FIELD( pressureScalingFactor,
+               "pressureScalingFactor",
                array1d< real64 >,
-               0,
-               LEVEL_0,
-               WRITE_AND_READ,
-               "Total mobility across all phases" );
-
-DECLARE_FIELD( phaseMobility,
-               "phaseMobility",
-               array2d< real64 >,
-               0,
-               LEVEL_0,
-               WRITE_AND_READ,
-               "Mobility for each phase" );
-
-// Phase saturation fields (for multiphase flow)
-DECLARE_FIELD( phaseSaturation,
-               "phaseSaturation",
-               array2d< real64 >,
-               0,
-               LEVEL_0,
-               WRITE_AND_READ,
-               "Saturation for each phase" );
-
-DECLARE_FIELD( phaseSaturation_n,
-               "phaseSaturation_n",
-               array2d< real64 >,
-               0,
-               NOPLOT,
-               WRITE_AND_READ,
-               "Phase saturation at previous time step" );
-
-DECLARE_FIELD( phaseSaturation_k,
-               "phaseSaturation_k",
-               array2d< real64 >,
-               0,
+               1,
                NOPLOT,
                NO_WRITE,
-               "Phase saturation at previous sequential iteration" );
+               "Scaling factors for pressure" );
 
-// Mixture property fields
-DECLARE_FIELD( mixtureDensity,
-               "mixtureDensity",
+DECLARE_FIELD( temperatureScalingFactor,
+               "temperatureScalingFactor",
                array1d< real64 >,
-               0,
-               LEVEL_0,
-               WRITE_AND_READ,
-               "Mixture density" );
-
-DECLARE_FIELD( mixtureEnthalpy,
-               "mixtureEnthalpy",
-               array1d< real64 >,
-               0,
-               LEVEL_0,
-               WRITE_AND_READ,
-               "Mixture enthalpy" );
-
-DECLARE_FIELD( mixtureViscosity,
-               "mixtureViscosity",
-               array1d< real64 >,
-               0,
-               LEVEL_0,
-               WRITE_AND_READ,
-               "Mixture viscosity" );
-
-// Phase density fields
-DECLARE_FIELD( phaseDensity,
-               "phaseDensity",
-               array2d< real64 >,
-               0,
-               LEVEL_0,
-               WRITE_AND_READ,
-               "Density for each phase" );
-
-DECLARE_FIELD( phaseViscosity,
-               "phaseViscosity",
-               array2d< real64 >,
-               0,
-               LEVEL_0,
-               WRITE_AND_READ,
-               "Viscosity for each phase" );
-
-DECLARE_FIELD( phaseEnthalpy,
-               "phaseEnthalpy",
-               array2d< real64 >,
-               0,
-               LEVEL_0,
-               WRITE_AND_READ,
-               "Enthalpy for each phase" );
-
-// Capillary pressure fields
-DECLARE_FIELD( capillaryPressure,
-               "capillaryPressure",
-               array2d< real64 >,
-               0,
-               LEVEL_0,
-               WRITE_AND_READ,
-               "Capillary pressure between phases" );
-
-// Transport equation residuals
-DECLARE_FIELD( transportResidual,
-               "transportResidual",
-               array2d< real64 >,
-               0,
+               1,
                NOPLOT,
                NO_WRITE,
-               "Transport equation residuals" );
+               "Scaling factors for temperature" );
 
-// Flux derivatives for Jacobian assembly
-DECLARE_FIELD( dTotalMassFlux_dPressure,
-               "dTotalMassFlux_dPressure",
+DECLARE_FIELD( energy,
+               "energy",
+               array1d< real64 >,
+               0,
+               LEVEL_0,
+               WRITE_AND_READ,
+               "Energy" );
+
+DECLARE_FIELD( energy_n,
+               "energy_n",
                array1d< real64 >,
                0,
                NOPLOT,
                NO_WRITE,
-               "Derivative of total mass flux w.r.t. pressure" );
+               "Energy at the previous converged time step" );
 
-DECLARE_FIELD( dTotalMassFlux_dSaturation,
-               "dTotalMassFlux_dSaturation",
-               array2d< real64 >,
+DECLARE_FIELD( fractureCreationTime,
+               "fractureCreationTime",
+               array1d< real64 >,
                0,
-               NOPLOT,
-               NO_WRITE,
-               "Derivative of total mass flux w.r.t. saturation" );
-
-DECLARE_FIELD( dFractionalFlow_dSaturation,
-               "dFractionalFlow_dSaturation",
-               array3d< real64 >,
-               0,
-               NOPLOT,
-               NO_WRITE,
-               "Derivative of fractional flow w.r.t. saturation" );
-
-// ...existing code...
+               LEVEL_1,
+               WRITE_AND_READ,
+               "The creation time for the fracture cell." );
 }
 
 }
