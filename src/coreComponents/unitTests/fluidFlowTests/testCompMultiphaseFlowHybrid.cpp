@@ -16,7 +16,6 @@
 #include "constitutive/fluid/multifluid/MultiFluidBase.hpp"
 #include "finiteVolume/FiniteVolumeManager.hpp"
 #include "mainInterface/initialization.hpp"
-#include "discretizationMethods/NumericalMethodsManager.hpp"
 #include "mainInterface/ProblemManager.hpp"
 #include "mainInterface/GeosxState.hpp"
 #include "physicsSolvers/PhysicsSolverManager.hpp"
@@ -198,7 +197,7 @@ void testNumericalJacobian( CompositionalMultiphaseHybridFVM & solver,
 
   solver.forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                        MeshLevel & mesh,
-                                                                       arrayView1d< string const > const & )
+                                                                       string_array const & )
   {
 
     FaceManager & faceManager = mesh.getFaceManager();

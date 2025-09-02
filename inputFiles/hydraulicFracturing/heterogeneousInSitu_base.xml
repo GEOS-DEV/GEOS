@@ -22,10 +22,9 @@
         preconditionerType="mgr"/>
     </Hydrofracture>
 
-    <SolidMechanicsLagrangianSSLE
+    <SolidMechanicsLagrangianFEM
       name="lagsolve"
       logLevel="1"
-      timeIntegrationOption="QuasiStatic"
       discretization="FE1"
       targetRegions="{ Domain, Fracture }"
       contactRelationName="fractureContact"
@@ -35,7 +34,7 @@
       <LinearSolverParameters
         solverType="gmres"
         krylovTol="1.0e-10"/>
-    </SolidMechanicsLagrangianSSLE>
+    </SolidMechanicsLagrangianFEM>
 
     <SinglePhaseFVM
       name="SinglePhaseFlow"

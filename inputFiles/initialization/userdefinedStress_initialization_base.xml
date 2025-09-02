@@ -21,9 +21,8 @@
     <!-- SPHINX_POROMECHANICSSOLVER_END -->
 
     <!-- SPHINX_MECHANICALSOLVER -->
-    <SolidMechanicsLagrangianSSLE
+    <SolidMechanicsLagrangianFEM
       name="lagsolve"
-      timeIntegrationOption="QuasiStatic"
       logLevel="1"
       discretization="FE1"
       targetRegions="{ Domain }" />

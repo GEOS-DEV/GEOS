@@ -15,7 +15,6 @@
 
 #include "FieldSpecificationBase.hpp"
 
-#include "common/MpiWrapper.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
 
 namespace geos
@@ -82,8 +81,6 @@ FieldSpecificationBase::FieldSpecificationBase( string const & name, Group * par
     setApplyDefaultValue( 1.0e99 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Time at which the boundary condition will stop being applied." );
-
-  enableLogLevelInput();
 }
 
 

@@ -15,7 +15,6 @@
 
 // Source includes
 #include "common/DataTypes.hpp"
-#include "common/TimingMacros.hpp"
 #include "fieldSpecification/AquiferBoundaryCondition.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
 #include "mainInterface/ProblemManager.hpp"

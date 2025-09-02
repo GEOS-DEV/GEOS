@@ -15,6 +15,7 @@
 
 #include "WellGeneratorBase.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
+#include "mesh/generators/LogLevelsInfo.hpp"
 #include "mesh/Perforation.hpp"
 #include "mesh/generators/LineBlockABC.hpp"
 #include "LvArray/src/genericTensorOps.hpp"
@@ -70,6 +71,8 @@ WellGeneratorBase::WellGeneratorBase( string const & name, Group * const parent 
     setInputFlag( InputFlags::REQUIRED ).
     setSizedFromParent( 0 ).
     setDescription( "Name of the set of constraints associated with this well" );
+
+  addLogLevel< logInfo::GenerateWell >();
 }
 
 Group * WellGeneratorBase::createChild( string const & childKey, string const & childName )
@@ -113,6 +116,7 @@ void WellGeneratorBase::generateWellGeometry( )
   m_perfDistFromHead.resize( m_numPerforations );
   m_perfTransmissibility.resize( m_numPerforations );
   m_perfSkinFactor.resize( m_numPerforations );
+  m_perfTargetRegion.resize( m_numPerforations );
   m_perfElemId.resize( m_numPerforations );
 
   // construct a reverse map from the polyline nodes to the segments
@@ -130,12 +134,11 @@ void WellGeneratorBase::generateWellGeometry( )
   // make sure that the perforation locations are valid
   checkPerforationLocationsValidity();
 
-  if( getLogLevel() >= 1 && MpiWrapper::commRank() == 0 )
+  if( isLogLevelActive< logInfo::GenerateWell >( this->getLogLevel() ) && MpiWrapper::commRank() == 0 )
   {
     logInternalWell();
     logPerforationTable();
   }
-
 }
 
 void WellGeneratorBase::postInputInitialization()
@@ -343,6 +346,7 @@ void WellGeneratorBase::connectPerforationsToWellElements()
     m_perfDistFromHead[iperf]  = perf.getDistanceFromWellHead();
     m_perfTransmissibility[iperf] = perf.getWellTransmissibility();
     m_perfSkinFactor[iperf] = perf.getWellSkinFactor();
+    m_perfTargetRegion[iperf] = perf.getTargetRegion();
 
     // search in all the elements of this well between head and bottom
     globalIndex iwelemTop    = 0;

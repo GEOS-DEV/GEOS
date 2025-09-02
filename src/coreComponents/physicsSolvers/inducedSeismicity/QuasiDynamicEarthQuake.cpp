@@ -22,9 +22,8 @@
 #include "dataRepository/InputFlags.hpp"
 #include "mesh/DomainPartition.hpp"
 #include "rateAndStateFields.hpp"
-#include "physicsSolvers/contact/ContactFields.hpp"
+#include "physicsSolvers/solidMechanics/contact/ContactFields.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
-#include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
 
 #include "ExplicitQDRateAndState.hpp"
 
@@ -33,7 +32,6 @@ namespace geos
 
 using namespace dataRepository;
 using namespace fields;
-using namespace constitutive;
 using namespace rateAndStateKernels;
 
 template< typename RSSOLVER_TYPE >
@@ -79,7 +77,7 @@ real64 QuasiDynamicEarthQuake< RSSOLVER_TYPE >::updateStresses( real64 const & t
   // 3. Add background stress and possible forcing.
   this->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                      MeshLevel & mesh,
-                                                                     arrayView1d< string const > const & regionNames )
+                                                                     string_array const & regionNames )
   {
     mesh.getElemManager().forElementSubRegions< SurfaceElementSubRegion >( regionNames,
                                                                            [&]( localIndex const,
@@ -112,7 +110,7 @@ void QuasiDynamicEarthQuake< RSSOLVER_TYPE >::setTargetDispJump( DomainPartition
 {
   this->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                      MeshLevel & mesh,
-                                                                     arrayView1d< string const > const & regionNames )
+                                                                     string_array const & regionNames )
   {
     mesh.getElemManager().forElementSubRegions< SurfaceElementSubRegion >( regionNames,
                                                                            [&]( localIndex const,
