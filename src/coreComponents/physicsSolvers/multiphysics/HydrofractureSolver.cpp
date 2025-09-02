@@ -705,7 +705,6 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::assembleSystem( real64 const t
                                                                              [&]( localIndex const,
                                                                                   SurfaceElementSubRegion & subRegion )
       {
-        std::cout << "Num of frac elements: " << subRegion.size() << std::endl;
         flowSolver()->accumulationAssemblyLaunch( dofManager,
                                                   subRegion,
                                                   localMatrix,
