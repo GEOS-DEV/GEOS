@@ -160,7 +160,7 @@ LinearSolverParametersInput::LinearSolverParametersInput( string const & name,
   registerWrapper( viewKeyStruct::reuseFactorizationString(), &m_parameters.direct.reuseFactorization ).
     setApplyDefaultValue( m_parameters.direct.reuseFactorization ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Whether to reuse the LU factorization" );  
+    setDescription( "Whether to reuse the LU factorization (experimental)" );
 
   registerWrapper( viewKeyStruct::krylovMaxIterString(), &m_parameters.krylov.maxIterations ).
     setApplyDefaultValue( m_parameters.krylov.maxIterations ).

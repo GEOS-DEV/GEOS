@@ -6,14 +6,17 @@ This file is designed to track changes to the integrated test baselines.
 Any developer who updates the baseline ID in the .integrated_tests.yaml file is expected to create an entry in this file with the pull request number, date, and their justification for rebaselining.
 These notes should be in reverse-chronological order, and use the following time format: (YYYY-MM-DD).
 
+PR #3629 (2025-09-02) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3680-13304-f49e13a.tar.gz>
+=====================
+Logic for deciding whether to setup linear solver, new flag `reuseFactorization`.
+
 PR #3629 (2025-08-29) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3629-13262-9e92109.tar.gz>
 =====================
-Add solver statistics wrapper
+Add solver statistics wrapper.
 
 PR #3627 (2025-08-29) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3672-13218-b729958.tar.gz>
 =====================
 Some fields were not being syncronized as part of the parallel topology change. This PR syncs them and produces a new baseline as a result.
-
 
 PR #3755 (2025-08-25) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3755-13107-9203370.tar.gz>
 =====================
