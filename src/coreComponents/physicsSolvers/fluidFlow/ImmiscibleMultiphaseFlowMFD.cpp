@@ -537,7 +537,7 @@ real64 ImmiscibleMultiphaseFlowMFD::calculateResidualNorm( real64 const & time_n
   {
     mesh.getElemManager().forElementSubRegions( regionNames, [&]( localIndex const, ElementSubRegionBase const & sr )
     {
-      arrayView1d< globalIndex const > dof = sr.getField< globalIndex >( dofKey );
+      arrayView1d< globalIndex const > dof = sr.getReference< array1d< globalIndex > >( dofKey );
       arrayView1d< integer const > ghost = sr.ghostRank();
       RAJA::ReduceSum< parallelDeviceReduce, real64 > sumSq( 0.0 );
       RAJA::ReduceMax< parallelDeviceReduce, real64 > maxVal( 0.0 );

@@ -315,6 +315,20 @@ private:
   CRSMatrixView< real64, globalIndex const > const m_localMatrix; arrayView1d< real64 > const m_localRhs;
 };
 
+// Free function launcher for ElementBasedAssemblyKernel (avoids needing a static member)
+template< typename POLICY, integer NF, typename IPType >
+GEOS_HOST_DEVICE_INLINE void launchElementBasedAssemblyKernel( localIndex const n,
+                                                               ElementBasedAssemblyKernel< NF, IPType > const k )
+{
+  forAll< POLICY >( n, [=] GEOS_HOST_DEVICE ( localIndex const ei )
+  {
+    typename ElementBasedAssemblyKernel< NF, IPType >::StackVariables s;
+    k.setup( ei, s );
+    k.compute( ei, s, NoOpFunc{} );
+    k.complete( ei, s );
+  } );
+}
+
 class ElementBasedAssemblyKernelFactory
 {
 public:
@@ -351,7 +365,7 @@ public:
                                                     faceDofKey, nodeManager, faceManager,
                                                     subRegion, dofNumberAccessor, fluid, permeability,
                                                     regionFilter, dt, assembleCellEq, localMatrix, localRhs );
-        ElementBasedAssemblyKernel< NF, IPType >::template launch< POLICY >( subRegion.size(), k );
+        launchElementBasedAssemblyKernel< POLICY, NF, IPType >( subRegion.size(), k );
       } );
     } );
   }
