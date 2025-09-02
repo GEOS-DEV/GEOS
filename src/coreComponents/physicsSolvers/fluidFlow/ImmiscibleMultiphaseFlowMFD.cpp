@@ -19,6 +19,8 @@
 #include "finiteVolume/FiniteVolumeManager.hpp"
 #include "finiteVolume/HybridMimeticDiscretization.hpp"
 #include "mesh/DomainPartition.hpp"
+// Add explicit include for FluxApproximationBase to use hasGroup with this type
+#include "finiteVolume/FluxApproximationBase.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
 #include "fieldSpecification/SourceFluxBoundaryCondition.hpp"
@@ -307,6 +309,11 @@ void ImmiscibleMultiphaseFlowMFD::assembleFluxTerms( real64 const dt,
 {
   NumericalMethodsManager const & nm = domain.getNumericalMethodManager();
   FiniteVolumeManager const & fvManager = nm.getFiniteVolumeManager();
+  // If the discretization name corresponds to a HybridMimeticDiscretization (and not a FluxApproximationBase), skip this TPFA-style flux assembly.
+  if( !fvManager.hasGroup< FluxApproximationBase >( m_discretizationName ) )
+  {
+    return; // hybrid-only case: flux terms will be handled by assembleFluxTermsHybrid
+  }
   FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( m_discretizationName );
   string const dofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &, MeshLevel const & mesh, string_array const & )
@@ -351,6 +358,11 @@ void ImmiscibleMultiphaseFlowMFD::assembleFluxTermsHybrid( real64 const dt,
 {
   NumericalMethodsManager const & nm = domain.getNumericalMethodManager();
   FiniteVolumeManager const & fvManager = nm.getFiniteVolumeManager();
+  // Skip if the discretization name corresponds to a FluxApproximation (i.e. not hybrid)
+  if( !fvManager.hasGroup< HybridMimeticDiscretization >( m_discretizationName ) )
+  {
+    return;
+  }
   HybridMimeticDiscretization const & hm = fvManager.getHybridMimeticDiscretization( m_discretizationName );
   mimeticInnerProduct::MimeticInnerProductBase const & ip = hm.getReference< mimeticInnerProduct::MimeticInnerProductBase >( HybridMimeticDiscretization::viewKeyStruct::innerProductString() );
   string const faceDofKey = dofManager.getKey( flow::facePressure::key() );
