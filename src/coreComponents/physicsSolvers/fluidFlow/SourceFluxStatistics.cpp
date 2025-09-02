@@ -304,6 +304,7 @@ void SourceFluxStatsAggregator::StatData::combine( StatData const & other )
 }
 void SourceFluxStatsAggregator::StatData::mpiReduce()
 {
+  allocate( MpiWrapper::max( m_producedMass.size() ) );
   for( int ip = 0; ip < getPhaseCount(); ++ip )
   {
     m_producedMass[ip] = MpiWrapper::sum( m_producedMass[ip] );
