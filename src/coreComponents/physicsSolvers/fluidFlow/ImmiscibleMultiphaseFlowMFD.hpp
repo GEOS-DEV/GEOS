@@ -20,6 +20,7 @@
 #ifndef GEOS_PHYSICSSOLVERS_FLUIDFLOW_IMMISCIBLEMULTIPHASEFLOWMFD_HPP_
 #define GEOS_PHYSICSSOLVERS_FLUIDFLOW_IMMISCIBLEMULTIPHASEFLOWMFD_HPP_
 
+#include "physicsSolvers/fluidFlow/FlowSolverBase.hpp"
 #include "physicsSolvers/fluidFlow/ImmiscibleMultiphaseFlow.hpp"
 #include "physicsSolvers/fluidFlow/kernels/immiscibleMultiphase/ImmiscibleMultiphaseMFDKernels.hpp"
 
@@ -36,7 +37,7 @@ namespace geos
  * This is an initial structural implementation that assembles a hybrid flux
  * contribution only into the pressure equation and the face constraints.
  */
-class ImmiscibleMultiphaseFlowMFD : public ImmiscibleMultiphaseFlow
+class ImmiscibleMultiphaseFlowMFD : public FlowSolverBase
 {
 public:
   ImmiscibleMultiphaseFlowMFD( const string & name, Group * const parent );
@@ -97,18 +98,70 @@ public:
                             real64 const dt,
                             DomainPartition & domain ) override;
 
-  // update mobility to provide total mobility field expected by hybrid kernels
-  void updatePhaseMobility( ObjectManagerBase & dataGroup ) const override;
+  // multiphase specific public hooks
+  integer numFluidPhases() const { return m_numPhases; }
+
+  struct viewKeyStruct : public FlowSolverBase::viewKeyStruct
+  {
+    static constexpr char const * elemDofFieldString() { return "elemDofField"; }
+    static constexpr char const * capPressureNamesString() { return "capillary_pressure"; }
+    static constexpr char const * relPermNamesString() { return "relative_permeability"; }
+    static constexpr char const * useTotalMassEquationString() { return "useTotalMassEquation"; }
+  };
 
   void initializePreSubGroups() override;
   void initializePostInitialConditionsPreSubGroups() override;
 
 private:
-  void computeTotalMobility( ObjectManagerBase & dataGroup ) const;
-
-  // region filter used in hybrid flux assembly
+  // helper methods migrated from ImmiscibleMultiphaseFlow
+  void updateFluidState( ElementSubRegionBase & subRegion ) const;
+  void updatePhaseMass( ElementSubRegionBase & subRegion ) const;
+  void updatePhaseMobility( ObjectManagerBase & dataGroup ) const;
+  void updateVolumeConstraint( ElementSubRegionBase & subRegion ) const;
+  void updateRelPermModel( ObjectManagerBase & dataGroup ) const;
+  void updateCapPressureModel( ObjectManagerBase & dataGroup ) const;
+  void updateFluidModel( ObjectManagerBase & dataGroup ) const;
+  bool validateDirichletBC( DomainPartition & domain, real64 const time ) const;
+  void applyDirichletBC( real64 const time_n,
+                         real64 const dt,
+                         DofManager const & dofManager,
+                         DomainPartition & domain,
+                         CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                         arrayView1d< real64 > const & localRhs ) const;
+  void applySourceFluxBC( real64 const time,
+                          real64 const dt,
+                          DofManager const & dofManager,
+                          DomainPartition & domain,
+                          CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                          arrayView1d< real64 > const & localRhs ) const;
+  void assembleAccumulationTerm( DomainPartition & domain,
+                                 DofManager const & dofManager,
+                                 CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                 arrayView1d< real64 > const & localRhs ) const;
+  void assembleFluxTerms( real64 const dt,
+                          DomainPartition const & domain,
+                          DofManager const & dofManager,
+                          CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                          arrayView1d< real64 > const & localRhs ) const;
+  template< typename OBJECT_TYPE >
+  void applyFieldValue( real64 const & time_n,
+                        real64 const & dt,
+                        MeshLevel & mesh,
+                        char const logMessage[],
+                        string const fieldKey,
+                        string const boundaryFieldKey ) const;
+  // multiphase state
+  integer m_numPhases;
+  bool m_hasCapPressure;
+  integer m_useTotalMassEquation;
+  // time stepping targets (simplified defaults)
+  real64 m_targetRelativePresChange;
+  real64 m_targetPhaseVolFracChange;
+  real64 m_solutionChangeScalingFactor;
+  GravityDensityScheme m_gravityDensityScheme;
+  // region filter & tolerance already present
   SortedArray< localIndex > m_regionFilter;
-  real64 m_areaRelTol; // tolerance for transmissibility (like single-phase)
+  real64 m_areaRelTol;
 };
 
 } // namespace geos
