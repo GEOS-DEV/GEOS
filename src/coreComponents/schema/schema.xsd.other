@@ -621,24 +621,7 @@
 		<!--usePML => Flag to apply PML-->
 		<xsd:attribute name="usePML" type="integer" />
 	</xsd:complexType>
-	<xsd:complexType name="SolverStatisticsType">
-		<!--numDiscardedLinearIterations => Cumulative number of discarded linear iterations-->
-		<xsd:attribute name="numDiscardedLinearIterations" type="integer" />
-		<!--numDiscardedNonlinearIterations => Cumulative number of discarded nonlinear iterations-->
-		<xsd:attribute name="numDiscardedNonlinearIterations" type="integer" />
-		<!--numDiscardedOuterLoopIterations => Cumulative number of discarded outer loop iterations-->
-		<xsd:attribute name="numDiscardedOuterLoopIterations" type="integer" />
-		<!--numSuccessfulLinearIterations => Cumulative number of successful linear iterations-->
-		<xsd:attribute name="numSuccessfulLinearIterations" type="integer" />
-		<!--numSuccessfulNonlinearIterations => Cumulative number of successful nonlinear iterations-->
-		<xsd:attribute name="numSuccessfulNonlinearIterations" type="integer" />
-		<!--numSuccessfulOuterLoopIterations => Cumulative number of successful outer loop iterations-->
-		<xsd:attribute name="numSuccessfulOuterLoopIterations" type="integer" />
-		<!--numTimeStepCuts => Number of time step cuts-->
-		<xsd:attribute name="numTimeStepCuts" type="integer" />
-		<!--numTimeSteps => Number of time steps-->
-		<xsd:attribute name="numTimeSteps" type="integer" />
-	</xsd:complexType>
+	<xsd:complexType name="SolverStatisticsType" />
 	<xsd:complexType name="AcousticElasticSEMType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
