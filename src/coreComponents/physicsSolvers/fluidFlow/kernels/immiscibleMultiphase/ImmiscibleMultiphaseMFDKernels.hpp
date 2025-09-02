@@ -316,8 +316,9 @@ private:
 };
 
 // Free function launcher for ElementBasedAssemblyKernel (avoids needing a static member)
+// (Fixed: was using undefined GEOS_HOST_DEVICE_INLINE macro; use standard pattern instead.)
 template< typename POLICY, integer NF, typename IPType >
-GEOS_HOST_DEVICE_INLINE void launchElementBasedAssemblyKernel( localIndex const n,
+GEOS_HOST_DEVICE inline void launchElementBasedAssemblyKernel( localIndex const n,
                                                                ElementBasedAssemblyKernel< NF, IPType > const k )
 {
   forAll< POLICY >( n, [=] GEOS_HOST_DEVICE ( localIndex const ei )
