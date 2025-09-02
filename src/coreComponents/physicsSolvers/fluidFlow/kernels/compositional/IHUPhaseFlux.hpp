@@ -1305,6 +1305,10 @@ public:
  */
 class HybridUpwind : public UpwindScheme
 {
+  template< typename VIEWTYPE >
+  using ElementViewConst = ElementRegionManager::ElementViewConst< VIEWTYPE >;
+
+  using Deriv = constitutive::multifluid::DerivativeOffset;
 
 public:
   template< localIndex numComp, localIndex numFluxSupportPoints >
