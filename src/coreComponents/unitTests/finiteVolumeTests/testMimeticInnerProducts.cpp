@@ -1165,7 +1165,8 @@ static inline void computeDistortedVolumeAndCenter( array2d< real64, nodes::REFE
     center[1] += X[a][1];
     center[2] += X[a][2];
   }
-  vol = hexahedronVolume( X );
+  const real64 volSigned = hexahedronVolume( X );
+  vol = std::abs(volSigned);
   center[0] /= 8.0; center[1] /= 8.0; center[2] /= 8.0;
 }
 
@@ -1476,6 +1477,327 @@ TEST( MimeticIP_Linear, Distortion_NonPlanar_LinearPressure )
 
     double errBDVLM = computeLinearPressure_error< 6 >( InnerProductType::BDVLM, DistortionMode::NonPlanar, eps );
     EXPECT_GT( errBDVLM, 1e-15 );
+  }
+}
+
+//======================== Gravity Consistency Test =============================
+static inline void makeDistortedPlanar_gravity( array2d< real64, nodes::REFERENCE_POSITION_PERM > & nodeL,
+                                                array2d< real64, nodes::REFERENCE_POSITION_PERM > & nodeU,
+                                                FaceManager::NodeMapType const & faceL,
+                                                FaceManager::NodeMapType const & faceU,
+                                                localIndex fL, localIndex fU,
+                                                real64 eps,
+                                                int coord = 0 )
+{
+  int Lv1 = faceL( fL, 1 ), Lv2 = faceL( fL, 2 );
+  int Rv1 = faceU( fU, 3 ), Rv2 = faceU( fU, 2 );
+
+  nodeL( Lv1, coord ) += eps;  nodeU( Rv1, coord ) += eps;
+  nodeL( Lv2, coord ) += eps;  nodeU( Rv2, coord ) += eps;
+}
+
+static inline void makeDistortedNonplanar_gravity( array2d<real64, nodes::REFERENCE_POSITION_PERM> & nodeL,
+                                                   array2d<real64, nodes::REFERENCE_POSITION_PERM> & nodeU,
+                                                   FaceManager::NodeMapType const & faceL,
+                                                   FaceManager::NodeMapType const & faceU,
+                                                   localIndex fL, localIndex fU,
+                                                   real64 eps,
+                                                   int coord = 0 )
+{
+  int Lv = faceL( fL, 2 );
+  int Rv = faceU( fU, 2 );
+ 
+  nodeL( Lv, coord ) += eps;
+  nodeU( Rv, coord ) += eps;
+}
+
+template< int NF >
+static double computeGravityConsistency_error( int ipKind,
+                                               DistortionMode mode = DistortionMode::None,
+                                               real64 eps = 0.0,
+                                               real64 rho = 1000.0,
+                                               real64 g = 9.81,
+                                               real64 pD = 1.23e5,
+                                               bool flag = false )
+{
+    // build two cells (z-stacked)
+    array2d< real64, nodes::REFERENCE_POSITION_PERM > node_L, node_U;
+    FaceManager::NodeMapType faceTonode_L, faceTonode_U;
+    array1d< localIndex > elemToface_L, elemToface_U;
+    real64 center_L[3], center_U[3], vol_L = 0, vol_U = 0;
+    
+    makeUnitCube( 0.0, node_L, faceTonode_L, elemToface_L, center_L, vol_L );
+    makeUnitCube( 0.0, node_U, faceTonode_U, elemToface_U, center_U, vol_U );
+    // stack upward of second cube (z + 1)
+    for ( int i = 0; i < 8; ++i )
+    {
+        node_U(i, 2) += 1.0;
+    }
+
+    // shared interface: lower top face fL = 5, upper bottom face fU = 0
+    if ( mode == DistortionMode::Planar )
+    {
+      makeDistortedPlanar_gravity( node_L, node_U, faceTonode_L, faceTonode_U, 5, 0, eps, 2 );
+    }
+    else if ( mode == DistortionMode::NonPlanar )
+    {
+      makeDistortedNonplanar_gravity( node_L, node_U, faceTonode_L, faceTonode_U, 5, 0, eps, 2 );
+    }
+    
+    computeDistortedVolumeAndCenter( node_L, center_L, vol_L );
+    computeDistortedVolumeAndCenter( node_U, center_U, vol_U );
+    
+    // indicate the shared face for z-stacked cubes
+    localIndex const fL_int = 5; // top of lower cell
+    localIndex const fU_int = 0; // bottom of upper cell
+    
+    // build the matrix T per cell (reuse inner product computes)
+    constexpr real64 ltol = 1e-12;
+    real64 Kvec[3] = {1.0, 1.0, 1.0};
+    stackArray2d< real64, NF * NF > TL( NF, NF ), TU( NF, NF );
+    
+    stackArray1d< real64, 3 > cLc(3), cUc(3);
+    for ( int d = 0; d < 3; ++d )
+    {
+        cLc[d] = center_L[d];
+        cUc[d] = center_U[d];
+    }
+    
+    array1d< real64 > mult( NF );
+    mult.setValues< parallelHostPolicy >( 1.0 );
+    
+    if ( ipKind == InnerProductType::TPFA )
+    {
+        TPFAInnerProduct::compute< NF >( node_L.toViewConst(),
+                                         mult.toViewConst(),
+                                         faceTonode_L.toViewConst(),
+                                         elemToface_L.toSliceConst(),
+                                         cLc, vol_L, Kvec, ltol, TL.toSlice() );
+        TPFAInnerProduct::compute< NF >( node_U.toViewConst(),
+                                         mult.toViewConst(),
+                                         faceTonode_U.toViewConst(),
+                                         elemToface_U.toSliceConst(),
+                                         cUc, vol_U, Kvec, ltol, TU.toSlice() );
+    }
+    else if ( ipKind == InnerProductType::QUASI_TPFA )
+    {
+        QuasiTPFAInnerProduct::compute< NF >( node_L.toViewConst(),
+                                              mult.toViewConst(),
+                                              faceTonode_L.toViewConst(),
+                                              elemToface_L.toSliceConst(),
+                                              cLc, vol_L, Kvec, ltol, TL.toSlice() );
+        QuasiTPFAInnerProduct::compute< NF >( node_U.toViewConst(),
+                                              mult.toViewConst(),
+                                              faceTonode_U.toViewConst(),
+                                              elemToface_U.toSliceConst(),
+                                              cUc, vol_U, Kvec, ltol, TU.toSlice() );
+    }
+    else if ( ipKind == InnerProductType::SIMPLE )
+    {
+        SimpleInnerProduct::compute< NF >( node_L.toViewConst(),
+                                           mult.toViewConst(),
+                                           faceTonode_L.toViewConst(),
+                                           elemToface_L.toSliceConst(),
+                                           cLc, vol_L, Kvec, ltol, TL.toSlice() );
+        SimpleInnerProduct::compute< NF >( node_U.toViewConst(),
+                                           mult.toViewConst(),
+                                           faceTonode_U.toViewConst(),
+                                           elemToface_U.toSliceConst(),
+                                           cUc, vol_U, Kvec, ltol, TU.toSlice() );
+    }
+    else if ( ipKind == InnerProductType::BDVLM )
+    {
+        BdVLMInnerProduct::compute< NF >( node_L.toViewConst(),
+                                          mult.toViewConst(),
+                                          faceTonode_L.toViewConst(),
+                                          elemToface_L.toSliceConst(),
+                                          cLc, vol_L, Kvec, ltol, TL.toSlice() );
+        BdVLMInnerProduct::compute< NF >( node_U.toViewConst(),
+                                          mult.toViewConst(),
+                                          faceTonode_U.toViewConst(),
+                                          elemToface_U.toSliceConst(),
+                                          cUc, vol_U, Kvec, ltol, TU.toSlice() );
+    }
+    else
+    {
+        // sanity check for inner product type
+        if (flag)
+        {
+            std::cout << "Unknown inner product type\n";
+        }
+        return std::numeric_limits< double >::infinity();
+    }
+    
+    // find top face center on the upper cell and build p0
+    auto faceCentroid = [&](auto const& node, auto const& f2n, localIndex f, real64 c[3])
+    {
+        c[0] = c[1] = c[2] = 0;
+        for (int k = 0; k < 4; ++k)
+        {
+            c[0] += node( f2n(f, k), 0);
+            c[1] += node( f2n(f, k), 1);
+            c[2] += node( f2n(f, k), 2);
+        }
+        c[0] /= 4.0;
+        c[1] /= 4.0;
+        c[2] /= 4.0;
+    };
+    
+    real64 xTop[3];
+    {
+        real64 zbest = std::numeric_limits< real64 >::lowest();
+        for ( localIndex f = 0; f < faceTonode_U.size(); ++f)
+        {
+            real64 c[3];
+            faceCentroid( node_U, faceTonode_U, f, c );
+            if ( c[2] > zbest )
+            {
+                zbest = c[2];
+                xTop[0] = c[0];
+                xTop[1] = c[1];
+                xTop[2] = c[2];
+            }
+        }
+    }
+    
+    const real64 gvec[3] = { 0.0, 0.0, -g };
+    const real64 p0 = pD + rho * ( gvec[0] * xTop[0] + gvec[1] * xTop[1] + gvec[2] * xTop[2] );
+    
+    auto buildCloc = [&]( auto const& node, auto const& f2n, real64 const Cc[3] )
+    {
+        stackArray2d< real64, NF * 3 > C( NF, 3 );
+        for ( localIndex k = 0; k < NF; ++k )
+        {
+            real64 cf[3];
+            faceCentroid( node, f2n, k, cf );
+            C( k, 0 ) = cf[0] - Cc[0];
+            C( k, 1 ) = cf[1] - Cc[1];
+            C( k, 2 ) = cf[2] - Cc[2];
+        }
+        return C;
+    };
+    auto CL = buildCloc( node_L, faceTonode_L, center_L );
+    auto CU = buildCloc( node_U, faceTonode_U, center_U );
+    
+    // hydro flux per cell: u = T (pi - ep + C (rho g))
+    auto hydroFlux = [&]( arraySlice2d< real64 const > Tloc,
+                          auto const& C_loc,
+                          auto const& node,
+                          auto const& f2n,
+                          real64 const Cc[3] )
+    {
+        // pE (cell center)
+        real64 pE = p0 - rho * ( gvec[0] * Cc[0] + gvec[1] * Cc[1] + gvec[2] * Cc[2] );
+        
+        //piE (face center)
+        stackArray1d< real64, NF > piE( NF );
+        for ( localIndex k = 0; k < NF; ++k )
+        {
+            real64 cf[3];
+            faceCentroid( node, f2n, k, cf );
+            piE[k] = p0 - rho * (gvec[0] * cf[0] + gvec[1] * cf[1] + gvec[2] * cf[2] );
+        }
+        
+        // bE = C (rho g)
+        real64 rg[3] = { rho * gvec[0], rho * gvec[1], rho * gvec[2] };
+        stackArray1d< real64, NF > bE(NF);
+        for ( localIndex k = 0; k < NF; ++k )
+        {
+            bE[k] = C_loc(k, 0) * rg[0] + C_loc(k, 1) * rg[1] + C_loc(k, 2) * rg[2];
+        }
+        
+        // rhs = piE - pE*1 + bE
+        stackArray1d< real64, NF > rhs(NF), uE(NF);
+        for ( localIndex k = 0; k < NF; ++k )
+        {
+            rhs[k] = piE[k] - pE + bE[k];
+        }
+        
+        // uE = Tloc * rhs
+        for ( localIndex i = 0; i < NF; ++i)
+        {
+            real64 s = 0;
+            for ( localIndex j = 0; j < NF; ++j)
+            {
+                s += Tloc(i, j) * rhs[j];
+            }
+            uE[i] = s;
+        }
+        
+        return uE;
+    };
+    
+    auto uL = hydroFlux( TL.toSliceConst(), CL.toSliceConst(), node_L, faceTonode_L, center_L );
+    auto uU = hydroFlux( TU.toSliceConst(), CU.toSliceConst(), node_U, faceTonode_U, center_U );
+    
+    real64 maxErr = 0;
+    for ( localIndex i = 0; i < NF; ++i)
+    {
+        maxErr = std::max( maxErr, std::abs( uL[i]) );
+    }
+    for ( localIndex i = 0; i < NF; ++i)
+    {
+        maxErr = std::max( maxErr, std::abs( uU[i]) );
+    }
+    
+    // interface flux consistency (should be ~0)
+    real64 faceErr = std::abs( uL[fL_int] + uU[fU_int] );
+    
+    return std::max( maxErr, faceErr );
+}
+
+// ================= case 0: without distortion ===========================
+TEST( Hydrostatic, GravityConsistency_NoDistortion_TPFA )
+{
+    double err = computeGravityConsistency_error< 6 >( InnerProductType::TPFA, DistortionMode::None, 0.0, 1000.0, 9.81, 1.23e5, false );
+    EXPECT_LE( err, 1e-15 );
+}
+
+TEST( Hydrostatic, GravityConsistency_NoDistortion_QuasiTPFA )
+{
+    double err = computeGravityConsistency_error< 6 >( InnerProductType::QUASI_TPFA, DistortionMode::None, 0.0, 1000.0, 9.81, 1.23e5, false );
+    EXPECT_LE( err, 1e-15 );
+}
+
+TEST( Hydrostatic, GravityConsistency_NoDistortion_Simple )
+{
+    double err = computeGravityConsistency_error< 6 >( InnerProductType::SIMPLE, DistortionMode::None, 0.0, 1000.0, 9.81, 1.23e5, false );
+    EXPECT_LE( err, 1e-15 );
+}
+
+TEST( Hydrostatic, GravityConsistency_NoDistortion_BdVLM )
+{
+    double err = computeGravityConsistency_error< 6 >( InnerProductType::BDVLM, DistortionMode::None, 0.0, 1000.0, 9.81, 1.23e5, false );
+    EXPECT_LE( err, 1e-15 );
+}
+
+// =================== case 1: with distortion (planar) ===========================
+TEST( Hydrostatic, GravityConsistency_Distortion_Planar )
+{
+  const double tol = 1e-10;
+  std::vector< double > eps_values{ 0.2, 0.9 };
+
+  for( double eps : eps_values )
+  {
+    EXPECT_LE( computeGravityConsistency_error< 6 >( InnerProductType::TPFA, DistortionMode::Planar, eps ), tol );
+    EXPECT_LE( computeGravityConsistency_error< 6 >( InnerProductType::QUASI_TPFA, DistortionMode::Planar, eps ), tol );
+    EXPECT_LE( computeGravityConsistency_error< 6 >( InnerProductType::SIMPLE, DistortionMode::Planar, eps ), tol );
+    EXPECT_LE( computeGravityConsistency_error< 6 >( InnerProductType::BDVLM, DistortionMode::Planar, eps ), tol );
+  }
+}
+
+// =================== case 2: with distortion (nonplanar) ===========================
+TEST(Hydrostatic, GravityConsistency_Distortion_NonPlanar)
+{
+  const double tol = 1e-10;
+  std::vector< double > eps_values{ 0.2, 0.9 };
+    
+  for( double eps : eps_values )
+  {
+    EXPECT_LE( computeGravityConsistency_error< 6 >(InnerProductType::TPFA, DistortionMode::NonPlanar, eps ), tol );
+    EXPECT_LE( computeGravityConsistency_error< 6 >(InnerProductType::QUASI_TPFA, DistortionMode::NonPlanar, eps ), tol );
+    EXPECT_LE( computeGravityConsistency_error< 6 >(InnerProductType::SIMPLE, DistortionMode::NonPlanar, eps ), tol );
+    EXPECT_LE( computeGravityConsistency_error< 6 >(InnerProductType::BDVLM, DistortionMode::NonPlanar, eps ), tol );
   }
 }
 
