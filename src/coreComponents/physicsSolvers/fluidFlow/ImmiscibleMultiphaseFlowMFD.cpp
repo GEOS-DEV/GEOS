@@ -31,6 +31,8 @@
 #include "constitutive/solid/porosity/PorosityFields.hpp"
 #include "physicsSolvers/fluidFlow/SourceFluxStatistics.hpp"
 #include "constitutive/ConstitutivePassThru.hpp"
+#include "constitutive/relativePermeability/RelativePermeabilitySelector.hpp"
+#include "constitutive/capillaryPressure/CapillaryPressureSelector.hpp"
 
 namespace geos
 {
