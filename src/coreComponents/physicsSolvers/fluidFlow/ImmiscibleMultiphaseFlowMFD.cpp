@@ -30,6 +30,7 @@
 #include "constitutive/capillaryPressure/CapillaryPressureBase.hpp"
 #include "constitutive/solid/porosity/PorosityFields.hpp"
 #include "physicsSolvers/fluidFlow/SourceFluxStatistics.hpp"
+#include "constitutive/ConstitutivePassThru.hpp"
 
 namespace geos
 {
@@ -385,17 +386,41 @@ bool ImmiscibleMultiphaseFlowMFD::validateDirichletBC( DomainPartition & domain,
   constexpr integer MAX_NP = 2;
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &, MeshLevel & mesh, string_array const & )
   {
-    map< string, map< string, map< string, ComponentMask< MAX_NP > > > > status;
+    // map: region -> subRegion -> set -> component mask
+    map< string, map< string, map< string, ComponentMask< MAX_NP > > > > bcStatus;
+    // pressure specs
     fsManager.apply< ElementSubRegionBase >( time, mesh, flow::pressure::key(), [&]( FieldSpecificationBase const &, string const & setName, SortedArrayView< localIndex const > const &, ElementSubRegionBase & sr, string const & )
     {
-      status[sr.getParent().getParent().getName()][sr.getName()][setName].setNumComp( m_numPhases );
+      string const regionName = sr.getParent().getParent().getName();
+      string const subRegionName = sr.getName();
+      auto & setMap = bcStatus[regionName][subRegionName];
+      if( setMap.count( setName ) > 0 )
+      {
+        ok = false; // duplicate pressure BC on same set
+      }
+      setMap[setName].setNumComp( m_numPhases );
     } );
+    // phase volume fraction specs
     fsManager.apply< ElementSubRegionBase >( time, mesh, immiscibleMultiphaseFlow::phaseVolumeFraction::key(), [&]( FieldSpecificationBase const & fs, string const & setName, SortedArrayView< localIndex const > const &, ElementSubRegionBase & sr, string const & )
     {
-      auto & mask = status[sr.getParent().getParent().getName()][sr.getName()][setName];
-      if( !mask.isValid() ) { ok = false; }
-      integer comp = fs.getComponent();
-      if( comp < 0 || comp >= m_numPhases ) ok = false; else if( mask[comp] ) ok = false; else mask.set( comp );
+      string const regionName = sr.getParent().getParent().getName();
+      string const subRegionName = sr.getName();
+      integer const comp = fs.getComponent();
+      auto & setMap = bcStatus[regionName][subRegionName];
+      if( setMap.count( setName ) == 0 )
+      {
+        ok = false; // saturation BC without pressure BC on same set
+      }
+      if( comp < 0 || comp >= m_numPhases )
+      {
+        ok = false; return;
+      }
+      ComponentMask< MAX_NP > & mask = setMap[setName];
+      if( mask[comp] )
+      {
+        ok = false; // duplicate component specification
+      }
+      mask.set( comp );
     } );
   } );
   return ok;
@@ -417,16 +442,20 @@ void ImmiscibleMultiphaseFlowMFD::applyDirichletBC( real64 const time_n,
   {
     fsManager.apply< ElementSubRegionBase >( time_n + dt, mesh, flow::pressure::key(), [&]( FieldSpecificationBase const & fs, string const & setName, SortedArrayView< localIndex const > const & target, ElementSubRegionBase & sr, string const & )
     {
+      GEOS_UNUSED_VAR( fs, setName );
       // apply to bcPressure then enforce
       fs.applyFieldValue< FieldSpecificationEqual, parallelDevicePolicy<> >( target, time_n + dt, sr, flow::bcPressure::key() );
       arrayView1d< real64 const > bcPres = sr.getField< flow::bcPressure >();
       arrayView1d< real64 const > pres = sr.getField< flow::pressure >();
-      arrayView1d< globalIndex const > dof = sr.getField< globalIndex >( dofManager.getKey( viewKeyStruct::elemDofFieldString() ) );
+      string const dofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
+      arrayView1d< globalIndex const > dof = sr.getReference< array1d< globalIndex > >( dofKey );
       arrayView1d< integer const > ghost = sr.ghostRank();
       globalIndex rankOffset = dofManager.rankOffset();
+      auto lm = localMatrix; auto rhs = localRhs; // capture copies
       forAll< parallelDevicePolicy<> >( target.size(), [=] GEOS_HOST_DEVICE ( localIndex const a )
       {
-        localIndex ei = target[a]; if( ghost[ei] >= 0 ) return; globalIndex idx = dof[ei]; localIndex row = idx - rankOffset; real64 rhsVal; FieldSpecificationEqual::SpecifyFieldValue( idx, rankOffset, localMatrix, rhsVal, bcPres[ei], pres[ei] ); localRhs[row] = rhsVal; });
+        localIndex const ei = target[a]; if( ghost[ei] >= 0 ) return; globalIndex const g = dof[ei]; localIndex const row = g - rankOffset; real64 rhsVal; FieldSpecificationEqual::SpecifyFieldValue( g, rankOffset, lm, rhsVal, bcPres[ei], pres[ei] ); rhs[row] = rhsVal; }
+      );
     } );
   } );
 }
@@ -441,23 +470,23 @@ void ImmiscibleMultiphaseFlowMFD::applySourceFluxBC( real64 const time,
   GEOS_UNUSED_VAR( localMatrix );
   FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
   string const dofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
-  // collect bc names
   std::map< string, localIndex > nameToId; localIndex count=0; fsManager.forSubGroups< SourceFluxBoundaryCondition >( [&]( SourceFluxBoundaryCondition const & bc ){ nameToId[bc.getName()] = count++; } );
   if( count==0 ) return;
   array1d< globalIndex > setSizes( count );
   computeSourceFluxSizeScalingFactor( time, dt, domain, nameToId, setSizes.toView() );
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &, MeshLevel & mesh, string_array const & )
   {
-    fsManager.apply< ElementSubRegionBase, SourceFluxBoundaryCondition >( time+dt, mesh, SourceFluxBoundaryCondition::catalogName(), [&]( SourceFluxBoundaryCondition const & fs, string const & setName, SortedArrayView< localIndex const > const & target, ElementSubRegionBase & sr, string const & )
+    fsManager.apply< ElementSubRegionBase, SourceFluxBoundaryCondition >( time+dt, mesh, SourceFluxBoundaryCondition::catalogName(), [&]( SourceFluxBoundaryCondition const & fs, string const &, SortedArrayView< localIndex const > const & target, ElementSubRegionBase & sr, string const & )
     {
       if( target.size()==0 || !sr.hasWrapper( dofKey ) ) return;
-      auto dof = sr.getField< globalIndex >( dofKey );
+      auto dof = sr.getReference< array1d< globalIndex > >( dofKey );
       auto ghost = sr.ghostRank();
-      array1d< globalIndex > tmpDof( target.size() ); array1d< real64 > tmpRhs( target.size() ); auto viewTmp = tmpRhs.toView();
-      fs.computeRhsContribution< FieldSpecificationAdd, parallelDevicePolicy<> >( target.toViewConst(), time+dt, dt, sr, dof, dofManager.rankOffset(), localMatrix, tmpDof.toView(), viewTmp, [] GEOS_HOST_DEVICE ( localIndex const ){ return 0.0; } );
+      array1d< globalIndex > tmpDof( target.size() ); array1d< real64 > tmpRhs( target.size() );
+      fs.computeRhsContribution< FieldSpecificationAdd, parallelDevicePolicy<> >( target.toViewConst(), time+dt, dt, sr, dof, dofManager.rankOffset(), localMatrix, tmpDof.toView(), tmpRhs.toView(), [] GEOS_HOST_DEVICE ( localIndex const ){ return 0.0; } );
       real64 scale = setSizes[nameToId.at( fs.getName() )]; integer phaseId = fs.getComponent();
+      auto rhs = localRhs; globalIndex rankOffset = dofManager.rankOffset();
       forAll< parallelDevicePolicy<> >( target.size(), [=] GEOS_HOST_DEVICE ( localIndex const a )
-      { localIndex ei=target[a]; if( ghost[ei] >=0 ) return; globalIndex base = dof[ei]-dofManager.rankOffset(); real64 val = viewTmp[a]/scale; localRhs[base] += val; if( phaseId <  m_numPhases-1 ) localRhs[base+phaseId+1]+=val; });
+      { localIndex const ei=target[a]; if( ghost[ei] >=0 ) return; globalIndex const base = dof[ei]-rankOffset; real64 val = tmpRhs[a]/scale; rhs[base] += val; if( phaseId <  m_numPhases-1 ) rhs[base+phaseId+1]+=val; } );
     } );
   } );
 }
@@ -471,21 +500,20 @@ void ImmiscibleMultiphaseFlowMFD::applyBoundaryConditions( real64 const time_n,
 {
   applyDirichletBC( time_n, dt, dofManager, domain, localMatrix, localRhs );
   applySourceFluxBC( time_n, dt, dofManager, domain, localMatrix, localRhs );
-  // face pressure BCs (reuse element set spec on faces if provided)
   FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
   string const faceDofKey = dofManager.getKey( flow::facePressure::key() );
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &, MeshLevel & mesh, string_array const & )
   {
     FaceManager & fm = mesh.getFaceManager();
     auto faceP = fm.getField< flow::facePressure >();
-    auto faceDof = fm.getField< globalIndex >( faceDofKey );
+    auto faceDof = fm.getReference< array1d< globalIndex > >( faceDofKey );
     auto ghost = fm.ghostRank();
     fsManager.apply< FaceManager >( time_n+dt, mesh, flow::pressure::key(), [&]( FieldSpecificationBase const & fs, string const &, SortedArrayView< localIndex const > const & target, FaceManager & group, string const & )
     {
       fs.applyFieldValue< FieldSpecificationEqual, parallelDevicePolicy<> >( target, time_n+dt, group, flow::facePressure::key() );
-      globalIndex rankOffset = dofManager.rankOffset();
+      globalIndex rankOffset = dofManager.rankOffset(); auto lm = localMatrix; auto rhs = localRhs;
       forAll< parallelDevicePolicy<> >( target.size(), [=] GEOS_HOST_DEVICE ( localIndex const a )
-      { localIndex fi = target[a]; if( ghost[fi] >=0 ) return; globalIndex g = faceDof[fi]; localIndex row = g - rankOffset; real64 rhsVal; FieldSpecificationEqual::SpecifyFieldValue( g, rankOffset, localMatrix, rhsVal, faceP[fi], faceP[fi] ); localRhs[row] = rhsVal; });
+      { localIndex const fi = target[a]; if( ghost[fi] >=0 ) return; globalIndex const g = faceDof[fi]; localIndex const row = g - rankOffset; real64 rhsVal; FieldSpecificationEqual::SpecifyFieldValue( g, rankOffset, lm, rhsVal, faceP[fi], faceP[fi] ); rhs[row] = rhsVal; });
     } );
   } );
 }
@@ -619,8 +647,6 @@ void ImmiscibleMultiphaseFlowMFD::updateFluidState( ElementSubRegionBase & subRe
   updatePhaseMobility( subRegion );
   updateCapPressureModel( subRegion );
 }
-
-void ImmiscibleMultiphaseFlowMFD::computeTotalMobility( ObjectManagerBase & ) const {}
 
 REGISTER_CATALOG_ENTRY( PhysicsSolverBase, ImmiscibleMultiphaseFlowMFD, string const &, Group * const )
 
