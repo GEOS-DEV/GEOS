@@ -150,16 +150,16 @@ class ElementBasedAssemblyKernel
 {
 public:
   using DerivMob = immiscibleFlow::DerivativeOffset; // for mobility derivatives
+  using DofNumberAccessor = ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > >;
   ElementBasedAssemblyKernel( globalIndex const rankOffset,
                               localIndex const er,
                               localIndex const esr,
                               real64 const & lengthTolerance,
-                              string const elemDofKey,
                               string const faceDofKey,
                               NodeManager const & nodeManager,
                               FaceManager const & faceManager,
                               CellElementSubRegion const & subRegion,
-                              ElementRegionManager const & elemManager,
+                              DofNumberAccessor const & elemDofNumberAccessor,
                               constitutive::TwoPhaseImmiscibleFluid const & fluid,
                               constitutive::PermeabilityBase const & permeability,
                               SortedArrayView< localIndex const > const & regionFilter,
@@ -169,7 +169,7 @@ public:
                               arrayView1d< real64 > const & localRhs )
     : m_rankOffset( rankOffset ), m_er( er ), m_esr( esr ), m_lengthTolerance( lengthTolerance ), m_dt( dt ),
       m_elemGhostRank( subRegion.ghostRank() ),
-      m_elemDofNumber( elemManager.constructArrayViewAccessor< globalIndex, 1 >( elemDofKey ).toNestedViewConst() ),
+      m_elemDofNumber( elemDofNumberAccessor.toNestedViewConst() ),
       m_faceGhostRank( faceManager.ghostRank() ),
       m_faceDofNumber( faceManager.getReference< array1d< globalIndex > >( faceDofKey ) ),
       m_elemToFaces( subRegion.faceList().toViewConst() ),
@@ -344,8 +344,12 @@ public:
       using IPType = TYPEOFREF( ip );
       internal::kernelLaunchSelectorFaceSwitch( subRegion.numFacesPerElement(), [&] ( auto NF )
       {
-        ElementBasedAssemblyKernel< NF, IPType > k( rankOffset, er, esr, lengthTolerance, elemDofKey, faceDofKey,
-                                                    nodeManager, faceManager, subRegion, elemManager, fluid, permeability,
+        // persistent accessor for element dof numbers
+        auto dofNumberAccessor = elemManager.constructArrayViewAccessor< globalIndex, 1 >( elemDofKey );
+        dofNumberAccessor.setName( solverName + "/accessors/" + elemDofKey );
+        ElementBasedAssemblyKernel< NF, IPType > k( rankOffset, er, esr, lengthTolerance,
+                                                    faceDofKey, nodeManager, faceManager,
+                                                    subRegion, dofNumberAccessor, fluid, permeability,
                                                     regionFilter, dt, assembleCellEq, localMatrix, localRhs );
         ElementBasedAssemblyKernel< NF, IPType >::template launch< POLICY >( subRegion.size(), k );
       } );
