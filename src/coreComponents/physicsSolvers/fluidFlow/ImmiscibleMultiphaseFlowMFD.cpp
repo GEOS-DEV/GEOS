@@ -82,6 +82,13 @@ ImmiscibleMultiphaseFlowMFD::ImmiscibleMultiphaseFlowMFD( const string & name,
   m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::immiscibleMultiphaseFVM; // placeholder
 }
 
+void ImmiscibleMultiphaseFlowMFD::setConstitutiveNames( ElementSubRegionBase & subRegion ) const
+{
+  setConstitutiveNamesCallSuper( subRegion );
+  setConstitutiveName< TwoPhaseImmiscibleFluid >( subRegion, viewKeyStruct::fluidNamesString(), "two phase immiscible fluid" );
+  setConstitutiveName< RelativePermeabilityBase >( subRegion, viewKeyStruct::relPermNamesString(), "relative permeability" );
+}
+
 void ImmiscibleMultiphaseFlowMFD::registerDataOnMesh( Group & meshBodies )
 {
   FlowSolverBase::registerDataOnMesh( meshBodies );
