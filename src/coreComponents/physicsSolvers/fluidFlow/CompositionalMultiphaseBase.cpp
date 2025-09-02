@@ -1579,7 +1579,6 @@ void CompositionalMultiphaseBase::applySourceFluxBC( real64 const time,
 
       if( targetSet.size() == 0 )
       {
-        // TODO crash by default if no elem on every ranks, or just warn if a dedicated option 'allowNoElem' is enabled
         return;
       }
       if( !subRegion.hasWrapper( dofKey ) )
