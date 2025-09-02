@@ -719,7 +719,7 @@ void CompositionalMultiphaseWell::updateVolRatesForConstraint( WellElementSubReg
     else
     {
       // use reservoir region averages
-      flashTemperature = wellControls.getRegionAveragePressure();
+      flashTemperature = wellControls.getRegionAverageTemperature();
     }
   }
   arrayView1d< real64 > const & currentPhaseVolRate =
