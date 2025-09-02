@@ -113,6 +113,9 @@ public:
   void initializePostInitialConditionsPreSubGroups() override;
 
 private:
+  // Add override to register constitutive model names (fluid, relperm) and call base for solid/permeability
+  virtual void setConstitutiveNames( ElementSubRegionBase & subRegion ) const override;
+
   // helper methods migrated from ImmiscibleMultiphaseFlow
   void updateFluidState( ElementSubRegionBase & subRegion ) const;
   void updatePhaseMass( ElementSubRegionBase & subRegion ) const;
