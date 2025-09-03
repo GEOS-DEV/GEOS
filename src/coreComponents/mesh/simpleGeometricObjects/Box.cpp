@@ -100,7 +100,7 @@ bool Box::isCoordInObject( real64 const ( &coord ) [3] ) const
   }
   for( int i = 0; i < 3; ++i )
   {
-    if( coord0[i] < m_min[i] - m_epsilon|| coord0[i] > m_max[i] + m_epsilon )
+    if( coord0[i] < m_min[i] - m_epsilon || coord0[i] > m_max[i] + m_epsilon )
     {
       return false;
     }
