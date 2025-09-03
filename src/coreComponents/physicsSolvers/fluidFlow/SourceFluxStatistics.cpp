@@ -22,6 +22,7 @@
 #include "fieldSpecification/SourceFluxBoundaryCondition.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
 #include "physicsSolvers/fluidFlow/LogLevelsInfo.hpp"
+#include "common/TimingMacros.hpp"  // Pour les macros GEOS_MARK_*
 
 namespace geos
 {
