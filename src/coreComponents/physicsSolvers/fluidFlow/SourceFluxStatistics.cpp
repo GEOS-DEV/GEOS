@@ -199,16 +199,16 @@ void SourceFluxStatsAggregator::gatherStatsForCSV( string_view fluxName,
 
 void SourceFluxStatsAggregator::outputStatsToLog( bool logLevelActive,
                                                   string_view fluxesStr,
-                                                  TableData const & tableMeshData )
+                                                  TableData const & statsData )
 {
   if( logLevelActive && logger::internal::rank == 0 )
   {
-    string const title = GEOS_FMT( "{}, flux statistics for {}",
+    string const title = GEOS_FMT( "{}, flux statistics for: {}",
                                    getName(), fluxesStr );
     string const multilineTitle = wrapTextToMaxLength( title, 80 );
     m_logLayout.setTitle( multilineTitle );
     TableTextFormatter const tableStatFormatter( m_logLayout );
-    GEOS_LOG_RANK( tableStatFormatter.toString( tableMeshData ) );
+    GEOS_LOG_RANK( tableStatFormatter.toString( statsData ) );
   }
 }
 void SourceFluxStatsAggregator::outputStatsToCSV( TableData & csvData )
@@ -239,15 +239,13 @@ bool SourceFluxStatsAggregator::execute( real64 const GEOS_UNUSED_PARAM( time_n 
   forMeshLevelStatsWrapper( domain,
                             [&] ( MeshLevel & meshLevel, WrappedStats & meshLevelStats )
   {
-    TableData tableMeshData;
+    TableData logData;
     TableData csvData;
     meshLevelStats.stats() = StatData();
     forAllFluxStatsWrappers( meshLevel,
                              [&] ( MeshLevel &, WrappedStats & fluxStats )
     {
       fluxStats.stats() = StatData();
-      TableData tableFluxData;
-      TableData tableRegionsData;
       forAllRegionStatsWrappers( meshLevel, fluxStats.getFluxName(),
                                  [&] ( ElementRegionBase & region, WrappedStats & regionStats )
       {
@@ -262,22 +260,22 @@ bool SourceFluxStatsAggregator::execute( real64 const GEOS_UNUSED_PARAM( time_n 
         fluxStats.stats().combine( regionStats.stats() );
 
         gatherStatsForLog( regionsStatsOn,
-                           fluxStats.getFluxName(), region.getName(), tableRegionsData, regionStats );
+                           fluxStats.getFluxName(), region.getName(), logData, regionStats );
         gatherStatsForCSV( fluxStats.getFluxName(), region.getName(), csvData, regionStats );
       } );
 
       meshLevelStats.stats().combine( fluxStats.stats() );
 
       gatherStatsForLog( fluxesStatsOn,
-                         fluxStats.getFluxName(), allRegionsStr, tableFluxData, fluxStats );
+                         fluxStats.getFluxName(), allRegionsStr, logData, fluxStats );
       gatherStatsForCSV( fluxStats.getFluxName(), allRegionsStr, csvData, fluxStats );
     } );
     gatherStatsForLog( fluxMeshesStatsOn,
-                       fluxesSetStr, allRegionsStr, tableMeshData, meshLevelStats );
+                       fluxesSetStr, allRegionsStr, logData, meshLevelStats );
     gatherStatsForCSV( fluxesSetStr, allRegionsStr, csvData, meshLevelStats );
 
     outputStatsToLog( fluxMeshesStatsOn,
-                      stringutilities::join( m_fluxNames, ", " ), tableMeshData );
+                      stringutilities::join( m_fluxNames, ", " ), logData );
     outputStatsToCSV( csvData );
   } );
 
