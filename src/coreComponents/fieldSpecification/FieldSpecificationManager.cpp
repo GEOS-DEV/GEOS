@@ -14,6 +14,10 @@
  */
 
 #include "FieldSpecificationManager.hpp"
+#include "mesh/DomainPartition.hpp"
+#include "mesh/MeshBody.hpp"
+#include "mainInterface/ProblemManager.hpp"
+#include <unordered_set>
 
 namespace geos
 {
@@ -67,55 +71,6 @@ void FieldSpecificationManager::expandObjectCatalogs()
 
 void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) const
 {
-  string invalidRegion = "";
-  std::map< std::string, std::vector< string > > allPresentFieldsName;
-  std::set< string > allPresentSets;
-
-  mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion const & subRegion )
-  {
-    std::vector< string > subRegionFields;
-    ObjectManagerBase const * targetOMB = dynamic_cast< ObjectManagerBase const * >( &subRegion );
-    if( targetOMB )
-    {   // filter anything that is not an ObjectManagerBase type
-        // show to the user all fields which are registered under the field-specification object path
-      subRegionFields.insert( subRegionFields.end(),
-                              targetOMB->getRegisteredFields().begin(),
-                              targetOMB->getRegisteredFields().end() );
-    }
-
-    subRegion.forSubGroups< Group >( [&]( Group const & constitutiveModel )
-    {
-      if( constitutiveModel.getName() == ConstitutiveManager::groupKeyStruct::constitutiveModelsString())
-      {
-        constitutiveModel.forSubGroups< Group >( [&]( Group const & constitutive )
-        {
-          ConstitutiveBase const * constitutiveBase = dynamic_cast< ConstitutiveBase const * >(&constitutive);
-          auto const constitutiveFields = constitutiveBase->getUserFields();
-          constitutive.forWrappers(
-            [&] ( dataRepository::WrapperBase const & wrapper )
-          {
-            if( std::find( constitutiveFields.begin(), constitutiveFields.end(),
-                           wrapper.getName()) != constitutiveFields.end())
-              subRegionFields.insert( subRegionFields.end(),
-                                      ConstitutiveBase::makeFieldName( constitutive.getName(),
-                                                                       wrapper.getName()));
-
-          } );
-        } );
-      }
-    } );
-
-    subRegion.sets().forWrappers( [&] ( dataRepository::WrapperBase const & wrapper )
-    {
-      allPresentSets.insert( wrapper.getName());
-    } );
-
-    if( !subRegionFields.empty())
-    {
-      allPresentFieldsName[subRegion.getName()] = subRegionFields;
-    }
-  } );
-
   // loop over all the FieldSpecification of the XML file
   this->forSubGroups< FieldSpecificationBase >( [&] ( FieldSpecificationBase const & fs )
   {
@@ -171,10 +126,7 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
       {
         isFieldNameFound = 1;
       }
-      else
-      {
-        invalidRegion = targetGroup.getName();
-      }
+
 
       // 2.c) If the target set is not empty, we record it
       //      Fracture/fault sets are sometimes at initialization and the "apply" call silently ignores them
@@ -210,6 +162,7 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
     // if all sets are missing, we stop the simulation.
     if( areAllSetsMissing )
     {
+
       // loop again over the map to collect the set names
       string_array missingSetNames;
       for( auto const & mapEntry : isTargetSetCreated )
@@ -217,12 +170,27 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
         missingSetNames.emplace_back( mapEntry.first );
       }
 
+      std::set< string > registeredSets;
+      DomainPartition const & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
+      Group const & meshBody = domain.getMeshBodies();
+      objectPath.forObjectsInPath( meshBody,
+                                   [&]( Group const & targetGroup )
+      {
+        string_array availableRegions;
+        ObjectManagerBase const & targetObject = dynamic_cast< ObjectManagerBase const & >(targetGroup);
+        targetObject.sets().forWrappers( [&] ( dataRepository::WrapperBase const & wrapper )
+        {
+          registeredSets.insert( wrapper.getName());
+        } );
+      } );
+
       std::ostringstream errorMessageBuilder;
       errorMessageBuilder << GEOS_FMT( "\n{}: there are no set(s) named `{}` under the {} `{}`.\n",
                                        fs.getWrapperDataContext( FieldSpecificationBase::viewKeyStruct::objectPathString() ),
                                        fmt::join( missingSetNames, ", " ),
                                        FieldSpecificationBase::viewKeyStruct::objectPathString(), fs.getObjectPath() );
-      errorMessageBuilder << GEOS_FMT( "Available set(s) are: {}", stringutilities::join( allPresentSets, ", " ));
+      if( !registeredSets.empty())
+        errorMessageBuilder << GEOS_FMT( "Available set(s) are: {}", stringutilities::join( registeredSets, ", " ));
 
       GEOS_THROW( errorMessageBuilder.str(), InputError );
     }
@@ -232,52 +200,55 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
     for( auto const & mapEntry : isTargetSetEmpty )
     {
       GEOS_LOG_RANK_0_IF( ( mapEntry.second == 1 ), // target set is empty
-                          GEOS_FMT( "\nWarning!\n{}: this FieldSpecification targets (an) empty set(s)"
-                                    "\nIf the simulation does not involve the SurfaceGenerator, check the content of the set `{}` in `{}`. \n",
-                                    fs.getDataContext(), mapEntry.first, fs.getObjectPath() ) );
+                          GEOS_FMT( "\nWarning!\n{}: this FieldSpecification targets (an) empty set(s) within `{}`"
+                                    "\nIf the simulation does not involve the SurfaceGenerator, check the content of the set `{}`. \n",
+                                    fs.getDataContext(), fs.getObjectPath(), mapEntry.first ) );
     }
+
     if( isFieldNameFound == 0 )
     {
       std::ostringstream errorMessageBuilder;
-      errorMessageBuilder << GEOS_FMT( "\n{}: there are no {} named `{}` under the region `{}`.\n",
+      errorMessageBuilder << GEOS_FMT( "\n{}: there are no field named `{}` under the region `{}`.\n",
                                        fs.getWrapperDataContext( FieldSpecificationBase::viewKeyStruct::fieldNameString() ),
-                                       FieldSpecificationBase::viewKeyStruct::fieldNameString(),
-                                       fs.getFieldName(), fs.getObjectPath() );;
+                                       fs.getFieldName(), fs.getObjectPath() );
 
-      string_array const splitPath =  stringutilities::tokenize( fs.getObjectPath(), "/" );
-      string const targetRegion = splitPath.size() > 1 ? splitPath.at( 1 ) : splitPath.at( 0 );
+      DomainPartition const & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
+      Group const & meshBody = domain.getMeshBodies();
 
-      string_array availableRegions;
-      bool foundMaterialInTargetRegion = false;
-      mesh.getElemManager().forElementRegions< ElementRegionBase >( [&]( ElementRegionBase const & elemRegion )
+      std::set< string > registeredFields;
+      auto processWrappers = [&]( auto const * path ) {
+        path->forWrappers( [&]( dataRepository::WrapperBase const & wrapper ) {
+          if( wrapper.getPlotLevel() != dataRepository::PlotLevel::NOPLOT )
+            registeredFields.insert( wrapper.getName());
+        } );
+      };
+      objectPath.forObjectsInPath( meshBody,
+                                   [&]( Group const & targetGroup )
       {
-        availableRegions.push_back( elemRegion.getName());
-        if( targetRegion == elemRegion.getName() && !elemRegion.getMaterialList().empty())
+
+        if( auto const subRegion = dynamic_cast< CellElementSubRegion const * >(&targetGroup))
         {
-          errorMessageBuilder << GEOS_FMT( "Available fieldname in {} are:\n{{ {} }}", fs.getObjectPath(),
-                                           stringutilities::join( allPresentFieldsName[invalidRegion], ", " ));
-          foundMaterialInTargetRegion = true;
+          processWrappers( subRegion );
         }
+        else if( auto const nodeManager = dynamic_cast< NodeManager const * >(&targetGroup))
+        {
+          processWrappers( nodeManager );
+        }
+        else if( auto const edgeManager = dynamic_cast< EdgeManager const * >(&targetGroup))
+        {
+          processWrappers( edgeManager );
+        }
+        else if( auto const faceManager = dynamic_cast< FaceManager const * >(&targetGroup))
+        {
+          processWrappers( faceManager );
+        }
+
+
       } );
 
-      if( splitPath.size()==1 )
-      {
-        std::set< std::string > uniqueFields;
-        for( const auto & pair : allPresentFieldsName )
-        {
-          const auto & vec = pair.second;
-          uniqueFields.insert( vec.begin(), vec.end());
-        }
-        errorMessageBuilder << GEOS_FMT( "{} contain the following fields :\n{{ {} }}\n", fs.getObjectPath(),
-                                         stringutilities::join( uniqueFields, ", " ) );
-        errorMessageBuilder << GEOS_FMT( "There are also {} CellElementsRegions that can be appended under {} : [{}].",
-                                         availableRegions.size(), fs.getObjectPath(),
-                                         stringutilities::join( availableRegions, ", " ) );
-      }
-      else if( !foundMaterialInTargetRegion )
-      {
-        errorMessageBuilder << GEOS_FMT( "No material found under {}.\n", fs.getObjectPath() );
-      }
+      if( !registeredFields.empty())
+        errorMessageBuilder << GEOS_FMT( "Available fieldname in {} are:\n{{ {} }}", fs.getObjectPath(),
+                                         stringutilities::join( registeredFields, ", " ));
 
       GEOS_THROW( errorMessageBuilder.str(), InputError );
     }
