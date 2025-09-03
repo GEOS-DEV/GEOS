@@ -1352,6 +1352,9 @@ void PhysicsSolverBase::solveLinearSystem( DofManager const & dofManager,
   solution.zero();
 
   LinearSolverParameters const & params = m_linearSolverParameters.get();
+  const bool isDirectSolver = (params.solverType == LinearSolverParameters::SolverType::direct);
+  const bool isSetupNeeded = !(isDirectSolver && params.direct.reuseFactorization);
+
   matrix.setDofManager( &dofManager );
 
   // Apply physics-based scaling to the linear system if enabled
@@ -1365,18 +1368,25 @@ void PhysicsSolverBase::solveLinearSystem( DofManager const & dofManager,
     // Assume the solution is zeroed out, thus no need to scale it
   }
 
-  if( params.solverType == LinearSolverParameters::SolverType::direct || !m_precond )
+  if( isDirectSolver || !m_precond )
   {
-    std::unique_ptr< LinearSolverBase< LAInterface > > solver = LAInterface::createSolver( params );
+    if( !m_linearSolver )
+    {
+      m_linearSolver = LAInterface::createSolver( params );
+    }
+
+    if( isSetupNeeded )
     {
       Timer timer_setup( m_timers["linear solver setup"] );
-      solver->setup( matrix );
+      m_linearSolver->setup( matrix );
     }
+
     {
       Timer timer_setup( m_timers["linear solver solve"] );
-      solver->solve( rhs, solution );
+      m_linearSolver->solve( rhs, solution );
     }
-    m_linearSolverResult = solver->result();
+
+    m_linearSolverResult = m_linearSolver->result();
   }
   else
   {
