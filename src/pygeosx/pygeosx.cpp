@@ -52,8 +52,8 @@ PyObject * init( PyObject * const pyArgv, bool const performSetup, long const py
     return nullptr;
   }
 
-  // Parse the python list into a std::vector< std::string >
-  std::vector< string > stringArgs;
+  // Parse the python list into a stdVector< std::string >
+  stdVector< string > stringArgs;
   for( LvArray::python::PyObjectRef<> item{ PyIter_Next( iterator ) }; item != nullptr; item = PyIter_Next( iterator ) )
   {
     LvArray::python::PyObjectRef<> ascii { PyUnicode_AsASCIIString( item ) };
@@ -76,7 +76,7 @@ PyObject * init( PyObject * const pyArgv, bool const performSetup, long const py
     return nullptr;
   }
 
-  std::vector< char * > argv( stringArgs.size() + 1 );
+  stdVector< char * > argv( stringArgs.size() + 1 );
   for( std::size_t i = 0; i < stringArgs.size(); ++i )
   {
     argv[ i ] = const_cast< char * >( stringArgs[ i ].data() );

@@ -21,21 +21,19 @@
 #include "SolidMechanicsLagrangeContact.hpp"
 
 #include "common/TimingMacros.hpp"
-#include "constitutive/ConstitutiveManager.hpp"
 #include "constitutive/contact/FrictionSelector.hpp"
 #include "constitutive/fluid/singlefluid/SingleFluidBase.hpp"
 #include "finiteVolume/FiniteVolumeManager.hpp"
 #include "finiteVolume/FluxApproximationBase.hpp"
 #include "mesh/DomainPartition.hpp"
 #include "discretizationMethods/NumericalMethodsManager.hpp"
-#include "mainInterface/ProblemManager.hpp"
 #include "mesh/SurfaceElementRegion.hpp"
 #include "mesh/mpiCommunications/NeighborCommunicator.hpp"
 #include "physicsSolvers/LogLevelsInfo.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp" // needed to register pressure(_n)
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
-#include "physicsSolvers/solidMechanics/contact/ContactFields.hpp"
 #include "physicsSolvers/solidMechanics/contact/LogLevelsInfo.hpp"
+#include "physicsSolvers/solidMechanics/contact/ContactFields.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
 #include "linearAlgebra/utilities/LAIHelperFunctions.hpp"
 #include "linearAlgebra/solvers/PreconditionerJacobi.hpp"
@@ -71,9 +69,6 @@ SolidMechanicsLagrangeContact::SolidMechanicsLagrangeContact( const string & nam
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( 1.0 ).
     setDescription( "It be used to increase the scale of the stabilization entries. A value < 1.0 results in larger entries in the stabilization matrix." );
-
-  addLogLevel< logInfo::Configuration >();
-  addLogLevel< logInfo::LinearSolverConfiguration >();
 }
 
 void SolidMechanicsLagrangeContact::postInputInitialization()
@@ -94,8 +89,8 @@ void SolidMechanicsLagrangeContact::setMGRStrategy()
   linearSolverParameters.dofsPerNode = 3;
 
   linearSolverParameters.mgr.strategy = LinearSolverParameters::MGR::StrategyType::lagrangianContactMechanics;
-  GEOS_LOG_LEVEL_RANK_0( logInfo::LinearSolverConfiguration, GEOS_FMT( "{}: MGR strategy set to {}", getName(),
-                                                                       EnumStrings< LinearSolverParameters::MGR::StrategyType >::toString( linearSolverParameters.mgr.strategy )));
+  GEOS_LOG_LEVEL_RANK_0( logInfo::LinearSolver, GEOS_FMT( "{}: MGR strategy set to {}", getName(),
+                                                          EnumStrings< LinearSolverParameters::MGR::StrategyType >::toString( linearSolverParameters.mgr.strategy )));
 }
 
 void SolidMechanicsLagrangeContact::registerDataOnMesh( Group & meshBodies )
@@ -106,38 +101,38 @@ void SolidMechanicsLagrangeContact::registerDataOnMesh( Group & meshBodies )
   {
     fractureRegion.forElementSubRegions< SurfaceElementSubRegion >( [&]( SurfaceElementSubRegion & subRegion )
     {
-      subRegion.registerWrapper< array3d< real64 > >( viewKeyStruct::rotationMatrixString() ).
-        setPlotLevel( PlotLevel::NOPLOT ).
-        setRegisteringObjects( this->getName()).
-        setDescription( "An array that holds the rotation matrices on the fracture." ).
-        reference().resizeDimension< 1, 2 >( 3, 3 );
-
       subRegion.registerField< contact::deltaTraction >( getName() ).
         reference().resizeDimension< 1 >( 3 );
 
+      subRegion.registerWrapper< array3d< real64 > >( viewKeyStruct::rotationMatrixString() ).
+        setPlotLevel( PlotLevel::NOPLOT ).
+        setRegisteringObjects( getName()).
+        setDescription( "An array that holds the rotation matrices on the fracture." ).
+        reference().resizeDimension< 1, 2 >( 3, 3 );
+
       subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::normalTractionToleranceString() ).
         setPlotLevel( PlotLevel::NOPLOT ).
-        setRegisteringObjects( this->getName()).
+        setRegisteringObjects( getName()).
         setDescription( "An array that holds the normal traction tolerance." );
 
       subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::normalDisplacementToleranceString() ).
         setPlotLevel( PlotLevel::NOPLOT ).
-        setRegisteringObjects( this->getName()).
+        setRegisteringObjects( getName()).
         setDescription( "An array that holds the normal displacement tolerance." );
 
       subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::slidingToleranceString() ).
         setPlotLevel( PlotLevel::NOPLOT ).
-        setRegisteringObjects( this->getName()).
+        setRegisteringObjects( getName()).
         setDescription( "An array that holds the sliding tolerance." );
 
       // Needed just because SurfaceGenerator initialize the field "pressure" (NEEDED!!!)
       // It is used in "TwoPointFluxApproximation.cpp", called by "SurfaceGenerator.cpp"
       subRegion.registerField< flow::pressure >( getName() ).
         setPlotLevel( PlotLevel::NOPLOT ).
-        setRegisteringObjects( this->getName());
+        setRegisteringObjects( getName());
       subRegion.registerField< flow::pressure_n >( getName() ).
         setPlotLevel( PlotLevel::NOPLOT ).
-        setRegisteringObjects( this->getName());
+        setRegisteringObjects( getName());
 
     } );
 
@@ -150,7 +145,7 @@ void SolidMechanicsLagrangeContact::registerDataOnMesh( Group & meshBodies )
       faceManager.registerWrapper< array1d< real64 > >( viewKeyStruct::transMultiplierString() ).
         setApplyDefaultValue( 1.0 ).
         setPlotLevel( PlotLevel::LEVEL_0 ).
-        setRegisteringObjects( this->getName() ).
+        setRegisteringObjects( getName() ).
         setDescription( "An array that holds the permeability transmissibility multipliers" );
     } );
 
@@ -238,7 +233,7 @@ void SolidMechanicsLagrangeContact::implicitStepComplete( real64 const & time_n,
       arrayView2d< real64 > const & deltaTraction = subRegion.getField< contact::deltaTraction >();
       arrayView2d< real64 const > const & dispJump = subRegion.getField< contact::dispJump >();
       arrayView2d< real64 > const & oldDispJump = subRegion.getField< contact::oldDispJump >();
-      arrayView1d< integer const > const & fractureState = subRegion.getField< contact::fractureState >();
+      arrayView1d< integer const > const fractureState = subRegion.getField< contact::fractureState >();
       arrayView1d< integer > const & oldFractureState = subRegion.getField< contact::oldFractureState >();
 
       forAll< parallelHostPolicy >( subRegion.size(), [=] ( localIndex const kfe )
@@ -446,9 +441,9 @@ void SolidMechanicsLagrangeContact::computeTolerances( DomainPartition & domain 
     } );
   } );
 
-  GEOS_LOG_LEVEL_RANK_0( logInfo::Configuration,
+  GEOS_LOG_LEVEL_RANK_0( logInfo::ContactTolerance,
                          GEOS_FMT( "{}: normal displacement tolerance = [{}, {}], sliding tolerance = [{}, {}], normal traction tolerance = [{}, {}]",
-                                   this->getName(), minNormalDisplacementTolerance, maxNormalDisplacementTolerance,
+                                   getName(), minNormalDisplacementTolerance, maxNormalDisplacementTolerance,
                                    minSlidingTolerance, maxSlidingTolerance,
                                    minNormalTractionTolerance, maxNormalTractionTolerance ) );
 }
@@ -470,7 +465,7 @@ void SolidMechanicsLagrangeContact::resetStateToBeginningOfStep( DomainPartition
       arrayView2d< real64 > const & dispJump = subRegion.getField< contact::dispJump >();
       arrayView2d< real64 const > const & oldDispJump = subRegion.getField< contact::oldDispJump >();
 
-      arrayView1d< integer > const & fractureState = subRegion.getField< contact::fractureState >();
+      arrayView1d< integer > const fractureState = subRegion.getField< contact::fractureState >();
       arrayView1d< integer const > const & oldFractureState = subRegion.getField< contact::oldFractureState >();
 
       forAll< parallelHostPolicy >( subRegion.size(), [=] ( localIndex const kfe )
@@ -801,7 +796,7 @@ real64 SolidMechanicsLagrangeContact::calculateContactResidualNorm( DomainPartit
     {
       arrayView1d< globalIndex const > const & dofNumber = subRegion.getReference< array1d< globalIndex > >( dofKey );
       arrayView1d< integer const > const & ghostRank = subRegion.ghostRank();
-      arrayView1d< integer const > const & fractureState = subRegion.getField< contact::fractureState >();
+      arrayView1d< integer const > const fractureState = subRegion.getField< contact::fractureState >();
       arrayView1d< real64 const > const & area = subRegion.getElementArea();
 
       RAJA::ReduceSum< parallelHostReduce, real64 > stickSum( 0.0 );
@@ -867,33 +862,44 @@ real64 SolidMechanicsLagrangeContact::calculateContactResidualNorm( DomainPartit
   openNormalizer = MpiWrapper::max( openNormalizer );
   openResidual = sqrt( openResidual ) / ( openNormalizer + 1.0 );
 
-  if( getLogLevel() >= 1 && logger::internal::rank==0 )
-  {
-    std::cout << GEOS_FMT( "        ( Rstick Rslip Ropen ) = ( {:15.6e} {:15.6e} {:15.6e} )", stickResidual, slipResidual, openResidual );
-  }
+  GEOS_LOG_LEVEL_RANK_0_NLR( logInfo::ResidualNorm,
+                             GEOS_FMT( "        ( Rstick Rslip Ropen ) = ( {:15.6e} {:15.6e} {:15.6e} )",
+                                       stickResidual, slipResidual, openResidual ));
 
-  return sqrt( stickResidual * stickResidual + slipResidual * slipResidual + openResidual * openResidual );
+
+  real64 totalResidualNorm = sqrt( stickResidual * stickResidual + slipResidual * slipResidual + openResidual * openResidual );
+
+  getConvergenceStats().setResidualValue( "Rstick", stickResidual );
+  getConvergenceStats().setResidualValue( "Rslip", slipResidual );
+  getConvergenceStats().setResidualValue( "Ropen", openResidual );
+  getConvergenceStats().setResidualValue( "RContact", totalResidualNorm );
+
+
+  return totalResidualNorm;
 }
 
-void SolidMechanicsLagrangeContact::createPreconditioner( DomainPartition const & domain )
+std::unique_ptr< PreconditionerBase< LAInterface > >
+SolidMechanicsLagrangeContact::createPreconditioner( DomainPartition & domain ) const
 {
-  if( m_linearSolverParameters.get().preconditionerType == LinearSolverParameters::PreconditionerType::block )
+  LinearSolverParameters const & linParams = m_linearSolverParameters.get();
+  if( linParams.preconditionerType == LinearSolverParameters::PreconditionerType::block )
   {
     // TODO: move among inputs (xml)
     string const leadingBlockApproximation = "blockJacobi";
 
     LinearSolverParameters mechParams = getLinearSolverParameters();
-    // Because of boundary conditions
-    mechParams.isSymmetric = false;
 
     std::unique_ptr< BlockPreconditioner< LAInterface > > precond;
     std::unique_ptr< PreconditionerBase< LAInterface > > tracPrecond;
 
+    LinearSolverParameters::Block blockParams;
+    blockParams.shape = LinearSolverParameters::Block::Shape::LowerUpperTriangular;
+    blockParams.scaling = LinearSolverParameters::Block::Scaling::UserProvided;
+
     if( leadingBlockApproximation == "jacobi" )
     {
-      precond = std::make_unique< BlockPreconditioner< LAInterface > >( BlockShapeOption::LowerUpperTriangular,
-                                                                        SchurComplementOption::FirstBlockDiagonal,
-                                                                        BlockScalingOption::UserProvided );
+      blockParams.schurType = LinearSolverParameters::Block::SchurType::FirstBlockDiagonal;
+      precond = std::make_unique< BlockPreconditioner< LAInterface > >( blockParams );
       // Using GEOSX implementation of Jacobi preconditioner
       // tracPrecond = std::make_unique< PreconditionerJacobi< LAInterface > >();
 
@@ -904,9 +910,8 @@ void SolidMechanicsLagrangeContact::createPreconditioner( DomainPartition const 
     }
     else if( leadingBlockApproximation == "blockJacobi" )
     {
-      precond = std::make_unique< BlockPreconditioner< LAInterface > >( BlockShapeOption::LowerUpperTriangular,
-                                                                        SchurComplementOption::FirstBlockUserDefined,
-                                                                        BlockScalingOption::UserProvided );
+      blockParams.schurType = LinearSolverParameters::Block::SchurType::FirstBlockUserDefined;
+      precond = std::make_unique< BlockPreconditioner< LAInterface > >( blockParams );
       tracPrecond = std::make_unique< PreconditionerBlockJacobi< LAInterface > >( mechParams.dofsPerNode );
     }
     else
@@ -919,31 +924,20 @@ void SolidMechanicsLagrangeContact::createPreconditioner( DomainPartition const 
                          { { contact::traction::key(), { 3, true } } },
                          std::move( tracPrecond ) );
 
-    if( mechParams.amg.nullSpaceType == LinearSolverParameters::AMG::NullSpaceType::rigidBodyModes )
-    {
-      if( getRigidBodyModes().empty() )
-      {
-        MeshLevel const & mesh = domain.getMeshBody( 0 ).getBaseDiscretization();
-        LAIHelperFunctions::computeRigidBodyModes( mesh,
-                                                   m_dofManager,
-                                                   { solidMechanics::totalDisplacement::key() },
-                                                   getRigidBodyModes() );
-      }
-    }
-
     // Preconditioner for the Schur complement: mechPrecond
-    std::unique_ptr< PreconditionerBase< LAInterface > > mechPrecond = LAInterface::createPreconditioner( mechParams, getRigidBodyModes() );
+    std::unique_ptr< PreconditionerBase< LAInterface > > mechPrecond = LAInterface::createPreconditioner( mechParams, getRigidBodyModes( domain ) );
     precond->setupBlock( 1,
-                         { { solidMechanics::totalDisplacement::key(), { 3, true } } },
+                         { { fields::solidMechanics::totalDisplacement::key(), { 3, true } } },
                          std::move( mechPrecond ) );
 
-    m_precond = std::move( precond );
+    return precond;
   }
   else
   {
-    //TODO: Revisit this part such that is coherent across physics solver
-    //m_precond = LAInterface::createPreconditioner( m_linearSolverParameters.get() );
+    // Unomment to use GEOSX's implementations of Krylov solvers instead of LA backend's
+    //return SolverBase::createPreconditioner( domain );
   }
+  return {};
 }
 
 void SolidMechanicsLagrangeContact::computeRotationMatrices( DomainPartition & domain ) const
@@ -1479,7 +1473,7 @@ void SolidMechanicsLagrangeContact::
     rotationMatrix = subRegion.getReference< array3d< real64 > >( viewKeyStruct::rotationMatrixString() );
     arrayView2d< localIndex const > const & elemsToFaces = subRegion.faceList().toViewConst();
     arrayView2d< real64 const > const & traction = subRegion.getField< contact::traction >();
-    arrayView1d< integer const > const & fractureState = subRegion.getField< contact::fractureState >();
+    arrayView1d< integer const > const fractureState = subRegion.getField< contact::fractureState >();
     arrayView2d< real64 const > const & dispJump = subRegion.getField< contact::dispJump >();
     arrayView2d< real64 const > const & previousDispJump = subRegion.getField< contact::oldDispJump >();
     arrayView1d< real64 const > const & slidingTolerance = subRegion.getReference< array1d< real64 > >( viewKeyStruct::slidingToleranceString() );
@@ -1736,8 +1730,8 @@ void SolidMechanicsLagrangeContact::assembleStabilization( MeshLevel const & mes
   arrayView2d< localIndex const > const elem2dToFaces = fractureSubRegion.faceList().toViewConst();
 
   // Get the state of fracture elements
-  arrayView1d< integer const > const & fractureState =
-    fractureSubRegion.getReference< array1d< integer > >( viewKeyStruct::fractureStateString() );
+  arrayView1d< integer const > const fractureState =
+    fractureSubRegion.getField< fields::contact::fractureState >();
 
   // Get the tractions and stabilization contribution to the local jump
   arrayView2d< real64 const > const & traction = fractureSubRegion.getField< contact::traction >();
@@ -2193,7 +2187,7 @@ bool SolidMechanicsLagrangeContact::resetConfigurationToDefault( DomainPartition
 {
   GEOS_MARK_FUNCTION;
 
-  using namespace fields::contact;
+  using namespace contact;
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
@@ -2206,7 +2200,7 @@ bool SolidMechanicsLagrangeContact::resetConfigurationToDefault( DomainPartition
     {
       if( subRegion.hasField< contact::traction >() )
       {
-        arrayView1d< integer > const & fractureState = subRegion.getField< contact::fractureState >();
+        arrayView1d< integer > const fractureState = subRegion.getField< contact::fractureState >();
         forAll< parallelHostPolicy >( subRegion.size(), [=] ( localIndex const kfe )
         {
           if( fractureState[kfe] != FractureState::Open )
@@ -2224,7 +2218,7 @@ bool SolidMechanicsLagrangeContact::updateConfiguration( DomainPartition & domai
 {
   GEOS_MARK_FUNCTION;
 
-  using namespace fields::contact;
+  using namespace contact;
 
   real64 changedArea = 0;
   real64 totalArea = 0;
@@ -2244,7 +2238,7 @@ bool SolidMechanicsLagrangeContact::updateConfiguration( DomainPartition & domai
       arrayView1d< integer const > const & ghostRank = subRegion.ghostRank();
       arrayView2d< real64 const > const & traction = subRegion.getField< contact::traction >();
       arrayView2d< real64 const > const & dispJump = subRegion.getField< contact::dispJump >();
-      arrayView1d< integer > const & fractureState = subRegion.getField< contact::fractureState >();
+      arrayView1d< integer > const & fractureState = subRegion.getField< fields::contact::fractureState >();
       arrayView1d< real64 const > const & faceArea = subRegion.getElementArea().toViewConst();
 
       arrayView1d< real64 const > const & normalTractionTolerance =
@@ -2341,7 +2335,7 @@ bool SolidMechanicsLagrangeContact::updateConfiguration( DomainPartition & domai
   // and total area of fracture elements
   totalArea = MpiWrapper::sum( totalArea );
 
-  GEOS_LOG_LEVEL_RANK_0( logInfo::Configuration, GEOS_FMT( "  {}: changed area {} out of {}", getName(), changedArea, totalArea ) );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::ConfigurationStatistics, GEOS_FMT( "  {}: changed area {} out of {}", getName(), changedArea, totalArea ) );
 
   // Assume converged if changed area is below certain fraction of total area
   return changedArea <= m_nonlinearSolverParameters.m_configurationTolerance * totalArea;

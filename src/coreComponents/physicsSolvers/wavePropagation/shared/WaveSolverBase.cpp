@@ -28,8 +28,6 @@
 #include "fieldSpecification/PerfectlyMatchedLayer.hpp"
 #include "mainInterface/ProblemManager.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
-#include "mesh/DomainPartition.hpp"
-#include "WaveSolverUtils.hpp"
 #include "events/EventManager.hpp"
 
 #include <limits>
@@ -100,7 +98,7 @@ WaveSolverBase::WaveSolverBase( const std::string & name,
   registerWrapper( viewKeyStruct::saveFieldsString(), &m_saveFields ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( 0 ).
-    setDescription( "Set to 1 to save fields during forward and restore them during backward" );
+    setDescription( "Set to 1 to save fields during forward and restore them during backward. If set to 1, the gradient is computed, and if set to 2, the imaging condition is computed." );
 
   registerWrapper( viewKeyStruct::shotIndexString(), &m_shotIndex ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -196,7 +194,8 @@ WaveSolverBase::WaveSolverBase( const std::string & name,
   registerWrapper( viewKeyStruct::timestepStabilityLimitString(), &m_timestepStabilityLimit ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( 0 ).
-    setDescription( "Set to 1 to apply a stability limit to the simulation timestep. The timestep used is that given by the CFL condition times the cflFactor parameter." );
+    setDescription(
+    "Flag that indicates how to deal with timeStep: if it is set to 0 (default value) we do not compute the timeStep and use the one defined inside the xml, 1 means that we use a routine to compute the timeStep but only one time (even with Pygeos), 2 means that we compute the timeStep each time" );
 
   registerWrapper( viewKeyStruct::timeStepString(), &m_timeStep ).
     setInputFlag( InputFlags::FALSE ).
@@ -214,6 +213,21 @@ WaveSolverBase::WaveSolverBase( const std::string & name,
     setInputFlag( InputFlags::FALSE ).
     setSizedFromParent( 0 ).
     setDescription( "Element containing the receivers" );
+
+  registerWrapper( viewKeyStruct::useTaperString(), &m_useTaper ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( 0 ).
+    setDescription( "Flag to apply taper" );
+
+  registerWrapper( viewKeyStruct::reflectivityCoeffString(), &m_reflectivityCoeff ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( 0.001 ).
+    setDescription( "Reflectivity coeff for taper" );
+
+  registerWrapper( viewKeyStruct::thicknessTaperString(), &m_thicknessTaper ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( 0.0 ).
+    setDescription( "Size for the taper layer " );
 
   registerWrapper( viewKeyStruct::slsReferenceAngularFrequenciesString(), &m_slsReferenceAngularFrequencies ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -274,6 +288,10 @@ void WaveSolverBase::registerDataOnMesh( Group & meshBodies )
         nodeCoords32[i][j] = X[i][j];
       }
     }
+
+
+    nodeManager.registerField< fields::taperCoeff >( this->getName());
+
   } );
 }
 
@@ -574,6 +592,5 @@ bool WaveSolverBase::directoryExists( std::string const & directoryName )
   struct stat buffer;
   return stat( directoryName.c_str(), &buffer ) == 0;
 }
-
 
 } /* namespace geos */

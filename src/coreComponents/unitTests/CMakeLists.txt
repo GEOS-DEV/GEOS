@@ -18,6 +18,7 @@ Contains high-level unit tests that depends typically depends on mainInterface c
 ProblemManager.
 #]]
 
+add_subdirectory( tableFunctionsFileTests )
 add_subdirectory( toolchain )
 add_subdirectory( testingUtilities )
 add_subdirectory( xmlTests )
@@ -27,6 +28,7 @@ add_subdirectory( dataRepositoryTests )
 add_subdirectory( fieldSpecificationTests )
 add_subdirectory( constitutiveTests )
 add_subdirectory( meshTests )
+add_subdirectory( solverStatisticsTests )
 add_subdirectory( finiteVolumeTests )
 add_subdirectory( fileIOTests )
 if( GEOS_ENABLE_FLUIDFLOW )
