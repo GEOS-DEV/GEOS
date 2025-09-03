@@ -218,56 +218,103 @@ bool SourceFluxStatsAggregator::execute( real64 const GEOS_UNUSED_PARAM( time_n 
                                          real64 const GEOS_UNUSED_PARAM( eventProgress ),
                                          DomainPartition & domain )
 {
+  GEOS_MARK_FUNCTION;
+
   bool const fluxMeshesStats = isLogLevelActive< logInfo::AggregatedSourceFluxStats >( getLogLevel() );
   bool const fluxesStats = isLogLevelActive< logInfo::DetailedSourceFluxStats >( getLogLevel() );
   bool const regionsStats = isLogLevelActive< logInfo::DetailedRegionsSourceFluxStats >( getLogLevel() );
+  GEOS_MARK_SCOPE( SF_meshLevelProcessing );
   forMeshLevelStatsWrapper( domain,
                             [&] ( MeshLevel & meshLevel, WrappedStats & meshLevelStats )
   {
     TableData tableMeshData;
     TableData csvData;
     meshLevelStats.stats() = StatData();
+
+    GEOS_MARK_SCOPE( SF_fluxProcessing );
     forAllFluxStatsWrappers( meshLevel,
                              [&] ( MeshLevel &, WrappedStats & fluxStats )
     {
       fluxStats.stats() = StatData();
       TableData tableFluxData;
       TableData tableRegionsData;
+
+      GEOS_MARK_SCOPE( SF_regionProcessing );
       forAllRegionStatsWrappers( meshLevel, fluxStats.getFluxName(),
                                  [&] ( ElementRegionBase & region, WrappedStats & regionStats )
       {
         regionStats.stats() = StatData();
 
+        GEOS_MARK_SCOPE( SF_subRegionProcessing );
         forAllSubRegionStatsWrappers( region, regionStats.getFluxName(),
                                       [&] ( ElementSubRegionBase &, WrappedStats & subRegionStats )
         {
           subRegionStats.finalizePeriod();
           regionStats.stats().combine( subRegionStats.stats() );
         } );
+        GEOS_MARK_BEGIN( SF_subRegionFinalCombine );
         fluxStats.stats().combine( regionStats.stats() );
+        GEOS_MARK_END( SF_subRegionFinalCombine );
 
+
+        GEOS_MARK_BEGIN( SF_subRegion_statsLogGathering );
         gatherStatsForLog( regionsStats, region.getName(), tableRegionsData, regionStats );
+        GEOS_MARK_END( SF_subRegion_statsLogGathering );
+
+        GEOS_MARK_BEGIN( SF_subRegion_statsCSVGathering );
         gatherStatsForCSV( csvData, regionStats );
+        GEOS_MARK_END( SF_subRegion_statsCSVGathering );
+
       } );
 
+      GEOS_MARK_BEGIN( SF_subRegion_statsLogOutput );
       outputStatsToLog( regionsStats, fluxStats.getFluxName(), tableRegionsData );
+      GEOS_MARK_END( SF_subRegion_statsLogOutput );
+
+      GEOS_MARK_BEGIN( SF_subRegion_statsCSVOutput );
       outputStatsToCSV( m_regionsfilename, csvData );
+      GEOS_MARK_END( SF_subRegion_statsCSVOutput );
+
 
       meshLevelStats.stats().combine( fluxStats.stats() );
 
+      GEOS_MARK_BEGIN( SF_region_statsLogGathering );
       gatherStatsForLog( fluxesStats, viewKeyStruct::allRegionWrapperString(), tableFluxData, fluxStats );
-      gatherStatsForCSV( csvData, fluxStats );
+      GEOS_MARK_END( SF_region_statsLogGathering );
 
+      GEOS_MARK_BEGIN( SF_region_statsCSVGathering );
+      gatherStatsForCSV( csvData, fluxStats );
+      GEOS_MARK_END( SF_region_statsCSVGathering );
+
+
+      GEOS_MARK_BEGIN( SF_region_statsLogOutput );
       outputStatsToLog( fluxesStats, fluxStats.getFluxName(), tableFluxData );
+      GEOS_MARK_END( SF_region_statsLogOutput );
+
+      GEOS_MARK_BEGIN( SF_region_statsCSVOutput );
       outputStatsToCSV( m_allRegionFluxsfilename, csvData );
+      GEOS_MARK_END( SF_region_statsCSVOutput );
 
     } );
+
+    GEOS_MARK_BEGIN( SF_mesh_statsLogGathering );
     gatherStatsForLog( fluxMeshesStats,
                        viewKeyStruct::allRegionWrapperString(), tableMeshData, meshLevelStats );
-    gatherStatsForCSV( csvData, meshLevelStats );
+    GEOS_MARK_END( SF_mesh_statsLogGathering );
 
+    GEOS_MARK_BEGIN( SF_mesh_statsCSVGathering );
+    gatherStatsForCSV( csvData, meshLevelStats );
+    GEOS_MARK_END( SF_mesh_statsCSVGathering );
+
+
+    GEOS_MARK_BEGIN( SF_mesh_statsLogOutput );
     outputStatsToLog( fluxMeshesStats, stringutilities::join( m_fluxNames, ", " ), tableMeshData );
+    GEOS_MARK_END( SF_mesh_statsLogOutput );
+
+    GEOS_MARK_BEGIN( SF_mesh_statsCSVOutput );
     outputStatsToCSV( m_allRegionWrapperFluxFilename, csvData );
+    GEOS_MARK_END( SF_mesh_statsCSVOutput );
+
   } );
   return false;
 }
