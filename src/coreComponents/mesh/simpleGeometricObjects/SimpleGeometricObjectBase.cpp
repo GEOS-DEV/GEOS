@@ -44,6 +44,7 @@ SimpleGeometricObjectBase::CatalogInterface::CatalogType & SimpleGeometricObject
 void SimpleGeometricObjectBase::postInputInitialization()
 {
   // determine m_epsilon
+  m_epsilon = std::numeric_limits< real64 >::max();
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
   domain.forMeshBodies( [&]( MeshBody const & meshBody )
   {
