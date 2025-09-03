@@ -531,8 +531,7 @@ template< localIndex NF, typename ARRAY_VIEW_T >
 static void runConsistencyTest( array2d< real64, nodes::REFERENCE_POSITION_PERM > const & nodePosition,
                                 FaceManager::NodeMapType const & faceToNodes,
                                 real64 const elemPerm[3],
-                                ARRAY_VIEW_T const & transMatrix,
-                                std::string const & testName )
+                                ARRAY_VIEW_T const & transMatrix )
 {
   real64 N[NF][3], C[NF][3], TC[NF][3], K[3][3];
   real64 faceCenter[3], faceNormal[3];
@@ -629,8 +628,7 @@ TEST( testMimeticInnerProducts, TPFA_hexa )
   runConsistencyTest< NF >( nodePosition,
                             faceToNodes,
                             elemPerm,
-                            transMatrix.toViewConst(),
-                            "TPFA_hexa" );
+                            transMatrix.toViewConst() );
 }
 
 
@@ -685,8 +683,7 @@ TEST( testMimeticInnerProducts, QTPFA_hexa )
   runConsistencyTest< NF >( nodePosition,
                             faceToNodes,
                             elemPerm,
-                            transMatrix.toViewConst(),
-                            "QTPFA_hexa" );
+                            transMatrix.toViewConst() );
 }
 
 TEST( testMimeticInnerProducts, Simple_hexa )
@@ -741,8 +738,7 @@ TEST( testMimeticInnerProducts, Simple_hexa )
   runConsistencyTest< NF >( nodePosition,
                             faceToNodes,
                             elemPerm,
-                            transMatrix.toViewConst(),
-                            "Simple_hexa" );
+                            transMatrix.toViewConst() );
 }
 
 TEST( testMimeticInnerProducts, BdVLM_hexa )
@@ -797,8 +793,7 @@ TEST( testMimeticInnerProducts, BdVLM_hexa )
   runConsistencyTest< NF >( nodePosition,
                             faceToNodes,
                             elemPerm,
-                            transMatrix.toViewConst(),
-                            "BdVLM_hexa" );
+                            transMatrix.toViewConst() );
 }
 
 
@@ -850,8 +845,7 @@ TEST( testMimeticInnerProducts, TPFA_tetra )
   runConsistencyTest< NF >( nodePosition,
                             faceToNodes,
                             elemPerm,
-                            transMatrix.toViewConst(),
-                            "TPFA_tetra" );
+                            transMatrix.toViewConst() );
 }
 
 
@@ -903,8 +897,7 @@ TEST( testMimeticInnerProducts, QTPFA_tetra )
   runConsistencyTest< NF >( nodePosition,
                             faceToNodes,
                             elemPerm,
-                            transMatrix.toViewConst(),
-                            "QTPFA_tetra" );
+                            transMatrix.toViewConst() );
 }
 
 TEST( testMimeticInnerProducts, Simple_tetra )
@@ -955,8 +948,7 @@ TEST( testMimeticInnerProducts, Simple_tetra )
   runConsistencyTest< NF >( nodePosition,
                             faceToNodes,
                             elemPerm,
-                            transMatrix.toViewConst(),
-                            "Simple_tetra" );
+                            transMatrix.toViewConst() );
 }
 
 TEST( testMimeticInnerProducts, BdVLMtetra )
@@ -1007,8 +999,7 @@ TEST( testMimeticInnerProducts, BdVLMtetra )
   runConsistencyTest< NF >( nodePosition,
                             faceToNodes,
                             elemPerm,
-                            transMatrix.toViewConst(),
-                            "BdVLM_tetra" );
+                            transMatrix.toViewConst() );
 }
 
 
@@ -1604,7 +1595,7 @@ static double computeGravityConsistency_error( int ipKind,
     c[2] /= 4.0;
   };
 
-  real64 xTop[3];
+  real64 xTop[3] = { 0.0, 0.0, 0.0 };
   {
     real64 zbest = std::numeric_limits< real64 >::lowest();
     for( localIndex f = 0; f < faceTonode_U.size(); ++f )
