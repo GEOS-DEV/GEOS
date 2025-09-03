@@ -160,7 +160,6 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
     // if all sets are missing, we stop the simulation.
     if( areAllSetsMissing )
     {
-
       // loop again over the map to collect the set names
       string_array missingSetNames;
       for( auto const & mapEntry : isTargetSetCreated )
