@@ -241,14 +241,6 @@ public:
                      arrayView1d< real64 > const & localRhs ) const
   { reservoirSolver()->assembleFluxTerms( dt, domain, dofManager, localMatrix, localRhs );  }
 
-  void
-  assembleStabilizedFluxTerms( real64 const dt,
-                               DomainPartition const & domain,
-                               DofManager const & dofManager,
-                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                               arrayView1d< real64 > const & localRhs ) const
-  { reservoirSolver()->assembleStabilizedFluxTerms( dt, domain, dofManager, localMatrix, localRhs );  }
-
   real64 updateFluidState( ElementSubRegionBase & subRegion ) const
   { return reservoirSolver()->updateFluidState( subRegion ); }
   void updatePorosityAndPermeability( CellElementSubRegion & subRegion ) const

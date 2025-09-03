@@ -14,11 +14,11 @@
  */
 
 /**
- * @file PhaseComponentFluxZFormulation.hpp
+ * @file PhaseComponentFlux.hpp
  */
 
-#ifndef GEOS_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONAL_PHASECOMPONENTFLUXZFORMULATION_HPP
-#define GEOS_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONAL_PHASECOMPONENTFLUXZFORMULATION_HPP
+#ifndef GEOS_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONAL_ZFORMULATION_PHASECOMPONENTFLUX_HPP
+#define GEOS_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONAL_ZFORMULATION_PHASECOMPONENTFLUX_HPP
 
 #include "common/DataLayouts.hpp"
 #include "common/DataTypes.hpp"
@@ -29,10 +29,10 @@
 namespace geos
 {
 
-namespace kernels::fluidFlow::compositional::fvm::isothermal
+namespace kernels::fluidFlow::compositional::fvm::zformulation
 {
 
-struct PhaseComponentFluxZFormulation
+struct PhaseComponentFlux
 {
   template< typename VIEWTYPE >
   using ElementViewConst = ElementRegionManager::ElementViewConst< VIEWTYPE >;
@@ -112,8 +112,8 @@ struct PhaseComponentFluxZFormulation
   }
 };
 
-} // namespace kernels::fluidFlow::compositional::fvm::isothermal
+} // namespace kernels::fluidFlow::compositional::fvm::zformulation
 
 } // namespace geos
 
-#endif // GEOS_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONAL_PHASECOMPONENTFLUXZFORMULATION_HPP
+#endif // GEOS_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONAL_ZFORMULATION_PHASECOMPONENTFLUX_HPP

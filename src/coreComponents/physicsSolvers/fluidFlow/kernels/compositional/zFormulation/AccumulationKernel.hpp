@@ -14,11 +14,11 @@
  */
 
 /**
- * @file AccumulationZFormulationKernel.hpp
+ * @file AccumulationKernel.hpp
  */
 
-#ifndef GEOS_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONAL_ACCUMULATIONZFORMULATIONKERNEL_HPP
-#define GEOS_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONAL_ACCUMULATIONZFORMULATIONKERNEL_HPP
+#ifndef GEOS_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONAL_ZFORMULATION_ACCUMULATIONKERNEL_HPP
+#define GEOS_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONAL_ZFORMULATION_ACCUMULATIONKERNEL_HPP
 
 #include "codingUtilities/Utilities.hpp"
 #include "common/DataLayouts.hpp"
@@ -35,19 +35,19 @@
 namespace geos
 {
 
-namespace kernels::fluidFlow::compositional::isothermal
+namespace kernels::fluidFlow::compositional::zformulation
 {
 
 /******************************** AccumulationKernel ********************************/
 
 /**
- * @class AccumulationZFormulationKernel
+ * @class AccumulationKernel
  * @tparam NUM_COMP number of fluid components
  * @tparam NUM_DOF number of degrees of freedom
  * @brief Define the interface for the assembly kernel in charge of accumulation and volume balance
  */
 template< integer NUM_COMP, integer NUM_DOF >
-class AccumulationZFormulationKernel
+class AccumulationKernel
 {
 public:
 
@@ -71,15 +71,15 @@ public:
    * @param[inout] localMatrix the local CRS matrix
    * @param[inout] localRhs the local right-hand side vector
    */
-  AccumulationZFormulationKernel( localIndex const numPhases,
-                                  globalIndex const rankOffset,
-                                  string const dofKey,
-                                  ElementSubRegionBase const & subRegion,
-                                  constitutive::MultiFluidBase const & fluid,
-                                  constitutive::CoupledSolidBase const & solid,
-                                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                  arrayView1d< real64 > const & localRhs,
-                                  BitFlags< KernelFlags > const KernelFlags )
+  AccumulationKernel( localIndex const numPhases,
+                      globalIndex const rankOffset,
+                      string const dofKey,
+                      ElementSubRegionBase const & subRegion,
+                      constitutive::MultiFluidBase const & fluid,
+                      constitutive::CoupledSolidBase const & solid,
+                      CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                      arrayView1d< real64 > const & localRhs,
+                      BitFlags< KernelFlags > const KernelFlags )
     : m_numPhases( numPhases ),
     m_rankOffset( rankOffset ),
     m_dofNumber( subRegion.getReference< array1d< globalIndex > >( dofKey ) ),
@@ -355,9 +355,9 @@ protected:
 };
 
 /**
- * @class AccumulationZFormulationKernelFactory
+ * @class AccumulationKernelFactory
  */
-class AccumulationZFormulationKernelFactory
+class AccumulationKernelFactory
 {
 public:
 
@@ -392,17 +392,17 @@ public:
       integer constexpr NUM_COMP = NC();
       integer constexpr NUM_DOF = NC()+1;
 
-      AccumulationZFormulationKernel< NUM_COMP, NUM_DOF > kernel( numPhases, rankOffset, dofKey, subRegion,
-                                                                  fluid, solid, localMatrix, localRhs, kernelFlags );
-      AccumulationZFormulationKernel< NUM_COMP, NUM_DOF >::template launch< POLICY >( subRegion.size(), kernel );
+      AccumulationKernel< NUM_COMP, NUM_DOF > kernel( numPhases, rankOffset, dofKey, subRegion,
+                                                      fluid, solid, localMatrix, localRhs, kernelFlags );
+      AccumulationKernel< NUM_COMP, NUM_DOF >::template launch< POLICY >( subRegion.size(), kernel );
     } );
   }
 
 };
 
-} // namespace kernels::fluidFlow::compositional::isothermal
+} // namespace kernels::fluidFlow::compositional::zformulation
 
 } // namespace geos
 
 
-#endif //GEOS_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONAL_ACCUMULATIONZFORMULATIONKERNEL_HPP
+#endif //GEOS_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONAL_ZFORMULATION_ACCUMULATIONKERNEL_HPP

@@ -89,7 +89,7 @@ public:
 
     this->registerWrapper( viewKeyStruct::stabilizationTypeString(), &m_stabilizationType ).
       setInputFlag( dataRepository::InputFlags::OPTIONAL ).
-      setDescription( "StabilizationType. Options are:\n" +
+      setDescription( "Stabilization type. Options are:\n" +
                       toString( stabilization::StabilizationType::None ) + "- Add no stabilization to mass equation \n" +
                       toString( stabilization::StabilizationType::Global ) + "- Add jump stabilization to all faces \n" +
                       toString( stabilization::StabilizationType::Local ) + "- Add jump stabilization on interior of macro elements" );

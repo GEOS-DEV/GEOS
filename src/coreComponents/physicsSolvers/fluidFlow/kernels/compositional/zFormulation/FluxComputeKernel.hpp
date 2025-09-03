@@ -14,11 +14,11 @@
  */
 
 /**
- * @file FluxComputeZFormulationKernel.hpp
+ * @file FluxComputeKernel.hpp
  */
 
-#ifndef GEOS_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONAL_FLUXCOMPUTEZFORMULATIONKERNEL_HPP
-#define GEOS_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONAL_FLUXCOMPUTEZFORMULATIONKERNEL_HPP
+#ifndef GEOS_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONAL_ZFORMULATION_FLUXCOMPUTEKERNEL_HPP
+#define GEOS_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONAL_ZFORMULATION_FLUXCOMPUTEKERNEL_HPP
 
 #include "physicsSolvers/fluidFlow/kernels/compositional/FluxComputeKernelBase.hpp"
 
@@ -35,23 +35,23 @@
 #include "physicsSolvers/fluidFlow/kernels/compositional/PPUPhaseFlux.hpp"
 #include "physicsSolvers/fluidFlow/kernels/compositional/C1PPUPhaseFlux.hpp"
 #include "physicsSolvers/fluidFlow/kernels/compositional/IHUPhaseFlux.hpp"
-#include "physicsSolvers/fluidFlow/kernels/compositional/zFormulation/PPUPhaseFluxZFormulation.hpp"
+#include "physicsSolvers/fluidFlow/kernels/compositional/zFormulation/PPUPhaseFlux.hpp"
 
 namespace geos
 {
 
-namespace kernels::fluidFlow::compositional::fvm::isothermal
+namespace kernels::fluidFlow::compositional::fvm::zformulation
 {
 
 /**
- * @class FluxComputeZFormulationKernel
+ * @class FluxComputeKernel
  * @tparam NUM_COMP number of fluid components
  * @tparam NUM_DOF number of degrees of freedom
  * @tparam STENCILWRAPPER the type of the stencil wrapper
  * @brief Define the interface for the assembly kernel in charge of flux terms
  */
 template< integer NUM_COMP, integer NUM_DOF, typename STENCILWRAPPER >
-class FluxComputeZFormulationKernel : public FluxComputeKernelBase
+class FluxComputeKernel : public kernels::fluidFlow::compositional::fvm::FluxComputeKernelBase
 {
 public:
 
@@ -91,18 +91,18 @@ public:
    * @param[inout] localRhs the local right-hand side vector
    * @param[in] kernelFlags flags packed together
    */
-  FluxComputeZFormulationKernel( integer const numPhases,
-                                 globalIndex const rankOffset,
-                                 STENCILWRAPPER const & stencilWrapper,
-                                 DofNumberAccessor const & dofNumberAccessor,
-                                 CompFlowAccessors const & compFlowAccessors,
-                                 MultiFluidAccessors const & multiFluidAccessors,
-                                 CapPressureAccessors const & capPressureAccessors,
-                                 PermeabilityAccessors const & permeabilityAccessors,
-                                 real64 const dt,
-                                 CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                 arrayView1d< real64 > const & localRhs,
-                                 BitFlags< KernelFlags > kernelFlags )
+  FluxComputeKernel( integer const numPhases,
+                     globalIndex const rankOffset,
+                     STENCILWRAPPER const & stencilWrapper,
+                     DofNumberAccessor const & dofNumberAccessor,
+                     CompFlowAccessors const & compFlowAccessors,
+                     MultiFluidAccessors const & multiFluidAccessors,
+                     CapPressureAccessors const & capPressureAccessors,
+                     PermeabilityAccessors const & permeabilityAccessors,
+                     real64 const dt,
+                     CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                     arrayView1d< real64 > const & localRhs,
+                     BitFlags< KernelFlags > kernelFlags )
     : FluxComputeKernelBase( numPhases,
                              rankOffset,
                              dofNumberAccessor,
@@ -272,7 +272,7 @@ public:
 
           localIndex k_up = -1;
 
-          PPUPhaseFluxZFormulation::compute< numComp, numFluxSupportPoints >
+          PPUPhaseFlux::compute< numComp, numFluxSupportPoints >
             ( m_numPhases,
             ip,
             m_kernelFlags.isSet( KernelFlags::CapPressure ),
@@ -441,9 +441,9 @@ protected:
 };
 
 /**
- * @class FluxComputeZFormulationKernelFactory
+ * @class FluxComputeKernelFactory
  */
-class FluxComputeZFormulationKernelFactory
+class FluxComputeKernelFactory
 {
 public:
 
@@ -486,7 +486,7 @@ public:
         elemManager.constructArrayViewAccessor< globalIndex, 1 >( dofKey );
       dofNumberAccessor.setName( solverName + "/accessors/" + dofKey );
 
-      using kernelType = FluxComputeZFormulationKernel< NUM_COMP, NUM_DOF, STENCILWRAPPER >;
+      using kernelType = FluxComputeKernel< NUM_COMP, NUM_DOF, STENCILWRAPPER >;
       typename kernelType::CompFlowAccessors compFlowAccessors( elemManager, solverName );
       typename kernelType::MultiFluidAccessors multiFluidAccessors( elemManager, solverName );
       typename kernelType::CapPressureAccessors capPressureAccessors( elemManager, solverName );
@@ -504,4 +504,4 @@ public:
 
 } // namespace geos
 
-#endif //GEOS_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONAL_FLUXCOMPUTEZFORMULATIONKERNEL_HPP
+#endif //GEOS_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONAL_ZFORMULATION_FLUXCOMPUTEKERNEL_HPP

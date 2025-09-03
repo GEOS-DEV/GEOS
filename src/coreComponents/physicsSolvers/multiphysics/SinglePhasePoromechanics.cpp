@@ -213,22 +213,11 @@ void SinglePhasePoromechanics< FLOW_SOLVER, MECHANICS_SOLVER >::assembleSystem( 
                              localRhs );
 
   // Step 3: compute the fluxes (face-based contributions)
-  if( m_stabilizationType == StabilizationType::Global || m_stabilizationType == StabilizationType::Local )
-  {
-    this->flowSolver()->assembleStabilizedFluxTerms( dt,
-                                                     domain,
-                                                     dofManager,
-                                                     localMatrix,
-                                                     localRhs );
-  }
-  else
-  {
-    this->flowSolver()->assembleFluxTerms( dt,
-                                           domain,
-                                           dofManager,
-                                           localMatrix,
-                                           localRhs );
-  }
+  this->flowSolver()->assembleFluxTerms( dt,
+                                         domain,
+                                         dofManager,
+                                         localMatrix,
+                                         localRhs );
 }
 
 template<>
@@ -250,22 +239,11 @@ void SinglePhasePoromechanics< SinglePhaseReservoirAndWells<>, SolidMechanicsLag
                              localRhs );
 
   // Step 3: compute the fluxes (face-based contributions)
-  if( m_stabilizationType == StabilizationType::Global || m_stabilizationType == StabilizationType::Local )
-  {
-    this->flowSolver()->assembleStabilizedFluxTerms( dt,
-                                                     domain,
-                                                     dofManager,
-                                                     localMatrix,
-                                                     localRhs );
-  }
-  else
-  {
-    this->flowSolver()->assembleFluxTerms( dt,
-                                           domain,
-                                           dofManager,
-                                           localMatrix,
-                                           localRhs );
-  }
+  this->flowSolver()->assembleFluxTerms( dt,
+                                         domain,
+                                         dofManager,
+                                         localMatrix,
+                                         localRhs );
 
   // step 4: assemble well contributions
 

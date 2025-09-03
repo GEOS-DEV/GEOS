@@ -49,7 +49,7 @@
 #include "physicsSolvers/fluidFlow/kernels/compositional/SolidInternalEnergyUpdateKernel.hpp"
 #include "physicsSolvers/fluidFlow/kernels/compositional/HydrostaticPressureKernel.hpp"
 #include "physicsSolvers/fluidFlow/kernels/compositional/StatisticsKernel.hpp"
-#include "physicsSolvers/fluidFlow/kernels/compositional/zFormulation/PhaseVolumeFractionZFormulationKernel.hpp"
+#include "physicsSolvers/fluidFlow/kernels/compositional/zFormulation/PhaseVolumeFractionKernel.hpp"
 
 #if defined( __INTEL_COMPILER )
 #pragma GCC optimize "O0"
@@ -671,7 +671,7 @@ real64 CompositionalMultiphaseBase::updatePhaseVolumeFraction( ObjectManagerBase
   if( m_formulationType == CompositionalMultiphaseFormulationType::OverallComposition )
   {
     // isothermal for now
-    return isothermal::PhaseVolumeFractionZFormulationKernelFactory::
+    return zformulation::PhaseVolumeFractionKernelFactory::
              createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
                                                         m_numPhases,
                                                         dataGroup,
@@ -1424,22 +1424,11 @@ void CompositionalMultiphaseBase::assembleSystem( real64 const GEOS_UNUSED_PARAM
                       localMatrix,
                       localRhs );
 
-  if( m_isJumpStabilized )
-  {
-    assembleStabilizedFluxTerms( dt,
-                                 domain,
-                                 dofManager,
-                                 localMatrix,
-                                 localRhs );
-  }
-  else
-  {
-    assembleFluxTerms( dt,
-                       domain,
-                       dofManager,
-                       localMatrix,
-                       localRhs );
-  }
+  assembleFluxTerms( dt,
+                     domain,
+                     dofManager,
+                     localMatrix,
+                     localRhs );
 }
 
 void CompositionalMultiphaseBase::assembleLocalTerms( DomainPartition & domain,

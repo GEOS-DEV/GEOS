@@ -103,7 +103,11 @@ public:
 
   void enableFixedStressPoromechanicsUpdate() { m_isFixedStressPoromechanicsUpdate = true; }
 
-  void enableJumpStabilization() { m_isJumpStabilized = true; }
+  virtual void enableJumpStabilization()
+  {
+    GEOS_ERROR( GEOS_FMT( "{}: stabilization is not implemented for {} solver",
+                          getDataContext(), getCatalogName() ) );
+  }
 
   void updatePorosityAndPermeability( CellElementSubRegion & subRegion ) const;
 

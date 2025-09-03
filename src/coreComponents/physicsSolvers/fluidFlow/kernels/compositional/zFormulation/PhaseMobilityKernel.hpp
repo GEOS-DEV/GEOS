@@ -14,30 +14,30 @@
  */
 
 /**
- * @file PhaseMobilityZFormulationKernel.hpp
+ * @file PhaseMobilityKernel.hpp
  */
 
-#ifndef GEOS_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONAL_PHASEMOBILITYZFORMULATIONKERNEL_HPP
-#define GEOS_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONAL_PHASEMOBILITYZFORMULATIONKERNEL_HPP
+#ifndef GEOS_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONAL_ZFORMULATION_PHASEMOBILITYKERNEL_HPP
+#define GEOS_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONAL_ZFORMULATION_PHASEMOBILITYKERNEL_HPP
 
 #include "physicsSolvers/fluidFlow/kernels/compositional/PropertyKernelBase.hpp"
 
 namespace geos
 {
 
-namespace kernels::fluidFlow::compositional::isothermal
+namespace kernels::fluidFlow::compositional::zformulation
 {
 
-/******************************** PhaseMobilityZFormulationKernel ********************************/
+/******************************** PhaseMobilityKernel ********************************/
 
 /**
- * @class PhaseMobilityZFormulationKernel
+ * @class PhaseMobilityKernel
  * @tparam NUM_COMP number of fluid components
  * @tparam NUM_PHASE number of fluid phases
  * @brief Defines the interface for the property kernel in charge of computing the phase mobilities
  */
 template< integer NUM_COMP, integer NUM_PHASE >
-class PhaseMobilityZFormulationKernel :
+class PhaseMobilityKernel :
   public kernels::fluidFlow::compositional::PropertyKernelBase< NUM_COMP >
 {
 public:
@@ -54,9 +54,9 @@ public:
    * @param[in] fluid the fluid model
    * @param[in] relperm the relperm model
    */
-  PhaseMobilityZFormulationKernel( ObjectManagerBase & subRegion,
-                                   constitutive::MultiFluidBase const & fluid,
-                                   constitutive::RelativePermeabilityBase const & relperm )
+  PhaseMobilityKernel( ObjectManagerBase & subRegion,
+                       constitutive::MultiFluidBase const & fluid,
+                       constitutive::RelativePermeabilityBase const & relperm )
     : Base(),
     m_phaseVolFrac( subRegion.getField< fields::flow::phaseVolumeFraction >() ),
     m_dPhaseVolFrac( subRegion.getField< fields::flow::dPhaseVolumeFraction >() ),
@@ -189,9 +189,9 @@ protected:
 };
 
 /**
- * @class PhaseMobilityZFormulationKernelFactory
+ * @class PhaseMobilityKernelFactory
  */
-class PhaseMobilityZFormulationKernelFactory
+class PhaseMobilityKernelFactory
 {
 public:
 
@@ -219,8 +219,8 @@ public:
       kernelLaunchSelectorCompSwitch( numComp, [&] ( auto NC )
       {
         integer constexpr NUM_COMP = NC();
-        PhaseMobilityZFormulationKernel< NUM_COMP, 2 > kernel( subRegion, fluid, relperm );
-        PhaseMobilityZFormulationKernel< NUM_COMP, 2 >::template launch< POLICY >( subRegion.size(), kernel );
+        PhaseMobilityKernel< NUM_COMP, 2 > kernel( subRegion, fluid, relperm );
+        PhaseMobilityKernel< NUM_COMP, 2 >::template launch< POLICY >( subRegion.size(), kernel );
       } );
     }
     else if( numPhase == 3 )
@@ -228,16 +228,16 @@ public:
       kernelLaunchSelectorCompSwitch( numComp, [&] ( auto NC )
       {
         integer constexpr NUM_COMP = NC();
-        PhaseMobilityZFormulationKernel< NUM_COMP, 3 > kernel( subRegion, fluid, relperm );
-        PhaseMobilityZFormulationKernel< NUM_COMP, 3 >::template launch< POLICY >( subRegion.size(), kernel );
+        PhaseMobilityKernel< NUM_COMP, 3 > kernel( subRegion, fluid, relperm );
+        PhaseMobilityKernel< NUM_COMP, 3 >::template launch< POLICY >( subRegion.size(), kernel );
       } );
     }
   }
 };
 
-} // namespace kernels::fluidFlow::compositional::isothermal
+} // namespace kernels::fluidFlow::compositional::zformulation
 
 } // namespace geos
 
 
-#endif //GEOS_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONAL_PHASEMOBILITYZFORMULATIONKERNEL_HPP
+#endif //GEOS_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONAL_ZFORMULATION_PHASEMOBILITYKERNEL_HPP

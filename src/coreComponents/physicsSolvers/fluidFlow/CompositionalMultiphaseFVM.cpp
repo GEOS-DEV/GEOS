@@ -55,11 +55,11 @@
 #include "physicsSolvers/fluidFlow/kernels/compositional/ThermalPhaseMobilityKernel.hpp"
 #include "physicsSolvers/fluidFlow/kernels/compositional/AquiferBCKernel.hpp"
 #include "physicsSolvers/fluidFlow/kernels/compositional/CFLKernel.hpp"
-#include "physicsSolvers/fluidFlow/kernels/compositional/zFormulation/FluxComputeZFormulationKernel.hpp"
-#include "physicsSolvers/fluidFlow/kernels/compositional/zFormulation/AccumulationZFormulationKernel.hpp"
-#include "physicsSolvers/fluidFlow/kernels/compositional/zFormulation/PhaseMobilityZFormulationKernel.hpp"
-#include "physicsSolvers/fluidFlow/kernels/compositional/zFormulation/SolutionScalingZFormulationKernel.hpp"
-#include "physicsSolvers/fluidFlow/kernels/compositional/zFormulation/DirichletFluxComputeZFormulationKernel.hpp"
+#include "physicsSolvers/fluidFlow/kernels/compositional/zFormulation/FluxComputeKernel.hpp"
+#include "physicsSolvers/fluidFlow/kernels/compositional/zFormulation/AccumulationKernel.hpp"
+#include "physicsSolvers/fluidFlow/kernels/compositional/zFormulation/PhaseMobilityKernel.hpp"
+#include "physicsSolvers/fluidFlow/kernels/compositional/zFormulation/SolutionScalingKernel.hpp"
+#include "physicsSolvers/fluidFlow/kernels/compositional/zFormulation/DirichletFluxComputeKernel.hpp"
 #include "physicsSolvers/multiphysics/poromechanicsKernels/MultiphasePoromechanicsConformingFractures.hpp"
 
 namespace geos
@@ -158,6 +158,20 @@ void CompositionalMultiphaseFVM::postInputInitialization()
                             getDataContext(),
                             EnumStrings< UpwindingScheme >::toString( upwindingParams.upwindingScheme ),
                             formulationName ) );
+    }
+  }
+
+  if( m_dbcParams.useDBC )
+  {
+    if( m_isThermal ) // DBC is not compatible with thermal
+    {
+      GEOS_ERROR( GEOS_FMT( "{}: '{}' is currently not available for thermal simulations",
+                            getDataContext(), viewKeyStruct::useDBCString() ) );
+    }
+    if( m_isJumpStabilized ) // DBC is not compatible with pressure stabilization
+    {
+      GEOS_ERROR( GEOS_FMT( "{}: pressure stabilization is not compatible with {}",
+                            getDataContext(), viewKeyStruct::useDBCString() ) );
     }
   }
 }
@@ -283,7 +297,7 @@ void CompositionalMultiphaseFVM::assembleFluxTerms( real64 const dt,
       if( m_formulationType == CompositionalMultiphaseFormulationType::OverallComposition )
       {
         // isothermal only for now
-        isothermal::FluxComputeZFormulationKernelFactory::
+        zformulation::FluxComputeKernelFactory::
           createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
                                                      m_numPhases,
                                                      dofManager.rankOffset(),
@@ -296,7 +310,44 @@ void CompositionalMultiphaseFVM::assembleFluxTerms( real64 const dt,
                                                      localMatrix.toViewConstSizes(),
                                                      localRhs.toView() );
       }
-      else
+      else if( m_dbcParams.useDBC )
+      {
+        dissipation::FluxComputeKernelFactory::
+          createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
+                                                     m_numPhases,
+                                                     dofManager.rankOffset(),
+                                                     elemDofKey,
+                                                     kernelFlags,
+                                                     getName(),
+                                                     mesh.getElemManager(),
+                                                     stencilWrapper,
+                                                     dt,
+                                                     localMatrix.toViewConstSizes(),
+                                                     localRhs.toView(),
+                                                     m_dbcParams.omega,
+                                                     getNonlinearSolverParameters().m_numNewtonIterations,
+                                                     m_dbcParams.continuation,
+                                                     m_dbcParams.miscible,
+                                                     m_dbcParams.kappamin,
+                                                     m_dbcParams.contMultiplier );
+      }
+      else if( m_isJumpStabilized )
+      {
+        // Thermal implementation not supported yet
+        stabilization::FluxComputeKernelFactory::
+          createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
+                                                     m_numPhases,
+                                                     dofManager.rankOffset(),
+                                                     elemDofKey,
+                                                     kernelFlags,
+                                                     getName(),
+                                                     mesh.getElemManager(),
+                                                     stencilWrapper,
+                                                     dt,
+                                                     localMatrix.toViewConstSizes(),
+                                                     localRhs.toView() );
+      }
+      else // default
       {
         if( m_isThermal )
         {
@@ -315,132 +366,55 @@ void CompositionalMultiphaseFVM::assembleFluxTerms( real64 const dt,
         }
         else
         {
-          if( m_dbcParams.useDBC )
-          {
-            isothermal::dissipation::FluxComputeKernelFactory::
-              createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
-                                                         m_numPhases,
-                                                         dofManager.rankOffset(),
-                                                         elemDofKey,
-                                                         kernelFlags,
-                                                         getName(),
-                                                         mesh.getElemManager(),
-                                                         stencilWrapper,
-                                                         dt,
-                                                         localMatrix.toViewConstSizes(),
-                                                         localRhs.toView(),
-                                                         m_dbcParams.omega,
-                                                         getNonlinearSolverParameters().m_numNewtonIterations,
-                                                         m_dbcParams.continuation,
-                                                         m_dbcParams.miscible,
-                                                         m_dbcParams.kappamin,
-                                                         m_dbcParams.contMultiplier );
-          }
-          else
-          {
-            isothermal::FluxComputeKernelFactory::
-              createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
-                                                         m_numPhases,
-                                                         dofManager.rankOffset(),
-                                                         elemDofKey,
-                                                         kernelFlags,
-                                                         getName(),
-                                                         mesh.getElemManager(),
-                                                         stencilWrapper,
-                                                         dt,
-                                                         localMatrix.toViewConstSizes(),
-                                                         localRhs.toView() );
-          }
-        }
-
-        // Diffusive and dispersive flux
-
-        if( m_hasDiffusion || m_hasDispersion )
-        {
-          if( m_isThermal )
-          {
-            thermal::DiffusionDispersionFluxComputeKernelFactory::
-              createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
-                                                         m_numPhases,
-                                                         dofManager.rankOffset(),
-                                                         elemDofKey,
-                                                         kernelFlags,
-                                                         getName(),
-                                                         mesh.getElemManager(),
-                                                         stencilWrapper,
-                                                         dt,
-                                                         localMatrix.toViewConstSizes(),
-                                                         localRhs.toView() );
-          }
-          else
-          {
-            isothermal::DiffusionDispersionFluxComputeKernelFactory::
-              createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
-                                                         m_numPhases,
-                                                         dofManager.rankOffset(),
-                                                         elemDofKey,
-                                                         kernelFlags,
-                                                         getName(),
-                                                         mesh.getElemManager(),
-                                                         stencilWrapper,
-                                                         dt,
-                                                         localMatrix.toViewConstSizes(),
-                                                         localRhs.toView() );
-          }
+          isothermal::FluxComputeKernelFactory::
+            createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
+                                                       m_numPhases,
+                                                       dofManager.rankOffset(),
+                                                       elemDofKey,
+                                                       kernelFlags,
+                                                       getName(),
+                                                       mesh.getElemManager(),
+                                                       stencilWrapper,
+                                                       dt,
+                                                       localMatrix.toViewConstSizes(),
+                                                       localRhs.toView() );
         }
       }
 
-    } );
-  } );
-}
-
-void CompositionalMultiphaseFVM::assembleStabilizedFluxTerms( real64 const dt,
-                                                              DomainPartition const & domain,
-                                                              DofManager const & dofManager,
-                                                              CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                                              arrayView1d< real64 > const & localRhs ) const
-{
-  GEOS_MARK_FUNCTION;
-
-  using namespace kernels::fluidFlow::compositional::fvm;
-
-  BitFlags< KernelFlags > kernelFlags;
-  if( m_hasCapPressure )
-    kernelFlags.set( KernelFlags::CapPressure );
-  if( m_useTotalMassEquation )
-    kernelFlags.set( KernelFlags::TotalMassEquation );
-
-  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
-                                                               MeshLevel const & mesh,
-                                                               string_array const & )
-  {
-    NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
-    FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
-    FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( m_discretizationName );
-
-    string const & elemDofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
-    ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > elemDofNumber =
-      mesh.getElemManager().constructArrayViewAccessor< globalIndex, 1 >( elemDofKey );
-    elemDofNumber.setName( getName() + "/accessors/" + elemDofKey );
-
-    fluxApprox.forAllStencils( mesh, [&] ( auto & stencil )
-    {
-      typename TYPEOFREF( stencil ) ::KernelWrapper stencilWrapper = stencil.createKernelWrapper();
-
-      // Thermal implementation not supported yet
-
-      stabilization::FluxComputeKernelFactory::
-        createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
-                                                   m_numPhases,
-                                                   dofManager.rankOffset(),
-                                                   elemDofKey,
-                                                   kernelFlags,
-                                                   getName(),
-                                                   mesh.getElemManager(),
-                                                   stencilWrapper,
-                                                   dt,
-                                                   localMatrix.toViewConstSizes(),
-                                                   localRhs.toView() );
+      // add diffusive and dispersive flux
+      if( m_hasDiffusion || m_hasDispersion )
+      {
+        if( m_isThermal )
+        {
+          thermal::DiffusionDispersionFluxComputeKernelFactory::
+            createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
+                                                       m_numPhases,
+                                                       dofManager.rankOffset(),
+                                                       elemDofKey,
+                                                       kernelFlags,
+                                                       getName(),
+                                                       mesh.getElemManager(),
+                                                       stencilWrapper,
+                                                       dt,
+                                                       localMatrix.toViewConstSizes(),
+                                                       localRhs.toView() );
+        }
+        else
+        {
+          isothermal::DiffusionDispersionFluxComputeKernelFactory::
+            createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
+                                                       m_numPhases,
+                                                       dofManager.rankOffset(),
+                                                       elemDofKey,
+                                                       kernelFlags,
+                                                       getName(),
+                                                       mesh.getElemManager(),
+                                                       stencilWrapper,
+                                                       dt,
+                                                       localMatrix.toViewConstSizes(),
+                                                       localRhs.toView() );
+        }
+      }
 
     } );
   } );
@@ -758,8 +732,8 @@ real64 CompositionalMultiphaseFVM::scalingForSystemSolutionZFormulation( DomainP
       //arrayView1d< real64 > temperatureScalingFactor = subRegion.getField< flow::temperatureScalingFactor >();
       arrayView1d< real64 > compFracScalingFactor = subRegion.getField< flow::globalCompFractionScalingFactor >();
 
-      auto const subRegionData = kernels::fluidFlow::compositional::isothermal::
-                                   SolutionScalingZFormulationKernelFactory::
+      auto const subRegionData = kernels::fluidFlow::compositional::zformulation::
+                                   SolutionScalingKernelFactory::
                                    createAndLaunch< parallelDevicePolicy<> >( m_maxRelativePresChange,
                                                                               m_maxAbsolutePresChange,
                                                                               m_maxCompFracChange,
@@ -1066,7 +1040,7 @@ void CompositionalMultiphaseFVM::updatePhaseMobility( ObjectManagerBase & dataGr
   if( m_formulationType == CompositionalMultiphaseFormulationType::OverallComposition )
   {
     // For now: isothermal only
-    isothermal::PhaseMobilityZFormulationKernelFactory::
+    zformulation::PhaseMobilityKernelFactory::
       createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
                                                  m_numPhases,
                                                  dataGroup,
@@ -1321,7 +1295,8 @@ void CompositionalMultiphaseFVM::applyFaceDirichletBC( real64 const time_n,
 
       if( m_formulationType == CompositionalMultiphaseFormulationType::OverallComposition )
       {
-        isothermal::DirichletFluxComputeZFormulationKernelFactory::
+        // no thermal support
+        zformulation::DirichletFluxComputeKernelFactory::
           createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
                                                      m_numPhases,
                                                      dofManager.rankOffset(),

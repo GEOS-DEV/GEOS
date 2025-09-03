@@ -14,30 +14,30 @@
  */
 
 /**
- * @file PhaseVolumeFractionZFormulationKernel.hpp
+ * @file PhaseVolumeFractionKernel.hpp
  */
 
-#ifndef GEOS_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONAL_PHASEVOLUMEFRACTIONZFORMULATIONKERNEL_HPP
-#define GEOS_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONAL_PHASEVOLUMEFRACTIONZFORMULATIONKERNEL_HPP
+#ifndef GEOS_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONAL_ZFORMULATION_PHASEVOLUMEFRACTIONKERNEL_HPP
+#define GEOS_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONAL_ZFORMULATION_PHASEVOLUMEFRACTIONKERNEL_HPP
 
 #include "physicsSolvers/fluidFlow/kernels/compositional/PropertyKernelBase.hpp"
 
 namespace geos
 {
 
-namespace kernels::fluidFlow::compositional::isothermal
+namespace kernels::fluidFlow::compositional::zformulation
 {
 
-/******************************** PhaseVolumeFractionZFormulationKernel ********************************/
+/******************************** PhaseVolumeFractionKernel ********************************/
 
 /**
- * @class PhaseVolumeFractionZFormulationKernel
+ * @class PhaseVolumeFractionKernel
  * @tparam NUM_COMP number of fluid components
  * @tparam NUM_PHASE number of fluid phases
  * @brief Define the interface for the property kernel in charge of computing the phase volume fractions
  */
 template< integer NUM_COMP, integer NUM_PHASE >
-class PhaseVolumeFractionZFormulationKernel : public PropertyKernelBase< NUM_COMP >
+class PhaseVolumeFractionKernel : public PropertyKernelBase< NUM_COMP >
 {
 public:
 
@@ -52,8 +52,8 @@ public:
    * @param[in] subRegion the element subregion
    * @param[in] fluid the fluid model
    */
-  PhaseVolumeFractionZFormulationKernel( ObjectManagerBase & subRegion,
-                                         constitutive::MultiFluidBase const & fluid )
+  PhaseVolumeFractionKernel( ObjectManagerBase & subRegion,
+                             constitutive::MultiFluidBase const & fluid )
     : Base(),
     m_phaseVolFrac( subRegion.getField< fields::flow::phaseVolumeFraction >() ),
     m_dPhaseVolFrac( subRegion.getField< fields::flow::dPhaseVolumeFraction >() ),
@@ -178,9 +178,9 @@ protected:
 };
 
 /**
- * @class PhaseVolumeFractionZFormulationKernelFactory
+ * @class PhaseVolumeFractionKernelFactory
  */
-class PhaseVolumeFractionZFormulationKernelFactory
+class PhaseVolumeFractionKernelFactory
 {
 public:
 
@@ -205,8 +205,8 @@ public:
       internal::kernelLaunchSelectorCompSwitch( numComp, [&] ( auto NC )
       {
         integer constexpr NUM_COMP = NC();
-        PhaseVolumeFractionZFormulationKernel< NUM_COMP, 2 > kernel( subRegion, fluid );
-        maxDeltaPhaseVolFrac = PhaseVolumeFractionZFormulationKernel< NUM_COMP, 2 >::template launch< POLICY >( subRegion.size(), kernel );
+        PhaseVolumeFractionKernel< NUM_COMP, 2 > kernel( subRegion, fluid );
+        maxDeltaPhaseVolFrac = PhaseVolumeFractionKernel< NUM_COMP, 2 >::template launch< POLICY >( subRegion.size(), kernel );
       } );
     }
     else if( numPhase == 3 )
@@ -214,17 +214,17 @@ public:
       internal::kernelLaunchSelectorCompSwitch( numComp, [&] ( auto NC )
       {
         integer constexpr NUM_COMP = NC();
-        PhaseVolumeFractionZFormulationKernel< NUM_COMP, 3 > kernel( subRegion, fluid );
-        maxDeltaPhaseVolFrac = PhaseVolumeFractionZFormulationKernel< NUM_COMP, 3 >::template launch< POLICY >( subRegion.size(), kernel );
+        PhaseVolumeFractionKernel< NUM_COMP, 3 > kernel( subRegion, fluid );
+        maxDeltaPhaseVolFrac = PhaseVolumeFractionKernel< NUM_COMP, 3 >::template launch< POLICY >( subRegion.size(), kernel );
       } );
     }
     return maxDeltaPhaseVolFrac;
   }
 };
 
-} // namespace kernels::fluidFlow::compositional::isothermal
+} // namespace kernels::fluidFlow::compositional::zformulation
 
 } // namespace geos
 
 
-#endif //GEOS_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONAL_PHASEVOLUMEFRACTIONZFORMULATIONKERNEL_HPP
+#endif //GEOS_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONAL_ZFORMULATION_PHASEVOLUMEFRACTIONKERNEL_HPP

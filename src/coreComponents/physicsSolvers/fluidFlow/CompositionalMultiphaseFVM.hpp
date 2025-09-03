@@ -142,13 +142,6 @@ public:
                      arrayView1d< real64 > const & localRhs ) const override;
 
   virtual void
-  assembleStabilizedFluxTerms( real64 const dt,
-                               DomainPartition const & domain,
-                               DofManager const & dofManager,
-                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                               arrayView1d< real64 > const & localRhs ) const override;
-
-  virtual void
   assembleHydrofracFluxTerms( real64 const time_n,
                               real64 const dt,
                               DomainPartition const & domain,
@@ -183,6 +176,8 @@ public:
   real64 setNextDt( real64 const & currentTime,
                     real64 const & currentDt,
                     DomainPartition & domain ) override;
+
+  virtual void enableJumpStabilization() { m_isJumpStabilized = true; }
 
   struct viewKeyStruct : CompositionalMultiphaseBase::viewKeyStruct
   {

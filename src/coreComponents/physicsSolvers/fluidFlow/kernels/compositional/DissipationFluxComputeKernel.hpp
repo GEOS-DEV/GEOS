@@ -28,7 +28,7 @@
 namespace geos
 {
 
-namespace kernels::fluidFlow::compositional::fvm::isothermal::dissipation
+namespace kernels::fluidFlow::compositional::fvm::dissipation
 {
 
 static constexpr integer newtonContinuationCutoffIteration = 5;
@@ -392,7 +392,7 @@ public:
   }
 };
 
-} // namespace kernels::fluidFlow::compositional::fvm::isothermal:dissipation
+} // namespace kernels::fluidFlow::compositional::fvm::dissipation
 
 } // namespace geos
 

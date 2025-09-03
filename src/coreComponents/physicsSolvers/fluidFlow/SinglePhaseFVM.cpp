@@ -328,77 +328,48 @@ void SinglePhaseFVM<>::assembleFluxTerms( real64 const dt,
     {
       typename TYPEOFREF( stencil ) ::KernelWrapper stencilWrapper = stencil.createKernelWrapper();
 
-
-      if( m_isThermal )
+      if( m_isJumpStabilized )
       {
-        thermal::FluxComputeKernelFactory::createAndLaunch< parallelDevicePolicy<> >( dofManager.rankOffset(),
-                                                                                      dofKey,
-                                                                                      getName(),
-                                                                                      mesh.getElemManager(),
-                                                                                      stencilWrapper,
-                                                                                      dt,
-                                                                                      localMatrix.toViewConstSizes(),
-                                                                                      localRhs.toView() );
+        // No thermal support yet
+        stabilization::FluxComputeKernelFactory::createAndLaunch< parallelDevicePolicy<> >( dofManager.rankOffset(),
+                                                                                            dofKey,
+                                                                                            getName(),
+                                                                                            mesh.getElemManager(),
+                                                                                            stencilWrapper,
+                                                                                            dt,
+                                                                                            localMatrix.toViewConstSizes(),
+                                                                                            localRhs.toView() );
       }
       else
       {
-        isothermal::FluxComputeKernelFactory::createAndLaunch< parallelDevicePolicy<> >( dofManager.rankOffset(),
-                                                                                         dofKey,
-                                                                                         getName(),
-                                                                                         mesh.getElemManager(),
-                                                                                         stencilWrapper,
-                                                                                         dt,
-                                                                                         localMatrix.toViewConstSizes(),
-                                                                                         localRhs.toView() );
+        if( m_isThermal )
+        {
+          thermal::FluxComputeKernelFactory::createAndLaunch< parallelDevicePolicy<> >( dofManager.rankOffset(),
+                                                                                        dofKey,
+                                                                                        getName(),
+                                                                                        mesh.getElemManager(),
+                                                                                        stencilWrapper,
+                                                                                        dt,
+                                                                                        localMatrix.toViewConstSizes(),
+                                                                                        localRhs.toView() );
+        }
+        else
+        {
+          isothermal::FluxComputeKernelFactory::createAndLaunch< parallelDevicePolicy<> >( dofManager.rankOffset(),
+                                                                                           dofKey,
+                                                                                           getName(),
+                                                                                           mesh.getElemManager(),
+                                                                                           stencilWrapper,
+                                                                                           dt,
+                                                                                           localMatrix.toViewConstSizes(),
+                                                                                           localRhs.toView() );
+        }
       }
 
-
     } );
   } );
 
 }
-
-
-template< >
-void SinglePhaseFVM< SinglePhaseBase >::assembleStabilizedFluxTerms( real64 const dt,
-                                                                     DomainPartition const & domain,
-                                                                     DofManager const & dofManager,
-                                                                     CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                                                     arrayView1d< real64 > const & localRhs )
-{
-  GEOS_MARK_FUNCTION;
-
-  NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
-  FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
-  FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( m_discretizationName );
-
-  string const & dofKey = dofManager.getKey( SinglePhaseBase::viewKeyStruct::elemDofFieldString() );
-
-  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                                MeshLevel const & mesh,
-                                                                string_array const & )
-  {
-    fluxApprox.forAllStencils( mesh, [&]( auto & stencil )
-    {
-      typename TYPEOFREF( stencil ) ::KernelWrapper stencilWrapper = stencil.createKernelWrapper();
-
-      // No thermal support yet
-      kernels::fluidFlow::singlePhase::fvm::stabilization::
-        FluxComputeKernelFactory::createAndLaunch< parallelDevicePolicy<> >( dofManager.rankOffset(),
-                                                                             dofKey,
-                                                                             getName(),
-                                                                             mesh.getElemManager(),
-                                                                             stencilWrapper,
-                                                                             dt,
-                                                                             localMatrix.toViewConstSizes(),
-                                                                             localRhs.toView() );
-
-    } );
-  } );
-
-}
-
-
 
 template<>
 void SinglePhaseFVM< SinglePhaseProppantBase >::assembleFluxTerms( real64 const dt,
@@ -455,17 +426,6 @@ void SinglePhaseFVM< SinglePhaseProppantBase >::assembleFluxTerms( real64 const 
                                        localRhs );
     } );
   } );
-}
-
-template< >
-void SinglePhaseFVM< SinglePhaseProppantBase >::assembleStabilizedFluxTerms( real64 const dt,
-                                                                             DomainPartition const & domain,
-                                                                             DofManager const & dofManager,
-                                                                             CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                                                             arrayView1d< real64 > const & localRhs )
-{
-  GEOS_UNUSED_VAR( dt, domain, dofManager, localMatrix, localRhs );
-  GEOS_ERROR( "Stabilized flux not available with this flow solver" );
 }
 
 template< typename BASE >

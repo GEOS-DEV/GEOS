@@ -109,6 +109,16 @@ set( fluidFlowSolvers_headers
      kernels/compositional/ThermalResidualNormKernel.hpp
      kernels/compositional/ThermalSolutionCheckKernel.hpp
      kernels/compositional/ThermalSolutionScalingKernel.hpp
+     kernels/compositional/zFormulation/AccumulationKernel.hpp
+     kernels/compositional/zFormulation/FluxComputeKernel.hpp
+     kernels/compositional/zFormulation/PhaseComponentFlux.hpp
+     kernels/compositional/zFormulation/PhaseVolumeFractionKernel.hpp
+     kernels/compositional/zFormulation/SolutionScalingAndCheckingKernelBase.hpp
+     kernels/compositional/zFormulation/DirichletFluxComputeKernel.hpp
+     kernels/compositional/zFormulation/PPUPhaseFlux.hpp
+     kernels/compositional/zFormulation/PhaseMobilityKernel.hpp
+     kernels/compositional/zFormulation/PotGrad.hpp
+     kernels/compositional/zFormulation/SolutionScalingKernel.hpp
      kernels/immiscibleMultiphase/ImmiscibleMultiphaseKernels.hpp
      wells/CompositionalMultiphaseWell.hpp
      wells/CompositionalMultiphaseWellFields.hpp

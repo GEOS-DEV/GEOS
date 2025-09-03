@@ -14,32 +14,31 @@
  */
 
 /**
- * @file SolutionScalingZFormulationKernel.hpp
+ * @file SolutionScalingKernel.hpp
  */
 
-#ifndef GEOS_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONAL_SOLUTIONSCALINGZFORMULATIONKERNEL_HPP
-#define GEOS_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONAL_SOLUTIONSCALINGZFORMULATIONKERNEL_HPP
+#ifndef GEOS_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONAL_ZFORMULATION_SOLUTIONSCALINGKERNEL_HPP
+#define GEOS_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONAL_ZFORMULATION_SOLUTIONSCALINGKERNEL_HPP
 
-#include "physicsSolvers/fluidFlow/kernels/compositional/zFormulation/SolutionScalingAndCheckingZFormulationKernelBase.hpp"
-#include "physicsSolvers/fluidFlow/CompositionalMultiphaseFVM.hpp"
+#include "physicsSolvers/fluidFlow/kernels/compositional/zFormulation/SolutionScalingAndCheckingKernelBase.hpp"
 
 namespace geos
 {
 
-namespace kernels::fluidFlow::compositional::isothermal
+namespace kernels::fluidFlow::compositional::zformulation
 {
 
-/******************************** SolutionScalingZFormulationKernel ********************************/
+/******************************** SolutionScalingKernel ********************************/
 
 /**
- * @class SolutionScalingZFormulationKernel
+ * @class SolutionScalingKernel
  * @brief Define the kernel for scaling the Newton update
  */
-class SolutionScalingZFormulationKernel : public SolutionScalingAndCheckingZFormulationKernelBase< real64 >
+class SolutionScalingKernel : public SolutionScalingAndCheckingKernelBase< real64 >
 {
 public:
 
-  using Base = SolutionScalingAndCheckingZFormulationKernelBase< real64 >;
+  using Base = SolutionScalingAndCheckingKernelBase< real64 >;
   using Base::m_rankOffset;
   using Base::m_numComp;
   using Base::m_dofNumber;
@@ -65,18 +64,18 @@ public:
    * @param[in] pressureScalingFactor the pressure local scaling factor
    * @param[in] compFracScalingFactor the component density local scaling factor
    */
-  SolutionScalingZFormulationKernel( real64 const maxRelativePresChange,
-                                     real64 const maxAbsolutePresChange,
-                                     real64 const maxCompFracChange,
-                                     globalIndex const rankOffset,
-                                     integer const numComp,
-                                     string const dofKey,
-                                     ElementSubRegionBase const & subRegion,
-                                     arrayView1d< real64 const > const localSolution,
-                                     arrayView1d< real64 const > const pressure,
-                                     arrayView2d< real64 const, compflow::USD_COMP > const compFrac,
-                                     arrayView1d< real64 > pressureScalingFactor,
-                                     arrayView1d< real64 > compFracScalingFactor )
+  SolutionScalingKernel( real64 const maxRelativePresChange,
+                         real64 const maxAbsolutePresChange,
+                         real64 const maxCompFracChange,
+                         globalIndex const rankOffset,
+                         integer const numComp,
+                         string const dofKey,
+                         ElementSubRegionBase const & subRegion,
+                         arrayView1d< real64 const > const localSolution,
+                         arrayView1d< real64 const > const pressure,
+                         arrayView2d< real64 const, compflow::USD_COMP > const compFrac,
+                         arrayView1d< real64 > pressureScalingFactor,
+                         arrayView1d< real64 > compFracScalingFactor )
     : Base( rankOffset,
             numComp,
             dofKey,
@@ -300,9 +299,9 @@ protected:
 };
 
 /**
- * @class SolutionScalingZFormulationKernelFactory
+ * @class SolutionScalingKernelFactory
  */
-class SolutionScalingZFormulationKernelFactory
+class SolutionScalingKernelFactory
 {
 public:
 
@@ -320,7 +319,7 @@ public:
    * @return the scaling factor
    */
   template< typename POLICY >
-  static SolutionScalingZFormulationKernel::StackVariables
+  static SolutionScalingKernel::StackVariables
   createAndLaunch( real64 const maxRelativePresChange,
                    real64 const maxAbsolutePresChange,
                    real64 const maxCompFracChange,
@@ -334,15 +333,15 @@ public:
                    ElementSubRegionBase & subRegion,
                    arrayView1d< real64 const > const localSolution )
   {
-    SolutionScalingZFormulationKernel kernel( maxRelativePresChange, maxAbsolutePresChange, maxCompFracChange, rankOffset,
-                                              numComp, dofKey, subRegion, localSolution, pressure, compFrac, pressureScalingFactor, compFracScalingFactor );
-    return SolutionScalingZFormulationKernel::launch< POLICY >( subRegion.size(), kernel );
+    SolutionScalingKernel kernel( maxRelativePresChange, maxAbsolutePresChange, maxCompFracChange, rankOffset,
+                                  numComp, dofKey, subRegion, localSolution, pressure, compFrac, pressureScalingFactor, compFracScalingFactor );
+    return SolutionScalingKernel::launch< POLICY >( subRegion.size(), kernel );
   }
 };
 
-} // namespace kernels::fluidFlow::compositional::isothermal
+} // namespace kernels::fluidFlow::compositional::zformulation
 
 } // namespace geos
 
 
-#endif //GEOS_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONAL_SOLUTIONSCALINGZFORMULATIONKERNEL_HPP
+#endif //GEOS_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONAL_ZFORMULATION_SOLUTIONSCALINGKERNEL_HPP

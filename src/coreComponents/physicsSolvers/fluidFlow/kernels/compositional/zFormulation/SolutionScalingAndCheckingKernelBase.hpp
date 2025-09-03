@@ -14,11 +14,11 @@
  */
 
 /**
- * @file SolutionScalingAndCheckingZFormulationKernelBase.hpp
+ * @file SolutionScalingAndCheckingKernelBase.hpp
  */
 
-#ifndef GEOS_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONAL_SOLUTIONSCALINGANDCHECKINGZFORMULATIONKERNELBASE_HPP
-#define GEOS_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONAL_SOLUTIONSCALINGANDCHECKINGZFORMULATIONKERNELBASE_HPP
+#ifndef GEOS_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONAL_ZFORMULATION_SOLUTIONSCALINGANDCHECKINGKERNELBASE_HPP
+#define GEOS_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONAL_ZFORMULATION_SOLUTIONSCALINGANDCHECKINGKERNELBASE_HPP
 
 #include "common/DataLayouts.hpp"
 #include "common/DataTypes.hpp"
@@ -28,15 +28,15 @@
 namespace geos
 {
 
-namespace kernels::fluidFlow::compositional
+namespace kernels::fluidFlow::compositional::zformulation
 {
 
 /**
- * @class SolutionScalingAndCheckingZFormulationKernelBase
+ * @class SolutionScalingAndCheckingKernelBase
  * @brief Define the kernel for scaling the solution and check its validity
  */
 template< typename TYPE >
-class SolutionScalingAndCheckingZFormulationKernelBase
+class SolutionScalingAndCheckingKernelBase
 {
 public:
 
@@ -52,15 +52,15 @@ public:
    * @param[in] pressureScalingFactor the pressure local scaling factor
    * @param[in] compFracScalingFactor the component local scaling factor
    */
-  SolutionScalingAndCheckingZFormulationKernelBase( globalIndex const rankOffset,
-                                                    integer const numComp,
-                                                    string const dofKey,
-                                                    ElementSubRegionBase const & subRegion,
-                                                    arrayView1d< real64 const > const localSolution,
-                                                    arrayView1d< real64 const > const pressure,
-                                                    arrayView2d< real64 const, compflow::USD_COMP > const compFrac,
-                                                    arrayView1d< real64 > pressureScalingFactor,
-                                                    arrayView1d< real64 > compFracScalingFactor )
+  SolutionScalingAndCheckingKernelBase( globalIndex const rankOffset,
+                                        integer const numComp,
+                                        string const dofKey,
+                                        ElementSubRegionBase const & subRegion,
+                                        arrayView1d< real64 const > const localSolution,
+                                        arrayView1d< real64 const > const pressure,
+                                        arrayView2d< real64 const, compflow::USD_COMP > const compFrac,
+                                        arrayView1d< real64 > pressureScalingFactor,
+                                        arrayView1d< real64 > compFracScalingFactor )
     : m_rankOffset( rankOffset ),
     m_numComp( numComp ),
     m_dofNumber( subRegion.getReference< array1d< globalIndex > >( dofKey ) ),
@@ -174,9 +174,9 @@ protected:
 
 };
 
-} // namespace kernels::fluidFlow::compositional
+} // namespace kernels::fluidFlow::compositional::zformulation
 
 } // namespace geos
 
 
-#endif //GEOS_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONAL_SOLUTIONSCALINGANDCHECKINGZFORMULATIONKERNELBASE_HPP
+#endif //GEOS_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONAL_ZFORMULATION_SOLUTIONSCALINGANDCHECKINGKERNELBASE_HPP

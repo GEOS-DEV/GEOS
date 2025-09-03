@@ -30,7 +30,7 @@
 #include "constitutive/solid/CoupledSolidBase.hpp"
 #include "physicsSolvers/fluidFlow/kernels/compositional/AccumulationKernel.hpp"
 #include "physicsSolvers/fluidFlow/kernels/compositional/ThermalAccumulationKernel.hpp"
-#include "physicsSolvers/fluidFlow/kernels/compositional/zFormulation/AccumulationZFormulationKernel.hpp"
+#include "physicsSolvers/fluidFlow/kernels/compositional/zFormulation/AccumulationKernel.hpp"
 
 
 namespace geos
@@ -262,21 +262,6 @@ public:
                      DofManager const & dofManager,
                      CRSMatrixView< real64, globalIndex const > const & localMatrix,
                      arrayView1d< real64 > const & localRhs ) const = 0;
-
-  /**
-   * @brief assembles the flux terms for all cells with pressure jump stabilization
-   * @param dt time step
-   * @param domain the physical domain object
-   * @param dofManager degree-of-freedom manager associated with the linear system
-   * @param matrix the system matrix
-   * @param rhs the system right-hand side vector
-   */
-  virtual void
-  assembleStabilizedFluxTerms( real64 const dt,
-                               DomainPartition const & domain,
-                               DofManager const & dofManager,
-                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                               arrayView1d< real64 > const & localRhs ) const = 0;
 
   /**@}*/
 
@@ -624,7 +609,7 @@ void CompositionalMultiphaseBase::accumulationAssemblyLaunch( DofManager const &
   if( m_formulationType == CompositionalMultiphaseFormulationType::OverallComposition )
   {
     // isothermal for now
-    isothermal::AccumulationZFormulationKernelFactory::
+    zformulation::AccumulationKernelFactory::
       createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
                                                  m_numPhases,
                                                  dofManager.rankOffset(),

@@ -14,27 +14,27 @@
  */
 
 /**
- * @file PPUPhaseFluxZFormulation.hpp
+ * @file PPUPhaseFlux.hpp
  */
 
-#ifndef GEOS_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONAL_PPUPHASEFLUXZFORMULATION_HPP
-#define GEOS_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONAL_PPUPHASEFLUXZFORMULATION_HPP
+#ifndef GEOS_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONAL_ZFORMULATION_PPUPHASEFLUX_HPP
+#define GEOS_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONAL_ZFORMULATION_PPUPHASEFLUX_HPP
 
 #include "common/DataLayouts.hpp"
 #include "common/DataTypes.hpp"
 #include "constitutive/fluid/multifluid/Layouts.hpp"
 #include "constitutive/capillaryPressure/Layouts.hpp"
 #include "mesh/ElementRegionManager.hpp"
-#include "physicsSolvers/fluidFlow/kernels/compositional/zFormulation/PotGradZFormulation.hpp"
-#include "physicsSolvers/fluidFlow/kernels/compositional/zFormulation/PhaseComponentFluxZFormulation.hpp"
+#include "physicsSolvers/fluidFlow/kernels/compositional/zFormulation/PotGrad.hpp"
+#include "physicsSolvers/fluidFlow/kernels/compositional/zFormulation/PhaseComponentFlux.hpp"
 
 namespace geos
 {
 
-namespace kernels::fluidFlow::compositional::fvm::isothermal
+namespace kernels::fluidFlow::compositional::fvm::zformulation
 {
 
-struct PPUPhaseFluxZFormulation
+struct PPUPhaseFlux
 {
   template< typename VIEWTYPE >
   using ElementViewConst = ElementRegionManager::ElementViewConst< VIEWTYPE >;
@@ -105,10 +105,10 @@ struct PPUPhaseFluxZFormulation
     real64 dPresGrad_dC[numFluxSupportPoints][numComp]{};
     real64 dGravHead_dP[numFluxSupportPoints]{};
     real64 dGravHead_dC[numFluxSupportPoints][numComp]{};
-    PotGradZFormulation::compute< numComp, numFluxSupportPoints >( numPhase, ip, hasCapPressure, useNewGravity, seri, sesri, sei, trans, dTrans_dPres, pres,
-                                                                   gravCoef, phaseVolFrac, dPhaseVolFrac, phaseMassDens, dPhaseMassDens,
-                                                                   phaseCapPressure, dPhaseCapPressure_dPhaseVolFrac, potGrad, dPresGrad_dP,
-                                                                   dPresGrad_dC, dGravHead_dP, dGravHead_dC );
+    PotGrad::compute< numComp, numFluxSupportPoints >( numPhase, ip, hasCapPressure, useNewGravity, seri, sesri, sei, trans, dTrans_dPres, pres,
+                                                       gravCoef, phaseVolFrac, dPhaseVolFrac, phaseMassDens, dPhaseMassDens,
+                                                       phaseCapPressure, dPhaseCapPressure_dPhaseVolFrac, potGrad, dPresGrad_dP,
+                                                       dPresGrad_dC, dGravHead_dP, dGravHead_dC );
 
     // *** upwinding ***
 
@@ -146,16 +146,16 @@ struct PPUPhaseFluxZFormulation
       dPhaseFlux_dC[k_up][jc] += dPhaseMobSub[Deriv::dC+jc] * potGrad;
     }
 
-    //distribute on phaseComponentFlux here
-    PhaseComponentFluxZFormulation::compute( ip, k_up, seri, sesri, sei, phaseCompFrac, dPhaseCompFrac, phaseFlux
-                                             , dPhaseFlux_dP, dPhaseFlux_dC, compFlux, dCompFlux_dP, dCompFlux_dC );
+    // distribute on phaseComponentFlux here
+    PhaseComponentFlux::compute( ip, k_up, seri, sesri, sei, phaseCompFrac, dPhaseCompFrac, phaseFlux
+                                 , dPhaseFlux_dP, dPhaseFlux_dC, compFlux, dCompFlux_dP, dCompFlux_dC );
 
   }
 };
 
-} // namespace kernels::fluidFlow::compositional::fvm::isothermal
+} // namespace kernels::fluidFlow::compositional::fvm::zformulation
 
 } // namespace geos
 
 
-#endif // GEOS_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONAL_PPUPHASEFLUXZFORMULATION_HPP
+#endif // GEOS_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONAL_ZFORMULATION_PPUPHASEFLUX_HPP

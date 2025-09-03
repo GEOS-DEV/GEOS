@@ -14,11 +14,11 @@
  */
 
 /**
- * @file PotGradZFormulation.hpp
+ * @file PotGrad.hpp
  */
 
-#ifndef GEOS_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONAL_POTGRADZFORMULATION_HPP
-#define GEOS_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONAL_POTGRADZFORMULATION_HPP
+#ifndef GEOS_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONAL_ZFORMULATION_POTGRAD_HPP
+#define GEOS_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONAL_ZFORMULATION_POTGRAD_HPP
 
 #include "common/DataLayouts.hpp"
 #include "common/DataTypes.hpp"
@@ -30,10 +30,10 @@
 namespace geos
 {
 
-namespace kernels::fluidFlow::compositional::fvm::isothermal
+namespace kernels::fluidFlow::compositional::fvm::zformulation
 {
 
-struct PotGradZFormulation
+struct PotGrad
 {
   template< typename VIEWTYPE >
   using ElementViewConst = ElementRegionManager::ElementViewConst< VIEWTYPE >;
@@ -209,8 +209,8 @@ struct PotGradZFormulation
 
 };
 
-} // namespace kernels::fluidFlow::compositional::fvm::isothermal
+} // namespace kernels::fluidFlow::compositional::fvm::zformulation
 
 } // namespace geos
 
-#endif // GEOS_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONAL_POTGRADZFORMULATION_HPP
+#endif // GEOS_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONAL_ZFORMULATION_POTGRAD_HPP

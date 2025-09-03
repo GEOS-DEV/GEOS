@@ -14,11 +14,11 @@
  */
 
 /**
- * @file DirichletFluxComputeZFormulationKernel.hpp
+ * @file DirichletFluxComputeKernel.hpp
  */
 
-#ifndef GEOS_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONAL_DIRICHLETFLUXCOMPUTEZFORMULATIONKERNEL_HPP
-#define GEOS_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONAL_DIRICHLETFLUXCOMPUTEZFORMULATIONKERNEL_HPP
+#ifndef GEOS_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONAL_ZFORMULATION_DIRICHLETFLUXCOMPUTEKERNEL_HPP
+#define GEOS_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONAL_ZFORMULATION_DIRICHLETFLUXCOMPUTEKERNEL_HPP
 
 #include "codingUtilities/Utilities.hpp"
 #include "common/DataLayouts.hpp"
@@ -37,22 +37,22 @@
 namespace geos
 {
 
-namespace kernels::fluidFlow::compositional::fvm::isothermal
+namespace kernels::fluidFlow::compositional::fvm::zformulation
 {
 
-/******************************** DirichletFluxComputeZFormulationKernel ********************************/
+/******************************** DirichletFluxComputeKernel ********************************/
 
 /**
- * @class DirichletFluxComputeZFormulationKernel
+ * @class DirichletFluxComputeKernel
  * @tparam NUM_COMP number of fluid components
  * @tparam NUM_DOF number of degrees of freedom
  * @tparam FLUIDWRAPPER the type of the fluid wrapper
  * @brief Define the interface for the assembly kernel in charge of Dirichlet face flux terms
  */
 template< integer NUM_COMP, integer NUM_DOF, typename FLUIDWRAPPER >
-class DirichletFluxComputeZFormulationKernel : public FluxComputeKernel< NUM_COMP,
-                                                                         NUM_DOF,
-                                                                         BoundaryStencilWrapper >
+class DirichletFluxComputeKernel : public FluxComputeKernel< NUM_COMP,
+                                                             NUM_DOF,
+                                                             BoundaryStencilWrapper >
 {
 public:
 
@@ -117,20 +117,20 @@ public:
    * @param[inout] localRhs the local right-hand side vector
    * @param[in] kernelFlags flags packed together
    */
-  DirichletFluxComputeZFormulationKernel( integer const numPhases,
-                                          globalIndex const rankOffset,
-                                          FaceManager const & faceManager,
-                                          BoundaryStencilWrapper const & stencilWrapper,
-                                          FLUIDWRAPPER const & fluidWrapper,
-                                          DofNumberAccessor const & dofNumberAccessor,
-                                          CompFlowAccessors const & compFlowAccessors,
-                                          MultiFluidAccessors const & multiFluidAccessors,
-                                          CapPressureAccessors const & capPressureAccessors,
-                                          PermeabilityAccessors const & permeabilityAccessors,
-                                          real64 const dt,
-                                          CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                          arrayView1d< real64 > const & localRhs,
-                                          BitFlags< KernelFlags > kernelFlags )
+  DirichletFluxComputeKernel( integer const numPhases,
+                              globalIndex const rankOffset,
+                              FaceManager const & faceManager,
+                              BoundaryStencilWrapper const & stencilWrapper,
+                              FLUIDWRAPPER const & fluidWrapper,
+                              DofNumberAccessor const & dofNumberAccessor,
+                              CompFlowAccessors const & compFlowAccessors,
+                              MultiFluidAccessors const & multiFluidAccessors,
+                              CapPressureAccessors const & capPressureAccessors,
+                              PermeabilityAccessors const & permeabilityAccessors,
+                              real64 const dt,
+                              CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                              arrayView1d< real64 > const & localRhs,
+                              BitFlags< KernelFlags > kernelFlags )
     : Base( numPhases,
             rankOffset,
             stencilWrapper,
@@ -467,9 +467,9 @@ protected:
 
 
 /**
- * @class DirichletFluxComputeZFormulationKernelFactory
+ * @class DirichletFluxComputeKernelFactory
  */
-class DirichletFluxComputeZFormulationKernelFactory
+class DirichletFluxComputeKernelFactory
 {
 public:
 
@@ -517,7 +517,7 @@ public:
         elemManager.constructArrayViewAccessor< globalIndex, 1 >( dofKey );
       dofNumberAccessor.setName( solverName + "/accessors/" + dofKey );
 
-      using kernelType = DirichletFluxComputeZFormulationKernel< NUM_COMP, NUM_DOF, typename FluidType::KernelWrapper >;
+      using kernelType = DirichletFluxComputeKernel< NUM_COMP, NUM_DOF, typename FluidType::KernelWrapper >;
       typename kernelType::CompFlowAccessors compFlowAccessors( elemManager, solverName );
       typename kernelType::MultiFluidAccessors multiFluidAccessors( elemManager, solverName );
       typename kernelType::CapPressureAccessors capPressureAccessors( elemManager, solverName );
@@ -531,8 +531,8 @@ public:
   }
 };
 
-} // namespace kernels::fluidFlow::compositional::fvm::isothermal
+} // namespace kernels::fluidFlow::compositional::fvm::zformulation
 
 } // namespace geos
 
-#endif //GEOS_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONAL_DIRICHLETFLUXCOMPUTEZFORMULATIONKERNEL_HPP
+#endif //GEOS_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONAL_ZFORMULATION_DIRICHLETFLUXCOMPUTEKERNEL_HPP
