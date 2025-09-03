@@ -22,6 +22,7 @@
 #include "fieldSpecification/SourceFluxBoundaryCondition.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
 #include "physicsSolvers/fluidFlow/LogLevelsInfo.hpp"
+#include "common/TimingMacros.hpp"  // Pour les macros GEOS_MARK_*
 
 namespace geos
 {
@@ -259,24 +260,42 @@ bool SourceFluxStatsAggregator::execute( real64 const GEOS_UNUSED_PARAM( time_n 
         } );
         fluxStats.stats().combine( regionStats.stats() );
 
+        GEOS_MARK_BEGIN( SF_subRegion_statsLogGathering );
         gatherStatsForLog( regionsStatsOn,
                            fluxStats.getFluxName(), region.getName(), logData, regionStats );
+        GEOS_MARK_END( SF_subRegion_statsLogGathering );
+
+        GEOS_MARK_BEGIN( SF_subRegion_statsCSVGathering );
         gatherStatsForCSV( fluxStats.getFluxName(), region.getName(), csvData, regionStats );
+        GEOS_MARK_END( SF_subRegion_statsCSVGathering );
       } );
 
       meshLevelStats.stats().combine( fluxStats.stats() );
 
+      GEOS_MARK_BEGIN( SF_region_statsLogGathering );
       gatherStatsForLog( fluxesStatsOn,
                          fluxStats.getFluxName(), allRegionsStr, logData, fluxStats );
+      GEOS_MARK_END( SF_region_statsLogGathering );
+
+      GEOS_MARK_BEGIN( SF_region_statsCSVGathering );
       gatherStatsForCSV( fluxStats.getFluxName(), allRegionsStr, csvData, fluxStats );
+      GEOS_MARK_END( SF_region_statsCSVGathering );
     } );
+    GEOS_MARK_BEGIN( SF_mesh_statsLogGathering );
     gatherStatsForLog( fluxMeshesStatsOn,
                        fluxesSetStr, allRegionsStr, logData, meshLevelStats );
+    GEOS_MARK_END( SF_mesh_statsLogGathering );
+    GEOS_MARK_BEGIN( SF_mesh_statsCSVGathering );
     gatherStatsForCSV( fluxesSetStr, allRegionsStr, csvData, meshLevelStats );
+    GEOS_MARK_END( SF_mesh_statsCSVGathering );
 
+    GEOS_MARK_BEGIN( SF_mesh_statsLogOutput );
     outputStatsToLog( fluxMeshesStatsOn,
                       stringutilities::join( m_fluxNames, ", " ), logData );
+    GEOS_MARK_END( SF_mesh_statsLogOutput );
+    GEOS_MARK_BEGIN( SF_mesh_statsCSVOutput );
     outputStatsToCSV( csvData );
+    GEOS_MARK_END( SF_mesh_statsCSVOutput );
   } );
 
   return false;
