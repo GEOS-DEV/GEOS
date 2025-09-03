@@ -16,8 +16,6 @@
 #include "FieldSpecificationManager.hpp"
 #include "mesh/DomainPartition.hpp"
 #include "mesh/MeshBody.hpp"
-#include "mainInterface/ProblemManager.hpp"
-#include <unordered_set>
 
 namespace geos
 {

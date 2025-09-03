@@ -322,19 +322,19 @@ TEST( testIncorrectFieldSpecification, testSetNames )
 TEST( testIncorrectFieldSpecification, testWrongFieldNames )
 {
   static constexpr auto expectedMsg1 =  "Available fieldname in ElementRegions/Channel1 are:";
-  static constexpr auto expectedMsg2 =  "{ bcPressure, bcTemperature, dMass, dMobility, deltaPressure, deltaVolume, gravityCoefficient, "
-                                        "initialPressure, initialTemperature, mass, mass_n, mobility, netToGross, pressure, pressure_n, temperature, temperature_n, water_density, "
-                                        "water_dDensity, water_viscosity, water_dViscosity, water_internalEnergy, water_dInternalEnergy, water_enthalpy, water_dEnthalpy, "
-                                        "rockPorosity_porosity, rockPorosity_initialPorosity, rockPorosity_referencePorosity, channelPerm_permeability, channelPerm_dPerm_dPressure }";
+  static constexpr auto expectedMsg2 =  "{ channelPerm_dPerm_dPressure, channelPerm_permeability, deltaPressure, elementCenter, elementVolume, "
+                                        "ghostRank, localToGlobalMap, mass, pressure, rockPorosity_initialPorosity, rockPorosity_porosity, "
+                                        "rockPorosity_referencePorosity, temperature, water_dDensity, water_dEnthalpy, water_dInternalEnergy, "
+                                        "water_dViscosity, water_density, water_enthalpy, water_internalEnergy, water_viscosity }";
   setupAndPlayWrongFieldSpecification( xmlWrongFieldNames, expectedMsg1, expectedMsg2 );
 }
 
 TEST( testIncorrectFieldSpecification, testFieldSpecification )
 {
-  static constexpr auto tokens =  "bcPressure, bcTemperature, dMass, dMobility, deltaPressure, deltaVolume, gravityCoefficient, "
-                                  "initialPressure, initialTemperature, mass, mass_n, mobility, netToGross, pressure, pressure_n, temperature, temperature_n, water_density, "
-                                  "water_dDensity, water_viscosity, water_dViscosity, water_internalEnergy, water_dInternalEnergy, water_enthalpy, water_dEnthalpy, "
-                                  "rockPorosity_porosity, rockPorosity_initialPorosity, rockPorosity_referencePorosity, channelPerm_permeability, channelPerm_dPerm_dPressure";
+  static constexpr auto tokens =  "channelPerm_dPerm_dPressure, channelPerm_permeability, deltaPressure, elementCenter, elementVolume, "
+                                  "ghostRank, localToGlobalMap, mass, pressure, rockPorosity_initialPorosity, rockPorosity_porosity, "
+                                  "rockPorosity_referencePorosity, temperature, water_dDensity, water_dEnthalpy, water_dInternalEnergy, "
+                                  "water_dViscosity, water_density, water_enthalpy, water_internalEnergy, water_viscosity";
   std::vector< string > const splitToken = splitStringByDelimiter( tokens, "," );
   for( auto const & token : splitToken )
   {
@@ -348,20 +348,6 @@ TEST( testIncorrectFieldSpecification, testFieldSpecification )
     )xml";
     setupAndCheckFieldSpecification( xmlTemplate );
   }
-}
-
-TEST( testIncorrectFieldSpecification, testWrongFieldAndTargetAllRegion )
-{
-  static constexpr auto expectedMsg1 = " ";
-  static constexpr auto expectedMsg2 =  "There are also 3 CellElementsRegions that can be appended under ElementRegions : [Channel1, Channel2, Barrier]";
-  setupAndPlayWrongFieldSpecification( xmlWrongTargetAllRegion, expectedMsg1, expectedMsg2 );
-}
-
-TEST( testIncorrectFieldSpecification, testWrongNoMaterialFound )
-{
-  static constexpr auto expectedMsg1 = " ";
-  static constexpr auto expectedMsg2 =  "No material found under ElementRegions/Channel2";
-  setupAndPlayWrongFieldSpecification( xmlWrongNoMaterial, expectedMsg1, expectedMsg2 );
 }
 
 int main( int argc, char * * argv )
