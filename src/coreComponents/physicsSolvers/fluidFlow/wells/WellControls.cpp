@@ -20,17 +20,10 @@
 #include "LogLevelsInfo.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellControls.hpp"
 
-#include "physicsSolvers/fluidFlow/wells/WellBHPConstraints.hpp"
-#include "physicsSolvers/fluidFlow/wells/WellWHPConstraints.hpp"
-#include "physicsSolvers/fluidFlow/wells/WellVolumeRateConstraints.hpp"
-#include "physicsSolvers/fluidFlow/wells/WellPhaseRateConstraints.hpp"
-#include "physicsSolvers/fluidFlow/wells/WellMassRateConstraints.hpp"
-#include "physicsSolvers/fluidFlow/wells/WellLiquidRateConstraints.hpp"
-
 #include "WellConstants.hpp"
 #include "dataRepository/InputFlags.hpp"
 #include "functions/FunctionManager.hpp"
-
+#include "physicsSolvers/fluidFlow/wells/PipeFlowTableFunction.hpp"
 
 namespace geos
 {
@@ -205,59 +198,91 @@ Group * WellControls::createChild( string const & childKey, string const & child
   if( childKey == viewKeyStruct::minimumWHPConstraintString() )
   {
     MinimumWHPConstraint & whpConstraint = registerGroup< MinimumWHPConstraint >( childName );
-    constraint = &whpConstraint;
-  }
-  else if( childKey == viewKeyStruct::maximumWHPConstraintString() )
-  {
-    MaximumWHPConstraint & whpConstraint = registerGroup< MaximumWHPConstraint >( childName );
+    m_minWHPConstraint = std::shared_ptr< MinimumWHPConstraint >( &whpConstraint );
     constraint = &whpConstraint;
   }
   else if( childKey == viewKeyStruct::minimumBHPConstraintString() )
   {
     MinimumBHPConstraint & bhpConstraint = registerGroup< MinimumBHPConstraint >( childName );
+    m_minBHPConstraint = std::shared_ptr< MinimumBHPConstraint >( &bhpConstraint );
     constraint = &bhpConstraint;
   }
   else if( childKey == viewKeyStruct::maximumBHPConstraintString() )
   {
     MaximumBHPConstraint & bhpConstraint = registerGroup< MaximumBHPConstraint >( childName );
+    m_maxBHPConstraint = std::shared_ptr< MaximumBHPConstraint >( &bhpConstraint );
     constraint = &bhpConstraint;
   }
   else if( childKey == viewKeyStruct::phaseProductionConstraintString() )
   {
     PhaseProductionConstraint & phaseConstraint = registerGroup< PhaseProductionConstraint >( childName );
+    m_productionRateConstraintList.emplace_back( std::shared_ptr< WellConstraintBase >( &phaseConstraint ) );
     constraint = &phaseConstraint;
   }
   else if( childKey == viewKeyStruct::phaseInjectionConstraintString() )
   {
     PhaseInjectionConstraint & phaseConstraint = registerGroup< PhaseInjectionConstraint >( childName );
+    m_injectionRateConstraintList.emplace_back( std::shared_ptr< WellConstraintBase >( &phaseConstraint ) );
     constraint = &phaseConstraint;
   }
   else if( childKey == viewKeyStruct::volumeProductionConstraintString() )
   {
     VolumeProductionConstraint & volConstraint = registerGroup< VolumeProductionConstraint >( childName );
+    m_productionRateConstraintList.emplace_back( std::shared_ptr< WellConstraintBase >( &volConstraint ) );
     constraint = &volConstraint;
   }
   else if( childKey == viewKeyStruct::volumeInjectionConstraintString() )
   {
     VolumeInjectionConstraint & volConstraint = registerGroup< VolumeInjectionConstraint >( childName );
+    m_injectionRateConstraintList.emplace_back( std::shared_ptr< WellConstraintBase >( &volConstraint ) );
     constraint = &volConstraint;
   }
   else if( childKey == viewKeyStruct::massProductionConstraintString() )
   {
     MassProductionConstraint & massConstraint = registerGroup< MassProductionConstraint >( childName );
+    m_productionRateConstraintList.emplace_back( std::shared_ptr< WellConstraintBase >( &massConstraint ) );
     constraint = &massConstraint;
+
   }
   else if( childKey == viewKeyStruct::massInjectionConstraintString() )
   {
     MassInjectionConstraint & massConstraint = registerGroup< MassInjectionConstraint >( childName );
+    m_injectionRateConstraintList.emplace_back( std::shared_ptr< WellConstraintBase >( &massConstraint ) );
     constraint = &massConstraint;
   }
   else if( childKey == viewKeyStruct::liquidProductionConstraintString() )
   {
     LiquidProductionConstraint & liquidConstraint = registerGroup< LiquidProductionConstraint >( childName );
+    m_productionRateConstraintList.emplace_back( std::shared_ptr< LiquidProductionConstraint >( &liquidConstraint ) );
     constraint = &liquidConstraint;
   }
   return constraint;
+}
+
+void WellControls::createMinBHPConstraintForWHP()
+{
+  // Create constraint and set local pointer
+  MinimumBHPConstraint & bhpConstraint = registerGroup< MinimumBHPConstraint >( m_minWHPConstraint->getName()+"MinimumBHPConstraint" );
+  m_minBHPConstraintForWHP = std::shared_ptr< MinimumBHPConstraint >( &bhpConstraint );
+  // Set properties from the original minBHP constraint
+  m_minBHPConstraintForWHP->setReferenceElevation( m_minBHPConstraint->getReferenceElevation() );
+  m_minBHPConstraintForWHP->setReferenceGravityCoef ( m_minBHPConstraint->getReferenceGravityCoef() );
+  // Set to inactive. WHP estimator solve will set status
+  m_minBHPConstraintForWHP->setConstraintActive( false );
+}
+void WellControls::createMaxLiquidConstraintForWHP()
+{
+  // Create constraint and set local pointer
+  LiquidProductionConstraint & liquidConstraint = registerGroup< LiquidProductionConstraint >( m_minWHPConstraint->getName()+"LiquidProductionConstraint" );
+  m_maxLiquidConstraintForWHP = std::shared_ptr< LiquidProductionConstraint >( &liquidConstraint );
+  // Set properties from VFP table
+  FunctionManager & functionManager = FunctionManager::getInstance();
+  const PipeFlowTableFunction & m_flowTable =  functionManager.getGroup< PipeFlowTableFunction const >( m_minWHPConstraint->getFlowTableName());
+  string_array ratePhases = m_flowTable.getRatePhases();
+  m_maxLiquidConstraintForWHP->setPhaseNames( ratePhases );
+  m_maxLiquidConstraintForWHP->validateLiquidType( getMultiFluidSeparator());
+  // WHP estimator solve will set status
+  m_maxLiquidConstraintForWHP->setConstraintActive( false );
 }
 
 void WellControls::expandObjectCatalogs()

@@ -33,7 +33,7 @@ PipeFlowTableFunction::PipeFlowTableFunction( const string & name,
   MultivariableNonuniformTableFunction( name, parent ),
   m_tableFunction( nullptr )
 {
-  registerWrapper( viewKeyStruct::rateType(), &m_tableName ).
+  registerWrapper( viewKeyStruct::tableName(), &m_tableName ).
     setInputFlag( InputFlags::REQUIRED ).
     setSizedFromParent( 0 ).
     setDescription( "Flow table name. Table is associated with a Min/MaxWHPConstraint with the constraints flowTableName field" );
@@ -103,18 +103,18 @@ void PipeFlowTableFunction::postInputInitialization()
   checkNotDecreasing( m_gfr, getGasFractionType());
 
   // fluid model phase naming convention associated with rate type
-  if( m_rateType == "LIQ" )
+  if( m_rateType == "liq" )
   {
     m_ratePhases.resize( 2 );
     m_ratePhases[0] = "oil";
-    m_ratePhases[1] = "wat";
+    m_ratePhases[1] = "water";
   }
-  else if( m_rateType == "OIL" )
+  else if( m_rateType == "oil" )
   {
     m_ratePhases.resize( 1 );
     m_ratePhases[0] = "oil";
   }
-  else if( m_rateType == "GAS" )
+  else if( m_rateType == "gas" )
   {
     m_ratePhases.resize( 1 );
     m_ratePhases[0] = "gas";
@@ -140,47 +140,49 @@ void PipeFlowTableFunction::initializeFunction()
   // Copy inputs into formats needed by table function
 
   integer_array axisPoints( nDims );
-  axisPoints[0] = m_rate.size();
-  axisPoints[1] = m_whp.size();
-  axisPoints[2] = m_wfr.size();
-  axisPoints[3] = m_gfr.size();
 
+  axisPoints[0] = m_whp.size();
+  axisPoints[1] = m_gfr.size();
+  axisPoints[2] = m_wfr.size();
+  axisPoints[3] = m_rate.size();
 
   array2d< real64 > axisCoordinates( nDims, maxVar );
-  for( int i=0; i< m_rate.size(); i++ )
-  {
-    axisCoordinates[0][i] = m_rate[i];
-  }
+
   for( int i=0; i<m_whp.size(); i++ )
   {
-    axisCoordinates[1][i] = m_whp[i];
+    axisCoordinates[0][i] = m_whp[i];
+  }
+
+  for( int i=0; i<m_gfr.size(); i++ )
+  {
+    axisCoordinates[1][i] = m_gfr[i];
   }
   for( int i=0; i<m_wfr.size(); i++ )
   {
     axisCoordinates[2][i] = m_wfr[i];
   }
-  for( int i=0; i<m_gfr.size(); i++ )
+  for( int i=0; i< m_rate.size(); i++ )
   {
-    axisCoordinates[3][i] = m_gfr[i];
+    axisCoordinates[3][i] = m_rate[i];
   }
-  m_tableFunction->setTableCoordinates( nDims, nOps, axisCoordinates, axisPoints );
-  m_tableFunction->setTableValues( m_bhp );
-  m_tableFunction->initializeFunction();
+  setTableCoordinates( nDims, nOps, axisCoordinates, axisPoints );
+  setTableValues( m_bhp );
+  MultivariableNonuniformTableFunction::initializeFunction();
+
 
 }
-
-void PipeFlowTableFunction::calculateWHP( real64 const & bhp, array1d< real64 > const & phaseRates, real64 & whp, integer & solveStat ) const
+void PipeFlowTableFunction::calculateBHP( array1d< real64 > const & phaseRates, real64 const & whp, real64 & bhp, integer & solveStat ) const
 {
 
-  MultivariableNonuniformTableFunctionStaticKernel< 4, 1 > kernel( m_tableFunction->getAxisCoordinates(),
-                                                                   m_tableFunction->getAxisPoints(),
-                                                                   m_tableFunction->getAxisSteps(),
-                                                                   m_tableFunction->getAxisStepInvs(),
-                                                                   m_tableFunction->getAxisHypercubeMults(),
-                                                                   m_tableFunction->getHypercubeData()
+  MultivariableNonuniformTableFunctionStaticKernel< 4, 1 > kernel( getAxisCoordinates(),
+                                                                   getAxisPoints(),
+                                                                   getAxisSteps(),
+                                                                   getAxisStepInvs(),
+                                                                   getAxisHypercubeMults(),
+                                                                   getHypercubeData()
                                                                    );
 
-  solveStat = 0;  // Assume success
+  solveStat = 0;                                                                     // Assume success
   // liq(oil)=0 vap = 1 wat = 2
   //real64 totalVolumeRate = 0.0;
   //for( int i = 0; i < phaseRates.size(); ++i )
@@ -193,10 +195,47 @@ void PipeFlowTableFunction::calculateWHP( real64 const & bhp, array1d< real64 > 
   real64 gor = phaseRates[1]/phaseRates[0];
   real64 liq = (phaseRates[0] /* + phaseRates[1]*/)*m_sign;  // liquid rate
   array1d< real64 > table_coords( 4 );
-  table_coords[0]=liq;  // liquid rate
-  table_coords[1]=whp; // well head pressure
+  table_coords[0]=whp;  // liquid rate
+  table_coords[1]=gor; // well head pressure
   table_coords[2]=wct; // water cut
-  table_coords[3]=gor; // gas oil ratio
+  table_coords[3]=liq; // gas oil ratio
+  std::cout << "PipeFlowTableFunction::calculateWHP input bhp = " << bhp << " liq = " << liq << " whp " << whp << " wct = " << wct << " gor = " << gor << std::endl;
+
+  array1d< real64 > table_bhp( 1 );
+  array2d< real64 > derivs( 1, 4 );
+  kernel.compute( table_coords, table_bhp, derivs );
+  bhp = table_bhp[0];
+}
+
+void PipeFlowTableFunction::calculateWHP( real64 const & bhp, array1d< real64 > const & phaseRates, real64 & whp, integer & solveStat ) const
+{
+
+  MultivariableNonuniformTableFunctionStaticKernel< 4, 1 > kernel( getAxisCoordinates(),
+                                                                   getAxisPoints(),
+                                                                   getAxisSteps(),
+                                                                   getAxisStepInvs(),
+                                                                   getAxisHypercubeMults(),
+                                                                   getHypercubeData()
+                                                                   );
+
+  solveStat = 0;  // Assume success
+  // liq(oil)=0 vap = 1 wat = 2
+  //real64 totalVolumeRate = 0.0;
+  //for( int i = 0; i < phaseRates.size(); ++i )
+  //{
+  //  totalVolumeRate += phaseRates[i];
+//  }
+  std::cout << bhp << " " << phaseRates << " " << whp << std::endl;
+  integer m_sign=-1;
+  real64 wct = 0; // phaseRates[2]/totalVolumeRate*m_sign;
+  real64 gor = 0; //phaseRates[1]/phaseRates[0];
+  real64 liq = (phaseRates[0] /* + phaseRates[1]*/)*m_sign;  // liquid rate
+  array1d< real64 > table_coords( 4 );
+
+  table_coords[0]=whp; // well head pressure
+  table_coords[1]=gor; // gas oil ratio
+  table_coords[2]=wct; // water cut
+  table_coords[3]=liq;  // liquid rate
   std::cout << "PipeFlowTableFunction::calculateWHP input bhp = " << bhp << " liq = " << liq << " whp " << whp << " wct = " << wct << " gor = " << gor << std::endl;
 
   array1d< real64 > table_bhp( 1 );
@@ -209,13 +248,60 @@ void PipeFlowTableFunction::calculateWHP( real64 const & bhp, array1d< real64 > 
   while( iter < maxIters && std::abs( table_bhp[0] - bhp ) > tol )
   {
     // update whp
-    table_coords[1] -= ( table_bhp[0] - bhp ) / derivs[0][1];
+    table_coords[0] -= ( table_bhp[0] - bhp ) / derivs[0][0];
     kernel.compute( table_coords, table_bhp, derivs );
-    std::cout << " PipeFlowTableFunction::calculateWHP iter = " << iter << " whp = " << table_coords[1] << " residual = " << table_bhp[0] - bhp << std::endl;
+    std::cout << " PipeFlowTableFunction::calculateWHP iter = " << iter << " whp = " << table_coords[0] << " residual = " << table_bhp[0] - bhp << std::endl;
 
     ++iter;
   }
-  whp = table_coords[1];
+  whp = table_coords[0];
+}
+
+void PipeFlowTableFunction::writeTable() const
+{
+
+  std::ofstream of;
+  std::string filename = getTableName() + ".csv";
+  of.open( filename );
+
+
+
+  MultivariableNonuniformTableFunctionStaticKernel< 4, 1 > kernel( getAxisCoordinates(),
+                                                                   getAxisPoints(),
+                                                                   getAxisSteps(),
+                                                                   getAxisStepInvs(),
+                                                                   getAxisHypercubeMults(),
+                                                                   getHypercubeData()
+                                                                   );
+
+  of << "wellHeadPressure,gasFraction,waterFraction,rate,bottomHolePressure" << std::endl;
+  array1d< real64 > table_coords( 4 );
+
+  for( integer j=0; j < m_whp.size(); ++j )
+  {
+    table_coords[0]=m_whp[j];   // well head pressure
+
+    for( integer l=0; l < m_gfr.size(); ++l )
+    {
+      table_coords[1]=m_gfr[l];     // gas oil ratio
+      for( integer k=0; k < m_wfr.size(); ++k )
+      {
+        table_coords[2]=m_wfr[k]; // water cut
+        for( integer i=0; i < m_rate.size(); ++i )
+        {
+          table_coords[3]=m_rate[i]; // liquid rate
+
+          array1d< real64 > table_bhp( 1 );
+          array2d< real64 > derivs( 1, 4 );
+          kernel.compute( table_coords, table_bhp, derivs );
+          of << table_coords[0] << "," << table_coords[1] << "," << table_coords[2] << "," << table_coords[3] << "," << table_bhp[0] << std::endl;
+        }
+      }
+    }
+  }
+  of.close();
+
+
 }
 
 REGISTER_CATALOG_ENTRY( FunctionBase, PipeFlowTableFunction, string const &, Group * const )

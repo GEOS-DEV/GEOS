@@ -75,7 +75,7 @@ public:
    */
   const string_array & getRatePhases() const { return m_ratePhases; }
 
-    /**
+  /**
    * @brief Get rates table coordinates
    * @return array of phases
    */
@@ -101,6 +101,9 @@ public:
    */
   struct viewKeyStruct
   {
+    /// @return String key type of table name
+    static constexpr char const *tableName() { return "name"; }
+
     /// @return String key type of flow rate associated with the "rate" array
     static constexpr char const *rateType() { return "rateType"; }
     /// @return String key for "rate" array
@@ -126,8 +129,11 @@ public:
   /// ViewKey struct for the Perforation class
   viewKeysPipeFlowTableFunction;
 
+  void calculateBHP( array1d< real64 > const & phaseRates, real64 const & whp, real64 & bhp, integer & solveStat ) const;
 
   void calculateWHP( real64 const & bhp, array1d< real64 > const & phaseRates, real64 & whp, integer & solveStat ) const;
+
+  void writeTable() const;
 
 protected:
   virtual void postInputInitialization() override;
@@ -135,6 +141,7 @@ protected:
    * @brief Initialize the table function after setting table coordinates and values
    */
   virtual void initializeFunction() override;
+  //void initializeFunction1()  ;
 private:
 
   /// Name of the flow table

@@ -26,6 +26,12 @@
 #include "functions/TableFunction.hpp"
 #include "constitutive/fluid/multifluid/MultiFluidBase.hpp"
 
+#include "physicsSolvers/fluidFlow/wells/WellBHPConstraints.hpp"
+#include "physicsSolvers/fluidFlow/wells/WellWHPConstraints.hpp"
+#include "physicsSolvers/fluidFlow/wells/WellVolumeRateConstraints.hpp"
+#include "physicsSolvers/fluidFlow/wells/WellPhaseRateConstraints.hpp"
+#include "physicsSolvers/fluidFlow/wells/WellMassRateConstraints.hpp"
+#include "physicsSolvers/fluidFlow/wells/WellLiquidRateConstraints.hpp"
 
 namespace geos
 {
@@ -350,6 +356,15 @@ public:
    */
   integer estimateSolution() const { return m_estimateSolution; }
 
+  /**
+   * @brief getter for presence of production WHP constraint
+   * @return True if constraint exists
+   */
+  bool hasMinimumWHPConstraint() const
+  {
+    return static_cast< bool >(m_minWHPConstraint);
+  }
+
   ///@}
 
   /**
@@ -435,6 +450,18 @@ public:
    * @param[in] constraintName name to assign to the constraint
    */
   template< typename ConstraintType > void createConstraint ( string const & constraintName );
+
+  /**
+   * @brief Creates for internal constraints used by WHP constraints
+   */
+  void createMinBHPConstraintForWHP();
+  void createMaxLiquidConstraintForWHP();
+
+  /**
+   * @brief Getters for constraints
+   */
+  std::shared_ptr< MinimumWHPConstraint > getMinWHPConstraint() { return m_minWHPConstraint; };
+  std::shared_ptr< LiquidProductionConstraint > getMaxLiquidConstraintForWHP() { return m_maxLiquidConstraintForWHP; };
 protected:
 
   virtual void postInputInitialization() override;
@@ -542,6 +569,18 @@ private:
 
   // Current constraint
   WellConstraintBase * m_currentConstraint;
+  // Minimum and maximum BHP and WHP constraints
+  std::shared_ptr< MinimumBHPConstraint >  m_minBHPConstraint;
+  std::shared_ptr< MaximumBHPConstraint >  m_maxBHPConstraint;
+  std::shared_ptr< MinimumWHPConstraint >  m_minWHPConstraint;
+
+  // BHP constraint used when WHP constraint is active
+  std::shared_ptr< MinimumBHPConstraint >     m_minBHPConstraintForWHP;
+  std::shared_ptr< LiquidProductionConstraint >  m_maxLiquidConstraintForWHP;
+
+  // Lists of rate constraints
+  std::vector< std::shared_ptr< WellConstraintBase > > m_productionRateConstraintList;
+  std::vector< std::shared_ptr< WellConstraintBase > > m_injectionRateConstraintList;
 
 };
 

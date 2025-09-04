@@ -518,7 +518,9 @@ void CompositionalMultiphaseWell::validateWellConstraints( real64 const & time_n
                  ": Target total rate cannot be used for producers",
                  InputError );
 
-  // Find target phase index for phase rate constraint
+  // Find target phase index for phase rate constraint // tjb move
+  //if ( !wellControls.getConstraintSwitch())
+  //{ 
   for( integer ip = 0; ip < fluid.numFluidPhases(); ++ip )
   {
     if( fluid.phaseNames()[ip] == wellControls.getTargetPhaseName() )
@@ -530,6 +532,7 @@ void CompositionalMultiphaseWell::validateWellConstraints( real64 const & time_n
                  "WellControls " << wellControls.getDataContext() <<
                  ": Phase " << wellControls.getTargetPhaseName() << " not found for well control " << wellControls.getName(),
                  InputError );
+  //}
 }
 
 void CompositionalMultiphaseWell::initializePostSubGroups()
@@ -1058,25 +1061,11 @@ void CompositionalMultiphaseWell::initializePostInitialConditionsPreSubGroups()
       wellControls.setFluidSeparator( std::move( fluidSeparatorPtr ));
 
       // setup internal constraints if needed
-
-      wellControls.forSubGroups< MinimumWHPConstraint >( [&]( auto & constraint )
+      if( wellControls.hasMinimumWHPConstraint())
       {
-        // Flow table evaluation requires a phase rate constraint associated with rateType specified in table
-        // Create an internal liquid constraint and set phases to be consistent with rateType phases
-        LiquidProductionConstraint * liquidConstraint =
-          dynamic_cast< LiquidProductionConstraint * >(wellControls.createChild( WellControls::viewKeyStruct::liquidProductionConstraintString(), constraint.getName()+"LiquidProduction" ));
-
-        const std::string flowTableName = constraint.getFlowTableName();
-        FunctionManager & functionManager = FunctionManager::getInstance();
-        const PipeFlowTableFunction & m_flowTable =  functionManager.getGroup< PipeFlowTableFunction const >( constraint.getFlowTableName());
-
-        string_array ratePhases = m_flowTable.getRatePhases();
-        liquidConstraint->setPhaseNames( ratePhases );
-
-        liquidConstraint->validateLiquidType( wellControls.getMultiFluidSeparator());
-        // WHP estimator solve will set status
-        liquidConstraint->setConstraintActive( false );
-      } );
+        //wellControls.createMinBHPConstraintForWHP();
+        wellControls.createMaxLiquidConstraintForWHP();
+      }
     } );
   } );
 }
@@ -3214,7 +3203,6 @@ void CompositionalMultiphaseWell::computeWellPerforationRates( real64 const & ti
 
   CompositionalMultiphaseBase const & flowSolver = getParent().getGroup< CompositionalMultiphaseBase >( getFlowSolverName() );
 
-
   PerforationData * const perforationData = subRegion.getPerforationData();
   WellControls const & wellControls = getWellControls( subRegion );
   if( wellControls.isWellOpen( time_n ) && !m_keepVariablesConstantDuringInitStep )
@@ -4242,70 +4230,163 @@ void CompositionalMultiphaseWell::solveConstraint< MinimumWHPConstraint >( real6
   if( useEstimator )
   {
 
-    wellControls.forSubGroups< WHPConstraint, MinimumWHPConstraint >( [&]( auto & constraint )
+    //wellControls.forSubGroups< WHPConstraint, MinimumWHPConstraint >( [&]( auto & constraint )
+    if( wellControls.hasMinimumWHPConstraint())
     {
-      std::cout << "Use estimator " <<  useEstimator << " Evaluating constraint " << constraint.getName() << std::endl;
+      std::shared_ptr< MinimumWHPConstraint > whpConstraint = wellControls.getMinWHPConstraint();
+      // find limiting constraint
+      //wellControls.forSubGroups< MinimumWHPConstraint >( [&]( auto & constraint )
 
-      real64 wellWHP = constraint.getConstraintValue( time_n );
+      std::cout << "Use estimator " <<  useEstimator << " Evaluating constraint " << whpConstraint->getName() << std::endl;
+      real64 & currentBHP =   wellControls.getReference< real64 >( CompositionalMultiphaseWell::viewKeyStruct::currentBHPString() );
+      array1d< real64 > & currentPhaseVolRate =
+        wellControls.getReference< array1d< real64 > >( CompositionalMultiphaseWell::viewKeyStruct::currentPhaseVolRateString() );
+      real64 & currentTotalVolRate =
+        wellControls.getReference< real64 >( CompositionalMultiphaseWell::viewKeyStruct::currentTotalVolRateString() );
+
+
+      real64 constraintWHP = whpConstraint->getConstraintValue( time_n );
+      real64 currentWHP = constraintWHP;
       integer owner = -1;
 
       // Get the flow table function
       FunctionManager & functionManager = FunctionManager::getInstance();
-      const PipeFlowTableFunction & m_flowTable =  functionManager.getGroup< PipeFlowTableFunction const >( constraint.getFlowTableName());
-
+      const PipeFlowTableFunction & m_flowTable =  functionManager.getGroup< PipeFlowTableFunction const >( whpConstraint->getFlowTableName());
+      m_flowTable.writeTable();
+      integer flowTableSolveState;
       if( subRegion.isLocallyOwned() )
       {
         owner = MpiWrapper::commRank( MPI_COMM_GEOS );
-        integer flowTableSolveState;
-        real64 wellBHP = wellControls.getReference< real64 >( CompositionalMultiphaseWell::viewKeyStruct::currentBHPString() );
-        array1d< real64 > & phaseRates = wellControls.getReference< array1d< real64 > >(
-          CompositionalMultiphaseWell::viewKeyStruct::currentPhaseVolRateString() );
 
-        m_flowTable.calculateWHP( wellBHP, phaseRates, wellWHP, flowTableSolveState );
+
+        m_flowTable.calculateWHP( currentBHP, currentPhaseVolRate, currentWHP, flowTableSolveState );
       }
       owner = MpiWrapper::max( owner );
 
-      MpiWrapper::broadcast( wellWHP, owner );
+      MpiWrapper::broadcast( currentWHP,
+                             owner );
 
-      if( wellWHP < constraint.getConstraintValue( time_n ) )
+      if( currentWHP < constraintWHP )
       {
-        std::cout << "Whp constraint violated " << wellWHP << " " << constraint.getConstraintValue( time_n ) << std::endl;
-        const array1d< real64 > & liquidRates = m_flowTable.getRates();
-        integer numRates = liquidRates.size();
 
-        real64 liqRate = liquidRates[numRates/2];
+        std::cout << " WHP constraint violated " << currentWHP << " < " << constraintWHP << " bhp " << currentBHP << " phase rates " << currentPhaseVolRate << " total vol " << currentTotalVolRate <<
+          std::endl;
+        // WHP is limiting  set WHP to constraint value
+        currentWHP = constraintWHP;
 
         // name of internal constraint for WHP solve
-        LiquidProductionConstraint * liqConstraint=nullptr;
-        std::string liqConstraintName ( constraint.getName()+"LiquidProduction" );
-        // find constraint
-        wellControls.forSubGroups< LiquidProductionConstraint >( [&]( auto & constraint )
-        {
-          if( constraint.getName() == liqConstraintName )
-          {
-            liqConstraint=&constraint;
-
-          }
-        } );
-        wellControls.setCurrentConstraint( liqConstraint );
-        wellControls.setControl( static_cast< WellControls::Control >(constraint.getControl()) );     // tjb old
+        std::shared_ptr< LiquidProductionConstraint > liqConstraint=  wellControls.getMaxLiquidConstraintForWHP();
+        
+        // sets. tjb cleanup
+        wellControls.setCurrentConstraint( liqConstraint.get() );
+        wellControls.setControl( static_cast< WellControls::Control >(liqConstraint->getControl()) );     // tjb old
         WellControls::Control wellControl = wellControls.getControl();
         MpiWrapper::broadcast( wellControl, owner );
         wellControls.setControl( wellControl );
+        std::ofstream of;
+        of.open( "fl.csv" );
+        of << "liq ,bhp ,tablebhp"<< std::endl;
+        // Liquid constraint is used to find intersection of IPR and VLP
+        const array1d< real64 > & liquidRates = m_flowTable.getRates();
+        std::cout << liquidRates << std::endl;
+        integer numRates = liquidRates.size();
+        real64 liqRate0;
+        real64 bhp0;
+        real64 tableBHP0;
 
-        liqConstraint->setConstraintValue( liqRate );
+        liqRate0= liquidRates[0];
+        for( integer i=0; i < 1; ++i) // numRates; ++i )
+        {
+          of << liquidRates[i] << ",";
+          liqRate0 = liquidRates[i];
+          liqConstraint->setConstraintValue( liqRate0 );
+          solveNonlinearSystem( time_n,
+                                dt,
+                                cycleNumber,
+                                domain,
+                                mesh,
+                                elemManager,
+                                subRegion,
+                                dofManager );
+          bhp0 = currentBHP;
 
+          m_flowTable.calculateBHP( currentPhaseVolRate, currentWHP, tableBHP0,
+                                    flowTableSolveState );
+          std::cout << " Solve at liquid rate " << liqRate0 << " whp " << constraintWHP << " bhp " << bhp0 << " table bhp " << tableBHP0<< " phase rates " << currentPhaseVolRate <<
+            " total vol " << currentTotalVolRate << std::endl;
+          of << bhp0 << "," << tableBHP0 << std::endl;
+        }
+        of.close();
+        liqConstraint->setConstraintValue( liquidRates[numRates-1] );
+        solveNonlinearSystem( time_n,
+                              dt,
+                              cycleNumber,
+                              domain,
+                              mesh,
+                              elemManager,
+                              subRegion,
+                              dofManager );
+        real64 bhp1 = currentBHP;
+        real64 liqRate1 = liquidRates[numRates-1];
+        real64 tableBHP1;
+        m_flowTable.calculateBHP( currentPhaseVolRate, currentWHP, tableBHP1,
+                                  flowTableSolveState );
+
+        std::cout << " Solve at liquid rate " << liqRate1 << " whp  " << constraintWHP << " bhp " << bhp1 << " table bhp " << tableBHP1<< " phase rates " << currentPhaseVolRate <<
+          " total vol " << currentTotalVolRate << " bhp res " << bhp1-tableBHP1 << std::endl;
+
+
+        integer const maxIters=20;
+        real64 const tol = 1e-6;
+        integer iter = 0;
+        while( iter < maxIters && std::abs( tableBHP1 - bhp1 ) > tol )
+        {
+          // update whp
+          real64 m = (liqRate1-liqRate0)/(bhp1-bhp0);
+          
+         
+          real64 dy0 = tableBHP0 - bhp0;
+          real64 dy1 =  bhp1 - tableBHP1;
+          real64 dx  = liqRate1 - liqRate0;
+          real64 x0  = liqRate0;
+          liqRate0 = liqRate1;
+          bhp0 = bhp1;
+          tableBHP0 = tableBHP1;
+          //
+          liqRate1 -= m*  (tableBHP1-bhp1);
+          liqRate1 = x0;
+          liqRate1 +=   dy1*dx/(dy1+dy0);
+
+          liqConstraint->setConstraintValue( liqRate1 );
+          solveNonlinearSystem( time_n,
+                                dt,
+                                cycleNumber,
+                                domain,
+                                mesh,
+                                elemManager,
+                                subRegion,
+                                dofManager );
+          bhp1 = currentBHP;
+          m_flowTable.calculateBHP( currentPhaseVolRate, currentWHP, tableBHP1,
+                                    flowTableSolveState );
+          std::cout << " Solve at liquid rate " << liqRate1 << " whp  " << constraintWHP << " bhp " << bhp1 << " table bhp " << tableBHP1 << " phase rates " << currentPhaseVolRate <<
+            " total vol " << currentTotalVolRate << " bhp res " << bhp1-tableBHP1 << std::endl;
+
+
+          ++iter;
+        }
 
         // Use liquid constraint to find intersection of IPR and VLP
+
+        wellControls.setControl( static_cast< WellControls::Control >(liqConstraint->getControl()) );   // tjb old
+        wellControls.setCurrentConstraint( liqConstraint.get());
       }
-      wellControls.setControl( static_cast< WellControls::Control >(constraint.getControl()) );     // tjb old
-      wellControls.setCurrentConstraint( &constraint );
 
       // If a well is opened and then timestep is cut resulting in the well being shut, if the well is opened
 // the well initialization code requires control type to by synced
- 
+
 // Only subregion owner evaluates well control and control changes need to be broadcast to all ranks
- 
+
       WellControls::Control wellControl = wellControls.getControl();
       MpiWrapper::broadcast( wellControl, owner );
       wellControls.setControl( wellControl );
@@ -4317,18 +4398,18 @@ void CompositionalMultiphaseWell::solveConstraint< MinimumWHPConstraint >( real6
                             elemManager,
                             subRegion,
                             dofManager );
-
+      WellConstraintBase *  constraint = wellControls.getCurrentConstraint();
       // Store computed well quantities for this constraint
-      constraint.setBHP ( wellControls.getReference< real64 >( CompositionalMultiphaseWell::viewKeyStruct::currentBHPString() ));
-      constraint.setPhaseVolumeRates ( wellControls.getReference< array1d< real64 > >(
-                                         CompositionalMultiphaseWell::viewKeyStruct::currentPhaseVolRateString() ) );
-      constraint.setTotalVolumeRate ( wellControls.getReference< real64 >(
-                                        CompositionalMultiphaseWell::viewKeyStruct::currentTotalVolRateString() ));
-      constraint.setMassRate( wellControls.getReference< real64 >( CompositionalMultiphaseWell::viewKeyStruct::currentMassRateString() ));
+      constraint->setBHP ( wellControls.getReference< real64 >( CompositionalMultiphaseWell::viewKeyStruct::currentBHPString() ));
+      constraint->setPhaseVolumeRates ( wellControls.getReference< array1d< real64 > >(
+                                          CompositionalMultiphaseWell::viewKeyStruct::currentPhaseVolRateString() ) );
+      constraint->setTotalVolumeRate ( wellControls.getReference< real64 >(
+                                         CompositionalMultiphaseWell::viewKeyStruct::currentTotalVolRateString() ));
+      constraint->setMassRate( wellControls.getReference< real64 >( CompositionalMultiphaseWell::viewKeyStruct::currentMassRateString() ));
 
-      std::cout << constraint.getName() << " " << constraint.bottomHolePressure() << " " << constraint.phaseVolumeRates() << " " << constraint.totalVolumeRate() << " " << constraint.massRate() <<
+      std::cout << constraint->getName() << " " << constraint->bottomHolePressure() << " " << constraint->phaseVolumeRates() << " " << constraint->totalVolumeRate() << " " << constraint->massRate() <<
         std::endl;
-    } );
+    }
   }
 }
 

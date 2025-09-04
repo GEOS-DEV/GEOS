@@ -126,6 +126,12 @@ public:
   real64 getReferenceElevation() const { return m_refElevation; }
 
   /**
+   * @brief Set the reference elevation where the BHP control is enforced
+   * @return the reference elevation
+   */
+  void setReferenceElevation( real64 const & refElevation ) { m_refElevation=refElevation; }
+
+  /**
    * @brief Getter for the reference gravity coefficient
    * @return the reference gravity coefficient
    */
