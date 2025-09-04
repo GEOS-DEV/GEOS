@@ -210,37 +210,16 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
                                        fs.getFieldName(), fs.getObjectPath() );
 
       DomainPartition const & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
-      Group const & meshBody = domain.getMeshBodies();
+      Group const & meshBodies = domain.getMeshBodies();
 
       std::set< string > registeredFields;
-      auto processWrappers = [&]( auto const * path ) {
-        path->forWrappers( [&]( dataRepository::WrapperBase const & wrapper ) {
+      objectPath.forObjectsInPath( meshBodies,
+                                   [&]( Group const & targetGroup )
+      {
+        targetGroup.forWrappers( [&]( dataRepository::WrapperBase const & wrapper ) {
           if( wrapper.getPlotLevel() != dataRepository::PlotLevel::NOPLOT )
             registeredFields.insert( wrapper.getName());
         } );
-      };
-      objectPath.forObjectsInPath( meshBody,
-                                   [&]( Group const & targetGroup )
-      {
-
-        if( auto const subRegion = dynamic_cast< CellElementSubRegion const * >(&targetGroup))
-        {
-          processWrappers( subRegion );
-        }
-        else if( auto const nodeManager = dynamic_cast< NodeManager const * >(&targetGroup))
-        {
-          processWrappers( nodeManager );
-        }
-        else if( auto const edgeManager = dynamic_cast< EdgeManager const * >(&targetGroup))
-        {
-          processWrappers( edgeManager );
-        }
-        else if( auto const faceManager = dynamic_cast< FaceManager const * >(&targetGroup))
-        {
-          processWrappers( faceManager );
-        }
-
-
       } );
 
       if( !registeredFields.empty())
