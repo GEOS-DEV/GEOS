@@ -299,31 +299,25 @@ public:
    * @brief Getter for the reservoir average pressure when m_useSurfaceConditions == 0
    * @return the pressure
    */
-  const real64 & getRegionAveragePressure() const { return m_regionAveragePressure; }
+  real64 getRegionAveragePressure() const { return m_regionAveragePressure; }
 
   /**
    * @brief Set the reservoir average pressure when m_useSurfaceConditions == 0
-   * @param[in] val value for pressure
+   * @param[in] regionAveragePressure value for pressure
    */
-  void setRegionAveragePressure( real64 regionAveragePressure ) { m_regionAveragePressure=regionAveragePressure; }
+  void setRegionAveragePressure( real64 regionAveragePressure ) { m_regionAveragePressure = regionAveragePressure; }
 
   /**
    * @brief Getter for the reservoir average temperature when m_useSurfaceConditions == 0
-   * @return the tempeature
-   */
-  const real64 & getRegionAverageTemperature() const { return m_regionAverageTemperature; }
-
-  /**
-   * @brief Set the reservoir average temperature when m_useSurfaceConditions == 0
    * @return the temperature
    */
-  const real64 & getRegionAverageTemperature() const { return m_regionAverageTemperature; }
+  real64 getRegionAverageTemperature() const { return m_regionAverageTemperature; }
 
   /**
    * @brief Set the reservoir average temperature when m_useSurfaceConditions == 0
-   * @param[in] val value for temperature
+   * @param[in] regionAverageTemperature value for temperature
    */
-  void setRegionAverageTemperature( real64 regionAverageTemperature ) { m_regionAverageTemperature=regionAverageTemperature; }
+  void setRegionAverageTemperature( real64 regionAverageTemperature ) { m_regionAverageTemperature = regionAverageTemperature; }
 
   ///@}
 
