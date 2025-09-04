@@ -19,13 +19,7 @@
                 maxTimeStepCuts="10"
                 lineSearchAction="None" />
             <LinearSolverParameters
-                solverType="fgmres"
-                preconditionerType="mgr"
-                krylovTol="1.0e-6"
-                krylovMaxIter="500"
-                krylovAdaptiveTol="1"
-                krylovWeakestTol="0.01"
-                logLevel="1" />
+                directParallel="0" />
         </SinglePhasePoromechanics>
 
         <SolidMechanicsLagrangianFEM
