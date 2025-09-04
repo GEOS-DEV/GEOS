@@ -1,0 +1,214 @@
+<?xml version="1.0" ?>
+<Problem>
+    <Solvers>
+        <CompositionalMultiphaseWell
+            name="WELL.SOLVER"
+            useMass="1"
+            logLevel="2"
+            writeCSV="1"
+            maxRelativeCompDensChange="0.5"
+            targetRegions="{ WELL.P1, WELL.P2, WELL.P3, WELL.I1, WELL.I2, WELL.I3 }">
+            <WellControls
+                name="P1"
+                type="producer"
+                estimateWellSolution="1"
+                useSurfaceConditions="1"
+                surfacePressure="1.013250e+05"
+                surfaceTemperature="288.71"
+                enableCrossflow="1"
+                control="phaseVolRate"
+                referenceElevation="-3400"
+                targetPhaseName="oil"
+                targetBHPTableName="BHP.PRODUCTION"
+                targetPhaseRateTableName="RATE.P1"
+                logLevel="2" >
+                <MinimumBHPConstraint
+                  name="minBHP"
+                  referenceElevation="-3400"
+                  constraintScheduleTableName="BHP.PRODUCTION"/>
+                <PhaseProductionConstraint
+                  name="maxOil"
+                  phaseName="oil"
+                  constraintScheduleTableName="RATE.P1"/>
+            </WellControls>
+            <WellControls
+                name="P2"
+                type="producer"
+                estimateWellSolution="1"
+                useSurfaceConditions="1"
+                surfacePressure="1.013250e+05"
+                surfaceTemperature="288.71"
+                enableCrossflow="1"
+                control="phaseVolRate"
+                referenceElevation="-3400"
+                targetBHPTableName="BHP.PRODUCTION"
+                targetPhaseRateTableName="RATE.P2"
+                targetPhaseName="oil"
+                logLevel="2" >
+                <MinimumBHPConstraint
+                  name="minBHP"
+                  referenceElevation="-3400"
+                  constraintScheduleTableName="BHP.PRODUCTION"/>
+                <PhaseProductionConstraint
+                  name="maxOil"
+                  phaseName="oil"
+                  constraintScheduleTableName="RATE.P2"/>
+            </WellControls>
+            <WellControls
+                name="P3"
+                type="producer"
+                estimateWellSolution="1"
+                useSurfaceConditions="1"
+                surfacePressure="1.013250e+05"
+                surfaceTemperature="288.71"
+                enableCrossflow="1"
+                control="phaseVolRate"
+                referenceElevation="-3400"
+                targetPhaseName="oil"
+                targetBHPTableName="BHP.PRODUCTION"
+                targetPhaseRateTableName="RATE.P3"
+                logLevel="2" >
+                <MinimumBHPConstraint
+                  name="minBHP"
+                  referenceElevation="-3400"
+                  constraintScheduleTableName="BHP.PRODUCTION"/>
+                <PhaseProductionConstraint
+                  name="maxOil"
+                  phaseName="oil"
+                  constraintScheduleTableName="RATE.P3"/>
+            </WellControls>
+            <WellControls
+                name="I1"
+                type="injector"
+                estimateWellSolution="1"
+                useSurfaceConditions="1"
+                surfacePressure="1.013250e+05"
+                surfaceTemperature="288.71"
+                enableCrossflow="1"
+                control="totalVolRate"
+                referenceElevation="-3400"
+                injectionTemperature="323.15"
+                injectionStream="{ 0.0, 0.0, 1.0 }"
+                targetBHPTableName="BHP.INJECTION"
+                targetTotalRateTableName="RATE.I1"
+                logLevel="2" >
+                <MaximumBHPConstraint
+                  name="maxBHP"
+                  referenceElevation="-3400"
+                  constraintScheduleTableName="BHP.INJECTION"/>
+                <VolumeInjectionConstraint
+                  name="maxVol"
+                  constraintScheduleTableName="RATE.I1"
+                  injectionTemperature="323.15"
+                  injectionStream="{ 0.0, 0.0, 1.0 }"/>
+            </WellControls>
+            <WellControls
+                name="I2"
+                type="injector"
+                estimateWellSolution="1"
+                useSurfaceConditions="1"
+                surfacePressure="1.013250e+05"
+                surfaceTemperature="288.71"
+                control="totalVolRate"
+                referenceElevation="-3400"
+                injectionTemperature="323.15"
+                injectionStream="{ 0.0, 0.0, 1.0 }"
+                targetBHPTableName="BHP.INJECTION"
+                targetTotalRateTableName="RATE.I2"
+                enableCrossflow="1"
+                logLevel="2" >
+                <MaximumBHPConstraint
+                  name="maxBHP"
+                  referenceElevation="-3400"
+                  constraintScheduleTableName="BHP.INJECTION"/>
+                <VolumeInjectionConstraint
+                  name="maxVol"
+                  constraintScheduleTableName="RATE.I2"
+                  injectionTemperature="323.15"
+                  injectionStream="{ 0.0, 0.0, 1.0 }"/>
+            </WellControls>
+            <WellControls
+                name="I3"
+                type="injector"
+                estimateWellSolution="1"
+                useSurfaceConditions="1"
+                surfacePressure="1.013250e+05"
+                surfaceTemperature="288.71"
+                enableCrossflow="1"
+                control="totalVolRate"
+                referenceElevation="-3400"
+                injectionTemperature="323.15"
+                injectionStream="{ 0.0, 0.0, 1.0 }"
+                targetBHPTableName="BHP.INJECTION"
+                targetTotalRateTableName="RATE.I3"
+                logLevel="2" >
+                <MaximumBHPConstraint
+                  name="maxBHP"
+                  referenceElevation="-3400"
+                  constraintScheduleTableName="BHP.INJECTION"/>
+                <VolumeInjectionConstraint
+                  name="maxVol"
+                  constraintScheduleTableName="RATE.I3"
+                  injectionTemperature="323.15"
+                  injectionStream="{ 0.0, 0.0, 1.0 }"/>
+            </WellControls>
+        </CompositionalMultiphaseWell>
+    </Solvers>
+    <Functions>
+        <TableFunction
+            name="BHP.PRODUCTION"
+            inputVarNames="{ time }"
+            interpolation="lower"
+            coordinates="{ -1.0e10, 1.0e10 }"
+            values="{ 100.0e5, 100.0e5 }" />
+
+        <TableFunction
+            name="BHP.INJECTION"
+            inputVarNames="{ time }"
+            interpolation="lower"
+            coordinates="{ -1.0e10, 1.0e10 }"
+            values="{ 500.0e5, 500.0e5 }" />
+
+        <TableFunction
+            name="RATE.P1"
+            inputVarNames="{ time }"
+            interpolation="lower"
+            coordinateFiles="{ rates/TIME.csv }"
+            voxelFile="rates/RATE.P1.csv" />
+
+        <TableFunction
+            name="RATE.P2"
+            inputVarNames="{ time }"
+            interpolation="lower"
+            coordinateFiles="{ rates/TIME.csv }"
+            voxelFile="rates/RATE.P2.csv" />
+
+        <TableFunction
+            name="RATE.P3"
+            inputVarNames="{ time }"
+            interpolation="lower"
+            coordinateFiles="{ rates/TIME.csv }"
+            voxelFile="rates/RATE.P3.csv" />
+
+        <TableFunction
+            name="RATE.I1"
+            inputVarNames="{ time }"
+            interpolation="lower"
+            coordinateFiles="{ rates/TIME.csv }"
+            voxelFile="rates/RATE.I1.csv" />
+
+        <TableFunction
+            name="RATE.I2"
+            inputVarNames="{ time }"
+            interpolation="lower"
+            coordinateFiles="{ rates/TIME.csv }"
+            voxelFile="rates/RATE.I2.csv" />
+
+        <TableFunction
+            name="RATE.I3"
+            inputVarNames="{ time }"
+            interpolation="lower"
+            coordinateFiles="{ rates/TIME.csv }"
+            voxelFile="rates/RATE.I3.csv" />
+    </Functions>    
+</Problem>

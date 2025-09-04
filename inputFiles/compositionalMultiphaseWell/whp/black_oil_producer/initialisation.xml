@@ -1,0 +1,74 @@
+<?xml version="1.0" ?>
+<Problem>
+    <FieldSpecifications>
+        <FieldSpecification
+            name="INITIAL.PRESSURE"
+            initialCondition="1"
+            setNames="{ all }"
+            objectPath="ElementRegions"
+            fieldName="pressure"
+            functionName="INITIAL.PRESSURE"
+            scale="1.0" />
+        <FieldSpecification
+            name="INITIAL.TEMPERATURE"
+            initialCondition="1"
+            setNames="{ all }"
+            objectPath="ElementRegions"
+            fieldName="temperature"
+            scale="323.15" />
+        <FieldSpecification
+            name="INITIAL.ZOIL"
+            initialCondition="1"
+            setNames="{ all }"
+            objectPath="ElementRegions"
+            fieldName="globalCompFraction"
+            component="0"
+            functionName="INITIAL.ZOIL"
+            scale="1.0" />
+        <FieldSpecification
+            name="INITIAL.ZGAS"
+            initialCondition="1"
+            setNames="{ all }"
+            objectPath="ElementRegions"
+            fieldName="globalCompFraction"
+            component="1"
+            functionName="INITIAL.ZGAS"
+            scale="1.0" />
+        <FieldSpecification
+            name="INITIAL.ZWAT"
+            initialCondition="1"
+            setNames="{ all }"
+            objectPath="ElementRegions"
+            fieldName="globalCompFraction"
+            component="2"
+            functionName="INITIAL.ZWAT"
+            scale="1.0" />
+    </FieldSpecifications>
+
+    <Functions>
+        <TableFunction
+            name="INITIAL.PRESSURE"
+            inputVarNames="{ elementCenter }"
+            interpolation="linear"
+            coordinateFiles="{ initial/x.txt, initial/y.txt, initial/z.txt }"
+            voxelFile="initial/INITIAL.PRESSURE.txt" />
+        <TableFunction
+            name="INITIAL.ZWAT"
+            inputVarNames="{ elementCenter }"
+            interpolation="linear"
+            coordinateFiles="{ initial/x.txt, initial/y.txt, initial/z.txt }"
+            voxelFile="initial/INITIAL.ZWAT.txt" />
+        <TableFunction
+            name="INITIAL.ZOIL"
+            inputVarNames="{ elementCenter }"
+            interpolation="linear"
+            coordinateFiles="{ initial/x.txt, initial/y.txt, initial/z.txt }"
+            voxelFile="initial/INITIAL.ZOIL.txt" />
+        <TableFunction
+            name="INITIAL.ZGAS"
+            inputVarNames="{ elementCenter }"
+            interpolation="linear"
+            coordinateFiles="{ initial/x.txt, initial/y.txt, initial/z.txt }"
+            voxelFile="initial/INITIAL.ZGAS.txt" />
+    </Functions>
+</Problem>

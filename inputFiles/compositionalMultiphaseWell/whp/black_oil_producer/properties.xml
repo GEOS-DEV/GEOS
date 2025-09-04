@@ -1,0 +1,123 @@
+<?xml version="1.0" ?>
+<Problem>
+    <FieldSpecifications>
+        <FieldSpecification
+            name="POROSITY.01"
+            fieldName="ROCK.POROSITY_referencePorosity"
+            initialCondition="1"
+            objectPath="ElementRegions/RESERVOIR/1_hexahedra"
+            setNames="{ all }"
+            scale="0.25" />
+        <FieldSpecification
+            name="POROSITY.02"
+            fieldName="ROCK.POROSITY_referencePorosity"
+            initialCondition="1"
+            objectPath="ElementRegions/RESERVOIR/2_hexahedra"
+            setNames="{ all }"
+            scale="0.15" />
+        <FieldSpecification
+            name="POROSITY.03"
+            fieldName="ROCK.POROSITY_referencePorosity"
+            initialCondition="1"
+            objectPath="ElementRegions/RESERVOIR/3_hexahedra"
+            setNames="{ all }"
+            scale="0.20" />
+
+        <FieldSpecification
+            name="NET.TO.GROSS.01"
+            fieldName="netToGross"
+            initialCondition="1"
+            objectPath="ElementRegions/RESERVOIR/1_hexahedra"
+            setNames="{ all }"
+            scale="0.6" />
+        <FieldSpecification
+            name="NET.TO.GROSS.02"
+            fieldName="netToGross"
+            initialCondition="1"
+            objectPath="ElementRegions/RESERVOIR/2_hexahedra"
+            setNames="{ all }"
+            scale="0.5" />
+        <FieldSpecification
+            name="NET.TO.GROSS.03"
+            fieldName="netToGross"
+            initialCondition="1"
+            objectPath="ElementRegions/RESERVOIR/3_hexahedra"
+            setNames="{ all }"
+            scale="0.55" />
+
+        <FieldSpecification
+            name="PERMEABILITY.X.01"
+            fieldName="ROCK.PERMEABILITY_permeability"
+            initialCondition="1"
+            objectPath="ElementRegions/RESERVOIR/1_hexahedra"
+            setNames="{ all }"
+            component="0"
+            scale="4.9346165e-14" /><!-- 50mD -->
+        <FieldSpecification
+            name="PERMEABILITY.Y.01"
+            fieldName="ROCK.PERMEABILITY_permeability"
+            initialCondition="1"
+            objectPath="ElementRegions/RESERVOIR/1_hexahedra"
+            setNames="{ all }"
+            component="1"
+            scale="4.9346165e-14" /><!-- 50mD -->
+        <FieldSpecification
+            name="PERMEABILITY.Z.01"
+            fieldName="ROCK.PERMEABILITY_permeability"
+            initialCondition="1"
+            objectPath="ElementRegions/RESERVOIR/1_hexahedra"
+            setNames="{ all }"
+            component="2"
+            scale="4.9346165e-15" /><!-- 5mD -->
+
+        <FieldSpecification
+            name="PERMEABILITY.X.02"
+            fieldName="ROCK.PERMEABILITY_permeability"
+            initialCondition="1"
+            objectPath="ElementRegions/RESERVOIR/2_hexahedra"
+            setNames="{ all }"
+            component="0"
+            scale="9.869233e-15" /><!-- 10mD -->
+        <FieldSpecification
+            name="PERMEABILITY.Y.02"
+            fieldName="ROCK.PERMEABILITY_permeability"
+            initialCondition="1"
+            objectPath="ElementRegions/RESERVOIR/2_hexahedra"
+            setNames="{ all }"
+            component="1"
+            scale="9.869233e-15" /><!-- 10mD -->
+        <FieldSpecification
+            name="PERMEABILITY.Z.02"
+            fieldName="ROCK.PERMEABILITY_permeability"
+            initialCondition="1"
+            objectPath="ElementRegions/RESERVOIR/2_hexahedra"
+            setNames="{ all }"
+            component="2"
+            scale="9.869233e-16" /><!-- 1mD -->
+
+        <FieldSpecification
+            name="PERMEABILITY.X.03"
+            fieldName="ROCK.PERMEABILITY_permeability"
+            initialCondition="1"
+            objectPath="ElementRegions/RESERVOIR/3_hexahedra"
+            setNames="{ all }"
+            component="0"
+            scale="1.9738466e-13" /><!-- 200mD -->
+        <FieldSpecification
+            name="PERMEABILITY.Y.03"
+            fieldName="ROCK.PERMEABILITY_permeability"
+            initialCondition="1"
+            objectPath="ElementRegions/RESERVOIR/3_hexahedra"
+            setNames="{ all }"
+            component="1"
+            scale="1.9738466e-13" /><!-- 200mD -->
+        <FieldSpecification
+            name="PERMEABILITY.Z.03"
+            fieldName="ROCK.PERMEABILITY_permeability"
+            initialCondition="1"
+            objectPath="ElementRegions/RESERVOIR/3_hexahedra"
+            setNames="{ all }"
+            component="2"
+            scale="1.9738466e-14" /><!-- 20mD -->
+    </FieldSpecifications>
+</Problem>

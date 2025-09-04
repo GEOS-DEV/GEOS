@@ -1,0 +1,8 @@
+<?xml version="1.0"?>
+<VTKFile type="Collection" version="0.1">
+	<Collection>
+		<DataSet timestep="0" file="TRAINING/000001.vtm" />
+		<DataSet timestep="63115200" file="TRAINING/000045.vtm" />
+		<DataSet timestep="126230400" file="TRAINING/000072.vtm" />
+	</Collection>
+</VTKFile>

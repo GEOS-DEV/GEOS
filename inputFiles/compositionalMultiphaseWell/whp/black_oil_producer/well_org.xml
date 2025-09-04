@@ -1,0 +1,157 @@
+<?xml version="1.0" ?>
+<Problem>
+    <Solvers>
+        <CompositionalMultiphaseWell
+            name="WELL.SOLVER"
+            useMass="1"
+            logLevel="2"
+            writeCSV="1"
+            maxRelativeCompDensChange="0.5"
+            targetRegions="{ WELL.P1, WELL.P2, WELL.P3, WELL.I1, WELL.I2, WELL.I3 }">
+            <WellControls
+                name="P1"
+                logLevel="1"
+                type="producer"
+                useSurfaceConditions="1"
+                surfacePressure="1.013250e+05"
+                surfaceTemperature="288.71"
+                control="phaseVolRate"
+                targetPhaseName="oil"
+                enableCrossflow="1"
+                targetBHPTableName="BHP.PRODUCTION"
+                targetPhaseRateTableName="RATE.P1"
+                referenceElevation="-3400"
+                logLevel="2" />
+            <WellControls
+                name="P2"
+                logLevel="1"
+                type="producer"
+                useSurfaceConditions="1"
+                surfacePressure="1.013250e+05"
+                surfaceTemperature="288.71"
+                control="phaseVolRate"
+                targetPhaseName="oil"
+                enableCrossflow="1"
+                targetBHPTableName="BHP.PRODUCTION"
+                targetPhaseRateTableName="RATE.P2"
+                referenceElevation="-3400"
+                logLevel="2" />
+            <WellControls
+                name="P3"
+                logLevel="1"
+                type="producer"
+                useSurfaceConditions="1"
+                surfacePressure="1.013250e+05"
+                surfaceTemperature="288.71"
+                control="phaseVolRate"
+                targetPhaseName="oil"
+                enableCrossflow="1"
+                targetBHPTableName="BHP.PRODUCTION"
+                targetPhaseRateTableName="RATE.P3"
+                referenceElevation="-3400"
+                logLevel="2" />
+            <WellControls
+                name="I1"
+                logLevel="1"
+                type="injector"
+                useSurfaceConditions="1"
+                surfacePressure="1.013250e+05"
+                surfaceTemperature="288.71"
+                control="totalVolRate"
+                enableCrossflow="1"
+                injectionTemperature="323.15"
+                injectionStream="{ 0.0, 0.0, 1.0 }"
+                targetBHPTableName="BHP.INJECTION"
+                targetTotalRateTableName="RATE.I1"
+                referenceElevation="-3400"
+                logLevel="2" />
+            <WellControls
+                name="I2"
+                logLevel="1"
+                type="injector"
+                useSurfaceConditions="1"
+                surfacePressure="1.013250e+05"
+                surfaceTemperature="288.71"
+                control="totalVolRate"
+                enableCrossflow="1"
+                injectionTemperature="323.15"
+                injectionStream="{ 0.0, 0.0, 1.0 }"
+                targetBHPTableName="BHP.INJECTION"
+                targetTotalRateTableName="RATE.I2"
+                referenceElevation="-3400"
+                logLevel="2" />
+            <WellControls
+                name="I3"
+                logLevel="1"
+                type="injector"
+                useSurfaceConditions="1"
+                surfacePressure="1.013250e+05"
+                surfaceTemperature="288.71"
+                control="totalVolRate"
+                enableCrossflow="1"
+                injectionTemperature="323.15"
+                injectionStream="{ 0.0, 0.0, 1.0 }"
+                targetBHPTableName="BHP.INJECTION"
+                targetTotalRateTableName="RATE.I3"
+                referenceElevation="-3400"
+                logLevel="2" />
+        </CompositionalMultiphaseWell>
+    </Solvers>
+    <Functions>
+        <TableFunction
+            name="BHP.PRODUCTION"
+            inputVarNames="{ time }"
+            interpolation="lower"
+            coordinates="{ -1.0e10, 1.0e10 }"
+            values="{ 100.0e5, 100.0e5 }" />
+
+        <TableFunction
+            name="BHP.INJECTION"
+            inputVarNames="{ time }"
+            interpolation="lower"
+            coordinates="{ -1.0e10, 1.0e10 }"
+            values="{ 500.0e5, 500.0e5 }" />
+
+        <TableFunction
+            name="RATE.P1"
+            inputVarNames="{ time }"
+            interpolation="lower"
+            coordinateFiles="{ rates/TIME.csv }"
+            voxelFile="rates/RATE.P1.csv" />
+
+        <TableFunction
+            name="RATE.P2"
+            inputVarNames="{ time }"
+            interpolation="lower"
+            coordinateFiles="{ rates/TIME.csv }"
+            voxelFile="rates/RATE.P2.csv" />
+
+        <TableFunction
+            name="RATE.P3"
+            inputVarNames="{ time }"
+            interpolation="lower"
+            coordinateFiles="{ rates/TIME.csv }"
+            voxelFile="rates/RATE.P3.csv" />
+
+        <TableFunction
+            name="RATE.I1"
+            inputVarNames="{ time }"
+            interpolation="lower"
+            coordinateFiles="{ rates/TIME.csv }"
+            voxelFile="rates/RATE.I1.csv" />
+
+        <TableFunction
+            name="RATE.I2"
+            inputVarNames="{ time }"
+            interpolation="lower"
+            coordinateFiles="{ rates/TIME.csv }"
+            voxelFile="rates/RATE.I2.csv" />
+
+        <TableFunction
+            name="RATE.I3"
+            inputVarNames="{ time }"
+            interpolation="lower"
+            coordinateFiles="{ rates/TIME.csv }"
+            voxelFile="rates/RATE.I3.csv" />
+    </Functions>    
+</Problem>

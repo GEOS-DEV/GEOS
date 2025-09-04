@@ -1,0 +1,34 @@
+<?xml version="1.0"?>
+<VTKFile type="vtkMultiBlockDataSet" version="1.0">
+	<vtkMultiBlockDataSet>
+		<Block name="COARSEGRID">
+			<Block name="Level0">
+				<Block name="CellElementRegion">
+					<Block name="RESERVOIR">
+						<DataSet name="rank_0" file="000045/COARSEGRID/Level0/RESERVOIR/rank_0.vtu" />
+					</Block>
+				</Block>
+				<Block name="WellElementRegion">
+					<Block name="WELL.P1">
+						<DataSet name="rank_0" file="000045/COARSEGRID/Level0/WELL.P1/rank_0.vtu" />
+					</Block>
+					<Block name="WELL.P2">
+						<DataSet name="rank_0" file="000045/COARSEGRID/Level0/WELL.P2/rank_0.vtu" />
+					</Block>
+					<Block name="WELL.P3">
+						<DataSet name="rank_0" file="000045/COARSEGRID/Level0/WELL.P3/rank_0.vtu" />
+					</Block>
+					<Block name="WELL.I1">
+						<DataSet name="rank_0" file="000045/COARSEGRID/Level0/WELL.I1/rank_0.vtu" />
+					</Block>
+					<Block name="WELL.I2">
+						<DataSet name="rank_0" file="000045/COARSEGRID/Level0/WELL.I2/rank_0.vtu" />
+					</Block>
+					<Block name="WELL.I3">
+						<DataSet name="rank_0" file="000045/COARSEGRID/Level0/WELL.I3/rank_0.vtu" />
+					</Block>
+				</Block>
+			</Block>
+		</Block>
+	</vtkMultiBlockDataSet>
+</VTKFile>

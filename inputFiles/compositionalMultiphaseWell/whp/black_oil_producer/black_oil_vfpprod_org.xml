@@ -1,0 +1,175 @@
+<?xml version="1.0" ?>
+<Problem>
+    <Solvers>
+        <CompositionalMultiphaseFVM
+            name="FLOW.SOLVER"
+            logLevel="1"
+            discretization="TPFA"
+            targetRegions="{ RESERVOIR }"
+            temperature="323.15"
+            useMass="1"
+            formulationType="ComponentDensities"
+            maxCompFractionChange="0.1"
+            maxAbsolutePressureChange="1.0e5"
+            maxRelativeCompDensChange="0.2"
+            initialDt="120" />
+        <CompositionalMultiphaseReservoir
+            name="RESERVOIR"
+            flowSolverName="FLOW.SOLVER"
+            wellSolverName="WELL.SOLVER"
+            targetRegions="{
+                RESERVOIR,
+                WELL.P1, WELL.P2, WELL.P3, WELL.I1, WELL.I2, WELL.I3
+            }"
+            initialDt="120"
+            logLevel="2">
+            <NonlinearSolverParameters
+                newtonTol="1.0e-3"
+                newtonMaxIter="10"
+                timeStepDecreaseIterLimit="0.9"
+                timeStepIncreaseIterLimit="0.4"
+                timeStepCutFactor="0.5"
+                maxTimeStepCuts="100"
+                maxSubSteps="100"
+                lineSearchAction="None" />
+            <LinearSolverParameters
+                solverType="gmres"
+                preconditionerType="mgr"
+                krylovTol="1e-5"
+                krylovAdaptiveTol="0"
+                krylovWeakestTol="1e-2"
+                logLevel="1" />
+        </CompositionalMultiphaseReservoir>
+    </Solvers>
+
+    <NumericalMethods>
+        <FiniteVolume>
+            <TwoPointFluxApproximation
+                name="TPFA" />
+        </FiniteVolume>
+    </NumericalMethods>
+
+    <ElementRegions>
+        <CellElementRegion
+            name="RESERVOIR"
+            cellBlocks="{ 1, 2, 3 }"
+            materialList="{ FLUID, ROCK, RELPERM, CAPPRES }" />
+        <WellElementRegion
+            name="WELL.P1"
+            materialList="{ FLUID, RELPERM }" />
+        <WellElementRegion
+            name="WELL.P2"
+            materialList="{ FLUID, RELPERM }" />
+        <WellElementRegion
+            name="WELL.P3"
+            materialList="{ FLUID, RELPERM }" />
+        <WellElementRegion
+            name="WELL.I1"
+            materialList="{ FLUID, RELPERM }" />
+        <WellElementRegion
+            name="WELL.I2"
+            materialList="{ FLUID, RELPERM }" />
+        <WellElementRegion
+            name="WELL.I3"
+            materialList="{ FLUID, RELPERM }" />
+    </ElementRegions>
+
+    <Constitutive> 
+        <CompressibleSolidConstantPermeability
+            name="ROCK"
+            solidModelName="NULLSOLID"
+            porosityModelName="ROCK.POROSITY"
+            permeabilityModelName="ROCK.PERMEABILITY"/>
+
+        <NullModel
+            name="NULLSOLID"/>
+
+        <PressurePorosity
+            name="ROCK.POROSITY"
+            defaultReferencePorosity="0.2"
+            referencePressure="400.0e5"
+            compressibility="5.3e-10"/>
+        
+        <ConstantPermeability
+            name="ROCK.PERMEABILITY"
+            permeabilityComponents="{ 1e-12, 1e-12, 1e-12 }" />
+
+        <TableRelativePermeabilityHysteresis
+            name="RELPERM"
+            phaseNames="{ oil, gas, water }"
+            drainageNonWettingIntermediateRelPermTableNames="{ SATNUM.01.KRG, SATNUM.01.KROG }"
+            drainageWettingIntermediateRelPermTableNames="{ SATNUM.01.KRW, SATNUM.01.KROW }"
+            imbibitionNonWettingRelPermTableName="SATNUM.02.KRG"
+            imbibitionWettingRelPermTableName="SATNUM.02.KRW"/>
+
+        <TableCapillaryPressure
+            name="CAPPRES"
+            phaseNames="{ oil, gas, water}"
+            nonWettingIntermediateCapPressureTableName="SATNUM.01.PCGO"
+            wettingIntermediateCapPressureTableName="SATNUM.01.PCOW" />
+
+        <BlackOilFluid
+            name="FLUID"
+            phaseNames="{ oil, gas, water }"
+            componentNames="{ oil, gas, water }"
+            surfaceDensities="{ 850.0, 0.9, 1102 }"
+            componentMolarWeight="{ 120.0e-3, 25.0e-3, 18.0e-3 }"
+            tableFiles="{ fluid/pvto.txt, fluid/pvdg.txt, fluid/pvtw.txt }" />
+    </Constitutive>
+
+    <Tasks>
+        <CompositionalMultiphaseStatistics
+          name="FLOW.STATISTICS"
+          flowSolverName="FLOW.SOLVER"
+          logLevel="1"
+          computeCFLNumbers="1"
+          computeRegionStatistics="1"
+          writeCSV="1" />    
+    </Tasks>
+
+    <Outputs>
+	    <VTK 
+            name="TRAINING" />
+	    <Restart 
+            name="TRAINING.RESTART" />
+    </Outputs>
+
+    <Events
+        minTime="-86400"
+        maxTime="788918400"><!-- maxTime="788918400" -->
+        
+        <SoloEvent name="VTK.00" target="/Outputs/TRAINING" targetExactTimestep="1" targetTime="-43200" />
+        <PeriodicEvent
+            name="VTK.01"
+            beginTime="0"
+            timeFrequency="63115200"
+            targetExactTimestep="1"
+            target="/Outputs/TRAINING" />
+
+        <SoloEvent name="STATISTICS.00" target="/Tasks/FLOW.STATISTICS" targetExactTimestep="1" targetTime="-43200" />
+        <SoloEvent name="STATISTICS.01" target="/Tasks/FLOW.STATISTICS" targetExactTimestep="1" targetTime="0" />
+
+        <PeriodicEvent
+            name="RESTART.01"
+            beginTime="0"
+            timeFrequency="157788000"
+            targetExactTimestep="1"
+            target="/Outputs/TRAINING.RESTART" />
+
+        <PeriodicEvent
+            name="SOLVER.01"
+            beginTime="0"
+            endTime="1328119200"
+            maxEventDt="5616000"
+            target="/Solvers/RESERVOIR" />
+    </Events>
+
+    <Included>
+        <File name="well.xml" />
+        <File name="mesh.xml" />
+        <File name="properties.xml" />
+        <File name="initialisation.xml" />
+        <File name="functions.xml" />
+        <File name="aquifer.xml" />
+    </Included>
+</Problem>

@@ -1,0 +1,128 @@
+<?xml version="1.0" ?>
+<Problem>
+    <Mesh>
+        <VTKMesh
+            name="COARSEGRID"
+            file="mesh/training.vtu"
+            regionAttribute="FIPNUM"
+            logLevel="5">
+            <InternalWell
+                name="well.P1"
+                wellRegionName="WELL.P1"
+                wellControlsName="P1"
+                radius="0.1"
+                polylineNodeCoords="{
+                    {  5235.39,   2812.00,  -3301.13 },
+                    {  5235.39,   2812.00,  -3316.13 },
+                    {  5235.39,   2812.00,  -3338.13 }
+                }"
+                polylineSegmentConn="{ {0,1},{1,2} }"
+                numElementsPerSegment="1"
+                logLevel="2">
+                <Perforation
+                    name="P1.38_3_1"
+                    distanceFromHead="7.499969482421875"
+                    transmissibility="2.309378402850184e-12" />
+                <Perforation
+                    name="P1.38_3_2"
+                    distanceFromHead="25.99993896484375"
+                    transmissibility="5.645147150406092e-13" />
+            </InternalWell>
+            <InternalWell
+                name="well.P2"
+                wellRegionName="WELL.P2"
+                wellControlsName="P2"
+                radius="0.1"
+                polylineNodeCoords="{
+                    {  4077.36,   3222.25,  -3311.82 },
+                    {  4077.36,   3222.25,  -3326.82 },
+                    {  4077.36,   3222.25,  -3348.82 }
+                }"
+                polylineSegmentConn="{ {0,1},{1,2} }"
+                numElementsPerSegment="1"
+                logLevel="2">
+                <Perforation
+                    name="P2.32_14_1"
+                    distanceFromHead="7.499969483974086"
+                    transmissibility="2.3045933401730413e-12" />
+                <Perforation
+                    name="P2.32_14_2"
+                    distanceFromHead="25.99993896794817"
+                    transmissibility="5.633449835619667e-13" />
+            </InternalWell>
+            <InternalWell
+                name="well.P3"
+                wellRegionName="WELL.P3"
+                wellControlsName="P3"
+                radius="0.1"
+                polylineNodeCoords="{
+                    {  4243.48,   1674.00,  -3308.53 },
+                    {  4243.48,   1674.00,  -3323.53 },
+                    {  4243.48,   1674.00,  -3345.53 }
+                }"
+                polylineSegmentConn="{ {0,1},{1,2} }"
+                numElementsPerSegment="1"
+                logLevel="2">
+                <Perforation
+                    name="P3.23_2_1"
+                    distanceFromHead="7.50006103515625"
+                    transmissibility="2.3040422943913383e-12" />
+                <Perforation
+                    name="P3.23_2_2"
+                    distanceFromHead="26.0001220703125"
+                    transmissibility="5.632103400430194e-13" />
+            </InternalWell>
+            <InternalWell
+                name="well.I1"
+                wellRegionName="WELL.I1"
+                wellControlsName="I1"
+                radius="0.1"
+                polylineNodeCoords="{
+                    {  2921.66,   2094.75,  -3386.74 },
+                    {  2921.66,   2094.75,  -3398.74 }
+                }"
+                polylineSegmentConn="{ {0,1} }"
+                numElementsPerSegment="1"
+                logLevel="2">
+                <Perforation
+                    name="I1.16_14_3"
+                    distanceFromHead="6.000030517888565"
+                    transmissibility="3.378673452096367e-12" />
+            </InternalWell>
+            <InternalWell
+                name="well.I2"
+                wellRegionName="WELL.I2"
+                wellControlsName="I2"
+                radius="0.1"
+                polylineNodeCoords="{
+                    {  3193.34,   3625.25,  -3386.21 },
+                    {  3193.34,   3625.25,  -3398.21 }
+                }"
+                polylineSegmentConn="{ {0,1} }"
+                numElementsPerSegment="1"
+                logLevel="2">
+                <Perforation
+                    name="I2.28_23_3"
+                    distanceFromHead="5.999908447576071"
+                    transmissibility="3.3748611824805027e-12" />
+            </InternalWell>
+            <InternalWell
+                name="well.I3"
+                wellRegionName="WELL.I3"
+                wellControlsName="I3"
+                radius="0.1"
+                polylineNodeCoords="{
+                    {  4535.36,   4222.00,  -3392.46 },
+                    {  4535.36,   4222.00,  -3404.46 }
+                }"
+                polylineSegmentConn="{ {0,1} }"
+                numElementsPerSegment="1"
+                logLevel="2">
+                <Perforation
+                    name="I3.42_18_3"
+                    distanceFromHead="6.000030517888565"
+                    transmissibility="3.3877358008527326e-12" />
+            </InternalWell>
+        </VTKMesh>
+    </Mesh>
+</Problem>
