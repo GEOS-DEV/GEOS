@@ -82,16 +82,7 @@ FiniteElementDiscretization::factory( ElementType const parentElementShape ) con
         {
           return std::make_unique< H1_TriangleFace_Lagrange1_Gauss1 >();
         }
-      case ElementType::Quadrilateral:
-        if( m_useHighOrderQuadratureRule == 1 )
-        {
-          std::cout<<"using hihg order quadrature"<<std::endl;
-          return std::make_unique< H1_QuadrilateralFace_Lagrange1_GaussLegendre6 >();
-        }
-        else
-        {
-          return std::make_unique< H1_QuadrilateralFace_Lagrange1_GaussLegendre2 >();
-        }
+      case ElementType::Quadrilateral: return std::make_unique< H1_QuadrilateralFace_Lagrange1_GaussLegendre2 >();
       // On polyhedra where FEM are available, we use VEM only if useVirtualElements is set to 1 in
       // the input file.
       case ElementType::Tetrahedron:

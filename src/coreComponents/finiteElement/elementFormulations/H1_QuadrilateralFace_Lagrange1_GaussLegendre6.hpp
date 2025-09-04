@@ -62,7 +62,10 @@ public:
   constexpr static localIndex maxSupportPoints = numNodes;
 
   /// The number of quadrature points per element.
-  constexpr static localIndex numQuadraturePoints = 6;
+  constexpr static localIndex numQuadraturePoints1D = 6;
+
+    /// The number of quadrature points per element.
+  constexpr static localIndex numQuadraturePoints = 36;
 
   GEOS_HOST_DEVICE
   virtual ~H1_QuadrilateralFace_Lagrange1_GaussLegendre6() override
@@ -71,7 +74,7 @@ public:
   GEOS_HOST_DEVICE
   virtual localIndex getNumQuadraturePoints() const override
   {
-    return numQuadraturePoints*numQuadraturePoints;
+    return numQuadraturePoints;
   }
 
   /**
@@ -83,7 +86,7 @@ public:
   static localIndex getNumQuadraturePoints( StackVariables const & stack )
   {
     GEOS_UNUSED_VAR( stack );
-    return numQuadraturePoints*numQuadraturePoints;
+    return numQuadraturePoints;
   }
 
   GEOS_HOST_DEVICE
@@ -109,6 +112,73 @@ public:
     GEOS_UNUSED_VAR( stack );
     return numNodes;
   }
+
+    /**
+   * @brief Calculates the xi0 coordinates from linear index of quadrature point
+   * @param q linear index of the support/quadrature point (0-3)
+   * @return i The i index in the xi0 direction (0,..5)
+   */
+  template< typename T >
+  GEOS_HOST_DEVICE
+  inline
+  constexpr static T linearCoordQuadrature0( localIndex const q )
+  {
+    return q / numQuadraturePoints1D;
+  }
+
+  /**
+   * @brief Calculates the xi1 coordinates from linear index of quadrature point
+   * @param q linear index of the support/quadrature point (0-3)
+   * @return i The i index in the xi0 direction (0,..5)
+   */
+  template< typename T >
+  GEOS_HOST_DEVICE
+  inline
+  constexpr static T linearCoordQuadrature1( localIndex const q )
+  {
+    return q % numQuadraturePoints1D;
+  }
+
+  GEOS_HOST_DEVICE
+  inline
+  constexpr static real64 quadratureCoord(localIndex const idx)
+  {
+    constexpr real64 a = 0.9324695142031521;
+    constexpr real64 b = 0.6612093864662645;
+    constexpr real64 c = 0.2386191860831969;
+  
+    switch (idx)
+    {
+      case 0: return -a;
+      case 1: return -b;
+      case 2: return -c;
+      case 3: return  c;
+      case 4: return  b;
+      case 5: return  a;
+      default: return -1.0;
+    }
+  }
+
+  GEOS_HOST_DEVICE
+  inline
+  constexpr static real64 quadratureWeight(localIndex const idx)
+  {
+    constexpr real64 wa = 0.1713244923791704;
+    constexpr real64 wb = 0.3607615730481386;
+    constexpr real64 wc = 0.2386191860831969;
+  
+    switch (idx)
+    {
+      case 0: return wa;
+      case 1: return wb;
+      case 2: return wc;
+      case 3: return wc;
+      case 4: return wb;
+      case 5: return wa;
+      default: return -1.0;
+    }
+  }
+
 
   /**
    * @brief Calculate shape functions values at a single point.
@@ -168,8 +238,11 @@ public:
   static void calcBubbleN( localIndex const q,
                            real64 (& N)[1] )
   {
-    real64 const qCoords[2] = { quadratureFactor *parentCoords0( q ),
-                                quadratureFactor *parentCoords1( q ) };
+    localIndex const qi = linearCoordQuadrature0<localIndex>(q);
+    localIndex const qj = linearCoordQuadrature1<localIndex>(q);
+
+    real64 const qCoords[2] = { quadratureCoord(qi),
+                                quadratureCoord(qj) };
 
     calcBubbleN( qCoords, N );
   }
@@ -223,15 +296,15 @@ private:
   constexpr static real64 parentArea = 4.0;
 
   /// The weight of each quadrature point.
-  constexpr static real64 weight = parentArea / numQuadraturePoints;
+  //constexpr static real64 weight = parentArea / numQuadraturePoints;
 
   /// The scaling factor specifying the location of the quadrature points
   /// relative to the origin and the outer extent of the element in the
   /// parent space.
-  constexpr static real64 quadratureFactor = 1.0 / 1.732050807568877293528;
+  //constexpr static real64 quadratureFactor = 1.0 / 1.732050807568877293528;
 
   /**
-   * @brief Calculates the linear index for support/quadrature points from ij
+   * @brief Calculates the linear index for support points from ij
    *   coordinates.
    * @param i The index in the xi0 direction (0,1)
    * @param j The index in the xi1 direction (0,1)
@@ -271,6 +344,7 @@ private:
     return -1.0 + ( a & 2 );
   }
 
+
 };
 
 /// @cond Doxygen_Suppress
@@ -300,8 +374,8 @@ H1_QuadrilateralFace_Lagrange1_GaussLegendre6::
   for( localIndex a=0; a<numNodes; ++a )
   {
     N[a] = 0.25 *
-           ( 1 + quadratureFactor*coords[0]*parentCoords0( a ) ) *
-           ( 1 + quadratureFactor*coords[1]*parentCoords1( a ) );
+           ( 1 + coords[0]*parentCoords0( a ) ) *
+           ( 1 + coords[1]*parentCoords1( a ) );
   }
 }
 GEOS_HOST_DEVICE
@@ -311,11 +385,13 @@ H1_QuadrilateralFace_Lagrange1_GaussLegendre6::
   calcN( localIndex const q,
          real64 (& N)[numNodes] )
 {
+  localIndex const qi = linearCoordQuadrature0<localIndex>(q);
+  localIndex const qj = linearCoordQuadrature1<localIndex>(q);
   for( localIndex a=0; a<numNodes; ++a )
   {
     N[a] = 0.25 *
-           ( 1 + quadratureFactor*parentCoords0( q )*parentCoords0( a ) ) *
-           ( 1 + quadratureFactor*parentCoords1( q )*parentCoords1( a ) );
+           ( 1 + quadratureCoord( qi )*parentCoords0( a ) ) *
+           ( 1 + quadratureCoord( qj )*parentCoords1( a ) );
   }
 }
 
@@ -340,8 +416,11 @@ H1_QuadrilateralFace_Lagrange1_GaussLegendre6::
 {
   real64 dXdXi[3][2] = {{0}};
 
-  real64 const quadratureCoords[2] = { quadratureFactor *parentCoords0( q ),
-                                       quadratureFactor *parentCoords1( q ) };
+  localIndex const qi = linearCoordQuadrature0<localIndex>(q);
+  localIndex const qj = linearCoordQuadrature1<localIndex>(q);
+
+  real64 const quadratureCoords[2] = { quadratureCoord(qi),
+                                       quadratureCoord(qj) };
 
   real64 const psi0[2] = { 0.5*( 1.0 - quadratureCoords[0] ),
                            0.5*( 1.0 + quadratureCoords[0] ) };
@@ -372,7 +451,7 @@ H1_QuadrilateralFace_Lagrange1_GaussLegendre6::
                       + pow( dXdXi[2][0] * dXdXi[0][1] - dXdXi[0][0] * dXdXi[2][1], 2.0 )
                       + pow( dXdXi[0][0] * dXdXi[1][1] - dXdXi[1][0] * dXdXi[0][1], 2.0 );
 
-  return sqrt( detJ ) * weight;
+  return sqrt( detJ ) * quadratureWeight(qi) * quadratureWeight(qj);
 }
 
 /// @endcond

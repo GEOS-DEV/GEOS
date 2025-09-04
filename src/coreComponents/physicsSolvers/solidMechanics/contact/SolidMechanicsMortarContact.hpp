@@ -129,7 +129,10 @@ private:
   FaceElementSubRegion const* m_surfaceSlave = nullptr;
 
   // map id of slave elements to id of connected master elements
-  ArrayOfArrays< localIndex > m_connectivityMap;  
+  ArrayOfArrays< localIndex > m_connectivityMapSlave;  
+
+  // map id of master elements to id of connected master elements
+  ArrayOfArrays< localIndex > m_connectivityMapMaster;  
 
   void addCouplingNumNonzeros( DofManager & dofManager,
                                arrayView1d< localIndex > const & rowLengths ) const;
@@ -141,12 +144,37 @@ private:
   /// Finite element type to face element index map
   FaceTypeMap m_faceTypesToFaceElementsMaster;
   FaceTypeMap m_faceTypesToFaceElementsSlave;
+
+  /// Finite element type to finite element object map
+  std::map< string, std::unique_ptr< geos::finiteElement::FiniteElementBase > > m_faceTypeToFiniteElements;
   
-  // tandem traversal contact search 
+  /// Map gauss point list to master basis functions values
+  std::map< string, ArrayOfArrays< real64 > > m_gpToMasterBasis; 
+
+  /// Map gauss point list to corresponding master element id 
+  std::map< string, array2d< localIndex > > m_gpToMasterId; 
+
+  /// List of all existing pairs of slave-master elements (derived from m_gpToMasterId)
+  std::map< string, array2d< localIndex > > m_mortarPairs;
+
+  ///
+  void computeMortarInterpolation();
+
+  void getLocalInterpolationPoints( localIndex nInt, string const & finiteElementName, array2d< real64 > & localCoordsMaster );
+
+  real64 computeRBF( real64 const d, real64 const radius );
+
+  real64 computeRBF( real64 const (&pt1)[3], real64 const (&pt2)[3], real64 const radius );
+
+  void computeRBFweights( arrayView2d<real64> M, arrayView2d<real64> Nm, arrayView2d<real64> wRBF, localIndex nIntPts, localIndex numNodeperElement );
+
+  real64 computeRBFmatrix( arrayView2d<real64> realCoordsInterpolation, arrayView2d<real64> RBFmatrix, localIndex nIntPts);
+  
+  /// Tandem traversal contact search 
   void contactSearch(std::unique_ptr<TreeNodeMortar> const & nodeMaster,
                      std::unique_ptr<TreeNodeMortar> const & nodeSlave);
 
-  // check intersection between two bounding boxes using polytops primitives                   
+  /// Check intersection between two bounding boxes using polytops primitives                   
   bool checkIntersection(std::unique_ptr<TreeNodeMortar> const & nodeMaster,
                          std::unique_ptr<TreeNodeMortar> const & nodeSlave);
 

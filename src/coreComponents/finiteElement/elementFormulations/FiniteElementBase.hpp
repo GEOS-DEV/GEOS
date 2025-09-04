@@ -791,6 +791,8 @@ constexpr PDEUtilities::FunctionSpace FiniteElementBase::getFunctionSpace()
   return FunctionSpaceHelper< N >::getFunctionSpace();
 }
 
+
+
 template< typename LEAF >
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
