@@ -110,7 +110,7 @@ public:
     m_resElementIndex( perforationData->getField< fields::perforation::reservoirElementIndex >()),
     m_perfRate( perforationData->getField< fields::well::perforationRate >()),
     m_dPerfRate( perforationData->getField< fields::well::dPerforationRate >()),
-    m_perfStatus( perforationData->getField< fields::perforation::perforationStatus >()) 
+    m_perfStatus( perforationData->getField< fields::perforation::perforationStatus >())
   {}
 
   template< typename FUNC = NoOpFunc >
