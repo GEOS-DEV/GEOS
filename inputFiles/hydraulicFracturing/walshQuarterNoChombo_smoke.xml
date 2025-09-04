@@ -9,11 +9,11 @@
      <InternalMesh name="mesh1"
                   elementTypes="{C3D8}"
                   xCoords="{  0.0000000,  0.0010000 }"
-                  yCoords="{  0.0000000,  0.0075000, 0.0075800, 0.0150000 }"
-                  zCoords="{ -0.0075000, -0.0012500, 0.0012500, 0.0075000 }"
-                  nx="{10}"
-                  ny="{7, 2, 7}"
-                  nz="{7, 3, 7}"
+                  yCoords="{  0.0040000,  0.0065000, 0.0085800, 0.010000 }"
+                  zCoords="{ -0.0025000, -0.0012500, 0.0012500, 0.0025000 }"
+                  nx="{1}"
+                  ny="{1, 2, 1}"
+                  nz="{1, 1, 1}"
                   cellBlockNames="{cb1,  cb1, cb1,
                                    cb1, void, cb1,
                                    cb1,  cb1, cb1 }"/>
@@ -27,7 +27,7 @@
       solidSolverName="lagsolve"
       flowSolverName="SinglePhaseFlow"
       surfaceGeneratorName="SurfaceGen"
-      logLevel="1"
+      logLevel="2"
       targetRegions="{Fracture}"
       maxNumResolves="5"
       initialDt="0.1">
@@ -59,7 +59,7 @@
 
     <SurfaceGenerator
       name="SurfaceGen"
-      logLevel="0"
+      logLevel="1"
       fractureRegion="Fracture"
       targetRegions="{Domain, void}"
       nodeBasedSIF="1"
@@ -69,6 +69,11 @@
   </Solvers>
 
    <Events maxTime="0.001">
+
+    <SoloEvent
+      name="preFracOuput"
+      target="/Outputs/siloOutput"/>
+
     <SoloEvent
       name="preFracture"
       target="/Solvers/SurfaceGen"/>
