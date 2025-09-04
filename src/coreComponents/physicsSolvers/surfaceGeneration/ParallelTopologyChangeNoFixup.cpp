@@ -595,7 +595,7 @@ localIndex unpackNewAndModifiedObjectsDataOnOwningRanks( MeshLevel * const mesh,
 
   unpackedSize += nodeManager.unpackUpDownMaps( receiveBufferPtr, modifiedLocalNodes, false, true );
   unpackedSize += edgeManager.unpackUpDownMaps( receiveBufferPtr, modifiedLocalEdges, false, true );
-  unpackedSize += faceManager.unpackUpDownMaps( receiveBufferPtr, modifiedLocalFaces, true, true );
+  unpackedSize += faceManager.unpackUpDownMaps( receiveBufferPtr, modifiedLocalFaces, false, true );
   unpackedSize += elemManager.unpackUpDownMaps( receiveBufferPtr, modifiedLocalElements, true );
 
   unpackedSize += nodeManager.unpackParentChildMaps( receiveBufferPtr, modifiedLocalNodes );
@@ -847,7 +847,7 @@ void unpackNewAndModifiedObjectsDataOnGhosts( NeighborCommunicator & neighbor,
 
   nodeManager.unpackUpDownMaps( receiveBufferPtr, modGhostNodes, false, true );
   edgeManager.unpackUpDownMaps( receiveBufferPtr, modGhostEdges, false, true );
-  faceManager.unpackUpDownMaps( receiveBufferPtr, modGhostFaces, true, true );
+  faceManager.unpackUpDownMaps( receiveBufferPtr, modGhostFaces, false, true );
   elemManager.unpackUpDownMaps( receiveBufferPtr, modGhostElems, true );
 
   nodeManager.unpackParentChildMaps( receiveBufferPtr, modGhostNodes );

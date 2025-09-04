@@ -624,38 +624,35 @@ int SurfaceGenerator::separationDriver( DomainPartition & domain,
 
   array1d< integer > const & isNodeGhost = nodeManager.ghostRank();
 
-
-
-
   for( int color=0; color<numTileColors; ++color )
   {
-    printf( "color = %d\n", color );
-    for( int rank=0; rank<MpiWrapper::commSize(); ++rank )
-    {
-      if( rank==MpiWrapper::commRank() )
-      {
-        printf( "Rank %d:\n", rank );
-        array2d< localIndex > const & faceToRegionMap = faceManager.elementRegionList();
-        array2d< localIndex > const & faceToSubRegionMap = faceManager.elementSubRegionList();
-        array2d< localIndex > const & faceToElementMap = faceManager.elementList();
-        arrayView1d< globalIndex const> const faceToGlobalMap = faceManager.localToGlobalMap();
-        for( localIndex kf=0; kf<faceManager.size(); ++kf )
-        {
-          for( localIndex side=0; side<faceToRegionMap.size( 1 ); ++side )
-          {
-            localIndex const er = faceToRegionMap[kf][side];
-            localIndex const esr = faceToSubRegionMap[kf][side];
-            localIndex const ei = faceToElementMap[kf][side];
+    // printf( "color = %d\n", color );
+    // for( int rank=0; rank<MpiWrapper::commSize(); ++rank )
+    // {
+    //   if( rank==MpiWrapper::commRank() )
+    //   {
+    //     printf( "Rank %d:\n", rank );
+    //     array2d< localIndex > const & faceToRegionMap = faceManager.elementRegionList();
+    //     array2d< localIndex > const & faceToSubRegionMap = faceManager.elementSubRegionList();
+    //     array2d< localIndex > const & faceToElementMap = faceManager.elementList();
+    //     arrayView1d< globalIndex const> const faceToGlobalMap = faceManager.localToGlobalMap();
+    //     for( localIndex kf=0; kf<faceManager.size(); ++kf )
+    //     {
+    //       for( localIndex side=0; side<faceToRegionMap.size( 1 ); ++side )
+    //       {
+    //         localIndex const er = faceToRegionMap[kf][side];
+    //         localIndex const esr = faceToSubRegionMap[kf][side];
+    //         localIndex const ei = faceToElementMap[kf][side];
 
-            printf( "faceToElementMap[%d(%lld)][%d] = (%d, %d, %d)\n",
-                    kf, faceToGlobalMap[kf], side, er, esr, ei );
+    //         printf( "faceToElementMap[%d(%lld)][%d] = (%d, %d, %d)\n",
+    //                 kf, faceToGlobalMap[kf], side, er, esr, ei );
 
-          }
-        }
+    //       }
+    //     }
 
-      }
-      MpiWrapper::barrier();
-    }
+    //   }
+    //   MpiWrapper::barrier();
+    // }
 
 
 
@@ -2157,20 +2154,18 @@ void SurfaceGenerator::performFracture( const localIndex nodeID,
           // GEOS_LOG_LEVEL_RANK_0( logInfo::Mapping, "    faceToSubRegionMap["<<faceIndex<<"][1] = "<<faceToSubRegionMap[faceIndex][1] );
           // GEOS_LOG_LEVEL_RANK_0( logInfo::Mapping, "    faceToElementMap["<<faceIndex<<"][1]      = "<<faceToElementMap[faceIndex][1] );
 
-            printf( "post map change \n");
-            printf( "    faceToElementMap[%d]  = ( %d, %d, %d ), ( %d, %d, %d )\n", faceIndex, 
-                                                                                    faceToRegionMap[faceIndex][0], faceToSubRegionMap[faceIndex][0], faceToElementMap[faceIndex][0], 
-                                                                                    faceToRegionMap[faceIndex][1], faceToSubRegionMap[faceIndex][1], faceToElementMap[faceIndex][1] );
-            printf( "    faceToElementMap[%d]  = ( %d, %d, %d ), ( %d, %d, %d )\n", newFaceIndex, 
-                                                                                    faceToRegionMap[newFaceIndex][0], faceToSubRegionMap[newFaceIndex][0], faceToElementMap[newFaceIndex][0], 
-                                                                                    faceToRegionMap[newFaceIndex][1], faceToSubRegionMap[newFaceIndex][1], faceToElementMap[newFaceIndex][1] );
+            // printf( "post map change \n");
+            // printf( "    faceToElementMap[%d]  = ( %d, %d, %d ), ( %d, %d, %d )\n", faceIndex, 
+            //                                                                         faceToRegionMap[faceIndex][0], faceToSubRegionMap[faceIndex][0], faceToElementMap[faceIndex][0], 
+            //                                                                         faceToRegionMap[faceIndex][1], faceToSubRegionMap[faceIndex][1], faceToElementMap[faceIndex][1] );
+            // printf( "    faceToElementMap[%d]  = ( %d, %d, %d ), ( %d, %d, %d )\n", newFaceIndex, 
+            //                                                                         faceToRegionMap[newFaceIndex][0], faceToSubRegionMap[newFaceIndex][0], faceToElementMap[newFaceIndex][0], 
+            //                                                                         faceToRegionMap[newFaceIndex][1], faceToSubRegionMap[newFaceIndex][1], faceToElementMap[newFaceIndex][1] );
 
 
           for( int i = 0; i < 2; i++ )
           {
             localIndex iFace = i == 0 ? faceIndex : newFaceIndex;
-
-
 
             localIndex elementIndex = faceToElementMap[iFace][0];
             CellElementSubRegion & elementSubRegion = elementManager.getRegion( faceToRegionMap[iFace][0] ).
