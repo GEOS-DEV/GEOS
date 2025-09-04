@@ -153,6 +153,7 @@ void PerforationData::computeWellTransmissibility( MeshLevel const & mesh,
                        "but a better strategy to shut down a perforation is to remove the " <<
                        "<Perforation> block from the XML\n \n" );
       }
+      continue;
     }
 
     // get the indices of the reservoir element
