@@ -149,6 +149,7 @@ void WellSolverBase::registerDataOnMesh( Group & meshBodies )
 void WellSolverBase::initializePostSubGroups()
 {
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
+  FunctionManager & functionManager = FunctionManager::getInstance();
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
                                                                 string_array const & regionNames )
@@ -159,6 +160,18 @@ void WellSolverBase::initializePostSubGroups()
                                                                    WellElementSubRegion & subRegion )
     {
       validateWellConstraints( 0, 0, subRegion );
+
+      // validate perforation status table
+      PerforationData & perforationData = *subRegion.getPerforationData();
+      string_array const & perfStatusTableName = perforationData.getPerfStatusTableName();
+      for( integer i=0; i<perforationData.size(); i++ )
+      {
+        TableFunction * tableFunction =  functionManager.getGroupPointer< TableFunction >( perfStatusTableName[i] );
+        GEOS_THROW_IF( tableFunction->getInterpolationMethod() != TableFunction::InterpolationType::Lower,
+                       "WellSolverBase " << getDataContext() << ": The interpolation method for the perforation status table "
+                                         << tableFunction->getName() << " should be TableFunction::InterpolationType::Lower",
+                       InputError );
+      }
     } );
   } );
 }
