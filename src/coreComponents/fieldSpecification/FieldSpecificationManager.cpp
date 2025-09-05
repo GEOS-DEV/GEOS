@@ -258,8 +258,8 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
             {
               std::stringstream line;
               line << fs.getDataContext().getLine();
-              message << GEOS_FMT( "You can set `errorAsWarning` (. {}) to `0` to disable the error",
-                                   ss.str() );
+              message << GEOS_FMT( "You can set `errorAsWarning` (l. {}) to `0` to disable the error.",
+                                   line.str() );
               GEOS_ERROR( message.str() );
             }
             else
