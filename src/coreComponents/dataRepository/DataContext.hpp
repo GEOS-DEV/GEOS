@@ -70,6 +70,11 @@ public:
    */
   friend std::ostream & operator<<( std::ostream & os, const DataContext & ctx );
 
+  /**
+   * @return the line (starting from 1) where the target object has been declared in the source file.
+   */
+  virtual size_t getLine() const = 0;
+
 protected:
   // GroupContext & WrapperContext are friend class to be able to access to the protected method on other instances.
   friend class GroupContext;
@@ -170,8 +175,7 @@ public:
   /**
    * @return the line (starting from 1) where the target object has been declared in the source file.
    */
-  size_t getLine() const
-  { return m_line; }
+  size_t getLine() const override;
 
   /**
    * @return the character offset in the line (starting from 1) where the target object has been

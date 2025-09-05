@@ -81,6 +81,11 @@ FieldSpecificationBase::FieldSpecificationBase( string const & name, Group * par
     setApplyDefaultValue( 1.0e99 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Time at which the boundary condition will stop being applied." );
+
+  registerWrapper( viewKeyStruct::errorAsWarningString(), &m_errorAsWarning ).
+    setApplyDefaultValue( 1 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Converts an error into a warning" );
 }
 
 

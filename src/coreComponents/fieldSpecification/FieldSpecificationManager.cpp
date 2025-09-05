@@ -237,14 +237,38 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
       GEOS_THROW( setNamesError, InputError );
     }
 
-    // if a target set is empty, we issue a warning
-    // ideally we would just stop the simulation, but the SurfaceGenerator relies on this behavior
+    GeometricObjectManager & geometricObjManager = GeometricObjectManager::getInstance();
+
     for( auto const & mapEntry : isTargetSetEmpty )
     {
-      GEOS_LOG_RANK_0_IF( ( mapEntry.second == 1 ), // target set is empty
-                          GEOS_FMT( "\nWarning!\n{}: this FieldSpecification targets (an) empty set(s)"
-                                    "\nIf the simulation does not involve the SurfaceGenerator, check the content of the set `{}` in `{}`. \n",
-                                    fs.getDataContext(), mapEntry.first, fs.getObjectPath() ) );
+      if( mapEntry.second == 1 )
+      {
+        geometricObjManager.forSubGroups< SimpleGeometricObjectBase >(
+          [&]( SimpleGeometricObjectBase const & object )
+        {
+          if( mapEntry.first == object.getName())
+          {
+            std::ostringstream message;
+            message << GEOS_FMT( "{}: this FieldSpecification targets (an) empty set(s)\n"
+                                 "The box {} does not select any region.\n"
+                                 "If the simulation does not involve the SurfaceGenerator, check the content of the set `{}` in `{}`.\n",
+                                 fs.getDataContext(), object.getDataContext(),
+                                 mapEntry.first, fs.getObjectPath());
+            if( fs.getErrorAsWarning() )
+            {
+              std::stringstream line;
+              line << fs.getDataContext().getLine();
+              message << GEOS_FMT( "You can set `errorAsWarning` (. {}) to `0` to disable the error",
+                                   ss.str() );
+              GEOS_ERROR( message.str() );
+            }
+            else
+            {
+              GEOS_WARNING( message.str() );
+            }
+          }
+        } );
+      }
     }
 
     if( isFieldNameFound == 0 )

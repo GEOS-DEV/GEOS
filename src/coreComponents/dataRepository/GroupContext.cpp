@@ -57,6 +57,11 @@ string GroupContext::toString() const
 DataContext::ToStringInfo GroupContext::getToStringInfo() const
 { return ToStringInfo( m_targetName ); }
 
+size_t GroupContext::getLine() const
+{
+  return m_group.getDataContext().getToStringInfo().m_line;
+}
+
 
 } /* namespace dataRepository */
 } /* namespace geos */

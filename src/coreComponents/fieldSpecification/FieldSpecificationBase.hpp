@@ -392,6 +392,8 @@ public:
     constexpr static char const * beginTimeString() { return "beginTime"; }
     /// @return The key for endTime
     constexpr static char const * endTimeString() { return "endTime"; }
+    /// @return The key for endTime
+    constexpr static char const * errorAsWarningString() { return "errorAsWarning"; }
   };
 
   /**
@@ -547,6 +549,11 @@ public:
     return *(m_meshObjectPaths.get());
   }
 
+  integer getErrorAsWarning() const
+  {
+    return m_errorAsWarning;
+  }
+
 
 protected:
 
@@ -591,6 +598,8 @@ private:
   /// The name of a function used to turn on and off the boundary condition.
   string m_bcApplicationFunctionName;
 
+  /// Value indicating whether we converts an error into a warning
+  integer m_errorAsWarning;
 };
 
 

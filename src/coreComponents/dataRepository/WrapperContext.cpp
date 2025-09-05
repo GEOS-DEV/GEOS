@@ -38,6 +38,11 @@ string WrapperContext::toString() const
          GEOS_FMT( "{}/{}", m_group.getDataContext().toString(), m_typeName );
 }
 
+size_t WrapperContext::getLine() const
+{
+  return m_group.getDataContext().getToStringInfo().m_line;
+}
+
 
 } /* namespace dataRepository */
 } /* namespace geos */

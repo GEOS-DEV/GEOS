@@ -108,6 +108,12 @@ string DataFileContext::toString() const
   }
 }
 
+size_t DataFileContext::getLine() const
+{
+  return m_line;
+}
+
+
 DataContext::ToStringInfo DataFileContext::getToStringInfo() const
 { return ToStringInfo( m_targetName, m_filePath, m_line ); }
 
