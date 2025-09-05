@@ -577,7 +577,8 @@ static void runConsistencyTest( array2d< real64, nodes::REFERENCE_POSITION_PERM 
   }
   diffNorm = std::sqrt( diffNorm );
 
-  EXPECT_LT( diffNorm, 1e-10 );
+  // set tol = 1e-11 because of absolute permeability employed makeHexa is of order of 1e-12
+  EXPECT_LT( diffNorm, 1e-11 );
 }
 
 TEST( testMimeticInnerProducts, TPFA_hexa )
