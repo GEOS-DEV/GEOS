@@ -72,11 +72,6 @@ private:
    * @copydoc DataContext::getToStringInfo()
    */
   ToStringInfo getToStringInfo() const override;
-
-  /**
-   * @copydoc DataContext::getLine()
-   */
-  size_t getLine() const override;
 };
 
 

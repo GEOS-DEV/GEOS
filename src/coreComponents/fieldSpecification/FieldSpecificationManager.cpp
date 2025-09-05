@@ -256,10 +256,8 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
                                  mapEntry.first, fs.getObjectPath());
             if( fs.getErrorAsWarning() )
             {
-              std::stringstream line;
-              line << fs.getDataContext().getLine();
-              message << GEOS_FMT( "You can set `errorAsWarning` (l. {}) to `0` to disable the error.",
-                                   line.str() );
+              message << GEOS_FMT( "You can set `errorAsWarning` to `0` in {} to disable the error.",
+                                   fs.getDataContext() );
               GEOS_ERROR( message.str() );
             }
             else

@@ -54,11 +54,6 @@ private:
    */
   string toString() const override;
 
-  /**
-   * @copydoc DataContext::getLine()
-   */
-  size_t getLine() const override;
-
 };
 
 
