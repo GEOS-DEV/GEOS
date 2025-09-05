@@ -90,17 +90,15 @@ SourceFluxStatsAggregator::registerWrappedStats( Group & group,
 
   { //tableLayout initialisation
     string_view massUnit = units::getSymbol( m_solver->getMassUnit() );
+    string const massColumn = GEOS_FMT( "Prod. mass [{}]", massUnit );
+    string const rateColumn = GEOS_FMT( "Prod. rate [{}/s]", massUnit );
 
     // log output preparation
-    string const logMassColumn = GEOS_FMT( "Prod. mass [{}]", massUnit );
-    string const logRateColumn = GEOS_FMT( "Prod. rate [{}]", massUnit );
-    TableLayout statsLogLayout( "", { "Flux(es)", "Region", "Element Count", logMassColumn, logRateColumn } );
+    TableLayout statsLogLayout( "", { "Flux(es)", "Region", "Element Count", massColumn, rateColumn } );
     m_logLayout = statsLogLayout;
 
     // CSV output preparation
-    string const csvMassColumn = GEOS_FMT( "Produced mass [{}]", massUnit );
-    string const csvRateColumn = GEOS_FMT( "Production rate [{}]", massUnit );
-    TableLayout const statsCSVLayout( "", {"Flux(es)", "Region", "Time [s]", "Element Count", csvMassColumn, csvRateColumn} );
+    TableLayout const statsCSVLayout( "", {"Time [s]", "Flux(es)", "Region", "Element Count", massColumn, rateColumn} );
     m_csvLayout = statsCSVLayout;
   }
 
