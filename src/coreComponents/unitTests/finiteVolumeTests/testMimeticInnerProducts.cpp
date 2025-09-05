@@ -1580,19 +1580,18 @@ static double computeGravityConsistency_error( int ipKind,
                                       cUc, vol_U, Kvec, ltol, TU.toSlice() );
   }
 
-  // find top face center on the upper cell and build p0
-  auto faceCentroid = [&]( auto const & node, auto const & f2n, localIndex f, real64 c[3] )
+  auto faceCentroid = [&]( auto const & node,
+                           auto const & f2n,
+                           localIndex f,
+                           real64 c[3] )
   {
-    c[0] = c[1] = c[2] = 0;
-    for( int k = 0; k < 4; ++k )
-    {
-      c[0] += node( f2n( f, k ), 0 );
-      c[1] += node( f2n( f, k ), 1 );
-      c[2] += node( f2n( f, k ), 2 );
-    }
-    c[0] /= 4.0;
-    c[1] /= 4.0;
-    c[2] /= 4.0;
+    // fc: centroid, fn: area-weighted normal
+    stackArray1d< real64, 3 > fc( 3 ), fn( 3 );
+    computationalGeometry::centroid_3DPolygon( f2n[f], node.toViewConst(), fc.toSlice(), fn.toSlice() );
+
+    c[0] = fc[0];
+    c[1] = fc[1];
+    c[2] = fc[2];
   };
 
   real64 xTop[3] = { 0.0, 0.0, 0.0 };
