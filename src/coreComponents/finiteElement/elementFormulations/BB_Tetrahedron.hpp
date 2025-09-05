@@ -281,6 +281,7 @@ public:
     }
     lambda[ 0 ] = 1.0 - lambda[ 1 ] - lambda[ 2 ] - lambda[ 3 ];
     return calcN( lambda, N );
+
   }
 
   /**
@@ -293,7 +294,7 @@ public:
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
   static void calcNandGradN( real64 const ( &lambda)[4],
-                             real64 const ( &N)[numNodes],
+                             real64 ( &N)[numNodes],
                              real64 (& gradN)[numNodes][ 4 ] )
   {
     gradN[ 0 ][ 0 ] = 0.0;

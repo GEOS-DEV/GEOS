@@ -43,6 +43,7 @@ set( finiteElement_headers
      elementFormulations/LagrangeBasis5GL.hpp
      elementFormulations/BB_Tetrahedron.hpp
      elementFormulations/Pk_Pyramid_BCD.hpp
+     elementFormulations/Pk_TriangleFace_BCDBB.hpp
      kernelInterface/InterfaceKernelBase.hpp
      kernelInterface/ImplicitKernelBase.hpp
      kernelInterface/KernelBase.hpp
