@@ -2100,13 +2100,13 @@ void SurfaceGenerator::performFracture( const localIndex nodeID,
           // faceID is the parent face, and newFaceID is the child face.
           elemsToFaces[elemIndex][kf] = childFaceIndex[faceIndex];
 
-            printf( "pre map change \n");
-            printf( "    faceToElementMap[%d]  = ( %d, %d, %d ), ( %d, %d, %d )\n", faceIndex, 
-                                                                                    faceToRegionMap[faceIndex][0], faceToSubRegionMap[faceIndex][0], faceToElementMap[faceIndex][0], 
-                                                                                    faceToRegionMap[faceIndex][1], faceToSubRegionMap[faceIndex][1], faceToElementMap[faceIndex][1] );
-            printf( "    faceToElementMap[%d]  = ( %d, %d, %d ), ( %d, %d, %d )\n", newFaceIndex, 
-                                                                                    faceToRegionMap[newFaceIndex][0], faceToSubRegionMap[newFaceIndex][0], faceToElementMap[newFaceIndex][0], 
-                                                                                    faceToRegionMap[newFaceIndex][1], faceToSubRegionMap[newFaceIndex][1], faceToElementMap[newFaceIndex][1] );
+            // printf( "pre map change \n");
+            // printf( "    faceToElementMap[%d]  = ( %d, %d, %d ), ( %d, %d, %d )\n", faceIndex, 
+            //                                                                         faceToRegionMap[faceIndex][0], faceToSubRegionMap[faceIndex][0], faceToElementMap[faceIndex][0], 
+            //                                                                         faceToRegionMap[faceIndex][1], faceToSubRegionMap[faceIndex][1], faceToElementMap[faceIndex][1] );
+            // printf( "    faceToElementMap[%d]  = ( %d, %d, %d ), ( %d, %d, %d )\n", newFaceIndex, 
+            //                                                                         faceToRegionMap[newFaceIndex][0], faceToSubRegionMap[newFaceIndex][0], faceToElementMap[newFaceIndex][0], 
+            //                                                                         faceToRegionMap[newFaceIndex][1], faceToSubRegionMap[newFaceIndex][1], faceToElementMap[newFaceIndex][1] );
 
 
           // add the element to the child faceToElem
