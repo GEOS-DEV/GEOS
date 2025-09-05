@@ -326,6 +326,12 @@ All elements are now in place to run GEOS.
 Running GEOS
 ------------------------------------
 
+The simulation can be launched with:
+
+.. code-block:: console
+
+  geosx -i deadOilSpe10Layers84_85_benchmark.xml
+
 The first few lines appearing to the console are indicating that the XML elements are read and registered correctly:
 
 .. code-block:: console
