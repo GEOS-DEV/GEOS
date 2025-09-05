@@ -392,7 +392,7 @@ public:
     constexpr static char const * beginTimeString() { return "beginTime"; }
     /// @return The key for endTime
     constexpr static char const * endTimeString() { return "endTime"; }
-    /// @return The key for endTime
+    /// @return The key errorAsWarning
     constexpr static char const * errorAsWarningString() { return "errorAsWarning"; }
   };
 
