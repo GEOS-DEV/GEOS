@@ -1,0 +1,256 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <Events
+    maxTime="1.0">
+
+    <SoloEvent
+      name="genSurfaceMaster"
+      target="/Solvers/SurfaceGenMaster"/>
+
+    <SoloEvent
+      name="genSurfaceSlave"
+      target="/Solvers/SurfaceGenSlave"/>
+
+    <PeriodicEvent
+      name="solverApplications"
+      beginTime="0.0"
+      forceDt="1.0"
+      target="/Solvers/Mortar"/>
+
+  </Events>
+
+  <ElementRegions>
+    <CellElementRegion
+      name="regionMaster"
+      meshBody="meshMaster"
+      cellBlocks="{ cb1 }"
+      materialList="{ steel }"/>
+
+    <CellElementRegion
+      name="regionSlave"
+      meshBody="meshSlave"
+      cellBlocks="{ cb2 }"
+      materialList="{ steel }"/>
+
+    <SurfaceElementRegion
+      name="surfaceMaster"
+      meshBody="meshMaster"
+      faceBlock="faceElementSubRegion"
+      defaultAperture="1.0e-6"
+      materialList="{ frictionLaw }"/>
+
+    <SurfaceElementRegion
+      name="surfaceSlave"
+      meshBody="meshSlave"
+      faceBlock="faceElementSubRegion"
+      defaultAperture="1.0e-6"
+      materialList="{ frictionLaw }"/>
+  </ElementRegions>
+
+  <Constitutive>
+    <ElasticIsotropic
+      name="steel"
+      defaultDensity="0.0"
+      defaultBulkModulus="175.0"
+      defaultShearModulus="80.77"/>
+
+    <Coulomb
+      name="frictionLaw"
+      cohesion="0.0"
+      frictionCoefficient="0.577350269"/>
+  </Constitutive>
+
+  <FieldSpecifications>
+    <FieldSpecification
+      name="surf"
+      initialCondition="1"
+      setNames="{ surface }"
+      objectPath="faceManager"
+      fieldName="ruptureState"
+      scale="1"/>
+
+    <FieldSpecification
+      name="x_fix_left"
+      objectPath="nodeManager"
+      fieldName="totalDisplacement"
+      component="0"
+      scale="0.0"
+      setNames="{ fixed_left}"/>
+
+    <FieldSpecification
+      name="y_fix_left"
+      objectPath="nodeManager"
+      fieldName="totalDisplacement"
+      component="1"
+      scale="0.0"
+      setNames="{ fixed_left}"/>
+
+    <FieldSpecification
+      name="z_fix_left"
+      objectPath="nodeManager"
+      fieldName="totalDisplacement"
+      component="2"
+      scale="0.0"
+      setNames="{ fixed_left }"/>
+
+    <FieldSpecification
+      name="x_fix_right"
+      objectPath="nodeManager"
+      fieldName="totalDisplacement"
+      component="0"
+      scale="0.0"
+      setNames="{ fixed_right}"/>
+
+    <FieldSpecification
+      name="y_fix_right"
+      objectPath="nodeManager"
+      fieldName="totalDisplacement"
+      component="1"
+      scale="0.0"
+      setNames="{ fixed_right}"/>
+
+    <FieldSpecification
+      name="z_fix_right"
+      objectPath="nodeManager"
+      fieldName="totalDisplacement"
+      component="2"
+      scale="0.0"
+      setNames="{ fixed_right}"/>
+
+    <Traction
+      name="distributed_load_left"
+      objectPath="faceManager"
+      scale="1.0e-2"
+      direction="{ 0, 1, 0 }"
+      functionName="loadFunction"
+      setNames="{ top_surface_left}"/>
+
+    <Traction
+      name="distributed_load_right"
+      objectPath="faceManager"
+      scale="1.0e-2"
+      direction="{ 0, 1, 0 }"
+      functionName="loadFunction"
+      setNames="{ top_surface_right}"/>
+
+  </FieldSpecifications>
+
+  <Functions>
+    <TableFunction
+      name="loadFunction"
+      inputVarNames="{ time }"
+      coordinates="{ 0.0, 1.0 }"
+      values="{ -1.0, -1.0 }"/>
+  </Functions>
+
+  <Outputs>
+    <VTK
+      name="vtkOutput_2beams"
+      plotFileRoot="VTKplot"/>
+
+  </Outputs>
+
+  <Solvers
+    gravityVector="{ 0.0, 0.0, 0.0 }">
+    <SurfaceGenerator
+      name="SurfaceGenMaster"
+      logLevel="0"
+      fractureRegion="surfaceMaster"
+      targetRegions="{ meshMaster/regionMaster}"
+      initialRockToughness="1.0e6"
+      mpiCommOrder="1"/>
+
+    <SurfaceGenerator
+      name="SurfaceGenSlave"
+      logLevel="0"
+      fractureRegion="surfaceSlave"
+      targetRegions="{ meshSlave/regionSlave}"
+      initialRockToughness="1.0e6"
+      mpiCommOrder="1"/>
+
+    <SolidMechanicsMortarContact
+      name="Mortar"
+      timeIntegrationOption="QuasiStatic"
+      logLevel="2"
+      discretization="FE1"
+      targetRegions="{ meshMaster/regionMaster, meshMaster/surfaceMaster, meshSlave/regionSlave, meshSlave/surfaceSlave  }"
+      master = "surfaceMaster"
+      slave = "surfaceSlave">
+      <NonlinearSolverParameters
+        newtonTol="5.0e-6"
+        logLevel="2"
+        newtonMaxIter="20"
+        lineSearchAction="None"
+        lineSearchMaxCuts="4"/>
+      <LinearSolverParameters
+        solverType="direct"
+       logLevel="1"/> 
+    </SolidMechanicsMortarContact>
+
+  </Solvers>
+
+  <NumericalMethods>
+    <FiniteElements>
+      <FiniteElementSpace
+        name="FE1"
+        order="1"
+        useHighOrderQuadratureRule = "1"/>
+    </FiniteElements>
+  </NumericalMethods>
+
+  <Mesh>
+    <InternalMesh
+      name="meshMaster"
+      elementTypes="{ C3D8 }"
+      xCoords="{ 0, 8 }"
+      yCoords="{ 0, 1 }"
+      zCoords="{ 0, 1 }"
+      nx="{ 4 }"
+      ny="{ 2 }"
+      nz="{ 2 }"
+      cellBlockNames="{ cb1 }"/>
+
+    <InternalMesh
+      name="meshSlave"
+      elementTypes="{ C3D8 }"
+      xCoords="{ 8, 16 }"
+      yCoords="{ 0, 1 }"
+      zCoords="{ 0, 1 }"
+      nx="{ 4 }"
+      ny="{ 3 }"
+      nz="{ 3 }"
+      cellBlockNames="{ cb2 }"/>
+
+  </Mesh>
+
+  <Geometry>
+    <Box
+      name = "fixed_left"
+      xMin = "{-0.01,-0.01,-0.01}"
+      xMax = "{0.01,1.01,1.01}"/>
+    <Box
+      name = "fixed_right"
+      xMin = "{15.99,-0.01,-0.01}"
+      xMax = "{16.01,1.01,1.01}"/>
+   
+    <Box
+      name = "top_surface_left"
+      xMin = "{-0.01,0.99,-0.01}"
+      xMax = "{8.01,1.01,1.01}"/>
+    <Box
+      name = "top_surface_right"
+      xMin = "{7.99,0.99,-0.01}"
+      xMax = "{16.01,1.01,1.01}"/>
+
+    <Rectangle
+      name="surface"
+      normal="{1.0, 0.0, 0.0}"
+      origin="{8.0, 0.5, 0.5}"
+      lengthVector="{0.0, 1.0, 0.0}"
+      widthVector="{0.0, 0.0, 1.0}"
+      dimensions="{ 1.0, 1.0 }"/>
+
+  </Geometry>
+
+ </Problem>

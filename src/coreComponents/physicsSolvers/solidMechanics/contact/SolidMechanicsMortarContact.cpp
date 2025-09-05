@@ -43,7 +43,20 @@ SolidMechanicsMortarContact::SolidMechanicsMortarContact( const string & name,
   ContactSolverBase( name, parent )
 {
   // higher order quadrature for element-based mortar integration
+  m_faceTypeToMortarFiniteElements[ElementShape::Quadrilateral] = std::make_unique< finiteElement::H1_QuadrilateralFace_Lagrange1_GaussLegendre6 >();
+  m_faceTypeToMortarFiniteElements[ElementShape::Triangle] = std::make_unique< finiteElement::H1_TriangleFace_Lagrange1_Gauss6 >();
+
   m_faceTypeToFiniteElements["Quadrilateral"] = std::make_unique< finiteElement::H1_QuadrilateralFace_Lagrange1_GaussLegendre6 >();
+  m_faceTypeToFiniteElements["Triangle"] = std::make_unique< finiteElement::H1_TriangleFace_Lagrange1_Gauss6 >();
+
+  registerWrapper( viewKeyStruct::masterString(), &m_masterName ).
+    setInputFlag( InputFlags::REQUIRED ).
+    setDescription( "Name of the master surface" );
+
+  registerWrapper( viewKeyStruct::slaveString(), &m_slaveName ).
+    setInputFlag( InputFlags::REQUIRED ).
+    setDescription( "Name of the slave surface" );
+
 }
 
 SolidMechanicsMortarContact::~SolidMechanicsMortarContact()
@@ -120,6 +133,8 @@ void SolidMechanicsMortarContact::setupSystem( DomainPartition & domain,
                                                             bool const setSparsity )
 {
 
+  setMortarSurfaces(domain);
+
   //string const meshMasterName;
   string meshSlaveName;
 
@@ -160,7 +175,14 @@ void SolidMechanicsMortarContact::setupSystem( DomainPartition & domain,
 
   } );
 
-  
+  createFaceTypeListMortar(MortarSide::Master);
+  createFaceTypeListMortar(MortarSide::Slave);
+
+  std::cout << "Number of master quad cells: " <<  m_faceTypeToElementList[MortarSide::Master][ElementShape::Quadrilateral].size() << std::endl;
+  std::cout << "Number of master tri cells: " <<  m_faceTypeToElementList[MortarSide::Master][ElementShape::Triangle].size() << std::endl;
+  std::cout << "Number of slave quad cells: " <<  m_faceTypeToElementList[MortarSide::Slave][ElementShape::Quadrilateral].size() << std::endl;
+  std::cout << "Number of slave tri cells: " <<  m_faceTypeToElementList[MortarSide::Slave][ElementShape::Triangle].size() << std::endl;
+
   std::cout << "Processing master/slave connectivity" << std::endl;
 
   this->getConnectivityMap();
@@ -169,7 +191,7 @@ void SolidMechanicsMortarContact::setupSystem( DomainPartition & domain,
   m_faceTypesToFaceElementsSlave = this->createFaceTypeList(*m_meshSlave, *m_surfaceSlave, "slave");
 
   // create list of bubbles for the slave side
-  this->createBubbleCellList(*m_meshSlave, *m_surfaceSlave);
+  this->createBubbleCellList();
 
   
   dofManager.setDomain( domain );
@@ -227,14 +249,12 @@ void SolidMechanicsMortarContact::setupSystem( DomainPartition & domain,
 
 
   // compute mortar interpolation: populate maps from gauss points to master basis functions
-  this -> computeMortarInterpolation();
+  //this -> computeMortarInterpolation();
+
+
+  forMortarSurfaces(MortarInterpolation{});
 
   //computeRotationMatrices( domain );
-
-
-  
-
-
   
   //////////////////////////////////////////////////////////////////////////////////
   GEOS_ERROR("Mortar solver is not implemented yet. ");
@@ -736,9 +756,87 @@ SolidMechanicsMortarContact::createFaceTypeList( MeshLevel const & mesh,
 }
 
 
-void SolidMechanicsMortarContact::createBubbleCellList( MeshLevel & mesh,  
-                                                        FaceElementSubRegion const & surfRegion ) const
+void SolidMechanicsMortarContact::createFaceTypeListMortar( MortarSide side)
 {
+    // Generate lists containing elements of various face types
+    MeshLevel & mesh = *m_mortarSide.at(side).mesh;
+    FaceElementSubRegion const & surfRegion = m_mortarSide.at(side).surface->getUniqueSubRegion< FaceElementSubRegion >();
+
+    FaceManager const & faceManager = mesh.getFaceManager();
+    //ElementRegionManager const & elemManager = mesh.getElemManager();
+    ArrayOfArraysView< localIndex const > const faceToNodeMap = faceManager.nodeList().toViewConst();
+
+    array1d< localIndex > keys( surfRegion.size());
+    array1d< localIndex > vals( surfRegion.size());
+    array1d< localIndex > quadList;
+    array1d< localIndex > triList;
+    RAJA::ReduceSum< ReducePolicy< parallelDevicePolicy<> >, localIndex > nTri_r( 0 );
+    RAJA::ReduceSum< ReducePolicy< parallelDevicePolicy<> >, localIndex > nQuad_r( 0 );
+
+    arrayView1d< localIndex > const keys_v = keys.toView();
+    arrayView1d< localIndex > const vals_v = vals.toView();
+    // Determine the size of the lists and generate the vector keys and vals for parallel indexing into lists.
+    // (With RAJA, parallelizing this operation seems the most viable approach.)
+    forAll< parallelDevicePolicy<> >( surfRegion.size(),
+                                      [ = ] GEOS_HOST_DEVICE ( localIndex const kfe )
+    {
+
+      localIndex const numNodesPerFace = faceToNodeMap.sizeOfArray( kfe );
+      if( numNodesPerFace == 3 )
+      {
+        keys_v[kfe]=0;
+        vals_v[kfe]=kfe;
+        nTri_r += 1;
+        GEOS_ERROR( "SolidMechanicsMortarContact:: triangular face type not yet available" );
+      }
+      else if( numNodesPerFace == 4 )
+      {
+        keys_v[kfe]=1;
+        vals_v[kfe]=kfe;
+        nQuad_r += 1;
+      }
+      else
+      {
+        GEOS_ERROR( "SolidMechanicsMortarContact:: invalid face type" );
+      }
+    } );
+
+    localIndex nQuad = static_cast< localIndex >(nQuad_r.get());
+    localIndex nTri = static_cast< localIndex >(nTri_r.get());
+
+    // Sort vals according to keys to ensure that
+    // elements of the same type are adjacent in the vals list.
+    // This arrangement allows for efficient copying into the container
+    // by leveraging parallelism.
+    RAJA::sort_pairs< parallelDevicePolicy<> >( keys_v, vals_v );
+
+    quadList.resize( nQuad );
+    triList.resize( nTri );
+    arrayView1d< localIndex > const quadList_v = quadList.toView();
+    arrayView1d< localIndex > const triList_v = triList.toView();
+
+    forAll< parallelDevicePolicy<> >( nTri, [ = ] GEOS_HOST_DEVICE ( localIndex const kfe )
+    {
+      triList_v[kfe] = vals_v[kfe];
+    } );
+
+    forAll< parallelDevicePolicy<> >( nQuad, [ = ] GEOS_HOST_DEVICE ( localIndex const kfe )
+    {
+      quadList_v[kfe] = vals_v[nTri+kfe];
+    } );
+
+    std::map< string, array1d< localIndex > > faceTypeList;
+
+    m_faceTypeToElementList[side][ElementShape::Quadrilateral] =  quadList;
+    m_faceTypeToElementList[side][ElementShape::Triangle] =  triList;
+
+}
+
+
+void SolidMechanicsMortarContact::createBubbleCellList( ) const
+{
+    MeshLevel & mesh = *m_mortarSide.at(MortarSide::Slave).mesh;
+    FaceElementSubRegion const & surfRegion = m_mortarSide.at(MortarSide::Slave).surface->getUniqueSubRegion< FaceElementSubRegion >();
 
     ElementRegionManager & elemManager = mesh.getElemManager();
 
@@ -847,13 +945,75 @@ void SolidMechanicsMortarContact::createBubbleCellList( MeshLevel & mesh,
       {
         localIndex const kfe =  bubbleElemsList_v[k];
         faceElemsList_v[k][0] = elemsToFaces[kfe][keys_v[k]];
-        faceElemsList_v[k][1] = keys_v[kfe];
+        faceElemsList_v[k][1] = keys_v[k];
       } );
       cellElementSubRegion.setFaceElementsList( faceElemsList.toViewConst());
 
     } );
 
 }
+
+  void SolidMechanicsMortarContact::setMortarSurfaces( DomainPartition & domain)
+  {
+    forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const & meshName,
+                                                                MeshLevel & mesh,
+                                                                string_array const & )
+    {
+      // // naive way to assign master and slave mesh levels
+      // if (meshName == "meshMaster"){
+      //   this->m_meshMaster = &mesh;
+      // }
+
+      // if (meshName == "meshSlave"){
+      //   this->m_meshSlave = &mesh;
+      //   meshSlaveName = meshName;
+      // }
+      GEOS_UNUSED_VAR(meshName);
+
+      ElementRegionManager const & elemManager = mesh.getElemManager();
+
+      elemManager.forElementRegions< SurfaceElementRegion >([&,this](const SurfaceElementRegion & region )
+      {
+        // TO DO: assign different subregions for triangles and quadrilaterals?
+
+        // assign surface to master or slave depending on object path (again, naive)
+        string surfacePath = region.getPath();
+        std::cout << surfacePath << std::endl;
+
+        // check if region is master or slave and populate member maps
+        if (surfacePath.find(m_slaveName) != std::string::npos)
+        {
+          MortarSurface surfaceSlave;
+          surfaceSlave.mesh = &mesh;
+          surfaceSlave.surface = &region;
+          m_mortarSide[MortarSide::Slave] = surfaceSlave;
+        }
+        else if (surfacePath.find(m_masterName) != std::string::npos)
+        {
+          MortarSurface surfaceMaster;
+          surfaceMaster.mesh = &mesh;
+          surfaceMaster.surface = &region;
+          m_mortarSide[MortarSide::Master] = surfaceMaster;
+        }
+      });
+
+    } );
+
+    // debug log surfaces path
+    string pathMaster;
+    string pathMeshMaster;
+    pathMaster = m_mortarSide[MortarSide::Master].surface->getPath();
+    pathMeshMaster = m_mortarSide[MortarSide::Master].mesh->getPath();
+    std::cout << "Path of master surface: " << pathMaster << std::endl;
+    std::cout << "Path of master mesh level: " << pathMeshMaster << std::endl; 
+
+    string pathSlave;
+    string pathMeshSlave;
+    pathSlave = m_mortarSide[MortarSide::Slave].surface->getPath();
+    pathMeshSlave = m_mortarSide[MortarSide::Slave].mesh->getPath();
+    std::cout << "Path of slave surface: " << pathSlave << std::endl;
+    std::cout << "Path of slave mesh level: " << pathMeshSlave << std::endl;
+  }
 
 void SolidMechanicsMortarContact::computeMortarInterpolation()
 {
@@ -1034,9 +1194,7 @@ void SolidMechanicsMortarContact::computeMortarInterpolation()
     }
   }
 
-}  
-
-
+} 
 
 
 void SolidMechanicsMortarContact::getLocalInterpolationPoints( localIndex nInt, string const & finiteElementName, array2d< real64 > & localCoordsMaster )
@@ -1210,42 +1368,14 @@ void SolidMechanicsMortarContact::getConnectivityMap()
   // perform contact search and populate connectivity map
   contactSearch(treeSlave,treeMaster);
 
-  std::cout << "\n\n======================================================\n";
-  std::cout << "Verifying m_connectivityMapMaster structure:\n";
-  std::cout << "Total number of master faces: " << m_connectivityMapMaster.size() << "\n";
-
-  // Get a direct view to the offsets array
-  auto const offsetsView = m_connectivityMapMaster.offsets();
-
-  for (localIndex i = 0; i < m_connectivityMapMaster.size(); ++i)
+    for (localIndex i=0; i<nSurfMaster; ++i)
   {
-    localIndex currentOffset = offsetsView[i];
-    localIndex nextOffset = offsetsView[i+1]; // This is safe, offsets array is size+1
-    localIndex calculatedSize = nextOffset - currentOffset;
-    localIndex apiSize = m_connectivityMapMaster.sizeOfArray(i);
-
-    std::cout << "Master Face " << i << ":\n"
-              << "  - offsets[" << i << "] = " << currentOffset << "\n"
-              << "  - offsets[" << i+1 << "] = " << nextOffset << "\n"
-              << "  - Calculated Size (offsets[" << i+1 << "] - offsets[" << i << "]) = " << calculatedSize << "\n"
-              << "  - API Size (sizeOfArray(" << i << ")) = " << apiSize << "\n";
-
-    if (calculatedSize != apiSize)
-    {
-        std::cout << "  *** MISMATCH! The API size does not match the calculated size! ***\n";
-    }
-  }
-  std::cout << "======================================================\n\n";
-
-
-    for (localIndex i=0; i<nSurfSlave; ++i)
-  {
-    localIndex N = m_connectivityMapSlave.sizeOfArray(i);
-    std::cout << "SLAVE ELEMENT: " << i << std::endl;
-    std::cout << "MASTER ELEMENT:"; 
+    localIndex N = m_connectivityMapMaster.sizeOfArray(i);
+    std::cout << "MASTER ELEMENT: " << i << std::endl;
+    std::cout << "SLAVE ELEMENT:"; 
     for (localIndex j=0; j<N; ++j)
     {  
-      std::cout << " " << m_connectivityMapSlave[i][j];
+      std::cout << " " << m_connectivityMapMaster[i][j];
     }
     std::cout << std::endl;
     std::cout << "__________________________________________" << std::endl;
