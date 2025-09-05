@@ -125,6 +125,29 @@ void SolidMechanicsMortarContact::setupDofs( DomainPartition const & domain,
   //                        meshTargets );
 }
 
+// struct MortarInterpolation 
+//   {
+//   template<ElementShape shapeSlave, ElementShape shapeMaster>
+//   void operator()() const 
+//   {
+
+//     auto const & slaveFE = ElementDispatch<shapeSlave>::getFE();
+//     auto const & masterFE = ElementDispatch<shapeMaster>::getFE();
+
+//     // compile time knowledge!
+//     constexpr static localIndex nGPslave = slaveFE.numQuadraturePoints;
+//     constexpr static localIndex nGPmaster = masterFE.numQuadraturePoints;
+//     constexpr static localIndex numNodeMaster = masterFE.numNodes;
+//     constexpr static localIndex numNodeSlave = slaveFE.numNodes;
+
+//     std::cout << "Number of quadrature points (slave): " << nGPslave << std::endl;
+//     std::cout << "Number of quadrature points (master): " << nGPmaster << std::endl;
+//     std::cout << "Number of nodes (master): " << numNodeMaster << std::endl;
+//     std::cout << "Number of nodes (slave): " << numNodeSlave << std::endl;
+
+//   }
+// };
+
 void SolidMechanicsMortarContact::setupSystem( DomainPartition & domain,
                                                             DofManager & dofManager,
                                                             CRSMatrix< real64, globalIndex > & localMatrix,
@@ -248,11 +271,13 @@ void SolidMechanicsMortarContact::setupSystem( DomainPartition & domain,
   */
 
 
-  // compute mortar interpolation: populate maps from gauss points to master basis functions
-  //this -> computeMortarInterpolation();
 
 
-  forMortarSurfaces(MortarInterpolation{});
+  // perform mortar interpolation with compile time knowledge of element types on each side
+  computeMortarInterpolationNew<ElementShape::Triangle, ElementShape::Triangle>();
+  computeMortarInterpolationNew<ElementShape::Triangle, ElementShape::Quadrilateral>();
+  computeMortarInterpolationNew<ElementShape::Quadrilateral, ElementShape::Triangle>();
+  computeMortarInterpolationNew<ElementShape::Quadrilateral, ElementShape::Quadrilateral>();
 
   //computeRotationMatrices( domain );
   
@@ -1014,6 +1039,24 @@ void SolidMechanicsMortarContact::createBubbleCellList( ) const
     std::cout << "Path of slave surface: " << pathSlave << std::endl;
     std::cout << "Path of slave mesh level: " << pathMeshSlave << std::endl;
   }
+
+template< ElementShape slaveShape, ElementShape masterShape >
+void SolidMechanicsMortarContact::computeMortarInterpolationNew()
+{
+  auto const & slaveFE = getFE< slaveShape >();
+  auto const & masterFE = getFE< masterShape >();
+
+  // compile time knowledge!
+  constexpr static localIndex nGPslave = slaveFE.numQuadraturePoints;
+  constexpr static localIndex nGPmaster = masterFE.numQuadraturePoints;
+  constexpr static localIndex numNodeMaster = masterFE.numNodes;
+  constexpr static localIndex numNodeSlave = slaveFE.numNodes;
+
+  std::cout << "Number of quadrature points (slave): " << nGPslave << std::endl;
+  std::cout << "Number of quadrature points (master): " << nGPmaster << std::endl;
+  std::cout << "Number of nodes (master): " << numNodeMaster << std::endl;
+  std::cout << "Number of nodes (slave): " << numNodeSlave << std::endl; 
+}
 
 void SolidMechanicsMortarContact::computeMortarInterpolation()
 {

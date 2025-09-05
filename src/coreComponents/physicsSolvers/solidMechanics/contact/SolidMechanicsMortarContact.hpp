@@ -61,39 +61,12 @@ class TreeNodeMortar;
 enum class ElementShape { Triangle, Quadrilateral };
 enum class MortarSide { Slave, Master };
 
+using feTriangleCell = finiteElement::H1_TriangleFace_Lagrange1_Gauss6;
+
 struct MortarSurface
 {
   MeshLevel* mesh = nullptr;
   const SurfaceElementRegion* surface = nullptr;
-};
-
-template<ElementShape>
-struct ElementDispatch;
-
-template<>
-struct ElementDispatch<ElementShape::Triangle>
-{
-  using femType = finiteElement::H1_TriangleFace_Lagrange1_Gauss6;
-  inline static std::unique_ptr<geos::finiteElement::FiniteElementBase> femTypePtr = std::make_unique<femType>();
-
-  static const femType& getFE()
-  {
-    // Encapsulate the static_cast here
-    return *static_cast<femType*>(femTypePtr.get());
-  }
-};
-
-template<>
-struct ElementDispatch<ElementShape::Quadrilateral>
-{
-  using femType = finiteElement::H1_QuadrilateralFace_Lagrange1_GaussLegendre6;
-  inline static std::unique_ptr<geos::finiteElement::FiniteElementBase> femTypePtr = std::make_unique<femType>();
-
-  static const femType& getFE()
-  {
-    // Encapsulate the static_cast here
-    return *static_cast<femType*>(femTypePtr.get());
-  }
 };
 
 class SolidMechanicsMortarContact : public ContactSolverBase
@@ -119,7 +92,7 @@ public:
 
   using FaceTypeMap = std::map< string, std::map< string, array1d< localIndex > > >;
 
-
+ 
   virtual void registerDataOnMesh( dataRepository::Group & meshBodies ) override final;
 
   void setupDofs( DomainPartition const & domain,
@@ -182,50 +155,50 @@ public:
 
   
   // call templated lambda with compile time knowledge of the element shapes on the master and the slave side
-  template<typename FUNC>
-  void forMortarSurfaces(FUNC&& func) const
-  {
-    std::map<ElementShape, array1d<localIndex>> const&
-    faceTypesToFaceElementsSlave = m_faceTypeToElementList.at(MortarSide::Slave);
+  // template<typename FUNC>
+  // void forMortarSurfaces(FUNC&& func) const
+  // {
+  //   std::map<ElementShape, array1d<localIndex>> const&
+  //   faceTypesToFaceElementsSlave = m_faceTypeToElementList.at(MortarSide::Slave);
 
-    std::map<ElementShape, array1d<localIndex>> const&
-        faceTypesToFaceElementsMaster = m_faceTypeToElementList.at(MortarSide::Master);
+  //   std::map<ElementShape, array1d<localIndex>> const&
+  //       faceTypesToFaceElementsMaster = m_faceTypeToElementList.at(MortarSide::Master);
 
-    for (const auto& [slaveShape, slaveElementList] : faceTypesToFaceElementsSlave) {
-        GEOS_UNUSED_VAR(slaveElementList);
+  //   for (const auto& [slaveShape, slaveElementList] : faceTypesToFaceElementsSlave) {
+  //       GEOS_UNUSED_VAR(slaveElementList);
 
-        for (const auto& [masterShape, masterElementList] : faceTypesToFaceElementsMaster) 
-        {
-          GEOS_UNUSED_VAR(masterElementList);
+  //       for (const auto& [masterShape, masterElementList] : faceTypesToFaceElementsMaster) 
+  //       {
+  //         GEOS_UNUSED_VAR(masterElementList);
 
-          switch (slaveShape) 
-          {
-          case ElementShape::Triangle:
-            switch (masterShape) 
-            {
-            case ElementShape::Triangle:
-              func.template operator()<ElementShape::Triangle, ElementShape::Triangle>();
-              break;
-            case ElementShape::Quadrilateral:
-              func.template operator()<ElementShape::Triangle, ElementShape::Quadrilateral>();
-              break;
-            }
-            break;
-          case ElementShape::Quadrilateral:
-            switch (masterShape) 
-            {
-            case ElementShape::Triangle:
-              func.template operator()<ElementShape::Quadrilateral, ElementShape::Triangle>();
-              break;
-            case ElementShape::Quadrilateral:
-              func.template operator()<ElementShape::Quadrilateral, ElementShape::Quadrilateral>();
-              break;
-            }
-            break;
-          }
-        }
-    }
-  }
+  //         switch (slaveShape) 
+  //         {
+  //         case ElementShape::Triangle:
+  //           switch (masterShape) 
+  //           {
+  //           case ElementShape::Triangle:
+  //             func.template operator()<ElementShape::Triangle, ElementShape::Triangle>();
+  //             break;
+  //           case ElementShape::Quadrilateral:
+  //             func.template operator()<ElementShape::Triangle, ElementShape::Quadrilateral>();
+  //             break;
+  //           }
+  //           break;
+  //         case ElementShape::Quadrilateral:
+  //           switch (masterShape) 
+  //           {
+  //           case ElementShape::Triangle:
+  //             func.template operator()<ElementShape::Quadrilateral, ElementShape::Triangle>();
+  //             break;
+  //           case ElementShape::Quadrilateral:
+  //             func.template operator()<ElementShape::Quadrilateral, ElementShape::Quadrilateral>();
+  //             break;
+  //           }
+  //           break;
+  //         }
+  //       }
+  //   }
+  // }
 
   // template< typename LAMBDA >
   // void forMortarSurfacesOld( LAMBDA && lambda ) const
@@ -360,6 +333,7 @@ private:
   ///
   void computeMortarInterpolation();
 
+  template< ElementShape slaveShape, ElementShape masterShape >
   void computeMortarInterpolationNew();
 
   void getLocalInterpolationPoints( localIndex nInt, string const & finiteElementName, array2d< real64 > & localCoordsMaster );
@@ -382,22 +356,28 @@ private:
 
   void getConnectivityMap();
 
-  struct MortarInterpolation 
-{
-  template<ElementShape shapeSlave, ElementShape shapeMaster>
-  void operator()() const 
+  
+  template<ElementShape S>
+  decltype(auto) getFE() 
   {
+    auto & femTypePtr = m_faceTypeToMortarFiniteElements.at(S); // unique_ptr<FiniteElementBase>
 
-    auto const & slaveFE = ElementDispatch<shapeSlave>::getFE();
-    auto const & masterFE = ElementDispatch<shapeMaster>::getFE();
-    localIndex nGPslave = slaveFE.getNumQuadraturePoints();
-    localIndex nGPmaster = masterFE.getNumQuadraturePoints();
-
-    std::cout << "Number of quadrature points (slave): " << nGPslave << std::endl;
-    std::cout << "Number of quadrature points (master): " << nGPmaster << std::endl;
-      
+    if constexpr (S == ElementShape::Triangle) 
+    {
+        using femType = finiteElement::H1_TriangleFace_Lagrange1_Gauss6;
+        return *static_cast<femType*>(femTypePtr.get()); 
+    } 
+    else if constexpr (S == ElementShape::Quadrilateral) 
+    {
+        using femType = finiteElement::H1_QuadrilateralFace_Lagrange1_GaussLegendre6;
+        return *static_cast<femType*>(femTypePtr.get()); 
+    } 
+    else 
+    {
+        static_assert(S == ElementShape::Triangle || S == ElementShape::Quadrilateral,
+                      "Unsupported ElementShape");
+    }
   }
-};
 
 };
 
