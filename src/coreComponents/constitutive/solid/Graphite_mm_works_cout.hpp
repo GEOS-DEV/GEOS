@@ -246,8 +246,7 @@ public:
                                                 real64 const (& materialDirection)[3], 
                                                 real64 const (& oldStress)[6],
                                                 real64 const (& D)[6],           
-                                                real64 (& newStress) [6],
-                                                localIndex const k ) const;
+                                                real64 (& newStress) [6] ) const;
 
   GEOS_HOST_DEVICE
   void computeTransverselyIsotropicPlasticStrainIncrement( real64 const ( & velocityGradient )[3][3],
@@ -628,8 +627,7 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
                                              unrotatedMaterialDirection,	 // preferred direction
                                              oldStress,          // stress at start of step
                                              D,                  // D=sym(L)
-                                             stress,
-                                             k );           // stress at end of step
+                                             stress );           // stress at end of step
 
     // CC: debug
     // GEOS_LOG_RANK( "Particle " << k << ", Trial stress: {" << stress[0] << ", " << stress[1] << ", " << stress[2] << ", " << stress[3] << ", " << stress[4] << ", " << stress[5] << "}" );
@@ -981,8 +979,7 @@ void GraphiteUpdates::computeTransverselyIsotropicTrialStress(const real64 timeI
                                                               real64 const (& materialDirection)[3], // preferred direction
                                                               real64 const (& oldStress)[6],   // stress at start of step.
                                                               real64 const (& D)[6],           // D=sym(L)
-                                                              real64 (& newStress) [6],         // stress at end of step
-                                                              const localIndex k
+                                                              real64 (& newStress) [6]         // stress at end of step
 ) const
 {
   // These are the TI elastic stiffness coefficients using Brannon's TI basis tensors:
@@ -1001,28 +998,28 @@ void GraphiteUpdates::computeTransverselyIsotropicTrialStress(const real64 timeI
       for (int j = 0; j < 3; ++j)
       {
           double delta = (i == j) ? 1.0 : 0.0;
-          //std::cout<<"delta:   " << delta <<std::endl;
+          std::cout<<"delta:   " << delta <<std::endl;
           alphaDense[i][j] = (m_alphaL - m_alphaT) * materialDirection[i] * materialDirection[j] + delta * m_alphaT;
-          //std::cout<<"alphaL:   " << m_alphaL << "alphaT:   " << m_alphaT <<std::endl;
+          std::cout<<"alphaL:   " << m_alphaL << "alphaT:   " << m_alphaT <<std::endl;
 
       }
   }
 
   
-  //std::cout << "alphaDense:" << std::endl;
-  //for (int i = 0; i < 3; ++i) {
-  //    for (int j = 0; j < 3; ++j) {
-  //        std::cout << alphaDense[i][j] << " ";
-  //    }
-  //    std::cout << std::endl;
-  //}
+  std::cout << "alphaDense:" << std::endl;
+  for (int i = 0; i < 3; ++i) {
+      for (int j = 0; j < 3; ++j) {
+          std::cout << alphaDense[i][j] << " ";
+      }
+      std::cout << std::endl;
+  }
 
   real64 stressIncrementDense[3][3] = { { 0 } };
-  //std::cout<<"stressIncrementDense:   " << stressIncrementDense <<std::endl;
+  std::cout<<"stressIncrementDense:   " << stressIncrementDense <<std::endl;
   int voigtMap[3][3] = { {0, 5, 4}, {5, 1, 3}, {4, 3, 2} };
-  //std::cout<<"voigtMap:   " << voigtMap <<std::endl;
+  std::cout<<"voigtMap:   " << voigtMap <<std::endl;
 	double alphaVoigt[6];
-  //std::cout<< "alphaVoigt:   " << alphaVoigt <<std::endl;
+  std::cout<< "alphaVoigt:   " << alphaVoigt <<std::endl;
   // Voigt notation mapping for symmetric tensors
 
   alphaVoigt[0] = alphaDense[0][0];
@@ -1031,9 +1028,10 @@ void GraphiteUpdates::computeTransverselyIsotropicTrialStress(const real64 timeI
   alphaVoigt[3] = alphaDense[1][2]; 
   alphaVoigt[4] = alphaDense[0][2]; 
   alphaVoigt[5] = alphaDense[0][1]; 
-  //std::cout<< "alphaVoigt[5]" <<  alphaVoigt[5] <<std::endl;
+  std::cout<< "alphaVoigt[5]" <<  alphaVoigt[5] <<std::endl;
+
+  std::cout<<"temperature rate:   " << m_temperatureRate << std::endl;
   real64 temperatureRateNew = m_temperatureRate[k];
-  //std::cout<<"temperature rate:   " << m_temperatureRate << std::endl;
 
   for(int i=0; i<3; i++)
 	{
@@ -1055,19 +1053,19 @@ void GraphiteUpdates::computeTransverselyIsotropicTrialStress(const real64 timeI
 //                                          h5*transverselyIsotropicB5(materialDirection,i,j,p,w))*D[voigtMap[p][w]]*timeIncrement;
 //                                        still need to find temp rate 
                                           h5 * transverselyIsotropicB5(materialDirection, i, j, p, w)) * (D[voigtMap[p][w]] - (alphaVoigt[voigtMap[p][w]] * temperatureRateNew)) * timeIncrement;
-                                          //std::cout << "Type check: alphaVoigt[voigtMap[p][w]] = " << alphaVoigt[voigtMap[p][w]] << std::endl;
+                                          std::cout << "Type check: alphaVoigt[voigtMap[p][w]] = " << alphaVoigt[voigtMap[p][w]] << std::endl;
 				}
 			}
 		}
 	}
 
-  //std::cout << "stressIncrementDense:" << std::endl;
-  //for (int i = 0; i < 3; ++i) {
-  //    for (int j = 0; j < 3; ++j) {
-  //        std::cout << stressIncrementDense[i][j] << " ";
-  //    }
-  //    std::cout << std::endl;
-  //}
+  std::cout << "stressIncrementDense:" << std::endl;
+  for (int i = 0; i < 3; ++i) {
+      for (int j = 0; j < 3; ++j) {
+          std::cout << stressIncrementDense[i][j] << " ";
+      }
+      std::cout << std::endl;
+  }
 
   real64 stressIncrement[6] = { 0 };
   LvArray::tensorOps::denseToSymmetric< 3 >( stressIncrement, stressIncrementDense );
