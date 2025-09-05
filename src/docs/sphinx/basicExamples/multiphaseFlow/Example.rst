@@ -272,6 +272,36 @@ injection rate of component 1 (water) to mimic a rate-controlled well.
 
 
 
+---------------------
+Source fluxes statistics
+---------------------
+
+In order to output aggregated source flux statistics for monitoring mass balance and flow rates for a given group of ``SourceFlux``.
+This functionality is implemented through a ``SourceFluxStatistics`` **Task** which then output the statistics at regular intervals via **Events** to:
+  - a CSV, for all fluxes and regions details and sum, through ``writeCSV="1"``.
+  - log format, with user defined level of detail, through ``logLevel="2"`` (which gives each flux stats and ).
+The group of target **SourceFlux** is define in ``fluxNames``, specifying their names, or just ``*`` to all fluxes.
+The task requires a ``flowSolverName`` which refers to the solver used for flow calculations (e.g., ``SinglePhaseFlow``).
+
+.. literalinclude:: ../../../../../inputFiles/compositionalMultiphaseFlow/benchmarks/SPE10/deadOilSpe10Layers84_85_base_iterative.xml
+  :language: xml
+  :start-after: <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_TASKS -->
+  :end-before: <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_TASKS_END -->
+
+To output these statistics during simulation, an event must be defined (previously shown ``sourceFluxStatsEvent``).
+
+In addition to the comprehensive CSV named ``fluxesStats.csv``, we can see the following table appear in the log:
+
+.. code-block:: console
+
+  -----------------------------------------------------------------------------------------------------
+  |                           fluxesStats, flux statistics for: sourceTerm                            |
+  |---------------------------------------------------------------------------------------------------|
+  |   Flux(es)   |    Region     |  Element Count  |      Prod. mass [kg]       |  Prod. rate [kg/s]  |
+  |--------------|---------------|-----------------|----------------------------|---------------------|
+  |  sourceTerm  |  all_regions  |              2  |  [0, -57048.521447934894]  |      [0, -0.07279]  |
+  |    flux_set  |  all_regions  |              2  |  [0, -57048.521447934894]  |      [0, -0.07279]  |
+  -----------------------------------------------------------------------------------------------------
 
 .. _Outputs_tag_dead_oil_bottom_layers_spe10:
 
